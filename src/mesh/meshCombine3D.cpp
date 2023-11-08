@@ -31,57 +31,6 @@ static void buildUniqueFaces(GRegion *gr, std::map<MFace, GRegion*, MFaceLessTha
   }
 }
 
-bool MakeHybridHexTetMeshConformalThroughTriHedron(GModel *gm)
-{
-  fs_cont search;
-  // on boundary.
-  buildFaceSearchStructure(gm, search);
-  std::map<MFace, GRegion*, MFaceLessThan> bnd;
-  for(auto rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
-    GRegion *gr = *rit;
-    // look at every face that only comes once
-    buildUniqueFaces(gr, bnd);
-  }
-  // bnd2 contains non conforming faces
-  std::map<MFace, GRegion*,MFaceLessThan> bnd2;
-  for(auto itf = bnd.begin(); itf != bnd.end(); ++itf) {
-    GFace *gfound = findInFaceSearchStructure(itf->first, search);
-    if(!gfound) { bnd2[itf->first]=itf->second; }
-  }
-  bnd.clear();
-
-  //  Msg::Info("%d hanging faces", bnd2.size());
-
-  // create trihedron
-  
-  for(auto itf = bnd2.begin(); itf != bnd2.end(); ++itf) {
-    const MFace &f = itf->first;
-    if(f.getNumVertices() == 4) { // quad face
-      auto it1 =
-        bnd2.find(MFace(f.getVertex(0), f.getVertex(1), f.getVertex(2)));
-      auto it2 =
-        bnd2.find(MFace(f.getVertex(2), f.getVertex(3), f.getVertex(0)));
-      if(it1 != bnd2.end() && it2 != bnd2.end()) {
-	MTrihedron *th = new MTrihedron (f.getVertex(3),f.getVertex(0),f.getVertex(1),f.getVertex(2));
-	itf->second->trihedra.push_back(th);
-      }
-      else {
-        it1 = bnd2.find(MFace(f.getVertex(0), f.getVertex(1), f.getVertex(3)));
-        it2 = bnd2.find(MFace(f.getVertex(3), f.getVertex(1), f.getVertex(2)));
-        if(it1 != bnd2.end() && it2 != bnd2.end()) {
-	  MTrihedron *th = new MTrihedron (f.getVertex(0),f.getVertex(1),f.getVertex(2),f.getVertex(3));
-	  itf->second->trihedra.push_back(th);	
-        }
-        else {
-          Msg::Warning("MakeMeshConformal: wrong mesh topology");
-	  //          return false;
-        }
-      }
-    }
-  }
-  return true;
-}
-
 static void createMeshStore (GRegion *gr, HXTCombine::MeshStore &ms,
 			     std::map<MVertex *, uint32_t> &v2c,
 			     std::vector<MVertex *> &c2v){
@@ -231,3 +180,56 @@ int meshCombine3d (GModel *m){
   return -1;
 }
 #endif
+
+
+bool MakeHybridHexTetMeshConformalThroughTriHedron(GModel *gm)
+{
+  fs_cont search;
+  // on boundary.
+  buildFaceSearchStructure(gm, search);
+  std::map<MFace, GRegion*, MFaceLessThan> bnd;
+  for(auto rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
+    GRegion *gr = *rit;
+    // look at every face that only comes once
+    buildUniqueFaces(gr, bnd);
+  }
+  // bnd2 contains non conforming faces
+  std::map<MFace, GRegion*,MFaceLessThan> bnd2;
+  for(auto itf = bnd.begin(); itf != bnd.end(); ++itf) {
+    GFace *gfound = findInFaceSearchStructure(itf->first, search);
+    if(!gfound) { bnd2[itf->first]=itf->second; }
+  }
+  bnd.clear();
+
+  //  Msg::Info("%d hanging faces", bnd2.size());
+
+  // create trihedron
+  
+  for(auto itf = bnd2.begin(); itf != bnd2.end(); ++itf) {
+    const MFace &f = itf->first;
+    if(f.getNumVertices() == 4) { // quad face
+      auto it1 =
+        bnd2.find(MFace(f.getVertex(0), f.getVertex(1), f.getVertex(2)));
+      auto it2 =
+        bnd2.find(MFace(f.getVertex(2), f.getVertex(3), f.getVertex(0)));
+      if(it1 != bnd2.end() && it2 != bnd2.end()) {
+	MTrihedron *th = new MTrihedron (f.getVertex(3),f.getVertex(0),f.getVertex(1),f.getVertex(2));
+	itf->second->trihedra.push_back(th);
+      }
+      else {
+        it1 = bnd2.find(MFace(f.getVertex(0), f.getVertex(1), f.getVertex(3)));
+        it2 = bnd2.find(MFace(f.getVertex(3), f.getVertex(1), f.getVertex(2)));
+        if(it1 != bnd2.end() && it2 != bnd2.end()) {
+	  MTrihedron *th = new MTrihedron (f.getVertex(0),f.getVertex(1),f.getVertex(2),f.getVertex(3));
+	  itf->second->trihedra.push_back(th);	
+        }
+        else {
+          Msg::Warning("MakeMeshConformal: wrong mesh topology");
+	  //          return false;
+        }
+      }
+    }
+  }
+  return true;
+}
+
