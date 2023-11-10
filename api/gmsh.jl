@@ -1910,6 +1910,24 @@ function reverse(dimTags = Tuple{Cint,Cint}[])
 end
 
 """
+    gmsh.model.mesh.reverseElements(elementTags)
+
+Reverse the orientation of all the elements of tag `elementTags`.
+
+Types:
+ - `elementTags`: vector of sizes
+"""
+function reverseElements(elementTags)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshReverseElements, gmsh.lib), Cvoid,
+          (Ptr{Csize_t}, Csize_t, Ptr{Cint}),
+          convert(Vector{Csize_t}, elementTags), length(elementTags), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const reverse_elements = reverseElements
+
+"""
     gmsh.model.mesh.affineTransform(affineTransform, dimTags = Tuple{Cint,Cint}[])
 
 Apply the affine transformation `affineTransform` (16 entries of a 4x4 matrix,

@@ -633,6 +633,10 @@ GMSH_API void gmshModelMeshClear(const int * dimTags, const size_t dimTags_n,
 GMSH_API void gmshModelMeshReverse(const int * dimTags, const size_t dimTags_n,
                                    int * ierr);
 
+/* Reverse the orientation of all the elements of tag `elementTags'. */
+GMSH_API void gmshModelMeshReverseElements(const size_t * elementTags, const size_t elementTags_n,
+                                           int * ierr);
+
 /* Apply the affine transformation `affineTransform' (16 entries of a 4x4
  * matrix, by row; only the 12 first can be provided for convenience) to the
  * coordinates of the nodes classified on the entities `dimTags', given as a

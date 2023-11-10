@@ -288,6 +288,9 @@ mesh.add('clear', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', '[]', 
 doc = '''Reverse the orientation of the elements in the entities `dimTags', given as a vector of (dim, tag) pairs. If `dimTags' is empty, reverse the orientation of the elements in the whole mesh.'''
 mesh.add('reverse', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', '[]', '[]'))
 
+doc = '''Reverse the orientation of all the elements of tag `elementTags'.'''
+mesh.add('reverseElements', doc, None, ivectorsize('elementTags'))
+
 doc = '''Apply the affine transformation `affineTransform' (16 entries of a 4x4 matrix, by row; only the 12 first can be provided for convenience) to the coordinates of the nodes classified on the entities `dimTags', given as a vector of (dim, tag) pairs. If `dimTags' is empty, transform all the nodes in the mesh.'''
 mesh.add('affineTransform', doc, None, ivectordouble('affineTransform'), ivectorpair('dimTags', 'gmsh::vectorpair()', '[]', '[]'))
 

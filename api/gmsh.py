@@ -2248,6 +2248,25 @@ class model:
                 raise Exception(logger.getLastError())
 
         @staticmethod
+        def reverseElements(elementTags):
+            """
+            gmsh.model.mesh.reverseElements(elementTags)
+
+            Reverse the orientation of all the elements of tag `elementTags'.
+
+            Types:
+            - `elementTags': vector of sizes
+            """
+            api_elementTags_, api_elementTags_n_ = _ivectorsize(elementTags)
+            ierr = c_int()
+            lib.gmshModelMeshReverseElements(
+                api_elementTags_, api_elementTags_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        reverse_elements = reverseElements
+
+        @staticmethod
         def affineTransform(affineTransform, dimTags=[]):
             """
             gmsh.model.mesh.affineTransform(affineTransform, dimTags=[])
