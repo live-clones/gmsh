@@ -167,7 +167,6 @@ int meshCombine3D (GRegion *gr){
     }
     gf->triangles = temp;
   }   
-  // ----------------- C R E A T I N G  T R A N S I T I O N   E L E M E N T S ----------------
 
   Msg::Info("Hybrid mesh statistics");
   Msg::Info("Volume Hex %12.5E --- Volume Tet %12.5E --- Percentage Vol Hex %12.5E",volHex,volTet,100*volHex/(volHex+volTet));

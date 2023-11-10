@@ -460,8 +460,8 @@ void Filler::treat_region(GRegion *gr)
   //  printf("coucou4\n");    
 
 
-  //  FILE *f = fopen("new_points.pos","w");
-  //  fprintf(f,"View \" \"{\n");
+    FILE *f = fopen("new_points.pos","w");
+    fprintf(f,"View \" \"{\n");
   
   for (auto v : new_vertices){
     Vertex *vv = new Vertex (v->x(),v->y(),v->z());
@@ -471,11 +471,11 @@ void Filler::treat_region(GRegion *gr)
     v->setEntity(gr);
     gr->mesh_vertices.push_back(v);
     gr->addEmbeddedVertex(newV);
-    //    fprintf(f,"SP(%g,%g,%g){1,1};\n",v->x(),v->y(),v->z());
+        fprintf(f,"SP(%g,%g,%g){1,1};\n",v->x(),v->y(),v->z());
   }
 
-  //  fprintf(f,"};\n");
-  //  fclose(f);
+    fprintf(f,"};\n");
+    fclose(f);
   
   std::vector<GRegion *> regions;
   regions.push_back(gr);
