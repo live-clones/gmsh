@@ -524,6 +524,8 @@ module gmsh
         gmshModelMeshClear
     procedure, nopass :: reverse => &
         gmshModelMeshReverse
+    procedure, nopass :: reverseElements => &
+        gmshModelMeshReverseElements
     procedure, nopass :: affineTransform => &
         gmshModelMeshAffineTransform
     procedure, nopass :: getNodes => &
@@ -3320,6 +3322,27 @@ module gmsh
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          ierr_=ierr)
   end subroutine gmshModelMeshReverse
+
+  !> Reverse the orientation of the elements with tags `elementTags'.
+  subroutine gmshModelMeshReverseElements(elementTags, &
+                                          ierr)
+    interface
+    subroutine C_API(api_elementTags_, &
+                     api_elementTags_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshReverseElements")
+      use, intrinsic :: iso_c_binding
+      integer(c_size_t), dimension(*) :: api_elementTags_
+      integer(c_size_t), value, intent(in) :: api_elementTags_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_size_t), dimension(:), intent(in) :: elementTags
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(api_elementTags_=elementTags, &
+         api_elementTags_n_=size_gmsh_size(elementTags), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshReverseElements
 
   !> Apply the affine transformation `affineTransform' (16 entries of a 4x4
   !! matrix, by row; only the 12 first can be provided for convenience) to the
