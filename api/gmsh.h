@@ -738,6 +738,11 @@ namespace gmsh { // Top-level functions
       // orientation of the elements in the whole mesh.
       GMSH_API void reverse(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
 
+      // gmsh::model::mesh::reverseElements
+      //
+      // Reverse the orientation of the elements with tags `elementTags'.
+      GMSH_API void reverseElements(const std::vector<std::size_t> & elementTags);
+
       // gmsh::model::mesh::affineTransform
       //
       // Apply the affine transformation `affineTransform' (16 entries of a 4x4

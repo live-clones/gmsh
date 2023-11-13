@@ -1081,6 +1081,18 @@ GMSH_API void gmshModelMeshReverse(const int * dimTags, const size_t dimTags_n, 
   }
 }
 
+GMSH_API void gmshModelMeshReverseElements(const size_t * elementTags, const size_t elementTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_elementTags_(elementTags, elementTags + elementTags_n);
+    gmsh::model::mesh::reverseElements(api_elementTags_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshAffineTransform(const double * affineTransform, const size_t affineTransform_n, const int * dimTags, const size_t dimTags_n, int * ierr)
 {
   if(ierr) *ierr = 0;
