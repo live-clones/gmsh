@@ -1468,7 +1468,6 @@ GMSH_API void gmsh::model::mesh::reverse(const vectorpair &dimTags)
 GMSH_API void gmsh::model::mesh::reverseElements(const std::vector<std::size_t> & elementTags)
 {
   if(!_checkInit()) return;
-
   for(auto const tag : elementTags) {
     MElement *e = GModel::current()->getMeshElementByTag(tag);
     if(e) {
@@ -1478,7 +1477,6 @@ GMSH_API void gmsh::model::mesh::reverseElements(const std::vector<std::size_t> 
       Msg::Error("Could not find element %d", tag);
     }
   }
-
   GModel::current()->destroyMeshCaches();
 }
 

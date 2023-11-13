@@ -1912,7 +1912,7 @@ end
 """
     gmsh.model.mesh.reverseElements(elementTags)
 
-Reverse the orientation of all the elements of tag `elementTags`.
+Reverse the orientation of the elements with tags `elementTags`.
 
 Types:
  - `elementTags`: vector of sizes

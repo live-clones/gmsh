@@ -1318,7 +1318,7 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::reverseElements
       //
-      // Reverse the orientation of all the elements of tag `elementTags'.
+      // Reverse the orientation of the elements with tags `elementTags'.
       inline void reverseElements(const std::vector<std::size_t> & elementTags)
       {
         int ierr = 0;

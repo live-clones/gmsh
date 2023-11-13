@@ -3323,7 +3323,7 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelMeshReverse
 
-  !> Reverse the orientation of all the elements of tag `elementTags'.
+  !> Reverse the orientation of the elements with tags `elementTags'.
   subroutine gmshModelMeshReverseElements(elementTags, &
                                           ierr)
     interface
