@@ -1,4 +1,3 @@
-
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "Context.h"
@@ -73,7 +72,6 @@ static void createMeshStore (GRegion *gr, HXTCombine::MeshStore &ms,
   computeTetAdjacencies (ms);  
 }
 
-
 int meshCombine3D (GRegion *gr){
   Msg::Info ("Creating Mesh Wrapper for region %d",gr->tag());
   double volHex=0, volTet=0;
@@ -103,6 +101,8 @@ int meshCombine3D (GRegion *gr){
   buildFaceSearchStructure(gr->model(), search);
   
   std::set <MFace,MFaceLessThan> faceToDelete;
+
+  std::unordered_set<MVertex*> all_v;
   
   for (size_t k=0; k< ccs.hexes().size() ;k++){
     if (ccs.selectedHexes()[k]){
@@ -114,6 +114,14 @@ int meshCombine3D (GRegion *gr){
       MVertex *v5 = c2v[ccs.hexes()[k].vertexes[5]];
       MVertex *v6 = c2v[ccs.hexes()[k].vertexes[6]];
       MVertex *v7 = c2v[ccs.hexes()[k].vertexes[7]];
+      all_v.insert(v0);
+      all_v.insert(v1);
+      all_v.insert(v2);
+      all_v.insert(v3);
+      all_v.insert(v4);
+      all_v.insert(v5);
+      all_v.insert(v6);
+      all_v.insert(v7);
       MHexahedron *h = new MHexahedron(v0,v1,v2,v3,v4,v5,v6,v7);
       volHex += h->getVolume();
       numHex ++;
@@ -149,13 +157,28 @@ int meshCombine3D (GRegion *gr){
       MVertex *v1 = c2v[ms.tetCorners[4*k+1]];
       MVertex *v2 = c2v[ms.tetCorners[4*k+2]];
       MVertex *v3 = c2v[ms.tetCorners[4*k+3]];
+      all_v.insert(v0);
+      all_v.insert(v1);
+      all_v.insert(v2);
+      all_v.insert(v3);
       MTetrahedron *tet = new MTetrahedron(v0,v1,v2,v3);
       gr->tetrahedra.push_back(tet);	    
       volTet += tet->getVolume();
       numTet ++;
     }	  
   }
-  
+
+  {
+    std::vector<MVertex*> vr;
+    for (auto v : gr->mesh_vertices){
+      if (all_v.find(v) != all_v.end())vr.push_back(v);
+      else {
+	delete v;
+      }
+    }
+    Msg::Info("%d vertice have been removed durin tet2hex combination",gr->mesh_vertices.size()-vr.size());
+    gr->mesh_vertices = vr;
+  }
   std::vector<GFace *> faces = gr->faces();
   for (auto gf : faces){
     std::vector<MTriangle*> temp;
@@ -180,7 +203,6 @@ int meshCombine3d (GModel *m){
   return -1;
 }
 #endif
-
 
 bool MakeHybridHexTetMeshConformalThroughTriHedron(GModel *gm)
 {

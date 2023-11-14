@@ -1869,6 +1869,8 @@ _getEntitiesForElementTypes(int dim, int tag,
         typeEnt[r->prisms.front()->getTypeForMSH()].push_back(ge);
       if(r->pyramids.size())
         typeEnt[r->pyramids.front()->getTypeForMSH()].push_back(ge);
+      if(r->trihedra.size())
+        typeEnt[r->trihedra.front()->getTypeForMSH()].push_back(ge);
       break;
     }
     }
@@ -2068,6 +2070,8 @@ static void _addElements(int dim, int tag, GEntity *ge, int type,
       _addElements(dim, tag, elements, static_cast<GRegion *>(ge)->prisms);
     else if(elements[0]->getType() == TYPE_PYR)
       _addElements(dim, tag, elements, static_cast<GRegion *>(ge)->pyramids);
+    else if(elements[0]->getType() == TYPE_TRIH)
+      _addElements(dim, tag, elements, static_cast<GRegion *>(ge)->trihedra);
     else
       ok = false;
     break;
@@ -8197,6 +8201,7 @@ static void _createFltk()
 
 GMSH_API void gmsh::fltk::initialize()
 {
+  
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
   _createFltk();

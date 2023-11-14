@@ -1279,6 +1279,7 @@ static bool improved_translate(GFace *gf, MVertex *vertex, SVector3 &v1,
 
 static void directions_storage(GFace *gf)
 {
+
   std::set<MVertex *> vertices;
   for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
     MElement *element = gf->getMeshElement(i);
@@ -3080,8 +3081,12 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
                        gf->meshStatistics.best_element_shape,
                        gf->meshStatistics.nbTriangle,
                        gf->meshStatistics.nbGoodQuality);
+
+  if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) { directions_storage(gf); }
+
   gf->meshStatistics.status = GFace::DONE;
 
+  
   // Remove unused vertices, generated e.g. during background mesh
   deleteUnusedVertices(gf);
 
