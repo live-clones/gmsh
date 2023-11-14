@@ -557,11 +557,12 @@ public:
       he2->f = he0->f;
       createFace(he0->f, v0, v1, v2, he0, he1, he2);
       if(_t) {
-        for(auto he : *_t) _touched.push_back(he);
-        _touched.push_back(he0);
-        _touched.push_back(he1);
-        _touched.push_back(he2);
+        // for(auto he : *_t) (*_t).push_back(he);
+        (*_t).push_back(he0);
+        (*_t).push_back(he1);
+        (*_t).push_back(he2);
       }
+
     }
     else {
       HalfEdge *he = v->he;
@@ -587,18 +588,18 @@ public:
           // we found a good edge! we can adapt the big mesh
           _he = he->next->next->opposite;
           while(degree(v) > 3) {
+            if (_t) (*_t).push_back(_he);
             HalfEdge *_heNext = _he->next->next->opposite;
             swap_edge(_he);
-            _touched.push_back(_he);
             _he = _heNext;
           }
-          if(_t) *_t = _touched;
-          deleteVertex(v, _t);
+          // if(_t) *_t = _touched;
+          // if(_t) (*_t).insert((*_t).end(), _touched.begin(), _touched.end());
           deletion_accepted = true;
         }
       }
+      deleteVertex(v, _t);
     }
-    if(_t) *_t = _touched;
     return 0;
   }
 

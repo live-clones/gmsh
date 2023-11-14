@@ -795,10 +795,6 @@ void addPoints(PolyMesh *pm, std::vector<double> &pts, SBoundingBox3d &bb)
                                bb.max().y() - bb.center().y());
     IND[i] = i;
   }
-  // NB: temporary workaround for alphashapes : avoiding the sort so the
-  // numbering is not messed up
-  // std::sort(IND.begin(), IND.end(),
-  //          [&](size_t i, size_t j) { return HC[i] < HC[j]; });
 
   for(size_t i = 0; i < N; i++) {
     size_t I = IND[i];
