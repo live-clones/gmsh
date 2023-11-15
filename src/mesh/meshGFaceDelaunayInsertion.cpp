@@ -1635,6 +1635,7 @@ void bowyerWatsonParallelograms(
     return;
   }
 
+  
 #if defined(HAVE_DOMHEX)
   if(old_algo_hexa()) {
     Msg::Debug("bowyerWatsonParallelograms: call packingOfParallelograms()");

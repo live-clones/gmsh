@@ -485,32 +485,38 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
   std::vector<MVertex*> singularities;
   for(; it != bnd_vertices.end(); ++it) {
 
-    int NP = 1;
+    int NP = 0;
     SPoint2 midpoint;
     double du[4] = {0,0,0,0}, dv[4]= {0,0,0,0};
 
+    //    printf("cop %d\n",(*it)->getNum());
+    
     for (int i=0;i<2;i++){
       if (gf->periodic(i)){
 	reparamMeshVertexOnFace(*it, gf, midpoint);
 	Range<double> bnds = gf->parBounds(i);
 	//	if (1 || midpoint[i] == bnds.low()){
-	  if (i == 0)
-	    du[NP] =  bnds.high() -  bnds.low();
-	  else
-	    dv[NP] =  bnds.high() -  bnds.low();
-	  NP++;
-	  //	}
-	  //	else if (midpoint[i] == bnds.high()){
-	  if (i == 0)
-	    du[NP] =  -(bnds.high() -  bnds.low());
-	  else
-	    dv[NP] =  -(bnds.high() -  bnds.low());
-	  NP++;
-	  //	}
+	if (i == 0)
+	  du[NP] =  bnds.high() -  bnds.low();
+	else
+	  dv[NP] =  bnds.high() -  bnds.low();
+	NP++;
+	//	}
+	//	else if (midpoint[i] == bnds.high()){
+	if (i == 0)
+	  du[NP] =  -(bnds.high() -  bnds.low());
+	else
+	  dv[NP] =  -(bnds.high() -  bnds.low());
+	NP++;
+	//	}
       }
     }
+
+    if (NP == 0)NP=1;
+    
     for (int i=0;i<NP;i++){
       bool singular = !compute4neighbors(gf, *it, midpoint, newp, metricField, cross_field, du[i],dv[i],globalMult );
+      //      printf("there %d %g %g\n",singular,du[i],dv[i]);
       if (!singular){
 	surfacePointWithExclusionRegion *sp =
 	  new surfacePointWithExclusionRegion(*it, newp, midpoint, metricField);
@@ -530,8 +536,6 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
       }
     }
   }
-
-  //  printf("bounds = %g %g %g %g \n",minu,maxu,minv,maxv);
 
   __OK = 0;
   __KO = 0;
