@@ -576,20 +576,8 @@ mesh.add('generateMesh', doc, None, iint('dim'), iint('tag'), ibool('refine'), i
 doc = '''Triangulate the points given in the `coord' vector as pairs of u, v coordinates, and return the node tags (with numbering starting at 1) of the resulting triangles in `tri'. If specified, `edges' contains constrained edges in the mesh, given as pairs of nodes.'''
 mesh.add('triangulate', doc, None, ivectordouble('coord'), ivectorsize('edges'), ovectorsize('tri'))
 
-doc = '''Triangulate the nodes (if any) on discrete entity of tag `tag', assuming there is a boundary.'''
-mesh.add('triangulateNodesOnEntity', doc, None, iint('tag'))
-
 doc = '''Tetrahedralize the points given in the `coord' vector as x, y, z coordinates, concatenated, and return the node tags (with numbering starting at 1) of the resulting tetrahedra in `tetra'.'''
 mesh.add('tetrahedralize', doc, None, ivectordouble('coord'), ovectorsize('tetra'))
-
-doc = '''Give an alpha shape `threshold', points given in the `coord' vector as triplets of x, y, z coordinates, and return the tetrahedra (like intetrahedralize), `domains' as vectors of vectors of tetrahedron indices, `boundaries' as vectors of vectors of pairs tet/face and `neighbors' as a vector of size 4 times the number of tetrahedra giving neighboring ids of tetrahedra of a given tetrahedra. When a tetrahedra has no neighbor for its ith face, the value is tetrahedra.size. For a tet with vertices (0,1,2,3), node ids of the faces are respectively (0,1,2), (0,1,3), (0,2,3) and (1,2,3). `nodalSize' is a vector defining the desired alpha criterion at each point. It should either be of size 1 : it is then used as a global  alpha shape criterion : R_circumsribed / nodalSize[0] < threshold. (if meanValue < 0,  meanValue is computed as the average minimum edge length of each element.). `nodalSize' can also be a vector of size corresponding to the number of points : it is then used as a local alpha shape criterion. After triangulation, the average of `nodalSize' of each vertex of the element (= hElement) is taken and compared to R_circumscribed. Thus, if threshold == 1, the alpha criterion becomes R_circumscribed < hElement.'''
-mesh.add('alphaShapes', doc, None, idouble('threshold'), iint('dim'), ivectordouble('coord'), ivectordouble('nodalSize'), ovectorsize('tetra'), ovectorvectorsize('domains'), ovectorvectorsize('boundaries'), ovectorsize('neighbors'))
-
-doc = '''Take  the node tags (with numbering starting at 1) of the tetrahedra in `tetra' and returns `neighbors' as a vector of size 4 times the number of tetrahedra giving neighboring ids of tetrahedra of a given tetrahedra. When a tetrahedra has no neighbor for its ith face, the value is tetrahedra.size. For a tet with vertices (0,1,2,3), node ids of the faces are respectively (0,1,2), (0,1,3), (0,2,3) and (1,2,3)'''
-mesh.add('tetNeighbors', doc, None, ivectorsize('tetra'), ovectorsize('neighbors'))
-
-doc = '''Generate a mesh of the array of points `coord', constrained to the surface mesh of the current model. Currently only supported for 3D.'''
-mesh.add('alphaShapesConstrained', doc, None, iint('dim'), iint('tag'), ivectordouble('coord'), ivectorsize('nodeTags'), idouble('alpha'), idouble('meanValue'), ovectorsize('tetrahedra'), ovectorvectorsize('domains'), ovectorvectorsize('boundaries'), ovectorsize('neighbors'), odouble('hMean'), ivectorint('controlTags'))
 
 doc = '''Apply a Delaunay refinement on entity of dimension `dim' and tag `tag'. `elementTags' contains a vector of the tags of the elements that need to be refined. `constrainedEdges' is a vector of size m*2 containing the edges that need to stay in the mesh, in the form of 2 successive nodes. `sizeField' is a vector containing the size at the nodes referenced by `nodeTags'. `minRadius' is the minimum allowed circumradius of elements in the mesh. An element that has a circumradius which is smaller than this value will not be refined. Return newly added nodes and corresponding size field, as well as the updated list of constrained edges and elements within the refinement.'''
 mesh.add('constrainedDelaunayRefinement', doc, None, iint('dim'), iint('tag'), ivectorsize('elementTags'), ivectorsize('constrainedEdges'), ivectorsize('nodeTags'), ivectordouble('sizeField'), idouble('minRadius'), idouble('minQuality'), ovectorsize('newNodeTags'), ovectordouble('newCoords'), ovectordouble('newSizeField'), ovectorvectorsize('newConstrainedEdges'), ovectorsize('newElementsInRefinement'))
@@ -600,7 +588,8 @@ mesh.add('alphaShape', doc, None, iint('dim'), iint('tag'), idouble('alpha'), iv
 doc = '''From an initial empty 3D surface mesh, insert new nodes into the volume. Tetrahedralize these nodes, and determine the alphashape of the mesh. If refine is set, refine the tetrahedra to match the size field.'''
 mesh.add('performAlphaShapeAndRefine', doc, None, ivectorsize('nodeTags'), ivectordouble('coord'), ivectorint('nodesDimTags'), iint("refine"), ivectordouble('sizeAtNodes'), idouble('alpha'), idouble('hMean'), iint('surfaceTag'), iint('volumeTag'))
 
-
+doc = '''Compute the alpha shape of the set of points on the entity of dimension `dim' and tag `tag', with respect to a constant mean mesh size `hMean' (if `hMean' > 0) or to the size field defined by `sizeFieldCallback'. If desired, also refine the elements in the alpha shape so as to respect the size field defined by `sizeFieldCallback'. The new mesh will be stored in the discrete entities with tags `alphaShapeTags' = [alphaShapeTag, alphaShapeBoundaryTag].'''
+mesh.add('computeAlphaShape', doc, None, iint('dim'), iint('tag'), idouble('alpha'), idouble('hMean'), isizefun('sizeFieldCallback'), iint('refine'), ivectorint('alphaShapeTags'))
 
 ################################################################################
 

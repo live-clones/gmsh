@@ -1633,70 +1633,12 @@ GMSH_API void gmshModelMeshTriangulate(const double * coord, const size_t coord_
                                        size_t ** tri, size_t * tri_n,
                                        int * ierr);
 
-/* Triangulate the nodes (if any) on discrete entity of tag `tag', assuming
- * there is a boundary. */
-GMSH_API void gmshModelMeshTriangulateNodesOnEntity(const int tag,
-                                                    int * ierr);
-
 /* Tetrahedralize the points given in the `coord' vector as x, y, z
  * coordinates, concatenated, and return the node tags (with numbering
  * starting at 1) of the resulting tetrahedra in `tetra'. */
 GMSH_API void gmshModelMeshTetrahedralize(const double * coord, const size_t coord_n,
                                           size_t ** tetra, size_t * tetra_n,
                                           int * ierr);
-
-/* Give an alpha shape `threshold', points given in the `coord' vector as
- * triplets of x, y, z coordinates, and return the tetrahedra (like
- * intetrahedralize), `domains' as vectors of vectors of tetrahedron indices,
- * `boundaries' as vectors of vectors of pairs tet/face and `neighbors' as a
- * vector of size 4 times the number of tetrahedra giving neighboring ids of
- * tetrahedra of a given tetrahedra. When a tetrahedra has no neighbor for its
- * ith face, the value is tetrahedra.size. For a tet with vertices (0,1,2,3),
- * node ids of the faces are respectively (0,1,2), (0,1,3), (0,2,3) and
- * (1,2,3). `nodalSize' is a vector defining the desired alpha criterion at
- * each point. It should either be of size 1 : it is then used as a global
- * alpha shape criterion : R_circumsribed / nodalSize[0] < threshold. (if
- * meanValue < 0,  meanValue is computed as the average minimum edge length of
- * each element.). `nodalSize' can also be a vector of size corresponding to
- * the number of points : it is then used as a local alpha shape criterion.
- * After triangulation, the average of `nodalSize' of each vertex of the
- * element (= hElement) is taken and compared to R_circumscribed. Thus, if
- * threshold == 1, the alpha criterion becomes R_circumscribed < hElement. */
-GMSH_API void gmshModelMeshAlphaShapes(const double threshold,
-                                       const int dim,
-                                       const double * coord, const size_t coord_n,
-                                       const double * nodalSize, const size_t nodalSize_n,
-                                       size_t ** tetra, size_t * tetra_n,
-                                       size_t *** domains, size_t ** domains_n, size_t *domains_nn,
-                                       size_t *** boundaries, size_t ** boundaries_n, size_t *boundaries_nn,
-                                       size_t ** neighbors, size_t * neighbors_n,
-                                       int * ierr);
-
-/* Take  the node tags (with numbering starting at 1) of the tetrahedra in
- * `tetra' and returns `neighbors' as a vector of size 4 times the number of
- * tetrahedra giving neighboring ids of tetrahedra of a given tetrahedra. When
- * a tetrahedra has no neighbor for its ith face, the value is
- * tetrahedra.size. For a tet with vertices (0,1,2,3), node ids of the faces
- * are respectively (0,1,2), (0,1,3), (0,2,3) and (1,2,3) */
-GMSH_API void gmshModelMeshTetNeighbors(const size_t * tetra, const size_t tetra_n,
-                                        size_t ** neighbors, size_t * neighbors_n,
-                                        int * ierr);
-
-/* Generate a mesh of the array of points `coord', constrained to the surface
- * mesh of the current model. Currently only supported for 3D. */
-GMSH_API void gmshModelMeshAlphaShapesConstrained(const int dim,
-                                                  const int tag,
-                                                  const double * coord, const size_t coord_n,
-                                                  const size_t * nodeTags, const size_t nodeTags_n,
-                                                  const double alpha,
-                                                  const double meanValue,
-                                                  size_t ** tetrahedra, size_t * tetrahedra_n,
-                                                  size_t *** domains, size_t ** domains_n, size_t *domains_nn,
-                                                  size_t *** boundaries, size_t ** boundaries_n, size_t *boundaries_nn,
-                                                  size_t ** neighbors, size_t * neighbors_n,
-                                                  double * hMean,
-                                                  const int * controlTags, const size_t controlTags_n,
-                                                  int * ierr);
 
 /* Apply a Delaunay refinement on entity of dimension `dim' and tag `tag'.
  * `elementTags' contains a vector of the tags of the elements that need to be
@@ -1746,6 +1688,22 @@ GMSH_API void gmshModelMeshPerformAlphaShapeAndRefine(const size_t * nodeTags, c
                                                       const int surfaceTag,
                                                       const int volumeTag,
                                                       int * ierr);
+
+/* Compute the alpha shape of the set of points on the entity of dimension
+ * `dim' and tag `tag', with respect to a constant mean mesh size `hMean' (if
+ * `hMean' > 0) or to the size field defined by `sizeFieldCallback'. If
+ * desired, also refine the elements in the alpha shape so as to respect the
+ * size field defined by `sizeFieldCallback'. The new mesh will be stored in
+ * the discrete entities with tags `alphaShapeTags' = [alphaShapeTag,
+ * alphaShapeBoundaryTag]. */
+GMSH_API void gmshModelMeshComputeAlphaShape(const int dim,
+                                             const int tag,
+                                             const double alpha,
+                                             const double hMean,
+                                             double (*sizeFieldCallback)(int dim, int tag, double x, double y, double z, double lc, void * data), void * sizeFieldCallback_data,
+                                             const int refine,
+                                             const int * alphaShapeTags, const size_t alphaShapeTags_n,
+                                             int * ierr);
 
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
  * the tag explicitly; otherwise a new tag is assigned automatically. Return

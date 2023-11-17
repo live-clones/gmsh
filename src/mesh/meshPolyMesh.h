@@ -504,7 +504,6 @@ public:
     bool corner = false;
     while(!deletion_accepted && !corner) {
       if(he->data != -1) { return false; }
-
       HalfEdge *_he = he->next->next->opposite;
       Vertex *v0 = he->next->v;
       bool flipped = false;
@@ -512,8 +511,7 @@ public:
       while(!flipped && _he->next->next->opposite != he && !corner) {
         Vertex *v1 = _he->next->v;
         Vertex *v2 = _he->next->next->v;
-        double s =
-          robustPredicates::orient2d(v0->position, v1->position, v2->position);
+        double s = robustPredicates::orient2d(v0->position, v1->position, v2->position);
         if(s <= 0) flipped = true;
         _he = _he->next->next->opposite;
         if(_he == nullptr) corner = true;

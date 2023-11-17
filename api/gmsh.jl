@@ -4489,25 +4489,6 @@ function triangulate(coord, edges)
 end
 
 """
-    gmsh.model.mesh.triangulateNodesOnEntity(tag)
-
-Triangulate the nodes (if any) on discrete entity of tag `tag`, assuming there
-is a boundary.
-
-Types:
- - `tag`: integer
-"""
-function triangulateNodesOnEntity(tag)
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshTriangulateNodesOnEntity, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cint}),
-          tag, ierr)
-    ierr[] != 0 && error(gmsh.logger.getLastError())
-    return nothing
-end
-const triangulate_nodes_on_entity = triangulateNodesOnEntity
-
-"""
     gmsh.model.mesh.tetrahedralize(coord)
 
 Tetrahedralize the points given in the `coord` vector as x, y, z coordinates,
@@ -4531,146 +4512,6 @@ function tetrahedralize(coord)
     tetra = unsafe_wrap(Array, api_tetra_[], api_tetra_n_[], own = true)
     return tetra
 end
-
-"""
-    gmsh.model.mesh.alphaShapes(threshold, dim, coord, nodalSize)
-
-Give an alpha shape `threshold`, points given in the `coord` vector as triplets
-of x, y, z coordinates, and return the tetrahedra (like intetrahedralize),
-`domains` as vectors of vectors of tetrahedron indices, `boundaries` as vectors
-of vectors of pairs tet/face and `neighbors` as a vector of size 4 times the
-number of tetrahedra giving neighboring ids of tetrahedra of a given tetrahedra.
-When a tetrahedra has no neighbor for its ith face, the value is
-tetrahedra.size. For a tet with vertices (0,1,2,3), node ids of the faces are
-respectively (0,1,2), (0,1,3), (0,2,3) and (1,2,3). `nodalSize` is a vector
-defining the desired alpha criterion at each point. It should either be of size
-1 : it is then used as a global  alpha shape criterion : R_circumsribed /
-nodalSize[0] < threshold. (if meanValue < 0,  meanValue is computed as the
-average minimum edge length of each element.). `nodalSize` can also be a vector
-of size corresponding to the number of points : it is then used as a local alpha
-shape criterion. After triangulation, the average of `nodalSize` of each vertex
-of the element (= hElement) is taken and compared to R_circumscribed. Thus, if
-threshold == 1, the alpha criterion becomes R_circumscribed < hElement.
-
-Return `tetra`, `domains`, `boundaries`, `neighbors`.
-
-Types:
- - `threshold`: double
- - `dim`: integer
- - `coord`: vector of doubles
- - `nodalSize`: vector of doubles
- - `tetra`: vector of sizes
- - `domains`: vector of vectors of sizes
- - `boundaries`: vector of vectors of sizes
- - `neighbors`: vector of sizes
-"""
-function alphaShapes(threshold, dim, coord, nodalSize)
-    api_tetra_ = Ref{Ptr{Csize_t}}()
-    api_tetra_n_ = Ref{Csize_t}()
-    api_domains_ = Ref{Ptr{Ptr{Csize_t}}}()
-    api_domains_n_ = Ref{Ptr{Csize_t}}()
-    api_domains_nn_ = Ref{Csize_t}()
-    api_boundaries_ = Ref{Ptr{Ptr{Csize_t}}}()
-    api_boundaries_n_ = Ref{Ptr{Csize_t}}()
-    api_boundaries_nn_ = Ref{Csize_t}()
-    api_neighbors_ = Ref{Ptr{Csize_t}}()
-    api_neighbors_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshAlphaShapes, gmsh.lib), Cvoid,
-          (Cdouble, Cint, Ptr{Cdouble}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
-          threshold, dim, convert(Vector{Cdouble}, coord), length(coord), convert(Vector{Cdouble}, nodalSize), length(nodalSize), api_tetra_, api_tetra_n_, api_domains_, api_domains_n_, api_domains_nn_, api_boundaries_, api_boundaries_n_, api_boundaries_nn_, api_neighbors_, api_neighbors_n_, ierr)
-    ierr[] != 0 && error(gmsh.logger.getLastError())
-    tetra = unsafe_wrap(Array, api_tetra_[], api_tetra_n_[], own = true)
-    tmp_api_domains_ = unsafe_wrap(Array, api_domains_[], api_domains_nn_[], own = true)
-    tmp_api_domains_n_ = unsafe_wrap(Array, api_domains_n_[], api_domains_nn_[], own = true)
-    domains = [ unsafe_wrap(Array, tmp_api_domains_[i], tmp_api_domains_n_[i], own = true) for i in 1:api_domains_nn_[] ]
-    tmp_api_boundaries_ = unsafe_wrap(Array, api_boundaries_[], api_boundaries_nn_[], own = true)
-    tmp_api_boundaries_n_ = unsafe_wrap(Array, api_boundaries_n_[], api_boundaries_nn_[], own = true)
-    boundaries = [ unsafe_wrap(Array, tmp_api_boundaries_[i], tmp_api_boundaries_n_[i], own = true) for i in 1:api_boundaries_nn_[] ]
-    neighbors = unsafe_wrap(Array, api_neighbors_[], api_neighbors_n_[], own = true)
-    return tetra, domains, boundaries, neighbors
-end
-const alpha_shapes = alphaShapes
-
-"""
-    gmsh.model.mesh.tetNeighbors(tetra)
-
-Take  the node tags (with numbering starting at 1) of the tetrahedra in `tetra`
-and returns `neighbors` as a vector of size 4 times the number of tetrahedra
-giving neighboring ids of tetrahedra of a given tetrahedra. When a tetrahedra
-has no neighbor for its ith face, the value is tetrahedra.size. For a tet with
-vertices (0,1,2,3), node ids of the faces are respectively (0,1,2), (0,1,3),
-(0,2,3) and (1,2,3)
-
-Return `neighbors`.
-
-Types:
- - `tetra`: vector of sizes
- - `neighbors`: vector of sizes
-"""
-function tetNeighbors(tetra)
-    api_neighbors_ = Ref{Ptr{Csize_t}}()
-    api_neighbors_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshTetNeighbors, gmsh.lib), Cvoid,
-          (Ptr{Csize_t}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
-          convert(Vector{Csize_t}, tetra), length(tetra), api_neighbors_, api_neighbors_n_, ierr)
-    ierr[] != 0 && error(gmsh.logger.getLastError())
-    neighbors = unsafe_wrap(Array, api_neighbors_[], api_neighbors_n_[], own = true)
-    return neighbors
-end
-const tet_neighbors = tetNeighbors
-
-"""
-    gmsh.model.mesh.alphaShapesConstrained(dim, tag, coord, nodeTags, alpha, meanValue, controlTags)
-
-Generate a mesh of the array of points `coord`, constrained to the surface mesh
-of the current model. Currently only supported for 3D.
-
-Return `tetrahedra`, `domains`, `boundaries`, `neighbors`, `hMean`.
-
-Types:
- - `dim`: integer
- - `tag`: integer
- - `coord`: vector of doubles
- - `nodeTags`: vector of sizes
- - `alpha`: double
- - `meanValue`: double
- - `tetrahedra`: vector of sizes
- - `domains`: vector of vectors of sizes
- - `boundaries`: vector of vectors of sizes
- - `neighbors`: vector of sizes
- - `hMean`: double
- - `controlTags`: vector of integers
-"""
-function alphaShapesConstrained(dim, tag, coord, nodeTags, alpha, meanValue, controlTags)
-    api_tetrahedra_ = Ref{Ptr{Csize_t}}()
-    api_tetrahedra_n_ = Ref{Csize_t}()
-    api_domains_ = Ref{Ptr{Ptr{Csize_t}}}()
-    api_domains_n_ = Ref{Ptr{Csize_t}}()
-    api_domains_nn_ = Ref{Csize_t}()
-    api_boundaries_ = Ref{Ptr{Ptr{Csize_t}}}()
-    api_boundaries_n_ = Ref{Ptr{Csize_t}}()
-    api_boundaries_nn_ = Ref{Csize_t}()
-    api_neighbors_ = Ref{Ptr{Csize_t}}()
-    api_neighbors_n_ = Ref{Csize_t}()
-    api_hMean_ = Ref{Cdouble}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshAlphaShapesConstrained, gmsh.lib), Cvoid,
-          (Cint, Cint, Ptr{Cdouble}, Csize_t, Ptr{Csize_t}, Csize_t, Cdouble, Cdouble, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cdouble}, Ptr{Cint}, Csize_t, Ptr{Cint}),
-          dim, tag, convert(Vector{Cdouble}, coord), length(coord), convert(Vector{Csize_t}, nodeTags), length(nodeTags), alpha, meanValue, api_tetrahedra_, api_tetrahedra_n_, api_domains_, api_domains_n_, api_domains_nn_, api_boundaries_, api_boundaries_n_, api_boundaries_nn_, api_neighbors_, api_neighbors_n_, api_hMean_, convert(Vector{Cint}, controlTags), length(controlTags), ierr)
-    ierr[] != 0 && error(gmsh.logger.getLastError())
-    tetrahedra = unsafe_wrap(Array, api_tetrahedra_[], api_tetrahedra_n_[], own = true)
-    tmp_api_domains_ = unsafe_wrap(Array, api_domains_[], api_domains_nn_[], own = true)
-    tmp_api_domains_n_ = unsafe_wrap(Array, api_domains_n_[], api_domains_nn_[], own = true)
-    domains = [ unsafe_wrap(Array, tmp_api_domains_[i], tmp_api_domains_n_[i], own = true) for i in 1:api_domains_nn_[] ]
-    tmp_api_boundaries_ = unsafe_wrap(Array, api_boundaries_[], api_boundaries_nn_[], own = true)
-    tmp_api_boundaries_n_ = unsafe_wrap(Array, api_boundaries_n_[], api_boundaries_nn_[], own = true)
-    boundaries = [ unsafe_wrap(Array, tmp_api_boundaries_[i], tmp_api_boundaries_n_[i], own = true) for i in 1:api_boundaries_nn_[] ]
-    neighbors = unsafe_wrap(Array, api_neighbors_[], api_neighbors_n_[], own = true)
-    return tetrahedra, domains, boundaries, neighbors, api_hMean_[]
-end
-const alpha_shapes_constrained = alphaShapesConstrained
 
 """
     gmsh.model.mesh.constrainedDelaunayRefinement(dim, tag, elementTags, constrainedEdges, nodeTags, sizeField, minRadius, minQuality)
@@ -4795,6 +4636,37 @@ function performAlphaShapeAndRefine(nodeTags, coord, nodesDimTags, refine, sizeA
     return nothing
 end
 const perform_alpha_shape_and_refine = performAlphaShapeAndRefine
+
+"""
+    gmsh.model.mesh.computeAlphaShape(dim, tag, alpha, hMean, sizeFieldCallback, refine, alphaShapeTags)
+
+Compute the alpha shape of the set of points on the entity of dimension `dim`
+and tag `tag`, with respect to a constant mean mesh size `hMean` (if `hMean` >
+0) or to the size field defined by `sizeFieldCallback`. If desired, also refine
+the elements in the alpha shape so as to respect the size field defined by
+`sizeFieldCallback`. The new mesh will be stored in the discrete entities with
+tags `alphaShapeTags` = [alphaShapeTag, alphaShapeBoundaryTag].
+
+Types:
+ - `dim`: integer
+ - `tag`: integer
+ - `alpha`: double
+ - `hMean`: double
+ - `sizeFieldCallback`: 
+ - `refine`: integer
+ - `alphaShapeTags`: vector of integers
+"""
+function computeAlphaShape(dim, tag, alpha, hMean, sizeFieldCallback, refine, alphaShapeTags)
+    api_sizeFieldCallback__(dim, tag, x, y, z, lc, data) = sizeFieldCallback(dim, tag, x, y, z, lc)
+    api_sizeFieldCallback_ = @cfunction($api_sizeFieldCallback__, Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshComputeAlphaShape, gmsh.lib), Cvoid,
+          (Cint, Cint, Cdouble, Cdouble, Ptr{Cvoid}, Ptr{Cvoid}, Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          dim, tag, alpha, hMean, api_sizeFieldCallback_, C_NULL, refine, convert(Vector{Cint}, alphaShapeTags), length(alphaShapeTags), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const compute_alpha_shape = computeAlphaShape
 
 """
     module gmsh.model.mesh.field

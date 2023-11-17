@@ -5602,15 +5602,6 @@ GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
 #endif
 }
 
-GMSH_API void gmsh::model::mesh::triangulateNodesOnEntity(const int tag)
-{
-#if defined(HAVE_MESH)
-  //  triangulateEntity(tag);
-#else
-  Msg::Error("triangulate requires the mesh module");
-#endif
-}
-
 GMSH_API void
 gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
                                   std::vector<std::size_t> &tetra)
@@ -5648,58 +5639,6 @@ gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
 #endif
 }
 
-// gmsh::model::mesh::alphaShapes
-
-
-GMSH_API void
-gmsh::model::mesh::alphaShapes( const double threshold,
-                                const int dim,
-                                const std::vector<double> & coord,
-                                const std::vector<double> & nodalSize,
-                                std::vector<std::size_t> & tetra,
-                                std::vector<std::vector<std::size_t> > & domains,
-                                std::vector<std::vector<std::size_t> > & boundaries,
-                                std::vector<std::size_t> & neighbors){
-#if defined(HAVE_MESH) && defined(HAVE_HXT)
-  alphaShapes_ (threshold, dim, coord, nodalSize, tetra, domains, boundaries, neighbors);
-#else
-  Msg::Error("alphaShapes requires the mesh and hxt modules");
-#endif
-
-}
-
-// gmsh::model::mesh::tetNeighbors
-
-GMSH_API void
-gmsh::model::mesh::tetNeighbors(const std::vector<std::size_t> &tetra,
-				std::vector<std::size_t> &neigh){
-#if defined(HAVE_MESH) && defined(HAVE_HXT)
-  computeTetNeighbors_ (tetra, neigh);
-#else
-  Msg::Error("alphaShapes requires the mesh and hxt modules");
-#endif  
-}
-
-GMSH_API void
-gmsh::model::mesh::alphaShapesConstrained(const int dim, 
-                                          const int tag,
-                                          const std::vector<double>& coord,
-                                          const std::vector<size_t>& nodeTags,
-                                          const double alpha, 
-                                          const double meanValue, 
-                                          std::vector<size_t> &tetrahedra, 
-                                          std::vector<std::vector<size_t> > &domains,
-                                          std::vector<std::vector<size_t> > &boundaries,
-                                          std::vector<size_t> &neigh, 
-                                          double &hMean,
-                                          const std::vector<int> &controlTags){
-#if defined(HAVE_MESH) && defined(HAVE_HXT)
-  constrainedAlphaShapes_(GModel::current(), dim, tag, coord, nodeTags, alpha, meanValue, tetrahedra, domains, boundaries, neigh, hMean, controlTags);
-#else
-  Msg::Error("alphaShapesConstrained requires the mesh and hxt modules");
-#endif  
-}
-
 GMSH_API void 
 gmsh::model::mesh::constrainedDelaunayRefinement(const int dim, const int tag, const std::vector<size_t> &elementTags, const std::vector<size_t> &constrainedEdges, const std::vector<size_t> &nodeTags, const std::vector<double> &sizeField, const double minRadius, const double minQuality, std::vector<size_t> &newNodeTags, std::vector<double>& newCoords, std::vector<double>& newSizeField, std::vector<std::vector<size_t>>& newConstrainedEdges, std::vector<size_t>& newElementsInRefinement)
 {
@@ -5728,6 +5667,19 @@ gmsh::model::mesh::performAlphaShapeAndRefine(const std::vector<size_t>& nodeTag
 #else 
   Msg::Error("performAlphaShapeAndRefine requires the mesh and hxt modules");
 #endif
+}
+
+GMSH_API void
+gmsh::model::mesh::computeAlphaShape(const int dim, const int tag, const double alpha, const double hMean,
+                          std::function<double(int, int, double, double, double, double)> sizeFieldCallback, 
+                          const int refine, const std::vector<int> & alphaShapeTags)
+{
+#if defined(HAVE_MESH) && defined(HAVE_HXT)
+  _computeAlphaShape(dim, tag, alpha, hMean, sizeFieldCallback, refine, alphaShapeTags);
+#else 
+  Msg::Error("performAlphaShapeAndRefine requires the mesh and hxt modules");
+#endif
+
 }
 
 
