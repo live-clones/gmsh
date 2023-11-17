@@ -225,7 +225,7 @@ void generateMesh3D_(const std::vector<double>& coord, const std::vector<size_t>
 // sizeAtNodes :   mesh size at each node
 // nodesDimTags :  the entity (dim,tag) to which each node belongs
 void performAlphaShapeAndRefine_(const std::vector<size_t>& nodeTags, const std::vector<double>& coord, const std::vector<int>& nodesDimTags, const int refine, const std::vector<double>& sizeAtNodes, const double alpha, const double hMean, const int surfaceTag, const int volumeTag){
-  auto t0 = std::chrono::high_resolution_clock::now();
+  // auto t0 = std::chrono::high_resolution_clock::now();
 
   GModel *m = GModel::current();
   
@@ -316,7 +316,7 @@ void performAlphaShapeAndRefine_(const std::vector<size_t>& nodeTags, const std:
   printf("here :) \n");
   hxtDelaunaySteadyVertices(mesh, &delOptions, &nodeInfo[0], numNewPts);
   
-  auto t1 = std::chrono::high_resolution_clock::now();
+  // auto t1 = std::chrono::high_resolution_clock::now();
   
   printf("meshed 3D\n");
 
@@ -345,18 +345,18 @@ void performAlphaShapeAndRefine_(const std::vector<size_t>& nodeTags, const std:
   printf("number of vertices in mesh : %d \n", mesh->vertices.num);
 
   HXTAlphaShapeOptions alphaShapeOptions = {
-      .colorOut = 1,
       .colorIn = volumeTag,
+      .colorOut = 1,
       .colorBoundary = surfaceTag,
-      .tetrahedra = NULL,
-      .n_tetrahedra = 0,
       .alpha = alpha,
-      .hMean = hMean
+      .hMean = hMean,
+      .n_tetrahedra = 0,
+      .tetrahedra = NULL
   };
 
   hxtAlphaShape(mesh, &delOptions, &alphaShapeOptions);
   printf("done with alpha shape : there are %d facets and %llu tets in the alpha shape \n", alphaShapeOptions.n_boundaryFacets, alphaShapeOptions.n_tetrahedra);
-  auto t2 = std::chrono::high_resolution_clock::now();
+  // auto t2 = std::chrono::high_resolution_clock::now();
     
   if (alphaShapeOptions.n_tetrahedra == 0){
     HXT_ERROR_MSG(HXT_STATUS_FAILED, "No tetrahedra in alpha shape, exiting \n");
@@ -377,25 +377,25 @@ void performAlphaShapeAndRefine_(const std::vector<size_t>& nodeTags, const std:
     mesh->triangles.color[startFrom+i] = alphaShapeOptions.colorBoundary;
   }
   // hxtMeshWriteGmsh(mesh, "beforeRefinement.msh");
-  std::__1::chrono::steady_clock::time_point t3, t3Bis, t4;
+  // std::__1::chrono::steady_clock::time_point t3, t3Bis, t4;
   if (refine == 1){
     printf("refining in alpha shape \n");
 
     hxtRefineSurfaceTriangulation(mesh, &delOptions, &alphaShapeOptions);
-    t3 = std::chrono::high_resolution_clock::now();
+    // t3 = std::chrono::high_resolution_clock::now();
     printf("done with surface triangulation refinement\n");
 
     // A new alpha shape to redefine the internal elements --> not ideal (but a work around ...)
     hxtAlphaShape(mesh, &delOptions, &alphaShapeOptions);
 
-    t3Bis = std::chrono::high_resolution_clock::now();
+    // t3Bis = std::chrono::high_resolution_clock::now();
     // hxtMeshWriteGmsh(mesh, "newAlphaShape.msh");
 
     // hxtRefineTetrahedraInAlphaShapeSequential(mesh, &delOptions, &alphaShapeOptions);
     delOptions.nodalSizes->enabled = 1;
     hxtAlphaShapeNodeInsertion(mesh, &delOptions, &alphaShapeOptions);
     // hxtMeshWriteGmsh(mesh, "afterNodeInsertion.msh");
-    t4 = std::chrono::high_resolution_clock::now();
+    // t4 = std::chrono::high_resolution_clock::now();
   }
 
   for (int i=0; i<mesh->tetrahedra.num; i++){
@@ -418,31 +418,31 @@ void performAlphaShapeAndRefine_(const std::vector<size_t>& nodeTags, const std:
   }
   gmsh::model::mesh::addElementsByType(surfaceTag, 2, alphaTriTags, alphaTriNodeTags);
   gmsh::model::mesh::addElementsByType(volumeTag,  4, alphaTetTags, alphaTetNodeTags);
-  auto t5 = std::chrono::high_resolution_clock::now();
+  // auto t5 = std::chrono::high_resolution_clock::now();
 
   hxtMeshDelete(&mesh);
-  std::chrono::duration<double, std::milli> time_mesh3D = t1-t0;
-  double durMesh3D = time_mesh3D.count();
-  std::chrono::duration<double, std::milli> time_alphaShape = t2-t1;
-  double durAlphaShape = time_alphaShape.count();
-  std::chrono::duration<double, std::milli> time_surfaceRefine = t3-t2;
-  double durSurfaceRefine = time_surfaceRefine.count();
-  std::chrono::duration<double, std::milli> time_alphaShape2 = t3Bis-t3;
-  double durAlphaShape2= time_alphaShape2.count();
-  std::chrono::duration<double, std::milli> time_volumeRefine = t4-t3;
-  double durVolumeRefine = time_volumeRefine.count();
-  std::chrono::duration<double, std::milli> time_backGmsh = t5-t4;
-  double durBackGmsh = time_backGmsh.count();
-  std::chrono::duration<double, std::milli> time_total = t5-t0;
-  double durTotal = time_total.count();
+  // std::chrono::duration<double, std::milli> time_mesh3D = t1-t0;
+  // double durMesh3D = time_mesh3D.count();
+  // std::chrono::duration<double, std::milli> time_alphaShape = t2-t1;
+  // double durAlphaShape = time_alphaShape.count();
+  // std::chrono::duration<double, std::milli> time_surfaceRefine = t3-t2;
+  // double durSurfaceRefine = time_surfaceRefine.count();
+  // std::chrono::duration<double, std::milli> time_alphaShape2 = t3Bis-t3;
+  // double durAlphaShape2= time_alphaShape2.count();
+  // std::chrono::duration<double, std::milli> time_volumeRefine = t4-t3;
+  // double durVolumeRefine = time_volumeRefine.count();
+  // std::chrono::duration<double, std::milli> time_backGmsh = t5-t4;
+  // double durBackGmsh = time_backGmsh.count();
+  // std::chrono::duration<double, std::milli> time_total = t5-t0;
+  // double durTotal = time_total.count();
   
-  printf("Mesh 3D time        : %f percent \n", 100*durMesh3D/durTotal);
-  printf("Alpha shape time    : %f percent \n", 100*durAlphaShape/durTotal);
-  printf("Refine Surface time : %f percent \n", 100*durSurfaceRefine/durTotal);
-  printf("Alpha shape 2 time  : %f percent \n", 100*durAlphaShape2/durTotal);
-  printf("Refine Volume  time : %f percent \n", 100*durVolumeRefine/durTotal);
-  printf("Back to Gmsh time   : %f percent \n", 100*durBackGmsh/durTotal);
-  printf("Total               : %f percent \n", 100*(durMesh3D+durAlphaShape+durAlphaShape2+durSurfaceRefine+durVolumeRefine+durBackGmsh)/durTotal);
+  // printf("Mesh 3D time        : %f percent \n", 100*durMesh3D/durTotal);
+  // printf("Alpha shape time    : %f percent \n", 100*durAlphaShape/durTotal);
+  // printf("Refine Surface time : %f percent \n", 100*durSurfaceRefine/durTotal);
+  // printf("Alpha shape 2 time  : %f percent \n", 100*durAlphaShape2/durTotal);
+  // printf("Refine Volume  time : %f percent \n", 100*durVolumeRefine/durTotal);
+  // printf("Back to Gmsh time   : %f percent \n", 100*durBackGmsh/durTotal);
+  // printf("Total               : %f percent \n", 100*(durMesh3D+durAlphaShape+durAlphaShape2+durSurfaceRefine+durVolumeRefine+durBackGmsh)/durTotal);
   
 
 }
