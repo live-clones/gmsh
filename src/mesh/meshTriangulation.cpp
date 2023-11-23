@@ -808,7 +808,6 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover,
                            std::vector<double> *additional)
 {
   GFace *gf = GModel::current()->getFaceByTag(faceTag);
-
   if(!gf) Msg::Error("GFaceInitialMesh: no face with tag %d", faceTag);
 
   PolyMesh *pm = new PolyMesh;
@@ -818,8 +817,9 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover,
 
   SBoundingBox3d bb;
   for(auto c : copies) {
-    for(size_t i = 0; i < c.second.nbCopies; i++)
+    for(size_t i = 0; i < c.second.nbCopies; i++){
       bb += SPoint3(c.second.u[i], c.second.v[i], 0);
+    }
   }
   bb *= 1.1;
   pm->initialize_rectangle(bb.min().x(), bb.max().x(), bb.min().y(),

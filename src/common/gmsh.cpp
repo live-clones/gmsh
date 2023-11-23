@@ -5670,12 +5670,12 @@ gmsh::model::mesh::performAlphaShapeAndRefine(const std::vector<size_t>& nodeTag
 }
 
 GMSH_API void
-gmsh::model::mesh::computeAlphaShape(const int dim, const int tag, const double alpha, const double hMean,
+gmsh::model::mesh::computeAlphaShape(const std::vector<int> & alphaShapeTags, const double alpha, const double hMean,
                           std::function<double(int, int, double, double, double, double)> sizeFieldCallback, 
-                          const int refine, const std::vector<int> & alphaShapeTags)
+                          const int refine)
 {
 #if defined(HAVE_MESH) && defined(HAVE_HXT)
-  _computeAlphaShape(dim, tag, alpha, hMean, sizeFieldCallback, refine, alphaShapeTags);
+  _computeAlphaShape(alphaShapeTags, alpha, hMean, sizeFieldCallback, refine);
 #else 
   Msg::Error("performAlphaShapeAndRefine requires the mesh and hxt modules");
 #endif

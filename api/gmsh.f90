@@ -7760,60 +7760,51 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelMeshPerformAlphaShapeAndRefine
 
-  !> Compute the alpha shape of the set of points on the entity of dimension
-  !! `dim' and tag `tag', with respect to a constant mean mesh size `hMean' (if
-  !! `hMean' > 0) or to the size field defined by `sizeFieldCallback'. If
+  !> Compute the alpha shape of the set of points on the discrete entity defined
+  !! by the first tag of `alphaShapeTags', with the second tag its boundary. The
+  !! alpha shape is computed with respect to a constant mean mesh size `hMean'
+  !! (if `hMean' > 0) or to the size field defined by `sizeFieldCallback'. If
   !! desired, also refine the elements in the alpha shape so as to respect the
   !! size field defined by `sizeFieldCallback'. The new mesh will be stored in
   !! the discrete entities with tags `alphaShapeTags' = [alphaShapeTag,
   !! alphaShapeBoundaryTag].
-  subroutine gmshModelMeshComputeAlphaShape(dim, &
-                                            tag, &
+  subroutine gmshModelMeshComputeAlphaShape(alphaShapeTags, &
                                             alpha, &
                                             hMean, &
                                             sizeFieldCallback, &
                                             refine, &
-                                            alphaShapeTags, &
                                             ierr)
     interface
-    subroutine C_API(dim, &
-                     tag, &
+    subroutine C_API(api_alphaShapeTags_, &
+                     api_alphaShapeTags_n_, &
                      alpha, &
                      hMean, &
                      sizeFieldCallback, &
                      refine, &
-                     api_alphaShapeTags_, &
-                     api_alphaShapeTags_n_, &
                      ierr_) &
       bind(C, name="gmshModelMeshComputeAlphaShape")
       use, intrinsic :: iso_c_binding
-      integer(c_int), value, intent(in) :: dim
-      integer(c_int), value, intent(in) :: tag
+      integer(c_int), dimension(*) :: api_alphaShapeTags_
+      integer(c_size_t), value, intent(in) :: api_alphaShapeTags_n_
       real(c_double), value, intent(in) :: alpha
       real(c_double), value, intent(in) :: hMean
       type(c_funptr), value, intent(in) :: sizeFieldCallback
       integer(c_int), value, intent(in) :: refine
-      integer(c_int), dimension(*) :: api_alphaShapeTags_
-      integer(c_size_t), value, intent(in) :: api_alphaShapeTags_n_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer, intent(in) :: dim
-    integer, intent(in) :: tag
+    integer(c_int), dimension(:), intent(in) :: alphaShapeTags
     real(c_double), intent(in) :: alpha
     real(c_double), intent(in) :: hMean
     type(c_funptr), value, intent(in) :: sizeFieldCallback
     integer, intent(in) :: refine
-    integer(c_int), dimension(:), intent(in) :: alphaShapeTags
     integer(c_int), intent(out), optional :: ierr
-    call C_API(dim=int(dim, c_int), &
-         tag=int(tag, c_int), &
+    call C_API(api_alphaShapeTags_=alphaShapeTags, &
+         api_alphaShapeTags_n_=size_gmsh_int(alphaShapeTags), &
          alpha=real(alpha, c_double), &
          hMean=real(hMean, c_double), &
          sizeFieldCallback=sizeFieldCallback, &
          refine=int(refine, c_int), &
-         api_alphaShapeTags_=alphaShapeTags, &
-         api_alphaShapeTags_n_=size_gmsh_int(alphaShapeTags), &
          ierr_=ierr)
   end subroutine gmshModelMeshComputeAlphaShape
 

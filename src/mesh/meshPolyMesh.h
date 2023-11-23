@@ -933,7 +933,6 @@ public:
     createFace(f0, v0, v1, v, he0, he1v, hev0);
     createFace(f1, v1, v2, v, he1, he2v, hev1);
     createFace(f2, v2, v0, v, he2, he0v, hev2);
-
     if(doSwap) {
       std::stack<HalfEdge *> _stack;
       _stack.push(he0);

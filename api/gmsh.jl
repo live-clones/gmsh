@@ -4638,31 +4638,30 @@ end
 const perform_alpha_shape_and_refine = performAlphaShapeAndRefine
 
 """
-    gmsh.model.mesh.computeAlphaShape(dim, tag, alpha, hMean, sizeFieldCallback, refine, alphaShapeTags)
+    gmsh.model.mesh.computeAlphaShape(alphaShapeTags, alpha, hMean, sizeFieldCallback, refine)
 
-Compute the alpha shape of the set of points on the entity of dimension `dim`
-and tag `tag`, with respect to a constant mean mesh size `hMean` (if `hMean` >
-0) or to the size field defined by `sizeFieldCallback`. If desired, also refine
-the elements in the alpha shape so as to respect the size field defined by
-`sizeFieldCallback`. The new mesh will be stored in the discrete entities with
-tags `alphaShapeTags` = [alphaShapeTag, alphaShapeBoundaryTag].
+Compute the alpha shape of the set of points on the discrete entity defined by
+the first tag of `alphaShapeTags`, with the second tag its boundary. The alpha
+shape is computed with respect to a constant mean mesh size `hMean` (if `hMean`
+> 0) or to the size field defined by `sizeFieldCallback`. If desired, also
+refine the elements in the alpha shape so as to respect the size field defined
+by `sizeFieldCallback`. The new mesh will be stored in the discrete entities
+with tags `alphaShapeTags` = [alphaShapeTag, alphaShapeBoundaryTag].
 
 Types:
- - `dim`: integer
- - `tag`: integer
+ - `alphaShapeTags`: vector of integers
  - `alpha`: double
  - `hMean`: double
  - `sizeFieldCallback`: 
  - `refine`: integer
- - `alphaShapeTags`: vector of integers
 """
-function computeAlphaShape(dim, tag, alpha, hMean, sizeFieldCallback, refine, alphaShapeTags)
+function computeAlphaShape(alphaShapeTags, alpha, hMean, sizeFieldCallback, refine)
     api_sizeFieldCallback__(dim, tag, x, y, z, lc, data) = sizeFieldCallback(dim, tag, x, y, z, lc)
     api_sizeFieldCallback_ = @cfunction($api_sizeFieldCallback__, Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshComputeAlphaShape, gmsh.lib), Cvoid,
-          (Cint, Cint, Cdouble, Cdouble, Ptr{Cvoid}, Ptr{Cvoid}, Cint, Ptr{Cint}, Csize_t, Ptr{Cint}),
-          dim, tag, alpha, hMean, api_sizeFieldCallback_, C_NULL, refine, convert(Vector{Cint}, alphaShapeTags), length(alphaShapeTags), ierr)
+          (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Ptr{Cvoid}, Ptr{Cvoid}, Cint, Ptr{Cint}),
+          convert(Vector{Cint}, alphaShapeTags), length(alphaShapeTags), alpha, hMean, api_sizeFieldCallback_, C_NULL, refine, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end

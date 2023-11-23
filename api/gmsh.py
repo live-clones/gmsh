@@ -5264,41 +5264,38 @@ class model:
         perform_alpha_shape_and_refine = performAlphaShapeAndRefine
 
         @staticmethod
-        def computeAlphaShape(dim, tag, alpha, hMean, sizeFieldCallback, refine, alphaShapeTags):
+        def computeAlphaShape(alphaShapeTags, alpha, hMean, sizeFieldCallback, refine):
             """
-            gmsh.model.mesh.computeAlphaShape(dim, tag, alpha, hMean, sizeFieldCallback, refine, alphaShapeTags)
+            gmsh.model.mesh.computeAlphaShape(alphaShapeTags, alpha, hMean, sizeFieldCallback, refine)
 
-            Compute the alpha shape of the set of points on the entity of dimension
-            `dim' and tag `tag', with respect to a constant mean mesh size `hMean' (if
-            `hMean' > 0) or to the size field defined by `sizeFieldCallback'. If
+            Compute the alpha shape of the set of points on the discrete entity defined
+            by the first tag of `alphaShapeTags', with the second tag its boundary. The
+            alpha shape is computed with respect to a constant mean mesh size `hMean'
+            (if `hMean' > 0) or to the size field defined by `sizeFieldCallback'. If
             desired, also refine the elements in the alpha shape so as to respect the
             size field defined by `sizeFieldCallback'. The new mesh will be stored in
             the discrete entities with tags `alphaShapeTags' = [alphaShapeTag,
             alphaShapeBoundaryTag].
 
             Types:
-            - `dim': integer
-            - `tag': integer
+            - `alphaShapeTags': vector of integers
             - `alpha': double
             - `hMean': double
             - `sizeFieldCallback': 
             - `refine': integer
-            - `alphaShapeTags': vector of integers
             """
+            api_alphaShapeTags_, api_alphaShapeTags_n_ = _ivectorint(alphaShapeTags)
             global api_sizeFieldCallback_type_
             api_sizeFieldCallback_type_ = CFUNCTYPE(c_double, c_int, c_int, c_double, c_double, c_double, c_double, c_void_p)
             global api_sizeFieldCallback_
             api_sizeFieldCallback_ = api_sizeFieldCallback_type_(lambda dim, tag, x, y, z, lc, _ : sizeFieldCallback(dim, tag, x, y, z, lc))
-            api_alphaShapeTags_, api_alphaShapeTags_n_ = _ivectorint(alphaShapeTags)
             ierr = c_int()
             lib.gmshModelMeshComputeAlphaShape(
-                c_int(dim),
-                c_int(tag),
+                api_alphaShapeTags_, api_alphaShapeTags_n_,
                 c_double(alpha),
                 c_double(hMean),
                 api_sizeFieldCallback_, None,
                 c_int(refine),
-                api_alphaShapeTags_, api_alphaShapeTags_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())

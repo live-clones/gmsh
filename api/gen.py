@@ -588,8 +588,8 @@ mesh.add('alphaShape', doc, None, iint('dim'), iint('tag'), idouble('alpha'), iv
 doc = '''From an initial empty 3D surface mesh, insert new nodes into the volume. Tetrahedralize these nodes, and determine the alphashape of the mesh. If refine is set, refine the tetrahedra to match the size field.'''
 mesh.add('performAlphaShapeAndRefine', doc, None, ivectorsize('nodeTags'), ivectordouble('coord'), ivectorint('nodesDimTags'), iint("refine"), ivectordouble('sizeAtNodes'), idouble('alpha'), idouble('hMean'), iint('surfaceTag'), iint('volumeTag'))
 
-doc = '''Compute the alpha shape of the set of points on the entity of dimension `dim' and tag `tag', with respect to a constant mean mesh size `hMean' (if `hMean' > 0) or to the size field defined by `sizeFieldCallback'. If desired, also refine the elements in the alpha shape so as to respect the size field defined by `sizeFieldCallback'. The new mesh will be stored in the discrete entities with tags `alphaShapeTags' = [alphaShapeTag, alphaShapeBoundaryTag].'''
-mesh.add('computeAlphaShape', doc, None, iint('dim'), iint('tag'), idouble('alpha'), idouble('hMean'), isizefun('sizeFieldCallback'), iint('refine'), ivectorint('alphaShapeTags'))
+doc = '''Compute the alpha shape of the set of points on the discrete entity defined by the first tag of `alphaShapeTags', with the second tag its boundary. The alpha shape is computed with respect to a constant mean mesh size `hMean' (if `hMean' > 0) or to the size field defined by `sizeFieldCallback'. If desired, also refine the elements in the alpha shape so as to respect the size field defined by `sizeFieldCallback'. The new mesh will be stored in the discrete entities with tags `alphaShapeTags' = [alphaShapeTag, alphaShapeBoundaryTag].'''
+mesh.add('computeAlphaShape', doc, None, ivectorint('alphaShapeTags'), idouble('alpha'), idouble('hMean'), isizefun('sizeFieldCallback'), iint('refine'))
 
 ################################################################################
 

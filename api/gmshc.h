@@ -1689,20 +1689,19 @@ GMSH_API void gmshModelMeshPerformAlphaShapeAndRefine(const size_t * nodeTags, c
                                                       const int volumeTag,
                                                       int * ierr);
 
-/* Compute the alpha shape of the set of points on the entity of dimension
- * `dim' and tag `tag', with respect to a constant mean mesh size `hMean' (if
- * `hMean' > 0) or to the size field defined by `sizeFieldCallback'. If
+/* Compute the alpha shape of the set of points on the discrete entity defined
+ * by the first tag of `alphaShapeTags', with the second tag its boundary. The
+ * alpha shape is computed with respect to a constant mean mesh size `hMean'
+ * (if `hMean' > 0) or to the size field defined by `sizeFieldCallback'. If
  * desired, also refine the elements in the alpha shape so as to respect the
  * size field defined by `sizeFieldCallback'. The new mesh will be stored in
  * the discrete entities with tags `alphaShapeTags' = [alphaShapeTag,
  * alphaShapeBoundaryTag]. */
-GMSH_API void gmshModelMeshComputeAlphaShape(const int dim,
-                                             const int tag,
+GMSH_API void gmshModelMeshComputeAlphaShape(const int * alphaShapeTags, const size_t alphaShapeTags_n,
                                              const double alpha,
                                              const double hMean,
                                              double (*sizeFieldCallback)(int dim, int tag, double x, double y, double z, double lc, void * data), void * sizeFieldCallback_data,
                                              const int refine,
-                                             const int * alphaShapeTags, const size_t alphaShapeTags_n,
                                              int * ierr);
 
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
