@@ -122,12 +122,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#ifdef CPU86
-#include <float.h>
-#endif /* CPU86 */
-#ifdef LINUX
-#include <fpu_control.h>
-#endif /* LINUX */
+
+#ifndef SPEC
+    #ifdef CPU86
+    #include <float.h>
+    #endif /* CPU86 */
+    #ifdef LINUX
+    #include <fpu_control.h>
+    #endif /* LINUX */
+#endif
+
+#ifdef SPEC
+#ifdef __FAST_MATH__
+#error 737.gmsh cannot run successfully with fast math: read the comments above in ths file. Please specify this knob: -fno-fast-math
+#endif
+#endif
 
 namespace robustPredicates
 {
@@ -311,6 +320,9 @@ void exactinit(REAL maxx, REAL maxy, REAL maxz)
   REAL half;
   REAL check, lastcheck;
   int everyOther;
+
+#ifndef SPEC
+
 #ifdef LINUX
   int cword;
 #endif /* LINUX */
@@ -332,6 +344,8 @@ void exactinit(REAL maxx, REAL maxy, REAL maxz)
 #endif /* not SINGLE */
   _FPU_SETCW(cword);
 #endif /* LINUX */
+
+#endif /* SPEC */
 
   everyOther = 1;
   half = 0.5;

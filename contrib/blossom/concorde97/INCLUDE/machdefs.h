@@ -1,7 +1,17 @@
 #ifndef __MACHDEFS_H
 #define __MACHDEFS_H
 
+#if defined(SPEC)
+# include <string.h>
+# if !defined(SPEC_WINDOWS)
+#  include <unistd.h>
+# endif
+# if !defined(NDEBUG)
+#  define NDEBUG
+# endif
+#else
 #define NDEBUG
+#endif
 #define CCSYS_STANDARD
 
 #ifdef  CCSYS_STANDARD

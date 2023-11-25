@@ -154,10 +154,14 @@ void Msg::Initialize(int argc, char **argv)
 #endif
   delete [] sargv;
 #endif
+#if defined(SPEC)
+  _launchDate = "[SPEC CPU disables timing]";
+#else
   time_t now;
   time(&now);
   _launchDate = ctime(&now);
   _launchDate.resize(_launchDate.size() - 1);
+#endif
 
   bool _env = true, _locale = true;
   _commandLineArgs.resize(argc);

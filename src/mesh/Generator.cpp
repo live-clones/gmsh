@@ -65,6 +65,12 @@
 #include "PViewData.h"
 #endif
 
+#ifdef SPEC
+extern "C" {
+#include "specrand.h"
+}
+#endif
+
 class EmbeddedCompatibilityTest {
 public:
   void operator()(GRegion *gr)
@@ -1284,7 +1290,11 @@ void GenerateMesh(GModel *m, int ask)
   m->clearLastMeshVertexError();
 
   // Initialize pseudo random mesh generator with the same seed
+#ifdef SPEC
+  spec_srand(CTX::instance()->mesh.randomSeed);
+#else
   srand(CTX::instance()->mesh.randomSeed);
+#endif
 
   // Change any high order elements back into first order ones (but skip
   // discrete entities)

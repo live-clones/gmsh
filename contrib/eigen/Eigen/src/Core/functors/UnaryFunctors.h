@@ -285,17 +285,6 @@ struct functor_traits<scalar_exp_op<Scalar> > {
   enum {
     PacketAccess = packet_traits<Scalar>::HasExp,
     // The following numbers are based on the AVX implementation.
-#ifdef EIGEN_VECTORIZE_FMA
-    // Haswell can issue 2 add/mul/madd per cycle.
-    Cost =
-    (sizeof(Scalar) == 4
-     // float: 8 pmadd, 4 pmul, 2 padd/psub, 6 other
-     ? (8 * NumTraits<Scalar>::AddCost + 6 * NumTraits<Scalar>::MulCost)
-     // double: 7 pmadd, 5 pmul, 3 padd/psub, 1 div,  13 other
-     : (14 * NumTraits<Scalar>::AddCost +
-        6 * NumTraits<Scalar>::MulCost +
-        scalar_div_cost<Scalar,packet_traits<Scalar>::HasDiv>::value))
-#else
     Cost =
     (sizeof(Scalar) == 4
      // float: 7 pmadd, 6 pmul, 4 padd/psub, 10 other
@@ -304,7 +293,6 @@ struct functor_traits<scalar_exp_op<Scalar> > {
      : (23 * NumTraits<Scalar>::AddCost +
         12 * NumTraits<Scalar>::MulCost +
         scalar_div_cost<Scalar,packet_traits<Scalar>::HasDiv>::value))
-#endif
   };
 };
 
@@ -347,13 +335,8 @@ struct functor_traits<scalar_log_op<Scalar> > {
     Cost =
     (PacketAccess
      // The following numbers are based on the AVX implementation.
-#ifdef EIGEN_VECTORIZE_FMA
-     // 8 pmadd, 6 pmul, 8 padd/psub, 16 other, can issue 2 add/mul/madd per cycle.
-     ? (20 * NumTraits<Scalar>::AddCost + 7 * NumTraits<Scalar>::MulCost)
-#else
      // 8 pmadd, 6 pmul, 8 padd/psub, 20 other
      ? (36 * NumTraits<Scalar>::AddCost + 14 * NumTraits<Scalar>::MulCost)
-#endif
      // Measured cost of std::log.
      : sizeof(Scalar)==4 ? 40 : 85)
   };
@@ -603,17 +586,9 @@ struct functor_traits<scalar_tanh_op<Scalar> > {
     PacketAccess = packet_traits<Scalar>::HasTanh,
     Cost = ( (EIGEN_FAST_MATH && is_same<Scalar,float>::value)
 // The following numbers are based on the AVX implementation,
-#ifdef EIGEN_VECTORIZE_FMA
-                // Haswell can issue 2 add/mul/madd per cycle.
-                // 9 pmadd, 2 pmul, 1 div, 2 other
-                ? (2 * NumTraits<Scalar>::AddCost +
-                   6 * NumTraits<Scalar>::MulCost +
-                   scalar_div_cost<Scalar,packet_traits<Scalar>::HasDiv>::value)
-#else
                 ? (11 * NumTraits<Scalar>::AddCost +
                    11 * NumTraits<Scalar>::MulCost +
                    scalar_div_cost<Scalar,packet_traits<Scalar>::HasDiv>::value)
-#endif
                 // This number assumes a naive implementation of tanh
                 : (6 * NumTraits<Scalar>::AddCost +
                    3 * NumTraits<Scalar>::MulCost +
@@ -1055,11 +1030,7 @@ struct scalar_logistic_op<float> {
 
     // The upper cut-off is the smallest x for which the rational approximation evaluates to 1.
     // Choosing this value saves us a few instructions clamping the results at the end.
-#ifdef EIGEN_VECTORIZE_FMA
-    const Packet cutoff_upper = pset1<Packet>(15.7243833541870117f);
-#else
     const Packet cutoff_upper = pset1<Packet>(15.6437711715698242f);
-#endif
     const Packet x = pmin(_x, cutoff_upper);
 
     // The monomial coefficients of the numerator polynomial (odd).

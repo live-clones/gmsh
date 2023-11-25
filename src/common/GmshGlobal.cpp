@@ -267,10 +267,14 @@ static void StartupMessage()
 
 static void GoodbyeMessage()
 {
+#if defined(SPEC)
+  std::string currtime = "[SPEC CPU disables timing]";
+#else
   time_t now;
   time(&now);
   std::string currtime = ctime(&now);
   currtime.resize(currtime.size() - 1);
+#endif
   Msg::SetInfoCpu(true); // always print cpu info at the end
   Msg::Info("Stopped on %s", currtime.c_str());
 }

@@ -1524,7 +1524,11 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
             NB_CORRECTION_OF_CAVITY);
   Msg::Info(" - %d nodes could not be inserted", COUNT_MISS);
   Msg::Info(" - %d tetrahedra created in %g sec. (%d tets/s)", allTets.size(),
+#if defined(SPEC)
+            dt, allTets.size());
+#else
             dt, (int)(allTets.size() / dt));
+#endif
 
   // relocate vertices
   int nbReloc = 0;

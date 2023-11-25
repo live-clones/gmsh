@@ -12,10 +12,6 @@
 #include <string.h>
 
 
-#if defined( __BMI2__ ) || defined( __AVX2__ ) || (defined(__AVX512F__) && defined(__AVX512VL__))
-#include <immintrin.h>
-#endif
-
 /**
 * \file hxt_vertices.c see header hxt_vertices.h.
 * \author Célestin Marot
@@ -39,7 +35,6 @@ static inline double nextbeforef(double x) {
 
 // fill zorder and return first 3 bits
 static inline uint64_t Zorder(uint32_t xyz[]) {
-#ifndef __BMI2__
   static const uint64_t hxtDeclareAligned morton7[128] =
   {
 0x00000,0x00001,0x00008,0x00009,0x00040,0x00041,0x00048,0x00049, 
@@ -69,11 +64,6 @@ static inline uint64_t Zorder(uint32_t xyz[]) {
          (uint64_t) morton7[xyz[0]>>14 & 0x7F]<<42 |
          (uint64_t) morton7[xyz[1]>>14 & 0x7F]<<43 |
          (uint64_t) morton7[xyz[2]>>14 & 0x7F]<<44;
-#else
-  return _pdep_u64(xyz[0], UINT64_C(0x1249249249249249)) |
-         _pdep_u64(xyz[1], UINT64_C(0x2492492492492492)) | 
-         _pdep_u64(xyz[2], UINT64_C(0x4924924924924924));
-#endif
 }
 
 
@@ -82,7 +72,6 @@ static inline uint64_t Zorder(uint32_t xyz[]) {
  * This part is for computing the hilbert coordinates of the vertices (X,Y,Z)
  * shift[i] must be between 0 and 1
  */
-// TODO: special function for AVX512: it can be super optimized !!! :-)
 HXTStatus hxtMoore(HXTBbox* bbox, HXTVertex* vertices, const uint32_t n, const double* mid01)
 {
 HXT_ASSERT(vertices!=NULL);

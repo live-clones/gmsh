@@ -231,6 +231,8 @@ if(NOT GMSH_OS)
   set(GMSH_OS "${CMAKE_SYSTEM_NAME}")
 endif()
 
+add_definitions(-DSPEC)
+
 include(CheckTypeSize)
 include(CheckFunctionExists)
 include(CheckIncludeFile)

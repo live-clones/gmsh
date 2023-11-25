@@ -21,6 +21,12 @@
 #include "DivideAndConquer.h"
 #endif
 
+#ifdef SPEC
+extern "C" {
+#include "specrand.h"
+}
+#endif
+
 SOrientedBoundingRectangle::SOrientedBoundingRectangle()
   : center({{0.0, 0.0}}), size({{0.0, 0.0}}), axisX({{0.0, 0.0}}),
     axisY({{0.0, 0.0}})
@@ -293,14 +299,27 @@ SOrientedBoundingBox::buildOBB(std::vector<SPoint3> &vertices)
   // Find the convex hull from a delaunay triangulation of the points
   DocRecord record(points.size());
   record.numPoints = points.size();
+#ifdef SPEC
+  spec_srand(0);
+#else
   srand((unsigned)time(nullptr));
+#endif
   for(std::size_t i = 0; i < points.size(); i++) {
+#ifdef SPEC
+    record.points[i].where.h =
+      points[i]->x() + (10e-6) * sizes[smallest_comp == 0 ? 1 : 0] *
+                         (-0.5 + ((double)spec_rand()) / RAND_MAX);
+    record.points[i].where.v =
+      points[i]->y() + (10e-6) * sizes[smallest_comp == 2 ? 1 : 0] *
+                         (-0.5 + ((double)spec_rand()) / RAND_MAX);
+#else
     record.points[i].where.h =
       points[i]->x() + (10e-6) * sizes[smallest_comp == 0 ? 1 : 0] *
                          (-0.5 + ((double)rand()) / RAND_MAX);
     record.points[i].where.v =
       points[i]->y() + (10e-6) * sizes[smallest_comp == 2 ? 1 : 0] *
                          (-0.5 + ((double)rand()) / RAND_MAX);
+#endif
     record.points[i].adjacent = nullptr;
   }
 

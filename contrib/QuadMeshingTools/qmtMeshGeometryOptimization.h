@@ -10,6 +10,7 @@
 #include <float.h>
 #include <cstdint>
 #include "qmtMeshUtils.h"
+#include <cstdint>
 
 class SurfaceProjector;
 

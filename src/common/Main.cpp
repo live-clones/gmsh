@@ -6,7 +6,16 @@
 #include <stdlib.h>
 #include "GmshGlobal.h"
 
-#if defined(WIN32) && !defined(__CYGWIN__)
+// Setting -Ofast or -ffast-math causes certain mesh algorithms to not
+// converge, leading to runs with infinite runtimes, segmentation faults,
+// and dying puppies.
+#ifdef SPEC
+#ifdef __FAST_MATH__
+#error Usage of -ffast-math does not work for 737.gmsh_r. Please pass -fno-fast-math to your compiler.
+#endif
+#endif
+
+#if defined(WIN32) && !defined(__CYGWIN__) && !defined(SPEC_USEMAIN)
 
 // in order to handle non-ASCII command line arguments on Windows, use wmain()
 // instead of main() (we could also use main() and retrieve the "wide" args with

@@ -41,6 +41,12 @@ typedef unsigned long intptr_t;
 #include "drawContext.h"
 #endif
 
+#if defined(SPEC)
+extern "C" {
+# include "specrand.h"
+}
+#endif
+
 #if 0
 static int computeTetGenVersion2(uint32_t v1, uint32_t* v2Choices,
                                  const int iface2)

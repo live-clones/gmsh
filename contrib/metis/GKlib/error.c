@@ -14,6 +14,7 @@ This file contains functions dealing with error reporting and termination
                          as an extern function in GKlib.h */
 
 #include "GKlib.h"
+#include <string.h>
 
 
 /* These are the jmp_buf for the graceful exit in case of severe errors.

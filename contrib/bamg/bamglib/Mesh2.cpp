@@ -45,6 +45,12 @@ using namespace std;
 #include "QuadTree.h"
 #include "SetOfE4.h"
 
+#ifdef SPEC
+extern "C" {
+#include "specrand.h"
+}
+#endif
+
 namespace bamg {
 
 
@@ -1717,7 +1723,11 @@ Int4 Triangles::InsertNewPoints(Int4 nbvold,Int4 & NbTSwap)
     return 0;
   if (nbvnew) {
   const Int4 PrimeNumber= AGoodNumberPrimeWith(nbv)  ;
+#ifdef SPEC
+  Int4 k3 = spec_genrand_int31()%nbvnew ;
+#else
   Int4 k3 = rand()%nbvnew ;
+#endif
   for (Int4 is3=0; is3<nbvnew; is3++) {
     Int4 j = nbvold +(k3 = (k3 + PrimeNumber)% nbvnew);
     Int4 i = nbvold+is3;
@@ -2359,7 +2369,11 @@ void  Triangles::NewPointsOld(Triangles & Bh)
     break;
   if (nbvnew) {
   const Int4 PrimeNumber= AGoodNumberPrimeWith(nbv)  ;
+#ifdef SPEC
+  Int4 k3 = spec_genrand_int31()%nbvnew ;
+#else
   Int4 k3 = rand()%nbvnew ;
+#endif
   for (Int4 is3=0; is3<nbvnew; is3++)
     ordre[nbvold+is3]= &vertices[nbvold +(k3 = (k3 + PrimeNumber)% nbvnew)];
 
@@ -2436,7 +2450,11 @@ void Triangles::Insert()
 
   // construction d'un ordre aleatoire
   const Int4 PrimeNumber= AGoodNumberPrimeWith(nbv) ;
+#ifdef SPEC
+  Int4 k3 = spec_genrand_int31()%nbv ;
+#else
   Int4 k3 = rand()%nbv ;
+#endif
   for (int is3=0; is3<nbv; is3++)
     ordre[is3]= &vertices[k3 = (k3 + PrimeNumber)% nbv];
 
@@ -2526,7 +2544,11 @@ void Triangles::Insert()
   //  const int PrimeNumber= (nbv % 999983) ? 1000003: 999983 ;
 #ifdef NBLOOPOPTIM
 
+#ifdef SPEC
+  k3 = spec_genrand_int31()%nbv ;
+#else
   k3 = rand()%nbv ;
+#endif
   for (int is4=0; is4<nbv; is4++)
     ordre[is4]= &vertices[k3 = (k3 + PrimeNumber)% nbv];
 
@@ -3173,7 +3195,11 @@ Vertex * Triangles::NearestVertex(Icoor1 i,Icoor1 j)
 
 void Triangles::PreInit(Int4 inbvx,char *fname)
 {
+#ifdef SPEC
+  spec_srand(19999999);
+#else
   srand(19999999);
+#endif
   OnDisk =0;
   NbRef=0;
   //  allocGeometry=0;

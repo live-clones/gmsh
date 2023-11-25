@@ -15,6 +15,12 @@
 
 #include "sampling_fwd.hpp"
 
+#ifdef SPEC
+extern "C" {
+#include "specrand.h"
+}
+#endif
+
 namespace Revoropt {
 
 /* Generate a random set of sites on a mesh */
@@ -32,7 +38,11 @@ void generate_random_sites( const Triangulation* mesh,
 
   //initialize random generator if requested
   if(reset_random) {
+#ifdef SPEC
+    spec_srand(0) ;
+#else
     srand(0) ;
+#endif
   }
 
   //sizes
@@ -70,13 +80,22 @@ void generate_random_sites( const Triangulation* mesh,
   //generate random sites
   for(unsigned int i=0; i<sites_size; ++i) {
     //get a random triangle by area
+#if SPEC
+    Scalar rand_area = ((Scalar) spec_rand() / (Scalar) RAND_MAX) * max_area ;
+#else
     Scalar rand_area = ((Scalar) rand() / (Scalar) RAND_MAX) * max_area ;
+#endif
     Scalar* pos = std::upper_bound(area_ranges,area_ranges+fsize,rand_area) ;
     unsigned int tri_index = pos - area_ranges ;
 
     //get random barycentric coordinates
+#if SPEC
+    Scalar u = sqrt((Scalar) spec_rand() / (Scalar) RAND_MAX) ;
+    Scalar v = (Scalar) spec_rand() / (Scalar) RAND_MAX ;
+#else
     Scalar u = sqrt((Scalar) rand() / (Scalar) RAND_MAX) ;
     Scalar v = (Scalar) rand() / (Scalar) RAND_MAX ;
+#endif
     v *= u ;
     u = 1-u ;
     Scalar w = 1-u-v ;

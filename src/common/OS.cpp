@@ -323,6 +323,10 @@ void SleepInSeconds(double s)
 
 static void GetResources(double &s, std::size_t &mem)
 {
+#if defined(SPEC)
+  s = 1.0;
+  mem = 1024 * 1024 * 2;
+#else
 #if defined(WIN32) && !defined(__CYGWIN__)
   FILETIME creation, exit, kernel, user;
   if(GetProcessTimes(GetCurrentProcess(), &creation, &exit, &kernel, &user)) {
@@ -342,6 +346,7 @@ static void GetResources(double &s, std::size_t &mem)
   mem = (std::size_t)(r.ru_maxrss * 1024L);
 #endif
 #endif
+#endif // !SPEC
 }
 
 void CheckResources()
@@ -398,9 +403,13 @@ double TotalRam()
 
 double TimeOfDay()
 {
+#if defined(SPEC)
+  return 1.0;
+#else
   //auto t = std::chrono::system_clock::now();
   auto t = std::chrono::steady_clock::now(); // guaranteed monotonic
   return std::chrono::duration<double>(t.time_since_epoch()).count();
+#endif
 }
 
 std::size_t GetMemoryUsage()
@@ -413,15 +422,22 @@ std::size_t GetMemoryUsage()
 
 int GetProcessId()
 {
+#if defined(SPEC)
+  return 2;
+#else
 #if defined(WIN32) && !defined(__CYGWIN__)
   return _getpid();
 #else
   return getpid();
 #endif
+#endif // !SPEC
 }
 
 std::string GetExecutableFileName()
 {
+#if defined(SPEC)
+  return std::string("gmsh_cpuv8");
+#else
   std::string name = "";
 #if defined(WIN32) && !defined(__CYGWIN__)
   wchar_t src[MAX_PATH];
@@ -449,6 +465,7 @@ std::string GetExecutableFileName()
   }
 #endif
   return name;
+#endif // !SPEC
 }
 
 std::string GetAbsolutePath(const std::string &fileName)

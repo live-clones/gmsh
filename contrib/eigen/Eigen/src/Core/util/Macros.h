@@ -72,13 +72,6 @@
   #define EIGEN_COMP_CLANG 0
 #endif
 
-/// \internal EIGEN_COMP_CASTXML set to 1 if being preprocessed by CastXML
-#if defined(__castxml__)
-  #define EIGEN_COMP_CASTXML 1
-#else
-  #define EIGEN_COMP_CASTXML 0
-#endif
-
 /// \internal EIGEN_COMP_LLVM set to 1 if the compiler backend is llvm
 #if defined(__llvm__)
   #define EIGEN_COMP_LLVM 1
@@ -226,114 +219,32 @@
 //------------------------------------------------------------------------------------------
 
 
-#if defined(__x86_64__) || (defined(_M_X64) && !defined(_M_ARM64EC)) || defined(__amd64)
-  #define EIGEN_ARCH_x86_64 1
-#else
-  #define EIGEN_ARCH_x86_64 0
-#endif
+#define EIGEN_ARCH_x86_64 0
 
-#if defined(__i386__) || defined(_M_IX86) || defined(_X86_) || defined(__i386)
-  #define EIGEN_ARCH_i386 1
-#else
-  #define EIGEN_ARCH_i386 0
-#endif
+#define EIGEN_ARCH_i386 0
 
-#if EIGEN_ARCH_x86_64 || EIGEN_ARCH_i386
-  #define EIGEN_ARCH_i386_OR_x86_64 1
-#else
-  #define EIGEN_ARCH_i386_OR_x86_64 0
-#endif
+#define EIGEN_ARCH_i386_OR_x86_64 0
 
-/// \internal EIGEN_ARCH_ARM set to 1 if the architecture is ARM
-#if defined(__arm__)
-  #define EIGEN_ARCH_ARM 1
-#else
-  #define EIGEN_ARCH_ARM 0
-#endif
+#define EIGEN_ARCH_ARM 0
 
-/// \internal EIGEN_ARCH_ARM64 set to 1 if the architecture is ARM64
-#if defined(__aarch64__) || defined(_M_ARM64) || defined(_M_ARM64EC)
-  #define EIGEN_ARCH_ARM64 1
-#else
-  #define EIGEN_ARCH_ARM64 0
-#endif
+#define EIGEN_ARCH_ARM64 0
 
-/// \internal EIGEN_ARCH_ARM_OR_ARM64 set to 1 if the architecture is ARM or ARM64
-#if EIGEN_ARCH_ARM || EIGEN_ARCH_ARM64
-  #define EIGEN_ARCH_ARM_OR_ARM64 1
-#else
-  #define EIGEN_ARCH_ARM_OR_ARM64 0
-#endif
+#define EIGEN_ARCH_ARM_OR_ARM64 0
 
-/// \internal EIGEN_ARCH_ARMV8 set to 1 if the architecture is armv8 or greater.
-#if EIGEN_ARCH_ARM_OR_ARM64 && defined(__ARM_ARCH) && __ARM_ARCH >= 8
-#define EIGEN_ARCH_ARMV8 1
-#else
 #define EIGEN_ARCH_ARMV8 0
-#endif
 
 
-/// \internal EIGEN_HAS_ARM64_FP16 set to 1 if the architecture provides an IEEE
-/// compliant Arm fp16 type
-#if EIGEN_ARCH_ARM64
-  #ifndef EIGEN_HAS_ARM64_FP16
-    #if defined(__ARM_FP16_FORMAT_IEEE)
-      #define EIGEN_HAS_ARM64_FP16 1
-    #else
-      #define EIGEN_HAS_ARM64_FP16 0
-    #endif
-  #endif
-#endif
+#define EIGEN_HAS_ARM64_FP16 0
 
-/// \internal EIGEN_HAS_ARM64_FP16_VECTOR_ARITHMETIC set to 1 if the architecture
-/// supports Neon vector intrinsics for fp16.
-#if EIGEN_ARCH_ARM64
-  #ifndef EIGEN_HAS_ARM64_FP16_VECTOR_ARITHMETIC
-    #if defined(__ARM_FEATURE_FP16_VECTOR_ARITHMETIC)
-      #define EIGEN_HAS_ARM64_FP16_VECTOR_ARITHMETIC 1
-    #else
-      #define EIGEN_HAS_ARM64_FP16_VECTOR_ARITHMETIC 0
-    #endif
-  #endif
-#endif
+#define EIGEN_HAS_ARM64_FP16_VECTOR_ARITHMETIC 0
 
-/// \internal EIGEN_HAS_ARM64_FP16_SCALAR_ARITHMETIC set to 1 if the architecture
-/// supports Neon scalar intrinsics for fp16.
-#if EIGEN_ARCH_ARM64
-  #ifndef EIGEN_HAS_ARM64_FP16_SCALAR_ARITHMETIC
-    #if defined(__ARM_FEATURE_FP16_SCALAR_ARITHMETIC)
-      #define EIGEN_HAS_ARM64_FP16_SCALAR_ARITHMETIC 1
-    #endif
-  #endif
-#endif
+#define EIGEN_ARCH_MIPS 0
 
-/// \internal EIGEN_ARCH_MIPS set to 1 if the architecture is MIPS
-#if defined(__mips__) || defined(__mips)
-  #define EIGEN_ARCH_MIPS 1
-#else
-  #define EIGEN_ARCH_MIPS 0
-#endif
+#define EIGEN_ARCH_SPARC 0
 
-/// \internal EIGEN_ARCH_SPARC set to 1 if the architecture is SPARC
-#if defined(__sparc__) || defined(__sparc)
-  #define EIGEN_ARCH_SPARC 1
-#else
-  #define EIGEN_ARCH_SPARC 0
-#endif
+#define EIGEN_ARCH_IA64 0
 
-/// \internal EIGEN_ARCH_IA64 set to 1 if the architecture is Intel Itanium
-#if defined(__ia64__)
-  #define EIGEN_ARCH_IA64 1
-#else
-  #define EIGEN_ARCH_IA64 0
-#endif
-
-/// \internal EIGEN_ARCH_PPC set to 1 if the architecture is PowerPC
-#if defined(__powerpc__) || defined(__ppc__) || defined(_M_PPC)
-  #define EIGEN_ARCH_PPC 1
-#else
-  #define EIGEN_ARCH_PPC 0
-#endif
+#define EIGEN_ARCH_PPC 0
 
 
 

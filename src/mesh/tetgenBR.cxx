@@ -38,6 +38,12 @@
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
+#ifdef SPEC
+extern "C" {
+#include "specrand.h"
+}
+#endif
+
 bool tetgenbehavior::parse_commandline(int argc, char **argv)
 {
   int startindex;
@@ -9059,9 +9065,19 @@ void tetgenmesh::incrementaldelaunay(clock_t& tv)
     if (b->verbose) {
       printf("  Permuting vertices.\n");
     }
+
+#ifdef SPEC
+    spec_srand(in->numberofpoints);
+#else
     srand(in->numberofpoints);
+#endif
+
     for (i = 0; i < in->numberofpoints; i++) {
+#ifdef SPEC
+      randindex = randomnation(i + 1);
+#else
       randindex = rand() % (i + 1); // randomnation(i + 1);
+#endif
       permutarray[i] = permutarray[randindex];
       permutarray[randindex] = (point) points->traverse();
     }

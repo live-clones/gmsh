@@ -51,10 +51,14 @@ static int vsnprintf(char *str, size_t size, const char *fmt, va_list ap)
 
 void OLMsg::Init(int argc, char **argv)
 {
+#if defined(SPEC)
+  _launchDate = "a date of your choosing.";
+#else
   time_t now;
   time(&now);
   _launchDate = ctime(&now);
   _launchDate.resize(_launchDate.size() - 1);
+#endif
   _commandLine.clear();
   for(int i = 0; i < argc; i++) {
     if(i) _commandLine += " ";

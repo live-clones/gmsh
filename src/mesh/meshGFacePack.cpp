@@ -14,6 +14,7 @@
 #include "SVector3.h"
 #include "meshTriangulation.h"
 #include "robustPredicates.h"
+#include <cstdint>
 
 static void analyze2dMetric(std::vector<double> &val, double &C, double &S,
                             double &h1, double &h2)

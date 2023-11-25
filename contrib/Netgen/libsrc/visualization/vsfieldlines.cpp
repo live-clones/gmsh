@@ -11,6 +11,9 @@
 
 #include <visual.hpp>
 
+#ifdef SPEC
+#include "specrand.h"
+#endif
 
 namespace netgen
 {
@@ -239,7 +242,11 @@ namespace netgen
 	cout << "\rFieldline Calculation " << int(100.*i/potential_startpoints.Size()) << "%"; cout.flush();
 
 	if(randomized)
+#ifdef SPEC
+	  SetCriticalValue((double(spec_rand())/RAND_MAX)*crit);
+#else
 	  SetCriticalValue((double(rand())/RAND_MAX)*crit);
+#endif
 
 	if(calculated >= numlines) break;
 
@@ -459,9 +466,17 @@ namespace netgen
     
     for (int i = 1; i <= startpoints.Size(); i++)
       {
-	Point3d p (fieldlines_startarea_parameter[0] + double (rand()) / RAND_MAX * (fieldlines_startarea_parameter[3]-fieldlines_startarea_parameter[0]),
+	Point3d p (
+#ifdef SPEC
+           fieldlines_startarea_parameter[0] + double (spec_rand()) / RAND_MAX * (fieldlines_startarea_parameter[3]-fieldlines_startarea_parameter[0]),
+		   fieldlines_startarea_parameter[1] + double (spec_rand()) / RAND_MAX * (fieldlines_startarea_parameter[4]-fieldlines_startarea_parameter[1]),
+		   fieldlines_startarea_parameter[2] + double (spec_rand()) / RAND_MAX * (fieldlines_startarea_parameter[5]-fieldlines_startarea_parameter[2])
+#else
+           fieldlines_startarea_parameter[0] + double (rand()) / RAND_MAX * (fieldlines_startarea_parameter[3]-fieldlines_startarea_parameter[0]),
 		   fieldlines_startarea_parameter[1] + double (rand()) / RAND_MAX * (fieldlines_startarea_parameter[4]-fieldlines_startarea_parameter[1]),
-		   fieldlines_startarea_parameter[2] + double (rand()) / RAND_MAX * (fieldlines_startarea_parameter[5]-fieldlines_startarea_parameter[2]));
+		   fieldlines_startarea_parameter[2] + double (rand()) / RAND_MAX * (fieldlines_startarea_parameter[5]-fieldlines_startarea_parameter[2])
+#endif
+           );
 	
 	startpoints[i-1] = p;
       }
@@ -471,7 +486,11 @@ namespace netgen
   {
     for (int i = 1; i <= startpoints.Size(); i++)
       {
+#ifdef SPEC
+	double s = double (spec_rand()) / RAND_MAX;
+#else
 	double s = double (rand()) / RAND_MAX;
+#endif
 
 	Point3d p (fieldlines_startarea_parameter[0] + s * (fieldlines_startarea_parameter[3]-fieldlines_startarea_parameter[0]),
 		   fieldlines_startarea_parameter[1] + s * (fieldlines_startarea_parameter[4]-fieldlines_startarea_parameter[1]),
@@ -623,13 +642,22 @@ namespace netgen
 	    double thisarea = cross.Length();
 	    
 	    int numloc = int(startpoints.Size()*thisarea/area);
+#ifdef SPEC
+	    if(double (spec_rand()) / RAND_MAX < startpoints.Size()*thisarea/area - numloc)
+#else
 	    if(double (rand()) / RAND_MAX < startpoints.Size()*thisarea/area - numloc)
+#endif
 	      numloc++;
 	    
 	    for(int j=0; startpointsp < startpoints.Size() && j<numloc; j++)
 	      {
+#ifdef SPEC
+		double s = double (spec_rand()) / RAND_MAX;
+		double t = double (spec_rand()) / RAND_MAX;
+#else
 		double s = double (rand()) / RAND_MAX;
 		double t = double (rand()) / RAND_MAX;
+#endif
 		if(s+t > 1)
 		  {
 		    s = 1.-s; t = 1.-t;
