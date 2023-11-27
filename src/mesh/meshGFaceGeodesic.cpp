@@ -6,13 +6,18 @@
 #include "MVertexRTree.h"
 #include "Numeric.h"
 #include "robustPredicates.h"
+#include "gmsh.h"
 
 #if defined(HAVE_MESH) && defined(HAVE_GEODESIC)
 
+#include "GModelParametrize.h"
 #include "meshTriangulation.h"
 
 #include "geodesic_mesh.h"
 #include "geodesic_algorithm_exact.h"
+
+
+#define EPS 1e-16
 
 PolyMesh *createPolyMesh(const std::vector<double> &p,
                          const std::vector<size_t> &t,
@@ -859,6 +864,7 @@ public:
   int splitEdge(const std::pair<int, int> &p01, double lTarget,
                 double adimMin = 0.7, double adimMax = 1.4);
   double pathLength(const std::pair<int, int> &p01);
+  void write(const PolyMesh *pm_new);
 
   // END MAIN FUNCTIONS ----
 
@@ -1754,6 +1760,7 @@ int highOrderPolyMesh::splitEdge(const std::pair<int, int> &p01, double lTarget,
 }
 // END SPLIT EDGE
 
+// CUT MESH
 PolyMesh *highOrderPolyMesh::cutMesh()
 {
   size_t nbFaces = pm->faces.size();
@@ -1989,6 +1996,282 @@ PolyMesh *highOrderPolyMesh::cutMesh()
 
   return pm_new;
 }
+// END CUT MESH
+
+// WRITE
+void highOrderPolyMesh::write(const PolyMesh *pm_new)
+{
+  //
+  // All points
+  //
+  std::string currentModel;
+  gmsh::model::getCurrent(currentModel);
+  gmsh::model::add("points");
+
+  Msg::Info("%lu points", pm_new->vertices.size());
+  std::map<int, MVertex*> index2MVertex;
+  std::map<int, char> pointAssigned;
+  for (size_t i = 0; i < pm_new->vertices.size(); ++i) {
+    auto v = pm_new->vertices[i];
+    SVector3 pos = v->position;
+    int index = v->data/3;
+    gmsh::model::geo::addPoint(pos.x(), pos.y(), pos.z(), 1., index);
+    auto mv = new MVertex(pos.x(), pos.y(), pos.z());
+    mv->setIndex(index);
+    index2MVertex[index] = mv;
+    pointAssigned[index] = 0;
+  }
+  gmsh::model::geo::synchronize();
+  gmsh::write("points.msh");
+  gmsh::model::setCurrent(currentModel);
+
+
+  //
+  // Vertices
+  //
+  Msg::Info("%lu vertices ", points.size());
+  std::vector<int> vertexTags(points.size());
+  Msg::Info("Writing 'vertices.csv'...");
+  std::ofstream outputVertices("vertices.csv");
+  outputVertices << "vertexTag\n";
+  for (size_t i = 0; i < points.size(); ++i) {
+    int id = points[i].base_element()->id();
+    vertexTags[i] = id;
+    pointAssigned[id] = 1;
+    outputVertices << id <<"\n";
+  }
+  outputVertices.close();
+  Msg::Info("Done writing 'vertices.csv'");
+
+
+  //
+  // Edges
+  //
+  Msg::Info("%lu edges", edges.size());
+  std::map<int, std::vector<PolyMesh::HalfEdge*>> edgeHEdges;
+  for (size_t i = 0; i < pm_new->hedges.size(); i++) {
+    auto he = pm_new->hedges[i];
+    if (he->data == -1)
+      continue;
+    edgeHEdges[he->data].push_back(he);
+    if (pointAssigned[he->v->data/3] == 0)
+      pointAssigned[he->v->data/3] = 2;
+  }
+
+  std::map<std::pair<int, int>, std::vector<int>> edgeTags;
+  Msg::Info("Writing 'edges.csv'...");
+  std::ofstream outputEdges("edges.csv");
+  outputEdges << "firstVertexTag,secondVertexTag,pointTag\n";
+
+  for (auto eHEdges: edgeHEdges) {
+    auto HEdges = eHEdges.second;
+    std::vector<PolyMesh::Vertex*> vertices;
+    for (auto he: HEdges) {
+      int i = 0;
+      int n = vertices.size();
+      for (; i < n; i++) {
+        if (he->v == vertices[i]) {
+          vertices.erase(vertices.begin() + i);
+          break;
+        }
+      }
+      if (i == n)
+        vertices.push_back(he->v);
+    }
+
+    if (vertices[0]->data > vertices[1]->data)
+      std::swap(vertices[0], vertices[1]);
+
+    std::pair<int, int> pair ={vertices[0]->data/3, vertices[1]->data/3};
+    int n = (HEdges.size())/2;
+    edgeTags[pair].reserve(n);
+    edgeTags[pair].push_back(vertices[0]->data/3);
+    for (int i = 1; i < n; i++) {
+      for (auto he: HEdges) {
+        if (he->v->data/3 == edgeTags[pair][i-1] && (i==1 || he->next->v->data/3 != edgeTags[pair][i-2])) {
+          edgeTags[pair].push_back(he->next->v->data/3);
+          break;
+        }
+      }
+    }
+    edgeTags[pair].erase(edgeTags[pair].begin());
+
+    for (size_t i = 0; i < edgeTags[pair].size(); i++) {
+      outputEdges << pair.first << "," << pair.second << "," << edgeTags[pair][i] << "\n";
+    }
+  }
+  outputEdges.close();
+  Msg::Info("Done writing 'edges.csv'");
+
+
+  //
+  // Faces
+  //
+  Msg::Info("%lu faces", triangles.size()/3);
+  std::map<int, std::vector<PolyMesh::HalfEdge*>> faceVerticesHedges;
+  std::map<int, std::vector<int>> facePoints;
+  std::map<int, std::vector<int>> faceTriangles;
+  std::map<int, std::vector<MTriangle *>> faceMTriangles;
+  for (size_t i = 0; i < pm_new->faces.size(); i++) {
+    auto face = pm_new->faces[i];
+    std::vector<PolyMesh::HalfEdge*> halfEdges(3);
+    halfEdges[0] = face->he;
+    halfEdges[1] = halfEdges[0]->next;
+    halfEdges[2] = halfEdges[1]->next;
+
+    for (auto he: halfEdges) {
+      int index = he->v->data/3;
+      if (pointAssigned[index] == 1)
+        faceVerticesHedges[face->data].push_back(he);
+      if (pointAssigned[index] > 0)
+        continue;
+      facePoints[face->data].push_back(index);
+      pointAssigned[index] = 3;
+    }
+
+    faceTriangles[face->data].push_back(halfEdges[0]->v->data/3);
+    faceTriangles[face->data].push_back(halfEdges[1]->v->data/3);
+    faceTriangles[face->data].push_back(halfEdges[2]->v->data/3);
+    MTriangle *t = new MTriangle(index2MVertex[halfEdges[0]->v->data/3],
+                                 index2MVertex[halfEdges[1]->v->data/3],
+                                 index2MVertex[halfEdges[2]->v->data/3]);
+    faceMTriangles[face->data].push_back(t);
+  }
+
+  // Faces points
+  std::map<int, std::vector<int>> faceVertices;
+  Msg::Info("Writing 'faces.csv'...");
+  std::ofstream outputFaces("faces.csv");
+  outputFaces << "firstVertexTag,secondVertexTag,thridVertexTag," << "pointTag\n";
+  for (auto keyValue: facePoints) {
+    auto key = keyValue.first;
+    auto points = keyValue.second;
+
+    faceVertices[key].assign(3,-1);
+    auto verticesHedges = faceVerticesHedges[key];
+    // get vertices
+    for (size_t i = 0; i < verticesHedges.size(); i++) {
+      auto vertices = faceVertices[key];
+      int j = 0;
+      for (; j < 3; j++) {
+        int index = verticesHedges[i]->v->data/3;
+        if (vertices[j] == -1) {
+          faceVertices[key][j] = index;
+          break;
+        }
+        if (vertices[j] == index)
+          break;
+      }
+      if (j == 2)
+        break;
+    }
+
+    // Order vertices
+    for (int i = 0; i < 3; i++) {
+      auto vertices = faceVertices[key];
+      for (size_t j = 0; j < verticesHedges.size(); j++) {
+        int jndex = verticesHedges[j]->v->data/3;
+        if (vertices[i] != jndex)
+          continue;
+
+        std::pair<int,int> pair;
+        if (vertices[i] < vertices[(i+1)%3]) {
+          pair.first = vertices[i];
+          pair.second = vertices[(i+1)%3];
+        } else {
+          pair.first = vertices[(i+1)%3];
+          pair.second = vertices[i];
+        }
+        jndex = verticesHedges[j]->next->v->data/3;
+        auto tags = edgeTags[pair];
+        auto it = std::find(tags.begin(), tags.end(), jndex);
+        if (it != tags.end())
+          break;
+
+        if (j == verticesHedges.size()-1) {
+          std::swap(faceVertices[key][i], faceVertices[key][(i+1)%3]);
+        }
+      }
+    }
+
+    auto vertices = faceVertices[key];
+    for (size_t i = 0; i < points.size(); i++) {
+      outputFaces << vertices[0] << ","
+                  << vertices[1] << ","
+                  << vertices[2] << "," << points[i] << "\n";
+    }
+  }
+  outputFaces.close();
+  Msg::Info("Done writing 'faces.csv'");
+
+  // Face triangles with parametrization
+  Msg::Info("Writing 'triangles.csv'...");
+  std::ofstream outputTriangles("triangles.csv");
+  outputTriangles << "firstVertexTag,secondVertexTag,thridVertexTag,"
+                  << "firstPointTag,secondPointTag,thridPointTag\n";
+  for (auto keyValue: faceTriangles) {
+    auto key = keyValue.first;
+    auto triangles = keyValue.second;
+    auto vertices = faceVertices[key];
+
+    for (size_t i = 0; i < triangles.size()/3; i++) {
+      for (int j = 0; j < 3; j++)
+        outputTriangles << vertices[j] << ",";
+      for (int j = 0; j < 3; j++) {
+        outputTriangles << triangles[3*i+j];
+        if (j < 2)
+          outputTriangles << ",";
+        else
+          outputTriangles << "\n";
+      }
+    }
+  }
+  outputTriangles.close();
+  Msg::Info("Done writing 'triangles.csv'");
+
+  // Face triangles with parametrization
+  Msg::Info("Writing 'parametrization.csv'...");
+  std::ofstream outputParametrization("parametrization.csv");
+  outputParametrization << "firstVertexTag,secondVertexTag,thridVertexTag,"
+                  << "pointTag,pointU,pointV\n";
+  for (auto keyValue: faceTriangles) {
+    auto key = keyValue.first;
+    //auto triangles = keyValue.second;
+    auto mTriangles = faceMTriangles[key];
+
+    auto vertices = faceVertices[key];
+    std::vector<MVertex*> mVertices(3);
+    for (int i = 0; i < 3; i++) {
+      mVertices[i] = index2MVertex[vertices[i]];
+    }
+
+    std::vector<MVertex *> nodes;
+    std::vector<SPoint2> stl_vertices_uv;
+    std::vector<SPoint3> stl_vertices_xyz;
+    std::vector<int> stl_triangles;
+    computeParametrization(mTriangles, nodes, stl_vertices_uv, stl_vertices_xyz, stl_triangles, mVertices);
+
+    for (size_t i = 0; i < nodes.size(); i++) {
+      for (int j = 0; j < 3; j++)
+        outputParametrization << vertices[j] << ",";
+      outputParametrization << nodes[i]->getIndex() << "," << stl_vertices_uv[i].x() << "," << stl_vertices_uv[i].y() << "\n";
+    }
+  }
+  outputParametrization.close();
+  Msg::Info("Done writing 'parametrization.csv'");
+
+
+  for (auto fTriangles: faceMTriangles) {
+    for (auto t: fTriangles.second) {
+      delete t;
+    }
+  }
+  for (size_t i = 0; i < pm_new->vertices.size(); ++i) {
+    delete index2MVertex[i];
+  }
+}
+// END WRITE
+
 
 int makeMeshGeodesic(GModel *gm)
 {
@@ -2084,9 +2367,14 @@ int makeMeshGeodesic(GModel *gm)
 
     std::map<PolyMesh::Vertex *, double> nothing;
     print__("toto.pos", pm_new, nothing);
+
+    hop.write(pm_new);
   }
+
   return 0;
 }
+
+
 
 // END FOR ARTHUR !!! --------------------------------------------------------
 
