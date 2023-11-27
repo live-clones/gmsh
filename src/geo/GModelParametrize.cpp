@@ -496,7 +496,8 @@ bool computeParametrization(const std::vector<MTriangle *> &triangles,
                             std::vector<MVertex *> &nodes,
                             std::vector<SPoint2> &stl_vertices_uv,
                             std::vector<SPoint3> &stl_vertices_xyz,
-                            std::vector<int> &stl_triangles)
+                            std::vector<int> &stl_triangles,
+                            const std::vector<MVertex *> &vertices)
 {
   stl_vertices_uv.clear();
   stl_vertices_xyz.clear();
@@ -519,7 +520,8 @@ bool computeParametrization(const std::vector<MTriangle *> &triangles,
       edges[t->getEdge(j)].push_back(t);
     }
   }
-
+  
+  
   // compute edge loops
   std::vector<MEdge> es;
   for(auto it = edges.begin(); it != edges.end(); ++it) {
@@ -552,17 +554,37 @@ bool computeParametrization(const std::vector<MTriangle *> &triangles,
   // find longest loop and use it as the "exterior" loop
   int loop = 0;
   double longest = 0.;
+  std::vector<double> verticesL(vertices.size(), 0);
   for(std::size_t i = 0; i < vs.size(); i++) {
     double l = 0.;
     for(std::size_t j = 1; j < vs[i].size(); j++) {
       l += vs[i][j]->point().distance(vs[i][j - 1]->point());
+      for (size_t k = 0; k < vertices.size(); ++k) {
+        if (vs[i][j] == vertices[k] && j != vs[i].size()-1)
+          verticesL[k] = l;
+      }
     }
     if(l > longest) {
       longest = l;
       loop = i;
     }
   }
-
+  
+  if (vertices.size() != 0) {
+    // Start at the first vertex
+    auto it = std::find(vs[loop].begin(), vs[loop].end(), vertices[0]);
+    if (it != vs[loop].end()) {
+      size_t startIndex = std::distance(vs[loop].begin(), it);
+      vs[loop].insert(vs[loop].end(), vs[loop].begin()+1, it+1);
+      vs[loop].erase(vs[loop].begin(), vs[loop].begin() + startIndex);
+    }
+    for (size_t k = vertices.size(); k-- > 0; ) {
+      verticesL[k] -= verticesL[0];
+      if (verticesL[k] < 0)
+        verticesL[k] += longest;
+    }
+  }
+    
   // check orientation of the loop and reverse if necessary
   bool reverse = true;
   MEdge ref(vs[loop][0], vs[loop][1]);
@@ -578,7 +600,18 @@ bool computeParametrization(const std::vector<MTriangle *> &triangles,
     }
     if(!reverse) break;
   }
-  if(reverse) { std::reverse(vs[0].begin(), vs[0].end()); }
+  if (vertices.size() > 2) {
+    if (verticesL[1] > verticesL[2])  // TODO: manage more than 2 vertices
+      reverse = true;
+    else
+      reverse = false;
+  }
+  if(reverse) { 
+    std::reverse(vs[0].begin(), vs[0].end());
+    for (size_t k = 1; k < verticesL.size(); ++k) {
+      verticesL[k] = longest - verticesL[k];
+    }
+  }
 
   std::vector<double> u(nodes.size(), 0.), v(nodes.size(), 0.);
 
@@ -591,12 +624,45 @@ bool computeParametrization(const std::vector<MTriangle *> &triangles,
   v[index] = 0.;
   for(std::size_t i = 1; i < vs[loop].size() - 1; i++) {
     currentLength += vs[loop][i]->point().distance(vs[loop][i - 1]->point());
-    double angle = 2 * M_PI * currentLength / longest;
     index = nodeIndex[vs[loop][i]];
     bc[index] = true;
-    u[index] = cos(angle);
-    v[index] = sin(angle);
+
+    if (vertices.size() == 0) { // Unit Circle
+      double angle = 2 * M_PI * currentLength / longest;
+      u[index] = cos(angle);
+      v[index] = sin(angle);
+    }
+    else if (vertices.size() == 2) { // Unit Circle with vertices
+      double angle = M_PI;
+      if (currentLength < verticesL[1]) {
+        angle *= currentLength / verticesL[1];
+      }
+      else {
+        angle *= 1 + (currentLength - verticesL[1])/(longest - verticesL[1]);
+      }
+      u[index] = cos(angle);
+      v[index] = sin(angle);
+    }
+    else { // Regular polygon
+      size_t j = 0;
+      for (; j < vertices.size()-1; ++j)
+        if (currentLength < verticesL[j+1]) break;
+
+      double cL = currentLength - verticesL[j];
+      if (j == vertices.size()-1)
+        cL /= longest - verticesL[j];
+      else
+        cL /= verticesL[j+1] - verticesL[j];
+
+      double angle0 = j * 2*M_PI/vertices.size();
+      double angle1 = (j+1) * 2*M_PI/vertices.size();
+      double angle = (1-cL) * angle0 + cL * angle1;
+      u[index] = (1-cL) * cos(angle0) + cL * cos(angle1);
+      v[index] = (1-cL) * sin(angle0) + cL * sin(angle1);
+    }
   }
+
+
 
   // assemble matrix
 #if defined(HAVE_SOLVER)
