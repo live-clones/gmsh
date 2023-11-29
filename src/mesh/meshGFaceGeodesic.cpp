@@ -26,7 +26,7 @@ PolyMesh *createPolyMesh(const std::vector<double> &p,
 {
   PolyMesh *pm_new = new PolyMesh;
 
-  int cc = 0;
+  //int cc = 0;
   for(size_t i = 0; i < p.size(); i += 3) {
     int tag = vertexNum.empty() ? i : vertexNum[i];
     pm_new->vertices.push_back(
@@ -139,7 +139,7 @@ static PolyMesh *createPolyMesh(PolyMesh *pm, const std::vector<size_t> &t,
 
   return pm_new;
 }
-
+/*
 static bool decimate(const std::vector<geodesic::SurfacePoint> &points,
                      std::vector<size_t> &triangles,
                      const double distanceThreshold)
@@ -169,7 +169,7 @@ static bool decimate(const std::vector<geodesic::SurfacePoint> &points,
   triangles.clear();
   for(auto x : t) triangles.push_back(x);
 }
-
+*/
 /*-------------------------------------------------*/
 
 struct VertexOnEdge {
@@ -282,7 +282,7 @@ createPolyMesh(GModel *gm,
   std::sort(pm->hedges.begin(), pm->hedges.end(), compare);
 
   HalfEdgePtrEqual equal;
-  for(int i = 0; i < pm->hedges.size() - 1; i++) {
+  for(size_t i = 0; i < pm->hedges.size() - 1; i++) {
     PolyMesh::HalfEdge *h0 = pm->hedges[i];
     PolyMesh::HalfEdge *h1 = pm->hedges[i + 1];
     if(equal(h0, h1)) {
@@ -621,8 +621,8 @@ private:
     double a2 = computeAngleTrue(p2, p0, p3);
     if(a1 < 0) a1 += 2 * M_PI;
     if(a2 < 0) a2 += 2 * M_PI;
-    double a3 = computeAngleTrue(p0, p1, p2);
-    double a4 = computeAngleTrue(p3, p1, p2);
+    //double a3 = computeAngleTrue(p0, p1, p2);
+    //double a4 = computeAngleTrue(p3, p1, p2);
     //    printf("%12.5E %12.5E -- %12.5E %12.5E
     //    \n",a1*180/M_PI,a2*180/M_PI,a1,a2-a1); if (a3 < 0) a3 += 2*M_PI; if
     //    (a4 < 0) a4 += 2*M_PI;
@@ -882,14 +882,14 @@ public:
         fprintf(f, "SP(%g,%g,%g){%d};\n", it->second[last].x(),
                 it->second[last].y(), it->second[last].z(), count);
         for(size_t i = 1; i < it->second.size(); ++i) {
-          fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", it->second[i - 1].x(),
+          fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%ld,%ld};\n", it->second[i - 1].x(),
                   it->second[i - 1].y(), it->second[i - 1].z(),
                   it->second[i].x(), it->second[i].y(), it->second[i].z(),
                   ite->second[0], ite->second[0]);
         }
         if(ite->second.size() == 2) {
           for(size_t i = 1; i < it->second.size(); ++i) {
-            fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", it->second[i - 1].x(),
+            fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%ld,%ld};\n", it->second[i - 1].x(),
                     it->second[i - 1].y(), it->second[i - 1].z(),
                     it->second[i].x(), it->second[i].y(), it->second[i].z(),
                     ite->second[1], ite->second[1]);
@@ -1043,7 +1043,7 @@ void highOrderPolyMesh::createGeodesicsInParallel(std::vector<int> &__rows,
     std::vector<geodesic::SurfacePoint> pts_start = {points[__rows[i]]};
     std::vector<geodesic::SurfacePoint> pts_end;
     std::vector<std::pair<int, int>> pairs;
-    for(size_t j = start; j < end; j++) {
+    for(int j = start; j < end; j++) {
       pts_end.push_back(points[__columns[j]]);
       pairs.push_back(std::make_pair(__rows[i], __columns[j]));
     }
@@ -2291,12 +2291,12 @@ int makeMeshGeodesic(GModel *gm)
 
   if(0) {
     size_t NN = hop.triangles.size() / 3;
-    for(int i = 0; i < NN; i++) {
+    for(size_t i = 0; i < NN; i++) {
       std::vector<geodesic::SurfacePoint> sp = hop.circumCenter(i);
       if(sp.empty()) sp = hop.circumCenter(i, 1.e22);
       if(!sp.empty()) hop.splitTriangle(i, sp[0]);
       char fn[245];
-      sprintf(fn, "Split%d.pos", i);
+      sprintf(fn, "Split%ld.pos", i);
       hop.printGeodesics(fn);
     }
   }
@@ -2322,7 +2322,7 @@ int makeMeshGeodesic(GModel *gm)
   Msg::Info("Checking orientation");
   for(int K = 0; K < 1; K++) {
     std::vector<int> inverted;
-    for(int i = 0; i < hop.triangles.size() / 3; i++) {
+    for(size_t i = 0; i < hop.triangles.size() / 3; i++) {
       double ori1 = hop.computeBoxProduct(hop.triangles[3 * i + 0],
                                           hop.triangles[3 * i + 1],
                                           hop.triangles[3 * i + 2]);
@@ -2333,7 +2333,7 @@ int makeMeshGeodesic(GModel *gm)
                                           hop.triangles[3 * i + 0],
                                           hop.triangles[3 * i + 1]);
       if(ori1 < 0 || ori2 < 0 || ori3 < 0) {
-        printf("Triangle %6d --> %12.5E  %12.5E  %12.5E  \n", i, ori1, ori2,
+        printf("Triangle %6ld --> %12.5E  %12.5E  %12.5E  \n", i, ori1, ori2,
                ori3);
         inverted.push_back(i);
       }

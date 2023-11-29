@@ -656,7 +656,6 @@ bool computeParametrization(const std::vector<MTriangle *> &triangles,
 
       double angle0 = j * 2*M_PI/vertices.size();
       double angle1 = (j+1) * 2*M_PI/vertices.size();
-      double angle = (1-cL) * angle0 + cL * angle1;
       u[index] = (1-cL) * cos(angle0) + cL * cos(angle1);
       v[index] = (1-cL) * sin(angle0) + cL * sin(angle1);
     }

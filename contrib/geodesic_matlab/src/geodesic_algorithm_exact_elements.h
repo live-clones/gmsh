@@ -23,6 +23,11 @@ public:
 	Interval(){};
 	~Interval(){};
 
+	Interval(const Interval& other) :
+	m_start(other.m_start), m_d(other.m_d), m_pseudo_x(other.m_pseudo_x),
+	m_pseudo_y(other.m_pseudo_y), m_min(other.m_min), m_next(other.m_next),
+	m_edge(other.m_edge), m_source_index(other.m_source_index), m_direction(other.m_direction) {};
+
 	enum DirectionType
     {
         FROM_FACE_0,

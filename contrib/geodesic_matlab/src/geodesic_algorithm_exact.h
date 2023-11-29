@@ -153,7 +153,7 @@ inline void GeodesicAlgorithmExact::best_point_on_the_edge_set(SurfacePoint& poi
 		edge_pointer e = storage[i];
 		list_pointer list = interval_list(e);
 
-		double offset;
+		double offset = 0.;
 		double distance;
 		interval_pointer interval;
 
@@ -374,7 +374,7 @@ inline unsigned GeodesicAlgorithmExact::intersect_intervals(interval_pointer zer
 	double R1 = x1*x1 + one->pseudo_y()*one->pseudo_y();
 
 	double inter[2];									//points of intersection
-	char Ninter=0;										//number of the points of the intersection
+	int Ninter=0;										//number of the points of the intersection
 
 	if(std::abs(D)<local_epsilon)					//if d1 == d0, equation is linear
 	{
@@ -442,9 +442,9 @@ inline unsigned GeodesicAlgorithmExact::intersect_intervals(interval_pointer zer
 
 	double good_start[4];										//points of intersection within the (left, right) limits +"left" + "right"
 	good_start[0] = left;
-	char Ngood_start=1;										//number of the points of the intersection	
+	int Ngood_start=1;										//number of the points of the intersection
 
-	for(char i=0; i<Ninter; ++i)							//for all points of intersection
+	for(int i=0; i<Ninter; ++i)							//for all points of intersection
 	{
 		double x = inter[i];
 		if(x > left + local_epsilon && x < right - local_epsilon)
@@ -455,7 +455,7 @@ inline unsigned GeodesicAlgorithmExact::intersect_intervals(interval_pointer zer
 	good_start[Ngood_start++] = right;
 
 	MapType mid_map[3];
-	for(char i=0; i<Ngood_start-1; ++i)
+	for(int i=0; i<Ngood_start-1; ++i)
 	{
 		double mid = (good_start[i] + good_start[i+1])*0.5;
 		mid_map[i] = zero->signal(mid) <= one->signal(mid) ? OLD : NEW;
@@ -562,7 +562,7 @@ inline void GeodesicAlgorithmExact::propagate(std::vector<SurfacePoint>& sources
 		interval_pointer min_interval = *m_queue.begin();
 		m_queue.erase(m_queue.begin());
 		edge_pointer edge = min_interval->edge();
-		list_pointer list = interval_list(edge);
+		//list_pointer list = interval_list(edge);
 
 		assert(min_interval->d() < GEODESIC_INF);
 
@@ -754,14 +754,16 @@ inline void GeodesicAlgorithmExact::update_list_and_queue(list_pointer list,
 		}
 
 		*p = m_memory_allocator.allocate();
-		std::memcpy(*p,first,sizeof(Interval));
+		new(*p) geodesic::Interval(*first);
+		//std::memcpy(*p,first,sizeof(Interval));
 		m_queue.insert(*p);
 
 		if(num_candidates == 2)
 		{
 			p = &(*p)->next();
 			*p = m_memory_allocator.allocate();
-			std::memcpy(*p,second,sizeof(Interval));
+			new(*p) geodesic::Interval(*second);
+			//std::memcpy(*p,second,sizeof(Interval));
 			m_queue.insert(*p);
 		}
 
@@ -828,7 +830,8 @@ inline void GeodesicAlgorithmExact::update_list_and_queue(list_pointer list,
 					interval_pointer next = p->next();
 					erase_from_queue(p);
 
-					std::memcpy(previous,q,sizeof(Interval));
+					*previous =*q;
+					//std::memcpy(previous,q,sizeof(Interval));
 
 					previous->start() = start[0];
 					previous->next() = next;
@@ -871,7 +874,8 @@ inline void GeodesicAlgorithmExact::update_list_and_queue(list_pointer list,
 			else				//p becomes "previous"
 			{
 				i_new[0] = p;
-				std::memcpy(p,q,sizeof(Interval));
+				*p = *q;
+				//std::memcpy(p,q,sizeof(Interval));
 
 				p->next() = i_new[1];
 				p->start() = start[0];
@@ -885,11 +889,13 @@ inline void GeodesicAlgorithmExact::update_list_and_queue(list_pointer list,
 
 				if(map[j] == OLD)	
 				{
-					std::memcpy(current_interval,&swap,sizeof(Interval));
+					*current_interval = swap;
+					//std::memcpy(current_interval,&swap,sizeof(Interval));
 				}
 				else
 				{
-					std::memcpy(current_interval,q,sizeof(Interval));
+					*current_interval = *q;
+					//std::memcpy(current_interval,q,sizeof(Interval));
 				}
 				
 				if(j == N-1)	
@@ -1316,9 +1322,9 @@ inline void GeodesicAlgorithmExact::trace_back(SurfacePoint& destination,		//tra
 
 			possible_traceback_edges(q, possible_edges);
 
-			interval_pointer interval;
+			interval_pointer interval = 0ULL;
 			double total_distance;
-			double position;
+			double position = 0.;
 
 			best_point_on_the_edge_set(q, 
 									   possible_edges,
