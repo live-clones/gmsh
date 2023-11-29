@@ -317,7 +317,7 @@ void GMSH_AnalyseMeshQualityPlugin::_computeMinMaxJandValidity(int dim)
     if(normals) delete normals;
   }
   if(cntInverted) {
-    Msg::Warning("%d element%s completely inverted",
+    Msg::Warning("%d element%s completely inverted", cntInverted,
                  (cntInverted > 1) ? "s are" : " is");
   }
   _computedJac[dim - 1] = true;
