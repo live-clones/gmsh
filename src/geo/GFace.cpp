@@ -480,7 +480,7 @@ void GFace::writeGEO(FILE *fp)
   if(geomType() == DiscreteSurface || geomType() == BoundaryLayerSurface) return;
 
   std::vector<GEdge *> const &edg = edges();
-  std::vector<int> const &dir = orientations();
+  std::vector<int> const &dir = edgeOrientations();
   if(edg.size() && dir.size() == edg.size()) {
     std::vector<int> num, ori;
     for(auto it = edg.begin(); it != edg.end(); it++)

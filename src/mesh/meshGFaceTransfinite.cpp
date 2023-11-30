@@ -93,7 +93,7 @@ static void computeEdgeLoops(const GFace *gf,
                              std::vector<int> &indices)
 {
   std::vector<GEdge *> const &e = gf->edges();
-  std::vector<int> const &o = gf->orientations();
+  std::vector<int> const &o = gf->edgeOrientations();
 
   std::vector<GEdge *> edges;
   std::vector<int> ori;
