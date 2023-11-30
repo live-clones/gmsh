@@ -451,11 +451,12 @@ int GModel::readNEU(const std::string &name)
       return 0;
     }
 
-    if(p > 0 && p <= vertexVector.size()) {
+    if(p > 0 && p <= (int)vertexVector.size()) {
       vertexVector[p - 1] = new MVertex(x, y, z);
     }
     else {
       Msg::Error("Node tag %d out of range", p);
+      return 0;
     }
     if(numVertices > 100000) Msg::ProgressMeter(i + 1, true, "Reading nodes");
   }
