@@ -1307,6 +1307,106 @@ SVector3 GFace::normal(const SPoint2 &param) const
   return n;
 }
 
+bool GFace::normalToPlanarMesh(SVector3 &normal) const
+{
+  normal = SVector3(.0, .0, .0);
+  if (getNumMeshElements() == 0) return false;
+
+  // Get one arbitrary normal
+  double n[3];
+  bool foundNormal = false;
+  for (size_t i = 0; i < getNumMeshElements(); ++i) {
+    MElement *el = getMeshElement(i);
+    MVertex *v[3] = {el->getVertex(0), el->getVertex(1), el->getVertex(2)};
+    normal3points(v[0]->x(), v[0]->y(), v[0]->z(), v[1]->x(), v[1]->y(),
+                  v[1]->z(), v[2]->x(), v[2]->y(), v[2]->z(), n);
+    if (norm3(n) > .5) {
+      foundNormal = true;
+      break;
+    }
+  }
+
+  if (!foundNormal) {
+    Msg::Warning("Could not define a normal for function "
+                 "'normalToPlanarMesh' on GFace %d", tag());
+    return false;
+  }
+
+  // Check that all MVertex are in the same plane.
+  // It is sufficient to check this: for each pair of mesh vertices, the vector
+  // linking the pair is perpendicular to the same normal vector.
+  // We can either only consider primary (first-order) vertices or include
+  // high-order vertices. Here, we choose to include HO vertices.
+  bool planar = true;
+  for (std::size_t i = 0; planar && i < getNumMeshElements(); ++i) {
+    MElement *el = getMeshElement(i);
+    MVertex *v[2] = {el->getVertex(0), NULL};
+
+    for(std::size_t j = 1; j < el->getNumVertices(); ++j) {
+      v[j % 2] = el->getVertex(j);
+      double e[3] = {v[1]->x() - v[0]->x(), v[1]->y() - v[0]->y(),
+                     v[1]->z() - v[0]->z()};
+      norme(e);
+      if(std::abs(prosca(n, e)) >= 1e-12) {
+        planar = false;
+        break;
+      }
+    }
+  }
+  if (!planar) return false;
+
+  normal = SVector3(n[0], n[1], n[2]);
+
+  // Check the orientation of the surface to scale normal by -1 if needed
+  if (l_edges.empty() || l_dirs.size() < l_edges.size()) return planar;
+
+  GVertex *gv[3] = {NULL, NULL, NULL};
+  if (l_dirs[0] == 1) {
+    gv[0] = l_edges[0]->getBeginVertex();
+    gv[1] = l_edges[0]->getEndVertex();
+  }
+  else {
+    gv[0] = l_edges[0]->getEndVertex();
+    gv[1] = l_edges[0]->getBeginVertex();
+  }
+
+  // Find three GVertex that are not on a line (i.e. |n2| > 0) to execute
+  // the check:
+  for (std::size_t i = 1; i < l_edges.size(); ++i) {
+    GVertex *first, *last;
+    if (l_dirs[i] == 1) {
+      first = l_edges[i]->getBeginVertex();
+      last = l_edges[i]->getEndVertex();
+    }
+    else {
+      first = l_edges[i]->getEndVertex();
+      last = l_edges[i]->getBeginVertex();
+    }
+
+    if (gv[i%3] != first) {
+      Msg::Error("The edge loop is not coherent, not possible to orient the "
+                 "normal in function 'normalToPlanarMesh' for GFace %d", tag());
+      return planar;
+    }
+    gv[(i+1)%3] = last;
+
+    double n2[3];
+    normal3points(gv[0]->x(), gv[0]->y(), gv[0]->z(), gv[1]->x(), gv[1]->y(),
+                  gv[1]->z(), gv[2]->x(), gv[2]->y(), gv[2]->z(), n2);
+
+    double scalarProd = prosca(n, n2);
+    if (scalarProd >  1 - 1e-14) return planar;
+    if (scalarProd < -1 + 1e-14) {
+      normal = normal * -1;
+      return planar;
+    }
+  }
+
+  Msg::Error("The edge loop seems to be on a line, not possible to orient "
+             "the normal in function 'normalToPlanarMesh' for GFace %d", tag());
+  return planar;
+}
+
 bool GFace::buildRepresentationCross(bool force)
 {
   if(cross[0].size()) {

@@ -120,6 +120,9 @@ public:
   void setBoundEdges(const std::vector<int> &tagEdges,
                      const std::vector<int> &signEdges);
 
+  // check if the surface mesh is planar in which case the normal is given
+  bool normalToPlanarMesh(SVector3 &normal) const;
+
   // direct access to embedded entities
   std::vector<GEdge *> &embeddedEdges() { return embedded_edges; }
   std::set<GVertex *, GEntityPtrLessThan> &embeddedVertices()
