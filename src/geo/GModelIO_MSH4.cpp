@@ -42,7 +42,7 @@
 #include "StringUtils.h"
 
 static bool readMSH4Physicals(GModel *const model, FILE *fp,
-                              GEntity *const entity, bool binary, char *str,
+                              GEntity *const entity, bool binary,
                               bool swap)
 {
   std::size_t numPhy = 0;
@@ -59,17 +59,10 @@ static bool readMSH4Physicals(GModel *const model, FILE *fp,
     }
   }
   else {
-    sscanf(str, "%lu %[0-9- ]", &numPhy, str);
+    if(fscanf(fp, "%lu", &numPhy) != 1){ return false; }
     for(std::size_t i = 0; i < numPhy; i++) {
       int phyTag = 0;
-
-      if(i == numPhy - 1 && entity->dim() == 0) {
-        if(sscanf(str, "%d", &phyTag) != 1) { return false; }
-      }
-      else {
-        if(sscanf(str, "%d %[0-9- ]", &phyTag, str) != 2) { return false; }
-      }
-
+      if(fscanf(fp, "%d", &phyTag) != 1) { return false; }
       entity->addPhysicalEntity(phyTag);
     }
   }
@@ -78,7 +71,7 @@ static bool readMSH4Physicals(GModel *const model, FILE *fp,
 
 static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
                                      GEntity *const entity, bool binary,
-                                     char *str, bool swap)
+                                     bool swap)
 {
   std::size_t numBrep = 0;
   std::vector<GEntity *> boundingEntities;
@@ -108,17 +101,10 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
     }
   }
   else {
-    sscanf(str, "%lu %[0-9- ]", &numBrep, str);
+    if(fscanf(fp, "%lu", &numBrep) != 1) { return false; }
     for(std::size_t i = 0; i < numBrep; i++) {
       int entityTag = 0;
-
-      if(i != numBrep - 1) {
-        if(sscanf(str, "%d %[0-9- ]", &entityTag, str) != 2) { return false; }
-      }
-      else {
-        if(sscanf(str, "%d", &entityTag) != 1) { return false; }
-      }
-
+      if(fscanf(fp, "%d", &entityTag) != 1) { return false; }
       GEntity *brep =
         model->getEntityByTag(entity->dim() - 1, std::abs(entityTag));
       if(!brep) {
@@ -168,7 +154,7 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
   return true;
 }
 
-static bool readMSH4EntityInfo(FILE *fp, bool binary, char *str, int sizeofstr,
+static bool readMSH4EntityInfo(FILE *fp, bool binary,
                                bool swap, double version, bool partition,
                                int dim, int &tag, int &parentDim,
                                int &parentTag, std::vector<int> &partitions,
@@ -225,7 +211,6 @@ static bool readMSH4EntityInfo(FILE *fp, bool binary, char *str, int sizeofstr,
         maxY = minY;
         maxZ = minZ;
       }
-      if(!fgets(str, sizeofstr, fp)) { return false; }
     }
   }
   else {
@@ -260,7 +245,6 @@ static bool readMSH4EntityInfo(FILE *fp, bool binary, char *str, int sizeofstr,
         maxY = minY;
         maxZ = minZ;
       }
-      if(!fgets(str, sizeofstr, fp)) { return false; }
     }
   }
   return true;
@@ -340,12 +324,7 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
     }
   }
 
-  // max length of line for ascii input file (should be large enough to handle
-  // entities with many entities on their boundary)
   int nume = numEntities[0] + numEntities[1] + numEntities[2] + numEntities[3];
-  std::size_t strl = std::max(4096, 128 * nume);
-  char *str = new char[strl];
-
   if(partition)
     Msg::Info("%d partition entit%s", nume, nume > 1 ? "ies" : "y");
   else
@@ -356,10 +335,9 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
       int tag = 0, parentDim = 0, parentTag = 0;
       std::vector<int> partitions;
       double minX = 0., minY = 0., minZ = 0., maxX = 0., maxY = 0., maxZ = 0.;
-      if(!readMSH4EntityInfo(fp, binary, str, strl, swap, version, partition,
+      if(!readMSH4EntityInfo(fp, binary, swap, version, partition,
                              dim, tag, parentDim, parentTag, partitions, minX,
                              minY, minZ, maxX, maxY, maxZ)) {
-        delete[] str;
         return false;
       }
 
@@ -378,8 +356,7 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
           }
           model->add(gv);
         }
-        if(!readMSH4Physicals(model, fp, gv, binary, str, swap)) {
-          delete[] str;
+        if(!readMSH4Physicals(model, fp, gv, binary, swap)) {
           return false;
         }
       } break;
@@ -397,12 +374,10 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
           }
           model->add(ge);
         }
-        if(!readMSH4Physicals(model, fp, ge, binary, str, swap)) {
-          delete[] str;
+        if(!readMSH4Physicals(model, fp, ge, binary, swap)) {
           return false;
         }
-        if(!readMSH4BoundingEntities(model, fp, ge, binary, str, swap)) {
-          delete[] str;
+        if(!readMSH4BoundingEntities(model, fp, ge, binary, swap)) {
           return false;
         }
       } break;
@@ -420,12 +395,10 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
           }
           model->add(gf);
         }
-        if(!readMSH4Physicals(model, fp, gf, binary, str, swap)) {
-          delete[] str;
+        if(!readMSH4Physicals(model, fp, gf, binary, swap)) {
           return false;
         }
-        if(!readMSH4BoundingEntities(model, fp, gf, binary, str, swap)) {
-          delete[] str;
+        if(!readMSH4BoundingEntities(model, fp, gf, binary, swap)) {
           return false;
         }
       } break;
@@ -443,19 +416,16 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
           }
           model->add(gr);
         }
-        if(!readMSH4Physicals(model, fp, gr, binary, str, swap)) {
-          delete[] str;
+        if(!readMSH4Physicals(model, fp, gr, binary, swap)) {
           return false;
         }
-        if(!readMSH4BoundingEntities(model, fp, gr, binary, str, swap)) {
-          delete[] str;
+        if(!readMSH4BoundingEntities(model, fp, gr, binary, swap)) {
           return false;
         }
       } break;
       }
     }
   }
-  delete[] str;
   return true;
 }
 
@@ -862,6 +832,12 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
           delete[] elementCache;
           return nullptr;
         }
+
+        // We read all node tags with a single fread() to improve
+        // performance. Beware that this assumes that all node tags are on a
+        // single line, which is not required by the MSH4 specification - we
+        // might need to revert to multiple fscanf() calls instead (see
+        // e.g. #2724)
         if(!fgets(str, sizeof(str), fp)) {
           delete[] elementCache;
           return nullptr;
@@ -1021,7 +997,7 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
     else {
       if(version >= 4.1) {
         std::size_t numAffine;
-        if(!fscanf(fp, "%lu", &numAffine)) { return false; }
+        if(fscanf(fp, "%lu", &numAffine) != 1) { return false; }
         if(numAffine) {
           std::vector<double> tfo(numAffine);
           for(std::size_t i = 0; i < numAffine; i++) {
@@ -1036,7 +1012,7 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
       }
       else {
         char affine[256];
-        if(!fscanf(fp, "%s", affine)) { return false; }
+        if(fscanf(fp, "%s", affine) != 1) { return false; }
         if(!strncmp(affine, "Affine", 6)) {
           if(!fgets(affine, sizeof(affine), fp)) { return false; }
           std::vector<double> tfo(16);
@@ -1104,7 +1080,6 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
     std::size_t elmTag = 0;
     int partNum = 0;
     std::size_t numGhostPartitions = 0;
-    char str[1024];
 
     if(binary) {
       if(fread(&elmTag, sizeof(std::size_t), 1, fp) != 1) { return false; }
@@ -1121,7 +1096,6 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
          3) {
         return false;
       }
-      if(!fgets(str, sizeof(str), fp)) { return false; }
     }
 
     MElement *elm = model->getMeshElementByTag(elmTag);
@@ -1138,14 +1112,7 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
         if(swap) SwapBytes((char *)&ghostPartition, sizeof(int), 1);
       }
       else {
-        if(j == numGhostPartitions - 1) {
-          if(sscanf(str, "%d", &ghostPartition) != 1) { return false; }
-        }
-        else {
-          if(sscanf(str, "%d %[0-9- ]", &ghostPartition, str) != 2) {
-            return false;
-          }
-        }
+        if(fscanf(fp, "%d", &ghostPartition) != 1) { return false; }
       }
 
       ghostCells.insert(std::make_pair(std::make_pair(elm, partNum),
