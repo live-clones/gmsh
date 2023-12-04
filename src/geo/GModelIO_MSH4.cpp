@@ -1422,20 +1422,22 @@ int GModel::_readMSH4(const std::string &name)
       break;
     }
     else if(strlen(&str[1]) > 0){
-      sectionName.pop_back();
-      Msg::Info("Storing section $%s as model attribute", sectionName.c_str());
-      std::vector<std::string> section;
-      while(1) {
-        if(!fgets(str, sizeof(str), fp) || feof(fp) ||
-           !strncmp(&str[1], endSectionName.c_str(), endSectionName.size())) {
-          break;
+      if(!CTX::instance()->mesh.ignoreUnknownSections) {
+        sectionName.pop_back();
+        Msg::Info("Storing section $%s as model attribute", sectionName.c_str());
+        std::vector<std::string> section;
+        while(1) {
+          if(!fgets(str, sizeof(str), fp) || feof(fp) ||
+             !strncmp(&str[1], endSectionName.c_str(), endSectionName.size())) {
+            break;
+          }
+          std::string s(str);
+          if(s.back() == '\n') s.pop_back();
+          if(s.back() == '\r') s.pop_back();
+          section.push_back(s);
         }
-        std::string s(str);
-        if(s.back() == '\n') s.pop_back();
-        if(s.back() == '\r') s.pop_back();
-        section.push_back(s);
+        _attributes[sectionName] = section;
       }
-      _attributes[sectionName] = section;
     }
 
     while(strncmp(&str[1], endSectionName.c_str(), endSectionName.size())) {

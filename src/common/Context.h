@@ -42,7 +42,8 @@ struct contextMeshOptions {
   int hoCurveOuterBL;
   double hoMaxRho, hoMaxAngle, hoMaxInnerAngle;
   int NewtonConvergenceTestXYZ, maxIterDelaunay3D;
-  int ignorePeriodicityMsh2, ignoreParametrizationMsh4, boundaryLayerFanElements;
+  int ignorePeriodicityMsh2, ignoreParametrizationMsh4, ignoreUnknownSections;
+  int boundaryLayerFanElements;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
   double angleToleranceFacetOverlap, toleranceReferenceElement;
   int renumber, compoundClassify, reparamMaxTriangles;

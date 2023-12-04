@@ -6661,6 +6661,12 @@ double opt_mesh_preserve_numbering_msh2(OPT_ARGS_NUM)
   return CTX::instance()->mesh.preserveNumberingMsh2;
 }
 
+double opt_mesh_ignore_unknown_sections(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.ignoreUnknownSections = (int)val;
+  return CTX::instance()->mesh.ignoreUnknownSections;
+}
+
 double opt_mesh_ignore_periodicity(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.ignorePeriodicityMsh2 = (int)val;

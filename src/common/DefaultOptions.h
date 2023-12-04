@@ -1222,6 +1222,9 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "HighOrderSkipQualityCheck", opt_mesh_ho_skip_quality_check, 0.,
     "Skip element quality check after high-order mesh generation"},
 
+  { F|O, "IgnoreUnknownSections" , opt_mesh_ignore_unknown_sections, 0. ,
+    "Skip unknown sections when reading meshes in the MSH4 format (otherwise the "
+    "contents of these sections are stored as model attributes)"},
   { F|O, "IgnoreParametrization" , opt_mesh_ignore_parametrization, 0. ,
     "Skip parametrization section when reading meshes in the MSH4 format" },
   { F|O, "IgnorePeriodicity" , opt_mesh_ignore_periodicity , 1. ,
