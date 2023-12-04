@@ -5679,7 +5679,6 @@ gmsh::model::mesh::computeAlphaShape(const std::vector<int> & alphaShapeTags, co
 #else 
   Msg::Error("performAlphaShapeAndRefine requires the mesh and hxt modules");
 #endif
-
 }
 
 
