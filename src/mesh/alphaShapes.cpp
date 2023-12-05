@@ -22,10 +22,6 @@ extern "C" {
 #include "libol1.h"
 }
 
-
-
-
-
 /* verify if circumscribed radius is smaller than alpha threshold -- 3D */
 double alphaShape (const size_t *t, const std::vector<double> &p, const double hMean){
   double tetcircumcenter(double a[3], double b[3], double c[3], double d[3],
@@ -216,137 +212,106 @@ void generateMesh3D_(const std::vector<double>& coord, const std::vector<size_t>
   //int meshDim = m->getMeshStatus(false); 
 }
 
+
+HXTStatus gmsh2hxtCallback (double *coord, uint32_t* volume, size_t n, void* userData){
+  auto cbGmsh = (std::function<double(int, int, double, double, double, double)>*)userData;
+  for (size_t i=0; i<n; i++){
+    double s = (*cbGmsh)(3, volume[i], coord[4*i+0], coord[4*i+1], coord[4*i+2], 0.);
+    coord[4*i+3] = s;
+  }
+  return HXT_STATUS_OK;
+}
+
+
 // nodeTags :      all the nodes in the mesh (including boundary nodes)
 // coords :        coordinates of all the nodes
 // sizeAtNodes :   mesh size at each node
 // nodesDimTags :  the entity (dim,tag) to which each node belongs
-void performAlphaShapeAndRefine_(const std::vector<size_t>& nodeTags, const std::vector<double>& coord, const std::vector<int>& nodesDimTags, const int refine, const std::vector<double>& sizeAtNodes, const double alpha, const double hMean, const int surfaceTag, const int volumeTag){
+void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double alpha, const double hMean,
+                        std::function<double(int, int, double, double, double, double)> sizeFieldCallback, 
+                        const int refine){
 
-  GModel *m = GModel::current();
+  GRegion* gr = GModel::current()->getRegionByTag(alphaShapeTags[0]);
+  size_t nNodesInMesh = gr->mesh_vertices.size();
+  std::vector<double> coordsInMesh(3*nNodesInMesh);
+  std::vector<size_t> nodeTagsInMesh(nNodesInMesh);
+  for (size_t i=0; i<nNodesInMesh; i++){
+    MVertex* v = gr->mesh_vertices[i];
+    coordsInMesh[3*i+0] = v->x();
+    coordsInMesh[3*i+1] = v->y();
+    coordsInMesh[3*i+2] = v->z();
+    nodeTagsInMesh[i] = v->getNum();
+  }
 
   /* initialize hxt mesh */
   HXTMesh *mesh;
   hxtMeshCreate(&mesh);
-
-  /* set the gmsh surface mesh to hxt format */
-  std::map<MVertex *, uint32_t> v2c;
-  std::vector<MVertex *> c2v;
-  std::set<GRegion *, GEntityPtrLessThan> rs;
-  rs = m->getRegions();
-  std::vector<GRegion *> regions(rs.begin(), rs.end());
-  std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
-  Gmsh2HxtAlpha(regions, mesh, v2c, c2v);
-
-
-  // all other fields of the options will be 0 or NULL (standard C behavior)
   HXTTetMeshOptions options = {};
   options.defaultThreads = 2;
   options.verbosity=2;
   options.stat=1;
 
-	// create the empty mesh
-	hxtTetMesh(mesh, &options);
-  hxtMeshWriteGmsh(mesh, "emptyMesh.msh");
-
-  // a map from vertex node tag to index in nodeTags
-  std::map<size_t, size_t> g2i;
-  for(size_t i=0; i<nodeTags.size(); i++){
-    g2i.insert(std::pair<size_t, size_t>(nodeTags[i], i));
+  mesh->vertices.num += nNodesInMesh;
+  hxtAlignedRealloc(&mesh->vertices.coord, sizeof(double) * mesh->vertices.num * 4);
+  mesh->vertices.size = mesh->vertices.num;
+  for (size_t p = 0; p < nNodesInMesh; p++) {
+    uint32_t nodeIndex = p;
+    for (int dim = 0; dim < 3; dim++) {
+      mesh->vertices.coord[4 * nodeIndex + dim] = coordsInMesh[3*p+dim];
+    }
   }
-  // an array from nodeTags to hxt node index and vice versa
-  std::vector<int> nodeTags2hxt(nodeTags.size());
-  std::vector<int> hxt2nodeTags(nodeTags.size());
-
-  for (int i=0; i<mesh->vertices.num; i++){
-    hxt2nodeTags[i] = g2i[c2v[i]->getNum()];
-  }  
-
-  uint32_t nBndPts = mesh->vertices.num;
+  
   // create the bounding box of the mesh
 	HXTBbox bbox;
 	hxtBboxInit(&bbox);
 	hxtBboxAdd(&bbox, mesh->vertices.coord, mesh->vertices.num);
 
-
-  // only add to mesh the internal coords (because the others are already in...)
-  std::vector<double> internalCoords;
-  std::vector<size_t> internalNodeTags;
-  for (size_t i=0; i<nodeTags.size(); i++){
-    if (nodesDimTags[2*i+0] == 3){
-      internalCoords.push_back(coord[3*i+0]);
-      internalCoords.push_back(coord[3*i+1]);
-      internalCoords.push_back(coord[3*i+2]);
-      internalNodeTags.push_back(nodeTags[i]);
-    }
-  }
-
-  uint32_t numNewPts = internalCoords.size()/3;
-  std::vector<HXTNodeInfo> nodeInfo(numNewPts);
-
-  /* add the internal nodes to the mesh */
-  mesh->vertices.num += numNewPts;
-	if (mesh->vertices.num > mesh->vertices.size) {
-		hxtAlignedRealloc(&mesh->vertices.coord, sizeof(double) * mesh->vertices.num * 4);
-		mesh->vertices.size = mesh->vertices.num;
-	}
-  for (size_t p = 0; p < numNewPts; p++) {
-    uint32_t nodeIndex = p + nBndPts;
-    for (int dim = 0; dim < 3; dim++) {
-      mesh->vertices.coord[4 * nodeIndex + dim] = internalCoords[3*p+dim];
-    }
-    hxt2nodeTags[nodeIndex] = g2i[internalNodeTags[p]];
-    nodeInfo[p].node = nodeIndex;
-    nodeInfo[p].status = HXT_STATUS_TRYAGAIN; // state that we want to insert this point
-  }
-
   HXTDelaunayOptions delOptions = {};
   delOptions.bbox = &bbox;
-  delOptions.numVerticesInMesh = nBndPts;
-  delOptions.insertionFirst = nBndPts;
+  delOptions.numVerticesInMesh = 0;
+  delOptions.insertionFirst = 0;
   delOptions.verbosity = 2;
   delOptions.allowOuterInsertion = 0;
 
   /* Generate the tet mesh */
-  hxtDelaunaySteadyVertices(mesh, &delOptions, &nodeInfo[0], numNewPts);
-  
-  
+  hxtDelaunay(mesh, &delOptions);
+  mesh->tetrahedra.color = (uint32_t*) malloc(sizeof(uint32_t) * mesh->tetrahedra.num);
+
+  hxtMeshWriteGmsh(mesh, "emptyMesh.msh"); 
 
 
   HXTNodalSizes nodalSizes = {
       .array = NULL,
-      // .callback = options->nodalSizes.callback,
-      // .userData = options->nodalSizes.userData,
-      .min = .2*.07, 
+      .callback = gmsh2hxtCallback, 
+      .userData = (void*)&sizeFieldCallback,
+      .min = .2*.05, 
       .max = .05,  
       .factor = 1.,
       .enabled = 0  // only enabled for the refine step
-    };
-
+  };
   hxtNodalSizesInit(mesh, &nodalSizes);
-  if (mesh->vertices.num == sizeAtNodes.size()){
-    for (size_t i=0; i<mesh->vertices.num; i++){
-      nodalSizes.array[i] = sizeAtNodes[hxt2nodeTags[i]];
-    }
+  
+  for (size_t i=0; i<mesh->vertices.num; i++){
+    double s = sizeFieldCallback(3, nodeTagsInMesh[i], mesh->vertices.coord[4*i+0], mesh->vertices.coord[4*i+1], mesh->vertices.coord[4*i+2], 0.);
+    nodalSizes.array[i] = s;
   }
-  else {
-    HXT_WARNING("sizeAtNodes size (%lu) is not equal to mesh->vertices.num (%d) ! \n", sizeAtNodes.size(), mesh->vertices.num);
-  }
+
   delOptions.nodalSizes = &nodalSizes;
 
-  printf("number of vertices in mesh : %d \n", mesh->vertices.num);
-
   HXTAlphaShapeOptions alphaShapeOptions = {
-      .colorIn = volumeTag,
+      .colorIn = alphaShapeTags[0],
       .colorOut = 1,
-      .colorBoundary = surfaceTag,
+      .colorBoundary = alphaShapeTags[1],
       .alpha = alpha,
       .hMean = hMean,
       .n_tetrahedra = 0,
-      .tetrahedra = NULL
+      .tetrahedra = NULL,
+      .n_boundaryFacets = 0,
+      .boundaryFacets = NULL    
   };
-
   hxtAlphaShape(mesh, &delOptions, &alphaShapeOptions);
-  printf("done with alpha shape : there are %d facets and %llu tets in the alpha shape \n", alphaShapeOptions.n_boundaryFacets, alphaShapeOptions.n_tetrahedra);
+
+
   // auto t2 = std::chrono::high_resolution_clock::now();
     
   if (alphaShapeOptions.n_tetrahedra == 0){
@@ -354,64 +319,105 @@ void performAlphaShapeAndRefine_(const std::vector<size_t>& nodeTags, const std:
     return;
   }
   // Add alpha shape facets into the mesh
-  uint32_t startFrom = mesh->triangles.num;
-  mesh->triangles.num += alphaShapeOptions.n_boundaryFacets;
-  if (mesh->triangles.num > mesh->triangles.size){
+  mesh->triangles.num = alphaShapeOptions.n_boundaryFacets;
+  if (mesh->triangles.num != mesh->triangles.size){
     hxtAlignedRealloc(&mesh->triangles.node, sizeof(uint32_t) * mesh->triangles.num * 3);
     hxtAlignedRealloc(&mesh->triangles.color, sizeof(uint32_t) * mesh->triangles.num);
     mesh->triangles.size = mesh->triangles.num;
   }
   for (int i=0; i<alphaShapeOptions.n_boundaryFacets; i++){
-    mesh->triangles.node[3*(startFrom+i)+0] = alphaShapeOptions.boundaryFacets[3*i+0];
-    mesh->triangles.node[3*(startFrom+i)+1] = alphaShapeOptions.boundaryFacets[3*i+1];
-    mesh->triangles.node[3*(startFrom+i)+2] = alphaShapeOptions.boundaryFacets[3*i+2];
-    mesh->triangles.color[startFrom+i] = alphaShapeOptions.colorBoundary;
+    mesh->triangles.node[3*i+0] = alphaShapeOptions.boundaryFacets[3*i+0];
+    mesh->triangles.node[3*i+1] = alphaShapeOptions.boundaryFacets[3*i+1];
+    mesh->triangles.node[3*i+2] = alphaShapeOptions.boundaryFacets[3*i+2];
+    mesh->triangles.color[i] = alphaShapeOptions.colorBoundary;
   }
-  // hxtMeshWriteGmsh(mesh, "beforeRefinement.msh");
-  // std::__1::chrono::steady_clock::time_point t3, t3Bis, t4;
+  hxtMeshWriteGmsh(mesh, "alphaShapeMesh.msh");
+  // for (int i=0; i<mesh->tetrahedra.num; i++){
+  //   printf("tet color : %d; nodes : %d, %d, %d, %d \n", mesh->tetrahedra.color[i], mesh->tetrahedra.node[4*i+0], mesh->tetrahedra.node[4*i+1], mesh->tetrahedra.node[4*i+2], mesh->tetrahedra.node[4*i+3]);
+  // }
+  // // std::__1::chrono::steady_clock::time_point t3, t3Bis, t4;
   if (refine == 1){
     printf("refining in alpha shape \n");
 
     hxtRefineSurfaceTriangulation(mesh, &delOptions, &alphaShapeOptions);
-    // t3 = std::chrono::high_resolution_clock::now();
+  //   // t3 = std::chrono::high_resolution_clock::now();
     printf("done with surface triangulation refinement\n");
-
+    hxtMeshWriteGmsh(mesh, "surface_ref.msh");
+    exit(0);
     // A new alpha shape to redefine the internal elements --> not ideal (but a work around ...)
     hxtAlphaShape(mesh, &delOptions, &alphaShapeOptions);
+    // Add alpha shape facets into the mesh
+    mesh->triangles.num = alphaShapeOptions.n_boundaryFacets;
+    if (mesh->triangles.num != mesh->triangles.size){
+      hxtAlignedRealloc(&mesh->triangles.node, sizeof(uint32_t) * mesh->triangles.num * 3);
+      hxtAlignedRealloc(&mesh->triangles.color, sizeof(uint32_t) * mesh->triangles.num);
+      mesh->triangles.size = mesh->triangles.num;
+    }
+    for (int i=0; i<alphaShapeOptions.n_boundaryFacets; i++){
+      mesh->triangles.node[3*i+0] = alphaShapeOptions.boundaryFacets[3*i+0];
+      mesh->triangles.node[3*i+1] = alphaShapeOptions.boundaryFacets[3*i+1];
+      mesh->triangles.node[3*i+2] = alphaShapeOptions.boundaryFacets[3*i+2];
+      mesh->triangles.color[i] = alphaShapeOptions.colorBoundary;
+    }
 
     // t3Bis = std::chrono::high_resolution_clock::now();
-    // hxtMeshWriteGmsh(mesh, "newAlphaShape.msh");
-
-    // hxtRefineTetrahedraInAlphaShapeSequential(mesh, &delOptions, &alphaShapeOptions);
+    hxtMeshWriteGmsh(mesh, "newAlphaShape.msh");
+    printf("wrote new alpha shape \n");
+    HXTOptimizeOptions optOptions = {
+      .bbox = &bbox, 
+      .numVerticesConstrained = mesh->vertices.num
+    };
+    hxtOptimizeTetrahedra(mesh, &optOptions);
+    hxtMeshWriteGmsh(mesh, "afterOptimization.msh");
+    printf("optimized mesh \n");
     delOptions.nodalSizes->enabled = 1;
     hxtAlphaShapeNodeInsertion(mesh, &delOptions, &alphaShapeOptions);
-    // hxtMeshWriteGmsh(mesh, "afterNodeInsertion.msh");
-    // t4 = std::chrono::high_resolution_clock::now();
+    hxtMeshWriteGmsh(mesh, "afterNodeInsertion.msh");
+  //   // t4 = std::chrono::high_resolution_clock::now();
   }
 
-  for (int i=0; i<mesh->tetrahedra.num; i++){
-    if (mesh->tetrahedra.color[i] != HXT_COLOR_OUT)
-      mesh->tetrahedra.color[i] = 0;
-  }
-  Hxt2GmshAlpha(regions, mesh, v2c, c2v);
+  // std::vector<size_t> nodeTags(pm->vertices.size());
+  // std::vector<double> coords(3*pm->vertices.size());
+  // size_t nNodes = 0;
+  // for (size_t i=0; i<pm->vertices.size(); i++){
+  //   PolyMesh::Vertex* v = pm->vertices[i];
+  //   size_t gmshTag = vertex2Tag[v];
+  //   if (!v->he || gmshTag == -1 || !checkVertexConnection(v, alphaShapeTags[0])) continue;
+  //   coords[3*nNodes+0] = v->position.x();
+  //   coords[3*nNodes+1] = v->position.y();
+  //   coords[3*nNodes+2] = v->position.z();
+  //   nodeTags[nNodes++] = gmshTag;
+  // }
+  // nodeTags.resize(nNodes);
+  // coords.resize(3*nNodes);
+  // gmsh::vectorpair atags2D;
+  // atags2D.push_back(std::make_pair(2, alphaShapeTags[0]));
+  // gmsh::model::mesh::clear(atags2D);
+  // gmsh::vectorpair atags1D;
+  // atags1D.push_back(std::make_pair(1, alphaShapeTags[1]));
+  // gmsh::model::mesh::clear(atags1D);
 
-  std::vector<size_t> alphaTriTags, alphaTriNodeTags, alphaTetTags, alphaTetNodeTags;
-  for (int i=0; i<alphaShapeOptions.n_boundaryFacets; i++){
-    alphaTriTags.push_back(i+1);
-    for (int j=0; j<3; j++)
-      alphaTriNodeTags.push_back(c2v[alphaShapeOptions.boundaryFacets[3*i+j]]->getNum());
-  }
-  for (int i=0; i<alphaShapeOptions.n_tetrahedra; i++){
-    alphaTetTags.push_back(i+1);
-    uint64_t tetIndex = alphaShapeOptions.tetrahedra[i];
-    for (int j=0; j<4; j++) 
-      alphaTetNodeTags.push_back(c2v[mesh->tetrahedra.node[4*tetIndex+j]]->getNum());
-  }
-  gmsh::model::mesh::addElementsByType(surfaceTag, 2, alphaTriTags, alphaTriNodeTags);
-  gmsh::model::mesh::addElementsByType(volumeTag,  4, alphaTetTags, alphaTetNodeTags);
+  // gmsh::model::mesh::addNodes(2, alphaShapeTags[0], nodeTags, coords);
+
+  // std::vector<size_t> alphaTriTags, alphaTriNodeTags, alphaTetTags, alphaTetNodeTags;
+  // for (int i=0; i<alphaShapeOptions.n_boundaryFacets; i++){
+  //   alphaTriTags.push_back(i+1);
+  //   for (int j=0; j<3; j++)
+  //     alphaTriNodeTags.push_back(c2v[alphaShapeOptions.boundaryFacets[3*i+j]]->getNum());
+  // }
+  // for (int i=0; i<alphaShapeOptions.n_tetrahedra; i++){
+  //   alphaTetTags.push_back(i+1);
+  //   uint64_t tetIndex = alphaShapeOptions.tetrahedra[i];
+  //   for (int j=0; j<4; j++) 
+  //     alphaTetNodeTags.push_back(c2v[mesh->tetrahedra.node[4*tetIndex+j]]->getNum());
+  // }
+  // gmsh::model::mesh::addElementsByType(alphaShapeT[1], 2, alphaTriTags, alphaTriNodeTags);
+  // gmsh::model::mesh::addElementsByType(alphaShapeTags[0],  4, alphaTetTags, alphaTetNodeTags);
+  
+  
   // auto t5 = std::chrono::high_resolution_clock::now();
 
-  hxtMeshDelete(&mesh);
+  // hxtMeshDelete(&mesh);
   // std::chrono::duration<double, std::milli> time_mesh3D = t1-t0;
   // double durMesh3D = time_mesh3D.count();
   // std::chrono::duration<double, std::milli> time_alphaShape = t2-t1;
@@ -437,6 +443,7 @@ void performAlphaShapeAndRefine_(const std::vector<size_t>& nodeTags, const std:
   
 
 }
+
 
 void generateMesh_(const int dim, const int tag, const bool refine, const std::vector<double> &coord, const std::vector<size_t> &nodeTags){
   // -----------------  1D ------------------------------
@@ -2164,7 +2171,7 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
   gmsh::model::mesh::addElementsByType(alphaShapeTags[1], 1, trash, edges);
   // gmsh::model::mesh::reclassifyNodes();
 
-  pm->clean();
+  pm->reset();
   delete pm;
   // Msg::Info("Done! \n");
 }

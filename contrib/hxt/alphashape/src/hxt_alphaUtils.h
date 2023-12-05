@@ -35,6 +35,7 @@ typedef struct {
 //                                *  - if verbosity>=2: print everything */
 } HXTAlphaShapeOptions;
 
+
 double tetrahedron_circumcenter(const double a[3], const double b[3], const double c[3], const double d[3], double circumcenter[3], double* xi, double* eta,double* zeta);
 
 double tetAlphaShape(HXTMesh* mesh, const int *tet, const double h);

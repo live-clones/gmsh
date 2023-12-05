@@ -4610,35 +4610,7 @@ end
 const alpha_shape = alphaShape
 
 """
-    gmsh.model.mesh.performAlphaShapeAndRefine(nodeTags, coord, nodesDimTags, refine, sizeAtNodes, alpha, hMean, surfaceTag, volumeTag)
-
-From an initial empty 3D surface mesh, insert new nodes into the volume.
-Tetrahedralize these nodes, and determine the alphashape of the mesh. If refine
-is set, refine the tetrahedra to match the size field.
-
-Types:
- - `nodeTags`: vector of sizes
- - `coord`: vector of doubles
- - `nodesDimTags`: vector of integers
- - `refine`: integer
- - `sizeAtNodes`: vector of doubles
- - `alpha`: double
- - `hMean`: double
- - `surfaceTag`: integer
- - `volumeTag`: integer
-"""
-function performAlphaShapeAndRefine(nodeTags, coord, nodesDimTags, refine, sizeAtNodes, alpha, hMean, surfaceTag, volumeTag)
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshPerformAlphaShapeAndRefine, gmsh.lib), Cvoid,
-          (Ptr{Csize_t}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Cint}, Csize_t, Cint, Ptr{Cdouble}, Csize_t, Cdouble, Cdouble, Cint, Cint, Ptr{Cint}),
-          convert(Vector{Csize_t}, nodeTags), length(nodeTags), convert(Vector{Cdouble}, coord), length(coord), convert(Vector{Cint}, nodesDimTags), length(nodesDimTags), refine, convert(Vector{Cdouble}, sizeAtNodes), length(sizeAtNodes), alpha, hMean, surfaceTag, volumeTag, ierr)
-    ierr[] != 0 && error(gmsh.logger.getLastError())
-    return nothing
-end
-const perform_alpha_shape_and_refine = performAlphaShapeAndRefine
-
-"""
-    gmsh.model.mesh.computeAlphaShape(alphaShapeTags, alpha, hMean, sizeFieldCallback, refine)
+    gmsh.model.mesh.computeAlphaShape(dim, alphaShapeTags, alpha, hMean, sizeFieldCallback, refine)
 
 Compute the alpha shape of the set of points on the discrete entity defined by
 the first tag of `alphaShapeTags`, with the second tag its boundary. The alpha
@@ -4649,19 +4621,20 @@ by `sizeFieldCallback`. The new mesh will be stored in the discrete entities
 with tags `alphaShapeTags` = [alphaShapeTag, alphaShapeBoundaryTag].
 
 Types:
+ - `dim`: integer
  - `alphaShapeTags`: vector of integers
  - `alpha`: double
  - `hMean`: double
  - `sizeFieldCallback`: 
  - `refine`: integer
 """
-function computeAlphaShape(alphaShapeTags, alpha, hMean, sizeFieldCallback, refine)
+function computeAlphaShape(dim, alphaShapeTags, alpha, hMean, sizeFieldCallback, refine)
     api_sizeFieldCallback__(dim, tag, x, y, z, lc, data) = sizeFieldCallback(dim, tag, x, y, z, lc)
     api_sizeFieldCallback_ = @cfunction($api_sizeFieldCallback__, Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshComputeAlphaShape, gmsh.lib), Cvoid,
-          (Ptr{Cint}, Csize_t, Cdouble, Cdouble, Ptr{Cvoid}, Ptr{Cvoid}, Cint, Ptr{Cint}),
-          convert(Vector{Cint}, alphaShapeTags), length(alphaShapeTags), alpha, hMean, api_sizeFieldCallback_, C_NULL, refine, ierr)
+          (Cint, Ptr{Cint}, Csize_t, Cdouble, Cdouble, Ptr{Cvoid}, Ptr{Cvoid}, Cint, Ptr{Cint}),
+          dim, convert(Vector{Cint}, alphaShapeTags), length(alphaShapeTags), alpha, hMean, api_sizeFieldCallback_, C_NULL, refine, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end

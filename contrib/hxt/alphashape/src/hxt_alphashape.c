@@ -16,6 +16,7 @@ HXTStatus hxtAlphaShape(HXTMesh* mesh, HXTDelaunayOptions* delOptions, HXTAlphaS
     uint64_t* boundaryFacets = malloc(sizeof(uint64_t)*numTets*2); // for each facet, store element + facet
     double hMean = alphaShapeOptions->hMean;
     double alpha = alphaShapeOptions->alpha;
+    printf("here ... \n");
     if ( delOptions->nodalSizes == NULL && hMean <= 0) {
         HXT_ERROR_MSG(HXT_STATUS_FAILED, "Error in alpha shape : nodal sizes need to be defined, or hMean > 0.");
         exit(0);
@@ -74,17 +75,25 @@ HXTStatus hxtAlphaShape(HXTMesh* mesh, HXTDelaunayOptions* delOptions, HXTAlphaS
         }
     }
     alphaShapeOptions->n_tetrahedra = tetCount;
+    printf("finished loop \n");
     // color the tets inside the alpha shape
-    for (int i=0; i<numTets; i++) 
-        if (mesh->tetrahedra.color[i] != HXT_COLOR_OUT) mesh->tetrahedra.color[i] = alphaShapeOptions->colorOut;
-    HXT_CHECK( hxtMalloc(&alphaShapeOptions->tetrahedra, (tetCount)*sizeof(uint64_t)) );
+    for (int i=0; i<numTets; i++) {
+        if (mesh->tetrahedra.node[4*i+3] == HXT_GHOST_VERTEX) 
+            mesh->tetrahedra.color[i] = HXT_COLOR_OUT;
+        else 
+            mesh->tetrahedra.color[i] = alphaShapeOptions->colorOut;
+    }
+    printf("after if \n");
+    HXT_CHECK( hxtAlignedRealloc(&alphaShapeOptions->tetrahedra, (tetCount)*sizeof(uint64_t)) );
+    printf("realloc'd \n");
     for (int i=0; i<tetCount; i++){
         mesh->tetrahedra.color[domainTetrahedra[i]] = alphaShapeOptions->colorIn;
         alphaShapeOptions->tetrahedra[i] = domainTetrahedra[i];
     }
+    printf("added tets \n");
     // add the facets to the mesh
     alphaShapeOptions->n_boundaryFacets = facetCount/2;
-    HXT_CHECK( hxtMalloc(&alphaShapeOptions->boundaryFacets, 3*alphaShapeOptions->n_boundaryFacets*sizeof(uint32_t)));
+    HXT_CHECK( hxtAlignedRealloc(&alphaShapeOptions->boundaryFacets, 3*alphaShapeOptions->n_boundaryFacets*sizeof(uint32_t)));
     for (uint64_t i=0; i<alphaShapeOptions->n_boundaryFacets; i++){
         alphaShapeOptions->boundaryFacets[3*i+0] = mesh->tetrahedra.node[4*boundaryFacets[2*i]+getNode0FromFacet(boundaryFacets[2*i+1])];
         alphaShapeOptions->boundaryFacets[3*i+1] = mesh->tetrahedra.node[4*boundaryFacets[2*i]+getNode1FromFacet(boundaryFacets[2*i+1])];

@@ -1675,20 +1675,6 @@ GMSH_API void gmshModelMeshAlphaShape(const int dim,
                                       size_t *** edges, size_t ** edges_n, size_t *edges_nn,
                                       int * ierr);
 
-/* From an initial empty 3D surface mesh, insert new nodes into the volume.
- * Tetrahedralize these nodes, and determine the alphashape of the mesh. If
- * refine is set, refine the tetrahedra to match the size field. */
-GMSH_API void gmshModelMeshPerformAlphaShapeAndRefine(const size_t * nodeTags, const size_t nodeTags_n,
-                                                      const double * coord, const size_t coord_n,
-                                                      const int * nodesDimTags, const size_t nodesDimTags_n,
-                                                      const int refine,
-                                                      const double * sizeAtNodes, const size_t sizeAtNodes_n,
-                                                      const double alpha,
-                                                      const double hMean,
-                                                      const int surfaceTag,
-                                                      const int volumeTag,
-                                                      int * ierr);
-
 /* Compute the alpha shape of the set of points on the discrete entity defined
  * by the first tag of `alphaShapeTags', with the second tag its boundary. The
  * alpha shape is computed with respect to a constant mean mesh size `hMean'
@@ -1697,7 +1683,8 @@ GMSH_API void gmshModelMeshPerformAlphaShapeAndRefine(const size_t * nodeTags, c
  * size field defined by `sizeFieldCallback'. The new mesh will be stored in
  * the discrete entities with tags `alphaShapeTags' = [alphaShapeTag,
  * alphaShapeBoundaryTag]. */
-GMSH_API void gmshModelMeshComputeAlphaShape(const int * alphaShapeTags, const size_t alphaShapeTags_n,
+GMSH_API void gmshModelMeshComputeAlphaShape(const int dim,
+                                             const int * alphaShapeTags, const size_t alphaShapeTags_n,
                                              const double alpha,
                                              const double hMean,
                                              double (*sizeFieldCallback)(int dim, int tag, double x, double y, double z, double lc, void * data), void * sizeFieldCallback_data,

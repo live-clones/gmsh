@@ -5660,22 +5660,19 @@ gmsh::model::mesh::alphaShape(const int dim, const int tag, const double alpha, 
 }
 
 GMSH_API void
-gmsh::model::mesh::performAlphaShapeAndRefine(const std::vector<size_t>& nodeTags, const std::vector<double>& coord, const std::vector<int>& nodesDimTags, const int refine, const std::vector<double>& sizeAtNodes, const double alpha, const double hMean, const int surfaceTag, const int volumeTag)
+gmsh::model::mesh::computeAlphaShape(const int dim, 
+                                     const std::vector<int> & alphaShapeTags, 
+                                     const double alpha, const double hMean, 
+                                     std::function<double(int, int, double, double, double, double)> sizeFieldCallback, 
+                                     const int refine)
 {
 #if defined(HAVE_MESH) && defined(HAVE_HXT)
-  performAlphaShapeAndRefine_(nodeTags, coord, nodesDimTags, refine, sizeAtNodes, alpha, hMean, surfaceTag, volumeTag);
-#else 
-  Msg::Error("performAlphaShapeAndRefine requires the mesh and hxt modules");
-#endif
-}
-
-GMSH_API void
-gmsh::model::mesh::computeAlphaShape(const std::vector<int> & alphaShapeTags, const double alpha, const double hMean,
-                          std::function<double(int, int, double, double, double, double)> sizeFieldCallback, 
-                          const int refine)
-{
-#if defined(HAVE_MESH) && defined(HAVE_HXT)
-  _computeAlphaShape(alphaShapeTags, alpha, hMean, sizeFieldCallback, refine);
+  if (dim == 2)
+    _computeAlphaShape(alphaShapeTags, alpha, hMean, sizeFieldCallback, refine);
+  else if (dim == 3)
+    _computeAlphaShape3D(alphaShapeTags, alpha, hMean, sizeFieldCallback, refine);
+  else 
+    Msg::Error("Wrong dimension in alpha shape; 2 or 3");
 #else 
   Msg::Error("performAlphaShapeAndRefine requires the mesh and hxt modules");
 #endif

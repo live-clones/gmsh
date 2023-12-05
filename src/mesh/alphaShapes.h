@@ -48,7 +48,9 @@ void constrainedDelaunayRefinement_(const int dim, const int tag,
 
 void alphaShape_entity(const int dim, const int tag, const double alpha, const std::vector<size_t>& nodeTags, const std::vector<double>& sizeAtNodes, std::vector<std::vector<size_t>>& elementTags, std::vector<std::vector<size_t>>& edges);
 
-void performAlphaShapeAndRefine_(const std::vector<size_t>& nodeTags, const std::vector<double>& coord, const std::vector<int>& nodesDimTags, const int refine, const std::vector<double>& sizeAtNodes, const double alpha, const double hMean, const int surfaceTag, const int volumeTag);
+void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double alpha, const double hMean,
+                        std::function<double(int, int, double, double, double, double)> sizeFieldCallback, 
+                        const int refine);
 
 void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double alpha, const double hMean,
                         std::function<double(int, int, double, double, double, double)> sizeFieldCallback, 

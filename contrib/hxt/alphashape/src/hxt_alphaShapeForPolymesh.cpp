@@ -39,30 +39,28 @@ extern "C" void print4debug(PolyMesh* pm, int debugTag)
     fclose(f);
 }
 
-extern "C" void hxt2PolyMesh(HXTMesh* mesh, HXTAlphaShapeOptions* alphaShapeOptions, PolyMesh** pm)
+extern "C" void hxt2PolyMesh(HXTMesh* mesh, HXTAlphaShapeOptions* alphaShapeOptions, PolyMesh* pm)
 {
-    *pm = new PolyMesh();
-
-    (*pm)->vertices.resize(mesh->vertices.num);
+    pm->vertices.resize(mesh->vertices.num);
     for (int i=0; i<mesh->vertices.num; i++){
         double *coord = &mesh->vertices.coord[i * 4];
-        (*pm)->vertices[i] = new PolyMesh::Vertex(coord[0], coord[1], coord[2], i);
+        pm->vertices[i] = new PolyMesh::Vertex(coord[0], coord[1], coord[2], i);
     }
     size_t nNod = 3;
     PolyMesh::Vertex *v[3] = {nullptr, nullptr, nullptr};
     for(size_t i = 0; i < alphaShapeOptions->n_boundaryFacets; i++) {
         for(int j = 0; j < nNod; j++) {
-            v[j] = (*pm)->vertices[alphaShapeOptions->boundaryFacets[i * nNod + j]];
+            v[j] = pm->vertices[alphaShapeOptions->boundaryFacets[i * nNod + j]];
         }
         PolyMesh::HalfEdge *he[3];
         for(int j = 0; j < nNod; j++) {
             he[j] = new PolyMesh::HalfEdge(v[j]);
-            (*pm)->hedges.push_back(he[j]);
+            pm->hedges.push_back(he[j]);
             v[j]->he = he[j];
         }
 
         PolyMesh::Face *ff = new PolyMesh::Face(he[0]);
-        (*pm)->faces.push_back(ff);
+        pm->faces.push_back(ff);
 
         for(int j = 0; j < nNod; j++) {
         he[j]->next = he[(j + 1) % nNod];
@@ -72,12 +70,12 @@ extern "C" void hxt2PolyMesh(HXTMesh* mesh, HXTAlphaShapeOptions* alphaShapeOpti
     }
 
     HalfEdgePtrLessThan compare;
-    std::sort((*pm)->hedges.begin(), (*pm)->hedges.end(), compare);
+    std::sort(pm->hedges.begin(), pm->hedges.end(), compare);
 
     HalfEdgePtrEqual equal;
-    for(size_t i = 0; i < (*pm)->hedges.size() - 1; i++) {
-    PolyMesh::HalfEdge *h0 = (*pm)->hedges[i];
-    PolyMesh::HalfEdge *h1 = (*pm)->hedges[i + 1];
+    for(size_t i = 0; i < pm->hedges.size() - 1; i++) {
+    PolyMesh::HalfEdge *h0 = pm->hedges[i];
+    PolyMesh::HalfEdge *h1 = pm->hedges[i + 1];
     if(equal(h0, h1)) {
         h0->opposite = h1;
         h1->opposite = h0;
@@ -101,18 +99,8 @@ extern "C" int polyMesh2hxt(PolyMesh* pm, HXTMesh* mesh, HXTAlphaShapeOptions* a
         delOptions->nodalSizes->array[i] = nodalSizes[i];
     }
 
-    // Find where the triangles of the boundary are --> these need to stay in the mesh! 
-    // NOTE : this might not be ideal, because is there really a guarantee that all the boundary triangles are at the beginning..?
-    uint32_t index_triangle = 0;
-    for (uint32_t i=0; i<mesh->triangles.num; i++) {
-        if (mesh->triangles.color[i] == alphaShapeOptions->colorBoundary) {
-            index_triangle = i;
-            break;
-        }
-    }
-
     alphaShapeOptions->n_boundaryFacets = pm->faces.size();
-    mesh->triangles.num = mesh->triangles.size = index_triangle + pm->faces.size();
+    mesh->triangles.num = mesh->triangles.size = pm->faces.size();
     HXT_CHECK( hxtAlignedRealloc(&mesh->triangles.node, mesh->triangles.num * 3 * sizeof(uint32_t) ));
     HXT_CHECK( hxtAlignedRealloc(&mesh->triangles.color, mesh->triangles.num * sizeof(uint32_t) ));
     HXT_CHECK( hxtAlignedRealloc(&alphaShapeOptions->boundaryFacets, alphaShapeOptions->n_boundaryFacets * 3 * sizeof(uint32_t) ));
@@ -122,10 +110,10 @@ extern "C" int polyMesh2hxt(PolyMesh* pm, HXTMesh* mesh, HXTAlphaShapeOptions* a
         alphaShapeOptions->boundaryFacets[3 * i + 0] = f->he->v->data;
         alphaShapeOptions->boundaryFacets[3 * i + 1] = f->he->next->v->data;
         alphaShapeOptions->boundaryFacets[3 * i + 2] = f->he->next->next->v->data;
-        mesh->triangles.node[3 * index_triangle + 0] = f->he->v->data;
-        mesh->triangles.node[3 * index_triangle + 1] = f->he->next->v->data;
-        mesh->triangles.node[3 * index_triangle + 2] = f->he->next->next->v->data;
-        mesh->triangles.color[index_triangle++] = alphaShapeOptions->colorBoundary;
+        mesh->triangles.node[3 * i + 0] = f->he->v->data;
+        mesh->triangles.node[3 * i + 1] = f->he->next->v->data;
+        mesh->triangles.node[3 * i + 2] = f->he->next->next->v->data;
+        mesh->triangles.color[i] = alphaShapeOptions->colorBoundary;
     }
 
     return 0;
@@ -164,8 +152,8 @@ double halfEdgeLength(PolyMesh::HalfEdge* he){
 extern "C" void _refineSurfaceTriangulation(HXTMesh* mesh, HXTDelaunayOptions* delOptions, HXTAlphaShapeOptions* alphaShapeOptions) 
 {
     // Define polymesh (2D mesh data structure)
-    PolyMesh* pm;
-    hxt2PolyMesh(mesh, alphaShapeOptions, &pm);
+    PolyMesh* pm = new PolyMesh;
+    hxt2PolyMesh(mesh, alphaShapeOptions, pm);
     printf("There are initially %lu facets and %d points in the triangulation\n", pm->faces.size(), pm->vertices.size());
     int ptIndex = mesh->vertices.num;
     // print4debug(pm, 0);
@@ -229,11 +217,11 @@ extern "C" void _refineSurfaceTriangulation(HXTMesh* mesh, HXTDelaunayOptions* d
     double durTotal = time_total.count();
 
     // printf("Time spent in sorting : %f \n", 100*timeInSort/durTotal);
-    // printf("Surface triangulation done -- added %d new points, there are now %lu faces \n", iter, pm->faces.size());
+    printf("Surface triangulation done -- added %d new points, there are now %lu faces \n", iter, pm->faces.size());
     delOptions->insertionFirst = mesh->vertices.num;
     polyMesh2hxt(pm, mesh, alphaShapeOptions, delOptions, nodalSizes);
-    // printf("insertion first : %d \n", delOptions->insertionFirst);
     int numNewPoints = mesh->vertices.num - delOptions->insertionFirst;
+    printf("insertion first : %d ; num new points : %d \n", delOptions->insertionFirst, numNewPoints);
     HXTNodeInfo* nodeInfo;
     hxtAlignedMalloc(&nodeInfo, sizeof(HXTNodeInfo)*numNewPoints);
     for (int i=0; i<numNewPoints; i++){
@@ -241,10 +229,18 @@ extern "C" void _refineSurfaceTriangulation(HXTMesh* mesh, HXTDelaunayOptions* d
         nodeInfo[i].status = HXT_STATUS_TRYAGAIN;
     }
 
+    
 
-    // printf("before doing new delaunay; num vertices in mesh : %d \n", delOptions->numVerticesInMesh);
+    printf("before doing new delaunay; num vertices in mesh : %d \n", delOptions->numVerticesInMesh);
     hxtDelaunaySteadyVertices(mesh, delOptions, nodeInfo, numNewPoints);
-    // hxtMeshWriteGmsh(mesh, "afterRefinement.msh");
-    // printf("PolyMesh is back to hxt \n");
+    printf("PolyMesh is back to hxt \n");
+
+    hxtAlignedFree(&nodeInfo);
+    printf("done with surf ref 0\n");
+    // pm->reset();
+    // printf("done with surf ref 1\n");
+    delete pm;
+    printf("done with surf ref \n");
+    exit(0);
     
 }

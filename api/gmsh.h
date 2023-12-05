@@ -1889,21 +1889,6 @@ namespace gmsh { // Top-level functions
                                std::vector<std::vector<std::size_t> > & elementTags,
                                std::vector<std::vector<std::size_t> > & edges);
 
-      // gmsh::model::mesh::performAlphaShapeAndRefine
-      //
-      // From an initial empty 3D surface mesh, insert new nodes into the volume.
-      // Tetrahedralize these nodes, and determine the alphashape of the mesh. If
-      // refine is set, refine the tetrahedra to match the size field.
-      GMSH_API void performAlphaShapeAndRefine(const std::vector<std::size_t> & nodeTags,
-                                               const std::vector<double> & coord,
-                                               const std::vector<int> & nodesDimTags,
-                                               const int refine,
-                                               const std::vector<double> & sizeAtNodes,
-                                               const double alpha,
-                                               const double hMean,
-                                               const int surfaceTag,
-                                               const int volumeTag);
-
       // gmsh::model::mesh::computeAlphaShape
       //
       // Compute the alpha shape of the set of points on the discrete entity
@@ -1914,7 +1899,8 @@ namespace gmsh { // Top-level functions
       // shape so as to respect the size field defined by `sizeFieldCallback'. The
       // new mesh will be stored in the discrete entities with tags
       // `alphaShapeTags' = [alphaShapeTag, alphaShapeBoundaryTag].
-      GMSH_API void computeAlphaShape(const std::vector<int> & alphaShapeTags,
+      GMSH_API void computeAlphaShape(const int dim,
+                                      const std::vector<int> & alphaShapeTags,
                                       const double alpha,
                                       const double hMean,
                                       std::function<double(int, int, double, double, double, double)> sizeFieldCallback,
