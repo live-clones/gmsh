@@ -4223,7 +4223,6 @@ static void setTargetUnit(const std::string &unit)
     Msg::Error("Could not set OpenCASCADE target unit '%s'", unit.c_str());
 }
 
-
 static Handle_Interface_HArray1OfHAsciiString strToOccStrArray(std::string str)
 {
   Handle_Interface_HArray1OfHAsciiString array =
@@ -4239,46 +4238,54 @@ static Handle_TCollection_HAsciiString strToOccStr(std::string str)
 
 static void setOCCStepHeaderFileName(Handle_HeaderSection_FileName &hfname)
 {
-  if (!CTX::instance()->geom.occStepModelName.empty()) {
+  if(!CTX::instance()->geom.occStepModelName.empty()) {
     hfname->SetName(strToOccStr(CTX::instance()->geom.occStepModelName));
   }
-  if (!CTX::instance()->geom.occStepAuthor.empty()) {
+  if(!CTX::instance()->geom.occStepAuthor.empty()) {
     hfname->SetAuthor(strToOccStrArray(CTX::instance()->geom.occStepAuthor));
   }
-  if (!CTX::instance()->geom.occStepOrganization.empty()) {
-    hfname->SetOrganization(strToOccStrArray(CTX::instance()->geom.occStepOrganization));
+  if(!CTX::instance()->geom.occStepOrganization.empty()) {
+    hfname->SetOrganization(
+      strToOccStrArray(CTX::instance()->geom.occStepOrganization));
   }
-  if (!CTX::instance()->geom.occStepPreprocessorVersion.empty()) {
-    hfname->SetPreprocessorVersion(strToOccStr(CTX::instance()->geom.occStepPreprocessorVersion));
+  if(!CTX::instance()->geom.occStepPreprocessorVersion.empty()) {
+    hfname->SetPreprocessorVersion(
+      strToOccStr(CTX::instance()->geom.occStepPreprocessorVersion));
   }
-  if (!CTX::instance()->geom.occStepOriginatingSystem.empty()) {
-    hfname->SetOriginatingSystem(strToOccStr(CTX::instance()->geom.occStepOriginatingSystem));
+  if(!CTX::instance()->geom.occStepOriginatingSystem.empty()) {
+    hfname->SetOriginatingSystem(
+      strToOccStr(CTX::instance()->geom.occStepOriginatingSystem));
   }
-  if (!CTX::instance()->geom.occStepAuthorization.empty()) {
-    hfname->SetAuthorisation(strToOccStr(CTX::instance()->geom.occStepAuthorization));
+  if(!CTX::instance()->geom.occStepAuthorization.empty()) {
+    hfname->SetAuthorisation(
+      strToOccStr(CTX::instance()->geom.occStepAuthorization));
   }
 }
 
-static void setOCCSTEPHeaderDescription(Handle_HeaderSection_FileDescription &hdesc)
+static void
+setOCCSTEPHeaderDescription(Handle_HeaderSection_FileDescription &hdesc)
 {
-  if (!CTX::instance()->geom.occStepDescription.empty()) {
-    hdesc->SetDescription(strToOccStrArray(CTX::instance()->geom.occStepDescription));
+  if(!CTX::instance()->geom.occStepDescription.empty()) {
+    hdesc->SetDescription(
+      strToOccStrArray(CTX::instance()->geom.occStepDescription));
   }
-  if (!CTX::instance()->geom.occStepImplementationLevel.empty()){
-    hdesc->SetImplementationLevel(strToOccStr(CTX::instance()->geom.occStepImplementationLevel));
+  if(!CTX::instance()->geom.occStepImplementationLevel.empty()) {
+    hdesc->SetImplementationLevel(
+      strToOccStr(CTX::instance()->geom.occStepImplementationLevel));
   }
 }
 
 static void setOCCSTEPHeaderSchema(Handle_HeaderSection_FileSchema &hschema,
-                            const Interface_EntityIterator& header)
+                                   const Interface_EntityIterator &header)
 {
-  if (!CTX::instance()->geom.occStepSchemaIdentifier.empty()) {
-    hschema->SetSchemaIdentifiers(strToOccStrArray(CTX::instance()->geom.occStepSchemaIdentifier));
+  if(!CTX::instance()->geom.occStepSchemaIdentifier.empty()) {
+    hschema->SetSchemaIdentifiers(
+      strToOccStrArray(CTX::instance()->geom.occStepSchemaIdentifier));
   }
-  else{
-    for (auto It = header; It.More(); It.Next()) {
-      const Handle_Standard_Transient& entity = It.Value();
-      if (entity->IsKind(STANDARD_TYPE(HeaderSection_FileSchema))) {
+  else {
+    for(auto It = header; It.More(); It.Next()) {
+      const Handle_Standard_Transient &entity = It.Value();
+      if(entity->IsKind(STANDARD_TYPE(HeaderSection_FileSchema))) {
         hschema = Handle_HeaderSection_FileSchema::DownCast(entity);
         break;
       }
