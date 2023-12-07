@@ -111,6 +111,7 @@ struct contextGeometryOptions {
   std::string occStepImplementationLevel;
   // header section: FILE_NAME
   std::string occStepModelName;
+  std::string occStepTimeStamp;
   std::string occStepAuthor;
   std::string occStepOrganization;
   std::string occStepPreprocessorVersion;

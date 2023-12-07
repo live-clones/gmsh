@@ -71,6 +71,7 @@ std::string opt_geometry_occ_target_unit(OPT_ARGS_STR);
 std::string opt_geometry_occ_step_description(OPT_ARGS_STR);
 std::string opt_geometry_occ_step_implementation_level(OPT_ARGS_STR);
 std::string opt_geometry_occ_step_model_name(OPT_ARGS_STR);
+std::string opt_geometry_occ_step_time_stamp(OPT_ARGS_STR);
 std::string opt_geometry_occ_step_author(OPT_ARGS_STR);
 std::string opt_geometry_occ_step_organization(OPT_ARGS_STR);
 std::string opt_geometry_occ_step_preprocessor_version(OPT_ARGS_STR);

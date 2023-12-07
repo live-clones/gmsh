@@ -4241,6 +4241,9 @@ static void setOCCStepHeaderFileName(Handle_HeaderSection_FileName &hfname)
   if(!CTX::instance()->geom.occStepModelName.empty()) {
     hfname->SetName(strToOccStr(CTX::instance()->geom.occStepModelName));
   }
+  if(!CTX::instance()->geom.occStepTimeStamp.empty()) {
+    hfname->SetTimeStamp(strToOccStr(CTX::instance()->geom.occStepTimeStamp));
+  }
   if(!CTX::instance()->geom.occStepAuthor.empty()) {
     hfname->SetAuthor(strToOccStrArray(CTX::instance()->geom.occStepAuthor));
   }

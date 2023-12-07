@@ -173,6 +173,10 @@ StringXString GeometryOptions_String[] = {
     "Model name of the STEP file to be written by OpenCASCADE. "
     "If left empty, the default value is set by OpenCASCADE"},
 
+  { F|O, "OCCSTEPTimeStamp", opt_geometry_occ_step_time_stamp, "",
+    "Time stamp for the creation of the STEP file. "
+    "If left empty, the default value is current time."},
+
   { F|O, "OCCSTEPAuthor", opt_geometry_occ_step_author, "",
     "Author of the STEP file to be written by OpenCASCADE. "
     "If left empty, the default value is set by OpenCASCADE"},

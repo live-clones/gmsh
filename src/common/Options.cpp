@@ -1448,6 +1448,12 @@ std::string opt_geometry_occ_step_model_name(OPT_ARGS_STR)
   return CTX::instance()->geom.occStepModelName;
 }
 
+std::string opt_geometry_occ_step_time_stamp(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occStepTimeStamp = val;
+  return CTX::instance()->geom.occStepTimeStamp;
+}
+
 std::string opt_geometry_occ_step_author(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) CTX::instance()->geom.occStepAuthor = val;
