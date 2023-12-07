@@ -105,6 +105,20 @@ struct contextGeometryOptions {
   int occUnionUnify, occThruSectionsDegree, occUseGenericClosestPoint;
   double occScaling;
   std::string occTargetUnit;
+  // STEP file outputs
+  // header section: FILE_DESCRIPTION
+  std::string occStepDescription;
+  std::string occStepImplementationLevel;
+  // header section: FILE_NAME
+  std::string occStepModelName;
+  std::string occStepAuthor;
+  std::string occStepOrganization;
+  std::string occStepPreprocessorVersion;
+  std::string occStepOriginatingSystem;
+  std::string occStepAuthorization;
+  // header section: FILE_SCHEMA
+  std::string occStepSchemaIdentifier;
+
   int copyMeshingMethod, exactExtrusion;
   int matchGeomAndMesh;
   double matchMeshScaleFactor;
