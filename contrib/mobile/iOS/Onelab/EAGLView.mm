@@ -1,5 +1,5 @@
-#import <QuartzCore/QuartzCore.h>
 #import <OpenGLES/EAGLDrawable.h>
+#import <QuartzCore/QuartzCore.h>
 
 #import "EAGLView.h"
 
@@ -10,8 +10,8 @@
 
 @property (nonatomic, retain) EAGLContext *context;
 
-- (BOOL) createFramebuffer;
-- (void) destroyFramebuffer;
+- (BOOL)createFramebuffer;
+- (void)destroyFramebuffer;
 
 @end
 
@@ -25,35 +25,37 @@
   return [CAEAGLLayer class];
 }
 
-//The GL view is stored in the nib file. When it's unarchived it's sent -initWithCoder:
-- (id)initWithCoder:(NSCoder*)coder
+// The GL view is stored in the nib file. When it's unarchived it's sent
+// -initWithCoder:
+- (id)initWithCoder:(NSCoder *)coder
 {
-  if ((self = [super initWithCoder:coder])) {
+  if((self = [super initWithCoder:coder])) {
     // Get the layer
     CAEAGLLayer *eaglLayer = (CAEAGLLayer *)self.layer;
 
     // detect retina display
-    if ([[UIScreen mainScreen] respondsToSelector:@selector(displayLinkWithTarget:selector:)] &&
-        ([UIScreen mainScreen].scale == 2.0)) {
+    if([[UIScreen mainScreen]
+         respondsToSelector:@selector(displayLinkWithTarget:selector:)] &&
+       ([UIScreen mainScreen].scale >= 2.0)) {
       self.contentScaleFactor = 2.0;
       eaglLayer.contentsScale = 2;
     }
 
     eaglLayer.opaque = YES;
-    eaglLayer.drawableProperties =
-      [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:NO],
-                    kEAGLDrawablePropertyRetainedBacking,
-                    kEAGLColorFormatRGBA8,
-                    kEAGLDrawablePropertyColorFormat, nil];
+    eaglLayer.drawableProperties = [NSDictionary
+      dictionaryWithObjectsAndKeys:[NSNumber numberWithBool:NO],
+                                   kEAGLDrawablePropertyRetainedBacking,
+                                   kEAGLColorFormatRGBA8,
+                                   kEAGLDrawablePropertyColorFormat, nil];
     context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES1];
-    if (!context || ![EAGLContext setCurrentContext:context]) {
+    if(!context || ![EAGLContext setCurrentContext:context]) {
       //[self release];
       return nil;
     }
     mContext = new drawContext((eaglLayer.contentsScale == 2) ? 1.5 : 1,
                                eaglLayer.contentsScale == 2);
+    rendering = NO;
   }
-  rendering = NO;
   return self;
 }
 
@@ -72,23 +74,24 @@
   rendering = NO;
 }
 
-- (void)load:(NSString*) file
+- (void)load:(NSString *)file
 {
   mContext->load(*new std::string([file fileSystemRepresentation]));
-  [[NSNotificationCenter defaultCenter] postNotificationName:@"resetParameters" object:nil];
+  [[NSNotificationCenter defaultCenter] postNotificationName:@"resetParameters"
+                                                      object:nil];
   [self drawView];
 }
 
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
 {
   NSUInteger ntouch = [[event allTouches] count];
-  UITouch* touch = [touches anyObject];
+  UITouch *touch = [touches anyObject];
   CGPoint position = [touch locationInView:self];
   if(ntouch != 1) return;
   if(rotate)
-    mContext->eventHandler(3,position.x,position.y);
+    mContext->eventHandler(3, position.x, position.y);
   else
-    mContext->eventHandler(1,position.x,position.y);
+    mContext->eventHandler(1, position.x, position.y);
 
   [self drawView];
 }
@@ -109,21 +112,29 @@
 
   glBindFramebufferOES(GL_FRAMEBUFFER_OES, viewFramebuffer);
   glBindRenderbufferOES(GL_RENDERBUFFER_OES, viewRenderbuffer);
-  [context renderbufferStorage:GL_RENDERBUFFER_OES fromDrawable:(CAEAGLLayer*)self.layer];
-  glFramebufferRenderbufferOES(GL_FRAMEBUFFER_OES, GL_COLOR_ATTACHMENT0_OES, GL_RENDERBUFFER_OES, viewRenderbuffer);
+  [context renderbufferStorage:GL_RENDERBUFFER_OES
+                  fromDrawable:(CAEAGLLayer *)self.layer];
+  glFramebufferRenderbufferOES(GL_FRAMEBUFFER_OES, GL_COLOR_ATTACHMENT0_OES,
+                               GL_RENDERBUFFER_OES, viewRenderbuffer);
 
-  glGetRenderbufferParameterivOES(GL_RENDERBUFFER_OES, GL_RENDERBUFFER_WIDTH_OES, &backingWidth);
-  glGetRenderbufferParameterivOES(GL_RENDERBUFFER_OES, GL_RENDERBUFFER_HEIGHT_OES, &backingHeight);
+  glGetRenderbufferParameterivOES(GL_RENDERBUFFER_OES,
+                                  GL_RENDERBUFFER_WIDTH_OES, &backingWidth);
+  glGetRenderbufferParameterivOES(GL_RENDERBUFFER_OES,
+                                  GL_RENDERBUFFER_HEIGHT_OES, &backingHeight);
 
-  if (USE_DEPTH_BUFFER) {
+  if(USE_DEPTH_BUFFER) {
     glGenRenderbuffersOES(1, &depthRenderbuffer);
     glBindRenderbufferOES(GL_RENDERBUFFER_OES, depthRenderbuffer);
-    glRenderbufferStorageOES(GL_RENDERBUFFER_OES, GL_DEPTH_COMPONENT16_OES, backingWidth, backingHeight);
-    glFramebufferRenderbufferOES(GL_FRAMEBUFFER_OES, GL_DEPTH_ATTACHMENT_OES, GL_RENDERBUFFER_OES, depthRenderbuffer);
+    glRenderbufferStorageOES(GL_RENDERBUFFER_OES, GL_DEPTH_COMPONENT16_OES,
+                             backingWidth, backingHeight);
+    glFramebufferRenderbufferOES(GL_FRAMEBUFFER_OES, GL_DEPTH_ATTACHMENT_OES,
+                                 GL_RENDERBUFFER_OES, depthRenderbuffer);
   }
 
-  if(glCheckFramebufferStatusOES(GL_FRAMEBUFFER_OES) != GL_FRAMEBUFFER_COMPLETE_OES) {
-    NSLog(@"failed to make complete framebuffer object %x", glCheckFramebufferStatusOES(GL_FRAMEBUFFER_OES));
+  if(glCheckFramebufferStatusOES(GL_FRAMEBUFFER_OES) !=
+     GL_FRAMEBUFFER_COMPLETE_OES) {
+    NSLog(@"failed to make complete framebuffer object %x",
+          glCheckFramebufferStatusOES(GL_FRAMEBUFFER_OES));
     return NO;
   }
 
@@ -144,7 +155,7 @@
 
 - (void)dealloc
 {
-  if ([EAGLContext currentContext] == context) {
+  if([EAGLContext currentContext] == context) {
     [EAGLContext setCurrentContext:nil];
   }
 }

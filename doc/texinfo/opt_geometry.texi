@@ -2,32 +2,37 @@
 
 @ftable @code
 @item Geometry.DoubleClickedPointCommand
-Command parsed when double-clicking on a point@*
-Default value: @code{""}@*
+Command parsed when double-clicking on a point, or 'ONELAB' to edit associated ONELAB parameters@*
+Default value: @code{"ONELAB"}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.DoubleClickedLineCommand
-Command parsed when double-clicking on a line@*
-Default value: @code{""}@*
+@item Geometry.DoubleClickedCurveCommand
+Command parsed when double-clicking on a curve, or 'ONELAB' to edit associated ONELAB parameters@*
+Default value: @code{"ONELAB"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.DoubleClickedSurfaceCommand
-Command parsed when double-clicking on a surface@*
-Default value: @code{""}@*
+Command parsed when double-clicking on a surface, or 'ONELAB' to edit associated ONELAB parameters@*
+Default value: @code{"ONELAB"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.DoubleClickedVolumeCommand
-Command parsed when double-clicking on a volume@*
-Default value: @code{""}@*
+Command parsed when double-clicking on a volume, or 'ONELAB' to edit associated ONELAB parameters@*
+Default value: @code{"ONELAB"}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCTargetUnit
-Length unit to which coordinates from STEP and IGES files are converted to when imported by OpenCASCADE, e.g. 'M' for meters (leave empty to use OpenCASCADE default bahavior)@*
+Length unit to which coordinates from STEP and IGES files are converted to when imported by OpenCASCADE, e.g. 'M' for meters (leave empty to use the default OpenCASCADE behavior); the option should be set before importing the STEP or IGES file@*
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.PipeDefaultTrihedron
+Default trihedron type when creating pipes@*
+Default value: @code{"DiscreteTrihedron"}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.AutoCoherence
-Should all duplicate entities be automatically removed with the built-in geometry kernel? (If AutoCoherence == 2, also remove degenerate entities.) The option has no effect with the OpenCASCADE kernel@*
+Should all duplicate entities be automatically removed with the built-in geometry kernel? If Geometry.AutoCoherence = 2, also remove degenerate entities. The option has no effect with the OpenCASCADE kernel@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -37,8 +42,33 @@ Default value: @code{0}@*
 Saved in: @code{-}
 
 @item Geometry.CopyMeshingMethod
-Copy meshing method (unstructured or transfinite) when duplicating geometrical entities?@*
+Copy meshing method (unstructured or transfinite) when duplicating geometrical entities with built-in geometry kernel?@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.Curves
+Display geometry curves?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.CurveLabels
+Display curve labels?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.CurveSelectWidth
+Display width of selected curves (in pixels)@*
+Default value: @code{3}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.CurveType
+Display curves as solid color segments (0) or 3D cylinders (1)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.CurveWidth
+Display width of lines (in pixels)@*
+Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.DoubleClickedEntityTag
@@ -61,13 +91,23 @@ Number of control points for splines created during extrusion@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.FirstEntityTag
+First tag (>= 1) of entities when creating a model@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.FirstPhysicalTag
+First tag (>= 1) of physicall groups when creating a model@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.HighlightOrphans
-Highlight orphan entities (lines connected to a single surface, etc.)?@*
+Highlight orphan and boundary entities?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.LabelType
-Type of entity label (0: description, 1: elementary number, 2: physical number)@*
+Type of entity label (0: description, 1: elementary entity tag, 2: physical group tag, 3: elementary name, 4: physical name)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -79,31 +119,6 @@ Saved in: @code{General.OptionsFileName}
 @item Geometry.LightTwoSide
 Light both sides of surfaces (leads to slower rendering)@*
 Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Geometry.Lines
-Display geometry curves?@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Geometry.LineNumbers
-Display curve numbers?@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Geometry.LineSelectWidth
-Display width of selected curves (in pixels)@*
-Default value: @code{3}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Geometry.LineType
-Display curves as solid color segments (0), 3D cylinders (1) or tapered cylinders (2)@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Geometry.LineWidth
-Display width of lines (in pixels)@*
-Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.MatchGeomAndMesh
@@ -127,8 +142,13 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.NumSubEdges
-Number of edge subdivisions between control points when displaying curves@*
+Number of subdivisions (per control point or pole) used to draw curves@*
 Default value: @code{40}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OCCAutoEmbed
+Automatically embed points, curves and faces in higher dimensional entities if they are marked as 'internal' by OpenCASCADE@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCAutoFix
@@ -141,7 +161,12 @@ Try to preserve the numbering of entities through OpenCASCADE boolean operations
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.OCCDisableSTL
+@item Geometry.OCCBoundsUseStl
+Use STL mesh for computing bounds of OpenCASCADE shapes (more accurate, but slower)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OCCDisableStl
 Disable STL creation in OpenCASCADE kernel@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
@@ -161,14 +186,29 @@ Fix small faces when importing STEP, IGES and BRep models with the OpenCASCADE k
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.OCCExportOnlyVisible
+Only consider visible shapes when exporting STEP or BREP models with the OpenCASCADE kernel@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.OCCImportLabels
 Import labels and colors when importing STEP models with the OpenCASCADE kernel@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.OCCMakeSolids
+Fix shells and make solids when importing STEP, IGES and BRep models with the OpenCASCADE kernel@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.OCCParallel
 Use multi-threaded OpenCASCADE boolean operators@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OCCFastUnbind
+Use fast (i.e. without recursive checks on boundaries) unbinding of entities in geometrical transformations (1), as well as in boolean operations (2)@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCScaling
@@ -178,6 +218,21 @@ Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCSewFaces
 Sew faces when importing STEP, IGES and BRep models with the OpenCASCADE kernel@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OCCThruSectionsDegree
+Maximum degree of surfaces generated by thrusections with the OpenCASCADE kernel, if not explicitly specified (default OCC value if negative)@*
+Default value: @code{-1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OCCUnionUnify
+Try to unify faces and edges (remove internal seams) which lie on the same geometry after performing a boolean union with the OpenCASCADE kernel@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OCCUseGenericClosestPoint
+Use generic algrithm to compute point projections in the OpenCASCADE kernel (less robust, but significally faster in some configurations)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -211,13 +266,18 @@ Use old newreg definition for geometrical transformations (compatibility option 
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.OrientedPhysicals
+Use sign of elementary entity in physical definition as orientation indicator@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.Points
 Display geometry points?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.PointNumbers
-Display points numbers?@*
+@item Geometry.PointLabels
+Display points labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -246,8 +306,8 @@ Global geometry scaling factor@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.OrientedPhysicals
-Use sign of elementary entity in physical definition as orientation indicator@*
+@item Geometry.SnapPoints
+Snap points on curves if their evaluation using the parametrization is larger than the geometrical tolerance (currently only with the OpenCASCADE kernel)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -271,13 +331,13 @@ Display geometry surfaces?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.SurfaceNumbers
-Display surface numbers?@*
+@item Geometry.SurfaceLabels
+Display surface labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.SurfaceType
-Surface display type (0: cross, 1: wireframe, 2: solid)@*
+Surface display type (0: cross, 1: wireframe, 2: solid). Wireframe and solid are not available with the built-in geometry kernel.@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -347,12 +407,17 @@ Default value: @code{1}@*
 Saved in: @code{-}
 
 @item Geometry.Volumes
-Display geometry volumes? (not implemented yet)@*
+Display geometry volumes?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.VolumeNumbers
-Display volume numbers? (not implemented yet)@*
+@item Geometry.VolumeLabels
+Display volume labels?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.VolumeType
+Volume display type (0: sphere, 1: diamond)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -361,7 +426,7 @@ Normal geometry point color@*
 Default value: @code{@{90,90,90@}}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Geometry.Color.Lines
+@item Geometry.Color.Curves
 Normal geometry curve color@*
 Default value: @code{@{0,0,255@}}@*
 Saved in: @code{General.OptionsFileName}
@@ -373,7 +438,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Color.Volumes
 Normal geometry volume color@*
-Default value: @code{@{255,255,0@}}@*
+Default value: @code{@{200,200,0@}}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.Color.Selection

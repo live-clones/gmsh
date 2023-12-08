@@ -1,4 +1,4 @@
-// 
+//
 //  eddyblade3d-1.geo
 //
 //  Copyright 2002 by Alfred P. Steffens, Jr. <alfred.p.steffens-jr@boeing.com>
@@ -17,7 +17,6 @@ shield_scale = 0.7;
 large_scale = 1.5;
 */
 
-Mesh.Algorithm = 3;
 Mesh.Smoothing = 3;
 a=0.2;
 tiny_scale = a/3.;
@@ -1279,4 +1278,3 @@ Physical Volume (27) = {50000446};
 Physical Volume (28) = {51000448};
 
 //  end .geo file
-

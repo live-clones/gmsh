@@ -27,12 +27,12 @@ Delete{ Volume{aa[1]}; } // this volume is wrong: we will be carving holes in it
 
 Function newsphere
   rr = 0.5-sphere_dist;
-  a = newp; 
+  a = newp;
   b = newl;
-  c = newll; 
-  d = news; 
-  e = newsl; 
-  f = newv; 
+  c = newll;
+  d = news;
+  e = newsl;
+  f = newv;
   Point(a) = {i,j,k,lc};
   Point(a+1) = {i,j+rr,k,lc};
   Point(a+2) = {i,j-rr,k,lc};
@@ -60,9 +60,9 @@ Function newsphere
   Line Loop(c+5) = {b+4,-(b+1),-(b+8)}; Surface(d+5) = {c+5};
   Line Loop(c+6) = {b+8,-b,b+7}; Surface(d+6) = {c+6};
   Line Loop(c+7) = {b+7,-(b+11),b+3}; Surface(d+7) = {c+7};
-  Surface Loop(e) = {d+1,-(d+4),-(d+3),d+2,d,(d+6),-(d+5),-(d+7)}; 
+  Surface Loop(e) = {d+1,-(d+4),-(d+3),d+2,d,(d+6),-(d+5),-(d+7)};
   Volume(f) = e;
-  holes[] += e; 
+  holes[] += e;
 Return
 
 //random distribution
@@ -90,7 +90,7 @@ For i In {1:xdim-2:1}
 	    array[(i-1)*ydim*zdim + (j-1)*zdim + k] == 0 &&
 	    array[(i)*ydim*zdim + (j+1)*zdim + k] == 0 &&
 	    array[(i)*ydim*zdim + (j-1)*zdim + k] == 0 &&
-	    
+
 	    array[(i+1)*ydim*zdim + j*zdim + (k-1)] == 0 &&
 	    array[(i+1)*ydim*zdim + (j+1)*zdim + (k-1)] == 0 &&
 	    array[(i+1)*ydim*zdim + (j-1)*zdim + (k-1)] == 0 &&
@@ -100,7 +100,7 @@ For i In {1:xdim-2:1}
 	    array[(i)*ydim*zdim + (j+1)*zdim + (k-1)] == 0 &&
 	    array[(i)*ydim*zdim + (j-1)*zdim + (k-1)] == 0 &&
 	    array[i*ydim*zdim + j*zdim + (k-1)]  == 0 &&
-	    
+
 	    array[(i+1)*ydim*zdim + j*zdim + (k+1)] == 0 &&
 	    array[(i+1)*ydim*zdim + (j+1)*zdim + (k+1)] == 0 &&
 	    array[(i+1)*ydim*zdim + (j-1)*zdim + (k+1)] == 0 &&
@@ -121,7 +121,7 @@ For i In {0:xdim-1:1}
   For j In {0:ydim-1:1}
     For k In {0:zdim-1:1}
       //Printf("array[%g][%g][%g] = %g", i, j, k,array[i*ydim*zdim + j*zdim + k]);
-      If (array[i*ydim*zdim + j*zdim + k] == 1) 
+      If (array[i*ydim*zdim + j*zdim + k] == 1)
 	Call newsphere;
       EndIf
     EndFor
@@ -132,5 +132,4 @@ EndFor
 c = newsl; Surface Loop(c) = {43,-1,35,39,48,47};
 v = newv; Volume(v) = {c, holes[]};
 
-Coherence; // make sure duplicate nodes are removed when sphere_dist=0
-Field[1] = BoundaryLayer;
+Coherence; // make sure duplicate points are removed when sphere_dist=0

@@ -19,16 +19,16 @@ extern unsigned int getColorByEntity(GEntity *e);
 
 void drawMeshVertex(GVertex *e)
 {
-  if(!CTX::instance()->mesh.points && !CTX::instance()->mesh.pointsNum) return;
-  if(!CTX::instance()->mesh.points) return;
+  if(!CTX::instance()->mesh.nodes) return;
   std::vector<GLfloat> vertex;
   std::vector<GLubyte> color;
-  for(unsigned int i = 0; i < e->mesh_vertices.size(); i++){
+  for(unsigned int i = 0; i < e->mesh_vertices.size(); i++) {
     MVertex *v = e->mesh_vertices[i];
     if(!v->getVisibility()) continue;
     unsigned int col;
     if(CTX::instance()->mesh.colorCarousel == 0 ||
-       CTX::instance()->mesh.volumesFaces || CTX::instance()->mesh.surfacesFaces) {
+       CTX::instance()->mesh.volumeFaces ||
+       CTX::instance()->mesh.surfaceFaces) {
       if(v->getPolynomialOrder() > 1)
         col = CTX::instance()->color.mesh.nodeSup;
       else
@@ -46,9 +46,9 @@ void drawMeshVertex(GVertex *e)
   }
   glVertexPointer(3, GL_FLOAT, 0, &vertex.front());
   glEnableClientState(GL_VERTEX_ARRAY);
-  glColorPointer(4, GL_UNSIGNED_BYTE, color.size()/4, &color.front());
+  glColorPointer(4, GL_UNSIGNED_BYTE, (int)color.size() / 4, &color.front());
   glEnableClientState(GL_COLOR_ARRAY);
-  glDrawArrays(GL_POINTS, 0, vertex.size()/3);
+  glDrawArrays(GL_POINTS, 0, (int)vertex.size() / 3);
   glDisableClientState(GL_VERTEX_ARRAY);
   glDisableClientState(GL_COLOR_ARRAY);
 }
@@ -87,17 +87,15 @@ void drawContext::drawMesh()
              (GLubyte)CTX::instance()->unpackGreen(col),
              (GLubyte)CTX::instance()->unpackBlue(col),
              (GLubyte)CTX::instance()->unpackAlpha(col));
-  for(unsigned int i = 0; i < GModel::list.size(); i++){
+  for(unsigned int i = 0; i < GModel::list.size(); i++) {
     GModel *m = GModel::list[i];
     m->fillVertexArrays();
     if(!m->getVisibility()) continue;
     int status = m->getMeshStatus();
     if(status >= 0)
       std::for_each(m->firstVertex(), m->lastVertex(), drawMeshVertex);
-    if(status >= 1)
-      std::for_each(m->firstEdge(), m->lastEdge(), drawMeshEdge);
-    if(status >= 2)
-      std::for_each(m->firstFace(), m->lastFace(), drawMeshFace);
+    if(status >= 1) std::for_each(m->firstEdge(), m->lastEdge(), drawMeshEdge);
+    if(status >= 2) std::for_each(m->firstFace(), m->lastFace(), drawMeshFace);
     if(status >= 3)
       std::for_each(m->firstRegion(), m->lastRegion(), drawMeshRegion);
   }

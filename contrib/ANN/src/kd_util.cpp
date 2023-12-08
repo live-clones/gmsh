@@ -6,12 +6,12 @@
 //----------------------------------------------------------------------
 // Copyright (c) 1997-2005 University of Maryland and Sunil Arya and
 // David Mount.  All Rights Reserved.
-// 
+//
 // This software and related documentation is part of the Approximate
 // Nearest Neighbor Library (ANN).  This software is provided under
 // the provisions of the Lesser GNU Public License (LGPL).  See the
 // file ../ReadMe.txt for further information.
-// 
+//
 // The University of Maryland (U.M.) and the authors make no
 // representations about the suitability or fitness of this software for
 // any purpose.  It is provided "as is" without express or implied
@@ -127,10 +127,10 @@ ANNdist annBoxDistance(			// compute distance from point to box
 	const ANNpoint		hi,				// high point of box
 	int					dim)			// dimension of space
 {
-	register ANNdist dist = 0.0;		// sum of squared distances
-	register ANNdist t;
+	/* register */ ANNdist dist = 0.0;		// sum of squared distances
+	/* register */ ANNdist t;
 
-	for (register int d = 0; d < dim; d++) {
+	for (/* register */ int d = 0; d < dim; d++) {
 		if (q[d] < lo[d]) {				// q is left of box
 			t = ANNdist(lo[d]) - ANNdist(q[d]);
 			dist = ANN_SUM(dist, ANN_POW(t));
@@ -238,8 +238,8 @@ void annMedianSplit(
 	int l = 0;							// left end of current subarray
 	int r = n-1;						// right end of current subarray
 	while (l < r) {
-		register int i = (r+l)/2;		// select middle as pivot
-		register int k;
+		/* register */ int i = (r+l)/2;		// select middle as pivot
+		/* register */ int k;
 
 		if (PA(i,d) > PA(r,d))			// make sure last > pivot
 			PASWAP(i,r)
@@ -279,7 +279,7 @@ void annMedianSplit(
 //		Split the points in an array about a given plane along a
 //		given cutting dimension.  On exit, br1 and br2 are set so
 //		that:
-//		
+//
 //				pa[ 0 ..br1-1] <  cv
 //				pa[br1..br2-1] == cv
 //				pa[br2.. n -1] >  cv

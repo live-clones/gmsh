@@ -482,7 +482,7 @@ char *gk_time2str(time_t time)
 
 
 
-#if !defined(WIN32) && !defined(__MINGW32__)
+#if !defined(WIN32) && !defined(__MINGW32__) && !defined(__PGI) /* PGI fix for Gmsh */
 /************************************************************************/
 /*! \brief Converts a date/time string into its equivalent time_t value
 

@@ -9,7 +9,7 @@
     <key>CFBundleShortVersionString</key><string>GMSH_VERSION</string>
     <key>CFBundleIconFile</key><string>Gmsh.icns</string>
     <key>CFBundleSignature</key><string>GMSH</string>
-    <key>CFBundleGetInfoString</key><string>Gmsh GMSH_VERSION, Copyright (C) 1997-2019 C. Geuzaine and J.-F. Remacle</string>
+    <key>CFBundleGetInfoString</key><string>Gmsh GMSH_VERSION, Copyright (C) 1997-2023 C. Geuzaine and J.-F. Remacle</string>
     <key>CFBundleIdentifier</key><string>org.geuz.Gmsh</string>
     <key>NSHighResolutionCapable</key><true/>
     <key>CFBundleDocumentTypes</key>
@@ -19,7 +19,9 @@
           <string>geo</string>
           <string>brep</string><string>brp</string><string>rle</string>
           <string>igs</string><string>iges</string>
-          <string>stp</string><string>step</string></array>
+          <string>stp</string><string>step</string>
+          <string>xmt_txt</string>
+        </array>
         <key>CFBundleTypeIconFile</key><string>GmshGeo.icns</string>
         <key>CFBundleTypeName</key><string>Gmsh Geometry File</string>
         <key>CFBundleTypeOSTypes</key><array><string>GGEO</string></array>
@@ -33,7 +35,10 @@
           <string>vrml</string><string>wrl</string><string>iv</string>
           <string>bdf</string><string>nas</string>
           <string>mesh</string>
-          <string>mmed</string></array>
+          <string>cgns</string>
+          <string>inp</string>
+          <string>mmed</string>
+        </array>
         <key>CFBundleTypeIconFile</key><string>GmshMsh.icns</string>
         <key>CFBundleTypeName</key><string>Gmsh Mesh File</string>
         <key>CFBundleTypeOSTypes</key><array><string>GMSH</string></array>
@@ -43,7 +48,8 @@
         <key>CFBundleTypeExtensions</key><array>
           <string>pro</string>
           <string>py</string>
-          <string>ol</string></array>
+          <string>ol</string>
+        </array>
         <key>CFBundleTypeIconFile</key><string>GmshSol.icns</string>
         <key>CFBundleTypeName</key><string>Gmsh Solver File</string>
         <key>CFBundleTypeOSTypes</key><array><string>GSOL</string></array>
@@ -52,7 +58,8 @@
       <dict>
         <key>CFBundleTypeExtensions</key><array>
           <string>pos</string>
-          <string>med</string><string>rmed</string></array>
+          <string>med</string><string>rmed</string>
+        </array>
         <key>CFBundleTypeIconFile</key><string>GmshPos.icns</string>
         <key>CFBundleTypeName</key><string>Gmsh Post-Processing File</string>
         <key>CFBundleTypeOSTypes</key><array><string>GPOS</string></array>

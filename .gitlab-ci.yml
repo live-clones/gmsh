@@ -1,7 +1,7 @@
-# Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 #
-# See the LICENSE.txt file for license information. Please report all
-# issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+# See the LICENSE.txt file in the Gmsh root directory for license information.
+# Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 variables:
   EXTRA_OPTION: ""
@@ -17,38 +17,35 @@ variables:
 # Continuous integration builds for all branches
 # ----------------------------------------------
 
-linux64_ci:
-  image: onelab/ubuntu18.10
+linux_ci:
+  image: onelab/ubuntu20.04
   script:
     - mkdir build
     - cd build
     - export CXXFLAGS=-Werror
-    - cmake ${EXTRA_OPTION} ..
+    - cmake ..
     - make -j 8
+    - make doc
     - ctest -j 8 --output-on-failure
-    - valgrind --leak-check=full --error-exitcode=1 ./gmsh ../tutorial/t5.geo -3
+    - valgrind --leak-check=full --error-exitcode=1 ./gmsh ../tutorials/t5.geo -3
   tags:
     - linux64
     - docker
   except:
     - tags
 
-linux64_compatibility_ci:
-  image: onelab/ubuntu18.10
+linux_compatibility_ci:
+  image: onelab/ubuntu20.04
   script:
     - mkdir build
     - cd build
-    - cmake -DDEFAULT=0 ${EXTRA_OPTION} ..
+    - cmake -DDEFAULT=0 ..
     - make -j 8
     - cmake -DENABLE_PARSER=1 ..
     - make -j 8
     - cmake -DENABLE_POST=1 ..
     - make -j 8
-    - cmake -DENABLE_MESH=1 -DENABLE_BUILD_DYNAMIC=1 -DENABLE_PRIVATE_API=1 -DENABLE_WRAP_PYTHON=1 ..
-    - make -j 8
-    - rm -rf *
-    - export CXXFLAGS=-std=c++98
-    - cmake -DENABLE_CXX11=0 -DENABLE_OCC=0 ..
+    - cmake -DENABLE_MESH=1 -DENABLE_BUILD_DYNAMIC=1 -DENABLE_PRIVATE_API=1 -DENABLE_EIGEN=0 -DENABLE_WRAP_PYTHON=1 -DENABLE_PETSC=1 ..
     - make -j 8
   tags:
     - linux64
@@ -56,24 +53,24 @@ linux64_compatibility_ci:
   except:
     - tags
 
-windows64_ci:
+windows_ci:
   script:
     - md build
     - cd build
-    - bash -c "/usr/bin/cmake -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;-lgfortran;-lquadmath' -DENABLE_OS_SPECIFIC_INSTALL=1 ${EXTRA_OPTION} .."
-    - bash -c "/usr/bin/make -j 8"
-    - bash -c "/usr/bin/ctest -j 8 --output-on-failure"
+    - c:\cygwin64\bin\bash -c "/usr/bin/cmake -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;-lgfortran;-lquadmath' -DENABLE_OS_SPECIFIC_INSTALL=1 .."
+    - c:\cygwin64\bin\bash -c "/usr/bin/make -j 8"
+    - c:\cygwin64\bin\bash -c "/usr/bin/ctest -j 8 --output-on-failure"
   tags:
     - windows64
     - shared
   except:
     - tags
 
-windows64_msvc_ci:
+windows_msvc_ci:
   script:
     - md build
     - cd build
-    - cmake -DENABLE_BLAS_LAPACK=0 -DENABLE_HXT=0 ${EXTRA_OPTION} ..
+    - cmake -DENABLE_OPENMP=0 ..
     - msbuild package.vcxproj
   tags:
     - windows64
@@ -92,7 +89,7 @@ windows64_msvc_ci:
   script:
     - mkdir build
     - cd build
-    - cmake -DGMSH_HOST=gmsh.info -DENABLE_NATIVE_FILE_CHOOSER=0 ${EXTRA_OPTION} ..
+    - cmake -DGMSH_HOST=gmsh.info -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/petsc-3.14.4 ${EXTRA_OPTION} ..
     - make package -j 8
     - PKG=`ls gmsh-*.tar*`
     - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/Linux/${PKG/\.tar\.gz/\.tgz}
@@ -101,69 +98,59 @@ windows64_msvc_ci:
     - linux64
     - docker
 
-linux64_official_snapshot:
-  image: onelab/debian.wheezy.64bit
+linux_official_snapshot:
+  image: onelab/debian.stretch.64bit
   variables:
-    EXTRA_OPTION: "-DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib64/libgfortran.a;/usr/local/lib64/libquadmath.a;-lpthread;-static-libstdc++'"
+    EXTRA_OPTION: "-DCMAKE_EXE_LINKER_FLAGS=-static-libstdc++"
   <<: *linux_official
   except:
     - tags
 
-linux64_official_release:
-  image: onelab/debian.wheezy.64bit
+linux_official_release:
+  image: onelab/debian.stretch.64bit
   variables:
-    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib64/libgfortran.a;/usr/local/lib64/libquadmath.a;-lpthread;-static-libstdc++'"
+    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DCMAKE_EXE_LINKER_FLAGS=-static-libstdc++"
   <<: *linux_official
   only:
     - /^gmsh_.*$/
 
-linux64-sdk_official_snapshot:
-  image: onelab/debian.wheezy.64bit
+linux-sdk_official_snapshot:
+  image: onelab/debian.stretch.64bit
   variables:
-    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib64/libgfortran.a;/usr/local/lib64/libquadmath.a;-lpthread;-static-libstdc++'"
+    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *linux_official
   except:
     - tags
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+      - build/version.txt
+    expire_in: 1day
 
-linux64-sdk_official_release:
-  image: onelab/debian.wheezy.64bit
+linux-sdk_official_release:
+  image: onelab/debian.stretch.64bit
   variables:
-    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib64/libgfortran.a;/usr/local/lib64/libquadmath.a;-lpthread;-static-libstdc++'"
+    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *linux_official
   only:
     - /^gmsh_.*$/
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+      - build/version.txt
+    expire_in: 1day
 
-linux32_official_snapshot:
-  image: onelab/debian.wheezy.32bit
+linux-nox-sdk_official_snapshot:
+  image: onelab/debian.stretch.64bit
   variables:
-    EXTRA_OPTION: "-DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread;-static-libstdc++'"
+    EXTRA_OPTION: "-DGMSH_EXTRA_VERSION=-nox -DENABLE_FLTK=0 -DENABLE_OCC_CAF=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *linux_official
   except:
     - tags
-
-linux32_official_release:
-  image: onelab/debian.wheezy.32bit
-  variables:
-    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread;-static-libstdc++'"
-  <<: *linux_official
-  only:
-    - /^gmsh_.*$/
-
-linux32-sdk_official_snapshot:
-  image: onelab/debian.wheezy.32bit
-  variables:
-    EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread;-static-libstdc++'"
-  <<: *linux_official
-  except:
-    - tags
-
-linux32-sdk_official_release:
-  image: onelab/debian.wheezy.32bit
-  variables:
-    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/usr/local/lib/libgfortran.a;/usr/local/lib/libquadmath.a;-lpthread;-static-libstdc++'"
-  <<: *linux_official
-  only:
-    - /^gmsh_.*$/
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+    expire_in: 1day
 
 # --------------------------------------------
 # Official Windows builds (master branch only)
@@ -175,12 +162,12 @@ linux32-sdk_official_release:
   script:
     - md build
     - cd build
-    - bash -c "/usr/bin/cmake -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/mingw32-windres.exe -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;-lgfortran;-lquadmath' -DENABLE_OS_SPECIFIC_INSTALL=1 ${EXTRA_OPTION} .."
-    - bash -c "/usr/bin/make package -j 3"
-    - bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/bin/Windows/"
-    - bash -c "/usr/bin/ctest -j 3 --output-on-failure"
+    - c:\cygwin64\bin\bash -c "/usr/bin/cmake -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/home/geuzaine/src/petsc ${EXTRA_OPTION} .."
+    - c:\cygwin64\bin\bash -c "/usr/bin/make package -j 4"
+    - c:\cygwin64\bin\bash -c "/usr/bin/scp -o StrictHostKeyChecking=no -i /home/geuzaine/.ssh/id_rsa gmsh-*.zip geuzaine@gmsh.info:.wwwgmsh/bin/Windows/"
+    - c:\cygwin64\bin\bash -c "/usr/bin/ctest -j 4 --output-on-failure"
 
-windows64_official_snapshot:
+windows_official_snapshot:
   <<: *windows_official
   tags:
     - windows64
@@ -188,7 +175,7 @@ windows64_official_snapshot:
   except:
     - tags
 
-windows64_official_release:
+windows_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1"
   <<: *windows_official
@@ -198,7 +185,7 @@ windows64_official_release:
   only:
     - /^gmsh_.*$/
 
-windows64-sdk_official_snapshot:
+windows-sdk_official_snapshot:
   variables:
     EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *windows_official
@@ -207,8 +194,12 @@ windows64-sdk_official_snapshot:
     - official
   except:
     - tags
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+    expire_in: 1day
 
-windows64-sdk_official_release:
+windows-sdk_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *windows_official
@@ -217,47 +208,13 @@ windows64-sdk_official_release:
     - official
   only:
     - /^gmsh_.*$/
-
-windows32_official_snapshot:
-  <<: *windows_official
-  tags:
-    - windows32
-    - official
-  except:
-    - tags
-
-windows32_official_release:
-  variables:
-    EXTRA_OPTION: "-DGMSH_RELEASE=1"
-  <<: *windows_official
-  tags:
-    - windows32
-    - official
-  only:
-    - /^gmsh_.*$/
-
-windows32-sdk_official_snapshot:
-  variables:
-    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
-  <<: *windows_official
-  tags:
-    - windows32
-    - official
-  except:
-    - tags
-
-windows32-sdk_official_release:
-  variables:
-    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
-  <<: *windows_official
-  tags:
-    - windows32
-    - official
-  only:
-    - /^gmsh_.*$/
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+    expire_in: 1day
 
 # ------------------------------------------
-# Official MacOS builds (master branch only)
+# Official macOS builds (master branch only)
 # ------------------------------------------
 
 .macos_official: &macos_official
@@ -266,50 +223,112 @@ windows32-sdk_official_release:
   script:
     - mkdir build
     - cd build
-    - /usr/local/bin/cmake -DGMSH_HOST=gmsh.info -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local' -DCMAKE_C_COMPILER=/opt/local/bin/clang-mp-3.9 -DCMAKE_CXX_COMPILER=/opt/local/bin/clang++-mp-3.9 -DENABLE_CAIRO=0 -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;/opt/local/lib/gcc5/libgfortran.a;/opt/local/lib/gcc5/libquadmath.a;/opt/local/lib/gcc5/gcc/x86_64-apple-darwin13/5.4.0/libgcc.a' -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_GMP=0 ${EXTRA_OPTION} ..
-    - make package -j 2
+    - cmake -DGMSH_HOST=gmsh.info -DENABLE_CAIRO=0 -DENABLE_OS_SPECIFIC_INSTALL=1 -DENABLE_PETSC=1 -DPETSC_ARCH=real_mumps_seq -DPETSC_DIR=/Users/geuzaine/src/petsc ${EXTRA_OPTION} ..
+    - make package -j 4
     - PKG=`ls gmsh-*.[dt][ma][gr]*`
-    - if [[ $PKG == *".dmg"* ]]; then scp ${PKG} ace@ace36.montefiore.ulg.ac.be:/tmp; fi
-    - if [[ $PKG == *".dmg"* ]]; then ssh ace@ace36.montefiore.ulg.ac.be /Users/ace/re-sign.sh /tmp/${PKG}; fi
-    - if [[ $PKG == *".dmg"* ]]; then scp ace@ace36.montefiore.ulg.ac.be:/tmp/${PKG} .; fi
-    - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/MacOSX/${PKG/\.tar\.gz/\.tgz}
-    - /usr/local/bin/ctest -j 2 --output-on-failure
+    - '[[ ${PKG} == *.dmg ]] && xcrun notarytool submit ${PKG} --key /Users/geuzaine/AuthKey_4R6P5NYF3T.p8 --key-id 4R6P5NYF3T --issuer 69a6de7c-0b3a-47e3-e053-5b8c7c11a4d1 --wait'
+    - '[[ ${PKG} == *.dmg ]] && xcrun stapler staple ${PKG}'
+    - scp ${PKG} geuzaine@gmsh.info:.wwwgmsh/bin/macOS/${PKG/\.tar\.gz/\.tgz}
+    - ctest -j 4 --output-on-failure
+
+macosx_official_snapshot:
+  <<: *macos_official
   tags:
     - macos64
     - official
-
-macos64_official_snapshot:
-  <<: *macos_official
   except:
     - tags
 
-macos64_official_release:
+macosx_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1"
   <<: *macos_official
+  tags:
+    - macos64
+    - official
   only:
     - /^gmsh_.*$/
 
-macos64-sdk_official_snapshot:
+macosx-sdk_official_snapshot:
   variables:
     EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *macos_official
+  tags:
+    - macos64
+    - official
   except:
     - tags
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+    expire_in: 1day
 
-macos64-sdk_official_release:
+macosx-sdk_official_release:
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *macos_official
+  tags:
+    - macos64
+    - official
   only:
     - /^gmsh_.*$/
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+    expire_in: 1day
+
+macosarm_official_snapshot:
+  <<: *macos_official
+  tags:
+    - macos64arm
+    - official
+  except:
+    - tags
+
+macosarm_official_release:
+  variables:
+    EXTRA_OPTION: "-DGMSH_RELEASE=1"
+  <<: *macos_official
+  tags:
+    - macos64arm
+    - official
+  only:
+    - /^gmsh_.*$/
+
+macosarm-sdk_official_snapshot:
+  variables:
+    EXTRA_OPTION: "-DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
+  <<: *macos_official
+  tags:
+    - macos64arm
+    - official
+  except:
+    - tags
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+    expire_in: 1day
+
+macosarm-sdk_official_release:
+  variables:
+    EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_OS_SPECIFIC_INSTALL=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
+  <<: *macos_official
+  tags:
+    - macos64arm
+    - official
+  only:
+    - /^gmsh_.*$/
+  artifacts:
+    paths:
+      - build/_CPack_Packages/
+    expire_in: 1day
 
 # ----------------------------------------------
 # Official source snapshots (master branch only)
 # ----------------------------------------------
 
 .source_official: &source_official
-  image: onelab/ubuntu18.10
+  image: onelab/ubuntu20.04
   only:
     - master@gmsh/gmsh
   <<: *ssh_config
@@ -341,17 +360,18 @@ source_official_release:
 # ----------------------------------------------
 
 doc_official_snapshot:
-  image: onelab/ubuntu18.10
+  stage: .post
+  image: onelab/ubuntu20.04
   only:
     - master@gmsh/gmsh
   <<: *ssh_config
   script:
     - mkdir build_doc
     - cd build_doc
-    - cmake ${EXTRA_OPTION} ..
+    - cmake ..
     - make doc
     - scp gmsh-*-doc.tgz geuzaine@gmsh.info:.wwwgmsh/doc.tgz
-    - ssh geuzaine@gmsh.info 'cd .wwwgmsh/dev && tar zxvf ../doc.tgz'
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh/dev && tar zxvf ../doc.tgz"
   tags:
     - linux64
     - docker
@@ -359,20 +379,103 @@ doc_official_snapshot:
     - tags
 
 doc_official_release:
-  image: onelab/ubuntu18.10
-  variables:
-    EXTRA_OPTION: "-DGMSH_RELEASE=1"
+  stage: .post
+  image: onelab/ubuntu20.04
   only:
     - master@gmsh/gmsh
   <<: *ssh_config
   script:
     - mkdir build_doc
     - cd build_doc
-    - cmake ${EXTRA_OPTION} ..
+    - cmake -DGMSH_RELEASE=1 ..
     - make doc
     - scp gmsh-*-doc.tgz geuzaine@gmsh.info:.wwwgmsh/doc.tgz
-    - ssh geuzaine@gmsh.info 'cd .wwwgmsh && tar zxvf doc.tgz'
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh && tar zxvf doc.tgz"
     - scp ../doc/gmsh.html geuzaine@gmsh.info:.wwwgmsh/
+  tags:
+    - linux64
+    - docker
+  only:
+    - /^gmsh_.*$/
+
+# ----------------------------------------------
+# Cookbook
+# ----------------------------------------------
+
+doc_cookbook:
+  stage: .post
+  image: onelab/ubuntu20.04
+  only:
+    - gmsh/gmsh
+  <<: *ssh_config
+  script:
+    - mdbook build doc/cookbook
+    - scp -r doc/cookbook/book geuzaine@gmsh.info:.wwwgmsh/doc/cookbook
+  tags:
+    - linux64
+    - docker
+
+# ----------------------------------------------
+# PyPi package
+# ----------------------------------------------
+
+pypi_official_snapshot:
+  stage: .post
+  image: onelab/ubuntu20.04
+  only:
+    - master@gmsh/gmsh
+  <<: *ssh_config
+  dependencies:
+    - linux-sdk_official_snapshot
+    - linux-nox-sdk_official_snapshot
+    - windows-sdk_official_snapshot
+    - macosx-sdk_official_snapshot
+    - macosarm-sdk_official_snapshot
+  script:
+    - cd build
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Linux/TGZ/gmsh-git-Linux64-sdk/ manylinux_2_24_x86_64
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Linux/TGZ/gmsh-nox-git-Linux64-sdk/ manylinux_2_24_x86_64
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/CYGWIN/ZIP/gmsh-git-Windows64-sdk/ win_amd64
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin/TGZ/gmsh-git-MacOSX-sdk/ macosx_10_15_x86_64
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin/TGZ/gmsh-git-MacOSARM-sdk/ macosx_12_0_arm64
+    - scp gmsh-*.dev1+nox*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages-dev-nox/gmsh/
+    - scp gmsh-*.dev1-*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages-dev/gmsh/
+  tags:
+    - linux64
+    - docker
+  except:
+    - tags
+
+pypi_official_release:
+  stage: .post
+  image: onelab/ubuntu20.04
+  only:
+    - master@gmsh/gmsh
+  <<: *ssh_config
+  dependencies:
+    - linux-sdk_official_release
+    - windows-sdk_official_release
+    - macosx-sdk_official_release
+    - macosarm-sdk_official_release
+  script:
+    - echo "[distutils]" > ~/.pypirc
+    - echo "index-servers = pypi" >> ~/.pypirc
+    - echo "[pypi]" >> ~/.pypirc
+    - echo "username = __token__" >> ~/.pypirc
+    - echo "password = $PYPI_TOKEN" >> ~/.pypirc
+    - cd build
+    - VERSION=`cat version.txt`
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Linux/TGZ/gmsh-${VERSION}-Linux64-sdk/ manylinux_2_24_x86_64
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/CYGWIN/ZIP/gmsh-${VERSION}-Windows64-sdk/ win_amd64
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin/TGZ/gmsh-${VERSION}-MacOSX-sdk/ macosx_10_15_x86_64
+    - python3 ../utils/pypi/sdktowheel.py _CPack_Packages/Darwin/TGZ/gmsh-${VERSION}-MacOSARM-sdk/ macosx_12_0_arm64
+    - scp gmsh*.whl geuzaine@gmsh.info:.wwwgmsh/python-packages/gmsh/
+    - twine upload gmsh*.whl
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Linux && rm -f gmsh-stable-Linux64* && ln -s gmsh-${VERSION}-Linux64.tgz gmsh-stable-Linux64.tgz && ln -s gmsh-${VERSION}-Linux64-sdk.tgz gmsh-stable-Linux64-sdk.tgz"
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/Windows && rm -f gmsh-stable-Windows64* && ln -s gmsh-${VERSION}-Windows64.zip gmsh-stable-Windows64.zip && ln -s gmsh-${VERSION}-Windows64-sdk.zip gmsh-stable-Windows64-sdk.zip"
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/macOS && rm -f gmsh-stable-MacOSX* && ln -s gmsh-${VERSION}-MacOSX.dmg gmsh-stable-MacOSX.dmg && ln -s gmsh-${VERSION}-MacOSX-sdk.tgz gmsh-stable-MacOSX-sdk.tgz"
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh/bin/macOS && rm -f gmsh-stable-MacOSARM* && ln -s gmsh-${VERSION}-MacOSARM.dmg gmsh-stable-MacOSARM.dmg && ln -s gmsh-${VERSION}-MacOSARM-sdk.tgz gmsh-stable-MacOSARM-sdk.tgz"
+    - ssh geuzaine@gmsh.info "cd .wwwgmsh/src && rm -f gmsh-stable-source.tgz && ln -s gmsh-${VERSION}-source.tgz gmsh-stable-source.tgz"
   tags:
     - linux64
     - docker

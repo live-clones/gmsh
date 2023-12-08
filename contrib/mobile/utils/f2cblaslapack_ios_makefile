@@ -10,8 +10,8 @@ ALL: blas_lib lapack_lib
 # Specify options to compile and create libraries
 ########################################################################################
 CC         = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang
-COPTFLAGS  = -O -arch armv7 -arch armv7s -arch arm64 -fembed-bitcode -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -miphoneos-version-min=7.0
-CNOOPT     = -O0 -arch armv7 -arch armv7s -arch arm64 -fembed-bitcode -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -miphoneos-version-min=7.0
+COPTFLAGS  = -O -arch arm64 -fembed-bitcode -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -target arm64-apple-ios9.0
+CNOOPT     = -O0 -arch arm64 -fembed-bitcode -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk -target arm64-apple-ios9.0
 RM         = /bin/rm
 AR         = /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar
 AR_FLAGS   = cr

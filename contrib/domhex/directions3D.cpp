@@ -1,10 +1,11 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 //
 // Contributor(s):
-//   Tristan Carrier François Henrotte
+//   Tristan Carrier
+//   François Henrotte
 
 #include <fstream>
 #include "GModel.h"
@@ -74,6 +75,8 @@ void Frame_field::init_face(GFace *gf)
   SVector3 v3;
   STensor3 m(1.0);
 
+  //  printf("face %d storage size %lu\n",gf->tag(), gf->storage1.size());
+  
   for(i = 0; i < gf->storage1.size(); i++) {
     point = gf->storage1[i];
     v1 = gf->storage2[i];
@@ -1046,7 +1049,7 @@ void Frame_field::save_dist(const std::string &filename)
   std::ofstream file(filename.c_str());
   file << "View \"Distance\" {\n";
 
-  for(std::map<MEdge, double, Less_Edge>::iterator it = crossDist.begin();
+  for(std::map<MEdge, double, MEdgeLessThan>::iterator it = crossDist.begin();
       it != crossDist.end(); it++) {
     MVertex *pVerta = it->first.getVertex(0);
     MVertex *pVertb = it->first.getVertex(1);
@@ -1118,7 +1121,7 @@ void Frame_field::save_energy(GRegion *gr, const std::string &filename)
         matvec(inv, gsf[nod1], grd1);
         matvec(inv, gsf[nod2], grd2);
         SVector3 esf = sf[nod1] * SVector3(grd2) - sf[nod2] * SVector3(grd1);
-        std::map<MEdge, double, Less_Edge>::iterator it =
+        std::map<MEdge, double, MEdgeLessThan>::iterator it =
           crossDist.find(pTet->getEdge(k));
         sum += it->second * esf;
         // sum += (pTet->getVertex(nod2)->z() - pTet->getVertex(nod1)->z()) *
@@ -1155,7 +1158,7 @@ void Size_field::init_region(GRegion *gr)
   std::vector<GFace *>::iterator it;
   for(it = faces.begin(); it != faces.end(); it++) {
     GFace *gf = *it;
-
+    
     for(std::size_t i = 0; i < gf->storage1.size(); i++) {
       SPoint3 point = gf->storage1[i];
       double const h = gf->storage4[i];
@@ -1752,7 +1755,7 @@ std::vector<std::pair<SPoint3, STensor3> > Frame_field::field;
 std::vector<int> Frame_field::labels;
 std::map<MVertex *, STensor3> Frame_field::crossField;
 std::map<MVertex *, double> Frame_field::crossFieldSmoothness;
-std::map<MEdge, double, Less_Edge> Frame_field::crossDist;
+std::map<MEdge, double, MEdgeLessThan> Frame_field::crossDist;
 std::map<MVertex *, std::set<MVertex *> > Frame_field::vertex_to_vertices;
 std::map<MVertex *, std::set<MElement *> > Frame_field::vertex_to_elements;
 std::vector<MVertex *> Frame_field::listVertices;

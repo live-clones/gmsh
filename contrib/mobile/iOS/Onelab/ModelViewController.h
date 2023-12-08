@@ -1,9 +1,9 @@
 #import <UIKit/UIKit.h>
 #import "EAGLView.h"
 
-@interface ModelViewController : UIViewController <UISplitViewControllerDelegate>
-{
-  @private
+@interface ModelViewController
+  : UIViewController <UISplitViewControllerDelegate> {
+@private
   double scaleFactor;
   UIBarButtonItem *_runStopButton, *_playButton, *_stopButton;
   NSTimer *_animation;

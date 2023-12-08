@@ -1,4 +1,4 @@
-// MeshOptimizer - Copyright (C) 2013-2019 UCLouvain-ULiege
+// MeshOptimizer - Copyright (C) 2013-2023 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -59,9 +59,8 @@ public:
   void gXyz2gUvw(const SPoint3 &uvw, const std::vector<SPoint3> &gXyz,
                  std::vector<SPoint3> &gUvw) const
   {
-    std::vector<SPoint3>::iterator itUvw = gUvw.begin();
-    for(std::vector<SPoint3>::const_iterator itXyz = gXyz.begin();
-        itXyz != gXyz.end(); itXyz++) {
+    auto itUvw = gUvw.begin();
+    for(auto itXyz = gXyz.begin(); itXyz != gXyz.end(); itXyz++) {
       *itUvw = *itXyz;
       itUvw++;
     }
@@ -102,9 +101,8 @@ public:
   void gXyz2gUvw(const SPoint3 &uvw, const std::vector<SPoint3> &gXyz,
                  std::vector<SPoint3> &gUvw) const
   {
-    std::vector<SPoint3>::iterator itUvw = gUvw.begin();
-    for(std::vector<SPoint3>::const_iterator itXyz = gXyz.begin();
-        itXyz != gXyz.end(); itXyz++) {
+    auto itUvw = gUvw.begin();
+    for(auto itXyz = gXyz.begin(); itXyz != gXyz.end(); itXyz++) {
       (*itUvw)[0] =
         itXyz->x() * dir[0] + itXyz->y() * dir[1] + itXyz->z() * dir[2];
       itUvw++;
@@ -134,9 +132,8 @@ public:
   void gXyz2gUvw(const SPoint3 &uvw, const std::vector<SPoint3> &gXyz,
                  std::vector<SPoint3> &gUvw) const
   {
-    std::vector<SPoint3>::iterator itUvw = gUvw.begin();
-    for(std::vector<SPoint3>::const_iterator itXyz = gXyz.begin();
-        itXyz != gXyz.end(); itXyz++) {
+    auto itUvw = gUvw.begin();
+    for(auto itXyz = gXyz.begin(); itXyz != gXyz.end(); itXyz++) {
       (*itUvw)[0] =
         itXyz->x() * dir0[0] + itXyz->y() * dir0[1] + itXyz->z() * dir0[2];
       (*itUvw)[1] =

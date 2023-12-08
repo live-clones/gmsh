@@ -1,5 +1,5 @@
-Merge "tutorial/t1.geo";
-Merge "tutorial/view1.pos";
+Merge "tutorials/t1.geo";
+Merge "tutorials/view1.pos";
 
 DefineConstant
 [
@@ -7,7 +7,7 @@ DefineConstant
    Macro "GmshMergeFile", AutoCheck 0}
  m2 = {"script_convert_to_m.geo", Name "Actions/Set views in m",
    Macro "GmshMergeFile", AutoCheck 0}
- m3 = {"script_show_lines.geo", Name "Actions/Toogle line display",
+ m3 = {"script_show_lines.geo", Name "Actions/Toggle line display",
    Macro "GmshMergeFile", AutoCheck 0, Highlight "Pink"}
  m4 = {"script_mesh_model.geo", Name "Actions/Mesh model",
    Macro "GmshMergeFile", AutoCheck 0}
@@ -25,12 +25,12 @@ DefineConstant
  m71 = {Mesh.NbTriangles, Name "Nb triangles",
    ReadOnly 1 },
 
- m7 = {Geometry.Lines, Name "Options/Show lines?", Choices {0,1},
-   GmshOption "Geometry.Lines", AutoCheck 0, Highlight "Pink"}
- m8 = {Geometry.LineNumbers, Name "Options/Show line numbers?", Choices {0,1},
-   GmshOption "Geometry.LineNumbers", AutoCheck 0}
- m9 = {Geometry.LineWidth, Name "Options/Line Width", Min 0.1, Max 7, Step 0.5,
-       GmshOption "Geometry.LineWidth", AutoCheck 0, Highlight "LightGreen"}
+ m7 = {Geometry.Curves, Name "Options/Show curves?", Choices {0,1},
+   GmshOption "Geometry.Curves", AutoCheck 0, Highlight "Pink"}
+ m8 = {Geometry.CurveNumbers, Name "Options/Show curve numbers?", Choices {0,1},
+   GmshOption "Geometry.CurveNumbers", AutoCheck 0}
+ m9 = {Geometry.CurveWidth, Name "Options/Curve Width", Min 0.1, Max 7, Step 0.5,
+       GmshOption "Geometry.CurveWidth", AutoCheck 0, Highlight "LightGreen"}
  m9b = {Mesh.PointNumbers, Name "Options/Mesh point numbers", Choices{0,1},
         GmshOption "Mesh.PointNumbers", AutoCheck 0, Highlight "LightGreen"}
 

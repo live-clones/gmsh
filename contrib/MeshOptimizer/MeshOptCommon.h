@@ -1,4 +1,4 @@
-// MeshOptimizer - Copyright (C) 2013-2019 UCLouvain-ULiege
+// MeshOptimizer - Copyright (C) 2013-2023 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -120,7 +120,7 @@ class MeshOptParameters { // Parameters controlling the strategy
 public:
   int dim; // Which dimension to optimize
   bool onlyVisible; // Apply optimization to visible entities ONLY
-  bool fixBndNodes; // If points can move on boundaries
+  int fixBndNodes; // If points on all (1) or periodic (2) boundaries are fixed
   bool useGeomForPatches,
     useGeomForOpt; // Whether to use info from CAD for creation of patches and
                    // for optimization

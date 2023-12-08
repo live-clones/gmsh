@@ -3,6 +3,8 @@
 appname=Onelab
 enable_occ=1
 enable_simulator=0
+version=2.3.6
+build=62 # must be incremented for each submitted build
 
 while [[ $# -gt 0 ]]; do
   key="$1"
@@ -27,6 +29,14 @@ while [[ $# -gt 0 ]]; do
   shift # past argument or value
 done
 
+# modify Android/app/src/main/AndroidManifest.xml
+#
+#   android:versionName="XXX"
+#   android:versionCode="YYY"
+mobile="${HOME}/src/gmsh/contrib/mobile"
+sed -i "" "s/.*android:versionName.*/          android:versionName=\"${version}\"/" ${mobile}/Android/app/src/main/AndroidManifest.xml
+sed -i "" "s/.*android:versionCode.*/          android:versionCode=\"${build}\"/" ${mobile}/Android/app/src/main/AndroidManifest.xml
+
 android=android
 if [ $enable_simulator != 0 ]; then
   android=androidsimulator
@@ -40,7 +50,7 @@ petsc_lib="$frameworks_dir/petsc"
 slepc_lib="$frameworks_dir/slepc"
 occ_lib="$frameworks_dir/occt/lib"
 occ_inc="$frameworks_dir/occt/include/opencascade"
-android_ndk="${HOME}/Library/Android/sdk/ndk-bundle/"
+android_ndk="${HOME}/Library/Android/sdk/ndk/25.2.9519653/"
 android_sdk="${HOME}/Library/Android/sdk/"
 
 if [ "$appname" != "Onelab" ] ; then
@@ -52,10 +62,13 @@ if [ -f ${models_dir}/cleanup.sh ]; then
   cd ${models_dir} && ./cleanup.sh
 fi
 
+cmake_default="-DDEFAULT=0 -DENABLE_PRIVATE_API=1 -DCMAKE_TOOLCHAIN_FILE=${android_ndk}/build/cmake/android.toolchain.cmake -DANDROID_STL_FORCE_FEATURES=1 -DENABLE_BUILD_ANDROID=1 -DCMAKE_BUILD_TYPE=Release"
+
 if [ $enable_simulator != 0 ]; then
-  cmake_default="-DDEFAULT=0 -DENABLE_PRIVATE_API=1 -DCMAKE_TOOLCHAIN_FILE=${android_ndk}/build/cmake/android.toolchain.cmake -DANDROID_STL_FORCE_FEATURES=1 -DENABLE_BUILD_ANDROID=1 -DCMAKE_BUILD_TYPE=Release -DANDROID_ABI=x86_64"
+  cmake_default="${cmake_default} -DANDROID_ABI=x86_64"
 else
-  cmake_default="-DDEFAULT=0 -DENABLE_PRIVATE_API=1 -DCMAKE_TOOLCHAIN_FILE=${android_ndk}/build/cmake/android.toolchain.cmake -DANDROID_STL_FORCE_FEATURES=1 -DENABLE_BUILD_ANDROID=1 -DCMAKE_BUILD_TYPE=Release"
+  cmake_default="${cmake_default} -DANDROID_ABI=arm64-v8a"
+  # for old 32 bit app: -DANDROID_ABI=armeabi-v7a
 fi
 
 cmake_thread=6
@@ -144,7 +157,13 @@ fi
 # as well as the keystore config in app/build.gradle
 
 check
-gradle assembleRelease
+
+# old-style APK
+gradle --warning-mode all assembleRelease
+
+# new-style APP bundle
+#gradle bundleRelease
+
 check
 
 # to install on the device:

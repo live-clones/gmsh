@@ -2,12 +2,17 @@
 
 @ftable @code
 @item Mesh.Algorithm
-2D mesh algorithm (1: MeshAdapt, 2: Automatic, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms)@*
-Default value: @code{2}@*
+2D mesh algorithm (1: MeshAdapt, 2: Automatic, 3: Initial mesh only, 5: Delaunay, 6: Frontal-Delaunay, 7: BAMG, 8: Frontal-Delaunay for Quads, 9: Packing of Parallelograms, 11: Quasi-structured Quad)@*
+Default value: @code{6}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Algorithm3D
-3D mesh algorithm (1: Delaunay, 4: Frontal, 7: MMG3D, 9: R-tree, 10: HXT)@*
+3D mesh algorithm (1: Delaunay, 3: Initial mesh only, 4: Frontal, 7: MMG3D, 9: R-tree, 10: HXT)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.AlgorithmSwitchOnFailure
+Switch meshing algorithm on failure? (Currently only for 2D Delaunay-based algorithms, switching to MeshAdapt)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -17,7 +22,7 @@ Default value: @code{30}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.AngleToleranceFacetOverlap
-Consider connected facets as overlapping when the dihedral angle between the facets is smaller than the user's defined tolerance@*
+Consider connected facets as overlapping when the dihedral angle between the facets is smaller than the user's defined tolerance (in degrees)@*
 Default value: @code{0.1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -41,14 +46,24 @@ Write mesh files in binary format (if possible)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.BoundaryLayerFanPoints
-Number of points (per Pi radians) for 2D boundary layer fans@*
+@item Mesh.BoundaryLayerFanElements
+Number of elements (per Pi radians) for 2D boundary layer fans@*
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CgnsImportOrder
-Enable the creation of high-order mesh from CGNS structured meshes(1, 2, 4, 8, ...)@*
+Order of the mesh to be created by coarsening CGNS structured zones (1 to 4)@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CgnsImportIgnoreBC
+Ignore information in ZoneBC structures when reading a CGNS file@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CgnsImportIgnoreSolution
+Ignore solution when reading a CGNS file@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CgnsConstructTopology
@@ -56,33 +71,18 @@ Reconstruct the model topology (BREP) after reading a CGNS file@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.CharacteristicLengthExtendFromBoundary
-Extend computation of mesh element sizes from the boundaries into the interior (for 3D Delaunay, use 1: longest or 2: shortest surface edge length)@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.CharacteristicLengthFactor
-Factor applied to all mesh element sizes@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.CharacteristicLengthMin
-Minimum mesh element size@*
+@item Mesh.CgnsExportCPEX0045
+Use the CPEX0045 convention when exporting a high-order mesh to CGNS@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.CharacteristicLengthMax
-Maximum mesh element size@*
-Default value: @code{1e+22}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.CharacteristicLengthFromCurvature
-Automatically compute mesh element sizes from curvature (experimental)@*
+@item Mesh.CgnsExportStructured
+Export transfinite meshes as structured CGNS grids@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.CharacteristicLengthFromPoints
-Compute mesh element sizes from values given at geometry points@*
+@item Mesh.CheckSurfaceNormalValidity
+Check surface mesh validity according to the geometry normal@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -92,14 +92,29 @@ Default value: @code{0}@*
 Saved in: @code{-}
 
 @item Mesh.ColorCarousel
-Mesh coloring (0: by element type, 1: by elementary entity, 2: by physical entity, 3: by partition)@*
+Mesh coloring (0: by element type, 1: by elementary entity, 2: by physical group, 3: by mesh partition)@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CompoundClassify
+How are surface mesh elements classified on compounds? (0: on the new discrete surface, 1: on the original geometrical surfaces - incompatible with e.g. high-order meshing)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.CompoundMeshSizeFactor
+Mesh size factor applied to compound parts@*
+Default value: @code{0.5}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.CpuTime
 CPU time (in seconds) for the generation of the current mesh (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{-}
+
+@item Mesh.CreateTopologyMsh2
+Attempt to (re)create the model topology when reading MSH2 files@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
 
 @item Mesh.DrawSkinOnly
 Draw only the skin of 3D meshes?@*
@@ -121,13 +136,18 @@ Element shrinking factor (between 0 and 1)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.FlexibleTransfinite
-Allow transfinite constraints to be modified for Blossom or by global mesh size factor@*
-Default value: @code{0}@*
+@item Mesh.FirstElementTag
+First tag (>= 1) of mesh elements when generating or renumbering a mesh@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.NewtonConvergenceTestXYZ
-Force inverse surface mapping algorithm (Newton-Raphson) to converge in real coordinates (experimental)@*
+@item Mesh.FirstNodeTag
+First tag (>= 1) of mesh nodes when generating or renumbering a mesh@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.FlexibleTransfinite
+Allow transfinite constraints to be modified for recombination (e.g. Blossom) or by global mesh size factor@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -141,18 +161,28 @@ Display mesh hexahedra?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.HighOrderDistCAD
+Try to optimize distance to CAD in high-order optimizer?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderFixBoundaryNodes
+Fix all (1) or periodic (2) boundary nodes during high-order optimization?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.HighOrderIterMax
 Maximum number of iterations in high-order optimization pass@*
 Default value: @code{100}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.HighOrderNumLayers
-Number of layers around a problematic element to consider for high-order optimization@*
+Number of layers around a problematic element to consider for high-order optimization, or number of element layers to consider in the boundary layer mesh for high-order fast curving@*
 Default value: @code{6}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.HighOrderOptimize
-Optimize high-order meshes? (-1: elastic smoothing, 1: optimization, 2: both)@*
+Optimize high-order meshes? (0: none, 1: optimization, 2: elastic+optimization, 3: elastic, 4: fast curving)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -162,7 +192,7 @@ Default value: @code{25}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.HighOrderPeriodic
-Correct high-order optimization for periodic connections?@*
+Force location of nodes for periodic meshes using periodicity transform (0: assume identical parametrisations, 1: invert parametrisations, 2: compute closest point@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -171,13 +201,13 @@ Poisson ratio of the material used in the elastic smoother for high-order meshes
 Default value: @code{0.33}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.HighOrderPrimSurfMesh
-Try to fix flipped surface mesh elements in high-order optimizer?@*
+@item Mesh.HighOrderSavePeriodic
+Save high-order nodes in periodic section of MSH files?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.HighOrderDistCAD
-Try to optimize distance to CAD in high-order optimizer?@*
+@item Mesh.HighOrderPrimSurfMesh
+Try to fix flipped surface mesh elements in high-order optimizer?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -191,13 +221,53 @@ Maximum threshold for high-order element optimization@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.HighOrderFastCurvingNewAlgo
+Curve boundary layer with new "fast curving" algorithm (experimental)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderCurveOuterBL
+Curve also the outer surface of the boundary layer in the fast curving algorithm (0 = do not curve, 1 = curve according to boundary, 2 = curve without breaking outer elements)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderMaxRho
+Maximum min/max ratio of edge/face size for the detection of BL element columns in the fast curving algorithm@*
+Default value: @code{0.3}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderMaxAngle
+Maximum angle between layers of BL elements for the detection of columns in the fast curving algorithm@*
+Default value: @code{0.174533}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderMaxInnerAngle
+Maximum angle between edges/faces within layers of BL triangles/tets for the detection of columns in the fast curving algorithm@*
+Default value: @code{0.523599}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.HighOrderSkipQualityCheck
+Skip element quality check after high-order mesh generation@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.IgnoreParametrization
+Skip parametrization section when reading meshes in the MSH4 format@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.IgnorePeriodicity
+Skip periodic node section and skip periodic boundary alignment step when reading meshes in the MSH2 format@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.LabelSampling
 Label sampling rate (display one label every `LabelSampling' elements)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.LabelType
-Type of element label (0: element number, 1: elementary entity number, 2: physical entity number, 3: partition number, 4: coordinates)@*
+Type of element label (0: node/element tag, 1: elementary entity tag, 2: physical entity tag, 3: partition, 4: coordinates)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -226,8 +296,8 @@ Display mesh lines (1D elements)?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.LineNumbers
-Display mesh line numbers?@*
+@item Mesh.LineLabels
+Display mesh line labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -236,23 +306,78 @@ Display width of mesh lines (in pixels)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.MaxIterDelaunay3D
+Maximum number of point insertion iterations in 3D Delaunay mesher (0: unlimited)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.MaxNumThreads1D
-Maximum number of threads for 1D meshing (0: use default)@*
+Maximum number of threads for 1D meshing (0: use General.NumThreads)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MaxNumThreads2D
-Maximum number of threads for 2D meshing (0: use default)@*
+Maximum number of threads for 2D meshing (0: use General.NumThreads)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MaxNumThreads3D
-Maximum number of threads for 3D meshing (0: use default)@*
+Maximum number of threads for 3D meshing (0: use General.NumThreads)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.MaxRetries
+Maximum number of times meshing is retried on curves and surfaces with a pending mesh@*
+Default value: @code{10}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.MeshOnlyVisible
-Mesh only visible entities (experimental: use with caution!)@*
+Mesh only visible entities (experimental)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MeshOnlyEmpty
+Mesh only entities that have no existing mesh@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MeshSizeExtendFromBoundary
+Extend computation of mesh element sizes from the boundaries into the interior (0: never; 1: for surfaces and volumes; 2: for surfaces and volumes, but use smallest surface element edge length instead of longest length in 3D Delaunay; -2: only for surfaces; -3: only for volumes)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MeshSizeFactor
+Factor applied to all mesh element sizes@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MeshSizeMin
+Minimum mesh element size@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MeshSizeMax
+Maximum mesh element size@*
+Default value: @code{1e+22}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MeshSizeFromCurvature
+Automatically compute mesh element sizes from curvature, using the value as the target number of elements per 2 * Pi radians@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MeshSizeFromCurvatureIsotropic
+Force isotropic curvature estimation when the mesh size is computed from curvature@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MeshSizeFromPoints
+Compute mesh element sizes from values given at geometry points@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MeshSizeFromParametricPoints
+Compute mesh element sizes from values given at geometry points defining parametric curves@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -286,14 +411,24 @@ METIS algorithm for k-way refinement 'rtype' (1: FM-based cut, 2: Greedy, 3: Two
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.MinimumCirclePoints
-Minimum number of nodes used to mesh a circle (and number of nodes per 2 * Pi radians when the mesh size of adapted to the curvature)@*
+@item Mesh.MinimumLineNodes
+Minimum number of nodes used to mesh (straight) lines@*
+Default value: @code{2}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MinimumCircleNodes
+Minimum number of nodes used to mesh circles and ellipses@*
 Default value: @code{7}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.MinimumCurvePoints
-Minimum number of points used to mesh a (non-straight) curve@*
+@item Mesh.MinimumCurveNodes
+Minimum number of nodes used to mesh curves other than lines, circles and ellipses@*
 Default value: @code{3}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.MinimumElementsPerTwoPi
+[Deprecated]@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MshFileVersion
@@ -313,6 +448,106 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MedSingleModel
 Import MED meshes in the current model, even if several MED mesh names exist@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.NbHexahedra
+Number of hexahedra in the current mesh (read-only)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.NbNodes
+Number of nodes in the current mesh (read-only)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.NbPartitions
+Number of partitions@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.NbPrisms
+Number of prisms in the current mesh (read-only)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.NbPyramids
+Number of pyramids in the current mesh (read-only)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.NbTrihedra
+Number of trihedra in the current mesh (read-only)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.NbQuadrangles
+Number of quadrangles in the current mesh (read-only)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.NbTetrahedra
+Number of tetrahedra in the current mesh (read-only)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.NbTriangles
+Number of triangles in the current mesh (read-only)@*
+Default value: @code{0}@*
+Saved in: @code{-}
+
+@item Mesh.NewtonConvergenceTestXYZ
+Force inverse surface mapping algorithm (Newton-Raphson) to converge in real coordinates (experimental)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Nodes
+Display mesh nodes?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.NodeLabels
+Display mesh node labels?@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.NodeSize
+Display size of mesh nodes (in pixels)@*
+Default value: @code{4}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.NodeType
+Display mesh nodes as solid color dots (0) or 3D spheres (1)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Normals
+Display size of normal vectors (in pixels)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.NumSubEdges
+Number of edge subdivisions used to draw high-order mesh elements@*
+Default value: @code{2}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.OldInitialDelaunay2D
+Use old initial 2D Delaunay code@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Optimize
+Optimize the mesh to improve the quality of tetrahedral elements@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.OptimizeThreshold
+Optimize tetrahedra that have a quality below ... @*
+Default value: @code{0.3}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.OptimizeNetgen
+Optimize the mesh using Netgen to improve the quality of tetrahedral elements@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -386,93 +621,13 @@ Write partitioned meshes in MSH2 format using old style (i.e. by not referencing
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.NbHexahedra
-Number of hexahedra in the current mesh (read-only)@*
-Default value: @code{0}@*
-Saved in: @code{-}
-
-@item Mesh.NbNodes
-Number of nodes in the current mesh (read-only)@*
-Default value: @code{0}@*
-Saved in: @code{-}
-
-@item Mesh.NbPartitions
-Number of partitions@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.NbPrisms
-Number of prisms in the current mesh (read-only)@*
-Default value: @code{0}@*
-Saved in: @code{-}
-
-@item Mesh.NbPyramids
-Number of pyramids in the current mesh (read-only)@*
-Default value: @code{0}@*
-Saved in: @code{-}
-
-@item Mesh.NbTrihedra
-Number of trihedra in the current mesh (read-only)@*
-Default value: @code{0}@*
-Saved in: @code{-}
-
-@item Mesh.NbQuadrangles
-Number of quadrangles in the current mesh (read-only)@*
-Default value: @code{0}@*
-Saved in: @code{-}
-
-@item Mesh.NbTetrahedra
-Number of tetrahedra in the current mesh (read-only)@*
-Default value: @code{0}@*
-Saved in: @code{-}
-
-@item Mesh.NbTriangles
-Number of triangles in the current mesh (read-only)@*
-Default value: @code{0}@*
-Saved in: @code{-}
-
-@item Mesh.Normals
-Display size of normal vectors (in pixels)@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.NumSubEdges
-Number of edge subdivisions when displaying high-order elements@*
-Default value: @code{2}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.Optimize
-Optimize the mesh to improve the quality of tetrahedral elements@*
+@item Mesh.PartitionConvertMsh2
+When reading partitioned meshes in MSH2 format, create new partition entities@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.OptimizeThreshold
-Optimize tetrahedra that have a quality below ... @*
-Default value: @code{0.3}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.OptimizeNetgen
-Optimize the mesh using Netgen to improve the quality of tetrahedral elements@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.Points
-Display mesh nodes (vertices)?@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PointNumbers
-Display mesh node numbers?@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PointSize
-Display size of mesh nodes (in pixels)@*
-Default value: @code{4}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.PointType
-Display mesh nodes as solid color dots (0) or 3D spheres (1)@*
+@item Mesh.PreserveNumberingMsh2
+Preserve element numbering in MSH2 format (will break meshes with multiple physical groups for a single elementary entity)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -486,9 +641,24 @@ Display mesh pyramids?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.Trihedra
-Display mesh trihedra?@*
-Default value: @code{1}@*
+@item Mesh.QuadqsSizemapMethod
+Size map method in QuadQuasiStructured. 0: default, 1: cross-field,2: cross-field + CAD small features adaptation,3: from background mesh (e.g. sizes in current triangulation),4: cross-field + CAD small features adaptation (clamped by background mesh)@*
+Default value: @code{3}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.QuadqsTopologyOptimizationMethods
+Topology optimization methods in QuadQuasiStructured. 0: default (all),100: pattern-based CAD faces,010: disk quadrangulation remeshing,001: cavity remeshing,xxx: combination of multiple methods (e.g. 111 for all)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.QuadqsRemeshingBoldness
+Controls how much cavity remeshing is allowed to distort the quad mesh. From 0 (no quality decrease during remeshing) to 1 (quality can tend to 0 during remeshing).@*
+Default value: @code{0.66}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.QuadqsScalingOnTriangulation
+Ratio on the edge length between the triangulation and the quadrangulation. Use a small ratio (e.g. 0.5) to get a background triangulation finer than the quad mesh. Useful to get a more accurate cross-field.@*
+Default value: @code{0.75}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Quadrangles
@@ -531,14 +701,14 @@ Random factor used in the 3D meshing algorithm@*
 Default value: @code{1e-12}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.PreserveNumberingMsh2
-Preserve element numbering in MSH2 format (will break meshes with multiple physical groups for a single elementary entity)@*
-Default value: @code{0}@*
+@item Mesh.RandomSeed
+Seed of pseudo-random number generator@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.IgnorePeriodicity
-Ignore alignment of periodic boundaries when reading the mesh in MSH2 format (used by ParaView plugin)@*
-Default value: @code{0}@*
+@item Mesh.ReadGroupsOfElements
+Read groups of elements in UNV meshes (this will discard the elementary entity tags inferred from the element section)@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RecombinationAlgorithm
@@ -556,18 +726,28 @@ Number of topological optimization passes (removal of diamonds, ...) of recombin
 Default value: @code{5}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.RecombineNodeRepositioning
+Allow repositioning of nodes during recombination of surface meshes@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.RecombineMinimumQuality
+Minimum quality for quadrangle generated by recombination@*
+Default value: @code{0.01}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.Recombine3DAll
-Apply recombination3D algorithm to all volumes, ignoring per-volume spec@*
+Apply recombination3D algorithm to all volumes, ignoring per-volume spec (experimental)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Recombine3DLevel
-3d recombination level (0: hex, 1: hex+prisms, 2: hex+prism+pyramids)@*
+3d recombination level (0: hex, 1: hex+prisms, 2: hex+prism+pyramids) (experimental)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Recombine3DConformity
-3d recombination conformity type (0: nonconforming, 1: trihedra, 2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)@*
+3d recombination conformity type (0: nonconforming, 1: trihedra, 2: pyramids+trihedra, 3:pyramids+hexSplit+trihedra, 4:hexSplit+trihedra)(experimental)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -581,8 +761,13 @@ Renumber nodes and elements in a continuous sequence after mesh generation@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.ReparamMaxTriangles
+Maximum number of triangles in a single parametrization patch@*
+Default value: @code{250000}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.SaveAll
-Save all elements, even if they don't belong to physical groups@*
+Save all elements, even if they don't belong to physical groups (for some mesh formats, this removes physical groups altogether)@*
 Default value: @code{0}@*
 Saved in: @code{-}
 
@@ -591,8 +776,13 @@ Type of the element tag saved in mesh formats that don't support saving physical
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.SaveTopology
-Save model topology in MSH2 output files (this is always saved in MSH3)@*
+@item Mesh.SaveGroupsOfElements
+Save groups of elements for each physical group (for UNV and INP mesh format) if value is positive; if negative, save groups of elements for physical groups of dimension dim if the (dim+1)^th least significant digit of -Mesh.SaveGroupsOfElements is 1 (for example: -100 will only savesurfaces, while -1010 will save volumes and curves), and for INP skip saving elements of dimension dim altogether if the (dim+1)^th least significant digit of -Mesh.SaveGroupsOfElements is 0@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.SaveGroupsOfNodes
+Save groups of nodes for each physical group (for UNV, INP and Tochnog mesh formats) if value is positive; if negative, save groups of nodes for physical groups of dimension dim if the (dim+1)^th least significant digit of -Mesh.SaveGroupsOfNodes is 1 (for example: -100 will only save surfaces, while -1010 will save volumes and curves); for INP, save groups of nodes for all entities of dimension dim if the (dim+1)^th least significant digit of -Mesh.SaveGroupsOfNodes is 2@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -601,19 +791,19 @@ Save parametric coordinates of nodes@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.SaveGroupsOfNodes
-Save groups of nodes for each physical line and surface (for UNV, INP and Tochnog mesh formats)@*
+@item Mesh.SaveWithoutOrphans
+Don't save orphan entities (not connected to any highest dimensional entity in the model) in MSH4 files@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.SaveTopology
+Save model topology in MSH2 output files (this is always saved in MSH3 and above)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ScalingFactor
 Global scaling factor applied to the saved mesh@*
 Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.SecondOrderExperimental
-Use experimental code to generate second order mesh@*
-Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SecondOrderIncomplete
@@ -651,6 +841,21 @@ Ratio between mesh sizes at nodes of a same edge (used in BAMG)@*
 Default value: @code{1.8}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.StlAngularDeflection
+Maximum angular deflection when creating STL representations of entities (currently only used with the OpenCASCADE kernel)@*
+Default value: @code{0.3}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.StlLinearDeflection
+Maximum relative linear deflection when creating STL representation of entities (currently only used with the OpenCASCADE kernel)@*
+Default value: @code{0.001}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.StlLinearDeflectionRelative
+Compute the linear deflection for STL representations relative to the length of curves (currently only used with the OpenCASCADE kernel)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.StlOneSolidPerSurface
 Create one solid per surface when exporting STL files? (0: single solid, 1: one solid per face, 2: one solid per physical surface)@*
 Default value: @code{0}@*
@@ -662,7 +867,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SubdivisionAlgorithm
-Mesh subdivision algorithm (0: none, 1: all quadrangles, 2: all hexahedra)@*
+Mesh subdivision algorithm (0: none, 1: all quadrangles, 2: all hexahedra, 3: barycentric)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -676,8 +881,8 @@ Display faces of surface mesh?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.SurfaceNumbers
-Display surface mesh element numbers?@*
+@item Mesh.SurfaceLabels
+Display surface mesh element labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -703,12 +908,27 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.ToleranceInitialDelaunay
 Tolerance for initial 3D Delaunay mesher@*
-Default value: @code{1e-08}@*
+Default value: @code{1e-12}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.ToleranceReferenceElement
+Tolerance for classifying a point inside a reference element (of size 1)@*
+Default value: @code{1e-06}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Triangles
 Display mesh triangles?@*
 Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Trihedra
+Display mesh trihedra?@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.TransfiniteTri
+Use alternative transfinite arrangement when meshing 3-sided surfaces@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.UnvStrictFormat
@@ -726,8 +946,8 @@ Display faces of volume mesh?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.VolumeNumbers
-Display volume mesh element numbers?@*
+@item Mesh.VolumeLabels
+Display volume mesh element labels?@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -741,12 +961,12 @@ Method for defining a zone (0: single zone, 1: by partition, 2: by physical)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.Color.Points
+@item Mesh.Color.Nodes
 Mesh node color@*
 Default value: @code{@{0,0,255@}}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.Color.PointsSup
+@item Mesh.Color.NodesSup
 Second order mesh node color@*
 Default value: @code{@{255,0,255@}}@*
 Saved in: @code{General.OptionsFileName}

@@ -3,7 +3,7 @@
 #import "ParametersViewController.h"
 #import "ModelViewController.h"
 
-@interface SplitViewController : UISplitViewController{
+@interface SplitViewController : UISplitViewController {
   ModelViewController *modelViewController;
   ParametersViewController *parametersViewController;
 }

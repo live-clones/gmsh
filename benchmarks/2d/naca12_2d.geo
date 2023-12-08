@@ -224,30 +224,32 @@ Line(8) = {1003,1000};
 Line Loop(9) = {6,7,8,5};
 Line Loop(10) = {2,3,4,1};
 Plane Surface(11) = {9,10};
-//Recombine Surface {11};
 
 Field[2] = BoundaryLayer;
-//Field[2].NodesList = {1};
-//Field[2].EdgesList = {1,2,3,4};
-Field[2].EdgesList = {1,2,3,4};
-Field[2].hfar = 1.5;
-Field[2].hwall_n = 0.0008;
-Field[2].ratio = 1.2;
-Field[2].thickness = .03;
+Field[2].FanPointsList = {1};
+Field[2].CurvesList = {1,2,3,4};
+Field[2].SizeFar = 1.5;
+Field[2].Size = 0.0008;
+Field[2].Ratio = 1.2;
+Field[2].Thickness = .03;
 Field[2].IntersectMetrics = 1;
-Background Field = 2;
+Field[2].Quads = 1;
 
 Field[1] = Box;
-Field[1].VIn = 0.01;
+Field[1].VIn = 0.0025;
 Field[1].VOut = 1;
-Field[1].XMax = 0.6;
 Field[1].XMin = 0.4;
+Field[1].XMax = 0.8;
 Field[1].YMax = 0.1;
 Field[1].YMin = -0.1;
-Field[1].ZMax = 1;
-Field[1].ZMin = -1;
+Field[1].Thickness = 2;
 
 Field[3] = MinAniso;
 Field[3].FieldsList = {1, 2};
-//Background Field = 2;
+Background Field = 3;
 BoundaryLayer Field = 2;
+
+Mesh.BoundaryLayerFanElements = 30;
+
+//Mesh.Algorithm = 8; // del for quads
+//Mesh.RecombineAll = 1;

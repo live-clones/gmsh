@@ -36,21 +36,6 @@ Composite all window tiles in the same output image (for bitmap output only)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Print.PgfTwoDim
-Output PGF format for two dimensions. Mostly irrelevant if `PgfExportAxis=0`. Default `1` (yes).@*
-Default value: @code{1}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Print.PgfExportAxis
-Include axis in export pgf code (not in the png). Default `0` (no).@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Print.PgfHorizontalBar
-Use a horizontal color bar in the pgf output. Default `0` (no).@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Print.DeleteTemporaryFiles
 Delete temporary files used during printing@*
 Default value: @code{1}@*
@@ -141,13 +126,28 @@ JPEG smoothing (between 0 and 100)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Print.PgfTwoDim
+Output PGF format for two dimensions. Mostly irrelevant if `PgfExportAxis=0`. Default `1` (yes).@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.PgfExportAxis
+Include axis in export pgf code (not in the png). Default `0` (no).@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.PgfHorizontalBar
+Use a horizontal color bar in the pgf output. Default `0` (no).@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Print.PostElementary
 Save elementary region tags in mesh statistics exported as post-processing views@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Print.PostElement
-Save element numbers in mesh statistics exported as post-processing views@*
+Save element tags in mesh statistics exported as post-processing views@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -181,13 +181,23 @@ Print all TeX strings as equations@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Print.TexForceFontSize
+Force font size of TeX strings to fontsize in the graphic window@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.TexWidthInMm
+Width of tex graphics in mm (use 0 for the natural width inferred from the image width in pixels)@*
+Default value: @code{150}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Print.Text
 Print text strings?@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Print.X3dCompatibility
-Produce highliy compatible X3D output (no scale bar)@*
+Produce highly compatible X3D output (no scale bar)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -203,6 +213,31 @@ Saved in: @code{General.OptionsFileName}
 
 @item Print.X3dTransparency
 Transparency for X3D output@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.X3dSurfaces
+Save surfaces in CAD X3D output (0: no, 1: yes in a single X3D object,2: one X3D object per geometrical surface, 3: one X3D object perphysical surface)@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.X3dEdges
+Save edges in CAD X3D output (0: no, 1: yes in a single X3D object,2: one X3D object per geometrical edge, 3: one X3D object perphysical edge)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.X3dVertices
+Save vertices in CAD X3D output (0: no, 1: yes)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.X3dVolumes
+Save separate volumes in CAD X3D output (0: no, 1: yes)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Print.X3dColorize
+Apply colors to faces (0: no, 1: yes)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

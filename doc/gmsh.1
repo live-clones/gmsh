@@ -1,4 +1,4 @@
-.TH Gmsh 1 "19 April 2019" "4.3" "Gmsh Manual Pages"
+.TH Gmsh 1 "6 November 2022" "4.11" "Gmsh Manual Pages"
 .UC 4
 .\" ********************************************************************
 .SH NAME
@@ -9,15 +9,16 @@ post-processor
 .B gmsh [file(s)] [option(s)]
 .\" ********************************************************************
 .SH DESCRIPTION
-\fIGmsh\fR is a 3D finite element grid generator with a build-in CAD
+\fIGmsh\fR is a 3D finite element mesh generator with a build-in CAD
 engine and post-processor. Its design goal is to provide a fast, light
-and user-friendly meshing tool with parametric input and advanced
+and user-friendly meshing tool with parametric input and flexible
 visualization capabilities.
 .PP
-\fIGmsh\fR is built around four modules: geometry, mesh, solver and
-post-processing. The specification of any input to these modules is
-done either interactively using the graphical user interface or in
-ASCII text files using \fIGmsh\fR's own scripting language.
+\fIGmsh\fR is built around four modules (geometry, mesh, solver and
+post-processing), which can be controlled with the graphical user interface,
+from the command line, using text files written in \fIGmsh\fR's own scripting
+language (\fI.geo\fR files), or through the C++, C, Python, Julia and Fortran
+application programming interface.
 .\" ********************************************************************
 .SH GEOMETRY OPTIONS
 .TP 4
@@ -60,14 +61,13 @@ set number of mesh smoothing steps.
 set mesh order.
 .TP 4
 .B \-clscale float
-set global scaling factor to the mesh characteristic lengths in the
-model.
+set global mesh element size scaling factor.
 .TP 4
 .B \-clmin float
-Set minimum characteristic length.
+set minimum mesh element size.
 .TP 4
 .B \-clmax float
-Set maximum characteristic length.
+set maximum mesh element size.
 .TP 4
 .B \-rand float
 set random perturbation factor.
@@ -114,8 +114,9 @@ start in automatic, geometry, mesh, solver or post-processing mode.
 .B \-pid
 print pid on stdout.
 .TP 4
-.B \-listen
-always listen to incoming connection requests.
+.B \-listen string
+always listen to incoming connection requests on the given socket
+(a default socket is used if not specified).
 .TP 4
 .B \-v int
 set verbosity level.
@@ -154,9 +155,9 @@ Christophe Geuzaine (cgeuzaine@uliege.be) and Jean-Francois Remacle
 .SH SEE ALSO
 .BR getdp (1),
 .br
-Gmsh examples (\fI/usr/share/doc/gmsh-*/\fR),
+Gmsh examples (\fI/usr/share/doc/gmsh\fR),
 .br
-Gmsh homepage (\fIhttp://gmsh.info\fR).
+Gmsh homepage (\fIhttps://gmsh.info\fR).
 .PP
 The full documentation for Gmsh is maintained as a Texinfo manual.  If
 the

@@ -1,4 +1,4 @@
-// MeshOptimizer - Copyright (C) 2013-2019 UCLouvain-ULiege
+// MeshOptimizer - Copyright (C) 2013-2023 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -33,14 +33,38 @@
 #include "qualityMeasures.h"
 #include "Patch.h"
 #include "bezierBasis.h"
+#include "nodalBasis.h"
+#include "GModel.h"
 
 Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
              const std::map<MElement *, GEntity *> &bndEl2Ent,
              const std::set<MElement *> &els, std::set<MVertex *> &toFix,
-             const std::set<MElement *> &bndEls, bool fixBndNodes)
+             const std::set<MElement *> &bndEls, int fixBndNodes)
   : _typeLengthScale(LS_NONE), _invLengthScaleSq(0.)
 {
   _dim = (*els.begin())->getDim();
+
+  // Get all entities that are linked by periodicity constraints
+  std::set<GEntity*> fixBndEntities;
+  if(fixBndNodes == 2) {
+    GModel *m = GModel::current(); // FIXME get model from entities
+    for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) {
+      GEdge *ge = *it;
+      if(ge->getMeshMaster() != ge) {
+        fixBndEntities.insert(ge);
+        fixBndEntities.insert(ge->getMeshMaster());
+      }
+    }
+    for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
+      GFace *gf = *it;
+      if(gf->getMeshMaster() != gf) {
+        fixBndEntities.insert(gf);
+        fixBndEntities.insert(gf->getMeshMaster());
+      }
+    }
+    Msg::Info("Considering %lu entities with periodic constraints",
+              fixBndEntities.size());
+  }
 
   // Initialize elements, vertices, free vertices and element->vertices
   // connectivity
@@ -54,12 +78,10 @@ Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
   if(!element2entity.empty()) _gEnt.resize(nElements);
   int iEl = 0;
   bool nonGeoMove = false;
-  for(std::set<MElement *>::const_iterator it = els.begin(); it != els.end();
-      ++it, ++iEl) {
+  for(auto it = els.begin(); it != els.end(); ++it, ++iEl) {
     _el[iEl] = *it;
     if(!element2entity.empty()) {
-      std::map<MElement *, GEntity *>::const_iterator itEl2Ent =
-        element2entity.find(*it);
+      auto itEl2Ent = element2entity.find(*it);
       _gEnt[iEl] = (itEl2Ent == element2entity.end()) ? 0 : itEl2Ent->second;
     }
     _nNodEl[iEl] = _el[iEl]->getNumVertices();
@@ -70,8 +92,16 @@ Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
       const bool hasParam = ge->haveParametrization();
       int iV = addVert(vert);
       _el2V[iEl].push_back(iV);
-      if((vDim > 0) && (toFix.find(vert) == toFix.end()) &&
-         (!fixBndNodes || vDim == _dim)) { // Free vertex?
+
+      if((vDim == 0) ||
+         (toFix.find(vert) != toFix.end()) ||
+         (fixBndNodes == 1 && vDim < _dim) ||
+         (fixBndNodes == 2 && fixBndEntities.find(ge) != fixBndEntities.end())) {
+        // fixed
+        _el2FV[iEl].push_back(-1);
+      }
+      else {
+        // free to move
         VertexCoord *coord;
         if(vDim == 3)
           coord = new VertexCoordPhys3D();
@@ -89,13 +119,11 @@ Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
         for(int i = _startPCFV[iFV]; i < _startPCFV[iFV] + vDim; i++)
           _indPCEl[iEl].push_back(i);
       }
-      else
-        _el2FV[iEl].push_back(-1);
     }
   }
 
   if(nonGeoMove)
-    Msg::Warning("Some vertices will be moved along local lines "
+    Msg::Warning("Some nodes will be moved along local lines "
                  "or planes, they may not remain on the exact geometry");
 
   // Initialize boundary elements and related connectivity if required
@@ -107,12 +135,10 @@ Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
     _bndEl2FV.resize(nBndElts);
     int iBndEl = 0;
     bool unknownVert = false;
-    for(std::set<MElement *>::iterator it = bndEls.begin(); it != bndEls.end();
-        ++it, ++iBndEl) {
+    for(auto it = bndEls.begin(); it != bndEls.end(); ++it, ++iBndEl) {
       MElement *bndEl = *it;
       _bndEl[iBndEl] = bndEl;
-      std::map<MElement *, GEntity *>::const_iterator itBndEl2Ent =
-        bndEl2Ent.find(bndEl);
+      auto itBndEl2Ent = bndEl2Ent.find(bndEl);
       _bndEl2Ent[iBndEl] =
         (itBndEl2Ent == bndEl2Ent.end()) ? 0 : itBndEl2Ent->second;
       int nBndElVerts = bndEl->getNumVertices();
@@ -120,14 +146,12 @@ Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
       _bndEl2FV[iBndEl].resize(nBndElVerts);
       for(int iVBndEl = 0; iVBndEl < nBndElVerts; iVBndEl++) {
         MVertex *vert = bndEl->getVertex(iVBndEl);
-        std::vector<MVertex *>::iterator itV =
-          std::find(_vert.begin(), _vert.end(), vert);
+        auto itV = std::find(_vert.begin(), _vert.end(), vert);
         if(itV == _vert.end())
           unknownVert = true;
         else
           _bndEl2V[iBndEl][iVBndEl] = std::distance(_vert.begin(), itV);
-        std::vector<MVertex *>::iterator itFV =
-          std::find(_freeVert.begin(), _freeVert.end(), vert);
+        auto itFV = std::find(_freeVert.begin(), _freeVert.end(), vert);
         if(itFV == _freeVert.end())
           _bndEl2FV[iBndEl][iVBndEl] = -1;
         else
@@ -135,8 +159,7 @@ Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
       }
     }
     if(unknownVert)
-      Msg::Error("Unknown vertices in boundary element "
-                 "at patch initialization");
+      Msg::Error("Unknown nodes in boundary element at patch initialization");
   }
 
   // Initial coordinates
@@ -153,8 +176,7 @@ Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
 
 int Patch::addVert(MVertex *vert)
 {
-  std::vector<MVertex *>::iterator itVert =
-    find(_vert.begin(), _vert.end(), vert);
+  auto itVert = find(_vert.begin(), _vert.end(), vert);
   if(itVert == _vert.end()) {
     _vert.push_back(vert);
     return _vert.size() - 1;
@@ -166,8 +188,7 @@ int Patch::addVert(MVertex *vert)
 int Patch::addFreeVert(MVertex *vert, const int iV, const int nPCV,
                        VertexCoord *param, std::set<MVertex *> &toFix)
 {
-  std::vector<MVertex *>::iterator itVert =
-    find(_freeVert.begin(), _freeVert.end(), vert);
+  auto itVert = find(_freeVert.begin(), _freeVert.end(), vert);
   if(itVert == _freeVert.end()) {
     const int iStart =
       (_startPCFV.size() == 0) ? 0 : _startPCFV.back() + _nPCFV.back();
@@ -331,7 +352,7 @@ void Patch::initScaledJac()
   if(_nBezEl.empty()) {
     _nBezEl.resize(nEl());
     for(int iEl = 0; iEl < nEl(); iEl++)
-      _nBezEl[iEl] = _el[iEl]->getJacobianFuncSpace()->getNumJacNodes();
+      _nBezEl[iEl] = _el[iEl]->getJacobianFuncSpace()->getNumSamplingPnts();
   }
 
   // Set normals to 2D elements (with magnitude of inverse Jacobian) or initial
@@ -356,7 +377,7 @@ void Patch::initMetricMin()
   if(_nBezEl.empty()) {
     _nBezEl.resize(nEl());
     for(int iEl = 0; iEl < nEl(); iEl++)
-      _nBezEl[iEl] = _el[iEl]->getJacobianFuncSpace()->getNumJacNodes();
+      _nBezEl[iEl] = _el[iEl]->getJacobianFuncSpace()->getNumSamplingPnts();
   }
 }
 
@@ -372,7 +393,7 @@ void Patch::calcNormalEl2D(int iEl, NormalScaling scaling,
 
   fullMatrix<double> primNodesXYZ(jac->getNumPrimMapNodes(), 3);
   SVector3 geoNorm(0., 0., 0.);
-  GEntity *ge = (_gEnt.empty()) ? 0 : _gEnt[iEl];
+  GEntity *ge = (_gEnt.empty()) ? nullptr : _gEnt[iEl];
   const bool hasGeoNorm = ge && (ge->dim() == 2) && ge->haveParametrization();
   for(int i = 0; i < jac->getNumPrimMapNodes(); i++) {
     const int &iV = _el2V[iEl][i];
@@ -413,9 +434,9 @@ void Patch::scaledJacAndGradients(int iEl, std::vector<double> &sJ,
                                   std::vector<double> &gSJ)
 {
   const JacobianBasis *jacBasis = _el[iEl]->getJacobianFuncSpace();
-  const int &numJacNodes = _nBezEl[iEl];
+  const int &numSamplingPnts = _nBezEl[iEl];
   const int &numMapNodes = _nNodEl[iEl];
-  fullMatrix<double> JDJ(numJacNodes, 3 * numMapNodes + 1);
+  fullMatrix<double> JDJ(numSamplingPnts, 3 * numMapNodes + 1);
 
   // Coordinates of nodes
   fullMatrix<double> nodesXYZ(numMapNodes, 3), normals(_dim, 3);
@@ -435,21 +456,21 @@ void Patch::scaledJacAndGradients(int iEl, std::vector<double> &sJ,
   bezierCoeff BDB(jacBasis->getFuncSpaceData(), JDJ);
 
   // Scaled jacobian
-  for(int l = 0; l < numJacNodes; l++) sJ[l] = BDB(l, 3 * numMapNodes);
+  for(int l = 0; l < numSamplingPnts; l++) sJ[l] = BDB(l, 3 * numMapNodes);
 
   // Gradients of the scaled jacobian
   int iPC = 0;
-  std::vector<SPoint3> gXyzV(numJacNodes);
-  std::vector<SPoint3> gUvwV(numJacNodes);
+  std::vector<SPoint3> gXyzV(numSamplingPnts);
+  std::vector<SPoint3> gUvwV(numSamplingPnts);
   for(int i = 0; i < numMapNodes; i++) {
     int &iFVi = _el2FV[iEl][i];
     if(iFVi >= 0) {
-      for(int l = 0; l < numJacNodes; l++)
+      for(int l = 0; l < numSamplingPnts; l++)
         gXyzV[l] =
           SPoint3(BDB(l, i + 0 * numMapNodes), BDB(l, i + 1 * numMapNodes),
                   BDB(l, i + 2 * numMapNodes));
       _coordFV[iFVi]->gXyz2gUvw(_uvw[iFVi], gXyzV, gUvwV);
-      for(int l = 0; l < numJacNodes; l++) {
+      for(int l = 0; l < numSamplingPnts; l++) {
         gSJ[indGSJ(iEl, l, iPC)] = gUvwV[l][0];
         if(_nPCFV[iFVi] >= 2) gSJ[indGSJ(iEl, l, iPC + 1)] = gUvwV[l][1];
         if(_nPCFV[iFVi] == 3) gSJ[indGSJ(iEl, l, iPC + 2)] = gUvwV[l][2];
@@ -463,12 +484,12 @@ void Patch::metricMinAndGradients(int iEl, std::vector<double> &lambda,
                                   std::vector<double> &gradLambda)
 {
   const JacobianBasis *jacBasis = _el[iEl]->getJacobianFuncSpace();
-  const int &numJacNodes = jacBasis->getNumJacNodes();
+  const int &numSamplingPnts = jacBasis->getNumSamplingPnts();
   const int &numMapNodes = jacBasis->getNumMapNodes();
   const int &numPrimMapNodes = jacBasis->getNumPrimMapNodes();
-  fullVector<double> lambdaJ(numJacNodes), lambdaB(numJacNodes);
-  fullMatrix<double> gradLambdaJ(numJacNodes, 2 * numMapNodes);
-  fullMatrix<double> gradLambdaB(numJacNodes, 2 * numMapNodes);
+  fullVector<double> lambdaJ(numSamplingPnts), lambdaB(numSamplingPnts);
+  fullMatrix<double> gradLambdaJ(numSamplingPnts, 2 * numMapNodes);
+  fullMatrix<double> gradLambdaB(numSamplingPnts, 2 * numMapNodes);
 
   // Coordinates of nodes
   fullMatrix<double> nodesXYZ(numMapNodes, 3),
@@ -494,21 +515,19 @@ void Patch::metricMinAndGradients(int iEl, std::vector<double> &lambda,
   gradLambdaB = gradLambdaJ;
 
   int iPC = 0;
-  std::vector<SPoint3> gXyzV(numJacNodes);
-  std::vector<SPoint3> gUvwV(numJacNodes);
-  for(int l = 0; l < numJacNodes; l++) {
-    lambda[l] = lambdaB(l);
-  }
+  std::vector<SPoint3> gXyzV(numSamplingPnts);
+  std::vector<SPoint3> gUvwV(numSamplingPnts);
+  for(int l = 0; l < numSamplingPnts; l++) { lambda[l] = lambdaB(l); }
   for(int i = 0; i < numMapNodes; i++) {
     int &iFVi = _el2FV[iEl][i];
     if(iFVi >= 0) {
-      for(int l = 0; l < numJacNodes; l++) {
+      for(int l = 0; l < numSamplingPnts; l++) {
         gXyzV[l] =
           SPoint3(gradLambdaB(l, i + 0 * numMapNodes),
                   gradLambdaB(l, i + 1 * numMapNodes), /*BDB(l,i+2*nbNod)*/ 0.);
       }
       _coordFV[iFVi]->gXyz2gUvw(_uvw[iFVi], gXyzV, gUvwV);
-      for(int l = 0; l < numJacNodes; l++) {
+      for(int l = 0; l < numSamplingPnts; l++) {
         gradLambda[indGSJ(iEl, l, iPC)] = gUvwV[l][0];
         if(_nPCFV[iFVi] >= 2) gradLambda[indGSJ(iEl, l, iPC + 1)] = gUvwV[l][1];
         if(_nPCFV[iFVi] == 3) gradLambda[indGSJ(iEl, l, iPC + 2)] = gUvwV[l][2];
@@ -545,7 +564,7 @@ bool Patch::bndDistAndGradients(int iEl, double &f, std::vector<double> &gradF,
     int clId = elbasis.getClosureId(iEdge, 1);
     const std::vector<int> &closure = elbasis.closures[clId];
     std::vector<MVertex *> vertices;
-    GEdge *edge = NULL;
+    GEdge *edge = nullptr;
     for(size_t i = 0; i < closure.size(); ++i) {
       MVertex *v = element->getVertex(closure[i]);
       vertices.push_back(v);
@@ -564,9 +583,7 @@ bool Patch::bndDistAndGradients(int iEl, double &f, std::vector<double> &gradF,
         nodes[i] = _xyz[_el2V[iEl][closure[i]]];
         onedge[i] = element->getVertex(closure[i])->onWhat() == edge &&
                     _el2FV[iEl][closure[i]] >= 0;
-        if(onedge[i]) {
-          params[i] = _uvw[_el2FV[iEl][closure[i]]].x();
-        }
+        if(onedge[i]) { params[i] = _uvw[_el2FV[iEl][closure[i]]].x(); }
         else
           reparamMeshVertexOnEdge(element->getVertex(closure[i]), edge,
                                   params[i]);
@@ -769,7 +786,7 @@ void Patch::initIdealJac()
   if(_nIJacEl.empty()) {
     _nIJacEl.resize(nEl());
     for(int iEl = 0; iEl < nEl(); iEl++)
-      _nIJacEl[iEl] = _el[iEl]->getJacobianFuncSpace()->getNumJacNodes();
+      _nIJacEl[iEl] = _el[iEl]->getJacobianFuncSpace()->getNumSamplingPnts();
   }
 
   // Set normals to 2D elements (with magnitude of inverse Jacobian) or initial
@@ -796,9 +813,9 @@ void Patch::idealJacAndGradients(int iEl, std::vector<double> &iJ,
                                  std::vector<double> &gIJ)
 {
   const JacobianBasis *jacBasis = _el[iEl]->getJacobianFuncSpace();
-  const int &numJacNodes = _nIJacEl[iEl];
+  const int &numSamplingPnts = _nIJacEl[iEl];
   const int &numMapNodes = _nNodEl[iEl];
-  fullMatrix<double> JDJ(numJacNodes, 3 * numMapNodes + 1);
+  fullMatrix<double> JDJ(numSamplingPnts, 3 * numMapNodes + 1);
 
   // Coordinates of nodes
   fullMatrix<double> nodesXYZ(numMapNodes, 3), normals(_dim, 3);
@@ -818,20 +835,20 @@ void Patch::idealJacAndGradients(int iEl, std::vector<double> &iJ,
   bezierCoeff BDB(jacBasis->getFuncSpaceData(), JDJ);
 
   // Scaled jacobian
-  for(int l = 0; l < numJacNodes; l++) iJ[l] = BDB(l, 3 * numMapNodes);
+  for(int l = 0; l < numSamplingPnts; l++) iJ[l] = BDB(l, 3 * numMapNodes);
 
   // Gradients of the scaled jacobian
   int iPC = 0;
-  std::vector<SPoint3> gXyzV(numJacNodes);
-  std::vector<SPoint3> gUvwV(numJacNodes);
+  std::vector<SPoint3> gXyzV(numSamplingPnts);
+  std::vector<SPoint3> gUvwV(numSamplingPnts);
   for(int i = 0; i < numMapNodes; i++) {
     int &iFVi = _el2FV[iEl][i];
     if(iFVi >= 0) {
-      for(int l = 0; l < numJacNodes; l++)
+      for(int l = 0; l < numSamplingPnts; l++)
         gXyzV[l] = SPoint3(BDB(l, i), BDB(l, i + numMapNodes),
                            BDB(l, i + 2 * numMapNodes));
       _coordFV[iFVi]->gXyz2gUvw(_uvw[iFVi], gXyzV, gUvwV);
-      for(int l = 0; l < numJacNodes; l++) {
+      for(int l = 0; l < numSamplingPnts; l++) {
         gIJ[indGIJac(iEl, l, iPC)] = gUvwV[l][0];
         if(_nPCFV[iFVi] >= 2) gIJ[indGIJac(iEl, l, iPC + 1)] = gUvwV[l][1];
         if(_nPCFV[iFVi] == 3) gIJ[indGIJac(iEl, l, iPC + 2)] = gUvwV[l][2];

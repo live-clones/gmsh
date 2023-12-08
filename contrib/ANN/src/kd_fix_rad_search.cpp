@@ -6,12 +6,12 @@
 //----------------------------------------------------------------------
 // Copyright (c) 1997-2005 University of Maryland and Sunil Arya and
 // David Mount.  All Rights Reserved.
-// 
+//
 // This software and related documentation is part of the Approximate
 // Nearest Neighbor Library (ANN).  This software is provided under
 // the provisions of the Lesser GNU Public License (LGPL).  See the
 // file ../ReadMe.txt for further information.
-// 
+//
 // The University of Maryland (U.M.) and the authors make no
 // representations about the suitability or fitness of this software for
 // any purpose.  It is provided "as is" without express or implied
@@ -147,11 +147,11 @@ void ANNkd_split::ann_FR_search(ANNdist box_dist)
 
 void ANNkd_leaf::ann_FR_search(ANNdist box_dist)
 {
-	register ANNdist dist;				// distance to data point
-	register ANNcoord* pp;				// data coordinate pointer
-	register ANNcoord* qq;				// query coordinate pointer
-	register ANNcoord t;
-	register int d;
+	/* register */ ANNdist dist;				// distance to data point
+	/* register */ ANNcoord* pp;				// data coordinate pointer
+	/* register */ ANNcoord* qq;				// query coordinate pointer
+	/* register */ ANNcoord t;
+	/* register */ int d;
 
 	for (int i = 0; i < n_pts; i++) {	// check points in bucket
 

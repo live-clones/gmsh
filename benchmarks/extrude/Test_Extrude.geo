@@ -1,11 +1,11 @@
-MeshSize = 0.04;
+s = 0.04;
 Radius = 0.5;
 
-Point(1) = { 0.0 , 0.0 , 0.0 , MeshSize};
-Point(2) = { Radius , 0.0 , 0.0 , MeshSize};
-Point(3) = { 0.0 , Radius , 0.0 , MeshSize};
-Point(4) = { -Radius ,0.0 , 0.0 , MeshSize};
-Point(5) = {0.0 , -Radius , 0.0 , MeshSize};
+Point(1) = { 0.0 , 0.0 , 0.0 , s};
+Point(2) = { Radius , 0.0 , 0.0 , s};
+Point(3) = { 0.0 , Radius , 0.0 , s};
+Point(4) = { -Radius ,0.0 , 0.0 , s};
+Point(5) = {0.0 , -Radius , 0.0 , s};
 
 Circle(1) = {2, 1, 3};
 Circle(2) = {3, 1, 4};

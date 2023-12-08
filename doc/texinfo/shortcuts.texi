@@ -11,7 +11,7 @@ Make previous view visible
 Make next view visible
 @item 0
 Reload geometry
-@item Ctrl+0
+@item Ctrl+0 or 9
 Reload full project
 @item 1 or F1
 Mesh lines
@@ -34,11 +34,11 @@ Abort selection in geometry creation mode
 @item s
 Go to solver module
 @item x
-Toogle x coordinate freeze in geometry creation mode
+Toggle x coordinate freeze in geometry creation mode
 @item y
-Toogle y coordinate freeze in geometry creation mode
+Toggle y coordinate freeze in geometry creation mode
 @item z
-Toogle z coordinate freeze in geometry creation mode
+Toggle z coordinate freeze in geometry creation mode
 @item Shift+a
 Bring all windows to front
 @item Shift+g
@@ -99,6 +99,8 @@ Show manipulator window
 Show option window
 @item Shift+Ctrl+o
 Merge file(s)
+@item Shift+Ctrl+r
+Open next-to-last opened file
 @item Shift+Ctrl+u
 Show plugin window
 @item Shift+Ctrl+v
@@ -143,6 +145,8 @@ Set X view
 Set Y view
 @item Alt+z
 Set Z view
+@item Alt+1
+Set 1:1 view
 @item Alt+Shift+a
 Hide/show small axes
 @item Alt+Shift+b
@@ -154,7 +158,7 @@ Hide/show mesh surface faces
 @item Alt+Shift+l
 Hide/show mesh lines
 @item Alt+Shift+p
-Hide/show mesh points
+Hide/show mesh nodes
 @item Alt+Shift+s
 Hide/show mesh surface edges
 @item Alt+Shift+t
@@ -167,4 +171,8 @@ Set -X view
 Set -Y view
 @item Alt+Shift+z
 Set -Z view
+@item Alt+Shift+1
+Reset bounding box around visible entities
+@item Alt+Ctrl++1
+Sync scale between viewports
 @end table

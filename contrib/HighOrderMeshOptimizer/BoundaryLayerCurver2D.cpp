@@ -1,4 +1,4 @@
-// HighOrderMeshOptimizer - Copyright (C) 2013-2019 UCLouvain-ULiege
+// HighOrderMeshOptimizer - Copyright (C) 2013-2023 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -31,22 +31,23 @@
 #include "GFace.h"
 #include "orthogonalBasis.h"
 #include "bezierBasis.h"
-
 #include "gmshVertex.h"
 #include "Geo.h"
 #include "MLine.h"
 #include "GModel.h"
-#if defined(HAVE_POST)
-#include "PView.h"
-#endif
-#if defined(HAVE_FLTK)
-#include "FlGui.h"
-#endif
 #include "Options.h"
-#include "AnalyseCurvedMesh.h"
+#include "AnalyseMeshQuality.h"
 #include "InnerVertexPlacement.h"
 #include "pointsGenerators.h"
 #include "qualityMeasuresJacobian.h"
+
+#if defined(HAVE_POST)
+#include "PView.h"
+#endif
+
+#if defined(HAVE_FLTK)
+#include "FlGui.h"
+#endif
 
 namespace {
   void drawEquidistantPoints(GEdge *gedge, int N)
@@ -74,7 +75,7 @@ namespace {
   {
     const int nVert = controlPoints.getNumCoeff();
 
-    MVertex *previous = NULL;
+    MVertex *previous = nullptr;
     for(int i = 0; i < nVert; ++i) {
       MVertex *v = new MVertex(controlPoints(i, 0), controlPoints(i, 1),
                                controlPoints(i, 2), gedge);
@@ -88,11 +89,9 @@ namespace {
   }
 
   void drawBezierControlPolygon(const std::vector<MVertex *> &vertices,
-                                GEdge *gedge = NULL)
+                                GEdge *gedge = nullptr)
   {
-    if(!gedge) {
-      gedge = *GModel::current()->firstEdge();
-    }
+    if(!gedge) { gedge = *GModel::current()->firstEdge(); }
 
     const int nVert = (int)vertices.size();
     fullMatrix<double> xyz(nVert, 3);
@@ -123,7 +122,7 @@ namespace {
   }
 
   void draw3DFrame(SPoint3 &p, SVector3 &t, SVector3 &n, SVector3 &w,
-                   double unitDimension, GFace *gFace = NULL)
+                   double unitDimension, GFace *gFace = nullptr)
   {
     return;
     if(!gFace) gFace = *GModel::current()->firstFace();
@@ -220,7 +219,7 @@ namespace BoundaryLayerCurver {
           _paramVerticesOnGFace[2 * i + 0] = param[0];
           _paramVerticesOnGFace[2 * i + 1] = param[1];
           if(!success) {
-            Msg::Warning("Could not compute param of vertex %d on surface %d",
+            Msg::Warning("Could not compute param of node %d on surface %d",
                          edge->getVertex(i)->getNum(), gface->tag());
           }
           // TODO: Check if periodic face
@@ -232,7 +231,7 @@ namespace BoundaryLayerCurver {
           bool success = reparamMeshVertexOnEdge(edge->getVertex(i), gedge,
                                                  _paramVerticesOnGEdge[i]);
           if(!success) {
-            Msg::Warning("Could not compute param of vertex %d on edge %d",
+            Msg::Warning("Could not compute param of node %d on edge %d",
                          edge->getVertex(i)->getNum(), gedge->tag());
           }
           else if(gedge->periodic(0) && gedge->getBeginVertex() &&
@@ -269,9 +268,7 @@ namespace BoundaryLayerCurver {
           std::cout << "aarg " << _gedge->tag() << " " << paramGeoEdge
                     << std::endl;
       }
-      if(!_gedge || t.norm() == 0) {
-        t = _edgeOnBoundary->tangent(paramEdge);
-      }
+      if(!_gedge || t.norm() == 0) { t = _edgeOnBoundary->tangent(paramEdge); }
 
       if(_gface) {
         SPoint2 paramGFace;
@@ -373,7 +370,7 @@ namespace BoundaryLayerCurver {
                                 double coeffs[2][3], GEdge *gedge)
     {
       int N = 100;
-      MVertex *previous = NULL;
+      MVertex *previous = nullptr;
 
       for(int i = 0; i < N + 1; ++i) {
         const double u = (double)i / N * 2 - 1;
@@ -813,9 +810,7 @@ namespace BoundaryLayerCurver {
         for(int i = 0; i < nbDofh; ++i) {
           double sf[100];
           fs->f(refNodesh(i, 0), refNodesh(i, 1), refNodesh(i, 2), sf);
-          for(int j = 0; j < nbDof; ++j) {
-            Mh(i, j) = sf[j];
-          }
+          for(int j = 0; j < nbDof; ++j) { Mh(i, j) = sf[j]; }
         }
         //      Mh.print("Mh");
 
@@ -835,9 +830,7 @@ namespace BoundaryLayerCurver {
           double *val = new double[nbDofh];
           for(int i = 0; i < nbDofh; ++i) {
             LegendrePolynomials::fc(order + 1, refNodesh(i, 0), val);
-            for(int j = 0; j < nbDofh; ++j) {
-              vandermonde(i, j) = val[j];
-            }
+            for(int j = 0; j < nbDofh; ++j) { vandermonde(i, j) = val[j]; }
           }
           delete val;
 
@@ -854,9 +847,7 @@ namespace BoundaryLayerCurver {
           double *val = new double[nbDof];
           for(int i = 0; i < nbDof; ++i) {
             LegendrePolynomials::fc(order, refNodes(i, 0), val);
-            for(int j = 0; j < nbDof; ++j) {
-              Me(i, j) = val[j];
-            }
+            for(int j = 0; j < nbDof; ++j) { Me(i, j) = val[j]; }
           }
           delete val;
         }
@@ -1288,9 +1279,7 @@ namespace BoundaryLayerCurver {
         const fullMatrix<double> &refNodes = fs->getReferenceNodes();
         for(int i = 0; i < szSpace; ++i) {
           basis.f(refNodes(i, 0), 0, 0, val);
-          for(int j = 0; j < szSpace; ++j) {
-            Leg2Lag(i, j) = val[j];
-          }
+          for(int j = 0; j < szSpace; ++j) { Leg2Lag(i, j) = val[j]; }
         }
       }
 
@@ -1326,9 +1315,7 @@ namespace BoundaryLayerCurver {
             M2(i, j) = val[i] * data->intPoints[j].weight;
           }
         }
-        for(int i = 0; i < nConstraint; ++i) {
-          M2(szSpace + i, nGP + i) = 1;
-        }
+        for(int i = 0; i < nConstraint; ++i) { M2(szSpace + i, nGP + i) = 1; }
       }
 
       fullMatrix<double> M1(szSpace + nConstraint, szSpace + nConstraint, true);
@@ -1350,9 +1337,7 @@ namespace BoundaryLayerCurver {
       {
         for(int i = 0; i < szSpace; ++i) {
           basis.f(refNodes(i, 0), refNodes(i, 1), 0, val);
-          for(int j = 0; j < szSpace; ++j) {
-            Leg2Lag(i, j) = val[j];
-          }
+          for(int j = 0; j < szSpace; ++j) { Leg2Lag(i, j) = val[j]; }
         }
       }
 
@@ -1388,9 +1373,7 @@ namespace BoundaryLayerCurver {
             M2(i, j) = val[i] * data->intPoints[j].weight;
           }
         }
-        for(int i = 0; i < nConstraint; ++i) {
-          M2(szSpace + i, nGP + i) = 1;
-        }
+        for(int i = 0; i < nConstraint; ++i) { M2(szSpace + i, nGP + i) = 1; }
       }
 
       fullMatrix<double> M1(szSpace + nConstraint, szSpace + nConstraint, true);
@@ -1412,9 +1395,7 @@ namespace BoundaryLayerCurver {
       {
         for(int i = 0; i < szSpace; ++i) {
           basis.f(refNodes(i, 0), refNodes(i, 1), 0, val);
-          for(int j = 0; j < szSpace; ++j) {
-            Leg2Lag(i, j) = val[j];
-          }
+          for(int j = 0; j < szSpace; ++j) { Leg2Lag(i, j) = val[j]; }
         }
       }
 
@@ -1509,7 +1490,7 @@ namespace BoundaryLayerCurver {
     const std::vector<MElement *> &stackElements = column.second;
     const int numVertexPerLayer = bottomElement->getNumPrimaryVertices();
     std::size_t numLayers = stackElements.size();
-    stack.assign(numVertexPerLayer * (numLayers + 1), NULL);
+    stack.assign(numVertexPerLayer * (numLayers + 1), nullptr);
 
     std::size_t k = 0;
     for(int i = 0; i < numVertexPerLayer; ++i) {
@@ -1604,7 +1585,7 @@ namespace BoundaryLayerCurver {
           }
         }
         int idxv1AtBottom = -1;
-        for(std::size_t m = 0; m < (std::size_t)numVertexPerLayer; ++m) {
+        for(int m = 0; m < numVertexPerLayer; ++m) {
           if(v1 == stack[k - 1 - m]) {
             idxv1AtBottom = k - 1 - m;
             break;
@@ -1621,9 +1602,7 @@ namespace BoundaryLayerCurver {
       // If there remains NULL values, it is because the vertex is the same
       // on both layers (because of a non-tensorial element).
       for(int l = k; l < k + numVertexPerLayer; ++l) {
-        if(stack[l] == NULL) {
-          stack[l] = stack[l - numVertexPerLayer];
-        }
+        if(stack[l] == nullptr) { stack[l] = stack[l - numVertexPerLayer]; }
       }
 
       k += numVertexPerLayer;
@@ -1912,7 +1891,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &columns, SVector3 normal,
     for(std::size_t j = 0; j < columns[i].second.size(); ++j) {
       columns[i].second[j]->setVisibility(1);
     }
-    BoundaryLayerCurver::curve2Dcolumn(columns[i], NULL, gedge, normal);
+    BoundaryLayerCurver::curve2Dcolumn(columns[i], nullptr, gedge, normal);
   }
 }
 

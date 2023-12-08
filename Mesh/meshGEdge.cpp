@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
 #include "GModel.h"
@@ -92,13 +92,13 @@ struct F_Lc {
     Range<double> bounds = ge->parBounds(0);
     double t_begin = bounds.low();
     double t_end = bounds.high();
-    double lc_here;
+    double lc_here = 1.e22;
     if(t == t_begin && ge->getBeginVertex())
       lc_here = BGM_MeshSize(ge->getBeginVertex(), t, 0, p.x(), p.y(), p.z());
     else if(t == t_end && ge->getEndVertex())
       lc_here = BGM_MeshSize(ge->getEndVertex(), t, 0, p.x(), p.y(), p.z());
-    else
-      lc_here = BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z());
+
+    lc_here = std::min(lc_here, BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z()));
     SVector3 der = ge->firstDer(t);
     return norm(der) / lc_here;
   }
@@ -124,8 +124,9 @@ struct F_Lc_aniso {
     FieldManager *fields = ge->model()->getFields();
     for(int i = 0; i < fields->getNumBoundaryLayerFields(); ++i) {
       Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
-      if(bl_field == NULL) continue;
+      if(!bl_field) continue;
       BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField *>(bl_field);
+      if(!blf) continue;
       if(blf->isEdgeBL(ge->tag())) break;
       SMetric3 lc_bgm;
       blf->computeFor1dMesh(p.x(), p.y(), p.z(), lc_bgm);
@@ -136,6 +137,20 @@ struct F_Lc_aniso {
     return std::sqrt(dot(der, lc_here, der));
   }
 };
+
+// static double dfbeta2 (double t, double beta){
+//  double ratio = (1+beta)/(beta-1);
+//  double zlog  = log(ratio);
+//  return 1.-acosh(beta*zlog/t - 1.0)/zlog;
+//  return beta*zlog / (1+cosh(zlog*(1-t)));
+//}
+
+static double dfbeta(double t, double beta)
+{
+  double ratio = (1 + beta) / (beta - 1);
+  double zlog = log(ratio);
+  return 2 * beta / ((1 + beta - t) * (-1 + beta + t) * zlog);
+}
 
 struct F_Transfinite {
   double operator()(GEdge *ge, double t_)
@@ -150,6 +165,7 @@ struct F_Transfinite {
     double d = norm(der);
     double coef = ge->meshAttributes.coeffTransfinite;
     int type = ge->meshAttributes.typeTransfinite;
+    int atype = std::abs(type);
     int nbpt = ge->meshAttributes.nbPointsTransfinite;
 
     if(CTX::instance()->mesh.flexibleTransfinite &&
@@ -163,23 +179,22 @@ struct F_Transfinite {
 
     double val;
 
-    if(coef <= 0.0 || coef == 1.0) {
+    if(coef <= 0.0 || coef == 1.0 || (atype == 3 && coef < 1.)) {
       // coef < 0 should never happen
       val = d * coef / ge->length();
     }
     else {
-      switch(std::abs(type)) {
-      case 1: // Geometric progression ar^i; Sum of n terms = length = a
-              // (r^n-1)/(r-1)
-      {
+      switch(atype) {
+      case 1: {
+        // geometric progression ar^i; Sum of n terms = length = a (r^n-1)/(r-1)
         double r = (gmsh_sign(type) >= 0) ? coef : 1. / coef;
         double a = length * (r - 1.) / (std::pow(r, nbpt - 1.) - 1.);
         int i = (int)(std::log(t * length / a * (r - 1.) + 1.) / std::log(r));
         val = d / (a * std::pow(r, (double)i));
       } break;
 
-      case 2: // Bump
-      {
+      case 2: {
+        // "bump"
         double a;
         if(coef > 1.0) {
           a = -4. * std::sqrt(coef - 1.) *
@@ -195,8 +210,21 @@ struct F_Transfinite {
         val = d / (-a * std::pow(t * length - (length)*0.5, 2) + b);
         break;
       }
+      case 3: {
+        // "beta" law
+        if(type < 0)
+          val = dfbeta(1. - t, coef);
+        else
+          val = dfbeta(t, coef);
+        break;
+      }
+      case 4: {
+        // standard boundary layer progression: TODO
+        val = d / (length * t);
+        break;
+      }
       default:
-        Msg::Warning("Unknown case in Transfinite Line mesh");
+        Msg::Warning("Unknown case in Transfinite curve mesh");
         val = 1.;
         break;
       }
@@ -273,10 +301,21 @@ static double Integration(GEdge *ge, double t1, double t2, function f,
   return Points.back().p;
 }
 
-void copyMesh(GEdge *from, GEdge *to, int direction)
+static SPoint3 transform(MVertex *vsource, const std::vector<double> &tfo)
+{
+  double ps[4] = {vsource->x(), vsource->y(), vsource->z(), 1.};
+  double res[4] = {0., 0., 0., 0.};
+  int idx = 0;
+  for(int i = 0; i < 4; i++)
+    for(int j = 0; j < 4; j++) res[i] += tfo[idx++] * ps[j];
+
+  return SPoint3(res[0], res[1], res[2]);
+}
+
+static void copyMesh(GEdge *from, GEdge *to, int direction)
 {
   if(!from->getBeginVertex() || !from->getEndVertex() ||
-     !to->getBeginVertex() || !to->getEndVertex()){
+     !to->getBeginVertex() || !to->getEndVertex()) {
     Msg::Error("Cannot copy mesh on curves without begin/end points");
     return;
   }
@@ -289,10 +328,8 @@ void copyMesh(GEdge *from, GEdge *to, int direction)
   double to_u_min = to_u_bounds.low();
 
   // include begin and end point to avoid conflicts when realigning
-
   MVertex *vt0 = to->getBeginVertex()->mesh_vertices[0];
   MVertex *vt1 = to->getEndVertex()->mesh_vertices[0];
-
   MVertex *vs0 = from->getBeginVertex()->mesh_vertices[0];
   MVertex *vs1 = from->getEndVertex()->mesh_vertices[0];
 
@@ -302,11 +339,23 @@ void copyMesh(GEdge *from, GEdge *to, int direction)
   for(std::size_t i = 0; i < from->mesh_vertices.size(); i++) {
     int index = (direction < 0) ? (from->mesh_vertices.size() - 1 - i) : i;
     MVertex *v = from->mesh_vertices[index];
-    double u;
-    v->getParameter(0, u);
-    double newu =
-      (direction > 0) ? (u - u_min + to_u_min) : (u_max - u + to_u_min);
-    GPoint gp = to->point(newu);
+    GPoint gp;
+    double newu;
+    if(to->affineTransform.size() < 16) {
+      // assume identical parametrisations (dangerous...)
+      double u;
+      v->getParameter(0, u);
+      newu = (direction > 0) ? (u - u_min + to_u_min) : (u_max - u + to_u_min);
+      gp = to->point(newu);
+    }
+    else {
+      SPoint3 p = transform(v, to->affineTransform);
+      // for non-exact periodic curves we could use closestPoint; just use
+      // Mesh.HighOrderPeriodic=2, which will do that
+      newu = to->parFromPoint(p);
+      gp = to->point(newu);
+      // gp = to->closestPoint(p, newu);
+    }
     MEdgeVertex *vv = new MEdgeVertex(gp.x(), gp.y(), gp.z(), to, newu);
     to->mesh_vertices.push_back(vv);
     to->correspondingVertices[vv] = v;
@@ -321,16 +370,42 @@ void copyMesh(GEdge *from, GEdge *to, int direction)
   }
 }
 
+
+static void fillCorrespondingNodes(GEdge *from, GEdge *to, int direction)
+{
+  if(!from->getBeginVertex() || !from->getEndVertex() ||
+     !to->getBeginVertex() || !to->getEndVertex()) {
+    Msg::Error("Cannot fill corresponding nodes on curves without begin/end points");
+    return;
+  }
+
+  // include begin and end point to avoid conflicts when realigning
+  MVertex *vt0 = to->getBeginVertex()->mesh_vertices[0];
+  MVertex *vt1 = to->getEndVertex()->mesh_vertices[0];
+  MVertex *vs0 = from->getBeginVertex()->mesh_vertices[0];
+  MVertex *vs1 = from->getEndVertex()->mesh_vertices[0];
+
+  to->correspondingVertices[vt0] = direction > 0 ? vs0 : vs1;
+  to->correspondingVertices[vt1] = direction > 0 ? vs1 : vs0;
+
+  if(to->mesh_vertices.size() != from->mesh_vertices.size()) {
+    Msg::Error("Incompatible meshes to fill node correspondance");
+    return;
+  }
+
+  for(std::size_t i = 0; i < from->mesh_vertices.size(); i++) {
+    int index = (direction < 0) ? (from->mesh_vertices.size() - 1 - i) : i;
+    MVertex *v = from->mesh_vertices[index];
+    // FIXME: verify that the nodes follow the transformation!
+    to->correspondingVertices[to->mesh_vertices[i]] = v;
+  }
+}
+
 void deMeshGEdge::operator()(GEdge *ge)
 {
-  if(ge->geomType() == GEntity::DiscreteCurve){
-    if(!static_cast<discreteEdge *>(ge)->haveParametrization())
-      return;
-  }
+  if(ge->isFullyDiscrete()) return;
   ge->deleteMesh();
   ge->meshStatistics.status = GEdge::PENDING;
-  ge->correspondingVertices.clear();
-  ge->correspondingHOPoints.clear();
 }
 
 /*
@@ -368,9 +443,7 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
   if((ge->meshAttributes.method != MESH_TRANSFINITE ||
       CTX::instance()->mesh.flexibleTransfinite) &&
      CTX::instance()->mesh.algoRecombine != 0) {
-    if(CTX::instance()->mesh.recombineAll) {
-      forceOdd = true;
-    }
+    if(CTX::instance()->mesh.recombineAll) { forceOdd = true; }
   }
 
   if(!ge->getBeginVertex() || !ge->getEndVertex()) return;
@@ -380,7 +453,7 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
   for(std::size_t i = 0; i < ge->mesh_vertices.size(); i++) {
     MEdgeVertex *v = dynamic_cast<MEdgeVertex *>(ge->mesh_vertices[i]);
     if(!v) {
-      Msg::Error("in 1D mesh filterPoints");
+      Msg::Error("Node not classified on curve in 1D mesh filtering");
       return;
     }
     double d = distance(v, v0);
@@ -399,9 +472,7 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
     }
     double lc = F_LcB()(ge, t);
     // double lc = v->getLc();
-    if(d < lc * .3) {
-      lengths.push_back(std::make_pair(lc / d, v));
-    }
+    if(d < lc * .3) { lengths.push_back(std::make_pair(lc / d, v)); }
     else
       v0 = v;
   }
@@ -425,12 +496,10 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
     (((int)ge->mesh_vertices.size() - last) >= nMinimumPoints);
   if(filteringObservesMinimumN) {
     for(int i = 0; i < last; i++) {
-      std::vector<MVertex *>::iterator it = std::find(
-        ge->mesh_vertices.begin(), ge->mesh_vertices.end(), lengths[i].second);
+      auto it = std::find(ge->mesh_vertices.begin(), ge->mesh_vertices.end(),
+                          lengths[i].second);
 
-      if(it != ge->mesh_vertices.end()) {
-        ge->mesh_vertices.erase(it);
-      }
+      if(it != ge->mesh_vertices.end()) { ge->mesh_vertices.erase(it); }
       delete lengths[i].second;
     }
   }
@@ -441,20 +510,37 @@ static void createPoints(GVertex *gv, GEdge *ge, BoundaryLayerField *blf,
 {
   if(!ge->getBeginVertex() || !ge->getEndVertex()) return;
 
-  const double hwall = blf->hwall(gv->tag());
-  double L = hwall;
+  const double hWall = blf->hWall(gv->tag());
+  double L = hWall;
   double LEdge = distance(ge->getBeginVertex()->mesh_vertices[0],
                           ge->getEndVertex()->mesh_vertices[0]);
-  while(1) {
-    if(L > blf->thickness || L > LEdge * .4) {
-      break;
-    }
 
-    SPoint3 p(gv->x() + dir.x() * L, gv->y() + dir.y() * L, 0.0);
-    v.push_back(new MEdgeVertex(p.x(), p.y(), p.z(), ge, ge->parFromPoint(p), 0,
-                                blf->hfar));
-    int ith = v.size();
-    L += hwall * std::pow(blf->ratio, ith);
+  if(blf->betaLaw) {
+    std::vector<double> t(blf->nb_divisions);
+    double zlog = log((1 + blf->beta) / (blf->beta - 1));
+    for(int i = 0; i < blf->nb_divisions; i++) {
+      const double eta = (double)(i + 1) / blf->nb_divisions;
+      const double power = exp(zlog * (1. - eta));
+      const double ratio = (1. - power) / (1. + power);
+      t[i] = 1.0 + blf->beta * ratio;
+    }
+    for(int i = 0; i < blf->nb_divisions; i++) {
+      double L = hWall * t[i] / t[0];
+      SPoint3 p(gv->x() + dir.x() * L, gv->y() + dir.y() * L, 0.0);
+      v.push_back(new MEdgeVertex(p.x(), p.y(), p.z(), ge, ge->parFromPoint(p),
+                                  0, blf->hFar));
+    }
+  }
+  else {
+    while(1) {
+      if(L > blf->thickness || L > LEdge * .4) { break; }
+
+      SPoint3 p(gv->x() + dir.x() * L, gv->y() + dir.y() * L, 0.0);
+      v.push_back(new MEdgeVertex(p.x(), p.y(), p.z(), ge, ge->parFromPoint(p),
+                                  0, blf->hFar));
+      int ith = v.size();
+      L += hWall * std::pow(blf->ratio, ith);
+    }
   }
 }
 
@@ -477,8 +563,9 @@ static void addBoundaryLayerPoints(GEdge *ge, double &t_begin, double &t_end,
   // Check if edge is a BL edge
   for(int i = 0; i < n; ++i) {
     Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
-    if(bl_field == NULL) continue;
+    if(!bl_field) continue;
     BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField *>(bl_field);
+    if(!blf) continue;
     if(blf->isEdgeBL(ge->tag())) return;
   }
 
@@ -492,8 +579,9 @@ static void addBoundaryLayerPoints(GEdge *ge, double &t_begin, double &t_end,
   // Check if extremity nodes are BL node
   for(int i = 0; i < n; ++i) {
     Field *bl_field = fields->get(fields->getBoundaryLayerField(i));
-    if(bl_field == NULL) continue;
+    if(!bl_field) continue;
     BoundaryLayerField *blf = dynamic_cast<BoundaryLayerField *>(bl_field);
+    if(!blf) continue;
     blf->setupFor1d(ge->tag());
 
     if(blf->isEndNode(gvb->tag())) {
@@ -526,76 +614,18 @@ static void addBoundaryLayerPoints(GEdge *ge, double &t_begin, double &t_end,
   }
 }
 
-void meshGEdge::operator()(GEdge *ge)
+int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
+                        std::vector<IntPoint> &Points, double &a,
+                        int &filterMinimumN)
 {
-  // debug stuff
-  if(CTX::instance()->debugSurface > 0){
-    std::vector<GFace *> f = ge->faces();
-    bool found = false;
-    for (size_t i=0;i<f.size(); i++){
-      if(f[i]->tag() == CTX::instance()->debugSurface) {
-	found = true;
-      }
-    }
-    if(!found) return;
-  }
-
-  ge->model()->setCurrentMeshEntity(ge);
-
-  if(ge->degenerate(1)) return;
-  if(ge->geomType() == GEntity::BoundaryLayerCurve) return;
-  if(ge->meshAttributes.method == MESH_NONE) return;
-  if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) return;
-
-  deMeshGEdge dem;
-  dem(ge);
-
-  if(MeshExtrudedCurve(ge)) return;
-
-  if(ge->getMeshMaster() != ge) {
-    GEdge *gef = ge->getMeshMaster()->cast2Edge();
-    if(gef->meshStatistics.status == GEdge::PENDING) return;
-    Msg::Info("Meshing curve %d (%s) as a copy of %d", ge->tag(),
-              ge->getTypeString().c_str(), ge->getMeshMaster()->tag());
-    copyMesh(gef, ge, ge->masterOrientation);
-    ge->meshStatistics.status = GEdge::DONE;
-    return;
-  }
-
-  if(ge->model()->getNumEdges() > 100000) {
-    if(ge->tag() % 100000 == 1) {
-      Msg::Info("Meshing curve %d/%d (%s)", ge->tag(),
-                ge->model()->getNumEdges(), ge->getTypeString().c_str());
-    }
-  }
-  else if(ge->model()->getNumEdges() > 10000) {
-    if(ge->tag() % 10000 == 1) {
-      Msg::Info("Meshing curve %d/%d (%s)", ge->tag(),
-                ge->model()->getNumEdges(), ge->getTypeString().c_str());
-    }
-  }
-  else if(ge->model()->getNumEdges() > 1000) {
-    if(ge->tag() % 1000 == 1) {
-      Msg::Info("Meshing curve %d/%d (%s)", ge->tag(),
-                ge->model()->getNumEdges(), ge->getTypeString().c_str());
-    }
-  }
-  else {
-    Msg::Info("Meshing curve %d (%s)", ge->tag(), ge->getTypeString().c_str());
-  }
-
-  // compute bounds
-  Range<double> bounds = ge->parBounds(0);
-  double t_begin = bounds.low();
-  double t_end = bounds.high();
-
-  // if a BL is ending at one of the ends, then create specific points
-  std::vector<MVertex *> _addBegin, _addEnd;
-  addBoundaryLayerPoints(ge, t_begin, t_end, _addBegin, _addEnd);
+  if(ge->geomType() == GEntity::BoundaryLayerCurve) return 0;
+  if(ge->meshAttributes.method == MESH_NONE) return 0;
+  if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) return 0;
+  if(CTX::instance()->mesh.meshOnlyEmpty && ge->getNumMeshElements()) return 0;
 
   // first compute the length of the curve by integrating one
   double length;
-  std::vector<IntPoint> Points;
+  Points.clear();
   if(ge->geomType() == GEntity::Line && ge->getBeginVertex() &&
      ge->getBeginVertex() == ge->getEndVertex() &&
      // do not consider closed lines as degenerated
@@ -605,7 +635,7 @@ void meshGEdge::operator()(GEdge *ge)
   else
     length = Integration(ge, t_begin, t_end, F_One(), Points,
                          CTX::instance()->mesh.lcIntegrationPrecision *
-                         CTX::instance()->lc);
+                           CTX::instance()->lc);
   ge->setLength(length);
   Points.clear();
 
@@ -614,9 +644,7 @@ void meshGEdge::operator()(GEdge *ge)
   }
 
   // Integrate detJ/lc du
-  double a;
-  int N;
-  int filterMinimumN = 1;
+  filterMinimumN = 1;
   if(length == 0. && CTX::instance()->mesh.toleranceEdgeLength == 0.) {
     Msg::Debug("Curve %d has a zero length", ge->tag());
     a = 0.;
@@ -626,6 +654,14 @@ void meshGEdge::operator()(GEdge *ge)
     Msg::Debug("Curve %d is degenerated", ge->tag());
     a = 0.;
     N = 1;
+  }
+  else if(ge->meshAttributes.method == MESH_TRANSFINITE &&
+          ge->meshAttributes.typeTransfinite == 4) {
+    // Transfinite (prescribed number of edges) but the points are positioned
+    // according to the standard size constraints (size map, etc)
+    a = Integration(ge, t_begin, t_end, F_Lc(), Points,
+                    CTX::instance()->mesh.lcIntegrationPrecision);
+    N = ge->meshAttributes.nbPointsTransfinite;
   }
   else if(ge->meshAttributes.method == MESH_TRANSFINITE) {
     a = Integration(ge, t_begin, t_end, F_Transfinite(), Points,
@@ -665,21 +701,93 @@ void meshGEdge::operator()(GEdge *ge)
     std::vector<GFace *> const &faces = ge->faces();
     if(CTX::instance()->mesh.recombineAll && faces.size()) {
       if(N % 2 == 0) N++;
-      if(CTX::instance()->mesh.algoRecombine == 2) N = increaseN(N);
+      if(CTX::instance()->mesh.algoRecombine == 2 ||
+         CTX::instance()->mesh.algoRecombine == 4)
+        N = increaseN(N);
     }
     else {
-      for(std::vector<GFace *>::const_iterator it = faces.begin();
-          it != faces.end(); it++) {
+      for(auto it = faces.begin(); it != faces.end(); it++) {
         if((*it)->meshAttributes.recombine) {
           if(N % 2 == 0) N++;
-          if(CTX::instance()->mesh.algoRecombine == 2) N = increaseN(N);
+          if(CTX::instance()->mesh.algoRecombine == 2 ||
+             CTX::instance()->mesh.algoRecombine == 4)
+            N = increaseN(N);
           break;
         }
       }
     }
   }
 
-  // printFandPrimitive(ge->tag(),Points);
+  return N;
+}
+
+void meshGEdge::operator()(GEdge *ge)
+{
+  // debug stuff
+  if(CTX::instance()->debugSurface > 0) {
+    std::vector<GFace *> f = ge->faces();
+    bool found = false;
+    for(size_t i = 0; i < f.size(); i++) {
+      if(f[i]->tag() == CTX::instance()->debugSurface) { found = true; }
+    }
+    if(!found) return;
+  }
+
+  ge->model()->setCurrentMeshEntity(ge);
+
+  if(ge->degenerate(1)) {
+    ge->meshStatistics.status = GEdge::DONE;
+    return;
+  }
+
+  if(ge->geomType() == GEntity::BoundaryLayerCurve) return;
+  if(ge->meshAttributes.method == MESH_NONE) return;
+  if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) return;
+  if(CTX::instance()->mesh.meshOnlyEmpty && ge->getNumMeshElements()) return;
+
+  // destroy the mesh if it exists
+  deMeshGEdge dem;
+  dem(ge);
+
+  if(MeshExtrudedCurve(ge)) {
+
+    // if there is a periodic constraint, fill the corresponding node arrays
+    if(ge->getMeshMaster() != ge) {
+      GEdge *gef = dynamic_cast<GEdge *>(ge->getMeshMaster());
+      fillCorrespondingNodes(gef, ge, ge->masterOrientation);
+    }
+    return;
+  }
+
+  if(ge->getMeshMaster() != ge) {
+    GEdge *gef = dynamic_cast<GEdge *>(ge->getMeshMaster());
+    if(gef->meshStatistics.status == GEdge::PENDING) return;
+    Msg::Info("Meshing curve %d (%s) as a copy of curve %d", ge->tag(),
+              ge->getTypeString().c_str(), ge->getMeshMaster()->tag());
+    copyMesh(gef, ge, ge->masterOrientation);
+    ge->meshStatistics.status = GEdge::DONE;
+    return;
+  }
+
+  Msg::Info("Meshing curve %d (%s)", ge->tag(), ge->getTypeString().c_str());
+
+  // compute bounds
+  Range<double> bounds = ge->parBounds(0);
+  double t_begin = bounds.low();
+  double t_end = bounds.high();
+
+  // if a BL is ending at one of the ends, then create specific points
+  std::vector<MVertex *> _addBegin, _addEnd;
+  addBoundaryLayerPoints(ge, t_begin, t_end, _addBegin, _addEnd);
+
+  // integration to get length, number of points, etc
+  int N;
+  std::vector<IntPoint> Points;
+  double a;
+  int filterMinimumN;
+  meshGEdgeProcessing(ge, t_begin, t_end, N, Points, a, filterMinimumN);
+
+  //  printFandPrimitive(ge->tag(),Points);
 
   // if the curve is periodic and if the begin vertex is identical to
   // the end vertex and if this vertex has only one model curve
@@ -698,7 +806,8 @@ void meshGEdge::operator()(GEdge *ge)
   else if(ge->getBeginVertex() == ge->getEndVertex() &&
           ge->getBeginVertex()->edges().size() == 1) {
     end_p = beg_p = ge->point(t_begin);
-    Msg::Debug("Meshing periodic closed curve");
+    Msg::Debug("Meshing periodic closed curve (tag %i, %i points)", ge->tag(),
+               N);
   }
   else {
     MVertex *v0 = ge->getBeginVertex()->mesh_vertices[0];
@@ -746,11 +855,12 @@ void meshGEdge::operator()(GEdge *ge)
     vv.insert(vv.end(), mesh_vertices.begin(), mesh_vertices.end());
     for(std::size_t i = 0; i < _addEnd.size(); i++)
       vv.push_back(_addEnd[_addEnd.size() - 1 - i]);
-    //    vv.insert(vv.end(), _addEnd.rend(), _addEnd.rbegin());
     mesh_vertices = vv;
   }
 
-  if(CTX::instance()->mesh.algo2d != ALGO_2D_BAMG)
+  if(CTX::instance()->mesh.algo2d != ALGO_2D_BAMG &&
+     CTX::instance()->mesh.algo2d != ALGO_2D_QUAD_QUASI_STRUCT &&
+     CTX::instance()->mesh.algo2d != ALGO_2D_PACK_PRLGRMS)
     if(_addBegin.empty() && _addEnd.empty())
       filterPoints(ge, filterMinimumN - 2);
 
@@ -773,6 +883,10 @@ void meshGEdge::operator()(GEdge *ge)
     v0->y() = beg_p.y();
     v0->z() = beg_p.z();
   }
+
+  Msg::Debug("Meshing curve %d (%s): %li interior vertices", ge->tag(),
+             ge->getTypeString().c_str(), ge->mesh_vertices.size());
+
   ge->meshStatistics.status = GEdge::DONE;
 }
 
@@ -782,4 +896,18 @@ void orientMeshGEdge::operator()(GEdge *ge)
   if(ge->meshAttributes.reverseMesh)
     for(std::size_t k = 0; k < ge->getNumMeshElements(); k++)
       ge->getMeshElement(k)->reverse();
+}
+
+int meshGEdgeTargetNumberOfPoints(GEdge *ge)
+{
+  Range<double> bounds = ge->parBounds(0);
+  double t_begin = bounds.low();
+  double t_end = bounds.high();
+
+  int N = 0;
+  std::vector<IntPoint> Points;
+  double a = 0.;
+  int filterMinimumN = 1;
+  meshGEdgeProcessing(ge, t_begin, t_end, N, Points, a, filterMinimumN);
+  return N;
 }

@@ -1,4 +1,4 @@
-// HighOrderMeshOptimizer - Copyright (C) 2013-2019 UCLouvain-ULiege
+// HighOrderMeshOptimizer - Copyright (C) 2013-2023 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -59,7 +59,7 @@ private:
   }
   double _smoothMetric(std::vector<MElement *> &v, GFace *gf,
                        dofManager<double> &myAssembler,
-                       std::set<MVertex *> &verticesToMove,
+                       std::set<MVertex *, MVertexPtrLessThan> &verticesToMove,
                        elasticityTerm &El);
   void _computeMetricInfo(GFace *gf, MElement *e, fullMatrix<double> &J,
                           fullMatrix<double> &JT, fullVector<double> &D);
@@ -83,8 +83,7 @@ public:
                           bool mixed);
   inline SVector3 getSSL(MVertex *v) const
   {
-    std::map<MVertex *, SVector3>::const_iterator it =
-      _straightSidedLocation.find(v);
+    auto it = _straightSidedLocation.find(v);
     if(it != _straightSidedLocation.end())
       return it->second;
     else
@@ -92,7 +91,7 @@ public:
   }
   inline SVector3 getTL(MVertex *v) const
   {
-    std::map<MVertex *, SVector3>::const_iterator it = _targetLocation.find(v);
+    auto it = _targetLocation.find(v);
     if(it != _targetLocation.end())
       return it->second;
     else

@@ -1,19 +1,27 @@
-bin*
-lib
-build
-!contrib/mmg3d/build
-build_*/
+bin*/
+lib*/
+build*/
+install/
 contrib/mobile/frameworks_*
 contrib/3M
 contrib/Parasolid
 *.db
+doc/cookbook/book
 doc/doxygen/html
 .DS_Store
 *~
 *.so
 *.so.*
+*.mod
 *#
 *.pyc
 ## CLion directories
 .idea
 cmake-build-*
+
+# VS Code directories
+.vscode/
+
+# Ameury
+!contrib/mmg3d/build
+#build_*/

@@ -1,4 +1,4 @@
-// MeshQualityOptimizer - Copyright (C) 2015-2019 UCLouvain-ULiege
+// MeshQualityOptimizer - Copyright (C) 2013-2023 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -53,8 +53,8 @@ protected:
 
 template <class FuncType>
 ObjContribIdealJac<FuncType>::ObjContribIdealJac(double weight)
-  : ObjContrib("IdealJac", FuncType::getNamePrefix() + "IdealJac"), _mesh(0),
-    _weight(weight)
+  : ObjContrib("IdealJac", FuncType::getNamePrefix() + "IdealJac"),
+    _mesh(nullptr), _weight(weight)
 {
 }
 

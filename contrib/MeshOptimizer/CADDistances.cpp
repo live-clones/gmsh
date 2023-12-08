@@ -1,4 +1,4 @@
-// HighOrderMeshOptimizer - Copyright (C) 2013-2019 UCLouvain-ULiege
+// HighOrderMeshOptimizer - Copyright (C) 2013-2023 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -224,9 +224,7 @@ namespace {
                      const std::vector<SPoint3> &Q)
   {
     double CAij;
-    if(CA(i, j) > -1.) {
-      CAij = CA(i, j);
-    }
+    if(CA(i, j) > -1.) { CAij = CA(i, j); }
     else if(i == 0 && j == 0) {
       CA(i, j) = P[0].distance(Q[0]); // update the CA permanent
       CAij = CA(i, j); // set the current relevant value
@@ -428,7 +426,7 @@ double taylorDistanceSq1D(const GradientBasis *gb,
 {
   const int nV = nodesXYZ.size1();
   fullMatrix<double> dxyzdX(nV, 3);
-  gb->getGradientsFromNodes(nodesXYZ, &dxyzdX, 0, 0);
+  gb->getGradientsFromNodes(nodesXYZ, &dxyzdX, nullptr, nullptr);
   //  const double dx = nodesXYZ(1, 0) - nodesXYZ(0, 0), dy = nodesXYZ(1, 1) -
   //  nodesXYZ(0, 1),
   //               dz = nodesXYZ(1, 2) - nodesXYZ(0, 2), h =
@@ -450,7 +448,7 @@ double taylorDistanceSq2D(const GradientBasis *gb,
 {
   const int nV = nodesXYZ.size1();
   fullMatrix<double> dxyzdX(nV, 3), dxyzdY(nV, 3);
-  gb->getGradientsFromNodes(nodesXYZ, &dxyzdX, &dxyzdY, 0);
+  gb->getGradientsFromNodes(nodesXYZ, &dxyzdX, &dxyzdY, nullptr);
   double distSq = 0.;
   for(int i = 0; i < nV; i++) {
     const double nz = dxyzdX(i, 0) * dxyzdY(i, 1) - dxyzdX(i, 1) * dxyzdY(i, 0);
@@ -520,8 +518,8 @@ double taylorDistanceFace(MElement *el, GFace *gf)
 void distanceFromElementsToGeometry(GModel *gm, int dim,
                                     std::map<MElement *, double> &distances)
 {
-  std::map<MEdge, double, Less_Edge> dist2Edge;
-  for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
+  std::map<MEdge, double, MEdgeLessThan> dist2Edge;
+  for(auto it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
     if((*it)->geomType() == GEntity::Line) continue;
     for(unsigned int i = 0; i < (*it)->lines.size(); i++) {
       double d = taylorDistanceEdge((*it)->lines[i], *it);
@@ -530,8 +528,8 @@ void distanceFromElementsToGeometry(GModel *gm, int dim,
     }
   }
 
-  std::map<MFace, double, Less_Face> dist2Face;
-  for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
+  std::map<MFace, double, MFaceLessThan> dist2Face;
+  for(auto it = gm->firstFace(); it != gm->lastFace(); ++it) {
     if((*it)->geomType() == GEntity::Plane) continue;
     for(unsigned int i = 0; i < (*it)->triangles.size(); i++) {
       double d = taylorDistanceFace((*it)->triangles[i], *it);
@@ -551,12 +549,12 @@ void distanceFromElementsToGeometry(GModel *gm, int dim,
       double d = 0.;
       for(int iEdge = 0; iEdge < element->getNumEdges(); ++iEdge) {
         MEdge e = element->getEdge(iEdge);
-        std::map<MEdge, double, Less_Edge>::iterator it = dist2Edge.find(e);
+        auto it = dist2Edge.find(e);
         if(it != dist2Edge.end()) d += it->second;
       }
       for(int iFace = 0; iFace < element->getNumFaces(); ++iFace) {
         MFace f = element->getFace(iFace);
-        std::map<MFace, double, Less_Face>::iterator it = dist2Face.find(f);
+        auto it = dist2Face.find(f);
         if(it != dist2Face.end()) d += it->second;
       }
       distances[element] = d;
@@ -571,7 +569,7 @@ double distanceToGeometry(GModel *gm, int distType, double tol, int meshDiscr,
   double maxDist = 0.;
 
   if(dim == 2) {
-    for(GModel::eiter it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
+    for(auto it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
       if((*it)->geomType() == GEntity::Line) continue;
       for(unsigned int i = 0; i < (*it)->lines.size(); i++) {
         double dist;
@@ -601,7 +599,7 @@ double distanceToGeometry(GModel *gm, int distType, double tol, int meshDiscr,
   }
   else if(dim == 3) {
     if(distType == CADDIST_TAYLOR) {
-      for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
+      for(auto it = gm->firstFace(); it != gm->lastFace(); ++it) {
         if((*it)->geomType() == GEntity::Plane) continue;
         for(unsigned int i = 0; i < (*it)->triangles.size(); i++) {
           maxDist =

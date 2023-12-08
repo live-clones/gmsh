@@ -1,12 +1,9 @@
-# Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 #
-# See the LICENSE.txt file for license information. Please report all
-# issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+# See the LICENSE.txt file in the Gmsh root directory for license information.
+# Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
-
-# do not warn about non-definition of WIN32 on Cygwin
-set(CMAKE_LEGACY_CYGWIN_WIN32 0)
+cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
 
 # if CMAKE_BUILD_TYPE is specified use it; otherwise set the default
 # build type to "RelWithDebInfo" ("-O2 -g" with gcc) prior to calling
@@ -19,6 +16,11 @@ endif()
 
 project(gmsh CXX C)
 
+# require C++11 and request C99
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_C_STANDARD 99)
+
 # this variable controls the default value of the options which are normally set
 # to ON (useful if you want to configure a minimal version of Gmsh: e.g. "cmake
 # -DDEFAULT=0 -DENABLE_POST=1 -DENABLE_PARSER=1")
@@ -30,25 +32,25 @@ macro(opt OPTION HELP VALUE)
 endmacro()
 
 opt(3M "Enable proprietary 3M extension" OFF)
-opt(ACIS "Enable ACIS geometrical models (experimental)" ${DEFAULT})
 opt(ALGLIB "Enable ALGLIB (used by some mesh optimizers)" ${DEFAULT})
 opt(ANN "Enable ANN (used for fast point search in mesh/post)" ${DEFAULT})
 opt(BAMG "Enable Bamg 2D anisotropic mesh generator" ${DEFAULT})
-opt(BLAS_LAPACK "Enable BLAS/Lapack for linear algebra (required for meshing)" ON)
+opt(BLAS_LAPACK "Enable BLAS/Lapack for linear algebra (if Eigen if disabled)" OFF)
 opt(BLOSSOM "Enable Blossom algorithm (needed for full quad meshing)" ${DEFAULT})
 opt(BUILD_LIB "Enable 'lib' target for building static Gmsh library" OFF)
 opt(BUILD_SHARED "Enable 'shared' target for building shared Gmsh library" OFF)
 opt(BUILD_DYNAMIC "Enable dynamic Gmsh executable (linked with shared library)" OFF)
 opt(BUILD_ANDROID "Enable Android NDK library target (experimental)" OFF)
 opt(BUILD_IOS "Enable iOS library target (experimental)" OFF)
-opt(CGNS "Enable CGNS mesh import (experimental)" ${DEFAULT})
+opt(CGNS "Enable CGNS import/export (experimental)" ${DEFAULT})
+opt(CGNS_CPEX0045 "Enable high-order CGNS import/export following CPEX0045 (experimental)" OFF)
 opt(CAIRO "Enable Cairo to render fonts (experimental)" ${DEFAULT})
-opt(CXX11 "Enable C++11" ON)
-opt(C99 "Enable C99" ON)
 opt(PROFILE "Enable profiling compiler flags" OFF)
 opt(DINTEGRATION "Enable discrete integration (needed for levelsets)" ${DEFAULT})
 opt(DOMHEX "Enable experimental DOMHEX code" ${DEFAULT})
+opt(EIGEN "Enable Eigen for linear algebra (instead of Blas/Lapack)" ON)
 opt(FLTK "Enable FLTK graphical user interface (requires mesh/post)" ${DEFAULT})
+opt(GEOMETRYCENTRAL "Enable geometry-central library (experimental)" ${DEFAULT})
 opt(GETDP "Enable GetDP solver (linked as a library, experimental)" ${DEFAULT})
 opt(GMM "Enable GMM linear solvers (simple alternative to PETSc)" ${DEFAULT})
 opt(GMP "Enable GMP for Kbipack (advanced)" ON)
@@ -57,14 +59,13 @@ opt(HXT "Enable HXT library (for reparametrization and meshing)" ${DEFAULT})
 opt(KBIPACK "Enable Kbipack (neeeded by homology solver)" ${DEFAULT})
 opt(MATHEX "Enable Mathex expression parser (used by plugins and options)" ${DEFAULT})
 opt(MED "Enable MED mesh and post file formats" ${DEFAULT})
-opt(MESH "Enable mesh module (required by GUI)" ${DEFAULT})
+opt(MESH "Enable mesh module" ${DEFAULT})
 opt(METIS "Enable Metis mesh partitioner" ${DEFAULT})
-opt(MMG3D "Enable MMG3D 3D anisotropic mesh refinement" ${DEFAULT})
+opt(MMG "Enable Mmg mesh adaptation interface" ${DEFAULT})
 opt(MPEG_ENCODE "Enable built-in MPEG movie encoder" ${DEFAULT})
 opt(MPI "Enable MPI (experimental, not used for meshing)" OFF)
 opt(MSVC_STATIC_RUNTIME "Enable static Visual C++ runtime" OFF)
 opt(MUMPS "Enable MUMPS sparse direct linear solver" OFF)
-opt(NATIVE_FILE_CHOOSER "Enable native file chooser in GUI" ${DEFAULT})
 opt(NETGEN "Enable Netgen 3D frontal mesh generator" ${DEFAULT})
 opt(NUMPY "Enable fullMatrix and numpy array conversion for private API" OFF)
 opt(PETSC4PY "Enable petsc4py wrappers for petsc matrices for private API" OFF)
@@ -74,41 +75,51 @@ opt(OCC_STATIC "Link OpenCASCADE static instead of dynamic libraries (requires E
 opt(OCC_TBB "Add TBB libraries in list of OCC libraries" OFF)
 opt(ONELAB "Enable ONELAB solver interface" ${DEFAULT})
 opt(ONELAB_METAMODEL "Enable ONELAB metamodels (experimental)" ${DEFAULT})
-opt(OPENMP "Enable OpenMP" OFF)
+opt(OPENACC "Enable OpenACC" OFF)
+opt(OPENMP "Enable OpenMP" ${DEFAULT})
 opt(OPTHOM "Enable high-order mesh optimization tools" ${DEFAULT})
 opt(OS_SPECIFIC_INSTALL "Enable OS-specific (e.g. app bundle) installation" OFF)
 opt(OSMESA "Enable OSMesa for offscreen rendering (experimental)" OFF)
-opt(P4EST "Enable p4est for enabling automatic mesh size firld (experimental)" OFF)
-opt(PARSER "Enable GEO file parser (required for .geo/.pos files)" ${DEFAULT})
+opt(P4EST "Enable p4est for enabling automatic mesh size field (experimental)" OFF)
+opt(PACKAGE_STRIP "Strip symbols in install packages to reduce install size" ON)
+opt(PARSER "Enable GEO file parser (required for .geo/.pos scripts)" ${DEFAULT})
 opt(PETSC "Enable PETSc linear solvers (required for SLEPc)" OFF)
 opt(PLUGINS "Enable post-processing plugins" ${DEFAULT})
 opt(POST "Enable post-processing module (required by GUI)" ${DEFAULT})
 opt(POPPLER "Enable Poppler for displaying PDF documents (experimental)" OFF)
 opt(PRIVATE_API "Enable private API" OFF)
+opt(PRO "Enable PRO extensions" ${DEFAULT})
+opt(QUADMESHINGTOOLS "Enable QuadMeshingTools extensions" ${DEFAULT})
 opt(QUADTRI "Enable QuadTri structured meshing extensions" ${DEFAULT})
 opt(REVOROPT "Enable Revoropt (used for CVT remeshing)" OFF)
+opt(RPATH "Use RPATH in dynamically linked targets" ON)
 opt(SLEPC "Enable SLEPc eigensolvers" OFF)
-opt(SOLVER "Enable built-in finite element solvers (required for compounds)" ${DEFAULT})
+opt(SOLVER "Enable built-in finite element solvers (required for reparametrization)" ${DEFAULT})
 opt(SYSTEM_CONTRIB "Use system versions of contrib libraries, when possible" OFF)
 opt(TCMALLOC "Enable libtcmalloc (fast malloc that does not release memory)" OFF)
-opt(TOUCHBAR "Enable Apple Touch bar" OFF)
+opt(TESTS "Enable tests" ${DEFAULT})
+opt(TOUCHBAR "Enable Apple Touch bar" ${DEFAULT})
 opt(VISUDEV "Enable additional visualization capabilities for development purposes" OFF)
 opt(VOROPP "Enable voro++ (for hex meshing, experimental)" ${DEFAULT})
-opt(WRAP_JAVA "Enable generation of Java wrappers for private API" OFF)
-opt(WRAP_PYTHON "Enable generation of Python wrappers for private API" OFF)
+opt(WINSLOWUNTANGLER "Enable WinslowUntangler extensions (requires ALGLIB)" ${DEFAULT})
+opt(WRAP_JAVA "Generate SWIG Java wrappers for private API" OFF)
+opt(WRAP_PYTHON "Generate SWIG Python wrappers for private API (not used by public API)" OFF)
 opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 4)
-set(GMSH_MINOR_VERSION 4)
+set(GMSH_MINOR_VERSION 12)
 set(GMSH_PATCH_VERSION 0)
-set(GMSH_EXTRA_VERSION "")
+if(NOT GMSH_EXTRA_VERSION)
+  set(GMSH_EXTRA_VERSION "")
+endif()
 set(GMSH_EXTRA_VERSION_TEXI "${GMSH_EXTRA_VERSION}")
+set(GMSH_EXTRA_VERSION_ORIG ${GMSH_EXTRA_VERSION})
 
 if(NOT GMSH_RELEASE)
   find_package(Git)
   if(GIT_FOUND)
     execute_process(COMMAND ${GIT_EXECUTABLE} log -1 --format=%h
-                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} ERROR_QUIET
                     OUTPUT_VARIABLE GIT_COMMIT_HASH
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
   endif()
@@ -118,28 +129,40 @@ if(NOT GMSH_RELEASE)
   set(GMSH_EXTRA_VERSION_TEXI "${GMSH_EXTRA_VERSION_TEXI} (development version)")
 endif()
 
-set(GMSH_VERSION "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}")
-set(GMSH_VERSION "${GMSH_VERSION}.${GMSH_PATCH_VERSION}${GMSH_EXTRA_VERSION}")
+set(GMSH_SHORT_VERSION
+    "${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}")
+set(GMSH_VERSION "${GMSH_SHORT_VERSION}${GMSH_EXTRA_VERSION}")
 set(GMSH_SHORT_LICENSE "GNU General Public License")
 
-set(GMSH_API api/gmsh.h api/gmshc.h api/gmsh.h_cwrap)
+set(GMSH_GITLAB_PREFIX "https://gitlab.onelab.info/gmsh/gmsh")
+if(GMSH_RELEASE)
+  string(REPLACE "\." "_" GMSH_SHORT_VERSION_ ${GMSH_SHORT_VERSION})
+  set(GMSH_GITLAB_PREFIX "${GMSH_GITLAB_PREFIX}/blob/gmsh_${GMSH_SHORT_VERSION_}")
+else()
+  set(GMSH_GITLAB_PREFIX "${GMSH_GITLAB_PREFIX}/blob/master")
+endif()
+
+set(GMSH_API api/gmsh.h api/gmshc.h api/gmsh.h_cwrap api/gmsh.f90)
 
 if(ENABLE_PRIVATE_API)
   message(WARNING "The private API is unsupported and undocumented. It is meant "
           "for expert Gmsh developers, not for regular Gmsh users, who should rely "
-          "on the stable public API (gmsh/api) instead. If you are repackaging Gmsh, "
-          "e.g. for a Linux distribution, please DO NOT distribute the private API "
-          "(i.e. all the internal headers) and ship the stable public API instead "
-          "(i.e. only the headers and modules in gmsh/api).")
-  file(GLOB_RECURSE HEADERS Common/*.h Numeric/*.h Geo/*.h Mesh/*.h Solver/*.h
-    Post/*.h Graphics/*.h contrib/kbipack/*.h contrib/DiscreteIntegration/*.h
-    contrib/HighOrderMeshOptimizer/*.h contrib/MeshOptimizer/*.h
-    contrib/MeshQualityOptimizer/*.h)
-  set(GMSH_PRIVATE_API ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshConfig.h
-      ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h ${HEADERS})
+          "on the stable public API (gmsh/api) instead.")
+  file(GLOB_RECURSE HEADERS src/common/*.h src/numeric/*.h src/numeric/*.hpp
+       src/geo/*.h src/mesh/*.h src/solver/*.h src/post/*.h src/plugin/*.h
+       src/graphics/*.h contrib/kbipack/*.h contrib/DiscreteIntegration/*.h
+       contrib/HighOrderMeshOptimizer/*.h contrib/MeshOptimizer/*.h
+       contrib/MeshQualityOptimizer/*.h)
+  set(GMSH_PRIVATE_API ${CMAKE_CURRENT_BINARY_DIR}/src/common/GmshConfig.h
+      ${CMAKE_CURRENT_BINARY_DIR}/src/common/GmshVersion.h ${HEADERS})
   get_property(IAMCHILD DIRECTORY PROPERTY PARENT_DIRECTORY)
   if(IAMCHILD)
     set(GMSH_PRIVATE_API ${GMSH_PRIVATE_API} PARENT_SCOPE)
+  endif()
+  if(ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
+    set(ENABLE_BUILD_DYNAMIC ON)
+    message(WARNING "SWIG wrappers for the private API are unsupported and "
+            "undocumented. The stable public Python API does not required SWIG.")
   endif()
 endif()
 
@@ -153,10 +176,6 @@ else()
   execute_process(COMMAND date "+%Y%m%d" OUTPUT_VARIABLE DATE
                   OUTPUT_STRIP_TRAILING_WHITESPACE)
 endif()
-execute_process(COMMAND hostname OUTPUT_VARIABLE HOSTNAME
-                OUTPUT_STRIP_TRAILING_WHITESPACE)
-execute_process(COMMAND whoami OUTPUT_VARIABLE PACKAGER
-                OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 if(NOT DATE)
   set(DATE "unknown")
@@ -164,23 +183,36 @@ endif()
 set(GMSH_DATE "${DATE}")
 
 if(NOT GMSH_HOST)
-  if(NOT HOSTNAME)
-    set(HOSTNAME "unknown")
+  execute_process(COMMAND hostname OUTPUT_VARIABLE HOST
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(NOT HOST)
+    set(HOST "unknown")
   endif()
-  set(GMSH_HOST "${HOSTNAME}")
+  set(GMSH_HOST "${HOST}")
 endif()
 
-if(NOT PACKAGER)
-  set(PACKAGER "unknown")
+if(NOT GMSH_PACKAGER)
+  execute_process(COMMAND whoami OUTPUT_VARIABLE PACKAGER
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(NOT PACKAGER)
+    set(PACKAGER "unknown")
+  endif()
+  string(REPLACE "\\" " " PACKAGER ${PACKAGER})
+  set(GMSH_PACKAGER "${PACKAGER}")
 endif()
-string(REPLACE "\\" " " PACKAGER ${PACKAGER})
-set(GMSH_PACKAGER "${PACKAGER}")
 
 if(APPLE)
-  set(GMSH_OS "MacOSX")
+  if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm64")
+    set(GMSH_OS "MacOSARM")
+  else()
+    set(GMSH_OS "MacOSX")
+  endif()
+  # build universal binary
+  #SET(CMAKE_OSX_ARCHITECTURES "x86_64;arm64" CACHE STRING "Build architectures for macOS" FORCE)
 elseif(CYGWIN OR MSYS)
   # detect if we use the MinGW compilers on Cygwin - if we do, handle the build
-  # as a pure Windows build
+  # as a pure Windows build and make cmake find pure Windows import libraries
+  # (.lib)
   if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR
      CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpmachine
@@ -190,9 +222,12 @@ elseif(CYGWIN OR MSYS)
       set(GMSH_OS "Windows")
       set(WIN32 1)
       add_definitions(-DWIN32)
+      set(CMAKE_FIND_LIBRARY_PREFIXES "lib" "")
+      set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".so" ".lib" ".LIB" ".dll" ".DLL" ".dll.a")
     endif()
   endif()
-else()
+endif()
+if(NOT GMSH_OS)
   set(GMSH_OS "${CMAKE_SYSTEM_NAME}")
 endif()
 
@@ -208,25 +243,10 @@ macro(set_config_option VARNAME STRING)
   message(STATUS "Found " ${STRING})
 endmacro()
 
-# check if the machine is 64 bits (this is more reliable than using
-# CMAKE_SIZEOF_VOID_P, which does not seem to work e.g. on some Suse
-# machines)
-check_type_size("void*" SIZEOF_VOID_P)
-if(SIZEOF_VOID_P EQUAL 8)
+# check the size of size_t
+check_type_size("size_t" SIZEOF_SIZE_T)
+if(SIZEOF_SIZE_T EQUAL 8)
   set_config_option(HAVE_64BIT_SIZE_T "64Bit")
-endif()
-
-if(ENABLE_TOUCHBAR)
-  if(APPLE)
-    if(ENABLE_FLTK)
-      set(GMSH_SRC ${GMSH_SRC};Fltk/touchBar.mm)
-      set_config_option(HAVE_TOUCHBAR "TouchBar")
-    else()
-      message(WARNING "FLTK must be switched on to activate the Touch Bar.")
-    endif()
-  else()
-    message(WARNING "The Touch Bar can only be activated on Apple devices.")
-  endif()
 endif()
 
 # append 32/64 to the build name on Linux and Windows
@@ -238,26 +258,19 @@ if(NOT APPLE)
   endif()
 endif()
 
-if(NOT ENABLE_BUILD_SHARED)
-  if(ENABLE_WRAP_PYTHON OR ENABLE_WRAP_JAVA)
-    set(ENABLE_BUILD_DYNAMIC ON)
-  endif()
-endif()
-
 if(ENABLE_BUILD_DYNAMIC)
   set(GMSH_OS "${GMSH_OS}-sdk")
 endif()
 
-if(APPLE)
-  # FIXME: change this once we understand rpaths - the options below do not work
-  set(CMAKE_MACOSX_RPATH 0)
-else()
-  # make sure that dynamic libraries can be found when installing/ displacing the
-  # binaries: from https://gitlab.kitware.com/cmake/community/wikis/doc/cmake/
-  # RPATH-handling:
+if(ENABLE_RPATH)
+  set(CMAKE_MACOSX_RPATH 1)
+
+  # make sure that dynamic libraries can be found when installing/ displacing
+  # the binaries: from https://gitlab.kitware.com/cmake/community/wikis/doc/
+  # cmake/RPATH-handling:
 
   # use, i.e. don't skip the full RPATH for the build tree
-  set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+  set(CMAKE_SKIP_BUILD_RPATH FALSE)
 
   # when building, don't use the install RPATH already (but later on when
   # installing)
@@ -272,8 +285,15 @@ else()
   list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib"
        isSystemDir)
   if("${isSystemDir}" STREQUAL "-1")
-     set(CMAKE_INSTALL_RPATH "\\\$ORIGIN/../lib")
+    if(APPLE)
+      set(CMAKE_INSTALL_RPATH "@executable_path/../lib")
+    else()
+      set(CMAKE_INSTALL_RPATH "\\\$ORIGIN/../lib")
+    endif()
   endif()
+else()
+  set(CMAKE_MACOSX_RPATH 0)
+  set(CMAKE_SKIP_BUILD_RPATH TRUE)
 endif()
 
 if(MSVC)
@@ -301,36 +321,56 @@ if(MSVC)
   endif()
 endif()
 
+# reduce memory usage of GCC on 32 bit systems
+if(NOT HAVE_64BIT_SIZE_T AND CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+  set(CMAKE_CXX_FLAGS
+      "${CMAKE_CXX_FLAGS} --param ggc-min-expand=1 --param ggc-min-heapsize=512000")
+endif()
+
 if(ENABLE_OPENMP)
   find_package(OpenMP)
-  if(OPENMP_FOUND)
+  if(OpenMP_FOUND OR OPENMP_FOUND)
     set_config_option(HAVE_OPENMP "OpenMP")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    list(APPEND EXTERNAL_LIBRARIES "${OpenMP_CXX_LIBRARIES}")
   elseif(APPLE AND EXISTS "/opt/local/lib/libomp")
-    # just for testing the official Apple compiler with macports' libomp
+    # official Apple compiler with macports' libomp
     set_config_option(HAVE_OPENMP "OpenMP[MacPorts]")
     set(CMAKE_C_FLAGS
         "${CMAKE_C_FLAGS} -Xpreprocessor -fopenmp -I/opt/local/include/libomp")
     set(CMAKE_CXX_FLAGS
         "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp -I/opt/local/include/libomp")
     list(APPEND EXTERNAL_LIBRARIES "-L/opt/local/lib/libomp -lomp")
+  elseif(APPLE AND EXISTS "/usr/local/lib/libomp.dylib")
+    # official Apple compiler with homebrew's libomp on Intel
+    set_config_option(HAVE_OPENMP "OpenMP[Homebrew]")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Xpreprocessor -fopenmp")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp")
+    list(APPEND EXTERNAL_LIBRARIES "-L/usr/local/lib -lomp")
+  elseif(APPLE AND EXISTS "/opt/homebrew/opt/libomp")
+    # official Apple compiler with homebrew's libomp on M processors
+    set_config_option(HAVE_OPENMP "OpenMP[Homebrew]")
+    set(CMAKE_C_FLAGS
+        "${CMAKE_C_FLAGS} -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include")
+    set(CMAKE_CXX_FLAGS
+        "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp -I/opt/homebrew/opt/libomp/include")
+    list(APPEND EXTERNAL_LIBRARIES "-L/opt/homebrew/opt/libomp/lib -lomp")
+  elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux" AND EXISTS "/usr/local/lib64/libgomp.a")
+    # custom static openmp for official linux builds
+    set_config_option(HAVE_OPENMP "OpenMP[static]")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Xpreprocessor -fopenmp")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Xpreprocessor -fopenmp")
+    list(APPEND EXTERNAL_LIBRARIES "/usr/local/lib64/libgomp.a")
   endif()
 endif()
 
-if(ENABLE_CXX11)
-  # in recent cmake versions we could do e.g. set(CMAKE_CXX_STANDARD 11)
-  check_cxx_compiler_flag("-std=c++11" STDCXX11)
-  if(STDCXX11)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-  endif()
-endif()
-
-if(ENABLE_C99)
-  # in recent cmake versions we could do e.g. set(CMAKE_C_STANDARD 99)
-  check_c_compiler_flag("-std=c99" STDC99)
-  if(STDC99)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
+if(ENABLE_OPENACC)
+  find_package(OpenACC)
+  if(OpenACC_C_FOUND AND OpenACC_CXX_FOUND)
+    set_config_option(HAVE_OPENACC "OpenACC")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenACC_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenACC_CXX_FLAGS}")
   endif()
 endif()
 
@@ -382,7 +422,35 @@ macro(set_compile_flags LISTNAME FLAGS)
   endforeach()
 endmacro()
 
-if(ENABLE_BLAS_LAPACK)
+if(ENABLE_GEOMETRYCENTRAL)
+  find_library(GEOMETRYCENTRAL_LIB NAMES geometry-central)
+  find_path(GEOMETRYCENTRAL_INC "surface/meshio.h" PATH_SUFFIXES geometrycentral)
+  if(GEOMETRYCENTRAL_LIB AND GEOMETRYCENTRAL_INC)
+    list(APPEND EXTERNAL_LIBRARIES ${GEOMETRYCENTRAL_LIB})
+    list(APPEND EXTERNAL_INCLUDES ${GEOMETRYCENTRAL_INC})
+    set_config_option(HAVE_GEOMETRYCENTRAL "geometry-central")
+  endif()
+endif()
+
+if(ENABLE_EIGEN)
+  if(ENABLE_SYSTEM_CONTRIB)
+    find_path(EIGEN_INC "Eigen/Dense" PATH_SUFFIXES eigen3)
+    if(EIGEN_INC)
+      include_directories(${EIGEN_INC})
+      set_config_option(HAVE_EIGEN "Eigen")
+      set(HAVE_CONTRIB_EIGEN FALSE)
+    endif()
+  endif()
+  if(NOT HAVE_EIGEN AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/eigen)
+    include_directories(contrib/eigen)
+    set_config_option(HAVE_EIGEN "Eigen[contrib]")
+    set(HAVE_CONTRIB_EIGEN TRUE)
+  endif()
+  # We could also add an option to use BLAS with Eigen
+  # add_definitions(-DEIGEN_USE_BLAS)
+endif()
+
+if(NOT HAVE_EIGEN AND ENABLE_BLAS_LAPACK)
   if(BLAS_LAPACK_LIBRARIES)
     # use libs as specified in the BLAS_LAPACK_LIBRARIES variable
     set_config_option(HAVE_BLAS "Blas[custom]")
@@ -444,8 +512,8 @@ if(ENABLE_BLAS_LAPACK)
           set(GENERIC_LIBS_REQUIRED lapack blas pthread)
           find_all_libraries(LAPACK_LIBRARIES GENERIC_LIBS_REQUIRED "" "")
           if(LAPACK_LIBRARIES)
-            set_config_option(HAVE_BLAS "Blas")
-            set_config_option(HAVE_LAPACK "Lapack")
+            set_config_option(HAVE_BLAS "Blas[generic]")
+            set_config_option(HAVE_LAPACK "Lapack[generic]")
             find_library(GFORTRAN_LIB gfortran)
             if(GFORTRAN_LIB)
               list(APPEND LAPACK_LIBRARIES ${GFORTRAN_LIB})
@@ -500,15 +568,11 @@ if(ENABLE_BLAS_LAPACK)
           elseif(CMAKE_Fortran_COMPILER MATCHES "g77")
             list(APPEND LAPACK_LIBRARIES g2c)
           endif()
+        elseif(CMAKE_Fortran_COMPILER MATCHES "pgi")
+          list(APPEND LAPACK_LIBRARIES -pgf77libs)
         endif()
       endif()
     endif()
-
-    if(NOT HAVE_BLAS OR NOT HAVE_LAPACK)
-      message(WARNING "Could not find Blas or Lapack: most meshing algorithms "
-              "will not be functional")
-    endif()
-
   endif()
 endif()
 
@@ -520,31 +584,31 @@ if(ENABLE_TCMALLOC)
   endif()
 endif()
 
-add_subdirectory(Common)
-add_subdirectory(Numeric)
-add_subdirectory(Geo)
+add_subdirectory(src/common)
+add_subdirectory(src/numeric)
+add_subdirectory(src/geo)
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Mesh AND ENABLE_MESH)
-  add_subdirectory(Mesh)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/mesh AND ENABLE_MESH)
+  add_subdirectory(src/mesh)
   set_config_option(HAVE_MESH "Mesh")
 endif()
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Solver AND ENABLE_SOLVER)
-  add_subdirectory(Solver)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/solver AND ENABLE_SOLVER)
+  add_subdirectory(src/solver)
   set_config_option(HAVE_SOLVER "Solver")
 endif()
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Post AND ENABLE_POST)
-  add_subdirectory(Post)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/post AND ENABLE_POST)
+  add_subdirectory(src/post)
   set_config_option(HAVE_POST "Post")
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Plugin AND ENABLE_PLUGINS)
-    add_subdirectory(Plugin)
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/plugin AND ENABLE_PLUGINS)
+    add_subdirectory(src/plugin)
     set_config_option(HAVE_PLUGINS "Plugins")
   endif()
 endif()
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Parser AND ENABLE_PARSER)
-  add_subdirectory(Parser)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/parser AND ENABLE_PARSER)
+  add_subdirectory(src/parser)
   set_config_option(HAVE_PARSER "Parser")
 endif()
 
@@ -552,7 +616,7 @@ if(ENABLE_VISUDEV)
   set_config_option(HAVE_VISUDEV "VisuDev")
 endif()
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Fltk AND ENABLE_FLTK)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
   # first, try to use fltk-config for fltk >= 1.3 (FindFLTK is buggy on Unix,
   # where e.g. xft and xinerama options are not dealt with)
   find_program(FLTK_CONFIG_SCRIPT fltk-config)
@@ -560,35 +624,17 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Fltk AND ENABLE_FLTK)
     execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --api-version
                     OUTPUT_VARIABLE FLTK_VERSION)
     string(STRIP "${FLTK_VERSION}" FLTK_VERSION)
-    if(FLTK_VERSION GREATER 1.1)
-      add_subdirectory(Fltk)
+    if(FLTK_VERSION VERSION_GREATER 1.3)
+      add_subdirectory(src/fltk)
       set_config_option(HAVE_FLTK "Fltk")
       message(STATUS "Using fltk-config script for Fltk " ${FLTK_VERSION})
       execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --includedir
                       OUTPUT_VARIABLE FLTK_INCLUDE_DIR)
       string(STRIP ${FLTK_INCLUDE_DIR} FLTK_INCLUDE_DIR)
       list(APPEND EXTERNAL_INCLUDES ${FLTK_INCLUDE_DIR})
-      # On linux (at least OpenSuSE) the following directories are
-      # not existing (everything is in /usr/include). To avoid warnings
-      # check existance of these directories before adding them
-      if(EXISTS ${FLTK_INCLUDE_DIR}/FL/images)
-        list(APPEND EXTERNAL_INCLUDES ${FLTK_INCLUDE_DIR}/FL/images)
-      endif()
-      if(EXISTS ${FLTK_INCLUDE_DIR}/jpeg)
-        list(APPEND EXTERNAL_INCLUDES ${FLTK_INCLUDE_DIR}/jpeg)
-      endif()
-      if(EXISTS ${FLTK_INCLUDE_DIR}/zlib)
-        list(APPEND EXTERNAL_INCLUDES ${FLTK_INCLUDE_DIR}/zlib)
-      endif()
-      if(EXISTS ${FLTK_INCLUDE_DIR}/png)
-        list(APPEND EXTERNAL_INCLUDES ${FLTK_INCLUDE_DIR}/png)
-      endif()
       execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --use-gl --use-images --ldflags
                       OUTPUT_VARIABLE FLTK_LIBRARIES)
       string(STRIP ${FLTK_LIBRARIES} FLTK_LIBRARIES)
-      string(REGEX MATCH "fltk[_ ]jpeg" FLTK_JPEG ${FLTK_LIBRARIES})
-      string(REGEX MATCH "fltk[_ ]z" FLTK_Z ${FLTK_LIBRARIES})
-      string(REGEX MATCH "fltk[_ ]png" FLTK_PNG ${FLTK_LIBRARIES})
     endif()
   endif()
   # then try the built-in FindFLTK module
@@ -597,33 +643,9 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Fltk AND ENABLE_FLTK)
     set(FLTK_SKIP_FLUID TRUE)
     find_package(FLTK)
     if(FLTK_FOUND)
-      add_subdirectory(Fltk)
+      add_subdirectory(src/fltk)
       set_config_option(HAVE_FLTK "Fltk")
       list(APPEND EXTERNAL_INCLUDES ${FLTK_INCLUDE_DIR})
-      # find fltk jpeg
-      find_library(FLTK_JPEG NAMES fltk_jpeg fltkjpeg)
-      if(FLTK_JPEG)
-        list(APPEND EXTERNAL_LIBRARIES ${FLTK_JPEG})
-        foreach(DIR ${FLTK_INCLUDE_DIR})
-          list(APPEND EXTERNAL_INCLUDES ${DIR}/FL/images ${DIR}/jpeg)
-        endforeach()
-      endif()
-      # find fltk zlib
-      find_library(FLTK_Z NAMES fltk_z fltkz)
-      if(FLTK_Z)
-        list(APPEND EXTERNAL_LIBRARIES ${FLTK_Z})
-        foreach(DIR ${FLTK_INCLUDE_DIR})
-          list(APPEND EXTERNAL_INCLUDES ${DIR}/FL/images ${DIR}/zlib)
-        endforeach()
-      endif()
-      # find fltk png
-      find_library(FLTK_PNG NAMES fltk_png fltkpng)
-      if(FLTK_PNG)
-        list(APPEND EXTERNAL_LIBRARIES ${FLTK_PNG})
-        foreach(DIR ${FLTK_INCLUDE_DIR})
-          list(APPEND EXTERNAL_INCLUDES ${DIR}/FL/images ${DIR}/png)
-        endforeach()
-      endif()
     endif()
   endif()
   # workaround for Fedora/Suse messing up fltk-config (see issue #417)
@@ -639,8 +661,14 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Fltk AND ENABLE_FLTK)
   endif()
 endif()
 
-if(ENABLE_NATIVE_FILE_CHOOSER)
-  set_config_option(HAVE_NATIVE_FILE_CHOOSER "NativeFileChooser")
+if(APPLE AND HAVE_FLTK AND ENABLE_TOUCHBAR)
+  STRING(REGEX MATCH "([0-9]+.[0-9]+)" OSX_SDK_VERSION "${CMAKE_OSX_SYSROOT}")
+  if(OSX_SDK_VERSION)
+    if(${OSX_SDK_VERSION} VERSION_GREATER 10.11)
+      set(GMSH_SRC ${GMSH_SRC};src/fltk/touchBar.mm)
+      set_config_option(HAVE_TOUCHBAR "TouchBar")
+    endif()
+  endif()
 endif()
 
 if(ENABLE_ONELAB)
@@ -664,42 +692,30 @@ if(ENABLE_BUILD_IOS)
 endif()
 
 if(HAVE_FLTK OR ENABLE_GRAPHICS)
-  if(NOT HAVE_MESH OR NOT HAVE_POST OR NOT HAVE_PLUGINS OR NOT HAVE_ONELAB)
-    message(SEND_ERROR "Cannot compile GUI without Mesh, Post, Plugin and ONELAB")
+  if(NOT HAVE_POST OR NOT HAVE_PLUGINS OR NOT HAVE_ONELAB)
+    message(SEND_ERROR "Cannot compile GUI without Post, Plugin and ONELAB")
   endif()
 
-  if(FLTK_JPEG)
-    set_config_option(HAVE_LIBJPEG "Jpeg[fltk]")
-  else()
-    find_package(JPEG)
-    if(JPEG_FOUND)
-      set_config_option(HAVE_LIBJPEG "Jpeg")
-      list(APPEND EXTERNAL_LIBRARIES ${JPEG_LIBRARIES})
-      list(APPEND EXTERNAL_INCLUDES ${JPEG_INCLUDE_DIR})
-    endif()
+  find_package(JPEG)
+  if(JPEG_FOUND)
+    set_config_option(HAVE_LIBJPEG "Jpeg")
+    list(APPEND EXTERNAL_LIBRARIES ${JPEG_LIBRARIES})
+    list(APPEND EXTERNAL_INCLUDES ${JPEG_INCLUDE_DIR})
   endif()
 
-  if(FLTK_Z)
-    set_config_option(HAVE_LIBZ "Zlib[fltk]")
-  else()
-    find_package(ZLIB)
-    if(ZLIB_FOUND)
-      set_config_option(HAVE_LIBZ "Zlib")
-      list(APPEND EXTERNAL_LIBRARIES ${ZLIB_LIBRARIES})
-      list(APPEND EXTERNAL_INCLUDES ${ZLIB_INCLUDE_DIR})
-    endif()
+  find_package(ZLIB)
+  if(ZLIB_FOUND)
+    set_config_option(HAVE_LIBZ "Zlib")
+    list(APPEND EXTERNAL_LIBRARIES ${ZLIB_LIBRARIES})
+    list(APPEND EXTERNAL_INCLUDES ${ZLIB_INCLUDE_DIR})
   endif()
 
   if(HAVE_LIBZ)
-    if(FLTK_PNG)
-      set_config_option(HAVE_LIBPNG "Png[fltk]")
-    else()
-      find_package(PNG)
-      if(PNG_FOUND)
-        set_config_option(HAVE_LIBPNG "Png")
-        list(APPEND EXTERNAL_LIBRARIES ${PNG_LIBRARIES})
-        list(APPEND EXTERNAL_INCLUDES ${PNG_INCLUDE_DIR})
-      endif()
+    find_package(PNG)
+    if(PNG_FOUND)
+      set_config_option(HAVE_LIBPNG "Png")
+      list(APPEND EXTERNAL_LIBRARIES ${PNG_LIBRARIES})
+      list(APPEND EXTERNAL_INCLUDES ${PNG_INCLUDE_DIR})
     endif()
   endif()
 
@@ -724,11 +740,11 @@ if(HAVE_FLTK OR ENABLE_GRAPHICS)
     endif()
   endif()
 
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Graphics)
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/graphics)
     set(OpenGL_GL_PREFERENCE "LEGACY")
     find_package(OpenGL REQUIRED)
     if(OPENGL_GLU_FOUND AND OPENGL_FOUND)
-      add_subdirectory(Graphics)
+      add_subdirectory(src/graphics)
       set_config_option(HAVE_OPENGL "OpenGL")
     else()
       message(SEND_ERROR "Could not find GLU: disabling OpenGL support")
@@ -743,25 +759,25 @@ if(ENABLE_ANN)
     message(STATUS "Using system version of ANN")
     list(APPEND EXTERNAL_LIBRARIES ${ANN_LIB})
     list(APPEND EXTERNAL_INCLUDES ${ANN_INC})
-    set_config_option(HAVE_ANN "Ann[system]")
+    set_config_option(HAVE_ANN "ANN")
   elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/ANN)
     add_subdirectory(contrib/ANN)
     include_directories(contrib/ANN/include)
-    set_config_option(HAVE_ANN "Ann")
+    set_config_option(HAVE_ANN "ANN[contrib]")
   endif()
 endif()
 
 if(ENABLE_ALGLIB)
-  find_library(ALGLIB_LIB alglib PATH_SUFFIXES lib)
-  find_path(ALGLIB_INC "stdafx.h" PATH_SUFFIXES include)
+  find_library(ALGLIB_LIB alglib)
+  find_path(ALGLIB_INC "stdafx.h" PATH_SUFFIXES libalglib)
   if(ENABLE_SYSTEM_CONTRIB AND ALGLIB_LIB AND ALGLIB_INC)
     list(APPEND EXTERNAL_LIBRARIES ${ALGLIB_LIB})
     list(APPEND EXTERNAL_INCLUDES ${ALGLIB_INC})
-    set_config_option(HAVE_ALGLIB "ALGLIB[system]")
+    set_config_option(HAVE_ALGLIB "ALGLIB")
   elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/ALGLIB)
     add_subdirectory(contrib/ALGLIB)
     include_directories(contrib/ALGLIB)
-    set_config_option(HAVE_ALGLIB "ALGLIB")
+    set_config_option(HAVE_ALGLIB "ALGLIB[contrib]")
   endif()
 endif()
 
@@ -780,34 +796,6 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/DiscreteIntegration AND
   add_subdirectory(contrib/DiscreteIntegration)
   include_directories(contrib/DiscreteIntegration)
   set_config_option(HAVE_DINTEGRATION "DIntegration")
-endif()
-
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/HighOrderMeshOptimizer AND
-   EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/MeshOptimizer AND
-   EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/MeshQualityOptimizer AND
-   ENABLE_OPTHOM AND HAVE_MESH)
-  add_subdirectory(contrib/HighOrderMeshOptimizer)
-  include_directories(contrib/HighOrderMeshOptimizer)
-  add_subdirectory(contrib/MeshOptimizer)
-  include_directories(contrib/MeshOptimizer)
-  include_directories(${CMAKE_CURRENT_BINARY_DIR}/contrib/MeshOptimizer)
-  add_subdirectory(contrib/MeshQualityOptimizer)
-  include_directories(contrib/MeshQualityOptimizer)
-  set_config_option(HAVE_OPTHOM "OptHom")
-endif()
-
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/domhex AND
-   ENABLE_DOMHEX AND HAVE_MESH)
-  add_subdirectory(contrib/domhex)
-  include_directories(contrib/domhex)
-  set_config_option(HAVE_DOMHEX "DomHex")
-endif()
-
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadTri AND
-   ENABLE_QUADTRI AND HAVE_MESH)
-  add_subdirectory(contrib/QuadTri)
-  include_directories(contrib/QuadTri)
-  set_config_option(HAVE_QUADTRI "QuadTri")
 endif()
 
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/kbipack AND ENABLE_KBIPACK)
@@ -833,11 +821,11 @@ if(ENABLE_MATHEX)
   if(ENABLE_SYSTEM_CONTRIB AND MATHEX_LIB AND MATHEX_INC)
     list(APPEND EXTERNAL_LIBRARIES ${MATHEX_LIB})
     list(APPEND EXTERNAL_INCLUDES ${MATHEX_INC})
-    set_config_option(HAVE_MATHEX "MathEx[system]")
+    set_config_option(HAVE_MATHEX "MathEx")
   elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/MathEx)
     add_subdirectory(contrib/MathEx)
     include_directories(contrib/MathEx)
-    set_config_option(HAVE_MATHEX "MathEx")
+    set_config_option(HAVE_MATHEX "MathEx[contrib]")
   endif()
 endif()
 
@@ -868,10 +856,10 @@ endif()
 if(ENABLE_P4EST)
   find_library(P4EST_LIB p4est)
   find_path(P4EST_INC "p4est.h" PATH_SUFFIXES src)
-  if(P4EST_LIB AND P4EST_INC)
-    set_config_option(HAVE_P4EST "p4est")
-    list(APPEND EXTERNAL_LIBRARIES ${P4EST_LIB})
-    list(APPEND EXTERNAL_LIBRARIES ${POPPLER_CPP_LIB})
+  find_library(SC_LIB sc)
+  if(P4EST_LIB AND P4EST_INC AND SC_LIB)
+    set_config_option(HAVE_P4EST "P4est")
+    list(APPEND EXTERNAL_LIBRARIES ${P4EST_LIB} ${SC_LIB})
     list(APPEND EXTERNAL_INCLUDES ${P4EST_INC})
   endif()
 endif()
@@ -884,35 +872,61 @@ if(HAVE_MESH OR HAVE_SOLVER)
       message(STATUS "Using system version of METIS")
       list(APPEND EXTERNAL_LIBRARIES ${METIS_LIB})
       list(APPEND EXTERNAL_INCLUDES ${METIS_INC})
-      set_config_option(HAVE_METIS "Metis[system]")
+      set_config_option(HAVE_METIS "Metis")
     elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/metis)
       add_definitions(-DUSE_GKREGEX)
       add_subdirectory(contrib/metis)
       include_directories(contrib/metis/include contrib/metis/libmetis
                           contrib/metis/GKlib)
-      set_config_option(HAVE_METIS "Metis")
+      set_config_option(HAVE_METIS "Metis[contrib]")
     endif()
   endif()
 endif()
 
 if(HAVE_MESH)
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Mesh/tetgenBR.cxx)
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/mesh/tetgenBR.cxx)
     set_config_option(HAVE_TETGENBR "TetGen/BR")
   endif()
 
   if(ENABLE_VOROPP)
-    find_library(VOROPP_LIB voro++ PATH_SUFFIXES lib)
-    find_path(VOROPP_INC "voro++.hh" PATH_SUFFIXES include)
+    find_library(VOROPP_LIB voro++)
+    find_path(VOROPP_INC "voro++.hh" PATH_SUFFIXES voro++)
     if(ENABLE_SYSTEM_CONTRIB AND VOROPP_LIB AND VOROPP_INC)
       message(STATUS "Using system version of voro++")
       list(APPEND EXTERNAL_LIBRARIES ${VOROPP_LIB})
       list(APPEND EXTERNAL_INCLUDES ${VOROPP_INC})
-      set_config_option(HAVE_VOROPP "Voro++[system]")
+      set_config_option(HAVE_VOROPP "Voro++")
     elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/voro++)
       add_subdirectory(contrib/voro++)
       include_directories(contrib/voro++/src)
-      set_config_option(HAVE_VOROPP "Voro++")
+      set_config_option(HAVE_VOROPP "Voro++[contrib]")
     endif()
+  endif()
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/HighOrderMeshOptimizer AND
+     EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/MeshOptimizer AND
+     EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/MeshQualityOptimizer AND
+     ENABLE_OPTHOM)
+    add_subdirectory(contrib/HighOrderMeshOptimizer)
+    include_directories(contrib/HighOrderMeshOptimizer)
+    add_subdirectory(contrib/MeshOptimizer)
+    include_directories(contrib/MeshOptimizer)
+    include_directories(${CMAKE_CURRENT_BINARY_DIR}/contrib/MeshOptimizer)
+    add_subdirectory(contrib/MeshQualityOptimizer)
+    include_directories(contrib/MeshQualityOptimizer)
+    set_config_option(HAVE_OPTHOM "OptHom")
+  endif()
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/domhex AND ENABLE_DOMHEX)
+    add_subdirectory(contrib/domhex)
+    include_directories(contrib/domhex)
+    set_config_option(HAVE_DOMHEX "DomHex")
+  endif()
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadTri AND ENABLE_QUADTRI)
+    add_subdirectory(contrib/QuadTri)
+    include_directories(contrib/QuadTri)
+    set_config_option(HAVE_QUADTRI "QuadTri")
   endif()
 
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/blossom AND ENABLE_BLOSSOM)
@@ -936,18 +950,56 @@ if(HAVE_MESH)
     set_config_option(HAVE_BAMG "Bamg")
   endif()
 
-  if(ENABLE_MMG3D)
-    find_library(MMG3D_LIB mmg3d PATH_SUFFIXES lib)
-    find_path(MMG3D_INC "libmmg3d.h" PATH_SUFFIXES src include)
-    if(ENABLE_SYSTEM_CONTRIB AND MMG3D_LIB AND MMG3D_INC)
-      list(APPEND EXTERNAL_LIBRARIES ${MMG3D_LIB})
-      list(APPEND EXTERNAL_INCLUDES ${MMG3D_INC})
-      set_config_option(HAVE_MMG3D "Mmg3d[system]")
-    elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/mmg3d)
-      add_subdirectory(contrib/mmg3d)
-      include_directories(contrib/mmg3d/build/sources)
-      set_config_option(HAVE_MMG3D "Mmg3d")
+  if(ENABLE_MMG)
+    find_library(MMG_LIB NAMES Mmg mmg)
+    find_path(MMG_INC "libmmg.h" PATH_SUFFIXES mmg)
+    if(MMG_LIB AND MMG_INC)
+      list(APPEND EXTERNAL_LIBRARIES ${MMG_LIB})
+      list(APPEND EXTERNAL_INCLUDES ${MMG_INC})
+      set_config_option(HAVE_MMG "Mmg")
     endif()
+  endif()
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt AND ENABLE_HXT)
+    add_subdirectory(contrib/hxt)
+    include_directories(BEFORE ${HXT_INC_DIRS})
+    set_config_option(HAVE_HXT "Hxt")
+    # do not use arithmetic contraction in predicates.c
+    if(MSVC OR (CMAKE_C_COMPILER_ID STREQUAL "Intel" AND WIN32))
+      set_source_files_properties(
+          "${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/predicates/src/predicates.c"
+          PROPERTIES COMPILE_FLAGS "/fp:strict")
+    elseif(CMAKE_C_COMPILER_ID STREQUAL "Intel")
+      set_source_files_properties(
+          "${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/predicates/src/predicates.c"
+          PROPERTIES COMPILE_FLAGS "-fp-model strict")
+    elseif(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+      set_source_files_properties(
+          "${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/predicates/src/predicates.c"
+          PROPERTIES COMPILE_FLAGS  "-fno-unsafe-math-optimizations -ffp-contract=off")
+    else()
+      message(WARNING "Unknown compiler: make sure compiled functions from "
+              "predicates.c do not use extended double precision and follow "
+              "the IEEE754 standard. It is crucial for the robustness of "
+              "geometric predicates.")
+    endif()
+    if(MSVC)
+      add_definitions(/bigobj)
+    endif()
+  endif()
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/QuadMeshingTools
+     AND ENABLE_QUADMESHINGTOOLS)
+    set_config_option(HAVE_QUADMESHINGTOOLS "QuadMeshingTools")
+    add_subdirectory(contrib/QuadMeshingTools)
+    include_directories(BEFORE contrib/QuadMeshingTools)
+  endif()
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/WinslowUntangler
+     AND ENABLE_WINSLOWUNTANGLER)
+    set_config_option(HAVE_WINSLOWUNTANGLER "WinslowUntangler")
+    add_subdirectory(contrib/WinslowUntangler)
+    include_directories(BEFORE contrib/WinslowUntangler)
   endif()
 endif()
 
@@ -957,19 +1009,24 @@ if(ENABLE_MED OR ENABLE_CGNS)
     set(HDF5_LIB "${HDF5_C_LIBRARIES}")
     list(APPEND EXTERNAL_INCLUDES ${HDF5_INCLUDE_DIRS})
     if(ENABLE_MED)
-      find_library(MED_LIB medC)
-      if(MED_LIB)
+      find_library(MED_LIB medC HINTS ENV MED3HOME PATH_SUFFIXES lib)
+      find_path(MED_INC "med.h" HINTS ENV MED3HOME PATH_SUFFIXES include)
+      if(MED_LIB AND MED_INC)
         set_config_option(HAVE_MED "Med")
         list(APPEND EXTERNAL_LIBRARIES ${MED_LIB})
+        list(APPEND EXTERNAL_INCLUDES ${MED_INC})
       endif()
     endif()
     if(ENABLE_CGNS)
-      find_library(CGNS_LIB cgns PATHS ENV CGNS_ROOT PATH_SUFFIXES lib)
-      find_path(CGNS_INC "cgnslib.h" PATHS ENV CGNS_ROOT PATH_SUFFIXES include)
+      find_library(CGNS_LIB cgns HINTS ENV CGNS_ROOT PATH_SUFFIXES lib)
+      find_path(CGNS_INC "cgnslib.h" HINTS ENV CGNS_ROOT PATH_SUFFIXES include)
       if(CGNS_LIB AND CGNS_INC)
         set_config_option(HAVE_LIBCGNS "Cgns")
         list(APPEND EXTERNAL_LIBRARIES ${CGNS_LIB})
         list(APPEND EXTERNAL_INCLUDES ${CGNS_INC})
+        if(ENABLE_CGNS_CPEX0045)
+          set_config_option(HAVE_LIBCGNS_CPEX0045 "Cgns_CPEX0045")
+        endif()
       endif()
     endif()
     if(MED_LIB OR CGNS_LIB)
@@ -997,10 +1054,10 @@ if(HAVE_SOLVER)
     if(ENABLE_SYSTEM_CONTRIB AND GMM_INC)
       message(STATUS "Using system version of GMM")
       list(APPEND EXTERNAL_INCLUDES ${GMM_INC})
-      set_config_option(HAVE_GMM "Gmm[system]")
+      set_config_option(HAVE_GMM "Gmm")
     elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/gmm)
       include_directories(contrib/gmm)
-      set_config_option(HAVE_GMM "Gmm")
+      set_config_option(HAVE_GMM "Gmm[contrib]")
     endif()
   endif()
 
@@ -1180,31 +1237,13 @@ if(HAVE_SOLVER)
   endif()
 endif()
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt AND
-   ENABLE_HXT AND HAVE_METIS)
-  set_config_option(HAVE_HXT "Hxt")
-  add_subdirectory(contrib/hxt)
-  include_directories(BEFORE contrib/hxt)
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/hxt/hxt_tetDelaunay.c)
-    set_config_option(HAVE_HXT3D "Hxt3D")
-  endif()
-  if(MSVC)
-    # Visual C++ does not support C99 - force compilation as C++ code
-    file(GLOB_RECURSE HXT_SRC contrib/hxt/*.c)
-    set_compile_flags(HXT_SRC "/TP")
-  endif()
-  check_include_file("immintrin.h" HAVE_IMMINTRIN_H)
-  if(NOT HAVE_IMMINTRIN_H)
-    add_definitions(-DHAVE_NO_IMMINTRIN_H)
-  endif()
-  if(HAVE_PETSC)
-    add_definitions(-DHXT_HAVE_PETSC)
-  endif()
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/pro AND ENABLE_PRO)
+  add_subdirectory(pro)
 endif()
 
 if(ENABLE_OCC)
   set(OCC_MINIMAL_VERSION "6.9.1")
-  if(WIN32 OR CYGWIN)
+  if(WIN32)
     if(HAVE_64BIT_SIZE_T)
       set(OCC_SYS_NAME win64)
     else()
@@ -1234,7 +1273,7 @@ if(ENABLE_OCC)
   if(OCC_VERSION AND OCC_VERSION STRLESS ${OCC_MINIMAL_VERSION})
     message(WARNING "Gmsh requires OpenCASCADE >= ${OCC_MINIMAL_VERSION}. "
         "Use CMAKE_PREFIX_PATH or the CASROOT environment variable "
-        "to explicitely specify the installation path of OpenCASCADE")
+        "to explicitly specify the installation path of OpenCASCADE")
   elseif(OCC_INC)
     set(OCC_LIBS_REQUIRED
 	# subset of DataExchange
@@ -1256,17 +1295,16 @@ if(ENABLE_OCC)
     else()
       set(OCC_LIBS)
       foreach(OCC ${OCC_LIBS_REQUIRED})
-        if(ENABLE_OCC_STATIC)
-          set(LIBNAME lib${OCC}.a)
-        else()
-          set(LIBNAME ${OCC})
-        endif()
-        find_library(OCC_LIB ${LIBNAME} HINTS ENV CASROOT PATH_SUFFIXES
-                     lib ${OCC_SYS_NAME}/lib ${OCC_SYS_NAME}/vc8/lib)
+        find_library(OCC_LIB ${OCC} HINTS ENV CASROOT PATH_SUFFIXES
+                     lib ${OCC_SYS_NAME}/vc8/lib  ${OCC_SYS_NAME}/vc9/lib
+                         ${OCC_SYS_NAME}/vc10/lib ${OCC_SYS_NAME}/vc11/lib
+                         ${OCC_SYS_NAME}/vc12/lib ${OCC_SYS_NAME}/vc14/lib
+                         ${OCC_SYS_NAME}/gcc/lib  ${OCC_SYS_NAME}/gcc/bin
+                         ${OCC_SYS_NAME}/lib)
         if(OCC_LIB)
-	  list(APPEND OCC_LIBS ${OCC_LIB})
+          list(APPEND OCC_LIBS ${OCC_LIB})
         else()
-          message(STATUS "OCC lib " ${LIBNAME} " not Found")
+          message(STATUS "OCC lib " ${OCC} " not Found")
         endif()
         unset(OCC_LIB CACHE)
       endforeach()
@@ -1284,7 +1322,11 @@ if(ENABLE_OCC)
       set(OCC_CAF_LIBS)
       foreach(OCC ${OCC_CAF_LIBS_REQUIRED})
         find_library(OCC_CAF_LIB ${OCC} HINTS ENV CASROOT PATH_SUFFIXES
-                     lib ${OCC_SYS_NAME}/lib ${OCC_SYS_NAME}/vc8/lib)
+                     lib ${OCC_SYS_NAME}/vc8/lib  ${OCC_SYS_NAME}/vc9/lib
+                         ${OCC_SYS_NAME}/vc10/lib ${OCC_SYS_NAME}/vc11/lib
+                         ${OCC_SYS_NAME}/vc12/lib ${OCC_SYS_NAME}/vc14/lib
+                         ${OCC_SYS_NAME}/gcc/lib  ${OCC_SYS_NAME}/gcc/bin
+                         ${OCC_SYS_NAME}/lib)
         if(OCC_CAF_LIB)
           list(APPEND OCC_CAF_LIBS ${OCC_CAF_LIB})
         else()
@@ -1296,42 +1338,23 @@ if(ENABLE_OCC)
     endif()
   endif()
 
-  # append OCC CAF libraries first...
-  if(NUM_OCC_CAF_LIBS EQUAL NUM_OCC_CAF_LIBS_REQUIRED)
-    set_config_option(HAVE_OCC_CAF "OpenCASCADE-CAF")
-    list(APPEND EXTERNAL_LIBRARIES ${OCC_CAF_LIBS} ${FREETYPE_LIBRARIES})
-    list(APPEND EXTERNAL_INCLUDES ${FREETYPE_INCLUDE_DIRS})
-    if(WIN32 OR CYGWIN)
-      list(APPEND EXTERNAL_LIBRARIES "windowscodecs")
-      list(APPEND EXTERNAL_LIBRARIES "ole32")
-    endif()
-  endif()
-
-  # then append OCC libraries
   if(NUM_OCC_LIBS EQUAL NUM_OCC_LIBS_REQUIRED)
+    # append OCC CAF libraries first...
+    if(NUM_OCC_CAF_LIBS EQUAL NUM_OCC_CAF_LIBS_REQUIRED)
+      set_config_option(HAVE_OCC_CAF "OpenCASCADE-CAF")
+      list(APPEND EXTERNAL_LIBRARIES ${OCC_CAF_LIBS} ${FREETYPE_LIBRARIES})
+      list(APPEND EXTERNAL_INCLUDES ${FREETYPE_INCLUDE_DIRS})
+      if(WIN32)
+        list(APPEND EXTERNAL_LIBRARIES "windowscodecs")
+        list(APPEND EXTERNAL_LIBRARIES "ole32")
+      endif()
+    endif()
+    # then append OCC libraries
     set_config_option(HAVE_OCC "OpenCASCADE")
     list(APPEND EXTERNAL_LIBRARIES ${OCC_LIBS})
     list(APPEND EXTERNAL_INCLUDES ${OCC_INC})
-    if(HAVE_64BIT_SIZE_T)
-      add_definitions(-D_OCC64)
-    endif()
-    if(WIN32 OR CYGWIN)
-      list(APPEND EXTERNAL_LIBRARIES "winspool")
+    if(WIN32 AND NOT MSVC)
       add_definitions(-DOCC_CONVERT_SIGNALS)
-    elseif(MSVC)
-      add_definitions(-DWNT)
-    endif()
-  endif()
-endif()
-
-if(ENABLE_ACIS)
-  find_library(ACIS_LIB SpaACIS PATH_SUFFIXES bin/maci386)
-  if(ACIS_LIB)
-    find_path(ACIS_INC "kernapi.hxx" PATH_SUFFIXES include)
-    if(ACIS_INC)
-      set_config_option(HAVE_ACIS "Acis")
-      list(APPEND EXTERNAL_LIBRARIES ${ACIS_LIB})
-      list(APPEND EXTERNAL_INCLUDES ${ACIS_INC})
     endif()
   endif()
 endif()
@@ -1431,21 +1454,21 @@ if(DLFCN_H)
   list(APPEND EXTERNAL_LIBRARIES ${CMAKE_DL_LIBS})
 endif()
 
-check_include_file(linux/joystick.h LINUX_JOYSTICK_H)
-if(LINUX_JOYSTICK_H)
-  set_config_option(HAVE_LINUX_JOYSTICK "LinuxJoystick")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  check_include_file(linux/joystick.h LINUX_JOYSTICK_H)
+  if(LINUX_JOYSTICK_H)
+    set_config_option(HAVE_LINUX_JOYSTICK "LinuxJoystick")
+  endif()
 endif()
 
-if(WIN32 OR CYGWIN)
+if(WIN32)
   add_definitions(-D_USE_MATH_DEFINES)
   list(APPEND EXTERNAL_LIBRARIES winmm wsock32 ws2_32 psapi)
 endif()
 
 if(MSVC)
-  add_definitions(-DNOMINMAX -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_DEPRECATE)
-  if(HAVE_FLTK)
-    set(GMSH_SRC ${GMSH_SRC};Fltk/Win32Icon.rc)
-  endif()
+  add_definitions(-DNOMINMAX -D_CRT_SECURE_NO_DEPRECATE -D_CRT_SECURE_NO_WARNINGS
+                  -D_SCL_SECURE_NO_DEPRECATE)
 endif()
 
 # add C functions API
@@ -1454,9 +1477,9 @@ set(GMSH_SRC ${GMSH_SRC};api/gmshc.cpp)
 # force full warnings to encourage everybody to write clean(er) code
 check_cxx_compiler_flag("-Wall" WALL)
 if(WALL AND NOT MSVC)
-  file(GLOB_RECURSE WALL_SRC Common/*.cpp Fltk/*.cpp FunctionSpace/*.cpp
-       Geo/*.cpp Graphics/*.cpp Mesh/*.cpp Numeric/*.cpp Parser/*.cpp
-       Plugin/*.cpp Post/*.cpp Solver/*.cpp)
+  file(GLOB_RECURSE WALL_SRC src/common/*.cpp src/fltk/*.cpp FunctionSpace/*.cpp
+       src/geo/*.cpp src/graphics/*.cpp src/mesh/*.cpp src/numeric/*.cpp src/parser/*.cpp
+       src/plugin/*.cpp src/post/*.cpp src/solver/*.cpp)
   set(WF "-Wall")
   check_cxx_compiler_flag("-Wint-to-void-pointer-cast" WCAST)
   if(WCAST)
@@ -1471,60 +1494,80 @@ if(WALL AND NOT MSVC)
   if(WIND)
     set(WF "${WF} -Wno-misleading-indentation")
   endif()
+  check_cxx_compiler_flag("-Wno-attributes" WATTR)
+  if(WATTR)
+    # FIXME: remove this when GCC behaves more intelligently
+    set(WF "${WF} -Wno-attributes")
+  endif()
+  check_cxx_compiler_flag("-Wno-unused-but-set-variable" WUNUSED)
+  if(WUNUSED)
+    set(WF "${WF} -Wno-unused-but-set-variable")
+  endif()
+  if(WIN32 OR NOT HAVE_64BIT_SIZE_T)
+    # FIXME: remove printf family warnings on 32 bit systems and windows
+    check_cxx_compiler_flag("-Wno-format" WFORMAT)
+    if(WFORMAT)
+      set(WF "${WF} -Wno-format")
+    endif()
+  endif()
   set_compile_flags(WALL_SRC ${WF})
 endif()
 
-# don't issue warnings for contributed libraries
+# don't issue warnings for contributed libraries and for autogenerated files
 check_cxx_compiler_flag("-w" NOWARN)
 if(NOWARN)
-  file(GLOB_RECURSE NOWARN_SRC contrib/*.cpp contrib/*.cc contrib/*.cxx contrib/*.c)
+  file(GLOB_RECURSE NOWARN_SRC contrib/*.cpp contrib/*.cc contrib/*.cxx
+       contrib/*.c src/parser/Gmsh.*.cpp)
   set_compile_flags(NOWARN_SRC "-w")
 endif()
 
-# disable compile optimization on some known problematic files
+# fine-tune optimization flags for particular files
 check_cxx_compiler_flag("-O0" NOOPT)
 if(NOOPT OR ENABLE_BUILD_IOS)
-  if(ENABLE_BUILD_IOS) # optimized iOS 10 64 bits screws somewhere in Geo
-    file(GLOB_RECURSE NOOPT_SRC Numeric/robustPredicates.cpp Geo/G*.cpp Mesh/BDS.cpp
-         Parser/Gmsh.tab.cpp contrib/blossom/* Mesh/Background*)
+  if(ENABLE_BUILD_IOS)
+    # optimized builds on iOS 10 64 bits fail spectacularly
+    file(GLOB_RECURSE NOOPT_SRC src/geo/G*.cpp src/mesh/BDS.cpp
+         src/parser/Gmsh.tab.cpp contrib/blossom/* contrib/bamg/*
+         src/mesh/Background*)
   else()
-    file(GLOB_RECURSE NOOPT_SRC Numeric/robustPredicates.cpp Mesh/BDS.cpp
-         Parser/Gmsh.tab.cpp contrib/blossom/* contrib/bamg/* Mesh/Background*)
+    # bamg fails even with -O1
+    file(GLOB_RECURSE NOOPT_SRC contrib/bamg/*)
   endif()
   set_compile_flags(NOOPT_SRC "-O0")
 endif()
-
-# do not use arithmetic contraction in predicates.cpp
-# if("${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC")
-#   set_source_files_properties(Numeric/robustPredicates.cpp PROPERTIES
-#     COMPILE_FLAGS "/fp:strict")
-# elseif(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-#   set_source_files_properties(Numeric/robustPredicates.cpp PROPERTIES
-#     COMPILE_FLAGS "-fno-unsafe-math-optimizations -ffp-contract=off")
-# elseif(CMAKE_C_COMPILER_ID STREQUAL "Intel")
-#   set_source_files_properties(Numeric/robustPredicates.cpp PROPERTIES
-#     COMPILE_FLAGS "-fp-model strict")
-# endif()
+if(MSVC OR (CMAKE_C_COMPILER_ID STREQUAL "Intel" AND WIN32))
+  set_source_files_properties(
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/numeric/robustPredicates.cpp"
+    PROPERTIES COMPILE_FLAGS "/fp:strict")
+elseif(CMAKE_C_COMPILER_ID STREQUAL "Intel")
+  set_source_files_properties(
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/numeric/robustPredicates.cpp"
+    PROPERTIES COMPILE_FLAGS "-fp-model strict")
+elseif(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+  set_source_files_properties(
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/numeric/robustPredicates.cpp"
+    PROPERTIES COMPILE_FLAGS "-fno-unsafe-math-optimizations -ffp-contract=off")
+else()
+  message(WARNING "Unknown compiler: make sure compiled functions from "
+          "src/numeric/robustPredicates.cpp do not use extended double precision "
+          "and follow the IEEE754 standard. It is crucial for the robustness of "
+          "geometric predicates.")
+endif()
 
 # enable Revoropt and set compile flags for the corresponding plugin
 if(ENABLE_REVOROPT)
-  find_path(EIGEN3_INC "eigen3/Eigen/Dense")
-  if(EIGEN3_INC AND HAVE_MESH AND HAVE_PLUGINS AND HAVE_ANN AND HAVE_ALGLIB)
-    list(APPEND EXTERNAL_INCLUDES ${EIGEN3_INC} contrib/Revoropt/include)
-    message(STATUS "using contrib/Revoropt")
+  if(HAVE_EIGEN AND HAVE_MESH AND HAVE_PLUGINS AND HAVE_ANN AND HAVE_ALGLIB)
+    list(APPEND EXTERNAL_INCLUDES contrib/Revoropt/include)
     set_config_option(HAVE_REVOROPT "Revoropt")
     add_definitions(-DUSE_ANN)
-    get_source_file_property(PROP Plugin/CVTRemesh.cpp COMPILE_FLAGS)
-    if(PROP)
-      set_source_files_properties(Plugin/CVTRemesh.cpp PROPERTIES
-                                  COMPILE_FLAGS "${PROP} -std=c++11")
-    else()
-      set_source_files_properties(Plugin/CVTRemesh.cpp PROPERTIES
-                                  COMPILE_FLAGS "-std=c++11")
-    endif()
   else()
-    message(WARNING "Revoropt requires Eigen3, Mesh, Plugins, ANN and ALGLIB")
+    message(WARNING "Revoropt requires Eigen, Mesh, Plugins, ANN and ALGLIB")
   endif()
+endif()
+
+if(HAVE_MESH AND NOT HAVE_EIGEN AND NOT HAVE_LAPACK)
+  message(WARNING "Most meshing algorithms will not be functional without "
+          "Eigen or Lapack")
 endif()
 
 list(SORT CONFIG_OPTIONS)
@@ -1533,16 +1576,35 @@ foreach(OPT ${CONFIG_OPTIONS})
   set(GMSH_CONFIG_OPTIONS "${GMSH_CONFIG_OPTIONS} ${OPT}")
 endforeach()
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Common/GmshConfig.h.in
-               ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshConfig.h)
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Common/GmshVersion.h.in
-               ${CMAKE_CURRENT_BINARY_DIR}/Common/GmshVersion.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/common/GmshConfig.h.in
+               ${CMAKE_CURRENT_BINARY_DIR}/src/common/GmshConfig.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/common/GmshVersion.h.in
+               ${CMAKE_CURRENT_BINARY_DIR}/src/common/GmshVersion.h)
 
-# the texi version file is modified in the source directory (not ideal, but
-# since git tracks the contents of the file this is acceptable as it will only
-# change when the actual version is changed - not for each git hash)
+# the texi version file is modified in the source directory (not
+# ideal for version.texi, but since git tracks the contents of the file this is
+# acceptable as it will only change when the actual version is changed - not for
+# each git hash)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi.in
                ${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi)
+
+if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
+  if (GMSH_RELEASE)
+    set(GMSH_PYTHON_VERSION ${GMSH_SHORT_VERSION})
+    file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh.rst GMSH_LONG_DESCRIPTION)
+  else()
+    if ("${GMSH_EXTRA_VERSION}" MATCHES "-nox")
+      set(GMSH_PYTHON_VERSION "${GMSH_SHORT_VERSION}.dev1+nox")
+      file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh-nox-dev.rst GMSH_LONG_DESCRIPTION)
+    else ()
+      set(GMSH_PYTHON_VERSION "${GMSH_SHORT_VERSION}.dev1")
+      file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh-dev.rst GMSH_LONG_DESCRIPTION)
+    endif()
+  endif()
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/METADATA.in ${CMAKE_CURRENT_BINARY_DIR}/METADATA)
+endif()
+
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/version.txt ${GMSH_SHORT_VERSION})
 
 # process cmake environment variables so we can append them to the -I include
 # commands. This is not recommended (we should only use the cache variables) but
@@ -1593,7 +1655,7 @@ if(NOT ENABLE_BUILD_DYNAMIC AND NOT ENABLE_BUILD_SHARED)
   endif()
 endif()
 
-# Linux-specific linking
+# Linux-specific linker options
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
   if(HAVE_OCC)
     find_library(RT_LIB rt)
@@ -1607,8 +1669,9 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 endif()
 
 # we could specify include dirs more selectively, but this is simpler
-include_directories(Common Fltk Geo Graphics Mesh Solver Numeric Parser
-  Plugin Post api ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/Common)
+include_directories(src/common src/fltk src/geo src/graphics src/mesh src/solver
+                    src/numeric src/parser src/plugin src/post api
+                    ${EXTERNAL_INCLUDES} ${CMAKE_CURRENT_BINARY_DIR}/src/common)
 
 # set this for external codes that might include this CMakeList file
 set(GMSH_EXTERNAL_INCLUDE_DIRS ${EXTERNAL_INCLUDES} CACHE
@@ -1640,11 +1703,29 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   set_target_properties(shared PROPERTIES OUTPUT_NAME gmsh
      VERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION}.${GMSH_PATCH_VERSION}
      SOVERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION})
-  if(WIN32 OR CYGWIN)
+  if(WIN32)
     set_target_properties(shared PROPERTIES PREFIX "" IMPORT_PREFIX ""
       IMPORT_SUFFIX ".lib" COMPILE_FLAGS "-DGMSH_DLL -DGMSH_DLL_EXPORT")
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    if(NOT ENABLE_PRIVATE_API)
+      # hide all symbols by default (if not exporting the private API); symbols to
+      # export should be marked with __attribute__ ((visibility("default")))
+      set_target_properties(shared PROPERTIES COMPILE_FLAGS "-fvisibility=hidden")
+    endif()
+    # hide all symbols from static libs linked into the shared Gmsh lib (this is
+    # easier than recompiling all the dependencies with -fvisibility=hidden)
+    if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+      # TODO would be nice to have the equivalent on macOS
+      message(STATUS "Excluding symbols from bundled static libraries")
+      list(APPEND LINK_LIBRARIES "-Wl,--exclude-libs,ALL")
+    endif()
   endif()
   target_link_libraries(shared ${LINK_LIBRARIES})
+  # don't define LC_RPATH in dylib for development, to not get endless warnings
+  # about code signing
+  if(APPLE AND NOT GMSH_RELEASE)
+    set_target_properties(shared PROPERTIES INSTALL_RPATH "")
+  endif()
   if(MSVC AND ENABLE_MSVC_STATIC_RUNTIME)
     message(STATUS "Note: By enabling ENABLE_MSVC_STATIC_RUNTIME, shared library "
             "won't link. In MSVC change /MT to /MD in the shared project properties")
@@ -1654,10 +1735,10 @@ endif()
 # binary targets
 if(HAVE_FLTK)
   if(ENABLE_BUILD_DYNAMIC)
-    add_executable(gmsh WIN32 Common/Main.cpp)
+    add_executable(gmsh WIN32 src/common/Main.cpp)
     target_link_libraries(gmsh shared)
   else()
-    add_executable(gmsh WIN32 Common/Main.cpp ${GMSH_SRC})
+    add_executable(gmsh WIN32 src/common/Main.cpp ${GMSH_SRC})
   endif()
   # we could add this to create a minimal app bundle even without install
   # if(APPLE AND NOT ENABLE_OS_SPECIFIC_INSTALL)
@@ -1666,31 +1747,41 @@ if(HAVE_FLTK)
   # endif()
 else()
   if(ENABLE_BUILD_DYNAMIC)
-    add_executable(gmsh Common/Main.cpp)
+    add_executable(gmsh src/common/Main.cpp)
     target_link_libraries(gmsh shared)
   else()
-    add_executable(gmsh Common/Main.cpp ${GMSH_SRC})
+    add_executable(gmsh src/common/Main.cpp ${GMSH_SRC})
   endif()
 endif()
 target_link_libraries(gmsh ${LINK_LIBRARIES})
 
-# Windows specific linker options
-if(WIN32 AND NOT MSVC OR CYGWIN)
-  set(FLAGS "-Wl,--stack,16777216 -mwindows")
-  if(HAVE_64BIT_SIZE_T)
-    set(FLAGS "${FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/Win64Icon.res")
+# OS specific linker options
+if(WIN32 AND NOT MSVC)
+  set(FLAGS "-Wl,--stack,16777216 -Wl,--image-base -Wl,0x10000000 -static")
+  if(HAVE_FLTK)
+    set(APPFLAGS "${FLAGS} -municode -mwindows")
+    if(HAVE_64BIT_SIZE_T)
+      set(APPFLAGS "${APPFLAGS} \"${CMAKE_CURRENT_SOURCE_DIR}/src/fltk/Win64Icon.res\"")
+    else()
+      set(APPFLAGS "${APPFLAGS} \"${CMAKE_CURRENT_SOURCE_DIR}/src/fltk/Win32Icon.res\"")
+    endif()
   else()
-    set(FLAGS "${FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/Win32Icon.res")
+    set(APPFLAGS "${FLAGS} -municode -mconsole")
   endif()
-  set_target_properties(gmsh PROPERTIES LINK_FLAGS "${FLAGS} -static")
+  set_target_properties(gmsh PROPERTIES LINK_FLAGS "${APPFLAGS}")
   if(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
-    set_target_properties(shared PROPERTIES LINK_FLAGS -static)
+    set_target_properties(shared PROPERTIES LINK_FLAGS "${FLAGS}")
   endif()
   # remove -Wl,-Bdynamic flags
   set(CMAKE_EXE_LINK_DYNAMIC_C_FLAGS)
   set(CMAKE_EXE_LINK_DYNAMIC_CXX_FLAGS)
 elseif(MSVC)
   set_target_properties(gmsh PROPERTIES LINK_FLAGS "/STACK:16777216 /SAFESEH:NO")
+elseif(APPLE)
+  # this remove ld warnings with PETSc+MUMPS on recent macOS versions; but
+  # breaks exception handling
+  # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-no_compact_unwind")
+  # set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-no_compact_unwind")
 endif()
 
 # android target
@@ -1700,7 +1791,6 @@ if(ENABLE_BUILD_ANDROID)
     message(FATAL_ERROR "Cannot compile Gmsh for android without android-cmake")
   endif()
   add_definitions(-D_GLIBCXX_USE_C99_MATH=1)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
   set(CMAKE_BUILD_TYPE Release)
   set(LIBRARY_OUTPUT_PATH_ROOT ${CMAKE_CURRENT_BINARY_DIR})
   set(LIBRARY_OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/libs/)
@@ -1720,7 +1810,7 @@ if(BISON AND FLEX)
   add_custom_target(parser
                     COMMAND ${BISON} -p gmsh_yy --output Gmsh.tab.cpp -d Gmsh.y
                     COMMAND ${FLEX} -P gmsh_yy -o Gmsh.yy.cpp Gmsh.l
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/Parser)
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/parser)
 endif()
 
 if(UNIX)
@@ -1748,38 +1838,44 @@ set(SDK_FILE ${CMAKE_CURRENT_SOURCE_DIR}/doc/SDK.txt)
 set(LICENSE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt)
 set(CREDITS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/CREDITS.txt)
 set(CHANGELOG_FILE ${CMAKE_CURRENT_SOURCE_DIR}/CHANGELOG.txt)
-file(GLOB TUTORIAL_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tutorial/?*.*)
-file(GLOB DEMOS ${CMAKE_CURRENT_SOURCE_DIR}/demos/*)
-foreach(SUBDIR ${DEMOS})
+file(GLOB TUTORIALS_GEO_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tutorials/?*.*)
+file(GLOB TUTORIALS_CPP_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tutorials/c++/?*.*)
+file(GLOB TUTORIALS_C_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tutorials/c/?*.*)
+file(GLOB TUTORIALS_PY_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tutorials/python/?*.*)
+file(GLOB TUTORIALS_JL_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tutorials/julia/?*.*)
+file(GLOB TUTORIALS_F90_FILES ${CMAKE_CURRENT_SOURCE_DIR}/tutorials/fortran/?*.*)
+file(GLOB EXAMPLES ${CMAKE_CURRENT_SOURCE_DIR}/examples/*)
+foreach(SUBDIR ${EXAMPLES})
   if(IS_DIRECTORY ${SUBDIR})
-    list(APPEND DEMOS_DIRS ${SUBDIR})
+    list(APPEND EXAMPLES_DIRS ${SUBDIR})
   endif()
 endforeach()
 set(TEX_DIR ${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo)
 file(GLOB TEX_SRC ${TEX_DIR}/*.texi)
+file(GLOB TEX_IMG ${TEX_DIR}/images/*.png)
 set(TEX_OBJ ${TEX_DIR}/gmsh.aux ${TEX_DIR}/gmsh.cp ${TEX_DIR}/gmsh.cps
     ${TEX_DIR}/gmsh.fn ${TEX_DIR}/gmsh.html ${TEX_DIR}/gmsh.info ${TEX_DIR}/gmsh.ky
     ${TEX_DIR}/gmsh.log ${TEX_DIR}/gmsh.pdf ${TEX_DIR}/gmsh.pg ${TEX_DIR}/gmsh.toc
     ${TEX_DIR}/gmsh.tp ${TEX_DIR}/gmsh.tps ${TEX_DIR}/gmsh.txt ${TEX_DIR}/gmsh.vr)
 
-macro(unix2dos VARNAME)
-  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/unix2dos)
+macro(unix2dos VARNAME UNIQUEPATH)
+  file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/unix2dos/${UNIQUEPATH})
   set(UNIX2DOS_FILES)
   foreach(FILE ${${VARNAME}})
     file(READ ${FILE} F0)
     get_filename_component(N ${FILE} NAME)
     if(CYGWIN)
       string(REGEX REPLACE "\n" "\r\n" F1 "${F0}")
-      file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/unix2dos/${N} "${F1}")
+      file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/unix2dos/${UNIQUEPATH}/${N} "${F1}")
     else() # if not in Cygwin, cmake adds '\r's automatically
-      file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/unix2dos/${N} "${F0}")
+      file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/unix2dos/${UNIQUEPATH}/${N} "${F0}")
     endif()
-    list(APPEND UNIX2DOS_FILES ${CMAKE_CURRENT_BINARY_DIR}/unix2dos/${N})
+    list(APPEND UNIX2DOS_FILES ${CMAKE_CURRENT_BINARY_DIR}/unix2dos/${UNIQUEPATH}/${N})
   endforeach()
   set(${VARNAME} ${UNIX2DOS_FILES})
 endmacro()
 
-if(WIN32 OR CYGWIN)
+if(WIN32)
   if(ENABLE_OS_SPECIFIC_INSTALL)
     set(GMSH_BIN .)
     set(GMSH_LIB .)
@@ -1795,24 +1891,28 @@ if(WIN32 OR CYGWIN)
     set(GMSH_INC ${CMAKE_INSTALL_INCLUDEDIR})
   endif()
   if(CYGWIN)
-    unix2dos(GMSH_API)
+    unix2dos(GMSH_API "api")
     if(ENABLE_PRIVATE_API)
-      unix2dos(GMSH_PRIVATE_API)
+      unix2dos(GMSH_PRIVATE_API "private_api")
     endif()
-    unix2dos(WELCOME_FILE)
-    unix2dos(SDK_FILE)
-    unix2dos(LICENSE_FILE)
-    unix2dos(CREDITS_FILE)
-    unix2dos(CHANGELOG_FILE)
-    unix2dos(TUTORIAL_FILES)
-    foreach(DIR ${DEMOS_DIRS})
-      file(GLOB DEMO_FILES ${DIR}/?*.*)
-      unix2dos(DEMO_FILES)
+    unix2dos(WELCOME_FILE "welcome")
+    unix2dos(SDK_FILE "sdk")
+    unix2dos(LICENSE_FILE "license")
+    unix2dos(CREDITS_FILE "credits")
+    unix2dos(CHANGELOG_FILE "changelog")
+    unix2dos(TUTORIALS_GEO_FILES "geo")
+    unix2dos(TUTORIALS_CPP_FILES "cpp")
+    unix2dos(TUTORIALS_C_FILES "c")
+    unix2dos(TUTORIALS_PY_FILES "python")
+    unix2dos(TUTORIALS_JL_FILES "julia")
+    unix2dos(TUTORIALS_F90_FILES "fortran")
+    foreach(DIR ${EXAMPLES_DIRS})
+      file(GLOB EXAMPLES_FILES ${DIR}/?*.*)
+      unix2dos(EXAMPLES_FILES "examples")
     endforeach()
   endif()
 elseif(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
-  # set these so that the files get installed nicely in the MacOSX
-  # .app bundle
+  # set these so that the files get installed nicely in the macOS .app bundle
   set(GMSH_BIN ../MacOS)
   set(GMSH_LIB ../MacOS)
   set(GMSH_DOC ../../..)
@@ -1827,14 +1927,6 @@ else()
   set(GMSH_INC ${CMAKE_INSTALL_INCLUDEDIR})
 endif()
 
-# FIXME: change this once we understand rpaths
-if(APPLE)
-  if(ENABLE_BUILD_DYNAMIC OR ENABLE_BUILD_SHARED)
-    set_target_properties(shared PROPERTIES INSTALL_NAME_DIR
-                          ${CMAKE_INSTALL_PREFIX}/${GMSH_LIB})
-  endif()
-endif()
-
 # mark targets as optional so we can install them separately if needed
 # (e.g. "make lib" or "make shared" followed by "make install/fast")
 install(TARGETS gmsh DESTINATION ${GMSH_BIN} OPTIONAL)
@@ -1843,19 +1935,22 @@ if(ENABLE_BUILD_LIB)
 endif()
 if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   install(TARGETS shared DESTINATION ${GMSH_LIB} OPTIONAL)
-  # FIXME once we cleanup the installation of the python module
-  install(TARGETS shared DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/api OPTIONAL)
 endif()
 
-if(ENABLE_ONELAB)
+if(ENABLE_ONELAB AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab)
   install(FILES ${ONELAB_PY} DESTINATION ${GMSH_BIN})
 endif()
 if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   install(FILES ${GMSH_API} DESTINATION ${GMSH_INC})
   install(FILES ${GMSH_PY} DESTINATION ${GMSH_LIB})
   install(FILES ${GMSH_JL} DESTINATION ${GMSH_LIB})
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/METADATA DESTINATION
+                ${GMSH_LIB}/gmsh-${GMSH_PYTHON_VERSION}.dist-info)
   if(ENABLE_PRIVATE_API)
     install(FILES ${GMSH_PRIVATE_API} DESTINATION ${GMSH_INC}/gmsh)
+    if(HAVE_CONTRIB_EIGEN) # the private API depends on Eigen
+      install(DIRECTORY contrib/eigen/Eigen DESTINATION ${GMSH_INC}/gmsh)
+    endif()
   endif()
 endif()
 if(INSTALL_SDK_README)
@@ -1866,11 +1961,16 @@ install(FILES ${WELCOME_FILE} DESTINATION ${GMSH_DOC} RENAME README.txt)
 install(FILES ${LICENSE_FILE} DESTINATION ${GMSH_DOC})
 install(FILES ${CREDITS_FILE} DESTINATION ${GMSH_DOC})
 install(FILES ${CHANGELOG_FILE} DESTINATION ${GMSH_DOC})
-install(FILES ${TUTORIAL_FILES} DESTINATION ${GMSH_DOC}/tutorial)
-foreach(DIR ${DEMOS_DIRS})
-  get_filename_component(DEMOS_DIR_NAME ${DIR} NAME)
-  file(GLOB DEMO_FILES ${DIR}/?*.*)
-  install(FILES ${DEMO_FILES} DESTINATION ${GMSH_DOC}/demos/${DEMOS_DIR_NAME})
+install(FILES ${TUTORIALS_GEO_FILES} DESTINATION ${GMSH_DOC}/tutorials)
+install(FILES ${TUTORIALS_CPP_FILES} DESTINATION ${GMSH_DOC}/tutorials/c++)
+install(FILES ${TUTORIALS_C_FILES} DESTINATION ${GMSH_DOC}/tutorials/c)
+install(FILES ${TUTORIALS_PY_FILES} DESTINATION ${GMSH_DOC}/tutorials/python)
+install(FILES ${TUTORIALS_JL_FILES} DESTINATION ${GMSH_DOC}/tutorials/julia)
+install(FILES ${TUTORIALS_F90_FILES} DESTINATION ${GMSH_DOC}/tutorials/fortran)
+foreach(DIR ${EXAMPLES_DIRS})
+  get_filename_component(EXAMPLES_DIR_NAME ${DIR} NAME)
+  file(GLOB EXAMPLES_FILES ${DIR}/?*.*)
+  install(FILES ${EXAMPLES_FILES} DESTINATION ${GMSH_DOC}/examples/${EXAMPLES_DIR_NAME})
 endforeach()
 if(UNIX AND NOT CYGWIN)
   install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/doc/gmsh.1 DESTINATION ${GMSH_MAN})
@@ -1890,6 +1990,12 @@ if(ENABLE_PRIVATE_API)
       -E copy_if_different ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/Headers/gmsh/
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
   endforeach()
+  if(HAVE_CONTRIB_EIGEN) # the private API depends on Eigen
+    add_custom_command(TARGET get_headers POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory contrib/eigen/Eigen
+        ${CMAKE_CURRENT_BINARY_DIR}/Headers/gmsh/Eigen
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  endif()
 endif()
 
 find_program(MAKEINFO makeinfo)
@@ -1903,12 +2009,12 @@ if(MAKEINFO)
                      ARGS ${TEX_DIR}/gmsh.texi WORKING_DIRECTORY ${TEX_DIR})
   add_custom_target(txt DEPENDS ${TEX_DIR}/gmsh.txt)
   add_custom_command(OUTPUT ${TEX_DIR}/gmsh.html DEPENDS ${TEX_SRC}
-    COMMAND ${MAKEINFO} --html --css-ref=http://gmsh.info/gmsh.css
-    --no-split --set-customization-variable
-    EXTRA_HEAD='<meta name="viewport" content="width=device-width,initial-scale=1.0">'
+    COMMAND ${MAKEINFO} --html --css-ref=/gmsh.css --no-split
+    --set-customization-variable EXTRA_HEAD='<meta name="viewport" content="width=device-width,initial-scale=1.0"><style type="text/css"><!-- img {  width:66%\; max-width:768px } --></style>'
     ARGS ${TEX_DIR}/gmsh.texi WORKING_DIRECTORY ${TEX_DIR})
   add_custom_target(html DEPENDS ${TEX_DIR}/gmsh.html)
   install(FILES ${TEX_DIR}/gmsh.html DESTINATION ${GMSH_DOC} OPTIONAL)
+  install(FILES ${TEX_IMG} DESTINATION ${GMSH_DOC}/images OPTIONAL)
 else()
   add_custom_target(html COMMAND ${CMAKE_COMMAND} -E touch ${TEX_DIR}/gmsh.html)
 endif()
@@ -1929,12 +2035,11 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E echo
 if(MAKEINFO AND TEXI2PDF)
   add_custom_target(doc COMMAND ${CMAKE_COMMAND} -E tar zcf
                     ${CMAKE_CURRENT_BINARY_DIR}/gmsh-${GMSH_VERSION}-doc.tgz
-                    CREDITS.txt LICENSE.txt CHANGELOG.txt
-                    doc/gmsh.1 doc/texinfo/gmsh.html doc/texinfo/gmsh.info
+                    CREDITS.txt LICENSE.txt CHANGELOG.txt doc/gmsh.1
+                    doc/texinfo/gmsh.html doc/texinfo/images doc/texinfo/gmsh.info
                     doc/texinfo/gmsh.pdf doc/texinfo/gmsh.txt
                     COMMAND ${CMAKE_COMMAND} -E remove ${TEX_OBJ}
-                    DEPENDS ${TEX_DIR}/gmsh.info ${TEX_DIR}/gmsh.txt
-                    ${TEX_DIR}/gmsh.html ${TEX_DIR}/gmsh.pdf
+                    DEPENDS info txt html pdf
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
@@ -1946,8 +2051,7 @@ if(APPLE AND ENABLE_BUILD_LIB)
   file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/misc/gmsh_framework.plist F0)
   string(REPLACE GMSH_VERSION "${GMSH_VERSION}" F1 "${F0}")
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/Info_framework.plist "${F1}")
-  get_target_property(LIBNAME lib LOCATION) # depracated
-  #set(LIBNAME $<TARGET_FILE:lib>) # FIXME: use this in the future
+  set(LIBNAME $<TARGET_FILE:lib>)
   add_custom_target(framework DEPENDS lib
     COMMAND ${CMAKE_COMMAND} -E remove_directory gmsh.framework
     COMMAND ${CMAKE_COMMAND} -E make_directory gmsh.framework/Headers
@@ -1968,6 +2072,12 @@ if(APPLE AND ENABLE_BUILD_LIB)
           ${FILE} ${CMAKE_CURRENT_BINARY_DIR}/gmsh.framework/Headers/
           WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     endforeach()
+    if(HAVE_CONTRIB_EIGEN) # the private API depends on Eigen
+      add_custom_command(TARGET framework POST_BUILD COMMAND ${CMAKE_COMMAND}
+          -E copy_directory contrib/eigen/Eigen
+          ${CMAKE_CURRENT_BINARY_DIR}/gmsh.framework/Headers/Eigen
+          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    endif()
   endif()
 endif()
 
@@ -1979,8 +2089,8 @@ set(CPACK_PACKAGE_DESCRIPTION_FILE ${WELCOME_FILE})
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY
     "3D finite element mesh generator with built-in CAD engine and post-processor")
 if(GMSH_EXTRA_VERSION MATCHES "-git.*") # so that we'll overwrite the archives
-  set(CPACK_PACKAGE_FILE_NAME gmsh-git-${GMSH_OS})
-  set(CPACK_SOURCE_PACKAGE_FILE_NAME gmsh-git-source)
+  set(CPACK_PACKAGE_FILE_NAME gmsh${GMSH_EXTRA_VERSION_ORIG}-git-${GMSH_OS})
+  set(CPACK_SOURCE_PACKAGE_FILE_NAME gmsh${GMSH_EXTRA_VERSION_ORIG}-git-source)
 else()
   set(CPACK_PACKAGE_FILE_NAME gmsh-${GMSH_VERSION}-${GMSH_OS})
   set(CPACK_SOURCE_PACKAGE_FILE_NAME gmsh-${GMSH_VERSION}-source)
@@ -1990,7 +2100,11 @@ set(CPACK_RESOURCE_FILE_LICENSE ${LICENSE_FILE})
 set(CPACK_RESOURCE_FILE_README ${WELCOME_FILE})
 set(CPACK_RESOURCE_FILE_WELCOME ${WELCOME_FILE})
 set(CPACK_PACKAGE_EXECUTABLE "gmsh")
-set(CPACK_STRIP_FILES TRUE)
+if(ENABLE_PACKAGE_STRIP)
+  set(CPACK_STRIP_FILES TRUE)
+else()
+  set(CPACK_STRIP_FILES FALSE)
+endif()
 set(CPACK_SOURCE_GENERATOR TGZ)
 set(CPACK_SOURCE_IGNORE_FILES "${CMAKE_CURRENT_BINARY_DIR}" "/CVS/" "/.svn" "/.git"
     "~$" "DS_Store$" "GmshConfig.h$" "GmshVersion.h$" "/benchmarks/" "/tmp/"
@@ -2004,28 +2118,30 @@ if(UNIX)
   set(CPACK_INSTALL_COMMANDS "rm -rf ${CMAKE_CURRENT_BINARY_DIR}/_CPack_Packages")
 endif()
 
-if(APPLE AND ENABLE_OS_SPECIFIC_INSTALL)
+if(APPLE AND ENABLE_OS_SPECIFIC_INSTALL AND HAVE_FLTK)
   set(CPACK_GENERATOR Bundle)
   set(CPACK_BUNDLE_NAME Gmsh)
   file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/misc/gmsh_app.plist F0)
   string(REPLACE GMSH_VERSION "${GMSH_VERSION}" F1 "${F0}")
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/Info.plist "${F1}")
   set(CPACK_BUNDLE_PLIST ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
-  set(CPACK_BUNDLE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIcons.icns)
-  if(PACKAGER STREQUAL "geuzaine - removed: we sign on a separate machine")
-    # codesigning requires CMake >= 3.2
+  set(CPACK_BUNDLE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk/MacIcons.icns)
+  if(PACKAGER STREQUAL "geuzaine")
+    # automatic codesigning of the .app
     set(CPACK_BUNDLE_APPLE_CERT_APP "Developer ID Application: Christophe Geuzaine")
+    # enable hardened runtime (necessary for notarization and app store)
+    set(CPACK_BUNDLE_APPLE_CODESIGN_PARAMETER "--deep --force --options runtime")
   endif()
-  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsGeo.icns DESTINATION .
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk/MacIconsGeo.icns DESTINATION .
           RENAME GmshGeo.icns)
-  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsMsh.icns DESTINATION .
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk/MacIconsMsh.icns DESTINATION .
           RENAME GmshMsh.icns)
-  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsSol.icns DESTINATION .
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk/MacIconsSol.icns DESTINATION .
           RENAME GmshSol.icns)
-  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIconsPos.icns DESTINATION .
+  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk/MacIconsPos.icns DESTINATION .
           RENAME GmshPos.icns)
-  set(CPACK_PACKAGE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/Fltk/MacIcons.icns)
-elseif(WIN32 OR CYGWIN)
+  set(CPACK_PACKAGE_ICON ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk/MacIcons.icns)
+elseif(WIN32)
   set(CPACK_GENERATOR ZIP)
 else()
   set(CPACK_GENERATOR TGZ)
@@ -2043,20 +2159,83 @@ endif()
 
 include(CPack)
 
-if(NOT DISABLE_GMSH_TESTS)
+macro(filter_tests IN OUT)
+  unset(${OUT})
+  foreach(FILE ${IN})
+    unset(BAD1)
+    unset(BAD2)
+    unset(BAD3)
+    # OpenCASCADE
+    if(NOT HAVE_OCC AND NOT BAD1 AND NOT BAD2 AND NOT BAD3)
+      file(STRINGS ${FILE} BAD1 REGEX "^SetFactory.*OpenCASCADE.*")
+      file(STRINGS ${FILE} BAD2 REGEX ".*occ\\.synchronize.*")
+      file(STRINGS ${FILE} BAD3 REGEX ".*occ::synchronize.*")
+    endif()
+    # Metis
+    if(NOT HAVE_METIS AND NOT BAD1 AND NOT BAD2 AND NOT BAD3)
+      file(STRINGS ${FILE} BAD1 REGEX ".*PartitionMesh.*")
+      file(STRINGS ${FILE} BAD2 REGEX ".*mesh\\.partition.*")
+      file(STRINGS ${FILE} BAD3 REGEX ".*mesh::partition.*")
+    endif()
+    if(BAD1 OR BAD2 OR BAD3)
+      message("Skipping test " ${FILE})
+    else()
+      list(APPEND ${OUT} ${FILE})
+    endif()
+  endforeach()
+endmacro()
+
+if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
   # disabling tests is useful when including this CMakeLists in an external project
   include(CTest)
-  file(GLOB_RECURSE TESTFILES
-       tutorial/*.geo demos/*.geo benchmarks/?d/*.geo benchmarks/extrude/*.geo
+  file(GLOB_RECURSE ALLFILES
+       tutorials/*.geo examples/*.geo benchmarks/?d/*.geo benchmarks/extrude/*.geo
        benchmarks/occ/*.geo)
+  filter_tests("${ALLFILES}" TESTFILES)
   foreach(TESTFILE ${TESTFILES})
     # use relative path for Cygwin/MinGW (the pure win exe built with the MinGW
     # compilers does not understand a full Cygwin-style path)
     FILE(RELATIVE_PATH TEST ${CMAKE_CURRENT_BINARY_DIR} ${TESTFILE})
-    if(HAVE_OCC OR NOT ${TEST} MATCHES "boolean" OR NOT ${TEST} MATCHES "occ")
-      add_test(${TEST} ./gmsh ${TEST} -3 -nopopup -o ./tmp.msh)
-    endif()
+    add_test(${TEST} ./gmsh ${TEST} -3 -nopopup -o ./tmp.msh)
   endforeach()
+  # test c++ api tutorials with dynamic builds
+  if(ENABLE_BUILD_DYNAMIC)
+    file(GLOB_RECURSE ALLFILES tutorials/c++/*.cpp tutorials/c/*.c)
+    filter_tests("${ALLFILES}" TESTFILES)
+    foreach(TESTFILE ${TESTFILES})
+      get_filename_component(TEST ${TESTFILE} NAME)
+      string(REPLACE "\." "_" TEST ${TEST})
+      add_executable(${TEST} WIN32 ${TESTFILE})
+      target_link_libraries(${TEST} shared)
+      if(WIN32 AND NOT MSVC)
+        set(FLAGS "-static")
+        if(HAVE_FLTK)
+          set(FLAGS "${FLAGS} -mwindows")
+        else()
+          set(FLAGS "${FLAGS} -mconsole")
+        endif()
+        set_target_properties(${TEST} PROPERTIES LINK_FLAGS "${FLAGS}")
+      endif()
+      add_test(${TEST} ${TEST} -nopopup)
+    endforeach()
+  endif()
+  # enable this once we have worked out the path issues on the build machines
+  if(0 AND ENABLE_BUILD_DYNAMIC)
+    find_package(PythonInterp)
+    if(PYTHONINTERP_FOUND)
+      file(GLOB_RECURSE ALLFILES tutorials/python/*.py examples/api/*.py)
+      filter_tests("${ALLFILES}" TESTFILES)
+      foreach(TESTFILE ${TESTFILES})
+        get_filename_component(TEST ${TESTFILE} NAME)
+        string(REPLACE "\." "_" TEST ${TEST})
+        add_test(NAME ${TEST} COMMAND ${PYTHON_EXECUTABLE} ${TESTFILE} -nopopup)
+        set_property(TEST ${TEST} APPEND PROPERTY ENVIRONMENT
+                     "PYTHONPATH=${CMAKE_SOURCE_DIR}/api")
+        set_property(TEST ${TEST} APPEND PROPERTY ENVIRONMENT
+                     "LD_LIBRARY_PATH=${CMAKE_CURRENT_BINARY_DIR}")
+        endforeach()
+    endif()
+  endif()
 endif()
 
 message(STATUS "")
@@ -2069,9 +2248,8 @@ message(STATUS " * C++ compiler: " ${CMAKE_CXX_COMPILER})
 message(STATUS " * Install prefix: " ${CMAKE_INSTALL_PREFIX})
 message(STATUS "")
 
-mark_as_advanced(GMSH_EXTRA_VERSION
-                 ACIS_LIB ANN_INC ANN_LIB CAIRO_LIB CAIRO_INC CGNS_INC GMM_INC
-                 GMP_INC GMP_LIB MMG3D_INC MMG3D_LIB HDF5_LIB
+mark_as_advanced(ANN_INC ANN_LIB CAIRO_LIB CAIRO_INC CGNS_INC GMM_INC
+                 GMP_INC GMP_LIB MMG_INC MMG_LIB HDF5_LIB
                  MED_LIB OCC_INC SZ_LIB
                  PETSC_LIBS SLEPC_INC SLEPC_INC2 SLEPC_LIB
                  BISON FLEX MAKEINFO TEXI2PDF FLTK_CONFIG_SCRIPT

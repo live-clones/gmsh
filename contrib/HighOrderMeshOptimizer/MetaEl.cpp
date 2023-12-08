@@ -1,4 +1,4 @@
-// HighOrderMeshOptimizer - Copyright (C) 2013-2019 UCLouvain-ULiege
+// HighOrderMeshOptimizer - Copyright (C) 2013-2023 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -33,6 +33,7 @@
 #include "MPrism.h"
 #include "MHexahedron.h"
 #include "BasisFactory.h"
+#include "nodalBasis.h"
 #include "MetaEl.h"
 
 std::map<int, MetaEl::metaInfoType> MetaEl::_metaInfo;
@@ -182,8 +183,7 @@ MetaEl::metaInfoType::metaInfoType(int type, int order)
 
 const MetaEl::metaInfoType &MetaEl::getMetaInfo(int elType, int order)
 {
-  std::map<int, MetaEl::metaInfoType>::iterator itMInfo =
-    _metaInfo.find(elType);
+  auto itMInfo = _metaInfo.find(elType);
   if(itMInfo == _metaInfo.end()) {
     const metaInfoType mInfo(elType, order);
     itMInfo =
@@ -231,7 +231,7 @@ void MetaEl::computeBaseNorm(const SVector3 &metaNorm,
 
 MetaEl::MetaEl(int type, int order, const std::vector<MVertex *> &baseVert,
                const std::vector<MVertex *> &topPrimVert)
-  : _mInfo(getMetaInfo(type, order)), _metaEl(0), _metaEl0(0)
+  : _mInfo(getMetaInfo(type, order)), _metaEl(nullptr), _metaEl0(nullptr)
 {
   // Get info on meta-element type
   if(_mInfo.nbVert == 0) return;

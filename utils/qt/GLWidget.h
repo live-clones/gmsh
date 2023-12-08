@@ -1,14 +1,14 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef _GLWIDGET_H_
 #define _GLWIDGET_H_
 
 #include <QGLWidget>
-#include "GmshGlobal.h"
-#include "drawContext.h"
+#include <gmsh/GmshGlobal.h>
+#include <gmsh/drawContext.h>
 
 class GLWidget : public QGLWidget
 {

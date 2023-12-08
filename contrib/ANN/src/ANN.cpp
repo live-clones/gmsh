@@ -2,16 +2,16 @@
 // File:			ANN.cpp
 // Programmer:		Sunil Arya and David Mount
 // Description:		Methods for ANN.h and ANNx.h
-// Last modified:	01/04/05 (Version 1.0)
+// Last modified:	01/27/10 (Version 1.1.2)
 //----------------------------------------------------------------------
-// Copyright (c) 1997-2005 University of Maryland and Sunil Arya and
+// Copyright (c) 1997-2010 University of Maryland and Sunil Arya and
 // David Mount.  All Rights Reserved.
-// 
+//
 // This software and related documentation is part of the Approximate
 // Nearest Neighbor Library (ANN).  This software is provided under
 // the provisions of the Lesser GNU Public License (LGPL).  See the
 // file ../ReadMe.txt for further information.
-// 
+//
 // The University of Maryland (U.M.) and the authors make no
 // representations about the suitability or fitness of this software for
 // any purpose.  It is provided "as is" without express or implied
@@ -22,11 +22,13 @@
 //		Initial release
 //	Revision 1.0  04/01/05
 //		Added performance counting to annDist()
+//	Revision 1.1.2  01/27/10
+//		Fixed minor compilation bugs for new versions of gcc
 //----------------------------------------------------------------------
 
+#include <cstdlib>						// C standard lib defs
 #include <ANN/ANNx.h>					// all ANN includes
-#include <ANN/ANNperf.h>				// ANN performance 
-#include <stdlib.h> // for gmsh
+#include <ANN/ANNperf.h>				// ANN performance
 
 using namespace std;					// make std:: accessible
 
@@ -46,9 +48,9 @@ ANNdist annDist(						// interpoint squared distance
 	ANNpoint			p,
 	ANNpoint			q)
 {
-	register int d;
-	register ANNcoord diff;
-	register ANNcoord dist;
+	/* register */ int d;
+	/* register */ ANNcoord diff;
+	/* register */ ANNcoord dist;
 
 	dist = 0;
 	for (d = 0; d < dim; d++) {
@@ -111,7 +113,7 @@ ANNpoint annAllocPt(int dim, ANNcoord c)		// allocate 1 point
 	for (int i = 0; i < dim; i++) p[i] = c;
 	return p;
 }
-   
+
 ANNpointArray annAllocPts(int n, int dim)		// allocate n pts in dim
 {
 	ANNpointArray pa = new ANNpoint[n];			// allocate points
@@ -127,21 +129,21 @@ void annDeallocPt(ANNpoint &p)					// deallocate 1 point
 	delete [] p;
 	p = NULL;
 }
-   
+
 void annDeallocPts(ANNpointArray &pa)			// deallocate points
 {
 	delete [] pa[0];							// dealloc coordinate storage
 	delete [] pa;								// dealloc points
 	pa = NULL;
 }
-   
+
 ANNpoint annCopyPt(int dim, ANNpoint source)	// copy point
 {
 	ANNpoint p = new ANNcoord[dim];
 	for (int i = 0; i < dim; i++) p[i] = source[i];
 	return p;
 }
-   
+
 												// assign one rect to another
 void annAssignRect(int dim, ANNorthRect &dest, const ANNorthRect &source)
 {
@@ -164,7 +166,7 @@ ANNbool ANNorthRect::inside(int dim, ANNpoint p)
 //	Error handler
 //----------------------------------------------------------------------
 
-void annError(char *msg, ANNerr level)
+void annError(const char* msg, ANNerr level)
 {
 	if (level == ANNabort) {
 		cerr << "ANN: ERROR------->" << msg << "<-------------ERROR\n";

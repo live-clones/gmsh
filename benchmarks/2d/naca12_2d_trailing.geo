@@ -1,5 +1,5 @@
 lc = .033 ;
-lc2 = 2.2 ;
+lc2 = 0.3 ;
 lc3 = .03 ;
 Point(1) =  {1.000000e+00,0.000000e+00,0.000000e+00,lc3};
 Point(2) =  {9.997533e-01,0.000000e+00,-3.498543e-05,lc};
@@ -224,17 +224,20 @@ Line Loop(9) = {6,7,8,5};
 Line Loop(10) = {2,3,4,1};
 Plane Surface(11) = {9,10};
 
-//Physical Surface(11)={11};
-//Point(9999) = {0.6,0,0,1};
-
 Point(1004) = {1.5, 0, 0, lc};
 Line(12) = {1, 1004};
 Line {12} In Surface {11};
 
 Field[2] = BoundaryLayer;
-Field[2].EdgesList = {12, 1,2,3,4,12};
-Field[2].hfar = 1.5;
-Field[2].hwall_n = 0.0001;
-Field[2].ratio = 1.3;
-Field[2].thickness = .05;
+Field[2].CurvesList = {12, 1,2,3,4,12};
+Field[2].SizeFar = 1.5;
+Field[2].Size = 0.0001;
+Field[2].Ratio = 1.3;
+Field[2].Thickness = .05;
+Field[2].FanPointsList = {1004};
+Field[2].Quads = 1;
+
 BoundaryLayer Field = 2;
+
+Mesh.Algorithm = 8; // del for quads
+Mesh.RecombineAll = 1;

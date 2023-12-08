@@ -10,7 +10,7 @@ other mesh elements.
 
 Trevor S. Strickler hereby transfers copyright of QuadTri files to Christophe
 Geuzaine and J.-F. Remacle with the understanding that his contribution shall be
-cited appropriately. See the LICENSE.txt file for license information.
+cited appropriately. See the README.txt file for license information.
 
 ********************************************************************************/
 
@@ -227,7 +227,7 @@ int IsValidQuadToTriTop(GFace *face, int *quadToTri, bool *detectQuadToTriTop)
     std::vector<GRegion *> all_regions;
     int numRegions = 0;
     int numTopRegions = 0;
-    std::set<GRegion *, GEntityLessThan>::iterator itreg;
+    std::set<GRegion *, GEntityPtrLessThan>::iterator itreg;
 
     for(itreg = model->firstRegion(); itreg != model->lastRegion(); itreg++)
       all_regions.push_back((*itreg));

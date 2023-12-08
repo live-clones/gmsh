@@ -1,6 +1,6 @@
 If(!PostProcessing.NbViews)
-  Merge "../../tutorial/view1.pos";
-  Merge "../../tutorial/view1.pos";
+  Merge "../../tutorials/view1.pos";
+  Merge "../../tutorials/view1.pos";
 EndIf
 DefineConstant[
   DD = {0, Name "Plane", Min -0.1, Max 0, Step 0.01,

@@ -51,11 +51,13 @@ void drawGeomEdge(GEdge *e)
   double t_max = t_bounds.high();
 
   // Create a VA for this edge
-  std::vector<GLfloat> edge(N*3);
-  for(unsigned int i=0; i < N; i++) {
-    double t = t_min + (double)i / (double)(N-1) * (t_max - t_min);
+  std::vector<GLfloat> edge(N * 3);
+  for(unsigned int i = 0; i < N; i++) {
+    double t = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
     GPoint p = e->point(t);
-    edge[i*3] = p.x(); edge[i*3+1] = p.y(); edge[i*3+2] = p.z();
+    edge[i * 3] = p.x();
+    edge[i * 3 + 1] = p.y();
+    edge[i * 3 + 2] = p.z();
   }
   // Then print the VA
   glLineWidth((GLfloat)CTX::instance()->geom.curveWidth);
@@ -69,20 +71,20 @@ void drawGeomEdge(GEdge *e)
 
 void drawGeomFace(GFace *f)
 {
-	// TODO
+  // TODO
 }
 
 void drawContext::drawGeom()
 {
-  for(unsigned int i=0; i<GModel::list.size(); i++) {
+  for(unsigned int i = 0; i < GModel::list.size(); i++) {
     GModel *m = GModel::list[i];
     if(!m->getVisibility()) continue;
-    if(CTX::instance()->geom.points || CTX::instance()->geom.pointsNum)
+    if(CTX::instance()->geom.points || CTX::instance()->geom.pointLabels)
       std::for_each(m->firstVertex(), m->lastVertex(), drawGeomVertex);
-    if(CTX::instance()->geom.curves || CTX::instance()->geom.curvesNum ||
+    if(CTX::instance()->geom.curves || CTX::instance()->geom.curveLabels ||
        CTX::instance()->geom.tangents)
       std::for_each(m->firstEdge(), m->lastEdge(), drawGeomEdge);
-    if(CTX::instance()->geom.surfaces || CTX::instance()->geom.surfacesNum ||
+    if(CTX::instance()->geom.surfaces || CTX::instance()->geom.surfaceLabels ||
        CTX::instance()->geom.normals)
       std::for_each(m->firstFace(), m->lastFace(), drawGeomFace);
   }

@@ -1,4 +1,4 @@
-// HighOrderMeshOptimizer - Copyright (C) 2013-2019 UCLouvain-ULiege
+// HighOrderMeshOptimizer - Copyright (C) 2013-2023 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -136,7 +136,7 @@ double computeBndDistH(GEdge *edge,
   double maxDist = 0.0;
   for(std::size_t i = 0; i < dpts.size(); i++) {
     maxDist = std::max(
-      maxDist, dpts[i].distance(edge->closestPoint(dpts[i], tolerance)));
+      maxDist, dpts[i].distance(edge->closestPointWithTol(dpts[i], tolerance)));
   }
   return maxDist;
 }
@@ -513,7 +513,7 @@ double computeBndDist(MElement *element, int distanceDefinition,
     int clId = elbasis.getClosureId(iEdge, 1);
     const std::vector<int> &closure = elbasis.closures[clId];
     std::vector<SPoint3> xyz;
-    GEdge *edge = NULL;
+    GEdge *edge = nullptr;
     std::vector<MVertex *> vertices(closure.size());
     for(size_t i = 0; i < closure.size(); ++i) {
       MVertex *v = element->getVertex(closure[i]);

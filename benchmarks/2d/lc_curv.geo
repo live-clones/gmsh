@@ -11,5 +11,5 @@ Spline(1) = {1, 2, 3, 4, 5, 6};
 Line(2) = {6, 1};
 Line Loop(1) = {1, 2};
 Plane Surface(1) = {1};
-Mesh.CharacteristicLengthFromCurvature = 1;
-Mesh.MinimumCirclePoints = 50; // points per 2*pi
+Mesh.LcIntegrationPrecision = 1e-6;
+Mesh.MeshSizeFromCurvature = 50;

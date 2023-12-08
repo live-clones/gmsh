@@ -1,4 +1,4 @@
-// HighOrderMeshOptimizer - Copyright (C) 2013-2019 UCLouvain-ULiege
+// HighOrderMeshOptimizer - Copyright (C) 2013-2023 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -32,17 +32,17 @@
 
 #include "MEdge.h"
 #include "MFace.h"
+#include "nodalBasis.h"
 #include "fullMatrix.h"
 
 class MElement;
 class GEntity;
 class MVertex;
 struct IntPt;
-struct nodalBasis;
 
 typedef std::pair<MElement *, std::vector<MElement *> > PairMElemVecMElem;
 typedef std::vector<PairMElemVecMElem> VecPairMElemVecMElem;
-typedef std::map<MEdge, std::vector<MElement *>, Less_Edge> MapMEdgeVecMElem;
+typedef std::map<MEdge, std::vector<MElement *>, MEdgeLessThan> MapMEdgeVecMElem;
 
 namespace BoundaryLayerCurver {
 
@@ -381,7 +381,7 @@ namespace BoundaryLayerCurver {
 // BL in planar surface (always prefer this one if possible)
 //   GEdge is not mandatory but highly recommended
 void curve2DBoundaryLayer(VecPairMElemVecMElem &columns, SVector3 normal,
-                          const GEdge *edge = NULL);
+                          const GEdge *edge = nullptr);
 
 // BL on CAD surface
 //   GEdge is not mandatory but highly recommended

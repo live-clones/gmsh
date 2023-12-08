@@ -10,7 +10,7 @@ other mesh elements.
 
 Trevor S. Strickler hereby transfers copyright of QuadTri files to Christophe
 Geuzaine and J.-F. Remacle with the understanding that his contribution shall be
-cited appropriately. See the LICENSE.txt file for license information.
+cited appropriately. See the README.txt file for license information.
 ********************************************************************************/
 
 #include <stdlib.h>
@@ -45,7 +45,7 @@ int IsInToroidalQuadToTri(GFace *face)
   // find the two regions adjacent to the root face. If this is a structured
   // torus, then both regions
   // should be structured extrusions and BOTH should have the same root face
-  std::set<GRegion *, GEntityLessThan>::iterator itreg;
+  std::set<GRegion *, GEntityPtrLessThan>::iterator itreg;
   for(itreg = model->firstRegion(); itreg != model->lastRegion(); itreg++) {
     // save time
     if(numRegions >= 2) break;
@@ -634,7 +634,7 @@ int GetNeighborRegionsOfFace(GFace *face, std::vector<GRegion *> &neighbors)
     regions_count = 0;
 
   // pedantic search
-  std::set<GRegion *, GEntityLessThan>::iterator itreg;
+  std::set<GRegion *, GEntityPtrLessThan>::iterator itreg;
   for(itreg = model->firstRegion(); itreg != model->lastRegion(); itreg++) {
     std::vector<GFace *> reg_faces = (*itreg)->faces();
     if(std::find(reg_faces.begin(), reg_faces.end(), face) != reg_faces.end()) {

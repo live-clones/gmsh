@@ -6,20 +6,20 @@
 
 #include <Gmsh/GmshMessage.h>
 
-void messageFromCpp (void *self, std::string level, std::string msg);
+void messageFromCpp(void *self, std::string level, std::string msg);
 void getBitmap(void *self, const char *text, int textsize, unsigned char **map,
-               int *height, int *width, int *realWidth=NULL);
+               int *height, int *width, int *realWidth = NULL);
 void getBitmapFromString(const char *text, int textsize, unsigned char **map,
-                         int *height, int *width, int *realWidth=NULL);
+                         int *height, int *width, int *realWidth = NULL);
 void setObjCBridge(void *objcObject);
 
-class MobileMessage : GmshMessage
-{
+class MobileMessage : GmshMessage {
 private:
-  void* _objcObject;
+  void *_objcObject;
+
 public:
-  MobileMessage(void* objcObject){_objcObject = objcObject;}
-  ~MobileMessage(){}
+  MobileMessage(void *objcObject) { _objcObject = objcObject; }
+  ~MobileMessage() {}
   void operator()(std::string level, std::string message)
   {
     messageFromCpp(_objcObject, level, message);

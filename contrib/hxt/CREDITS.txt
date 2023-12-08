@@ -2,8 +2,8 @@
 
                Universite catholique de Louvain
 
-The TetGen/BR code (tetgenBR.{cxx,h}) is copyright (c) 2016 Hang Si,
+The TetGen/BR code (tetBR/src/tetgenBR.{cxx,h}) is copyright (c) 2016 Hang Si,
 Weierstrass Institute for Applied Analysis and Stochatics. It is relicensed
-under the terms of gmsh/LICENSE.txt for use in Gmsh thanks to a Software License
-Agreement between Weierstrass Institute for Applied Analysis and Stochastics and
-GMESH SPRL.
+under the terms of gmsh/LICENSE.txt for use in Gmsh thanks to a Software
+License Agreement between Weierstrass Institute for Applied Analysis and
+Stochastics and GMESH SPRL.

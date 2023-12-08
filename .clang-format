@@ -1,5 +1,4 @@
 ---
-Language:        Cpp
 BasedOnStyle: None
 AccessModifierOffset: -2
 AlignAfterOpenBracket: Align
@@ -9,6 +8,7 @@ AlignEscapedNewlines: Right
 AlignOperands:   true
 AlignTrailingComments: false
 AllowAllParametersOfDeclarationOnNextLine: true
+AllowAllArgumentsOnNextLine: true
 AllowShortBlocksOnASingleLine: true
 AllowShortCaseLabelsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: All
@@ -100,7 +100,7 @@ SpacesInContainerLiterals: true
 SpacesInCStyleCastParentheses: false
 SpacesInParentheses: false
 SpacesInSquareBrackets: false
-Standard:        Cpp03
+Standard:        Cpp11
 TabWidth:        4
 UseTab:          Never
 ...

@@ -130,11 +130,11 @@ namespace std {
 %include "MHexahedron.h"
 %include "MQuadrangle.h"
 %include "MLine.h"
-%warnfilter(401) Equal_Edge;
-%warnfilter(401) Less_Edge;
+%warnfilter(401) MEdgeEqual;
+%warnfilter(401) MEdgeLessThan;
 %include "MEdge.h"
-%warnfilter(401) Equal_Face;
-%warnfilter(401) Less_Face;
+%warnfilter(401) MFaceEqual;
+%warnfilter(401) MFaceLessThan;
 %include "MFace.h"
 %include "MPoint.h"
 %ignore SVector3::operator()(int);

@@ -9,7 +9,7 @@ This is the binary Software Development Kit (SDK) for Gmsh ${GMSH_VERSION}:
 
 Gmsh is distributed under the terms of the GNU General Public License: see
 share/doc/gmsh/LICENSE.txt and share/doc/gmsh/CREDITS.txt. For additional Gmsh
-resources, see http://gmsh.info.
+resources, see https://gmsh.info.
 
 SDK layout:
 
@@ -20,8 +20,14 @@ SDK layout:
   * include/gmsh.h: C++ API header
   * include/gmshc.h: C API header
   * include/gmsh.h_cwrap: C++ wrapper of the C API (see the `Notes' below)
+  * include/gmsh.f90: Fortran module
   * bin/gmsh: gmsh executable (linked with the shared Gmsh library)
-  * share/doc/gmsh/demos/api : API examples in C++, C, Python and Julia
+  * share/doc/gmsh/tutorials/c++: C++ API tutorials
+  * share/doc/gmsh/tutorials/c: C API tutorials
+  * share/doc/gmsh/tutorials/python: Python API tutorials
+  * share/doc/gmsh/tutorials/julia: Julia API tutorials
+  * share/doc/gmsh/tutorials/fortran: Fortran API tutorials
+  * share/doc/gmsh/examples/api: Other API examples
 
 Notes:
 
@@ -43,10 +49,18 @@ Notes:
     Collection (GCC). To compile a C++ example with Microsoft Visual Studio 2017
     in the Visual Studio shell and run it, you would do:
 
+    C:\gmsh-git-Windows64-sdk> ren include\gmsh.h gmsh.h_original
     C:\gmsh-git-Windows64-sdk> ren include\gmsh.h_cwrap gmsh.h
-    C:\gmsh-git-Windows64-sdk> cl /Iinclude share\doc\gmsh\demos\api\simple.cpp lib\gmsh.lib
+    C:\gmsh-git-Windows64-sdk> cl /Iinclude share\doc\gmsh\tutorials\c++\t1.cpp lib\gmsh.lib
     C:\gmsh-git-Windows64-sdk> cd lib
-    C:\gmsh-git-Windows64-sdk\lib> ..\simple.exe
+    C:\gmsh-git-Windows64-sdk\lib> ..\t1.exe
 
-  * The shared Gmsh library references several other shared system libraries. If
-    some of these libraries are missing you will need to install them.
+  * To make it as portable and as easy-to-use as possible the shared Gmsh
+    library embeds most Gmsh dependencies statically linked directly inside the
+    share library: libgfortran, FreeType, OpenCASCADE, OpenBLAS, HDF5, MED,
+    CGNS, FLTK, ... Linking your app with different versions of some of these
+    dependencies can cause issues: in this case you should rebuild the Gmsh
+    shared library from source and manage the dependencies consistently.
+
+  * The shared Gmsh library also references shared system libraries. If some of
+    these libraries are missing you will need to install them.

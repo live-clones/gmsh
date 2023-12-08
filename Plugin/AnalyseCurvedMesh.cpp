@@ -1,13 +1,13 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GmshConfig.h"
 
 #if defined(HAVE_MESH)
 
-#include "AnalyseCurvedMesh.h"
+#include "AnalyseMeshQuality.h"
 #include "qualityMeasuresJacobian.h"
 #include "OS.h"
 #include "Context.h"
@@ -25,105 +25,101 @@
 #endif
 
 StringXNumber CurvedMeshOptions_Number[] = {
-  {GMSH_FULLRC, "JacobianDeterminant", NULL, 0},
-  {GMSH_FULLRC, "IGEMeasure", NULL, 0},
-  {GMSH_FULLRC, "ICNMeasure", NULL, 0},
-  {GMSH_FULLRC, "HidingThreshold", NULL, 9},
-  {GMSH_FULLRC, "DrawPView", NULL, 0},
-  {GMSH_FULLRC, "Recompute", NULL, 0},
-  {GMSH_FULLRC, "DimensionOfElements", NULL, -1}
+  {GMSH_FULLRC, "JacobianDeterminant", nullptr, 0},
+  {GMSH_FULLRC, "IGEMeasure", nullptr, 0},
+  {GMSH_FULLRC, "ICNMeasure", nullptr, 0},
+  {GMSH_FULLRC, "HidingThreshold", nullptr, 99},
+  {GMSH_FULLRC, "ThresholdGreater", nullptr, 1},
+  {GMSH_FULLRC, "CreateView", nullptr, 0},
+  {GMSH_FULLRC, "Recompute", nullptr, 0},
+  {GMSH_FULLRC, "DimensionOfElements", nullptr, -1}
 #if defined(HAVE_VISUDEV)
   ,
-  {GMSH_FULLRC, "Element to draw quality", NULL, 0}
+  {GMSH_FULLRC, "Element to draw quality", nullptr, 0}
 #endif
 };
 
 extern "C" {
-GMSH_Plugin *GMSH_RegisterAnalyseCurvedMeshPlugin()
+GMSH_Plugin *GMSH_RegisterAnalyseMeshQualityPlugin()
 {
-  return new GMSH_AnalyseCurvedMeshPlugin();
+  return new GMSH_AnalyseMeshQualityPlugin();
 }
 }
 
-int GMSH_AnalyseCurvedMeshPlugin::getNbOptions() const
+int GMSH_AnalyseMeshQualityPlugin::getNbOptions() const
 {
   return sizeof(CurvedMeshOptions_Number) / sizeof(StringXNumber);
 }
 
-StringXNumber *GMSH_AnalyseCurvedMeshPlugin::getOption(int iopt)
+StringXNumber *GMSH_AnalyseMeshQualityPlugin::getOption(int iopt)
 {
   return &CurvedMeshOptions_Number[iopt];
 }
 
-std::string GMSH_AnalyseCurvedMeshPlugin::getHelp() const
+std::string GMSH_AnalyseMeshQualityPlugin::getHelp() const
 {
-  return "Plugin(AnalyseCurvedMesh) analyse all elements of a given dimension. "
-         "According to what is asked, it computes the minimum of the Jacobian "
-         "determinant (J), the IGE quality measure (Inverse Gradient Error) "
-         "and/or "
-         "the ICN quality measure (Inverse Condition Number). "
-         "Statistics are printed and, if asked, a Pview is created for each "
-         "measure. "
-         "The plugin hides elements for which the measure mu > 'Hiding "
-         "threshold', "
-         "where mu is the ICN measure if asked otherwise the IGE measure if "
-         "asked otherwise the Jacobian determinant.\n"
+  return "Plugin(AnalyseMeshQuality) analyses the quality of the elements "
+         "of a given dimension in the current model. Depending on the input "
+         "parameters it computes the minimum of the Jacobian determinant (J), "
+         "the IGE quality measure (Inverse Gradient Error) and/or the ICN "
+         "quality measure (Condition Number). Statistics are printed and, "
+         "if requested, a model-based post-processing view is created for each "
+         "quality measure. The plugin can optionally hide elements by "
+         "comparing the measure to a prescribed threshold.\n"
          "\n"
-         "J is faster to compute but gives information only on validity while "
-         "the "
-         "other measure gives also information on quality.\n"
-         "The IGE measure is related to the error on the gradient of the "
-         "finite "
-         "element solution. It is the scaled Jacobian for quads and hexes and "
-         "a new "
-         "measure for triangles and tetrahedra.\n"
+         "J is faster to compute but gives information only on element "
+         "validity while the other measures also give information on element "
+         "quality. The IGE measure is related to the error on the gradient of "
+         "the finite element solution. It is the scaled Jacobian for quads and "
+         "hexes and a new measure for triangles and tetrahedra. "
          "The ICN measure is related to the condition number of the stiffness "
-         "matrix.\n"
-         "(See article \"Efficient computation of the minimum of shape quality "
-         "measures on curvilinear finite elements\" for details.)\n"
+         "matrix. (See the article \"Efficient computation of the minimum of "
+         "shape quality measures on curvilinear finite elements\" for "
+         "details.)\n"
          "\n"
          "Parameters:\n"
          "\n"
-         "- JacobianDeterminant = {0, 1}\n"
+         "- `JacobianDeterminant': compute J?\n"
          "\n"
-         "- IGEMeasure = {0, 1}\n"
+         "- `IGEMeasure': compute IGE?\n"
          "\n"
-         "- ICNMeasure = {0, 1}\n"
+         "- `ICNMeasure': compute ICN?\n"
          "\n"
-         "- HidingThreshold = [0, 1]: Hides all element for which min(mu) is "
-         "strictly greater than the threshold, where mu is ICN if"
-         "ICNMeasure == 1, otherwise it is IGE if IGEMeasure == 1. "
-         "If ICNMeasure == IGEMeasure == 0, nothing happens. "
-         "If threshold == 0, hides all elements except invalid.\n"
+         "- `HidingThreshold': hide all elements for which min(mu) is "
+         "strictly greater than (if `ThresholdGreater' == 1) or less than "
+         "(if `ThresholdGreater' == 0) the threshold, where mu is ICN if "
+         "`ICNMeasure' == 1, IGE if `IGEMeasure' == 1 or min(J)/max(J) if "
+         "`JacobianDeterminant' == 1.\n"
          "\n"
-         "- DrawPView = {0, 1}: Creates a PView of min(J)/max(J), min(IGE) "
-         "and/or min(ICN) according to what is asked. If 'Recompute' = 1, "
-         "new PViews are created.\n"
+         "- `CreateView': create a model-based view of min(J)/max(J), "
+         "min(IGE) and/or min(ICN)?\n"
          "\n"
-         "- Recompute = {0,1}: Should be 1 if the mesh has changed.\n"
+         "- `Recompute': force recomputation (set to 1 if the mesh has "
+         "changed).\n"
          "\n"
-         "- DimensionOfElements = {-1, 1, 2, 3, 4}: If == -1, analyse element "
-         "of the "
-         "greater dimension. If == 4, analyse 2D and 3D elements.";
+         "- `DimensionOfElements': analyse elements of the given dimension if "
+         "equal to 1, 2 or 3; analyse 2D and 3D elements if equal to 4; "
+         "or analyse elements of the highest dimension if equal to -1.";
 }
 
-PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
+PView *GMSH_AnalyseMeshQualityPlugin::execute(PView *v)
 {
   _m = GModel::current();
   int computeJac = static_cast<int>(CurvedMeshOptions_Number[0].def);
   int computeIGE = static_cast<int>(CurvedMeshOptions_Number[1].def);
   int computeICN = static_cast<int>(CurvedMeshOptions_Number[2].def);
-  _threshold = CurvedMeshOptions_Number[3].def;
-  bool drawPView = static_cast<bool>(CurvedMeshOptions_Number[4].def);
-  bool recompute = static_cast<bool>(CurvedMeshOptions_Number[5].def);
-  int askedDim = static_cast<int>(CurvedMeshOptions_Number[6].def);
+  double threshold = CurvedMeshOptions_Number[3].def;
+  bool thresholdGreater = static_cast<bool>(CurvedMeshOptions_Number[4].def);
+  bool createView = static_cast<bool>(CurvedMeshOptions_Number[5].def);
+  bool recompute = static_cast<bool>(CurvedMeshOptions_Number[6].def);
+  int askedDim = static_cast<int>(CurvedMeshOptions_Number[7].def);
 
 #if defined(HAVE_VISUDEV)
   _pwJac = computeJac / 2;
   _pwIGE = computeIGE / 2;
   _pwICN = computeICN / 2;
 
-  _numElementToScan = static_cast<int>(CurvedMeshOptions_Number[7].def);
+  _numElementToScan = static_cast<int>(CurvedMeshOptions_Number[8].def);
   _viewOrder = 0;
   _dataPViewJac.clear();
   _dataPViewIGE.clear();
@@ -132,25 +128,7 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
 
   if(askedDim < 0 || askedDim > 4) askedDim = _m->getDim();
 
-  if(recompute) {
-    _data.clear();
-    if(askedDim < 4) {
-      _computedJac[askedDim - 1] = false;
-      _computedIGE[askedDim - 1] = false;
-      _computedICN[askedDim - 1] = false;
-      _pviewJac[askedDim - 1] = false;
-      _pviewIGE[askedDim - 1] = false;
-      _pviewICN[askedDim - 1] = false;
-    }
-    else {
-      _computedJac[1] = _computedJac[2] = false;
-      _computedIGE[1] = _computedIGE[2] = false;
-      _computedICN[1] = _computedICN[2] = false;
-      _pviewJac[1] = _pviewJac[2] = false;
-      _pviewIGE[1] = _pviewIGE[2] = false;
-      _pviewICN[1] = _pviewICN[2] = false;
-    }
-  }
+  if(recompute) _clear(askedDim);
 
   // Compute what have to
   bool printStatJ = false;
@@ -159,27 +137,33 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
   for(int dim = 1; dim <= 3 && dim <= _m->getDim(); ++dim) {
     if((askedDim == 4 && dim > 1) || dim == askedDim) {
       if(!_computedJac[dim - 1]) {
-        double time = Cpu();
+        double time = Cpu(), w = TimeOfDay();
         Msg::StatusBar(true, "Computing Jacobian for %dD elements...", dim);
         _computeMinMaxJandValidity(dim);
-        Msg::StatusBar(true, "Done computing Jacobian for %dD elements (%g s)",
-                       dim, Cpu() - time);
+        Msg::StatusBar(true,
+                       "Done computing Jacobian for %dD elements (Wall %gs, "
+                       "CPU %gs)",
+                       dim, TimeOfDay() - w, Cpu() - time);
         printStatJ = true;
       }
       if(computeIGE && !_computedIGE[dim - 1]) {
-        double time = Cpu();
+        double time = Cpu(), w = TimeOfDay();
         Msg::StatusBar(true, "Computing IGE for %dD elements...", dim);
         _computeMinIGE(dim);
-        Msg::StatusBar(true, "Done computing IGE for %dD elements (%g s)", dim,
-                       Cpu() - time);
+        Msg::StatusBar(true,
+                       "Done computing IGE for %dD elements (Wall %gs, "
+                       "CPU %gs)",
+                       dim, TimeOfDay() - w, Cpu() - time);
         printStatS = true;
       }
       if(computeICN && !_computedICN[dim - 1]) {
-        double time = Cpu();
+        double time = Cpu(), w = TimeOfDay();
         Msg::StatusBar(true, "Computing ICN for %dD elements...", dim);
         _computeMinICN(dim);
-        Msg::StatusBar(true, "Done computing ICN for %dD elements (%g s)", dim,
-                       Cpu() - time);
+        Msg::StatusBar(true,
+                       "Done computing ICN for %dD elements (Wall %gs, "
+                       "CPU %gs)",
+                       dim, TimeOfDay() - w, Cpu() - time);
         printStatI = true;
       }
     }
@@ -193,7 +177,8 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
 #endif
 
   // Create PView
-  if(drawPView) {
+  PView *view = nullptr;
+  if(createView) {
     for(int dim = 1; dim <= 3; ++dim) {
       if((askedDim == 4 && dim > 1) || dim == askedDim) {
         if(!_pviewJac[dim - 1] && computeJac) {
@@ -213,7 +198,7 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
           if(dataPV.size()) {
             std::stringstream name;
             name << "minJ/maxJ " << dim << "D";
-            new PView(name.str().c_str(), "ElementData", _m, dataPV);
+            view = new PView(name.str().c_str(), "ElementData", _m, dataPV);
           }
         }
         if(!_pviewIGE[dim - 1] && computeIGE) {
@@ -227,7 +212,7 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
           if(dataPV.size()) {
             std::stringstream name;
             name << "IGE " << dim << "D";
-            new PView(name.str().c_str(), "ElementData", _m, dataPV);
+            view = new PView(name.str().c_str(), "ElementData", _m, dataPV);
           }
         }
         if(!_pviewICN[dim - 1] && computeICN) {
@@ -241,52 +226,52 @@ PView *GMSH_AnalyseCurvedMeshPlugin::execute(PView *v)
           if(dataPV.size()) {
             std::stringstream name;
             name << "ICN " << dim << "D";
-            new PView(name.str().c_str(), "ElementData", _m, dataPV);
+            view = new PView(name.str().c_str(), "ElementData", _m, dataPV);
           }
         }
       }
     }
   }
 
-    // Hide elements
+  // hide elements
+  int whichMeasure = computeICN ? 2 : computeIGE ? 1 : computeJac ? 0 : -1;
+  if(threshold < 99 && whichMeasure >= 0) {
+    _hideWithThreshold(askedDim, whichMeasure, threshold, thresholdGreater);
+    CTX::instance()->mesh.changed = ENT_ALL;
 #if defined(HAVE_OPENGL)
-  _hideWithThreshold(askedDim,
-                     computeICN ? 2 : computeIGE ? 1 : computeJac ? 0 : -1);
-  CTX::instance()->mesh.changed = (ENT_ALL);
-  drawContext::global()->draw();
+    drawContext::global()->draw();
 #endif
+  }
 
-  return NULL;
+  return view;
 }
 
-void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
+void GMSH_AnalyseMeshQualityPlugin::_computeMinMaxJandValidity(int dim)
 {
   if(_computedJac[dim - 1]) return;
 
-  std::set<GEntity *, GEntityLessThan> entities;
+  std::set<GEntity *, GEntityPtrFullLessThan> entities;
   switch(dim) {
   case 3:
-    for(GModel::riter it = _m->firstRegion(); it != _m->lastRegion(); it++)
+    for(auto it = _m->firstRegion(); it != _m->lastRegion(); it++)
       entities.insert(*it);
     break;
   case 2:
-    for(GModel::fiter it = _m->firstFace(); it != _m->lastFace(); it++)
+    for(auto it = _m->firstFace(); it != _m->lastFace(); it++)
       entities.insert(*it);
     break;
   case 1:
-    for(GModel::eiter it = _m->firstEdge(); it != _m->lastEdge(); it++)
+    for(auto it = _m->firstEdge(); it != _m->lastEdge(); it++)
       entities.insert(*it);
     break;
   default: return;
   }
 
   int cntInverted = 0;
-  std::set<GEntity *, GEntityLessThan>::iterator it;
-  for(it = entities.begin(); it != entities.end(); ++it) {
+  for(auto it = entities.begin(); it != entities.end(); ++it) {
     GEntity *entity = *it;
     unsigned num = entity->getNumMeshElements();
-    fullMatrix<double> *normals = NULL;
-    SVector3 v;
+    fullMatrix<double> *normals = nullptr;
     switch(dim) {
     case 3:
       Msg::StatusBar(true, "Volume %d: checking the Jacobian of %d elements",
@@ -295,53 +280,21 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
     case 2:
       Msg::StatusBar(true, "Surface %d: checking the Jacobian of %d elements",
                      entity->tag(), num);
-      if(entity->cast2Face()->uniqueNormal(v, true)) {
-        normals = new fullMatrix<double>(1, 3);
-        normals->set(0, 0, v[0]);
-        normals->set(0, 1, v[1]);
-        normals->set(0, 2, v[2]);
+      // check the classical case of 2D planar meshes in the z=0 plane to issue
+      // a warning of the mesh is oriented along -z
+      if(entity->geomType() == GEntity::DiscreteSurface) {
+        SBoundingBox3d bb = entity->bounds();
+        if(!bb.empty() && bb.max().z() - bb.min().z() == .0) {
+          normals = new fullMatrix<double>(1, 3);
+          normals->set(0, 0, 0);
+          normals->set(0, 1, 0);
+          normals->set(0, 2, 1);
+        }
       }
       break;
     case 1:
       Msg::StatusBar(true, "Line %d: checking the Jacobian of %d elements",
                      entity->tag(), num);
-      if(entity->geomType() == GEntity::Line && entity->haveParametrization()) {
-        double u = entity->parBounds(0).low();
-        SVector3 t = entity->cast2Edge()->firstDer(u);
-        SVector3 dum = SVector3(0, 0, 0);
-        if(t[0] == 0.)
-          dum[0] = 1;
-        else if(t[1] == 0.)
-          dum[1] = 1;
-        else
-          dum[2] = 1;
-        SVector3 n1, n2;
-        n1 = crossprod(t, dum);
-        n1.normalize();
-        n2 = crossprod(t, n1);
-        n2.normalize();
-        normals = new fullMatrix<double>(2, 3);
-        normals->set(0, 0, n1[0]);
-        normals->set(0, 1, n1[1]);
-        normals->set(0, 2, n1[2]);
-        normals->set(1, 0, n2[0]);
-        normals->set(1, 1, n2[1]);
-        normals->set(1, 2, n2[2]);
-      }
-      else if(entity->geomType() == GEntity::DiscreteCurve) {
-        SBoundingBox3d bb = entity->bounds();
-        // If we don't have the CAD, check if the mesh is 1D:
-        if(!bb.empty() && bb.max().y() - bb.min().y() == .0 &&
-           bb.max().z() - bb.min().z() == .0) {
-          normals = new fullMatrix<double>(2, 3);
-          normals->set(0, 0, 0);
-          normals->set(0, 1, 1);
-          normals->set(0, 2, 0);
-          normals->set(1, 0, 0);
-          normals->set(1, 1, 0);
-          normals->set(1, 2, 1);
-        }
-      }
       break;
     default: break;
     }
@@ -361,16 +314,17 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinMaxJandValidity(int dim)
       _computePointwiseQuantities(el, normals);
 #endif
     }
-    delete normals;
+    if(normals) delete normals;
   }
   if(cntInverted) {
-    Msg::Warning("%d elements are completely inverted", cntInverted);
+    Msg::Warning("%d element%s completely inverted",
+                 (cntInverted > 1) ? "s are" : " is");
   }
   _computedJac[dim - 1] = true;
   bezierCoeff::releasePools();
 }
 
-void GMSH_AnalyseCurvedMeshPlugin::_computeMinIGE(int dim)
+void GMSH_AnalyseMeshQualityPlugin::_computeMinIGE(int dim)
 {
   if(_computedIGE[dim - 1]) return;
 
@@ -379,9 +333,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinIGE(int dim)
   for(std::size_t i = 0; i < _data.size(); ++i) {
     MElement *const el = _data[i].element();
     if(el->getDim() != dim) continue;
-    if(_data[i].minJ() <= 0 && _data[i].maxJ() >= 0) {
-      _data[i].setMinS(0);
-    }
+    if(_data[i].minJ() <= 0 && _data[i].maxJ() >= 0) { _data[i].setMinS(0); }
     else {
       _data[i].setMinS(jacobianBasedQuality::minIGEMeasure(el, true));
     }
@@ -391,7 +343,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinIGE(int dim)
   _computedIGE[dim - 1] = true;
 }
 
-void GMSH_AnalyseCurvedMeshPlugin::_computeMinICN(int dim)
+void GMSH_AnalyseMeshQualityPlugin::_computeMinICN(int dim)
 {
   if(_computedICN[dim - 1]) return;
 
@@ -400,9 +352,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinICN(int dim)
   for(std::size_t i = 0; i < _data.size(); ++i) {
     MElement *const el = _data[i].element();
     if(el->getDim() != dim) continue;
-    if(_data[i].minJ() <= 0 && _data[i].maxJ() >= 0) {
-      _data[i].setMinI(0);
-    }
+    if(_data[i].minJ() <= 0 && _data[i].maxJ() >= 0) { _data[i].setMinI(0); }
     else {
       _data[i].setMinI(jacobianBasedQuality::minICNMeasure(el, true));
     }
@@ -412,25 +362,27 @@ void GMSH_AnalyseCurvedMeshPlugin::_computeMinICN(int dim)
   _computedICN[dim - 1] = true;
 }
 
-int GMSH_AnalyseCurvedMeshPlugin::_hideWithThreshold(int askedDim,
-                                                     int whichMeasure)
+int GMSH_AnalyseMeshQualityPlugin::_hideWithThreshold(int askedDim,
+                                                      int whichMeasure,
+                                                      double threshold,
+                                                      bool greater)
 {
-  // only hide for quality measures
-  if(_threshold > 1 || whichMeasure < 1) return 0;
-
   int nHidden = 0;
-
   for(std::size_t i = 0; i < _data.size(); ++i) {
     MElement *const el = _data[i].element();
     const int dim = el->getDim();
     if((askedDim == 4 && dim > 1) || dim == askedDim) {
-      bool toHide = false;
+      double q = 1.;
       switch(whichMeasure) {
-      case 2: toHide = _data[i].minI() > _threshold; break;
-      case 1: toHide = _data[i].minS() > _threshold; break;
-      case 0: toHide = _data[i].minJ() > _threshold; break;
+      case 2: q = _data[i].minI(); break;
+      case 1: q = _data[i].minS(); break;
+      case 0:
+        if(_data[i].maxJ() > 0)
+          q = _data[i].minJ() / _data[i].maxJ();
+        else if(_data[i].maxJ() < 0)
+          q = _data[i].maxJ() / _data[i].minJ();
       }
-      if(toHide) {
+      if((greater && q > threshold) || (!greater && q < threshold)) {
         el->setVisibility(0);
         ++nHidden;
       }
@@ -442,10 +394,10 @@ int GMSH_AnalyseCurvedMeshPlugin::_hideWithThreshold(int askedDim,
   return nHidden;
 }
 
-void GMSH_AnalyseCurvedMeshPlugin::_printStatJacobian()
+void GMSH_AnalyseMeshQualityPlugin::_printStatJacobian()
 {
   if(_data.empty()) {
-    Msg::Info("No stat to print.");
+    Msg::Info("No stat to print");
     return;
   }
   double infminJ, supminJ, avgminJ;
@@ -484,17 +436,17 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatJacobian()
   Msg::Info("minJ      = %8.3g, %8.3g, %8.3g (min, avg, max)", infminJ, avgminJ,
             supminJ);
   if(countc && countc < count)
-    Msg::Info("minJ/maxJ =           %8.3f           (avg on the %d "
+    Msg::Info("minJ/maxJ =           %8.3g           (avg on the %d "
               "non-constant elements)",
               avgratJc, countc);
-  Msg::Info("minJ/maxJ = %8.3f, %8.3f, %8.3f (worst, avg, best)", infratJ,
+  Msg::Info("minJ/maxJ = %8.3g, %8.3g, %8.3g (worst, avg, best)", infratJ,
             avgratJ, supratJ);
 }
 
-void GMSH_AnalyseCurvedMeshPlugin::_printStatIGE()
+void GMSH_AnalyseMeshQualityPlugin::_printStatIGE()
 {
   if(_data.empty()) {
-    Msg::Info("No stat to print.");
+    Msg::Info("No stat to print");
     return;
   }
   double infminS, supminS, avgminS;
@@ -507,14 +459,14 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatIGE()
   }
   avgminS /= _data.size();
 
-  Msg::Info("IGE       = %8.3f, %8.3f, %8.3f (worst, avg, best)", infminS,
+  Msg::Info("IGE       = %8.3g, %8.3g, %8.3g (worst, avg, best)", infminS,
             avgminS, supminS);
 }
 
-void GMSH_AnalyseCurvedMeshPlugin::_printStatICN()
+void GMSH_AnalyseMeshQualityPlugin::_printStatICN()
 {
   if(_data.empty()) {
-    Msg::Info("No stat to print.");
+    Msg::Info("No stat to print");
     return;
   }
   double infminI, supminI, avgminI;
@@ -527,12 +479,34 @@ void GMSH_AnalyseCurvedMeshPlugin::_printStatICN()
   }
   avgminI /= _data.size();
 
-  Msg::Info("ICN       = %8.3f, %8.3f, %8.3f (worst, avg, best)", infminI,
+  Msg::Info("ICN       = %8.3g, %8.3g, %8.3g (worst, avg, best)", infminI,
             avgminI, supminI);
 }
 
+void GMSH_AnalyseMeshQualityPlugin::_clear(int askedDim)
+{
+  _data.clear();
+  if(askedDim < 4) {
+    _computedJac[askedDim - 1] = false;
+    _computedIGE[askedDim - 1] = false;
+    _computedICN[askedDim - 1] = false;
+    _pviewJac[askedDim - 1] = false;
+    _pviewIGE[askedDim - 1] = false;
+    _pviewICN[askedDim - 1] = false;
+  }
+  else {
+    _computedJac[1] = _computedJac[2] = false;
+    _computedIGE[1] = _computedIGE[2] = false;
+    _computedICN[1] = _computedICN[2] = false;
+    _pviewJac[1] = _pviewJac[2] = false;
+    _pviewIGE[1] = _pviewIGE[2] = false;
+    _pviewICN[1] = _pviewICN[2] = false;
+  }
+}
+
 #if defined(HAVE_VISUDEV)
-void GMSH_AnalyseCurvedMeshPlugin::_computePointwiseQuantities(
+
+void GMSH_AnalyseMeshQualityPlugin::_computePointwiseQuantities(
   MElement *el, const fullMatrix<double> *normals)
 {
   if(_numElementToScan != -1 && el->getNum() != _numElementToScan) return;
@@ -573,7 +547,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_computePointwiseQuantities(
   }
 }
 
-void GMSH_AnalyseCurvedMeshPlugin::_setInterpolationMatrices(PView *view)
+void GMSH_AnalyseMeshQualityPlugin::_setInterpolationMatrices(PView *view)
 {
   PViewData *viewData = view->getData();
   for(int type = 0; type < 20; ++type) {
@@ -590,7 +564,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_setInterpolationMatrices(PView *view)
   }
 }
 
-void GMSH_AnalyseCurvedMeshPlugin::_createPViewPointwise()
+void GMSH_AnalyseMeshQualityPlugin::_createPViewPointwise()
 {
   if(_pwJac) {
     _setInterpolationMatrices(new PView("Pointwise Jacobian", "ElementNodeData",
@@ -607,6 +581,7 @@ void GMSH_AnalyseCurvedMeshPlugin::_createPViewPointwise()
       new PView("Pointwise ICN", "ElementNodeData", _m, _dataPViewICN, 0, 1));
   }
 }
+
 #endif
 
 #endif

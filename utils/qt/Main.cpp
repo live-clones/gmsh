@@ -1,18 +1,18 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdlib.h>
-#include "GmshGlobal.h"
-#include "GmshMessage.h"
-#include "GModel.h"
-#include "CommandLine.h"
-#include "OpenFile.h"
-#include "Context.h"
-#include "QGui.h"
-
 #include <QApplication>
+#include <gmsh/GmshGlobal.h>
+#include <gmsh/GmshMessage.h>
+#include <gmsh/GModel.h>
+#include <gmsh/CommandLine.h>
+#include <gmsh/OpenFile.h>
+#include <gmsh/Context.h>
+
+#include "QGui.h"
 
 int main(int argc, char *argv[])
 {

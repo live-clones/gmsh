@@ -1,6 +1,6 @@
 #!/bin/sh
 
-icon_source=../../../utils/icons/gmsh_mobile_1024x1024.png
+icon_source=./gmsh_mobile_1024x1024.png
 bg=black
 
 #icon_source=$HOME/tex/proposals/bbemg/icons/bbemg-logo-white.png

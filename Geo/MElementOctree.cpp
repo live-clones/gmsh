@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "GModel.h"
 #include "MElement.h"
@@ -11,10 +11,13 @@
 #include "fullMatrix.h"
 #include "bezierBasis.h"
 #include "BasisFactory.h"
+#include "SBoundingBox3d.h"
+#include "Context.h"
 
 void MElementBB(void *a, double *min, double *max)
 {
   MElement *e = static_cast<MElement *>(a);
+
   if(e->getPolynomialOrder() == 1) {
     MVertex *v = e->getVertex(0);
     min[0] = max[0] = v->x();
@@ -31,14 +34,12 @@ void MElementBB(void *a, double *min, double *max)
     }
   }
   else {
-    fullMatrix<double> nodesXYZ(e->getNumVertices(), 3);
-    e->getNodesCoord(nodesXYZ);
+    bezierCoeff &bezNodes = *e->getBezierVerticesCoord();
 
-    bezierCoeff bezNodes(e->getFuncSpaceData(), nodesXYZ);
     min[0] = max[0] = bezNodes(0, 0);
     min[1] = max[1] = bezNodes(0, 1);
     min[2] = max[2] = bezNodes(0, 2);
-    for(std::size_t i = 1; i < e->getNumVertices(); i++) {
+    for(int i = 1; i < bezNodes.getNumCoeff(); i++) {
       min[0] = std::min(min[0], bezNodes(i, 0));
       max[0] = std::max(max[0], bezNodes(i, 0));
       min[1] = std::min(min[1], bezNodes(i, 1));
@@ -46,13 +47,18 @@ void MElementBB(void *a, double *min, double *max)
       min[2] = std::min(min[2], bezNodes(i, 2));
       max[2] = std::max(max[2], bezNodes(i, 2));
     }
+
+    delete &bezNodes;
   }
-  // make bounding boxes larger up to (absolute) geometrical tolerance
-  double const eps = CTX::instance()->geom.tolerance;
-  for(int i = 0; i < 3; i++) {
-    min[i] -= eps;
-    max[i] += eps;
-  }
+
+  SBoundingBox3d bb(min[0], min[1], min[2], max[0], max[1], max[2]);
+  bb.thicken(0.01); // make 1% thicker
+  max[0] = bb.max().x();
+  max[1] = bb.max().y();
+  max[2] = bb.max().z();
+  min[0] = bb.min().x();
+  min[1] = bb.min().y();
+  min[2] = bb.min().z();
 }
 
 static void MElementCentroid(void *a, double *x)
@@ -86,11 +92,8 @@ int MElementInEle(void *a, double *x)
 MElementOctree::MElementOctree(GModel *m) : _gm(m)
 {
   SBoundingBox3d bb = m->bounds();
-  // make bounding box larger up to (absolute) geometrical tolerance
-  double eps = CTX::instance()->geom.tolerance;
-  SPoint3 bbmin = bb.min(), bbmax = bb.max(), bbeps(eps, eps, eps);
-  bbmin -= bbeps;
-  bbmax += bbeps;
+  bb.thicken(0.01); // make 1% thicker
+  SPoint3 bbmin = bb.min(), bbmax = bb.max();
   double min[3] = {bbmin.x(), bbmin.y(), bbmin.z()};
   double size[3] = {bbmax.x() - bbmin.x(), bbmax.y() - bbmin.y(),
                     bbmax.z() - bbmin.z()};
@@ -112,26 +115,21 @@ MElementOctree::MElementOctree(GModel *m) : _gm(m)
         Octree_Insert(entities[i]->getMeshElement(j), _octree);
     }
   }
-  // exit(1);
   Octree_Arrange(_octree);
 }
 
 MElementOctree::MElementOctree(const std::vector<MElement *> &v)
-  : _gm(0), _elems(v)
+  : _gm(nullptr), _elems(v)
 {
   SBoundingBox3d bb;
   for(std::size_t i = 0; i < v.size(); i++) {
     for(std::size_t j = 0; j < v[i]->getNumVertices(); j++) {
-      // if (!_gm) _gm = v[i]->getVertex(j)->onWhat()->model();
       bb += SPoint3(v[i]->getVertex(j)->x(), v[i]->getVertex(j)->y(),
                     v[i]->getVertex(j)->z());
     }
   }
-  // make bounding box larger up to (absolute) geometrical tolerance
-  double eps = CTX::instance()->geom.tolerance;
-  SPoint3 bbmin = bb.min(), bbmax = bb.max(), bbeps(eps, eps, eps);
-  bbmin -= bbeps;
-  bbmax += bbeps;
+  bb.thicken(0.01); // make 1% thicker
+  SPoint3 bbmin = bb.min(), bbmax = bb.max();
   double min[3] = {bbmin.x(), bbmin.y(), bbmin.z()};
   double size[3] = {bbmax.x() - bbmin.x(), bbmax.y() - bbmin.y(),
                     bbmax.z() - bbmin.z()};
@@ -145,7 +143,7 @@ MElementOctree::MElementOctree(const std::vector<MElement *> &v)
 MElementOctree::~MElementOctree() { Octree_Delete(_octree); }
 
 std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
-                                                int dim, bool strict)
+                                                int dim, bool strict) const
 {
   double maxTol = 1.;
   double tolIncr = 10.;
@@ -154,55 +152,51 @@ std::vector<MElement *> MElementOctree::findAll(double x, double y, double z,
   std::vector<void *> v;
   std::vector<MElement *> e;
   Octree_SearchAll(P, _octree, &v);
-  for(std::vector<void *>::iterator it = v.begin(); it != v.end(); ++it) {
+  for(auto it = v.begin(); it != v.end(); ++it) {
     MElement *el = (MElement *)*it;
     if(dim == -1 || el->getDim() == dim) e.push_back(el);
   }
   if(e.empty() && !strict && _gm) {
-    double initialTol = MElement::getTolerance();
+    double initialTol = CTX::instance()->mesh.toleranceReferenceElement;
     double tol = initialTol;
     while(tol < maxTol) {
       tol *= tolIncr;
-      MElement::setTolerance(tol);
+      CTX::instance()->mesh.toleranceReferenceElement = tol;
       std::vector<GEntity *> entities;
       _gm->getEntities(entities);
       for(std::size_t i = 0; i < entities.size(); i++) {
         for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
           MElement *el = entities[i]->getMeshElement(j);
           if(dim == -1 || el->getDim() == dim) {
-            if(MElementInEle(el, P)) {
-              e.push_back(el);
-            }
+            if(MElementInEle(el, P)) { e.push_back(el); }
           }
         }
       }
       if(!e.empty()) {
-        MElement::setTolerance(initialTol);
+        CTX::instance()->mesh.toleranceReferenceElement = initialTol;
         return e;
       }
     }
-    MElement::setTolerance(initialTol);
+    CTX::instance()->mesh.toleranceReferenceElement = initialTol;
   }
   else if(e.empty() && !strict && !_gm) {
-    double initialTol = MElement::getTolerance();
+    double initialTol = CTX::instance()->mesh.toleranceReferenceElement;
     double tol = initialTol;
     while(tol < maxTol) {
       tol *= tolIncr;
-      MElement::setTolerance(tol);
+      CTX::instance()->mesh.toleranceReferenceElement = tol;
       for(std::size_t i = 0; i < _elems.size(); i++) {
         MElement *el = _elems[i];
         if(dim == -1 || el->getDim() == dim) {
-          if(MElementInEle(el, P)) {
-            e.push_back(el);
-          }
+          if(MElementInEle(el, P)) { e.push_back(el); }
         }
       }
       if(!e.empty()) {
-        MElement::setTolerance(initialTol);
+        CTX::instance()->mesh.toleranceReferenceElement = initialTol;
         return e;
       }
     }
-    MElement::setTolerance(initialTol);
+    CTX::instance()->mesh.toleranceReferenceElement = initialTol;
     // Msg::Warning("Point %g %g %g not found",x,y,z);
   }
   return e;
@@ -217,19 +211,17 @@ MElement *MElementOctree::find(double x, double y, double z, int dim,
   std::vector<void *> l;
   if(e && e->getDim() != dim) {
     Octree_SearchAll(P, _octree, &l);
-    for(std::vector<void *>::iterator it = l.begin(); it != l.end(); it++) {
+    for(auto it = l.begin(); it != l.end(); it++) {
       MElement *el = (MElement *)*it;
-      if(el->getDim() == dim) {
-        return el;
-      }
+      if(el->getDim() == dim) { return el; }
     }
   }
   if(!strict && _gm) {
-    double initialTol = MElement::getTolerance();
+    double initialTol = CTX::instance()->mesh.toleranceReferenceElement;
     double tol = initialTol;
     while(tol < 1.) {
       tol *= 10;
-      MElement::setTolerance(tol);
+      CTX::instance()->mesh.toleranceReferenceElement = tol;
       std::vector<GEntity *> entities;
       _gm->getEntities(entities);
       for(std::size_t i = 0; i < entities.size(); i++) {
@@ -237,34 +229,34 @@ MElement *MElementOctree::find(double x, double y, double z, int dim,
           e = entities[i]->getMeshElement(j);
           if(dim == -1 || e->getDim() == dim) {
             if(MElementInEle(e, P)) {
-              MElement::setTolerance(initialTol);
+              CTX::instance()->mesh.toleranceReferenceElement = initialTol;
               return e;
             }
           }
         }
       }
     }
-    MElement::setTolerance(initialTol);
+    CTX::instance()->mesh.toleranceReferenceElement = initialTol;
     // Msg::Warning("Point %g %g %g not found",x,y,z);
   }
   else if(!strict && !_gm) {
-    double initialTol = MElement::getTolerance();
+    double initialTol = CTX::instance()->mesh.toleranceReferenceElement;
     double tol = initialTol;
     while(tol < 0.1) {
       tol *= 10.0;
-      MElement::setTolerance(tol);
+      CTX::instance()->mesh.toleranceReferenceElement = tol;
       for(std::size_t i = 0; i < _elems.size(); i++) {
         e = _elems[i];
         if(dim == -1 || e->getDim() == dim) {
           if(MElementInEle(e, P)) {
-            MElement::setTolerance(initialTol);
+            CTX::instance()->mesh.toleranceReferenceElement = initialTol;
             return e;
           }
         }
       }
     }
-    MElement::setTolerance(initialTol);
+    CTX::instance()->mesh.toleranceReferenceElement = initialTol;
     // Msg::Warning("Point %g %g %g not found",x,y,z);
   }
-  return NULL;
+  return nullptr;
 }

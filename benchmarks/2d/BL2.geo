@@ -1,5 +1,3 @@
-Mesh.CharacteristicLengthFromCurvature=1;
-Mesh.MinimumCirclePoints=20;
 l = .2;
 Point(1) = {-1.1, -0.3, 0, l};
 Point(2) = {-0.3, -0, 0, l};
@@ -26,11 +24,12 @@ Line(9) = {3, 11};
 Line {9} In Surface {8};
 
 Field[1] = BoundaryLayer;
-Field[1].EdgesList = {1, 11, 9};
-Field[1].hfar = 0.1;
-Field[1].hwall_n = 0.01;
-Field[1].thickness = 0.1;
-Field[1].ratio = 1.4;
-Field[1].FanNodesList = {1, 11}; // try e.g. removing 11
+Field[1].CurvesList = {1, 11, 9};
+Field[1].SizeFar = 0.1;
+Field[1].Size = 0.01;
+Field[1].Thickness = 0.1;
+Field[1].Ratio = 1.4;
+Field[1].FanPointsList = {1, 11}; // try e.g. removing 11
+Field[1].FanPointsSizesList = {5, 4}; // 5 elements for node 1 and 4 for node 11
 Field[1].Quads = 1;
 BoundaryLayer Field = 1;

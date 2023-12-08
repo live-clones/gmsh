@@ -1,7 +1,6 @@
 
 // se plante sous Linux qd on compile avec -O2
 
-Mesh.Algorithm = 3;
 Mesh.CharacteristicLengthFactor = 0.5;
 
 r = 1;
@@ -43,12 +42,12 @@ For t In {1:temp1}
   tthp1 = (phinumber) + ((thnumber+1)-1)*nth;
   tphip1 = (phinumber+1) + ((thnumber)-1)*nphi;
   tphiback = (1) + ((thnumber)-1)*nphi;
-  If (phinumber < nphi) 
+  If (phinumber < nphi)
     Line(2000 + t) = {1000 + t,1000 + tphip1};
   EndIf
   If (phinumber == nphi)
-    Line(2000 + t) = {1000+t, 1000 + tphiback}; 
-  EndIf 
+    Line(2000 + t) = {1000+t, 1000 + tphiback};
+  EndIf
 EndFor
 
 //lines in th dir, 3000s
@@ -58,7 +57,7 @@ For t In {1:temp1}
   tthp1 = (phinumber) + ((thnumber+1)-1)*nth;
   tphip1 = (phinumber+1) + ((thnumber)-1)*nphi;
   tphiback = (1) + ((thnumber)-1)*nphi;
-  If (thnumber < nth) 
+  If (thnumber < nth)
     Line(3000 + t) = {1000 + t,1000 + tthp1};
   EndIf
 EndFor
@@ -72,14 +71,14 @@ For t In {1:temp1}
   tphip1 = (phinumber+1) + ((thnumber)-1)*nphi;
   tphiback = (1) + ((thnumber)-1)*nphi;
   tphibackp1 = (2) + ((thnumber)-1)*nphi;
-  If ((thnumber < nth) && (phinumber < nphi)) 
+  If ((thnumber < nth) && (phinumber < nphi))
     Line Loop(4000 + t) = {3000 + t,2000 + tthp1, -(3000 + tphip1), -(2000 + t)};
-    Plane Surface(5000 + t) = {4000 + t}; 
+    Plane Surface(5000 + t) = {4000 + t};
   EndIf
   If ((thnumber < nth) && (phinumber == nphi))
     Line Loop(4000 + t) = {3000 + t,2000 + tthp1, -(3000 + tphiback), -(2000 + t)};
-    Plane Surface(5000 + t) = {4000 + t}; 
-  EndIf 
+    Plane Surface(5000 + t) = {4000 + t};
+  EndIf
 EndFor
 
 

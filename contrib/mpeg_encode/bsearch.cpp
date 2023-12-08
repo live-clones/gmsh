@@ -426,7 +426,7 @@ BMotionSearchExhaust(LumBlock currentBlock,
                      int *bmx,
                      int oldMode)
 {
-    register int mx, my;
+    int mx, my;
     int32 diff, bestDiff;
     int	    stepSize;
     LumBlock	forwardBlock;
@@ -571,7 +571,7 @@ FindBestMatchExhaust(LumBlock block,
                      int32 bestSoFar,
                      int searchRange)
 {
-    register int mx, my;
+    int mx, my;
     int32 diff, bestDiff;
     int	    stepSize;
     int	    leftMY, leftMX;
@@ -692,7 +692,7 @@ FindBestMatchTwoLevel(LumBlock block,
                       int32 bestSoFar,
                       int searchRange)
 {
-    register int mx, my;
+    int mx, my;
     int32 diff, bestDiff;
     int	    leftMY, leftMX;
     int	    rightMY, rightMX;
@@ -858,7 +858,7 @@ FindBestMatchLogarithmic(LumBlock block,
                          int32 bestSoFar,
                          int searchRange)
 {
-    register int mx, my;
+    int mx, my;
     int32 diff, bestDiff;
     int	    stepSize;
     int	    leftMY, leftMX;

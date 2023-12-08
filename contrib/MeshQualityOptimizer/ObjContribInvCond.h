@@ -1,4 +1,4 @@
-// MeshQualityOptimizer - Copyright (C) 2015-2019 UCLouvain-ULiege
+// MeshQualityOptimizer - Copyright (C) 2013-2023 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -54,7 +54,7 @@ protected:
 template <class FuncType>
 ObjContribInvCondNum<FuncType>::ObjContribInvCondNum(double weight)
   : ObjContrib("InvCondNum", FuncType::getNamePrefix() + "InvCondNum"),
-    _mesh(0), _weight(weight)
+    _mesh(nullptr), _weight(weight)
 {
 }
 

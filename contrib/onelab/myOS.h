@@ -1,6 +1,6 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// ONELAB - Copyright (C) 2010-2012 C. Geuzaine, F. Henrotte
 //
-// See the LICENSE.txt file for license information. Please report all
+// See the README.txt file for license information. Please report all
 // issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef MY_OS_H
@@ -19,7 +19,7 @@ std::string GetHostName();
 int UnlinkFile(const std::string &fileName);
 int StatFile(const std::string &fileName);
 int KillProcess(int pid);
-int SystemCall(const std::string &command, bool blocking=false);
+int SystemCall(const std::string &command, bool blocking = false);
 std::string getCurrentWorkdir();
 
 #endif

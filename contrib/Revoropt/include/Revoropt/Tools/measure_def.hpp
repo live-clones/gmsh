@@ -1,7 +1,7 @@
 #ifndef _REVOROPT_TOOLS_MEASURE_DEF_HPP_
 #define _REVOROPT_TOOLS_MEASURE_DEF_HPP_
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 
 #include "measure_fwd.hpp"
 #include "intersections_def.hpp"
@@ -89,9 +89,9 @@ Scalar triangle_barycentric_coords( const Scalar x0_p[Dim],
 /*{{{ Find a projection plane for points based on SVD */
 
 template< typename Scalar, int Dim >
-void svd_plane( 
-    const Scalar* coords, 
-    unsigned int size , 
+void svd_plane(
+    const Scalar* coords,
+    unsigned int size ,
     Scalar paramU[Dim], //output
     Scalar paramV[Dim] //output
     ) {
@@ -138,14 +138,14 @@ void svd_plane(
 /*{{{ Disc areas */
 
 /* Area of a disc sector, defined by the disc radius r
- * and the length d of the chord joining the extremities 
+ * and the length d of the chord joining the extremities
  * of the sector
  *
  *     /\
  *    /  \ r
  *   /    \
  *  /___d__\
- *  \______/       
+ *  \______/
  */
 template<typename Scalar>
 Scalar disc_sector_area( const Scalar radius,
@@ -187,7 +187,7 @@ Scalar circle_segment_area( const Scalar radius,
 namespace triangle_sphere_intersection_area_impl {
 
 template<typename Scalar>
-Scalar tsia_no_vertex_in_circle( const Scalar x0_coords[2], 
+Scalar tsia_no_vertex_in_circle( const Scalar x0_coords[2],
                                  const Scalar x1_coords[2],
                                  const Scalar x2_coords[2],
                                  const Scalar c_coords[2],
@@ -214,14 +214,14 @@ Scalar tsia_no_vertex_in_circle( const Scalar x0_coords[2],
 
     //barycentric coordinates of the circle / segment intersection
     Scalar intersections[2] ;
-    const unsigned char ninter = segment_sphere_intersections<2>( 
+    const unsigned char ninter = segment_sphere_intersections<2>(
       v0.data(), v1.data(), c.data(), radius, intersections
     ) ;
 
     if(ninter > 0) {
       intersects = true ;
       //ninter can only be 2 since the two vertices of the edge are out
-      assert( (ninter == 2) 
+      assert( (ninter == 2)
               || "The edge intersects once with both vertices out."
             ) ;
 
@@ -263,7 +263,7 @@ Scalar tsia_no_vertex_in_circle( const Scalar x0_coords[2],
 
 /* The vertex inside is x0 */
 template<typename Scalar>
-Scalar tsia_one_vertex_in_circle( const Scalar x0_coords[2], 
+Scalar tsia_one_vertex_in_circle( const Scalar x0_coords[2],
                                   const Scalar x1_coords[2],
                                   const Scalar x2_coords[2],
                                   const Scalar c_coords[2],
@@ -279,23 +279,23 @@ Scalar tsia_one_vertex_in_circle( const Scalar x0_coords[2],
   Eigen::Map<const Vector> x0(x0_coords) ;
   Eigen::Map<const Vector> x1(x1_coords) ;
   Eigen::Map<const Vector> x2(x2_coords) ;
-  
+
   //intersections with the edges adjacent to x0
   Scalar intersections[2] ;
   unsigned char ninter ;
-  
-  ninter =  segment_sphere_intersections<2>( 
+
+  ninter =  segment_sphere_intersections<2>(
     x0.data(), x1.data(), c.data(), radius, intersections
   ) ;
-  assert( (ninter == 1) 
+  assert( (ninter == 1)
           || "x0 should be in the circle and x1 out."
         ) ;
   const Vector i01 = x0 + intersections[0]*(x1-x0) ;
-  
-  ninter =  segment_sphere_intersections<2>( 
+
+  ninter =  segment_sphere_intersections<2>(
     x0.data(), x2.data(), c.data(), radius, intersections
   ) ;
-  assert( (ninter == 1) 
+  assert( (ninter == 1)
           || "x0 should be in the circle and x2 out."
         ) ;
   const Vector i02 = x0 + intersections[0]*(x2-x0) ;
@@ -313,12 +313,12 @@ Scalar tsia_one_vertex_in_circle( const Scalar x0_coords[2],
   }
 
   //check the intersection of the last edge
-  ninter =  segment_sphere_intersections<2>( 
+  ninter =  segment_sphere_intersections<2>(
     x1.data(), x2.data(), c.data(), radius, intersections
   ) ;
   if(ninter > 0) {
     //ninter can only be 2 since the two vertices of the edge are out
-    assert( (ninter == 2) 
+    assert( (ninter == 2)
             || "Edge intersects once with both vertices out."
           ) ;
 
@@ -348,7 +348,7 @@ Scalar tsia_one_vertex_in_circle( const Scalar x0_coords[2],
 
 /* The vertices inside are x0 and x1 */
 template<typename Scalar>
-Scalar tsia_two_vertices_in_circle( const Scalar x0_coords[2], 
+Scalar tsia_two_vertices_in_circle( const Scalar x0_coords[2],
                                     const Scalar x1_coords[2],
                                     const Scalar x2_coords[2],
                                     const Scalar c_coords[2],
@@ -368,19 +368,19 @@ Scalar tsia_two_vertices_in_circle( const Scalar x0_coords[2],
   //intersections with the edges adjacent to x2
   Scalar intersections[2] ;
   unsigned char ninter ;
-  
-  ninter =  segment_sphere_intersections<2>( 
+
+  ninter =  segment_sphere_intersections<2>(
     x0.data(), x2.data(), c.data(), radius, intersections
   ) ;
-  assert( (ninter == 1) 
+  assert( (ninter == 1)
           && "x0 should be in the circle and x2 out."
         ) ;
   const Vector i02 = x0 + intersections[0]*(x2-x0) ;
-  
-  ninter =  segment_sphere_intersections<2>( 
+
+  ninter =  segment_sphere_intersections<2>(
     x1.data(), x2.data(), c.data(), radius, intersections
   ) ;
-  assert( (ninter == 1) 
+  assert( (ninter == 1)
           && "x1 should be in the circle and x2 out."
         ) ;
   const Vector i12 = x1 + intersections[0]*(x2-x1) ;
@@ -405,7 +405,7 @@ Scalar tsia_two_vertices_in_circle( const Scalar x0_coords[2],
 }
 
 template<typename Scalar>
-Scalar tsia_three_vertices_in_circle( const Scalar x0_coords[2], 
+Scalar tsia_three_vertices_in_circle( const Scalar x0_coords[2],
                                       const Scalar x1_coords[2],
                                       const Scalar x2_coords[2]
                                     ) {
@@ -436,7 +436,7 @@ class tsia_impl {
     const Scalar base_len = P.row(0).norm() ;
     if(base_len == 0) return 0 ;
     P.row(0) /= base_len ;
-  
+
     //height of the triangle
     P.row(1) = x2-x0 ;
     P.row(1) -= P.row(1).dot(P.row(0))*P.row(0) ;
@@ -462,10 +462,10 @@ class tsia_impl {
       x2p = P*(x2-x0) ;
 
       //switch to 2D
-      return tsia_impl<2,Scalar>::do_it( x0p.data(), 
-                                         x1p.data(), 
-                                         x2p.data(), 
-                                         cp.data(), 
+      return tsia_impl<2,Scalar>::do_it( x0p.data(),
+                                         x1p.data(),
+                                         x2p.data(),
+                                         cp.data(),
                                          p_radius
                                        ) ;
     } else {
@@ -478,7 +478,7 @@ class tsia_impl {
 template< typename Scalar >
 class tsia_impl<2,Scalar> {
   public:
-  static Scalar do_it( const Scalar x0_coords[2], 
+  static Scalar do_it( const Scalar x0_coords[2],
                        const Scalar x1_coords[2],
                        const Scalar x2_coords[2],
                        const Scalar c_coords[2],
@@ -495,64 +495,64 @@ class tsia_impl<2,Scalar> {
     //handle the cases
     if(vertex_status == 0) {
       //no vertex_inside
-      return tsia_no_vertex_in_circle( x0_coords, 
-                                       x1_coords, 
-                                       x2_coords, 
-                                       c_coords, 
+      return tsia_no_vertex_in_circle( x0_coords,
+                                       x1_coords,
+                                       x2_coords,
+                                       c_coords,
                                        radius
                                      ) ;
     } else if(vertex_status == 1) {
       //x2 inside
-      return tsia_one_vertex_in_circle( x2_coords, 
-                                        x0_coords, 
-                                        x1_coords, 
-                                        c_coords, 
+      return tsia_one_vertex_in_circle( x2_coords,
+                                        x0_coords,
+                                        x1_coords,
+                                        c_coords,
                                         radius
                                       ) ;
     } else if(vertex_status == 2) {
       //x1 inside
-      return tsia_one_vertex_in_circle( x1_coords, 
-                                        x2_coords, 
-                                        x0_coords, 
-                                        c_coords, 
+      return tsia_one_vertex_in_circle( x1_coords,
+                                        x2_coords,
+                                        x0_coords,
+                                        c_coords,
                                         radius
                                       ) ;
     } else if(vertex_status == 3) {
       //x1 and x2 inside
-      return tsia_two_vertices_in_circle( x1_coords, 
-                                          x2_coords, 
-                                          x0_coords, 
-                                          c_coords, 
+      return tsia_two_vertices_in_circle( x1_coords,
+                                          x2_coords,
+                                          x0_coords,
+                                          c_coords,
                                           radius
                                         ) ;
     } else if(vertex_status == 4) {
       //x0 inside
-      return tsia_one_vertex_in_circle( x0_coords, 
-                                        x1_coords, 
-                                        x2_coords, 
-                                        c_coords, 
+      return tsia_one_vertex_in_circle( x0_coords,
+                                        x1_coords,
+                                        x2_coords,
+                                        c_coords,
                                         radius
                                       ) ;
     } else if(vertex_status == 5) {
       //x0 and x2 inside
-      return tsia_two_vertices_in_circle( x2_coords, 
-                                          x0_coords, 
-                                          x1_coords, 
-                                          c_coords, 
+      return tsia_two_vertices_in_circle( x2_coords,
+                                          x0_coords,
+                                          x1_coords,
+                                          c_coords,
                                           radius
                                         ) ;
     } else if(vertex_status == 6) {
       //x0 and x1 inside
-      return tsia_two_vertices_in_circle( x0_coords, 
-                                          x1_coords, 
-                                          x2_coords, 
-                                          c_coords, 
+      return tsia_two_vertices_in_circle( x0_coords,
+                                          x1_coords,
+                                          x2_coords,
+                                          c_coords,
                                           radius
                                         ) ;
     } else if(vertex_status == 7) {
       //all vertices inside
-      return tsia_three_vertices_in_circle( x0_coords, 
-                                            x1_coords, 
+      return tsia_three_vertices_in_circle( x0_coords,
+                                            x1_coords,
                                             x2_coords
                                           ) ;
     }
@@ -573,7 +573,7 @@ Scalar triangle_sphere_intersection_area( const Scalar x0_coords[Dim],
                                         ) {
   //bring in the handling of the various cases
   using namespace triangle_sphere_intersection_area_impl ;
-  
+
   return tsia_impl<Dim,Scalar>::do_it( x0_coords,
                                        x1_coords,
                                        x2_coords,

@@ -1,7 +1,7 @@
-// Gmsh - Copyright (C) 1997-2019 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
-// See the LICENSE.txt file for license information. Please report all
-// issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #ifndef GMSH_FACE_H
 #define GMSH_FACE_H
@@ -11,15 +11,14 @@
 class Surface;
 
 class gmshFace : public GFace {
-protected:
-  Surface *s;
-  bool buildSTLTriangulation(bool force);
+private:
+  Surface *_s;
+  Range<double> _parBounds[2];
 
 public:
-  gmshFace(GModel *m, Surface *face);
+  gmshFace(GModel *m, Surface *s);
   virtual ~gmshFace() {}
-  Range<double> parBounds(int i) const;
-  void setModelEdges(std::list<GEdge *> &);
+  virtual Range<double> parBounds(int i) const { return _parBounds[i]; }
   using GFace::point;
   virtual GPoint point(double par1, double par2) const;
   virtual GPoint closestPoint(const SPoint3 &queryPoint,
@@ -33,11 +32,12 @@ public:
                          SVector3 &) const;
   virtual GEntity::GeomType geomType() const;
   virtual bool haveParametrization() const;
-  ModelType getNativeType() const { return GmshModel; }
-  void *getNativePtr() const { return s; }
-  virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface = true) const;
+  virtual ModelType getNativeType() const { return GmshModel; }
+  virtual void *getNativePtr() const { return _s; }
+  virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface = true,
+                               bool convTestXYZ = false) const;
   virtual void resetMeshAttributes();
-  void resetNativePtr(Surface *_s);
+  void resetNativePtr(Surface *s);
   bool degenerate(int dim) const;
 };
 

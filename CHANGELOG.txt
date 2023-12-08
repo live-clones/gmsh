@@ -1,13 +1,317 @@
-4.4.0: new STL remeshing workflow; added API support for color options, mesh
-optimization, recombination, smoothing and shape healing; exposed additional
-METIS options; improved support for periodic entities (multiple curves with the
-same start/end points; legacy MSH2 format); added mesh renumbering also after
-interactive mesh modifications; new interactive filter in visibility window;
-modernized GUI with slightly "flatter" scheme; small bug fixes.
+4.12 (Work-in-progress): new high-order mesh optimisation mode for periodic
+meshes; new element qualities available through API; new IGES export; new volume
+glyph; OCC curve loops can now be oriented based on the sign of the first curve;
+better mesh node visualization; added suppport for model attributes in MSH2
+files; new mesh renumbering capabilities in the API; new GAMBIT mesh reader;
+replaced Geometry.OCCSafeUnbind with more flexible Geometry.OCCFastUnbind (which
+can be set for boolean operations as well); small bug fixes.
+
+* New API functions: model/getEntitiesForPhysicalName, mesh/computeRenumbering,
+  mesh/getVisibility.
+
+* Incompatible API changes: new optional argument to occ/addCircleArc,
+  mesh/renumberNodes, mesh/renumberElements and view/getListData; new optional
+  "interruptible" argument to gmsh.initialize() in Python
+
+4.11.1 (December 21, 2022): Mesh.TransfiniteTri improvements; small bug fixes.
+
+4.11.0 (November 6, 2022): new Fortran API; improved copying ("Duplicata") of
+multiple shapes with OCC; reduced default order for OCC surface filling;
+arbitrary string attributes can now be stored in models and MSH files; new
+Radioss export; added ability to specify spline tangents with OCC; new option
+Mesh.SaveWithoutOrphans to prune orphan entities (e.g. geometrical construction
+points) from MSH4 files; major overhaul of the reference manual; new official
+macOS ARM builds; small bug fixes.
+
+* New API functions: model/getAttributeNames, model/getAttribute,
+  model/setAttribute, model/removeAttribute
+
+* Incompatible API changes: new argument to mesh/computeHomology; new optional
+  arguments to occ/addSpline and occ/addThruSections
+
+4.10.5 (July 1, 2022): small bug fixes.
+
+4.10.4 (June 19, 2022): improved graphical window tooltips; small bug fixes.
+
+* New API function: mesh/removeDuplicateElements
+
+4.10.3 (May 26, 2022): small bug fixes.
+
+* New API function: fltk/finalize
+
+4.10.2 (May 13, 2022): fixed regression introduced in 4.9 for recombined meshes
+with boundary layers; new Geometry.OCCSafeUnbind option to disable boolean
+optimization introduced in 4.10.0 (for backward compatibility); new HealShapes
+command in .geo files; simplified calculation of OCC STL bounding boxes;
+generalized Crack plugin; small bug fixes.
+
+4.10.1 (May 1, 2022): small bug fixes.
+
+4.10.0 (April 25, 2022): more flexible homology/cohomology workflow in the API;
+"Attractor" field is now just a synonym for the newer (and more efficient)
+"Distance" field; periodic bsplines now use the same default multiplicities in
+OCC as in the built-in kernel; model/isInside now also handles discrete
+entities; speed-up repeated simple boolean operations; C++ api now throws
+std::runtime_error on errors; small bug fixes.
+
+* New API functions: geo/addGeometry, geo/addPointOnGeometry,
+  mesh/addHomologyRequest, mesh/clearHomologyRequests, mesh/setVisibility,
+  mesh/getElementQualities
+
+* Incompatible API changes: additional const qualifiers in C API; removed
+  mesh/computeCohomology; new arguments to occ/getCurveLoops and
+  occ/getSurfaceLoops; changed arguments of mesh/computeHomology; new optional
+  arguments to occ/addCircle, occ/addEllipse, occ/addDisk, occ/addTorus,
+  occ/addWedge, model/addPhysicalGroup, model/geo/addPhysicalGroup,
+  mesh/removeDuplicateNodes and mesh/setRecombine.
+
+4.9.5 (February 21, 2022): dynamic Gmsh library now also only exports public
+symbols on macOS and Linux, like it does on Windows; better handling of
+max. thread settings; small bug fixes.
+
+* New API function: mesh/getDuplicateNodes
+
+4.9.4 (February 3, 2022): improved BSpline filling; new options
+Mesh.MinimumLineNodes, Mesh.RecombineNodeRepositioning,
+Mesh.RecombineMinimumQuality and Mesh.StlLinearDeflectionRelative; updated
+bundled Eigen; small bug fixes.
+
+* New API functions: gmsh/isInitialized, occ/convertToNURBS, occ/getCurveLoops,
+  occ/getSurfaceLoops, mesh/importStl, parser/getNames, parser/setNumber,
+  parser/setString, parser/getNumber, parser/getString, parser/clear,
+  parser/parse, onelab/getChanged, onelab/setChanged
+
+4.9.3 (January 4, 2022): improved handling of degenerate curves in periodic
+surfaces and boundary layer extrusion; extended Mesh.SaveGroupsOfElements
+capabilities for INP export; extended Mesh.MeshSizeExtendFromBoundary + new
+"Extend" mesh size field to enable alternative mesh size extensions from
+boundary; enhanced X3D output; moved all kernel sources to src/ subdirectory;
+renamed demos/ as examples/ and tutorial/ as tutorials/; small bug fixes.
+
+4.9.2 (December 23, 2021): faster projection on OCC entities; extended
+Mesh.SaveGroupsOfNodes capabilities for INP export; improved transfinite meshing
+of surfaces with boundary on periodic seam.
+
+4.9.1 (December 18, 2021): relax tolerance on curve parametrization match for
+periodic meshing; enable extruded boundary layers on generic model entities;
+activate IncludeBoundary by default in Restrict field; downgraded compiler for
+official Linux releases to gcc 6 to improve compatibility with older systems;
+small bug fixes (view tag generation with zero tag, model/setTag).
+
+4.9.0 (December 3, 2021): new initial 2D meshing algorithm; new quasi-structured
+quad algorithm; improved handling of imperfect curve reparametrization on
+surfaces in 2D periodic meshing algorithm; mesh renumbering now also renumbers
+dependent post-processing views; the mesh size callback is now per-model and its
+returned value is not gathered with the other size constraints in a global min
+reduction anymore: instead the callback takes as additional argument the mesh
+size lc that would be prescribed in the absence of the callback, which allows to
+perform any desired modification (the old behavior can be achieved by returning
+min(lc, value)); OCC STL representation is now generated using relative
+deflection tolerance; new TransformMesh command in .geo files; new behavior of
+Mesh.SaveGroupsOf{Nodes,Elements} in UNV and INP exports; partitioned MSH4 files
+now contain the full partition topology (i.e. all partition entities); fixed
+metric calculation with Eigen (for anisotropic mesh generation); official binary
+builds now support OpenMP parallelization and are 64 bit only (build OS upgraded
+to Windows 10, macOS 10.15 and Linux glibc 2.24); new experimental Fortran API;
+new API functions to handle view options by tag instead of by index; color
+options in the API can now be specified as in .geo files, in the form
+"Category.Color.Option"; small bug fixes.
+
+* New API functions: model/setTag, mesh/reverse, mesh/affineTransform,
+  mesh/getMaxNodeTag, mesh/getMaxElementTag, mesh/getSizes, mesh/getPeriodic,
+  mesh/getAllEdges, mesh/getAllFaces, mesh/addEdge, mesh/addFace,
+  mesh/getNumberOfPartitions, field/list, field/getType, field/getNumber,
+  field/getNumbers, field/getString, view/option/setNumber,
+  view/option/getNumber, view/option/setString, view/option/getString,
+  view/option/setColor, view/option/getColor, view/option/copy.
+
+* Incompatible API changes: new arguments to mesh/getNode, mesh/getElement and
+  view/probe; additional argument to the mesh size callback function provided to
+  mesh/setSizeCallback; new optional arguments to gmsh/initialize,
+  model/isInside, mesh/partition and occ/addSurfaceFilling; renamed
+  mesh/preallocateBasisFunctionsOrientationForElements as
+  mesh/preallocateBasisFunctionsOrientation, mesh/getNumberOfKeysForElements as
+  mesh/getNumberOfKeys, and mesh/getBasisFunctionsOrientationForElements as
+  mesh/getBasisFunctionsOrientation; renamed mesh/getKeysForElements as
+  mesh/getKeys and mesh/getInformationForElements as mesh/getKeysInformation,
+  and modified their arguments; modified arguments to mesh/getKeysForElement;
+  removed mesh/getLocalMultipliersForHcurl0; renamed view/copyOptions as
+  view/option/copy.
+
+4.8.4 (April 28, 2021): set current model in gmsh/model/add; small bug fixes.
+
+4.8.3 (April 6, 2021): better handling of errors in inverse surface mapping;
+fixed Mesh.MedFileMinorVersion for MED 4; small bug fixes.
+
+4.8.2 (March 27, 2021): fixed regression in OCC transforms; fixed cwrap API.
+
+4.8.1 (March 21, 2021): improved performance when transforming many OCC
+entities; fixed regression in high-order meshing of surfaces with singular
+parametrizations; small bug fixes.
+
+4.8.0 (March 2, 2021): new interactive and fully parametrizable definition of
+boundary conditions, materials, etc. through ONELAB variables; new API functions
+for creating trimmed BSpline/Bezier patches, perform raw triangulations and
+tetrehedralizations, get upward adjacencies, and create extruded boundary layers
+and automatic curve loops in built-in kernel; improved performance of high-order
+meshing of OCC models; improved handling of high resolution displays; new
+structured CGNS exporter; new transfinite Beta law; added support for embedded
+curves in HXT; added automatic conversion from partitioned MSH2 files to new
+partitioned entities; element groups can now be imported from UNV files; fixed
+order of Gauss quadrature for quads and hexas; code modernization (C++11);
+further uniformization of option names to match the documented terminology
+(Mesh.Point -> Mesh.Node, ...; old names are still accepted, but deprecated);
+deprecated Mesh.MinimumElementsPerTwoPi: set value directly to
+Mesh.MeshSizeFromCurvature instead; Python and Julia APIs now also define "snake
+case" aliases for all camelCase function names; small bug fixes and
+improvements.
+
+* New API functions: model/getFileName, model/setFileName, model/getAdjacencies,
+  model/getSecondDerivative, mesh/getEdges, mesh/getFaces, mesh/createEdges,
+  mesh/createFaces, mesh/removeConstraints, mesh/getEmbedded, mesh/triangulate,
+  mesh/tetrahedralize, geo/addCurveLoops, fltk/setStatusMessage,
+  fltk/showContextWindow, fltk/openTreeItem, fltk/closeTreeItem,
+  onelab/getNames.
+
+* Incompatible API changes: new optional arguments to mesh/classifySurfaces,
+  occ/addBSplineSurface, occ/addBezierSurface, occ/addPipe and view/probe;
+  renamed mesh/getEdgeNumber as mesh/getEdges.
+
+4.7.1 (November 16, 2020): small bug fixes and improvements.
+
+4.7.0 (November 5, 2020): API errors now throw exceptions with the last error
+message (instead of an integer error code); API functions now print messages on
+the terminal by default, and throw exceptions on all errors unless in
+interactive mode; new API functions to retrieve "homogeneous" model-based data
+(for improved Python performance), to set interpolation matrices for high-order
+datasets, to assign "automatic" transfinite meshing constraints and to pass
+native (C++, C, Python or Julia) mesh size callback; added option to save
+high-order periodic nodes info; added support for scripted window splitting;
+improved VTK reader; new MatrixOfInertia command; added support for Unicode
+command line arguments on Windows; uniformized commands, options and field
+option names to match the documented terminology (CharacteristicLength ->
+MeshSize, geometry Line -> Curve, ...; old names are still accepted, but
+deprecated); improved handling of complex periodic cases; removed bundled Mmg3D
+and added support for stock Mmg 5; Gmsh now requires C++11 and CMake 3.1, and
+uses Eigen by default instead of Blas/Lapack for dense linear algebra; small bug
+fixes.
+
+* New API functions: model/setVisibilityPerWindow, mesh/setSizeCallback,
+  mesh/removeSizeCallback, mesh/setTransfiniteAutomatic, geo/addPhysicalGroup,
+  geo/removePhysicalGroups, view/setInterpolationMatrices,
+  view/setVisibilityPerWindow, fltk/splitCurrentWindow, fltk/setCurrentWindow,
+  logger/getLastError.
+
+* Incompatible API changes: new optional argument to geo/addCurveLoop.
+
+4.6.0 (June 22, 2020): new options to only generate initial 2D or 3D meshes
+(without node insertion), and to only mesh non-meshed entities; added ability to
+only remesh parts of discrete models; added support for mesh size fields and
+embedded points and surfaces in HXT; improved reparametrization and partitioning
+code; new OCC API functions to reduce the number of synchronizations for complex
+models; new OCC spline surface interfaces; new functions and options to control
+the first tag of entities, nodes and elements; fixed duplicated entities in STEP
+output; improved mesh subdivision and high-order pipeline; MED output now
+preserves node and element tags; small bug fixes.
+
+* New API functions: model/getParametrizationBounds, model/isInside,
+  model/getClosestPoint, model/reparametrizeOnSurface, mesh/rebuildElementCache,
+  mesh/getBasisFunctionsOrientationForElements,
+  mesh/getBasisFunctionsOrientationForElement, mesh/getNumberOfOrientations,
+  mesh/preallocateBasisFunctionsOrientationForElements,
+  mesh/setSizeAtParametricPoints, geo/setMaxTag, geo/getMaxTag,
+  occ/addBSplineFilling, occ/addBezierFilling, occ/addBSplineSurface,
+  occ/addBezierSurface, occ/setMaxTag, occ/getMaxTag, occ/getEntities,
+  occ/getEntitiesInBoundingBox, occ/getBoundingBox,
+  view/addHomogeneousModelData.
+
+* Incompatible API changes: new optional arguments to mesh/clear,
+  mesh/createTopology, mesh/createGeometry, occ/addThruSections,
+  mesh/getPeriodicNodes; new arguments to mesh/getBasisFunctions; removed
+  mesh/preallocateBasisFunctions, mesh/precomputeBasisFunctions and
+  mesh/getBasisFunctionsForElements; renamed occ/setMeshSize as
+  occ/mesh/setSize.
+
+4.5.6 (March 30, 2020): better calculation of OCC bounding boxes using STL; API
+tutorials; small bug fixes.
+
+* New API functions: view/addListDataString, view/getListDataStrings.
+
+4.5.5 (March 21, 2020): tooltips in GUI to help discovery of scripting options;
+fixed MED IO of high-order elements; fixed OCC attribute search by bounding box;
+fix parsing of mac-encoded scripts; new RecombineMesh command; added support for
+extrusion of mixed-dimension entities with OCC; small bug fixes.
+
+4.5.4 (February 29, 2020): periodic mesh optimization now ensures that the
+master mesh is not modified; code cleanup; small bug fixes.
+
+4.5.3 (February 22, 2020): improved positioning of corresponding nodes on
+periodic entities; improved LaTeX output; improved curve splitting in
+reparametrization; new binary PLY reader; small compilation fixes.
+
+* New API functions: mesh/getEdgeNumber, mesh/getLocalMultipliersForHcurl0.
+
+4.5.2 (January 30, 2020): periodic meshes now obey reorientation constraints;
+physical group definitions now follow compound meshing constraints; small bug
+fixes and improvements.
+
+* New API function: geo/splitCurve.
+
+4.5.1 (December 28, 2019): new Min and Max commands in .geo files;
+Mesh.MinimumCirclePoints now behaves the same with all geometry kernels; fixed
+issue with UTF16-encoded home directories on Windows.
+
+4.5.0 (December 21, 2019): changed default 2D meshing algorithm to
+Frontal-Delaunay; new compound Spline/BSpline commands; new MeshSizeFromBoundary
+command; new CGNS importer/exporter; new X3D exporter for geometries and meshes;
+improved surface mesh reclassification; new separate option to govern curvature
+adapted meshes (Mesh.MinimumElementsPerTwoPi and "-clcurv val"); improved
+handling of anisotropic surface meshes in 3D Delaunay; improved high-order
+periodic meshing; improved 2D boolean unions; file chooser type is now
+changeable at runtime; FLTK GUI can now be created and destroyed at will through
+the API; fixed regression in MeshAdapt for non-periodic surfaces with
+singularities; combining views now copies options; added API support for mesh
+compounds, per-surface mesh algorithm and mesh size from boundary; renamed
+plugin AnalyseCurvedMesh to AnalyseMeshQuality; fixed regression for built-in
+kernel BSplines on non-flat geometries (Sphere, PolarSphere); small fixes and
+improvements.
+
+* New API functions: model/getCurrent, model/getParametrization,
+  mesh/computeCrossField, mesh/setNode, mesh/getElementsByCoordinates,
+  mesh/getLocalCoordinatesInElement, mesh/getNumberOfKeysForElements,
+  mesh/setAlgorithm, mesh.setSizeFromBoundary, mesh/setComound,
+  geo/addCompoundSpline, geo/addCompoundBSpline, fltk/isAvailable.
+
+* Incompatible API changes: removed mesh/smooth (now handled by mesh/optimize
+  like all other mesh optimizers); renamed logger/time to logger/getWallTime and
+  logger/cputime to logger/getCpuTime; new arguments to mesh/optimize,
+  mesh/getElementProperties and occ/healShapes; added optional argument to
+  mesh/classifySurfaces and view/combine.
+
+4.4.1 (July 25, 2019): small improvements (transfinite with degenerate curves,
+renumbering for some mesh formats, empty MSH file sections, tunable accuracy of
+compound meshes) and bug fixes (ellipse < pi, orientation and reclassification
+of compound parts, serendip pyramids, periodic MeshAdapt robustness, invalidate
+cache after mesh/addNodes).
+
+4.4.0 (July 1, 2019): new STL remeshing workflow (with new ClassifySurfaces
+command in .geo files); added API support for color options, mesh optimization,
+recombination, smoothing and shape healing; exposed additional METIS options;
+improved support for periodic entities (multiple curves with the same start/end
+points, legacy MSH2 format, periodic surfaces with embedded entities); added
+mesh renumbering also after interactive mesh modifications; improved support for
+OpenCASCADE ellipse arcs; new interactive filter in visibility window; flatter
+GUI; small bug fixes.
+
+* New API functions: option/setColor, option/getColor, mesh/optimize,
+  mesh/recombine, mesh/smooth, mesh/clear, mesh/getNodesByElementType,
+  occ/healShapes.
 
 * Incompatible API changes: mesh/getJacobians and mesh/getBasisFunctions now
-  take integration points explicitely; mesh/setNodes and mesh/setElements have
-  been replaced by mesh/addNodes and mesh/addElements.
+  take integration points explicitly; mesh/setNodes and mesh/setElements have
+  been replaced by mesh/addNodes and mesh/addElements; added optional arguments
+  to mesh/classifySurfaces and occ/addSurfaceLoop; changed arguments of
+  occ/addEllipseArc to follow geo/addEllipseArc.
 
 4.3.0 (April 19, 2019): improved meshing of surfaces with singular
 parametrizations; added API support for aliasing and combining views, copying
@@ -16,12 +320,18 @@ normals and retrieving mass, center of mass and inertia from OpenCASCADE CAD
 entities; fixed regression introduced in 4.1.4 that could lead to
 non-deterministic 2D meshes; small bug fixes.
 
+* New API functions: model/setCoordinates, occ/getMass, occ/getCenterOfMass,
+  occ/getMatrixOfInertia, view/addAlias, view/copyOptions, view/combine
+
 * Incompatible API changes: added optional arguments to mesh/getNodes and
-  mesh/getElementByCoordinates
+  mesh/getElementByCoordinates.
 
 4.2.3 (April 3, 2019): added STL export by physical surface; added ability to
 remove embedded entities; added handling of boundary entities in
 addDiscreteEntity; small bug fixes.
+
+* New API functions: mesh/getKeysForElements, mesh/getInformationForElements,
+  mesh/removeEmbedded.
 
 4.2.2 (March 13, 2019): fixed regression in reading of extruded meshes; added
 ability to export one solid per surface in STL format.
@@ -34,29 +344,37 @@ to the reference manual.
 4.2.0 (March 5, 2019): new MSH4.1 revision of the MSH file format, with support
 for size_t node and element tags (see the reference manual for detailed
 changes); added support for reading STEP labels and colors with OCC CAF; changed
-default "General.OCCTargetUnit" value to none (i.e. use STEP file coordinates
+default "Geometry.OCCTargetUnit" value to none (i.e. use STEP file coordinates
 as-is, without conversion); improved high-order mesh optimization; added ability
-to import groups of nodes from MED files; extruded meshes now fill-in periodic
-node information; enhanced Plugin(Distance) and Plugin(SimplePartition); removed
-unmaintained plugins; removed default dependency on PETSc; small improvements
-and bug fixes.
+to import groups of nodes from MED files; enhanced Plugin(Distance) and
+Plugin(SimplePartition); removed unmaintained plugins; removed default
+dependency on PETSc; small improvements and bug fixes.
+
+* New API functions: model/setEntityName, model/getEntityName,
+  model/removeEntityName.
 
 * Incompatible API changes: changed type of node and element tags from int to
   size_t to support (very) large meshes; changed logger/start,
   mesh/getPeriodicNodes and mesh/setElementsByType.
 
 4.1.5 (February 14, 2019): improved OpenMP parallelization, STL remeshing, mesh
-partitioning and high-order mesh optimization; added classifySurfaces in API;
-bug fixes.
+partitioning and high-order mesh optimization; bug fixes.
 
-4.1.4 (February 3, 2019): improved ghost cell I/O; added getGhostElements,
-relocateNodes, getElementType, getElementFaceNodes, getElementEdgeNodes
-functions in API; small improvements and bug fixes.
+* New API function: mesh/classifySurfces.
+
+4.1.4 (February 3, 2019): improved ghost cell I/O; small improvements and bug
+fixes.
+
+* New API functions: mesh/relocateNodes, mesh/getElementType,
+  mesh/setElementsByType, mesh/getElementEdgeNodes, mesh/getElementFaceNodes,
+  mesh/getGhostElements, mesh/splitQuadrangles.
 
 4.1.3 (January 23, 2019): improved quad meshing; new options for automatic
-full-quad meshes; save nodesets also for physical points (Abaqus, Tochnog); new
-getPartitions, unpartition and removePhysicalName functions in API; small bug
-fixes.
+full-quad meshes; save nodesets also for physical points (Abaqus, Tochnog);
+small bug fixes.
+
+* New API functions: model/removePhysicalName, model/getPartitions,
+  mesh/unpartition.
 
 4.1.2 (January 21, 2019): fixed full-quad subdivision if Mesh.SecondOrderLinear
 is set; fixed packing of parallelograms regression in 4.1.1.
@@ -69,8 +387,15 @@ algorithm); fixed face vertices for PyramidN; renamed ONELAB "Action" and
 actions on any ONELAB button; added API functions for selections in user
 interface.
 
+* New API functions: occ/affineTransform, fltk/selectEntities,
+  fltk/selectElements, fltk/selectViews.
+
 4.1.0 (January 13, 2019): improved ONELAB and Fltk support in API; improved
 renumbering of mesh nodes/elements; major code refactoring.
+
+* New API functions: fltk/update, fltk/awake, fltk/lock, fltk/unlock,
+  onelab/setNumber, onelab/getNumber, onelab/setString, onelab/getString,
+  onelab/clear, onelab/write, logger/time, logger/cputime.
 
 * Incompatible API changes: changed onelab/get.
 
@@ -89,20 +414,24 @@ improved robustness of 2D MeshAdapt algorithm; bug fixes.
 
 4.0.3 (October 18, 2018): bug fixes.
 
+* New API function: model/removePhysicalGroups.
+
 4.0.2 (September 26, 2018): added support for creating MED files with specific
 MED (minor) version; small bug fixes.
 
 4.0.1 (September 7, 2018): renumber mesh nodes/elements by default; new
-SendToServer command for nodal views; added color and visibility handling in
-API; small bug fixes.
+SendToServer command for nodal views; small bug fixes.
+
+* New API functions: model/setVisibility, model/getVisibility, model/setColor,
+  model/getColor.
 
 4.0.0 (August 22, 2018): new C++, C, Python and Julia API; new MSH4 format; new
 mesh partitioning code based on Metis 5; new 3D tetrahedralization algorithm as
 default; new workflow for remeshing (compound entities as meshing constraints,
-CreateGeometry for mesh reparametrization); added support for general b-splines,
-fillets and chamfers with OpenCASCADE kernel and changed default bspline
+CreateGeometry for mesh reparametrization); added support for general BSplines,
+fillets and chamfers with OpenCASCADE kernel and changed default BSpline
 parameters with the built-in kernel to match OpenCASCADE's; STEP files are now
-be default interpreted in MKS units (see General.OCCTargetUnit); improved
+be default interpreted in MKS units (see Geometry.OCCTargetUnit); improved
 meshing of surfaces with singular parametrizations (spheres, etc.); uniformized
 entity naming conventions (line/curve, vertex/node, etc.); generalized handling
 of "all" entities in geo file (using {:} notation); added support for creating
@@ -241,7 +570,7 @@ FLTK 1.3); new tensor field visualization modes (eigenvectors, ellipsoid, etc.);
 added support for interpolation schemes in .msh file; added support for MED3
 format; rescale viewport around visible entities (shift+1:1 in GUI); unified
 post-processing field export; new experimental stereo+camera visualization mode;
-added experimental BAMG & MMG3D support for anisotropic mesh generation; new OCC
+added experimental BAMG & Mmg3D support for anisotropic mesh generation; new OCC
 cut & merge algorithm imported from Salome; new ability to connect extruded
 meshes to tetrahedral grids using pyramids; new homology solver; Abaqus (INP)
 mesh export; new Python and Java wrappers; bug fixes and small improvements all
@@ -287,7 +616,7 @@ mesh refinement (thanks Brian!); fixed various other small bugs.
 
 2.2.5 (Oct 25, 2008): Gmsh now requires FLTK 1.1.7 or above; various small
 improvements (STL and VTK mesh I/O, Netgen upgrade, Visual C++ support, Fields,
-Mesh.{Msh,Stl,...}Binary changed to Mesh.Bindary) and bug fixes (pyramid
+Mesh.{Msh,Stl,...}Binary changed to Mesh.Binary) and bug fixes (pyramid
 interpolation, Chaco crashes).
 
 2.2.4 (Aug 14, 2008): integrated Metis and Chaco mesh partitioners; variables
@@ -434,7 +763,7 @@ behavior; new plugins (HarmonicToTime, Integrate, Eigenvectors); tetrahedral
 mesh file reading speedup (50% faster on large meshes); large memory footprint
 reduction (up to 50%) for the visualization of triangular/tetrahedral meshes;
 the solver interface now supports TCP/IP connections; new generalized raise mode
-(allows to use complex expressions to offset post-processing maps); upgraded
+(allows one to use complex expressions to offset post-processing maps); upgraded
 Netgen kernel to version 4.4; new optional TIME list in parsed views to specify
 the values of the time steps; several bug fixes in the Elliptic mesh algorithm;
 various other small bug fixes and enhancements.

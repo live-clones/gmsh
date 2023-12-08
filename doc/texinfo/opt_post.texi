@@ -26,8 +26,18 @@ Step increment for animations@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
+@item PostProcessing.Binary
+Write post-processing files in binary format (if possible)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item PostProcessing.CombineRemoveOriginal
 Remove original views after a Combine operation@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
+@item PostProcessing.CombineCopyOptions
+Copy options during Combine operation@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

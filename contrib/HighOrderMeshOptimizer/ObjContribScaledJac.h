@@ -1,4 +1,4 @@
-// HighOrderMeshOptimizer - Copyright (C) 2013-2019 UCLouvain-ULiege
+// HighOrderMeshOptimizer - Copyright (C) 2013-2023 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -53,8 +53,8 @@ protected:
 
 template <class FuncType>
 ObjContribScaledJac<FuncType>::ObjContribScaledJac(double weight)
-  : ObjContrib("ScaledJac", FuncType::getNamePrefix() + "ScaledJac"), _mesh(0),
-    _weight(weight)
+  : ObjContrib("ScaledJac", FuncType::getNamePrefix() + "ScaledJac"),
+    _mesh(nullptr), _weight(weight)
 {
 }
 

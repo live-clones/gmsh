@@ -1,8 +1,7 @@
 #import <UIKit/UIKit.h>
 
-@interface OptionsViewController : UITableViewController <UITextFieldDelegate>
-{
+@interface OptionsViewController : UITableViewController <UITextFieldDelegate> {
 @private
-    UISegmentedControl *control;
+  UISegmentedControl *control;
 }
 @end

@@ -3,7 +3,6 @@ Physical Volume(100) = {1};            // volume ring
 Physical Volume(200) = {2};            // air volume
 Physical Surface(1000) = {7};        // outer truncation boundary
 
-Mesh.CharacteristicLengthMin = 10;
-Mesh.CharacteristicLengthMax = 100;
-Mesh.CharacteristicLengthFromCurvature = 1;
-Mesh.MinimumCirclePoints = 20; // points per 2*pi
+Mesh.MeshSizeMin = 10;
+Mesh.MeshSizeMax = 100;
+Mesh.MeshSizeFromCurvature = 20;

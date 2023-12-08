@@ -1,0 +1,10 @@
+// use these options for creating GUI screenshots
+
+// Then crop and resize to fit into 1280x1280 (in Preview.app: Tools->Adjust
+// size->Fit into 1280 x 1280)
+
+General.GraphicsHeight = 512;
+General.GraphicsWidth = 940;
+General.MenuWidth = 215;
+General.MessageHeight = 130;
+General.SystemMenuBar = 0;
