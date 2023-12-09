@@ -503,7 +503,7 @@ int PolyMesh::decimate(double thresholdDistance,
               SVector3 b = crossprod(t, nrm);
               double aspect_ratio = 1.e22;
               bool sign_consistency = true;
-              double firstDist;
+              double firstDist = 0;
               for(size_t j = _start + 1; j < _end; j++) {
                 Vertex *vk = loop[j % loop.size()];
                 SVector3 tik = vk->position - vi->position;
@@ -539,7 +539,7 @@ int PolyMesh::decimate(double thresholdDistance,
         }
         if(best_start >= 0) {
           std::vector<Vertex *> newLoop;
-          for(size_t i = best_start; i < best_end + 1; i++)
+          for(int i = best_start; i < best_end + 1; i++)
             newLoop.push_back(loop[i % loop.size()]);
           loops.push(newLoop);
           newLoop.clear();

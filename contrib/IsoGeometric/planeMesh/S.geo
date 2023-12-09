@@ -20,9 +20,11 @@ Line(4) = {6, 5};
 Circle(5) = {5, 8, 4};
 Circle(6) = {1, 7, 4};
 
-Curve Loop(1) = {1, 2, -3, 4, 5, -6};
+Curve Loop(1) = {-1, -2, 3, -4, -5, 6};
 Plane Surface(1) = {1};
 
 
 Physical Point("vertices") = {1, 2, 6, 5};
+Physical Curve("edges") = {1,2,3,4,5,6};
 Physical Surface("surface") = {1};
+

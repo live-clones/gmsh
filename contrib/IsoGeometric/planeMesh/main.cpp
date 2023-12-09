@@ -1,24 +1,35 @@
 #include <iostream>
 #include <memory>
 #include <algorithm>
+#include <chrono>
 
 #include <gmsh.h>
 #include <gmsh/MTriangle.h>
 #include <gmsh/GModel.h>
 #include <gmsh/GModelParametrize.h>
+#include <gmsh/winslowUntangler.h>
 
 #include <gmsh/geodesic/src/geodesic_mesh.h>
 #include <gmsh/geodesic/src/geodesic_algorithm_exact.h>
 
-#if defined(HAVE_SOLVER)
-#include <gmsh/linearSystemPETSc.h>
-#include <gmsh/linearSystemCSR.h>
-#include <gmsh/linearSystemFull.h>
-#endif
+
+#include "laplacianSmoothing.h"
+
+#include <gmshfem/GmshFem.h>
+#include <gmshfem/Formulation.h>
+using namespace gmshfem::common;
+using namespace gmshfem::domain;
+using namespace gmshfem::post;
+using namespace gmshfem::equation;
+using namespace gmshfem::problem;
+using namespace gmshfem::field;
+
 
 
 #define EPS 1e-6
-#define CREATEGEO false
+#define LARGE_EPS 5e-2
+#define OPT 1
+#define WINSLOW 1
 
 static void filterPath(std::vector<geodesic::SurfacePoint> &path, double eps)
 {
@@ -74,126 +85,253 @@ void periodicBoundaryConditions(const std::vector<MVertex *> & loop,
       if (edgeAngle == 0) edgeAngle = 1;
     }
     else if (l0 == -1) {
-      edgeAngle = 1;
+      edgeAngle = 0;
     }
-    edgeAngle *= 2 * M_PI;
+    //edgeAngle *= 2 * M_PI;
+    edgeAngle *= M_PI;
 
     currentLength = 0;
+    if (k%2) currentLength = edgeLength;
     for(; i <= indices[k]; i++) {
       currentLength += loop[i]->point().distance(loop[i - 1]->point());
       currentAngle = currentLength/edgeLength * edgeAngle;
       int index = loop[i]->getIndex();
       bc[index] = true;
-      u[index] = sin(currentAngle);
+      //u[index] = sin(currentAngle);
+      u[index] = sin(currentAngle) * edgeLength * .2;
     }
   }
 }
 
-void laplacianSmoothing(const std::vector<MVertex *> & nodes,
-                        const std::map<MEdge, std::vector<MTriangle *>, MEdgeLessThan> & edges,
-                        const std::vector<std::vector<MVertex *> > & loops,
-                        const std::vector<bool> & bc,
-                        std::vector<double> & u)
+void expandCoord(std::vector<double> & coord,
+                std::vector<MTriangle*> & triangles,
+                std::map<MVertex *, int> & nbrTriangles,
+                std::vector<double> & u)
 {
-  // assemble matrix
-#if defined(HAVE_SOLVER)
-#if defined(HAVE_PETSC)
-  linearSystemPETSc<double> *lsys = new linearSystemPETSc<double>;
-  std::string options = "-ksp_type preonly -pc_type lu ";
-#if defined(PETSC_HAVE_MUMPS)
-  options += "-pc_factor_mat_solver_type mumps";
-#elif defined(PETSC_HAVE_MKL_PARDISO)
-  options += "-pc_factor_mat_solver_type mkl_pardiso";
-#elif defined(PETSC_HAVE_UMFPACK) || defined(PETSC_HAVE_SUITESPARSE)
-  options += "-pc_factor_mat_solver_type umfpack";
-#endif
-  lsys->setParameter("petsc_solver_options", options);
-  lsys->setParameter("matrix_reuse", "same_matrix");
-#elif defined(HAVE_GMM)
-  linearSystemCSRGmm<double> *lsys = new linearSystemCSRGmm<double>;
-#else
-  linearSystemFull<double> *lsys = new linearSystemFull<double>;
-#endif
-
-  lsys->allocate(nodes.size());
-
-#if defined(HAVE_PETSC)
-  for(auto it = edges.begin(); it != edges.end(); ++it) {
-    for(int i = 0; i < 2; i++) {
-      for(int j = 0; j < 2; j++) {
-        lsys->insertInSparsityPattern(it->first.getVertex(i)->getIndex(),
-                                      it->first.getVertex(j)->getIndex());
-      }
+  for (size_t i = 0; i < triangles.size(); i++) {
+    auto t = triangles[i];
+    auto v0 = t->getVertex(0)->point();
+    auto v1 = t->getVertex(1)->point();
+    auto v2 = t->getVertex(2)->point();
+    auto d0 = v1 - v0;
+    auto d1 = v2 - v0;
+    double dx = d0.y() * d1.z() - d0.z() * d1.y();
+    double dy = d0.z() * d1.x() - d0.x() * d1.z();
+    double dz = d0.x() * d1.y() - d0.y() * d1.x();
+    double norm = sqrt(dx*dx + dy*dy + dz*dz);
+    dx /= norm;
+    dy /= norm;
+    dz /= norm;
+    for (size_t j = 0; j < 3; j++) {
+      auto v = t->getVertex(j);
+      int index = v->getIndex();
+      coord[3*index+0] += dx*u[index]/nbrTriangles[v];
+      coord[3*index+1] += dy*u[index]/nbrTriangles[v];
+      coord[3*index+2] += dz*u[index]/nbrTriangles[v];
     }
   }
-#endif
-
-  for(auto it = edges.begin(); it != edges.end(); ++it) {
-    for(int ij = 0; ij < 2; ij++) {
-      MVertex *v0 = it->first.getVertex(ij);
-      int index0 = v0->getIndex();
-      if(bc[index0]) continue; // boundary condition
-      MVertex *v1 = it->first.getVertex(1 - ij);
-      int index1 = v1->getIndex();
-      MTriangle *tLeft = it->second[0];
-      MVertex *vLeft = tLeft->getVertex(0);
-      if(vLeft == v0 || vLeft == v1) vLeft = tLeft->getVertex(1);
-      if(vLeft == v0 || vLeft == v1) vLeft = tLeft->getVertex(2);
-      double e[3] = {v1->x() - v0->x(), v1->y() - v0->y(), v1->z() - v0->z()};
-      double ne = sqrt(e[0] * e[0] + e[1] * e[1] + e[2] * e[2]);
-      double a[3] = {vLeft->x() - v0->x(), vLeft->y() - v0->y(),
-                     vLeft->z() - v0->z()};
-      double na = sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
-      double thetaL =
-        acos((a[0] * e[0] + a[1] * e[1] + a[2] * e[2]) / (na * ne));
-      double thetaR = 0.;
-      if(it->second.size() == 2) {
-        MTriangle *tRight = it->second[1];
-        MVertex *vRight = tRight->getVertex(0);
-        if(vRight == v0 || vRight == v1) vRight = tRight->getVertex(1);
-        if(vRight == v0 || vRight == v1) vRight = tRight->getVertex(2);
-        double b[3] = {vRight->x() - v0->x(), vRight->y() - v0->y(),
-                       vRight->z() - v0->z()};
-        double nb = sqrt(b[0] * b[0] + b[1] * b[1] + b[2] * b[2]);
-        thetaR = acos((b[0] * e[0] + b[1] * e[1] + b[2] * e[2]) / (nb * ne));
-      }
-      double c = (tan(.5 * thetaL) + tan(.5 * thetaR)) / ne;
-      lsys->addToMatrix(index0, index1, -c);
-      lsys->addToMatrix(index0, index0, c);
-    }
-  }
-  for(std::size_t j = 0; j < loops.size(); j++) {
-    auto loop = loops[j];
-    for(std::size_t i = 0; i < loop.size() - 1; i++) {
-      int row = loop[i]->getIndex();
-      lsys->addToMatrix(row, row, 1);
-    }
-  }
-
-  lsys->zeroRightHandSide();
-  for(std::size_t j = 0; j < loops.size(); j++) {
-    auto loop = loops[j];
-    for(std::size_t i = 0; i < loop.size() - 1; i++) {
-      int row = loop[i]->getIndex();
-      lsys->addToRightHandSide(row, u[row]);
-    }
-  }
-  lsys->systemSolve();
-  for(std::size_t i = 0; i < nodes.size(); i++) lsys->getFromSolution(i, u[i]);
-
-  delete lsys;
-#endif
 }
 
 
+
+
+
+void femSmoothing(const int physicalSurface,
+                  const int physicalBoundary,
+                  const int physicalPoints,
+                  const double gravity,
+                  const double ratio,
+                  const std::vector<MVertex*> & nodes,
+                  std::vector<double> & u)
+{
+  std::string gauss = "Gauss4";
+  //const std::complex< double > im(0., 1.);
+
+  Domain domain;
+  if (physicalSurface != 0)
+    domain |= Domain(2, physicalSurface);
+  Domain boundary;
+  if (physicalBoundary != 0)
+    boundary |= Domain(1, physicalBoundary);
+  Domain points;
+  if (physicalPoints != 0)
+    points |= Domain(0, physicalPoints);
+
+  Formulation<double> gravityFormulation("Gravity_Formulation");
+
+  Field<double, Form::Form0> gField("g", domain | boundary | points, FunctionSpaceTypeForm0::Lagrange);
+
+  gravityFormulation.integral(grad(dof(gField)), grad(tf(gField)), domain, gauss);
+  gravityFormulation.integral(gravity, tf(gField), domain, gauss);
+
+  gField.addConstraint(boundary, 0.);
+
+  gravityFormulation.pre();
+  gravityFormulation.assemble();
+  gravityFormulation.solve();
+
+
+  save(gField);
+  double minG = 0;
+  auto gfunc = gField.getEvaluableFunction();
+  for (size_t i = 0; i < nodes.size(); i++) {
+    auto n = nodes[i];
+    double tmpG = evaluate(gfunc, n->x(), n->y(), n->z());
+    if (tmpG < minG) minG = tmpG;
+  }
+
+
+
+  Formulation<double> formulation("Surface_Expansion");
+
+  Field<double, Form::Form0> uField("u", domain | boundary | points, FunctionSpaceTypeForm0::Lagrange);
+
+  formulation.integral(grad(dof(uField)), grad(tf(uField)), domain, gauss);
+  formulation.integral(-minG, tf(uField), domain, gauss);
+  formulation.integral(gField, tf(uField), domain, gauss);
+
+  formulation.integral(ratio, tf(uField), boundary, gauss);
+  //formulation.integral(dof(uField), tf(uField), boundary, gauss);
+
+  uField.addConstraint(boundary, 0.);
+
+  formulation.pre();
+  formulation.assemble();
+  formulation.solve();
+
+  save(uField);
+
+  auto func = uField.getEvaluableFunction();
+  u.resize(nodes.size());
+  for (size_t i = 0; i < nodes.size(); i++) {
+    auto n = nodes[i];
+    int index = n->getIndex();
+    u[index] = evaluate(func, n->x(), n->y(), n->z());
+  }
+
+}
+
+void manualSmoothing(const double gravity,
+                     const double ratio,
+                     const std::vector<MTriangle*> & triangles,
+                     const std::vector<MVertex*> & nodes,
+                     const std::vector<std::vector<MVertex *>> & loops,
+                     const std::vector<std::vector<size_t>> & loopIndices,
+                     const std::vector<std::vector<double>> & loopLengths,
+                     const std::vector<size_t> & vertexIndices,
+                     std::vector<double> & u,
+                     std::vector<bool> & bc,
+                     const std::map<MEdge, std::vector<MTriangle *>, MEdgeLessThan> & edge2Triangles)
+{
+  u.resize(nodes.size(),0);
+  for (size_t i = 0; i < vertexIndices.size(); ++i) {
+    int index = vertexIndices[i];
+    u[index] = 0.;
+    bc[index] = true;
+  }
+
+  size_t maxC = 1e3;
+  for (size_t j = 0; j < loops.size(); ++j) {
+    const std::vector<MVertex *>& loop = loops[j];
+    const std::vector<size_t>& indices = loopIndices[j];
+    const std::vector<double>& lengths = loopLengths[j];
+
+    double mult = +1;
+    double length = lengths[0];
+    int n = indices[0];
+    double density = length / n;
+    size_t k = 0;
+
+    for (size_t i = 0; i < loop.size(); ++i) {
+      auto v0 = loop[i];
+      auto i0 = v0->getIndex();
+      if (bc[i0]) continue;
+
+      if (i > indices[k]) {
+        ++k;
+        mult *= -1;
+        length = lengths[k] - lengths[k-1];
+        n = indices[k] - indices[k-1];
+        density = length / n;
+      }
+
+      u[i0] = ratio * mult;
+      //u[i0] = ratio * length * mult;
+    }
+
+    /*
+    for (size_t c = 0; c < maxC; ++c) {
+      mult = +1;
+      length = lengths[0];
+      n = indices[0];
+      density = length / n;
+      k = 0;
+      for (size_t i = 0; i < loop.size(); ++i) {
+        auto v0 = loop[i];
+        auto i0 = v0->getIndex();
+        if (bc[i0]) continue;
+
+        if (i > indices[k]) {
+          ++k;
+          mult *= -1;
+          length = lengths[k] - lengths[k-1];
+          n = indices[k] - indices[k-1];
+          density = length / n;
+        }
+
+        auto vm = loop[(i+loop.size()-1)%loop.size()];
+        auto im = vm->getIndex();
+        auto vp = loop[(i+1)%loop.size()];
+        auto ip = vp->getIndex();
+        //u[i0] = (u[im] + u[ip])/2 - gravity * (u[i0]-ratio * mult);
+        u[i0] = (u[im] + u[ip])/2 - gravity * (u[i0] - 10 * density * mult);
+
+      }
+    }
+    */
+
+    for (size_t i = 0; i < loop.size(); ++i) {
+      auto v0 = loop[i];
+      auto i0 = v0->getIndex();
+      bc[i0] = true;
+    }
+  }
+
+  
+  for (size_t c = 0; c < maxC; ++c) {
+    for (size_t i = 0; i < triangles.size(); ++i) {
+      auto t =  triangles[i];
+      double mean = 0.;
+      for (int j = 0; j < 3; ++j) {
+        mean += u[t->getVertex(j)->getIndex()];
+      }
+      mean /= 3;
+      for (int j = 0; j < 3; ++j) {
+        size_t index = t->getVertex(j)->getIndex();
+        if (bc[index]) continue;
+        u[index] += .1 * ((mean - u[index]) - gravity * (u[index]));
+        //u[index] += .1 * (mean - u[index]);
+      }
+
+    }
+  }
+  
+
+  //laplacianSmoothing(nodes, edge2Triangles, loops, bc, u, 0.);
+
+}
 
 int main(int argc, char* argv[]) {
-  gmsh::initialize();
-  
+  GmshFem gmshFem(argc, argv);
+  //gmsh::initialize();
+
   std::string fn = "X"; // X, C, S, 0, 8, c3, uk
-  double coeff = .1;
+  double coeff = .2;
   int div = 10;
   int opt = 0;
+  int smoothing = 0;
+  double gravity = 0.;
+  double ratio = 0.;
   
   for (int i = 1; i < argc; i++) {
     if (std::string(argv[i]) == "-f" && i + 1 < argc) {
@@ -208,6 +346,15 @@ int main(int argc, char* argv[]) {
     } else if (std::string(argv[i]) == "-o" && i + 1 < argc) {
       opt = std::stoi(argv[++i]);
       continue;
+    } else if (std::string(argv[i]) == "-s" && i + 1 < argc) {
+      smoothing = std::stoi(argv[++i]);
+      continue;
+    } else if (std::string(argv[i]) == "-g" && i + 1 < argc) {
+      gravity = std::stod(argv[++i]);
+      continue;
+    } else if (std::string(argv[i]) == "-r" && i + 1 < argc) {
+      ratio = std::stod(argv[++i]);
+      continue;
     }
   }
 
@@ -218,15 +365,28 @@ int main(int argc, char* argv[]) {
   // Construct mesh
   std::string filename = fn;
   gmsh::open("../"+fn+".geo");
-  gmsh::model::mesh::generate(2);
+  if (OPT == 0) 
+    gmsh::model::mesh::generate(2);
+  else {
+    gmsh::option::setNumber("Mesh.MeshSizeFactor", 150);
+    gmsh::option::setNumber("Mesh.Algorithm", 3);
+    gmsh::model::mesh::generate(2);
+  }
+
+  int physicalSurface = 0, physicalBoundary = 0, physicalPoints = 0;
+  int surface;
+  std::vector<int> edges;
+  std::vector<int> verticesGeoTags;
+  std::vector<size_t> vertexTags;
+  std::vector<double> vertexCoord;
+  std::map<int, std::vector<int>> startEnds;
+  std::map<int, std::vector<int>> vertexStartEnds;
+if (OPT == 0) {
 
   // Load vertices and surface
   gmsh::vectorpair dimTags;
   gmsh::model::getPhysicalGroups(dimTags);
 
-  std::vector<size_t> vertexTags;
-  std::map<int, std::vector<int>> startEnds;
-  size_t surface;
   for (auto dimTag: dimTags) {
     std::string name;
     gmsh::model::getPhysicalName(dimTag.first, dimTag.second, name);
@@ -234,6 +394,7 @@ int main(int argc, char* argv[]) {
     gmsh::model::getEntitiesForPhysicalGroup(dimTag.first, dimTag.second, geoTags);
 
     if (name.substr(0, 8) == "vertices") {
+      verticesGeoTags.push_back(geoTags[0]);
       size_t i0 = vertexTags.size();
       for (size_t i = 0; i < geoTags.size(); ++i) {
         std::vector<std::size_t> vertexNodeTag;
@@ -251,12 +412,93 @@ int main(int argc, char* argv[]) {
           startEnds[vertexTags.back()].push_back(vertexTags[j]);
         }
       }
+
+      std::cout << "vertex tag: " << geoTags[0] << std::endl;
+      physicalPoints = dimTag.second;
+      for (auto t: geoTags)
+        verticesGeoTags.push_back(t);
+      continue;
     }
-    else if (name.substr(0, 7) == "surface") {
+
+    if (name.substr(0, 7) == "surface") {
+      std::cout << "surface tag: " << geoTags[0] << std::endl;
+      physicalSurface = dimTag.second;
       surface = geoTags[0];
+      continue;
+    }
+    if (name.substr(0, 4) == "edge") {
+      std::cout << "edge tag: " << geoTags[0] << std::endl;
+      physicalBoundary = dimTag.second;
+      for (auto t: geoTags)
+        edges.push_back(t);
+      continue;
+    }
+
+  }
+
+}
+else {
+
+  gmsh::vectorpair dimTags;
+  gmsh::model::getPhysicalGroups(dimTags);
+  for (auto dimTag: dimTags) {
+    std::string name;
+    gmsh::model::getPhysicalName(dimTag.first, dimTag.second, name);
+    std::vector<int> geoTags;
+    gmsh::model::getEntitiesForPhysicalGroup(dimTag.first, dimTag.second, geoTags);
+    if (name.substr(0, 7) == "surface") {
+      std::cout << "surface tag: " << geoTags[0] << std::endl;
+      physicalSurface = dimTag.second;
+      surface = geoTags[0];
+      continue;
+    }
+    if (name.substr(0, 4) == "edge") {
+      std::cout << "edge tag: " << geoTags[0] << std::endl;
+      physicalBoundary = dimTag.second;
+      for (auto t: geoTags)
+        edges.push_back(t);
+      continue;
+    }
+    if (name.substr(0, 8) == "vertices") {
+      std::cout << "vertex tag: " << geoTags[0] << std::endl;
+      physicalPoints = dimTag.second;
+      for (auto t: geoTags)
+        verticesGeoTags.push_back(t);
+      continue;
     }
   }
 
+  std::vector<double> vertexParametricCoord;
+  gmsh::model::mesh::getNodes(vertexTags, vertexCoord, vertexParametricCoord, 2, surface, true);
+
+  std::vector<std::size_t> elementTags;
+  std::vector<std::size_t> elementNodeTags;
+  gmsh::model::mesh::getElementsByType(MSH_TRI_3, elementTags, elementNodeTags, surface);
+  for (size_t i = 0; i < elementTags.size(); ++i) {
+    for (int j = 0; j < 3; ++j) {
+      auto n0 = elementNodeTags[3*i+j];
+      auto n1 = elementNodeTags[3*i+(j+1)%3];
+      vertexStartEnds[n0].push_back(n1);
+    }
+  }
+
+  //gmsh::fltk::run();
+
+  if (OPT == 1) {
+    gmsh::model::mesh::clear();
+    gmsh::option::setNumber("Mesh.MeshSizeFactor", 1);
+    gmsh::option::setNumber("Mesh.Algorithm", 6);
+    gmsh::model::mesh::generate(2);
+  }
+  else if (OPT == 2) {
+    int nbrRefine = 3;
+    for (int i = 0; i < nbrRefine; ++i) {
+      gmsh::model::mesh::refine();
+    }
+  }
+  //gmsh::fltk::run();
+
+}
 
   //
   // N O D E S
@@ -282,9 +524,45 @@ int main(int argc, char* argv[]) {
   }
 
   // Vertices
+if (OPT) {
+  std::map<int, int> old2New;
+  for (size_t iv = 0; iv < vertexTags.size(); ++iv) {
+    int minTag = -1;
+    double minDistance = std::numeric_limits<double>::max(), distance, tmp;
+    for (size_t i = 0; i < nodeTags.size(); ++i) {
+      distance = 0.;
+      int j = 0;
+      for (; j < 3; ++j) {
+        tmp = coord[3*i+j]-vertexCoord[3*iv+j];
+        distance += tmp*tmp;
+      }
+      if (distance < minDistance) {
+        minTag = nodeTags[i];
+        minDistance = distance;
+      }
+       
+    }
+    old2New[vertexTags[iv]] = minTag;
+    vertexTags[iv] = minTag;
+  }
+
+  for (auto vertexStartEnd: vertexStartEnds) {
+    auto n0 = vertexStartEnd.first;
+    for (auto n1: vertexStartEnd.second) {
+      // don't connect adjacent vertices
+      if (std::find(vertexStartEnds[n1].begin(), vertexStartEnds[n1].end(), n0) == vertexStartEnds[n1].end())
+        continue;
+      if (old2New[n0] > old2New[n1])
+        continue;
+      startEnds[old2New[n0]].push_back(old2New[n1]);
+    }
+  }
+}
+
   std::vector<size_t> vertexIndices(vertexTags.size());
-  for (size_t i = 0; i < vertexTags.size(); ++i)
+  for (size_t i = 0; i < vertexTags.size(); ++i) {
     vertexIndices[i] = tag2Index[vertexTags[i]];
+  }
 
   // Dimentional coeffs
   double lMax = 0, lMin = std::numeric_limits<double>::max();
@@ -319,7 +597,7 @@ int main(int argc, char* argv[]) {
   gmsh::model::mesh::getElementsByType(MSH_TRI_3, elementTags, elementNodeTags, surface);
 
   std::vector<MTriangle*> triangles(elementTags.size());
-  std::map<MEdge, std::vector<MTriangle *>, MEdgeLessThan> edges;
+  std::map<MEdge, std::vector<MTriangle *>, MEdgeLessThan> edge2Triangles;
   for (size_t i = 0; i < elementTags.size(); ++i) {
     auto t = new MTriangle(nodes[tag2Index[elementNodeTags[3*i]]],
                            nodes[tag2Index[elementNodeTags[3*i+1]]],
@@ -327,7 +605,7 @@ int main(int argc, char* argv[]) {
     triangles[i] = t;
     for (int j = 0; j < 3; ++j) {
       ++nbrTriangles[t->getVertex(j)];
-      edges[t->getEdge(j)].push_back(t);
+      edge2Triangles[t->getEdge(j)].push_back(t);
     }
   }
 
@@ -338,7 +616,7 @@ int main(int argc, char* argv[]) {
 
   // Find loops
   std::vector<MEdge> boundaries;
-  for(auto it = edges.begin(); it != edges.end(); ++it) {
+  for(auto it = edge2Triangles.begin(); it != edge2Triangles.end(); ++it) {
     if(it->second.size() == 1) { // on boundary
       boundaries.push_back(it->first);
     }
@@ -352,68 +630,131 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  std::vector<std::vector<MVertex *> > loops;
+  std::vector<std::vector<MVertex *>> loops;
   if(!SortEdgeConsecutive(boundaries, loops)) {
     Msg::Error("Wrong topology of boundary mesh for parametrization");
     return false;
   }
 
-  if (!loops.empty()) {
-    Msg::Debug("Parametrisation of surface with %lu triangles, %lu edges and "
-               "%lu holes",
-               triangles.size(), edges.size(), loops.size() - 1);
+  if (loops.empty()) {
+    std::cout << "No boundary found" << std::endl;
+  }
 
-    // Check orientation of the loop and reverse if necessary
-    for (size_t j = 0; j < loops.size(); j++) {
-      auto loop = loops[j];
-      bool reverse = true;
-      MEdge ref(loop[0], loop[1]);
-      for(std::size_t i = 0; i < triangles.size(); i++) {
-        MTriangle *t = triangles[i];
-        for(int j = 0; j < 3; j++) {
-          MEdge e = t->getEdge(j);
-          if(e.getVertex(0) == ref.getVertex(0) &&
-             e.getVertex(1) == ref.getVertex(1)) {
-            reverse = false;
-            break;
-          }
-        }
-        if(!reverse) break;
-      }
-      if(reverse) { std::reverse(loop.begin(), loop.end()); }
-    }
+  Msg::Debug("Parametrisation of surface with %lu triangles, %lu edges and "
+             "%lu holes",
+             triangles.size(), edge2Triangles.size(), loops.size() - 1);
 
-    // Get first vertex at the front
-    for (size_t j = 0; j < loops.size(); j++) {
-      auto loop = loops[j];
-      for (size_t i = 0; i < loop.size(); i++) {
-        if (std::find(vertexIndices.begin(), vertexIndices.end(), loop[i]->getIndex()) != vertexIndices.end()) {
-          std::rotate(loop.begin(), loop.begin()+i, loop.end()-1);
-          loop[loop.size()-1] = loop[0];
+  // Check orientation of the loop and reverse if necessary
+  for (size_t j = 0; j < loops.size(); j++) {
+    std::vector<MVertex *>& loop = loops[j];
+    bool reverse = true;
+    MEdge ref(loop[0], loop[1]);
+    for(std::size_t i = 0; i < triangles.size(); i++) {
+      MTriangle *t = triangles[i];
+      for(int j = 0; j < 3; j++) {
+        MEdge e = t->getEdge(j);
+        if(e.getVertex(0) == ref.getVertex(0) &&
+           e.getVertex(1) == ref.getVertex(1)) {
+          reverse = false;
           break;
         }
       }
+      if(!reverse) break;
+    }
+    if(reverse) { std::reverse(loop.begin(), loop.end()); }
+  }
+
+  // Get first vertex at the front
+  for (size_t j = 0; j < loops.size(); j++) {
+    std::vector<MVertex *>& loop = loops[j];
+    for (size_t i = 0; i < loop.size(); i++) {
+      if (std::find(vertexIndices.begin(), vertexIndices.end(), loop[i]->getIndex()) != vertexIndices.end()) {
+        std::rotate(loop.begin(), loop.begin()+i, loop.end()-1);
+        loop[loop.size()-1] = loop[0];
+        break;
+      }
+    }
+  }
+
+  // Get vertices positions
+  std::vector<std::vector<size_t>> loopIndices(loops.size());
+  std::vector<std::vector<double>> loopLengthFromFirst(loops.size());
+  for(std::size_t j = 0; j < loops.size(); j++) {
+    std::vector<MVertex *>& loop = loops[j];
+    double l = 0.;
+    for(std::size_t i = 1; i < loop.size(); i++) {
+      l += loop[i]->point().distance(loop[i - 1]->point());
+      if (std::find(vertexIndices.begin(), vertexIndices.end(), loop[i]->getIndex()) != vertexIndices.end()
+          || i == loop.size()-1) {
+        loopIndices[j].push_back(i);
+        loopLengthFromFirst[j].push_back(l);
+      }
+    }
+  }
+
+
+  //
+  // U N T A N G L E
+  //
+if (OPT == 2) {
+  auto untangleStart = std::chrono::high_resolution_clock::now();
+  if (!WINSLOW) {
+    gmsh::model::mesh::optimize("UntangleMeshGeometry");
+    gmsh::model::mesh::getNodes(nodeTags, coord, parametricCoord, 2, surface, true);
+  }
+  else {
+    std::vector<std::array<double, 2> > untanglePoints(2*nodes.size());
+    for (size_t i = 0; i < nodes.size(); ++i) {
+      untanglePoints[i][0] = coord[3*i];
+      untanglePoints[i][1] = coord[3*i+1];
     }
 
-    // Get vertices positions
-    std::vector<std::vector<size_t>> loopIndices(loops.size());
-    std::vector<std::vector<double>> loopLengthFromFirst(loops.size());
-    for(std::size_t j = 0; j < loops.size(); j++) {
-      auto loop = loops[j];
-      double l = 0.;
-      for(std::size_t i = 1; i < loop.size(); i++) {
-        l += loop[i]->point().distance(loop[i - 1]->point());
-        if (std::find(vertexIndices.begin(), vertexIndices.end(), loop[i]->getIndex()) != vertexIndices.end()
-            || i == loop.size()-1) {
-          loopIndices[j].push_back(i);
-          loopLengthFromFirst[j].push_back(l);
-        }
+    std::vector<bool> untangleLocked(nodes.size(), false);
+    for (size_t j = 0; j < loops.size(); ++j) {
+      std::vector<MVertex *>& loop = loops[j];
+      for (size_t i = 0; i < loop.size(); ++i) {
+        int index = loop[i]->getIndex();
+        untangleLocked[index] = true;
+      }
+    }
+    
+    std::vector<std::array<uint32_t, 3> > untangleTriangles(3*triangles.size());
+    for (size_t i = 0; i < triangles.size(); ++i) {
+      for (int j = 0; j < 3; ++j) {
+        int index = triangles[i]->getVertex(j)->getIndex();
+        untangleTriangles[i][j] = index;
       }
     }
 
+    std::vector<std::array<std::array<double, 2>, 3> > untangleTriIdealShapes = {};
+    double lambda = 1.;
+    
+    untangle_triangles_2D(untanglePoints, untangleLocked, untangleTriangles, untangleTriIdealShapes, lambda);
+
+    for (size_t i = 0; i < nodes.size(); ++i) {
+      coord[3*i] = untanglePoints[i][0];
+      coord[3*i+1] = untanglePoints[i][1];
+    }
+
+//
+    for (size_t i = 0; i < nodes.size(); i++) {
+      gmsh::model::mesh::setNode(tags[i], {coord[3*i], coord[3*i+1], coord[3*i+2]}, {});
+    }
+//
+  }
+  auto untangleStop = std::chrono::high_resolution_clock::now();
+  auto untangleDuration = std::chrono::duration_cast<std::chrono::milliseconds>(untangleStop - untangleStart);
+  std::cout << "Expanded in " << untangleDuration.count()/1e3 << "sec" << std::endl;
+}
+
+
+  //
+  // E X P A N S I O N
+  //
+  std::vector<double> u(nodes.size(), 0.);
+  std::vector<bool> bc(nodes.size(), false);
+  if (smoothing == 0) {
     // Boundary conditions
-    std::vector<double> u(nodes.size(), 0.);
-    std::vector<bool> bc(nodes.size(), false);
     for (size_t j = 0; j < loops.size(); ++j) {
       if (opt == 0)
         periodicBoundaryConditions(loops[j], loopIndices[j], loopLengthFromFirst[j], bc, u, div);
@@ -424,40 +765,29 @@ int main(int argc, char* argv[]) {
       else
         Msg::Error("Option not defined !");
     }
+    /*
     for(size_t i = 0; i < u.size(); i++)
       u[i] *= coeff;
-
-    // Smoothing
-    laplacianSmoothing(nodes, edges, loops, bc, u);
-
-    // Move nodes perpendicularly to the surface
-    for (size_t i = 0; i < triangles.size(); i++) {
-      auto t = triangles[i];
-      auto v0 = t->getVertex(0)->point();
-      auto v1 = t->getVertex(1)->point();
-      auto v2 = t->getVertex(2)->point();
-      auto d0 = v1 - v0;
-      auto d1 = v2 - v0;
-      double dx = d0.y() * d1.z() - d0.z() * d1.y();
-      double dy = d0.z() * d1.x() - d0.x() * d1.z();
-      double dz = d0.x() * d1.y() - d0.y() * d1.x();
-      double norm = sqrt(dx*dx + dy*dy + dz*dz);
-      dx /= norm;
-      dy /= norm;
-      dz /= norm;
-      for (size_t j = 0; j < 3; j++) {
-        auto v = t->getVertex(j);
-        int index = v->getIndex();
-        coord[3*index+0] += dx*u[index]/nbrTriangles[v];
-        coord[3*index+1] += dy*u[index]/nbrTriangles[v];
-        coord[3*index+2] += dz*u[index]/nbrTriangles[v];
-      }
-    }
-    for (size_t i = 0; i < nodes.size(); i++) {
-      int index = nodes[i]->getIndex();
-      gmsh::model::mesh::setNode(tags[index], {coord[3*index], coord[3*index+1], coord[3*index+2]}, {});
-    }
+    */
+    
+    laplacianSmoothing(nodes, edge2Triangles, loops, bc, u, 0.);
   }
+  else if (smoothing == 1) {
+    femSmoothing(physicalSurface, physicalBoundary, physicalPoints, gravity, ratio, nodes, u);
+  }
+  else {
+    manualSmoothing(gravity, ratio*lMax, triangles, nodes, loops, loopIndices, loopLengthFromFirst, vertexIndices, u, bc, edge2Triangles);
+  }
+  // Move nodes perpendicularly to the surface
+  expandCoord(coord, triangles, nbrTriangles, u);
+  std::cout << "Pre Expanded"<< std::endl;
+
+  // Move nodes in the representation
+  for (size_t i = 0; i < nodes.size(); i++) {
+    gmsh::model::mesh::setNode(tags[i], {coord[3*i], coord[3*i+1], coord[3*i+2]}, {});
+  }
+  std::cout << "Expanded"<< std::endl;
+
 
   // Compute geodesic
   geodesic::Mesh mesh;
@@ -547,7 +877,7 @@ int main(int argc, char* argv[]) {
     delete node;
   }
 
-  gmsh::finalize();
+  //gmsh::finalize();
 
   return 0;
 }

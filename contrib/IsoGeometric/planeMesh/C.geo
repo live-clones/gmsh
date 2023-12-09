@@ -20,5 +20,7 @@ Curve Loop(1) = {1, -2, 3, 4};
 Plane Surface(1) = {1};
 
 
-Physical Point("vertices") = {1, 2, 3, 4};
+Physical Point("vertices") = {1,2,3,4};
+Physical Curve("edges") = {1,2,3,4};
 Physical Surface("surface") = {1};
+

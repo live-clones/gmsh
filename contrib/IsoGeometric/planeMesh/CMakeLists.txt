@@ -197,5 +197,5 @@ endif()
 include_directories(${EXTRA_INCS})
 
 
-add_executable(example main.cpp ${EXTRA_INCS})
+add_executable(example main.cpp laplacianSmoothing.h ${EXTRA_INCS})
 target_link_libraries(example ${EXTRA_LIBS})

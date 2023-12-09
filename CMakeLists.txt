@@ -153,7 +153,7 @@ if(ENABLE_PRIVATE_API)
        src/geo/*.h src/mesh/*.h src/solver/*.h src/post/*.h src/plugin/*.h
        src/graphics/*.h contrib/kbipack/*.h contrib/DiscreteIntegration/*.h
        contrib/HighOrderMeshOptimizer/*.h contrib/MeshOptimizer/*.h
-       contrib/MeshQualityOptimizer/*.h)
+       contrib/MeshQualityOptimizer/*.h contrib/WinslowUntangler/*.h)
   set(GMSH_PRIVATE_API ${CMAKE_CURRENT_BINARY_DIR}/src/common/GmshConfig.h
       ${CMAKE_CURRENT_BINARY_DIR}/src/common/GmshVersion.h ${HEADERS})
   get_property(IAMCHILD DIRECTORY PROPERTY PARENT_DIRECTORY)

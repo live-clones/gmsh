@@ -32,12 +32,17 @@ Curve Loop(4) = {6};
 
 Plane Surface(1) = {1, 2, 3, 4};
 
-
+/*
 Physical Point("vertices_outer") = {7,8,9};
 Physical Point("vertices_inner1") = {2};
 Physical Point("vertices_inner2") = {4};
 Physical Point("vertices_inner3") = {6};
 Physical Surface("surface") = {1};
+*/
 
+
+Physical Point("vertices") = {2,4,6,7,8,9};
+Physical Curve("edges") = {2,4,6,7,8,9};
+Physical Surface("surface") = {1};
 
 MeshSize {:} = p;

@@ -153,7 +153,7 @@ inline void GeodesicAlgorithmExact::best_point_on_the_edge_set(SurfacePoint& poi
 		edge_pointer e = storage[i];
 		list_pointer list = interval_list(e);
 
-		double offset = 0.;
+		double offset;
 		double distance;
 		interval_pointer interval;
 

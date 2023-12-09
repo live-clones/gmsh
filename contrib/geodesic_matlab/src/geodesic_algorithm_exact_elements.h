@@ -200,6 +200,7 @@ public:
 							interval_pointer& interval)
 	{
 		interval_pointer p = m_first; 
+		offset = GEODESIC_INF;
 		distance = GEODESIC_INF;
 		interval = NULL;
 
