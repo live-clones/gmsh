@@ -1177,7 +1177,8 @@ void HighOrderMeshFastCurving(GEntity *ent, std::vector<GEntity *> &boundary,
         // }
         // continue;
 
-        Msg::Info("Curving elements in %s...", entName(ent).c_str());
+        Msg::Info("Curving elements in %s touching %s...",
+                  entName(ent).c_str(), entName(boundary[i]).c_str());
         if(haveNormal)
           curve2DBoundaryLayer(columns, normal, boundary[i]->cast2Edge());
         else

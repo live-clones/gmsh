@@ -13,7 +13,7 @@
 #include "Numeric.h"
 #include <iostream> //FIXMEDEBUG
 
-double *orthoBasisConstrained::_coeff_LIN = NULL;
+double *orthoBasisConstrained::_coeff_LIN = nullptr;
 int orthoBasisConstrained::_maxOrder = 10;
 
 orthogonalBasis::orthogonalBasis(const FuncSpaceData &_data)

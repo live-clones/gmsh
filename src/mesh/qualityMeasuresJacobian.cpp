@@ -237,7 +237,7 @@ static bool _getQualityFunctionSpace(MElement *el, FuncSpaceData &fsGrad,
   return true;
 }
 
-static bool _robustIGETooExpensive(MElement *el)
+static bool _robustIGEIsTooExpensive(MElement *el)
 {
   const int type = el->getType();
   const int order = el->getPolynomialOrder();
@@ -296,7 +296,7 @@ namespace jacobianBasedQuality {
       if((jmin <= 0 && jmax >= 0) || (jmax < 0 && !reversedOk)) return 0;
     }
 
-    if(_robustIGETooExpensive(el)) {
+    if(_robustIGEIsTooExpensive(el)) {
       double min, max;
       int order = el->getPolynomialOrder();
       // for(int i = 1; i < 10; ++i) {
@@ -700,10 +700,10 @@ namespace jacobianBasedQuality {
       raiser->computeCoeff(prox[3], prox[4], prox[5], coeffDen2);
 
       fullVector<double> &coeffNumerator = tmp;
-      const bezierBasisRaiser *raiserBis =
+      const bezierBasisRaiser *raiser2 =
         _coeffDet->getBezierBasis()->getRaiser();
-      raiserBis->computeCoeff(coeffNum1, det, coeffNumerator);
-      raiserBis->computeCoeff(coeffDen1, coeffDen2, coeffDenominator);
+      raiser2->computeCoeff(coeffNum1, det, coeffNumerator);
+      raiser2->computeCoeff(coeffDen1, coeffDen2, coeffDenominator);
 
       result = _computeBoundRational(coeffNumerator, coeffDenominator, true);
       return cTet * result / 12;
@@ -730,12 +730,12 @@ namespace jacobianBasedQuality {
       raiser->computeCoeff(prox[3], prox[4], prox[5], coeffDen2);
 
       fullVector<double> &coeffNumerator = tmp;
-      const bezierBasisRaiser *raiserBis =
+      const bezierBasisRaiser *raiser2 =
         _coeffDet->getBezierBasis()->getRaiser();
-      raiserBis->computeCoeff(coeffNum1, det, coeffNumerator);
-      raiserBis->computeCoeff(coeffDen1, coeffDen2, coeffDenominator);
+      raiser2->computeCoeff(coeffNum1, det, coeffNumerator);
+      raiser2->computeCoeff(coeffDen1, coeffDen2, coeffDenominator);
       // This implementation computes a sharp bound but requires to compute
-      // raiserBis which is (too) expensive both in time and memory consumption.
+      // raiser2 which is (too) expensive both in time and memory consumption.
 
       result = _computeBoundRational(coeffNumerator, coeffDenominator, true);
       return cPyr * result / 8;
