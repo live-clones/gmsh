@@ -215,10 +215,10 @@ SVector3 gmshFace::normal(const SPoint2 &param) const
   }
 }
 
-bool gmshFace::uniqueNormal(SVector3 &n, bool oriented) const
+bool gmshFace::uniqueNormal(SVector3 &n, bool oriented)
 {
-  if(s->Typ == MSH_SURF_DISCRETE) return uniqueNormalDiscreteFace(n);
-  if(s->Typ != MSH_SURF_PLAN) return false;
+  if(_s->Typ == MSH_SURF_DISCRETE) return uniqueNormalDiscreteFace(n);
+  if(_s->Typ != MSH_SURF_PLAN) return false;
 
   if(!oriented) {
     n[0] = meanPlane.a;

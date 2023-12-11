@@ -21,7 +21,3 @@ cmake-build-*
 
 # VS Code directories
 .vscode/
-
-# Ameury
-!contrib/mmg3d/build
-#build_*/

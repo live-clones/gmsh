@@ -1092,7 +1092,7 @@ namespace {
       // }
     }
 
-    std::set<MEdge, MFaceLessThan> BLShellEdges;
+    std::set<MEdge, MEdgeLessThan> BLShellEdges;
     std::set<MFace, MFaceLessThan>::iterator it;
     for(it = BLShell.begin(); it != BLShell.end(); ++it) {
       const MFace &f = *it;

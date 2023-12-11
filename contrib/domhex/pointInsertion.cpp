@@ -26,7 +26,6 @@
 
 bool old_algo_hexa() { return true; }
 
-  
 void computeSixNeighbors(frameFieldBackgroundMesh3D *bgm, MVertex *parent,
                          std::vector<MVertex *> &spawns, STensor3 dir, double h)
 {

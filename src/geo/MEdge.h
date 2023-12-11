@@ -6,10 +6,10 @@
 #ifndef MEDGE_H
 #define MEDGE_H
 
+#include "GmshDefines.h"
 #include "MVertex.h"
 #include "SVector3.h"
 #include <iostream>
-#include "GmshDefines.h"
 
 // A mesh edge.
 class MEdge {

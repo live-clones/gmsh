@@ -159,6 +159,7 @@ public:
   std::size_t getNumVertices() const { return (int)_v.size(); }
   MVertex *getVertex(std::size_t i) const { return _v[i]; }
   const std::vector<MVertex *> &getVertices() const { return _v; }
+
   std::size_t getNumCorners() const { return isTriangular() ? 3 : 4; }
   std::size_t getNumVerticesOnBoundary() const { return getNumCorners() * _order; }
 

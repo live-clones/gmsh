@@ -19,7 +19,7 @@ public:
   discreteRegion(GModel *model);
   virtual ~discreteRegion() {}
   virtual GeomType geomType() const { return DiscreteVolume; }
-  virtual bool haveParametrization() { return _geometry; }
+  virtual bool haveParametrization() const { return _geometry; }
   int createGeometry();
 };
 

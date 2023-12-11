@@ -15,6 +15,7 @@
 #include "GModel.h"
 #include "MElement.h"
 #include "bezierBasis.h"
+#include "polynomialBasis.h"
 #include <sstream>
 #include <fstream>
 #if defined(HAVE_OPENGL)

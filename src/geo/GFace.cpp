@@ -1307,7 +1307,7 @@ SVector3 GFace::normal(const SPoint2 &param) const
   return n;
 }
 
-bool GFace::uniqueNormal(SVector3 &n, bool oriented) const
+bool GFace::uniqueNormal(SVector3 &n, bool oriented)
 {
   // FIXME: The normal of a plane surface should be computed a single time
   //  and stored
@@ -1319,7 +1319,7 @@ bool GFace::uniqueNormal(SVector3 &n, bool oriented) const
   return false;
 }
 
-bool GFace::uniqueNormalDiscreteFace(SVector3 &n) const
+bool GFace::uniqueNormalDiscreteFace(SVector3 &n)
 {
   // Check if the mesh is in xy-plane
   SBoundingBox3d bb = bounds();

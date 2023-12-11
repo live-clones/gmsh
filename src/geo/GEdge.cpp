@@ -597,8 +597,7 @@ double GEdge::parFromPoint(const SPoint3 &P) const
   if(geomType() == BoundaryLayerCurve) return 0.;
 
   double t;
-  if (!XYZToU(P.x(), P.y(), P.z(), t)) std::cout << "aaaarg" << std::endl;
-  // FIXMEDEBUG what to do then?
+  XYZToU(P.x(), P.y(), P.z(), t);
   return t;
 }
 
