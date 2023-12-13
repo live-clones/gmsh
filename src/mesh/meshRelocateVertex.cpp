@@ -287,8 +287,7 @@ static void _relocateVertexOfPyramid(MVertex *ver,
     double ZOPT = c.z() + relax * H * n.z();
     double FULL_MOVE_OBJ =
       objective_function(1.0, ver, XOPT, YOPT, ZOPT, lt, true);
-    // printf("relax %g obj %g\n",relax,FULL_MOVE_OBJ);
-    if(FULL_MOVE_OBJ > 1e-3) {
+    if(FULL_MOVE_OBJ > 1e-6) {
       ver->x() = XOPT;
       ver->y() = YOPT;
       ver->z() = ZOPT;
@@ -492,14 +491,14 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
   buildVertexToElement(region->hexahedra, adj);
 
   for(int i = 0; i < 10; i++) {
-    double relax = (double)i / 10. + 1e-3;
+    double relax = (double)i / 10. + 1e-6;
     auto it = adj.begin();
     while(it != adj.end()) {
       _relocateVertexOfPyramid(it->first, it->second, relax);
       ++it;
     }
   }
-  return;
+
   for(int i = 0; i < niter + 2; i++) {
     auto it = adj.begin();
     double relax = std::min((double)(i + 1) / niter, 1.0);
