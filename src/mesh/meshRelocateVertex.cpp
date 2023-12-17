@@ -499,6 +499,8 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
     }
   }
 
+  // return;
+
   for(int i = 0; i < niter + 2; i++) {
     auto it = adj.begin();
     double relax = std::min((double)(i + 1) / niter, 1.0);
