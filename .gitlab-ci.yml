@@ -53,7 +53,8 @@ linux_compatibility_ci:
   except:
     - tags
 
-windows_ci:
+# FIXME: currently broken VM
+. windows_ci:
   script:
     - md build
     - cd build
