@@ -6,6 +6,7 @@
 #ifndef ANALYSEMESHQUALITY_H
 #define ANALYSEMESHQUALITY_H
 
+#include "GmshConfig.h"
 #include "Plugin.h"
 #include <vector>
 class MElement;

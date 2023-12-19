@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <limits>
+#include "GmshConfig.h"
 #include "MHexahedron.h"
 #include "Numeric.h"
 #include "Context.h"
