@@ -8,6 +8,7 @@
 #include "GmshConfig.h"
 #if defined(HAVE_MESH)
 
+#include "GmshConfig.h"
 #include "Plugin.h"
 #include <vector>
 class MElement;
