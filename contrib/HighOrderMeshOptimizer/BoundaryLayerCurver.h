@@ -143,7 +143,7 @@ namespace BoundaryLayerCurver {
 
     std::size_t getNumBLElements() const { return _stackElements.size(); }
     MElement *getBLElement(std::size_t num) const {
-      if(_stackElements.size() <= num) return NULL;
+      if(_stackElements.size() <= num) return nullptr;
       return _stackElements[num];
     }
 
@@ -386,7 +386,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &columns, SVector3 normal,
 // BL on CAD surface
 //   GEdge is not mandatory but highly recommended
 void curve2DBoundaryLayer(VecPairMElemVecMElem &columns, const GFace *,
-                          const GEdge *edge = NULL);
+                          const GEdge *edge = nullptr);
 
 // 3D BL
 void curve3DBoundaryLayer(VecPairMElemVecMElem &columns,

@@ -5,7 +5,6 @@
 
 #include <vector>
 #include <algorithm>
-#include "GmshConfig.h"
 #include "MFace.h"
 #include "Numeric.h"
 #include "ElementType.h"
@@ -47,7 +46,7 @@ void sortVertices(const std::vector<MVertex *> &v, std::vector<char> &s)
   }
   else if(v.size() == 4) {
     // avoid overhead of general case below
-    MVertex * sorted[4] {v[0], v[1], v[2], v[3]};
+    MVertex *sorted[4]{v[0], v[1], v[2], v[3]};
     std::sort(&sorted[0], &sorted[4], compare);
     s.reserve(4);
     for(int i = 0; i < 4; ++i) {
@@ -254,10 +253,10 @@ MEdgeN MFaceN::getHighOrderEdge(int num, int sign) const
   std::size_t end = nCorner + (num + 1) * (_order - 1);
   std::size_t k = 1;
   if(sign == 1) {
-    for(int i = start; i < end; ++i) vertices[++k] = _v[i];
+    for(std::size_t i = start; i < end; ++i) vertices[++k] = _v[i];
   }
   else {
-    for(int i = end - 1; i >= start; --i) vertices[++k] = _v[i];
+    for(std::size_t i = end - 1; i >= start; --i) vertices[++k] = _v[i];
   }
   return MEdgeN(vertices);
 }

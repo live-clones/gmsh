@@ -74,7 +74,7 @@ private:
     {
     }
   };
-  std::vector<std::vector<_data> > _raiser2, _raiser3;
+  std::vector<std::vector<_data>> _raiser2, _raiser3;
   const bezierBasis *_bfs;
 
 public:
@@ -99,11 +99,19 @@ private:
 class bezierCoeffMemoryPool {
   // This class is to avoid multiple allocation / deallocation during
   // the subdivision algorithm.
+  //
+  // Bezier coefficients are stored here (in '_memory') instead of in
+  // bezierCoeff class. A 'block' is a part of '_memory' that contains one set
+  // of Bezier coefficients.
+
 private:
+  // array of double to store Bezier coefficients:
   std::vector<double> _memory;
   std::size_t _sizeBlocks;
   std::size_t _numUsedBlocks;
   std::size_t _currentIndexOfSearch;
+  // FIXME: I think that _endOfSearch is not needed
+  //        because I think it is always equal to _bezierCoeff.size()
   std::size_t _endOfSearch;
   // if a reallocation is performed, the pointers must be updated, we need to
   // know which bezierCoeff have to be updated:
@@ -116,8 +124,13 @@ public:
   // before to be used, the size of the blocks has to be specified
   void setSizeBlocks(std::size_t size);
 
-  double *giveBlock(bezierCoeff *bez); // gives a block of size _sizeBlocks[num]
-  void releaseBlock(double *block, bezierCoeff *bez);
+  // gives a block of size _sizeBlocks
+  double *giveBlock(bezierCoeff *bez);
+
+  // Make the block that was used for a set of Bezier coefficient that
+  // can be discarded available
+  void releaseBlock(const double *block, bezierCoeff *bez);
+
   void freeMemory();
 
 private:
@@ -130,7 +143,7 @@ private:
   FuncSpaceData _funcSpaceData;
   const bezierBasis *_basis;
   int _r, _c; // size of the matrix
-  double *_data; // pointer on the first element
+  double *_data; // pointer on the first coefficient
   bool _ownData; // to know if data should be freed when object is deleted
 
   static bezierCoeffMemoryPool *_pool0;
@@ -145,9 +158,9 @@ public:
   bezierCoeff(){};
   bezierCoeff(const bezierCoeff &other, bool swap = false);
 
-  bezierCoeff(const FuncSpaceData fsData,
+  bezierCoeff(const FuncSpaceData &fsData,
               const fullVector<double> &orderedLagCoeff, int numOfPool = -1);
-  bezierCoeff(const FuncSpaceData fsData,
+  bezierCoeff(const FuncSpaceData &fsData,
               const fullMatrix<double> &orderedLagCoeff, int numOfPool = -1);
   // [orderedLagCoeff] : the Lagrange coefficients in the order given by
   //   function gmshGenerateOrderedPoints(..)

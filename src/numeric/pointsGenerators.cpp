@@ -1074,7 +1074,6 @@ void gmshGenerateOrderedPointsLine(int order, fullVector<double> &points)
   for(int i = 0; i < order + 1; ++i) {
     points(i) = i / static_cast<double>(order);
   }
-  return;
 }
 
 void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points,

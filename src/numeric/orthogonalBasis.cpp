@@ -27,9 +27,7 @@ void orthogonalBasis::f(double u, double v, double w, double *sf) const
   static double sf1[100];
   int k = 0;
   switch(_type) {
-  case TYPE_LIN:
-    LegendrePolynomials::f(_order, u, sf);
-    return;
+  case TYPE_LIN: LegendrePolynomials::f(_order, u, sf); return;
   case TYPE_TRI:
     if(u >= 1.) {
       for(int k = 0; k <= _order; ++k) { sf[k] = k + 1; }
@@ -89,18 +87,18 @@ void orthoBasisConstrained::_constructCoeffArrays() const
     denominators[i] = 1 + 2 * i;
     int par = i % 2;
     for(int j = par; j < i; j += 2) {
-      _coeff_LIN[++k] = - denominators[j] / static_cast<double>(sumDenoms[par]);
+      _coeff_LIN[++k] = -denominators[j] / static_cast<double>(sumDenoms[par]);
     }
     sumDenoms[par] += denominators[i];
   }
-  std::cout << "k is now " << k << " compared to size " << _maxOrder * _maxOrder / 4 << std::endl; //FIXMEDEBUG
+  std::cout << "k is now " << k << " compared to size "
+            << _maxOrder * _maxOrder / 4 << std::endl; // FIXMEDEBUG
   k = -1;
   for(int i = 0; i <= _maxOrder; ++i) {
-    for(int j = i % 2; j < i; j += 2) {
-      std::cout << " " << _coeff_LIN[++k];
-    }
+    for(int j = i % 2; j < i; j += 2) { std::cout << " " << _coeff_LIN[++k]; }
     std::cout << std::endl;
   }
+  delete[] denominators;
 }
 
 namespace LegendrePolynomials {

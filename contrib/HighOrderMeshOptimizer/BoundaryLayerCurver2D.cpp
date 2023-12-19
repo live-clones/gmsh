@@ -832,7 +832,7 @@ namespace BoundaryLayerCurver {
             LegendrePolynomials::fc(order + 1, refNodesh(i, 0), val);
             for(int j = 0; j < nbDofh; ++j) { vandermonde(i, j) = val[j]; }
           }
-          delete val;
+          delete[] val;
 
           fullMatrix<double> tmp;
           vandermonde.invert(tmp);
@@ -1189,7 +1189,7 @@ namespace BoundaryLayerCurver {
         _generalTFI(stackEdges, iLast, eta, terms, coeffHermite[i], gface);
         for(unsigned int j = 0; j < stackEdges.size() - 2; j += 2) {
           EdgeCurver2D::curveEdge(stackEdges[j], stackEdges[j + 1], gface,
-                                  NULL, normal);
+                                  nullptr, normal);
         }
         repositionInnerVertices(stackFacesBL, gface, true);
 
@@ -1536,10 +1536,10 @@ namespace BoundaryLayerCurver {
         }
       }
 
-      // If there remains NULL values, it is because the vertex is the same
+      // If there remains nullptr values, it is because the vertex is the same
       // on both layers (because of a non-tensorial element).
       for(int l = k; l < k + numVertexPerLayer; ++l) {
-        if(stack[l] == NULL) {
+        if(stack[l] == nullptr) {
           stack[l] = stack[l - numVertexPerLayer];
         }
       }
@@ -1553,7 +1553,7 @@ namespace BoundaryLayerCurver {
     MElement *bottomElement = column.getBoundaryElement();
     const int numVertexPerLayer = bottomElement->getNumPrimaryVertices();
     std::size_t numLayers = column.getNumBLElements();
-    stack.assign(numVertexPerLayer * (numLayers + 1), NULL);
+    stack.assign(numVertexPerLayer * (numLayers + 1), nullptr);
 
     std::size_t k = 0;
     for(int i = 0; i < numVertexPerLayer; ++i) {
@@ -1599,7 +1599,7 @@ namespace BoundaryLayerCurver {
         }
       }
 
-      // If there remains NULL values, it is because the vertex is the same
+      // If there remains nullptr values, it is because the vertex is the same
       // on both layers (because of a non-tensorial element).
       for(int l = k; l < k + numVertexPerLayer; ++l) {
         if(stack[l] == nullptr) { stack[l] = stack[l - numVertexPerLayer]; }

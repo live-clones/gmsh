@@ -383,7 +383,7 @@ namespace BoundaryLayerCurver {
 
   void repositionInnerVertices3D(MElement *el)
   {
-    const fullMatrix<double> *placement = NULL;
+    const fullMatrix<double> *placement = nullptr;
     const int order = el->getPolynomialOrder();
     switch(el->getType()) {
     case TYPE_TET:
@@ -419,7 +419,7 @@ namespace BoundaryLayerCurver {
       case TYPE_TET: placement = placementTet; break;
       case TYPE_HEX: placement = placementHex; break;
       case TYPE_PRI: placement = placementPri; break;
-      default: placement = NULL; break;
+      default: placement = nullptr; break;
       }
       if(placement)
         repositionInnerVertices3D(el, *placement);
@@ -453,7 +453,7 @@ namespace BoundaryLayerCurver {
   }
 
   Column3DBL::Column3DBL(PairMElemVecMElem &col)
-  : _stackElements(col.second), _boundaryElement(col.first), _gface(NULL)
+  : _stackElements(col.second), _boundaryElement(col.first), _gface(nullptr)
   {
     computeStackHighOrderFaces(col, _stackOrientedFaces);
     _externalElement = _stackElements.back();
@@ -475,7 +475,7 @@ namespace BoundaryLayerCurver {
     MElement *el = _stackElements[num];
     MFace bottomFace = _stackOrientedFaces[num].getFace();
     MFace topFace = _stackOrientedFaces[num + 1].getFace();
-    const fullMatrix<double> *placement = NULL;
+    const fullMatrix<double> *placement = nullptr;
     const int order = el->getPolynomialOrder();
     int nFace, nOtherFace, sign, rot;
     switch(el->getType()) {
@@ -617,10 +617,10 @@ namespace BoundaryLayerCurver {
       }
       if(v2 == v1) {
         v2 = v3;
-        v3 = NULL;
+        v3 = nullptr;
       }
       else if(v3 == v0) {
-        v3 = NULL;
+        v3 = nullptr;
       }
 
       MElement *el = column.getBLElement(i);
@@ -633,8 +633,8 @@ namespace BoundaryLayerCurver {
 
   Interface3DBL::Interface3DBL(const Column3DBL &col, const MEdge &edge,
                                const MapMEdgeVecMElem &touchedElems)
-  : _numFaces(col.getNumBLElements()), _col1(&col), _col2(NULL),
-    _boundaryElem2(NULL), _gface(NULL), _gedge(NULL)
+  : _numFaces(col.getNumBLElements()), _col1(&col), _col2(nullptr),
+    _boundaryElem2(nullptr), _gface(nullptr), _gedge(nullptr)
   {
     computeStackHOEdgesFaces(col, edge, _stackOrientedEdges, _stackOrientedFaces);
     _classifyExternalElements(touchedElems);
@@ -647,8 +647,8 @@ namespace BoundaryLayerCurver {
 
   Interface3DBL::Interface3DBL(const Column3DBL &col1, const Column3DBL &col2,
                                const MapMEdgeVecMElem &touchedElems)
-    : _col1(&col1), _col2(&col1), _boundaryElem2(NULL), _gface(NULL),
-      _gedge(NULL)
+    : _col1(&col1), _col2(&col1), _boundaryElem2(nullptr), _gface(nullptr),
+      _gedge(nullptr)
   {
     MEdge commonEdge;
     {
@@ -691,7 +691,7 @@ namespace BoundaryLayerCurver {
       others = it->second;
     }
 
-    _elementAtLastFace = NULL;
+    _elementAtLastFace = nullptr;
     intersect(last, others, common);
     if(common.size()) {
       _elementAtLastFace = common[0];
@@ -907,7 +907,7 @@ namespace BoundaryLayerCurver {
     // // FIXME We should check that _stackOrientedEdges.back() is not in a GFace
     //
     // const MElement *bottomEl1 = _col1->getBoundaryElement();
-    // const MElement *bottomEl2 = _boundaryElem2; // may be NULL
+    // const MElement *bottomEl2 = _boundaryElem2; // may be nullptr
     // if(_col2) bottomEl2 = _col2->getBoundaryElement();
     //
     // // FIXME:NOW
@@ -921,7 +921,7 @@ namespace BoundaryLayerCurver {
     // _checkQuality();
     //
     // // FIXME quid GFace?
-    // // FIXME computeExtremityCoefficients should handle if bottomEl2 == NULL
+    // // FIXME computeExtremityCoefficients should handle if bottomEl2 == nullptr
     // computeExtremityCoefficients(bottomEl1, bottomEl2, baseEdge, topEdge, parameters);
     // computePosition3DEdge(bottomEl1, bottomEl2, baseEdge, topEdge, parameters, 0, 0, boundary);
     //
@@ -1905,14 +1905,14 @@ namespace BoundaryLayerCurver {
       //
       // // Get an interior vertex and check if the border of the column is on a
       // // GFace. Then do the same for the bottom of column.
-      // GFace *gf = NULL;
+      // GFace *gf = nullptr;
       // {
       //   MFaceN &face = stackFaces.back();
       //   MVertex *v = face.getVertex(face.getNumVertices() - 1);
       //   GEntity *entity = v->onWhat();
       //   if(entity && entity->dim() == 2) gf = entity->cast2Face();
       // }
-      // GEdge *ge = NULL;
+      // GEdge *ge = nullptr;
       // {
       //   MEdgeN &edge = stackEdges[0];
       //   MVertex *v = edge.getVertex(2);
@@ -1924,7 +1924,7 @@ namespace BoundaryLayerCurver {
       //   // curveInterface(stackEdges, mapEdgeToElements, gf, ge);
       //   // SVector3 n;
       //   // if(gf->uniqueNormal(n, false))
-      //   //   curve2Dcolumn(columns[idx], NULL, ge, n);
+      //   //   curve2Dcolumn(columns[idx], nullptr, ge, n);
       //   // else
       //   //   curve2Dcolumn(columns[idx], gf, ge, n);
       // }

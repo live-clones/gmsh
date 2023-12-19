@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <map>
+#include <cmath>
 #include <algorithm>
 #include "bezierBasis.h"
 #include "GmshDefines.h"
@@ -14,6 +15,16 @@
 #include "Numeric.h"
 
 namespace {
+
+  void double2int(const fullMatrix<double> &matDouble, fullMatrix<int> &matInt)
+  {
+    matInt.resize(matDouble.size1(), matDouble.size2());
+    for(int i = 0; i < matDouble.size1(); ++i) {
+      for(int j = 0; j < matDouble.size2(); ++j) {
+        matInt(i, j) = static_cast<int>(std::lround(matDouble(i, j)));
+      }
+    }
+  }
 
   // Exponents:
   void generateExponents(FuncSpaceData data, fullMatrix<double> &exp)
@@ -94,34 +105,27 @@ namespace {
       return fullMatrix<double>(1, 1);
     }
 
-    const int ndofs = exponent.size1();
+    fullMatrix<int> expInt;
+    double2int(exponent, expInt);
+
+    const int ndofs = expInt.size1();
 
     int n01 = nij;
     fullMatrix<double> bez2Lag(ndofs, ndofs);
     for(int i = 0; i < ndofs; i++) {
       for(int j = 0; j < ndofs; j++) {
-        if(pyr) n01 = exponent(j, 2) + nij;
+        if(pyr) n01 = expInt(j, 2) + nij;
         bez2Lag(i, j) =
-          nChoosek(n01, exponent(j, 0)) * nChoosek(n01, exponent(j, 1)) *
-          nChoosek(nk, exponent(j, 2)) * pow_int(point(i, 0), exponent(j, 0)) *
-          pow_int(point(i, 1), exponent(j, 1)) *
-          pow_int(point(i, 2), exponent(j, 2)) *
-          pow_int(1. - point(i, 0), n01 - exponent(j, 0)) *
-          pow_int(1. - point(i, 1), n01 - exponent(j, 1)) *
-          pow_int(1. - point(i, 2), nk - exponent(j, 2));
+          nChoosek(n01, expInt(j, 0)) * nChoosek(n01, expInt(j, 1)) *
+          nChoosek(nk, expInt(j, 2)) * pow_int(point(i, 0), expInt(j, 0)) *
+          pow_int(point(i, 1), expInt(j, 1)) *
+          pow_int(point(i, 2), expInt(j, 2)) *
+          pow_int(1. - point(i, 0), n01 - expInt(j, 0)) *
+          pow_int(1. - point(i, 1), n01 - expInt(j, 1)) *
+          pow_int(1. - point(i, 2), nk - expInt(j, 2));
       }
     }
     return bez2Lag;
-  }
-
-  void double2int(const fullMatrix<double> &matDouble, fullMatrix<int> &matInt)
-  {
-    matInt.resize(matDouble.size1(), matDouble.size2());
-    for(int i = 0; i < matDouble.size1(); ++i) {
-      for(int j = 0; j < matDouble.size2(); ++j) {
-        matInt(i, j) = static_cast<int>(matDouble(i, j) + .5);
-      }
-    }
   }
 
   template <typename D>
@@ -191,12 +195,7 @@ bezierBasis::bezierBasis(FuncSpaceData data)
     _construct();
 }
 
-bezierBasis::~bezierBasis()
-{
-  if(_raiser != nullptr) {
-    delete _raiser;
-  }
-}
+bezierBasis::~bezierBasis() { delete _raiser; }
 
 void bezierBasis::_construct()
 {
@@ -613,7 +612,7 @@ bezierCoeffMemoryPool *bezierCoeff::_pool0 = nullptr;
 bezierCoeffMemoryPool *bezierCoeff::_pool1 = nullptr;
 fullMatrix<double> bezierCoeff::_sub = fullMatrix<double>();
 
-bezierCoeff::bezierCoeff(const FuncSpaceData fsData,
+bezierCoeff::bezierCoeff(const FuncSpaceData &fsData,
                          const fullMatrix<double> &orderedLagCoeff, int num)
   : _numPool(num), _funcSpaceData(fsData),
     _basis(BasisFactory::getBezierBasis(fsData))
@@ -626,8 +625,8 @@ bezierCoeff::bezierCoeff(const FuncSpaceData fsData,
   }
   if(!abort && orderedLagCoeff.size1() != _basis->getNumCoeff()) {
     Msg::Error("Call of Bezier expansion with a wrong number of Lagrange "
-               "coefficients (%d vs %d).", orderedLagCoeff.size1(),
-               _basis->getNumCoeff());
+               "coefficients (%d vs %d).",
+               orderedLagCoeff.size1(), _basis->getNumCoeff());
     abort = true;
   }
   if(abort) {
@@ -653,7 +652,7 @@ bezierCoeff::bezierCoeff(const FuncSpaceData fsData,
   _computeCoefficients(orderedLagCoeff.getDataPtr());
 }
 
-bezierCoeff::bezierCoeff(const FuncSpaceData fsData,
+bezierCoeff::bezierCoeff(const FuncSpaceData &fsData,
                          const fullVector<double> &orderedLagCoeff, int num)
   : _numPool(num), _funcSpaceData(fsData),
     _basis(BasisFactory::getBezierBasis(fsData))
@@ -666,8 +665,8 @@ bezierCoeff::bezierCoeff(const FuncSpaceData fsData,
   }
   if(!abort && orderedLagCoeff.size() != _basis->getNumCoeff()) {
     Msg::Error("Call of Bezier expansion with a wrong number of Lagrange "
-               "coefficients (%d vs %d).", orderedLagCoeff.size(),
-               _basis->getNumCoeff());
+               "coefficients (%d vs %d).",
+               orderedLagCoeff.size(), _basis->getNumCoeff());
     abort = true;
   }
   if(abort) {
@@ -812,6 +811,9 @@ void bezierCoeff::_computeCoefficients(const double *lagCoeffDataConst)
     }
     return;
   }
+  default:
+    Msg::Error("Element type %d unknown in bezier data construction", type);
+    return;
   }
 }
 
@@ -852,6 +854,7 @@ int bezierCoeff::getIdxCornerCoeff(int i) const
     case 0: return 0;
     case 1: return order;
     case 2: return _r - 1;
+    default:;
     }
   case TYPE_QUA:
     switch(i) {
@@ -859,6 +862,7 @@ int bezierCoeff::getIdxCornerCoeff(int i) const
     case 1: return order;
     case 2: return _r - 1;
     case 3: return _r - 1 - order;
+    default:;
     }
   case TYPE_TET:
     switch(i) {
@@ -866,6 +870,7 @@ int bezierCoeff::getIdxCornerCoeff(int i) const
     case 1: return order;
     case 2: return (order + 2) * (order + 1) / 2 - 1;
     case 3: return _r - 1;
+    default:;
     }
   case TYPE_HEX:
     switch(i) {
@@ -877,6 +882,7 @@ int bezierCoeff::getIdxCornerCoeff(int i) const
     case 5: return (order + 1) * (order + 1) * order + order;
     case 6: return _r - 1;
     case 7: return (order + 2) * (order + 1) * order;
+    default:;
     }
   case TYPE_PRI:
     switch(i) {
@@ -886,6 +892,7 @@ int bezierCoeff::getIdxCornerCoeff(int i) const
     case 3: return (order + 2) * (order + 1) / 2 * order;
     case 4: return (order + 2) * (order + 1) / 2 * order + order;
     case 5: return _r - 1;
+    default:;
     }
   case TYPE_PYR:
     if(_funcSpaceData.getPyramidalSpace()) {
@@ -895,6 +902,7 @@ int bezierCoeff::getIdxCornerCoeff(int i) const
       case 2: return (order + 1) * (order + 1) - 1;
       case 3: return (order + 1) * order;
       case 4: return _r - 1;
+      default:;
       }
     }
     else {
@@ -909,13 +917,18 @@ int bezierCoeff::getIdxCornerCoeff(int i) const
       case 5: return (nij + 1) * (nij + 1) * nk + nij;
       case 6: return _r - 1;
       case 7: return (nij + 1) * (nij + 1) * nk + (nij + 1) * nij;
+      default:;
       }
     }
   default:
-    Msg::Error("type %d not implemented in getIdxCornerCoeff",
+    Msg::Error("Element type %d is unknown in getIdxCornerCoeff",
                _funcSpaceData.getType());
     return 0;
   }
+  Msg::Warning("Wrong input corner number in function "
+               "bezierCoeff::getIdxCornerCoeff: type=%d, corner=%d.",
+               _funcSpaceData.getType(), i);
+  return 0;
 }
 
 void bezierCoeff::getCornerCoeffs(fullVector<double> &v) const
@@ -937,7 +950,7 @@ void bezierCoeff::getCornerCoeffs(fullMatrix<double> &m) const
 
 void bezierCoeff::subdivide(std::vector<bezierCoeff *> &subCoeff) const
 {
-  if(subCoeff.size()) {
+  if(!subCoeff.empty()) {
     Msg::Warning("expected empty vector of bezierCoeff");
     subCoeff.clear();
   }
@@ -1083,8 +1096,7 @@ void bezierCoeff::_subdivideTriangle(const bezierCoeff &coeff, int start,
   }
 }
 
-void bezierCoeff::_subdivideTet(SubdivisionTet which, int n,
-                                bezierCoeff &coeff)
+void bezierCoeff::_subdivideTet(SubdivisionTet which, int n, bezierCoeff &coeff)
 {
   // TODO: consider precompute vector<pair<int, int>> for subdiv
   //       consider precompute vector<pair<int, int, int>> for n_crosse_e
@@ -1266,7 +1278,6 @@ void bezierCoeff::_subdivideQuadrangle(const bezierCoeff &coeff,
   _copyQuad(_sub, n, n - 1, 0, *subCoeff[1]);
   _copyQuad(_sub, n, 0, n - 1, *subCoeff[2]);
   _copyQuad(_sub, n, n - 1, n - 1, *subCoeff[3]);
-  return;
 }
 
 void bezierCoeff::_subdivideHexahedron(const bezierCoeff &coeff,
@@ -1302,7 +1313,6 @@ void bezierCoeff::_subdivideHexahedron(const bezierCoeff &coeff,
   _copyHex(_sub, n, n - 1, 0, n - 1, *subCoeff[5]);
   _copyHex(_sub, n, 0, n - 1, n - 1, *subCoeff[6]);
   _copyHex(_sub, n, n - 1, n - 1, n - 1, *subCoeff[7]);
-  return;
 }
 
 void bezierCoeff::_subdividePrism(const bezierCoeff &coeff,
@@ -1338,7 +1348,6 @@ void bezierCoeff::_subdividePrism(const bezierCoeff &coeff,
     _subdivideTriangle(*subCoeff[0], k * ntri, subCoeff);
     _subdivideTriangle(*subCoeff2[0], k * ntri, subCoeff2);
   }
-  return;
 }
 
 void bezierCoeff::_subdividePyramid(const bezierCoeff &coeff,
@@ -1383,7 +1392,6 @@ void bezierCoeff::_subdividePyramid(const bezierCoeff &coeff,
   _copyPyr(_sub, nij, nk, nij - 1, 0, nk - 1, *subCoeff[5]);
   _copyPyr(_sub, nij, nk, 0, nij - 1, nk - 1, *subCoeff[6]);
   _copyPyr(_sub, nij, nk, nij - 1, nij - 1, nk - 1, *subCoeff[7]);
-  return;
 }
 
 void bezierCoeff::_copy(const bezierCoeff &from, int start, int num,
@@ -1505,14 +1513,15 @@ double *bezierCoeffMemoryPool::giveBlock(bezierCoeff *bez)
   // We must never be here. If yes, this means that
   // _numUsedBlocks < _endOfSearch
   // and _bezierCoeff[i] for i < _endOfSearch are all different from
-  // NULL which should never happens.
+  // nullptr which should never happens.
   Msg::Error("Wrong state of bezierCoeffMemoryPool."
              "_bezierCoeff[i] not correct?");
   return nullptr;
 }
 
-void bezierCoeffMemoryPool::releaseBlock(double *block, bezierCoeff *bez)
+void bezierCoeffMemoryPool::releaseBlock(const double *block, bezierCoeff *bez)
 {
+  // 1) Release
   long diff = block - &_memory.front();
   std::size_t idx = diff / _sizeBlocks;
   //  if (_bezierCoeff[idx] == bez)
@@ -1520,6 +1529,9 @@ void bezierCoeffMemoryPool::releaseBlock(double *block, bezierCoeff *bez)
   //  else
   //    Msg::Info("Did not work :'( ");
   _bezierCoeff[idx] = nullptr;
+  --_numUsedBlocks;
+
+  // 2) Update _endOfSearch
   if(idx == _endOfSearch - 1) {
     do {
       --_endOfSearch;
@@ -1527,7 +1539,6 @@ void bezierCoeffMemoryPool::releaseBlock(double *block, bezierCoeff *bez)
     _bezierCoeff.resize(_endOfSearch);
     if(_currentIndexOfSearch >= _endOfSearch) _currentIndexOfSearch = 0;
   }
-  --_numUsedBlocks;
 }
 
 void bezierCoeffMemoryPool::freeMemory()
