@@ -3577,22 +3577,22 @@ double opt_general_expert_mode(OPT_ARGS_NUM)
   return CTX::instance()->expertMode;
 }
 
-#if defined(HAVE_VISUDEV)
 double opt_general_heavy_visualization(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
+#if defined(HAVE_VISUDEV)
     if(CTX::instance()->heavyVisu != val)
       CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+#endif
     CTX::instance()->heavyVisu = (int)val;
   }
-#if defined(HAVE_FLTK)
+#if defined(HAVE_VISUDEV) && defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->general.butt[20]->value(
       CTX::instance()->heavyVisu);
 #endif
   return CTX::instance()->heavyVisu;
 }
-#endif
 
 double opt_general_stereo_mode(OPT_ARGS_NUM)
 {
