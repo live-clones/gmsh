@@ -7,7 +7,7 @@
 #include "robustPredicates.h"
 //#include "libol1.h"
 
-int TESTCASE = 1;
+int TESTCASE = 12;
 
 discreteFront::discreteFront (std::vector<double> &p, std::vector<size_t> &l, std::vector<int> &c, double _t){
   addLines(p,l,c);
@@ -92,9 +92,9 @@ void discreteFront::intersectLine2d (const SVector3 &p0, const SVector3 &p1,
   int IMIN,IMAX,JMIN,JMAX;
   getCoordinates(xmin,ymin,IMIN,JMIN);
   getCoordinates(xmax,ymax,IMAX,JMAX);
-  for (size_t I=IMIN; I<=IMAX;I++){
-    for (size_t J=JMIN; J<=JMAX;J++){
-      size_t index = I+NX*J;
+  for (int I=IMIN; I<=IMAX;I++){
+    for (int J=JMIN; J<=JMAX;J++){
+      int index = I+NX*J;
       _ind.insert(_ind.begin(),sss[index].begin(),sss[index].end());
     }
   }
@@ -154,6 +154,21 @@ void discreteFront::buildSpatialSearchStructure () {
 }
 
 SVector3 discreteFront::velocity (double x, double y, double z, double t, int col){
+  // doublet
+  if (TESTCASE == 12){
+    double x1 = 0.5, y1=0.5;
+    double x2 = 1.5, y2=0.5;
+    double r1 = sqrt((x-x1)*(x-x1)+(y-y1)*(y-y1));
+    double r2 = sqrt((x-x2)*(x-x2)+(y-y2)*(y-y2));
+    double Gamma = 1;
+    double theta_1 = atan2(y-y1,x-x1);
+    double theta_2 = atan2(y-y2,x-x2);
+    SVector3 v1  ((Gamma/(2*M_PI))*sin(theta_1)/r1,
+		  (-Gamma/(2*M_PI))*cos(theta_1)/r1,0);
+    SVector3 v2  ((-Gamma/(2*M_PI))*sin(theta_2)/r2,
+		  (Gamma/(2*M_PI))*cos(theta_2)/r2,0);
+    return v1+v2;
+  }
   if (TESTCASE == 11){
     double r = col == 1 ? sqrt(x*x+y*y) : sqrt((x-.3)*(x-.3)+y*y);
     double theta = col == 1 ? atan2(y,x) : atan2(y,x-.3);    
@@ -410,6 +425,9 @@ void testRelaying() {
     df.buildSpatialSearchStructure () ;
     df.boolOp();
   }
+  else if (TESTCASE == 12){
+    df.addEllipsis(1,1.,0.6,0,0.3,0.3,3000);
+  }
   else if (TESTCASE == 2){
     //    df.addRectangle(1,0.5,0.75,0.3,0.003,200);
     df.addEllipsis(1,0.5,0.75,0,0.15,0.15,1000);
@@ -437,7 +455,7 @@ void testRelaying() {
     mr.doRelax (1);
     char name [245];
     sprintf(name, "test%lu.pos",i);
-    if(ITERR%1==0)mr.print4debug (name);
+    if(ITERR%20==0)mr.print4debug (name);
     mr.advanceInTime(0.025);
     if (t > 16)break;
     t+= 0.025;
