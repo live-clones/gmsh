@@ -212,7 +212,7 @@ int GmshRestoreDefaultOptions()
 
 int GmshOpenProject(const std::string &fileName)
 {
-  OpenProject(fileName);
+  OpenProject(fileName, true);
   return 1;
 }
 

@@ -611,6 +611,7 @@ double opt_mesh_nb_pyramids(OPT_ARGS_NUM);
 double opt_mesh_nb_trihedra(OPT_ARGS_NUM);
 double opt_mesh_cpu_time(OPT_ARGS_NUM);
 double opt_mesh_clip(OPT_ARGS_NUM);
+double opt_mesh_ignore_unknown_sections(OPT_ARGS_NUM);
 double opt_mesh_ignore_periodicity(OPT_ARGS_NUM);
 double opt_mesh_preserve_numbering_msh2(OPT_ARGS_NUM);
 double opt_mesh_max_iter_delaunay_3d(OPT_ARGS_NUM);

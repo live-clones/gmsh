@@ -165,7 +165,6 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
   // known problem : all the volumes have to be set as Physical Volumes
   // otherwise set saveAll = true (20.10.2023)
   indexMeshVertices(saveAll, 0, false);
-
   // create association map for vertices and faces
   hashMap<unsigned, std::vector<unsigned>>::_ vertmap;
   for(auto it = firstFace(); it != lastFace(); ++it) {
@@ -452,7 +451,13 @@ int GModel::readNEU(const std::string &name)
       return 0;
     }
 
-    vertexVector[i] = new MVertex(x, y, z);
+    if(p > 0 && p <= (int)vertexVector.size()) {
+      vertexVector[p - 1] = new MVertex(x, y, z);
+    }
+    else {
+      Msg::Error("Node tag %d out of range", p);
+      return 0;
+    }
     if(numVertices > 100000) Msg::ProgressMeter(i + 1, true, "Reading nodes");
   }
 
@@ -484,7 +489,7 @@ int GModel::readNEU(const std::string &name)
   std::vector<int> elementTypeVector;
   elementTypeVector.reserve(numElements);
 
-  for(int num = 0; num < numElements; num++) {
+  for(int num = 1; num <= numElements; num++) {
     if(!fgets(str, sizeof(str), fp) || feof(fp)) {
       fclose(fp);
       return 0;
