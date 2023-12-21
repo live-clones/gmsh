@@ -348,7 +348,7 @@ actions in the geometry module automatically append the related command
 in the input script file, and can optionally also generate input for the
 languages supported by the API (see the
 @code{General.ScriptingLanguages} option; this is still work-in-progress
-as of Gmsh 4.11.)
+as of Gmsh 4.12.)
 
 In addition to CAD-type geometrical entities, whose geometry is provided
 by a CAD kernel, Gmsh also supports @emph{discrete} model entities,
