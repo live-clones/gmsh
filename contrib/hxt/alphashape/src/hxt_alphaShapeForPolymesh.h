@@ -16,7 +16,7 @@ extern "C" {
 #include "hxt_tetRefine.h"
 #include "hxt_alphashape.h"
 
-void _refineSurfaceTriangulation(HXTMesh* mesh, HXTDelaunayOptions* delOptions, HXTAlphaShapeOptions* alphaShapeOptions);
+void _refineSurfaceTriangulation(HXTMesh** meshPtr, HXTDelaunayOptions* delOptions, HXTAlphaShapeOptions* alphaShapeOptions);
 
 
 #ifdef __cplusplus

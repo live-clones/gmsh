@@ -13,7 +13,7 @@ HXTStatus hxtAlphaShape(HXTMesh* mesh, HXTDelaunayOptions* delOptions, HXTAlphaS
 
 // Refine the surface triangulation defined by the alpha shape.
 // The facets on the boundary should respect a size field defined by the user.
-int hxtRefineSurfaceTriangulation(HXTMesh* mesh, HXTDelaunayOptions* delOptions, HXTAlphaShapeOptions* alphaShapeOptions);
+int hxtRefineSurfaceTriangulation(HXTMesh** mesh, HXTDelaunayOptions* delOptions, HXTAlphaShapeOptions* alphaShapeOptions);
 
 // Delaunay refinement of the tetrahedra colored as part of the alpha shape.
 // A size field should be given as input.

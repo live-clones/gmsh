@@ -84,7 +84,8 @@ HXTStatus hxtAlphaShape(HXTMesh* mesh, HXTDelaunayOptions* delOptions, HXTAlphaS
             mesh->tetrahedra.color[i] = alphaShapeOptions->colorOut;
     }
     printf("after if \n");
-    HXT_CHECK( hxtAlignedRealloc(&alphaShapeOptions->tetrahedra, (tetCount)*sizeof(uint64_t)) );
+    HXT_CHECK( hxtMalloc(&alphaShapeOptions->tetrahedra, (tetCount)*sizeof(uint64_t)) );
+    // HXT_CHECK( hxtAlignedRealloc(&alphaShapeOptions->tetrahedra, (tetCount)*sizeof(uint64_t)) );
     printf("realloc'd \n");
     for (int i=0; i<tetCount; i++){
         mesh->tetrahedra.color[domainTetrahedra[i]] = alphaShapeOptions->colorIn;
@@ -93,7 +94,8 @@ HXTStatus hxtAlphaShape(HXTMesh* mesh, HXTDelaunayOptions* delOptions, HXTAlphaS
     printf("added tets \n");
     // add the facets to the mesh
     alphaShapeOptions->n_boundaryFacets = facetCount/2;
-    HXT_CHECK( hxtAlignedRealloc(&alphaShapeOptions->boundaryFacets, 3*alphaShapeOptions->n_boundaryFacets*sizeof(uint32_t)));
+    // HXT_CHECK( hxtAlignedRealloc(&alphaShapeOptions->boundaryFacets, 3*alphaShapeOptions->n_boundaryFacets*sizeof(uint32_t)));
+    HXT_CHECK( hxtMalloc(&alphaShapeOptions->boundaryFacets, 3*alphaShapeOptions->n_boundaryFacets*sizeof(uint32_t)));
     for (uint64_t i=0; i<alphaShapeOptions->n_boundaryFacets; i++){
         alphaShapeOptions->boundaryFacets[3*i+0] = mesh->tetrahedra.node[4*boundaryFacets[2*i]+getNode0FromFacet(boundaryFacets[2*i+1])];
         alphaShapeOptions->boundaryFacets[3*i+1] = mesh->tetrahedra.node[4*boundaryFacets[2*i]+getNode1FromFacet(boundaryFacets[2*i+1])];
@@ -108,7 +110,7 @@ HXTStatus hxtAlphaShape(HXTMesh* mesh, HXTDelaunayOptions* delOptions, HXTAlphaS
 /****************************************************************************************
  **************** Refine surface triangulation of alpha shape ***************************
  ****************************************************************************************/
-int hxtRefineSurfaceTriangulation(HXTMesh* mesh, HXTDelaunayOptions* delOptions, HXTAlphaShapeOptions* alphaShapeOptions){
+int hxtRefineSurfaceTriangulation(HXTMesh** mesh, HXTDelaunayOptions* delOptions, HXTAlphaShapeOptions* alphaShapeOptions){
     _refineSurfaceTriangulation(mesh, delOptions, alphaShapeOptions);
     return 0;
 }
@@ -159,9 +161,10 @@ int hxtAlphaShapeNodeInsertion(HXTMesh* mesh, HXTDelaunayOptions* delOptions, HX
             double c[3], R, xi, eta, zeta;  
             R = tetrahedron_circumcenter(p[0], p[1], p[2], p[3], c, &xi, &eta, &zeta);
             if (R <= 0.) continue;
+            
             // Test size and quality
             double s_mean = (s[0]+s[1]+s[2]+s[3])/4;
-            // if (R/s_mean < 1) continue; // it is small enough 
+            if (R/s_mean < 1) continue; // it is small enough 
             // Find in which tet is the newly spawned point
             uint64_t pt2Tet = HXT_COLOR_OUT;
             if (pointInTetrahedron(p[0], p[1], p[2], p[3], c)==1){
@@ -200,6 +203,10 @@ int hxtAlphaShapeNodeInsertion(HXTMesh* mesh, HXTDelaunayOptions* delOptions, HX
         }
 
         uint32_t v = delOptions->insertionFirst;
+
+        if(delOptions->nodalSizes->callback!=NULL) {
+            HXT_CHECK( delOptions->nodalSizes->callback(newVertices, NULL, numNewPts, delOptions->nodalSizes->userData) );
+        }
 
         HXTNodeInfo* nodeInfo;
         if(status==HXT_STATUS_OK){
