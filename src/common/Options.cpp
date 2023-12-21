@@ -4303,6 +4303,22 @@ double opt_geometry_oriented_physicals(OPT_ARGS_NUM)
   return CTX::instance()->geom.orientedPhysicals;
 }
 
+double opt_geometry_first_entity_tag(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->geom.firstEntityTag = (val > 1) ? (int)val : 1;
+  }
+  return CTX::instance()->geom.firstEntityTag;
+}
+
+double opt_geometry_first_physical_tag(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->geom.firstPhysicalTag = (val > 1) ? (int)val : 1;
+  }
+  return CTX::instance()->geom.firstPhysicalTag;
+}
+
 double opt_geometry_highlight_orphans(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.highlightOrphans = (int)val;
@@ -6304,6 +6320,12 @@ double opt_mesh_ho_fix_bnd_nodes(OPT_ARGS_NUM)
   return CTX::instance()->mesh.hoFixBndNodes;
 }
 
+double opt_mesh_ho_skip_quality_check(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.hoSkipQualityCheck = val;
+  return CTX::instance()->mesh.hoSkipQualityCheck;
+}
+
 double opt_mesh_second_order_linear(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
@@ -6637,6 +6659,12 @@ double opt_mesh_preserve_numbering_msh2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.preserveNumberingMsh2 = (int)val;
   return CTX::instance()->mesh.preserveNumberingMsh2;
+}
+
+double opt_mesh_ignore_unknown_sections(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.ignoreUnknownSections = (int)val;
+  return CTX::instance()->mesh.ignoreUnknownSections;
 }
 
 double opt_mesh_ignore_periodicity(OPT_ARGS_NUM)

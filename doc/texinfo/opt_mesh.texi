@@ -246,6 +246,11 @@ Maximum angle between edges/faces within layers of BL triangles/tets for the det
 Default value: @code{0.523599}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.HighOrderSkipQualityCheck
+Skip element quality check after high-order mesh generation@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.IgnoreParametrization
 Skip parametrization section when reading meshes in the MSH4 format@*
 Default value: @code{0}@*

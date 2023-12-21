@@ -223,7 +223,7 @@
 #define MSH_TET_16   137
 #define MSH_TRI_MINI 138
 #define MSH_TET_MINI 139
-#define MSH_TRIH_4   140
+#define MSH_TRIH_4   140 // Tri hedron -- One quad face and two triangular faces -- made for connecting hexes and tets
 #define MSH_MAX_NUM  140 // keep this up-to-date when adding new type
 
 // Geometric entities

@@ -1474,7 +1474,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
   Msg::StopProgressMeter();
   double t2 = Cpu(), w2 = TimeOfDay();
 
-  if(!linear) {
+  if(!linear && !CTX::instance()->mesh.hoSkipQualityCheck) {
     std::vector<MElement *> bad;
     double worst;
     checkHighOrderTriangles("Surface mesh", m, bad, worst);

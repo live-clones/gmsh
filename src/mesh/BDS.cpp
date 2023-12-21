@@ -1093,7 +1093,8 @@ bool BDS_Mesh::collapse_edge_parametric(BDS_Edge *e, BDS_Point *p, bool force)
   const int CHECK1 = -1, CHECK2 = -1;
 
   if(e->p1->iD == CHECK1 && e->p2->iD == CHECK2) {
-    printf("collapsing edge %p %p onto %p\n", e->p1, e->p2, p);
+    printf("collapsing edge %p %p onto %p\n", (void*)e->p1, (void*)e->p2,
+           (void*)p);
     printf("collapsing edge %d %d onto %d\n", e->p1->iD, e->p2->iD, p->iD);
   }
 
@@ -1261,7 +1262,8 @@ static inline bool getOrderedNeighboringVertices(BDS_Point *p,
     for(size_t i = 0; i < ts.size(); i++) {
       BDS_Point *pts[4];
       if(ts[i]->getNodes(pts)) {
-        printf("TR %lu : %p %p %p\n", i, pts[0], pts[1], pts[2]);
+        printf("TR %lu : %p %p %p\n", i, (void*)pts[0], (void*)pts[1],
+               (void*)pts[2]);
         printf("TR %lu : %d %d - %d %d - %d %d\n", i, ts[i]->e1->p1->iD,
                ts[i]->e1->p2->iD, ts[i]->e2->p1->iD, ts[i]->e2->p2->iD,
                ts[i]->e3->p1->iD, ts[i]->e3->p2->iD);

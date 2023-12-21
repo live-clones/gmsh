@@ -252,9 +252,17 @@ void onelab_cb(Fl_Widget *w, void *data)
 
   if(action == "compute" && (CTX::instance()->solver.autoSaveDatabase ||
                              CTX::instance()->solver.autoArchiveOutputFiles)) {
-    std::vector<std::string> split =
-      SplitFileName(GModel::current()->getFileName());
-    std::string db = split[0] + split[1] + ".db";
+    std::string db;
+    std::vector<onelab::string> ps;
+    onelab::server::instance()->get(ps, "Gmsh/DatabaseFileName");
+    if(ps.size() && ps[0].getValue().size()) {
+      db = ps[0].getValue();
+    }
+    else {
+      std::vector<std::string> split =
+        SplitFileName(GModel::current()->getFileName());
+      db = split[0] + split[1] + ".db";
+    }
     if(CTX::instance()->solver.autoArchiveOutputFiles)
       onelabUtils::archiveOutputFiles(db);
     if(CTX::instance()->solver.autoSaveDatabase) onelabUtils::saveDb(db);

@@ -599,11 +599,13 @@ void Msg::Info(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
+  str[4999] = '\0';
+  int l = strlen(str); if(l > 0 && str[l - 1] == '\n') str[l - 1] = '\0';
 
   if(_infoCpu || _infoMem){
     std::string res = PrintResources(false, _infoCpu, _infoCpu, _infoMem);
-    strcat(str, res.c_str());
+    if(strlen(str) + res.size() < 5000)
+      strcat(str, res.c_str());
   }
 
   if(_logFile) fprintf(_logFile, "Info: %s\n", str);

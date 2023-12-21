@@ -917,6 +917,7 @@ public:
   int writeSU2(const std::string &name, bool saveAll, double scalingFactor);
 
   // GAMBIT neutral mesh file (.neu)
+  int readNEU(const std::string &name);
   int writeNEU(const std::string &name, bool saveAll, double scalingFactor);
 };
 

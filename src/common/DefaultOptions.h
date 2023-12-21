@@ -892,6 +892,11 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "ExtrudeSplinePoints" , opt_geometry_extrude_spline_points, 5. ,
     "Number of control points for splines created during extrusion" },
 
+  { F|O, "FirstEntityTag" , opt_geometry_first_entity_tag , 1. ,
+    "First tag (>= 1) of entities when creating a model" },
+  { F|O, "FirstPhysicalTag" , opt_geometry_first_physical_tag , 1. ,
+    "First tag (>= 1) of physicall groups when creating a model" },
+
   { F|O, "HighlightOrphans" , opt_geometry_highlight_orphans, 0. ,
     "Highlight orphan and boundary entities?" },
 
@@ -1214,7 +1219,12 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "HighOrderMaxInnerAngle", opt_mesh_ho_max_in_angle, 3.1415927*30./180.,
     "Maximum angle between edges/faces within layers of BL triangles/tets "
     "for the detection of columns in the fast curving algorithm"},
+  { F|O, "HighOrderSkipQualityCheck", opt_mesh_ho_skip_quality_check, 0.,
+    "Skip element quality check after high-order mesh generation"},
 
+  { F|O, "IgnoreUnknownSections" , opt_mesh_ignore_unknown_sections, 0. ,
+    "Skip unknown sections when reading meshes in the MSH4 format (otherwise the "
+    "contents of these sections are stored as model attributes)"},
   { F|O, "IgnoreParametrization" , opt_mesh_ignore_parametrization, 0. ,
     "Skip parametrization section when reading meshes in the MSH4 format" },
   { F|O, "IgnorePeriodicity" , opt_mesh_ignore_periodicity , 1. ,

@@ -161,7 +161,8 @@ void writeBrep(const T &shapes, const std::string &fileName = "debug.brep")
 
 OCC_Internals::OCC_Internals()
 {
-  for(int i = 0; i < 6; i++) _maxTag[i] = 0;
+  for(int i = 0; i < 6; i++)
+    _maxTag[i] = CTX::instance()->geom.firstEntityTag - 1;
   _changed = true;
   _attributes = new OCCAttributesRTree(CTX::instance()->geom.tolerance);
 }
@@ -195,7 +196,7 @@ int OCC_Internals::getMaxTag(int dim) const
 void OCC_Internals::_recomputeMaxTag(int dim)
 {
   if(dim < -2 || dim > 3) return;
-  _maxTag[dim + 2] = 0;
+  _maxTag[dim + 2] = CTX::instance()->geom.firstEntityTag - 1;
   TopTools_DataMapIteratorOfDataMapOfIntegerShape exp;
   switch(dim) {
   case 0: exp.Initialize(_tagVertex); break;
@@ -667,7 +668,8 @@ void OCC_Internals::_unbindWithoutChecks(TopoDS_Shape shape)
 
 void OCC_Internals::_unbind()
 {
-  for(int i = 0; i < 6; i++) _maxTag[i] = 0;
+  for(int i = 0; i < 6; i++)
+    _maxTag[i] = CTX::instance()->geom.firstEntityTag - 1;
 
   TopTools_DataMapIteratorOfDataMapOfIntegerShape exp;
   exp.Initialize(_tagVertex);
@@ -4563,9 +4565,12 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
       STEPControl_Writer writer;
       setTargetUnit(CTX::instance()->geom.occTargetUnit);
 
+# if 0
       // this does not seem to solve the issue that entities get duplicated when
-      // exporting STEP files (see issue #906):
+      // exporting STEP files (see issue #906), and leads to some regressions
+      // (see issue #2673) - so leaving it out for now:
       Interface_Static::SetIVal("write.step.nonmanifold", 1);
+#endif
 
       if(writer.Transfer(c, STEPControl_AsIs) == IFSelect_RetDone) {
         if(writer.Write(occfile.ToCString()) != IFSelect_RetDone) {

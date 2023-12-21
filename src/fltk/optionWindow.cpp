@@ -2603,7 +2603,7 @@ optionWindow::optionWindow(int deltaFontSize)
 
       mesh.butt[6] = new Fl_Check_Button(L + 2 * WB, 2 * WB + 1 * BH,
                                          BW / 2 - WB, BH, "Nodes");
-      mesh.butt[6]->tooltip("Mesh.Points (Alt+Shift+p)");
+      mesh.butt[6]->tooltip("Mesh.Nodes (Alt+Shift+p)");
       mesh.butt[6]->type(FL_TOGGLE_BUTTON);
       mesh.butt[6]->callback(mesh_options_ok_cb);
 

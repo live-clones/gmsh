@@ -85,6 +85,7 @@ std::vector<std::pair<std::string, std::string> > GetUsage()
                  "then exit"));
   s.push_back(mp("-reclassify angle", "Reclassify surface mesh, then exit"));
   s.push_back(mp("-reparam angle", "Reparametrize surface mesh, then exit"));
+  s.push_back(mp("-hybrid", "generate a hybrid hex-tet mesh with trihedron for transitions"));
   s.push_back(mp("-part int", "Partition after batch mesh generation "
                  "(Mesh.NbPartitions)"));
   s.push_back(mp("-part_weight [tri,quad,tet,hex,pri,pyr,trih] int",
@@ -1012,6 +1013,12 @@ static bool GetMeshOption(const std::vector<std::string> &argv,
   else if(argv[i] == "-quad") {
     opt_mesh_recombine_all(0, GMSH_SET, 1);
     opt_mesh_algo_recombine(0, GMSH_SET, 2);
+    i++;
+  }
+  else if(argv[i] == "-hybrid") {
+    opt_mesh_recombine3d_all(0,GMSH_SET, 1);
+    opt_mesh_algo3d(0, GMSH_SET, ALGO_3D_RTREE);
+    opt_mesh_algo2d(0, GMSH_SET, ALGO_2D_PACK_PRLGRMS);
     i++;
   }
   else if(argv[i] == "-format" || argv[i] == "-f") {

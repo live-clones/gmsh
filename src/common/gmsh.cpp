@@ -1468,6 +1468,21 @@ GMSH_API void gmsh::model::mesh::reverse(const vectorpair &dimTags)
   GModel::current()->destroyMeshCaches();
 }
 
+GMSH_API void gmsh::model::mesh::reverseElements(const std::vector<std::size_t> & elementTags)
+{
+  if(!_checkInit()) return;
+  for(auto const tag : elementTags) {
+    MElement *e = GModel::current()->getMeshElementByTag(tag);
+    if(e) {
+      e->reverse();
+    }
+    else {
+      Msg::Error("Could not find element %d", tag);
+    }
+  }
+  GModel::current()->destroyMeshCaches();
+}
+
 GMSH_API void
 gmsh::model::mesh::affineTransform(const std::vector<double> &affineTransform,
                                    const vectorpair &dimTags)
@@ -1872,6 +1887,8 @@ _getEntitiesForElementTypes(int dim, int tag,
         typeEnt[r->prisms.front()->getTypeForMSH()].push_back(ge);
       if(r->pyramids.size())
         typeEnt[r->pyramids.front()->getTypeForMSH()].push_back(ge);
+      if(r->trihedra.size())
+        typeEnt[r->trihedra.front()->getTypeForMSH()].push_back(ge);
       break;
     }
     }
@@ -2071,6 +2088,8 @@ static void _addElements(int dim, int tag, GEntity *ge, int type,
       _addElements(dim, tag, elements, static_cast<GRegion *>(ge)->prisms);
     else if(elements[0]->getType() == TYPE_PYR)
       _addElements(dim, tag, elements, static_cast<GRegion *>(ge)->pyramids);
+    else if(elements[0]->getType() == TYPE_TRIH)
+      _addElements(dim, tag, elements, static_cast<GRegion *>(ge)->trihedra);
     else
       ok = false;
     break;
@@ -8229,6 +8248,7 @@ static void _createFltk()
 
 GMSH_API void gmsh::fltk::initialize()
 {
+  
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
   _createFltk();

@@ -1,20 +1,10 @@
-#ifndef ROBUST_PREDICATES_H
-#define ROBUST_PREDICATES_H
+#ifndef _ROBUST_PREDICATES_H_
+#define _ROBUST_PREDICATES_H_
 
-#ifdef _MSC_VER
-#ifndef __restrict__
-#define __restrict__ __restrict
-#endif
-#endif
+#include <hxt_tools.h>
 
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-#ifdef _MSC_VER
-#ifndef __restrict__
-#define __restrict__ __restrict
-#endif
 #endif
 
 extern double splitter;
@@ -24,7 +14,15 @@ extern double ispstaticfilter;
 extern double isperrboundA;
 
 void exactinit(double maxx, double maxy, double maxz);
+// double incircle(double *pa, double *pb, double *pc, double *pd);
 
+/** \todo Please comment the freaking variable type you are using. [JP]
+ */
+
+// we give as much information to the compiler as possible.
+// __restrict__ means it is unique: pa!=pb!=pc!=pd!=pe
+// const double* const means it is a constant pointer to constant data
+// so these are unique constant pointer to constant data...
 double insphere(
   const double* const __restrict__ pa,
   const double* const __restrict__ pb,
@@ -48,6 +46,38 @@ double orient2d(
   const double* const __restrict__ pa,
   const double* const __restrict__ pb,
   const double* const __restrict__ pc);
+
+int grow_expansion(int elen,
+                  const double* const __restrict__ e,
+                  double b,
+                  double* const __restrict__ h);
+
+int grow_expansion_zeroelim(int elen,
+                            const double* const __restrict__ e,
+                            double b,
+                            double* const __restrict__ h);
+
+int fast_expansion_sum(int elen,
+                       const double* const __restrict__ e,
+                       int flen,
+                       const double* const __restrict__ f,
+                       double* const __restrict__ h);
+
+int fast_expansion_sum_zeroelim(const int elen,
+                                const double* const __restrict__ e,
+                                const int flen,
+                                const double* const __restrict__ f,
+                                double* const __restrict__ h);
+
+int scale_expansion(int elen,
+                    const double* const __restrict__ e,
+                    double b,
+                    double* const __restrict__ h);
+
+int scale_expansion_zeroelim(const int elen,
+                             const double* const __restrict__ e,
+                             const double b,
+                             double* const __restrict__ h);
 
 
 /* if you want a rough idea of the volume of one tet, but you don't need

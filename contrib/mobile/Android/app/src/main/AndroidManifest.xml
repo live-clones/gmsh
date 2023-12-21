@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           android:versionName="2.3.6"
-          android:versionCode="61"
+          android:versionCode="62"
           android:installLocation="auto" >
 
   <uses-sdk android:minSdkVersion="16"

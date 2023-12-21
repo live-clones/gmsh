@@ -4,7 +4,7 @@ appname=Onelab
 enable_occ=1
 enable_simulator=0
 version=2.3.6
-build=61 # must be incremented for each submitted build
+build=62 # must be incremented for each submitted build
 
 while [[ $# -gt 0 ]]; do
   key="$1"

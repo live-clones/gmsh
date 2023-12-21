@@ -75,6 +75,8 @@ void Frame_field::init_face(GFace *gf)
   SVector3 v3;
   STensor3 m(1.0);
 
+  //  printf("face %d storage size %lu\n",gf->tag(), gf->storage1.size());
+  
   for(i = 0; i < gf->storage1.size(); i++) {
     point = gf->storage1[i];
     v1 = gf->storage2[i];
@@ -1156,7 +1158,7 @@ void Size_field::init_region(GRegion *gr)
   std::vector<GFace *>::iterator it;
   for(it = faces.begin(); it != faces.end(); it++) {
     GFace *gf = *it;
-
+    
     for(std::size_t i = 0; i < gf->storage1.size(); i++) {
       SPoint3 point = gf->storage1[i];
       double const h = gf->storage4[i];

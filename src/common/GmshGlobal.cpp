@@ -96,7 +96,7 @@ int GmshInitialize(int argc, char **argv, bool readConfigFiles,
 
   // Initialize robust predicates (no static filter for now, we do not know the
   // size of the domain)
-  robustPredicates::exactinit(0, 1.0, 1.0, 1.0);
+  robustPredicates::exactinit(1.0, 1.0, 1.0);
 
   if(dummy) delete dummy;
   return 1;
@@ -213,7 +213,7 @@ int GmshRestoreDefaultOptions()
 
 int GmshOpenProject(const std::string &fileName)
 {
-  OpenProject(fileName);
+  OpenProject(fileName, true);
   return 1;
 }
 

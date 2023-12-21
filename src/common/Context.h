@@ -36,13 +36,14 @@ struct contextMeshOptions {
   int meshOnlyVisible, meshOnlyEmpty;
   int minCircleNodes, minCurveNodes, minLineNodes;
   int hoOptimize, hoPeriodic, hoNLayers, hoPrimSurfMesh, hoIterMax, hoPassMax;
-  int hoDistCAD, hoSavePeriodic, hoFixBndNodes;
+  int hoDistCAD, hoSavePeriodic, hoFixBndNodes, hoSkipQualityCheck;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
   bool hoNewFastCurvingAlgo;
   int hoCurveOuterBL;
   double hoMaxRho, hoMaxAngle, hoMaxInnerAngle;
   int NewtonConvergenceTestXYZ, maxIterDelaunay3D;
-  int ignorePeriodicityMsh2, ignoreParametrizationMsh4, boundaryLayerFanElements;
+  int ignorePeriodicityMsh2, ignoreParametrizationMsh4, ignoreUnknownSections;
+  int boundaryLayerFanElements;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
   double angleToleranceFacetOverlap, toleranceReferenceElement;
   int renumber, compoundClassify, reparamMaxTriangles;
@@ -116,7 +117,7 @@ struct contextGeometryOptions {
   double pointSize, curveWidth, selectedPointSize, selectedCurveWidth;
   int pointType, curveType, surfaceType, volumeType, numSubEdges;
   double normals, tangents, scalingFactor;
-  int snapPoints;
+  int firstEntityTag, firstPhysicalTag, snapPoints;
   int highlightOrphans, clip, useTransform;
   int doubleClickedEntityTag;
   std::string doubleClickedPointCommand, doubleClickedCurveCommand;

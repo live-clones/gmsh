@@ -1114,9 +1114,9 @@ if(HAVE_SOLVER)
           string(REPLACE " " ";" PETSC_PACKAGES_INCLUDES ${PETSC_PACKAGES_INCLUDES})
           foreach(VAR ${PETSC_PACKAGES_INCLUDES})
             # seem to include unexisting directories (/usr/include/lib64)
-	    # check to avoid warnings
-	    if(EXISTS ${VAR})
-	      list(APPEND EXTERNAL_INCLUDES ${VAR})
+            # check to avoid warnings
+            if(EXISTS ${VAR})
+              list(APPEND EXTERNAL_INCLUDES ${VAR})
             endif()
           endforeach()
         endif()
@@ -1132,10 +1132,10 @@ if(HAVE_SOLVER)
       endif()
       if(PETSC_LIBS)
         set_config_option(HAVE_PETSC "PETSc")
-	if(NOT HAVE_BLAS)
+        if(NOT HAVE_BLAS)
           set_config_option(HAVE_BLAS "Blas[petsc]")
         endif()
-	if(NOT HAVE_LAPACK)
+        if(NOT HAVE_LAPACK)
           set_config_option(HAVE_LAPACK "Lapack[petsc]")
         endif()
       endif()
@@ -1277,21 +1277,34 @@ if(ENABLE_OCC)
       message(STATUS "Found OpenCASCADE version ${OCC_VERSION} in ${OCC_INC}")
     endif()
   endif()
-  if(OCC_VERSION AND OCC_VERSION STRLESS ${OCC_MINIMAL_VERSION})
+  if(OCC_VERSION AND OCC_VERSION VERSION_LESS ${OCC_MINIMAL_VERSION})
     message(WARNING "Gmsh requires OpenCASCADE >= ${OCC_MINIMAL_VERSION}. "
         "Use CMAKE_PREFIX_PATH or the CASROOT environment variable "
         "to explicitly specify the installation path of OpenCASCADE")
   elseif(OCC_INC)
-    set(OCC_LIBS_REQUIRED
-	# subset of DataExchange
-      	TKSTEP TKSTEP209 TKSTEPAttr TKSTEPBase TKIGES TKXSBase
-      	# ModelingAlgorithms
-      	TKOffset TKFeat TKFillet TKBool TKMesh TKHLR TKBO TKPrim TKShHealing
-      	TKTopAlgo TKGeomAlgo
-      	# ModelingData
-      	TKBRep TKGeomBase TKG3d TKG2d
-      	# FoundationClasses
-      	TKMath TKernel)
+    if(OCC_VERSION AND OCC_VERSION VERSION_GREATER_EQUAL "7.8.0")
+      set(OCC_LIBS_REQUIRED
+          # subset of DataExchange
+          TKDESTEP TKDEIGES TKXSBase
+          # ModelingAlgorithms
+          TKOffset TKFeat TKFillet TKBool TKMesh TKHLR TKBO TKPrim TKShHealing
+          TKTopAlgo TKGeomAlgo
+          # ModelingData
+          TKBRep TKGeomBase TKG3d TKG2d
+          # FoundationClasses
+          TKMath TKernel)
+    else()
+      set(OCC_LIBS_REQUIRED
+          # subset of DataExchange
+          TKSTEP TKSTEP209 TKSTEPAttr TKSTEPBase TKIGES TKXSBase
+          # ModelingAlgorithms
+          TKOffset TKFeat TKFillet TKBool TKMesh TKHLR TKBO TKPrim TKShHealing
+          TKTopAlgo TKGeomAlgo
+          # ModelingData
+          TKBRep TKGeomBase TKG3d TKG2d
+          # FoundationClasses
+          TKMath TKernel)
+    endif()
     if(ENABLE_OCC_TBB)
       list(APPEND OCC_LIBS_REQUIRED tbb tbbmalloc)
     endif()
@@ -1323,8 +1336,13 @@ if(ENABLE_OCC)
   if(ENABLE_OCC_CAF)
     find_package(Freetype)
     if(FREETYPE_FOUND)
-      set(OCC_CAF_LIBS_REQUIRED
-          TKXDESTEP TKXDEIGES TKXCAF TKLCAF TKVCAF TKCAF TKV3d TKService TKCDF)
+      if(OCC_VERSION AND OCC_VERSION VERSION_GREATER_EQUAL "7.8.0")
+        set(OCC_CAF_LIBS_REQUIRED
+            TKXCAF TKLCAF TKVCAF TKCAF TKV3d TKService TKCDF)
+      else()
+        set(OCC_CAF_LIBS_REQUIRED
+            TKXDESTEP TKXDEIGES TKXCAF TKLCAF TKVCAF TKCAF TKV3d TKService TKCDF)
+      endif()
       list(LENGTH OCC_CAF_LIBS_REQUIRED NUM_OCC_CAF_LIBS_REQUIRED)
       set(OCC_CAF_LIBS)
       foreach(OCC ${OCC_CAF_LIBS_REQUIRED})

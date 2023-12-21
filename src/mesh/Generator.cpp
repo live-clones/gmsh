@@ -21,6 +21,7 @@
 #include "MHexahedron.h"
 #include "MPrism.h"
 #include "MPyramid.h"
+#include "MTrihedron.h"
 #include "meshGEdge.h"
 #include "meshGFace.h"
 #include "meshGFaceOptimize.h"
@@ -40,9 +41,11 @@
 #include "meshGFaceBipartiteLabelling.h"
 #include "sizeField.h"
 
+#include "meshCombine3D.h"
+
 #if defined(HAVE_DOMHEX)
 #include "simple3D.h"
-#include "yamakawa.h"
+//#include "yamakawa.h"
 #include "pointInsertion.h"
 #endif
 
@@ -624,152 +627,10 @@ FindConnectedRegions(const std::vector<GRegion *> &del,
   v0       v1
  */
 
-void buildUniqueFaces(GRegion *gr, std::set<MFace, MFaceLessThan> &bnd)
-{
-  for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
-    MElement *e = gr->getMeshElement(i);
-    for(int j = 0; j < e->getNumFaces(); j++) {
-      MFace f = e->getFace(j);
-      auto it = bnd.find(f);
-      if(it == bnd.end())
-        bnd.insert(f);
-      else
-        bnd.erase(it);
-    }
-  }
-}
 
-bool MakeMeshConformal(GModel *gm, int howto)
-{
-  fs_cont search;
-  buildFaceSearchStructure(gm, search);
-  std::set<MFace, MFaceLessThan> bnd;
-  for(auto rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
-    GRegion *gr = *rit;
-    buildUniqueFaces(gr, bnd);
-  }
-  // bnd2 contains non conforming faces
-
-  std::set<MFace, MFaceLessThan> bnd2;
-  for(auto itf = bnd.begin(); itf != bnd.end(); ++itf) {
-    GFace *gfound = findInFaceSearchStructure(*itf, search);
-    if(!gfound) { bnd2.insert(*itf); }
-  }
-  bnd.clear();
-
-  Msg::Info("%d hanging faces", bnd2.size());
-
-  std::set<MFace, MFaceLessThan> ncf;
-  for(auto itf = bnd2.begin(); itf != bnd2.end(); ++itf) {
-    const MFace &f = *itf;
-    if(f.getNumVertices() == 4) { // quad face
-      auto it1 =
-        bnd2.find(MFace(f.getVertex(0), f.getVertex(1), f.getVertex(2)));
-      auto it2 =
-        bnd2.find(MFace(f.getVertex(2), f.getVertex(3), f.getVertex(0)));
-      if(it1 != bnd2.end() && it2 != bnd2.end()) {
-        ncf.insert(MFace(f.getVertex(1), f.getVertex(2), f.getVertex(3),
-                         f.getVertex(0)));
-      }
-      else {
-        it1 = bnd2.find(MFace(f.getVertex(0), f.getVertex(1), f.getVertex(3)));
-        it2 = bnd2.find(MFace(f.getVertex(3), f.getVertex(1), f.getVertex(2)));
-        if(it1 != bnd2.end() && it2 != bnd2.end()) {
-          ncf.insert(MFace(f.getVertex(0), f.getVertex(1), f.getVertex(2),
-                           f.getVertex(3)));
-        }
-        else {
-          Msg::Error("MakeMeshConformal: wrong mesh topology");
-          return false;
-        }
-      }
-    }
-  }
-  bnd2.clear();
-
-  for(auto rit = gm->firstRegion(); rit != gm->lastRegion(); ++rit) {
-    GRegion *gr = *rit;
-    std::vector<MHexahedron *> remainingHexes;
-    for(std::size_t i = 0; i < gr->hexahedra.size(); i++) {
-      MHexahedron *e = gr->hexahedra[i];
-      std::vector<MFace> faces;
-      for(int j = 0; j < e->getNumFaces(); j++) {
-        MFace f = e->getFace(j);
-        auto it = ncf.find(f);
-        if(it == ncf.end()) { faces.push_back(f); }
-        else {
-          faces.push_back(
-            MFace(it->getVertex(0), it->getVertex(1), it->getVertex(3)));
-          faces.push_back(
-            MFace(it->getVertex(1), it->getVertex(2), it->getVertex(3)));
-        }
-      }
-      // Hex is only surrounded by compatible elements
-      if((int)faces.size() == e->getNumFaces()) { remainingHexes.push_back(e); }
-      else {
-        SPoint3 pp = e->barycenter();
-        MVertex *newv = new MVertex(pp.x(), pp.y(), pp.z(), gr);
-        gr->mesh_vertices.push_back(newv);
-        for(std::size_t j = 0; j < faces.size(); j++) {
-          MFace &f = faces[j];
-          if(f.getNumVertices() == 4) {
-            gr->pyramids.push_back(new MPyramid(f.getVertex(0), f.getVertex(1),
-                                                f.getVertex(2), f.getVertex(3),
-                                                newv));
-          }
-          else {
-            gr->tetrahedra.push_back(new MTetrahedron(
-              f.getVertex(0), f.getVertex(1), f.getVertex(2), newv));
-          }
-        }
-      }
-    }
-    gr->hexahedra = remainingHexes;
-    remainingHexes.clear();
-    std::vector<MPrism *> remainingPrisms;
-    for(std::size_t i = 0; i < gr->prisms.size(); i++) {
-      MPrism *e = gr->prisms[i];
-      std::vector<MFace> faces;
-      for(int j = 0; j < e->getNumFaces(); j++) {
-        MFace f = e->getFace(j);
-        auto it = ncf.find(f);
-        if(it == ncf.end()) { faces.push_back(f); }
-        else {
-          faces.push_back(
-            MFace(it->getVertex(0), it->getVertex(1), it->getVertex(3)));
-          faces.push_back(
-            MFace(it->getVertex(1), it->getVertex(2), it->getVertex(3)));
-        }
-      }
-      // Hex is only surrounded by compatible elements
-      if((int)faces.size() == e->getNumFaces()) {
-        remainingPrisms.push_back(e);
-      }
-      else {
-        SPoint3 pp = e->barycenter();
-        MVertex *newv = new MVertex(pp.x(), pp.y(), pp.z(), gr);
-        gr->mesh_vertices.push_back(newv);
-        for(std::size_t j = 0; j < faces.size(); j++) {
-          MFace &f = faces[j];
-          if(f.getNumVertices() == 4) {
-            gr->pyramids.push_back(new MPyramid(f.getVertex(0), f.getVertex(1),
-                                                f.getVertex(2), f.getVertex(3),
-                                                newv));
-          }
-          else {
-            gr->tetrahedra.push_back(new MTetrahedron(
-              f.getVertex(0), f.getVertex(1), f.getVertex(2), newv));
-          }
-        }
-      }
-    }
-    gr->prisms = remainingPrisms;
-  }
-
-  return true;
-}
 
 #if defined(HAVE_DOMHEX)
+/*
 static void TestConformity(GModel *gm)
 {
   fs_cont search;
@@ -803,7 +664,9 @@ static void TestConformity(GModel *gm)
   else
     Msg::Error("Mesh is not conforming (%d hanging faces)!", count);
 }
+*/
 #endif
+
 
 static void Mesh3D(GModel *m)
 {
@@ -849,12 +712,6 @@ static void Mesh3D(GModel *m)
     }
   }
 
-#if defined(HAVE_DOMHEX)
-  double time_recombination = 0., vol_element_recombination = 0.;
-  double vol_hexa_recombination = 0.;
-  int nb_elements_recombination = 0, nb_hexa_recombination = 0;
-#endif
-
   for(std::size_t i = 0; i < connected.size(); i++) {
     if(CTX::instance()->abortOnError && Msg::GetErrorCount()) {
       Msg::Warning("Aborted 3D meshing");
@@ -863,7 +720,7 @@ static void Mesh3D(GModel *m)
 
     MeshDelaunayVolume(connected[i]);
 
-#if defined(HAVE_DOMHEX)
+#if defined(HAVE_DOMHEX) and defined(HAVE_HXT)
     // additional code for experimental hex mesh - will eventually be replaced
     // by new HXT-based code
     for(std::size_t j = 0; j < connected[i].size(); j++) {
@@ -879,56 +736,18 @@ static void Mesh3D(GModel *m)
           Filler3D f;
           treat_region_ok = f.treat_region(gr);
         }
-      }
+      }    
+      
       if(treat_region_ok && (CTX::instance()->mesh.recombine3DAll ||
                              gr->meshAttributes.recombine3D)) {
-        if(CTX::instance()->mesh.optimize) {
-          optimizeMeshGRegion opt;
-          opt(gr);
-        }
-        double a = TimeOfDay();
-        // CTX::instance()->mesh.recombine3DLevel = 2;
-        if(CTX::instance()->mesh.recombine3DLevel >= 0) {
-          Recombinator rec;
-          rec.execute(gr);
-        }
-        if(CTX::instance()->mesh.recombine3DLevel >= 1) {
-          Supplementary sup;
-          sup.execute(gr);
-        }
-        PostOp post;
-        post.execute(gr, CTX::instance()->mesh.recombine3DLevel,
-                     CTX::instance()->mesh.recombine3DConformity);
-        // CTX::instance()->mesh.recombine3DConformity);
-        // 0: no pyramid, 1: single-step, 2: two-steps (conforming),
-        // true: fill non-conformities with trihedra
+	meshCombine3D(gr);
         RelocateVertices(gr, CTX::instance()->mesh.nbSmoothing);
-        // while(LaplaceSmoothing (gr)){
-        // }
-        nb_elements_recombination += post.get_nb_elements();
-        nb_hexa_recombination += post.get_nb_hexahedra();
-        vol_element_recombination += post.get_vol_elements();
-        vol_hexa_recombination += post.get_vol_hexahedra();
-        time_recombination += (TimeOfDay() - a);
       }
     }
 #endif
   }
 
-#if defined(HAVE_DOMHEX)
-  if(CTX::instance()->mesh.recombine3DAll) {
-    Msg::Info("Recombination timing:");
-    Msg::Info(" - Cumulative time recombination: %g s", time_recombination);
-    Msg::Info("Recombination cumulative statistics:");
-    Msg::Info(" - Percentage of hexahedra (#)  : %g",
-              nb_hexa_recombination * 100. / nb_elements_recombination);
-    Msg::Info(" - Percentage of hexahedra (Vol): %g",
-              vol_hexa_recombination * 100. / vol_element_recombination);
-    // MakeMeshConformal(m, 1);
-    TestConformity(m);
-  }
-#endif
-
+  MakeHybridHexTetMeshConformalThroughTriHedron(m);
   // ensure that all volume Jacobians are positive
   m->setAllVolumesPositive();
 
