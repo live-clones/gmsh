@@ -1,10 +1,11 @@
-4.12 (Work-in-progress): new high-order mesh optimisation mode for periodic
+4.12.0 (December 21, 2023): new high-order mesh optimisation mode for periodic
 meshes; new element qualities available through API; new IGES export; new volume
 glyph; OCC curve loops can now be oriented based on the sign of the first curve;
 better mesh node visualization; added suppport for model attributes in MSH2
 files; new mesh renumbering capabilities in the API; new GAMBIT mesh reader;
 replaced Geometry.OCCSafeUnbind with more flexible Geometry.OCCFastUnbind (which
-can be set for boolean operations as well); small bug fixes.
+can be set for boolean operations as well); added support for editing STEP
+headers; small bug fixes.
 
 * New API functions: model/getEntitiesForPhysicalName, mesh/computeRenumbering,
   mesh/getVisibility.

@@ -160,43 +160,33 @@ StringXString GeometryOptions_String[] = {
     "imported by OpenCASCADE, e.g. 'M' for meters (leave empty to use the default "
     "OpenCASCADE behavior); the option should be set before importing the STEP or "
     "IGES file"},
-
   { F|O, "OCCSTEPDescription", opt_geometry_occ_step_description, "",
     "Description of the STEP file to be written by OpenCASCADE. "
     "If left empty, the default value is set by OpenCASCADE"},
-
   { F|O, "OCCSTEPImplementationLevel", opt_geometry_occ_step_implementation_level,
     "", "Implementation level of the STEP file to be written by OpenCASCADE. "
     "If left empty, the default value is set by OpenCASCADE"},
-  
   { F|O, "OCCSTEPModelName", opt_geometry_occ_step_model_name, "",
     "Model name of the STEP file to be written by OpenCASCADE. "
     "If left empty, the default value is set by OpenCASCADE"},
-
   { F|O, "OCCSTEPTimeStamp", opt_geometry_occ_step_time_stamp, "",
     "Time stamp for the creation of the STEP file. "
     "If left empty, the default value is current time."},
-
   { F|O, "OCCSTEPAuthor", opt_geometry_occ_step_author, "",
     "Author of the STEP file to be written by OpenCASCADE. "
     "If left empty, the default value is set by OpenCASCADE"},
-
   { F|O, "OCCSTEPOrganization", opt_geometry_occ_step_organization, "",
     "Organization of the STEP file to be written by OpenCASCADE. "
     "If left empty, the default value is set by OpenCASCADE"},
-
   { F|O, "OCCSTEPPreprocessorVersion", opt_geometry_occ_step_preprocessor_version,
     "", "Preprocessor version of the STEP file to be written by OpenCASCADE. "
     "If left empty, the default value is set by OpenCASCADE"},
-
   { F|O, "OCCSTEPOriginatingSystem", opt_geometry_occ_step_originating_system,
     "", "Originating system of the STEP file to be written by OpenCASCADE. "
     "If left empty, the default value is set by OpenCASCADE"},
-
   { F|O, "OCCSTEPAuthorization", opt_geometry_occ_step_authorization, "",
     "Authorization of the STEP file to be written by OpenCASCADE. "
     "If left empty, the default value is set by OpenCASCADE"},
-
   { F|O, "OCCSTEPSchemaIdentifier", opt_geometry_occ_step_schema_identifier, "",
     "Schema identifier of the STEP file to be written by OpenCASCADE. "
     "If left empty, the default value is set by OpenCASCADE"},
