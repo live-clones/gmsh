@@ -1,8 +1,10 @@
 # This demo implements free form deformation in cylindrical coordinates
 
+# Contributed by Ekrem Ekici
+
 from math import pi, cos, sin, comb
 import gmsh
-import os 
+import os
 import sys
 import numpy as np
 
@@ -11,8 +13,8 @@ def cart2cyl(x, y, z):
     rho = np.sqrt(x**2 + y**2)
     phi = np.arctan2(y, x)
     zeta = z
-    return rho, phi, zeta 
-    
+    return rho, phi, zeta
+
 def cyl2cart(rho, phi, zeta):
     # cylindrical to Cartesian
     x = rho * np.cos(phi)
@@ -20,12 +22,9 @@ def cyl2cart(rho, phi, zeta):
     z = zeta
     return x, y, z
 
-path = os.path.dirname(os.path.abspath(__file__))
-mesh_name = "/Cylinder"
-
 gmsh.initialize()
 gmsh.option.setNumber("General.Terminal", 0)
-gmsh.model.add(__name__)
+gmsh.model.add("original_model")
 
 R = 0.1
 L_total = 0.4
@@ -33,34 +32,23 @@ L_total = 0.4
 gmsh.model.occ.addCylinder(0, 0, 0, 0, 0, L_total, R, tag=1)
 gmsh.model.occ.synchronize()
 
-# Physical tags
-surfaces = gmsh.model.occ.getEntities(dim=2)
-
-for surface in surfaces:
-    gmsh.model.addPhysicalGroup(2, [surface[1]])
-
-gmsh.model.addPhysicalGroup(3, [1], tag=1) # Geometry tag 
-
-lc = 0.1 #0.005 
+lc = 0.1 #0.005
 
 gmsh.option.setNumber("Mesh.MeshSizeMax", lc)
 gmsh.option.setNumber("Mesh.SaveAll", 0)
 
 gmsh.model.mesh.generate(3)
 
-# get mesh data before it disappears
+# get mesh data
 mesh_data = {}
 for e in gmsh.model.getEntities():
     mesh_data[e] = (gmsh.model.getBoundary([e]),
             gmsh.model.mesh.getNodes(e[0], e[1]),
             gmsh.model.mesh.getElements(e[0], e[1]))
 
-if '-nopopup' not in sys.argv:
-    gmsh.fltk.run()
+gmsh.write("cylinder.msh")
 
-gmsh.write("{}.msh".format(path+mesh_name))
-
-### Introducing FFD 
+### Introducing FFD
 
 l = 2 # number of control points in the x axis
 m = 4 # number of control points in the y axis
@@ -75,7 +63,7 @@ ys = coords[1::3]
 zs = coords[2::3]
 
 rhos, phis, zetas = cart2cyl(xs, ys, zs)
- 
+
 dr = max(rhos)-min(rhos)
 dphi = 2*np.pi
 dz = max(zetas)-min(zetas)
@@ -129,7 +117,7 @@ for e in mesh_data:
                             comb(n-1,k)*np.power(1-u, n-1-k)*np.power(u,k) * \
                             np.asarray([Pr[i,j,k], Pphi[i,j,k], Pz[i,j,k]])
         Xdef_3d_cart = Xdef.copy()
-        Xdef_3d_cart[0], Xdef_3d_cart[1],Xdef_3d_cart[2] = cyl2cart(Xdef[0], Xdef[1], Xdef[2]) 
+        Xdef_3d_cart[0], Xdef_3d_cart[1],Xdef_3d_cart[2] = cyl2cart(Xdef[0], Xdef[1], Xdef[2])
         new_coord = Xdef_3d_cart.flatten()
 
     else:
@@ -145,29 +133,18 @@ for e in mesh_data:
                                         comb(n-1,k)*np.power(1-u[point], n-1-k)*np.power(u[point],k) * \
                                         np.asarray([Pr[i,j,k], Pphi[i,j,k], Pz[i,j,k]])
 
-        
+
         Xdef_3d_cart = Xdef.copy()
-        Xdef_3d_cart[:,0], Xdef_3d_cart[:,1],Xdef_3d_cart[:,2] = cyl2cart(Xdef[:,0], Xdef[:,1], Xdef[:,2]) 
+        Xdef_3d_cart[:,0], Xdef_3d_cart[:,1],Xdef_3d_cart[:,2] = cyl2cart(Xdef[:,0], Xdef[:,1], Xdef[:,2])
 
         new_coord = Xdef_3d_cart.flatten()
-        
+
     gmsh.model.addDiscreteEntity(e[0], e[1], [b[1] for b in mesh_data[e][0]])
     gmsh.model.mesh.addNodes(e[0], e[1], mesh_data[e][1][0], new_coord)
     gmsh.model.mesh.addElements(e[0], e[1], mesh_data[e][2][0], mesh_data[e][2][1], mesh_data[e][2][2])
 
-# Assign physical tags to the deformed mesh
-
-# surfaces
-for surface in surfaces:
-    gmsh.model.addPhysicalGroup(2, [surface[1]])
-
-# volumes
-gmsh.model.addPhysicalGroup(3, [1], tag=1) # Geometry tag 
-
 if '-nopopup' not in sys.argv:
     gmsh.fltk.run()
 
-deformed_mesh_name = "/deformedCylinder"
-
-gmsh.write("{}.msh".format(path+deformed_mesh_name))
+gmsh.write("cylinder_deformed.msh")
 gmsh.finalize()
