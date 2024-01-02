@@ -1319,9 +1319,10 @@ if not libpath:
         libpath = find_library("gmsh")
 
 # ... and print a warning if everything failed
-if (not libpath) or (not os.path.exists(libpath)):
-    print("Warning: could not find Gmsh shared library " + libname)
-    print("Searched at these locations: " + str(possible_libpaths))
+if not libpath:
+    print("Warning: could not find Gmsh shared library " + libname +
+          " with ctypes.util.find_library() or in the following locations: " +
+          str(possible_libpaths))
 
 lib = CDLL(libpath)
 
