@@ -251,6 +251,7 @@ public:
     for(auto it = _hWallNNodes.begin(); it != _hWallNNodes.end(); ++it) {
       int i = (int)*it;
       ++it;
+      if(it == _hWallNNodes.end()) break;
       double h = *it;
       if(i == iV) return h;
     }
