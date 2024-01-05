@@ -1909,6 +1909,7 @@ namespace gmsh { // Top-level functions
                                       const double alpha,
                                       const double hMean,
                                       std::function<double(int, int, double, double, double, double)> sizeFieldCallback,
+                                      const int triangulate,
                                       const int refine);
 
       namespace field { // Mesh size field functions

@@ -1692,6 +1692,7 @@ GMSH_API void gmshModelMeshComputeAlphaShape(const int dim,
                                              const double alpha,
                                              const double hMean,
                                              double (*sizeFieldCallback)(int dim, int tag, double x, double y, double z, double lc, void * data), void * sizeFieldCallback_data,
+                                             const int triangulate,
                                              const int refine,
                                              int * ierr);
 

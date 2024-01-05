@@ -2480,12 +2480,12 @@ GMSH_API void gmshModelMeshAlphaShape(const int dim, const int tag, const double
   }
 }
 
-GMSH_API void gmshModelMeshComputeAlphaShape(const int dim, const int * alphaShapeTags, const size_t alphaShapeTags_n, const double alpha, const double hMean, double (*sizeFieldCallback)(int dim, int tag, double x, double y, double z, double lc, void * data), void * sizeFieldCallback_data, const int refine, int * ierr)
+GMSH_API void gmshModelMeshComputeAlphaShape(const int dim, const int * alphaShapeTags, const size_t alphaShapeTags_n, const double alpha, const double hMean, double (*sizeFieldCallback)(int dim, int tag, double x, double y, double z, double lc, void * data), void * sizeFieldCallback_data, const int triangulate, const int refine, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_alphaShapeTags_(alphaShapeTags, alphaShapeTags + alphaShapeTags_n);
-    gmsh::model::mesh::computeAlphaShape(dim, api_alphaShapeTags_, alpha, hMean, std::bind(sizeFieldCallback, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, sizeFieldCallback_data), refine);
+    gmsh::model::mesh::computeAlphaShape(dim, api_alphaShapeTags_, alpha, hMean, std::bind(sizeFieldCallback, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, sizeFieldCallback_data), triangulate, refine);
   }
   catch(...){
     if(ierr) *ierr = 1;

@@ -5683,11 +5683,12 @@ gmsh::model::mesh::computeAlphaShape(const int dim,
                                      const std::vector<int> & alphaShapeTags, 
                                      const double alpha, const double hMean, 
                                      std::function<double(int, int, double, double, double, double)> sizeFieldCallback, 
+                                     const int triangulate,
                                      const int refine)
 {
 #if defined(HAVE_MESH) && defined(HAVE_HXT)
   if (dim == 2)
-    _computeAlphaShape(alphaShapeTags, alpha, hMean, sizeFieldCallback, refine);
+    _computeAlphaShape(alphaShapeTags, alpha, hMean, sizeFieldCallback, triangulate, refine);
   else if (dim == 3)
     _computeAlphaShape3D(alphaShapeTags, alpha, hMean, sizeFieldCallback, refine);
   else 

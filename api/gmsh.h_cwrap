@@ -3307,6 +3307,7 @@ namespace gmsh { // Top-level functions
                                     const double alpha,
                                     const double hMean,
                                     std::function<double(int, int, double, double, double, double)> sizeFieldCallback,
+                                    const int triangulate,
                                     const int refine)
       {
         int ierr = 0;
@@ -3318,7 +3319,7 @@ namespace gmsh { // Top-level functions
         };
         // FIXME memory leak
         auto *sizeFieldCallback_ptr_ = new std::function<double(int, int, double, double, double, double)>(sizeFieldCallback);
-        gmshModelMeshComputeAlphaShape(dim, api_alphaShapeTags_, api_alphaShapeTags_n_, alpha, hMean, &sizeFieldCallback_caller_::call, sizeFieldCallback_ptr_, refine, &ierr);
+        gmshModelMeshComputeAlphaShape(dim, api_alphaShapeTags_, api_alphaShapeTags_n_, alpha, hMean, &sizeFieldCallback_caller_::call, sizeFieldCallback_ptr_, triangulate, refine, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_alphaShapeTags_);
       }

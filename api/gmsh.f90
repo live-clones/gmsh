@@ -7722,6 +7722,7 @@ module gmsh
                                             alpha, &
                                             hMean, &
                                             sizeFieldCallback, &
+                                            triangulate, &
                                             refine, &
                                             ierr)
     interface
@@ -7731,6 +7732,7 @@ module gmsh
                      alpha, &
                      hMean, &
                      sizeFieldCallback, &
+                     triangulate, &
                      refine, &
                      ierr_) &
       bind(C, name="gmshModelMeshComputeAlphaShape")
@@ -7741,6 +7743,7 @@ module gmsh
       real(c_double), value, intent(in) :: alpha
       real(c_double), value, intent(in) :: hMean
       type(c_funptr), value, intent(in) :: sizeFieldCallback
+      integer(c_int), value, intent(in) :: triangulate
       integer(c_int), value, intent(in) :: refine
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
@@ -7750,6 +7753,7 @@ module gmsh
     real(c_double), intent(in) :: alpha
     real(c_double), intent(in) :: hMean
     type(c_funptr), value, intent(in) :: sizeFieldCallback
+    integer, intent(in) :: triangulate
     integer, intent(in) :: refine
     integer(c_int), intent(out), optional :: ierr
     call C_API(dim=int(dim, c_int), &
@@ -7758,6 +7762,7 @@ module gmsh
          alpha=real(alpha, c_double), &
          hMean=real(hMean, c_double), &
          sizeFieldCallback=sizeFieldCallback, &
+         triangulate=int(triangulate, c_int), &
          refine=int(refine, c_int), &
          ierr_=ierr)
   end subroutine gmshModelMeshComputeAlphaShape

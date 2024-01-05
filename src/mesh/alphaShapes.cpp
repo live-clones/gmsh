@@ -557,7 +557,7 @@ void print4debug(PolyMesh* pm, const int debugTag)
     FILE *f = fopen(name, "w");
     fprintf(f, "View \" %s \"{\n", name);
     for(auto it : pm->faces) {
-      if (it->data == -2) continue;
+      // if (it->data == -2) continue;
       if (it->he){
         PolyMesh::HalfEdge *he0 = it->he;
         PolyMesh::HalfEdge *he1 = it->he->next;
@@ -574,14 +574,14 @@ void print4debug(PolyMesh* pm, const int debugTag)
         //         Ry, Ry, Ry);
       }
     }
-    // for(auto it : pm->hedges) {
-    //   PolyMesh::HalfEdge *he = it;
-    //   if(he->opposite && he->f) {
-    //     fprintf(f, "SL(%g,%g,0,%g,%g,0){%d,%d};\n", he->v->position.x(),
-    //             he->v->position.y(), he->opposite->v->position.x(),
-    //             he->opposite->v->position.y(), he->data, he->data);
-    //   }
-    // }
+    for(auto it : pm->hedges) {
+      PolyMesh::HalfEdge *he = it;
+      if(he->opposite && he->f) {
+        fprintf(f, "SL(%g,%g,0,%g,%g,0){%d,%d};\n", he->v->position.x(),
+                he->v->position.y(), he->opposite->v->position.x(),
+                he->opposite->v->position.y(), he->data, he->data);
+      }
+    }
 
     fprintf(f, "};\n");
     fclose(f);
@@ -1847,7 +1847,7 @@ inline bool checkVertexConnection(PolyMesh::Vertex* v, int volTag){
 
 void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double alpha, const double hMean,
                         std::function<double(int, int, double, double, double, double)> sizeFieldCallback, 
-                        const int refine){
+                        const int triangulate, const int refine){
 
 // #pragma omp parallel
 // {
@@ -1858,7 +1858,6 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
 
   // 1. generate mesh 
   // Msg::Info("generating mesh...\n");
-
   GFace* gf = GModel::current()->getFaceByTag(alphaShapeTags[0]);
   size_t nNodesInMesh = gf->mesh_vertices.size();
   std::vector<double> coordsInMesh(2*nNodesInMesh);
@@ -1871,23 +1870,29 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
   }
   PolyMesh *pm = new PolyMesh;
 
-  SBoundingBox3d bb;
-  for(size_t i = 0; i < coordsInMesh.size(); i += 2) {
-    bb += SPoint3(coordsInMesh[i], coordsInMesh[i + 1], 0);
+  if (triangulate){
+    SBoundingBox3d bb;
+    for(size_t i = 0; i < coordsInMesh.size(); i += 2) {
+      bb += SPoint3(coordsInMesh[i], coordsInMesh[i + 1], 0);
+    }
+    bb *= 1.1;
+    initialize_rectangle(pm, bb.min().x(), bb.max().x(), bb.min().y(),
+                            bb.max().y());
+    PolyMesh::Face *f = pm->faces[0];
+    PolyMesh::HalfEdge* he;
+    bool found;
+    for(size_t i = 0; i < coordsInMesh.size(); i += 2) {
+      double x[2] = {coordsInMesh[i], coordsInMesh[i + 1]};
+      _Walk(f, x, &he, &found, 10);
+      f = he->f;
+      pm->split_triangle(-1, x[0], x[1], 0, f, delaunayCriterion, nullptr);
+      pm->vertices[pm->vertices.size() - 1]->data = nodeTagsInMesh[i/2];
+    }
   }
-  bb *= 1.1;
-  initialize_rectangle(pm, bb.min().x(), bb.max().x(), bb.min().y(),
-                           bb.max().y());
-  PolyMesh::Face *f = pm->faces[0];
-  PolyMesh::HalfEdge* he;
-  bool found;
-  for(size_t i = 0; i < coordsInMesh.size(); i += 2) {
-    double x[2] = {coordsInMesh[i], coordsInMesh[i + 1]};
-    _Walk(f, x, &he, &found, 10);
-    f = he->f;
-    pm->split_triangle(-1, x[0], x[1], 0, f, delaunayCriterion, nullptr);
-    pm->vertices[pm->vertices.size() - 1]->data = nodeTagsInMesh[i/2];
+  else {
+    GFace2PolyMesh(alphaShapeTags[0], &pm);
   }
+
 
   for (auto f : pm->faces){
     int i0 = f->he->v->data;
@@ -1906,6 +1911,7 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
     v->data = i;
   }
 
+  // print4debug(pm, 0);
   // 2. compute alpha shape
   // Msg::Info("computing alpha shape...\n");
   std::unordered_map<PolyMesh::Face*, bool> _touched;
@@ -1927,8 +1933,8 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
         PolyMesh::HalfEdge *_he = _f->he;
         do {
           if (_he->opposite == nullptr || _he->opposite->f->data < -1){
-              _he->data = alphaShapeTags[1];      
-              _he->opposite->data = alphaShapeTags[1]; 
+            _he->data = alphaShapeTags[1];      
+            // _he->opposite->data = alphaShapeTags[1]; 
           }     
           else if (!_touched[_he->opposite->f]){
             PolyMesh::Face *f_neigh = _he->opposite->f;
@@ -1950,9 +1956,8 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
     }
   }
 
-  // print4debug(pm, 1);
-
   for (auto f : pm->faces) if (f->data == -2) f->data = -1;
+  // print4debug(pm, 1);
   // 3. if requested, refine  
   if (refine){
     // Msg::Info("constrained Delaunay...\n");
@@ -2104,7 +2109,7 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
 
 
   // 4. store in discrete entities
-  // Msg::Info("saving back to gmsh...\n");
+  Msg::Info("saving back to gmsh...\n");
 
   std::vector<size_t> nodeTags(pm->vertices.size());
   std::vector<double> coords(3*pm->vertices.size());

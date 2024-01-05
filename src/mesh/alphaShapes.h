@@ -54,7 +54,7 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
 
 void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double alpha, const double hMean,
                         std::function<double(int, int, double, double, double, double)> sizeFieldCallback, 
-                        const int refine);
+                        const int triangulate, const int refine);
 
 #endif
 

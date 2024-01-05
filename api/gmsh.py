@@ -5243,9 +5243,9 @@ class model:
         alpha_shape = alphaShape
 
         @staticmethod
-        def computeAlphaShape(dim, alphaShapeTags, alpha, hMean, sizeFieldCallback, refine):
+        def computeAlphaShape(dim, alphaShapeTags, alpha, hMean, sizeFieldCallback, triangulate, refine):
             """
-            gmsh.model.mesh.computeAlphaShape(dim, alphaShapeTags, alpha, hMean, sizeFieldCallback, refine)
+            gmsh.model.mesh.computeAlphaShape(dim, alphaShapeTags, alpha, hMean, sizeFieldCallback, triangulate, refine)
 
             Compute the alpha shape of the set of points on the discrete entity defined
             by the first tag of `alphaShapeTags', with the second tag its boundary. The
@@ -5262,6 +5262,7 @@ class model:
             - `alpha': double
             - `hMean': double
             - `sizeFieldCallback': 
+            - `triangulate': integer
             - `refine': integer
             """
             api_alphaShapeTags_, api_alphaShapeTags_n_ = _ivectorint(alphaShapeTags)
@@ -5276,6 +5277,7 @@ class model:
                 c_double(alpha),
                 c_double(hMean),
                 api_sizeFieldCallback_, None,
+                c_int(triangulate),
                 c_int(refine),
                 byref(ierr))
             if ierr.value != 0:

@@ -4628,7 +4628,7 @@ end
 const alpha_shape = alphaShape
 
 """
-    gmsh.model.mesh.computeAlphaShape(dim, alphaShapeTags, alpha, hMean, sizeFieldCallback, refine)
+    gmsh.model.mesh.computeAlphaShape(dim, alphaShapeTags, alpha, hMean, sizeFieldCallback, triangulate, refine)
 
 Compute the alpha shape of the set of points on the discrete entity defined by
 the first tag of `alphaShapeTags`, with the second tag its boundary. The alpha
@@ -4644,15 +4644,16 @@ Types:
  - `alpha`: double
  - `hMean`: double
  - `sizeFieldCallback`: 
+ - `triangulate`: integer
  - `refine`: integer
 """
-function computeAlphaShape(dim, alphaShapeTags, alpha, hMean, sizeFieldCallback, refine)
+function computeAlphaShape(dim, alphaShapeTags, alpha, hMean, sizeFieldCallback, triangulate, refine)
     api_sizeFieldCallback__(dim, tag, x, y, z, lc, data) = sizeFieldCallback(dim, tag, x, y, z, lc)
     api_sizeFieldCallback_ = @cfunction($api_sizeFieldCallback__, Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshComputeAlphaShape, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cint}, Csize_t, Cdouble, Cdouble, Ptr{Cvoid}, Ptr{Cvoid}, Cint, Ptr{Cint}),
-          dim, convert(Vector{Cint}, alphaShapeTags), length(alphaShapeTags), alpha, hMean, api_sizeFieldCallback_, C_NULL, refine, ierr)
+          (Cint, Ptr{Cint}, Csize_t, Cdouble, Cdouble, Ptr{Cvoid}, Ptr{Cvoid}, Cint, Cint, Ptr{Cint}),
+          dim, convert(Vector{Cint}, alphaShapeTags), length(alphaShapeTags), alpha, hMean, api_sizeFieldCallback_, C_NULL, triangulate, refine, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
