@@ -339,7 +339,11 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
     
     HXTOptimizeOptions optOptions = {
       .bbox = &bbox, 
-      // .numVerticesConstrained = mesh->vertices.num
+      .qualityFun = NULL,
+      .qualityMin = .1,
+      .numVerticesConstrained = mesh->vertices.num,
+      .verbosity = 2,
+      .reproducible = 0
     };
     #pragma omp parallel for
     for (uint64_t i=0; i<mesh->tetrahedra.num; i++) {
@@ -352,6 +356,21 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
     }
     hxtOptimizeTetrahedra(mesh, &optOptions);
     hxtMeshWriteGmsh(mesh, "afterOptimization.msh");
+    hxtAlphaShape(mesh, &delOptions, &alphaShapeOptions);
+    // Add alpha shape facets into the mesh
+    mesh->triangles.num = alphaShapeOptions.n_boundaryFacets;
+    // if (mesh->triangles.num != mesh->triangles.size){
+    hxtAlignedRealloc(&mesh->triangles.node, sizeof(uint32_t) * mesh->triangles.num * 3);
+    hxtAlignedRealloc(&mesh->triangles.color, sizeof(uint32_t) * mesh->triangles.num);
+    mesh->triangles.size = mesh->triangles.num;
+    // }
+    for (int i=0; i<alphaShapeOptions.n_boundaryFacets; i++){
+      mesh->triangles.node[3*i+0] = alphaShapeOptions.boundaryFacets[3*i+0];
+      mesh->triangles.node[3*i+1] = alphaShapeOptions.boundaryFacets[3*i+1];
+      mesh->triangles.node[3*i+2] = alphaShapeOptions.boundaryFacets[3*i+2];
+      mesh->triangles.color[i] = alphaShapeOptions.colorBoundary;
+    }
+
     printf("optimized mesh \n");
   }
 
