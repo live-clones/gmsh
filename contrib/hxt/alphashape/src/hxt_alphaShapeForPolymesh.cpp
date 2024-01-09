@@ -1,5 +1,6 @@
 
 #include <iostream>
+#include <chrono>
 #include "hxt_alphaShapeForPolymesh.h"
 #include "meshPolyMesh.h"
 #include <vector>
@@ -215,7 +216,7 @@ extern "C" void _refineSurfaceTriangulation(HXTMesh** meshPtr, HXTDelaunayOption
         // timeElse += (double)time_else.count();
         // print4debug(pm, iter);
     }
-    auto tEnd = std::chrono::steady_clock::now();
+    auto tEnd = std::chrono::high_resolution_clock::now();
     duration<double, std::milli> time_total = tEnd - tStart;
     double durTotal = time_total.count();
 
