@@ -1,4 +1,4 @@
-4.12.1 (Work-in-progress): small bug fixes.
+4.12.1 (January 11, 2024): small bug fixes.
 
 4.12.0 (December 21, 2023): new high-order mesh optimisation mode for periodic
 meshes; new element qualities available through API; new IGES export; new volume
