@@ -224,8 +224,8 @@ void adaptiveTriangle::create(int maxlevel)
 {
   cleanElement<adaptiveTriangle>();
   adaptiveVertex *p1 = adaptiveVertex::add(0, 0, 0, allVertices);
-  adaptiveVertex *p2 = adaptiveVertex::add(0, 1, 0, allVertices);
-  adaptiveVertex *p3 = adaptiveVertex::add(1, 0, 0, allVertices);
+  adaptiveVertex *p2 = adaptiveVertex::add(1, 0, 0, allVertices);
+  adaptiveVertex *p3 = adaptiveVertex::add(0, 1, 0, allVertices);
   adaptiveTriangle *t = new adaptiveTriangle(p1, p2, p3);
   recurCreate(t, maxlevel, 0);
 }
