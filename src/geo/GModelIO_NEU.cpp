@@ -557,7 +557,7 @@ int GModel::readNEU(const std::string &name)
     case GAMBIT_TYPE_PYR:
       len_p = 5;
       for(int i = len_p; i > 1; --i) sstr.insert(23 + (i - 2) * 8, " ");
-      if(sscanf(str, "%*d%*d%*d%d%d%d%d%d", p, p + 1, p + 2, p + 3, p + 4) !=
+      if(sscanf(str, "%*d%*d%*d%d%d%d%d%d", p, p + 1, p + 3, p + 2, p + 4) !=
          len_p) {
         fclose(fp);
         return 0;
@@ -728,11 +728,11 @@ int GModel::readNEU(const std::string &name)
         break;
       case GAMBIT_TYPE_PYR:
         switch(side) {
-        case 1: sub = {0, 1, 3, 2}; break;
+        case 1: sub = {0, 1, 2, 3}; break;
         case 2: sub = {0, 1, 4}; break;
-        case 3: sub = {1, 3, 4}; break;
-        case 4: sub = {2, 3, 4}; break;
-        case 5: sub = {0, 2, 4}; break;
+        case 3: sub = {1, 2, 4}; break;
+        case 4: sub = {3, 2, 4}; break;
+        case 5: sub = {0, 3, 4}; break;
         default: Msg::Warning("  side = %d", side); return 0;
         }
         break;
