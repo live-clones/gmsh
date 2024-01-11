@@ -173,9 +173,9 @@ public:
   void addPyramid(MPyramid *p) { pyramids.push_back(p); }
   void addPolyhedron(MPolyhedron *p) { polyhedra.push_back(p); }
   void addTrihedron(MTrihedron *t) { trihedra.push_back(t); }
-  void addElement(int type, MElement *e);
-  void removeElement(int type, MElement *e);
-  void removeElements(int type);
+  void addElement(MElement *e);
+  void removeElement(MElement *e, bool del);
+  void removeElements(bool del);
 
   // get the boundary layer columns
   BoundaryLayerColumns *getColumns() { return &_columns; }

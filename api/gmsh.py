@@ -2229,6 +2229,32 @@ class model:
                 raise Exception(logger.getLastError())
 
         @staticmethod
+        def removeElements(dim, tag, elementTags=[]):
+            """
+            gmsh.model.mesh.removeElements(dim, tag, elementTags=[])
+
+            Remove the elements with tags `elementTags' from the entity of dimension
+            `dim' and tag `tag'. If `elementTags' is empty, remove all the elements
+            classified on the entity. To get consistent node classification on model
+            entities, `reclassifyNodes()' should be called afterwards.
+
+            Types:
+            - `dim': integer
+            - `tag': integer
+            - `elementTags': vector of sizes
+            """
+            api_elementTags_, api_elementTags_n_ = _ivectorsize(elementTags)
+            ierr = c_int()
+            lib.gmshModelMeshRemoveElements(
+                c_int(dim),
+                c_int(tag),
+                api_elementTags_, api_elementTags_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        remove_elements = removeElements
+
+        @staticmethod
         def reverse(dimTags=[]):
             """
             gmsh.model.mesh.reverse(dimTags=[])

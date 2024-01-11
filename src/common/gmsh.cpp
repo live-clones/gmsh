@@ -1435,6 +1435,35 @@ GMSH_API void gmsh::model::mesh::clear(const vectorpair &dimTags)
   GModel::current()->deleteMesh(entities);
 }
 
+GMSH_API void gmsh::model::mesh::removeElements(
+   const int dim, const int tag,
+   const std::vector<std::size_t> &elementTags)
+{
+  if(!_checkInit()) return;
+  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+  if(!ge) {
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+    return;
+  }
+  if(elementTags.empty()) {
+    ge->removeElements(true);
+  }
+  else {
+    for(auto t : elementTags) {
+      MElement *e = GModel::current()->getMeshElementByTag(t);
+      if(!e) {
+        Msg::Error("Unknown element %d", t);
+      }
+      else {
+        ge->removeElement(e, true);
+      }
+    }
+  }
+  ge->deleteVertexArrays();
+  GModel::current()->destroyMeshCaches();
+  // we leave the user to call reclassifyNodes()
+}
+
 static void _getEntities(const gmsh::vectorpair &dimTags,
                          std::vector<GEntity *> &entities)
 {
@@ -8216,7 +8245,7 @@ static void _createFltk()
 
 GMSH_API void gmsh::fltk::initialize()
 {
-  
+
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
   _createFltk();

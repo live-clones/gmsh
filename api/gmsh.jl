@@ -1889,6 +1889,29 @@ function clear(dimTags = Tuple{Cint,Cint}[])
 end
 
 """
+    gmsh.model.mesh.removeElements(dim, tag, elementTags = Csize_t[])
+
+Remove the elements with tags `elementTags` from the entity of dimension `dim`
+and tag `tag`. If `elementTags` is empty, remove all the elements classified on
+the entity. To get consistent node classification on model entities,
+`reclassifyNodes()` should be called afterwards.
+
+Types:
+ - `dim`: integer
+ - `tag`: integer
+ - `elementTags`: vector of sizes
+"""
+function removeElements(dim, tag, elementTags = Csize_t[])
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshRemoveElements, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
+          dim, tag, convert(Vector{Csize_t}, elementTags), length(elementTags), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const remove_elements = removeElements
+
+"""
     gmsh.model.mesh.reverse(dimTags = Tuple{Cint,Cint}[])
 
 Reverse the orientation of the elements in the entities `dimTags`, given as a

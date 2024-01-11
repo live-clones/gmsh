@@ -627,6 +627,15 @@ GMSH_API void gmshModelMeshGetLastNodeError(size_t ** nodeTags, size_t * nodeTag
 GMSH_API void gmshModelMeshClear(const int * dimTags, const size_t dimTags_n,
                                  int * ierr);
 
+/* Remove the elements with tags `elementTags' from the entity of dimension
+ * `dim' and tag `tag'. If `elementTags' is empty, remove all the elements
+ * classified on the entity. To get consistent node classification on model
+ * entities, `reclassifyNodes()' should be called afterwards. */
+GMSH_API void gmshModelMeshRemoveElements(const int dim,
+                                          const int tag,
+                                          const size_t * elementTags, const size_t elementTags_n,
+                                          int * ierr);
+
 /* Reverse the orientation of the elements in the entities `dimTags', given as
  * a vector of (dim, tag) pairs. If `dimTags' is empty, reverse the
  * orientation of the elements in the whole mesh. */

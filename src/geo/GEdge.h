@@ -270,9 +270,9 @@ public:
   } meshStatistics;
 
   void addLine(MLine *line) { lines.push_back(line); }
-  void addElement(int type, MElement *e);
-  void removeElement(int type, MElement *e);
-  void removeElements(int type);
+  void addElement(MElement *e);
+  void removeElement(MElement *e, bool del=false);
+  void removeElements(bool del=false);
 
   virtual void discretize(double tol, std::vector<SPoint3> &dpts,
                           std::vector<double> &ts);

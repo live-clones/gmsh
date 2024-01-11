@@ -120,9 +120,9 @@ public:
   std::vector<MPoint *> points;
 
   void addPoint(MPoint *p) { points.push_back(p); }
-  void addElement(int type, MElement *e);
-  void removeElement(int type, MElement *e);
-  void removeElements(int type);
+  void addElement(MElement *e);
+  void removeElement(MElement *e, bool del=false);
+  void removeElements(bool del=false);
 
   virtual bool reorder(const int elementType,
                        const std::vector<std::size_t> &ordering);

@@ -47,9 +47,9 @@ public:
     _ghostCells.insert(std::pair<MElement *, int>(l, onWhichPartition));
     model()->addGhostCells(l, _partition);
   }
-  void addElement(int type, MElement *e, int onWhichPartition)
+  void addElement(MElement *e, int onWhichPartition)
   {
-    GEdge::addElement(type, e);
+    GEdge::addElement(e);
     _ghostCells.insert(std::pair<MElement *, int>(e, onWhichPartition));
     model()->addGhostCells(e, _partition);
   }

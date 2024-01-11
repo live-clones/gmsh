@@ -383,15 +383,15 @@ public:
 
   // add a MeshVertex
   void addMeshVertex(MVertex *v) { mesh_vertices.push_back(v); }
-  // delete a MeshVertex
-  void removeMeshVertex(MVertex *v);
+  // remove a MeshVertex
+  void removeMeshVertex(MVertex *v, bool del=false);
 
   // add an element
-  virtual void addElement(int type, MElement *e) {}
+  virtual void addElement(MElement *e) {}
   // remove an element
-  virtual void removeElement(int type, MElement *e) {}
-  // remove all elements of a given type
-  virtual void removeElements(int type) {}
+  virtual void removeElement(MElement *e, bool del=false) {}
+  // remove all the elements
+  virtual void removeElements(bool del=false) {}
 
   // relocate mesh vertices using their parametric coordinates
   virtual void relocateMeshVertices() {}

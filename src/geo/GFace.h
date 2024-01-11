@@ -391,9 +391,9 @@ public:
   void addTriangle(MTriangle *t) { triangles.push_back(t); }
   void addQuadrangle(MQuadrangle *q) { quadrangles.push_back(q); }
   void addPolygon(MPolygon *p) { polygons.push_back(p); }
-  void addElement(int type, MElement *e);
-  void removeElement(int type, MElement *e);
-  void removeElements(int type);
+  void addElement(MElement *e);
+  void removeElement(MElement *e, bool del=false);
+  void removeElements(bool del=false);
 
   // get the boundary layer columns
   BoundaryLayerColumns *getColumns() { return &_columns; }

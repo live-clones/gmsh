@@ -731,6 +731,16 @@ namespace gmsh { // Top-level functions
       // mesh.
       GMSH_API void clear(const gmsh::vectorpair & dimTags = gmsh::vectorpair());
 
+      // gmsh::model::mesh::removeElements
+      //
+      // Remove the elements with tags `elementTags' from the entity of dimension
+      // `dim' and tag `tag'. If `elementTags' is empty, remove all the elements
+      // classified on the entity. To get consistent node classification on model
+      // entities, `reclassifyNodes()' should be called afterwards.
+      GMSH_API void removeElements(const int dim,
+                                   const int tag,
+                                   const std::vector<std::size_t> & elementTags = std::vector<std::size_t>());
+
       // gmsh::model::mesh::reverse
       //
       // Reverse the orientation of the elements in the entities `dimTags', given

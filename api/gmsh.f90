@@ -522,6 +522,8 @@ module gmsh
         gmshModelMeshGetLastNodeError
     procedure, nopass :: clear => &
         gmshModelMeshClear
+    procedure, nopass :: removeElements => &
+        gmshModelMeshRemoveElements
     procedure, nopass :: reverse => &
         gmshModelMeshReverse
     procedure, nopass :: reverseElements => &
@@ -3299,6 +3301,40 @@ module gmsh
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          ierr_=ierr)
   end subroutine gmshModelMeshClear
+
+  !> Remove the elements with tags `elementTags' from the entity of dimension
+  !! `dim' and tag `tag'. If `elementTags' is empty, remove all the elements
+  !! classified on the entity. To get consistent node classification on model
+  !! entities, `reclassifyNodes()' should be called afterwards.
+  subroutine gmshModelMeshRemoveElements(dim, &
+                                         tag, &
+                                         elementTags, &
+                                         ierr)
+    interface
+    subroutine C_API(dim, &
+                     tag, &
+                     api_elementTags_, &
+                     api_elementTags_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshRemoveElements")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), value, intent(in) :: tag
+      integer(c_size_t), dimension(*), optional :: api_elementTags_
+      integer(c_size_t), value, intent(in) :: api_elementTags_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    integer(c_size_t), dimension(:), intent(in), optional :: elementTags
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(dim=int(dim, c_int), &
+         tag=int(tag, c_int), &
+         api_elementTags_=elementTags, &
+         api_elementTags_n_=size_gmsh_size(elementTags), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshRemoveElements
 
   !> Reverse the orientation of the elements in the entities `dimTags', given as
   !! a vector of (dim, tag) pairs. If `dimTags' is empty, reverse the

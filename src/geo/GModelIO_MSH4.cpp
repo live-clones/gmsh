@@ -811,7 +811,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         if(entity->geomType() != GEntity::GhostCurve &&
            entity->geomType() != GEntity::GhostSurface &&
            entity->geomType() != GEntity::GhostVolume) {
-          entity->addElement(element->getType(), element);
+          entity->addElement(element);
         }
 
         minElementNum = std::min(minElementNum, data[j]);
@@ -880,7 +880,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         if(entity->geomType() != GEntity::GhostCurve &&
            entity->geomType() != GEntity::GhostSurface &&
            entity->geomType() != GEntity::GhostVolume) {
-          entity->addElement(element->getType(), element);
+          entity->addElement(element);
         }
 
         minElementNum = std::min(minElementNum, elmTag);
@@ -1146,16 +1146,13 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
       Msg::Warning("Missing ghost entity on partition %d", it->second);
     }
     else if(ge->geomType() == GEntity::GhostCurve) {
-      static_cast<ghostEdge *>(ge)->addElement(
-        it->first.first->getType(), it->first.first, it->first.second);
+      static_cast<ghostEdge *>(ge)->addElement(it->first.first, it->first.second);
     }
     else if(ge->geomType() == GEntity::GhostSurface) {
-      static_cast<ghostFace *>(ge)->addElement(
-        it->first.first->getType(), it->first.first, it->first.second);
+      static_cast<ghostFace *>(ge)->addElement(it->first.first, it->first.second);
     }
     else if(ge->geomType() == GEntity::GhostVolume) {
-      static_cast<ghostRegion *>(ge)->addElement(
-        it->first.first->getType(), it->first.first, it->first.second);
+      static_cast<ghostRegion *>(ge)->addElement(it->first.first, it->first.second);
     }
   }
   return true;

@@ -116,10 +116,13 @@ std::string GEntity::getInfoString(bool additional, bool multiline)
 }
 
 // removes a MeshVertex
-void GEntity::removeMeshVertex(MVertex *v)
+void GEntity::removeMeshVertex(MVertex *v, bool del)
 {
   auto it = std::find(mesh_vertices.begin(), mesh_vertices.end(), v);
-  if(it != mesh_vertices.end()) mesh_vertices.erase(it);
+  if(it != mesh_vertices.end()) {
+    mesh_vertices.erase(it);
+    if(del) delete v;
+  }
 }
 
 GVertex *GEntity::cast2Vertex() { return dynamic_cast<GVertex *>(this); }

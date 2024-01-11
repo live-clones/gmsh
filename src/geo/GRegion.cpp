@@ -41,18 +41,7 @@ void GRegion::deleteMesh()
   for(std::size_t i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
   mesh_vertices.clear();
   transfinite_vertices.clear();
-  for(std::size_t i = 0; i < tetrahedra.size(); i++) delete tetrahedra[i];
-  tetrahedra.clear();
-  for(std::size_t i = 0; i < hexahedra.size(); i++) delete hexahedra[i];
-  hexahedra.clear();
-  for(std::size_t i = 0; i < prisms.size(); i++) delete prisms[i];
-  prisms.clear();
-  for(std::size_t i = 0; i < pyramids.size(); i++) delete pyramids[i];
-  pyramids.clear();
-  for(std::size_t i = 0; i < trihedra.size(); i++) delete trihedra[i];
-  trihedra.clear();
-  for(std::size_t i = 0; i < polyhedra.size(); i++) delete polyhedra[i];
-  polyhedra.clear();
+  removeElements(true);
   deleteVertexArrays();
   model()->destroyMeshCaches();
 }
@@ -610,9 +599,9 @@ std::vector<GVertex *> GRegion::vertices() const
   return std::vector<GVertex *>(v.begin(), v.end());
 }
 
-void GRegion::addElement(int type, MElement *e)
+void GRegion::addElement(MElement *e)
 {
-  switch(type) {
+  switch(e->getType()) {
   case TYPE_TET: addTetrahedron(reinterpret_cast<MTetrahedron *>(e)); break;
   case TYPE_HEX: addHexahedron(reinterpret_cast<MHexahedron *>(e)); break;
   case TYPE_PRI: addPrism(reinterpret_cast<MPrism *>(e)); break;
@@ -624,56 +613,78 @@ void GRegion::addElement(int type, MElement *e)
   }
 }
 
-void GRegion::removeElement(int type, MElement *e)
+void GRegion::removeElement(MElement *e, bool del)
 {
-  switch(type) {
+  switch(e->getType()) {
   case TYPE_TET: {
     auto it = std::find(tetrahedra.begin(), tetrahedra.end(),
                         reinterpret_cast<MTetrahedron *>(e));
-    if(it != tetrahedra.end()) tetrahedra.erase(it);
+    if(it != tetrahedra.end()) {
+      tetrahedra.erase(it);
+      if(del) delete e;
+    }
   } break;
   case TYPE_HEX: {
     auto it = std::find(hexahedra.begin(), hexahedra.end(),
                         reinterpret_cast<MHexahedron *>(e));
-    if(it != hexahedra.end()) hexahedra.erase(it);
+    if(it != hexahedra.end()) {
+      hexahedra.erase(it);
+      if(del) delete e;
+    }
   } break;
   case TYPE_PRI: {
     auto it =
       std::find(prisms.begin(), prisms.end(), reinterpret_cast<MPrism *>(e));
-    if(it != prisms.end()) prisms.erase(it);
+    if(it != prisms.end()) {
+      prisms.erase(it);
+      if(del) delete e;
+    }
   } break;
   case TYPE_PYR: {
     auto it = std::find(pyramids.begin(), pyramids.end(),
                         reinterpret_cast<MPyramid *>(e));
-    if(it != pyramids.end()) pyramids.erase(it);
+    if(it != pyramids.end()) {
+      pyramids.erase(it);
+      if(del) delete e;
+    }
   } break;
   case TYPE_TRIH: {
     auto it = std::find(trihedra.begin(), trihedra.end(),
                         reinterpret_cast<MTrihedron *>(e));
-    if(it != trihedra.end()) trihedra.erase(it);
+    if(it != trihedra.end()) {
+      trihedra.erase(it);
+      if(del) delete e;
+    }
   } break;
   case TYPE_POLYH: {
     auto it = std::find(polyhedra.begin(), polyhedra.end(),
                         reinterpret_cast<MPolyhedron *>(e));
-    if(it != polyhedra.end()) polyhedra.erase(it);
+    if(it != polyhedra.end()) {
+      polyhedra.erase(it);
+      if(del) delete e;
+    }
   } break;
   default:
     Msg::Error("Trying to remove unsupported element in volume %d", tag());
   }
 }
 
-void GRegion::removeElements(int type)
+void GRegion::removeElements(bool del)
 {
-  switch(type) {
-  case TYPE_TET: tetrahedra.clear(); break;
-  case TYPE_HEX: hexahedra.clear(); break;
-  case TYPE_PRI: prisms.clear(); break;
-  case TYPE_PYR: pyramids.clear(); break;
-  case TYPE_TRIH: trihedra.clear(); break;
-  case TYPE_POLYH: polyhedra.clear(); break;
-  default:
-    Msg::Error("Trying to remove unsupported elements in volume %d", tag());
+  if(del) {
+    for(auto e : tetrahedra) delete e;
+    for(auto e : hexahedra) delete e;
+    for(auto e : prisms) delete e;
+    for(auto e : pyramids) delete e;
+    for(auto e : trihedra) delete e;
+    for(auto e : polyhedra) delete e;
   }
+  tetrahedra.clear();
+  hexahedra.clear();
+  prisms.clear();
+  pyramids.clear();
+  trihedra.clear();
+  polyhedra.clear();
 }
 
 bool GRegion::reorder(const int elementType,
