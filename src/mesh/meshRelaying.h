@@ -12,6 +12,33 @@
 
 class GModel;
 
+class edgeCut {
+public:
+  size_t a,b;
+  SVector3 p;
+  double d;  
+  int index;
+  edgeCut (size_t _a, size_t _b, SVector3 _p, double _d, int _i) : a(_a) , b(_b), p(_p), d(_d), index(_i) {     
+  }
+  bool operator < (const edgeCut &o) const{
+    if (d < o.d)return true;
+    return false;
+  }
+};
+
+class frontNode {
+ public :
+  size_t meshNode;
+  size_t line;
+  double t;
+  frontNode (size_t n, size_t l, double _t) : meshNode (n), line(l), t(_t){
+  }
+  bool operator < (const frontNode &other) const{
+    if (line != other.line)return line<other.line;
+    return t < other.t;
+  }
+};
+
 class discreteFront {
   //  int64_t octree;
   std::vector<int> colors;
@@ -19,6 +46,7 @@ class discreteFront {
   std::vector<size_t> lines;
   std::vector<double> pos;
   double t;
+  std::vector<frontNode> fn;
   
   // Let us thus use a search structure based on edges  
   std::vector<std::vector<size_t> > sss;
@@ -29,12 +57,6 @@ class discreteFront {
  public :
   discreteFront (){}
   discreteFront (std::vector<double> &p, std::vector<size_t> &l, std::vector<int> &c, double _t0 = 0);
-  void addLines (std::vector<double> &p, std::vector<size_t> &l, std::vector<int> &c){
-    size_t n = colors.size();
-    pos.insert (pos.end(), p.begin(), p.end());
-    colors.insert (colors.end(), c.begin(), c.end());
-    for (size_t i=0;i<l.size();i++)lines.push_back(l[i]+n);
-  }
   // assume 2D x y here !!!!
   void intersectLine2d (const SVector3 &p0, const SVector3 &p1,
 			std::vector<double> &d, std::vector<int> &c);
@@ -44,17 +66,47 @@ class discreteFront {
   bool empty() const {return pos.empty();}
   void move (double dt);
   virtual SVector3 velocity (double x, double y, double z, double t, int col);
-  void print(FILE *f);
+  void printGeometry(FILE *f);
   int whatIsTheColorOf2d (const SVector3 &P);
   int getColor(int i){return colors[i/2];}
   void buildSpatialSearchStructure ();
   int dim() const {return 2;}
   void setBbox (SBoundingBox3d _bbox){bbox=_bbox;}
+  // ------------------------------------
+  // --> tell what are mesh nodes  
+  void clearFrontNodes(){
+    fn.clear();
+  }
+  void addFrontNode(size_t n, size_t l, SVector3 t){
+    SVector3 p0 (pos[3*lines[l]],pos[3*lines[l]+1],pos[3*lines[l]+2]);
+    SVector3 p1 (pos[3*lines[l+1]],pos[3*lines[l+1]+1],pos[3*lines[l+1]+2]);
+    double d = (p1-p0).norm();
+    double a = (t-p0).norm() / d;
+    fn.push_back(frontNode (n,l,a));
+  }
+  std::vector<std::pair<size_t,size_t> > getFrontEdges();  
+  void printMesh (FILE *f);
+
+  SVector3 relaxFrontNode (size_t i);
+
+  //-----------------------------------------------------------------------------------
+  // --> should be simplified to
+  void addGmshModel (const char *fn);
   // basic shapes
   void addEllipsis (int tag, double xc, double yc, double theta0, double r1, double r2, int n);
   void addRectangle (int tag, double xc, double yc, double r1, double r2, int n);
   void addPolygon (int tag, const std::vector<SVector3> &poly, int n);
+  //-----------------------------------------------------------------------------------
+  // --> boolean operator 
   void boolOp ();
+  // create a loop
+  void addLines (std::vector<double> &p, std::vector<size_t> &l, std::vector<int> &c){
+    size_t n = colors.size();
+    pos.insert (pos.end(), p.begin(), p.end());
+    colors.insert (colors.end(), c.begin(), c.end());
+    for (size_t i=0;i<l.size();i++)lines.push_back(l[i]+n);
+  }
+  
 };
 
 
@@ -90,9 +142,6 @@ class meshRelaying {
   /// functions for optimization
   double smallest_measure (const size_t n, 
 			const SVector3 &target) ;  
-  void computeFront (const std::function<double(size_t, size_t)> &fct,
-		     std::vector<SVector3> &front,
-		     const char*fn = nullptr);
  public:
   meshRelaying (GModel *gm = nullptr); // use GModel gm or Gmodel::current() if NULL  
   void doRelaying (const std::function<std::vector<std::pair<double, int> >(size_t, size_t)> &f); 
@@ -112,7 +161,7 @@ class meshRelaying {
   }
   void doRelaying (double t);
   void doRelax (double r);
-  void doRelaxFrontNode (size_t i, const std::vector<size_t> &n, double r);
+  void doRelaxFrontNode (size_t i, const std::vector<size_t> &n, double r, std::vector<std::pair<size_t,size_t> > &fe);
   void print4debug(const char *);
 };
 
