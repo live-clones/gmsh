@@ -568,7 +568,7 @@ double MElement::getVolume()
 {
   int npts;
   IntPt *pts;
-  getIntegrationPoints(getDim() * (getPolynomialOrder() - 1), &npts, &pts);
+  getIntegrationPoints(getPolynomialOrder() + 3, &npts, &pts);
   double vol = 0.;
   for(int i = 0; i < npts; i++) {
     vol += getJacobianDeterminant(pts[i].pt[0], pts[i].pt[1], pts[i].pt[2]) *

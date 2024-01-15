@@ -49,7 +49,7 @@ IntPt *getGQPyrPts(int order)
       intpt[l].pt[2] = 0.5 * (1 + wp);
 
       wt *= 0.125;
-      intpt[l++].weight = wt * 4. / 3.;
+      intpt[l++].weight = wt;
     }
     GQPyr[order] = intpt;
   }
