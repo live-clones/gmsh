@@ -7,17 +7,17 @@
 #include "robustPredicates.h"
 // #include "libol1.h"
 
-int TESTCASE = 12;
+int TESTCASE = 2;
 
 discreteFront::discreteFront (std::vector<double> &p, std::vector<size_t> &l, std::vector<int> &c, double _t){
   addLines(p,l,c);
 }
 
-void discreteFront::print(FILE *f){
+void discreteFront::printGeometry(FILE *f){
   for (size_t i=0 ; i< lines.size() ; i+=2){
     fprintf(f,"SL(%12.5E,%12.5E,0,%12.5E,%12.5E,0){%d,%d};\n",
 	    pos[3*lines[i]],pos[3*lines[i]+1],
-	    pos[3*lines[i+1]],pos[3*lines[i+1]+1],3,3);
+	    pos[3*lines[i+1]],pos[3*lines[i+1]+1],-colors[i/2],-colors[i/2]);
   }
 
   for(size_t i=0; i<lines.size(); i+=2){
@@ -26,6 +26,24 @@ void discreteFront::print(FILE *f){
   }
 
 }
+
+SVector3 discreteFront::relaxFrontNode (size_t i){
+  /*  int color = -1;
+  int start = -1;
+  for (size_t k=0;k<fn.size();k++){
+    if (fn[k].meshNode == i){
+      color = getColor(fn[k].line);
+      start = k;
+      break;
+    }
+  }
+  std::vector<size_t> is;
+  for (size_t k=start;k<fn.size()+start;k++)
+    if (getColor(fn[k%fn.size()].line) == color) is.push_back(fn[k%fn.size()].meshNode);
+  int end = is[is.size() - 1];
+  */  
+}
+
 
 int discreteFront::whatIsTheColorOf2d (const SVector3 &P){
 
@@ -169,18 +187,32 @@ void discreteFront::buildSpatialSearchStructure () {
 SVector3 discreteFront::velocity (double x, double y, double z, double t, int col){
   // doublet
   if (TESTCASE == 12){
-    double x1 = 0.5, y1=0.5;
+    //    double x1 = 0.5, y1=0.5;
+    if (col == 0) return SVector3(0,0,0);
     double x2 = 1.5, y2=0.5;
-    double r1 = sqrt((x-x1)*(x-x1)+(y-y1)*(y-y1));
+    //    double r1 = sqrt((x-x1)*(x-x1)+(y-y1)*(y-y1));
     double r2 = sqrt((x-x2)*(x-x2)+(y-y2)*(y-y2));
-    double Gamma = 1;
-    double theta_1 = atan2(y-y1,x-x1);
     double theta_2 = atan2(y-y2,x-x2);
-    SVector3 v1  ((Gamma/(2*M_PI))*sin(theta_1)/r1,
-		  (-Gamma/(2*M_PI))*cos(theta_1)/r1,0);
-    SVector3 v2  ((-Gamma/(2*M_PI))*sin(theta_2)/r2,
-		  (Gamma/(2*M_PI))*cos(theta_2)/r2,0);
-    return v1+v2;
+    double U = 1.0;
+    double R = 0.6;
+    //    if (r2 <= R) return SVector3(0,0,0);
+    double ur = U*cos(theta_2)*(1.-R*R/(r2*r2));
+    double ut = -U*sin(theta_2)*(1.+R*R/(r2*r2));
+    double ux = ur*cos(theta_2)-ut*sin(theta_2);
+    double uy = ur*sin(theta_2)+ut*cos(theta_2);
+    return SVector3(ux,uy,0);
+    //    double Gamma = 1;
+    //    double theta_1 = atan2(y-y1,x-x1);
+    //    double theta_2 = atan2(y-y2,x-x2);
+    // SVector3 v1  ((Gamma/(2*M_PI))*sin(theta_1)/r1,
+    // 		  (-Gamma/(2*M_PI))*cos(theta_1)/r1,0);
+    // SVector3 v2  ((-Gamma/(2*M_PI))*sin(theta_2)/r2,
+    // 		  (Gamma/(2*M_PI))*cos(theta_2)/r2,0);
+    //    SVector3 v1  ((Gamma/(2*M_PI))*cos(theta_1)/r1,
+    //		  (Gamma/(2*M_PI))*sin(theta_1)/r1,0);
+    //    SVector3 v2  ((Gamma/(2*M_PI))*cos(theta_2)/r2,
+    //		  (Gamma/(2*M_PI))*sin(theta_2)/r2,0);
+    // return v1+v2;
   }
   if (TESTCASE == 11){
     double r = col == 1 ? sqrt(x*x+y*y) : sqrt((x-.3)*(x-.3)+y*y);
@@ -438,6 +470,7 @@ void discreteFront::boolOp (){
       _ll.clear();
     }
   }
+  if (_ll.size()) _lls.push_back(_ll);
   for (size_t k=0;k<_lls.size();k++){
     for (size_t i=0;i<_lls[k].size();i+=2){
       if(colors[_lls[k][i+1]]<0) continue;
@@ -455,6 +488,8 @@ void discreteFront::boolOp (){
       }
     }
   }
+  
+  //  printf("%lu cornres %lu\n",corners.size(),_lls.size());
   
   std::map<size_t, std::vector<size_t> > cuts;
   for (size_t i=0;i<lines.size();i+=2){
@@ -644,6 +679,72 @@ void discreteFront::redistFront(double lc){
   }
   
 }
+
+void discreteFront :: printMesh (FILE *f) {
+  std::sort(fn.begin(), fn.end());
+  std::vector<SVector3> pp;
+  int current_color = getColor(fn[0].line);
+  for (size_t i=0;i<fn.size();i++){
+    const frontNode &n = fn[i];
+    //    printf("front node %lu %lu %g\n",n.meshNode,n.line,n.t);
+    size_t l = n.line;
+    int color = getColor(l);
+    SVector3 p0 (pos[3*lines[l]],pos[3*lines[l]+1],pos[3*lines[l]+2]);
+    SVector3 p1 (pos[3*lines[l+1]],pos[3*lines[l+1]+1],pos[3*lines[l+1]+2]);
+    SVector3 p = p0+(p1-p0)*n.t;
+    fprintf(f,"SP(%g,%g,%g){%lu};\n",p.x(),p.y(),p.z(),current_color);
+    if (current_color != color){
+      for (size_t j=0;j<pp.size();j++){
+	fprintf(f,"SL(%g,%g,%g,%g,%g,%g){%d,%d};\n",
+		pp[j].x(),pp[j].y(),pp[j].z(),
+		pp[(j+1)%pp.size()].x(),pp[(j+1)%pp.size()].y(),pp[(j+1)%pp.size()].z(),
+		current_color,current_color);	
+      }
+      pp.clear();
+      current_color = color;
+    }
+    pp.push_back(p);
+  }
+  for (size_t i=0;i<pp.size();i++){
+    fprintf(f,"SL(%g,%g,%g,%g,%g,%g){%d,%d};\n",
+	    pp[i].x(),pp[i].y(),pp[i].z(),
+	    pp[(i+1)%pp.size()].x(),pp[(i+1)%pp.size()].y(),pp[(i+1)%pp.size()].z(),
+	    current_color,current_color);	
+  }  
+}
+
+std::vector<std::pair<size_t,size_t> > discreteFront :: getFrontEdges() {
+  std::sort(fn.begin(), fn.end());
+  std::vector<std::pair<size_t,size_t> > pp;
+  std::vector<size_t>  curr;
+  int current_color = getColor(fn[0].line);
+  for (size_t i=0;i<fn.size();i++){
+    const frontNode &n = fn[i];
+    size_t l = n.line;
+    int color = getColor(l);
+    //    printf("front node %lu %lu %g\n",n.meshNode,n.line,n.t);
+    if (current_color != color){
+      for (size_t j=0;j<curr.size();j++){
+	size_t A = curr[j];
+	size_t B = curr[(j+1)%curr.size()];
+	std::pair<size_t,size_t> pa = std::make_pair(std::min(A,B), std::max(A,B));
+	pp.push_back(pa);
+      }
+      curr.clear();
+      current_color = color;
+    }
+    curr.push_back(n.meshNode);
+  }
+  for (size_t j=0;j<curr.size();j++){
+    size_t A = curr[j];
+    size_t B = curr[(j+1)%curr.size()];
+    std::pair<size_t,size_t> pa = std::make_pair(std::min(A,B), std::max(A,B));
+    pp.push_back(pa);
+  }
+  return pp;
+}
+
+
 
 // -----------------------------------------------------------------------------------------------
 // -----------------------------------------------------------------------------------------------
@@ -874,6 +975,7 @@ void meshRelaying::doRelaying (double t){
       std::pair<double,int > p = std::make_pair(d[i],c[i]);
       ds.push_back(p);
     }
+    std::sort(ds.begin(),ds.end());
     return ds;
   };
   if (df.empty())
@@ -884,50 +986,6 @@ void meshRelaying::doRelaying (double t){
   }
 }
 
-
-void meshRelaying::computeFront (const std::function<double(size_t, size_t)> &fct,
-				 std::vector<SVector3> &front,
-				 const char*fn){
-  FILE *f = nullptr;
-  if (fn){
-    f = fopen(fn,"w");
-    fprintf(f,"View \"FRONT\"{\n");
-  }
-
-  if (tets.size()){
-  }
-  else if (tris.size()){
-    for (size_t i=0; i< tris.size() ; i+=3){
-      size_t n[3] = {tris[i],tris[i+1],tris[i+2]};
-      double f_[3] = {fct(tris[i],tris[i+1]),
-		     fct(tris[i+1],tris[i+2]),
-		     fct(tris[i+2],tris[i])};    
-      SVector3 p[3] = {SVector3(pos[3*n[0]],pos[3*n[0]+1],pos[3*n[0]+2]),
-		       SVector3(pos[3*n[1]],pos[3*n[1]+1],pos[3*n[1]+2]),
-		       SVector3(pos[3*n[2]],pos[3*n[2]+1],pos[3*n[2]+2])};		       
-      for (size_t j=0;j<3;j++){
-	double fa = f_[j];
-	double fb = f_[(j+1)%3];
-	if (fa >= 0 && fa <= 1 &&
-	    fb >= 0 && fb <= 1){
-	  SVector3 p1 = p[j] + (p[(j+1)%3] - p[j])*fa;
-	  SVector3 p2 = p[(j+1)%3] + (p[(j+2)%3] - p[(j+1)%3])*fb;
-	  front.push_back(p1);
-	  front.push_back(p2);
-	  if (f){
-	    fprintf(f,"SL(%12.5E,%12.5E,%12.5E,%12.5E,%12.5E,%12.5E){1,1};\n",
-		    p1.x(),p1.y(),p1.z(),
-		    p2.x(),p2.y(),p2.z());
-	  }
-	}
-      }
-    }
-  }
-  if (f){
-    fprintf(f,"};\n");
-    fclose(f);
-  }
-}
 
 double meshRelaying::smallest_measure (const size_t n, 
 				    const SVector3 &t){
@@ -980,32 +1038,20 @@ double meshRelaying::smallest_measure (const size_t n,
   return volume;
 }
 
-
-class edgeCut {
-public:
-  size_t a,b;
-  SVector3 p;
-  double d;  
-  int index;
-  edgeCut (size_t _a, size_t _b, SVector3 _p, double _d, int _i) : a(_a) , b(_b), p(_p), d(_d), index(_i){     
-  }
-  bool operator < (const edgeCut &o) const{
-    if (d < o.d)return true;
-    return false;
-  }
-};
-
 void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,int> >(size_t, size_t)> &f){
   
-  
   front_nodes.clear();
+  df.clearFrontNodes();
   //Compute all cuts ...
-  int ITTT = 0;
+  int ITTT = 1;
   df.buildSpatialSearchStructure ();
   df.boolOp();
+  int MAXIT = 10;
   while(1) {
-    if (ITTT++ > 5)break;
-    // snap corners
+
+    auto front_edges = df.getFrontEdges();
+    
+    if (ITTT++ == MAXIT)break;
     if (tets.empty()){      
       for (size_t i=0;i<tris.size();i+=3){
         std::vector<SVector3> c;
@@ -1038,23 +1084,39 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
     }
     std::sort(front_nodes.begin(),front_nodes.end());
     std::sort(corners.begin(),corners.end());
-    //    continue;
     std::set<std::pair<size_t,size_t> > cuts;
     std::vector<edgeCut> moves;
+
+    size_t maxCuts = 0;
+    
+    //    char name[245];
+    //    sprintf(name,"AAA%d.pos",ITTT);
+    //    FILE *fi = fopen(name,"w");
+    //    fprintf(fi,"View \"\"{\n");
+    //    int CC = 0;
     for (size_t i = 0; i< v2v.size() ; i++){
       for (auto j : v2v[i]){
         if (i < j){
+          std::pair<size_t,size_t> pa = std::make_pair(i,j);
+          if (std::binary_search(front_edges.begin(), front_edges.end(), pa))continue;
+
           std::vector<std::pair<double,int> > ds = f (i,j);
           if (ds.empty())continue;
-          if (df.getColor(ds[0].second)<0) continue;
-          if (ds.size() > 2)Msg::Debug("Relaying cannot be done -- mesh is too coarse with respect to front features (%d intersections)",ds.size());
+          if (ds.size() > 2) {
+            printf("iter %d we have edge %lu %lu cut by %lu\n",ITTT,i,j,ds.size());
+          }
           std::pair<size_t,size_t> p = std::make_pair(std::min(i,j),std::max(i,j));
           cuts.insert(p);
-          std::sort(ds.begin(),ds.end());
-          const double di = ds[0].first;// FIXME
-          const double dj = ds.size() >= 2 ? ds[ds.size()-1].first : di;
-          const int    ii = ds[0].second;// FIXME
-          const int    ij = ds.size() >= 2 ? ds[ds.size()-1].second : ii;
+
+          double xxx = (ds.size() - 1.)/2.0;
+          
+          size_t indexi = 0;//floor(xxx); 
+          size_t indexj = ds.size() - 1.;//ceil(xxx);
+
+          const double di = ds[indexi].first;
+          const double dj = ds[indexj].first;
+          const int    ii = ds[indexi].second;
+          const int    ij = ds[indexj].second;
           int dimEdge = tets.size() ? 3:2;
           if (std::binary_search(bnd2d.begin(), bnd2d.end(), p))dimEdge = std::min(dimEdge,2);
           if (std::binary_search(bnd1d.begin(), bnd1d.end(), p))dimEdge = std::min(dimEdge,1);
@@ -1069,16 +1131,26 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
           edgeCut mi(i, j, pOpti, DI.norm(), ii);
           edgeCut mj(j, i, pOptj, DJ.norm(), ij);
           // Not perfect ... but workable
-          
           if (!std::binary_search(front_nodes.begin(),front_nodes.end(),i))
             if(di>0.0000001 && di<0.999999 && dimi >= dimEdge)moves.push_back(mi);
           if (!std::binary_search(front_nodes.begin(),front_nodes.end(),j))
             if(dj>0.0000001 && dj<0.999999 && dimj >= dimEdge)moves.push_back(mj);
+          maxCuts = std::max(maxCuts, ds.size());
         }
       }
     }
+    //    fprintf(fi,"};\n");
+    //    fclose(fi);
+    //    if(CC){
+    //      print4debug ("A.pos");
+      //      exit(1);
+    //    }
+    //    printf("%d %lu\n",ITTT,maxCuts);
+    //    if (ITTT > -1)maxCuts = 2;
+    
     if (moves.empty())break;
     std::sort(moves.begin(), moves.end());
+
     for (auto c : moves){
       size_t i = c.a;
       size_t j = c.b;
@@ -1098,6 +1170,7 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
         printf("i = %d (%f,%f), j = %d (%f,%f), popti = %f, %f \n \n", i, pos[3*i], pos[3*i+1], j, pos[3*j], pos[3*j+1], pOpt.x(), pOpt.y());
       }
       front_nodes.push_back(i);
+      df.addFrontNode (i,c.index,pOpt);
       pos[3*i] = pOpt.x();
       pos[3*i+1] = pOpt.y();
       pos[3*i+2] = pOpt.z();
@@ -1116,8 +1189,10 @@ static SVector3 average (const std::vector<size_t> &vs, const std::vector<double
   return a;
 }
 
-void meshRelaying::doRelaxFrontNode (size_t i, const std::vector<size_t> &n, double r){
+void meshRelaying::doRelaxFrontNode (size_t i, const std::vector<size_t> &n, double r,
+				     std::vector<std::pair<size_t,size_t> > &fe){
 
+  return;
   if (df.empty())return;
   if (std::binary_search(corners.begin(),corners.end(),i))return;
   if (dimVertex[i]<2) return;
@@ -1125,9 +1200,9 @@ void meshRelaying::doRelaxFrontNode (size_t i, const std::vector<size_t> &n, dou
   SVector3 pi (pos[3*i],pos[3*i+1],pos[3*i+2]);
 
   std::vector<size_t> fn; // front neighbors
-  for (auto i : n){
-    if (std::binary_search(front_nodes.begin(), front_nodes.end(),i)){
-      fn.push_back(i);
+  for (auto j : n){
+    if (std::binary_search(front_nodes.begin(), front_nodes.end(),j)){
+      fn.push_back(j);
     }
   }
   if (fn.size() == 2){
@@ -1146,6 +1221,8 @@ void meshRelaying::doRelaxFrontNode (size_t i, const std::vector<size_t> &n, dou
 }
 
 void meshRelaying::doRelax (double r){
+  auto front_edges = df.getFrontEdges();
+
   for (size_t i=0;i<v2v.size();i++){
     if (!std::binary_search(front_nodes.begin(), front_nodes.end(),i)){
       SVector3 pi (initial_pos[3*i],initial_pos[3*i+1],initial_pos[3*i+2]);
@@ -1160,17 +1237,20 @@ void meshRelaying::doRelax (double r){
       }
     }
     else {
-      doRelaxFrontNode (i, v2v[i], r);
+      doRelaxFrontNode (i, v2v[i], r, front_edges);
     }
   }
 }
 
 void meshRelaying::print4debug(const char *fn){
   FILE *f = fopen (fn,"w");
-  fprintf(f,"View \"\"{\n");
-
-  df.print(f);
-  
+  fprintf(f,"View \"Front Geometry\"{\n");
+  df.printGeometry(f);
+  fprintf(f,"};\n");
+  fprintf(f,"View \"Front Mesh\"{\n");
+  df.printMesh(f);
+  fprintf(f,"};\n");
+  fprintf(f,"View \"Mesh\"{\n");  
   for (size_t i=0;i<tets.size();i+=4){
     fprintf(f,"SS(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
 	    pos[3*tets[i]],pos[3*tets[i]+1],pos[3*tets[i]+2],
