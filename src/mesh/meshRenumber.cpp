@@ -285,7 +285,7 @@ int meshRenumber_Vertices_Metis(
   if(result != METIS_OK) {
     delete[] perm;
     delete[] iperm;
-    Msg::Warning("RENUMBERING WITH METIS FAILED");
+    Msg::Warning("Renumbering with METIS failed");
     return -1;
   }
 

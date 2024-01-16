@@ -1,4 +1,4 @@
-4.13 (Work-in-progress)
+4.12.2 (Work-in-progress): bug fixes.
 
 * New API functions: mesh/removeElements.
 
