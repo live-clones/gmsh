@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -224,8 +224,8 @@ void adaptiveTriangle::create(int maxlevel)
 {
   cleanElement<adaptiveTriangle>();
   adaptiveVertex *p1 = adaptiveVertex::add(0, 0, 0, allVertices);
-  adaptiveVertex *p2 = adaptiveVertex::add(0, 1, 0, allVertices);
-  adaptiveVertex *p3 = adaptiveVertex::add(1, 0, 0, allVertices);
+  adaptiveVertex *p2 = adaptiveVertex::add(1, 0, 0, allVertices);
+  adaptiveVertex *p3 = adaptiveVertex::add(0, 1, 0, allVertices);
   adaptiveTriangle *t = new adaptiveTriangle(p1, p2, p3);
   recurCreate(t, maxlevel, 0);
 }

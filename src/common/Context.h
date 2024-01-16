@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -105,6 +105,21 @@ struct contextGeometryOptions {
   int occUnionUnify, occThruSectionsDegree, occUseGenericClosestPoint;
   double occScaling;
   std::string occTargetUnit;
+  // STEP file outputs
+  // header section: FILE_DESCRIPTION
+  std::string occStepDescription;
+  std::string occStepImplementationLevel;
+  // header section: FILE_NAME
+  std::string occStepModelName;
+  std::string occStepTimeStamp;
+  std::string occStepAuthor;
+  std::string occStepOrganization;
+  std::string occStepPreprocessorVersion;
+  std::string occStepOriginatingSystem;
+  std::string occStepAuthorization;
+  // header section: FILE_SCHEMA
+  std::string occStepSchemaIdentifier;
+
   int copyMeshingMethod, exactExtrusion;
   int matchGeomAndMesh;
   double matchMeshScaleFactor;

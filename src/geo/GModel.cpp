@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -2913,22 +2913,19 @@ int GModel::removeDuplicateMeshElements(const std::vector<GEntity*> &ents)
   if(entities.empty()) getEntities(entities);
   int num = 0;
   for(auto &e : entities) {
-    std::vector<int> types;
-    e->getElementTypes(types);
-    for(auto t : types) {
-      std::set<MElement*, MElementPtrLessThanVertices> uniq;
-      for(std::size_t i = 0; i < e->getNumMeshElementsByType(t); i++) {
-        MElement *ele = e->getMeshElementByType(t, i);
-        uniq.insert(ele);
-      }
-      int diff = e->getNumMeshElementsByType(t) - uniq.size();
-      if(diff > 0) {
-        num += diff;
-        Msg::Info("Removed %d duplicate element%s in entity %d of dimension %d",
-                  diff, diff > 1 ? "s" : "", e->tag(), e->dim());
-        e->removeElements(t);
-        for(auto ele : uniq) e->addElement(t, ele);
-      }
+    std::set<MElement*, MElementPtrLessThanVertices> uniq;
+    for(std::size_t i = 0; i < e->getNumMeshElements(); i++) {
+      MElement *ele = e->getMeshElement(i);
+      uniq.insert(ele);
+    }
+    int diff = e->getNumMeshElements() - uniq.size();
+    if(diff > 0) {
+      num += diff;
+      Msg::Info("Removed %d duplicate element%s in entity %d of dimension %d",
+                diff, diff > 1 ? "s" : "", e->tag(), e->dim());
+      e->removeElements(false);
+      for(auto ele : uniq) e->addElement(ele);
+      // TODO: we should delete the duplicate elements
     }
   }
 

@@ -2,7 +2,6 @@
 Geometry.Surfaces=1;
 Mesh.SurfaceFaces=1;
 Mesh.RecombinationAlgorithm = 0;
-Mesh.RemeshAlgorithm = 1;
 Mesh.Algorithm=6; // mesh algorithm
 Mesh.Algorithm3D=4; // mesh algorithm
 Geometry.OldRuledSurface=1;
@@ -159,4 +158,3 @@ Volume (newv) = { outer_surf_loop, inner_surf_loop };
 Characteristic Length { Boundary{ Line{ Boundary{ Surface{outer_vol[{0,2:5}] }; } }; } } = outer_length / transf_outer ;
 Characteristic Length { Boundary{ Line{ Boundary{ Surface{vol1[{0,2:5}], vol2[{0,2:5}], vol3[{0,2:5}], vol4[{0,2:5}],
                         vol5[{0,2:5}], vol6[{0,2:5}], vol7[{0,2:5}] }; } }; } } = length1 / transf1 ;
-

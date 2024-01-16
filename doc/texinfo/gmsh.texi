@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+@c Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 @c
 @c See the LICENSE.txt file in the Gmsh root directory for license information.
 @c Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -22,7 +22,7 @@
 @c %**starts of header
 @setfilename gmsh.info
 @include version.texi
-@set COPYRIGHT @copyright{} 1997-2023 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
+@set COPYRIGHT @copyright{} 1997-2024 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @set SYN a synchronization of the CAD model with the internal Gmsh model.
 @set SYNC This operation triggers @value{SYN}
 @set SYNCS These operations all trigger @value{SYN}
@@ -348,7 +348,7 @@ actions in the geometry module automatically append the related command
 in the input script file, and can optionally also generate input for the
 languages supported by the API (see the
 @code{General.ScriptingLanguages} option; this is still work-in-progress
-as of Gmsh 4.11.)
+as of Gmsh 4.12.)
 
 In addition to CAD-type geometrical entities, whose geometry is provided
 by a CAD kernel, Gmsh also supports @emph{discrete} model entities,

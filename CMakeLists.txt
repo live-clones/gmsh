@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -107,7 +107,7 @@ opt(WRAP_PYTHON "Generate SWIG Python wrappers for private API (not used by publ
 opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 4)
-set(GMSH_MINOR_VERSION 12)
+set(GMSH_MINOR_VERSION 13)
 set(GMSH_PATCH_VERSION 0)
 if(NOT GMSH_EXTRA_VERSION)
   set(GMSH_EXTRA_VERSION "")
