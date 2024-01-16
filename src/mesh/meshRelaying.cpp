@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "meshRelaying.h"
 #include "GModel.h"
 #include "MTetrahedron.h"
@@ -22,20 +23,42 @@ void discreteFront::printGeometry(FILE *f){
 }
 
 SVector3 discreteFront::relaxFrontNode (size_t i){
-  /*  int color = -1;
-  int start = -1;
+
+  int current_color = getColor(fn[0].line);
+  size_t start_color = 0;
+  std::vector<frontNode> frontColor;
+  int pos = -1;
   for (size_t k=0;k<fn.size();k++){
-    if (fn[k].meshNode == i){
-      color = getColor(fn[k].line);
-      start = k;
-      break;
+    int color = getColor(fn[k].line);
+    if (color == current_color){
+      if (fn[k].meshNode == i)  pos = frontColor.size();
+      frontColor.push_back(fn[k]);
+    }
+    else {
+      if (pos != -1) break;
+      frontColor.clear();
+      current_color = color;
     }
   }
-  std::vector<size_t> is;
-  for (size_t k=start;k<fn.size()+start;k++)
-    if (getColor(fn[k%fn.size()].line) == color) is.push_back(fn[k%fn.size()].meshNode);
-  int end = is[is.size() - 1];
-  */  
+
+  size_t posp, posm;
+
+  if (pos == 0) posm = frontColor.size() - 1;
+  else posm = pos-1;
+
+  if (pos == frontColor.size() - 1) posp = 0;
+  else posp = pos+1;  
+    
+  size_t low = 2*(*std::lower_bound (colors.begin(), colors.end(), current_color));
+  size_t up  = 2*(*std::upper_bound (colors.begin(), colors.end(), current_color));
+
+  size_t lpos = frontColor[pos].line;
+  size_t lposp = frontColor[posp].line;
+  size_t lposm = frontColor[posm].line;
+
+  //  printf("node %lu -- prev %lu -- next %lu -- lines %lu %lu %lu\n",pos,posp,posm,lposm,lpos,lposp);
+
+  return SVector3(0,0,0);
 }
 
 
@@ -82,9 +105,15 @@ void discreteFront::cornersInTriangle2d (const SVector3 &p0, const SVector3 &p1,
     double a01p = robustPredicates::orient2d(a0,a1,p);
     double a12p = robustPredicates::orient2d(a1,a2,p);
     double a20p = robustPredicates::orient2d(a2,a0,p);
+
     if (a01p*a12p >=0 && a01p*a20p >=0 && a20p*a12p >=0){
-      c.push_back(SVector3(pos[3*i],pos[3*i+1],0));
-      // do something with colours -- later
+      for (size_t j =0; j< lines.size() ; j+=2 ){
+	if (lines[j] == i){
+	  col.push_back(j);
+	  break;
+	}
+      }
+      c.push_back(SVector3(pos[3*i],pos[3*i+1],0));      
     }
   }
 }
@@ -816,6 +845,7 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
 	      pos[3*tris[i+j]]   = c[0].x();
 	      pos[3*tris[i+j]+1] = c[0].y();
 	      front_nodes.push_back(tris[i+j]);
+	      df.addFrontNode (tris[i+j],col[0],c[0]);
 	      corners.push_back(tris[i+j]);
 	      break;
 	    }
@@ -931,31 +961,10 @@ static SVector3 average (const std::vector<size_t> &vs, const std::vector<double
 void meshRelaying::doRelaxFrontNode (size_t i, const std::vector<size_t> &n, double r,
 				     std::vector<std::pair<size_t,size_t> > &fe){
 
-  return;
   if (df.empty())return;
   if (std::binary_search(corners.begin(),corners.end(),i))return;
 
-  SVector3 pi (pos[3*i],pos[3*i+1],pos[3*i+2]);
-
-  std::vector<size_t> fn; // front neighbors
-  for (auto j : n){
-    if (std::binary_search(front_nodes.begin(), front_nodes.end(),j)){
-      fn.push_back(j);
-    }
-  }
-  if (fn.size() == 2){
-    SVector3 pj (pos[3*fn[0]],pos[3*fn[0]+1],pos[3*fn[0]+2]);
-    SVector3 pk (pos[3*fn[1]],pos[3*fn[1]+1],pos[3*fn[1]+2]);
-    SVector3 pmid = (pj+pk)*0.5;
-    SVector3 p = pi*(1-r) + pmid*r;
-    p = df.closestPoints2d (p);
-    double qMin = smallest_measure (i,p);
-    if (qMin > 0){
-      pos[3*i] = p.x();
-      pos[3*i+1] = p.y();
-      pos[3*i+2] = p.z();
-    }    
-  }
+  df.relaxFrontNode(i);
 }
 
 void meshRelaying::doRelax (double r){
