@@ -5,7 +5,7 @@
 #include "MLine.h"
 #include "MVertex.h"
 #include "robustPredicates.h"
-//#include "libol1.h"
+// #include "libol1.h"
 
 int TESTCASE = 12;
 
@@ -15,10 +15,16 @@ discreteFront::discreteFront (std::vector<double> &p, std::vector<size_t> &l, st
 
 void discreteFront::print(FILE *f){
   for (size_t i=0 ; i< lines.size() ; i+=2){
-    fprintf(f,"SL(%12.5E,%12.5E,0,%12.5E,%12.5E,0){2,2};\n",
+    fprintf(f,"SL(%12.5E,%12.5E,0,%12.5E,%12.5E,0){%d,%d};\n",
 	    pos[3*lines[i]],pos[3*lines[i]+1],
-	    pos[3*lines[i+1]],pos[3*lines[i+1]+1]);
+	    pos[3*lines[i+1]],pos[3*lines[i+1]+1],3,3);
   }
+
+  for(size_t i=0; i<lines.size(); i+=2){
+    fprintf(f, "T3(%12.5E, %12.5E, 0.01, 0){'%d'};\n", pos[3*lines[i]],pos[3*lines[i]+1], lines[i]);
+    fprintf(f, "T3(%12.5E, %12.5E, 0.01, 0){'%d'};\n", pos[3*lines[i+1]],pos[3*lines[i+1]+1], lines[i+1]);
+  }
+
 }
 
 int discreteFront::whatIsTheColorOf2d (const SVector3 &P){
@@ -26,20 +32,26 @@ int discreteFront::whatIsTheColorOf2d (const SVector3 &P){
   std::set<int> cs;
   std::vector<int> cols;
   for (auto c : colors){
+    if (c<0) continue; 
     if (cs.find(c) == cs.end()){
       cs.insert(c);
       double angTot = 0.0;
       for (size_t i=0 ; i< lines.size() ; i+=2){
-	if (colors[i/2] == c){
-	  SVector3 A(pos[3*lines[i]],pos[3*lines[i]+1],0);
-	  SVector3 B(pos[3*lines[i+1]],pos[3*lines[i+1]+1],0);
-	  SVector3 PA = A-P;
-	  SVector3 PB = B-P;
-	  SVector3 pv = crossprod(PB,PA);
-	  double a = atan2(pv.z(),dot(PA,PB));
-	  angTot += a;
-	}
+        if (colors[i/2] == c){
+          SVector3 A(pos[3*lines[i]],pos[3*lines[i]+1],0);
+          SVector3 B(pos[3*lines[i+1]],pos[3*lines[i+1]+1],0);
+          SVector3 PA = A-P;
+          SVector3 PB = B-P;
+          SVector3 pv = crossprod(PB,PA);
+          
+          double a = atan2(pv.z(),dot(PA,PB));
+          angTot += a;
+        }
       }
+      if(fabs(angTot)>1 && fabs(angTot) < M_PI*1.99){
+        printf("angle total = %f \n", angTot);
+      }
+      
       if (fabs(angTot) > M_PI*1.99)cols.push_back(c);
     }
   }
@@ -57,6 +69,7 @@ void discreteFront::cornersInTriangle2d (const SVector3 &p0, const SVector3 &p1,
   SPoint2 a1(p1.x(),p1.y());
   SPoint2 a2(p2.x(),p2.y());
   for (auto i : corners){
+    if(colors[i]<0) continue;
     SPoint2 p(pos[3*i],pos[3*i+1]);
     SVector3 p3(pos[3*i],pos[3*i+1],0);
     double d = std::min(std::min((p0-p3).norm(),(p1-p3).norm()),(p2-p3).norm());
@@ -208,6 +221,103 @@ void discreteFront::move (double dt){
   t+=dt;
 }
 
+void discreteFront::moveFromV (double dt, std::vector<SVector3> v, bool bnd){
+  size_t n = v.size();
+  std::vector<double> target(pos);
+  std::vector<bool> found(n, false);
+
+  for (size_t i=0;i<n;++i){
+    if(colors[i]>=0){
+      target[3*i] += v[i].x()*dt;
+      target[3*i+1] += v[i].y()*dt;
+      target[3*i+2] = 0;
+    }
+  }
+  
+  if(bnd) {
+    while(1){
+      for(size_t i=0; i<n; ++i){
+        if(found[i]) continue;
+        if(colors[i]<0){
+          found[i] = true;
+          continue;
+        }
+        // compute all intersection with bnd
+        double a1[2] = {pos[3*i], pos[3*i+1]};
+        double a2[2] = {target[3*i], target[3*i+1]}; 
+        int IMIN,IMAX,JMIN,JMAX;
+        getCoordinates(std::min(a1[0],a2[0]),std::min(a1[1],a2[1]),IMIN,JMIN);
+        getCoordinates(std::max(a1[0],a2[0]),std::max(a1[1],a2[1]),IMAX,JMAX);
+        std::set<size_t> touched;
+        std::vector<std::pair<double, size_t>> intersection;  // vector of [s, j]. s = parametric coord of the movement, index in lines (and sss)
+        for (size_t I=IMIN; I<=IMAX;I++){
+          for (size_t J=JMIN; J<=JMAX;J++){
+            size_t index = I+NX*J;
+            for (auto j : sss [index]){
+              if(colors[j/2]>0) continue;                     // bnd has a -1 color
+              if (touched.find(j) != touched.end())continue;
+              touched.insert(j);
+              double a3[2] = {pos[3*lines[j]],pos[3*lines[j]+1]};
+              double a4[2] = {pos[3*lines[j+1]],pos[3*lines[j+1]+1]};
+              double a143 = robustPredicates::orient2d(a1,a4,a3);
+              double a243 = robustPredicates::orient2d(a2,a4,a3);    
+              double a123 = robustPredicates::orient2d(a1,a2,a3);
+              double a124 = robustPredicates::orient2d(a1,a2,a4);
+              if (a143*a243 < 0 && a123*a124 < 0){
+                double t = a143/(a143-a243);
+                intersection.push_back(std::make_pair(t, j));
+              }
+              if ((a143*a243 == 0 && a123*a124 < 0) || (a143*a243 < 0 && a123*a124 == 0)){
+                double t = a143/(a143-a243);
+                intersection.push_back(std::make_pair(t, j));
+              }
+            }
+          }
+        }
+        
+        // choose closest intersection or target if none
+        if(intersection.empty()){
+          found[i] = true;
+        } else {
+          double t_min = 2;
+          size_t id_min;
+          for(size_t k=0; k<intersection.size(); ++k){
+            if(intersection[k].first<t_min){
+              t_min = intersection[k].first;
+              id_min = intersection[k].second;
+            }
+          }
+          // continue movement along the edge
+          pos[3*i] = a1[0]+(a2[0]-a1[0])*t_min;
+          pos[3*i+1] = a1[1]+(a2[1]-a1[1])*t_min;
+          double a4[2] = {pos[3*lines[id_min+1]],pos[3*lines[id_min+1]+1]};
+
+          double pt[2] = {target[3*i]-pos[3*i], target[3*i+1]-pos[3*i+1]};
+          double pa4[2] = {a4[0]-pos[3*i], a4[1]-pos[3*i+1]};
+
+          double pnewt[2];
+          double norm_pa4 = sqrt(pa4[0]*pa4[0] + pa4[1]*pa4[1]);
+          double pt_dot_pa4 = pt[0]*pa4[0] + pt[1]*pa4[1];
+          pnewt[0] = pt_dot_pa4*pa4[0]/(norm_pa4*norm_pa4);
+          pnewt[1] = pt_dot_pa4*pa4[1]/(norm_pa4*norm_pa4);
+
+          target[3*i] = pos[3*i]+pnewt[0];
+          target[3*i+1] = pos[3*i+1]+pnewt[1];
+        }
+        
+      }
+      if (std::find(begin(found), end(found), false) == end(found)) {
+        break; // All false
+      }
+    }
+  }
+
+  for(size_t i=0; i<target.size(); ++i){
+    pos[i] = target[i];
+  }
+  return;
+}
+
 SVector3 discreteFront::closestPoints2d (const SVector3 &P){
   double dmin = 1.e22;
   SVector3 res;
@@ -281,6 +391,22 @@ void discreteFront::addPolygon (int tag, const std::vector<SVector3> &poly, int 
   }  
 }
 
+void discreteFront::addFreeForm (int tag, const std::vector<SVector3> &poly){
+  std::vector<double> p;
+  std::vector<size_t> l;
+  std::vector<int> c;
+  for (size_t k=0;k<poly.size();k++){
+    SVector3 p0 = poly[k];
+    c.push_back(tag);
+    l.push_back(k);
+    l.push_back((k+1)%poly.size());
+    p.push_back(p0.x());
+    p.push_back(p0.y());
+    p.push_back(0.);
+  }  
+  addLines(p,l,c);
+}
+
 void discreteFront::addEllipsis (int tag, double x0, double y0, double theta0, double r1, double r2, int n){
   std::vector<double> p;
   std::vector<size_t> l;
@@ -314,6 +440,7 @@ void discreteFront::boolOp (){
   }
   for (size_t k=0;k<_lls.size();k++){
     for (size_t i=0;i<_lls[k].size();i+=2){
+      if(colors[_lls[k][i+1]]<0) continue;
       double a1[2] = {pos[3*_lls[k][i]],pos[3*_lls[k][i]+1]};
       double a2[2] = {pos[3*_lls[k][i+1]],pos[3*_lls[k][i+1]+1]};
       double a3[2] = {pos[3*_lls[k][(i+3)%_lls[k].size()]],
@@ -324,7 +451,7 @@ void discreteFront::boolOp (){
       v2.normalize();
       double c = dot(v1,v2);
       if (c < sqrt(2)/2){
-	corners.push_back(_lls[k][i+1]);
+	      corners.push_back(_lls[k][i+1]);
       }
     }
   }
@@ -339,30 +466,30 @@ void discreteFront::boolOp (){
     std::set<size_t> touched;
     for (size_t I=IMIN; I<=IMAX;I++){
       for (size_t J=JMIN; J<=JMAX;J++){
-	size_t index = I+NX*J;
-	for (auto j : sss [index]){
-	  if (touched.find(j) != touched.end())continue;
-	  touched.insert(j);
-	  if (i < j){ // only compute once intersections
-	    double a3[2] = {pos[3*lines[j]],pos[3*lines[j]+1]};
-	    double a4[2] = {pos[3*lines[j+1]],pos[3*lines[j+1]+1]};
-	    double a143 = robustPredicates::orient2d(a1,a4,a3);
-	    double a243 = robustPredicates::orient2d(a2,a4,a3);    
-	    double a123 = robustPredicates::orient2d(a1,a2,a3);
-	    double a124 = robustPredicates::orient2d(a1,a2,a4);
-	    if (a143*a243 < 0 && a123*a124 < 0){
-	      double t = a143/(a143-a243);
-	      size_t n = pos.size()/3;
-	      cuts[i].push_back(n);
-	      cuts[j].push_back(n);
-	      corners.push_back(n);
-	      //	      printf("corner %lu %lu %lu %12.5E %12.5E\n",i,j,n,a1[0]+(a2[0]-a1[0])*t,a1[1]+(a2[1]-a1[1])*t);
-	      pos.push_back(a1[0]+(a2[0]-a1[0])*t);
-	      pos.push_back(a1[1]+(a2[1]-a1[1])*t);
-	      pos.push_back(0.0);
-	    }
-	  }
-	}
+        size_t index = I+NX*J;
+        for (auto j : sss [index]){
+          if (touched.find(j) != touched.end())continue;
+          touched.insert(j);
+          if (i < j){ // only compute once intersections
+            double a3[2] = {pos[3*lines[j]],pos[3*lines[j]+1]};
+            double a4[2] = {pos[3*lines[j+1]],pos[3*lines[j+1]+1]};
+            double a143 = robustPredicates::orient2d(a1,a4,a3);
+            double a243 = robustPredicates::orient2d(a2,a4,a3);    
+            double a123 = robustPredicates::orient2d(a1,a2,a3);
+            double a124 = robustPredicates::orient2d(a1,a2,a4);
+            if (a143*a243 < 0 && a123*a124 < 0){
+              double t = a143/(a143-a243);
+              size_t n = pos.size()/3;
+              cuts[i].push_back(n);
+              cuts[j].push_back(n);
+              corners.push_back(n);
+              //	      printf("corner %lu %lu %lu %12.5E %12.5E\n",i,j,n,a1[0]+(a2[0]-a1[0])*t,a1[1]+(a2[1]-a1[1])*t);
+              pos.push_back(a1[0]+(a2[0]-a1[0])*t);
+              pos.push_back(a1[1]+(a2[1]-a1[1])*t);
+              pos.push_back(0.0);
+            }
+          }
+        }
       }
     }
   }
@@ -380,15 +507,142 @@ void discreteFront::boolOp (){
       l.push_back(lines[i]);
       c.push_back(colors[i/2]);
       for (auto j : it->second){
-	l.push_back(j);
-	l.push_back(j);	
-	c.push_back(colors[i/2]);
+        l.push_back(j);
+        l.push_back(j);	
+        c.push_back(colors[i/2]);
       }
       l.push_back(lines[i+1]);
     }
   }
   lines = l;
   colors = c;
+}
+
+void discreteFront::getDFPosition(std::vector<double> *position){
+  for(int i=0; i<pos.size(); ++i){
+    position->push_back(pos[i]);
+  }
+  return;
+}
+
+void discreteFront::clear(){
+  colors.clear();
+  corners.clear();
+  lines.clear();
+  pos.clear();
+}
+
+void discreteFront::redistFront(double lc){
+  double fc_min=0.5; 
+  double fc_max=1.5;
+  double small_dist = fc_min*lc;
+  double large_dist = fc_max*lc;
+  std::vector<std::vector<size_t> > _lls;
+  std::vector<size_t> _ll;
+
+  std::vector<size_t> l;
+  std::vector<int> c;
+  std::vector<double> p;
+
+  for (size_t i=0;i<lines.size();i+=2){
+    _ll.push_back(lines[i]);
+    _ll.push_back(lines[i+1]);
+    if (lines[(i+2)%lines.size()] != lines[i+1]){
+      _lls.push_back(_ll);
+      _ll.clear();
+    }
+  }
+  if(!_ll.empty()){
+    _lls.push_back(_ll);
+  }
+  
+  size_t iter = 0;
+  for(size_t i=0; i<_lls.size(); ++i){
+    int n = _lls[i].size();
+    // first marker
+    size_t first = iter;
+    l.push_back(iter);
+    for(int k=0; k<3; ++k){
+      p.push_back(pos[3*_lls[i][0]+k]);
+    }
+
+    // loop through markers
+    for(size_t j=1; j<n; j+=2){
+      double dist;
+      if(colors[_lls[i][j]]<0){
+        dist = lc;
+      } else {
+        dist = sqrt(pow(pos[3*_lls[i][j]] - p.end()[-3], 2) + pow(pos[3*_lls[i][j]+1] - p.end()[-2], 2)); 
+      }
+      
+      if(dist<small_dist){          // markers too close -> take the middle position
+        if(j==n-1){
+          c.push_back(colors[_lls[i][j]]);
+          l.push_back(first);
+        } else {
+          double temp;
+          for(int k=0; k<3; k++){
+            temp = (pos[3*_lls[i][j]+k] + p.end()[-3+k])/2.0;
+            p.end()[-3+k] = temp;
+          }
+        }
+      } else if(dist>large_dist){   // markers too far -> add markers
+        int n_new = (int) (dist/lc - (fc_max-1.01));
+        double temp[3];
+        for(int k=0; k<3; k++){
+          temp[k] = p.end()[-3+k];
+        }
+        for(int k=0; k<n_new; ++k){
+          double s = (k+1.0)/(n_new+1.0);
+          iter++;
+          l.push_back(iter);
+          l.push_back(iter);
+          c.push_back(colors[_lls[i][j]]);
+          for(int k=0; k<3; k++){
+            p.push_back(s*temp[k]+(1-s)*pos[3*_lls[i][j]+k]);
+          }
+        }
+
+        c.push_back(colors[_lls[i][j]]);
+        if(j!=n-1){
+          iter++;
+          l.push_back(iter);
+          l.push_back(iter);
+          for(int k=0; k<3; ++k){
+            p.push_back(pos[3*_lls[i][j]+k]);
+          }
+        } else {
+          l.push_back(first);
+        }
+        
+      }else{                        // good distance
+        c.push_back(colors[_lls[i][j]]);
+        if(j!=n-1){
+          iter++;
+          l.push_back(iter);
+          l.push_back(iter);
+          for(int k=0; k<3; ++k){
+            p.push_back(pos[3*_lls[i][j]+k]);
+          }
+        } else {
+          l.push_back(first);
+        }
+      }
+    }
+    iter++;
+  }
+
+  pos.clear(); colors.clear(); lines.clear();
+  for(int i=0; i<p.size(); ++i){
+    pos.push_back(p[i]);
+  }
+  for(int i=0; i<c.size(); ++i){
+    colors.push_back(c[i]);
+  }
+  for(int i=0; i<l.size(); ++i){
+    lines.push_back(l[i]);
+  }
+  
 }
 
 // -----------------------------------------------------------------------------------------------
@@ -404,59 +658,58 @@ double ll (double x, double y, double z, double t){
 int ITERR = 0;
 
 void testRelaying() {
-  discreteFront df;
+  
   if (TESTCASE == 0){
-    df.addEllipsis(1,-0.6,0.4,M_PI/8,0.25,0.5,300);
-    df.addRectangle(3,0,0.5,.7172,.7172,10);
-    df.addEllipsis(2,0.6,0.25,0,0.35,0.25,300);
-    df.buildSpatialSearchStructure () ;
-    df.boolOp();
+    _df.addEllipsis(1,-0.6,0.4,M_PI/8,0.25,0.5,300);
+    _df.addRectangle(3,0,0.5,.7172,.7172,10);
+    _df.addEllipsis(2,0.6,0.25,0,0.35,0.25,300);
+    _df.buildSpatialSearchStructure () ;
+    _df.boolOp();
   }
   if (TESTCASE == 1){
     //    df.addEllipsis(1,-0.6,0.4,M_PI/8,0.25,0.5,300);
-    df.addPolygon(1,{{-.5,0,0}, {0,0,0}, {0.25,0.25,0}, {0.001,-0.0005,0}, {0.25,-0.25,0}, {0.0,-0.001,0}},10);
-    df.addEllipsis(2,0.,0.,0,0.35,0.35,300);
-    df.buildSpatialSearchStructure () ;
-    df.boolOp();
+    _df.addPolygon(1,{{-.5,0,0}, {0,0,0}, {0.25,0.25,0}, {0.001,-0.0005,0}, {0.25,-0.25,0}, {0.0,-0.001,0}},10);
+    _df.addEllipsis(2,0.,0.,0,0.35,0.35,300);
+    _df.buildSpatialSearchStructure () ;
+    _df.boolOp();
   }
   else if (TESTCASE == 11){
-    df.addRectangle(1,0,0,.7172,.7172,10);
-    df.addRectangle(2,0.3,0,.7,.7,10);
-    df.buildSpatialSearchStructure () ;
-    df.boolOp();
+    _df.addRectangle(1,0,0,.7172,.7172,10);
+    _df.addRectangle(2,0.3,0,.7,.7,10);
+    _df.buildSpatialSearchStructure () ;
+    _df.boolOp();
   }
   else if (TESTCASE == 12){
-    df.addEllipsis(1,1.,0.6,0,0.3,0.3,3000);
+    _df.addEllipsis(1,1.,0.6,0,0.3,0.3,3000);
   }
   else if (TESTCASE == 2){
     //    df.addRectangle(1,0.5,0.75,0.3,0.003,200);
-    df.addEllipsis(1,0.5,0.75,0,0.15,0.15,1000);
-    df.addEllipsis(2,0.5,0.25,0,0.15,0.15,1000);
-    df.addEllipsis(3,0.25,0.5,0,0.15,0.15,1000);
+    _df.addEllipsis(1,0.5,0.75,0,0.15,0.15,1000);
+    _df.addEllipsis(2,0.5,0.25,0,0.15,0.15,1000);
+    _df.addEllipsis(3,0.25,0.5,0,0.15,0.15,1000);
   }
   else if (TESTCASE == 3){
-    df.addEllipsis(1, 0.5, 0.75, 0, 0.15,0.15,200);
-    df.addEllipsis(2, 0.37, 0.75, 0, 0.15,0.15,200);
-    df.buildSpatialSearchStructure () ;
-    df.boolOp();
+    _df.addEllipsis(1, 0.5, 0.75, 0, 0.15,0.15,200);
+    _df.addEllipsis(2, 0.37, 0.75, 0, 0.15,0.15,200);
+    _df.buildSpatialSearchStructure () ;
+    _df.boolOp();
   }
 
-  meshRelaying mr;
-  mr.setLevelset (ll);
-  mr.setDiscreteFront(df);
+  _mr.setLevelset (ll);
+  _mr.setDiscreteFront(_df);  
   double t = 0.0;
   ITERR = 0;
-  mr.print4debug ("test.pos");
+  _mr.print4debug ("test.pos");
   for (size_t i=0;i<1500;i++){
     printf("ITER %8d time %12.5E\n",ITERR,t);
-    mr.doRelaying (t);
-    mr.doRelax (1);
-    mr.doRelax (1);
-    mr.doRelax (1);
+    _mr.doRelaying (t);
+    _mr.doRelax (1);
+    _mr.doRelax (1);
+    _mr.doRelax (1);
     char name [245];
     sprintf(name, "test%lu.pos",i);
-    if(ITERR%20==0)mr.print4debug (name);
-    mr.advanceInTime(0.025);
+    if(ITERR%20==0)_mr.print4debug (name);
+    _mr.advanceInTime(0.025);
     if (t > 16)break;
     t+= 0.025;
     ITERR++;
@@ -746,7 +999,6 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
   
   
   front_nodes.clear();
-  
   //Compute all cuts ...
   int ITTT = 0;
   df.buildSpatialSearchStructure ();
@@ -756,24 +1008,32 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
     // snap corners
     if (tets.empty()){      
       for (size_t i=0;i<tris.size();i+=3){
-	std::vector<SVector3> c;
-	std::vector<int> col;
-	df.cornersInTriangle2d (SVector3(pos[3*tris[i]],pos[3*tris[i]+1],pos[3*tris[i]+2]),
-				SVector3(pos[3*tris[i+1]],pos[3*tris[i+1]+1],pos[3*tris[i+1]+2]),
-				SVector3(pos[3*tris[i+2]],pos[3*tris[i+2]+1],pos[3*tris[i+2]+2]),
-				c,col);
-	if (!c.empty()){
-	  for (int j=0;j<3;j++){
-	    double qMin = smallest_measure (tris[i+j],c[0]);
-	    if (qMin > 0){
-	      pos[3*tris[i+j]]   = c[0].x();
-	      pos[3*tris[i+j]+1] = c[0].y();
-	      front_nodes.push_back(tris[i+j]);
-	      corners.push_back(tris[i+j]);
-	      break;
-	    }
-	  }
-	}
+        std::vector<SVector3> c;
+        std::vector<int> col;
+        // df.cornersInTriangle2d (SVector3(pos[3*tris[i]],pos[3*tris[i]+1],pos[3*tris[i]+2]),
+        //       SVector3(pos[3*tris[i+1]],pos[3*tris[i+1]+1],pos[3*tris[i+1]+2]),
+        //       SVector3(pos[3*tris[i+2]],pos[3*tris[i+2]+1],pos[3*tris[i+2]+2]),
+        //       c,col);
+        if (!c.empty()){
+          for (int j=0;j<3;j++){
+            int dimEdge = tets.size() ? 3:2;
+            // find a way to detect corner on the bnd
+            int dimi = dimVertex[tris[i+j]];
+            if(dimi<dimEdge){
+              printf("continued in %f,%f \n", c[0].x(), c[0].y());
+              continue;
+            } 
+            
+            double qMin = smallest_measure (tris[i+j],c[0]);
+            if (qMin > 0){
+              pos[3*tris[i+j]]   = c[0].x();
+              pos[3*tris[i+j]+1] = c[0].y();
+              front_nodes.push_back(tris[i+j]);
+              corners.push_back(tris[i+j]);
+              break;
+            }
+          }
+        }
       }
     }
     std::sort(front_nodes.begin(),front_nodes.end());
@@ -783,36 +1043,38 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
     std::vector<edgeCut> moves;
     for (size_t i = 0; i< v2v.size() ; i++){
       for (auto j : v2v[i]){
-	if (i < j){
-	  std::vector<std::pair<double,int> > ds = f (i,j);
-	  if (ds.empty())continue;
-	  if (ds.size() > 2)Msg::Debug("Relaying cannot be done -- mesh is too coarse with respect to front features (%d intersections)",ds.size());
-	  std::pair<size_t,size_t> p = std::make_pair(std::min(i,j),std::max(i,j));
-	  cuts.insert(p);
-	  std::sort(ds.begin(),ds.end());
-	  const double di = ds[0].first;// FIXME
-	  const double dj = ds.size() >= 2 ? ds[ds.size()-1].first : di;
-	  const int    ii = ds[0].second;// FIXME
-	  const int    ij = ds.size() >= 2 ? ds[ds.size()-1].second : ii;
-	  int dimEdge = tets.size() ? 3:2;
-	  if (std::binary_search(bnd2d.begin(), bnd2d.end(), p))dimEdge = std::min(dimEdge,2);
-	  if (std::binary_search(bnd1d.begin(), bnd1d.end(), p))dimEdge = std::min(dimEdge,1);
-	  int dimi = dimVertex[i];
-	  int dimj = dimVertex[j];
-	  SVector3 pi (pos[3*i],pos[3*i+1],pos[3*i+2]); 
-	  SVector3 pj (pos[3*j],pos[3*j+1],pos[3*j+2]); 
-	  SVector3 pOpti  = pi + (pj-pi)*di;
-	  SVector3 pOptj  = pi + (pj-pi)*dj;
-	  SVector3 DI = pi-pOpti;
-	  SVector3 DJ = pj-pOptj;
-	  edgeCut mi(i, j, pOpti, DI.norm(), ii);
-	  edgeCut mj(j, i, pOptj, DJ.norm(), ij);
-	  // Not perfect ... but workable
-	  if (!std::binary_search(front_nodes.begin(),front_nodes.end(),i))
-	    if(di>0.0000001 && di<0.999999 && dimi >= dimEdge)moves.push_back(mi);
-	  if (!std::binary_search(front_nodes.begin(),front_nodes.end(),j))
-	    if(dj>0.0000001 && dj<0.999999 && dimj >= dimEdge)moves.push_back(mj);
-	}
+        if (i < j){
+          std::vector<std::pair<double,int> > ds = f (i,j);
+          if (ds.empty())continue;
+          if (df.getColor(ds[0].second)<0) continue;
+          if (ds.size() > 2)Msg::Debug("Relaying cannot be done -- mesh is too coarse with respect to front features (%d intersections)",ds.size());
+          std::pair<size_t,size_t> p = std::make_pair(std::min(i,j),std::max(i,j));
+          cuts.insert(p);
+          std::sort(ds.begin(),ds.end());
+          const double di = ds[0].first;// FIXME
+          const double dj = ds.size() >= 2 ? ds[ds.size()-1].first : di;
+          const int    ii = ds[0].second;// FIXME
+          const int    ij = ds.size() >= 2 ? ds[ds.size()-1].second : ii;
+          int dimEdge = tets.size() ? 3:2;
+          if (std::binary_search(bnd2d.begin(), bnd2d.end(), p))dimEdge = std::min(dimEdge,2);
+          if (std::binary_search(bnd1d.begin(), bnd1d.end(), p))dimEdge = std::min(dimEdge,1);
+          int dimi = dimVertex[i];
+          int dimj = dimVertex[j];
+          SVector3 pi (pos[3*i],pos[3*i+1],pos[3*i+2]); 
+          SVector3 pj (pos[3*j],pos[3*j+1],pos[3*j+2]); 
+          SVector3 pOpti  = pi + (pj-pi)*di;
+          SVector3 pOptj  = pi + (pj-pi)*dj;
+          SVector3 DI = pi-pOpti;
+          SVector3 DJ = pj-pOptj;
+          edgeCut mi(i, j, pOpti, DI.norm(), ii);
+          edgeCut mj(j, i, pOptj, DJ.norm(), ij);
+          // Not perfect ... but workable
+          
+          if (!std::binary_search(front_nodes.begin(),front_nodes.end(),i))
+            if(di>0.0000001 && di<0.999999 && dimi >= dimEdge)moves.push_back(mi);
+          if (!std::binary_search(front_nodes.begin(),front_nodes.end(),j))
+            if(dj>0.0000001 && dj<0.999999 && dimj >= dimEdge)moves.push_back(mj);
+        }
       }
     }
     if (moves.empty())break;
@@ -828,11 +1090,13 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
       
       if (qMin < 0) continue;
       
-      for (auto j : v2v[i]){
-	p = std::make_pair(std::min(i,j), std::max(i,j));
-	cuts.erase(p);
+      for (auto k : v2v[i]){
+        p = std::make_pair(std::min(i,k), std::max(i,k));
+        cuts.erase(p);
       }
-      
+      if(dimVertex[i]==1){
+        printf("i = %d (%f,%f), j = %d (%f,%f), popti = %f, %f \n \n", i, pos[3*i], pos[3*i+1], j, pos[3*j], pos[3*j+1], pOpt.x(), pOpt.y());
+      }
       front_nodes.push_back(i);
       pos[3*i] = pOpt.x();
       pos[3*i+1] = pOpt.y();
@@ -856,6 +1120,7 @@ void meshRelaying::doRelaxFrontNode (size_t i, const std::vector<size_t> &n, dou
 
   if (df.empty())return;
   if (std::binary_search(corners.begin(),corners.end(),i))return;
+  if (dimVertex[i]<2) return;
 
   SVector3 pi (pos[3*i],pos[3*i+1],pos[3*i+2]);
 
@@ -889,9 +1154,9 @@ void meshRelaying::doRelax (double r){
       SVector3 p = pj*(1-r) + pi*r;
       double qMin = smallest_measure (i,p);
       if (qMin > 0){
-	pos[3*i] = p.x();
-	pos[3*i+1] = p.y();
-	pos[3*i+2] = p.z();
+        pos[3*i] = p.x();
+        pos[3*i+1] = p.y();
+        pos[3*i+2] = p.z();
       }
     }
     else {
@@ -942,6 +1207,122 @@ void meshRelaying::print4debug(const char *fn){
   fprintf(f,"};\n");
   fclose(f);
 }
+
+void meshRelaying::concentration(std::vector<int> *concentration){
+  for (size_t i=0;i<tris.size();i+=3){
+    SVector3 COG((pos[3*tris[i]]+pos[3*tris[i+1]]+pos[3*tris[i+2]])/3.0,
+		 (pos[3*tris[i]+1]+pos[3*tris[i+1]+1]+pos[3*tris[i+2]+1])/3.0,
+		 0);
+    int color = 1;
+    if (!df.empty()){
+      color = df.whatIsTheColorOf2d(COG);
+      if(color<0) color = 0;
+    }
+    (*concentration).push_back(color);
+  }
+}
+
+void meshRelaying::setBndFront(){
+  std::vector<size_t> l;
+  std::vector<double> p;
+  std::vector<int> c; 
+
+  size_t iter = 0;
+  l.push_back(iter);
+  iter++;
+  c.push_back(-1);
+  p.push_back(pos[3*bnd1d[0].first]);
+  p.push_back(pos[3*bnd1d[0].first+1]);
+  p.push_back(pos[3*bnd1d[0].first+2]);
+  size_t current = bnd1d[0].second;
+  size_t first = bnd1d[0].first;
+  size_t id_current = 0;
+  
+  while(current!= first){
+    l.push_back(iter);
+    l.push_back(iter);
+    iter++;
+    c.push_back(-1);
+    p.push_back(pos[3*current]);
+    p.push_back(pos[3*current+1]);
+    p.push_back(pos[3*current+2]);
+    
+    for(size_t j=0; j<bnd1d.size(); ++j){
+      if(bnd1d[j].first == current && j!=id_current){
+        current = bnd1d[j].second;
+        id_current = j;
+        break;
+      } else if(bnd1d[j].second == current && j!=id_current){
+        current = bnd1d[j].first;
+        id_current = j;
+        break;
+      }
+    }
+  }
+  l.push_back(l[0]);
+
+  _df.addLines(p,l,c); 
+}
+
+
+
+/*
+  FOR API
+*/
+
+void concentration(std::vector<int> &concentration){
+  _mr.concentration(&concentration);
+}
+
+void advanceInTime(double dt, std::vector<SVector3> v){
+  _mr.advanceInTime(dt, v);
+}
+
+void addFreeForm(int tag, const std::vector<SVector3> &poly){
+  _df.addFreeForm(tag, poly);
+}
+
+void getDFPosition(std::vector<double> &api_position){
+  _mr.getDFPosition(&api_position);
+}
+
+void getNodesPosition(std::vector<double> &api_position){
+  _mr.getNodesPosition(&api_position);
+}
+
+void initRelaying(){
+  _mr = meshRelaying();
+}
+
+void setDiscreteFront(){
+  _mr.setDiscreteFront(_df);
+}
+
+void resetDiscreteFront(){
+  _df.clear();
+  _mr.setDiscreteFront(_df);
+}
+
+void relayingAndRelax(){
+  _mr.print4debug("in_gmsh.pos");
+  _mr.doRelaying(0);      // time not used for df -> 0
+  _mr.print4debug("between_gmsh.pos");
+  _mr.doRelax(1);         // full relax
+  _mr.print4debug("out_gmsh.pos");
+}
+
+void redistFront(double lc){
+  _mr.redistFront(lc);
+}
+
+void setBndFront(){
+  _mr.setBndFront();
+}
+
+  
+
+
+
 
 
 

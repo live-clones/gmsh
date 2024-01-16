@@ -1631,6 +1631,45 @@ GMSH_API void gmshModelMeshTetrahedralize(const double * coord, const size_t coo
                                           size_t ** tetra, size_t * tetra_n,
                                           int * ierr);
 
+/* Compute the concentration of each element based on the discrete front for mesh relaying*/
+GMSH_API void gmshModelMeshConcentrationFromDF(int ** concentration, size_t * concentration_n, 
+                                               int * ierr);
+
+/* Advance in time the discrete front of relaying */
+GMSH_API void gmshModelMeshAdvanceDFInTime(double dt, double *v, size_t v_n,
+                                           int * ierr);
+
+/* Add a closed loop of markers */
+GMSH_API void gmshModelMeshAddFreeForm(int tag, double * poly, size_t poly_n, 
+                                       int * ierr);
+
+/* return the position of the discrete front of relaying */
+GMSH_API void gmshModelMeshGetDFPosition(double ** position, size_t * position_n, 
+                                         int * ierr);
+
+/* return the position of the deformed mesh from relaying */
+GMSH_API void gmshModelMeshGetNodesPosition(double ** position, size_t * position_n, 
+                                         int * ierr);
+
+/* set the discrete front created from api to the relaying object */
+GMSH_API void gmshModelMeshSetDiscreteFront(int * ierr);
+
+/* move the mesh to be conform to the discrete front 
+ * and relax the nodes that are not on the front    */
+GMSH_API void gmshModelMeshRelayingAndRelax(int * ierr);
+
+/* Initialize the relaying object */
+GMSH_API void gmshModelMeshInitRelaying(int * ierr);
+
+/* Reset the discrete front operator */
+GMSH_API void gmshModelMeshResetDiscreteFront(int * ierr);
+
+/* Redistanciation of the markers on the discrete front*/
+GMSH_API void gmshModelMeshRedistFront(double lc, int * ierr);
+
+/* set dirscete front on the boundary */
+GMSH_API void gmshModelMeshSetBndFront(int * ierr);
+
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
  * the tag explicitly; otherwise a new tag is assigned automatically. Return
  * the field tag. Available field types are listed in the "Gmsh mesh size

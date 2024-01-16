@@ -43,6 +43,7 @@ class discreteFront {
   SVector3 closestPoints2d (const SVector3 &P);
   bool empty() const {return pos.empty();}
   void move (double dt);
+  void moveFromV (double dt, std::vector<SVector3> V, bool bnd);
   virtual SVector3 velocity (double x, double y, double z, double t, int col);
   void print(FILE *f);
   int whatIsTheColorOf2d (const SVector3 &P);
@@ -54,7 +55,11 @@ class discreteFront {
   void addEllipsis (int tag, double xc, double yc, double theta0, double r1, double r2, int n);
   void addRectangle (int tag, double xc, double yc, double r1, double r2, int n);
   void addPolygon (int tag, const std::vector<SVector3> &poly, int n);
+  void addFreeForm (int tag, const std::vector<SVector3> &poly);
   void boolOp ();
+  void getDFPosition(std::vector<double> *position);
+  void clear();
+  void redistFront(double lc);
 };
 
 
@@ -95,6 +100,7 @@ class meshRelaying {
 		     const char*fn = nullptr);
  public:
   meshRelaying (GModel *gm = nullptr); // use GModel gm or Gmodel::current() if NULL  
+  
   void doRelaying (const std::function<std::vector<std::pair<double, int> >(size_t, size_t)> &f); 
   void setLevelset (const std::function<double(double, double, double, double)> &_ls){
     levelset = _ls;
@@ -107,14 +113,52 @@ class meshRelaying {
     df = _df;
     df.setBbox (bbox);
   }
-  void advanceInTime(double dt){
-    df.move(dt);
+  void advanceInTime(double dt, std::vector<SVector3> v = std::vector<SVector3>()){
+    if(v.empty()){
+      df.move(dt);
+    } else {
+      time += dt;
+      df.moveFromV(dt, v, true);
+    }
+    
   }
   void doRelaying (double t);
   void doRelax (double r);
   void doRelaxFrontNode (size_t i, const std::vector<size_t> &n, double r);
   void print4debug(const char *);
+  void concentration(std::vector<int> *concentration);
+  void getDFPosition(std::vector<double> *position){
+    df.getDFPosition(position);
+  }
+  void getNodesPosition(std::vector<double> *position){
+    for(int i=0; i<pos.size(); ++i){
+      position->push_back(pos[i]);
+    }
+  }
+  void redistFront(double lc){
+    df.redistFront(lc);
+  }
+
+  void setBndFront();
 };
 
+/*
+  FOR API
+*/
+
+void concentration(std::vector<int> &concentration);
+void advanceInTime(double dt, std::vector<SVector3> v );
+void addFreeForm(int tag, const std::vector<SVector3> &poly);
+void getDFPosition(std::vector<double> &api_position);
+void getNodesPosition(std::vector<double> &api_position);
+void setDiscreteFront();
+void relayingAndRelax();
+void initRelaying();
+void resetDiscreteFront();
+void redistFront(double lc);
+void setBndFront();
+
+inline meshRelaying _mr;
+inline discreteFront _df;
 
 #endif

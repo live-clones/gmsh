@@ -2424,6 +2424,128 @@ GMSH_API void gmshModelMeshTetrahedralize(const double * coord, const size_t coo
   }
 }
 
+GMSH_API void gmshModelMeshConcentrationFromDF(int ** concentration, size_t * concentration_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_concentration;
+    gmsh::model::mesh::concentrationFromDF(api_concentration);
+    vector2ptr(api_concentration, concentration, concentration_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshAdvanceDFInTime(double dt, double * v, size_t v_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_v(v, v + v_n);
+    gmsh::model::mesh::advanceDFInTime(dt, api_v); 
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshAddFreeForm(int tag, double * poly, size_t poly_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_poly(poly, poly + poly_n);
+    gmsh::model::mesh::addFreeForm(tag, api_poly); 
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshGetDFPosition(double ** position, size_t * position_n, int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_position;
+    gmsh::model::mesh::getDFPosition_(api_position);
+    vector2ptr(api_position, position, position_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshGetNodesPosition(double ** position, size_t * position_n, int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_position;
+    gmsh::model::mesh::getNodesPosition_(api_position);
+    vector2ptr(api_position, position, position_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshSetDiscreteFront(int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::setDiscreteFront_();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshRelayingAndRelax(int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::relayingAndRelax_();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshInitRelaying(int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::initRelaying_();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshResetDiscreteFront(int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::resetDiscreteFront_();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshRedistFront(double lc, int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::redistFront_(lc);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshSetBndFront(int * ierr){
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::setBndFront_();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+
 GMSH_API int gmshModelMeshFieldAdd(const char * fieldType, const int tag, int * ierr)
 {
   int result_api_ = 0;

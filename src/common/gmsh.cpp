@@ -71,6 +71,7 @@
 #include "gmshCrossFields.h"
 #include "qualityMeasuresJacobian.h"
 #include "meshRenumber.h"
+#include "meshRelaying.h"
 #endif
 
 #if defined(HAVE_POST)
@@ -5665,6 +5666,66 @@ gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
 #else
   Msg::Error("Tetrahedralize requires the mesh module");
 #endif
+}
+
+GMSH_API void gmsh::model::mesh::concentrationFromDF(std::vector<int> &api_concentration){
+  concentration(api_concentration);
+  return;
+}
+
+GMSH_API void gmsh::model::mesh::advanceDFInTime(double dt, std::vector<double> v){
+  std::vector<SVector3> api_v;
+  for(int i=0; i<v.size(); i+=3){
+    api_v.push_back(SVector3(&v[i]));
+  }
+  advanceInTime(dt, api_v);
+  return;
+}
+
+GMSH_API void gmsh::model::mesh::addFreeForm(int tag, std::vector<double> poly){
+  std::vector<SVector3> api_poly;
+  for(int i=0; i<poly.size(); i+=3){
+    api_poly.push_back(SVector3(poly[i], poly[i+1], poly[i+2]));
+  }
+  addFreeForm(tag, api_poly);
+  return;
+} 
+
+GMSH_API void gmsh::model::mesh::getDFPosition_(std::vector<double> &api_position){
+  getDFPosition(api_position);
+  return;
+}
+
+GMSH_API void gmsh::model::mesh::getNodesPosition_(std::vector<double> &api_position){
+  getNodesPosition(api_position);
+  return;
+}
+
+GMSH_API void gmsh::model::mesh::setDiscreteFront_(){
+  setDiscreteFront();
+  return;
+}
+
+GMSH_API void gmsh::model::mesh::initRelaying_(){
+  initRelaying();
+  return;
+}
+
+GMSH_API void gmsh::model::mesh::resetDiscreteFront_(){
+  resetDiscreteFront();
+  return;
+}
+
+GMSH_API void gmsh::model::mesh::relayingAndRelax_(){
+  relayingAndRelax();
+}
+
+GMSH_API void gmsh::model::mesh::redistFront_(double lc){
+  redistFront(lc);
+}
+
+GMSH_API void gmsh::model::mesh::setBndFront_(){
+  setBndFront();
 }
 
 // gmsh::model::mesh::field

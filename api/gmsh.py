@@ -5099,7 +5099,176 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorsize(api_tetra_, api_tetra_n_.value)
+        
+        @staticmethod
+        def concentrationFromDF():
+            """
+            gmsh.model.mesh.concentrationFromDF()
 
+            Compute the concentration of each element based on the discrete front for mesh relaying
+
+            return 'concentration'
+
+            Types:
+            - 'concentration': vector of int
+            """
+            api_concentration, api_concentration_n = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshConcentrationFromDF(byref(api_concentration), byref(api_concentration_n), byref(ierr))
+
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorint(api_concentration, api_concentration_n.value)
+        concentration_from_DF = concentrationFromDF
+        concentration_from_df = concentrationFromDF
+        
+        def advanceDFInTime(dt, v):
+            """
+            gmsh.model.mesh.advanceDFInTime()
+
+            move the discrete front based on the velocity given in v. v is of size [n_marker x 3]
+
+            Types:
+            - 'v': vector of double [n_marker x 3]
+            - 'dt': double
+            """
+            ierr = c_int()
+            api_v, api_v_n = _ivectordouble(v)
+            lib.gmshModelMeshAdvanceDFInTime(c_double(dt), api_v, api_v_n, byref(ierr))
+
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return
+        advance_DF_in_time = advanceDFInTime
+        advance_df_in_time = advanceDFInTime
+
+        def addFreeForm(tag, poly):
+            """
+            gmsh.model.mesh.addFreeForm()
+
+            add a close loop of markers in the discrete front of relaying 
+
+            Types:
+            - 'tag': int
+            - 'poly': vector of double of size [n_marker x 3]
+            """
+            ierr = c_int()
+            api_poly, api_poly_n = _ivectordouble(poly)
+            lib.gmshModelMeshAddFreeForm(c_int(tag), api_poly, api_poly_n, byref(ierr))
+
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return
+        add_free_form = addFreeForm
+
+        def getDFPosition():
+            """
+            gmsh.model.mesh.getDFPosition()
+
+            return the position of the discrete front of relaying
+
+            Types:
+            """
+            api_position, api_position_n = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetDFPosition(byref(api_position), byref(api_position_n), byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectordouble(api_position, api_position_n.value)
+        get_DF_position = getDFPosition
+        get_df_position = getDFPosition
+
+        def getNodesPosition():
+            """
+            gmsh.model.mesh.getNodesPosition()
+
+            return the position of the deformed mesh from relaying
+
+            Types:
+            """
+            api_position, api_position_n = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetNodesPosition(byref(api_position), byref(api_position_n), byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectordouble(api_position, api_position_n.value)
+        get_nodes_position = getNodesPosition
+
+        def setDiscreteFront():
+            """
+            gmsh.model.mesh.setDiscreteFront()
+
+            set the discrete front object created trough the api to the relaying object
+            """
+            ierr = c_int()
+            lib.gmshModelMeshSetDiscreteFront(byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        set_discrete_front = setDiscreteFront
+
+        def relayingAndRelax():
+            """
+            gmsh.model.mesh.relayingAndRelax()
+
+            move the mesh to be conform to the discrete front 
+            and relax the nodes that are not on the front
+            """
+            ierr = c_int()
+            lib.gmshModelMeshRelayingAndRelax(byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        relaying_and_relax = relayingAndRelax
+
+        def initRelaying():
+            """
+            gmsh.model.mesh.initRelaying()
+
+            initialize the relaying object
+            """
+            ierr = c_int()
+            lib.gmshModelMeshInitRelaying(byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        init_relaying = initRelaying
+
+        def resetDiscreteFront():
+            """
+            gmsh.model.mesh.resetDiscreteFront()
+
+            reset the discrete front object created trough the api to the relaying object
+            """
+            ierr = c_int()
+            lib.gmshModelMeshResetDiscreteFront(byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        reset_discrete_front = resetDiscreteFront
+
+        def redistFront(lc):
+            """
+            gmsh.model.mesh.redistFront()
+
+            redistanciation of the markers on the discrete front
+            Types: -"lc" double (charachterictic length)
+            """
+            ierr = c_int()
+            lib.gmshModelMeshRedistFront(c_double(lc), byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        redist_front = redistFront
+
+        def setBndFront():
+            """
+            gmsh.model.mesh.setBndFront()
+
+            set discrete front on the boundary 
+            Types: 
+            """
+            ierr = c_int()
+            lib.gmshModelMeshSetBndFront( byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        set_bnd_front = setBndFront
+            
 
         class field:
             """
