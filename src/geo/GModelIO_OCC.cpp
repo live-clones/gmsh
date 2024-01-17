@@ -4585,6 +4585,22 @@ void _writeXAO(TopoDS_Shape &shape, GModel *model, const std::string &fileName)
     Msg::Error("Could not open file '%s'", fileName.c_str());
     return;
   }
+
+  // It would be nice to also store
+  //
+  // - the physical group tag: this would allow to serialize OCC geometries
+  //   after complex boolean operations and have a result directly usable by
+  //   codes (only) referencing physical tags such as GetDP, GmshFEM, ... This
+  //   could be done easily by adding a "tag" attribute to "group" in addition
+  //   to "dimension" and "name" (but we should check that is would be OK with
+  //   other XAO parsers like SALOME/SHAPER); we could also add a new node in
+  //   the XML tree.
+  //
+  // - the meshing constraints associated with entities (in particular points).
+  //   This could be done by adding an optional "meshsize" attribute in each
+  //   entry in "topology"; but that location does not feel very natural. We
+  //   could also add a new node in the XML tree.
+
   file << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << std::endl;
   file << "<XAO version=\"1.0\" author=\"Gmsh\">" << std::endl;
   file << "  <geometry name=\"" << model->getName() << "\">" << std::endl;
