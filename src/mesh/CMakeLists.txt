@@ -41,7 +41,7 @@ set(SRC
   meshQuadQuasiStructured.cpp
   meshOctreeLibOL.cpp
   meshCombine3D.cpp
-)
+  )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
 append_gmsh_src(src/mesh "${SRC};${HDR}")
