@@ -6168,6 +6168,10 @@ int GModel::readOCCXAO(const std::string &fn)
 {
   if(!_occ_internals) _occ_internals = new OCC_Internals;
 
+  // We cannot use importShapes(fn) directly, as 1) we don't want to apply any
+  // changes to the OCC shape through healing; and 2) we need access to GModel
+  // to make the link between subshapes and model entities
+
 #if defined(HAVE_OCC) && defined(HAVE_TINYXML2)
   // import BREP
   TCollection_AsciiString occfile(fn.c_str());
