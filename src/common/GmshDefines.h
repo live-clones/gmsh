@@ -59,6 +59,7 @@
 #define FORMAT_OFF          53
 #define FORMAT_PY           54
 #define FORMAT_RAD          55
+#define FORMAT_XAO          56
 
 // Element types
 #define TYPE_PNT     1

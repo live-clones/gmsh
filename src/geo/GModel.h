@@ -760,9 +760,11 @@ public:
 
   // OCC model
   int readOCCBREP(const std::string &name);
+  int readOCCXAO(const std::string &name);
   int readOCCSTEP(const std::string &name);
   int readOCCIGES(const std::string &name);
   int writeOCCBREP(const std::string &name);
+  int writeOCCXAO(const std::string &name);
   int writeOCCSTEP(const std::string &name);
   int writeOCCIGES(const std::string &name);
   int importOCCShape(const void *shape);
