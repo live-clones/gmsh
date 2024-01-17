@@ -188,6 +188,8 @@ optional codes in the contrib/ directory, each governed by their own license:
 
 * contrib/bamg from Freefem++ copyright (C) Frederic Hecht;
 
+* contrib/tinyxml2 from Lee Thomason;
+
 * contrib/voro++ from Voro++ Copyright (c) 2008, The Regents of the University
   of California, through Lawrence Berkeley National Laboratory (subject to
   receipt of any required approvals from the U.S. Dept. of Energy). All rights

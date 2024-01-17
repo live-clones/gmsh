@@ -1,4 +1,5 @@
-4.12.2 (Work-in-progress): bug fixes.
+4.13 (Work-in-progress): added support for importing and exporting XAO files;
+new quasi-transfinite 2d meshes (with fans); bug fixes.
 
 * New API functions: mesh/removeElements.
 
