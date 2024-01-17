@@ -154,6 +154,10 @@
 #include <XCAFDoc_ShapeTool.hxx>
 #endif
 
+#if defined(HAVE_TINYXML2)
+#include "tinyxml2.h"
+#endif
+
 // for debugging:
 template <class T>
 void writeBrep(const T &shapes, const std::string &fileName = "debug.brep")
@@ -6175,7 +6179,179 @@ int GModel::readOCCXAO(const std::string &fn)
   _occ_internals->synchronize(this);
   snapVertices();
 
-  printf("TODO read XML data and create physical groups accordingly!\n");
+  // import XML data
+  using namespace tinyxml2;
+  XMLDocument xmlDoc;
+  if(xmlDoc.LoadFile(fn.c_str()) != XML_SUCCESS) {
+    Msg::Error("Could not load XML file '%s'", fn.c_str());
+    return 0;
+  }
+  XMLElement *xao = xmlDoc.FirstChildElement("XAO");
+  if(!xao) {
+    Msg::Error("No root XAO node in file '%s'", fn.c_str());
+    return 0;
+  }
+  XMLElement *geometry = xao->FirstChildElement("geometry");
+  if(!geometry) {
+    Msg::Warning("No geometry node in file '%s'", fn.c_str());
+    return 0;
+  }
+  XMLElement *topology = geometry->FirstChildElement("topology");
+  if(!topology) {
+    Msg::Error("No topology node in file '%s'", fn.c_str());
+    return 0;
+  }
+  XMLElement *groups = xao->FirstChildElement("groups");
+  if(!groups) {
+    Msg::Warning("No groups node in file '%s'", fn.c_str());
+  }
+
+  TopTools_IndexedMapOfShape mainMap;
+  TopExp::MapShapes(shape, mainMap);
+  std::map<int, GEntity*> entities[4];
+
+  XMLElement *vertices = topology->FirstChildElement("vertices");
+  if(vertices) {
+    XMLElement *vertex = vertices->FirstChildElement("vertex");
+    while(vertex) {
+      int index = 0, ref = 0;
+      if(vertex->QueryIntAttribute("index", &index) != XML_SUCCESS ||
+         vertex->QueryIntAttribute("reference", &ref) != XML_SUCCESS) {
+        Msg::Error("Missing index or reference for vertex");
+      }
+      else {
+        TopoDS_Shape subShape = mainMap.FindKey(ref);
+        GVertex *gv = getVertexForOCCShape(&subShape);
+        if(gv) {
+          entities[0][index] = gv;
+          const char* name = nullptr;
+          if(vertex->QueryAttribute("name", &name) == XML_SUCCESS)
+            setElementaryName(0, gv->tag(), name);
+        }
+        else {
+          Msg::Error("Could not find model point for XAO reference %d", ref);
+        }
+      }
+      vertex = vertex->NextSiblingElement("vertex");
+    }
+  }
+
+  XMLElement *edges = topology->FirstChildElement("edges");
+  if(edges) {
+    XMLElement *edge = edges->FirstChildElement("edge");
+    while(edge) {
+      int index = 0, ref = 0;
+      if(edge->QueryIntAttribute("index", &index) != XML_SUCCESS ||
+         edge->QueryIntAttribute("reference", &ref) != XML_SUCCESS) {
+        Msg::Error("Missing index or reference for edge");
+      }
+      else {
+        TopoDS_Shape subShape = mainMap.FindKey(ref);
+        GEdge *ge = getEdgeForOCCShape(&subShape);
+        if(ge) {
+          entities[1][index] = ge;
+          const char* name = nullptr;
+          if(edge->QueryAttribute("name", &name) == XML_SUCCESS)
+            setElementaryName(1, ge->tag(), name);
+        }
+        else {
+          Msg::Error("Could not find model curve for XAO reference %d", ref);
+        }
+      }
+      edge = edge->NextSiblingElement("edge");
+    }
+  }
+
+  XMLElement *faces = topology->FirstChildElement("faces");
+  if(faces) {
+    XMLElement *face = faces->FirstChildElement("face");
+    while(face) {
+      int index = 0, ref = 0;
+      if(face->QueryIntAttribute("index", &index) != XML_SUCCESS ||
+         face->QueryIntAttribute("reference", &ref) != XML_SUCCESS) {
+        Msg::Error("Missing index or reference for face");
+      }
+      else {
+        TopoDS_Shape subShape = mainMap.FindKey(ref);
+        GFace *gf = getFaceForOCCShape(&subShape);
+        if(gf) {
+          entities[2][index] = gf;
+          const char* name = nullptr;
+          if(face->QueryAttribute("name", &name) == XML_SUCCESS)
+            setElementaryName(2, gf->tag(), name);
+        }
+        else {
+          Msg::Error("Could not find model surface for XAO reference %d", ref);
+        }
+      }
+      face = face->NextSiblingElement("face");
+    }
+  }
+
+  XMLElement *solids = topology->FirstChildElement("solids");
+  if(solids) {
+    XMLElement *solid = solids->FirstChildElement("solid");
+    while(solid) {
+      int index = 0, ref = 0;
+      if(solid->QueryIntAttribute("index", &index) != XML_SUCCESS ||
+         solid->QueryIntAttribute("reference", &ref) != XML_SUCCESS) {
+        Msg::Error("Missing index or reference for solid");
+      }
+      else {
+        TopoDS_Shape subShape = mainMap.FindKey(ref);
+        GRegion *gr = getRegionForOCCShape(&subShape);
+        if(gr) {
+          entities[3][index] = gr;
+          const char* name = nullptr;
+          if(solid->QueryAttribute("name", &name) == XML_SUCCESS)
+            setElementaryName(3, gr->tag(), name);
+        }
+        else {
+          Msg::Error("Could not find model volume for XAO reference %d", ref);
+        }
+      }
+      solid = solid->NextSiblingElement("solid");
+    }
+  }
+
+  auto getDim = [](const std::string &name) {
+    if(name == "vertex") return 0;
+    else if(name == "edge") return 1;
+    else if(name == "face") return 2;
+    else if(name == "solid") return 3;
+    return -1;
+  };
+
+  if(groups) {
+    XMLElement *group = groups->FirstChildElement("group");
+    while(group) {
+      const char* name = nullptr, *dimension = nullptr;
+      if(group->QueryAttribute("name", &name) == XML_SUCCESS &&
+         group->QueryAttribute("dimension", &dimension) == XML_SUCCESS &&
+         getDim(dimension) >= 0) {
+        int dim = getDim(dimension);
+        XMLElement *element = group->FirstChildElement("element");
+        while(element) {
+          int index = 0;
+          if(element->QueryIntAttribute("index", &index) == XML_SUCCESS &&
+             entities[dim].count(index)) {
+            GEntity *ge = entities[dim][index];
+            int ptag = setPhysicalName(name, dim);
+            ge->physicals.push_back(ptag);
+          }
+          else {
+            Msg::Error("Unknown model entity of dimension %d at index %d",
+                       dim, index);
+          }
+          element = element->NextSiblingElement("element");
+        }
+      }
+      else {
+        Msg::Error("Missing name or dimension for group");
+      }
+      group = group->NextSiblingElement("group");
+    }
+  }
 
 #else
   Msg::Error("Gmsh requires OpenCASCADE and TinyXML2 to import XAO files");
