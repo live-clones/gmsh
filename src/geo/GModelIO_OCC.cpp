@@ -4562,6 +4562,7 @@ bool OCC_Internals::importShapes(const std::string &fileName,
     CTX::instance()->geom.occMakeSolids, CTX::instance()->geom.occScaling);
 
   _multiBind(result, -1, outDimTags, highestDimOnly, true);
+
   return true;
 }
 
@@ -4571,6 +4572,99 @@ bool OCC_Internals::importShapes(const TopoDS_Shape *shape, bool highestDimOnly,
   if(!shape) return false;
   _multiBind(*shape, -1, outDimTags, highestDimOnly, true);
   return true;
+}
+
+void _writeXAO(TopoDS_Shape &shape, GModel *model, const std::string &fileName)
+{
+  std::ofstream file(fileName);
+  if(!file.is_open()) {
+    Msg::Error("Could not open file '%s'", fileName.c_str());
+    return;
+  }
+  file << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << std::endl;
+  file << "<XAO version=\"1.0\" author=\"Gmsh\">" << std::endl;
+  file << "  <geometry name=\"" << model->getName() << "\">" << std::endl;
+  file << "    <shape format=\"BREP\"><![CDATA[";
+  BRepTools::Write(shape, file);
+  file << "]]></shape>" << std::endl;
+  file << "    <topology>" << std::endl;
+
+  TopTools_IndexedMapOfShape mainMap;
+  TopExp::MapShapes(shape, mainMap);
+  TopExp_Explorer exp;
+  std::set<std::pair<int, GEntity*>> topo[4];
+  for(exp.Init(shape, TopAbs_VERTEX); exp.More(); exp.Next()) {
+    TopoDS_Shape subShape = exp.Current();
+    auto p = std::make_pair(mainMap.FindIndex(subShape),
+                            model->getVertexForOCCShape(&subShape));
+    if(p.first && p.second && !topo[0].count(p)) topo[0].insert(p);
+  }
+  for(exp.Init(shape, TopAbs_EDGE); exp.More(); exp.Next()) {
+    TopoDS_Shape subShape = exp.Current();
+    auto p = std::make_pair(mainMap.FindIndex(subShape),
+                            model->getEdgeForOCCShape(&subShape));
+    if(p.first && p.second && !topo[1].count(p)) topo[1].insert(p);
+  }
+  for(exp.Init(shape, TopAbs_FACE); exp.More(); exp.Next()) {
+    TopoDS_Shape subShape = exp.Current();
+    auto p = std::make_pair(mainMap.FindIndex(subShape),
+                            model->getFaceForOCCShape(&subShape));
+    if(p.first && p.second && !topo[2].count(p)) topo[2].insert(p);
+  }
+  for(exp.Init(shape, TopAbs_SOLID); exp.More(); exp.Next()) {
+    TopoDS_Shape subShape = exp.Current();
+    auto p = std::make_pair(mainMap.FindIndex(subShape),
+                            model->getRegionForOCCShape(&subShape));
+    if(p.first && p.second && !topo[3].count(p)) topo[3].insert(p);
+  }
+  std::map<int, std::vector<int>> groups[4];
+  for(int dim = 0; dim <= 3; dim++) {
+    std::string labels = (dim == 3) ? "solids" : (dim == 2) ? "faces" :
+      (dim == 1) ? "edges" : "vertices";
+    std::string label = (dim == 3) ? "solid" : (dim == 2) ? "face" :
+      (dim == 1) ? "edge" : "vertex";
+    file << "      <" << labels << " count=\"" << topo[dim].size() << "\">"
+         << std::endl;
+    int index = 0;
+    for(auto p : topo[dim]) {
+      std::string name = model->getElementaryName(p.second->dim(),
+                                                  p.second->tag());
+      file << "        <" << label << " index=\"" << index << "\" "
+           << "name=\"" << name << "\" " << "reference=\"" << p.first
+           << "\"/>" << std::endl;
+      for(auto &g : p.second->physicals) {
+        groups[dim][std::abs(g)].push_back(index);
+      }
+      index++;
+    }
+    file << "      </" << labels << ">" << std::endl;
+  }
+
+  file << "    </topology>" << std::endl;
+  file << "  </geometry>" << std::endl;
+  file << "  <groups count=\"" << groups[0].size() + groups[1].size() +
+    groups[2].size() + groups[3].size() << "\">" << std::endl;
+  for(int dim = 0; dim <= 3; dim++) {
+    std::string label = (dim == 3) ? "solid" : (dim == 2) ? "face" :
+      (dim == 1) ? "edge" : "vertex";
+    for(auto g : groups[dim]) {
+      std::string name = model->getPhysicalName(dim, g.first);
+      if(name.empty()) { // create same unique name as for MED export
+        std::ostringstream gs;
+        gs << "G_" << dim << "D_" << g.first;
+        name = gs.str();
+      }
+      file << "    <group name=\"" << name << "\" dimension=\"" <<
+        label << "\" count=\"" << g.second.size() << "\">" << std::endl;
+      for(auto index : g.second) {
+        file << "      <element index=\"" << index << "\"/>" << std::endl;
+      }
+      file << "    </group>" << std::endl;
+    }
+  }
+  file << "  </groups>" << std::endl;
+  file << "  <fields count=\"0\"/>" << std::endl;
+  file << "</XAO>" << std::endl;
 }
 
 bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
@@ -4657,6 +4751,9 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
   try {
     if(format == "brep" || split[2] == ".brep" || split[2] == ".BREP") {
       BRepTools::Write(c, occfile.ToCString());
+    }
+    else if(format == "xao" || split[2] == ".xao" || split[2] == ".XAO") {
+      _writeXAO(c, model, fileName);
     }
     else if(format == "step" || split[2] == ".step" || split[2] == ".stp" ||
             split[2] == ".STEP" || split[2] == ".STP") {
@@ -6063,6 +6160,31 @@ int GModel::readOCCBREP(const std::string &fn)
   return 1;
 }
 
+int GModel::readOCCXAO(const std::string &fn)
+{
+  if(!_occ_internals) _occ_internals = new OCC_Internals;
+
+#if defined(HAVE_OCC) && defined(HAVE_TINYXML2)
+  // import BREP
+  TCollection_AsciiString occfile(fn.c_str());
+  TopoDS_Shape shape;
+  BRep_Builder aBuilder;
+  BRepTools::Read(shape, occfile.ToCString(), aBuilder);
+  std::vector<std::pair<int, int> > outDimTags;
+  _occ_internals->importShapes(&shape, false, outDimTags);
+  _occ_internals->synchronize(this);
+  snapVertices();
+
+  printf("TODO read XML data and create physical groups accordingly!\n");
+
+#else
+  Msg::Error("Gmsh requires OpenCASCADE and TinyXML2 to import XAO files");
+  return 0;
+#endif
+
+  return 1;
+}
+
 int GModel::readOCCSTEP(const std::string &fn)
 {
   if(!_occ_internals) _occ_internals = new OCC_Internals;
@@ -6088,6 +6210,17 @@ int GModel::writeOCCBREP(const std::string &fn)
     return 0;
   }
   _occ_internals->exportShapes(this, fn, "brep",
+                               CTX::instance()->geom.occExportOnlyVisible);
+  return 1;
+}
+
+int GModel::writeOCCXAO(const std::string &fn)
+{
+  if(!_occ_internals) {
+    Msg::Error("No OpenCASCADE model found");
+    return 0;
+  }
+  _occ_internals->exportShapes(this, fn, "xao",
                                CTX::instance()->geom.occExportOnlyVisible);
   return 1;
 }
