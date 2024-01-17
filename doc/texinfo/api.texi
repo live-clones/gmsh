@@ -1207,7 +1207,7 @@ Clear the mesh, i.e. delete all the nodes and elements, for the entities @code{d
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L732,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L627,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L2210,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L1880,Julia}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/copy_mesh.py#L53,copy_mesh.py}, @url{@value{GITLAB-PREFIX}/examples/api/flatten.py#L32,flatten.py}, @url{@value{GITLAB-PREFIX}/examples/api/remesh_partial_move.py#L19,remesh_partial_move.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/copy_mesh.py#L53,copy_mesh.py}, @url{@value{GITLAB-PREFIX}/examples/api/flatten.py#L32,flatten.py}, @url{@value{GITLAB-PREFIX}/examples/api/remesh_partial_move.py#L19,remesh_partial_move.py}, @url{@value{GITLAB-PREFIX}/examples/api/remove_elements.py#L13,remove_elements.py})
 @end table
 
 @item gmsh/model/mesh/removeElements
@@ -1222,6 +1222,8 @@ Remove the elements with tags @code{elementTags} from the entity of dimension @c
 -
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L740,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L634,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L2232,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L1904,Julia}
+@item Examples:
+Python (@url{@value{GITLAB-PREFIX}/examples/api/remove_elements.py#L18,remove_elements.py})
 @end table
 
 @item gmsh/model/mesh/reverse
@@ -1415,7 +1417,7 @@ Reclassify all nodes on their associated model entity, based on the elements. Ca
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L872,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L753,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L2609,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L2243,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x2.cpp#L107,x2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/x2.py#L102,x2.py}, @url{@value{GITLAB-PREFIX}/examples/api/terrain.py#L66,terrain.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x2.cpp#L107,x2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/x2.py#L102,x2.py}, @url{@value{GITLAB-PREFIX}/examples/api/remove_elements.py#L28,remove_elements.py}, @url{@value{GITLAB-PREFIX}/examples/api/terrain.py#L66,terrain.py})
 @end table
 
 @item gmsh/model/mesh/relocateNodes
