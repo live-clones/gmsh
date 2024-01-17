@@ -41,7 +41,6 @@ set(SRC
   meshQuadQuasiStructured.cpp
   meshOctreeLibOL.cpp
   meshCombine3D.cpp
-  meshRelaying.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

@@ -352,9 +352,9 @@ int GmshBatch()
     }
     else if(CTX::instance()->batch == 69) {
 
-      void testRelaying();
-      testRelaying() ;
-      /*
+      //      void testRelaying();
+      //      testRelaying() ;
+      
 
 
       std::vector<int> tags;
@@ -363,7 +363,7 @@ int GmshBatch()
       CTX::instance()->batch = 0;
       // still a bug in allocation somewhere
       exit(0);
-      */
+      
     }
 #endif
   }
