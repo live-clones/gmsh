@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -68,6 +68,16 @@ std::string opt_geometry_double_clicked_curve_command(OPT_ARGS_STR);
 std::string opt_geometry_double_clicked_surface_command(OPT_ARGS_STR);
 std::string opt_geometry_double_clicked_volume_command(OPT_ARGS_STR);
 std::string opt_geometry_occ_target_unit(OPT_ARGS_STR);
+std::string opt_geometry_occ_step_description(OPT_ARGS_STR);
+std::string opt_geometry_occ_step_implementation_level(OPT_ARGS_STR);
+std::string opt_geometry_occ_step_model_name(OPT_ARGS_STR);
+std::string opt_geometry_occ_step_time_stamp(OPT_ARGS_STR);
+std::string opt_geometry_occ_step_author(OPT_ARGS_STR);
+std::string opt_geometry_occ_step_organization(OPT_ARGS_STR);
+std::string opt_geometry_occ_step_preprocessor_version(OPT_ARGS_STR);
+std::string opt_geometry_occ_step_originating_system(OPT_ARGS_STR);
+std::string opt_geometry_occ_step_authorization(OPT_ARGS_STR);
+std::string opt_geometry_occ_step_schema_identifier(OPT_ARGS_STR);
 std::string opt_geometry_pipe_default_trihedron(OPT_ARGS_STR);
 std::string opt_solver_socket_name(OPT_ARGS_STR);
 std::string opt_solver_name(OPT_ARGS_STR);

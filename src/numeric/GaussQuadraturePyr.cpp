@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -49,7 +49,7 @@ IntPt *getGQPyrPts(int order)
       intpt[l].pt[2] = 0.5 * (1 + wp);
 
       wt *= 0.125;
-      intpt[l++].weight = wt * 4. / 3.;
+      intpt[l++].weight = wt;
     }
     GQPyr[order] = intpt;
   }

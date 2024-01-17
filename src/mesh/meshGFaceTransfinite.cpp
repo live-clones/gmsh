@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -166,6 +166,135 @@ double maxDistParam(const std::vector<double> &U, const std::vector<double> &V)
   return d;
 }
 
+static void rescaleIrregularTransfinite (int &L, int &Lb, int &H, int &Hb,
+				  std::vector<MVertex *> &m_vertices,
+				  std::vector<double> &U, std::vector<double> &V){
+
+  if (L == Lb && H == Hb)return;
+  
+  std::vector<double> U_new, V_new;
+  std::vector<MVertex *> m_vertices_new;
+
+  size_t duplicate_start_H = 0;
+  size_t duplicate_size_H  = 0;
+  if (H > Hb){
+    duplicate_start_H = L+Lb+H+1;            
+    duplicate_size_H  = H - Hb;
+  }
+  else if (H < Hb){
+    duplicate_start_H = L+1;            
+    duplicate_size_H  = Hb - H;
+  }
+  
+  size_t duplicate_start_L = 0;
+  size_t duplicate_size_L  = 0;
+  if (L > Lb){
+    duplicate_start_L = L+H+1;            
+    duplicate_size_L  = L - Lb;
+  }
+  else if (L < Lb){
+    duplicate_start_L = 1;            
+    duplicate_size_L  = Lb - L;
+  }
+  if (H > Hb)Hb=H;
+  else if (H < Hb)H=Hb;
+  if (L > Lb)Lb=L;
+  else if (L < Lb)L=Lb;
+
+  
+  
+  if (duplicate_size_L == 0) {
+    for (size_t i=0;i<duplicate_start_H;i++){
+      m_vertices_new.push_back(m_vertices[i]);
+      U_new.push_back(U[i]);
+      V_new.push_back(V[i]);
+    }
+    for (size_t i=0;i<duplicate_size_H;i++){
+      m_vertices_new.push_back(m_vertices[duplicate_start_H-1]);
+      U_new.push_back(U[duplicate_start_H-1]);
+      V_new.push_back(V[duplicate_start_H-1]);
+    }
+    for (size_t i=duplicate_start_H;i<U.size();i++){
+      m_vertices_new.push_back(m_vertices[i]);
+      U_new.push_back(U[i]);
+      V_new.push_back(V[i]);
+    }
+  }
+  else if (duplicate_size_H == 0) {
+    for (size_t i=0;i<duplicate_start_L;i++){
+      m_vertices_new.push_back(m_vertices[i]);
+      U_new.push_back(U[i]);
+      V_new.push_back(V[i]);
+    }
+    for (size_t i=0;i<duplicate_size_L;i++){
+      m_vertices_new.push_back(m_vertices[duplicate_start_L-1]);
+      U_new.push_back(U[duplicate_start_L-1]);
+      V_new.push_back(V[duplicate_start_L-1]);
+    }
+    for (size_t i=duplicate_start_L;i<U.size();i++){
+      m_vertices_new.push_back(m_vertices[i]);
+      U_new.push_back(U[i]);
+      V_new.push_back(V[i]);
+    }
+  }
+  else {
+    size_t start_1 = duplicate_start_L < duplicate_start_H ? duplicate_start_L : duplicate_start_H;
+    size_t size_1  = duplicate_start_L < duplicate_start_H ? duplicate_size_L : duplicate_size_H;
+    for (size_t i=0;i<start_1;i++){
+      m_vertices_new.push_back(m_vertices[i]);
+      U_new.push_back(U[i]);
+      V_new.push_back(V[i]);
+    }
+    for (size_t i=0;i<size_1;i++){
+      m_vertices_new.push_back(m_vertices[start_1-1]);
+      U_new.push_back(U[start_1-1]);
+      V_new.push_back(V[start_1-1]);
+    }
+    size_t start_2 = duplicate_start_L < duplicate_start_H ? duplicate_start_H : duplicate_start_L;
+    size_t size_2  = duplicate_start_L < duplicate_start_H ? duplicate_size_H : duplicate_size_L;
+    
+    for (size_t i=start_1;i<start_2;i++){
+      m_vertices_new.push_back(m_vertices[i]);
+      U_new.push_back(U[i]);
+      V_new.push_back(V[i]);
+    }
+    for (size_t i=0;i<size_2;i++){
+      m_vertices_new.push_back(m_vertices[start_2-1]);
+      U_new.push_back(U[start_2-1]);
+      V_new.push_back(V[start_2-1]);
+    }
+    for (size_t i=start_2;i<U.size();i++){
+      m_vertices_new.push_back(m_vertices[i]);
+      U_new.push_back(U[i]);
+      V_new.push_back(V[i]);
+    }    
+  }
+ 
+  U = U_new;
+  V = V_new;
+  m_vertices = m_vertices_new;
+  
+}
+
+static void ADDTRIANGLE (GFace *gf, MVertex *v1, MVertex *v2, MVertex *v3){
+  if (v1 == v2)return;
+  if (v1 == v3)return;
+  if (v2 == v3)return;
+  gf->triangles.push_back(new MTriangle(v1, v2, v3));
+}
+    
+static void ADDQUADRANGLE (GFace *gf, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4){
+  if (v1 == v2)ADDTRIANGLE (gf,v1,v3,v4);
+  else if (v1 == v3)ADDTRIANGLE (gf,v1,v2,v4);
+  else if (v1 == v4)ADDTRIANGLE (gf,v1,v2,v3);
+  else if (v2 == v3)ADDTRIANGLE (gf,v1,v2,v4);
+  else if (v2 == v4)ADDTRIANGLE (gf,v1,v2,v3);
+  else if (v3 == v4)ADDTRIANGLE (gf,v1,v2,v3);
+  else gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
+}
+
+
+
 int MeshTransfiniteSurface(GFace *gf)
 {
   if(gf->meshAttributes.method != MESH_TRANSFINITE) return 0;
@@ -268,10 +397,20 @@ int MeshTransfiniteSurface(GFace *gf)
     V = V2;
   }
 
+  // Part 2 --> make the 3-corners transfinite mesh
+
+  
   int N1 = N[0], N2 = N[1], N3 = N[2], N4 = N[3];
   int L = N2 - N1, H = N3 - N2;
   if(corners.size() == 4) {
     int Lb = N4 - N3, Hb = m_vertices.size() - N4;
+
+    // Part 1 --> make the 4-corners transfinite mesh
+    rescaleIrregularTransfinite (L, Lb, H, Hb, m_vertices,U,V);
+    N2 = N1+L;
+    N3 = N2+H;
+    N4 = N3+L;
+        
     if(Lb != L || Hb != H) {
       Msg::Error("Surface %d cannot be meshed using the transfinite algorithm "
                  "(non-matching number of nodes on opposite sides %d != %d or "
@@ -751,19 +890,23 @@ int MeshTransfiniteSurface(GFace *gf)
         MVertex *v3 = tab[i + 1][j + 1];
         MVertex *v4 = tab[i][j + 1];
         if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine)
-          gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
-        else if(gf->meshAttributes.transfiniteArrangement == 1 ||
+	  ADDQUADRANGLE (gf, v1,v2,v3,v4);
+	else if(gf->meshAttributes.transfiniteArrangement == 1 ||
                 (gf->meshAttributes.transfiniteArrangement == 2 &&
                  ((i % 2 == 0 && j % 2 == 1) || (i % 2 == 1 && j % 2 == 0))) ||
                 (gf->meshAttributes.transfiniteArrangement == -2 &&
                  ((i % 2 == 0 && j % 2 == 0) || (i % 2 == 1 && j % 2 == 1)))) {
           //        else if(rand() % 2 == 0){
-          gf->triangles.push_back(new MTriangle(v1, v2, v3));
-          gf->triangles.push_back(new MTriangle(v3, v4, v1));
+	  ADDTRIANGLE (gf, v1,v2,v3);
+	  ADDTRIANGLE (gf, v3,v4,v1);
+	  //gf->triangles.push_back(new MTriangle(v1, v2, v3));
+	  //gf->triangles.push_back(new MTriangle(v3, v4, v1));
         }
         else {
-          gf->triangles.push_back(new MTriangle(v1, v2, v4));
-          gf->triangles.push_back(new MTriangle(v4, v2, v3));
+	  ADDTRIANGLE (gf, v1,v2,v4);
+	  ADDTRIANGLE (gf, v4,v2,v3);
+	  //   gf->triangles.push_back(new MTriangle(v1, v2, v4));
+	  //   gf->triangles.push_back(new MTriangle(v4, v2, v3));
         }
       }
     }
@@ -774,7 +917,8 @@ int MeshTransfiniteSurface(GFace *gf)
         MVertex *v1 = tab[0][0];
         MVertex *v2 = tab[1][j];
         MVertex *v3 = tab[1][j + 1];
-        gf->triangles.push_back(new MTriangle(v1, v2, v3));
+	ADDTRIANGLE (gf, v1,v2,v3);
+	//        if (v1 != v2 && v1 != v3 && v2 != v3 )gf->triangles.push_back(new MTriangle(v1, v2, v3));
       }
       for(int i = 1; i < L; i++) {
         for(int j = 0; j < H; j++) {
@@ -783,7 +927,7 @@ int MeshTransfiniteSurface(GFace *gf)
           MVertex *v3 = tab[i + 1][j + 1];
           MVertex *v4 = tab[i][j + 1];
           if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine)
-            gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
+	    ADDQUADRANGLE (gf, v1,v2,v3,v4);
           else if(gf->meshAttributes.transfiniteArrangement == 1 ||
                   (gf->meshAttributes.transfiniteArrangement == 2 &&
                    ((i % 2 == 0 && j % 2 == 1) ||
@@ -791,12 +935,12 @@ int MeshTransfiniteSurface(GFace *gf)
                   (gf->meshAttributes.transfiniteArrangement == -2 &&
                    ((i % 2 == 0 && j % 2 == 0) ||
                     (i % 2 == 1 && j % 2 == 1)))) {
-            gf->triangles.push_back(new MTriangle(v1, v2, v3));
-            gf->triangles.push_back(new MTriangle(v3, v4, v1));
+	    ADDTRIANGLE (gf, v1,v2,v3);
+	    ADDTRIANGLE (gf, v3,v4,v1);
           }
           else {
-            gf->triangles.push_back(new MTriangle(v1, v2, v4));
-            gf->triangles.push_back(new MTriangle(v4, v2, v3));
+	    ADDTRIANGLE (gf, v1,v2,v4);
+	    ADDTRIANGLE (gf, v4,v2,v3);
           }
         }
       }
@@ -818,9 +962,9 @@ int MeshTransfiniteSurface(GFace *gf)
             case 1: // Right (right side tria)
 
               if(i > 0 && j < i) {
-                gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
+		ADDQUADRANGLE (gf, v1,v2,v3,v4);
               }
-              if(i == j) { gf->triangles.push_back(new MTriangle(v1, v2, v3)); }
+              if(i == j) { ADDTRIANGLE (gf, v1, v2, v3); }
               break;
 
             case 2: // AlternateRight (side tria <- ->) == Alternate
@@ -828,19 +972,22 @@ int MeshTransfiniteSurface(GFace *gf)
 
               if(i % 2) {
                 if(i > 0 && j < i) {
-                  gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
+		  ADDQUADRANGLE (gf, v1,v2,v3,v4);
                 }
                 if(i == j) {
-                  gf->triangles.push_back(new MTriangle(v1, v2, v3));
+		  ADDTRIANGLE (gf, v1, v2, v3);
+		  //		  gf->triangles.push_back(new MTriangle(v1, v2, v3));
                 }
               }
               else {
                 if(j == 0) {
-                  gf->triangles.push_back(new MTriangle(v1, v2, v3));
+		  ADDTRIANGLE (gf, v1, v2, v3);
+		  //                  gf->triangles.push_back(new MTriangle(v1, v2, v3));
                 }
                 if(i > 0 && j < i) {
                   v5 = tab[i + 1][j + 2];
-                  gf->quadrangles.push_back(new MQuadrangle(v1, v3, v5, v4));
+		  ADDQUADRANGLE (gf, v1,v3,v5,v4);
+		  //		  gf->quadrangles.push_back(new MQuadrangle(v1, v3, v5, v4));
                 }
               }
               break;
@@ -849,14 +996,17 @@ int MeshTransfiniteSurface(GFace *gf)
 
               ni = 2 * (i / 4) + (i % 4 ? 1 : 0);
               if(i > 0 && j < ni) {
-                gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
+		ADDQUADRANGLE (gf, v1,v2,v3,v4);
+		//                gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
               }
               if(j == ni) {
-                gf->triangles.push_back(new MTriangle(v1, v2, v3));
+		ADDTRIANGLE (gf, v1, v2, v3);
+                //gf->triangles.push_back(new MTriangle(v1, v2, v3));
               }
               if(i > 0 && j >= ni && j < i) {
                 v5 = tab[i + 1][j + 2];
-                gf->quadrangles.push_back(new MQuadrangle(v1, v3, v5, v4));
+		ADDQUADRANGLE (gf, v1,v3,v5,v4);
+		//                gf->quadrangles.push_back(new MQuadrangle(v1, v3, v5, v4));
               }
               break;
 
@@ -871,9 +1021,9 @@ int MeshTransfiniteSurface(GFace *gf)
           }
           else {
             if(i > 0 && j < i) {
-              gf->triangles.push_back(new MTriangle(v1, v3, v4));
+	      ADDTRIANGLE (gf, v1,v3,v4);
             }
-            gf->triangles.push_back(new MTriangle(v1, v2, v3));
+	    ADDTRIANGLE (gf, v1,v2,v3);
           }
         }
       }
