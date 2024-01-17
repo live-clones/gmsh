@@ -370,6 +370,9 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
   else if(ext == ".brep" || ext == ".rle" || ext == ".brp" || ext == ".BRP") {
     status = GModel::current()->readOCCBREP(fileName);
   }
+  else if(ext == ".xao" || ext == ".XAO") {
+    status = GModel::current()->readOCCXAO(fileName);
+  }
   else if(ext == ".iges" || ext == ".IGES" || ext == ".igs" || ext == ".IGS") {
     status = GModel::current()->readOCCIGES(fileName);
   }
