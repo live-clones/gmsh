@@ -510,12 +510,16 @@ std::vector<std::pair<size_t,size_t> > discreteFront :: getFrontEdges() {
     }
     curr.push_back(n.meshNode);
   }
+  //  printf("front edges :");
   for (size_t j=0;j<curr.size();j++){
     size_t A = curr[j];
     size_t B = curr[(j+1)%curr.size()];
     std::pair<size_t,size_t> pa = std::make_pair(std::min(A,B), std::max(A,B));
+    //    printf("(%lu,%lu)",pa.first,pa.second);
     pp.push_back(pa);
   }
+  std::sort(pp.begin(),pp.end());
+  //  printf("\n");
   return pp;
 }
 
@@ -580,9 +584,9 @@ void testRelaying() {
   for (size_t i=0;i<1200;i++){
     printf("ITER %8d time %12.5E\n",ITERR,t);
     mr.doRelaying (t);
-    mr.doRelax (1);
-    mr.doRelax (1);
-    mr.doRelax (1);
+    //    mr.doRelax (1);
+    //    mr.doRelax (1);
+    //    mr.doRelax (1);
     char name [245];
     sprintf(name, "test%lu.pos",i);
     //    if(ITERR%10==0){
@@ -860,11 +864,11 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
 
     size_t maxCuts = 0;
     
-    //    char name[245];
-    //    sprintf(name,"AAA%d.pos",ITTT);
-    //    FILE *fi = fopen(name,"w");
-    //    fprintf(fi,"View \"\"{\n");
-    //    int CC = 0;
+    char name[245];
+    sprintf(name,"AAA%d.pos",ITERR);
+    FILE *fi = fopen(name,"w");
+    fprintf(fi,"View \"\"{\n");
+    int CC = 0;
     for (size_t i = 0; i< v2v.size() ; i++){
       for (auto j : v2v[i]){
 	if (i < j){
@@ -874,15 +878,16 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
 	  std::vector<std::pair<double,int> > ds = f (i,j);
 	  if (ds.empty())continue;
 	  if (ds.size() > 2) {
-	    printf("iter %d we have edge %lu %lu cut by %lu\n",ITTT,i,j,ds.size());
+	    printf("glob %d iter %d we have edge %lu %lu cut by %lu\n",ITERR,ITTT,i,j,ds.size());
+	    fprintf(fi,"SL(%g,%g,0,%g,%g,0){1,1};\n",pos[3*i],pos[3*i+1],pos[3*j],pos[3*j+1]);
 	  }
 	  std::pair<size_t,size_t> p = std::make_pair(std::min(i,j),std::max(i,j));
 	  cuts.insert(p);
 
 	  double xxx = (ds.size() - 1.)/2.0;
 	  
-	  size_t indexi = 0;//floor(xxx); 
-	  size_t indexj = ds.size() - 1.;//ceil(xxx);
+	  size_t indexi = floor(xxx); 
+	  size_t indexj = ceil(xxx);
 
 	  const double di = ds[indexi].first;
 	  const double dj = ds[indexj].first;
@@ -910,8 +915,8 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
 	}
       }
     }
-    //    fprintf(fi,"};\n");
-    //    fclose(fi);
+    fprintf(fi,"};\n");
+    fclose(fi);
     //    if(CC){
     //      print4debug ("A.pos");
       //      exit(1);
