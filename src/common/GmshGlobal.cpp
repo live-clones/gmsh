@@ -356,7 +356,7 @@ int GmshBatch()
       //      testRelaying() ;
       //      
       //
-
+      
       std::vector<int> tags;
       computeCrossField(GModel::current(), tags);
       GoodbyeMessage();
