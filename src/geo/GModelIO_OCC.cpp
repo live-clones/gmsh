@@ -6246,7 +6246,7 @@ int GModel::readOCCXAO(const std::string &fn)
           entities[0][index] = gv;
           const char* name = nullptr;
           if(vertex->QueryAttribute("name", &name) == XML_SUCCESS)
-            setElementaryName(0, gv->tag(), name);
+            if(strlen(name)) setElementaryName(0, gv->tag(), name);
         }
         else {
           Msg::Error("Could not find model point for XAO reference %d", ref);
@@ -6272,7 +6272,7 @@ int GModel::readOCCXAO(const std::string &fn)
           entities[1][index] = ge;
           const char* name = nullptr;
           if(edge->QueryAttribute("name", &name) == XML_SUCCESS)
-            setElementaryName(1, ge->tag(), name);
+            if(strlen(name)) setElementaryName(1, ge->tag(), name);
         }
         else {
           Msg::Error("Could not find model curve for XAO reference %d", ref);
@@ -6298,7 +6298,7 @@ int GModel::readOCCXAO(const std::string &fn)
           entities[2][index] = gf;
           const char* name = nullptr;
           if(face->QueryAttribute("name", &name) == XML_SUCCESS)
-            setElementaryName(2, gf->tag(), name);
+            if(strlen(name)) setElementaryName(2, gf->tag(), name);
         }
         else {
           Msg::Error("Could not find model surface for XAO reference %d", ref);
@@ -6324,7 +6324,7 @@ int GModel::readOCCXAO(const std::string &fn)
           entities[3][index] = gr;
           const char* name = nullptr;
           if(solid->QueryAttribute("name", &name) == XML_SUCCESS)
-            setElementaryName(3, gr->tag(), name);
+            if(strlen(name)) setElementaryName(3, gr->tag(), name);
         }
         else {
           Msg::Error("Could not find model volume for XAO reference %d", ref);
