@@ -681,6 +681,7 @@ void discreteFront::redistFront(double lc){
 }
 
 void discreteFront :: printMesh (FILE *f) {
+  if(fn.empty()) return;
   std::sort(fn.begin(), fn.end());
   std::vector<SVector3> pp;
   int current_color = getColor(fn[0].line);
