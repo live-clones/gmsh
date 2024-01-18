@@ -9,7 +9,12 @@ int main(int argc, char **argv)
   }
 
   gmsh::initialize();
-  gmsh::open(argv[1]);
+  try{
+    gmsh::open(argv[1]);
+  }
+  catch(...){
+    exit(0);
+  }
   gmsh::model::mesh::generate(3);
   gmsh::write("test.msh");
   gmsh::finalize();

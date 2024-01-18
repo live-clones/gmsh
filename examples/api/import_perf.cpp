@@ -65,12 +65,12 @@ int main()
 
   tic = gmsh::logger::getWallTime();
   gmsh::option::setNumber("Mesh.Binary", 1);
-  gmsh::write("import_perf.msh");
+  gmsh::write("import_perf_cpp.msh");
   toc = gmsh::logger::getWallTime();
   printf("==> wrote to disk in %g seconds\n", toc - tic);
 
   tic = gmsh::logger::getWallTime();
-  gmsh::merge("import_perf.msh");
+  gmsh::merge("import_perf_cpp.msh");
   toc = gmsh::logger::getWallTime();
   printf("==> read from disk in %g seconds\n", toc - tic);
 
