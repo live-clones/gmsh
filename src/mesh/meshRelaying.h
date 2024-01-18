@@ -54,9 +54,13 @@ class discreteFront {
   SBoundingBox3d bbox;
   void getCoordinates(double x, double y, int &IX, int &IY);
   
- public :
   discreteFront (){}
-  discreteFront (std::vector<double> &p, std::vector<size_t> &l, std::vector<int> &c, double _t0 = 0);
+  static discreteFront *_instance;
+ public :
+  static discreteFront *instance() {
+    if(!_instance) _instance = new discreteFront();
+    return _instance;
+  }
   // assume 2D x y here !!!!
   void intersectLine2d (const SVector3 &p0, const SVector3 &p1,
 			std::vector<double> &d, std::vector<int> &c);
@@ -65,6 +69,7 @@ class discreteFront {
   SVector3 closestPoints2d (const SVector3 &P);
   bool empty() const {return pos.empty();}
   void move (double dt);
+  void moveFromV (double dt, std::vector<SVector3> V, bool bnd);
   virtual SVector3 velocity (double x, double y, double z, double t, int col);
   void printGeometry(FILE *f);
   int whatIsTheColorOf2d (const SVector3 &P);
@@ -96,6 +101,10 @@ class discreteFront {
   void addEllipsis (int tag, double xc, double yc, double theta0, double r1, double r2, int n);
   void addRectangle (int tag, double xc, double yc, double r1, double r2, int n);
   void addPolygon (int tag, const std::vector<SVector3> &poly, int n);
+  void addFreeForm (int tag, const std::vector<SVector3> &poly);
+  void getDFPosition(std::vector<double> *position);
+  void clear();
+  void redistFront(double lc);
   //-----------------------------------------------------------------------------------
   // --> boolean operator 
   void boolOp ();
@@ -136,34 +145,71 @@ class meshRelaying {
   double time;  
   std::function<double (double, double, double, double)> levelset;
 
-  /// discrete front
-  discreteFront df;
-  
   /// functions for optimization
   double smallest_measure (const size_t n, 
 			const SVector3 &target) ;  
- public:
+  static meshRelaying *_instance;
   meshRelaying (GModel *gm = nullptr); // use GModel gm or Gmodel::current() if NULL  
+ public :
+  static meshRelaying *instance() {
+    if(!_instance) _instance = new meshRelaying();
+    return _instance;
+  }
+
   void doRelaying (const std::function<std::vector<std::pair<double, int> >(size_t, size_t)> &f); 
   void setLevelset (const std::function<double(double, double, double, double)> &_ls){
     levelset = _ls;
   }
-  void setDiscreteFront (const discreteFront &_df){    
+  void setDiscreteFrontBBox (){    
     SBoundingBox3d bbox;
     for (size_t i=0;i<pos.size();i+=3)
       bbox += SPoint3(pos[i],pos[i+1],pos[i+2]);    
     bbox *= 1.01;
-    df = _df;
-    df.setBbox (bbox);
+    discreteFront::instance()->setBbox (bbox);
   }
-  void advanceInTime(double dt){
-    df.move(dt);
+  void advanceInTime(double dt, std::vector<SVector3> v = std::vector<SVector3>()){
+    if(v.empty()){
+      discreteFront::instance()->move(dt);
+    } else {
+      time += dt;
+      discreteFront::instance()->moveFromV(dt, v, true);
+    }
+    
   }
   void doRelaying (double t);
   void doRelax (double r);
   void doRelaxFrontNode (size_t i, const std::vector<size_t> &n, double r, std::vector<std::pair<size_t,size_t> > &fe);
   void print4debug(const char *);
+  void concentration(std::vector<int> *concentration);
+  void getDFPosition(std::vector<double> *position){
+    discreteFront::instance()->getDFPosition(position);
+  }
+  void getNodesPosition(std::vector<double> *position){
+    for(int i=0; i<pos.size(); ++i){
+      position->push_back(pos[i]);
+    }
+  }
+  void redistFront(double lc){
+    discreteFront::instance()->redistFront(lc);
+  }
+
+  void setBndFront();
 };
 
+/*
+  FOR API
+*/
+
+void concentration(std::vector<int> &concentration);
+void advanceInTime(double dt, std::vector<SVector3> v );
+void addFreeForm(int tag, const std::vector<SVector3> &poly);
+void getDFPosition(std::vector<double> &api_position);
+void getNodesPosition(std::vector<double> &api_position);
+void setDiscreteFront();
+void relayingAndRelax();
+void initRelaying();
+void resetDiscreteFront();
+void redistFront(double lc);
+void setBndFront();
 
 #endif

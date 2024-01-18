@@ -1853,6 +1853,63 @@ namespace gmsh { // Top-level functions
       GMSH_API void tetrahedralize(const std::vector<double> & coord,
                                    std::vector<std::size_t> & tetra);
 
+      // gmsh::model::mesh::concentrationFromDF
+      //
+      // Compute the concentration of each element based on the discrete front for mesh relaying
+      GMSH_API void concentrationFromDF(std::vector<int> &api_concentration);
+
+      // gmsh::model::mesh::advanceDFInTime
+      //
+      // Move the markers of dt based on the velocity v
+      GMSH_API void advanceDFInTime(double dt, std::vector<double> v);
+
+      // gmsh::model::mesh::addFreeForm
+      //
+      // Add a closed loop of markers stored in poly as [x1,y1,z1, x2,y2,z2, ...]
+      GMSH_API void addFreeForm(int tag, std::vector<double> poly);
+
+      // gmsh::model::mesh::getDFPosition
+      //
+      // return the position of the discrete front of relaying
+      GMSH_API void getDFPosition_(std::vector<double> &api_position);
+
+      // gmsh::model::mesh::getDFPosition
+      //
+      // return the position of the deformed mesh from relaying
+      GMSH_API void getNodesPosition_(std::vector<double> &api_position);
+
+      // gmsh::model::mesh::setDiscreteFront
+      //
+      // set the discrete front constructed via api to the mesh relaying object
+      GMSH_API void setDiscreteFront_();
+
+      // gmsh::model::mesh::relayingAndRelax
+      //
+      // move the mesh to be conform to the discrete front 
+      // and relax the nodes that are not on the front 
+      GMSH_API void relayingAndRelax_();
+
+      //gmsh::model::mesh::initRelaying_
+      //
+      // initialisation of the relaying object
+      GMSH_API void initRelaying_();
+
+      // gmsh::model::mesh::resetDiscreteFront_
+      //
+      // reset the discrete front 
+      GMSH_API void resetDiscreteFront_();
+
+      // gmsh::model::mesh::redistFront_(double lc)
+      //
+      // redistantiate the markers on the discrete front
+      GMSH_API void redistFront_(double lc);
+
+
+      // gmsh::model::mesh::setBndFront_()
+      //
+      // set front on the boundary of the mesh
+      GMSH_API void setBndFront_();
+
       namespace field { // Mesh size field functions
 
         // gmsh::model::mesh::field::add
