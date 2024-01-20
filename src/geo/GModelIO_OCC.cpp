@@ -4586,20 +4586,10 @@ void _writeXAO(TopoDS_Shape &shape, GModel *model, const std::string &fileName)
     return;
   }
 
-  // It would be nice to also store
-  //
-  // - the physical group tag: this would allow to serialize OCC geometries
-  //   after complex boolean operations and have a result directly usable by
-  //   codes (only) referencing physical tags such as GetDP, GmshFEM, ... This
-  //   could be done easily by adding a "tag" attribute to "group" in addition
-  //   to "dimension" and "name" (but we should check that is would be OK with
-  //   other XAO parsers like SALOME/SHAPER); we could also add a new node in
-  //   the XML tree.
-  //
-  // - the meshing constraints associated with entities (in particular points).
-  //   This could be done by adding an optional "meshsize" attribute in each
-  //   entry in "topology"; but that location does not feel very natural. We
-  //   could also add a new node in the XML tree.
+  // TODO: In addition to saving physical group tags (see below), we could
+  // further extend the XAO output by dumping OCCAttributes (extrusion
+  // constraints, mesh sizes...). We should discuss this with the Salome/Shaper
+  // team.
 
   file << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << std::endl;
   file << "<XAO version=\"1.0\" author=\"Gmsh\">" << std::endl;
@@ -4674,8 +4664,16 @@ void _writeXAO(TopoDS_Shape &shape, GModel *model, const std::string &fileName)
         gs << "G_" << dim << "D_" << g.first;
         name = gs.str();
       }
-      file << "    <group name=\"" << name << "\" dimension=\"" <<
-        label << "\" count=\"" << g.second.size() << "\">" << std::endl;
+      file << "    <group name=\"" << name << "\" dimension=\"" << label;
+#if 0
+      // Gmsh XAO extension: also save the physical tag, so that XAO can be used
+      // to serialize OCC geometries, ready to be used by GetDP, GmshFEM & co
+      //
+      // TOOD: verify with Salome/Shaper folks if this does not break anything
+      // on their side
+      file << "\" tag=\"" << g.first;
+#endif
+      file << "\" count=\"" << g.second.size() << "\">" << std::endl;
       for(auto index : g.second) {
         file << "      <element index=\"" << index << "\"/>" << std::endl;
       }
@@ -6350,14 +6348,21 @@ int GModel::readOCCXAO(const std::string &fn)
          group->QueryAttribute("dimension", &dimension) == XML_SUCCESS &&
          getDim(dimension) >= 0) {
         int dim = getDim(dimension);
+        int tag = 0;
+        if(group->QueryIntAttribute("tag", &tag) == XML_SUCCESS) {
+          // tag is available only in XAO files created by Gmsh
+          tag = setPhysicalName(name, dim, tag);
+        }
+        else {
+          tag = setPhysicalName(name, dim);
+        }
         XMLElement *element = group->FirstChildElement("element");
         while(element) {
           int index = 0;
           if(element->QueryIntAttribute("index", &index) == XML_SUCCESS &&
              entities[dim].count(index)) {
             GEntity *ge = entities[dim][index];
-            int ptag = setPhysicalName(name, dim);
-            ge->physicals.push_back(ptag);
+            ge->physicals.push_back(tag);
           }
           else {
             Msg::Error("Unknown model entity of dimension %d at index %d",
