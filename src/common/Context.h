@@ -103,6 +103,7 @@ struct contextGeometryOptions {
   int occSewFaces, occMakeSolids, occParallel, occBooleanPreserveNumbering;
   int occBoundsUseSTL, occDisableSTL, occImportLabels, occExportOnlyVisible;
   int occUnionUnify, occThruSectionsDegree, occUseGenericClosestPoint;
+  int occBrepFormatVersion;
   double occScaling;
   std::string occTargetUnit;
   // STEP file outputs

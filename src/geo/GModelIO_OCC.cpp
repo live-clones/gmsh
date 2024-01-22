@@ -158,17 +158,6 @@
 #include "tinyxml2.h"
 #endif
 
-// for debugging:
-template <class T>
-void writeBrep(const T &shapes, const std::string &fileName = "debug.brep")
-{
-  BRep_Builder b;
-  TopoDS_Compound c;
-  b.MakeCompound(c);
-  for(auto s : shapes) b.Add(c, s);
-  BRepTools::Write(c, fileName.c_str());
-}
-
 OCC_Internals::OCC_Internals()
 {
   for(int i = 0; i < 6; i++)
@@ -4491,13 +4480,11 @@ bool OCC_Internals::importShapes(const std::string &fileName,
 {
   std::vector<std::string> split = SplitFileName(fileName);
 
-  TCollection_AsciiString occfile(fileName.c_str());
-
   TopoDS_Shape result;
   try {
     if(format == "brep" || split[2] == ".brep" || split[2] == ".BREP") {
       BRep_Builder aBuilder;
-      BRepTools::Read(result, occfile.ToCString(), aBuilder);
+      BRepTools::Read(result, fileName.c_str(), aBuilder);
     }
     else if(format == "step" || split[2] == ".step" || split[2] == ".stp" ||
             split[2] == ".STEP" || split[2] == ".STP") {
@@ -4508,7 +4495,7 @@ bool OCC_Internals::importShapes(const std::string &fileName,
 #if defined(HAVE_OCC_CAF)
       //Interface_Static::SetIVal("read.stepcaf.subshapes.name", 1);
       STEPCAFControl_Reader cafreader;
-      if(cafreader.ReadFile(occfile.ToCString()) != IFSelect_RetDone) {
+      if(cafreader.ReadFile(fileName.c_str()) != IFSelect_RetDone) {
         Msg::Error("Could not read file '%s'", fileName.c_str());
         return false;
       }
@@ -4516,7 +4503,7 @@ bool OCC_Internals::importShapes(const std::string &fileName,
         readAttributes(_attributes, cafreader, "STEP-XCAF");
       reader = cafreader.ChangeReader();
 #else
-      if(reader.ReadFile(occfile.ToCString()) != IFSelect_RetDone) {
+      if(reader.ReadFile(fileName.c_str()) != IFSelect_RetDone) {
         Msg::Error("Could not read file '%s'", fileName.c_str());
         return false;
       }
@@ -4530,7 +4517,7 @@ bool OCC_Internals::importShapes(const std::string &fileName,
       setTargetUnit(CTX::instance()->geom.occTargetUnit);
 #if defined(HAVE_OCC_CAF)
       IGESCAFControl_Reader reader;
-      if(reader.ReadFile(occfile.ToCString()) != IFSelect_RetDone) {
+      if(reader.ReadFile(fileName.c_str()) != IFSelect_RetDone) {
         Msg::Error("Could not read file '%s'", fileName.c_str());
         return false;
       }
@@ -4538,7 +4525,7 @@ bool OCC_Internals::importShapes(const std::string &fileName,
         readAttributes(_attributes, reader, "IGES-XCAF");
 #else
       IGESControl_Reader reader;
-      if(reader.ReadFile(occfile.ToCString()) != IFSelect_RetDone) {
+      if(reader.ReadFile(fileName.c_str()) != IFSelect_RetDone) {
         Msg::Error("Could not read file '%s'", fileName.c_str());
         return false;
       }
@@ -4588,14 +4575,22 @@ void _writeXAO(TopoDS_Shape &shape, GModel *model, const std::string &fileName)
 
   // TODO: In addition to saving physical group tags (see below), we could
   // further extend the XAO output by dumping OCCAttributes (extrusion
-  // constraints, mesh sizes...). We should discuss this with the Salome/Shaper
-  // team.
+  // constraints, mesh sizes...).
 
   file << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << std::endl;
   file << "<XAO version=\"1.0\" author=\"Gmsh\">" << std::endl;
   file << "  <geometry name=\"" << model->getName() << "\">" << std::endl;
   file << "    <shape format=\"BREP\"><![CDATA[";
+#if OCC_VERSION_HEX < 0x070600
   BRepTools::Write(shape, file);
+#else
+  int v = CTX::instance()->geom.occBrepFormatVersion;
+  BRepTools::Write(shape, file, Standard_True, Standard_True,
+                   (v == 1) ? TopTools_FormatVersion_VERSION_1 :
+                   (v == 2) ? TopTools_FormatVersion_VERSION_2 :
+                   (v == 3) ? TopTools_FormatVersion_VERSION_3 :
+                   TopTools_FormatVersion_CURRENT);
+#endif
   file << "]]></shape>" << std::endl;
   file << "    <topology>" << std::endl;
 
@@ -4665,12 +4660,9 @@ void _writeXAO(TopoDS_Shape &shape, GModel *model, const std::string &fileName)
         name = gs.str();
       }
       file << "    <group name=\"" << name << "\" dimension=\"" << label;
-#if 0
+#if 1
       // Gmsh XAO extension: also save the physical tag, so that XAO can be used
       // to serialize OCC geometries, ready to be used by GetDP, GmshFEM & co
-      //
-      // TOOD: verify with Salome/Shaper folks if this does not break anything
-      // on their side
       file << "\" tag=\"" << g.first;
 #endif
       file << "\" count=\"" << g.second.size() << "\">" << std::endl;
@@ -4764,11 +4756,18 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
 
   std::vector<std::string> split = SplitFileName(fileName);
 
-  TCollection_AsciiString occfile(fileName.c_str());
-
   try {
     if(format == "brep" || split[2] == ".brep" || split[2] == ".BREP") {
-      BRepTools::Write(c, occfile.ToCString());
+#if OCC_VERSION_HEX < 0x070600
+      BRepTools::Write(c, fileName.c_str());
+#else
+      int v = CTX::instance()->geom.occBrepFormatVersion;
+      BRepTools::Write(c, fileName.c_str(), Standard_True, Standard_True,
+                       (v == 1) ? TopTools_FormatVersion_VERSION_1 :
+                       (v == 2) ? TopTools_FormatVersion_VERSION_2 :
+                       (v == 3) ? TopTools_FormatVersion_VERSION_3 :
+                       TopTools_FormatVersion_CURRENT);
+#endif
     }
     else if(format == "xao" || split[2] == ".xao" || split[2] == ".XAO") {
       _writeXAO(c, model, fileName);
@@ -4787,7 +4786,7 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
 #endif
 
       if(writer.Transfer(c, STEPControl_AsIs) == IFSelect_RetDone) {
-        if(writer.Write(occfile.ToCString()) != IFSelect_RetDone) {
+        if(writer.Write(fileName.c_str()) != IFSelect_RetDone) {
           Msg::Error("Could not create file '%s'", fileName.c_str());
           return false;
         }
@@ -4801,7 +4800,7 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
             split[2] == ".IGES" || split[2] == ".IGS") {
       IGESControl_Writer writer;
       if(writer.AddShape(c)) {
-        if(writer.Write(occfile.ToCString()) != true) {
+        if(writer.Write(fileName.c_str()) != true) {
           Msg::Error("Could not create file '%s'", fileName.c_str());
           return false;
         }
@@ -6188,10 +6187,9 @@ int GModel::readOCCXAO(const std::string &fn)
 
 #if defined(HAVE_OCC) && defined(HAVE_TINYXML2)
   // import BREP
-  TCollection_AsciiString occfile(fn.c_str());
   TopoDS_Shape shape;
   BRep_Builder aBuilder;
-  BRepTools::Read(shape, occfile.ToCString(), aBuilder);
+  BRepTools::Read(shape, fn.c_str(), aBuilder);
   std::vector<std::pair<int, int> > outDimTags;
   _occ_internals->importShapes(&shape, false, outDimTags);
   _occ_internals->synchronize(this);

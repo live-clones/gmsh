@@ -970,6 +970,9 @@ StringXNumber GeometryOptions_Number[] = {
     "Try to preserve the numbering of entities through OpenCASCADE boolean operations" },
   { F|O, "OCCBoundsUseStl" , opt_geometry_occ_bounds_use_stl , 0. ,
     "Use STL mesh for computing bounds of OpenCASCADE shapes (more accurate, but slower)" },
+  { F|O, "OCCBrepFormatVersion" , opt_geometry_occ_brep_format_version , 0. ,
+    "Version of BREP format used when saving BREP and XAO files (0: current, "
+    "1, 2, 3: currently supported versions)" },
   { F|O, "OCCDisableStl" , opt_geometry_occ_disable_stl , 0. ,
     "Disable STL creation in OpenCASCADE kernel" },
   { F|O, "OCCFixDegenerated" , opt_geometry_occ_fix_degenerated , 0. ,

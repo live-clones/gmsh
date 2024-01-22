@@ -4682,6 +4682,12 @@ double opt_geometry_occ_bounds_use_stl(OPT_ARGS_NUM)
   return CTX::instance()->geom.occBoundsUseSTL;
 }
 
+double opt_geometry_occ_brep_format_version(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occBrepFormatVersion = (int)val;
+  return CTX::instance()->geom.occBrepFormatVersion;
+}
+
 double opt_geometry_occ_disable_stl(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.occDisableSTL = val ? 1 : 0;

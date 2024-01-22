@@ -415,6 +415,7 @@ double opt_geometry_occ_auto_embed(OPT_ARGS_NUM);
 double opt_geometry_occ_fast_unbind(OPT_ARGS_NUM);
 double opt_geometry_occ_auto_fix(OPT_ARGS_NUM);
 double opt_geometry_occ_bounds_use_stl(OPT_ARGS_NUM);
+double opt_geometry_occ_brep_format_version(OPT_ARGS_NUM);
 double opt_geometry_occ_disable_stl(OPT_ARGS_NUM);
 double opt_geometry_occ_fix_degenerated(OPT_ARGS_NUM);
 double opt_geometry_occ_fix_small_edges(OPT_ARGS_NUM);
