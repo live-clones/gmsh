@@ -3071,7 +3071,7 @@ Add curve loops in the built-in CAD representation based on the curves @code{cur
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2077,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1829,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5753,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5108,Julia}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/aneurysm.py#L42,aneurysm.py}, @url{@value{GITLAB-PREFIX}/examples/api/tube_boundary_layer.py#L39,tube_boundary_layer.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/aneurysm.py#L43,aneurysm.py}, @url{@value{GITLAB-PREFIX}/examples/api/tube_boundary_layer.py#L39,tube_boundary_layer.py})
 @end table
 
 @item gmsh/model/geo/addPlaneSurface
@@ -3119,7 +3119,7 @@ integer
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2107,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1855,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5837,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5185,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t2.cpp#L113,t2.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t5.cpp#L70,t5.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t13.cpp#L77,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/x2.cpp#L143,x2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t2.py#L108,t2.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t5.py#L103,t5.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t13.py#L65,t13.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/x2.py#L139,x2.py}, @url{@value{GITLAB-PREFIX}/examples/api/aneurysm.py#L47,aneurysm.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t2.cpp#L113,t2.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t5.cpp#L70,t5.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t13.cpp#L77,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/x2.cpp#L143,x2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t2.py#L108,t2.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t5.py#L103,t5.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t13.py#L65,t13.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/x2.py#L139,x2.py}, @url{@value{GITLAB-PREFIX}/examples/api/aneurysm.py#L49,aneurysm.py}, ...)
 @end table
 
 @item gmsh/model/geo/addVolume
@@ -3135,7 +3135,7 @@ integer
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2117,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1864,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5863,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L5210,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t2.cpp#L114,t2.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t5.cpp#L71,t5.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t13.cpp#L78,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/x2.cpp#L144,x2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t2.py#L109,t2.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t5.py#L163,t5.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t13.py#L66,t13.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/x2.py#L140,x2.py}, @url{@value{GITLAB-PREFIX}/examples/api/aneurysm.py#L47,aneurysm.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t2.cpp#L114,t2.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t5.cpp#L71,t5.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t13.cpp#L78,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/x2.cpp#L144,x2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t2.py#L109,t2.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t5.py#L163,t5.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t13.py#L66,t13.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/x2.py#L140,x2.py}, @url{@value{GITLAB-PREFIX}/examples/api/aneurysm.py#L49,aneurysm.py}, ...)
 @end table
 
 @item gmsh/model/geo/addGeometry

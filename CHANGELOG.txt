@@ -3,6 +3,8 @@ new quasi-transfinite 2d meshes (with fans); bug fixes.
 
 * New API functions: mesh/removeElements.
 
+4.12.2 (January 21, 2024): small bug fixes.
+
 4.12.1 (January 11, 2024): small bug fixes.
 
 4.12.0 (December 21, 2023): new high-order mesh optimisation mode for periodic
