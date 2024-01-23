@@ -1132,7 +1132,7 @@ int meshTriangulate2d(const std::vector<double> &coord,
     int i0 = t->he->v->data;
     int i1 = t->he->next->v->data;
     int i2 = t->he->next->next->v->data;
-    if(i0 > 0 && i1 > 0 && i2 > 0 && t->data != -10) { // (t->data == -1){
+    if(i0 > 0 && i1 > 0 && i2 > 0 && t->data == -10) { // (t->data == -1){
       tri.push_back(i0);
       tri.push_back(i1);
       tri.push_back(i2);
