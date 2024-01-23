@@ -332,10 +332,11 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
     
     
     delOptions.nodalSizes->enabled = 1;
+    delOptions.allowOuterInsertion = 0;
     
     hxtAlphaShapeNodeInsertion(mesh, &delOptions, &alphaShapeOptions);
     
-    // hxtMeshWriteGmsh(mesh, "afterNodeInsertion.msh");
+    hxtMeshWriteGmsh(mesh, "afterNodeInsertion.msh");
     
     HXTOptimizeOptions optOptions = {
       .bbox = &bbox, 
@@ -1934,7 +1935,8 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
 
   auto it_min = min_element(sizeAtNodes.begin(), sizeAtNodes.end()); // to restrict elements even more if all the nodes have minimum size field
   double minSize = *it_min;
-  double surfaceConstraint = hMean < 0. ? 0.2 : 1.;
+  double surfaceConstraint = hMean == -20 ? 0.2 : 1.;
+  // double surfaceConstraint = 1.;
 
   // print4debug(pm, 0);
   // 2. compute alpha shape
