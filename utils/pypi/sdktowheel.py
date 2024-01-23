@@ -95,7 +95,7 @@ with tempfile.TemporaryDirectory() as wheel_dir:
     with open(os.path.join(wheel_dir, dist_info_dir, 'RECORD'), 'w') as f:
         for r in records:
             f.write(r+"\n")
-        relpath = os.path.join(wheel_dir, dist_info_dir, 'RECORD')
+        relpath = os.path.join(dist_info_dir, 'RECORD')
         f.write(f'{relpath},,\n')
 
     # zip
