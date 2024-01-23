@@ -1686,7 +1686,8 @@ GMSH_API void gmshModelMeshAlphaShape(const int dim,
  * desired, also refine the elements in the alpha shape so as to respect the
  * size field defined by `sizeFieldCallback'. The new mesh will be stored in
  * the discrete entities with tags `alphaShapeTags' = [alphaShapeTag,
- * alphaShapeBoundaryTag]. */
+ * alphaShapeBoundaryTag]. If the alpha shape entity already contains elements
+ * and no new mesh should be generated, triangulate should be 0. */
 GMSH_API void gmshModelMeshComputeAlphaShape(const int dim,
                                              const int * alphaShapeTags, const size_t alphaShapeTags_n,
                                              const double alpha,

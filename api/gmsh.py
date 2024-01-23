@@ -5254,7 +5254,8 @@ class model:
             desired, also refine the elements in the alpha shape so as to respect the
             size field defined by `sizeFieldCallback'. The new mesh will be stored in
             the discrete entities with tags `alphaShapeTags' = [alphaShapeTag,
-            alphaShapeBoundaryTag].
+            alphaShapeBoundaryTag]. If the alpha shape entity already contains elements
+            and no new mesh should be generated, triangulate should be 0.
 
             Types:
             - `dim': integer

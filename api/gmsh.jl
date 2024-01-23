@@ -4636,7 +4636,9 @@ shape is computed with respect to a constant mean mesh size `hMean` (if `hMean`
 > 0) or to the size field defined by `sizeFieldCallback`. If desired, also
 refine the elements in the alpha shape so as to respect the size field defined
 by `sizeFieldCallback`. The new mesh will be stored in the discrete entities
-with tags `alphaShapeTags` = [alphaShapeTag, alphaShapeBoundaryTag].
+with tags `alphaShapeTags` = [alphaShapeTag, alphaShapeBoundaryTag]. If the
+alpha shape entity already contains elements and no new mesh should be
+generated, triangulate should be 0.
 
 Types:
  - `dim`: integer
