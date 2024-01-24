@@ -5122,7 +5122,7 @@ class model:
         concentration_from_DF = concentrationFromDF
         concentration_from_df = concentrationFromDF
         
-        def advanceDFInTime(dt, v):
+        def advanceDFInTime(dt, v, front=False):
             """
             gmsh.model.mesh.advanceDFInTime()
 
@@ -5134,7 +5134,8 @@ class model:
             """
             ierr = c_int()
             api_v, api_v_n = _ivectordouble(v)
-            lib.gmshModelMeshAdvanceDFInTime(c_double(dt), api_v, api_v_n, byref(ierr))
+            api_front = c_int(bool(front))
+            lib.gmshModelMeshAdvanceDFInTime(c_double(dt), api_v, api_v_n, api_front, byref(ierr))
 
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
@@ -5165,16 +5166,29 @@ class model:
             """
             gmsh.model.mesh.getDFPosition()
 
-            return the position of the discrete front of relaying
+            return the tags and position of the discrete front of relaying in the format:
+
+            tags = [tag0, tag1, tag2]
+            pos = [numpy_array([[x0, y0, z0], [x1, y1, z1], ...]),  # pos of tag0
+                   numpy_array([[x0, y0, z0], [x1, y1, z1], ...]),  # pos of tag1
+                   numpy_array([[x0, y0, z0], [x1, y1, z1], ...]),] # pos of tag2
 
             Types:
             """
             api_position, api_position_n = POINTER(c_double)(), c_size_t()
+            api_tags, api_tags_n = POINTER(c_int)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGetDFPosition(byref(api_position), byref(api_position_n), byref(ierr))
+            lib.gmshModelMeshGetDFPosition(byref(api_position), byref(api_position_n), byref(api_tags), byref(api_tags_n), byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
-            return _ovectordouble(api_position, api_position_n.value)
+            all_pos = _ovectordouble(api_position, api_position_n.value).reshape((-1,3))
+            all_tags = _ovectorsize(api_tags, api_tags_n.value)
+            tags = numpy.sort(numpy.unique(all_tags))
+            pos = []
+            for i in range(tags.shape[0]):
+                pos.append(all_pos[numpy.where(all_tags==tags[i]),:])
+
+            return tags, pos
         get_DF_position = getDFPosition
         get_df_position = getDFPosition
 
@@ -5193,6 +5207,22 @@ class model:
                 raise Exception(logger.getLastError())
             return _ovectordouble(api_position, api_position_n.value)
         get_nodes_position = getNodesPosition
+
+        def getFrontNodesPosition():
+            """
+            gmsh.model.mesh.getFrontNodesPosition()
+
+            return the position of the front nodes from relaying
+
+            Types:
+            """
+            api_position, api_position_n = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGetFrontNodesPosition(byref(api_position), byref(api_position_n), byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectordouble(api_position, api_position_n.value)
+        get_front_nodes_position = getFrontNodesPosition
 
         def setDiscreteFront():
             """

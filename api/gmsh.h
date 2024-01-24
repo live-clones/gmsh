@@ -1850,8 +1850,9 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::advanceDFInTime
       //
-      // Move the markers of dt based on the velocity v
-      GMSH_API void advanceDFInTime(double dt, std::vector<double> v);
+      // Move the markers of dt based on the velocity v 
+      // The velocity is given at the front nodes if front is true otherwise at the marker position 
+      GMSH_API void advanceDFInTime(double dt, std::vector<double> v, bool front);
 
       // gmsh::model::mesh::addFreeForm
       //
@@ -1861,12 +1862,17 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::getDFPosition
       //
       // return the position of the discrete front of relaying
-      GMSH_API void getDFPosition_(std::vector<double> &api_position);
+      GMSH_API void getDFPosition_(std::vector<double> &api_position, std::vector<int> &api_tags);
 
       // gmsh::model::mesh::getDFPosition
       //
       // return the position of the deformed mesh from relaying
       GMSH_API void getNodesPosition_(std::vector<double> &api_position);
+
+      // gmsh::model::mesh::getFrontNodesPosition
+      //
+      // return the position of the front nodes of mesh relaying
+      GMSH_API void getFrontNodesPosition_(std::vector<double> &api_position);
 
       // gmsh::model::mesh::setDiscreteFront
       //

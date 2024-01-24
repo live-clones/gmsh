@@ -135,6 +135,7 @@ void discreteFront::intersectLine2d (const SVector3 &p0, const SVector3 &p1,
  
   for (size_t I=0 ; I< _ind.size() ; I++){
     size_t i = _ind[I];
+    if(colors[i/2]<0) continue; // don't compute intersection with bnd
     //    printf("%lu\n",i);
     double a3[2]= {pos[3*lines[i]],pos[3*lines[i]+1]};
     double a4[2]= {pos[3*lines[i+1]],pos[3*lines[i+1]+1]};
@@ -149,10 +150,10 @@ void discreteFront::intersectLine2d (const SVector3 &p0, const SVector3 &p1,
     if  (yminb > ymax)continue;
     double a143 = robustPredicates::orient2d(a1,a4,a3);
     double a243 = robustPredicates::orient2d(a2,a4,a3);    
-    if (a143*a243 >= 0) continue;
+    if (a143*a243 > 0) continue;  
     double a123 = robustPredicates::orient2d(a1,a2,a3);
     double a124 = robustPredicates::orient2d(a1,a2,a4);
-    if (a123*a124 >= 0) continue;
+    if (a123*a124 > 0) continue;
     d.push_back(a143/(a143-a243));
     c.push_back(i);
   }
@@ -254,6 +255,7 @@ void discreteFront::move (double dt){
 }
 
 void discreteFront::moveFromV (double dt, std::vector<SVector3> v, bool bnd){
+  buildSpatialSearchStructure ();
   size_t n = v.size();
   std::vector<double> target(pos);
   std::vector<bool> found(n, false);
@@ -265,9 +267,11 @@ void discreteFront::moveFromV (double dt, std::vector<SVector3> v, bool bnd){
       target[3*i+2] = 0;
     }
   }
-  
+  int iter = 0;
   if(bnd) {
     while(1){
+      printf("iter = %d \n", iter);
+      iter++;
       for(size_t i=0; i<n; ++i){
         if(found[i]) continue;
         if(colors[i]<0){
@@ -286,6 +290,12 @@ void discreteFront::moveFromV (double dt, std::vector<SVector3> v, bool bnd){
           for (size_t J=JMIN; J<=JMAX;J++){
             size_t index = I+NX*J;
             for (auto j : sss [index]){
+              // if(i == 203){
+              //   printf("i'm here i=203, line %d-%d \n", lines[j], lines[j+1]);
+              // }
+              // if(i == 192){
+              //   printf("i'm here i=192, line %d-%d \n", lines[j], lines[j+1]);
+              // }
               if(colors[j/2]>0) continue;                     // bnd has a -1 color
               if (touched.find(j) != touched.end())continue;
               touched.insert(j);
@@ -296,19 +306,34 @@ void discreteFront::moveFromV (double dt, std::vector<SVector3> v, bool bnd){
               double a123 = robustPredicates::orient2d(a1,a2,a3);
               double a124 = robustPredicates::orient2d(a1,a2,a4);
               if (a143*a243 < 0 && a123*a124 < 0){
-                double t = a143/(a143-a243);
+                double t = fabs(a143)/(fabs(a143)+fabs(a243));
                 intersection.push_back(std::make_pair(t, j));
+              } else if(fabs(a143)<1e-12){ //previous position on the bnd
+                if(a1[0] == a3[0] && a1[1] == a3[1]){
+                  double a14[2] = {a4[0]-a1[0], a4[1]-a1[1]};
+                  double a12[2] = {a2[0]-a1[0], a2[1]-a1[1]};
+                  if((a14[0]*a12[0]+a14[1]*a12[1])>0){
+                    intersection.push_back(std::make_pair(0, j));
+                  }
+                } else if(a1[0] == a4[0] && a1[1] == a4[1]){
+                  double a13[2] = {a3[0]-a1[0], a3[1]-a1[1]};
+                  double a12[2] = {a2[0]-a1[0], a2[1]-a1[1]};
+                  if((a13[0]*a12[0]+a13[1]*a12[1])>0){
+                    intersection.push_back(std::make_pair(0, j));
+                  }
+                } else {
+                  intersection.push_back(std::make_pair(0, j));
+                }
               }
-              if ((a143*a243 == 0 && a123*a124 < 0) || (a143*a243 < 0 && a123*a124 == 0)){
-                double t = a143/(a143-a243);
-                intersection.push_back(std::make_pair(t, j));
-              }
+
             }
           }
         }
         
         // choose closest intersection or target if none
         if(intersection.empty()){
+          pos[3*i] = target[3*i];
+          pos[3*i+1] = target[3*i+1];
           found[i] = true;
         } else {
           double t_min = 2;
@@ -323,18 +348,56 @@ void discreteFront::moveFromV (double dt, std::vector<SVector3> v, bool bnd){
           pos[3*i] = a1[0]+(a2[0]-a1[0])*t_min;
           pos[3*i+1] = a1[1]+(a2[1]-a1[1])*t_min;
           double a4[2] = {pos[3*lines[id_min+1]],pos[3*lines[id_min+1]+1]};
+          double a3[2] = {pos[3*lines[id_min]],pos[3*lines[id_min]+1]};
 
           double pt[2] = {target[3*i]-pos[3*i], target[3*i+1]-pos[3*i+1]};
           double pa4[2] = {a4[0]-pos[3*i], a4[1]-pos[3*i+1]};
+          double a34[2] = {a4[0]-a3[0], a4[1]-a3[1]};
 
           double pnewt[2];
-          double norm_pa4 = sqrt(pa4[0]*pa4[0] + pa4[1]*pa4[1]);
-          double pt_dot_pa4 = pt[0]*pa4[0] + pt[1]*pa4[1];
-          pnewt[0] = pt_dot_pa4*pa4[0]/(norm_pa4*norm_pa4);
-          pnewt[1] = pt_dot_pa4*pa4[1]/(norm_pa4*norm_pa4);
+          double norm_pa4_square = pa4[0]*pa4[0] + pa4[1]*pa4[1];
+          double norm_a34_square = a34[0]*a34[0] + a34[1]*a34[1];
 
-          target[3*i] = pos[3*i]+pnewt[0];
-          target[3*i+1] = pos[3*i+1]+pnewt[1];
+          double lineDirection[2] = {a4[0]-a3[0], a4[1]-a3[1]};
+          double lineLengthSquared = lineDirection[0]*lineDirection[0] + lineDirection[1]*lineDirection[1];
+
+          // Avoid division by zero
+          if (lineLengthSquared == 0.0) {
+              pnewt[0] = 0;
+              pnewt[1] = 0;
+              return;
+          }
+
+          double dotProduct = ((pt[0]-a3[0]) * lineDirection[0] + (pt[1]-a3[1]) * lineDirection[1]);
+          double t = dotProduct / lineLengthSquared;
+
+          pnewt[0] = t * lineDirection[0];
+          pnewt[1] = t * lineDirection[1];
+          if(dotProduct>0){
+            if((pnewt[0]*pnewt[0]+pnewt[1]*pnewt[1]) > norm_pa4_square){
+              target[3*i] = pos[3*i]+pnewt[0];
+              target[3*i+1] = pos[3*i+1]+pnewt[1];
+              pos[3*i] = a4[0];
+              pos[3*i+1] = a4[1];
+            } else{
+              pos[3*i] = pos[3*i]+pnewt[0];
+              pos[3*i+1] = pos[3*i+1]+pnewt[1];
+              found[i] = true;
+            }
+          } else {
+            if(sqrt(pnewt[0]*pnewt[0]+pnewt[1]*pnewt[1]) > sqrt(norm_a34_square)-sqrt(norm_pa4_square)){
+              target[3*i] = pos[3*i]+pnewt[0];
+              target[3*i+1] = pos[3*i+1]+pnewt[1];
+              pos[3*i] = a3[0];
+              pos[3*i+1] = a3[1];
+            } else{
+              pos[3*i] = pos[3*i]+pnewt[0];
+              pos[3*i+1] = pos[3*i+1]+pnewt[1];
+              found[i] = true;
+            }
+          }
+          
+          
         }
         
       }
@@ -344,9 +407,12 @@ void discreteFront::moveFromV (double dt, std::vector<SVector3> v, bool bnd){
     }
   }
 
-  for(size_t i=0; i<target.size(); ++i){
-    pos[i] = target[i];
-  }
+  FILE *f = fopen ("after_v.pos","w");
+  fprintf(f,"View \"Front Geometry\"{\n");
+  printGeometry(f);
+  fprintf(f,"};\n");
+  fclose(f);
+
   return;
 }
 
@@ -553,9 +619,12 @@ void discreteFront::boolOp (){
   colors = c;
 }
 
-void discreteFront::getDFPosition(std::vector<double> *position){
+void discreteFront::getDFPosition(std::vector<double> *position, std::vector<int> *tags){
   for(int i=0; i<pos.size(); ++i){
     position->push_back(pos[i]);
+  }
+  for(int i=0; i<colors.size(); ++i){
+    tags->push_back(colors[i]);
   }
   return;
 }
@@ -745,6 +814,211 @@ std::vector<std::pair<size_t,size_t> > discreteFront :: getFrontEdges() {
   return pp;
 }
 
+//FIX ME
+void discreteFront::moveFromFront(double dt, std::vector<SVector3> v){
+  
+  std::vector<SVector3> v_marker(pos.size()/3, SVector3(0.0));
+  std::sort(fn.begin(), fn.end());
+  std::vector<double> mesh_pos;
+  _mr.getNodesPosition(&mesh_pos);
+
+  std::vector<std::vector<size_t> > _lls;
+  std::vector<size_t> _ll;
+
+  for (size_t i=0;i<lines.size();i+=2){
+    if(colors[i/2]<0) continue;
+    _ll.push_back(lines[i]);
+    _ll.push_back(lines[i+1]);
+    if (lines[(i+2)%lines.size()] != lines[i+1]){
+      _lls.push_back(_ll);
+      _ll.clear();
+    }
+  }
+
+  std::vector<std::vector<std::pair<size_t,int>>> fls;
+  std::vector<std::pair<size_t,int>> fl;
+
+  for(size_t i=0; i<_lls.size();++i){
+    size_t start = _lls[i][0];
+    for(size_t j=0; j<_lls[i].size(); j+=2){
+      fl.push_back(std::make_pair(_lls[i][j],-1));
+      for(size_t k=0; k<fn.size(); ++k){
+        if( _lls[i][j] == lines[fn[k].line] ){
+          fl.push_back(std::make_pair(fn[k].meshNode,k));
+        }
+      }
+    }
+    fls.push_back(fl);
+    fl.clear();
+  }
+
+  
+
+  for(int i=0; i<fls.size(); ++i){
+    int current=0;
+    while(fls[i][current].second<0 && current<fls[i].size()) ++current;
+    int start = current;
+    int next = current;
+    std::vector<std::pair<size_t, double>> in_between_markers;
+    while (next<fls[i].size()-1){
+      next++;
+      if(fls[i][next].second >= 0){
+        printf(" front node : %d, v = %f,%f \n", fls[i][next].second, v[fls[i][next].second].x(), v[fls[i][next].second].y());
+        // compute velocity for markers between current and next front node
+        double total_dist;
+        if(!in_between_markers.empty()){
+          total_dist = in_between_markers.back().second + sqrt(pow(pos[3*in_between_markers.back().first]-pos[3*fls[i][next].second],2) + pow(mesh_pos[3*in_between_markers.back().first+1]-pos[3*fls[i][next].second +1],2));
+        }
+  
+        for(size_t k=0; k<in_between_markers.size(); ++k){
+          double s = in_between_markers[k].second/total_dist;
+          SVector3 v1 = v[fls[i][current].second];
+          SVector3 v2 = v[fls[i][next].second]; 
+          v_marker[in_between_markers[k].first] = s*v2 + (1-s)*v1;
+
+        }
+        current = next;
+        in_between_markers.clear();
+      }else{
+        double dist;
+        if(in_between_markers.empty()){
+          dist = sqrt(pow(mesh_pos[3*current]-pos[3*fls[i][next].second],2) + pow(mesh_pos[3*current+1]-pos[3*fls[i][next].second +1],2));
+          in_between_markers.push_back(std::make_pair(fls[i][next].first, dist));
+        }else{
+          dist = sqrt(pow(pos[3*in_between_markers.back().first]-pos[3*fls[i][next].second],2) + pow(mesh_pos[3*in_between_markers.back().first+1]-pos[3*fls[i][next].second +1],2));
+          in_between_markers.push_back(std::make_pair(fls[i][next].first, in_between_markers.back().second + dist));
+        }
+      }
+    }
+
+    int reset = 0;
+    while(fls[i][reset].second<0 && current<fls[i].size()){
+      double dist;
+      if(in_between_markers.empty()){
+        dist = sqrt(pow(mesh_pos[3*current]-pos[3*fls[i][reset].second],2) + pow(mesh_pos[3*current+1]-pos[3*fls[i][reset].second +1],2));
+        in_between_markers.push_back(std::make_pair(fls[i][reset].first, dist));
+      }else{
+        dist = sqrt(pow(pos[3*in_between_markers.back().first]-pos[3*fls[i][reset].second],2) + pow(mesh_pos[3*in_between_markers.back().first+1]-pos[3*fls[i][reset].second +1],2));
+        in_between_markers.push_back(std::make_pair(fls[i][reset].first, in_between_markers.back().second + dist));
+      }
+      ++reset;
+    }
+    double total_dist;
+    if(!in_between_markers.empty()){
+      total_dist = in_between_markers.back().second + sqrt(pow(pos[3*in_between_markers.back().first]-pos[3*fls[i][start].second],2) + pow(mesh_pos[3*in_between_markers.back().first+1]-pos[3*fls[i][start].second +1],2));
+    }
+    for(size_t k=0; k<in_between_markers.size(); ++k){
+      double s = in_between_markers[k].second/total_dist;
+      printf("end marker = %d s = %f \n", in_between_markers[k].first, s);
+      SVector3 v1 = v[fls[i][current].second];
+      SVector3 v2 = v[fls[i][start].second];
+      v_marker[in_between_markers[k].first] = s*v2 + (1-s)*v1;
+
+    }
+    
+    
+  }
+
+  for(size_t i=0; i<fls.size(); ++i){
+    for(size_t j=0; j<fls[i].size(); ++j){
+      if(fls[i][j].second<0){
+        printf("marker : %d, v = %f,%f \n", fls[i][j].first, v_marker[fls[i][j].first].x(), v_marker[fls[i][j].first].y());
+      } else {
+        printf("front node: %d, v = %f,%f \n", fls[i][j].second, v[fls[i][j].second].x(), v[fls[i][j].second].y());
+      }
+    }
+    
+  }
+
+  printf("before move from v \n");
+  
+  moveFromV(dt, v_marker, true);
+}
+
+// FIX ME
+void discreteFront::adjustBnd(std::vector<std::pair<size_t,size_t>> bnd1d){
+  std::vector<double> position;
+  getNodesPosition(position);
+  std::vector<double> old_pos;
+  for(size_t i=0; i<pos.size();++i){
+    old_pos.push_back(pos[i]);
+  }
+
+  size_t current = bnd1d[0].second;
+  size_t first = bnd1d[0].first;
+  size_t id_current = 0;
+  size_t i = 0;
+  pos[3*i] = position[3*first];
+  pos[3*i+1] = position[3*first+1];
+  pos[3*i+2] = position[3*first+2];
+  ++i;
+  while(current!= first){
+    pos[3*i] = position[3*current];
+    pos[3*i+1] = position[3*current+1];
+    pos[3*i+2] = position[3*current+2];
+    ++i;
+    
+    for(size_t j=0; j<bnd1d.size(); ++j){
+      if(bnd1d[j].first == current && j!=id_current){
+        current = bnd1d[j].second;
+        id_current = j;
+        break;
+      } else if(bnd1d[j].second == current && j!=id_current){
+        current = bnd1d[j].first;
+        id_current = j;
+        break;
+      }
+    }
+  }
+
+  std::vector<int> moved(pos.size()/3, 0);
+  for(size_t i=0; i<pos.size()/3; ++i){
+    if (old_pos[3*i]!=pos[3*i] || old_pos[3*i+1]!=pos[3*i+1]){
+      moved[i] = 1;
+    }
+  }
+
+  for(size_t i=0; i<lines.size(); i+=2){
+    if(!moved[lines[i]] && !moved[lines[i+1]]) continue;
+    // compute if markers went through
+    printf("moved at %d-%d : %d, %d \n", lines[i], lines[i+1], moved[lines[i]], moved[lines[i+1]]);
+    for(size_t j=0; j<lines.size(); j+=2){
+      if(colors[lines[j]]<0) continue;
+      printf("marker : %d with %d-%d \n", lines[j], lines[i], lines[i+1]);
+      double b1[2] = {pos[3*lines[i]], pos[3*lines[i]+1]};
+      double b2[2] = {pos[3*lines[i+1]], pos[3*lines[i+1]+1]};
+      double a1[2]  = {old_pos[3*lines[i]], old_pos[3*lines[i]+1]};
+      double a2[2]  = {old_pos[3*lines[i+1]], old_pos[3*lines[i+1]+1]};
+      double p[2] = {pos[3*lines[j]], pos[3*lines[j]+1]};
+
+      double a12p  = robustPredicates::orient2d(a1,a2,p);
+      double b12p = robustPredicates::orient2d(b1,b2,p);
+
+      if(a12p*b12p<=0){
+        double a1b1p = robustPredicates::orient2d(a1,b1,p);
+        double a2b2p = robustPredicates::orient2d(a2,b2,p);
+        if(a1b1p*a2b2p<=0){
+          printf("need displacement : %d with %d-%d \n", lines[j], lines[i], lines[i+1]);
+          double lengthSquared = (b2[0]-b1[0])*(b2[0]-b1[0]) + (b2[1]-b1[1])*(b2[1]-b1[1]);
+          // Avoid division by zero
+          if (lengthSquared == 0.0) {
+              pos[3*lines[j]] = b1[0];
+              pos[3*lines[j]+1] = b1[1];
+          } else {
+            double t = ((p[0]-b1[0])*(b2[0]-b1[0]) + (p[1]-b1[1])*(b2[1]-b1[1])) / lengthSquared;
+            printf("t = %f \n", t);
+            t = std::max(0.0, std::min(1.0, t));
+            pos[3*lines[j]] = b1[0]+t*(b2[0]-b1[0]);
+            pos[3*lines[j]+1] = b1[1]+t*(b2[1]-b1[1]);
+          }
+        }
+      }
+    }
+    
+
+  }
+  
+}
 
 
 // -----------------------------------------------------------------------------------------------
@@ -1131,6 +1405,7 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
           SVector3 DJ = pj-pOptj;
           edgeCut mi(i, j, pOpti, DI.norm(), ii);
           edgeCut mj(j, i, pOptj, DJ.norm(), ij);
+          
           // Not perfect ... but workable
           if (!std::binary_search(front_nodes.begin(),front_nodes.end(),i))
             if(di>0.0000001 && di<0.999999 && dimi >= dimEdge)moves.push_back(mi);
@@ -1263,7 +1538,7 @@ void meshRelaying::print4debug(const char *fn){
 	    ll(pos[3*tets[i+2]],pos[3*tets[i+2]+1],pos[3*tets[i+2]+2],time),  
 	    ll(pos[3*tets[i+3]],pos[3*tets[i+3]+1],pos[3*tets[i+3]+2],time));    
   }
-
+  
   for (size_t i=0;i<tris.size();i+=3){
     SVector3 COG((pos[3*tris[i]]+pos[3*tris[i+1]]+pos[3*tris[i+2]])/3.0,
 		 (pos[3*tris[i]+1]+pos[3*tris[i+1]+1]+pos[3*tris[i+2]+1])/3.0,
@@ -1272,7 +1547,6 @@ void meshRelaying::print4debug(const char *fn){
     if (!df.empty()){
       color = df.whatIsTheColorOf2d(COG);
     }
-    
     fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
 	    pos[3*tris[i]],pos[3*tris[i]+1],pos[3*tris[i]+2],
 	    pos[3*tris[i+1]],pos[3*tris[i+1]+1],pos[3*tris[i+1]+2],
@@ -1342,6 +1616,12 @@ void meshRelaying::setBndFront(){
   }
   l.push_back(l[0]);
 
+  printf("bnd = \n");
+  for(auto i=0; i<p.size(); ++i){
+    printf("%f, ", p[i]);
+  }
+  printf("\n");
+
   _df.addLines(p,l,c); 
 }
 
@@ -1355,16 +1635,24 @@ void concentration(std::vector<int> &concentration){
   _mr.concentration(&concentration);
 }
 
-void advanceInTime(double dt, std::vector<SVector3> v){
-  _mr.advanceInTime(dt, v);
+void advanceInTime(double dt, std::vector<SVector3> v, bool front){
+  if(front){
+    _mr.moveFromFront(dt,v);
+  }else{
+    _mr.advanceInTime(dt, v);
+  }
 }
 
 void addFreeForm(int tag, const std::vector<SVector3> &poly){
   _df.addFreeForm(tag, poly);
 }
 
-void getDFPosition(std::vector<double> &api_position){
-  _mr.getDFPosition(&api_position);
+void getDFPosition(std::vector<double> &api_position, std::vector<int> &api_tags){
+  _mr.getDFPosition(&api_position, &api_tags);
+}
+
+void getFrontNodesPosition(std::vector<double> &api_position){
+  _mr.getFrontNodesPosition(&api_position);
 }
 
 void getNodesPosition(std::vector<double> &api_position){
@@ -1385,10 +1673,11 @@ void resetDiscreteFront(){
 }
 
 void relayingAndRelax(){
-  _mr.print4debug("in_gmsh.pos");
+  _mr.print4debug("before_gmsh.pos");
   _mr.doRelaying(0);      // time not used for df -> 0
-  _mr.print4debug("between_gmsh.pos");
   _mr.doRelax(1);         // full relax
+  _mr.print4debug("before_adjust_gmsh.pos");
+  _mr.adjustBnd();
   _mr.print4debug("out_gmsh.pos");
 }
 
@@ -1399,6 +1688,7 @@ void redistFront(double lc){
 void setBndFront(){
   _mr.setBndFront();
 }
+
 
   
 

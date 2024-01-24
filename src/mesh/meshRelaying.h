@@ -66,6 +66,7 @@ class discreteFront {
   bool empty() const {return pos.empty();}
   void move (double dt);
   void moveFromV (double dt, std::vector<SVector3> V, bool bnd);
+  void moveFromFront(double dt, std::vector<SVector3> v);
   virtual SVector3 velocity (double x, double y, double z, double t, int col);
   void printGeometry(FILE *f);
   int whatIsTheColorOf2d (const SVector3 &P);
@@ -98,9 +99,10 @@ class discreteFront {
   void addRectangle (int tag, double xc, double yc, double r1, double r2, int n);
   void addPolygon (int tag, const std::vector<SVector3> &poly, int n);
   void addFreeForm (int tag, const std::vector<SVector3> &poly);
-  void getDFPosition(std::vector<double> *position);
+  void getDFPosition(std::vector<double> *position, std::vector<int> *tags);
   void clear();
   void redistFront(double lc);
+  void adjustBnd(std::vector<std::pair<size_t,size_t>> bnd1d);
   //-----------------------------------------------------------------------------------
   // --> boolean operator 
   void boolOp ();
@@ -176,30 +178,51 @@ class meshRelaying {
   void doRelaxFrontNode (size_t i, const std::vector<size_t> &n, double r, std::vector<std::pair<size_t,size_t> > &fe);
   void print4debug(const char *);
   void concentration(std::vector<int> *concentration);
-  void getDFPosition(std::vector<double> *position){
-    df.getDFPosition(position);
+  void getDFPosition(std::vector<double> *position, std::vector<int> *tags){
+    df.getDFPosition(position, tags);
   }
   void getNodesPosition(std::vector<double> *position){
     for(int i=0; i<pos.size(); ++i){
       position->push_back(pos[i]);
     }
   }
+
+  void getFrontNodesPosition(std::vector<double> *position){
+    std::sort(front_nodes.begin(), front_nodes.end());
+    for(int i=0; i<front_nodes.size(); ++i){
+      position->push_back(pos[3*front_nodes[i]]);
+      position->push_back(pos[3*front_nodes[i]+1]);
+      position->push_back(pos[3*front_nodes[i]+2]);
+    }
+  }
+
   void redistFront(double lc){
     df.redistFront(lc);
   }
 
   void setBndFront();
+  void moveFromFront(double dt, std::vector<SVector3> v){
+    df.moveFromFront(dt, v);
+  }
+  void adjustBnd(){
+    df.adjustBnd(bnd1d);
+  }
+  
+
 };
+
+void xToxi(double p[2], double nodes[8], double *xi);
 
 /*
   FOR API
 */
 
 void concentration(std::vector<int> &concentration);
-void advanceInTime(double dt, std::vector<SVector3> v );
+void advanceInTime(double dt, std::vector<SVector3> v, bool front);
 void addFreeForm(int tag, const std::vector<SVector3> &poly);
-void getDFPosition(std::vector<double> &api_position);
+void getDFPosition(std::vector<double> &api_position, std::vector<int> &api_tags);
 void getNodesPosition(std::vector<double> &api_position);
+void getFrontNodesPosition(std::vector<double> &api_position);
 void setDiscreteFront();
 void relayingAndRelax();
 void initRelaying();

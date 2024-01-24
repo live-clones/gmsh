@@ -1637,6 +1637,7 @@ GMSH_API void gmshModelMeshConcentrationFromDF(int ** concentration, size_t * co
 
 /* Advance in time the discrete front of relaying */
 GMSH_API void gmshModelMeshAdvanceDFInTime(double dt, double *v, size_t v_n,
+                                           int front,
                                            int * ierr);
 
 /* Add a closed loop of markers */
@@ -1644,11 +1645,16 @@ GMSH_API void gmshModelMeshAddFreeForm(int tag, double * poly, size_t poly_n,
                                        int * ierr);
 
 /* return the position of the discrete front of relaying */
-GMSH_API void gmshModelMeshGetDFPosition(double ** position, size_t * position_n, 
+GMSH_API void gmshModelMeshGetDFPosition(double ** position, size_t * position_n,
+                                         int ** tags, size_t * tags_n,
                                          int * ierr);
 
 /* return the position of the deformed mesh from relaying */
 GMSH_API void gmshModelMeshGetNodesPosition(double ** position, size_t * position_n, 
+                                         int * ierr);
+
+/* return the position of the front nodes of mesh relaying*/
+GMSH_API void gmshModelMeshGetFrontNodesPosition(double ** position, size_t * position_n,
                                          int * ierr);
 
 /* set the discrete front created from api to the relaying object */
