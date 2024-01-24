@@ -48,7 +48,7 @@ Physical Surface(72) = {e(7)};
 Physical Surface(73) = {e(9)};
 
 // Whole domain surface
-bnd() = Boundary{ Volume{e(1)}; };
+bnd() = Abs(Boundary{ Volume{e(1)}; });
 Physical Surface(80) = bnd();
 
 // Complement of the domain surface with respect to the four terminals

@@ -544,7 +544,7 @@ bool GFaceMeshDiff::execute(bool verifyPatchTopology)
   while(after.elements.size() > 0) {
     MElement *ne = after.elements.back();
     after.elements.pop_back();
-    gf->addElement(ne->getType(), ne);
+    gf->addElement(ne);
   }
 
   this->done = true;

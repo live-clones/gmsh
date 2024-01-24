@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -284,6 +284,9 @@ mesh.add('getLastNodeError', doc, None, ovectorsize('nodeTags'))
 
 doc = '''Clear the mesh, i.e. delete all the nodes and elements, for the entities `dimTags', given as a vector of (dim, tag) pairs. If `dimTags' is empty, clear the whole mesh. Note that the mesh of an entity can only be cleared if this entity is not on the boundary of another entity with a non-empty mesh.'''
 mesh.add('clear', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', '[]', '[]'))
+
+doc = '''Remove the elements with tags `elementTags' from the entity of dimension `dim' and tag `tag'. If `elementTags' is empty, remove all the elements classified on the entity. To get consistent node classification on model entities, `reclassifyNodes()' should be called afterwards.'''
+mesh.add('removeElements', doc, None, iint('dim'), iint('tag'), ivectorsize('elementTags', 'std::vector<std::size_t>()', '[]', '[]'))
 
 doc = '''Reverse the orientation of the elements in the entities `dimTags', given as a vector of (dim, tag) pairs. If `dimTags' is empty, reverse the orientation of the elements in the whole mesh.'''
 mesh.add('reverse', doc, None, ivectorpair('dimTags', 'gmsh::vectorpair()', '[]', '[]'))

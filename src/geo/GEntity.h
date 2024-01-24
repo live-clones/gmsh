@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -49,6 +49,7 @@ private:
   unsigned int _color;
 
 protected:
+  // the oriented bounding box of the entity
   SOrientedBoundingBox *_obb;
 
 public: // these will become protected at some point
@@ -58,16 +59,17 @@ public: // these will become protected at some point
   // a list of geometrical entities that form a compound mesh
   std::vector<GEntity *> compound;
 
-  // corresponding principal vertices
+  // the corresponding principal points of the entity in case of periodic mesh
   std::map<GVertex *, GVertex *> vertexCounterparts;
 
-  // the physical entities (if any) that contain this entity
+  // the physical groups that contain this entity
   std::vector<int> physicals;
 
-  // vertex arrays to draw the mesh efficiently
+  // the vertex arrays to draw the mesh of the entity efficiently
   VertexArray *va_lines, *va_triangles;
 
-  // Set of high-order elements fixed by "fast curving"
+  // the set of high-order elements fixed by the "fast curving" boundary layer
+  // optimization
   std::set<MElement *> curvedBLElements;
 
 public:
@@ -127,6 +129,7 @@ public:
     GhostVolume
   };
 
+  // the mesh generation status
   enum MeshGenerationStatus { PENDING, DONE, FAILED };
 
   // return a string describing the entity type
@@ -201,23 +204,23 @@ public:
   // returns the parent entity for partitioned entities
   virtual GEntity *getParentEntity() { return nullptr; }
 
-  // regions that bound this entity or that this entity bounds.
+  // regions that bound this entity or that this entity bounds
   virtual std::list<GRegion *> regions() const
   {
     return std::list<GRegion *>();
   }
 
-  // faces that bound this entity or that this entity bounds.
+  // faces that bound this entity or that this entity bounds
   virtual std::vector<GFace *> faces() const { return std::vector<GFace *>(); }
 
-  // edges that bound this entity or that this entity bounds.
+  // edges that bound this entity or that this entity bounds
   virtual std::vector<GEdge *> const &edges() const
   {
     static std::vector<GEdge *> i;
     return i;
   }
 
-  // vertices that bound this entity.
+  // vertices that bound this entity
   virtual std::vector<GVertex *> vertices() const
   {
     return std::vector<GVertex *>();
@@ -226,7 +229,7 @@ public:
   // is this entity an orphan?
   virtual bool isOrphan() { return false; }
 
-  // for Python, temporary solution while iterator are not binded
+  // for Python, temporary solution while iterators are not binded
   std::vector<GRegion *> bindingsGetRegions()
   {
     // NOTE: two-line to not create two different lists with diff pointers
@@ -237,17 +240,17 @@ public:
   std::vector<GEdge *> bindingsGetEdges() const { return edges(); }
   std::vector<GVertex *> bindingsGetVertices() { return vertices(); }
 
-  // underlying geometric representation of this entity.
+  // underlying geometric representation of this entity
   virtual GeomType geomType() const { return Unknown; }
 
-  // true if parametric space is continuous in the "dim" direction.
+  // true if parametric space is continuous in the "dim" direction
   virtual bool continuous(int dim) const { return true; }
 
-  // true if entity is periodic in the "dim" direction.
+  // true if entity is periodic in the "dim" direction
   virtual bool periodic(int dim) const { return false; }
   virtual double period(int dim) const { return 0.0; }
 
-  // true if there are parametric degeneracies in the "dim" direction.
+  // true if there are parametric degeneracies in the "dim" direction
   virtual bool degenerate(int dim) const { return false; }
 
   // does the entity have a parametrization?
@@ -258,13 +261,13 @@ public:
   // (re)meshed?
   virtual bool isFullyDiscrete() { return !haveParametrization(); }
 
-  // parametric bounds of the entity in the "i" direction.
+  // parametric bounds of the entity in the "i" direction
   virtual Range<double> parBounds(int i) const { return Range<double>(0., 0.); }
 
-  // modeler tolerance for the entity.
+  // modeler tolerance for the entity
   virtual double tolerance() const { return 1.e-14; }
 
-  // true if the entity contains the given point to within tolerance.
+  // true if the entity contains the given point to within tolerance
   virtual bool containsPoint(const SPoint3 &pt) const { return false; }
 
   // get the native type of the particular representation
@@ -297,13 +300,12 @@ public:
                      bool updateCorrespondingVertices = true);
   void updateCorrespondingVertices();
   void copyMasterCoordinates();
-
   virtual void alignElementsWithMaster() {}
 
   // get the bounding box
   virtual SBoundingBox3d bounds(bool fast = false) { return SBoundingBox3d(); }
 
-  //  get the oriented bounding box
+  // get the oriented bounding box
   virtual SOrientedBoundingBox getOBB() { return SOrientedBoundingBox(); }
 
   // get/set the visibility flag
@@ -344,7 +346,7 @@ public:
   virtual double getMeshSize() const { return MAX_LC; }
   virtual double getMeshSizeFactor() const { return 1.; }
 
-  // types of elements
+  // get the family types of elements that could mesh this entity
   virtual void getElementTypes(std::vector<int> &types) const {};
 
   // get the number of mesh elements (total and by type) in the entity
@@ -381,17 +383,20 @@ public:
   // get the mesh vertex at the given index
   MVertex *getMeshVertex(std::size_t index) { return mesh_vertices[index]; }
 
-  // add a MeshVertex
+  // add a mesh vertex
   void addMeshVertex(MVertex *v) { mesh_vertices.push_back(v); }
-  // delete a MeshVertex
-  void removeMeshVertex(MVertex *v);
+  // remove a mesh vertex, and delete it as well if del=true (warning: this does
+  // not invalidate the mesh cache and vertex arrays, which should be taken care
+  // of after a delete)
+  void removeMeshVertex(MVertex *v, bool del=false);
 
-  // add an element
-  virtual void addElement(int type, MElement *e) {}
-  // remove an element
-  virtual void removeElement(int type, MElement *e) {}
-  // remove all elements of a given type
-  virtual void removeElements(int type) {}
+  // add a mesh element
+  virtual void addElement(MElement *e) {}
+  // remove an element or all the elements, and delete as well if del=true
+  // (warning: this does not invalidate the mesh cache and vertex arrays, which
+  // should be taken care of after a delete)
+  virtual void removeElement(MElement *e, bool del=false) {}
+  virtual void removeElements(bool del=false) {}
 
   // relocate mesh vertices using their parametric coordinates
   virtual void relocateMeshVertices() {}
@@ -408,7 +413,7 @@ public:
   // corresponding mesh vertices
   std::map<MVertex *, MVertex *> correspondingVertices;
 
-  // corresponding high order vertices
+  // corresponding high order mesh vertices
   std::map<MVertex *, MVertex *> correspondingHighOrderVertices;
 
   // reorder the mesh elements of the given type, according to ordering

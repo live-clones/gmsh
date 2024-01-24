@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1428,6 +1428,66 @@ std::string opt_geometry_occ_target_unit(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) CTX::instance()->geom.occTargetUnit = val;
   return CTX::instance()->geom.occTargetUnit;
+}
+
+std::string opt_geometry_occ_step_description(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occStepDescription = val;
+  return CTX::instance()->geom.occStepDescription;
+}
+
+std::string opt_geometry_occ_step_implementation_level(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occStepImplementationLevel = val;
+  return CTX::instance()->geom.occStepImplementationLevel;
+}
+
+std::string opt_geometry_occ_step_model_name(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occStepModelName = val;
+  return CTX::instance()->geom.occStepModelName;
+}
+
+std::string opt_geometry_occ_step_time_stamp(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occStepTimeStamp = val;
+  return CTX::instance()->geom.occStepTimeStamp;
+}
+
+std::string opt_geometry_occ_step_author(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occStepAuthor = val;
+  return CTX::instance()->geom.occStepAuthor;
+}
+
+std::string opt_geometry_occ_step_organization(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occStepOrganization = val;
+  return CTX::instance()->geom.occStepOrganization;
+}
+
+std::string opt_geometry_occ_step_preprocessor_version(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occStepPreprocessorVersion = val;
+  return CTX::instance()->geom.occStepPreprocessorVersion;
+}
+
+std::string opt_geometry_occ_step_originating_system(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occStepOriginatingSystem = val;
+  return CTX::instance()->geom.occStepOriginatingSystem;
+}
+
+std::string opt_geometry_occ_step_authorization(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occStepAuthorization = val;
+  return CTX::instance()->geom.occStepAuthorization;
+}
+
+std::string opt_geometry_occ_step_schema_identifier(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occStepSchemaIdentifier = val;
+  return CTX::instance()->geom.occStepSchemaIdentifier;
 }
 
 std::string opt_geometry_pipe_default_trihedron(OPT_ARGS_STR)

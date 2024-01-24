@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1434,6 +1434,35 @@ GMSH_API void gmsh::model::mesh::clear(const vectorpair &dimTags)
     entities.push_back(ge);
   }
   GModel::current()->deleteMesh(entities);
+}
+
+GMSH_API void gmsh::model::mesh::removeElements(
+   const int dim, const int tag,
+   const std::vector<std::size_t> &elementTags)
+{
+  if(!_checkInit()) return;
+  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+  if(!ge) {
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+    return;
+  }
+  if(elementTags.empty()) {
+    ge->removeElements(true);
+  }
+  else {
+    for(auto t : elementTags) {
+      MElement *e = GModel::current()->getMeshElementByTag(t);
+      if(!e) {
+        Msg::Error("Unknown element %d", t);
+      }
+      else {
+        ge->removeElement(e, true);
+      }
+    }
+  }
+  ge->deleteVertexArrays();
+  GModel::current()->destroyMeshCaches();
+  // we leave the user to call reclassifyNodes()
 }
 
 static void _getEntities(const gmsh::vectorpair &dimTags,
@@ -5706,16 +5735,6 @@ GMSH_API void gmsh::model::mesh::getNodesPosition_(std::vector<double> &api_posi
   return;
 }
 
-GMSH_API void gmsh::model::mesh::setDiscreteFront_(){
-  setDiscreteFront();
-  return;
-}
-
-GMSH_API void gmsh::model::mesh::initRelaying_(){
-  initRelaying();
-  return;
-}
-
 GMSH_API void gmsh::model::mesh::resetDiscreteFront_(){
   resetDiscreteFront();
   return;
@@ -8282,7 +8301,7 @@ static void _createFltk()
 
 GMSH_API void gmsh::fltk::initialize()
 {
-  
+
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
   _createFltk();

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1059,6 +1059,18 @@ GMSH_API void gmshModelMeshClear(const int * dimTags, const size_t dimTags_n, in
       api_dimTags_[i].second = dimTags[i * 2 + 1];
     }
     gmsh::model::mesh::clear(api_dimTags_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshRemoveElements(const int dim, const int tag, const size_t * elementTags, const size_t elementTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_elementTags_(elementTags, elementTags + elementTags_n);
+    gmsh::model::mesh::removeElements(dim, tag, api_elementTags_);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2499,30 +2511,10 @@ GMSH_API void gmshModelMeshGetFrontNodesPosition(double ** position, size_t * po
   }
 }
 
-GMSH_API void gmshModelMeshSetDiscreteFront(int * ierr){
-  if(ierr) *ierr = 0;
-  try {
-    gmsh::model::mesh::setDiscreteFront_();
-  }
-  catch(...){
-    if(ierr) *ierr = 1;
-  }
-}
-
 GMSH_API void gmshModelMeshRelayingAndRelax(int * ierr){
   if(ierr) *ierr = 0;
   try {
     gmsh::model::mesh::relayingAndRelax_();
-  }
-  catch(...){
-    if(ierr) *ierr = 1;
-  }
-}
-
-GMSH_API void gmshModelMeshInitRelaying(int * ierr){
-  if(ierr) *ierr = 0;
-  try {
-    gmsh::model::mesh::initRelaying_();
   }
   catch(...){
     if(ierr) *ierr = 1;

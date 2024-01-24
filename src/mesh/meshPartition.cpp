@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -256,18 +256,15 @@ public:
             switch(_dim) {
             case 1:
               static_cast<ghostEdge *>(ghostEntities[_partition[_adjncy[j]]])
-                ->addElement(_element[i]->getType(), _element[i],
-                             _partition[i] + 1);
+                ->addElement(_element[i], _partition[i] + 1);
               break;
             case 2:
               static_cast<ghostFace *>(ghostEntities[_partition[_adjncy[j]]])
-                ->addElement(_element[i]->getType(), _element[i],
-                             _partition[i] + 1);
+                ->addElement(_element[i], _partition[i] + 1);
               break;
             case 3:
               static_cast<ghostRegion *>(ghostEntities[_partition[_adjncy[j]]])
-                ->addElement(_element[i]->getType(), _element[i],
-                             _partition[i] + 1);
+                ->addElement(_element[i], _partition[i] + 1);
               break;
             default: break;
             }
@@ -764,7 +761,7 @@ assignElementsToEntities(GModel *model, hashmapelementpart &elmToPartition,
       newEntities[partition] = de;
     }
 
-    newEntities[partition]->addElement((*it)->getType(), *it);
+    newEntities[partition]->addElement(*it);
   }
 }
 
@@ -924,8 +921,7 @@ divideNonConnectedEntities(GModel *model, int dim,
             // Add to model
             model->add(pvertex);
             // Add elements
-            pvertex->addElement(vertex->getMeshElement(i)->getType(),
-                                vertex->getMeshElement(i));
+            pvertex->addElement(vertex->getMeshElement(i));
             // Move B-Rep
             std::vector<GEdge *> BRepEdges = vertex->edges();
             if(!BRepEdges.empty()) {
@@ -1024,7 +1020,7 @@ divideNonConnectedEntities(GModel *model, int dim,
             for(auto itSet = connectedElements[i].begin();
                 itSet != connectedElements[i].end(); ++itSet) {
               // Add elements
-              pedge->addElement((*itSet)->getType(), (*itSet));
+              pedge->addElement((*itSet));
             }
             // Move B-Rep
             if(BRepFaces.size() > 0) {
@@ -1120,7 +1116,7 @@ divideNonConnectedEntities(GModel *model, int dim,
             for(auto itSet = connectedElements[i].begin();
                 itSet != connectedElements[i].end(); ++itSet) {
               // Add elements
-              pface->addElement((*itSet)->getType(), (*itSet));
+              pface->addElement((*itSet));
             }
             // Move B-Rep
             if(BRepRegions.size() > 0) {
@@ -1217,7 +1213,7 @@ divideNonConnectedEntities(GModel *model, int dim,
             for(auto itSet = connectedElements[i].begin();
                 itSet != connectedElements[i].end(); ++itSet) {
               // Add elements
-              pregion->addElement((*itSet)->getType(), (*itSet));
+              pregion->addElement((*itSet));
             }
           }
 
@@ -2358,7 +2354,7 @@ static void assignToParent(std::set<MVertex *> &verts, PART_ENTITY *entity,
                            ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it) {
-    entity->getParentEntity()->addElement((*it)->getType(), *it);
+    entity->getParentEntity()->addElement(*it);
     (*it)->setPartition(0);
 
     for(std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
@@ -2608,15 +2604,15 @@ int PartitionUsingThisSplit(GModel *model,
         switch(graph.dim()) {
           case 1:
             static_cast<ghostEdge *>(ghostEntities[part - 1])
-              ->addElement(el->getType(), el, elmToPartition[el]);
+              ->addElement(el, elmToPartition[el]);
             break;
           case 2:
             static_cast<ghostFace *>(ghostEntities[part - 1])
-              ->addElement(el->getType(), el, elmToPartition[el]);
+              ->addElement(el, elmToPartition[el]);
             break;
           case 3:
             static_cast<ghostRegion *>(ghostEntities[part - 1])
-              ->addElement(el->getType(), el, elmToPartition[el]);
+              ->addElement(el, elmToPartition[el]);
             break;
           default: break;
         }
