@@ -105,6 +105,7 @@ void discreteFront::cornersInTriangle2d (const SVector3 &p0, const SVector3 &p1,
   SPoint2 a1(p1.x(),p1.y());
   SPoint2 a2(p2.x(),p2.y());
   for (auto i : corners){
+    if(colors[i]<0) continue;
     SPoint2 p(pos[3*i],pos[3*i+1]);
     SVector3 p3(pos[3*i],pos[3*i+1],0);
     double d = std::min(std::min((p0-p3).norm(),(p1-p3).norm()),(p2-p3).norm());
@@ -296,6 +297,11 @@ void discreteFront::move (double dt){
 }
 
 void discreteFront::moveFromV (double dt, std::vector<SVector3> v, bool bnd){
+  FILE *fb = fopen ("before_v.pos","w");
+  fprintf(fb,"View \"Front Geometry\"{\n");
+  printGeometry(fb);
+  fprintf(fb,"};\n");
+  fclose(fb);
   buildSpatialSearchStructure ();
   size_t n = v.size();
   std::vector<double> target(pos);
@@ -388,55 +394,57 @@ void discreteFront::moveFromV (double dt, std::vector<SVector3> v, bool bnd){
           // continue movement along the edge
           pos[3*i] = a1[0]+(a2[0]-a1[0])*t_min;
           pos[3*i+1] = a1[1]+(a2[1]-a1[1])*t_min;
-          double a4[2] = {pos[3*lines[id_min+1]],pos[3*lines[id_min+1]+1]};
-          double a3[2] = {pos[3*lines[id_min]],pos[3*lines[id_min]+1]};
 
-          double pt[2] = {target[3*i]-pos[3*i], target[3*i+1]-pos[3*i+1]};
-          double pa4[2] = {a4[0]-pos[3*i], a4[1]-pos[3*i+1]};
-          double a34[2] = {a4[0]-a3[0], a4[1]-a3[1]};
+          found[i] = true;
+          // double a4[2] = {pos[3*lines[id_min+1]],pos[3*lines[id_min+1]+1]};
+          // double a3[2] = {pos[3*lines[id_min]],pos[3*lines[id_min]+1]};
 
-          double pnewt[2];
-          double norm_pa4_square = pa4[0]*pa4[0] + pa4[1]*pa4[1];
-          double norm_a34_square = a34[0]*a34[0] + a34[1]*a34[1];
+          // double pt[2] = {target[3*i]-pos[3*i], target[3*i+1]-pos[3*i+1]};
+          // double pa4[2] = {a4[0]-pos[3*i], a4[1]-pos[3*i+1]};
+          // double a34[2] = {a4[0]-a3[0], a4[1]-a3[1]};
 
-          double lineDirection[2] = {a4[0]-a3[0], a4[1]-a3[1]};
-          double lineLengthSquared = lineDirection[0]*lineDirection[0] + lineDirection[1]*lineDirection[1];
+          // double pnewt[2];
+          // double norm_pa4_square = pa4[0]*pa4[0] + pa4[1]*pa4[1];
+          // double norm_a34_square = a34[0]*a34[0] + a34[1]*a34[1];
 
-          // Avoid division by zero
-          if (lineLengthSquared == 0.0) {
-              pnewt[0] = 0;
-              pnewt[1] = 0;
-              return;
-          }
+          // double lineDirection[2] = {a4[0]-a3[0], a4[1]-a3[1]};
+          // double lineLengthSquared = lineDirection[0]*lineDirection[0] + lineDirection[1]*lineDirection[1];
 
-          double dotProduct = ((pt[0]-a3[0]) * lineDirection[0] + (pt[1]-a3[1]) * lineDirection[1]);
-          double t = dotProduct / lineLengthSquared;
+          // // Avoid division by zero
+          // if (lineLengthSquared == 0.0) {
+          //     pnewt[0] = 0;
+          //     pnewt[1] = 0;
+          //     return;
+          // }
 
-          pnewt[0] = t * lineDirection[0];
-          pnewt[1] = t * lineDirection[1];
-          if(dotProduct>0){
-            if((pnewt[0]*pnewt[0]+pnewt[1]*pnewt[1]) > norm_pa4_square){
-              target[3*i] = pos[3*i]+pnewt[0];
-              target[3*i+1] = pos[3*i+1]+pnewt[1];
-              pos[3*i] = a4[0];
-              pos[3*i+1] = a4[1];
-            } else{
-              pos[3*i] = pos[3*i]+pnewt[0];
-              pos[3*i+1] = pos[3*i+1]+pnewt[1];
-              found[i] = true;
-            }
-          } else {
-            if(sqrt(pnewt[0]*pnewt[0]+pnewt[1]*pnewt[1]) > sqrt(norm_a34_square)-sqrt(norm_pa4_square)){
-              target[3*i] = pos[3*i]+pnewt[0];
-              target[3*i+1] = pos[3*i+1]+pnewt[1];
-              pos[3*i] = a3[0];
-              pos[3*i+1] = a3[1];
-            } else{
-              pos[3*i] = pos[3*i]+pnewt[0];
-              pos[3*i+1] = pos[3*i+1]+pnewt[1];
-              found[i] = true;
-            }
-          }
+          // double dotProduct = ((pt[0]-a3[0]) * lineDirection[0] + (pt[1]-a3[1]) * lineDirection[1]);
+          // double t = dotProduct / lineLengthSquared;
+
+          // pnewt[0] = t * lineDirection[0];
+          // pnewt[1] = t * lineDirection[1];
+          // if(dotProduct>0){
+          //   if((pnewt[0]*pnewt[0]+pnewt[1]*pnewt[1]) > norm_pa4_square){
+          //     target[3*i] = pos[3*i]+pnewt[0];
+          //     target[3*i+1] = pos[3*i+1]+pnewt[1];
+          //     pos[3*i] = a4[0];
+          //     pos[3*i+1] = a4[1];
+          //   } else{
+          //     pos[3*i] = pos[3*i]+pnewt[0];
+          //     pos[3*i+1] = pos[3*i+1]+pnewt[1];
+          //     found[i] = true;
+          //   }
+          // } else {
+          //   if(sqrt(pnewt[0]*pnewt[0]+pnewt[1]*pnewt[1]) > sqrt(norm_a34_square)-sqrt(norm_pa4_square)){
+          //     target[3*i] = pos[3*i]+pnewt[0];
+          //     target[3*i+1] = pos[3*i+1]+pnewt[1];
+          //     pos[3*i] = a3[0];
+          //     pos[3*i+1] = a3[1];
+          //   } else{
+          //     pos[3*i] = pos[3*i]+pnewt[0];
+          //     pos[3*i+1] = pos[3*i+1]+pnewt[1];
+          //     found[i] = true;
+          //   }
+          // }
           
           
         }
@@ -564,6 +572,7 @@ void discreteFront::boolOp (){
   if (_ll.size()) _lls.push_back(_ll);
   for (size_t k=0;k<_lls.size();k++){
     for (size_t i=0;i<_lls[k].size();i+=2){
+      if(colors[_lls[k][i+1]]<0) continue;
       double a1[2] = {pos[3*_lls[k][i]],pos[3*_lls[k][i]+1]};
       double a2[2] = {pos[3*_lls[k][i+1]],pos[3*_lls[k][i+1]+1]};
       double a3[2] = {pos[3*_lls[k][(i+3)%_lls[k].size()]],
@@ -574,7 +583,7 @@ void discreteFront::boolOp (){
       v2.normalize();
       double c = dot(v1,v2);
       if (c < sqrt(3)/2){
-	corners.push_back(_lls[k][i+1]);
+	      corners.push_back(_lls[k][i+1]);
       }
     }
   }
@@ -654,6 +663,7 @@ void discreteFront::getDFPosition(std::vector<double> *position, std::vector<int
 }
 
 void discreteFront::redistFront(double lc){
+  meshRelaying::instance()->print4debug("before_redist.pos");
   double fc_min=0.5; 
   double fc_max=1.5;
   double small_dist = fc_min*lc;
@@ -764,6 +774,7 @@ void discreteFront::redistFront(double lc){
     lines.push_back(l[i]);
   }
   
+  meshRelaying::instance()->print4debug("after_redist.pos");
 }
 
 void discreteFront :: printMesh (FILE *f) {
@@ -1005,7 +1016,7 @@ void discreteFront::adjustBnd(std::vector<std::pair<size_t,size_t>> bnd1d){
     printf("moved at %d-%d : %d, %d \n", lines[i], lines[i+1], moved[lines[i]], moved[lines[i+1]]);
     for(size_t j=0; j<lines.size(); j+=2){
       if(colors[lines[j]]<0) continue;
-      printf("marker : %d with %d-%d \n", lines[j], lines[i], lines[i+1]);
+      
       double b1[2] = {pos[3*lines[i]], pos[3*lines[i]+1]};
       double b2[2] = {pos[3*lines[i+1]], pos[3*lines[i+1]+1]};
       double a1[2]  = {old_pos[3*lines[i]], old_pos[3*lines[i]+1]};
@@ -1014,31 +1025,31 @@ void discreteFront::adjustBnd(std::vector<std::pair<size_t,size_t>> bnd1d){
 
       double a12p  = robustPredicates::orient2d(a1,a2,p);
       double b12p = robustPredicates::orient2d(b1,b2,p);
-
-      if(a12p*b12p<=0){
+      printf("marker : %d with %d-%d -> %f, %f\n", lines[j], lines[i], lines[i+1], a12p, b12p);
+      if(a12p*b12p<=1e-12){
         double a1b1p = robustPredicates::orient2d(a1,b1,p);
         double a2b2p = robustPredicates::orient2d(a2,b2,p);
-        if(a1b1p*a2b2p<=0){
-          printf("need displacement : %d with %d-%d \n", lines[j], lines[i], lines[i+1]);
-          double lengthSquared = (b2[0]-b1[0])*(b2[0]-b1[0]) + (b2[1]-b1[1])*(b2[1]-b1[1]);
-          // Avoid division by zero
-          if (lengthSquared == 0.0) {
-              pos[3*lines[j]] = b1[0];
-              pos[3*lines[j]+1] = b1[1];
-          } else {
-            double t = ((p[0]-b1[0])*(b2[0]-b1[0]) + (p[1]-b1[1])*(b2[1]-b1[1])) / lengthSquared;
-            printf("t = %f \n", t);
-            t = std::max(0.0, std::min(1.0, t));
+        printf(" and : %f, %f \n", a1b1p, a2b2p);
+        printf("need displacement : %d with %d-%d \n", lines[j], lines[i], lines[i+1]);
+        double lengthSquared = (b2[0]-b1[0])*(b2[0]-b1[0]) + (b2[1]-b1[1])*(b2[1]-b1[1]);
+        // Avoid division by zero
+        if (lengthSquared == 0.0) {
+            pos[3*lines[j]] = b1[0];
+            pos[3*lines[j]+1] = b1[1];
+        } else {
+          double t = ((p[0]-b1[0])*(b2[0]-b1[0]) + (p[1]-b1[1])*(b2[1]-b1[1])) / lengthSquared;
+          printf("t = %f \n", t);
+          if(t>=0 && t<=1){
             pos[3*lines[j]] = b1[0]+t*(b2[0]-b1[0]);
             pos[3*lines[j]+1] = b1[1]+t*(b2[1]-b1[1]);
           }
+          
         }
       }
     }
+  }
     
 
-  }
-  
 }
 
 
@@ -1378,10 +1389,10 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
       for (size_t i=0;i<tris.size();i+=3){
         std::vector<SVector3> c;
         std::vector<int> col;
-        discreteFront::instance()->cornersInTriangle2d (SVector3(pos[3*tris[i]],pos[3*tris[i]+1],pos[3*tris[i]+2]),
-                    SVector3(pos[3*tris[i+1]],pos[3*tris[i+1]+1],pos[3*tris[i+1]+2]),
-              SVector3(pos[3*tris[i+2]],pos[3*tris[i+2]+1],pos[3*tris[i+2]+2]),
-                    c,col);
+        // discreteFront::instance()->cornersInTriangle2d (SVector3(pos[3*tris[i]],pos[3*tris[i]+1],pos[3*tris[i]+2]),
+        //             SVector3(pos[3*tris[i+1]],pos[3*tris[i+1]+1],pos[3*tris[i+1]+2]),
+        //       SVector3(pos[3*tris[i+2]],pos[3*tris[i+2]+1],pos[3*tris[i+2]+2]),
+        //             c,col);
         if (!c.empty()){
           for (int j=0;j<3;j++){
             
@@ -1491,8 +1502,8 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
       
       if (qMin < 0) continue;
       
-      for (auto j : v2v[i]){
-        p = std::make_pair(std::min(i,j), std::max(i,j));
+      for (auto k : v2v[i]){
+        p = std::make_pair(std::min(i,k), std::max(i,k));
         cuts.erase(p);
       }
       
@@ -1663,9 +1674,11 @@ void resetDiscreteFront(){
 void relayingAndRelax(){
   meshRelaying::instance()->print4debug("in_gmsh.pos");
   meshRelaying::instance()->doRelaying(0);      // time not used for df -> 0
-  meshRelaying::instance()->print4debug("between_gmsh.pos");
   meshRelaying::instance()->doRelax(1);         // full relax
+  meshRelaying::instance()->print4debug("before_adjust.pos");
+  meshRelaying::instance()->adjustBnd();
   meshRelaying::instance()->print4debug("out_gmsh.pos");
+
 }
 
 void redistFront(double lc){
