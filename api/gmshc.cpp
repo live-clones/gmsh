@@ -2449,12 +2449,12 @@ GMSH_API void gmshModelMeshConcentrationFromDF(int ** concentration, size_t * co
   }
 }
 
-GMSH_API void gmshModelMeshAdvanceDFInTime(double dt, double * v, size_t v_n, int * ierr)
+GMSH_API void gmshModelMeshAdvanceDFInTime(double dt, double * v, size_t v_n, int front, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_v(v, v + v_n);
-    gmsh::model::mesh::advanceDFInTime(dt, api_v); 
+    gmsh::model::mesh::advanceDFInTime(dt, api_v, front); 
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2473,12 +2473,14 @@ GMSH_API void gmshModelMeshAddFreeForm(int tag, double * poly, size_t poly_n, in
   }
 }
 
-GMSH_API void gmshModelMeshGetDFPosition(double ** position, size_t * position_n, int * ierr){
+GMSH_API void gmshModelMeshGetDFPosition(double ** position, size_t * position_n, int ** tags, size_t * tags_n, int * ierr){
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_position;
-    gmsh::model::mesh::getDFPosition_(api_position);
+    std::vector<int> api_tags;
+    gmsh::model::mesh::getDFPosition_(api_position, api_tags);
     vector2ptr(api_position, position, position_n);
+    vector2ptr(api_tags, tags, tags_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2497,10 +2499,12 @@ GMSH_API void gmshModelMeshGetNodesPosition(double ** position, size_t * positio
   }
 }
 
-GMSH_API void gmshModelMeshSetDiscreteFront(int * ierr){
+GMSH_API void gmshModelMeshGetFrontNodesPosition(double ** position, size_t * position_n, int * ierr){
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::setDiscreteFront_();
+    std::vector<double> api_position;
+    gmsh::model::mesh::getFrontNodesPosition_(api_position);
+    vector2ptr(api_position, position, position_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2511,16 +2515,6 @@ GMSH_API void gmshModelMeshRelayingAndRelax(int * ierr){
   if(ierr) *ierr = 0;
   try {
     gmsh::model::mesh::relayingAndRelax_();
-  }
-  catch(...){
-    if(ierr) *ierr = 1;
-  }
-}
-
-GMSH_API void gmshModelMeshInitRelaying(int * ierr){
-  if(ierr) *ierr = 0;
-  try {
-    gmsh::model::mesh::initRelaying_();
   }
   catch(...){
     if(ierr) *ierr = 1;

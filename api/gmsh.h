@@ -1860,8 +1860,9 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::advanceDFInTime
       //
-      // Move the markers of dt based on the velocity v
-      GMSH_API void advanceDFInTime(double dt, std::vector<double> v);
+      // Move the markers of dt based on the velocity v 
+      // The velocity is given at the front nodes if front is true otherwise at the marker position 
+      GMSH_API void advanceDFInTime(double dt, std::vector<double> v, bool front);
 
       // gmsh::model::mesh::addFreeForm
       //
@@ -1871,28 +1872,23 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::getDFPosition
       //
       // return the position of the discrete front of relaying
-      GMSH_API void getDFPosition_(std::vector<double> &api_position);
+      GMSH_API void getDFPosition_(std::vector<double> &api_position, std::vector<int> &api_tags);
 
       // gmsh::model::mesh::getDFPosition
       //
       // return the position of the deformed mesh from relaying
       GMSH_API void getNodesPosition_(std::vector<double> &api_position);
 
-      // gmsh::model::mesh::setDiscreteFront
+      // gmsh::model::mesh::getFrontNodesPosition
       //
-      // set the discrete front constructed via api to the mesh relaying object
-      GMSH_API void setDiscreteFront_();
+      // return the position of the front nodes of mesh relaying
+      GMSH_API void getFrontNodesPosition_(std::vector<double> &api_position);
 
       // gmsh::model::mesh::relayingAndRelax
       //
       // move the mesh to be conform to the discrete front 
       // and relax the nodes that are not on the front 
       GMSH_API void relayingAndRelax_();
-
-      //gmsh::model::mesh::initRelaying_
-      //
-      // initialisation of the relaying object
-      GMSH_API void initRelaying_();
 
       // gmsh::model::mesh::resetDiscreteFront_
       //

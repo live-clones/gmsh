@@ -5702,12 +5702,12 @@ GMSH_API void gmsh::model::mesh::concentrationFromDF(std::vector<int> &api_conce
   return;
 }
 
-GMSH_API void gmsh::model::mesh::advanceDFInTime(double dt, std::vector<double> v){
+GMSH_API void gmsh::model::mesh::advanceDFInTime(double dt, std::vector<double> v, bool front){
   std::vector<SVector3> api_v;
   for(int i=0; i<v.size(); i+=3){
     api_v.push_back(SVector3(&v[i]));
   }
-  advanceInTime(dt, api_v);
+  advanceInTime(dt, api_v, front);
   return;
 }
 
@@ -5720,23 +5720,18 @@ GMSH_API void gmsh::model::mesh::addFreeForm(int tag, std::vector<double> poly){
   return;
 } 
 
-GMSH_API void gmsh::model::mesh::getDFPosition_(std::vector<double> &api_position){
-  getDFPosition(api_position);
+GMSH_API void gmsh::model::mesh::getDFPosition_(std::vector<double> &api_position, std::vector<int> &api_tags){
+  getDFPosition(api_position, api_tags);
+  return;
+}
+
+GMSH_API void gmsh::model::mesh::getFrontNodesPosition_(std::vector<double> &api_position){
+  getFrontNodesPosition(api_position);
   return;
 }
 
 GMSH_API void gmsh::model::mesh::getNodesPosition_(std::vector<double> &api_position){
   getNodesPosition(api_position);
-  return;
-}
-
-GMSH_API void gmsh::model::mesh::setDiscreteFront_(){
-  setDiscreteFront();
-  return;
-}
-
-GMSH_API void gmsh::model::mesh::initRelaying_(){
-  initRelaying();
   return;
 }
 

@@ -70,6 +70,7 @@ class discreteFront {
   bool empty() const {return pos.empty();}
   void move (double dt);
   void moveFromV (double dt, std::vector<SVector3> V, bool bnd);
+  void moveFromFront(double dt, std::vector<SVector3> v);
   virtual SVector3 velocity (double x, double y, double z, double t, int col);
   void printGeometry(FILE *f);
   int whatIsTheColorOf2d (const SVector3 &P);
@@ -104,9 +105,10 @@ class discreteFront {
   void addRectangle (int tag, double xc, double yc, double r1, double r2, int n);
   void addPolygon (int tag, const std::vector<SVector3> &poly, int n);
   void addFreeForm (int tag, const std::vector<SVector3> &poly);
-  void getDFPosition(std::vector<double> *position);
+  void getDFPosition(std::vector<double> *position, std::vector<int> *tags);
   void clear();
   void redistFront(double lc);
+  void adjustBnd(std::vector<std::pair<size_t,size_t>> bnd1d);
   //-----------------------------------------------------------------------------------
   // --> boolean operator 
   void boolOp ();
@@ -149,11 +151,11 @@ class meshRelaying {
 
   static meshRelaying *_instance;
   meshRelaying (GModel *gm = nullptr); // use GModel gm or Gmodel::current() if NULL  
- public :
-  static meshRelaying *instance() {
-    if(!_instance) _instance = new meshRelaying();
-    return _instance;
-  }
+  public :
+    static meshRelaying *instance() {
+      if(!_instance) _instance = new meshRelaying();
+      return _instance;
+    }
 
   void doRelaying (const std::function<std::vector<std::pair<double, int> >(size_t, size_t)> &f); 
   void setLevelset (const std::function<double(double, double, double, double)> &_ls){
@@ -166,11 +168,12 @@ class meshRelaying {
     bbox *= 1.01;
     discreteFront::instance()->setBbox (bbox);
   }
-  void advanceInTime(double dt, std::vector<SVector3> v = std::vector<SVector3>()){
-    if(v.empty()){
+  void advanceInTime(double dt, std::vector<SVector3> v = std::vector<SVector3>(), bool front = false){
+    if(front){
+      discreteFront::instance()->moveFromFront(dt, v);
+    } else if(v.empty()){
       discreteFront::instance()->move(dt);
     } else {
-      time += dt;
       discreteFront::instance()->moveFromV(dt, v, true);
     }
     
@@ -185,14 +188,21 @@ class meshRelaying {
   void doRelaxFrontNode (size_t i, const std::vector<size_t> &n, double r, std::vector<std::pair<size_t,size_t> > &fe);
   void print4debug(const char *);
   void concentration(std::vector<int> *concentration);
-  void getDFPosition(std::vector<double> *position){
-    discreteFront::instance()->getDFPosition(position);
-  }
   void getNodesPosition(std::vector<double> *position){
     for(int i=0; i<pos.size(); ++i){
       position->push_back(pos[i]);
     }
   }
+
+  void getFrontNodesPosition(std::vector<double> *position){
+    std::sort(front_nodes.begin(), front_nodes.end());
+    for(int i=0; i<front_nodes.size(); ++i){
+      position->push_back(pos[3*front_nodes[i]]);
+      position->push_back(pos[3*front_nodes[i]+1]);
+      position->push_back(pos[3*front_nodes[i]+2]);
+    }
+  }
+
   void redistFront(double lc){
     discreteFront::instance()->redistFront(lc);
   }
@@ -201,17 +211,21 @@ class meshRelaying {
   double smallest_measure (const size_t n, const SVector3 &target) ;  
   double smallest_quality_measure (const size_t n, const SVector3 &target) ;  
   double massTriangles (int color);
- };
+  void adjustBnd(){
+    discreteFront::instance()->adjustBnd(bnd1d);
+  }  
+};
 
 /*
   FOR API
 */
 
 void concentration(std::vector<int> &concentration);
-void advanceInTime(double dt, std::vector<SVector3> v );
+void advanceInTime(double dt, std::vector<SVector3> v, bool front);
 void addFreeForm(int tag, const std::vector<SVector3> &poly);
-void getDFPosition(std::vector<double> &api_position);
+void getDFPosition(std::vector<double> &api_position, std::vector<int> &api_tags);
 void getNodesPosition(std::vector<double> &api_position);
+void getFrontNodesPosition(std::vector<double> &api_position);
 void setDiscreteFront();
 void relayingAndRelax();
 void initRelaying();
