@@ -73,6 +73,8 @@ class discreteFront {
   virtual SVector3 velocity (double x, double y, double z, double t, int col);
   void printGeometry(FILE *f);
   int whatIsTheColorOf2d (const SVector3 &P);
+  int whatIsTheColorOf2dSlow (const SVector3 &P);
+  double massMarkers (int color);
   int getColor(int i){return colors[i/2];}
   void buildSpatialSearchStructure ();
   int dim() const {return 2;}
@@ -92,7 +94,7 @@ class discreteFront {
   std::vector<std::pair<size_t,size_t> > getFrontEdges();  
   void printMesh (FILE *f);
 
-  SVector3 relaxFrontNode (size_t i);
+  void relaxFrontNode (size_t i, double r);
 
   //-----------------------------------------------------------------------------------
   // --> should be simplified to
@@ -145,9 +147,6 @@ class meshRelaying {
   double time;  
   std::function<double (double, double, double, double)> levelset;
 
-  /// functions for optimization
-  double smallest_measure (const size_t n, 
-			const SVector3 &target) ;  
   static meshRelaying *_instance;
   meshRelaying (GModel *gm = nullptr); // use GModel gm or Gmodel::current() if NULL  
  public :
@@ -176,6 +175,11 @@ class meshRelaying {
     }
     
   }
+  void setPos (size_t i, double x, double y, double z){
+    pos[3*i] = x;
+    pos[3*i+1] = y;
+    pos[3*i+2] = z;
+  }
   void doRelaying (double t);
   void doRelax (double r);
   void doRelaxFrontNode (size_t i, const std::vector<size_t> &n, double r, std::vector<std::pair<size_t,size_t> > &fe);
@@ -194,7 +198,10 @@ class meshRelaying {
   }
 
   void setBndFront();
-};
+  double smallest_measure (const size_t n, const SVector3 &target) ;  
+  double smallest_quality_measure (const size_t n, const SVector3 &target) ;  
+  double massTriangles (int color);
+ };
 
 /*
   FOR API
