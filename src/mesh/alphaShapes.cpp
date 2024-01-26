@@ -331,7 +331,7 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
 
     hxtRefineSurfaceTriangulation(&mesh, &delOptions, &alphaShapeOptions);
 
-    printf("done with surface triangulation refinement\n");
+    // printf("done with surface triangulation refinement\n");
     
     // hxtMeshWriteGmsh(mesh, "afterSurfaceRefinement.msh");
     
@@ -375,7 +375,7 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
       mesh->triangles.color[i] = alphaShapeOptions.colorBoundary;
     }
 
-    hxtMeshWriteGmsh(mesh, "alphaShapeMesh.msh");
+    // hxtMeshWriteGmsh(mesh, "alphaShapeMesh.msh");
     // printf("optimized mesh \n");
   }
 

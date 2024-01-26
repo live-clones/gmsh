@@ -194,7 +194,7 @@ extern "C" void _refineSurfaceTriangulation(HXTMesh** meshPtr, HXTDelaunayOption
     // }
     // TODO : store nodes that are not on surface in different mesh
 
-    printf("There are initially %lu facets and %d points in the triangulation\n", pm->faces.size(), pm->vertices.size());
+    // printf("There are initially %lu facets and %d points in the triangulation\n", pm->faces.size(), pm->vertices.size());
     int ptIndex = mesh->vertices.num;
     // print4debug(pm, 0);
 
@@ -220,7 +220,7 @@ extern "C" void _refineSurfaceTriangulation(HXTMesh** meshPtr, HXTDelaunayOption
     /* TODO : instead of the current version of decimate, need a version that only removes nodes based on a size field */
 
     // nNodesDeleted = pm->decimate(thresholdDistance, NULL, NULL, true);
-    printf("going to decimate \n");
+    // printf("going to decimate \n");
     int nNodesDeleted = 0;
     for (auto v : pm->vertices){
         if (v->he == nullptr) continue;
@@ -245,10 +245,10 @@ extern "C" void _refineSurfaceTriangulation(HXTMesh** meshPtr, HXTDelaunayOption
         }
     }
     // print4debug(pm, 1);
-    if (nNodesDeleted){
-        printf("decimated some ! \n");
-        // exit(0);
-    }
+    // if (nNodesDeleted){
+    //     printf("decimated some ! \n");
+    //     // exit(0);
+    // }
     // printf("decimated %d nodes! \n", nNodesDeleted);
     // int nNodesNullHe = 0;
     // for (auto v : pm->vertices){
@@ -324,7 +324,7 @@ extern "C" void _refineSurfaceTriangulation(HXTMesh** meshPtr, HXTDelaunayOption
     double durTotal = time_total.count();
 
     // printf("Time spent in sorting : %f \n", 100*timeInSort/durTotal);
-    printf("Surface triangulation done -- added %d new points, there are now %lu faces \n", iter, pm->faces.size());
+    // printf("Surface triangulation done -- added %d new points, there are now %lu faces \n", iter, pm->faces.size());
     delOptions->insertionFirst = mesh->vertices.num;
     
     // Now, we discard the mesh, and create a new one in which the boundaries of the alpha shape are the boundaries of the mesh
