@@ -251,6 +251,20 @@ public:
     if(vertexNeighbors) *vertexNeighbors = vs;
   }
 
+  inline int vertex_faces(const Vertex *v, std::vector<Face *> &faces)
+  {
+    int n_faces = 0;
+    HalfEdge *he = v->he;
+    do {
+      faces.push_back(he->f);
+      he = he->opposite;
+      if(he == NULL) return -1;
+      he = he->next;
+      n_faces++;
+    } while(he != v->he);
+    return n_faces;
+  }
+
   inline int num_sides(const HalfEdge *he) const
   {
     size_t count = 0;
@@ -991,6 +1005,12 @@ public:
 
   int decimate(double d, std::map<Vertex *, SVector3> *cogs = nullptr,
                std::map<Vertex *, SVector3> *nrms = nullptr);
+
+  int decimateOneNode(Vertex* v, double thresholdDistance,
+                      std::map<Vertex *, SVector3> *cogs,
+                      std::map<Vertex *, SVector3> *nrms);
+  
+
   void computeNormalsAndCentersOfGravity(
     std::map<PolyMesh::Vertex *, SVector3> &cogs,
     std::map<PolyMesh::Vertex *, SVector3> &nrms);

@@ -274,16 +274,22 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
       // .userData = (void*)&sizeFieldCallback,
       .callback = NULL, 
       .userData = NULL,
-      .min = .2*.04, 
-      .max = .1,  
+      // .min = .2*.04, 
+      // .max = ,  
       .factor = 1.,
       .enabled = 0  // only enabled for the refine step
   };
   hxtNodalSizesInit(mesh, &nodalSizes);
   
+  double nodalSizeMin = 1e10;
+  double nodalSizeMax = 0.;
   for (size_t i=0; i<mesh->vertices.num; i++){
     nodalSizes.array[i] = sizeFieldCallback(3, nodeTagsInMesh[i], mesh->vertices.coord[4*i+0], mesh->vertices.coord[4*i+1], mesh->vertices.coord[4*i+2], 0.);
+    nodalSizeMin = std::min(nodalSizeMin, nodalSizes.array[i]);
+    nodalSizeMax = std::max(nodalSizeMax, nodalSizes.array[i]);
   }
+  nodalSizes.min = nodalSizeMin;
+  nodalSizes.max = nodalSizeMax;
   delOptions.nodalSizes = &nodalSizes;
 
   HXTAlphaShapeOptions alphaShapeOptions = {
@@ -319,16 +325,15 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
     mesh->triangles.node[3*i+2] = alphaShapeOptions.boundaryFacets[3*i+2];
     mesh->triangles.color[i] = alphaShapeOptions.colorBoundary;
   }
-  hxtMeshWriteGmsh(mesh, "alphaShapeMesh.msh");
+  // hxtMeshWriteGmsh(mesh, "alphaShapeMesh.msh");
 
   if (refine == 1){
-    printf("refining in alpha shape \n");
 
     hxtRefineSurfaceTriangulation(&mesh, &delOptions, &alphaShapeOptions);
 
     printf("done with surface triangulation refinement\n");
     
-    hxtMeshWriteGmsh(mesh, "afterSurfaceRefinement.msh");
+    // hxtMeshWriteGmsh(mesh, "afterSurfaceRefinement.msh");
     
     
     delOptions.nodalSizes->enabled = 1;
@@ -336,8 +341,7 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
     
     hxtAlphaShapeNodeInsertion(mesh, &delOptions, &alphaShapeOptions);
     
-    hxtMeshWriteGmsh(mesh, "afterNodeInsertion.msh");
-    
+    // hxtMeshWriteGmsh(mesh, "afterNodeInsertion.msh");
     HXTOptimizeOptions optOptions = {
       .bbox = &bbox, 
       .qualityFun = NULL,
@@ -356,7 +360,6 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
       }
     }
     hxtOptimizeTetrahedra(mesh, &optOptions);
-    hxtMeshWriteGmsh(mesh, "afterOptimization.msh");
     hxtAlphaShape(mesh, &delOptions, &alphaShapeOptions);
     // Add alpha shape facets into the mesh
     mesh->triangles.num = alphaShapeOptions.n_boundaryFacets;
@@ -372,7 +375,8 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
       mesh->triangles.color[i] = alphaShapeOptions.colorBoundary;
     }
 
-    printf("optimized mesh \n");
+    hxtMeshWriteGmsh(mesh, "alphaShapeMesh.msh");
+    // printf("optimized mesh \n");
   }
 
   gmsh::vectorpair atags3D;

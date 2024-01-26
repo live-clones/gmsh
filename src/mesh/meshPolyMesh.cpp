@@ -415,6 +415,193 @@ void PolyMesh::computeNormalsAndCentersOfGravity(
   }
 }
 
+// TOOOOOOOO DOOOOOOOOOO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+int PolyMesh::decimateOneNode(Vertex * v,
+                              double thresholdDistance,
+                              std::map<Vertex *, SVector3> *cogs,
+                              std::map<Vertex *, SVector3> *nrms)
+{
+  // Msg::Info(
+  //   "Trying to delete one node",
+  //   vertices.size(), thresholdDistance);
+
+  if (v->he == NULL) return 0; // safety check
+
+  std::vector<Vertex *> neigh;
+  bool onBoundary = false;
+  vertexNeighbors(v, &neigh, &onBoundary);
+
+  if (onBoundary)return 0;
+  if (neigh.empty())return 0;
+
+  SVector3 nrm(0, 0, 0);
+  SVector3 cog(0, 0, 0);
+  if(nrms && cogs) {
+    cog = (*cogs)[v];
+    nrm = (*nrms)[v];
+  }
+  else {
+    double sumai = 0;
+    for(size_t i = 0; i < neigh.size(); i++) {
+      Vertex *v0 = neigh[i];
+      Vertex *v1 = neigh[(i + 1) % neigh.size()];
+      SVector3 t1 = v1->position - v->position;
+      SVector3 t0 = v0->position - v->position;
+      SVector3 ni = crossprod(t1, t0);
+      double ai = ni.norm();
+      sumai += ai;
+      cog += (v0->position * ai);
+      nrm += ni;
+    }
+    cog *= (1. / sumai);
+    nrm.normalize();
+  }
+  double d = fabs(dot(nrm, v->position - cog));
+
+  if(d > thresholdDistance) return 0;
+  std::stack<std::vector<Vertex *>> loops;
+  std::vector<std::vector<Vertex *>> triangles;
+  loops.push(neigh);
+
+  bool remove_vertex = true;
+
+  while(!loops.empty()) {
+    std::vector<Vertex *> loop = loops.top();
+    //      //            printf("total size %lu loop size %lu loop
+    //      :",loops.size(),loop.size());
+    //            for (auto aaa : loop)printf("%d ",aaa->data);
+    //            printf("\n");
+    loops.pop();
+    if(loop.size() == 3) {
+      std::reverse(loop.begin(), loop.end());
+      triangles.push_back(loop);
+    }
+    else { // split the loop
+      int best_start = -1;
+      int best_end = -1;
+      double best_aspect_ratio = -1.0;
+      for(size_t _start = 0; _start < loop.size(); _start++) {
+        for(size_t end = _start + 2; end < _start + loop.size() - 1; end++) {
+          size_t _end = end % loop.size();
+
+          // only consider split edge once
+          if(_start < _end) {
+            Vertex *vi = loop[_start];
+            Vertex *vj = loop[_end];
+
+            //	      printf("CUTTING WITH %d %d\n",vi->data,vj->data);
+
+            SVector3 t = vj->position - vi->position;
+            double L = t.norm();
+            t.normalize();
+            SVector3 b = crossprod(t, nrm);
+            double aspect_ratio = 1.e22;
+            bool sign_consistency = true;
+            double firstDist;
+            for(size_t j = _start + 1; j < _end; j++) {
+              Vertex *vk = loop[j % loop.size()];
+              SVector3 tik = vk->position - vi->position;
+              double dist = dot(b, tik);
+              //	printf("side 1 vertex %d dist %g\n",vk->data,dist);
+              if(j == _start + 1)
+                firstDist = dist;
+              else if(dist * firstDist < 0)
+                sign_consistency = false;
+              aspect_ratio = std::min(aspect_ratio, fabs(dist) / L);
+            }
+            firstDist = -firstDist;
+            for(size_t j = _end + 1; j < _start + loop.size(); j++) {
+              Vertex *vk = loop[j % loop.size()];
+              SVector3 tik = vk->position - vi->position;
+              double dist = dot(b, tik);
+              //		printf("side 2 vertex %d dist %g\n",vk->data,dist);
+              //		if (j == _end+1)firstDist = dist;
+              if(dist * firstDist < 0) sign_consistency = false;
+              aspect_ratio = std::min(aspect_ratio, fabs(dist) / L);
+            }
+            //	      printf("considering %d %d -- %g %g %g AR
+            //%12.5E\n",vi->data,vj->data,_end,b.x(),b.y(),b.z(),aspect_ratio);
+            if(!sign_consistency) continue;
+            if(aspect_ratio < 0.1) continue;
+            if(aspect_ratio > best_aspect_ratio) {
+              best_aspect_ratio = aspect_ratio;
+              best_start = _start;
+              best_end = _end;
+            }
+          }
+        }
+      }
+      if(best_start >= 0) {
+        std::vector<Vertex *> newLoop;
+        for(size_t i = best_start; i < best_end + 1; i++)
+          newLoop.push_back(loop[i % loop.size()]);
+        loops.push(newLoop);
+        newLoop.clear();
+        for(size_t i = best_end; i < best_start + loop.size() + 1; i++)
+          newLoop.push_back(loop[i % loop.size()]);
+        loops.push(newLoop);
+      }
+      else {
+        remove_vertex = false;
+        break;
+      }
+    }
+  }
+
+  // impossible to unrefine that pattern so continue
+
+  if (!remove_vertex)return 0;
+
+  //    if (triangles.size() == 2)
+  //    if (v->data > 42800){	
+  //      std::map<PolyMesh::Vertex*,double> nothing;
+  //      char name[123];
+  //      sprintf(name,"x%d.pos",v->data);
+  //      print__ (name, this, nothing);
+  //    }
+  
+  if (deleteVertexAndRemeshCavity2 (v,triangles)){
+    //      printf("%d remeshed with %lu triangles\n",v->data,triangles.size());
+    v->he = nullptr;
+    // printf("removed! %d\n", v->data);
+    // if(nbProcessed % 100000 == 0) {
+    //   Msg::Info("vertex %ld / %lu -- %lu processed -- %lu removed\n", v->data,
+    //             vertices.size(), nbProcessed, nbRemove);
+    // }
+  }
+  //    if (triangles.size() == 2)printf("%d remeshing with %lu triangles
+  //    done\n",v->data,triangles.size());
+
+  // if(nbRemove == 0) return 0;
+
+  {
+    // std::vector<Vertex *> new_v;
+    // for(auto v : vertices) {
+    //   // if(!keepDeletedNodes && v->he == nullptr) { delete v; continue;}
+    //   new_v.push_back(v);
+    // }
+    // vertices = new_v;
+    std::vector<HalfEdge *> new_edges;
+    for(auto e : hedges) {
+      if(e->v == nullptr) { delete e; }
+      else
+        new_edges.push_back(e);
+    }
+    hedges = new_edges;
+    std::vector<Face *> new_faces;
+    for(auto f : faces) {
+      if(f->he == nullptr) { delete f; } // delete f;
+      else
+      new_faces.push_back(f);
+    }
+    faces = new_faces;
+  }
+
+  return 1;
+}
+
+
+
 int PolyMesh::decimate(double thresholdDistance,
                        std::map<Vertex *, SVector3> *cogs,
                        std::map<Vertex *, SVector3> *nrms)
@@ -587,7 +774,7 @@ int PolyMesh::decimate(double thresholdDistance,
     std::vector<Vertex *> new_v;
     for(auto v : vertices) {
       if(v->he == nullptr) { delete v; }
-      else
+      else 
         new_v.push_back(v);
     }
     vertices = new_v;

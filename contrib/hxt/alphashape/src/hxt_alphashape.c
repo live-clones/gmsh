@@ -133,11 +133,9 @@ int hxtAlphaShapeNodeInsertion(HXTMesh* mesh, HXTDelaunayOptions* delOptions, HX
 
         uint32_t ptIndex = 0;
         uint32_t numNewPts = 0;
-
         for(uint64_t t=0; t<nTetrahedra; t++) {
 
             // TODO : issue with slivers --> manage them differently ... 
-            
             uint64_t tet = alphaShapeOptions->tetrahedra[t];
             
             if (mesh->tetrahedra.color[tet] != alphaShapeOptions->colorIn){
@@ -149,41 +147,46 @@ int hxtAlphaShapeNodeInsertion(HXTMesh* mesh, HXTDelaunayOptions* delOptions, HX
             getTetCoordAndNodalSize(mesh, delOptions->nodalSizes->array, tet, p, s);
 
             // Using the best center approach of hxt
-            // double bestC[4];
-            // if(getBestCenter(p, s, bestC, delOptions->nodalSizes)){
-            //     // printf("get best center removes the point\n");
-            //     // printf("best center :      %f, %f, %f \n", bestC[0], bestC[1], bestC[2]);
-            //     continue;
-            // }
-            // for (int i=0; i<4; i++) newVertices[4*ptIndex+i] = bestC[i];
-            
-            // Using the "classical" circumcenter approach
-            double c[3], R, xi, eta, zeta;  
-            R = tetrahedron_circumcenter(p[0], p[1], p[2], p[3], c, &xi, &eta, &zeta);
-            if (R <= 0.) continue;
-            
-            // Test size and quality
-            double s_mean = (s[0]+s[1]+s[2]+s[3])/4;
-            if (R/s_mean < 1) continue; // it is small enough 
-            // Find in which tet is the newly spawned point
-            uint64_t pt2Tet = HXT_COLOR_OUT;
-            if (pointInTetrahedron(p[0], p[1], p[2], p[3], c)==1){
-                pt2Tet = tet;
-            }
-            else { 
-                // If the point is not in its own tet, check in neighbors and neighs of neighs. (not perfect...)
-                pt2Tet = findPointInNeighbouringTets(mesh, tet, c);
-            }
-            if (pt2Tet == -1 || mesh->tetrahedra.color[pt2Tet] != alphaShapeOptions->colorIn) { 
-                // it is not in its neighbors, or it is outside of the alpha shape
+            double bestC[4];
+            if(getBestCenter(p, s, bestC, delOptions->nodalSizes)){
+                // printf("get best center removes the point\n");
+                // printf("best center :      %f, %f, %f \n", bestC[0], bestC[1], bestC[2]);
                 continue;
             }
-            double pNeigh[4][4], sNeigh[4];
-            getTetCoordAndNodalSize(mesh, delOptions->nodalSizes->array, pt2Tet, pNeigh, sNeigh);
-            newVertices[4*ptIndex+3] = 0.;
-            for (int i=0; i<3; i++) newVertices[4*ptIndex+i] = c[i];
-            for (int i=0; i<4; i++) newVertices[4*ptIndex+3] += sNeigh[i]/4;
-            ptToTet[ptIndex] = pt2Tet;
+            for (int i=0; i<4; i++) newVertices[4*ptIndex+i] = bestC[i];
+            // Using the "classical" circumcenter approach
+            // double c[3], R, xi, eta, zeta;  
+            // R = tetrahedron_circumcenter(p[0], p[1], p[2], p[3], c, &xi, &eta, &zeta);
+            // for (int i=0; i<4; i++) printf("p[%d] : %f, %f, %f , R = %f \n", i, p[i][0], p[i][1], p[i][2], R);
+            // if (R <= 0.){
+            //     continue;    
+            // }
+            
+            // Test size and quality
+            // double s_mean = (s[0]+s[1]+s[2]+s[3])/4;
+            // if (R/s_mean < 1) {
+            //     continue; // it is small enough 
+            // }
+            // Find in which tet is the newly spawned point
+            // uint64_t pt2Tet = HXT_COLOR_OUT;
+            // pt2Tet = tet;
+            // if (pointInTetrahedron(p[0], p[1], p[2], p[3], c)==1){
+            //     pt2Tet = tet;
+            // }
+            // else { 
+            //     // If the point is not in its own tet, check in neighbors and neighs of neighs. (not perfect...)
+            //     pt2Tet = findPointInNeighbouringTets(mesh, tet, c);
+            // }
+            // if (pt2Tet == -1 || mesh->tetrahedra.color[pt2Tet] != alphaShapeOptions->colorIn) { 
+            //     // it is not in its neighbors, or it is outside of the alpha shape
+            //     continue;
+            // }
+            // double pNeigh[4][4], sNeigh[4];
+            // getTetCoordAndNodalSize(mesh, delOptions->nodalSizes->array, pt2Tet, pNeigh, sNeigh);
+            // newVertices[4*ptIndex+3] = 0.;
+            // for (int i=0; i<3; i++) newVertices[4*ptIndex+i] = c[i];
+            // for (int i=0; i<4; i++) newVertices[4*ptIndex+3] += sNeigh[i]/4;
+            // ptToTet[ptIndex] = pt2Tet;
             
             numNewPts++;
             ptIndex++;
@@ -232,10 +235,12 @@ int hxtAlphaShapeNodeInsertion(HXTMesh* mesh, HXTDelaunayOptions* delOptions, HX
         if(delOptions->insertionFirst == mesh->vertices.num)
             break;
 
-
+        // delOptions->nodalSizes->enabled = 0;
         HXT_CHECK(hxtDelaunaySteadyVertices(mesh, delOptions, nodeInfo, numNewPts));
         hxtFree(&nodeInfo);
         
+        // hxtMeshWriteGmsh(mesh, "intermediateMesh.msh");
+
         uint64_t numNewTets = 0;
         for (uint64_t j=0; j<mesh->tetrahedra.num; j++) 
             if (mesh->tetrahedra.color[j] == alphaShapeOptions->colorIn) numNewTets++;

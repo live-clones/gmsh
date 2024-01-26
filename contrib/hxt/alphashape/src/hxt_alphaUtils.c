@@ -73,10 +73,10 @@ double tetrahedron_circumcenter(const double a[3], const double b[3], const doub
   }
 
   double R;
-  if (xxx > 1e-6) // avoid inserting points in sliver tetrahedra
+  // if (xxx > 1e-10) // avoid inserting points in sliver tetrahedra
     R = sqrt ((a[0]-circumcenter[0])*(a[0]-circumcenter[0])+(a[1]-circumcenter[1])*(a[1]-circumcenter[1])+(a[2]-circumcenter[2])*(a[2]-circumcenter[2]));
-  else
-    R = -DBL_MAX;
+  // else
+  //   R = -DBL_MAX;
   return R;
 }
 
