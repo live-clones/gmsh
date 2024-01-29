@@ -1586,12 +1586,13 @@ void _delaunayCheck(PolyMesh* pm, std::vector<PolyMesh::HalfEdge* > hes, std::ve
   *_t = _touched;
 }
 
-void _Walk(PolyMesh::Face *f, double* cc, PolyMesh::HalfEdge** heCandidate, bool* found, int bndTag)
+void _Walk(PolyMesh::Face *f, double* cc, PolyMesh::HalfEdge** heCandidate, bool* found, int bndTag, int* onEdgeFlag)
 {
   // heCandidate = nullptr;
   double POS[2] = {cc[0], cc[1]};
   PolyMesh::HalfEdge *he = f->he;
   bool cont = true;
+  if (onEdgeFlag) *onEdgeFlag = -1;
   while(cont) {
     PolyMesh::Vertex *v0 = he->v;
     PolyMesh::Vertex *v1 = he->next->v;
@@ -1600,7 +1601,11 @@ void _Walk(PolyMesh::Face *f, double* cc, PolyMesh::HalfEdge** heCandidate, bool
     double s0 = robustPredicates::orient2d(v0->position, v1->position, POS);
     double s1 = robustPredicates::orient2d(v1->position, v2->position, POS);
     double s2 = robustPredicates::orient2d(v2->position, v0->position, POS);
-
+    if (onEdgeFlag){
+      if (s0 == 0) *onEdgeFlag = 0;
+      if (s1 == 0) *onEdgeFlag = 1;
+      if (s2 == 0) *onEdgeFlag = 2;
+    }
     if(s0 >= 0 && s1 >= 0 && s2 >= 0) {
       *heCandidate = he;
       *found = true;
@@ -1909,7 +1914,7 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
     bool found;
     for(size_t i = 0; i < coordsInMesh.size(); i += 2) {
       double x[2] = {coordsInMesh[i], coordsInMesh[i + 1]};
-      _Walk(f, x, &he, &found, 10);
+      _Walk(f, x, &he, &found, 10, nullptr);
       f = he->f;
       pm->split_triangle(-1, x[0], x[1], 0, f, delaunayCriterion, nullptr);
       pm->vertices[pm->vertices.size() - 1]->data = nodeTagsInMesh[i/2];
@@ -1942,7 +1947,6 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
   double surfaceConstraint = hMean == -20 ? 0.2 : 1.;
   // double surfaceConstraint = 1.;
 
-  // print4debug(pm, 0);
   // 2. compute alpha shape
   std::unordered_map<PolyMesh::Face*, bool> _touched;
   double hTriangle, R, q;
@@ -1986,7 +1990,7 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
             }	    
             else {
               _he->data = alphaShapeTags[1];      
-              _he->opposite->data = alphaShapeTags[1];      
+              // _he->opposite->data = alphaShapeTags[1];      
             }
           }
           _he = _he->next;
@@ -1997,7 +2001,8 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
 
   // printf("alpha shape done \n");
 
-  // print4debug(pm, 0);
+  // print4debug(pm, 1);
+  // exit(0);
   for (auto f : pm->faces) if (f->data == -2) f->data = -1;
   // 3. if requested, refine  
   if (refine){
@@ -2050,7 +2055,8 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
       }
     }
 
-    // printf("coarsening done \n");
+
+    // exit(0);
     // Then, refine...
     // Msg::Info("--> refining...\n");
     std::vector<PolyMesh::Face *> _badFaces;
@@ -2070,6 +2076,8 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
     gmsh::model::mesh::getMaxNodeTag(newTag);
     newTag++;
     while (!_badFaces.empty()){
+      // print4debug(pm, newTag);
+      // exit(0);
       PolyMesh::Face *f = _badFaces.back();
       _badFaces.erase(_badFaces.end()-1);
       if (f->he == nullptr || f->data != alphaShapeTags[0]) {
@@ -2082,7 +2090,18 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
       if((q < _limit && R/s > _sizeMinFactor) || R/s > _size){
           PolyMesh::HalfEdge* heCandidate = nullptr;
           bool found;
-          _Walk(f, cc, &heCandidate, &found, alphaShapeTags[1]);
+          int onEdgeFlag;
+          _Walk(f, cc, &heCandidate, &found, alphaShapeTags[1], &onEdgeFlag);
+          if (onEdgeFlag != -1){ // A sanity check... if we are splitting a triangle with a 90° angle, and the opposite edge happens to be a boundary edge, we must split the edge, not the triangle
+            PolyMesh::HalfEdge *flaggedHe = nullptr; 
+            if (onEdgeFlag == 0) flaggedHe = heCandidate;
+            else if (onEdgeFlag == 1) flaggedHe = heCandidate->next;
+            else if (onEdgeFlag == 2) flaggedHe = heCandidate->next->next;
+            if (flaggedHe->data == alphaShapeTags[1]) {
+              found = false;
+              heCandidate = flaggedHe;
+            }
+          }
           std::vector<PolyMesh::HalfEdge *> _touched;
           if (heCandidate && found){ // this means it is NOT a constrained edge
             int bndTag = alphaShapeTags[1];
