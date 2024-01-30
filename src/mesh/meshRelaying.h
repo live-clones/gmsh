@@ -212,6 +212,8 @@ class meshRelaying {
 
 };
 
+void projectPonLine(double A[2], double B[2], double P[2], double *proj);
+
 /*
   FOR API
 */
