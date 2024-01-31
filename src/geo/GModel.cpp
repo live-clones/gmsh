@@ -379,8 +379,12 @@ GEntity *GModel::getEntityByTag(int dim, int n) const
 bool GModel::changeEntityTag(int dim, int tag, int newTag)
 {
   if(dim == 0) {
-    GVertex *gv = getVertexByTag(tag);
-    if(gv) {
+    GVertex *gv = getVertexByTag(tag), *gvn = getVertexByTag(newTag);
+    if(gvn) {
+      Msg::Error("Point with tag %d already exists", newTag);
+      return false;
+    }
+    else if(gv) {
       vertices.erase(gv);
       gv->setTag(newTag);
       vertices.insert(gv);
@@ -391,8 +395,12 @@ bool GModel::changeEntityTag(int dim, int tag, int newTag)
     }
   }
   else if(dim == 1) {
-    GEdge *ge = getEdgeByTag(tag);
-    if(ge) {
+    GEdge *ge = getEdgeByTag(tag), *gen = getEdgeByTag(newTag);
+    if(gen) {
+      Msg::Error("Curve with tag %d already exists", newTag);
+      return false;
+    }
+    else if(ge) {
       edges.erase(ge);
       ge->setTag(newTag);
       edges.insert(ge);
@@ -403,8 +411,12 @@ bool GModel::changeEntityTag(int dim, int tag, int newTag)
     }
   }
   else if(dim == 2) {
-    GFace *gf = getFaceByTag(tag);
-    if(gf) {
+    GFace *gf = getFaceByTag(tag), *gfn = getFaceByTag(newTag);
+    if(gfn) {
+      Msg::Error("Surface with tag %d already exists", newTag);
+      return false;
+    }
+    else if(gf) {
       faces.erase(gf);
       gf->setTag(newTag);
       faces.insert(gf);
@@ -415,8 +427,12 @@ bool GModel::changeEntityTag(int dim, int tag, int newTag)
     }
   }
   else if(dim == 3) {
-    GRegion *gr = getRegionByTag(tag);
-    if(gr) {
+    GRegion *gr = getRegionByTag(tag), *grn = getRegionByTag(newTag);
+    if(grn) {
+      Msg::Error("Volume with tag %d already exists", newTag);
+      return false;
+    }
+    else if(gr) {
       regions.erase(gr);
       gr->setTag(newTag);
       regions.insert(gr);
