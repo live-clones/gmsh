@@ -1796,12 +1796,10 @@ int checkColorHedge(PolyMesh::HalfEdge* he, int volTag, int bndTag){
   if (he->opposite == nullptr) return -1;
   if (he->f->data == volTag && he->opposite->f->data != volTag) {
     he->data = bndTag;
-    he->opposite->data = bndTag;
     return 1;
   }
   if (he->f->data != volTag && he->opposite->f->data != volTag) {
     he->data = -1;
-    he->opposite->data = -1;
     return 0;
   }
   return 0;
@@ -1820,7 +1818,9 @@ void hedgeCollapseBoundaryEdge(PolyMesh* pm, PolyMesh::HalfEdge* he, int volTag,
   _vertexNeighbors(he->v, vCheck);
   pm->hedgeCollapse(he, _t);
   for (auto v : vCheck){
-    if (v->he->f->data != volTag) continue;
+    if (v->data <= 0) {
+      continue;
+    }
     PolyMesh::HalfEdge* heTurn = v->he;
     do {
       checkColorHedge(heTurn, volTag, bndTag);
@@ -1935,7 +1935,7 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
   
   std::unordered_map<PolyMesh::Vertex*, size_t> vertex2Tag;
   std::vector<double> sizeAtNodes(pm->vertices.size());
-  for (size_t i=0; i<pm->vertices.size(); i++){
+  for (size_t i=4; i<pm->vertices.size(); i++){ // we're skipping the 4 vertices of the bounding box
     PolyMesh::Vertex* v = pm->vertices[i];
     vertex2Tag[v] = v->data;
     sizeAtNodes[i] = hMean > 0 ? hMean : sizeFieldCallback(2, v->data, v->position.x(), v->position.y(), v->position.z(), 0);
@@ -2227,6 +2227,15 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
   // pm->reset();
   delete pm;
   // Msg::Info("Done! \n");
+}
+
+
+void _decimateTriangulation(const int faceTag, const double thresholdDistance){
+  PolyMesh* pm;
+  GFace2PolyMesh(faceTag, &pm);
+  print4debug(pm, 1);
+  pm->decimate(thresholdDistance);
+  PolyMesh2GFace(pm, faceTag);
 }
 
 
