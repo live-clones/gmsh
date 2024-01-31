@@ -4577,6 +4577,12 @@ void _writeXAO(TopoDS_Shape &shape, GModel *model, const std::string &fileName)
   // further extend the XAO output by dumping OCCAttributes (extrusion
   // constraints, mesh sizes...).
 
+  // We could also save the entity tag; for reading back this info we would then
+  // either need to change/write a custom importShapes/synchronize() where tags
+  // are explicitly given; or modify the bound tags in OCC_Internals so that
+  // synchronize() can be used as-is; or add a "renumberEntities" function in
+  // GModel.
+
   file << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << std::endl;
   file << "<XAO version=\"1.0\" author=\"Gmsh\">" << std::endl;
   file << "  <geometry name=\"" << model->getName() << "\">" << std::endl;
@@ -6348,7 +6354,8 @@ int GModel::readOCCXAO(const std::string &fn)
         int dim = getDim(dimension);
         int tag = 0;
         if(group->QueryIntAttribute("tag", &tag) == XML_SUCCESS) {
-          // tag is available only in XAO files created by Gmsh
+          // Gmsh XAO extension: Gmsh saves the physical tag when creating XAO
+          // files
           tag = setPhysicalName(name, dim, tag);
         }
         else {
