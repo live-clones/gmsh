@@ -149,6 +149,9 @@ GMSH_API void gmshOptionGetColor(const char * name,
                                  int * a,
                                  int * ierr);
 
+/* Restore all options to default settings. */
+GMSH_API void gmshOptionRestoreDefaults(int * ierr);
+
 /* Add a new model, with name `name', and set it as the current model. */
 GMSH_API void gmshModelAdd(const char * name,
                            int * ierr);
@@ -2947,7 +2950,9 @@ GMSH_API void gmshModelOccGetSurfaceLoops(const int volumeTag,
                                           int *** surfaceTags, size_t ** surfaceTags_n, size_t *surfaceTags_nn,
                                           int * ierr);
 
-/* Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'. */
+/* Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'. If
+ * no density is attached to the entity (the default), the value corresponds
+ * respectively to the length, area and volume for `dim' = 1, 2 and 3. */
 GMSH_API void gmshModelOccGetMass(const int dim,
                                   const int tag,
                                   double * mass,

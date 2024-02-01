@@ -325,6 +325,21 @@ function getColor(name)
 end
 const get_color = getColor
 
+"""
+    gmsh.option.restoreDefaults()
+
+Restore all options to default settings.
+"""
+function restoreDefaults()
+    ierr = Ref{Cint}()
+    ccall((:gmshOptionRestoreDefaults, gmsh.lib), Cvoid,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const restore_defaults = restoreDefaults
+
 end # end of module option
 
 """
@@ -7814,7 +7829,9 @@ const get_surface_loops = getSurfaceLoops
 """
     gmsh.model.occ.getMass(dim, tag)
 
-Get the mass of the OpenCASCADE entity of dimension `dim` and tag `tag`.
+Get the mass of the OpenCASCADE entity of dimension `dim` and tag `tag`. If no
+density is attached to the entity (the default), the value corresponds
+respectively to the length, area and volume for `dim` = 1, 2 and 3.
 
 Return `mass`.
 

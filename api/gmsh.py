@@ -565,6 +565,20 @@ class option:
             api_a_.value)
     get_color = getColor
 
+    @staticmethod
+    def restoreDefaults():
+        """
+        gmsh.option.restoreDefaults()
+
+        Restore all options to default settings.
+        """
+        ierr = c_int()
+        lib.gmshOptionRestoreDefaults(
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+    restore_defaults = restoreDefaults
+
 
 class model:
     """
@@ -8834,7 +8848,9 @@ class model:
             """
             gmsh.model.occ.getMass(dim, tag)
 
-            Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.
+            Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'. If
+            no density is attached to the entity (the default), the value corresponds
+            respectively to the length, area and volume for `dim' = 1, 2 and 3.
 
             Return `mass'.
 

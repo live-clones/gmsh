@@ -46,6 +46,7 @@
 #include "pyramidalBasis.h"
 #include "Numeric.h"
 #include "OS.h"
+#include "Options.h"
 #include "OpenFile.h"
 #include "HierarchicalBasisH1Quad.h"
 #include "HierarchicalBasisH1Tria.h"
@@ -296,6 +297,14 @@ GMSH_API void gmsh::option::getColor(const std::string &name, int &r, int &g,
   else {
     Msg::Error("Could not get option '%s'", name.c_str());
   }
+}
+
+GMSH_API void gmsh::option::restoreDefaults()
+{
+  UnlinkFile(CTX::instance()->homeDir + CTX::instance()->sessionFileName);
+  UnlinkFile(CTX::instance()->homeDir + CTX::instance()->optionsFileName);
+  ReInitOptions(0);
+  InitOptionsGUI(0);
 }
 
 // gmsh::model

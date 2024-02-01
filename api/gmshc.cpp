@@ -242,6 +242,17 @@ GMSH_API void gmshOptionGetColor(const char * name, int * r, int * g, int * b, i
   }
 }
 
+GMSH_API void gmshOptionRestoreDefaults(int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::option::restoreDefaults();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelAdd(const char * name, int * ierr)
 {
   if(ierr) *ierr = 0;

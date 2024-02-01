@@ -849,6 +849,8 @@ module gmsh
         gmshOptionSetColor
     procedure, nopass :: getColor => &
         gmshOptionGetColor
+    procedure, nopass :: restoreDefaults => &
+        gmshOptionRestoreDefaults
   end type gmsh_option_t
 
   type, public :: gmsh_t
@@ -1212,6 +1214,19 @@ module gmsh
          a=a, &
          ierr_=ierr)
   end subroutine gmshOptionGetColor
+
+  !> Restore all options to default settings.
+  subroutine gmshOptionRestoreDefaults(ierr)
+    interface
+    subroutine C_API(ierr_) &
+      bind(C, name="gmshOptionRestoreDefaults")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(ierr_=ierr)
+  end subroutine gmshOptionRestoreDefaults
 
   !> Add a new model, with name `name', and set it as the current model.
   subroutine gmshModelAdd(name, &
@@ -12679,7 +12694,9 @@ module gmsh
       surfaceTags_n)
   end subroutine gmshModelOccGetSurfaceLoops
 
-  !> Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.
+  !> Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'. If
+  !! no density is attached to the entity (the default), the value corresponds
+  !! respectively to the length, area and volume for `dim' = 1, 2 and 3.
   subroutine gmshModelOccGetMass(dim, &
                                  tag, &
                                  mass, &

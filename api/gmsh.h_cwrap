@@ -314,6 +314,16 @@ namespace gmsh { // Top-level functions
       if(ierr) throwLastError();
     }
 
+    // gmsh::option::restoreDefaults
+    //
+    // Restore all options to default settings.
+    inline void restoreDefaults()
+    {
+      int ierr = 0;
+      gmshOptionRestoreDefaults(&ierr);
+      if(ierr) throwLastError();
+    }
+
   } // namespace option
 
   namespace model { // Model functions
@@ -5564,6 +5574,9 @@ namespace gmsh { // Top-level functions
       // gmsh::model::occ::getMass
       //
       // Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.
+      // If no density is attached to the entity (the default), the value
+      // corresponds respectively to the length, area and volume for `dim' = 1, 2
+      // and 3.
       inline void getMass(const int dim,
                           const int tag,
                           double & mass)

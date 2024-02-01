@@ -88,6 +88,9 @@ option.add('setColor', doc, None, istring('name'), iint('r'), iint('g'), iint('b
 doc = '''Get the `r', `g', `b', `a' value of a color option. `name' is of the form "Category.Color.Option" or "Category[num].Color.Option". Available categories and options are listed in the "Gmsh options" chapter of the Gmsh reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options). For conciseness "Color." can be ommitted in `name'.'''
 option.add('getColor', doc, None, istring('name'), oint('r'), oint('g'), oint('b'), oint('a'))
 
+doc = '''Restore all options to default settings.'''
+option.add('restoreDefaults', doc, None)
+
 ################################################################################
 
 model = gmsh.add_module('model', 'model functions')
@@ -938,7 +941,7 @@ occ.add('getCurveLoops', doc, None, iint('surfaceTag'), ovectorint('curveLoopTag
 doc = '''Get the tags `surfaceLoopTags' of the surface loops making up the volume of tag `volumeTag', as well as the tags `surfaceTags' of the surfaces making up each surface loop.'''
 occ.add('getSurfaceLoops', doc, None, iint('volumeTag'), ovectorint('surfaceLoopTags'), ovectorvectorint('surfaceTags'))
 
-doc = '''Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.'''
+doc = '''Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'. If no density is attached to the entity (the default), the value corresponds respectively to the length, area and volume for `dim' = 1, 2 and 3.'''
 occ.add('getMass', doc, None, iint('dim'), iint('tag'), odouble('mass'))
 
 doc = '''Get the center of mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.'''
