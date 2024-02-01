@@ -214,15 +214,17 @@ class meshRelaying {
   void adjustBnd(){
     discreteFront::instance()->adjustBnd(bnd1d);
   }  
+  void curvature(std::vector<int> concentration, std::vector<double> *curvature);
 };
 
 void projectPonLine(double A[2], double B[2], double P[2], double *proj);
+double kappa(double x1[2], double x2[2], double x3[2]);
 
 /*
   FOR API
 */
 
-void concentration(std::vector<int> &concentration);
+void concentration(std::vector<int> &concentration, std::vector<double> &curvature);
 void advanceInTime(double dt, std::vector<SVector3> v, bool front);
 void addFreeForm(int tag, const std::vector<SVector3> &poly);
 void getDFPosition(std::vector<double> &api_position, std::vector<int> &api_tags);

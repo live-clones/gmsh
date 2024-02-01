@@ -197,6 +197,7 @@ int discreteFront::whatIsTheColorOf2d (const SVector3 &P){
   std::vector<int> cols;
   double pp[2] = {P.x(),P.y()};
   for (auto c : colors){
+    if(c<0) continue;
     if (cs.find(c) == cs.end()){
       cs.insert(c);
       int wn = 0;
@@ -1081,6 +1082,7 @@ void discreteFront::moveFromFront(double dt, std::vector<SVector3> v){
   moveFromV(dt, v_marker, true);
 }
 
+// NEED FIX
 void discreteFront::adjustBnd(std::vector<std::pair<size_t,size_t>> bnd1d){
 
   std::vector<double> position;
@@ -1149,6 +1151,7 @@ void discreteFront::adjustBnd(std::vector<std::pair<size_t,size_t>> bnd1d){
             pos[3*lines[j]+1] = b1[1];
         } else {
           double t = ((p[0]-b1[0])*(b2[0]-b1[0]) + (p[1]-b1[1])*(b2[1]-b1[1])) / lengthSquared;
+          // t = std::max(0.0, std::min(1.0, t));
           if(t>=0.0 && t<=1.0){
             pos[3*lines[j]] = b1[0]+t*(b2[0]-b1[0]);
             pos[3*lines[j]+1] = b1[1]+t*(b2[1]-b1[1]);
@@ -1739,13 +1742,98 @@ void meshRelaying::print4debug(const char *fn){
   fclose(f);
 }
 
+void meshRelaying::curvature(std::vector<int> concentration, std::vector<double> *curvature){
+  curvature->resize(v2v.size());
+  for(size_t i=0; i<v2v.size(); ++i){
+    std::vector<std::pair<size_t, int>> front_node_i;
+    for(size_t j=0; j<v2v[i].size(); ++j){
+
+      std::vector<std::pair<size_t,int>> edgeij2tri;
+      for(size_t k=0; k<v2tri[i].size(); ++k){
+        for(int d=0; d<3; ++d){
+          if(tris[3*v2tri[i][k]+d] == v2v[i][j]){
+            if(tris[3*v2tri[i][k]+((d+1)%3)] == i){
+              edgeij2tri.push_back(std::make_pair(v2tri[i][k], 1));
+            } else {
+              edgeij2tri.push_back(std::make_pair(v2tri[i][k], -1));
+            }
+            
+          }
+        }
+      }
+      
+      if(edgeij2tri.size()!=2){
+        (*curvature)[i] = 0.0;
+        continue;
+      }
+      if(concentration[edgeij2tri[0].first]!=concentration[edgeij2tri[1].first]){
+        int sign = 0;
+        if(concentration[edgeij2tri[0].first]==1){
+          sign = edgeij2tri[0].second;
+        } else {
+          sign = edgeij2tri[1].second;
+        }
+        front_node_i.push_back(std::make_pair(v2v[i][j], sign));
+      }
+    }
+    
+    if(front_node_i.size()!=2){
+      (*curvature)[i] = 0.0;
+      continue;
+    } 
+    
+    
+    size_t triplet[3];
+    if(front_node_i[0].second == 1){
+      triplet[0] = front_node_i[0].first;
+      triplet[1] = i;
+      triplet[2] = front_node_i[1].first;
+    } else {
+      triplet[0] = front_node_i[1].first;
+      triplet[1] = i;
+      triplet[2] = front_node_i[0].first;
+    }
+    (*curvature)[i] = kappa(&pos[3*triplet[0]], &pos[3*triplet[1]], &pos[3*triplet[2]]);
+    
+  }
+}
+
+double kappa(double x1[2], double x2[2], double x3[2]){
+  double dy1 = x1[1]-x2[1];
+  double dy2 = x2[1]-x3[1];
+  double dy3 = x3[1]-x1[1];
+
+  double n1 = x1[0]*x1[0] + x1[1]*x1[1];
+  double n2 = x2[0]*x2[0] + x2[1]*x2[1];
+  double n3 = x3[0]*x3[0] + x3[1]*x3[1];
+
+  double area = 0.5*(x1[0]*dy2 + x2[0]*dy3 + x3[0]*dy1);
+  if (area == 0.0){
+      return 0.0;
+  } else {
+    double Ux = (1/(4*area))*(n1*dy2 + n2*dy3 + n3*dy1);
+    double Uy = (1/(4*area))*(n1*(x3[0]-x2[0]) + n2*(x1[0]-x3[0]) + n3*(x2[0]-x1[0]));
+
+    double radius = sqrt((Ux-x2[0])*(Ux-x2[0]) + (Uy-x2[1])*(Uy-x2[1]));
+    double sign = 0.0;
+    if(robustPredicates::orient2d(x1,x2,x3)>0){
+      sign = 1.0;
+    } else {
+      sign = -1.0;
+    }
+    return -sign*(1.0/radius);
+  }
+  return 0;
+}
+
 /*
   FOR API
 */
 
 
-void concentration(std::vector<int> &concentration){
+void concentration(std::vector<int> &concentration, std::vector<double> &curvature){
   meshRelaying::instance()->concentration(&concentration);
+  meshRelaying::instance()->curvature(concentration, &curvature);
 }
 
 void advanceInTime(double dt, std::vector<SVector3> v, bool front){
@@ -1781,6 +1869,7 @@ void resetDiscreteFront(){
 void relayingAndRelax(){
   meshRelaying::instance()->print4debug("in_gmsh.pos");
   meshRelaying::instance()->doRelaying(0);      // time not used for df -> 0
+  meshRelaying::instance()->print4debug("before_relax.pos");
   meshRelaying::instance()->doRelax(1);         // full relax
   meshRelaying::instance()->print4debug("before_adjust.pos");
   meshRelaying::instance()->adjustBnd();

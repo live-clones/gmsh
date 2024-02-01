@@ -1642,6 +1642,7 @@ GMSH_API void gmshModelMeshTetrahedralize(const double * coord, const size_t coo
 
 /* Compute the concentration of each element based on the discrete front for mesh relaying*/
 GMSH_API void gmshModelMeshConcentrationFromDF(int ** concentration, size_t * concentration_n, 
+                                               double ** curvature, size_t * curvature_n,
                                                int * ierr);
 
 /* Advance in time the discrete front of relaying */

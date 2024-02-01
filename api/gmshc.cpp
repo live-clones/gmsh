@@ -2436,13 +2436,15 @@ GMSH_API void gmshModelMeshTetrahedralize(const double * coord, const size_t coo
   }
 }
 
-GMSH_API void gmshModelMeshConcentrationFromDF(int ** concentration, size_t * concentration_n, int * ierr)
+GMSH_API void gmshModelMeshConcentrationFromDF(int ** concentration, size_t * concentration_n, double ** curvature, size_t * curvature_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<int> api_concentration;
-    gmsh::model::mesh::concentrationFromDF(api_concentration);
+    std::vector<double> api_curvature;
+    gmsh::model::mesh::concentrationFromDF(api_concentration, api_curvature);
     vector2ptr(api_concentration, concentration, concentration_n);
+    vector2ptr(api_curvature, curvature, curvature_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
