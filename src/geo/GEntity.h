@@ -42,8 +42,8 @@ private:
   // the visibility and the selection flag
   char _visible, _selection;
 
-  // flag storing if all mesh elements are visible
-  char _allElementsVisible;
+  // flag storing if only some mesh elements are visible
+  char _onlySomeElementsVisible;
 
   // the color of the entity (ignored if set to transparent blue)
   unsigned int _color;
@@ -373,9 +373,15 @@ public:
     return nullptr;
   }
 
-  // get/set all mesh element visibility flag
-  bool getAllElementsVisible() { return _allElementsVisible ? true : false; }
-  void setAllElementsVisible(bool val) { _allElementsVisible = val ? 1 : 0; }
+  // get/set only some mesh element visibility flag
+  bool getOnlySomeElementsVisible()
+  {
+    return _onlySomeElementsVisible ? true : false;
+  }
+  void setOnlySomeElementsVisible(bool val)
+  {
+    _onlySomeElementsVisible = val ? 1 : 0;
+  }
 
   // get the number of mesh vertices in the entity
   std::size_t getNumMeshVertices() { return mesh_vertices.size(); }

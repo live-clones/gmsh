@@ -458,7 +458,7 @@ public:
     if(CTX::instance()->mesh.lineLabels) drawElementLabels(_ctx, e, e->lines);
 
     if(CTX::instance()->mesh.nodes || CTX::instance()->mesh.nodeLabels) {
-      if(e->getAllElementsVisible())
+      if(!e->getOnlySomeElementsVisible())
         drawVerticesPerEntity(_ctx, e);
       else
         drawVerticesPerElement(_ctx, e, e->lines);
@@ -522,8 +522,9 @@ public:
     }
 
     if(CTX::instance()->mesh.nodes || CTX::instance()->mesh.nodeLabels) {
-      if(f->getAllElementsVisible())
+      if(!f->getOnlySomeElementsVisible()) {
         drawVerticesPerEntity(_ctx, f);
+      }
       else {
         if(CTX::instance()->mesh.triangles)
           drawVerticesPerElement(_ctx, f, f->triangles);
@@ -620,8 +621,9 @@ public:
     }
 
     if(CTX::instance()->mesh.nodes || CTX::instance()->mesh.nodeLabels) {
-      if(r->getAllElementsVisible())
+      if(!r->getOnlySomeElementsVisible()) {
         drawVerticesPerEntity(_ctx, r);
+      }
       else {
         if(CTX::instance()->mesh.tetrahedra)
           drawVerticesPerElement(_ctx, r, r->tetrahedra);
