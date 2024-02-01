@@ -15,6 +15,15 @@ meshRelaying *meshRelaying::_instance = nullptr;
 int ITERR = 0;
 int TESTCASE = 2;
 
+
+//void discreteFront::forceMassConservation ( double mass , int color ){
+//}
+
+//void discreteFront::getNormalsAndLocalMassDefect ( size_t i , SVector3 &n, double &massDefect){
+//
+//}
+
+
 void discreteFront::printGeometry(FILE *f){
   for (size_t i=0 ; i< lines.size() ; i+=2){
     fprintf(f,"SL(%12.5E,%12.5E,0,%12.5E,%12.5E,0){%d,%d};\n",

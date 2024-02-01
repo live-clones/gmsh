@@ -119,7 +119,7 @@ class discreteFront {
     colors.insert (colors.end(), c.begin(), c.end());
     for (size_t i=0;i<l.size();i++)lines.push_back(l[i]+n);
   }
-  
+  void forceMassConservation ( double mass , int color );  
 };
 
 
