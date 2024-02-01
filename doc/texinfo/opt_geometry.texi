@@ -218,7 +218,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCBrepFormatVersion
 Version of BREP format used when saving BREP and XAO files (0: current, 1, 2, 3: currently supported versions)@*
-Default value: @code{0}@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCDisableStl

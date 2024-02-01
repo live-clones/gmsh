@@ -1226,6 +1226,12 @@ std::string opt_general_error_filename(OPT_ARGS_STR)
   return CTX::instance()->errorFileName;
 }
 
+std::string opt_general_number_format(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->numberFormat = val;
+  return CTX::instance()->numberFormat;
+}
+
 std::string opt_general_session_filename(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) CTX::instance()->sessionFileName = val;
@@ -1805,7 +1811,7 @@ std::string opt_view_name(OPT_ARGS_STR)
 #endif
 }
 
-std::string opt_view_format(OPT_ARGS_STR)
+std::string opt_view_number_format(OPT_ARGS_STR)
 {
 #if defined(HAVE_POST)
   GET_VIEWo("");

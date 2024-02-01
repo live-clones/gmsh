@@ -73,6 +73,9 @@ StringXString GeneralOptions_String[] = {
   { F|O, "GraphicsFontTitle" , opt_general_graphics_font_title , "Helvetica" ,
     "Font used in the graphic window for titles" },
 
+  { F|O, "NumberFormat" , opt_general_number_format , "%.3g" ,
+    "Number format (in standard C form)" },
+
   { F|S, "OptionsFileName" , opt_general_options_filename ,
 #if defined(WIN32)
     "gmsh-options" ,
@@ -338,8 +341,8 @@ StringXString ViewOptions_String[] = {
 
   { F,   "FileName" , opt_view_filename , "" ,
     "Default post-processing view file name" },
-  { F|O, "Format" , opt_view_format , "%.3g" ,
-    "Number format (in standard C form)" },
+  { F|O|D, "Format" , opt_view_number_format , "%.3g" ,
+    "[Deprecated]" },
 
   { F|O, "GeneralizedRaiseX" , opt_view_gen_raise0 , "v0" ,
     "Generalized elevation of the view along X-axis (in model coordinates, "
@@ -355,6 +358,8 @@ StringXString ViewOptions_String[] = {
 
   { F,   "Name" , opt_view_name , "" ,
     "Default post-processing view name" },
+  { F|O, "NumberFormat" , opt_view_number_format , "%.3g" ,
+    "Number format (in standard C form)" },
 
   { F|O, "Stipple0" , opt_view_stipple0 , "1*0x1F1F" ,
     "First stippling pattern" },
