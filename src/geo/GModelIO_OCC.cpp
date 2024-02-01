@@ -6192,16 +6192,7 @@ int GModel::readOCCXAO(const std::string &fn)
   // to make the link between subshapes and model entities
 
 #if defined(HAVE_OCC) && defined(HAVE_TINYXML2)
-  // import BREP
-  TopoDS_Shape shape;
-  BRep_Builder aBuilder;
-  BRepTools::Read(shape, fn.c_str(), aBuilder);
-  std::vector<std::pair<int, int> > outDimTags;
-  _occ_internals->importShapes(&shape, false, outDimTags);
-  _occ_internals->synchronize(this);
-  snapVertices();
-
-  // import XML data
+  // get XML elements
   using namespace tinyxml2;
   XMLDocument xmlDoc;
   if(xmlDoc.LoadFile(fn.c_str()) != XML_SUCCESS) {
@@ -6215,7 +6206,12 @@ int GModel::readOCCXAO(const std::string &fn)
   }
   XMLElement *geometry = xao->FirstChildElement("geometry");
   if(!geometry) {
-    Msg::Warning("No geometry node in file '%s'", fn.c_str());
+    Msg::Error("No geometry node in file '%s'", fn.c_str());
+    return 0;
+  }
+  XMLElement *shape = geometry->FirstChildElement("shape");
+  if(!shape) {
+    Msg::Warning("No shape node in file '%s'", fn.c_str());
     return 0;
   }
   XMLElement *topology = geometry->FirstChildElement("topology");
@@ -6228,8 +6224,41 @@ int GModel::readOCCXAO(const std::string &fn)
     Msg::Warning("No groups node in file '%s'", fn.c_str());
   }
 
+  // import BREP
+  TopoDS_Shape mainShape;
+  BRep_Builder aBuilder;
+  const char *format = nullptr;
+  if(shape->QueryAttribute("format", &format) == XML_SUCCESS) {
+    if(std::string(format) != "BREP") {
+      Msg::Warning("Shape format '%s' in file '%s' is not BREP",
+                   format, fn.c_str());
+    }
+  }
+  else {
+    Msg::Warning("No shape format in file '%s'", fn.c_str());
+  }
+
+  const char *file = nullptr;
+  if(shape->QueryAttribute("file", &file) == XML_SUCCESS) {
+    std::string n = FixRelativePath(fn, file);
+    if(StatFile(n)) {
+      Msg::Error("BREP file '%s' does not exist", n.c_str());
+      return 0;
+    }
+    else {
+      Msg::Info("Reading BREP shape from file '%s'", n.c_str());
+      BRepTools::Read(mainShape, n.c_str(), aBuilder);
+    }
+  }
+  else {
+    BRepTools::Read(mainShape, fn.c_str(), aBuilder);
+  }
+  std::vector<std::pair<int, int> > outDimTags;
+  _occ_internals->importShapes(&mainShape, false, outDimTags);
+  _occ_internals->synchronize(this);
+  snapVertices();
   TopTools_IndexedMapOfShape mainMap;
-  TopExp::MapShapes(shape, mainMap);
+  TopExp::MapShapes(mainShape, mainMap);
   std::map<int, GEntity*> entities[4];
 
   XMLElement *vertices = topology->FirstChildElement("vertices");
@@ -6246,7 +6275,7 @@ int GModel::readOCCXAO(const std::string &fn)
         GVertex *gv = getVertexForOCCShape(&subShape);
         if(gv) {
           entities[0][index] = gv;
-          const char* name = nullptr;
+          const char *name = nullptr;
           if(vertex->QueryAttribute("name", &name) == XML_SUCCESS)
             if(strlen(name)) setElementaryName(0, gv->tag(), name);
         }
@@ -6272,7 +6301,7 @@ int GModel::readOCCXAO(const std::string &fn)
         GEdge *ge = getEdgeForOCCShape(&subShape);
         if(ge) {
           entities[1][index] = ge;
-          const char* name = nullptr;
+          const char *name = nullptr;
           if(edge->QueryAttribute("name", &name) == XML_SUCCESS)
             if(strlen(name)) setElementaryName(1, ge->tag(), name);
         }
@@ -6298,7 +6327,7 @@ int GModel::readOCCXAO(const std::string &fn)
         GFace *gf = getFaceForOCCShape(&subShape);
         if(gf) {
           entities[2][index] = gf;
-          const char* name = nullptr;
+          const char *name = nullptr;
           if(face->QueryAttribute("name", &name) == XML_SUCCESS)
             if(strlen(name)) setElementaryName(2, gf->tag(), name);
         }
@@ -6324,7 +6353,7 @@ int GModel::readOCCXAO(const std::string &fn)
         GRegion *gr = getRegionForOCCShape(&subShape);
         if(gr) {
           entities[3][index] = gr;
-          const char* name = nullptr;
+          const char *name = nullptr;
           if(solid->QueryAttribute("name", &name) == XML_SUCCESS)
             if(strlen(name)) setElementaryName(3, gr->tag(), name);
         }
@@ -6347,7 +6376,7 @@ int GModel::readOCCXAO(const std::string &fn)
   if(groups) {
     XMLElement *group = groups->FirstChildElement("group");
     while(group) {
-      const char* name = nullptr, *dimension = nullptr;
+      const char *name = nullptr, *dimension = nullptr;
       if(group->QueryAttribute("name", &name) == XML_SUCCESS &&
          group->QueryAttribute("dimension", &dimension) == XML_SUCCESS &&
          getDim(dimension) >= 0) {
