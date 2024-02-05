@@ -605,6 +605,11 @@ void print4debug(PolyMesh* pm, const int debugTag)
                 he->v->position.y(), he->opposite->v->position.x(),
                 he->opposite->v->position.y(), he->data, he->data);
       }
+      else {
+        fprintf(f, "SL(%g,%g,0,%g,%g,0){%d,%d};\n", he->v->position.x(),
+                he->v->position.y(), he->next->v->position.x(),
+                he->next->v->position.y(), he->data, he->data);
+      }
     }
 
     fprintf(f, "};\n");
@@ -1876,6 +1881,59 @@ inline bool checkVertexConnection(PolyMesh::Vertex* v, int volTag){
   return false;
 }
 
+void polyMeshFromExistingElements(PolyMesh* pm, int faceTag, int bndTag){
+  GFace* gf = GModel::current()->getFaceByTag(faceTag);
+  size_t nNodesInMesh = gf->mesh_vertices.size();
+  std::vector<double> coordsInMesh(2*nNodesInMesh);
+  std::unordered_map<size_t, size_t> nodeTagsInMesh;
+  for (size_t i=0; i<nNodesInMesh; i++){
+    MVertex* v = gf->mesh_vertices[i];
+    coordsInMesh[2*i+0] = v->x();
+    coordsInMesh[2*i+1] = v->y();
+  }
+  SBoundingBox3d bb;
+  for(size_t i = 0; i < coordsInMesh.size(); i += 2) {
+    bb += SPoint3(coordsInMesh[i], coordsInMesh[i + 1], 0);
+  }
+  bb *= 1.1;
+  initialize_rectangle(pm, bb.min().x(), bb.max().x(), bb.min().y(),
+                          bb.max().y());
+  std::vector<MTriangle *> elementsInMesh = gf->triangles;
+  MVertex* vert;
+  PolyMesh::Vertex *v[4] = {nullptr, nullptr, nullptr, nullptr};
+  PolyMesh::Face *f = pm->faces[0];
+  PolyMesh::HalfEdge* he;
+  for(size_t i = 0; i < elementsInMesh.size(); i++) {
+    for(int j = 0; j < 3; j++) {
+      vert = elementsInMesh[i]->getVertex(j);
+      auto it = nodeTagsInMesh.find(vert->getNum());
+      if(it == nodeTagsInMesh.end()) {
+        bool found;
+        double x[2] = {vert->x(), vert->y()};
+        _Walk(f, x, &he, &found, 10, nullptr);
+        f = he->f;
+        pm->split_triangle(-1, x[0], x[1], 0, f, delaunayCriterion, nullptr);
+        pm->vertices[pm->vertices.size() - 1]->data = vert->getNum();
+        nodeTagsInMesh[vert->getNum()] = pm->vertices.size();
+      }
+    }
+  }
+  // recover boundary edges
+  GEdge* ge = GModel::current()->getEdgeByTag(bndTag);
+  std::vector<MLine *> edges = ge->lines;
+  printf("edges size : %lu \n", edges.size());
+  for (auto ed : edges){
+    printf("recovering an edge ...\n");
+    MVertex* gv0 = ed->getVertex(0);
+    MVertex* gv1 = ed->getVertex(1);
+    size_t idx0 = nodeTagsInMesh[gv0->getNum()];
+    size_t idx1 = nodeTagsInMesh[gv1->getNum()];
+    PolyMesh::Vertex *v0 = pm->vertices[idx0];
+    PolyMesh::Vertex *v1 = pm->vertices[idx1];
+    int result = recover_edge(pm, v0, v1);
+  }
+}
+
 void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double alpha, const double hMean,
                         std::function<double(int, int, double, double, double, double)> sizeFieldCallback, 
                         const int triangulate, const int refine){
@@ -1921,7 +1979,8 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
     }
   }
   else {
-    GFace2PolyMesh(alphaShapeTags[0], &pm);
+    polyMeshFromExistingElements(pm, alphaShapeTags[0], alphaShapeTags[1]);
+    // GFace2PolyMesh(alphaShapeTags[0], &pm);
   }
 
 
@@ -1935,7 +1994,7 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
   
   std::unordered_map<PolyMesh::Vertex*, size_t> vertex2Tag;
   std::vector<double> sizeAtNodes(pm->vertices.size());
-  for (size_t i=4; i<pm->vertices.size(); i++){ // we're skipping the 4 vertices of the bounding box
+  for (size_t i= triangulate? 4 : 0; i<pm->vertices.size(); i++){ // we're skipping the 4 vertices of the bounding box
     PolyMesh::Vertex* v = pm->vertices[i];
     vertex2Tag[v] = v->data;
     sizeAtNodes[i] = hMean > 0 ? hMean : sizeFieldCallback(2, v->data, v->position.x(), v->position.y(), v->position.z(), 0);
@@ -2001,7 +2060,6 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
 
   // printf("alpha shape done \n");
 
-  // print4debug(pm, 1);
   // exit(0);
   for (auto f : pm->faces) if (f->data == -2) f->data = -1;
   // 3. if requested, refine  
@@ -2031,16 +2089,17 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
         }
       }
     }
+    int n_delete = 2;
     while (!heVector.empty()){
       PolyMesh::HalfEdge *he = heVector.back();
       heVector.erase(heVector.end()-1);
-      if (he->opposite->f == nullptr || he->f == nullptr ) continue; 
+      if (he->opposite == nullptr || he->opposite->f == nullptr || he->f == nullptr ) continue; 
       if (he->f->data != alphaShapeTags[0]) continue;
       if (freeSurfaceCheck(pm, he->v, alphaShapeTags[1]) && he->data == -1) continue; 
       double d = norm(he->v->position - he->next->v->position);
       double size = 0.5*(sizeAtNodes[he->v->data] + sizeAtNodes[he->next->v->data]);
-
       if (d < coarseFactor_in*size){
+        // print4debug(pm, n_delete++);
         std::vector<PolyMesh::HalfEdge *> _nhes;
         if (he->data == alphaShapeTags[1] && d <coarseFactor_bnd*size){
           hedgeCollapseBoundaryEdge(pm, he, alphaShapeTags[0], alphaShapeTags[1], &_nhes);
@@ -2054,7 +2113,6 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
         _delaunayCheck(pm, _nhes, &_t, alphaShapeTags[1]);  
       }
     }
-
 
     // exit(0);
     // Then, refine...
@@ -2076,7 +2134,6 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
     gmsh::model::mesh::getMaxNodeTag(newTag);
     newTag++;
     while (!_badFaces.empty()){
-      // print4debug(pm, newTag);
       // exit(0);
       PolyMesh::Face *f = _badFaces.back();
       _badFaces.erase(_badFaces.end()-1);
@@ -2221,6 +2278,7 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
       edges.push_back(vertex2Tag[he->next->v]);
     }
   }
+  printf("number of boundary edges : %lu\n", edges.size()/2);
   gmsh::model::mesh::addElementsByType(alphaShapeTags[1], 1, trash, edges);
   // printf("added edges\n");
   // gmsh::model::mesh::reclassifyNodes();
