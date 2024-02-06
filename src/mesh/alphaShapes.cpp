@@ -1899,6 +1899,7 @@ void polyMeshFromExistingElements(PolyMesh* pm, int faceTag, int bndTag){
   initialize_rectangle(pm, bb.min().x(), bb.max().x(), bb.min().y(),
                           bb.max().y());
   std::vector<MTriangle *> elementsInMesh = gf->triangles;
+  if (elementsInMesh.size() == 0) Msg::Error("No elements in mesh. Set triangulate option to 1.\n");
   MVertex* vert;
   PolyMesh::Vertex *v[4] = {nullptr, nullptr, nullptr, nullptr};
   PolyMesh::Face *f = pm->faces[0];
@@ -1914,24 +1915,121 @@ void polyMeshFromExistingElements(PolyMesh* pm, int faceTag, int bndTag){
         f = he->f;
         pm->split_triangle(-1, x[0], x[1], 0, f, delaunayCriterion, nullptr);
         pm->vertices[pm->vertices.size() - 1]->data = vert->getNum();
-        nodeTagsInMesh[vert->getNum()] = pm->vertices.size();
+        nodeTagsInMesh[vert->getNum()] = pm->vertices.size()-1;
       }
     }
   }
   // recover boundary edges
   GEdge* ge = GModel::current()->getEdgeByTag(bndTag);
   std::vector<MLine *> edges = ge->lines;
-  printf("edges size : %lu \n", edges.size());
+  // printf("edges size : %lu \n", edges.size());
+  
   for (auto ed : edges){
-    printf("recovering an edge ...\n");
     MVertex* gv0 = ed->getVertex(0);
     MVertex* gv1 = ed->getVertex(1);
     size_t idx0 = nodeTagsInMesh[gv0->getNum()];
     size_t idx1 = nodeTagsInMesh[gv1->getNum()];
+    // printf("recovering edge %d->%d ...\n", gv0->getNum(), gv1->getNum());
     PolyMesh::Vertex *v0 = pm->vertices[idx0];
     PolyMesh::Vertex *v1 = pm->vertices[idx1];
     int result = recover_edge(pm, v0, v1);
+    if(result < 0) {
+      Msg::Warning("Impossible to recover edge %lu %lu (error tag %d)",
+                    gv0->getNum(), gv1->getNum(), result);
+    }
+    else {
+      PolyMesh::HalfEdge *he = pm->getEdge(v0, v1);
+      if(he) {
+        if(he->opposite) he->opposite->data = -1;
+        he->data = bndTag;
+      }
+    }
   }
+}
+void recoverEdgesOfPolyMesh(PolyMesh** pm, int faceTag, int bndTag){
+  PolyMesh* pm_old = *pm;
+  SBoundingBox3d bb;
+  for(auto v : pm_old->vertices) {
+    bb += SPoint3(v->position.x(), v->position.y(), 0);
+  }
+  bb *= 1.1;
+  PolyMesh* pm_new = new PolyMesh;
+  initialize_rectangle(pm_new, bb.min().x(), bb.max().x(), bb.min().y(),
+                          bb.max().y());
+  PolyMesh::Face *f = pm_new->faces[0];
+  PolyMesh::HalfEdge* he;
+  std::unordered_map<PolyMesh::Vertex*, PolyMesh::Vertex*> old2new;
+  for(auto v : pm_old->vertices) {
+    bool found;
+    double x[2] = {v->position.x(), v->position.y()};
+    _Walk(f, x, &he, &found, 10, nullptr);
+    f = he->f;
+    pm_new->split_triangle(-1, x[0], x[1], 0, f, delaunayCriterion, nullptr);
+    pm_new->vertices[pm_new->vertices.size() - 1]->data = v->data;
+    old2new[v] = pm_new->vertices[pm_new->vertices.size() - 1];
+  }
+  // recover boundary edges
+  for (auto he : pm_old->hedges){
+    if (he->data != bndTag) continue;
+    PolyMesh::Vertex *v0 = old2new[he->v];
+    PolyMesh::Vertex *v1 = old2new[he->next->v];
+    PolyMesh::HalfEdge* heBnd = pm_new->getEdge(v0, v1);
+    if ( heBnd == nullptr) {
+      int result = recover_edge(pm_new, v0, v1);
+      if(result < 0) {
+        Msg::Warning("Impossible to recover edge %lu %lu (error tag %d)",
+                      v0->data, v1->data, result);
+      }
+      else {
+        PolyMesh::HalfEdge *heBnd = pm_new->getEdge(v0, v1);
+        if(heBnd) {
+          if(heBnd->opposite) heBnd->opposite->data = -1;
+          heBnd->data = bndTag;
+        }
+      }
+    }
+    else {
+      if(heBnd->opposite) heBnd->opposite->data = -1;
+      heBnd->data = bndTag;
+    }
+  }
+
+  // color internal faces :)
+  size_t nadded = 0;
+  std::unordered_set<PolyMesh::Face*> touched;
+  for (auto f : pm_new->faces){
+    PolyMesh::HalfEdge* he = f->he;
+    bool inside = false;
+    do {
+      if (he->data == bndTag) { // we're inside :)
+        inside = true;
+        break;
+      }
+      he = he->next;
+    } while (he != f->he);
+    if (inside) {
+      std::stack<PolyMesh::Face *> _s;
+      _s.push(f);
+      while(!_s.empty()){
+        PolyMesh::Face* _f = _s.top();
+        _f->data = faceTag;
+        touched.insert(_f);
+        _s.pop();
+        PolyMesh::HalfEdge *_he = _f->he;
+        do {
+          if (_he->opposite != nullptr){
+            if (_he->data != bndTag && touched.find(_he->opposite->f) == touched.end()){
+              _s.push(_he->opposite->f);
+            }
+          }
+          _he = _he->next;
+        }while (_he != _f->he);
+      }
+    }
+  }
+
+  *pm = pm_new;
+  delete pm_old;
 }
 
 void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double alpha, const double hMean,
@@ -1979,10 +2077,9 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
     }
   }
   else {
-    polyMeshFromExistingElements(pm, alphaShapeTags[0], alphaShapeTags[1]);
-    // GFace2PolyMesh(alphaShapeTags[0], &pm);
+    // polyMeshFromExistingElements(pm, alphaShapeTags[0], alphaShapeTags[1]);
+    GFace2PolyMesh(alphaShapeTags[0], &pm);
   }
-
 
   for (auto f : pm->faces){
     int i0 = f->he->v->data;
@@ -1994,9 +2091,11 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
   
   std::unordered_map<PolyMesh::Vertex*, size_t> vertex2Tag;
   std::vector<double> sizeAtNodes(pm->vertices.size());
+  std::vector<size_t> gNodeTags(pm->vertices.size(), 0);
   for (size_t i= triangulate? 4 : 0; i<pm->vertices.size(); i++){ // we're skipping the 4 vertices of the bounding box
     PolyMesh::Vertex* v = pm->vertices[i];
     vertex2Tag[v] = v->data;
+    gNodeTags[i] = v->data;
     sizeAtNodes[i] = hMean > 0 ? hMean : sizeFieldCallback(2, v->data, v->position.x(), v->position.y(), v->position.z(), 0);
     v->data = i;
   }
@@ -2058,7 +2157,20 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
     }
   }
 
-  // printf("alpha shape done \n");
+  if (triangulate == 0 && refine == 1){ // we need create a bounding boxed mesh, but with constrained edges
+    recoverEdgesOfPolyMesh(&pm, alphaShapeTags[0], alphaShapeTags[1]);
+    vertex2Tag.clear();
+    sizeAtNodes.clear();
+    sizeAtNodes.resize(pm->vertices.size());
+    for (size_t i=4 ; i<pm->vertices.size(); i++){ // we're skipping the 4 vertices of the bounding box
+      PolyMesh::Vertex* v = pm->vertices[i];
+      vertex2Tag[v] = gNodeTags[i-4];
+      sizeAtNodes[i] = hMean > 0 ? hMean : sizeFieldCallback(2, v->data, v->position.x(), v->position.y(), v->position.z(), 0);
+      v->data = i;
+    }
+  }
+
+  // print4debug(pm, 2);
 
   // exit(0);
   for (auto f : pm->faces) if (f->data == -2) f->data = -1;
@@ -2226,7 +2338,7 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
       }
     }
   }
-  // printf("refinement done \n");
+  printf("refinement done \n");
 
   // 4. store in discrete entities
   // Msg::Info("saving back to gmsh...\n");
