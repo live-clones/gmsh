@@ -810,6 +810,12 @@ public:
                bool saveAll = false, double scalingFactor = 1.0,
                int oneSolidPerSurface = 0);
 
+
+  // NII format is created by Neuroimaging Informatics Technology Initiative. It is commonly used to store magnetic resonance imaging (MRI) data.
+  int readNII(const std::string &name, float isolevel = 0.0, int isoDarkMediumBright123 = 2,
+	      float reduceFraction = 0.25, int preSmooth = 1, bool onlyLargest = true,
+	      bool fillBubbles = false, int postSmooth = 1);
+
   // X3D (only output from OCCT's triangulation)
   int writeX3D(const std::string &name, bool saveAll = false,
                double scalingFactor = 1.0, int x3dsurfaces = 1,

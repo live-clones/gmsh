@@ -367,6 +367,10 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
     status =
       GModel::current()->readSTL(fileName, CTX::instance()->geom.tolerance);
   }
+  if(ext == ".stl" || ext == ".nii") {
+    status =
+      GModel::current()->readNII(fileName);
+  }
   else if(ext == ".brep" || ext == ".rle" || ext == ".brp" || ext == ".BRP") {
     status = GModel::current()->readOCCBREP(fileName);
   }
