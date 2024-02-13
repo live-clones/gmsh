@@ -303,6 +303,7 @@ static void _relocateVertexGolden(MVertex *ver,
   if(ver->onWhat()->dim() != 3) return;
   double x = 0.0, y = 0.0, z = 0.0;
   int N = 0;
+
   for(std::size_t i = 0; i < lt.size(); i++) {
     double XCG = 0.0, YCG = 0.0, ZCG = 0.0;
     for(std::size_t j = 0; j < lt[i]->getNumVertices(); j++) {
@@ -316,19 +317,19 @@ static void _relocateVertexGolden(MVertex *ver,
     N += lt[i]->getNumVertices();
   }
 
+  
   double NO_MOVE_OBJ = objective_function(0.0, ver, x / N, y / N, z / N, lt);
-  if(NO_MOVE_OBJ > 0.1) return;
   double FULL_MOVE_OBJ = objective_function(1.0, ver, x / N, y / N, z / N, lt);
   if(FULL_MOVE_OBJ > NO_MOVE_OBJ) {
     ver->x() = x / N;
     ver->y() = y / N;
     ver->z() = z / N;
-    return;
+    //    return;
   }
 
   double q;
-  double xi = relax * Maximize_Quality_Golden_Section(ver, x / N, y / N, z / N,
-                                                      lt, tol, q);
+  double xi =  Maximize_Quality_Golden_Section(ver, x / N, y / N, z / N,
+					       lt, tol, q);
   ver->x() = (1. - xi) * ver->x() + xi * x / N;
   ver->y() = (1. - xi) * ver->y() + xi * y / N;
   ver->z() = (1. - xi) * ver->z() + xi * z / N;
@@ -430,6 +431,7 @@ void RelocateVertices(GFace *gf, int niter, double tol)
 
 void RelocateVertices(GRegion *region, int niter, double tol)
 {
+
   if(!niter) return;
 
   v2t_cont adj;

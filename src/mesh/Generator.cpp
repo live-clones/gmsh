@@ -789,7 +789,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
 {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
 
-  if(how != "" && how != "Gmsh" && how != "Optimize" && how != "Netgen" &&
+  if(how != "" && how != "Gmsh" && how != "Optimize" && how != "UntangleTets" && how != "Netgen" &&
      how != "HighOrder" && how != "HighOrderElastic" &&
      how != "HighOrderFastCurving" && how != "Laplace2D" &&
      how != "Relocate2D" && how != "Relocate3D" &&
@@ -808,6 +808,13 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
   if(how == "" || how == "Gmsh" || how == "Optimize") {
     for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
       optimizeMeshGRegion opt;
+      opt(*it, force);
+    }
+    m->setAllVolumesPositive();
+  }
+  else if(how == "UntangleTets") {
+    for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
+      untangleMeshGRegion opt;
       opt(*it, force);
     }
     m->setAllVolumesPositive();

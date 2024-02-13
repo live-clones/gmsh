@@ -17,7 +17,7 @@ endif()
 project(gmsh CXX C)
 
 # require C++11 and request C99
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 99)
 
@@ -101,6 +101,7 @@ opt(TCMALLOC "Enable libtcmalloc (fast malloc that does not release memory)" OFF
 opt(TESTS "Enable tests" ${DEFAULT})
 opt(TINYXML2 "Enable TinyXML2 parser (used by XAO reader)" ${DEFAULT})
 opt(TOUCHBAR "Enable Apple Touch bar" ${DEFAULT})
+opt(UNTANGLE "Enable 2D and 3D UNTANGLER" ${DEFAULT})
 opt(VISUDEV "Enable additional visualization capabilities for development purposes" OFF)
 opt(VOROPP "Enable voro++ (for hex meshing, experimental)" ${DEFAULT})
 opt(WINSLOWUNTANGLER "Enable WinslowUntangler extensions (requires ALGLIB)" ${DEFAULT})
@@ -956,6 +957,12 @@ if(HAVE_MESH)
     add_subdirectory(contrib/nii2mesh)
     include_directories(contrib/nii2mesh)
     set_config_option(HAVE_NII2MESH "Nii2mesh")
+  endif()
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/untangle AND ENABLE_UNTANGLE)
+    add_subdirectory(contrib/untangle)
+    include_directories(contrib/untangle)
+    set_config_option(HAVE_UNTANGLE "Untangle")
   endif()
 
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/Netgen AND ENABLE_NETGEN)

@@ -25,6 +25,7 @@ set(SRC
   meshRenumber.cpp
   meshTriangulation.cpp
   meshMetric.cpp
+  meshUntangle.cpp
   BackgroundMesh.cpp BackgroundMeshTools.cpp
   qualityMeasures.cpp qualityMeasuresJacobian.cpp
   BoundaryLayers.cpp
