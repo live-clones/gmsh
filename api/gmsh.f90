@@ -726,6 +726,10 @@ module gmsh
         gmshModelMeshAlphaShape
     procedure, nopass :: computeAlphaShape => &
         gmshModelMeshComputeAlphaShape
+    procedure, nopass :: decimateTriangulation => &
+        gmshModelMeshDecimateTriangulation
+    procedure, nopass :: conformAlphaShapeToBoundary => &
+        gmshModelMeshConformAlphaShapeToBoundary
   end type gmsh_model_mesh_t
 
   type, public :: gmsh_model_t
@@ -7767,6 +7771,63 @@ module gmsh
          refine=int(refine, c_int), &
          ierr_=ierr)
   end subroutine gmshModelMeshComputeAlphaShape
+
+  !> Decimate a triangulation
+  subroutine gmshModelMeshDecimateTriangulation(faceTag, &
+                                                distanceThreshold, &
+                                                ierr)
+    interface
+    subroutine C_API(faceTag, &
+                     distanceThreshold, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshDecimateTriangulation")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: faceTag
+      real(c_double), value, intent(in) :: distanceThreshold
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: faceTag
+    real(c_double), intent(in) :: distanceThreshold
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(faceTag=int(faceTag, c_int), &
+         distanceThreshold=real(distanceThreshold, c_double), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshDecimateTriangulation
+
+  !> Conform alpha shape mesh to solid boundaries
+  subroutine gmshModelMeshConformAlphaShapeToBoundary(alphaShapeTags, &
+                                                      boundaryTags, &
+                                                      sizeFieldCallback, &
+                                                      ierr)
+    interface
+    subroutine C_API(api_alphaShapeTags_, &
+                     api_alphaShapeTags_n_, &
+                     api_boundaryTags_, &
+                     api_boundaryTags_n_, &
+                     sizeFieldCallback, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshConformAlphaShapeToBoundary")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), dimension(*) :: api_alphaShapeTags_
+      integer(c_size_t), value, intent(in) :: api_alphaShapeTags_n_
+      integer(c_int), dimension(*) :: api_boundaryTags_
+      integer(c_size_t), value, intent(in) :: api_boundaryTags_n_
+      type(c_funptr), value, intent(in) :: sizeFieldCallback
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), dimension(:), intent(in) :: alphaShapeTags
+    integer(c_int), dimension(:), intent(in) :: boundaryTags
+    type(c_funptr), value, intent(in) :: sizeFieldCallback
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(api_alphaShapeTags_=alphaShapeTags, &
+         api_alphaShapeTags_n_=size_gmsh_int(alphaShapeTags), &
+         api_boundaryTags_=boundaryTags, &
+         api_boundaryTags_n_=size_gmsh_int(boundaryTags), &
+         sizeFieldCallback=sizeFieldCallback, &
+         ierr_=ierr)
+  end subroutine gmshModelMeshConformAlphaShapeToBoundary
 
   !> Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
   !! the tag explicitly; otherwise a new tag is assigned automatically. Return

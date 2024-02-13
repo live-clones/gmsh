@@ -26,6 +26,9 @@ int meshTriangulate2d (const std::vector<double> &coord,
 int triangulateEntity(const int tag);
 // apply Delaunay refinement using old algorithms
 // FIXME -- not working yet
+int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
+                        PolyMesh::Vertex *v_end);
+
 void GFaceDelaunayRefinementOldMesher(int faceTag);
 
 #endif

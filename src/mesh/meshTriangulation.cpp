@@ -451,7 +451,7 @@ static int intersect(PolyMesh::Vertex *v0, PolyMesh::Vertex *v1,
   return 1;
 }
 
-static int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
+int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
                         PolyMesh::Vertex *v_end)
 {
   PolyMesh::HalfEdge *he = v_start->he;

@@ -56,6 +56,11 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
                         std::function<double(int, int, double, double, double, double)> sizeFieldCallback, 
                         const int triangulate, const int refine);
 
+void _decimateTriangulation(const int faceTag, const double thresholdDistance);
+
+void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags, const std::vector<int> & boundaryTags, 
+                                  std::function<double(int, int, double, double, double, double)> sizeFieldCallback);
+
 #endif
 
 #endif

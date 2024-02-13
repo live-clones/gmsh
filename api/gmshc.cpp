@@ -2492,6 +2492,30 @@ GMSH_API void gmshModelMeshComputeAlphaShape(const int dim, const int * alphaSha
   }
 }
 
+GMSH_API void gmshModelMeshDecimateTriangulation(const int faceTag, const double distanceThreshold, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::decimateTriangulation(faceTag, distanceThreshold);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshConformAlphaShapeToBoundary(const int * alphaShapeTags, const size_t alphaShapeTags_n, const int * boundaryTags, const size_t boundaryTags_n, double (*sizeFieldCallback)(int dim, int tag, double x, double y, double z, double lc, void * data), void * sizeFieldCallback_data, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_alphaShapeTags_(alphaShapeTags, alphaShapeTags + alphaShapeTags_n);
+    std::vector<int> api_boundaryTags_(boundaryTags, boundaryTags + boundaryTags_n);
+    gmsh::model::mesh::conformAlphaShapeToBoundary(api_alphaShapeTags_, api_boundaryTags_, std::bind(sizeFieldCallback, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, sizeFieldCallback_data));
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API int gmshModelMeshFieldAdd(const char * fieldType, const int tag, int * ierr)
 {
   int result_api_ = 0;
