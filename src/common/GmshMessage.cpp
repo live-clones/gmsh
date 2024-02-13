@@ -1209,6 +1209,8 @@ void Msg::FinalizeOnelab()
       it != onelab::server::instance()->lastClient(); it++){
     (*it)->kill();
   }
+  // clear db
+  onelab::server::instance()->clear();
   // delete local client
   if(_onelabClient){
     delete _onelabClient;
