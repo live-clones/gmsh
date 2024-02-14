@@ -5285,6 +5285,54 @@ class model:
                 raise Exception(logger.getLastError())
         compute_alpha_shape = computeAlphaShape
 
+        @staticmethod
+        def decimateTriangulation(faceTag, distanceThreshold):
+            """
+            gmsh.model.mesh.decimateTriangulation(faceTag, distanceThreshold)
+
+            Decimate a triangulation
+
+            Types:
+            - `faceTag': integer
+            - `distanceThreshold': double
+            """
+            ierr = c_int()
+            lib.gmshModelMeshDecimateTriangulation(
+                c_int(faceTag),
+                c_double(distanceThreshold),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        decimate_triangulation = decimateTriangulation
+
+        @staticmethod
+        def conformAlphaShapeToBoundary(alphaShapeTags, boundaryTags, sizeFieldCallback):
+            """
+            gmsh.model.mesh.conformAlphaShapeToBoundary(alphaShapeTags, boundaryTags, sizeFieldCallback)
+
+            Conform alpha shape mesh to solid boundaries
+
+            Types:
+            - `alphaShapeTags': vector of integers
+            - `boundaryTags': vector of integers
+            - `sizeFieldCallback': 
+            """
+            api_alphaShapeTags_, api_alphaShapeTags_n_ = _ivectorint(alphaShapeTags)
+            api_boundaryTags_, api_boundaryTags_n_ = _ivectorint(boundaryTags)
+            global api_sizeFieldCallback_type_
+            api_sizeFieldCallback_type_ = CFUNCTYPE(c_double, c_int, c_int, c_double, c_double, c_double, c_double, c_void_p)
+            global api_sizeFieldCallback_
+            api_sizeFieldCallback_ = api_sizeFieldCallback_type_(lambda dim, tag, x, y, z, lc, _ : sizeFieldCallback(dim, tag, x, y, z, lc))
+            ierr = c_int()
+            lib.gmshModelMeshConformAlphaShapeToBoundary(
+                api_alphaShapeTags_, api_alphaShapeTags_n_,
+                api_boundaryTags_, api_boundaryTags_n_,
+                api_sizeFieldCallback_, None,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        conform_alpha_shape_to_boundary = conformAlphaShapeToBoundary
+
 
         class field:
             """

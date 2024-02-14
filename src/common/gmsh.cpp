@@ -5698,6 +5698,25 @@ gmsh::model::mesh::computeAlphaShape(const int dim,
 #endif
 }
 
+GMSH_API void
+gmsh::model::mesh::decimateTriangulation(const int faceTag, 
+                                         const double thresholdDistance)
+{
+  #if defined(HAVE_MESH)
+    _decimateTriangulation(faceTag, thresholdDistance);
+  #endif
+}
+
+GMSH_API void
+gmsh::model::mesh::conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags, 
+                                               const std::vector<int> & boundaryTags, 
+                                               std::function<double(int, int, double, double, double, double)> sizeFieldCallback)
+{
+  #if defined(HAVE_MESH)
+    _conformAlphaShapeToBoundary(alphaShapeTags, boundaryTags, sizeFieldCallback);
+  #endif
+}
+
 
 
 // gmsh::model::mesh::field

@@ -4662,6 +4662,47 @@ end
 const compute_alpha_shape = computeAlphaShape
 
 """
+    gmsh.model.mesh.decimateTriangulation(faceTag, distanceThreshold)
+
+Decimate a triangulation
+
+Types:
+ - `faceTag`: integer
+ - `distanceThreshold`: double
+"""
+function decimateTriangulation(faceTag, distanceThreshold)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshDecimateTriangulation, gmsh.lib), Cvoid,
+          (Cint, Cdouble, Ptr{Cint}),
+          faceTag, distanceThreshold, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const decimate_triangulation = decimateTriangulation
+
+"""
+    gmsh.model.mesh.conformAlphaShapeToBoundary(alphaShapeTags, boundaryTags, sizeFieldCallback)
+
+Conform alpha shape mesh to solid boundaries
+
+Types:
+ - `alphaShapeTags`: vector of integers
+ - `boundaryTags`: vector of integers
+ - `sizeFieldCallback`: 
+"""
+function conformAlphaShapeToBoundary(alphaShapeTags, boundaryTags, sizeFieldCallback)
+    api_sizeFieldCallback__(dim, tag, x, y, z, lc, data) = sizeFieldCallback(dim, tag, x, y, z, lc)
+    api_sizeFieldCallback_ = @cfunction($api_sizeFieldCallback__, Cdouble, (Cint, Cint, Cdouble, Cdouble, Cdouble, Cdouble, Ptr{Cvoid}))
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshConformAlphaShapeToBoundary, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cvoid}, Ptr{Cvoid}, Ptr{Cint}),
+          convert(Vector{Cint}, alphaShapeTags), length(alphaShapeTags), convert(Vector{Cint}, boundaryTags), length(boundaryTags), api_sizeFieldCallback_, C_NULL, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const conform_alpha_shape_to_boundary = conformAlphaShapeToBoundary
+
+"""
     module gmsh.model.mesh.field
 
 Mesh size field functions

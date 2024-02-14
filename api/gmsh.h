@@ -1914,6 +1914,19 @@ namespace gmsh { // Top-level functions
                                       const int triangulate,
                                       const int refine);
 
+      // gmsh::model::mesh::decimateTriangulation
+      //
+      // Decimate a triangulation
+      GMSH_API void decimateTriangulation(const int faceTag,
+                                          const double distanceThreshold);
+
+      // gmsh::model::mesh::conformAlphaShapeToBoundary
+      //
+      // Conform alpha shape mesh to solid boundaries
+      GMSH_API void conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags,
+                                                const std::vector<int> & boundaryTags,
+                                                std::function<double(int, int, double, double, double, double)> sizeFieldCallback);
+
       namespace field { // Mesh size field functions
 
         // gmsh::model::mesh::field::add

@@ -1697,6 +1697,17 @@ GMSH_API void gmshModelMeshComputeAlphaShape(const int dim,
                                              const int refine,
                                              int * ierr);
 
+/* Decimate a triangulation */
+GMSH_API void gmshModelMeshDecimateTriangulation(const int faceTag,
+                                                 const double distanceThreshold,
+                                                 int * ierr);
+
+/* Conform alpha shape mesh to solid boundaries */
+GMSH_API void gmshModelMeshConformAlphaShapeToBoundary(const int * alphaShapeTags, const size_t alphaShapeTags_n,
+                                                       const int * boundaryTags, const size_t boundaryTags_n,
+                                                       double (*sizeFieldCallback)(int dim, int tag, double x, double y, double z, double lc, void * data), void * sizeFieldCallback_data,
+                                                       int * ierr);
+
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
  * the tag explicitly; otherwise a new tag is assigned automatically. Return
  * the field tag. Available field types are listed in the "Gmsh mesh size
