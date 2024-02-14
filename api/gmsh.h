@@ -3997,13 +3997,23 @@ namespace gmsh { // Top-level functions
 
     // gmsh::logger::getWallTime
     //
-    // Return wall clock time.
+    // Return wall clock time (in s).
     GMSH_API double getWallTime();
 
     // gmsh::logger::getCpuTime
     //
-    // Return CPU time.
+    // Return CPU time (in s).
     GMSH_API double getCpuTime();
+
+    // gmsh::logger::getMemory
+    //
+    // Return memory usage (in Mb).
+    GMSH_API double getMemory();
+
+    // gmsh::logger::getTotalMemory
+    //
+    // Return total available memory (in Mb).
+    GMSH_API double getTotalMemory();
 
     // gmsh::logger::getLastError
     //

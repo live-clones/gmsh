@@ -3513,11 +3513,17 @@ GMSH_API void gmshLoggerGet(char *** log, size_t * log_n,
 /* Stop logging messages. */
 GMSH_API void gmshLoggerStop(int * ierr);
 
-/* Return wall clock time. */
+/* Return wall clock time (in s). */
 GMSH_API double gmshLoggerGetWallTime(int * ierr);
 
-/* Return CPU time. */
+/* Return CPU time (in s). */
 GMSH_API double gmshLoggerGetCpuTime(int * ierr);
+
+/* Return memory usage (in Mb). */
+GMSH_API double gmshLoggerGetMemory(int * ierr);
+
+/* Return total available memory (in Mb). */
+GMSH_API double gmshLoggerGetTotalMemory(int * ierr);
 
 /* Return last error message, if any. */
 GMSH_API void gmshLoggerGetLastError(char ** error,

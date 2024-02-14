@@ -9663,7 +9663,7 @@ end
 """
     gmsh.logger.getWallTime()
 
-Return wall clock time.
+Return wall clock time (in s).
 
 Return a double.
 """
@@ -9680,7 +9680,7 @@ const get_wall_time = getWallTime
 """
     gmsh.logger.getCpuTime()
 
-Return CPU time.
+Return CPU time (in s).
 
 Return a double.
 """
@@ -9693,6 +9693,40 @@ function getCpuTime()
     return api_result_
 end
 const get_cpu_time = getCpuTime
+
+"""
+    gmsh.logger.getMemory()
+
+Return memory usage (in Mb).
+
+Return a double.
+"""
+function getMemory()
+    ierr = Ref{Cint}()
+    api_result_ = ccall((:gmshLoggerGetMemory, gmsh.lib), Cdouble,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_result_
+end
+const get_memory = getMemory
+
+"""
+    gmsh.logger.getTotalMemory()
+
+Return total available memory (in Mb).
+
+Return a double.
+"""
+function getTotalMemory()
+    ierr = Ref{Cint}()
+    api_result_ = ccall((:gmshLoggerGetTotalMemory, gmsh.lib), Cdouble,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_result_
+end
+const get_total_memory = getTotalMemory
 
 """
     gmsh.logger.getLastError()
