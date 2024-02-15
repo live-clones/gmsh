@@ -48,6 +48,7 @@
 #include <BRepOffsetAPI_MakeThickSolid.hxx>
 #include <BRepOffsetAPI_Sewing.hxx>
 #include <BRepOffsetAPI_ThruSections.hxx>
+#include <BRepOffsetAPI_MakeOffset.hxx>
 #include <BRepPrimAPI_MakeBox.hxx>
 #include <BRepPrimAPI_MakeCone.hxx>
 #include <BRepPrimAPI_MakeCylinder.hxx>
@@ -63,6 +64,8 @@
 #include <ElCLib.hxx>
 #include <GProp_GProps.hxx>
 #include <Geom2d_Curve.hxx>
+#include <ChFi2d_ChamferAPI.hxx>
+#include <ChFi2d_FilletAPI.hxx>
 #include <GeomAPI_Interpolate.hxx>
 #include <GeomConvert.hxx>
 #include <GeomFill_BSplineCurves.hxx>
