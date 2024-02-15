@@ -876,6 +876,15 @@ occ.add('fillet', doc, None, ivectorint('volumeTags'), ivectorint('curveTags'), 
 doc = '''Chamfer the volumes `volumeTags' on the curves `curveTags' with distances `distances' measured on surfaces `surfaceTags'. The `distances' vector can either contain a single distance, as many distances as `curveTags' and `surfaceTags', or twice as many as `curveTags' and `surfaceTags' (in which case the first in each pair is measured on the corresponding surface in `surfaceTags', the other on the other adjacent surface). Return the chamfered entities in `outDimTags'. Remove the original volume if `removeVolume' is set.'''
 occ.add('chamfer', doc, None, ivectorint('volumeTags'), ivectorint('curveTags'), ivectorint('surfaceTags'), ivectordouble('distances'), ovectorpair('outDimTags'), ibool('removeVolume', 'true', 'True'))
 
+doc = '''Create a fillet edge between edges `edgeTag1' and `edgeTag2' with radius `radius'. Return the modified edges and the filleted edge in `outDimTags' as a vector of (dim, tag) pairs.'''
+occ.add('fillet2D', doc, None, iint('edgeTag1'), iint('edgeTag2'), idouble('radius'), ovectorpair('outDimTags'))
+
+doc = '''Create a chamfer edge between edges `edgeTag1' and `edgeTag2' with distance1 `distance1' and distance2 `distance2'. Return the modified edges and the chamfered edge in `outDimTags' as a vector of (dim, tag) pairs.'''
+occ.add('chamfer2D', doc, None, iint('edgeTag1'), iint('edgeTag2'), idouble('distance1'), idouble('distance2'), ovectorpair('outDimTags'))
+
+doc = '''Create an offset curve based on the curve loop `curveLoopTag' with offset `offset'. Return the curve loop in `outDimTags' as a vector of (dim, tag) pairs.'''
+occ.add('offsetCurve', doc, None, iint('curveLoopTag'), idouble('offset'), ovectorpair('outDimTags'))
+
 doc = '''Compute the boolean union (the fusion) of the entities `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the OpenCASCADE CAD representation. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
 occ.add('fuse', doc, None, ivectorpair('objectDimTags'), ivectorpair('toolDimTags'), ovectorpair('outDimTags'), ovectorvectorpair('outDimTagsMap'), iint('tag', '-1'), ibool('removeObject', 'true', 'True'), ibool('removeTool', 'true', 'True'))
 

@@ -7128,6 +7128,92 @@ function chamfer(volumeTags, curveTags, surfaceTags, distances, removeVolume = t
 end
 
 """
+    gmsh.model.occ.fillet2D(edgeTag1, edgeTag2, radius)
+
+Create a fillet edge between edges `edgeTag1` and `edgeTag2` with radius
+`radius`. Return the modified edges and the filleted edge in `outDimTags` as a
+vector of (dim, tag) pairs.
+
+Return `outDimTags`.
+
+Types:
+ - `edgeTag1`: integer
+ - `edgeTag2`: integer
+ - `radius`: double
+ - `outDimTags`: vector of pairs of integers
+"""
+function fillet2D(edgeTag1, edgeTag2, radius)
+    api_outDimTags_ = Ref{Ptr{Cint}}()
+    api_outDimTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccFillet2D, gmsh.lib), Cvoid,
+          (Cint, Cint, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          edgeTag1, edgeTag2, radius, api_outDimTags_, api_outDimTags_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
+    outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
+    return outDimTags
+end
+const fillet2_d = fillet2D
+
+"""
+    gmsh.model.occ.chamfer2D(edgeTag1, edgeTag2, distance1, distance2)
+
+Create a chamfer edge between edges `edgeTag1` and `edgeTag2` with distance1
+`distance1` and distance2 `distance2`. Return the modified edges and the
+chamfered edge in `outDimTags` as a vector of (dim, tag) pairs.
+
+Return `outDimTags`.
+
+Types:
+ - `edgeTag1`: integer
+ - `edgeTag2`: integer
+ - `distance1`: double
+ - `distance2`: double
+ - `outDimTags`: vector of pairs of integers
+"""
+function chamfer2D(edgeTag1, edgeTag2, distance1, distance2)
+    api_outDimTags_ = Ref{Ptr{Cint}}()
+    api_outDimTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccChamfer2D, gmsh.lib), Cvoid,
+          (Cint, Cint, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          edgeTag1, edgeTag2, distance1, distance2, api_outDimTags_, api_outDimTags_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
+    outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
+    return outDimTags
+end
+const chamfer2_d = chamfer2D
+
+"""
+    gmsh.model.occ.offsetCurve(curveLoopTag, offset)
+
+Create an offset curve based on the curve loop `curveLoopTag` with offset
+`offset`. Return the curve loop in `outDimTags` as a vector of (dim, tag) pairs.
+
+Return `outDimTags`.
+
+Types:
+ - `curveLoopTag`: integer
+ - `offset`: double
+ - `outDimTags`: vector of pairs of integers
+"""
+function offsetCurve(curveLoopTag, offset)
+    api_outDimTags_ = Ref{Ptr{Cint}}()
+    api_outDimTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccOffsetCurve, gmsh.lib), Cvoid,
+          (Cint, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          curveLoopTag, offset, api_outDimTags_, api_outDimTags_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
+    outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
+    return outDimTags
+end
+const offset_curve = offsetCurve
+
+"""
     gmsh.model.occ.fuse(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
 
 Compute the boolean union (the fusion) of the entities `objectDimTags` and

@@ -3525,6 +3525,119 @@ bool OCC_Internals::chamfer(const std::vector<int> &volumeTags,
                  removeVolume);
 }
 
+
+bool OCC_Internals::fillet2D(const int edgeTag1,
+                              const int edgeTag2,
+                              double radius,
+                              std::vector<std::pair<int, int> > &outDimTags)
+{
+  
+  if(!_tagEdge.IsBound(edgeTag1)) {
+    Msg::Error("Unknown OpenCASCADE curve with tag %d", edgeTag1);
+    return false;
+  }
+  TopoDS_Edge ed1 = TopoDS::Edge(_tagEdge.Find(edgeTag1));
+
+  if(!_tagEdge.IsBound(edgeTag2)) {
+    Msg::Error("Unknown OpenCASCADE curve with tag %d", edgeTag2);
+    return false;
+  }
+  TopoDS_Edge ed2 = TopoDS::Edge(_tagEdge.Find(edgeTag2));
+
+  gp_Pln p;
+
+  ChFi2d_FilletAPI f(ed1, ed2, p);
+  if (!f.Perform(radius)){
+    Msg::Error("Could not compute fillet");
+    return false;
+  }
+  gp_Pnt point;
+  TopoDS_Edge filletEd = f.Result(point, ed1, ed2, -1);
+
+  _unbind(_find(1, edgeTag1), 1, edgeTag1, true);
+  _unbind(_find(1, edgeTag2), 1, edgeTag2, true);
+
+  _bind(ed1, edgeTag1, true);
+  _bind(ed2, edgeTag2, true);
+
+  outDimTags.push_back(std::make_pair(1, edgeTag1));
+  outDimTags.push_back(std::make_pair(1, edgeTag2));
+
+  _multiBind(filletEd, -1, outDimTags, true, true);
+
+  return true;
+}
+
+bool OCC_Internals::chamfer2D(const int edgeTag1,
+                              const int edgeTag2,
+                              double distance1,
+                              double distance2,
+                            std::vector<std::pair<int, int> > &outDimTags)
+{
+  if(!_tagEdge.IsBound(edgeTag1)) {
+    Msg::Error("Unknown OpenCASCADE curve with tag %d", edgeTag1);
+    return false;
+  }
+  TopoDS_Edge ed1 = TopoDS::Edge(_tagEdge.Find(edgeTag1));
+
+  if(!_tagEdge.IsBound(edgeTag2)) {
+    Msg::Error("Unknown OpenCASCADE curve with tag %d", edgeTag2);
+    return false;
+  }
+  TopoDS_Edge ed2 = TopoDS::Edge(_tagEdge.Find(edgeTag2));
+
+  ChFi2d_ChamferAPI cha(ed1, ed2);
+
+  if (!cha.Perform()){
+    Msg::Error("Could not compute chamfer");
+    return false;
+  }
+
+  TopoDS_Edge chamferEd = cha.Result(ed1, ed2, distance1, distance2);
+
+  _unbind(_find(1, edgeTag1), 1, edgeTag1, true);
+  _unbind(_find(1, edgeTag2), 1, edgeTag2, true);
+
+  _bind(ed1, edgeTag1, true);
+  _bind(ed2, edgeTag2, true);
+
+  outDimTags.push_back(std::make_pair(1, edgeTag1));
+  outDimTags.push_back(std::make_pair(1, edgeTag2));
+
+
+  _multiBind(chamferEd, -1, outDimTags, true, true);
+  
+  return true;
+}
+
+
+bool OCC_Internals::offsetCurve(const int curveLoopTag, 
+                                double offset,
+                                std::vector<std::pair<int, int> > &outDimTags)
+{
+  
+  if(!_tagWire.IsBound(curveLoopTag)) {
+    Msg::Error("Unknown OpenCASCADE curve loop with tag %d", curveLoopTag);
+    return false;
+  }
+  TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(curveLoopTag));
+
+  BRepOffsetAPI_MakeOffset of(wire, GeomAbs_Arc);
+
+  of.Perform(offset);
+
+  if (!of.IsDone())
+  {
+    Msg::Error("Could not compute offset curve");
+    return false;
+  }
+
+  _multiBind(of.Shape(), -1, outDimTags, true, true);
+  
+  return true;
+
+}
+
 static void _filterTags(std::vector<std::pair<int, int> > &outDimTags,
                         int minDim)
 {
