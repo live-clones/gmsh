@@ -304,6 +304,7 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
       .boundaryFacets = NULL    
   };
   
+  hxtMeshWriteGmsh(mesh, "convexHullMesh.msh");
   hxtAlphaShape(mesh, &delOptions, &alphaShapeOptions);
 
 
@@ -1822,6 +1823,7 @@ void hedgeCollapseBoundaryEdge(PolyMesh* pm, PolyMesh::HalfEdge* he, int volTag,
   std::vector<PolyMesh::Vertex*> vCheck;
   _vertexNeighbors(he->v, vCheck);
   pm->hedgeCollapse(he, _t);
+
   for (auto v : vCheck){
     if (v->data <= 0) {
       continue;
@@ -2519,12 +2521,12 @@ void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags, const
   // GFace *gf = GModel::current()->getFaceByTag(alphaShapeTags[0]);
   PolyMesh *pm;
   GFace2PolyMesh(alphaShapeTags[0], &pm);
-  print4debug(pm, -2);
+  // print4debug(pm, -2);
   for (auto f : pm->faces) f->data = alphaShapeTags[0];
   for (auto he : pm->hedges) if (he->opposite == nullptr) he->data = alphaShapeTags[1];
-  print4debug(pm, -1);
+  // print4debug(pm, -1);
   recoverEdgesOfPolyMesh(&pm, alphaShapeTags[0], alphaShapeTags[1]);
-  print4debug(pm, 0);
+  // print4debug(pm, 0);
   // PART 2 : Intersection of edges with the alpha shape edges
   std::vector<SPoint3> bndEdgeCoords;
   std::vector<size_t> bndEdgeNodes;
@@ -2548,7 +2550,7 @@ void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags, const
       double d0 = norm(X - he->v->position);
       double d1 = norm(X - he->next->v->position);
       double d2 = norm(X - he->next->next->v->position);
-      double threshold = 1e-8;
+      double threshold = 1e-6;
       if (d0 < threshold || d1 < threshold || d2 < threshold) {
         continue;
       }
@@ -2560,7 +2562,7 @@ void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags, const
       v->data = newTag++;
     }
   }
-  print4debug(pm, 1);
+  // print4debug(pm, 1);
   // int n_debug = 10;
   for (size_t i=0; i<n_bndEdges; i++){
     double* a1 = &bndEdgeCoords[2*i][0];
@@ -2587,7 +2589,7 @@ void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags, const
         double d1 = norm(new_intersection - he->next->v->position);
         double d2 = norm(new_intersection - he->next->next->v->position);
         double d3 = norm(new_intersection - he->opposite->next->v->position);
-        double threshold = 1e-8; // FIXME : doesn't work with smaller threshold ...
+        double threshold = 1e-6; // FIXME : doesn't work with smaller threshold ...
         if (d0 < threshold || d1 < threshold || d2 < threshold || d3 < threshold) continue;
         pm->split_edge(he, new_intersection, newTag++);
         
@@ -2656,13 +2658,13 @@ void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags, const
     } while (he != f->he);
   }
 
-  print4debug(pm, 2);
+  // print4debug(pm, 2);
   std::vector<PolyMesh::HalfEdge *> _touched;
   _delaunayCheck(pm, pm->hedges, &_touched, alphaShapeTags[1]);
-  print4debug(pm, 3);
+  // print4debug(pm, 3);
   
   // 3. Delaunay refinement :)
-  
+
   std::vector<double> sizeAtNodes(pm->vertices.size());
   std::unordered_map<PolyMesh::Vertex*, int> vertex2Tag;
   for (size_t i=4; i<pm->vertices.size(); i++){ // we're skipping the 4 vertices of the bounding box
@@ -2692,10 +2694,12 @@ void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags, const
     if (he->opposite == nullptr || he->opposite->f == nullptr || he->f == nullptr ) continue; 
     if (he->f->data != alphaShapeTags[0]) continue;
     if (freeSurfaceCheck(pm, he->v, alphaShapeTags[1]) && he->data == -1) continue; 
-    if (controlNodes.find(he->v) != controlNodes.end()) continue;
+    bool control = false;
+    if (controlNodes.find(he->v) != controlNodes.end()) control = true;
     double d = norm(he->v->position - he->next->v->position);
     double size = 0.5*(sizeAtNodes[he->v->data] + sizeAtNodes[he->next->v->data]);
     if (d < coarseFactor_in*size){
+      if (control) he = he->opposite;
       std::vector<PolyMesh::HalfEdge *> _nhes;
       if (he->data == alphaShapeTags[1] && d <coarseFactor_bnd*size){
         hedgeCollapseBoundaryEdge(pm, he, alphaShapeTags[0], alphaShapeTags[1], &_nhes);
@@ -2710,7 +2714,7 @@ void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags, const
     }
   }
 
-  print4debug(pm, 4);
+  // print4debug(pm, 4);
 
   std::vector<PolyMesh::Face *> _badFaces;
   double _limit = .4;         // Values to discuss...
@@ -2818,7 +2822,7 @@ void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags, const
     }
   }
 
-  //print4debug(pm, 5);
+  // print4debug(pm, 5);
 
   // 4. store in discrete entities
   // Msg::Info("saving back to gmsh...\n");
