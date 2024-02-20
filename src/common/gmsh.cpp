@@ -8850,6 +8850,18 @@ GMSH_API double gmsh::logger::getCpuTime()
   return Cpu();
 }
 
+GMSH_API double gmsh::logger::getMemory()
+{
+  if(!_checkInit()) return -1;
+  return GetMemoryUsage()/1024./1024.;
+}
+
+GMSH_API double gmsh::logger::getTotalMemory()
+{
+  if(!_checkInit()) return -1;
+  return TotalRam();
+}
+
 GMSH_API void gmsh::logger::getLastError(std::string &error)
 {
   if(!_checkInit()) return;

@@ -5056,6 +5056,32 @@ GMSH_API double gmshLoggerGetCpuTime(int * ierr)
   return result_api_;
 }
 
+GMSH_API double gmshLoggerGetMemory(int * ierr)
+{
+  double result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::logger::getMemory();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API double gmshLoggerGetTotalMemory(int * ierr)
+{
+  double result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::logger::getTotalMemory();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
 GMSH_API void gmshLoggerGetLastError(char ** error, int * ierr)
 {
   if(ierr) *ierr = 0;

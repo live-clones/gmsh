@@ -5715,7 +5715,7 @@ C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t16.cpp#L139,t16.cpp}), Python (@u
 @end table
 
 @item gmsh/logger/getWallTime
-Return wall clock time.
+Return wall clock time (in s).
 
 @table @asis
 @item Input:
@@ -5731,7 +5731,7 @@ Python (@url{@value{GITLAB-PREFIX}/examples/api/import_perf.py#L8,import_perf.py
 @end table
 
 @item gmsh/logger/getCpuTime
-Return CPU time.
+Return CPU time (in s).
 
 @table @asis
 @item Input:
@@ -5742,6 +5742,34 @@ Return CPU time.
 double
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L4006,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3520,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10793,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9687,Julia}
+@end table
+
+@item gmsh/logger/getMemory
+Return memory usage (in Mb).
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+double
+@item Language-specific definition:
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L4011,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3523,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10811,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9704,Julia}
+@end table
+
+@item gmsh/logger/getTotalMemory
+Return total available memory (in Mb).
+
+@table @asis
+@item Input:
+-
+@item Output:
+-
+@item Return:
+double
+@item Language-specific definition:
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L4016,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3526,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10829,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9721,Julia}
 @end table
 
 @item gmsh/logger/getLastError
@@ -5755,7 +5783,7 @@ Return last error message, if any.
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L4011,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3523,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10811,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9707,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L4021,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3529,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10847,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9741,Julia}
 @end table
 
 @end ftable

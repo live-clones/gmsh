@@ -1205,11 +1205,17 @@ logger.add('get', doc, None, ovectorstring('log'))
 doc = '''Stop logging messages.'''
 logger.add('stop', doc, None)
 
-doc = '''Return wall clock time.'''
+doc = '''Return wall clock time (in s).'''
 logger.add('getWallTime', doc, odouble)
 
-doc = '''Return CPU time.'''
+doc = '''Return CPU time (in s).'''
 logger.add('getCpuTime', doc, odouble)
+
+doc = '''Return memory usage (in Mb).'''
+logger.add('getMemory', doc, odouble)
+
+doc = '''Return total available memory (in Mb).'''
+logger.add('getTotalMemory', doc, odouble)
 
 doc = '''Return last error message, if any.'''
 logger.add('getLastError', doc, None, ostring('error'))

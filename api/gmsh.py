@@ -10776,7 +10776,7 @@ class logger:
         """
         gmsh.logger.getWallTime()
 
-        Return wall clock time.
+        Return wall clock time (in s).
 
         Return a double.
         """
@@ -10794,7 +10794,7 @@ class logger:
         """
         gmsh.logger.getCpuTime()
 
-        Return CPU time.
+        Return CPU time (in s).
 
         Return a double.
         """
@@ -10806,6 +10806,42 @@ class logger:
             raise Exception(logger.getLastError())
         return api_result_
     get_cpu_time = getCpuTime
+
+    @staticmethod
+    def getMemory():
+        """
+        gmsh.logger.getMemory()
+
+        Return memory usage (in Mb).
+
+        Return a double.
+        """
+        ierr = c_int()
+        lib.gmshLoggerGetMemory.restype = c_double
+        api_result_ = lib.gmshLoggerGetMemory(
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return api_result_
+    get_memory = getMemory
+
+    @staticmethod
+    def getTotalMemory():
+        """
+        gmsh.logger.getTotalMemory()
+
+        Return total available memory (in Mb).
+
+        Return a double.
+        """
+        ierr = c_int()
+        lib.gmshLoggerGetTotalMemory.restype = c_double
+        api_result_ = lib.gmshLoggerGetTotalMemory(
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return api_result_
+    get_total_memory = getTotalMemory
 
     @staticmethod
     def getLastError():

@@ -6746,7 +6746,7 @@ namespace gmsh { // Top-level functions
 
     // gmsh::logger::getWallTime
     //
-    // Return wall clock time.
+    // Return wall clock time (in s).
     inline double getWallTime()
     {
       int ierr = 0;
@@ -6757,11 +6757,33 @@ namespace gmsh { // Top-level functions
 
     // gmsh::logger::getCpuTime
     //
-    // Return CPU time.
+    // Return CPU time (in s).
     inline double getCpuTime()
     {
       int ierr = 0;
       double result_api_ = gmshLoggerGetCpuTime(&ierr);
+      if(ierr) throwLastError();
+      return result_api_;
+    }
+
+    // gmsh::logger::getMemory
+    //
+    // Return memory usage (in Mb).
+    inline double getMemory()
+    {
+      int ierr = 0;
+      double result_api_ = gmshLoggerGetMemory(&ierr);
+      if(ierr) throwLastError();
+      return result_api_;
+    }
+
+    // gmsh::logger::getTotalMemory
+    //
+    // Return total available memory (in Mb).
+    inline double getTotalMemory()
+    {
+      int ierr = 0;
+      double result_api_ = gmshLoggerGetTotalMemory(&ierr);
       if(ierr) throwLastError();
       return result_api_;
     }

@@ -72,6 +72,10 @@ module gmsh
         gmshLoggerGetWallTime
     procedure, nopass :: getCpuTime => &
         gmshLoggerGetCpuTime
+    procedure, nopass :: getMemory => &
+        gmshLoggerGetMemory
+    procedure, nopass :: getTotalMemory => &
+        gmshLoggerGetTotalMemory
     procedure, nopass :: getLastError => &
         gmshLoggerGetLastError
   end type gmsh_logger_t
@@ -15075,7 +15079,7 @@ module gmsh
     call C_API(ierr_=ierr)
   end subroutine gmshLoggerStop
 
-  !> Return wall clock time.
+  !> Return wall clock time (in s).
   function gmshLoggerGetWallTime(ierr)
     interface
     function C_API(ierr_) &
@@ -15090,7 +15094,7 @@ module gmsh
     gmshLoggerGetWallTime = C_API(ierr_=ierr)
   end function gmshLoggerGetWallTime
 
-  !> Return CPU time.
+  !> Return CPU time (in s).
   function gmshLoggerGetCpuTime(ierr)
     interface
     function C_API(ierr_) &
@@ -15104,6 +15108,36 @@ module gmsh
     integer(c_int), intent(out), optional :: ierr
     gmshLoggerGetCpuTime = C_API(ierr_=ierr)
   end function gmshLoggerGetCpuTime
+
+  !> Return memory usage (in Mb).
+  function gmshLoggerGetMemory(ierr)
+    interface
+    function C_API(ierr_) &
+      bind(C, name="gmshLoggerGetMemory")
+      use, intrinsic :: iso_c_binding
+      real(c_double) :: C_API
+      integer(c_int), intent(out), optional :: ierr_
+    end function C_API
+    end interface
+    real(c_double) :: gmshLoggerGetMemory
+    integer(c_int), intent(out), optional :: ierr
+    gmshLoggerGetMemory = C_API(ierr_=ierr)
+  end function gmshLoggerGetMemory
+
+  !> Return total available memory (in Mb).
+  function gmshLoggerGetTotalMemory(ierr)
+    interface
+    function C_API(ierr_) &
+      bind(C, name="gmshLoggerGetTotalMemory")
+      use, intrinsic :: iso_c_binding
+      real(c_double) :: C_API
+      integer(c_int), intent(out), optional :: ierr_
+    end function C_API
+    end interface
+    real(c_double) :: gmshLoggerGetTotalMemory
+    integer(c_int), intent(out), optional :: ierr
+    gmshLoggerGetTotalMemory = C_API(ierr_=ierr)
+  end function gmshLoggerGetTotalMemory
 
   !> Return last error message, if any.
   subroutine gmshLoggerGetLastError(error, &
