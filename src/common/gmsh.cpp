@@ -5697,8 +5697,8 @@ gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
 #endif
 }
 
-GMSH_API void gmsh::model::mesh::concentrationFromDF(std::vector<int> &api_concentration){
-  concentration(api_concentration);
+GMSH_API void gmsh::model::mesh::concentrationFromDF(std::vector<int> &api_concentration, std::vector<double> &api_curvature){
+  concentration(api_concentration, api_curvature);
   return;
 }
 

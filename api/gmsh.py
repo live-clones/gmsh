@@ -5128,24 +5128,31 @@ class model:
             return _ovectorsize(api_tetra_, api_tetra_n_.value)
         
         @staticmethod
-        def concentrationFromDF():
+        def concentrationFromDF(curvature = False):
             """
             gmsh.model.mesh.concentrationFromDF()
 
             Compute the concentration of each element based on the discrete front for mesh relaying
+            and the oriented curvature based on the concentration if curvature is true
 
-            return 'concentration'
+            return 'concentration, curvature'
 
             Types:
             - 'concentration': vector of int
+            - 'curvature': vector of double
             """
             api_concentration, api_concentration_n = POINTER(c_int)(), c_size_t()
+            api_curvature, api_curvature_n = POINTER(c_double)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshConcentrationFromDF(byref(api_concentration), byref(api_concentration_n), byref(ierr))
+            lib.gmshModelMeshConcentrationFromDF(byref(api_concentration), byref(api_concentration_n), byref(api_curvature), byref(api_curvature_n), byref(ierr))
 
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
-            return _ovectorint(api_concentration, api_concentration_n.value)
+            
+            if(curvature):
+                return _ovectorint(api_concentration, api_concentration_n.value), _ovectordouble(api_curvature, api_curvature_n.value) 
+            else:
+                return _ovectorint(api_concentration, api_concentration_n.value)
         concentration_from_DF = concentrationFromDF
         concentration_from_df = concentrationFromDF
         

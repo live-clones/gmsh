@@ -1856,7 +1856,7 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::concentrationFromDF
       //
       // Compute the concentration of each element based on the discrete front for mesh relaying
-      GMSH_API void concentrationFromDF(std::vector<int> &api_concentration);
+      GMSH_API void concentrationFromDF(std::vector<int> &api_concentration, std::vector<double> &api_curvature);
 
       // gmsh::model::mesh::advanceDFInTime
       //
