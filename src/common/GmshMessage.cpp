@@ -147,10 +147,10 @@ void Msg::Initialize(int argc, char **argv)
       sargv[sargc++] = argv[i];
   }
   sargv[sargc] = nullptr;
-  PetscInitialize(&sargc, &sargv, PETSC_NULL, PETSC_NULL);
+  PetscInitialize(&sargc, &sargv, nullptr, nullptr);
   PetscPopSignalHandler();
 #if defined(HAVE_SLEPC)
-  SlepcInitialize(&sargc, &sargv, PETSC_NULL, PETSC_NULL);
+  SlepcInitialize(&sargc, &sargv, nullptr, nullptr);
 #endif
   delete [] sargv;
 #endif
@@ -1209,6 +1209,8 @@ void Msg::FinalizeOnelab()
       it != onelab::server::instance()->lastClient(); it++){
     (*it)->kill();
   }
+  // clear db
+  onelab::server::instance()->clear();
   // delete local client
   if(_onelabClient){
     delete _onelabClient;

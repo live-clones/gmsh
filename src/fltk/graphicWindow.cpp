@@ -119,6 +119,7 @@ static const char *input_formats =
 #endif
 #if defined(HAVE_OCC)
   "Geometry - OpenCASCADE BRep\t*.brep\n"
+  "Geometry - OpenCASCADE XAO\t*.xao\n"
 #endif
 #if defined(HAVE_PARASOLID)
   "Geometry - Parasolid XMT\t*.xmt_txt\n"
@@ -300,6 +301,11 @@ static int _save_geo(const char *name) { return geoFileDialog(name); }
 static int _save_brep(const char *name)
 {
   CreateOutputFile(name, FORMAT_BREP);
+  return 1;
+}
+static int _save_xao(const char *name)
+{
+  CreateOutputFile(name, FORMAT_XAO);
   return 1;
 }
 static int _save_step(const char *name)
@@ -484,6 +490,7 @@ static int _save_auto(const char *name)
   case FORMAT_OPT: return _save_options(name);
   case FORMAT_GEO: return _save_geo(name);
   case FORMAT_BREP: return _save_brep(name);
+  case FORMAT_XAO: return _save_xao(name);
   case FORMAT_STEP: return _save_step(name);
   case FORMAT_IGES: return _save_iges(name);
   case FORMAT_CGNS: return _save_cgns(name);
@@ -540,6 +547,7 @@ static void file_export_cb(Fl_Widget *w, void *data)
     {"Geometry - Gmsh Unrolled GEO\t*.geo_unrolled", _save_geo},
 #if defined(HAVE_OCC)
     {"Geometry - OpenCASCADE BRep\t*.brep", _save_brep},
+    {"Geometry - OpenCASCADE XAO\t*.xao", _save_xao},
 #endif
 #if defined(HAVE_PARASOLID)
     {"Geometry - Parasolid XMT\t*.xmt_txt", _save_xmt},

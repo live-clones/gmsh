@@ -145,11 +145,16 @@ bool isElementVisible(MElement *ele)
   return true;
 }
 
-template <class T> static bool areAllElementsVisible(std::vector<T *> &elements)
+template <class T> static bool areOnlySomeElementsVisible(std::vector<T *> &elements)
 {
-  for(std::size_t i = 0; i < elements.size(); i++)
-    if(!isElementVisible(elements[i])) return false;
-  return true;
+  bool visible = false, hidden = false;
+  for(std::size_t i = 0; i < elements.size(); i++) {
+    bool v = isElementVisible(elements[i]);
+    if(v) visible = true;
+    else hidden = true;
+    if(hidden && visible) return true;
+  }
+  return false;
 }
 
 template <class T> static bool areSomeElementsCurved(std::vector<T *> &elements)
@@ -275,7 +280,7 @@ public:
   {
     e->deleteVertexArrays();
     if(!e->getVisibility()) return;
-    e->setAllElementsVisible(areAllElementsVisible(e->lines));
+    e->setOnlySomeElementsVisible(areOnlySomeElementsVisible(e->lines));
 
     if(CTX::instance()->mesh.lines) {
       e->va_lines = new VertexArray(2, _estimateNumLines(e));
@@ -326,8 +331,8 @@ public:
   {
     f->deleteVertexArrays();
     if(!f->getVisibility()) return;
-    f->setAllElementsVisible(areAllElementsVisible(f->triangles) &&
-                             areAllElementsVisible(f->quadrangles));
+    f->setOnlySomeElementsVisible(areOnlySomeElementsVisible(f->triangles) ||
+                                  areOnlySomeElementsVisible(f->quadrangles));
 
     bool edg = CTX::instance()->mesh.surfaceEdges;
     bool fac = CTX::instance()->mesh.surfaceFaces;
@@ -410,11 +415,11 @@ public:
   {
     r->deleteVertexArrays();
     if(!r->getVisibility()) return;
-    r->setAllElementsVisible(areAllElementsVisible(r->tetrahedra) &&
-                             areAllElementsVisible(r->hexahedra) &&
-                             areAllElementsVisible(r->prisms) &&
-                             areAllElementsVisible(r->pyramids) &&
-                             areAllElementsVisible(r->trihedra));
+    r->setOnlySomeElementsVisible(areOnlySomeElementsVisible(r->tetrahedra) ||
+                                  areOnlySomeElementsVisible(r->hexahedra) ||
+                                  areOnlySomeElementsVisible(r->prisms) ||
+                                  areOnlySomeElementsVisible(r->pyramids) ||
+                                  areOnlySomeElementsVisible(r->trihedra));
 
     bool edg = CTX::instance()->mesh.volumeEdges;
     bool fac = CTX::instance()->mesh.volumeFaces;

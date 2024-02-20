@@ -251,6 +251,11 @@ Skip element quality check after high-order mesh generation@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.IgnoreUnknownSections
+Skip unknown sections when reading meshes in the MSH4 format (otherwise the contents of these sections are stored as model attributes)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.IgnoreParametrization
 Skip parametrization section when reading meshes in the MSH4 format@*
 Default value: @code{0}@*

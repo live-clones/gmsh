@@ -22,15 +22,16 @@ if extrude:
 
     # extrude a boundary layer of 4 elements using mesh normals (thickness =
     # 0.5)
-    gmsh.model.geo.extrudeBoundaryLayer(gmsh.model.getEntities(2), [4], [0.5], True)
+    e1 = gmsh.model.geo.extrudeBoundaryLayer(gmsh.model.getEntities(2),
+                                             [4], [0.5], True)
 
     # extrude a second boundary layer in the opposite direction (note the
     # `second == True' argument to distinguish it from the first one)
-    e = gmsh.model.geo.extrudeBoundaryLayer(gmsh.model.getEntities(2), [4], [-0.5],
-                                            True, True)
+    e2 = gmsh.model.geo.extrudeBoundaryLayer(gmsh.model.getEntities(2), [4], [-0.5],
+                                             True, True)
 
     # get "top" surfaces created by extrusion
-    top_ent = [s for s in e if s[0] == 2]
+    top_ent = [s for s in e2 if s[0] == 2]
     top_surf = [s[1] for s in top_ent]
 
     # get boundary of top surfaces, i.e. boundaries of holes
@@ -40,12 +41,19 @@ if extrude:
 
     # create plane surfaces filling the holes
     loops = gmsh.model.geo.addCurveLoops(bnd_curv)
+    bnd_surf = []
     for l in loops:
-        top_surf.append(gmsh.model.geo.addPlaneSurface([l]))
+        bnd_surf.append(gmsh.model.geo.addPlaneSurface([l]))
 
     # create the inner volume
-    gmsh.model.geo.addVolume([gmsh.model.geo.addSurfaceLoop(top_surf)])
+    vf = gmsh.model.geo.addVolume([gmsh.model.geo.addSurfaceLoop(top_surf + bnd_surf)])
     gmsh.model.geo.synchronize()
+
+    gmsh.model.addPhysicalGroup(3, [v[1] for v in e1 if v[0] == 3], name="solid")
+    gmsh.model.addPhysicalGroup(3, [v[1] for v in e2 if v[0] == 3], name="fluid bl")
+    gmsh.model.addPhysicalGroup(3, [vf], name="fluid")
+
+    # to do: identify useful boundaries
 
 # use MeshAdapt for the resulting not-so-smooth parametrizations
 gmsh.option.setNumber('Mesh.Algorithm', 1)

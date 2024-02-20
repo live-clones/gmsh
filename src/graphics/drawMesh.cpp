@@ -109,8 +109,19 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
   int np = e->physicals.size();
   int physical = np ? e->physicals[np - 1] : 0;
   char str[256];
-  if(CTX::instance()->mesh.labelType == 4)
-    sprintf(str, "(%.16g,%.16g,%.16g)", v->x(), v->y(), v->z());
+  if(CTX::instance()->mesh.labelType == 4) {
+    strcpy(str, "(");
+    char tmp[256];
+    sprintf(tmp, CTX::instance()->numberFormat.c_str(), v->x());
+    strcat(str, tmp);
+    strcat(str, ",");
+    sprintf(tmp, CTX::instance()->numberFormat.c_str(), v->y());
+    strcat(str, tmp);
+    strcat(str, ",");
+    sprintf(tmp, CTX::instance()->numberFormat.c_str(), v->z());
+    strcat(str, tmp);
+    strcat(str, ")");
+  }
   else if(CTX::instance()->mesh.labelType == 3) {
     if(partition < 0)
       sprintf(str, "NA");
@@ -458,7 +469,7 @@ public:
     if(CTX::instance()->mesh.lineLabels) drawElementLabels(_ctx, e, e->lines);
 
     if(CTX::instance()->mesh.nodes || CTX::instance()->mesh.nodeLabels) {
-      if(e->getAllElementsVisible())
+      if(!e->getOnlySomeElementsVisible())
         drawVerticesPerEntity(_ctx, e);
       else
         drawVerticesPerElement(_ctx, e, e->lines);
@@ -522,8 +533,9 @@ public:
     }
 
     if(CTX::instance()->mesh.nodes || CTX::instance()->mesh.nodeLabels) {
-      if(f->getAllElementsVisible())
+      if(!f->getOnlySomeElementsVisible()) {
         drawVerticesPerEntity(_ctx, f);
+      }
       else {
         if(CTX::instance()->mesh.triangles)
           drawVerticesPerElement(_ctx, f, f->triangles);
@@ -620,8 +632,9 @@ public:
     }
 
     if(CTX::instance()->mesh.nodes || CTX::instance()->mesh.nodeLabels) {
-      if(r->getAllElementsVisible())
+      if(!r->getOnlySomeElementsVisible()) {
         drawVerticesPerEntity(_ctx, r);
+      }
       else {
         if(CTX::instance()->mesh.tetrahedra)
           drawVerticesPerElement(_ctx, r, r->tetrahedra);

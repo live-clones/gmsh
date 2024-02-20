@@ -850,7 +850,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
   double sampling = opt_view_sampling(current, GMSH_GET, 0);
 
   std::string name = opt_view_name(current, GMSH_GET, "");
-  std::string format = opt_view_format(current, GMSH_GET, "");
+  std::string format = opt_view_number_format(current, GMSH_GET, "");
   std::string axes_label0 = opt_view_axes_label0(current, GMSH_GET, "");
   std::string axes_label1 = opt_view_axes_label1(current, GMSH_GET, "");
   std::string axes_label2 = opt_view_axes_label2(current, GMSH_GET, "");
@@ -1227,7 +1227,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       if(force || (str != name)) opt_view_name(i, GMSH_SET, str);
 
       str = o->view.input[1]->value();
-      if(force || (str != format)) opt_view_format(i, GMSH_SET, str);
+      if(force || (str != format)) opt_view_number_format(i, GMSH_SET, str);
 
       str = o->view.input[10]->value();
       if(force || (str != axes_label0)) opt_view_axes_label0(i, GMSH_SET, str);
@@ -3942,7 +3942,7 @@ void optionWindow::updateViewGroup(int index)
   double val2 = 2. * CTX::instance()->lc / maxval;
 
   opt_view_name(index, GMSH_GUI, "");
-  opt_view_format(index, GMSH_GUI, "");
+  opt_view_number_format(index, GMSH_GUI, "");
   opt_view_type(index, GMSH_GUI, 0);
   opt_view_show_scale(index, GMSH_GUI, 0);
   opt_view_draw_strings(index, GMSH_GUI, 0);

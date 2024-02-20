@@ -25,6 +25,8 @@ set(SRC
   meshRenumber.cpp
   meshTriangulation.cpp
   meshMetric.cpp
+  meshUntangle.cpp
+  meshMesquite.cpp
   BackgroundMesh.cpp BackgroundMeshTools.cpp
   qualityMeasures.cpp qualityMeasuresJacobian.cpp
   BoundaryLayers.cpp
@@ -43,6 +45,7 @@ set(SRC
   meshCombine3D.cpp
   meshRelaying.cpp
 )
+
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
 append_gmsh_src(src/mesh "${SRC};${HDR}")

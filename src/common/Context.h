@@ -103,6 +103,7 @@ struct contextGeometryOptions {
   int occSewFaces, occMakeSolids, occParallel, occBooleanPreserveNumbering;
   int occBoundsUseSTL, occDisableSTL, occImportLabels, occExportOnlyVisible;
   int occUnionUnify, occThruSectionsDegree, occUseGenericClosestPoint;
+  int occBrepFormatVersion;
   double occScaling;
   std::string occTargetUnit;
   // STEP file outputs
@@ -163,6 +164,8 @@ public:
   std::string homeDir;
   // file history
   std::vector<std::string> recentFiles;
+  // default number format in graphics window
+  std::string numberFormat;
   // create mesh statistics report (0: do nothing, 1: create, 2: append)
   int createAppendMeshStatReport;
   // behavior on error

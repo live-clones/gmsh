@@ -49,7 +49,6 @@ int GModel::readDIFF(const std::string &name)
 
   char str[256] = "XXX";
   std::map<int, std::vector<MElement *> > elements[10];
-  std::map<int, std::map<int, std::string> > physicals[4];
   std::map<std::size_t, MVertex *> vertexMap;
   std::vector<MVertex *> vertexVector;
 
@@ -108,7 +107,7 @@ int GModel::readDIFF(const std::string &name)
     }
     Msg::Info("numVerticesPerElement %d", numVerticesPerElement);
 
-    bool several_subdomains;
+    bool severalSubdomains;
     if(!fgets(str, sizeof(str), fp) || feof(fp)) {
       fclose(fp);
       return 0;
@@ -117,12 +116,12 @@ int GModel::readDIFF(const std::string &name)
        !strncmp(&str[2], "Only one subdomain", 18)) {
       if(!strncmp(&str[37], "dpTRUE", 6) || !strncmp(&str[37], "true", 4) ||
          !strncmp(&str[36], "dpTRUE", 6) || !strncmp(&str[36], "true", 4)) {
-        several_subdomains = false;
+        severalSubdomains = false;
       }
       else {
-        several_subdomains = true;
+        severalSubdomains = true;
       }
-      Msg::Info("several_subdomains %x %s", several_subdomains, str);
+      Msg::Info("several subdomains %x %s", severalSubdomains, str);
     }
 
     int nbi;
@@ -239,8 +238,7 @@ int GModel::readDIFF(const std::string &name)
         fclose(fp);
         return 0;
       }
-      int num = 0, type, physical = 0;
-      unsigned int partition = 0;
+      int num = 0, type;
       int indices[60];
       if(sscanf(str, "%*d %s %d", eleTypec, &material[i - 1]) != 2) {
         fclose(fp);
@@ -350,13 +348,13 @@ int GModel::readDIFF(const std::string &name)
       }
 
       MElementFactory f;
-      MElement *e = f.create(type, vertices, num, partition);
+      MElement *e = f.create(type, vertices, num);
       if(!e) {
         Msg::Error("Unknown type of element %d", type);
         fclose(fp);
         return 0;
       }
-      int reg = elementary[i - 1][1];
+      int reg = material[i - 1];
       switch(e->getType()) {
       case TYPE_PNT: elements[0][reg].push_back(e); break;
       case TYPE_LIN: elements[1][reg].push_back(e); break;
@@ -371,12 +369,6 @@ int GModel::readDIFF(const std::string &name)
         fclose(fp);
         return 0;
       }
-      int dim = e->getDim();
-      if(physical &&
-         (!physicals[dim].count(reg) || !physicals[dim][reg].count(physical)))
-        physicals[dim][reg][physical] = "unnamed";
-      if(partition > getNumPartitions()) setNumPartitions(partition);
-
       if(numElements > 100000)
         Msg::ProgressMeter(i + 1, true, "Reading elements");
     }
@@ -396,9 +388,6 @@ int GModel::readDIFF(const std::string &name)
     _storeVerticesInEntities(vertexVector);
   else
     _storeVerticesInEntities(vertexMap);
-
-  // store the physical tags
-  for(int i = 0; i < 4; i++) _storePhysicalTagsInEntities(i, physicals[i]);
 
   fclose(fp);
   return 1;

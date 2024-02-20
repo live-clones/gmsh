@@ -30,6 +30,8 @@ Perform barycentric mesh refinement, then exit
 Reclassify surface mesh, then exit
 @item -reparam angle
 Reparametrize surface mesh, then exit
+@item -hybrid
+generate a hybrid hex-tet mesh with trihedron for transitions
 @item -part int
 Partition after batch mesh generation (Mesh.NbPartitions)
 @item -part_weight [tri,quad,tet,hex,pri,pyr,trih] int

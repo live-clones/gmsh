@@ -61,7 +61,8 @@ Calhoun-Lopez, Michel Zou, Sir Sunsheep, Mariano Forti, Walter Steffe, Nico
 Schloemer, Simon Tournier, Alexandru Dadalau, Thomas Ulrich, Matthias Diener,
 Jamie Border; Kenneth Jansen; Steven Masfaraud; Sai Sumanth Moturu; Arie
 Westland; Andreas Farley; Mahesh Madhav; Zoltan Csati; Christophe Bourcier;
-Mattéo Couplet, Mahesh Madhav, Giuseppe Musacchio, Romin Tomasetti.
+Mattéo Couplet, Mahesh Madhav, Giuseppe Musacchio, Romin Tomasetti, Lin Qi Chen,
+Tim Furlan.
 
 Special thanks to Bill Spitzak, Michael Sweet, Matthias Melcher, Greg Ercolano
 and others for the Fast Light Tool Kit on which Gmsh's GUI is based. See
@@ -187,6 +188,8 @@ optional codes in the contrib/ directory, each governed by their own license:
 * contrib/blossom copyright (C) 1995-1997 Bill Cook et al.;
 
 * contrib/bamg from Freefem++ copyright (C) Frederic Hecht;
+
+* contrib/tinyxml2 from Lee Thomason;
 
 * contrib/voro++ from Voro++ Copyright (c) 2008, The Regents of the University
   of California, through Lawrence Berkeley National Laboratory (subject to

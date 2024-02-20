@@ -1226,6 +1226,12 @@ std::string opt_general_error_filename(OPT_ARGS_STR)
   return CTX::instance()->errorFileName;
 }
 
+std::string opt_general_number_format(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->numberFormat = val;
+  return CTX::instance()->numberFormat;
+}
+
 std::string opt_general_session_filename(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) CTX::instance()->sessionFileName = val;
@@ -1805,7 +1811,7 @@ std::string opt_view_name(OPT_ARGS_STR)
 #endif
 }
 
-std::string opt_view_format(OPT_ARGS_STR)
+std::string opt_view_number_format(OPT_ARGS_STR)
 {
 #if defined(HAVE_POST)
   GET_VIEWo("");
@@ -4680,6 +4686,12 @@ double opt_geometry_occ_bounds_use_stl(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.occBoundsUseSTL = val ? 1 : 0;
   return CTX::instance()->geom.occBoundsUseSTL;
+}
+
+double opt_geometry_occ_brep_format_version(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occBrepFormatVersion = (int)val;
+  return CTX::instance()->geom.occBrepFormatVersion;
 }
 
 double opt_geometry_occ_disable_stl(OPT_ARGS_NUM)

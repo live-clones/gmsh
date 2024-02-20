@@ -88,6 +88,9 @@ option.add('setColor', doc, None, istring('name'), iint('r'), iint('g'), iint('b
 doc = '''Get the `r', `g', `b', `a' value of a color option. `name' is of the form "Category.Color.Option" or "Category[num].Color.Option". Available categories and options are listed in the "Gmsh options" chapter of the Gmsh reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-options). For conciseness "Color." can be ommitted in `name'.'''
 option.add('getColor', doc, None, istring('name'), oint('r'), oint('g'), oint('b'), oint('a'))
 
+doc = '''Restore all options to default settings.'''
+option.add('restoreDefaults', doc, None)
+
 ################################################################################
 
 model = gmsh.add_module('model', 'model functions')
@@ -920,7 +923,7 @@ occ.add('convertToNURBS', doc, None, ivectorpair('dimTags'))
 doc = '''Import BREP, STEP or IGES shapes from the file `fileName' in the OpenCASCADE CAD representation. The imported entities are returned in `outDimTags', as a vector of (dim, tag) pairs. If the optional argument `highestDimOnly' is set, only import the highest dimensional entities in the file. The optional argument `format' can be used to force the format of the file (currently "brep", "step" or "iges").'''
 occ.add('importShapes', doc, None, istring('fileName'), ovectorpair('outDimTags'), ibool('highestDimOnly', 'true', 'True'), istring('format', '""'))
 
-doc = '''Imports an OpenCASCADE `shape' by providing a pointer to a native OpenCASCADE `TopoDS_Shape' object (passed as a pointer to void). The imported entities are returned in `outDimTags' as a vector of (dim, tag) pairs. If the optional argument `highestDimOnly' is set, only import the highest dimensional entities in `shape'. In Python, this function can be used for integration with PythonOCC, in which the SwigPyObject pointer of `TopoDS_Shape' must be passed as an int to `shape', i.e., `shape = int(pythonocc_shape.this)'. Warning: this function is unsafe, as providing an invalid pointer will lead to undefined behavior.'''
+doc = '''Import an OpenCASCADE `shape' by providing a pointer to a native OpenCASCADE `TopoDS_Shape' object (passed as a pointer to void). The imported entities are returned in `outDimTags' as a vector of (dim, tag) pairs. If the optional argument `highestDimOnly' is set, only import the highest dimensional entities in `shape'. In Python, this function can be used for integration with PythonOCC, in which the SwigPyObject pointer of `TopoDS_Shape' must be passed as an int to `shape', i.e., `shape = int(pythonocc_shape.this)'. Warning: this function is unsafe, as providing an invalid pointer will lead to undefined behavior.'''
 occ.add('importShapesNativePointer', doc, None, ivoidstar('shape'), ovectorpair('outDimTags'), ibool('highestDimOnly', 'true', 'True'))
 
 doc = '''Get all the OpenCASCADE entities. If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0). The entities are returned as a vector of (dim, tag) pairs.'''
@@ -938,7 +941,7 @@ occ.add('getCurveLoops', doc, None, iint('surfaceTag'), ovectorint('curveLoopTag
 doc = '''Get the tags `surfaceLoopTags' of the surface loops making up the volume of tag `volumeTag', as well as the tags `surfaceTags' of the surfaces making up each surface loop.'''
 occ.add('getSurfaceLoops', doc, None, iint('volumeTag'), ovectorint('surfaceLoopTags'), ovectorvectorint('surfaceTags'))
 
-doc = '''Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.'''
+doc = '''Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'. If no density is attached to the entity (the default), the value corresponds respectively to the length, area and volume for `dim' = 1, 2 and 3.'''
 occ.add('getMass', doc, None, iint('dim'), iint('tag'), odouble('mass'))
 
 doc = '''Get the center of mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.'''
@@ -1202,11 +1205,17 @@ logger.add('get', doc, None, ovectorstring('log'))
 doc = '''Stop logging messages.'''
 logger.add('stop', doc, None)
 
-doc = '''Return wall clock time.'''
+doc = '''Return wall clock time (in s).'''
 logger.add('getWallTime', doc, odouble)
 
-doc = '''Return CPU time.'''
+doc = '''Return CPU time (in s).'''
 logger.add('getCpuTime', doc, odouble)
+
+doc = '''Return memory usage (in Mb).'''
+logger.add('getMemory', doc, odouble)
+
+doc = '''Return total available memory (in Mb).'''
+logger.add('getTotalMemory', doc, odouble)
 
 doc = '''Return last error message, if any.'''
 logger.add('getLastError', doc, None, ostring('error'))

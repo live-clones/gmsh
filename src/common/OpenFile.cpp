@@ -367,8 +367,15 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
     status =
       GModel::current()->readSTL(fileName, CTX::instance()->geom.tolerance);
   }
+  else if(ext == ".NII" || ext == ".nii") {
+    status =
+      GModel::current()->readNII(fileName);
+  }
   else if(ext == ".brep" || ext == ".rle" || ext == ".brp" || ext == ".BRP") {
     status = GModel::current()->readOCCBREP(fileName);
+  }
+  else if(ext == ".xao" || ext == ".XAO") {
+    status = GModel::current()->readOCCXAO(fileName);
   }
   else if(ext == ".iges" || ext == ".IGES" || ext == ".igs" || ext == ".IGS") {
     status = GModel::current()->readOCCIGES(fileName);

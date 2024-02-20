@@ -46,6 +46,7 @@
 #include "pyramidalBasis.h"
 #include "Numeric.h"
 #include "OS.h"
+#include "Options.h"
 #include "OpenFile.h"
 #include "HierarchicalBasisH1Quad.h"
 #include "HierarchicalBasisH1Tria.h"
@@ -297,6 +298,14 @@ GMSH_API void gmsh::option::getColor(const std::string &name, int &r, int &g,
   else {
     Msg::Error("Could not get option '%s'", name.c_str());
   }
+}
+
+GMSH_API void gmsh::option::restoreDefaults()
+{
+  UnlinkFile(CTX::instance()->homeDir + CTX::instance()->sessionFileName);
+  UnlinkFile(CTX::instance()->homeDir + CTX::instance()->optionsFileName);
+  ReInitOptions(0);
+  InitOptionsGUI(0);
 }
 
 // gmsh::model
@@ -8895,6 +8904,18 @@ GMSH_API double gmsh::logger::getCpuTime()
 {
   if(!_checkInit()) return -1;
   return Cpu();
+}
+
+GMSH_API double gmsh::logger::getMemory()
+{
+  if(!_checkInit()) return -1;
+  return GetMemoryUsage()/1024./1024.;
+}
+
+GMSH_API double gmsh::logger::getTotalMemory()
+{
+  if(!_checkInit()) return -1;
+  return TotalRam();
 }
 
 GMSH_API void gmsh::logger::getLastError(std::string &error)

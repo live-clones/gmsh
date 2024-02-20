@@ -26,6 +26,56 @@ Length unit to which coordinates from STEP and IGES files are converted to when 
 Default value: @code{""}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Geometry.OCCSTEPDescription
+Description of the STEP file to be written by OpenCASCADE. If left empty, the default value is set by OpenCASCADE@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OCCSTEPImplementationLevel
+Implementation level of the STEP file to be written by OpenCASCADE. If left empty, the default value is set by OpenCASCADE@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OCCSTEPModelName
+Model name of the STEP file to be written by OpenCASCADE. If left empty, the default value is set by OpenCASCADE@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OCCSTEPTimeStamp
+Time stamp for the creation of the STEP file. If left empty, the default value is current time.@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OCCSTEPAuthor
+Author of the STEP file to be written by OpenCASCADE. If left empty, the default value is set by OpenCASCADE@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OCCSTEPOrganization
+Organization of the STEP file to be written by OpenCASCADE. If left empty, the default value is set by OpenCASCADE@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OCCSTEPPreprocessorVersion
+Preprocessor version of the STEP file to be written by OpenCASCADE. If left empty, the default value is set by OpenCASCADE@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OCCSTEPOriginatingSystem
+Originating system of the STEP file to be written by OpenCASCADE. If left empty, the default value is set by OpenCASCADE@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OCCSTEPAuthorization
+Authorization of the STEP file to be written by OpenCASCADE. If left empty, the default value is set by OpenCASCADE@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OCCSTEPSchemaIdentifier
+Schema identifier of the STEP file to be written by OpenCASCADE. If left empty, the default value is set by OpenCASCADE@*
+Default value: @code{""}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Geometry.PipeDefaultTrihedron
 Default trihedron type when creating pipes@*
 Default value: @code{"DiscreteTrihedron"}@*
@@ -164,6 +214,11 @@ Saved in: @code{General.OptionsFileName}
 @item Geometry.OCCBoundsUseStl
 Use STL mesh for computing bounds of OpenCASCADE shapes (more accurate, but slower)@*
 Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Geometry.OCCBrepFormatVersion
+Version of BREP format used when saving BREP and XAO files (0: current, 1, 2, 3: currently supported versions)@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCDisableStl

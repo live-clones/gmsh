@@ -262,9 +262,11 @@ int GRegion::delFace(GFace *face)
 {
   const auto found = std::find(l_faces.begin(), l_faces.end(), face);
 
-  if(found != l_faces.end()) { l_faces.erase(found); }
+  if(found == l_faces.end()) { return 0; }
 
   const auto pos = std::distance(l_faces.begin(), found);
+
+  l_faces.erase(found);
 
   if(l_dirs.empty()) { return 0; }
 
