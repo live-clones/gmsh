@@ -1,8 +1,8 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
+#include "meshMesquite.h"
 
 #ifdef HAVE_MESQUITE
-#include "meshMesquite.h"
 #include "GModel.h"
 #include "GRegion.h"
 #include "MTriangle.h"
