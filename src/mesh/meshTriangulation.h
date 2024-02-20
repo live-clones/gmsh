@@ -20,5 +20,6 @@ void GFaceDelaunayRefinementOldMesher(int faceTag);
 void GFaceDelaunayRefinement(int faceTag);
 int GFace2PolyMesh(int faceTag, PolyMesh **pm);
 int PolyMesh2GFace(PolyMesh *pm, int faceTag);
+int PolyMeshDelaunayize (int faceTag);
 
 #endif
