@@ -154,8 +154,10 @@ int mesquiteImprove (GFace *gf){
 #else
 int mesquiteImprove (GRegion *gr){
   Msg::Error("Gmsh must be compiled with the UNTANGLE lib to be able to untangle a tet mesh");
+  return -1;
 }
 int mesquiteImprove (GFace *gf){
   Msg::Error("Gmsh must be compiled with the UNTANGLE lib to be able to untangle a tet mesh");
+  return -1;
 }
 #endif
