@@ -904,7 +904,6 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover,
 int PolyMeshDelaunayize (int faceTag){
 
   PolyMesh *pm;
-  GFace *gf = GModel::current()->getFaceByTag(faceTag);
   GFace2PolyMesh(faceTag, &pm);
 
   for(auto ff : pm->faces)ff->data = faceTag;
