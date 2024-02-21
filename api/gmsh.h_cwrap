@@ -3221,6 +3221,127 @@ namespace gmsh { // Top-level functions
         tetra.assign(api_tetra_, api_tetra_ + api_tetra_n_); gmshFree(api_tetra_);
       }
 
+      // gmsh::model::mesh::concentration_from_DF
+      //
+      // Antoine put a comment here.
+      inline void concentration_from_DF(std::vector<int> & api_concentration,
+                                        std::vector<double> & api_curvature)
+      {
+        int ierr = 0;
+        int *api_api_concentration_; size_t api_api_concentration_n_;
+        double *api_api_curvature_; size_t api_api_curvature_n_;
+        gmshModelMeshConcentration_from_DF(&api_api_concentration_, &api_api_concentration_n_, &api_api_curvature_, &api_api_curvature_n_, &ierr);
+        if(ierr) throwLastError();
+        api_concentration.assign(api_api_concentration_, api_api_concentration_ + api_api_concentration_n_); gmshFree(api_api_concentration_);
+        api_curvature.assign(api_api_curvature_, api_api_curvature_ + api_api_curvature_n_); gmshFree(api_api_curvature_);
+      }
+
+      // gmsh::model::mesh::advance_DF_in_time
+      //
+      // Antoine put a comment here.
+      inline void advance_DF_in_time(const double dt,
+                                     const std::vector<double> & velocity,
+                                     const bool front = false)
+      {
+        int ierr = 0;
+        double *api_velocity_; size_t api_velocity_n_; vector2ptr(velocity, &api_velocity_, &api_velocity_n_);
+        gmshModelMeshAdvance_DF_in_time(dt, api_velocity_, api_velocity_n_, (int)front, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_velocity_);
+      }
+
+      // gmsh::model::mesh::add_free_form
+      //
+      // Antoine put a comment here.
+      inline void add_free_form(const int tag,
+                                const std::vector<double> & poly)
+      {
+        int ierr = 0;
+        double *api_poly_; size_t api_poly_n_; vector2ptr(poly, &api_poly_, &api_poly_n_);
+        gmshModelMeshAdd_free_form(tag, api_poly_, api_poly_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_poly_);
+      }
+
+      // gmsh::model::mesh::get_DF_position
+      //
+      // Antoine put a comment here.
+      inline void get_DF_position(std::vector<double> & api_position,
+                                  std::vector<int> & api_tags)
+      {
+        int ierr = 0;
+        double *api_api_position_; size_t api_api_position_n_;
+        int *api_api_tags_; size_t api_api_tags_n_;
+        gmshModelMeshGet_DF_position(&api_api_position_, &api_api_position_n_, &api_api_tags_, &api_api_tags_n_, &ierr);
+        if(ierr) throwLastError();
+        api_position.assign(api_api_position_, api_api_position_ + api_api_position_n_); gmshFree(api_api_position_);
+        api_tags.assign(api_api_tags_, api_api_tags_ + api_api_tags_n_); gmshFree(api_api_tags_);
+      }
+
+      // gmsh::model::mesh::get_front_nodes_position
+      //
+      // Antoine put a comment here.
+      inline void get_front_nodes_position(std::vector<double> & api_position)
+      {
+        int ierr = 0;
+        double *api_api_position_; size_t api_api_position_n_;
+        gmshModelMeshGet_front_nodes_position(&api_api_position_, &api_api_position_n_, &ierr);
+        if(ierr) throwLastError();
+        api_position.assign(api_api_position_, api_api_position_ + api_api_position_n_); gmshFree(api_api_position_);
+      }
+
+      // gmsh::model::mesh::get_nodes_position
+      //
+      // Antoine put a comment here.
+      inline void get_nodes_position(std::vector<double> & api_position)
+      {
+        int ierr = 0;
+        double *api_api_position_; size_t api_api_position_n_;
+        gmshModelMeshGet_nodes_position(&api_api_position_, &api_api_position_n_, &ierr);
+        if(ierr) throwLastError();
+        api_position.assign(api_api_position_, api_api_position_ + api_api_position_n_); gmshFree(api_api_position_);
+      }
+
+      // gmsh::model::mesh::reset_discrete_front
+      //
+      // Antoine put a comment here.
+      inline void reset_discrete_front()
+      {
+        int ierr = 0;
+        gmshModelMeshReset_discrete_front(&ierr);
+        if(ierr) throwLastError();
+      }
+
+      // gmsh::model::mesh::relaying_and_relax
+      //
+      // Antoine put a comment here.
+      inline void relaying_and_relax()
+      {
+        int ierr = 0;
+        gmshModelMeshRelaying_and_relax(&ierr);
+        if(ierr) throwLastError();
+      }
+
+      // gmsh::model::mesh::redist_front
+      //
+      // Antoine put a comment here.
+      inline void redist_front(const double lc)
+      {
+        int ierr = 0;
+        gmshModelMeshRedist_front(lc, &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // gmsh::model::mesh::set_bnd_front
+      //
+      // Antoine put a comment here.
+      inline void set_bnd_front()
+      {
+        int ierr = 0;
+        gmshModelMeshSet_bnd_front(&ierr);
+        if(ierr) throwLastError();
+      }
+
       namespace field { // Mesh size field functions
 
         // gmsh::model::mesh::field::add

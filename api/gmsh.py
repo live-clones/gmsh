@@ -5140,189 +5140,202 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectorsize(api_tetra_, api_tetra_n_.value)
-        
+
         @staticmethod
-        def concentrationFromDF(curvature = False):
+        def concentration_from_DF():
             """
-            gmsh.model.mesh.concentrationFromDF()
+            gmsh.model.mesh.concentration_from_DF()
 
-            Compute the concentration of each element based on the discrete front for mesh relaying
-            and the oriented curvature based on the concentration if curvature is true
+            Antoine put a comment here.
 
-            return 'concentration, curvature'
+            Return `api_concentration', `api_curvature'.
 
             Types:
-            - 'concentration': vector of int
-            - 'curvature': vector of double
+            - `api_concentration': vector of integers
+            - `api_curvature': vector of doubles
             """
-            api_concentration, api_concentration_n = POINTER(c_int)(), c_size_t()
-            api_curvature, api_curvature_n = POINTER(c_double)(), c_size_t()
+            api_api_concentration_, api_api_concentration_n_ = POINTER(c_int)(), c_size_t()
+            api_api_curvature_, api_api_curvature_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshConcentrationFromDF(byref(api_concentration), byref(api_concentration_n), byref(api_curvature), byref(api_curvature_n), byref(ierr))
-
+            lib.gmshModelMeshConcentration_from_DF(
+                byref(api_api_concentration_), byref(api_api_concentration_n_),
+                byref(api_api_curvature_), byref(api_api_curvature_n_),
+                byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
-            
-            if(curvature):
-                return _ovectorint(api_concentration, api_concentration_n.value), _ovectordouble(api_curvature, api_curvature_n.value) 
-            else:
-                return _ovectorint(api_concentration, api_concentration_n.value)
-        concentration_from_DF = concentrationFromDF
-        concentration_from_df = concentrationFromDF
-        
-        def advanceDFInTime(dt, v, front=False):
-            """
-            gmsh.model.mesh.advanceDFInTime()
+            return (
+                _ovectorint(api_api_concentration_, api_api_concentration_n_.value),
+                _ovectordouble(api_api_curvature_, api_api_curvature_n_.value))
+        concentration_from__df = concentration_from_DF
 
-            move the discrete front based on the velocity given in v. v is of size [n_marker x 3]
+        @staticmethod
+        def advance_DF_in_time(dt, velocity, front=False):
+            """
+            gmsh.model.mesh.advance_DF_in_time(dt, velocity, front=False)
+
+            Antoine put a comment here.
 
             Types:
-            - 'v': vector of double [n_marker x 3]
-            - 'dt': double
+            - `dt': double
+            - `velocity': vector of doubles
+            - `front': boolean
             """
+            api_velocity_, api_velocity_n_ = _ivectordouble(velocity)
             ierr = c_int()
-            api_v, api_v_n = _ivectordouble(v)
-            api_front = c_int(bool(front))
-            lib.gmshModelMeshAdvanceDFInTime(c_double(dt), api_v, api_v_n, api_front, byref(ierr))
-
+            lib.gmshModelMeshAdvance_DF_in_time(
+                c_double(dt),
+                api_velocity_, api_velocity_n_,
+                c_int(bool(front)),
+                byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
-            return
-        advance_DF_in_time = advanceDFInTime
-        advance_df_in_time = advanceDFInTime
+        advance__df_in_time = advance_DF_in_time
 
-        def addFreeForm(tag, poly):
+        @staticmethod
+        def add_free_form(tag, poly):
             """
-            gmsh.model.mesh.addFreeForm()
+            gmsh.model.mesh.add_free_form(tag, poly)
 
-            add a close loop of markers in the discrete front of relaying 
+            Antoine put a comment here.
 
             Types:
-            - 'tag': int
-            - 'poly': vector of double of size [n_marker x 3]
+            - `tag': integer
+            - `poly': vector of doubles
             """
+            api_poly_, api_poly_n_ = _ivectordouble(poly)
             ierr = c_int()
-            api_poly, api_poly_n = _ivectordouble(poly)
-            lib.gmshModelMeshAddFreeForm(c_int(tag), api_poly, api_poly_n, byref(ierr))
-
+            lib.gmshModelMeshAdd_free_form(
+                c_int(tag),
+                api_poly_, api_poly_n_,
+                byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
-            return
-        add_free_form = addFreeForm
 
-        def getDFPosition():
+        @staticmethod
+        def get_DF_position():
             """
-            gmsh.model.mesh.getDFPosition()
+            gmsh.model.mesh.get_DF_position()
 
-            return the tags and position of the discrete front of relaying in the format:
+            Antoine put a comment here.
 
-            tags = [tag0, tag1, tag2]
-            pos = [numpy_array([[x0, y0, z0], [x1, y1, z1], ...]),  # pos of tag0
-                   numpy_array([[x0, y0, z0], [x1, y1, z1], ...]),  # pos of tag1
-                   numpy_array([[x0, y0, z0], [x1, y1, z1], ...]),] # pos of tag2
+            Return `api_position', `api_tags'.
 
             Types:
+            - `api_position': vector of doubles
+            - `api_tags': vector of integers
             """
-            api_position, api_position_n = POINTER(c_double)(), c_size_t()
-            api_tags, api_tags_n = POINTER(c_int)(), c_size_t()
+            api_api_position_, api_api_position_n_ = POINTER(c_double)(), c_size_t()
+            api_api_tags_, api_api_tags_n_ = POINTER(c_int)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGetDFPosition(byref(api_position), byref(api_position_n), byref(api_tags), byref(api_tags_n), byref(ierr))
+            lib.gmshModelMeshGet_DF_position(
+                byref(api_api_position_), byref(api_api_position_n_),
+                byref(api_api_tags_), byref(api_api_tags_n_),
+                byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
-            all_pos = _ovectordouble(api_position, api_position_n.value).reshape((-1,3))
-            all_tags = _ovectorsize(api_tags, api_tags_n.value)
-            tags = numpy.sort(numpy.unique(all_tags))
-            pos = []
-            for i in range(tags.shape[0]):
-                pos.append(all_pos[numpy.where(all_tags==tags[i]),:])
+            return (
+                _ovectordouble(api_api_position_, api_api_position_n_.value),
+                _ovectorint(api_api_tags_, api_api_tags_n_.value))
+        get__df_position = get_DF_position
 
-            return tags, pos
-        get_DF_position = getDFPosition
-        get_df_position = getDFPosition
-
-        def getNodesPosition():
+        @staticmethod
+        def get_front_nodes_position():
             """
-            gmsh.model.mesh.getNodesPosition()
+            gmsh.model.mesh.get_front_nodes_position()
 
-            return the position of the deformed mesh from relaying
+            Antoine put a comment here.
+
+            Return `api_position'.
 
             Types:
+            - `api_position': vector of doubles
             """
-            api_position, api_position_n = POINTER(c_double)(), c_size_t()
+            api_api_position_, api_api_position_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGetNodesPosition(byref(api_position), byref(api_position_n), byref(ierr))
+            lib.gmshModelMeshGet_front_nodes_position(
+                byref(api_api_position_), byref(api_api_position_n_),
+                byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
-            return _ovectordouble(api_position, api_position_n.value)
-        get_nodes_position = getNodesPosition
+            return _ovectordouble(api_api_position_, api_api_position_n_.value)
 
-        def getFrontNodesPosition():
+        @staticmethod
+        def get_nodes_position():
             """
-            gmsh.model.mesh.getFrontNodesPosition()
+            gmsh.model.mesh.get_nodes_position()
 
-            return the position of the front nodes from relaying
+            Antoine put a comment here.
+
+            Return `api_position'.
 
             Types:
+            - `api_position': vector of doubles
             """
-            api_position, api_position_n = POINTER(c_double)(), c_size_t()
+            api_api_position_, api_api_position_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGetFrontNodesPosition(byref(api_position), byref(api_position_n), byref(ierr))
+            lib.gmshModelMeshGet_nodes_position(
+                byref(api_api_position_), byref(api_api_position_n_),
+                byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
-            return _ovectordouble(api_position, api_position_n.value)
-        get_front_nodes_position = getFrontNodesPosition
+            return _ovectordouble(api_api_position_, api_api_position_n_.value)
 
-        def relayingAndRelax():
+        @staticmethod
+        def reset_discrete_front():
             """
-            gmsh.model.mesh.relayingAndRelax()
+            gmsh.model.mesh.reset_discrete_front()
 
-            move the mesh to be conform to the discrete front 
-            and relax the nodes that are not on the front
-            """
-            ierr = c_int()
-            lib.gmshModelMeshRelayingAndRelax(byref(ierr))
-            if ierr.value != 0:
-                raise Exception(logger.getLastError())
-        relaying_and_relax = relayingAndRelax
-
-        def resetDiscreteFront():
-            """
-            gmsh.model.mesh.resetDiscreteFront()
-
-            reset the discrete front object created trough the api to the relaying object
+            Antoine put a comment here.
             """
             ierr = c_int()
-            lib.gmshModelMeshResetDiscreteFront(byref(ierr))
+            lib.gmshModelMeshReset_discrete_front(
+                byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
-        reset_discrete_front = resetDiscreteFront
 
-        def redistFront(lc):
+        @staticmethod
+        def relaying_and_relax():
             """
-            gmsh.model.mesh.redistFront()
+            gmsh.model.mesh.relaying_and_relax()
 
-            redistanciation of the markers on the discrete front
-            Types: -"lc" double (charachterictic length)
+            Antoine put a comment here.
             """
             ierr = c_int()
-            lib.gmshModelMeshRedistFront(c_double(lc), byref(ierr))
+            lib.gmshModelMeshRelaying_and_relax(
+                byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
-        redist_front = redistFront
 
-        def setBndFront():
+        @staticmethod
+        def redist_front(lc):
             """
-            gmsh.model.mesh.setBndFront()
+            gmsh.model.mesh.redist_front(lc)
 
-            set discrete front on the boundary 
-            Types: 
+            Antoine put a comment here.
+
+            Types:
+            - `lc': double
             """
             ierr = c_int()
-            lib.gmshModelMeshSetBndFront( byref(ierr))
+            lib.gmshModelMeshRedist_front(
+                c_double(lc),
+                byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
-        set_bnd_front = setBndFront
-            
+
+        @staticmethod
+        def set_bnd_front():
+            """
+            gmsh.model.mesh.set_bnd_front()
+
+            Antoine put a comment here.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshSet_bnd_front(
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+
 
         class field:
             """

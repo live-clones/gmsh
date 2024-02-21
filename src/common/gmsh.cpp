@@ -5706,12 +5706,12 @@ gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
 #endif
 }
 
-GMSH_API void gmsh::model::mesh::concentrationFromDF(std::vector<int> &api_concentration, std::vector<double> &api_curvature){
+GMSH_API void gmsh::model::mesh::concentration_from_DF(std::vector<int> &api_concentration, std::vector<double> &api_curvature){
   concentration(api_concentration, api_curvature);
   return;
 }
 
-GMSH_API void gmsh::model::mesh::advanceDFInTime(double dt, std::vector<double> v, bool front){
+GMSH_API void gmsh::model::mesh::advance_DF_in_time(const double dt, const std::vector<double> &v, const bool front){
   std::vector<SVector3> api_v;
   for(int i=0; i<v.size(); i+=3){
     api_v.push_back(SVector3(&v[i]));
@@ -5720,7 +5720,7 @@ GMSH_API void gmsh::model::mesh::advanceDFInTime(double dt, std::vector<double> 
   return;
 }
 
-GMSH_API void gmsh::model::mesh::addFreeForm(int tag, std::vector<double> poly){
+GMSH_API void gmsh::model::mesh::add_free_form(const int tag, const std::vector<double> &poly){
   std::vector<SVector3> api_poly;
   for(int i=0; i<poly.size(); i+=3){
     api_poly.push_back(SVector3(poly[i], poly[i+1], poly[i+2]));
@@ -5729,35 +5729,35 @@ GMSH_API void gmsh::model::mesh::addFreeForm(int tag, std::vector<double> poly){
   return;
 } 
 
-GMSH_API void gmsh::model::mesh::getDFPosition_(std::vector<double> &api_position, std::vector<int> &api_tags){
+GMSH_API void gmsh::model::mesh::get_DF_position(std::vector<double> &api_position, std::vector<int> &api_tags){
   getDFPosition(api_position, api_tags);
   return;
 }
 
-GMSH_API void gmsh::model::mesh::getFrontNodesPosition_(std::vector<double> &api_position){
+GMSH_API void gmsh::model::mesh::get_front_nodes_position(std::vector<double> &api_position){
   getFrontNodesPosition(api_position);
   return;
 }
 
-GMSH_API void gmsh::model::mesh::getNodesPosition_(std::vector<double> &api_position){
+GMSH_API void gmsh::model::mesh::get_nodes_position(std::vector<double> &api_position){
   getNodesPosition(api_position);
   return;
 }
 
-GMSH_API void gmsh::model::mesh::resetDiscreteFront_(){
+GMSH_API void gmsh::model::mesh::reset_discrete_front(){
   resetDiscreteFront();
   return;
 }
 
-GMSH_API void gmsh::model::mesh::relayingAndRelax_(){
+GMSH_API void gmsh::model::mesh::relaying_and_relax(){
   relayingAndRelax();
 }
 
-GMSH_API void gmsh::model::mesh::redistFront_(double lc){
+GMSH_API void gmsh::model::mesh::redist_front(const double lc){
   redistFront(lc);
 }
 
-GMSH_API void gmsh::model::mesh::setBndFront_(){
+GMSH_API void gmsh::model::mesh::set_bnd_front(){
   setBndFront();
 }
 

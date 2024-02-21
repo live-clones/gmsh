@@ -2447,123 +2447,129 @@ GMSH_API void gmshModelMeshTetrahedralize(const double * coord, const size_t coo
   }
 }
 
-GMSH_API void gmshModelMeshConcentrationFromDF(int ** concentration, size_t * concentration_n, double ** curvature, size_t * curvature_n, int * ierr)
+GMSH_API void gmshModelMeshConcentration_from_DF(int ** api_concentration, size_t * api_concentration_n, double ** api_curvature, size_t * api_curvature_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<int> api_concentration;
-    std::vector<double> api_curvature;
-    gmsh::model::mesh::concentrationFromDF(api_concentration, api_curvature);
-    vector2ptr(api_concentration, concentration, concentration_n);
-    vector2ptr(api_curvature, curvature, curvature_n);
+    std::vector<int> api_api_concentration_;
+    std::vector<double> api_api_curvature_;
+    gmsh::model::mesh::concentration_from_DF(api_api_concentration_, api_api_curvature_);
+    vector2ptr(api_api_concentration_, api_concentration, api_concentration_n);
+    vector2ptr(api_api_curvature_, api_curvature, api_curvature_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
 
-GMSH_API void gmshModelMeshAdvanceDFInTime(double dt, double * v, size_t v_n, int front, int * ierr)
+GMSH_API void gmshModelMeshAdvance_DF_in_time(const double dt, const double * velocity, const size_t velocity_n, const int front, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<double> api_v(v, v + v_n);
-    gmsh::model::mesh::advanceDFInTime(dt, api_v, front); 
+    std::vector<double> api_velocity_(velocity, velocity + velocity_n);
+    gmsh::model::mesh::advance_DF_in_time(dt, api_velocity_, front);
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
 
-GMSH_API void gmshModelMeshAddFreeForm(int tag, double * poly, size_t poly_n, int * ierr)
+GMSH_API void gmshModelMeshAdd_free_form(const int tag, const double * poly, const size_t poly_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<double> api_poly(poly, poly + poly_n);
-    gmsh::model::mesh::addFreeForm(tag, api_poly); 
+    std::vector<double> api_poly_(poly, poly + poly_n);
+    gmsh::model::mesh::add_free_form(tag, api_poly_);
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
 
-GMSH_API void gmshModelMeshGetDFPosition(double ** position, size_t * position_n, int ** tags, size_t * tags_n, int * ierr){
+GMSH_API void gmshModelMeshGet_DF_position(double ** api_position, size_t * api_position_n, int ** api_tags, size_t * api_tags_n, int * ierr)
+{
   if(ierr) *ierr = 0;
   try {
-    std::vector<double> api_position;
-    std::vector<int> api_tags;
-    gmsh::model::mesh::getDFPosition_(api_position, api_tags);
-    vector2ptr(api_position, position, position_n);
-    vector2ptr(api_tags, tags, tags_n);
+    std::vector<double> api_api_position_;
+    std::vector<int> api_api_tags_;
+    gmsh::model::mesh::get_DF_position(api_api_position_, api_api_tags_);
+    vector2ptr(api_api_position_, api_position, api_position_n);
+    vector2ptr(api_api_tags_, api_tags, api_tags_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
 
-GMSH_API void gmshModelMeshGetNodesPosition(double ** position, size_t * position_n, int * ierr){
+GMSH_API void gmshModelMeshGet_front_nodes_position(double ** api_position, size_t * api_position_n, int * ierr)
+{
   if(ierr) *ierr = 0;
   try {
-    std::vector<double> api_position;
-    gmsh::model::mesh::getNodesPosition_(api_position);
-    vector2ptr(api_position, position, position_n);
+    std::vector<double> api_api_position_;
+    gmsh::model::mesh::get_front_nodes_position(api_api_position_);
+    vector2ptr(api_api_position_, api_position, api_position_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
 
-GMSH_API void gmshModelMeshGetFrontNodesPosition(double ** position, size_t * position_n, int * ierr){
+GMSH_API void gmshModelMeshGet_nodes_position(double ** api_position, size_t * api_position_n, int * ierr)
+{
   if(ierr) *ierr = 0;
   try {
-    std::vector<double> api_position;
-    gmsh::model::mesh::getFrontNodesPosition_(api_position);
-    vector2ptr(api_position, position, position_n);
+    std::vector<double> api_api_position_;
+    gmsh::model::mesh::get_nodes_position(api_api_position_);
+    vector2ptr(api_api_position_, api_position, api_position_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
 
-GMSH_API void gmshModelMeshRelayingAndRelax(int * ierr){
+GMSH_API void gmshModelMeshReset_discrete_front(int * ierr)
+{
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::relayingAndRelax_();
+    gmsh::model::mesh::reset_discrete_front();
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
 
-GMSH_API void gmshModelMeshResetDiscreteFront(int * ierr){
+GMSH_API void gmshModelMeshRelaying_and_relax(int * ierr)
+{
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::resetDiscreteFront_();
+    gmsh::model::mesh::relaying_and_relax();
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
 
-GMSH_API void gmshModelMeshRedistFront(double lc, int * ierr){
+GMSH_API void gmshModelMeshRedist_front(const double lc, int * ierr)
+{
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::redistFront_(lc);
+    gmsh::model::mesh::redist_front(lc);
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
 
-GMSH_API void gmshModelMeshSetBndFront(int * ierr){
+GMSH_API void gmshModelMeshSet_bnd_front(int * ierr)
+{
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::setBndFront_();
+    gmsh::model::mesh::set_bnd_front();
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
-
 
 GMSH_API int gmshModelMeshFieldAdd(const char * fieldType, const int tag, int * ierr)
 {

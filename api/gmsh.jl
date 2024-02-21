@@ -4543,6 +4543,201 @@ function tetrahedralize(coord)
 end
 
 """
+    gmsh.model.mesh.concentration_from_DF()
+
+Antoine put a comment here.
+
+Return `api_concentration`, `api_curvature`.
+
+Types:
+ - `api_concentration`: vector of integers
+ - `api_curvature`: vector of doubles
+"""
+function concentration_from_DF()
+    api_api_concentration_ = Ref{Ptr{Cint}}()
+    api_api_concentration_n_ = Ref{Csize_t}()
+    api_api_curvature_ = Ref{Ptr{Cdouble}}()
+    api_api_curvature_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshConcentration_from_DF, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_api_concentration_, api_api_concentration_n_, api_api_curvature_, api_api_curvature_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    api_concentration = unsafe_wrap(Array, api_api_concentration_[], api_api_concentration_n_[], own = true)
+    api_curvature = unsafe_wrap(Array, api_api_curvature_[], api_api_curvature_n_[], own = true)
+    return api_concentration, api_curvature
+end
+const concentration_from__df = concentration_from_DF
+
+"""
+    gmsh.model.mesh.advance_DF_in_time(dt, velocity, front = false)
+
+Antoine put a comment here.
+
+Types:
+ - `dt`: double
+ - `velocity`: vector of doubles
+ - `front`: boolean
+"""
+function advance_DF_in_time(dt, velocity, front = false)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshAdvance_DF_in_time, gmsh.lib), Cvoid,
+          (Cdouble, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
+          dt, convert(Vector{Cdouble}, velocity), length(velocity), front, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const advance__df_in_time = advance_DF_in_time
+
+"""
+    gmsh.model.mesh.add_free_form(tag, poly)
+
+Antoine put a comment here.
+
+Types:
+ - `tag`: integer
+ - `poly`: vector of doubles
+"""
+function add_free_form(tag, poly)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshAdd_free_form, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
+          tag, convert(Vector{Cdouble}, poly), length(poly), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.get_DF_position()
+
+Antoine put a comment here.
+
+Return `api_position`, `api_tags`.
+
+Types:
+ - `api_position`: vector of doubles
+ - `api_tags`: vector of integers
+"""
+function get_DF_position()
+    api_api_position_ = Ref{Ptr{Cdouble}}()
+    api_api_position_n_ = Ref{Csize_t}()
+    api_api_tags_ = Ref{Ptr{Cint}}()
+    api_api_tags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGet_DF_position, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_api_position_, api_api_position_n_, api_api_tags_, api_api_tags_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    api_position = unsafe_wrap(Array, api_api_position_[], api_api_position_n_[], own = true)
+    api_tags = unsafe_wrap(Array, api_api_tags_[], api_api_tags_n_[], own = true)
+    return api_position, api_tags
+end
+const get__df_position = get_DF_position
+
+"""
+    gmsh.model.mesh.get_front_nodes_position()
+
+Antoine put a comment here.
+
+Return `api_position`.
+
+Types:
+ - `api_position`: vector of doubles
+"""
+function get_front_nodes_position()
+    api_api_position_ = Ref{Ptr{Cdouble}}()
+    api_api_position_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGet_front_nodes_position, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_api_position_, api_api_position_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    api_position = unsafe_wrap(Array, api_api_position_[], api_api_position_n_[], own = true)
+    return api_position
+end
+
+"""
+    gmsh.model.mesh.get_nodes_position()
+
+Antoine put a comment here.
+
+Return `api_position`.
+
+Types:
+ - `api_position`: vector of doubles
+"""
+function get_nodes_position()
+    api_api_position_ = Ref{Ptr{Cdouble}}()
+    api_api_position_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGet_nodes_position, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_api_position_, api_api_position_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    api_position = unsafe_wrap(Array, api_api_position_[], api_api_position_n_[], own = true)
+    return api_position
+end
+
+"""
+    gmsh.model.mesh.reset_discrete_front()
+
+Antoine put a comment here.
+"""
+function reset_discrete_front()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshReset_discrete_front, gmsh.lib), Cvoid,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.relaying_and_relax()
+
+Antoine put a comment here.
+"""
+function relaying_and_relax()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshRelaying_and_relax, gmsh.lib), Cvoid,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.redist_front(lc)
+
+Antoine put a comment here.
+
+Types:
+ - `lc`: double
+"""
+function redist_front(lc)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshRedist_front, gmsh.lib), Cvoid,
+          (Cdouble, Ptr{Cint}),
+          lc, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.set_bnd_front()
+
+Antoine put a comment here.
+"""
+function set_bnd_front()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSet_bnd_front, gmsh.lib), Cvoid,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
     module gmsh.model.mesh.field
 
 Mesh size field functions

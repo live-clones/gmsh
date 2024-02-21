@@ -1643,45 +1643,47 @@ GMSH_API void gmshModelMeshTetrahedralize(const double * coord, const size_t coo
                                           size_t ** tetra, size_t * tetra_n,
                                           int * ierr);
 
-/* Compute the concentration of each element based on the discrete front for mesh relaying*/
-GMSH_API void gmshModelMeshConcentrationFromDF(int ** concentration, size_t * concentration_n, 
-                                               double ** curvature, size_t * curvature_n,
-                                               int * ierr);
+/* Antoine put a comment here. */
+GMSH_API void gmshModelMeshConcentration_from_DF(int ** api_concentration, size_t * api_concentration_n,
+                                                 double ** api_curvature, size_t * api_curvature_n,
+                                                 int * ierr);
 
-/* Advance in time the discrete front of relaying */
-GMSH_API void gmshModelMeshAdvanceDFInTime(double dt, double *v, size_t v_n,
-                                           int front,
+/* Antoine put a comment here. */
+GMSH_API void gmshModelMeshAdvance_DF_in_time(const double dt,
+                                              const double * velocity, const size_t velocity_n,
+                                              const int front,
+                                              int * ierr);
+
+/* Antoine put a comment here. */
+GMSH_API void gmshModelMeshAdd_free_form(const int tag,
+                                         const double * poly, const size_t poly_n,
+                                         int * ierr);
+
+/* Antoine put a comment here. */
+GMSH_API void gmshModelMeshGet_DF_position(double ** api_position, size_t * api_position_n,
+                                           int ** api_tags, size_t * api_tags_n,
                                            int * ierr);
 
-/* Add a closed loop of markers */
-GMSH_API void gmshModelMeshAddFreeForm(int tag, double * poly, size_t poly_n, 
-                                       int * ierr);
+/* Antoine put a comment here. */
+GMSH_API void gmshModelMeshGet_front_nodes_position(double ** api_position, size_t * api_position_n,
+                                                    int * ierr);
 
-/* return the position of the discrete front of relaying */
-GMSH_API void gmshModelMeshGetDFPosition(double ** position, size_t * position_n,
-                                         int ** tags, size_t * tags_n,
-                                         int * ierr);
+/* Antoine put a comment here. */
+GMSH_API void gmshModelMeshGet_nodes_position(double ** api_position, size_t * api_position_n,
+                                              int * ierr);
 
-/* return the position of the deformed mesh from relaying */
-GMSH_API void gmshModelMeshGetNodesPosition(double ** position, size_t * position_n, 
-                                         int * ierr);
+/* Antoine put a comment here. */
+GMSH_API void gmshModelMeshReset_discrete_front(int * ierr);
 
-/* return the position of the front nodes of mesh relaying*/
-GMSH_API void gmshModelMeshGetFrontNodesPosition(double ** position, size_t * position_n,
-                                         int * ierr);
+/* Antoine put a comment here. */
+GMSH_API void gmshModelMeshRelaying_and_relax(int * ierr);
 
-/* move the mesh to be conform to the discrete front 
- * and relax the nodes that are not on the front    */
-GMSH_API void gmshModelMeshRelayingAndRelax(int * ierr);
+/* Antoine put a comment here. */
+GMSH_API void gmshModelMeshRedist_front(const double lc,
+                                        int * ierr);
 
-/* Reset the discrete front operator */
-GMSH_API void gmshModelMeshResetDiscreteFront(int * ierr);
-
-/* Redistanciation of the markers on the discrete front*/
-GMSH_API void gmshModelMeshRedistFront(double lc, int * ierr);
-
-/* set dirscete front on the boundary */
-GMSH_API void gmshModelMeshSetBndFront(int * ierr);
+/* Antoine put a comment here. */
+GMSH_API void gmshModelMeshSet_bnd_front(int * ierr);
 
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
  * the tag explicitly; otherwise a new tag is assigned automatically. Return

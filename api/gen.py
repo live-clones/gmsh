@@ -585,6 +585,36 @@ mesh.add('triangulate', doc, None, ivectordouble('coord'), ovectorsize('tri'))
 doc = '''Tetrahedralize the points given in the `coord' vector as x, y, z coordinates, concatenated, and return the node tags (with numbering starting at 1) of the resulting tetrahedra in `tetra'.'''
 mesh.add('tetrahedralize', doc, None, ivectordouble('coord'), ovectorsize('tetra'))
 
+doc = '''Antoine put a comment here.'''
+mesh.add('concentration_from_DF', doc, None, ovectorint('api_concentration'), ovectordouble('api_curvature'))
+
+doc = '''Antoine put a comment here.'''
+mesh.add('advance_DF_in_time', doc, None, idouble('dt'), ivectordouble('velocity'), ibool('front', 'false', 'False'))
+
+doc = '''Antoine put a comment here.'''
+mesh.add('add_free_form', doc, None, iint('tag'), ivectordouble('poly'))
+
+doc = '''Antoine put a comment here.'''
+mesh.add('get_DF_position', doc, None, ovectordouble('api_position'),ovectorint('api_tags') )
+
+doc = '''Antoine put a comment here.'''
+mesh.add('get_front_nodes_position', doc, None, ovectordouble('api_position') )
+
+doc = '''Antoine put a comment here.'''
+mesh.add('get_nodes_position', doc, None, ovectordouble('api_position') )
+
+doc = '''Antoine put a comment here.'''
+mesh.add('reset_discrete_front', doc, None )
+
+doc = '''Antoine put a comment here.'''
+mesh.add('relaying_and_relax', doc, None )
+
+doc = '''Antoine put a comment here.'''
+mesh.add('redist_front', doc, None, idouble('lc') )
+
+doc = '''Antoine put a comment here.'''
+mesh.add('set_bnd_front', doc, None )
+
 ################################################################################
 
 field = mesh.add_module('field', 'mesh size field functions')

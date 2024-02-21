@@ -1858,58 +1858,60 @@ namespace gmsh { // Top-level functions
       GMSH_API void tetrahedralize(const std::vector<double> & coord,
                                    std::vector<std::size_t> & tetra);
 
-      // gmsh::model::mesh::concentrationFromDF
+      // gmsh::model::mesh::concentration_from_DF
       //
-      // Compute the concentration of each element based on the discrete front for mesh relaying
-      GMSH_API void concentrationFromDF(std::vector<int> &api_concentration, std::vector<double> &api_curvature);
+      // Antoine put a comment here.
+      GMSH_API void concentration_from_DF(std::vector<int> & api_concentration,
+                                          std::vector<double> & api_curvature);
 
-      // gmsh::model::mesh::advanceDFInTime
+      // gmsh::model::mesh::advance_DF_in_time
       //
-      // Move the markers of dt based on the velocity v 
-      // The velocity is given at the front nodes if front is true otherwise at the marker position 
-      GMSH_API void advanceDFInTime(double dt, std::vector<double> v, bool front);
+      // Antoine put a comment here.
+      GMSH_API void advance_DF_in_time(const double dt,
+                                       const std::vector<double> & velocity,
+                                       const bool front = false);
 
-      // gmsh::model::mesh::addFreeForm
+      // gmsh::model::mesh::add_free_form
       //
-      // Add a closed loop of markers stored in poly as [x1,y1,z1, x2,y2,z2, ...]
-      GMSH_API void addFreeForm(int tag, std::vector<double> poly);
+      // Antoine put a comment here.
+      GMSH_API void add_free_form(const int tag,
+                                  const std::vector<double> & poly);
 
-      // gmsh::model::mesh::getDFPosition
+      // gmsh::model::mesh::get_DF_position
       //
-      // return the position of the discrete front of relaying
-      GMSH_API void getDFPosition_(std::vector<double> &api_position, std::vector<int> &api_tags);
+      // Antoine put a comment here.
+      GMSH_API void get_DF_position(std::vector<double> & api_position,
+                                    std::vector<int> & api_tags);
 
-      // gmsh::model::mesh::getDFPosition
+      // gmsh::model::mesh::get_front_nodes_position
       //
-      // return the position of the deformed mesh from relaying
-      GMSH_API void getNodesPosition_(std::vector<double> &api_position);
+      // Antoine put a comment here.
+      GMSH_API void get_front_nodes_position(std::vector<double> & api_position);
 
-      // gmsh::model::mesh::getFrontNodesPosition
+      // gmsh::model::mesh::get_nodes_position
       //
-      // return the position of the front nodes of mesh relaying
-      GMSH_API void getFrontNodesPosition_(std::vector<double> &api_position);
+      // Antoine put a comment here.
+      GMSH_API void get_nodes_position(std::vector<double> & api_position);
 
-      // gmsh::model::mesh::relayingAndRelax
+      // gmsh::model::mesh::reset_discrete_front
       //
-      // move the mesh to be conform to the discrete front 
-      // and relax the nodes that are not on the front 
-      GMSH_API void relayingAndRelax_();
+      // Antoine put a comment here.
+      GMSH_API void reset_discrete_front();
 
-      // gmsh::model::mesh::resetDiscreteFront_
+      // gmsh::model::mesh::relaying_and_relax
       //
-      // reset the discrete front 
-      GMSH_API void resetDiscreteFront_();
+      // Antoine put a comment here.
+      GMSH_API void relaying_and_relax();
 
-      // gmsh::model::mesh::redistFront_(double lc)
+      // gmsh::model::mesh::redist_front
       //
-      // redistantiate the markers on the discrete front
-      GMSH_API void redistFront_(double lc);
+      // Antoine put a comment here.
+      GMSH_API void redist_front(const double lc);
 
-
-      // gmsh::model::mesh::setBndFront_()
+      // gmsh::model::mesh::set_bnd_front
       //
-      // set front on the boundary of the mesh
-      GMSH_API void setBndFront_();
+      // Antoine put a comment here.
+      GMSH_API void set_bnd_front();
 
       namespace field { // Mesh size field functions
 
