@@ -5706,8 +5706,9 @@ gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
 #endif
 }
 
-GMSH_API void gmsh::model::mesh::concentration_from_DF(std::vector<int> &api_concentration, std::vector<double> &api_curvature){
-  concentration(api_concentration, api_curvature);
+GMSH_API void gmsh::model::mesh::concentration_from_DF(std::vector<int> &concentration, std::vector<double> &curvature){
+  meshRelaying::instance()->concentration(&concentration);
+  meshRelaying::instance()->curvature(concentration, &curvature);
   return;
 }
 
@@ -5716,7 +5717,7 @@ GMSH_API void gmsh::model::mesh::advance_DF_in_time(const double dt, const std::
   for(int i=0; i<v.size(); i+=3){
     api_v.push_back(SVector3(&v[i]));
   }
-  advanceInTime(dt, api_v, front);
+  meshRelaying::instance()->advanceInTime(dt, api_v, front);
   return;
 }
 
@@ -5725,40 +5726,43 @@ GMSH_API void gmsh::model::mesh::add_free_form(const int tag, const std::vector<
   for(int i=0; i<poly.size(); i+=3){
     api_poly.push_back(SVector3(poly[i], poly[i+1], poly[i+2]));
   }
-  addFreeForm(tag, api_poly);
+  discreteFront::instance()->addFreeForm(tag, api_poly);
   return;
 } 
 
 GMSH_API void gmsh::model::mesh::get_DF_position(std::vector<double> &api_position, std::vector<int> &api_tags){
-  getDFPosition(api_position, api_tags);
+  discreteFront::instance()->getDFPosition(api_position, api_tags);
   return;
 }
 
 GMSH_API void gmsh::model::mesh::get_front_nodes_position(std::vector<double> &api_position){
-  getFrontNodesPosition(api_position);
+  meshRelaying::instance()->getFrontNodesPosition(api_position);
   return;
 }
 
 GMSH_API void gmsh::model::mesh::get_nodes_position(std::vector<double> &api_position){
-  getNodesPosition(api_position);
+  meshRelaying::instance()->getNodesPosition(api_position);
   return;
 }
 
 GMSH_API void gmsh::model::mesh::reset_discrete_front(){
-  resetDiscreteFront();
+  discreteFront::instance()->clear();
   return;
 }
 
 GMSH_API void gmsh::model::mesh::relaying_and_relax(){
-  relayingAndRelax();
+  meshRelaying::instance()->doRelaying(0);      // time not used for df -> 0
+  meshRelaying::instance()->untangle();         // untangle
+  meshRelaying::instance()->adjustBnd();
+  meshRelaying::instance()->print4debug("out_gmsh.pos");
 }
 
 GMSH_API void gmsh::model::mesh::redist_front(const double lc){
-  redistFront(lc);
+  meshRelaying::instance()->redistFront(lc);
 }
 
 GMSH_API void gmsh::model::mesh::set_bnd_front(){
-  setBndFront();
+  meshRelaying::instance()->setBndFront();
 }
 
 // gmsh::model::mesh::field

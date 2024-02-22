@@ -66,7 +66,7 @@ class discreteFront {
 			std::vector<double> &d, std::vector<int> &c);
   void cornersInTriangle2d (const SVector3 &p0, const SVector3 &p1, const SVector3 &p2,
 			    std::vector<SVector3> &c, std::vector<int> &col);
-  SVector3 closestPoints2d (const SVector3 &P);
+  //  SVector3 closestPoints2d (const SVector3 &P);
   bool empty() const {return pos.empty();}
   //  void move (double dt);
   void moveFromV (double dt, std::vector<SVector3> V, bool bnd);
@@ -74,7 +74,6 @@ class discreteFront {
   //  virtual SVector3 velocity (double x, double y, double z, double t, int col);
   void printGeometry(FILE *f);
   int whatIsTheColorOf2d (const SVector3 &P);
-  int whatIsTheColorOf2dSlow (const SVector3 &P);
   double massMarkers (int color);
   int getColor(int i){return colors[i/2];}
   void buildSpatialSearchStructure ();
@@ -94,32 +93,22 @@ class discreteFront {
   }
   std::vector<std::pair<size_t,size_t> > getFrontEdges();  
   void printMesh (FILE *f);
-
-  void relaxFrontNode (size_t i, double r);
-
   //-----------------------------------------------------------------------------------
   // --> should be simplified to
   void addGmshModel (const char *fn);
   // basic shapes
-  void addEllipsis (int tag, double xc, double yc, double theta0, double r1, double r2, int n);
-  void addRectangle (int tag, double xc, double yc, double r1, double r2, int n);
-  void addPolygon (int tag, const std::vector<SVector3> &poly, int n);
   void addFreeForm (int tag, const std::vector<SVector3> &poly);
-  void getDFPosition(std::vector<double> *position, std::vector<int> *tags);
+  void getDFPosition(std::vector<double> &position, std::vector<int> &tags);
   void clear();
   void redistFront(double lc);
   void adjustBnd(std::vector<std::pair<size_t,size_t>> bnd1d);
-  //-----------------------------------------------------------------------------------
-  // --> boolean operator 
-  void boolOp ();
-  // create a loop
   void addLines (std::vector<double> &p, std::vector<size_t> &l, std::vector<int> &c){
     size_t n = colors.size();
     pos.insert (pos.end(), p.begin(), p.end());
     colors.insert (colors.end(), c.begin(), c.end());
     for (size_t i=0;i<l.size();i++)lines.push_back(l[i]+n);
   }
-  void forceMassConservation ( double mass , int color );  
+  //  void forceMassConservation ( double mass , int color );  
 };
 
 
@@ -173,7 +162,8 @@ class meshRelaying {
       discreteFront::instance()->moveFromFront(dt, v);
     } else if(v.empty()){
       //      discreteFront::instance()->move(dt);
-    } else {
+    }
+    else {
       discreteFront::instance()->moveFromV(dt, v, true);
     }
     
@@ -184,23 +174,19 @@ class meshRelaying {
     pos[3*i+2] = z;
   }
   void doRelaying (double t);
-  void doRelax (double r);
   void untangle ();
-  void doRelaxFrontNode (size_t i, const std::vector<size_t> &n, double r, std::vector<std::pair<size_t,size_t> > &fe);
   void print4debug(const char *);
   void concentration(std::vector<int> *concentration);
-  void getNodesPosition(std::vector<double> *position){
-    for(int i=0; i<pos.size(); ++i){
-      position->push_back(pos[i]);
-    }
+  void getNodesPosition(std::vector<double> &position){
+    position = pos;
   }
 
-  void getFrontNodesPosition(std::vector<double> *position){
+  void getFrontNodesPosition(std::vector<double> &position){
     std::sort(front_nodes.begin(), front_nodes.end());
     for(int i=0; i<front_nodes.size(); ++i){
-      position->push_back(pos[3*front_nodes[i]]);
-      position->push_back(pos[3*front_nodes[i]+1]);
-      position->push_back(pos[3*front_nodes[i]+2]);
+      position.push_back(pos[3*front_nodes[i]]);
+      position.push_back(pos[3*front_nodes[i]+1]);
+      position.push_back(pos[3*front_nodes[i]+2]);
     }
   }
 
@@ -210,7 +196,6 @@ class meshRelaying {
 
   void setBndFront();
   double smallest_measure (const size_t n, const SVector3 &target) ;  
-  double smallest_quality_measure (const size_t n, const SVector3 &target) ;  
   double massTriangles (int color);
   void adjustBnd(){
     discreteFront::instance()->adjustBnd(bnd1d);
@@ -220,22 +205,5 @@ class meshRelaying {
 
 void projectPonLine(double A[2], double B[2], double P[2], double *proj);
 double kappa(double x1[2], double x2[2], double x3[2]);
-
-/*
-  FOR API
-*/
-
-void concentration(std::vector<int> &concentration, std::vector<double> &curvature);
-void advanceInTime(double dt, std::vector<SVector3> v, bool front);
-void addFreeForm(int tag, const std::vector<SVector3> &poly);
-void getDFPosition(std::vector<double> &api_position, std::vector<int> &api_tags);
-void getNodesPosition(std::vector<double> &api_position);
-void getFrontNodesPosition(std::vector<double> &api_position);
-void setDiscreteFront();
-void relayingAndRelax();
-void initRelaying();
-void resetDiscreteFront();
-void redistFront(double lc);
-void setBndFront();
 
 #endif
