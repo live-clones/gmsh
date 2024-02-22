@@ -68,10 +68,10 @@ class discreteFront {
 			    std::vector<SVector3> &c, std::vector<int> &col);
   SVector3 closestPoints2d (const SVector3 &P);
   bool empty() const {return pos.empty();}
-  void move (double dt);
+  //  void move (double dt);
   void moveFromV (double dt, std::vector<SVector3> V, bool bnd);
   void moveFromFront(double dt, std::vector<SVector3> v);
-  virtual SVector3 velocity (double x, double y, double z, double t, int col);
+  //  virtual SVector3 velocity (double x, double y, double z, double t, int col);
   void printGeometry(FILE *f);
   int whatIsTheColorOf2d (const SVector3 &P);
   int whatIsTheColorOf2dSlow (const SVector3 &P);
@@ -172,7 +172,7 @@ class meshRelaying {
     if(front){
       discreteFront::instance()->moveFromFront(dt, v);
     } else if(v.empty()){
-      discreteFront::instance()->move(dt);
+      //      discreteFront::instance()->move(dt);
     } else {
       discreteFront::instance()->moveFromV(dt, v, true);
     }
@@ -185,6 +185,7 @@ class meshRelaying {
   }
   void doRelaying (double t);
   void doRelax (double r);
+  void untangle ();
   void doRelaxFrontNode (size_t i, const std::vector<size_t> &n, double r, std::vector<std::pair<size_t,size_t> > &fe);
   void print4debug(const char *);
   void concentration(std::vector<int> *concentration);

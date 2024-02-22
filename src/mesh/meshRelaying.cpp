@@ -9,6 +9,13 @@
 #include "qualityMeasures.h"
 //#include "libol1.h"
 
+#if defined(HAVE_WINSLOWUNTANGLER)
+#include "meshSurfaceUntangling.h"
+#include "meshVolumeUntangling.h"
+#include "winslowUntangler.h"
+#endif
+
+
 discreteFront *discreteFront::_instance = nullptr;
 meshRelaying *meshRelaying::_instance = nullptr;
 
@@ -32,8 +39,8 @@ void discreteFront::printGeometry(FILE *f){
   }
 
   for(size_t i=0; i<lines.size(); i+=2){
-    fprintf(f, "T3(%12.5E, %12.5E, 0.01, 0){'%d'};\n", pos[3*lines[i]],pos[3*lines[i]+1], lines[i]);
-    fprintf(f, "T3(%12.5E, %12.5E, 0.01, 0){'%d'};\n", pos[3*lines[i+1]],pos[3*lines[i+1]+1], lines[i+1]);
+    fprintf(f, "T3(%12.5E, %12.5E, 0.01, 0){'%lu'};\n", pos[3*lines[i]],pos[3*lines[i]+1], lines[i]);
+    fprintf(f, "T3(%12.5E, %12.5E, 0.01, 0){'%lu'};\n", pos[3*lines[i+1]],pos[3*lines[i+1]+1], lines[i+1]);
   }
 
 }
@@ -377,53 +384,53 @@ void discreteFront::buildSpatialSearchStructure () {
   return;
 }
 
-SVector3 discreteFront::velocity (double x, double y, double z, double t, int col){
-  // doublet
-  if (TESTCASE == 12){
-    //    double x1 = 0.5, y1=0.5;
-    if (col == 0) return SVector3(0,0,0);
-    double x2 = 1.5, y2=0.5;
-    //    double r1 = sqrt((x-x1)*(x-x1)+(y-y1)*(y-y1));
-    double r2 = sqrt((x-x2)*(x-x2)+(y-y2)*(y-y2));
-    double theta_2 = atan2(y-y2,x-x2);
-    double U = 1.0;
-    double R = 0.6;
-    //    if (r2 <= R) return SVector3(0,0,0);
-    double ur = U*cos(theta_2)*(1.-R*R/(r2*r2));
-    double ut = -U*sin(theta_2)*(1.+R*R/(r2*r2));
-    double ux = ur*cos(theta_2)-ut*sin(theta_2);
-    double uy = ur*sin(theta_2)+ut*cos(theta_2);
-    return SVector3(ux,uy,0);
-    //    double Gamma = 1;
-    //    double theta_1 = atan2(y-y1,x-x1);
-    //    double theta_2 = atan2(y-y2,x-x2);
-    // SVector3 v1  ((Gamma/(2*M_PI))*sin(theta_1)/r1,
-    // 		  (-Gamma/(2*M_PI))*cos(theta_1)/r1,0);
-    // SVector3 v2  ((-Gamma/(2*M_PI))*sin(theta_2)/r2,
-    // 		  (Gamma/(2*M_PI))*cos(theta_2)/r2,0);
-    //    SVector3 v1  ((Gamma/(2*M_PI))*cos(theta_1)/r1,
-    //		  (Gamma/(2*M_PI))*sin(theta_1)/r1,0);
-    //    SVector3 v2  ((Gamma/(2*M_PI))*cos(theta_2)/r2,
-    //		  (Gamma/(2*M_PI))*sin(theta_2)/r2,0);
-    // return v1+v2;
-  }
-  if (TESTCASE == 11){
-    double r = col == 1 ? sqrt(x*x+y*y) : sqrt((x-.3)*(x-.3)+y*y);
-    double theta = col == 1 ? atan2(y,x) : atan2(y,x-.3);    
-    return col == 1 ? SVector3(-r*sin(theta),r*cos(theta),0) : SVector3(r*sin(theta),-r*cos(theta),0);
-  }
-  if (TESTCASE == 1){
-    if (col == 1)return SVector3(cos (M_PI*t),0,0);
-    if (col == 2)return SVector3(-cos (M_PI*t),0,0);
-    if (col == 3)return SVector3(0,0,0);
-  }
-  double vx = sin(2*M_PI*y)*sin(M_PI*x)*sin(M_PI*x);
-  double vy = -sin(2*M_PI*x)*sin(M_PI*y)*sin(M_PI*y);
-  double TT = 1;//cos (M_PI*t/8.0);
-  return SVector3(vx*TT,vy*TT,0.0);
-}
+// SVector3 discreteFront::velocity (double x, double y, double z, double t, int col){
+//   // doublet
+//   if (TESTCASE == 12){
+//     //    double x1 = 0.5, y1=0.5;
+//     if (col == 0) return SVector3(0,0,0);
+//     double x2 = 1.5, y2=0.5;
+//     //    double r1 = sqrt((x-x1)*(x-x1)+(y-y1)*(y-y1));
+//     double r2 = sqrt((x-x2)*(x-x2)+(y-y2)*(y-y2));
+//     double theta_2 = atan2(y-y2,x-x2);
+//     double U = 1.0;
+//     double R = 0.6;
+//     //    if (r2 <= R) return SVector3(0,0,0);
+//     double ur = U*cos(theta_2)*(1.-R*R/(r2*r2));
+//     double ut = -U*sin(theta_2)*(1.+R*R/(r2*r2));
+//     double ux = ur*cos(theta_2)-ut*sin(theta_2);
+//     double uy = ur*sin(theta_2)+ut*cos(theta_2);
+//     return SVector3(ux,uy,0);
+//     //    double Gamma = 1;
+//     //    double theta_1 = atan2(y-y1,x-x1);
+//     //    double theta_2 = atan2(y-y2,x-x2);
+//     // SVector3 v1  ((Gamma/(2*M_PI))*sin(theta_1)/r1,
+//     // 		  (-Gamma/(2*M_PI))*cos(theta_1)/r1,0);
+//     // SVector3 v2  ((-Gamma/(2*M_PI))*sin(theta_2)/r2,
+//     // 		  (Gamma/(2*M_PI))*cos(theta_2)/r2,0);
+//     //    SVector3 v1  ((Gamma/(2*M_PI))*cos(theta_1)/r1,
+//     //		  (Gamma/(2*M_PI))*sin(theta_1)/r1,0);
+//     //    SVector3 v2  ((Gamma/(2*M_PI))*cos(theta_2)/r2,
+//     //		  (Gamma/(2*M_PI))*sin(theta_2)/r2,0);
+//     // return v1+v2;
+//   }
+//   if (TESTCASE == 11){
+//     double r = col == 1 ? sqrt(x*x+y*y) : sqrt((x-.3)*(x-.3)+y*y);
+//     double theta = col == 1 ? atan2(y,x) : atan2(y,x-.3);    
+//     return col == 1 ? SVector3(-r*sin(theta),r*cos(theta),0) : SVector3(r*sin(theta),-r*cos(theta),0);
+//   }
+//   if (TESTCASE == 1){
+//     if (col == 1)return SVector3(cos (M_PI*t),0,0);
+//     if (col == 2)return SVector3(-cos (M_PI*t),0,0);
+//     if (col == 3)return SVector3(0,0,0);
+//   }
+//   double vx = sin(2*M_PI*y)*sin(M_PI*x)*sin(M_PI*x);
+//   double vy = -sin(2*M_PI*x)*sin(M_PI*y)*sin(M_PI*y);
+//   double TT = 1;//cos (M_PI*t/8.0);
+//   return SVector3(vx*TT,vy*TT,0.0);
+// }
 
-void discreteFront::move (double dt){
+/*void discreteFront::move (double dt){
   std::map<size_t,int> cols;
   for (size_t i=0;i<lines.size();i+=2){
     cols[lines[i]] = colors[i/2];
@@ -445,6 +452,7 @@ void discreteFront::move (double dt){
   }
   t+=dt;
 }
+*/
 
 void discreteFront::moveFromV (double dt, std::vector<SVector3> v, bool bnd){
   buildSpatialSearchStructure ();
@@ -628,67 +636,67 @@ SVector3 discreteFront::closestPoints2d (const SVector3 &P){
   return res;
 }
 
-void discreteFront::addRectangle (int tag, double x0, double y0, double r1, double r2, int n){
-  std::vector<double> p;
-  std::vector<size_t> l;
-  std::vector<int> c;
-  double dX[4] = {r1,0,-r1,0};
-  double dY[4] = {0,r2,0,-r2};
-  double x = x0-r1/2, y=y0-r2/2;
-  double dx = r1/n;
-  double dy = r2/n;
-  for (int k=0;k<4;k++){
-    for (int i=0;i<n;i++){
-      c.push_back(tag);
-      l.push_back(k*n+i);
-      l.push_back((k*n+i+1)%(4*n));
-      p.push_back(x);
-      p.push_back(y);
-      p.push_back(0.);
-      x += dx * dX[k];
-      y += dy * dY[k];
-    }
-  }
-  addLines (p,l,c);
-}
+// void discreteFront::addRectangle (int tag, double x0, double y0, double r1, double r2, int n){
+//   std::vector<double> p;
+//   std::vector<size_t> l;
+//   std::vector<int> c;
+//   double dX[4] = {r1,0,-r1,0};
+//   double dY[4] = {0,r2,0,-r2};
+//   double x = x0-r1/2, y=y0-r2/2;
+//   double dx = r1/n;
+//   double dy = r2/n;
+//   for (int k=0;k<4;k++){
+//     for (int i=0;i<n;i++){
+//       c.push_back(tag);
+//       l.push_back(k*n+i);
+//       l.push_back((k*n+i+1)%(4*n));
+//       p.push_back(x);
+//       p.push_back(y);
+//       p.push_back(0.);
+//       x += dx * dX[k];
+//       y += dy * dY[k];
+//     }
+//   }
+//   addLines (p,l,c);
+// }
 
-void discreteFront::addPolygon (int tag, const std::vector<SVector3> &poly, int n){
-  for (size_t k=0;k<poly.size();k++){
-    std::vector<double> p;
-    std::vector<size_t> l;
-    std::vector<int> c;
-    SVector3 p0 = poly[k];
-    SVector3 p1 = poly[(k+1)%poly.size()];
-    for (int i=0;i<n;i++){
-      c.push_back(tag);
-      l.push_back(i);
-      l.push_back((i+1)%n);
-      double t = (double) i/(n-1);
-      double x = p0.x() + (p1.x()-p0.x())*t;
-      double y = p0.y() + (p1.y()-p0.y())*t;
-      p.push_back(x);
-      p.push_back(y);
-      p.push_back(0.);
-      addLines (p,l,c);
-    }
-  }  
-}
+// void discreteFront::addPolygon (int tag, const std::vector<SVector3> &poly, int n){
+//   for (size_t k=0;k<poly.size();k++){
+//     std::vector<double> p;
+//     std::vector<size_t> l;
+//     std::vector<int> c;
+//     SVector3 p0 = poly[k];
+//     SVector3 p1 = poly[(k+1)%poly.size()];
+//     for (int i=0;i<n;i++){
+//       c.push_back(tag);
+//       l.push_back(i);
+//       l.push_back((i+1)%n);
+//       double t = (double) i/(n-1);
+//       double x = p0.x() + (p1.x()-p0.x())*t;
+//       double y = p0.y() + (p1.y()-p0.y())*t;
+//       p.push_back(x);
+//       p.push_back(y);
+//       p.push_back(0.);
+//       addLines (p,l,c);
+//     }
+//   }  
+// }
 
-void discreteFront::addEllipsis (int tag, double x0, double y0, double theta0, double r1, double r2, int n){
-  std::vector<double> p;
-  std::vector<size_t> l;
-  std::vector<int> c;
-  for (int i=0;i<n;i++){
-    c.push_back(tag);
-    l.push_back(i);
-    l.push_back((i+1)%n);
-    double theta = theta0+2.*(double)i*M_PI/n;
-    p.push_back(x0 + r1*cos(theta));
-    p.push_back(y0 + r2*sin(theta));
-    p.push_back(0.);
-  }
-  addLines (p,l,c);
-}
+// void discreteFront::addEllipsis (int tag, double x0, double y0, double theta0, double r1, double r2, int n){
+//   std::vector<double> p;
+//   std::vector<size_t> l;
+//   std::vector<int> c;
+//   for (int i=0;i<n;i++){
+//     c.push_back(tag);
+//     l.push_back(i);
+//     l.push_back((i+1)%n);
+//     double theta = theta0+2.*(double)i*M_PI/n;
+//     p.push_back(x0 + r1*cos(theta));
+//     p.push_back(y0 + r2*sin(theta));
+//     p.push_back(0.);
+//   }
+//   addLines (p,l,c);
+// }
 
 void discreteFront::boolOp (){
   // this stuff is just about finding corners
@@ -997,7 +1005,7 @@ void discreteFront::moveFromFront(double dt, std::vector<SVector3> v){
   std::vector<std::pair<size_t,int>> fl;
 
   for(size_t i=0; i<_lls.size();++i){
-    size_t start = _lls[i][0];
+    //    size_t start = _lls[i][0];
     for(size_t j=0; j<_lls[i].size(); j+=2){
       fl.push_back(std::make_pair(_lls[i][j],-1));
       for(size_t k=0; k<fn.size(); ++k){
@@ -1067,7 +1075,7 @@ void discreteFront::moveFromFront(double dt, std::vector<SVector3> v){
     }
     for(size_t k=0; k<in_between_markers.size(); ++k){
       double s = in_between_markers[k].second/total_dist;
-      printf("end marker = %d s = %f \n", in_between_markers[k].first, s);
+      printf("end marker = %lu s = %f \n", in_between_markers[k].first, s);
       SVector3 v1 = v[fls[i][current].second];
       SVector3 v2 = v[fls[i][start].second];
       v_marker[in_between_markers[k].first] = s*v2 + (1-s)*v1;
@@ -1080,7 +1088,7 @@ void discreteFront::moveFromFront(double dt, std::vector<SVector3> v){
   for(size_t i=0; i<fls.size(); ++i){
     for(size_t j=0; j<fls[i].size(); ++j){
       if(fls[i][j].second<0){
-        printf("marker : %d, v = %f,%f \n", fls[i][j].first, v_marker[fls[i][j].first].x(), v_marker[fls[i][j].first].y());
+        printf("marker : %lu, v = %f,%f \n", fls[i][j].first, v_marker[fls[i][j].first].x(), v_marker[fls[i][j].first].y());
       } else {
         printf("front node: %d, v = %f,%f \n", fls[i][j].second, v[fls[i][j].second].x(), v[fls[i][j].second].y());
       }
@@ -1151,8 +1159,8 @@ void discreteFront::adjustBnd(std::vector<std::pair<size_t,size_t>> bnd1d){
       double a12p  = robustPredicates::orient2d(a1,a2,p);
       double b12p = robustPredicates::orient2d(b1,b2,p);
       if(a12p*b12p<=1e-12){
-        double a1b1p = robustPredicates::orient2d(a1,b1,p);
-        double a2b2p = robustPredicates::orient2d(a2,b2,p);
+	//        double a1b1p = robustPredicates::orient2d(a1,b1,p);
+	//        double a2b2p = robustPredicates::orient2d(a2,b2,p);
         double lengthSquared = (b2[0]-b1[0])*(b2[0]-b1[0]) + (b2[1]-b1[1])*(b2[1]-b1[1]);
         // Avoid division by zero
         if (lengthSquared == 0.0) {
@@ -1177,71 +1185,71 @@ void discreteFront::adjustBnd(std::vector<std::pair<size_t,size_t>> bnd1d){
 // -----------------------------------------------------------------------------------------------
 
 
-double ll (double x, double y, double z, double t){
-  //  return x+t;
-  return (x-.05)*(x-.05)+.3*y*y+z*z-0.25*sin(t*M_PI)*sin(t*M_PI);
-}
+// double ll (double x, double y, double z, double t){
+//   //  return x+t;
+//   return (x-.05)*(x-.05)+.3*y*y+z*z-0.25*sin(t*M_PI)*sin(t*M_PI);
+// }
 
 
-void testRelaying() {
-  if (TESTCASE == 0){
-    discreteFront::instance()->addEllipsis(1,-0.6,0.4,M_PI/8,0.25,0.5,300);
-    discreteFront::instance()->addRectangle(3,0,0.5,.7172,.7172,10);
-    discreteFront::instance()->addEllipsis(2,0.6,0.25,0,0.35,0.25,300);
-    discreteFront::instance()->buildSpatialSearchStructure () ;
-    discreteFront::instance()->boolOp();
-  }
-  if (TESTCASE == 1){
-    //    df.addEllipsis(1,-0.6,0.4,M_PI/8,0.25,0.5,300);
-    discreteFront::instance()->addPolygon(1,{{-.5,0,0}, {0,0,0}, {0.25,0.25,0}, {0.001,-0.0005,0}, {0.25,-0.25,0}, {0.0,-0.001,0}},10);
-    discreteFront::instance()->addEllipsis(2,0.,0.,0,0.35,0.35,300);
-    discreteFront::instance()->buildSpatialSearchStructure () ;
-    discreteFront::instance()->boolOp();
-  }
-  else if (TESTCASE == 11){
-    discreteFront::instance()->addRectangle(1,0,0,.7172,.7172,10);
-    discreteFront::instance()->addRectangle(2,0.3,0,.7,.7,10);
-    discreteFront::instance()->buildSpatialSearchStructure () ;
-    discreteFront::instance()->boolOp();
-  }
-  else if (TESTCASE == 12){
-    discreteFront::instance()->addEllipsis(1,-2.,0.5,0,0.8,0.8,1000);
-    //    df.addEllipsis(0,1.5,0.5,0,0.6,0.6,1000);
-  }
-  else if (TESTCASE == 2){
-    //    df.addRectangle(1,0.5,0.75,0.3,0.003,200);
-    discreteFront::instance()->addEllipsis(1,0.5,0.75,0,0.15,0.15,1000);
-    //    df.addEllipsis(2,0.5,0.25,0,0.15,0.15,1000);
-    //    df.addEllipsis(3,0.25,0.5,0,0.15,0.15,1000);
-  }
-  else if (TESTCASE == 3){
-    discreteFront::instance()->addEllipsis(1, 0.5, 0.75, 0, 0.15,0.15,200);
-    discreteFront::instance()->addEllipsis(2, 0.37, 0.75, 0, 0.15,0.15,200);
-    discreteFront::instance()->buildSpatialSearchStructure () ;
-    discreteFront::instance()->boolOp();
-  }
+// void testRelaying() {
+//   if (TESTCASE == 0){
+//     discreteFront::instance()->addEllipsis(1,-0.6,0.4,M_PI/8,0.25,0.5,300);
+//     discreteFront::instance()->addRectangle(3,0,0.5,.7172,.7172,10);
+//     discreteFront::instance()->addEllipsis(2,0.6,0.25,0,0.35,0.25,300);
+//     discreteFront::instance()->buildSpatialSearchStructure () ;
+//     discreteFront::instance()->boolOp();
+//   }
+//   if (TESTCASE == 1){
+//     //    df.addEllipsis(1,-0.6,0.4,M_PI/8,0.25,0.5,300);
+//     discreteFront::instance()->addPolygon(1,{{-.5,0,0}, {0,0,0}, {0.25,0.25,0}, {0.001,-0.0005,0}, {0.25,-0.25,0}, {0.0,-0.001,0}},10);
+//     discreteFront::instance()->addEllipsis(2,0.,0.,0,0.35,0.35,300);
+//     discreteFront::instance()->buildSpatialSearchStructure () ;
+//     discreteFront::instance()->boolOp();
+//   }
+//   else if (TESTCASE == 11){
+//     discreteFront::instance()->addRectangle(1,0,0,.7172,.7172,10);
+//     discreteFront::instance()->addRectangle(2,0.3,0,.7,.7,10);
+//     discreteFront::instance()->buildSpatialSearchStructure () ;
+//     discreteFront::instance()->boolOp();
+//   }
+//   else if (TESTCASE == 12){
+//     discreteFront::instance()->addEllipsis(1,-2.,0.5,0,0.8,0.8,1000);
+//     //    df.addEllipsis(0,1.5,0.5,0,0.6,0.6,1000);
+//   }
+//   else if (TESTCASE == 2){
+//     //    df.addRectangle(1,0.5,0.75,0.3,0.003,200);
+//     discreteFront::instance()->addEllipsis(1,0.5,0.75,0,0.15,0.15,1000);
+//     //    df.addEllipsis(2,0.5,0.25,0,0.15,0.15,1000);
+//     //    df.addEllipsis(3,0.25,0.5,0,0.15,0.15,1000);
+//   }
+//   else if (TESTCASE == 3){
+//     discreteFront::instance()->addEllipsis(1, 0.5, 0.75, 0, 0.15,0.15,200);
+//     discreteFront::instance()->addEllipsis(2, 0.37, 0.75, 0, 0.15,0.15,200);
+//     discreteFront::instance()->buildSpatialSearchStructure () ;
+//     discreteFront::instance()->boolOp();
+//   }
 
-  meshRelaying::instance()->setLevelset (ll);
-  meshRelaying::instance()->setDiscreteFrontBBox();
-  double t = 0.0;
-  double massInit = discreteFront::instance()->massMarkers(1);
-  for (size_t i=0;i<1200;i++){
-    double massM = discreteFront::instance()->massMarkers(1);
-    double massT = meshRelaying::instance()->massTriangles(1);
-    printf("ITER %8d time %12.5E MASS = %12.5E/%12.5E (ERR %12.10lf) MassT = %12.5E\n",ITERR,t,
-	   massM,massInit,(massM-massInit)/massInit, massT);
-    meshRelaying::instance()->doRelaying (t);
-    if(ITERR%1==0){
-      char name [245];
-      sprintf(name, "test%lu.pos",i);
-      meshRelaying::instance()->print4debug (name);
-    }
-    meshRelaying::instance()->advanceInTime(0.025);
-    if (t > 16)break;
-    t+= 0.025;
-    ITERR++;
-  }
-}
+//   meshRelaying::instance()->setLevelset (ll);
+//   meshRelaying::instance()->setDiscreteFrontBBox();
+//   double t = 0.0;
+//   double massInit = discreteFront::instance()->massMarkers(1);
+//   for (size_t i=0;i<1200;i++){
+//     double massM = discreteFront::instance()->massMarkers(1);
+//     double massT = meshRelaying::instance()->massTriangles(1);
+//     printf("ITER %8d time %12.5E MASS = %12.5E/%12.5E (ERR %12.10lf) MassT = %12.5E\n",ITERR,t,
+// 	   massM,massInit,(massM-massInit)/massInit, massT);
+//     meshRelaying::instance()->doRelaying (t);
+//     if(ITERR%1==0){
+//       char name [245];
+//       sprintf(name, "test%lu.pos",i);
+//       meshRelaying::instance()->print4debug (name);
+//     }
+//     meshRelaying::instance()->advanceInTime(0.025);
+//     if (t > 16)break;
+//     t+= 0.025;
+//     ITERR++;
+//   }
+// }
 
 
 //------------------------------------------------
@@ -1490,8 +1498,8 @@ double meshRelaying::smallest_quality_measure (const size_t n,
       double gamma = qmTriangle::gamma(x0,y0,0.0,
 				       x1,y1,0.0,
 				       x2,y2,0.0);
-      if (v < 0)return -1;
-      gamma = v > 0 ? gamma : -1.e-22;
+      //      if (v < 0)return -1;
+      //      gamma = v > 0 ? gamma : -1.e-22;
       volume = std::min(gamma,volume);
     }
   }
@@ -1708,7 +1716,7 @@ void meshRelaying::print4debug(const char *fn){
   discreteFront::instance()->printMesh(f);
   fprintf(f,"};\n");
   fprintf(f,"View \"Mesh\"{\n");  
-  for (size_t i=0;i<tets.size();i+=4){
+  /*  for (size_t i=0;i<tets.size();i+=4){
     fprintf(f,"SS(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
 	    pos[3*tets[i]],pos[3*tets[i]+1],pos[3*tets[i]+2],
 	    pos[3*tets[i+1]],pos[3*tets[i+1]+1],pos[3*tets[i+1]+2],
@@ -1719,6 +1727,7 @@ void meshRelaying::print4debug(const char *fn){
 	    ll(pos[3*tets[i+2]],pos[3*tets[i+2]+1],pos[3*tets[i+2]+2],time),  
 	    ll(pos[3*tets[i+3]],pos[3*tets[i+3]+1],pos[3*tets[i+3]+2],time));    
   }
+  */
   
   for (size_t i=0;i<tris.size();i+=3){
     SVector3 COG((pos[3*tris[i]]+pos[3*tris[i+1]]+pos[3*tris[i+2]])/3.0,
@@ -1835,6 +1844,29 @@ double kappa(double x1[2], double x2[2], double x3[2]){
   return 0;
 }
 
+void meshRelaying::untangle(){
+#if defined(HAVE_WINSLOWUNTANGLER)
+  std::vector<bool> _locked;
+  std::vector<std::array<double,2> > _points;
+  std::vector<std::array<uint32_t, 4> > _elements;
+  for (size_t i=0;i<tris.size()/3;i++)_elements.push_back({static_cast<unsigned int>(tris[3*i]),
+	static_cast<unsigned int>(tris[3*i+1]),static_cast<unsigned int>(tris[3*i+2]),uint32_t(-1)});
+  for (size_t i=0;i<pos.size()/3;i++)_points.push_back({pos[3*i],pos[3*i+1]});  
+  for (size_t i=0;i<pos.size()/3;i++)_locked.push_back(dimVertex[i] == 2 ? false : true);
+  for (size_t i=0;i<front_nodes.size();i++)_locked[front_nodes[i]]=true;  
+  std::vector<std::array<uint32_t, 3> > _triangles;
+  std::vector<std::array<std::array<double,2>, 3> > _triIdealShapes;    
+  buildTrianglesAndTargetsFromElements(_points,_elements,_triangles,_triIdealShapes);
+  untangle_triangles_2D(_points, _locked, _triangles, _triIdealShapes);
+  for (size_t i=0;i<_points.size();i++){
+    pos[3*i] = _points[i][0];
+    pos[3*i+1] = _points[i][1];
+  }    
+#else
+  Msg::Error ("Gmsh Must Be Compiled With WinslowUntangler to be able to use meshRelaying::untangle()");  
+#endif
+}
+
 /*
   FOR API
 */
@@ -1879,7 +1911,8 @@ void relayingAndRelax(){
   meshRelaying::instance()->print4debug("in_gmsh.pos");
   meshRelaying::instance()->doRelaying(0);      // time not used for df -> 0
   meshRelaying::instance()->print4debug("before_relax.pos");
-  meshRelaying::instance()->doRelax(1);         // full relax
+  //  meshRelaying::instance()->doRelax(1);         // full relax
+  meshRelaying::instance()->untangle();         // untangle
   meshRelaying::instance()->print4debug("before_adjust.pos");
   meshRelaying::instance()->adjustBnd();
   meshRelaying::instance()->print4debug("out_gmsh.pos");
