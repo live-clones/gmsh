@@ -184,7 +184,7 @@ class meshRelaying {
 
   void getFrontNodesPosition(std::vector<double> &position){
     std::sort(front_nodes.begin(), front_nodes.end());
-    for(int i=0; i<front_nodes.size(); ++i){
+    for(size_t i=0; i<front_nodes.size(); ++i){
       position.push_back(pos[3*front_nodes[i]]);
       position.push_back(pos[3*front_nodes[i]+1]);
       position.push_back(pos[3*front_nodes[i]+2]);
