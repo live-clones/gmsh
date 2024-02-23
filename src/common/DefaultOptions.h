@@ -1452,7 +1452,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O|D, "PointType" , opt_mesh_node_type , 0. ,
     "[Deprecated]" },
   { F|O, "PreserveNumberingMsh2" , opt_mesh_preserve_numbering_msh2 , 0. ,
-    "Preserve element numbering in MSH2 format (will break meshes with multiple "
+    "Preserve node and element numbering in MSH2 format (will break meshes with multiple "
     "physical groups for a single elementary entity)"},
   { F|O, "Prisms" , opt_mesh_prisms , 1. ,
     "Display mesh prisms?" },
