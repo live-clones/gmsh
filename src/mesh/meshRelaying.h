@@ -97,16 +97,17 @@ class discreteFront {
   // --> should be simplified to
   void addGmshModel (const char *fn);
   // basic shapes
-  void addFreeForm (int tag, const std::vector<SVector3> &poly);
+  void addFreeForm (int tag, const std::vector<SVector3> &poly, const std::vector<size_t> &_corners);
   void getDFPosition(std::vector<double> &position, std::vector<int> &tags);
   void clear();
   void redistFront(double lc);
   void adjustBnd(std::vector<std::pair<size_t,size_t>> bnd1d);
-  void addLines (std::vector<double> &p, std::vector<size_t> &l, std::vector<int> &c){
+  void addLines (std::vector<double> &p, std::vector<size_t> &l, std::vector<int> &c, const std::vector<size_t> &_corners){
     size_t n = colors.size();
     pos.insert (pos.end(), p.begin(), p.end());
     colors.insert (colors.end(), c.begin(), c.end());
     for (size_t i=0;i<l.size();i++)lines.push_back(l[i]+n);
+    for (size_t i=0;i<_corners.size(); i++) corners.push_back(_corners[i]+n);
   }
   //  void forceMassConservation ( double mass , int color );  
 };

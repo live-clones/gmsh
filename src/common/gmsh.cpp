@@ -5721,12 +5721,12 @@ GMSH_API void gmsh::model::mesh::advance_DF_in_time(const double dt, const std::
   return;
 }
 
-GMSH_API void gmsh::model::mesh::add_free_form(const int tag, const std::vector<double> &poly){
+GMSH_API void gmsh::model::mesh::add_free_form(const int tag, const std::vector<double> &poly, const std::vector<size_t> &_corners){
   std::vector<SVector3> api_poly;
   for(int i=0; i<poly.size(); i+=3){
     api_poly.push_back(SVector3(poly[i], poly[i+1], poly[i+2]));
   }
-  discreteFront::instance()->addFreeForm(tag, api_poly);
+  discreteFront::instance()->addFreeForm(tag, api_poly, _corners);
   return;
 } 
 
