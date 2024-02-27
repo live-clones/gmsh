@@ -5336,6 +5336,24 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
 
+        @staticmethod
+        def set_levelsets(levelsets):
+            """
+            gmsh.model.mesh.set_levelsets(levelsets)
+
+            Antoine put a comment here.
+
+            Types:
+            - `levelsets': vector of vectors of doubles
+            """
+            api_levelsets_, api_levelsets_n_, api_levelsets_nn_ = _ivectorvectordouble(levelsets)
+            ierr = c_int()
+            lib.gmshModelMeshSet_levelsets(
+                api_levelsets_, api_levelsets_n_, api_levelsets_nn_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+
 
         class field:
             """

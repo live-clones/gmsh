@@ -1685,6 +1685,10 @@ GMSH_API void gmshModelMeshRedist_front(const double lc,
 /* Antoine put a comment here. */
 GMSH_API void gmshModelMeshSet_bnd_front(int * ierr);
 
+/* Antoine put a comment here. */
+GMSH_API void gmshModelMeshSet_levelsets(const double * const * levelsets, const size_t * levelsets_n, const size_t levelsets_nn,
+                                         int * ierr);
+
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
  * the tag explicitly; otherwise a new tag is assigned automatically. Return
  * the field tag. Available field types are listed in the "Gmsh mesh size

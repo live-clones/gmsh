@@ -5765,6 +5765,10 @@ GMSH_API void gmsh::model::mesh::set_bnd_front(){
   meshRelaying::instance()->setBndFront();
 }
 
+GMSH_API void gmsh::model::mesh::set_levelsets(const std::vector<std::vector< double > > &ls){
+  meshRelaying::instance()->setLevelsets(ls);
+}
+
 // gmsh::model::mesh::field
 
 GMSH_API int gmsh::model::mesh::field::add(const std::string &fieldType,

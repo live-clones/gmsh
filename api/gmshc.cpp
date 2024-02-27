@@ -2571,6 +2571,20 @@ GMSH_API void gmshModelMeshSet_bnd_front(int * ierr)
   }
 }
 
+GMSH_API void gmshModelMeshSet_levelsets(const double * const * levelsets, const size_t * levelsets_n, const size_t levelsets_nn, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::vector<double> > api_levelsets_(levelsets_nn);
+    for(size_t i = 0; i < levelsets_nn; ++i)
+      api_levelsets_[i] = std::vector<double>(levelsets[i], levelsets[i] + levelsets_n[i]);
+    gmsh::model::mesh::set_levelsets(api_levelsets_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API int gmshModelMeshFieldAdd(const char * fieldType, const int tag, int * ierr)
 {
   int result_api_ = 0;

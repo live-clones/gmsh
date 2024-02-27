@@ -4738,6 +4738,24 @@ function set_bnd_front()
 end
 
 """
+    gmsh.model.mesh.set_levelsets(levelsets)
+
+Antoine put a comment here.
+
+Types:
+ - `levelsets`: vector of vectors of doubles
+"""
+function set_levelsets(levelsets)
+    api_levelsets_n_ = [ length(levelsets[i]) for i in 1:length(levelsets) ]
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSet_levelsets, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
+          convert(Vector{Vector{Cdouble}},levelsets), api_levelsets_n_, length(levelsets), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
     module gmsh.model.mesh.field
 
 Mesh size field functions

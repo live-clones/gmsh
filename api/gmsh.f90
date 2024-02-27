@@ -744,6 +744,8 @@ module gmsh
         gmshModelMeshRedist_front
     procedure, nopass :: set_bnd_front => &
         gmshModelMeshSet_bnd_front
+    procedure, nopass :: set_levelsets => &
+        gmshModelMeshSet_levelsets
   end type gmsh_model_mesh_t
 
   type, public :: gmsh_model_t
@@ -7731,6 +7733,40 @@ module gmsh
     integer(c_int), intent(out), optional :: ierr
     call C_API(ierr_=ierr)
   end subroutine gmshModelMeshSet_bnd_front
+
+  !> Antoine put a comment here.
+  subroutine gmshModelMeshSet_levelsets(levelsets, &
+                                        levelsets_n, &
+                                        ierr)
+    interface
+    subroutine C_API(api_levelsets_, &
+                     api_levelsets_n_, &
+                     api_levelsets_nn_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshSet_levelsets")
+      use, intrinsic :: iso_c_binding
+      type(c_ptr), intent(in) :: api_levelsets_
+      type(c_ptr), intent(in) :: api_levelsets_n_
+      integer(c_size_t), value, intent(in) :: api_levelsets_nn_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    real(c_double), dimension(:), intent(in) :: levelsets
+    integer(c_size_t), dimension(:), intent(in) :: levelsets_n
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_levelsets_
+    type(c_ptr) :: api_levelsets_n_
+    integer(c_size_t) :: api_levelsets_nn_
+    call ivectorvectordouble_(levelsets, &
+      levelsets_n, &
+      api_levelsets_, &
+      api_levelsets_n_, &
+      api_levelsets_nn_)
+    call C_API(api_levelsets_=api_levelsets_, &
+         api_levelsets_n_=api_levelsets_n_, &
+         api_levelsets_nn_=api_levelsets_nn_, &
+         ierr_=ierr)
+  end subroutine gmshModelMeshSet_levelsets
 
   !> Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
   !! the tag explicitly; otherwise a new tag is assigned automatically. Return

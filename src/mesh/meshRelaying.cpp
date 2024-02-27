@@ -6,6 +6,7 @@
 #include "MLine.h"
 #include "MVertex.h"
 #include "robustPredicates.h"
+#include "qualityMeasures.h"
 //#include "libol1.h"
 
 #if defined(HAVE_WINSLOWUNTANGLER)
@@ -13,7 +14,6 @@
 #include "meshVolumeUntangling.h"
 #include "winslowUntangler.h"
 #endif
-
 
 discreteFront *discreteFront::_instance = nullptr;
 meshRelaying *meshRelaying::_instance = nullptr;
@@ -34,23 +34,51 @@ double discreteFront::massMarkers (int color){
   return mass;
 }
 
-double meshRelaying::massTriangles (int color){
+double meshRelaying::massElements (int color){
 
   double mass = 0.0;
-  for (size_t i=0;i<tris.size();i+=3){
-    SVector3 COG((pos[3*tris[i]]+pos[3*tris[i+1]]+pos[3*tris[i+2]])/3.0,
-		 (pos[3*tris[i]+1]+pos[3*tris[i+1]+1]+pos[3*tris[i+2]+1])/3.0,
-		 0);
-    if (discreteFront::instance()->whatIsTheColorOf2d(COG) == color){
-      double aa[2] = {pos[3*tris[i]],pos[3*tris[i]+1]}; 
-      double bb[2] = {pos[3*tris[i+1]],pos[3*tris[i+1]+1]}; 
-      double cc[2] = {pos[3*tris[i+2]],pos[3*tris[i+2]+1]};
-      double area = robustPredicates::orient2d(aa,bb,cc);
-      mass += area;
+  if (tets.empty()){
+    for (size_t i=0;i<tris.size();i+=3){
+      SVector3 COG((pos[3*tris[i]]+pos[3*tris[i+1]]+pos[3*tris[i+2]])/3.0,
+		   (pos[3*tris[i]+1]+pos[3*tris[i+1]+1]+pos[3*tris[i+2]+1])/3.0,
+		   0);
+      if (discreteFront::instance()->whatIsTheColorOf2d(COG) == color){
+	double aa[2] = {pos[3*tris[i]],pos[3*tris[i]+1]}; 
+	double bb[2] = {pos[3*tris[i+1]],pos[3*tris[i+1]+1]}; 
+	double cc[2] = {pos[3*tris[i+2]],pos[3*tris[i+2]+1]};
+	double area = robustPredicates::orient2d(aa,bb,cc);
+	mass += area;
+      }
     }
   }
   return mass;
 }
+
+double meshRelaying::qualityElement (size_t elem){
+
+  if (!tets.empty()){
+    size_t n0 = tets[4*elem+0];
+    size_t n1 = tets[4*elem+1];
+    size_t n2 = tets[4*elem+2];
+    size_t n3 = tets[4*elem+3];
+    //    printf("%lu %lu %lu %lu -- %lu\n",n0,n1,n2,n3, pos.size());
+    double aa[3] = {pos[3*n0],pos[3*n0+1],pos[3*n0+2]}; 
+    //    printf("%g %g %g \n",aa[0],aa[1],aa[2]);
+    double bb[3] = {pos[3*n1],pos[3*n1+1],pos[3*n1+2]}; 
+    //    printf("%g %g %g \n",bb[0],bb[1],bb[2]);
+    double cc[3] = {pos[3*n2],pos[3*n2+1],pos[3*n2+2]}; 
+    //    printf("%g %g %g \n",cc[0],cc[1],cc[2]);
+    double dd[3] = {pos[3*n3],pos[3*n3+1],pos[3*n3+2]}; 
+    //    printf("%g %g %g \n",dd[0],dd[1],dd[2]);
+    double volume;
+    return qmTetrahedron::gamma(aa[0],aa[1],aa[2],
+				bb[0],bb[1],bb[2],
+				cc[0],cc[1],cc[2],
+				dd[0],dd[1],dd[2],&volume);
+  }
+  return 0.0;
+}
+
 
 int discreteFront::whatIsTheColorOf2d (const SVector3 &P){
   // compute winding number -- fast
@@ -244,7 +272,7 @@ void discreteFront::buildSpatialSearchStructure () {
 //   return SVector3(vx*TT,vy*TT,0.0);
 // }
 
-void discreteFront::moveFromV (double dt, std::vector<SVector3> v, bool bnd){
+void discreteFront::moveFromV (double dt, const std::vector<SVector3> &v, bool bnd){
   buildSpatialSearchStructure ();
   size_t n = v.size();
   std::vector<double> target(pos);
@@ -576,8 +604,7 @@ std::vector<std::pair<size_t,size_t> > discreteFront :: getFrontEdges() {
   return pp;
 }
 
-//FIX ME
-void discreteFront::moveFromFront(double dt, std::vector<SVector3> v){
+void discreteFront::moveFromFront(double dt, const std::vector<SVector3> &v){
   
   std::vector<SVector3> v_marker(pos.size()/3, SVector3(0.0));
   std::sort(fn.begin(), fn.end());
@@ -696,8 +723,10 @@ void discreteFront::moveFromFront(double dt, std::vector<SVector3> v){
 }
 
 // NEED FIX
-void discreteFront::adjustBnd(std::vector<std::pair<size_t,size_t>> bnd1d){
+void discreteFront::adjustBnd(const std::vector<std::pair<size_t,size_t>> &bnd1d){
 
+  if (empty())return;
+  
   std::vector<double> position;
   meshRelaying::instance()->getNodesPosition(position);
   std::vector<double> old_pos;
@@ -891,29 +920,19 @@ meshRelaying::meshRelaying(GModel *gm){
   
 }
 
-//------------------------------------------------
-// ---            doRelaying                   ---
-// ---  Assume a levelset has been provided    ---
-//------------------------------------------------
-
 void meshRelaying::doRelaying (double t){
-  time = t;
   auto f_levelset = [this] (size_t i, size_t j) -> std::vector<std::pair<double,int > > {
-    double x0 = pos [3*i];
-    double y0 = pos [3*i+1];
-    double z0 = pos [3*i+2];
-    double x1 = pos [3*j];
-    double y1 = pos [3*j+1];
-    double z1 = pos [3*j+2];
-    double l0 = levelset(x0,y0,z0,time);
-    double l1 = levelset(x1,y1,z1,time);
-    double t = -1;
     std::vector<std::pair<double,int > > ds;
-    if (l0 * l1 < 0){
-      t = l0/(l0-l1);
-      std::pair<double,int > d = std::make_pair(t,1);
-      ds.push_back(d);
+    for (size_t k = 0; k < levelsets.size() ; k++){    
+      double l0 = levelsets[k][i];
+      double l1 = levelsets[k][j];
+      if (l0 * l1 < 0){
+	double t = l0/(l0-l1);
+	std::pair<double,int > d = std::make_pair(t,k);
+	ds.push_back(d);
+      }
     }
+    std::sort(ds.begin(),ds.end());
     return ds;    
   };
 
@@ -998,7 +1017,7 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
   discreteFront::instance()->clearFrontNodes();
   discreteFront::instance()->buildSpatialSearchStructure ();
 
-  int MAXIT = 3;
+  int MAXIT = (discreteFront::instance()->empty()) ? 2 : 3;
   int ITTT = 1;
   
   while(1) {
@@ -1042,17 +1061,19 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
     std::set<std::pair<size_t,size_t> > cuts;
     std::vector<edgeCut> moves;
 
+    printf("%lu\n",v2v.size());
+    
     for (size_t i = 0; i< v2v.size() ; i++){
       for (auto j : v2v[i]){
         if (i < j){
           std::pair<size_t,size_t> pa = std::make_pair(i,j);
           if (std::find(front_edges.begin(), front_edges.end(), pa) != front_edges.end())continue;
 
-          std::vector<std::pair<double,int> > ds = f (i,j);
+	  std::vector<std::pair<double,int> > ds = f (i,j);
           if (ds.empty())continue;
           std::pair<size_t,size_t> p = std::make_pair(std::min(i,j),std::max(i,j));
           cuts.insert(p);
-          
+	  
           size_t indexi = 0; 
           size_t indexj = ds.size() - 1;
 
@@ -1086,6 +1107,8 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
     if (moves.empty())break;
     std::sort(moves.begin(), moves.end());
 
+    printf("%lu moves\n",moves.size());
+    
     for (auto c : moves){
       size_t i = c.a;
       size_t j = c.b;
@@ -1093,25 +1116,30 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
       if (cuts.find(p) == cuts.end())continue;
       
       SVector3 pOpt = c.p;
-      double qMin = smallest_measure (i,pOpt);
-      
-      if (qMin < 0) continue;
+      //      double qMin = smallest_measure (i,pOpt);      
+      //      if (qMin < 0) continue;
       
       for (auto k : v2v[i]){
         p = std::make_pair(std::min(i,k), std::max(i,k));
         cuts.erase(p);
       }
 
+      if (levelsets.size()){
+	levelsets[c.index][i] = 0.0;
+      }
+      
       front_nodes.push_back(i);
       discreteFront::instance()->addFrontNode (i,c.index,pOpt);
       pos[3*i] = pOpt.x();
       pos[3*i+1] = pOpt.y();
       pos[3*i+2] = pOpt.z();
     }    
+    printf("coucou %lu fn\n",front_nodes.size());
     std::sort(front_nodes.begin(),front_nodes.end());
   }
 
-  {
+  
+  if (!discreteFront::instance()->empty()){
     auto front_edges = discreteFront::instance()->getFrontEdges();
     auto missing_edges = front_edges;
     missing_edges.clear();
@@ -1142,56 +1170,6 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
     }
     */
   }
-}
-
-void meshRelaying::print4debug(const char *fn){
-  FILE *f = fopen (fn,"w");
-  fprintf(f,"View \"Front Mesh\"{\n");
-  discreteFront::instance()->printMesh(f);
-  fprintf(f,"};\n");
-  fprintf(f,"View \"Mesh\"{\n");  
-  /*  for (size_t i=0;i<tets.size();i+=4){
-    fprintf(f,"SS(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
-	    pos[3*tets[i]],pos[3*tets[i]+1],pos[3*tets[i]+2],
-	    pos[3*tets[i+1]],pos[3*tets[i+1]+1],pos[3*tets[i+1]+2],
-	    pos[3*tets[i+2]],pos[3*tets[i+2]+1],pos[3*tets[i+2]+2],
-	    pos[3*tets[i+3]],pos[3*tets[i+3]+1],pos[3*tets[i+3]+2],
-	    ll(pos[3*tets[i]],pos[3*tets[i]+1],pos[3*tets[i]+2],time),
-	    ll(pos[3*tets[i+1]],pos[3*tets[i+1]+1],pos[3*tets[i+1]+2],time),
-	    ll(pos[3*tets[i+2]],pos[3*tets[i+2]+1],pos[3*tets[i+2]+2],time),  
-	    ll(pos[3*tets[i+3]],pos[3*tets[i+3]+1],pos[3*tets[i+3]+2],time));    
-  }
-  */
-  
-  for (size_t i=0;i<tris.size();i+=3){
-    SVector3 COG((pos[3*tris[i]]+pos[3*tris[i+1]]+pos[3*tris[i+2]])/3.0,
-		 (pos[3*tris[i]+1]+pos[3*tris[i+1]+1]+pos[3*tris[i+2]+1])/3.0,
-		 (pos[3*tris[i]+2]+pos[3*tris[i+1]+2]+pos[3*tris[i+2]+2])/3.0);
-    int color = 1;
-    if (!discreteFront::instance()->empty()){
-      color = discreteFront::instance()->whatIsTheColorOf2d(COG);
-    }
-    fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
-	    pos[3*tris[i]],pos[3*tris[i]+1],pos[3*tris[i]+2],
-	    pos[3*tris[i+1]],pos[3*tris[i+1]+1],pos[3*tris[i+1]+2],
-	    pos[3*tris[i+2]],pos[3*tris[i+2]+1],pos[3*tris[i+2]+2],color,color,color);
-  }
-
-  for (size_t i=0;i<tris.size();i+=3){
-    fprintf(f, "SL(%g,%g,0.005,%g,%g,0.005){%d,%d};\n", pos[3*tris[i]],pos[3*tris[i]+1], pos[3*tris[i+1]],pos[3*tris[i+1]+1], 5,5);
-    fprintf(f, "SL(%g,%g,0.005,%g,%g,0.005){%d,%d};\n", pos[3*tris[i+1]],pos[3*tris[i+1]+1], pos[3*tris[i+2]],pos[3*tris[i+2]+1], 5,5);
-    fprintf(f, "SL(%g,%g,0.005,%g,%g,0.005){%d,%d};\n", pos[3*tris[i]],pos[3*tris[i]+1], pos[3*tris[i+2]],pos[3*tris[i+2]+1], 5,5);
-  }
-  for (size_t i=0;i<front_nodes.size();i++){
-    fprintf(f,"SP(%g,%g,%g){3};\n",pos[3*front_nodes[i]],
-	    pos[3*front_nodes[i]+1],pos[3*front_nodes[i]+2]);
-  }
-  fprintf(f,"};\n");
-
-  fprintf(f,"View \"Front Geometry\"{\n");
-  discreteFront::instance()->printGeometry(f);
-  fprintf(f,"};\n");
-  fclose(f);
 }
 
 void meshRelaying::curvature(std::vector<int> concentration, std::vector<double> *curvature){
@@ -1233,8 +1211,7 @@ void meshRelaying::curvature(std::vector<int> concentration, std::vector<double>
       (*curvature)[i] = 0.0;
       continue;
     } 
-    
-    
+   
     size_t triplet[3];
     if(front_node_i[0].second == 1){
       triplet[0] = front_node_i[0].first;
@@ -1281,21 +1258,67 @@ double kappa(double x1[2], double x2[2], double x3[2]){
 void meshRelaying::untangle(){
 #if defined(HAVE_WINSLOWUNTANGLER)
   std::vector<bool> _locked;
-  std::vector<std::array<double,2> > _points;
-  std::vector<std::array<uint32_t, 4> > _elements;
-  for (size_t i=0;i<tris.size()/3;i++)_elements.push_back({static_cast<unsigned int>(tris[3*i]),
-	static_cast<unsigned int>(tris[3*i+1]),static_cast<unsigned int>(tris[3*i+2]),uint32_t(-1)});
-  for (size_t i=0;i<pos.size()/3;i++)_points.push_back({pos[3*i],pos[3*i+1]});  
-  for (size_t i=0;i<pos.size()/3;i++)_locked.push_back(dimVertex[i] == 2 ? false : true);
-  for (size_t i=0;i<front_nodes.size();i++)_locked[front_nodes[i]]=true;  
-  std::vector<std::array<uint32_t, 3> > _triangles;
-  std::vector<std::array<std::array<double,2>, 3> > _triIdealShapes;    
-  buildTrianglesAndTargetsFromElements(_points,_elements,_triangles,_triIdealShapes);
-  untangle_triangles_2D(_points, _locked, _triangles, _triIdealShapes);
-  for (size_t i=0;i<_points.size();i++){
-    pos[3*i] = _points[i][0];
-    pos[3*i+1] = _points[i][1];
-  }    
+  if (tets.size()){
+    std::vector<std::vector<uint32_t> > _elements;
+    std::vector<std::array<double,3> > _points;
+    for (size_t i=0;i<tets.size()/4;i++)_elements.push_back({
+	static_cast<unsigned int>(tets[4*i]),
+	  static_cast<unsigned int>(tets[4*i+1]),
+	  static_cast<unsigned int>(tets[4*i+2]),
+	  static_cast<unsigned int>(tets[4*i+3])});
+    for (size_t i=0;i<pos.size()/3;i++)_points.push_back({pos[3*i],pos[3*i+1],pos[3*i+2]});  
+    for (size_t i=0;i<pos.size()/3;i++)_locked.push_back(dimVertex[i] == 3 ? false : true);
+    for (size_t i=0;i<front_nodes.size();i++)_locked[front_nodes[i]]=true;  
+    std::vector<std::array<uint32_t, 4> > _tets;
+    std::vector<std::array<std::array<double,3>, 4> > _tetIdealShapes;
+    std::vector<std::vector<std::array<double,3> > > _elementTargetShapes;
+    {
+      //      double minQual = 1.0;
+      double avgQual = 0.0;
+      for (size_t i=0;i<tets.size()/4;i++){
+	//	minQual = std::min(qualityElement(i),minQual);
+	avgQual += qualityElement(i);
+      }
+      avgQual /= (tets.size()/4);
+      Msg::Info ("Avg Quality Before Untangling %12.5E",avgQual);
+    }
+    buildTetrahedraFromElements(_elements,_elementTargetShapes, _tets,_tetIdealShapes);
+    untangle_tetrahedra(_points, _locked, _tets, _tetIdealShapes);
+    for (size_t i=0;i<_points.size();i++){
+      pos[3*i] = _points[i][0];
+      pos[3*i+1] = _points[i][1];
+      pos[3*i+2] = _points[i][2];
+    }
+    {
+      //      double minQual = 1.0;
+      double avgQual = 0.0;
+      for (size_t i=0;i<tets.size()/4;i++){
+	//	minQual = std::min(qualityElement(i),minQual);
+	avgQual += qualityElement(i);
+      }
+      avgQual /= (tets.size()/4);
+      //      Msg::Info ("Min Quality Before Untangling %12.5E",avgQual);
+      //      for (size_t i=0;i<tets.size()/4;i++)minQual = std::min(qualityElement(i),minQual);
+      Msg::Info ("Avg Quality After Untangling %12.5E",avgQual);
+    }
+  }
+  else{  
+    std::vector<std::array<uint32_t,4> >  _elements;
+    std::vector<std::array<double,2> > _points;
+    for (size_t i=0;i<tris.size()/3;i++)_elements.push_back({static_cast<unsigned int>(tris[3*i]),
+	  static_cast<unsigned int>(tris[3*i+1]),static_cast<unsigned int>(tris[3*i+2]),uint32_t(-1)});
+    for (size_t i=0;i<pos.size()/3;i++)_points.push_back({pos[3*i],pos[3*i+1]});  
+    for (size_t i=0;i<pos.size()/3;i++)_locked.push_back(dimVertex[i] == 2 ? false : true);
+    for (size_t i=0;i<front_nodes.size();i++)_locked[front_nodes[i]]=true;  
+    std::vector<std::array<uint32_t, 3> > _triangles;
+    std::vector<std::array<std::array<double,2>, 3> > _triIdealShapes;    
+    buildTrianglesAndTargetsFromElements(_points,_elements,_triangles,_triIdealShapes);
+    untangle_triangles_2D(_points, _locked, _triangles, _triIdealShapes);
+    for (size_t i=0;i<_points.size();i++){
+      pos[3*i] = _points[i][0];
+      pos[3*i+1] = _points[i][1];
+    }
+  }
 #else
   Msg::Error ("Gmsh Must Be Compiled With WinslowUntangler to be able to use meshRelaying::untangle()");  
 #endif
@@ -1381,8 +1404,6 @@ void discreteFront::addFreeForm (int tag, const std::vector<SVector3> &poly){
   discreteFront::instance()->addLines(p,l,c);
 }
 
-
-
 void discreteFront :: printMesh (FILE *f) {
   if(fn.empty()) return;
   std::sort(fn.begin(), fn.end());
@@ -1427,5 +1448,71 @@ void discreteFront::printGeometry(FILE *f){
     fprintf(f, "T3(%12.5E, %12.5E, 0.01, 0){'%lu'};\n", pos[3*lines[i]],pos[3*lines[i]+1], lines[i]);
     fprintf(f, "T3(%12.5E, %12.5E, 0.01, 0){'%lu'};\n", pos[3*lines[i+1]],pos[3*lines[i+1]+1], lines[i+1]);
   }
-
 }
+
+void meshRelaying::print4debug(const char *fn){
+  FILE *f = fopen (fn,"w");
+  if (discreteFront::instance()->empty()){
+    for (size_t k=0;k<levelsets.size();k++){
+      fprintf(f,"View \"Levelset %lu\"{\n",k);
+      for (size_t i=0;i<tris.size();i+=3){
+	fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+		pos[3*tris[i]],pos[3*tris[i]+1],pos[3*tris[i]+2],
+		pos[3*tris[i+1]],pos[3*tris[i+1]+1],pos[3*tris[i+1]+2],
+		pos[3*tris[i+2]],pos[3*tris[i+2]+1],pos[3*tris[i+2]+2],
+		levelsets[k][tris[i]],
+		levelsets[k][tris[i+1]],
+		levelsets[k][tris[i+2]]);    
+      }
+      for (size_t i=0;i<tets.size();i+=4){
+	fprintf(f,"SS(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
+		pos[3*tets[i]],pos[3*tets[i]+1],pos[3*tets[i]+2],
+		pos[3*tets[i+1]],pos[3*tets[i+1]+1],pos[3*tets[i+1]+2],
+		pos[3*tets[i+2]],pos[3*tets[i+2]+1],pos[3*tets[i+2]+2],
+		pos[3*tets[i+3]],pos[3*tets[i+3]+1],pos[3*tets[i+3]+2],
+		levelsets[k][tets[i]],
+		levelsets[k][tets[i+1]],
+		levelsets[k][tets[i+2]],
+		levelsets[k][tets[i+3]]);       
+      }    
+      fprintf(f,"};\n");
+    }
+  }
+  else{
+    fprintf(f,"View \"Front Mesh\"{\n");
+    discreteFront::instance()->printMesh(f);
+    fprintf(f,"};\n");
+    fprintf(f,"View \"Mesh\"{\n");  
+  
+    for (size_t i=0;i<tris.size();i+=3){
+      SVector3 COG((pos[3*tris[i]]+pos[3*tris[i+1]]+pos[3*tris[i+2]])/3.0,
+		   (pos[3*tris[i]+1]+pos[3*tris[i+1]+1]+pos[3*tris[i+2]+1])/3.0,
+		 (pos[3*tris[i]+2]+pos[3*tris[i+1]+2]+pos[3*tris[i+2]+2])/3.0);
+      int color = 1;
+      if (!discreteFront::instance()->empty()){
+	color = discreteFront::instance()->whatIsTheColorOf2d(COG);
+      }
+      fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
+	      pos[3*tris[i]],pos[3*tris[i]+1],pos[3*tris[i]+2],
+	      pos[3*tris[i+1]],pos[3*tris[i+1]+1],pos[3*tris[i+1]+2],
+	      pos[3*tris[i+2]],pos[3*tris[i+2]+1],pos[3*tris[i+2]+2],color,color,color);
+    }
+    
+    for (size_t i=0;i<tris.size();i+=3){
+      fprintf(f, "SL(%g,%g,0.005,%g,%g,0.005){%d,%d};\n", pos[3*tris[i]],pos[3*tris[i]+1], pos[3*tris[i+1]],pos[3*tris[i+1]+1], 5,5);
+      fprintf(f, "SL(%g,%g,0.005,%g,%g,0.005){%d,%d};\n", pos[3*tris[i+1]],pos[3*tris[i+1]+1], pos[3*tris[i+2]],pos[3*tris[i+2]+1], 5,5);
+      fprintf(f, "SL(%g,%g,0.005,%g,%g,0.005){%d,%d};\n", pos[3*tris[i]],pos[3*tris[i]+1], pos[3*tris[i+2]],pos[3*tris[i+2]+1], 5,5);
+    }
+    for (size_t i=0;i<front_nodes.size();i++){
+      fprintf(f,"SP(%g,%g,%g){3};\n",pos[3*front_nodes[i]],
+	      pos[3*front_nodes[i]+1],pos[3*front_nodes[i]+2]);
+    }
+    fprintf(f,"};\n");
+    
+    fprintf(f,"View \"Front Geometry\"{\n");
+    discreteFront::instance()->printGeometry(f);
+    fprintf(f,"};\n");
+  }
+  fclose(f);
+}
+  
