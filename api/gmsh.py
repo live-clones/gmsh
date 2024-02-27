@@ -5192,21 +5192,24 @@ class model:
         advance__df_in_time = advance_DF_in_time
 
         @staticmethod
-        def add_free_form(tag, poly):
+        def add_free_form(tag, poly, _corners):
             """
-            gmsh.model.mesh.add_free_form(tag, poly)
+            gmsh.model.mesh.add_free_form(tag, poly, _corners)
 
             Antoine put a comment here.
 
             Types:
             - `tag': integer
             - `poly': vector of doubles
+            - `_corners': vector of sizes
             """
             api_poly_, api_poly_n_ = _ivectordouble(poly)
+            api__corners_, api__corners_n_ = _ivectorsize(_corners)
             ierr = c_int()
             lib.gmshModelMeshAdd_free_form(
                 c_int(tag),
                 api_poly_, api_poly_n_,
+                api__corners_, api__corners_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())

@@ -7567,26 +7567,34 @@ module gmsh
   !> Antoine put a comment here.
   subroutine gmshModelMeshAdd_free_form(tag, &
                                         poly, &
+                                        _corners, &
                                         ierr)
     interface
     subroutine C_API(tag, &
                      api_poly_, &
                      api_poly_n_, &
+                     api__corners_, &
+                     api__corners_n_, &
                      ierr_) &
       bind(C, name="gmshModelMeshAdd_free_form")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: tag
       real(c_double), dimension(*) :: api_poly_
       integer(c_size_t), value, intent(in) :: api_poly_n_
+      integer(c_size_t), dimension(*) :: api__corners_
+      integer(c_size_t), value, intent(in) :: api__corners_n_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer, intent(in) :: tag
     real(c_double), dimension(:), intent(in) :: poly
+    integer(c_size_t), dimension(:), intent(in) :: _corners
     integer(c_int), intent(out), optional :: ierr
     call C_API(tag=int(tag, c_int), &
          api_poly_=poly, &
          api_poly_n_=size_gmsh_double(poly), &
+         api__corners_=_corners, &
+         api__corners_n_=size_gmsh_size(_corners), &
          ierr_=ierr)
   end subroutine gmshModelMeshAdd_free_form
 

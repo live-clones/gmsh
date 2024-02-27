@@ -1363,7 +1363,8 @@ void meshRelaying::setBndFront(){
   }
   l.push_back(l[0]);
 
-  discreteFront::instance()->addLines(p,l,c); 
+  std::vector<size_t> _corners;
+  discreteFront::instance()->addLines(p,l,c,_corners); 
 }
 
 void discreteFront::clear(){
@@ -1388,7 +1389,7 @@ void meshRelaying::concentration(std::vector<int> *concentration){
 }
 
 
-void discreteFront::addFreeForm (int tag, const std::vector<SVector3> &poly){
+void discreteFront::addFreeForm (int tag, const std::vector<SVector3> &poly, const std::vector<size_t> &_corners){
   std::vector<double> p;
   std::vector<size_t> l;
   std::vector<int> c;
@@ -1401,7 +1402,7 @@ void discreteFront::addFreeForm (int tag, const std::vector<SVector3> &poly){
     p.push_back(p0.y());
     p.push_back(0.);
   }  
-  discreteFront::instance()->addLines(p,l,c);
+  discreteFront::instance()->addLines(p,l,c,_corners);
 }
 
 void discreteFront :: printMesh (FILE *f) {

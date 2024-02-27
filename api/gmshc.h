@@ -1657,6 +1657,7 @@ GMSH_API void gmshModelMeshAdvance_DF_in_time(const double dt,
 /* Antoine put a comment here. */
 GMSH_API void gmshModelMeshAdd_free_form(const int tag,
                                          const double * poly, const size_t poly_n,
+                                         const size_t * _corners, const size_t _corners_n,
                                          int * ierr);
 
 /* Antoine put a comment here. */
