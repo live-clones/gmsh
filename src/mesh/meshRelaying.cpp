@@ -998,7 +998,7 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
   discreteFront::instance()->clearFrontNodes();
   discreteFront::instance()->buildSpatialSearchStructure ();
 
-  int MAXIT = 3;
+  int MAXIT = 10;
   int ITTT = 1;
   
   while(1) {
@@ -1082,7 +1082,7 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
         }
       }
     }
-    
+
     if (moves.empty())break;
     std::sort(moves.begin(), moves.end());
 
@@ -1095,7 +1095,8 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
       SVector3 pOpt = c.p;
       double qMin = smallest_measure (i,pOpt);
       
-      if (qMin < 0) continue;
+
+      if (ITTT<3 && qMin < 0) continue; // winslow should allow us to remove this except if 3 nodes on the front
       
       for (auto k : v2v[i]){
         p = std::make_pair(std::min(i,k), std::max(i,k));
