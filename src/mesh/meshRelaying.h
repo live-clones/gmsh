@@ -69,8 +69,8 @@ class discreteFront {
   //  SVector3 closestPoints2d (const SVector3 &P);
   bool empty() const {return pos.empty();}
   //  void move (double dt);
-  void moveFromV (double dt, std::vector<SVector3> V, bool bnd);
-  void moveFromFront(double dt, std::vector<SVector3> v);
+  void moveFromV (double dt, const std::vector<SVector3> &V, bool bnd);
+  void moveFromFront(double dt, const std::vector<SVector3> &v);
   //  virtual SVector3 velocity (double x, double y, double z, double t, int col);
   void printGeometry(FILE *f);
   int whatIsTheColorOf2d (const SVector3 &P);
@@ -85,6 +85,7 @@ class discreteFront {
     fn.clear();
   }
   void addFrontNode(size_t n, size_t l, SVector3 t){
+    if (empty())return;
     SVector3 p0 (pos[3*lines[l]],pos[3*lines[l]+1],pos[3*lines[l]+2]);
     SVector3 p1 (pos[3*lines[l+1]],pos[3*lines[l+1]+1],pos[3*lines[l+1]+2]);
     double d = (p1-p0).norm();
@@ -101,7 +102,7 @@ class discreteFront {
   void getDFPosition(std::vector<double> &position, std::vector<int> &tags);
   void clear();
   void redistFront(double lc);
-  void adjustBnd(std::vector<std::pair<size_t,size_t>> bnd1d);
+  void adjustBnd(const std::vector<std::pair<size_t,size_t>> &bnd1d);
   void addLines (std::vector<double> &p, std::vector<size_t> &l, std::vector<int> &c, const std::vector<size_t> &_corners){
     size_t n = colors.size();
     pos.insert (pos.end(), p.begin(), p.end());
@@ -134,11 +135,8 @@ class meshRelaying {
   std::vector<size_t> corners;
   std::vector<size_t> dimVertex;
 
+  std::vector<std::vector<double> > levelsets;
   
-  //// levelset function that drives relaying
-  double time;  
-  std::function<double (double, double, double, double)> levelset;
-
   static meshRelaying *_instance;
   meshRelaying (GModel *gm = nullptr); // use GModel gm or Gmodel::current() if NULL  
   public :
@@ -148,9 +146,11 @@ class meshRelaying {
     }
 
   void doRelaying (const std::function<std::vector<std::pair<double, int> >(size_t, size_t)> &f); 
-  void setLevelset (const std::function<double(double, double, double, double)> &_ls){
-    levelset = _ls;
+
+  void setLevelsets (const std::vector<std::vector<double> > &_ls){
+    levelsets = _ls;
   }
+
   void setDiscreteFrontBBox (){    
     SBoundingBox3d bbox;
     for (size_t i=0;i<pos.size();i+=3)
@@ -158,16 +158,12 @@ class meshRelaying {
     bbox *= 1.01;
     discreteFront::instance()->setBbox (bbox);
   }
-  void advanceInTime(double dt, std::vector<SVector3> v = std::vector<SVector3>(), bool front = false){
-    if(front){
+
+  void advanceInTime(double dt, std::vector<SVector3> &v, bool front = false){
+    if(front)
       discreteFront::instance()->moveFromFront(dt, v);
-    } else if(v.empty()){
-      //      discreteFront::instance()->move(dt);
-    }
-    else {
+    else 
       discreteFront::instance()->moveFromV(dt, v, true);
-    }
-    
   }
   void setPos (size_t i, double x, double y, double z){
     pos[3*i] = x;
@@ -194,10 +190,11 @@ class meshRelaying {
   void redistFront(double lc){
     discreteFront::instance()->redistFront(lc);
   }
-
+  
   void setBndFront();
   double smallest_measure (const size_t n, const SVector3 &target) ;  
-  double massTriangles (int color);
+  double massElements (int color);
+  double qualityElement (size_t elem);
   void adjustBnd(){
     discreteFront::instance()->adjustBnd(bnd1d);
   }  

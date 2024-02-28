@@ -3254,13 +3254,16 @@ namespace gmsh { // Top-level functions
       //
       // Antoine put a comment here.
       inline void add_free_form(const int tag,
-                                const std::vector<double> & poly)
+                                const std::vector<double> & poly,
+                                const std::vector<std::size_t> & _corners)
       {
         int ierr = 0;
         double *api_poly_; size_t api_poly_n_; vector2ptr(poly, &api_poly_, &api_poly_n_);
-        gmshModelMeshAdd_free_form(tag, api_poly_, api_poly_n_, &ierr);
+        size_t *api__corners_; size_t api__corners_n_; vector2ptr(_corners, &api__corners_, &api__corners_n_);
+        gmshModelMeshAdd_free_form(tag, api_poly_, api_poly_n_, api__corners_, api__corners_n_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_poly_);
+        gmshFree(api__corners_);
       }
 
       // gmsh::model::mesh::get_DF_position
@@ -3340,6 +3343,18 @@ namespace gmsh { // Top-level functions
         int ierr = 0;
         gmshModelMeshSet_bnd_front(&ierr);
         if(ierr) throwLastError();
+      }
+
+      // gmsh::model::mesh::set_levelsets
+      //
+      // Antoine put a comment here.
+      inline void set_levelsets(const std::vector<std::vector<double> > & levelsets)
+      {
+        int ierr = 0;
+        double **api_levelsets_; size_t *api_levelsets_n_, api_levelsets_nn_; vectorvector2ptrptr(levelsets, &api_levelsets_, &api_levelsets_n_, &api_levelsets_nn_);
+        gmshModelMeshSet_levelsets(api_levelsets_, api_levelsets_n_, api_levelsets_nn_, &ierr);
+        if(ierr) throwLastError();
+        for(size_t i = 0; i < api_levelsets_nn_; ++i){ gmshFree(api_levelsets_[i]); } gmshFree(api_levelsets_); gmshFree(api_levelsets_n_);
       }
 
       namespace field { // Mesh size field functions

@@ -4590,19 +4590,20 @@ end
 const advance__df_in_time = advance_DF_in_time
 
 """
-    gmsh.model.mesh.add_free_form(tag, poly)
+    gmsh.model.mesh.add_free_form(tag, poly, _corners)
 
 Antoine put a comment here.
 
 Types:
  - `tag`: integer
  - `poly`: vector of doubles
+ - `_corners`: vector of sizes
 """
-function add_free_form(tag, poly)
+function add_free_form(tag, poly, _corners)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshAdd_free_form, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
-          tag, convert(Vector{Cdouble}, poly), length(poly), ierr)
+          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
+          tag, convert(Vector{Cdouble}, poly), length(poly), convert(Vector{Csize_t}, _corners), length(_corners), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
@@ -4733,6 +4734,24 @@ function set_bnd_front()
     ccall((:gmshModelMeshSet_bnd_front, gmsh.lib), Cvoid,
           (Ptr{Cint},),
           ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.set_levelsets(levelsets)
+
+Antoine put a comment here.
+
+Types:
+ - `levelsets`: vector of vectors of doubles
+"""
+function set_levelsets(levelsets)
+    api_levelsets_n_ = [ length(levelsets[i]) for i in 1:length(levelsets) ]
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSet_levelsets, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
+          convert(Vector{Vector{Cdouble}},levelsets), api_levelsets_n_, length(levelsets), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end

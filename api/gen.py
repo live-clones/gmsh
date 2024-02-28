@@ -615,6 +615,10 @@ mesh.add('redist_front', doc, None, idouble('lc') )
 doc = '''Antoine put a comment here.'''
 mesh.add('set_bnd_front', doc, None )
 
+doc = '''Antoine put a comment here.'''
+mesh.add('set_levelsets', doc, None, ivectorvectordouble('levelsets') )
+
+
 ################################################################################
 
 field = mesh.add_module('field', 'mesh size field functions')

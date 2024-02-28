@@ -1875,7 +1875,8 @@ namespace gmsh { // Top-level functions
       //
       // Antoine put a comment here.
       GMSH_API void add_free_form(const int tag,
-                                  const std::vector<double> & poly);
+                                  const std::vector<double> & poly,
+                                  const std::vector<std::size_t> & _corners);
 
       // gmsh::model::mesh::get_DF_position
       //
@@ -1912,6 +1913,11 @@ namespace gmsh { // Top-level functions
       //
       // Antoine put a comment here.
       GMSH_API void set_bnd_front();
+
+      // gmsh::model::mesh::set_levelsets
+      //
+      // Antoine put a comment here.
+      GMSH_API void set_levelsets(const std::vector<std::vector<double> > & levelsets);
 
       namespace field { // Mesh size field functions
 

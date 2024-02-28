@@ -2474,12 +2474,13 @@ GMSH_API void gmshModelMeshAdvance_DF_in_time(const double dt, const double * ve
   }
 }
 
-GMSH_API void gmshModelMeshAdd_free_form(const int tag, const double * poly, const size_t poly_n, int * ierr)
+GMSH_API void gmshModelMeshAdd_free_form(const int tag, const double * poly, const size_t poly_n, const size_t * _corners, const size_t _corners_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_poly_(poly, poly + poly_n);
-    gmsh::model::mesh::add_free_form(tag, api_poly_);
+    std::vector<std::size_t> api__corners_(_corners, _corners + _corners_n);
+    gmsh::model::mesh::add_free_form(tag, api_poly_, api__corners_);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2565,6 +2566,20 @@ GMSH_API void gmshModelMeshSet_bnd_front(int * ierr)
   if(ierr) *ierr = 0;
   try {
     gmsh::model::mesh::set_bnd_front();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshSet_levelsets(const double * const * levelsets, const size_t * levelsets_n, const size_t levelsets_nn, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::vector<double> > api_levelsets_(levelsets_nn);
+    for(size_t i = 0; i < levelsets_nn; ++i)
+      api_levelsets_[i] = std::vector<double>(levelsets[i], levelsets[i] + levelsets_n[i]);
+    gmsh::model::mesh::set_levelsets(api_levelsets_);
   }
   catch(...){
     if(ierr) *ierr = 1;
