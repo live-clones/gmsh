@@ -196,6 +196,18 @@ endif()
 
 include_directories(${EXTRA_INCS})
 
+# Surface deformation
+add_executable(expansion mainExpansion.cpp laplacianSmoothing.h ${EXTRA_INCS})
+add_executable(metric mainMetric.cpp laplacianSmoothing.h ${EXTRA_INCS})
+add_executable(deformation mainDeformation.cpp ${EXTRA_INCS})
+add_executable(construct mainConstruct.cpp meshMacro.h ${EXTRA_INCS})
 
-add_executable(example main.cpp laplacianSmoothing.h ${EXTRA_INCS})
-target_link_libraries(example ${EXTRA_LIBS})
+target_link_libraries(expansion ${EXTRA_LIBS})
+target_link_libraries(metric ${EXTRA_LIBS})
+target_link_libraries(deformation ${EXTRA_LIBS})
+target_link_libraries(construct ${EXTRA_LIBS})
+
+# Solver
+add_executable(poisson mainPoisson.cpp ${EXTRA_INCS})
+
+target_link_libraries(poisson ${EXTRA_LIBS})

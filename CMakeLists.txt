@@ -153,7 +153,7 @@ if(ENABLE_PRIVATE_API)
        src/geo/*.h src/mesh/*.h src/solver/*.h src/post/*.h src/plugin/*.h
        src/graphics/*.h contrib/kbipack/*.h contrib/DiscreteIntegration/*.h
        contrib/HighOrderMeshOptimizer/*.h contrib/MeshOptimizer/*.h
-       contrib/MeshQualityOptimizer/*.h contrib/WinslowUntangler/*.h)
+       contrib/MeshQualityOptimizer/*.h contrib/WinslowUntangler/*.h contrib/geodesic_matlab/src/*.h)
   set(GMSH_PRIVATE_API ${CMAKE_CURRENT_BINARY_DIR}/src/common/GmshConfig.h
       ${CMAKE_CURRENT_BINARY_DIR}/src/common/GmshVersion.h ${HEADERS})
   get_property(IAMCHILD DIRECTORY PROPERTY PARENT_DIRECTORY)
@@ -1003,7 +1003,7 @@ if(HAVE_MESH)
     include_directories(BEFORE contrib/WinslowUntangler)
   endif()
 
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/geodesic_matlab
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/geodesic_matlab/src
      AND ENABLE_GEODESIC)
     set_config_option(HAVE_GEODESIC "Geodesic")
     include_directories(BEFORE contrib/geodesic_matlab/src)
@@ -1957,9 +1957,6 @@ if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
     install(FILES ${GMSH_PRIVATE_API} DESTINATION ${GMSH_INC}/gmsh)
     if(HAVE_CONTRIB_EIGEN) # the private API depends on Eigen
       install(DIRECTORY contrib/eigen/Eigen DESTINATION ${GMSH_INC}/gmsh)
-    endif()
-    if(HAVE_GEODESIC)
-      install(DIRECTORY contrib/geodesic_matlab/src DESTINATION ${GMSH_INC}/gmsh/geodesic)
     endif()
   endif()
 endif()

@@ -22,6 +22,7 @@ from mpl_toolkits.mplot3d import Axes3D  # Import the 3D plotting module
 EPS = 1e-6
 
 # possible: 3, 6, 9, 10, 12, 15, 21, 28, 36, 45, 55, 66
+geoFile = ""
 degree = 4
 tri = 15
 p_norm = 2
@@ -36,6 +37,8 @@ method = 'SLSQP'            # "SLSQP" or "L-BFGS-B"
 nt=1
 pwd = "./"
 for i, arg in enumerate(sys.argv):
+  if (arg == "-f" and len(sys.argv) >= i+2):
+    geoFile = sys.argv[i+1]
   #if (arg == "-tri" and len(sys.argv) >= i+2):
   #  tri = int(sys.argv[i+1])
   if (arg == "-d" and len(sys.argv) >= i+2):
@@ -160,6 +163,21 @@ def getElementID(degree):
   }
   return elementID_mapping[degree]
 
+def getElementID2D(degree):
+  elementID_mapping = {
+    1: 1,
+    2: 8,
+    3: 26,
+    4: 27,
+    5: 28,
+    6: 62,
+    7: 63,
+    8: 64,
+    9: 65,
+    10: 66,
+  }
+  return elementID_mapping[degree]
+
 def BarycentricCoord(p0, p1, p2, p):
   d1 = p1 - p0
   d2 = p2 - p0
@@ -176,14 +194,26 @@ def BarycentricCoord(p0, p1, p2, p):
 # L O A D S
 #
 gmsh.initialize()
-gmsh.open(pwd+"points.msh")
+mySurface = 1;
+if (geoFile):
+  gmsh.open(pwd+geoFile+".geo")
+else:
+  mySurface = gmsh.model.addDiscreteEntity(2);
+  gmsh.model.geo.synchronize()
+
 
 
 print("Load coordinates")
-dimTags = gmsh.model.getEntities(0)
 coords = {}
-for dimTag in dimTags:
-  coords[dimTag[1]] = gmsh.model.getValue(0, dimTag[1], [])
+with open(pwd+"points.csv", newline='') as csvfile:
+  reader = csv.DictReader(csvfile)
+  for row in reader:
+    t = int(row['pointTag'])
+    x = float(row['x'])
+    y = float(row['y'])
+    z = float(row['z'])
+
+    coords[t] = np.array([x,y,z])
 
 
 print("Load Triangles")
@@ -261,7 +291,6 @@ with open(pwd+"faces.csv", newline='') as csvfile:
       faces[face] = []
     faces[face].append(p)
 
-
 print("Load Parametrization")
 paramCoords = {}
 with open(pwd+"parametrization.csv", newline='') as csvfile:
@@ -292,13 +321,37 @@ for face in triangleVertices:
                                               paramCoords[face][face[2]], p) for j, p in paramCoords[face].items()}
 
 
+entities = {}
+tag2Entity = {}
+if (geoFile and os.path.exists(pwd+"entities.csv")):
+  print("Load Entities")
+  with open(pwd+"entities.csv", newline='') as csvfile:
+    reader = csv.DictReader(csvfile)
+    tmp = []
+    for row in reader:
+      eDim = int(row['entityDim'])
+      eTag = int(row['entityTag'])
+
+      if (eDim == 0):
+        vTags = [int(row['vertexTag1'])]
+      elif (eDim == 1):
+        vTags = [int(row['vertexTag1']), int(row['vertexTag2'])]
+      elif (eDim == 2):
+        vTags = [int(row['vertexTag1']), int(row['vertexTag2']), int(row['vertexTag3'])]
+        
+
+      if (eDim,eTag) not in entities:
+        entities[(eDim,eTag)] = []      
+      entities[(eDim,eTag)].append(vTags)
+
+      for vTag in vTags:
+        if vTag not in tag2Entity:
+          tag2Entity[vTag] = (eDim,eTag)
 
 #
 # B U I L D   E L E M E N T S
 #
 print("Build elements")
-mySurface = gmsh.model.addDiscreteEntity(2);
-gmsh.model.geo.synchronize()
 nodeCount = 0
 
 print(" - Vertices nodes")
@@ -312,7 +365,14 @@ for i,face in enumerate(triangleVertices):
       vertexNodes[vertex] = nodeCount
       vertexNodeCoords.extend(coords[vertex])
 
-gmsh.model.mesh.addNodes(2, mySurface, range(1,nodeCount+1), vertexNodeCoords)
+      if tag2Entity:
+        dimTag = tag2Entity[vertex]
+      else:
+        dimTag = (2,mySurface)
+        
+      gmsh.model.mesh.addNodes(dimTag[0], dimTag[1], [vertexNodes[vertex]], coords[vertex])
+      
+# gmsh.model.mesh.addNodes(2, mySurface, range(1,nodeCount+1), vertexNodeCoords)
 
 
 print(" - Edges nodes")
@@ -320,7 +380,11 @@ edgeTs = np.arange(1., degree) / degree
 
 edgeNodes = {}
 edgeNodeCoords = []
+lineCount = 1;
 for edge,points in edges.items():
+  if (edge[0] > edge[1]):
+    continue
+  
   # Collect points
   xs = np.empty(len(points) + 2, dtype=float)
   ys = np.empty(len(points) + 2, dtype=float)
@@ -373,7 +437,37 @@ for edge,points in edges.items():
   for l in range(len(edgeTs)):
     edgeNodeCoords.extend([nodeXs[l], nodeYs[l], nodeZs[l]])
 
-gmsh.model.mesh.addNodes(2, mySurface, range(len(vertexNodes)+1,nodeCount+1), edgeNodeCoords)
+  dimTag = (0,0)
+  if (entities):
+    for entity,es in entities.items():
+      if (entity[0] == 0):
+        continue
+
+      for e in es:
+        if ((edge[0] in e) and (edge[1] in e)):
+          dimTag = entity
+          break
+
+      if (dimTag != (0,0)):
+        break
+  else:
+    dimTag = (2,mySurface)
+    
+  coordsTmp = edgeNodeCoords[-3*len(edgeNodes[edge]):]
+  gmsh.model.mesh.addNodes(dimTag[0], dimTag[1], edgeNodes[edge], coordsTmp)
+
+  if (dimTag[0] == 1):
+    tags = []
+    tags.append(vertexNodes[edge[0]])
+    tags.append(vertexNodes[edge[1]])
+    tags.extend(edgeNodes[edge])
+    elementID = getElementID2D(degree)
+    
+    gmsh.model.mesh.addElements(dimTag[0], dimTag[1], [elementID], [[lineCount]], [tags])
+    lineCount += 1
+
+
+# gmsh.model.mesh.addNodes(2, mySurface, range(len(vertexNodes)+1,nodeCount+1), edgeNodeCoords)
 
 
 print(" - Interior nodes")
@@ -498,8 +592,28 @@ for i,face in enumerate(triangleVertices):
     innerNodes[face] = range(nodeCount+1, nodeCount+1+len(faceUVs))
     nodeCount += len(faceUVs)
 
+  dimTag = (0,0)
+  if (entities):
+    for entity,ts in entities.items():
+      if (entity[0] == 0 or entity == 1):
+        continue
+
+      for t in ts:
+        if ((face[0] in t) and (face[1] in t) and (face[2] in t)):
+          dimTag = entity
+          break
+
+      if (dimTag != (0,0)):
+        break
+  else:
+    dimTag = (2,mySurface)
+    
+  coordsTmp = innerCoords[-3*len(innerNodes[face]):]
+  gmsh.model.mesh.addNodes(dimTag[0], dimTag[1], innerNodes[face], coordsTmp)
+
+
 firstInteriorNode = len(vertexNodes)+(degree-1)*len(edgeNodes)+1
-gmsh.model.mesh.addNodes(2, mySurface, range(firstInteriorNode,nodeCount+1), innerCoords)
+# gmsh.model.mesh.addNodes(2, mySurface, range(firstInteriorNode,nodeCount+1), innerCoords)
 
 
 print(" - Add elements")
@@ -554,7 +668,6 @@ def optimizeTriangle(i):
 
 
   if optimizationBounds:
-    print("ok")
     results = minimize(objective_function, xl, method=method, bounds=bnd_xl)
   else:
     results = minimize(objective_function, xl, method=method)
@@ -648,6 +761,8 @@ print(f"Elapsed time: {elapsed_time} seconds")
 fname = ""
 if debug:
   fname += "d"
+if geoFile:
+  fname += os.path.basename(geoFile)
 if polyfit:
   fname += "polyfit"
 if optimize:

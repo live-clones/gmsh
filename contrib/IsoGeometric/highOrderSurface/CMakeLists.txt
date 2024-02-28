@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
-
+set(CMAKE_BUILD_TYPE Debug)
 project(example CXX)
 
 # The following commands can be included in the CMakeLists.txt of each tutorial:
