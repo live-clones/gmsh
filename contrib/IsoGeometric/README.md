@@ -4,7 +4,7 @@
 cd highOrderSurface
 mkdir build
 cd build
-gmsh Vertebra.stl -geodesic -clmax 2.5 -nt 12
+gmsh ../Vertebra.stl -geodesic -clmax 2.5 -nt 12
 python code.py 
 ```
 | flag | default | option |
@@ -21,7 +21,7 @@ mkdir build
 cd build
 cmake ..
 make
-./expansion -f ../planeMesh/0.geo
+./expansion -f ../0.geo
 ```
 | flag | default | option |
 |:--:|:--:|:--|
@@ -34,7 +34,7 @@ make
 
 ### Construct high order polynomial elements:
 ```
-python ../../highOrderSurface/code.py -f ../planeMesh/0.geo
+python ../../highOrderSurface/code.py -f ../0.geo
 ```
 
 
