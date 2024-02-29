@@ -5086,8 +5086,9 @@ bool OCC_Internals::getMatrixOfInertia(int dim, int tag,
   return true;
 }
 
-double OCC_Internals::getDistance(int dim1, int tag1,
+bool OCC_Internals::getDistance(int dim1, int tag1,
                                   int dim2, int tag2,
+                                  double &distance,
                                   double &x1, double &y1, double &z1,
                                   double &x2, double &y2, double &z2)
 {
@@ -5125,10 +5126,11 @@ double OCC_Internals::getDistance(int dim1, int tag1,
     x2 = pmin2.X();
     y2 = pmin2.Y();
     z2 = pmin2.Z();
-    return dmin;
+    distance = dmin;
+    return true;
   }
 
-  return -1.;
+  return false;
 }
 
 bool const sortByInvDim(std::pair<int, int> const &lhs,
