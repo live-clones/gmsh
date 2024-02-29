@@ -3045,10 +3045,10 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::occ::getDistance
       //
-      // Find the minimal distance between shape with 'dim1' and 'tag1' and shape
-      // with 'dim2' and 'tag2' and the according coordinates. Return the distance
-      // in 'distance' and the coordinate of the points as 'x1', 'y1', 'z1' and
-      // 'x2', 'y2', 'z2'.
+      // Find the minimal distance between shape with `dim1' and `tag1' and shape
+      // with `dim2' and `tag2' and the according coordinates. Return the distance
+      // in `distance' and the coordinate of the points as `x1', `y1', `z1' and
+      // `x2', `y2', `z2'.
       GMSH_API void getDistance(const int dim1,
                                 const int tag1,
                                 const int dim2,

@@ -8132,10 +8132,10 @@ class model:
             """
             gmsh.model.occ.getDistance(dim1, tag1, dim2, tag2)
 
-            Find the minimal distance between shape with 'dim1' and 'tag1' and shape
-            with 'dim2' and 'tag2' and the according coordinates. Return the distance
-            in 'distance' and the coordinate of the points as 'x1', 'y1', 'z1' and
-            'x2', 'y2', 'z2'.
+            Find the minimal distance between shape with `dim1' and `tag1' and shape
+            with `dim2' and `tag2' and the according coordinates. Return the distance
+            in `distance' and the coordinate of the points as `x1', `y1', `z1' and
+            `x2', `y2', `z2'.
 
             Return `distance', `x1', `y1', `z1', `x2', `y2', `z2'.
 

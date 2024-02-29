@@ -4155,7 +4155,7 @@ Chamfer the volumes @code{volumeTags} on the curves @code{curveTags} with distan
 @end table
 
 @item gmsh/model/occ/getDistance
-Find the minimal distance between shape with }dim1} and }tag1} and shape with }dim2} and }tag2} and the according coordinates. Return the distance in }distance} and the coordinate of the points as }x1}, }y1}, }z1} and }x2}, }y2}, }z2}. 
+Find the minimal distance between shape with @code{dim1} and @code{tag1} and shape with @code{dim2} and @code{tag2} and the according coordinates. Return the distance in @code{distance} and the coordinate of the points as @code{x1}, @code{y1}, @code{z1} and @code{x2}, @code{y2}, @code{z2}. 
 
 @table @asis
 @item Input:
