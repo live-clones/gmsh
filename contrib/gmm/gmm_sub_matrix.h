@@ -1,32 +1,33 @@
-// -*- c++ -*- (enables emacs c++ mode)
-//===========================================================================
-//
-// Copyright (C) 2002-2008 Yves Renard
-//
-// This file is a part of GETFEM++
-//
-// Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
-// under  the  terms  of the  GNU  Lesser General Public License as published
-// by  the  Free Software Foundation;  either version 2.1 of the License,  or
-// (at your option) any later version.
-// This program  is  distributed  in  the  hope  that it will be useful,  but
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-// or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-// License for more details.
-// You  should  have received a copy of the GNU Lesser General Public License
-// along  with  this program;  if not, write to the Free Software Foundation,
-// Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
-//
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
-//
-//===========================================================================
+/* -*- c++ -*- (enables emacs c++ mode) */
+/*===========================================================================
+
+ Copyright (C) 2002-2020 Yves Renard
+
+ This file is a part of GetFEM
+
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
+ under  the  terms  of the  GNU  Lesser General Public License as published
+ by  the  Free Software Foundation;  either version 3 of the License,  or
+ (at your option) any later version along with the GCC Runtime Library
+ Exception either version 3.1 or (at your option) any later version.
+ This program  is  distributed  in  the  hope  that it will be useful,  but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ License and GCC Runtime Library Exception for more details.
+ You  should  have received a copy of the GNU Lesser General Public License
+ along  with  this program;  if not, write to the Free Software Foundation,
+ Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+
+ As a special exception, you  may use  this file  as it is a part of a free
+ software  library  without  restriction.  Specifically,  if   other  files
+ instantiate  templates  or  use macros or inline functions from this file,
+ or  you compile this  file  and  link  it  with other files  to produce an
+ executable, this file  does  not  by itself cause the resulting executable
+ to be covered  by the GNU Lesser General Public License.  This   exception
+ does not  however  invalidate  any  other  reasons why the executable file
+ might be covered by the GNU Lesser General Public License.
+
+===========================================================================*/
 
 /**@file gmm_sub_matrix.h
    @author Yves Renard <Yves.Renard@insa-lyon.fr>
@@ -142,11 +143,11 @@ namespace gmm {
     typedef abstract_null_type col_iterator;
     typedef abstract_null_type const_sub_col_type;
     typedef abstract_null_type const_col_iterator;
-    typedef typename sub_vector_type<const typename
-            linalg_traits<M>::const_sub_row_type *, SUBI2>::vector_type
+    typedef typename sub_vector_type<const typename org_type<typename
+	    linalg_traits<M>::const_sub_row_type>::t *, SUBI2>::vector_type
             const_sub_row_type;
     typedef typename select_ref<abstract_null_type, 
-            typename sub_vector_type<typename linalg_traits<M>::sub_row_type *,
+	    typename sub_vector_type<typename org_type<typename linalg_traits<M>::sub_row_type>::t *,
 	    SUBI2>::vector_type, PT>::ref_type sub_row_type;
     typedef gen_sub_row_matrix_iterator<typename const_pointer<PT>::pointer,
 	    SUBI1, SUBI2> const_row_iterator;
@@ -289,12 +290,8 @@ namespace gmm {
     typedef abstract_null_type row_iterator;
     typedef abstract_null_type const_sub_row_type;
     typedef abstract_null_type const_row_iterator;
-    typedef typename sub_vector_type<const typename
-            linalg_traits<M>::const_sub_col_type *, SUBI1>::vector_type
-            const_sub_col_type;
-    typedef typename select_ref<abstract_null_type, 
-            typename sub_vector_type<typename linalg_traits<M>::sub_col_type *,
-	    SUBI1>::vector_type, PT>::ref_type sub_col_type;
+    typedef typename sub_vector_type<const typename org_type<typename linalg_traits<M>::const_sub_col_type>::t *, SUBI1>::vector_type const_sub_col_type;
+    typedef typename select_ref<abstract_null_type, typename sub_vector_type<typename org_type<typename linalg_traits<M>::sub_col_type>::t *, SUBI1>::vector_type, PT>::ref_type sub_col_type;
     typedef gen_sub_col_matrix_iterator<typename const_pointer<PT>::pointer,
 	    SUBI1, SUBI2> const_col_iterator;
     typedef typename select_ref<abstract_null_type, 

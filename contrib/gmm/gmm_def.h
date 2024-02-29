@@ -1,32 +1,33 @@
-// -*- c++ -*- (enables emacs c++ mode)
-//===========================================================================
-//
-// Copyright (C) 2002-2008 Yves Renard
-//
-// This file is a part of GETFEM++
-//
-// Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
-// under  the  terms  of the  GNU  Lesser General Public License as published
-// by  the  Free Software Foundation;  either version 2.1 of the License,  or
-// (at your option) any later version.
-// This program  is  distributed  in  the  hope  that it will be useful,  but
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-// or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-// License for more details.
-// You  should  have received a copy of the GNU Lesser General Public License
-// along  with  this program;  if not, write to the Free Software Foundation,
-// Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
-//
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
-//
-//===========================================================================
+/* -*- c++ -*- (enables emacs c++ mode) */
+/*===========================================================================
+
+ Copyright (C) 2002-2020 Yves Renard
+
+ This file is a part of GetFEM
+
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
+ under  the  terms  of the  GNU  Lesser General Public License as published
+ by  the  Free Software Foundation;  either version 3 of the License,  or
+ (at your option) any later version along with the GCC Runtime Library
+ Exception either version 3.1 or (at your option) any later version.
+ This program  is  distributed  in  the  hope  that it will be useful,  but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ License and GCC Runtime Library Exception for more details.
+ You  should  have received a copy of the GNU Lesser General Public License
+ along  with  this program;  if not, write to the Free Software Foundation,
+ Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+
+ As a special exception, you  may use  this file  as it is a part of a free
+ software  library  without  restriction.  Specifically,  if   other  files
+ instantiate  templates  or  use macros or inline functions from this file,
+ or  you compile this  file  and  link  it  with other files  to produce an
+ executable, this file  does  not  by itself cause the resulting executable
+ to be covered  by the GNU Lesser General Public License.  This   exception
+ does not  however  invalidate  any  other  reasons why the executable file
+ might be covered by the GNU Lesser General Public License.
+
+===========================================================================*/
 
 /**@file gmm_def.h
    @author  Yves Renard <Yves.Renard@insa-lyon.fr>
@@ -220,23 +221,33 @@ namespace gmm {
   };
 
   /* ******************************************************************** */
-  /*  types to deal with const object representing a modifiable reference */
+  /* Original type from a pointer or a reference.                         */
+  /* ******************************************************************** */
+
+  template <typename V> struct org_type            { typedef V t; };
+  template <typename V> struct org_type<V *>       { typedef V t; };
+  template <typename V> struct org_type<const V *> { typedef V t; };
+  template <typename V> struct org_type<V &>       { typedef V t; };
+  template <typename V> struct org_type<const V &> { typedef V t; };
+
+  /* ******************************************************************** */
+  /*  Types to deal with const object representing a modifiable reference */
   /* ******************************************************************** */
   
   template <typename PT, typename R> struct mref_type_ 
   { typedef abstract_null_type return_type; };
   template <typename L, typename R> struct mref_type_<L *, R>
-  { typedef L & return_type; };
+  { typedef typename org_type<L>::t & return_type; };
   template <typename L, typename R> struct mref_type_<const L *, R>
-  { typedef const L & return_type; };
+  { typedef const typename org_type<L>::t & return_type; };
   template <typename L> struct mref_type_<L *, linalg_const>
-  { typedef const L & return_type; };
+  { typedef const typename org_type<L>::t & return_type; };
   template <typename L> struct mref_type_<const L *, linalg_const>
-  { typedef const L & return_type; };
+  { typedef const typename org_type<L>::t & return_type; };
   template <typename L> struct mref_type_<const L *, linalg_modifiable>
-  { typedef L & return_type; };
+  { typedef typename org_type<L>::t & return_type; };
   template <typename L> struct mref_type_<L *, linalg_modifiable>
-  { typedef L & return_type; };
+  { typedef typename org_type<L>::t & return_type; };
 
   template <typename PT> struct mref_type {
     typedef typename std::iterator_traits<PT>::value_type L;
@@ -254,7 +265,7 @@ namespace gmm {
   template <typename L, typename R> struct cref_type_
   { typedef abstract_null_type return_type; };
   template <typename L> struct cref_type_<L, linalg_modifiable>
-  { typedef L & return_type; };
+  { typedef typename org_type<L>::t & return_type; };
   template <typename L> struct cref_type {
     typedef typename cref_type_<L, 
       typename linalg_traits<L>::is_reference>::return_type return_type;
@@ -349,23 +360,24 @@ namespace gmm {
   /*		Operations on scalars                         		  */
   /* ******************************************************************** */
 
-  template <typename T> inline T sqr(T a) { return a * a; }
+  template <typename T> inline T sqr(T a) { return T(a * a); }
   template <typename T> inline T abs(T a) { return (a < T(0)) ? T(-a) : a; }
   template <typename T> inline T abs(std::complex<T> a)
-  { T x = a.real(), y = a.imag(); return ::sqrt(x*x+y*y); }
-  template <typename T> inline T abs_sqr(T a) { return a*a; }
+  { T x = a.real(), y = a.imag(); return T(::sqrt(x*x+y*y)); }
+  template <typename T> inline T abs_sqr(T a) { return T(a*a); }
   template <typename T> inline T abs_sqr(std::complex<T> a)
   { return gmm::sqr(a.real()) + gmm::sqr(a.imag()); }
   template <typename T> inline T pos(T a) { return (a < T(0)) ? T(0) : a; }
   template <typename T> inline T neg(T a) { return (a < T(0)) ? T(-a) : T(0); }
   template <typename T> inline T sgn(T a) { return (a < T(0)) ? T(-1) : T(1); }
+  template <typename T> inline T Heaviside(T a) { return (a < T(0)) ? T(0) : T(1); }
   inline double random() { return double(rand())/(RAND_MAX+0.5); }
   template <typename T> inline T random(T)
   { return T(rand()*2.0)/(T(RAND_MAX)+T(1)/T(2)) - T(1); }
   template <typename T> inline std::complex<T> random(std::complex<T>)
   { return std::complex<T>(gmm::random(T()), gmm::random(T())); }
   template <typename T> inline T irandom(T max)
-  { return T(gmm::random() * max); }
+  { return T(gmm::random() * double(max)); }
   template <typename T> inline T conj(T a) { return a; }
   template <typename T> inline std::complex<T> conj(std::complex<T> a)
   { return std::conj(a); }
@@ -373,14 +385,14 @@ namespace gmm {
   template <typename T> inline T real(std::complex<T> a) { return a.real(); }
   template <typename T> inline T imag(T ) { return T(0); }
   template <typename T> inline T imag(std::complex<T> a) { return a.imag(); }  
-  template <typename T> inline T sqrt(T a) { return ::sqrt(a); }
+  template <typename T> inline T sqrt(T a) { return T(::sqrt(a)); }
   template <typename T> inline std::complex<T> sqrt(std::complex<T> a) {
     T x = a.real(), y = a.imag();
     if (x == T(0)) {
-      T t = ::sqrt(gmm::abs(y) / T(2));
+      T t = T(::sqrt(gmm::abs(y) / T(2)));
       return std::complex<T>(t, y < T(0) ? -t : t);
     }
-    T t = ::sqrt(T(2) * (gmm::abs(a) + gmm::abs(x))), u = t / T(2);
+    T t = T(::sqrt(T(2) * (gmm::abs(a) + gmm::abs(x)))), u = t / T(2);
     return x > T(0) ? std::complex<T>(u, y / t)
       : std::complex<T>(gmm::abs(y) / t, y < T(0) ? -u : u);
   }
@@ -407,13 +419,6 @@ namespace gmm {
 # define magnitude_of_linalg(M) typename number_traits<typename \
                     linalg_traits<M>::value_type>::magnitude_type
   
-  template<typename T> inline std::complex<T> operator*(const std::complex<T>& a, int b) {
-    return a*T(b);
-  }
-  template<typename T> inline std::complex<T> operator*(int b, const std::complex<T>& a) {
-    return a*T(b);
-  }
-
   /* ******************************************************************** */
   /*  types promotion                                                     */
   /* ******************************************************************** */
@@ -481,6 +486,7 @@ namespace gmm {
 
   template <typename T> class wsvector;
   template <typename T> class rsvector;
+  template <typename T> class dsvector;
   template<typename T> struct sparse_vector_type 
   { typedef wsvector<T> vector_type; };
 
@@ -917,22 +923,21 @@ namespace gmm {
   template <typename IT, typename ORG, typename VECT> inline
   void set_to_end(IT &, ORG, const VECT *, linalg_const) { }
 
-
   template <typename IT, typename ORG, typename VECT> inline
   void set_to_begin(IT &, ORG, VECT *v, linalg_modifiable)
-  { GMM_ASSERT3(!is_sparse(*v), "internal_error"); v = 0; }
+  { GMM_ASSERT3(!is_sparse(*v), "internal_error"); (void)v; }
 
   template <typename IT, typename ORG, typename VECT> inline
   void set_to_begin(IT &, ORG, const VECT *v, linalg_modifiable)
-  { GMM_ASSERT3(!is_sparse(*v), "internal_error"); v = 0; }
+  { GMM_ASSERT3(!is_sparse(*v), "internal_error"); (void)v; }
  
   template <typename IT, typename ORG, typename VECT> inline
   void set_to_end(IT &, ORG, VECT *v, linalg_modifiable)
-  { GMM_ASSERT3(!is_sparse(*v), "internal_error"); v = 0; }
+  { GMM_ASSERT3(!is_sparse(*v), "internal_error"); (void)v; }
   
   template <typename IT, typename ORG, typename VECT> inline
   void set_to_end(IT &, ORG, const VECT *v, linalg_modifiable)
-  { GMM_ASSERT3(!is_sparse(*v), "internal_error"); v = 0; }
+  { GMM_ASSERT3(!is_sparse(*v), "internal_error"); (void)v; }
 
   /* ******************************************************************** */
   /*		General index for certain algorithms.         		  */
@@ -959,7 +964,7 @@ namespace gmm {
       if (numeric_limits<T>::is_specialized)
 	tol = numeric_limits<T>::epsilon();
       else {
-	int i=sizeof(T)/4; while(i-- > 0) tol*=T(1E-8); 
+	int i=int(sizeof(T)/4); while(i-- > 0) tol*=T(1E-8); 
 	GMM_WARNING1("The numeric type " << typeid(T).name()
 		    << " has no numeric_limits defined !!\n"
 		    << "Taking " << tol << " as default tolerance");
@@ -1049,7 +1054,7 @@ namespace gmm {
     typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
       ite = vect_const_end(l);
     for (; it != ite; ++it) 
-      o << " (r" << it.index() << "," << cast_char(*it) << ")";
+      o << " (r" << it.index() << ", " << cast_char(*it) << ")";
   }
 
   template <typename L> void write(std::ostream &o, const L &l,

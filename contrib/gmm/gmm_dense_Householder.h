@@ -1,32 +1,33 @@
-// -*- c++ -*- (enables emacs c++ mode)
-//===========================================================================
-//
-// Copyright (C) 2003-2008 Yves Renard
-//
-// This file is a part of GETFEM++
-//
-// Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
-// under  the  terms  of the  GNU  Lesser General Public License as published
-// by  the  Free Software Foundation;  either version 2.1 of the License,  or
-// (at your option) any later version.
-// This program  is  distributed  in  the  hope  that it will be useful,  but
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-// or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-// License for more details.
-// You  should  have received a copy of the GNU Lesser General Public License
-// along  with  this program;  if not, write to the Free Software Foundation,
-// Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
-//
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
-//
-//===========================================================================
+/* -*- c++ -*- (enables emacs c++ mode) */
+/*===========================================================================
+
+ Copyright (C) 2003-2020 Yves Renard, Caroline Lecalvez
+
+ This file is a part of GetFEM
+
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
+ under  the  terms  of the  GNU  Lesser General Public License as published
+ by  the  Free Software Foundation;  either version 3 of the License,  or
+ (at your option) any later version along with the GCC Runtime Library
+ Exception either version 3.1 or (at your option) any later version.
+ This program  is  distributed  in  the  hope  that it will be useful,  but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ License and GCC Runtime Library Exception for more details.
+ You  should  have received a copy of the GNU Lesser General Public License
+ along  with  this program;  if not, write to the Free Software Foundation,
+ Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+
+ As a special exception, you  may use  this file  as it is a part of a free
+ software  library  without  restriction.  Specifically,  if   other  files
+ instantiate  templates  or  use macros or inline functions from this file,
+ or  you compile this  file  and  link  it  with other files  to produce an
+ executable, this file  does  not  by itself cause the resulting executable
+ to be covered  by the GNU Lesser General Public License.  This   exception
+ does not  however  invalidate  any  other  reasons why the executable file
+ might be covered by the GNU Lesser General Public License.
+
+===========================================================================*/
 
 /**@file gmm_dense_Householder.h
    @author Caroline Lecalvez <Caroline.Lecalvez@gmm.insa-toulouse.fr>
@@ -49,17 +50,17 @@ namespace gmm {
 
   template <typename Matrix, typename VecX, typename VecY>
   inline void rank_one_update(Matrix &A, const VecX& x,
-			      const VecY& y, row_major) {
+                              const VecY& y, row_major) {
     typedef typename linalg_traits<Matrix>::value_type T;
     size_type N = mat_nrows(A);
     GMM_ASSERT2(N <= vect_size(x) && mat_ncols(A) <= vect_size(y),
-	       "dimensions mismatch");
+                "dimensions mismatch");
     typename linalg_traits<VecX>::const_iterator itx = vect_const_begin(x);
     for (size_type i = 0; i < N; ++i, ++itx) {
       typedef typename linalg_traits<Matrix>::sub_row_type row_type;
       row_type row = mat_row(A, i);
-      typename linalg_traits<row_type>::iterator
-	it = vect_begin(row), ite = vect_end(row);
+      typename linalg_traits<typename org_type<row_type>::t>::iterator
+        it = vect_begin(row), ite = vect_end(row);
       typename linalg_traits<VecY>::const_iterator ity = vect_const_begin(y);
       T tx = *itx;
       for (; it != ite; ++it, ++ity) *it += conj_product(*ity, tx);
@@ -68,30 +69,30 @@ namespace gmm {
 
   template <typename Matrix, typename VecX, typename VecY>
   inline void rank_one_update(Matrix &A, const VecX& x,
-			      const VecY& y, col_major) {
+                              const VecY& y, col_major) {
     typedef typename linalg_traits<Matrix>::value_type T;
     size_type M = mat_ncols(A);
     GMM_ASSERT2(mat_nrows(A) <= vect_size(x) && M <= vect_size(y),
-		"dimensions mismatch");
+                "dimensions mismatch");
     typename linalg_traits<VecY>::const_iterator ity = vect_const_begin(y);
     for (size_type i = 0; i < M; ++i, ++ity) {
       typedef typename linalg_traits<Matrix>::sub_col_type col_type;
       col_type col = mat_col(A, i);
-      typename linalg_traits<col_type>::iterator
-	it = vect_begin(col), ite = vect_end(col);
+      typename linalg_traits<typename org_type<col_type>::t>::iterator
+        it = vect_begin(col), ite = vect_end(col);
       typename linalg_traits<VecX>::const_iterator itx = vect_const_begin(x);
       T ty = *ity;
       for (; it != ite; ++it, ++itx) *it += conj_product(ty, *itx);
     }
   }
-  
+
   ///@endcond
   template <typename Matrix, typename VecX, typename VecY>
   inline void rank_one_update(const Matrix &AA, const VecX& x,
-			      const VecY& y) {
+                              const VecY& y) {
     Matrix& A = const_cast<Matrix&>(AA);
     rank_one_update(A, x, y, typename principal_orientation_type<typename
-		    linalg_traits<Matrix>::sub_orientation>::potype());
+                    linalg_traits<Matrix>::sub_orientation>::potype());
   }
   ///@cond DOXY_SHOW_ALL_FUNCTIONS
 
@@ -101,55 +102,55 @@ namespace gmm {
 
   template <typename Matrix, typename VecX, typename VecY>
   inline void rank_two_update(Matrix &A, const VecX& x,
-			      const VecY& y, row_major) {
+                              const VecY& y, row_major) {
     typedef typename linalg_traits<Matrix>::value_type value_type;
     size_type N = mat_nrows(A);
     GMM_ASSERT2(N <= vect_size(x) && mat_ncols(A) <= vect_size(y),
-		"dimensions mismatch");
+                "dimensions mismatch");
     typename linalg_traits<VecX>::const_iterator itx1 = vect_const_begin(x);
     typename linalg_traits<VecY>::const_iterator ity2 = vect_const_begin(y);
     for (size_type i = 0; i < N; ++i, ++itx1, ++ity2) {
       typedef typename linalg_traits<Matrix>::sub_row_type row_type;
       row_type row = mat_row(A, i);
-      typename linalg_traits<row_type>::iterator
-	it = vect_begin(row), ite = vect_end(row);
+      typename linalg_traits<typename org_type<row_type>::t>::iterator
+        it = vect_begin(row), ite = vect_end(row);
       typename linalg_traits<VecX>::const_iterator itx2 = vect_const_begin(x);
       typename linalg_traits<VecY>::const_iterator ity1 = vect_const_begin(y);
       value_type tx = *itx1, ty = *ity2;
       for (; it != ite; ++it, ++ity1, ++itx2)
-	*it += conj_product(*ity1, tx) + conj_product(*itx2, ty);
+        *it += conj_product(*ity1, tx) + conj_product(*itx2, ty);
     }
   }
 
   template <typename Matrix, typename VecX, typename VecY>
   inline void rank_two_update(Matrix &A, const VecX& x,
-			      const VecY& y, col_major) {
+                              const VecY& y, col_major) {
     typedef typename linalg_traits<Matrix>::value_type value_type;
     size_type M = mat_ncols(A);
     GMM_ASSERT2(mat_nrows(A) <= vect_size(x) && M <= vect_size(y),
-		"dimensions mismatch");
+                "dimensions mismatch");
     typename linalg_traits<VecX>::const_iterator itx2 = vect_const_begin(x);
     typename linalg_traits<VecY>::const_iterator ity1 = vect_const_begin(y);
     for (size_type i = 0; i < M; ++i, ++ity1, ++itx2) {
       typedef typename linalg_traits<Matrix>::sub_col_type col_type;
       col_type col = mat_col(A, i);
-      typename linalg_traits<col_type>::iterator
-	it = vect_begin(col), ite = vect_end(col);
+      typename linalg_traits<typename org_type<col_type>::t>::iterator
+        it = vect_begin(col), ite = vect_end(col);
       typename linalg_traits<VecX>::const_iterator itx1 = vect_const_begin(x);
       typename linalg_traits<VecY>::const_iterator ity2 = vect_const_begin(y);
       value_type ty = *ity1, tx = *itx2;
       for (; it != ite; ++it, ++itx1, ++ity2)
-	*it += conj_product(ty, *itx1) + conj_product(tx, *ity2); 
+        *it += conj_product(ty, *itx1) + conj_product(tx, *ity2);
     }
   }
-  
+
   ///@endcond
   template <typename Matrix, typename VecX, typename VecY>
   inline void rank_two_update(const Matrix &AA, const VecX& x,
-			      const VecY& y) {
+                              const VecY& y) {
     Matrix& A = const_cast<Matrix&>(AA);
     rank_two_update(A, x, y, typename principal_orientation_type<typename
-		    linalg_traits<Matrix>::sub_orientation>::potype());
+                    linalg_traits<Matrix>::sub_orientation>::potype());
   }
   ///@cond DOXY_SHOW_ALL_FUNCTIONS
 
@@ -161,11 +162,11 @@ namespace gmm {
     VECT &V = const_cast<VECT &>(VV);
     typedef typename linalg_traits<VECT>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
-    
+
     R mu = vect_norm2(V), abs_v0 = gmm::abs(V[0]);
     if (mu != R(0))
       gmm::scale(V, (abs_v0 == R(0)) ? T(R(1) / mu)
-		 : (safe_divide(T(abs_v0), V[0]) / (abs_v0 + mu)));
+                 : (safe_divide(T(abs_v0), V[0]) / (abs_v0 + mu)));
     if (gmm::real(V[vect_size(V)-1]) * R(0) != R(0)) gmm::clear(V);
     V[0] = T(1);
   }
@@ -179,47 +180,47 @@ namespace gmm {
     R mu = vect_norm2(V), abs_v0 = gmm::abs(V[m-1]);
     if (mu != R(0))
       gmm::scale(V, (abs_v0 == R(0)) ? T(R(1) / mu)
-		 : ((abs_v0 / V[m-1]) / (abs_v0 + mu)));
+                 : ((abs_v0 / V[m-1]) / (abs_v0 + mu)));
     if (gmm::real(V[0]) * R(0) != R(0)) gmm::clear(V);
     V[m-1] = T(1);
   }
-  
+
   /* ********************************************************************* */
   /*    Householder updates  (complex and real version)                    */
   /* ********************************************************************* */
 
   // multiply A to the left by the reflector stored in V. W is a temporary.
   template <typename MAT, typename VECT1, typename VECT2> inline
-    void row_house_update(const MAT &AA, const VECT1 &V, const VECT2 &WW) {
+  void row_house_update(const MAT &AA, const VECT1 &V, const VECT2 &WW) {
     VECT2 &W = const_cast<VECT2 &>(WW); MAT &A = const_cast<MAT &>(AA);
     typedef typename linalg_traits<MAT>::value_type value_type;
     typedef typename number_traits<value_type>::magnitude_type magnitude_type;
 
     gmm::mult(conjugated(A),
-	      scaled(V, value_type(magnitude_type(-2)/vect_norm2_sqr(V))), W);
+              scaled(V, value_type(magnitude_type(-2)/vect_norm2_sqr(V))), W);
     rank_one_update(A, V, W);
   }
 
   // multiply A to the right by the reflector stored in V. W is a temporary.
   template <typename MAT, typename VECT1, typename VECT2> inline
-    void col_house_update(const MAT &AA, const VECT1 &V, const VECT2 &WW) {
+  void col_house_update(const MAT &AA, const VECT1 &V, const VECT2 &WW) {
     VECT2 &W = const_cast<VECT2 &>(WW); MAT &A = const_cast<MAT &>(AA);
     typedef typename linalg_traits<MAT>::value_type value_type;
     typedef typename number_traits<value_type>::magnitude_type magnitude_type;
-    
+
     gmm::mult(A,
-	      scaled(V, value_type(magnitude_type(-2)/vect_norm2_sqr(V))), W);
+              scaled(V, value_type(magnitude_type(-2)/vect_norm2_sqr(V))), W);
     rank_one_update(A, W, V);
   }
 
   ///@endcond
 
   /* ********************************************************************* */
-  /*    Hessemberg reduction with Householder.                             */
+  /*    Hessenberg reduction with Householder.                             */
   /* ********************************************************************* */
 
   template <typename MAT1, typename MAT2>
-    void Hessenberg_reduction(const MAT1& AA, const MAT2 &QQ, bool compute_Q){
+  void Hessenberg_reduction(const MAT1& AA, const MAT2 &QQ, bool compute_Q){
     MAT1& A = const_cast<MAT1&>(AA); MAT2& Q = const_cast<MAT2&>(QQ);
     typedef typename linalg_traits<MAT1>::value_type value_type;
     if (compute_Q) gmm::copy(identity_matrix(), Q);
@@ -242,9 +243,9 @@ namespace gmm {
   /*    Householder tridiagonalization for symmetric matrices              */
   /* ********************************************************************* */
 
-  template <typename MAT1, typename MAT2> 
+  template <typename MAT1, typename MAT2>
   void Householder_tridiagonalization(const MAT1 &AA, const MAT2 &QQ,
-				     bool compute_q) {
+                                      bool compute_q) {
     MAT1 &A = const_cast<MAT1 &>(AA); MAT2 &Q = const_cast<MAT2 &>(QQ);
     typedef typename linalg_traits<MAT1>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
@@ -255,9 +256,9 @@ namespace gmm {
 
     for (size_type k = 1; k+1 < n; ++k) { // not optimized ...
       sub_interval SUBI(k, n-k);
-      v.resize(n-k); p.resize(n-k); w.resize(n-k); 
-      for (size_type l = k; l < n; ++l) 
-	{ v[l-k] = w[l-k] = A(l, k-1); A(l, k-1) = A(k-1, l) = T(0); }
+      v.resize(n-k); p.resize(n-k); w.resize(n-k);
+      for (size_type l = k; l < n; ++l)
+        { v[l-k] = w[l-k] = A(l, k-1); A(l, k-1) = A(k-1, l) = T(0); }
       house_vector(v);
       R norm = vect_norm2_sqr(v);
       A(k-1, k) = gmm::conj(A(k, k-1) = w[0] - T(2)*v[0]*vect_hp(w, v)/norm);
@@ -309,7 +310,7 @@ namespace gmm {
     for (size_type j = 0; j < mat_nrows(A); ++j)
       Apply_Givens_rotation_right(A(j,i), A(j,k), c, s);
   }
-  
+
 }
 
 #endif

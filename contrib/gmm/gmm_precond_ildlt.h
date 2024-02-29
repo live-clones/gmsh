@@ -1,40 +1,40 @@
-// -*- c++ -*- (enables emacs c++ mode)
-//===========================================================================
-//
-// Copyright (C) 2003-2008 Yves Renard
-//
-// This file is a part of GETFEM++
-//
-// Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
-// under  the  terms  of the  GNU  Lesser General Public License as published
-// by  the  Free Software Foundation;  either version 2.1 of the License,  or
-// (at your option) any later version.
-// This program  is  distributed  in  the  hope  that it will be useful,  but
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-// or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-// License for more details.
-// You  should  have received a copy of the GNU Lesser General Public License
-// along  with  this program;  if not, write to the Free Software Foundation,
-// Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
-//
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
-//
-//===========================================================================
+/* -*- c++ -*- (enables emacs c++ mode) */
+/*===========================================================================
+
+ Copyright (C) 2003-2020 Yves Renard
+
+ This file is a part of GetFEM
+
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
+ under  the  terms  of the  GNU  Lesser General Public License as published
+ by  the  Free Software Foundation;  either version 3 of the License,  or
+ (at your option) any later version along with the GCC Runtime Library
+ Exception either version 3.1 or (at your option) any later version.
+ This program  is  distributed  in  the  hope  that it will be useful,  but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ License and GCC Runtime Library Exception for more details.
+ You  should  have received a copy of the GNU Lesser General Public License
+ along  with  this program;  if not, write to the Free Software Foundation,
+ Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+
+ As a special exception, you  may use  this file  as it is a part of a free
+ software  library  without  restriction.  Specifically,  if   other  files
+ instantiate  templates  or  use macros or inline functions from this file,
+ or  you compile this  file  and  link  it  with other files  to produce an
+ executable, this file  does  not  by itself cause the resulting executable
+ to be covered  by the GNU Lesser General Public License.  This   exception
+ does not  however  invalidate  any  other  reasons why the executable file
+ might be covered by the GNU Lesser General Public License.
+
+===========================================================================*/
 
 // This file is a modified version of cholesky.h from ITL.
 // See http://osl.iu.edu/research/itl/
 // Following the corresponding Copyright notice.
 //===========================================================================
 //
-// Copyright (c) 1997-2001, The Trustees of Indiana University.
-// All rights reserved.
+// Copyright (c) 1998-2020, University of Notre Dame. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 //
@@ -43,7 +43,7 @@
 //    * Redistributions in binary form must reproduce the above copyright
 //      notice, this list of conditions and the following disclaimer in the
 //      documentation and/or other materials provided with the distribution.
-//    * Neither the name of the University of California, Berkeley nor the
+//    * Neither the name of the University of Notre Dame nor the
 //      names of its contributors may be used to endorse or promote products
 //      derived from this software without specific prior written permission.
 //
@@ -144,7 +144,7 @@ namespace gmm {
       for (Tri_loc = 0, i = 0; i < n; ++i) {
 	typedef typename linalg_traits<M>::const_sub_row_type row_type;
 	row_type row = mat_const_row(A, i);
-        typename linalg_traits<row_type>::const_iterator
+        typename linalg_traits<typename org_type<row_type>::t>::const_iterator
 	  it = vect_const_begin(row), ite = vect_const_end(row);
 
 	if (count) { Tri_val[Tri_loc] = T(0); Tri_ind[Tri_loc] = i; }
@@ -235,51 +235,6 @@ namespace gmm {
   { copy(v1, v2); gmm::lower_tri_solve(gmm::conjugated(P.U), v2, true); }
 
 
-
-  // for compatibility with old versions
-
-  template <typename Matrix>
-  struct cholesky_precond : public ildlt_precond<Matrix> {
-    cholesky_precond(const Matrix& A) : ildlt_precond<Matrix>(A) {}
-    cholesky_precond(void) {}
-  } IS_DEPRECATED;
-
-  template <typename Matrix, typename V1, typename V2> inline
-  void mult(const cholesky_precond<Matrix>& P, const V1 &v1, V2 &v2) {
-    gmm::copy(v1, v2);
-    gmm::lower_tri_solve(gmm::conjugated(P.U), v2, true);
-    for (size_type i = 0; i < mat_nrows(P.U); ++i) v2[i] /= P.D(i);
-    gmm::upper_tri_solve(P.U, v2, true);
-  }
-
-  template <typename Matrix, typename V1, typename V2> inline
-  void transposed_mult(const cholesky_precond<Matrix>& P,const V1 &v1,V2 &v2)
-  { mult(P, v1, v2); }
-
-  template <typename Matrix, typename V1, typename V2> inline
-  void left_mult(const cholesky_precond<Matrix>& P, const V1 &v1, V2 &v2) {
-    copy(v1, v2);
-    gmm::lower_tri_solve(gmm::conjugated(P.U), v2, true);
-    for (size_type i = 0; i < mat_nrows(P.U); ++i) v2[i] /= P.D(i);
-  }
-
-  template <typename Matrix, typename V1, typename V2> inline
-  void right_mult(const cholesky_precond<Matrix>& P, const V1 &v1, V2 &v2)
-  { copy(v1, v2); gmm::upper_tri_solve(P.U, v2, true);  }
-
-  template <typename Matrix, typename V1, typename V2> inline
-  void transposed_left_mult(const cholesky_precond<Matrix>& P, const V1 &v1,
-			    V2 &v2) {
-    copy(v1, v2);
-    gmm::upper_tri_solve(P.U, v2, true);
-    for (size_type i = 0; i < mat_nrows(P.U); ++i) v2[i] /= P.D(i);
-  }
-
-  template <typename Matrix, typename V1, typename V2> inline
-  void transposed_right_mult(const cholesky_precond<Matrix>& P, const V1 &v1,
-			     V2 &v2)
-  { copy(v1, v2); gmm::lower_tri_solve(gmm::conjugated(P.U), v2, true); }
-  
 }
 
 #endif 

@@ -1,40 +1,40 @@
-// -*- c++ -*- (enables emacs c++ mode)
-//===========================================================================
-//
-// Copyright (C) 2002-2008 Yves Renard
-//
-// This file is a part of GETFEM++
-//
-// Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
-// under  the  terms  of the  GNU  Lesser General Public License as published
-// by  the  Free Software Foundation;  either version 2.1 of the License,  or
-// (at your option) any later version.
-// This program  is  distributed  in  the  hope  that it will be useful,  but
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-// or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-// License for more details.
-// You  should  have received a copy of the GNU Lesser General Public License
-// along  with  this program;  if not, write to the Free Software Foundation,
-// Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
-//
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
-//
-//===========================================================================
+/* -*- c++ -*- (enables emacs c++ mode) */
+/*===========================================================================
+
+ Copyright (C) 2002-2020 Yves Renard
+
+ This file is a part of GetFEM
+
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
+ under  the  terms  of the  GNU  Lesser General Public License as published
+ by  the  Free Software Foundation;  either version 3 of the License,  or
+ (at your option) any later version along with the GCC Runtime Library
+ Exception either version 3.1 or (at your option) any later version.
+ This program  is  distributed  in  the  hope  that it will be useful,  but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ License and GCC Runtime Library Exception for more details.
+ You  should  have received a copy of the GNU Lesser General Public License
+ along  with  this program;  if not, write to the Free Software Foundation,
+ Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+
+ As a special exception, you  may use  this file  as it is a part of a free
+ software  library  without  restriction.  Specifically,  if   other  files
+ instantiate  templates  or  use macros or inline functions from this file,
+ or  you compile this  file  and  link  it  with other files  to produce an
+ executable, this file  does  not  by itself cause the resulting executable
+ to be covered  by the GNU Lesser General Public License.  This   exception
+ does not  however  invalidate  any  other  reasons why the executable file
+ might be covered by the GNU Lesser General Public License.
+
+===========================================================================*/
 
 // This file is a modified version of cg.h from ITL.
 // See http://osl.iu.edu/research/itl/
 // Following the corresponding Copyright notice.
 //===========================================================================
 //
-// Copyright (c) 1997-2001, The Trustees of Indiana University.
-// All rights reserved.
+// Copyright (c) 1998-2020, University of Notre Dame. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 //
@@ -43,7 +43,7 @@
 //    * Redistributions in binary form must reproduce the above copyright
 //      notice, this list of conditions and the following disclaimer in the
 //      documentation and/or other materials provided with the distribution.
-//    * Neither the name of the University of California, Berkeley nor the
+//    * Neither the name of the University of Notre Dame nor the
 //      names of its contributors may be used to endorse or promote products
 //      derived from this software without specific prior written permission.
 //
@@ -102,10 +102,6 @@ namespace gmm {
       rho = vect_hp(PS, z, r);
       copy(z, p);
 
-// #ifdef GMM_USES_MPI
-//       double t_ref, t_prec = MPI_Wtime(), t_tot = 0;
-//       static double tmult_tot = 0.0;
-// #endif
       while (!iter.finished_vect(r)) {
 
 	if (!iter.first()) { 
@@ -113,24 +109,13 @@ namespace gmm {
 	  rho = vect_hp(PS, z, r);
 	  add(z, scaled(p, rho / rho_1), p);
 	}
-// #ifdef GMM_USES_MPI
-// t_ref = MPI_Wtime();
-//     cout << "mult CG " << endl;
-// #endif	
 	mult(A, p, q);
-// #ifdef GMM_USES_MPI
-//     tmult_tot += MPI_Wtime()-t_ref;
-//     cout << "tmult_tot CG = " << tmult_tot << endl;
-// #endif
+
 	a = rho / vect_hp(PS, q, p);	
 	add(scaled(p, a), x);
 	add(scaled(q, -a), r);
 	rho_1 = rho;
 
-// #ifdef GMM_USES_MPI
-// 	t_tot = MPI_Wtime() - t_prec;
-// 	cout << "temps CG : " << t_tot << endl; 
-// #endif
 	++iter;
       }
     }
@@ -155,34 +140,17 @@ namespace gmm {
       rho = vect_hp(PS, r, r);
       copy(r, p);
 
-// #ifdef GMM_USES_MPI
-//       double t_ref, t_prec = MPI_Wtime(), t_tot = 0;
-//       static double tmult_tot = 0.0;
-// #endif
       while (!iter.finished_vect(r)) {
 
 	if (!iter.first()) { 
 	  rho = vect_hp(PS, r, r);
 	  add(r, scaled(p, rho / rho_1), p);
-	}
-// #ifdef GMM_USES_MPI
-// t_ref = MPI_Wtime();
-//     cout << "mult CG " << endl;
-// #endif	
+	}	
 	mult(A, p, q);
-// #ifdef GMM_USES_MPI
-//     tmult_tot += MPI_Wtime()-t_ref;
-//     cout << "tmult_tot CG = " << tmult_tot << endl;
-// #endif
 	a = rho / vect_hp(PS, q, p);	
 	add(scaled(p, a), x);
 	add(scaled(q, -a), r);
 	rho_1 = rho;
-
-// #ifdef GMM_USES_MPI
-// 	t_tot = MPI_Wtime() - t_prec;
-// 	cout << "temps CG : " << t_tot << endl; 
-// #endif
 	++iter;
       }
     }
@@ -205,7 +173,7 @@ namespace gmm {
   void cg(const Matrix& A, const Vector1& x, const Vector2& b,
 	 const Precond &P, iteration &iter)
   { cg(A, x , b , identity_matrix(), P , iter); }
-  
+
 }
 
 
