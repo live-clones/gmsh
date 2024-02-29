@@ -604,7 +604,7 @@ int main(int argc, char* argv[]) {
   hop.createGeodesics();
 
   if (swap)
-    hop.swapEdges(1,0);
+    hop.swapEdges(1,0,true);
 
 
   // std::vector<size_t> newVertexTags;
