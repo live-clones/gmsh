@@ -341,8 +341,11 @@ if (geoFile and os.path.exists(pwd+"entities.csv")):
         
 
       if (eDim,eTag) not in entities:
-        entities[(eDim,eTag)] = []      
-      entities[(eDim,eTag)].append(vTags)
+        entities[(eDim,eTag)] = []
+      if (eDim == 2):
+        entities[(eDim,eTag)].extend(vTags)
+      else:
+        entities[(eDim,eTag)].append(vTags)
 
       for vTag in vTags:
         if vTag not in tag2Entity:
@@ -443,16 +446,26 @@ for edge,points in edges.items():
       if (entity[0] == 0):
         continue
 
-      for e in es:
-        if ((edge[0] in e) and (edge[1] in e)):
-          dimTag = entity
-          break
-
+      if (entity[0] == 1):
+        for e in es:
+          if ((edge[0] in e) and (edge[1] in e)):
+            dimTag = entity
+            break
+        continue
       if (dimTag != (0,0)):
+        break
+
+
+      if ((edge[0] in es) and (edge[1] in es)):
+        dimTag = entity
         break
   else:
     dimTag = (2,mySurface)
-    
+
+  if (dimTag == (0,0)):
+    print("Error: the two vertices "+edge+" are not defined on the same physical group")
+    exit()
+
   coordsTmp = edgeNodeCoords[-3*len(edgeNodes[edge]):]
   gmsh.model.mesh.addNodes(dimTag[0], dimTag[1], edgeNodes[edge], coordsTmp)
 
@@ -595,19 +608,19 @@ for i,face in enumerate(triangleVertices):
   dimTag = (0,0)
   if (entities):
     for entity,ts in entities.items():
-      if (entity[0] == 0 or entity == 1):
+      if (entity[0] == 0 or entity[0] == 1):
         continue
 
-      for t in ts:
-        if ((face[0] in t) and (face[1] in t) and (face[2] in t)):
-          dimTag = entity
-          break
-
-      if (dimTag != (0,0)):
+      if ((face[0] in ts) and (face[1] in ts) and (face[2] in ts)):
+        dimTag = entity
         break
   else:
     dimTag = (2,mySurface)
     
+  if (dimTag == (0,0)):
+    print("Error: the two vertices "+edge+" are not defined on the same physical group")
+    exit()
+
   coordsTmp = innerCoords[-3*len(innerNodes[face]):]
   gmsh.model.mesh.addNodes(dimTag[0], dimTag[1], innerNodes[face], coordsTmp)
 

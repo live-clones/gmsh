@@ -304,6 +304,7 @@ int main(int argc, char* argv[]) {
   double clscale = 50; //64;
   double clrefine = 1.;
   int refineOption = 0;
+  bool swap = false;
   
   for (int i = 1; i < argc; i++) {
     if (std::string(argv[i]) == "-f" && i + 1 < argc) {
@@ -335,6 +336,9 @@ int main(int argc, char* argv[]) {
       continue;
     } else if (std::string(argv[i]) == "-refineOption" && i + 1 < argc) {
       refineOption = std::stoi(argv[++i]);
+      continue;
+    } else if (std::string(argv[i]) == "-swap") {
+      swap = !swap;
       continue;
     }
   }
@@ -599,30 +603,36 @@ int main(int argc, char* argv[]) {
 
   hop.createGeodesics();
 
-  // hop.swapEdges(1,0);
+  if (swap)
+    hop.swapEdges(1,0);
 
-  // for (auto geodesic: hop.geodesics) {
-  //   auto path = geodesic.second;
-  //   std::vector<size_t> pathTags(path.size());
-  //   for (size_t i = 0; i < path.size(); ++i)
-  //     pathTags[i] = gmsh::model::geo::addPoint(path[i].x(), path[i].y(), path[i].z());
-  //   std::vector<size_t> pathLines(path.size()-1);
-  //   for (size_t i = 0; i < path.size()-1; ++i)
-  //     pathLines[i] = gmsh::model::geo::addLine(pathTags[i], pathTags[i+1]);
+
+  // std::vector<size_t> newVertexTags;
+  // for (size_t t: macroElementNodeTags) {
+  //   if (std::find(newVertexTags.begin(), newVertexTags.end(), t) == newVertexTags.end())
+  //     newVertexTags.push_back(t);
   // }
-  // gmsh::model::geo::synchronize();
+  // for (size_t i = 0; i < newVertexTags.size(); ++i)
+  //   std::cout << i << " " << newVertexTags[i] << std::endl;
 
-
+  
   // Create geometry points and lines
-  for (auto geodesic: hop.geodesics) {
-    auto path = geodesic.second;
-    std::vector<size_t> pathTags(path.size());
-    for (size_t i = 0; i < path.size(); ++i) {
-      pathTags[i] = gmsh::model::geo::addPoint(path[i].x(), path[i].y(), path[i].z());
+  for (size_t i = 0; i < hop.triangles.size()/3; i++) {
+    for (int j = 0; j < 3; ++j) {
+      size_t i0 = hop.triangles[3*i+j];
+      size_t i1 = hop.triangles[3*i+(j+1)%3];
+      if (i0 > i1)
+	continue;
+
+      auto path = hop.geodesics[{i0,i1}];
+      std::vector<size_t> pathTags(path.size());
+      for (size_t i = 0; i < path.size(); ++i) {
+	pathTags[i] = gmsh::model::geo::addPoint(path[i].x(), path[i].y(), path[i].z());
+      }
+      std::vector<size_t> pathLines(path.size()-1);
+      for (size_t i = 0; i < path.size()-1; ++i)
+	pathLines[i] = gmsh::model::geo::addLine(pathTags[i], pathTags[i+1]);
     }
-    std::vector<size_t> pathLines(path.size()-1);
-    for (size_t i = 0; i < path.size()-1; ++i)
-      pathLines[i] = gmsh::model::geo::addLine(pathTags[i], pathTags[i+1]);
   }
   gmsh::model::geo::synchronize();
 
