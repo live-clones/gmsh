@@ -196,7 +196,7 @@ def BarycentricCoord(p0, p1, p2, p):
 gmsh.initialize()
 mySurface = 1;
 if (geoFile):
-  gmsh.open(pwd+geoFile+".geo")
+  gmsh.open(geoFile)
 else:
   mySurface = gmsh.model.addDiscreteEntity(2);
   gmsh.model.geo.synchronize()
@@ -762,7 +762,7 @@ fname = ""
 if debug:
   fname += "d"
 if geoFile:
-  fname += os.path.basename(geoFile)
+  fname += os.path.splitext(os.path.basename(geoFile))[0]
 if polyfit:
   fname += "polyfit"
 if optimize:

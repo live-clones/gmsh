@@ -174,7 +174,7 @@ void triangleSwap(std::vector<size_t> & triangleNodeTags,
 int main(int argc, char* argv[]) {
   gmsh::initialize();
 
-  std::string fn = "0"; // X, C, S, 0, 8, c3, uk
+  std::string filename = "../0.geo"; // X, C, S, 0, 8, c3, uk
   double coeff = .2;
   int div = 10;
   int opt = 0;
@@ -200,7 +200,7 @@ int main(int argc, char* argv[]) {
 
   for (int i = 1; i < argc; i++) {
     if (std::string(argv[i]) == "-f" && i + 1 < argc) {
-      fn = argv[++i];
+      filename = argv[++i];
       continue;
     } else if (std::string(argv[i]) == "-c" && i + 1 < argc) {
       coeff = std::stod(argv[++i]);
@@ -259,8 +259,6 @@ int main(int argc, char* argv[]) {
   //
   // L O A D S
   //
-  std::string filename = "../"+fn+".geo";
-
   std::vector<std::size_t> macroElementNodeTags;
   std::vector<size_t> vertexTags;
   int physicalSurface, physicalBoundary, physicalPoints;

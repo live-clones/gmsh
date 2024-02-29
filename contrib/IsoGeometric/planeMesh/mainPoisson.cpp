@@ -29,7 +29,7 @@ int main(int argc, char **argv)
   Domain gammaSmall("inner");
   Domain gammaBig("outer");
 
-  Field< double, Form::Form0 > v("v", omega, FunctionSpaceTypeForm0::Lagrange);
+  Field< double, Form::Form0 > v("v", omega, FunctionSpaceTypeForm0::Lagrange, order);
 
   v.addConstraint(gammaBig, 0.);
 
