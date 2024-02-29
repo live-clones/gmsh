@@ -1,32 +1,33 @@
-// -*- c++ -*- (enables emacs c++ mode)
-//===========================================================================
-//
-// Copyright (C) 2002-2008 Yves Renard
-//
-// This file is a part of GETFEM++
-//
-// Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
-// under  the  terms  of the  GNU  Lesser General Public License as published
-// by  the  Free Software Foundation;  either version 2.1 of the License,  or
-// (at your option) any later version.
-// This program  is  distributed  in  the  hope  that it will be useful,  but
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-// or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-// License for more details.
-// You  should  have received a copy of the GNU Lesser General Public License
-// along  with  this program;  if not, write to the Free Software Foundation,
-// Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
-//
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
-//
-//===========================================================================
+/* -*- c++ -*- (enables emacs c++ mode) */
+/*===========================================================================
+
+ Copyright (C) 2002-2020 Yves Renard
+
+ This file is a part of GetFEM
+
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
+ under  the  terms  of the  GNU  Lesser General Public License as published
+ by  the  Free Software Foundation;  either version 3 of the License,  or
+ (at your option) any later version along with the GCC Runtime Library
+ Exception either version 3.1 or (at your option) any later version.
+ This program  is  distributed  in  the  hope  that it will be useful,  but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ License and GCC Runtime Library Exception for more details.
+ You  should  have received a copy of the GNU Lesser General Public License
+ along  with  this program;  if not, write to the Free Software Foundation,
+ Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+
+ As a special exception, you  may use  this file  as it is a part of a free
+ software  library  without  restriction.  Specifically,  if   other  files
+ instantiate  templates  or  use macros or inline functions from this file,
+ or  you compile this  file  and  link  it  with other files  to produce an
+ executable, this file  does  not  by itself cause the resulting executable
+ to be covered  by the GNU Lesser General Public License.  This   exception
+ does not  however  invalidate  any  other  reasons why the executable file
+ might be covered by the GNU Lesser General Public License.
+
+===========================================================================*/
 
 
 /**@file gmm_interface.h
@@ -193,6 +194,12 @@ namespace gmm {
   std::ostream &operator << (std::ostream &o, const simple_vector_ref<PT>& v)
   { gmm::write(o,v); return o; }
 
+  template <typename T, typename alloc>
+  simple_vector_ref<const std::vector<T,alloc> *>
+    vref(const std::vector<T, alloc> &vv)
+  { return simple_vector_ref<const std::vector<T,alloc> *>(vv); }
+  
+
   /* ********************************************************************* */
   /*		                                         		   */
   /*		Traits for S.T.L. object                     		   */
@@ -229,13 +236,9 @@ namespace gmm {
     { return it[i]; }
     static void resize(this_type &v, size_type n) { v.resize(n); }
   };
-}
-namespace std {
-  template <typename T> ostream &operator <<
-  (std::ostream &o, const vector<T>& m) { gmm::write(o,m); return o; }
-}
-namespace gmm {
 
+  
+  
   template <typename T>
   inline size_type nnz(const std::vector<T>& l) { return l.size(); }
 
@@ -702,7 +705,7 @@ namespace gmm {
     size_type ncols(void) const { return nc; }
    
     value_type operator()(size_type i, size_type j) const
-      { return mat_col(*this, i)[j]; }
+      { return mat_row(*this, i)[j]; }
   };
   
   template <typename PT1, typename PT2, typename PT3, int shift>
@@ -831,8 +834,8 @@ namespace gmm {
     }
     
     void fill(T a, T b = T(0)) { 
-      std::fill(begin_, end()+nbc*nbl, b);
-      iterator p = begin_, e = end()+nbc*nbl;
+      std::fill(begin_, begin_+nbc*nbl, b);
+      iterator p = begin_, e = begin_+nbc*nbl;
       while (p < e) { *p = a; p += nbl+1; }
     }
     inline size_type nrows(void) const { return nbl; }
@@ -957,8 +960,8 @@ namespace gmm {
     }
     
     void fill(T a, T b = T(0)) { 
-      std::fill(begin_, end()+nbc*nbl, b);
-      iterator p = begin_, e = end()+nbc*nbl;
+      std::fill(begin_, begin_+nbc*nbl, b);
+      iterator p = begin_, e = begin_+nbc*nbl;
       while (p < e) { *p = a; p += nbc+1; }
     }
     inline size_type nrows(void) const { return nbl; }
