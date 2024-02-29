@@ -124,7 +124,7 @@ inline void GMM_NOPERATION_(int) { }
 #include <array>
 #include <locale.h>
 
-#include <gmm_arch_config.h>
+//#include <gmm/gmm_arch_config.h>
 
 namespace std {
 #if defined(__GNUC__) && (__cplusplus <= 201103L)
