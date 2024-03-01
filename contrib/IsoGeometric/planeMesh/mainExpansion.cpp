@@ -622,7 +622,7 @@ int main(int argc, char* argv[]) {
       size_t i0 = hop.triangles[3*i+j];
       size_t i1 = hop.triangles[3*i+(j+1)%3];
       if (i0 > i1)
-	continue;
+	std::swap(i0,i1);
 
       auto path = hop.geodesics[{i0,i1}];
       std::vector<size_t> pathTags(path.size());
