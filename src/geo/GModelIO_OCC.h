@@ -414,8 +414,9 @@ public:
   bool getMass(int dim, int tag, double &mass);
   bool getCenterOfMass(int dim, int tag, double &x, double &y, double &z);
   bool getMatrixOfInertia(int dim, int tag, std::vector<double> &mat);
-  double getDistance(int dim1, int tag1,
+  bool getDistance(int dim1, int tag1,
                      int dim2, int tag2,
+                     double &distance,
                      double &x1, double &y1, double &z1,
                      double &x2, double &y2, double &z2);
   GVertex *getVertexForOCCShape(GModel *model, const TopoDS_Vertex &toFind);
@@ -844,8 +845,9 @@ public:
   {
     return false;
   }
-  double getDistance(int dim1, int tag1,
+  bool getDistance(int dim1, int tag1,
                      int dim2, int tag2,
+                     double &distance,
                      double &x1, double &y1, double &z1,
                      double &x2, double &y2, double &z2)
   {

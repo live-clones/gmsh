@@ -318,6 +318,8 @@ module gmsh
         gmshModelOccFillet
     procedure, nopass :: chamfer => &
         gmshModelOccChamfer
+    procedure, nopass :: getDistance => &
+        gmshModelOccGetDistance
     procedure, nopass :: fuse => &
         gmshModelOccFuse
     procedure, nopass :: intersect => &
@@ -11594,6 +11596,77 @@ module gmsh
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)
   end subroutine gmshModelOccChamfer
+
+  !> Find the minimal distance between shape with `dim1' and `tag1' and shape
+  !! with `dim2' and `tag2' and the according coordinates. Return the distance
+  !! in `distance' and the coordinate of the points as `x1', `y1', `z1' and
+  !! `x2', `y2', `z2'.
+  subroutine gmshModelOccGetDistance(dim1, &
+                                     tag1, &
+                                     dim2, &
+                                     tag2, &
+                                     distance, &
+                                     x1, &
+                                     y1, &
+                                     z1, &
+                                     x2, &
+                                     y2, &
+                                     z2, &
+                                     ierr)
+    interface
+    subroutine C_API(dim1, &
+                     tag1, &
+                     dim2, &
+                     tag2, &
+                     distance, &
+                     x1, &
+                     y1, &
+                     z1, &
+                     x2, &
+                     y2, &
+                     z2, &
+                     ierr_) &
+      bind(C, name="gmshModelOccGetDistance")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: dim1
+      integer(c_int), value, intent(in) :: tag1
+      integer(c_int), value, intent(in) :: dim2
+      integer(c_int), value, intent(in) :: tag2
+      real(c_double) :: distance
+      real(c_double) :: x1
+      real(c_double) :: y1
+      real(c_double) :: z1
+      real(c_double) :: x2
+      real(c_double) :: y2
+      real(c_double) :: z2
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: dim1
+    integer, intent(in) :: tag1
+    integer, intent(in) :: dim2
+    integer, intent(in) :: tag2
+    real(c_double) :: distance
+    real(c_double) :: x1
+    real(c_double) :: y1
+    real(c_double) :: z1
+    real(c_double) :: x2
+    real(c_double) :: y2
+    real(c_double) :: z2
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(dim1=int(dim1, c_int), &
+         tag1=int(tag1, c_int), &
+         dim2=int(dim2, c_int), &
+         tag2=int(tag2, c_int), &
+         distance=distance, &
+         x1=x1, &
+         y1=y1, &
+         z1=z1, &
+         x2=x2, &
+         y2=y2, &
+         z2=z2, &
+         ierr_=ierr)
+  end subroutine gmshModelOccGetDistance
 
   !> Compute the boolean union (the fusion) of the entities `objectDimTags' and
   !! `toolDimTags' (vectors of (dim, tag) pairs) in the OpenCASCADE CAD

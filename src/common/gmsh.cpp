@@ -6941,6 +6941,21 @@ GMSH_API void gmsh::model::occ::fuse(const vectorpair &objectDimTags,
     removeTool);
 }
 
+GMSH_API void gmsh::model::occ::getDistance(int dim1, int tag1,
+                                  int dim2, int tag2,
+                                  double &distance,
+                                  double &x1, double &y1, double &z1,
+                                  double &x2, double &y2, double &z2)
+{
+  if(!_checkInit()) return;
+  _createOcc();
+  GModel::current()->getOCCInternals()->getDistance(dim1, tag1,
+                                  dim2, tag2,
+                                  distance,
+                                  x1, y1, z1,
+                                  x2, y2, z2);
+}
+
 GMSH_API void gmsh::model::occ::intersect(
   const vectorpair &objectDimTags, const vectorpair &toolDimTags,
   vectorpair &outDimTags, std::vector<vectorpair> &outDimTagsMap, const int tag,
