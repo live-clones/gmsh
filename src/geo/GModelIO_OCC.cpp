@@ -3809,7 +3809,7 @@ bool OCC_Internals::booleanOperator(
       }
       else {
         if(remove) {
-          if(CTX::instance()->geom.occFastUnbind)
+          if(CTX::instance()->geom.occFastUnbind == 2)
             _unbindWithoutChecks(mapOriginal[i]);
           else
             _unbind(mapOriginal[i], dim, tag, true);

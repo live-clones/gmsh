@@ -521,4 +521,19 @@ struct HalfEdgePtrEqual {
   }
 };
 
+// compute the degree of a given vertex v
+inline int degree(const PolyMesh::Vertex *v) 
+{
+  PolyMesh::HalfEdge *he = v->he;
+  size_t count = 0;
+  do {
+    he = he->opposite;
+    if(he == NULL) return -1;
+    he = he->next;
+    count++;
+  } while(he != v->he);
+  return count;
+}
+
+
 #endif

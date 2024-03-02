@@ -3954,6 +3954,8 @@ Optimize the current mesh with the given algorithm (currently
 for Netgen optimizer, @code{"HighOrder"} for direct high-order mesh
 optimizer, @code{"HighOrderElastic"} for high-order elastic smoother,
 @code{"HighOrderFastCurving"} for fast curving algorithm,
+@code{"UntangleTets''} for untangling tetrahedral meshes,
+@code{"UntangleTris''} for untangling xy-planar triangular meshes,
 @code{"Laplace2D"} for Laplace smoothing, @code{"Relocate2D"} and
 @code{"Relocate3D"} for node relocation).
 

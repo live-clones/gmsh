@@ -30,6 +30,7 @@
 #include "meshGRegionLocalMeshMod.h"
 #include "meshRelocateVertex.h"
 #include "meshRefine.h"
+#include "meshTriangulation.h"
 #include "BackgroundMesh.h"
 #include "BoundaryLayers.h"
 #include "ExtrudeParams.h"
@@ -59,6 +60,8 @@
 #include "meshSurfaceUntangling.h"
 #include "meshVolumeUntangling.h"
 #endif
+
+#include "meshMesquite.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -789,7 +792,10 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
 {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
 
-  if(how != "" && how != "Gmsh" && how != "Optimize" && how != "UntangleTets" && how != "Netgen" &&
+  if(how != "" && how != "Gmsh" && how != "Optimize" && how != "Optimize2D"&&
+     how != "MesquiteImprove3D" && how != "MesquiteImprove2D" &&
+     how != "UntangleTris" &&
+     how != "UntangleTets" && how != "Netgen" &&
      how != "HighOrder" && how != "HighOrderElastic" &&
      how != "HighOrderFastCurving" && how != "Laplace2D" &&
      how != "Relocate2D" && how != "Relocate3D" &&
@@ -812,10 +818,55 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
     }
     m->setAllVolumesPositive();
   }
+  else if(how == "Optimize2D") {
+    for(GFace *gf : m->getFaces()) {
+      if(gf->geomType() == GFace::Plane) {
+        PolyMeshDelaunayize (gf->tag());
+      }
+      else {
+        Msg::Debug("- Surface %i: not planar, do not apply Edge Swaps",
+                   gf->tag());
+      }
+    }
+  }
   else if(how == "UntangleTets") {
+#if defined(HAVE_WINSLOWUNTANGLER)
+    double timeMax = 100.;
+    int nIterWinslow = 10;
+    for(GRegion *gr : m->getRegions()) {
+      untangleGRegionMeshConstrained(gr, nIterWinslow, timeMax);
+    }
+#else
     for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
       untangleMeshGRegion opt;
       opt(*it, force);
+    }
+#endif
+    m->setAllVolumesPositive();
+  }
+  else if(how == "UntangleTris") {
+#if defined(HAVE_WINSLOWUNTANGLER)
+    int nIterWinslow = 10;
+    double timeMax = 100.;
+    for(GFace *gf : m->getFaces()) {
+      if(gf->geomType() == GFace::Plane) {
+        untangleGFaceMeshConstrained(gf, nIterWinslow, timeMax);
+      }
+      else {
+        Msg::Debug("- Surface %i: not planar, do not apply Winslow untangling",
+                   gf->tag());
+      }
+    }
+#endif
+  }
+  else if(how == "MesquiteImprove2D") {
+    for(auto it = m->firstFace(); it != m->lastFace(); it++) {
+      mesquiteImprove (*it);
+    }
+  }
+  else if(how == "MesquiteImprove3D") {
+    for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
+      mesquiteImprove (*it);
     }
     m->setAllVolumesPositive();
   }
