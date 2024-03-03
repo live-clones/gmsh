@@ -3781,6 +3781,17 @@ GMSH_API void gmshModelOccOffsetCurve(const int curveLoopTag, const double offse
   }
 }
 
+GMSH_API void gmshModelOccGetDistance(const int dim1, const int tag1, const int dim2, const int tag2, double * distance, double * x1, double * y1, double * z1, double * x2, double * y2, double * z2, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::occ::getDistance(dim1, tag1, dim2, tag2, *distance, *x1, *y1, *z1, *x2, *y2, *z2);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelOccFuse(const int * objectDimTags, const size_t objectDimTags_n, const int * toolDimTags, const size_t toolDimTags_n, int ** outDimTags, size_t * outDimTags_n, int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn, const int tag, const int removeObject, const int removeTool, int * ierr)
 {
   if(ierr) *ierr = 0;

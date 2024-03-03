@@ -8218,6 +8218,64 @@ class model:
         offset_curve = offsetCurve
 
         @staticmethod
+        def getDistance(dim1, tag1, dim2, tag2):
+            """
+            gmsh.model.occ.getDistance(dim1, tag1, dim2, tag2)
+
+            Find the minimal distance between shape with `dim1' and `tag1' and shape
+            with `dim2' and `tag2' and the according coordinates. Return the distance
+            in `distance' and the coordinate of the points as `x1', `y1', `z1' and
+            `x2', `y2', `z2'.
+
+            Return `distance', `x1', `y1', `z1', `x2', `y2', `z2'.
+
+            Types:
+            - `dim1': integer
+            - `tag1': integer
+            - `dim2': integer
+            - `tag2': integer
+            - `distance': double
+            - `x1': double
+            - `y1': double
+            - `z1': double
+            - `x2': double
+            - `y2': double
+            - `z2': double
+            """
+            api_distance_ = c_double()
+            api_x1_ = c_double()
+            api_y1_ = c_double()
+            api_z1_ = c_double()
+            api_x2_ = c_double()
+            api_y2_ = c_double()
+            api_z2_ = c_double()
+            ierr = c_int()
+            lib.gmshModelOccGetDistance(
+                c_int(dim1),
+                c_int(tag1),
+                c_int(dim2),
+                c_int(tag2),
+                byref(api_distance_),
+                byref(api_x1_),
+                byref(api_y1_),
+                byref(api_z1_),
+                byref(api_x2_),
+                byref(api_y2_),
+                byref(api_z2_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return (
+                api_distance_.value,
+                api_x1_.value,
+                api_y1_.value,
+                api_z1_.value,
+                api_x2_.value,
+                api_y2_.value,
+                api_z2_.value)
+        get_distance = getDistance
+
+        @staticmethod
         def fuse(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True):
             """
             gmsh.model.occ.fuse(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True)

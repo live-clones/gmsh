@@ -7214,6 +7214,46 @@ end
 const offset_curve = offsetCurve
 
 """
+    gmsh.model.occ.getDistance(dim1, tag1, dim2, tag2)
+
+Find the minimal distance between shape with `dim1` and `tag1` and shape with
+`dim2` and `tag2` and the according coordinates. Return the distance in
+`distance` and the coordinate of the points as `x1`, `y1`, `z1` and `x2`, `y2`,
+`z2`.
+
+Return `distance`, `x1`, `y1`, `z1`, `x2`, `y2`, `z2`.
+
+Types:
+ - `dim1`: integer
+ - `tag1`: integer
+ - `dim2`: integer
+ - `tag2`: integer
+ - `distance`: double
+ - `x1`: double
+ - `y1`: double
+ - `z1`: double
+ - `x2`: double
+ - `y2`: double
+ - `z2`: double
+"""
+function getDistance(dim1, tag1, dim2, tag2)
+    api_distance_ = Ref{Cdouble}()
+    api_x1_ = Ref{Cdouble}()
+    api_y1_ = Ref{Cdouble}()
+    api_z1_ = Ref{Cdouble}()
+    api_x2_ = Ref{Cdouble}()
+    api_y2_ = Ref{Cdouble}()
+    api_z2_ = Ref{Cdouble}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccGetDistance, gmsh.lib), Cvoid,
+          (Cint, Cint, Cint, Cint, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cint}),
+          dim1, tag1, dim2, tag2, api_distance_, api_x1_, api_y1_, api_z1_, api_x2_, api_y2_, api_z2_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_distance_[], api_x1_[], api_y1_[], api_z1_[], api_x2_[], api_y2_[], api_z2_[]
+end
+const get_distance = getDistance
+
+"""
     gmsh.model.occ.fuse(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)
 
 Compute the boolean union (the fusion) of the entities `objectDimTags` and

@@ -2737,6 +2737,23 @@ GMSH_API void gmshModelOccOffsetCurve(const int curveLoopTag,
                                       int ** outDimTags, size_t * outDimTags_n,
                                       int * ierr);
 
+/* Find the minimal distance between shape with `dim1' and `tag1' and shape
+ * with `dim2' and `tag2' and the according coordinates. Return the distance
+ * in `distance' and the coordinate of the points as `x1', `y1', `z1' and
+ * `x2', `y2', `z2'. */
+GMSH_API void gmshModelOccGetDistance(const int dim1,
+                                      const int tag1,
+                                      const int dim2,
+                                      const int tag2,
+                                      double * distance,
+                                      double * x1,
+                                      double * y1,
+                                      double * z1,
+                                      double * x2,
+                                      double * y2,
+                                      double * z2,
+                                      int * ierr);
+
 /* Compute the boolean union (the fusion) of the entities `objectDimTags' and
  * `toolDimTags' (vectors of (dim, tag) pairs) in the OpenCASCADE CAD
  * representation. Return the resulting entities in `outDimTags'. If `tag' is

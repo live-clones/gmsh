@@ -20,7 +20,7 @@ RUN git clone https://github.com/MmgTools/mmg.git && cd mmg && mkdir build && cd
 # RUN curl -LO https://github.com/llvm/llvm-project/archive/refs/tags/llvmorg-12.0.0.tar.gz && tar xf llvmorg-12.0.0.tar.gz && cd llvm-project-llvmorg-12.0.0 && mkdir build && cd build && cmake -DLIBOMP_TSAN_SUPPORT=1 ../openmp && cmake --build . --target install && cd .. && rm -rf llvm-project-llvmorg-12.0.0
 
 # "docker build --build-arg REBUILD_GMSH=somethingnew"
-RUN REBUILD_GMSH=${REBUILD_GMSH} && git clone https://gitlab.onelab.info/gmsh/gmsh.git && cd gmsh && mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_BUILD_SHARED=1 -DENABLE_PRIVATE_API=1 .. && make -j8 shared && make install/fast && cd .. && rm -rf gmsh
+RUN REBUILD_GMSH=${REBUILD_GMSH} && git clone https://gitlab.onelab.info/gmsh/gmsh.git && cd gmsh && mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_BUILD_SHARED=1 -DENABLE_PRIVATE_API=1 .. && make -j4 shared && make install/fast && cd .. && rm -rf gmsh
 
 VOLUME ["/etc/gitlab-runner"]
 RUN useradd -ms /bin/bash validator
