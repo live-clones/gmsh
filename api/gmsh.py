@@ -8128,6 +8128,96 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
+        def fillet2D(edgeTag1, edgeTag2, radius):
+            """
+            gmsh.model.occ.fillet2D(edgeTag1, edgeTag2, radius)
+
+            Create a fillet edge between edges `edgeTag1' and `edgeTag2' with radius
+            `radius'. Return the modified edges and the filleted edge in `outDimTags'
+            as a vector of (dim, tag) pairs.
+
+            Return `outDimTags'.
+
+            Types:
+            - `edgeTag1': integer
+            - `edgeTag2': integer
+            - `radius': double
+            - `outDimTags': vector of pairs of integers
+            """
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelOccFillet2D(
+                c_int(edgeTag1),
+                c_int(edgeTag2),
+                c_double(radius),
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
+        fillet2_d = fillet2D
+
+        @staticmethod
+        def chamfer2D(edgeTag1, edgeTag2, distance1, distance2):
+            """
+            gmsh.model.occ.chamfer2D(edgeTag1, edgeTag2, distance1, distance2)
+
+            Create a chamfer edge between edges `edgeTag1' and `edgeTag2' with
+            distance1 `distance1' and distance2 `distance2'. Return the modified edges
+            and the chamfered edge in `outDimTags' as a vector of (dim, tag) pairs.
+
+            Return `outDimTags'.
+
+            Types:
+            - `edgeTag1': integer
+            - `edgeTag2': integer
+            - `distance1': double
+            - `distance2': double
+            - `outDimTags': vector of pairs of integers
+            """
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelOccChamfer2D(
+                c_int(edgeTag1),
+                c_int(edgeTag2),
+                c_double(distance1),
+                c_double(distance2),
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
+        chamfer2_d = chamfer2D
+
+        @staticmethod
+        def offsetCurve(curveLoopTag, offset):
+            """
+            gmsh.model.occ.offsetCurve(curveLoopTag, offset)
+
+            Create an offset curve based on the curve loop `curveLoopTag' with offset
+            `offset'. Return the curve loop in `outDimTags' as a vector of (dim, tag)
+            pairs.
+
+            Return `outDimTags'.
+
+            Types:
+            - `curveLoopTag': integer
+            - `offset': double
+            - `outDimTags': vector of pairs of integers
+            """
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelOccOffsetCurve(
+                c_int(curveLoopTag),
+                c_double(offset),
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
+        offset_curve = offsetCurve
+
+        @staticmethod
         def getDistance(dim1, tag1, dim2, tag2):
             """
             gmsh.model.occ.getDistance(dim1, tag1, dim2, tag2)

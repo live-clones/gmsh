@@ -312,6 +312,21 @@ public:
                const std::vector<double> &distances,
                std::vector<std::pair<int, int> > &outDimTags,
                bool removeVolume);
+  
+  bool fillet2D(const int edgeTag1,
+                const int edgeTag2, 
+                double radius,
+                std::vector<std::pair<int, int> > &outDimTags);
+
+  bool chamfer2D( const int edgeTag1,
+                  const int edgeTag2,
+                  double distance1,
+                  double distance2,
+                  std::vector<std::pair<int, int> > &outDimTags);
+
+  bool offsetCurve( const int curveLoopTag, 
+                    double offset,
+                    std::vector<std::pair<int, int> > &outDimTags);
 
   // apply boolean operator
   bool booleanOperator(
@@ -697,6 +712,27 @@ public:
                std::vector<std::pair<int, int> > &outDimTags, bool removeVolume)
   {
     return _error("create chamfer");
+  }
+  bool fillet2D(const int edgeTag1,
+                const int edgeTag2, 
+                double radius,
+                std::vector<std::pair<int, int> > &outDimTags)
+  {
+    return _error("create fillet in 2D");
+  }
+  bool chamfer2D( const int edgeTag1,
+                  const int edgeTag2,
+                  double distance1,
+                  double distance2,
+                  std::vector<std::pair<int, int> > &outDimTags)
+  {
+    return _error("create chamfer in 2D");
+  }
+  bool offsetCurve( const int curveLoopTag, 
+                    double offset,
+                    std::vector<std::pair<int, int> > &outDimTags)
+  {
+    return _error("create offset curve");
   }
   bool booleanOperator(
     int tag, BooleanOperator op,

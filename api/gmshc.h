@@ -2710,6 +2710,33 @@ GMSH_API void gmshModelOccChamfer(const int * volumeTags, const size_t volumeTag
                                   const int removeVolume,
                                   int * ierr);
 
+/* Create a fillet edge between edges `edgeTag1' and `edgeTag2' with radius
+ * `radius'. Return the modified edges and the filleted edge in `outDimTags'
+ * as a vector of (dim, tag) pairs. */
+GMSH_API void gmshModelOccFillet2D(const int edgeTag1,
+                                   const int edgeTag2,
+                                   const double radius,
+                                   int ** outDimTags, size_t * outDimTags_n,
+                                   int * ierr);
+
+/* Create a chamfer edge between edges `edgeTag1' and `edgeTag2' with
+ * distance1 `distance1' and distance2 `distance2'. Return the modified edges
+ * and the chamfered edge in `outDimTags' as a vector of (dim, tag) pairs. */
+GMSH_API void gmshModelOccChamfer2D(const int edgeTag1,
+                                    const int edgeTag2,
+                                    const double distance1,
+                                    const double distance2,
+                                    int ** outDimTags, size_t * outDimTags_n,
+                                    int * ierr);
+
+/* Create an offset curve based on the curve loop `curveLoopTag' with offset
+ * `offset'. Return the curve loop in `outDimTags' as a vector of (dim, tag)
+ * pairs. */
+GMSH_API void gmshModelOccOffsetCurve(const int curveLoopTag,
+                                      const double offset,
+                                      int ** outDimTags, size_t * outDimTags_n,
+                                      int * ierr);
+
 /* Find the minimal distance between shape with `dim1' and `tag1' and shape
  * with `dim2' and `tag2' and the according coordinates. Return the distance
  * in `distance' and the coordinate of the points as `x1', `y1', `z1' and

@@ -318,6 +318,12 @@ module gmsh
         gmshModelOccFillet
     procedure, nopass :: chamfer => &
         gmshModelOccChamfer
+    procedure, nopass :: fillet2D => &
+        gmshModelOccFillet2D
+    procedure, nopass :: chamfer2D => &
+        gmshModelOccChamfer2D
+    procedure, nopass :: offsetCurve => &
+        gmshModelOccOffsetCurve
     procedure, nopass :: getDistance => &
         gmshModelOccGetDistance
     procedure, nopass :: fuse => &
@@ -11596,6 +11602,132 @@ module gmsh
     outDimTags = ovectorpair_(api_outDimTags_, &
       api_outDimTags_n_)
   end subroutine gmshModelOccChamfer
+
+  !> Create a fillet edge between edges `edgeTag1' and `edgeTag2' with radius
+  !! `radius'. Return the modified edges and the filleted edge in `outDimTags'
+  !! as a vector of (dim, tag) pairs.
+  subroutine gmshModelOccFillet2D(edgeTag1, &
+                                  edgeTag2, &
+                                  radius, &
+                                  outDimTags, &
+                                  ierr)
+    interface
+    subroutine C_API(edgeTag1, &
+                     edgeTag2, &
+                     radius, &
+                     api_outDimTags_, &
+                     api_outDimTags_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelOccFillet2D")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: edgeTag1
+      integer(c_int), value, intent(in) :: edgeTag2
+      real(c_double), value, intent(in) :: radius
+      type(c_ptr), intent(out) :: api_outDimTags_
+      integer(c_size_t), intent(out) :: api_outDimTags_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: edgeTag1
+    integer, intent(in) :: edgeTag2
+    real(c_double), intent(in) :: radius
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_outDimTags_
+    integer(c_size_t) :: api_outDimTags_n_
+    call C_API(edgeTag1=int(edgeTag1, c_int), &
+         edgeTag2=int(edgeTag2, c_int), &
+         radius=real(radius, c_double), &
+         api_outDimTags_=api_outDimTags_, &
+         api_outDimTags_n_=api_outDimTags_n_, &
+         ierr_=ierr)
+    outDimTags = ovectorpair_(api_outDimTags_, &
+      api_outDimTags_n_)
+  end subroutine gmshModelOccFillet2D
+
+  !> Create a chamfer edge between edges `edgeTag1' and `edgeTag2' with
+  !! distance1 `distance1' and distance2 `distance2'. Return the modified edges
+  !! and the chamfered edge in `outDimTags' as a vector of (dim, tag) pairs.
+  subroutine gmshModelOccChamfer2D(edgeTag1, &
+                                   edgeTag2, &
+                                   distance1, &
+                                   distance2, &
+                                   outDimTags, &
+                                   ierr)
+    interface
+    subroutine C_API(edgeTag1, &
+                     edgeTag2, &
+                     distance1, &
+                     distance2, &
+                     api_outDimTags_, &
+                     api_outDimTags_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelOccChamfer2D")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: edgeTag1
+      integer(c_int), value, intent(in) :: edgeTag2
+      real(c_double), value, intent(in) :: distance1
+      real(c_double), value, intent(in) :: distance2
+      type(c_ptr), intent(out) :: api_outDimTags_
+      integer(c_size_t), intent(out) :: api_outDimTags_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: edgeTag1
+    integer, intent(in) :: edgeTag2
+    real(c_double), intent(in) :: distance1
+    real(c_double), intent(in) :: distance2
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_outDimTags_
+    integer(c_size_t) :: api_outDimTags_n_
+    call C_API(edgeTag1=int(edgeTag1, c_int), &
+         edgeTag2=int(edgeTag2, c_int), &
+         distance1=real(distance1, c_double), &
+         distance2=real(distance2, c_double), &
+         api_outDimTags_=api_outDimTags_, &
+         api_outDimTags_n_=api_outDimTags_n_, &
+         ierr_=ierr)
+    outDimTags = ovectorpair_(api_outDimTags_, &
+      api_outDimTags_n_)
+  end subroutine gmshModelOccChamfer2D
+
+  !> Create an offset curve based on the curve loop `curveLoopTag' with offset
+  !! `offset'. Return the curve loop in `outDimTags' as a vector of (dim, tag)
+  !! pairs.
+  subroutine gmshModelOccOffsetCurve(curveLoopTag, &
+                                     offset, &
+                                     outDimTags, &
+                                     ierr)
+    interface
+    subroutine C_API(curveLoopTag, &
+                     offset, &
+                     api_outDimTags_, &
+                     api_outDimTags_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelOccOffsetCurve")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: curveLoopTag
+      real(c_double), value, intent(in) :: offset
+      type(c_ptr), intent(out) :: api_outDimTags_
+      integer(c_size_t), intent(out) :: api_outDimTags_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: curveLoopTag
+    real(c_double), intent(in) :: offset
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_outDimTags_
+    integer(c_size_t) :: api_outDimTags_n_
+    call C_API(curveLoopTag=int(curveLoopTag, c_int), &
+         offset=real(offset, c_double), &
+         api_outDimTags_=api_outDimTags_, &
+         api_outDimTags_n_=api_outDimTags_n_, &
+         ierr_=ierr)
+    outDimTags = ovectorpair_(api_outDimTags_, &
+      api_outDimTags_n_)
+  end subroutine gmshModelOccOffsetCurve
 
   !> Find the minimal distance between shape with `dim1' and `tag1' and shape
   !! with `dim2' and `tag2' and the according coordinates. Return the distance
