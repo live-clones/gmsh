@@ -6925,6 +6925,41 @@ GMSH_API void gmsh::model::occ::chamfer(const std::vector<int> &volumeTags,
     volumeTags, curveTags, surfaceTags, distances, outDimTags, removeVolume);
 }
 
+GMSH_API void gmsh::model::occ::fillet2D(const int edgeTag1,
+                                        const int edgeTag2, 
+                                        double radius,
+                                        vectorpair &outDimTags)
+{
+  if(!_checkInit()) return;
+  _createOcc();
+  outDimTags.clear();
+  GModel::current()->getOCCInternals()->fillet2D(edgeTag1, edgeTag2, radius,
+                                               outDimTags);
+}
+
+GMSH_API void gmsh::model::occ::chamfer2D(const int edgeTag1,
+                                          const int edgeTag2,
+                                          double distance1,
+                                          double distance2,
+                                          vectorpair &outDimTags)
+{
+  if(!_checkInit()) return;
+  _createOcc();
+  outDimTags.clear();
+  GModel::current()->getOCCInternals()->chamfer2D(edgeTag1, edgeTag2, distance1,
+                                                  distance2, outDimTags);
+}
+
+GMSH_API void gmsh::model::occ::offsetCurve( const int curveLoopTag, 
+                                              double offset,
+                                              vectorpair &outDimTags)
+{
+  if(!_checkInit()) return;
+  _createOcc();
+  outDimTags.clear();
+  GModel::current()->getOCCInternals()->offsetCurve(curveLoopTag, offset, outDimTags);
+}
+
 GMSH_API void gmsh::model::occ::fuse(const vectorpair &objectDimTags,
                                      const vectorpair &toolDimTags,
                                      vectorpair &outDimTags,

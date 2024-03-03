@@ -3043,6 +3043,36 @@ namespace gmsh { // Top-level functions
                             gmsh::vectorpair & outDimTags,
                             const bool removeVolume = true);
 
+      // gmsh::model::occ::fillet2D
+      //
+      // Create a fillet edge between edges `edgeTag1' and `edgeTag2' with radius
+      // `radius'. Return the modified edges and the filleted edge in `outDimTags'
+      // as a vector of (dim, tag) pairs.
+      GMSH_API void fillet2D(const int edgeTag1,
+                             const int edgeTag2,
+                             const double radius,
+                             gmsh::vectorpair & outDimTags);
+
+      // gmsh::model::occ::chamfer2D
+      //
+      // Create a chamfer edge between edges `edgeTag1' and `edgeTag2' with
+      // distance1 `distance1' and distance2 `distance2'. Return the modified edges
+      // and the chamfered edge in `outDimTags' as a vector of (dim, tag) pairs.
+      GMSH_API void chamfer2D(const int edgeTag1,
+                              const int edgeTag2,
+                              const double distance1,
+                              const double distance2,
+                              gmsh::vectorpair & outDimTags);
+
+      // gmsh::model::occ::offsetCurve
+      //
+      // Create an offset curve based on the curve loop `curveLoopTag' with offset
+      // `offset'. Return the curve loop in `outDimTags' as a vector of (dim, tag)
+      // pairs.
+      GMSH_API void offsetCurve(const int curveLoopTag,
+                                const double offset,
+                                gmsh::vectorpair & outDimTags);
+
       // gmsh::model::occ::getDistance
       //
       // Find the minimal distance between shape with `dim1' and `tag1' and shape
