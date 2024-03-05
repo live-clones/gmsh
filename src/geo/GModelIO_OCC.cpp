@@ -3536,7 +3536,7 @@ bool OCC_Internals::fillet2D(int &tag, const int edgeTag1, const int edgeTag2,
   w.Add(ed2);
   w.Build();
   if(!w.IsDone()) {
-    Msg::Error("Could not create wire from given edges. Are edges connected?");
+    Msg::Error("Could not create temporary wire from given edges. Are edges connected?");
     return false;
   }
   wire = w.Wire();
@@ -3546,7 +3546,7 @@ bool OCC_Internals::fillet2D(int &tag, const int edgeTag1, const int edgeTag2,
 
   mf.Build();
   if(!mf.IsDone()) {
-    Msg::Error("Could not create face from given edges.");
+    Msg::Error("Could not create temporary face from given edges. Are edges planar?");
     return false;
   }
   face = mf.Face();
@@ -3586,10 +3586,6 @@ bool OCC_Internals::fillet2D(int &tag, const int edgeTag1, const int edgeTag2,
 
   if(tag < 0) tag = getMaxTag(1) + 1;
   _bind(filletEd, tag, true);
-  // outDimTags.push_back(std::make_pair(1, edgeTag1));
-  // outDimTags.push_back(std::make_pair(1, edgeTag2));
-
-  // _multiBind(filletEd, -1, outDimTags, true, true);
 
   return true;
 }
@@ -3626,11 +3622,6 @@ bool OCC_Internals::chamfer2D(int &tag, const int edgeTag1, const int edgeTag2,
 
   if(tag < 0) tag = getMaxTag(1) + 1;
   _bind(chamferEd, tag, true);
-
-  // outDimTags.push_back(std::make_pair(1, edgeTag1));
-  // outDimTags.push_back(std::make_pair(1, edgeTag2));
-
-  // _multiBind(chamferEd, -1, outDimTags, true, true);
 
   return true;
 }
