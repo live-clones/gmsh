@@ -7128,61 +7128,52 @@ function chamfer(volumeTags, curveTags, surfaceTags, distances, removeVolume = t
 end
 
 """
-    gmsh.model.occ.fillet2D(edgeTag1, edgeTag2, radius)
+    gmsh.model.occ.fillet2D(edgeTag1, edgeTag2, radius, tag = -1)
 
 Create a fillet edge between edges `edgeTag1` and `edgeTag2` with radius
-`radius`. Return the modified edges and the filleted edge in `outDimTags` as a
-vector of (dim, tag) pairs.
+`radius`. Return the filleted edge in `tag` as a tag.
 
-Return `outDimTags`.
+Return an integer.
 
 Types:
  - `edgeTag1`: integer
  - `edgeTag2`: integer
  - `radius`: double
- - `outDimTags`: vector of pairs of integers
+ - `tag`: integer
 """
-function fillet2D(edgeTag1, edgeTag2, radius)
-    api_outDimTags_ = Ref{Ptr{Cint}}()
-    api_outDimTags_n_ = Ref{Csize_t}()
+function fillet2D(edgeTag1, edgeTag2, radius, tag = -1)
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccFillet2D, gmsh.lib), Cvoid,
-          (Cint, Cint, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          edgeTag1, edgeTag2, radius, api_outDimTags_, api_outDimTags_n_, ierr)
+    api_result_ = ccall((:gmshModelOccFillet2D, gmsh.lib), Cint,
+          (Cint, Cint, Cdouble, Cint, Ptr{Cint}),
+          edgeTag1, edgeTag2, radius, tag, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
-    outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
-    return outDimTags
+    return api_result_
 end
 const fillet2_d = fillet2D
 
 """
-    gmsh.model.occ.chamfer2D(edgeTag1, edgeTag2, distance1, distance2)
+    gmsh.model.occ.chamfer2D(edgeTag1, edgeTag2, distance1, distance2, tag = -1)
 
 Create a chamfer edge between edges `edgeTag1` and `edgeTag2` with distance1
-`distance1` and distance2 `distance2`. Return the modified edges and the
-chamfered edge in `outDimTags` as a vector of (dim, tag) pairs.
+`distance1` and distance2 `distance2`. Return the modified edges in `tag` as a
+tag.
 
-Return `outDimTags`.
+Return an integer.
 
 Types:
  - `edgeTag1`: integer
  - `edgeTag2`: integer
  - `distance1`: double
  - `distance2`: double
- - `outDimTags`: vector of pairs of integers
+ - `tag`: integer
 """
-function chamfer2D(edgeTag1, edgeTag2, distance1, distance2)
-    api_outDimTags_ = Ref{Ptr{Cint}}()
-    api_outDimTags_n_ = Ref{Csize_t}()
+function chamfer2D(edgeTag1, edgeTag2, distance1, distance2, tag = -1)
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccChamfer2D, gmsh.lib), Cvoid,
-          (Cint, Cint, Cdouble, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          edgeTag1, edgeTag2, distance1, distance2, api_outDimTags_, api_outDimTags_n_, ierr)
+    api_result_ = ccall((:gmshModelOccChamfer2D, gmsh.lib), Cint,
+          (Cint, Cint, Cdouble, Cdouble, Cint, Ptr{Cint}),
+          edgeTag1, edgeTag2, distance1, distance2, tag, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
-    outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
-    return outDimTags
+    return api_result_
 end
 const chamfer2_d = chamfer2D
 

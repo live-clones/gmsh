@@ -2711,23 +2711,22 @@ GMSH_API void gmshModelOccChamfer(const int * volumeTags, const size_t volumeTag
                                   int * ierr);
 
 /* Create a fillet edge between edges `edgeTag1' and `edgeTag2' with radius
- * `radius'. Return the modified edges and the filleted edge in `outDimTags'
- * as a vector of (dim, tag) pairs. */
-GMSH_API void gmshModelOccFillet2D(const int edgeTag1,
-                                   const int edgeTag2,
-                                   const double radius,
-                                   int ** outDimTags, size_t * outDimTags_n,
-                                   int * ierr);
+ * `radius'. Return the filleted edge in `tag' as a tag. */
+GMSH_API int gmshModelOccFillet2D(const int edgeTag1,
+                                  const int edgeTag2,
+                                  const double radius,
+                                  const int tag,
+                                  int * ierr);
 
 /* Create a chamfer edge between edges `edgeTag1' and `edgeTag2' with
  * distance1 `distance1' and distance2 `distance2'. Return the modified edges
- * and the chamfered edge in `outDimTags' as a vector of (dim, tag) pairs. */
-GMSH_API void gmshModelOccChamfer2D(const int edgeTag1,
-                                    const int edgeTag2,
-                                    const double distance1,
-                                    const double distance2,
-                                    int ** outDimTags, size_t * outDimTags_n,
-                                    int * ierr);
+ * in `tag' as a tag. */
+GMSH_API int gmshModelOccChamfer2D(const int edgeTag1,
+                                   const int edgeTag2,
+                                   const double distance1,
+                                   const double distance2,
+                                   const int tag,
+                                   int * ierr);
 
 /* Create an offset curve based on the curve loop `curveLoopTag' with offset
  * `offset'. Return the curve loop in `outDimTags' as a vector of (dim, tag)

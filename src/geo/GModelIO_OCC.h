@@ -313,16 +313,14 @@ public:
                std::vector<std::pair<int, int> > &outDimTags,
                bool removeVolume);
   
-  bool fillet2D(const int edgeTag1,
+  bool fillet2D(int &tag, const int edgeTag1,
                 const int edgeTag2, 
-                double radius,
-                std::vector<std::pair<int, int> > &outDimTags);
+                double radius);
 
-  bool chamfer2D( const int edgeTag1,
+  bool chamfer2D( int &tag, const int edgeTag1,
                   const int edgeTag2,
                   double distance1,
-                  double distance2,
-                  std::vector<std::pair<int, int> > &outDimTags);
+                  double distance2);
 
   bool offsetCurve( const int curveLoopTag, 
                     double offset,
@@ -713,24 +711,22 @@ public:
   {
     return _error("create chamfer");
   }
-  bool fillet2D(const int edgeTag1,
+  bool fillet2D(int &tag, const int edgeTag1,
                 const int edgeTag2, 
-                double radius,
-                std::vector<std::pair<int, int> > &outDimTags)
+                double radius)
   {
     return _error("create fillet in 2D");
   }
-  bool chamfer2D( const int edgeTag1,
+  bool chamfer2D( int &tag, const int edgeTag1,
                   const int edgeTag2,
                   double distance1,
-                  double distance2,
-                  std::vector<std::pair<int, int> > &outDimTags)
+                  double distance2)
   {
     return _error("create chamfer in 2D");
   }
   bool offsetCurve( const int curveLoopTag, 
                     double offset,
-                    std::vector<std::pair<int, int> > &outDimTags)
+                    int &tag)
   {
     return _error("create offset curve");
   }
