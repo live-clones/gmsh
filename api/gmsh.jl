@@ -7131,7 +7131,8 @@ end
     gmsh.model.occ.fillet2D(edgeTag1, edgeTag2, radius, tag = -1)
 
 Create a fillet edge between edges `edgeTag1` and `edgeTag2` with radius
-`radius`. Return the filleted edge in `tag` as a tag.
+`radius`. The modifed edges keep their tag. If `tag` is positive, set the tag
+explicitly; otherwise a new tag is selected automatically.
 
 Return an integer.
 
@@ -7155,8 +7156,9 @@ const fillet2_d = fillet2D
     gmsh.model.occ.chamfer2D(edgeTag1, edgeTag2, distance1, distance2, tag = -1)
 
 Create a chamfer edge between edges `edgeTag1` and `edgeTag2` with distance1
-`distance1` and distance2 `distance2`. Return the modified edges in `tag` as a
-tag.
+`distance1` and distance2 `distance2`. The modifed edges keep their tag. If
+`tag` is positive, set the tag explicitly; otherwise a new tag is selected
+automatically.
 
 Return an integer.
 

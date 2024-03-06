@@ -3518,6 +3518,12 @@ bool OCC_Internals::chamfer(const std::vector<int> &volumeTags,
 bool OCC_Internals::fillet2D(int &tag, const int edgeTag1, const int edgeTag2,
                              double radius)
 {
+  
+  if(tag >= 0 && _tagEdge.IsBound(tag)) {
+    Msg::Error("OpenCASCADE curve with tag %d already exists", tag);
+    return false;
+  }
+
   if(!_tagEdge.IsBound(edgeTag1)) {
     Msg::Error("Unknown OpenCASCADE curve with tag %d", edgeTag1);
     return false;
@@ -3593,6 +3599,11 @@ bool OCC_Internals::fillet2D(int &tag, const int edgeTag1, const int edgeTag2,
 bool OCC_Internals::chamfer2D(int &tag, const int edgeTag1, const int edgeTag2,
                               double distance1, double distance2)
 {
+  if(tag >= 0 && _tagEdge.IsBound(tag)) {
+    Msg::Error("OpenCASCADE curve with tag %d already exists", tag);
+    return false;
+  }
+  
   if(!_tagEdge.IsBound(edgeTag1)) {
     Msg::Error("Unknown OpenCASCADE curve with tag %d", edgeTag1);
     return false;

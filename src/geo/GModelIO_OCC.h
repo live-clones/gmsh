@@ -726,7 +726,7 @@ public:
   }
   bool offsetCurve( const int curveLoopTag, 
                     double offset,
-                    int &tag)
+                    std::vector<std::pair<int, int>> &outDimTags)
   {
     return _error("create offset curve");
   }

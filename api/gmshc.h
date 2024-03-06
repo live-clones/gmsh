@@ -2711,7 +2711,8 @@ GMSH_API void gmshModelOccChamfer(const int * volumeTags, const size_t volumeTag
                                   int * ierr);
 
 /* Create a fillet edge between edges `edgeTag1' and `edgeTag2' with radius
- * `radius'. Return the filleted edge in `tag' as a tag. */
+ * `radius'. The modifed edges keep their tag. If `tag' is positive, set the
+ * tag explicitly; otherwise a new tag is selected automatically. */
 GMSH_API int gmshModelOccFillet2D(const int edgeTag1,
                                   const int edgeTag2,
                                   const double radius,
@@ -2719,8 +2720,9 @@ GMSH_API int gmshModelOccFillet2D(const int edgeTag1,
                                   int * ierr);
 
 /* Create a chamfer edge between edges `edgeTag1' and `edgeTag2' with
- * distance1 `distance1' and distance2 `distance2'. Return the modified edges
- * in `tag' as a tag. */
+ * distance1 `distance1' and distance2 `distance2'. The modifed edges keep
+ * their tag. If `tag' is positive, set the tag explicitly; otherwise a new
+ * tag is selected automatically. */
 GMSH_API int gmshModelOccChamfer2D(const int edgeTag1,
                                    const int edgeTag2,
                                    const double distance1,
