@@ -211,16 +211,11 @@ extern "C" void _refineSurfaceTriangulation(HXTMesh** meshPtr, HXTDelaunayOption
     double _size = 1.;
     double dimensionFactor = 4/sqrt(6);
     double minRadius = alphaShapeOptions->minRadius;
-
     // Step 2a: coarsen --> decimation algorithm [Schroder1992]
     // print4debug(pm, 0);
     double thresholdDistance = .1*minRadius;
     // int nNodesDeleted = 0;
 
-    /* TODO : instead of the current version of decimate, need a version that only removes nodes based on a size field */
-
-    // nNodesDeleted = pm->decimate(thresholdDistance, NULL, NULL, true);
-    // printf("going to decimate \n");
     int nNodesDeleted = 0;
     for (auto v : pm->vertices){
         if (v->he == nullptr) continue;
@@ -239,11 +234,14 @@ extern "C" void _refineSurfaceTriangulation(HXTMesh** meshPtr, HXTDelaunayOption
             }
         }
         double s = 0.5*(nodalSizes[v->data] + nodalSizes[closestNeigh->data]);
-        if (minDist < .5*s) {
+        if (minDist < .3*dimensionFactor*s) {
+            printf("Going to try to delete... threshold dist : %f \n ", thresholdDistance);
             int deleted = pm->decimateOneNode(v, thresholdDistance, NULL, NULL);
+            if (deleted) printf("YES ! \n");
             nNodesDeleted += deleted;
         }
     }
+    printf("deleted %d nodes \n", nNodesDeleted); 
     // print4debug(pm, 1);
     // if (nNodesDeleted){
     //     printf("decimated some ! \n");

@@ -115,7 +115,7 @@ int hxtRefineSurfaceTriangulation(HXTMesh** mesh, HXTDelaunayOptions* delOptions
  ***************** Refine tets in alpha shape *******************************************
  ****************************************************************************************/
 int hxtAlphaShapeNodeInsertion(HXTMesh* mesh, HXTDelaunayOptions* delOptions, HXTAlphaShapeOptions* alphaShapeOptions){
-    
+    printf("in hxtAlphaShapeNodeInsertion\n");
     for(int iter=0; iter<42; iter++) { // An arbitrary number of maximum refinements ? 
 
         // Allocations 

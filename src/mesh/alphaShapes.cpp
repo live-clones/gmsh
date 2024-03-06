@@ -270,8 +270,8 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
 
   HXTNodalSizes nodalSizes = {
       .array = NULL,
-      // .callback = gmsh2hxtCallback, 
-      // .userData = (void*)&sizeFieldCallback,
+      .callback = gmsh2hxtCallback, 
+      .userData = (void*)&sizeFieldCallback,
       .callback = NULL, 
       .userData = NULL,
       // .min = .2*.04, 
@@ -298,10 +298,12 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
       .colorBoundary = alphaShapeTags[1],
       .alpha = alpha,
       .hMean = hMean,
+      .minQuality = .1, // TO CHECK !!!!!!!!!!!
+      .minRadius = nodalSizeMin,
       .n_tetrahedra = 0,
       .tetrahedra = NULL,
       .n_boundaryFacets = 0,
-      .boundaryFacets = NULL    
+      .boundaryFacets = NULL,    
   };
   
   hxtMeshWriteGmsh(mesh, "convexHullMesh.msh");
@@ -326,7 +328,7 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
     mesh->triangles.node[3*i+2] = alphaShapeOptions.boundaryFacets[3*i+2];
     mesh->triangles.color[i] = alphaShapeOptions.colorBoundary;
   }
-  // hxtMeshWriteGmsh(mesh, "alphaShapeMesh.msh");
+  hxtMeshWriteGmsh(mesh, "alphaShapeMesh.msh");
 
   if (refine == 1){
 
@@ -334,15 +336,25 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
 
     // printf("done with surface triangulation refinement\n");
     
-    // hxtMeshWriteGmsh(mesh, "afterSurfaceRefinement.msh");
+    hxtMeshWriteGmsh(mesh, "afterSurfaceRefinement.msh");
     
     
     delOptions.nodalSizes->enabled = 1;
     delOptions.allowOuterInsertion = 0;
     
-    hxtAlphaShapeNodeInsertion(mesh, &delOptions, &alphaShapeOptions);
     
-    // hxtMeshWriteGmsh(mesh, "afterNodeInsertion.msh");
+    // hxtAlphaShapeNodeInsertion(mesh, &delOptions, &alphaShapeOptions);
+    for (uint64_t i=0; i<mesh->tetrahedra.num; i++) {
+      if(mesh->tetrahedra.color[i]!=alphaShapeOptions.colorIn) {
+        setProcessedFlag(mesh, i);
+      }
+      else {
+        unsetProcessedFlag(mesh, i);
+      }
+    }
+    hxtRefineTetrahedra(mesh, &delOptions);
+    hxtMeshWriteGmsh(mesh, "afterNodeInsertion.msh");
+    // printf("wrote mesh after node insertion\n");
     HXTOptimizeOptions optOptions = {
       .bbox = &bbox, 
       .qualityFun = NULL,
@@ -361,20 +373,25 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
       }
     }
     hxtOptimizeTetrahedra(mesh, &optOptions);
-    hxtAlphaShape(mesh, &delOptions, &alphaShapeOptions);
-    // Add alpha shape facets into the mesh
-    mesh->triangles.num = alphaShapeOptions.n_boundaryFacets;
-    // if (mesh->triangles.num != mesh->triangles.size){
-    hxtAlignedRealloc(&mesh->triangles.node, sizeof(uint32_t) * mesh->triangles.num * 3);
-    hxtAlignedRealloc(&mesh->triangles.color, sizeof(uint32_t) * mesh->triangles.num);
-    mesh->triangles.size = mesh->triangles.num;
+    hxtMeshWriteGmsh(mesh, "afterOptimisation.msh");
+    printf("wrote mesh after second alpha shape\n");
+    // WHY AM I DOING A NEW ALPHA SHAPE HERE ?
+    // hxtAlphaShape(mesh, &delOptions, &alphaShapeOptions);
+    // // hxtMeshWriteGmsh(mesh, "alphaShape2.msh");
+    // // printf("wrote mesh after second alpha shape\n");
+    // // Add alpha shape facets into the mesh
+    // mesh->triangles.num = alphaShapeOptions.n_boundaryFacets;
+    // // if (mesh->triangles.num != mesh->triangles.size){
+    // hxtAlignedRealloc(&mesh->triangles.node, sizeof(uint32_t) * mesh->triangles.num * 3);
+    // hxtAlignedRealloc(&mesh->triangles.color, sizeof(uint32_t) * mesh->triangles.num);
+    // mesh->triangles.size = mesh->triangles.num;
+    // // }
+    // for (int i=0; i<alphaShapeOptions.n_boundaryFacets; i++){
+    //   mesh->triangles.node[3*i+0] = alphaShapeOptions.boundaryFacets[3*i+0];
+    //   mesh->triangles.node[3*i+1] = alphaShapeOptions.boundaryFacets[3*i+1];
+    //   mesh->triangles.node[3*i+2] = alphaShapeOptions.boundaryFacets[3*i+2];
+    //   mesh->triangles.color[i] = alphaShapeOptions.colorBoundary;
     // }
-    for (int i=0; i<alphaShapeOptions.n_boundaryFacets; i++){
-      mesh->triangles.node[3*i+0] = alphaShapeOptions.boundaryFacets[3*i+0];
-      mesh->triangles.node[3*i+1] = alphaShapeOptions.boundaryFacets[3*i+1];
-      mesh->triangles.node[3*i+2] = alphaShapeOptions.boundaryFacets[3*i+2];
-      mesh->triangles.color[i] = alphaShapeOptions.colorBoundary;
-    }
 
     // hxtMeshWriteGmsh(mesh, "alphaShapeMesh.msh");
     // printf("optimized mesh \n");
@@ -438,7 +455,6 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
   gmsh::model::mesh::addNodes(3, alphaShapeTags[0], nodeTags, coords);
   gmsh::model::mesh::addElementsByType(alphaShapeTags[1], 2, alphaTriTags, alphaTriNodeTags);
   gmsh::model::mesh::addElementsByType(alphaShapeTags[0],  4, alphaTetTags, alphaTetNodeTags);
-  
   hxtMeshDelete(&mesh);
 }
 

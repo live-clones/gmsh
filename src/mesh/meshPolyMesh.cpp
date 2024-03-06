@@ -415,7 +415,6 @@ void PolyMesh::computeNormalsAndCentersOfGravity(
   }
 }
 
-// TOOOOOOOO DOOOOOOOOOO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 int PolyMesh::decimateOneNode(Vertex * v,
                               double thresholdDistance,
                               std::map<Vertex *, SVector3> *cogs,
@@ -430,7 +429,7 @@ int PolyMesh::decimateOneNode(Vertex * v,
   std::vector<Vertex *> neigh;
   bool onBoundary = false;
   vertexNeighbors(v, &neigh, &onBoundary);
-
+  // printf("on boundary ? %d, no neighs ? %d \n",onBoundary, neigh.empty());
   if (onBoundary)return 0;
   if (neigh.empty())return 0;
 
@@ -457,7 +456,7 @@ int PolyMesh::decimateOneNode(Vertex * v,
     nrm.normalize();
   }
   double d = fabs(dot(nrm, v->position - cog));
-
+  // printf("d : %f, threshold : %f ; d > theshold ? %d \n",d,thresholdDistance, d>thresholdDistance);
   if(d > thresholdDistance) return 0;
   std::stack<std::vector<Vertex *>> loops;
   std::vector<std::vector<Vertex *>> triangles;
@@ -547,7 +546,8 @@ int PolyMesh::decimateOneNode(Vertex * v,
       }
     }
   }
-
+  // if (remove_vertex == false) printf("pattern to remove impossible \n");
+  
   // impossible to unrefine that pattern so continue
 
   if (!remove_vertex)return 0;
@@ -559,16 +559,20 @@ int PolyMesh::decimateOneNode(Vertex * v,
   //      sprintf(name,"x%d.pos",v->data);
   //      print__ (name, this, nothing);
   //    }
-  
+  int removed = 0;
   if (deleteVertexAndRemeshCavity2 (v,triangles)){
+    // printf("deleted node ! \n");
     //      printf("%d remeshed with %lu triangles\n",v->data,triangles.size());
     v->he = nullptr;
-    // printf("removed! %d\n", v->data);
+    removed = 1;
     // if(nbProcessed % 100000 == 0) {
     //   Msg::Info("vertex %ld / %lu -- %lu processed -- %lu removed\n", v->data,
     //             vertices.size(), nbProcessed, nbRemove);
     // }
   }
+  // else {
+  //   // printf("could not delete node ! \n");
+  // }
   //    if (triangles.size() == 2)printf("%d remeshing with %lu triangles
   //    done\n",v->data,triangles.size());
 
@@ -597,7 +601,7 @@ int PolyMesh::decimateOneNode(Vertex * v,
     faces = new_faces;
   }
 
-  return 1;
+  return removed;
 }
 
 
