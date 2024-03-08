@@ -272,8 +272,8 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
       .array = NULL,
       .callback = gmsh2hxtCallback, 
       .userData = (void*)&sizeFieldCallback,
-      .callback = NULL, 
-      .userData = NULL,
+      // .callback = NULL, 
+      // .userData = NULL,
       // .min = .2*.04, 
       // .max = ,  
       .factor = 1.,
@@ -306,7 +306,7 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
       .boundaryFacets = NULL,    
   };
   
-  hxtMeshWriteGmsh(mesh, "convexHullMesh.msh");
+  // hxtMeshWriteGmsh(mesh, "convexHullMesh.msh");
   hxtAlphaShape(mesh, &delOptions, &alphaShapeOptions);
 
 
@@ -328,7 +328,7 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
     mesh->triangles.node[3*i+2] = alphaShapeOptions.boundaryFacets[3*i+2];
     mesh->triangles.color[i] = alphaShapeOptions.colorBoundary;
   }
-  hxtMeshWriteGmsh(mesh, "alphaShapeMesh.msh");
+  // hxtMeshWriteGmsh(mesh, "alphaShapeMesh.msh");
 
   if (refine == 1){
 
@@ -336,7 +336,7 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
 
     // printf("done with surface triangulation refinement\n");
     
-    hxtMeshWriteGmsh(mesh, "afterSurfaceRefinement.msh");
+    // hxtMeshWriteGmsh(mesh, "afterSurfaceRefinement.msh");
     
     
     delOptions.nodalSizes->enabled = 1;
@@ -353,7 +353,7 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
       }
     }
     hxtRefineTetrahedra(mesh, &delOptions);
-    hxtMeshWriteGmsh(mesh, "afterNodeInsertion.msh");
+    // hxtMeshWriteGmsh(mesh, "afterNodeInsertion.msh");
     // printf("wrote mesh after node insertion\n");
     HXTOptimizeOptions optOptions = {
       .bbox = &bbox, 
@@ -373,8 +373,8 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
       }
     }
     hxtOptimizeTetrahedra(mesh, &optOptions);
-    hxtMeshWriteGmsh(mesh, "afterOptimisation.msh");
-    printf("wrote mesh after second alpha shape\n");
+    // hxtMeshWriteGmsh(mesh, "afterOptimisation.msh");
+    // printf("wrote mesh after second alpha shape\n");
     // WHY AM I DOING A NEW ALPHA SHAPE HERE ?
     // hxtAlphaShape(mesh, &delOptions, &alphaShapeOptions);
     // // hxtMeshWriteGmsh(mesh, "alphaShape2.msh");
@@ -429,9 +429,14 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
         alphaTriNodeTags.push_back(it->second);
     }
   }
-  for (int i=0; i<alphaShapeOptions.n_tetrahedra; i++){
-    alphaTetTags.push_back(i+1);
-    uint64_t tetIndex = alphaShapeOptions.tetrahedra[i];
+  // for (int i=0; i<alphaShapeOptions.n_tetrahedra; i++){
+  size_t tetTag = 1;
+  for (int i=0; i<mesh->tetrahedra.num; i++){
+    uint32_t myColor = mesh->tetrahedra.color[i];
+    if (myColor == HXT_COLOR_OUT) continue;
+    alphaTetTags.push_back(tetTag++);
+    // uint64_t tetIndex = alphaShapeOptions.tetrahedra[i];
+    uint64_t tetIndex = i;
     for (int j=0; j<4; j++){
       size_t nodeIndex = mesh->tetrahedra.node[4*tetIndex+j];
       auto it = i2g.find(nodeIndex);
@@ -2131,7 +2136,7 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
     nodeTagsInMesh[i] = v->getNum();
   }
   PolyMesh *pm = new PolyMesh;
-
+  printf("here \n");
   if (triangulate){
     SBoundingBox3d bb;
     for(size_t i = 0; i < coordsInMesh.size(); i += 2) {
@@ -2559,7 +2564,9 @@ PolyMesh::HalfEdge* getNextEdgeOnBoundary(PolyMesh::HalfEdge* he, const int bndT
   return nullptr;
 }
 
-void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags, const std::vector<int> & boundaryTags, 
+void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags, 
+                                  const std::vector<int> & boundaryTags, 
+                                  // const std::vector<int> & externalBoundaryTags,
                                   std::function<double(int, int, double, double, double, double)> sizeFieldCallback){
   // printf("starting conforming \n");
   // 1. create polymesh
@@ -2709,7 +2716,7 @@ void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags, const
   }
   PolyMeshDebugCheck(pm);
   // print4debug(pm, 4);
-  PolyMeshDebugCheck(pm);
+  // PolyMeshDebugCheck(pm);
   std::vector<PolyMesh::HalfEdge *> _touched;
   _delaunayCheck(pm, pm->hedges, &_touched, alphaShapeTags[1]);
   // print4debug(pm, 5);
