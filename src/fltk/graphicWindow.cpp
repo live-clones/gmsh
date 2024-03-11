@@ -2448,7 +2448,9 @@ static void mesh_cross_compute_cb(Fl_Widget *w, void *data)
 static void mesh_refine_cb(Fl_Widget *w, void *data)
 {
   GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear,
-                                CTX::instance()->mesh.algoSubdivide);
+                                CTX::instance()->mesh.algoSubdivide == 1,
+                                CTX::instance()->mesh.algoSubdivide == 2,
+                                CTX::instance()->mesh.algoSubdivide == 3);
   drawContext::global()->draw();
   FlGui::instance()->updateStatistics();
 }
