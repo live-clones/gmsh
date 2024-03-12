@@ -517,24 +517,16 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(
           continue;
 
         // Flip 2D elements in the correct orientation
-        if (3 <= np && np <= 4) {
-          double v1[3] = {x[n[2]] - x[n[0]], y[n[2]] - y[n[0]], z[n[2]] - z[n[0]]};
-          double v2[3] = {x[n[1]] - x[n[0]], y[n[1]] - y[n[0]], z[n[1]] - z[n[0]]};
-          double w1[3] = {xp[2] - xp[0], yp[2] - yp[0], zp[2] - zp[0]};
-          double w2[3] = {xp[1] - xp[0], yp[1] - yp[0], zp[1] - zp[0]};
-          double normal[3], mormal[3];
-          prodve(v1, v2, normal);
-          prodve(w1, w2, mormal);
-          if (prosca(normal, mormal) < 0) {
-            double xpi[12], ypi[12], zpi[12], valpi[12][9];
-            int epi[12];
-            for(int k = 0; k < np; k++)
-              affect(xpi, ypi, zpi, valpi, epi, k, xp, yp, zp, valp, ep, k,
-                    numComp);
-            for(int k = 0; k < np; k++)
-              affect(xp, yp, zp, valp, ep, k, xpi, ypi, zpi, valpi, epi,
-                    np - k - 1, numComp);
-          }
+        if ((np == 3 && levels[n[0]]*levels[n[2]] > 0) ||
+            (np == 4 && levels[n[0]]*levels[n[2]] < 0)) {
+          double xpi[12], ypi[12], zpi[12], valpi[12][9];
+          int epi[12];
+          for(int k = 0; k < np; k++)
+            affect(xpi, ypi, zpi, valpi, epi, k, xp, yp, zp, valp, ep, k,
+                  numComp);
+          for(int k = 0; k < np; k++)
+            affect(xp, yp, zp, valp, ep, k, xpi, ypi, zpi, valpi, epi,
+                  np - k - 1, numComp);
         }
       }
 
