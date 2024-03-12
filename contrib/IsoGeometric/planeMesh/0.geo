@@ -1,7 +1,7 @@
 // 0 shape geometry
-dL = 5;
-dl = 3;
-p = .3;
+dL = 30;
+dl = 16;
+p = 1;
 
 Point(1) = {0., dL, 0, p};
 Point(2) = {0., -dL, 0, p};

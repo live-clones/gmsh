@@ -1,7 +1,7 @@
 // C shape geometry
-dL = 5;
-dl = 2;
-p = .2;
+dL = 20;
+dl = 8;
+p = 1;
 
 Point(1) = {0., -dL, 0, p};
 Point(2) = {0., -dl, 0, p};

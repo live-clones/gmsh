@@ -209,5 +209,7 @@ target_link_libraries(construct ${EXTRA_LIBS})
 
 # Solver
 add_executable(poisson mainPoisson.cpp ${EXTRA_INCS})
+add_executable(elasticity mainElasticity.cpp ${EXTRA_INCS})
 
 target_link_libraries(poisson ${EXTRA_LIBS})
+target_link_libraries(elasticity ${EXTRA_LIBS})

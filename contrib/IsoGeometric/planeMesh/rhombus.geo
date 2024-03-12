@@ -1,7 +1,7 @@
 // Rhombus shape geometry
-dx = 10;
+dx = 20;
 dy = dx/2;
-p = .5;
+p = 1;
 
 Point(1) = {-dx, 0, 0, p};
 Point(2) = {0, -dy, 0, p};

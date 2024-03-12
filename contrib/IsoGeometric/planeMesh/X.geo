@@ -1,11 +1,11 @@
 // X shape geometry
-dx = 6;
-dy = 5;
+dx = 30;
+dy = 25;
 p = 1;
 
 Point(1) = {-dx, -dy, 0, p};
 Point(2) = {+dx, -dy, 0, p};
-Point(3) = {+dx, +dy, 0, p/10};
+Point(3) = {+dx, +dy, 0, p};
 Point(4) = {-dx, +dy, 0, p};
 
 Point(5) = {+dx, 0, 0, p};

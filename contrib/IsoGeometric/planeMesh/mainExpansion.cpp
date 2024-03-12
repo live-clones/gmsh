@@ -299,9 +299,10 @@ int main(int argc, char* argv[]) {
   int div = 10;
   int opt = 0;
   int smoothing = 3;
+  int func = 1;
   double gravity = 1;
   double ratio = 1.;
-  double clscale = 50; //64;
+  double clscale = 100; //64;
   double clrefine = 1.;
   int refineOption = 0;
   bool swap = false;
@@ -321,6 +322,9 @@ int main(int argc, char* argv[]) {
       continue;
     } else if (std::string(argv[i]) == "-s" && i + 1 < argc) {
       smoothing = std::stoi(argv[++i]);
+      continue;
+    } else if (std::string(argv[i]) == "-func" && i + 1 < argc) {
+      func = std::stoi(argv[++i]);
       continue;
     } else if (std::string(argv[i]) == "-g" && i + 1 < argc) {
       gravity = std::stod(argv[++i]);
@@ -474,14 +478,54 @@ int main(int argc, char* argv[]) {
       if (max < d)
 	max = d;
     }
+
+    // gmsh::view::add("Distance", 1);
+    // std::string currentModel;
+    // gmsh::model::getCurrent(currentModel);
+    // gmsh::view::addHomogeneousModelData(1, 0, currentModel, "NodeData", nodeTags, u);
+
     for (size_t i = 0; i < nodes.size(); ++i) {
-      u[i] /= max;
-    }
-    for (size_t i = 0; i < nodes.size(); ++i) {
-      // u[i] = sqrt(u[i]);
-      u[i] = sin(acos(u[i]-1));
+      double BLength = 5;
+      
+      if (func == 0) {
+	u[i] = sqrt(u[i]/max);
+	u[i] *= max;
+      }
+      else if (func == 1) {
+	u[i] = sin(acos(u[i]/max - 1));
+	u[i] *= max;
+      }
+      else if (func == 2) {
+	if (u[i] > BLength)
+	  u[i] = BLength;
+	u[i] = sin(acos(u[i]/BLength - 1));
+	u[i] *= BLength;
+      }
+      else if (func == 3) {
+	double h = 1;
+	double a = h/10;
+	double b = 1.2;
+	double H = (h-a)/log(b);
 	
-      u[i] *= max;
+	double omega = a / h;
+	omega *= omega;
+	omega = sqrt(1 - omega);
+	double f = h/log(b) * (atanh(omega) - omega);
+	double rho = 2;
+	double factor = rho * f;
+
+	if (u[i] > H)
+	  u[i] = H;
+      
+	omega = (a + u[i] * log(b)) / h;
+	omega *= omega;
+	omega = sqrt(1 - omega);
+	f = h/log(b) * (atanh(omega) - omega);
+	rho = 2 - sqrt(u[i]/H);
+	// u[i] = rho * f;
+	u[i] = rho * f * H / factor;
+      }
+
       u[i] *= ratio;
     }
     

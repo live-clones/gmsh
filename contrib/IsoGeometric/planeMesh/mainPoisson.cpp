@@ -15,13 +15,13 @@ int main(int argc, char **argv)
 {
   GmshFem gmshFem(argc, argv);
 
-  std::string fname = "0polyfit4";
+  std::string fname = "./0polyfit4.msh";
   gmshFem.userDefinedParameter(fname, "f");
 
   int order = std::stoi(fname.substr(fname.find("polyfit") + 7));
   std::string gauss = "Gauss" + std::to_string(2 * order + 1);
     
-  gmsh::open("./"+fname+".msh");
+  gmsh::open(fname);
 
   Formulation< double > formulation("Poisson");
 

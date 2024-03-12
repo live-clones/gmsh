@@ -1,7 +1,7 @@
 // Square shape geometry
-dx = 5;
+dx = 10;
 dy = dx;
-p = .5;
+p = 1;
 
 Point(1) = {-dx, -dy, 0, p};
 Point(2) = {+dx, -dy, 0, p};
@@ -38,4 +38,6 @@ Physical Point("end_4") = {4};
 
 Physical Point("vertices") = {1,2,3,4};
 Physical Curve("edges") = {1,2,3,4};
+Physical Curve("bottom") = {1};
+Physical Curve("top") = {3};
 Physical Surface("surface") = {1};
