@@ -336,7 +336,10 @@ kernel's own API.  In the same philosophy, models can be imported in the
 geometry module through each CAD kernel's own import mechanisms. For
 example, by default Gmsh imports STEP and IGES files through
 OpenCASCADE, which will lead to the creation of model entities with an
-internal OpenCASCADE representation.
+internal OpenCASCADE representation. Models represented with the
+built-in CAD kernel can be serialized to disk by exporting them as
+@file{.geo_unrolled} files, while models contructed with the OpenCASCADE
+kernel can be serialized as @file{.brep} or @file{.xao} files.
 
 The @ref{Gmsh tutorial}, starting with @ref{t1}, is the best place to
 learn how to use the geometry module: it contains examples of increasing
