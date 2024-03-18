@@ -15672,7 +15672,7 @@ module gmsh
     do i = 1_c_size_t, n
         iend = int(dims(i))
         call c_f_pointer(ptrs(i), v_, [iend])
-        v(istart:iend) = v_
+        v(istart:istart + iend - 1) = v_
         istart = istart + iend
     end do
     do i = 1_c_size_t, n
@@ -15699,7 +15699,7 @@ module gmsh
     do i = 1_c_size_t, n
         iend = int(dims(i))
         call c_f_pointer(ptrs(i), v_, [iend])
-        v(istart:iend) = v_
+        v(istart:istart + iend - 1) = v_
         istart = istart + iend
     end do
     do i = 1_c_size_t, n
@@ -15726,7 +15726,7 @@ module gmsh
     do i = 1_c_size_t, n
         iend = int(dims(i))
         call c_f_pointer(ptrs(i), v_, [iend])
-        v(istart:iend) = v_
+        v(istart:istart + iend - 1) = v_
         istart = istart + iend
     end do
     do i = 1_c_size_t, n
@@ -15753,7 +15753,7 @@ module gmsh
     do i = 1_c_size_t, n
         iend = int(dims(i)/2)
         call c_f_pointer(ptrs(i), v_, [2_c_size_t, iend])
-        v(:,istart:iend) = v_
+        v(:,istart:istart + iend - 1) = v_
         istart = istart + iend
     end do
     do i = 1_c_size_t, n
