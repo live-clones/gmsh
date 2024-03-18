@@ -131,10 +131,10 @@ public:
   MElement *const *getStartElementType(int type) const;
 
   // get the element at the given index
-  MElement *getMeshElement(std::size_t index) const;
+  MElement *getMeshElement(std::size_t index) const override;
   // get the element at the given index for a given familyType
   MElement *getMeshElementByType(const int familyType,
-                                 const std::size_t index) const;
+                                 const std::size_t index) const override;
 
   // reset the mesh attributes to default values
   virtual void resetMeshAttributes();
