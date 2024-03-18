@@ -6925,29 +6925,28 @@ GMSH_API void gmsh::model::occ::chamfer(const std::vector<int> &volumeTags,
     volumeTags, curveTags, surfaceTags, distances, outDimTags, removeVolume);
 }
 
-GMSH_API void gmsh::model::occ::fillet2D(const int edgeTag1,
+GMSH_API int gmsh::model::occ::fillet2D(const int edgeTag1,
                                         const int edgeTag2, 
-                                        double radius,
-                                        vectorpair &outDimTags)
+                                        const double radius, const int tag)
 {
-  if(!_checkInit()) return;
+  if(!_checkInit()) return -1;
   _createOcc();
-  outDimTags.clear();
-  GModel::current()->getOCCInternals()->fillet2D(edgeTag1, edgeTag2, radius,
-                                               outDimTags);
+  int outTag = tag;  
+  GModel::current()->getOCCInternals()->fillet2D(outTag, edgeTag1, edgeTag2, radius);
+  return outTag;
 }
 
-GMSH_API void gmsh::model::occ::chamfer2D(const int edgeTag1,
+GMSH_API int gmsh::model::occ::chamfer2D(const int edgeTag1,
                                           const int edgeTag2,
-                                          double distance1,
-                                          double distance2,
-                                          vectorpair &outDimTags)
+                                          const double distance1,
+                                          const double distance2, const int tag)
 {
-  if(!_checkInit()) return;
+  if(!_checkInit()) return -1;
   _createOcc();
-  outDimTags.clear();
-  GModel::current()->getOCCInternals()->chamfer2D(edgeTag1, edgeTag2, distance1,
-                                                  distance2, outDimTags);
+  int outTag = tag;  
+  GModel::current()->getOCCInternals()->chamfer2D(outTag, edgeTag1, edgeTag2, distance1,
+                                                  distance2);
+  return outTag;
 }
 
 GMSH_API void gmsh::model::occ::offsetCurve( const int curveLoopTag, 

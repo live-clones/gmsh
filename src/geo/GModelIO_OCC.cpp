@@ -95,6 +95,7 @@
 #include <HeaderSection_FileDescription.hxx>
 #include <HeaderSection_FileSchema.hxx>
 #include <APIHeaderSection_MakeHeader.hxx>
+#include <ShapeAnalysis_Edge.hxx>
 #include <ShapeBuild_ReShape.hxx>
 #include <ShapeExtend_WireData.hxx>
 #include <ShapeFix_FixSmallFace.hxx>
@@ -3514,10 +3515,15 @@ bool OCC_Internals::chamfer(const std::vector<int> &volumeTags,
                  removeVolume);
 }
 
-bool OCC_Internals::fillet2D(const int edgeTag1, const int edgeTag2,
-                             double radius,
-                             std::vector<std::pair<int, int>> &outDimTags)
+bool OCC_Internals::fillet2D(int &tag, const int edgeTag1, const int edgeTag2,
+                             double radius)
 {
+  
+  if(tag >= 0 && _tagEdge.IsBound(tag)) {
+    Msg::Error("OpenCASCADE curve with tag %d already exists", tag);
+    return false;
+  }
+
   if(!_tagEdge.IsBound(edgeTag1)) {
     Msg::Error("Unknown OpenCASCADE curve with tag %d", edgeTag1);
     return false;
@@ -3530,14 +3536,52 @@ bool OCC_Internals::fillet2D(const int edgeTag1, const int edgeTag2,
   }
   TopoDS_Edge ed2 = TopoDS::Edge(_tagEdge.Find(edgeTag2));
 
-  gp_Pln p;
+  BRepBuilderAPI_MakeWire w;
+  TopoDS_Wire wire;
+  w.Add(ed1);
+  w.Add(ed2);
+  w.Build();
+  if(!w.IsDone()) {
+    Msg::Error("Could not create temporary wire from given edges. Are edges connected?");
+    return false;
+  }
+  wire = w.Wire();
+
+  TopoDS_Face face;
+  BRepBuilderAPI_MakeFace mf(wire);
+
+  mf.Build();
+  if(!mf.IsDone()) {
+    Msg::Error("Could not create temporary face from given edges. Are edges planar?");
+    return false;
+  }
+  face = mf.Face();
+  if(CTX::instance()->geom.occAutoFix) {
+    // make sure wires are oriented correctly
+    ShapeFix_Face fix(face);
+    fix.Perform();
+    face = fix.Face();
+  }
+
+  Handle(Geom_Surface) gSurface = BRep_Tool::Surface(face);
+	Handle(Geom_ElementarySurface) aElementarySurface = Handle(Geom_ElementarySurface)::DownCast(gSurface);
+	gp_Dir normal = aElementarySurface->Axis().Direction();
+	if (face.Orientation() == TopAbs_REVERSED)
+	{
+    normal = -normal;
+  }
+
+  TopoDS_Vertex v1 = ShapeAnalysis_Edge().FirstVertex(ed1);
+  gp_Pnt point = BRep_Tool().Pnt(v1);
+
+  gp_Pln p(point, normal);
 
   ChFi2d_FilletAPI f(ed1, ed2, p);
   if(!f.Perform(radius)) {
     Msg::Error("Could not compute fillet");
     return false;
   }
-  gp_Pnt point;
+ 
   TopoDS_Edge filletEd = f.Result(point, ed1, ed2, -1);
 
   _unbind(_find(1, edgeTag1), 1, edgeTag1, true);
@@ -3546,18 +3590,20 @@ bool OCC_Internals::fillet2D(const int edgeTag1, const int edgeTag2,
   _bind(ed1, edgeTag1, true);
   _bind(ed2, edgeTag2, true);
 
-  outDimTags.push_back(std::make_pair(1, edgeTag1));
-  outDimTags.push_back(std::make_pair(1, edgeTag2));
-
-  _multiBind(filletEd, -1, outDimTags, true, true);
+  if(tag < 0) tag = getMaxTag(1) + 1;
+  _bind(filletEd, tag, true);
 
   return true;
 }
 
-bool OCC_Internals::chamfer2D(const int edgeTag1, const int edgeTag2,
-                              double distance1, double distance2,
-                              std::vector<std::pair<int, int>> &outDimTags)
+bool OCC_Internals::chamfer2D(int &tag, const int edgeTag1, const int edgeTag2,
+                              double distance1, double distance2)
 {
+  if(tag >= 0 && _tagEdge.IsBound(tag)) {
+    Msg::Error("OpenCASCADE curve with tag %d already exists", tag);
+    return false;
+  }
+  
   if(!_tagEdge.IsBound(edgeTag1)) {
     Msg::Error("Unknown OpenCASCADE curve with tag %d", edgeTag1);
     return false;
@@ -3585,10 +3631,8 @@ bool OCC_Internals::chamfer2D(const int edgeTag1, const int edgeTag2,
   _bind(ed1, edgeTag1, true);
   _bind(ed2, edgeTag2, true);
 
-  outDimTags.push_back(std::make_pair(1, edgeTag1));
-  outDimTags.push_back(std::make_pair(1, edgeTag2));
-
-  _multiBind(chamferEd, -1, outDimTags, true, true);
+  if(tag < 0) tag = getMaxTag(1) + 1;
+  _bind(chamferEd, tag, true);
 
   return true;
 }
