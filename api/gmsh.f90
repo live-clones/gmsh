@@ -11604,93 +11604,84 @@ module gmsh
   end subroutine gmshModelOccChamfer
 
   !> Create a fillet edge between edges `edgeTag1' and `edgeTag2' with radius
-  !! `radius'. Return the modified edges and the filleted edge in `outDimTags'
-  !! as a vector of (dim, tag) pairs.
-  subroutine gmshModelOccFillet2D(edgeTag1, &
-                                  edgeTag2, &
-                                  radius, &
-                                  outDimTags, &
-                                  ierr)
+  !! `radius'. The modifed edges keep their tag. If `tag' is positive, set the
+  !! tag explicitly; otherwise a new tag is selected automatically.
+  function gmshModelOccFillet2D(edgeTag1, &
+                                edgeTag2, &
+                                radius, &
+                                tag, &
+                                ierr)
     interface
-    subroutine C_API(edgeTag1, &
-                     edgeTag2, &
-                     radius, &
-                     api_outDimTags_, &
-                     api_outDimTags_n_, &
-                     ierr_) &
+    function C_API(edgeTag1, &
+                   edgeTag2, &
+                   radius, &
+                   tag, &
+                   ierr_) &
       bind(C, name="gmshModelOccFillet2D")
       use, intrinsic :: iso_c_binding
+      integer(c_int) :: C_API
       integer(c_int), value, intent(in) :: edgeTag1
       integer(c_int), value, intent(in) :: edgeTag2
       real(c_double), value, intent(in) :: radius
-      type(c_ptr), intent(out) :: api_outDimTags_
-      integer(c_size_t), intent(out) :: api_outDimTags_n_
+      integer(c_int), value, intent(in) :: tag
       integer(c_int), intent(out), optional :: ierr_
-    end subroutine C_API
+    end function C_API
     end interface
+    integer(c_int) :: gmshModelOccFillet2D
     integer, intent(in) :: edgeTag1
     integer, intent(in) :: edgeTag2
     real(c_double), intent(in) :: radius
-    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
+    integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    type(c_ptr) :: api_outDimTags_
-    integer(c_size_t) :: api_outDimTags_n_
-    call C_API(edgeTag1=int(edgeTag1, c_int), &
-         edgeTag2=int(edgeTag2, c_int), &
-         radius=real(radius, c_double), &
-         api_outDimTags_=api_outDimTags_, &
-         api_outDimTags_n_=api_outDimTags_n_, &
-         ierr_=ierr)
-    outDimTags = ovectorpair_(api_outDimTags_, &
-      api_outDimTags_n_)
-  end subroutine gmshModelOccFillet2D
+    gmshModelOccFillet2D = C_API(edgeTag1=int(edgeTag1, c_int), &
+                           edgeTag2=int(edgeTag2, c_int), &
+                           radius=real(radius, c_double), &
+                           tag=optval_c_int(-1, tag), &
+                           ierr_=ierr)
+  end function gmshModelOccFillet2D
 
   !> Create a chamfer edge between edges `edgeTag1' and `edgeTag2' with
-  !! distance1 `distance1' and distance2 `distance2'. Return the modified edges
-  !! and the chamfered edge in `outDimTags' as a vector of (dim, tag) pairs.
-  subroutine gmshModelOccChamfer2D(edgeTag1, &
-                                   edgeTag2, &
-                                   distance1, &
-                                   distance2, &
-                                   outDimTags, &
-                                   ierr)
+  !! distance1 `distance1' and distance2 `distance2'. The modifed edges keep
+  !! their tag. If `tag' is positive, set the tag explicitly; otherwise a new
+  !! tag is selected automatically.
+  function gmshModelOccChamfer2D(edgeTag1, &
+                                 edgeTag2, &
+                                 distance1, &
+                                 distance2, &
+                                 tag, &
+                                 ierr)
     interface
-    subroutine C_API(edgeTag1, &
-                     edgeTag2, &
-                     distance1, &
-                     distance2, &
-                     api_outDimTags_, &
-                     api_outDimTags_n_, &
-                     ierr_) &
+    function C_API(edgeTag1, &
+                   edgeTag2, &
+                   distance1, &
+                   distance2, &
+                   tag, &
+                   ierr_) &
       bind(C, name="gmshModelOccChamfer2D")
       use, intrinsic :: iso_c_binding
+      integer(c_int) :: C_API
       integer(c_int), value, intent(in) :: edgeTag1
       integer(c_int), value, intent(in) :: edgeTag2
       real(c_double), value, intent(in) :: distance1
       real(c_double), value, intent(in) :: distance2
-      type(c_ptr), intent(out) :: api_outDimTags_
-      integer(c_size_t), intent(out) :: api_outDimTags_n_
+      integer(c_int), value, intent(in) :: tag
       integer(c_int), intent(out), optional :: ierr_
-    end subroutine C_API
+    end function C_API
     end interface
+    integer(c_int) :: gmshModelOccChamfer2D
     integer, intent(in) :: edgeTag1
     integer, intent(in) :: edgeTag2
     real(c_double), intent(in) :: distance1
     real(c_double), intent(in) :: distance2
-    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
+    integer, intent(in), optional :: tag
     integer(c_int), intent(out), optional :: ierr
-    type(c_ptr) :: api_outDimTags_
-    integer(c_size_t) :: api_outDimTags_n_
-    call C_API(edgeTag1=int(edgeTag1, c_int), &
-         edgeTag2=int(edgeTag2, c_int), &
-         distance1=real(distance1, c_double), &
-         distance2=real(distance2, c_double), &
-         api_outDimTags_=api_outDimTags_, &
-         api_outDimTags_n_=api_outDimTags_n_, &
-         ierr_=ierr)
-    outDimTags = ovectorpair_(api_outDimTags_, &
-      api_outDimTags_n_)
-  end subroutine gmshModelOccChamfer2D
+    gmshModelOccChamfer2D = C_API(edgeTag1=int(edgeTag1, c_int), &
+                            edgeTag2=int(edgeTag2, c_int), &
+                            distance1=real(distance1, c_double), &
+                            distance2=real(distance2, c_double), &
+                            tag=optval_c_int(-1, tag), &
+                            ierr_=ierr)
+  end function gmshModelOccChamfer2D
 
   !> Create an offset curve based on the curve loop `curveLoopTag' with offset
   !! `offset'. Return the curve loop in `outDimTags' as a vector of (dim, tag)
@@ -15672,7 +15663,7 @@ module gmsh
     do i = 1_c_size_t, n
         iend = int(dims(i))
         call c_f_pointer(ptrs(i), v_, [iend])
-        v(istart:iend) = v_
+        v(istart:istart + iend - 1) = v_
         istart = istart + iend
     end do
     do i = 1_c_size_t, n
@@ -15699,7 +15690,7 @@ module gmsh
     do i = 1_c_size_t, n
         iend = int(dims(i))
         call c_f_pointer(ptrs(i), v_, [iend])
-        v(istart:iend) = v_
+        v(istart:istart + iend - 1) = v_
         istart = istart + iend
     end do
     do i = 1_c_size_t, n
@@ -15726,7 +15717,7 @@ module gmsh
     do i = 1_c_size_t, n
         iend = int(dims(i))
         call c_f_pointer(ptrs(i), v_, [iend])
-        v(istart:iend) = v_
+        v(istart:istart + iend - 1) = v_
         istart = istart + iend
     end do
     do i = 1_c_size_t, n
@@ -15753,7 +15744,7 @@ module gmsh
     do i = 1_c_size_t, n
         iend = int(dims(i)/2)
         call c_f_pointer(ptrs(i), v_, [2_c_size_t, iend])
-        v(:,istart:iend) = v_
+        v(:,istart:istart + iend - 1) = v_
         istart = istart + iend
     end do
     do i = 1_c_size_t, n
