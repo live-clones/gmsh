@@ -101,8 +101,8 @@ public:
   };
 
   // get number of elements in the mesh
-  std::size_t getNumMeshElements() const override { return points.size(); }
-  std::size_t getNumMeshElementsByType(const int familyType) const override;
+  std::size_t getNumMeshElements() const { return points.size(); }
+  std::size_t getNumMeshElementsByType(const int familyType) const;
   void getNumMeshElements(unsigned *const c) const;
 
   // get the element at the given index
