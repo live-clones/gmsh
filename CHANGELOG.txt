@@ -1,5 +1,6 @@
 4.13 (Work-in-progress): added support for importing and exporting XAO files;
-new quasi-transfinite 2d meshes (with fans); bug fixes.
+new quasi-transfinite 2d meshes (with fans); revert Crack plugin logic to
+version 4.10.1; bug fixes.
 
 * New API functions: occ/getDistance, occ/fillet2D, occ/chamfer2D,
   occ/offsetCurve, mesh/removeElements, option/restoreDefaults,
