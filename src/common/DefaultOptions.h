@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -72,6 +72,9 @@ StringXString GeneralOptions_String[] = {
     "Set graphics font engine (Native, StringTexture, Cairo)" },
   { F|O, "GraphicsFontTitle" , opt_general_graphics_font_title , "Helvetica" ,
     "Font used in the graphic window for titles" },
+
+  { F|O, "NumberFormat" , opt_general_number_format , "%.3g" ,
+    "Number format (in standard C form)" },
 
   { F|S, "OptionsFileName" , opt_general_options_filename ,
 #if defined(WIN32)
@@ -160,6 +163,36 @@ StringXString GeometryOptions_String[] = {
     "imported by OpenCASCADE, e.g. 'M' for meters (leave empty to use the default "
     "OpenCASCADE behavior); the option should be set before importing the STEP or "
     "IGES file"},
+  { F|O, "OCCSTEPDescription", opt_geometry_occ_step_description, "",
+    "Description of the STEP file to be written by OpenCASCADE. "
+    "If left empty, the default value is set by OpenCASCADE"},
+  { F|O, "OCCSTEPImplementationLevel", opt_geometry_occ_step_implementation_level,
+    "", "Implementation level of the STEP file to be written by OpenCASCADE. "
+    "If left empty, the default value is set by OpenCASCADE"},
+  { F|O, "OCCSTEPModelName", opt_geometry_occ_step_model_name, "",
+    "Model name of the STEP file to be written by OpenCASCADE. "
+    "If left empty, the default value is set by OpenCASCADE"},
+  { F|O, "OCCSTEPTimeStamp", opt_geometry_occ_step_time_stamp, "",
+    "Time stamp for the creation of the STEP file. "
+    "If left empty, the default value is current time."},
+  { F|O, "OCCSTEPAuthor", opt_geometry_occ_step_author, "",
+    "Author of the STEP file to be written by OpenCASCADE. "
+    "If left empty, the default value is set by OpenCASCADE"},
+  { F|O, "OCCSTEPOrganization", opt_geometry_occ_step_organization, "",
+    "Organization of the STEP file to be written by OpenCASCADE. "
+    "If left empty, the default value is set by OpenCASCADE"},
+  { F|O, "OCCSTEPPreprocessorVersion", opt_geometry_occ_step_preprocessor_version,
+    "", "Preprocessor version of the STEP file to be written by OpenCASCADE. "
+    "If left empty, the default value is set by OpenCASCADE"},
+  { F|O, "OCCSTEPOriginatingSystem", opt_geometry_occ_step_originating_system,
+    "", "Originating system of the STEP file to be written by OpenCASCADE. "
+    "If left empty, the default value is set by OpenCASCADE"},
+  { F|O, "OCCSTEPAuthorization", opt_geometry_occ_step_authorization, "",
+    "Authorization of the STEP file to be written by OpenCASCADE. "
+    "If left empty, the default value is set by OpenCASCADE"},
+  { F|O, "OCCSTEPSchemaIdentifier", opt_geometry_occ_step_schema_identifier, "",
+    "Schema identifier of the STEP file to be written by OpenCASCADE. "
+    "If left empty, the default value is set by OpenCASCADE"},
 
   { F|O, "PipeDefaultTrihedron" , opt_geometry_pipe_default_trihedron,
     "DiscreteTrihedron" , "Default trihedron type when creating pipes" },
@@ -308,8 +341,8 @@ StringXString ViewOptions_String[] = {
 
   { F,   "FileName" , opt_view_filename , "" ,
     "Default post-processing view file name" },
-  { F|O, "Format" , opt_view_format , "%.3g" ,
-    "Number format (in standard C form)" },
+  { F|O|D, "Format" , opt_view_number_format , "%.3g" ,
+    "[Deprecated]" },
 
   { F|O, "GeneralizedRaiseX" , opt_view_gen_raise0 , "v0" ,
     "Generalized elevation of the view along X-axis (in model coordinates, "
@@ -325,6 +358,8 @@ StringXString ViewOptions_String[] = {
 
   { F,   "Name" , opt_view_name , "" ,
     "Default post-processing view name" },
+  { F|O, "NumberFormat" , opt_view_number_format , "%.3g" ,
+    "Number format (in standard C form)" },
 
   { F|O, "Stipple0" , opt_view_stipple0 , "1*0x1F1F" ,
     "First stippling pattern" },
@@ -892,6 +927,11 @@ StringXNumber GeometryOptions_Number[] = {
   { F|O, "ExtrudeSplinePoints" , opt_geometry_extrude_spline_points, 5. ,
     "Number of control points for splines created during extrusion" },
 
+  { F|O, "FirstEntityTag" , opt_geometry_first_entity_tag , 1. ,
+    "First tag (>= 1) of entities when creating a model" },
+  { F|O, "FirstPhysicalTag" , opt_geometry_first_physical_tag , 1. ,
+    "First tag (>= 1) of physicall groups when creating a model" },
+
   { F|O, "HighlightOrphans" , opt_geometry_highlight_orphans, 0. ,
     "Highlight orphan and boundary entities?" },
 
@@ -935,6 +975,9 @@ StringXNumber GeometryOptions_Number[] = {
     "Try to preserve the numbering of entities through OpenCASCADE boolean operations" },
   { F|O, "OCCBoundsUseStl" , opt_geometry_occ_bounds_use_stl , 0. ,
     "Use STL mesh for computing bounds of OpenCASCADE shapes (more accurate, but slower)" },
+  { F|O, "OCCBrepFormatVersion" , opt_geometry_occ_brep_format_version , 1. ,
+    "Version of BREP format used when saving BREP and XAO files (0: current, "
+    "1, 2, 3: currently supported versions)" },
   { F|O, "OCCDisableStl" , opt_geometry_occ_disable_stl , 0. ,
     "Disable STL creation in OpenCASCADE kernel" },
   { F|O, "OCCFixDegenerated" , opt_geometry_occ_fix_degenerated , 0. ,
@@ -1214,7 +1257,12 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "HighOrderMaxInnerAngle", opt_mesh_ho_max_in_angle, 3.1415927*30./180.,
     "Maximum angle between edges/faces within layers of BL triangles/tets "
     "for the detection of columns in the fast curving algorithm"},
+  { F|O, "HighOrderSkipQualityCheck", opt_mesh_ho_skip_quality_check, 0.,
+    "Skip element quality check after high-order mesh generation"},
 
+  { F|O, "IgnoreUnknownSections" , opt_mesh_ignore_unknown_sections, 0. ,
+    "Skip unknown sections when reading meshes in the MSH4 format (otherwise the "
+    "contents of these sections are stored as model attributes)"},
   { F|O, "IgnoreParametrization" , opt_mesh_ignore_parametrization, 0. ,
     "Skip parametrization section when reading meshes in the MSH4 format" },
   { F|O, "IgnorePeriodicity" , opt_mesh_ignore_periodicity , 1. ,
@@ -1404,7 +1452,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O|D, "PointType" , opt_mesh_node_type , 0. ,
     "[Deprecated]" },
   { F|O, "PreserveNumberingMsh2" , opt_mesh_preserve_numbering_msh2 , 0. ,
-    "Preserve element numbering in MSH2 format (will break meshes with multiple "
+    "Preserve node and element numbering in MSH2 format (will break meshes with multiple "
     "physical groups for a single elementary entity)"},
   { F|O, "Prisms" , opt_mesh_prisms , 1. ,
     "Display mesh prisms?" },

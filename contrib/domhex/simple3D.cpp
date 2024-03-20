@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -21,6 +21,8 @@
 #include "Context.h"
 #include "rtree.h"
 #include "Field.h"
+#include "Geo.h"
+#include "gmshVertex.h"
 
 #define k1 0.7 // k1*h is the minimal distance between two nodes
 #define k2 0.5 // k2*h is the minimal distance to the boundary
@@ -291,12 +293,10 @@ void Filler::treat_model()
 void Filler::treat_region(GRegion *gr)
 {
   int NumSmooth = CTX::instance()->mesh.smoothCrossField;
-  std::cout << "NumSmooth = " << NumSmooth << std::endl;
   if(NumSmooth && (gr->dim() == 3)) {
     double scale = gr->bounds().diag() * 1e-2;
     Frame_field::initRegion(gr, NumSmooth);
     Frame_field::saveCrossField("cross0.pos", scale);
-
     Frame_field::smoothRegion(gr, NumSmooth);
     Frame_field::saveCrossField("cross1.pos", scale);
   }
@@ -312,19 +312,23 @@ void Filler::treat_region(GRegion *gr)
   deMeshGRegion deleter;
   Wrapper wrapper;
   GFace *gf;
-  std::vector<Node *> garbage;
+  //  std::vector<Node *> garbage;
   std::vector<MVertex *> boundary_vertices;
   std::set<MVertex *>::iterator it;
   std::vector<GFace *>::iterator it2;
   std::map<MVertex *, int>::iterator it3;
   RTree<Node *, double, 3, double> rtree;
-
+  
   Frame_field::init_region(gr);
   Size_field::init_region(gr);
   Size_field::solve(gr);
-
+  /*  {
+    double scale = gr->bounds().diag() * 1e-2;
+    Frame_field::saveCrossField("cross0.pos", scale);
+    }*/
+  
   octree = new MElementOctree(gr->model());
-  garbage.clear();
+  //  garbage.clear();
   boundary_vertices.clear();
   new_vertices.clear();
 
@@ -382,17 +386,21 @@ void Filler::treat_region(GRegion *gr)
     fifo.push(node);
   }
 
+  //  printf("coucou3\n");
+
   count = 1;
   while(!fifo.empty()) {
     parent = fifo.front();
     fifo.pop();
-    garbage.push_back(parent);
+    //    garbage.push_back(parent);
 
     if(parent->get_limit() != -1 &&
        parent->get_layer() >= parent->get_limit()) {
       continue;
     }
 
+    if (count % 1000 == 0)Msg::Info("%d points inserted -- queue size %d",new_vertices.size(), fifo.size());
+    
     std::vector<Node *> spawns(6);
     for(int i = 0; i < 6; i++) {
       spawns[i] = new Node();
@@ -400,6 +408,8 @@ void Filler::treat_region(GRegion *gr)
 
     create_spawns(gr, octree, parent, spawns);
 
+    //    printf("creating 6 spawns\n");
+    
     for(int i = 0; i < 6; i++) {
       ok2 = 0;
       individual = spawns[i];
@@ -409,6 +419,7 @@ void Filler::treat_region(GRegion *gr)
       z = point.z();
 
       if(inside_domain(octree, x, y, z)) {
+	//	printf("%g %g %g inside domain\n",x,y,z);
         compute_parameters(individual, gr);
         individual->set_layer(parent->get_layer() + 1);
         individual->set_limit(parent->get_limit());
@@ -433,27 +444,52 @@ void Filler::treat_region(GRegion *gr)
       if(!ok2) delete individual;
     }
 
-    if(count % 100 == 0) {
-      printf("%d\n", count);
-    }
     count++;
   }
 
   int option = CTX::instance()->mesh.algo3d;
-  CTX::instance()->mesh.algo3d = ALGO_3D_DELAUNAY;
 
   deleter(gr);
-  printf("%d vertices to add\n", (int)new_vertices.size());
+
+  std::vector<GVertex *> old_embedded = gr->embeddedVertices();
+  std::vector<GVertex *> new_embedded;
+  std::vector<Vertex *> new_vertex;
+
+  // Cheat -- create embedded vertices....
+
+  //  printf("coucou4\n");    
+
+
+    FILE *f = fopen("new_points.pos","w");
+    fprintf(f,"View \" \"{\n");
+  
+  for (auto v : new_vertices){
+    Vertex *vv = new Vertex (v->x(),v->y(),v->z());
+    new_vertex.push_back(vv);
+    gmshVertex *newV = new gmshVertex(gr->model(), vv);
+    newV->mesh_vertices.push_back(v);
+    v->setEntity(gr);
+    gr->mesh_vertices.push_back(v);
+    gr->addEmbeddedVertex(newV);
+        fprintf(f,"SP(%g,%g,%g){1,1};\n",v->x(),v->y(),v->z());
+  }
+
+    fprintf(f,"};\n");
+    fclose(f);
+  
   std::vector<GRegion *> regions;
   regions.push_back(gr);
-  meshGRegion mesher(regions); //?
-  mesher(gr); //?
+
   MeshDelaunayVolume(regions);
 
+  gr->embeddedVertices() = old_embedded;
+  
   CTX::instance()->mesh.algo3d = option;
 
-  for(std::size_t i = 0; i < garbage.size(); i++) delete garbage[i];
-  for(std::size_t i = 0; i < new_vertices.size(); i++) delete new_vertices[i];
+  //  for(std::size_t i = 0; i < garbage.size(); i++) delete garbage[i];
+  //  for(std::size_t i = 0; i < new_vertices.size(); i++) delete new_vertices[i];
+  for(std::size_t i = 0; i < new_vertex.size(); i++) delete new_vertex[i];
+  for(std::size_t i = 0; i < new_embedded.size(); i++) {new_embedded[i]->mesh_vertices.clear(); delete new_embedded[i];}
 
   delete octree;
   rtree.RemoveAll();
@@ -556,6 +592,7 @@ bool Filler::inside_domain(MElementOctree *octree, double x, double y, double z)
 
 bool Filler::far_from_boundary(MElementOctree *octree, Node *node)
 {
+  return 1;
   double x, y, z;
   double h;
   SPoint3 point;
@@ -616,7 +653,6 @@ void Filler::create_spawns(GEntity *ge, MElementOctree *octree, Node *node,
   double x5, y5, z5;
   double x6, y6, z6;
   double h;
-  double h1, h2, h3, h4, h5, h6;
   Metric m;
   SPoint3 point;
 
@@ -626,39 +662,41 @@ void Filler::create_spawns(GEntity *ge, MElementOctree *octree, Node *node,
   z = point.z();
   h = node->get_size();
   m = node->get_metric();
+  double h1=h, h2=h, h3=h, h4=h, h5=h, h6=h;
 
-  h1 = improvement(ge, octree, point, h,
-                   SVector3(m.get_m11(), m.get_m21(), m.get_m31()));
+  //  h1 = improvement(ge, octree, point, h,
+  //                   SVector3(m.get_m11(), m.get_m21(), m.get_m31()));
+  
   x1 = x + h1 * m.get_m11();
   y1 = y + h1 * m.get_m21();
   z1 = z + h1 * m.get_m31();
 
-  h2 = improvement(ge, octree, point, h,
-                   SVector3(-m.get_m11(), -m.get_m21(), -m.get_m31()));
+  //  h2 = improvement(ge, octree, point, h,
+  //                   SVector3(-m.get_m11(), -m.get_m21(), -m.get_m31()));
   x2 = x - h2 * m.get_m11();
   y2 = y - h2 * m.get_m21();
   z2 = z - h2 * m.get_m31();
 
-  h3 = improvement(ge, octree, point, h,
-                   SVector3(m.get_m12(), m.get_m22(), m.get_m32()));
+  //  h3 = improvement(ge, octree, point, h,
+  //                   SVector3(m.get_m12(), m.get_m22(), m.get_m32()));
   x3 = x + h3 * m.get_m12();
   y3 = y + h3 * m.get_m22();
   z3 = z + h3 * m.get_m32();
 
-  h4 = improvement(ge, octree, point, h,
-                   SVector3(-m.get_m12(), -m.get_m22(), -m.get_m32()));
+  //  h4 = improvement(ge, octree, point, h,
+  //                   SVector3(-m.get_m12(), -m.get_m22(), -m.get_m32()));
   x4 = x - h4 * m.get_m12();
   y4 = y - h4 * m.get_m22();
   z4 = z - h4 * m.get_m32();
 
-  h5 = improvement(ge, octree, point, h,
-                   SVector3(m.get_m13(), m.get_m23(), m.get_m33()));
+  //  h5 = improvement(ge, octree, point, h,
+  //                   SVector3(m.get_m13(), m.get_m23(), m.get_m33()));
   x5 = x + h5 * m.get_m13();
   y5 = y + h5 * m.get_m23();
   z5 = z + h5 * m.get_m33();
 
-  h6 = improvement(ge, octree, point, h,
-                   SVector3(-m.get_m13(), -m.get_m23(), -m.get_m33()));
+  //  h6 = improvement(ge, octree, point, h,
+  //                   SVector3(-m.get_m13(), -m.get_m23(), -m.get_m33()));
   x6 = x - h6 * m.get_m13();
   y6 = y - h6 * m.get_m23();
   z6 = z - h6 * m.get_m33();

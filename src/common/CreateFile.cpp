@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -89,6 +89,7 @@ int GetFileFormatFromExtension(const std::string &ext, double *version)
   else if(ext == ".ppm")      return FORMAT_PPM;
   else if(ext == ".yuv")      return FORMAT_YUV;
   else if(ext == ".brep")     return FORMAT_BREP;
+  else if(ext == ".xao")      return FORMAT_XAO;
   else if(ext == ".step")     return FORMAT_STEP;
   else if(ext == ".stp")      return FORMAT_STEP;
   else if(ext == ".iges")     return FORMAT_IGES;
@@ -152,6 +153,7 @@ std::string GetDefaultFileExtension(int format, bool onlyMeshFormats)
   case FORMAT_PPM:     name = ".ppm"; break;
   case FORMAT_YUV:     name = ".yuv"; break;
   case FORMAT_BREP:    name = ".brep"; break;
+  case FORMAT_XAO:     name = ".xao"; break;
   case FORMAT_IGES:    name = ".iges"; break;
   case FORMAT_STEP:    name = ".step"; break;
   case FORMAT_NEU:     name = ".neu"; mesh = true; break;
@@ -500,6 +502,13 @@ void CreateOutputFile(const std::string &fileName, int format,
       GModel::current()->writeOCCBREP(name);
     else
       Msg::Error("No OpenCASCADE CAD data found for BREP export");
+    break;
+
+  case FORMAT_XAO:
+    if(GModel::current()->getOCCInternals())
+      GModel::current()->writeOCCXAO(name);
+    else
+      Msg::Error("No OpenCASCADE CAD data found for XAO export");
     break;
 
   case FORMAT_STEP:

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -90,8 +90,7 @@ namespace {
     ossEnt << "_" << ge->tag();
     entityName = model->getElementaryName(ge->dim(), ge->tag());
     if(!entityName.empty()) ossEnt << "_" << entityName;
-    entityName = ossEnt.str();
-    entityName = cgnsString(entityName);
+    entityName = cgnsString(ossEnt.str());
   }
 
 } // anonymous namespace
@@ -651,7 +650,7 @@ int writeGeomEntities(std::map<GEntity *, std::string> &geomEntities,
       if(physName == "") {
         std::ostringstream oss;
         oss << physTag;
-        physName = oss.str();
+        physName = cgnsString(oss.str());
       }
 
       // write to family name

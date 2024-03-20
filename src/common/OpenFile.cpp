@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -367,8 +367,15 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
     status =
       GModel::current()->readSTL(fileName, CTX::instance()->geom.tolerance);
   }
+  else if(ext == ".NII" || ext == ".nii") {
+    status =
+      GModel::current()->readNII(fileName);
+  }
   else if(ext == ".brep" || ext == ".rle" || ext == ".brp" || ext == ".BRP") {
     status = GModel::current()->readOCCBREP(fileName);
+  }
+  else if(ext == ".xao" || ext == ".XAO") {
+    status = GModel::current()->readOCCXAO(fileName);
   }
   else if(ext == ".iges" || ext == ".IGES" || ext == ".igs" || ext == ".IGS") {
     status = GModel::current()->readOCCIGES(fileName);
@@ -416,6 +423,9 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
   }
   else if(ext == ".bdf" || ext == ".BDF" || ext == ".nas" || ext == ".NAS") {
     status = GModel::current()->readBDF(fileName);
+  }
+  else if (ext == ".neu" || ext == ".NEU") {
+    status=GModel::current()->readNEU(fileName);
   }
   else if(ext == ".dat" || ext == ".DAT") {
     if(!strncmp(header, "BEGIN ACTRAN", 12))

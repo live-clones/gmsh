@@ -18,7 +18,7 @@ import sys
 
 gmsh.initialize()
 
-if len(sys.argv) > 1:
+if len(sys.argv) > 1 and sys.argv[1][0] != '-':
     # If an argument is provided, handle it as a file that Gmsh can read, e.g. a
     # mesh file in the MSH format (`python x1.py file.msh')
     gmsh.open(sys.argv[1])

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -312,6 +312,21 @@ public:
                const std::vector<double> &distances,
                std::vector<std::pair<int, int> > &outDimTags,
                bool removeVolume);
+  
+  bool fillet2D(const int edgeTag1,
+                const int edgeTag2, 
+                double radius,
+                std::vector<std::pair<int, int> > &outDimTags);
+
+  bool chamfer2D( const int edgeTag1,
+                  const int edgeTag2,
+                  double distance1,
+                  double distance2,
+                  std::vector<std::pair<int, int> > &outDimTags);
+
+  bool offsetCurve( const int curveLoopTag, 
+                    double offset,
+                    std::vector<std::pair<int, int> > &outDimTags);
 
   // apply boolean operator
   bool booleanOperator(
@@ -414,8 +429,9 @@ public:
   bool getMass(int dim, int tag, double &mass);
   bool getCenterOfMass(int dim, int tag, double &x, double &y, double &z);
   bool getMatrixOfInertia(int dim, int tag, std::vector<double> &mat);
-  double getDistance(int dim1, int tag1,
+  bool getDistance(int dim1, int tag1,
                      int dim2, int tag2,
+                     double &distance,
                      double &x1, double &y1, double &z1,
                      double &x2, double &y2, double &z2);
   GVertex *getVertexForOCCShape(GModel *model, const TopoDS_Vertex &toFind);
@@ -697,6 +713,27 @@ public:
   {
     return _error("create chamfer");
   }
+  bool fillet2D(const int edgeTag1,
+                const int edgeTag2, 
+                double radius,
+                std::vector<std::pair<int, int> > &outDimTags)
+  {
+    return _error("create fillet in 2D");
+  }
+  bool chamfer2D( const int edgeTag1,
+                  const int edgeTag2,
+                  double distance1,
+                  double distance2,
+                  std::vector<std::pair<int, int> > &outDimTags)
+  {
+    return _error("create chamfer in 2D");
+  }
+  bool offsetCurve( const int curveLoopTag, 
+                    double offset,
+                    std::vector<std::pair<int, int> > &outDimTags)
+  {
+    return _error("create offset curve");
+  }
   bool booleanOperator(
     int tag, BooleanOperator op,
     const std::vector<std::pair<int, int> > &objectDimTags,
@@ -844,8 +881,9 @@ public:
   {
     return false;
   }
-  double getDistance(int dim1, int tag1,
+  bool getDistance(int dim1, int tag1,
                      int dim2, int tag2,
+                     double &distance,
                      double &x1, double &y1, double &z1,
                      double &x2, double &y2, double &z2)
   {

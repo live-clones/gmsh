@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -129,7 +129,7 @@ template <class scalar> void linearSystemPETSc<scalar>::preAllocateEntries()
   if(_sparsity.getNbRows() == 0) {
     PetscInt prealloc = 300; // 8*27 = 216 for 8 2nd order hexas
     PetscBool set;
-    PetscOptionsGetInt(PETSC_NULL, "-petsc_prealloc", &prealloc, &set);
+    PetscOptionsGetInt(nullptr, "-petsc_prealloc", &prealloc, &set);
     prealloc = std::min(prealloc, _localSize);
     nByRowDiag.resize(0);
     nByRowDiag.resize(_localSize, prealloc);

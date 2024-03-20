@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -18,6 +18,7 @@
 #include "nodalBasis.h"
 #include "CGNSCommon.h"
 #include "CGNSConventions.h"
+#include "StringUtils.h"
 
 #if defined(HAVE_LIBCGNS)
 
@@ -743,7 +744,20 @@ bool computeReordering(fullMatrix<double> src, fullMatrix<double> dest,
 
 std::string cgnsString(const std::string &s, std::string::size_type maxLength)
 {
+  // From the CGNS documentation: "Names or identifiers contain no spaces and
+  // capitalization is used to distinguish individual words making up a name;
+  // names are case-sensitive. The character "/" should be avoided in names, as
+  // well as the names "." and "..", as these have special meaning when
+  // referencing elements of a structure entity. An entity name cannot exceed 32
+  // characters."
+
   std::string s2(s);
+
+  if(!s2.compare(0, 1, ".")) s2[0] = '_';
+  if(!s2.compare(0, 2, "..")) s2[0] = s2[1] = '_';
+  ReplaceSubStringInPlace("/", "_", s2);
+  ReplaceSubStringInPlace(" ", "_", s2);
+
   if(s2.size() > maxLength) s2.resize(maxLength);
   return s2;
 }

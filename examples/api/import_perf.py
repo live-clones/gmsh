@@ -73,12 +73,12 @@ print("==> imported elements in {} seconds".format(toc - tic))
 
 tic = gmsh.logger.getWallTime()
 gmsh.option.setNumber("Mesh.Binary", 1)
-gmsh.write("import_perf.msh")
+gmsh.write("import_perf_py.msh")
 toc = gmsh.logger.getWallTime()
 print("==> wrote to disk in {} seconds".format(toc - tic))
 
 tic = gmsh.logger.getWallTime()
-gmsh.merge("import_perf.msh")
+gmsh.merge("import_perf_py.msh")
 toc = gmsh.logger.getWallTime()
 print("==> read from disk in {} seconds".format(toc - tic))
 

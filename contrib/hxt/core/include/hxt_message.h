@@ -15,6 +15,7 @@ extern "C" {
 
 #include <stdlib.h>
 #include <stdarg.h>
+#include <stdint.h>
 
 
 /* HEXTREME FUNCTIONS ONLY RETURN A STATUS (except hxtGetMessageString)*/
@@ -106,6 +107,7 @@ typedef enum
   #define HXT_ASSERT(exp)
 #endif
 
+typedef uint32_t HXTIndex;
 
 const char*  hxtGetStatusString(HXTStatus status);
 

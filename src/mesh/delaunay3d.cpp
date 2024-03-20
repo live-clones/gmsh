@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1262,7 +1262,7 @@ void delaunayTriangulation(const int numThreads, const int nptsatonce,
     _temp[v->getNum()] = mv;
   }
 
-  robustPredicates::exactinit(1, maxx, maxy, maxz);
+  robustPredicates::exactinit(maxx, maxy, maxz);
 
   Vert *box[8];
   delaunayTriangulation(numThreads, nptsatonce, _vertices, box, allocator);

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -10,6 +10,7 @@
 #include <iterator>
 #include <limits>
 #include <unordered_map>
+#include <cstring>
 #include "GModel.h"
 #include "OS.h"
 #include "MTriangle.h"
@@ -107,7 +108,7 @@ namespace {
   }
 
   typedef std::pair<unsigned, unsigned> FacePair;
-  typedef hashMap<unsigned, std::vector<FacePair> >::_ IDFaceMap;
+  typedef hashMap<unsigned, std::vector<FacePair>>::_ IDFaceMap;
 
   bool const sortBCs(FacePair const &lhs, FacePair const &rhs)
   {
@@ -134,7 +135,7 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
   unsigned numPyramids = 0;
 
   unsigned lowestId = std::numeric_limits<int>::max();
-  hashMap<unsigned, std::vector<unsigned> >::_ elementGroups;
+  hashMap<unsigned, std::vector<unsigned>>::_ elementGroups;
 
   for(auto it = firstRegion(); it != lastRegion(); ++it) {
     if(saveAll || (*it)->physicals.size()) {
@@ -161,17 +162,16 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
   }
 
   unsigned numElements = numTetrahedra + numHexahedra + numPrisms + numPyramids;
-
-  unsigned nVertex = indexMeshVertices(saveAll, 0, false);
-  std::vector<unsigned char> vertex_phys(nVertex, 0);
+  // known problem : all the volumes have to be set as Physical Volumes
+  // otherwise set saveAll = true (20.10.2023)
+  indexMeshVertices(saveAll, 0, false);
   // create association map for vertices and faces
-  hashMap<unsigned, std::vector<unsigned> >::_ vertmap;
+  hashMap<unsigned, std::vector<unsigned>>::_ vertmap;
   for(auto it = firstFace(); it != lastFace(); ++it) {
     for(auto &tri : (*it)->triangles) {
       for(std::size_t j = 0; j < tri->getNumVertices(); ++j) {
         unsigned numVertex = tri->getVertex(j)->getNum();
         vertmap[numVertex].push_back(tri->getNum());
-        vertex_phys[numVertex - 1] = 1;
       }
     }
 
@@ -179,7 +179,6 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
       for(std::size_t j = 0; j < quad->getNumVertices(); ++j) {
         unsigned numVertex = quad->getVertex(j)->getNum();
         vertmap[numVertex].push_back(quad->getNum());
-        vertex_phys[numVertex - 1] = 1;
       }
     }
   }
@@ -197,10 +196,8 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
         for(unsigned j = 0; j < (*it)->getMeshElement(i)->getNumVertices();
             ++j) {
           unsigned vertex = (*it)->getMeshElement(i)->getVertex(j)->getNum();
-
-          if(vertex_phys[vertex - 1]) { sum++; }
+          if(vertmap[vertex].size()) { sum++; }
         }
-
         if(sum >= 3) { elem_phys[num - lowestId - 1] = 1; }
       }
     }
@@ -237,7 +234,7 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
             case TYPE_HEX: face = GAMBIT_FACE_HEX_MAP[faceNum]; break;
             case TYPE_PRI: face = GAMBIT_FACE_PRI_MAP[faceNum]; break;
             case TYPE_PYR: face = GAMBIT_FACE_PYR_MAP[faceNum]; break;
-            default: break;
+            default: Msg::Warning("type = %d", type); break;
             }
             facemap[current[0]].push_back(FacePair(num, face));
           }
@@ -245,7 +242,6 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
       }
     }
   }
-
   // populate boundary conditions for tetrahedra given triangle physicals
   IDFaceMap boundaryConditions;
   for(auto it = firstFace(); it != lastFace(); ++it) {
@@ -280,18 +276,16 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
   fprintf(fp, "        CONTROL INFO 2.0.0\n");
   fprintf(fp, "** GAMBIT NEUTRAL FILE\n");
   fprintf(fp, "Gmsh mesh in GAMBIT neutral file format\n");
-  fprintf(fp, "PROGRAM:                  Gmsh     VERSION:  %s\n", GMSH_VERSION);
+  fprintf(fp, "PROGRAM:                  Gmsh     VERSION:  %s\n",
+          GMSH_VERSION);
 
   time_t rawtime;
   time(&rawtime);
   fprintf(fp, "%s", ctime(&rawtime));
-
   fprintf(fp, "     NUMNP     NELEM     NGRPS    NBSETS     NDFCD     NDFVL\n");
-
   fprintf(fp, " %9ld %9d %9lu %9lu %9d %9d\n",
           indexMeshVertices(saveAll, 0, false), numElements,
           elementGroups.size(), boundaryConditions.size(), getDim(), getDim());
-
   fprintf(fp, "ENDOFSECTION\n");
 
   // Nodes
@@ -331,13 +325,11 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
   fprintf(fp, "ENDOFSECTION\n");
 
   // Element Groups
-
   for(auto it = elementGroups.begin(); it != elementGroups.end(); ++it) {
     fprintf(fp, "       ELEMENT GROUP 2.0.0\n");
     fprintf(fp,
             "GROUP: %10d ELEMENTS: %10lu MATERIAL:          0 NFLAGS: %10d\n",
             it->first, it->second.size(), 1);
-
     std::string volumeName = getPhysicalName(3, it->first);
     if(volumeName.empty()) {
       char tmp[256];
@@ -345,9 +337,7 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
       volumeName = tmp;
     }
     fprintf(fp, "%32s\n", volumeName.c_str());
-
     fprintf(fp, "       0");
-
     for(unsigned i = 0; i < it->second.size(); ++i) {
       if(i % 10 == 0) { fprintf(fp, "\n"); }
       fprintf(fp, "%8d", it->second[i] - lowestId);
@@ -357,7 +347,6 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
   }
 
   // Boundary Conditions
-
   unsigned nphys = getMaxPhysicalNumber(2);
   for(unsigned iphys = 1; iphys <= nphys; ++iphys) {
     for(auto it = boundaryConditions.begin(); it != boundaryConditions.end();
@@ -383,9 +372,8 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
           case TYPE_PYR: gambit_type = GAMBIT_TYPE_PYR; break;
           case TYPE_PRI: gambit_type = GAMBIT_TYPE_PRI; break;
           case TYPE_HEX: gambit_type = GAMBIT_TYPE_HEX; break;
-          default: break;
+          default: Msg::Warning("type = %d", type); break;
           }
-
           fprintf(fp, "%10d%5d%5d\n", tfp->first - lowestId, gambit_type,
                   tfp->second);
         }
@@ -396,5 +384,398 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
   }
 
   fclose(fp);
+  return 1;
+}
+
+int GModel::readNEU(const std::string &name)
+{
+  FILE *fp = Fopen(name.c_str(), "r");
+  if(!fp) {
+    Msg::Error("Unable to open file '%s'", name.c_str());
+    return 0;
+  }
+
+  char str[256] = "XXX";
+  int ic = 0;
+  while(strstr(str, "NUMNP") == nullptr) {
+    if(ic++ > 5) {
+      fclose(fp);
+      return 0;
+    }
+    if(!fgets(str, sizeof(str), fp) || feof(fp)) break;
+  }
+
+  if(!fgets(str, sizeof(str), fp) || feof(fp)) {
+    fclose(fp);
+    return 0;
+  }
+  int numVertices, numElements, ng, nb;
+  if(sscanf(str, "%d %d %d %d", &numVertices, &numElements, &ng, &nb) != 4) {
+    fclose(fp);
+    return 0;
+  }
+
+  if(!fgets(str, sizeof(str), fp) || feof(fp)) {
+    fclose(fp);
+    return 0;
+  }
+  if(strstr(str, "ENDOFSECTION") == nullptr) {
+    fclose(fp);
+    return 0;
+  }
+
+  Msg::Info("%d nodes", numVertices);
+  Msg::StartProgressMeter(numVertices);
+
+  if(!fgets(str, sizeof(str), fp) || feof(fp)) {
+    fclose(fp);
+    return 0;
+  }
+  if(strstr(str, "NODAL COORDINATES") == nullptr) {
+    fclose(fp);
+    return 0;
+  }
+
+  std::vector<MVertex *> vertexVector;
+  vertexVector.resize(numVertices);
+
+  for(int i = 0; i < numVertices; i++) {
+    if(!fgets(str, sizeof(str), fp) || feof(fp)) {
+      fclose(fp);
+      return 0;
+    }
+    int p;
+    double x, y, z;
+    if(sscanf(str, "%d %le %le %le", &p, &x, &y, &z) != 4) {
+      fclose(fp);
+      return 0;
+    }
+
+    if(p > 0 && p <= (int)vertexVector.size()) {
+      vertexVector[p - 1] = new MVertex(x, y, z);
+    }
+    else {
+      Msg::Error("Node tag %d out of range", p);
+      return 0;
+    }
+    if(numVertices > 100000) Msg::ProgressMeter(i + 1, true, "Reading nodes");
+  }
+
+  if(!fgets(str, sizeof(str), fp) || feof(fp)) {
+    fclose(fp);
+    return 0;
+  }
+  if(strstr(str, "ENDOFSECTION") == nullptr) {
+    fclose(fp);
+    return 0;
+  }
+
+  Msg::StopProgressMeter();
+
+  Msg::Info("%d elements", numElements);
+  Msg::StartProgressMeter(numElements);
+
+  if(!fgets(str, sizeof(str), fp) || feof(fp)) {
+    fclose(fp);
+    return 0;
+  }
+  if(strstr(str, "ELEMENTS/CELLS") == nullptr) {
+    fclose(fp);
+    return 0;
+  }
+
+  std::vector<MElement *> elementVector;
+  elementVector.reserve(numElements);
+  std::vector<int> elementTypeVector;
+  elementTypeVector.reserve(numElements);
+
+  for(int num = 1; num <= numElements; num++) {
+    if(!fgets(str, sizeof(str), fp) || feof(fp)) {
+      fclose(fp);
+      return 0;
+    }
+
+    int ne, ntype, ndp;
+    if(sscanf(str, "%d %d %d", &ne, &ntype, &ndp) != 3) {
+      fclose(fp);
+      return 0;
+    }
+
+    int p[8];
+    int len_p = -1;
+    std::vector<MVertex *> vertices;
+    std::string sstr(str);
+    switch(ntype) {
+    case GAMBIT_TYPE_HEX:
+      len_p = 8;
+      for(int i = len_p - 1; i > 1; --i) sstr.insert(23 + (i - 2) * 8, " ");
+      if(sscanf(sstr.c_str(), "%*d%*d%*d%d%d%d%d%d%d%d", p, p + 1, p + 3, p + 2,
+                p + 4, p + 5, p + 7) != len_p - 1) {
+        fclose(fp);
+        return 0;
+      }
+      if(!fgets(str, sizeof(str), fp) || feof(fp)) {
+        fclose(fp);
+        return 0;
+      }
+      if(sscanf(str, "%d", p + 6) != 1) {
+        fclose(fp);
+        return 0;
+      }
+      for(int ip = 0; ip < len_p; ip++)
+        vertices.push_back(vertexVector[p[ip] - 1]);
+      elementVector.push_back(new MHexahedron(vertices, num));
+      elementTypeVector.push_back(6); // 6
+      break;
+    case GAMBIT_TYPE_PRI:
+      len_p = 6;
+      for(int i = len_p; i > 1; --i) sstr.insert(23 + (i - 2) * 8, " ");
+      if(sscanf(str, "%*d%*d%*d%d%d%d%d%d%d", p, p + 1, p + 2, p + 3, p + 4,
+                p + 5) != len_p) {
+        fclose(fp);
+        return 0;
+      }
+      for(int ip = 0; ip < len_p; ip++)
+        vertices.push_back(vertexVector[p[ip] - 1]);
+      elementVector.push_back(new MPrism(vertices, num));
+      elementTypeVector.push_back(TYPE_PRI); // 7
+      break;
+
+    case GAMBIT_TYPE_TET:
+      len_p = 4;
+      for(int i = len_p; i > 1; --i) sstr.insert(23 + (i - 2) * 8, " ");
+      if(sscanf(sstr.c_str(), "%*d%*d%*d%d%d%d%d", p, p + 1, p + 2, p + 3) !=
+         len_p) {
+        fclose(fp);
+        return 0;
+      }
+      for(int ip = 0; ip < len_p; ip++)
+        vertices.push_back(vertexVector[p[ip] - 1]);
+      elementVector.push_back(new MTetrahedron(vertices, num));
+      elementTypeVector.push_back(TYPE_TET); // 5
+      break;
+    case GAMBIT_TYPE_PYR:
+      len_p = 5;
+      for(int i = len_p; i > 1; --i) sstr.insert(23 + (i - 2) * 8, " ");
+      if(sscanf(str, "%*d%*d%*d%d%d%d%d%d", p, p + 1, p + 3, p + 2, p + 4) !=
+         len_p) {
+        fclose(fp);
+        return 0;
+      }
+      for(int ip = 0; ip < len_p; ip++)
+        vertices.push_back(vertexVector[p[ip] - 1]);
+      elementVector.push_back(new MPyramid(vertices, num));
+      elementTypeVector.push_back(8); // 8
+      break;
+    default:
+      Msg::Error("Wrong type %d of element %d", ntype, num + 1);
+      fclose(fp);
+      return 0;
+    }
+
+    if(numElements > 100000)
+      Msg::ProgressMeter(num + 1, true, "Reading elements");
+  }
+
+  if(!fgets(str, sizeof(str), fp) || feof(fp)) {
+    fclose(fp);
+    return 0;
+  }
+  if(strstr(str, "ENDOFSECTION") == nullptr) {
+    fclose(fp);
+    return 0;
+  }
+
+  Msg::StopProgressMeter();
+
+  const int num_elements = 9;
+  std::map<int, std::vector<MElement *>> elements[num_elements];
+  std::map<int, std::map<int, std::string>> physicals[4];
+  for(int ig = 0; ig < ng; ig++) {
+    int reg = ig + 1;
+    if(!fgets(str, sizeof(str), fp) || feof(fp)) {
+      fclose(fp);
+      return 0;
+    }
+    if(strstr(str, "ELEMENT GROUP") == nullptr) {
+      fclose(fp);
+      return 0;
+    }
+    if(!fgets(str, sizeof(str), fp) || feof(fp)) {
+      fclose(fp);
+      return 0;
+    }
+    int neg, phys;
+    if(sscanf(str, "%*s %d %*s %d", &phys, &neg) != 2) {
+      fclose(fp);
+      return 0;
+    }
+    if(!fgets(str, sizeof(str), fp) || feof(fp)) {
+      fclose(fp);
+      return 0;
+    }
+    char phys_name[80] = "XXX";
+    if(sscanf(str, "%s ", phys_name) != 1) {
+      fclose(fp);
+      return 0;
+    }
+    physicals[3][reg][phys] = phys_name;
+
+    if(!fgets(str, sizeof(str), fp) || feof(fp)) {
+      fclose(fp);
+      return 0;
+    }
+
+    // read group (region) elements
+    while(neg > 0) {
+      if(!fgets(str, sizeof(str), fp) || feof(fp)) {
+        fclose(fp);
+        return 0;
+      }
+      int e[10];
+      int nelem = std::min(10, neg);
+
+      std::string sstr(str);
+      for(int i = nelem; i > 1; --i) sstr.insert(8 * (i - 1), " ");
+      if(sscanf(sstr.c_str(), "%d%d%d%d%d%d%d%d%d%d", e, e + 1, e + 2, e + 3,
+                e + 4, e + 5, e + 6, e + 7, e + 8, e + 9) != nelem) {
+        fclose(fp);
+        return 0;
+      }
+      for(int i = 0; i < nelem; i++) {
+        int ei = e[i] - 1;
+        elements[elementTypeVector[ei]][reg].push_back(elementVector[ei]);
+      }
+      neg = neg - 10;
+    }
+
+    if(!fgets(str, sizeof(str), fp) || feof(fp)) {
+      fclose(fp);
+      return 0;
+    }
+    if(strstr(str, "ENDOFSECTION") == nullptr) {
+      fclose(fp);
+      return 0;
+    }
+  }
+
+  for(int ib = 0; ib < nb; ib++) {
+    int reg = ib + 1;
+    int phys = reg;
+    if(!fgets(str, sizeof(str), fp) || feof(fp)) {
+      fclose(fp);
+      return 0;
+    }
+    if(strstr(str, "BOUNDARY CONDITIONS") == nullptr) {
+      fclose(fp);
+      return 0;
+    }
+
+    if(!fgets(str, sizeof(str), fp) || feof(fp)) {
+      fclose(fp);
+      return 0;
+    }
+    char phys_name[80] = "XXX";
+    int neb = -1;
+    if(sscanf(str, "%s %*d %d", phys_name, &neb) != 2) {
+      fclose(fp);
+      return 0;
+    }
+    physicals[2][reg][phys] = phys_name;
+
+    int num, type, side;
+    for(int i = 0; i < neb; i++) {
+      if(!fgets(str, sizeof(str), fp) || feof(fp)) {
+        fclose(fp);
+        return 0;
+      }
+      if(sscanf(str, "%d %d %d", &num, &type, &side) != 3) {
+        fclose(fp);
+        return 0;
+      }
+
+      std::vector<int> sub(4);
+      switch(type) {
+      case GAMBIT_TYPE_TET:
+        switch(side) {
+        case 1: sub = {0, 1, 2}; break;
+        case 2: sub = {0, 1, 3}; break;
+        case 3: sub = {1, 2, 3}; break;
+        case 4: sub = {0, 2, 3}; break;
+        default: Msg::Warning("  side = %d", side); return 0;
+        }
+        break;
+      case GAMBIT_TYPE_HEX:
+        switch(side) {
+        case 1: sub = {0, 1, 5, 4}; break;
+        case 2: sub = {1, 2, 6, 5}; break;
+        case 3: sub = {3, 2, 6, 7}; break;
+        case 4: sub = {0, 3, 7, 4}; break;
+        case 5: sub = {0, 1, 2, 3}; break;
+        case 6: sub = {4, 5, 6, 7}; break;
+        default: Msg::Warning("  side = %d", side); return 0;
+        }
+        break;
+      case GAMBIT_TYPE_PRI:
+        switch(side) {
+        case 1: sub = {0, 1, 4, 3}; break;
+        case 2: sub = {1, 2, 5, 4}; break;
+        case 3: sub = {0, 2, 5, 3}; break;
+        case 4: sub = {0, 1, 2}; break;
+        case 5: sub = {3, 4, 5}; break;
+        default: Msg::Warning("  side = %d", side); return 0;
+        }
+        break;
+      case GAMBIT_TYPE_PYR:
+        switch(side) {
+        case 1: sub = {0, 1, 2, 3}; break;
+        case 2: sub = {0, 1, 4}; break;
+        case 3: sub = {1, 2, 4}; break;
+        case 4: sub = {3, 2, 4}; break;
+        case 5: sub = {0, 3, 4}; break;
+        default: Msg::Warning("  side = %d", side); return 0;
+        }
+        break;
+      default:
+        Msg::Error("Wrong type %d of element %d", type, num + 1);
+        fclose(fp);
+        return 0;
+      }
+
+      std::vector<MVertex *> vertices;
+      for(std::size_t i = 0; i < sub.size(); i++)
+        vertices.push_back(elementVector[num - 1]->getVertex(sub[i]));
+      if(sub.size() == 3)
+        elements[TYPE_TRI][reg].push_back(new MTriangle(vertices));
+      else
+        elements[TYPE_QUA][reg].push_back(new MQuadrangle(vertices));
+    }
+
+    if(!fgets(str, sizeof(str), fp) || feof(fp)) {
+      fclose(fp);
+      return 0;
+    }
+    if(strstr(str, "ENDOFSECTION") == nullptr) {
+      fclose(fp);
+      return 0;
+    }
+  }
+
+  // store the elements in their associated elementary entity. If the
+  // entity does not exist, create a new (discrete) one.
+  for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
+    _storeElementsInEntities(elements[i]);
+
+  // associate the correct geometrical entity with each mesh vertex
+  _associateEntityWithMeshVertices();
+
+  // store the vertices in their associated geometrical entity
+  _storeVerticesInEntities(vertexVector);
+
+  // store the physical tags
+  for(int i = 0; i < 4; i++) _storePhysicalTagsInEntities(i, physicals[i]);
+
+  fclose(fp);
+
   return 1;
 }

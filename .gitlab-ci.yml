@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -57,9 +57,9 @@ windows_ci:
   script:
     - md build
     - cd build
-    - c:\cygwin64\bin\bash -c "/usr/bin/cmake -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_Fortran_COMPILER=/usr/bin/x86_64-w64-mingw32-gfortran.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DBLAS_LAPACK_LIBRARIES='/usr/local/lib/libopenblas.a;-lgfortran;-lquadmath' -DENABLE_OS_SPECIFIC_INSTALL=1 .."
+    - c:\cygwin64\bin\bash -c "/usr/bin/cmake -DCMAKE_PREFIX_PATH='/usr/local/opencascade;/usr/local;/usr/x86_64-w64-mingw32/sys-root/mingw' -DCMAKE_C_COMPILER=/usr/bin/x86_64-w64-mingw32-gcc.exe -DCMAKE_CXX_COMPILER=/usr/bin/x86_64-w64-mingw32-g++.exe -DCMAKE_RC_COMPILER=/usr/bin/x86_64-w64-mingw32-windres.exe -DENABLE_OS_SPECIFIC_INSTALL=1 .. && ls"
     - c:\cygwin64\bin\bash -c "/usr/bin/make -j 8"
-    - c:\cygwin64\bin\bash -c "/usr/bin/ctest -j 8 --output-on-failure"
+    - c:\cygwin64\bin\bash -c "/usr/bin/ctest -j 8 --output-on-failure && ls"
   tags:
     - windows64
     - shared

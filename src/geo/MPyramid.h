@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -344,6 +344,15 @@ public:
     Msg::Error("No MSH type found for P%d pyramid with %d nodes", _order,
                5 + _vs.size());
     return 0;
+  }
+  virtual const char *getStringForINP() const
+  {
+    if(_order == 2 && _vs.size() + 5 == 13) return "C3D13";
+    else {
+      Msg::Warning("No INP type found for P%d pyramid with %d nodes", _order,
+                   5 + _vs.size());
+      return "C3D5";
+    }
   }
   virtual void reverse();
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,

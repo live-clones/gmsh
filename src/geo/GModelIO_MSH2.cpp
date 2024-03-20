@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -123,7 +123,8 @@ int GModel::_readMSH2(const std::string &name)
     if(feof(fp)) break;
 
     std::string sectionName(&str[1]);
-    std::string endSectionName = (version < 2) ? "END" : "End" + sectionName;
+    std::string endSectionName = "End" + sectionName;
+    std::string endSectionNameAlt = "END" + sectionName;
 
     if(!strncmp(&str[1], "MeshFormat", 10)) {
       if(!fgets(str, sizeof(str), fp) || feof(fp)) {
@@ -135,7 +136,6 @@ int GModel::_readMSH2(const std::string &name)
         fclose(fp);
         return 0;
       }
-      endSectionName = "End" + sectionName; // version >= 2
       if(format) {
         binary = true;
         Msg::Debug("Mesh is in binary format");
@@ -632,7 +632,8 @@ int GModel::_readMSH2(const std::string &name)
       std::vector<std::string> section;
       while(1) {
         if(!fgets(str, sizeof(str), fp) || feof(fp) ||
-           !strncmp(&str[1], endSectionName.c_str(), endSectionName.size())) {
+           !strncmp(&str[1], endSectionName.c_str(), endSectionName.size()) ||
+           !strncmp(&str[1], endSectionNameAlt.c_str(), endSectionNameAlt.size())) {
           break;
         }
         std::string s(str);
@@ -643,7 +644,8 @@ int GModel::_readMSH2(const std::string &name)
       _attributes[sectionName] = section;
     }
 
-    while(strncmp(&str[1], endSectionName.c_str(), endSectionName.size())) {
+    while(strncmp(&str[1], endSectionName.c_str(), endSectionName.size()) &&
+          strncmp(&str[1], endSectionNameAlt.c_str(), endSectionNameAlt.size())) {
       if(!fgets(str, sizeof(str), fp) || feof(fp)) { break; }
     }
     str[0] = 'a';

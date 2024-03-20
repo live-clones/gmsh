@@ -8,7 +8,10 @@ import sys
 
 gmsh.initialize(sys.argv)
 if len(sys.argv) > 1:
-    gmsh.open(sys.argv[1])
+    try:
+        gmsh.open(sys.argv[1])
+    except:
+        pass
 
 # For Gmsh to know which types of boundary conditions, materials, etc., are
 # available, you should define "template" ONELAB parameters with names
@@ -199,8 +202,12 @@ def checkForEvent():
         # user clicked on "Some action"
         gmsh.onelab.setString("ONELAB/Action", [""])
         gmsh.fltk.setStatusMessage(
-            "Please select an entity (or press 'q' to quit)", True)
-        r, ent = gmsh.fltk.selectEntities()
+            "Please select one or more curves (or press 'q' to quit)", True)
+        while 1:
+            r, ent = gmsh.fltk.selectEntities(dim=1)
+            print("select returned", r)
+            print("selected curves", ent)
+            if r == 0: break
         if gmsh.fltk.isAvailable() == 0: return 0
         if r and len(ent):
             gmsh.fltk.showContextWindow(ent[0][0], ent[0][1])

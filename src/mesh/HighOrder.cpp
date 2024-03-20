@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1474,7 +1474,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
   Msg::StopProgressMeter();
   double t2 = Cpu(), w2 = TimeOfDay();
 
-  if(!linear) {
+  if(!linear && !CTX::instance()->mesh.hoSkipQualityCheck) {
     std::vector<MElement *> bad;
     double worst;
     checkHighOrderTriangles("Surface mesh", m, bad, worst);

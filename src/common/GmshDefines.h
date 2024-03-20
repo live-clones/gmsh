@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -59,6 +59,7 @@
 #define FORMAT_OFF          53
 #define FORMAT_PY           54
 #define FORMAT_RAD          55
+#define FORMAT_XAO          56
 
 // Element types
 #define TYPE_PNT     1
@@ -223,7 +224,7 @@
 #define MSH_TET_16   137
 #define MSH_TRI_MINI 138
 #define MSH_TET_MINI 139
-#define MSH_TRIH_4   140
+#define MSH_TRIH_4   140 // Tri hedron -- One quad face and two triangular faces -- made for connecting hexes and tets
 #define MSH_MAX_NUM  140 // keep this up-to-date when adding new type
 
 // Geometric entities

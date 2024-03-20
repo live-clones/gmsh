@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+@c Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 @c
 @c See the LICENSE.txt file in the Gmsh root directory for license information.
 @c Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -22,7 +22,7 @@
 @c %**starts of header
 @setfilename gmsh.info
 @include version.texi
-@set COPYRIGHT @copyright{} 1997-2023 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
+@set COPYRIGHT @copyright{} 1997-2024 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @set SYN a synchronization of the CAD model with the internal Gmsh model.
 @set SYNC This operation triggers @value{SYN}
 @set SYNCS These operations all trigger @value{SYN}
@@ -348,7 +348,7 @@ actions in the geometry module automatically append the related command
 in the input script file, and can optionally also generate input for the
 languages supported by the API (see the
 @code{General.ScriptingLanguages} option; this is still work-in-progress
-as of Gmsh 4.11.)
+as of Gmsh 4.12.)
 
 In addition to CAD-type geometrical entities, whose geometry is provided
 by a CAD kernel, Gmsh also supports @emph{discrete} model entities,
@@ -3954,6 +3954,8 @@ Optimize the current mesh with the given algorithm (currently
 for Netgen optimizer, @code{"HighOrder"} for direct high-order mesh
 optimizer, @code{"HighOrderElastic"} for high-order elastic smoother,
 @code{"HighOrderFastCurving"} for fast curving algorithm,
+@code{"UntangleTets''} for untangling tetrahedral meshes,
+@code{"UntangleTris''} for untangling xy-planar triangular meshes,
 @code{"Laplace2D"} for Laplace smoothing, @code{"Relocate2D"} and
 @code{"Relocate3D"} for node relocation).
 
@@ -4773,8 +4775,9 @@ the boundary representation of the model geometrical entities,
 @code{$Nodes} and @code{$Elements} store mesh data classified on these
 entities, and @code{$NodeData}, @code{$ElementData},
 @code{$ElementNodeData} store post-processing data (views). (See
-@ref{Gmsh application programming interface} and @ref{Source code structure} for a more detailed
-description of the internal Gmsh data model.)
+@ref{Gmsh application programming interface} and @ref{Source code
+structure} for a more detailed description of the internal Gmsh data
+model.)
 
 To represent a simple mesh, the minimal sections that should be present
 in the file are @code{$MeshFormat}, @code{$Nodes} and
@@ -4784,28 +4787,31 @@ associated physical groups, an @code{$Entities} section should be
 present before the @code{$Nodes} section. Sections can be repeated in
 the same file, and post-processing sections can be put into separate
 files (e.g. one file per time step). Any section with an unrecognized
-header is simply ignored: you can thus add comments in a @file{.msh}
-file by putting them e.g. inside a @code{$Comments}/@code{$EndComments}
-section.
+header is stored by default as a model attribute: you can thus e.g. add
+comments in a @file{.msh} file by putting them inside a
+@code{$Comments}/@code{$EndComments} section. Unrocognized sections can
+be ignored altogether if the @code{Mesh.IgnoreUnknownSections} option is
+set.
 
-All the node, element and entity tags (their global identification
-numbers) should be strictly positive. (Tag @code{0} is reserved for
-internal use.)  Important note about efficiency: tags can be "sparse",
-i.e., do not have to constitute a continuous list of numbers (the format
-even allows them to not be ordered). However, using sparse tags can lead
-to performance degradation. For meshes, sparse indexing can@footnote{If
-the numbering is not too sparse, Gmsh will still use a vector.} force
-Gmsh to use a map instead of a vector to access nodes and elements. The
-performance hit is on speed. For post-processing datasets, which always
-use vectors to access data, the performance hit is on memory. A
-@code{$NodeData} with two nodes, tagged 1 and 1000000, will allocate a
-(mostly empty) vector of 1000000 elements. By default, for
-non-partitioned, single file meshes, Gmsh will create files with a
-continuous ordering of node and element tags, starting at 1. Detecting
-if the numbering is continuous can be done easily when reading a file by
-inspecting @code{numNodes}, @code{minNodeTag} and @code{maxNodeTag} in
-the @code{$Nodes} section; and @code{numElements}, @code{minElementTag}
-and @code{maxElementTag} in the @code{$Elements} section.
+All the node, element, entity and physical group tags (their global
+identification numbers) should be strictly positive. (Tag @code{0} is
+reserved for internal use.)  Important note about efficiency: tags can
+be "sparse", i.e., do not have to constitute a continuous list of
+numbers (the format even allows them to not be ordered). However, using
+sparse node or element tags can lead to performance degradation. For
+meshes, sparse indexing can@footnote{If the numbering is not too sparse,
+Gmsh will still use a vector.} force Gmsh to use a map instead of a
+vector to access nodes and elements. The performance hit is on
+speed. For post-processing datasets, which always use vectors to access
+data, the performance hit is on memory. A @code{$NodeData} with two
+nodes, tagged 1 and 1000000, will allocate a (mostly empty) vector of
+1000000 elements. By default, for non-partitioned, single file meshes,
+Gmsh will create files with a continuous ordering of node and element
+tags, starting at 1. Detecting if the numbering is continuous can be
+done easily when reading a file by inspecting @code{numNodes},
+@code{minNodeTag} and @code{maxNodeTag} in the @code{$Nodes} section;
+and @code{numElements}, @code{minElementTag} and @code{maxElementTag} in
+the @code{$Elements} section.
 
 In binary mode (@code{Mesh.Binary=1} or @code{-bin} on the command
 line), all the numerical values (integer and floating point) not marked
@@ -5496,8 +5502,8 @@ $Elements
 $EndElements
 $Periodic
 @var{number-of-periodic-entities}
-<Affine @var{value} ...>
 @var{dimension} @var{entity-tag} @var{master-entity-tag}
+<Affine @var{value} ...>
 @var{number-of-nodes}
 @var{node-number master-node-number}
 @dots{}

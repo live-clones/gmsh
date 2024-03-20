@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -147,10 +147,10 @@ void Msg::Initialize(int argc, char **argv)
       sargv[sargc++] = argv[i];
   }
   sargv[sargc] = nullptr;
-  PetscInitialize(&sargc, &sargv, PETSC_NULL, PETSC_NULL);
+  PetscInitialize(&sargc, &sargv, nullptr, nullptr);
   PetscPopSignalHandler();
 #if defined(HAVE_SLEPC)
-  SlepcInitialize(&sargc, &sargv, PETSC_NULL, PETSC_NULL);
+  SlepcInitialize(&sargc, &sargv, nullptr, nullptr);
 #endif
   delete [] sargv;
 #endif
@@ -599,11 +599,13 @@ void Msg::Info(const char *fmt, ...)
   va_start(args, fmt);
   vsnprintf(str, sizeof(str), fmt, args);
   va_end(args);
-  int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
+  str[4999] = '\0';
+  int l = strlen(str); if(l > 0 && str[l - 1] == '\n') str[l - 1] = '\0';
 
   if(_infoCpu || _infoMem){
     std::string res = PrintResources(false, _infoCpu, _infoCpu, _infoMem);
-    strcat(str, res.c_str());
+    if(strlen(str) + res.size() < 5000)
+      strcat(str, res.c_str());
   }
 
   if(_logFile) fprintf(_logFile, "Info: %s\n", str);
@@ -1207,6 +1209,8 @@ void Msg::FinalizeOnelab()
       it != onelab::server::instance()->lastClient(); it++){
     (*it)->kill();
   }
+  // clear db
+  onelab::server::instance()->clear();
   // delete local client
   if(_onelabClient){
     delete _onelabClient;

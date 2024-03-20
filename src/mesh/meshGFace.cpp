@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -127,6 +127,7 @@ class quadMeshRemoveHalfOfOneDMesh {
 private:
   GFace *_gf;
   std::map<GEdge *, std::vector<MLine *> > _backup;
+  std::map<GEdge *, std::vector<MVertex *> > _backupv;
   std::map<MEdge, MVertex *, MEdgeLessThan> _middle;
   void _subdivide()
   {
@@ -247,13 +248,17 @@ private:
   }
   void _restore()
   {
-    std::vector<GEdge *> const &edges = _gf->edges();
+    std::vector<GEdge *> edges = _gf->edges();
+    std::vector<GEdge *> const &emb = _gf->embeddedEdges();
+    edges.insert(edges.begin(), emb.begin(), emb.end());
     auto ite = edges.begin();
     while(ite != edges.end()) {
+      //      printf("restore %d  %d --> %d\n",(*ite)->tag(),(*ite)->lines.size(),_backup[*ite].size());
       for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
-        delete(*ite)->lines[i];
+	delete(*ite)->lines[i];
       }
       (*ite)->lines = _backup[*ite];
+      (*ite)->mesh_vertices = _backupv[*ite];
       ++ite;
     }
   }
@@ -273,7 +278,9 @@ public:
       Msg::Error("Full-quad recombination not ready yet for periodic surfaces");
       return;
     }
-    std::vector<GEdge *> const &edges = gf->edges();
+    std::vector<GEdge *> edges = gf->edges();
+    std::vector<GEdge *> const &emb = gf->embeddedEdges();
+    edges.insert(edges.begin(), emb.begin(), emb.end());
     auto ite = edges.begin();
     while(ite != edges.end()) {
       if((*ite)->meshAttributes.method == MESH_TRANSFINITE) {
@@ -282,7 +289,8 @@ public:
       }
       if(!(*ite)->isMeshDegenerated()) {
         std::vector<MLine *> temp;
-        (*ite)->mesh_vertices.clear();
+        _backupv[*ite] = (*ite)->mesh_vertices;
+	(*ite)->mesh_vertices.clear();
         for(std::size_t i = 0; i < (*ite)->lines.size(); i += 2) {
           if(i + 1 >= (*ite)->lines.size()) {
             Msg::Error("1D mesh cannot be divided by 2");
@@ -295,9 +303,18 @@ public:
           v2->y() = 0.5 * (v1->y() + v3->y());
           v2->z() = 0.5 * (v1->z() + v3->z());
           temp.push_back(new MLine(v1, v3));
-          if(v1->onWhat() == *ite) (*ite)->mesh_vertices.push_back(v1);
+	  //	  printf("%d %d %d %d %d\n",(*ite)->tag(),v1->onWhat()->dim(),v1->onWhat()->tag(),v3->onWhat()->dim(),v3->onWhat()->tag());
+	  if(v1->onWhat() == *ite && std::find((*ite)->mesh_vertices.begin(), (*ite)->mesh_vertices.end(), v1) == (*ite)->mesh_vertices.end()) {
+	    //	  	    printf("adding vertex %d to %d\n",v1->getNum(),(*ite)->tag());
+	    (*ite)->mesh_vertices.push_back(v1);
+	  }
+	  //	  if(v3->onWhat() == *ite && std::find((*ite)->mesh_vertices.begin(), (*ite)->mesh_vertices.end(), v3) == (*ite)->mesh_vertices.end()) {
+	    //	    printf("adding vertex %d to %d\n",v3->getNum(),(*ite)->tag());
+	  //	    (*ite)->mesh_vertices.push_back(v3);
+	  //	  }
           _middle[MEdge(v1, v3)] = v2;
         }
+	//	printf("%d %d --> %d\n",(*ite)->tag(), (*ite)->lines.size(),temp.size());
         _backup[*ite] = (*ite)->lines;
         (*ite)->lines = temp;
       }
@@ -1279,6 +1296,7 @@ static bool improved_translate(GFace *gf, MVertex *vertex, SVector3 &v1,
 
 static void directions_storage(GFace *gf)
 {
+
   std::set<MVertex *> vertices;
   for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
     MElement *element = gf->getMeshElement(i);
@@ -2346,9 +2364,9 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     for(auto it = gf->edgeLoops.begin(); it != gf->edgeLoops.end(); it++) {
       std::vector<BDS_Point *> edgeLoop_BDS;
       int nbPointsLocal;
-      const double fact[5] = {1.e-12, 1.e-9, 1.e-6, 1.e-3, 1.e-1};
+      const double fact[6] = {1.e-12, 1.e-9, 1.e-6, 1.e-3, 1.e-2, 1.e-1};
       bool ok = false;
-      for(int i = 0; i < 5; i++) {
+      for(int i = 0; i < 6; i++) {
         if(buildConsecutiveListOfVertices(gf, *it, edgeLoop_BDS, bbox, m,
                                           recoverMap, nbPointsLocal,
                                           nbPointsTotal, fact[i] * LC2D)) {
@@ -3080,7 +3098,11 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
                        gf->meshStatistics.best_element_shape,
                        gf->meshStatistics.nbTriangle,
                        gf->meshStatistics.nbGoodQuality);
+
+  if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) { directions_storage(gf); }
+
   gf->meshStatistics.status = GFace::DONE;
+
 
   // Remove unused vertices, generated e.g. during background mesh
   deleteUnusedVertices(gf);

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -28,8 +28,10 @@
 
 void GEO_Internals::_allocateAll()
 {
-  _maxPointNum = _maxLineNum = _maxLineLoopNum = _maxSurfaceNum = 0;
-  _maxSurfaceLoopNum = _maxVolumeNum = _maxPhysicalNum = 0;
+  int t = CTX::instance()->geom.firstEntityTag;
+  _maxPointNum = _maxLineNum = _maxLineLoopNum = _maxSurfaceNum = t - 1;
+  _maxSurfaceLoopNum = _maxVolumeNum = t - 1;
+  _maxPhysicalNum = CTX::instance()->geom.firstPhysicalTag - 1;
 
   Points = Tree_Create(sizeof(Vertex *), CompareVertex);
   Curves = Tree_Create(sizeof(Curve *), CompareCurve);
@@ -51,8 +53,10 @@ void GEO_Internals::_allocateAll()
 
 void GEO_Internals::_freeAll()
 {
-  _maxPointNum = _maxLineNum = _maxLineLoopNum = _maxSurfaceNum = 0;
-  _maxSurfaceLoopNum = _maxVolumeNum = _maxPhysicalNum = 0;
+  int t = CTX::instance()->geom.firstEntityTag;
+  _maxPointNum = _maxLineNum = _maxLineLoopNum = _maxSurfaceNum = t - 1;
+  _maxSurfaceLoopNum = _maxVolumeNum = t - 1;
+  _maxPhysicalNum = CTX::instance()->geom.firstPhysicalTag - 1;
 
   Tree_Action(Points, FreeVertex);
   Tree_Delete(Points);
@@ -87,12 +91,23 @@ void GEO_Internals::_freeAll()
 void GEO_Internals::setMaxTag(int dim, int val)
 {
   switch(dim) {
+#if 0
+  // this is "right" (so that we always obey Geometry.FirstEntityTag) but breaks
+  // backward compatibility
+  case 0: _maxPointNum = std::max(_maxPointNum, val); break;
+  case 1: _maxLineNum = std::max(_maxLineNum, val); break;
+  case -1: _maxLineLoopNum = std::max(_maxLineLoopNum, val); break;
+  case 2: _maxSurfaceNum = std::max(_maxSurfaceNum, val); break;
+  case -2: _maxSurfaceLoopNum = std::max(_maxSurfaceLoopNum, val); break;
+  case 3: _maxVolumeNum = std::max(_maxVolumeNum, val); break;
+#else
   case 0: _maxPointNum = val; break;
   case 1: _maxLineNum = val; break;
   case -1: _maxLineLoopNum = val; break;
   case 2: _maxSurfaceNum = val; break;
   case -2: _maxSurfaceLoopNum = val; break;
   case 3: _maxVolumeNum = val; break;
+#endif
   }
 }
 
@@ -1527,8 +1542,10 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
 
   // delete all physical groups before sync only if there is no mesh (if there
   // is a mesh, it could have been loaded from a file with physical groups - we
-  // don't want to remove those)
-  if(!model->getNumMeshElements()) model->removePhysicalGroups();
+  // don't want to remove those) and we have physical groups in the built-in
+  // kernel
+  if(!model->getNumMeshElements() && Tree_Nbr(PhysicalGroups))
+    model->removePhysicalGroups();
   // we might want to store physical groups directly in GModel; but I guess this
   // is OK for now:
   if(Tree_Nbr(PhysicalGroups)) {

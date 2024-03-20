@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -32,9 +32,10 @@ GMSH_Plugin *GMSH_RegisterCrackPlugin() { return new GMSH_CrackPlugin(); }
 
 std::string GMSH_CrackPlugin::getHelp() const
 {
-  return "Plugin(Crack) creates a crack around the physical "
-         "group `PhysicalGroup' of dimension `Dimension' (1 or 2), "
-         "embedded in a mesh of dimension `Dimension' + 1. "
+  return "Plugin(Crack) creates a crack around the orientable, "
+         "manifold physical group `PhysicalGroup' of dimension "
+         "`Dimension' (1 or 2), embedded in a mesh of dimension "
+         "`Dimension' + 1."
          "The plugin duplicates the nodes and the elements on "
          "the crack and stores them in a new discrete curve "
          "(`Dimension' = 1) or surface (`Dimension' = 2). The "
@@ -263,29 +264,31 @@ PView *GMSH_CrackPlugin::execute(PView *view)
       for(std::size_t j = 0; j < e->getNumVertices(); j++) {
         auto it = crackVertices.find(e->getVertex(j));
         if(it == crackVertices.end()) continue;
-        // the element touches the crack by at least one node: determine if the
-        // vector joining its barycenter to the barycenter of one of the
-        // connected crack elements is not in the same direction as the normal
-        // to the crack element; if the condition is fulfilled for one of the
-        // connected crack elements, we consider the element lies on the
-        // "positive side" of the crack
-        SPoint3 b = e->barycenter();
+        // the element touches the crack by at least one node: if the vector
+        // joining the node to element barycenter is in the same direction as
+        // the normal to all the connected crack elements, we consider the
+        // element lies on the "positive side" of the crack
+        SVector3 dv = SVector3(it->first->point(), e->barycenter());
+        bool positive = true;
         for(auto ce : it->second) {
-          SVector3 dv = SVector3(b, ce->barycenter());
           SVector3 n;
           if(dim == 1)
             n = crossprod(normal1d, ce->getEdge(0).tangent());
           else
             n = ce->getFace(0).normal();
           if(dot(n, dv) < 0) {
-            auto it2 = oneside.find(e);
-            if(it2 == oneside.end())
-              oneside[e] = {j};
-            else {
-              if(std::find(it2->second.begin(), it2->second.end(), j) ==
-                 it2->second.end())
-                it2->second.push_back(j);
-            }
+            positive = false;
+            break;
+          }
+        }
+        if(positive){
+          auto it2 = oneside.find(e);
+          if(it2 == oneside.end())
+            oneside[e] = {j};
+          else {
+            if(std::find(it2->second.begin(), it2->second.end(), j) ==
+               it2->second.end())
+              it2->second.push_back(j);
           }
         }
       }

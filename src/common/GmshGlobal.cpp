@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -96,7 +96,7 @@ int GmshInitialize(int argc, char **argv, bool readConfigFiles,
 
   // Initialize robust predicates (no static filter for now, we do not know the
   // size of the domain)
-  robustPredicates::exactinit(0, 1.0, 1.0, 1.0);
+  robustPredicates::exactinit(1.0, 1.0, 1.0);
 
   if(dummy) delete dummy;
   return 1;
@@ -213,7 +213,7 @@ int GmshRestoreDefaultOptions()
 
 int GmshOpenProject(const std::string &fileName)
 {
-  OpenProject(fileName);
+  OpenProject(fileName, true);
   return 1;
 }
 
@@ -351,7 +351,13 @@ int GmshBatch()
     else if(CTX::instance()->batch == 9) {
       GModel::current()->computeSizeField();
     }
-    else if(CTX::instance()->batch == 69) { // FIXME TEST
+    else if(CTX::instance()->batch == 69) {
+
+      //      void testRelaying();
+      //      testRelaying() ;
+      //      
+      //
+      
       std::vector<int> tags;
       computeCrossField(GModel::current(), tags);
       GoodbyeMessage();

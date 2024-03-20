@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -36,13 +36,14 @@ struct contextMeshOptions {
   int meshOnlyVisible, meshOnlyEmpty;
   int minCircleNodes, minCurveNodes, minLineNodes;
   int hoOptimize, hoPeriodic, hoNLayers, hoPrimSurfMesh, hoIterMax, hoPassMax;
-  int hoDistCAD, hoSavePeriodic, hoFixBndNodes;
+  int hoDistCAD, hoSavePeriodic, hoFixBndNodes, hoSkipQualityCheck;
   double hoThresholdMin, hoThresholdMax, hoPoissonRatio;
   bool hoNewFastCurvingAlgo;
   int hoCurveOuterBL;
   double hoMaxRho, hoMaxAngle, hoMaxInnerAngle;
   int NewtonConvergenceTestXYZ, maxIterDelaunay3D;
-  int ignorePeriodicityMsh2, ignoreParametrizationMsh4, boundaryLayerFanElements;
+  int ignorePeriodicityMsh2, ignoreParametrizationMsh4, ignoreUnknownSections;
+  int boundaryLayerFanElements;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
   double angleToleranceFacetOverlap, toleranceReferenceElement;
   int renumber, compoundClassify, reparamMaxTriangles;
@@ -102,8 +103,24 @@ struct contextGeometryOptions {
   int occSewFaces, occMakeSolids, occParallel, occBooleanPreserveNumbering;
   int occBoundsUseSTL, occDisableSTL, occImportLabels, occExportOnlyVisible;
   int occUnionUnify, occThruSectionsDegree, occUseGenericClosestPoint;
+  int occBrepFormatVersion;
   double occScaling;
   std::string occTargetUnit;
+  // STEP file outputs
+  // header section: FILE_DESCRIPTION
+  std::string occStepDescription;
+  std::string occStepImplementationLevel;
+  // header section: FILE_NAME
+  std::string occStepModelName;
+  std::string occStepTimeStamp;
+  std::string occStepAuthor;
+  std::string occStepOrganization;
+  std::string occStepPreprocessorVersion;
+  std::string occStepOriginatingSystem;
+  std::string occStepAuthorization;
+  // header section: FILE_SCHEMA
+  std::string occStepSchemaIdentifier;
+
   int copyMeshingMethod, exactExtrusion;
   int matchGeomAndMesh;
   double matchMeshScaleFactor;
@@ -116,7 +133,7 @@ struct contextGeometryOptions {
   double pointSize, curveWidth, selectedPointSize, selectedCurveWidth;
   int pointType, curveType, surfaceType, volumeType, numSubEdges;
   double normals, tangents, scalingFactor;
-  int snapPoints;
+  int firstEntityTag, firstPhysicalTag, snapPoints;
   int highlightOrphans, clip, useTransform;
   int doubleClickedEntityTag;
   std::string doubleClickedPointCommand, doubleClickedCurveCommand;
@@ -147,6 +164,8 @@ public:
   std::string homeDir;
   // file history
   std::vector<std::string> recentFiles;
+  // default number format in graphics window
+  std::string numberFormat;
   // create mesh statistics report (0: do nothing, 1: create, 2: append)
   int createAppendMeshStatReport;
   // behavior on error
