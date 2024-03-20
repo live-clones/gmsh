@@ -299,11 +299,12 @@ int main(int argc, char* argv[]) {
   int div = 10;
   int opt = 0;
   int smoothing = 3;
-  int func = 1;
+  int func = 2;
   double gravity = 1;
   double ratio = 1.;
   double clscale = 100; //64;
   double clrefine = 1.;
+  double clmax = 1.;
   int refineOption = 0;
   bool swap = false;
   
@@ -338,6 +339,9 @@ int main(int argc, char* argv[]) {
     } else if (std::string(argv[i]) == "-clrefine" && i + 1 < argc) {
       clrefine = std::stod(argv[++i]);
       continue;
+    } else if (std::string(argv[i]) == "-clmax" && i + 1 < argc) {
+      clmax = std::stod(argv[++i]);
+      continue;
     } else if (std::string(argv[i]) == "-refineOption" && i + 1 < argc) {
       refineOption = std::stoi(argv[++i]);
       continue;
@@ -353,7 +357,14 @@ int main(int argc, char* argv[]) {
   std::vector<std::size_t> macroElementNodeTags;
   std::vector<size_t> vertexTags;
   int physicalSurface, physicalBoundary, physicalPoints;
-  macroMesh(filename, clscale, clrefine, vertexTags,macroElementNodeTags, refineOption);
+  std::string format = "";
+  size_t lastDotPos = filename.find_last_of(".");
+  if (lastDotPos != std::string::npos)
+    format = filename.substr(lastDotPos + 1);
+  if (format == "geo")
+    macroGeo(filename, clscale, clrefine, vertexTags,macroElementNodeTags, refineOption);
+  else
+    macroMsh(filename, clmax, vertexTags,macroElementNodeTags, refineOption);
 
   std::vector<MVertex*> nodes;
   std::vector<size_t> nodeTags;
@@ -445,7 +456,7 @@ int main(int argc, char* argv[]) {
     std::vector<std::size_t> eTags;
     std::vector<std::size_t> eNodeTags;
     gmsh::model::mesh::getElementsByType(MSH_TRI_3, eTags, eNodeTags);
-   
+
     geodesic::Mesh mesh;
     std::vector<size_t> _faces(eNodeTags.size());
     for (size_t i = 0; i < eNodeTags.size(); ++i) {
@@ -456,14 +467,14 @@ int main(int argc, char* argv[]) {
     std::vector<geodesic::SurfacePoint> points(nodeTags.size());
     for (size_t i = 0; i < nodeTags.size(); ++i) {
       points[i] = geodesic::SurfacePoint(&mesh.vertices()[i], nodeCoord[3*i],
-					 nodeCoord[3*i+1], nodeCoord[3*i+2], geodesic::VERTEX);
+                                         nodeCoord[3*i+1], nodeCoord[3*i+2], geodesic::VERTEX);
     }
 
     std::vector<geodesic::SurfacePoint> sources;
     for (size_t j = 0; j < loops.size(); ++j) {
       std::vector<MVertex *>& loop = loops[j];
       for (size_t i = 0; i < loop.size()-1; ++i) {
-	sources.push_back(points[loop[i]->getIndex()]);
+        sources.push_back(points[loop[i]->getIndex()]);
       }
     }
 
@@ -476,7 +487,7 @@ int main(int argc, char* argv[]) {
       algorithm.best_source(points[i],d);
       u[i] = d;
       if (max < d)
-	max = d;
+        max = d;
     }
 
     // gmsh::view::add("Distance", 1);
@@ -488,42 +499,42 @@ int main(int argc, char* argv[]) {
       double BLength = 5;
       
       if (func == 0) {
-	u[i] = sqrt(u[i]/max);
-	u[i] *= max;
+        u[i] = sqrt(u[i]/max);
+        u[i] *= max;
       }
       else if (func == 1) {
-	u[i] = sin(acos(u[i]/max - 1));
-	u[i] *= max;
+        u[i] = sin(acos(u[i]/max - 1));
+        u[i] *= max;
       }
       else if (func == 2) {
-	if (u[i] > BLength)
-	  u[i] = BLength;
-	u[i] = sin(acos(u[i]/BLength - 1));
-	u[i] *= BLength;
+        if (u[i] > BLength)
+          u[i] = BLength;
+        u[i] = sin(acos(u[i]/BLength - 1));
+        u[i] *= BLength;
       }
       else if (func == 3) {
-	double h = 1;
-	double a = h/10;
-	double b = 1.2;
-	double H = (h-a)/log(b);
-	
-	double omega = a / h;
-	omega *= omega;
-	omega = sqrt(1 - omega);
-	double f = h/log(b) * (atanh(omega) - omega);
-	double rho = 2;
-	double factor = rho * f;
+        double h = 1;
+        double a = h/10;
+        double b = 1.2;
+        double H = (h-a)/log(b);
 
-	if (u[i] > H)
-	  u[i] = H;
-      
-	omega = (a + u[i] * log(b)) / h;
-	omega *= omega;
-	omega = sqrt(1 - omega);
-	f = h/log(b) * (atanh(omega) - omega);
-	rho = 2 - sqrt(u[i]/H);
-	// u[i] = rho * f;
-	u[i] = rho * f * H / factor;
+        double omega = a / h;
+        omega *= omega;
+        omega = sqrt(1 - omega);
+        double f = h/log(b) * (atanh(omega) - omega);
+        double rho = 2;
+        double factor = rho * f;
+
+        if (u[i] > H)
+          u[i] = H;
+
+        omega = (a + u[i] * log(b)) / h;
+        omega *= omega;
+        omega = sqrt(1 - omega);
+        f = h/log(b) * (atanh(omega) - omega);
+        rho = 2 - sqrt(u[i]/H);
+        // u[i] = rho * f;
+        u[i] = rho * f * H / factor;
       }
 
       u[i] *= ratio;
@@ -622,7 +633,7 @@ int main(int argc, char* argv[]) {
   // cutMesh(nodes, triangles, edge2Triangles, macroElementNodeTags, nodeTag2Index, triangle2Index, paths);
 
 
-  std::vector<double> pts(3*nodes.size());
+std::vector<double> pts(3*nodes.size());
   for (size_t i = 0; i < nodes.size(); ++i) {
     auto v = nodes[i];
     pts[3*i] = nodeCoord[3*i];
@@ -641,7 +652,7 @@ int main(int argc, char* argv[]) {
   tris.resize(macroElementNodeTags.size());
   for (size_t i = 0; i < macroElementNodeTags.size(); ++i) {
     tris[i] = nodeTag2Index[macroElementNodeTags[i]];
-  }
+      }
 
   highOrderPolyMesh hop(pm, tris);
 
@@ -665,8 +676,8 @@ int main(int argc, char* argv[]) {
     for (int j = 0; j < 3; ++j) {
       size_t i0 = hop.triangles[3*i+j];
       size_t i1 = hop.triangles[3*i+(j+1)%3];
-      if (i0 > i1)
-	std::swap(i0,i1);
+      // if (i0 > i1)
+      //   std::swap(i0,i1);
 
       auto path = hop.geodesics[{i0,i1}];
       std::vector<size_t> pathTags(path.size());
@@ -680,7 +691,7 @@ int main(int argc, char* argv[]) {
   }
   gmsh::model::geo::synchronize();
 
-  // gmsh::fltk::run();
+  gmsh::fltk::run();
 
   // Paste
   auto & points = hop.points;

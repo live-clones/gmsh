@@ -53,7 +53,7 @@ PolyMesh *createPolyMesh(const std::vector<double> &p,
   std::sort(pm_new->hedges.begin(), pm_new->hedges.end(), compare);
 
   HalfEdgePtrEqual equal;
-  for(size_t i = 0; i < pm_new->hedges.size() - 1; i++) {
+  for(size_t i = 0; i + 1 < pm_new->hedges.size(); i++) {
     PolyMesh::HalfEdge *h0 = pm_new->hedges[i];
     PolyMesh::HalfEdge *h1 = pm_new->hedges[i + 1];
     if(equal(h0, h1)) {

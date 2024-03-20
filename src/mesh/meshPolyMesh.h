@@ -232,6 +232,7 @@ public:
         vs.push_back(he->v);
         he = he->opposite;
       } while(he != nullptr);
+      std::reverse(vs.begin(), vs.end());
     }
     if(vertexNeighbors) *vertexNeighbors = vs;
   }

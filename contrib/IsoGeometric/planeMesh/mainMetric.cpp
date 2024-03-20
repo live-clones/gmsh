@@ -70,7 +70,7 @@ int main(int argc, char* argv[]) {
   std::vector<std::size_t> macroElementNodeTags;
   std::vector<size_t> vertexTags;
   int physicalSurface, physicalBoundary, physicalPoints;
-  macroMesh(filename, clscale, clrefine, vertexTags,macroElementNodeTags, refineOption);
+  macroGeo(filename, clscale, clrefine, vertexTags,macroElementNodeTags, refineOption);
 
   std::vector<MVertex*> nodes;
   std::vector<size_t> nodeTags;

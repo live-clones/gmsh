@@ -434,7 +434,11 @@ int PolyMesh::decimate(double thresholdDistance,
     bool onBoundary = false;
     vertexNeighbors(v, &neigh, &onBoundary);
 
-    if(onBoundary) continue;
+    if (neigh.size() == 2) { // check for isolated triangle
+      HalfEdge *he = getEdge(neigh[0], neigh[1]);
+      if (he == nullptr || he->opposite == nullptr)
+        continue;
+    }
 
     //    printf("%d (%d) ",v->data,onBoundary);
     //    for (auto nsa : neigh) printf("%d ",nsa->data);
@@ -449,6 +453,7 @@ int PolyMesh::decimate(double thresholdDistance,
     else {
       double sumai = 0;
       for(size_t i = 0; i < neigh.size(); i++) {
+        if (i == neigh.size()-1 && onBoundary) break;
         Vertex *v0 = neigh[i];
         Vertex *v1 = neigh[(i + 1) % neigh.size()];
         SVector3 t1 = v1->position - v->position;
@@ -462,7 +467,15 @@ int PolyMesh::decimate(double thresholdDistance,
       cog *= (1. / sumai);
       nrm.normalize();
     }
-    double d = fabs(dot(nrm, v->position - cog));
+
+    double d;
+    if (onBoundary) { // distance to the boundary
+      SVector3 t1 = neigh[neigh.size()-1]->position - neigh[0]->position;
+      SVector3 t2 = v->position                     - neigh[0]->position;
+      d = norm(crossprod(t1,t2)) / norm(t1);
+    }
+    else // distance to the average plane
+      d = fabs(dot(nrm, v->position - cog));
 
     if(d > thresholdDistance) continue;
     std::stack<std::vector<Vertex *>> loops;
@@ -478,79 +491,92 @@ int PolyMesh::decimate(double thresholdDistance,
       //            for (auto aaa : loop)printf("%d ",aaa->data);
       //            printf("\n");
       loops.pop();
-      if(loop.size() == 3) {
-        std::reverse(loop.begin(), loop.end());
-        triangles.push_back(loop);
-      }
-      else { // split the loop
-        int best_start = -1;
-        int best_end = -1;
-        double best_aspect_ratio = -1.0;
-        for(size_t _start = 0; _start < loop.size(); _start++) {
-          for(size_t end = _start + 2; end < _start + loop.size() - 1; end++) {
-            size_t _end = end % loop.size();
 
-            // only consider split edge once
-            if(_start < _end) {
-              Vertex *vi = loop[_start];
-              Vertex *vj = loop[_end];
+      if (loop.size() == 2) // Triangle with 2 boundary edges
+        continue;
 
-              //	      printf("CUTTING WITH %d %d\n",vi->data,vj->data);
-
-              SVector3 t = vj->position - vi->position;
-              double L = t.norm();
-              t.normalize();
-              SVector3 b = crossprod(t, nrm);
-              double aspect_ratio = 1.e22;
-              bool sign_consistency = true;
-              double firstDist = 0;
-              for(size_t j = _start + 1; j < _end; j++) {
-                Vertex *vk = loop[j % loop.size()];
-                SVector3 tik = vk->position - vi->position;
-                double dist = dot(b, tik);
-                //	printf("side 1 vertex %d dist %g\n",vk->data,dist);
-                if(j == _start + 1)
-                  firstDist = dist;
-                else if(dist * firstDist < 0)
-                  sign_consistency = false;
-                aspect_ratio = std::min(aspect_ratio, fabs(dist) / L);
-              }
-              firstDist = -firstDist;
-              for(size_t j = _end + 1; j < _start + loop.size(); j++) {
-                Vertex *vk = loop[j % loop.size()];
-                SVector3 tik = vk->position - vi->position;
-                double dist = dot(b, tik);
-                //		printf("side 2 vertex %d dist %g\n",vk->data,dist);
-                //		if (j == _end+1)firstDist = dist;
-                if(dist * firstDist < 0) sign_consistency = false;
-                aspect_ratio = std::min(aspect_ratio, fabs(dist) / L);
-              }
-              //	      printf("considering %d %d -- %g %g %g AR
-              //%12.5E\n",vi->data,vj->data,_end,b.x(),b.y(),b.z(),aspect_ratio);
-              if(!sign_consistency) continue;
-              if(aspect_ratio < 0.1) continue;
-              if(aspect_ratio > best_aspect_ratio) {
-                best_aspect_ratio = aspect_ratio;
-                best_start = _start;
-                best_end = _end;
-              }
-            }
-          }
-        }
-        if(best_start >= 0) {
-          std::vector<Vertex *> newLoop;
-          for(int i = best_start; i < best_end + 1; i++)
-            newLoop.push_back(loop[i % loop.size()]);
-          loops.push(newLoop);
-          newLoop.clear();
-          for(size_t i = best_end; i < best_start + loop.size() + 1; i++)
-            newLoop.push_back(loop[i % loop.size()]);
-          loops.push(newLoop);
-        }
-        else {
+      if(loop.size() == 3) { // Add the triangle
+        // Check triangle area
+        SVector3 t0 = loop[2]->position - loop[0]->position;
+        SVector3 t1 = loop[1]->position - loop[0]->position;
+        if (dot(crossprod(t0,t1), nrm) < 0) {
+          // printf("Zero or negative area triangle\n");
           remove_vertex = false;
           break;
         }
+
+        std::reverse(loop.begin(), loop.end());
+        triangles.push_back(loop);
+        continue;
+      }
+
+      // split the loop
+      int best_start = -1;
+      int best_end = -1;
+      double best_aspect_ratio = -1.0;
+      for(size_t _start = 0; _start < loop.size(); _start++) {
+        for(size_t end = _start + 2; end < _start + loop.size() - 1; end++) {
+          size_t _end = end % loop.size();
+          // only consider split edge once
+          if(_end < _start) break;
+
+          Vertex *vi = loop[_start];
+          Vertex *vj = loop[_end];
+
+          //	      printf("CUTTING WITH %d %d\n",vi->data,vj->data);
+
+          SVector3 t = vj->position - vi->position;
+          double L = t.norm();
+          t.normalize();
+          SVector3 b = crossprod(t, nrm);
+          double aspect_ratio = 1.e22;
+          bool sign_consistency = true;
+          double firstDist = 0;
+          for(size_t j = _start + 1; j < _end; j++) {
+            Vertex *vk = loop[j % loop.size()];
+            SVector3 tik = vk->position - vi->position;
+            double dist = dot(b, tik);
+            //	printf("side 1 vertex %d dist %g\n",vk->data,dist);
+            if(j == _start + 1)
+              firstDist = dist;
+            else if(dist * firstDist < 0)
+              sign_consistency = false;
+            aspect_ratio = std::min(aspect_ratio, fabs(dist) / L);
+          }
+          firstDist = -firstDist;
+          for(size_t j = _end + 1; j < _start + loop.size(); j++) {
+            Vertex *vk = loop[j % loop.size()];
+            SVector3 tik = vk->position - vi->position;
+            double dist = dot(b, tik);
+            //		printf("side 2 vertex %d dist %g\n",vk->data,dist);
+            //		if (j == _end+1)firstDist = dist;
+            if(dist * firstDist < 0) sign_consistency = false;
+            aspect_ratio = std::min(aspect_ratio, fabs(dist) / L);
+          }
+          //	      printf("considering %d %d -- %g %g %g AR
+          //%12.5E\n",vi->data,vj->data,_end,b.x(),b.y(),b.z(),aspect_ratio);
+          if(!sign_consistency) continue;
+          if(aspect_ratio < 0.1) continue;
+          if(aspect_ratio > best_aspect_ratio) {
+            best_aspect_ratio = aspect_ratio;
+            best_start = _start;
+            best_end = _end;
+          }
+        }
+      }
+      if(best_start >= 0) {
+        std::vector<Vertex *> newLoop;
+        for(int i = best_start; i < best_end + 1; i++)
+          newLoop.push_back(loop[i % loop.size()]);
+        loops.push(newLoop);
+        newLoop.clear();
+        for(size_t i = best_end; i < best_start + loop.size() + 1; i++)
+          newLoop.push_back(loop[i % loop.size()]);
+        loops.push(newLoop);
+      }
+      else {
+        remove_vertex = false;
+        break;
       }
     }
 
@@ -671,6 +697,7 @@ bool PolyMesh::deleteVertexAndRemeshCavity2(
   std::vector<Face *> old_faces;
   std::vector<HalfEdge *> bnd;
   std::vector<HalfEdge *> old_inner;
+  std::vector<Vertex *> newHe;
   //  printf("starting with edge %d %d\n",he->v->data,he->next->v->data);
   do {
     old_faces.push_back(he->f);
@@ -678,11 +705,29 @@ bool PolyMesh::deleteVertexAndRemeshCavity2(
     //    printf("boundary added %d
     //    %d\n",he->next->v->data,he->next->next->v->data);
     old_inner.push_back(he);
-    if(he->opposite) old_inner.push_back(he->opposite);
-    //        printf("inner added %d %d\n",he->v->data,he->next->v->data);
-    if(he->opposite == NULL)
-      return false; // for now no boundary considered
+
+    if(he->opposite == NULL) {  // Manage boundary edges
+      HalfEdge *heNext = he->next;
+      he = he->next->next;
+      while (he->opposite != NULL)
+        he = he->opposite->next->next;
+      HalfEdge *hePrev = he->prev;
+
+      if (hePrev == heNext) { // Triangle with 2 boundary edges
+        old_inner = {he, he->next, he->next->next};
+        old_faces = {he->f};
+        heNext->opposite->opposite = nullptr;
+        he->v->he = heNext->opposite;
+        heNext->v->he = heNext->opposite->next;
+        break;
+      }
+
+      newHe = {he->v, heNext->v}; // add a new boundary edge
+      old_inner.push_back(he);
+      he = he->next;
+    }
     else {
+      old_inner.push_back(he->opposite);
       he = he->opposite->next;
     }
   } while(he != toDelete->he);
@@ -745,7 +790,7 @@ bool PolyMesh::deleteVertexAndRemeshCavity2(
       Msg::Debug("Vertex %d Cannot Be Removed -- Topological Obstruction "
                  "(creation of a non manifold edge %d %d)",
                  toDelete->data, v0->data, v1->data);
-      return false;
+        return false;
     }
     if(h12 &&
        std::find(old_inner.begin(), old_inner.end(), h12) == old_inner.end() &&
@@ -753,7 +798,7 @@ bool PolyMesh::deleteVertexAndRemeshCavity2(
       Msg::Debug("Vertex Cannot Be Removed -- Topological Obstruction "
                  "(creation of a non manifold edge %d %d)",
                  toDelete->data, v1->data, v2->data);
-      return false;
+        return false;
     }
     if(h20 &&
        std::find(old_inner.begin(), old_inner.end(), h20) == old_inner.end() &&
@@ -761,14 +806,22 @@ bool PolyMesh::deleteVertexAndRemeshCavity2(
       Msg::Debug("Vertex Cannot Be Removed -- Topological Obstruction "
                  "(creation of a non manifold edge %d %d)",
                  toDelete->data, v2->data, v0->data);
-      return false;
+        return false;
     }
   }
-
+      
   //  printf("replacing a cavity %lu by %lu (%lu
   //  %lu)\n",old_faces.size(),triangles.size(), old_inner.size(), bnd.size());
 
   // now it works
+
+  // Effectively add the new edge
+  HalfEdge *heNew;
+  if (!newHe.empty()) {
+    heNew = new HalfEdge(newHe[0]);
+    hedges.push_back(heNew);
+    bnd.push_back(heNew);
+  }
 
   std::vector<HalfEdge *> new_edges;
   std::vector<HalfEdge *> new_inner;
@@ -776,6 +829,8 @@ bool PolyMesh::deleteVertexAndRemeshCavity2(
   for(auto t : triangles) {
     for(size_t i = 0; i < 3; i++) {
       HalfEdge *he = getEdge(t[i], t[(i + 1) % 3]);
+      if (!newHe.empty() && t[i] == newHe[0] && t[(i+1)%3] == newHe[1])
+        he = heNew;
       if(std::find(bnd.begin(), bnd.end(), he) == bnd.end()) {
         he = new PolyMesh::HalfEdge(t[i]);
         //	printf("creating new edge %d %d\n",t[i]->data,t[(i+1)%3]->data);
@@ -784,7 +839,7 @@ bool PolyMesh::deleteVertexAndRemeshCavity2(
       new_edges.push_back(he);
     }
   }
-
+      
   //  printf("creating %lu new edges\n",new_edges.size());
 
   // if (new_inner.size()/2 != bnd.size() - 3)printf("aaaaaaargh %lu
@@ -821,7 +876,7 @@ bool PolyMesh::deleteVertexAndRemeshCavity2(
       }
     }
   }
-
+      
   for(auto f : old_faces) { f->he = nullptr; }
   for(auto e : old_inner) { e->v = nullptr; }
   for(auto f : new_faces) {
