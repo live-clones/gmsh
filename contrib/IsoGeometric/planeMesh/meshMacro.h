@@ -348,8 +348,6 @@ void macroGeo(const std::string & filename,
   gmsh::model::mesh::setOrder(1);
   gmsh::model::mesh::generate(2);
 
-  gmsh::fltk::run();
-
   std::vector<double> vertexCoord;
   std::vector<double> vertexParametricCoord;
   gmsh::model::mesh::getNodes(vertexTags, vertexCoord, vertexParametricCoord, 2, -1, true);
@@ -400,12 +398,12 @@ void macroGeo(const std::string & filename,
   //
   int nbrRefine = int(log2(clscale/clrefine)) - 2;
   if (opt == 0) {
-    // gmsh::model::mesh::clear();
-    // gmsh::option::setNumber("Mesh.MeshSizeFactor", clrefine);
-    // gmsh::option::setNumber("Mesh.Algorithm", 6);
-    // gmsh::model::mesh::generate(2);
-    gmsh::clear();
-    gmsh::open(filename);
+    gmsh::model::mesh::clear();
+    gmsh::option::setNumber("Mesh.MeshSizeFactor", clrefine);
+    gmsh::option::setNumber("Mesh.Algorithm", 6);
+    gmsh::model::mesh::generate(2);
+    // gmsh::clear();
+    // gmsh::open(filename);
   }
   else if (opt == 1) {
     for (int i = 0; i < nbrRefine; ++i) {
@@ -712,4 +710,23 @@ static void filterPath(std::vector<geodesic::SurfacePoint> &path, double eps)
   path = filtered_path;
 }
 
-
+static void drawGeodesics(highOrderPolyMesh & hop, std::vector< std::vector<int> > & geodesicLines)
+{
+    for (size_t i = 0; i < hop.triangles.size()/3; i++) {
+    for (int j = 0; j < 3; ++j) {
+      size_t i0 = hop.triangles[3*i+j];
+      size_t i1 = hop.triangles[3*i+(j+1)%3];
+      // if (i0 > i1)
+      //   std::swap(i0,i1);
+      auto path = hop.geodesics[{i0,i1}];
+      std::vector<size_t> geodesicPoints(path.size());
+      for (size_t k = 0; k < path.size(); ++k) {
+        geodesicPoints[k] = gmsh::model::geo::addPoint(path[k].x(), path[k].y(), path[k].z());
+      }
+      geodesicLines[3*i+j].resize(path.size()-1);
+      for (size_t k = 0; k < path.size()-1; ++k)
+        geodesicLines[3*i+j][k] = gmsh::model::geo::addLine(geodesicPoints[k], geodesicPoints[k+1]);
+    }
+  }
+  gmsh::model::geo::synchronize();
+}

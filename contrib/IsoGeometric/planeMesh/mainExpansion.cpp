@@ -427,7 +427,11 @@ int main(int argc, char* argv[]) {
   // E X P A N S I O N
   //
   std::vector<double> u(nodes.size(), 0.);
+  std::vector<double> v(nodes.size(), 0.);
   std::vector<bool> bc(nodes.size(), false);
+  std::vector<geodesic::SurfacePoint> points(nodeTags.size());
+  std::vector<geodesic::SurfacePoint> sources;
+  std::vector<geodesic::SurfacePoint *> srcs(nodes.size());
   if (smoothing == 0) {
     // Waves on boundary
     for (size_t j = 0; j < loops.size(); ++j) {
@@ -464,13 +468,11 @@ int main(int argc, char* argv[]) {
     }
     mesh.initialize_mesh_data(nodeCoord, _faces);
 
-    std::vector<geodesic::SurfacePoint> points(nodeTags.size());
     for (size_t i = 0; i < nodeTags.size(); ++i) {
       points[i] = geodesic::SurfacePoint(&mesh.vertices()[i], nodeCoord[3*i],
-                                         nodeCoord[3*i+1], nodeCoord[3*i+2], geodesic::VERTEX);
+                                        nodeCoord[3*i+1], nodeCoord[3*i+2], geodesic::VERTEX);
     }
 
-    std::vector<geodesic::SurfacePoint> sources;
     for (size_t j = 0; j < loops.size(); ++j) {
       std::vector<MVertex *>& loop = loops[j];
       for (size_t i = 0; i < loop.size()-1; ++i) {
@@ -484,8 +486,9 @@ int main(int argc, char* argv[]) {
     double max = 0.;
     for (size_t i = 0; i < nodes.size(); ++i) {
       double d;
-      algorithm.best_source(points[i],d);
+      unsigned iSource = algorithm.best_source(points[i],d);
       u[i] = d;
+      srcs[i] = &sources[iSource];
       if (max < d)
         max = d;
     }
@@ -536,11 +539,19 @@ int main(int argc, char* argv[]) {
         // u[i] = rho * f;
         u[i] = rho * f * H / factor;
       }
+      else if (func == 4) {
+        u[i] /= BLength;
+        if (u[i] > 1)
+          u[i] = 1;
+        v[i] = 1 - cos(u[i] * M_PI/2) - u[i];
+        u[i] = sin(u[i] * M_PI/2);
+        u[i] *= BLength;
+        v[i] *= BLength;
+        std::cout << u[i] << " " << v[i] << std::endl;
+      }
 
       u[i] *= ratio;
     }
-    
-    
 
   }
 
@@ -550,10 +561,20 @@ int main(int argc, char* argv[]) {
   // gmsh::view::addHomogeneousModelData(1, 0, currentModel, "NodeData", nodeTags, u);
 
 
-  // Move nodes perpendicularly to the surface
   std::vector<double> oldCoord(nodeCoord);
-  expandCoord(nodeCoord, triangles, node2Triangles, u);
-  std::cout << "Pre Expanded"<< std::endl;
+  // // Move nodes perpendicularly to the surface
+  // expandCoord(nodeCoord, triangles, node2Triangles, u);
+  // std::cout << "Pre Expanded"<< std::endl;
+
+  for (size_t i = 0; i < nodes.size(); ++i) {
+    nodeCoord[3*i+2] = u[i];
+    if (v[i] == 0)
+      continue;
+    SVector3 dv(points[i].x() - srcs[i]->x(), points[i].y() - srcs[i]->y(), 0);
+    dv.normalize();
+    nodeCoord[3*i] += v[i] * dv.x();
+    nodeCoord[3*i+1] += v[i] * dv.y();
+  }
 
   // Move nodes in the representation
   for (size_t i = 0; i < nodes.size(); i++) {
@@ -563,8 +584,9 @@ int main(int argc, char* argv[]) {
 
   // gmsh::fltk::run();
 
-  
-  // Compute geodesic
+  //
+  // C O M P U T E   G E O D E S I C S
+  //
   // geodesic::Mesh mesh;
   // std::vector<size_t> _faces(elementNodeTags.size());
   // for (size_t i = 0; i < elementNodeTags.size(); ++i) {
@@ -658,8 +680,9 @@ std::vector<double> pts(3*nodes.size());
 
   hop.createGeodesics();
 
-  if (swap)
-    hop.swapEdges(1,0,true);
+  // TODO: manage unexpansion to swap
+  // if (swap)
+  //   hop.swapEdges(1,0,true);
 
 
   // std::vector<size_t> newVertexTags;
@@ -670,34 +693,17 @@ std::vector<double> pts(3*nodes.size());
   // for (size_t i = 0; i < newVertexTags.size(); ++i)
   //   std::cout << i << " " << newVertexTags[i] << std::endl;
 
-  
   // Create geometry points and lines
-  for (size_t i = 0; i < hop.triangles.size()/3; i++) {
-    for (int j = 0; j < 3; ++j) {
-      size_t i0 = hop.triangles[3*i+j];
-      size_t i1 = hop.triangles[3*i+(j+1)%3];
-      // if (i0 > i1)
-      //   std::swap(i0,i1);
-
-      auto path = hop.geodesics[{i0,i1}];
-      std::vector<size_t> pathTags(path.size());
-      for (size_t i = 0; i < path.size(); ++i) {
-	pathTags[i] = gmsh::model::geo::addPoint(path[i].x(), path[i].y(), path[i].z());
-      }
-      std::vector<size_t> pathLines(path.size()-1);
-      for (size_t i = 0; i < path.size()-1; ++i)
-	pathLines[i] = gmsh::model::geo::addLine(pathTags[i], pathTags[i+1]);
-    }
-  }
-  gmsh::model::geo::synchronize();
+  std::vector< std::vector<int> > geodesicLines(hop.triangles.size());
+  drawGeodesics(hop, geodesicLines);
 
   gmsh::fltk::run();
 
   // Paste
-  auto & points = hop.points;
+  auto & ps = hop.points;
   std::map<size_t, size_t> vertex2Index;
-  for (size_t i = 0; i < points.size(); ++i) {
-    vertex2Index[points[i].base_element()->id()] = i;
+  for (size_t i = 0; i < ps.size(); ++i) {
+    vertex2Index[ps[i].base_element()->id()] = i;
   }
   
   auto & geodesics = hop.geodesics;
@@ -774,13 +780,27 @@ std::vector<double> pts(3*nodes.size());
     }
   }
 
-  // expandCoord(oldCoord, triangles, nbrTriangles, u);
-  // for (size_t i = 0; i < nodes.size(); i++) {
-  //   gmsh::model::mesh::setNode(tags[i], {oldCoord[3*i], oldCoord[3*i+1], oldCoord[3*i+2]}, {});
-  // }
+
+  // Move nodes in the representation
+  for (size_t i = 0; i < nodes.size(); i++) {
+    gmsh::model::mesh::setNode(nodeTags[i], {oldCoord[3*i], oldCoord[3*i+1], oldCoord[3*i+2]}, {});
+  }
+  std::cout << "Unexpanded"<< std::endl;
 
 
-  
+  // Create geometry points and lines
+  gmsh::vectorpair dimTags;
+  for (size_t i = 0; i < geodesicLines.size(); ++i) {
+    for (size_t j = 0; j < geodesicLines[i].size(); ++j) {
+      dimTags.push_back({1,geodesicLines[i][j]});
+    }
+  }
+  for (auto dt: dimTags)
+    std::cout << dt.first << " " << dt.second << std::endl; 
+  gmsh::model::geo::remove(dimTags, true);
+  drawGeodesics(hop, geodesicLines);
+
+
   // Cut
   PolyMesh *pm_new = hop.cutMesh();
 
