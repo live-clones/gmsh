@@ -2066,7 +2066,6 @@ void highOrderPolyMesh::write(const PolyMesh *pm_new)
     auto he = pm_new->hedges[i];
     if (he->data == -1)
       continue;
-    auto & eHEdges = edgeHEdges[he->data];
     edgeHEdges[he->data].push_back(he);
     if (pointAssigned[he->v->data/3] == 0)
       pointAssigned[he->v->data/3] = 2;
@@ -2199,21 +2198,20 @@ void highOrderPolyMesh::write(const PolyMesh *pm_new)
     auto hes = it->second;
     
     std::vector<size_t> is;
-    size_t k = 0;
     for (size_t i = 0; i < hes.size(); ++i) {
       auto index = hes[i]->v->data/3;
       if (std::find(is.begin(), is.end(), index) == is.end())
-	is.push_back(index);
+        is.push_back(index);
     }
     for (size_t i = 0; i < triangles.size()/3; ++i) {
       int p0 = points[triangles[3*i]].base_element()->id();
       int p1 = points[triangles[3*i+1]].base_element()->id();
       int p2 = points[triangles[3*i+2]].base_element()->id();
       if ((p0 == is[0] || p0 == is[1] || p0 == is[2]) &&
-	  (p1 == is[0] || p1 == is[1] || p1 == is[2]) &&
-	  (p2 == is[0] || p2 == is[1] || p2 == is[2])) {
-	faceVertices[key] = {p0, p1, p2};
-	break;
+          (p1 == is[0] || p1 == is[1] || p1 == is[2]) &&
+          (p2 == is[0] || p2 == is[1] || p2 == is[2])) {
+        faceVertices[key] = {p0, p1, p2};
+        break;
       }
     }
   }

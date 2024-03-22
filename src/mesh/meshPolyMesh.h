@@ -1014,20 +1014,6 @@ inline int degree(const PolyMesh::Vertex *v)
   return count;
 }
 
-// compute the degree of a given vertex v
-inline int degree(const PolyMesh::Vertex *v) 
-{
-  PolyMesh::HalfEdge *he = v->he;
-  size_t count = 0;
-  do {
-    he = he->opposite;
-    if(he == NULL) return -1;
-    he = he->next;
-    count++;
-  } while(he != v->he);
-  return count;
-}
-
 void print__(const char *fn, PolyMesh *pm,
              std::map<PolyMesh::Vertex *, double> &ls);
 
