@@ -948,7 +948,7 @@ readMSH4Edges(GModel *const model, FILE *fp, bool binary, double version)
       // TODO
     }
     else {
-      if(fscanf(fp, "%lu %lu %lu", &edge, &node1, &node2, &numElements) != 3) {
+      if(fscanf(fp, "%lu %lu %lu", &edge, &node1, &node2) != 3) {
         return {};
       }
       output.push_back({edge, node1, node2});
