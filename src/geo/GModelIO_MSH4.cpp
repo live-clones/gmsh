@@ -914,6 +914,50 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
   return elementCache;
 }
 
+// Returns a vector of (edgeTag, nodeTag1, nodeTag2) arrays
+static std::vector<std::array<std::size_t, 3>>
+readMSH4Edges(GModel *const model, FILE *fp, bool binary, double version)
+{
+  std::size_t numTags = 0;
+
+  if(binary) {
+    throw std::runtime_error("Binary non implemented!");
+  }
+  else {
+    // First line indicates the number of edges, then one line per edge
+    if(fscanf(fp, "%lu", &numTags) != 1) {
+      return {};
+    }
+  }
+
+  if (numTags == 0)
+    return {};
+
+  Msg::Info("readMSH4Edges with %lu elements", numTags);
+
+  std::vector<std::array<std::size_t, 3>> output;
+  output.reserve(numTags);
+
+  std::size_t edge, node1, node2;
+
+  for(std::size_t i = 0; i < numTags; i++) {
+    int entityTag = 0, entityDim = 0, elmType = 0;
+    std::size_t numElements = 0;
+
+    if(binary) {
+      // TODO
+    }
+    else {
+      if(fscanf(fp, "%lu %lu %lu", &edge, &node1, &node2, &numElements) != 3) {
+        return {};
+      }
+      output.push_back({edge, node1, node2});
+    }
+  }
+
+  return output;
+}
+
 static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
                                   bool swap, double version)
 {
@@ -1390,6 +1434,22 @@ int GModel::_readMSH4(const std::string &name)
         }
       }
       delete[] elementCache;
+    }
+    else if(!strncmp(&str[1], "EdgeTags", 8)) {
+      auto edgeTags = 
+        readMSH4Edges(this, fp, binary, version);
+      Msg::Info("Read %lu edge tags from file", edgeTags.size());
+      for (auto& elem: edgeTags) {
+        // EdgeTag, nodeTag1, nodeTag2 format
+        MVertex* v1 = getMeshVertexByTag(elem[1]);
+        MVertex* v2 = getMeshVertexByTag(elem[2]);
+        if(v1 != nullptr && v2 != nullptr) {
+          // Should be enough for not adding edges on other partitions ?
+          MEdge edge(v1, v2);
+          this->_mapEdgeNum.insert({std::move(edge), elem[0]});
+        }
+      }
+      Msg::Info("Total number of edges is now %lu", this->_mapEdgeNum.size());
     }
     else if(!strncmp(&str[1], "Periodic", 8)) {
       if(!readMSH4PeriodicNodes(this, fp, binary, swap, version)) {
@@ -2761,6 +2821,42 @@ static void writeMSH4Parametrizations(GModel *const model, FILE *fp,
   fprintf(fp, "$EndParametrizations\n");
 }
 
+static void writeMSH4Edges(GModel *const model, FILE *fp, bool partitioned,
+                              int partitionToSave, bool binary, bool saveAll,
+                              double version)
+{
+  if(model->getNumMEdges() == 0) return;
+
+  std::vector<std::size_t> edgeTags;
+  std::vector<std::size_t> edgeNodes;
+  edgeTags.reserve(model->getNumMEdges());
+  edgeNodes.reserve(model->getNumMEdges() * 2);
+  for(auto it = model->firstMEdge(); it != model->lastMEdge(); ++it) {
+    edgeTags.push_back(it->second);
+    edgeNodes.push_back(it->first.getVertex(0)->getNum());
+    edgeNodes.push_back(it->first.getVertex(1)->getNum());
+  }
+
+
+  fprintf(fp, "$EdgeTags\n");
+
+  if(binary) {
+    throw std::runtime_error(
+      "Binary format not supported yet for exporting edges");
+  }
+  else {
+    fprintf(fp, "%lu\n", edgeTags.size());
+    for(std::size_t tag = 0; tag < edgeTags.size(); ++tag) {
+      fprintf(fp, "%lu %lu %lu\n", edgeTags[tag], edgeNodes[2 * tag],
+              edgeNodes[2 * tag + 1]);
+    }
+  }
+
+  if(binary) fprintf(fp, "\n");
+
+  fprintf(fp, "$EndEdgeTags\n");
+}
+
 int GModel::_writeMSH4(const std::string &name, double version, bool binary,
                        bool saveAll, bool saveParametric, double scalingFactor,
                        bool append, int partitionToSave,
@@ -2849,6 +2945,10 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   // elements
   writeMSH4Elements(this, fp, partitioned, partitionToSave, binary, saveAll,
                     version);
+
+  // Edge tags
+  writeMSH4Edges(this, fp, partitioned, partitionToSave, binary, saveAll,
+                 version);
 
   // periodic
   writeMSH4PeriodicNodes(this, fp, binary, version);
