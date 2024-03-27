@@ -300,6 +300,7 @@ int main(int argc, char* argv[]) {
   int opt = 0;
   int smoothing = 3;
   int func = 2;
+  double BLength = 5;
   double gravity = 1;
   double ratio = 1.;
   double clscale = 100; //64;
@@ -326,6 +327,9 @@ int main(int argc, char* argv[]) {
       continue;
     } else if (std::string(argv[i]) == "-func" && i + 1 < argc) {
       func = std::stoi(argv[++i]);
+      continue;
+    } else if (std::string(argv[i]) == "-bl" && i + 1 < argc) {
+      BLength = std::stod(argv[++i]);
       continue;
     } else if (std::string(argv[i]) == "-g" && i + 1 < argc) {
       gravity = std::stod(argv[++i]);
@@ -499,8 +503,6 @@ int main(int argc, char* argv[]) {
     // gmsh::view::addHomogeneousModelData(1, 0, currentModel, "NodeData", nodeTags, u);
 
     for (size_t i = 0; i < nodes.size(); ++i) {
-      double BLength = 5;
-      
       if (func == 0) {
         u[i] = sqrt(u[i]/max);
         u[i] *= max;
@@ -547,7 +549,7 @@ int main(int argc, char* argv[]) {
         u[i] = sin(u[i] * M_PI/2);
         u[i] *= BLength;
         v[i] *= BLength;
-        std::cout << u[i] << " " << v[i] << std::endl;
+        // std::cout << u[i] << " " << v[i] << std::endl;
       }
 
       u[i] *= ratio;
@@ -677,12 +679,12 @@ std::vector<double> pts(3*nodes.size());
       }
 
   highOrderPolyMesh hop(pm, tris);
+  hop.trueCoords = oldCoord;
 
   hop.createGeodesics();
 
-  // TODO: manage unexpansion to swap
-  // if (swap)
-  //   hop.swapEdges(1,0,true);
+  if (swap)
+    hop.swapEdges(1,0,true);
 
 
   // std::vector<size_t> newVertexTags;
@@ -795,10 +797,12 @@ std::vector<double> pts(3*nodes.size());
       dimTags.push_back({1,geodesicLines[i][j]});
     }
   }
-  for (auto dt: dimTags)
-    std::cout << dt.first << " " << dt.second << std::endl; 
+  // for (auto dt: dimTags)
+  //   std::cout << dt.first << " " << dt.second << std::endl; 
   gmsh::model::geo::remove(dimTags, true);
   drawGeodesics(hop, geodesicLines);
+
+  gmsh::fltk::run();
 
 
   // Cut
@@ -847,9 +851,9 @@ std::vector<double> pts(3*nodes.size());
   //   std::cout << p << std::endl;
 
 
-  if (argc < 2 || std::string(argv[1]) != "-nopopup") {
-    gmsh::fltk::run();
-  }
+  // if (argc < 2 || std::string(argv[1]) != "-nopopup") {
+  //   gmsh::fltk::run();
+  // }
   
   for (auto triangle: triangles) {
     delete triangle;

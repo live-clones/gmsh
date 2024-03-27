@@ -570,17 +570,16 @@ bool compareVertexOnHalfEdge(const PolyMesh::Vertex *v0,
 
   double highOrderPolyMesh::computeAngle(int p0, int p1, int p2, bool forceInPlane)
   {
+    if (trueCoords.size() == 0) {
+      std::cerr << "trueCoords is null" << std::endl;
+      return 0;
+    }
+
     std::vector<geodesic::SurfacePoint> p10, p12;
     createGeodesicPath(p1, p0, p10);
     createGeodesicPath(p1, p2, p12);
-    SVector3 v10(p10[1].x() - p10[0].x(), p10[1].y() - p10[0].y(),
-                 p10[1].z() - p10[0].z());
-    SVector3 v12(p12[1].x() - p12[0].x(), p12[1].y() - p12[0].y(),
-                 p12[1].z() - p12[0].z());
-    if (forceInPlane) {
-      v10 = SVector3(p10[1].x() - p10[0].x(), p10[1].y() - p10[0].y(), 0);
-      v12 = SVector3(p12[1].x() - p12[0].x(), p12[1].y() - p12[0].y(), 0);
-    }
+    SVector3 v10(getTrueCoords(p10[1]), getTrueCoords(p10[0]));
+    SVector3 v12(getTrueCoords(p12[1]), getTrueCoords(p12[0]));
     return angle(v12, v10);
   }
 
@@ -1040,6 +1039,38 @@ void highOrderPolyMesh::createGeodesicsInParallel(std::vector<int> &__rows,
   double t2 = TimeOfDay();
 
   Msg::Info("Time for computing Geodesics : %12.5E sec", t2 - t1);
+}
+
+SPoint3 highOrderPolyMesh::getTrueCoords(geodesic::SurfacePoint &sp)
+{
+  if (sp.type() == geodesic::VERTEX) {
+    geodesic::Vertex *v = (geodesic::Vertex *) sp.base_element();
+    return SPoint3(trueCoords[3*v->id()],
+                   trueCoords[3*v->id() + 1],
+                   trueCoords[3*v->id() + 2]);
+  }
+  if (sp.type() == geodesic::EDGE) {
+    geodesic::Edge *e = (geodesic::Edge *) sp.base_element();
+    geodesic::Vertex *v0 = e->v0();
+    geodesic::Vertex *v1 = e->v1();
+    SVector3 t0 = SVector3(v1->x() - v0->x(),
+                           v1->y() - v0->y(),
+                           v1->z() - v0->z());
+    SVector3 t1 = SVector3(sp.x() - v0->x(),
+                           sp.y() - v0->y(),
+                           sp.z() - v0->z());
+    double alpha = dot(t0, t1) / dot(t0, t0);
+    return SPoint3((1-alpha) * trueCoords[3*v0->id()] + alpha * trueCoords[3*v1->id()],
+                   (1-alpha) * trueCoords[3*v0->id() + 1] + alpha * trueCoords[3*v1->id() + 1],
+                   (1-alpha) * trueCoords[3*v0->id() + 2] + alpha * trueCoords[3*v1->id() + 2]);
+  }
+  if (sp.type() == geodesic::FACE) {
+    // TODO: manage this case
+    std::cerr << "Error: SurfacePoint type not managed" << std::endl;
+    return SPoint3(0, 0, 0);
+  }
+  std::cerr << "Error: SurfacePoint type not recognized" << std::endl;
+  return SPoint3(0, 0, 0);
 }
 
 // CONSTRUCTORS

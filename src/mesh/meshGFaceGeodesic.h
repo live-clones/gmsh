@@ -31,6 +31,7 @@ public:
   std::map<PolyMesh::HalfEdge *, std::vector<int>> evs;
   // detect intersecting geodesic @ saddle_points
   std::map<int, int> _saddle;
+  std::vector<double> trueCoords;
 
 
   ///  std::map<int, std::map<int,double> > nodalDistances; // points -->
@@ -65,7 +66,8 @@ public:
   void createGeodesicsInParallel(std::vector<int> &__rows,
                                  std::vector<int> &__columns,
                                  std::vector<int> &__starts);
-  
+  SPoint3 getTrueCoords(geodesic::SurfacePoint &sp);
+
 private:
   int getTag(const std::pair<int, int> &e2);
   SVector3 unit_normal(geodesic::Face *f);
