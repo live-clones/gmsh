@@ -2201,6 +2201,7 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
   double surfaceConstraint = hMean == -20 ? 0.5 : 1.;
   // double surfaceConstraint = 1.;
 
+
   // 2. compute alpha shape
   std::unordered_map<PolyMesh::Face*, bool> _touched;
   // std::vector<std::vector<size_t>> edges;
@@ -2324,6 +2325,7 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
       }
     }
 
+    // print4debug(pm, 0);
     // exit(0);
     // Then, refine...
     // Msg::Info("--> refining...\n");
@@ -2402,8 +2404,9 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
               for (auto vv : closeVertices){
                 std::vector<PolyMesh::HalfEdge *> _tlocal;
                 std::vector<PolyMesh::HalfEdge *> _nhes;
-                if (pm->degree(vv) > 0 && !freeSurfaceCheck(pm, vv, alphaShapeTags[1])) {
+                if (vv->he->f->data == alphaShapeTags[0] && pm->degree(vv) > 0 && !freeSurfaceCheck(pm, vv, alphaShapeTags[1])) {
                   _deleteVertex(pm, vv, &_nhes);
+                  // pm->deleteVertex(vv, &_nhes);
                 }
                 _delaunayCheck(pm, _nhes, &_tlocal, alphaShapeTags[1]);
                 _touched.insert(_touched.end(), _tlocal.begin(), _tlocal.end());
@@ -2474,37 +2477,39 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
   gmsh::model::mesh::addElementsByType(alphaShapeTags[0], 2, trash, triangles);
   
   // Create chained list of edges
-  std::vector< std::vector< PolyMesh::HalfEdge* >> edgeLoops;
-  std::unordered_set< PolyMesh::HalfEdge* > he_touched; 
-  std::vector<size_t> edges;
-  for (auto he : pm->hedges){
-    if (he_touched.find(he) != he_touched.end()) continue;
-    if (he->f == nullptr || he->f->data != alphaShapeTags[0]) continue;
-    if (he->f->data == alphaShapeTags[0] && he->data == alphaShapeTags[1]){
-      he_touched.insert(he);
-      std::vector< PolyMesh::HalfEdge* > loop;
-      PolyMesh::HalfEdge* he_loop = he;
-      do {
-        loop.push_back(he_loop);
-        he_loop = getNextEdgeOnBoundary(he_loop, alphaShapeTags[1]);
-        he_touched.insert(he_loop);
-      } while(he_loop != he);
-      edgeLoops.push_back(loop);
-    }
-  }
-  for (auto lo : edgeLoops){
-    for (auto he : lo){
-      if (he->data != alphaShapeTags[1]) printf("woups..\n");
-      edges.push_back(vertex2Tag[he->v]);
-      edges.push_back(vertex2Tag[he->next->v]);
-    }
-  }
+  // std::vector< std::vector< PolyMesh::HalfEdge* >> edgeLoops;
+  // std::unordered_set< PolyMesh::HalfEdge* > he_touched; 
+  // std::vector<size_t> edges;
   // for (auto he : pm->hedges){
-  //   if (he->data == alphaShapeTags[1] && he->f != nullptr && he->f->data == alphaShapeTags[0]) {
+  //   if (he_touched.find(he) != he_touched.end()) continue;
+  //   if (he->f == nullptr || he->f->data != alphaShapeTags[0]) continue;
+  //   if (he->f->data == alphaShapeTags[0] && he->data == alphaShapeTags[1]){
+  //     he_touched.insert(he);
+  //     std::vector< PolyMesh::HalfEdge* > loop;
+  //     PolyMesh::HalfEdge* he_loop = he;
+  //     do {
+  //       loop.push_back(he_loop);
+  //       he_loop = getNextEdgeOnBoundary(he_loop, alphaShapeTags[1]);
+  //       he_touched.insert(he_loop);
+  //     } while(he_loop != he);
+  //     edgeLoops.push_back(loop);
+  //   }
+  // }
+  // for (auto lo : edgeLoops){
+  //   for (auto he : lo){
+  //     if (he->data != alphaShapeTags[1]) printf("woups..\n");
   //     edges.push_back(vertex2Tag[he->v]);
   //     edges.push_back(vertex2Tag[he->next->v]);
   //   }
   // }
+  
+  std::vector<size_t> edges;
+  for (auto he : pm->hedges){
+    if (he->data == alphaShapeTags[1] && he->f != nullptr && he->f->data == alphaShapeTags[0]) {
+      edges.push_back(vertex2Tag[he->v]);
+      edges.push_back(vertex2Tag[he->next->v]);
+    }
+  }
   gmsh::model::mesh::addElementsByType(alphaShapeTags[1], 1, trash, edges);
   delete pm;
 }
@@ -2859,7 +2864,7 @@ void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags,
             for (auto vv : closeVertices){
               std::vector<PolyMesh::HalfEdge *> _tlocal;
               std::vector<PolyMesh::HalfEdge *> _nhes;
-              if (pm->degree(vv) > 0 && !freeSurfaceCheck(pm, vv, alphaShapeTags[1])) {
+              if (vv->he->f->data == alphaShapeTags[0] && pm->degree(vv) > 0 && !freeSurfaceCheck(pm, vv, alphaShapeTags[1])) {
                 _deleteVertex(pm, vv, &_nhes);
               }
               _delaunayCheck(pm, _nhes, &_tlocal, alphaShapeTags[1]);
@@ -2894,23 +2899,23 @@ void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags,
   }
 
   // Create chained list of edges
-  std::vector< std::vector< PolyMesh::HalfEdge* >> edgeLoops;
-  std::unordered_set< PolyMesh::HalfEdge* > he_touched; 
-  for (auto he : pm->hedges){
-    if (he_touched.find(he) != he_touched.end()) continue;
-    if (he->f == nullptr || he->f->data != alphaShapeTags[0]) continue;
-    if (he->f->data == alphaShapeTags[0] && he->data == alphaShapeTags[1]){
-      he_touched.insert(he);
-      std::vector< PolyMesh::HalfEdge* > loop;
-      PolyMesh::HalfEdge* he_loop = he;
-      do {
-        loop.push_back(he_loop);
-        he_loop = getNextEdgeOnBoundary(he_loop, alphaShapeTags[1]);
-        he_touched.insert(he_loop);
-      } while(he_loop != he);
-      edgeLoops.push_back(loop);
-    }
-  }
+  // std::vector< std::vector< PolyMesh::HalfEdge* >> edgeLoops;
+  // std::unordered_set< PolyMesh::HalfEdge* > he_touched; 
+  // for (auto he : pm->hedges){
+  //   if (he_touched.find(he) != he_touched.end()) continue;
+  //   if (he->f == nullptr || he->f->data != alphaShapeTags[0]) continue;
+  //   if (he->f->data == alphaShapeTags[0] && he->data == alphaShapeTags[1]){
+  //     he_touched.insert(he);
+  //     std::vector< PolyMesh::HalfEdge* > loop;
+  //     PolyMesh::HalfEdge* he_loop = he;
+  //     do {
+  //       loop.push_back(he_loop);
+  //       he_loop = getNextEdgeOnBoundary(he_loop, alphaShapeTags[1]);
+  //       he_touched.insert(he_loop);
+  //     } while(he_loop != he);
+  //     edgeLoops.push_back(loop);
+  //   }
+  // }
 
   // print4debug(pm, 7);
 
@@ -2964,19 +2969,19 @@ void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags,
   // printf("added triangles \n");
   // printf("added triangles\n");
   std::vector<size_t> edges;
-  // for (auto he : pm->hedges){
-    // if (he->data == alphaShapeTags[1] && he->f != nullptr && he->f->data == alphaShapeTags[0]) {
-    //   edges.push_back(vertex2Tag[he->v]);
-    //   edges.push_back(vertex2Tag[he->next->v]);
-    // }
-  // }
-  for (auto lo : edgeLoops){
-    for (auto he : lo){
-      if (he->data != alphaShapeTags[1]) printf("woups..\n");
+  for (auto he : pm->hedges){
+    if (he->data == alphaShapeTags[1] && he->f != nullptr && he->f->data == alphaShapeTags[0]) {
       edges.push_back(vertex2Tag[he->v]);
       edges.push_back(vertex2Tag[he->next->v]);
     }
   }
+  // for (auto lo : edgeLoops){
+  //   for (auto he : lo){
+  //     if (he->data != alphaShapeTags[1]) printf("woups..\n");
+  //     edges.push_back(vertex2Tag[he->v]);
+  //     edges.push_back(vertex2Tag[he->next->v]);
+  //   }
+  // }
   // printf("number of boundary edges : %lu\n", edges.size()/2);
   gmsh::model::mesh::addElementsByType(alphaShapeTags[1], 1, trash, edges);
   // printf("added edges \n");
