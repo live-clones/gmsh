@@ -234,7 +234,8 @@ extern "C" void _refineSurfaceTriangulation(HXTMesh** meshPtr, HXTDelaunayOption
             }
         }
         double s = 0.5*(nodalSizes[v->data] + nodalSizes[closestNeigh->data]);
-        if (minDist < .3*dimensionFactor*s) {
+        printf("minDist : %f ; s : %f \n", minDist, s);
+        if (minDist < .3*s/dimensionFactor) {
             printf("Going to try to delete... threshold dist : %f \n ", thresholdDistance);
             int deleted = pm->decimateOneNode(v, thresholdDistance, NULL, NULL);
             if (deleted) printf("YES ! \n");
