@@ -49,7 +49,7 @@ public:
 
   int splitTriangle(size_t iTriangle, geodesic::SurfacePoint &sp);
   int swapEdge(const std::pair<int, int> &p01, const int onlyMisoriented,
-               std::pair<int, int> *p23 = nullptr, const bool forceInPlane = false);
+               std::pair<int, int> *p23 = nullptr);
   std::vector<geodesic::SurfacePoint> circumCenter(int iTriangle,
                                                    double dist_max = 0);
   int splitEdge(const std::pair<int, int> &p01, double lTarget,
@@ -58,7 +58,7 @@ public:
   void write(const PolyMesh *pm_new);
 
   void printGeodesics(const char *fn);
-  int swapEdges(int niter = 1, int onlyMisoriented = 1, const bool forceInPlane = false);
+  int swapEdges(int niter = 1, int onlyMisoriented = 1);
   int splitEdges(double L);
   double computeAngleTrue(int p0, int p1, int p2);
   double computeBoxProduct(int p0, int p1, int p2);
@@ -72,9 +72,9 @@ private:
   int getTag(const std::pair<int, int> &e2);
   SVector3 unit_normal(geodesic::Face *f);
   SVector3 normal(int p);
-  double computeAngle(int p0, int p1, int p2, bool forceInPlane = false);
+  double computeAngle(int p0, int p1, int p2);
   bool edgeValid(int p0, int p1, int p2, int p3);
-  bool doWeSwap(int p0, int p1, int p2, int p3, int onlyMisoriented, const bool forceInPlane = false);
+  bool doWeSwap(int p0, int p1, int p2, int p3, int onlyMisoriented);
   void addVertexOnSurface(PolyMesh::Face *f, int v);
   void addVertexOnEdge(PolyMesh::HalfEdge *e, int v);
   void addPolyMeshVertexTag(PolyMesh::Vertex *v, int tag);

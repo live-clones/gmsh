@@ -568,7 +568,7 @@ bool compareVertexOnHalfEdge(const PolyMesh::Vertex *v0,
     return n;
   }
 
-  double highOrderPolyMesh::computeAngle(int p0, int p1, int p2, bool forceInPlane)
+  double highOrderPolyMesh::computeAngle(int p0, int p1, int p2)
   {
     if (trueCoords.size() == 0) {
       std::cerr << "trueCoords is null" << std::endl;
@@ -611,7 +611,7 @@ bool compareVertexOnHalfEdge(const PolyMesh::Vertex *v0,
     return false;
   }
 
-bool highOrderPolyMesh::doWeSwap(int p0, int p1, int p2, int p3, int onlyMisoriented, const bool forceInPlane)
+bool highOrderPolyMesh::doWeSwap(int p0, int p1, int p2, int p3, int onlyMisoriented)
   {
     double ori012 = computeBoxProduct(p0, p1, p2);
     double ori103 = computeBoxProduct(p1, p0, p3);
@@ -631,14 +631,14 @@ bool highOrderPolyMesh::doWeSwap(int p0, int p1, int p2, int p3, int onlyMisorie
     if(ori032 < 0 || ori231 < 0) return false;
     if(onlyMisoriented) return false;
 
-    double a1 = computeAngle(p1, p0, p3, forceInPlane); // OK
-    double a2 = computeAngle(p2, p0, p1, forceInPlane); // OK
-    double a3 = computeAngle(p3, p2, p0, forceInPlane); // OK
-    double a4 = computeAngle(p1, p2, p3, forceInPlane); // OK
-    double a5 = computeAngle(p0, p1, p2, forceInPlane); // OK
-    double a6 = computeAngle(p3, p1, p0, forceInPlane); // OK
-    double a7 = computeAngle(p2, p3, p1, forceInPlane); // OK
-    double a8 = computeAngle(p0, p3, p2, forceInPlane); // OK
+    double a1 = computeAngle(p1, p0, p3); // OK
+    double a2 = computeAngle(p2, p0, p1); // OK
+    double a3 = computeAngle(p3, p2, p0); // OK
+    double a4 = computeAngle(p1, p2, p3); // OK
+    double a5 = computeAngle(p0, p1, p2); // OK
+    double a6 = computeAngle(p3, p1, p0); // OK
+    double a7 = computeAngle(p2, p3, p1); // OK
+    double a8 = computeAngle(p0, p3, p2); // OK
 
     std::vector<double> A_before = {a1, a3 + a4, a5, a6, a7 + a8, a2};
     std::vector<double> A_after = {a1 + a2, a3, a8, a4, a5 + a6, a7};
@@ -862,7 +862,7 @@ bool highOrderPolyMesh::doWeSwap(int p0, int p1, int p2, int p3, int onlyMisorie
   // Parallelizing edge swapping should be done
   // The only thiong to parallelize is to
 
-int highOrderPolyMesh::swapEdges(int niter, int onlyMisoriented, const bool forceInPlane)
+int highOrderPolyMesh::swapEdges(int niter, int onlyMisoriented)
   {
     int countTot = 0;
     int iter = 0;
@@ -912,7 +912,7 @@ int highOrderPolyMesh::swapEdges(int niter, int onlyMisoriented, const bool forc
       createGeodesicsInParallel(__rows, __columns, __starts);
 
       for(auto it : eds)
-        count += (swapEdge(it, onlyMisoriented, nullptr, forceInPlane) == 0 ? 1 : 0);
+        count += (swapEdge(it, onlyMisoriented, nullptr) == 0 ? 1 : 0);
       if(count == 0) break;
       if(++iter >= niter) break;
       countTot += count;
@@ -1409,8 +1409,7 @@ int highOrderPolyMesh::splitTriangle(size_t iTriangle,
 
 int highOrderPolyMesh::swapEdge(const std::pair<int, int> &p01,
                                 const int onlyMisoriented,
-                                std::pair<int, int> *p23,
-				const bool forceInPlane)
+                                std::pair<int, int> *p23)
 { // force an edge swap (2 geodesics to compute)
   auto it01 = edges.find(p01);
   if(it01 == edges.end()) { return -2; }
@@ -1468,7 +1467,7 @@ int highOrderPolyMesh::swapEdge(const std::pair<int, int> &p01,
   createGeodesicPath(p0, p1, oldPath);
   createGeodesicPath(p2, p3, newPath);
   SVector3 intersection;
-  if (  doWeSwap ( p0, p1, p2, p3, onlyMisoriented , forceInPlane)/* && intersectGeodesicPath (oldPath, newPath,intersection)*/){
+  if (  doWeSwap ( p0, p1, p2, p3, onlyMisoriented)/* && intersectGeodesicPath (oldPath, newPath,intersection)*/){
     std::pair<int, int> p12 =
       std::make_pair(std::min(p1, p2), std::max(p1, p2));
     std::pair<int, int> p03 =
