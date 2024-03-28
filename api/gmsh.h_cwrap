@@ -3341,12 +3341,14 @@ namespace gmsh { // Top-level functions
       //
       // Conform alpha shape mesh to solid boundaries
       inline void conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags,
-                                              const std::vector<int> & boundaryTags,
+                                              const std::vector<int> & internalBoundaryTags,
+                                              const std::vector<int> & externalBoundaryTags,
                                               std::function<double(int, int, double, double, double, double)> sizeFieldCallback)
       {
         int ierr = 0;
         int *api_alphaShapeTags_; size_t api_alphaShapeTags_n_; vector2ptr(alphaShapeTags, &api_alphaShapeTags_, &api_alphaShapeTags_n_);
-        int *api_boundaryTags_; size_t api_boundaryTags_n_; vector2ptr(boundaryTags, &api_boundaryTags_, &api_boundaryTags_n_);
+        int *api_internalBoundaryTags_; size_t api_internalBoundaryTags_n_; vector2ptr(internalBoundaryTags, &api_internalBoundaryTags_, &api_internalBoundaryTags_n_);
+        int *api_externalBoundaryTags_; size_t api_externalBoundaryTags_n_; vector2ptr(externalBoundaryTags, &api_externalBoundaryTags_, &api_externalBoundaryTags_n_);
         struct sizeFieldCallback_caller_  {
           static double call(int dim, int tag, double x, double y, double z, double lc, void * callbackp_) {
             return (*static_cast<std::function<double(int, int, double, double, double, double)>*> (callbackp_))(dim, tag, x, y, z, lc);
@@ -3354,10 +3356,11 @@ namespace gmsh { // Top-level functions
         };
         // FIXME memory leak
         auto *sizeFieldCallback_ptr_ = new std::function<double(int, int, double, double, double, double)>(sizeFieldCallback);
-        gmshModelMeshConformAlphaShapeToBoundary(api_alphaShapeTags_, api_alphaShapeTags_n_, api_boundaryTags_, api_boundaryTags_n_, &sizeFieldCallback_caller_::call, sizeFieldCallback_ptr_, &ierr);
+        gmshModelMeshConformAlphaShapeToBoundary(api_alphaShapeTags_, api_alphaShapeTags_n_, api_internalBoundaryTags_, api_internalBoundaryTags_n_, api_externalBoundaryTags_, api_externalBoundaryTags_n_, &sizeFieldCallback_caller_::call, sizeFieldCallback_ptr_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_alphaShapeTags_);
-        gmshFree(api_boundaryTags_);
+        gmshFree(api_internalBoundaryTags_);
+        gmshFree(api_externalBoundaryTags_);
       }
 
       namespace field { // Mesh size field functions

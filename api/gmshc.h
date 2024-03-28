@@ -1704,7 +1704,8 @@ GMSH_API void gmshModelMeshDecimateTriangulation(const int faceTag,
 
 /* Conform alpha shape mesh to solid boundaries */
 GMSH_API void gmshModelMeshConformAlphaShapeToBoundary(const int * alphaShapeTags, const size_t alphaShapeTags_n,
-                                                       const int * boundaryTags, const size_t boundaryTags_n,
+                                                       const int * internalBoundaryTags, const size_t internalBoundaryTags_n,
+                                                       const int * externalBoundaryTags, const size_t externalBoundaryTags_n,
                                                        double (*sizeFieldCallback)(int dim, int tag, double x, double y, double z, double lc, void * data), void * sizeFieldCallback_data,
                                                        int * ierr);
 

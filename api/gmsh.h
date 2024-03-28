@@ -1924,7 +1924,8 @@ namespace gmsh { // Top-level functions
       //
       // Conform alpha shape mesh to solid boundaries
       GMSH_API void conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags,
-                                                const std::vector<int> & boundaryTags,
+                                                const std::vector<int> & internalBoundaryTags,
+                                                const std::vector<int> & externalBoundaryTags,
                                                 std::function<double(int, int, double, double, double, double)> sizeFieldCallback);
 
       namespace field { // Mesh size field functions

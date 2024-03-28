@@ -7797,34 +7797,42 @@ module gmsh
 
   !> Conform alpha shape mesh to solid boundaries
   subroutine gmshModelMeshConformAlphaShapeToBoundary(alphaShapeTags, &
-                                                      boundaryTags, &
+                                                      internalBoundaryTags, &
+                                                      externalBoundaryTags, &
                                                       sizeFieldCallback, &
                                                       ierr)
     interface
     subroutine C_API(api_alphaShapeTags_, &
                      api_alphaShapeTags_n_, &
-                     api_boundaryTags_, &
-                     api_boundaryTags_n_, &
+                     api_internalBoundaryTags_, &
+                     api_internalBoundaryTags_n_, &
+                     api_externalBoundaryTags_, &
+                     api_externalBoundaryTags_n_, &
                      sizeFieldCallback, &
                      ierr_) &
       bind(C, name="gmshModelMeshConformAlphaShapeToBoundary")
       use, intrinsic :: iso_c_binding
       integer(c_int), dimension(*) :: api_alphaShapeTags_
       integer(c_size_t), value, intent(in) :: api_alphaShapeTags_n_
-      integer(c_int), dimension(*) :: api_boundaryTags_
-      integer(c_size_t), value, intent(in) :: api_boundaryTags_n_
+      integer(c_int), dimension(*) :: api_internalBoundaryTags_
+      integer(c_size_t), value, intent(in) :: api_internalBoundaryTags_n_
+      integer(c_int), dimension(*) :: api_externalBoundaryTags_
+      integer(c_size_t), value, intent(in) :: api_externalBoundaryTags_n_
       type(c_funptr), value, intent(in) :: sizeFieldCallback
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), dimension(:), intent(in) :: alphaShapeTags
-    integer(c_int), dimension(:), intent(in) :: boundaryTags
+    integer(c_int), dimension(:), intent(in) :: internalBoundaryTags
+    integer(c_int), dimension(:), intent(in) :: externalBoundaryTags
     type(c_funptr), value, intent(in) :: sizeFieldCallback
     integer(c_int), intent(out), optional :: ierr
     call C_API(api_alphaShapeTags_=alphaShapeTags, &
          api_alphaShapeTags_n_=size_gmsh_int(alphaShapeTags), &
-         api_boundaryTags_=boundaryTags, &
-         api_boundaryTags_n_=size_gmsh_int(boundaryTags), &
+         api_internalBoundaryTags_=internalBoundaryTags, &
+         api_internalBoundaryTags_n_=size_gmsh_int(internalBoundaryTags), &
+         api_externalBoundaryTags_=externalBoundaryTags, &
+         api_externalBoundaryTags_n_=size_gmsh_int(externalBoundaryTags), &
          sizeFieldCallback=sizeFieldCallback, &
          ierr_=ierr)
   end subroutine gmshModelMeshConformAlphaShapeToBoundary

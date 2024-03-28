@@ -2583,8 +2583,8 @@ void PolyMeshDebugCheck(PolyMesh* pm){
 }
 
 void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags, 
-                                  const std::vector<int> & boundaryTags, 
-                                  // const std::vector<int> & externalBoundaryTags,
+                                  const std::vector<int> & internalBoundaryTags, 
+                                  const std::vector<int> & externalBoundaryTags,
                                   std::function<double(int, int, double, double, double, double)> sizeFieldCallback){
   // printf("starting conforming \n");
   // 1. create polymesh
@@ -2597,19 +2597,80 @@ void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags,
   // print4debug(pm, 1);
   recoverEdgesOfPolyMesh(&pm, alphaShapeTags[0], alphaShapeTags[1]);
   // print4debug(pm, 2);
-  // PART 2 : Intersection of edges with the alpha shape edges
-  std::vector<SPoint3> bndEdgeCoords;
-  std::vector<size_t> bndEdgeNodes;
-  getEdgesForEntities(boundaryTags, bndEdgeCoords, bndEdgeNodes);
-  size_t n_bndEdges = bndEdgeCoords.size()/2;
-  std::vector<double> intersections;
 
   size_t newTag;
   gmsh::model::mesh::getMaxNodeTag(newTag);
   newTag++;
+  // print4debug(pm, 2);
+
+  // first we do the external boundaries
+  // std::vector<SPoint3> extBndEdgeCoords;
+  // std::vector<size_t> extBndEdgeNodes;
+  // getEdgesForEntities(externalBoundaryTags, extBndEdgeCoords, extBndEdgeNodes);
+  // size_t n_extBndEdges = extBndEdgeCoords.size()/2;
+
+  // int n_debug = 10;
+  // for (size_t i=0; i<n_extBndEdges; i++){
+  //   double* a1 = &extBndEdgeCoords[2*i][0];
+  //   double* a2 = &extBndEdgeCoords[2*i+1][0];
+  //   std::stack<PolyMesh::HalfEdge*> allEdges;
+  //   for (auto he : pm->hedges) allEdges.push(he);
+  //   while (!allEdges.empty()){
+  //     PolyMesh::HalfEdge* he = allEdges.top();
+  //     allEdges.pop();
+  //     if (he->f == nullptr) continue; 
+  //     if (he->f->data != alphaShapeTags[0]) continue; 
+  //     double* a3 = &he->v->position[0];
+  //     double* a4 = &he->next->v->position[0];
+  //     double a143 = robustPredicates::orient2d(a1,a4,a3);
+  //     double a243 = robustPredicates::orient2d(a2,a4,a3);    
+  //     double a123 = robustPredicates::orient2d(a1,a2,a3);
+  //     double a124 = robustPredicates::orient2d(a1,a2,a4);
+  //     if (fabs(a143) < 1e-16 || fabs(a243) < 1e-16 || fabs(a123) < 1e-16 || fabs(a124) < 1e-16) continue; // parallel ? 
+  //     if (a143*a243 < 0 && a123*a124 < 0){
+  //       double t = fabs(a143)/(fabs(a143)+fabs(a243));
+  //       double vec[3] = {a2[0]-a1[0], a2[1]-a1[1], a2[2]-a1[2]};
+  //       SVector3 new_intersection(a1[0]+t*vec[0], a1[1]+t*vec[1], a1[2]+t*vec[2]);
+  //       double d0 = norm(new_intersection - he->v->position);
+  //       double d1 = norm(new_intersection - he->next->v->position);
+  //       double d2 = norm(new_intersection - he->next->next->v->position);
+  //       double d3 = norm(new_intersection - he->opposite->next->v->position);
+  //       double threshold = 1e-6; // FIXME : doesn't work with smaller threshold ...
+  //       if (d0 < threshold || d1 < threshold || d2 < threshold || d3 < threshold) continue;
+  //       pm->split_edge(he, new_intersection, newTag++);
+  //       he->f->data = alphaShapeTags[0];
+  //       he->next->opposite->f->data = alphaShapeTags[0];
+  //       if (he->data != alphaShapeTags[1]){
+  //         he->opposite->f->data = alphaShapeTags[0];
+  //         he->opposite->next->next->opposite->f->data = alphaShapeTags[0];
+  //       }
+  //       else {
+  //         he->next->opposite->f->data = he->f->data;
+  //         he->opposite->f->data = he->next->opposite->next->opposite->f->data;
+  //         he->data = alphaShapeTags[1]; // constrain them again
+  //         he->next->opposite->next->data = alphaShapeTags[1]; // constrain them again
+  //       }
+  //     }
+  //   }
+  // }
+
+
+  // PART 2 : Intersection of edges with the alpha shape edges
+  std::vector<SPoint3> bndEdgeCoords;
+  std::vector<size_t> bndEdgeNodes;
+  std::vector<SPoint3> innerBndEdgeCoords;
+  std::vector<size_t> innerBndEdgeNodes;
+  std::vector<int> allBoundaryTags;
+  allBoundaryTags.insert(allBoundaryTags.end(), externalBoundaryTags.begin(), externalBoundaryTags.end());
+  allBoundaryTags.insert(allBoundaryTags.end(), internalBoundaryTags.begin(), internalBoundaryTags.end());
+  
+  getEdgesForEntities(internalBoundaryTags, innerBndEdgeCoords, innerBndEdgeNodes);
+  getEdgesForEntities(allBoundaryTags, bndEdgeCoords, bndEdgeNodes);
+  size_t n_bndEdges = bndEdgeCoords.size()/2;
   std::unordered_set<PolyMesh::Vertex*> controlNodes;
 
-  for (auto b : boundaryTags){
+  // second we do the internal boundaries
+  for (auto b : allBoundaryTags){
     GEdge* ge = GModel::current()->getEdgeByTag(b);
     GVertex* gv = ge->getBeginVertex();
     SVector3 X(gv->x(), gv->y(), gv->z());
@@ -2632,15 +2693,26 @@ void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags,
       v->data = newTag++;
     }
   }
+
+  // printf("control nodes added \n");
+
   // print4debug(pm, 3);
   int n_debug = 10;
   for (size_t i=0; i<n_bndEdges; i++){
     double* a1 = &bndEdgeCoords[2*i][0];
     double* a2 = &bndEdgeCoords[2*i+1][0];
+    // printf("edge coords done \n");
     std::stack<PolyMesh::HalfEdge*> allEdges;
     for (auto he : pm->hedges) allEdges.push(he);
+    // printf("stack done \n");
     while (!allEdges.empty()){
+      // printf("or here ? \n");
       PolyMesh::HalfEdge* he = allEdges.top();
+      // if (he == nullptr) {
+      //   printf("he is null \n");
+      //   allEdges.pop();
+      //   continue;
+      // }
       allEdges.pop();
       if (he->f == nullptr) continue; 
       if (he->f->data != alphaShapeTags[0]) continue; 
@@ -2650,12 +2722,12 @@ void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags,
       double a243 = robustPredicates::orient2d(a2,a4,a3);    
       double a123 = robustPredicates::orient2d(a1,a2,a3);
       double a124 = robustPredicates::orient2d(a1,a2,a4);
+      // printf("if0 \n");
       if (fabs(a143) < 1e-16 || fabs(a243) < 1e-16 || fabs(a123) < 1e-16 || fabs(a124) < 1e-16) continue; // parallel ? 
-      // printf("a143 = %g, a243 = %g, a123 = %g, a124 = %g\n", a143, a243, a123, a124);
+      // printf("if1 \n");
       if (a143*a243 < 0 && a123*a124 < 0){
-        // test distance : 
+        // printf("in if1 \n");
         double t = fabs(a143)/(fabs(a143)+fabs(a243));
-        // printf("t : %f \n", t);
         double vec[3] = {a2[0]-a1[0], a2[1]-a1[1], a2[2]-a1[2]};
         SVector3 new_intersection(a1[0]+t*vec[0], a1[1]+t*vec[1], a1[2]+t*vec[2]);
         double d0 = norm(new_intersection - he->v->position);
@@ -2664,39 +2736,30 @@ void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags,
         double d3 = norm(new_intersection - he->opposite->next->v->position);
         double threshold = 1e-6; // FIXME : doesn't work with smaller threshold ...
         if (d0 < threshold || d1 < threshold || d2 < threshold || d3 < threshold) continue;
-        // printf("half-edge goes from %f %f to %f %f \n", he->v->position.x(), he->v->position.y(), he->next->v->position.x(), he->next->v->position.y());
-        // printf("splitting edge at : %f %f \n", new_intersection.x(), new_intersection.y());
+        // printf("going to split edge \n");
         pm->split_edge(he, new_intersection, newTag++);
-        // print4debug(pm, n_debug++);
-        
-        
+        // printf("split edge \n");
         he->f->data = alphaShapeTags[0];
         he->next->opposite->f->data = alphaShapeTags[0];
+        // printf("if2 \n");
         if (he->data != alphaShapeTags[1]){
+          // printf("in if if2 \n");
           he->opposite->f->data = alphaShapeTags[0];
           he->opposite->next->next->opposite->f->data = alphaShapeTags[0];
         }
         else {
-          // printf("yes, splitting bnd \n");
+          // printf("in else if2 \n");
           he->next->opposite->f->data = he->f->data;
           he->opposite->f->data = he->next->opposite->next->opposite->f->data;
           he->data = alphaShapeTags[1]; // constrain them again
-          // he->opposite->data = alphaShapeTags[1]; // constrain them again
           he->next->opposite->next->data = alphaShapeTags[1]; // constrain them again
-          // he->next->opposite->next->opposite->data = alphaShapeTags[1]; // constrain them again
-          // he->opposite->f->data = -1;
-          // he->opposite->next->next->opposite->f->data = alphaShapeTags[0];
-          // he->next->opposite->next->data = alphaShapeTags[1];
         }
-        // allEdges.push(he);
-        // allEdges.push(he->next);
-        // allEdges.push(he->next->opposite->next);
-        // allEdges.push(he->opposite->next->next);
-        
-
+        // printf("finish\n");
       }
     }
   }
+
+  // printf("finished splitting \n");
   
   // check and remove elements that are outside the domain
   for (auto f : pm->faces){
@@ -2710,7 +2773,7 @@ void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags,
     SVector3 p1 = v1->position;
     SVector3 p2 = v2->position;
     SVector3 cc = 1./3.*(p0+p1+p2);
-    int wn = whatIsTheColorOf2d(cc, bndEdgeCoords);
+    int wn = whatIsTheColorOf2d(cc, innerBndEdgeCoords);
     if (wn != 0){
       f->data = -1;
     }
@@ -2738,7 +2801,7 @@ void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags,
   std::vector<PolyMesh::HalfEdge *> _touched;
   _delaunayCheck(pm, pm->hedges, &_touched, alphaShapeTags[1]);
   // print4debug(pm, 5);
-  
+  // printf("finished conforming \n");
   // 3. Delaunay refinement :)
 
   std::vector<double> sizeAtNodes(pm->vertices.size());
@@ -2790,6 +2853,7 @@ void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags,
     }
   }
 
+  // printf("coarsen done \n");
   // print4debug(pm, 6);
 
   std::vector<PolyMesh::Face *> _badFaces;
@@ -2897,6 +2961,7 @@ void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags,
         }
     }
   }
+  // printf("refine done \n");
 
   // Create chained list of edges
   // std::vector< std::vector< PolyMesh::HalfEdge* >> edgeLoops;

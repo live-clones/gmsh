@@ -5306,19 +5306,21 @@ class model:
         decimate_triangulation = decimateTriangulation
 
         @staticmethod
-        def conformAlphaShapeToBoundary(alphaShapeTags, boundaryTags, sizeFieldCallback):
+        def conformAlphaShapeToBoundary(alphaShapeTags, internalBoundaryTags, externalBoundaryTags, sizeFieldCallback):
             """
-            gmsh.model.mesh.conformAlphaShapeToBoundary(alphaShapeTags, boundaryTags, sizeFieldCallback)
+            gmsh.model.mesh.conformAlphaShapeToBoundary(alphaShapeTags, internalBoundaryTags, externalBoundaryTags, sizeFieldCallback)
 
             Conform alpha shape mesh to solid boundaries
 
             Types:
             - `alphaShapeTags': vector of integers
-            - `boundaryTags': vector of integers
+            - `internalBoundaryTags': vector of integers
+            - `externalBoundaryTags': vector of integers
             - `sizeFieldCallback': 
             """
             api_alphaShapeTags_, api_alphaShapeTags_n_ = _ivectorint(alphaShapeTags)
-            api_boundaryTags_, api_boundaryTags_n_ = _ivectorint(boundaryTags)
+            api_internalBoundaryTags_, api_internalBoundaryTags_n_ = _ivectorint(internalBoundaryTags)
+            api_externalBoundaryTags_, api_externalBoundaryTags_n_ = _ivectorint(externalBoundaryTags)
             global api_sizeFieldCallback_type_
             api_sizeFieldCallback_type_ = CFUNCTYPE(c_double, c_int, c_int, c_double, c_double, c_double, c_double, c_void_p)
             global api_sizeFieldCallback_
@@ -5326,7 +5328,8 @@ class model:
             ierr = c_int()
             lib.gmshModelMeshConformAlphaShapeToBoundary(
                 api_alphaShapeTags_, api_alphaShapeTags_n_,
-                api_boundaryTags_, api_boundaryTags_n_,
+                api_internalBoundaryTags_, api_internalBoundaryTags_n_,
+                api_externalBoundaryTags_, api_externalBoundaryTags_n_,
                 api_sizeFieldCallback_, None,
                 byref(ierr))
             if ierr.value != 0:

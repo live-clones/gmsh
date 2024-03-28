@@ -5709,11 +5709,12 @@ gmsh::model::mesh::decimateTriangulation(const int faceTag,
 
 GMSH_API void
 gmsh::model::mesh::conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags, 
-                                               const std::vector<int> & boundaryTags, 
+                                               const std::vector<int> & internalBoundaryTags, 
+                                               const std::vector<int> & externalBoundaryTags, 
                                                std::function<double(int, int, double, double, double, double)> sizeFieldCallback)
 {
   #if defined(HAVE_MESH)
-    _conformAlphaShapeToBoundary(alphaShapeTags, boundaryTags, sizeFieldCallback);
+    _conformAlphaShapeToBoundary(alphaShapeTags, internalBoundaryTags, externalBoundaryTags, sizeFieldCallback);
   #endif
 }
 
