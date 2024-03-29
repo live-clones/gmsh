@@ -595,7 +595,7 @@ doc = '''Decimate a triangulation'''
 mesh.add('decimateTriangulation', doc, None, iint('faceTag'), idouble('distanceThreshold'))
 
 doc = '''Conform alpha shape mesh to solid boundaries'''
-mesh.add('conformAlphaShapeToBoundary', doc, None, ivectorint('alphaShapeTags'), ivectorint('boundaryTags'), isizefun('sizeFieldCallback'))
+mesh.add('conformAlphaShapeToBoundary', doc, None, ivectorint('alphaShapeTags'), ivectorint('internalBoundaryTags'), ivectorint('externalBoundaryTags'), isizefun('sizeFieldCallback'))
 
 ################################################################################
 
