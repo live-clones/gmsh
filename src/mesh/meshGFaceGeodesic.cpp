@@ -921,6 +921,49 @@ int highOrderPolyMesh::swapEdges(int niter, int onlyMisoriented)
     return countTot;
   }
 
+
+  void highOrderPolyMesh::enforceBoundary() {
+    std::map<std::pair<int, int>, int> edgeNT;
+    for (size_t i = 0; i < triangles.size()/3; i++) {
+      for (int j = 0; j < 3; j++) {
+        auto i0 = triangles[3*i+j];
+        auto i1 = triangles[3*i+(j+1)%3];
+        if (i0 > i1) std::swap(i0, i1);
+        auto it = edgeNT.find({i0, i1});
+        if (it == edgeNT.end()) {
+          edgeNT[{i0, i1}] = 1;
+        } else {
+          it->second++;
+        }
+      }
+    }
+
+    for (size_t i = 0; i < triangles.size()/3; i++) {
+      for (int j = 0; j < 3; j++) {
+        auto i0 = triangles[3*i+j];
+        auto i1 = triangles[3*i+(j+1)%3];
+        auto it = edgeNT.find({std::min(i0,i1), std::max(i0,i1)});
+        if (it->second != 1) continue;
+
+        PolyMesh::Vertex *v0 = pm->vertices[points[i0].base_element()->id()];
+        PolyMesh::Vertex *v1 = pm->vertices[points[i1].base_element()->id()];
+        PolyMesh::HalfEdge *he = v0->he;
+        while (he->opposite != nullptr)
+          he = he->opposite->next;
+        auto &geodesic = geodesics[{i0, i1}];
+        geodesic.clear();
+        do {
+          geodesic.push_back(geodesic::SurfacePoint(&geoMesh.vertices()[he->v->data]));
+          he = he->next;
+          while (he->opposite != nullptr)
+            he = he->opposite->next;
+        } while (he->v != v1);
+        geodesic.push_back(geodesic::SurfacePoint(&geoMesh.vertices()[he->v->data]));
+
+      }
+    }
+
+  }
   int highOrderPolyMesh::splitEdges(double L)
   {
     int count = 0;

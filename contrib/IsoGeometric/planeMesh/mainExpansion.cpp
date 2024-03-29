@@ -702,46 +702,48 @@ std::vector<double> pts(3*nodes.size());
   gmsh::fltk::run();
 
   // Paste
-  auto & ps = hop.points;
-  std::map<size_t, size_t> vertex2Index;
-  for (size_t i = 0; i < ps.size(); ++i) {
-    vertex2Index[ps[i].base_element()->id()] = i;
-  }
+  // auto & ps = hop.points;
+  // std::map<size_t, size_t> vertex2Index;
+  // for (size_t i = 0; i < ps.size(); ++i) {
+  //   vertex2Index[ps[i].base_element()->id()] = i;
+  // }
   
-  auto & geodesics = hop.geodesics;
-  auto & vertices = hop.geoMesh.vertices();
-  for (size_t j = 0; j < loops.size(); ++j) {
-    auto & loop = loops[j];
-    MVertex *v0, *v1;
-    size_t k = 0;
-    size_t last = 0;
-    while (k < loopIndices[j].size()) {
-      v0 = loop[last];
-      v1 = loop[loopIndices[j][k]];
+  // auto & geodesics = hop.geodesics;
+  // auto & vertices = hop.geoMesh.vertices();
+  // for (size_t j = 0; j < loops.size(); ++j) {
+  //   auto & loop = loops[j];
+  //   MVertex *v0, *v1;
+  //   size_t k = 0;
+  //   size_t last = 0;
+  //   while (k < loopIndices[j].size()) {
+  //     v0 = loop[last];
+  //     v1 = loop[loopIndices[j][k]];
 
-      size_t i0 = vertex2Index[v0->getIndex()];
-      size_t i1 = vertex2Index[v1->getIndex()];
+  //     size_t i0 = vertex2Index[v0->getIndex()];
+  //     size_t i1 = vertex2Index[v1->getIndex()];
 
-      auto & geodesic0 = geodesics[{i0,i1}];
-      geodesic0.clear();
-      for (size_t l = last; l <= loopIndices[j][k]; ++l) {
-	geodesic0.push_back(geodesic::SurfacePoint(&vertices[loop[l]->getIndex()]));	
-      }
+  //     auto & geodesic0 = geodesics[{i0,i1}];
+  //     geodesic0.clear();
+  //     for (size_t l = last; l <= loopIndices[j][k]; ++l) {
+	// geodesic0.push_back(geodesic::SurfacePoint(&vertices[loop[l]->getIndex()]));	
+  //     }
 
-      auto & geodesic1 = geodesics[{i1,i0}];
-      geodesic1.clear();
-      for (size_t l = loopIndices[j][k] + 1; l-- > last; ) {
-	geodesic1.push_back(geodesic::SurfacePoint(&vertices[loop[l]->getIndex()]));	
-      }
+  //     auto & geodesic1 = geodesics[{i1,i0}];
+  //     geodesic1.clear();
+  //     for (size_t l = loopIndices[j][k] + 1; l-- > last; ) {
+	// geodesic1.push_back(geodesic::SurfacePoint(&vertices[loop[l]->getIndex()]));	
+  //     }
 
 
-      last = loopIndices[j][k];
-      ++k;
-    }
-  }
-  
+  //     last = loopIndices[j][k];
+  //     ++k;
+  //   }
+  // }
+
+  hop.enforceBoundary();
 
   // Unexpand
+  auto & geodesics = hop.geodesics;
   auto & verts = hop.pm->vertices;
   for (size_t i = 0; i < verts.size(); ++i) {
     verts[i]->position = SVector3(oldCoord[3*i], oldCoord[3*i+1], oldCoord[3*i+2]);
