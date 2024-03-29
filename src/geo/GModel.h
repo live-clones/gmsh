@@ -22,10 +22,6 @@
 #include "MFaceHash.h"
 #include "MEdgeHash.h"
 
-#define hashmapMFace                                                           \
-  std::unordered_map<MFace, std::size_t, MFaceHash, MFaceEqual>
-#define hashmapMEdge                                                           \
-  std::unordered_map<MEdge, std::size_t, MEdgeHash, MEdgeEqual>
 
 template <class scalar> class simpleFunction;
 
@@ -42,7 +38,11 @@ class MElementOctree;
 
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
 class GModel {
+public:
+  using hashmapMFace = std::unordered_map<MFace, std::size_t, MFaceHash, MFaceEqual>;
+  using hashmapMEdge = std::unordered_map<MEdge, std::size_t, MEdgeHash, MEdgeEqual>;
 private:
+
   std::multimap<std::pair<const std::vector<int>, const std::vector<int> >,
                 std::pair<const std::string, const std::vector<int> > >
     _homologyRequests;

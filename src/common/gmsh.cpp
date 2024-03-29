@@ -3605,8 +3605,7 @@ GMSH_API void gmsh::model::mesh::createEdges(const vectorpair &dimTags)
   if(!_checkInit()) return;
   std::vector<GEntity *> entities;
   _getEntities(dimTags, entities);
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
+  for(GEntity *ge : entities) {
     for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
       MElement *e = ge->getMeshElement(j);
       for(int k = 0; k < e->getNumEdges(); k++) {
@@ -3622,8 +3621,7 @@ GMSH_API void gmsh::model::mesh::createFaces(const vectorpair &dimTags)
   if(!_checkInit()) return;
   std::vector<GEntity *> entities;
   _getEntities(dimTags, entities);
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
+  for(GEntity *ge : entities) {
     for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
       MElement *e = ge->getMeshElement(j);
       for(int k = 0; k < e->getNumFaces(); k++) {
