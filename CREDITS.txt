@@ -63,7 +63,9 @@ Schloemer, Simon Tournier, Alexandru Dadalau, Thomas Ulrich, Matthias Diener,
 Jamie Border, Kenneth Jansen, Steven Masfaraud, Sai Sumanth Moturu, Arie
 Westland, Andreas Farley, Mahesh Madhav, Zoltan Csati, Thierry Hocquellet,
 Christophe Bourcier, Mattéo Couplet, Mahesh Madhav, Giuseppe Musacchio, Romin
-Tomasetti, Lin Qi Chen, Tim Furlan, Matthias Lang, Tim Gabriel, Julien Chapelat.
+Tomasetti, Lin Qi Chen, Tim Furlan, Matthias Lang, Tim Gabriel, Julien Chapelat,
+Boris Martin.
+
 
 Special thanks to Bill Spitzak, Michael Sweet, Matthias Melcher, Greg Ercolano
 and others for the Fast Light Tool Kit on which Gmsh's GUI is based. See
