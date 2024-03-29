@@ -2072,267 +2072,381 @@ void highOrderPolyMesh::write(const PolyMesh *pm_new)
   //
   // Vertices
   //
-  Msg::Info("%lu vertices ", points.size());
-  std::vector<int> vertexTags(points.size());
+  std::set<int> vertexTags;
+  std::vector<int> faceTags(triangles.size()/3);
+  std::map<int, int> faceTags2Index;
+  for (size_t i = 0; i < triangles.size()/3; ++i) {
+    std::set<int> faces;
+    for (int j = 0; j < 3; ++j) {
+      int index = points[triangles[3*i+j]].base_element()->id();
+      vertexTags.insert(index); // TODO: manage non-vertex sp
+      PolyMesh::HalfEdge *he = pm_new->vertices[index]->he;
+      std::set<int> otherFaces;
+      do {
+        otherFaces.insert(he->f->data);
+        if (he->opposite != nullptr)
+          he = he->opposite->next;
+        else {
+          while (he->prev->opposite != nullptr) {
+            he = he->prev->opposite;
+            otherFaces.insert(he->f->data);
+          }
+          pm_new->vertices[index]->he = he;
+        }
+      } while (he != pm_new->vertices[index]->he);
+      if (j == 0)
+        faces = otherFaces;
+      else {
+        std::set<int> intersection;
+        std::set_intersection(faces.begin(), faces.end(),
+                              otherFaces.begin(), otherFaces.end(),
+                              std::inserter(intersection, intersection.begin()));
+        faces = intersection;
+      }
+    }
+    if (faces.size() != 1) {
+      Msg::Error("Triangle %lu correspond to %lu faces", i, faces.size());
+      return;
+    }
+    faceTags[i] = *faces.begin();
+    faceTags2Index[faceTags[i]] = i;
+  }
+  Msg::Info("%lu vertices ", vertexTags.size());
+  // std::vector<int> vertexTags(points.size());
   Msg::Info("Writing 'vertices.csv'...");
   std::ofstream outputVertices("vertices.csv");
   outputVertices << "vertexTag\n";
-  for (size_t i = 0; i < points.size(); ++i) {
-    int id = points[i].base_element()->id();
-    vertexTags[i] = id;
-    pointAssigned[id] = 1;
-    outputVertices << id <<"\n";
+  for (auto it = vertexTags.begin(); it != vertexTags.end(); ++it) {
+    pointAssigned[*it] = 1;
+    outputVertices << *it <<"\n";
   }
   outputVertices.close();
   Msg::Info("Done writing 'vertices.csv'");
 
 
+  // Msg::Info("%lu vertices ", points.size());
+  // std::vector<int> vertexTags(points.size());
+  // Msg::Info("Writing 'vertices.csv'...");
+  // std::ofstream outputVertices("vertices.csv");
+  // outputVertices << "vertexTag\n";
+  // for (size_t i = 0; i < points.size(); ++i) {
+  //   int id = points[i].base_element()->id();
+  //   vertexTags[i] = id;
+  //   pointAssigned[id] = 1;
+  //   outputVertices << id <<"\n";
+  // }
+  // outputVertices.close();
+  // Msg::Info("Done writing 'vertices.csv'");
+
+
   //
   // Edges
   //
-  Msg::Info("%lu edges", edges.size());
-  std::map<int, std::vector<PolyMesh::HalfEdge*>> edgeHEdges;
-  for (size_t i = 0; i < pm_new->hedges.size(); i++) {
-    auto he = pm_new->hedges[i];
-    if (he->data == -1)
-      continue;
-    edgeHEdges[he->data].push_back(he);
-    if (pointAssigned[he->v->data/3] == 0)
-      pointAssigned[he->v->data/3] = 2;
-  }
-
-  std::map<std::pair<int, int>, std::vector<int>> edgeTags;
+  Msg::Info("%lu edges", triangles.size());
   Msg::Info("Writing 'edges.csv'...");
   std::ofstream outputEdges("edges.csv");
   outputEdges << "firstVertexTag,secondVertexTag,pointTag\n";
-
-
-
-  for (auto eHEdges: edgeHEdges) {
-    auto HEdges = eHEdges.second;
-
-    std::vector<size_t> vs;
-    for (size_t i = 0; i < HEdges.size(); ++i) {
-      for (auto p: points) {
-	 auto v = HEdges[i]->v->data/3;
-	 if (v == p.base_element()->id() && (vs.size() == 0
-					     || vs[0] != v)) {
-	   vs.push_back(v);
-	   if (vs.size() == 2)
-	     break;
-	 }
-       }
-      if (vs.size() == 2)
-	break;
+  std::vector<std::vector<PolyMesh::HalfEdge*>> triangleHEdges(triangles.size());
+  for (size_t i = 0; i < triangles.size()/3; ++i) {
+    int faceTag = faceTags[i];
+    for (int j = 0; j < 3; ++j) {
+      int index0 = points[triangles[3*i+j]].base_element()->id();
+      int index1 = points[triangles[3*i+(j+1)%3]].base_element()->id();
+      PolyMesh::HalfEdge *he = pm_new->vertices[index0]->he;
+      while (he->v->data/3 != index1) {
+        while (he->f->data != faceTag || he->data == -1) {
+          if (he->opposite == nullptr) {
+            Msg::Error("HalfEdge not found");
+            return;
+          }
+          he = he->opposite->next;
+        }
+        triangleHEdges[3*i+j].push_back(he);
+        outputEdges << index0 << "," << index1 << "," << he->v->data/3 << "\n";
+        he = he->next;
+      }
+      outputEdges << index0 << "," << index1 << "," << he->v->data/3 << "\n";
     }
-
-    std::vector<size_t> gs;
-    if (vs.size() == 2) {
-      auto vLast = vs[0], vLastLast = vs[0];
-      do {
-	for (size_t i = 0; i < HEdges.size(); ++i) {
-	 auto v = HEdges[i]->v->data/3;
-	 auto vNext = HEdges[i]->next->v->data/3;
-	 if (v == vLast && vNext != vLastLast) {
-	   gs.push_back(vNext);
-	   vLastLast = v;
-	   vLast = vNext;
-	   break;
-	 }
-	}
-      } while (vLast != vs[1]);
-      gs.pop_back();
-    }
-    else if (vs.size() == 1) {
-      auto vLast = vs[0];
-      bool notFound = false;
-      do {
-	size_t i = 0;
-	for (; i < HEdges.size(); ++i) {
-	 auto v = HEdges[i]->v->data/3;
-	 if (v == vLast) {
-	   v = HEdges[i]->next->v->data/3;
-	   gs.push_back(v);
-	   vLast = v;
-	   break;
-	 }
-	}
-
-	if (i == HEdges.size())
-	  notFound = true;
-      } while (!notFound);
-      vs.push_back(gs.back());
-      gs.pop_back();
-    }
-    else
-      std::cerr << "Error: start point of the geodesic not found !" << std::endl;
-
-    // One direction
-    outputEdges << vs[0] << "," << vs[1] << "," << vs[0] << "\n";
-    for (size_t i = 0; i < gs.size(); i++) {
-      outputEdges << vs[0] << "," << vs[1] << "," << gs[i] << "\n";
-    }
-    outputEdges << vs[0] << "," << vs[1] << "," << vs[1] << "\n";
-
-    // The other direction
-    outputEdges << vs[1] << "," << vs[0] << "," << vs[1] << "\n";
-    for (size_t i = gs.size(); i-- > 0;) {
-      outputEdges << vs[1] << "," << vs[0] << "," << gs[i] << "\n";
-    }
-    outputEdges << vs[1] << "," << vs[0] << "," << vs[0] << "\n";
   }
-
   outputEdges.close();
   Msg::Info("Done writing 'edges.csv'");
+
+  // Msg::Info("%lu edges", edges.size());
+  // std::map<int, std::vector<PolyMesh::HalfEdge*>> edgeHEdges;
+  // for (size_t i = 0; i < pm_new->hedges.size(); i++) {
+  //   auto he = pm_new->hedges[i];
+  //   if (he->data == -1)
+  //     continue;
+  //   edgeHEdges[he->data].push_back(he);
+  //   if (pointAssigned[he->v->data/3] == 0)
+  //     pointAssigned[he->v->data/3] = 2;
+  // }
+
+  // std::map<std::pair<int, int>, std::vector<int>> edgeTags;
+  // Msg::Info("Writing 'edges.csv'...");
+  // std::ofstream outputEdges("edges.csv");
+  // outputEdges << "firstVertexTag,secondVertexTag,pointTag\n";
+
+
+
+  // for (auto eHEdges: edgeHEdges) {
+  //   auto HEdges = eHEdges.second;
+
+  //   std::vector<size_t> vs;
+  //   for (size_t i = 0; i < HEdges.size(); ++i) {
+  //     for (auto p: points) {
+	//  auto v = HEdges[i]->v->data/3;
+	//  if (v == p.base_element()->id() && (vs.size() == 0
+	// 				     || vs[0] != v)) {
+	//    vs.push_back(v);
+	//    if (vs.size() == 2)
+	//      break;
+	//  }
+  //      }
+  //     if (vs.size() == 2)
+	// break;
+  //   }
+
+  //   std::vector<size_t> gs;
+  //   if (vs.size() == 2) {
+  //     auto vLast = vs[0], vLastLast = vs[0];
+  //     do {
+	// for (size_t i = 0; i < HEdges.size(); ++i) {
+	//  auto v = HEdges[i]->v->data/3;
+	//  auto vNext = HEdges[i]->next->v->data/3;
+	//  if (v == vLast && vNext != vLastLast) {
+	//    gs.push_back(vNext);
+	//    vLastLast = v;
+	//    vLast = vNext;
+	//    break;
+	//  }
+	// }
+  //     } while (vLast != vs[1]);
+  //     gs.pop_back();
+  //   }
+  //   else if (vs.size() == 1) {
+  //     auto vLast = vs[0];
+  //     bool notFound = false;
+  //     do {
+	// size_t i = 0;
+	// for (; i < HEdges.size(); ++i) {
+	//  auto v = HEdges[i]->v->data/3;
+	//  if (v == vLast) {
+	//    v = HEdges[i]->next->v->data/3;
+	//    gs.push_back(v);
+	//    vLast = v;
+	//    break;
+	//  }
+	// }
+
+	// if (i == HEdges.size())
+	//   notFound = true;
+  //     } while (!notFound);
+  //     vs.push_back(gs.back());
+  //     gs.pop_back();
+  //   }
+  //   else
+  //     std::cerr << "Error: start point of the geodesic not found !" << std::endl;
+
+  //   // One direction
+  //   outputEdges << vs[0] << "," << vs[1] << "," << vs[0] << "\n";
+  //   for (size_t i = 0; i < gs.size(); i++) {
+  //     outputEdges << vs[0] << "," << vs[1] << "," << gs[i] << "\n";
+  //   }
+  //   outputEdges << vs[0] << "," << vs[1] << "," << vs[1] << "\n";
+
+  //   // The other direction
+  //   outputEdges << vs[1] << "," << vs[0] << "," << vs[1] << "\n";
+  //   for (size_t i = gs.size(); i-- > 0;) {
+  //     outputEdges << vs[1] << "," << vs[0] << "," << gs[i] << "\n";
+  //   }
+  //   outputEdges << vs[1] << "," << vs[0] << "," << vs[0] << "\n";
+  // }
+
+  // outputEdges.close();
+  // Msg::Info("Done writing 'edges.csv'");
 
 
   //
   // Faces
   //
   Msg::Info("%lu faces", triangles.size()/3);
-  std::map<int, std::vector<PolyMesh::HalfEdge*>> faceVerticesHedges;
-  std::map<int, std::vector<int>> facePoints;
-  std::map<int, std::vector<int>> faceTriangles;
-  std::map<int, std::vector<MTriangle *>> faceMTriangles;
-  for (size_t i = 0; i < pm_new->faces.size(); i++) {
-    auto face = pm_new->faces[i];
-    std::vector<PolyMesh::HalfEdge*> halfEdges(3);
-    halfEdges[0] = face->he;
-    halfEdges[1] = halfEdges[0]->next;
-    halfEdges[2] = halfEdges[1]->next;
-
-    for (auto he: halfEdges) {
-      int index = he->v->data/3;
-      if (pointAssigned[index] == 1)
-        faceVerticesHedges[face->data].push_back(he);
-      
-      if (pointAssigned[index] > 0)
-        continue;
-      facePoints[face->data].push_back(index);
-      pointAssigned[index] = 3;
-    }
-
-    faceTriangles[face->data].push_back(halfEdges[0]->v->data/3);
-    faceTriangles[face->data].push_back(halfEdges[1]->v->data/3);
-    faceTriangles[face->data].push_back(halfEdges[2]->v->data/3);
-    MTriangle *t = new MTriangle(index2MVertex[halfEdges[0]->v->data/3],
-                                 index2MVertex[halfEdges[1]->v->data/3],
-                                 index2MVertex[halfEdges[2]->v->data/3]);
-    faceMTriangles[face->data].push_back(t);
-  }
-
-  // Face data to vertices
-  std::map<int, std::vector<int>> faceVertices;
-  for (auto it = faceVerticesHedges.begin(); it != faceVerticesHedges.end(); ++it) {
-    auto key = it->first;
-    auto hes = it->second;
-    
-    std::vector<size_t> is;
-    for (size_t i = 0; i < hes.size(); ++i) {
-      auto index = hes[i]->v->data/3;
-      if (std::find(is.begin(), is.end(), index) == is.end())
-        is.push_back(index);
-    }
-    for (size_t i = 0; i < triangles.size()/3; ++i) {
-      int p0 = points[triangles[3*i]].base_element()->id();
-      int p1 = points[triangles[3*i+1]].base_element()->id();
-      int p2 = points[triangles[3*i+2]].base_element()->id();
-      if ((p0 == is[0] || p0 == is[1] || p0 == is[2]) &&
-          (p1 == is[0] || p1 == is[1] || p1 == is[2]) &&
-          (p2 == is[0] || p2 == is[1] || p2 == is[2])) {
-        faceVertices[key] = {p0, p1, p2};
-        break;
-      }
-    }
-  }
-
-  // Faces points
   Msg::Info("Writing 'faces.csv'...");
   std::ofstream outputFaces("faces.csv");
   outputFaces << "firstVertexTag,secondVertexTag,thridVertexTag," << "pointTag\n";
-  for (auto keyValue: facePoints) {
-    auto key = keyValue.first;
-    auto points = keyValue.second;
-    auto vertices = faceVertices[key];
-    if (vertices.size() != 3)
-      std::cerr << "Error: not identified triangle" << std::endl;
-    
-    auto verticesHedges = faceVerticesHedges[key];
-    for (size_t i = 0; i < points.size(); i++) {
-      outputFaces << vertices[0] << ","
-                  << vertices[1] << ","
-                  << vertices[2] << "," << points[i] << "\n";
-    }
-  }
-  outputFaces.close();
-  Msg::Info("Done writing 'faces.csv'");
-
-  // Face triangles with parametrization
   Msg::Info("Writing 'triangles.csv'...");
   std::ofstream outputTriangles("triangles.csv");
   outputTriangles << "firstVertexTag,secondVertexTag,thridVertexTag,"
                   << "firstPointTag,secondPointTag,thridPointTag\n";
-  for (auto keyValue: faceTriangles) {
-    auto key = keyValue.first;
-    auto triangles = keyValue.second;
-    auto vertices = faceVertices[key];
+  for (size_t i = 0; i < pm_new->faces.size(); ++i) {
+    PolyMesh::Face *f = pm_new->faces[i];
+    size_t index = faceTags2Index[f->data];
+    size_t i0 = points[triangles[3*index]].base_element()->id();
+    size_t i1 = points[triangles[3*index+1]].base_element()->id();
+    size_t i2 = points[triangles[3*index+2]].base_element()->id();
+    PolyMesh::HalfEdge *hes[3] = {f->he,
+                                  f->he->next,
+                                  f->he->next->next};
 
-    if (vertices.size() != 3)
-      std::cerr << "Error: not identified triangle" << std::endl;
-
-    for (size_t i = 0; i < triangles.size()/3; i++) {
-      for (int j = 0; j < 3; j++)
-        outputTriangles << vertices[j] << ",";
-      for (int j = 0; j < 3; j++) {
-        outputTriangles << triangles[3*i+j];
-        if (j < 2)
-          outputTriangles << ",";
-        else
-          outputTriangles << "\n";
-      }
+    outputTriangles << i0 << "," << i1 << "," << i2;
+    for (size_t j = 0; j < 3; ++j) {
+      if (hes[j]->data != -1)
+        outputFaces << i0 << "," << i1 << "," << i2 << "," << hes[j]->v->data/3 << "\n";
+      outputTriangles << "," << hes[j]->v->data/3 << std::endl;
     }
-  }
+    outputTriangles << "\n";
 
+  }
+  outputFaces.close();
+  Msg::Info("Done writing 'faces.csv'");
   outputTriangles.close();
   Msg::Info("Done writing 'triangles.csv'");
 
-  // Face triangles with parametrization
-  Msg::Info("Writing 'parametrization.csv'...");
-  std::ofstream outputParametrization("parametrization.csv");
-  outputParametrization << "firstVertexTag,secondVertexTag,thridVertexTag,"
-                  << "pointTag,pointU,pointV\n";
-  for (auto keyValue: faceTriangles) {
-    auto key = keyValue.first;
-    //auto triangles = keyValue.second;
-    auto mTriangles = faceMTriangles[key];
 
-    auto vertices = faceVertices[key];
-    std::vector<MVertex*> mVertices(3);
-    for (int i = 0; i < 3; i++) {
-      mVertices[i] = index2MVertex[vertices[i]];
-    }
+  // Msg::Info("%lu faces", triangles.size()/3);
+  // std::map<int, std::vector<PolyMesh::HalfEdge*>> faceVerticesHedges;
+  // std::map<int, std::vector<int>> facePoints;
+  // std::map<int, std::vector<int>> faceTriangles;
+  // std::map<int, std::vector<MTriangle *>> faceMTriangles;
+  // for (size_t i = 0; i < pm_new->faces.size(); i++) {
+  //   auto face = pm_new->faces[i];
+  //   std::vector<PolyMesh::HalfEdge*> halfEdges(3);
+  //   halfEdges[0] = face->he;
+  //   halfEdges[1] = halfEdges[0]->next;
+  //   halfEdges[2] = halfEdges[1]->next;
 
-    std::vector<MVertex *> nodes;
-    std::vector<SPoint2> stl_vertices_uv;
-    std::vector<SPoint3> stl_vertices_xyz;
-    std::vector<int> stl_triangles;
-    computeParametrization(mTriangles, nodes, stl_vertices_uv, stl_vertices_xyz, stl_triangles, mVertices);
+  //   for (auto he: halfEdges) {
+  //     int index = he->v->data/3;
+  //     if (pointAssigned[index] == 1)
+  //       faceVerticesHedges[face->data].push_back(he);
+      
+  //     if (pointAssigned[index] > 0)
+  //       continue;
+  //     facePoints[face->data].push_back(index);
+  //     pointAssigned[index] = 3;
+  //   }
 
-    for (size_t i = 0; i < nodes.size(); i++) {
-      for (int j = 0; j < 3; j++)
-        outputParametrization << vertices[j] << ",";
-      outputParametrization << nodes[i]->getIndex() << "," << stl_vertices_uv[i].x() << "," << stl_vertices_uv[i].y() << "\n";
-    }
-  }
-  outputParametrization.close();
-  Msg::Info("Done writing 'parametrization.csv'");
+  //   faceTriangles[face->data].push_back(halfEdges[0]->v->data/3);
+  //   faceTriangles[face->data].push_back(halfEdges[1]->v->data/3);
+  //   faceTriangles[face->data].push_back(halfEdges[2]->v->data/3);
+  //   MTriangle *t = new MTriangle(index2MVertex[halfEdges[0]->v->data/3],
+  //                                index2MVertex[halfEdges[1]->v->data/3],
+  //                                index2MVertex[halfEdges[2]->v->data/3]);
+  //   faceMTriangles[face->data].push_back(t);
+  // }
+
+  // // Face data to vertices
+  // std::map<int, std::vector<int>> faceVertices;
+  // for (auto it = faceVerticesHedges.begin(); it != faceVerticesHedges.end(); ++it) {
+  //   auto key = it->first;
+  //   auto hes = it->second;
+    
+  //   std::vector<size_t> is;
+  //   for (size_t i = 0; i < hes.size(); ++i) {
+  //     auto index = hes[i]->v->data/3;
+  //     if (std::find(is.begin(), is.end(), index) == is.end())
+  //       is.push_back(index);
+  //   }
+  //   for (size_t i = 0; i < triangles.size()/3; ++i) {
+  //     int p0 = points[triangles[3*i]].base_element()->id();
+  //     int p1 = points[triangles[3*i+1]].base_element()->id();
+  //     int p2 = points[triangles[3*i+2]].base_element()->id();
+  //     if ((p0 == is[0] || p0 == is[1] || p0 == is[2]) &&
+  //         (p1 == is[0] || p1 == is[1] || p1 == is[2]) &&
+  //         (p2 == is[0] || p2 == is[1] || p2 == is[2])) {
+  //       faceVertices[key] = {p0, p1, p2};
+  //       break;
+  //     }
+  //   }
+  // }
+
+  // // Faces points
+  // Msg::Info("Writing 'faces.csv'...");
+  // std::ofstream outputFaces("faces.csv");
+  // outputFaces << "firstVertexTag,secondVertexTag,thridVertexTag," << "pointTag\n";
+  // for (auto keyValue: facePoints) {
+  //   auto key = keyValue.first;
+  //   auto points = keyValue.second;
+  //   auto vertices = faceVertices[key];
+  //   if (vertices.size() != 3)
+  //     std::cerr << "Error: not identified triangle" << std::endl;
+    
+  //   auto verticesHedges = faceVerticesHedges[key];
+  //   for (size_t i = 0; i < points.size(); i++) {
+  //     outputFaces << vertices[0] << ","
+  //                 << vertices[1] << ","
+  //                 << vertices[2] << "," << points[i] << "\n";
+  //   }
+  // }
+  // outputFaces.close();
+  // Msg::Info("Done writing 'faces.csv'");
+
+  // // Face triangles with parametrization
+  // Msg::Info("Writing 'triangles.csv'...");
+  // std::ofstream outputTriangles("triangles.csv");
+  // outputTriangles << "firstVertexTag,secondVertexTag,thridVertexTag,"
+  //                 << "firstPointTag,secondPointTag,thridPointTag\n";
+  // for (auto keyValue: faceTriangles) {
+  //   auto key = keyValue.first;
+  //   auto triangles = keyValue.second;
+  //   auto vertices = faceVertices[key];
+
+  //   if (vertices.size() != 3)
+  //     std::cerr << "Error: not identified triangle" << std::endl;
+
+  //   for (size_t i = 0; i < triangles.size()/3; i++) {
+  //     for (int j = 0; j < 3; j++)
+  //       outputTriangles << vertices[j] << ",";
+  //     for (int j = 0; j < 3; j++) {
+  //       outputTriangles << triangles[3*i+j];
+  //       if (j < 2)
+  //         outputTriangles << ",";
+  //       else
+  //         outputTriangles << "\n";
+  //     }
+  //   }
+  // }
+
+  // outputTriangles.close();
+  // Msg::Info("Done writing 'triangles.csv'");
+
+  // // Face triangles with parametrization
+  // Msg::Info("Writing 'parametrization.csv'...");
+  // std::ofstream outputParametrization("parametrization.csv");
+  // outputParametrization << "firstVertexTag,secondVertexTag,thridVertexTag,"
+  //                 << "pointTag,pointU,pointV\n";
+  // for (auto keyValue: faceTriangles) {
+  //   auto key = keyValue.first;
+  //   //auto triangles = keyValue.second;
+  //   auto mTriangles = faceMTriangles[key];
+
+  //   auto vertices = faceVertices[key];
+  //   std::vector<MVertex*> mVertices(3);
+  //   for (int i = 0; i < 3; i++) {
+  //     mVertices[i] = index2MVertex[vertices[i]];
+  //   }
+
+  //   std::vector<MVertex *> nodes;
+  //   std::vector<SPoint2> stl_vertices_uv;
+  //   std::vector<SPoint3> stl_vertices_xyz;
+  //   std::vector<int> stl_triangles;
+  //   computeParametrization(mTriangles, nodes, stl_vertices_uv, stl_vertices_xyz, stl_triangles, mVertices);
+
+  //   for (size_t i = 0; i < nodes.size(); i++) {
+  //     for (int j = 0; j < 3; j++)
+  //       outputParametrization << vertices[j] << ",";
+  //     outputParametrization << nodes[i]->getIndex() << "," << stl_vertices_uv[i].x() << "," << stl_vertices_uv[i].y() << "\n";
+  //   }
+  // }
+  // outputParametrization.close();
+  // Msg::Info("Done writing 'parametrization.csv'");
 
 
-  for (auto fTriangles: faceMTriangles) {
-    for (auto t: fTriangles.second) {
-      delete t;
-    }
-  }
+  // for (auto fTriangles: faceMTriangles) {
+  //   for (auto t: fTriangles.second) {
+  //     delete t;
+  //   }
+  // }
   for (size_t i = 0; i < pm_new->vertices.size(); ++i) {
     delete index2MVertex[i];
   }
