@@ -476,11 +476,11 @@ void constructNodes(const std::vector<size_t> vertexTags,
 		    std::vector<MVertex*> & nodes,
 		    std::vector<size_t> & tags,
 		    std::vector<double> & coord,
+		    std::vector<double> & parametricCoord,
 		    std::map<size_t,size_t> & tag2Index,
 		    std::map<MVertex *, bool> & nodeIsVertex) {
   // All nodes
-  std::vector<double> parametricCoord;
-  gmsh::model::mesh::getNodes(tags, coord, parametricCoord, 2, -1, true, false);
+  gmsh::model::mesh::getNodes(tags, coord, parametricCoord, 2, -1, true, true);
 
   nodes.resize(tags.size());
   tags.resize(tags.size());

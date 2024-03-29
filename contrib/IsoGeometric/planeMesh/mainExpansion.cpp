@@ -373,10 +373,11 @@ int main(int argc, char* argv[]) {
   std::vector<MVertex*> nodes;
   std::vector<size_t> nodeTags;
   std::vector<double> nodeCoord;
+  std::vector<double> nodeParametricCoord;
   std::map<size_t,size_t> nodeTag2Index;
   std::map<MVertex *, bool> nodeIsVertex;
-  constructNodes(vertexTags, nodes, nodeTags, nodeCoord, nodeTag2Index, nodeIsVertex);
-  
+  constructNodes(vertexTags, nodes, nodeTags, nodeCoord, nodeParametricCoord, nodeTag2Index, nodeIsVertex);
+
   std::vector<MTriangle*> triangles;
   std::vector<size_t> triangleTags;
   std::vector<size_t> triangleNodeTags;
@@ -680,12 +681,21 @@ std::vector<double> pts(3*nodes.size());
 
   highOrderPolyMesh hop(pm, tris);
   hop.trueCoords = oldCoord;
+  hop.parametricCoords = nodeParametricCoord;
 
   hop.createGeodesics();
 
-  if (swap)
-    hop.swapEdges(1,0,true);
+  if (swap) {
+    // hop.swapEdges(1,0);
 
+    BDS_Mesh *bdsMesh = hop.buildBDSMesh();
+    int nbSwap;
+    double t;
+    hop.mySwapEdgePass(*bdsMesh, nbSwap, t);
+    std::cout << "nbSwap = " << nbSwap << " t = " << t << std::endl;
+
+    hop.updateMesh(*bdsMesh);
+  }
 
   // std::vector<size_t> newVertexTags;
   // for (size_t t: macroElementNodeTags) {

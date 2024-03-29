@@ -3,6 +3,7 @@
 
 #include "meshTriangulation.h"
 #include "geodesic_mesh.h"
+#include "BDS.h"
 
 int makeMeshGeodesic(GModel *gm);
 PolyMesh *createPolyMesh(const std::vector<double> &p,
@@ -32,6 +33,7 @@ public:
   // detect intersecting geodesic @ saddle_points
   std::map<int, int> _saddle;
   std::vector<double> trueCoords;
+  std::vector<double> parametricCoords;
 
 
   ///  std::map<int, std::map<int,double> > nodalDistances; // points -->
@@ -59,6 +61,12 @@ public:
 
   void printGeodesics(const char *fn);
   int swapEdges(int niter = 1, int onlyMisoriented = 1);
+  BDS_Mesh *buildBDSMesh();
+  int edgeSwapTest(BDS_Edge *e);
+  void mySwapEdgePass(BDS_Mesh &m, int &nb_swap, double &t,
+                      int FINALIZE = 0, double orientation = 1.0);
+  void updateMesh(BDS_Mesh &m);
+  void enforceBoundary();
   int splitEdges(double L);
   double computeAngleTrue(int p0, int p1, int p2);
   double computeBoxProduct(int p0, int p1, int p2);
@@ -67,6 +75,7 @@ public:
                                  std::vector<int> &__columns,
                                  std::vector<int> &__starts);
   SPoint3 getTrueCoords(geodesic::SurfacePoint &sp);
+  bool doWeSwap(int p0, int p1, int p2, int p3, int onlyMisoriented);
 
 private:
   int getTag(const std::pair<int, int> &e2);
@@ -74,7 +83,6 @@ private:
   SVector3 normal(int p);
   double computeAngle(int p0, int p1, int p2);
   bool edgeValid(int p0, int p1, int p2, int p3);
-  bool doWeSwap(int p0, int p1, int p2, int p3, int onlyMisoriented);
   void addVertexOnSurface(PolyMesh::Face *f, int v);
   void addVertexOnEdge(PolyMesh::HalfEdge *e, int v);
   void addPolyMeshVertexTag(PolyMesh::Vertex *v, int tag);

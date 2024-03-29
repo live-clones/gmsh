@@ -12,8 +12,10 @@
 
 #if defined(HAVE_MESH) && defined(HAVE_GEODESIC)
 
+#include "qualityMeasures.h"
 #include "GModelParametrize.h"
 #include "geodesic_algorithm_exact.h"
+#include <geodesic_mesh_elements.h>
 
 
 #define EPS 1e-16
@@ -746,12 +748,15 @@ bool highOrderPolyMesh::doWeSwap(int p0, int p1, int p2, int p3, int onlyMisorie
   void highOrderPolyMesh::classifyGeodesicVertices()
   {
     std::set<int> pts;
-    for(auto it = geodesics.begin(); it != geodesics.end(); ++it) {
-      auto ite = edges.find(it->first);
-      if(ite != edges.end() && ite->second.size()) {
-        pts.insert(it->first.first);
-        pts.insert(it->first.second);
-      }
+    // for(auto it = geodesics.begin(); it != geodesics.end(); ++it) {
+    //   auto ite = edges.find(it->first);
+    //   if(ite != edges.end() && ite->second.size()) {
+    //     pts.insert(it->first.first);
+    //     pts.insert(it->first.second);
+    //   }
+    // }
+    for (size_t i = 0; i < triangles.size(); i++) {
+      pts.insert(triangles[i]);
     }
 
     std::map<int, PolyMesh::Vertex *> i2pts;
@@ -799,14 +804,26 @@ bool highOrderPolyMesh::doWeSwap(int p0, int p1, int p2, int p3, int onlyMisorie
       }
     }
 
-    for(auto it = geodesics.begin(); it != geodesics.end(); ++it) {
-      auto ite = edges.find(it->first);
-      if(ite != edges.end() && ite->second.size()) {
-        PolyMesh::Vertex *v0 = i2pts[it->first.first];
-        PolyMesh::Vertex *v1 = i2pts[it->first.second];
-        int tag = getTag(it->first);
-        addPolyMeshVertexTag(v0, tag);
-        addPolyMeshVertexTag(v1, tag);
+    // for(auto it = geodesics.begin(); it != geodesics.end(); ++it) {
+    //   auto ite = edges.find(it->first);
+    //   if(ite != edges.end() && ite->second.size()) {
+    //     PolyMesh::Vertex *v0 = i2pts[it->first.first];
+    //     PolyMesh::Vertex *v1 = i2pts[it->first.second];
+    //     int tag = getTag(it->first);
+    //     addPolyMeshVertexTag(v0, tag);
+    //     addPolyMeshVertexTag(v1, tag);
+    //   }
+    // }
+    for (size_t i = 0; i < triangles.size()/3; ++i) {
+      PolyMesh::Vertex *vs[3] = {i2pts[triangles[3*i]], 
+                                 i2pts[triangles[3*i+1]],
+                                 i2pts[triangles[3*i+2]]};
+      for (int j = 0; j < 3; ++j) {
+        auto i0 = triangles[3*i+j];
+        auto i1 = triangles[3*i+(j+1)%3];
+        int tag = getTag({i0, i1});
+        addPolyMeshVertexTag(vs[j], tag);
+        addPolyMeshVertexTag(vs[(j+1)%3], tag);
       }
     }
 
@@ -816,12 +833,25 @@ bool highOrderPolyMesh::doWeSwap(int p0, int p1, int p2, int p3, int onlyMisorie
     //      printf("\n");
     //    }
 
-    for(auto it = geodesics.begin(); it != geodesics.end(); ++it) {
-      auto ite = edges.find(it->first);
-      if(ite != edges.end() && ite->second.size()) {
-        classifyGeodesic(it->first, it->second);
+    // for(auto it = geodesics.begin(); it != geodesics.end(); ++it) {
+    //   auto ite = edges.find(it->first);
+    //   if(ite != edges.end() && ite->second.size()) {
+    //     classifyGeodesic(it->first, it->second);
+    //   }
+    // }
+    std::map<std::pair<int, int>, bool> done;
+    for (size_t i = 0; i < triangles.size()/3; ++i) {
+      for (int j = 0; j < 3; ++j) {
+        auto i0 = triangles[3*i+j];
+        auto i1 = triangles[3*i+(j+1)%3];
+        if (i0 > i1) std::swap(i0, i1);
+        if (done.find({i0, i1}) == done.end()) {
+          classifyGeodesic({i0, i1}, geodesics[{i0, i1}]);
+          done[{i0, i1}] = true;
+        }
       }
     }
+
   }
 
 //public
@@ -921,6 +951,186 @@ int highOrderPolyMesh::swapEdges(int niter, int onlyMisoriented)
     return countTot;
   }
 
+  BDS_Mesh *highOrderPolyMesh::buildBDSMesh()
+  {
+    BDS_Mesh *mesh = new BDS_Mesh();
+    for(size_t i = 0; i < points.size(); ++i) {
+      // TODO: manage degeneracy
+      geodesic::SurfacePoint &sp = points[i];
+      if (sp.type() != geodesic::VERTEX) {
+        Msg::Error("Only vertices are supported in BDS mesh");
+        return nullptr;
+      }
+      geodesic::Vertex *v = static_cast<geodesic::Vertex *>(sp.base_element());
+      BDS_Point *p = new BDS_Point(i, v->x(), v->y(),v->z());
+      p->u = parametricCoords[2*v->id()];
+      p->v = parametricCoords[2*v->id()+1];
+      mesh->points.insert(p);
+    }
+    for(size_t i = 0; i < triangles.size()/3; i++) {
+      BDS_Point *ps[3] = {mesh->find_point(triangles[3*i]),
+                          mesh->find_point(triangles[3*i+1]),
+                          mesh->find_point(triangles[3*i+2])};
+      mesh->add_triangle(ps[0]->iD, ps[1]->iD, ps[2]->iD);
+    }
+    return mesh;
+  }
+
+  class BDS_MySwapEdgeTest : public BDS_SwapEdgeTestQuality
+  {
+  public:
+    highOrderPolyMesh *hop;
+    BDS_MySwapEdgeTest(highOrderPolyMesh *_hop) : BDS_SwapEdgeTestQuality(true), hop(_hop) {}
+
+    bool operator()(BDS_Point *_p1, BDS_Point *_p2,
+                    BDS_Point *_p3, BDS_Point *_q1,
+                    BDS_Point *_q2, BDS_Point *_q3,
+                    BDS_Point *_op1, BDS_Point *_op2,
+                    BDS_Point *_op3, BDS_Point *_oq1,
+                    BDS_Point *_oq2, BDS_Point *_oq3) const
+    {
+      // Check if new edge is not on a seam or degenerated
+      BDS_Point *p1 = nullptr, *p2 = nullptr;
+      if(_op1 != _oq1 && _op1 != _oq2 && _op1 != _oq3) {
+        p1 = _op2;
+        p2 = _op3;
+      }
+      else if(_op2 != _oq1 && _op2 != _oq2 && _op2 != _oq3) {
+        p1 = _op1;
+        p2 = _op3;
+      }
+      else if(_op3 != _oq1 && _op3 != _oq2 && _op3 != _oq3) {
+        p1 = _op1;
+        p2 = _op2;
+      }
+      else {
+        Msg::Warning("Unable to detect the new edge in BDS_SwapEdgeTestQuality\n");
+      }
+
+      if(p1 && p2) {
+        if(p1->degenerated && p2->degenerated) return false;
+        if(p1->_periodicCounterpart && p2->_periodicCounterpart) return false;
+      }
+
+      // if(!testQuality) return true;
+
+      // double qa1 = qmTriangle::gamma(_p1, _p2, _p3);
+      // double qa2 = qmTriangle::gamma(_q1, _q2, _q3);
+      // double qb1 = qmTriangle::gamma(_op1, _op2, _op3);
+      // double qb2 = qmTriangle::gamma(_oq1, _oq2, _oq3);
+
+      // // we swap for a better configuration
+      // double const mina = std::min(qa1, qa2);
+      // double const minb = std::min(qb1, qb2);
+
+      // return minb > mina;
+      return hop->doWeSwap(_p1->iD, _p2->iD, _op1->iD, _op2->iD, 0);
+    }
+  };
+
+  // Check for non feature edge
+  static bool edgeSwapTestAngle(BDS_Edge *e, double min_cos)
+  {
+    BDS_Face *f1 = e->faces(0);
+    BDS_Face *f2 = e->faces(1);
+    BDS_Point *n1[4];
+    BDS_Point *n2[4];
+    if(!f1->getNodes(n1) || !f2->getNodes(n2)) return false;
+    double norm1[3];
+    double norm2[3];
+    normal_triangle(n1[0], n1[1], n1[2], norm1);
+    normal_triangle(n2[0], n2[1], n2[2], norm2);
+
+    return prosca(norm1, norm2) > min_cos;
+  }
+
+  int highOrderPolyMesh::edgeSwapTest(BDS_Edge *e)
+  {
+    BDS_Point *op[2];
+
+    const double THRESH =
+      cos(CTX::instance()->mesh.allowSwapEdgeAngle * M_PI / 180.);
+
+    e->oppositeof(op);
+
+    // double qa1 = qmTriangle::gamma(e->p1, e->p2, op[0]);
+    // double qa2 = qmTriangle::gamma(e->p1, e->p2, op[1]);
+    // double qb1 = qmTriangle::gamma(e->p1, op[0], op[1]);
+    // double qb2 = qmTriangle::gamma(e->p2, op[0], op[1]);
+    // double qa = std::min(qa1, qa2);
+    // double qb = std::min(qb1, qb2);
+
+
+    //  if(qb > 15*qa) return 1;
+
+    if(!edgeSwapTestAngle(e, THRESH)) return -1;
+
+    // if(qb > qa)
+    //   return 1;
+    // else
+    //   return -1;
+
+    return doWeSwap(e->p1->iD, e->p2->iD, op[0]->iD, op[1]->iD, 0) ? 1 : -1;
+  }
+
+  static bool neighboringModified(BDS_Point *p)
+  {
+    if(p->config_modified) return true;
+    auto it = p->edges.begin();
+    auto ite = p->edges.end();
+    while(it != ite) {
+      BDS_Point *o = (*it)->othervertex(p);
+      if(o->config_modified) return true;
+      ++it;
+    }
+    return false;
+  }
+
+  // Alternative swapEdges with BDS implementation
+  void highOrderPolyMesh::mySwapEdgePass(BDS_Mesh &m, int &nb_swap, double &t,
+                          int FINALIZE, double orientation)
+  {
+    double t1 = Cpu();
+    BDS_SwapEdgeTest *qual;
+    // if(FINALIZE && gf->getNativeType() != GEntity::GmshModel)
+    //   qual = new BDS_SwapEdgeTestNormals(gf, orientation);
+    // else
+    //   qual = new BDS_SwapEdgeTestQuality(true, true);
+    qual = new BDS_MySwapEdgeTest(this);
+
+    typedef std::vector<BDS_Edge *>::size_type size_type;
+    size_type origSize = m.edges.size();
+    for(size_type index = 0; index < 2 * origSize && index < m.edges.size();
+        ++index) {
+      if(neighboringModified(m.edges.at(index)->p1) ||
+        neighboringModified(m.edges.at(index)->p2)) {
+        if(!m.edges.at(index)->deleted && m.edges.at(index)->numfaces() == 2) {
+          int const result = FINALIZE ? 1 : edgeSwapTest(m.edges.at(index));
+          if(result >= 0) {
+            if(m.swap_edge(m.edges.at(index), *qual)) { ++nb_swap; }
+          }
+        }
+      }
+    }
+    m.cleanup();
+    delete qual;
+    t += (Cpu() - t1);
+  }
+
+  void highOrderPolyMesh::updateMesh(BDS_Mesh &m)
+  {
+    triangles.resize(3 * m.triangles.size());
+    for (size_t i = 0; i < m.triangles.size(); i++) {
+      BDS_Point *ps[4];
+      if (!m.triangles[i]->getNodes(ps)) {
+        Msg::Error("Unable to get nodes of triangle %lu", i);
+        return;
+      }
+      for (int j = 0; j < 3; j++) {
+        triangles[3 * i + j] = ps[j]->iD;
+      }
+    }
+  }
 
   void highOrderPolyMesh::enforceBoundary() {
     std::map<std::pair<int, int>, int> edgeNT;
@@ -964,6 +1174,7 @@ int highOrderPolyMesh::swapEdges(int niter, int onlyMisoriented)
     }
 
   }
+
   int highOrderPolyMesh::splitEdges(double L)
   {
     int count = 0;
@@ -2509,7 +2720,13 @@ int makeMeshGeodesic(GModel *gm)
 
   Msg::Info("Swapping Edges");
 
-  hop.swapEdges(1, 1);
+  // hop.swapEdges(1, 1);
+
+  BDS_Mesh *bdsMesh = hop.buildBDSMesh();
+  int nbSwap;
+  double t;
+  hop.mySwapEdgePass(*bdsMesh, nbSwap, t);
+  std::cout << "nbSwap = " << nbSwap << " t = " << t << std::endl;
 
   Msg::Info("Swapping Edges Done");
 

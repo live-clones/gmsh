@@ -75,9 +75,10 @@ int main(int argc, char* argv[]) {
   std::vector<MVertex*> nodes;
   std::vector<size_t> nodeTags;
   std::vector<double> nodeCoord;
+  std::vector<double> nodeParametricCoord;
   std::map<size_t,size_t> nodeTag2Index;
   std::map<MVertex *, bool> nodeIsVertex;
-  constructNodes(vertexTags, nodes, nodeTags, nodeCoord, nodeTag2Index, nodeIsVertex);
+  constructNodes(vertexTags, nodes, nodeTags, nodeCoord, nodeParametricCoord, nodeTag2Index, nodeIsVertex);
   
   std::vector<MTriangle*> triangles;
   std::vector<size_t> triangleTags;
