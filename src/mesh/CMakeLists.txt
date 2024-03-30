@@ -14,7 +14,6 @@ set(SRC
     meshGFaceBamg.cpp meshGFaceBDS.cpp meshGFaceDelaunayInsertion.cpp
     meshGFaceOptimize.cpp
     meshGFaceBipartiteLabelling.cpp
-    meshGFaceGeodesic.cpp
   meshGRegion.cpp
     meshGRegionBoundaryRecovery.cpp
     meshGRegionHxt.cpp meshGRegionNetgen.cpp
@@ -46,6 +45,10 @@ set(SRC
   meshCombine3D.cpp
   meshPolyMesh.cpp
 )
+
+if(HAVE_GEODESIC)
+  list(APPEND SRC meshGFaceGeodesic.cpp)
+endif(HAVE_GEODESIC)
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
 append_gmsh_src(src/mesh "${SRC};${HDR}")
