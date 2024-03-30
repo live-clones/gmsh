@@ -46,7 +46,9 @@ typedef unsigned long intptr_t;
 #include "meshPartition.h"
 #include "gmshCrossFields.h"
 #include "automaticMeshSizeField.h"
+#if defined(HAVE_GEODESIC)
 #include "meshGFaceGeodesic.h" // FIXME TEST
+#endif
 #endif
 
 #if defined(HAVE_PLUGINS)
@@ -365,9 +367,11 @@ int GmshBatch()
       // still a bug in allocation somewhere
       exit(0);
     }
+    #if defined(HAVE_GEODESIC)
     else if(CTX::instance()->batch == 70) { // FIXME TEST
       makeMeshGeodesic (GModel::current());
     }
+    #endif
 #endif
   }
 
