@@ -46,9 +46,9 @@ set(SRC
   meshPolyMesh.cpp
 )
 
-if(HAVE_GEODESIC)
+if(ENABLE_GEODESIC)
   list(APPEND SRC meshGFaceGeodesic.cpp)
-endif(HAVE_GEODESIC)
+endif(ENABLE_GEODESIC)
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
 append_gmsh_src(src/mesh "${SRC};${HDR}")
