@@ -82,10 +82,6 @@ def distance(i):
   for index in range(3):
     v0 = face[index]
     v1 = face[(index+1)%3]
-    if (v0 > v1):
-      tmp = v0
-      v0 = v1
-      v1 = tmp
     allPoints.extend(edges[(v0,v1)])
   allPoints.extend(faces[face])
   
@@ -385,8 +381,9 @@ edgeNodes = {}
 edgeNodeCoords = []
 lineCount = 1;
 for edge,points in edges.items():
-  if (edge[0] > edge[1]):
+  if (edgeNodes.get(edge)):
     continue
+  invEdge = (edge[1], edge[0])
   
   # Collect points
   xs = np.empty(len(points) + 2, dtype=float)
@@ -436,6 +433,7 @@ for edge,points in edges.items():
           break
 
   edgeNodes[edge] = range(nodeCount+1,nodeCount+1+len(edgeTs))
+  edgeNodes[invEdge] = edgeNodes[edge][::-1]
   nodeCount += len(edgeTs)
   for l in range(len(edgeTs)):
     edgeNodeCoords.extend([nodeXs[l], nodeYs[l], nodeZs[l]])
@@ -518,8 +516,6 @@ for i,face in enumerate(triangleVertices):
   for j in range(3):
     v0 = face[j]
     v1 = face[(j+1)%3]
-    if (v0 > v1):
-      v0, v1 = v1, v0
     faceEdges.append((v0,v1))
     total_length += len(edges[faceEdges[j]])
   total_length += 3
@@ -562,8 +558,6 @@ for i,face in enumerate(triangleVertices):
       for j in range(3):
         v0 = face[j]
         v1 = face[(j+1)%3]
-        if (v0 > v1):
-          v0, v1 = v1, v0
         edge = (v0,v1)
         for node in edgeNodes[edge]:
           index = node-len(vertexNodes)-1

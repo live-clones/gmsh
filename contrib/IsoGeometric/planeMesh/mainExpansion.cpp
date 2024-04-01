@@ -818,7 +818,8 @@ std::vector<double> pts(3*nodes.size());
 
 
   // Cut
-  PolyMesh *pm_new = hop.cutMesh();
+  std::vector<PolyMesh::Vertex *> pointVertices;
+  PolyMesh *pm_new = hop.cutMesh(pointVertices);
 
 
   
@@ -852,7 +853,7 @@ std::vector<double> pts(3*nodes.size());
   // }
   
   // std::cout << tags[64] << " "  << tags[57] << " " <<std::endl;
-  hop.write(pm_new);
+  hop.write(pm_new, pointVertices);
 
   // for (auto v: pm_new->vertices)
   //   std::cout << v->data << std::endl;

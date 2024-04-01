@@ -42,7 +42,7 @@ public:
   highOrderPolyMesh(GModel *gm);
   highOrderPolyMesh(PolyMesh *pm, std::vector<size_t> & tris);
   void createGeodesics();
-  PolyMesh *cutMesh();
+  PolyMesh *cutMesh(std::vector<PolyMesh::Vertex *> &pointVertices);
   void createGeodesicPath(int p0, int p1,
                           std::vector<geodesic::SurfacePoint> &path);
   bool intersectGeodesicPath(std::vector<geodesic::SurfacePoint> &p0,
@@ -57,7 +57,7 @@ public:
   int splitEdge(const std::pair<int, int> &p01, double lTarget,
                 double adimMin = 0.7, double adimMax = 1.4);
   double pathLength(const std::pair<int, int> &p01);
-  void write(const PolyMesh *pm_new);
+  void write(const PolyMesh *pm_new, std::vector<PolyMesh::Vertex *> &pointVertices);
 
   void printGeodesics(const char *fn);
   int swapEdges(int niter = 1, int onlyMisoriented = 1);
@@ -88,8 +88,7 @@ private:
   void addPolyMeshVertexTag(PolyMesh::Vertex *v, int tag);
   void classifyGeodesic(std::pair<int, int> pair,
 					   const std::vector<geodesic::SurfacePoint> &p);
-  void classifyGeodesicVertices();
-  
+  void classifyGeodesicVertices(std::vector<PolyMesh::Vertex *> &pointVertices);
 };
 
 #endif

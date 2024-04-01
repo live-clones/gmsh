@@ -29,7 +29,7 @@ PolyMesh *createPolyMesh(const std::vector<double> &p,
 
   //int cc = 0;
   for(size_t i = 0; i < p.size(); i += 3) {
-    int tag = vertexNum.empty() ? i : vertexNum[i];
+    int tag = vertexNum.empty() ? i/3 : vertexNum[i/3];
     pm_new->vertices.push_back(
       new PolyMesh::Vertex(p[i], p[i + 1], p[i + 2], tag));
   }
@@ -745,9 +745,9 @@ bool highOrderPolyMesh::doWeSwap(int p0, int p1, int p2, int p3, int onlyMisorie
     }
   }
 
-  void highOrderPolyMesh::classifyGeodesicVertices()
+  void highOrderPolyMesh::classifyGeodesicVertices(std::vector<PolyMesh::Vertex *> & pointVertices)
   {
-    std::set<int> pts;
+    // std::set<int> pts;
     // for(auto it = geodesics.begin(); it != geodesics.end(); ++it) {
     //   auto ite = edges.find(it->first);
     //   if(ite != edges.end() && ite->second.size()) {
@@ -755,19 +755,20 @@ bool highOrderPolyMesh::doWeSwap(int p0, int p1, int p2, int p3, int onlyMisorie
     //     pts.insert(it->first.second);
     //   }
     // }
-    for (size_t i = 0; i < triangles.size(); i++) {
-      pts.insert(triangles[i]);
-    }
+    // for (size_t i = 0; i < triangles.size(); i++) {
+    //   pts.insert(triangles[i]);
+    // }
 
-    std::map<int, PolyMesh::Vertex *> i2pts;
-    for(auto i : pts) {
+    // std::map<int, PolyMesh::Vertex *> i2pts;
+    pointVertices.resize(points.size());
+    for(size_t i = 0; i < points.size(); ++i) {
       geodesic::SurfacePoint _s = points[i];
       //      printf("end point %lu geodesic vertex - %g %g %g - type
       //      %d\n",i,_s.x(),_s.y(),_s.z(),_s.type());
       if(_s.type() == geodesic::VERTEX) { // saddle vertex
         geodesic::Vertex *pv =
           static_cast<geodesic::Vertex *>(_s.base_element());
-        i2pts[i] = pm->vertices[pv->id()];
+        pointVertices[i] = pm->vertices[pv->id()];
       }
       else if(_s.type() == geodesic::FACE) {
         geodesic::Face *pf = static_cast<geodesic::Face *>(_s.base_element());
@@ -775,7 +776,7 @@ bool highOrderPolyMesh::doWeSwap(int p0, int p1, int p2, int p3, int onlyMisorie
           new PolyMesh::Vertex(_s.x(), _s.y(), _s.z(), pm->vertices.size());
         addVertexOnSurface(pm->faces[pf->id()], pm->vertices.size());
         pm->vertices.push_back(newv);
-        i2pts[i] = newv;
+        pointVertices[i] = newv;
       }
       else if(_s.type() == geodesic::EDGE) {
         geodesic::Edge *pe = static_cast<geodesic::Edge *>(_s.base_element());
@@ -790,7 +791,7 @@ bool highOrderPolyMesh::doWeSwap(int p0, int p1, int p2, int p3, int onlyMisorie
         if(!he) Msg::Error("%s %d -- FAILURE", __FILE__, __LINE__);
         if(pm->vertices.size() == 664 || pm->vertices.size() == 655 ||
            pm->vertices.size() == 644 || pm->vertices.size() == 634) {
-          printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  argh : %d --- %g %g %g --> "
+          printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA  argh : %lu --- %g %g %g --> "
                  "%g %g %g\n",
                  i, he->v->position.x(), he->v->position.y(),
                  he->v->position.z(), he->next->v->position.x(),
@@ -800,7 +801,7 @@ bool highOrderPolyMesh::doWeSwap(int p0, int p1, int p2, int p3, int onlyMisorie
           new PolyMesh::Vertex(_s.x(), _s.y(), _s.z(), pm->vertices.size());
         addVertexOnEdge(he, pm->vertices.size());
         pm->vertices.push_back(newv);
-        i2pts[i] = newv;
+        pointVertices[i] = newv;
       }
     }
 
@@ -815,9 +816,9 @@ bool highOrderPolyMesh::doWeSwap(int p0, int p1, int p2, int p3, int onlyMisorie
     //   }
     // }
     for (size_t i = 0; i < triangles.size()/3; ++i) {
-      PolyMesh::Vertex *vs[3] = {i2pts[triangles[3*i]], 
-                                 i2pts[triangles[3*i+1]],
-                                 i2pts[triangles[3*i+2]]};
+      PolyMesh::Vertex *vs[3] = {pointVertices[triangles[3*i]], 
+                                 pointVertices[triangles[3*i+1]],
+                                 pointVertices[triangles[3*i+2]]};
       for (int j = 0; j < 3; ++j) {
         auto i0 = triangles[3*i+j];
         auto i1 = triangles[3*i+(j+1)%3];
@@ -2053,7 +2054,7 @@ int highOrderPolyMesh::splitEdge(const std::pair<int, int> &p01, double lTarget,
 // END SPLIT EDGE
 
 // CUT MESH
-PolyMesh *highOrderPolyMesh::cutMesh()
+PolyMesh *highOrderPolyMesh::cutMesh(std::vector<PolyMesh::Vertex *> & pointVertices)
 {
   size_t nbFaces = pm->faces.size();
   std::vector<SVector3> p0;
@@ -2091,7 +2092,7 @@ PolyMesh *highOrderPolyMesh::cutMesh()
   // ---  Cut every mesh edge with eventual additional points
 
   printf("Classifying Geodesic Vertices\n");
-  classifyGeodesicVertices();
+  classifyGeodesicVertices(pointVertices);
   printf("Classifying Geodesic Vertices Done\n");
 
   printf("Spliting original mesh using geodesics\n");
@@ -2291,7 +2292,7 @@ PolyMesh *highOrderPolyMesh::cutMesh()
 // END CUT MESH
 
 // WRITE
-void highOrderPolyMesh::write(const PolyMesh *pm_new)
+void highOrderPolyMesh::write(const PolyMesh *pm_new, std::vector<PolyMesh::Vertex *> & pointVertices)
 {
   //
   // All points
@@ -2309,7 +2310,7 @@ void highOrderPolyMesh::write(const PolyMesh *pm_new)
   for (size_t i = 0; i < pm_new->vertices.size(); ++i) {
     auto v = pm_new->vertices[i];
     SVector3 pos = v->position;
-    int index = v->data/3;
+    int index = v->data;
     gmsh::model::geo::addPoint(pos.x(), pos.y(), pos.z(), 1., index);
     outputPoints << index << "," << pos.x() << "," << pos.y() << "," << pos.z() << "\n";
     auto mv = new MVertex(pos.x(), pos.y(), pos.z());
@@ -2332,7 +2333,7 @@ void highOrderPolyMesh::write(const PolyMesh *pm_new)
   for (size_t i = 0; i < triangles.size()/3; ++i) {
     std::set<int> faces;
     for (int j = 0; j < 3; ++j) {
-      int index = points[triangles[3*i+j]].base_element()->id();
+      int index = pointVertices[triangles[3*i+j]]->data;
       vertexTags.insert(index); // TODO: manage non-vertex sp
       PolyMesh::HalfEdge *he = pm_new->vertices[index]->he;
       std::set<int> otherFaces;
@@ -2407,7 +2408,7 @@ void highOrderPolyMesh::write(const PolyMesh *pm_new)
       int index0 = points[triangles[3*i+j]].base_element()->id();
       int index1 = points[triangles[3*i+(j+1)%3]].base_element()->id();
       PolyMesh::HalfEdge *he = pm_new->vertices[index0]->he;
-      while (he->v->data/3 != index1) {
+      while (he->v->data != index1) {
         while (he->f->data != faceTag || he->data == -1) {
           if (he->opposite == nullptr) {
             Msg::Error("HalfEdge not found");
@@ -2416,10 +2417,10 @@ void highOrderPolyMesh::write(const PolyMesh *pm_new)
           he = he->opposite->next;
         }
         triangleHEdges[3*i+j].push_back(he);
-        outputEdges << index0 << "," << index1 << "," << he->v->data/3 << "\n";
+        outputEdges << index0 << "," << index1 << "," << he->v->data << "\n";
         he = he->next;
       }
-      outputEdges << index0 << "," << index1 << "," << he->v->data/3 << "\n";
+      outputEdges << index0 << "," << index1 << "," << he->v->data << "\n";
     }
   }
   outputEdges.close();
@@ -2432,8 +2433,8 @@ void highOrderPolyMesh::write(const PolyMesh *pm_new)
   //   if (he->data == -1)
   //     continue;
   //   edgeHEdges[he->data].push_back(he);
-  //   if (pointAssigned[he->v->data/3] == 0)
-  //     pointAssigned[he->v->data/3] = 2;
+  //   if (pointAssigned[he->v->data] == 0)
+  //     pointAssigned[he->v->data] = 2;
   // }
 
   // std::map<std::pair<int, int>, std::vector<int>> edgeTags;
@@ -2449,7 +2450,7 @@ void highOrderPolyMesh::write(const PolyMesh *pm_new)
   //   std::vector<size_t> vs;
   //   for (size_t i = 0; i < HEdges.size(); ++i) {
   //     for (auto p: points) {
-	//  auto v = HEdges[i]->v->data/3;
+	//  auto v = HEdges[i]->v->data;
 	//  if (v == p.base_element()->id() && (vs.size() == 0
 	// 				     || vs[0] != v)) {
 	//    vs.push_back(v);
@@ -2466,8 +2467,8 @@ void highOrderPolyMesh::write(const PolyMesh *pm_new)
   //     auto vLast = vs[0], vLastLast = vs[0];
   //     do {
 	// for (size_t i = 0; i < HEdges.size(); ++i) {
-	//  auto v = HEdges[i]->v->data/3;
-	//  auto vNext = HEdges[i]->next->v->data/3;
+	//  auto v = HEdges[i]->v->data;
+	//  auto vNext = HEdges[i]->next->v->data;
 	//  if (v == vLast && vNext != vLastLast) {
 	//    gs.push_back(vNext);
 	//    vLastLast = v;
@@ -2484,9 +2485,9 @@ void highOrderPolyMesh::write(const PolyMesh *pm_new)
   //     do {
 	// size_t i = 0;
 	// for (; i < HEdges.size(); ++i) {
-	//  auto v = HEdges[i]->v->data/3;
+	//  auto v = HEdges[i]->v->data;
 	//  if (v == vLast) {
-	//    v = HEdges[i]->next->v->data/3;
+	//    v = HEdges[i]->next->v->data;
 	//    gs.push_back(v);
 	//    vLast = v;
 	//    break;
@@ -2532,24 +2533,34 @@ void highOrderPolyMesh::write(const PolyMesh *pm_new)
   std::ofstream outputTriangles("triangles.csv");
   outputTriangles << "firstVertexTag,secondVertexTag,thridVertexTag,"
                   << "firstPointTag,secondPointTag,thridPointTag\n";
-  for (size_t i = 0; i < pm_new->faces.size(); ++i) {
-    PolyMesh::Face *f = pm_new->faces[i];
-    size_t index = faceTags2Index[f->data];
-    size_t i0 = points[triangles[3*index]].base_element()->id();
-    size_t i1 = points[triangles[3*index+1]].base_element()->id();
-    size_t i2 = points[triangles[3*index+2]].base_element()->id();
-    PolyMesh::HalfEdge *hes[3] = {f->he,
-                                  f->he->next,
-                                  f->he->next->next};
+  for (size_t index = 0; index < triangles.size()/3; ++index) {
+    size_t i0 = pointVertices[triangles[3*index]]->data;
+    size_t i1 = pointVertices[triangles[3*index+1]]->data;
+    size_t i2 = pointVertices[triangles[3*index+2]]->data;
+    std::set<int> pts;
+    std::set<int> boundaryPts;
+    for (size_t i = 0; i < pm_new->faces.size(); ++i) {
+      PolyMesh::Face *f = pm_new->faces[i];
+      if (f->data != faceTags[index]) continue;
+      PolyMesh::HalfEdge *hes[3] = {f->he,
+                                    f->he->next,
+                                    f->he->next->next};
 
-    outputTriangles << i0 << "," << i1 << "," << i2;
-    for (size_t j = 0; j < 3; ++j) {
-      if (hes[j]->data != -1)
-        outputFaces << i0 << "," << i1 << "," << i2 << "," << hes[j]->v->data/3 << "\n";
-      outputTriangles << "," << hes[j]->v->data/3 << std::endl;
+      outputTriangles << i0 << "," << i1 << "," << i2;
+      for (size_t j = 0; j < 3; ++j) {
+        outputTriangles << "," << hes[j]->v->data;
+        if (hes[j]->data == -1)
+          pts.insert(hes[j]->v->data);
+        else
+          boundaryPts.insert(hes[j]->v->data);
+      }
+      outputTriangles << "\n";
+
     }
-    outputTriangles << "\n";
-
+    for (auto p: pts) {
+      if (boundaryPts.find(p) == boundaryPts.end())
+        outputFaces << i0 << "," << i1 << "," << i2 << "," << p << "\n";
+    }
   }
   outputFaces.close();
   Msg::Info("Done writing 'faces.csv'");
@@ -2570,7 +2581,7 @@ void highOrderPolyMesh::write(const PolyMesh *pm_new)
   //   halfEdges[2] = halfEdges[1]->next;
 
   //   for (auto he: halfEdges) {
-  //     int index = he->v->data/3;
+  //     int index = he->v->data;
   //     if (pointAssigned[index] == 1)
   //       faceVerticesHedges[face->data].push_back(he);
       
@@ -2580,12 +2591,12 @@ void highOrderPolyMesh::write(const PolyMesh *pm_new)
   //     pointAssigned[index] = 3;
   //   }
 
-  //   faceTriangles[face->data].push_back(halfEdges[0]->v->data/3);
-  //   faceTriangles[face->data].push_back(halfEdges[1]->v->data/3);
-  //   faceTriangles[face->data].push_back(halfEdges[2]->v->data/3);
-  //   MTriangle *t = new MTriangle(index2MVertex[halfEdges[0]->v->data/3],
-  //                                index2MVertex[halfEdges[1]->v->data/3],
-  //                                index2MVertex[halfEdges[2]->v->data/3]);
+  //   faceTriangles[face->data].push_back(halfEdges[0]->v->data);
+  //   faceTriangles[face->data].push_back(halfEdges[1]->v->data);
+  //   faceTriangles[face->data].push_back(halfEdges[2]->v->data);
+  //   MTriangle *t = new MTriangle(index2MVertex[halfEdges[0]->v->data],
+  //                                index2MVertex[halfEdges[1]->v->data],
+  //                                index2MVertex[halfEdges[2]->v->data]);
   //   faceMTriangles[face->data].push_back(t);
   // }
 
@@ -2597,7 +2608,7 @@ void highOrderPolyMesh::write(const PolyMesh *pm_new)
     
   //   std::vector<size_t> is;
   //   for (size_t i = 0; i < hes.size(); ++i) {
-  //     auto index = hes[i]->v->data/3;
+  //     auto index = hes[i]->v->data;
   //     if (std::find(is.begin(), is.end(), index) == is.end())
   //       is.push_back(index);
   //   }
@@ -2664,11 +2675,47 @@ void highOrderPolyMesh::write(const PolyMesh *pm_new)
   // outputTriangles.close();
   // Msg::Info("Done writing 'triangles.csv'");
 
-  // // Face triangles with parametrization
-  // Msg::Info("Writing 'parametrization.csv'...");
-  // std::ofstream outputParametrization("parametrization.csv");
-  // outputParametrization << "firstVertexTag,secondVertexTag,thridVertexTag,"
-  //                 << "pointTag,pointU,pointV\n";
+  // Face triangles with parametrization
+  Msg::Info("Writing 'parametrization.csv'...");
+  std::ofstream outputParametrization("parametrization.csv");
+  outputParametrization << "firstVertexTag,secondVertexTag,thridVertexTag,"
+                  << "pointTag,pointU,pointV\n";
+  for (auto faceTag: faceTags) {
+    std::vector<size_t> vertices(3);
+    std::vector<MVertex*> mVertices(3);
+    size_t index = faceTags2Index[faceTag];
+    for (int i = 0; i < 3; i++) {
+      vertices[i] = pointVertices[triangles[3*index+i]]->data;
+      mVertices[i] = index2MVertex[vertices[i]];
+    }
+
+    std::vector<MTriangle *> mTriangles;
+    for (size_t i = 0; i < pm_new->faces.size(); i++) {
+      auto f = pm_new->faces[i];
+      if (f->data != faceTag)
+        continue;
+      auto mTriangle = new MTriangle(index2MVertex[f->he->v->data],
+                                     index2MVertex[f->he->next->v->data],
+                                     index2MVertex[f->he->next->next->v->data]);
+      mTriangles.push_back(mTriangle);
+    }
+
+    std::vector<MVertex *> nodes;
+    std::vector<SPoint2> stl_vertices_uv;
+    std::vector<SPoint3> stl_vertices_xyz;
+    std::vector<int> stl_triangles;
+    computeParametrization(mTriangles, nodes, stl_vertices_uv, stl_vertices_xyz, stl_triangles, mVertices);
+
+    for (size_t i = 0; i < nodes.size(); i++) {
+      for (int j = 0; j < 3; j++)
+        outputParametrization << vertices[j] << ",";
+      outputParametrization << nodes[i]->getIndex() << "," << stl_vertices_uv[i].x() << "," << stl_vertices_uv[i].y() << "\n";
+    }
+
+    for (auto mTriangle : mTriangles)
+      delete mTriangle;
+  }
+
   // for (auto keyValue: faceTriangles) {
   //   auto key = keyValue.first;
   //   //auto triangles = keyValue.second;
@@ -2692,8 +2739,8 @@ void highOrderPolyMesh::write(const PolyMesh *pm_new)
   //     outputParametrization << nodes[i]->getIndex() << "," << stl_vertices_uv[i].x() << "," << stl_vertices_uv[i].y() << "\n";
   //   }
   // }
-  // outputParametrization.close();
-  // Msg::Info("Done writing 'parametrization.csv'");
+  outputParametrization.close();
+  Msg::Info("Done writing 'parametrization.csv'");
 
 
   // for (auto fTriangles: faceMTriangles) {
@@ -2806,12 +2853,13 @@ int makeMeshGeodesic(GModel *gm)
   Msg::Info("Checking orientation Done");
 
   {
-    PolyMesh *pm_new = hop.cutMesh();
+    std::vector<PolyMesh::Vertex *> pointVertices;
+    PolyMesh *pm_new = hop.cutMesh(pointVertices);
 
     std::map<PolyMesh::Vertex *, double> nothing;
     print__("toto.pos", pm_new, nothing);
 
-    hop.write(pm_new);
+    hop.write(pm_new, pointVertices);
   }
 
   return 0;
