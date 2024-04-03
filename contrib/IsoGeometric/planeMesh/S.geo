@@ -1,7 +1,7 @@
 // S shape geometry
-dL = 5;
-dl = 2;
-p = .4;
+dL = 12.5;
+dl = 5;
+p = 1;
 
 Point(1) = {0., 0, 0, p};
 Point(2) = {0., dL-dl, 0, p};

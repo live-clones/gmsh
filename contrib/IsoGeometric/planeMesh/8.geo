@@ -1,8 +1,8 @@
 // 8 shape geometry
-R = 2;
-r = 1;
-dy = 3;
-p = .1;
+R = 20;
+r = 10;
+dy = 30;
+p = 1;
 
 SetFactory("OpenCASCADE");
 

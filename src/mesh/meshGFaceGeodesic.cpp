@@ -618,19 +618,21 @@ bool highOrderPolyMesh::doWeSwap(int p0, int p1, int p2, int p3, int onlyMisorie
     double ori012 = computeBoxProduct(p0, p1, p2);
     double ori103 = computeBoxProduct(p1, p0, p3);
 
-    if(ori012 > 0 && ori103 > 0 && onlyMisoriented) return false;
+    const double eps = 1e-12; // FIXME
+
+    if(ori012 > eps && ori103 > eps && onlyMisoriented) return false;
 
     double ori032 = computeBoxProduct(p0, p3, p2);
     double ori231 = computeBoxProduct(p2, p3, p1);
-    if(ori012 < 0 || ori103 < 0) {
-      if(ori032 > 0 && ori231 > 0) {
+    if(ori012 < -eps || ori103 < -eps) {
+      if(ori032 > eps && ori231 > eps) {
         printf("FORCING SWAP (creating 2 positive elements) %d %d %d %d : %g "
                "%g --> %g %g\n",
                p0, p1, p2, p3, ori012, ori103, ori032, ori231);
         return true;
       }
     }
-    if(ori032 < 0 || ori231 < 0) return false;
+    if(ori032 < -eps || ori231 < -eps) return false;
     if(onlyMisoriented) return false;
 
     double a1 = computeAngle(p1, p0, p3); // OK
@@ -845,10 +847,14 @@ bool highOrderPolyMesh::doWeSwap(int p0, int p1, int p2, int p3, int onlyMisorie
       for (int j = 0; j < 3; ++j) {
         auto i0 = triangles[3*i+j];
         auto i1 = triangles[3*i+(j+1)%3];
-        if (i0 > i1) std::swap(i0, i1);
-        if (done.find({i0, i1}) == done.end()) {
+        // if (geodesics.find({i0, i1}) == geodesics.end()) {
+        //   std::vector<geodesic::SurfacePoint> p;
+        //   createGeodesicPath(i0, i1, p);
+        //   geodesics[{i0, i1}] = p;
+        // }
+        if (done.find({std::min(i0,i1), std::max(i0,i1)}) == done.end()) {
           classifyGeodesic({i0, i1}, geodesics[{i0, i1}]);
-          done[{i0, i1}] = true;
+          done[{std::min(i0,i1), std::max(i0,i1)}] = true;
         }
       }
     }
@@ -1025,7 +1031,7 @@ int highOrderPolyMesh::swapEdges(int niter, int onlyMisoriented)
       // double const minb = std::min(qb1, qb2);
 
       // return minb > mina;
-      return hop->doWeSwap(_p1->iD, _p2->iD, _op1->iD, _op2->iD, 0);
+      return hop->doWeSwap(_p1->iD, _p2->iD, _p3->iD, _q3->iD, 0);
     }
   };
 
@@ -1047,12 +1053,24 @@ int highOrderPolyMesh::swapEdges(int niter, int onlyMisoriented)
 
   int highOrderPolyMesh::edgeSwapTest(BDS_Edge *e)
   {
-    BDS_Point *op[2];
-
     const double THRESH =
       cos(CTX::instance()->mesh.allowSwapEdgeAngle * M_PI / 180.);
 
-    e->oppositeof(op);
+    BDS_Point *op[2];
+    BDS_Point *pts1[4];
+    BDS_Point *pts2[4];
+    e->computeNeighborhood(pts1, pts2, op);
+    if(!op[0] || !op[1]) return false;
+
+    int orientation = 0;
+    for(int i = 0; i < 3; i++) {
+      if(pts1[i] == e->p1) {
+        orientation = pts1[(i + 1) % 3] == e->p2 ? 1 : -1;
+        break;
+      }
+    }
+    if (orientation == -1) std::swap(op[0], op[1]);
+
 
     // double qa1 = qmTriangle::gamma(e->p1, e->p2, op[0]);
     // double qa2 = qmTriangle::gamma(e->p1, e->p2, op[1]);
@@ -2297,9 +2315,9 @@ void highOrderPolyMesh::write(const PolyMesh *pm_new, std::vector<PolyMesh::Vert
   //
   // All points
   //
-  std::string currentModel;
-  gmsh::model::getCurrent(currentModel);
-  gmsh::model::add("points");
+  // std::string currentModel;
+  // gmsh::model::getCurrent(currentModel);
+  // gmsh::model::add("points");
 
   Msg::Info("%lu points", pm_new->vertices.size());
   std::map<int, MVertex*> index2MVertex;
@@ -2311,7 +2329,7 @@ void highOrderPolyMesh::write(const PolyMesh *pm_new, std::vector<PolyMesh::Vert
     auto v = pm_new->vertices[i];
     SVector3 pos = v->position;
     int index = v->data;
-    gmsh::model::geo::addPoint(pos.x(), pos.y(), pos.z(), 1., index);
+    // gmsh::model::geo::addPoint(pos.x(), pos.y(), pos.z(), 1., index);
     outputPoints << index << "," << pos.x() << "," << pos.y() << "," << pos.z() << "\n";
     auto mv = new MVertex(pos.x(), pos.y(), pos.z());
     mv->setIndex(index);
@@ -2319,9 +2337,9 @@ void highOrderPolyMesh::write(const PolyMesh *pm_new, std::vector<PolyMesh::Vert
     pointAssigned[index] = 0;
   }
   outputPoints.close();
-  gmsh::model::geo::synchronize();
-  gmsh::write("points.msh");
-  gmsh::model::setCurrent(currentModel);
+  // gmsh::model::geo::synchronize();
+  // gmsh::write("points.msh");
+  // gmsh::model::setCurrent(currentModel);
 
 
   //
@@ -2405,8 +2423,8 @@ void highOrderPolyMesh::write(const PolyMesh *pm_new, std::vector<PolyMesh::Vert
   for (size_t i = 0; i < triangles.size()/3; ++i) {
     int faceTag = faceTags[i];
     for (int j = 0; j < 3; ++j) {
-      int index0 = points[triangles[3*i+j]].base_element()->id();
-      int index1 = points[triangles[3*i+(j+1)%3]].base_element()->id();
+      int index0 = pointVertices[triangles[3*i+j]]->data;
+      int index1 = pointVertices[triangles[3*i+(j+1)%3]]->data;
       PolyMesh::HalfEdge *he = pm_new->vertices[index0]->he;
       while (he->v->data != index1) {
         while (he->f->data != faceTag || he->data == -1) {
