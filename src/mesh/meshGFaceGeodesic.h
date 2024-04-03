@@ -65,6 +65,8 @@ public:
   int edgeSwapTest(BDS_Edge *e);
   void mySwapEdgePass(BDS_Mesh &m, int &nb_swap, double &t,
                       int FINALIZE = 0, double orientation = 1.0);
+  void mySplitEdgePass(BDS_Mesh &m, double MAXE_, int &nb_split,
+                              std::vector<SPoint2> *true_boundary , double &t);
   void updateMesh(BDS_Mesh &m);
   void enforceBoundary();
   int splitEdges(double L);

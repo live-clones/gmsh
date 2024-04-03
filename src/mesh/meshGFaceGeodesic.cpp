@@ -961,6 +961,7 @@ int highOrderPolyMesh::swapEdges(int niter, int onlyMisoriented)
   BDS_Mesh *highOrderPolyMesh::buildBDSMesh()
   {
     BDS_Mesh *mesh = new BDS_Mesh();
+    std::vector<BDS_Point *> pts(points.size());
     for(size_t i = 0; i < points.size(); ++i) {
       // TODO: manage degeneracy
       geodesic::SurfacePoint &sp = points[i];
@@ -972,13 +973,39 @@ int highOrderPolyMesh::swapEdges(int niter, int onlyMisoriented)
       BDS_Point *p = new BDS_Point(i, v->x(), v->y(),v->z());
       p->u = parametricCoords[2*v->id()];
       p->v = parametricCoords[2*v->id()+1];
+      p->lc() = 0;
       mesh->points.insert(p);
+      pts[i] = p;
     }
+    std::map<std::pair<size_t, size_t>, double> edgeLengths;
     for(size_t i = 0; i < triangles.size()/3; i++) {
       BDS_Point *ps[3] = {mesh->find_point(triangles[3*i]),
                           mesh->find_point(triangles[3*i+1]),
                           mesh->find_point(triangles[3*i+2])};
       mesh->add_triangle(ps[0]->iD, ps[1]->iD, ps[2]->iD);
+      for (int j = 0; j < 3; ++j) {
+        std::vector<geodesic::SurfacePoint> path;
+        createGeodesicPath(triangles[3*i+j], triangles[3*i+(j+1)%3], path);
+        double l = 0;
+        for (size_t k = 1; k < path.size(); ++k) {
+          SVector3 v0(getTrueCoords(path[k-1]), getTrueCoords(path[k]));
+          l += v0.norm();
+        }
+        size_t i0 = triangles[3*i+j];
+        size_t i1 = triangles[3*i+(j+1)%3];
+        if (i0 > i1) std::swap(i0, i1);
+        if (edgeLengths.find({i0, i1}) == edgeLengths.end()) {
+          edgeLengths[{i0, i1}] = l;
+        } else {
+          edgeLengths.erase({i0, i1});
+        }
+      }
+    }
+    for (auto it : edgeLengths) {
+      size_t i0 = it.first.first;
+      size_t i1 = it.first.second;
+      pts[i0]->lc() += it.second/2;
+      pts[i1]->lc() += it.second/2;
     }
     return mesh;
   }
@@ -1135,6 +1162,259 @@ int highOrderPolyMesh::swapEdges(int niter, int onlyMisoriented)
     delete qual;
     t += (Cpu() - t1);
   }
+
+  static bool edges_sort(std::pair<double, BDS_Edge *> a,
+                        std::pair<double, BDS_Edge *> b)
+  {
+    // don't compare pointers: it leads to non-deterministic behavior
+    // if (a.first == b.first){
+    //   return ((*a.second) < (*b.second));
+    // }
+    if(std::abs(a.first - b.first) < 1e-10) {
+      if(a.second->p1->iD == b.second->p1->iD)
+        return (a.second->p2->iD < b.second->p2->iD);
+      else
+        return (a.second->p1->iD < b.second->p1->iD);
+    }
+    else
+      return (a.first < b.first);
+  }
+
+  void highOrderPolyMesh::mySplitEdgePass(BDS_Mesh &m, double MAXE_, int &nb_split,
+                          std::vector<SPoint2> *true_boundary, double &t)
+  {
+    double t1 = Cpu();
+    std::vector<std::pair<double, BDS_Edge *> > edges;
+
+    // SPoint2 out(gf->parBounds(0).high() + 1.21982512,
+    //             gf->parBounds(1).high() + 1.8635436432);
+
+    for(auto it = m.points.begin(); it != m.points.end(); ++it) {
+      BDS_Point *p = *it;
+      if(!p->_periodicCounterpart && (p->g && p->g->classif_degree == 2)) {
+        for(size_t i = 0; i < p->edges.size(); i++) {
+          BDS_Point *p1 =
+            p->edges[i]->p1 == p ? p->edges[i]->p2 : p->edges[i]->p1;
+          for(size_t j = 0; j < i; j++) {
+            BDS_Point *p2 =
+              p->edges[j]->p1 == p ? p->edges[j]->p2 : p->edges[j]->p1;
+            if(!p1->degenerated && !p2->degenerated && p1->_periodicCounterpart &&
+              p1->_periodicCounterpart == p2) {
+              edges.push_back(std::make_pair(-10.0, p->edges[i]));
+              edges.push_back(std::make_pair(-10.0, p->edges[j]));
+            }
+          }
+        }
+      }
+    }
+
+    auto it = m.edges.begin();
+    while(it != m.edges.end()) {
+      // if(!(*it)->deleted && (*it)->numfaces() == 2 && (*it)->g &&
+      //   (*it)->g->classif_degree == 2) {
+      if(!(*it)->deleted && (*it)->numfaces() == 2) {
+        // double lone = NewGetLc(*it, gf);
+        auto e = *it;
+        std::vector<geodesic::SurfacePoint> path;
+        createGeodesicPath(e->p1->iD, e->p2->iD, path);
+        double lone = 0;
+        for (size_t i = 1; i < path.size(); ++i) {
+          SVector3 v0(getTrueCoords(path[i-1]), getTrueCoords(path[i]));
+          lone += v0.norm();
+        }
+        double ladd = lone * 2 / (e->p1->lc() + e->p2->lc());
+        // std::cout << "lone = " << lone << " ladd = " << ladd << std::endl;
+        if(ladd > MAXE_) edges.push_back(std::make_pair(-lone, *it));
+      }
+      ++it;
+    }
+
+    std::sort(edges.begin(), edges.end(), edges_sort);
+
+    std::vector<BDS_Point *> mids(edges.size());
+    std::vector<geodesic::SurfacePoint> midSps(edges.size());
+
+    // bool faceDiscrete = gf->geomType() == GEntity::DiscreteSurface;
+
+    for(std::size_t i = 0; i < edges.size(); ++i) {
+      BDS_Edge *e = edges[i].second;
+      BDS_Point *mid = nullptr;
+      // if(!e->deleted &&
+      //   (neighboringModified(e->p1) || neighboringModified(e->p2))) {
+        // double U1 = e->p1->u;
+        // double U2 = e->p2->u;
+        // double V1 = e->p1->v;
+        // double V2 = e->p2->v;
+        // if(e->p1->degenerated == 1) U1 = U2;
+        // if(e->p2->degenerated == 1) U2 = U1;
+        // if(e->p1->degenerated == 2) V1 = V2;
+        // if(e->p2->degenerated == 2) V2 = V1;
+        // double U = 0.5 * (U1 + U2);
+        // double V = 0.5 * (V1 + V2);
+        // if(faceDiscrete)
+        //   if(!middlePoint(gf, e, U, V)) continue;
+
+        // GPoint gpp = gf->point(U, V);
+        // bool inside = true;
+        // if(true_boundary) {
+        //   SPoint2 pp(U, V);
+        //   int N;
+        //   if(!pointInsideParametricDomain(*true_boundary, pp, out, N)) {
+        //     inside = false;
+        //   }
+        // }
+        // if(inside && gpp.succeeded()) {
+        //   mid = m.add_point(++m.MAXPOINTNUMBER, gpp.x(), gpp.y(), gpp.z());
+        //   mid->u = U;
+        //   mid->v = V;
+        //   mid->lc() = 0.5 * (e->p1->lc() + e->p2->lc());
+        //   mid->lcBGM() = BGM_MeshSize(gf, U, V, mid->X, mid->Y, mid->Z);
+        // }
+
+      if(e->deleted) {
+        mids[i] = mid;
+        continue;
+      }
+
+      std::vector<geodesic::SurfacePoint> path;
+      createGeodesicPath(e->p1->iD, e->p2->iD, path);
+      double length = edges[i].first;
+      length = length / 2;
+      size_t j = 0;
+      for (; j < path.size()-1; j++) {
+        SVector3 v0(getTrueCoords(path[j+1]), getTrueCoords(path[j]));
+        double l = v0.norm();
+        // std::cout << "length = " << length << " l = " << l << std::endl;
+        length += l;
+        if (length > 0) {
+          length = length / l;
+          break;
+        }
+      }
+      // std::cout << "length = " << length << std::endl;
+      SPoint3 newP((1-length) * path[j].x() + length * path[j+1].x(),
+                   (1-length) * path[j].y() + length * path[j+1].y(),
+                   (1-length) * path[j].z() + length * path[j+1].z());
+      mid = m.add_point(m.points.size(), newP.x(), newP.y(), newP.z());
+
+      geodesic::Vertex *v0 = nullptr, *v1 = nullptr, *v2 = nullptr;
+      if (path[j].type() == geodesic::VERTEX && path[j+1].type() == geodesic::VERTEX) {
+        v0 = static_cast<geodesic::Vertex *>(path[j].base_element());
+        v1 = static_cast<geodesic::Vertex *>(path[j+1].base_element());
+        mid->u = (1-length) * parametricCoords[2*v0->id()] + length * parametricCoords[2*v1->id()];
+        mid->v = (1-length) * parametricCoords[2*v0->id()+1] + length * parametricCoords[2*v1->id()+1];
+        mid->lc() = e->p1->lc() * (1 - length) + e->p2->lc() * length;
+        mid->lcBGM() = e->p1->lcBGM() * (1-length) + e->p2->lcBGM() * length;
+        mids[i] = mid;
+        geodesic::Edge *e = nullptr;
+        for (auto it = v0->adjacent_edges().begin(); it != v0->adjacent_edges().end(); ++it) {
+          if ((*it)->v0() == v1 || (*it)->v1() == v1) {
+            e = *it;
+            break;
+          }
+        }
+        if (!e) Msg::Error("Unable to find the edge while splitting edge");
+        midSps[i] = geodesic::SurfacePoint(e, length);
+        continue;
+      }
+
+      if (path[j].type() == geodesic::EDGE && path[j+1].type() == geodesic::VERTEX) {
+        geodesic::Edge *e = static_cast<geodesic::Edge *>(path[j].base_element());
+        v0 = e->v0();
+        v1 = e->v1();
+        v2 = static_cast<geodesic::Vertex *>(path[j+1].base_element());
+      }
+      else if (path[j].type() == geodesic::VERTEX && path[j+1].type() == geodesic::EDGE) {
+        v0 = static_cast<geodesic::Vertex *>(path[j].base_element());
+        geodesic::Edge *e = static_cast<geodesic::Edge *>(path[j+1].base_element());
+        v1 = e->v0();
+        v2 = e->v1();
+      }
+      else if (path[j].type() == geodesic::EDGE && path[j+1].type() == geodesic::EDGE) {
+        geodesic::Edge *e0 = static_cast<geodesic::Edge *>(path[j].base_element());
+        geodesic::Edge *e1 = static_cast<geodesic::Edge *>(path[j+1].base_element());
+        v0 = e0->v0();
+        v1 = e0->v1();
+        v2 = (e1->v0() == v0 || e1->v0() == v1) ? e1->v1() : e1->v0();
+      }
+      else if (path[j].type() == geodesic::FACE) {
+        geodesic::Face *f = static_cast<geodesic::Face *>(path[j].base_element());
+        v0 = f->adjacent_vertices()[0];
+        v1 = f->adjacent_vertices()[1];
+        v2 = f->adjacent_vertices()[2];
+      }
+      else if (path[j+1].type() == geodesic::FACE) {
+        geodesic::Face *f = static_cast<geodesic::Face *>(path[j+1].base_element());
+        v0 = f->adjacent_vertices()[0];
+        v1 = f->adjacent_vertices()[1];
+        v2 = f->adjacent_vertices()[2];
+      }
+      else
+        Msg::Error("Unable to manage the type of the geodesic path while splitting edge: %d %d", path[j].type(), path[j+1].type());
+
+      if (!v0 || !v1 || !v2)
+        Msg::Error("Unable to find the vertices of the edge while splitting edge");
+
+      geodesic::Face *f = nullptr;
+      for (auto it = v0->adjacent_faces().begin(); it != v0->adjacent_faces().end(); ++it) {
+        auto vertices = (*it)->adjacent_vertices();
+        auto it1 = std::find(vertices.begin(), vertices.end(), v1);
+        auto it2 = std::find(vertices.begin(), vertices.end(), v2);
+        if (it1 != vertices.end() && it2 != vertices.end()) {
+          f = *it;
+          break;
+        }
+      }
+      if (!f) Msg::Error("Unable to find the face of the edge while splitting edge");
+
+      v0 = f->adjacent_vertices()[0];
+      v1 = f->adjacent_vertices()[1];
+      v2 = f->adjacent_vertices()[2];
+      SVector3 t(newP.x() - v0->x(), newP.y() - v0->y(), newP.z() - v0->z());
+      SVector3 t1(v1->x() - v0->x(), v1->y() - v0->y(), v1->z() - v0->z());
+      SVector3 t2(v2->x() - v0->x(), v2->y() - v0->y(), v2->z() - v0->z());
+      double a = crossprod(t1, t2).norm();
+      double vtmp = crossprod(t1, t).norm() / a;
+      double utmp = crossprod(t, t2).norm() / a;
+
+      mid->u = (1 - utmp - vtmp) * parametricCoords[2*v0->id()] +
+                            utmp * parametricCoords[2*v1->id()] +
+                            vtmp * parametricCoords[2*v2->id()];
+      mid->v = (1 - utmp - vtmp) * parametricCoords[2*v0->id()+1] +
+                            utmp * parametricCoords[2*v1->id()+1] +
+                            vtmp * parametricCoords[2*v2->id()+1];
+      mid->lc() = e->p1->lc() * (1 - length) + e->p2->lc() * length;
+      mid->lcBGM() = e->p1->lcBGM() * (1 - length) + e->p2->lcBGM() * length;
+      //   mid->lcBGM() = BGM_MeshSize(gf, U, V, mid->X, mid->Y, mid->Z);
+      mids[i] = mid;
+      midSps[i] = geodesic::SurfacePoint(f, utmp, vtmp);
+    }
+
+    for(std::size_t i = 0; i < edges.size(); ++i) {
+      BDS_Edge *e = edges[i].second;
+      if(!e->deleted) {
+        BDS_Point *mid = mids[i];
+        if(mid) {
+          if(!m.split_edge(e, mid)) {
+            m.del_point(mid);
+          } else {
+            nb_split++;
+            points.push_back(geodesic::SurfacePoint(midSps[i]));
+            auto es = mid->edges;
+            // std::cout << mid->iD << " " << es.size() << std::endl;
+            for (auto it = es.begin(); it != es.end(); ++it) {
+              // std::cout << "edge " << (*it)->p1->iD << " " << (*it)->p2->iD << std::endl;
+              std::vector<geodesic::SurfacePoint> path;
+              createGeodesicPath((*it)->p1->iD, (*it)->p2->iD, path);
+            }
+
+          }
+        }
+      }
+    }
+    t += (Cpu() - t1);
+  }
+
 
   void highOrderPolyMesh::updateMesh(BDS_Mesh &m)
   {
@@ -1326,23 +1606,39 @@ SPoint3 highOrderPolyMesh::getTrueCoords(geodesic::SurfacePoint &sp)
     geodesic::Edge *e = (geodesic::Edge *) sp.base_element();
     geodesic::Vertex *v0 = e->v0();
     geodesic::Vertex *v1 = e->v1();
-    SVector3 t0 = SVector3(v1->x() - v0->x(),
-                           v1->y() - v0->y(),
-                           v1->z() - v0->z());
-    SVector3 t1 = SVector3(sp.x() - v0->x(),
+    SVector3 d = SVector3(sp.x() - v0->x(),
                            sp.y() - v0->y(),
                            sp.z() - v0->z());
-    double alpha = dot(t0, t1) / dot(t0, t0);
-    return SPoint3((1-alpha) * trueCoords[3*v0->id()] + alpha * trueCoords[3*v1->id()],
-                   (1-alpha) * trueCoords[3*v0->id() + 1] + alpha * trueCoords[3*v1->id() + 1],
-                   (1-alpha) * trueCoords[3*v0->id() + 2] + alpha * trueCoords[3*v1->id() + 2]);
+    SVector3 d1 = SVector3(v1->x() - v0->x(),
+                           v1->y() - v0->y(),
+                           v1->z() - v0->z());
+    double t = dot(d1, d) / dot(d1, d1);
+    return SPoint3((1-t) * trueCoords[3*v0->id()] + t * trueCoords[3*v1->id()],
+                   (1-t) * trueCoords[3*v0->id() + 1] + t * trueCoords[3*v1->id() + 1],
+                   (1-t) * trueCoords[3*v0->id() + 2] + t * trueCoords[3*v1->id() + 2]);
   }
   if (sp.type() == geodesic::FACE) {
-    // TODO: manage this case
-    std::cerr << "Error: SurfacePoint type not managed" << std::endl;
-    return SPoint3(0, 0, 0);
+    geodesic::Face *f = (geodesic::Face *) sp.base_element();
+    auto & v0 = f->adjacent_vertices()[0];
+    auto & v1 = f->adjacent_vertices()[1];
+    auto & v2 = f->adjacent_vertices()[2];
+    SVector3 d = SVector3(sp.x() - v0->x(),
+                          sp.y() - v0->y(),
+                          sp.z() - v0->z());
+    SVector3 d1 = SVector3(v1->x() - v0->x(),
+                           v1->y() - v0->y(),
+                           v1->z() - v0->z());
+    SVector3 d2 = SVector3(v2->x() - v0->x(),
+                           v2->y() - v0->y(),
+                           v2->z() - v0->z());
+    double a = crossprod(d1, d2).norm();
+    double v = crossprod(d1, d).norm() / a;
+    double u = crossprod(d, d2).norm() / a;
+    return SPoint3((1-u-v) * trueCoords[3*v0->id()] + u * trueCoords[3*v1->id()] + v * trueCoords[3*v2->id()],
+                   (1-u-v) * trueCoords[3*v0->id()+1] + u * trueCoords[3*v1->id()+1] + v * trueCoords[3*v2->id()+1],
+                   (1-u-v) * trueCoords[3*v0->id()+2] + u * trueCoords[3*v1->id()+2] + v * trueCoords[3*v2->id()+2]);
   }
-  std::cerr << "Error: SurfacePoint type not recognized" << std::endl;
+  std::cout << "Error: SurfacePoint type not recognized: " << sp.type() << std::endl;
   return SPoint3(0, 0, 0);
 }
 

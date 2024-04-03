@@ -297,14 +297,22 @@ public:
 		m_p(v)
 	{};
 
-	SurfacePoint(face_pointer f):		//set the surface point in the center of the face
+	SurfacePoint(face_pointer f, double u = 1./3, double v = 1./3):		//set the surface point in the center of the face
 		m_p(f)
 	{
-		set(0,0,0);
-		add(f->adjacent_vertices()[0]);
-		add(f->adjacent_vertices()[1]);
-		add(f->adjacent_vertices()[2]);
-		multiply(1./3.);
+		// set(0,0,0);
+		// add(f->adjacent_vertices()[0]);
+		// add(f->adjacent_vertices()[1]);
+		// add(f->adjacent_vertices()[2]);
+		// multiply(1./3.);
+
+		double w = 1 - u - v;
+		vertex_pointer v0 = f->adjacent_vertices()[0];
+		vertex_pointer v1 = f->adjacent_vertices()[1];
+		vertex_pointer v2 = f->adjacent_vertices()[2];
+		x() = w*v0->x() + u*v1->x() + v*v2->x();
+		y() = w*v0->y() + u*v1->y() + v*v2->y();
+		z() = w*v0->z() + u*v1->z() + v*v2->z();
 	};
 
 	SurfacePoint(edge_pointer e,		//set the surface point in the middle of the edge

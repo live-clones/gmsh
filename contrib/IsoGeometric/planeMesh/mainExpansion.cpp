@@ -138,11 +138,11 @@ void manualSmoothing(const double gravity,
     const std::vector<size_t>& indices = loopIndices[j];
     const std::vector<double>& lengths = loopLengths[j];
 
-    double mult = +1;
+    // double mult = +1;
     double length = lengths[0];
     int n = indices[0];
-    double density = length / n;
-    size_t k = 0;
+    // double density = length / n;
+    // size_t k = 0;
 
 
     std::vector<double> t(loop.size());
@@ -158,29 +158,29 @@ void manualSmoothing(const double gravity,
     for (size_t i = 0; i < loop.size()-1; ++i) {
       auto v0 = loop[i];
       auto v1 = loop[i+1]; 
-      size_t i0 = v0->getIndex();
-      size_t i1 = v1->getIndex();
+      // size_t i0 = v0->getIndex();
+      // size_t i1 = v1->getIndex();
       double dist = v1->distance(v0);
       t[i+1] = t[i] + dist;
     }
     
     for (size_t i = 0; i < loop.size(); ++i) {
-      auto v0 = loop[i];
-      size_t i0 = v0->getIndex();
+      // auto v0 = loop[i];
+      // size_t i0 = v0->getIndex();
       t[i] /= t[loop.size()-1];
     }
 
     for (size_t i = 0; i < loop.size()-1; ++i) {
       auto v0 = loop[i];
       auto v1 = loop[i+1];
-      size_t i0 = v0->getIndex();
+      // size_t i0 = v0->getIndex();
       dxdt[i] = (v1->x() - v0->x()) / (t[i+1] - t[i]);
       dydt[i] = (v1->y() - v0->y()) / (t[i+1] - t[i]);
     }
 
     for (size_t i = 0; i < loop.size()-2; ++i) {
       auto v0 = loop[i];
-      auto v1 = loop[i+1];
+      // auto v1 = loop[i+1];
       size_t i0 = v0->getIndex();
       d2xdt2[i] = (dxdt[i+1] - dxdt[i]) / (t[i+1] - t[i]);
       d2ydt2[i] = (dydt[i+1] - dydt[i]) / (t[i+1] - t[i]);
@@ -268,7 +268,7 @@ void manualSmoothing(const double gravity,
       auto v0 = t->getVertex(0)->point();
       auto v1 = t->getVertex(1)->point();
       auto v2 = t->getVertex(2)->point();
-      double area = 0.5 * abs(v0.x() * (v1.y() - v2.y()) + v1.x() * (v2.y() - v0.y()) + v2.x() * (v0.y() - v1.y()));
+      // double area = 0.5 * abs(v0.x() * (v1.y() - v2.y()) + v1.x() * (v2.y() - v0.y()) + v2.x() * (v0.y() - v1.y()));
     
       //mean += - 10*gravity * area * (mean);
       mean += - gravity * (mean);
@@ -289,6 +289,59 @@ void manualSmoothing(const double gravity,
   //laplacianSmoothing(nodes, edge2Triangles, loops, bc, u, 0.);
 
 }
+
+void unexpandSurfacePoint(geodesic::SurfacePoint & sp,
+                           const std::vector<double> & oldCoord)
+{
+  auto be = sp.base_element();
+  double x = 0, y = 0, z = 0;
+  if (be->type() == geodesic::VERTEX) {
+    size_t i0 = ((geodesic::Vertex *) be)->id();
+    x = oldCoord[3*i0];
+    y = oldCoord[3*i0+1];
+    z = oldCoord[3*i0+2];
+  }
+  else if (be->type() == geodesic::EDGE) {
+    auto v0 = ((geodesic::Edge *) be)->v0();
+    auto v1 = ((geodesic::Edge *) be)->v1();
+    SVector3 d = SVector3(sp.x() - v0->x(),
+                          sp.y() - v0->y(),
+                          sp.z() - v0->z());
+    SVector3 d1 = SVector3(v1->x() - v0->x(),
+                           v1->y() - v0->y(),
+                           v1->z() - v0->z());
+    double t = norm(d)/norm(d1);	
+    x = (1-t) * oldCoord[3*v0->id()] + t * oldCoord[3*v1->id()];
+    y = (1-t) * oldCoord[3*v0->id()+1] + t * oldCoord[3*v1->id()+1];
+    z = (1-t) * oldCoord[3*v0->id()+2] + t * oldCoord[3*v1->id()+2];
+  }
+  else if (be->type() == geodesic::FACE) {
+    auto & v0 = ((geodesic::Face *) be)->adjacent_vertices()[0];
+    auto & v1 = ((geodesic::Face *) be)->adjacent_vertices()[1];
+    auto & v2 = ((geodesic::Face *) be)->adjacent_vertices()[2];
+    SVector3 d = SVector3(sp.x() - v0->x(),
+                          sp.y() - v0->y(),
+                          sp.z() - v0->z());
+    SVector3 d1 = SVector3(v1->x() - v0->x(),
+                           v1->y() - v0->y(),
+                           v1->z() - v0->z());
+    SVector3 d2 = SVector3(v2->x() - v0->x(),
+                           v2->y() - v0->y(),
+                           v2->z() - v0->z());
+    double a = crossprod(d1, d2).norm();
+    double v = crossprod(d1, d).norm() / a;
+    double u = crossprod(d, d2).norm() / a;
+    x = (1-u-v) * oldCoord[3*v0->id()] + u * oldCoord[3*v1->id()] + v * oldCoord[3*v2->id()];
+    y = (1-u-v) * oldCoord[3*v0->id()+1] + u * oldCoord[3*v1->id()+1] + v * oldCoord[3*v2->id()+1];
+    z = (1-u-v) * oldCoord[3*v0->id()+2] + u * oldCoord[3*v1->id()+2] + v * oldCoord[3*v2->id()+2];
+  }
+  else {
+    Msg::Error("Element type not defined !");
+  }
+
+  sp.set(x,y,z);
+}
+
 
 int main(int argc, char* argv[]) {
   GmshFem gmshFem(argc, argv);
@@ -360,7 +413,7 @@ int main(int argc, char* argv[]) {
   //
   std::vector<std::size_t> macroElementNodeTags;
   std::vector<size_t> vertexTags;
-  int physicalSurface, physicalBoundary, physicalPoints;
+  int physicalSurface = 0, physicalBoundary = 0, physicalPoints = 0;
   std::string format = "";
   size_t lastDotPos = filename.find_last_of(".");
   if (lastDotPos != std::string::npos)
@@ -397,8 +450,8 @@ int main(int argc, char* argv[]) {
   double lMax = 0, lMin = std::numeric_limits<double>::max();
   for (size_t i = 0; i < triangles.size(); ++i) {
     for (int j =0; j < 3; ++j) {
-      auto index0 = 3*triangleNodeTags[3*i+j];
-      auto index1 = 3*triangleNodeTags[3*i+(j+1)%3];
+      auto index0 = 3*nodeTag2Index[triangleNodeTags[3*i+j]];
+      auto index1 = 3*nodeTag2Index[triangleNodeTags[3*i+(j+1)%3]];
       double dx = nodeCoord[index0+0] - nodeCoord[index1+0];
       double dy = nodeCoord[index0+1] - nodeCoord[index1+1];
       double dz = nodeCoord[index0+2] - nodeCoord[index1+2];
@@ -660,7 +713,7 @@ int main(int argc, char* argv[]) {
 
 std::vector<double> pts(3*nodes.size());
   for (size_t i = 0; i < nodes.size(); ++i) {
-    auto v = nodes[i];
+    // auto v = nodes[i];
     pts[3*i] = nodeCoord[3*i];
     pts[3*i+1] = nodeCoord[3*i+1];
     pts[3*i+2] = nodeCoord[3*i+2];
@@ -689,13 +742,36 @@ std::vector<double> pts(3*nodes.size());
     // hop.swapEdges(1,0);
 
     BDS_Mesh *bdsMesh = hop.buildBDSMesh();
-    int nbSwap;
     double t;
-    hop.mySwapEdgePass(*bdsMesh, nbSwap, t);
-    std::cout << "nbSwap = " << nbSwap << " t = " << t << std::endl;
+
+    std::cout << "Swapping:" << std::endl;
+    int nbSwap;
+    do {
+      nbSwap = 0;
+      hop.mySwapEdgePass(*bdsMesh, nbSwap, t);
+      std::cout << "nbSwap = " << nbSwap << " t = " << t << std::endl;
+    } while (nbSwap > 0);
+
+    std::cout << "Splitting:" << std::endl;
+    int nbSplit;
+    // do {
+    nbSplit = 0;
+    hop.mySplitEdgePass(*bdsMesh, 1.4, nbSplit, nullptr, t);
+    std::cout << "nbSplit = " << nbSplit << " t = " << t << std::endl;
+    bdsMesh->cleanup();
+    // } while (nbSplit > 0);
+
+    std::cout << "Swapping:" << std::endl;
+    do {
+      nbSwap = 0;
+      hop.mySwapEdgePass(*bdsMesh, nbSwap, t);
+      std::cout << "nbSwap = " << nbSwap << " t = " << t << std::endl;
+    } while (nbSwap > 0);
 
     hop.updateMesh(*bdsMesh);
   }
+
+  hop.enforceBoundary();
 
   // std::vector<size_t> newVertexTags;
   // for (size_t t: macroElementNodeTags) {
@@ -750,50 +826,30 @@ std::vector<double> pts(3*nodes.size());
   //   }
   // }
 
-  hop.enforceBoundary();
 
+  //
   // Unexpand
-  auto & geodesics = hop.geodesics;
+  //
+  auto & ps = hop.points;
+  for (size_t i = 0; i < ps.size(); ++i) {
+    auto & p = ps[i];
+    unexpandSurfacePoint(p, oldCoord);
+  }
   auto & verts = hop.pm->vertices;
   for (size_t i = 0; i < verts.size(); ++i) {
     verts[i]->position = SVector3(oldCoord[3*i], oldCoord[3*i+1], oldCoord[3*i+2]);
   }
-  for (auto it = geodesics.begin(); it != geodesics.end(); ++it) {
-    auto & path = it->second;
-    for (size_t i = 0; i < path.size(); ++i) {
-      auto be = path[i].base_element();
-      double x, y, z;
-      if (be->type() == geodesic::VERTEX) {
-	size_t index = ((geodesic::Vertex *) be)->id();
-	x = oldCoord[3*index];
-	y = oldCoord[3*index+1];
-	z = oldCoord[3*index+2];
-      }
-      else if (be->type() == geodesic::EDGE) {
-	size_t i0 = ((geodesic::Edge *) be)->v0()->id();
-	size_t i1 = ((geodesic::Edge *) be)->v1()->id();
-	SVector3 e = SVector3(nodeCoord[3*i1] - nodeCoord[3*i0],
-			      nodeCoord[3*i1+1] - nodeCoord[3*i0+1],
-			      nodeCoord[3*i1+2] - nodeCoord[3*i0+2]);
-	SVector3 E = SVector3(path[i].x() - nodeCoord[3*i0],
-			      path[i].y() - nodeCoord[3*i0+1],
-			      path[i].z() - nodeCoord[3*i0+2]);
-	double t = norm(E)/norm(e);	
-	e = SVector3(oldCoord[3*i1] - oldCoord[3*i0],
-		     oldCoord[3*i1+1] - oldCoord[3*i0+1],
-		     oldCoord[3*i1+2] - oldCoord[3*i0+2]);
-	e *= t;
-	x = oldCoord[3*i0] + e.x();
-	y = oldCoord[3*i0+1] + e.y();
-	z = oldCoord[3*i0+2] + e.z();
-      }
-      else
-	std::cerr << "FACE SURFACE POINT NOT TAKEN INTO ACCOUNT" << std::endl;
-   
-      path[i].set(x,y,z);
+  auto & trs = hop.triangles;
+  auto & geodesics = hop.geodesics;
+  for (size_t i = 0; i < trs.size()/3; ++i) {
+    for (size_t j = 0; j < 3; ++j) {
+      size_t i0 = trs[3*i+j];
+      size_t i1 = trs[3*i+(j+1)%3];
+      auto & path = geodesics[{i0,i1}];
+      for (size_t k = 0; k < path.size(); ++k)
+        unexpandSurfacePoint(path[k], oldCoord);
     }
   }
-
 
   // Move nodes in the representation
   for (size_t i = 0; i < nodes.size(); i++) {

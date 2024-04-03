@@ -19,7 +19,7 @@ void fillEdgeTag2TriangleMap(std::map<std::pair<size_t,size_t>, std::vector<size
 }
 
 void meshModif(std::map<std::pair<size_t,size_t>, std::vector<size_t>> entity2Tags)
-  {
+{
   // Lines
   std::vector<std::size_t> lineElementTags;
   std::vector<std::size_t> lineElementNodeTags;
@@ -178,17 +178,18 @@ void meshModif(std::map<std::pair<size_t,size_t>, std::vector<size_t>> entity2Ta
       triangleElementNodeTags[3*iOpp+jOpp] = newNodeTag;
       fillEdgeTag2TriangleMap(edgeTag2Triangle, triangleElementNodeTags, iOpp);
     
-      --i;
+      --j;
     }
   }
 
-  
-  /* gmsh::model::add("Unstructured surface"); */
+
+  gmsh::model::mesh::clear();
+
+  // gmsh::model::add("Unstructured surface");
   gmsh::model::addDiscreteEntity(0,0);
   gmsh::model::addDiscreteEntity(1,0,{0});
   gmsh::model::addDiscreteEntity(2,0,{0});
 
-  gmsh::model::mesh::clear();
   gmsh::model::mesh::addNodes(0, 0, nodeTags0D, coord0D);
   gmsh::model::mesh::addNodes(1, 0, nodeTags1D, coord1D);
   gmsh::model::mesh::addNodes(2, 0, nodeTags2D, coord2D);
@@ -344,9 +345,11 @@ void macroGeo(const std::string & filename,
   //
   gmsh::open(filename);
   gmsh::option::setNumber("Mesh.MeshSizeFactor", clscale);
-  // gmsh::option::setNumber("Mesh.Algorithm", 3);
+  gmsh::option::setNumber("Mesh.Algorithm", 3);
   gmsh::model::mesh::setOrder(1);
   gmsh::model::mesh::generate(2);
+
+  gmsh::fltk::run();
 
   std::vector<double> vertexCoord;
   std::vector<double> vertexParametricCoord;
@@ -428,7 +431,8 @@ void macroGeo(const std::string & filename,
   std::vector<std::size_t> nodeTags;
   std::vector<double> coord;
   std::vector<double> parametricCoord;
-  gmsh::model::mesh::getNodes(nodeTags, coord, parametricCoord, 2, -1, true, false);
+  // gmsh::model::mesh::getNodes(nodeTags, coord, parametricCoord, 2, -1, true, false);
+  gmsh::model::mesh::getNodes(nodeTags, coord, parametricCoord, 1, -1, true, false);
 
 
   //
@@ -648,7 +652,7 @@ void untangle(std::vector<std::size_t> & nodeTags,
         untangleLocked[index] = true;
       }
     }
-    auto index = loops[0][0]->getIndex();
+    // auto index = loops[0][0]->getIndex();
     
     std::vector<std::array<uint32_t, 3> > untangleTriangles(triangles.size());
     for (size_t i = 0; i < triangles.size(); ++i) {
@@ -712,7 +716,7 @@ static void filterPath(std::vector<geodesic::SurfacePoint> &path, double eps)
 
 static void drawGeodesics(highOrderPolyMesh & hop, std::vector< std::vector<int> > & geodesicLines)
 {
-    for (size_t i = 0; i < hop.triangles.size()/3; i++) {
+  for (size_t i = 0; i < hop.triangles.size()/3; i++) {
     for (int j = 0; j < 3; ++j) {
       size_t i0 = hop.triangles[3*i+j];
       size_t i1 = hop.triangles[3*i+(j+1)%3];
