@@ -26,7 +26,7 @@ static char *fgets0(char *buffer, int size, FILE *fp)
   while(1) {
     char *ret = fgets(buffer, size, fp);
     if(!ret) return nullptr;
-    for(int i = 0; i < strlen(ret); i++) {
+    for(std::size_t i = 0; i < strlen(ret); i++) {
       if(!isspace(ret[i])) return ret;
     }
   }
