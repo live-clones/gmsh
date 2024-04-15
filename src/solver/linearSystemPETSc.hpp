@@ -407,6 +407,16 @@ template <class scalar> int linearSystemPETSc<scalar>::systemSolve()
   _check(VecAssemblyBegin(_b));
   _check(VecAssemblyEnd(_b));
   _check(KSPSolve(_ksp, _b, _x));
+  
+  // check solver failed
+  KSPConvergedReason reason;
+  _check(KSPGetConvergedReason(_ksp, &reason));
+  if (reason < 0) 
+  {
+      Msg::Error("The linear system of equations did not converge (PETSc reason : %d)", reason);
+      return 0;
+  };
+  
   //_check(KSPView(ksp, PETSC_VIEWER_STDOUT_SELF));
   // PetscInt its;
   //_check(KSPGetIterationNumber(ksp, &its));
