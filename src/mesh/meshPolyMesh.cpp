@@ -343,7 +343,8 @@ void PolyMesh::fastMarching(std::vector<Vertex *> &seeds,
   for(auto v : vertices)
     if(ls.find(v) == ls.end()) ls[v] = 1.e22;
   for(auto v : seeds) {
-    if(ls.find(v) == ls.end()) ls[v] = 0.0;
+    // if(ls.find(v) == ls.end()) ls[v] = 0.0;
+    ls[v] = 0.0;
     front.insert(std::make_pair(0.0, v));
   }
 

@@ -7,6 +7,7 @@
 #include <gmsh/MTriangle.h>
 #include <gmsh/GModel.h>
 #include <gmsh/GModelParametrize.h>
+#include <gmsh/Field.h>
 
 #include <gmsh/geodesic_mesh.h>
 #include <gmsh/geodesic_algorithm_dijkstra.h>
@@ -15,11 +16,11 @@
 #include <gmsh/meshGFaceGeodesic.h>
 
 #include "laplacianSmoothing.h"
-#include "femSmoothing.h"
+// #include "femSmoothing.h"
 #include "meshMacro.h"
 
 
-
+#include <gmsh/Context.h>
 
 #define EPS 1e-6
 
@@ -344,8 +345,8 @@ void unexpandSurfacePoint(geodesic::SurfacePoint & sp,
 
 
 int main(int argc, char* argv[]) {
-  GmshFem gmshFem(argc, argv);
-  //gmsh::initialize();
+  // GmshFem gmshFem(argc, argv);
+  gmsh::initialize();
 
   std::string filename = "../0.geo"; // X, C, S, 0, 8, c3, uk
   double coeff = .2;
@@ -481,15 +482,34 @@ int main(int argc, char* argv[]) {
   //   }
   // }
 
+  // P O L Y M E S H
+  std::vector<double> pts(3*nodes.size());
+  for (size_t i = 0; i < nodes.size(); ++i) {
+    // auto v = nodes[i];
+    pts[3*i] = nodeCoord[3*i];
+    pts[3*i+1] = nodeCoord[3*i+1];
+    pts[3*i+2] = nodeCoord[3*i+2];
+  }
+  std::vector<size_t> tris(3*triangles.size());
+  for (size_t i = 0; i < triangles.size(); ++i) {
+    auto t = triangles[i];
+    tris[3*i] = t->getVertex(0)->getIndex();
+    tris[3*i+1] = t->getVertex(1)->getIndex();
+    tris[3*i+2] = t->getVertex(2)->getIndex();
+  }
+  PolyMesh *pm = createPolyMesh(pts, tris);
+
+
+
   //
   // E X P A N S I O N
   //
-  std::vector<double> u(nodes.size(), 0.);
+  std::vector<double> u(nodes.size(), 1.e22);
   std::vector<double> v(nodes.size(), 0.);
   std::vector<bool> bc(nodes.size(), false);
   std::vector<geodesic::SurfacePoint> points(nodeTags.size());
   std::vector<geodesic::SurfacePoint> sources;
-  std::vector<geodesic::SurfacePoint *> srcs(nodes.size());
+  std::vector<SVector3> dir(nodes.size(), SVector3(0,0,0));
   if (smoothing == 0) {
     // Waves on boundary
     for (size_t j = 0; j < loops.size(); ++j) {
@@ -503,11 +523,10 @@ int main(int argc, char* argv[]) {
     laplacianSmoothing(nodes, edge2Triangles, loops, bc, u, 0.);
 
   }
-  else if (smoothing == 1) {
-    // Gravity on mesh with GmshFEM
-    femSmoothing(physicalSurface, physicalBoundary, physicalPoints, gravity, ratio, nodes, u);
-
-  }
+  // else if (smoothing == 1) {
+  //   // Gravity on mesh with GmshFEM
+  //   femSmoothing(physicalSurface, physicalBoundary, physicalPoints, gravity, ratio, nodes, u);
+  // }
   else if (smoothing == 2) {
     // Gravity on mesh with repeating loops
     manualSmoothing(gravity, ratio, triangles, nodes, loops, loopIndices, loopLengthFromFirst, nodeIsVertex, u, bc, edge2Triangles);
@@ -519,44 +538,161 @@ int main(int argc, char* argv[]) {
     std::vector<std::size_t> eNodeTags;
     gmsh::model::mesh::getElementsByType(MSH_TRI_3, eTags, eNodeTags);
 
-    geodesic::Mesh mesh;
-    std::vector<size_t> _faces(eNodeTags.size());
-    for (size_t i = 0; i < eNodeTags.size(); ++i) {
-      _faces[i] = (long) nodeTag2Index[eNodeTags[i]];
-    }
-    mesh.initialize_mesh_data(nodeCoord, _faces);
+    double max = 0.;
+    int DIST = 3;
+    bool GRADIENT_DIRECTION = true;
 
-    for (size_t i = 0; i < nodeTags.size(); ++i) {
-      points[i] = geodesic::SurfacePoint(&mesh.vertices()[i], nodeCoord[3*i],
-                                        nodeCoord[3*i+1], nodeCoord[3*i+2], geodesic::VERTEX);
+    if (DIST == 0) {
+      geodesic::Mesh mesh;
+      std::vector<size_t> _faces(eNodeTags.size());
+      for (size_t i = 0; i < eNodeTags.size(); ++i) {
+        _faces[i] = (long) nodeTag2Index[eNodeTags[i]];
+      }
+      mesh.initialize_mesh_data(nodeCoord, _faces);
+
+      for (size_t i = 0; i < nodeTags.size(); ++i) {
+        points[i] = geodesic::SurfacePoint(&mesh.vertices()[i], nodeCoord[3*i],
+                                          nodeCoord[3*i+1], nodeCoord[3*i+2], geodesic::VERTEX);
+      }
+
+      for (size_t j = 0; j < loops.size(); ++j) {
+        std::vector<MVertex *>& loop = loops[j];
+        for (size_t i = 0; i < loop.size()-1; ++i) {
+          sources.push_back(points[loop[i]->getIndex()]);
+        }
+      }
+
+      geodesic::GeodesicAlgorithmExact algorithm(&mesh);
+      algorithm.propagate(sources);
+
+      for (size_t i = 0; i < nodes.size(); ++i) {
+        double d;
+        unsigned iSource = algorithm.best_source(points[i],d);
+        u[i] = d;
+        dir[i] = SVector3(points[i].x() - sources[iSource].x(),
+                       points[i].y() - sources[iSource].y(),
+                       points[i].z() - sources[iSource].z());
+      }
     }
+    else if (DIST == 1) {
+      std::vector<PolyMesh::Vertex *> seeds;
+      for (size_t j = 0; j < loops.size(); ++j) {
+        std::vector<MVertex *>& loop = loops[j];
+        for (size_t i = 0; i < loop.size()-1; ++i) {
+          seeds.push_back(pm->vertices[loop[i]->getIndex()]);
+          bc[loop[i]->getIndex()] = true;
+          std::cout << loop[i]->getIndex() << std::endl;
+        }
+      }
+      std::map<PolyMesh::Vertex *, double> d;
+      std::cout << seeds.size() << std::endl;
+      pm->fastMarching(seeds, d);
+
+      for (size_t i = 0; i < nodes.size(); ++i) {
+        PolyMesh::Vertex * v = pm->vertices[nodes[i]->getIndex()];
+        u[i] = d[v];
+      }
+    }
+    else if (DIST == 2) {
+      gmsh::vectorpair dimTags;
+      gmsh::model::getEntities(dimTags,1);
+
+      std::vector<double> coord;
+      std::vector<double> closestCoord;
+      std::vector<double> parametricCoord;
+      for (auto dt: dimTags) {
+        int t = dt.second;
+        gmsh::model::getClosestPoint(1, t, nodeCoord, closestCoord, parametricCoord);
+        for (size_t i = 0; i < nodes.size(); ++i) {
+          double dx = nodeCoord[3*i] - closestCoord[3*i];
+          double dy = nodeCoord[3*i+1] - closestCoord[3*i+1];
+          double dz = nodeCoord[3*i+2] - closestCoord[3*i+2];
+          double dist = sqrt(dx*dx + dy*dy + dz*dz);
+          if (dist > u[i])
+            continue;
+          u[i] = dist;
+          dir[i] = SVector3(dx, dy, dz);
+        }
+      }
+
+    }
+    else if (DIST == 3) {
+      gmsh::vectorpair dimTags;
+      gmsh::model::getEntities(dimTags,0);
+      std::vector<double> pointTags;
+      for (auto dt: dimTags)
+        pointTags.push_back(dt.second);
+      gmsh::model::getEntities(dimTags,1);
+      std::vector<double> curveTags;
+      for (auto dt: dimTags)
+        curveTags.push_back(dt.second);
+
+      int fieldTag = gmsh::model::mesh::field::add("Distance");
+      gmsh::model::mesh::field::setNumbers(fieldTag, "PointsList", pointTags);
+      gmsh::model::mesh::field::setNumbers(fieldTag, "CurvesList", curveTags);
+      // gmsh::model::mesh::field::setNumbers(fieldTag, "SurfacesList", {});
+      gmsh::model::mesh::field::setNumber(fieldTag, "Sampling", 200);
+
+      Field *field = GModel::current()->getFields()->get(fieldTag);
+      (*field).update();
+      if (!field) {
+        Msg::Error("Field not found !");
+      }
+
+      for (size_t i = 0; i < nodeTags.size(); ++i) {
+        u[i] = (*field)(nodeCoord[3*i], nodeCoord[3*i+1], nodeCoord[3*i+2]);
+      }
+
+    }
+
 
     for (size_t j = 0; j < loops.size(); ++j) {
       std::vector<MVertex *>& loop = loops[j];
-      for (size_t i = 0; i < loop.size()-1; ++i) {
-        sources.push_back(points[loop[i]->getIndex()]);
-      }
+      for (size_t i = 0; i < loop.size()-1; ++i)
+        bc[loop[i]->getIndex()] = true;
     }
-
-    geodesic::GeodesicAlgorithmExact algorithm(&mesh);
-    algorithm.propagate(sources);
-
-    double max = 0.;
     for (size_t i = 0; i < nodes.size(); ++i) {
-      double d;
-      unsigned iSource = algorithm.best_source(points[i],d);
-      u[i] = d;
-      srcs[i] = &sources[iSource];
-      if (max < d)
-        max = d;
+      if (max < u[i])
+        max = u[i];
+
+      if (!GRADIENT_DIRECTION || bc[i] == true)
+        continue;
+
+      PolyMesh::Vertex * v = pm->vertices[nodes[i]->getIndex()];
+      PolyMesh::HalfEdge *he = v->he;
+      dir[i] = SVector3(0,0,0);
+      double tot = 0;
+      do {
+        he = he->next;
+        PolyMesh::Vertex * v1 = he->v;
+        PolyMesh::Vertex * v2 = he->next->v;
+        SVector3 vec1 = SVector3(v1->position - v->position);
+        SVector3 vec2 = SVector3(v2->position - v->position);
+        double a = norm(vec2- vec1);
+        tot += a;
+        dir[i] += a/2 * (u[v1->data] - u[i])/(norm(vec1)*norm(vec1)) * vec1;
+        dir[i] += a/2 * (u[v2->data] - u[i])/(norm(vec2)*norm(vec2)) * vec2;
+        he = he->next->opposite;
+      } while (he != v->he);
+      dir[i] = 1./tot * dir[i];
     }
 
-    // gmsh::view::add("Distance", 1);
+
     // std::string currentModel;
     // gmsh::model::getCurrent(currentModel);
+    // gmsh::view::add("Distance", 1);
     // gmsh::view::addHomogeneousModelData(1, 0, currentModel, "NodeData", nodeTags, u);
+    // gmsh::view::add("Dir", 2);
+    // std::vector<double> dirCoord(3*nodes.size());
+    // for (size_t i = 0; i < nodes.size(); ++i) {
+    //   dirCoord[3*i] = dir[i].x();
+    //   dirCoord[3*i+1] = dir[i].y();
+    //   dirCoord[3*i+2] = dir[i].z();
+    // }
+    // gmsh::view::addHomogeneousModelData(2, 0, currentModel, "NodeData", nodeTags, dirCoord, 0, 3);
 
-    for (size_t i = 0; i < nodes.size(); ++i) {
+
+    for (size_t i = 0; i < u.size(); ++i) {
       if (func == 0) {
         u[i] = sqrt(u[i]/max);
         u[i] *= max;
@@ -626,11 +762,26 @@ int main(int argc, char* argv[]) {
     nodeCoord[3*i+2] = u[i];
     if (v[i] == 0)
       continue;
-    SVector3 dv(points[i].x() - srcs[i]->x(), points[i].y() - srcs[i]->y(), 0);
-    dv.normalize();
-    nodeCoord[3*i] += v[i] * dv.x();
-    nodeCoord[3*i+1] += v[i] * dv.y();
+    dir[i].normalize();
+    nodeCoord[3*i] += v[i] * dir[i].x();
+    nodeCoord[3*i+1] += v[i] * dir[i].y();
   }
+
+  for (size_t i = 0; i < pm->vertices.size(); ++i) {
+    auto pos = pm->vertices[i]->position;
+    double x = pos.x();
+    double y = pos.y();
+    double z = pos.z();
+    dir[i].normalize();
+    x += v[i] * dir[i].x();
+    y += v[i] * dir[i].y();
+    z += u[i];
+    pm->vertices[i]->position = SVector3(x, y, z);
+  }
+
+  // std::map<PolyMesh::Vertex*,double> nothing;
+  // print__ ("poly.pos", pm, nothing);
+
 
   // Move nodes in the representation
   for (size_t i = 0; i < nodes.size(); i++) {
@@ -710,22 +861,6 @@ int main(int argc, char* argv[]) {
 
   // cutMesh(nodes, triangles, edge2Triangles, macroElementNodeTags, nodeTag2Index, triangle2Index, paths);
 
-
-std::vector<double> pts(3*nodes.size());
-  for (size_t i = 0; i < nodes.size(); ++i) {
-    // auto v = nodes[i];
-    pts[3*i] = nodeCoord[3*i];
-    pts[3*i+1] = nodeCoord[3*i+1];
-    pts[3*i+2] = nodeCoord[3*i+2];
-  }
-  std::vector<size_t> tris(3*triangles.size());
-  for (size_t i = 0; i < triangles.size(); ++i) {
-    auto t = triangles[i];
-    tris[3*i] = t->getVertex(0)->getIndex();
-    tris[3*i+1] = t->getVertex(1)->getIndex();
-    tris[3*i+2] = t->getVertex(2)->getIndex();
-  }
-  PolyMesh *pm = createPolyMesh(pts, tris);
 
   tris.resize(macroElementNodeTags.size());
   for (size_t i = 0; i < macroElementNodeTags.size(); ++i) {

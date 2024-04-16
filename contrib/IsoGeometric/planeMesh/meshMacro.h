@@ -349,7 +349,7 @@ void macroGeo(const std::string & filename,
   gmsh::model::mesh::setOrder(1);
   gmsh::model::mesh::generate(2);
 
-  gmsh::fltk::run();
+  // gmsh::fltk::run();
 
   std::vector<double> vertexCoord;
   std::vector<double> vertexParametricCoord;
@@ -484,7 +484,12 @@ void constructNodes(const std::vector<size_t> vertexTags,
 		    std::map<size_t,size_t> & tag2Index,
 		    std::map<MVertex *, bool> & nodeIsVertex) {
   // All nodes
-  gmsh::model::mesh::getNodes(tags, coord, parametricCoord, 2, -1, true, true);
+  gmsh::model::mesh::getNodes(tags, coord, parametricCoord, 2, -1, true, false);
+  parametricCoord.resize(coord.size()*2/3);
+  for (size_t i = 0; i < tags.size(); ++i) {
+    parametricCoord[2*i] = coord[3*i];
+    parametricCoord[2*i+1] = coord[3*i+1];
+  }
 
   nodes.resize(tags.size());
   tags.resize(tags.size());
