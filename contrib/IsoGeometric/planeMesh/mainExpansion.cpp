@@ -742,6 +742,7 @@ std::vector<double> pts(3*nodes.size());
     // hop.swapEdges(1,0);
 
     BDS_Mesh *bdsMesh = hop.buildBDSMesh();
+    int MAXNP = bdsMesh->points.size();
     double t;
 
     std::cout << "Swapping:" << std::endl;
@@ -749,29 +750,72 @@ std::vector<double> pts(3*nodes.size());
     do {
       nbSwap = 0;
       hop.mySwapEdgePass(*bdsMesh, nbSwap, t);
+      bdsMesh->cleanup();
       std::cout << "nbSwap = " << nbSwap << " t = " << t << std::endl;
     } while (nbSwap > 0);
 
     std::cout << "Splitting:" << std::endl;
     int nbSplit;
-    // do {
+    int count = 0;
+    do {
     nbSplit = 0;
     hop.mySplitEdgePass(*bdsMesh, 1.4, nbSplit, nullptr, t);
-    std::cout << "nbSplit = " << nbSplit << " t = " << t << std::endl;
     bdsMesh->cleanup();
-    // } while (nbSplit > 0);
+    std::cout << "nbSplit = " << nbSplit << " t = " << t << std::endl;
+    if (count++ > 3) break;
+    } while (nbSplit > 0);
 
     std::cout << "Swapping:" << std::endl;
     do {
       nbSwap = 0;
       hop.mySwapEdgePass(*bdsMesh, nbSwap, t);
+      bdsMesh->cleanup();
       std::cout << "nbSwap = " << nbSwap << " t = " << t << std::endl;
     } while (nbSwap > 0);
+
+    std::cout << "Collapsing:" << std::endl;
+    int nbCollapse;
+    do {
+    nbCollapse = 0;
+    hop.myCollapseEdgePass(*bdsMesh, 0.7, MAXNP, nbCollapse, t);
+    bdsMesh->cleanup();
+    std::cout << "nbCollapse = " << nbCollapse << " t = " << t << std::endl;
+    } while (nbCollapse > 0);
+
+    std::cout << "Swapping:" << std::endl;
+    do {
+      nbSwap = 0;
+      hop.mySwapEdgePass(*bdsMesh, nbSwap, t);
+      bdsMesh->cleanup();
+      std::cout << "nbSwap = " << nbSwap << " t = " << t << std::endl;
+    } while (nbSwap > 0);
+    std::cout << std::endl;
 
     hop.updateMesh(*bdsMesh);
   }
 
-  hop.enforceBoundary();
+
+  // char name[256];
+  // sprintf(name, "triss.pos");
+  // FILE *f = fopen(name, "w");
+  // fprintf(f, "View \"P\"{\n");
+  // auto & p = hop.points;
+  // // for(size_t i = 0; i < p.size(); ++i) {
+  // //   fprintf(f, "SP(%g,%g,%g){1};\n", p[i].x(), p[i].y(), p[i].z());
+  // // }
+  // // fprintf(f, "};\n");
+
+  // auto & t = hop.triangles;
+  // for (size_t i = 0; i < t.size()/3; ++i) {
+  //   fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n", p[t[3*i]].x(),
+  //           p[t[3*i]].y(), p[t[3*i]].z(), p[t[3*i+1]].x(),
+  //           p[t[3*i+1]].y(), p[t[3*i+1]].z(), p[t[3*i+2]].x(),
+  //           p[t[3*i+2]].y(), p[t[3*i+2]].z(), 1, 1, 1);
+  // }
+  // fprintf(f, "};\n");
+  // fclose(f);
+
+
 
   // std::vector<size_t> newVertexTags;
   // for (size_t t: macroElementNodeTags) {
@@ -870,8 +914,10 @@ std::vector<double> pts(3*nodes.size());
   gmsh::model::geo::remove(dimTags, true);
   drawGeodesics(hop, geodesicLines);
 
+  CTX::instance()->mesh.changed = ENT_ALL;
   gmsh::fltk::run();
 
+  hop.enforceBoundary();
 
   // Cut
   std::vector<PolyMesh::Vertex *> pointVertices;

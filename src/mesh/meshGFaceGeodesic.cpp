@@ -487,9 +487,9 @@ static void polyMeshToGeodesicMesh(PolyMesh *pm, geodesic::Mesh &mesh,
     _faces.push_back(f->he->next->next->v->data);
     f2n[f] = nnn++;
   }
-  printf("coucou1 %lu %lu\n", _faces.size() / 3, _points.size() / 3);
+  // printf("coucou1 %lu %lu\n", _faces.size() / 3, _points.size() / 3);
   mesh.initialize_mesh_data(_points, _faces);
-  printf("coucou2\n");
+  // printf("coucou2\n");
 }
 
 geodesic::SurfacePoint
@@ -1180,6 +1180,21 @@ int highOrderPolyMesh::swapEdges(int niter, int onlyMisoriented)
       return (a.first < b.first);
   }
 
+
+  double highOrderPolyMesh::NewGetLc(BDS_Edge *const edge)
+  {
+    std::vector<geodesic::SurfacePoint> path;
+    createGeodesicPath(edge->p1->iD, edge->p2->iD, path);
+    double lone = 0;
+    for (size_t i = 1; i < path.size(); ++i) {
+      SVector3 v0(getTrueCoords(path[i-1]), getTrueCoords(path[i]));
+      lone += v0.norm();
+    }
+    lone = lone * 2 / (edge->p1->lc() + edge->p2->lc());
+    return lone;
+  }
+
+
   void highOrderPolyMesh::mySplitEdgePass(BDS_Mesh &m, double MAXE_, int &nb_split,
                           std::vector<SPoint2> *true_boundary, double &t)
   {
@@ -1213,18 +1228,8 @@ int highOrderPolyMesh::swapEdges(int niter, int onlyMisoriented)
       // if(!(*it)->deleted && (*it)->numfaces() == 2 && (*it)->g &&
       //   (*it)->g->classif_degree == 2) {
       if(!(*it)->deleted && (*it)->numfaces() == 2) {
-        // double lone = NewGetLc(*it, gf);
-        auto e = *it;
-        std::vector<geodesic::SurfacePoint> path;
-        createGeodesicPath(e->p1->iD, e->p2->iD, path);
-        double lone = 0;
-        for (size_t i = 1; i < path.size(); ++i) {
-          SVector3 v0(getTrueCoords(path[i-1]), getTrueCoords(path[i]));
-          lone += v0.norm();
-        }
-        double ladd = lone * 2 / (e->p1->lc() + e->p2->lc());
-        // std::cout << "lone = " << lone << " ladd = " << ladd << std::endl;
-        if(ladd > MAXE_) edges.push_back(std::make_pair(-lone, *it));
+        double lone = NewGetLc(*it);
+        if(lone > MAXE_) edges.push_back(std::make_pair(-lone, *it));
       }
       ++it;
     }
@@ -1279,6 +1284,7 @@ int highOrderPolyMesh::swapEdges(int niter, int onlyMisoriented)
       std::vector<geodesic::SurfacePoint> path;
       createGeodesicPath(e->p1->iD, e->p2->iD, path);
       double length = edges[i].first;
+      length = length * (e->p1->lc() + e->p2->lc()) / 2;
       length = length / 2;
       size_t j = 0;
       for (; j < path.size()-1; j++) {
@@ -1414,6 +1420,122 @@ int highOrderPolyMesh::swapEdges(int niter, int onlyMisoriented)
     }
     t += (Cpu() - t1);
   }
+
+  double highOrderPolyMesh::getMaxLcWhenCollapsingEdge(BDS_Mesh &m, BDS_Edge *e,
+                                    BDS_Point *p)
+  {
+    BDS_Point *o = e->othervertex(p);
+    double maxLc = 0.0;
+    std::vector<BDS_Edge *> edges(p->edges);
+    auto eit = edges.begin();
+    while(eit != edges.end()) {
+      BDS_Point *newP1 = nullptr, *newP2 = nullptr;
+      if((*eit)->p1 == p) {
+        newP1 = o;
+        newP2 = (*eit)->p2;
+      }
+      else if((*eit)->p2 == p) {
+        newP1 = (*eit)->p1;
+        newP2 = o;
+      }
+      if(!newP1 || !newP2) break; // error
+      BDS_Edge collapsedEdge = BDS_Edge(newP1, newP2);
+      maxLc = std::max(maxLc, NewGetLc(&collapsedEdge));
+      newP1->del(&collapsedEdge);
+      newP2->del(&collapsedEdge);
+      ++eit;
+    }
+
+    return maxLc;
+  }
+
+
+
+  void highOrderPolyMesh::myCollapseEdgePass(BDS_Mesh &m, double MINE_, int MAXNP,
+                        int &nb_collaps, double &t)
+  {
+    double t1 = Cpu();
+    std::vector<std::pair<double, BDS_Edge *> > edges;
+    auto it = m.edges.begin();
+    while(it != m.edges.end()) {
+      // if(!(*it)->deleted && (*it)->numfaces() == 2 && (*it)->g &&
+      //   (*it)->g->classif_degree == 2) {
+      if(!(*it)->deleted && (*it)->numfaces() == 2) {
+        double lone = NewGetLc(*it);
+        if(lone < MINE_) edges.push_back(std::make_pair(lone, *it));
+      }
+      ++it;
+    }
+
+    std::sort(edges.begin(), edges.end(), edges_sort);
+
+    for(std::size_t i = 0; i < edges.size(); i++) {
+      BDS_Edge *e = edges[i].second;
+      if(!e->deleted &&
+        (neighboringModified(e->p1) || neighboringModified(e->p2))) {
+        double lone1 = 0.;
+        bool collapseP1Allowed = false;
+        if(e->p1->iD > MAXNP) {
+          lone1 = getMaxLcWhenCollapsingEdge(m, e, e->p1);
+          collapseP1Allowed =
+            std::abs(lone1 - 1.0) < std::abs(edges[i].first - 1.0);
+        }
+
+        double lone2 = 0.;
+        bool collapseP2Allowed = false;
+        if(e->p2->iD > MAXNP) {
+          lone2 = getMaxLcWhenCollapsingEdge(m, e, e->p2);
+          collapseP2Allowed =
+            std::abs(lone2 - 1.0) < std::abs(edges[i].first - 1.0);
+        }
+
+        BDS_Point *p = nullptr;
+        if(collapseP1Allowed && collapseP2Allowed) {
+          if(std::abs(lone1 - lone2) < 1e-12)
+            p = e->p1->iD < e->p2->iD ? e->p1 : e->p2;
+          else
+            p = std::abs(lone1 - 1.0) < std::abs(lone2 - 1.0) ? e->p1 : e->p2;
+        }
+        else if(collapseP1Allowed && !collapseP2Allowed)
+          p = e->p1;
+        else if(collapseP2Allowed && !collapseP1Allowed)
+          p = e->p2;
+
+        // Check geodesic angles
+        if (p) {
+          BDS_Point *o = e->othervertex(p);
+          std::vector<BDS_Face *> faces;
+          std::vector<BDS_Edge *> edges(p->edges);
+          for (auto e: edges) {
+            if (e->deleted) continue;
+            faces.push_back(e->faces(0));
+            faces.push_back(e->faces(1));
+          }
+          for (auto f: faces) {
+            BDS_Point *ps[4];
+            if (!f->getNodes(ps)) {
+              Msg::Error("Unable to get nodes of face ");
+              return;
+            }
+            if (p == nullptr) break;
+            for (int j = 0; j < 3; j++) {
+              if (ps[j] == p) {
+                double angle = computeAngleTrue(ps[(j+2)%3]->iD, o->iD, ps[(j+1)%3]->iD);
+                if (abs(angle) < 1e-12) {
+                  p = nullptr;
+                  break;
+                }
+              }
+            }
+          }
+        }
+
+        if(p && m.collapse_edge_parametric(e, p)) nb_collaps++;
+      }
+    }
+    t += (Cpu() - t1);
+  }
+
 
 
   void highOrderPolyMesh::updateMesh(BDS_Mesh &m)

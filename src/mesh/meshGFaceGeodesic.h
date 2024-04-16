@@ -65,8 +65,12 @@ public:
   int edgeSwapTest(BDS_Edge *e);
   void mySwapEdgePass(BDS_Mesh &m, int &nb_swap, double &t,
                       int FINALIZE = 0, double orientation = 1.0);
+  double NewGetLc(BDS_Edge *const edge);
   void mySplitEdgePass(BDS_Mesh &m, double MAXE_, int &nb_split,
-                              std::vector<SPoint2> *true_boundary , double &t);
+                       std::vector<SPoint2> *true_boundary, double &t);
+  double getMaxLcWhenCollapsingEdge(BDS_Mesh &m, BDS_Edge *e, BDS_Point *p);
+  void myCollapseEdgePass(BDS_Mesh &m, double MINE_, int MAXNP, int &nb_collaps,
+                        double &t);
   void updateMesh(BDS_Mesh &m);
   void enforceBoundary();
   int splitEdges(double L);
