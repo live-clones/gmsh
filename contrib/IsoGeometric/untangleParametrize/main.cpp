@@ -136,7 +136,6 @@ int main(int argc, char* argv[])
     gmsh::model::mesh::generate(2);
     gmsh::fltk::run();
 
-    // Project the mesh on a plane
     std::vector<std::size_t> nodeTags;
     std::vector<double> coord, parametricCoord;
     gmsh::model::mesh::getNodes(nodeTags, coord, parametricCoord);
@@ -152,7 +151,12 @@ int main(int argc, char* argv[])
         elementTagToIndex[elementTags[i]] = i;
     }
 
-    int PROJ_OPT = 0;
+
+    //
+    // Get projection directions
+    //
+    // Average normal
+    int PROJ_OPT = 1;
     SVector3 n = {0, 0, 0};
     if (PROJ_OPT == 0) {
         size_t iElement = elementTagToIndex.begin()->second;
@@ -165,9 +169,6 @@ int main(int argc, char* argv[])
         SVector3 d1 = {coord[3 * iNodes[2] + 0] - coord[3 * iNodes[0] + 0],
                     coord[3 * iNodes[2] + 1] - coord[3 * iNodes[0] + 1],
                     coord[3 * iNodes[2] + 2] - coord[3 * iNodes[0] + 2]};
-        d0.normalize();
-        d1 = d1 - dot(d1, d0) * d0;
-        d1.normalize();
         n = crossprod(d0, d1);
     }
     else if (PROJ_OPT == 1) {
@@ -192,43 +193,41 @@ int main(int argc, char* argv[])
     n.normalize();
     std::cout << "Normal: " << n.x() << " " << n.y() << " " << n.z() << std::endl;
 
-    SVector3 d0 = {1, 0, 0};
-    SVector3 d1 = crossprod(n, d0);
-    if (norm(d1) < 1.e-6) {
-        d0 = {0, 1, 0};
-        d1 = crossprod(n,d0);
+    // u and v directions
+    SVector3 du = {1, 0, 0};
+    SVector3 dv = crossprod(n, du);
+    if (norm(dv) < 1.e-6) {
+        du = {0, 1, 0};
+        dv = crossprod(n,du);
     }
-    d0 = d0 - dot(d0,n) * n;
-    d0.normalize();
-    d1.normalize();
-    std::cout << "d0: " << d0.x() << " " << d0.y() << " " << d0.z() << std::endl;
-    std::cout << "d1: " << d1.x() << " " << d1.y() << " " << d1.z() << std::endl;
+    du = du - dot(du,n) * n;
+    du.normalize();
+    dv.normalize();
+    std::cout << "du: " << du.x() << " " << du.y() << " " << du.z() << std::endl;
+    std::cout << "dv: " << dv.x() << " " << dv.y() << " " << dv.z() << std::endl;
 
 
-    for (std::size_t i = 0; i < nodeTags.size(); i++) {
-        SVector3 p = {coord[3 * i + 0], coord[3 * i + 1], coord[3 * i + 2]};
-        p = p - dot(p, n) * n;
-        gmsh::model::mesh::setNode(nodeTags[i], {p.x(), p.y(), p.z()}, {});
-    }
-    CTX::instance()->mesh.changed = ENT_ALL;
-    gmsh::fltk::run();
-
+    //
     // Untangling
+    //
+    // Points
     std::vector<std::array<double, 2> > points(nodeTags.size());
     for (std::size_t i = 0; i < nodeTags.size(); i++) {
         SVector3 p = {coord[3 * i + 0], coord[3 * i + 1], coord[3 * i + 2]};
-        double u = dot(p, d0);
-        double v = dot(p, d1);
+        double u = dot(p, du);
+        double v = dot(p, dv);
         points[i] = {u, v};
     }
 
+    // Locked points
     std::vector<bool> locked(nodeTags.size(), false);
-    size_t iElement = elementTagToIndex.begin()->second;
-    size_t iNodes[3] = {nodeTagToIndex[elementNodeTags[3 * iElement + 0]],
-                        nodeTagToIndex[elementNodeTags[3 * iElement + 1]],
-                        nodeTagToIndex[elementNodeTags[3 * iElement + 2]]};
+    // size_t iElement = elementTagToIndex.begin()->second;
+    // size_t iNodes[3] = {nodeTagToIndex[elementNodeTags[3 * iElement + 0]],
+    //                     nodeTagToIndex[elementNodeTags[3 * iElement + 1]],
+    //                     nodeTagToIndex[elementNodeTags[3 * iElement + 2]]};
     // locked[iNodes[0]] = true; locked[iNodes[1]] = true; // locked[iNodes[2]] = true;
 
+    // Triangles
     std::vector<std::array<uint32_t, 3> > triangles(elementTags.size());
     for (std::size_t i = 0; i < elementTags.size(); i++) {
         triangles[i] = {(unsigned) nodeTagToIndex[elementNodeTags[3 * i + 0]],
@@ -236,17 +235,36 @@ int main(int argc, char* argv[])
                         (unsigned) nodeTagToIndex[elementNodeTags[3 * i + 2]]};
     }
 
-    std::vector<std::array<std::array<double, 2>, 3> > triIdealShapes = {};
+    // Ideal shapes
+    std::vector<std::array<std::array<double, 2>, 3> > triIdealShapes(elementTags.size());
+    for (size_t i = 0; i < elementTags.size(); i++) {
+        size_t iNodes[3] = {nodeTagToIndex[elementNodeTags[3 * i + 0]],
+                            nodeTagToIndex[elementNodeTags[3 * i + 1]],
+                            nodeTagToIndex[elementNodeTags[3 * i + 2]]};
+        SVector3 d0 = {coord[3 * iNodes[1] + 0] - coord[3 * iNodes[0] + 0],
+                        coord[3 * iNodes[1] + 1] - coord[3 * iNodes[0] + 1],
+                        coord[3 * iNodes[1] + 2] - coord[3 * iNodes[0] + 2]};
+        SVector3 d1 = {coord[3 * iNodes[2] + 0] - coord[3 * iNodes[0] + 0],
+                        coord[3 * iNodes[2] + 1] - coord[3 * iNodes[0] + 1],
+                        coord[3 * iNodes[2] + 2] - coord[3 * iNodes[0] + 2]};
+        double dx0 = norm(d0);
+        double dx1 = dot(d0,d1) / dx0;
+        double dy1 = sqrt(dot(d1,d1) - dx1 * dx1);
+        triIdealShapes[i][0] = {0, 0};
+        triIdealShapes[i][1] = {dx0, 0};
+        triIdealShapes[i][2] = {dx1, dy1};
+    }
 
     untangle_triangles_2D(points, locked, triangles, triIdealShapes, lambda, iterMaxInner, iterMaxOuter, iterFailMax, timeMax);
 
+
+    // Update the mesh
     for (std::size_t i = 0; i < nodeTags.size(); i++) {
-        SVector3 p = points[i][0] * d0 + points[i][1] * d1;
+        SVector3 p = points[i][0] * du + points[i][1] * dv;
         gmsh::model::mesh::setNode(nodeTags[i], {p.x(), p.y(), p.z()}, {});
     }
     CTX::instance()->mesh.changed = ENT_ALL;
     gmsh::fltk::run();
-
 
     // Save the untangled mesh
     gmsh::write("untangled.msh");
