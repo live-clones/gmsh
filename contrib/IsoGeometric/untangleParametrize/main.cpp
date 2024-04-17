@@ -79,6 +79,21 @@ void plane()
     gmsh::model::geo::synchronize();
 }
 
+void halfSphere()
+{
+    // Create the geometry
+    double lc = 0.1;
+    double radius = 1.0;
+    int sphereTag = gmsh::model::occ::addSphere(0, 0, 0, radius, -1, -M_PI/2, M_PI/2, M_PI);
+    gmsh::vectorpair dimTags;
+    gmsh::model::occ::getEntities(dimTags, 3);
+    gmsh::model::occ::remove({{3, dimTags[0].second}}, false);
+    gmsh::model::occ::getEntities(dimTags, 2);
+    gmsh::model::occ::remove({{2, dimTags[2].second}, {2, dimTags[3].second}}, false);
+    gmsh::model::occ::synchronize();
+}
+
+
 int main(int argc, char* argv[])
 {
     // Initialize Gmsh
@@ -126,6 +141,8 @@ int main(int argc, char* argv[])
         hole();
     else if (geometry == "plane")
         plane();
+    else if (geometry == "halfSphere")
+        halfSphere();
     else {
         std::cerr << "Unknown geometry: " << geometry << std::endl;
         return 1;
