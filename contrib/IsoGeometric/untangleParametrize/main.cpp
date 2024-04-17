@@ -65,6 +65,20 @@ void hole()
     gmsh::model::occ::synchronize();
 }
 
+void plane()
+{
+    // Create the geometry
+    double lc = 0.1;
+    double dx = 1.;
+    int is[2];
+    is[0] = gmsh::model::geo::addPoint(-dx, 0, 0, lc);
+    is[1] = gmsh::model::geo::addPoint(+dx, 0, 0, lc);
+    int l = gmsh::model::geo::addLine(is[0], is[1]);
+    gmsh::vectorpair outDimTags;
+    gmsh::model::geo::extrude({{1,l}}, 0, 0, dx, outDimTags);
+    gmsh::model::geo::synchronize();
+}
+
 int main(int argc, char* argv[])
 {
     // Initialize Gmsh
@@ -110,6 +124,8 @@ int main(int argc, char* argv[])
         fold();
     else if (geometry == "hole")
         hole();
+    else if (geometry == "plane")
+        plane();
     else {
         std::cerr << "Unknown geometry: " << geometry << std::endl;
         return 1;
@@ -136,24 +152,58 @@ int main(int argc, char* argv[])
         elementTagToIndex[elementTags[i]] = i;
     }
 
-    size_t iElement = elementTagToIndex.begin()->second;
-    size_t iNodes[3] = {nodeTagToIndex[elementNodeTags[3 * iElement + 0]],
-                        nodeTagToIndex[elementNodeTags[3 * iElement + 1]],
-                        nodeTagToIndex[elementNodeTags[3 * iElement + 2]]};
-    std::cout << "Element " << elementTags[iElement] 
-              << ": nodes " << iNodes[0] << " " << iNodes[1] << " " << iNodes[2] << std::endl;
-    SVector3 d0 = {coord[3 * iNodes[1] + 0] - coord[3 * iNodes[0] + 0],
-                   coord[3 * iNodes[1] + 1] - coord[3 * iNodes[0] + 1],
-                   coord[3 * iNodes[1] + 2] - coord[3 * iNodes[0] + 2]};
-    SVector3 d1 = {coord[3 * iNodes[2] + 0] - coord[3 * iNodes[0] + 0],
-                   coord[3 * iNodes[2] + 1] - coord[3 * iNodes[0] + 1],
-                   coord[3 * iNodes[2] + 2] - coord[3 * iNodes[0] + 2]};
-    d0.normalize();
-    d1 = d1 - dot(d1, d0) * d0;
-    d1.normalize();
-    SVector3 n = crossprod(d0, d1);
+    int PROJ_OPT = 0;
+    SVector3 n = {0, 0, 0};
+    if (PROJ_OPT == 0) {
+        size_t iElement = elementTagToIndex.begin()->second;
+        size_t iNodes[3] = {nodeTagToIndex[elementNodeTags[3 * iElement + 0]],
+                            nodeTagToIndex[elementNodeTags[3 * iElement + 1]],
+                            nodeTagToIndex[elementNodeTags[3 * iElement + 2]]};
+        SVector3 d0 = {coord[3 * iNodes[1] + 0] - coord[3 * iNodes[0] + 0],
+                    coord[3 * iNodes[1] + 1] - coord[3 * iNodes[0] + 1],
+                    coord[3 * iNodes[1] + 2] - coord[3 * iNodes[0] + 2]};
+        SVector3 d1 = {coord[3 * iNodes[2] + 0] - coord[3 * iNodes[0] + 0],
+                    coord[3 * iNodes[2] + 1] - coord[3 * iNodes[0] + 1],
+                    coord[3 * iNodes[2] + 2] - coord[3 * iNodes[0] + 2]};
+        d0.normalize();
+        d1 = d1 - dot(d1, d0) * d0;
+        d1.normalize();
+        n = crossprod(d0, d1);
+    }
+    else if (PROJ_OPT == 1) {
+        for (size_t i = 0; i < elementTags.size(); i++) {
+            size_t iNodes[3] = {nodeTagToIndex[elementNodeTags[3 * i + 0]],
+                                nodeTagToIndex[elementNodeTags[3 * i + 1]],
+                                nodeTagToIndex[elementNodeTags[3 * i + 2]]};
+            SVector3 d0 = {coord[3 * iNodes[1] + 0] - coord[3 * iNodes[0] + 0],
+                           coord[3 * iNodes[1] + 1] - coord[3 * iNodes[0] + 1],
+                           coord[3 * iNodes[1] + 2] - coord[3 * iNodes[0] + 2]};
+            SVector3 d1 = {coord[3 * iNodes[2] + 0] - coord[3 * iNodes[0] + 0],
+                           coord[3 * iNodes[2] + 1] - coord[3 * iNodes[0] + 1],
+                           coord[3 * iNodes[2] + 2] - coord[3 * iNodes[0] + 2]};
+            n += crossprod(d0, d1);
+        }
+        if (n == SVector3{0, 0, 0})
+            n = {0, 0, 1};
+    }
+    else 
+        n = {0, 0, 1};
+
     n.normalize();
     std::cout << "Normal: " << n.x() << " " << n.y() << " " << n.z() << std::endl;
+
+    SVector3 d0 = {1, 0, 0};
+    SVector3 d1 = crossprod(n, d0);
+    if (norm(d1) < 1.e-6) {
+        d0 = {0, 1, 0};
+        d1 = crossprod(n,d0);
+    }
+    d0 = d0 - dot(d0,n) * n;
+    d0.normalize();
+    d1.normalize();
+    std::cout << "d0: " << d0.x() << " " << d0.y() << " " << d0.z() << std::endl;
+    std::cout << "d1: " << d1.x() << " " << d1.y() << " " << d1.z() << std::endl;
+
 
     for (std::size_t i = 0; i < nodeTags.size(); i++) {
         SVector3 p = {coord[3 * i + 0], coord[3 * i + 1], coord[3 * i + 2]};
@@ -171,15 +221,23 @@ int main(int argc, char* argv[])
         double v = dot(p, d1);
         points[i] = {u, v};
     }
+
     std::vector<bool> locked(nodeTags.size(), false);
-    locked[iNodes[0]] = true; locked[iNodes[1]] = true; locked[iNodes[2]] = true;
+    size_t iElement = elementTagToIndex.begin()->second;
+    size_t iNodes[3] = {nodeTagToIndex[elementNodeTags[3 * iElement + 0]],
+                        nodeTagToIndex[elementNodeTags[3 * iElement + 1]],
+                        nodeTagToIndex[elementNodeTags[3 * iElement + 2]]};
+    // locked[iNodes[0]] = true; locked[iNodes[1]] = true; // locked[iNodes[2]] = true;
+
     std::vector<std::array<uint32_t, 3> > triangles(elementTags.size());
     for (std::size_t i = 0; i < elementTags.size(); i++) {
         triangles[i] = {(unsigned) nodeTagToIndex[elementNodeTags[3 * i + 0]],
                         (unsigned) nodeTagToIndex[elementNodeTags[3 * i + 1]],
                         (unsigned) nodeTagToIndex[elementNodeTags[3 * i + 2]]};
     }
-    std::vector<std::array<std::array<double, 2>, 3> > triIdealShapes;
+
+    std::vector<std::array<std::array<double, 2>, 3> > triIdealShapes = {};
+
     untangle_triangles_2D(points, locked, triangles, triIdealShapes, lambda, iterMaxInner, iterMaxOuter, iterFailMax, timeMax);
 
     for (std::size_t i = 0; i < nodeTags.size(); i++) {
