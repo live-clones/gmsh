@@ -2710,6 +2710,15 @@ GMSH_API void gmshModelOccChamfer(const int * volumeTags, const size_t volumeTag
                                   const int removeVolume,
                                   int * ierr);
 
+/* Defeature the volumes `volumeTags' by removing the surfaces `surfaceTags'.
+ * Return the defeatured entities in `outDimTags'. Remove the original volume
+ * if `removeVolume' is set. */
+GMSH_API void gmshModelOccDefeature(const int * volumeTags, const size_t volumeTags_n,
+                                    const int * surfaceTags, const size_t surfaceTags_n,
+                                    int ** outDimTags, size_t * outDimTags_n,
+                                    const int removeVolume,
+                                    int * ierr);
+
 /* Create a fillet edge between edges `edgeTag1' and `edgeTag2' with radius
  * `radius'. The modifed edges keep their tag. If `tag' is positive, set the
  * tag explicitly; otherwise a new tag is selected automatically. */
@@ -2731,8 +2740,8 @@ GMSH_API int gmshModelOccChamfer2D(const int edgeTag1,
                                    int * ierr);
 
 /* Create an offset curve based on the curve loop `curveLoopTag' with offset
- * `offset'. Return the curve loop in `outDimTags' as a vector of (dim, tag)
- * pairs. */
+ * `offset'. Return the offset curves in `outDimTags' as a vector of (dim,
+ * tag) pairs. */
 GMSH_API void gmshModelOccOffsetCurve(const int curveLoopTag,
                                       const double offset,
                                       int ** outDimTags, size_t * outDimTags_n,

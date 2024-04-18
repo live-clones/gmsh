@@ -100,9 +100,11 @@ struct contextGeometryOptions {
   double tolerance, toleranceBoolean, snap[3], transform[3][3], offset[3];
   int occAutoFix, occAutoEmbed, occFastUnbind;
   int occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
-  int occSewFaces, occMakeSolids, occParallel, occBooleanPreserveNumbering;
+  int occSewFaces, occMakeSolids, occParallel;
   int occBoundsUseSTL, occDisableSTL, occImportLabels, occExportOnlyVisible;
-  int occUnionUnify, occThruSectionsDegree, occUseGenericClosestPoint;
+  int occBooleanCheckInverted, occBooleanGlue, occBooleanNonDestructive;
+  int occBooleanPreserveNumbering, occBooleanSimplify;
+  int occThruSectionsDegree, occUseGenericClosestPoint;
   int occBrepFormatVersion;
   double occScaling;
   std::string occTargetUnit;

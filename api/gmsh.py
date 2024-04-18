@@ -8128,6 +8128,37 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
+        def defeature(volumeTags, surfaceTags, removeVolume=True):
+            """
+            gmsh.model.occ.defeature(volumeTags, surfaceTags, removeVolume=True)
+
+            Defeature the volumes `volumeTags' by removing the surfaces `surfaceTags'.
+            Return the defeatured entities in `outDimTags'. Remove the original volume
+            if `removeVolume' is set.
+
+            Return `outDimTags'.
+
+            Types:
+            - `volumeTags': vector of integers
+            - `surfaceTags': vector of integers
+            - `outDimTags': vector of pairs of integers
+            - `removeVolume': boolean
+            """
+            api_volumeTags_, api_volumeTags_n_ = _ivectorint(volumeTags)
+            api_surfaceTags_, api_surfaceTags_n_ = _ivectorint(surfaceTags)
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelOccDefeature(
+                api_volumeTags_, api_volumeTags_n_,
+                api_surfaceTags_, api_surfaceTags_n_,
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                c_int(bool(removeVolume)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
+
+        @staticmethod
         def fillet2D(edgeTag1, edgeTag2, radius, tag=-1):
             """
             gmsh.model.occ.fillet2D(edgeTag1, edgeTag2, radius, tag=-1)
@@ -8194,8 +8225,8 @@ class model:
             gmsh.model.occ.offsetCurve(curveLoopTag, offset)
 
             Create an offset curve based on the curve loop `curveLoopTag' with offset
-            `offset'. Return the curve loop in `outDimTags' as a vector of (dim, tag)
-            pairs.
+            `offset'. Return the offset curves in `outDimTags' as a vector of (dim,
+            tag) pairs.
 
             Return `outDimTags'.
 

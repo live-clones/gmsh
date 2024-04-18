@@ -7128,6 +7128,34 @@ function chamfer(volumeTags, curveTags, surfaceTags, distances, removeVolume = t
 end
 
 """
+    gmsh.model.occ.defeature(volumeTags, surfaceTags, removeVolume = true)
+
+Defeature the volumes `volumeTags` by removing the surfaces `surfaceTags`.
+Return the defeatured entities in `outDimTags`. Remove the original volume if
+`removeVolume` is set.
+
+Return `outDimTags`.
+
+Types:
+ - `volumeTags`: vector of integers
+ - `surfaceTags`: vector of integers
+ - `outDimTags`: vector of pairs of integers
+ - `removeVolume`: boolean
+"""
+function defeature(volumeTags, surfaceTags, removeVolume = true)
+    api_outDimTags_ = Ref{Ptr{Cint}}()
+    api_outDimTags_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccDefeature, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          convert(Vector{Cint}, volumeTags), length(volumeTags), convert(Vector{Cint}, surfaceTags), length(surfaceTags), api_outDimTags_, api_outDimTags_n_, removeVolume, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
+    outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
+    return outDimTags
+end
+
+"""
     gmsh.model.occ.fillet2D(edgeTag1, edgeTag2, radius, tag = -1)
 
 Create a fillet edge between edges `edgeTag1` and `edgeTag2` with radius
@@ -7183,7 +7211,8 @@ const chamfer2_d = chamfer2D
     gmsh.model.occ.offsetCurve(curveLoopTag, offset)
 
 Create an offset curve based on the curve loop `curveLoopTag` with offset
-`offset`. Return the curve loop in `outDimTags` as a vector of (dim, tag) pairs.
+`offset`. Return the offset curves in `outDimTags` as a vector of (dim, tag)
+pairs.
 
 Return `outDimTags`.
 

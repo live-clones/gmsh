@@ -4760,12 +4760,6 @@ double opt_geometry_occ_make_solids(OPT_ARGS_NUM)
   return CTX::instance()->geom.occMakeSolids;
 }
 
-double opt_geometry_occ_union_unify(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) CTX::instance()->geom.occUnionUnify = (int)val;
-  return CTX::instance()->geom.occUnionUnify;
-}
-
 double opt_geometry_occ_thrusections_degree(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.occThruSectionsDegree = (int)val;
@@ -4778,11 +4772,39 @@ double opt_geometry_occ_parallel(OPT_ARGS_NUM)
   return CTX::instance()->geom.occParallel;
 }
 
+double opt_geometry_occ_boolean_check_inverted(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occBooleanCheckInverted = (int)val;
+  return CTX::instance()->geom.occBooleanCheckInverted;
+}
+
+double opt_geometry_occ_boolean_glue(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occBooleanGlue = (int)val;
+  return CTX::instance()->geom.occBooleanGlue;
+}
+
+double opt_geometry_occ_boolean_non_destructive(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occBooleanNonDestructive = (int)val;
+  return CTX::instance()->geom.occBooleanNonDestructive;
+}
+
 double opt_geometry_occ_boolean_preserve_numbering(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX::instance()->geom.occBooleanPreserveNumbering = (int)val;
   return CTX::instance()->geom.occBooleanPreserveNumbering;
+}
+
+double opt_geometry_occ_boolean_simplify(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occBooleanSimplify = (int)val;
+  return CTX::instance()->geom.occBooleanSimplify;
 }
 
 double opt_geometry_occ_scaling(OPT_ARGS_NUM)

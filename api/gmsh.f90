@@ -318,6 +318,8 @@ module gmsh
         gmshModelOccFillet
     procedure, nopass :: chamfer => &
         gmshModelOccChamfer
+    procedure, nopass :: defeature => &
+        gmshModelOccDefeature
     procedure, nopass :: fillet2D => &
         gmshModelOccFillet2D
     procedure, nopass :: chamfer2D => &
@@ -11603,6 +11605,54 @@ module gmsh
       api_outDimTags_n_)
   end subroutine gmshModelOccChamfer
 
+  !> Defeature the volumes `volumeTags' by removing the surfaces `surfaceTags'.
+  !! Return the defeatured entities in `outDimTags'. Remove the original volume
+  !! if `removeVolume' is set.
+  subroutine gmshModelOccDefeature(volumeTags, &
+                                   surfaceTags, &
+                                   outDimTags, &
+                                   removeVolume, &
+                                   ierr)
+    interface
+    subroutine C_API(api_volumeTags_, &
+                     api_volumeTags_n_, &
+                     api_surfaceTags_, &
+                     api_surfaceTags_n_, &
+                     api_outDimTags_, &
+                     api_outDimTags_n_, &
+                     removeVolume, &
+                     ierr_) &
+      bind(C, name="gmshModelOccDefeature")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), dimension(*) :: api_volumeTags_
+      integer(c_size_t), value, intent(in) :: api_volumeTags_n_
+      integer(c_int), dimension(*) :: api_surfaceTags_
+      integer(c_size_t), value, intent(in) :: api_surfaceTags_n_
+      type(c_ptr), intent(out) :: api_outDimTags_
+      integer(c_size_t), intent(out) :: api_outDimTags_n_
+      integer(c_int), value, intent(in) :: removeVolume
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), dimension(:), intent(in) :: volumeTags
+    integer(c_int), dimension(:), intent(in) :: surfaceTags
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
+    logical, intent(in), optional :: removeVolume
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_outDimTags_
+    integer(c_size_t) :: api_outDimTags_n_
+    call C_API(api_volumeTags_=volumeTags, &
+         api_volumeTags_n_=size_gmsh_int(volumeTags), &
+         api_surfaceTags_=surfaceTags, &
+         api_surfaceTags_n_=size_gmsh_int(surfaceTags), &
+         api_outDimTags_=api_outDimTags_, &
+         api_outDimTags_n_=api_outDimTags_n_, &
+         removeVolume=optval_c_bool(.true., removeVolume), &
+         ierr_=ierr)
+    outDimTags = ovectorpair_(api_outDimTags_, &
+      api_outDimTags_n_)
+  end subroutine gmshModelOccDefeature
+
   !> Create a fillet edge between edges `edgeTag1' and `edgeTag2' with radius
   !! `radius'. The modifed edges keep their tag. If `tag' is positive, set the
   !! tag explicitly; otherwise a new tag is selected automatically.
@@ -11684,8 +11734,8 @@ module gmsh
   end function gmshModelOccChamfer2D
 
   !> Create an offset curve based on the curve loop `curveLoopTag' with offset
-  !! `offset'. Return the curve loop in `outDimTags' as a vector of (dim, tag)
-  !! pairs.
+  !! `offset'. Return the offset curves in `outDimTags' as a vector of (dim,
+  !! tag) pairs.
   subroutine gmshModelOccOffsetCurve(curveLoopTag, &
                                      offset, &
                                      outDimTags, &

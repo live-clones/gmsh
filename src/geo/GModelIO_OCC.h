@@ -312,17 +312,24 @@ public:
                const std::vector<double> &distances,
                std::vector<std::pair<int, int> > &outDimTags,
                bool removeVolume);
-  
+
+  // defeaturing
+  bool defeature(const std::vector<int> &volumeTags,
+                 const std::vector<int> &surfaceTags,
+                 std::vector<std::pair<int, int> > &outDimTags,
+                 bool removeVolume);
+
+  // 2D fillet and chamfer
   bool fillet2D(int &tag, const int edgeTag1,
-                const int edgeTag2, 
+                const int edgeTag2,
                 double radius);
 
-  bool chamfer2D( int &tag, const int edgeTag1,
-                  const int edgeTag2,
-                  double distance1,
-                  double distance2);
+  bool chamfer2D(int &tag, const int edgeTag1,
+                 const int edgeTag2,
+                 double distance1,
+                 double distance2);
 
-  bool offsetCurve( const int curveLoopTag, 
+  bool offsetCurve( const int curveLoopTag,
                     double offset,
                     std::vector<std::pair<int, int> > &outDimTags);
 
@@ -711,8 +718,15 @@ public:
   {
     return _error("create chamfer");
   }
+  bool defeature(const std::vector<int> &volumeTags,
+                 const std::vector<int> &surfaceTags,
+                 std::vector<std::pair<int, int> > &outDimTags,
+                 bool removeVolume)
+  {
+    return _error("defeature");
+  }
   bool fillet2D(int &tag, const int edgeTag1,
-                const int edgeTag2, 
+                const int edgeTag2,
                 double radius)
   {
     return _error("create fillet in 2D");
@@ -724,7 +738,7 @@ public:
   {
     return _error("create chamfer in 2D");
   }
-  bool offsetCurve( const int curveLoopTag, 
+  bool offsetCurve( const int curveLoopTag,
                     double offset,
                     std::vector<std::pair<int, int>> &outDimTags)
   {

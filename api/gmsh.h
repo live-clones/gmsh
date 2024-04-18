@@ -3043,6 +3043,16 @@ namespace gmsh { // Top-level functions
                             gmsh::vectorpair & outDimTags,
                             const bool removeVolume = true);
 
+      // gmsh::model::occ::defeature
+      //
+      // Defeature the volumes `volumeTags' by removing the surfaces `surfaceTags'.
+      // Return the defeatured entities in `outDimTags'. Remove the original volume
+      // if `removeVolume' is set.
+      GMSH_API void defeature(const std::vector<int> & volumeTags,
+                              const std::vector<int> & surfaceTags,
+                              gmsh::vectorpair & outDimTags,
+                              const bool removeVolume = true);
+
       // gmsh::model::occ::fillet2D
       //
       // Create a fillet edge between edges `edgeTag1' and `edgeTag2' with radius
@@ -3068,8 +3078,8 @@ namespace gmsh { // Top-level functions
       // gmsh::model::occ::offsetCurve
       //
       // Create an offset curve based on the curve loop `curveLoopTag' with offset
-      // `offset'. Return the curve loop in `outDimTags' as a vector of (dim, tag)
-      // pairs.
+      // `offset'. Return the offset curves in `outDimTags' as a vector of (dim,
+      // tag) pairs.
       GMSH_API void offsetCurve(const int curveLoopTag,
                                 const double offset,
                                 gmsh::vectorpair & outDimTags);
