@@ -799,10 +799,6 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
 
   if(percent >= _progressMeterCurrent || n > N - 1){
     int p = _progressMeterCurrent;
-    while(p < percent) p += _progressMeterStep;
-    if(p >= 100) p = 100;
-
-    _progressMeterCurrent = p;
 
     // TODO With C++11 use std::string (contiguous layout) and avoid all these C
     // problems
@@ -830,6 +826,10 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
       fprintf(stdout, "%s%s\r", (n > N - 1) ? "" : str2, w.c_str());
       fflush(stdout);
     }
+
+    while(p <= percent) p += _progressMeterStep;
+    if(p >= 100) p = 100;
+    _progressMeterCurrent = p;
   }
 }
 

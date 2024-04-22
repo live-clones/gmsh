@@ -3742,10 +3742,8 @@ bool OCC_Internals::offsetCurve(const int curveLoopTag, double offset,
 class OCCBooleanProgress : public Message_ProgressIndicator {
 private:
   std::string _name;
-  int _last;
-
 public:
-  OCCBooleanProgress(std::string name) : _name(name), _last(0)
+  OCCBooleanProgress(std::string name) : _name(name)
   {
     Msg::StartProgressMeter(100);
   }
@@ -3753,13 +3751,10 @@ public:
   void Show(const Message_ProgressScope &theScope,
             const Standard_Boolean theToForce)
   {
-    int s = (int)(99. * GetPosition());
-    if(s > _last) {
-      const char *str = theScope.Name();
-      Msg::ProgressMeter(s, true, "%s%s%s", _name.c_str(), str ? " - " : " ",
-                         str ? str : " ");
-      _last = s;
-    }
+    const char *str = theScope.Name();
+    int s = (int)(100. * GetPosition());
+    Msg::ProgressMeter(s, true, "%s%s%s",
+                       _name.c_str(), str ? " - " : " ", str ? str : " ");
   }
 };
 
