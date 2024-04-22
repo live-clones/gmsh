@@ -3752,8 +3752,7 @@ public:
             const Standard_Boolean theToForce)
   {
     const char *str = theScope.Name();
-    int s = (int)(100. * GetPosition());
-    Msg::ProgressMeter(s, true, "%s%s%s",
+    Msg::ProgressMeter((int)(100. * GetPosition()), true, "%s%s%s",
                        _name.c_str(), str ? " - " : " ", str ? str : " ");
   }
 };
