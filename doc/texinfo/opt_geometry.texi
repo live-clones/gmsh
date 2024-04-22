@@ -228,7 +228,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCBooleanSimplify
 Try to simplify the shape resulting from boolean operations (0: none, 1: only for unions, 2: for all boolean operations@*
-Default value: @code{0}@*
+Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCBoundsUseStl

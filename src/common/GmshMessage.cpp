@@ -826,8 +826,8 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
     if(_logFile) fprintf(_logFile, "Progress: %s\n", str);
     if(_callback) (*_callback)("Progress", str);
     if(!streamIsFile(stdout) && log && CTX::instance()->terminal){
-      fprintf(stdout, "%s                                          \r",
-              (n > N - 1) ? "" : str2);
+      std::string w(80, ' ');
+      fprintf(stdout, "%s%s\r", (n > N - 1) ? "" : str2, w.c_str());
       fflush(stdout);
     }
   }

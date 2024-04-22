@@ -143,6 +143,7 @@
 
 #if OCC_VERSION_HEX >= 0x070500
 #include <BRepAlgoAPI_Defeaturing.hxx>
+#include <Message_ProgressIndicator.hxx>
 #endif
 
 #if defined(HAVE_OCC_CAF)
@@ -3736,8 +3737,35 @@ bool OCC_Internals::offsetCurve(const int curveLoopTag, double offset,
   return true;
 }
 
-template<class T>
-static void _setOptions(T &algo)
+#if OCC_VERSION_HEX >= 0x070500
+
+class OCCBooleanProgress : public Message_ProgressIndicator {
+private:
+  std::string _name;
+  int _last;
+
+public:
+  OCCBooleanProgress(std::string name) : _name(name), _last(0)
+  {
+    Msg::StartProgressMeter(100);
+  }
+  ~OCCBooleanProgress() { Msg::StopProgressMeter(); }
+  void Show(const Message_ProgressScope &theScope,
+            const Standard_Boolean theToForce)
+  {
+    int s = (int)(99. * GetPosition());
+    if(s > _last) {
+      const char *str = theScope.Name();
+      Msg::ProgressMeter(s, true, "%s%s%s", _name.c_str(), str ? " - " : " ",
+                         str ? str : " ");
+      _last = s;
+    }
+  }
+};
+
+#endif
+
+template <class T> static void _setBooleanOptions(T &algo)
 {
   algo.SetRunParallel(CTX::instance()->geom.occParallel);
   if(CTX::instance()->geom.toleranceBoolean > 0.0)
@@ -3749,37 +3777,38 @@ static void _setOptions(T &algo)
 #if OCC_VERSION_HEX >= 0x070200
   switch(CTX::instance()->geom.occBooleanGlue) {
   case 1: algo.SetGlue(BOPAlgo_GlueShift); break;
-  case 2: printf(" ************** aaaaaa\n");algo.SetGlue(BOPAlgo_GlueFull); break;
+  case 2: algo.SetGlue(BOPAlgo_GlueFull); break;
   default: algo.SetGlue(BOPAlgo_GlueOff); break;
   }
 #endif
 #if OCC_VERSION_HEX >= 0x070300
-  if(CTX::instance()->geom.occBooleanCheckInverted)
-    algo.SetCheckInverted(true);
+  if(CTX::instance()->geom.occBooleanCheckInverted) algo.SetCheckInverted(true);
 #endif
 }
 
 template <class T>
-static std::string _getErrors(T &algo)
+static bool _printBooleanErrors(T &algo, const std::string &what)
 {
 #if OCC_VERSION_HEX >= 0x070200
   std::ostringstream os;
   algo.DumpErrors(os);
 #endif
   std::string s = ReplaceSubString("\n", "", os.str());
-  if(s.empty()) return "";
-  return std::string("(") + s + ")";
+  if(s.empty()) return false;
+
+  Msg::Error("%s failed%s", what.c_str(), s.c_str());
+  return false;
 }
 
 template <class T>
-static void _printWarnings(T &algo)
+static void _printBooleanWarnings(T &algo, const std::string &what)
 {
 #if OCC_VERSION_HEX >= 0x070200
   if(algo.HasWarnings()) {
     std::ostringstream os;
     algo.DumpWarnings(os);
     std::string s = ReplaceSubString("\n", "", os.str());
-    if(!s.empty()) Msg::Warning("%s", s.c_str());
+    if(!s.empty()) Msg::Warning("%s - %s", what.c_str(), s.c_str());
   }
 #endif
 }
@@ -3850,13 +3879,15 @@ bool OCC_Internals::booleanOperator(
       BRepAlgoAPI_Fuse fuse;
       fuse.SetArguments(objectShapes);
       fuse.SetTools(toolShapes);
-      _setOptions(fuse);
+      _setBooleanOptions(fuse);
+#if OCC_VERSION_HEX >= 0x070500
+      OCCBooleanProgress progress("Union");
+      fuse.Build(progress.Start());
+#else
       fuse.Build();
-      if(!fuse.IsDone()) {
-        Msg::Error("Fuse operation failed%s", _getErrors(fuse).c_str());
-        return false;
-      }
-      _printWarnings(fuse);
+#endif
+      if(!fuse.IsDone()) return _printBooleanErrors(fuse, "Union");
+      _printBooleanWarnings(fuse, "Union");
       if(CTX::instance()->geom.occBooleanSimplify >= 1) {
 #if OCC_VERSION_HEX >= 0x070400
         // better than ShapeUpgrade_UnifySameDomain, as it preserves the history
@@ -3893,13 +3924,15 @@ bool OCC_Internals::booleanOperator(
       BRepAlgoAPI_Common common;
       common.SetArguments(objectShapes);
       common.SetTools(toolShapes);
-      _setOptions(common);
+      _setBooleanOptions(common);
+#if OCC_VERSION_HEX >= 0x070500
+      OCCBooleanProgress progress("Intersection");
+      common.Build(progress.Start());
+#else
       common.Build();
-      if(!common.IsDone()) {
-        Msg::Error("Intersection operation failed%s", _getErrors(common).c_str());
-        return false;
-      }
-      _printWarnings(common);
+#endif
+      if(!common.IsDone()) return _printBooleanErrors(common, "Intersection");
+      _printBooleanWarnings(common, "Intersection");
 #if OCC_VERSION_HEX >= 0x070400
       if(CTX::instance()->geom.occBooleanSimplify >= 2) common.SimplifyResult();
 #endif
@@ -3924,13 +3957,15 @@ bool OCC_Internals::booleanOperator(
       BRepAlgoAPI_Cut cut;
       cut.SetArguments(objectShapes);
       cut.SetTools(toolShapes);
-      _setOptions(cut);
+      _setBooleanOptions(cut);
+#if OCC_VERSION_HEX >= 0x070500
+      OCCBooleanProgress progress("Difference");
+      cut.Build(progress.Start());
+#else
       cut.Build();
-      if(!cut.IsDone()) {
-        Msg::Error("Difference operation failed%s", _getErrors(cut).c_str());
-        return false;
-      }
-      _printWarnings(cut);
+#endif
+      if(!cut.IsDone()) return _printBooleanErrors(cut, "Difference");
+      _printBooleanWarnings(cut, "Difference");
 #if OCC_VERSION_HEX >= 0x070400
       if(CTX::instance()->geom.occBooleanSimplify >= 2) cut.SimplifyResult();
 #endif
@@ -3957,8 +3992,13 @@ bool OCC_Internals::booleanOperator(
       objectShapes.Append(toolShapes);
       toolShapes.Clear();
       fragments.SetArguments(objectShapes);
-      _setOptions(fragments);
+      _setBooleanOptions(fragments);
+#if OCC_VERSION_HEX >= 0x070500
+      OCCBooleanProgress progress("Fragments");
+      fragments.Build(progress.Start());
+#else
       fragments.Build();
+#endif
 #if OCC_VERSION_HEX > 0x070100
       if(fragments.HasErrors() &&
          fragments.HasError(STANDARD_TYPE(BOPAlgo_AlertTooFewArguments))) {
@@ -3966,11 +4006,9 @@ bool OCC_Internals::booleanOperator(
         return true;
       }
 #endif
-      if(!fragments.IsDone()) {
-        Msg::Error("Fragment operation failed%s", _getErrors(fragments).c_str());
-        return false;
-      }
-      _printWarnings(fragments);
+      if(!fragments.IsDone())
+        return _printBooleanErrors(fragments, "Fragments");
+      _printBooleanWarnings(fragments, "Fragments");
 #if OCC_VERSION_HEX >= 0x070400
       if(CTX::instance()->geom.occBooleanSimplify >= 2)
         fragments.SimplifyResult();
