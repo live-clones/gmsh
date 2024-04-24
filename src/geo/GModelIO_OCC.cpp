@@ -3783,13 +3783,11 @@ template <class T> static void _setBooleanOptions(T &algo)
 template <class T>
 static bool _printBooleanErrors(T &algo, const std::string &what)
 {
-#if OCC_VERSION_HEX >= 0x070200
   std::ostringstream os;
+#if OCC_VERSION_HEX >= 0x070200
   algo.DumpErrors(os);
 #endif
   std::string s = ReplaceSubString("\n", "", os.str());
-  if(s.empty()) return false;
-
   Msg::Error("%s failed%s", what.c_str(), s.c_str());
   return false;
 }
