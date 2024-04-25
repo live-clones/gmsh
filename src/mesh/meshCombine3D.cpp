@@ -34,6 +34,7 @@ static void buildUniqueFaces(GRegion *gr,
 }
 
 #if defined(HAVE_HXT)
+
 #include "hxt_combine_cpp_api.h"
 
 static void createMeshStore(GRegion *gr, HXTCombine::MeshStore &ms,
@@ -215,12 +216,14 @@ int meshCombine3D(GRegion *gr)
   return 0;
 }
 #else
-int meshCombine3d(GRegion *gr)
+
+int meshCombine3D(GRegion *gr)
 {
   Msg::Warning(
     "Gmsh must be compiled with HXT to enable hybrid mesh generation");
   return -1;
 }
+
 #endif
 
 bool MakeHybridHexTetMeshConformalThroughTriHedron(GModel *gm)
