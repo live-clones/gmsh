@@ -3567,13 +3567,16 @@ bool OCC_Internals::defeature(const std::vector<int> &volumeTags,
   if(!defeat.IsDone()) {
     std::ostringstream os;
     defeat.DumpErrors(os);
-    Msg::Error("Could not defeature shapes (%s)", os.str().c_str());
+    std::string s = ReplaceSubString("\n", " ", os.str());
+    Msg::Error("Could not defeature shapes%s%s", os.str().size() ? " - " : "",
+               s.c_str());
     return false;
   }
   if(defeat.HasWarnings()) {
     std::ostringstream os;
     defeat.DumpWarnings(os);
-    Msg::Warning("%s", os.str().c_str());
+    std::string s = ReplaceSubString("\n", " ", os.str());
+    Msg::Warning("%s", s.c_str());
   }
 
   TopoDS_Shape result = defeat.Shape();
@@ -3787,8 +3790,9 @@ static bool _printBooleanErrors(T &algo, const std::string &what)
 #if OCC_VERSION_HEX >= 0x070200
   algo.DumpErrors(os);
 #endif
-  std::string s = ReplaceSubString("\n", "", os.str());
-  Msg::Error("%s failed%s", what.c_str(), s.c_str());
+  std::string s = ReplaceSubString("\n", " ", os.str());
+  Msg::Error("%s failed%s%s", what.c_str(), os.str().size() ? " - " : "",
+             s.c_str());
   return false;
 }
 
@@ -3799,7 +3803,7 @@ static void _printBooleanWarnings(T &algo, const std::string &what)
   if(algo.HasWarnings()) {
     std::ostringstream os;
     algo.DumpWarnings(os);
-    std::string s = ReplaceSubString("\n", "", os.str());
+    std::string s = ReplaceSubString("\n", " ", os.str());
     if(!s.empty()) Msg::Warning("%s - %s", what.c_str(), s.c_str());
   }
 #endif
