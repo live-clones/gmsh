@@ -958,6 +958,56 @@ readMSH4Edges(GModel *const model, FILE *fp, bool binary, double version)
   return output;
 }
 
+// Returns a vector of pairs<faceTag, vector<nodeTag>>
+static std::vector<std::pair<std::size_t, std::vector<std::size_t>>>
+readMSH4Faces(GModel *const model, FILE *fp, bool binary, double version)
+{
+  std::size_t numTags = 0;
+
+  if(binary) {
+    throw std::runtime_error("Binary non implemented!");
+  }
+  else {
+    // First line indicates the number of faces, then one line per edge
+    if(fscanf(fp, "%lu", &numTags) != 1) {
+      return {};
+    }
+  }
+
+  if (numTags == 0)
+    return {};
+
+  Msg::Info("readMSH4Edges with %lu elements", numTags);
+
+  std::vector<std::pair<std::size_t, std::vector<std::size_t>>> output;
+  output.reserve(numTags);
+
+
+  // TAG NUM_VERT VERT1 VERT2 ... VERTN
+  for(std::size_t i = 0; i < numTags; i++) {
+    int entityTag = 0, entityDim = 0, elmType = 0;
+    std::size_t faceTag, numVerts;
+
+    if(binary) {
+      // TODO
+    }
+    else {
+      if(fscanf(fp, "%lu %lu", &faceTag, &numVerts) != 2) {
+        return {};
+      }
+      std::vector<std::size_t> nodes(numVerts);
+      for (std::size_t j = 0; j < numVerts; j++) {
+        if(fscanf(fp, "%lu", &nodes[j]) != 1) {
+          throw std::runtime_error("Error reading node tag in a face.");
+        }
+      }
+      output.push_back(std::make_pair(faceTag, std::move(nodes)));
+    }
+  }
+
+  return output;
+}
+
 static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
                                   bool swap, double version)
 {
@@ -1450,6 +1500,27 @@ int GModel::_readMSH4(const std::string &name)
         }
       }
       Msg::Info("Total number of edges is now %lu", this->_mapEdgeNum.size());
+    }
+    else if(!strncmp(&str[1], "FaceTags", 8)) {
+      auto faceTags = 
+        readMSH4Faces(this, fp, binary, version);
+      Msg::Info("Read %lu face tags from file", faceTags.size());
+      for (auto& elem: faceTags) {
+        // Always 3 or 4 nodes
+        MVertex* v1 = getMeshVertexByTag(elem.second.at(0));
+        MVertex* v2 = getMeshVertexByTag(elem.second.at(1));
+        MVertex* v3 = getMeshVertexByTag(elem.second.at(2));
+        bool isQuad = elem.second.size() == 4;
+        MVertex* v4 = nullptr;
+        if (isQuad) {
+          v4 = getMeshVertexByTag(elem.second.at(3));
+        }
+        if(v1 && v2 && v3 && (v4 || !isQuad)) {
+          MFace face(v1, v2, v3, v4);
+          this->_mapFaceNum.insert({std::move(face), elem.first});
+        }
+      }
+      Msg::Info("Total number of faces is now %lu", this->_mapFaceNum.size());
     }
     else if(!strncmp(&str[1], "Periodic", 8)) {
       if(!readMSH4PeriodicNodes(this, fp, binary, swap, version)) {
@@ -2857,6 +2928,32 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool partitioned,
   fprintf(fp, "$EndEdgeTags\n");
 }
 
+static void writeMSH4Faces(GModel *const model, FILE *fp, bool partitioned,
+                              int partitionToSave, bool binary, bool saveAll,
+                              double version)
+{
+  if(model->getNumMFaces() == 0) return;
+
+  fprintf(fp, "$FaceTags\n %lu\n", model->getNumMFaces());
+  if(binary) {
+    throw std::runtime_error(
+      "Binary format not supported yet for exporting edges");
+  }
+  for(auto it = model->firstMFace(); it != model->lastMFace(); ++it) {
+    // TAG NUM_VERT VERT1 VERT2 ... VERTN
+    auto nVert = it->first.getNumVertices();
+    fprintf(fp, "%lu %lu", it->second, nVert);
+    for (std::size_t i = 0; i < nVert; ++i) {
+      fprintf(fp, " %lu", it->first.getVertex(i)->getNum());
+    }
+    fprintf(fp, "\n");
+  }
+
+
+  if(binary) fprintf(fp, "\n");
+  fprintf(fp, "$EndFaceTags\n");
+}
+
 int GModel::_writeMSH4(const std::string &name, double version, bool binary,
                        bool saveAll, bool saveParametric, double scalingFactor,
                        bool append, int partitionToSave,
@@ -2950,6 +3047,9 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   writeMSH4Edges(this, fp, partitioned, partitionToSave, binary, saveAll,
                  version);
 
+  // Face tags
+  writeMSH4Faces(this, fp, partitioned, partitionToSave, binary, saveAll,
+                 version);
   // periodic
   writeMSH4PeriodicNodes(this, fp, binary, version);
 
