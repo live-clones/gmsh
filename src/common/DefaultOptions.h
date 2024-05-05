@@ -1498,6 +1498,9 @@ StringXNumber MeshOptions_Number[] = {
     "Type of quality measure (0: SICN~signed inverse condition number, "
     "1: SIGE~signed inverse gradient error, 2: gamma~vol/sum_face/max_edge, "
     "3: Disto~minJ/maxJ"},
+  { F|O, "QuasiTransfinite" , opt_mesh_quasi_transfinite , 0 ,
+    "Allow quasi-transfinite meshing of surfaces with non-matching number of nodes on "
+    "opposite sides" },
 
   { F|O, "RadiusInf" , opt_mesh_radius_inf , 0.0 ,
     "Only display elements whose longest edge is greater than RadiusInf" },

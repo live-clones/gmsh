@@ -6170,6 +6170,14 @@ double opt_mesh_flexible_transfinite(OPT_ARGS_NUM)
   return CTX::instance()->mesh.flexibleTransfinite;
 }
 
+double opt_mesh_quasi_transfinite(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.quasiTransfinite = (int)val;
+  }
+  return CTX::instance()->mesh.quasiTransfinite;
+}
+
 double opt_mesh_algo_subdivide(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {

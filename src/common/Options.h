@@ -565,6 +565,7 @@ double opt_mesh_recombine3d_all(OPT_ARGS_NUM);
 double opt_mesh_recombine3d_level(OPT_ARGS_NUM);
 double opt_mesh_recombine3d_conformity(OPT_ARGS_NUM);
 double opt_mesh_flexible_transfinite(OPT_ARGS_NUM);
+double opt_mesh_quasi_transfinite(OPT_ARGS_NUM);
 double opt_mesh_algo_subdivide(OPT_ARGS_NUM);
 double opt_mesh_mesh_only_visible(OPT_ARGS_NUM);
 double opt_mesh_mesh_only_empty(OPT_ARGS_NUM);

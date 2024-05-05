@@ -31,7 +31,7 @@ struct contextMeshOptions {
   int recombineNodeRepositioning;
   double recombineMinimumQuality;
   int recombine3DAll, recombine3DLevel, recombine3DConformity;
-  int flexibleTransfinite, transfiniteTri, maxRetries;
+  int flexibleTransfinite, quasiTransfinite, transfiniteTri, maxRetries;
   int order, secondOrderLinear, secondOrderIncomplete;
   int meshOnlyVisible, meshOnlyEmpty;
   int minCircleNodes, minCurveNodes, minLineNodes;
