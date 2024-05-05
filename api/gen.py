@@ -276,7 +276,7 @@ mesh.add('recombine', doc, None)
 doc = '''Refine the mesh of the current model by uniformly splitting the elements.'''
 mesh.add('refine', doc, None)
 
-doc = '''Set the order of the elements in the mesh of the current model to `order'.'''
+doc = '''Change the order of the elements in the mesh of the current model to `order'.'''
 mesh.add('setOrder', doc, None, iint('order'))
 
 doc = '''Get the last entities `dimTags' (as a vector of (dim, tag) pairs) where a meshing error occurred. Currently only populated by the new 3D meshing algorithms.'''

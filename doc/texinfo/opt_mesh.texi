@@ -686,6 +686,11 @@ Type of quality measure (0: SICN~signed inverse condition number, 1: SIGE~signed
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.QuasiTransfinite
+Allow quasi-transfinite meshing of surfaces with non-matching number of nodes on opposite sides@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.RadiusInf
 Only display elements whose longest edge is greater than RadiusInf@*
 Default value: @code{0}@*

@@ -38,7 +38,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item General.BuildInfo
 Gmsh build information (read-only)@*
-Default value: @code{"Version: 4.13.0-git-20eae654a; License: GNU General Public License; Build OS: MacOSARM-sdk; Build date: 20240404; Build host: MacBook-Pro-M2; Build options: 64Bit ALGLIB[contrib] ANN[contrib] Bamg Blossom Cairo Cgns DIntegration Dlopen DomHex Eigen[contrib] Fltk GMP Gmm[contrib] Hxt Jpeg Kbipack MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen Nii2mesh ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] TouchBar Untangle Voro++[contrib] WinslowUntangler Zlib; FLTK version: 1.4.0; OCC version: 7.8.1; MED version: 4.1.1; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
+Default value: @code{"Version: 4.13.0-git-1a83a1abf; License: GNU General Public License; Build OS: MacOSARM-sdk; Build date: 20240505; Build host: MacBook-Pro-M2.local; Build options: 64Bit ALGLIB[contrib] ANN[contrib] Bamg Blossom Cairo Cgns DIntegration Dlopen DomHex Eigen[contrib] Fltk GMP Gmm[contrib] Hxt Jpeg Kbipack MathEx[contrib] Med Mesh Metis[contrib] Mmg Mpeg Netgen Nii2mesh ONELAB ONELABMetamodel OpenCASCADE OpenCASCADE-CAF OpenGL OpenMP[Homebrew] OptHom Parser Plugins Png Post QuadMeshingTools QuadTri Solver TetGen/BR TinyXML2[contrib] TouchBar Untangle Voro++[contrib] WinslowUntangler Zlib; FLTK version: 1.4.0; OCC version: 7.8.1; MED version: 4.1.1; Packaged by: geuzaine; Web site: https://gmsh.info; Issue tracker: https://gitlab.onelab.info/gmsh/gmsh/issues"}@*
 Saved in: @code{-}
 
 @item General.BuildOptions
@@ -173,7 +173,7 @@ Saved in: @code{General.SessionFileName}
 
 @item General.Version
 Gmsh version (read-only)@*
-Default value: @code{"4.13.0-git-20eae654a"}@*
+Default value: @code{"4.13.0-git-1a83a1abf"}@*
 Saved in: @code{-}
 
 @item General.WatchFilePattern

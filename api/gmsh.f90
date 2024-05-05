@@ -3235,7 +3235,8 @@ module gmsh
     call C_API(ierr_=ierr)
   end subroutine gmshModelMeshRefine
 
-  !> Set the order of the elements in the mesh of the current model to `order'.
+  !> Change the order of the elements in the mesh of the current model to
+  !! `order'.
   subroutine gmshModelMeshSetOrder(order, &
                                    ierr)
     interface

@@ -711,7 +711,8 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::setOrder
       //
-      // Set the order of the elements in the mesh of the current model to `order'.
+      // Change the order of the elements in the mesh of the current model to
+      // `order'.
       GMSH_API void setOrder(const int order);
 
       // gmsh::model::mesh::getLastEntityError

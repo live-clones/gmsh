@@ -2160,7 +2160,8 @@ class model:
             """
             gmsh.model.mesh.setOrder(order)
 
-            Set the order of the elements in the mesh of the current model to `order'.
+            Change the order of the elements in the mesh of the current model to
+            `order'.
 
             Types:
             - `order': integer

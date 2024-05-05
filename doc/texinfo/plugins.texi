@@ -746,7 +746,7 @@ If `TimeStep' < 0, the plugin extracts data from all the time steps in the view.
 @*
 If `View' < 0, the plugin is run on the current view.@*
 @*
-Plugin(MathEval) creates one new view.If `PhysicalRegion' < 0, the plugin is run on all physical regions.If `Dimension' > 0, only search for elements of the given dimension.@*
+Plugin(MathEval) creates one new view.If `PhysicalGroup' < 0, the plugin is run on all physical regions.If `Dimension' > 0, only search for elements of the given dimension.@*
 @*
 Plugin(MathEval) creates one new list-based view.
 String options:
@@ -782,7 +782,7 @@ Default value: @code{-1}
 Default value: @code{-1}
 @item ForceInterpolation
 Default value: @code{0}
-@item PhysicalRegion
+@item PhysicalGroup
 Default value: @code{-1}
 @item Dimension
 Default value: @code{-1}
