@@ -91,13 +91,11 @@ Macro CheeseHole
 
   // We need non-plane surfaces to define the spherical holes. Here we use
   // `Surface', which can be used for surfaces with 3 or 4 curves on their
-  // boundary. With the he built-in kernel, if the curves are circle arcs, ruled
-  // surfaces are created; otherwise transfinite interpolation is used.
-  //
-  // With the OpenCASCADE kernel, `Surface' uses a much more general generic
-  // surface filling algorithm, creating a BSpline surface passing through an
-  // arbitrary number of boundary curves; and `ThruSections' allows to create
-  // ruled surfaces (see `t19.geo').
+  // boundary. With the built-in kernel, if all the curves are circle arcs with
+  // the same center, a spherical patch is created; otherwise transfinite
+  // interpolation is used. With the OpenCASCADE kernel, `Surface' can be used
+  // with an arbitrary number of boundary curves, and will fit a BSpline patch
+  // through them.
 
   l1 = newcl; Curve Loop(l1) = {c5,c10,c4};
   l2 = newcl; Curve Loop(l2) = {c9,-c5,c1};

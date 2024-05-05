@@ -48,15 +48,11 @@ void cheeseHole(double x, double y, double z, double r, double lc,
 
   // We need non-plane surfaces to define the spherical holes. Here we use the
   // `gmsh::model::geo::addSurfaceFilling()' function, which can be used for
-  // surfaces with 3 or 4 curves on their boundary. With the he built-in kernel,
-  // if the curves are circle arcs, ruled surfaces are created; otherwise
-  // transfinite interpolation is used.
-  //
-  // With the OpenCASCADE kernel, `gmsh::model::occ::addSurfaceFilling()' uses a
-  // much more general generic surface filling algorithm, creating a BSpline
-  // surface passing through an arbitrary number of boundary curves. The
-  // `gmsh::model::geo::addThruSections()' allows to create ruled surfaces (see
-  // `t19.cpp').
+  // surfaces with 3 or 4 curves on their boundary. If the curves are circle
+  // arcs with the same center, a spherical patch is created; otherwise
+  // transfinite interpolation is used. With the OpenCASCADE kernel,
+  // `gmsh::model::occ::addSurfaceFilling()' can be used with an arbitrary
+  // number of boundary curves, and will fit a BSpline patch through them.
 
   int s1 = gmsh::model::geo::addSurfaceFilling({l1});
   int s2 = gmsh::model::geo::addSurfaceFilling({l2});
