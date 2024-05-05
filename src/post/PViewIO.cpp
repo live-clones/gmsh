@@ -84,6 +84,9 @@ bool PView::readPOS(const std::string &fileName, int fileIndex)
 bool PView::readMSH(const std::string &fileName, int fileIndex,
                     int partitionToRead)
 {
+  // TODO: this should be replaced by functions reading each section, called
+  // directly from the GModel::readMSH()
+
   FILE *fp = Fopen(fileName.c_str(), "rb");
   if(!fp) {
     Msg::Error("Unable to open file '%s'", fileName.c_str());
@@ -107,6 +110,9 @@ bool PView::readMSH(const std::string &fileName, int fileIndex,
     }
 
     if(feof(fp)) break;
+
+    std::string sectionName(&str[1]);
+    std::string endSectionName = "End" + sectionName;
 
     if(!strncmp(&str[1], "MeshFormat", 10)) {
       double version;
@@ -132,6 +138,16 @@ bool PView::readMSH(const std::string &fileName, int fileIndex,
           Msg::Debug("Swapping bytes from binary file");
         }
       }
+    }
+    else if(!strncmp(&str[1], "PhysicalNames", 13) ||
+            !strncmp(&str[1], "Entities", 8) ||
+            !strncmp(&str[1], "PartitionedEntities", 19) ||
+            !strncmp(&str[1], "Nodes", 5) ||
+            !strncmp(&str[1], "Elements", 8) ||
+            !strncmp(&str[1], "Periodic", 8) ||
+            !strncmp(&str[1], "GhostElements", 13) ||
+            !strncmp(&str[1], "Parametrizations", 16)) {
+      // skip
     }
     else if(!strncmp(&str[1], "InterpolationScheme", 19)) {
       std::string name;
@@ -311,10 +327,29 @@ bool PView::readMSH(const std::string &fileName, int fileIndex,
         }
       }
     }
+    else if(strlen(&str[1]) > 0){
+      if(!CTX::instance()->mesh.ignoreUnknownSections) {
+        sectionName.pop_back();
+        Msg::Info("Storing section $%s as model attribute", sectionName.c_str());
+        std::vector<std::string> section;
+        while(1) {
+          if(!fgets(str, sizeof(str), fp) || feof(fp) ||
+             !strncmp(&str[1], endSectionName.c_str(), endSectionName.size())) {
+            break;
+          }
+          std::string s(str);
+          if(s.back() == '\n') s.pop_back();
+          if(s.back() == '\r') s.pop_back();
+          section.push_back(s);
+        }
+        model->getAttributes()[sectionName] = section;
+      }
+    }
 
-    do {
-      if(!fgets(str, sizeof(str), fp) || feof(fp)) break;
-    } while(str[0] != '$');
+    while(strncmp(&str[1], endSectionName.c_str(), endSectionName.size())) {
+      if(!fgets(str, sizeof(str), fp) || feof(fp)) { break; }
+    }
+    str[0] = 'a';
   }
 
   fclose(fp);

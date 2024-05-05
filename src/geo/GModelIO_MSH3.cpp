@@ -526,8 +526,13 @@ int GModel::_readMSH3(const std::string &name)
     // Post-processing sections
     else if(!strncmp(&str[1], "NodeData", 8) ||
             !strncmp(&str[1], "ElementData", 11) ||
-            !strncmp(&str[1], "ElementNodeData", 15)) {
+            !strncmp(&str[1], "ElementNodeData", 15) ||
+            !strncmp(&str[1], "InterpolationScheme", 19)) {
+      // there's some element post-processing data to read later on
       postpro = true;
+      // TODO: the break prevents other sections to be read and makes the
+      // post-pro reader slower - we should do the reading here instead of using
+      // PView::readMSH()
       break;
     }
 
