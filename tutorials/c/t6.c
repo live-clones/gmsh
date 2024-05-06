@@ -87,26 +87,22 @@ int main(int argc, char **argv)
   // can be omitted in the `setTransfiniteSurface()' call:
   gmshModelGeoAddPoint(0.2, 0.2, 0, 1.0, 7, &ierr);
   gmshModelGeoAddPoint(0.2, 0.1, 0, 1.0, 8, &ierr);
-  gmshModelGeoAddPoint(0, 0.3, 0, 1.0, 9, &ierr);
-  gmshModelGeoAddPoint(0.25, 0.2, 0, 1.0, 10, &ierr);
-  gmshModelGeoAddPoint(0.3, 0.1, 0, 1.0, 11, &ierr);
-
-  gmshModelGeoAddLine(8, 11, 10, &ierr);
-  gmshModelGeoAddLine(11, 10, 11, &ierr);
-  gmshModelGeoAddLine(10, 7, 12, &ierr);
+  gmshModelGeoAddPoint(0.25, 0.2, 0, 1.0, 9, &ierr);
+  gmshModelGeoAddPoint(0.3, 0.1, 0, 1.0, 10, &ierr);
+  gmshModelGeoAddLine(8, 10, 10, &ierr);
+  gmshModelGeoAddLine(10, 9, 11, &ierr);
+  gmshModelGeoAddLine(9, 7, 12, &ierr);
   gmshModelGeoAddLine(7, 8, 13, &ierr);
-
-  const int cl3[] = {13, 10, 11, 12};
+  const int cl3[] = {10, 11, 12, 13};
   gmshModelGeoAddCurveLoop(cl3, sizeof(cl3) / sizeof(cl3[0]), 14, 0, &ierr);
-
   const int s3[] = {14};
   gmshModelGeoAddPlaneSurface(s3, sizeof(s3) / sizeof(s3[0]), 15, &ierr);
-
   for(int i = 10; i <= 13; i++)
     gmshModelGeoMeshSetTransfiniteCurve(i, 10, "Progression", 1.0, &ierr);
+  gmshModelGeoMeshSetTransfiniteSurface(15, "Left", NULL, 0, &ierr);
 
   // The way triangles are generated can be controlled by specifying "Left",
-  // "Right" or "Alternate" in `setTransfiniteSurface()' command.
+  // "Right" or "Alternate" in `gmshModelGeoMeshSetTransfiniteSurface()'.
 
   // Finally we apply an elliptic smoother to the grid to have a more regular
   // mesh:
