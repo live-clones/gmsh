@@ -1,3 +1,5 @@
+4.13.1 (Work-in-progress): small bug fix.
+
 4.13.0 (May 7, 2024): added support for importing and exporting XAO files; new
 options for OCC boolean operations (OCCBooleanCheckInverted, OCCBooleanGlue,
 OCCBooleanNonDestructive, OCCBooleanSimplify); new OCC operations (2D fillets
