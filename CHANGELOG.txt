@@ -1,7 +1,8 @@
-4.13 (Work-in-progress): added support for importing and exporting XAO files;
-new quasi-transfinite 2d meshes (with fans); new options for OCC boolean
-operations (OCCBooleanCheckInverted, OCCBooleanGlue, OCCBooleanNonDestructive,
-OCCBooleanSimplify); revert Crack plugin logic to version 4.10.1; bug fixes.
+4.13.0 (May 7, 2024): added support for importing and exporting XAO files; new
+options for OCC boolean operations (OCCBooleanCheckInverted, OCCBooleanGlue,
+OCCBooleanNonDestructive, OCCBooleanSimplify); new OCC operations (2D fillets
+and chamfers, distance, defeature); new quasi-transfinite 2d meshes (with fans);
+small API additions; revert Crack plugin logic to version 4.10.1; bug fixes.
 
 * New API functions: occ/getDistance, occ/fillet2D, occ/chamfer2D,
   occ/offsetCurve, occ/defeature, mesh/removeElements, option/restoreDefaults,
