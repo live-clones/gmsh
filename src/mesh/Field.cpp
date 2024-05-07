@@ -1999,7 +1999,7 @@ public:
                                     ge->tag()) != _surfaceTags.end()) ||
        (ge->dim() == 3 && std::find(_volumeTags.begin(), _volumeTags.end(),
                                     ge->tag()) != _volumeTags.end()))
-      return (*f)(x, y, z);
+      return (*f)(x, y, z, ge);
     if(_boundary) {
       if(ge->dim() <= 2) {
         std::list<GRegion *> volumes = ge->regions();
