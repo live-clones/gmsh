@@ -663,7 +663,7 @@ public:
       new FieldOptionDouble(_lcMax, "Mesh size when value > DistMax");
     options["Sigmoid"] = new FieldOptionBool(
       _sigmoid,
-      "True to interpolate between SizeMin and LcMax using a sigmoid, "
+      "True to interpolate between SizeMin and SizeMax using a sigmoid, "
       "false to interpolate linearly");
     options["StopAtDistMax"] = new FieldOptionBool(
       _stopAtDistMax, "True to not impose mesh size outside DistMax (i.e., "
