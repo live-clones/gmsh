@@ -39,7 +39,7 @@ call gmsh%logger%start()
 ret = gmsh%model%occ%addBox(0.0d0, 0.0d0, 0.0d0, 1.0d0, 1.0d0, 1.0d0, 1)
 ret = gmsh%model%occ%addBox(0.0d0, 0.0d0, 0.0d0, 0.5d0, 0.5d0, 0.5d0, 2)
 
-! We apply a boolean difference to create the "cube minus one eigth" shape:
+! We apply a boolean difference to create the "cube minus one eighth" shape:
 call gmsh%model%occ%cut(objectDimTags=reshape([3, 1], [2, 1]), &
                         toolDimTags=reshape([3, 2], [2, 1]), &
                         outDimTags=ov, &
