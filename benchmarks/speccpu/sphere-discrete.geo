@@ -1,39 +1,32 @@
-fact = 0.1;
-Point(1) = {0, 0, 0, fact};
-Point(2) = {0, 1, 0, fact};
-Point(3) = {0, 1, 1, fact};
-Point(4) = {0, 0, 1, fact};
-Line(1) = {1, 2};
-Line(2) = {2, 3};
-Line(3) = {3, 4};
-Line(4) = {4, 1};
-Curve Loop(1) = {1:4};
-s() = {1};
-Plane Surface(s(0)) = {1};
+// merge a surface mesh (any format will work: .msh, .unv, etc.)
 
-// N cubes to have representative number of surfaces
-DefineConstant[ N = {5, Name "Number of cubes"} ];
-For i In {1:N}
-  s() = Extrude{1, 0, 0}{ Surface{s(0)}; };
-EndFor
+Merge "sphere-surf.stl";
 
+// add a geometrical volume
+
+Surface Loop(1) = {1};
+Volume(1) = {1};
+
+// use this to force a coarse mesh inside
+Mesh.MeshSizeExtendFromBoundary = 0;
+Mesh.MeshSizeMax = 0.5;
 
 // ********** Begin SPEC validation **********
-
+Mesh 2;
 Mesh 3;
-n = 4.5 * N / (fact * Mesh.MeshSizeFactor)^3;
+n = 360989;
 file = StrCat(StrPrefix(StrRelative(General.FileName)), ".val");
 Printf("Number of tet elements is %g (estimated %g)", Mesh.NbTetrahedra, n) >> file;
-If ( Fabs(Mesh.NbTetrahedra - n) / Mesh.NbTetrahedra > 0.10 )
+If ( Fabs(Mesh.NbTetrahedra - n) / Mesh.NbTetrahedra > 0.04 )
   Printf("Error: Number of tet elements is %g (estimated %g), outside of range", Mesh.NbTetrahedra, n) >> file;
 Else
   Printf("Successful Verification of requested %g elements", n) >> file;
 EndIf
 
 // validate number of nodes
-nn = n / 5;
+nn = n / 6;
 Printf("Number of nodes is %g (estimated %g)", Mesh.NbNodes, nn) >> file;
-If ( Fabs(Mesh.NbNodes - nn) / Mesh.NbNodes > 0.2 )
+If ( Fabs(Mesh.NbNodes - nn) / Mesh.NbNodes > 0.1 )
   Printf("Error: Number of nodes is %g (estimated %g), outside of range",
          Mesh.NbNodes, nn) >> file;
 Else
