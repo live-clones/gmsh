@@ -3829,7 +3829,7 @@ Add a surface in the OpenCASCADE CAD representation, filling the curve loop @cod
 
 @table @asis
 @item Input:
-@code{wireTag} (integer), @code{tag = -1} (integer), @code{pointTags = []} (vector of integers), @code{degree = 3} (integer), @code{numPointsOnCurves = 15} (integer), @code{numIter = 2} (integer), @code{anisotropic = False} (boolean), @code{tol2d = 0.00001} (double), @code{tol3d = 0.0001} (double), @code{tolAng = 0.01} (double), @code{tolCurv = 0.1} (double), @code{maxDegree = 8} (integer), @code{maxSegments = 9} (integer)
+@code{wireTag} (integer), @code{tag = -1} (integer), @code{pointTags = []} (vector of integers), @code{degree = 2} (integer), @code{numPointsOnCurves = 15} (integer), @code{numIter = 2} (integer), @code{anisotropic = False} (boolean), @code{tol2d = 0.00001} (double), @code{tol3d = 0.0001} (double), @code{tolAng = 0.01} (double), @code{tolCurv = 0.1} (double), @code{maxDegree = 8} (integer), @code{maxSegments = 9} (integer)
 @item Output:
 -
 @item Return:
