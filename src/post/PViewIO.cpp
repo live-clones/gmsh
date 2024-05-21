@@ -116,7 +116,7 @@ bool PView::readMSH(const std::string &fileName, int fileIndex,
 
     if(!strncmp(&str[1], "MeshFormat", 10)) {
       double version;
-      if(!fgets(str, sizeof(str), fp)) {
+      if(!fgets(str, sizeof(str), fp) || feof(fp)) {
         fclose(fp);
         return false;
       }
@@ -327,8 +327,18 @@ bool PView::readMSH(const std::string &fileName, int fileIndex,
         }
       }
     }
-    else if(strlen(&str[1]) > 0){
-      if(!CTX::instance()->mesh.ignoreUnknownSections) {
+    else if(strncmp(&str[1], "End", 3) && strlen(&str[1]) > 0){
+      // str could contain garbage as we might skip binary data - one more
+      // reason to replace PView::readMSH by functions reading each section,
+      // called directly from the GModel::readMSH()
+      bool skip = false;
+      for(int j = 0; j < strlen(&str[1]); j++) {
+        if(!isascii((&str[1])[j])) {
+          skip = true;
+          break;
+        }
+      }
+      if(!skip && !CTX::instance()->mesh.ignoreUnknownSections) {
         sectionName.pop_back();
         Msg::Info("Storing section $%s as model attribute", sectionName.c_str());
         std::vector<std::string> section;
@@ -346,10 +356,9 @@ bool PView::readMSH(const std::string &fileName, int fileIndex,
       }
     }
 
-    while(strncmp(&str[1], endSectionName.c_str(), endSectionName.size())) {
-      if(!fgets(str, sizeof(str), fp) || feof(fp)) { break; }
-    }
-    str[0] = 'a';
+    do {
+      if(!fgets(str, sizeof(str), fp) || feof(fp)) break;
+    } while(str[0] != '$');
   }
 
   fclose(fp);
