@@ -332,7 +332,7 @@ bool PView::readMSH(const std::string &fileName, int fileIndex,
       // reason to replace PView::readMSH by functions reading each section,
       // called directly from the GModel::readMSH()
       bool skip = false;
-      for(int j = 0; j < strlen(&str[1]); j++) {
+      for(auto j = 0; j < strlen(&str[1]); j++) {
         if(!isascii((&str[1])[j])) {
           skip = true;
           break;
