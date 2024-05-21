@@ -5718,20 +5718,26 @@ GMSH_API void gmsh::model::mesh::advance_DF_in_time(const double dt, const std::
     api_v.push_back(SVector3(&v[i]));
   }
   meshRelaying::instance()->advanceInTime(dt, api_v, front);
+  FILE *fp = fopen("after_interfaces.pos", "w");
+  discreteFront::instance()->printInterfaces(fp);
+  fclose(fp);
   return;
 }
 
-GMSH_API void gmsh::model::mesh::add_free_form(const int tag, const std::vector<double> &poly, const std::vector<size_t> &_corners){
+GMSH_API void gmsh::model::mesh::add_free_form(const int tag, const std::vector<double> &poly, const std::vector<size_t> &_corners, const int sense){
   std::vector<SVector3> api_poly;
   for(size_t i=0; i<poly.size(); i+=3){
     api_poly.push_back(SVector3(poly[i], poly[i+1], poly[i+2]));
   }
-  discreteFront::instance()->addFreeForm(tag, api_poly, _corners);
+  discreteFront::instance()->addFreeForm(tag, api_poly, _corners, sense);
+  // discreteFront::instance()->printInterfaces("after_free_form.pos");
   return;
 } 
 
 GMSH_API void gmsh::model::mesh::get_DF_position(std::vector<double> &api_position, std::vector<int> &api_tags){
+  discreteFront::instance()->renumberInterfaces();
   discreteFront::instance()->getDFPosition(api_position, api_tags);
+  meshRelaying::instance()->print4debug("after_renumber.pos");
   return;
 }
 
@@ -5752,9 +5758,13 @@ GMSH_API void gmsh::model::mesh::reset_discrete_front(){
 
 GMSH_API void gmsh::model::mesh::relaying_and_relax(){
   meshRelaying::instance()->doRelaying(0);      // time not used for df -> 0
-  meshRelaying::instance()->untangle();         // untangle
-  meshRelaying::instance()->adjustBnd();
+  printf("Relaying done\n");
+  // meshRelaying::instance()->untangle();         // untangle
+  // meshRelaying::instance()->adjustBnd();
+  printf("after adjust bnd\n");
   meshRelaying::instance()->print4debug("out_gmsh.pos");
+  // discreteFront::instance()->printInterfaces("interfaces.pos");
+  discreteFront::instance()->createTree();
 }
 
 GMSH_API void gmsh::model::mesh::redist_front(const double lc){

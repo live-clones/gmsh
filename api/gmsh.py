@@ -5192,9 +5192,9 @@ class model:
         advance__df_in_time = advance_DF_in_time
 
         @staticmethod
-        def add_free_form(tag, poly, _corners):
+        def add_free_form(tag, poly, _corners, sense=1):
             """
-            gmsh.model.mesh.add_free_form(tag, poly, _corners)
+            gmsh.model.mesh.add_free_form(tag, poly, _corners, sense=1)
 
             Antoine put a comment here.
 
@@ -5202,6 +5202,7 @@ class model:
             - `tag': integer
             - `poly': vector of doubles
             - `_corners': vector of sizes
+            - `sense': integer
             """
             api_poly_, api_poly_n_ = _ivectordouble(poly)
             api__corners_, api__corners_n_ = _ivectorsize(_corners)
@@ -5210,6 +5211,7 @@ class model:
                 c_int(tag),
                 api_poly_, api_poly_n_,
                 api__corners_, api__corners_n_,
+                c_int(sense),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())

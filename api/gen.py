@@ -592,7 +592,7 @@ doc = '''Antoine put a comment here.'''
 mesh.add('advance_DF_in_time', doc, None, idouble('dt'), ivectordouble('velocity'), ibool('front', 'false', 'False'))
 
 doc = '''Antoine put a comment here.'''
-mesh.add('add_free_form', doc, None, iint('tag'), ivectordouble('poly'), ivectorsize('_corners'))
+mesh.add('add_free_form', doc, None, iint('tag'), ivectordouble('poly'), ivectorsize('_corners'), iint('sense', '1'))
 
 doc = '''Antoine put a comment here.'''
 mesh.add('get_DF_position', doc, None, ovectordouble('api_position'),ovectorint('api_tags') )

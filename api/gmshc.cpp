@@ -2474,13 +2474,13 @@ GMSH_API void gmshModelMeshAdvance_DF_in_time(const double dt, const double * ve
   }
 }
 
-GMSH_API void gmshModelMeshAdd_free_form(const int tag, const double * poly, const size_t poly_n, const size_t * _corners, const size_t _corners_n, int * ierr)
+GMSH_API void gmshModelMeshAdd_free_form(const int tag, const double * poly, const size_t poly_n, const size_t * _corners, const size_t _corners_n, const int sense, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_poly_(poly, poly + poly_n);
     std::vector<std::size_t> api__corners_(_corners, _corners + _corners_n);
-    gmsh::model::mesh::add_free_form(tag, api_poly_, api__corners_);
+    gmsh::model::mesh::add_free_form(tag, api_poly_, api__corners_, sense);
   }
   catch(...){
     if(ierr) *ierr = 1;

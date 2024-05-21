@@ -17,8 +17,10 @@ public:
   size_t a,b;
   SVector3 p;
   double d;  
-  int index;
-  edgeCut (size_t _a, size_t _b, SVector3 _p, double _d, int _i) : a(_a) , b(_b), p(_p), d(_d), index(_i) {     
+  size_t interface;
+  size_t m1;
+  size_t m2;
+  edgeCut (size_t _a, size_t _b, SVector3 _p, double _d, size_t _interface, size_t _m1, size_t _m2) : a(_a) , b(_b), p(_p), d(_d), interface(_interface), m1(_m1), m2(_m2){     
   }
   bool operator < (const edgeCut &o) const{
     if (d < o.d)return true;
@@ -29,15 +31,69 @@ public:
 class frontNode {
  public :
   size_t meshNode;
-  size_t line;
+  size_t interface;
+  size_t m1;
+  size_t m2;
   double t;
-  frontNode (size_t n, size_t l, double _t) : meshNode (n), line(l), t(_t){
+  frontNode (size_t n, size_t _interface, size_t _m1, size_t _m2, double _t) : meshNode (n), interface(_interface), m1(_m1), m2(_m2), t(_t){
   }
   bool operator < (const frontNode &other) const{
-    if (line != other.line)return line<other.line;
+    if (m1 != other.m1)return m1<other.m1;
     return t < other.t;
   }
 };
+
+class triple_p {
+  public:
+    size_t marker;
+    size_t id_interface;
+    size_t id_marker;
+    int tag;
+    double pos[3];
+    size_t id_on_interface;
+    size_t id_on_marker;
+    int sense;
+
+    triple_p(size_t _marker, size_t _id_interface, size_t _id_marker, int _tag, double *_pos){
+      marker = _marker;
+      id_interface = _id_interface;
+      id_marker = _id_marker;
+      tag = _tag;
+      pos[0] = _pos[0];
+      pos[1] = _pos[1];
+      pos[2] = _pos[2];
+    }
+
+    triple_p(){
+
+    }
+};
+
+class interface {
+  public:
+    size_t id;
+    int tag;
+    std::vector<size_t> markers;
+    std::vector<size_t> triple;
+    int sense;
+
+    interface(size_t _id, int _tag, std::vector<size_t> _markers){
+      id = _id;
+      tag = _tag;
+      markers = _markers;
+      triple = {};
+      sense = 1;
+    }
+};
+
+struct T_node {
+    size_t id;
+    std::vector<T_node *>leafs;
+    int tag;
+    int data=0;
+};
+
+T_node *newT_node(size_t id, int tag);
 
 class discreteFront {
   //  int64_t octree;
@@ -47,12 +103,22 @@ class discreteFront {
   std::vector<double> pos;
   double t;
   std::vector<frontNode> fn;
+
+  //new way with interface and triple points
+  std::vector<interface> interfaces;
+  std::vector<std::vector<std::pair<size_t,std::pair<int,int>>>> sss_inter;
+  std::vector<int> priority {-1, 0, 1, 2, 3}; 
+  std::vector<triple_p> triple_points;
+  T_node *Tree;
+  size_t nT_node;
   
   // Let us thus use a search structure based on edges  
   std::vector<std::vector<size_t> > sss;
   size_t NX, NY;
   SBoundingBox3d bbox;
   void getCoordinates(double x, double y, int &IX, int &IY);
+
+
   
   discreteFront (){}
   static discreteFront *_instance;
@@ -69,11 +135,11 @@ class discreteFront {
   //  SVector3 closestPoints2d (const SVector3 &P);
   bool empty() const {return pos.empty();}
   //  void move (double dt);
-  void moveFromV (double dt, const std::vector<SVector3> &V, bool bnd);
+  void moveFromV (double dt, const std::vector<SVector3> &v, bool bnd);
   void moveFromFront(double dt, const std::vector<SVector3> &v);
   //  virtual SVector3 velocity (double x, double y, double z, double t, int col);
   void printGeometry(FILE *f);
-  int whatIsTheColorOf2d (const SVector3 &P);
+  int whatIsTheColorOf2d (const SVector3 &P, std::vector<std::vector<size_t>> loops, std::vector<int> loops_tags);
   double massMarkers (int color);
   int getColor(int i){return colors[i/2];}
   void buildSpatialSearchStructure ();
@@ -84,13 +150,20 @@ class discreteFront {
   void clearFrontNodes(){
     fn.clear();
   }
-  void addFrontNode(size_t n, size_t l, SVector3 t){
-    if (empty())return;
-    SVector3 p0 (pos[3*lines[l]],pos[3*lines[l]+1],pos[3*lines[l]+2]);
-    SVector3 p1 (pos[3*lines[l+1]],pos[3*lines[l+1]+1],pos[3*lines[l+1]+2]);
+  void addFrontNode(size_t n, size_t inter, size_t m1, size_t m2, SVector3 t){
+    if(m1==m2){
+      fn.push_back(frontNode (n,inter,m1,m2,1.0));
+      return;
+    }
+    SVector3 p0 (pos[3*m1],pos[3*m1+1],pos[3*m1+2]);
+    SVector3 p1 (pos[3*m2],pos[3*m2+1],pos[3*m2+2]);
     double d = (p1-p0).norm();
+    if(d<1e-10){
+      fn.push_back(frontNode (n,inter,m1,m2,1.0));
+      return;
+    }
     double a = (t-p0).norm() / d;
-    fn.push_back(frontNode (n,l,a));
+    fn.push_back(frontNode (n,inter,m1,m2,a));
   }
   std::vector<std::pair<size_t,size_t> > getFrontEdges();  
   void printMesh (FILE *f);
@@ -98,11 +171,35 @@ class discreteFront {
   // --> should be simplified to
   void addGmshModel (const char *fn);
   // basic shapes
-  void addFreeForm (int tag, const std::vector<SVector3> &poly, const std::vector<size_t> &_corners);
+  void addFreeForm (int tag, const std::vector<SVector3> &poly, const std::vector<size_t> &_corners, const int sense);
   void getDFPosition(std::vector<double> &position, std::vector<int> &tags);
   void clear();
   void redistFront(double lc);
+  void redistFrontNew(double lc);
   void adjustBnd(const std::vector<std::pair<size_t,size_t>> &bnd1d);
+  void printInterfaces(FILE *f);
+  void buildSpatialSearchStructureInterface();
+  void intersectInterfaces(std::vector<std::pair<size_t, size_t>> *interactions);
+  void bool_op_priority();
+  void mergeLoop(std::vector<size_t> loop1, std::vector<size_t> loop2, std::vector<size_t> inter, std::vector<size_t> *merged);
+  int insideList(std::vector<size_t> loop, double P[2]);
+  void loop1Minusloop2(std::vector<size_t> loop1, std::vector<size_t> loop2, std::vector<size_t> inter, std::vector<size_t> *minus);
+  void loop1Minusloop2_inside(std::vector<size_t> loop1, std::vector<size_t> loop2, std::vector<size_t> inter, std::vector<size_t> *minus);
+  void autoIntersect(std::vector<size_t> loop, std::vector<size_t> inter, std::vector<size_t> *outside, std::vector<size_t> *inside);
+  void autoIntersectNew(std::vector<size_t> loop, std::vector<size_t> inter, std::vector<std::vector<size_t>> *new_loops, std::vector<int> *new_loops_tags);
+  void loops2Interfaces(std::vector<std::vector<size_t>> loops, std::vector<int> loops_tags, std::vector<int> loops_sense, std::vector<interface> *new_interfaces);
+  void interfaces2Loops(std::vector<std::vector<size_t>> *new_loops, std::vector<int> *new_loops_tags, std::vector<int> *new_loops_sense);
+  void createTree();
+  void renumberLoops(std::vector<std::vector<size_t>> loops, std::vector<std::vector<size_t>> *new_loops, std::vector<double> *new_pos);
+  void interactionsOrder(std::vector<std::pair<size_t,size_t>> interactions, std::vector<std::pair<size_t,size_t>> *ordered);
+  void manageIntersection(std::vector<std::pair<size_t,size_t>> ordered, std::vector<std::vector<size_t>> loops, std::vector<int> loops_tags, std::vector<int> loops_sense, std::vector<size_t> inter_markers, std::vector<std::vector<size_t>> *new_loops, std::vector<int> *new_loops_tags, std::vector<int> *new_loops_sense);
+  size_t findMarker(size_t marker);
+  void tripleInTriangle2d (const SVector3 &p0, const SVector3 &p1, const SVector3 &p2, std::vector<size_t> &interface_id, std::vector<size_t> &m1, std::vector<size_t> &m2, std::vector<SVector3> &p_out);
+  void choose2Inter(std::vector<size_t> loop1, std::vector<size_t> loop2, std::vector<size_t> *inter, bool start_outside);
+  //-----------------------------------------------------------------------------------
+  // --> boolean operator 
+  void boolOp ();
+  // create a loop
   void addLines (std::vector<double> &p, std::vector<size_t> &l, std::vector<int> &c, const std::vector<size_t> &_corners){
     size_t n = colors.size();
     pos.insert (pos.end(), p.begin(), p.end());
@@ -111,6 +208,27 @@ class discreteFront {
     for (size_t i=0;i<_corners.size(); i++) corners.push_back(_corners[i]+n);
   }
   //  void forceMassConservation ( double mass , int color );  
+
+  void addInterface (std::vector<double> &p, int tag, int sense){
+    size_t n_interface = interfaces.size();
+    size_t n_marker = pos.size()/3;
+    size_t n = p.size()/3;
+    pos.insert (pos.end(), p.begin(), p.end()); 
+    std::vector<size_t> m(n);
+    std::iota(std::begin(m), std::end(m), n_marker);
+    interface i = interface(n_interface, tag, m);
+    i.sense = sense;
+    interfaces.push_back(i);
+  }
+
+  void setInterfaces(std::vector<interface> _interfaces){
+    interfaces = _interfaces;
+  }
+
+  void renumberInterfaces();
+  size_t max_marker();
+  
+  
 };
 
 
@@ -145,7 +263,7 @@ class meshRelaying {
       return _instance;
     }
 
-  void doRelaying (const std::function<std::vector<std::pair<double, int> >(size_t, size_t)> &f); 
+  void doRelaying (const std::function<std::vector<std::pair<double, std::pair<size_t, size_t>> >(size_t, size_t)> &f); 
 
   void setLevelsets (const std::vector<std::vector<double> > &_ls){
     levelsets = _ls;
@@ -160,16 +278,82 @@ class meshRelaying {
   }
 
   void advanceInTime(double dt, std::vector<SVector3> &v, bool front = false){
-    if(front)
-      discreteFront::instance()->moveFromFront(dt, v);
-    else 
-      discreteFront::instance()->moveFromV(dt, v, true);
+    discreteFront::instance()->createTree();
+    discreteFront::instance()->moveFromV(dt, v, true);
+    printf("after v \n");
+    printf("before build \n");
+    print4debug("before_build.pos");
+    discreteFront::instance()->buildSpatialSearchStructureInterface();
+    printf("after build \n");
+    size_t old_max = discreteFront::instance()->max_marker();
+    std::vector<std::pair<size_t, size_t>> interactions;
+    discreteFront::instance()->intersectInterfaces(&interactions);
+    size_t new_max = discreteFront::instance()->max_marker();
+    std::vector<size_t> inter_markers;
+    for(size_t i=old_max+1; i<new_max+1; ++i){
+      inter_markers.push_back(i);
+    }
+    FILE *f1 = fopen("after_intersect.pos", "w");
+    discreteFront::instance()->printInterfaces(f1);
+    fclose(f1);
+    printf("after intersect \n");
+    std::vector<std::pair<size_t, size_t>> ordered;
+    printf("before order \n");
+    discreteFront::instance()->interactionsOrder(interactions, &ordered);
+    for(size_t i=0; i<ordered.size(); ++i){
+      printf("ordered %d, %d \n", ordered[i].first, ordered[i].second);
+    }
+    std::vector<std::vector<size_t>> loops;
+    std::vector<int> loops_tags;
+    std::vector<int> loops_sense;
+    discreteFront::instance()->interfaces2Loops(&loops, &loops_tags, &loops_sense);
+    printf("\n interface2loops \n");
+    for(size_t i=0; i<loops.size(); ++i){
+      printf("loop %d, %d \n", loops_tags[i], loops_sense[i]);
+      for(size_t j=0; j<loops[i].size(); ++j){
+        printf(" %d,", loops[i][j]);
+      }
+      printf("\n");
+    }
+    
+    printf("after loops \n");
+    FILE *f = fopen("interfaces_before.pos", "w");
+    discreteFront::instance()->printInterfaces(f);
+    fclose(f);
+    std::vector<std::vector<size_t>> new_loops;
+    std::vector<int> new_loops_tags;
+    std::vector<int> new_loops_sense;
+    
+    discreteFront::instance()->manageIntersection(ordered, loops, loops_tags, loops_sense, inter_markers, &new_loops, &new_loops_tags, &new_loops_sense);
+    printf("after manage \n");
+    std::vector<interface> new_interfaces;
+    discreteFront::instance()->loops2Interfaces(new_loops, new_loops_tags, new_loops_sense, &new_interfaces);
+
+    printf("after loops2Interfaces \n");
+    for(size_t i=0; i<new_interfaces.size(); ++i){
+      printf("interface %d, %d \n", new_interfaces[i].id, new_interfaces[i].tag);
+      for(size_t j=0; j<new_interfaces[i].markers.size(); ++j){
+        printf(" %d,", new_interfaces[i].markers[j]);
+      }
+      printf("\n");
+    }
+    //set new interfaces
+    discreteFront::instance()->setInterfaces(new_interfaces);
+    printf("after set \n");
+
+    // 
+    // if(front)
+    //   discreteFront::instance()->moveFromFront(dt, v);
+    // else 
+    //   discreteFront::instance()->moveFromV(dt, v, true);
   }
+
   void setPos (size_t i, double x, double y, double z){
     pos[3*i] = x;
     pos[3*i+1] = y;
     pos[3*i+2] = z;
   }
+
   void doRelaying (double t);
   void untangle ();
   void print4debug(const char *);
@@ -188,7 +372,7 @@ class meshRelaying {
   }
 
   void redistFront(double lc){
-    discreteFront::instance()->redistFront(lc);
+    discreteFront::instance()->redistFrontNew(lc);
   }
   
   void setBndFront();
@@ -203,5 +387,6 @@ class meshRelaying {
 
 void projectPonLine(double A[2], double B[2], double P[2], double *proj);
 double kappa(double x1[2], double x2[2], double x3[2]);
-
+int computeIntersection(double a1[2], double a2[2], double a3[2], double a4[2], double *inter, double *param);
+double loopOrientation(std::vector<double> pos);
 #endif

@@ -3255,12 +3255,13 @@ namespace gmsh { // Top-level functions
       // Antoine put a comment here.
       inline void add_free_form(const int tag,
                                 const std::vector<double> & poly,
-                                const std::vector<std::size_t> & _corners)
+                                const std::vector<std::size_t> & _corners,
+                                const int sense = 1)
       {
         int ierr = 0;
         double *api_poly_; size_t api_poly_n_; vector2ptr(poly, &api_poly_, &api_poly_n_);
         size_t *api__corners_; size_t api__corners_n_; vector2ptr(_corners, &api__corners_, &api__corners_n_);
-        gmshModelMeshAdd_free_form(tag, api_poly_, api_poly_n_, api__corners_, api__corners_n_, &ierr);
+        gmshModelMeshAdd_free_form(tag, api_poly_, api_poly_n_, api__corners_, api__corners_n_, sense, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_poly_);
         gmshFree(api__corners_);
