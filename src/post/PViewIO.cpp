@@ -333,7 +333,7 @@ bool PView::readMSH(const std::string &fileName, int fileIndex,
       // called directly from the GModel::readMSH()
       bool skip = false;
       for(std::size_t j = 0; j < strlen(&str[1]); j++) {
-        if(!isascii((&str[1])[j])) {
+        if(!isalnum((&str[1])[j])) {
           skip = true;
           break;
         }
