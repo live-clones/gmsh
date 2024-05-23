@@ -6695,9 +6695,13 @@ double opt_mesh_nb_trihedra(OPT_ARGS_NUM)
 
 double opt_mesh_cpu_time(OPT_ARGS_NUM)
 {
-  double s[50];
-  GetStatistics(s);
-  return s[14] + s[15] + s[16];
+  return CTX::instance()->mesh.timer[0] + CTX::instance()->mesh.timer[1] +
+    CTX::instance()->mesh.timer[2];
+}
+
+double opt_mesh_min_quality(OPT_ARGS_NUM)
+{
+  return CTX::instance()->mesh.minQuality;
 }
 
 double opt_mesh_partition_num(OPT_ARGS_NUM)

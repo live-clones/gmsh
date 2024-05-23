@@ -416,23 +416,23 @@ METIS algorithm for k-way refinement 'rtype' (1: FM-based cut, 2: Greedy, 3: Two
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.MinimumLineNodes
+@item Mesh.MinLineNodes
 Minimum number of nodes used to mesh (straight) lines@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.MinimumCircleNodes
+@item Mesh.MinCircleNodes
 Minimum number of nodes used to mesh circles and ellipses@*
 Default value: @code{7}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.MinimumCurveNodes
+@item Mesh.MinCurveNodes
 Minimum number of nodes used to mesh curves other than lines, circles and ellipses@*
 Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.MinimumElementsPerTwoPi
-[Deprecated]@*
+@item Mesh.MinQuality
+Minimum mesh quality (inverse conditioning number, ICN) after the generation of the current mesh (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

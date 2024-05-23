@@ -88,6 +88,10 @@ struct contextMeshOptions {
   double nodeSize, lineWidth;
   int dual, voronoi, drawSkinOnly, colorCarousel, labelSampling;
   int smoothNormals, clip;
+  // records cpu times for 1D, 2D and 3D mesh generation
+  double timer[3];
+  // records minimal mesh quality after 2D and 3D mesh generation
+  double minQuality;
 };
 
 struct contextGeometryOptions {
@@ -307,8 +311,6 @@ public:
   // vector display type and options (for normals, etc.)
   int vectorType;
   double arrowRelHeadRadius, arrowRelStemRadius, arrowRelStemLength;
-  // records cpu times for 1-D, 2-D and 3-D mesh generation
-  double meshTimer[3];
   // dynamic variable tracking if the bbox is currently imposed
   int forcedBBox;
   // enable selection/hover/picking using the mouse
