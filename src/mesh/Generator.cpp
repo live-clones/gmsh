@@ -311,9 +311,9 @@ static double GetMinQualityFast(GModel *m, int dim)
   m->getEntities(entities, dim);
   for(auto ge : entities) {
     if(ge->dim() < 2) continue;
-    auto ne = ge->getNumMeshElements();
+    std::size_t ne = ge->getNumMeshElements();
 #pragma omp parallel for num_threads(nthreads) reduction(min:qmin)
-    for(auto i = 0; i < ne; i++) {
+    for(std::size_t i = 0; i < ne; i++) {
       MElement *e = ge->getMeshElement(i);
       double q = e->minSICNShapeMeasure();
       qmin = std::min(qmin, q);
