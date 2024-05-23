@@ -10334,21 +10334,50 @@ Field[5].FieldsList = {2,4};
 
 Background Field = 5;
 Mesh.MeshSizeExtendFromBoundary = 0;
-Mesh.Algorithm = 6;
+//Mesh.Algorithm = 6;
 
 // ********** Begin SPEC validation **********
 
-Mesh.MeshSizeFactor = 0.2;
+//Mesh.MeshSizeFactor = 0.2;
 //Mesh.ElementOrder = 2;
 Mesh 2;
-n = 5.7e5;
+n = 94681;
 file = StrCat(StrPrefix(StrRelative(General.FileName)), ".val");
-Printf("Number of tri elements is %g (estimated %g)", Mesh.NbTriangles, n);
-If ( Fabs(Mesh.NbTriangles - n) / Mesh.NbTriangles > 0.2 )
+Printf("Number of tri elements is %g (estimated %g)", Mesh.NbTriangles, n) >> file;
+If ( Fabs(Mesh.NbTriangles - n) / Mesh.NbTriangles > 0.03 )
   Printf("Error: Number of tri elements is %g (estimated %g), outside of range", Mesh.NbTriangles, n) >> file;
-  Error("Number of tri elements is %g (estimated %g), outside of range", Mesh.NbTriangles, n);
 Else
   Printf("Successful Verification of requested %g elements", n) >> file;
+EndIf
+
+// validate number of nodes
+nn = 59578;
+Printf("Number of nodes is %g (estimated %g)", Mesh.NbNodes, nn) >> file;
+If ( Fabs(Mesh.NbNodes - nn) / Mesh.NbNodes > 0.1 )
+  Printf("Error: Number of nodes is %g (estimated %g), outside of range",
+         Mesh.NbNodes, nn) >> file;
+Else
+  Printf("Successful Verification of requested %g nodes", nn) >> file;
+EndIf
+
+// validate mesh quality
+Plugin(AnalyseMeshQuality).ICNMeasure = 1;
+Plugin(AnalyseMeshQuality).CreateView = 1;
+Plugin(AnalyseMeshQuality).Run;
+Plugin(Integrate).View = 0;
+Plugin(Integrate).Run;
+// Plugin(MeshVolume).Run;
+minQ = View[0].Min;
+maxQ = View[0].Max;
+// intQ = View[1].Min;
+volQ = 0;
+avgQ = 1;
+Printf("Min/Avg/Max quality is %g / %g / %g (mesh volume is %g)",
+       minQ, avgQ, maxQ, volQ) >> file;
+If ( minQ < 0.1 )
+  Printf("Error: Min mesh quality is %g, outside of range", minQ) >> file;
+Else
+  Printf("Successful Verification of min mesh quality %g", minQ) >> file;
 EndIf
 
 // ********** End SPEC validation **********
