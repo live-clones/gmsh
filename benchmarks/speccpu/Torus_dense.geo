@@ -17,11 +17,11 @@ Extrude { {0.0,1,0}, {0,0.0,0.0}, 1*3.14159} { Surface{6}; }
 
 // ********** Begin SPEC validation **********
 
-//Mesh.MeshSizeFactor = 0.3;
-//Mesh.Algorithm = 5; // del2d
-//Mesh.Algorithm3D = 10; // hxt
+Mesh.MeshSizeFactor = 0.1;
+Mesh.Algorithm = 5; // del2d
+Mesh.Algorithm3D = 10; // hxt
 Mesh 3;
-n = 5.84666e6;
+n = 9.06218e+07;
 file = StrCat(StrPrefix(StrRelative(General.FileName)), ".val");
 Printf("Number of tet elements is %g (estimated %g)", Mesh.NbTetrahedra, n) >> file;
 If ( Fabs(Mesh.NbTetrahedra - n) / Mesh.NbTetrahedra > 0.03 )
@@ -31,7 +31,7 @@ Else
 EndIf
 
 // validate number of nodes
-nn = 988607;
+nn = 1.47395e+07;
 Printf("Number of nodes is %g (estimated %g)", Mesh.NbNodes, nn) >> file;
 If ( Fabs(Mesh.NbNodes - nn) / Mesh.NbNodes > 0.1 )
   Printf("Error: Number of nodes is %g (estimated %g), outside of range",
