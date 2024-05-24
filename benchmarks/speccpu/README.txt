@@ -35,59 +35,62 @@ with the .geo extension changed to ".val".
 
   # spec.geo:
   # 1D, 2D and 3D unstructured mesh, simple cubes with plane surfaces
-  gmsh spec.geo -option gmsh.opts -smooth 0 -check -clscale .60 -nt 1
+  gmsh spec.geo -option gmsh.opts -smooth 0 -clscale .60 -nt 1 -
 
 * train (short, used for compiler FDO training)
-  
+
   # spec.geo:
   # 1D, 2D and 3D unstructured mesh, simple cubes with plane surfaces
-  gmsh spec.geo -option gmsh.opts -smooth 2 -check -clscale .25 -nt 1
+  gmsh spec.geo -option gmsh.opts -smooth 2 -clscale .25 -nt 1 -
 
 * refrate (single threaded, within 1.8GB memory footprint):
 
   # spec.geo:
   # 1D, 2D and 3D unstructured mesh, simple cubes with plane surfaces
-  gmsh spec.geo -option gmsh.opts -check -clscale 0.175 -algo del2d -algo hxt -nt 1
+  gmsh spec.geo -option gmsh.opts -clscale 0.175 -algo del2d -algo hxt -nt 1 -
 
   # Torus.geo:
   # 1D, 2D and 3D unstructured mesh, single volume, few curved surfaces
-  gmsh Torus.geo -option gmsh.opts -smooth 3 -clscale 0.250 -algo del2d -algo hxt -nt 1
+  gmsh Torus.geo -option gmsh.opts -nt 1 -
 
   # gasdis.geo
   # 1D, 2D and 3D unstructured mesh, single volume, many curved surfaces
-  gmsh gasdis.geo -option gmsh.opts -smooth 2 -clscale 0.900 -algo del2d -algo hxt -nt 1
+  gmsh gasdis.geo -option gmsh.opts -nt 1 -
 
   # p19.geo:
   # 1D, 2D and 3D unstructured mesh, multiple volumes, curved surfaces
-  gmsh p19.geo -option gmsh.opts -check -smooth 1 -clscale 0.115 -algo del2d -algo hxt -nt 1
+  gmsh p19.geo -option gmsh.opts -nt 1 -
 
   # projection.geo:
   # 1D and 2D structured and unstructured mesh, twisted surface
-  gmsh projection.geo -option gmsh.opts -smooth 2 -clscale 0.041 -algo del2d -nt 1
+  gmsh projection.geo -option gmsh.opts -nt 1 -
 
   # mediterranean.geo:
   # 1D and 2D unstructured mesh, multiscale curved surface
-  gmsh mediterranean.geo -option gmsh.opts -clscale 0.500 -algo front2d -nt 1
+  gmsh mediterranean.geo -option gmsh.opts -nt 1 -
 
   # sphere-discrete.geo
   # reads in a file of nodes...
-  gmsh sphere-discrete.geo -option gmsh.opts -check -smooth 3 -clscale 0.070 -algo hxt -nt 1
+  gmsh sphere-discrete.geo -option gmsh.opts -nt 1 -
 
 * refspeed (multi threaded, within 64GB memory footprint)
 
+  # spec.geo:
+  # 1D, 2D and 3D unstructured mesh, simple cubes with plane surfaces
+  gmsh spec.geo -option gmsh.opts -clscale 0.05 -algo del2d -algo hxt -nt 0 -
+
   # Torus_dense.geo:
   # 1D, 2D and 3D unstructured mesh, single volume, few curved surfaces
-  gmsh Torus.geo -option gmsh.opts -smooth 3
+  gmsh Torus_dense.geo -option gmsh.opts -nt 0 -
 
-  # stator1920.geo:
+  # stator1910.geo:
   # 1D, 2D and 3D unstructured mesh, many volumes, high-order
-  gmsh stator1920.geo -option gmsh.opts
+  gmsh stator1910.geo -option gmsh.opts -nt 0 -
 
   # geom8du.geo:
   # 1D, 2D and 3D unstructured mesh, multiscale geometry
-  gmsh geom8du.geo -option gmsh.opts
+  gmsh geom8du.geo -option gmsh.opts -nt 0 -
 
   # TieAnchor520.geo
   # 1D and 2D unstructured mesh, many surfaces
-  gmsh TieAnchor520.geo -option gmsh.opts
-
+  gmsh TieAnchor520.geo -option gmsh.opts -nt 0 -
