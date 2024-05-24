@@ -132,8 +132,10 @@ public:
   // IO read routines (these are global: they can create multiple
   // views)
   static bool readPOS(const std::string &fileName, int fileIndex = -1);
-  static bool readMSH(const std::string &fileName, int fileIndex = -1,
-                      int partitionToRead = -1);
+  static bool readMSHInterpolationScheme(FILE *fp);
+  static bool readMSHViewData(const std::string &fileName, FILE *fp,
+                              bool binary, bool swap, const char *dataType,
+                              int partitionToRead = -1);
   static bool readCGNS(const std::vector<std::vector<MVertex *> > &vertPerZone,
                        const std::vector<std::vector<MElement *> > &eltPerZone,
                        const std::string &fileName);
