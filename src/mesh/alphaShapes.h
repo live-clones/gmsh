@@ -71,7 +71,7 @@ void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::stri
 
 void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, std::vector<PolyMesh::Vertex*> & controlNodes);
 
-void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag);
+void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, const std::string & boundaryModel);
 
 #endif
 

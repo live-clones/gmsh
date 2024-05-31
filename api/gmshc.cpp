@@ -2492,6 +2492,17 @@ GMSH_API void gmshModelMeshComputeAlphaShape(const int dim, const int * alphaSha
   }
 }
 
+GMSH_API void gmshModelMeshComputeAlphaShapeBis(const int dim, const int tag, const int bndTag, const char * boundaryModel, const double alpha, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::computeAlphaShapeBis(dim, tag, bndTag, boundaryModel, alpha);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshDecimateTriangulation(const int faceTag, const double distanceThreshold, int * ierr)
 {
   if(ierr) *ierr = 0;

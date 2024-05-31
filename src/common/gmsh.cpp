@@ -5709,7 +5709,7 @@ gmsh::model::mesh::computeAlphaShapeBis(const int dim, const int tag, const int 
     std::cout << "Refine       : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
 
     // back to gmsh
-    alphaShapePolyMesh2Gmsh(pm, tag, bndTag);
+    alphaShapePolyMesh2Gmsh(pm, tag, bndTag, boundaryModel);
     toc = std::chrono::high_resolution_clock::now();
     std::cout << "To Gmsh      : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
 
