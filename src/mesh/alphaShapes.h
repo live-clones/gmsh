@@ -50,7 +50,7 @@ void alphaShape_entity(const int dim, const int tag, const double alpha, const s
 
 void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double alpha, const double hMean,
                         std::function<double(int, int, double, double, double, double)> sizeFieldCallback, 
-                        const int refine);
+                        const int triangulate, const int refine);
 
 void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double alpha, const double hMean,
                         std::function<double(int, int, double, double, double, double)> sizeFieldCallback, 
@@ -62,6 +62,16 @@ void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags,
                                   const std::vector<int> & internalBoundaryTags, 
                                   const std::vector<int> & externalBoundaryTags, 
                                   std::function<double(int, int, double, double, double, double)> sizeFieldCallback);
+
+PolyMesh* _alphaShapeDelaunay2D(const int tag);
+
+void _alphaShape2D(PolyMesh* pm, const double alpha, const int faceTag, const int bndTag);
+
+void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::string & boundaryModel, std::vector<PolyMesh::Vertex*> & controlNodes);
+
+void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, std::vector<PolyMesh::Vertex*> & controlNodes);
+
+void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag);
 
 #endif
 

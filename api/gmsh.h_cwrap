@@ -3326,6 +3326,20 @@ namespace gmsh { // Top-level functions
         gmshFree(api_alphaShapeTags_);
       }
 
+      // gmsh::model::mesh::computeAlphaShapeBis
+      //
+      // Compute the alpha shape - improved function
+      inline void computeAlphaShapeBis(const int dim,
+                                       const int tag,
+                                       const int bndTag,
+                                       const std::string & boundaryModel,
+                                       const double alpha)
+      {
+        int ierr = 0;
+        gmshModelMeshComputeAlphaShapeBis(dim, tag, bndTag, boundaryModel.c_str(), alpha, &ierr);
+        if(ierr) throwLastError();
+      }
+
       // gmsh::model::mesh::decimateTriangulation
       //
       // Decimate a triangulation

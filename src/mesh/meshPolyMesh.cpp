@@ -593,12 +593,12 @@ int PolyMesh::decimateOneNode(Vertex * v,
     }
     hedges = new_edges;
     std::vector<Face *> new_faces;
-    for(auto f : faces) {
-      if(f->he == nullptr) { delete f; } // delete f;
-      else
-      new_faces.push_back(f);
-    }
-    faces = new_faces;
+    // for(auto f : faces) {
+    //   if(f->he == nullptr) { delete f; } // delete f;
+    //   else
+    //   new_faces.push_back(f);
+    // }
+    // faces = new_faces;
   }
 
   return removed;

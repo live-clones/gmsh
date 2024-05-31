@@ -4662,6 +4662,28 @@ end
 const compute_alpha_shape = computeAlphaShape
 
 """
+    gmsh.model.mesh.computeAlphaShapeBis(dim, tag, bndTag, boundaryModel, alpha)
+
+Compute the alpha shape - improved function
+
+Types:
+ - `dim`: integer
+ - `tag`: integer
+ - `bndTag`: integer
+ - `boundaryModel`: string
+ - `alpha`: double
+"""
+function computeAlphaShapeBis(dim, tag, bndTag, boundaryModel, alpha)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshComputeAlphaShapeBis, gmsh.lib), Cvoid,
+          (Cint, Cint, Cint, Ptr{Cchar}, Cdouble, Ptr{Cint}),
+          dim, tag, bndTag, boundaryModel, alpha, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const compute_alpha_shape_bis = computeAlphaShapeBis
+
+"""
     gmsh.model.mesh.decimateTriangulation(faceTag, distanceThreshold)
 
 Decimate a triangulation

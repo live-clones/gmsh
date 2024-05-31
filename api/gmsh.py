@@ -5286,6 +5286,32 @@ class model:
         compute_alpha_shape = computeAlphaShape
 
         @staticmethod
+        def computeAlphaShapeBis(dim, tag, bndTag, boundaryModel, alpha):
+            """
+            gmsh.model.mesh.computeAlphaShapeBis(dim, tag, bndTag, boundaryModel, alpha)
+
+            Compute the alpha shape - improved function
+
+            Types:
+            - `dim': integer
+            - `tag': integer
+            - `bndTag': integer
+            - `boundaryModel': string
+            - `alpha': double
+            """
+            ierr = c_int()
+            lib.gmshModelMeshComputeAlphaShapeBis(
+                c_int(dim),
+                c_int(tag),
+                c_int(bndTag),
+                c_char_p(boundaryModel.encode()),
+                c_double(alpha),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        compute_alpha_shape_bis = computeAlphaShapeBis
+
+        @staticmethod
         def decimateTriangulation(faceTag, distanceThreshold):
             """
             gmsh.model.mesh.decimateTriangulation(faceTag, distanceThreshold)

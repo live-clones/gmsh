@@ -1914,6 +1914,15 @@ namespace gmsh { // Top-level functions
                                       const int triangulate,
                                       const int refine);
 
+      // gmsh::model::mesh::computeAlphaShapeBis
+      //
+      // Compute the alpha shape - improved function
+      GMSH_API void computeAlphaShapeBis(const int dim,
+                                         const int tag,
+                                         const int bndTag,
+                                         const std::string & boundaryModel,
+                                         const double alpha);
+
       // gmsh::model::mesh::decimateTriangulation
       //
       // Decimate a triangulation

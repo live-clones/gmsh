@@ -61,6 +61,8 @@
 #include "HierarchicalBasisHcurlTetra.h"
 #include "HierarchicalBasisHcurlPri.h"
 
+#include <chrono>
+
 #if defined(HAVE_MESH)
 #include "Field.h"
 #include "meshGEdge.h"
@@ -5679,6 +5681,58 @@ gmsh::model::mesh::alphaShape(const int dim, const int tag, const double alpha, 
 }
 
 GMSH_API void
+gmsh::model::mesh::computeAlphaShapeBis(const int dim, const int tag, const int bndTag,
+                                        const std::string & boundaryModel,
+                                        const double alpha)
+{
+#if defined(HAVE_MESH) && defined(HAVE_HXT)
+  if (dim == 2){
+    std::vector<PolyMesh::Vertex*> controlNodes;
+
+    // Delaunay
+    auto tic = std::chrono::high_resolution_clock::now();
+    PolyMesh* pm = _alphaShapeDelaunay2D(tag);
+    auto toc = std::chrono::high_resolution_clock::now();
+    std::cout << "Triangulate  : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
+
+    // alpha shape
+    _alphaShape2D(pm, alpha, tag, bndTag);
+    tic = std::chrono::high_resolution_clock::now();
+    std::cout << "Alpha Shape  : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
+    // edge recover
+    _edgeRecover(pm, tag, bndTag, boundaryModel, controlNodes);
+    toc = std::chrono::high_resolution_clock::now();
+    std::cout << "Edge recover : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
+    // mesh adapt
+    _delaunayRefinement(pm, tag, bndTag, controlNodes);
+    tic = std::chrono::high_resolution_clock::now();
+    std::cout << "Refine       : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
+
+    // back to gmsh
+    alphaShapePolyMesh2Gmsh(pm, tag, bndTag);
+    toc = std::chrono::high_resolution_clock::now();
+    std::cout << "To Gmsh      : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
+
+  }
+  else 
+    Msg::Error("Wrong dimension in alpha shape; 2 or 3");
+#else 
+  Msg::Error("performAlphaShapeAndRefine requires the mesh and hxt modules");
+#endif
+}
+
+// GMSH_API void
+// gmsh::model::mesh::improveMesh(const int dim, const int tag,
+//                                         ){
+// #if defined(HAVE_MESH) && defined(HAVE_HXT)
+//   if (dim == 2){
+//     _improveMesh(dim, tag);
+//   }
+//   else 
+//     Msg::Error("Wrong dimension in alpha shape; 2 or 3");
+// }
+
+GMSH_API void
 gmsh::model::mesh::computeAlphaShape(const int dim, 
                                      const std::vector<int> & alphaShapeTags, 
                                      const double alpha, const double hMean, 
@@ -5690,7 +5744,7 @@ gmsh::model::mesh::computeAlphaShape(const int dim,
   if (dim == 2)
     _computeAlphaShape(alphaShapeTags, alpha, hMean, sizeFieldCallback, triangulate, refine);
   else if (dim == 3)
-    _computeAlphaShape3D(alphaShapeTags, alpha, hMean, sizeFieldCallback, refine);
+    _computeAlphaShape3D(alphaShapeTags, alpha, hMean, sizeFieldCallback, triangulate, refine);
   else 
     Msg::Error("Wrong dimension in alpha shape; 2 or 3");
 #else 

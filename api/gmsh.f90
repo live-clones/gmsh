@@ -726,6 +726,8 @@ module gmsh
         gmshModelMeshAlphaShape
     procedure, nopass :: computeAlphaShape => &
         gmshModelMeshComputeAlphaShape
+    procedure, nopass :: computeAlphaShapeBis => &
+        gmshModelMeshComputeAlphaShapeBis
     procedure, nopass :: decimateTriangulation => &
         gmshModelMeshDecimateTriangulation
     procedure, nopass :: conformAlphaShapeToBoundary => &
@@ -7771,6 +7773,44 @@ module gmsh
          refine=int(refine, c_int), &
          ierr_=ierr)
   end subroutine gmshModelMeshComputeAlphaShape
+
+  !> Compute the alpha shape - improved function
+  subroutine gmshModelMeshComputeAlphaShapeBis(dim, &
+                                               tag, &
+                                               bndTag, &
+                                               boundaryModel, &
+                                               alpha, &
+                                               ierr)
+    interface
+    subroutine C_API(dim, &
+                     tag, &
+                     bndTag, &
+                     boundaryModel, &
+                     alpha, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshComputeAlphaShapeBis")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), value, intent(in) :: bndTag
+      character(len=1, kind=c_char), dimension(*), intent(in) :: boundaryModel
+      real(c_double), value, intent(in) :: alpha
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    integer, intent(in) :: bndTag
+    character(len=*), intent(in) :: boundaryModel
+    real(c_double), intent(in) :: alpha
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(dim=int(dim, c_int), &
+         tag=int(tag, c_int), &
+         bndTag=int(bndTag, c_int), &
+         boundaryModel=istring_(boundaryModel), &
+         alpha=real(alpha, c_double), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshComputeAlphaShapeBis
 
   !> Decimate a triangulation
   subroutine gmshModelMeshDecimateTriangulation(faceTag, &
