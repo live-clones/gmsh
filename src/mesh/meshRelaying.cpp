@@ -1108,7 +1108,7 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
         }
       }
     }
-    
+
     if (moves.empty())break;
     std::sort(moves.begin(), moves.end());
 
