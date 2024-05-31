@@ -3315,13 +3315,37 @@ namespace gmsh { // Top-level functions
         if(ierr) throwLastError();
       }
 
-      // gmsh::model::mesh::relaying_and_relax
+      // gmsh::model::mesh::relaying_relay
       //
       // Antoine put a comment here.
-      inline void relaying_and_relax()
+      inline void relaying_relay()
       {
         int ierr = 0;
-        gmshModelMeshRelaying_and_relax(&ierr);
+        gmshModelMeshRelaying_relay(&ierr);
+        if(ierr) throwLastError();
+      }
+
+      // gmsh::model::mesh::restore_initial_mesh
+      //
+      // Antoine put a comment here.
+      inline void restore_initial_mesh()
+      {
+        int ierr = 0;
+        gmshModelMeshRestore_initial_mesh(&ierr);
+        if(ierr) throwLastError();
+      }
+
+      // gmsh::model::mesh::relaying_relax
+      //
+      // Antoine put a comment here.
+      inline void relaying_relax(const double myLambda,
+                                 const int nIterOut,
+                                 const int nIterIn,
+                                 const double distMax,
+                                 const double RATIO)
+      {
+        int ierr = 0;
+        gmshModelMeshRelaying_relax(myLambda, nIterOut, nIterIn, distMax, RATIO, &ierr);
         if(ierr) throwLastError();
       }
 

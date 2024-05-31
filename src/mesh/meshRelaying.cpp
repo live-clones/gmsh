@@ -427,32 +427,32 @@ void projectPonLine(double A[2], double B[2], double P[2], double *proj){
   (proj)[1] += (-mat[1][0]/norm)*A[0] +(1 - mat[1][1]/norm)*A[1];
 }
 
-// SVector3 discreteFront::closestPoints2d (const SVector3 &P){
-//   double dmin = 1.e22;
-//   SVector3 res;
-//   for (size_t i=0 ; i< lines.size() ; i+=2){
-//     SVector3 A (pos[3*lines[i]],pos[3*lines[i]+1],pos[3*lines[i]+2]);
-//     SVector3 B (pos[3*lines[i+1]],pos[3*lines[i+1]+1],pos[3*lines[i+1]+2]);
-//     if (dim() == 2){
-//       SVector3 AB = B - A;
-//       double lAB = AB.norm();
-//       AB.normalize();
-//       SVector3 AP = P - A;
-//       double L = dot(AP,AB);
-//       SVector3 H;
-//       if (L < 0)H = A;
-//       else if (L > lAB)H = B;
-//       else H = A + AB * L;
-//       SVector3 HP = P - H;
-//       double d = HP.norm();
-//       if (d < dmin){
-//         dmin = d;
-//         res = H;
-//       }
-//     }
-//   }
-//   return res;
-// }
+SVector3 discreteFront::closestPoints2d (const SVector3 &P){
+   double dmin = 1.e22;
+   SVector3 res;
+   for (size_t i=0 ; i< lines.size() ; i+=2){
+     SVector3 A (pos[3*lines[i]],pos[3*lines[i]+1],pos[3*lines[i]+2]);
+     SVector3 B (pos[3*lines[i+1]],pos[3*lines[i+1]+1],pos[3*lines[i+1]+2]);
+     if (dim() == 2 && getColor(i) >= 0){
+       SVector3 AB = B - A;
+       double lAB = AB.norm();
+       AB.normalize();
+       SVector3 AP = P - A;
+       double L = dot(AP,AB);
+       SVector3 H;
+       if (L < 0)H = A;
+       else if (L > lAB)H = B;
+       else H = A + AB * L;
+       SVector3 HP = P - H;
+       double d = HP.norm();
+       if (d < dmin){
+         dmin = d;
+         res = H;
+       }
+     }
+   }
+   return res;
+}
 
 void discreteFront::getDFPosition(std::vector<double> &position, std::vector<int> &tags){
   position = pos;
@@ -804,7 +804,7 @@ void discreteFront::adjustBnd(const std::vector<std::pair<size_t,size_t>> &bnd1d
   }
 }
 
-meshRelaying::meshRelaying(GModel *gm){
+meshRelaying::meshRelaying(GModel *gm) : _distMax(1.0), _RATIO(1.0) {
   
   if (!gm)gm=GModel::current();
 
@@ -920,6 +920,11 @@ meshRelaying::meshRelaying(GModel *gm){
   
 }
 
+void meshRelaying::restoreInitialMesh (){
+  pos = initial_pos;
+  front_nodes.clear();
+}
+
 void meshRelaying::doRelaying (double t){
   auto f_levelset = [this] (size_t i, size_t j) -> std::vector<std::pair<double,int > > {
     std::vector<std::pair<double,int > > ds;
@@ -954,7 +959,7 @@ void meshRelaying::doRelaying (double t){
   if (discreteFront::instance()->empty())
     doRelaying(f_levelset);
   else{
-    pos = initial_pos;
+    //    pos = initial_pos;
     doRelaying(f_discrete);
   }
 }
@@ -1255,7 +1260,161 @@ double kappa(double x1[2], double x2[2], double x3[2]){
   return 0;
 }
 
-void meshRelaying::untangle(){
+using vec2 = std::array<double,2>;
+inline vec2 operator-(const vec2& a, const vec2& b) { return {{a[0]-b[0], a[1]-b[1]}}; }
+inline vec2 operator+(const vec2& a, const vec2& b) { return {{a[0]+b[0], a[1]+b[1]}}; }
+inline vec2 operator*(const double& a, const vec2& b) { return {{a*b[0], a*b[1]}}; }
+inline vec2 operator*(const vec2& a, const double& b) { return {{a[0]*b, a[1]*b}}; }
+
+static double triangle_area_2d(vec2 a, vec2 b, vec2 c)
+{
+  return .5 * ((b[1] - a[1]) * (b[0] + a[0]) + (c[1] - b[1]) * (c[0] + b[0]) +
+               (a[1] - c[1]) * (a[0] + c[0]));
+}
+
+double meshRelaying::myDensity2D(size_t iTriangle, double distMax, double RATIO, std::vector<double> &distances) {
+  // assume levelsets represent the distance to the front
+
+  double DMIN =   1;
+  double DMAX = RATIO;
+
+  size_t i0 = tris[3*iTriangle];
+  size_t i1 = tris[3*iTriangle+1];
+  size_t i2 = tris[3*iTriangle+2];
+  double lsmin = 1.e22;
+  if (discreteFront::instance()->empty()){
+    for (size_t k=0;k<levelsets.size();k++){
+      double ls0 = levelsets[k][i0];
+      double ls1 = levelsets[k][i1];
+      double ls2 = levelsets[k][i2];
+      double lsk = fabs(ls0+ls1+ls2)/3.0;
+      if (lsk < lsmin)lsmin = lsk;
+    }
+  }
+  else {
+    lsmin = 0.0;
+    for (int k=0 ; k< 3 ; k++){
+      size_t ii = tris[3*iTriangle+k];
+      //      double x = pos[3*ii];
+      //      double y = pos[3*ii+1];
+      //      SVector3 P (x,y,0);
+      //      SVector3 C  = discreteFront::instance()->closestPoints2d(P);      
+      lsmin += distances[ii] / 3.0;
+      //      printf("%12.5E %12.5E\n",distances[ii],(P-C).norm());
+      //      lsmin = std::min((P-C).norm(),lsmin);
+    }
+  }
+  double size = (lsmin < distMax) ? DMIN + (DMAX-DMIN) * lsmin / distMax : DMAX;
+  return 1./(size*size);
+}
+
+
+void meshRelaying::untangle(double lambda, int nIterOut, int nIterIn, double distMax, double RATIO){
+  // update the triangular shapes for enabling 
+
+  auto sizeField = [this] (const std::vector<std::array<double, 2> > &points,
+			   const std::vector<std::array<uint32_t, 3> > &triangles,
+			   std::vector<double> &s, // size and grad sizes at nodes 
+			   std::vector<std::array<double, 3> > &grads) {
+    
+    double DMIN =   1;
+    double DMAX = _RATIO;
+    double distMax = _distMax;
+
+    s.resize(points.size());
+    grads.resize(points.size());
+    for (size_t i=0;i<points.size();i++){
+      SVector3 P (points[i][0],points[i][1],points[i][2]);
+      SVector3 C  = discreteFront::instance()->closestPoints2d(P);
+      // has to be done for levelsets
+      SVector3 CP = P-C;
+      double d = CP.norm();
+      CP.normalize();
+      double size = (d < distMax) ? DMIN + (DMAX-DMIN) * d / distMax : DMAX;
+      s[i] = size;
+      //      if (d < distMax)printf("size = %12.5E\n",size);
+      //      else printf("MAX --> size = %12.5E\n",size);
+      SVector3 gradSize = (d < distMax) ? ((DMAX-DMIN) * d / distMax)*CP : SVector3(0,0,0);
+      grads[i] = {gradSize.x(),gradSize.y(),gradSize.z()};
+    }    
+
+    double SUM = 0.0;
+    
+    for (size_t i=0;i<triangles.size();i++){
+      vec2 v0 = points[triangles[i][0]];
+      vec2 v1 = points[triangles[i][1]];
+      vec2 v2 = points[triangles[i][2]];
+      double s0 = s[triangles[i][0]];
+      double s1 = s[triangles[i][1]];
+      double s2 = s[triangles[i][2]];
+      double area = triangle_area_2d(v0,v1,v2);
+      SUM += 3.0*area/(s0*s0+s1*s1+s2*s2);
+    }    
+    double C = sqrt(SUM/ triangles.size());
+    for (size_t i=0;i<points.size();i++){
+      s[i] *= C;
+      grads[i][0] *= C;
+      grads[i][1] *= C;
+      grads[i][2] *= C;
+    }    
+  };
+
+  auto updateIdealTriangularShapes = [this] (const std::vector<std::array<double, 2> > &points,
+					     const std::vector<std::array<uint32_t, 3> > &triangles,
+					     std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes) {
+
+    triIdealShapes.clear();
+    std::array<vec2, 3> equi = {vec2{1., 0.},
+				vec2{cos(2. * M_PI / 3.), sin(2 * M_PI / 3.)},
+				vec2{cos(4. * M_PI / 3.), sin(4 * M_PI / 3.)}};
+    //    normalizeTargetArea(equi);
+    //    double areaEqui = triangle_area_2d(equi[0], equi[1], equi[2]);
+    double totArea = 0.0;
+    double totOneOverWeight = 0.0;
+    std::vector<double> distances;
+    if (!discreteFront::instance()->empty()){
+      for (size_t i=0;i<pos.size();i+=3){
+	double x = pos[i];
+	double y = pos[i+1];
+	SVector3 P (x,y,0);
+	SVector3 C  = discreteFront::instance()->closestPoints2d(P);	
+	distances.push_back((P-C).norm());
+      }
+    }
+    
+    for (size_t i=0;i<triangles.size();i++){
+      vec2 v0 = points[triangles[i][0]];
+      vec2 v1 = points[triangles[i][1]];
+      vec2 v2 = points[triangles[i][2]];
+      double density = myDensity2D (i, _distMax, _RATIO, distances);
+      double area = triangle_area_2d(v0,v1,v2);
+      totArea += area;
+      totOneOverWeight += 1./density;
+    }
+    double C = totArea/totOneOverWeight;  
+    double newArea = 0;
+    //    printf("coucou C = %12.5E d %lu\n",C, triangles.size());
+    for (size_t i=0;i<triangles.size();i++){
+      //      vec2 v0 = points[triangles[i][0]];
+      //      vec2 v1 = points[triangles[i][1]];
+      //      vec2 v2 = points[triangles[i][2]];
+      double density = myDensity2D(i, _distMax, _RATIO, distances);
+      double fact = sqrt(C/density);
+      vec2 p0 = equi[0] * fact;
+      vec2 p1 = equi[1] * fact;
+      vec2 p2 = equi[2] * fact;
+      std::array<vec2, 3> perfect = {p0,p1,p2};
+      double area = triangle_area_2d(p0,p1,p2);
+      //      printf("area[%lu] = %12.5E density %12.5E\n",i,area,density);
+      newArea += area;
+      triIdealShapes.push_back(perfect);
+    }
+  };
+
+  _distMax = distMax;
+  _RATIO = RATIO;
+  
+
 #if defined(HAVE_WINSLOWUNTANGLER)
   std::vector<bool> _locked;
   if (tets.size()){
@@ -1313,7 +1472,8 @@ void meshRelaying::untangle(){
     std::vector<std::array<uint32_t, 3> > _triangles;
     std::vector<std::array<std::array<double,2>, 3> > _triIdealShapes;    
     buildTrianglesAndTargetsFromElements(_points,_elements,_triangles,_triIdealShapes);
-    untangle_triangles_2D(_points, _locked, _triangles, _triIdealShapes);
+    untangle_triangles_2D(_points, _locked, _triangles, _triIdealShapes, lambda, nIterIn, nIterOut, 10, 100000,
+			  sizeField,updateIdealTriangularShapes);
     for (size_t i=0;i<_points.size();i++){
       pos[3*i] = _points[i][0];
       pos[3*i+1] = _points[i][1];
@@ -1480,11 +1640,12 @@ void meshRelaying::print4debug(const char *fn){
     }
   }
   else{
-    fprintf(f,"View \"Front Mesh\"{\n");
-    discreteFront::instance()->printMesh(f);
-    fprintf(f,"};\n");
+    //    fprintf(f,"View \"Front Mesh\"{\n");
+    //    discreteFront::instance()->printMesh(f);
+    //    fprintf(f,"};\n");
+
     fprintf(f,"View \"Mesh\"{\n");  
-  
+    
     for (size_t i=0;i<tris.size();i+=3){
       SVector3 COG((pos[3*tris[i]]+pos[3*tris[i+1]]+pos[3*tris[i+2]])/3.0,
 		   (pos[3*tris[i]+1]+pos[3*tris[i+1]+1]+pos[3*tris[i+2]+1])/3.0,
@@ -1498,7 +1659,11 @@ void meshRelaying::print4debug(const char *fn){
 	      pos[3*tris[i+1]],pos[3*tris[i+1]+1],pos[3*tris[i+1]+2],
 	      pos[3*tris[i+2]],pos[3*tris[i+2]+1],pos[3*tris[i+2]+2],color,color,color);
     }
-    
+    fprintf(f,"};\n");
+
+    fclose(f);
+    return; 
+
     for (size_t i=0;i<tris.size();i+=3){
       fprintf(f, "SL(%g,%g,0.005,%g,%g,0.005){%d,%d};\n", pos[3*tris[i]],pos[3*tris[i]+1], pos[3*tris[i+1]],pos[3*tris[i+1]+1], 5,5);
       fprintf(f, "SL(%g,%g,0.005,%g,%g,0.005){%d,%d};\n", pos[3*tris[i+1]],pos[3*tris[i+1]+1], pos[3*tris[i+2]],pos[3*tris[i+2]+1], 5,5);

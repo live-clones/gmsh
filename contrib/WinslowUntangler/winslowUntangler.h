@@ -43,7 +43,14 @@ bool untangle_triangles_2D(
   const std::vector<std::array<uint32_t, 3> > &triangles,
   const std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes,
   double lambda = 1., int iterMaxInner = 300, int iterMaxOuter = 100,
-  int iterFailMax = 10, double timeMax = 9999.);
+  int iterFailMax = 10, double timeMax = 9999.,
+  const std::function<void (const std::vector<std::array<double, 2> > &points,
+			    const std::vector<std::array<uint32_t, 3> > &triangles,
+			    std::vector<double> &s, // size and grad sizes at nodes 
+			    std::vector<std::array<double, 3> > &grads) > &sizeField={},    
+  const std::function<void (const std::vector<std::array<double, 2> > &points,
+  			    const std::vector<std::array<uint32_t, 3> > &triangles,
+  			    std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes)> &updateIdealTriangularShapes={});
 
 /**
  * @brief Volume untangler based on the minimization of the Winslow functional

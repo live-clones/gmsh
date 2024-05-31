@@ -4,7 +4,7 @@ Mesh.Recombine3DAll = 1;
 Mesh.Smoothing = 0;
 
 c1 = 0.25; //125;
-c2 = 0.05;
+c2 = 0.025;
 Point(1) = {1, 1, -1, c2};
 Point(2) = {-1, 1, -1, c1};
 Point(3) = {-1, -1, -1, c1};
@@ -40,5 +40,5 @@ Plane Surface(24) = {23};
 Surface Loop(25) = {14, 24, 16, 22, 20, 18};
 Volume(26) = {25};
 
-//Recombine Volume {26};
+//Recombine Surface {14,16,18,20,22,24};
 

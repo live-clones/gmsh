@@ -5745,14 +5745,24 @@ GMSH_API void gmsh::model::mesh::get_nodes_position(std::vector<double> &api_pos
   return;
 }
 
-GMSH_API void gmsh::model::mesh::reset_discrete_front(){
+GMSH_API void gmsh::model::mesh::reset_discrete_front(){ 
   discreteFront::instance()->clear();
   return;
 }
 
-GMSH_API void gmsh::model::mesh::relaying_and_relax(){
+GMSH_API void gmsh::model::mesh::restore_initial_mesh(){ 
+   meshRelaying::instance()->restoreInitialMesh();
+  return;
+}
+
+GMSH_API void gmsh::model::mesh::relaying_relax(const double lambda, const int nIterOut, const int nIterIn, const double distMax, const double RATIO){
+  meshRelaying::instance()->untangle(lambda, nIterOut, nIterIn, distMax, RATIO);        
+  meshRelaying::instance()->print4debug("smoothed.pos");
+}
+
+GMSH_API void gmsh::model::mesh::relaying_relay(){
   meshRelaying::instance()->doRelaying(0);      // time not used for df -> 0
-  meshRelaying::instance()->untangle();         // untangle
+  //  meshRelaying::instance()->untangle();         // untangle
   meshRelaying::instance()->adjustBnd();
   meshRelaying::instance()->print4debug("out_gmsh.pos");
 }

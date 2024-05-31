@@ -18,6 +18,24 @@
 #include "Field.h"
 #include "OS.h"
 
+double newton_get_r (double r0, double hw, double length, int n){
+  double r = r0;
+  int it = 0;
+  while(1){
+    double slope = ((n-1) * pow(r,n+1) - n*pow(r,n) + r) / ((r-1)*(r-1)*r);
+    double f = (pow(r,n)-1)/(r-1) - length/hw;
+    double dr = -f / slope;
+    r = r + dr;
+    if (f < 1.e-8){
+      //      printf("err %12.5E it %d\n",f,it);
+      return r;
+    }
+    if (it++ > 100)break;
+  }
+  return r;
+}
+
+
 typedef struct {
   int Num;
   // t is the local coordinate of the point
@@ -185,7 +203,7 @@ struct F_Transfinite {
     }
     else {
       switch(atype) {
-      case 1: {
+      case 1111: {
         // geometric progression ar^i; Sum of n terms = length = a (r^n-1)/(r-1)
         double r = (gmsh_sign(type) >= 0) ? coef : 1. / coef;
         double a = length * (r - 1.) / (std::pow(r, nbpt - 1.) - 1.);
@@ -215,12 +233,25 @@ struct F_Transfinite {
         if(type < 0)
           val = dfbeta(1. - t, coef);
         else
-          val = dfbeta(t, coef);
+          val = dfbeta(t, coef);        
         break;
       }
-      case 4: {
-        // standard boundary layer progression: TODO
-        val = d / (length * t);
+      case 1: {
+	// Assume h(y) = h_w + m y = a + (r-1) y  
+	// We want nbpt-1 subdivisions and a given edge length
+	// Two possibilities choose m --> compute h_w (should be exactly equivalent to case 1)
+	//                   choose h_w --> compute m
+        double r = (gmsh_sign(type) >= 0) ? coef : 1. / coef;
+	double m = log(r);//r-1;
+	//	double a = m*length/(exp((nbpt-1)*m)-1);
+	double hw = length * m / (std::pow(r, nbpt - 1.) - 1.);
+
+	//	double rr = newton_get_r (1.2, hw, length, nbpt-1);
+	//	printf("%g %g\n",r,rr);
+	
+	// standard boundary layer progression: TODO
+	double y = t*length;
+        val = d / (hw+y*m);
         break;
       }
       default:

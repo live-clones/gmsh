@@ -30,6 +30,7 @@
 #include "ExtrudeParams.h"
 #include "OS.h"
 #include "Context.h"
+#include "meshVolumeUntangling.h"
 
 void splitQuadRecovery::add(const MFace &f, MVertex *v, GFace *gf)
 {
@@ -47,7 +48,7 @@ void splitQuadRecovery::add(const MFace &f, MVertex *v, GFace *gf)
 int splitQuadRecovery::buildPyramids(GModel *gm)
 {
   if(_quad.empty()) return 0;
-
+  //  return 0;
   Msg::Info("Generating pyramids for hybrid mesh...");
   int npyram = 0;
   for(auto it = gm->firstRegion(); it != gm->lastRegion(); it++) {
@@ -194,7 +195,8 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
     if(sqr.buildPyramids(gr->model())) {
       Msg::Info("Optimizing pyramids for hybrid mesh...");
       gr->model()->setAllVolumesPositive();
-      RelocateVerticesOfPyramids(regions, 3);
+      untangleGRegionMeshConstrained(gr);
+	//      RelocateVerticesOfPyramids(regions, 3);
       // RelocateVertices(regions, 3);
       Msg::Info("Done optimizing pyramids for hybrid mesh");
     }

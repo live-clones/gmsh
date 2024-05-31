@@ -4694,15 +4694,50 @@ function reset_discrete_front()
 end
 
 """
-    gmsh.model.mesh.relaying_and_relax()
+    gmsh.model.mesh.relaying_relay()
 
 Antoine put a comment here.
 """
-function relaying_and_relax()
+function relaying_relay()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshRelaying_and_relax, gmsh.lib), Cvoid,
+    ccall((:gmshModelMeshRelaying_relay, gmsh.lib), Cvoid,
           (Ptr{Cint},),
           ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.restore_initial_mesh()
+
+Antoine put a comment here.
+"""
+function restore_initial_mesh()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshRestore_initial_mesh, gmsh.lib), Cvoid,
+          (Ptr{Cint},),
+          ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.relaying_relax(myLambda, nIterOut, nIterIn, distMax, RATIO)
+
+Antoine put a comment here.
+
+Types:
+ - `myLambda`: double
+ - `nIterOut`: integer
+ - `nIterIn`: integer
+ - `distMax`: double
+ - `RATIO`: double
+"""
+function relaying_relax(myLambda, nIterOut, nIterIn, distMax, RATIO)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshRelaying_relax, gmsh.lib), Cvoid,
+          (Cdouble, Cint, Cint, Cdouble, Cdouble, Ptr{Cint}),
+          myLambda, nIterOut, nIterIn, distMax, RATIO, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end

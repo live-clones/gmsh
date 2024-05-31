@@ -7,7 +7,7 @@ Point(4) = {7,0,0,1};
 Point(5) = {15,0,0,1};
 
 n = 4; // number of intervals
-r = 2; // progression
+r = 1./2; // progression
 
 // progression using transfinite mesh
 

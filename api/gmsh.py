@@ -5297,14 +5297,52 @@ class model:
                 raise Exception(logger.getLastError())
 
         @staticmethod
-        def relaying_and_relax():
+        def relaying_relay():
             """
-            gmsh.model.mesh.relaying_and_relax()
+            gmsh.model.mesh.relaying_relay()
 
             Antoine put a comment here.
             """
             ierr = c_int()
-            lib.gmshModelMeshRelaying_and_relax(
+            lib.gmshModelMeshRelaying_relay(
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+
+        @staticmethod
+        def restore_initial_mesh():
+            """
+            gmsh.model.mesh.restore_initial_mesh()
+
+            Antoine put a comment here.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshRestore_initial_mesh(
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+
+        @staticmethod
+        def relaying_relax(myLambda, nIterOut, nIterIn, distMax, RATIO):
+            """
+            gmsh.model.mesh.relaying_relax(myLambda, nIterOut, nIterIn, distMax, RATIO)
+
+            Antoine put a comment here.
+
+            Types:
+            - `myLambda': double
+            - `nIterOut': integer
+            - `nIterIn': integer
+            - `distMax': double
+            - `RATIO': double
+            """
+            ierr = c_int()
+            lib.gmshModelMeshRelaying_relax(
+                c_double(myLambda),
+                c_int(nIterOut),
+                c_int(nIterIn),
+                c_double(distMax),
+                c_double(RATIO),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())

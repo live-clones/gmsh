@@ -607,7 +607,13 @@ doc = '''Antoine put a comment here.'''
 mesh.add('reset_discrete_front', doc, None )
 
 doc = '''Antoine put a comment here.'''
-mesh.add('relaying_and_relax', doc, None )
+mesh.add('relaying_relay', doc, None )
+
+doc = '''Antoine put a comment here.'''
+mesh.add('restore_initial_mesh', doc, None )
+
+doc = '''Antoine put a comment here.'''
+mesh.add('relaying_relax', doc, None,  idouble('myLambda'),  iint('nIterOut'),  iint('nIterIn') ,  idouble('distMax'),  idouble('RATIO'))
 
 doc = '''Antoine put a comment here.'''
 mesh.add('redist_front', doc, None, idouble('lc') )

@@ -1,7 +1,7 @@
-SC = 1.00;
+SC = 4.00;
 lc = .033 *SC;
 lc2 = 2.2 *SC;
-lc3 = .03 *SC;
+lc3 = .001 *SC;
 Point(1) =  {1.000000e+00,0.000000e+00,0.000000e+00,lc3};
 Point(2) =  {9.997533e-01,0.000000e+00,-3.498543e-05,lc};
 Point(3) =  {9.990134e-01,0.000000e+00,-1.398841e-04,lc};
@@ -232,7 +232,7 @@ Field[1].Size = 0.0001*SC;
 Field[1].Ratio = 2.4;
 Field[1].Thickness = 0.02*SC;
 Field[1].PointsList = {1};
-Field[1].Quads = 1;
+//Field[1].Quads = 1;
 Field[1].FanPointsList = {1};
 
 BoundaryLayer Field = 1;

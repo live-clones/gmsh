@@ -1899,10 +1899,24 @@ namespace gmsh { // Top-level functions
       // Antoine put a comment here.
       GMSH_API void reset_discrete_front();
 
-      // gmsh::model::mesh::relaying_and_relax
+      // gmsh::model::mesh::relaying_relay
       //
       // Antoine put a comment here.
-      GMSH_API void relaying_and_relax();
+      GMSH_API void relaying_relay();
+
+      // gmsh::model::mesh::restore_initial_mesh
+      //
+      // Antoine put a comment here.
+      GMSH_API void restore_initial_mesh();
+
+      // gmsh::model::mesh::relaying_relax
+      //
+      // Antoine put a comment here.
+      GMSH_API void relaying_relax(const double myLambda,
+                                   const int nIterOut,
+                                   const int nIterIn,
+                                   const double distMax,
+                                   const double RATIO);
 
       // gmsh::model::mesh::redist_front
       //

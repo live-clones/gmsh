@@ -1677,7 +1677,18 @@ GMSH_API void gmshModelMeshGet_nodes_position(double ** api_position, size_t * a
 GMSH_API void gmshModelMeshReset_discrete_front(int * ierr);
 
 /* Antoine put a comment here. */
-GMSH_API void gmshModelMeshRelaying_and_relax(int * ierr);
+GMSH_API void gmshModelMeshRelaying_relay(int * ierr);
+
+/* Antoine put a comment here. */
+GMSH_API void gmshModelMeshRestore_initial_mesh(int * ierr);
+
+/* Antoine put a comment here. */
+GMSH_API void gmshModelMeshRelaying_relax(const double myLambda,
+                                          const int nIterOut,
+                                          const int nIterIn,
+                                          const double distMax,
+                                          const double RATIO,
+                                          int * ierr);
 
 /* Antoine put a comment here. */
 GMSH_API void gmshModelMeshRedist_front(const double lc,

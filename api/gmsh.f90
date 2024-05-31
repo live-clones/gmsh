@@ -738,8 +738,12 @@ module gmsh
         gmshModelMeshGet_nodes_position
     procedure, nopass :: reset_discrete_front => &
         gmshModelMeshReset_discrete_front
-    procedure, nopass :: relaying_and_relax => &
-        gmshModelMeshRelaying_and_relax
+    procedure, nopass :: relaying_relay => &
+        gmshModelMeshRelaying_relay
+    procedure, nopass :: restore_initial_mesh => &
+        gmshModelMeshRestore_initial_mesh
+    procedure, nopass :: relaying_relax => &
+        gmshModelMeshRelaying_relax
     procedure, nopass :: redist_front => &
         gmshModelMeshRedist_front
     procedure, nopass :: set_bnd_front => &
@@ -7699,17 +7703,68 @@ module gmsh
   end subroutine gmshModelMeshReset_discrete_front
 
   !> Antoine put a comment here.
-  subroutine gmshModelMeshRelaying_and_relax(ierr)
+  subroutine gmshModelMeshRelaying_relay(ierr)
     interface
     subroutine C_API(ierr_) &
-      bind(C, name="gmshModelMeshRelaying_and_relax")
+      bind(C, name="gmshModelMeshRelaying_relay")
       use, intrinsic :: iso_c_binding
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer(c_int), intent(out), optional :: ierr
     call C_API(ierr_=ierr)
-  end subroutine gmshModelMeshRelaying_and_relax
+  end subroutine gmshModelMeshRelaying_relay
+
+  !> Antoine put a comment here.
+  subroutine gmshModelMeshRestore_initial_mesh(ierr)
+    interface
+    subroutine C_API(ierr_) &
+      bind(C, name="gmshModelMeshRestore_initial_mesh")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(ierr_=ierr)
+  end subroutine gmshModelMeshRestore_initial_mesh
+
+  !> Antoine put a comment here.
+  subroutine gmshModelMeshRelaying_relax(myLambda, &
+                                         nIterOut, &
+                                         nIterIn, &
+                                         distMax, &
+                                         RATIO, &
+                                         ierr)
+    interface
+    subroutine C_API(myLambda, &
+                     nIterOut, &
+                     nIterIn, &
+                     distMax, &
+                     RATIO, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshRelaying_relax")
+      use, intrinsic :: iso_c_binding
+      real(c_double), value, intent(in) :: myLambda
+      integer(c_int), value, intent(in) :: nIterOut
+      integer(c_int), value, intent(in) :: nIterIn
+      real(c_double), value, intent(in) :: distMax
+      real(c_double), value, intent(in) :: RATIO
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    real(c_double), intent(in) :: myLambda
+    integer, intent(in) :: nIterOut
+    integer, intent(in) :: nIterIn
+    real(c_double), intent(in) :: distMax
+    real(c_double), intent(in) :: RATIO
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(myLambda=real(myLambda, c_double), &
+         nIterOut=int(nIterOut, c_int), &
+         nIterIn=int(nIterIn, c_int), &
+         distMax=real(distMax, c_double), &
+         RATIO=real(RATIO, c_double), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshRelaying_relax
 
   !> Antoine put a comment here.
   subroutine gmshModelMeshRedist_front(lc, &

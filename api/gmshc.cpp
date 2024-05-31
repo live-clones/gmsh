@@ -2539,11 +2539,33 @@ GMSH_API void gmshModelMeshReset_discrete_front(int * ierr)
   }
 }
 
-GMSH_API void gmshModelMeshRelaying_and_relax(int * ierr)
+GMSH_API void gmshModelMeshRelaying_relay(int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::relaying_and_relax();
+    gmsh::model::mesh::relaying_relay();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshRestore_initial_mesh(int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::restore_initial_mesh();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshRelaying_relax(const double myLambda, const int nIterOut, const int nIterIn, const double distMax, const double RATIO, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::relaying_relax(myLambda, nIterOut, nIterIn, distMax, RATIO);
   }
   catch(...){
     if(ierr) *ierr = 1;

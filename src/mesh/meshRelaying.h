@@ -66,7 +66,7 @@ class discreteFront {
 			std::vector<double> &d, std::vector<int> &c);
   void cornersInTriangle2d (const SVector3 &p0, const SVector3 &p1, const SVector3 &p2,
 			    std::vector<SVector3> &c, std::vector<int> &col);
-  //  SVector3 closestPoints2d (const SVector3 &P);
+  SVector3 closestPoints2d (const SVector3 &P);
   bool empty() const {return pos.empty();}
   //  void move (double dt);
   void moveFromV (double dt, const std::vector<SVector3> &V, bool bnd);
@@ -136,6 +136,8 @@ class meshRelaying {
   std::vector<size_t> dimVertex;
 
   std::vector<std::vector<double> > levelsets;
+
+  double _distMax, _RATIO;
   
   static meshRelaying *_instance;
   meshRelaying (GModel *gm = nullptr); // use GModel gm or Gmodel::current() if NULL  
@@ -171,7 +173,9 @@ class meshRelaying {
     pos[3*i+2] = z;
   }
   void doRelaying (double t);
-  void untangle ();
+  double myDensity2D(size_t iTriangle,  double distMax, double RATIO, std::vector<double> &distances);
+  void untangle (double lambda=1.0, int nIterOut=10, int nIterIn=1000, double distMax = 0.1, double RATIO = 5.0);
+  void restoreInitialMesh ();
   void print4debug(const char *);
   void concentration(std::vector<int> *concentration);
   void getNodesPosition(std::vector<double> &position){
