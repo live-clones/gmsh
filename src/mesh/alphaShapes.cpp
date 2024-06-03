@@ -19,7 +19,8 @@
 #include <unordered_set>
 #include "robin_hood.h"
 #include "BackgroundMeshTools.h"
-#include "alphaShape_ocTree.h"
+// #include "alphaShape_ocTree.h"
+#include "alphaShape_ocTree2.h"
 
 extern "C" {
 #include "libol1.h"
@@ -3305,7 +3306,8 @@ void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::stri
     bbox.extends({v->position.x(), v->position.y()});
   }
   bbox*=1.01;
-  OctreeNode<2, 64, PolyMesh::HalfEdge*, hedgeIntersect> octree(bbox);
+  // OctreeNode<2, 64, PolyMesh::HalfEdge*, hedgeIntersect> octree(bbox);
+  OctreeNode<2, 32, PolyMesh::HalfEdge*> octree(bbox);
   std::unordered_set<std::pair<PolyMesh::Vertex*,PolyMesh::Vertex*>> nodes2he;
   PolyMesh::Vertex *v0, *v1;
   for (const auto &he : pm->hedges) {
@@ -3322,7 +3324,10 @@ void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::stri
   }
   for (auto nodes : nodes2he){
     PolyMesh::HalfEdge* he = pm->getEdge(nodes.first, nodes.second);
-    if (he != nullptr) octree.add(he);
+    BBox<2> he_bbox;
+    he_bbox.extends({he->v->position.x(), he->v->position.y()});
+    he_bbox.extends({he->next->v->position.x(), he->next->v->position.y()});
+    if (he != nullptr) octree.add(he, he_bbox);
   }
   tic = std::chrono::high_resolution_clock::now();
   std::cout << "    Octree create  : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
@@ -3656,9 +3661,13 @@ void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, cons
     }
   }
   bbox*=1.01;
-  OctreeNode<2, 64, bndEdge*, edgeIntersect> octree(bbox);
+  OctreeNode<2, 32, bndEdge*> octree(bbox);
+  // OctreeNode<2, 64, bndEdge*, edgeIntersect> octree(bbox);
   for (auto &ed : bndEdges){
-    octree.add(&ed);
+    BBox<2> ed_bbox;
+    ed_bbox.extends({ed.x0, ed.y0});
+    ed_bbox.extends({ed.x1, ed.y1});
+    octree.add(&ed, ed_bbox);
   }
 
   std::vector<bndEdge*> result;
