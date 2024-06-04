@@ -63,7 +63,7 @@ void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags,
                                   const std::vector<int> & externalBoundaryTags, 
                                   std::function<double(int, int, double, double, double, double)> sizeFieldCallback);
 
-PolyMesh* _alphaShapeDelaunay2D(const int tag);
+PolyMesh* _alphaShapeDelaunay2D(const int tag, const std::string boundaryModealName);
 
 void _alphaShape2D(PolyMesh* pm, const double alpha, const int faceTag, const int bndTag);
 

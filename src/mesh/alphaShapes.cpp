@@ -1,4 +1,5 @@
 #include "GmshConfig.h"
+#include <cwchar>
 #ifdef HAVE_HXT
 #include <math.h>
 #include <vector>
@@ -19,8 +20,7 @@
 #include <unordered_set>
 #include "robin_hood.h"
 #include "BackgroundMeshTools.h"
-// #include "alphaShape_ocTree.h"
-#include "alphaShape_ocTree2.h"
+#include "alphaShape_ocTree.h"
 
 extern "C" {
 #include "libol1.h"
@@ -2056,11 +2056,11 @@ static PolyMesh::Face *WalkGeneral(PolyMesh::Face *f, double x, double y)
     else if(s2 <= 0 && s0 >= 0 && s1 >= 0)
       he = he->next->next->opposite;
     else if(s0 <= 0 && s1 <= 0)
-      he = s0 > s1 ? he->opposite : he->next->opposite;
+      he = s0 < s1 ? he->opposite : he->next->opposite;
     else if(s0 <= 0 && s2 <= 0)
-      he = s0 > s2 ? he->opposite : he->next->next->opposite;
+      he = s0 < s2 ? he->opposite : he->next->next->opposite;
     else if(s1 <= 0 && s2 <= 0)
-      he = s1 > s2 ? he->next->opposite : he->next->next->opposite;
+      he = s1 < s2 ? he->next->opposite : he->next->next->opposite;
     else {
       Msg::Error("Could not find half-edge in walk for point %g %g on "
                  "face %g %g %g / %g %g %g / %g %g %g "
@@ -3131,10 +3131,13 @@ static double _faceSizeFromMap(PolyMesh::HalfEdge *he, std::unordered_map<int, d
   return 1./3.* (sizeAtNodes[he->v->data] + sizeAtNodes[he->next->v->data] + sizeAtNodes[he->next->next->v->data]);
 }
 
-PolyMesh* _alphaShapeDelaunay2D(const int tag){
+PolyMesh* _alphaShapeDelaunay2D(const int tag, const std::string boundaryModelName){
+  GModel *current = GModel::current();
+  GModel *model_boundary = GModel::findByName(boundaryModelName);
+  auto bb = model_boundary->bounds();
+  current->setAsCurrent();
   GFace* gf = GModel::current()->getFaceByTag(tag);
   PolyMesh *pm = new PolyMesh;
-  SBoundingBox3d bb;
   for(auto &v : gf->mesh_vertices) {
     bb += SPoint3(v->x(), v->y(), 0);
   }
@@ -3188,6 +3191,7 @@ void _alphaShape2D(PolyMesh* pm, const double alpha, const int faceTag, const in
         do {
           if (_he->opposite == nullptr || _he->opposite->f->data < -1){
             _he->data = bndTag;      
+            _he->opposite->data = bndTag;      
           }     
           else if (!_touched[_he->opposite->f]){
             PolyMesh::Face *f_neigh = _he->opposite->f;
@@ -3203,6 +3207,7 @@ void _alphaShape2D(PolyMesh* pm, const double alpha, const int faceTag, const in
             }	    
             else {
               _he->data = bndTag;
+              _he->opposite->data = bndTag;
             }
           }
           _he = _he->next;
@@ -3239,6 +3244,97 @@ struct hash_pair {
   }
 };
 
+static std::vector<std::pair<PolyMesh::HalfEdge*,  SVector3> >
+walkWithIntersections(SVector3 pfrom, SVector3 pto, PolyMesh::HalfEdge *searchstart) {
+  std::vector<std::pair<PolyMesh::HalfEdge*,  SVector3> > res;
+  PolyMesh::HalfEdge *he = searchstart;
+  // search the starting triangle
+  while (true) {
+    auto s0 = robustPredicates::orient2d(*he->v, *he->next->v, pfrom);
+    auto s1 = robustPredicates::orient2d(*he->next->v, *he->next->next->v, pfrom);
+    auto s2 = robustPredicates::orient2d(*he->next->next->v, *he->v, pfrom);
+    if (s0 >= 0 && s1 >= 0 && s2 >= 0) {
+      break;
+    }
+    if (s0 < 0 && (s0 <= s1 || he->next->opposite == nullptr) && (s0 <= s2 || he->next->next->opposite == nullptr)) {
+      he = he->opposite;
+    } else if (s1 < 0 && (s1 <= s0 || he->opposite == nullptr) && (s1 <= s2 || he->next->next->opposite == nullptr)) {
+      he = he->next->opposite;
+    } else {
+      he = he->next->next->opposite;
+    }
+  }
+
+  // start with an he so that s0 >= 0
+  while (true) {
+    auto s0 = robustPredicates::orient2d(*he->v, *he->next->v, pto);
+    if (s0 >= 0) break;
+    he = he->next;
+  }
+
+  // walk to pto
+  SVector3 current = pfrom;
+  res.push_back({he, pfrom});
+  while (true) {
+    auto s0 = robustPredicates::orient2d(*he->v, *he->next->v, pto);
+    if (s0 < 0) {
+      printf("this should not happen.\n");
+      he = he->opposite;
+      continue;
+    }
+    double s1 = robustPredicates::orient2d(*he->next->v, *he->next->next->v, pto);
+    double s2 = robustPredicates::orient2d(*he->next->next->v, *he->v, pto);
+    double sto;
+
+    if (s1 >= 0 && s2 >= 0) {
+      //if (s0 != 0) {
+        res.push_back({he, pto});
+      //}
+      break;
+    }
+    if (s2 >= 0) { // s1 is negative
+      he = he->next->opposite;
+      sto = -s1;
+    }
+    else if (s1 >= 0) { // s2 is negative
+      he = he->next->next->opposite;
+      sto = -s2;
+    }
+    else {
+      auto s3 = robustPredicates::orient2d(current, pto, *he->next->next->v);
+      if (s3 < 0) {
+        he = he->next->next->opposite;
+        sto = -s2;
+      } else {
+        he = he->next->opposite;
+        sto = -s1;
+      }
+    }
+    // we know that (current, pto) intersects he
+    double sfrom = robustPredicates::orient2d(*he->v, *he->next->v, current);
+    if (sfrom == 0 && sto == 0) { // colinear
+      auto l = he->next->v->position-he->v->position;
+      double d = dot(pto-he->v->position, l)/dot(l, l);
+      if (d < 0) {
+        current = he->v->position;
+      }
+      else if (d > 1) {
+        current = he->next->v->position;
+      }
+      else {
+        current = he->v->position*(1-d) + he->next->v->position*d;
+      }
+    }
+    else {
+      double d = sto/(sto-sfrom);
+      current = pto*(1-d) + current*d;
+    }
+    res.push_back({he, current});
+  }
+  return res;
+}
+
+
 template <>
 struct std::hash<std::pair<PolyMesh::Vertex*, PolyMesh::Vertex*>> {
     size_t operator() (const std::pair<PolyMesh::Vertex*, PolyMesh::Vertex*>& m) const { 
@@ -3247,6 +3343,31 @@ struct std::hash<std::pair<PolyMesh::Vertex*, PolyMesh::Vertex*>> {
       return m.first->data*m.first->data + m.first->data + m.second->data;
     }
 };
+
+std::pair<int, SVector3> snapPoint(PolyMesh::HalfEdge *he, SVector3 p, double tol) {
+  PolyMesh::HalfEdge *hes[3] = {he, he->next, he->next->next};
+  int r = 0;
+  for (int i = 0; i < 3; ++i) {
+    auto h = hes[i];
+    auto d = h->next->v->position - h->v->position;
+    double a = dot(p - h->v->position, d)/dot(d, d);
+    auto proj = (1-a) * h->v->position + a * h->next->v->position;
+    if (norm(proj - p) < tol) {
+      r = i+1;
+      p = proj;
+      break;
+    }
+  }
+  for (int i = 0; i < 3; ++i) {
+    auto h = hes[i];
+    if (norm(h->v->position - p) < tol) {
+      r = i+4;
+      p = h->v->position;
+      break;
+    }
+  }
+  return {r, p};
+}
 
 void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::string & boundaryModel, std::vector<PolyMesh::Vertex*> & controlNodes){
   GModel* gm_alphaShape = GModel::current();
@@ -3278,127 +3399,142 @@ void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::stri
     // gVertices.insert(ge->getBeginVertex());
     // gVertices.insert(ge->getEndVertex());
   }
+  double threshold = 1e-6;
   for (auto gv : gVertices){
     SVector3 X(gv->x(), gv->y(), gv->z());
     PolyMesh::Face* f = WalkGeneral(pm->faces[0], X.x(), X.y());
-    if (f != nullptr && f->data == tag){
+    if (f != nullptr/* && f->data == tag*/){
       PolyMesh::HalfEdge* he = f->he;
-      double d0 = norm(X - he->v->position);
-      double d1 = norm(X - he->next->v->position);
-      double d2 = norm(X - he->next->next->v->position);
-      double threshold = 1e-6;
-      if (d0 < threshold || d1 < threshold || d2 < threshold) {
-        continue;
+      int rsnap;
+      std::tie(rsnap, X) = snapPoint(he, X, threshold);
+      switch(rsnap) {
+        case 0:
+          {
+            bool inside = f->data > 0;
+            if (inside) {
+              pm->split_triangle(-1, X.x(), X.y(), X.z(), f, delaunayCriterion, (void*)&bndTag);
+              PolyMesh::Vertex* v = pm->vertices.back();
+              v->data = newTag++;
+              controlNodes.push_back(v);
+            }
+          }
+          break;
+        case 3:
+          he = he->next;
+        case 2:
+          he = he->next;
+        case 1:
+          {
+            bool inside = he->f->data > 0 || he->opposite->f->data > 0;
+            if (inside) {
+              pm->split_edge(he, X, -1);
+              he->next->opposite->f->data = he->f->data;
+              he->opposite->f->data = he->next->opposite->next->opposite->f->data;
+              he->next->opposite->next->data = he->data;
+              he->opposite->data = he->data;
+              pm->vertices.back()->data = newTag++;
+              controlNodes.push_back(pm->vertices.back());
+            }
+          }
+          break;
+        case 6:
+          he = he->next;
+        case 5:
+          he = he->next;
+        case 4:
+          {
+            bool inside = false;
+            auto he0 = he;
+            do {
+              inside |= he->f->data > 0;
+              he = he->opposite->next;
+            }while (he != he0);
+            if (inside) {
+              controlNodes.push_back(he->v);
+            }
+          }
+          break;
       }
-      pm->split_triangle(-1, X.x(), X.y(), X.z(), f, delaunayCriterion, nullptr);
-      PolyMesh::Vertex* v = pm->vertices.back();
-      v->data = newTag++;
-      controlNodes.push_back(v);
     }
   }
-  auto toc = std::chrono::high_resolution_clock::now();
-  std::cout << "    Init  : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
-
-
-  BBox<2> bbox;
-  for(auto &v : pm->vertices) {
-    if (v->data == -1) continue;
-    bbox.extends({v->position.x(), v->position.y()});
-  }
-  bbox*=1.01;
-  // OctreeNode<2, 64, PolyMesh::HalfEdge*, hedgeIntersect> octree(bbox);
-  OctreeNode<2, 32, PolyMesh::HalfEdge*> octree(bbox);
-  std::unordered_set<std::pair<PolyMesh::Vertex*,PolyMesh::Vertex*>> nodes2he;
-  PolyMesh::Vertex *v0, *v1;
-  for (const auto &he : pm->hedges) {
-    if (he->f->data != tag) continue;
-    int n0 = he->v->data;
-    int n1 = he->next->v->data;
-    v0 = n0 < n1 ? he->v : he->next->v;
-    v1 = n0 < n1 ? he->next->v : he->v;
-    // auto edge = nodes2he.find(std::make_pair(std::min(n0, n1), std::max(n0, n1)));
-    // if (edge == nodes2he.end()){ 
-      // octree.add(he);
-    nodes2he.insert(std::make_pair(v0, v1));
-    // }
-  }
-  for (auto nodes : nodes2he){
-    PolyMesh::HalfEdge* he = pm->getEdge(nodes.first, nodes.second);
-    BBox<2> he_bbox;
-    he_bbox.extends({he->v->position.x(), he->v->position.y()});
-    he_bbox.extends({he->next->v->position.x(), he->next->v->position.y()});
-    if (he != nullptr) octree.add(he, he_bbox);
-  }
-  tic = std::chrono::high_resolution_clock::now();
-  std::cout << "    Octree create  : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
-
-  std::vector<PolyMesh::HalfEdge*> result;
-  std::unordered_set<std::pair<int,int>, hash_pair> res_set;
-  std::vector<PolyMesh::HalfEdge*> res_filtered;
-  double eps = 1e-8;
+  print4debug(pm, 0);
+  std::vector<std::pair<PolyMesh::HalfEdge*, SVector3>> crossed;
+  FILE *debug = fopen("debug.pos", "w");
+  fprintf(debug, "View \"search\" {\n");
+  auto *guess = pm->faces[0]->he;
+  int cc = 0;
   for (const auto &e : bndEntities) {
     size_t n_elem = e->getNumMeshElements();
     for (size_t i_el = 0; i_el<n_elem; i_el++){
+      cc++;
       MElement *elem = e->getMeshElement(i_el);
       if(elem->getDim() != 1) continue;
-      SPoint3 p[2] = {elem->getVertex(0)->point(), elem->getVertex(1)->point()};
-      double* a1 = p[0];
-      double* a2 = p[1];
-      BBox<2> searchbox;
-      for (int i = 0; i < 2; ++i) {
-        searchbox.extends({p[i].x(), p[i].y()});
+      SVector3 curpoint = elem->getVertex(0)->point();
+      SVector3 destpoint = elem->getVertex(1)->point();
+      auto inter = walkWithIntersections(curpoint, destpoint, guess);
+      if (inter.size() != 0) {
+        guess = inter.back().first;
       }
-      searchbox*=(1+eps);
-      result.clear();
-      res_set.clear();
-      res_filtered.clear();
-      octree.search(searchbox, result);
-      for (auto he : result){
-        int n0 = he->v->data;
-        int n1 = he->next->v->data;
-        auto edge = res_set.find(std::make_pair(std::min(n0, n1), std::max(n0, n1)));
-        if (edge == res_set.end()){
-          res_set.insert(std::make_pair(std::min(n0, n1), std::max(n0, n1)));
-          res_filtered.push_back(he);
+      PolyMesh::Vertex *lastv = nullptr;
+      for (size_t i = 0; i < inter.size(); ++i) {
+        // we know that the node belong to the hedge because contole points have been inserted previously
+        auto point = inter[i].second;
+        auto he = inter[i].first;
+        PolyMesh::Vertex *newv = nullptr;
+        // we are on the first vertex -> no split
+        if ((he->v->position-point).norm() < threshold) {
+          newv = he->v;
         }
-      }
-      for (auto he : res_filtered){
-        double* a3 = &he->v->position[0];
-        double* a4 = &he->next->v->position[0];
-        double a143 = robustPredicates::orient2d(a1,a4,a3);
-        double a243 = robustPredicates::orient2d(a2,a4,a3);    
-        double a123 = robustPredicates::orient2d(a1,a2,a3);
-        double a124 = robustPredicates::orient2d(a1,a2,a4);
-        if (fabs(a143) < 1e-16 || fabs(a243) < 1e-16 || fabs(a123) < 1e-16 || fabs(a124) < 1e-16) continue; // parallel ? 
-        if (a143*a243 < 0 && a123*a124 < 0){
-          double t = fabs(a143)/(fabs(a143)+fabs(a243));
-          double vec[3] = {a2[0]-a1[0], a2[1]-a1[1], a2[2]-a1[2]};
-          SVector3 new_intersection(a1[0]+t*vec[0], a1[1]+t*vec[1], a1[2]+t*vec[2]);
-          double d0 = norm(new_intersection - he->v->position);
-          double d1 = norm(new_intersection - he->next->v->position);
-          double d2 = norm(new_intersection - he->next->next->v->position);
-          double d3 = norm(new_intersection - he->opposite->next->v->position);
-          double threshold = 1e-6; // FIXME : doesn't work with smaller threshold ...
-          if (d0 < threshold || d1 < threshold || d2 < threshold || d3 < threshold) continue;
-          pm->split_edge(he, new_intersection, newTag++);
-          he->f->data = tag;
-          he->next->opposite->f->data = tag;
-          if (he->data != bndTag){
-            he->opposite->f->data = tag;
-            he->opposite->next->next->opposite->f->data = tag;
-          }
-          else {
+        // we are on second vertex -> no split
+        else if ((he->next->v->position-point).norm() < threshold) {
+          newv = he->next->v;
+        }
+        // we are on second vertex -> no split
+        else if ((he->next->next->v->position-point).norm() < threshold) {
+          newv = he->next->next->v;
+        }
+        // split if the edge is inside the domain and we are not on a control point
+        else if (i != inter.size()-1 && i != 0)  {
+          if (he->f->data >= 0 || he->opposite->f->data >= 0) {
+            pm->split_edge(he, point, -1);
             he->next->opposite->f->data = he->f->data;
             he->opposite->f->data = he->next->opposite->next->opposite->f->data;
-            he->data = bndTag; // constrain them again
-            he->next->opposite->next->data = bndTag; // constrain them again
+            he->next->opposite->next->data = he->data;
+            he->opposite->data = he->data;
+            pm->vertices.back()->data = newTag++;
+            newv = pm->vertices.back();
+          }
+          else {
+            newv = nullptr;
           }
         }
+        if (newv != nullptr && lastv != nullptr && newv != lastv) {
+          pm->getEdge(lastv, newv)->data = e->tag();
+          pm->getEdge(newv, lastv)->data = e->tag();
+        }
+        lastv = newv;
+      }
+      for (auto a : inter) {
+        fprintf(debug, "SP(%g, %g, 0){%d};\n", a.second.x(), a.second.y(), 0);
+      }
+
+      for (auto a : inter) {
+        fprintf(debug, "SP(%g, %g, 0){%d};\n", a.second.x(), a.second.y(), 0);
+      }
+      for (size_t i = 1; i < inter.size(); ++i) {
+        auto p0 = inter[i-1].second;
+        auto p1 = inter[i].second;
+        fprintf(debug, "SL(%g, %g, 0, %g, %g, 0){%d, %d};\n", p0.x(), p0.y(), p1.x(), p1.y(), cc, cc);
       }
     }
   }
-  toc = std::chrono::high_resolution_clock::now();
+  fprintf(debug, "};\n");
+  fclose(debug);
+  print4debug(pm, 1);
+  exit(0);
+  auto toc = std::chrono::high_resolution_clock::now();
   std::cout << "    Octree search  : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
+  exit(0);
 
 
   // check and remove elements that are outside the domain
@@ -3661,13 +3797,10 @@ void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, cons
     }
   }
   bbox*=1.01;
-  OctreeNode<2, 32, bndEdge*> octree(bbox);
-  // OctreeNode<2, 64, bndEdge*, edgeIntersect> octree(bbox);
+  //OctreeNode<2, 32, bndEdge*> octree(bbox);
+   OctreeNode<2, 64, bndEdge*, edgeIntersect> octree(bbox);
   for (auto &ed : bndEdges){
-    BBox<2> ed_bbox;
-    ed_bbox.extends({ed.x0, ed.y0});
-    ed_bbox.extends({ed.x1, ed.y1});
-    octree.add(&ed, ed_bbox);
+    octree.add(&ed);
   }
 
   std::vector<bndEdge*> result;
