@@ -3982,6 +3982,8 @@ bool OCC_Internals::booleanOperator(
       }
     } break;
 
+    // TODO: implement OCC_Internals::Section:
+
     case OCC_Internals::Fragments:
     default: {
       BRepAlgoAPI_BuilderAlgo fragments;
@@ -4103,6 +4105,11 @@ bool OCC_Internals::booleanOperator(
     }
     for(int d = -2; d <= 3; d++) _recomputeMaxTag(d);
     // bind all remaining entities and add the new ones to the returned list
+    //
+    // FIXME: this only returns entities of the same dimension as the input
+    // entities, unless the new entities are not on the boundary of higher
+    // dimensional new entities (due to recursive=true). This can lead to hard
+    // to understand results: see e.g. #2955
     _multiBind(result, -1, outDimTags, false, true, true);
     _filterTags(outDimTags, minDim);
     _toPreserve.clear();
