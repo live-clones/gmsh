@@ -3369,6 +3369,59 @@ std::pair<int, SVector3> snapPoint(PolyMesh::HalfEdge *he, SVector3 p, double to
   return {r, p};
 }
 
+ static int delaunayCriterionColors(PolyMesh::HalfEdge *he, void* val)
+{
+  // if(he->f == nullptr) return -1;
+  // if(he->opposite == nullptr) return -1;
+  if(he->opposite == nullptr) return -1;
+  if(he->data > 0) return 0;
+  if(he->opposite->data > 0) return 0;
+  PolyMesh::Vertex *v0 = he->v;
+  PolyMesh::Vertex *v1 = he->next->v;
+  PolyMesh::Vertex *v2 = he->next->next->v;
+  PolyMesh::Vertex *v = he->opposite->next->next->v;
+  // FIXME : should be oriented anyway !
+  double result = robustPredicates::incircle(v0->position, v1->position,
+                                              v2->position, v->position);
+  return (result > 0) ? 1 : 0;
+}
+
+void _delaunayCheckColors(PolyMesh* pm, std::vector<PolyMesh::HalfEdge* > hes, std::vector<PolyMesh::HalfEdge* > *_t){
+  std::stack<PolyMesh::HalfEdge *> _stack;
+  for (auto he : hes) _stack.push(he);
+  std::vector<PolyMesh::HalfEdge *> _touched;
+  while(!_stack.empty()) {
+    PolyMesh::HalfEdge *he = _stack.top();
+    _touched.push_back(he);
+    _stack.pop();
+    if(delaunayCriterionColors(he, nullptr) == 1) {
+      pm->swap_edge(he);
+      PolyMesh::HalfEdge *H[2] = {he, he->opposite};
+      for(int k = 0; k < 2; k++) {
+        if(H[k] == NULL) continue;
+        PolyMesh::HalfEdge *heb = H[k]->next;
+        PolyMesh::HalfEdge *hebo = heb->opposite;
+        if(std::find(_touched.begin(), _touched.end(), heb) ==
+              _touched.end() &&
+            std::find(_touched.begin(), _touched.end(), hebo) ==
+              _touched.end()) {
+          _stack.push(heb);
+        }
+
+        PolyMesh::HalfEdge *hec = heb->next;
+        PolyMesh::HalfEdge *heco = hec->opposite;
+        if(std::find(_touched.begin(), _touched.end(), hec) ==
+              _touched.end() &&
+            std::find(_touched.begin(), _touched.end(), heco) ==
+              _touched.end()) {
+          _stack.push(hec);
+        }
+      }
+    }
+  }
+  *_t = _touched;
+}
+
 void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::string & boundaryModel, std::vector<PolyMesh::Vertex*> & controlNodes){
   GModel* gm_alphaShape = GModel::current();
   size_t newTag = gm_alphaShape->getMaxVertexNumber()+1;
@@ -3457,10 +3510,8 @@ void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::stri
       }
     }
   }
-  print4debug(pm, 0);
+  // print4debug(pm, 0);
   std::vector<std::pair<PolyMesh::HalfEdge*, SVector3>> crossed;
-  FILE *debug = fopen("debug.pos", "w");
-  fprintf(debug, "View \"search\" {\n");
   auto *guess = pm->faces[0]->he;
   int cc = 0;
   for (const auto &e : bndEntities) {
@@ -3514,27 +3565,11 @@ void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::stri
         }
         lastv = newv;
       }
-      for (auto a : inter) {
-        fprintf(debug, "SP(%g, %g, 0){%d};\n", a.second.x(), a.second.y(), 0);
-      }
-
-      for (auto a : inter) {
-        fprintf(debug, "SP(%g, %g, 0){%d};\n", a.second.x(), a.second.y(), 0);
-      }
-      for (size_t i = 1; i < inter.size(); ++i) {
-        auto p0 = inter[i-1].second;
-        auto p1 = inter[i].second;
-        fprintf(debug, "SL(%g, %g, 0, %g, %g, 0){%d, %d};\n", p0.x(), p0.y(), p1.x(), p1.y(), cc, cc);
-      }
     }
   }
-  fprintf(debug, "};\n");
-  fclose(debug);
-  print4debug(pm, 1);
-  exit(0);
+  // print4debug(pm, 1);
   auto toc = std::chrono::high_resolution_clock::now();
-  std::cout << "    Octree search  : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
-  exit(0);
+  std::cout << "    Recover edges : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
 
 
   // check and remove elements that are outside the domain
@@ -3559,25 +3594,156 @@ void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::stri
   tic = std::chrono::high_resolution_clock::now();
   std::cout << "    Remove outside  : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
 
-  // Color boundary half edges
-  for (auto he : pm->hedges) he->data = -1;
-  for (auto f : pm->faces){
-    if (f->data == tag) continue;
-    PolyMesh::HalfEdge* he = f->he;
-    do {
-      if (he->opposite && he->opposite->f->data == tag){
-        he->data = bndTag;
-        he->opposite->data = bndTag;
-      }
-      he = he->next;
-    } while (he != f->he);
-  }
-  toc = std::chrono::high_resolution_clock::now();
-  std::cout << "    Color edges  : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
   std::vector<PolyMesh::HalfEdge *> _touched;
-  _delaunayCheck(pm, pm->hedges, &_touched, bndTag);
-  tic = std::chrono::high_resolution_clock::now();
-  std::cout << "    Delaunay check  : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
+  _delaunayCheckColors(pm, pm->hedges, &_touched);
+  toc = std::chrono::high_resolution_clock::now();
+  std::cout << "    Delaunay check  : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
+}
+
+bool boundaryCheck(PolyMesh* pm, PolyMesh::Vertex* v){
+  PolyMesh::HalfEdge *he = v->he;
+  if(he->data > 0) return true;
+  do {
+    he = he->opposite;
+    if(he == nullptr) return true;
+    he = he->next;
+    if(he->data > 0) return true;
+  } while(he != v->he);
+  return false;
+ }
+
+
+void _WalkColors(PolyMesh::Face *f, double* cc, PolyMesh::HalfEdge** heCandidate, bool* found, int* onEdgeFlag)
+{
+  // heCandidate = nullptr;
+  double POS[2] = {cc[0], cc[1]};
+  PolyMesh::HalfEdge *he = f->he;
+  bool cont = true;
+  if (onEdgeFlag) *onEdgeFlag = -1;
+  while(cont) {
+    PolyMesh::Vertex *v0 = he->v;
+    PolyMesh::Vertex *v1 = he->next->v;
+    PolyMesh::Vertex *v2 = he->next->next->v;
+
+    double s0 = robustPredicates::orient2d(v0->position, v1->position, POS);
+    double s1 = robustPredicates::orient2d(v1->position, v2->position, POS);
+    double s2 = robustPredicates::orient2d(v2->position, v0->position, POS);
+    if (onEdgeFlag){
+      if (s0 == 0) *onEdgeFlag = 0;
+      if (s1 == 0) *onEdgeFlag = 1;
+      if (s2 == 0) *onEdgeFlag = 2;
+    }
+    if(s0 >= 0 && s1 >= 0 && s2 >= 0) {
+      *heCandidate = he;
+      *found = true;
+      cont = false;
+    }
+    else if(s0 <= 0 && s1 >= 0 && s2 >= 0){
+      if (he->data > 0){
+        *heCandidate = he;
+        *found = false;
+        cont = false;
+      }
+      else 
+        he = he->opposite;
+    }
+    else if(s1 <= 0 && s0 >= 0 && s2 >= 0){
+      if (he->next->data > 0){
+        *heCandidate = he->next;
+        *found = false;
+        cont = false;
+      }
+      else 
+        he = he->next->opposite;
+    }
+    else if(s2 <= 0 && s0 >= 0 && s1 >= 0){
+      if (he->next->next->data > 0){
+        *heCandidate = he->next->next;
+        *found = false;
+        cont = false;
+      }
+      else 
+        he = he->next->next->opposite;
+    }
+    else if(s0 <= 0 && s1 <= 0){
+      // he = s0 > s1 ? he->opposite : he->next->opposite;
+      if (s0 < s1){
+        if (he->data > 0){
+          *heCandidate = he;
+          *found = false;
+          cont = false;
+        }
+        else {
+          he = he->opposite;
+        }
+      }
+      else{
+        if (he->next->data > 0){
+          *heCandidate = he->next;
+          *found = false;
+          cont = false;
+        }
+        else {
+          he = he->next->opposite;
+        }
+      }
+    }
+    else if(s0 <= 0 && s2 <= 0){
+      if (s0 < s2){
+        if (he->data > 0){
+          *heCandidate = he;
+          *found = false;
+          cont = false;
+        }
+        else {
+          he = he->opposite;
+        }
+      }
+      else {
+        if (he->next->next->data > 0){
+          *heCandidate = he->next->next;
+          *found = false;
+          cont = false;
+        }
+        else {
+          he = he->next->next->opposite;
+        }
+      }
+    }
+    else if(s1 <= 0 && s2 <= 0){
+      if (s1 < s2){
+        if(he->next->data > 0){
+          *heCandidate = he->next;
+          *found = false;
+          cont = false;
+        }
+        else {
+          he = he->next->opposite;
+        }
+      }
+      else {
+        if(he->next->next->data > 0){
+          *heCandidate = he->next->next;
+          *found = false;
+          cont = false;
+        }
+        else {
+          he = he->next->next->opposite;
+        }
+      }
+    }
+    else {
+      Msg::Error("Could not find half-edge in walk for point %g %g on "
+                 "face %g %g %g / %g %g %g / %g %g %g "
+                 "(orientation tests %g %g %g)", cc[0], cc[1],
+                 v0->position.x(), v0->position.y(), v0->position.z(),
+                 v1->position.x(), v1->position.y(), v1->position.z(),
+                 v2->position.x(), v2->position.y(), v2->position.z(),
+                 s0, s1, s2);
+    }
+    if(he == nullptr) break;
+  }
+  if(he== nullptr) *found = false;
 }
 
 void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, std::vector<PolyMesh::Vertex*> & controlNodes){
@@ -3595,7 +3761,7 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, std::vec
   double coarseFactor_bnd = 0.3;
   double coarseFactor_in = 0.3;
   for (auto he : pm->hedges){
-    if ((he->data == -1 && !freeSurfaceCheck(pm, he->v, bndTag)) || he->data == bndTag){
+    if ((he->data == -1 && !boundaryCheck(pm, he->v)) || he->data > 0){
       double d = norm(he->v->position - he->next->v->position);
       double size = 0.5*(sizeAtNodes[he->v->data] + sizeAtNodes[he->next->v->data]);
       if (d < coarseFactor_in*size) {
@@ -3610,7 +3776,7 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, std::vec
     heVector.erase(heVector.end()-1);
     if (he->opposite == nullptr || he->opposite->f == nullptr || he->f == nullptr ) continue; 
     if (he->f->data != tag) continue;
-    if (freeSurfaceCheck(pm, he->v, bndTag) && he->data == -1) continue; 
+    if (boundaryCheck(pm, he->v) && he->data == -1) continue; 
     bool control = false;
     if (controlNodesSet.find(he->v) != controlNodesSet.end()) control = true;
     double d = norm(he->v->position - he->next->v->position);
@@ -3619,16 +3785,17 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, std::vec
       if (control) he = he->opposite;
       if (control && controlNodesSet.find(he->v) != controlNodesSet.end()) continue;
       std::vector<PolyMesh::HalfEdge *> _nhes;
-      if (he->data == bndTag && d <coarseFactor_bnd*size){
-        hedgeCollapseBoundaryEdge(pm, he, tag, bndTag, &_nhes);
+      if (he->data > 0 && d <coarseFactor_bnd*size){
+        continue;
+        // hedgeCollapseBoundaryEdge(pm, he, tag, bndTag, &_nhes);
       }
-      else if (he->data != bndTag){
+      else if (he->data < 0){
         pm->hedgeCollapse(he, &_nhes);
       }
       auto it = std::find(heVector.begin(), heVector.end(), he->opposite);
       if (it != heVector.end()) heVector.erase(it);
       std::vector<PolyMesh::HalfEdge* > _t;
-      _delaunayCheck(pm, _nhes, &_t, bndTag);  
+      _delaunayCheckColors(pm, _nhes, &_t);  
     }
   }
   
@@ -3665,33 +3832,33 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, std::vec
       PolyMesh::HalfEdge* heCandidate = nullptr;
       bool found;
       int onEdgeFlag;
-      _Walk(f, cc, &heCandidate, &found, bndTag, &onEdgeFlag);
+      _WalkColors(f, cc, &heCandidate, &found, &onEdgeFlag);
       if (onEdgeFlag != -1){ // A sanity check... if we are splitting a triangle with a 90° angle, and the opposite edge happens to be a boundary edge, we must split the edge, not the triangle
         PolyMesh::HalfEdge *flaggedHe = nullptr; 
         if (onEdgeFlag == 0) flaggedHe = heCandidate;
         else if (onEdgeFlag == 1) flaggedHe = heCandidate->next;
         else if (onEdgeFlag == 2) flaggedHe = heCandidate->next->next;
-        if (flaggedHe->data == bndTag) {
+        if (flaggedHe->data > 0) {
           found = false;
           heCandidate = flaggedHe;
         }
       }
       std::vector<PolyMesh::HalfEdge *> _touched;
       if (heCandidate && found){ // this means it is NOT a constrained edge
-        int constrEdge = bndTag;
-        pm->split_triangle(-1, cc[0], cc[1], cc[2], heCandidate->f, delaunayCriterion, &constrEdge, &_touched);
+        pm->split_triangle(-1, cc[0], cc[1], cc[2], heCandidate->f, delaunayCriterionColors, nullptr, &_touched);
       }
       else { // this means it is a constrained edge
         SVector3 p = 0.5*(heCandidate->v->position + heCandidate->next->v->position);
         cc.setPosition(p.x(), p.y(), p.z());
         if ( heCandidate->opposite){
           pm->split_edge(heCandidate, cc, -1);
+          int heData = heCandidate->data;
           heCandidate->next->opposite->f->data = heCandidate->f->data;
           heCandidate->opposite->f->data = heCandidate->next->opposite->next->opposite->f->data;
-          heCandidate->data = bndTag; // constrain them again
-          heCandidate->opposite->data = bndTag; // constrain them again
-          heCandidate->next->opposite->next->data = bndTag; // constrain them again
-          heCandidate->next->opposite->next->opposite->data = bndTag; // constrain them again
+          heCandidate->data = heData; // constrain them again
+          // heCandidate->opposite->data = heData; // constrain them again
+          heCandidate->next->opposite->next->data = heData; // constrain them again
+          // heCandidate->next->opposite->next->opposite->data = heData; // constrain them again
           std::vector<PolyMesh::HalfEdge *> new_hes;
           new_hes.push_back(heCandidate);
           new_hes.push_back(heCandidate->next);
@@ -3699,7 +3866,7 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, std::vec
           new_hes.push_back(heCandidate->next->opposite);
           new_hes.push_back(heCandidate->next->opposite->next);
           new_hes.push_back(heCandidate->next->opposite->next->next);
-          _delaunayCheck(pm, new_hes, &_touched, bndTag);
+          _delaunayCheckColors(pm, new_hes, &_touched);
         }
         SVector3 dist = cc-heCandidate->v->position;
         std::vector<PolyMesh::Vertex *> closeVertices;
@@ -3709,10 +3876,10 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, std::vec
           for (auto vv : closeVertices){
             std::vector<PolyMesh::HalfEdge *> _tlocal;
             std::vector<PolyMesh::HalfEdge *> _nhes;
-            if (vv->he->f->data == tag && pm->degree(vv) > 0 && !freeSurfaceCheck(pm, vv, bndTag)) {
+            if (vv->he->f->data == tag && pm->degree(vv) > 0 && !boundaryCheck(pm, vv)) {
               _deleteVertex(pm, vv, &_nhes);
             }
-            _delaunayCheck(pm, _nhes, &_tlocal, bndTag);
+            _delaunayCheckColors(pm, _nhes, &_tlocal);
             _touched.insert(_touched.end(), _tlocal.begin(), _tlocal.end());
           }
           for(auto face_it = _badFaces.begin() ; face_it != _badFaces.end(); face_it++)
@@ -3742,6 +3909,7 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, std::vec
       }
     }
   }
+  // print4debug(pm, 3);
 }
 
 
@@ -3782,66 +3950,13 @@ void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, cons
   bndMap[bndTag] = std::vector<size_t>();
   for (auto e : bndEntities){
     GEdge* ge = (GEdge*)e;
-    size_t n_elem = e->getNumMeshElements();
-    for (size_t i_el = 0; i_el<n_elem; i_el++){
-      MElement *elem = e->getMeshElement(i_el);
-      if(elem->getDim() != 1) continue;
-      // gVertices.insert(elem->getVertex(0));
-      // gVertices.insert(elem->getVertex(1));
-      // std::array<double, 4> edge = {elem->getVertex(0)->x(), elem->getVertex(0)->y(), elem->getVertex(1)->x(), elem->getVertex(1)->y()};
-      bndEdge bd = {elem->getVertex(0)->x(), elem->getVertex(0)->y(), elem->getVertex(1)->x(), elem->getVertex(1)->y(), e->tag()};
-      bndMap[e->tag()] = std::vector<size_t>();
-      bndEdges.push_back(bd);
-      bbox.extends({bd.x0, bd.y0});
-      bbox.extends({bd.x1, bd.y1});
-    }
+    bndMap[e->tag()] = std::vector<size_t>();
   }
-  bbox*=1.01;
-  //OctreeNode<2, 32, bndEdge*> octree(bbox);
-   OctreeNode<2, 64, bndEdge*, edgeIntersect> octree(bbox);
-  for (auto &ed : bndEdges){
-    octree.add(&ed);
-  }
-
-  std::vector<bndEdge*> result;
-  std::set<int> resultTags0;
-  std::set<int> resultTags1;
-  std::set<int> intersection;
-  double eps = 1e-9;
   for (auto he : pm->hedges){
-    if (he->data != bndTag || he->f == nullptr || he->f->data != tag) continue;
-    resultTags0.clear();
-    resultTags1.clear();
-    intersection.clear();
-    BBox<2> search_bbox;
-    search_bbox.extends({he->v->position.x(), he->v->position.y()});
-    search_bbox*=(1+eps);
-    result.clear();
-    octree.search(search_bbox, result);
-    if (result.size() == 0){  // free surface!!!
-      bndMap[bndTag].push_back(he->v->data);
-      bndMap[bndTag].push_back(he->next->v->data); 
-      continue;
-    }
-    for (auto &ed : result) resultTags0.insert(ed->tag);
-    BBox<2> search_bbox1;
-    search_bbox1.extends({he->next->v->position.x(), he->next->v->position.y()});
-    search_bbox1*=(1+eps);
-    result.clear();
-    octree.search(search_bbox1, result);
-    if (result.size() == 0){ // free surface!!!
-      bndMap[bndTag].push_back(he->v->data);
-      bndMap[bndTag].push_back(he->next->v->data); 
-      continue; 
-    }
-    for (auto &ed : result) resultTags1.insert(ed->tag);
-    std::set_intersection(resultTags0.begin(), resultTags0.end(), resultTags1.begin(), resultTags1.end(), std::inserter(intersection, intersection.begin()));
-    if (intersection.size() == 1){
-      bndMap[*intersection.begin()].push_back(he->v->data);
-      bndMap[*intersection.begin()].push_back(he->next->v->data);
-    }
+    if (he->data < 0 || he->f == nullptr || he->f->data != tag) continue;
+    bndMap[he->data].push_back(he->v->data);
+    bndMap[he->data].push_back(he->next->v->data); 
   }
-
   gm_alphaShape->destroy(true);
   gmsh::model::addDiscreteEntity(2, tag);
 
