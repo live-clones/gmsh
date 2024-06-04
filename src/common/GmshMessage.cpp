@@ -387,13 +387,13 @@ onelab::client *Msg::GetOnelabClient()
 }
 #endif
 
-void Msg::Exit(int level)
+void Msg::Exit(int level, bool forceLevel)
 {
   Finalize();
 #if defined(HAVE_MPI)
   if(level) MPI_Abort(MPI_COMM_WORLD, level);
 #endif
-  exit(level ? level : _atLeastOneErrorInRun);
+  exit((forceLevel || level) ? level : _atLeastOneErrorInRun);
 }
 
 static int streamIsFile(FILE *stream)

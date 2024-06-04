@@ -3593,11 +3593,11 @@ Command :
     }
    | tExit tEND
     {
-      Msg::Exit(0);
+      Msg::Exit(0, true);
     }
    | tExit FExpr tEND
     {
-      Msg::Exit((int)$2);
+      Msg::Exit((int)$2, true);
     }
    | tAbort tEND
     {
