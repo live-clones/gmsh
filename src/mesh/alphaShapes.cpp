@@ -2025,7 +2025,7 @@ void polyMeshFromExistingElements(PolyMesh* pm, int faceTag, int bndTag){
   }
 }
 
-static PolyMesh::Face *WalkGeneral(PolyMesh::Face *f, double x, double y)
+static PolyMesh::Face *WalkGeneral(PolyMesh::Face *f, double x, double y, PolyMesh::HalfEdge** heBnd = nullptr)
 {
   double POS[2] = {x, y};
   PolyMesh::HalfEdge *he = f->he;
@@ -2040,13 +2040,9 @@ static PolyMesh::Face *WalkGeneral(PolyMesh::Face *f, double x, double y)
     double s2 = robustPredicates::orient2d(v2->position, v0->position, POS);
 
     if(s0 >= 0 && s1 >= 0 && s2 >= 0) {
-      /* printf("Face %g %g %g / %g %g %g / %g %g %g \n",
-                v0->position.x(), v0->position.y(), v0->position.z(),
-                v1->position.x(), v1->position.y(), v1->position.z(),
-                v2->position.x(), v2->position.y(), v2->position.z());
-                printf("point %g %g CURRENT FACE %p %g %g %g\n", x,y,he->f,
-                s0,s1,s2); */
-      // getchar();
+      if (heBnd != nullptr && s0 < 1e-11) *heBnd = he;
+      if (heBnd != nullptr && s1 < 1e-11) *heBnd = he->next;
+      if (heBnd != nullptr && s2 < 1e-11) *heBnd = he->next->next;
       return he->f;
     }
     else if(s0 <= 0 && s1 >= 0 && s2 >= 0)
@@ -3131,10 +3127,12 @@ static double _faceSizeFromMap(PolyMesh::HalfEdge *he, std::unordered_map<int, d
   return 1./3.* (sizeAtNodes[he->v->data] + sizeAtNodes[he->next->v->data] + sizeAtNodes[he->next->next->v->data]);
 }
 
-PolyMesh* _alphaShapeDelaunay2D(const int tag){
+PolyMesh* _alphaShapeDelaunay2D(const int tag, const std::string boundaryModel){
+  GModel* gm_boundary = GModel::findByName(boundaryModel);
+  GModel* gm_alphaShape = GModel::current();
   GFace* gf = GModel::current()->getFaceByTag(tag);
   PolyMesh *pm = new PolyMesh;
-  SBoundingBox3d bb;
+  SBoundingBox3d bb = gm_boundary->bounds();
   for(auto &v : gf->mesh_vertices) {
     bb += SPoint3(v->x(), v->y(), 0);
   }
@@ -3160,7 +3158,6 @@ void _alphaShape2D(PolyMesh* pm, const double alpha, const int faceTag, const in
     if(i0 < 0 || i1 < 0 || i2 < 0) 
       f->data = -2;
   }
-
   // compute size field at all the nodes
   std::unordered_map<int, double> sizeAtNodes(pm->vertices.size());
   for (auto v : pm->vertices){
@@ -3280,17 +3277,57 @@ void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::stri
   }
   for (auto gv : gVertices){
     SVector3 X(gv->x(), gv->y(), gv->z());
-    PolyMesh::Face* f = WalkGeneral(pm->faces[0], X.x(), X.y());
-    if (f != nullptr && f->data == tag){
+    PolyMesh::HalfEdge* heBnd = nullptr;
+    PolyMesh::Face* f = WalkGeneral(pm->faces[0], X.x(), X.y(), &heBnd);
+    if (heBnd != nullptr && (heBnd->data == bndTag || heBnd->opposite->data == bndTag)){
+    // if (heBnd != nullptr && (heBnd->data == bndTag)){
+      if (heBnd->data != bndTag) {
+        heBnd = heBnd->opposite;
+      }
+      if (heBnd->f->data != tag) 
+        continue;
+      double threshold = 1e-6;
+      double d0 = norm(X - heBnd->v->position);
+      if (d0 < threshold){
+        controlNodes.push_back(heBnd->v);
+        continue;
+      }
+      double d1 = norm(X - heBnd->next->v->position);
+      if (d1 < threshold){
+        controlNodes.push_back(heBnd->next->v);
+        continue;
+      }
+
+      pm->split_edge(heBnd, X, -1);
+      PolyMesh::Vertex* v = pm->vertices.back();
+      v->data = newTag++;
+      controlNodes.push_back(v);
+      heBnd->next->opposite->f->data = heBnd->f->data;
+      heBnd->opposite->f->data = heBnd->next->opposite->next->opposite->f->data;
+      heBnd->data = bndTag; // constrain them again
+      // heBnd->opposite->data = bndTag; // constrain them again
+      heBnd->next->opposite->next->data = bndTag; // constrain them again
+      // heBnd->next->opposite->next->opposite->data = bndTag; // constrain them again
+    }
+    else if (f != nullptr && f->data == tag){
       PolyMesh::HalfEdge* he = f->he;
       double d0 = norm(X - he->v->position);
       double d1 = norm(X - he->next->v->position);
       double d2 = norm(X - he->next->next->v->position);
       double threshold = 1e-6;
-      if (d0 < threshold || d1 < threshold || d2 < threshold) {
+      if (d0 < threshold){
+        controlNodes.push_back(he->v);
         continue;
       }
-      pm->split_triangle(-1, X.x(), X.y(), X.z(), f, delaunayCriterion, nullptr);
+      if (d1 < threshold){
+        controlNodes.push_back(he->next->v);
+        continue;
+      }
+      if (d2 < threshold){
+        controlNodes.push_back(he->next->next->v);
+        continue;
+      }
+      pm->split_triangle(-1, X.x(), X.y(), X.z(), f, delaunayCriterion, (void*)&bndTag);
       PolyMesh::Vertex* v = pm->vertices.back();
       v->data = newTag++;
       controlNodes.push_back(v);
@@ -3316,11 +3353,8 @@ void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::stri
     int n1 = he->next->v->data;
     v0 = n0 < n1 ? he->v : he->next->v;
     v1 = n0 < n1 ? he->next->v : he->v;
-    // auto edge = nodes2he.find(std::make_pair(std::min(n0, n1), std::max(n0, n1)));
-    // if (edge == nodes2he.end()){ 
-      // octree.add(he);
+    if (v0->data == -1 || v1->data == -1) printf("adding bbox node ... \n");
     nodes2he.insert(std::make_pair(v0, v1));
-    // }
   }
   for (auto nodes : nodes2he){
     PolyMesh::HalfEdge* he = pm->getEdge(nodes.first, nodes.second);
@@ -3328,6 +3362,7 @@ void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::stri
     he_bbox.extends({he->v->position.x(), he->v->position.y()});
     he_bbox.extends({he->next->v->position.x(), he->next->v->position.y()});
     if (he != nullptr) octree.add(he, he_bbox);
+    // if (he != nullptr) octree.add(he);
   }
   tic = std::chrono::high_resolution_clock::now();
   std::cout << "    Octree create  : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
@@ -3668,6 +3703,7 @@ void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, cons
     ed_bbox.extends({ed.x0, ed.y0});
     ed_bbox.extends({ed.x1, ed.y1});
     octree.add(&ed, ed_bbox);
+    // octree.add(&ed);
   }
 
   std::vector<bndEdge*> result;

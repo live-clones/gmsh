@@ -5691,7 +5691,7 @@ gmsh::model::mesh::computeAlphaShapeBis(const int dim, const int tag, const int 
 
     // Delaunay
     auto tic = std::chrono::high_resolution_clock::now();
-    PolyMesh* pm = _alphaShapeDelaunay2D(tag);
+    PolyMesh* pm = _alphaShapeDelaunay2D(tag, boundaryModel);
     auto toc = std::chrono::high_resolution_clock::now();
     std::cout << "Triangulate  : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
 
