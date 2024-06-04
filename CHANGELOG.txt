@@ -1,3 +1,5 @@
+4.13.2 (Work-in-progress): improve return value of boolean operations.
+
 4.13.1 (May 24, 2024): fix regression introduced in 4.13.0 when reading binary
 .msh files with post-processing data; new read-only Mesh.MinQuality updated
 after meshing pipeline; occ/addSurfaceFilling new defaults to degree=2 for
