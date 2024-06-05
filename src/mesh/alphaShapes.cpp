@@ -691,6 +691,9 @@ void print4debug(PolyMesh* pm, const int debugTag)
                 he->next->v->position.y(), he->data, he->data);
       }
     }
+    for (auto v : pm->vertices){
+      fprintf(f, "SP(%g,%g,0){%d};\n", v->position.x(), v->position.y(), v->data);
+    }
 
     fprintf(f, "};\n");
     fclose(f);
@@ -3443,7 +3446,7 @@ std::pair<int, SVector3> snapPoint(PolyMesh::HalfEdge *he, SVector3 p, double to
   // FIXME : should be oriented anyway !
   double result = robustPredicates::incircle(v0->position, v1->position,
                                               v2->position, v->position);
-  return (result > 0) ? 1 : 0;
+  return (result >= 0) ? 1 : 0;
 }
 
 void _delaunayCheckColors(PolyMesh* pm, std::vector<PolyMesh::HalfEdge* > hes, std::vector<PolyMesh::HalfEdge* > *_t){
@@ -3839,11 +3842,8 @@ void _WalkColors(PolyMesh::Face *f, double* cc, PolyMesh::HalfEdge** heCandidate
 }
 
 void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const int sizeFieldTag, std::vector<PolyMesh::Vertex*> & controlNodes){
-  // GModel::setAsCurrent()
-
   for (auto it : *GModel::current()->getFields()){
     auto field = it.second;
-    printf("field name : %s\n", field->getName());
     if (field->getName() == std::string("AlphaShapeDistance")){
       AlphaShapeDistanceField * asdf = dynamic_cast<AlphaShapeDistanceField*>(field);
       // for (auto i : list){
@@ -3853,7 +3853,8 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const in
           SVector3 p0 = he->v->position;
           SVector3 p1 = he->next->v->position;
           double d = norm(p1-p0);
-          int n = asdf->sampling_length == 0 ? std::max(2, int(d/asdf->sampling_length)) : 2;
+          int n = asdf->sampling_length == 0 ? 2 : std::max(2, int(d/asdf->sampling_length));
+          printf("n = %d; sampling lenght : %f; %d \n", n, asdf->sampling_length, int(d/asdf->sampling_length));
           for (int i = 0; i < n; i++){
             points.push_back((p0 + (p1-p0)*(i*1./(n-1))).point());
           }
@@ -3874,11 +3875,11 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const in
   for (int i=0; i<pm->vertices.size(); i++){
     PolyMesh::Vertex* v = pm->vertices[i];
     sizeAtNodes[v->data] = field->operator()(v->position.x(), v->position.y(), 0);
-    printf("sizeAtNodes[%d] = %g\n", v->data, sizeAtNodes[v->data]);
+    // printf("sizeAtNodes[%d] = %g\n", v->data, sizeAtNodes[v->data]);
     // sizeAtNodes[v->data] = BGM_MeshSize(gf, v->position.x(), v->position.y(), v->position.x(), v->position.y(), 0);
   }
 
-  printf("computed \n");
+  // print4debug(pm, 0);
 
   // Coarsen
   std::vector<PolyMesh::HalfEdge *> heVector;
@@ -3980,9 +3981,9 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const in
           heCandidate->next->opposite->f->data = heCandidate->f->data;
           heCandidate->opposite->f->data = heCandidate->next->opposite->next->opposite->f->data;
           heCandidate->data = heData; // constrain them again
-          // heCandidate->opposite->data = heData; // constrain them again
+          heCandidate->opposite->data = heData; // constrain them again
           heCandidate->next->opposite->next->data = heData; // constrain them again
-          // heCandidate->next->opposite->next->opposite->data = heData; // constrain them again
+          heCandidate->next->opposite->next->opposite->data = heData; // constrain them again
           std::vector<PolyMesh::HalfEdge *> new_hes;
           new_hes.push_back(heCandidate);
           new_hes.push_back(heCandidate->next);
@@ -4034,9 +4035,7 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const in
       }
     }
   }
-  // print4debug(pm, 3);
 }
-
 
 struct bndEdge {
   double x0, y0, x1, y1;
@@ -4080,8 +4079,9 @@ void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, cons
     bndMap[he->data].push_back(he->v->data);
     bndMap[he->data].push_back(he->next->v->data); 
   }
-  gm_alphaShape->destroy(true);
-  gmsh::model::addDiscreteEntity(2, tag);
+  gm_alphaShape->deleteMesh();
+  // gm_alphaShape->destroy(true);
+  // gmsh::model::addDiscreteEntity(2, tag);
 
   std::vector<size_t> nodeTags;
   std::vector<double> coords;
@@ -4096,7 +4096,7 @@ void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, cons
   
   std::vector<size_t> edTags;
   for (auto bnd : bndMap){
-    gmsh::model::addDiscreteEntity(1, bnd.first);
+    // gmsh::model::addDiscreteEntity(1, bnd.first);
     gmsh::model::mesh::addElementsByType(bnd.first, 1, edTags, bnd.second);
   }
 
