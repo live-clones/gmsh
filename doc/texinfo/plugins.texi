@@ -541,7 +541,7 @@ Plugin(HomologyComputation) computes representative chains of basis elements of 
 @*
 Define physical groups in order to specify the computation domain and the relative subdomain. Otherwise the whole mesh is the domain and the relative subdomain is empty. @*
 @*
-Plugin(HomologyComputation) creates new views, one for each basis element. The resulting basis chains of desired dimension together with the mesh are saved to the given file.
+Plugin(HomologyComputation) creates new views, one for each basis element. If `Filename' is provided, the plugin saves the resulting basis chains of desired dimension along with the mesh.
 String options:
 @table @code
 @item DomainPhysicalGroups
@@ -553,7 +553,7 @@ Default value: @code{""}
 @item DimensionOfChainsToSave
 Default value: @code{"0, 1, 2, 3"}
 @item Filename
-Default value: @code{"homology.msh"}
+Default value: @code{""}
 @end table
 Numeric options:
 @table @code
