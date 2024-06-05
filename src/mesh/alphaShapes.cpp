@@ -3453,10 +3453,12 @@ void _delaunayCheckColors(PolyMesh* pm, std::vector<PolyMesh::HalfEdge* > hes, s
   std::stack<PolyMesh::HalfEdge *> _stack;
   for (auto he : hes) _stack.push(he);
   std::vector<PolyMesh::HalfEdge *> _touched;
+  size_t debug = 0;
   while(!_stack.empty()) {
     PolyMesh::HalfEdge *he = _stack.top();
     _touched.push_back(he);
     _stack.pop();
+    if (!he->opposite || !he->f) continue;
     if(delaunayCriterionColors(he, nullptr) == 1) {
       pm->swap_edge(he);
       PolyMesh::HalfEdge *H[2] = {he, he->opposite};
@@ -3854,7 +3856,6 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const in
           SVector3 p1 = he->next->v->position;
           double d = norm(p1-p0);
           int n = asdf->sampling_length == 0 ? 2 : std::max(2, int(d/asdf->sampling_length));
-          printf("n = %d; sampling lenght : %f; %d \n", n, asdf->sampling_length, int(d/asdf->sampling_length));
           for (int i = 0; i < n; i++){
             points.push_back((p0 + (p1-p0)*(i*1./(n-1))).point());
           }
@@ -3863,6 +3864,7 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const in
       asdf->set(points);
     }
   }
+
 
 
   Field* field = GModel::current()->getFields()->get(sizeFieldTag);
@@ -3879,7 +3881,6 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const in
     // sizeAtNodes[v->data] = BGM_MeshSize(gf, v->position.x(), v->position.y(), v->position.x(), v->position.y(), 0);
   }
 
-  // print4debug(pm, 0);
 
   // Coarsen
   std::vector<PolyMesh::HalfEdge *> heVector;
@@ -3911,11 +3912,12 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const in
       if (control && controlNodesSet.find(he->v) != controlNodesSet.end()) continue;
       std::vector<PolyMesh::HalfEdge *> _nhes;
       if (he->data > 0 && d <coarseFactor_bnd*size){
-        continue;
-        // hedgeCollapseBoundaryEdge(pm, he, tag, bndTag, &_nhes);
+        // continue;
+        hedgeCollapseBoundaryEdge(pm, he, tag, he->data, &_nhes);
       }
       else if (he->data < 0){
         pm->hedgeCollapse(he, &_nhes);
+        // _deleteVertex(pm, he->v, &_nhes);
       }
       auto it = std::find(heVector.begin(), heVector.end(), he->opposite);
       if (it != heVector.end()) heVector.erase(it);
@@ -3923,6 +3925,7 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const in
       _delaunayCheckColors(pm, _nhes, &_t);  
     }
   }
+
   
   // Refine
   std::vector<PolyMesh::Face *> _badFaces;
@@ -3941,7 +3944,6 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const in
   int newTag = 0;
   for (auto v : pm->vertices) if (v->data > newTag) newTag = v->data;
   newTag++;
-
 
   while (!_badFaces.empty()){
     PolyMesh::Face *f = _badFaces.back();
