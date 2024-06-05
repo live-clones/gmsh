@@ -65,13 +65,15 @@ void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags,
 
 PolyMesh* _alphaShapeDelaunay2D(const int tag, const std::string boundaryModealName);
 
-void _alphaShape2D(PolyMesh* pm, const double alpha, const int faceTag, const int bndTag);
+void _alphaShape2D(PolyMesh* pm, const double alpha, const int faceTag, const int bndTag, const int sizeFieldTag);
 
 void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::string & boundaryModel, std::vector<PolyMesh::Vertex*> & controlNodes);
 
-void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, std::vector<PolyMesh::Vertex*> & controlNodes);
+void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const int sizeFieldTag, std::vector<PolyMesh::Vertex*> & controlNodes);
 
 void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, const std::string & boundaryModel);
+
+void registerAlphaShapeField(FieldManager* fm);
 
 #endif
 

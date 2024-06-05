@@ -517,7 +517,7 @@ int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
 
   int nbIntersection = _list.size();
   //  printf("%d intersections\n", nbIntersection);
-  int K = 100;
+  // int K = 100;
   int _iter = 0;
   // pm->print4debug(K++);
   while(!_list.empty()) {

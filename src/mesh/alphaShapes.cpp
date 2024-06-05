@@ -20,7 +20,9 @@
 #include <unordered_set>
 #include "robin_hood.h"
 #include "BackgroundMeshTools.h"
-#include "alphaShape_ocTree.h"
+#include "alphaShape_ocTree2.h"
+#include "Field.h"
+#include "SPoint3KDTree.h"
 
 extern "C" {
 #include "libol1.h"
@@ -2087,17 +2089,13 @@ void recoverEdgesOfPolyMesh(PolyMesh** pm, int faceTag, int bndTag){
   initialize_rectangle(pm_new, bb.min().x(), bb.max().x(), bb.min().y(),
                           bb.max().y());
   PolyMesh::Face *f = pm_new->faces[0];
-  PolyMesh::HalfEdge* he;
   std::unordered_map<PolyMesh::Vertex*, PolyMesh::Vertex*> old2new;
-  int ndebug = 1000;
   for(auto v : pm_old->vertices) {
-    bool found;
     double x[2] = {v->position.x(), v->position.y()};
     // _Walk(pm_new->faces.back(), x, &he, &found, 10, nullptr);
     // f = he->f;
     f = WalkGeneral(pm_new->faces.back(), x[0], x[1]);
     pm_new->split_triangle(-1, x[0], x[1], 0, f, delaunayCriterion, nullptr);
-    // print4debug(pm_new, ndebug++);
     pm_new->vertices[pm_new->vertices.size() - 1]->data = v->data;
     old2new[v] = pm_new->vertices[pm_new->vertices.size() - 1];
   }
@@ -2195,7 +2193,7 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
   
 
   // 1. generate mesh 
-  auto t0 = std::chrono::high_resolution_clock::now();
+  // auto t0 = std::chrono::high_resolution_clock::now();
 
   // Msg::Info("generating mesh...\n");
   GFace* gf = GModel::current()->getFaceByTag(alphaShapeTags[0]);
@@ -2218,8 +2216,6 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
     initialize_rectangle(pm, bb.min().x(), bb.max().x(), bb.min().y(),
                             bb.max().y());
     PolyMesh::Face *f = pm->faces[0];
-    PolyMesh::HalfEdge* he;
-    bool found;
     for(size_t i = 0; i < coordsInMesh.size(); i += 2) {
       double x[2] = {coordsInMesh[i], coordsInMesh[i + 1]};
       f = WalkGeneral(f, x[0], x[1]);
@@ -2261,7 +2257,7 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
 
 
   // 2. compute alpha shape
-  auto t1 = std::chrono::high_resolution_clock::now(); 
+  // auto t1 = std::chrono::high_resolution_clock::now(); 
   std::unordered_map<PolyMesh::Face*, bool> _touched;
   // std::vector<std::vector<size_t>> edges;
   double hTriangle, R, q;
@@ -2334,7 +2330,7 @@ void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double al
   // print4debug(pm, 1);
   for (auto f : pm->faces) if (f->data == -2) f->data = -1;
   // 3. if requested, refine  
-  auto t2 = std::chrono::high_resolution_clock::now(); 
+  // auto t2 = std::chrono::high_resolution_clock::now(); 
   if (refine){
     // Msg::Info("constrained Delaunay...\n");
 
@@ -2764,7 +2760,6 @@ void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags,
   // printf("control nodes added \n");
 
   // print4debug(pm, 3);
-  int n_debug = 10;
   for (size_t i=0; i<n_bndEdges; i++){
     double* a1 = &bndEdgeCoords[2*i][0];
     double* a2 = &bndEdgeCoords[2*i+1][0];
@@ -3127,6 +3122,69 @@ void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags,
 
 // ------------------------------ NEW FUNCTIONS -----------------------------
 
+class AlphaShapeDistanceField : public Field {
+  SPoint3Cloud _pc;
+  SPoint3CloudAdaptor<SPoint3Cloud> _pc2kdtree;
+  SPoint3KDTree *_kdtree;
+  std::size_t _outIndex;
+
+public:
+  int tag;
+  double sampling_length;
+
+  AlphaShapeDistanceField() : _pc2kdtree(_pc), _kdtree(nullptr), _outIndex(0)
+  {
+    tag = -1;
+    sampling_length = 0.;
+    options["Tag"] = new FieldOptionInt(
+      tag, "Tag of the discrete entity to which the distance is computed", &updateNeeded);
+    options["SamplingLength"] = new FieldOptionDouble(
+      sampling_length, "Distance between two sampling points. If 0, only use nodes of the edges", &updateNeeded);
+  }
+  ~AlphaShapeDistanceField()
+  {
+    if(_kdtree) delete _kdtree;
+  }
+  const char *getName() { return "AlphaShapeDistance"; }
+  std::string getDescription()
+  {
+    return "Compute the distance curves. "
+           "For efficiency, curves and surfaces are replaced by a set "
+           "of points (sampled according to Sampling), to which the distance "
+           "is actually computed."
+           "Used only the alpha-shape algorithm.";
+  }
+  void set(std::vector<SPoint3> &pts)
+  {
+    if(_kdtree) delete _kdtree;
+    _pc.pts = pts;
+    _kdtree = new SPoint3KDTree(3, _pc2kdtree,
+                                nanoflann::KDTreeSingleIndexAdaptorParams(10));
+    _kdtree->buildIndex();
+    updateNeeded = false;
+  }
+  void update()
+  {
+    if (updateNeeded == true)
+      Msg::Error("Set must be called explicitly with AlphaShapeDistance field");
+  }
+  using Field::operator();
+  virtual double operator()(double X, double Y, double Z, GEntity *ge = nullptr)
+  {
+    if(!_kdtree) return MAX_LC;
+    double pt[3] = {X, Y, Z};
+    nanoflann::KNNResultSet<double> res(1);
+    double outDistSqr;
+    res.init(&_outIndex, &outDistSqr);
+    _kdtree->findNeighbors(res, &pt[0], nanoflann::SearchParams(10));
+    return sqrt(outDistSqr);
+  }
+};
+void registerAlphaShapeField(FieldManager* fm)
+{
+  fm->mapTypeName["AlphaShapeDistance"] = new FieldFactoryT<AlphaShapeDistanceField>();
+}
+
 static double _faceSizeFromMap(PolyMesh::HalfEdge *he, std::unordered_map<int, double> & sizeAtNodes){
   return 1./3.* (sizeAtNodes[he->v->data] + sizeAtNodes[he->next->v->data] + sizeAtNodes[he->next->next->v->data]);
 }
@@ -3153,9 +3211,12 @@ PolyMesh* _alphaShapeDelaunay2D(const int tag, const std::string boundaryModelNa
   return pm;
 }
 
-void _alphaShape2D(PolyMesh* pm, const double alpha, const int faceTag, const int bndTag){
-  GFace* gf = GModel::current()->getFaceByTag(faceTag);
-
+void _alphaShape2D(PolyMesh* pm, const double alpha, const int faceTag, const int bndTag, const int sizeFieldTag){
+  Field* field = GModel::current()->getFields()->get(sizeFieldTag);
+  if (field == nullptr) {
+    Msg::Error("Field %d not found", sizeFieldTag);
+    return;
+  }
   for (auto f : pm->faces){
     int i0 = f->he->v->data;
     int i1 = f->he->next->v->data;
@@ -3168,7 +3229,7 @@ void _alphaShape2D(PolyMesh* pm, const double alpha, const int faceTag, const in
   std::unordered_map<int, double> sizeAtNodes(pm->vertices.size());
   for (auto v : pm->vertices){
     if (v->data == -1) continue;
-    sizeAtNodes[v->data] = BGM_MeshSize(gf, v->position.x(), v->position.y(), v->position.x(), v->position.y(), 0);
+    sizeAtNodes[v->data] = field->operator()(v->position.x(), v->position.y(), 0, NULL);
   }
   std::unordered_map<PolyMesh::Face*, bool> _touched;
   double hTriangle, R, q;
@@ -3218,16 +3279,15 @@ void _alphaShape2D(PolyMesh* pm, const double alpha, const int faceTag, const in
 }
 
 
-static bool hedgeIntersect(PolyMesh::HalfEdge* he, const Coord<2> &bbmin, const Coord<2> &bbmax) {
-  double coord[4] = {he->v->position.x(), he->v->position.y(), he->next->v->position.x(), he->next->v->position.y()};
-  BBox<2> bbox_he;
-  bbox_he.extends({he->v->position.x(), he->v->position.y()});
-  bbox_he.extends({he->next->v->position.x(), he->next->v->position.y()});
-  BBox<2> bbox_search;
-  bbox_search.extends(bbmin);
-  bbox_search.extends(bbmax);
-  return bbox_he.intersects(bbox_search);
-}
+// static bool hedgeIntersect(PolyMesh::HalfEdge* he, const Coord<2> &bbmin, const Coord<2> &bbmax) {
+//   BBox<2> bbox_he;
+//   bbox_he.extends({he->v->position.x(), he->v->position.y()});
+//   bbox_he.extends({he->next->v->position.x(), he->next->v->position.y()});
+//   BBox<2> bbox_search;
+//   bbox_search.extends(bbmin);
+//   bbox_search.extends(bbmax);
+//   return bbox_he.intersects(bbox_search);
+// }
 
 
 
@@ -3440,17 +3500,13 @@ void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::stri
   BBox<2> searchbox;
   auto tic = std::chrono::high_resolution_clock::now();
   for (auto e : bndEntities){
-    GEdge* ge = (GEdge*)e;
     size_t n_elem = e->getNumMeshElements();
     for (size_t i_el = 0; i_el<n_elem; i_el++){
       MElement *elem = e->getMeshElement(i_el);
       if(elem->getDim() != 1) continue;
       gVertices.insert(elem->getVertex(0));
       gVertices.insert(elem->getVertex(1));
-      // SPoint3 p[2] = {elem->getVertex(0)->point(), elem->getVertex(1)->point()};
     }
-    // gVertices.insert(ge->getBeginVertex());
-    // gVertices.insert(ge->getEndVertex());
   }
   double threshold = 1e-6;
   for (auto gv : gVertices){
@@ -3573,6 +3629,34 @@ void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::stri
 
 
   // check and remove elements that are outside the domain
+  
+  tic = std::chrono::high_resolution_clock::now();
+  BBox<2> bb_geo;
+  for (auto e : bndEntities){
+    size_t n_v = e->getNumMeshVertices();
+    for (size_t i_v = 0; i_v<n_v; i_v++){
+      MVertex *elem = e->getMeshVertex(i_v);
+      bb_geo.extends({elem->point().x(), elem->point().y()});
+    }
+  }
+  OctreeNode<2, 64, MElement*> octree_geo(bb_geo);
+  for (auto face : gm_boundary->getFaces()){
+    size_t n_elem = face->getNumMeshElements();
+    for (size_t i_el = 0; i_el<n_elem; i_el++){
+      MElement *elem = face->getMeshElement(i_el);
+      if(elem->getDim() != 2) continue;
+      BBox<2> bb_tri;
+      for (size_t i = 0; i < elem->getNumVertices(); i++){
+        bb_tri.extends({elem->getVertex(i)->point().x(), elem->getVertex(i)->point().y()});
+      }
+      octree_geo.add(elem, bb_tri);
+    }
+  }
+  toc = std::chrono::high_resolution_clock::now();
+
+  std::cout << "    init geo octree : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
+  
+  
   for (auto f : pm->faces){
     PolyMesh::Vertex* v0 = f->he->v;
     PolyMesh::Vertex* v1 = f->he->next->v;
@@ -3584,12 +3668,20 @@ void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::stri
     SVector3 p1 = v1->position;
     SVector3 p2 = v2->position;
     SVector3 pc = 1./3.*(p0+p1+p2);
-    SPoint3 cc(pc.x(), pc.y(), pc.z());
-    SPoint3 pcc(pc.x(), pc.y(), pc.z());
-    MElement* found = gm_boundary->getMeshElementByCoord(cc, pcc, 2);
-    if (found == nullptr){
-      f->data = -1;
+    BBox<2> bb_tri;
+    bb_tri.extends({pc.x(), pc.y()});
+    std::vector<MElement*> found;
+    octree_geo.search(bb_tri, found);
+    bool inside = false;
+    for (auto elem : found){
+      double uvw[3];
+      elem->xyz2uvw(pc, uvw);
+      if (elem->isInside(uvw[0], uvw[1], uvw[2])){
+        inside = true;
+        break;
+      }
     }
+    if (!inside) f->data = -1; 
   }
   tic = std::chrono::high_resolution_clock::now();
   std::cout << "    Remove outside  : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
@@ -3746,15 +3838,47 @@ void _WalkColors(PolyMesh::Face *f, double* cc, PolyMesh::HalfEdge** heCandidate
   if(he== nullptr) *found = false;
 }
 
-void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, std::vector<PolyMesh::Vertex*> & controlNodes){
-  GFace* gf = GModel::current()->getFaceByTag(tag);
+void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const int sizeFieldTag, std::vector<PolyMesh::Vertex*> & controlNodes){
+  // GModel::setAsCurrent()
 
+  for (auto it : *GModel::current()->getFields()){
+    auto field = it.second;
+    printf("field name : %s\n", field->getName());
+    if (field->getName() == std::string("AlphaShapeDistance")){
+      AlphaShapeDistanceField * asdf = dynamic_cast<AlphaShapeDistanceField*>(field);
+      // for (auto i : list){
+      std::vector<SPoint3> points;
+      for (auto he : pm->hedges){
+        if (he->f != nullptr && he->data == asdf->tag){
+          SVector3 p0 = he->v->position;
+          SVector3 p1 = he->next->v->position;
+          double d = norm(p1-p0);
+          int n = asdf->sampling_length == 0 ? std::max(2, int(d/asdf->sampling_length)) : 2;
+          for (int i = 0; i < n; i++){
+            points.push_back((p0 + (p1-p0)*(i*1./(n-1))).point());
+          }
+        }
+      }
+      asdf->set(points);
+    }
+  }
+
+
+  Field* field = GModel::current()->getFields()->get(sizeFieldTag);
+  if (field == nullptr) {
+    Msg::Error("Field %d not found", sizeFieldTag);
+    return;
+  }
   // Compute the size field at the nodes if it was not done in the alpha shape (because hMean was used)
   std::unordered_map<int, double> sizeAtNodes(pm->vertices.size());
   for (int i=0; i<pm->vertices.size(); i++){
     PolyMesh::Vertex* v = pm->vertices[i];
-    sizeAtNodes[v->data] = BGM_MeshSize(gf, v->position.x(), v->position.y(), v->position.x(), v->position.y(), 0);
+    sizeAtNodes[v->data] = field->operator()(v->position.x(), v->position.y(), 0);
+    printf("sizeAtNodes[%d] = %g\n", v->data, sizeAtNodes[v->data]);
+    // sizeAtNodes[v->data] = BGM_MeshSize(gf, v->position.x(), v->position.y(), v->position.x(), v->position.y(), 0);
   }
+
+  printf("computed \n");
 
   // Coarsen
   std::vector<PolyMesh::HalfEdge *> heVector;
@@ -3888,7 +4012,8 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, std::vec
       }
       PolyMesh::Vertex* v = pm->vertices.back();
       v->data = newTag++;
-      sizeAtNodes[v->data] = BGM_MeshSize(gf, v->position.x(), v->position.y(), v->position.x(), v->position.y(), 0);
+      sizeAtNodes[v->data] = field->operator()(v->position.x(), v->position.y(), 0, NULL);
+      // sizeAtNodes[v->data] = BGM_MeshSize(gf, v->position.x(), v->position.y(), v->position.x(), v->position.y(), 0);
       std::vector<PolyMesh::Face *> _newFaces;
       for(auto _h : _touched){
           if(_h->f && _h->f->he != nullptr && std::find(_newFaces.begin(), _newFaces.end(), _h->f) == _newFaces.end())
@@ -3918,15 +4043,15 @@ struct bndEdge {
   int tag;
 };
 
-static bool edgeIntersect(bndEdge* edge, const Coord<2> &bbmin, const Coord<2> &bbmax) {
-  BBox<2> bbox_ed;
-  bbox_ed.extends({edge->x0, edge->y0});
-  bbox_ed.extends({edge->x1, edge->y1});
-  BBox<2> bbox_search;
-  bbox_search.extends(bbmin);
-  bbox_search.extends(bbmax);
-  return bbox_ed.intersects(bbox_search);
-}
+// static bool edgeIntersect(bndEdge* edge, const Coord<2> &bbmin, const Coord<2> &bbmax) {
+//   BBox<2> bbox_ed;
+//   bbox_ed.extends({edge->x0, edge->y0});
+//   bbox_ed.extends({edge->x1, edge->y1});
+//   BBox<2> bbox_search;
+//   bbox_search.extends(bbmin);
+//   bbox_search.extends(bbmax);
+//   return bbox_ed.intersects(bbox_search);
+// }
 
 void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, const std::string & boundaryModel){
   // std::vector<std::pair<int, int>> dimTag;
@@ -3935,7 +4060,6 @@ void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, cons
   // color the boundary edges with the solid geometry
   GModel* gm_boundary = GModel::findByName(boundaryModel);
   GModel* gm_alphaShape = GModel::current();
-  size_t newTag = gm_alphaShape->getMaxVertexNumber()+1;
   if (gm_boundary == nullptr) {
     Msg::Error("Boundary model not found");
     return;
@@ -3949,7 +4073,6 @@ void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, cons
   std::unordered_map<int, std::vector<size_t>> bndMap;
   bndMap[bndTag] = std::vector<size_t>();
   for (auto e : bndEntities){
-    GEdge* ge = (GEdge*)e;
     bndMap[e->tag()] = std::vector<size_t>();
   }
   for (auto he : pm->hedges){

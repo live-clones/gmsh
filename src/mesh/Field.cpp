@@ -31,6 +31,7 @@
 #include "fullMatrix.h"
 #include "SPoint3KDTree.h"
 #include "MVertex.h"
+#include "alphaShapes.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -2609,7 +2610,6 @@ public:
     return sqrt(outDistSqr);
   }
 };
-
 class ExtendField : public Field {
   std::list<int> _tagCurves, _tagSurfaces;
   std::vector<double> _sizeCurves, _sizeSurfaces;
@@ -3192,6 +3192,7 @@ FieldManager::FieldManager()
   mapTypeName["Gradient"] = new FieldFactoryT<GradientField>();
   mapTypeName["Octree"] = new FieldFactoryT<OctreeField>();
   mapTypeName["Distance"] = new FieldFactoryT<DistanceField>();
+  registerAlphaShapeField(this);
   mapTypeName["Attractor"] = new FieldFactoryT<DistanceField>();
   mapTypeName["Extend"] = new FieldFactoryT<ExtendField>();
   mapTypeName["Restrict"] = new FieldFactoryT<RestrictField>();
