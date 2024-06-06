@@ -20,10 +20,14 @@ namespace IFF{
     std::vector<double> crossprod(const std::vector<double> &v0, const std::vector<double> &v1);
     double dotprod(const std::vector<double> &v0, const std::vector<double> &v1);
     double cosAngle(const std::vector<double> &v0, const std::vector<double> &v1);
+    std::vector<double> diff(const std::vector<double> &v0, const std::vector<double> &v1);
     double norm(const std::vector<double> &v);
     double norm2(const std::vector<double> &v); // squared norm
     double norm(const double *v, const size_t &size);
     double distance(const std::vector<double> &v0, const std::vector<double> &v1);
+    std::vector<double> rotateAlongDirection(const std::vector<double> &vectAxis, const double &theta, const std::vector<double> &v);
+    std::vector<double> getProjectionOnDirection(const std::vector<double> &dirProj, const std::vector<double> &v);
+    std::vector<double> getProjectionOnHyperPlan(const std::vector<double> &normalHyperPlan, const std::vector<double> &v);
   }
 
   class Vertex;
@@ -33,22 +37,34 @@ namespace IFF{
   class Element{
     friend class Mesh;
     static std::vector<Element*> elementCollector;
+    static std::vector<double> integrationWeights;
   public:
     static Element* create(Mesh *m, MElement* el){Element *newE = new Element(m, el); elementCollector.push_back(newE); return newE;}
-    Element(Mesh *m, MElement* el){
-      m_e = el;
-      std::vector<MVertex *> vert;
-      el->getVertices(vert);
-      m_vertices.reserve(vert.size());
-      for(MVertex *v: vert)
-        m_vertices.push_back(m_vertices[v->getIndex()]);
-    }
+    Element(Mesh *m, MElement* el);
     ~Element(){}
+
+    size_t getNumEdges(){return m_edges.size();}
+    std::vector<double> getNormal();
+    std::vector<double> getDirEdg(int iEdg);
     
-  private:
+    std::vector<double> getDet(int pOrder);
+    std::vector<double> getIntegrationWeights(int pOrder);
+    std::vector<std::vector<double>> getCRSF(int pOrder);
+    std::vector<std::vector<std::vector<double>>> getCRGradSF(int pOrder);
+    
     MElement *m_e;
+
+  private:
     std::vector<Vertex *> m_vertices;
     std::vector<Edge *> m_edges;
+
+    std::vector<double> m_normal;
+
+    std::vector<double> m_det;
+    std::vector<std::vector<double>> m_CRsf;
+    std::vector<std::vector<std::vector<double>>> m_CRgsf;
+
+    void _computeNormal();
   };
   
   class Vertex{
@@ -59,6 +75,7 @@ namespace IFF{
     Vertex(MVertex *v){m_v = v; vertexCollector.push_back(this);}
     ~Vertex(){}
 
+    std::vector<double> getCoord(){std::vector<double> coord{m_v->x(), m_v->y(), m_v->z()}; return coord;};
   private:
     MVertex *m_v;
     std::vector<Edge*> m_edges;
@@ -89,6 +106,17 @@ namespace IFF{
   public:
     Mesh(std::vector<MElement*> &elts, std::vector<MLine*> &bndLines);
     ~Mesh();
+
+    Element* getElement(size_t iElem){return m_elements[iElem];}
+    
+    void printInfos(){
+      std::cout << "--- --- MESH INFOS ---" << std::endl;
+      std::cout << "--- nVertices: " << m_vertices.size() << std::endl;
+      std::cout << "--- nLines: " << m_lines.size() << std::endl;
+      std::cout << "--- nEdges: " << m_edges.size() << std::endl;
+      std::cout << "--- nElements: " << m_elements.size() << std::endl;
+      std::cout << "--- ---" << std::endl;
+    }
 
   private:
     std::vector<Element*> m_elements;

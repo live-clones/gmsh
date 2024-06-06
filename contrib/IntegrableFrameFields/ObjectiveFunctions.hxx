@@ -1,0 +1,131 @@
+// Gmsh - Copyright (C) 1997-2020 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+//
+// Author: Alexandre Chemin
+
+#pragma once
+
+#include <IffTools.hxx>
+#include <vector>
+
+namespace IFF{
+  class ObjectiveFunction{
+    static std::vector<ObjectiveFunction*> objectiveFunctionsCollector;
+  public:
+    static void clearAll(){
+      for(auto p: objectiveFunctionsCollector)
+	delete p;
+      objectiveFunctionsCollector.clear();
+    }
+    // constructor to be call in each child class.
+    ObjectiveFunction(): m_useNodeData(false) {objectiveFunctionsCollector.push_back(this);}
+
+    // Methods to be defined for LBFGS solver
+    virtual void evaluateFunction(Element *element, std::vector<std::vector<double>> &solTri, double &valFunc){std::cout << "OjectiveFunction::evaluateFunction not implemented" << std::endl; exit(0);}
+    virtual void getGradient(Element *element, std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs){std::cout << "OjectiveFunction::getGradient not implemented" << std::endl; exit(0);};
+
+    // Set to true for objective functions needing extra data other than solution
+    bool m_useNodeData;
+  
+  protected:
+    // Forbid instanciation
+    virtual ~ObjectiveFunction(){}
+  };
+
+  // ------------------------------- Dirichlet energy objective function
+  class DirichletEnergieVectCR : public ObjectiveFunction{
+  public:
+    DirichletEnergieVectCR(): ObjectiveFunction(), m_nFields(2){}
+  
+    virtual void evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc);
+    virtual void getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs);
+    
+    size_t m_nFields;
+    
+  protected:
+    ~DirichletEnergieVectCR(){}
+
+  private:
+    std::vector<std::vector<std::vector<double>>> _getCRRotOperators(Element *e);
+    std::vector<std::vector<double>> _rotateSolTri(const std::vector<std::vector<double>> &solTri, const std::vector<std::vector<std::vector<double>>> &rotOp);
+  };
+  
+  // ------------------------------- classes for objective functions linear combinations
+  class SumObjectiveFunction : public ObjectiveFunction{
+  public:
+    SumObjectiveFunction(ObjectiveFunction *f1, ObjectiveFunction *f2): ObjectiveFunction(){
+      m_f.push_back(f1);
+      m_f.push_back(f2);
+    }
+
+    virtual void evaluateFunction(Element *element, std::vector<std::vector<double>> &solElem, double &valFunc){
+      std::vector<double> valFuncs;
+      valFunc = 0;
+      for(auto f: m_f){
+        double val=0.0;
+        f->evaluateFunction(element, solElem, val);
+        valFunc += val;
+      }
+    }
+    
+    virtual void getGradient(Element *element, std::vector<double> &localRhs, std::vector<std::vector<double>> &solTri){
+      m_f[0]->getGradient(element, solTri, localRhs);
+      for(size_t k=1; k<m_f.size(); k++){
+	std::vector<double> rhs;
+	m_f[k]->getGradient(element, solTri, rhs);
+	for(size_t l=0; l<localRhs.size(); l++){
+	  localRhs[l] += rhs[l];
+	}
+      }
+    }
+
+  private:
+    std::vector<ObjectiveFunction*> m_f;
+  protected:
+    ~SumObjectiveFunction(){}
+  };
+
+  class ScaledObjectiveFunction : public ObjectiveFunction{
+  public:
+    ScaledObjectiveFunction(ObjectiveFunction *f1, double s): ObjectiveFunction(), m_f(f1), m_scaling(s){}
+    
+    virtual void evaluateFunction(Element *element, std::vector<std::vector<double>> &solTri, double &valFunc){
+      m_f->evaluateFunction(element, solTri, valFunc);
+      valFunc *= m_scaling;
+    }
+    
+    virtual void getGradient(Element *element, std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs){
+      m_f->getGradient(element, solTri, localRhs);
+      for(size_t l=0; l<localRhs.size(); l++){
+	localRhs[l] *= m_scaling;
+      }
+    }
+  
+  private:
+    ObjectiveFunction* m_f;
+    double m_scaling;
+  protected:
+    ~ScaledObjectiveFunction(){}
+  };
+  
+  // ------------------------------- Operator overloads objective functions linear combinations
+  inline SumObjectiveFunction* operator+(ObjectiveFunction &f1, ObjectiveFunction &f2)
+  {
+    SumObjectiveFunction *f = new SumObjectiveFunction(&f1, &f2);
+    return f;
+  }
+
+  inline ScaledObjectiveFunction* operator*(ObjectiveFunction &f1, double s)
+  {
+    ScaledObjectiveFunction *f = new ScaledObjectiveFunction(&f1, s);
+    return f;
+  }
+
+  inline ScaledObjectiveFunction* operator*(double s, ObjectiveFunction &f1)
+  {
+    ScaledObjectiveFunction *f = new ScaledObjectiveFunction(&f1, s);
+    return f;
+  }
+}

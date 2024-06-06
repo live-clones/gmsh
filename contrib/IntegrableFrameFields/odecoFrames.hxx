@@ -160,4 +160,39 @@ namespace IFF{
       }
     }
   };
+
+  class ThetaIso2D : public Frame{
+  public:
+    ThetaIso2D(const std::vector<double> &f){
+      if(f.size()!=2){
+	std::cout << "Wrong argument for ThetaIso2D instantiation" << std::endl;
+	exit(0);
+      }
+      m_frame = f;
+    }
+
+    virtual std::vector<std::vector<double>> getDirections() const {
+      double theta = atan2(m_frame[1], m_frame[0])/4.0;
+      double norm = tools::norm(m_frame);
+      std::vector<std::vector<double>> d;
+      d.resize(2);
+      d[0].resize(3, 0.0);
+      d[1].resize(3, 0.0);
+      d[0][0] = norm*cos(theta); d[0][1] = norm*sin(theta);
+      d[1][0] = norm*cos(theta + M_PI/2.0); d[1][1] = norm*sin(theta + M_PI/2.0);
+      return d;
+    }
+    
+    virtual std::vector<std::vector<double>> getDirections(const std::vector<double> &refDir, const std::vector<double> &normal) const {
+      double theta = atan2(m_frame[1], m_frame[0])/4.0;
+      double norm = tools::norm(m_frame);
+      
+      std::vector<std::vector<double>> d;
+      d.resize(2);
+      d[0] = tools::rotateAlongDirection(normal, theta, refDir);
+      d[1] = tools::rotateAlongDirection(normal, theta+M_PI/2.0, refDir);
+      return d;
+    }
+  
+  };
 }

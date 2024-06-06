@@ -74,6 +74,10 @@ typedef unsigned long intptr_t;
 #include "touchBar.h"
 #endif
 
+#if defined(HAVE_INTEGRABLEFRAMEFIELDS)
+#include "IntegrableFrameFields.hxx"
+#endif
+
 static void file_new_cb(Fl_Widget *w, void *data)
 {
 test:
@@ -2499,6 +2503,12 @@ static void mesh_unpartition_cb(Fl_Widget *w, void *data)
   }
 }
 
+#if defined(HAVE_INTEGRABLEFRAMEFIELDS)
+static void mesh_quad_iff(Fl_Widget *w, void *data){
+  iffComputeIntegrableFrameField(GModel::current());
+}
+#endif
+
 static void mesh_convert_old_partitioning_cb(Fl_Widget *w, void *data)
 {
   int ier = GModel::current()->convertOldPartitioningToNewOne();
@@ -4735,6 +4745,10 @@ static menuItem static_modules[] = {
   {"0Modules/Mesh/Reclassify 2D", (Fl_Callback *)mesh_classify_cb},
   {"0Modules/Mesh/Experimental/Compute quad layout",
    (Fl_Callback *)mesh_cross_compute_cb},
+#if defined(HAVE_INTEGRABLEFRAMEFIELDS)
+  {"0Modules/Mesh/Experimental/Compute integrable framefield",
+   (Fl_Callback *)mesh_quad_iff},
+#endif
 #if defined(HAVE_METIS)
   {"0Modules/Mesh/Experimental/Convert old partitioning",
    (Fl_Callback *)mesh_convert_old_partitioning_cb},
