@@ -15,6 +15,7 @@
 #include "GModel.h"
 #include "MElement.h"
 #include "bezierBasis.h"
+#include "polynomialBasis.h"
 #include <sstream>
 #include <fstream>
 #if defined(HAVE_OPENGL)
@@ -271,6 +272,8 @@ void GMSH_AnalyseMeshQualityPlugin::_computeMinMaxJandValidity(int dim)
   for(auto it = entities.begin(); it != entities.end(); ++it) {
     GEntity *entity = *it;
     unsigned num = entity->getNumMeshElements();
+    if (!num) continue;
+
     fullMatrix<double> *normals = nullptr;
     switch(dim) {
     case 3:
@@ -281,7 +284,7 @@ void GMSH_AnalyseMeshQualityPlugin::_computeMinMaxJandValidity(int dim)
       Msg::StatusBar(true, "Surface %d: checking the Jacobian of %d elements",
                      entity->tag(), num);
       // check the classical case of 2D planar meshes in the z=0 plane to issue
-      // a warning of the mesh is oriented along -z
+      // a warning if the mesh is oriented along -z
       if(entity->geomType() == GEntity::DiscreteSurface) {
         SBoundingBox3d bb = entity->bounds();
         if(!bb.empty() && bb.max().z() - bb.min().z() == .0) {
@@ -317,7 +320,7 @@ void GMSH_AnalyseMeshQualityPlugin::_computeMinMaxJandValidity(int dim)
     if(normals) delete normals;
   }
   if(cntInverted) {
-    Msg::Warning("%d element%s completely inverted",
+    Msg::Warning("%d element%s completely inverted", cntInverted,
                  (cntInverted > 1) ? "s are" : " is");
   }
   _computedJac[dim - 1] = true;

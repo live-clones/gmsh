@@ -24,13 +24,13 @@ FuncSpaceData::FuncSpaceData(const FuncSpaceData &fsd, int nij, int nk)
 FuncSpaceData::FuncSpaceData(const MElement *el)
   : _parentType(el->getType()), _spaceOrder(el->getPolynomialOrder()),
     _serendipity(el->getIsOnlySerendipity()), _nij(0), _nk(_spaceOrder),
-    _pyramidalSpace(el->getType() == TYPE_PYR)
+    _pyramidalSpace(_parentType == TYPE_PYR)
 {
 }
 
 FuncSpaceData::FuncSpaceData(const MElement *el, int order, bool serendip)
   : _parentType(el->getType()), _spaceOrder(order), _serendipity(serendip),
-    _nij(0), _nk(_spaceOrder), _pyramidalSpace(el->getType() == TYPE_PYR)
+    _nij(0), _nk(_spaceOrder), _pyramidalSpace(_parentType == TYPE_PYR)
 {
 }
 
@@ -48,7 +48,7 @@ FuncSpaceData::FuncSpaceData(int tag)
     _spaceOrder(ElementType::getOrder(tag)),
     _serendipity(ElementType::getSerendipity(tag) > 1), _nij(0),
     _nk(_spaceOrder),
-    _pyramidalSpace(ElementType::getParentType(tag) == TYPE_PYR)
+    _pyramidalSpace(_parentType == TYPE_PYR)
 {
 }
 

@@ -170,7 +170,8 @@ static void _computeICN(const fullVector<double> &det,
 
   for(int i = 0; i < sz; i++) {
     double p = 0;
-    for(int k = 0; k < grad.size2(); ++k) { p += pow_int(grad(i, k), 2); }
+    for(int k = 0; k < grad.size2(); ++k)
+      p += pow_int(grad(i, k), 2);
     if(dim == 2)
       icn(i) = 2 * det(i) / p;
     else // 3D
