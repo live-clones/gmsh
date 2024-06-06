@@ -6782,20 +6782,45 @@ dragging the mouse in the input fields.
 
 @item What is the signification of SICN, Gamma and SIGE in Tools->Statistics?
 
-They measure the quality of the tetrahedra in a mesh:
+They measure the quality of the elements' shape in a mesh. They are defined for
+all 2D and 3D element types, except Gamma which is not defined for hexes and pyramids.
+The `S-' of SICN and SIGE stands for `Signed'. Those two measures actually give two information
+on an element: Their absolute value gives the element's shape quality while their sign
+gives the element validity. In other words, negative values of SICN and SIGE
+indicate tangled elements.
 
+The measures are computed for 3D elements if any, otherwise for 2D elements. Given values
+are the average, the minimum and the maximum among elements.
+Graphs plot the number of elements vs. the quality measure.
+
+Meaning of the measures:
 @itemize
 @item
-SICN: signed inverse condition number
+`(S-)ICN' stands  for (Signed-) Inverse Condition Number. Low-ICN elements influence
+negatively the condition number of the stiffness matrix which, as a result, can
+introduce roundoff errors, or significantly reduce the convergence speed of iterative methods.
 @item
-Gamma: inscribed radius / circumscribed radius
+`(S-)IGE' stands  for (Signed-) Inverse Gradient Error. Low-IGE elements influence
+negatively the error on the gradient of the FE solution. For hexahedra, the measure
+is the well-known "scaled Jacobian" as defined in the hexahedral community.
 @item
-SIGE: signed inverse error on the gradient of FE solution
+For triangles and tetrahedra, `Gamma' is equal to the ratio
+"inscribed radius / circumscribed radius", which is a measure that is largely used
+in the community of simplicial meshes. This form is closely related to the ICN measure.
+@item
+For quadrangles and prisms, `Gamma' is computed on the worst corner using the
+formula [1 - abs(r)] where r is proportional to the difference between the corner angle
+and the perfect (solid) angle, that is pi/2 for quads and pi/3 for prisms. This form is closely
+related to the IGE measure.
 @end itemize
 
 For the exact definitions, see
-@url{@value{GITLAB-PREFIX}/src/geo/MElement.cpp,src/geo/MElement.cpp}. The
-graphs plot the the number of elements vs. the quality measure.
+@url{@value{GITLAB-PREFIX}/src/geo/MElement.cpp,src/geo/MElement.cpp}, and, for
+the ICN and IGE measures, see the paper
+A. Johnen, C. Geuzaine, T. Toulorge and J.-F. Remacle,
+@url{https://www.sciencedirect.com/science/article/abs/pii/S0010448518301015,
+"Efficient computation of the minimum of shape quality measures on curvilinear finite elements"},
+Computer-Aided Design 103, pp. 24-33, 2018.
 
 @item How can I save a mesh file with a given (e.g. older) MSH file format version?
 
