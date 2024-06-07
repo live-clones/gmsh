@@ -25,7 +25,8 @@ namespace IFF{
         solTriPerturbed[iN][iF] -= epsilon;
       }
   }
-  
+
+  // ------------------------------- Dirichlet energy for CR GL framefield objective function
   std::vector<std::vector<std::vector<double>>> DirichletEnergieVectCR::_getCRRotOperators(Element *e){
     int nEdges = e->getNumEdges();
     std::vector<std::vector<std::vector<double>>> op;
@@ -140,5 +141,42 @@ namespace IFF{
           localRhs[locIndJ] += localRhsRotated[locIndK] * rotOp[jEdg][kField][jField];
         }
       }
+  }
+
+  // ------------------------------- GL framefield constraint
+  void GLframeConstraint::evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc){
+    int pOrder = 3;
+    valFunc = 0.0;
+
+    std::vector<double> intWeights = element->getIntegrationWeights(pOrder);
+    std::vector<std::vector<double>> intPoints= element->getIntegrationPoints(pOrder);
+    std::vector<double> dets = element->getDet(pOrder);
+
+    for(int k=0; k<intWeights.size(); k++){
+      std::vector<double> solXG = element->interpolateCR(intPoints[k][0], intPoints[k][1], solTri);
+      double valXG = m_penalty*(tools::norm2(solXG)-1.0)*(tools::norm2(solXG)-1.0);
+      valFunc += valXG*intWeights[k]*dets[k];
+    }
+  }
+
+  void GLframeConstraint::getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs){
+    int pOrder = 3;
+    size_t nEdges = element->getNumEdges();
+
+    std::vector<double> intWeights = element->getIntegrationWeights(pOrder);
+    std::vector<std::vector<double>> intPoints= element->getIntegrationPoints(pOrder);
+    std::vector<double> dets = element->getDet(pOrder);
+    std::vector<std::vector<double>> CRsf = element->getCRSF(pOrder);
+
+    localRhs.resize(m_nFields*nEdges, 0.0);
+    for(int k=0; k<intWeights.size(); k++){
+      std::vector<double> solXG = element->interpolateCR(intPoints[k][0], intPoints[k][1], solTri);
+      double sqrtConstr = tools::norm2(solXG) - 1.0;
+      for(size_t jField=0; jField<m_nFields; jField++)
+        for(size_t jEdg=0; jEdg<nEdges; jEdg++){
+          size_t locIndJ = m_nFields*jEdg + jField;
+          localRhs[locIndJ] += m_penalty*intWeights[k]*dets[k]*4.0*(CRsf[k][jEdg]*solXG[jField])*sqrtConstr;
+        }
+    }
   }
 }

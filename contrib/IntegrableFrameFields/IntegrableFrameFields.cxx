@@ -32,8 +32,8 @@ void iffComputeIntegrableFrameField(GModel *gm){
 
   //Test implemented functions
   DirichletEnergieVectCR *fTest = new DirichletEnergieVectCR();
-
-
+  GLframeConstraint *fTestC = new GLframeConstraint(1.0/(4*m.getMaxEdgeLength()*m.getMaxEdgeLength()));
+  SumObjectiveFunction *sum = *(0.54*(*fTest)) + *(10.5*(*fTestC));
 
   Element *e = m.getElement(0);
   std::vector<double> vRef = e->getDirEdg(0);
@@ -64,17 +64,18 @@ void iffComputeIntegrableFrameField(GModel *gm){
   //   std::cout << "valfunc: " << valFunc << std::endl;
   // }
 
-  // std::vector<std::vector<double>> solTri;
-  // solTri.resize(3);
-  // for(std::vector<double> &v: solTri)
-  //   v.resize(2, 0.0);
+  std::vector<std::vector<double>> solTri;
+  solTri.resize(3);
+  for(std::vector<double> &v: solTri)
+    v.resize(2, 0.0);
 
-  // for(size_t nTry=0; nTry<100; nTry++){
-  //   for(size_t iN=0; iN<3; iN++)
-  //     for(size_t iF=0; iF<2; iF++){
-  //       solTri[iN][iF] = unif(re);
-  //     }
-  //   std::cout << "------" << std::endl;
-  //   fTest->checkGradient(e, solTri);
-  // }
+  for(size_t nTry=0; nTry<100; nTry++){
+    for(size_t iN=0; iN<3; iN++)
+      for(size_t iF=0; iF<2; iF++){
+        solTri[iN][iF] = unif(re);
+      }
+    std::cout << "------" << std::endl;
+    // fTest->checkGradient(e, solTri);
+    sum->checkGradient(e, solTri);
+  }
 }

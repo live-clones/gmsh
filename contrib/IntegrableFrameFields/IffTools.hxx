@@ -38,6 +38,7 @@ namespace IFF{
     friend class Mesh;
     static std::vector<Element*> elementCollector;
     static std::vector<double> integrationWeights;
+    static std::vector<std::vector<double>> integrationPoints;
   public:
     static Element* create(Mesh *m, MElement* el){Element *newE = new Element(m, el); elementCollector.push_back(newE); return newE;}
     Element(Mesh *m, MElement* el);
@@ -48,9 +49,11 @@ namespace IFF{
     std::vector<double> getDirEdg(int iEdg);
     
     std::vector<double> getDet(int pOrder);
+    std::vector<std::vector<double>> getIntegrationPoints(int pOrder);
     std::vector<double> getIntegrationWeights(int pOrder);
     std::vector<std::vector<double>> getCRSF(int pOrder);
     std::vector<std::vector<std::vector<double>>> getCRGradSF(int pOrder);
+    std::vector<double> interpolateCR(double u, double v, const std::vector<std::vector<double>> &solTri);
     
     MElement *m_e;
 
@@ -65,6 +68,7 @@ namespace IFF{
     std::vector<std::vector<std::vector<double>>> m_CRgsf;
 
     void _computeNormal();
+    std::vector<double> _computeCRSF(double u, double v);
   };
   
   class Vertex{
@@ -91,6 +95,7 @@ namespace IFF{
     Edge(Vertex* v0, Vertex* v1):m_isOnCutGraph(false){m_vertices[0] = v0; m_vertices[1] = v1;}
     ~Edge(){}
 
+    double getLength();
   private:
     std::array<Vertex*, 2> m_vertices;
     std::vector<Element*> m_elements;
@@ -108,6 +113,8 @@ namespace IFF{
     ~Mesh();
 
     Element* getElement(size_t iElem){return m_elements[iElem];}
+    double getMinEdgeLength(){return m_minEdgeLenght;}
+    double getMaxEdgeLength(){return m_maxEdgeLenght;}
     
     void printInfos(){
       std::cout << "--- --- MESH INFOS ---" << std::endl;
@@ -115,6 +122,8 @@ namespace IFF{
       std::cout << "--- nLines: " << m_lines.size() << std::endl;
       std::cout << "--- nEdges: " << m_edges.size() << std::endl;
       std::cout << "--- nElements: " << m_elements.size() << std::endl;
+      std::cout << "--- hmin: " << m_minEdgeLenght << std::endl;
+      std::cout << "--- hmax: " << m_maxEdgeLenght << std::endl;
       std::cout << "--- ---" << std::endl;
     }
 
@@ -123,5 +132,8 @@ namespace IFF{
     std::vector<Element*> m_lines;
     std::vector<Edge*> m_edges;
     std::vector<Vertex*> m_vertices;
+
+    double m_minEdgeLenght;
+    double m_maxEdgeLenght;
   };
 }

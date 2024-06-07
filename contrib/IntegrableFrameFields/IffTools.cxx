@@ -141,6 +141,7 @@ namespace IFF{
   std::vector<Vertex*> Vertex::vertexCollector;
   std::vector<Element*> Element::elementCollector;
   std::vector<double> Element::integrationWeights;
+  std::vector<std::vector<double>> Element::integrationPoints;
   std::vector<Edge*> Edge::edgeCollector;
 
   Element::Element(Mesh *m, MElement* el){
@@ -192,6 +193,25 @@ namespace IFF{
     else
       return m_det;
   }
+
+  std::vector<std::vector<double>> Element::getIntegrationPoints(int pOrder){
+    if(integrationPoints.size() == 0){
+      int nptsG=0;
+      IntPt *ptsW = NULL;
+      m_e->getIntegrationPoints(pOrder, &nptsG, &ptsW);
+      integrationPoints.resize(nptsG);
+      for(std::vector<double> &v: integrationPoints)
+        v.resize(3, 0.0);
+      for(size_t k=0; k<nptsG; k++){
+        integrationPoints[k][0] = ptsW[k].pt[0];
+        integrationPoints[k][1] = ptsW[k].pt[1];
+        integrationPoints[k][2] = ptsW[k].pt[2];
+      }
+      return integrationPoints;
+    }
+    else
+      return integrationPoints;
+  }
   
   std::vector<double> Element::getIntegrationWeights(int pOrder){
     if(integrationWeights.size() == 0){
@@ -207,6 +227,22 @@ namespace IFF{
     else
       return integrationWeights;
   }
+
+  std::vector<double> Element::_computeCRSF(double u, double v){
+    size_t nEdges = m_edges.size();
+    if(nEdges==3){
+      std::vector<double> CRsf;
+      CRsf.resize(getNumEdges(), 0.0);
+      CRsf[0] = 1.0-2*v;
+      CRsf[1] = 2.0*u+2.0*v-1.0;
+      CRsf[2] = 1.0-2.0*u;
+      return CRsf;
+    }
+    else{
+      std::cout << "Crouzeix raviart shape functions not implement for element with " << nEdges << " edges." << std::endl;
+      exit(0);
+    }
+  }
   
   std::vector<std::vector<double>> Element::getCRSF(int pOrder){
     if(m_CRsf.size()==0){
@@ -220,14 +256,16 @@ namespace IFF{
           v.resize(nEdges, 0.0);
 
         for(int k=0; k<nptsG; k++){
-          m_CRsf[k][0] = 1.0-2*ptsW[k].pt[1];
-          m_CRsf[k][1] = 2.0*ptsW[k].pt[0]+2.0*ptsW[k].pt[1]-1.0;
-          m_CRsf[k][2] = 1.0-2.0*ptsW[k].pt[0];
+          m_CRsf[k] = _computeCRSF(ptsW[k].pt[0], ptsW[k].pt[1]);
+          // m_CRsf[k][0] = 1.0-2*ptsW[k].pt[1];
+          // m_CRsf[k][1] = 2.0*ptsW[k].pt[0]+2.0*ptsW[k].pt[1]-1.0;
+          // m_CRsf[k][2] = 1.0-2.0*ptsW[k].pt[0];
         }
         return m_CRsf;
       }
       else if(nEdges==4){
-        std::cout << "Crouzeix raviart grad shape functions not implement for element with " << nEdges << " edges." << std::endl;        
+        std::cout << "Crouzeix raviart grad shape functions not implement for element with " << nEdges << " edges." << std::endl;
+        exit(0);
       }
       else{
         std::cout << "Crouzeix raviart grad shape functions not implement for element with " << nEdges << " edges." << std::endl;
@@ -285,7 +323,21 @@ namespace IFF{
     else
       return m_CRgsf;
   }
+
+  std::vector<double> Element::interpolateCR(double u, double v, const std::vector<std::vector<double>> &solTri){
+    std::vector<double> interpolatedSol;
+    interpolatedSol.resize(solTri[0].size(), 0.0);
+    std::vector<double> sf = _computeCRSF(u, v);
+    for(size_t iEdg=0; iEdg<solTri.size(); iEdg++)
+      for(size_t iF=0; iF<solTri[0].size(); iF++)
+        interpolatedSol[iF] += sf[iEdg]*solTri[iEdg][iF];
+    return interpolatedSol;
+  }
   
+  double Edge::getLength(){
+    std::vector<double> v = tools::diff(m_vertices[0]->getCoord(), m_vertices[1]->getCoord());
+    return tools::norm(v);
+  }
   
   Mesh::Mesh(std::vector<MElement*> &elts, std::vector<MLine*> &bndLines){
     //Number vertices and Build vertices vector
@@ -371,17 +423,18 @@ namespace IFF{
       size_t nEdges = e->m_e->getNumEdges();
       for(size_t k=0; k<nEdges; k++){
         std::array<size_t, 2> vNum;
-        if(e->m_vertices[k]->m_index < e->m_vertices[(k+1)%nEdges]->m_index){
+        if(e->m_vertices[k]->m_index < e->m_vertices[k+1]->m_index){
           vNum[0] = e->m_vertices[k]->m_index;
-          vNum[1] = e->m_vertices[(k+1)%nEdges]->m_index;
+          vNum[1] = e->m_vertices[k+1]->m_index;
         }
         else{
-          vNum[0] = e->m_vertices[(k+1)%nEdges]->m_index;
+          vNum[0] = e->m_vertices[k+1]->m_index;
           vNum[1] = e->m_vertices[k]->m_index;
         }
         edgesList.push_back(std::make_pair(vNum, e));
       }
     }
+    
     std::sort(edgesList.begin(), edgesList.end(), [&](std::pair<std::array<size_t, 2>, Element*> i1, std::pair<std::array<size_t, 2>, Element*> i2){
       if(i1.first[0] == i2.first[0])
         return i1.first[1] < i2.first[1];
@@ -407,6 +460,17 @@ namespace IFF{
       pair.second->m_edges.push_back(edgK);
     }
     m_edges.shrink_to_fit();
+    //Compute min and max edge length
+    m_minEdgeLenght = 1e50;
+    m_maxEdgeLenght = 0.0;
+    for(Edge *e: m_edges){
+      double l = e->getLength();
+      if(l < m_minEdgeLenght)
+        m_minEdgeLenght = l;
+      if(l > m_maxEdgeLenght)
+        m_maxEdgeLenght = l;
+    }
+
     //Sort m_edges for elements
     for(Element *e: m_elements){
       std::vector<Edge *> sortedEdges;

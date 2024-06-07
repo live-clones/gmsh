@@ -38,7 +38,7 @@ namespace IFF{
     virtual ~ObjectiveFunction(){}
   };
 
-  // ------------------------------- Dirichlet energy objective function
+  // ------------------------------- Dirichlet energy for CR GL framefield objective function
   class DirichletEnergieVectCR : public ObjectiveFunction{
   public:
     DirichletEnergieVectCR(): ObjectiveFunction(), m_nFields(2){}
@@ -56,6 +56,22 @@ namespace IFF{
     std::vector<std::vector<double>> _rotateSolTri(const std::vector<std::vector<double>> &solTri, const std::vector<std::vector<std::vector<double>>> &rotOp);
     void _getRotatedGradient(Element *element, const std::vector<std::vector<double>> &solTriRotated, std::vector<double> &localRhs);
   };
+
+  // ------------------------------- GL framefield constraint
+  class GLframeConstraint : public ObjectiveFunction{
+  public:
+    GLframeConstraint(double penalty): ObjectiveFunction(), m_nFields(2), m_penalty(penalty){}
+  
+    virtual void evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc);
+    virtual void getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs);
+    
+  protected:
+    ~GLframeConstraint(){}
+
+  private:
+    size_t m_nFields;
+    double m_penalty;
+  };
   
   // ------------------------------- classes for objective functions linear combinations
   class SumObjectiveFunction : public ObjectiveFunction{
@@ -65,7 +81,7 @@ namespace IFF{
       m_f.push_back(f2);
     }
 
-    virtual void evaluateFunction(Element *element, std::vector<std::vector<double>> &solElem, double &valFunc){
+    virtual void evaluateFunction(Element *element, const std::vector<std::vector<double>> &solElem, double &valFunc){
       std::vector<double> valFuncs;
       valFunc = 0;
       for(auto f: m_f){
@@ -75,7 +91,7 @@ namespace IFF{
       }
     }
     
-    virtual void getGradient(Element *element, std::vector<double> &localRhs, std::vector<std::vector<double>> &solTri){
+    virtual void getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs){
       m_f[0]->getGradient(element, solTri, localRhs);
       for(size_t k=1; k<m_f.size(); k++){
 	std::vector<double> rhs;
@@ -96,12 +112,12 @@ namespace IFF{
   public:
     ScaledObjectiveFunction(ObjectiveFunction *f1, double s): ObjectiveFunction(), m_f(f1), m_scaling(s){}
     
-    virtual void evaluateFunction(Element *element, std::vector<std::vector<double>> &solTri, double &valFunc){
+    virtual void evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc){
       m_f->evaluateFunction(element, solTri, valFunc);
       valFunc *= m_scaling;
     }
     
-    virtual void getGradient(Element *element, std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs){
+    virtual void getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs){
       m_f->getGradient(element, solTri, localRhs);
       for(size_t l=0; l<localRhs.size(); l++){
 	localRhs[l] *= m_scaling;
