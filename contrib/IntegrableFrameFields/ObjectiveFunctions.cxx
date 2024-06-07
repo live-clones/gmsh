@@ -6,6 +6,26 @@
 namespace IFF{
   std::vector<ObjectiveFunction*> ObjectiveFunction::objectiveFunctionsCollector;
 
+  void ObjectiveFunction::checkGradient(Element *element, const std::vector<std::vector<double>> &solTri){
+    double epsilon = 1e-8;
+    std::vector<std::vector<double>> solTriPerturbed = solTri;
+    std::vector<double> localRhs;
+    getGradient(element, solTri, localRhs);
+    double valFunc = 0.0;
+    evaluateFunction(element, solTri, valFunc);
+    for(size_t iN=0; iN<solTri.size(); iN++)
+      for(size_t iF=0; iF<solTri[0].size(); iF++){
+        size_t locIndI = solTri[0].size()*iN + iF;
+        solTriPerturbed[iN][iF] += epsilon;
+        double valPerturbed = 0.0;
+        evaluateFunction(element, solTriPerturbed, valPerturbed);
+        double gradFiniteDiff = (valPerturbed - valFunc)/epsilon;
+        double errorGrad = sqrt((localRhs[locIndI] - gradFiniteDiff)*(localRhs[locIndI] - gradFiniteDiff));
+        std::cout << "error grad: " << errorGrad << std::endl;
+        solTriPerturbed[iN][iF] -= epsilon;
+      }
+  }
+  
   std::vector<std::vector<std::vector<double>>> DirichletEnergieVectCR::_getCRRotOperators(Element *e){
     int nEdges = e->getNumEdges();
     std::vector<std::vector<std::vector<double>>> op;
@@ -44,31 +64,81 @@ namespace IFF{
   void DirichletEnergieVectCR::evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc){
     int pOrder = 3;
     valFunc = 0.0;
-    // element->m_e->getIntegrationPoints(3, &nptsG, &ptsW);
+
     std::vector<double> intWeights = element->getIntegrationWeights(pOrder);
     std::vector<double> dets = element->getDet(pOrder);
     std::vector<std::vector<std::vector<double>>> CRGradSF = element->getCRGradSF(pOrder);
-    for(int k=0; k<intWeights.size(); k++){
-      std::vector<std::vector<std::vector<double>>> rotOp = _getCRRotOperators(element);
-      std::vector<std::vector<double>> solTriRotated = _rotateSolTri(solTri, rotOp);
+
+    std::vector<std::vector<std::vector<double>>> rotOp = _getCRRotOperators(element);
+    std::vector<std::vector<double>> solTriRotated = _rotateSolTri(solTri, rotOp);
       
+    for(int k=0; k<intWeights.size(); k++){
       std::vector<std::vector<double>> gradSolG;
       gradSolG.resize(m_nFields);
       for(std::vector<double> &v: gradSolG)
         v.resize(3, 0.0);
       for(size_t jField=0; jField<m_nFields; jField++)
-        for(size_t jX=0; jX<3; jX++)
-          for(size_t iEdg=0; iEdg<element->getNumEdges(); iEdg++)
+        for(size_t jX=0; jX<3; jX++){
+          for(size_t iEdg=0; iEdg<element->getNumEdges(); iEdg++){
             gradSolG[jField][jX] += CRGradSF[k][iEdg][jX] * solTriRotated[iEdg][jField] ;
+          }
+        }
       
       double valXG = 0.0;
       for(size_t jField=0; jField<m_nFields; jField++)
-        valXG += tools::norm(gradSolG[jField]);
-      
+        valXG += 0.5*tools::norm2(gradSolG[jField]);
+
       valFunc += valXG*intWeights[k]*dets[k];
     }
   }
-  void DirichletEnergieVectCR::getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs){
+
+  void DirichletEnergieVectCR::_getRotatedGradient(Element *element, const std::vector<std::vector<double>> &solTriRotated, std::vector<double> &localRhs){
+    int pOrder = 3;
+    size_t nEdges = element->getNumEdges();
+    localRhs.resize(m_nFields*nEdges, 0.0);
     
+    std::vector<double> intWeights = element->getIntegrationWeights(pOrder);
+    std::vector<double> dets = element->getDet(pOrder);
+    std::vector<std::vector<std::vector<double>>> CRGradSF = element->getCRGradSF(pOrder);
+    
+    for(int k=0; k<intWeights.size(); k++){
+      std::vector<std::vector<double>> gradSolG;
+      gradSolG.resize(m_nFields);
+      for(std::vector<double> &v: gradSolG)
+        v.resize(3, 0.0);
+
+      for(size_t jField=0; jField<m_nFields; jField++)
+        for(size_t jX=0; jX<3; jX++)
+          for(size_t iEdg=0; iEdg<element->getNumEdges(); iEdg++)
+            gradSolG[jField][jX] += CRGradSF[k][iEdg][jX] * solTriRotated[iEdg][jField] ;
+
+      for(size_t jField=0; jField<m_nFields; jField++)
+        for(size_t jEdg=0; jEdg<nEdges; jEdg++){
+          size_t locIndJ = m_nFields*jEdg + jField;
+          for(size_t iX=0; iX<3; iX++)
+            localRhs[locIndJ] += intWeights[k]*dets[k]*CRGradSF[k][jEdg][iX]*gradSolG[jField][iX];
+        }
+    }
+  }
+  
+  void DirichletEnergieVectCR::getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs){
+    int pOrder = 3;
+    size_t nEdges = element->getNumEdges();
+    
+    std::vector<std::vector<std::vector<double>>> rotOp = _getCRRotOperators(element);
+    std::vector<std::vector<double>> solTriRotated = _rotateSolTri(solTri, rotOp);
+  
+    std::vector<double> localRhsRotated;
+    _getRotatedGradient(element, solTriRotated, localRhsRotated);
+
+    localRhs.resize(m_nFields*nEdges, 0.0);
+    for(size_t jField=0; jField<m_nFields; jField++)
+      for(size_t jEdg=0; jEdg<nEdges; jEdg++){
+        size_t locIndJ = m_nFields*jEdg + jField;
+        for(size_t kField=0; kField<m_nFields; kField++){
+          size_t locIndK = m_nFields*jEdg + kField;
+          localRhs[locIndJ] += localRhsRotated[locIndK] * rotOp[jEdg][kField][jField];
+        }
+      }
   }
 }

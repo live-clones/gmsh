@@ -199,8 +199,9 @@ namespace IFF{
       IntPt *ptsW = NULL;
       m_e->getIntegrationPoints(pOrder, &nptsG, &ptsW);
       integrationWeights.resize(nptsG, 0.0);
-      for(size_t k=0; k<nptsG; k++)
+      for(size_t k=0; k<nptsG; k++){
         integrationWeights[k] = ptsW[k].weight;
+      }
       return integrationWeights;
     }
     else
@@ -238,7 +239,7 @@ namespace IFF{
   }
   
   std::vector<std::vector<std::vector<double>>> Element::getCRGradSF(int pOrder){
-    if(m_CRsf.size()==0){
+    if(m_CRgsf.size()==0){
       size_t nEdges = m_edges.size();
       if(nEdges==3){
         int nptsG=0;
@@ -270,10 +271,8 @@ namespace IFF{
             for(size_t j=0; j<3; j++)
               for(size_t l=0; l<3; l++)
                 m_CRgsf[k][i][j] += gsfRef[i][l]*invJac(l,j);
-          
-          return m_CRgsf;
         }
-      
+        return m_CRgsf;
       }
       else if(nEdges==4){
         std::cout << "Crouzeix raviart grad shape functions not implement for element with " << nEdges << " edges." << std::endl;

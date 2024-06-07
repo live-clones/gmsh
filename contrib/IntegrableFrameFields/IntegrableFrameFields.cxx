@@ -38,29 +38,43 @@ void iffComputeIntegrableFrameField(GModel *gm){
   Element *e = m.getElement(0);
   std::vector<double> vRef = e->getDirEdg(0);
 
-  double lower_bound = -10000;
-  double upper_bound = 10000;
+  double lower_bound = -1;
+  double upper_bound = 1;
   std::uniform_real_distribution<double> unif(lower_bound,upper_bound);
   std::default_random_engine re;
-  for(size_t nTry=0; nTry<100; nTry++){
-    double theta = unif(re);
+  // for(size_t nTry=0; nTry<100; nTry++){
+  //   double theta = unif(re);
    
-    std::vector<std::vector<double>> solTri;
-    solTri.resize(3);
-    for(std::vector<double> &v: solTri)
-      v.resize(2, 0.0);
-    solTri[0][0] = cos(4*theta); solTri[0][1] = sin(4*theta);
-    for(int k=1; k<3; k++){
-      std::vector<double> v = e->getDirEdg(k);
-      std::vector<double> n = e->getNormal();
-      std::vector<double> t = tools::crossprod(n, vRef);
-      double alpha = atan2(tools::dotprod(v, t), tools::dotprod(v, vRef));
-      solTri[k][0] = cos(-4*(alpha-theta)); solTri[k][1] = sin(-4*(alpha+theta));
-    }
+  //   std::vector<std::vector<double>> solTri;
+  //   solTri.resize(3);
+  //   for(std::vector<double> &v: solTri)
+  //     v.resize(2, 0.0);
+  //   solTri[0][0] = cos(4*theta); solTri[0][1] = sin(4*theta);
+  //   for(int k=1; k<3; k++){
+  //     std::vector<double> v = e->getDirEdg(k);
+  //     std::vector<double> n = e->getNormal();
+  //     std::vector<double> t = tools::crossprod(n, vRef);
+  //     double alpha = atan2(tools::dotprod(v, t), tools::dotprod(v, vRef));
+  //     solTri[k][0] = cos(-4*(alpha-theta)); solTri[k][1] = sin(-4*(alpha+theta));
+  //   }
 
-    double valFunc = -10.0;
-    // std::cout << "valfunc: " << valFunc << ", theta: " << theta << std::endl;
-    fTest->evaluateFunction(e, solTri, valFunc);
-    std::cout << "valfunc: " << valFunc << std::endl;
-  }
+  //   double valFunc = -10.0;
+  //   // std::cout << "valfunc: " << valFunc << ", theta: " << theta << std::endl;
+  //   fTest->evaluateFunction(e, solTri, valFunc);
+  //   std::cout << "valfunc: " << valFunc << std::endl;
+  // }
+
+  // std::vector<std::vector<double>> solTri;
+  // solTri.resize(3);
+  // for(std::vector<double> &v: solTri)
+  //   v.resize(2, 0.0);
+
+  // for(size_t nTry=0; nTry<100; nTry++){
+  //   for(size_t iN=0; iN<3; iN++)
+  //     for(size_t iF=0; iF<2; iF++){
+  //       solTri[iN][iF] = unif(re);
+  //     }
+  //   std::cout << "------" << std::endl;
+  //   fTest->checkGradient(e, solTri);
+  // }
 }
