@@ -3,6 +3,7 @@ set(IFF_SRC
   IffTools.cxx
   IntegrableFrameFields.cxx
   ObjectiveFunctions.cxx
+  Solver.cxx
   )
 
 file(GLOB_RECURSE HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.hxx)

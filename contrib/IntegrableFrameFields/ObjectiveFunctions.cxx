@@ -63,7 +63,7 @@ namespace IFF{
   }
   
   void DirichletEnergieVectCR::evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc){
-    int pOrder = 3;
+    int pOrder = 2;
     valFunc = 0.0;
 
     std::vector<double> intWeights = element->getIntegrationWeights(pOrder);
@@ -94,7 +94,7 @@ namespace IFF{
   }
 
   void DirichletEnergieVectCR::_getRotatedGradient(Element *element, const std::vector<std::vector<double>> &solTriRotated, std::vector<double> &localRhs){
-    int pOrder = 3;
+    int pOrder = 2;
     size_t nEdges = element->getNumEdges();
     localRhs.resize(m_nFields*nEdges, 0.0);
     
@@ -123,7 +123,7 @@ namespace IFF{
   }
   
   void DirichletEnergieVectCR::getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs){
-    int pOrder = 3;
+    int pOrder = 2;
     size_t nEdges = element->getNumEdges();
     
     std::vector<std::vector<std::vector<double>>> rotOp = _getCRRotOperators(element);
@@ -145,7 +145,7 @@ namespace IFF{
 
   // ------------------------------- GL framefield constraint
   void GLframeConstraint::evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc){
-    int pOrder = 3;
+    int pOrder = 2;
     valFunc = 0.0;
 
     std::vector<double> intWeights = element->getIntegrationWeights(pOrder);
@@ -160,7 +160,7 @@ namespace IFF{
   }
 
   void GLframeConstraint::getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs){
-    int pOrder = 3;
+    int pOrder = 2;
     size_t nEdges = element->getNumEdges();
 
     std::vector<double> intWeights = element->getIntegrationWeights(pOrder);

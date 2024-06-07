@@ -47,6 +47,9 @@ namespace IFF{
     size_t getNumEdges(){return m_edges.size();}
     std::vector<double> getNormal();
     std::vector<double> getDirEdg(int iEdg);
+
+    Edge* getEdge(int k){return m_edges[k];}
+    std::vector<Edge*> getEdges(){return m_edges;}
     
     std::vector<double> getDet(int pOrder);
     std::vector<std::vector<double>> getIntegrationPoints(int pOrder);
@@ -54,8 +57,13 @@ namespace IFF{
     std::vector<std::vector<double>> getCRSF(int pOrder);
     std::vector<std::vector<std::vector<double>>> getCRGradSF(int pOrder);
     std::vector<double> interpolateCR(double u, double v, const std::vector<std::vector<double>> &solTri);
-    
+
     MElement *m_e;
+
+    //For solver interaction
+    void setNumUnknown(int n){m_nUnknown = n;}
+    int getNumUnknown(){return m_nUnknown;}
+
 
   private:
     std::vector<Vertex *> m_vertices;
@@ -69,6 +77,9 @@ namespace IFF{
 
     void _computeNormal();
     std::vector<double> _computeCRSF(double u, double v);
+
+    //For solver interaction
+    int m_nUnknown;
   };
   
   class Vertex{
@@ -96,10 +107,13 @@ namespace IFF{
     ~Edge(){}
 
     double getLength();
+    size_t getIndex(){return m_index;}
   private:
     std::array<Vertex*, 2> m_vertices;
     std::vector<Element*> m_elements;
     std::vector<Element*> m_lines;
+
+    size_t m_index;
 
     bool m_isOnCutGraph;
   };
@@ -113,6 +127,11 @@ namespace IFF{
     ~Mesh();
 
     Element* getElement(size_t iElem){return m_elements[iElem];}
+    std::vector<Element*> getElements(){return m_elements;}
+    std::vector<Vertex*> getVertices(){return m_vertices;}
+    std::vector<Edge*> getEdges(){return m_edges;}
+    std::vector<Element*> getLines(){return m_lines;}
+    
     double getMinEdgeLength(){return m_minEdgeLenght;}
     double getMaxEdgeLength(){return m_maxEdgeLenght;}
     

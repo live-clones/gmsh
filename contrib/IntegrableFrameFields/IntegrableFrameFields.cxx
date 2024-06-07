@@ -14,6 +14,7 @@
 #include <IffTools.hxx>
 #include <ObjectiveFunctions.hxx>
 #include <random>
+#include <Solver.hxx>
 
 using namespace IFF;
 
@@ -69,7 +70,7 @@ void iffComputeIntegrableFrameField(GModel *gm){
   for(std::vector<double> &v: solTri)
     v.resize(2, 0.0);
 
-  for(size_t nTry=0; nTry<100; nTry++){
+  for(size_t nTry=0; nTry<2; nTry++){
     for(size_t iN=0; iN<3; iN++)
       for(size_t iF=0; iF<2; iF++){
         solTri[iN][iF] = unif(re);
@@ -78,4 +79,43 @@ void iffComputeIntegrableFrameField(GModel *gm){
     // fTest->checkGradient(e, solTri);
     sum->checkGradient(e, solTri);
   }
+
+  SumObjectiveFunction *GLobj = *fTest + *fTestC;
+  // Solver s(&m, 2, fTest, Solver::TYPEUNKNOWN::EDGE);
+  // Solver s(&m, 2, fTestC, Solver::TYPEUNKNOWN::EDGE);
+  Solver s(&m, 2, GLobj, Solver::TYPEUNKNOWN::EDGE);
+
+  for(Element *l: m.getLines()){
+    Edge* e=l->getEdge(0);
+    s.addBCDirichlet(std::make_pair(e, 0), 1.0);
+    s.addBCDirichlet(std::make_pair(e, 1), 0.0);
+  }
+
+  std::map<Edge*, std::vector<double>> sol;
+  for(Edge* e: m.getEdges()){
+    std::vector<double> solInitEdge{1.0, 0.0};
+    sol[e] = solInitEdge;
+  }
+  
+  s.solveLBFGS(sol);
+
+  double funC = 0.0;
+  for(Element *e: m.getElements()){
+    std::vector<std::vector<double>> solEl;
+    solEl.resize(e->getNumUnknown());
+    for(size_t l=0; l<solEl.size(); l++)
+      solEl[l].resize(s.m_nFields, 0.0);
+
+    for(size_t l=0; l<solEl.size(); l++)
+      solEl[l] = sol[e->getEdge(l)];
+
+    double func = 0.0;
+    fTestC->evaluateFunction(e, solEl, func);
+    // std::cout << "func: " << func << std::endl;
+    // std::cout << "------" << std::endl;
+    // fTestC->checkGradient(e, solEl);
+    funC += func;
+  }
+  std::cout << "func constr: " << funC << std::endl;
 }
+

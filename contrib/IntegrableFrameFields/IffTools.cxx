@@ -449,6 +449,7 @@ namespace IFF{
       if(edgPrec != pair.first){
         edgK = Edge::create(m_vertices[pair.first[0]], m_vertices[pair.first[1]]);
         m_edges.push_back(edgK);
+        edgK->m_index = m_edges.size()-1;
         // edgK->m_vertices[0] = m_vertices[pair.first[0]];
         // edgK->m_vertices[1] = m_vertices[pair.first[1]];
         edgPrec = pair.first;
