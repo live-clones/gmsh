@@ -8,13 +8,14 @@
 #if defined(HAVE_MESH)
 
 #include "AnalyseMeshQuality.h"
-#include "qualityMeasuresJacobian.h"
 #include "OS.h"
 #include "Context.h"
 #include "PView.h"
 #include "GModel.h"
 #include "MElement.h"
+#include "polynomialBasis.h"
 #include "bezierBasis.h"
+#include "qualityMeasuresJacobian.h"
 #include <sstream>
 #include <fstream>
 #if defined(HAVE_OPENGL)

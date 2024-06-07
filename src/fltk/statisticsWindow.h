@@ -21,7 +21,7 @@ public:
   Fl_Group *group[3];
   Fl_Box *memUsage;
   Fl_Check_Button *visible;
-  double quality[3][100];
+  double quality[3][101];
 
 public:
   statisticsWindow(int deltaFontSize);
