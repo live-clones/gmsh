@@ -3593,11 +3593,11 @@ Command :
     }
    | tExit tEND
     {
-      Msg::Exit(0, true);
+      Msg::Exit(0, false); // will return 0 only if no meshing error occurred
     }
    | tExit FExpr tEND
     {
-      Msg::Exit((int)$2, true);
+      Msg::Exit((int)$2, true); // will always return the specified value
     }
    | tAbort tEND
     {
