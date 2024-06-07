@@ -6787,7 +6787,8 @@ all 2D and 3D element types, except Gamma which is not defined for hexes and pyr
 The `S-' of SICN and SIGE stands for `Signed'. Those two measures actually give two information
 on an element: Their absolute value gives the element's shape quality while their sign
 gives the element validity. In other words, negative values of SICN and SIGE
-indicate tangled elements.
+indicate tangled elements. The pure quality part of the measures take values
+between 0 and 1, with 1 corresponding to the best shape.
 
 The measures are computed for 3D elements if any, otherwise for 2D elements. Given values
 are the average, the minimum and the maximum among elements.
