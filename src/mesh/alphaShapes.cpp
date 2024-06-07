@@ -3193,8 +3193,13 @@ static double _faceSizeFromMap(PolyMesh::HalfEdge *he, std::unordered_map<int, d
 }
 
 PolyMesh* _alphaShapeDelaunay2D(const int tag, const std::string boundaryModelName){
+  printf("starting \n");
   GModel *current = GModel::current();
   GModel *model_boundary = GModel::findByName(boundaryModelName);
+  if (model_boundary == nullptr) {
+    Msg::Error("Model %s not found", boundaryModelName.c_str());
+    return nullptr;
+  }
   auto bb = model_boundary->bounds();
   current->setAsCurrent();
   GFace* gf = GModel::current()->getFaceByTag(tag);
@@ -3206,6 +3211,7 @@ PolyMesh* _alphaShapeDelaunay2D(const int tag, const std::string boundaryModelNa
   initialize_rectangle(pm, bb.min().x(), bb.max().x(), bb.min().y(),
                           bb.max().y());
   PolyMesh::Face* f = pm->faces[0];
+  printf("continuing \n");
   for(auto &v : gf->mesh_vertices) {
     f = WalkGeneral(f, v->x(), v->y());
     pm->split_triangle(0, v->x(), v->y(), 0, f, delaunayCriterion, nullptr);
@@ -3453,7 +3459,6 @@ void _delaunayCheckColors(PolyMesh* pm, std::vector<PolyMesh::HalfEdge* > hes, s
   std::stack<PolyMesh::HalfEdge *> _stack;
   for (auto he : hes) _stack.push(he);
   std::vector<PolyMesh::HalfEdge *> _touched;
-  size_t debug = 0;
   while(!_stack.empty()) {
     PolyMesh::HalfEdge *he = _stack.top();
     _touched.push_back(he);
