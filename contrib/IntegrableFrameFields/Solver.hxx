@@ -19,6 +19,11 @@ namespace IFF{
     Solver(Mesh *m, int nFields, ObjectiveFunction *objFunc, TYPEUNKNOWN unknownType=TYPEUNKNOWN::VERTEX);
     ~Solver(){}
 
+    void printInfos(){
+      std::cout << "--- --- SOLVER INFOS ---" << std::endl;
+      std::cout << "-- nDofs: " << getNDof() << std::endl;
+      std::cout << "--- ---" << std::endl;
+    }
     void solveLBFGS(std::map<Edge*, std::vector<double>> &mapSolution);
     
     void addBCDirichlet(const std::pair<Edge*, int> &pairEdgeField, double valBC);

@@ -65,6 +65,18 @@ namespace IFF{
         return res;
       }
     }
+
+    std::vector<double> sum(const std::vector<double> &v0, const std::vector<double> &v1){
+      if(v0.size() != v1.size()){
+        std::cout << "Wrong use of tools::diff. v0 and v1 sizes not matching" << std::endl;
+      }
+      else{
+        std::vector<double> res(v0.size(), 0.0);
+        for(size_t k=0; k<v0.size(); k++)
+          res[k] = v0[k] + v1[k];
+        return res;
+      }
+    }
     
     double norm(const std::vector<double> &v){
       double norm = 0.0;

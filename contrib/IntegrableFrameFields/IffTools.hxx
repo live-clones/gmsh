@@ -21,6 +21,7 @@ namespace IFF{
     double dotprod(const std::vector<double> &v0, const std::vector<double> &v1);
     double cosAngle(const std::vector<double> &v0, const std::vector<double> &v1);
     std::vector<double> diff(const std::vector<double> &v0, const std::vector<double> &v1);
+    std::vector<double> sum(const std::vector<double> &v0, const std::vector<double> &v1);
     double norm(const std::vector<double> &v);
     double norm2(const std::vector<double> &v); // squared norm
     double norm(const double *v, const size_t &size);
@@ -108,6 +109,18 @@ namespace IFF{
 
     double getLength();
     size_t getIndex(){return m_index;}
+    std::vector<double> getDir(){
+      std::vector<double> v = tools::diff(m_vertices[0]->getCoord(), m_vertices[1]->getCoord());
+      tools::normalize(v);
+      return v;
+    }
+    
+    std::vector<double> getBarycenter(){
+      std::vector<double> res = tools::sum(m_vertices[0]->getCoord(), m_vertices[1]->getCoord());
+      tools::scale(res, 0.5);
+      return res;
+    };
+    
   private:
     std::array<Vertex*, 2> m_vertices;
     std::vector<Element*> m_elements;
