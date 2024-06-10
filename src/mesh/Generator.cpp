@@ -158,7 +158,7 @@ static void
 GetQualityMeasure(std::vector<T *> &ele, double &gamma, double &gammaMin,
                   double &gammaMax, double &minSICN, double &minSICNMin,
                   double &minSICNMax, double &minSIGE, double &minSIGEMin,
-                  double &minSIGEMax, double quality[3][100])
+                  double &minSIGEMax, double quality[3][101])
 {
   for(std::size_t i = 0; i < ele.size(); i++) {
     double g = ele[i]->gammaShapeMeasure();
@@ -173,15 +173,15 @@ GetQualityMeasure(std::vector<T *> &ele, double &gamma, double &gammaMin,
     minSIGE += e;
     minSIGEMin = std::min(minSIGEMin, e);
     minSIGEMax = std::max(minSIGEMax, e);
-    for(int j = 0; j < 100; j++) {
-      if(s > (2 * j - 100) / 100. && s <= (2 * j - 98) / 100.) quality[0][j]++;
-      if(g > j / 100. && g <= (j + 1) / 100.) quality[1][j]++;
-      if(e > (2 * j - 100) / 100. && e <= (2 * j - 98) / 100.) quality[2][j]++;
+    for(int j = 0; j < 101; j++) {
+      if(s > (2 * j - 101) / 101. && s <= (2 * j - 99) / 101.) quality[0][j]++;
+      if(g > j / 101. && g <= (j + 1) / 101.) quality[1][j]++;
+      if(e > (2 * j - 101) / 101. && e <= (2 * j - 99) / 101.) quality[2][j]++;
     }
   }
 }
 
-void GetStatistics(double stat[50], double quality[3][100], bool visibleOnly)
+void GetStatistics(double stat[50], double quality[3][101], bool visibleOnly)
 {
   for(int i = 0; i < 50; i++) stat[i] = 0.;
 
@@ -234,7 +234,7 @@ void GetStatistics(double stat[50], double quality[3][100], bool visibleOnly)
 
   if(quality) {
     for(int i = 0; i < 3; i++)
-      for(int j = 0; j < 100; j++) quality[i][j] = 0.;
+      for(int j = 0; j < 101; j++) quality[i][j] = 0.;
     double minSICN = 0., minSICNMin = 1., minSICNMax = -1.;
     double minSIGE = 0., minSIGEMin = 1., minSIGEMax = -1.;
     double gamma = 0., gammaMin = 1., gammaMax = 0.;
