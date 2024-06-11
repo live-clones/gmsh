@@ -344,8 +344,6 @@ macosarm-sdk_official_release:
 
 source_official_snapshot:
   image: onelab/ubuntu20.04
-  variables:
-    EXTRA_OPTION: "-DGMSH_RELEASE=0"
   <<: *source_official
   except:
     - tags
