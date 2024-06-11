@@ -80,8 +80,8 @@ namespace IFF{
     void (*_getRotatedSolEl)(Element*, const std::vector<std::vector<double>> &, std::vector<std::vector<double>> &);
     void (*_getInvertRotatedGradient)(Element *, const std::vector<double> &, std::vector<double> &);
   };
-
-    // ------------------------------- Odeco isotrope 2D framefield constraint
+  
+  // ------------------------------- Odeco anisotrope 2D framefield constraint
   class OdecoAniso2DConstraint : public ObjectiveFunction{
   public:
     OdecoAniso2DConstraint(double penalty, void (*rotSolElFunc)(Element*, const std::vector<std::vector<double>> &, std::vector<std::vector<double>> &), void (*invertRotatedGradient)(Element *, const std::vector<double> &, std::vector<double> &)) : ObjectiveFunction(), m_penalty(penalty), m_nFields(5), _getRotatedSolEl(rotSolElFunc), _getInvertRotatedGradient(invertRotatedGradient){
@@ -101,6 +101,52 @@ namespace IFF{
     size_t m_nFields;
     std::vector<double> m_weightsC;
 
+    void _getRotatedGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs);
+
+    void (*_getRotatedSolEl)(Element*, const std::vector<std::vector<double>> &, std::vector<std::vector<double>> &);
+    void (*_getInvertRotatedGradient)(Element *, const std::vector<double> &, std::vector<double> &);
+  };
+
+  // ------------------------------- Integrability objective function for Odeco isotrope 2D framefield representation
+  class LBOdecoIso2D : public ObjectiveFunction{
+  public:
+    LBOdecoIso2D(double penalty, void (*rotSolElFunc)(Element*, const std::vector<std::vector<double>> &, std::vector<std::vector<double>> &), void (*invertRotatedGradient)(Element *, const std::vector<double> &, std::vector<double> &)) : ObjectiveFunction(), m_penalty(penalty), m_nFields(3), _getRotatedSolEl(rotSolElFunc), _getInvertRotatedGradient(invertRotatedGradient){
+    }
+
+    virtual void evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc);
+    virtual void getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs);
+
+    double m_penalty;
+  protected:
+    ~LBOdecoIso2D(){}
+  private:
+    size_t m_nFields;
+
+    void _getRotatedGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs);
+
+    void (*_getRotatedSolEl)(Element*, const std::vector<std::vector<double>> &, std::vector<std::vector<double>> &);
+    void (*_getInvertRotatedGradient)(Element *, const std::vector<double> &, std::vector<double> &);
+  };
+  
+  // ------------------------------- Integrability objective function for Odeco anisotrope 2D framefield representation
+  class LBOdecoAniso2D : public ObjectiveFunction{
+  public:
+    LBOdecoAniso2D(double penalty, void (*rotSolElFunc)(Element*, const std::vector<std::vector<double>> &, std::vector<std::vector<double>> &), void (*invertRotatedGradient)(Element *, const std::vector<double> &, std::vector<double> &)) : ObjectiveFunction(), m_penalty(penalty), m_nFields(5), _getRotatedSolEl(rotSolElFunc), _getInvertRotatedGradient(invertRotatedGradient){
+      _create_C();
+    }
+
+    void _create_C();
+
+    virtual void evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc);
+    virtual void getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs);
+
+    double m_penalty;
+  protected:
+    ~LBOdecoAniso2D(){}
+  private:
+    size_t m_nFields;
+    std::vector<std::vector<std::vector<double>>> m_C0;
+    std::vector<std::vector<std::vector<double>>> m_C1;
     void _getRotatedGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs);
 
     void (*_getRotatedSolEl)(Element*, const std::vector<std::vector<double>> &, std::vector<std::vector<double>> &);

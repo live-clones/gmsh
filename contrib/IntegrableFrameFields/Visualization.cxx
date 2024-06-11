@@ -32,6 +32,8 @@
 namespace IFF{
   namespace visu{
     int framefield(const std::map<Element *, std::vector<std::vector<double>>> &mapElemDir, const std::string & nameView, int visible){
+      if(!gmsh::isInitialized())
+        gmsh::initialize();
       int tagView = gmsh::view::add(nameView);
       // int nBranches = 2;
       int nBranches = (mapElemDir.begin()->second)[0].size()/3;
@@ -55,6 +57,106 @@ namespace IFF{
         }
       }
       gmsh::view::addListData(tagView, "VP", numEl, data);
+      gmsh::view::option::setNumber(tagView, "Visible", visible);
+      return tagView;
+    }
+    
+    int vectorField(const std::map<Element *, std::vector<double>> &mapElemVect, const std::string & nameView, int visible){
+      if(!gmsh::isInitialized())
+        gmsh::initialize();
+      std::string modelName;
+      gmsh::model::getCurrent(modelName);
+      std::vector<size_t> tags;
+      std::vector<std::vector<double>> data;
+      tags.reserve(mapElemVect.size());
+      data.reserve(mapElemVect.size());
+      for(const auto &kv: mapElemVect){
+        tags.push_back(kv.first->getGmshTag());
+        data.push_back(kv.second);
+      }
+      int tagView = gmsh::view::add(nameView);
+      if(mapElemVect.size()>0){
+        gmsh::view::addModelData(tagView, 0, modelName, "ElementData", tags, data, 0.0, 3);
+      }
+      // gmsh::view::option::setNumber(tagView, "GlyphLocation", 2);
+      gmsh::view::option::setNumber(tagView, "Visible", visible);
+      return tagView;
+    }
+    
+    int scalarField(const std::map<Vertex*, double> &mapVertScalar, const std::string & nameView, int visible){
+      if(!gmsh::isInitialized())
+        gmsh::initialize();
+      std::string modelName;
+      gmsh::model::getCurrent(modelName);
+      int numEl = mapVertScalar.size();
+      std::vector<double> data;
+      data.reserve(mapVertScalar.size()*4);
+      for(const auto &kv: mapVertScalar){
+        std::vector<double> nodeCoord = kv.first->getCoord();
+        for(int j=0; j<nodeCoord.size(); j++)
+          data.push_back(nodeCoord[j]);
+        data.push_back(kv.second);
+      }
+      int tagView = gmsh::view::add(nameView);
+      if(mapVertScalar.size()>0){
+        gmsh::view::addListData(tagView, "SP", numEl, data);
+        // gmsh::view::addModelData(tagView, 0, modelName, "NodeData", tags, data, 0.0, 1);
+      }
+
+      gmsh::view::option::setNumber(tagView, "PointType", 1);
+      gmsh::view::option::setNumber(tagView, "PointSize", 8);
+
+      // gmsh::view::option::setNumber(tagView, "GlyphLocation", 2);
+      gmsh::view::option::setNumber(tagView, "Visible", visible);
+      return tagView;
+    }
+    int scalarField(const std::map<Edge*, double> &mapEdgScalar, const std::string & nameView, int visible){
+      if(!gmsh::isInitialized())
+        gmsh::initialize();
+      std::string modelName;
+      gmsh::model::getCurrent(modelName);
+      int numEl = mapEdgScalar.size();
+      std::vector<double> data;
+      data.reserve(mapEdgScalar.size()*4);
+      for(const auto &kv: mapEdgScalar){
+        std::vector<double> nodeCoord = kv.first->getBarycenter();
+        for(int j=0; j<nodeCoord.size(); j++)
+          data.push_back(nodeCoord[j]);
+        data.push_back(kv.second);
+      }
+      int tagView = gmsh::view::add(nameView);
+      if(mapEdgScalar.size()>0){
+        gmsh::view::addListData(tagView, "SP", numEl, data);
+        // gmsh::view::addModelData(tagView, 0, modelName, "NodeData", tags, data, 0.0, 1);
+      }
+      
+      // gmsh::view::option::setNumber(tagView, "GlyphLocation", 2);
+      gmsh::view::option::setNumber(tagView, "PointType", 1);
+      gmsh::view::option::setNumber(tagView, "PointSize", 8);
+      gmsh::view::option::setNumber(tagView, "Visible", visible);
+      return tagView;
+    }
+    int scalarField(const std::map<Element*, double> &mapElemScalar, const std::string & nameView, int visible){
+      if(!gmsh::isInitialized())
+        gmsh::initialize();
+      std::string modelName;
+      gmsh::model::getCurrent(modelName);
+      std::vector<size_t> tags;
+      std::vector<std::vector<double>> data;
+      tags.reserve(mapElemScalar.size());
+      data.reserve(mapElemScalar.size());
+      for(const auto &kv: mapElemScalar){
+        tags.push_back(kv.first->getGmshTag());
+        std::vector<double> elemData(1);
+        elemData[0] = kv.second;
+        data.push_back(elemData);
+      }
+      int tagView = gmsh::view::add(nameView);
+      if(mapElemScalar.size()>0){
+        gmsh::view::addModelData(tagView, 0, modelName, "ElementData", tags, data, 0.0, 1);
+      }
+      // gmsh::view::option::setNumber(tagView, "GlyphLocation", 2);
+      gmsh::view::option::setNumber(tagView, "Visible", visible);
       return tagView;
     }
   }

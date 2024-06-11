@@ -55,7 +55,7 @@ namespace IFF{
 	m_frame[3] = norm*2*cos(4*theta)*sqrt(M_PI)/8.0;
 	m_frame[4] = norm*2*sin(4*theta)*sqrt(M_PI)/8.0;
       }
-      else if(dir.size()==2){
+      else if(dir.size()<=4 && dir.size()>0){
 	if(fabs(tools::dotprod(dir[0], dir[1])) > 1e-12){
 	  gmsh::logger::write("Invalid OdecoAniso2D instantiation from directions. Directions are not orthogonal", "error");
 	}
@@ -217,11 +217,11 @@ namespace IFF{
       std::vector<std::vector<double>> directions = getDirections();
       double theta = atan2(directions[0][1], directions[0][0]);
       double norm = tools::norm(directions[0]);
-      if(norm > 1e-12){
-	m_frame[0] = norm*2*3*sqrt(2*M_PI)/8.0;
-	m_frame[1] = norm*2*cos(4*theta)*sqrt(M_PI)/8.0;
-	m_frame[2] = norm*2*sin(4*theta)*sqrt(M_PI)/8.0;
-      }
+      // if(norm > 1e-12){
+      m_frame[0] = norm*2*3*sqrt(2*M_PI)/8.0;
+      m_frame[1] = norm*2*cos(4*theta)*sqrt(M_PI)/8.0;
+      m_frame[2] = norm*2*sin(4*theta)*sqrt(M_PI)/8.0;
+      // }
     }
   };
 
@@ -295,6 +295,16 @@ namespace IFF{
         }
       }
       return d;
+    }
+
+    virtual void projectOnCrossManifold(){
+      std::vector<std::vector<double>> directions = getDirections();
+      double theta = atan2(directions[0][1], directions[0][0]);
+      double norm = tools::norm(directions[0]);
+      // if(norm > 1e-12){
+      m_frame[0] = norm*cos(4*theta);
+      m_frame[1] = norm*sin(4*theta);
+      // }
     }
   };
 }

@@ -12,5 +12,9 @@
 namespace IFF{
   namespace visu{
     int framefield(const std::map<Element *, std::vector<std::vector<double>>> &mapElemDir, const std::string & nameView="Frame field", int visible=0);
+    int vectorField(const std::map<Element *, std::vector<double>> &mapElemVect, const std::string & nameView="Vector", int visible=0);
+    int scalarField(const std::map<Vertex *, double> &mapVertScalar, const std::string & nameView="Vector", int visible=0);
+    int scalarField(const std::map<Edge*, double> &mapEdgScalar, const std::string & nameView="Vector", int visible=0);
+    int scalarField(const std::map<Element*, double> &mapElemScalar, const std::string & nameView="Vector", int visible=0);
   }
 }

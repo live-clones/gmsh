@@ -45,7 +45,7 @@ namespace IFF{
     }
     m_alglibrep = 0;
     m_func_prec = 0.0;
-    m_maxItLbfgs = 15000;
+    m_maxItLbfgs = 100000;
     m_lbfgsGradPrec = 1e-10;
     m_lbfgsFuncPrec = 0.0;
     m_lbfgsXPrec = 0.0;

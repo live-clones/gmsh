@@ -27,13 +27,22 @@ namespace IFF{
     double norm(const double *v, const size_t &size);
     double distance(const std::vector<double> &v0, const std::vector<double> &v1);
     std::vector<double> rotateAlongDirection(const std::vector<double> &vectAxis, const double &theta, const std::vector<double> &v);
+    double getAngleRotationAlongDirection(const std::vector<double> &vectAxis, const std::vector<double> &vInit, const std::vector<double> &vRotated);
     std::vector<double> getProjectionOnDirection(const std::vector<double> &dirProj, const std::vector<double> &v);
     std::vector<double> getProjectionOnHyperPlan(const std::vector<double> &normalHyperPlan, const std::vector<double> &v);
+    std::vector<double> getVectInNewBase(const std::vector<double> &u, const std::vector<double> &v, const std::vector<double> &w, const std::vector<double> &vect);
+    std::vector<double> getClosestVect(const std::vector<std::vector<double>> &listVects, const std::vector<double> &dirRef);
+    int getIndexClosestVect(const std::vector<std::vector<double>> &listVects, const std::vector<double> &dirRef);
   }
 
   class Vertex;
   class Edge;
+  class Element;
   class Mesh;
+  
+  namespace manifoldTools{//Tools for 2D discrete manifolds. Need all mesh classes
+    std::vector<double> transportToNeighbourElement(Element *eRef, Element *eTarget, const std::vector<double> &vectToTransport);
+  }
   
   class Element{
     friend class Mesh;
@@ -45,31 +54,42 @@ namespace IFF{
     Element(Mesh *m, MElement* el);
     ~Element(){}
 
+    size_t getIndex(){return m_index;}
+    size_t getGmshTag(){return m_e->getNum();}
     size_t getNumEdges(){return m_edges.size();}
+    std::vector<Vertex*> getVertices(){return m_vertices;}
+    Vertex* getVertex(int k){return m_vertices[k];}
+
+    std::vector<Element*> getNeighboursElements(){return m_neighbourElements;}
+    
     std::vector<double> getNormal();
     std::vector<double> getDirEdg(int iEdg);
 
     Edge* getEdge(int k){return m_edges[k];}
     std::vector<Edge*> getEdges(){return m_edges;}
+    Edge* getCommonEdge(Element* otherEl);
     
+    double getArea();
     std::vector<double> getDet(int pOrder);
     std::vector<std::vector<double>> getIntegrationPoints(int pOrder);
     std::vector<double> getIntegrationWeights(int pOrder);
     std::vector<std::vector<double>> getCRSF(int pOrder);
     std::vector<std::vector<std::vector<double>>> getCRGradSF(int pOrder);
     std::vector<double> interpolateCR(double u, double v, const std::vector<std::vector<double>> &solTri);
-
+    
     MElement *m_e;
 
     //For solver interaction
     void setNumUnknown(int n){m_nUnknown = n;}
     int getNumUnknown(){return m_nUnknown;}
 
-
   private:
-    std::vector<Vertex *> m_vertices;
-    std::vector<Edge *> m_edges;
+    std::vector<Vertex*> m_vertices;
+    std::vector<Edge*> m_edges;
+    std::vector<Element*> m_neighbourElements;
 
+    size_t m_index;
+    
     std::vector<double> m_normal;
 
     std::vector<double> m_det;
@@ -81,6 +101,12 @@ namespace IFF{
 
     //For solver interaction
     int m_nUnknown;
+
+    //Refinement tools
+    enum class CHILDTYPE{HALF1, HALF2, HALF3, FRACTAL};
+    Element *m_parentElem;
+    CHILDTYPE m_childType;
+    int m_childID;
   };
   
   class Vertex{
@@ -88,15 +114,72 @@ namespace IFF{
     static std::vector<Vertex*> vertexCollector;
   public:
     static Vertex* create(MVertex *v){Vertex *newV = new Vertex(v); vertexCollector.push_back(newV); return newV;}
-    Vertex(MVertex *v){m_v = v; vertexCollector.push_back(this);}
+    Vertex(MVertex *v): m_isGeometryBoundary(false){m_v = v; vertexCollector.push_back(this);}
     ~Vertex(){}
 
     std::vector<double> getCoord(){std::vector<double> coord{m_v->x(), m_v->y(), m_v->z()}; return coord;};
+    std::vector<Edge*> getEdges(){
+      if(m_edges.size() != 0)
+        return m_edges;
+      else{
+        std::cout << "edges empty" << std::endl;
+        exit(0);
+      }
+    }
+    std::vector<Edge*> getOrientedEdges(){
+      if(m_sortedEdges.size() != 0)
+        return m_sortedEdges;
+      else{
+        std::cout << "sortedEdges empty" << std::endl;
+        exit(0);
+      }
+    }
+
+    std::vector<Element*> getElements(){
+      if(m_elements.size() != 0)
+        return m_elements;
+      else{
+        std::cout << "elements empty" << std::endl;
+        exit(0);
+      }
+    }
+    
+    std::vector<Element*> getOrientedElements(){
+      if(m_sortedElements.size() != 0)
+        return m_sortedElements;
+      else{
+        std::cout << "sortedElements empty" << std::endl;
+        exit(0);
+      }
+    }
+    size_t getIndex(){return m_index;}
+    size_t getGmshTag(){return m_v->getNum();}
+
+    bool isGeometryBoundary(){return m_isGeometryBoundary;}
+
+    int getLocIndexInElem(Element *e){
+      int locIndex = -1;
+      std::vector<Vertex*> verts = e->getVertices();
+      for(int k=0; k<verts.size(); k++)
+        if(verts[k]->getIndex() == getIndex())
+          return k;
+      std::cout << "Vertex not found in element" << std::endl;
+      exit(0);
+      return locIndex;
+    }
+    
   private:
     MVertex *m_v;
     std::vector<Edge*> m_edges;
+    std::vector<Element*> m_elements;
+    std::vector<Edge*> m_sortedEdges;
+    std::vector<Element*> m_sortedElements;
     std::vector<Vertex*> m_neighbourVertices;
     size_t m_index;
+    bool m_isGeometryBoundary;
+
+    //Cutgraph tools
+    Vertex *m_parentVert;
   };
     
   class Edge{
@@ -109,8 +192,24 @@ namespace IFF{
 
     double getLength();
     size_t getIndex(){return m_index;}
+    Vertex *getVertex(int indV){return m_vertices[indV];}
+    std::array<Vertex*, 2> getVertices(){return m_vertices;}
+    std::vector<Element*> getElements(){return m_elements;}
+    std::vector<Element*> getLines(){return m_lines;}
+
+    int getLocIndexInElem(Element *e){
+      int locIndex = -1;
+      std::vector<Edge*> edges = e->getEdges();
+      for(int k=0; k<edges.size(); k++)
+        if(edges[k]->getIndex() == getIndex())
+          return k;
+      // std::cout << "Edge not found in element" << std::endl;
+      // exit(0);
+      return locIndex;
+    }
+    
     std::vector<double> getDir(){
-      std::vector<double> v = tools::diff(m_vertices[0]->getCoord(), m_vertices[1]->getCoord());
+      std::vector<double> v = tools::diff(m_vertices[1]->getCoord(), m_vertices[0]->getCoord());
       tools::normalize(v);
       return v;
     }
@@ -131,12 +230,21 @@ namespace IFF{
     bool m_isOnCutGraph;
   };
 
+  class MeshRefiner;
+  
   class Mesh{
     friend class Vertex;
     friend class Edge;
     friend class Element;
+    friend class MeshRefiner;
+    
   public:
+    static std::vector<MVertex*> hangingGmshVerticesCollector;
+    static std::vector<MElement*> hangingGmshElementsCollector;
+
+    Mesh(){}
     Mesh(std::vector<MElement*> &elts, std::vector<MLine*> &bndLines);
+    Mesh(Mesh &origMesh);
     ~Mesh();
 
     Element* getElement(size_t iElem){return m_elements[iElem];}
@@ -167,5 +275,31 @@ namespace IFF{
 
     double m_minEdgeLenght;
     double m_maxEdgeLenght;
+
+    void _buildStructure(size_t nMaxEdges);
+    void _buildNeighbourElements();
+    void _checkSanity();
   };
+
+  class MeshRefiner{
+  public:
+    MeshRefiner(Mesh *origMesh, Mesh *refinedMesh): m_origMesh(origMesh), m_refinedMesh(refinedMesh){
+      *refinedMesh = *origMesh;
+    }
+    ~MeshRefiner(){}
+
+    void refineMesh(const std::vector<size_t> &indicesElemToRefine);
+    
+  private:
+    Mesh *m_origMesh;
+    Mesh *m_refinedMesh;
+  };
+  
+  // To print vectors easily
+  template<class T> std::ostream &operator<<(std::ostream &os, std::vector<T> v) {
+    os << "["; if (v.size() > 0) os << v[0];
+    for(int i = 1; i < v.size(); i++) os << ", " << v[i];
+    os << "]";
+    return os;
+  }
 }

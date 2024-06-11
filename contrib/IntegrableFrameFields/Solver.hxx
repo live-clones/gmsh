@@ -31,6 +31,8 @@ namespace IFF{
     void addBCLinearCombination(const std::vector<std::vector<double>> &mat, const std::vector<double> &vect, const std::vector<std::pair<Edge*, int>> &pairEdgeField);
 
     size_t getNDof(){return m_nDof;}
+
+    void setObjectiveFunction(ObjectiveFunction *f){m_objFunc = f;}
     
     TYPEUNKNOWN m_unknownType;
     Mesh *m_mesh;
