@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -300,6 +300,38 @@ static int delaunayEdgeCriterionPlaneIsotropic(PolyMesh::HalfEdge *he, void *)
   return (result > 0) ? 1 : 0;
 }
 
+static double faceQuality(PolyMesh::Vertex *v0,
+			  PolyMesh::Vertex *v1,
+			  PolyMesh::Vertex *v2)
+{
+  return qmTriangle::gamma(v0->position.x(), v0->position.y(), v0->position.z(),
+			   v1->position.x(), v1->position.y(), v1->position.z(),
+			   v2->position.x(), v2->position.y(), v2->position.z());
+}
+
+static int enhanceQuality(PolyMesh::HalfEdge *he, void *)
+{
+  if(he->opposite == nullptr) return -1;
+
+  PolyMesh::Vertex *v0 = he->v;
+  PolyMesh::Vertex *v1 = he->next->v;
+  PolyMesh::Vertex *v2 = he->next->next->v;
+  PolyMesh::Vertex *v3 = he->opposite->next->next->v;
+
+  int d0 = degree(v0);
+  int d1 = degree(v1);
+  int d2 = degree(v2);
+  int d3 = degree(v3);
+
+  if ((d0 > 7 || d1 > 7) && (d2 < 7 && d3 < 7))return 1;
+    
+  double qBefore = std::min(faceQuality(v0,v1,v2), faceQuality(v1,v0,v3));
+  double qAfter  = std::min(faceQuality(v2,v3,v0), faceQuality(v3,v2,v1));
+  
+  return qAfter > qBefore ? 1 : 0;
+}
+
+
 static void faceCircumCenter(PolyMesh::HalfEdge *he, GFace *gf, double *res,
                              double *uv)
 {
@@ -314,6 +346,7 @@ static void faceCircumCenter(PolyMesh::HalfEdge *he, GFace *gf, double *res,
   double q2[3] = {p2.x(), p2.y(), p2.z()};
   circumCenterXYZ(q0, q1, q2, res, uv);
 }
+
 
 static double faceQuality(PolyMesh::HalfEdge *he, GFace *gf)
 {
@@ -865,3 +898,36 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover,
 
   return pm;
 }
+
+// -----------------------------------
+// only on planar faces ...
+int PolyMeshDelaunayize (int faceTag){
+
+  PolyMesh *pm;
+  GFace2PolyMesh(faceTag, &pm);
+
+  for(auto ff : pm->faces)ff->data = faceTag;
+
+  // flip edges that are not delaunay
+  int iter = 0;
+  while(iter++ < 100) {
+    int count = 0;
+    for(auto he : pm->hedges) {
+      if(he->opposite && enhanceQuality(he, nullptr)) {
+	if(intersect(he->v, he->next->v, he->next->next->v,
+		     he->opposite->next->next->v)) {
+	  pm->swap_edge(he);
+	  count++;
+	}
+      }
+    }
+    if(!count) break;
+  }
+  PolyMesh2GFace(pm, faceTag);
+  
+  delete pm;
+  return 0;
+}
+// -----------------------------------
+
+

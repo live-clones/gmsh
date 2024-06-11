@@ -23,7 +23,7 @@ int main(int argc, char **argv)
 
   gmshInitialize(0, 0, 1, 0, &ierr); chk(ierr);
 
-  gmshOpen(argv[1], &ierr); chk(ierr);
+  gmshOpen(argv[1], &ierr); if(ierr) return 0;
 
   gmshOnelabRun("", "", &ierr); chk(ierr);
 

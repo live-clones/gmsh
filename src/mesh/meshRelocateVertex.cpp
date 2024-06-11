@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -287,8 +287,7 @@ static void _relocateVertexOfPyramid(MVertex *ver,
     double ZOPT = c.z() + relax * H * n.z();
     double FULL_MOVE_OBJ =
       objective_function(1.0, ver, XOPT, YOPT, ZOPT, lt, true);
-    // printf("relax %g obj %g\n",relax,FULL_MOVE_OBJ);
-    if(FULL_MOVE_OBJ > 0.1) {
+    if(FULL_MOVE_OBJ > 1e-6) {
       ver->x() = XOPT;
       ver->y() = YOPT;
       ver->z() = ZOPT;
@@ -304,6 +303,7 @@ static void _relocateVertexGolden(MVertex *ver,
   if(ver->onWhat()->dim() != 3) return;
   double x = 0.0, y = 0.0, z = 0.0;
   int N = 0;
+
   for(std::size_t i = 0; i < lt.size(); i++) {
     double XCG = 0.0, YCG = 0.0, ZCG = 0.0;
     for(std::size_t j = 0; j < lt[i]->getNumVertices(); j++) {
@@ -317,19 +317,19 @@ static void _relocateVertexGolden(MVertex *ver,
     N += lt[i]->getNumVertices();
   }
 
+  
   double NO_MOVE_OBJ = objective_function(0.0, ver, x / N, y / N, z / N, lt);
-  if(NO_MOVE_OBJ > 0.1) return;
   double FULL_MOVE_OBJ = objective_function(1.0, ver, x / N, y / N, z / N, lt);
   if(FULL_MOVE_OBJ > NO_MOVE_OBJ) {
     ver->x() = x / N;
     ver->y() = y / N;
     ver->z() = z / N;
-    return;
+    //    return;
   }
 
   double q;
-  double xi = relax * Maximize_Quality_Golden_Section(ver, x / N, y / N, z / N,
-                                                      lt, tol, q);
+  double xi =  Maximize_Quality_Golden_Section(ver, x / N, y / N, z / N,
+					       lt, tol, q);
   ver->x() = (1. - xi) * ver->x() + xi * x / N;
   ver->y() = (1. - xi) * ver->y() + xi * y / N;
   ver->z() = (1. - xi) * ver->z() + xi * z / N;
@@ -431,6 +431,7 @@ void RelocateVertices(GFace *gf, int niter, double tol)
 
 void RelocateVertices(GRegion *region, int niter, double tol)
 {
+
   if(!niter) return;
 
   v2t_cont adj;
@@ -452,21 +453,18 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
 {
   if(!niter) return;
 
-  // FAST IMPLEMENTATION
   std::vector<MVertex *> _v_pyr;
   for(size_t i = 0; i < region->pyramids.size(); i++) {
     _v_pyr.push_back(region->pyramids[i]->getVertex(4));
   }
   std::sort(_v_pyr.begin(), _v_pyr.end());
 
-  std::vector<MTetrahedron *> _tets;
   std::set<MVertex *> _vts;
   for(size_t i = 0; i < region->tetrahedra.size(); i++) {
     MTetrahedron *t = region->tetrahedra[i];
     for(size_t j = 0; j < 4; j++) {
       MVertex *v = t->getVertex(j);
       if(std::binary_search(_v_pyr.begin(), _v_pyr.end(), v)) {
-        _tets.push_back(t);
         _vts.insert(t->getVertex(0));
         _vts.insert(t->getVertex(1));
         _vts.insert(t->getVertex(2));
@@ -476,7 +474,7 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
     }
   }
 
-  _tets.clear();
+  std::vector<MTetrahedron *> _tets;
   for(size_t i = 0; i < region->tetrahedra.size(); i++) {
     MTetrahedron *t = region->tetrahedra[i];
     for(size_t j = 0; j < 4; j++) {
@@ -489,21 +487,22 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
   }
 
   v2t_cont adj;
-  // buildVertexToElement(region->tetrahedra, adj);
   buildVertexToElement(_tets, adj);
   buildVertexToElement(region->pyramids, adj);
   buildVertexToElement(region->prisms, adj);
   buildVertexToElement(region->hexahedra, adj);
 
   for(int i = 0; i < 10; i++) {
-    double X = (double)(i + 1) / 10.;
+    double relax = (double)i / 10. + 1e-6;
     auto it = adj.begin();
     while(it != adj.end()) {
-      _relocateVertexOfPyramid(it->first, it->second, X);
+      _relocateVertexOfPyramid(it->first, it->second, relax);
       ++it;
     }
   }
-  //  return;
+
+  // return;
+
   for(int i = 0; i < niter + 2; i++) {
     auto it = adj.begin();
     double relax = std::min((double)(i + 1) / niter, 1.0);

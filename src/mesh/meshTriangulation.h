@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -20,5 +20,6 @@ void GFaceDelaunayRefinementOldMesher(int faceTag);
 void GFaceDelaunayRefinement(int faceTag);
 int GFace2PolyMesh(int faceTag, PolyMesh **pm);
 int PolyMesh2GFace(PolyMesh *pm, int faceTag);
+int PolyMeshDelaunayize (int faceTag);
 
 #endif

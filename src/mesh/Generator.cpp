@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -30,6 +30,7 @@
 #include "meshGRegionLocalMeshMod.h"
 #include "meshRelocateVertex.h"
 #include "meshRefine.h"
+#include "meshTriangulation.h"
 #include "BackgroundMesh.h"
 #include "BoundaryLayers.h"
 #include "ExtrudeParams.h"
@@ -59,6 +60,8 @@
 #include "meshSurfaceUntangling.h"
 #include "meshVolumeUntangling.h"
 #endif
+
+#include "meshMesquite.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -225,9 +228,9 @@ void GetStatistics(double stat[50], double quality[3][100], bool visibleOnly)
     stat[13] += (*it)->trihedra.size();
   }
 
-  stat[14] = CTX::instance()->meshTimer[0];
-  stat[15] = CTX::instance()->meshTimer[1];
-  stat[16] = CTX::instance()->meshTimer[2];
+  stat[14] = CTX::instance()->mesh.timer[0];
+  stat[15] = CTX::instance()->mesh.timer[1];
+  stat[16] = CTX::instance()->mesh.timer[2];
 
   if(quality) {
     for(int i = 0; i < 3; i++)
@@ -294,6 +297,29 @@ void GetStatistics(double stat[50], double quality[3][100], bool visibleOnly)
     stat[36] += data->getNumStrings2D() + data->getNumStrings3D();
   }
 #endif
+}
+
+static double GetMinQualityFast(GModel *m, int dim)
+{
+  int nthreads = CTX::instance()->numThreads;
+  if(CTX::instance()->mesh.maxNumThreads1D > 0)
+    nthreads = CTX::instance()->mesh.maxNumThreads1D;
+  if(!nthreads) nthreads = Msg::GetMaxThreads();
+
+  double qmin = 1e200;
+  std::vector<GEntity *> entities;
+  m->getEntities(entities, dim);
+  for(auto ge : entities) {
+    if(ge->dim() < 2) continue;
+    std::size_t ne = ge->getNumMeshElements();
+#pragma omp parallel for num_threads(nthreads) reduction(min:qmin)
+    for(std::size_t i = 0; i < ne; i++) {
+      MElement *e = ge->getMeshElement(i);
+      double q = e->minSICNShapeMeasure();
+      qmin = std::min(qmin, q);
+    }
+  }
+  return qmin;
 }
 
 static void Mesh0D(GModel *m)
@@ -390,9 +416,9 @@ static void Mesh1D(GModel *m)
   Msg::StopProgressMeter();
 
   double t2 = Cpu(), w2 = TimeOfDay();
-  CTX::instance()->meshTimer[0] = w2 - w1;
+  CTX::instance()->mesh.timer[0] = w2 - w1;
   Msg::StatusBar(true, "Done meshing 1D (Wall %gs, CPU %gs)",
-                 CTX::instance()->meshTimer[0], t2 - t1);
+                 CTX::instance()->mesh.timer[0], t2 - t1);
 }
 
 static void PrintMesh2dStatistics(GModel *m)
@@ -456,7 +482,7 @@ static void PrintMesh2dStatistics(GModel *m)
           (double)nTotGoodQuality / nTotT);
   fprintf(statreport, "%d\t\t%8.7f\t%d\t\t%8.7f\t%8.1f\n", nTotE,
           exp(e_avg / (double)nTotE), nTotGoodLength,
-          (double)nTotGoodLength / nTotE, CTX::instance()->meshTimer[1]);
+          (double)nTotGoodLength / nTotE, CTX::instance()->mesh.timer[1]);
   fclose(statreport);
 }
 
@@ -562,10 +588,9 @@ static void Mesh2D(GModel *m)
   }
 
   double t2 = Cpu(), w2 = TimeOfDay();
-  CTX::instance()->meshTimer[1] = w2 - w1;
+  CTX::instance()->mesh.timer[1] = w2 - w1;
   Msg::StatusBar(true, "Done meshing 2D (Wall %gs, CPU %gs)",
-                 CTX::instance()->meshTimer[1], t2 - t1);
-
+                 CTX::instance()->mesh.timer[1], t2 - t1);
   PrintMesh2dStatistics(m);
 }
 
@@ -736,8 +761,8 @@ static void Mesh3D(GModel *m)
           Filler3D f;
           treat_region_ok = f.treat_region(gr);
         }
-      }    
-      
+      }
+
       if(treat_region_ok && (CTX::instance()->mesh.recombine3DAll ||
                              gr->meshAttributes.recombine3D)) {
 	meshCombine3D(gr);
@@ -773,23 +798,25 @@ static void Mesh3D(GModel *m)
     Msg::Error(debugInfo.str().c_str());
   }
 
-  double t2 = Cpu(), w2 = TimeOfDay();
-  CTX::instance()->meshTimer[2] = w2 - w1;
-
   if(m->getNumRegions()) {
     Msg::ProgressMeter(1, false, "Meshing 3D...");
     Msg::StopProgressMeter();
   }
 
+  double t2 = Cpu(), w2 = TimeOfDay();
+  CTX::instance()->mesh.timer[2] = w2 - w1;
   Msg::StatusBar(true, "Done meshing 3D (Wall %gs, CPU %gs)",
-                 CTX::instance()->meshTimer[2], t2 - t1);
+                 CTX::instance()->mesh.timer[2], t2 - t1);
 }
 
 void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
 {
   if(CTX::instance()->abortOnError && Msg::GetErrorCount()) return;
 
-  if(how != "" && how != "Gmsh" && how != "Optimize" && how != "Netgen" &&
+  if(how != "" && how != "Gmsh" && how != "Optimize" && how != "Optimize2D"&&
+     how != "MesquiteImprove3D" && how != "MesquiteImprove2D" &&
+     how != "UntangleTris" &&
+     how != "UntangleTets" && how != "Netgen" &&
      how != "HighOrder" && how != "HighOrderElastic" &&
      how != "HighOrderFastCurving" && how != "Laplace2D" &&
      how != "Relocate2D" && how != "Relocate3D" &&
@@ -809,6 +836,58 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
     for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
       optimizeMeshGRegion opt;
       opt(*it, force);
+    }
+    m->setAllVolumesPositive();
+  }
+  else if(how == "Optimize2D") {
+    for(GFace *gf : m->getFaces()) {
+      if(gf->geomType() == GFace::Plane) {
+        PolyMeshDelaunayize (gf->tag());
+      }
+      else {
+        Msg::Debug("- Surface %i: not planar, do not apply Edge Swaps",
+                   gf->tag());
+      }
+    }
+  }
+  else if(how == "UntangleTets") {
+#if defined(HAVE_WINSLOWUNTANGLER)
+    double timeMax = 100.;
+    int nIterWinslow = 10;
+    for(GRegion *gr : m->getRegions()) {
+      untangleGRegionMeshConstrained(gr, nIterWinslow, timeMax);
+    }
+#else
+    for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
+      untangleMeshGRegion opt;
+      opt(*it, force);
+    }
+#endif
+    m->setAllVolumesPositive();
+  }
+  else if(how == "UntangleTris") {
+#if defined(HAVE_WINSLOWUNTANGLER)
+    int nIterWinslow = 10;
+    double timeMax = 100.;
+    for(GFace *gf : m->getFaces()) {
+      if(gf->geomType() == GFace::Plane) {
+        untangleGFaceMeshConstrained(gf, nIterWinslow, timeMax);
+      }
+      else {
+        Msg::Debug("- Surface %i: not planar, do not apply Winslow untangling",
+                   gf->tag());
+      }
+    }
+#endif
+  }
+  else if(how == "MesquiteImprove2D") {
+    for(auto it = m->firstFace(); it != m->lastFace(); it++) {
+      mesquiteImprove (*it);
+    }
+  }
+  else if(how == "MesquiteImprove3D") {
+    for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
+      mesquiteImprove (*it);
     }
     m->setAllVolumesPositive();
   }
@@ -954,8 +1033,8 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
                   EmbeddedCompatibilityTest());
 
   double t2 = Cpu(), w2 = TimeOfDay();
-  Msg::StatusBar(true, "Done optimizing mesh (Wall %gs, CPU %gs)", w2 - w1,
-                 t2 - t1);
+  Msg::StatusBar(true, "Done optimizing mesh (Wall %gs, CPU %gs)",
+                 w2 - w1, t2 - t1);
 }
 
 void AdaptMesh(GModel *m)
@@ -1418,6 +1497,9 @@ void GenerateMesh(GModel *m, int ask)
 
   Msg::Info("%d nodes %d elements", m->getNumMeshVertices(),
             m->getNumMeshElements());
+
+  CTX::instance()->mesh.minQuality = GetMinQualityFast(m, m->getMeshStatus());
+  Msg::Debug("Minimum mesh quality (ICN) = %g", CTX::instance()->mesh.minQuality);
 
   Msg::PrintErrorCounter("Mesh generation error summary");
 

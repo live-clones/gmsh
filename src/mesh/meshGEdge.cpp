@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -699,7 +699,7 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
       CTX::instance()->mesh.flexibleTransfinite) &&
      CTX::instance()->mesh.algoRecombine != 0) {
     std::vector<GFace *> const &faces = ge->faces();
-    if(CTX::instance()->mesh.recombineAll && faces.size()) {
+    if(CTX::instance()->mesh.recombineAll) {
       if(N % 2 == 0) N++;
       if(CTX::instance()->mesh.algoRecombine == 2 ||
          CTX::instance()->mesh.algoRecombine == 4)

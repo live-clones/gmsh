@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -22,10 +22,6 @@
 #include "MFaceHash.h"
 #include "MEdgeHash.h"
 
-#define hashmapMFace                                                           \
-  std::unordered_map<MFace, std::size_t, MFaceHash, MFaceEqual>
-#define hashmapMEdge                                                           \
-  std::unordered_map<MEdge, std::size_t, MEdgeHash, MEdgeEqual>
 
 template <class scalar> class simpleFunction;
 
@@ -42,7 +38,11 @@ class MElementOctree;
 
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
 class GModel {
+public:
+  using hashmapMFace = std::unordered_map<MFace, std::size_t, MFaceHash, MFaceEqual>;
+  using hashmapMEdge = std::unordered_map<MEdge, std::size_t, MEdgeHash, MEdgeEqual>;
 private:
+
   std::multimap<std::pair<const std::vector<int>, const std::vector<int> >,
                 std::pair<const std::string, const std::vector<int> > >
     _homologyRequests;
@@ -760,9 +760,11 @@ public:
 
   // OCC model
   int readOCCBREP(const std::string &name);
+  int readOCCXAO(const std::string &name);
   int readOCCSTEP(const std::string &name);
   int readOCCIGES(const std::string &name);
   int writeOCCBREP(const std::string &name);
+  int writeOCCXAO(const std::string &name);
   int writeOCCSTEP(const std::string &name);
   int writeOCCIGES(const std::string &name);
   int importOCCShape(const void *shape);
@@ -807,6 +809,12 @@ public:
   int writeSTL(const std::string &name, bool binary = false,
                bool saveAll = false, double scalingFactor = 1.0,
                int oneSolidPerSurface = 0);
+
+
+  // NII format is created by Neuroimaging Informatics Technology Initiative. It is commonly used to store magnetic resonance imaging (MRI) data.
+  int readNII(const std::string &name, float isolevel = 0.0, int isoDarkMediumBright123 = 2,
+	      float reduceFraction = 0.25, int preSmooth = 1, bool onlyLargest = true,
+	      bool fillBubbles = false, int postSmooth = 1);
 
   // X3D (only output from OCCT's triangulation)
   int writeX3D(const std::string &name, bool saveAll = false,

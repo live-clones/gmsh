@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -29,6 +29,10 @@
 #include "ghostEdge.h"
 #include "ghostFace.h"
 #include "ghostRegion.h"
+
+#if defined(HAVE_POST)
+#include "PView.h"
+#endif
 
 // periodic nodes and entities backported from MSH3 format
 extern void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity *> &entities,
@@ -107,7 +111,7 @@ int GModel::_readMSH2(const std::string &name)
 
   char str[256] = "x";
   double version = 1.0;
-  bool binary = false, swap = false, postpro = false;
+  bool binary = false, swap = false;
   std::map<int, std::vector<MElement *> > elements[10];
   std::map<int, std::map<int, std::string> > physicals[4];
   std::map<std::size_t, MVertex *> vertexMap;
@@ -610,22 +614,35 @@ int GModel::_readMSH2(const std::string &name)
         }
       }
     }
-    else if(!strncmp(&str[1], "NodeData", 8)) {
-      // there's some nodal post-processing data to read later on, so
-      // cache the vertex indexing data
-      if(vertexVector.size())
-        _vertexVectorCache = vertexVector;
-      else
-        _vertexMapCache = vertexMap;
-      postpro = true;
-      break;
+#if defined(HAVE_POST)
+    else if(!strncmp(&str[1], "InterpolationScheme", 19)) {
+      if(!PView::readMSHInterpolationScheme(fp)) {
+        fclose(fp);
+        return 0;
+      }
     }
-    else if(!strncmp(&str[1], "ElementData", 11) ||
+    else if(!strncmp(&str[1], "NodeData", 8) ||
+            !strncmp(&str[1], "ElementData", 11) ||
             !strncmp(&str[1], "ElementNodeData", 15)) {
-      // there's some element post-processing data to read later on
-      postpro = true;
-      break;
+      // store the elements in their associated elementary entity. If the entity
+      // does not exist, create a new (discrete) one. Clear the elements so that
+      // we don't store them twice below.
+      for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++) {
+        _storeElementsInEntities(elements[i]);
+        elements[i].clear();
+      }
+      if(!strncmp(&str[1], "NodeData", 8)) {
+        if(vertexVector.size())
+          _vertexVectorCache = vertexVector;
+        else
+          _vertexMapCache = vertexMap;
+      }
+      if(!PView::readMSHViewData(name, fp, binary, swap, &str[1])) {
+        fclose(fp);
+        return 0;
+      }
     }
+#endif
     else if(strlen(&str[1]) > 0){
       sectionName.pop_back();
       Msg::Info("Storing section $%s as model attribute", sectionName.c_str());
@@ -711,7 +728,7 @@ int GModel::_readMSH2(const std::string &name)
     convertOldPartitioningToNewOne();
   }
 
-  return postpro ? 2 : 1;
+  return 1;
 }
 
 template <class T>

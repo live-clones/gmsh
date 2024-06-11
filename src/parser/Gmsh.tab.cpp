@@ -574,7 +574,7 @@
 /* Copy the first part of user declarations.  */
 #line 1 "Gmsh.y"
 
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -10896,14 +10896,14 @@ yyreduce:
   case 279:
 #line 3595 "Gmsh.y"
     {
-      Msg::Exit(0);
+      Msg::Exit(0, false); // will return 0 only if no meshing error occurred
     ;}
     break;
 
   case 280:
 #line 3599 "Gmsh.y"
     {
-      Msg::Exit((int)(yyvsp[(2) - (3)].d));
+      Msg::Exit((int)(yyvsp[(2) - (3)].d), true); // will always return the specified value
     ;}
     break;
 

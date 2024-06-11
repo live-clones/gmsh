@@ -6,7 +6,11 @@ if length(ARGS) < 1
 end
 
 gmsh.initialize()
-gmsh.open(ARGS[1])
+try
+    gmsh.open(ARGS[1])
+catch e
+    exit(0)
+end
 
 # get all elementary entities in the model
 entities = gmsh.model.getEntities()

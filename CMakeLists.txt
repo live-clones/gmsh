@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -16,8 +16,8 @@ endif()
 
 project(gmsh CXX C)
 
-# require C++11 and request C99
-set(CMAKE_CXX_STANDARD 11)
+# require C++14 and request C99
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 99)
 
@@ -60,6 +60,7 @@ opt(KBIPACK "Enable Kbipack (neeeded by homology solver)" ${DEFAULT})
 opt(MATHEX "Enable Mathex expression parser (used by plugins and options)" ${DEFAULT})
 opt(MED "Enable MED mesh and post file formats" ${DEFAULT})
 opt(MESH "Enable mesh module" ${DEFAULT})
+opt(MESQUITE "Enable mesquite" ${DEFAULT})
 opt(METIS "Enable Metis mesh partitioner" ${DEFAULT})
 opt(MMG "Enable Mmg mesh adaptation interface" ${DEFAULT})
 opt(MPEG_ENCODE "Enable built-in MPEG movie encoder" ${DEFAULT})
@@ -67,6 +68,7 @@ opt(MPI "Enable MPI (experimental, not used for meshing)" OFF)
 opt(MSVC_STATIC_RUNTIME "Enable static Visual C++ runtime" OFF)
 opt(MUMPS "Enable MUMPS sparse direct linear solver" OFF)
 opt(NETGEN "Enable Netgen 3D frontal mesh generator" ${DEFAULT})
+opt(NII2MESH "Enable 3D voxel image to a triangulated mesh" ${DEFAULT})
 opt(NUMPY "Enable fullMatrix and numpy array conversion for private API" OFF)
 opt(PETSC4PY "Enable petsc4py wrappers for petsc matrices for private API" OFF)
 opt(OCC "Enable OpenCASCADE CAD kernel" ${DEFAULT})
@@ -98,7 +100,9 @@ opt(SOLVER "Enable built-in finite element solvers (required for reparametrizati
 opt(SYSTEM_CONTRIB "Use system versions of contrib libraries, when possible" OFF)
 opt(TCMALLOC "Enable libtcmalloc (fast malloc that does not release memory)" OFF)
 opt(TESTS "Enable tests" ${DEFAULT})
+opt(TINYXML2 "Enable TinyXML2 parser (used by XAO reader)" ${DEFAULT})
 opt(TOUCHBAR "Enable Apple Touch bar" ${DEFAULT})
+opt(UNTANGLE "Enable 2D and 3D UNTANGLER" ${DEFAULT})
 opt(VISUDEV "Enable additional visualization capabilities for development purposes" OFF)
 opt(VOROPP "Enable voro++ (for hex meshing, experimental)" ${DEFAULT})
 opt(WINSLOWUNTANGLER "Enable WinslowUntangler extensions (requires ALGLIB)" ${DEFAULT})
@@ -107,8 +111,8 @@ opt(WRAP_PYTHON "Generate SWIG Python wrappers for private API (not used by publ
 opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 4)
-set(GMSH_MINOR_VERSION 12)
-set(GMSH_PATCH_VERSION 0)
+set(GMSH_MINOR_VERSION 13)
+set(GMSH_PATCH_VERSION 2)
 if(NOT GMSH_EXTRA_VERSION)
   set(GMSH_EXTRA_VERSION "")
 endif()
@@ -232,7 +236,7 @@ if(NOT GMSH_OS)
 endif()
 
 include(CheckTypeSize)
-include(CheckFunctionExists)
+include(CheckSymbolExists)
 include(CheckIncludeFile)
 include(CheckCXXCompilerFlag)
 include(CheckCCompilerFlag)
@@ -829,6 +833,20 @@ if(ENABLE_MATHEX)
   endif()
 endif()
 
+if(ENABLE_TINYXML2)
+  find_library(TINYXML2_LIB mathex PATH_SUFFIXES lib)
+  find_path(TINYXML2_INC "tinyxml2.h" PATH_SUFFIXES src include)
+  if(ENABLE_SYSTEM_CONTRIB AND TINYXML2_LIB AND TINYXML2_INC)
+    list(APPEND EXTERNAL_LIBRARIES ${TINYXML2_LIB})
+    list(APPEND EXTERNAL_INCLUDES ${TINYXML2_INC})
+    set_config_option(HAVE_TINYXML2 "TinyXML2")
+  elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/tinyxml2)
+    add_subdirectory(contrib/tinyxml2)
+    include_directories(contrib/tinyxml2)
+    set_config_option(HAVE_TINYXML2 "TinyXML2[contrib]")
+  endif()
+endif()
+
 if(ENABLE_MPI)
   find_package(MPI)
   if(MPI_FOUND)
@@ -838,6 +856,17 @@ if(ENABLE_MPI)
     set(CMAKE_C_COMPILER ${MPI_C_COMPILER})
     set(CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER})
     set(CMAKE_Fortran_COMPILER ${MPI_Fortran_COMPILER})
+  endif()
+endif()
+
+
+if(ENABLE_MESQUITE)
+  find_library(MESQUITE_LIB mesquite)
+  find_path(MESQUITE_INC "Mesquite.hpp" PATH_SUFFIXES src include)
+  if(MESQUITE_LIB AND MESQUITE_INC)
+    set_config_option(HAVE_MESQUITE "Mesquite")
+    list(APPEND EXTERNAL_LIBRARIES ${MESQUITE_LIB})
+    list(APPEND EXTERNAL_INCLUDES ${MESQUITE_INC})
   endif()
 endif()
 
@@ -934,6 +963,18 @@ if(HAVE_MESH)
     include_directories(contrib/blossom/MATCH contrib/blossom/concorde97
                         contrib/blossom/concorde97/INCLUDE)
     set_config_option(HAVE_BLOSSOM "Blossom")
+  endif()
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/nii2mesh AND ENABLE_NII2MESH)
+    add_subdirectory(contrib/nii2mesh)
+    include_directories(contrib/nii2mesh)
+    set_config_option(HAVE_NII2MESH "Nii2mesh")
+  endif()
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/untangle AND ENABLE_UNTANGLE)
+    add_subdirectory(contrib/untangle)
+    include_directories(contrib/untangle)
+    set_config_option(HAVE_UNTANGLE "Untangle")
   endif()
 
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/Netgen AND ENABLE_NETGEN)
@@ -1107,9 +1148,9 @@ if(HAVE_SOLVER)
           string(REPLACE " " ";" PETSC_PACKAGES_INCLUDES ${PETSC_PACKAGES_INCLUDES})
           foreach(VAR ${PETSC_PACKAGES_INCLUDES})
             # seem to include unexisting directories (/usr/include/lib64)
-	    # check to avoid warnings
-	    if(EXISTS ${VAR})
-	      list(APPEND EXTERNAL_INCLUDES ${VAR})
+            # check to avoid warnings
+            if(EXISTS ${VAR})
+              list(APPEND EXTERNAL_INCLUDES ${VAR})
             endif()
           endforeach()
         endif()
@@ -1125,10 +1166,10 @@ if(HAVE_SOLVER)
       endif()
       if(PETSC_LIBS)
         set_config_option(HAVE_PETSC "PETSc")
-	if(NOT HAVE_BLAS)
+        if(NOT HAVE_BLAS)
           set_config_option(HAVE_BLAS "Blas[petsc]")
         endif()
-	if(NOT HAVE_LAPACK)
+        if(NOT HAVE_LAPACK)
           set_config_option(HAVE_LAPACK "Lapack[petsc]")
         endif()
       endif()
@@ -1270,21 +1311,34 @@ if(ENABLE_OCC)
       message(STATUS "Found OpenCASCADE version ${OCC_VERSION} in ${OCC_INC}")
     endif()
   endif()
-  if(OCC_VERSION AND OCC_VERSION STRLESS ${OCC_MINIMAL_VERSION})
+  if(OCC_VERSION AND OCC_VERSION VERSION_LESS ${OCC_MINIMAL_VERSION})
     message(WARNING "Gmsh requires OpenCASCADE >= ${OCC_MINIMAL_VERSION}. "
         "Use CMAKE_PREFIX_PATH or the CASROOT environment variable "
         "to explicitly specify the installation path of OpenCASCADE")
   elseif(OCC_INC)
-    set(OCC_LIBS_REQUIRED
-	# subset of DataExchange
-      	TKSTEP TKSTEP209 TKSTEPAttr TKSTEPBase TKIGES TKXSBase
-      	# ModelingAlgorithms
-      	TKOffset TKFeat TKFillet TKBool TKMesh TKHLR TKBO TKPrim TKShHealing
-      	TKTopAlgo TKGeomAlgo
-      	# ModelingData
-      	TKBRep TKGeomBase TKG3d TKG2d
-      	# FoundationClasses
-      	TKMath TKernel)
+    if(OCC_VERSION AND OCC_VERSION VERSION_GREATER_EQUAL "7.8.0")
+      set(OCC_LIBS_REQUIRED
+          # subset of DataExchange
+          TKDESTEP TKDEIGES TKXSBase
+          # ModelingAlgorithms
+          TKOffset TKFeat TKFillet TKBool TKMesh TKHLR TKBO TKPrim TKShHealing
+          TKTopAlgo TKGeomAlgo
+          # ModelingData
+          TKBRep TKGeomBase TKG3d TKG2d
+          # FoundationClasses
+          TKMath TKernel)
+    else()
+      set(OCC_LIBS_REQUIRED
+          # subset of DataExchange
+          TKSTEP TKSTEP209 TKSTEPAttr TKSTEPBase TKIGES TKXSBase
+          # ModelingAlgorithms
+          TKOffset TKFeat TKFillet TKBool TKMesh TKHLR TKBO TKPrim TKShHealing
+          TKTopAlgo TKGeomAlgo
+          # ModelingData
+          TKBRep TKGeomBase TKG3d TKG2d
+          # FoundationClasses
+          TKMath TKernel)
+    endif()
     if(ENABLE_OCC_TBB)
       list(APPEND OCC_LIBS_REQUIRED tbb tbbmalloc)
     endif()
@@ -1316,8 +1370,13 @@ if(ENABLE_OCC)
   if(ENABLE_OCC_CAF)
     find_package(Freetype)
     if(FREETYPE_FOUND)
-      set(OCC_CAF_LIBS_REQUIRED
-          TKXDESTEP TKXDEIGES TKXCAF TKLCAF TKVCAF TKCAF TKV3d TKService TKCDF)
+      if(OCC_VERSION AND OCC_VERSION VERSION_GREATER_EQUAL "7.8.0")
+        set(OCC_CAF_LIBS_REQUIRED
+            TKXCAF TKLCAF TKVCAF TKCAF TKV3d TKService TKCDF)
+      else()
+        set(OCC_CAF_LIBS_REQUIRED
+            TKXDESTEP TKXDEIGES TKXCAF TKLCAF TKVCAF TKCAF TKV3d TKService TKCDF)
+      endif()
       list(LENGTH OCC_CAF_LIBS_REQUIRED NUM_OCC_CAF_LIBS_REQUIRED)
       set(OCC_CAF_LIBS)
       foreach(OCC ${OCC_CAF_LIBS_REQUIRED})
@@ -1421,7 +1480,7 @@ if(ENABLE_PRIVATE_API AND ENABLE_WRAP_PYTHON)
   endif()
 endif()
 
-check_function_exists(vsnprintf HAVE_VSNPRINTF)
+check_symbol_exists(vsnprintf "stdio.h" HAVE_VSNPRINTF)
 if(NOT HAVE_VSNPRINTF AND NOT ENABLE_BUILD_IOS AND NOT ENABLE_BUILD_ANDROID)
   set_config_option(HAVE_NO_VSNPRINTF "NoVsnprintf")
 endif()

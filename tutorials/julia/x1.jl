@@ -17,7 +17,7 @@ import gmsh
 
 gmsh.initialize()
 
-if length(ARGS) > 0
+if length(ARGS) > 0 && ARGS[1][1] != '-'
     # If an argument is provided, handle it as a file that Gmsh can read, e.g. a
     # mesh file in the MSH format (`julia x1.py file.msh')
     gmsh.open(ARGS[1])

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -147,12 +147,7 @@ void GFace::deleteMesh()
   for(std::size_t i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
   mesh_vertices.clear();
   transfinite_vertices.clear();
-  for(std::size_t i = 0; i < triangles.size(); i++) delete triangles[i];
-  triangles.clear();
-  for(std::size_t i = 0; i < quadrangles.size(); i++) delete quadrangles[i];
-  quadrangles.clear();
-  for(std::size_t i = 0; i < polygons.size(); i++) delete polygons[i];
-  polygons.clear();
+  removeElements(true);
   correspondingVertices.clear();
   correspondingHighOrderVertices.clear();
   deleteVertexArrays();
@@ -2548,9 +2543,9 @@ void GFace::setMeshMaster(GFace *master, const std::map<int, int> &edgeCopies)
   setMeshMaster(master, tfo);
 }
 
-void GFace::addElement(int type, MElement *e)
+void GFace::addElement(MElement *e)
 {
-  switch(type) {
+  switch(e->getType()) {
   case TYPE_TRI: addTriangle(reinterpret_cast<MTriangle *>(e)); break;
   case TYPE_QUA: addQuadrangle(reinterpret_cast<MQuadrangle *>(e)); break;
   case TYPE_POLYG: addPolygon(reinterpret_cast<MPolygon *>(e)); break;
@@ -2559,38 +2554,48 @@ void GFace::addElement(int type, MElement *e)
   }
 }
 
-void GFace::removeElement(int type, MElement *e)
+void GFace::removeElement(MElement *e, bool del)
 {
-  switch(type) {
+  switch(e->getType()) {
   case TYPE_TRI: {
     auto it = std::find(triangles.begin(), triangles.end(),
                         reinterpret_cast<MTriangle *>(e));
-    if(it != triangles.end()) triangles.erase(it);
+    if(it != triangles.end()) {
+      triangles.erase(it);
+      if(del) delete e;
+    }
   } break;
   case TYPE_QUA: {
     auto it = std::find(quadrangles.begin(), quadrangles.end(),
                         reinterpret_cast<MQuadrangle *>(e));
-    if(it != quadrangles.end()) quadrangles.erase(it);
+    if(it != quadrangles.end()) {
+      quadrangles.erase(it);
+      if(del) delete e;
+    }
   } break;
   case TYPE_POLYG: {
     auto it = std::find(polygons.begin(), polygons.end(),
                         reinterpret_cast<MPolygon *>(e));
-    if(it != polygons.end()) polygons.erase(it);
+    if(it != polygons.end()) {
+      polygons.erase(it);
+      if(del) delete e;
+    }
   } break;
   default:
     Msg::Error("Trying to remove unsupported element in surface %d", tag());
   }
 }
 
-void GFace::removeElements(int type)
+void GFace::removeElements(bool del)
 {
-  switch(type) {
-  case TYPE_TRI: triangles.clear(); break;
-  case TYPE_QUA: quadrangles.clear(); break;
-  case TYPE_POLYG: polygons.clear(); break;
-  default:
-    Msg::Error("Trying to remove unsupported elements in surface %d", tag());
+  if(del) {
+    for(auto e : triangles) delete e;
+    for(auto e : quadrangles) delete e;
+    for(auto e : polygons) delete e;
   }
+  triangles.clear();
+  quadrangles.clear();
+  polygons.clear();
 }
 
 bool GFace::reorder(const int elementType,

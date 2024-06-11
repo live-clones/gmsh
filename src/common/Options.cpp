@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1226,6 +1226,12 @@ std::string opt_general_error_filename(OPT_ARGS_STR)
   return CTX::instance()->errorFileName;
 }
 
+std::string opt_general_number_format(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->numberFormat = val;
+  return CTX::instance()->numberFormat;
+}
+
 std::string opt_general_session_filename(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) CTX::instance()->sessionFileName = val;
@@ -1428,6 +1434,66 @@ std::string opt_geometry_occ_target_unit(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) CTX::instance()->geom.occTargetUnit = val;
   return CTX::instance()->geom.occTargetUnit;
+}
+
+std::string opt_geometry_occ_step_description(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occStepDescription = val;
+  return CTX::instance()->geom.occStepDescription;
+}
+
+std::string opt_geometry_occ_step_implementation_level(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occStepImplementationLevel = val;
+  return CTX::instance()->geom.occStepImplementationLevel;
+}
+
+std::string opt_geometry_occ_step_model_name(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occStepModelName = val;
+  return CTX::instance()->geom.occStepModelName;
+}
+
+std::string opt_geometry_occ_step_time_stamp(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occStepTimeStamp = val;
+  return CTX::instance()->geom.occStepTimeStamp;
+}
+
+std::string opt_geometry_occ_step_author(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occStepAuthor = val;
+  return CTX::instance()->geom.occStepAuthor;
+}
+
+std::string opt_geometry_occ_step_organization(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occStepOrganization = val;
+  return CTX::instance()->geom.occStepOrganization;
+}
+
+std::string opt_geometry_occ_step_preprocessor_version(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occStepPreprocessorVersion = val;
+  return CTX::instance()->geom.occStepPreprocessorVersion;
+}
+
+std::string opt_geometry_occ_step_originating_system(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occStepOriginatingSystem = val;
+  return CTX::instance()->geom.occStepOriginatingSystem;
+}
+
+std::string opt_geometry_occ_step_authorization(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occStepAuthorization = val;
+  return CTX::instance()->geom.occStepAuthorization;
+}
+
+std::string opt_geometry_occ_step_schema_identifier(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occStepSchemaIdentifier = val;
+  return CTX::instance()->geom.occStepSchemaIdentifier;
 }
 
 std::string opt_geometry_pipe_default_trihedron(OPT_ARGS_STR)
@@ -1745,7 +1811,7 @@ std::string opt_view_name(OPT_ARGS_STR)
 #endif
 }
 
-std::string opt_view_format(OPT_ARGS_STR)
+std::string opt_view_number_format(OPT_ARGS_STR)
 {
 #if defined(HAVE_POST)
   GET_VIEWo("");
@@ -4622,6 +4688,12 @@ double opt_geometry_occ_bounds_use_stl(OPT_ARGS_NUM)
   return CTX::instance()->geom.occBoundsUseSTL;
 }
 
+double opt_geometry_occ_brep_format_version(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->geom.occBrepFormatVersion = (int)val;
+  return CTX::instance()->geom.occBrepFormatVersion;
+}
+
 double opt_geometry_occ_disable_stl(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.occDisableSTL = val ? 1 : 0;
@@ -4688,12 +4760,6 @@ double opt_geometry_occ_make_solids(OPT_ARGS_NUM)
   return CTX::instance()->geom.occMakeSolids;
 }
 
-double opt_geometry_occ_union_unify(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) CTX::instance()->geom.occUnionUnify = (int)val;
-  return CTX::instance()->geom.occUnionUnify;
-}
-
 double opt_geometry_occ_thrusections_degree(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.occThruSectionsDegree = (int)val;
@@ -4706,11 +4772,39 @@ double opt_geometry_occ_parallel(OPT_ARGS_NUM)
   return CTX::instance()->geom.occParallel;
 }
 
+double opt_geometry_occ_boolean_check_inverted(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occBooleanCheckInverted = (int)val;
+  return CTX::instance()->geom.occBooleanCheckInverted;
+}
+
+double opt_geometry_occ_boolean_glue(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occBooleanGlue = (int)val;
+  return CTX::instance()->geom.occBooleanGlue;
+}
+
+double opt_geometry_occ_boolean_non_destructive(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occBooleanNonDestructive = (int)val;
+  return CTX::instance()->geom.occBooleanNonDestructive;
+}
+
 double opt_geometry_occ_boolean_preserve_numbering(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX::instance()->geom.occBooleanPreserveNumbering = (int)val;
   return CTX::instance()->geom.occBooleanPreserveNumbering;
+}
+
+double opt_geometry_occ_boolean_simplify(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occBooleanSimplify = (int)val;
+  return CTX::instance()->geom.occBooleanSimplify;
 }
 
 double opt_geometry_occ_scaling(OPT_ARGS_NUM)
@@ -6076,6 +6170,14 @@ double opt_mesh_flexible_transfinite(OPT_ARGS_NUM)
   return CTX::instance()->mesh.flexibleTransfinite;
 }
 
+double opt_mesh_quasi_transfinite(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.quasiTransfinite = (int)val;
+  }
+  return CTX::instance()->mesh.quasiTransfinite;
+}
+
 double opt_mesh_algo_subdivide(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
@@ -6593,9 +6695,13 @@ double opt_mesh_nb_trihedra(OPT_ARGS_NUM)
 
 double opt_mesh_cpu_time(OPT_ARGS_NUM)
 {
-  double s[50];
-  GetStatistics(s);
-  return s[14] + s[15] + s[16];
+  return CTX::instance()->mesh.timer[0] + CTX::instance()->mesh.timer[1] +
+    CTX::instance()->mesh.timer[2];
+}
+
+double opt_mesh_min_quality(OPT_ARGS_NUM)
+{
+  return CTX::instance()->mesh.minQuality;
 }
 
 double opt_mesh_partition_num(OPT_ARGS_NUM)
@@ -6659,6 +6765,12 @@ double opt_mesh_preserve_numbering_msh2(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.preserveNumberingMsh2 = (int)val;
   return CTX::instance()->mesh.preserveNumberingMsh2;
+}
+
+double opt_mesh_ignore_unknown_sections(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.ignoreUnknownSections = (int)val;
+  return CTX::instance()->mesh.ignoreUnknownSections;
 }
 
 double opt_mesh_ignore_periodicity(OPT_ARGS_NUM)

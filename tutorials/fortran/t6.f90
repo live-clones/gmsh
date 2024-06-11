@@ -78,14 +78,13 @@ call gmsh%model%geo%mesh%setRecombine(2, 1)
 ! can be omitted in the `setTransfiniteSurface()' call:
 ret = gmsh%model%geo%addPoint(0.20d0, 0.2d0, 0.0d0, 1.0d0, 7)
 ret = gmsh%model%geo%addPoint(0.20d0, 0.1d0, 0.0d0, 1.0d0, 8)
-ret = gmsh%model%geo%addPoint(0.00d0, 0.3d0, 0.0d0, 1.0d0, 9)
-ret = gmsh%model%geo%addPoint(0.25d0, 0.2d0, 0.0d0, 1.0d0, 10)
-ret = gmsh%model%geo%addPoint(0.30d0, 0.1d0, 0.0d0, 1.0d0, 11)
-ret = gmsh%model%geo%addLine(8, 11, 10)
-ret = gmsh%model%geo%addLine(11, 10, 11)
-ret = gmsh%model%geo%addLine(10, 7, 12)
+ret = gmsh%model%geo%addPoint(0.25d0, 0.2d0, 0.0d0, 1.0d0, 9)
+ret = gmsh%model%geo%addPoint(0.30d0, 0.1d0, 0.0d0, 1.0d0, 10)
+ret = gmsh%model%geo%addLine(8, 10, 10)
+ret = gmsh%model%geo%addLine(10, 9, 11)
+ret = gmsh%model%geo%addLine(9, 7, 12)
 ret = gmsh%model%geo%addLine(7, 8, 13)
-ret = gmsh%model%geo%addCurveLoop([13, 10, 11, 12], 14)
+ret = gmsh%model%geo%addCurveLoop([10, 11, 12, 13], 14)
 ret = gmsh%model%geo%addPlaneSurface([14], 15)
 do i = 10, 13
     call gmsh%model%geo%mesh%setTransfiniteCurve(i, 10)
@@ -93,7 +92,7 @@ end do
 call gmsh%model%geo%mesh%setTransfiniteSurface(15)
 
 ! The way triangles are generated can be controlled by specifying "Left",
-! "Right" or "Alternate" in `setTransfiniteSurface()' command. Try e.g.
+! "Right" or "Alternate" in `setTransfiniteSurface()'. Try e.g.
 !
 ! gmsh%model%geo%mesh%setTransfiniteSurface(15, "Alternate")
 

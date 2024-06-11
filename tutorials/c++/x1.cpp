@@ -21,7 +21,7 @@ int main(int argc, char **argv)
 {
   gmsh::initialize();
 
-  if(argc > 1) {
+  if(argc > 1 && argv[1][0] != '-') {
     // If an argument is provided, handle it as a file that Gmsh can read,
     // e.g. a mesh file in the MSH format (`x1.exe file.msh')
     gmsh::open(argv[1]);

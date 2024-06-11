@@ -1,10 +1,32 @@
-4.12 (Work-in-progress): new high-order mesh optimisation mode for periodic
+4.13.2 (Work-in-progress): improve return value of boolean operations.
+
+4.13.1 (May 24, 2024): fix regression introduced in 4.13.0 when reading binary
+.msh files with post-processing data; new read-only Mesh.MinQuality updated
+after meshing pipeline; occ/addSurfaceFilling new defaults to degree=2 for
+consistency with .geo files; small bug fixes.
+
+4.13.0 (May 7, 2024): added support for importing and exporting XAO files; new
+options for OCC boolean operations (OCCBooleanCheckInverted, OCCBooleanGlue,
+OCCBooleanNonDestructive, OCCBooleanSimplify); new OCC operations (2D fillets
+and chamfers, distance, defeature); new quasi-transfinite 2d meshes (with fans);
+small API additions; revert Crack plugin logic to version 4.10.1; bug fixes.
+
+* New API functions: occ/getDistance, occ/fillet2D, occ/chamfer2D,
+  occ/offsetCurve, occ/defeature, mesh/removeElements, option/restoreDefaults,
+  logger/getMemory, logger/getTotalMemory.
+
+4.12.2 (January 21, 2024): small bug fixes.
+
+4.12.1 (January 11, 2024): small bug fixes.
+
+4.12.0 (December 21, 2023): new high-order mesh optimisation mode for periodic
 meshes; new element qualities available through API; new IGES export; new volume
 glyph; OCC curve loops can now be oriented based on the sign of the first curve;
 better mesh node visualization; added suppport for model attributes in MSH2
 files; new mesh renumbering capabilities in the API; new GAMBIT mesh reader;
 replaced Geometry.OCCSafeUnbind with more flexible Geometry.OCCFastUnbind (which
-can be set for boolean operations as well); small bug fixes.
+can be set for boolean operations as well); added support for editing STEP
+headers; small bug fixes.
 
 * New API functions: model/getEntitiesForPhysicalName, mesh/computeRenumbering,
   mesh/getVisibility.

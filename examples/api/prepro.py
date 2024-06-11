@@ -8,7 +8,10 @@ import sys
 
 gmsh.initialize(sys.argv)
 if len(sys.argv) > 1:
-    gmsh.open(sys.argv[1])
+    try:
+        gmsh.open(sys.argv[1])
+    except:
+        pass
 
 # For Gmsh to know which types of boundary conditions, materials, etc., are
 # available, you should define "template" ONELAB parameters with names

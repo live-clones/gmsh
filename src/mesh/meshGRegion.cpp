@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -16,6 +16,7 @@
 #include "meshGRegionBoundaryRecovery.h"
 #include "meshGRegionDelaunayInsertion.h"
 #include "meshRelocateVertex.h"
+#include "meshUntangle.h"
 #include "GModel.h"
 #include "GRegion.h"
 #include "GFace.h"
@@ -235,6 +236,22 @@ void meshGRegion::operator()(GRegion *gr)
     meshGRegionNetgen(gr);
   }
 }
+
+void untangleMeshGRegion::operator()(GRegion *gr, bool always)
+{
+  gr->model()->setCurrentMeshEntity(gr);
+
+  if(!always && gr->isFullyDiscrete()) return;
+
+  // don't optimize extruded meshes
+  if(gr->meshAttributes.method == MESH_TRANSFINITE) return;
+  ExtrudeParams *ep = gr->meshAttributes.extrude;
+  if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) return;
+
+  Msg::Info("Untangling volume %d", gr->tag());
+  untangleMesh(gr);
+}
+
 
 void optimizeMeshGRegion::operator()(GRegion *gr, bool always)
 {

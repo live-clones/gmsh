@@ -28,7 +28,7 @@ gmsh.logger.start()
 gmsh.model.occ.addBox(0, 0, 0, 1, 1, 1, 1)
 gmsh.model.occ.addBox(0, 0, 0, 0.5, 0.5, 0.5, 2)
 
-# We apply a boolean difference to create the "cube minus one eigth" shape:
+# We apply a boolean difference to create the "cube minus one eighth" shape:
 gmsh.model.occ.cut([(3, 1)], [(3, 2)], 3)
 
 # Boolean operations with OpenCASCADE always create new entities. By default the
