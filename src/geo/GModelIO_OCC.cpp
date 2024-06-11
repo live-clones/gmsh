@@ -4100,9 +4100,7 @@ bool OCC_Internals::booleanOperator(
     int tag = inDimTags[i].second;
     std::pair<int, int> dimTag(dim, tag);
     std::vector<std::pair<int, int>> dimTags;
-    if(mapDeleted[i]) { // deleted
-    }
-    else if(mapModified[i].Extent() == 0) { // not modified
+    if(mapModified[i].Extent() == 0) { // not modified
       if(_isBound(dim, tag)) dimTags.push_back(dimTag);
     }
     else {
