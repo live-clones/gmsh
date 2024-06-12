@@ -18,6 +18,7 @@
 #include "meshTriangulation.h"
 #include "qualityMeasures.h"
 #include "robustPredicates.h"
+#include "alphaShape_ocTree2.h"
 
 extern "C" {
 #include "hxt_tetMesh.h"
@@ -29,6 +30,11 @@ extern "C" {
 #include "hxt_alphashape.h"
 }
 
+
+struct alphaShapeBndEdge {
+  double x0, y0, x1, y1;
+  int tag;
+};
 
 
 void generateMesh_(const int dim, const int tag, const bool refine, const std::vector<double> &coord, const std::vector<size_t> &nodeTags);
@@ -63,17 +69,21 @@ void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags,
                                   const std::vector<int> & externalBoundaryTags, 
                                   std::function<double(int, int, double, double, double, double)> sizeFieldCallback);
 
-PolyMesh* _alphaShapeDelaunay2D(const int tag, const std::string boundaryModealName);
+PolyMesh* _alphaShapeDelaunay2D(const int tag, const std::string boundaryModelName);
 
 void _alphaShape2D(PolyMesh* pm, const double alpha, const int faceTag, const int bndTag, const int sizeFieldTag);
 
-void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::string & boundaryModel, std::vector<PolyMesh::Vertex*> & controlNodes);
+void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::string & boundaryModel, std::vector<PolyMesh::Vertex*> & controlNodes, OctreeNode<2, 32, alphaShapeBndEdge*> &bnd_octree);
 
 void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const int sizeFieldTag, std::vector<PolyMesh::Vertex*> & controlNodes);
 
-void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, const std::string & boundaryModel);
+void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, const std::string & boundaryModel, OctreeNode<2, 32, alphaShapeBndEdge*> &bnd_octree);
 
 void registerAlphaShapeField(FieldManager* fm);
+
+// OctreeNode<2, 32, alphaShapeBndEdge*>* _createBoundaryOctree(const std::string & boundaryModel, const int bndTag);
+void _createBoundaryOctree(const std::string & boundaryModel, const int bndTag, OctreeNode<2, 32, alphaShapeBndEdge*>& octree, std::vector<alphaShapeBndEdge>& bndEdges);
+
 
 #endif
 
