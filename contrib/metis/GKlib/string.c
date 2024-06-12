@@ -13,6 +13,7 @@ of standard functions (but with enhanced functionality).
 */
 /************************************************************************/
 
+#define _XOPEN_SOURCE 700
 #include "GKlib.h"
 
 

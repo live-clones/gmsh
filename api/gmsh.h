@@ -1921,7 +1921,9 @@ namespace gmsh { // Top-level functions
                                          const int tag,
                                          const int bndTag,
                                          const std::string & boundaryModel,
-                                         const double alpha);
+                                         const double alpha,
+                                         const int alphaShapeSizeField,
+                                         const int refineSizeField);
 
       // gmsh::model::mesh::decimateTriangulation
       //

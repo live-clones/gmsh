@@ -7780,6 +7780,8 @@ module gmsh
                                                bndTag, &
                                                boundaryModel, &
                                                alpha, &
+                                               alphaShapeSizeField, &
+                                               refineSizeField, &
                                                ierr)
     interface
     subroutine C_API(dim, &
@@ -7787,6 +7789,8 @@ module gmsh
                      bndTag, &
                      boundaryModel, &
                      alpha, &
+                     alphaShapeSizeField, &
+                     refineSizeField, &
                      ierr_) &
       bind(C, name="gmshModelMeshComputeAlphaShapeBis")
       use, intrinsic :: iso_c_binding
@@ -7795,6 +7799,8 @@ module gmsh
       integer(c_int), value, intent(in) :: bndTag
       character(len=1, kind=c_char), dimension(*), intent(in) :: boundaryModel
       real(c_double), value, intent(in) :: alpha
+      integer(c_int), value, intent(in) :: alphaShapeSizeField
+      integer(c_int), value, intent(in) :: refineSizeField
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
@@ -7803,12 +7809,16 @@ module gmsh
     integer, intent(in) :: bndTag
     character(len=*), intent(in) :: boundaryModel
     real(c_double), intent(in) :: alpha
+    integer, intent(in) :: alphaShapeSizeField
+    integer, intent(in) :: refineSizeField
     integer(c_int), intent(out), optional :: ierr
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          bndTag=int(bndTag, c_int), &
          boundaryModel=istring_(boundaryModel), &
          alpha=real(alpha, c_double), &
+         alphaShapeSizeField=int(alphaShapeSizeField, c_int), &
+         refineSizeField=int(refineSizeField, c_int), &
          ierr_=ierr)
   end subroutine gmshModelMeshComputeAlphaShapeBis
 

@@ -3333,10 +3333,12 @@ namespace gmsh { // Top-level functions
                                        const int tag,
                                        const int bndTag,
                                        const std::string & boundaryModel,
-                                       const double alpha)
+                                       const double alpha,
+                                       const int alphaShapeSizeField,
+                                       const int refineSizeField)
       {
         int ierr = 0;
-        gmshModelMeshComputeAlphaShapeBis(dim, tag, bndTag, boundaryModel.c_str(), alpha, &ierr);
+        gmshModelMeshComputeAlphaShapeBis(dim, tag, bndTag, boundaryModel.c_str(), alpha, alphaShapeSizeField, refineSizeField, &ierr);
         if(ierr) throwLastError();
       }
 

@@ -1703,6 +1703,8 @@ GMSH_API void gmshModelMeshComputeAlphaShapeBis(const int dim,
                                                 const int bndTag,
                                                 const char * boundaryModel,
                                                 const double alpha,
+                                                const int alphaShapeSizeField,
+                                                const int refineSizeField,
                                                 int * ierr);
 
 /* Decimate a triangulation */

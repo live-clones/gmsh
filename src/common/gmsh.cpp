@@ -5683,11 +5683,15 @@ gmsh::model::mesh::alphaShape(const int dim, const int tag, const double alpha, 
 GMSH_API void
 gmsh::model::mesh::computeAlphaShapeBis(const int dim, const int tag, const int bndTag,
                                         const std::string & boundaryModel,
-                                        const double alpha)
+                                        const double alpha, const int alphaShapeSizeField, const int refineSizeField)
 {
 #if defined(HAVE_MESH) && defined(HAVE_HXT)
   if (dim == 2){
     std::vector<PolyMesh::Vertex*> controlNodes;
+
+    std::vector<alphaShapeBndEdge> bndEdges;
+    OctreeNode<2, 32, alphaShapeBndEdge*> bnd_octree;
+    _createBoundaryOctree(boundaryModel, bndTag, bnd_octree, bndEdges);
 
     // Delaunay
     auto tic = std::chrono::high_resolution_clock::now();
@@ -5696,20 +5700,20 @@ gmsh::model::mesh::computeAlphaShapeBis(const int dim, const int tag, const int 
     std::cout << "Triangulate  : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
 
     // alpha shape
-    _alphaShape2D(pm, alpha, tag, bndTag);
+    _alphaShape2D(pm, alpha, tag, bndTag, alphaShapeSizeField);
     tic = std::chrono::high_resolution_clock::now();
     std::cout << "Alpha Shape  : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
     // edge recover
-    _edgeRecover(pm, tag, bndTag, boundaryModel, controlNodes);
+    _edgeRecover(pm, tag, bndTag, boundaryModel, controlNodes, bnd_octree);
     toc = std::chrono::high_resolution_clock::now();
     std::cout << "Edge recover : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
     // mesh adapt
-    _delaunayRefinement(pm, tag, bndTag, controlNodes);
+    _delaunayRefinement(pm, tag, bndTag, refineSizeField, controlNodes);
     tic = std::chrono::high_resolution_clock::now();
     std::cout << "Refine       : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
 
     // back to gmsh
-    alphaShapePolyMesh2Gmsh(pm, tag, bndTag, boundaryModel);
+    alphaShapePolyMesh2Gmsh(pm, tag, bndTag, boundaryModel, bnd_octree);
     toc = std::chrono::high_resolution_clock::now();
     std::cout << "To Gmsh      : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
 

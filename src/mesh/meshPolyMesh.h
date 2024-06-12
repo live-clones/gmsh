@@ -31,6 +31,8 @@ public:
     PolyMesh::HalfEdge *he; // one incident half edge
     int data;
 
+    inline operator const double*() const { return position.data(); }
+
     inline double gaussianCurvature() const
     {
       HalfEdge *_he = he;
