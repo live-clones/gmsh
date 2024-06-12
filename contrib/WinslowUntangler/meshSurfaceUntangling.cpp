@@ -28,6 +28,7 @@
 #include "qmtMeshUtils.h"
 #include "arrayGeometry.h"
 
+#include <functional>
 using std::vector;
 using namespace ArrayGeometry;
 
@@ -69,13 +70,12 @@ bool buildTrianglesAndTargetsFromElements(
   std::vector<std::array<uint32_t, 4> > &elements,
   std::vector<std::array<uint32_t, 3> > &triangles,
   std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes){
-
   std::vector<std::array<uint32_t, 6> > eb;
+  eb.reserve(elements.size());
   for (auto e : elements){
-    std::array<uint32_t, 6> a = {e[0],e[1],e[2],e[3],uint32_t(-1),uint32_t(-1)};
-    eb.push_back(a);
+    eb.push_back({e[0],e[1],e[2],e[3],uint32_t(-1),uint32_t(-1)});
   }
-  buildTrianglesAndTargetsFromElements  (points, eb, triangles, triIdealShapes);
+  return buildTrianglesAndTargetsFromElements(points, eb, triangles, triIdealShapes);
 }
 
 extern size_t perTriangleP2;

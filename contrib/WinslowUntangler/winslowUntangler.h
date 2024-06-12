@@ -18,6 +18,7 @@
 #include <vector>
 #include <array>
 #include <cstdint>
+#include <functional>
 
 /**
  * @brief Planar untangler based on the minimization of the Winslow functional
