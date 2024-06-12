@@ -348,6 +348,7 @@ bool compute4neighbors(
 
 
 static bool outBounds(SPoint2 p, double minu, double maxu, double minv, double maxv){
+  //  return false;
   if (p.x() > maxu || p.x() <  minu || p.y() > maxv || p.y() <  minv){
     //    printf("OUT BOUND %g %g\n",p.x(),p.y());
     return true;
@@ -359,6 +360,7 @@ static bool outBounds(SPoint2 p, double minu, double maxu, double minv, double m
 static bool close2sing(std::vector<MVertex*> &s, GFace *gf, SPoint2 p, Field *f){
 
   if (s.empty())return false;
+
   GPoint gp = gf->point(p);
   SVector3 t1;
   (*f)(gp.x(), gp.y(), gp.z(), t1, gf);
@@ -549,7 +551,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
       if(!close2sing (singularities,gf,parent->_p[i],cross_field)
 	 && !inExclusionZone(parent->_v, parent->_p[i], rtree) &&
 	 !outBounds(parent->_p[i],minu,maxu,minv,maxv)
-	 && (gf->getNativeType() == GEntity::GmshModel || gf->containsParam(parent->_p[i])))
+	 && (1 || gf->getNativeType() == GEntity::GmshModel || gf->containsParam(parent->_p[i])))
 	{
 	  GPoint gp = gf->point(parent->_p[i]);
 	  MFaceVertex *v =
