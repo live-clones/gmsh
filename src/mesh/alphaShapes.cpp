@@ -3228,6 +3228,11 @@ PolyMesh* _alphaShapeDelaunay2D(const int tag, const std::string boundaryModelNa
   current->setAsCurrent();
   GFace* gf = GModel::current()->getFaceByTag(tag);
   PolyMesh *pm = new PolyMesh;
+  for (auto &ed : gf->edges()){
+    for (auto &v : ed->mesh_vertices){
+      bb += SPoint3(v->x(), v->y(), 0);
+    }
+  }
   for(auto &v : gf->mesh_vertices) {
     bb += SPoint3(v->x(), v->y(), 0);
   }
@@ -3235,6 +3240,13 @@ PolyMesh* _alphaShapeDelaunay2D(const int tag, const std::string boundaryModelNa
   initialize_rectangle(pm, bb.min().x(), bb.max().x(), bb.min().y(),
                           bb.max().y());
   PolyMesh::Face* f = pm->faces[0];
+  for (auto &ed : gf->edges()){
+    for (auto &v : ed->mesh_vertices){
+      f = WalkGeneral(f, v->x(), v->y());
+      pm->split_triangle(0, v->x(), v->y(), 0, f, delaunayCriterion, nullptr);
+      pm->vertices.back()->data = v->getNum();
+    }
+  }
   for(auto &v : gf->mesh_vertices) {
     f = WalkGeneral(f, v->x(), v->y());
     pm->split_triangle(0, v->x(), v->y(), 0, f, delaunayCriterion, nullptr);
