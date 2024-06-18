@@ -3903,6 +3903,71 @@ GMSH_API void gmshModelOccChamfer(const int * volumeTags, const size_t volumeTag
   }
 }
 
+GMSH_API void gmshModelOccDefeature(const int * volumeTags, const size_t volumeTags_n, const int * surfaceTags, const size_t surfaceTags_n, int ** outDimTags, size_t * outDimTags_n, const int removeVolume, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_volumeTags_(volumeTags, volumeTags + volumeTags_n);
+    std::vector<int> api_surfaceTags_(surfaceTags, surfaceTags + surfaceTags_n);
+    gmsh::vectorpair api_outDimTags_;
+    gmsh::model::occ::defeature(api_volumeTags_, api_surfaceTags_, api_outDimTags_, removeVolume);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API int gmshModelOccFillet2D(const int edgeTag1, const int edgeTag2, const double radius, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::occ::fillet2D(edgeTag1, edgeTag2, radius, tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API int gmshModelOccChamfer2D(const int edgeTag1, const int edgeTag2, const double distance1, const double distance2, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::occ::chamfer2D(edgeTag1, edgeTag2, distance1, distance2, tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API void gmshModelOccOffsetCurve(const int curveLoopTag, const double offset, int ** outDimTags, size_t * outDimTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_outDimTags_;
+    gmsh::model::occ::offsetCurve(curveLoopTag, offset, api_outDimTags_);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelOccGetDistance(const int dim1, const int tag1, const int dim2, const int tag2, double * distance, double * x1, double * y1, double * z1, double * x2, double * y2, double * z2, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::occ::getDistance(dim1, tag1, dim2, tag2, *distance, *x1, *y1, *z1, *x2, *y2, *z2);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelOccFuse(const int * objectDimTags, const size_t objectDimTags_n, const int * toolDimTags, const size_t toolDimTags_n, int ** outDimTags, size_t * outDimTags_n, int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn, const int tag, const int removeObject, const int removeTool, int * ierr)
 {
   if(ierr) *ierr = 0;

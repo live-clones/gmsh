@@ -1,32 +1,33 @@
-// -*- c++ -*- (enables emacs c++ mode)
-//===========================================================================
-//
-// Copyright (C) 2004-2008 Yves Renard
-//
-// This file is a part of GETFEM++
-//
-// Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
-// under  the  terms  of the  GNU  Lesser General Public License as published
-// by  the  Free Software Foundation;  either version 2.1 of the License,  or
-// (at your option) any later version.
-// This program  is  distributed  in  the  hope  that it will be useful,  but
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-// or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-// License for more details.
-// You  should  have received a copy of the GNU Lesser General Public License
-// along  with  this program;  if not, write to the Free Software Foundation,
-// Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
-//
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
-//
-//===========================================================================
+/* -*- c++ -*- (enables emacs c++ mode) */
+/*===========================================================================
+
+ Copyright (C) 2004-2020 Yves Renard
+
+ This file is a part of GetFEM
+
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
+ under  the  terms  of the  GNU  Lesser General Public License as published
+ by  the  Free Software Foundation;  either version 3 of the License,  or
+ (at your option) any later version along with the GCC Runtime Library
+ Exception either version 3.1 or (at your option) any later version.
+ This program  is  distributed  in  the  hope  that it will be useful,  but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ License and GCC Runtime Library Exception for more details.
+ You  should  have received a copy of the GNU Lesser General Public License
+ along  with  this program;  if not, write to the Free Software Foundation,
+ Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+
+ As a special exception, you  may use  this file  as it is a part of a free
+ software  library  without  restriction.  Specifically,  if   other  files
+ instantiate  templates  or  use macros or inline functions from this file,
+ or  you compile this  file  and  link  it  with other files  to produce an
+ executable, this file  does  not  by itself cause the resulting executable
+ to be covered  by the GNU Lesser General Public License.  This   exception
+ does not  however  invalidate  any  other  reasons why the executable file
+ might be covered by the GNU Lesser General Public License.
+
+===========================================================================*/
 
 /**@file gmm_solver_bfgs.h 
    @author  Yves Renard <Yves.Renard@insa-lyon.fr>
@@ -92,6 +93,8 @@ namespace gmm {
     
     template<typename VECT1, typename VECT2>
     void update(const VECT1 &deltak, const VECT2 &gammak) {
+      T vsp = vect_sp(deltak, gammak);
+      if (vsp == T(0)) return;
       size_type N = vect_size(deltak), k = delta.size();
       VECTOR Y(N);
       hmult(gammak, Y);
@@ -100,7 +103,7 @@ namespace gmm {
       resize(delta[k], N); resize(gamma[k], N); resize(zeta[k], N); 
       gmm::copy(deltak, delta[k]);
       gmm::copy(gammak, gamma[k]);
-      rho[k] = R(1) / vect_sp(deltak, gammak);
+      rho[k] = R(1) / vsp;
       if (version == 0)
 	add(delta[k], scaled(Y, -1), zeta[k]);
       else
@@ -113,9 +116,9 @@ namespace gmm {
 
 
   template <typename FUNCTION, typename DERIVATIVE, typename VECTOR> 
-  void bfgs(FUNCTION f, DERIVATIVE grad, VECTOR &x,
+  void bfgs(const FUNCTION &f, const DERIVATIVE &grad, VECTOR &x,
 	    int restart, iteration& iter, int version = 0,
-	    float lambda_init=0.001, float print_norm=1.0) {
+	    double lambda_init=0.001, double print_norm=1.0) {
 
     typedef typename linalg_traits<VECTOR>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
@@ -173,7 +176,7 @@ namespace gmm {
       ++iter;
       if (!grad_computed) grad(y, r2);
       gmm::add(scaled(r2, -1), r);
-      if (iter.get_iteration() % restart == 0 || blocked) { 
+      if ((iter.get_iteration() % restart) == 0 || blocked) { 
 	if (iter.get_noisy() >= 1) cout << "Restart\n";
 	invhessian.restart();
 	if (++nb_restart > 10) {
@@ -194,7 +197,7 @@ namespace gmm {
 
 
   template <typename FUNCTION, typename DERIVATIVE, typename VECTOR> 
-  inline void dfp(FUNCTION f, DERIVATIVE grad, VECTOR &x,
+  inline void dfp(const FUNCTION &f, const DERIVATIVE &grad, VECTOR &x,
 	    int restart, iteration& iter, int version = 1) {
     bfgs(f, grad, x, restart, iter, version);
 

@@ -10896,14 +10896,14 @@ yyreduce:
   case 279:
 #line 3595 "Gmsh.y"
     {
-      Msg::Exit(0);
+      Msg::Exit(0, false); // will return 0 only if no meshing error occurred
     ;}
     break;
 
   case 280:
 #line 3599 "Gmsh.y"
     {
-      Msg::Exit((int)(yyvsp[(2) - (3)].d));
+      Msg::Exit((int)(yyvsp[(2) - (3)].d), true); // will always return the specified value
     ;}
     break;
 

@@ -187,11 +187,13 @@ void signedDistancesPointsTriangle(std::vector<double> &distances,
 
 void signedDistancePointLine(const SPoint3 &p1, const SPoint3 &p2,
                              const SPoint3 &p, double &distance,
-                             SPoint3 &closePt);
+                             SPoint3 &closePt,
+                             const SVector3 &perp=SVector3());
 void signedDistancesPointsLine(std::vector<double> &distances,
                                std::vector<SPoint3> &closePts,
                                const std::vector<SPoint3> &pts,
-                               const SPoint3 &p1, const SPoint3 &p2);
+                               const SPoint3 &p1, const SPoint3 &p2,
+                               const SVector3 &perp=SVector3());
 
 void changeReferential(const int direction, const SPoint3 &p,
                        const SPoint3 &closePt, const SPoint3 &p1,

@@ -1,32 +1,33 @@
-// -*- c++ -*- (enables emacs c++ mode)
-//===========================================================================
-//
-// Copyright (C) 2002-2008 Yves Renard
-//
-// This file is a part of GETFEM++
-//
-// Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
-// under  the  terms  of the  GNU  Lesser General Public License as published
-// by  the  Free Software Foundation;  either version 2.1 of the License,  or
-// (at your option) any later version.
-// This program  is  distributed  in  the  hope  that it will be useful,  but
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-// or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-// License for more details.
-// You  should  have received a copy of the GNU Lesser General Public License
-// along  with  this program;  if not, write to the Free Software Foundation,
-// Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
-//
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
-//
-//===========================================================================
+/* -*- c++ -*- (enables emacs c++ mode) */
+/*===========================================================================
+
+ Copyright (C) 2002-2020 Yves Renard
+
+ This file is a part of GetFEM
+
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
+ under  the  terms  of the  GNU  Lesser General Public License as published
+ by  the  Free Software Foundation;  either version 3 of the License,  or
+ (at your option) any later version along with the GCC Runtime Library
+ Exception either version 3.1 or (at your option) any later version.
+ This program  is  distributed  in  the  hope  that it will be useful,  but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ License and GCC Runtime Library Exception for more details.
+ You  should  have received a copy of the GNU Lesser General Public License
+ along  with  this program;  if not, write to the Free Software Foundation,
+ Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+
+ As a special exception, you  may use  this file  as it is a part of a free
+ software  library  without  restriction.  Specifically,  if   other  files
+ instantiate  templates  or  use macros or inline functions from this file,
+ or  you compile this  file  and  link  it  with other files  to produce an
+ executable, this file  does  not  by itself cause the resulting executable
+ to be covered  by the GNU Lesser General Public License.  This   exception
+ does not  however  invalidate  any  other  reasons why the executable file
+ might be covered by the GNU Lesser General Public License.
+
+===========================================================================*/
 
 /**@file gmm_solver_Schwarz_additive.h
    @author  Yves Renard <Yves.Renard@insa-lyon.fr>
@@ -43,7 +44,6 @@
 #include "gmm_solver_gmres.h"
 #include "gmm_solver_bicgstab.h"
 #include "gmm_solver_qmr.h"
-#include "gmm_solver_Newton.h"
 
 namespace gmm {
       
@@ -212,23 +212,22 @@ namespace gmm {
 #ifdef GMM_USES_MPI
      }
       if (nproc != size - 1) {
-	MPI_Sendrecv(Acsr.jc, sizeA+1, MPI_INT, next, tag2,
-		     Acsrtemp.jc, sizeA+1,MPI_INT,previous,tag2,
-		     MPI_COMM_WORLD,&status);
-	if (Acsrtemp.jc[sizeA] > size_type(sizepr)) {
-	  sizepr = Acsrtemp.jc[sizeA];
-	  delete[] Acsrtemp.pr; delete[] Acsrtemp.ir;
-	  Acsrtemp.pr = new value_type[sizepr];
-	  Acsrtemp.ir = new unsigned int[sizepr];
-	}
-	MPI_Sendrecv(Acsr.ir, Acsr.jc[sizeA], MPI_INT, next, tag1,
-		     Acsrtemp.ir, Acsrtemp.jc[sizeA],MPI_INT,previous,tag1,
-		     MPI_COMM_WORLD,&status);
-	
-	MPI_Sendrecv(Acsr.pr, Acsr.jc[sizeA], mpi_type(value_type()), next, tag3, 
-		     Acsrtemp.pr, Acsrtemp.jc[sizeA],mpi_type(value_type()),previous,tag3,
-		     MPI_COMM_WORLD,&status);
-	gmm::copy(Acsrtemp, Acsr);
+        MPI_Sendrecv(&(Acsr.jc[0]), sizeA+1, MPI_INT, next, tag2,
+                     &(Acsrtemp.jc[0]), sizeA+1, MPI_INT, previous, tag2,
+                     MPI_COMM_WORLD, &status);
+        if (Acsrtemp.jc[sizeA] > size_type(sizepr)) {
+          sizepr = Acsrtemp.jc[sizeA];
+          gmm::resize(Acsrtemp.pr, sizepr);
+          gmm::resize(Acsrtemp.ir, sizepr);
+        }
+        MPI_Sendrecv(&(Acsr.ir[0]), Acsr.jc[sizeA], MPI_INT, next, tag1,
+                     &(Acsrtemp.ir[0]), Acsrtemp.jc[sizeA], MPI_INT, previous, tag1,
+                     MPI_COMM_WORLD, &status);
+        
+        MPI_Sendrecv(&(Acsr.pr[0]), Acsr.jc[sizeA], mpi_type(value_type()), next, tag3, 
+                     &(Acsrtemp.pr[0]), Acsrtemp.jc[sizeA], mpi_type(value_type()), previous, tag3,
+                     MPI_COMM_WORLD, &status);
+        gmm::copy(Acsrtemp, Acsr);
       }
     }
       t_final=MPI_Wtime();
@@ -595,7 +594,69 @@ namespace gmm {
   void mult(const AS_exact_gradient<Matrixt, MatrixBi> &M,
 	    const Vector2 &p, const Vector3 &p2, const Vector4 &q)
   { mult(M, p, const_cast<Vector4 &>(q)); add(p2, q); }
-  
+
+  struct S_default_newton_line_search {
+    
+    double conv_alpha, conv_r;
+    size_t it, itmax, glob_it;
+
+    double alpha, alpha_old, alpha_mult, first_res, alpha_max_ratio;
+    double alpha_min_ratio, alpha_min;
+    size_type count, count_pat;
+    bool max_ratio_reached;
+    double alpha_max_ratio_reached, r_max_ratio_reached;
+    size_type it_max_ratio_reached;
+
+    
+    double converged_value(void) { return conv_alpha; };
+    double converged_residual(void) { return conv_r; };
+
+    virtual void init_search(double r, size_t git, double = 0.0) {
+      alpha_min_ratio = 0.9;
+      alpha_min = 1e-10;
+      alpha_max_ratio = 10.0;
+      alpha_mult = 0.25;
+      itmax = size_type(-1);
+      glob_it = git; if (git <= 1) count_pat = 0;
+      conv_alpha = alpha = alpha_old = 1.;
+      conv_r = first_res = r; it = 0;
+      count = 0;
+      max_ratio_reached = false;
+    }
+    virtual double next_try(void) {
+      alpha_old = alpha;
+      if (alpha >= 0.4) alpha *= 0.5; else alpha *= alpha_mult; ++it;
+      return alpha_old;
+    }
+    virtual bool is_converged(double r, double = 0.0) {
+      // cout << "r = " << r << " alpha = " << alpha / alpha_mult << " count_pat = " << count_pat << endl;
+      if (!max_ratio_reached && r < first_res * alpha_max_ratio) {
+	alpha_max_ratio_reached = alpha_old; r_max_ratio_reached = r;
+	it_max_ratio_reached = it; max_ratio_reached = true; 
+      }
+      if (max_ratio_reached && r < r_max_ratio_reached * 0.5
+	  && r > first_res * 1.1 && it <= it_max_ratio_reached+1) {
+	alpha_max_ratio_reached = alpha_old; r_max_ratio_reached = r;
+	it_max_ratio_reached = it;
+      }
+      if (count == 0 || r < conv_r)
+	{ conv_r = r; conv_alpha = alpha_old; count = 1; }
+      if (conv_r < first_res) ++count;
+
+      if (r < first_res *  alpha_min_ratio)
+	{ count_pat = 0; return true; }      
+      if (count >= 5 || (alpha < alpha_min && max_ratio_reached)) {
+	if (conv_r < first_res * 0.99) count_pat = 0;
+	if (/*gmm::random() * 50. < -log(conv_alpha)-4.0 ||*/ count_pat >= 3)
+	  { conv_r=r_max_ratio_reached; conv_alpha=alpha_max_ratio_reached; }
+	if (conv_r >= first_res * 0.9999) count_pat++;
+	return true;
+      }
+      return false;
+    }
+    S_default_newton_line_search(void) { count_pat = 0; }
+  };
+
 
   
   template <typename Matrixt, typename MatrixBi, typename Vector,
@@ -611,10 +672,8 @@ namespace gmm {
     
     double residual = iter.get_resmax();
 
-    default_newton_line_search internal_ls;
-    default_newton_line_search external_ls(size_t(-1), 5.0/3, 1.0/1000, 3.0/5);
-
-    // systematic_newton_line_search external_ls(size_t(-1), 1.0/10000.0, 3.0/100.0);
+    S_default_newton_line_search internal_ls;
+    S_default_newton_line_search external_ls;
 
     typename chgt_precond::APrecond PP = chgt_precond::transform(P);
     iter.set_rhsnorm(mtype(1));

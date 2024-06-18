@@ -387,13 +387,13 @@ onelab::client *Msg::GetOnelabClient()
 }
 #endif
 
-void Msg::Exit(int level)
+void Msg::Exit(int level, bool forceLevel)
 {
   Finalize();
 #if defined(HAVE_MPI)
   if(level) MPI_Abort(MPI_COMM_WORLD, level);
 #endif
-  exit(level ? level : _atLeastOneErrorInRun);
+  exit((forceLevel || level) ? level : _atLeastOneErrorInRun);
 }
 
 static int streamIsFile(FILE *stream)
@@ -799,10 +799,6 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
 
   if(percent >= _progressMeterCurrent || n > N - 1){
     int p = _progressMeterCurrent;
-    while(p < percent) p += _progressMeterStep;
-    if(p >= 100) p = 100;
-
-    _progressMeterCurrent = p;
 
     // TODO With C++11 use std::string (contiguous layout) and avoid all these C
     // problems
@@ -826,10 +822,14 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
     if(_logFile) fprintf(_logFile, "Progress: %s\n", str);
     if(_callback) (*_callback)("Progress", str);
     if(!streamIsFile(stdout) && log && CTX::instance()->terminal){
-      fprintf(stdout, "%s                                          \r",
-              (n > N - 1) ? "" : str2);
+      std::string w(80, ' ');
+      fprintf(stdout, "%s%s\r", (n > N - 1) ? "" : str2, w.c_str());
       fflush(stdout);
     }
+
+    while(p <= percent) p += _progressMeterStep;
+    if(p >= 100) p = 100;
+    _progressMeterCurrent = p;
   }
 }
 

@@ -19,7 +19,7 @@ SetFactory("OpenCASCADE");
 Box(1) = {0,0,0, 1,1,1};
 Box(2) = {0,0,0, 0.5,0.5,0.5};
 
-// We apply a boolean difference to create the "cube minus one eigth" shape:
+// We apply a boolean difference to create the "cube minus one eighth" shape:
 BooleanDifference(3) = { Volume{1}; Delete; }{ Volume{2}; Delete; };
 
 // Boolean operations with OpenCASCADE always create new entities. Adding

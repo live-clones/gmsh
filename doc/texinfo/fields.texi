@@ -873,7 +873,7 @@ Tag of the field computing the input value, usually a distance@*
 Type: integer@*
 Default value: @code{0}
 @item Sigmoid
-True to interpolate between SizeMin and LcMax using a sigmoid, false to interpolate linearly@*
+True to interpolate between SizeMin and SizeMax using a sigmoid, false to interpolate linearly@*
 Type: boolean@*
 Default value: @code{0}
 @item SizeMax

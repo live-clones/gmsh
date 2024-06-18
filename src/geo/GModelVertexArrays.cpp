@@ -229,7 +229,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
           for(int k = 0; k < 2; k++)
             e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1],
                                      n[k][2]);
-#pragma omp critical
+#pragma omp critical(addElementsInArrays1)
         {
           e->va_lines->add(x, y, z, n, col, ele, unique);
         }
@@ -254,7 +254,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
           for(int k = 0; k < 3; k++)
             e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1],
                                      n[k][2]);
-#pragma omp critical
+#pragma omp critical(addElementsInArrays2)
         {
           e->va_triangles->add(x, y, z, n, col, ele, unique, skin);
         }

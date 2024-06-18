@@ -77,7 +77,7 @@ public:
   Msg() {}
   static void Initialize(int argc, char **argv);
   static void Finalize();
-  static void Exit(int level);
+  static void Exit(int level, bool forceLevel = false);
   static int GetCommRank();
   static int GetCommSize();
   static void SetCommRank(int val);

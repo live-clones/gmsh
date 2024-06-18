@@ -606,6 +606,7 @@ static bool GetMeshOption(const std::vector<std::string> &argv,
   }
   else if(argv[i] == "-part_physicals") {
     opt_mesh_partition_create_physicals(0, GMSH_SET, 1.);
+    opt_mesh_partition_old_style_msh2(0, GMSH_SET, 0.);
     i++;
   }
   else if(argv[i] == "-part_no_physicals") {

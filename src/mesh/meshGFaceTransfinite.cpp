@@ -417,12 +417,12 @@ int MeshTransfiniteSurface(GFace *gf)
   if(corners.size() == 4) {
     int Lb = N4 - N3, Hb = m_vertices.size() - N4;
 
-#if 1
-    rescaleIrregularTransfinite(L, Lb, H, Hb, m_vertices, U, V);
-    N2 = N1 + L;
-    N3 = N2 + H;
-    N4 = N3 + L;
-#endif
+    if(CTX::instance()->mesh.quasiTransfinite) {
+      rescaleIrregularTransfinite(L, Lb, H, Hb, m_vertices, U, V);
+      N2 = N1 + L;
+      N3 = N2 + H;
+      N4 = N3 + L;
+    }
 
     if(Lb != L || Hb != H) {
       Msg::Error("Surface %d cannot be meshed using the transfinite algorithm "

@@ -3606,8 +3606,7 @@ GMSH_API void gmsh::model::mesh::createEdges(const vectorpair &dimTags)
   if(!_checkInit()) return;
   std::vector<GEntity *> entities;
   _getEntities(dimTags, entities);
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
+  for(GEntity *ge : entities) {
     for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
       MElement *e = ge->getMeshElement(j);
       for(int k = 0; k < e->getNumEdges(); k++) {
@@ -3623,8 +3622,7 @@ GMSH_API void gmsh::model::mesh::createFaces(const vectorpair &dimTags)
   if(!_checkInit()) return;
   std::vector<GEntity *> entities;
   _getEntities(dimTags, entities);
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
+  for(GEntity *ge : entities) {
     for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
       MElement *e = ge->getMeshElement(j);
       for(int k = 0; k < e->getNumFaces(); k++) {
@@ -6999,6 +6997,52 @@ GMSH_API void gmsh::model::occ::chamfer(const std::vector<int> &volumeTags,
     volumeTags, curveTags, surfaceTags, distances, outDimTags, removeVolume);
 }
 
+GMSH_API void gmsh::model::occ::defeature(const std::vector<int> &volumeTags,
+                                          const std::vector<int> &surfaceTags,
+                                          vectorpair &outDimTags,
+                                          const bool removeVolume)
+{
+  if(!_checkInit()) return;
+  _createOcc();
+  outDimTags.clear();
+  GModel::current()->getOCCInternals()->defeature(
+    volumeTags, surfaceTags, outDimTags, removeVolume);
+}
+
+GMSH_API int gmsh::model::occ::fillet2D(const int edgeTag1,
+                                        const int edgeTag2,
+                                        const double radius, const int tag)
+{
+  if(!_checkInit()) return -1;
+  _createOcc();
+  int outTag = tag;
+  GModel::current()->getOCCInternals()->fillet2D(outTag, edgeTag1, edgeTag2, radius);
+  return outTag;
+}
+
+GMSH_API int gmsh::model::occ::chamfer2D(const int edgeTag1,
+                                          const int edgeTag2,
+                                          const double distance1,
+                                          const double distance2, const int tag)
+{
+  if(!_checkInit()) return -1;
+  _createOcc();
+  int outTag = tag;
+  GModel::current()->getOCCInternals()->chamfer2D(outTag, edgeTag1, edgeTag2, distance1,
+                                                  distance2);
+  return outTag;
+}
+
+GMSH_API void gmsh::model::occ::offsetCurve( const int curveLoopTag,
+                                              double offset,
+                                              vectorpair &outDimTags)
+{
+  if(!_checkInit()) return;
+  _createOcc();
+  outDimTags.clear();
+  GModel::current()->getOCCInternals()->offsetCurve(curveLoopTag, offset, outDimTags);
+}
+
 GMSH_API void gmsh::model::occ::fuse(const vectorpair &objectDimTags,
                                      const vectorpair &toolDimTags,
                                      vectorpair &outDimTags,
@@ -7013,6 +7057,21 @@ GMSH_API void gmsh::model::occ::fuse(const vectorpair &objectDimTags,
   GModel::current()->getOCCInternals()->booleanUnion(
     tag, objectDimTags, toolDimTags, outDimTags, outDimTagsMap, removeObject,
     removeTool);
+}
+
+GMSH_API void gmsh::model::occ::getDistance(int dim1, int tag1,
+                                  int dim2, int tag2,
+                                  double &distance,
+                                  double &x1, double &y1, double &z1,
+                                  double &x2, double &y2, double &z2)
+{
+  if(!_checkInit()) return;
+  _createOcc();
+  GModel::current()->getOCCInternals()->getDistance(dim1, tag1,
+                                  dim2, tag2,
+                                  distance,
+                                  x1, y1, z1,
+                                  x2, y2, z2);
 }
 
 GMSH_API void gmsh::model::occ::intersect(
@@ -8872,7 +8931,7 @@ public:
   apiMsg() {}
   virtual void operator()(std::string level, std::string message)
   {
-#pragma omp critical
+#pragma omp critical(apiMsg)
     _log.push_back(level + ": " + message);
   }
   void get(std::vector<std::string> &log) const { log = _log; }

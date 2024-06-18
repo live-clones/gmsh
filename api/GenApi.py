@@ -1878,7 +1878,7 @@ fortran_footer = """
     do i = 1_c_size_t, n
         iend = int(dims(i))
         call c_f_pointer(ptrs(i), v_, [iend])
-        v(istart:iend) = v_
+        v(istart:istart + iend - 1) = v_
         istart = istart + iend
     end do
     do i = 1_c_size_t, n
@@ -1905,7 +1905,7 @@ fortran_footer = """
     do i = 1_c_size_t, n
         iend = int(dims(i))
         call c_f_pointer(ptrs(i), v_, [iend])
-        v(istart:iend) = v_
+        v(istart:istart + iend - 1) = v_
         istart = istart + iend
     end do
     do i = 1_c_size_t, n
@@ -1932,7 +1932,7 @@ fortran_footer = """
     do i = 1_c_size_t, n
         iend = int(dims(i))
         call c_f_pointer(ptrs(i), v_, [iend])
-        v(istart:iend) = v_
+        v(istart:istart + iend - 1) = v_
         istart = istart + iend
     end do
     do i = 1_c_size_t, n
@@ -1959,7 +1959,7 @@ fortran_footer = """
     do i = 1_c_size_t, n
         iend = int(dims(i)/2)
         call c_f_pointer(ptrs(i), v_, [2_c_size_t, iend])
-        v(:,istart:iend) = v_
+        v(:,istart:istart + iend - 1) = v_
         istart = istart + iend
     end do
     do i = 1_c_size_t, n
@@ -2681,7 +2681,7 @@ class API:
                 for line in file[1]:
                     l = l + 1
                     # allow white space between func name and (
-                    if re.search(func + '\s*\(', line):
+                    if re.search(func + '\\s*\\(', line):
                         strip = re.sub(r'\s+', '', line)
                         # don't report matches in comments
                         if not in_comments and strip.startswith(comment):
