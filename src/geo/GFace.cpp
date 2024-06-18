@@ -1328,78 +1328,112 @@ bool GFace::normalToPlanarMesh(SVector3 &normal) const
   }
 
   // Check that all MVertex are in the same plane.
-  // It is sufficient to check this: for each pair of mesh vertices, the vector
-  // linking the pair is perpendicular to the same normal vector.
-  // We can either only consider primary (first-order) vertices or include
-  // high-order vertices. Here, we choose to include HO vertices.
-  bool planar = true;
-  for (std::size_t i = 0; planar && i < getNumMeshElements(); ++i) {
+  // It is sufficient to check for each pair of consecutive vertices in an
+  // arbitrary sequence of all surface vertices that the vector linking the
+  // pair is perpendicular to the normal vector.
+  for (std::size_t i = 0; i < getNumMeshElements(); ++i) {
     MElement *el = getMeshElement(i);
-    MVertex *v[2] = {el->getVertex(0), NULL};
+    MVertex *v[2] = {el->getVertex(0), nullptr};
 
     for(std::size_t j = 1; j < el->getNumVertices(); ++j) {
       v[j % 2] = el->getVertex(j);
       double e[3] = {v[1]->x() - v[0]->x(), v[1]->y() - v[0]->y(),
                      v[1]->z() - v[0]->z()};
       norme(e);
-      if(std::abs(prosca(n, e)) >= 1e-12) {
-        planar = false;
-        break;
-      }
+      if(std::abs(prosca(n, e)) >= 1e-12) return false;
     }
   }
-  if (!planar) return false;
 
   normal = SVector3(n[0], n[1], n[2]);
 
-  // Check the orientation of the surface to scale normal by -1 if needed
-  if (l_edges.empty() || l_dirs.size() < l_edges.size()) return planar;
+  // Now, check the orientation of the surface in order to scale normal by -1
+  // if needed.
+  // The only way is to check if the rotation of the complete boundary is of an
+  // angle of +2pi or -2pi for the current sense of 'normal'. We must cover the
+  // whole boundary since we cannot determine which part of it is convex except
+  // if we already know the orientation...
 
-  GVertex *gv[3] = {NULL, NULL, NULL};
-  if (l_dirs[0] == 1) {
-    gv[0] = l_edges[0]->getBeginVertex();
-    gv[1] = l_edges[0]->getEndVertex();
-  }
-  else {
-    gv[0] = l_edges[0]->getEndVertex();
-    gv[1] = l_edges[0]->getBeginVertex();
+  // 1) Determine the set of exterior edges (NB: it can be a single edge)
+  GVertex *vBegin, *vNext;
+
+  if (l_dirs[0] == 1)
+    vBegin = l_edges[0]->getBeginVertex();
+  else
+    vBegin = l_edges[0]->getEndVertex();
+
+  std::size_t numEdge = 1;
+  for (std::size_t i = 0; i < l_edges.size(); ++i) {
+    if (l_dirs[i] == 1)
+      vNext = l_edges[i]->getEndVertex();
+    else
+      vNext = l_edges[i]->getBeginVertex();
+    if (vNext ==  vBegin) {
+      numEdge = i+1;
+      break;
+    }
   }
 
-  // Find three GVertex that are not on a line (i.e. |n2| > 0) to execute
-  // the check:
-  for (std::size_t i = 1; i < l_edges.size(); ++i) {
-    GVertex *first, *last;
+  // 2) Get a set of points that represents the boundary.
+  //    We need at least 3 points in basic cases and an undetermined number in
+  //    general. Indeed, for any number of sampling points, we can always create
+  //    a boundary for which the sampling points are co-linear or even worse,
+  //    have sampling points that discretize so poorly the boundary that they
+  //    rotate inversely...
+  //    However, in practice, a minimum of 100 points should be sufficient.
+  const double minSamplingPoints = 100.;
+  const int numSampleInteriorEdge =
+    std::max(.0, std::ceil(minSamplingPoints/(double)numEdge - 1.));
+
+  std::vector<SPoint3> samplingPnts;
+  samplingPnts.reserve(numEdge + numEdge* numSampleInteriorEdge);
+  for (std::size_t i = 0; i < numEdge; ++i) {
+    auto *ge = l_edges[i];
+    Range<double> tr = ge->parBounds(0);
+    double low, high;
     if (l_dirs[i] == 1) {
-      first = l_edges[i]->getBeginVertex();
-      last = l_edges[i]->getEndVertex();
+      vBegin = ge->getBeginVertex();
+      low  = tr.low();
+      high  = tr.high();
     }
     else {
-      first = l_edges[i]->getEndVertex();
-      last = l_edges[i]->getBeginVertex();
+      vBegin = ge->getEndVertex();
+      low  = tr.high();
+      high  = tr.low();
     }
+    samplingPnts.emplace_back(vBegin->x(), vBegin->y(), vBegin->z());
 
-    if (gv[i%3] != first) {
-      Msg::Error("The edge loop is not coherent, not possible to orient the "
-                 "normal in function 'normalToPlanarMesh' for GFace %d", tag());
-      return planar;
-    }
-    gv[(i+1)%3] = last;
-
-    double n2[3];
-    normal3points(gv[0]->x(), gv[0]->y(), gv[0]->z(), gv[1]->x(), gv[1]->y(),
-                  gv[1]->z(), gv[2]->x(), gv[2]->y(), gv[2]->z(), n2);
-
-    double scalarProd = prosca(n, n2);
-    if (scalarProd >  1 - 1e-14) return planar;
-    if (scalarProd < -1 + 1e-14) {
-      normal = normal * -1;
-      return planar;
+    for (int j = 0; j < numSampleInteriorEdge; ++j) {
+      double t = low + (j + 1.) / (numSampleInteriorEdge + 1.) * (high - low);
+      auto gp = ge->point(t);
+      samplingPnts.emplace_back(gp.x(), gp.y(), gp.z());
     }
   }
 
-  Msg::Error("The edge loop seems to be on a line, not possible to orient "
-             "the normal in function 'normalToPlanarMesh' for GFace %d", tag());
-  return planar;
+  // 3) Compute the rotation angle and reverse normal if it is -2pi.
+  double p0[3], p1[3], p2[3];
+  samplingPnts[samplingPnts.size() - 2].position(p0);
+  samplingPnts[samplingPnts.size() - 1].position(p1);
+  normal.point().position(n);
+  //samplingPnts[1].position(p1);
+  double sumAngle = 0;
+  for (const auto &P : samplingPnts) {
+    P.position(p2);
+    double angle = angle_plan(p1, p2, p0, n);
+    sumAngle += (angle < 0 ? -1 : 1) * M_PI - angle;
+    p0[0] = p1[0]; p0[1] = p1[1]; p0[2] = p1[2];
+    p1[0] = p2[0]; p1[1] = p2[1]; p1[2] = p2[2];
+  }
+
+  const double eps = 1e-7;
+  const double absAngle = std::abs(sumAngle);
+  if(absAngle < 2 * M_PI - eps || absAngle > 2 * M_PI + eps) {
+    // FIXME: Remove because I think this cannot happen
+    Msg::Warning("Could not orient normal of surface %d (obtained angle %g)",
+                 tag(), angle);
+  }
+  else if (sumAngle < 0) normal *= -1;
+
+  return true;
 }
 
 bool GFace::buildRepresentationCross(bool force)
