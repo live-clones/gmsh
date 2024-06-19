@@ -141,7 +141,7 @@
 #include <ShapeUpgrade_UnifySameDomain.hxx>
 #endif
 
-#if OCC_VERSION_HEX >= 0x080700
+#if OCC_VERSION_HEX >= 0x070700
 #include <BRepAlgoAPI_Defeaturing.hxx>
 #include <Message_ProgressIndicator.hxx>
 #endif
@@ -3525,7 +3525,7 @@ bool OCC_Internals::defeature(const std::vector<int> &volumeTags,
                               std::vector<std::pair<int, int>> &outDimTags,
                               bool removeVolume)
 {
-#if OCC_VERSION_HEX >= 0x080500
+#if OCC_VERSION_HEX >= 0x070500
   // build a single compound shape
   BRep_Builder b;
   TopoDS_Compound c;
