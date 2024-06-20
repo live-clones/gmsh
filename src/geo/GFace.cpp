@@ -1302,7 +1302,7 @@ SVector3 GFace::normal(const SPoint2 &param) const
   return n;
 }
 
-bool GFace::normalToPlanarMesh(SVector3 &normal) const
+bool GFace::normalToPlanarMesh(SVector3 &normal, bool orient) const
 {
   normal = SVector3(.0, .0, .0);
   if (getNumMeshElements() == 0) return false;
@@ -1345,13 +1345,15 @@ bool GFace::normalToPlanarMesh(SVector3 &normal) const
   }
 
   normal = SVector3(n[0], n[1], n[2]);
+  if (!orient) return true;
 
-  // Now, check the orientation of the surface in order to scale normal by -1
-  // if needed.
+  // Now, if possible, check the orientation of the geometrical surface to make
+  // normal point in the same direction.
   // The only way is to check if the rotation of the complete boundary is of an
   // angle of +2pi or -2pi for the current sense of 'normal'. We must cover the
   // whole boundary since we cannot determine which part of it is convex except
   // if we already know the orientation...
+  if (l_edges.empty()) return true;
 
   // 1) Determine the set of exterior edges (NB: it can be a single edge)
   GVertex *vBegin, *vNext;
