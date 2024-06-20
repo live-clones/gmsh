@@ -475,7 +475,7 @@ void GFace::writeGEO(FILE *fp)
   if(geomType() == DiscreteSurface || geomType() == BoundaryLayerSurface) return;
 
   std::vector<GEdge *> const &edg = edges();
-  std::vector<int> const &dir = orientations();
+  std::vector<int> const &dir = edgeOrientations();
   if(edg.size() && dir.size() == edg.size()) {
     std::vector<int> num, ori;
     for(auto it = edg.begin(); it != edg.end(); it++)
@@ -1300,6 +1300,142 @@ SVector3 GFace::normal(const SPoint2 &param) const
   SVector3 n = crossprod(der.first(), der.second());
   n.normalize();
   return n;
+}
+
+bool GFace::normalToPlanarMesh(SVector3 &normal, bool orient) const
+{
+  normal = SVector3(.0, .0, .0);
+  if (getNumMeshElements() == 0) return false;
+
+  // Get one arbitrary normal
+  double n[3];
+  bool foundNormal = false;
+  for (size_t i = 0; i < getNumMeshElements(); ++i) {
+    MElement *el = getMeshElement(i);
+    MVertex *v[3] = {el->getVertex(0), el->getVertex(1), el->getVertex(2)};
+    normal3points(v[0]->x(), v[0]->y(), v[0]->z(), v[1]->x(), v[1]->y(),
+                  v[1]->z(), v[2]->x(), v[2]->y(), v[2]->z(), n);
+    if (norm3(n) > .5) {
+      foundNormal = true;
+      break;
+    }
+  }
+
+  if (!foundNormal) {
+    Msg::Warning("Could not define a normal for function "
+                 "'normalToPlanarMesh' on GFace %d", tag());
+    return false;
+  }
+
+  // Check that all MVertex are in the same plane.
+  // It is sufficient to check for each pair of consecutive vertices in an
+  // arbitrary sequence of all surface vertices that the vector linking the
+  // pair is perpendicular to the normal vector.
+  for (std::size_t i = 0; i < getNumMeshElements(); ++i) {
+    MElement *el = getMeshElement(i);
+    MVertex *v[2] = {el->getVertex(0), nullptr};
+
+    for(std::size_t j = 1; j < el->getNumVertices(); ++j) {
+      v[j % 2] = el->getVertex(j);
+      double e[3] = {v[1]->x() - v[0]->x(), v[1]->y() - v[0]->y(),
+                     v[1]->z() - v[0]->z()};
+      norme(e);
+      if(std::abs(prosca(n, e)) >= 1e-12) return false;
+    }
+  }
+
+  normal = SVector3(n[0], n[1], n[2]);
+  if (!orient) return true;
+
+  // Now, if possible, check the orientation of the geometrical surface to make
+  // normal point in the same direction.
+  // The only way is to check if the rotation of the complete boundary is of an
+  // angle of +2pi or -2pi for the current sense of 'normal'. We must cover the
+  // whole boundary since we cannot determine which part of it is convex except
+  // if we already know the orientation...
+  if (l_edges.empty()) return true;
+
+  // 1) Determine the set of exterior edges (NB: it can be a single edge)
+  GVertex *vBegin, *vNext;
+
+  if (l_dirs[0] == 1)
+    vBegin = l_edges[0]->getBeginVertex();
+  else
+    vBegin = l_edges[0]->getEndVertex();
+
+  std::size_t numEdge = 1;
+  for (std::size_t i = 0; i < l_edges.size(); ++i) {
+    if (l_dirs[i] == 1)
+      vNext = l_edges[i]->getEndVertex();
+    else
+      vNext = l_edges[i]->getBeginVertex();
+    if (vNext ==  vBegin) {
+      numEdge = i+1;
+      break;
+    }
+  }
+
+  // 2) Get a set of points that represents the boundary.
+  //    We need at least 3 points in basic cases and an undetermined number in
+  //    general. Indeed, for any number of sampling points, we can always create
+  //    a boundary for which the sampling points are co-linear or even worse,
+  //    have sampling points that discretize so poorly the boundary that they
+  //    rotate inversely...
+  //    However, in practice, a minimum of 100 points should be sufficient.
+  const double minSamplingPoints = 100.;
+  const int numSampleInteriorEdge =
+    std::max(.0, std::ceil(minSamplingPoints/(double)numEdge - 1.));
+
+  std::vector<SPoint3> samplingPnts;
+  samplingPnts.reserve(numEdge + numEdge* numSampleInteriorEdge);
+  for (std::size_t i = 0; i < numEdge; ++i) {
+    auto *ge = l_edges[i];
+    Range<double> tr = ge->parBounds(0);
+    double low, high;
+    if (l_dirs[i] == 1) {
+      vBegin = ge->getBeginVertex();
+      low  = tr.low();
+      high  = tr.high();
+    }
+    else {
+      vBegin = ge->getEndVertex();
+      low  = tr.high();
+      high  = tr.low();
+    }
+    samplingPnts.emplace_back(vBegin->x(), vBegin->y(), vBegin->z());
+
+    for (int j = 0; j < numSampleInteriorEdge; ++j) {
+      double t = low + (j + 1.) / (numSampleInteriorEdge + 1.) * (high - low);
+      auto gp = ge->point(t);
+      samplingPnts.emplace_back(gp.x(), gp.y(), gp.z());
+    }
+  }
+
+  // 3) Compute the rotation angle and reverse normal if it is -2pi.
+  double p0[3], p1[3], p2[3];
+  samplingPnts[samplingPnts.size() - 2].position(p0);
+  samplingPnts[samplingPnts.size() - 1].position(p1);
+  normal.point().position(n);
+  //samplingPnts[1].position(p1);
+  double sumAngle = 0;
+  for (const auto &P : samplingPnts) {
+    P.position(p2);
+    double angle = angle_plan(p1, p2, p0, n);
+    sumAngle += (angle < 0 ? -1 : 1) * M_PI - angle;
+    p0[0] = p1[0]; p0[1] = p1[1]; p0[2] = p1[2];
+    p1[0] = p2[0]; p1[1] = p2[1]; p1[2] = p2[2];
+  }
+
+  const double eps = 1e-7;
+  const double absAngle = std::abs(sumAngle);
+  if(absAngle < 2 * M_PI - eps || absAngle > 2 * M_PI + eps) {
+    // FIXME: Remove because I think this cannot happen
+    Msg::Warning("Could not orient normal of surface %d (obtained angle %g)",
+                 tag(), angle);
+  }
+  else if (sumAngle < 0) normal *= -1;
+
+  return true;
 }
 
 bool GFace::buildRepresentationCross(bool force)
