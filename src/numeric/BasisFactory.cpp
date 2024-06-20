@@ -50,7 +50,7 @@ const nodalBasis *BasisFactory::getNodalBasis(int tag)
   }
 
   std::pair<std::map<int, nodalBasis *>::const_iterator, bool> inserted;
-#pragma omp critical
+#pragma omp critical(getNodalBasis)
   {
     inserted = fs.insert(std::make_pair(tag, F));
     if(!inserted.second) delete F;

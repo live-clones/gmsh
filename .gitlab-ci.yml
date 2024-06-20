@@ -328,7 +328,6 @@ macosarm-sdk_official_release:
 # ----------------------------------------------
 
 .source_official: &source_official
-  image: onelab/ubuntu20.04
   only:
     - master@gmsh/gmsh
   <<: *ssh_config
@@ -344,11 +343,13 @@ macosarm-sdk_official_release:
     - docker
 
 source_official_snapshot:
+  image: onelab/ubuntu20.04
   <<: *source_official
   except:
     - tags
 
 source_official_release:
+  image: onelab/ubuntu20.04
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1"
   <<: *source_official
