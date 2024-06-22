@@ -251,12 +251,12 @@ Else
 EndIf
 
 // validate mesh quality
-Printf("Minimum mesh quality is %g", Mesh.MinQuality);
-If ( Mesh.MinQuality < 0.01 )
-  Printf("Error: Minimum mesh quality is %g, outside of range", Mesh.MinQuality) >> file;
-  Error("Minimum mesh quality is %g, outside of range", Mesh.MinQuality);
+Printf("Average mesh quality is %g", Mesh.AvgQuality);
+If ( Mesh.AvgQuality < 0.75 )
+  Printf("Error: average mesh quality is %g, outside of range", Mesh.AvgQuality) >> file;
+  Error("Average mesh quality is %g, outside of range", Mesh.AvgQuality);
 Else
-  Printf("Successful Verification of minimum mesh quality %g", Mesh.MinQuality) >> file;
+  Printf("Successful Verification of average mesh quality %g", Mesh.AvgQuality) >> file;
 EndIf
 
 // ********** End SPEC validation **********

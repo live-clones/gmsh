@@ -60,7 +60,7 @@ void CTX::init()
   polygonOffset = 0;
   printing = 0;
   mesh.timer[0] = mesh.timer[1] = mesh.timer[2] = 0.;
-  mesh.minQuality = 0.;
+  mesh.minQuality = mesh.avgQuality = 0.;
   drawRotationCenter = 0;
   pickElements = 0;
   geom.draw = 1;

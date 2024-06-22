@@ -90,8 +90,8 @@ struct contextMeshOptions {
   int smoothNormals, clip;
   // records cpu times for 1D, 2D and 3D mesh generation
   double timer[3];
-  // records minimal mesh quality after 2D and 3D mesh generation
-  double minQuality;
+  // records minimal and average mesh quality after 2D and 3D mesh generation
+  double minQuality, avgQuality;
 };
 
 struct contextGeometryOptions {

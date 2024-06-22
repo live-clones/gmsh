@@ -299,27 +299,31 @@ void GetStatistics(double stat[50], double quality[3][101], bool visibleOnly)
 #endif
 }
 
-static double GetMinQualityFast(GModel *m, int dim)
+static void GetQualityFast(GModel *m, int dim, double &qmin, double &qavg)
 {
   int nthreads = CTX::instance()->numThreads;
   if(CTX::instance()->mesh.maxNumThreads1D > 0)
     nthreads = CTX::instance()->mesh.maxNumThreads1D;
   if(!nthreads) nthreads = Msg::GetMaxThreads();
 
-  double qmin = 1e200;
+  std::size_t N = 0;
   std::vector<GEntity *> entities;
   m->getEntities(entities, dim);
+  qmin = 1e200;
+  qavg = 0;
   for(auto ge : entities) {
     if(ge->dim() < 2) continue;
     std::size_t ne = ge->getNumMeshElements();
-#pragma omp parallel for num_threads(nthreads) reduction(min:qmin)
+    N += ne;
+#pragma omp parallel for num_threads(nthreads) reduction(min:qmin) reduction(+:qavg)
     for(std::size_t i = 0; i < ne; i++) {
       MElement *e = ge->getMeshElement(i);
       double q = e->minSICNShapeMeasure();
       qmin = std::min(qmin, q);
+      qavg += q;
     }
   }
-  return qmin;
+  if(N) qavg /= N;
 }
 
 static void Mesh0D(GModel *m)
@@ -1498,8 +1502,10 @@ void GenerateMesh(GModel *m, int ask)
   Msg::Info("%d nodes %d elements", m->getNumMeshVertices(),
             m->getNumMeshElements());
 
-  CTX::instance()->mesh.minQuality = GetMinQualityFast(m, m->getMeshStatus());
-  Msg::Debug("Minimum mesh quality (ICN) = %g", CTX::instance()->mesh.minQuality);
+  GetQualityFast(m, m->getMeshStatus(), CTX::instance()->mesh.minQuality,
+                 CTX::instance()->mesh.avgQuality);
+  Msg::Debug("ICN mesh quality: min=%g avg=%g", CTX::instance()->mesh.minQuality,
+             CTX::instance()->mesh.avgQuality);
 
   Msg::PrintErrorCounter("Mesh generation error summary");
 

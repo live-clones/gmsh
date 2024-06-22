@@ -1139,6 +1139,9 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "AllowSwapAngle" , opt_mesh_allow_swap_edge_angle , 10.0 ,
     "Threshold angle (in degrees) between faces normals under which we allow "
     "an edge swap" },
+  { F|O, "AvgQuality" , opt_mesh_avg_quality, 0. ,
+    "Average mesh quality (inverse conditioning number, ICN) after the generation "
+    "of the current mesh (read-only)"},
 
   { F|O, "BdfFieldFormat" , opt_mesh_bdf_field_format , 1. ,
     "Field format for Nastran BDF files (0: free, 1: small, 2: large)" },

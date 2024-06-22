@@ -36,6 +36,11 @@ Threshold angle (in degrees) between faces normals under which we allow an edge 
 Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.AvgQuality
+Average mesh quality (inverse conditioning number, ICN) after the generation of the current mesh (read-only)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.BdfFieldFormat
 Field format for Nastran BDF files (0: free, 1: small, 2: large)@*
 Default value: @code{1}@*
