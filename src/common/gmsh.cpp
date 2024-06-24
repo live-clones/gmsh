@@ -5683,7 +5683,7 @@ gmsh::model::mesh::alphaShape(const int dim, const int tag, const double alpha, 
 GMSH_API void
 gmsh::model::mesh::computeAlphaShapeBis(const int dim, const int tag, const int bndTag,
                                         const std::string & boundaryModel,
-                                        const double alpha, const int alphaShapeSizeField, const int refineSizeField)
+                                        const double alpha, const int alphaShapeSizeField, const int refineSizeField, const bool usePreviousMesh)
 {
 #if defined(HAVE_MESH) && defined(HAVE_HXT)
   if (dim == 2){
@@ -5700,7 +5700,7 @@ gmsh::model::mesh::computeAlphaShapeBis(const int dim, const int tag, const int 
     std::cout << "Triangulate  : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
 
     // alpha shape
-    _alphaShape2D(pm, alpha, tag, bndTag, alphaShapeSizeField);
+    _alphaShape2D(pm, alpha, tag, bndTag, alphaShapeSizeField, usePreviousMesh);
     tic = std::chrono::high_resolution_clock::now();
     std::cout << "Alpha Shape  : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
     // edge recover

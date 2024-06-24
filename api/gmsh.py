@@ -5286,9 +5286,9 @@ class model:
         compute_alpha_shape = computeAlphaShape
 
         @staticmethod
-        def computeAlphaShapeBis(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField):
+        def computeAlphaShapeBis(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh):
             """
-            gmsh.model.mesh.computeAlphaShapeBis(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField)
+            gmsh.model.mesh.computeAlphaShapeBis(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh)
 
             Compute the alpha shape - improved function
 
@@ -5300,6 +5300,7 @@ class model:
             - `alpha': double
             - `alphaShapeSizeField': integer
             - `refineSizeField': integer
+            - `usePreviousMesh': boolean
             """
             ierr = c_int()
             lib.gmshModelMeshComputeAlphaShapeBis(
@@ -5310,6 +5311,7 @@ class model:
                 c_double(alpha),
                 c_int(alphaShapeSizeField),
                 c_int(refineSizeField),
+                c_int(bool(usePreviousMesh)),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())

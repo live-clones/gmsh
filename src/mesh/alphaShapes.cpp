@@ -1951,11 +1951,16 @@ inline void initialize_rectangle(PolyMesh* pm, double xmin, double xmax, double 
 
 inline bool checkVertexConnection(PolyMesh::Vertex* v, int volTag){
   PolyMesh::HalfEdge* he = v->he;
+  size_t i_debug = 0;
   do {
     if (!he) return false;
     if (!he->f) return false;
     if (he->f->data == volTag) return true;
     he = he->next->next->opposite;
+    if (i_debug++ > 1000){
+      printf("infite loop \n");
+      return false;
+    }
   } while (he != v->he);
   return false;
 }
@@ -3255,7 +3260,65 @@ PolyMesh* _alphaShapeDelaunay2D(const int tag, const std::string boundaryModelNa
   return pm;
 }
 
-void _alphaShape2D(PolyMesh* pm, const double alpha, const int faceTag, const int bndTag, const int sizeFieldTag){
+bool isInMesh(PolyMesh::Face* f, OctreeNode<2, 32, MElement*> &octree){
+  BBox<2> bb;
+  PolyMesh::HalfEdge* he = f->he;
+  SVector3 p0 = he->v->position;
+  SVector3 p1 = he->next->v->position;
+  SVector3 p2 = he->next->next->v->position;
+  SVector3 c = 1./3.*(p0+p1+p2);
+  bb.extends({c.x(), c.y()});
+  std::vector<MElement*> res;
+  octree.search(bb, res);
+  if (res.size() == 0) return false;
+  for (auto e : res){
+    // Check if point is in triangle
+    auto v0 = e->getVertex(0)->point();
+    auto v1 = e->getVertex(1)->point();
+    auto v2 = e->getVertex(2)->point();
+    if (robustPredicates::orient2d(v0.data(), v1.data(), c.data()) >= 0 &&
+        robustPredicates::orient2d(v1.data(), v2.data(), c.data()) >= 0 &&
+        robustPredicates::orient2d(v2.data(), v0.data(), c.data()) >= 0) {
+      return true;
+    }
+    // IDEA : IF THE TRIANGLE THAT I FOUND IS TOO SMALL, WE CONSIDER THAT WE'RE OUT OF THE MESH
+    SVector3 v0v1 = v1-v0;
+    SVector3 v0v2 = v2-v0;
+    double area = 0.5*norm(crossprod(v0v1, v0v2));
+    // TODO : WHAT VALUE TO PICK? !
+    if (area < 1e-10) return false;
+  }
+  // for (size_t i = 0; i < 3; i++){
+  //   bb.extends({f->he->v->position.x(), f->he->v->position.y()});
+  //   f->he = f->he->next;
+  // }
+  return false;
+}
+
+void _alphaShape2D(PolyMesh* pm, const double alpha, const int faceTag, const int bndTag, const int sizeFieldTag, const bool usePreviousMesh){
+  // Here, define an octree based on the previous, advected time step mesh, to check whether the triangle we are computing is in the mesh or not
+  auto gf = GModel::current()->getFaceByTag(faceTag);
+  auto gmsh_bb = gf->bounds();
+  BBox<2> bb; 
+  bb.extends({gmsh_bb.min().x(), gmsh_bb.min().y()});
+  bb.extends({gmsh_bb.max().x(), gmsh_bb.max().y()});
+  bb *= 1.1;
+  OctreeNode<2, 32, MElement*> octree_prev(bb);
+  for (size_t i=0; i<gf->getNumMeshElements(); i++){
+    MElement* elem = gf->getMeshElement(i);
+    if(elem->getDim() != 2) continue;
+    // check orientation of element
+    SPoint3 p0 = elem->getVertex(0)->point();
+    SPoint3 p1 = elem->getVertex(1)->point();
+    SPoint3 p2 = elem->getVertex(2)->point();
+    if (robustPredicates::orient2d(p0.data(), p1.data(), p2.data()) < 0) continue;
+    BBox<2> bb_tri;
+    for (size_t i = 0; i < elem->getNumVertices(); i++){
+      bb_tri.extends({elem->getVertex(i)->point().x(), elem->getVertex(i)->point().y()});
+    }
+    octree_prev.add(elem, bb_tri);
+  }
+  printf("previous mesh octree created \n");
   Field* field = GModel::current()->getFields()->get(sizeFieldTag);
   if (field == nullptr) {
     Msg::Error("Field %d not found", sizeFieldTag);
@@ -3274,6 +3337,16 @@ void _alphaShape2D(PolyMesh* pm, const double alpha, const int faceTag, const in
     if (v->data == -1) continue;
     sizeAtNodes[v->data] = field->operator()(v->position.x(), v->position.y(), 0, NULL);
   }
+
+  // // Get min size field
+  double hMin = 1e10;
+  for (auto ss : sizeAtNodes){
+    hMin = std::min(hMin, ss.second);
+  }
+  // printf("hMin : %f \n", hMin);
+  double bndLimit = .2;
+  double sizeLimit = 0.01;
+
   std::unordered_map<PolyMesh::Face*, bool> _touched;
   double hTriangle, R, q;
   double qualityThreshold = 0.;
@@ -3282,7 +3355,21 @@ void _alphaShape2D(PolyMesh* pm, const double alpha, const int faceTag, const in
     if (pm->faces[i]->data == -2) continue;
     PolyMesh::Face *f = pm->faces[i];
     hTriangle = _faceSizeFromMap(f->he, sizeAtNodes);
+    // printf("hTriangle : %f \n", hTriangle);
+    // check if element is in the advected mesh
+    // if (!isInMesh(f, octree_prev)) continue;
+    bool is_in_mesh = usePreviousMesh ? isInMesh(f, octree_prev) : true;
+    hTriangle = is_in_mesh ? hTriangle : hTriangle*0.1;
+    // if (usePreviousMesh && is_in_mesh &&  abs(hTriangle-hMin)/hMin < 1e-2) hTriangle*=bndLimit;
     faceInfo(f->he, cc, &R, &q);
+    if (usePreviousMesh && abs(hTriangle-hMin)/hMin < sizeLimit) {
+      // printf("yes, reducing ! \n");
+      // ce sont les plus petits éléments que je veux enlever, pas les grands... 
+      // hTriangle*=bndLimit;
+      R *= bndLimit;
+    }
+    // if (is_in_mesh){
+    // if (is_in_mesh && R/hTriangle < alpha && !_touched[f] && q > qualityThreshold){
     if (R/hTriangle < alpha && !_touched[f] && q > qualityThreshold){
       std::stack<PolyMesh::Face *> _s;
       _s.push(f);
@@ -3300,11 +3387,14 @@ void _alphaShape2D(PolyMesh* pm, const double alpha, const int faceTag, const in
           else if (!_touched[_he->opposite->f]){
             PolyMesh::Face *f_neigh = _he->opposite->f;
             hTriangle = _faceSizeFromMap(f_neigh->he, sizeAtNodes);
-            // if (abs(hTriangle-minSize)/minSize < 1e-2){
-            //   hTriangle *= surfaceConstraint;
-            // }
+            bool is_in_mesh = usePreviousMesh ? isInMesh(f_neigh, octree_prev) : true;
+            hTriangle = is_in_mesh ? hTriangle : hTriangle*0.2;
+            if (usePreviousMesh && is_in_mesh &&  abs(hTriangle-hMin)/hMin < sizeLimit) hTriangle*=bndLimit;
+            // printf("is in mesh ? %d \n", is_in_mesh);
             faceInfo(f_neigh->he, cc, &R, &q);
+            // if (is_in_mesh && R/hTriangle < alpha && q > qualityThreshold){
             if (R/hTriangle < alpha && q > qualityThreshold){
+            // if (is_in_mesh){
               _s.push(f_neigh);
               _touched[f_neigh] = true;
               f_neigh->data = faceTag;    
@@ -3651,7 +3741,7 @@ void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::stri
   std::vector<PolyMesh::HalfEdge*> result_he;
   std::unordered_set<std::pair<int,int>, hash_pair> res_set;
   std::vector<PolyMesh::HalfEdge*> res_filtered;
-  double eps = 1e-8;
+  double eps = 1e-5;
   for (const auto &e : bndEntities) {
     size_t n_elem = e->getNumMeshElements();
     for (size_t i_el = 0; i_el<n_elem; i_el++){
@@ -3795,8 +3885,10 @@ void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::stri
     resultTags1.clear();
     intersection.clear();
     BBox<2> search_bbox;
-    search_bbox.extends({he->v->position.x(), he->v->position.y()});
-    search_bbox*=(1+eps);
+    // search_bbox.extends({he->v->position.x(), he->v->position.y()});
+    search_bbox.extends({he->v->position.x()+eps, he->v->position.y()+eps});
+    search_bbox.extends({he->v->position.x()-eps, he->v->position.y()-eps});
+    // search_bbox*=(1+eps);
     result.clear();
     bnd_octree.search(search_bbox, result);
     if (result.size() == 0){  // free surface!!!
@@ -3804,10 +3896,13 @@ void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::stri
       he->opposite->data = bndTag;
       continue;
     }
-    for (auto &ed : result) resultTags0.insert(ed->tag);
+    for (auto &ed : result) 
+      resultTags0.insert(ed->tag);
     BBox<2> search_bbox1;
-    search_bbox1.extends({he->next->v->position.x(), he->next->v->position.y()});
-    search_bbox1*=(1+eps);
+    // search_bbox1.extends({he->next->v->position.x(), he->next->v->position.y()});
+    search_bbox1.extends({he->next->v->position.x()+eps, he->next->v->position.y()+eps});
+    search_bbox1.extends({he->next->v->position.x()-eps, he->next->v->position.y()-eps});
+    // search_bbox1*=(1+eps);
     result.clear();
     bnd_octree.search(search_bbox1, result);
     if (result.size() == 0){ // free surface!!!
@@ -4299,6 +4394,21 @@ bool decimationAllowed(PolyMesh* pm, PolyMesh::HalfEdge *he, const int tag, doub
   return true;
 }
 
+bool _deletionAllowed(PolyMesh* pm, PolyMesh::HalfEdge* he_delete){
+  PolyMesh::Vertex* v_del = he_delete->v;
+  PolyMesh::Vertex* v_col = he_delete->next->v;
+  std::vector<PolyMesh::Face*> _f;
+  pm->vertex_faces(v_del, _f);
+  for (auto f : _f){
+    // if (f->data < 0) continue;
+    auto v0 = f->he->v == v_del ? v_col : f->he->v;
+    auto v1 = f->he->next->v == v_del ? v_col : f->he->next->v;
+    auto v2 = f->he->next->next->v == v_del ? v_col : f->he->next->next->v;
+    if (robustPredicates::orient2d(v0->position, v1->position, v2->position) < 0) return false;
+  }
+  return true;
+}
+
 void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const int sizeFieldTag, std::vector<PolyMesh::Vertex*> & controlNodes){
   for (auto it : *GModel::current()->getFields()){
     auto field = it.second;
@@ -4337,10 +4447,11 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const in
   }
 
   printf("starting coarsen \n");
+  // print4debug(pm, 1);
   // Coarsen
   std::vector<PolyMesh::HalfEdge *> heVector;
-  double coarseFactor_bnd = 0.3;
-  double coarseFactor_in = 0.3;
+  double coarseFactor_bnd = 0.4;
+  double coarseFactor_in = 0.4;
   for (auto he : pm->hedges){
     if (he->f == nullptr) continue;
     if ((he->data == -1 && !boundaryCheck(pm, he->v)) || he->data > 0){
@@ -4369,8 +4480,13 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const in
       if (he->data > 0 && d <coarseFactor_bnd*size){
         // decimation test --> if angle is to small (i.e., a kink), then it is an important feature of the mesh which should not be removed
         // if (!decimationAllowed(pm, he, tag, 90*M_PI/180)) continue;
+        // if all three vertices are on the boundary, then we do not want to collapse the edge
+        // if (boundaryCheck(pm, he->v)+boundaryCheck(pm, he->next->v)+boundaryCheck(pm, he->next->next->v) == 3) continue;
         auto he_collapse = control ? he->opposite : he;
-        hedgeCollapseBoundaryEdge(pm, he_collapse, tag, he_collapse->data, &_nhes);
+        if (!_deletionAllowed(pm, he_collapse)) continue;
+        // if it would cause the element to be flat AND limited by 3 boundary edges, DON'T DO IT
+
+        hedgeCollapseBoundaryEdge(pm, he_collapse, tag, he->data, &_nhes);
       }
       else if (he->data < 0){
         auto he_collapse = control ? he->opposite : he;
@@ -4382,13 +4498,27 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const in
       _delaunayCheckColors(pm, _nhes, &_t);  
     }
   }
+  // print4debug(pm, 2);
   printf("coarsen done \n");
+
+  // Remove "killed" triangles
+  for (auto f : pm->faces){
+    if (f->data == -1 || f->he == nullptr) continue;
+    if (f->he->data > 0 && f->he->next->data > 0 && f->he->next->next->data > 0){
+      auto v0 = f->he->v;
+      auto v1 = f->he->next->v;
+      auto v2 = f->he->next->next->v;
+      if (robustPredicates::orient2d(v0->position, v1->position, v2->position) <= 0){
+        f->data = -1;
+      }
+    }
+  }
   
   // Refine
   std::vector<PolyMesh::Face *> _badFaces;
   double _limit = .4;         // Values to discuss...
   double _size = 1.;          // Values to discuss...
-  double _sizeMinFactor = .5; // Values to discuss...
+  double _sizeMinFactor = .2; // Values to discuss...
   for(auto f : pm->faces) {
     if (f->he && f->data == tag){
       double q, R, s;
@@ -4402,7 +4532,10 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const in
   for (auto v : pm->vertices) if (v->data > newTag) newTag = v->data;
   newTag++;
 
+  size_t debug = 0;
+
   while (!_badFaces.empty()){
+    if (debug++ > 1e8){ print4debug(pm, debug); exit(0);}
     PolyMesh::Face *f = _badFaces.back();
     _badFaces.erase(_badFaces.end()-1);
     if (f->he == nullptr || f->data != tag) {
@@ -4580,14 +4713,13 @@ void _createBoundaryOctree(const std::string & boundaryModel, const int bndTag, 
       for (size_t i_el = 0; i_el<n_elem; i_el++){
         MElement *elem = e->getMeshElement(i_el);
         if(elem->getDim() != 1) continue;
-        alphaShapeBndEdge bd = {elem->getVertex(0)->x(), elem->getVertex(0)->y(), elem->getVertex(1)->x(), 
-        elem->getVertex(1)->y(), e->tag()};
+        alphaShapeBndEdge bd = {elem->getVertex(0)->x(), elem->getVertex(0)->y(), elem->getVertex(1)->x(), elem->getVertex(1)->y(), e->tag()};
         bndEdges.push_back(bd);
         bbox.extends({bd.x0, bd.y0});
         bbox.extends({bd.x1, bd.y1});
       }
     }
-    bbox*=1.01;
+    bbox*=1.1;
     octree.set_bbox(bbox);
     // OctreeNode<2, 32, alphaShapeBndEdge*> octree(bbox);
     for (auto &ed : bndEdges){
@@ -4616,7 +4748,7 @@ void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, cons
   std::set<int> resultTags0;
   std::set<int> resultTags1;
   std::set<int> intersection;
-  double eps = 1e-10;
+  double eps = 1e-5;
   std::unordered_map<int, std::vector<size_t>> bndMap;
   bndMap[bndTag] = std::vector<size_t>();
   for (auto he : pm->hedges){
@@ -4626,8 +4758,10 @@ void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, cons
     resultTags1.clear();
     intersection.clear();
     BBox<2> search_bbox;
-    search_bbox.extends({he->v->position.x(), he->v->position.y()});
-    search_bbox*=(1+eps);
+    // search_bbox.extends({he->v->position.x(), he->v->position.y()});
+    search_bbox.extends({he->v->position.x()+eps, he->v->position.y()+eps});
+    search_bbox.extends({he->v->position.x()-eps, he->v->position.y()-eps});
+    // search_bbox*=(1+eps);
     result.clear();
     octree.search(search_bbox, result);
     if (result.size() == 0){  // free surface!!!
@@ -4638,8 +4772,10 @@ void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, cons
     }
     for (auto &ed : result) resultTags0.insert(ed->tag);
     BBox<2> search_bbox1;
-    search_bbox1.extends({he->next->v->position.x(), he->next->v->position.y()});
-    search_bbox1*=(1+eps);
+    // search_bbox1.extends({he->next->v->position.x(), he->next->v->position.y()});
+    search_bbox1.extends({he->next->v->position.x()+eps, he->next->v->position.y()+eps});
+    search_bbox1.extends({he->next->v->position.x()-eps, he->next->v->position.y()-eps});
+    // search_bbox1*=(1+eps);
     result.clear();
     octree.search(search_bbox1, result);
     if (result.size() == 0){ // free surface!!!

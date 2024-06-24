@@ -1923,7 +1923,8 @@ namespace gmsh { // Top-level functions
                                          const std::string & boundaryModel,
                                          const double alpha,
                                          const int alphaShapeSizeField,
-                                         const int refineSizeField);
+                                         const int refineSizeField,
+                                         const bool usePreviousMesh);
 
       // gmsh::model::mesh::decimateTriangulation
       //
