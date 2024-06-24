@@ -11,7 +11,10 @@
 #include "GmshMessage.h"
 #include "SPoint3.h"
 #include "meshOctreeLibOL.h"
+
+#ifdef _OPENMP
 #include "omp.h"
+#endif
 
 #include <time.h>
 #include <ctime>
