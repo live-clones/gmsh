@@ -15,6 +15,7 @@
 #include "Context.h"
 #include "meshGFaceOptimize.h"
 #include "qualityMeasures.h"
+#include "winslowUntangler.h"
 
 static double objective_function(double xi, MVertex *ver, double xTarget,
                                  double yTarget, double zTarget,
@@ -449,8 +450,120 @@ void RelocateVertices(GRegion *region, int niter, double tol)
   }
 }
 
+int untanglePyramids (GRegion *region, bool topological, bool geometrical){
+
+  const std::array<std::array<double, 3>, 4> tet_ideal_shape = {
+    std::array<double, 3>{.5, 0, -1. / (2. * std::sqrt(2.))},
+    std::array<double, 3>{-.5, 0, -1. / (2. * std::sqrt(2.))},
+    std::array<double, 3>{0, .5, 1. / (2. * std::sqrt(2.))},
+    std::array<double, 3>{0, -.5, 1. / (2. * std::sqrt(2.))},
+  };
+
+  
+  std::vector<MVertex *> _v_pyr;
+  for(size_t i = 0; i < region->pyramids.size(); i++) {
+    _v_pyr.push_back(region->pyramids[i]->getVertex(4));
+  }
+  std::sort(_v_pyr.begin(), _v_pyr.end());
+
+  // get all vertices ...
+  std::set<MVertex *> _vts;
+  std::set<MFace,MFaceLessThan> _fcs;
+  
+  std::vector<MTetrahedron*> _tets;
+  for(size_t i = 0; i < region->tetrahedra.size(); i++) {
+    MTetrahedron *t = region->tetrahedra[i];
+    for(size_t j = 0; j < 4; j++)
+      _fcs.insert(t->getFace(j));
+    for(size_t j = 0; j < 4; j++) {
+      MVertex *v = t->getVertex(j);
+      if(std::binary_search(_v_pyr.begin(), _v_pyr.end(), v)) {
+	_tets.push_back(t);
+	_vts.insert(t->getVertex(0));
+	_vts.insert(t->getVertex(1));
+	_vts.insert(t->getVertex(2));
+	_vts.insert(t->getVertex(3));
+	break;
+      }
+    }
+  }
+  
+  int count = 0;
+  std::vector<bool> locked;
+  
+  std::vector<std::array<double, 3> > points;
+  for (auto v : _vts){
+    points.push_back({v->x(),v->y(),v->z()});
+    if(std::binary_search(_v_pyr.begin(), _v_pyr.end(), v))locked.push_back(false);
+    else locked.push_back(true);
+    v->setIndex(count++);    
+  }
+  std::vector<std::array<uint32_t, 4> > tets;
+  for (auto t : _tets){
+    uint32_t n0 = t->getVertex(0)->getIndex();
+    uint32_t n1 = t->getVertex(1)->getIndex();
+    uint32_t n2 = t->getVertex(2)->getIndex();
+    uint32_t n3 = t->getVertex(3)->getIndex();
+    std::array<uint32_t, 4> _tt = {n0,n3,n2,n1};
+    tets.push_back(_tt);
+  }
+  
+  for(size_t i = 0; i < region->pyramids.size(); i++) {
+    MFace mf = region->pyramids[i]->getFace(0);
+    auto mf2 = _fcs.find(mf);
+    if (mf2 == _fcs.end()){
+      Msg::Warning ("Error in Pyramid Untangling");
+      return -1;
+    }
+    if (topological){
+      SVector3 nf = mf.normal();
+      SVector3 nf2 = (*mf2).normal();
+      //      printf("%12.5E\n",dot(nf,nf2));
+      if (dot(nf,nf2)>0){
+	MVertex *v1 = region->pyramids[i]->getVertex(1);
+	MVertex *v3 = region->pyramids[i]->getVertex(3);
+	region->pyramids[i]->setVertex(1,v3);
+	region->pyramids[i]->setVertex(3,v1);
+	printf("reverting pyramid %d %d %d %d %d\n",region->pyramids[i]->getVertex(0)->getIndex(),
+	       region->pyramids[i]->getVertex(1)->getIndex(),
+	       region->pyramids[i]->getVertex(2)->getIndex(),
+	       region->pyramids[i]->getVertex(3)->getIndex(),
+	       region->pyramids[i]->getVertex(4)->getIndex());
+      }
+    }
+    MVertex *v0 = region->pyramids[i]->getVertex(0);
+    MVertex *v1 = region->pyramids[i]->getVertex(1);
+    MVertex *v2 = region->pyramids[i]->getVertex(2);
+    MVertex *v3 = region->pyramids[i]->getVertex(3);
+    MVertex *v4 = region->pyramids[i]->getVertex(4);
+    tets.push_back({(uint32_t)v0->getIndex(),(uint32_t)v4->getIndex(),(uint32_t)v2->getIndex(),(uint32_t)v1->getIndex()});
+    tets.push_back({(uint32_t)v2->getIndex(),(uint32_t)v4->getIndex(),(uint32_t)v0->getIndex(),(uint32_t)v3->getIndex()});    
+
+    tets.push_back({(uint32_t)v1->getIndex(),(uint32_t)v4->getIndex(),(uint32_t)v3->getIndex(),(uint32_t)v2->getIndex()});
+    tets.push_back({(uint32_t)v3->getIndex(),(uint32_t)v4->getIndex(),(uint32_t)v1->getIndex(),(uint32_t)v0->getIndex()});    
+
+  }
+  if (geometrical){
+    std::vector<std::array<std::array<double, 3>, 4> > tetIdealShapes;
+    for (size_t i=0;i<tets.size();i++)tetIdealShapes.push_back(tet_ideal_shape);    
+    untangle_tetrahedra(points, locked, tets,tetIdealShapes, 1, 100, 10);			     
+
+    for (auto v : _v_pyr){
+      v->x() = points[v->getIndex()][0];
+      v->y() = points[v->getIndex()][1];
+      v->z() = points[v->getIndex()][2];
+    }
+
+  }
+  return 0;
+}
+
+
 void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
 {
+  untanglePyramids (region, true, true);
+  return;
+
   if(!niter) return;
 
   std::vector<MVertex *> _v_pyr;
