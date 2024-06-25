@@ -3619,6 +3619,14 @@ void _delaunayCheckColors(PolyMesh* pm, std::vector<PolyMesh::HalfEdge* > hes, s
   *_t = _touched;
 }
 
+double distPointSegment(SVector3 p, SVector3 a, SVector3 b) {
+  SVector3 ab = b-a;
+  double t = dot(p-a, ab)/dot(ab, ab);
+  if (t < 0) return norm(p-a);
+  if (t > 1) return norm(p-b);
+  return norm(p-(a+t*ab));
+}
+
 void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::string & boundaryModel, std::vector<PolyMesh::Vertex*> & controlNodes, OctreeNode<2, 32, alphaShapeBndEdge*> &bnd_octree){
   GModel* gm_alphaShape = GModel::current();
   size_t newTag = gm_alphaShape->getMaxVertexNumber()+1;
@@ -3883,10 +3891,10 @@ void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::stri
   for (auto he : pm->hedges){
     // if (he->data < 0 || he->f == nullptr || he->f->data != tag) continue;
     if (he->f == nullptr || he->f->data != tag) continue;
-    if (he->f->data == he->opposite->f->data) continue; // just to say it is a boundary edge
-    resultTags0.clear();
-    resultTags1.clear();
-    intersection.clear();
+    if (he->f->data == he->opposite->f->data){ // just to make sure it is a boundary edge
+      he->data = -1; 
+      continue;
+    }
     BBox<2> search_bbox;
     // search_bbox.extends({he->v->position.x(), he->v->position.y()});
     search_bbox.extends({he->v->position.x()+eps, he->v->position.y()+eps});
@@ -3897,10 +3905,16 @@ void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::stri
     if (result.size() == 0){  // free surface!!!
       he->data = bndTag;
       he->opposite->data = bndTag;
+      // printf("edge (%f,%f)->(%f,%f) is free surface \n", he->v->position.x(), he->v->position.y(), he->next->v->position.x(), he->next->v->position.y());
       continue;
     }
-    for (auto &ed : result) 
-      resultTags0.insert(ed->tag);
+    resultTags0.clear();
+    for (auto &ed : result){
+      SVector3 a(ed->x0, ed->y0, 0);
+      SVector3 b(ed->x1, ed->y1, 0);
+      if (distPointSegment(he->v->position, a, b) < eps)
+        resultTags0.insert(ed->tag);
+    }
     BBox<2> search_bbox1;
     // search_bbox1.extends({he->next->v->position.x(), he->next->v->position.y()});
     search_bbox1.extends({he->next->v->position.x()+eps, he->next->v->position.y()+eps});
@@ -3911,16 +3925,28 @@ void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::stri
     if (result.size() == 0){ // free surface!!!
       he->data = bndTag;
       he->opposite->data = bndTag;
+      // printf("edge (%f,%f)->(%f,%f) is free surface \n", he->v->position.x(), he->v->position.y(), he->next->v->position.x(), he->next->v->position.y());
       continue; 
     }
-    for (auto &ed : result) resultTags1.insert(ed->tag);
+    resultTags1.clear();
+    for (auto &ed : result){
+      SVector3 a(ed->x0, ed->y0, 0);
+      SVector3 b(ed->x1, ed->y1, 0);
+      if (distPointSegment(he->next->v->position, a, b) < eps)
+        resultTags1.insert(ed->tag);
+    }
+    intersection.clear();
     std::set_intersection(resultTags0.begin(), resultTags0.end(), resultTags1.begin(), resultTags1.end(), std::inserter(intersection, intersection.begin()));
     if (intersection.size() == 1){
       he->data = *intersection.begin();
       he->opposite->data = *intersection.begin();
+      // printf("intersection with %d for edge (%f,%f)->(%f,%f) \n", *intersection.begin(), he->v->position.x(), he->v->position.y(), he->next->v->position.x(), he->next->v->position.y());
     }
     else {
-      printf("there are two intersecting edges that work at %f, %f \n", he->v->position.x(), he->v->position.y());
+      // printf("there are %lu intersecting edges that work at %f, %f \n", intersection.size(), he->v->position.x(), he->v->position.y());
+      he->data = bndTag;
+      he->opposite->data = bndTag;
+
     }
   }
   tic = std::chrono::high_resolution_clock::now();
@@ -4450,7 +4476,6 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const in
   }
 
   printf("starting coarsen \n");
-  // print4debug(pm, 1);
   // Coarsen
   std::vector<PolyMesh::HalfEdge *> heVector;
   double coarseFactor_bnd = 0.4;
@@ -4501,7 +4526,6 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const in
       _delaunayCheckColors(pm, _nhes, &_t);  
     }
   }
-  // print4debug(pm, 2);
   printf("coarsen done \n");
 
   // Remove "killed" triangles
@@ -4706,6 +4730,10 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const in
 void _createBoundaryOctree(const std::string & boundaryModel, const int bndTag, OctreeNode<2, 32, alphaShapeBndEdge*>& octree, std::vector<alphaShapeBndEdge>& bndEdges){
     GModel* gm_alphaShape = GModel::current();
     GModel* gm_boundary = GModel::findByName(boundaryModel);
+    if (gm_boundary == nullptr) {
+      Msg::Error("Boundary model not found");
+      return;
+    }
     BBox<2> bbox;
     std::vector<GEntity*> bndEntities;
     gm_boundary->getEntities(bndEntities, 1); 
@@ -4756,6 +4784,15 @@ void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, cons
   bndMap[bndTag] = std::vector<size_t>();
   for (auto he : pm->hedges){
     if (he->data < 0 || he->f == nullptr || he->f->data != tag) continue;
+    if (he->f->data == tag && he->opposite->f->data == tag){
+      he->data = -1; 
+      continue;
+    }
+    if (he->v->data == -1 || he->next->v->data == -1){
+      printf("oh oh... data of v = -1 \n");
+      print4debug(pm, 0);
+      exit(0);
+    }
     // if (bndMap.find(he->data) == bndMap.end()) bndMap[he->data] = std::vector<size_t>();
     resultTags0.clear();
     resultTags1.clear();
@@ -4773,7 +4810,12 @@ void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, cons
       he->data = bndTag; 
       continue;
     }
-    for (auto &ed : result) resultTags0.insert(ed->tag);
+    for (auto &ed : result){
+      SVector3 a(ed->x0, ed->y0, 0);
+      SVector3 b(ed->x1, ed->y1, 0);
+      if (distPointSegment(he->v->position, a, b) < eps)
+        resultTags0.insert(ed->tag);
+    }
     BBox<2> search_bbox1;
     // search_bbox1.extends({he->next->v->position.x(), he->next->v->position.y()});
     search_bbox1.extends({he->next->v->position.x()+eps, he->next->v->position.y()+eps});
@@ -4787,7 +4829,12 @@ void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, cons
       he->data = bndTag; 
       continue; 
     }
-    for (auto &ed : result) resultTags1.insert(ed->tag);
+    for (auto &ed : result){
+      SVector3 a(ed->x0, ed->y0, 0);
+      SVector3 b(ed->x1, ed->y1, 0);
+      if (distPointSegment(he->next->v->position, a, b) < eps)
+        resultTags1.insert(ed->tag);
+    }
     std::set_intersection(resultTags0.begin(), resultTags0.end(), resultTags1.begin(), resultTags1.end(), std::inserter(intersection, intersection.begin()));
     if (intersection.size() == 1){
       bndMap[*intersection.begin()].push_back(he->v->data);
@@ -4795,7 +4842,10 @@ void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, cons
       he->data = *intersection.begin();
     }
     else {
-      printf("there are two intersecting edges that work at %f, %f \n", he->v->position.x(), he->v->position.y());
+      // printf("there are two intersecting edges that work at %f, %f \n", he->v->position.x(), he->v->position.y());
+      bndMap[bndTag].push_back(he->v->data);
+      bndMap[bndTag].push_back(he->next->v->data); 
+      he->data = bndTag; 
     }
   }
 
@@ -4811,11 +4861,12 @@ void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, cons
     nodeTags.push_back(size_t(v->data));
   }
   gmsh::model::mesh::addNodes(2, tag, nodeTags, coords);
-  
+  printf("nodes added to gsmh \n");
   std::vector<size_t> edTags;
   for (auto bnd : bndMap){
     gmsh::model::mesh::addElementsByType(bnd.first, 1, edTags, bnd.second);
   }
+  printf("boundary edges added to gsmh \n");
 
   std::vector<size_t> triangles, triangleTag;
   for (auto f : pm->faces){
@@ -4825,6 +4876,7 @@ void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, cons
     for (auto n : triangle) triangles.push_back(size_t(n));
   }
   gmsh::model::mesh::addElementsByType(tag, 2, triangleTag, triangles);
+  printf("triangles added to gsmh \n");
   delete pm;
   gm_alphaShape->setAsCurrent();
 }
