@@ -115,16 +115,16 @@ namespace WinslowUntangler {
     std::vector<bool> locked;
     const std::function<void (const std::vector<std::array<double, 2> > &points,
 			      const std::vector<std::array<uint32_t, 3> > &triangles,
-			      std::vector<double> &s, // size and grad sizes at nodes 
+			      std::vector<double> &s, // size and grad sizes at nodes
 			      std::vector<std::array<double, 3> > &grads)> & sizeField;
     UntanglerData (const std::function<void (const std::vector<std::array<double, 2> > &points,
 					     const std::vector<std::array<uint32_t, 3> > &triangles,
-					     std::vector<double> &s, // size and grad sizes at nodes 
+					     std::vector<double> &s, // size and grad sizes at nodes
 					     std::vector<std::array<double, 3> > &grads)> & sf) : sizeField(sf) {}
-    
+
     // Data for 2D planar
     // ---------------------------------------------------
-    // -- THIS IS A QUICK FIX -- 
+    // -- THIS IS A QUICK FIX --
     // In case of p2 triangles, half of the triangles
     // are used in a standard fashion and the other
     // half is only used for ensuring jacobian positivity
@@ -150,9 +150,9 @@ namespace WinslowUntangler {
 
 
   // each triangle has gradients of shape functions
-  // ((d_xi phi_1, d_eta phi_1) 
-  //  (d_xi phi_2, d_eta phi_2) 
-  //  (d_xi phi_3, d_eta phi_3)) 
+  // ((d_xi phi_1, d_eta phi_1)
+  //  (d_xi phi_2, d_eta phi_2)
+  //  (d_xi phi_3, d_eta phi_3))
   void update_all_jacobians_2D (size_t nElements,
 				UntanglerData &w,
 				std::vector<double> &dets,
@@ -177,13 +177,13 @@ namespace WinslowUntangler {
       dets[t] = j00*j11 - j01*j10;
       w.J_det[t] = dets[t];
       Eigen::Matrix<double, 2, 2> &J = w.J_mat_2D[t];
-      J(0,0) = j00; 
-      J(1,0) = j01; 
-      J(0,1) = j10; 
-      J(1,1) = j11; 
+      J(0,0) = j00;
+      J(1,0) = j01;
+      J(0,1) = j10;
+      J(1,1) = j11;
     }
   }
-  
+
   double update_jacobian_matrix(size_t t, UntanglerData &w,
                                 const alglib::real_1d_array &X)
   {
@@ -250,7 +250,7 @@ namespace WinslowUntangler {
     //      w.sizeField(positions,w.triangles,sizes,grads);
       //      printf("%lu sizes\n",sizes.size());
     //    }
-    
+
     for(size_t i = 0; i < grad.length(); ++i) grad[i] = 0.;
 
     // Loop over triangle/tet contributions
@@ -268,21 +268,26 @@ namespace WinslowUntangler {
     for(size_t i = 0; i < GL.size(); ++i) GL[i] = 0.;
     for(size_t i = 0; i < nthreads; ++i) DM[i] = 1.e22;
     for(size_t i = 0; i < nthreads; ++i) EN[i] = 0.0;
-    
+
     //#pragma omp parallel num_threads(nthreads) private (a_i,b_i)
     {
+#if defined(_OPENMP)
       int thread_num = omp_get_thread_num();
+#else
+      int thread_num = 0;
+#endif
+
       //#pragma omp for schedule(dynamic)
       for(size_t t = 0; t < nElements; t++) {
 	// Update jacobian with current triangle coordinates
 	const double det = /*dets[t];//*/update_jacobian_matrix(t, w, X);//
 	//      printf("det = %12.5E vs %12.5E\n",det,dets[t]);
-	double OneOverSize2 = 1.0; 
+	double OneOverSize2 = 1.0;
 	if (!sizes.empty()){
 	  double size = (sizes[w.triangles[t][0]]+sizes[w.triangles[t][1]]+sizes[w.triangles[t][2]])/3.0;
 	  OneOverSize2 = 1./(size*size);
 	}
-	
+
 	// Compute energy contribution from triangle
 	const double chi = coef_chi(det, w.eps);
 	const double chip = coef_chip(det, w.eps);
@@ -294,11 +299,11 @@ namespace WinslowUntangler {
 	const double g_eps = (det * det * OneOverSize2 * OneOverSize2 + 1.) / (chi*OneOverSize2);
 	const double Ec = f_eps + w.lambda * g_eps;
 	//	printf("%12.5E %12.5E %12.5E %12.5E\n",f_eps,g_eps,det,chi);
-	
+
 	if(det < DM[thread_num]) DM[thread_num]= det;
 	//      if(det <= 0.) w.nb_invalid += 1;
 	EN[thread_num] += Ec;
-	
+
 	// Compute contribution to global gradient
 	for(size_t i = 0; i < w.dim; ++i) {
 	  if(w.dim == 2) { // Planar case
@@ -311,17 +316,17 @@ namespace WinslowUntangler {
 	      b_i(0) = -w.J_mat_2D[t](1, 0);
 	      b_i(1) = w.J_mat_2D[t](0, 0);
 	    };
-	    
+
 	    Eigen::Vector2d dphi_da =
 	      2. / chi * a_i -
 	      1. / chi *
               (f_eps * chip - 2. * w.lambda * det + w.lambda * g_eps * chip) *
               b_i;
-	    
+
 	    for(size_t k = 0; k < 3; ++k) {
 	      uint32_t v = w.triangles[t][k];
 	      double gc = 0;
-	      if(!w.locked[v]) 
+	      if(!w.locked[v])
 		gc = dphi_da.dot(w.tri_normals[t].row(k));
 	      GL[(thread_num*grad.length()) + 2 * v + i] += gc;
 	    }
@@ -354,9 +359,9 @@ namespace WinslowUntangler {
     for(size_t i = 0; i < nthreads; ++i) if(DM[i] <w.J_det_min) w.J_det_min = DM[i];
     for(size_t i = 0; i < nthreads; ++i) energy += EN[i];
 
-    
+
     //    printf("COMPUTING ENERGY eps = %22.15E\n",w.eps);
-    
+
     if (w.isP2 && 0){
       size_t dT = (perTriangleP2 - 4)/3;
       //      printf("%lu %lu\n",(w.triangles.size()-nElements)/dT,nElements);
@@ -371,9 +376,9 @@ namespace WinslowUntangler {
 	  det += signs[l] * D;
 	}
 	//	printf("det = %12.5E\n",det);
-	
+
 	// Compute energy contribution from
-	// combination of 5 triangles (3 for the moment) 
+	// combination of 5 triangles (3 for the moment)
 	const double chi = coef_chi(det, w.eps);
 	const double chip = coef_chip(det, w.eps);
 	const double g_eps = (det * det + 1.) / chi;
@@ -388,7 +393,7 @@ namespace WinslowUntangler {
 	// Compute contribution to global gradient
 	for (size_t j=0;j<dT;j++){
 	  size_t t = nElements + tg*dT;
-		  
+
 	  for(size_t i = 0; i < w.dim; ++i) {
 	    Eigen::Vector2d a_i = w.J_mat_2D[t+j].col(i);
 	    Eigen::Vector2d b_i;
@@ -400,16 +405,16 @@ namespace WinslowUntangler {
 	      b_i(0) = -w.J_mat_2D[t+j](1, 0);
 	      b_i(1) = w.J_mat_2D[t+j](0, 0);
 	    };
-	    
+
 	    Eigen::Vector2d dphi_da =
 	      w.lambda * signs[j] / chi * (2. * det - g_eps * chip) * b_i;
-	    
+
 	    for(size_t k = 0; k < 3; ++k) {
 	      uint32_t v = w.triangles[t+j][k];
 	      double gc = 0;
-	      if(!w.locked[v]) 
+	      if(!w.locked[v])
 		gc = dphi_da.dot(w.tri_normals[t+j].row(k));
-#pragma omp critical	      
+#pragma omp critical
 	      grad[2 * v + i] += gc;
 	    }
 	  }
@@ -420,7 +425,7 @@ namespace WinslowUntangler {
 #pragma omp barrier
 
     //    printf("energy = %12.5E\n",energy);
-    //    exit(1);    
+    //    exit(1);
     if(std::isnan(energy)) energy = std::numeric_limits<double>::max();
     w.energy = energy;
     return w.energy;
@@ -436,13 +441,13 @@ namespace WinslowUntangler {
     //        printf("%22.15E\n",Cpu()-t1);
   }
 
-  void checkIfP2(UntanglerData &data, std::vector<size_t> &permut) {    
+  void checkIfP2(UntanglerData &data, std::vector<size_t> &permut) {
     if (perTriangleP2 < 10)return;
     // if P2 triangles are considered, I send to
     // the optimizer the three "bezier corner" triangles
     if (data.triangles.size() % perTriangleP2 != 0) return;
     // Three successive triangles should always be numbered as
-    // (a,d,f)(b,e,d)(c,f,e) which correspond to bezier triangles    
+    // (a,d,f)(b,e,d)(c,f,e) which correspond to bezier triangles
     for (size_t i=0; i<data.triangles.size(); i+=perTriangleP2){
       auto t1 = data.triangles[i+0];
       auto t2 = data.triangles[i+1];
@@ -456,7 +461,7 @@ namespace WinslowUntangler {
     for (size_t i=0; i<xxx.size(); i+=perTriangleP2){
       for (size_t j=0;j<4;j++){
 	permut.push_back(i+j);
-	data.triangles.push_back(xxx[i+j]);	
+	data.triangles.push_back(xxx[i+j]);
       }
     }
     for (size_t i=0; i<xxx.size(); i+=perTriangleP2){
@@ -467,10 +472,10 @@ namespace WinslowUntangler {
     }
 
     data.isP2 = true;
-    //    for (auto i : permut)printf("%lu ",i);    
+    //    for (auto i : permut)printf("%lu ",i);
     printf(" --- > FOUND A P2 MESH\n");
   }
-  
+
   bool prepareData2D(
     const std::vector<std::array<double, 2> > &points,
     const std::vector<bool> &locked,
@@ -509,7 +514,7 @@ namespace WinslowUntangler {
     // with unit area
     vec2 equi[3] = {{1., 0.},
                     {cos(2. * M_PI / 3.), sin(2 * M_PI / 3.)},
-                    {cos(4. * M_PI / 3.), sin(4 * M_PI / 3.)}};    
+                    {cos(4. * M_PI / 3.), sin(4 * M_PI / 3.)}};
     const vec3 N = {0, 0, -1};
     for(size_t tt = 0; tt < data.triangles.size(); ++tt) {
       size_t t = permut.empty() ? tt : permut[tt];
@@ -743,7 +748,7 @@ namespace WinslowUntangler {
   void  optional_lbfgs_callback(const alglib::real_1d_array &x, double func, void *ptr) {
     printf("F = %12.5E\n",func);
   }
-  
+
   // same function for 2D and 3D to avoid redundant code
   // only the structs of the appropriate dimension are used
   bool untangle_simplex_elements(
@@ -758,7 +763,7 @@ namespace WinslowUntangler {
     double timeMax,
     const std::function<void (const std::vector<std::array<double, 2> > &points,
     			      const std::vector<std::array<uint32_t, 3> > &triangles,
-    			      std::vector<double> &s, // size and grad sizes at nodes 
+    			      std::vector<double> &s, // size and grad sizes at nodes
     			      std::vector<std::array<double, 3> > &grads)> & sizeField,
     const std::function<void (const std::vector<std::array<double, 2> > &points,
 			      const std::vector<std::array<uint32_t, 3> > &triangles,
@@ -792,7 +797,7 @@ namespace WinslowUntangler {
     vec2 bbmin2D, bbmax2D;
     vec3 bbmin3D, bbmax3D;
     if(dim == 2) {
-      auto triIdealShapesS = triIdealShapes;     
+      auto triIdealShapesS = triIdealShapes;
       if (updateIdealTriangularShapes)
       	updateIdealTriangularShapes (points2D,triangles,triIdealShapesS);
 
@@ -846,19 +851,19 @@ namespace WinslowUntangler {
 
         // Extract coordinates
 	minlbfgsresults(state, x, rep);
-	
+
 	for(size_t v = 0; v < NV; ++v) {
           for(size_t d = 0; d < dim; ++d) {
             points[dim * v + d] = x[dim * v + d];
           }
         }
-	
+
 	if (updateIdealTriangularShapes){
 	  auto triIdealShapesS = triIdealShapes;
 	  updateIdealTriangularShapes (points2D,triangles,triIdealShapesS);
 	  prepareData2D(points2D, locked, triangles, triIdealShapesS, data);
 	}
-	
+
         if(rep.terminationtype != 4 && rep.terminationtype != 5) { nFail += 1; }
         lbfgsIter = rep.iterationscount;
 	printf(" detmin = %22.15E eps= %22.15E %lu iter term %lu\n",data.J_det_min,data.eps, rep.iterationscount,
@@ -934,7 +939,7 @@ namespace WinslowUntangler {
     }
 #endif
 
-    
+
     return converged;
   }
 } // namespace WinslowUntangler
@@ -951,7 +956,7 @@ bool untangle_triangles_2D(
   double timeMax,
   const std::function<void (const std::vector<std::array<double, 2> > &points,
 			    const std::vector<std::array<uint32_t, 3> > &triangles,
-			    std::vector<double> &s, // size and grad sizes at nodes 
+			    std::vector<double> &s, // size and grad sizes at nodes
 			    std::vector<std::array<double, 3> > &grads)> & sizeField,
   const std::function<void (const std::vector<std::array<double, 2> > &points,
 			    const std::vector<std::array<uint32_t, 3> > &triangles,
