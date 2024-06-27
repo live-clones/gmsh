@@ -137,7 +137,7 @@
 #include <BRepMesh_FastDiscret.hxx>
 #endif
 
-#if OCC_VERSION_HEX < 0x070400
+#if OCC_VERSION_HEX < 0x077400
 #include <ShapeUpgrade_UnifySameDomain.hxx>
 #endif
 
@@ -3866,7 +3866,7 @@ bool OCC_Internals::booleanOperator(
       fuse.SetArguments(objectShapes);
       fuse.SetTools(toolShapes);
       _setBooleanOptions(fuse);
-#if OCC_VERSION_HEX >= 0x070600
+#if OCC_VERSION_HEX >= 0x076600
       OCCBooleanProgress progress("Union");
       fuse.Build(progress.Start());
 #else
@@ -3875,7 +3875,7 @@ bool OCC_Internals::booleanOperator(
       if(!fuse.IsDone()) return _printBooleanErrors(fuse, "Union");
       _printBooleanWarnings(fuse, "Union");
       if(CTX::instance()->geom.occBooleanSimplify >= 1) {
-#if OCC_VERSION_HEX >= 0x070400
+#if OCC_VERSION_HEX >= 0x077400
         // better than ShapeUpgrade_UnifySameDomain, as it preserves the history
         fuse.SimplifyResult();
         result = fuse.Shape();
@@ -3911,7 +3911,7 @@ bool OCC_Internals::booleanOperator(
       common.SetArguments(objectShapes);
       common.SetTools(toolShapes);
       _setBooleanOptions(common);
-#if OCC_VERSION_HEX >= 0x070600
+#if OCC_VERSION_HEX >= 0x076600
       OCCBooleanProgress progress("Intersection");
       common.Build(progress.Start());
 #else
@@ -3919,7 +3919,7 @@ bool OCC_Internals::booleanOperator(
 #endif
       if(!common.IsDone()) return _printBooleanErrors(common, "Intersection");
       _printBooleanWarnings(common, "Intersection");
-#if OCC_VERSION_HEX >= 0x070400
+#if OCC_VERSION_HEX >= 0x076400
       if(CTX::instance()->geom.occBooleanSimplify >= 2) common.SimplifyResult();
 #endif
       result = common.Shape();
@@ -3944,7 +3944,7 @@ bool OCC_Internals::booleanOperator(
       cut.SetArguments(objectShapes);
       cut.SetTools(toolShapes);
       _setBooleanOptions(cut);
-#if OCC_VERSION_HEX >= 0x070600
+#if OCC_VERSION_HEX >= 0x076600
       OCCBooleanProgress progress("Difference");
       cut.Build(progress.Start());
 #else
@@ -3981,7 +3981,7 @@ bool OCC_Internals::booleanOperator(
       toolShapes.Clear();
       fragments.SetArguments(objectShapes);
       _setBooleanOptions(fragments);
-#if OCC_VERSION_HEX >= 0x070600
+#if OCC_VERSION_HEX >= 0x076600
       OCCBooleanProgress progress("Fragments");
       fragments.Build(progress.Start());
 #else
