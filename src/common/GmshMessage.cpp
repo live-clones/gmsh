@@ -393,7 +393,14 @@ void Msg::Exit(int level, bool forceLevel)
 #if defined(HAVE_MPI)
   if(level) MPI_Abort(MPI_COMM_WORLD, level);
 #endif
+#if defined(__APPLE__)
+  // temporary workaround for recent versions of OpenCASCADE (>= 7.8) which on
+  // macOS invoke a global destructor in the STEP module that leads to a
+  // segfault - using _exit() bypasses the global destructors
+  _exit((forceLevel || level) ? level : _atLeastOneErrorInRun);
+#else
   exit((forceLevel || level) ? level : _atLeastOneErrorInRun);
+#endif
 }
 
 static int streamIsFile(FILE *stream)
