@@ -249,9 +249,9 @@ static double Maximize_Quality_Golden_Section(MVertex *ver, GFace *gf,
   return a;
 }
 
-static void _relocateVertexOfPyramid(MVertex *ver,
-                                     const std::vector<MElement *> &lt,
-                                     double relax)
+void relocateVertexOfPyramid(MVertex *ver,
+                             const std::vector<MElement *> &lt,
+                             double relax)
 {
   if(ver->onWhat()->dim() != 3) return;
   double x = 0.0, y = 0.0, z = 0.0;
@@ -301,9 +301,9 @@ static void _relocateVertexOfPyramid(MVertex *ver,
   }
 }
 
-static void _relocateVertexGolden(MVertex *ver,
-                                  const std::vector<MElement *> &lt,
-                                  double relax, double tol)
+static void relocateVertexGolden(MVertex *ver,
+                                 const std::vector<MElement *> &lt,
+                                 double relax, double tol)
 {
   if(ver->onWhat()->dim() != 3) return;
   double x = 0.0, y = 0.0, z = 0.0;
@@ -340,8 +340,8 @@ static void _relocateVertexGolden(MVertex *ver,
 }
 
 // use real space + projection at the end
-static double _relocateVertex2(GFace *gf, MVertex *ver,
-                               const std::vector<MElement *> &lt, double tol)
+static double relocateVertex2(GFace *gf, MVertex *ver,
+                              const std::vector<MElement *> &lt, double tol)
 {
   SPoint3 p1(0, 0, 0);
   std::size_t counter = 0;
@@ -367,8 +367,8 @@ static double _relocateVertex2(GFace *gf, MVertex *ver,
   return worst;
 }
 
-static double _relocateVertex(GFace *gf, MVertex *ver,
-                              const std::vector<MElement *> &lt, double tol)
+static double relocateVertex(GFace *gf, MVertex *ver,
+                             const std::vector<MElement *> &lt, double tol)
 {
   if(ver->onWhat()->dim() != 2) return 2.0;
 
@@ -376,7 +376,7 @@ static double _relocateVertex(GFace *gf, MVertex *ver,
   SPoint2 p2;
   if(ver->getParameter(0, p2[0])) { ver->getParameter(1, p2[1]); }
   else {
-    return _relocateVertex2(gf, ver, lt, tol);
+    return relocateVertex2(gf, ver, lt, tol);
   }
 
   std::size_t counter = 0;
@@ -426,7 +426,7 @@ void RelocateVertices(GFace *gf, int niter, double tol)
     auto it = adj.begin();
     while(it != adj.end()) {
       if(vs.find(it->first) == vs.end()) {
-        _relocateVertex(gf, it->first, it->second, tol);
+        relocateVertex(gf, it->first, it->second, tol);
       }
       ++it;
     }
@@ -446,14 +446,14 @@ void RelocateVertices(GRegion *region, int niter, double tol)
     auto it = adj.begin();
     double relax = std::min((double)(i + 1) / niter, 1.0);
     while(it != adj.end()) {
-      _relocateVertexGolden(it->first, it->second, relax, tol);
+      relocateVertexGolden(it->first, it->second, relax, tol);
       ++it;
     }
   }
 }
 
 #if defined(HAVE_WINSLOWUNTANGLER)
-int untanglePyramids(GRegion *region, bool topological, bool geometrical)
+int _untanglePyramids(GRegion *region, bool topological, bool geometrical)
 {
   const std::array<std::array<double, 3>, 4> tet_ideal_shape = {
     std::array<double, 3>{.5, 0, -1. / (2. * std::sqrt(2.))},
@@ -570,7 +570,7 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
 {
 #if defined(HAVE_WINSLOWUNTANGLER)
   Msg::Info("Using new pyramid optimization");
-  untanglePyramids(region, true, true);
+  _untanglePyramids(region, true, true);
 #else
   if(!niter) return;
 
@@ -619,7 +619,7 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
     double relax = (double)i / 10. + 1e-6;
     auto it = adj.begin();
     while(it != adj.end()) {
-      _relocateVertexOfPyramid(it->first, it->second, relax);
+      relocateVertexOfPyramid(it->first, it->second, relax);
       ++it;
     }
   }
@@ -630,7 +630,7 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
     auto it = adj.begin();
     double relax = std::min((double)(i + 1) / niter, 1.0);
     while(it != adj.end()) {
-      _relocateVertexGolden(it->first, it->second, relax, tol);
+      relocateVertexGolden(it->first, it->second, relax, tol);
       ++it;
     }
   }
