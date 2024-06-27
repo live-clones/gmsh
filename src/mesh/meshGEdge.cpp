@@ -47,6 +47,45 @@ double bissection_get_beta (double beta0, double hw, double length, int n){
   return 100;
 }
 
+static double f_bump (double coef, double t, int n){
+  double a;
+  if(coef > 1.0) {
+    a = std::atan2(1.0, std::sqrt(coef - 1.))/std::sqrt(coef - 1.)/n;    
+    double A = (coef-1);
+    double f = (atan(sqrt(A)) - atan(sqrt(A)*(1-2*t)))/2/sqrt(A)/a;
+    return f;
+  }
+  else {
+    a = std::atanh(std::sqrt(1.-coef))/std::sqrt(1-coef)/n;    
+    double A = (1-coef);
+    double f = (atanh(sqrt(A)) - atanh(sqrt(A)*(1-2*t)))/2/sqrt(A)/a;
+    return f;
+  }
+  
+}
+
+// hwall given for the bump
+double bissection_get_a (double r0, double hw, double length, int n){
+  double t  = hw/length;
+
+  double alpha1 = 1.e-8;
+  double alpha2 = 100;
+  double f1 = f_bump(alpha1,t,n);
+  double f2 = f_bump(alpha2,t,n);
+  if (f1 > 1 && f2 < 1){
+    while(1){
+      double alpha3 = (alpha1+alpha2)*0.5;
+      double f3 = f_bump(alpha3,t,n);
+      //      printf("%12.5E %12.5E %12.5E\n",f1,f2,f3);
+      if (fabs(f3- 1) < 1.e-8)return alpha3;
+      if (f3 > 1)alpha1 = alpha3;
+      else alpha2 = alpha3;
+    }    
+  }
+  return 1;
+}
+
+
 // for a progression -- transform h_wall to ratio
 double newton_get_r (double r0, double hw, double length, int n){
   double r = r0;
@@ -221,6 +260,11 @@ struct F_Transfinite {
       coef = newton_get_r (1.1, fabs(coef), length, nbpt);
       if (!sgn) coef = 1./coef;
       type = 1;
+    }
+    if (type == 6){
+      // for a bump -- transform h_wall to a
+      coef = bissection_get_a (0.1, fabs(coef), length, nbpt);
+      type = 2;
     }
     // transform type = 7 onto type = 3
     if (type == 7){

@@ -4492,6 +4492,10 @@ TransfiniteType :
         $$[0] = 6.;
       else if(!strcmp($2, "Beta_HWall"))
         $$[0] = 7.;
+      else if(!strcmp($2, "Beta_Symmetrical"))
+        $$[0] = 8.;
+      else if(!strcmp($2, "Beta_Symmetrical_HWall"))
+        $$[0] = 9.;
       else{
         yymsg(0, "Unknown transfinite mesh type");
         $$[0] = 1.;
