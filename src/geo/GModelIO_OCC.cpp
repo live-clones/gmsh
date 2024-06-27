@@ -4763,6 +4763,11 @@ bool OCC_Internals::importShapes(const std::string &fileName,
                                  std::vector<std::pair<int, int>> &outDimTags,
                                  const std::string &format)
 {
+  if(StatFile(fileName)) {
+    Msg::Error("File '%s' does not exist", fileName.c_str());
+    return false;
+  }
+
   std::vector<std::string> split = SplitFileName(fileName);
 
   TopoDS_Shape result;
