@@ -592,7 +592,7 @@ doc = '''Compute the alpha shape of the set of points on the discrete entity def
 mesh.add('computeAlphaShape', doc, None, iint('dim'), ivectorint('alphaShapeTags'), idouble('alpha'), idouble('hMean'), isizefun('sizeFieldCallback'), iint('triangulate'), iint('refine'))
 
 doc = '''Compute the alpha shape - improved function'''
-mesh.add('computeAlphaShapeBis', doc, None, iint('dim'), iint('tag'), iint('bndTag'), istring('boundaryModel'), idouble('alpha'), iint('alphaShapeSizeField'), iint('refineSizeField'), ibool('usePreviousMesh', False))
+mesh.add('computeAlphaShapeBis', doc, None, iint('dim'), iint('tag'), iint('bndTag'), istring('boundaryModel'), idouble('alpha'), iint('alphaShapeSizeField'), iint('refineSizeField'), ibool('usePreviousMesh', False), idouble('boundaryTolerance', '1e-6'))
 
 doc = '''Decimate a triangulation'''
 mesh.add('decimateTriangulation', doc, None, iint('faceTag'), idouble('distanceThreshold'))

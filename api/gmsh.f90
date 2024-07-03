@@ -7783,6 +7783,7 @@ module gmsh
                                                alphaShapeSizeField, &
                                                refineSizeField, &
                                                usePreviousMesh, &
+                                               boundaryTolerance, &
                                                ierr)
     interface
     subroutine C_API(dim, &
@@ -7793,6 +7794,7 @@ module gmsh
                      alphaShapeSizeField, &
                      refineSizeField, &
                      usePreviousMesh, &
+                     boundaryTolerance, &
                      ierr_) &
       bind(C, name="gmshModelMeshComputeAlphaShapeBis")
       use, intrinsic :: iso_c_binding
@@ -7804,6 +7806,7 @@ module gmsh
       integer(c_int), value, intent(in) :: alphaShapeSizeField
       integer(c_int), value, intent(in) :: refineSizeField
       integer(c_int), value, intent(in) :: usePreviousMesh
+      real(c_double), value, intent(in) :: boundaryTolerance
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
@@ -7815,6 +7818,7 @@ module gmsh
     integer, intent(in) :: alphaShapeSizeField
     integer, intent(in) :: refineSizeField
     logical, intent(in) :: usePreviousMesh
+    real(c_double), intent(in), optional :: boundaryTolerance
     integer(c_int), intent(out), optional :: ierr
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
@@ -7824,6 +7828,7 @@ module gmsh
          alphaShapeSizeField=int(alphaShapeSizeField, c_int), &
          refineSizeField=int(refineSizeField, c_int), &
          usePreviousMesh=optval_c_bool(.False., usePreviousMesh), &
+         boundaryTolerance=optval_c_double(1e-6, boundaryTolerance), &
          ierr_=ierr)
   end subroutine gmshModelMeshComputeAlphaShapeBis
 

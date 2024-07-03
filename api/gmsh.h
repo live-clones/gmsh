@@ -1924,7 +1924,8 @@ namespace gmsh { // Top-level functions
                                          const double alpha,
                                          const int alphaShapeSizeField,
                                          const int refineSizeField,
-                                         const bool usePreviousMesh);
+                                         const bool usePreviousMesh,
+                                         const double boundaryTolerance = 1e-6);
 
       // gmsh::model::mesh::decimateTriangulation
       //

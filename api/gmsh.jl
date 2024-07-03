@@ -4662,7 +4662,7 @@ end
 const compute_alpha_shape = computeAlphaShape
 
 """
-    gmsh.model.mesh.computeAlphaShapeBis(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh)
+    gmsh.model.mesh.computeAlphaShapeBis(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh, boundaryTolerance = 1e-6)
 
 Compute the alpha shape - improved function
 
@@ -4675,12 +4675,13 @@ Types:
  - `alphaShapeSizeField`: integer
  - `refineSizeField`: integer
  - `usePreviousMesh`: boolean
+ - `boundaryTolerance`: double
 """
-function computeAlphaShapeBis(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh)
+function computeAlphaShapeBis(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh, boundaryTolerance = 1e-6)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshComputeAlphaShapeBis, gmsh.lib), Cvoid,
-          (Cint, Cint, Cint, Ptr{Cchar}, Cdouble, Cint, Cint, Cint, Ptr{Cint}),
-          dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh, ierr)
+          (Cint, Cint, Cint, Ptr{Cchar}, Cdouble, Cint, Cint, Cint, Cdouble, Ptr{Cint}),
+          dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh, boundaryTolerance, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end

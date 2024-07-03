@@ -2492,11 +2492,11 @@ GMSH_API void gmshModelMeshComputeAlphaShape(const int dim, const int * alphaSha
   }
 }
 
-GMSH_API void gmshModelMeshComputeAlphaShapeBis(const int dim, const int tag, const int bndTag, const char * boundaryModel, const double alpha, const int alphaShapeSizeField, const int refineSizeField, const int usePreviousMesh, int * ierr)
+GMSH_API void gmshModelMeshComputeAlphaShapeBis(const int dim, const int tag, const int bndTag, const char * boundaryModel, const double alpha, const int alphaShapeSizeField, const int refineSizeField, const int usePreviousMesh, const double boundaryTolerance, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::computeAlphaShapeBis(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh);
+    gmsh::model::mesh::computeAlphaShapeBis(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh, boundaryTolerance);
   }
   catch(...){
     if(ierr) *ierr = 1;
