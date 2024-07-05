@@ -48,6 +48,11 @@ void F77NAME(zscal)(int *n, std::complex<double> *alpha,
                     std::complex<double> *x, int *incx);
 }
 
+template <> void fullVector<int>::setAll(const fullVector<int> &m)
+{
+  for(int i = 0; i < _r; ++i) _data[i] = m._data[i];
+}
+
 template <> void fullVector<double>::setAll(const fullVector<double> &m)
 {
   int stride = 1;
