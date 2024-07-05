@@ -28,7 +28,7 @@ file = StrCat(StrPrefix(StrRelative(General.FileName)), ".val");
 
 // validate number of elements
 n = 9.06218e+07;
-Printf("Number of elements is %g (estimated %g)", Mesh.NbTetrahedra, n) >> file;
+Printf("Number of elements is %g (estimated %g)", Mesh.NbTetrahedra, n);
 If ( Fabs(Mesh.NbTetrahedra - n) / Mesh.NbTetrahedra > 0.03 )
   Printf("Error: Number of elements is %g (estimated %g), outside of range", Mesh.NbTetrahedra, n) >> file;
 Else
@@ -37,7 +37,7 @@ EndIf
 
 // validate number of nodes
 nn = 1.47395e+07;
-Printf("Number of nodes is %g (estimated %g)", Mesh.NbNodes, nn) >> file;
+Printf("Number of nodes is %g (estimated %g)", Mesh.NbNodes, nn);
 If ( Fabs(Mesh.NbNodes - nn) / Mesh.NbNodes > 0.1 )
   Printf("Error: Number of nodes is %g (estimated %g), outside of range",
          Mesh.NbNodes, nn) >> file;
@@ -46,12 +46,12 @@ Else
 EndIf
 
 // validate mesh quality
-Printf("Minimum mesh quality is %g", Mesh.MinQuality);
-If ( Mesh.MinQuality < 0.1 )
-  Printf("Error: Minimum mesh quality is %g, outside of range", Mesh.MinQuality) >> file;
-  Error("Minimum mesh quality is %g, outside of range", Mesh.MinQuality);
+Printf("Average mesh quality is %g", Mesh.AvgQuality);
+If ( Mesh.AvgQuality < 0.75 )
+  Printf("Error: Average mesh quality is %g, outside of range", Mesh.AvgQuality) >> file;
+  Error("Average mesh quality is %g, outside of range", Mesh.AvgQuality);
 Else
-  Printf("Successful Verification of minimum mesh quality %g", Mesh.MinQuality) >> file;
+  Printf("Successful Verification of average mesh quality %g", Mesh.AvgQuality) >> file;
 EndIf
 
 // ********** End SPEC validation **********

@@ -226,51 +226,6 @@ void discreteFront::buildSpatialSearchStructure () {
   return;
 }
 
-// SVector3 discreteFront::velocity (double x, double y, double z, double t, int col){
-//   // doublet
-//   if (TESTCASE == 12){
-//     //    double x1 = 0.5, y1=0.5;
-//     if (col == 0) return SVector3(0,0,0);
-//     double x2 = 1.5, y2=0.5;
-//     //    double r1 = sqrt((x-x1)*(x-x1)+(y-y1)*(y-y1));
-//     double r2 = sqrt((x-x2)*(x-x2)+(y-y2)*(y-y2));
-//     double theta_2 = atan2(y-y2,x-x2);
-//     double U = 1.0;
-//     double R = 0.6;
-//     //    if (r2 <= R) return SVector3(0,0,0);
-//     double ur = U*cos(theta_2)*(1.-R*R/(r2*r2));
-//     double ut = -U*sin(theta_2)*(1.+R*R/(r2*r2));
-//     double ux = ur*cos(theta_2)-ut*sin(theta_2);
-//     double uy = ur*sin(theta_2)+ut*cos(theta_2);
-//     return SVector3(ux,uy,0);
-//     //    double Gamma = 1;
-//     //    double theta_1 = atan2(y-y1,x-x1);
-//     //    double theta_2 = atan2(y-y2,x-x2);
-//     // SVector3 v1  ((Gamma/(2*M_PI))*sin(theta_1)/r1,
-//     // 		  (-Gamma/(2*M_PI))*cos(theta_1)/r1,0);
-//     // SVector3 v2  ((-Gamma/(2*M_PI))*sin(theta_2)/r2,
-//     // 		  (Gamma/(2*M_PI))*cos(theta_2)/r2,0);
-//     //    SVector3 v1  ((Gamma/(2*M_PI))*cos(theta_1)/r1,
-//     //		  (Gamma/(2*M_PI))*sin(theta_1)/r1,0);
-//     //    SVector3 v2  ((Gamma/(2*M_PI))*cos(theta_2)/r2,
-//     //		  (Gamma/(2*M_PI))*sin(theta_2)/r2,0);
-//     // return v1+v2;
-//   }
-//   if (TESTCASE == 11){
-//     double r = col == 1 ? sqrt(x*x+y*y) : sqrt((x-.3)*(x-.3)+y*y);
-//     double theta = col == 1 ? atan2(y,x) : atan2(y,x-.3);    
-//     return col == 1 ? SVector3(-r*sin(theta),r*cos(theta),0) : SVector3(r*sin(theta),-r*cos(theta),0);
-//   }
-//   if (TESTCASE == 1){
-//     if (col == 1)return SVector3(cos (M_PI*t),0,0);
-//     if (col == 2)return SVector3(-cos (M_PI*t),0,0);
-//     if (col == 3)return SVector3(0,0,0);
-//   }
-//   double vx = sin(2*M_PI*y)*sin(M_PI*x)*sin(M_PI*x);
-//   double vy = -sin(2*M_PI*x)*sin(M_PI*y)*sin(M_PI*y);
-//   double TT = 1;//cos (M_PI*t/8.0);
-//   return SVector3(vx*TT,vy*TT,0.0);
-// }
 
 void discreteFront::moveFromV (double dt, const std::vector<SVector3> &v, bool bnd){
   buildSpatialSearchStructure ();
@@ -425,6 +380,21 @@ void projectPonLine(double A[2], double B[2], double P[2], double *proj){
   (proj)[1] = (mat[1][0]*P[0] + mat[1][1]*P[1])/norm;
   (proj)[0] += (1-mat[0][0]/norm)*A[0] - mat[0][1]*A[1]/norm;
   (proj)[1] += (-mat[1][0]/norm)*A[0] +(1 - mat[1][1]/norm)*A[1];
+}
+
+SVector3 discreteFront::closestCorner2d (const SVector3 &P){
+  double dmin = 1.e22;
+  SVector3 res;
+  for (size_t i=0 ; i< corners.size() ; i++){
+    SVector3 A (pos[3*corners[i]],pos[3*corners[i]+1],pos[3*corners[i]+2]);    
+    SVector3 AP = P - A;
+    double lAP = AP.norm();
+    if (lAP < dmin){
+      dmin = lAP;
+      res = A;
+    }
+  }
+  return res;
 }
 
 SVector3 discreteFront::closestPoints2d (const SVector3 &P){
@@ -1311,21 +1281,32 @@ double meshRelaying::myDensity2D(size_t iTriangle, double distMax, double RATIO,
 
 void meshRelaying::untangle(double lambda, int nIterOut, int nIterIn, double distMax, double RATIO){
   // update the triangular shapes for enabling 
-
+  
   auto sizeField = [this] (const std::vector<std::array<double, 2> > &points,
 			   const std::vector<std::array<uint32_t, 3> > &triangles,
 			   std::vector<double> &s, // size and grad sizes at nodes 
 			   std::vector<std::array<double, 3> > &grads) {
     
+    bool use_corners = false;
+
+    if (_RATIO < 0){
+      use_corners = true;
+    }
+    
     double DMIN =   1;
-    double DMAX = _RATIO;
+    double DMAX = fabs(_RATIO);
     double distMax = _distMax;
 
     s.resize(points.size());
     grads.resize(points.size());
     for (size_t i=0;i<points.size();i++){
       SVector3 P (points[i][0],points[i][1],points[i][2]);
-      SVector3 C  = discreteFront::instance()->closestPoints2d(P);
+      SVector3 C ;
+      if (use_corners)
+	C  = discreteFront::instance()->closestCorner2d(P);
+      else
+	C  = discreteFront::instance()->closestPoints2d(P);
+	
       // has to be done for levelsets
       SVector3 CP = P-C;
       double d = CP.norm();
@@ -1363,6 +1344,11 @@ void meshRelaying::untangle(double lambda, int nIterOut, int nIterIn, double dis
 					     const std::vector<std::array<uint32_t, 3> > &triangles,
 					     std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes) {
 
+    bool use_corners=false;
+    if (_RATIO < 0){
+      use_corners = true;
+    }
+
     triIdealShapes.clear();
     std::array<vec2, 3> equi = {vec2{1., 0.},
 				vec2{cos(2. * M_PI / 3.), sin(2 * M_PI / 3.)},
@@ -1377,7 +1363,11 @@ void meshRelaying::untangle(double lambda, int nIterOut, int nIterIn, double dis
 	double x = pos[i];
 	double y = pos[i+1];
 	SVector3 P (x,y,0);
-	SVector3 C  = discreteFront::instance()->closestPoints2d(P);	
+	SVector3 C ;
+	if (use_corners)
+	  C  = discreteFront::instance()->closestCorner2d(P);	
+	else
+	  C  = discreteFront::instance()->closestPoints2d(P);	
 	distances.push_back((P-C).norm());
       }
     }
@@ -1398,7 +1388,7 @@ void meshRelaying::untangle(double lambda, int nIterOut, int nIterIn, double dis
       //      vec2 v0 = points[triangles[i][0]];
       //      vec2 v1 = points[triangles[i][1]];
       //      vec2 v2 = points[triangles[i][2]];
-      double density = myDensity2D(i, _distMax, _RATIO, distances);
+      double density = myDensity2D(i, _distMax, fabs(_RATIO), distances);
       double fact = sqrt(C/density);
       vec2 p0 = equi[0] * fact;
       vec2 p1 = equi[1] * fact;

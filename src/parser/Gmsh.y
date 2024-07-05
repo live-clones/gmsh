@@ -4486,6 +4486,16 @@ TransfiniteType :
         $$[0] = 2.;
       else if(!strcmp($2, "Beta"))
         $$[0] = 3.;
+      else if(!strcmp($2, "Progression_HWall"))
+        $$[0] = 5.;
+      else if(!strcmp($2, "Bump_HWall"))
+        $$[0] = 6.;
+      else if(!strcmp($2, "Beta_HWall"))
+        $$[0] = 7.;
+      else if(!strcmp($2, "Beta_Symmetrical"))
+        $$[0] = 8.;
+      else if(!strcmp($2, "Beta_Symmetrical_HWall"))
+        $$[0] = 9.;
       else{
         yymsg(0, "Unknown transfinite mesh type");
         $$[0] = 1.;
@@ -4595,7 +4605,7 @@ Constraints :
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
       int type = (int)$6[0];
-      double coef = fabs($6[1]);
+      double coef = $6[1];
       int npoints = ((int)$5 < 2) ? 2 : (int)$5;
       if(!$3){
         GModel::current()->getGEOInternals()->setTransfiniteLine

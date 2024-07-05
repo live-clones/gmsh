@@ -67,6 +67,7 @@ class discreteFront {
   void cornersInTriangle2d (const SVector3 &p0, const SVector3 &p1, const SVector3 &p2,
 			    std::vector<SVector3> &c, std::vector<int> &col);
   SVector3 closestPoints2d (const SVector3 &P);
+  SVector3 closestCorner2d (const SVector3 &P);
   bool empty() const {return pos.empty();}
   //  void move (double dt);
   void moveFromV (double dt, const std::vector<SVector3> &V, bool bnd);

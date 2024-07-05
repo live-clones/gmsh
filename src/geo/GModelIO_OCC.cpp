@@ -141,7 +141,7 @@
 #include <ShapeUpgrade_UnifySameDomain.hxx>
 #endif
 
-#if OCC_VERSION_HEX >= 0x070600
+#if OCC_VERSION_HEX >= 0x070700
 #include <BRepAlgoAPI_Defeaturing.hxx>
 #include <Message_ProgressIndicator.hxx>
 #endif
@@ -3525,7 +3525,7 @@ bool OCC_Internals::defeature(const std::vector<int> &volumeTags,
                               std::vector<std::pair<int, int>> &outDimTags,
                               bool removeVolume)
 {
-#if OCC_VERSION_HEX >= 0x070500
+#if OCC_VERSION_HEX >= 0x070700
   // build a single compound shape
   BRep_Builder b;
   TopoDS_Compound c;
@@ -3740,7 +3740,7 @@ bool OCC_Internals::offsetCurve(const int curveLoopTag, double offset,
   return true;
 }
 
-#if OCC_VERSION_HEX >= 0x070600
+#if OCC_VERSION_HEX >= 0x070700
 
 class OCCBooleanProgress : public Message_ProgressIndicator {
 private:
@@ -3866,7 +3866,7 @@ bool OCC_Internals::booleanOperator(
       fuse.SetArguments(objectShapes);
       fuse.SetTools(toolShapes);
       _setBooleanOptions(fuse);
-#if OCC_VERSION_HEX >= 0x076600
+#if OCC_VERSION_HEX >= 0x070700
       OCCBooleanProgress progress("Union");
       fuse.Build(progress.Start());
 #else
@@ -3911,7 +3911,7 @@ bool OCC_Internals::booleanOperator(
       common.SetArguments(objectShapes);
       common.SetTools(toolShapes);
       _setBooleanOptions(common);
-#if OCC_VERSION_HEX >= 0x076600
+#if OCC_VERSION_HEX >= 0x070700
       OCCBooleanProgress progress("Intersection");
       common.Build(progress.Start());
 #else
@@ -3944,7 +3944,7 @@ bool OCC_Internals::booleanOperator(
       cut.SetArguments(objectShapes);
       cut.SetTools(toolShapes);
       _setBooleanOptions(cut);
-#if OCC_VERSION_HEX >= 0x076600
+#if OCC_VERSION_HEX >= 0x070700
       OCCBooleanProgress progress("Difference");
       cut.Build(progress.Start());
 #else
@@ -3981,7 +3981,7 @@ bool OCC_Internals::booleanOperator(
       toolShapes.Clear();
       fragments.SetArguments(objectShapes);
       _setBooleanOptions(fragments);
-#if OCC_VERSION_HEX >= 0x076600
+#if OCC_VERSION_HEX >= 0x070700
       OCCBooleanProgress progress("Fragments");
       fragments.Build(progress.Start());
 #else
@@ -4763,6 +4763,11 @@ bool OCC_Internals::importShapes(const std::string &fileName,
                                  std::vector<std::pair<int, int>> &outDimTags,
                                  const std::string &format)
 {
+  if(StatFile(fileName)) {
+    Msg::Error("File '%s' does not exist", fileName.c_str());
+    return false;
+  }
+
   std::vector<std::string> split = SplitFileName(fileName);
 
   TopoDS_Shape result;

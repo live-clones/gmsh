@@ -18,6 +18,76 @@
 #include "Field.h"
 #include "OS.h"
 
+// for a beta law -- transform h_wall to beta
+//
+
+static double f_beta (double beta, double t, int n){
+  double c = atanh(1/beta);
+  double f = n*(1+atanh((t-1)/beta)/c);
+  return f;
+}
+
+double bissection_get_beta (double beta0, double hw, double length, int n){
+  double t  = hw/length;
+
+  double beta1 = 1. + 1.e-8;
+  double beta2 = 5;
+  double f1 = f_beta(beta1,t,n);
+  double f2 = f_beta(beta2,t,n);
+  if (f1 > 1 && f2 < 1){
+    while(1){
+      double beta3 = (beta1+beta2)*0.5;
+      double f3 = f_beta(beta3,t,n);
+      //      printf("%12.5E %12.5E %12.5E\n",f1,f2,f3);
+      if (fabs(f3- 1) < 1.e-8)return beta3;
+      if (f3 > 1)beta1 = beta3;
+      else beta2 = beta3;
+    }    
+  }
+  return 100;
+}
+
+static double f_bump (double coef, double t, int n){
+  double a;
+  if(coef > 1.0) {
+    a = std::atan2(1.0, std::sqrt(coef - 1.))/std::sqrt(coef - 1.)/n;    
+    double A = (coef-1);
+    double f = (atan(sqrt(A)) - atan(sqrt(A)*(1-2*t)))/2/sqrt(A)/a;
+    return f;
+  }
+  else {
+    a = std::atanh(std::sqrt(1.-coef))/std::sqrt(1-coef)/n;    
+    double A = (1-coef);
+    double f = (atanh(sqrt(A)) - atanh(sqrt(A)*(1-2*t)))/2/sqrt(A)/a;
+    return f;
+  }
+  
+}
+
+// hwall given for the bump
+double bissection_get_a (double r0, double hw, double length, int n){
+  double t  = hw/length;
+
+  double alpha1 = 1.e-8;
+  double alpha2 = 100;
+  double f1 = f_bump(alpha1,t,n);
+  double f2 = f_bump(alpha2,t,n);
+  if (f1 > 1 && f2 < 1){
+    while(1){
+      double alpha3 = (alpha1+alpha2)*0.5;
+      double f3 = f_bump(alpha3,t,n);
+      //      printf("%12.5E %12.5E %12.5E\n",f1,f2,f3);
+      if (fabs(f3- 1) < 1.e-8)return alpha3;
+      if (f3 > 1)alpha1 = alpha3;
+      else alpha2 = alpha3;
+    }    
+  }
+  return 1;
+}
+
+
+// for a progression -- transform h_wall to ratio
+
 double newton_get_r (double r0, double hw, double length, int n){
   double r = r0;
   int it = 0;
@@ -27,7 +97,6 @@ double newton_get_r (double r0, double hw, double length, int n){
     double dr = -f / slope;
     r = r + dr;
     if (f < 1.e-8){
-      //      printf("err %12.5E it %d\n",f,it);
       return r;
     }
     if (it++ > 100)break;
@@ -183,9 +252,32 @@ struct F_Transfinite {
     double d = norm(der);
     double coef = ge->meshAttributes.coeffTransfinite;
     int type = ge->meshAttributes.typeTransfinite;
-    int atype = std::abs(type);
     int nbpt = ge->meshAttributes.nbPointsTransfinite;
 
+    // transform type = 5 onto type = 1
+    if (type == 5){
+      // for a progression -- transform h_wall to ratio
+      bool sgn = coef > 0;
+      coef = newton_get_r (1.1, fabs(coef), length, nbpt);
+      if (!sgn) coef = 1./coef;
+      type = 1;
+    }
+    if (type == 6){
+      // for a bump -- transform h_wall to a
+      coef = bissection_get_a (0.1, fabs(coef), length, nbpt);
+      type = 2;
+    }
+    // transform type = 7 onto type = 3
+    if (type == 7){
+      // for a progression -- transform h_wall to ratio
+      bool sgn = coef > 0;
+      coef = bissection_get_beta (2, fabs(coef), length, nbpt);
+      type = 3*(sgn ? 1 : -1);
+    }
+
+    
+    int atype = std::abs(type);
+    
     if(CTX::instance()->mesh.flexibleTransfinite &&
        CTX::instance()->mesh.lcFactor)
       nbpt /= CTX::instance()->mesh.lcFactor;

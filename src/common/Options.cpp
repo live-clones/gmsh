@@ -6704,6 +6704,11 @@ double opt_mesh_min_quality(OPT_ARGS_NUM)
   return CTX::instance()->mesh.minQuality;
 }
 
+double opt_mesh_avg_quality(OPT_ARGS_NUM)
+{
+  return CTX::instance()->mesh.avgQuality;
+}
+
 double opt_mesh_partition_num(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
