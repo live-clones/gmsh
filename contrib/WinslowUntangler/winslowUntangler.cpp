@@ -38,12 +38,11 @@
 #include "cppUtils.h"
 #endif
 
-#if defined(HAVE_EIGEN) && defined(HAVE_ALGLIB) &&                             \
-  defined(HAVE_QUADMESHINGTOOLS)
+size_t perTriangleP2 = 19;
+
+#if defined(HAVE_EIGEN) && defined(HAVE_ALGLIB) && defined(HAVE_QUADMESHINGTOOLS)
 
 using namespace ArrayGeometry;
-
-size_t perTriangleP2 = 19;
 
 namespace WinslowUntangler {
 
@@ -962,8 +961,7 @@ bool untangle_triangles_2D(
 			    const std::vector<std::array<uint32_t, 3> > &triangles,
 			    std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes)> &updateIdealTriangularShapes)
 {
-#if defined(HAVE_EIGEN) && defined(HAVE_ALGLIB) &&	\
-  defined(HAVE_QUADMESHINGTOOLS)
+#if defined(HAVE_EIGEN) && defined(HAVE_ALGLIB) && defined(HAVE_QUADMESHINGTOOLS)
   std::vector<std::array<double, 3> > points3D;
   const std::vector<std::array<uint32_t, 4> > tetrahedra;
   const std::vector<std::array<std::array<double, 3>, 4> > tetIdealShapes;
@@ -986,8 +984,7 @@ bool untangle_tetrahedra(
   double lambda, int iterMaxInner, int iterMaxOuter, int iterFailMax,
   double timeMax)
 {
-#if defined(HAVE_EIGEN) && defined(HAVE_ALGLIB) &&                             \
-  defined(HAVE_QUADMESHINGTOOLS)
+#if defined(HAVE_EIGEN) && defined(HAVE_ALGLIB) && defined(HAVE_QUADMESHINGTOOLS)
   std::vector<std::array<double, 2> > points2D;
   const std::vector<std::array<uint32_t, 3> > tris;
   const std::vector<std::array<std::array<double, 2>, 3> > triIdealShapes;
