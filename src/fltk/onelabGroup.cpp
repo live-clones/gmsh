@@ -458,7 +458,7 @@ static void onelab_subtree_cb(Fl_Widget *w, void *data)
 
 void onelabGroup::_computeWidths()
 {
-  // "-FL_NORMAL_SIZE" to have space for a scrollbar to the right
+  // "- 1.1 * FL_NORMAL_SIZE" to have space for a scrollbar to the right
   _baseWidth = _tree->w() - _tree->marginleft() - 1.1 * FL_NORMAL_SIZE;
   // not sure why we have the "-2" correction at the end, but this is what is
   // needed to make things pixel-correct.
@@ -500,8 +500,11 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   // _tree->resizable(0);
   _tree->end();
 
-  _computeWidths();
   _widgetLabelRatio = 0.5;
+
+  // dummy values for now; will be updated with _computeWidths()
+  _baseWidth = _tree->w() - _tree->marginleft();
+  _indent = _tree->connectorwidth();
 
   int BB2 = BB / 2 + 4;
 
@@ -1420,7 +1423,6 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   setButtonVisibility();
 
   FL_NORMAL_SIZE -= CTX::instance()->deltaFontSize;
-  _computeWidths();
 
   std::set<std::string> closed = _getClosedGmshMenus();
 
@@ -1436,6 +1438,7 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   }
   _tree->sortorder(FL_TREE_SORT_ASCENDING);
   _tree->selectmode(FL_TREE_SELECT_NONE);
+  _computeWidths();
 
   // hide all the widgets we have added in the tree to make sure they don't get
   // spurious events (until they are deleted)
