@@ -309,21 +309,22 @@ static void GetQualityFast(GModel *m, int dim, double &qmin, double &qavg)
   std::size_t N = 0;
   std::vector<GEntity *> entities;
   m->getEntities(entities, dim);
-  qmin = 1e200;
-  qavg = 0;
+  double qm = 1e200, qa = 0;
   for(auto ge : entities) {
     if(ge->dim() < 2) continue;
     std::size_t ne = ge->getNumMeshElements();
     N += ne;
-#pragma omp parallel for num_threads(nthreads) reduction(min:qmin) reduction(+:qavg)
+#pragma omp parallel for num_threads(nthreads) reduction(min:qm) reduction(+:qa)
     for(std::size_t i = 0; i < ne; i++) {
       MElement *e = ge->getMeshElement(i);
       double q = e->minSICNShapeMeasure();
-      qmin = std::min(qmin, q);
-      qavg += q;
+      qm = std::min(qm, q);
+      qa += q;
     }
   }
-  if(N) qavg /= N;
+  if(N) qa /= N;
+  qmin = qm;
+  qavg = qa;
 }
 
 static void Mesh0D(GModel *m)
