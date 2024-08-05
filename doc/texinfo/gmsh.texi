@@ -570,9 +570,9 @@ command line (@pxref{Gmsh command-line interface}), or with the
 There are several ways to specify the size of the mesh elements for a
 given geometry:
 
-@enumerate
+@itemize
 @item
-First, if the options @code{Mesh.MeshSizeFromPoints} and
+If the options @code{Mesh.MeshSizeFromPoints} and
 @code{Mesh.MeshSizeExtendFromBoundary} are set (they are by default; see
 @ref{Mesh options}), you can simply specify desired mesh element sizes
 at the geometrical points of the model. The size of the mesh elements
@@ -582,13 +582,13 @@ some areas, so that you may have to add ``dummy'' geometrical entities
 in the model in order to get the desired element sizes or use more
 advanced methods explained below.
 @item
-Second, if @code{Mesh.MeshSizeFromCurvature} is set to a positive value
-(it is set to 0 by default), the mesh will be adapted with respect to
-the curvature of the model entities, the value giving the target number
-of elements per 2 Pi radians.
+If @code{Mesh.MeshSizeFromCurvature} is set to a positive value (it is
+set to 0 by default), the mesh will be adapted with respect to the
+curvature of the model entities, the value giving the target number of
+elements per 2 Pi radians.
 @item
-Next, you can specify a general target mesh size, expressed as a
-combination of mesh size fields (@pxref{Gmsh mesh size fields}):
+You can specify a general target mesh size, expressed as a combination
+of mesh size fields (@pxref{Gmsh mesh size fields}):
 @itemize @bullet
 @item
 The @code{Box} field specifies the size of the elements inside and
@@ -613,15 +613,17 @@ computed using other fields.
 @item
 @dots{}
 @end itemize
-@item
-Mesh sizes are also constrained by structured meshing constraints
-(e.g. transfinite or extruded meshes) as well as by any discrete model
-entity that is not equipped with a geometry, and which will thus
-preserve it mesh during mesh generation.
-@item
-Boundary mesh sizes are interpolated inside surfaces and/or volumes
-depending on the value of @code{Mesh.MeshSizeExtendFromBoundary}.
-@end enumerate
+@end itemize
+
+In all cases, boundary mesh sizes are interpolated inside surfaces
+and/or volumes depending on the value of
+@code{Mesh.MeshSizeExtendFromBoundary}, and meshes are constrained by
+structured meshing constraints (e.g. transfinite or extruded meshes) as
+well as by any discrete model entity that is not equipped with a
+geometry (which will thus preserve its mesh during mesh
+generation). Meshes on curves are further constrainted by the
+@code{Mesh.MinLineNodes}, @code{Mesh.MinCircleNodes} and
+@code{Mesh.MinCurveNodes} options.
 
 To determine the actual mesh size at any given point in the model, Gmsh
 evaluates all the above mesh size constraints and selects the smallest
