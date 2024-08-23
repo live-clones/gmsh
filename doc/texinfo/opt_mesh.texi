@@ -337,7 +337,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MaxRetries
-Maximum number of times meshing is retried on curves and surfaces with a pending mesh@*
+Maximum number of times meshing is retried on curves and surfaces with a pending mesh; also controls maximum number of recursive subdivisions when self-intersecting 1D meshes are detected@*
 Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
