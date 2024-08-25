@@ -327,6 +327,42 @@ static void GetQualityFast(GModel *m, int dim, double &qmin, double &qavg)
   qavg = qa;
 }
 
+static void CheckEmptyMesh(GModel *m, int dim)
+{
+  std::stringstream msg;
+  msg << "No elements in ";
+  if(dim == 3) msg << "volume";
+  else if(dim == 2) msg << "surface";
+  else msg << "curve";
+  bool emptyFound = false;
+  std::vector<GEntity *> entities;
+  m->getEntities(entities, dim);
+  for(auto ge : entities) {
+    if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) {
+      continue;
+    }
+    else if(dim == 1) {
+      if(ge->geomType() == GEntity::BoundaryLayerCurve || ge->degenerate(0))
+        continue;
+      GEdge *ged = static_cast<GEdge*>(ge);
+      if(ged->meshStatistics.status == GFace::DONE)
+        continue;
+    }
+    else if(dim == 2) {
+      if(ge->geomType() == GEntity::BoundaryLayerSurface)
+        continue;
+      GFace *gf = static_cast<GFace*>(ge);
+      if(gf->meshStatistics.status == GFace::DONE)
+        continue;
+    }
+    if(ge->getNumMeshElements() == 0) {
+      msg << " " << ge->tag();
+      emptyFound = true;
+    }
+  }
+  if(emptyFound) Msg::Error(msg.str().c_str());
+}
+
 static void Mesh0D(GModel *m)
 {
   m->getFields()->initialize();
@@ -415,15 +451,12 @@ static void Mesh1D(GModel *m)
     }
     if(exceptions) throw std::runtime_error(Msg::GetLastError());
     if(!nPending) break;
-    if(nIter++ > CTX::instance()->mesh.maxRetries) {
-      Msg::Error("No 1D mesh after Mesh.MaxRetries = %d",
-                 CTX::instance()->mesh.maxRetries);
-      break;
-    }
+    if(nIter++ > CTX::instance()->mesh.maxRetries) break;
   }
 
   Msg::StopProgressMeter();
 
+  CheckEmptyMesh(m, 1);
   double t2 = Cpu(), w2 = TimeOfDay();
   CTX::instance()->mesh.timer[0] = w2 - w1;
   Msg::StatusBar(true, "Done meshing 1D (Wall %gs, CPU %gs)",
@@ -577,11 +610,7 @@ static void Mesh2D(GModel *m)
       // iter == 2 is for meshing re-parametrized surfaces; after that, we
       // serialize (self-intersections of 1D meshes are not thread safe)!
       if(nIter > 2) nthreads = 1;
-      if(nIter++ > CTX::instance()->mesh.maxRetries) {
-        Msg::Error("No 2D mesh after Mesh.MaxRetries = %d",
-                   CTX::instance()->mesh.maxRetries);
-        break;
-      }
+      if(nIter++ > CTX::instance()->mesh.maxRetries) break;
     }
 
     Msg::StopProgressMeter();
@@ -600,6 +629,7 @@ static void Mesh2D(GModel *m)
     OptimizeMesh(m, "QuadQuasiStructured");
   }
 
+  CheckEmptyMesh(m, 2);
   double t2 = Cpu(), w2 = TimeOfDay();
   CTX::instance()->mesh.timer[1] = w2 - w1;
   Msg::StatusBar(true, "Done meshing 2D (Wall %gs, CPU %gs)",
@@ -793,29 +823,12 @@ static void Mesh3D(GModel *m)
     std::for_each(m->firstRegion(), m->lastRegion(),
                   EmbeddedCompatibilityTest());
 
-  std::stringstream debugInfo;
-  debugInfo << "No elements in volume ";
-  bool emptyRegionFound = false;
-  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
-    GRegion *gr = *it;
-    if(CTX::instance()->mesh.meshOnlyVisible && !gr->getVisibility()) continue;
-    if(CTX::instance()->mesh.meshOnlyEmpty && gr->getNumMeshElements())
-      continue;
-    if(gr->getNumMeshElements() == 0) {
-      debugInfo << gr->tag() << " ";
-      emptyRegionFound = true;
-    }
-  }
-  if(emptyRegionFound) {
-    debugInfo << std::endl;
-    Msg::Error(debugInfo.str().c_str());
-  }
-
   if(m->getNumRegions()) {
     Msg::ProgressMeter(1, false, "Meshing 3D...");
     Msg::StopProgressMeter();
   }
 
+  CheckEmptyMesh(m, 3);
   double t2 = Cpu(), w2 = TimeOfDay();
   CTX::instance()->mesh.timer[2] = w2 - w1;
   Msg::StatusBar(true, "Done meshing 3D (Wall %gs, CPU %gs)",
