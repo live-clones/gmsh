@@ -329,12 +329,7 @@ static void GetQualityFast(GModel *m, int dim, double &qmin, double &qavg)
 
 static void CheckEmptyMesh(GModel *m, int dim)
 {
-  std::stringstream msg;
-  msg << "No elements in ";
-  if(dim == 3) msg << "volume";
-  else if(dim == 2) msg << "surface";
-  else msg << "curve";
-  bool emptyFound = false;
+  std::vector<int> tags;
   std::vector<GEntity *> entities;
   m->getEntities(entities, dim);
   for(auto ge : entities) {
@@ -355,12 +350,15 @@ static void CheckEmptyMesh(GModel *m, int dim)
       if(gf->meshStatistics.status == GFace::DONE)
         continue;
     }
-    if(ge->getNumMeshElements() == 0) {
-      msg << " " << ge->tag();
-      emptyFound = true;
-    }
+    // mesh still pending, failed, ...
+    if(ge->getNumMeshElements() == 0) tags.push_back(ge->tag());
   }
-  if(emptyFound) Msg::Error(msg.str().c_str());
+  if(!tags.empty()) {
+    std::stringstream msg;
+    for(auto t : tags) msg << " " << t;
+    Msg::Error("No elements in %s %s", (dim == 3) ? "volume" :
+               (dim == 2) ? "surface" : "curve", msg.str().c_str());
+  }
 }
 
 static void Mesh0D(GModel *m)
