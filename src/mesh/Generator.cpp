@@ -356,7 +356,7 @@ static void CheckEmptyMesh(GModel *m, int dim)
   if(!tags.empty()) {
     std::stringstream msg;
     for(auto t : tags) msg << " " << t;
-    Msg::Error("No elements in %s %s", (dim == 3) ? "volume" :
+    Msg::Error("No elements in %s%s", (dim == 3) ? "volume" :
                (dim == 2) ? "surface" : "curve", msg.str().c_str());
   }
 }
