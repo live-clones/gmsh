@@ -919,53 +919,43 @@ static std::vector<std::array<std::size_t, 3>>
 readMSH4Edges(GModel *const model, FILE *fp, bool binary, double version)
 {
   std::size_t numTags = 0;
-
+  // First line indicates the number of edges, then one line per edge
   if(binary) {
-    // throw std::runtime_error("Binary non implemented!");
     if(fread(&numTags, sizeof(std::size_t), 1, fp) != 1) {
-      Msg::Info("readMSH4Edges: Error reading number of edges.");
+      Msg::Info("readMSH4Edges: Error reading number of edges (binary).");
       return {};
     }
   }
   else {
-    // First line indicates the number of edges, then one line per edge
     if(fscanf(fp, "%lu", &numTags) != 1) {
-      Msg::Info("readMSH4Edges: Error reading number of edges.");
+      Msg::Info("readMSH4Edges: Error reading number of edges (text).");
       return {};
     }
   }
 
-  if (numTags == 0)
-    return {};
+  if(numTags == 0) return {};
 
   Msg::Info("readMSH4Edges with %lu elements", numTags);
 
   std::vector<std::array<std::size_t, 3>> output;
   output.reserve(numTags);
 
-  std::size_t edge, node1, node2;
+  // edge, v1, v2
+  size_t buffer[3];
 
   for(std::size_t i = 0; i < numTags; i++) {
-    int entityTag = 0, entityDim = 0, elmType = 0;
-    std::size_t numElements = 0;
-
     if(binary) {
-      size_t buffer[3];
-      if (fread(&buffer, sizeof(std::size_t), 3, fp) != 3) {
+      if(fread(&buffer, sizeof(std::size_t), 3, fp) != 3) {
         Msg::Info("Error reading edge %lu.", i);
         return {};
       }
-      edge = buffer[0];
-      node1 = buffer[1];
-      node2 = buffer[2];
-      output.push_back({edge, node1, node2});
     }
     else {
-      if(fscanf(fp, "%lu %lu %lu", &edge, &node1, &node2) != 3) {
+      if(fscanf(fp, "%lu %lu %lu", &buffer[0], &buffer[1], &buffer[2]) != 3) {
         return {};
       }
-      output.push_back({edge, node1, node2});
     }
+    output.push_back({buffer[0], buffer[1], buffer[2]});
   }
 
   return output;
@@ -978,14 +968,15 @@ readMSH4Faces(GModel *const model, FILE *fp, bool binary, double version)
   std::size_t numTags = 0;
 
   if(binary) {
-    if (fread(&numTags, sizeof(std::size_t), 1, fp) != 1) {
+    if(fread(&numTags, sizeof(std::size_t), 1, fp) != 1) {
+      Msg::Info("readMSH4Faces: Error reading number of faces (binary).");
       return {};
     }
   }
   else {
-    // First line indicates the number of faces, then one line per edge
     if(fscanf(fp, "%lu", &numTags) != 1) {
-      return {};
+      Msg::Info("readMSH4Faces: Error reading number of faces (binary).");
+
     }
   }
 
@@ -997,40 +988,34 @@ readMSH4Faces(GModel *const model, FILE *fp, bool binary, double version)
   std::vector<std::pair<std::size_t, std::vector<std::size_t>>> output;
   output.reserve(numTags);
 
-
   // TAG NUM_VERT VERT1 VERT2 ... VERTN
+  size_t buffer[2]; // faceTag, numVerts (3 or 4)
   for(std::size_t i = 0; i < numTags; i++) {
-    int entityTag = 0, entityDim = 0, elmType = 0;
-    std::size_t faceTag, numVerts;
-
     if(binary) {
-      size_t buffer[2];
-      if (fread(&buffer, sizeof(std::size_t), 2, fp) != 2) {
+      if(fread(&buffer, sizeof(std::size_t), 2, fp) != 2) {
         Msg::Info("Error reading face %lu.", i);
         return {};
       }
-      auto faceTag = buffer[0];
-      auto numVerts = buffer[1];
-      std::vector<std::size_t> nodes(numVerts);
-      for(std::size_t j = 0; j < numVerts; j++) {
+    }
+    else {
+      if(fscanf(fp, "%lu %lu", &buffer[0], &buffer[1]) != 2) { return {}; }
+    }
+    std::vector<size_t> nodes(buffer[1]);
+    if(binary) {
+      for(std::size_t j = 0; j < buffer[1]; j++) {
         if(fread(&nodes[j], sizeof(std::size_t), 1, fp) != 1) {
           throw std::runtime_error("Error reading node tag in a face.");
         }
       }
-      output.push_back(std::make_pair(faceTag, std::move(nodes)));
     }
     else {
-      if(fscanf(fp, "%lu %lu", &faceTag, &numVerts) != 2) {
-        return {};
-      }
-      std::vector<std::size_t> nodes(numVerts);
-      for (std::size_t j = 0; j < numVerts; j++) {
+      for(std::size_t j = 0; j < buffer[1]; j++) {
         if(fscanf(fp, "%lu", &nodes[j]) != 1) {
           throw std::runtime_error("Error reading node tag in a face.");
         }
       }
-      output.push_back(std::make_pair(faceTag, std::move(nodes)));
     }
+    output.push_back(std::make_pair(buffer[0], std::move(nodes)));
   }
 
   return output;
