@@ -921,11 +921,16 @@ readMSH4Edges(GModel *const model, FILE *fp, bool binary, double version)
   std::size_t numTags = 0;
 
   if(binary) {
-    throw std::runtime_error("Binary non implemented!");
+    // throw std::runtime_error("Binary non implemented!");
+    if(fread(&numTags, sizeof(std::size_t), 1, fp) != 1) {
+      Msg::Info("readMSH4Edges: Error reading number of edges.");
+      return {};
+    }
   }
   else {
     // First line indicates the number of edges, then one line per edge
     if(fscanf(fp, "%lu", &numTags) != 1) {
+      Msg::Info("readMSH4Edges: Error reading number of edges.");
       return {};
     }
   }
@@ -945,7 +950,15 @@ readMSH4Edges(GModel *const model, FILE *fp, bool binary, double version)
     std::size_t numElements = 0;
 
     if(binary) {
-      // TODO
+      size_t buffer[3];
+      if (fread(&buffer, sizeof(std::size_t), 3, fp) != 3) {
+        Msg::Info("Error reading edge %lu.", i);
+        return {};
+      }
+      edge = buffer[0];
+      node1 = buffer[1];
+      node2 = buffer[2];
+      output.push_back({edge, node1, node2});
     }
     else {
       if(fscanf(fp, "%lu %lu %lu", &edge, &node1, &node2) != 3) {
@@ -965,7 +978,9 @@ readMSH4Faces(GModel *const model, FILE *fp, bool binary, double version)
   std::size_t numTags = 0;
 
   if(binary) {
-    throw std::runtime_error("Binary non implemented!");
+    if (fread(&numTags, sizeof(std::size_t), 1, fp) != 1) {
+      return {};
+    }
   }
   else {
     // First line indicates the number of faces, then one line per edge
@@ -977,7 +992,7 @@ readMSH4Faces(GModel *const model, FILE *fp, bool binary, double version)
   if (numTags == 0)
     return {};
 
-  Msg::Info("readMSH4Edges with %lu elements", numTags);
+  Msg::Info("readMSH4Faces with %lu elements", numTags);
 
   std::vector<std::pair<std::size_t, std::vector<std::size_t>>> output;
   output.reserve(numTags);
@@ -989,7 +1004,20 @@ readMSH4Faces(GModel *const model, FILE *fp, bool binary, double version)
     std::size_t faceTag, numVerts;
 
     if(binary) {
-      // TODO
+      size_t buffer[2];
+      if (fread(&buffer, sizeof(std::size_t), 2, fp) != 2) {
+        Msg::Info("Error reading face %lu.", i);
+        return {};
+      }
+      auto faceTag = buffer[0];
+      auto numVerts = buffer[1];
+      std::vector<std::size_t> nodes(numVerts);
+      for(std::size_t j = 0; j < numVerts; j++) {
+        if(fread(&nodes[j], sizeof(std::size_t), 1, fp) != 1) {
+          throw std::runtime_error("Error reading node tag in a face.");
+        }
+      }
+      output.push_back(std::make_pair(faceTag, std::move(nodes)));
     }
     else {
       if(fscanf(fp, "%lu %lu", &faceTag, &numVerts) != 2) {
@@ -2912,8 +2940,17 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool partitioned,
   fprintf(fp, "$EdgeTags\n");
 
   if(binary) {
-    throw std::runtime_error(
-      "Binary format not supported yet for exporting edges");
+    //throw std::runtime_error(
+    //  "Binary format not supported yet for exporting edges");
+    size_t numEdgeTags = edgeTags.size();
+    fwrite(&numEdgeTags, sizeof(size_t), 1, fp);
+    for(std::size_t tag = 0; tag < edgeTags.size(); ++tag) {
+      //fprintf(fp, "%lu %lu %lu\n", edgeTags[tag], edgeNodes[2 * tag],
+      //        edgeNodes[2 * tag + 1]);
+      size_t buffer[3] = {edgeTags[tag], edgeNodes[2 * tag],
+                          edgeNodes[2 * tag + 1]};
+      fwrite(buffer, sizeof(size_t), 3, fp);
+    }
   }
   else {
     fprintf(fp, "%lu\n", edgeTags.size());
@@ -2934,19 +2971,32 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool partitioned,
 {
   if(model->getNumMFaces() == 0) return;
 
-  fprintf(fp, "$FaceTags\n %lu\n", model->getNumMFaces());
+  fprintf(fp, "$FaceTags\n");
   if(binary) {
-    throw std::runtime_error(
-      "Binary format not supported yet for exporting edges");
-  }
-  for(auto it = model->firstMFace(); it != model->lastMFace(); ++it) {
-    // TAG NUM_VERT VERT1 VERT2 ... VERTN
-    auto nVert = it->first.getNumVertices();
-    fprintf(fp, "%lu %lu", it->second, nVert);
-    for (std::size_t i = 0; i < nVert; ++i) {
-      fprintf(fp, " %lu", it->first.getVertex(i)->getNum());
+    size_t numFaceTags = model->getNumMFaces();
+    fwrite(&numFaceTags, sizeof(std::size_t), 1, fp);
+    for(auto it = model->firstMFace(); it != model->lastMFace(); ++it) {
+      // TAG NUM_VERT VERT1 VERT2 ... VERTN
+      auto nVert = it->first.getNumVertices();
+      std::size_t buffer[2] = {it->second, nVert};
+      fwrite(buffer, sizeof(std::size_t), 2, fp);
+      for(std::size_t i = 0; i < nVert; ++i) {
+        std::size_t v = it->first.getVertex(i)->getNum();
+        fwrite(&v, sizeof(std::size_t), 1, fp);
+      }
     }
-    fprintf(fp, "\n");
+  }
+  else {
+      fprintf(fp, "%lu\n", model->getNumMFaces());
+    for(auto it = model->firstMFace(); it != model->lastMFace(); ++it) {
+      // TAG NUM_VERT VERT1 VERT2 ... VERTN
+      auto nVert = it->first.getNumVertices();
+      fprintf(fp, "%lu %lu", it->second, nVert);
+      for(std::size_t i = 0; i < nVert; ++i) {
+        fprintf(fp, " %lu", it->first.getVertex(i)->getNum());
+      }
+      fprintf(fp, "\n");
+    }
   }
 
 
