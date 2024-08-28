@@ -2936,24 +2936,21 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool partitioned,
     edgeNodes.push_back(it->first.getVertex(1)->getNum());
   }
 
-
   fprintf(fp, "$EdgeTags\n");
+  size_t numEdgeTags = edgeTags.size();
+  if(binary)
+    fwrite(&numEdgeTags, sizeof(size_t), 1, fp);
+  else
+    fprintf(fp, "%lu\n", numEdgeTags);
 
   if(binary) {
-    //throw std::runtime_error(
-    //  "Binary format not supported yet for exporting edges");
-    size_t numEdgeTags = edgeTags.size();
-    fwrite(&numEdgeTags, sizeof(size_t), 1, fp);
     for(std::size_t tag = 0; tag < edgeTags.size(); ++tag) {
-      //fprintf(fp, "%lu %lu %lu\n", edgeTags[tag], edgeNodes[2 * tag],
-      //        edgeNodes[2 * tag + 1]);
       size_t buffer[3] = {edgeTags[tag], edgeNodes[2 * tag],
                           edgeNodes[2 * tag + 1]};
       fwrite(buffer, sizeof(size_t), 3, fp);
     }
   }
   else {
-    fprintf(fp, "%lu\n", edgeTags.size());
     for(std::size_t tag = 0; tag < edgeTags.size(); ++tag) {
       fprintf(fp, "%lu %lu %lu\n", edgeTags[tag], edgeNodes[2 * tag],
               edgeNodes[2 * tag + 1]);
@@ -2969,36 +2966,28 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool partitioned,
                               int partitionToSave, bool binary, bool saveAll,
                               double version)
 {
-  if(model->getNumMFaces() == 0) return;
+  size_t numFaceTags = model->getNumMFaces();
+  if(numFaceTags == 0) return;
 
   fprintf(fp, "$FaceTags\n");
-  if(binary) {
-    size_t numFaceTags = model->getNumMFaces();
-    fwrite(&numFaceTags, sizeof(std::size_t), 1, fp);
-    for(auto it = model->firstMFace(); it != model->lastMFace(); ++it) {
-      // TAG NUM_VERT VERT1 VERT2 ... VERTN
-      auto nVert = it->first.getNumVertices();
-      std::size_t buffer[2] = {it->second, nVert};
-      fwrite(buffer, sizeof(std::size_t), 2, fp);
-      for(std::size_t i = 0; i < nVert; ++i) {
-        std::size_t v = it->first.getVertex(i)->getNum();
-        fwrite(&v, sizeof(std::size_t), 1, fp);
-      }
-    }
-  }
-  else {
-      fprintf(fp, "%lu\n", model->getNumMFaces());
-    for(auto it = model->firstMFace(); it != model->lastMFace(); ++it) {
-      // TAG NUM_VERT VERT1 VERT2 ... VERTN
-      auto nVert = it->first.getNumVertices();
+  fwrite(&numFaceTags, sizeof(std::size_t), 1, fp);
+  for(auto it = model->firstMFace(); it != model->lastMFace(); ++it) {
+    // TAG NUM_VERT VERT1 VERT2 ... VERTN
+    auto nVert = it->first.getNumVertices();
+    std::size_t buffer[2] = {it->second, nVert};
+    if(binary) { fwrite(buffer, sizeof(std::size_t), 2, fp); }
+    else {
       fprintf(fp, "%lu %lu", it->second, nVert);
-      for(std::size_t i = 0; i < nVert; ++i) {
-        fprintf(fp, " %lu", it->first.getVertex(i)->getNum());
-      }
-      fprintf(fp, "\n");
     }
+    for(std::size_t i = 0; i < nVert; ++i) {
+      std::size_t v = it->first.getVertex(i)->getNum();
+      if(binary) { fwrite(&v, sizeof(std::size_t), 1, fp); }
+      else {
+        fprintf(fp, " %lu", v);
+      }
+    }
+    if(!binary) { fprintf(fp, "\n"); }
   }
-
 
   if(binary) fprintf(fp, "\n");
   fprintf(fp, "$EndFaceTags\n");
