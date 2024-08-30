@@ -59,7 +59,7 @@ private:
         tmp << _max;
         _input->maximum(_max);
       }
-      if(_step && _step != 1.) tmp << " : " << _step;
+      if(_step) tmp << " : " << _step;
       if(CTX::instance()->inputScrolling) _input->step(_step, 1);
       _choices.clear();
     }
