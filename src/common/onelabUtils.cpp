@@ -217,8 +217,6 @@ namespace onelabUtils {
                       numbers[i].getName().c_str(), numbers[i].getValue());
             recompute = true;
           }
-          else
-            numbers[i].setIndex(numbers[i].getMax()); // FIXME makes sense?
         }
         else if(numbers[i].getStep() < 0) {
           int j = numbers[i].getIndex() + 1;
@@ -232,8 +230,6 @@ namespace onelabUtils {
                       numbers[i].getName().c_str(), numbers[i].getValue());
             recompute = true;
           }
-          else
-            numbers[i].setIndex(numbers[i].getMin()); // FIXME makes sense?
         }
       }
     }
