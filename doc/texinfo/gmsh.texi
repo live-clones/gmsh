@@ -859,6 +859,14 @@ Gmsh's graphical user interface is only exposing a limited number of the
 available features, and many aspects of the interface could be enhanced
 (especially manipulators).
 @item
+While Gmsh can create and manipulate geometries interactively, it is in
+no way a full-fledged replacement for an advanced CAD system.
+@item
+Gmsh uses straightforward OpenGL 1.1 for graphics, without specific
+tricks to handle very large meshes and post-processing datasets
+(decimation and automatic level of detail, culling, advanced
+transparency, etc.).
+@item
 Your complaints about Gmsh here :-)
 @end itemize
 
