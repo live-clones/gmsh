@@ -154,8 +154,8 @@ namespace onelabUtils {
           numbers[i].setIndex(0);
           numbers[i].setValue(numbers[i].getChoices()[0]);
           onelab::server::instance()->set(numbers[i]);
-          Msg::Info("Loop level %s: setting %dth choice %s=%g",
-                    level.c_str(), 0, numbers[i].getName().c_str(),
+          Msg::Info("Loop level %s - setting '%s' to choice %d: %g",
+                    level.c_str(), numbers[i].getName().c_str(), 0,
                     numbers[i].getValue());
           changed = true;
         }
@@ -166,8 +166,8 @@ namespace onelabUtils {
             std::vector<double> choices;
             numbers[0].setChoices(choices);
             onelab::server::instance()->set(numbers[i]);
-            Msg::Info("Loop level %s: setting %dth value %s=%g",
-                      level.c_str(), 0, numbers[i].getName().c_str(),
+            Msg::Info("Loop level %s - setting '%s' to value %d: %g",
+                      level.c_str(), numbers[i].getName().c_str(), 0,
                       numbers[i].getValue());
             changed = true;
           }
@@ -179,8 +179,9 @@ namespace onelabUtils {
             numbers[0].setChoices(choices);
             numbers[i].setValue(numbers[i].getMax());
             onelab::server::instance()->set(numbers[i]);
-            Msg::Info("Loop level %s: setting %dth value %s=%g", level.c_str(),
-                      0, numbers[i].getName().c_str(), numbers[i].getValue());
+            Msg::Info("Loop level %s - setting '%s' to value %d: %g",
+                      level.c_str(), numbers[i].getName().c_str(), 0,
+                      numbers[i].getValue());
             changed = true;
           }
         }
@@ -208,8 +209,8 @@ namespace onelabUtils {
             numbers[i].setValue(numbers[i].getChoices()[j]);
             numbers[i].setIndex(j);
             onelab::server::instance()->set(numbers[i]);
-            Msg::Info("Loop level %s: setting %dth choice %s=%g",
-                      level.c_str(), j, numbers[i].getName().c_str(),
+            Msg::Info("Loop level %s - setting '%s' to choice %d: %g",
+                      level.c_str(), numbers[i].getName().c_str(), j,
                       numbers[i].getValue());
             recompute = true;
           }
@@ -222,8 +223,9 @@ namespace onelabUtils {
             numbers[i].setValue(val);
             numbers[i].setIndex(j);
             onelab::server::instance()->set(numbers[i]);
-            Msg::Info("Loop level %s: setting %dth value %s=%g", level.c_str(),
-                      j, numbers[i].getName().c_str(), numbers[i].getValue());
+            Msg::Info("Loop level %s - setting '%s' to value %d: %g",
+                      level.c_str(), numbers[i].getName().c_str(), j,
+                      numbers[i].getValue());
             recompute = true;
           }
         }
@@ -235,8 +237,9 @@ namespace onelabUtils {
             numbers[i].setValue(val);
             numbers[i].setIndex(j);
             onelab::server::instance()->set(numbers[i]);
-            Msg::Info("Loop level %s: setting %dth value %s=%g", level.c_str(),
-                      j, numbers[i].getName().c_str(), numbers[i].getValue());
+            Msg::Info("Loop level %s - setting '%s' to value %d: %g",
+                      level.c_str(), numbers[i].getName().c_str(), j,
+                      numbers[i].getValue());
             recompute = true;
           }
         }

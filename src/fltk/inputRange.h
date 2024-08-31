@@ -136,7 +136,7 @@ private:
   void _edit_range()
   {
     const char *ret =
-      fl_input("Edit range ([min : max], [min : max : step], or "
+      fl_input("Edit range or choices ([min : max], [min : max : step], or "
                "[val1, val2, ...]):",
                _range.c_str());
     if(ret) {
@@ -149,7 +149,7 @@ private:
   }
   void _show_range()
   {
-    simpleTextDisplay("Range", _range);
+    simpleTextDisplay("Range or choices", _range);
   }
   void _set_loop_value(const std::string &val)
   {
@@ -279,20 +279,20 @@ public:
     _range_butt = new Fl_Button(x + input_w, y, dot_w, h, ":");
     _range_butt->callback(_range_butt_cb, this);
     if(_read_only_range)
-      _range_butt->tooltip("Show range");
+      _range_butt->tooltip("Show range or choices");
     else
-      _range_butt->tooltip("Edit range");
+      _range_butt->tooltip("Edit range or choices");
 
     _loop_butt = new Fl_Toggle_Button(x + input_w + dot_w, y, loop_w, h);
     _loop_butt->label("@-1gmsh_rotate");
     _loop_butt->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
     _loop_butt->callback(_loop_butt_cb, this);
-    _loop_butt->tooltip("Loop over range (loop level 1, 2 or 3)");
+    _loop_butt->tooltip("Loop over range or choices (loop level 1, 2 or 3)");
 
     _graph_butt = new Fl_Button(x + input_w + dot_w + loop_w, y, graph_w, h);
     _graph_butt->label("@-1gmsh_graph");
     _graph_butt->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
-    _graph_butt->tooltip("Draw range on X-Y graph(s)");
+    _graph_butt->tooltip("Draw range or choices on X-Y graph(s)");
 
     _graph_menu =
       new Fl_Menu_Button(x + input_w + dot_w + loop_w, y, graph_w, h);

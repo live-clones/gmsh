@@ -62,7 +62,7 @@ private:
   }
   void _show_range()
   {
-    simpleTextDisplay("Range", _range);
+    simpleTextDisplay("Range or choices", _range);
   }
   void _set_graph_value(const std::string &val, bool update_menu = true)
   {
@@ -136,12 +136,12 @@ public:
 
     _range_butt = new Fl_Button(x + output_w, y, dot_w, h, ":");
     _range_butt->callback(_range_butt_cb, this);
-    _range_butt->tooltip("Show range");
+    _range_butt->tooltip("Show range or choices");
 
     _graph_butt = new Fl_Button(x + output_w + dot_w, y, graph_w, h);
     _graph_butt->label("@-1gmsh_graph");
     _graph_butt->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
-    _graph_butt->tooltip("Draw range on X-Y graph(s)");
+    _graph_butt->tooltip("Draw range or choices on X-Y graph(s)");
 
     _graph_menu = new Fl_Menu_Button(x + output_w + dot_w, y, graph_w, h);
     _graph_menu->type(Fl_Menu_Button::POPUP123);
