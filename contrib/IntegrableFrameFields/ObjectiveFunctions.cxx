@@ -15,7 +15,7 @@ namespace IFF{
   std::vector<ObjectiveFunction*> ObjectiveFunction::objectiveFunctionsCollector;
 
   void ObjectiveFunction::checkGradient(Element *element, const std::vector<std::vector<double>> &solTri){
-    double epsilon = 1e-6;
+    double epsilon = 1e-10;
     std::vector<std::vector<double>> solTriPerturbed = solTri;
     std::vector<double> localRhs;
     getGradient(element, solTri, localRhs);
@@ -111,6 +111,168 @@ namespace IFF{
     _getInvertRotatedGradient(element, localRhsRotated, localRhs);
   }
 
+  void DirichletEnergieVectCR::_getRotatedFEMOperators(Element *element, std::vector<std::vector<double>> &localMat, std::vector<double> &localRhs){ //integrale on elem of 1/2*||grad(u)||
+    int pOrder = PORDER;
+    size_t nEdges = element->getNumEdges();
+    localMat.clear();
+    localRhs.clear();
+
+    localMat.resize(m_nFields*nEdges);
+    localRhs.resize(m_nFields*nEdges, 0.0);
+    for(size_t l=0; l<m_nFields*nEdges ; l++)
+      localMat[l].resize(m_nFields*nEdges, 0.0);
+
+    std::vector<double> intWeights = element->getIntegrationWeights(pOrder);
+    std::vector<double> dets = element->getDet(pOrder);
+    std::vector<std::vector<std::vector<double>>> CRGradSF = element->getCRGradSF(pOrder);
+    
+    for(size_t k=0; k<intWeights.size(); k++){
+      double w = intWeights[k];
+      double det = dets[k];
+
+      std::vector<std::vector<double>> gradgradT;
+      gradgradT.resize(nEdges);
+      for(auto &v: gradgradT)
+        v.resize(nEdges, 0.0);
+      
+      for(size_t m=0; m<nEdges; m++)
+	for(size_t n=0; n<nEdges; n++)
+	  for(size_t l=0; l<3; l++)
+	    gradgradT[m][n] += CRGradSF[k][m][l]*CRGradSF[k][n][l];
+
+      for(size_t iF=0; iF<m_nFields; iF++){
+	for(size_t iN=0; iN<nEdges; iN++){
+	  size_t locIndI = m_nFields*iN + iF;
+	  for(size_t jN=0; jN<nEdges; jN++){
+	    size_t locIndJ = m_nFields*jN + iF;
+	    localMat[locIndI][locIndJ] += gradgradT[iN][jN]*w*det;
+	  }
+	}
+      }
+    }
+  }
+
+  void DirichletEnergieVectCR::getHessianAndGradient(Element *element, const std::vector<std::vector<double>> &solEl, std::vector<std::vector<double>> &localHess, std::vector<double> &localRhs){
+    std::vector<double> localRhsRotated;
+    std::vector<std::vector<double>> localHessRotated;
+    // std::vector<std::vector<double>> localHess;
+    _getRotatedFEMOperators(element, localHessRotated, localRhsRotated);
+    if(_getInvertRotatedHessianAndGradient){
+      _getInvertRotatedHessianAndGradient(element, localHessRotated, localRhsRotated, localHess, localRhs);
+      std::vector<double> solOrdered;
+      solOrdered.resize(element->getNumEdges() * m_nFields, 0.0);
+      for(size_t k=0; k<element->getNumEdges(); k++)
+        for(size_t l=0; l<m_nFields; l++){
+          size_t locIndexKL = m_nFields*k + l;
+          solOrdered[locIndexKL] = solEl[k][l];
+        }
+      std::vector<double> KU;
+      KU.resize(element->getNumEdges() * m_nFields, 0.0);
+      for(size_t k=0; k<localHess.size(); k++){
+        for(size_t l=0; l<localHess[k].size(); l++){
+          KU[k] += localHess[k][l]*solOrdered[l];
+        }
+      }
+      for(size_t l=0; l<localRhs.size(); l++)
+        localRhs[l] = KU[l] - localRhs[l];
+    }
+    else{
+      std::cout << "DirichletEnergieVectCR: _getInvertRotatedHessianAndGradient not provided at instanciation" << std::endl;
+      exit(0);
+    }
+  }
+  
+  // ------------------------------- Dirichlet energy for CR GL framefield objective function iso frame normalized
+  void DirichletEnergieVectCRIsoMormalized::evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc){
+    int pOrder = PORDER;
+    valFunc = 0.0;
+
+    std::vector<double> intWeights = element->getIntegrationWeights(pOrder);
+    std::vector<double> dets = element->getDet(pOrder);
+    std::vector<std::vector<double>> intPoints= element->getIntegrationPoints(pOrder);
+    std::vector<std::vector<std::vector<double>>> CRGradSF = element->getCRGradSF(pOrder);
+
+    std::vector<std::vector<double>> solTriRotated;
+    _getRotatedSolEl(element, solTri, solTriRotated);
+      
+    for(int k=0; k<intWeights.size(); k++){
+      std::vector<double> solXG = element->interpolateCR(intPoints[k][0], intPoints[k][1], solTriRotated);
+      std::vector<std::vector<double>> gradSolG;
+      gradSolG.resize(m_nFields);
+      for(std::vector<double> &v: gradSolG)
+        v.resize(3, 0.0);
+      for(size_t jField=0; jField<m_nFields; jField++)
+        for(size_t jX=0; jX<3; jX++){
+          for(size_t iEdg=0; iEdg<element->getNumEdges(); iEdg++){
+            gradSolG[jField][jX] += CRGradSF[k][iEdg][jX] * solTriRotated[iEdg][jField] ;
+          }
+        }
+      
+      double valXG = 0.0;
+      for(size_t jField=0; jField<m_nFields; jField++)
+        valXG += 0.5*tools::norm2(gradSolG[jField]);
+      
+      double N = 0.25*(64.0/(9*2*M_PI)*solXG[0]*solXG[0]);
+      valXG /= (N);
+      
+      valFunc += valXG*intWeights[k]*dets[k];
+    }
+  }
+
+  void DirichletEnergieVectCRIsoMormalized::_getRotatedGradient(Element *element, const std::vector<std::vector<double>> &solTriRotated, std::vector<double> &localRhs){
+    int pOrder = PORDER;
+    size_t nEdges = element->getNumEdges();
+    localRhs.resize(m_nFields*nEdges, 0.0);
+    
+    std::vector<double> intWeights = element->getIntegrationWeights(pOrder);
+    std::vector<double> dets = element->getDet(pOrder);
+    std::vector<std::vector<double>> CRsf = element->getCRSF(pOrder);
+    std::vector<std::vector<double>> intPoints= element->getIntegrationPoints(pOrder);
+    std::vector<std::vector<std::vector<double>>> CRGradSF = element->getCRGradSF(pOrder);
+    
+    for(int k=0; k<intWeights.size(); k++){
+      std::vector<double> solXG = element->interpolateCR(intPoints[k][0], intPoints[k][1], solTriRotated);
+      double N = 0.25*(64.0/(9*2*M_PI)*solXG[0]*solXG[0]);
+      double coefN = 0.25*64.0/(9*2*M_PI);
+      
+      std::vector<std::vector<double>> gradSolG;
+      gradSolG.resize(m_nFields);
+      for(std::vector<double> &v: gradSolG)
+        v.resize(3, 0.0);
+
+      for(size_t jField=0; jField<m_nFields; jField++)
+        for(size_t jX=0; jX<3; jX++)
+          for(size_t iEdg=0; iEdg<element->getNumEdges(); iEdg++)
+            gradSolG[jField][jX] += CRGradSF[k][iEdg][jX] * solTriRotated[iEdg][jField] ;
+
+      double valFunc = 0.0;
+      for(size_t jField=0; jField<m_nFields; jField++)
+        valFunc += 0.5*tools::norm2(gradSolG[jField]);
+      
+      for(size_t jField=0; jField<m_nFields; jField++)
+        for(size_t jEdg=0; jEdg<nEdges; jEdg++){
+          size_t locIndJ = m_nFields*jEdg + jField;
+          for(size_t iX=0; iX<3; iX++)
+            localRhs[locIndJ] += intWeights[k]*dets[k]*CRGradSF[k][jEdg][iX]*gradSolG[jField][iX]/(N);
+          if(jField == 0){
+            localRhs[locIndJ] += -1.0*coefN*2.0*solXG[jField]*CRsf[k][jEdg]*intWeights[k]*dets[k]*valFunc/(N*N);
+          }
+        }
+    }
+  }
+  
+  void DirichletEnergieVectCRIsoMormalized::getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs){
+    int pOrder = PORDER;
+    size_t nEdges = element->getNumEdges();
+    
+    std::vector<std::vector<double>> solTriRotated;
+    _getRotatedSolEl(element, solTri, solTriRotated);
+  
+    std::vector<double> localRhsRotated;
+    _getRotatedGradient(element, solTriRotated, localRhsRotated);
+    _getInvertRotatedGradient(element, localRhsRotated, localRhs);
+  }
+
   // ------------------------------- Odeco isotrope 2D framefield constraint
   void OdecoIso2DConstraint::evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc){
     int pOrder = PORDER;
@@ -153,6 +315,409 @@ namespace IFF{
   }
 
   void OdecoIso2DConstraint::getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs){
+    int pOrder = PORDER;//Warning!! Do not pick an integratino rule with negative integratino weights... Subintegration + negative integration weight can break stability of solver...
+    size_t nEdges = element->getNumEdges();
+
+    std::vector<std::vector<double>> solTriRotated;
+    _getRotatedSolEl(element, solTri, solTriRotated);
+  
+    std::vector<double> localRhsRotated;
+    _getRotatedGradient(element, solTriRotated, localRhsRotated);
+    _getInvertRotatedGradient(element, localRhsRotated, localRhs);
+  }
+
+  // ------------------------------- Odeco isotrope 2D framefield constraint normalized
+  void OdecoIso2DConstraintNormalized::evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc){
+    int pOrder = PORDER;
+    valFunc = 0.0;
+
+    std::vector<double> intWeights = element->getIntegrationWeights(pOrder);
+    std::vector<std::vector<double>> intPoints= element->getIntegrationPoints(pOrder);
+    std::vector<double> dets = element->getDet(pOrder);
+
+    std::vector<std::vector<double>> solTriRotated;
+    _getRotatedSolEl(element, solTri, solTriRotated);
+    for(int k=0; k<intWeights.size(); k++){
+      std::vector<double> solXG = element->interpolateCR(intPoints[k][0], intPoints[k][1], solTriRotated);
+      double valXG = m_penalty*(solXG[0]*solXG[0] - 18*solXG[1]*solXG[1] - 18*solXG[2]*solXG[2])*(solXG[0]*solXG[0] - 18*solXG[1]*solXG[1] - 18*solXG[2]*solXG[2]);
+      double N = 0.25*(64.0/(9*2*M_PI)*solXG[0]*solXG[0]); //DBG investigation
+      valXG /= (N*N);
+      // double N = 0.25*(64.0/(9*2*M_PI)*solXG[0]*solXG[0]) + 0.01; //DBG investigation
+      // valXG /= (N*N*N*N);
+      //
+      valFunc += valXG*intWeights[k]*dets[k];
+    }
+  }
+
+  void OdecoIso2DConstraintNormalized::_getRotatedGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs){
+    int pOrder = PORDER;
+    size_t nEdges = element->getNumEdges();
+
+    std::vector<double> intWeights = element->getIntegrationWeights(pOrder);
+    std::vector<std::vector<double>> intPoints= element->getIntegrationPoints(pOrder);
+    std::vector<double> dets = element->getDet(pOrder);
+    std::vector<std::vector<double>> CRsf = element->getCRSF(pOrder);
+
+    double valGrad[3] = {1.0, -18.0, -18.0};
+    localRhs.resize(m_nFields*nEdges, 0.0);
+    for(int k=0; k<intWeights.size(); k++){
+      std::vector<double> solXG = element->interpolateCR(intPoints[k][0], intPoints[k][1], solTri);
+      double valFunc = (solXG[0]*solXG[0] - 18*solXG[1]*solXG[1] - 18*solXG[2]*solXG[2]);
+      double N = 0.25*(64.0/(9*2*M_PI)*solXG[0]*solXG[0]); //DBG investigation
+      // double N = 0.25*(64.0/(9*2*M_PI)*solXG[0]*solXG[0]) + 0.01; //DBG investigation
+      double coefN = 0.25*64.0/(9*2*M_PI);
+      
+      for(size_t jField=0; jField<m_nFields; jField++)
+        for(size_t jEdg=0; jEdg<nEdges; jEdg++){
+          size_t locIndJ = m_nFields*jEdg + jField;
+          localRhs[locIndJ] += m_penalty*intWeights[k]*dets[k]*4*valFunc*valGrad[jField]*solXG[jField]*CRsf[k][jEdg]/(N*N);
+          // localRhs[locIndJ] += m_penalty*intWeights[k]*dets[k]*4*valFunc*valGrad[jField]*solXG[jField]*CRsf[k][jEdg]/(N*N*N*N);
+          if(jField == 0){
+            localRhs[locIndJ] += -2.0*coefN*2*solXG[jField]*CRsf[k][jEdg]*m_penalty*intWeights[k]*dets[k]*valFunc*valFunc/(N*N*N);
+            // localRhs[locIndJ] += -4.0*coefN*2*solXG[jField]*CRsf[k][jEdg]*m_penalty*intWeights[k]*dets[k]*valFunc*valFunc/(N*N*N*N*N);
+          }
+        }
+    }
+  }
+
+  void OdecoIso2DConstraintNormalized::getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs){
+    int pOrder = PORDER;//Warning!! Do not pick an integratino rule with negative integratino weights... Subintegration + negative integration weight can break stability of solver...
+    size_t nEdges = element->getNumEdges();
+
+    std::vector<std::vector<double>> solTriRotated;
+    _getRotatedSolEl(element, solTri, solTriRotated);
+  
+    std::vector<double> localRhsRotated;
+    _getRotatedGradient(element, solTriRotated, localRhsRotated);
+    _getInvertRotatedGradient(element, localRhsRotated, localRhs);
+  }
+  
+  // ------------------------------- Odeco isotrope 2D framefield constraint normalized no area
+  void OdecoIso2DConstraintNormalizedNoArea::evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc){
+    int pOrder = PORDER;
+    valFunc = 0.0;
+
+    std::vector<double> intWeights = element->getIntegrationWeights(pOrder);
+    std::vector<std::vector<double>> intPoints= element->getIntegrationPoints(pOrder);
+    std::vector<double> dets = element->getDet(pOrder);
+
+    std::vector<std::vector<double>> solTriRotated;
+    _getRotatedSolEl(element, solTri, solTriRotated);
+    for(int k=0; k<intWeights.size(); k++){
+      std::vector<double> solXG = element->interpolateCR(intPoints[k][0], intPoints[k][1], solTriRotated);
+      double valXG = m_penalty*(solXG[0]*solXG[0] - 18*solXG[1]*solXG[1] - 18*solXG[2]*solXG[2])*(solXG[0]*solXG[0] - 18*solXG[1]*solXG[1] - 18*solXG[2]*solXG[2]);
+      double N = 0.25*(64.0/(9*2*M_PI)*solXG[0]*solXG[0]); //DBG investigation
+      valXG /= (N*N);
+      // double N = 0.25*(64.0/(9*2*M_PI)*solXG[0]*solXG[0]) + 0.01; //DBG investigation
+      // valXG /= (N*N*N*N);
+      //
+      valFunc += valXG*intWeights[k]*dets[k]/element->getArea();
+    }
+  }
+
+  void OdecoIso2DConstraintNormalizedNoArea::_getRotatedGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs){
+    int pOrder = PORDER;
+    size_t nEdges = element->getNumEdges();
+
+    std::vector<double> intWeights = element->getIntegrationWeights(pOrder);
+    std::vector<std::vector<double>> intPoints= element->getIntegrationPoints(pOrder);
+    std::vector<double> dets = element->getDet(pOrder);
+    std::vector<std::vector<double>> CRsf = element->getCRSF(pOrder);
+
+    double valGrad[3] = {1.0, -18.0, -18.0};
+    localRhs.resize(m_nFields*nEdges, 0.0);
+    for(int k=0; k<intWeights.size(); k++){
+      std::vector<double> solXG = element->interpolateCR(intPoints[k][0], intPoints[k][1], solTri);
+      double valFunc = (solXG[0]*solXG[0] - 18*solXG[1]*solXG[1] - 18*solXG[2]*solXG[2]);
+      double N = 0.25*(64.0/(9*2*M_PI)*solXG[0]*solXG[0]); //DBG investigation
+      // double N = 0.25*(64.0/(9*2*M_PI)*solXG[0]*solXG[0]) + 0.01; //DBG investigation
+      double coefN = 0.25*64.0/(9*2*M_PI);
+      
+      for(size_t jField=0; jField<m_nFields; jField++)
+        for(size_t jEdg=0; jEdg<nEdges; jEdg++){
+          size_t locIndJ = m_nFields*jEdg + jField;
+          localRhs[locIndJ] += m_penalty*intWeights[k]*dets[k]/element->getArea()*4*valFunc*valGrad[jField]*solXG[jField]*CRsf[k][jEdg]/(N*N);
+          // localRhs[locIndJ] += m_penalty*intWeights[k]*dets[k]*4*valFunc*valGrad[jField]*solXG[jField]*CRsf[k][jEdg]/(N*N*N*N);
+          if(jField == 0){
+            localRhs[locIndJ] += -2.0*coefN*2*solXG[jField]*CRsf[k][jEdg]*m_penalty*intWeights[k]*dets[k]/element->getArea()*valFunc*valFunc/(N*N*N);
+            // localRhs[locIndJ] += -4.0*coefN*2*solXG[jField]*CRsf[k][jEdg]*m_penalty*intWeights[k]*dets[k]*valFunc*valFunc/(N*N*N*N*N);
+          }
+        }
+    }
+  }
+
+  void OdecoIso2DConstraintNormalizedNoArea::getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs){
+    int pOrder = PORDER;//Warning!! Do not pick an integratino rule with negative integratino weights... Subintegration + negative integration weight can break stability of solver...
+    size_t nEdges = element->getNumEdges();
+
+    std::vector<std::vector<double>> solTriRotated;
+    _getRotatedSolEl(element, solTri, solTriRotated);
+  
+    std::vector<double> localRhsRotated;
+    _getRotatedGradient(element, solTriRotated, localRhsRotated);
+    _getInvertRotatedGradient(element, localRhsRotated, localRhs);
+  }
+
+  // ------------------------------- Odeco isotrope 2D framefield constraint normalized with log smoothness weight
+  void OdecoIso2DConstraintNormalizedWithLogSmoothWeight::evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc){
+    int pOrder = PORDER;
+    valFunc = 0.0;
+
+    std::vector<double> intWeights = element->getIntegrationWeights(pOrder);
+    std::vector<std::vector<double>> intPoints= element->getIntegrationPoints(pOrder);
+    std::vector<double> dets = element->getDet(pOrder);
+    std::vector<std::vector<std::vector<double>>> CRGradSF = element->getCRGradSF(pOrder);
+    
+    std::vector<std::vector<double>> solTriRotated;
+    _getRotatedSolEl(element, solTri, solTriRotated);
+    for(int k=0; k<intWeights.size(); k++){
+      std::vector<double> solXG = element->interpolateCR(intPoints[k][0], intPoints[k][1], solTriRotated);
+      std::vector<std::vector<double>> gradSolG;
+      gradSolG.resize(m_nFields);
+      for(std::vector<double> &v: gradSolG)
+        v.resize(3, 0.0);
+      for(size_t jField=0; jField<m_nFields; jField++)
+        for(size_t jX=0; jX<3; jX++){
+          for(size_t iEdg=0; iEdg<element->getNumEdges(); iEdg++){
+            gradSolG[jField][jX] += CRGradSF[k][iEdg][jX] * solTriRotated[iEdg][jField] ;
+          }
+        }
+      
+      double valXG = m_penalty*(solXG[0]*solXG[0] - 18*solXG[1]*solXG[1] - 18*solXG[2]*solXG[2])*(solXG[0]*solXG[0] - 18*solXG[1]*solXG[1] - 18*solXG[2]*solXG[2]);
+      double N = 0.25*(64.0/(9*2*M_PI)*solXG[0]*solXG[0]);
+      valXG /= (N*N);
+
+      double valWeight = 0.0;
+      for(size_t jField=0; jField<m_nFields; jField++)
+        valWeight += 0.5*tools::norm2(gradSolG[jField]);
+      // valWeight = log(1.0+valWeight/N)/log(2);
+      valWeight = log(1.0+valWeight/N)/log(2);
+      
+      // valFunc += valXG*intWeights[k]*0.5;
+      valFunc += valWeight*valXG*intWeights[k]*dets[k];
+      // valFunc += valXG*intWeights[k]*dets[k];
+    }
+  }
+
+  void OdecoIso2DConstraintNormalizedWithLogSmoothWeight::_getRotatedGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs){
+    int pOrder = PORDER;
+    size_t nEdges = element->getNumEdges();
+
+    std::vector<double> intWeights = element->getIntegrationWeights(pOrder);
+    std::vector<std::vector<double>> intPoints= element->getIntegrationPoints(pOrder);
+    std::vector<double> dets = element->getDet(pOrder);
+    std::vector<std::vector<double>> CRsf = element->getCRSF(pOrder);
+    std::vector<std::vector<std::vector<double>>> CRGradSF = element->getCRGradSF(pOrder);
+
+    double valGrad[3] = {1.0, -18.0, -18.0};
+    localRhs.resize(m_nFields*nEdges, 0.0);
+    for(int k=0; k<intWeights.size(); k++){
+      std::vector<std::vector<double>> gradSolG;
+      gradSolG.resize(m_nFields);
+      for(std::vector<double> &v: gradSolG)
+        v.resize(3, 0.0);
+
+      for(size_t jField=0; jField<m_nFields; jField++)
+        for(size_t jX=0; jX<3; jX++)
+          for(size_t iEdg=0; iEdg<element->getNumEdges(); iEdg++)
+            gradSolG[jField][jX] += CRGradSF[k][iEdg][jX] * solTri[iEdg][jField] ;
+      
+      std::vector<double> solXG = element->interpolateCR(intPoints[k][0], intPoints[k][1], solTri);
+      double valFunc = (solXG[0]*solXG[0] - 18*solXG[1]*solXG[1] - 18*solXG[2]*solXG[2]);
+      double N = 0.25*(64.0/(9*2*M_PI)*solXG[0]*solXG[0]);
+
+      double valWeightGrad = 0.0;
+      for(size_t jField=0; jField<m_nFields; jField++)
+        valWeightGrad += 0.5*tools::norm2(gradSolG[jField]);
+      double valWeight = log(1.0+valWeightGrad/N)/log(2);
+      
+      double coefN = 0.25*64.0/(9*2*M_PI);
+      
+      for(size_t jField=0; jField<m_nFields; jField++)
+        for(size_t jEdg=0; jEdg<nEdges; jEdg++){
+          size_t locIndJ = m_nFields*jEdg + jField;
+          // localRhs[locIndJ] += m_penalty*intWeights[k]*0.5*4*valFunc*valGrad[jField]*solXG[jField]*CRsf[k][jEdg]/(N*N);
+          localRhs[locIndJ] += m_penalty*(valWeight)*intWeights[k]*dets[k]*4*valFunc*valGrad[jField]*solXG[jField]*CRsf[k][jEdg]/(N*N);
+          for(size_t iX=0; iX<3; iX++)
+            localRhs[locIndJ] += m_penalty*(1.0/(1.0+valWeightGrad/N))/log(2)*(CRGradSF[k][jEdg][iX]*gradSolG[jField][iX]/N)*intWeights[k]*dets[k]*valFunc*valFunc/(N*N);
+          // if(jField == 0){
+          //   localRhs[locIndJ] += -1.0*m_penalty*coefN*2.0*solXG[jField]*CRsf[k][jEdg]*intWeights[k]*dets[k]*(valWeight/(N*N))*valFunc*valFunc/(N*N);
+          // }
+          if(jField == 0){
+            // localRhs[locIndJ] += -2.0*coefN*2*solXG[jField]*CRsf[k][jEdg]*m_penalty*intWeights[k]*0.5*valFunc*valFunc/(N*N*N);
+            localRhs[locIndJ] += -2.0*(valWeight)*coefN*2*solXG[jField]*CRsf[k][jEdg]*m_penalty*intWeights[k]*dets[k]*valFunc*valFunc/(N*N*N);
+            localRhs[locIndJ] += -(1.0/(1.0+valWeightGrad/N)/log(2))*valWeightGrad/(N*N)*coefN*2*solXG[jField]*CRsf[k][jEdg]*m_penalty*intWeights[k]*dets[k]*valFunc*valFunc/(N*N);
+          }
+        }
+    }
+  }
+
+  void OdecoIso2DConstraintNormalizedWithLogSmoothWeight::getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs){
+    int pOrder = PORDER;//Warning!! Do not pick an integratino rule with negative integratino weights... Subintegration + negative integration weight can break stability of solver...
+    size_t nEdges = element->getNumEdges();
+
+    std::vector<std::vector<double>> solTriRotated;
+    _getRotatedSolEl(element, solTri, solTriRotated);
+  
+    std::vector<double> localRhsRotated;
+    _getRotatedGradient(element, solTriRotated, localRhsRotated);
+    _getInvertRotatedGradient(element, localRhsRotated, localRhs);
+  }
+
+  // ------------------------------- Odeco isotrope 2D framefield constraint normalized with smoothness weight
+  void OdecoIso2DConstraintNormalizedWithSmoothWeight::evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc){
+    int pOrder = PORDER;
+    valFunc = 0.0;
+
+    std::vector<double> intWeights = element->getIntegrationWeights(pOrder);
+    std::vector<std::vector<double>> intPoints= element->getIntegrationPoints(pOrder);
+    std::vector<double> dets = element->getDet(pOrder);
+    std::vector<std::vector<std::vector<double>>> CRGradSF = element->getCRGradSF(pOrder);
+    
+    std::vector<std::vector<double>> solTriRotated;
+    _getRotatedSolEl(element, solTri, solTriRotated);
+    for(int k=0; k<intWeights.size(); k++){
+      std::vector<double> solXG = element->interpolateCR(intPoints[k][0], intPoints[k][1], solTriRotated);
+      std::vector<std::vector<double>> gradSolG;
+      gradSolG.resize(m_nFields);
+      for(std::vector<double> &v: gradSolG)
+        v.resize(3, 0.0);
+      for(size_t jField=0; jField<m_nFields; jField++)
+        for(size_t jX=0; jX<3; jX++){
+          for(size_t iEdg=0; iEdg<element->getNumEdges(); iEdg++){
+            gradSolG[jField][jX] += CRGradSF[k][iEdg][jX] * solTriRotated[iEdg][jField] ;
+          }
+        }
+      
+      double valXG = m_penalty*(solXG[0]*solXG[0] - 18*solXG[1]*solXG[1] - 18*solXG[2]*solXG[2])*(solXG[0]*solXG[0] - 18*solXG[1]*solXG[1] - 18*solXG[2]*solXG[2]);
+      double N = 0.25*(64.0/(9*2*M_PI)*solXG[0]*solXG[0]);
+      valXG /= (N*N);
+
+      double valWeight = 0.0;
+      for(size_t jField=0; jField<m_nFields; jField++)
+        valWeight += 0.5*tools::norm2(gradSolG[jField]);
+      valWeight = valWeight/N*element->getArea();
+      
+      valFunc += valWeight*valXG*intWeights[k]*dets[k];
+    }
+  }
+
+  void OdecoIso2DConstraintNormalizedWithSmoothWeight::_getRotatedGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs){
+    int pOrder = PORDER;
+    size_t nEdges = element->getNumEdges();
+
+    std::vector<double> intWeights = element->getIntegrationWeights(pOrder);
+    std::vector<std::vector<double>> intPoints= element->getIntegrationPoints(pOrder);
+    std::vector<double> dets = element->getDet(pOrder);
+    std::vector<std::vector<double>> CRsf = element->getCRSF(pOrder);
+    std::vector<std::vector<std::vector<double>>> CRGradSF = element->getCRGradSF(pOrder);
+
+    double valGrad[3] = {1.0, -18.0, -18.0};
+    localRhs.resize(m_nFields*nEdges, 0.0);
+    for(int k=0; k<intWeights.size(); k++){
+      std::vector<std::vector<double>> gradSolG;
+      gradSolG.resize(m_nFields);
+      for(std::vector<double> &v: gradSolG)
+        v.resize(3, 0.0);
+
+      for(size_t jField=0; jField<m_nFields; jField++)
+        for(size_t jX=0; jX<3; jX++)
+          for(size_t iEdg=0; iEdg<element->getNumEdges(); iEdg++)
+            gradSolG[jField][jX] += CRGradSF[k][iEdg][jX] * solTri[iEdg][jField] ;
+      
+      std::vector<double> solXG = element->interpolateCR(intPoints[k][0], intPoints[k][1], solTri);
+      double valFunc = (solXG[0]*solXG[0] - 18*solXG[1]*solXG[1] - 18*solXG[2]*solXG[2]);
+      double N = 0.25*(64.0/(9*2*M_PI)*solXG[0]*solXG[0]);
+
+      double valWeightGrad = 0.0;
+      for(size_t jField=0; jField<m_nFields; jField++)
+        valWeightGrad += 0.5*tools::norm2(gradSolG[jField]);
+      double valWeight = valWeightGrad/N*element->getArea();
+      
+      double coefN = 0.25*64.0/(9*2*M_PI);
+      
+      for(size_t jField=0; jField<m_nFields; jField++)
+        for(size_t jEdg=0; jEdg<nEdges; jEdg++){
+          size_t locIndJ = m_nFields*jEdg + jField;
+          // localRhs[locIndJ] += m_penalty*intWeights[k]*0.5*4*valFunc*valGrad[jField]*solXG[jField]*CRsf[k][jEdg]/(N*N);
+          localRhs[locIndJ] += m_penalty*(valWeight)*intWeights[k]*dets[k]*4*valFunc*valGrad[jField]*solXG[jField]*CRsf[k][jEdg]/(N*N);
+          for(size_t iX=0; iX<3; iX++)
+            localRhs[locIndJ] += m_penalty*(CRGradSF[k][jEdg][iX]*gradSolG[jField][iX]/N*element->getArea())*intWeights[k]*dets[k]*valFunc*valFunc/(N*N);
+          // if(jField == 0){
+          //   localRhs[locIndJ] += -1.0*m_penalty*coefN*2.0*solXG[jField]*CRsf[k][jEdg]*intWeights[k]*dets[k]*(valWeight/(N*N))*valFunc*valFunc/(N*N);
+          // }
+          if(jField == 0){
+            // localRhs[locIndJ] += -2.0*coefN*2*solXG[jField]*CRsf[k][jEdg]*m_penalty*intWeights[k]*0.5*valFunc*valFunc/(N*N*N);
+            localRhs[locIndJ] += -2.0*(valWeight)*coefN*2*solXG[jField]*CRsf[k][jEdg]*m_penalty*intWeights[k]*dets[k]*valFunc*valFunc/(N*N*N);
+            localRhs[locIndJ] += -valWeightGrad/(N*N)*element->getArea()*coefN*2*solXG[jField]*CRsf[k][jEdg]*m_penalty*intWeights[k]*dets[k]*valFunc*valFunc/(N*N);
+          }
+        }
+    }
+  }
+
+  void OdecoIso2DConstraintNormalizedWithSmoothWeight::getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs){
+    int pOrder = PORDER;//Warning!! Do not pick an integratino rule with negative integratino weights... Subintegration + negative integration weight can break stability of solver...
+    size_t nEdges = element->getNumEdges();
+
+    std::vector<std::vector<double>> solTriRotated;
+    _getRotatedSolEl(element, solTri, solTriRotated);
+  
+    std::vector<double> localRhsRotated;
+    _getRotatedGradient(element, solTriRotated, localRhsRotated);
+    _getInvertRotatedGradient(element, localRhsRotated, localRhs);
+  }
+
+  // ------------------------------- Odeco isotrope 2D framefield constraint normalized at edges
+  void OdecoIso2DConstraintNormalizedEdge::evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc){
+    int pOrder = PORDER;
+    valFunc = 0.0;
+
+    std::vector<double> intWeights = element->getIntegrationWeights(pOrder);
+    std::vector<std::vector<double>> intPoints= element->getIntegrationPoints(pOrder);
+    std::vector<double> dets = element->getDet(pOrder);
+
+    std::vector<std::vector<double>> solTriRotated;
+    _getRotatedSolEl(element, solTri, solTriRotated);
+    for(int k=0; k<element->getNumEdges(); k++){
+      std::vector<double> solXG = solTriRotated[k];
+      double valXG = m_penalty*(solXG[0]*solXG[0] - 18*solXG[1]*solXG[1] - 18*solXG[2]*solXG[2])*(solXG[0]*solXG[0] - 18*solXG[1]*solXG[1] - 18*solXG[2]*solXG[2]);
+      double N = 0.25*(64.0/(9*2*M_PI)*solXG[0]*solXG[0]);
+      valXG /= (N*N);
+      valFunc += valXG*1.0/3.0*element->getArea();
+    }
+  }
+
+  void OdecoIso2DConstraintNormalizedEdge::_getRotatedGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs){
+    int pOrder = PORDER;
+    size_t nEdges = element->getNumEdges();
+
+    std::vector<double> intWeights = element->getIntegrationWeights(pOrder);
+    std::vector<std::vector<double>> intPoints= element->getIntegrationPoints(pOrder);
+    std::vector<double> dets = element->getDet(pOrder);
+    std::vector<std::vector<double>> CRsf = element->getCRSF(pOrder);
+
+    double valGrad[3] = {1.0, -18.0, -18.0};
+    localRhs.resize(m_nFields*nEdges, 0.0);
+    for(int k=0; k<element->getNumEdges(); k++){
+      std::vector<double> solXG = solTri[k];
+      double valFunc = (solXG[0]*solXG[0] - 18*solXG[1]*solXG[1] - 18*solXG[2]*solXG[2]);
+      double N = 0.25*(64.0/(9*2*M_PI)*solXG[0]*solXG[0]);
+      double coefN = 0.25*64.0/(9*2*M_PI);
+      
+      for(size_t jField=0; jField<m_nFields; jField++){
+        // for(size_t jEdg=0; jEdg<nEdges; jEdg++){
+        size_t jEdg = k;
+        size_t locIndJ = m_nFields*jEdg + jField;
+        localRhs[locIndJ] += m_penalty*1.0/3.0*element->getArea()*4*valFunc*valGrad[jField]*solXG[jField]/(N*N);
+        if(jField == 0){
+          localRhs[locIndJ] += -2.0*coefN*2*solXG[jField]*m_penalty*1.0/3.0*element->getArea()*valFunc*valFunc/(N*N*N);
+        }
+        // }
+      }
+    }
+  }
+
+  void OdecoIso2DConstraintNormalizedEdge::getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs){
     int pOrder = PORDER;//Warning!! Do not pick an integratino rule with negative integratino weights... Subintegration + negative integration weight can break stability of solver...
     size_t nEdges = element->getNumEdges();
 
@@ -231,6 +796,82 @@ namespace IFF{
     _getInvertRotatedGradient(element, localRhsRotated, localRhs);
   }
 
+  // ------------------------------- Odeco anisotrope 2D framefield constraint normalized
+  void OdecoAniso2DConstraintNormalized::evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc){
+    int pOrder = PORDER;
+    valFunc = 0.0;
+
+    std::vector<double> intWeights = element->getIntegrationWeights(pOrder);
+    std::vector<std::vector<double>> intPoints= element->getIntegrationPoints(pOrder);
+    std::vector<double> dets = element->getDet(pOrder);
+
+    std::vector<std::vector<double>> solTriRotated;
+    _getRotatedSolEl(element, solTri, solTriRotated);
+    for(int k=0; k<intWeights.size(); k++){
+      std::vector<double> solXG = element->interpolateCR(intPoints[k][0], intPoints[k][1], solTriRotated);
+      double c1 = m_weightsC[0]*(solXG[0]*solXG[0] - 18*solXG[3]*solXG[3] - 18*solXG[4]*solXG[4]);
+      double c2 = m_weightsC[1]*(sqrt(2)*solXG[0]*solXG[1] - 6*solXG[1]*solXG[3] - 6*solXG[2]*solXG[4]);
+      double c3 = m_weightsC[2]*(sqrt(2)*solXG[0]*solXG[2] - 6*solXG[1]*solXG[4] + 6*solXG[2]*solXG[3]);
+      double N = 0.25*(64.0/(9*2*M_PI)*solXG[0]*solXG[0] - 4.0/M_PI*solXG[1]*solXG[1] - 4/M_PI*solXG[2]*solXG[2]);
+      double valXG = m_penalty*(c1*c1 + c2*c2 + c3*c3);
+      valXG /= (N*N);
+      valFunc += valXG*intWeights[k]*dets[k];
+    }
+  }
+
+  void OdecoAniso2DConstraintNormalized::_getRotatedGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs){
+    int pOrder = PORDER;
+    size_t nEdges = element->getNumEdges();
+
+    std::vector<double> intWeights = element->getIntegrationWeights(pOrder);
+    std::vector<std::vector<double>> intPoints= element->getIntegrationPoints(pOrder);
+    std::vector<double> dets = element->getDet(pOrder);
+    std::vector<std::vector<double>> CRsf = element->getCRSF(pOrder);
+
+    localRhs.resize(m_nFields*nEdges, 0.0);
+    for(int k=0; k<intWeights.size(); k++){
+      std::vector<double> solXG = element->interpolateCR(intPoints[k][0], intPoints[k][1], solTri);
+      double N = 0.25*(64.0/(9*2*M_PI)*solXG[0]*solXG[0] - 4.0/M_PI*solXG[1]*solXG[1] - 4/M_PI*solXG[2]*solXG[2]);
+      std::vector<double> coefsN{0.25*64.0/(9*2*M_PI), -0.25*4.0/M_PI, -0.25*4.0/M_PI};
+      
+      double c1 = m_weightsC[0]*(solXG[0]*solXG[0] - 18*solXG[3]*solXG[3] - 18*solXG[4]*solXG[4]);
+      double c2 = m_weightsC[1]*(sqrt(2)*solXG[0]*solXG[1] - 6*solXG[1]*solXG[3] - 6*solXG[2]*solXG[4]);
+      double c3 = m_weightsC[2]*(sqrt(2)*solXG[0]*solXG[2] - 6*solXG[1]*solXG[4] + 6*solXG[2]*solXG[3]);
+      double valXG = m_penalty*(c1*c1 + c2*c2 + c3*c3);
+
+      double valGradC1[5] = {2*solXG[0], 0.0, 0.0, -18.0*2*solXG[3], -18.0*2*solXG[4]};
+      for(size_t l=0; l<m_nFields; l++)
+	valGradC1[l] *= m_weightsC[0];
+      double valGradC2[5] = {sqrt(2)*solXG[1], sqrt(2)*solXG[0] - 6.0*solXG[3], -6.0*solXG[4], -6.0*solXG[1], -6.0*solXG[2]};
+      for(size_t l=0; l<m_nFields; l++)
+	valGradC2[l] *= m_weightsC[1];
+      double valGradC3[5] = {sqrt(2)*solXG[2], -6.0*solXG[4], sqrt(2)*solXG[0] + 6.0*solXG[3], 6.0*solXG[2], -6.0*solXG[1]};
+      for(size_t l=0; l<m_nFields; l++)
+	valGradC3[l] *= m_weightsC[2];
+      
+      for(size_t jField=0; jField<m_nFields; jField++)
+        for(size_t jEdg=0; jEdg<nEdges; jEdg++){
+          size_t locIndJ = m_nFields*jEdg + jField;
+          localRhs[locIndJ] += m_penalty*intWeights[k]*dets[k]*2*(c1*valGradC1[jField]*CRsf[k][jEdg] + c2*valGradC2[jField]*CRsf[k][jEdg] + c3*valGradC3[jField]*CRsf[k][jEdg])/(N*N);
+          if(jField < 3)
+            localRhs[locIndJ] += -2*coefsN[jField]*2*CRsf[k][jEdg]*solXG[jField]*intWeights[k]*dets[k]*valXG/(N*N*N);
+                    
+        }
+    }
+  }
+
+  void OdecoAniso2DConstraintNormalized::getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs){
+    int pOrder = PORDER;
+    size_t nEdges = element->getNumEdges();
+
+    std::vector<std::vector<double>> solTriRotated;
+    _getRotatedSolEl(element, solTri, solTriRotated);
+  
+    std::vector<double> localRhsRotated;
+    _getRotatedGradient(element, solTriRotated, localRhsRotated);
+    _getInvertRotatedGradient(element, localRhsRotated, localRhs);
+  }
+
   // ------------------------------- Integrability objective function for Odeco isotrope 2D framefield representation
   void LBOdecoIso2D::evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc){
     int pOrder = PORDER;
@@ -270,7 +911,8 @@ namespace IFF{
       double N = 0.25*(64.0/(9*2*M_PI)*solXG[0]*solXG[0]);
 
       double valXG = m_penalty*0.5*(LBx*LBx + LBy*LBy)/(N*N);
-      valFunc += valXG*intWeights[k]*dets[k];
+      valFunc += valXG*intWeights[k]*dets[k];//DBG equilibrium
+      // valFunc += valXG*intWeights[k];
     }
   }
 
@@ -350,6 +992,35 @@ namespace IFF{
           }
         }
       }
+      // for(size_t iF=0; iF<m_nFields; iF++){//DBG equilibrium
+      //   for(size_t iN=0; iN<nEdges; iN++){
+      //     size_t locIndI = m_nFields*iN + iF;
+      //     if(iF==0){
+      //       localRhs[locIndI] += m_penalty*intWeights[k]*LBx*2.0/(3*M_PI)*(CRsf[k][iN]*gradSolG[0][1] + solXG[0]*CRGradSF[k][iN][1])/(N*N);
+      //       localRhs[locIndI] += -m_penalty*intWeights[k]*2*valFunc*(2*coeffsN[iF]*solXG[iF]*CRsf[k][iN])/(N);
+      //     }
+      //     if(iF==1){
+      //       localRhs[locIndI] += m_penalty*intWeights[k]*LBx*4/M_PI*(-solXG[2]*CRGradSF[k][iN][0] + CRsf[k][iN]*gradSolG[1][1] + solXG[1]*CRGradSF[k][iN][1] + CRsf[k][iN]*gradSolG[2][0])/(N*N);
+      //     }
+      //     if(iF==2){
+      //       localRhs[locIndI] += m_penalty*intWeights[k]*LBx*4/M_PI*(-CRsf[k][iN]*gradSolG[1][0] + solXG[1]*CRGradSF[k][iN][0] + CRsf[k][iN]*gradSolG[2][1] + solXG[2]*CRGradSF[k][iN][1])/(N*N);
+      //     }
+      //   }
+      // }
+      // for(size_t iF=0; iF<m_nFields; iF++){
+      //   for(size_t iN=0; iN<nEdges; iN++){
+      //     size_t locIndI = m_nFields*iN + iF;
+      //     if(iF==0){
+      //       localRhs[locIndI] += m_penalty*intWeights[k]*LBy*2.0/(3*M_PI)*(-CRsf[k][iN]*gradSolG[0][0] - solXG[0]*CRGradSF[k][iN][0])/(N*N);
+      //     }
+      //     if(iF==1){
+      //       localRhs[locIndI] += m_penalty*intWeights[k]*LBy*4/M_PI*(-solXG[2]*CRGradSF[k][iN][1] - CRsf[k][iN]*gradSolG[1][0] - solXG[1]*CRGradSF[k][iN][0] + CRsf[k][iN]*gradSolG[2][1])/(N*N);
+      //     }
+      //     if(iF==2){
+      //       localRhs[locIndI] += m_penalty*intWeights[k]*LBy*4/M_PI*(-CRsf[k][iN]*gradSolG[1][1] + solXG[1]*CRGradSF[k][iN][1] - CRsf[k][iN]*gradSolG[2][0] - solXG[2]*CRGradSF[k][iN][0])/(N*N);
+      //     }
+      //   }
+      // }
     }
   }
   

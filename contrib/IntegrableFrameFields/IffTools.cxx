@@ -6,6 +6,8 @@
 #include <GaussIntegration.h>
 #include <fullMatrix.h>
 #include <GModel.h>
+#include <Visualization.hxx>
+#include <queue>
 
 namespace IFF{
   namespace tools{
@@ -160,6 +162,17 @@ namespace IFF{
       
       return res; 
     }
+    void projectOnHyperPlan(const std::vector<double> &normalHyperPlan, std::vector<double> &v){
+      if(normalHyperPlan.size() != v.size()){
+        std::cout << "Uncorrect used of IFF::tools:getProjectionOnHyperPlan. sizes do not match" << std::endl;
+        exit(0);
+      }
+      std::vector<double> normalizedDir = getNormalizedVector(normalHyperPlan);
+      double dp = dotprod(normalizedDir, v);
+      std::vector<double> res(v.size(), 0.0);
+      for(size_t j=0; j<v.size(); j++)
+        v[j] -= dp*normalizedDir[j];
+    }
     std::vector<double> getVectInNewBase(const std::vector<double> &u, const std::vector<double> &v, const std::vector<double> &w, const std::vector<double> &vect){
       bool isBaseOk = true;
       if(u.size() != 3 || v.size() != 3 || w.size() != 3 || vect.size() != 3)
@@ -248,6 +261,93 @@ namespace IFF{
     }
   }
 
+  std::vector<std::vector<double>> Element::getEdgesParamCoordInParentElem(){
+    std::vector<std::vector<double>> coordEdgesInParentElem;
+    switch(m_childType){
+    case CHILDTYPE::HALF0:
+      coordEdgesInParentElem.resize(getNumEdges());
+      if(m_childID == 0){
+        coordEdgesInParentElem[0] = {0.25, 0.0, 0.0};
+        coordEdgesInParentElem[1] = {0.25, 0.5, 0.0};
+        coordEdgesInParentElem[2] = {0.0, 0.5, 0.0};
+      }
+      else if(m_childID == 1){
+        coordEdgesInParentElem[0] = {0.75, 0.0, 0.0};
+        coordEdgesInParentElem[1] = {0.5, 0.5, 0.0};
+        coordEdgesInParentElem[2] = {0.25, 0.5, 0.0};
+      }
+      else{
+        std::cout << "HALF0: Unknown child type" << std::endl;
+        exit(0);
+      }
+      break;
+    case CHILDTYPE::HALF1:
+      coordEdgesInParentElem.resize(getNumEdges());
+      if(m_childID == 0){
+        coordEdgesInParentElem[0] = {0.75, 0.25, 0.0};
+        coordEdgesInParentElem[1] = {0.25, 0.25, 0.0};
+        coordEdgesInParentElem[2] = {0.5, 0.0, 0.0};
+      }
+      else if(m_childID == 1){
+        coordEdgesInParentElem[0] = {0.25, 0.75, 0.0};
+        coordEdgesInParentElem[1] = {0.0, 0.5, 0.0};
+        coordEdgesInParentElem[2] = {0.25, 0.25, 0.0};
+      }
+      else{
+        std::cout << "HALF1: Unknown child type" << std::endl;
+        exit(0);
+      }
+      break;
+    case CHILDTYPE::HALF2:
+      coordEdgesInParentElem.resize(getNumEdges());
+      if(m_childID == 0){
+        coordEdgesInParentElem[0] = {0.0, 0.75, 0.0};
+        coordEdgesInParentElem[1] = {0.5, 0.25, 0.0};
+        coordEdgesInParentElem[2] = {0.5, 0.5, 0.0};
+      }
+      else if(m_childID == 1){
+        coordEdgesInParentElem[0] = {0.0, 0.25, 0.0};
+        coordEdgesInParentElem[1] = {0.5, 0.0, 0.0};
+        coordEdgesInParentElem[2] = {0.5, 0.25, 0.0};
+      }
+      else{
+        std::cout << "HALF2: Unknown child type" << std::endl;
+        exit(0);
+      }
+      break;
+    case CHILDTYPE::FRACTAL:
+      coordEdgesInParentElem.resize(getNumEdges());
+      if(m_childID == 0){
+        coordEdgesInParentElem[0] = {0.5, 0.25, 0.0};
+        coordEdgesInParentElem[1] = {0.25, 0.5, 0.0};
+        coordEdgesInParentElem[2] = {0.25, 0.25, 0.0};
+      }
+      else if(m_childID == 1){
+        coordEdgesInParentElem[0] = {0.25, 0.0, 0.0};
+        coordEdgesInParentElem[1] = {0.25, 0.25, 0.0};
+        coordEdgesInParentElem[2] = {0.0, 0.25, 0.0};
+      }
+      else if(m_childID == 2){
+        coordEdgesInParentElem[0] = {0.75, 0.0, 0.0};
+        coordEdgesInParentElem[1] = {0.75, 0.25, 0.0};
+        coordEdgesInParentElem[2] = {0.5, 0.25, 0.0};
+      }
+      else if(m_childID == 3){
+        coordEdgesInParentElem[0] = {0.25, 0.5, 0.0};
+        coordEdgesInParentElem[1] = {0.25, 0.75, 0.0};
+        coordEdgesInParentElem[2] = {0.0, 0.75, 0.0};
+      }
+      else{
+        std::cout << "FRACTAL: Unknown child type" << std::endl;
+        exit(0);
+      }
+      break;
+    default:
+      return coordEdgesInParentElem;
+    }
+    return coordEdgesInParentElem;
+  }
+  
   std::vector<double> Element::getDirEdg(int iEdg){
     if(iEdg > m_e->getNumEdges()){
       std::cout << "Error in Element::getDirEdg. Request for the direction of an unexisting edge." << std::endl;
@@ -456,7 +556,7 @@ namespace IFF{
     return tools::norm(v);
   }
   
-  Mesh::Mesh(std::vector<MElement*> &elts, std::vector<MLine*> &bndLines){
+  Mesh::Mesh(std::vector<MElement*> &elts, std::vector<MLine*> &bndLines, std::vector<MVertex*> &geoNodes){
     //Number vertices and Build vertices vector
     size_t nMaxVert = 0;
     size_t nMaxEdges = 0;
@@ -476,7 +576,9 @@ namespace IFF{
         v->setIndex(-1);
       nMaxEdges += e->getNumEdges();
     }
-    
+    for(MVertex *v: geoNodes){
+      v->setIndex(-1);
+    }
     m_vertices.reserve(nMaxVert);
     size_t cptVert=0;
     for(MElement* e: elts){
@@ -504,6 +606,10 @@ namespace IFF{
         }
     }
     m_vertices.shrink_to_fit();
+    //Tag vertices which are geoNodes
+    for(MVertex *v: geoNodes)
+      if(v->getIndex() != -1)
+        m_vertices[v->getIndex()]->m_isGeoNode = true;
     //Build Elements vector
     m_elements.reserve(elts.size());
     for(MElement* e: elts){
@@ -518,6 +624,7 @@ namespace IFF{
     for(MLine* l: bndLines){
       Element *myE = Element::create(this, l);
       m_lines.push_back(myE);
+      myE->m_index = m_lines.size()-1;
     }
     //Build Edges and struct
     _buildStructure(nMaxEdges);
@@ -527,6 +634,20 @@ namespace IFF{
   }
 
   Mesh::Mesh(Mesh &origMesh){
+    minimalCopy(origMesh);
+    size_t nMaxEdges = 0;
+    for(Element *e: m_elements)
+      nMaxEdges += e->getNumEdges();
+    for(Element *l: m_lines)
+      nMaxEdges += l->getNumEdges();
+    //Build edges
+    _buildStructure(nMaxEdges);
+
+    //DBG check sanity
+    _checkSanity(); 
+  }
+
+  void Mesh::minimalCopy(Mesh &origMesh){
     MElementFactory elemfact;
 
     size_t nMaxEdges = 0;
@@ -540,6 +661,7 @@ namespace IFF{
       m_vertices.push_back(v);
       v->m_index = m_vertices.size()-1;
       v->m_v->setIndex(v->m_index);
+      v->m_isGeoNode = origV->m_isGeoNode;
     }
     //Build Elements vector
     GModel *gm = GModel::current();
@@ -579,15 +701,11 @@ namespace IFF{
         
       Element *myL = Element::create(this, newGmshElem);
       m_lines.push_back(myL);
+      myL->m_index = m_lines.size()-1;
       nMaxEdges += myL->getNumEdges();
     }
-    //Build edges
-    _buildStructure(nMaxEdges);
-
-    //DBG check sanity
-    _checkSanity(); 
   }
-
+  
   void Mesh::_buildStructure(size_t nMaxEdges){
     //Build Edges vector
     std::vector<std::pair<std::array<size_t, 2>, Element*>> edgesList;
@@ -687,6 +805,9 @@ namespace IFF{
     for(Element *e: m_elements)
       for(Vertex *v: e->getVertices())
         v->m_elements.push_back(e);
+    for(Element *l: m_lines)
+      for(Vertex *v: l->getVertices())
+        v->m_lines.push_back(l);
 
     for(Vertex *v: m_vertices){
       std::vector<Edge*> vertEdges = v->getEdges();
@@ -706,7 +827,10 @@ namespace IFF{
       v->m_sortedEdges.reserve(vertEdges.size());
       v->m_sortedElements.clear();
       v->m_sortedElements.reserve(v->m_elements.size());
+      // std::cout << "treating vert ind: " << v->m_index << std::endl;
+      // std::cout << "vert ind: " << v->m_index << " has " << v->m_elements.size() << " elements" << std::endl;
       while(v->m_sortedElements.size() != v->m_elements.size()){
+        // std::cout << "sorted elem size: " << v->m_sortedElements.size() << std::endl;
         Element *nextElem = NULL;
         for(Element *elem: edgCurrent->getElements()){
           if(edgCurrent->getLocIndexInElem(elem) == v->getLocIndexInElem(elem)){
@@ -729,6 +853,9 @@ namespace IFF{
         }
       }
     }
+
+    _buildNeighbourElements();
+    _buildLineGroups();
   }
 
   void Mesh::_buildNeighbourElements(){
@@ -741,6 +868,43 @@ namespace IFF{
           }
       }
     }
+  }
+
+  void Mesh::_buildLineGroups(){
+    m_lineGroups.clear();
+    std::vector<bool> lineTreated(m_lines.size(), false);
+
+    std::queue<Element*> lineQueue;
+    if(m_lines.size() > 0){
+      lineQueue.push(m_lines[0]);
+      lineTreated[m_lines[0]->getIndex()] = true;
+    }
+    std::vector<Element*> currentLineGroup;
+
+    while(lineQueue.size() > 0){
+      while(lineQueue.size() > 0){
+        Element *l = lineQueue.front();
+        lineQueue.pop();
+        currentLineGroup.push_back(l);
+        for(Vertex *v: l->getVertices())
+          if(v->m_lines.size() == 2 && !v->isGeoNode())
+            for(Element *lNext: v->m_lines)
+              if(lNext->getIndex() != l->getIndex() && !lineTreated[lNext->getIndex()]){
+                lineQueue.push(lNext);
+                lineTreated[lNext->getIndex()] = true;
+              }
+      }
+      m_lineGroups.push_back(currentLineGroup);
+      currentLineGroup.clear();
+      for(Element *l: m_lines)
+        if(!lineTreated[l->getIndex()]){
+          lineQueue.push(l);
+          lineTreated[l->getIndex()] = true;
+          break;
+        }
+    }
+    std::cout << "n line groups: " << m_lineGroups.size() << std::endl;
+
   }
 
   void Mesh::_checkSanity(){
@@ -795,21 +959,31 @@ namespace IFF{
   }
 
   void MeshRefiner::refineMesh(const std::vector<size_t> &indicesElemToRefine){
+    std::vector<Element*> coarseElemToRefineUnmodified;
+    coarseElemToRefineUnmodified.reserve(indicesElemToRefine.size());
+    for(size_t indEl: indicesElemToRefine)
+      coarseElemToRefineUnmodified.push_back(m_origMesh->m_elements[indEl]);
+      
+    std::vector<bool> coarseElementsRefined(m_origMesh->m_elements.size(), false);
     //Flag elements to refine fractal
     std::vector<bool> flagElemToRefine;
-    flagElemToRefine.resize(m_refinedMesh->m_elements.size(), false);
+    flagElemToRefine.resize(m_origMesh->m_elements.size(), false);
     //Add one layer to elements to refine 
     for(size_t indE: indicesElemToRefine){
       flagElemToRefine[indE] = true;
-      for(Element *e: m_refinedMesh->m_elements[indE]->getNeighboursElements()){
-        flagElemToRefine[e->getIndex()] = true;
+      for(Vertex *v: m_origMesh->m_elements[indE]->getVertices()){
+        for(Element *e: v->getOrientedElements())
+          flagElemToRefine[e->getIndex()] = true;
       }
+      // for(Element *e: m_origMesh->m_elements[indE]->getNeighboursElements()){
+      //   flagElemToRefine[e->getIndex()] = true;
+      // }
     }
     //Add elements having 2 neighbours to be refined
     bool flagModified = true;
     while(flagModified){
       flagModified = false;
-      for(Element *e: m_refinedMesh->m_elements){
+      for(Element *e: m_origMesh->m_elements){
         if(!flagElemToRefine[e->getIndex()]){
           int nNeigToRefine = 0;
           for(Element *eNeig: e->getNeighboursElements())
@@ -824,15 +998,14 @@ namespace IFF{
     }
     //Store elements to refine fractal
     std::vector<Element*> elementsFractalRefine;
-    elementsFractalRefine.reserve(m_refinedMesh->m_elements.size());
-    for(Element *e: m_refinedMesh->m_elements)
+    elementsFractalRefine.reserve(m_origMesh->m_elements.size());
+    for(Element *e: m_origMesh->m_elements)
       if(flagElemToRefine[e->getIndex()])
         elementsFractalRefine.push_back(e);
     elementsFractalRefine.shrink_to_fit();
-    
     //Store pairs (element to refine half split, localIndexEdg).
     std::vector<std::pair<Element*, int>> elementsHalfRefine;
-    elementsHalfRefine.reserve(m_refinedMesh->m_elements.size());
+    elementsHalfRefine.reserve(m_origMesh->m_elements.size());
     for(Element *e: elementsFractalRefine){
       for(Element *eNeigh: e->getNeighboursElements())
         if(!flagElemToRefine[eNeigh->getIndex()]){
@@ -841,6 +1014,269 @@ namespace IFF{
         }
     }
     elementsHalfRefine.shrink_to_fit();
-    //
+    //Flag edges to be split
+    std::vector<bool> edgesToSplit(m_origMesh->m_edges.size(), false);
+
+    for(Element *e: elementsFractalRefine)
+      for(Edge*edg: e->getEdges())
+        edgesToSplit[edg->getIndex()] = true;
+    // std::cout << "N fractal elements: " << elementsFractalRefine.size() << std::endl;
+    // std::cout << "gmsh tag element to split: " << elementsFractalRefine[0]->getGmshTag() << std::endl;
+    int cpt= 0;
+    for(bool isRef: edgesToSplit)
+      if(isRef)
+        cpt++;
+    // std::cout << "edges to split size: " << cpt << std::endl;
+    for(auto &kv: elementsHalfRefine)
+      edgesToSplit[kv.first->getEdge(kv.second)->getIndex()] = true;
+    //Create new vertices which will be added to refined mesh
+    std::vector<Vertex*> newVertices(m_origMesh->m_edges.size(), NULL);
+    for(size_t k=0; k<m_origMesh->m_edges.size(); k++)
+      if(edgesToSplit[k]){
+        Edge *e = m_origMesh->m_edges[k];
+        std::vector<double> coords = e->getBarycenter();
+        MVertex *newGmshV = new MVertex(coords[0], coords[1], coords[2]);
+        Mesh::hangingGmshVerticesCollector.push_back(newGmshV);
+        newVertices[k] = Vertex::create(newGmshV);
+      }
+    //TODO: add new vertices to refined mesh
+    int cpt2 = 0;
+    for(Vertex *v: newVertices){
+      if(v){
+        cpt2++;
+        m_refinedMesh->m_vertices.push_back(v);
+        v->m_index = m_refinedMesh->m_vertices.size() - 1;
+        // std::cout << "index: " << v->m_index << std::endl;
+        v->m_v->setIndex(v->m_index);
+      }
+    }
+    // std::cout << "n new vertices: " << cpt2 << std::endl;
+    // std::cout << "n lines in refined mesh before splitting: " << m_refinedMesh->m_lines.size()<<std::endl;;
+    //For element creation and memory management
+    GModel *gm = GModel::current();
+    MElementFactory elemfact;
+    //Create new lines
+    for(Edge *edg: m_origMesh->getEdges()){
+      if(edgesToSplit[edg->getIndex()] && edg->getNumLines() > 0){
+        Element *l = edg->getLines()[0];
+        std::vector<Vertex*> elemParentVertices = l->getVertices();
+        std::vector<Vertex*> refinedElemParentVertices;
+        refinedElemParentVertices.reserve(elemParentVertices.size());
+        for(Vertex *v: elemParentVertices)
+          refinedElemParentVertices.push_back(m_refinedMesh->m_vertices[v->getIndex()]);
+        std::vector<Vertex*> allVertices; allVertices.reserve(elemParentVertices.size() + 1);
+        for(Vertex *v: refinedElemParentVertices)
+          allVertices.push_back(v);
+        allVertices.push_back(newVertices[edg->getIndex()]);
+        std::vector<std::vector<int>> locIndLineSplitting{{0,2},{2,1}};
+        for(size_t k=0; k<locIndLineSplitting.size(); k++){
+          std::vector<int> locInds = locIndLineSplitting[k];
+          std::vector<Vertex *> verts{allVertices[locInds[0]], allVertices[locInds[1]]};
+          std::vector<MVertex*> gmshVerts;
+          gmshVerts.reserve(verts.size());
+          for(Vertex *v: verts){
+            gmshVerts.push_back(v->m_v);
+          }
+          MElement *newGmshElem = elemfact.create(l->m_e->getTypeForMSH(), gmshVerts);
+          for(auto ged: gm->getEdges()){//TODO: this is temporary, we have to add new elements to the good face. Let Gmsh handle memory for Elements created
+            ged->addElement(newGmshElem);
+            break;
+          }
+          Mesh::hangingGmshElementsCollector.push_back(newGmshElem);
+
+          Element *myE = Element::create(m_refinedMesh, newGmshElem);
+          if(k == 0){
+            m_refinedMesh->m_lines[l->getIndex()] = myE;
+            myE->m_index = l->getIndex();
+          }
+          else{
+            m_refinedMesh->m_lines.push_back(myE);
+            myE->m_index = m_refinedMesh->m_lines.size()-1;
+          }
+        }
+      }
+    }
+    //Create new elements for fractal refinement
+    std::vector<std::vector<int>> locIndFractalSplitting{{3,4,5},{0,3,5},{3,1,4},{5,4,2}};
+    // std::cout << "flag0" << std::endl;
+    for(Element *e: elementsFractalRefine){
+      coarseElementsRefined[e->getIndex()] = true;
+      std::vector<Vertex*> elemParentVertices = e->getVertices();
+      std::vector<Vertex*> refinedElemParentVertices;
+      refinedElemParentVertices.reserve(elemParentVertices.size());
+      for(Vertex *v: elemParentVertices)
+        refinedElemParentVertices.push_back(m_refinedMesh->m_vertices[v->getIndex()]);
+      
+      std::vector<Vertex*> allVertices; allVertices.reserve(elemParentVertices.size() + e->getNumEdges());
+      for(Vertex *v: refinedElemParentVertices)//TODO: change, it's wrong. Has to be refined mesh vertices. Looks right to me
+        allVertices.push_back(v);
+      // std::cout << "flag1" << std::endl;
+      for(Edge *edg: e->getEdges())
+        allVertices.push_back(newVertices[edg->getIndex()]);
+      
+      for(size_t k=0; k<locIndFractalSplitting.size(); k++){
+        std::vector<int> locInds = locIndFractalSplitting[k];
+        std::vector<Vertex *> verts{allVertices[locInds[0]], allVertices[locInds[1]], allVertices[locInds[2]]};
+        std::vector<MVertex*> gmshVerts;
+        gmshVerts.reserve(verts.size());
+        // std::cout << "---" << std::endl;
+        for(Vertex *v: verts){
+          gmshVerts.push_back(v->m_v);
+          // std::cout << "index: " << v->m_v->getIndex() << std::endl;
+        }
+        MElement *newGmshElem = elemfact.create(e->m_e->getTypeForMSH(), gmshVerts);
+        for(auto gf: gm->getFaces()){//TODO: this is temporary, we have to add new elements to the good face. Let Gmsh handle memory for Elements created
+          gf->addElement(newGmshElem);
+          break;
+        }
+        Mesh::hangingGmshElementsCollector.push_back(newGmshElem);
+
+        Element *myE = Element::create(m_refinedMesh, newGmshElem); //Attention: have to set gmsh index properly for using this function
+        //TODO: add new elements to refined mesh
+        if(k == 0){
+          m_refinedMesh->m_elements[e->getIndex()] = myE;
+          myE->m_index = e->getIndex();
+        }
+        else{
+          m_refinedMesh->m_elements.push_back(myE);
+          myE->m_index = m_refinedMesh->m_elements.size()-1;
+        }
+        e->m_childElem.push_back(myE);
+        myE->m_childType = Element::CHILDTYPE::FRACTAL;
+        myE->m_childID = k;
+        myE->m_parentElem = e;
+      }
+    }
+    // std::cout << "flag2.1" << std::endl;
+    //Create new elements for helf splitting
+    for(auto &kv: elementsHalfRefine){
+      Element *e = kv.first;
+      coarseElementsRefined[e->getIndex()] = true;
+      int locIndEdg = kv.second;
+      Edge *edgSplit = e->getEdge(locIndEdg);
+      int nEdges = e->getNumEdges();
+      std::vector<Vertex*> elemParentVertices = e->getVertices();
+      int nVerts = elemParentVertices.size();
+      std::vector<Vertex*> refinedElemParentVertices;
+      refinedElemParentVertices.reserve(elemParentVertices.size());
+      for(Vertex *v: elemParentVertices)
+        refinedElemParentVertices.push_back(m_refinedMesh->m_vertices[v->getIndex()]);
+      
+      std::vector<Vertex*> allVertices; allVertices.reserve(elemParentVertices.size() + 1);
+      for(Vertex *v: refinedElemParentVertices)
+        allVertices.push_back(v);
+      allVertices.push_back(newVertices[edgSplit->getIndex()]);
+
+      std::vector<std::vector<int>> locIndHalfSplitting{{locIndEdg, nVerts, (locIndEdg+2)%nEdges},
+                                                        {nVerts, (locIndEdg+1)%nEdges, (locIndEdg+2)%nEdges}};
+      for(size_t k=0; k<locIndHalfSplitting.size(); k++){
+        std::vector<int> locInds = locIndHalfSplitting[k];
+        std::vector<Vertex *> verts{allVertices[locInds[0]], allVertices[locInds[1]], allVertices[locInds[2]]};
+        std::vector<MVertex*> gmshVerts;
+        gmshVerts.reserve(verts.size());
+        // std::cout << "---" << std::endl;
+        for(Vertex *v: verts){
+          gmshVerts.push_back(v->m_v);
+          // std::cout << "index: " << v->m_v->getIndex() << std::endl;
+        }
+        MElement *newGmshElem = elemfact.create(e->m_e->getTypeForMSH(), gmshVerts);
+        for(auto gf: gm->getFaces()){//TODO: this is temporary, we have to add new elements to the good face. Let Gmsh handle memory for Elements created
+          gf->addElement(newGmshElem);
+          break;
+        }
+        Mesh::hangingGmshElementsCollector.push_back(newGmshElem);
+
+        Element *myE = Element::create(m_refinedMesh, newGmshElem); //Attention: have to set gmsh index properly for using this function
+        if(k == 0){
+          m_refinedMesh->m_elements[e->getIndex()] = myE;
+          myE->m_index = e->getIndex();
+        }
+        else{
+          m_refinedMesh->m_elements.push_back(myE);
+          myE->m_index = m_refinedMesh->m_elements.size()-1;
+        }
+        e->m_childElem.push_back(myE);
+        switch(locIndEdg){
+        case 0:
+          myE->m_childType = Element::CHILDTYPE::HALF0;
+          break;
+        case 1:
+          myE->m_childType = Element::CHILDTYPE::HALF1;
+          break;
+        case 2:
+          myE->m_childType = Element::CHILDTYPE::HALF2;
+          break;
+        default:
+          std::cout << "Error determining CHILDTYPE for HALF refinement" << std::endl;
+          exit(0);
+        }
+        myE->m_childID = k;
+        myE->m_parentElem = e;
+      }
+    }
+    // std::cout << "flag2.2" << std::endl;
+    //TODO: dont forget to store child type and element parent!!
+    gm->rebuildMeshElementCache();
+
+    //Build refined mesh structure
+    // std::cout << "flag3" << std::endl;
+    std::cout << "nElements orig: " << m_origMesh->m_elements.size() << std::endl;
+    std::cout << "nVertices orig: " << m_origMesh->m_vertices.size() << std::endl;
+    std::cout << "nElements: " << m_refinedMesh->m_elements.size() << std::endl;
+    std::cout << "nVertices: " << m_refinedMesh->m_vertices.size() << std::endl;
+    size_t nMaxEdges = 0;
+    for(Element *e: m_refinedMesh->m_elements)
+      nMaxEdges += e->getNumEdges();
+    for(Element *l: m_refinedMesh->m_lines)
+      nMaxEdges += l->getNumEdges();
+    // std::cout << "flag4" << std::endl;
+    m_refinedMesh->_buildStructure(nMaxEdges);
+    // std::cout << "flag5" << std::endl;
+    m_refinedMesh->_checkSanity();
+
+    //Store coarse elements not refined
+    for(Element *e: m_origMesh->m_elements)
+      if(coarseElementsRefined[e->getIndex()]){
+        for(Element *eChild: e->m_childElem)
+          m_fineElemRefined.push_back(eChild);
+        m_coarseElemRefined.push_back(e);
+      }
+      else{
+        m_coarseElemNotRefined.push_back(e);
+      }
+
+    //Store Edges of elements to refine unmodified
+    std::vector<bool> isEdgToStore;
+    isEdgToStore.resize(m_refinedMesh->m_edges.size(), false);
+    for(Element *e: coarseElemToRefineUnmodified)
+      for(Element *eFine: e->getChildren()){
+        m_fineElemRefinedUnmodified.push_back(eFine);
+        for(Edge *edg: eFine->getEdges())
+          isEdgToStore[edg->getIndex()] = true;
+      }
+
+    for(size_t k=0; k<m_refinedMesh->m_edges.size(); k++)
+      if(isEdgToStore[k])
+        m_edgesElemRefinedUnmodified.push_back(m_refinedMesh->m_edges[k]);
+      else
+        m_edgesElemRefinedUnmodifiedBar.push_back(m_refinedMesh->m_edges[k]);
+    
+    //Store common edges (pointers from corase mesh)
+    std::vector<bool> isCoarseCommonEdges(m_origMesh->m_edges.size(), false);
+    std::vector<bool> isFineCommonEdges(m_refinedMesh->m_edges.size(), false);
+    for(Element *e: m_coarseElemNotRefined){
+      for(Edge *edg: e->getEdges())
+        isCoarseCommonEdges[edg->getIndex()] = true;
+      Element *eFine = m_refinedMesh->m_elements[e->getIndex()];
+      for(Edge *edg: eFine->getEdges()){
+        isFineCommonEdges[edg->getIndex()] = true;
+      }
+    }
+    for(Edge *edg: m_origMesh->getEdges())
+      if(isCoarseCommonEdges[edg->getIndex()])
+        m_coarseCommonEdges.push_back(edg);
+    for(Edge *edg: m_refinedMesh->getEdges())
+      if(isFineCommonEdges[edg->getIndex()])
+        m_fineCommonEdges.push_back(edg);
   }
 }

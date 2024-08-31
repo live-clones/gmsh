@@ -25,7 +25,8 @@ namespace IFF{
     // Methods to be defined for LBFGS solver
     virtual void evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc){std::cout << "OjectiveFunction::evaluateFunction not implemented" << std::endl; exit(0);}
     virtual void getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs){std::cout << "OjectiveFunction::getGradient not implemented" << std::endl; exit(0);};
-
+    // Methods to be defined for Newton solver
+    virtual void getHessianAndGradient(Element *element, const std::vector<std::vector<double>> &solEl, std::vector<std::vector<double>> &localMat, std::vector<double> &localRhs){std::cout << "OjectiveFunction::getFEMHessianAndGradient not implemented" << std::endl; exit(0);}
     // Tools for new objective functions implementation check
     void checkGradient(Element *element, const std::vector<std::vector<double>> &solTri);
 
@@ -41,13 +42,36 @@ namespace IFF{
   // ------------------------------- Dirichlet energy for CR GL framefield objective function
   class DirichletEnergieVectCR : public ObjectiveFunction{
   public:
-    DirichletEnergieVectCR(int nFields, void (*rotSolElFunc)(Element*, const std::vector<std::vector<double>> &, std::vector<std::vector<double>> &), void (*invertRotatedGradient)(Element *, const std::vector<double> &, std::vector<double> &)): ObjectiveFunction(), m_nFields(nFields), _getRotatedSolEl(rotSolElFunc), _getInvertRotatedGradient(invertRotatedGradient){}
+    DirichletEnergieVectCR(int nFields, void (*rotSolElFunc)(Element*, const std::vector<std::vector<double>> &, std::vector<std::vector<double>> &), void (*invertRotatedGradient)(Element *, const std::vector<double> &, std::vector<double> &), void (*invertRotatedHessianAndGradient)(Element *, const std::vector<std::vector<double>> &, const std::vector<double> &, std::vector<std::vector<double>> &, std::vector<double> &)=NULL): ObjectiveFunction(), m_nFields(nFields), _getRotatedSolEl(rotSolElFunc), _getInvertRotatedGradient(invertRotatedGradient), _getInvertRotatedHessianAndGradient(invertRotatedHessianAndGradient){}
+  
+    virtual void evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc);
+    virtual void getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs);
+    virtual void getHessianAndGradient(Element *element, const std::vector<std::vector<double>> &solEl, std::vector<std::vector<double>> &localHess, std::vector<double> &localRhs);
+    
+  protected:
+    ~DirichletEnergieVectCR(){}
+
+  private:
+    void _getRotatedFEMOperators(Element *element, std::vector<std::vector<double>> &localMat, std::vector<double> &localRhs);
+    size_t m_nFields;
+    
+    void _getRotatedGradient(Element *element, const std::vector<std::vector<double>> &solTriRotated, std::vector<double> &localRhs);
+
+    void (*_getRotatedSolEl)(Element*, const std::vector<std::vector<double>> &, std::vector<std::vector<double>> &);
+    void (*_getInvertRotatedGradient)(Element *, const std::vector<double> &, std::vector<double> &);
+    void (*_getInvertRotatedHessianAndGradient)(Element *, const std::vector<std::vector<double>> &, const std::vector<double> &, std::vector<std::vector<double>> &, std::vector<double> &);
+  };
+
+  // ------------------------------- Dirichlet energy for CR GL framefield objective function
+  class DirichletEnergieVectCRIsoMormalized : public ObjectiveFunction{
+  public:
+    DirichletEnergieVectCRIsoMormalized(int nFields, void (*rotSolElFunc)(Element*, const std::vector<std::vector<double>> &, std::vector<std::vector<double>> &), void (*invertRotatedGradient)(Element *, const std::vector<double> &, std::vector<double> &)): ObjectiveFunction(), m_nFields(nFields), _getRotatedSolEl(rotSolElFunc), _getInvertRotatedGradient(invertRotatedGradient){}
   
     virtual void evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc);
     virtual void getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs);
     
   protected:
-    ~DirichletEnergieVectCR(){}
+    ~DirichletEnergieVectCRIsoMormalized(){}
 
   private:
     size_t m_nFields;
@@ -72,6 +96,121 @@ namespace IFF{
   
   protected:
     ~OdecoIso2DConstraint(){}
+  private:
+    size_t m_nFields;
+
+    void _getRotatedGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs);
+
+    void (*_getRotatedSolEl)(Element*, const std::vector<std::vector<double>> &, std::vector<std::vector<double>> &);
+    void (*_getInvertRotatedGradient)(Element *, const std::vector<double> &, std::vector<double> &);
+  };
+
+  // ------------------------------- Odeco isotrope 2D framefield constraint normalized
+  class OdecoIso2DConstraintNormalized : public ObjectiveFunction{
+  public:
+    OdecoIso2DConstraintNormalized(double penalty, void (*rotSolElFunc)(Element*, const std::vector<std::vector<double>> &, std::vector<std::vector<double>> &), void (*invertRotatedGradient)(Element *, const std::vector<double> &, std::vector<double> &)) : ObjectiveFunction(), m_penalty(penalty), m_nFields(3), _getRotatedSolEl(rotSolElFunc), _getInvertRotatedGradient(invertRotatedGradient){
+      
+    }
+
+    virtual void evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc);
+    virtual void getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs);
+
+    double m_penalty;
+  
+  protected:
+    ~OdecoIso2DConstraintNormalized(){}
+  private:
+    size_t m_nFields;
+
+    void _getRotatedGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs);
+
+    void (*_getRotatedSolEl)(Element*, const std::vector<std::vector<double>> &, std::vector<std::vector<double>> &);
+    void (*_getInvertRotatedGradient)(Element *, const std::vector<double> &, std::vector<double> &);
+  };
+
+  // ------------------------------- Odeco isotrope 2D framefield constraint normalized no area
+  class OdecoIso2DConstraintNormalizedNoArea : public ObjectiveFunction{
+  public:
+    OdecoIso2DConstraintNormalizedNoArea(double penalty, void (*rotSolElFunc)(Element*, const std::vector<std::vector<double>> &, std::vector<std::vector<double>> &), void (*invertRotatedGradient)(Element *, const std::vector<double> &, std::vector<double> &)) : ObjectiveFunction(), m_penalty(penalty), m_nFields(3), _getRotatedSolEl(rotSolElFunc), _getInvertRotatedGradient(invertRotatedGradient){
+      
+    }
+
+    virtual void evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc);
+    virtual void getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs);
+
+    double m_penalty;
+  
+  protected:
+    ~OdecoIso2DConstraintNormalizedNoArea(){}
+  private:
+    size_t m_nFields;
+
+    void _getRotatedGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs);
+
+    void (*_getRotatedSolEl)(Element*, const std::vector<std::vector<double>> &, std::vector<std::vector<double>> &);
+    void (*_getInvertRotatedGradient)(Element *, const std::vector<double> &, std::vector<double> &);
+  };
+
+  // ------------------------------- Odeco isotrope 2D framefield constraint normalized with log smooth wieght
+  class OdecoIso2DConstraintNormalizedWithLogSmoothWeight : public ObjectiveFunction{
+  public:
+    OdecoIso2DConstraintNormalizedWithLogSmoothWeight(double penalty, void (*rotSolElFunc)(Element*, const std::vector<std::vector<double>> &, std::vector<std::vector<double>> &), void (*invertRotatedGradient)(Element *, const std::vector<double> &, std::vector<double> &)) : ObjectiveFunction(), m_penalty(penalty), m_nFields(3), _getRotatedSolEl(rotSolElFunc), _getInvertRotatedGradient(invertRotatedGradient){
+      
+    }
+
+    virtual void evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc);
+    virtual void getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs);
+
+    double m_penalty;
+  
+  protected:
+    ~OdecoIso2DConstraintNormalizedWithLogSmoothWeight(){}
+  private:
+    size_t m_nFields;
+
+    void _getRotatedGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs);
+
+    void (*_getRotatedSolEl)(Element*, const std::vector<std::vector<double>> &, std::vector<std::vector<double>> &);
+    void (*_getInvertRotatedGradient)(Element *, const std::vector<double> &, std::vector<double> &);
+  };
+
+  // ------------------------------- Odeco isotrope 2D framefield constraint normalized with smooth wieght
+  class OdecoIso2DConstraintNormalizedWithSmoothWeight : public ObjectiveFunction{
+  public:
+    OdecoIso2DConstraintNormalizedWithSmoothWeight(double penalty, void (*rotSolElFunc)(Element*, const std::vector<std::vector<double>> &, std::vector<std::vector<double>> &), void (*invertRotatedGradient)(Element *, const std::vector<double> &, std::vector<double> &)) : ObjectiveFunction(), m_penalty(penalty), m_nFields(3), _getRotatedSolEl(rotSolElFunc), _getInvertRotatedGradient(invertRotatedGradient){
+      
+    }
+
+    virtual void evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc);
+    virtual void getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs);
+
+    double m_penalty;
+  
+  protected:
+    ~OdecoIso2DConstraintNormalizedWithSmoothWeight(){}
+  private:
+    size_t m_nFields;
+
+    void _getRotatedGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs);
+
+    void (*_getRotatedSolEl)(Element*, const std::vector<std::vector<double>> &, std::vector<std::vector<double>> &);
+    void (*_getInvertRotatedGradient)(Element *, const std::vector<double> &, std::vector<double> &);
+  };
+
+  // ------------------------------- Odeco isotrope 2D framefield constraint normalized at edges
+  class OdecoIso2DConstraintNormalizedEdge : public ObjectiveFunction{
+  public:
+    OdecoIso2DConstraintNormalizedEdge(double penalty, void (*rotSolElFunc)(Element*, const std::vector<std::vector<double>> &, std::vector<std::vector<double>> &), void (*invertRotatedGradient)(Element *, const std::vector<double> &, std::vector<double> &)) : ObjectiveFunction(), m_penalty(penalty), m_nFields(3), _getRotatedSolEl(rotSolElFunc), _getInvertRotatedGradient(invertRotatedGradient){
+      
+    }
+
+    virtual void evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc);
+    virtual void getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs);
+
+    double m_penalty;
+  
+  protected:
+    ~OdecoIso2DConstraintNormalizedEdge(){}
   private:
     size_t m_nFields;
 
@@ -107,6 +246,32 @@ namespace IFF{
     void (*_getInvertRotatedGradient)(Element *, const std::vector<double> &, std::vector<double> &);
   };
 
+  // ------------------------------- Odeco anisotrope 2D framefield constraint
+  class OdecoAniso2DConstraintNormalized : public ObjectiveFunction{
+  public:
+    OdecoAniso2DConstraintNormalized(double penalty, void (*rotSolElFunc)(Element*, const std::vector<std::vector<double>> &, std::vector<std::vector<double>> &), void (*invertRotatedGradient)(Element *, const std::vector<double> &, std::vector<double> &)) : ObjectiveFunction(), m_penalty(penalty), m_nFields(5), _getRotatedSolEl(rotSolElFunc), _getInvertRotatedGradient(invertRotatedGradient){
+      m_weightsC.resize(3, 1.0);
+      m_weightsC[1] = 10.0;
+      m_weightsC[2] = 10.0;
+    }
+
+    virtual void evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc);
+    virtual void getGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs);
+
+    double m_penalty;
+  
+  protected:
+    ~OdecoAniso2DConstraintNormalized(){}
+  private:
+    size_t m_nFields;
+    std::vector<double> m_weightsC;
+
+    void _getRotatedGradient(Element *element, const std::vector<std::vector<double>> &solTri, std::vector<double> &localRhs);
+
+    void (*_getRotatedSolEl)(Element*, const std::vector<std::vector<double>> &, std::vector<std::vector<double>> &);
+    void (*_getInvertRotatedGradient)(Element *, const std::vector<double> &, std::vector<double> &);
+  };
+  
   // ------------------------------- Integrability objective function for Odeco isotrope 2D framefield representation
   class LBOdecoIso2D : public ObjectiveFunction{
   public:

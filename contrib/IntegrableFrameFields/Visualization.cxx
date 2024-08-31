@@ -35,13 +35,10 @@ namespace IFF{
       if(!gmsh::isInitialized())
         gmsh::initialize();
       int tagView = gmsh::view::add(nameView);
-      // int nBranches = 2;
       int nBranches = (mapElemDir.begin()->second)[0].size()/3;
       std::cout << "Nbranches: " << nBranches << std::endl;
       int numEl = mapElemDir.size()*3*nBranches;
       std::vector<double> data;
-      // int nBranches = (mapElemDir.begin()->second)[0].size();
-      // std::cout << "Nbranches
       data.reserve(numEl*6);
       for(auto &kv: mapElemDir){
         Element *e = kv.first;
@@ -157,6 +154,7 @@ namespace IFF{
       }
       // gmsh::view::option::setNumber(tagView, "GlyphLocation", 2);
       gmsh::view::option::setNumber(tagView, "Visible", visible);
+      gmsh::view::option::setNumber(tagView, "ShowElement", 1);
       return tagView;
     }
   }

@@ -3868,7 +3868,8 @@ bool OCC_Internals::booleanOperator(
       _setBooleanOptions(fuse);
 #if OCC_VERSION_HEX >= 0x070500
       OCCBooleanProgress progress("Union");
-      fuse.Build(progress.Start());
+      // fuse.Build(progress.Start());
+      fuse.Build();
 #else
       fuse.Build();
 #endif
@@ -3913,7 +3914,8 @@ bool OCC_Internals::booleanOperator(
       _setBooleanOptions(common);
 #if OCC_VERSION_HEX >= 0x070500
       OCCBooleanProgress progress("Intersection");
-      common.Build(progress.Start());
+      // common.Build(progress.Start());
+      common.Build();
 #else
       common.Build();
 #endif
@@ -3946,7 +3948,8 @@ bool OCC_Internals::booleanOperator(
       _setBooleanOptions(cut);
 #if OCC_VERSION_HEX >= 0x070500
       OCCBooleanProgress progress("Difference");
-      cut.Build(progress.Start());
+      // cut.Build(progress.Start());
+      cut.Build();
 #else
       cut.Build();
 #endif
@@ -3983,7 +3986,8 @@ bool OCC_Internals::booleanOperator(
       _setBooleanOptions(fragments);
 #if OCC_VERSION_HEX >= 0x070500
       OCCBooleanProgress progress("Fragments");
-      fragments.Build(progress.Start());
+      // fragments.Build(progress.Start());
+      fragments.Build();
 #else
       fragments.Build();
 #endif

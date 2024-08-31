@@ -30,6 +30,7 @@ namespace IFF{
     double getAngleRotationAlongDirection(const std::vector<double> &vectAxis, const std::vector<double> &vInit, const std::vector<double> &vRotated);
     std::vector<double> getProjectionOnDirection(const std::vector<double> &dirProj, const std::vector<double> &v);
     std::vector<double> getProjectionOnHyperPlan(const std::vector<double> &normalHyperPlan, const std::vector<double> &v);
+    void projectOnHyperPlan(const std::vector<double> &normalHyperPlan, std::vector<double> &v);
     std::vector<double> getVectInNewBase(const std::vector<double> &u, const std::vector<double> &v, const std::vector<double> &w, const std::vector<double> &vect);
     std::vector<double> getClosestVect(const std::vector<std::vector<double>> &listVects, const std::vector<double> &dirRef);
     int getIndexClosestVect(const std::vector<std::vector<double>> &listVects, const std::vector<double> &dirRef);
@@ -46,6 +47,8 @@ namespace IFF{
   
   class Element{
     friend class Mesh;
+    friend class MeshRefiner;
+    
     static std::vector<Element*> elementCollector;
     static std::vector<double> integrationWeights;
     static std::vector<std::vector<double>> integrationPoints;
@@ -68,6 +71,8 @@ namespace IFF{
     Edge* getEdge(int k){return m_edges[k];}
     std::vector<Edge*> getEdges(){return m_edges;}
     Edge* getCommonEdge(Element* otherEl);
+
+    std::vector<Element*> getChildren(){return m_childElem;}
     
     double getArea();
     std::vector<double> getDet(int pOrder);
@@ -79,6 +84,8 @@ namespace IFF{
     
     MElement *m_e;
 
+    std::vector<std::vector<double>> getEdgesParamCoordInParentElem();
+    
     //For solver interaction
     void setNumUnknown(int n){m_nUnknown = n;}
     int getNumUnknown(){return m_nUnknown;}
@@ -103,18 +110,21 @@ namespace IFF{
     int m_nUnknown;
 
     //Refinement tools
-    enum class CHILDTYPE{HALF1, HALF2, HALF3, FRACTAL};
+    enum class CHILDTYPE{HALF0, HALF1, HALF2, FRACTAL};
     Element *m_parentElem;
+    std::vector<Element*> m_childElem;
     CHILDTYPE m_childType;
     int m_childID;
   };
   
   class Vertex{
     friend class Mesh;
+    friend class MeshRefiner;
+    
     static std::vector<Vertex*> vertexCollector;
   public:
     static Vertex* create(MVertex *v){Vertex *newV = new Vertex(v); vertexCollector.push_back(newV); return newV;}
-    Vertex(MVertex *v): m_isGeometryBoundary(false){m_v = v; vertexCollector.push_back(this);}
+    Vertex(MVertex *v): m_isGeometryBoundary(false), m_isGeoNode(false){m_v = v; vertexCollector.push_back(this);}
     ~Vertex(){}
 
     std::vector<double> getCoord(){std::vector<double> coord{m_v->x(), m_v->y(), m_v->z()}; return coord;};
@@ -152,10 +162,12 @@ namespace IFF{
         exit(0);
       }
     }
+
     size_t getIndex(){return m_index;}
     size_t getGmshTag(){return m_v->getNum();}
 
     bool isGeometryBoundary(){return m_isGeometryBoundary;}
+    bool isGeoNode(){return m_isGeoNode;}
 
     int getLocIndexInElem(Element *e){
       int locIndex = -1;
@@ -172,18 +184,21 @@ namespace IFF{
     MVertex *m_v;
     std::vector<Edge*> m_edges;
     std::vector<Element*> m_elements;
+    std::vector<Element*> m_lines;
     std::vector<Edge*> m_sortedEdges;
     std::vector<Element*> m_sortedElements;
     std::vector<Vertex*> m_neighbourVertices;
     size_t m_index;
     bool m_isGeometryBoundary;
-
+    bool m_isGeoNode;
     //Cutgraph tools
     Vertex *m_parentVert;
   };
     
   class Edge{
     friend class Mesh;
+    friend class MeshRefiner;
+    
     static std::vector<Edge*> edgeCollector;
   public:
     static Edge* create(Vertex* v0, Vertex* v1){Edge *newE = new Edge(v0, v1); edgeCollector.push_back(newE); return newE;}
@@ -195,6 +210,7 @@ namespace IFF{
     Vertex *getVertex(int indV){return m_vertices[indV];}
     std::array<Vertex*, 2> getVertices(){return m_vertices;}
     std::vector<Element*> getElements(){return m_elements;}
+    size_t getNumLines(){return m_lines.size();}
     std::vector<Element*> getLines(){return m_lines;}
 
     int getLocIndexInElem(Element *e){
@@ -243,15 +259,18 @@ namespace IFF{
     static std::vector<MElement*> hangingGmshElementsCollector;
 
     Mesh(){}
-    Mesh(std::vector<MElement*> &elts, std::vector<MLine*> &bndLines);
+    Mesh(std::vector<MElement*> &elts, std::vector<MLine*> &bndLines, std::vector<MVertex*> &geoNodes);
     Mesh(Mesh &origMesh);
     ~Mesh();
 
+    void minimalCopy(Mesh &origMesh);
+    
     Element* getElement(size_t iElem){return m_elements[iElem];}
     std::vector<Element*> getElements(){return m_elements;}
     std::vector<Vertex*> getVertices(){return m_vertices;}
     std::vector<Edge*> getEdges(){return m_edges;}
     std::vector<Element*> getLines(){return m_lines;}
+    std::vector<std::vector<Element*>> getLineGroups(){return m_lineGroups;}
     
     double getMinEdgeLength(){return m_minEdgeLenght;}
     double getMaxEdgeLength(){return m_maxEdgeLenght;}
@@ -273,26 +292,45 @@ namespace IFF{
     std::vector<Edge*> m_edges;
     std::vector<Vertex*> m_vertices;
 
+    std::vector<std::vector<Element*>> m_lineGroups;
+    
     double m_minEdgeLenght;
     double m_maxEdgeLenght;
 
     void _buildStructure(size_t nMaxEdges);
     void _buildNeighbourElements();
+    void _buildLineGroups();
     void _checkSanity();
   };
 
   class MeshRefiner{
   public:
     MeshRefiner(Mesh *origMesh, Mesh *refinedMesh): m_origMesh(origMesh), m_refinedMesh(refinedMesh){
-      *refinedMesh = *origMesh;
+      // *refinedMesh = *origMesh;
+      refinedMesh->minimalCopy(*origMesh);
     }
     ~MeshRefiner(){}
 
     void refineMesh(const std::vector<size_t> &indicesElemToRefine);
+    std::vector<Edge*> getFineCommonEdges(){return m_fineCommonEdges;}
+    std::vector<Edge*> getEdgesCLMultiGrille(){return m_edgesElemRefinedUnmodifiedBar;}
+    std::vector<Element*> getFineElemRefinedUnmodified(){return m_fineElemRefinedUnmodified;}
     
-  private:
     Mesh *m_origMesh;
     Mesh *m_refinedMesh;
+
+    std::vector<Element*> m_coarseElemNotRefined;
+    std::vector<Element*> m_coarseElemRefined;
+    std::vector<Edge*> m_coarseCommonEdges;
+    std::vector<Edge*> m_fineCommonEdges;
+
+    std::vector<Edge*> m_edgesElemRefinedUnmodifiedBar;
+    std::vector<Edge*> m_edgesElemRefinedUnmodified;
+    std::vector<Element*> m_fineElemRefinedUnmodified;
+    std::vector<Element*> m_fineElemRefined;
+
+  private:
+
   };
   
   // To print vectors easily

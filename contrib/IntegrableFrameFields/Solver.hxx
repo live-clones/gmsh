@@ -16,22 +16,27 @@ namespace IFF{
     
     enum class TYPEUNKNOWN{VERTEX, EDGE, ELEMENT};
 
-    Solver(Mesh *m, int nFields, ObjectiveFunction *objFunc, TYPEUNKNOWN unknownType=TYPEUNKNOWN::VERTEX);
+    Solver(Mesh *m, int nFields, ObjectiveFunction *objFunc, TYPEUNKNOWN unknownType=TYPEUNKNOWN::VERTEX, size_t maxItLbfgs = 100000);
     ~Solver(){}
 
     void printInfos(){
       std::cout << "--- --- SOLVER INFOS ---" << std::endl;
       std::cout << "-- nDofs: " << getNDof() << std::endl;
+      std::cout << "-- nLagMult: " << getNLagMult() << std::endl;
       std::cout << "--- ---" << std::endl;
     }
     void solveLBFGS(std::map<Edge*, std::vector<double>> &mapSolution);
+    void solveNewton(std::map<Edge *, std::vector<double>> &mapSolution);
     
     void addBCDirichlet(const std::pair<Edge*, int> &pairEdgeField, double valBC);
     void addBCDirichlet(const std::vector<std::pair<Edge*, int>> &pairEdgeField, const std::vector<double> &valBC);
     void addBCLinearCombination(const std::vector<std::vector<double>> &mat, const std::vector<double> &vect, const std::vector<std::pair<Edge*, int>> &pairEdgeField);
 
     size_t getNDof(){return m_nDof;}
-
+    size_t getNTotalDof(){return m_nDof+m_nLagMult;}
+    size_t getNLagMult(){return m_nLagMult;}
+    void clearBC(){m_linearBC.clear(); m_nLagMult = 0; m_lagMultDataToBeGenerated=true;}
+    
     void setObjectiveFunction(ObjectiveFunction *f){m_objFunc = f;}
     
     TYPEUNKNOWN m_unknownType;
@@ -66,7 +71,29 @@ namespace IFF{
         exit(0);
       }
     }
+    void _orthonormalizeConstraints();
+    void _checkNormalization();
+    void _removeUselessConstraints();
+    void _generateLagMultData();
 
+    size_t _getLinearBCMatMemSize(){
+      size_t memSize = 0;
+      for(auto bc: m_linearBC){
+	memSize += bc.mat.size()*bc.mat[0].size();
+      }
+      return memSize;
+    }
+    size_t _getIndexLagMult(size_t linBCIndex, size_t locLagMultIndex){
+      size_t index = m_nDof;
+      for(size_t k=0; k<linBCIndex; k++)
+	index += m_linearBC[k].mat.size();
+      index += locLagMultIndex;
+      return index;
+    }
+    
+    void _solveLinearSys(std::vector<std::vector<std::vector<double>>> &localMat, std::vector<std::vector<double>> &localRhs, std::vector<double> &solution);
+    void _solveNewtonStep(std::vector<double> &solution, double &residual);
+    
     struct LinearBC{
       std::vector<std::vector<double>> mat;
       std::vector<double> vect;
@@ -74,6 +101,10 @@ namespace IFF{
     };
 
     std::vector<LinearBC> m_linearBC;
+    bool m_lagMultDataToBeGenerated;
+
+    bool m_linearBCorthonormalized;
+    
     //
     
   private:

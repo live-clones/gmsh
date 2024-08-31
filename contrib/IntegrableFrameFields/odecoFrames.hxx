@@ -21,6 +21,7 @@ namespace IFF{
 
     virtual std::vector<std::vector<double>> getDirections(){std::cout << "Frame::getDirections not implemented" << std::endl; exit(0); std::vector<std::vector<double>> d; return d;}
     virtual std::vector<std::vector<double>> getDirectionsFromRef(const std::vector<double> &refDir, const std::vector<double> &normal){std::cout << "Frame::getDirections(refDir, normal) not implemented" << std::endl; exit(0); std::vector<std::vector<double>> d; return d;}
+    virtual double getTangentialLength(){std::cout << "Frame::getTangentialLength() not implemented" << std::endl; exit(0); double d=0; return d;}
 
     virtual void projectOnCrossManifold(){std::cout << "Frame::projectOnCrossManifold not implemented" << std::endl; exit(0);}
     std::vector<double > m_frame;
@@ -30,10 +31,13 @@ namespace IFF{
   public:
     
     static std::vector<std::vector<double>> getAlignmentLinConstr(const std::vector<double> &dir);
+    static std::vector<std::vector<double>> getAlignmentPlusTangentSizeLinConstr(const std::vector<double> &dir);
     static size_t nUnknown;
     static void getCRRotOperator(Element *e, std::vector<std::vector<std::vector<double>>> &rotOp);
+    static void getRotatedSol(const std::vector<double> &sol, std::vector<double> &solRotated, double alpha);
     static void getRotatedSolEl(Element *e, const std::vector<std::vector<double>> &solEl, std::vector<std::vector<double>> &solRotated);
     static void getInvertRotatedGradient(Element *e, const std::vector<double> &localRhsRotated, std::vector<double> &localRhs);
+    static void getInvertRotatedHessianAndGradient(Element *e, const std::vector<std::vector<double>> &localHessRotated, const std::vector<double> &localRhsRotated, std::vector<std::vector<double>> &localHess, std::vector<double> &localRhs);
 
     OdecoAniso2D(): Frame(){}
     OdecoAniso2D(const std::vector<double> &f){
@@ -58,6 +62,7 @@ namespace IFF{
       else if(dir.size()<=4 && dir.size()>0){
 	if(fabs(tools::dotprod(dir[0], dir[1])) > 1e-12){
 	  gmsh::logger::write("Invalid OdecoAniso2D instantiation from directions. Directions are not orthogonal", "error");
+          exit(0);
 	}
 	double theta = atan2(dir[0][1], dir[0][0]);
 	double norm0 = tools::norm(dir[0]);
@@ -79,7 +84,7 @@ namespace IFF{
       double theta = atan2(m_frame[4], m_frame[3])/4.0;
       std::vector<double> subFrameIso{m_frame[0], m_frame[3], m_frame[4]};
       std::vector<double> subFrameAniso{m_frame[1], m_frame[2]};
-      if(tools::norm(subFrameAniso) > 1e-10)
+      if(tools::norm(subFrameAniso) > 1e-2)
         theta = atan2(subFrameAniso[1], subFrameAniso[0])/2.0;
       
       std::vector<double> fIsoProjUnit{3*sqrt(2*M_PI)/8.0, cos(4*theta)*sqrt(M_PI)/8.0, sin(4*theta)*sqrt(M_PI)/8.0};
@@ -125,6 +130,18 @@ namespace IFF{
       return d;
     }
 
+    virtual double getLengthAlongDir(const std::vector<double> &dir){
+      if(dir.size() != 2){
+        throw std::invalid_argument("Wrong argument for OdecoAniso2D::getLengthAlongDir(const std::vector<double> &dir). dir size should be 2. For 3D directions, use OdecoAniso2D::getLengthAlongDir(const std::vector<double> &dir, const std::vector<double> &normal)");
+      }
+      else{
+        double alpha = atan2(dir[1], dir[0]);
+        std::vector<double> v1 = {3*sqrt(2*M_PI)/8.0, sqrt(M_PI)/2.0*cos(2*alpha), sqrt(M_PI)/2.0*sin(2*alpha), sqrt(M_PI)/8.0*cos(4*alpha), sqrt(M_PI)/8.0*sin(4*alpha)};
+        std::vector<double> v2 = {3*sqrt(2*M_PI)/8.0, -sqrt(M_PI)/2.0*cos(2*alpha), -sqrt(M_PI)/2.0*sin(2*alpha), sqrt(M_PI)/8.0*cos(4*alpha), sqrt(M_PI)/8.0*sin(4*alpha)};
+        return (tools::dotprod(m_frame, v1)*tools::norm2(v2)-tools::dotprod(m_frame, v2)*tools::dotprod(v1, v2))/(tools::norm2(v1)*tools::norm2(v2) - tools::dotprod(v1, v2)*tools::dotprod(v1, v2));
+      }
+    }
+
     virtual void projectOnCrossManifold(){ //WARNING: approximation
       std::vector<std::vector<double>> dir = getDirections();
       OdecoAniso2D projF(dir);
@@ -138,10 +155,15 @@ namespace IFF{
 
     // This function is providing coefficients of linear combination which has to be constant to ensure alignement constraint
     static std::vector<std::vector<double>> getAlignmentLinConstr(const std::vector<double> &dir);
+    static std::vector<std::vector<double>> getAlignmentPlusTangentSizeLinConstr(const std::vector<double> &dir);
+    static std::vector<std::vector<double>> getSizeLinConstr(double sizeFrame);
     static size_t nUnknown;
     static void getCRRotOperator(Element *e, std::vector<std::vector<std::vector<double>>> &rotOp);
+    static void getCRRotOperatorWithDefinedRef(Element *e, std::vector<std::vector<std::vector<double>>> &rotOp, int indLocEdgeRef);
+    static void getRotatedSol(const std::vector<double> &sol, std::vector<double> &solRotated, double alpha);
     static void getRotatedSolEl(Element *e, const std::vector<std::vector<double>> &solEl, std::vector<std::vector<double>> &solRotated);
     static void getInvertRotatedGradient(Element *e, const std::vector<double> &localRhsRotated, std::vector<double> &localRhs);
+    static void getInvertRotatedHessianAndGradient(Element *e, const std::vector<std::vector<double>> &localHessRotated, const std::vector<double> &localRhsRotated, std::vector<std::vector<double>> &localHess, std::vector<double> &localRhs);
 
     OdecoIso2D(): Frame(){}
     OdecoIso2D(const std::vector<double> &f){
@@ -213,6 +235,17 @@ namespace IFF{
       return d;
     }
 
+    virtual double getLengthAlongDir(const std::vector<double> &dir){
+      if(dir.size() != 2){
+        throw std::invalid_argument("Wrong argument for OdecoAniso2D::getLengthAlongDir(const std::vector<double> &dir). dir size should be 2. For 3D directions, use OdecoAniso2D::getLengthAlongDir(const std::vector<double> &dir, const std::vector<double> &normal)");
+      }
+      else{
+        double alpha = atan2(dir[1], dir[0]);
+        std::vector<double> v1 = {3*sqrt(2*M_PI)/4.0, sqrt(M_PI)/4.0*cos(4*alpha), sqrt(M_PI)/4.0*sin(4*alpha)};
+        return tools::dotprod(m_frame, v1)/tools::norm2(v1);
+      }
+    }
+    
     virtual void projectOnCrossManifold(){
       std::vector<std::vector<double>> directions = getDirections();
       double theta = atan2(directions[0][1], directions[0][0]);
