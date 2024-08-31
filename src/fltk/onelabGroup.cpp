@@ -1043,10 +1043,15 @@ Fl_Widget *addParameterWidget(onelab::number &p, int xx, int yy, int ww, int hh,
 
   // non-editable value
   if(p.getReadOnly()) {
-    outputRange *but = new outputRange(xx, yy, ww, hh);
+    outputRange *but = new outputRange(xx, yy, ww, hh,
+                                       onelab::parameter::maxNumber());
     but->callback(onelab_number_output_range_cb, (void *)path);
     but->numberFormat(p.getAttribute("NumberFormat"));
     but->value(p.getValue());
+    but->minimum(p.getMin());
+    but->maximum(p.getMax());
+    but->step(p.getStep());
+    but->choices(p.getChoices());
     but->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
     but->graph(p.getAttribute("Graph"));
     if(highlight) but->color(c);
