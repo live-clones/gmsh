@@ -15,4 +15,6 @@ std::string patternChooser();
 
 int cgnsImport();
 
+int simpleTextDisplay(const char *title, const std::string &text);
+
 #endif

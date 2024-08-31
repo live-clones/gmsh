@@ -21,6 +21,7 @@
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Input.H>
 #include <FL/Fl_Double_Window.H>
+#include <FL/Fl_Text_Display.H>
 #include <FL/fl_ask.H>
 #include <FL/Fl_Preferences.H>
 #include "FlGui.h"
@@ -360,4 +361,46 @@ int cgnsImport()
 {
   if(!_cgnsImport) { _cgnsImport = new cgnsImportDialog(); }
   return _cgnsImport->run();
+}
+
+// simple text display
+
+int simpleTextDisplay(const char *title, const std::string &text)
+{
+  struct _display {
+    Fl_Window *window;
+    Fl_Text_Buffer *buff;
+    Fl_Text_Display *disp;
+  };
+  static _display *display = nullptr;
+
+  if(!display) {
+    display = new _display;
+    display->window =
+      new paletteWindow(4 * BB + 2 * WB, 5 * BH + 2 * WB,
+                        CTX::instance()->nonModalWindows ? true : false);
+    display->buff = new Fl_Text_Buffer();
+    display->disp = new Fl_Text_Display(WB, WB, 4 * BB, 5 * BH);
+    display->disp->buffer(display->buff);
+    display->disp->wrap_mode(Fl_Text_Display::WRAP_AT_BOUNDS, 0);
+    display->window->end();
+    display->window->resizable(display->disp);
+    display->window->hotspot(display->window);
+  }
+  display->window->label(title);
+  display->buff->text(text.c_str());
+  display->window->show();
+
+  while(display->window->shown()) {
+    Fl::wait();
+    for(;;) {
+      Fl_Widget *o = Fl::readqueue();
+      if(!o) break;
+      if(o == display->window) {
+        display->window->hide();
+        return 0;
+      }
+    }
+  }
+  return 0;
 }
