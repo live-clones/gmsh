@@ -22,6 +22,7 @@
 #include <FL/Fl_Input.H>
 #include <FL/Fl_Double_Window.H>
 #include <FL/Fl_Text_Display.H>
+#include <FL/Fl_Text_Editor.H>
 #include <FL/fl_ask.H>
 #include <FL/Fl_Preferences.H>
 #include "FlGui.h"
@@ -385,10 +386,10 @@ int simpleTextDisplay(const char *title, const std::string &text)
     display->disp->wrap_mode(Fl_Text_Display::WRAP_AT_BOUNDS, 0);
     display->window->end();
     display->window->resizable(display->disp);
-    display->window->hotspot(display->window);
   }
   display->window->label(title);
   display->buff->text(text.c_str());
+  display->window->hotspot(display->window);
   display->window->show();
 
   while(display->window->shown()) {
@@ -398,6 +399,65 @@ int simpleTextDisplay(const char *title, const std::string &text)
       if(!o) break;
       if(o == display->window) {
         display->window->hide();
+        return 0;
+      }
+    }
+  }
+  return 0;
+}
+
+int simpleTextEditor(const char *title, const std::string &help,
+                     std::string &text)
+{
+  struct _editor {
+    Fl_Window *window;
+    Fl_Text_Buffer *buff;
+    Fl_Text_Editor *edit;
+    Fl_Button *apply, *cancel;
+    Fl_Box *help;
+    char *help_text;
+  };
+  static _editor *editor = nullptr;
+
+  if(!editor) {
+    editor = new _editor;
+    editor->window =
+      new paletteWindow(4 * BB + 2 * WB, 7 * BH + 3 * WB,
+                        CTX::instance()->nonModalWindows ? true : false);
+    editor->help_text = strdup(help.c_str());
+    editor->help = new Fl_Box(WB, WB / 2, 4 * BB, BH, editor->help_text);
+    editor->help->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE | FL_ALIGN_CLIP);
+    editor->buff = new Fl_Text_Buffer();
+    editor->edit = new Fl_Text_Editor(WB, WB + BH, 4 * BB, 5 * BH);
+    editor->edit->buffer(editor->buff);
+    editor->edit->wrap_mode(Fl_Text_Editor::WRAP_AT_BOUNDS, 0);
+    editor->apply = new Fl_Return_Button
+      (4 * BB + WB - BB, 2 * WB + 6 * BH, BB, BH, "Apply");
+    editor->cancel = new Fl_Button
+      (4 * BB - 2 * BB, 2 * WB + 6 * BH, BB, BH, "Cancel");
+    Fl_Box *resize = new Fl_Box(WB, WB + BH, WB, WB);
+    editor->window->end();
+    editor->window->resizable(resize);
+  }
+  editor->window->label(title);
+  editor->buff->text(text.c_str());
+  editor->window->hotspot(editor->window);
+  editor->window->show();
+
+  while(editor->window->shown()) {
+    Fl::wait();
+    for(;;) {
+      Fl_Widget *o = Fl::readqueue();
+      if(!o) break;
+      if(o == editor->apply) {
+        char *t = editor->buff->text();
+        text = t;
+        free(t);
+        editor->window->hide();
+        return 1;
+      }
+      if(o == editor->window || o == editor->cancel) {
+        editor->window->hide();
         return 0;
       }
     }

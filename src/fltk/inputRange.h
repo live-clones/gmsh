@@ -16,7 +16,6 @@
 #include <FL/Fl_Toggle_Button.H>
 #include <FL/Fl_Menu_Button.H>
 #include <FL/Fl_Multiline_Output.H>
-#include <FL/fl_ask.H>
 #include "inputValue.h"
 #include "extraDialogs.h"
 #include "Context.h"
@@ -135,12 +134,9 @@ private:
   }
   void _edit_range()
   {
-    const char *ret =
-      fl_input("Edit range or choices ([min : max], [min : max : step], or "
-               "[val1, val2, ...]):",
-               _range.c_str());
-    if(ret) {
-      _range = ret;
+    if(simpleTextEditor("Edit range or choices",
+                        "[min : max], [min : max : step], or [val1, val2, ...]",
+                        _range)) {
       _string2values();
       _values2string();
       doCallbackOnValues(true);
