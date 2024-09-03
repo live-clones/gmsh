@@ -3069,7 +3069,7 @@ Create a straight line segment. The @var{expression} inside the
 parentheses is the line segment's tag; the two @w{@var{expression}s}
 inside the braces on the right hand side give tags of the start and end
 points of the segment.
-@c TODO: multi-lines not authorized yet
+@c TODO: multi-lines not officially supported
 
 @item Bezier ( @var{expression} ) = @{ @var{expression-list} @};
 Create a Bezier curve. The @var{expression-list} contains the
@@ -3589,7 +3589,7 @@ only available with the built-in kernel.
 @item Split Curve @{ @var{expression} @} Point @{ @var{expression-list} @}
 (Not a transformation per-se.) Split the curve @var{expression} on the
 specified control points. Only available with the built-in kernel, for
-lines, splines and BSplines.
+splines and BSplines. @c multi-lines are not officially supported
 @end ftable
 
 @noindent with

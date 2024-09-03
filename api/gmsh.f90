@@ -9170,8 +9170,8 @@ module gmsh
 
   !> Split the curve of tag `tag' in the built-in CAD representation, on the
   !! specified control points `pointTags'. This feature is only available for
-  !! lines, splines and b-splines. Return the tag(s) `curveTags' of the newly
-  !! created curve(s).
+  !! splines and b-splines. Return the tag(s) `curveTags' of the newly created
+  !! curve(s).
   subroutine gmshModelGeoSplitCurve(tag, &
                                     pointTags, &
                                     curveTags, &
