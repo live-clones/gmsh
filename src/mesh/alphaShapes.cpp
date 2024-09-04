@@ -334,9 +334,9 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
   printf("nodal sizes initialized \n");
 
   HXTAlphaShapeOptions alphaShapeOptions = {
-      .colorIn = alphaShapeTags[0],
+      .colorIn = static_cast<uint32_t>(alphaShapeTags[0]),
       .colorOut = 1,
-      .colorBoundary = alphaShapeTags[1],
+      .colorBoundary = static_cast<uint32_t>(alphaShapeTags[1]),
       .alpha = alpha,
       .hMean = hMean,
       .minQuality = .1, // TO CHECK !!!!!!!!!!!
@@ -365,7 +365,7 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
     hxtAlignedRealloc(&mesh->triangles.color, sizeof(uint32_t) * mesh->triangles.num);
     mesh->triangles.size = mesh->triangles.num;
   }
-  for (int i=0; i<alphaShapeOptions.n_boundaryFacets; i++){
+  for (u_int32_t i=0; i<alphaShapeOptions.n_boundaryFacets; i++){
     mesh->triangles.node[3*i+0] = alphaShapeOptions.boundaryFacets[3*i+0];
     mesh->triangles.node[3*i+1] = alphaShapeOptions.boundaryFacets[3*i+1];
     mesh->triangles.node[3*i+2] = alphaShapeOptions.boundaryFacets[3*i+2];
@@ -428,7 +428,7 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
   }
   else {
     // create a mesh with only the elements in the alpha shape
-    for (int i=0; i<mesh->tetrahedra.num; i++){
+    for (uint64_t i=0; i<mesh->tetrahedra.num; i++){
       if (mesh->tetrahedra.color[i] != alphaShapeOptions.colorIn){
         mesh->tetrahedra.color[i] = HXT_COLOR_OUT;
       }
@@ -448,7 +448,7 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
   robin_hood::unordered_map<size_t, size_t> i2g;
   
   std::vector<size_t> alphaTriTags, alphaTriNodeTags, alphaTetTags, alphaTetNodeTags;
-  for (int i=0; i<mesh->triangles.num; i++){
+  for (uint64_t i=0; i<mesh->triangles.num; i++){
     alphaTriTags.push_back(i+1);
     for (int j=0; j<3; j++){
       size_t nodeIndex = mesh->triangles.node[3*i+j];
@@ -469,7 +469,7 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
   }
   // for (int i=0; i<alphaShapeOptions.n_tetrahedra; i++){
   size_t tetTag = 1;
-  for (int i=0; i<mesh->tetrahedra.num; i++){
+  for (uint64_t i=0; i<mesh->tetrahedra.num; i++){
     uint32_t myColor = mesh->tetrahedra.color[i];
     if (myColor == HXT_COLOR_OUT) continue;
     alphaTetTags.push_back(tetTag++);
@@ -1871,7 +1871,7 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const in
   }
   // Compute the size field at the nodes if it was not done in the alpha shape (because hMean was used)
   std::unordered_map<int, double> sizeAtNodes(pm->vertices.size());
-  for (int i=0; i<pm->vertices.size(); i++){
+  for (size_t i=0; i<pm->vertices.size(); i++){
     PolyMesh::Vertex* v = pm->vertices[i];
     sizeAtNodes[v->data] = field->operator()(v->position.x(), v->position.y(), 0);
     // sizeAtNodes[v->data] = BGM_MeshSize(gf, v->position.x(), v->position.y(), v->position.x(), v->position.y(), 0);

@@ -62,7 +62,7 @@ class OctreeNode {
     int n;
     Leaf(): n(0) {};
     void search(const BBox<dim> bbox, std::vector<Object> &result) {
-      for (size_t i = 0; i < n; ++i) {
+      for (int i = 0; i < n; ++i) {
         if (bboxes[i].intersects(bbox)) {
           result.push_back(objects[i]);
           auto it = std::lower_bound(result.begin(), result.end(), objects[i]);

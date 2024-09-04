@@ -13,9 +13,9 @@
  */
 typedef struct {
 
-  int colorIn;                 /* Color of tetrahedra inside alpha shape*/
-  int colorOut;                /* Color of tetrahedra outside alpha shape*/
-  int colorBoundary;           /* Color of triangles on the boundary of alpha shape*/
+  uint32_t colorIn;                 /* Color of tetrahedra inside alpha shape*/
+  uint32_t colorOut;                /* Color of tetrahedra outside alpha shape*/
+  uint32_t colorBoundary;           /* Color of triangles on the boundary of alpha shape*/
 
   double alpha;                /* Alpha value for alpha shape */
   double hMean;               /* Mean size of the mesh */   

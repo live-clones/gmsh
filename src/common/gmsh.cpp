@@ -5752,9 +5752,11 @@ GMSH_API void
 gmsh::model::mesh::decimateTriangulation(const int faceTag, 
                                          const double thresholdDistance)
 {
-  #if defined(HAVE_MESH)
+#if defined(HAVE_MESH)
     _decimateTriangulation(faceTag, thresholdDistance);
-  #endif
+#else 
+  Msg::Error("decimateTriangulation requires the mesh and hxt modules");
+#endif
 }
 
 // gmsh::model::mesh::field
