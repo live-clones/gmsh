@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1046,5 +1046,19 @@ struct HalfEdgePtrEqual {
 
 void print__(const char *fn, PolyMesh *pm,
              std::map<PolyMesh::Vertex *, double> &ls);
+// compute the degree of a given vertex v
+inline int degree(const PolyMesh::Vertex *v) 
+{
+  PolyMesh::HalfEdge *he = v->he;
+  size_t count = 0;
+  do {
+    he = he->opposite;
+    if(he == NULL) return -1;
+    he = he->next;
+    count++;
+  } while(he != v->he);
+  return count;
+}
+
 
 #endif

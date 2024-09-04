@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1542,8 +1542,10 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
 
   // delete all physical groups before sync only if there is no mesh (if there
   // is a mesh, it could have been loaded from a file with physical groups - we
-  // don't want to remove those)
-  if(!model->getNumMeshElements()) model->removePhysicalGroups();
+  // don't want to remove those) and we have physical groups in the built-in
+  // kernel
+  if(!model->getNumMeshElements() && Tree_Nbr(PhysicalGroups))
+    model->removePhysicalGroups();
   // we might want to store physical groups directly in GModel; but I guess this
   // is OK for now:
   if(Tree_Nbr(PhysicalGroups)) {

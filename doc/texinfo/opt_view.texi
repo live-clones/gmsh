@@ -46,11 +46,6 @@ Default post-processing view file name@*
 Default value: @code{""}@*
 Saved in: @code{-}
 
-@item View.Format
-Number format (in standard C form)@*
-Default value: @code{"%.3g"}@*
-Saved in: @code{General.OptionsFileName}
-
 @item View.GeneralizedRaiseX
 Generalized elevation of the view along X-axis (in model coordinates, using formula possibly containing x, y, z, s[tep], t[ime], v0, ... v8)@*
 Default value: @code{"v0"}@*
@@ -75,6 +70,11 @@ Saved in: @code{General.OptionsFileName}
 Default post-processing view name@*
 Default value: @code{""}@*
 Saved in: @code{-}
+
+@item View.NumberFormat
+Number format (in standard C form)@*
+Default value: @code{"%.3g"}@*
+Saved in: @code{General.OptionsFileName}
 
 @item View.Stipple0
 First stippling pattern@*

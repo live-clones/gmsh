@@ -31,7 +31,7 @@ int main(int argc, char **argv)
   }
   gmshModelOccAddBox(0, 0, 0, 0.5, 0.5, 0.5, 2, &ierr);
 
-  // We apply a boolean difference to create the "cube minus one eigth" shape:
+  // We apply a boolean difference to create the "cube minus one eighth" shape:
   const int o[] = {3, 1};
   const int t[] = {3, 2};
   gmshModelOccCut(o, sizeof(o) / sizeof(o[0]), t, sizeof(t) / sizeof(t[0]),

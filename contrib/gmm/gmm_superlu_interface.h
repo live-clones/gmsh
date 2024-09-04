@@ -1,32 +1,33 @@
-// -*- c++ -*- (enables emacs c++ mode)
-//===========================================================================
-//
-// Copyright (C) 2003-2008 Yves Renard
-//
-// This file is a part of GETFEM++
-//
-// Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
-// under  the  terms  of the  GNU  Lesser General Public License as published
-// by  the  Free Software Foundation;  either version 2.1 of the License,  or
-// (at your option) any later version.
-// This program  is  distributed  in  the  hope  that it will be useful,  but
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-// or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-// License for more details.
-// You  should  have received a copy of the GNU Lesser General Public License
-// along  with  this program;  if not, write to the Free Software Foundation,
-// Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
-//
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
-//
-//===========================================================================
+/* -*- c++ -*- (enables emacs c++ mode) */
+/*===========================================================================
+
+ Copyright (C) 2003-2020 Yves Renard
+
+ This file is a part of GetFEM
+
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
+ under  the  terms  of the  GNU  Lesser General Public License as published
+ by  the  Free Software Foundation;  either version 3 of the License,  or
+ (at your option) any later version along with the GCC Runtime Library
+ Exception either version 3.1 or (at your option) any later version.
+ This program  is  distributed  in  the  hope  that it will be useful,  but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ License and GCC Runtime Library Exception for more details.
+ You  should  have received a copy of the GNU Lesser General Public License
+ along  with  this program;  if not, write to the Free Software Foundation,
+ Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+
+ As a special exception, you  may use  this file  as it is a part of a free
+ software  library  without  restriction.  Specifically,  if   other  files
+ instantiate  templates  or  use macros or inline functions from this file,
+ or  you compile this  file  and  link  it  with other files  to produce an
+ executable, this file  does  not  by itself cause the resulting executable
+ to be covered  by the GNU Lesser General Public License.  This   exception
+ does not  however  invalidate  any  other  reasons why the executable file
+ might be covered by the GNU Lesser General Public License.
+
+===========================================================================*/
 
 /**@file gmm_superlu_interface.h
    @author  Yves Renard <Yves.Renard@insa-lyon.fr>
@@ -50,21 +51,21 @@ typedef int int_t;
 # undef FALSE
 #endif
 
-#include "SRC/slu_Cnames.h"
-#include "SRC/supermatrix.h"
-#include "SRC/slu_util.h"
+#include "superlu/slu_Cnames.h"
+#include "superlu/supermatrix.h"
+#include "superlu/slu_util.h"
 
 namespace SuperLU_S {
-#include "SRC/slu_sdefs.h"
+#include "superlu/slu_sdefs.h"
 }
 namespace SuperLU_D {
-#include "SRC/slu_ddefs.h"
+#include "superlu/slu_ddefs.h"
 }
 namespace SuperLU_C {
-#include "SRC/slu_cdefs.h"
+#include "superlu/slu_cdefs.h"
 }
 namespace SuperLU_Z {
-#include "SRC/slu_zdefs.h" 
+#include "superlu/slu_zdefs.h" 
 }
 
 
@@ -157,7 +158,7 @@ namespace gmm {
   /* ********************************************************************* */
 
   template <typename MAT, typename VECTX, typename VECTB>
-  void SuperLU_solve(const MAT &A, const VECTX &X_, const VECTB &B,
+  int SuperLU_solve(const MAT &A, const VECTX &X_, const VECTB &B,
 		     double& rcond_, int permc_spec = 3) {
     VECTX &X = const_cast<VECTX &>(X_);
     /*
@@ -195,8 +196,8 @@ namespace gmm {
     StatInit(&stat);
 
     SuperMatrix SA, SL, SU, SB, SX; // SuperLU format.
-    Create_CompCol_Matrix(&SA, m, n, nz, csc_A.pr,
-			  (int *)(csc_A.ir), (int *)(csc_A.jc));
+    Create_CompCol_Matrix(&SA, m, n, nz, (double *)(&(csc_A.pr[0])),
+			  (int *)(&(csc_A.ir[0])), (int *)(&(csc_A.jc[0])));
     Create_Dense_Matrix(&SB, m, nrhs, &rhs[0], m);
     Create_Dense_Matrix(&SX, m, nrhs, &sol[0], m);
     memset(&SL,0,sizeof SL);
@@ -231,8 +232,10 @@ namespace gmm {
     Destroy_SuperNode_Matrix(&SL);
     Destroy_CompCol_Matrix(&SU);
     StatFree(&stat);
-    GMM_ASSERT1(info == 0, "SuperLU solve failed: info=" << info);
+    GMM_ASSERT1(info >= 0, "SuperLU solve failed: info =" << info);
+    if (info > 0) GMM_WARNING1("SuperLU solve failed: info =" << info);
     gmm::copy(sol, X);
+    return info;
   }
 
   template <class T> class SuperLU_factor {
@@ -314,9 +317,10 @@ namespace gmm {
       case 3 : options.ColPerm = COLAMD; break;
       }
       StatInit(&stat);
-      
-      Create_CompCol_Matrix(&SA, m, n, nz, csc_A.pr,
-			    (int *)(csc_A.ir), (int *)(csc_A.jc));
+
+      Create_CompCol_Matrix(&SA, m, n, nz, (double *)(&(csc_A.pr[0])),
+			    (int *)(&(csc_A.ir[0])), (int *)(&(csc_A.jc[0])));
+
       Create_Dense_Matrix(&SB, m, 0, &rhs[0], m);
       Create_Dense_Matrix(&SX, m, 0, &sol[0], m);
       memset(&SL,0,sizeof SL);

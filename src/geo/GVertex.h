@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -120,9 +120,9 @@ public:
   std::vector<MPoint *> points;
 
   void addPoint(MPoint *p) { points.push_back(p); }
-  void addElement(int type, MElement *e);
-  void removeElement(int type, MElement *e);
-  void removeElements(int type);
+  void addElement(MElement *e);
+  void removeElement(MElement *e, bool del=false);
+  void removeElements(bool del=false);
 
   virtual bool reorder(const int elementType,
                        const std::vector<std::size_t> &ordering);

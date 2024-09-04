@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -129,7 +129,7 @@ template <class scalar> void linearSystemPETSc<scalar>::preAllocateEntries()
   if(_sparsity.getNbRows() == 0) {
     PetscInt prealloc = 300; // 8*27 = 216 for 8 2nd order hexas
     PetscBool set;
-    PetscOptionsGetInt(PETSC_NULL, "-petsc_prealloc", &prealloc, &set);
+    PetscOptionsGetInt(nullptr, "-petsc_prealloc", &prealloc, &set);
     prealloc = std::min(prealloc, _localSize);
     nByRowDiag.resize(0);
     nByRowDiag.resize(_localSize, prealloc);
@@ -407,6 +407,16 @@ template <class scalar> int linearSystemPETSc<scalar>::systemSolve()
   _check(VecAssemblyBegin(_b));
   _check(VecAssemblyEnd(_b));
   _check(KSPSolve(_ksp, _b, _x));
+  
+  // check solver failed
+  KSPConvergedReason reason;
+  _check(KSPGetConvergedReason(_ksp, &reason));
+  if (reason < 0) 
+  {
+      Msg::Error("The linear system of equations did not converge (PETSc reason : %d)", reason);
+      return 0;
+  };
+  
   //_check(KSPView(ksp, PETSC_VIEWER_STDOUT_SELF));
   // PetscInt its;
   //_check(KSPGetIterationNumber(ksp, &its));

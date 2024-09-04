@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -48,22 +48,22 @@ static void statistics_histogram_cb(Fl_Widget *w, void *data)
   std::vector<double> x, y;
 
   if(qmh == QMH_SICN_XY) {
-    for(int i = 0; i < 100; i++) {
-      x.push_back((double)(2 * i - 99) / 99);
+    for(int i = 0; i < 101; i++) {
+      x.push_back((double)(2 * i - 100) / 100);
       y.push_back(FlGui::instance()->stats->quality[0][i]);
     }
     new PView("SICN", "# Elements", x, y);
   }
   else if(qmh == QMH_GAMMA_XY) {
-    for(int i = 0; i < 100; i++) {
-      x.push_back((double)i / 99);
+    for(int i = 0; i < 101; i++) {
+      x.push_back((double)i / 100);
       y.push_back(FlGui::instance()->stats->quality[1][i]);
     }
     new PView("Gamma", "# Elements", x, y);
   }
   else if(qmh == QMH_SIGE_XY) {
-    for(int i = 0; i < 100; i++) {
-      x.push_back((double)(2 * i - 99) / 99);
+    for(int i = 0; i < 101; i++) {
+      x.push_back((double)(2 * i - 100) / 100);
       y.push_back(FlGui::instance()->stats->quality[2][i]);
     }
     new PView("SIGE", "# Elements", x, y);

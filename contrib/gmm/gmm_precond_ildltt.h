@@ -1,32 +1,33 @@
-// -*- c++ -*- (enables emacs c++ mode)
-//===========================================================================
-//
-// Copyright (C) 2003-2008 Yves Renard
-//
-// This file is a part of GETFEM++
-//
-// Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
-// under  the  terms  of the  GNU  Lesser General Public License as published
-// by  the  Free Software Foundation;  either version 2.1 of the License,  or
-// (at your option) any later version.
-// This program  is  distributed  in  the  hope  that it will be useful,  but
-// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-// or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
-// License for more details.
-// You  should  have received a copy of the GNU Lesser General Public License
-// along  with  this program;  if not, write to the Free Software Foundation,
-// Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
-//
-// As a special exception, you may use this file as part of a free software
-// library without restriction.  Specifically, if other files instantiate
-// templates or use macros or inline functions from this file, or you compile
-// this file and link it with other files to produce an executable, this
-// file does not by itself cause the resulting executable to be covered by
-// the GNU General Public License.  This exception does not however
-// invalidate any other reasons why the executable file might be covered by
-// the GNU General Public License.
-//
-//===========================================================================
+/* -*- c++ -*- (enables emacs c++ mode) */
+/*===========================================================================
+
+ Copyright (C) 2003-2020 Yves Renard
+
+ This file is a part of GetFEM
+
+ GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
+ under  the  terms  of the  GNU  Lesser General Public License as published
+ by  the  Free Software Foundation;  either version 3 of the License,  or
+ (at your option) any later version along with the GCC Runtime Library
+ Exception either version 3.1 or (at your option) any later version.
+ This program  is  distributed  in  the  hope  that it will be useful,  but
+ WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+ License and GCC Runtime Library Exception for more details.
+ You  should  have received a copy of the GNU Lesser General Public License
+ along  with  this program;  if not, write to the Free Software Foundation,
+ Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+
+ As a special exception, you  may use  this file  as it is a part of a free
+ software  library  without  restriction.  Specifically,  if   other  files
+ instantiate  templates  or  use macros or inline functions from this file,
+ or  you compile this  file  and  link  it  with other files  to produce an
+ executable, this file  does  not  by itself cause the resulting executable
+ to be covered  by the GNU Lesser General Public License.  This   exception
+ does not  however  invalidate  any  other  reasons why the executable file
+ might be covered by the GNU Lesser General Public License.
+
+===========================================================================*/
 
 /**@file gmm_precond_ildltt.h
    @author  Yves Renard <Yves.Renard@insa-lyon.fr>
@@ -65,7 +66,9 @@ namespace gmm {
     void do_ildltt(const Matrix&, col_major);
 
   public:
-    void build_with(const Matrix& A) {
+    void build_with(const Matrix& A, int k_ = -1, double eps_ = double(-1)) {
+      if (k_ >= 0) K = k_;
+      if (eps_ >= double(0)) eps = eps_;
       gmm::resize(U, mat_nrows(A), mat_ncols(A));
       indiag.resize(std::min(mat_nrows(A), mat_ncols(A)));
       do_ildltt(A, typename principal_orientation_type<typename
@@ -162,52 +165,6 @@ namespace gmm {
 
   template <typename Matrix, typename V1, typename V2> inline
   void transposed_right_mult(const ildltt_precond<Matrix>& P, const V1 &v1,
-			     V2 &v2)
-  { copy(v1, v2); gmm::lower_tri_solve(gmm::conjugated(P.U), v2, true); }
-
-
-  // for compatibility with old versions
-
-  template <typename Matrix>
-  struct choleskyt_precond : public ildltt_precond<Matrix>{
-    choleskyt_precond(const Matrix& A, int k_, double eps_)
-      : ildltt_precond<Matrix>(A, k_, eps_) {}
-    choleskyt_precond(void) {}
-  } IS_DEPRECATED;
-
-  template <typename Matrix, typename V1, typename V2> inline
-  void mult(const choleskyt_precond<Matrix>& P, const V1 &v1, V2 &v2) {
-    gmm::copy(v1, v2);
-    gmm::lower_tri_solve(gmm::conjugated(P.U), v2, true);
-    for (size_type i = 0; i < P.indiag.size(); ++i) v2[i] *= P.indiag[i];
-    gmm::upper_tri_solve(P.U, v2, true);
-  }
-
-  template <typename Matrix, typename V1, typename V2> inline
-  void transposed_mult(const choleskyt_precond<Matrix>& P,const V1 &v1, V2 &v2)
-  { mult(P, v1, v2); }
-
-  template <typename Matrix, typename V1, typename V2> inline
-  void left_mult(const choleskyt_precond<Matrix>& P, const V1 &v1, V2 &v2) {
-    copy(v1, v2);
-    gmm::lower_tri_solve(gmm::conjugated(P.U), v2, true);
-    for (size_type i = 0; i < P.indiag.size(); ++i) v2[i] *= P.indiag[i];
-  }
-
-  template <typename Matrix, typename V1, typename V2> inline
-  void right_mult(const choleskyt_precond<Matrix>& P, const V1 &v1, V2 &v2)
-  { copy(v1, v2); gmm::upper_tri_solve(P.U, v2, true); }
-
-  template <typename Matrix, typename V1, typename V2> inline
-  void transposed_left_mult(const choleskyt_precond<Matrix>& P, const V1 &v1,
-			    V2 &v2) {
-    copy(v1, v2);
-    gmm::upper_tri_solve(P.U, v2, true);
-    for (size_type i = 0; i < P.indiag.size(); ++i) v2[i] *= P.indiag[i];
-  }
-
-  template <typename Matrix, typename V1, typename V2> inline
-  void transposed_right_mult(const choleskyt_precond<Matrix>& P, const V1 &v1,
 			     V2 &v2)
   { copy(v1, v2); gmm::lower_tri_solve(gmm::conjugated(P.U), v2, true); }
 

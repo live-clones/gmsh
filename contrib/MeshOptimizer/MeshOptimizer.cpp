@@ -1,4 +1,4 @@
-// MeshOptimizer - Copyright (C) 2013-2023 UCLouvain-ULiege
+// MeshOptimizer - Copyright (C) 2013-2024 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -495,7 +495,7 @@ namespace {
       // Evaluate mesh and update it if (partial) success
       opt.updateResults();
 
-#pragma omp critical
+#pragma omp critical(optimizeDisjointPatches1)
       {
         if(newObjFunctionRange.size() == 0) {
           newObjFunctionRange = opt.objFunction()->minMax();
@@ -515,7 +515,7 @@ namespace {
 
       if(success >= 0) opt.patch.updateGEntityPositions();
 
-#pragma omp critical
+#pragma omp critical(optimizeDisjointPatches2)
       {
         par.success = std::min(par.success, success);
         nbPatchSuccess[success + 1]++;

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -730,7 +730,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
         }
       }
 
-#pragma omp critical
+#pragma omp critical(BuildBackgroundMeshAndGuidingField)
       {
         append(global_triangles, triangles);
         append(global_triangle_directions, triangleDirections);

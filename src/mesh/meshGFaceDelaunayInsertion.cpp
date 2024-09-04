@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -896,7 +896,7 @@ static MTri3 *search4Triangle(MTri3 *t, double pt[2], bidimMeshData &data,
       if(intersection_segments_2(p1, p2, q1, q2)) break;
     }
     if(i >= 3) {
-      printf("impossible\n");
+      Msg::Error("Impossible case in triangle search");
       break;
     }
     t = t->getNeigh(i);
@@ -1663,7 +1663,7 @@ void bowyerWatsonParallelograms(
     return;
   }
 
-  
+
 #if defined(HAVE_DOMHEX)
   if(old_algo_hexa()) {
     Msg::Debug("bowyerWatsonParallelograms: call packingOfParallelograms()");

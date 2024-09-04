@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -49,6 +49,10 @@
 #include <FL/fl_ask.H>
 #include "FlGui.h"
 #include "extraDialogs.h"
+#endif
+
+#if defined(HAVE_OCC)
+#include <Standard_Version.hxx>
 #endif
 
 #if defined(_OPENMP)
@@ -147,10 +151,10 @@ void Msg::Initialize(int argc, char **argv)
       sargv[sargc++] = argv[i];
   }
   sargv[sargc] = nullptr;
-  PetscInitialize(&sargc, &sargv, PETSC_NULL, PETSC_NULL);
+  PetscInitialize(&sargc, &sargv, nullptr, nullptr);
   PetscPopSignalHandler();
 #if defined(HAVE_SLEPC)
-  SlepcInitialize(&sargc, &sargv, PETSC_NULL, PETSC_NULL);
+  SlepcInitialize(&sargc, &sargv, nullptr, nullptr);
 #endif
   delete [] sargv;
 #endif
@@ -387,13 +391,24 @@ onelab::client *Msg::GetOnelabClient()
 }
 #endif
 
-void Msg::Exit(int level)
+void Msg::Exit(int level, bool forceLevel)
 {
   Finalize();
 #if defined(HAVE_MPI)
   if(level) MPI_Abort(MPI_COMM_WORLD, level);
 #endif
-  exit(level ? level : _atLeastOneErrorInRun);
+
+#if defined(HAVE_OCC) && (OCC_VERSION_HEX > 0x070800)
+#if defined(__APPLE__) || defined(__linux__)
+#warning "Using _exit() instead of exit() as workaround for OCC >= 7.8 STEP bug"
+  // workaround for recent versions of OpenCASCADE (>= 7.8) which on macOS and
+  // linux invoke a global destructor in the STEP module that sometimes leads to
+  // a segfault - using _exit() bypasses the global destructor
+  _exit((forceLevel || level) ? level : _atLeastOneErrorInRun);
+#endif
+#endif
+
+  exit((forceLevel || level) ? level : _atLeastOneErrorInRun);
 }
 
 static int streamIsFile(FILE *stream)
@@ -799,10 +814,6 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
 
   if(percent >= _progressMeterCurrent || n > N - 1){
     int p = _progressMeterCurrent;
-    while(p < percent) p += _progressMeterStep;
-    if(p >= 100) p = 100;
-
-    _progressMeterCurrent = p;
 
     // TODO With C++11 use std::string (contiguous layout) and avoid all these C
     // problems
@@ -826,10 +837,14 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
     if(_logFile) fprintf(_logFile, "Progress: %s\n", str);
     if(_callback) (*_callback)("Progress", str);
     if(!streamIsFile(stdout) && log && CTX::instance()->terminal){
-      fprintf(stdout, "%s                                          \r",
-              (n > N - 1) ? "" : str2);
+      std::string w(80, ' ');
+      fprintf(stdout, "%s%s\r", (n > N - 1) ? "" : str2, w.c_str());
       fflush(stdout);
     }
+
+    while(p <= percent) p += _progressMeterStep;
+    if(p >= 100) p = 100;
+    _progressMeterCurrent = p;
   }
 }
 
@@ -1209,6 +1224,8 @@ void Msg::FinalizeOnelab()
       it != onelab::server::instance()->lastClient(); it++){
     (*it)->kill();
   }
+  // clear db
+  onelab::server::instance()->clear();
   // delete local client
   if(_onelabClient){
     delete _onelabClient;
@@ -1418,28 +1435,6 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
     ps[0].setMax(fopt["Max"][0]); ps[0].setMin(-onelab::parameter::maxNumber());
   }
   if(noRange && fopt.count("Step")) ps[0].setStep(fopt["Step"][0]);
-  // if no range/min/max/step info is provided, try to compute a reasonnable
-  // range and step (this makes the gui much nicer to use)
-  if(val.size() && noRange && !fopt.count("Range") && !fopt.count("Step") &&
-     !fopt.count("Min") && !fopt.count("Max")){
-    bool isInteger = (floor(val[0]) == val[0]);
-    double fact = isInteger ? 5. : 20.;
-    if(val[0] > 0){
-      ps[0].setMin(val[0] / fact);
-      ps[0].setMax(val[0] * fact);
-      ps[0].setStep((ps[0].getMax() - ps[0].getMin()) / 100.);
-    }
-    else if(val[0] < 0){
-      ps[0].setMin(val[0] * fact);
-      ps[0].setMax(val[0] / fact);
-      ps[0].setStep((ps[0].getMax() - ps[0].getMin()) / 100.);
-    }
-    if(val[0] && isInteger){
-      ps[0].setMin((int)ps[0].getMin());
-      ps[0].setMax((int)ps[0].getMax());
-      ps[0].setStep((int)ps[0].getStep());
-    }
-  }
   if(noChoices && fopt.count("Choices")){
     ps[0].setChoices(fopt["Choices"]);
     if(copt.count("Choices")) ps[0].setChoiceLabels(copt["Choices"]);

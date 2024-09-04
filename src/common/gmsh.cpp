@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -46,6 +46,7 @@
 #include "pyramidalBasis.h"
 #include "Numeric.h"
 #include "OS.h"
+#include "Options.h"
 #include "OpenFile.h"
 #include "HierarchicalBasisH1Quad.h"
 #include "HierarchicalBasisH1Tria.h"
@@ -301,6 +302,14 @@ GMSH_API void gmsh::option::getColor(const std::string &name, int &r, int &g,
   else {
     Msg::Error("Could not get option '%s'", name.c_str());
   }
+}
+
+GMSH_API void gmsh::option::restoreDefaults()
+{
+  UnlinkFile(CTX::instance()->homeDir + CTX::instance()->sessionFileName);
+  UnlinkFile(CTX::instance()->homeDir + CTX::instance()->optionsFileName);
+  ReInitOptions(0);
+  InitOptionsGUI(0);
 }
 
 // gmsh::model
@@ -1438,6 +1447,35 @@ GMSH_API void gmsh::model::mesh::clear(const vectorpair &dimTags)
     entities.push_back(ge);
   }
   GModel::current()->deleteMesh(entities);
+}
+
+GMSH_API void gmsh::model::mesh::removeElements(
+   const int dim, const int tag,
+   const std::vector<std::size_t> &elementTags)
+{
+  if(!_checkInit()) return;
+  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+  if(!ge) {
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+    return;
+  }
+  if(elementTags.empty()) {
+    ge->removeElements(true);
+  }
+  else {
+    for(auto t : elementTags) {
+      MElement *e = GModel::current()->getMeshElementByTag(t);
+      if(!e) {
+        Msg::Error("Unknown element %d", t);
+      }
+      else {
+        ge->removeElement(e, true);
+      }
+    }
+  }
+  ge->deleteVertexArrays();
+  GModel::current()->destroyMeshCaches();
+  // we leave the user to call reclassifyNodes()
 }
 
 static void _getEntities(const gmsh::vectorpair &dimTags,
@@ -3572,8 +3610,7 @@ GMSH_API void gmsh::model::mesh::createEdges(const vectorpair &dimTags)
   if(!_checkInit()) return;
   std::vector<GEntity *> entities;
   _getEntities(dimTags, entities);
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
+  for(GEntity *ge : entities) {
     for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
       MElement *e = ge->getMeshElement(j);
       for(int k = 0; k < e->getNumEdges(); k++) {
@@ -3589,8 +3626,7 @@ GMSH_API void gmsh::model::mesh::createFaces(const vectorpair &dimTags)
   if(!_checkInit()) return;
   std::vector<GEntity *> entities;
   _getEntities(dimTags, entities);
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
+  for(GEntity *ge : entities) {
     for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
       MElement *e = ge->getMeshElement(j);
       for(int k = 0; k < e->getNumFaces(); k++) {
@@ -4789,10 +4825,13 @@ gmsh::model::mesh::setTransfiniteCurve(const int tag, const int numNodes,
         (meshType == "Progression" || meshType == "Power") ? 1 :
         (meshType == "Bump")                               ? 2 :
         (meshType == "Beta")                               ? 3 :
+        (meshType == "Progression_HWall")                  ? 5 :
+        (meshType == "Bump_HWall")                         ? 6 :
+        (meshType == "Beta_HWall")                         ? 7 :
                                                              1;
-      ge->meshAttributes.coeffTransfinite = std::abs(coef);
+      ge->meshAttributes.coeffTransfinite =  ge->meshAttributes.typeTransfinite > 4 ? coef : std::abs(coef);
       // in .geo file we use a negative tag to do this trick; it's a bad idea
-      if(coef < 0) ge->meshAttributes.typeTransfinite *= -1;
+      if(coef < 0 && ge->meshAttributes.typeTransfinite < 4) ge->meshAttributes.typeTransfinite *= -1;
     }
     else {
       if(t > 0) {
@@ -6979,6 +7018,52 @@ GMSH_API void gmsh::model::occ::chamfer(const std::vector<int> &volumeTags,
     volumeTags, curveTags, surfaceTags, distances, outDimTags, removeVolume);
 }
 
+GMSH_API void gmsh::model::occ::defeature(const std::vector<int> &volumeTags,
+                                          const std::vector<int> &surfaceTags,
+                                          vectorpair &outDimTags,
+                                          const bool removeVolume)
+{
+  if(!_checkInit()) return;
+  _createOcc();
+  outDimTags.clear();
+  GModel::current()->getOCCInternals()->defeature(
+    volumeTags, surfaceTags, outDimTags, removeVolume);
+}
+
+GMSH_API int gmsh::model::occ::fillet2D(const int edgeTag1,
+                                        const int edgeTag2,
+                                        const double radius, const int tag)
+{
+  if(!_checkInit()) return -1;
+  _createOcc();
+  int outTag = tag;
+  GModel::current()->getOCCInternals()->fillet2D(outTag, edgeTag1, edgeTag2, radius);
+  return outTag;
+}
+
+GMSH_API int gmsh::model::occ::chamfer2D(const int edgeTag1,
+                                          const int edgeTag2,
+                                          const double distance1,
+                                          const double distance2, const int tag)
+{
+  if(!_checkInit()) return -1;
+  _createOcc();
+  int outTag = tag;
+  GModel::current()->getOCCInternals()->chamfer2D(outTag, edgeTag1, edgeTag2, distance1,
+                                                  distance2);
+  return outTag;
+}
+
+GMSH_API void gmsh::model::occ::offsetCurve( const int curveLoopTag,
+                                              double offset,
+                                              vectorpair &outDimTags)
+{
+  if(!_checkInit()) return;
+  _createOcc();
+  outDimTags.clear();
+  GModel::current()->getOCCInternals()->offsetCurve(curveLoopTag, offset, outDimTags);
+}
+
 GMSH_API void gmsh::model::occ::fuse(const vectorpair &objectDimTags,
                                      const vectorpair &toolDimTags,
                                      vectorpair &outDimTags,
@@ -6993,6 +7078,21 @@ GMSH_API void gmsh::model::occ::fuse(const vectorpair &objectDimTags,
   GModel::current()->getOCCInternals()->booleanUnion(
     tag, objectDimTags, toolDimTags, outDimTags, outDimTagsMap, removeObject,
     removeTool);
+}
+
+GMSH_API void gmsh::model::occ::getDistance(int dim1, int tag1,
+                                  int dim2, int tag2,
+                                  double &distance,
+                                  double &x1, double &y1, double &z1,
+                                  double &x2, double &y2, double &z2)
+{
+  if(!_checkInit()) return;
+  _createOcc();
+  GModel::current()->getOCCInternals()->getDistance(dim1, tag1,
+                                  dim2, tag2,
+                                  distance,
+                                  x1, y1, z1,
+                                  x2, y2, z2);
 }
 
 GMSH_API void gmsh::model::occ::intersect(
@@ -8308,7 +8408,7 @@ static void _createFltk()
 
 GMSH_API void gmsh::fltk::initialize()
 {
-  
+
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
   _createFltk();
@@ -8852,7 +8952,7 @@ public:
   apiMsg() {}
   virtual void operator()(std::string level, std::string message)
   {
-#pragma omp critical
+#pragma omp critical(apiMsg)
     _log.push_back(level + ": " + message);
   }
   void get(std::vector<std::string> &log) const { log = _log; }
@@ -8902,6 +9002,18 @@ GMSH_API double gmsh::logger::getCpuTime()
 {
   if(!_checkInit()) return -1;
   return Cpu();
+}
+
+GMSH_API double gmsh::logger::getMemory()
+{
+  if(!_checkInit()) return -1;
+  return GetMemoryUsage()/1024./1024.;
+}
+
+GMSH_API double gmsh::logger::getTotalMemory()
+{
+  if(!_checkInit()) return -1;
+  return TotalRam();
 }
 
 GMSH_API void gmsh::logger::getLastError(std::string &error)

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -236,6 +236,17 @@ GMSH_API void gmshOptionGetColor(const char * name, int * r, int * g, int * b, i
   if(ierr) *ierr = 0;
   try {
     gmsh::option::getColor(name, *r, *g, *b, *a);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshOptionRestoreDefaults(int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::option::restoreDefaults();
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -1059,6 +1070,18 @@ GMSH_API void gmshModelMeshClear(const int * dimTags, const size_t dimTags_n, in
       api_dimTags_[i].second = dimTags[i * 2 + 1];
     }
     gmsh::model::mesh::clear(api_dimTags_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshRemoveElements(const int dim, const int tag, const size_t * elementTags, const size_t elementTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_elementTags_(elementTags, elementTags + elementTags_n);
+    gmsh::model::mesh::removeElements(dim, tag, api_elementTags_);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -3754,6 +3777,71 @@ GMSH_API void gmshModelOccChamfer(const int * volumeTags, const size_t volumeTag
   }
 }
 
+GMSH_API void gmshModelOccDefeature(const int * volumeTags, const size_t volumeTags_n, const int * surfaceTags, const size_t surfaceTags_n, int ** outDimTags, size_t * outDimTags_n, const int removeVolume, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_volumeTags_(volumeTags, volumeTags + volumeTags_n);
+    std::vector<int> api_surfaceTags_(surfaceTags, surfaceTags + surfaceTags_n);
+    gmsh::vectorpair api_outDimTags_;
+    gmsh::model::occ::defeature(api_volumeTags_, api_surfaceTags_, api_outDimTags_, removeVolume);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API int gmshModelOccFillet2D(const int edgeTag1, const int edgeTag2, const double radius, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::occ::fillet2D(edgeTag1, edgeTag2, radius, tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API int gmshModelOccChamfer2D(const int edgeTag1, const int edgeTag2, const double distance1, const double distance2, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::occ::chamfer2D(edgeTag1, edgeTag2, distance1, distance2, tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API void gmshModelOccOffsetCurve(const int curveLoopTag, const double offset, int ** outDimTags, size_t * outDimTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_outDimTags_;
+    gmsh::model::occ::offsetCurve(curveLoopTag, offset, api_outDimTags_);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelOccGetDistance(const int dim1, const int tag1, const int dim2, const int tag2, double * distance, double * x1, double * y1, double * z1, double * x2, double * y2, double * z2, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::occ::getDistance(dim1, tag1, dim2, tag2, *distance, *x1, *y1, *z1, *x2, *y2, *z2);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelOccFuse(const int * objectDimTags, const size_t objectDimTags_n, const int * toolDimTags, const size_t toolDimTags_n, int ** outDimTags, size_t * outDimTags_n, int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn, const int tag, const int removeObject, const int removeTool, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -5061,6 +5149,32 @@ GMSH_API double gmshLoggerGetCpuTime(int * ierr)
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::logger::getCpuTime();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API double gmshLoggerGetMemory(int * ierr)
+{
+  double result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::logger::getMemory();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API double gmshLoggerGetTotalMemory(int * ierr)
+{
+  double result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::logger::getTotalMemory();
   }
   catch(...){
     if(ierr) *ierr = 1;

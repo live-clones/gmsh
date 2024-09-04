@@ -96,9 +96,13 @@ eps = 1e-3
 call gmsh%model%getEntitiesInBoundingBox(2 - eps, -eps, -eps, 2 + 1 + eps, &
                                          1 + eps, 1 + eps, dim=3, dimTags=tags)
 
-tmp = pack(out, out /= tags)
-out = reshape(tmp, [2, size(tmp)/2])
-deallocate(tmp)
+remove_volumes_outside_bounding_box: block
+    integer(c_int), allocatable :: res(:)
+    res = pack(out(2,:), .not. [(any(out(2,i) == tags(2,:)), i=1, size(out, dim=2))])
+    deallocate(out); allocate(out(2, size(res)))
+    out(1,:) = 3
+    out(2,:) = res
+end block remove_volumes_outside_bounding_box
 
 call gmsh%model%removeEntities(out, .true.)  ! Delete outside parts recursively
 deallocate(out)

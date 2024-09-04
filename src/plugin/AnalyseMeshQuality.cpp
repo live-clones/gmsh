@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -8,15 +8,15 @@
 #if defined(HAVE_MESH)
 
 #include "AnalyseMeshQuality.h"
-#include "qualityMeasuresJacobian.h"
 #include "OS.h"
 #include "Context.h"
 #include "PView.h"
 #include "GModel.h"
 #include "MElement.h"
+#include "polynomialBasis.h"
 #include "bezierBasis.h"
+#include "qualityMeasuresJacobian.h"
 #include <sstream>
-#include <fstream>
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
 #endif
@@ -280,15 +280,13 @@ void GMSH_AnalyseMeshQualityPlugin::_computeMinMaxJandValidity(int dim)
     case 2:
       Msg::StatusBar(true, "Surface %d: checking the Jacobian of %d elements",
                      entity->tag(), num);
-      // check the classical case of 2D planar meshes in the z=0 plane to issue
-      // a warning of the mesh is oriented along -z
-      if(entity->geomType() == GEntity::DiscreteSurface) {
-        SBoundingBox3d bb = entity->bounds();
-        if(!bb.empty() && bb.max().z() - bb.min().z() == .0) {
+      {
+        SVector3 n;
+        if(((GFace *)entity)->normalToPlanarMesh(n)) {
           normals = new fullMatrix<double>(1, 3);
-          normals->set(0, 0, 0);
-          normals->set(0, 1, 0);
-          normals->set(0, 2, 1);
+          normals->set(0, 0, n(0));
+          normals->set(0, 1, n(1));
+          normals->set(0, 2, n(2));
         }
       }
       break;
@@ -317,7 +315,7 @@ void GMSH_AnalyseMeshQualityPlugin::_computeMinMaxJandValidity(int dim)
     if(normals) delete normals;
   }
   if(cntInverted) {
-    Msg::Warning("%d element%s completely inverted",
+    Msg::Warning("%d element%s completely inverted", cntInverted,
                  (cntInverted > 1) ? "s are" : " is");
   }
   _computedJac[dim - 1] = true;
