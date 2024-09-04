@@ -9,7 +9,7 @@
 #include "hxt_smoothing.h"
 #include "hxt_tetFlag.h"
 
-static constexpr double ONE_THIRD = 1.0/3.0;
+static const double ONE_THIRD = 1.0/3.0;
 
 /**************************************************************************
                     smoothing related functions

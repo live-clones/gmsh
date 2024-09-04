@@ -19,15 +19,9 @@
 #include <limits>
 #include <string.h>
 
-/* 1/24 */
-#define INV_24 0.041666666666666666666
-
-/* 1/60 */
-#define INV_60 0.016666666666666666666
-
-/* 1/90 */
-#define INV_90 0.011111111111111111111
-
+static constexpr double INV_24 = 1.0 / 24.0;
+static constexpr double INV_60 = 1.0 / 60.0;
+static constexpr double INV_90 = 1.0 / 90.0;
 
 namespace {
 
