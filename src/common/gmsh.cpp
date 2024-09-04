@@ -5596,15 +5596,15 @@ gmsh::model::mesh::computeHomology(vectorpair &dimTags)
   GModel::current()->computeHomology(dimTags);
 }
 
-GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, const bool refine, const std::vector<double> &coord, const std::vector<size_t> &nodeTags)
-{
-  if(!_checkInit()) return;
-#if defined(HAVE_MESH)
-  generateMesh_(dim, tag, refine, coord, nodeTags);
-#else
-  Msg::Error("alphaShapes requires the mesh and hxt modules");
-#endif
-}
+// GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, const bool refine, const std::vector<double> &coord, const std::vector<size_t> &nodeTags)
+// {
+//   if(!_checkInit()) return;
+// #if defined(HAVE_MESH)
+//   generateMesh_(dim, tag, refine, coord, nodeTags);
+// #else
+//   Msg::Error("alphaShapes requires the mesh and hxt modules");
+// #endif
+// }
 
 GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
                                              const std::vector<std::size_t> & edges,
@@ -5660,28 +5660,28 @@ gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
 #endif
 }
 
-GMSH_API void 
-gmsh::model::mesh::constrainedDelaunayRefinement(const int dim, const int tag, const std::vector<size_t> &elementTags, const std::vector<size_t> &constrainedEdges, const std::vector<size_t> &nodeTags, const std::vector<double> &sizeField, const double minRadius, const double minQuality, std::vector<size_t> &newNodeTags, std::vector<double>& newCoords, std::vector<double>& newSizeField, std::vector<std::vector<size_t>>& newConstrainedEdges, std::vector<size_t>& newElementsInRefinement)
-{
-#if defined(HAVE_MESH) 
-  constrainedDelaunayRefinement_(dim, tag, elementTags, constrainedEdges, nodeTags, sizeField, minRadius, minQuality, newNodeTags, newCoords, newSizeField, newConstrainedEdges, newElementsInRefinement);
-#else
-  Msg::Error("constrainedDelaunayRefinement requires the mesh module");
-#endif  
-}
+// GMSH_API void 
+// gmsh::model::mesh::constrainedDelaunayRefinement(const int dim, const int tag, const std::vector<size_t> &elementTags, const std::vector<size_t> &constrainedEdges, const std::vector<size_t> &nodeTags, const std::vector<double> &sizeField, const double minRadius, const double minQuality, std::vector<size_t> &newNodeTags, std::vector<double>& newCoords, std::vector<double>& newSizeField, std::vector<std::vector<size_t>>& newConstrainedEdges, std::vector<size_t>& newElementsInRefinement)
+// {
+// #if defined(HAVE_MESH) 
+//   constrainedDelaunayRefinement_(dim, tag, elementTags, constrainedEdges, nodeTags, sizeField, minRadius, minQuality, newNodeTags, newCoords, newSizeField, newConstrainedEdges, newElementsInRefinement);
+// #else
+//   Msg::Error("constrainedDelaunayRefinement requires the mesh module");
+// #endif  
+// }
 
-GMSH_API void 
-gmsh::model::mesh::alphaShape(const int dim, const int tag, const double alpha, const std::vector<size_t> &nodeTags, const std::vector<double> &sizeAtNodes, std::vector<std::vector<size_t>> &elementTags, std::vector<std::vector<size_t>> &edges)
-{
-#if defined(HAVE_MESH)
-  alphaShape_entity(dim, tag, alpha, nodeTags, sizeAtNodes, elementTags, edges);
-#else
-  Msg::Error("constrainedDelaunayRefinement requires the mesh module");
-#endif  
-}
+// GMSH_API void 
+// gmsh::model::mesh::alphaShape(const int dim, const int tag, const double alpha, const std::vector<size_t> &nodeTags, const std::vector<double> &sizeAtNodes, std::vector<std::vector<size_t>> &elementTags, std::vector<std::vector<size_t>> &edges)
+// {
+// #if defined(HAVE_MESH)
+//   alphaShape_entity(dim, tag, alpha, nodeTags, sizeAtNodes, elementTags, edges);
+// #else
+//   Msg::Error("constrainedDelaunayRefinement requires the mesh module");
+// #endif  
+// }
 
 GMSH_API void
-gmsh::model::mesh::computeAlphaShapeBis(const int dim, const int tag, const int bndTag,
+gmsh::model::mesh::computeAlphaShape(const int dim, const int tag, const int bndTag,
                                         const std::string & boundaryModel,
                                         const double alpha, const int alphaShapeSizeField, const int refineSizeField, const bool usePreviousMesh, 
                                         const double boundary_tolerance)
@@ -5692,35 +5692,35 @@ gmsh::model::mesh::computeAlphaShapeBis(const int dim, const int tag, const int 
 
     std::vector<alphaShapeBndEdge> bndEdges;
     OctreeNode<2, 32, alphaShapeBndEdge*> bnd_octree;
-    printf("before b octree \n");
     _createBoundaryOctree(boundaryModel, bndTag, bnd_octree, bndEdges);
-    printf("after b octree \n");
 
     // Delaunay
     auto tic = std::chrono::high_resolution_clock::now();
     PolyMesh* pm = _alphaShapeDelaunay2D(tag, boundaryModel);
     auto toc = std::chrono::high_resolution_clock::now();
-    std::cout << "Triangulate  : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
+    // std::cout << "Triangulate  : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
 
     // alpha shape
     _alphaShape2D(pm, alpha, tag, bndTag, alphaShapeSizeField, usePreviousMesh);
     tic = std::chrono::high_resolution_clock::now();
-    std::cout << "Alpha Shape  : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
+    // std::cout << "Alpha Shape  : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
     // edge recover
     _edgeRecover(pm, tag, bndTag, boundaryModel, controlNodes, bnd_octree, boundary_tolerance);
     toc = std::chrono::high_resolution_clock::now();
-    std::cout << "Edge recover : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
+    // std::cout << "Edge recover : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
     // mesh adapt
     _delaunayRefinement(pm, tag, bndTag, refineSizeField, controlNodes);
     tic = std::chrono::high_resolution_clock::now();
-    std::cout << "Refine       : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
+    // std::cout << "Refine       : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
 
     // back to gmsh
     alphaShapePolyMesh2Gmsh(pm, tag, bndTag, boundaryModel, bnd_octree, boundary_tolerance);
     toc = std::chrono::high_resolution_clock::now();
-    std::cout << "To Gmsh      : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
+    // std::cout << "To Gmsh      : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
 
   }
+  else if (dim == 3)
+    Msg::Error("Use computeAlphaShape3D for 3D alpha shape");
   else 
     Msg::Error("Wrong dimension in alpha shape; 2 or 3");
 #else 
@@ -5728,19 +5728,8 @@ gmsh::model::mesh::computeAlphaShapeBis(const int dim, const int tag, const int 
 #endif
 }
 
-// GMSH_API void
-// gmsh::model::mesh::improveMesh(const int dim, const int tag,
-//                                         ){
-// #if defined(HAVE_MESH) && defined(HAVE_HXT)
-//   if (dim == 2){
-//     _improveMesh(dim, tag);
-//   }
-//   else 
-//     Msg::Error("Wrong dimension in alpha shape; 2 or 3");
-// }
-
 GMSH_API void
-gmsh::model::mesh::computeAlphaShape(const int dim, 
+gmsh::model::mesh::computeAlphaShape3D(const int dim, 
                                      const std::vector<int> & alphaShapeTags, 
                                      const double alpha, const double hMean, 
                                      std::function<double(int, int, double, double, double, double)> sizeFieldCallback, 
@@ -5749,7 +5738,7 @@ gmsh::model::mesh::computeAlphaShape(const int dim,
 {
 #if defined(HAVE_MESH) && defined(HAVE_HXT)
   if (dim == 2)
-    _computeAlphaShape(alphaShapeTags, alpha, hMean, sizeFieldCallback, triangulate, refine);
+    Msg::Error("Use computeAlphaShape2D for 2D alpha shape");
   else if (dim == 3)
     _computeAlphaShape3D(alphaShapeTags, alpha, hMean, sizeFieldCallback, triangulate, refine);
   else 
@@ -5767,19 +5756,6 @@ gmsh::model::mesh::decimateTriangulation(const int faceTag,
     _decimateTriangulation(faceTag, thresholdDistance);
   #endif
 }
-
-GMSH_API void
-gmsh::model::mesh::conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags, 
-                                               const std::vector<int> & internalBoundaryTags, 
-                                               const std::vector<int> & externalBoundaryTags, 
-                                               std::function<double(int, int, double, double, double, double)> sizeFieldCallback)
-{
-  #if defined(HAVE_MESH)
-    _conformAlphaShapeToBoundary(alphaShapeTags, internalBoundaryTags, externalBoundaryTags, sizeFieldCallback);
-  #endif
-}
-
-
 
 // gmsh::model::mesh::field
 

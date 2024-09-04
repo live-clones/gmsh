@@ -573,32 +573,20 @@ mesh.add('computeHomology', doc, None, ovectorpair('dimTags'))
 doc = '''Compute a cross field for the current mesh. The function creates 3 views: the H function, the Theta function and cross directions. Return the tags of the views.'''
 mesh.add('computeCrossField', doc, None, ovectorint('viewTags'))
 
-doc = '''Generate a mesh on one single mode entity of dimension `dim' and of tag `tag'. User can give a set of points in parameter coordinates in the `coord' vector. Parameter `refine' is set to 1 if additional points must be added by the mesher using standard gmsh algorithms.'''
-mesh.add('generateMesh', doc, None, iint('dim'), iint('tag'), ibool('refine'), ivectordouble('coord'), ivectorsize('nodeTags'))
-
 doc = '''Triangulate the points given in the `coord' vector as pairs of u, v coordinates, and return the node tags (with numbering starting at 1) of the resulting triangles in `tri'. If specified, `edges' contains constrained edges in the mesh, given as pairs of nodes.'''
 mesh.add('triangulate', doc, None, ivectordouble('coord'), ivectorsize('edges'), ovectorsize('tri'))
 
 doc = '''Tetrahedralize the points given in the `coord' vector as x, y, z coordinates, concatenated, and return the node tags (with numbering starting at 1) of the resulting tetrahedra in `tetra'.'''
 mesh.add('tetrahedralize', doc, None, ivectordouble('coord'), ovectorsize('tetra'))
 
-doc = '''Apply a Delaunay refinement on entity of dimension `dim' and tag `tag'. `elementTags' contains a vector of the tags of the elements that need to be refined. `constrainedEdges' is a vector of size m*2 containing the edges that need to stay in the mesh, in the form of 2 successive nodes. `sizeField' is a vector containing the size at the nodes referenced by `nodeTags'. `minRadius' is the minimum allowed circumradius of elements in the mesh. An element that has a circumradius which is smaller than this value will not be refined. Return newly added nodes and corresponding size field, as well as the updated list of constrained edges and elements within the refinement.'''
-mesh.add('constrainedDelaunayRefinement', doc, None, iint('dim'), iint('tag'), ivectorsize('elementTags'), ivectorsize('constrainedEdges'), ivectorsize('nodeTags'), ivectordouble('sizeField'), idouble('minRadius'), idouble('minQuality'), ovectorsize('newNodeTags'), ovectordouble('newCoords'), ovectordouble('newSizeField'), ovectorvectorsize('newConstrainedEdges'), ovectorsize('newElementsInRefinement'))
-
-doc = '''alpha shape on the mesh of entity of dimension `dim' and tag `tag'.'''
-mesh.add('alphaShape', doc, None, iint('dim'), iint('tag'), idouble('alpha'), ivectorsize('nodeTags'), ivectordouble('sizeAtNodes'), ovectorvectorsize('elementTags'), ovectorvectorsize('edges'))
-
 doc = '''Compute the alpha shape of the set of points on the discrete entity defined by the first tag of `alphaShapeTags', with the second tag its boundary. The alpha shape is computed with respect to a constant mean mesh size `hMean' (if `hMean' > 0) or to the size field defined by `sizeFieldCallback'. If desired, also refine the elements in the alpha shape so as to respect the size field defined by `sizeFieldCallback'. The new mesh will be stored in the discrete entities with tags `alphaShapeTags' = [alphaShapeTag, alphaShapeBoundaryTag]. If the alpha shape entity already contains elements and no new mesh should be generated, triangulate should be 0.'''
-mesh.add('computeAlphaShape', doc, None, iint('dim'), ivectorint('alphaShapeTags'), idouble('alpha'), idouble('hMean'), isizefun('sizeFieldCallback'), iint('triangulate'), iint('refine'))
+mesh.add('computeAlphaShape3D', doc, None, iint('dim'), ivectorint('alphaShapeTags'), idouble('alpha'), idouble('hMean'), isizefun('sizeFieldCallback'), iint('triangulate'), iint('refine'))
 
 doc = '''Compute the alpha shape - improved function'''
-mesh.add('computeAlphaShapeBis', doc, None, iint('dim'), iint('tag'), iint('bndTag'), istring('boundaryModel'), idouble('alpha'), iint('alphaShapeSizeField'), iint('refineSizeField'), ibool('usePreviousMesh', False), idouble('boundaryTolerance', '1e-6'))
+mesh.add('computeAlphaShape', doc, None, iint('dim'), iint('tag'), iint('bndTag'), istring('boundaryModel'), idouble('alpha'), iint('alphaShapeSizeField'), iint('refineSizeField'), ibool('usePreviousMesh', False), idouble('boundaryTolerance', '1e-6'))
 
 doc = '''Decimate a triangulation'''
 mesh.add('decimateTriangulation', doc, None, iint('faceTag'), idouble('distanceThreshold'))
-
-doc = '''Conform alpha shape mesh to solid boundaries'''
-mesh.add('conformAlphaShapeToBoundary', doc, None, ivectorint('alphaShapeTags'), ivectorint('internalBoundaryTags'), ivectorint('externalBoundaryTags'), isizefun('sizeFieldCallback'))
 
 ################################################################################
 

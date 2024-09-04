@@ -36,38 +36,11 @@ struct alphaShapeBndEdge {
   int tag;
 };
 
-
-void generateMesh_(const int dim, const int tag, const bool refine, const std::vector<double> &coord, const std::vector<size_t> &nodeTags);
-
-void constrainedDelaunayRefinement_(const int dim, const int tag,
-                                    const std::vector<size_t> &elementTags,
-                                    const std::vector<size_t> &constrainedEdges,
-                                    const std::vector<size_t> &nodeTags,
-                                    const std::vector<double> &sizeField, 
-                                    const double minRadius, 
-                                    const double minQuality,
-                                    std::vector<size_t> &newNodeTags, 
-                                    std::vector<double>& newCoords, 
-                                    std::vector<double>& newSizeField, 
-                                    std::vector<std::vector<size_t>>& newConstrainedEdges,
-                                    std::vector<size_t>& newElementsInRefinement);
-
-void alphaShape_entity(const int dim, const int tag, const double alpha, const std::vector<size_t>& nodeTags, const std::vector<double>& sizeAtNodes, std::vector<std::vector<size_t>>& elementTags, std::vector<std::vector<size_t>>& edges);
-
 void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double alpha, const double hMean,
                         std::function<double(int, int, double, double, double, double)> sizeFieldCallback, 
                         const int triangulate, const int refine);
 
-void _computeAlphaShape(const std::vector<int> & alphaShapeTags, const double alpha, const double hMean,
-                        std::function<double(int, int, double, double, double, double)> sizeFieldCallback, 
-                        const int triangulate, const int refine);
-
 void _decimateTriangulation(const int faceTag, const double thresholdDistance);
-
-void _conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags, 
-                                  const std::vector<int> & internalBoundaryTags, 
-                                  const std::vector<int> & externalBoundaryTags, 
-                                  std::function<double(int, int, double, double, double, double)> sizeFieldCallback);
 
 PolyMesh* _alphaShapeDelaunay2D(const int tag, const std::string boundaryModelName);
 
@@ -81,7 +54,6 @@ void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, cons
 
 void registerAlphaShapeField(FieldManager* fm);
 
-// OctreeNode<2, 32, alphaShapeBndEdge*>* _createBoundaryOctree(const std::string & boundaryModel, const int bndTag);
 void _createBoundaryOctree(const std::string & boundaryModel, const int bndTag, OctreeNode<2, 32, alphaShapeBndEdge*>& octree, std::vector<alphaShapeBndEdge>& bndEdges);
 
 

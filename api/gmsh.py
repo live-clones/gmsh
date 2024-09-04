@@ -5049,37 +5049,6 @@ class model:
         compute_cross_field = computeCrossField
 
         @staticmethod
-        def generateMesh(dim, tag, refine, coord, nodeTags):
-            """
-            gmsh.model.mesh.generateMesh(dim, tag, refine, coord, nodeTags)
-
-            Generate a mesh on one single mode entity of dimension `dim' and of tag
-            `tag'. User can give a set of points in parameter coordinates in the
-            `coord' vector. Parameter `refine' is set to 1 if additional points must be
-            added by the mesher using standard gmsh algorithms.
-
-            Types:
-            - `dim': integer
-            - `tag': integer
-            - `refine': boolean
-            - `coord': vector of doubles
-            - `nodeTags': vector of sizes
-            """
-            api_coord_, api_coord_n_ = _ivectordouble(coord)
-            api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
-            ierr = c_int()
-            lib.gmshModelMeshGenerateMesh(
-                c_int(dim),
-                c_int(tag),
-                c_int(bool(refine)),
-                api_coord_, api_coord_n_,
-                api_nodeTags_, api_nodeTags_n_,
-                byref(ierr))
-            if ierr.value != 0:
-                raise Exception(logger.getLastError())
-        generate_mesh = generateMesh
-
-        @staticmethod
         def triangulate(coord, edges):
             """
             gmsh.model.mesh.triangulate(coord, edges)
@@ -5136,116 +5105,9 @@ class model:
             return _ovectorsize(api_tetra_, api_tetra_n_.value)
 
         @staticmethod
-        def constrainedDelaunayRefinement(dim, tag, elementTags, constrainedEdges, nodeTags, sizeField, minRadius, minQuality):
+        def computeAlphaShape3D(dim, alphaShapeTags, alpha, hMean, sizeFieldCallback, triangulate, refine):
             """
-            gmsh.model.mesh.constrainedDelaunayRefinement(dim, tag, elementTags, constrainedEdges, nodeTags, sizeField, minRadius, minQuality)
-
-            Apply a Delaunay refinement on entity of dimension `dim' and tag `tag'.
-            `elementTags' contains a vector of the tags of the elements that need to be
-            refined. `constrainedEdges' is a vector of size m*2 containing the edges
-            that need to stay in the mesh, in the form of 2 successive nodes.
-            `sizeField' is a vector containing the size at the nodes referenced by
-            `nodeTags'. `minRadius' is the minimum allowed circumradius of elements in
-            the mesh. An element that has a circumradius which is smaller than this
-            value will not be refined. Return newly added nodes and corresponding size
-            field, as well as the updated list of constrained edges and elements within
-            the refinement.
-
-            Return `newNodeTags', `newCoords', `newSizeField', `newConstrainedEdges', `newElementsInRefinement'.
-
-            Types:
-            - `dim': integer
-            - `tag': integer
-            - `elementTags': vector of sizes
-            - `constrainedEdges': vector of sizes
-            - `nodeTags': vector of sizes
-            - `sizeField': vector of doubles
-            - `minRadius': double
-            - `minQuality': double
-            - `newNodeTags': vector of sizes
-            - `newCoords': vector of doubles
-            - `newSizeField': vector of doubles
-            - `newConstrainedEdges': vector of vectors of sizes
-            - `newElementsInRefinement': vector of sizes
-            """
-            api_elementTags_, api_elementTags_n_ = _ivectorsize(elementTags)
-            api_constrainedEdges_, api_constrainedEdges_n_ = _ivectorsize(constrainedEdges)
-            api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
-            api_sizeField_, api_sizeField_n_ = _ivectordouble(sizeField)
-            api_newNodeTags_, api_newNodeTags_n_ = POINTER(c_size_t)(), c_size_t()
-            api_newCoords_, api_newCoords_n_ = POINTER(c_double)(), c_size_t()
-            api_newSizeField_, api_newSizeField_n_ = POINTER(c_double)(), c_size_t()
-            api_newConstrainedEdges_, api_newConstrainedEdges_n_, api_newConstrainedEdges_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
-            api_newElementsInRefinement_, api_newElementsInRefinement_n_ = POINTER(c_size_t)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshConstrainedDelaunayRefinement(
-                c_int(dim),
-                c_int(tag),
-                api_elementTags_, api_elementTags_n_,
-                api_constrainedEdges_, api_constrainedEdges_n_,
-                api_nodeTags_, api_nodeTags_n_,
-                api_sizeField_, api_sizeField_n_,
-                c_double(minRadius),
-                c_double(minQuality),
-                byref(api_newNodeTags_), byref(api_newNodeTags_n_),
-                byref(api_newCoords_), byref(api_newCoords_n_),
-                byref(api_newSizeField_), byref(api_newSizeField_n_),
-                byref(api_newConstrainedEdges_), byref(api_newConstrainedEdges_n_), byref(api_newConstrainedEdges_nn_),
-                byref(api_newElementsInRefinement_), byref(api_newElementsInRefinement_n_),
-                byref(ierr))
-            if ierr.value != 0:
-                raise Exception(logger.getLastError())
-            return (
-                _ovectorsize(api_newNodeTags_, api_newNodeTags_n_.value),
-                _ovectordouble(api_newCoords_, api_newCoords_n_.value),
-                _ovectordouble(api_newSizeField_, api_newSizeField_n_.value),
-                _ovectorvectorsize(api_newConstrainedEdges_, api_newConstrainedEdges_n_, api_newConstrainedEdges_nn_),
-                _ovectorsize(api_newElementsInRefinement_, api_newElementsInRefinement_n_.value))
-        constrained_delaunay_refinement = constrainedDelaunayRefinement
-
-        @staticmethod
-        def alphaShape(dim, tag, alpha, nodeTags, sizeAtNodes):
-            """
-            gmsh.model.mesh.alphaShape(dim, tag, alpha, nodeTags, sizeAtNodes)
-
-            alpha shape on the mesh of entity of dimension `dim' and tag `tag'.
-
-            Return `elementTags', `edges'.
-
-            Types:
-            - `dim': integer
-            - `tag': integer
-            - `alpha': double
-            - `nodeTags': vector of sizes
-            - `sizeAtNodes': vector of doubles
-            - `elementTags': vector of vectors of sizes
-            - `edges': vector of vectors of sizes
-            """
-            api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
-            api_sizeAtNodes_, api_sizeAtNodes_n_ = _ivectordouble(sizeAtNodes)
-            api_elementTags_, api_elementTags_n_, api_elementTags_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
-            api_edges_, api_edges_n_, api_edges_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshAlphaShape(
-                c_int(dim),
-                c_int(tag),
-                c_double(alpha),
-                api_nodeTags_, api_nodeTags_n_,
-                api_sizeAtNodes_, api_sizeAtNodes_n_,
-                byref(api_elementTags_), byref(api_elementTags_n_), byref(api_elementTags_nn_),
-                byref(api_edges_), byref(api_edges_n_), byref(api_edges_nn_),
-                byref(ierr))
-            if ierr.value != 0:
-                raise Exception(logger.getLastError())
-            return (
-                _ovectorvectorsize(api_elementTags_, api_elementTags_n_, api_elementTags_nn_),
-                _ovectorvectorsize(api_edges_, api_edges_n_, api_edges_nn_))
-        alpha_shape = alphaShape
-
-        @staticmethod
-        def computeAlphaShape(dim, alphaShapeTags, alpha, hMean, sizeFieldCallback, triangulate, refine):
-            """
-            gmsh.model.mesh.computeAlphaShape(dim, alphaShapeTags, alpha, hMean, sizeFieldCallback, triangulate, refine)
+            gmsh.model.mesh.computeAlphaShape3D(dim, alphaShapeTags, alpha, hMean, sizeFieldCallback, triangulate, refine)
 
             Compute the alpha shape of the set of points on the discrete entity defined
             by the first tag of `alphaShapeTags', with the second tag its boundary. The
@@ -5272,7 +5134,7 @@ class model:
             global api_sizeFieldCallback_
             api_sizeFieldCallback_ = api_sizeFieldCallback_type_(lambda dim, tag, x, y, z, lc, _ : sizeFieldCallback(dim, tag, x, y, z, lc))
             ierr = c_int()
-            lib.gmshModelMeshComputeAlphaShape(
+            lib.gmshModelMeshComputeAlphaShape3D(
                 c_int(dim),
                 api_alphaShapeTags_, api_alphaShapeTags_n_,
                 c_double(alpha),
@@ -5283,12 +5145,12 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
-        compute_alpha_shape = computeAlphaShape
+        compute_alpha_shape3_d = computeAlphaShape3D
 
         @staticmethod
-        def computeAlphaShapeBis(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh, boundaryTolerance=1e-6):
+        def computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh, boundaryTolerance=1e-6):
             """
-            gmsh.model.mesh.computeAlphaShapeBis(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh, boundaryTolerance=1e-6)
+            gmsh.model.mesh.computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh, boundaryTolerance=1e-6)
 
             Compute the alpha shape - improved function
 
@@ -5304,7 +5166,7 @@ class model:
             - `boundaryTolerance': double
             """
             ierr = c_int()
-            lib.gmshModelMeshComputeAlphaShapeBis(
+            lib.gmshModelMeshComputeAlphaShape(
                 c_int(dim),
                 c_int(tag),
                 c_int(bndTag),
@@ -5317,7 +5179,7 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
-        compute_alpha_shape_bis = computeAlphaShapeBis
+        compute_alpha_shape = computeAlphaShape
 
         @staticmethod
         def decimateTriangulation(faceTag, distanceThreshold):
@@ -5338,37 +5200,6 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
         decimate_triangulation = decimateTriangulation
-
-        @staticmethod
-        def conformAlphaShapeToBoundary(alphaShapeTags, internalBoundaryTags, externalBoundaryTags, sizeFieldCallback):
-            """
-            gmsh.model.mesh.conformAlphaShapeToBoundary(alphaShapeTags, internalBoundaryTags, externalBoundaryTags, sizeFieldCallback)
-
-            Conform alpha shape mesh to solid boundaries
-
-            Types:
-            - `alphaShapeTags': vector of integers
-            - `internalBoundaryTags': vector of integers
-            - `externalBoundaryTags': vector of integers
-            - `sizeFieldCallback': 
-            """
-            api_alphaShapeTags_, api_alphaShapeTags_n_ = _ivectorint(alphaShapeTags)
-            api_internalBoundaryTags_, api_internalBoundaryTags_n_ = _ivectorint(internalBoundaryTags)
-            api_externalBoundaryTags_, api_externalBoundaryTags_n_ = _ivectorint(externalBoundaryTags)
-            global api_sizeFieldCallback_type_
-            api_sizeFieldCallback_type_ = CFUNCTYPE(c_double, c_int, c_int, c_double, c_double, c_double, c_double, c_void_p)
-            global api_sizeFieldCallback_
-            api_sizeFieldCallback_ = api_sizeFieldCallback_type_(lambda dim, tag, x, y, z, lc, _ : sizeFieldCallback(dim, tag, x, y, z, lc))
-            ierr = c_int()
-            lib.gmshModelMeshConformAlphaShapeToBoundary(
-                api_alphaShapeTags_, api_alphaShapeTags_n_,
-                api_internalBoundaryTags_, api_internalBoundaryTags_n_,
-                api_externalBoundaryTags_, api_externalBoundaryTags_n_,
-                api_sizeFieldCallback_, None,
-                byref(ierr))
-            if ierr.value != 0:
-                raise Exception(logger.getLastError())
-        conform_alpha_shape_to_boundary = conformAlphaShapeToBoundary
 
 
         class field:

@@ -1827,18 +1827,6 @@ namespace gmsh { // Top-level functions
       // of the views.
       GMSH_API void computeCrossField(std::vector<int> & viewTags);
 
-      // gmsh::model::mesh::generateMesh
-      //
-      // Generate a mesh on one single mode entity of dimension `dim' and of tag
-      // `tag'. User can give a set of points in parameter coordinates in the
-      // `coord' vector. Parameter `refine' is set to 1 if additional points must
-      // be added by the mesher using standard gmsh algorithms.
-      GMSH_API void generateMesh(const int dim,
-                                 const int tag,
-                                 const bool refine,
-                                 const std::vector<double> & coord,
-                                 const std::vector<std::size_t> & nodeTags);
-
       // gmsh::model::mesh::triangulate
       //
       // Triangulate the points given in the `coord' vector as pairs of u, v
@@ -1857,44 +1845,7 @@ namespace gmsh { // Top-level functions
       GMSH_API void tetrahedralize(const std::vector<double> & coord,
                                    std::vector<std::size_t> & tetra);
 
-      // gmsh::model::mesh::constrainedDelaunayRefinement
-      //
-      // Apply a Delaunay refinement on entity of dimension `dim' and tag `tag'.
-      // `elementTags' contains a vector of the tags of the elements that need to
-      // be refined. `constrainedEdges' is a vector of size m*2 containing the
-      // edges that need to stay in the mesh, in the form of 2 successive nodes.
-      // `sizeField' is a vector containing the size at the nodes referenced by
-      // `nodeTags'. `minRadius' is the minimum allowed circumradius of elements in
-      // the mesh. An element that has a circumradius which is smaller than this
-      // value will not be refined. Return newly added nodes and corresponding size
-      // field, as well as the updated list of constrained edges and elements
-      // within the refinement.
-      GMSH_API void constrainedDelaunayRefinement(const int dim,
-                                                  const int tag,
-                                                  const std::vector<std::size_t> & elementTags,
-                                                  const std::vector<std::size_t> & constrainedEdges,
-                                                  const std::vector<std::size_t> & nodeTags,
-                                                  const std::vector<double> & sizeField,
-                                                  const double minRadius,
-                                                  const double minQuality,
-                                                  std::vector<std::size_t> & newNodeTags,
-                                                  std::vector<double> & newCoords,
-                                                  std::vector<double> & newSizeField,
-                                                  std::vector<std::vector<std::size_t> > & newConstrainedEdges,
-                                                  std::vector<std::size_t> & newElementsInRefinement);
-
-      // gmsh::model::mesh::alphaShape
-      //
-      // alpha shape on the mesh of entity of dimension `dim' and tag `tag'.
-      GMSH_API void alphaShape(const int dim,
-                               const int tag,
-                               const double alpha,
-                               const std::vector<std::size_t> & nodeTags,
-                               const std::vector<double> & sizeAtNodes,
-                               std::vector<std::vector<std::size_t> > & elementTags,
-                               std::vector<std::vector<std::size_t> > & edges);
-
-      // gmsh::model::mesh::computeAlphaShape
+      // gmsh::model::mesh::computeAlphaShape3D
       //
       // Compute the alpha shape of the set of points on the discrete entity
       // defined by the first tag of `alphaShapeTags', with the second tag its
@@ -1906,40 +1857,32 @@ namespace gmsh { // Top-level functions
       // `alphaShapeTags' = [alphaShapeTag, alphaShapeBoundaryTag]. If the alpha
       // shape entity already contains elements and no new mesh should be
       // generated, triangulate should be 0.
-      GMSH_API void computeAlphaShape(const int dim,
-                                      const std::vector<int> & alphaShapeTags,
-                                      const double alpha,
-                                      const double hMean,
-                                      std::function<double(int, int, double, double, double, double)> sizeFieldCallback,
-                                      const int triangulate,
-                                      const int refine);
+      GMSH_API void computeAlphaShape3D(const int dim,
+                                        const std::vector<int> & alphaShapeTags,
+                                        const double alpha,
+                                        const double hMean,
+                                        std::function<double(int, int, double, double, double, double)> sizeFieldCallback,
+                                        const int triangulate,
+                                        const int refine);
 
-      // gmsh::model::mesh::computeAlphaShapeBis
+      // gmsh::model::mesh::computeAlphaShape
       //
       // Compute the alpha shape - improved function
-      GMSH_API void computeAlphaShapeBis(const int dim,
-                                         const int tag,
-                                         const int bndTag,
-                                         const std::string & boundaryModel,
-                                         const double alpha,
-                                         const int alphaShapeSizeField,
-                                         const int refineSizeField,
-                                         const bool usePreviousMesh,
-                                         const double boundaryTolerance = 1e-6);
+      GMSH_API void computeAlphaShape(const int dim,
+                                      const int tag,
+                                      const int bndTag,
+                                      const std::string & boundaryModel,
+                                      const double alpha,
+                                      const int alphaShapeSizeField,
+                                      const int refineSizeField,
+                                      const bool usePreviousMesh,
+                                      const double boundaryTolerance = 1e-6);
 
       // gmsh::model::mesh::decimateTriangulation
       //
       // Decimate a triangulation
       GMSH_API void decimateTriangulation(const int faceTag,
                                           const double distanceThreshold);
-
-      // gmsh::model::mesh::conformAlphaShapeToBoundary
-      //
-      // Conform alpha shape mesh to solid boundaries
-      GMSH_API void conformAlphaShapeToBoundary(const std::vector<int> & alphaShapeTags,
-                                                const std::vector<int> & internalBoundaryTags,
-                                                const std::vector<int> & externalBoundaryTags,
-                                                std::function<double(int, int, double, double, double, double)> sizeFieldCallback);
 
       namespace field { // Mesh size field functions
 

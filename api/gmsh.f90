@@ -714,24 +714,16 @@ module gmsh
         gmshModelMeshComputeHomology
     procedure, nopass :: computeCrossField => &
         gmshModelMeshComputeCrossField
-    procedure, nopass :: generateMesh => &
-        gmshModelMeshGenerateMesh
     procedure, nopass :: triangulate => &
         gmshModelMeshTriangulate
     procedure, nopass :: tetrahedralize => &
         gmshModelMeshTetrahedralize
-    procedure, nopass :: constrainedDelaunayRefinement => &
-        gmshModelMeshConstrainedDelaunayRefinement
-    procedure, nopass :: alphaShape => &
-        gmshModelMeshAlphaShape
+    procedure, nopass :: computeAlphaShape3D => &
+        gmshModelMeshComputeAlphaShape3D
     procedure, nopass :: computeAlphaShape => &
         gmshModelMeshComputeAlphaShape
-    procedure, nopass :: computeAlphaShapeBis => &
-        gmshModelMeshComputeAlphaShapeBis
     procedure, nopass :: decimateTriangulation => &
         gmshModelMeshDecimateTriangulation
-    procedure, nopass :: conformAlphaShapeToBoundary => &
-        gmshModelMeshConformAlphaShapeToBoundary
   end type gmsh_model_mesh_t
 
   type, public :: gmsh_model_t
@@ -7363,53 +7355,6 @@ module gmsh
       api_viewTags_n_)
   end subroutine gmshModelMeshComputeCrossField
 
-  !> Generate a mesh on one single mode entity of dimension `dim' and of tag
-  !! `tag'. User can give a set of points in parameter coordinates in the
-  !! `coord' vector. Parameter `refine' is set to 1 if additional points must be
-  !! added by the mesher using standard gmsh algorithms.
-  subroutine gmshModelMeshGenerateMesh(dim, &
-                                       tag, &
-                                       refine, &
-                                       coord, &
-                                       nodeTags, &
-                                       ierr)
-    interface
-    subroutine C_API(dim, &
-                     tag, &
-                     refine, &
-                     api_coord_, &
-                     api_coord_n_, &
-                     api_nodeTags_, &
-                     api_nodeTags_n_, &
-                     ierr_) &
-      bind(C, name="gmshModelMeshGenerateMesh")
-      use, intrinsic :: iso_c_binding
-      integer(c_int), value, intent(in) :: dim
-      integer(c_int), value, intent(in) :: tag
-      integer(c_int), value, intent(in) :: refine
-      real(c_double), dimension(*) :: api_coord_
-      integer(c_size_t), value, intent(in) :: api_coord_n_
-      integer(c_size_t), dimension(*) :: api_nodeTags_
-      integer(c_size_t), value, intent(in) :: api_nodeTags_n_
-      integer(c_int), intent(out), optional :: ierr_
-    end subroutine C_API
-    end interface
-    integer, intent(in) :: dim
-    integer, intent(in) :: tag
-    logical, intent(in) :: refine
-    real(c_double), dimension(:), intent(in) :: coord
-    integer(c_size_t), dimension(:), intent(in) :: nodeTags
-    integer(c_int), intent(out), optional :: ierr
-    call C_API(dim=int(dim, c_int), &
-         tag=int(tag, c_int), &
-         refine=merge(1_c_int, 0_c_int, refine), &
-         api_coord_=coord, &
-         api_coord_n_=size_gmsh_double(coord), &
-         api_nodeTags_=nodeTags, &
-         api_nodeTags_n_=size_gmsh_size(nodeTags), &
-         ierr_=ierr)
-  end subroutine gmshModelMeshGenerateMesh
-
   !> Triangulate the points given in the `coord' vector as pairs of u, v
   !! coordinates, and return the node tags (with numbering starting at 1) of the
   !! resulting triangles in `tri'. If specified, `edges' contains constrained
@@ -7489,232 +7434,6 @@ module gmsh
       api_tetra_n_)
   end subroutine gmshModelMeshTetrahedralize
 
-  !> Apply a Delaunay refinement on entity of dimension `dim' and tag `tag'.
-  !! `elementTags' contains a vector of the tags of the elements that need to be
-  !! refined. `constrainedEdges' is a vector of size m*2 containing the edges
-  !! that need to stay in the mesh, in the form of 2 successive nodes.
-  !! `sizeField' is a vector containing the size at the nodes referenced by
-  !! `nodeTags'. `minRadius' is the minimum allowed circumradius of elements in
-  !! the mesh. An element that has a circumradius which is smaller than this
-  !! value will not be refined. Return newly added nodes and corresponding size
-  !! field, as well as the updated list of constrained edges and elements within
-  !! the refinement.
-  subroutine gmshModelMeshConstrainedDelaunayRefinement(dim, &
-                                                        tag, &
-                                                        elementTags, &
-                                                        constrainedEdges, &
-                                                        nodeTags, &
-                                                        sizeField, &
-                                                        minRadius, &
-                                                        minQuality, &
-                                                        newNodeTags, &
-                                                        newCoords, &
-                                                        newSizeField, &
-                                                        newConstrainedEdges, &
-                                                        newConstrainedEdges_n, &
-                                                        newElementsInRefinement, &
-                                                        ierr)
-    interface
-    subroutine C_API(dim, &
-                     tag, &
-                     api_elementTags_, &
-                     api_elementTags_n_, &
-                     api_constrainedEdges_, &
-                     api_constrainedEdges_n_, &
-                     api_nodeTags_, &
-                     api_nodeTags_n_, &
-                     api_sizeField_, &
-                     api_sizeField_n_, &
-                     minRadius, &
-                     minQuality, &
-                     api_newNodeTags_, &
-                     api_newNodeTags_n_, &
-                     api_newCoords_, &
-                     api_newCoords_n_, &
-                     api_newSizeField_, &
-                     api_newSizeField_n_, &
-                     api_newConstrainedEdges_, &
-                     api_newConstrainedEdges_n_, &
-                     api_newConstrainedEdges_nn_, &
-                     api_newElementsInRefinement_, &
-                     api_newElementsInRefinement_n_, &
-                     ierr_) &
-      bind(C, name="gmshModelMeshConstrainedDelaunayRefinement")
-      use, intrinsic :: iso_c_binding
-      integer(c_int), value, intent(in) :: dim
-      integer(c_int), value, intent(in) :: tag
-      integer(c_size_t), dimension(*) :: api_elementTags_
-      integer(c_size_t), value, intent(in) :: api_elementTags_n_
-      integer(c_size_t), dimension(*) :: api_constrainedEdges_
-      integer(c_size_t), value, intent(in) :: api_constrainedEdges_n_
-      integer(c_size_t), dimension(*) :: api_nodeTags_
-      integer(c_size_t), value, intent(in) :: api_nodeTags_n_
-      real(c_double), dimension(*) :: api_sizeField_
-      integer(c_size_t), value, intent(in) :: api_sizeField_n_
-      real(c_double), value, intent(in) :: minRadius
-      real(c_double), value, intent(in) :: minQuality
-      type(c_ptr), intent(out) :: api_newNodeTags_
-      integer(c_size_t), intent(out) :: api_newNodeTags_n_
-      type(c_ptr), intent(out) :: api_newCoords_
-      integer(c_size_t) :: api_newCoords_n_
-      type(c_ptr), intent(out) :: api_newSizeField_
-      integer(c_size_t) :: api_newSizeField_n_
-      type(c_ptr), intent(out) :: api_newConstrainedEdges_
-      type(c_ptr), intent(out) :: api_newConstrainedEdges_n_
-      integer(c_size_t), intent(out) :: api_newConstrainedEdges_nn_
-      type(c_ptr), intent(out) :: api_newElementsInRefinement_
-      integer(c_size_t), intent(out) :: api_newElementsInRefinement_n_
-      integer(c_int), intent(out), optional :: ierr_
-    end subroutine C_API
-    end interface
-    integer, intent(in) :: dim
-    integer, intent(in) :: tag
-    integer(c_size_t), dimension(:), intent(in) :: elementTags
-    integer(c_size_t), dimension(:), intent(in) :: constrainedEdges
-    integer(c_size_t), dimension(:), intent(in) :: nodeTags
-    real(c_double), dimension(:), intent(in) :: sizeField
-    real(c_double), intent(in) :: minRadius
-    real(c_double), intent(in) :: minQuality
-    integer(c_size_t), dimension(:), allocatable, intent(out) :: newNodeTags
-    real(c_double), dimension(:), allocatable, intent(out) :: newCoords
-    real(c_double), dimension(:), allocatable, intent(out) :: newSizeField
-    integer(c_size_t), dimension(:), allocatable, intent(out) :: newConstrainedEdges
-    integer(c_size_t), dimension(:), allocatable, intent(out) :: newConstrainedEdges_n
-    integer(c_size_t), dimension(:), allocatable, intent(out) :: newElementsInRefinement
-    integer(c_int), intent(out), optional :: ierr
-    type(c_ptr) :: api_newNodeTags_
-    integer(c_size_t) :: api_newNodeTags_n_
-    type(c_ptr) :: api_newCoords_
-    integer(c_size_t) :: api_newCoords_n_
-    type(c_ptr) :: api_newSizeField_
-    integer(c_size_t) :: api_newSizeField_n_
-    type(c_ptr) :: api_newConstrainedEdges_, api_newConstrainedEdges_n_
-    integer(c_size_t) :: api_newConstrainedEdges_nn_
-    type(c_ptr) :: api_newElementsInRefinement_
-    integer(c_size_t) :: api_newElementsInRefinement_n_
-    call C_API(dim=int(dim, c_int), &
-         tag=int(tag, c_int), &
-         api_elementTags_=elementTags, &
-         api_elementTags_n_=size_gmsh_size(elementTags), &
-         api_constrainedEdges_=constrainedEdges, &
-         api_constrainedEdges_n_=size_gmsh_size(constrainedEdges), &
-         api_nodeTags_=nodeTags, &
-         api_nodeTags_n_=size_gmsh_size(nodeTags), &
-         api_sizeField_=sizeField, &
-         api_sizeField_n_=size_gmsh_double(sizeField), &
-         minRadius=real(minRadius, c_double), &
-         minQuality=real(minQuality, c_double), &
-         api_newNodeTags_=api_newNodeTags_, &
-         api_newNodeTags_n_=api_newNodeTags_n_, &
-         api_newCoords_=api_newCoords_, &
-         api_newCoords_n_=api_newCoords_n_, &
-         api_newSizeField_=api_newSizeField_, &
-         api_newSizeField_n_=api_newSizeField_n_, &
-         api_newConstrainedEdges_=api_newConstrainedEdges_, &
-         api_newConstrainedEdges_n_=api_newConstrainedEdges_n_, &
-         api_newConstrainedEdges_nn_=api_newConstrainedEdges_nn_, &
-         api_newElementsInRefinement_=api_newElementsInRefinement_, &
-         api_newElementsInRefinement_n_=api_newElementsInRefinement_n_, &
-         ierr_=ierr)
-    newNodeTags = ovectorsize_(api_newNodeTags_, &
-      api_newNodeTags_n_)
-    newCoords = ovectordouble_(api_newCoords_, &
-      api_newCoords_n_)
-    newSizeField = ovectordouble_(api_newSizeField_, &
-      api_newSizeField_n_)
-    call ovectorvectorsize_(api_newConstrainedEdges_, &
-      api_newConstrainedEdges_n_, &
-      api_newConstrainedEdges_nn_, &
-      newConstrainedEdges, &
-      newConstrainedEdges_n)
-    newElementsInRefinement = ovectorsize_(api_newElementsInRefinement_, &
-      api_newElementsInRefinement_n_)
-  end subroutine gmshModelMeshConstrainedDelaunayRefinement
-
-  !> alpha shape on the mesh of entity of dimension `dim' and tag `tag'.
-  subroutine gmshModelMeshAlphaShape(dim, &
-                                     tag, &
-                                     alpha, &
-                                     nodeTags, &
-                                     sizeAtNodes, &
-                                     elementTags, &
-                                     elementTags_n, &
-                                     edges, &
-                                     edges_n, &
-                                     ierr)
-    interface
-    subroutine C_API(dim, &
-                     tag, &
-                     alpha, &
-                     api_nodeTags_, &
-                     api_nodeTags_n_, &
-                     api_sizeAtNodes_, &
-                     api_sizeAtNodes_n_, &
-                     api_elementTags_, &
-                     api_elementTags_n_, &
-                     api_elementTags_nn_, &
-                     api_edges_, &
-                     api_edges_n_, &
-                     api_edges_nn_, &
-                     ierr_) &
-      bind(C, name="gmshModelMeshAlphaShape")
-      use, intrinsic :: iso_c_binding
-      integer(c_int), value, intent(in) :: dim
-      integer(c_int), value, intent(in) :: tag
-      real(c_double), value, intent(in) :: alpha
-      integer(c_size_t), dimension(*) :: api_nodeTags_
-      integer(c_size_t), value, intent(in) :: api_nodeTags_n_
-      real(c_double), dimension(*) :: api_sizeAtNodes_
-      integer(c_size_t), value, intent(in) :: api_sizeAtNodes_n_
-      type(c_ptr), intent(out) :: api_elementTags_
-      type(c_ptr), intent(out) :: api_elementTags_n_
-      integer(c_size_t), intent(out) :: api_elementTags_nn_
-      type(c_ptr), intent(out) :: api_edges_
-      type(c_ptr), intent(out) :: api_edges_n_
-      integer(c_size_t), intent(out) :: api_edges_nn_
-      integer(c_int), intent(out), optional :: ierr_
-    end subroutine C_API
-    end interface
-    integer, intent(in) :: dim
-    integer, intent(in) :: tag
-    real(c_double), intent(in) :: alpha
-    integer(c_size_t), dimension(:), intent(in) :: nodeTags
-    real(c_double), dimension(:), intent(in) :: sizeAtNodes
-    integer(c_size_t), dimension(:), allocatable, intent(out) :: elementTags
-    integer(c_size_t), dimension(:), allocatable, intent(out) :: elementTags_n
-    integer(c_size_t), dimension(:), allocatable, intent(out) :: edges
-    integer(c_size_t), dimension(:), allocatable, intent(out) :: edges_n
-    integer(c_int), intent(out), optional :: ierr
-    type(c_ptr) :: api_elementTags_, api_elementTags_n_
-    integer(c_size_t) :: api_elementTags_nn_
-    type(c_ptr) :: api_edges_, api_edges_n_
-    integer(c_size_t) :: api_edges_nn_
-    call C_API(dim=int(dim, c_int), &
-         tag=int(tag, c_int), &
-         alpha=real(alpha, c_double), &
-         api_nodeTags_=nodeTags, &
-         api_nodeTags_n_=size_gmsh_size(nodeTags), &
-         api_sizeAtNodes_=sizeAtNodes, &
-         api_sizeAtNodes_n_=size_gmsh_double(sizeAtNodes), &
-         api_elementTags_=api_elementTags_, &
-         api_elementTags_n_=api_elementTags_n_, &
-         api_elementTags_nn_=api_elementTags_nn_, &
-         api_edges_=api_edges_, &
-         api_edges_n_=api_edges_n_, &
-         api_edges_nn_=api_edges_nn_, &
-         ierr_=ierr)
-    call ovectorvectorsize_(api_elementTags_, &
-      api_elementTags_n_, &
-      api_elementTags_nn_, &
-      elementTags, &
-      elementTags_n)
-    call ovectorvectorsize_(api_edges_, &
-      api_edges_n_, &
-      api_edges_nn_, &
-      edges, &
-      edges_n)
-  end subroutine gmshModelMeshAlphaShape
-
   !> Compute the alpha shape of the set of points on the discrete entity defined
   !! by the first tag of `alphaShapeTags', with the second tag its boundary. The
   !! alpha shape is computed with respect to a constant mean mesh size `hMean'
@@ -7724,14 +7443,14 @@ module gmsh
   !! the discrete entities with tags `alphaShapeTags' = [alphaShapeTag,
   !! alphaShapeBoundaryTag]. If the alpha shape entity already contains elements
   !! and no new mesh should be generated, triangulate should be 0.
-  subroutine gmshModelMeshComputeAlphaShape(dim, &
-                                            alphaShapeTags, &
-                                            alpha, &
-                                            hMean, &
-                                            sizeFieldCallback, &
-                                            triangulate, &
-                                            refine, &
-                                            ierr)
+  subroutine gmshModelMeshComputeAlphaShape3D(dim, &
+                                              alphaShapeTags, &
+                                              alpha, &
+                                              hMean, &
+                                              sizeFieldCallback, &
+                                              triangulate, &
+                                              refine, &
+                                              ierr)
     interface
     subroutine C_API(dim, &
                      api_alphaShapeTags_, &
@@ -7742,7 +7461,7 @@ module gmsh
                      triangulate, &
                      refine, &
                      ierr_) &
-      bind(C, name="gmshModelMeshComputeAlphaShape")
+      bind(C, name="gmshModelMeshComputeAlphaShape3D")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: dim
       integer(c_int), dimension(*) :: api_alphaShapeTags_
@@ -7772,19 +7491,19 @@ module gmsh
          triangulate=int(triangulate, c_int), &
          refine=int(refine, c_int), &
          ierr_=ierr)
-  end subroutine gmshModelMeshComputeAlphaShape
+  end subroutine gmshModelMeshComputeAlphaShape3D
 
   !> Compute the alpha shape - improved function
-  subroutine gmshModelMeshComputeAlphaShapeBis(dim, &
-                                               tag, &
-                                               bndTag, &
-                                               boundaryModel, &
-                                               alpha, &
-                                               alphaShapeSizeField, &
-                                               refineSizeField, &
-                                               usePreviousMesh, &
-                                               boundaryTolerance, &
-                                               ierr)
+  subroutine gmshModelMeshComputeAlphaShape(dim, &
+                                            tag, &
+                                            bndTag, &
+                                            boundaryModel, &
+                                            alpha, &
+                                            alphaShapeSizeField, &
+                                            refineSizeField, &
+                                            usePreviousMesh, &
+                                            boundaryTolerance, &
+                                            ierr)
     interface
     subroutine C_API(dim, &
                      tag, &
@@ -7796,7 +7515,7 @@ module gmsh
                      usePreviousMesh, &
                      boundaryTolerance, &
                      ierr_) &
-      bind(C, name="gmshModelMeshComputeAlphaShapeBis")
+      bind(C, name="gmshModelMeshComputeAlphaShape")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: dim
       integer(c_int), value, intent(in) :: tag
@@ -7830,7 +7549,7 @@ module gmsh
          usePreviousMesh=optval_c_bool(.False., usePreviousMesh), &
          boundaryTolerance=optval_c_double(1e-6, boundaryTolerance), &
          ierr_=ierr)
-  end subroutine gmshModelMeshComputeAlphaShapeBis
+  end subroutine gmshModelMeshComputeAlphaShape
 
   !> Decimate a triangulation
   subroutine gmshModelMeshDecimateTriangulation(faceTag, &
@@ -7854,48 +7573,6 @@ module gmsh
          distanceThreshold=real(distanceThreshold, c_double), &
          ierr_=ierr)
   end subroutine gmshModelMeshDecimateTriangulation
-
-  !> Conform alpha shape mesh to solid boundaries
-  subroutine gmshModelMeshConformAlphaShapeToBoundary(alphaShapeTags, &
-                                                      internalBoundaryTags, &
-                                                      externalBoundaryTags, &
-                                                      sizeFieldCallback, &
-                                                      ierr)
-    interface
-    subroutine C_API(api_alphaShapeTags_, &
-                     api_alphaShapeTags_n_, &
-                     api_internalBoundaryTags_, &
-                     api_internalBoundaryTags_n_, &
-                     api_externalBoundaryTags_, &
-                     api_externalBoundaryTags_n_, &
-                     sizeFieldCallback, &
-                     ierr_) &
-      bind(C, name="gmshModelMeshConformAlphaShapeToBoundary")
-      use, intrinsic :: iso_c_binding
-      integer(c_int), dimension(*) :: api_alphaShapeTags_
-      integer(c_size_t), value, intent(in) :: api_alphaShapeTags_n_
-      integer(c_int), dimension(*) :: api_internalBoundaryTags_
-      integer(c_size_t), value, intent(in) :: api_internalBoundaryTags_n_
-      integer(c_int), dimension(*) :: api_externalBoundaryTags_
-      integer(c_size_t), value, intent(in) :: api_externalBoundaryTags_n_
-      type(c_funptr), value, intent(in) :: sizeFieldCallback
-      integer(c_int), intent(out), optional :: ierr_
-    end subroutine C_API
-    end interface
-    integer(c_int), dimension(:), intent(in) :: alphaShapeTags
-    integer(c_int), dimension(:), intent(in) :: internalBoundaryTags
-    integer(c_int), dimension(:), intent(in) :: externalBoundaryTags
-    type(c_funptr), value, intent(in) :: sizeFieldCallback
-    integer(c_int), intent(out), optional :: ierr
-    call C_API(api_alphaShapeTags_=alphaShapeTags, &
-         api_alphaShapeTags_n_=size_gmsh_int(alphaShapeTags), &
-         api_internalBoundaryTags_=internalBoundaryTags, &
-         api_internalBoundaryTags_n_=size_gmsh_int(internalBoundaryTags), &
-         api_externalBoundaryTags_=externalBoundaryTags, &
-         api_externalBoundaryTags_n_=size_gmsh_int(externalBoundaryTags), &
-         sizeFieldCallback=sizeFieldCallback, &
-         ierr_=ierr)
-  end subroutine gmshModelMeshConformAlphaShapeToBoundary
 
   !> Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
   !! the tag explicitly; otherwise a new tag is assigned automatically. Return
