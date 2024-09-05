@@ -6,10 +6,7 @@ if len(sys.argv) < 2:
     exit(0)
 
 gmsh.initialize()
-try:
-    gmsh.open(sys.argv[1])
-except:
-    exit(0)
+gmsh.open(sys.argv[1])
 
 # Second arg force optimization of discrete volumes
 gmsh.model.mesh.optimize('', True)

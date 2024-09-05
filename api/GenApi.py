@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1319,10 +1319,9 @@ if not libpath:
         libpath = find_library("gmsh")
 
 # ... and print a warning if everything failed
-if not libpath:
-    print("Warning: could not find Gmsh shared library " + libname +
-          " with ctypes.util.find_library() or in the following locations: " +
-          str(possible_libpaths))
+if (not libpath) or (not os.path.exists(libpath)):
+    print("Warning: could not find Gmsh shared library " + libname)
+    print("Searched at these locations: " + str(possible_libpaths))
 
 lib = CDLL(libpath)
 
@@ -1878,7 +1877,7 @@ fortran_footer = """
     do i = 1_c_size_t, n
         iend = int(dims(i))
         call c_f_pointer(ptrs(i), v_, [iend])
-        v(istart:istart + iend - 1) = v_
+        v(istart:iend) = v_
         istart = istart + iend
     end do
     do i = 1_c_size_t, n
@@ -1905,7 +1904,7 @@ fortran_footer = """
     do i = 1_c_size_t, n
         iend = int(dims(i))
         call c_f_pointer(ptrs(i), v_, [iend])
-        v(istart:istart + iend - 1) = v_
+        v(istart:iend) = v_
         istart = istart + iend
     end do
     do i = 1_c_size_t, n
@@ -1932,7 +1931,7 @@ fortran_footer = """
     do i = 1_c_size_t, n
         iend = int(dims(i))
         call c_f_pointer(ptrs(i), v_, [iend])
-        v(istart:istart + iend - 1) = v_
+        v(istart:iend) = v_
         istart = istart + iend
     end do
     do i = 1_c_size_t, n
@@ -1959,7 +1958,7 @@ fortran_footer = """
     do i = 1_c_size_t, n
         iend = int(dims(i)/2)
         call c_f_pointer(ptrs(i), v_, [2_c_size_t, iend])
-        v(:,istart:istart + iend - 1) = v_
+        v(:,istart:iend) = v_
         istart = istart + iend
     end do
     do i = 1_c_size_t, n
@@ -1985,7 +1984,7 @@ class API:
         version_patch,
         namespace = "gmsh",
         code = "Gmsh",
-        copyright = "Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle",
+        copyright = "Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle",
         issues = "https://gitlab.onelab.info/gmsh/gmsh/issues.",
         description = "Gmsh is an automatic three-dimensional finite element mesh generator with a built-in CAD engine and post-processor. Its design goal is to provide a fast, light and user-friendly meshing tool with parametric input and flexible visualization capabilities.\nGmsh is built around four modules (geometry, mesh, solver and post-processing), which can be controlled with the graphical user interface, from the command line, using text files written in Gmsh's own scripting language (.geo files), or through the C++, C, Python, Julia and Fortran application programming interface (API)."):
         self.version_major = version_major
@@ -2681,7 +2680,7 @@ class API:
                 for line in file[1]:
                     l = l + 1
                     # allow white space between func name and (
-                    if re.search(func + '\\s*\\(', line):
+                    if re.search(func + '\s*\(', line):
                         strip = re.sub(r'\s+', '', line)
                         # don't report matches in comments
                         if not in_comments and strip.startswith(comment):

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -21,7 +21,7 @@ public:
   Fl_Group *group[3];
   Fl_Box *memUsage;
   Fl_Check_Button *visible;
-  double quality[3][101];
+  double quality[3][100];
 
 public:
   statisticsWindow(int deltaFontSize);

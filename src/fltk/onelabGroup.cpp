@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -458,7 +458,7 @@ static void onelab_subtree_cb(Fl_Widget *w, void *data)
 
 void onelabGroup::_computeWidths()
 {
-  // "- 1.1 * FL_NORMAL_SIZE" to have space for a scrollbar to the right
+  // "-FL_NORMAL_SIZE" to have space for a scrollbar to the right
   _baseWidth = _tree->w() - _tree->marginleft() - 1.1 * FL_NORMAL_SIZE;
   // not sure why we have the "-2" correction at the end, but this is what is
   // needed to make things pixel-correct.
@@ -500,11 +500,8 @@ onelabGroup::onelabGroup(int x, int y, int w, int h, const char *l)
   // _tree->resizable(0);
   _tree->end();
 
+  _computeWidths();
   _widgetLabelRatio = 0.5;
-
-  // dummy values for now; will be updated with _computeWidths()
-  _baseWidth = _tree->w() - _tree->marginleft();
-  _indent = _tree->connectorwidth();
 
   int BB2 = BB / 2 + 4;
 
@@ -1043,15 +1040,10 @@ Fl_Widget *addParameterWidget(onelab::number &p, int xx, int yy, int ww, int hh,
 
   // non-editable value
   if(p.getReadOnly()) {
-    outputRange *but = new outputRange(xx, yy, ww, hh,
-                                       onelab::parameter::maxNumber());
+    outputRange *but = new outputRange(xx, yy, ww, hh);
     but->callback(onelab_number_output_range_cb, (void *)path);
     but->numberFormat(p.getAttribute("NumberFormat"));
     but->value(p.getValue());
-    but->minimum(p.getMin());
-    but->maximum(p.getMax());
-    but->step(p.getStep());
-    but->choices(p.getChoices());
     but->align(FL_ALIGN_RIGHT | FL_ALIGN_CLIP);
     but->graph(p.getAttribute("Graph"));
     if(highlight) but->color(c);
@@ -1428,6 +1420,7 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   setButtonVisibility();
 
   FL_NORMAL_SIZE -= CTX::instance()->deltaFontSize;
+  _computeWidths();
 
   std::set<std::string> closed = _getClosedGmshMenus();
 
@@ -1443,7 +1436,6 @@ void onelabGroup::rebuildTree(bool deleteWidgets)
   }
   _tree->sortorder(FL_TREE_SORT_ASCENDING);
   _tree->selectmode(FL_TREE_SELECT_NONE);
-  _computeWidths();
 
   // hide all the widgets we have added in the tree to make sure they don't get
   // spurious events (until they are deleted)

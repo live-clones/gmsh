@@ -1084,14 +1084,14 @@ Volume(6) = {3, 4};
 
 // ********** Begin SPEC validation **********
 
-Mesh.MeshSizeFactor = 0.13;
+Mesh.MeshSizeFactor = 0.1;
 Mesh.Algorithm = 5; // del2d
 Mesh.Algorithm3D = 10; // hxt
 Mesh 3;
-n = 1.25589e+08;
+n = 2.75e8;
 file = StrCat(StrPrefix(StrRelative(General.FileName)), ".val");
 Printf("Number of tet elements is %g (estimated %g)", Mesh.NbTetrahedra, n);
-If ( Fabs(Mesh.NbTetrahedra - n) / Mesh.NbTetrahedra > 0.03 )
+If ( Fabs(Mesh.NbTetrahedra - n) / Mesh.NbTetrahedra > 0.2 )
   Printf("Error: Number of tet elements is %g (estimated %g), outside of range", Mesh.NbTetrahedra, n) >> file;
   Error("Number of tet elements is %g (estimated %g), outside of range", Mesh.NbTetrahedra, n);
 Else

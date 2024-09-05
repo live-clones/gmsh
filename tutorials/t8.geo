@@ -53,6 +53,7 @@ View[v2].Axes = 1;
 View[v2].Color.Axes = Black;
 View[v2].IntervalsType = 2;
 View[v2].Type = 2;
+View[v2].IntervalsType = 2;
 View[v2].AutoPosition = 0;
 View[v2].PositionX = 85;
 View[v2].PositionY = 50;

@@ -2422,9 +2422,10 @@ bool GeometryOptimizer::smoothWithWinslowUntangler(PlanarMethod planar,
   /* Triangles from quads */
   std::vector<std::array<vec2, 3> > triIdealShapes;
   std::vector<std::array<uint32_t, 3> > triangles;
+  bool preserveQuadAnisotropy = false;
 #if defined(HAVE_WINSLOWUNTANGLER)
   buildTrianglesAndTargetsFromElements(points_2D, quads, triangles,
-                                       triIdealShapes);
+                                       triIdealShapes, preserveQuadAnisotropy);
 #else
   Msg::Error("smoothWithWinslowUntangler requires WinslowUntangler");
 #endif

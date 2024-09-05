@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -41,7 +41,18 @@ void GRegion::deleteMesh()
   for(std::size_t i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
   mesh_vertices.clear();
   transfinite_vertices.clear();
-  removeElements(true);
+  for(std::size_t i = 0; i < tetrahedra.size(); i++) delete tetrahedra[i];
+  tetrahedra.clear();
+  for(std::size_t i = 0; i < hexahedra.size(); i++) delete hexahedra[i];
+  hexahedra.clear();
+  for(std::size_t i = 0; i < prisms.size(); i++) delete prisms[i];
+  prisms.clear();
+  for(std::size_t i = 0; i < pyramids.size(); i++) delete pyramids[i];
+  pyramids.clear();
+  for(std::size_t i = 0; i < trihedra.size(); i++) delete trihedra[i];
+  trihedra.clear();
+  for(std::size_t i = 0; i < polyhedra.size(); i++) delete polyhedra[i];
+  polyhedra.clear();
   deleteVertexArrays();
   model()->destroyMeshCaches();
 }
@@ -262,11 +273,9 @@ int GRegion::delFace(GFace *face)
 {
   const auto found = std::find(l_faces.begin(), l_faces.end(), face);
 
-  if(found == l_faces.end()) { return 0; }
+  if(found != l_faces.end()) { l_faces.erase(found); }
 
   const auto pos = std::distance(l_faces.begin(), found);
-
-  l_faces.erase(found);
 
   if(l_dirs.empty()) { return 0; }
 
@@ -601,9 +610,9 @@ std::vector<GVertex *> GRegion::vertices() const
   return std::vector<GVertex *>(v.begin(), v.end());
 }
 
-void GRegion::addElement(MElement *e)
+void GRegion::addElement(int type, MElement *e)
 {
-  switch(e->getType()) {
+  switch(type) {
   case TYPE_TET: addTetrahedron(reinterpret_cast<MTetrahedron *>(e)); break;
   case TYPE_HEX: addHexahedron(reinterpret_cast<MHexahedron *>(e)); break;
   case TYPE_PRI: addPrism(reinterpret_cast<MPrism *>(e)); break;
@@ -615,78 +624,56 @@ void GRegion::addElement(MElement *e)
   }
 }
 
-void GRegion::removeElement(MElement *e, bool del)
+void GRegion::removeElement(int type, MElement *e)
 {
-  switch(e->getType()) {
+  switch(type) {
   case TYPE_TET: {
     auto it = std::find(tetrahedra.begin(), tetrahedra.end(),
                         reinterpret_cast<MTetrahedron *>(e));
-    if(it != tetrahedra.end()) {
-      tetrahedra.erase(it);
-      if(del) delete e;
-    }
+    if(it != tetrahedra.end()) tetrahedra.erase(it);
   } break;
   case TYPE_HEX: {
     auto it = std::find(hexahedra.begin(), hexahedra.end(),
                         reinterpret_cast<MHexahedron *>(e));
-    if(it != hexahedra.end()) {
-      hexahedra.erase(it);
-      if(del) delete e;
-    }
+    if(it != hexahedra.end()) hexahedra.erase(it);
   } break;
   case TYPE_PRI: {
     auto it =
       std::find(prisms.begin(), prisms.end(), reinterpret_cast<MPrism *>(e));
-    if(it != prisms.end()) {
-      prisms.erase(it);
-      if(del) delete e;
-    }
+    if(it != prisms.end()) prisms.erase(it);
   } break;
   case TYPE_PYR: {
     auto it = std::find(pyramids.begin(), pyramids.end(),
                         reinterpret_cast<MPyramid *>(e));
-    if(it != pyramids.end()) {
-      pyramids.erase(it);
-      if(del) delete e;
-    }
+    if(it != pyramids.end()) pyramids.erase(it);
   } break;
   case TYPE_TRIH: {
     auto it = std::find(trihedra.begin(), trihedra.end(),
                         reinterpret_cast<MTrihedron *>(e));
-    if(it != trihedra.end()) {
-      trihedra.erase(it);
-      if(del) delete e;
-    }
+    if(it != trihedra.end()) trihedra.erase(it);
   } break;
   case TYPE_POLYH: {
     auto it = std::find(polyhedra.begin(), polyhedra.end(),
                         reinterpret_cast<MPolyhedron *>(e));
-    if(it != polyhedra.end()) {
-      polyhedra.erase(it);
-      if(del) delete e;
-    }
+    if(it != polyhedra.end()) polyhedra.erase(it);
   } break;
   default:
     Msg::Error("Trying to remove unsupported element in volume %d", tag());
   }
 }
 
-void GRegion::removeElements(bool del)
+void GRegion::removeElements(int type)
 {
-  if(del) {
-    for(auto e : tetrahedra) delete e;
-    for(auto e : hexahedra) delete e;
-    for(auto e : prisms) delete e;
-    for(auto e : pyramids) delete e;
-    for(auto e : trihedra) delete e;
-    for(auto e : polyhedra) delete e;
+  switch(type) {
+  case TYPE_TET: tetrahedra.clear(); break;
+  case TYPE_HEX: hexahedra.clear(); break;
+  case TYPE_PRI: prisms.clear(); break;
+  case TYPE_PYR: pyramids.clear(); break;
+  case TYPE_TRIH: trihedra.clear(); break;
+  case TYPE_POLYH: polyhedra.clear(); break;
+  default:
+    Msg::Error("Trying to remove unsupported elements in volume %d", tag());
   }
-  tetrahedra.clear();
-  hexahedra.clear();
-  prisms.clear();
-  pyramids.clear();
-  trihedra.clear();
-  polyhedra.clear();
 }
 
 bool GRegion::reorder(const int elementType,

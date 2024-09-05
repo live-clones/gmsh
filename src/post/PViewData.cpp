@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -254,7 +254,7 @@ double PViewData::findClosestNode(double &xn, double &yn, double &zn, int step)
   // slow, naive implementation; beware that iterations on view data is
   // currently not thread-safe (it uses a cache for the current element/node)
   double dist2 = 1e200;
-#pragma omp critical(PViewDataFindClosestNode)
+#pragma omp critical
   {
     if(step < 0) step = getFirstNonEmptyTimeStep();
     for(int ent = 0; ent < getNumEntities(step); ent++) {
@@ -279,7 +279,7 @@ double PViewData::findClosestNode(double &xn, double &yn, double &zn, int step)
 
 #else
 
-#pragma omp critical(PViewDataFindClosestNode)
+#pragma omp critical
   if(!_kdtree) {
     Msg::Debug("Rebuilding kdtree for view data '%s'", _name.c_str());
     _pc.pts.clear();

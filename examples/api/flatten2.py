@@ -10,11 +10,7 @@ if len(sys.argv) < 2:
     exit(0)
 
 gmsh.initialize()
-
-try:
-    gmsh.open(sys.argv[1])
-except:
-    exit(0)
+gmsh.open(sys.argv[1])
 
 gmsh.model.mesh.affineTransform([1, 0, 0, 0,
                                  0, 1, 0, 0,

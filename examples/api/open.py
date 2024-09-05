@@ -6,10 +6,7 @@ if len(sys.argv) < 2:
     exit(0)
 
 gmsh.initialize()
-try:
-    gmsh.open(sys.argv[1])
-except:
-    exit(0)
+gmsh.open(sys.argv[1])
 gmsh.model.mesh.generate(3)
 gmsh.write("test.msh")
 gmsh.finalize()

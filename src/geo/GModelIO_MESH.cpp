@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -45,8 +45,8 @@ int GModel::readMESH(const std::string &name)
   char str[256];
   int format;
   sscanf(buffer, "%s %d", str, &format);
-  if(format < 1 || format > 4) {
-    Msg::Error("Unknown Medit mesh format %d", format);
+  if(format == 3) {
+    Msg::Error("Medit mesh import only available for ASCII files");
     fclose(fp);
     return 0;
   }

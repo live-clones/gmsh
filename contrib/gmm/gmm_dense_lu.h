@@ -1,64 +1,90 @@
-/* -*- c++ -*- (enables emacs c++ mode) */
-/*===========================================================================
-
- Copyright (C) 2003-2020 Yves Renard
-
- This file is a part of GetFEM
-
- GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
- under  the  terms  of the  GNU  Lesser General Public License as published
- by  the  Free Software Foundation;  either version 3 of the License,  or
- (at your option) any later version along with the GCC Runtime Library
- Exception either version 3.1 or (at your option) any later version.
- This program  is  distributed  in  the  hope  that it will be useful,  but
- WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
- License and GCC Runtime Library Exception for more details.
- You  should  have received a copy of the GNU Lesser General Public License
- along  with  this program;  if not, write to the Free Software Foundation,
- Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
-
- As a special exception, you  may use  this file  as it is a part of a free
- software  library  without  restriction.  Specifically,  if   other  files
- instantiate  templates  or  use macros or inline functions from this file,
- or  you compile this  file  and  link  it  with other files  to produce an
- executable, this file  does  not  by itself cause the resulting executable
- to be covered  by the GNU Lesser General Public License.  This   exception
- does not  however  invalidate  any  other  reasons why the executable file
- might be covered by the GNU Lesser General Public License.
-
-===========================================================================*/
+// -*- c++ -*- (enables emacs c++ mode)
+//===========================================================================
+//
+// Copyright (C) 2003-2008 Yves Renard
+//
+// This file is a part of GETFEM++
+//
+// Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
+// under  the  terms  of the  GNU  Lesser General Public License as published
+// by  the  Free Software Foundation;  either version 2.1 of the License,  or
+// (at your option) any later version.
+// This program  is  distributed  in  the  hope  that it will be useful,  but
+// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+// or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+// License for more details.
+// You  should  have received a copy of the GNU Lesser General Public License
+// along  with  this program;  if not, write to the Free Software Foundation,
+// Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+//
+// As a special exception, you may use this file as part of a free software
+// library without restriction.  Specifically, if other files instantiate
+// templates or use macros or inline functions from this file, or you compile
+// this file and link it with other files to produce an executable, this
+// file does not by itself cause the resulting executable to be covered by
+// the GNU General Public License.  This exception does not however
+// invalidate any other reasons why the executable file might be covered by
+// the GNU General Public License.
+//
+//===========================================================================
 
 // This file is a modified version of lu.h from MTL.
 // See http://osl.iu.edu/research/mtl/
 // Following the corresponding Copyright notice.
 //===========================================================================
+// Copyright (c) 2001-2003 The Trustees of Indiana University.
+// All rights reserved.
+// Copyright (c) 1998-2001 University of Notre Dame. All rights reserved.
+// Authors: Andrew Lumsdaine, Jeremy G. Siek, Lie-Quan Lee
 //
-// Copyright (c) 1998-2020, University of Notre Dame. All rights reserved.
+// This file is part of the Matrix Template Library
+//
+// Indiana University has the exclusive rights to license this product under
+// the following license.
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
+//   1.  All redistributions of source code must retain the above  copyright
+//       notice, the list of authors in the original source code,  this list
+//       of conditions and the disclaimer listed in this license;
+//   2.  All redistributions in binary form must reproduce the above
+//       copyright notice, this list of conditions and the disclaimer listed
+//       in this license in the documentation and/or other materials provided
+//       with the distribution;
+//   3.  Any documentation included with all redistributions must include the
+//       following acknowledgement:
+//	"This product includes software developed at the University of
+//       Notre Dame and the Pervasive Technology Labs at Indiana University.
+//       For technical information contact Andrew Lumsdaine at the Pervasive
+//       Technology Labs at Indiana University. 
+//	 For administrative and license questions contact the Advanced
+//       Research and Technology Institute at 1100 Waterway Blvd.
+//       Indianapolis, Indiana 46202, phone 317-274-5905, fax  317-274-5902."
+//	 Alternatively, this acknowledgement may appear in the software
+//       itself, and wherever such third-party acknowledgments normally appear.
+//   4.  The name "MTL" shall not be used to endorse or promote  products
+//       derived from this software without prior written  permission from
+//       Indiana University. For written permission, please  contact Indiana
+//       University Advanced Research & Technology  Institute.
+//   5.  Products derived from this software may not be called "MTL", nor
+//       may "MTL" appear in their name, without  prior written permission
+//       of Indiana University Advanced Research & Technology Institute.
 //
-//    * Redistributions of source code must retain the above copyright
-//      notice, this list of conditions and the following disclaimer.
-//    * Redistributions in binary form must reproduce the above copyright
-//      notice, this list of conditions and the following disclaimer in the
-//      documentation and/or other materials provided with the distribution.
-//    * Neither the name of the University of Notre Dame nor the
-//      names of its contributors may be used to endorse or promote products
-//      derived from this software without specific prior written permission.
+// Indiana University provides no reassurances that the source code provided
+// does not infringe the patent or any other intellectual property rights of
+// any other entity. Indiana University disclaims any liability to any
+// recipient for claims brought by any other entity based on infringement of 
+// intellectual property rights or otherwise.
 //
-// THIS SOFTWARE  IS  PROVIDED  BY  THE TRUSTEES  OF  INDIANA UNIVERSITY  AND
-// CONTRIBUTORS  ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,  INCLUDING,
-// BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND  FITNESS
-// FOR  A PARTICULAR PURPOSE ARE DISCLAIMED. IN  NO  EVENT SHALL THE TRUSTEES
-// OF INDIANA UNIVERSITY AND CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-// INCIDENTAL, SPECIAL, EXEMPLARY,  OR CONSEQUENTIAL DAMAGES (INCLUDING,  BUT
-// NOT  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA,  OR PROFITS;  OR BUSINESS  INTERRUPTION)  HOWEVER  CAUSED AND ON ANY
-// THEORY  OF  LIABILITY,  WHETHER  IN  CONTRACT,  STRICT  LIABILITY, OR TORT
-// (INCLUDING  NEGLIGENCE  OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-// THIS  SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
+// LICENSEE UNDERSTANDS THAT SOFTWARE IS PROVIDED "AS IS" FOR WHICH NO
+// WARRANTIES AS TO CAPABILITIES OR ACCURACY ARE MADE. INDIANA UNIVERSITY
+// GIVES NO WARRANTIES AND MAKES NO REPRESENTATION THAT SOFTWARE IS FREE OF
+// INFRINGEMENT OF THIRD PARTY PATENT, COPYRIGHT, OR OTHER PROPRIETARY RIGHTS. 
+// INDIANA UNIVERSITY MAKES NO WARRANTIES THAT SOFTWARE IS FREE FROM "BUGS",
+// "VIRUSES", "TROJAN HORSES", "TRAP DOORS", "WORMS", OR OTHER HARMFUL CODE.
+// LICENSEE ASSUMES THE ENTIRE RISK AS TO THE PERFORMANCE OF SOFTWARE AND/OR
+// ASSOCIATED MATERIALS, AND TO THE PERFORMANCE AND VALIDITY OF 
+// INFORMATION GENERATED USING SOFTWARE.
 //===========================================================================
 
 /**@file gmm_dense_lu.h
@@ -70,50 +96,10 @@
 #define GMM_DENSE_LU_H
 
 #include "gmm_dense_Householder.h"
-
-namespace gmm {
-
-  /* ********************************************************************** */
-  /* IPVT structure.                                                        */
-  /* ********************************************************************** */
-  // For compatibility with lapack version with 64 or 32 bit integer.
-  // Should be replaced by std::vector<size_type> if 32 bit integer version
-  // of lapack is not used anymore (and lapack_ipvt_int set to size_type)
-
-  // Do not use iterators of this interface container
-  class lapack_ipvt : public std::vector<size_type> {
-    bool is_int64;
-    size_type &operator[](size_type i)
-    { return std::vector<size_type>::operator[](i); }
-    size_type operator[] (size_type i) const
-    { return std::vector<size_type>::operator[](i); }
-    void begin(void) const {}
-    void begin(void) {}
-    void end(void) const {}
-    void end(void) {}
-    
-  public:
-    void set_to_int32() { is_int64 = false; }
-    const size_type *pfirst() const
-    { return &(*(std::vector<size_type>::begin())); }
-    size_type *pfirst() { return &(*(std::vector<size_type>::begin())); }
-    
-    lapack_ipvt(size_type n) :  std::vector<size_type>(n), is_int64(true) {}
-    
-    size_type get(size_type i) const {
-      const size_type *p = pfirst();
-      return is_int64 ? p[i] : size_type(((const int *)(p))[i]);
-    }
-    void set(size_type i, size_type val) {
-      size_type *p = pfirst();
-      if (is_int64) p[i] = val; else ((int *)(p))[i] = int(val);
-    }
-  };
-}
-
 #include "gmm_opt.h"
 
 namespace gmm {
+
 
   /** LU Factorization of a general (dense) matrix (real or complex).
   
@@ -125,8 +111,8 @@ namespace gmm {
   The pivot indices in ipvt are indexed starting from 1
   so that this is compatible with LAPACK (Fortran).
   */
-  template <typename DenseMatrix>
-  size_type lu_factor(DenseMatrix& A, lapack_ipvt& ipvt) {
+  template <typename DenseMatrix, typename Pvector>
+  size_type lu_factor(DenseMatrix& A, Pvector& ipvt) {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
     size_type info(0), i, j, jp, M(mat_nrows(A)), N(mat_ncols(A));
@@ -134,14 +120,14 @@ namespace gmm {
     std::vector<T> c(M), r(N);
     
     GMM_ASSERT2(ipvt.size()+1 >= NN, "IPVT too small");
-    for (i = 0; i+1 < NN; ++i) ipvt.set(i, i);
+    for (i = 0; i+1 < NN; ++i) ipvt[i] = i;
       
     if (M || N) {
       for (j = 0; j+1 < NN; ++j) {
 	R max = gmm::abs(A(j,j)); jp = j;
 	for (i = j+1; i < M; ++i)		   /* find pivot.          */
 	  if (gmm::abs(A(i,j)) > max) { jp = i; max = gmm::abs(A(i,j)); }
-	ipvt.set(j, jp + 1);
+	ipvt[j] = jp + 1;
 	
 	if (max == R(0)) { info = j + 1; break; }
         if (jp != j) for (i = 0; i < N; ++i) std::swap(A(jp, i), A(j, i));
@@ -151,7 +137,7 @@ namespace gmm {
 	rank_one_update(sub_matrix(A, sub_interval(j+1, M-j-1),
 				 sub_interval(j+1, N-j-1)), c, conjugated(r));
       }
-      ipvt.set(NN-1, NN);
+      ipvt[j] = j + 1;
     }
     return info;
   }
@@ -165,7 +151,7 @@ namespace gmm {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
     copy(b, x);
     for(size_type i = 0; i < pvector.size(); ++i) {
-      size_type perm = pvector.get(i)-1;   // permutations stored in 1's offset
+      size_type perm = pvector[i]-1;     // permutations stored in 1's offset
       if(i != perm) { T aux = x[i]; x[i] = x[perm]; x[perm] = aux; }
     }
     /* solve  Ax = b  ->  LUx = b  ->  Ux = L^-1 b.                        */
@@ -177,7 +163,7 @@ namespace gmm {
   void lu_solve(const DenseMatrix &A, VectorX &x, const VectorB &b) {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
     dense_matrix<T> B(mat_nrows(A), mat_ncols(A));
-    lapack_ipvt ipvt(mat_nrows(A));
+    std::vector<int> ipvt(mat_nrows(A));
     gmm::copy(A, B);
     size_type info = lu_factor(B, ipvt);
     GMM_ASSERT1(!info, "Singular system, pivot = " << info);
@@ -193,9 +179,10 @@ namespace gmm {
     lower_tri_solve(transposed(LU), x, false);
     upper_tri_solve(transposed(LU), x, true);
     for(size_type i = pvector.size(); i > 0; --i) {
-      size_type perm = pvector.get(i-1)-1; // permutations stored in 1's offset
+      size_type perm = pvector[i-1]-1;    // permutations stored in 1's offset
       if(i-1 != perm) { T aux = x[i-1]; x[i-1] = x[perm]; x[perm] = aux; }
     }
+
   }
 
 
@@ -246,15 +233,15 @@ namespace gmm {
       return the determinant */
   template <typename DenseMatrix>
   typename linalg_traits<DenseMatrix>::value_type
-  lu_inverse(const DenseMatrix& A_, bool doassert = true) {
+  lu_inverse(const DenseMatrix& A_) {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
     DenseMatrix& A = const_cast<DenseMatrix&>(A_);
     dense_matrix<T> B(mat_nrows(A), mat_ncols(A));
-    lapack_ipvt ipvt(mat_nrows(A));
+    std::vector<int> ipvt(mat_nrows(A));
     gmm::copy(A, B);
     size_type info = lu_factor(B, ipvt);
-    if (doassert) GMM_ASSERT1(!info, "Non invertible matrix, pivot = "<<info);
-    if (!info) lu_inverse(B, ipvt, A);
+    GMM_ASSERT1(!info, "Non invertible matrix, pivot = " << info);
+    lu_inverse(B, ipvt, A);
     return lu_det(B, ipvt);
   }
 
@@ -267,7 +254,7 @@ namespace gmm {
     for (size_type j = 0; j < std::min(mat_nrows(LU), mat_ncols(LU)); ++j)
       det *= LU(j,j);
     for(size_type i = 0; i < pvector.size(); ++i)
-      if (i != size_type(pvector.get(i)-1)) { det = -det; }
+      if (i != size_type(pvector[i]-1)) { det = -det; }
     return det;
   }
 
@@ -276,7 +263,7 @@ namespace gmm {
   lu_det(const DenseMatrix& A) {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
     dense_matrix<T> B(mat_nrows(A), mat_ncols(A));
-    lapack_ipvt ipvt(mat_nrows(A));
+    std::vector<int> ipvt(mat_nrows(A));
     gmm::copy(A, B);
     lu_factor(B, ipvt);
     return lu_det(B, ipvt);

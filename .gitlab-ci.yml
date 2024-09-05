@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -27,7 +27,7 @@ linux_ci:
     - make -j 8
     - make doc
     - ctest -j 8 --output-on-failure
-    - valgrind --leak-check=full --show-leak-kinds=definite,indirect --error-exitcode=0 ./gmsh ../tutorials/t5.geo -3
+    - valgrind --leak-check=full --error-exitcode=1 ./gmsh ../tutorials/t5.geo -3
   tags:
     - linux64
     - docker
@@ -328,6 +328,7 @@ macosarm-sdk_official_release:
 # ----------------------------------------------
 
 .source_official: &source_official
+  image: onelab/ubuntu20.04
   only:
     - master@gmsh/gmsh
   <<: *ssh_config
@@ -343,13 +344,11 @@ macosarm-sdk_official_release:
     - docker
 
 source_official_snapshot:
-  image: onelab/ubuntu20.04
   <<: *source_official
   except:
     - tags
 
 source_official_release:
-  image: onelab/ubuntu20.04
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1"
   <<: *source_official

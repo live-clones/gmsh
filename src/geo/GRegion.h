@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -173,9 +173,9 @@ public:
   void addPyramid(MPyramid *p) { pyramids.push_back(p); }
   void addPolyhedron(MPolyhedron *p) { polyhedra.push_back(p); }
   void addTrihedron(MTrihedron *t) { trihedra.push_back(t); }
-  void addElement(MElement *e);
-  void removeElement(MElement *e, bool del);
-  void removeElements(bool del);
+  void addElement(int type, MElement *e);
+  void removeElement(int type, MElement *e);
+  void removeElements(int type);
 
   // get the boundary layer columns
   BoundaryLayerColumns *getColumns() { return &_columns; }

@@ -20,10 +20,7 @@ if len(sys.argv) < 2:
 
 gmsh.initialize()
 
-try:
-    gmsh.open(sys.argv[1])
-except:
-    exit(0)
+gmsh.open(sys.argv[1])
 
 # attempts to run a client selected when opening the file (e.g. a .pro file)
 gmsh.onelab.run()

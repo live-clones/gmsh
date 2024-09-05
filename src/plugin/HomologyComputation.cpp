@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -33,7 +33,7 @@ StringXString HomologyComputationOptions_String[] = {
   {GMSH_FULLRC, "SubdomainPhysicalGroups", nullptr, ""},
   {GMSH_FULLRC, "ReductionImmunePhysicalGroups", nullptr, ""},
   {GMSH_FULLRC, "DimensionOfChainsToSave", nullptr, "0, 1, 2, 3"},
-  {GMSH_FULLRC, "Filename", nullptr, ""}};
+  {GMSH_FULLRC, "Filename", nullptr, "homology.msh"}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterHomologyComputationPlugin()
@@ -52,9 +52,8 @@ std::string GMSH_HomologyComputationPlugin::getHelp() const
          "is the domain and the relative subdomain is empty. \n\n"
 
          "Plugin(HomologyComputation) creates new views, one for each "
-         "basis element. If `Filename' is provided, the plugin saves the "
-         "resulting basis chains of desired dimension along with the "
-         "mesh.";
+         "basis element. The resulting basis chains of desired dimension "
+         "together with the mesh are saved to the given file.";
 }
 
 int GMSH_HomologyComputationPlugin::getNbOptions() const

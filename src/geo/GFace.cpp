@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -147,7 +147,12 @@ void GFace::deleteMesh()
   for(std::size_t i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
   mesh_vertices.clear();
   transfinite_vertices.clear();
-  removeElements(true);
+  for(std::size_t i = 0; i < triangles.size(); i++) delete triangles[i];
+  triangles.clear();
+  for(std::size_t i = 0; i < quadrangles.size(); i++) delete quadrangles[i];
+  quadrangles.clear();
+  for(std::size_t i = 0; i < polygons.size(); i++) delete polygons[i];
+  polygons.clear();
   correspondingVertices.clear();
   correspondingHighOrderVertices.clear();
   deleteVertexArrays();
@@ -475,7 +480,7 @@ void GFace::writeGEO(FILE *fp)
   if(geomType() == DiscreteSurface || geomType() == BoundaryLayerSurface) return;
 
   std::vector<GEdge *> const &edg = edges();
-  std::vector<int> const &dir = edgeOrientations();
+  std::vector<int> const &dir = orientations();
   if(edg.size() && dir.size() == edg.size()) {
     std::vector<int> num, ori;
     for(auto it = edg.begin(); it != edg.end(); it++)
@@ -1300,142 +1305,6 @@ SVector3 GFace::normal(const SPoint2 &param) const
   SVector3 n = crossprod(der.first(), der.second());
   n.normalize();
   return n;
-}
-
-bool GFace::normalToPlanarMesh(SVector3 &normal, bool orient) const
-{
-  normal = SVector3(.0, .0, .0);
-  if (getNumMeshElements() == 0) return false;
-
-  // Get one arbitrary normal
-  double n[3];
-  bool foundNormal = false;
-  for (size_t i = 0; i < getNumMeshElements(); ++i) {
-    MElement *el = getMeshElement(i);
-    MVertex *v[3] = {el->getVertex(0), el->getVertex(1), el->getVertex(2)};
-    normal3points(v[0]->x(), v[0]->y(), v[0]->z(), v[1]->x(), v[1]->y(),
-                  v[1]->z(), v[2]->x(), v[2]->y(), v[2]->z(), n);
-    if (norm3(n) > .5) {
-      foundNormal = true;
-      break;
-    }
-  }
-
-  if (!foundNormal) {
-    Msg::Warning("Could not define a normal for function "
-                 "'normalToPlanarMesh' on GFace %d", tag());
-    return false;
-  }
-
-  // Check that all MVertex are in the same plane.
-  // It is sufficient to check for each pair of consecutive vertices in an
-  // arbitrary sequence of all surface vertices that the vector linking the
-  // pair is perpendicular to the normal vector.
-  for (std::size_t i = 0; i < getNumMeshElements(); ++i) {
-    MElement *el = getMeshElement(i);
-    MVertex *v[2] = {el->getVertex(0), nullptr};
-
-    for(std::size_t j = 1; j < el->getNumVertices(); ++j) {
-      v[j % 2] = el->getVertex(j);
-      double e[3] = {v[1]->x() - v[0]->x(), v[1]->y() - v[0]->y(),
-                     v[1]->z() - v[0]->z()};
-      norme(e);
-      if(std::abs(prosca(n, e)) >= 1e-12) return false;
-    }
-  }
-
-  normal = SVector3(n[0], n[1], n[2]);
-  if (!orient) return true;
-
-  // Now, if possible, check the orientation of the geometrical surface to make
-  // normal point in the same direction.
-  // The only way is to check if the rotation of the complete boundary is of an
-  // angle of +2pi or -2pi for the current sense of 'normal'. We must cover the
-  // whole boundary since we cannot determine which part of it is convex except
-  // if we already know the orientation...
-  if (l_edges.empty()) return true;
-
-  // 1) Determine the set of exterior edges (NB: it can be a single edge)
-  GVertex *vBegin, *vNext;
-
-  if (l_dirs[0] == 1)
-    vBegin = l_edges[0]->getBeginVertex();
-  else
-    vBegin = l_edges[0]->getEndVertex();
-
-  std::size_t numEdge = 1;
-  for (std::size_t i = 0; i < l_edges.size(); ++i) {
-    if (l_dirs[i] == 1)
-      vNext = l_edges[i]->getEndVertex();
-    else
-      vNext = l_edges[i]->getBeginVertex();
-    if (vNext ==  vBegin) {
-      numEdge = i+1;
-      break;
-    }
-  }
-
-  // 2) Get a set of points that represents the boundary.
-  //    We need at least 3 points in basic cases and an undetermined number in
-  //    general. Indeed, for any number of sampling points, we can always create
-  //    a boundary for which the sampling points are co-linear or even worse,
-  //    have sampling points that discretize so poorly the boundary that they
-  //    rotate inversely...
-  //    However, in practice, a minimum of 100 points should be sufficient.
-  const double minSamplingPoints = 100.;
-  const int numSampleInteriorEdge =
-    std::max(.0, std::ceil(minSamplingPoints/(double)numEdge - 1.));
-
-  std::vector<SPoint3> samplingPnts;
-  samplingPnts.reserve(numEdge + numEdge* numSampleInteriorEdge);
-  for (std::size_t i = 0; i < numEdge; ++i) {
-    auto *ge = l_edges[i];
-    Range<double> tr = ge->parBounds(0);
-    double low, high;
-    if (l_dirs[i] == 1) {
-      vBegin = ge->getBeginVertex();
-      low  = tr.low();
-      high  = tr.high();
-    }
-    else {
-      vBegin = ge->getEndVertex();
-      low  = tr.high();
-      high  = tr.low();
-    }
-    samplingPnts.emplace_back(vBegin->x(), vBegin->y(), vBegin->z());
-
-    for (int j = 0; j < numSampleInteriorEdge; ++j) {
-      double t = low + (j + 1.) / (numSampleInteriorEdge + 1.) * (high - low);
-      auto gp = ge->point(t);
-      samplingPnts.emplace_back(gp.x(), gp.y(), gp.z());
-    }
-  }
-
-  // 3) Compute the rotation angle and reverse normal if it is -2pi.
-  double p0[3], p1[3], p2[3];
-  samplingPnts[samplingPnts.size() - 2].position(p0);
-  samplingPnts[samplingPnts.size() - 1].position(p1);
-  normal.point().position(n);
-  //samplingPnts[1].position(p1);
-  double sumAngle = 0;
-  for (const auto &P : samplingPnts) {
-    P.position(p2);
-    double angle = angle_plan(p1, p2, p0, n);
-    sumAngle += (angle < 0 ? -1 : 1) * M_PI - angle;
-    p0[0] = p1[0]; p0[1] = p1[1]; p0[2] = p1[2];
-    p1[0] = p2[0]; p1[1] = p2[1]; p1[2] = p2[2];
-  }
-
-  const double eps = 1e-7;
-  const double absAngle = std::abs(sumAngle);
-  if(absAngle < 2 * M_PI - eps || absAngle > 2 * M_PI + eps) {
-    // FIXME: Remove because I think this cannot happen
-    Msg::Warning("Could not orient normal of surface %d (obtained angle %g)",
-                 tag(), angle);
-  }
-  else if (sumAngle < 0) normal *= -1;
-
-  return true;
 }
 
 bool GFace::buildRepresentationCross(bool force)
@@ -2580,9 +2449,9 @@ void GFace::setMeshMaster(GFace *master, const std::map<int, int> &edgeCopies)
   setMeshMaster(master, tfo);
 }
 
-void GFace::addElement(MElement *e)
+void GFace::addElement(int type, MElement *e)
 {
-  switch(e->getType()) {
+  switch(type) {
   case TYPE_TRI: addTriangle(reinterpret_cast<MTriangle *>(e)); break;
   case TYPE_QUA: addQuadrangle(reinterpret_cast<MQuadrangle *>(e)); break;
   case TYPE_POLYG: addPolygon(reinterpret_cast<MPolygon *>(e)); break;
@@ -2591,48 +2460,38 @@ void GFace::addElement(MElement *e)
   }
 }
 
-void GFace::removeElement(MElement *e, bool del)
+void GFace::removeElement(int type, MElement *e)
 {
-  switch(e->getType()) {
+  switch(type) {
   case TYPE_TRI: {
     auto it = std::find(triangles.begin(), triangles.end(),
                         reinterpret_cast<MTriangle *>(e));
-    if(it != triangles.end()) {
-      triangles.erase(it);
-      if(del) delete e;
-    }
+    if(it != triangles.end()) triangles.erase(it);
   } break;
   case TYPE_QUA: {
     auto it = std::find(quadrangles.begin(), quadrangles.end(),
                         reinterpret_cast<MQuadrangle *>(e));
-    if(it != quadrangles.end()) {
-      quadrangles.erase(it);
-      if(del) delete e;
-    }
+    if(it != quadrangles.end()) quadrangles.erase(it);
   } break;
   case TYPE_POLYG: {
     auto it = std::find(polygons.begin(), polygons.end(),
                         reinterpret_cast<MPolygon *>(e));
-    if(it != polygons.end()) {
-      polygons.erase(it);
-      if(del) delete e;
-    }
+    if(it != polygons.end()) polygons.erase(it);
   } break;
   default:
     Msg::Error("Trying to remove unsupported element in surface %d", tag());
   }
 }
 
-void GFace::removeElements(bool del)
+void GFace::removeElements(int type)
 {
-  if(del) {
-    for(auto e : triangles) delete e;
-    for(auto e : quadrangles) delete e;
-    for(auto e : polygons) delete e;
+  switch(type) {
+  case TYPE_TRI: triangles.clear(); break;
+  case TYPE_QUA: quadrangles.clear(); break;
+  case TYPE_POLYG: polygons.clear(); break;
+  default:
+    Msg::Error("Trying to remove unsupported elements in surface %d", tag());
   }
-  triangles.clear();
-  quadrangles.clear();
-  polygons.clear();
 }
 
 bool GFace::reorder(const int elementType,

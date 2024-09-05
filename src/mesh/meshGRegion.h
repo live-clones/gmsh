@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -30,13 +30,6 @@ public:
 class meshGRegionExtruded {
 public:
   void operator()(GRegion *);
-};
-
-
-// Optimize the mesh of the region using gmsh's algo
-class untangleMeshGRegion {
-public:
-  void operator()(GRegion *, bool always = false);
 };
 
 // Optimize the mesh of the region using gmsh's algo

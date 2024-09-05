@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -19,9 +19,10 @@ GVertex::~GVertex() { GVertex::deleteMesh(); }
 
 void GVertex::deleteMesh()
 {
-  for(auto v : mesh_vertices) delete v;
+  for(std::size_t i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
   mesh_vertices.clear();
-  removeElements(true);
+  for(std::size_t i = 0; i < points.size(); i++) delete points[i];
+  points.clear();
   deleteVertexArrays();
   model()->destroyMeshCaches();
 }
@@ -192,37 +193,35 @@ void GVertex::relocateMeshVertices()
   }
 }
 
-void GVertex::addElement(MElement *e)
+void GVertex::addElement(int type, MElement *e)
 {
-  switch(e->getType()) {
+  switch(type) {
   case TYPE_PNT: addPoint(reinterpret_cast<MPoint *>(e)); break;
   default:
     Msg::Error("Trying to add unsupported element in point %d", tag());
   }
 }
 
-void GVertex::removeElement(MElement *e, bool del)
+void GVertex::removeElement(int type, MElement *e)
 {
-  switch(e->getType()) {
+  switch(type) {
   case TYPE_PNT: {
     auto it =
       std::find(points.begin(), points.end(), reinterpret_cast<MPoint *>(e));
-    if(it != points.end()) {
-      points.erase(it);
-      if(del) delete e;
-    }
+    if(it != points.end()) points.erase(it);
   } break;
   default:
     Msg::Error("Trying to remove unsupported element in point %d", tag());
   }
 }
 
-void GVertex::removeElements(bool del)
+void GVertex::removeElements(int type)
 {
-  if(del) {
-    for(auto e : points) delete e;
+  switch(type) {
+  case TYPE_PNT: points.clear(); break;
+  default:
+    Msg::Error("Trying to remove unsupported elements in point %d", tag());
   }
-  points.clear();
 }
 
 bool GVertex::reorder(const int elementType,

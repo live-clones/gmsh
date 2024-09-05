@@ -1,4 +1,4 @@
-                 Gmsh is copyright (C) 1997-2024
+                 Gmsh is copyright (C) 1997-2023
 
                        Christophe Geuzaine
                      <cgeuzaine at uliege.be>
@@ -34,9 +34,8 @@ Toulorge (high order mesh optimizer, new CGNS IO), Max Orok (binary PLY), Marek
 Wojciechowski (PyPi packaging), Maxence Reberol (automatic transfinite, quad
 meshing tools), Michael Ermakov (Gambit IO, Fortran API, TransfiniteTri,
 boundary layer fans), Alex Krasner (X3D export), Giannis Nikiteas (Fortran API),
-Paul Sharp (Radioss export), Marco Failla (2D fillet/offset and API
-additions). See comments in the sources for more information. If we forgot to
-list your contributions please send us an email!
+Paul Sharp (Radioss export). See comments in the sources for more
+information. If we forgot to list your contributions please send us an email!
 
 Thanks to the following folks who have contributed by providing fresh ideas on
 theoretical or programming topics, who have sent patches, requests for changes
@@ -60,12 +59,9 @@ Alberto Escrig, Samy Mukadi, Peter Johnston, Bruno de Sousa Alves, Stefan
 Bruens, Luca Verzeroli, Tristan Seidlhofer, Ding Jiaming, Joost Gevaert, Marcus
 Calhoun-Lopez, Michel Zou, Sir Sunsheep, Mariano Forti, Walter Steffe, Nico
 Schloemer, Simon Tournier, Alexandru Dadalau, Thomas Ulrich, Matthias Diener,
-Jamie Border, Kenneth Jansen, Steven Masfaraud, Sai Sumanth Moturu, Arie
-Westland, Andreas Farley, Mahesh Madhav, Zoltan Csati, Thierry Hocquellet,
-Christophe Bourcier, Mattéo Couplet, Mahesh Madhav, Giuseppe Musacchio, Romin
-Tomasetti, Lin Qi Chen, Tim Furlan, Matthias Lang, Tim Gabriel, Julien Chapelat,
-Boris Martin, Thomas Pirottin, Kazuyoshi Furutaka, Mariusz Wozniak, Christophe
-Friebel, Thierry Thomas, Joonas Haapsaari.
+Jamie Border; Kenneth Jansen; Steven Masfaraud; Sai Sumanth Moturu; Arie
+Westland; Andreas Farley; Mahesh Madhav; Zoltan Csati; Christophe Bourcier;
+Mattéo Couplet, Mahesh Madhav, Giuseppe Musacchio, Romin Tomasetti.
 
 Special thanks to Bill Spitzak, Michael Sweet, Matthias Melcher, Greg Ercolano
 and others for the Fast Light Tool Kit on which Gmsh's GUI is based. See
@@ -191,8 +187,6 @@ optional codes in the contrib/ directory, each governed by their own license:
 * contrib/blossom copyright (C) 1995-1997 Bill Cook et al.;
 
 * contrib/bamg from Freefem++ copyright (C) Frederic Hecht;
-
-* contrib/tinyxml2 from Lee Thomason;
 
 * contrib/voro++ from Voro++ Copyright (c) 2008, The Regents of the University
   of California, through Lawrence Berkeley National Laboratory (subject to

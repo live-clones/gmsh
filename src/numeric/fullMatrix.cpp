@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -46,11 +46,6 @@ void F77NAME(zgemv)(const char *trans, int *m, int *n,
 void F77NAME(dscal)(int *n, double *alpha, double *x, int *incx);
 void F77NAME(zscal)(int *n, std::complex<double> *alpha,
                     std::complex<double> *x, int *incx);
-}
-
-template <> void fullVector<int>::setAll(const fullVector<int> &m)
-{
-  for(int i = 0; i < _r; ++i) _data[i] = m._data[i];
 }
 
 template <> void fullVector<double>::setAll(const fullVector<double> &m)

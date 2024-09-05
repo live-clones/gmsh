@@ -28,9 +28,16 @@
 #include "qmtMeshUtils.h"
 #include "arrayGeometry.h"
 
-#include <functional>
 using std::vector;
 using namespace ArrayGeometry;
+
+struct TransfoPlanar {
+  SVector3 pop;
+  SVector3 normal;
+  SVector3 tangent;
+  SVector3 binormal;
+  mean_plane mp;
+};
 
 inline std::array<vec2, 4>
 quadAnisotropicTargetShape(const std::vector<vec2> &points,
@@ -54,7 +61,6 @@ quadAnisotropicTargetShape(const std::vector<vec2> &points,
   return target;
 }
 
-// create a triangle with a unit area ...
 bool normalizeTargetArea(std::array<vec2, 3> &target)
 {
   double area = triangleArea(target[0], target[1], target[2]);
@@ -66,78 +72,42 @@ bool normalizeTargetArea(std::array<vec2, 3> &target)
 }
 
 bool buildTrianglesAndTargetsFromElements(
-  std::vector<std::array<double, 2> > &points,
-  std::vector<std::array<uint32_t, 4> > &elements,
+  const std::vector<std::array<double, 2> > &points,
+  const std::vector<std::array<uint32_t, 4> > &elements,
   std::vector<std::array<uint32_t, 3> > &triangles,
-  std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes){
-  std::vector<std::array<uint32_t, 6> > eb;
-  eb.reserve(elements.size());
-  for (auto e : elements){
-    eb.push_back({e[0],e[1],e[2],e[3],uint32_t(-1),uint32_t(-1)});
-  }
-  return buildTrianglesAndTargetsFromElements(points, eb, triangles, triIdealShapes);
-}
-
-extern size_t perTriangleP2;
-
-bool buildTrianglesAndTargetsFromElements(
-  std::vector<std::array<double, 2> > &points,
-  std::vector<std::array<uint32_t, 6> > &elements,
-  std::vector<std::array<uint32_t, 3> > &triangles,
-  std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes)
+  std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes,
+  bool preserveQuadAnisotropy)
 {
   const uint32_t NO_U32 = (uint32_t)-1;
 
   // Equilateral triangle centered in origin with unit area
-
-  vec2 one = {1., 1.};
-  
   std::array<vec2, 3> equi = {vec2{1., 0.},
                               vec2{cos(2. * M_PI / 3.), sin(2 * M_PI / 3.)},
                               vec2{cos(4. * M_PI / 3.), sin(4 * M_PI / 3.)}};
   normalizeTargetArea(equi);
 
   const int quad_dcp[4][3] = {{0, 1, 2}, {0, 2, 3}, {1, 2, 3}, {1, 3, 0}};
-  /*
-          2
-        /   \
-       /     \
-      5       4
-     /         \
-    0 --- 3 --- 1
 
-*/
-  int NUMT  = perTriangleP2;
-  int NUMT2 = (NUMT-4)/3;
-
-  const int p2_cp_13[13][4] = {{0, 3, 5}, {1, 4, 3}, {2, 5, 4}, {4,5,3},
-			       {0, 1, 5}, {0, 1, 4}, {0, 1, 3},
-			       {1, 2, 3}, {1, 2, 5}, {1, 2, 4},
-			       {2, 0, 4}, {2, 0, 3}, {2, 0, 5}};
-  
-  const int p2_cp_19[19][4] = {{0, 3, 5}, {1, 4, 3}, {2, 5, 4}, {0, 1, 2},
-			       {0, 1, 5}, {0, 1, 4}, {0, 1, 3}, {0, 3, 5}, {3, 1, 4},
-			       {1, 2, 3}, {1, 2, 5}, {1, 2, 4}, {3, 1, 4}, {5, 4, 2},
-			       {2, 0, 4}, {2, 0, 3}, {2, 0, 5}, {5, 4, 2}, {0, 3, 5}};
-  
   triIdealShapes.clear();
   triangles.clear();
-  std::set<std::pair<uint32_t,uint32_t> > p2edges;
+  double areaAvg = 0.;
+  double areaN = 0.;
   for(size_t i = 0; i < elements.size(); ++i) {
     if(elements[i][0] == NO_U32) { continue; }
     else if(elements[i][3] == NO_U32) { /* already triangle */
       triangles.push_back({elements[i][0], elements[i][1], elements[i][2]});
-      std::array<vec2, 3> perfect = equi;
-      triIdealShapes.push_back(perfect);
+      /* equilateral triangle target shape */
+      triIdealShapes.push_back(equi);
+      areaAvg += 1.;
+      areaN += 1.;
     }
-    else if(elements[i][4] == NO_U32) {
+    else {
       std::array<vec2, 4> qtarget = {vec2{0., 0.}, vec2{1., 0.}, vec2{1., 1.},
                                      vec2{0., 1.}};
-      //      if(preserveQuadAnisotropy) { /* does not work well, need better approach
-      //                                    */
-      //	std::array<uint32_t, 4> a = {elements[i][0],elements[i][1],elements[i][2],elements[i][3]};
-      //        qtarget = quadAnisotropicTargetShape(points, a);
-      //      }
+      if(preserveQuadAnisotropy) { /* does not work well, need better approach
+                                    */
+        qtarget = quadAnisotropicTargetShape(points, elements[i]);
+      }
       for(size_t k = 0; k < 4; ++k) {
         triangles.push_back({elements[i][quad_dcp[k][0]],
                              elements[i][quad_dcp[k][1]],
@@ -145,100 +115,30 @@ bool buildTrianglesAndTargetsFromElements(
         std::array<vec2, 3> target = {qtarget[quad_dcp[k][0]],
                                       qtarget[quad_dcp[k][1]],
                                       qtarget[quad_dcp[k][2]]};
-	// 2DO --> control sizes 
         normalizeTargetArea(target);
-        triIdealShapes.push_back(target);
-      }
-    }
-    else if(elements[i][5] != NO_U32) { // P2 triangles -- 
-      // replace point positions by bezier polygons
-      std::array<double, 2> p [6] = {points[elements[i][0]], points[elements[i][1]],
-				     points[elements[i][2]], points[elements[i][3]],
-				     points[elements[i][4]], points[elements[i][5]]};     
-      for (size_t k = 0; k < 3 ; k++){
-	std::pair<uint32_t,uint32_t> pair =
-	  std::make_pair(std::min(elements[i][k],elements[i][(k+1)%3]),
-			 std::max(elements[i][k],elements[i][(k+1)%3]));
-	if (p2edges.find(pair) == p2edges.end()){
-	  p2edges.insert(pair);
-	  double xmid = 0.5*(p[k][0] + p[(k+1)%3][0]); 
-	  double ymid = 0.5*(p[k][1] + p[(k+1)%3][1]);
-	  double x2   = p[k+3][0]; 
-	  double y2   = p[k+3][1];
-	  points[elements[i][k+3]][0] = xmid + 2.0*(x2-xmid);
-	  points[elements[i][k+3]][1] = ymid + 2.0*(y2-ymid);
-	}	
-      }
 
-      std::array<vec2, 3> corners = {vec2{points[elements[i][0]][0], points[elements[i][0]][1]},
-				     vec2{points[elements[i][1]][0], points[elements[i][1]][1]},
-				     vec2{points[elements[i][2]][0], points[elements[i][2]][1]}};
-      std::array<vec2, 6> straight = {corners[0],corners[1],corners[2],
-				      (corners[0]+corners[1])*.5,
-				      (corners[1]+corners[2])*.5,
-				      (corners[2]+corners[0])*.5};	
-      vec2 dx = (corners[0] + corners[1] + corners[2]) * (-1./3.);
-      for (size_t k=0;k<6;k++)straight[k] = (straight[k] + dx);
+        // Warning: better behavior with equilateral tris instead of tri adapted
+        // to unit quad. Quite weird... maybe a bug ?
+        // triIdealShapes.push_back(target);
+        triIdealShapes.push_back(equi);
 
-      for(size_t k = 0; k < (NUMT == 3 ? 3:4) ; ++k) {
-	if (NUMT == 19){
-	  triangles.push_back({elements[i][p2_cp_19[k][0]],
-		elements[i][p2_cp_19[k][1]],
-		elements[i][p2_cp_19[k][2]]});
-	  std::array<vec2, 3> target = {straight[p2_cp_19[k][0]],
-					straight[p2_cp_19[k][1]],
-					straight[p2_cp_19[k][2]]};
-	  triIdealShapes.push_back(target);
-	}
-	else{
-	  triangles.push_back({elements[i][p2_cp_13[k][0]],
-		elements[i][p2_cp_13[k][1]],
-		elements[i][p2_cp_13[k][2]]});
-	  std::array<vec2, 3> target = {straight[p2_cp_13[k][0]],
-					straight[p2_cp_13[k][1]],
-					straight[p2_cp_13[k][2]]};
-	  triIdealShapes.push_back(target);
-	}
-
-      }
-
-      double signs[5] = {1,1,-1,-1,-1};
-      for(size_t k = 4; k < NUMT; k+=NUMT2) {
-	double a = 0.0;
-	for (size_t l=0; l<NUMT2; l++){
-	  if (NUMT == 19){
-	    triangles.push_back({elements[i][p2_cp_19[k+l][0]],
-		  elements[i][p2_cp_19[k+l][1]],
-		  elements[i][p2_cp_19[k+l][2]]});
-	    std::array<vec2, 3> targetl = {straight[p2_cp_19[k+l][0]],
-					   straight[p2_cp_19[k+l][1]],
-					   straight[p2_cp_19[k+l][2]]};
-	    a += signs[l]*triangleArea(straight[p2_cp_19[k+l][0]],straight[p2_cp_19[k+l][1]],straight[p2_cp_19[k+l][2]]);
-	  }
-	  else {
-	    triangles.push_back({elements[i][p2_cp_13[k+l][0]],
-		  elements[i][p2_cp_13[k+l][1]],
-		  elements[i][p2_cp_13[k+l][2]]});
-	    std::array<vec2, 3> targetl = {straight[p2_cp_13[k+l][0]],
-					   straight[p2_cp_13[k+l][1]],
-					   straight[p2_cp_13[k+l][2]]};
-	    a += signs[l]*triangleArea(straight[p2_cp_13[k+l][0]],straight[p2_cp_13[k+l][1]],straight[p2_cp_13[k+l][2]]);
-	  }
-	}
-	double fact =sqrt(a);
-	std::array<vec2, 3> target = {equi[0]*fact,equi[1]*fact,equi[2]*fact};
-	for (size_t l=0; l<NUMT2; l++){	
-	  triIdealShapes.push_back(target);
-	}
+        areaAvg += 1.;
+        areaN += 1.;
       }
     }
   }
-    
+  if(areaN > 0) areaAvg /= areaN;
+  for(size_t i = 0; i < triIdealShapes.size(); ++i)
+    for(size_t lv = 0; lv < 3; ++lv) {
+      triIdealShapes[i][lv] =
+        triIdealShapes[i][lv] * (1. / std::pow(areaAvg, 1. / 2.));
+    }
+
   return true;
 }
 
 bool buildVerticesAndElements(GFace *gf, vector<MVertex *> &vertices,
-                              vector<std::array<uint32_t, 6> > &elements)
+                              vector<std::array<uint32_t, 4> > &elements)
 {
   std::unordered_map<MVertex *, uint32_t> old2new;
   vector<uint32_t> fvert;
@@ -259,13 +159,10 @@ bool buildVerticesAndElements(GFace *gf, vector<MVertex *> &vertices,
       }
     }
     if(n == 3) {
-      elements.push_back({fvert[0], fvert[1], fvert[2], uint32_t(-1), uint32_t(-1), uint32_t(-1)});
+      elements.push_back({fvert[0], fvert[1], fvert[2], uint32_t(-1)});
     }
-    else if (n== 4){
-      elements.push_back({fvert[0], fvert[1], fvert[2], fvert[3], uint32_t(-1), uint32_t(-1)});
-    }
-    else if (n== 6){
-      elements.push_back({fvert[0], fvert[1], fvert[2], fvert[3], fvert[4], fvert[5]});
+    else {
+      elements.push_back({fvert[0], fvert[1], fvert[2], fvert[3]});
     }
   }
 
@@ -274,23 +171,43 @@ bool buildVerticesAndElements(GFace *gf, vector<MVertex *> &vertices,
 
 bool buildPlanarTriProblem(
   GFace *gf, vector<MVertex *> &vertices, vector<vec2> &points,
-  std::vector<std::array<uint32_t, 6> > &elements,
   vector<bool> &locked, std::vector<std::array<uint32_t, 3> > &triangles,
-  std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes)
+  std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes,
+  TransfoPlanar &transfo)
 {
-  //  std::vector<std::array<uint32_t, 6> > elements;
+  std::vector<std::array<uint32_t, 4> > elements;
   buildVerticesAndElements(gf, vertices, elements);
+
+  // Compute mean plane
+  std::vector<SPoint3> positions;
+  positions.reserve(vertices.size());
+  for(MVertex *v : vertices) { positions.push_back(v->point()); }
+  computeMeanPlaneSimple(positions, transfo.mp);
+  double denom = std::pow(transfo.mp.a, 2) + std::pow(transfo.mp.b, 2) +
+                 std::pow(transfo.mp.c, 2);
+  if(denom < 1.e-16) {
+    Msg::Warning("geometry optimize: invalid mean plane");
+    return false;
+  }
+  transfo.normal = SVector3(transfo.mp.a, transfo.mp.b, transfo.mp.c);
+  buildOrthoBasis(transfo.normal, transfo.tangent, transfo.binormal);
+  transfo.pop = SPoint3(transfo.mp.x, transfo.mp.y, transfo.mp.z);
+
+  // Project on plane
   points.resize(vertices.size());
   locked.clear();
   locked.resize(vertices.size(), false);
   SPoint3 proj;
   for(size_t v = 0; v < points.size(); ++v) {
     SPoint3 p = vertices[v]->point();
-    points[v] = {p.x(),p.y()};
+    points[v] = {dot(p - transfo.pop, transfo.tangent),
+                 dot(p - transfo.pop, transfo.binormal)};
     if(vertices[v]->onWhat()->dim() < 2) { locked[v] = true; }
   }
-  return buildTrianglesAndTargetsFromElements(points, elements,
-					      triangles, triIdealShapes);
+
+  bool preserveQuadAnisotropy = true;
+  return buildTrianglesAndTargetsFromElements(
+    points, elements, triangles, triIdealShapes, preserveQuadAnisotropy);
 }
 
 double triangle_area_2d(vec2 a, vec2 b, vec2 c)
@@ -320,72 +237,8 @@ void _invertTrianglesIfNecessary(
   }
 }
 
-// TEST -------------------------------------------------------------
-static double myDensity (double x, double y){
-  double r = sqrt(x*x+y*y);
-  //  double theta = atan2(y,x);
-  //  double a = 0.3;
-  //  double d = a*(1+cos(theta));
-  //  double density = 0.01 + 1./(.1+(d-r)*(d-r));
-  double density = 1./(.01+2*fabs(r-.2));
-  return density;
-}
-
-void myUpdateIdealShapes (const std::vector<std::array<double, 2> > &points,
-			  const std::vector<std::array<uint32_t, 3> > &triangles,
-			  std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes){
-  triIdealShapes.clear();
-  std::array<vec2, 3> equi = {vec2{1., 0.},
-                              vec2{cos(2. * M_PI / 3.), sin(2 * M_PI / 3.)},
-                              vec2{cos(4. * M_PI / 3.), sin(4 * M_PI / 3.)}};
-  normalizeTargetArea(equi);
-  double areaEqui = triangleArea(equi[0], equi[1], equi[2]);
-  //  printf("Updating %lu ideal shapes area %g\n",triangles.size(),areaEqui);
-  double totArea = 0.0;
-  double totOneOverWeight = 0.0;
-  
-  for (size_t i=0;i<triangles.size();i++){
-    vec2 v0 = points[triangles[i][0]];
-    vec2 v1 = points[triangles[i][1]];
-    vec2 v2 = points[triangles[i][2]];
-    double xc = (v0[0]+v1[0]+v2[0])/3.0;
-    double yc = (v0[1]+v1[1]+v2[1])/3.0;
-    double density = myDensity (xc,yc);
-    double area = triangle_area_2d(v0,v1,v2);
-    totArea += area;
-    totOneOverWeight += 1./density;
-  }
-  double C = totArea/totOneOverWeight;  
-  
-  // \rho (x_i,y_i) * s_i = c --> s_i = c / \rho_i 
-  // \sum_i s_i = S --> S = c \sum (1/\rho_i) 
-  // 
-
-  double newArea = 0;
-  for (size_t i=0;i<triangles.size();i++){
-    vec2 v0 = points[triangles[i][0]];
-    vec2 v1 = points[triangles[i][1]];
-    vec2 v2 = points[triangles[i][2]];
-    double xc = (v0[0]+v1[0]+v2[0])/3.0;
-    double yc = (v0[1]+v1[1]+v2[1])/3.0;
-    double density = myDensity(xc,yc);
-    double fact = sqrt(C/density);
-    vec2 p0 = equi[0] * fact;
-    vec2 p1 = equi[1] * fact;
-    vec2 p2 = equi[2] * fact;
-    std::array<vec2, 3> perfect = {p0,p1,p2};
-    double area = triangle_area_2d(p0,p1,p2);
-    newArea += area;
-    triIdealShapes.push_back(perfect);
-  }
-  printf("%22.15E %22.15E \n",newArea,totArea);
-}
-// ENDTEST ---------------------------------------------------------
-
-
 bool untangleGFaceMeshConstrained(GFace *gf, int iterMax, double timeMax)
 {
-  const uint32_t NO_U32 = (uint32_t)-1;
   if(gf->geomType() != GFace::Plane) {
     Msg::Error("- Face %i: untangleGFaceMeshConstrained only implemented for "
                "planar faces",
@@ -409,9 +262,9 @@ bool untangleGFaceMeshConstrained(GFace *gf, int iterMax, double timeMax)
   vector<bool> locked;
   vector<std::array<uint32_t, 3> > triangles;
   std::vector<std::array<std::array<double, 2>, 3> > triIdealShapes;
-  std::vector<std::array<uint32_t, 6> > elements;
-  bool okb = buildPlanarTriProblem(gf, vertices,  points, elements,locked, triangles,
-                                   triIdealShapes);
+  TransfoPlanar transfo;
+  bool okb = buildPlanarTriProblem(gf, vertices, points, locked, triangles,
+                                   triIdealShapes, transfo);
   if(!okb) {
     Msg::Error(
       "- Face %i: untangleGFaceMeshConstrained, failed to build planar problem",
@@ -423,75 +276,18 @@ bool untangleGFaceMeshConstrained(GFace *gf, int iterMax, double timeMax)
   /* Call Winslow untangler */
   int iterMaxInner = 1000;
   int iterFailMax = 10;
-  double lambda = 1.0100;
-
-#if 0
-  {
-    FILE *f = fopen("t.pos","w");
-    fprintf(f,"View\"\"{\n");
-    int count = 0;
-    for (auto t : triangles){
-      fprintf(f,"ST(%g,%g,0,%g,%g,0,%g,%g,0){%d,%d,%d};\n",
-	      points[t[0]][0],points[t[0]][1],
-	      points[t[1]][0],points[t[1]][1],
-	      points[t[2]][0],points[t[2]][1],count,count,count++);
-    }
-    fprintf(f,"}\n;");
-    fclose(f);
-  }
-#endif
+  double lambda = 1. / 127.;
 
   bool converged =
     untangle_triangles_2D(points, locked, triangles, triIdealShapes, lambda,
-                          iterMaxInner, iterMax, iterFailMax, timeMax,nullptr);
-			  //  			  myUpdateIdealShapes);
-#if 0
-  {
-    FILE *f = fopen("unt.pos","w");
-    fprintf(f,"View\"\"{\n");
-    for (auto t : triangles){
-      fprintf(f,"ST(%g,%g,0,%g,%g,0,%g,%g,0){0,0,0};\n",
-	      points[t[0]][0],points[t[0]][1],
-	      points[t[1]][0],points[t[1]][1],
-	      points[t[2]][0],points[t[2]][1]);
-    }
-    fprintf(f,"}\n;");
-    fclose(f);
-  }
-#endif
-
-  // p2 triangles are using bezier polygons --> back to non bezier ...
-  {
-    std::set<std::pair<uint32_t,uint32_t> > p2edges;
-    for(size_t i = 0; i < elements.size(); ++i) {
-      if(elements[i][5] != NO_U32) { // P2 triangles --
-	std::array<double, 2> p [6] = {points[elements[i][0]], points[elements[i][1]],
-				       points[elements[i][2]], points[elements[i][3]],
-				       points[elements[i][4]], points[elements[i][5]]};
-	for (size_t k = 0; k < 3 ; k++){
-	  std::pair<uint32_t,uint32_t> pair =
-	    std::make_pair(std::min(elements[i][k],elements[i][(k+1)%3]),
-			   std::max(elements[i][k],elements[i][(k+1)%3]));
-	  if (p2edges.find(pair) == p2edges.end()){
-	    p2edges.insert(pair);
-	    double xmid = 0.5*(p[k][0] + p[(k+1)%3][0]); 
-	    double ymid = 0.5*(p[k][1] + p[(k+1)%3][1]);
-	    double xb   = p[k+3][0]; 
-	    double yb   = p[k+3][1];
-	    points[elements[i][k+3]][0] = 0.5*(xmid + xb);
-	    points[elements[i][k+3]][1] = 0.5*(ymid + yb);
-	  }
-	}
-      }
-    }
-  }
+                          iterMaxInner, iterMax, iterFailMax, timeMax);
 
   /* Project back on 3D plane, then CAD */
   for(size_t v = 0; v < points.size(); ++v)
     if(!locked[v]) {
-      SPoint3 onPlane = SPoint3(points[v][0],
-                                points[v][1],0);
-      
+      SPoint3 onPlane = SPoint3(transfo.pop + points[v][0] * transfo.tangent +
+                                points[v][1] * transfo.binormal);
+
       double initGuess[2] = {0., 0.};
       GPoint proj = gf->closestPoint(onPlane, initGuess);
       if(proj.succeeded()) {

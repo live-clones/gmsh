@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -109,19 +109,8 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
   int np = e->physicals.size();
   int physical = np ? e->physicals[np - 1] : 0;
   char str[256];
-  if(CTX::instance()->mesh.labelType == 4) {
-    strcpy(str, "(");
-    char tmp[256];
-    sprintf(tmp, CTX::instance()->numberFormat.c_str(), v->x());
-    strcat(str, tmp);
-    strcat(str, ",");
-    sprintf(tmp, CTX::instance()->numberFormat.c_str(), v->y());
-    strcat(str, tmp);
-    strcat(str, ",");
-    sprintf(tmp, CTX::instance()->numberFormat.c_str(), v->z());
-    strcat(str, tmp);
-    strcat(str, ")");
-  }
+  if(CTX::instance()->mesh.labelType == 4)
+    sprintf(str, "(%.16g,%.16g,%.16g)", v->x(), v->y(), v->z());
   else if(CTX::instance()->mesh.labelType == 3) {
     if(partition < 0)
       sprintf(str, "NA");
@@ -469,7 +458,7 @@ public:
     if(CTX::instance()->mesh.lineLabels) drawElementLabels(_ctx, e, e->lines);
 
     if(CTX::instance()->mesh.nodes || CTX::instance()->mesh.nodeLabels) {
-      if(!e->getOnlySomeElementsVisible())
+      if(e->getAllElementsVisible())
         drawVerticesPerEntity(_ctx, e);
       else
         drawVerticesPerElement(_ctx, e, e->lines);
@@ -533,9 +522,8 @@ public:
     }
 
     if(CTX::instance()->mesh.nodes || CTX::instance()->mesh.nodeLabels) {
-      if(!f->getOnlySomeElementsVisible()) {
+      if(f->getAllElementsVisible())
         drawVerticesPerEntity(_ctx, f);
-      }
       else {
         if(CTX::instance()->mesh.triangles)
           drawVerticesPerElement(_ctx, f, f->triangles);
@@ -632,9 +620,8 @@ public:
     }
 
     if(CTX::instance()->mesh.nodes || CTX::instance()->mesh.nodeLabels) {
-      if(!r->getOnlySomeElementsVisible()) {
+      if(r->getAllElementsVisible())
         drawVerticesPerEntity(_ctx, r);
-      }
       else {
         if(CTX::instance()->mesh.tetrahedra)
           drawVerticesPerElement(_ctx, r, r->tetrahedra);

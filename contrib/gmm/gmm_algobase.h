@@ -1,33 +1,32 @@
-/* -*- c++ -*- (enables emacs c++ mode) */
-/*===========================================================================
-
- Copyright (C) 2000-2020 Yves Renard
-
- This file is a part of GetFEM
-
- GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
- under  the  terms  of the  GNU  Lesser General Public License as published
- by  the  Free Software Foundation;  either version 3 of the License,  or
- (at your option) any later version along with the GCC Runtime Library
- Exception either version 3.1 or (at your option) any later version.
- This program  is  distributed  in  the  hope  that it will be useful,  but
- WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
- License and GCC Runtime Library Exception for more details.
- You  should  have received a copy of the GNU Lesser General Public License
- along  with  this program;  if not, write to the Free Software Foundation,
- Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
-
- As a special exception, you  may use  this file  as it is a part of a free
- software  library  without  restriction.  Specifically,  if   other  files
- instantiate  templates  or  use macros or inline functions from this file,
- or  you compile this  file  and  link  it  with other files  to produce an
- executable, this file  does  not  by itself cause the resulting executable
- to be covered  by the GNU Lesser General Public License.  This   exception
- does not  however  invalidate  any  other  reasons why the executable file
- might be covered by the GNU Lesser General Public License.
-
-===========================================================================*/
+// -*- c++ -*- (enables emacs c++ mode)
+//===========================================================================
+//
+// Copyright (C) 2000-2008 Yves Renard
+//
+// This file is a part of GETFEM++
+//
+// Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
+// under  the  terms  of the  GNU  Lesser General Public License as published
+// by  the  Free Software Foundation;  either version 2.1 of the License,  or
+// (at your option) any later version.
+// This program  is  distributed  in  the  hope  that it will be useful,  but
+// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+// or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+// License for more details.
+// You  should  have received a copy of the GNU Lesser General Public License
+// along  with  this program;  if not, write to the Free Software Foundation,
+// Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+//
+// As a special exception, you may use this file as part of a free software
+// library without restriction.  Specifically, if other files instantiate
+// templates or use macros or inline functions from this file, or you compile
+// this file and link it with other files to produce an executable, this
+// file does not by itself cause the resulting executable to be covered by
+// the GNU General Public License.  This exception does not however
+// invalidate any other reasons why the executable file might be covered by
+// the GNU General Public License.
+//
+//===========================================================================
 
 /** @file gmm_algobase.h 
    @author  Yves Renard <Yves.Renard@insa-lyon.fr>
@@ -49,36 +48,39 @@ namespace gmm {
   /* ********************************************************************* */
   
   template <class T>
-    struct less {
+    struct less : public std::binary_function<T, T, int> {
     inline int operator()(const T& x, const T& y) const
     { return (x < y) ? -1 : ((y < x) ? 1 : 0); }
   };
 
-  template<> struct less<int> {
-    int operator()(int x, int y) const { return x-y; } };
-  template<> struct less<char> {
-    int operator()(char x, char y) const { return int(x-y); } };
-  template<> struct less<short> {
-    int operator()(short x, short y) const { return int(x-y); } };
-  template<> struct less<unsigned char> {
+  template<> struct less<int> : public std::binary_function<int, int, int>
+  { int operator()(int x, int y) const { return x-y; } };
+  template<> struct less<char> : public std::binary_function<char, char, int>
+  { int operator()(char x, char y) const { return int(x-y); } };
+  template<> struct less<short> : public std::binary_function<short,short,int>
+  { int operator()(short x, short y) const { return int(x-y); } };
+  template<> struct less<unsigned char>
+     : public std::binary_function<unsigned char, unsigned char, int> {
     int operator()(unsigned char x, unsigned char y) const
     { return int(x)-int(y); }
   };
   
 
   template <class T>
-    struct greater {
+    struct greater : public std::binary_function<T, T, int> {
     inline int operator()(const T& x, const T& y) const
     { return (y < x) ? -1 : ((x < y) ? 1 : 0); }
   };
 
-  template<> struct greater<int> {
-    int operator()(int x, int y) const { return y-x; } };
-  template<> struct greater<char> {
-    int operator()(char x, char y) const { return int(y-x); } };
-  template<> struct greater<short> {
-    int operator()(short x, short y) const { return int(y-x); } };
-  template<> struct greater<unsigned char> {
+  template<> struct greater<int> : public std::binary_function<int, int, int>
+  { int operator()(int x, int y) const { return y-x; } };
+  template<> struct greater<char> : public std::binary_function<char,char,int>
+  { int operator()(char x, char y) const { return int(y-x); } };
+  template<> struct greater<short>
+      : public std::binary_function<short, short, int>
+  { int operator()(short x, short y) const { return int(y-x); } };
+  template<> struct greater<unsigned char>
+    : public std::binary_function<unsigned char, unsigned char, int> {
     int operator()(unsigned char x, unsigned char y) const
       { return int(y)-int(x); }
   };
@@ -86,7 +88,7 @@ namespace gmm {
   template <typename T> inline T my_abs(T a) { return (a < T(0)) ? T(-a) : a; }
   
   template <class T>
-    struct approx_less { 
+    struct approx_less : public std::binary_function<T, T, int> { 
     double eps;
     inline int operator()(const T &x, const T &y) const
     { if (my_abs(x - y) <= eps) return 0; if (x < y) return -1; return 1; }
@@ -94,7 +96,7 @@ namespace gmm {
   };
 
   template <class T>
-    struct approx_greater { 
+    struct approx_greater : public std::binary_function<T, T, int> { 
     double eps;
     inline int operator()(const T &x, const T &y) const
     { if (my_abs(x - y) <= eps) return 0; if (x > y) return -1; return 1; }
@@ -107,13 +109,12 @@ namespace gmm {
     int i;
     for ( ; b1 != e1 && b2 != e2; ++b1, ++b2)
       if ((i = c(*b1, *b2)) != 0) return i;
-    if (b1 != e1) return 1;
-    if (b2 != e2) return -1;
-    return 0; 
+    if (b1 != e1) return 1; if (b2 != e2) return -1; return 0; 
   }
 
   template<class CONT, class COMP = gmm::less<typename CONT::value_type> >
-    struct lexicographical_less {
+    struct lexicographical_less : public std::binary_function<CONT, CONT, int>
+  { 
     COMP c;
     int operator()(const CONT &x, const CONT &y) const {
       return gmm::lexicographical_compare(x.begin(), x.end(),
@@ -123,7 +124,8 @@ namespace gmm {
   };
 
   template<class CONT, class COMP = gmm::less<typename CONT::value_type> >
-  struct lexicographical_greater {
+  struct lexicographical_greater
+    : public std::binary_function<CONT, CONT, int> { 
     COMP c;
     int operator()(const CONT &x, const CONT &y) const {
       return -gmm::lexicographical_compare(x.begin(), x.end(),
@@ -179,7 +181,7 @@ namespace gmm {
     size_t n = 1;
     typename std::iterator_traits<ITER>::value_type res = *first++;
     while (first != last) { res += *first; ++first; ++n; }
-    res /= float(n);
+    res /= n;
     return res;
   }
 

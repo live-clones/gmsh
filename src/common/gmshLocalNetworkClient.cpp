@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -280,15 +280,15 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       p.fromChar(message);
       if(!tryToSetGmshNumberOption(p)) {
         if(type == GmshSocket::GMSH_PARAMETER_WITHOUT_CHOICES) {
-          // append values to any choices already on the server
+          // append value to any choices already on the server
           std::vector<onelab::number> par;
           get(par, name);
           std::vector<double> c;
           if(par.size()) c = par[0].getChoices();
-          c.insert(c.end(), p.getValues().begin(), p.getValues().end());
+          c.push_back(p.getValue());
           p.setChoices(c);
         }
-        else if(type == GmshSocket::GMSH_PARAMETER_UPDATE) {
+        if(type == GmshSocket::GMSH_PARAMETER_UPDATE) {
           std::vector<onelab::number> par;
           get(par, name);
           if(par.size()) {
@@ -317,7 +317,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
           get(par, name);
           std::vector<std::string> c;
           if(par.size()) c = par[0].getChoices();
-          c.insert(c.end(), p.getValues().begin(), p.getValues().end());
+          c.push_back(p.getValue());
           p.setChoices(c);
         }
         else if(type == GmshSocket::GMSH_PARAMETER_UPDATE) {

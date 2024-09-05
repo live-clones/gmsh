@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -11,13 +11,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <cmath>
+#include "inputValue.h"
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Toggle_Button.H>
 #include <FL/Fl_Menu_Button.H>
-#include <FL/Fl_Multiline_Output.H>
-#include "inputValue.h"
-#include "extraDialogs.h"
+#include <FL/fl_ask.H>
 #include "Context.h"
 
 class inputRange : public Fl_Group {
@@ -29,9 +28,8 @@ private:
   std::string _loop_val, _graph_val, _number_format;
   double _min, _max, _step, _max_number;
   std::vector<double> _choices;
-  std::string _range;
-  bool _read_only_range, _do_callback_on_values;
-
+  std::string _range, _range_tooltip;
+  bool _do_callback_on_values;
   void _values2string()
   {
     std::ostringstream tmp;
@@ -52,29 +50,26 @@ private:
     }
     else {
       // construct range string from min/max/step
-      if(_min != -_max_number && _max != _max_number) {
-        tmp << _min << " : " << _max;
+      if(_min != -_max_number) {
+        tmp << _min;
         _input->minimum(_min);
-        _input->maximum(_max);
-        if(_step) {
-          tmp << " : " << _step;
-          if(CTX::instance()->inputScrolling) _input->step(_step, 1);
-        }
       }
+      tmp << " : ";
+      if(_max != _max_number) {
+        tmp << _max;
+        _input->maximum(_max);
+      }
+      if(_step && _step != 1.) tmp << " : " << _step;
+      if(CTX::instance()->inputScrolling) _input->step(_step, 1);
       _choices.clear();
     }
     _range = tmp.str();
-
-    if(!_step && _choices.empty()) {
-      _graph_butt->deactivate();
-      _graph_menu->deactivate();
-      _loop_butt->deactivate();
-    }
-    else{
-      _graph_butt->activate();
-      _graph_menu->activate();
-      _loop_butt->activate();
-    }
+    if(_range_butt->active())
+      _range_tooltip = "Edit range [";
+    else
+      _range_tooltip = "Range [";
+    _range_tooltip += _range + "]";
+    _range_butt->tooltip(_range_tooltip.c_str());
   }
   void _string2values()
   {
@@ -134,18 +129,17 @@ private:
   }
   void _edit_range()
   {
-    if(simpleTextEditor("Edit range or choices",
-                        "[min : max], [min : max : step], or [val1, val2, ...]",
-                        _range)) {
+    const char *ret =
+      fl_input("Edit range ([min : max], [min : max : step], or "
+               "[val1, val2, ...]):",
+               _range.c_str());
+    if(ret) {
+      _range = ret;
       _string2values();
       _values2string();
       doCallbackOnValues(true);
       do_callback();
     }
-  }
-  void _show_range()
-  {
-    simpleTextDisplay("Range or choices", _range);
   }
   void _set_loop_value(const std::string &val)
   {
@@ -209,10 +203,7 @@ private:
   static void _range_butt_cb(Fl_Widget *w, void *data)
   {
     inputRange *b = (inputRange *)data;
-    if(b->_read_only_range)
-      b->_show_range();
-    else
-      b->_edit_range();
+    b->_edit_range();
   }
   static void _loop_butt_cb(Fl_Widget *w, void *data)
   {
@@ -258,14 +249,12 @@ public:
   inputRange(int x, int y, int w, int h, double max_number,
              bool readOnlyRange = false, const char *l = nullptr)
     : Fl_Group(x, y, w, h, l), _min(-max_number), _max(max_number), _step(0.),
-      _max_number(max_number), _read_only_range(readOnlyRange),
-      _do_callback_on_values(true)
+      _max_number(max_number), _do_callback_on_values(true)
   {
     _graph_val.resize(36, '0');
 
-    int dot_w = FL_NORMAL_SIZE - 2;
-    int loop_w = FL_NORMAL_SIZE + 6;
-    int graph_w = loop_w;
+    int dot_w = FL_NORMAL_SIZE - 2, loop_w = FL_NORMAL_SIZE + 6,
+        graph_w = loop_w;
     int input_w = w - dot_w - loop_w - graph_w;
 
     _input = new inputValueFloat(x, y, input_w, h);
@@ -274,21 +263,19 @@ public:
 
     _range_butt = new Fl_Button(x + input_w, y, dot_w, h, ":");
     _range_butt->callback(_range_butt_cb, this);
-    if(_read_only_range)
-      _range_butt->tooltip("Show range or choices");
-    else
-      _range_butt->tooltip("Edit range or choices");
+    _range_butt->tooltip("Edit range");
+    if(readOnlyRange) _range_butt->deactivate();
 
     _loop_butt = new Fl_Toggle_Button(x + input_w + dot_w, y, loop_w, h);
     _loop_butt->label("@-1gmsh_rotate");
     _loop_butt->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
     _loop_butt->callback(_loop_butt_cb, this);
-    _loop_butt->tooltip("Loop over range or choices (loop level 1, 2 or 3)");
+    _loop_butt->tooltip("Loop over range (loop level 1, 2 or 3)");
 
     _graph_butt = new Fl_Button(x + input_w + dot_w + loop_w, y, graph_w, h);
     _graph_butt->label("@-1gmsh_graph");
     _graph_butt->align(FL_ALIGN_CENTER | FL_ALIGN_INSIDE);
-    _graph_butt->tooltip("Draw range or choices on X-Y graph(s)");
+    _graph_butt->tooltip("Draw range on X-Y graph(s)");
 
     _graph_menu =
       new Fl_Menu_Button(x + input_w + dot_w + loop_w, y, graph_w, h);

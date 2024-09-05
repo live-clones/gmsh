@@ -76,7 +76,7 @@ gmsh.model.addPhysicalGroup(2, terminal_tags, terminals_physical_tag,
                             "Terminals")
 
 # Find domain boundary tags
-boundary_dimtags = gmsh.model.getBoundary([(3, domain_tag)], false, false)
+boundary_dimtags = gmsh.model.getBoundary([(3, domain_tag)], false)
 boundary_tags = []
 complement_tags = []
 

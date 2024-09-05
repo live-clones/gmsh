@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1712,8 +1712,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
       Msg::Info(":-( There are %d intersections in the 1D mesh (curves%s)",
                 edgesNotRecovered.size(), sstream.str().c_str());
       if(repairSelfIntersecting1dMesh)
-        Msg::Info("8-| Splitting those edges and trying again - level %d",
-                  RECUR_ITER);
+        Msg::Info("8-| Splitting those edges and trying again");
     }
     if(debug) {
       char name[245];
@@ -1738,13 +1737,11 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
 
     // delete the mesh
     delete m;
-    if(RECUR_ITER < CTX::instance()->mesh.maxRetries) {
+    if(RECUR_ITER < 10) {
       return meshGenerator(gf, RECUR_ITER + 1, repairSelfIntersecting1dMesh,
                            onlyInitialMesh, debug, replacementEdges);
     }
-    else {
-      return false;
-    }
+    return false;
   }
 
   if(RECUR_ITER > 0)
@@ -2784,7 +2781,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       outputScalarField(m->triangles, name, 1, gf);
     }
     delete m;
-    if(RECUR_ITER < CTX::instance()->mesh.maxRetries) {
+    if(RECUR_ITER < 10) {
       return meshGeneratorPeriodic(gf, RECUR_ITER + 1,
                                    repairSelfIntersecting1dMesh, debug);
     }

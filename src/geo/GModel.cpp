@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -214,7 +214,7 @@ void GModel::destroy(bool keepName)
 void GModel::destroyMeshCaches()
 {
   // this is called in GEntity::deleteMesh()
-#pragma omp critical(destroyMeshCaches)
+#pragma omp critical
   {
     _vertexVectorCache.clear();
     std::vector<MVertex *>().swap(_vertexVectorCache);
@@ -379,12 +379,8 @@ GEntity *GModel::getEntityByTag(int dim, int n) const
 bool GModel::changeEntityTag(int dim, int tag, int newTag)
 {
   if(dim == 0) {
-    GVertex *gv = getVertexByTag(tag), *gvn = getVertexByTag(newTag);
-    if(gvn) {
-      Msg::Error("Point with tag %d already exists", newTag);
-      return false;
-    }
-    else if(gv) {
+    GVertex *gv = getVertexByTag(tag);
+    if(gv) {
       vertices.erase(gv);
       gv->setTag(newTag);
       vertices.insert(gv);
@@ -395,12 +391,8 @@ bool GModel::changeEntityTag(int dim, int tag, int newTag)
     }
   }
   else if(dim == 1) {
-    GEdge *ge = getEdgeByTag(tag), *gen = getEdgeByTag(newTag);
-    if(gen) {
-      Msg::Error("Curve with tag %d already exists", newTag);
-      return false;
-    }
-    else if(ge) {
+    GEdge *ge = getEdgeByTag(tag);
+    if(ge) {
       edges.erase(ge);
       ge->setTag(newTag);
       edges.insert(ge);
@@ -411,12 +403,8 @@ bool GModel::changeEntityTag(int dim, int tag, int newTag)
     }
   }
   else if(dim == 2) {
-    GFace *gf = getFaceByTag(tag), *gfn = getFaceByTag(newTag);
-    if(gfn) {
-      Msg::Error("Surface with tag %d already exists", newTag);
-      return false;
-    }
-    else if(gf) {
+    GFace *gf = getFaceByTag(tag);
+    if(gf) {
       faces.erase(gf);
       gf->setTag(newTag);
       faces.insert(gf);
@@ -427,12 +415,8 @@ bool GModel::changeEntityTag(int dim, int tag, int newTag)
     }
   }
   else if(dim == 3) {
-    GRegion *gr = getRegionByTag(tag), *grn = getRegionByTag(newTag);
-    if(grn) {
-      Msg::Error("Volume with tag %d already exists", newTag);
-      return false;
-    }
-    else if(gr) {
+    GRegion *gr = getRegionByTag(tag);
+    if(gr) {
       regions.erase(gr);
       gr->setTag(newTag);
       regions.insert(gr);
@@ -2105,7 +2089,7 @@ void GModel::addMVertexToVertexCache(MVertex* v)
     rebuildMeshVertexCache();
   }
   if (_vertexVectorCache.size() > 0) {
-#pragma omp critical(addMVertexToVertexCache)
+#pragma omp critical
     if (v->getNum() >= _vertexVectorCache.size()) {
       _vertexVectorCache.resize(v->getNum()+1, nullptr);
     }
@@ -2929,19 +2913,22 @@ int GModel::removeDuplicateMeshElements(const std::vector<GEntity*> &ents)
   if(entities.empty()) getEntities(entities);
   int num = 0;
   for(auto &e : entities) {
-    std::set<MElement*, MElementPtrLessThanVertices> uniq;
-    for(std::size_t i = 0; i < e->getNumMeshElements(); i++) {
-      MElement *ele = e->getMeshElement(i);
-      uniq.insert(ele);
-    }
-    int diff = e->getNumMeshElements() - uniq.size();
-    if(diff > 0) {
-      num += diff;
-      Msg::Info("Removed %d duplicate element%s in entity %d of dimension %d",
-                diff, diff > 1 ? "s" : "", e->tag(), e->dim());
-      e->removeElements(false);
-      for(auto ele : uniq) e->addElement(ele);
-      // TODO: we should delete the duplicate elements
+    std::vector<int> types;
+    e->getElementTypes(types);
+    for(auto t : types) {
+      std::set<MElement*, MElementPtrLessThanVertices> uniq;
+      for(std::size_t i = 0; i < e->getNumMeshElementsByType(t); i++) {
+        MElement *ele = e->getMeshElementByType(t, i);
+        uniq.insert(ele);
+      }
+      int diff = e->getNumMeshElementsByType(t) - uniq.size();
+      if(diff > 0) {
+        num += diff;
+        Msg::Info("Removed %d duplicate element%s in entity %d of dimension %d",
+                  diff, diff > 1 ? "s" : "", e->tag(), e->dim());
+        e->removeElements(t);
+        for(auto ele : uniq) e->addElement(t, ele);
+      }
     }
   }
 

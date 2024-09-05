@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -40,10 +40,6 @@
 #include "MPyramid.h"
 #include "MTrihedron.h"
 #include "StringUtils.h"
-
-#if defined(HAVE_POST)
-#include "PView.h"
-#endif
 
 static bool readMSH4Physicals(GModel *const model, FILE *fp,
                               GEntity *const entity, bool binary,
@@ -815,7 +811,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         if(entity->geomType() != GEntity::GhostCurve &&
            entity->geomType() != GEntity::GhostSurface &&
            entity->geomType() != GEntity::GhostVolume) {
-          entity->addElement(element);
+          entity->addElement(element->getType(), element);
         }
 
         minElementNum = std::min(minElementNum, data[j]);
@@ -884,7 +880,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         if(entity->geomType() != GEntity::GhostCurve &&
            entity->geomType() != GEntity::GhostSurface &&
            entity->geomType() != GEntity::GhostVolume) {
-          entity->addElement(element);
+          entity->addElement(element->getType(), element);
         }
 
         minElementNum = std::min(minElementNum, elmTag);
@@ -1150,13 +1146,16 @@ static bool readMSH4GhostElements(GModel *const model, FILE *fp, bool binary,
       Msg::Warning("Missing ghost entity on partition %d", it->second);
     }
     else if(ge->geomType() == GEntity::GhostCurve) {
-      static_cast<ghostEdge *>(ge)->addElement(it->first.first, it->first.second);
+      static_cast<ghostEdge *>(ge)->addElement(
+        it->first.first->getType(), it->first.first, it->first.second);
     }
     else if(ge->geomType() == GEntity::GhostSurface) {
-      static_cast<ghostFace *>(ge)->addElement(it->first.first, it->first.second);
+      static_cast<ghostFace *>(ge)->addElement(
+        it->first.first->getType(), it->first.first, it->first.second);
     }
     else if(ge->geomType() == GEntity::GhostVolume) {
-      static_cast<ghostRegion *>(ge)->addElement(it->first.first, it->first.second);
+      static_cast<ghostRegion *>(ge)->addElement(
+        it->first.first->getType(), it->first.first, it->first.second);
     }
   }
   return true;
@@ -1231,7 +1230,7 @@ int GModel::_readMSH4(const std::string &name)
 
   char str[1024] = "x";
   double version = 1.0;
-  bool binary = false, swap = false;
+  bool binary = false, swap = false, postpro = false;
 
   while(1) {
     while(str[0] != '$') {
@@ -1416,22 +1415,12 @@ int GModel::_readMSH4(const std::string &name)
         return 0;
       }
     }
-#if defined(HAVE_POST)
-    else if(!strncmp(&str[1], "InterpolationScheme", 19)) {
-      if(!PView::readMSHInterpolationScheme(fp)) {
-        fclose(fp);
-        return 0;
-      }
-    }
     else if(!strncmp(&str[1], "NodeData", 8) ||
             !strncmp(&str[1], "ElementData", 11) ||
             !strncmp(&str[1], "ElementNodeData", 15)) {
-      if(!PView::readMSHViewData(name, fp, binary, swap, &str[1])) {
-        fclose(fp);
-        return 0;
-      }
+      postpro = true;
+      break;
     }
-#endif
     else if(strlen(&str[1]) > 0){
       if(!CTX::instance()->mesh.ignoreUnknownSections) {
         sectionName.pop_back();
@@ -1504,7 +1493,7 @@ int GModel::_readMSH4(const std::string &name)
     }
   }
 
-  return 1;
+  return postpro ? 2 : 1;
 }
 
 static void writeMSH4Physicals(FILE *fp, GEntity *const entity, bool binary)
