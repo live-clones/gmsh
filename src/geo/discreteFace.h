@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -16,7 +16,7 @@
 class MElementOctree;
 
 class discreteFace : public GFace {
-private:
+public:
   class param {
   public:
     MElementOctree *oct;
@@ -38,8 +38,7 @@ private:
   param _param;
   void _createGeometryFromSTL();
   void _computeSTLNormals();
-  void _debugParametrization(bool uv);
-
+  void _debugParametrization(bool uv);  
 public:
   discreteFace(GModel *model, int num);
   discreteFace(GModel *model);

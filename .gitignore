@@ -21,7 +21,3 @@ cmake-build-*
 
 # VS Code directories
 .vscode/
-
-# Python virtual environment
-venv/
-.venv/

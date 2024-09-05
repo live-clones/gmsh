@@ -2,12 +2,13 @@
 Geometry.Surfaces=1;
 Mesh.SurfaceFaces=1;
 Mesh.RecombinationAlgorithm = 0;
+Mesh.RemeshAlgorithm = 1;
 Mesh.Algorithm=6; // mesh algorithm
 Mesh.Algorithm3D=4; // mesh algorithm
 Geometry.AutoCoherence = 1;
   Geometry.OldRuledSurface=1;
-
-
+  
+  
 r = .70;
 a = .4;
 b = 0.1;
@@ -78,7 +79,7 @@ outer_fourth[] = Extrude { {0, 1, 0}, {0, 0, 0}, Pi/2 }{ Surface {outer_third[0]
 quadtri_laterals[] += outer_fourth[{2:5}];
 
 
-//outer big unstructured volume
+//outer big unstructured volume 
 Point (newp) = {-big/2, -big/2, -big/2};
 Point (newp) = {big/2, -big/2, -big/2};
 Point (newp) = {big/2, big/2, -big/2};
@@ -108,3 +109,5 @@ Surface Loop (newsl) = {outer_big_bnd_surfs[]};
 Surface Loop (newsl) = {quadtri_laterals[]};
 Volume (newv) = { newsl-2, -(newsl-1) };
 unstr_vol = newv-1;
+
+

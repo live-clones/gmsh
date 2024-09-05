@@ -1,33 +1,32 @@
-/* -*- c++ -*- (enables emacs c++ mode) */
-/*===========================================================================
-
- Copyright (C) 2002-2020 Yves Renard
-
- This file is a part of GetFEM
-
- GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
- under  the  terms  of the  GNU  Lesser General Public License as published
- by  the  Free Software Foundation;  either version 3 of the License,  or
- (at your option) any later version along with the GCC Runtime Library
- Exception either version 3.1 or (at your option) any later version.
- This program  is  distributed  in  the  hope  that it will be useful,  but
- WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
- License and GCC Runtime Library Exception for more details.
- You  should  have received a copy of the GNU Lesser General Public License
- along  with  this program;  if not, write to the Free Software Foundation,
- Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
-
- As a special exception, you  may use  this file  as it is a part of a free
- software  library  without  restriction.  Specifically,  if   other  files
- instantiate  templates  or  use macros or inline functions from this file,
- or  you compile this  file  and  link  it  with other files  to produce an
- executable, this file  does  not  by itself cause the resulting executable
- to be covered  by the GNU Lesser General Public License.  This   exception
- does not  however  invalidate  any  other  reasons why the executable file
- might be covered by the GNU Lesser General Public License.
-
-===========================================================================*/
+// -*- c++ -*- (enables emacs c++ mode)
+//===========================================================================
+//
+// Copyright (C) 2002-2008 Yves Renard
+//
+// This file is a part of GETFEM++
+//
+// Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
+// under  the  terms  of the  GNU  Lesser General Public License as published
+// by  the  Free Software Foundation;  either version 2.1 of the License,  or
+// (at your option) any later version.
+// This program  is  distributed  in  the  hope  that it will be useful,  but
+// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+// or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+// License for more details.
+// You  should  have received a copy of the GNU Lesser General Public License
+// along  with  this program;  if not, write to the Free Software Foundation,
+// Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+//
+// As a special exception, you may use this file as part of a free software
+// library without restriction.  Specifically, if other files instantiate
+// templates or use macros or inline functions from this file, or you compile
+// this file and link it with other files to produce an executable, this
+// file does not by itself cause the resulting executable to be covered by
+// the GNU General Public License.  This exception does not however
+// invalidate any other reasons why the executable file might be covered by
+// the GNU General Public License.
+//
+//===========================================================================
 
 /**@file gmm_scaled.h
    @author  Yves Renard <Yves.Renard@insa-lyon.fr>
@@ -79,7 +78,7 @@ namespace gmm {
     inline difference_type operator -(const scaled_const_iterator &i) const
       { return difference_type(it - i.it); }
     
-    inline value_type operator  *() const { return (*it) * value_type(r); }
+    inline value_type operator  *() const { return (*it) * r; }
     inline value_type operator [](size_type ii) const { return it[ii] * r; }
     
     inline bool operator ==(const scaled_const_iterator &i) const
@@ -107,9 +106,32 @@ namespace gmm {
 	origin(linalg_origin(v)), size_(vect_size(v)), r(rr) {}
 
     reference operator[](size_type i) const
-    { return value_type(r) * linalg_traits<V>::access(origin, begin_, end_, i); }
+    { return r * linalg_traits<V>::access(origin, begin_, end_, i); }
   };
 
+  template <typename V, typename S> struct linalg_traits<scaled_vector_const_ref<V,S> > {
+    typedef scaled_vector_const_ref<V,S> this_type;
+    typedef linalg_const is_reference;
+    typedef abstract_vector linalg_type;
+    typedef typename strongest_numeric_type<S, typename linalg_traits<V>::value_type>::T value_type;
+    typedef typename linalg_traits<V>::origin_type origin_type;
+    typedef value_type reference;
+    typedef abstract_null_type iterator;
+    typedef scaled_const_iterator<typename linalg_traits<V>::const_iterator, S>
+      const_iterator;
+    typedef typename linalg_traits<V>::storage_type storage_type;
+    typedef typename linalg_traits<V>::index_sorted index_sorted;
+    static size_type size(const this_type &v) { return v.size_; }
+    static const_iterator begin(const this_type &v)
+    { return const_iterator(v.begin_, v.r); }
+    static const_iterator end(const this_type &v)
+    { return const_iterator(v.end_, v.r); }
+    static const origin_type* origin(const this_type &v) { return v.origin; }
+    static value_type access(const origin_type *o, const const_iterator &it,
+			     const const_iterator &ite, size_type i)
+    { return it.r * (linalg_traits<V>::access(o, it.it, ite.it, i)); }
+
+  };
 
    template<typename V, typename S> std::ostream &operator <<
      (std::ostream &o, const scaled_vector_const_ref<V,S>& m)
@@ -174,6 +196,39 @@ namespace gmm {
     { return r * linalg_traits<M>::access(begin_+i, j); }
   };
 
+  template <typename M, typename S> struct linalg_traits<scaled_row_matrix_const_ref<M,S> > {
+    typedef scaled_row_matrix_const_ref<M,S> this_type;
+    typedef linalg_const is_reference;
+    typedef abstract_matrix linalg_type;
+    typedef typename linalg_traits<M>::origin_type origin_type;
+    typedef typename strongest_numeric_type<S, typename linalg_traits<M>::value_type>::T value_type;
+    typedef value_type reference;
+    typedef typename linalg_traits<M>::storage_type storage_type;
+    typedef typename linalg_traits<M>::const_sub_row_type vector_type;
+    typedef scaled_vector_const_ref<vector_type,S> sub_row_type;
+    typedef scaled_vector_const_ref<vector_type,S> const_sub_row_type;
+    typedef scaled_row_const_iterator<M,S> row_iterator;
+    typedef scaled_row_const_iterator<M,S> const_row_iterator;
+    typedef abstract_null_type const_sub_col_type;
+    typedef abstract_null_type sub_col_type;
+    typedef abstract_null_type const_col_iterator;
+    typedef abstract_null_type col_iterator;
+    typedef row_major sub_orientation;
+    typedef typename linalg_traits<M>::index_sorted index_sorted;
+    static size_type nrows(const this_type &m)
+    { return m.nr; }
+    static size_type ncols(const this_type &m)
+    { return m.nc; }
+    static const_sub_row_type row(const const_row_iterator &it)
+    { return scaled(linalg_traits<M>::row(it.it), it.r); }
+    static const_row_iterator row_begin(const this_type &m)
+    { return const_row_iterator(m.begin_, m.r); }
+    static const_row_iterator row_end(const this_type &m)
+    { return const_row_iterator(m.end_, m.r); }
+    static const origin_type* origin(const this_type &m) { return m.origin; }
+    static value_type access(const const_row_iterator &it, size_type i)
+    { return it.r * (linalg_traits<M>::access(it.it, i)); }
+  };
 
   template<typename M, typename S> std::ostream &operator <<
     (std::ostream &o, const scaled_row_matrix_const_ref<M,S>& m)
@@ -235,7 +290,39 @@ namespace gmm {
     { return r * linalg_traits<M>::access(begin_+j, i); }
   };
 
-
+  template <typename M, typename S> struct linalg_traits<scaled_col_matrix_const_ref<M,S> > {
+    typedef scaled_col_matrix_const_ref<M,S> this_type;
+    typedef linalg_const is_reference;
+    typedef abstract_matrix linalg_type;
+    typedef typename strongest_numeric_type<S, typename linalg_traits<M>::value_type>::T value_type;
+    typedef typename linalg_traits<M>::origin_type origin_type;
+    typedef value_type reference;
+    typedef typename linalg_traits<M>::storage_type storage_type;
+    typedef typename linalg_traits<M>::const_sub_col_type vector_type;
+    typedef abstract_null_type sub_col_type;
+    typedef scaled_vector_const_ref<vector_type,S> const_sub_col_type;
+    typedef abstract_null_type  col_iterator;
+    typedef scaled_col_const_iterator<M,S> const_col_iterator;
+    typedef abstract_null_type const_sub_row_type;
+    typedef abstract_null_type sub_row_type;
+    typedef abstract_null_type const_row_iterator;
+    typedef abstract_null_type row_iterator;
+    typedef col_major sub_orientation;
+    typedef typename linalg_traits<M>::index_sorted index_sorted;
+    static size_type ncols(const this_type &m)
+    { return m.nc; }
+    static size_type nrows(const this_type &m)
+    { return m.nr; }
+    static const_sub_col_type col(const const_col_iterator &it)
+    { return scaled(linalg_traits<M>::col(it.it), it.r); }
+    static const_col_iterator col_begin(const this_type &m)
+    { return const_col_iterator(m.begin_, m.r); }
+    static const_col_iterator col_end(const this_type &m)
+    { return const_col_iterator(m.end_, m.r); }
+    static const origin_type* origin(const this_type &m) { return m.origin; }
+    static value_type access(const const_col_iterator &it, size_type i)
+    { return it.r * (linalg_traits<M>::access(it.it, i)); }
+  };
 
   template<typename M, typename S> std::ostream &operator <<
     (std::ostream &o, const scaled_col_matrix_const_ref<M,S>& m)
@@ -296,7 +383,7 @@ namespace gmm {
     return scaled_col_matrix_const_ref<M,S>(m, x);
   }
 
-
+  
   /* ******************************************************************** */
   /*	matrix or vector scale                                	          */
   /* ******************************************************************** */
@@ -334,100 +421,6 @@ namespace gmm {
       ite = mat_col_end(l);
     for ( ; it != ite; ++it) scale(linalg_traits<L>::col(it), a);
   }
-
-  template <typename V, typename S> struct linalg_traits<scaled_vector_const_ref<V,S> > {
-    typedef scaled_vector_const_ref<V,S> this_type;
-    typedef linalg_const is_reference;
-    typedef abstract_vector linalg_type;
-    typedef typename strongest_numeric_type<S, typename linalg_traits<V>::value_type>::T value_type;
-    typedef typename linalg_traits<V>::origin_type origin_type;
-    typedef value_type reference;
-    typedef abstract_null_type iterator;
-    typedef scaled_const_iterator<typename linalg_traits<V>::const_iterator, S>
-      const_iterator;
-    typedef typename linalg_traits<V>::storage_type storage_type;
-    typedef typename linalg_traits<V>::index_sorted index_sorted;
-    static size_type size(const this_type &v) { return v.size_; }
-    static const_iterator begin(const this_type &v)
-    { return const_iterator(v.begin_, v.r); }
-    static const_iterator end(const this_type &v)
-    { return const_iterator(v.end_, v.r); }
-    static const origin_type* origin(const this_type &v) { return v.origin; }
-    static value_type access(const origin_type *o, const const_iterator &it,
-			     const const_iterator &ite, size_type i)
-    { return it.r * (linalg_traits<V>::access(o, it.it, ite.it, i)); }
-
-  };
-
-
-  template <typename M, typename S> struct linalg_traits<scaled_row_matrix_const_ref<M,S> > {
-    typedef scaled_row_matrix_const_ref<M,S> this_type;
-    typedef linalg_const is_reference;
-    typedef abstract_matrix linalg_type;
-    typedef typename linalg_traits<M>::origin_type origin_type;
-    typedef typename strongest_numeric_type<S, typename linalg_traits<M>::value_type>::T value_type;
-    typedef value_type reference;
-    typedef typename linalg_traits<M>::storage_type storage_type;
-    typedef typename org_type<typename linalg_traits<M>::const_sub_row_type>::t vector_type;
-    typedef scaled_vector_const_ref<vector_type,S> sub_row_type;
-    typedef scaled_vector_const_ref<vector_type,S> const_sub_row_type;
-    typedef scaled_row_const_iterator<M,S> row_iterator;
-    typedef scaled_row_const_iterator<M,S> const_row_iterator;
-    typedef abstract_null_type const_sub_col_type;
-    typedef abstract_null_type sub_col_type;
-    typedef abstract_null_type const_col_iterator;
-    typedef abstract_null_type col_iterator;
-    typedef row_major sub_orientation;
-    typedef typename linalg_traits<M>::index_sorted index_sorted;
-    static size_type nrows(const this_type &m)
-    { return m.nr; }
-    static size_type ncols(const this_type &m)
-    { return m.nc; }
-    static const_sub_row_type row(const const_row_iterator &it)
-    { return scaled(linalg_traits<M>::row(it.it), it.r); }
-    static const_row_iterator row_begin(const this_type &m)
-    { return const_row_iterator(m.begin_, m.r); }
-    static const_row_iterator row_end(const this_type &m)
-    { return const_row_iterator(m.end_, m.r); }
-    static const origin_type* origin(const this_type &m) { return m.origin; }
-    static value_type access(const const_row_iterator &it, size_type i)
-    { return it.r * (linalg_traits<M>::access(it.it, i)); }
-  };
-
-  template <typename M, typename S> struct linalg_traits<scaled_col_matrix_const_ref<M,S> > {
-    typedef scaled_col_matrix_const_ref<M,S> this_type;
-    typedef linalg_const is_reference;
-    typedef abstract_matrix linalg_type;
-    typedef typename strongest_numeric_type<S, typename linalg_traits<M>::value_type>::T value_type;
-    typedef typename linalg_traits<M>::origin_type origin_type;
-    typedef value_type reference;
-    typedef typename linalg_traits<M>::storage_type storage_type;
-    typedef typename org_type<typename linalg_traits<M>::const_sub_col_type>::t vector_type;
-    typedef abstract_null_type sub_col_type;
-    typedef scaled_vector_const_ref<vector_type,S> const_sub_col_type;
-    typedef abstract_null_type  col_iterator;
-    typedef scaled_col_const_iterator<M,S> const_col_iterator;
-    typedef abstract_null_type const_sub_row_type;
-    typedef abstract_null_type sub_row_type;
-    typedef abstract_null_type const_row_iterator;
-    typedef abstract_null_type row_iterator;
-    typedef col_major sub_orientation;
-    typedef typename linalg_traits<M>::index_sorted index_sorted;
-    static size_type ncols(const this_type &m)
-    { return m.nc; }
-    static size_type nrows(const this_type &m)
-    { return m.nr; }
-    static const_sub_col_type col(const const_col_iterator &it)
-    { return scaled(linalg_traits<M>::col(it.it), it.r); }
-    static const_col_iterator col_begin(const this_type &m)
-    { return const_col_iterator(m.begin_, m.r); }
-    static const_col_iterator col_end(const this_type &m)
-    { return const_col_iterator(m.end_, m.r); }
-    static const origin_type* origin(const this_type &m) { return m.origin; }
-    static value_type access(const const_col_iterator &it, size_type i)
-    { return it.r * (linalg_traits<M>::access(it.it, i)); }
-  };
-
 
 }
 

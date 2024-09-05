@@ -1,17 +1,17 @@
 #!/bin/sh -
 
-files=`git grep -l '(C) 1997-2024 C. Geuzaine'`
+files=`git grep -l '(C) 1997-2023 C. Geuzaine'`
 
 for file in $files; do
   echo "modifying $file"
-  sed -i '' -e "s/(C) 1997-2023 C\. Geuzaine/(C) 1997-2024 C\. Geuzaine/g" $file
+  sed -i '' -e "s/(C) 1997-2023 C\. Geuzaine/(C) 1997-2023 C\. Geuzaine/g" $file
 done
 
-files=`git grep -l '(C) 2013-2024 UCLouvain-ULiege'`
+files=`git grep -l '(C) 2013-2023 UCLouvain-ULiege'`
 
 for file in $files; do
   echo "modifying $file"
-  sed -i '' -e "s/(C) 2013-2024 UCLouvain-ULiege/(C) 2013-2024 UCLouvain-ULiege/g" $file
+  sed -i '' -e "s/(C) 2013-2023 UCLouvain-ULiege/(C) 2013-2023 UCLouvain-ULiege/g" $file
 done
 
 # Need to manually change:

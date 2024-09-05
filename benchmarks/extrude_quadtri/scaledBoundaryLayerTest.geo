@@ -2,12 +2,13 @@
 Geometry.Surfaces=1;
 Mesh.SurfaceFaces=1;
 Mesh.RecombinationAlgorithm = 0;
+Mesh.RemeshAlgorithm = 1;
 Mesh.Algorithm=6; // mesh algorithm
 Mesh.Algorithm3D=4; // mesh algorithm
 Geometry.AutoCoherence = 1;
 Geometry.OldRuledSurface=1;
-
-
+  
+  
 curve_radius = .50;
 
 Point(newp) = { 0.0, 0.0, 0.0};

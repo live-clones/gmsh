@@ -31,7 +31,7 @@ class GRegion;
  *
  * @return True if the smoothing have been applied (mesh may still be tangled)
  */
-bool untangleGRegionMeshConstrained(GRegion *gr, int iterMax = 10,
+bool untangleGRegionMeshConstrained(GRegion *gr, int iterMax = 100,
                                     double timeMax = 9999.);
 
 

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -46,6 +46,7 @@ typedef unsigned long intptr_t;
 #include "meshPartition.h"
 #include "gmshCrossFields.h"
 #include "automaticMeshSizeField.h"
+#include "meshGFaceGeodesic.h" // FIXME TEST
 #endif
 
 #if defined(HAVE_PLUGINS)
@@ -350,20 +351,16 @@ int GmshBatch()
     else if(CTX::instance()->batch == 9) {
       GModel::current()->computeSizeField();
     }
-    else if(CTX::instance()->batch == 69) {
-
-      //      void testRelaying();
-      //      testRelaying() ;
-      //      
-      //
-      
+    else if(CTX::instance()->batch == 69) { // FIXME TEST
       std::vector<int> tags;
       computeCrossField(GModel::current(), tags);
       GoodbyeMessage();
       CTX::instance()->batch = 0;
       // still a bug in allocation somewhere
       exit(0);
-      
+    }
+    else if(CTX::instance()->batch == 70) { // FIXME TEST
+      makeMeshGeodesic (GModel::current());
     }
 #endif
   }

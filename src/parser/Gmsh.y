@@ -1,5 +1,5 @@
 %{
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -3593,11 +3593,11 @@ Command :
     }
    | tExit tEND
     {
-      Msg::Exit(0, false); // will return 0 only if no meshing error occurred
+      Msg::Exit(0);
     }
    | tExit FExpr tEND
     {
-      Msg::Exit((int)$2, true); // will always return the specified value
+      Msg::Exit((int)$2);
     }
    | tAbort tEND
     {
@@ -4486,16 +4486,6 @@ TransfiniteType :
         $$[0] = 2.;
       else if(!strcmp($2, "Beta"))
         $$[0] = 3.;
-      else if(!strcmp($2, "Progression_HWall"))
-        $$[0] = 5.;
-      else if(!strcmp($2, "Bump_HWall"))
-        $$[0] = 6.;
-      else if(!strcmp($2, "Beta_HWall"))
-        $$[0] = 7.;
-      else if(!strcmp($2, "Beta_Symmetrical"))
-        $$[0] = 8.;
-      else if(!strcmp($2, "Beta_Symmetrical_HWall"))
-        $$[0] = 9.;
       else{
         yymsg(0, "Unknown transfinite mesh type");
         $$[0] = 1.;
@@ -4605,7 +4595,7 @@ Constraints :
          GModel::current()->getOCCInternals()->getChanged())
         GModel::current()->getOCCInternals()->synchronize(GModel::current());
       int type = (int)$6[0];
-      double coef = $6[1];
+      double coef = fabs($6[1]);
       int npoints = ((int)$5 < 2) ? 2 : (int)$5;
       if(!$3){
         GModel::current()->getGEOInternals()->setTransfiniteLine

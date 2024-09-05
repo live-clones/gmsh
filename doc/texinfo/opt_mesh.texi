@@ -36,11 +36,6 @@ Threshold angle (in degrees) between faces normals under which we allow an edge 
 Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.AvgQuality
-Average mesh quality (inverse conditioning number, ICN) after the generation of the current mesh (read-only)@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.BdfFieldFormat
 Field format for Nastran BDF files (0: free, 1: small, 2: large)@*
 Default value: @code{1}@*
@@ -256,11 +251,6 @@ Skip element quality check after high-order mesh generation@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.IgnoreUnknownSections
-Skip unknown sections when reading meshes in the MSH4 format (otherwise the contents of these sections are stored as model attributes)@*
-Default value: @code{0}@*
-Saved in: @code{General.OptionsFileName}
-
 @item Mesh.IgnoreParametrization
 Skip parametrization section when reading meshes in the MSH4 format@*
 Default value: @code{0}@*
@@ -337,7 +327,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MaxRetries
-Maximum number of times meshing is retried on curves and surfaces with a pending mesh; also controls maximum number of recursive subdivisions when self-intersecting 1D meshes are detected@*
+Maximum number of times meshing is retried on curves and surfaces with a pending mesh@*
 Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -421,23 +411,23 @@ METIS algorithm for k-way refinement 'rtype' (1: FM-based cut, 2: Greedy, 3: Two
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.MinLineNodes
+@item Mesh.MinimumLineNodes
 Minimum number of nodes used to mesh (straight) lines@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.MinCircleNodes
+@item Mesh.MinimumCircleNodes
 Minimum number of nodes used to mesh circles and ellipses@*
 Default value: @code{7}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.MinCurveNodes
+@item Mesh.MinimumCurveNodes
 Minimum number of nodes used to mesh curves other than lines, circles and ellipses@*
 Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.MinQuality
-Minimum mesh quality (inverse conditioning number, ICN) after the generation of the current mesh (read-only)@*
+@item Mesh.MinimumElementsPerTwoPi
+[Deprecated]@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -637,7 +627,7 @@ Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PreserveNumberingMsh2
-Preserve node and element numbering in MSH2 format (will break meshes with multiple physical groups for a single elementary entity)@*
+Preserve element numbering in MSH2 format (will break meshes with multiple physical groups for a single elementary entity)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -689,11 +679,6 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.QualityType
 Type of quality measure (0: SICN~signed inverse condition number, 1: SIGE~signed inverse gradient error, 2: gamma~vol/sum_face/max_edge, 3: Disto~minJ/maxJ@*
 Default value: @code{2}@*
-Saved in: @code{General.OptionsFileName}
-
-@item Mesh.QuasiTransfinite
-Allow quasi-transfinite meshing of surfaces with non-matching number of nodes on opposite sides@*
-Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RadiusInf

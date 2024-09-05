@@ -224,7 +224,6 @@ HXTStatus hxtMapColorsToBrep(HXTMesh* mesh, uint64_t* tri2TetMap)
     // we have got to match the BREPs together...
     HXT_ASSERT(mesh->brep.numSurfacesPerVolume!=NULL);
     HXT_ASSERT(mesh->brep.surfacesPerVolume!=NULL);
-
     if(mesh->brep.numVolumes > numVolumes)
       return HXT_ERROR_MSG(HXT_STATUS_INPUT_ERROR, "BRep contains more volumes than there really are !");
 

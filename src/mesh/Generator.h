@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -15,7 +15,7 @@ void OptimizeMesh(GModel *m, const std::string &how = "", bool force = false,
 void RecombineMesh(GModel *m);
 void AdaptMesh(GModel *m);
 void FixPeriodicMesh(GModel *m);
-void GetStatistics(double stat[50], double quality[3][101] = 0,
+void GetStatistics(double stat[50], double quality[3][100] = 0,
                    bool visibleOnly = false);
 
 #endif

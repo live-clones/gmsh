@@ -1,5 +1,5 @@
 %{
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -546,12 +546,6 @@ void skipTest(const char *skip, const char *until,
         if     (c_next ==  '*') skipcomments();
         else if(c_next ==  '/') skipline();
         else unput(c_next);
-      }
-      if(chars[0] == '"'){
-        parsestring('"');
-      }
-      if(chars[0] == '\''){
-        parsestring('\'');
       }
       if(!c_previous || !is_alpha(c_previous)) {
         if(chars[0] == until[0]) break;

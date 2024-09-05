@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -46,7 +46,6 @@
 #include "pyramidalBasis.h"
 #include "Numeric.h"
 #include "OS.h"
-#include "Options.h"
 #include "OpenFile.h"
 #include "HierarchicalBasisH1Quad.h"
 #include "HierarchicalBasisH1Tria.h"
@@ -62,14 +61,19 @@
 #include "HierarchicalBasisHcurlTetra.h"
 #include "HierarchicalBasisHcurlPri.h"
 
+#include <chrono>
+
 #if defined(HAVE_MESH)
 #include "Field.h"
+#include "meshGEdge.h"
 #include "meshGFace.h"
 #include "meshGFaceDelaunayInsertion.h"
 #include "meshGFaceOptimize.h"
 #include "meshGRegionDelaunayInsertion.h"
 #include "meshGRegionHxt.h"
 #include "gmshCrossFields.h"
+#include "alphaShapes.h"
+#include "meshTriangulation.h"
 #include "qualityMeasuresJacobian.h"
 #include "meshRenumber.h"
 #endif
@@ -297,14 +301,6 @@ GMSH_API void gmsh::option::getColor(const std::string &name, int &r, int &g,
   else {
     Msg::Error("Could not get option '%s'", name.c_str());
   }
-}
-
-GMSH_API void gmsh::option::restoreDefaults()
-{
-  UnlinkFile(CTX::instance()->homeDir + CTX::instance()->sessionFileName);
-  UnlinkFile(CTX::instance()->homeDir + CTX::instance()->optionsFileName);
-  ReInitOptions(0);
-  InitOptionsGUI(0);
 }
 
 // gmsh::model
@@ -1442,35 +1438,6 @@ GMSH_API void gmsh::model::mesh::clear(const vectorpair &dimTags)
     entities.push_back(ge);
   }
   GModel::current()->deleteMesh(entities);
-}
-
-GMSH_API void gmsh::model::mesh::removeElements(
-   const int dim, const int tag,
-   const std::vector<std::size_t> &elementTags)
-{
-  if(!_checkInit()) return;
-  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
-  if(!ge) {
-    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
-    return;
-  }
-  if(elementTags.empty()) {
-    ge->removeElements(true);
-  }
-  else {
-    for(auto t : elementTags) {
-      MElement *e = GModel::current()->getMeshElementByTag(t);
-      if(!e) {
-        Msg::Error("Unknown element %d", t);
-      }
-      else {
-        ge->removeElement(e, true);
-      }
-    }
-  }
-  ge->deleteVertexArrays();
-  GModel::current()->destroyMeshCaches();
-  // we leave the user to call reclassifyNodes()
 }
 
 static void _getEntities(const gmsh::vectorpair &dimTags,
@@ -3605,7 +3572,8 @@ GMSH_API void gmsh::model::mesh::createEdges(const vectorpair &dimTags)
   if(!_checkInit()) return;
   std::vector<GEntity *> entities;
   _getEntities(dimTags, entities);
-  for(GEntity *ge : entities) {
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *ge = entities[i];
     for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
       MElement *e = ge->getMeshElement(j);
       for(int k = 0; k < e->getNumEdges(); k++) {
@@ -3621,7 +3589,8 @@ GMSH_API void gmsh::model::mesh::createFaces(const vectorpair &dimTags)
   if(!_checkInit()) return;
   std::vector<GEntity *> entities;
   _getEntities(dimTags, entities);
-  for(GEntity *ge : entities) {
+  for(std::size_t i = 0; i < entities.size(); i++) {
+    GEntity *ge = entities[i];
     for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
       MElement *e = ge->getMeshElement(j);
       for(int k = 0; k < e->getNumFaces(); k++) {
@@ -4820,13 +4789,10 @@ gmsh::model::mesh::setTransfiniteCurve(const int tag, const int numNodes,
         (meshType == "Progression" || meshType == "Power") ? 1 :
         (meshType == "Bump")                               ? 2 :
         (meshType == "Beta")                               ? 3 :
-        (meshType == "Progression_HWall")                  ? 5 :
-        (meshType == "Bump_HWall")                         ? 6 :
-        (meshType == "Beta_HWall")                         ? 7 :
                                                              1;
-      ge->meshAttributes.coeffTransfinite =  ge->meshAttributes.typeTransfinite > 4 ? coef : std::abs(coef);
+      ge->meshAttributes.coeffTransfinite = std::abs(coef);
       // in .geo file we use a negative tag to do this trick; it's a bad idea
-      if(coef < 0 && ge->meshAttributes.typeTransfinite < 4) ge->meshAttributes.typeTransfinite *= -1;
+      if(coef < 0) ge->meshAttributes.typeTransfinite *= -1;
     }
     else {
       if(t > 0) {
@@ -5630,7 +5596,18 @@ gmsh::model::mesh::computeHomology(vectorpair &dimTags)
   GModel::current()->computeHomology(dimTags);
 }
 
+// GMSH_API void gmsh::model::mesh::generateMesh(const int dim, const int tag, const bool refine, const std::vector<double> &coord, const std::vector<size_t> &nodeTags)
+// {
+//   if(!_checkInit()) return;
+// #if defined(HAVE_MESH)
+//   generateMesh_(dim, tag, refine, coord, nodeTags);
+// #else
+//   Msg::Error("alphaShapes requires the mesh and hxt modules");
+// #endif
+// }
+
 GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
+                                             const std::vector<std::size_t> & edges,
                                              std::vector<std::size_t> &tri)
 {
   if(!_checkInit()) return;
@@ -5640,30 +5617,7 @@ GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
     return;
   }
 #if defined(HAVE_MESH)
-  SBoundingBox3d bbox;
-  for(std::size_t i = 0; i < coord.size(); i += 2)
-    bbox += SPoint3(coord[i], coord[i + 1], 0.);
-  double lc = 10. * norm(SVector3(bbox.max(), bbox.min()));
-  std::vector<MVertex *> verts(coord.size() / 2);
-  std::size_t j = 0;
-  for(std::size_t i = 0; i < coord.size(); i += 2) {
-    double XX = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
-    double YY = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
-    MVertex *v = new MVertex(coord[i] + XX, coord[i + 1] + YY, 0.);
-    v->setIndex(j);
-    verts[j++] = v;
-  }
-  std::vector<MTriangle *> tris;
-  delaunayMeshIn2D(verts, tris);
-  if(tris.empty()) return;
-  tri.resize(3 * tris.size());
-  for(std::size_t i = 0; i < tris.size(); i++) {
-    MTriangle *t = tris[i];
-    for(std::size_t j = 0; j < 3; j++)
-      tri[3 * i + j] = t->getVertex(j)->getIndex() + 1; // start at 1
-  }
-  for(std::size_t i = 0; i < verts.size(); i++) delete verts[i];
-  for(std::size_t i = 0; i < tris.size(); i++) delete tris[i];
+  meshTriangulate2d(coord,tri, &edges);
 #else
   Msg::Error("Triangulate requires the mesh module");
 #endif
@@ -5703,6 +5657,105 @@ gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
   for(std::size_t i = 0; i < tets.size(); i++) delete tets[i];
 #else
   Msg::Error("Tetrahedralize requires the mesh module");
+#endif
+}
+
+// GMSH_API void 
+// gmsh::model::mesh::constrainedDelaunayRefinement(const int dim, const int tag, const std::vector<size_t> &elementTags, const std::vector<size_t> &constrainedEdges, const std::vector<size_t> &nodeTags, const std::vector<double> &sizeField, const double minRadius, const double minQuality, std::vector<size_t> &newNodeTags, std::vector<double>& newCoords, std::vector<double>& newSizeField, std::vector<std::vector<size_t>>& newConstrainedEdges, std::vector<size_t>& newElementsInRefinement)
+// {
+// #if defined(HAVE_MESH) 
+//   constrainedDelaunayRefinement_(dim, tag, elementTags, constrainedEdges, nodeTags, sizeField, minRadius, minQuality, newNodeTags, newCoords, newSizeField, newConstrainedEdges, newElementsInRefinement);
+// #else
+//   Msg::Error("constrainedDelaunayRefinement requires the mesh module");
+// #endif  
+// }
+
+// GMSH_API void 
+// gmsh::model::mesh::alphaShape(const int dim, const int tag, const double alpha, const std::vector<size_t> &nodeTags, const std::vector<double> &sizeAtNodes, std::vector<std::vector<size_t>> &elementTags, std::vector<std::vector<size_t>> &edges)
+// {
+// #if defined(HAVE_MESH)
+//   alphaShape_entity(dim, tag, alpha, nodeTags, sizeAtNodes, elementTags, edges);
+// #else
+//   Msg::Error("constrainedDelaunayRefinement requires the mesh module");
+// #endif  
+// }
+
+GMSH_API void
+gmsh::model::mesh::computeAlphaShape(const int dim, const int tag, const int bndTag,
+                                        const std::string & boundaryModel,
+                                        const double alpha, const int alphaShapeSizeField, const int refineSizeField, const bool usePreviousMesh, 
+                                        const double boundary_tolerance)
+{
+#if defined(HAVE_MESH) && defined(HAVE_HXT)
+  if (dim == 2){
+    std::vector<PolyMesh::Vertex*> controlNodes;
+
+    std::vector<alphaShapeBndEdge> bndEdges;
+    OctreeNode<2, 32, alphaShapeBndEdge*> bnd_octree;
+    _createBoundaryOctree(boundaryModel, bndTag, bnd_octree, bndEdges);
+
+    // Delaunay
+    auto tic = std::chrono::high_resolution_clock::now();
+    PolyMesh* pm = _alphaShapeDelaunay2D(tag, boundaryModel);
+    auto toc = std::chrono::high_resolution_clock::now();
+    // std::cout << "Triangulate  : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
+
+    // alpha shape
+    _alphaShape2D(pm, alpha, tag, bndTag, alphaShapeSizeField, usePreviousMesh);
+    tic = std::chrono::high_resolution_clock::now();
+    // std::cout << "Alpha Shape  : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
+    // edge recover
+    _edgeRecover(pm, tag, bndTag, boundaryModel, controlNodes, bnd_octree, boundary_tolerance);
+    toc = std::chrono::high_resolution_clock::now();
+    // std::cout << "Edge recover : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
+    // mesh adapt
+    _delaunayRefinement(pm, tag, bndTag, refineSizeField, controlNodes);
+    tic = std::chrono::high_resolution_clock::now();
+    // std::cout << "Refine       : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
+
+    // back to gmsh
+    alphaShapePolyMesh2Gmsh(pm, tag, bndTag, boundaryModel, bnd_octree, boundary_tolerance);
+    toc = std::chrono::high_resolution_clock::now();
+    // std::cout << "To Gmsh      : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
+
+  }
+  else if (dim == 3)
+    Msg::Error("Use computeAlphaShape3D for 3D alpha shape");
+  else 
+    Msg::Error("Wrong dimension in alpha shape; 2 or 3");
+#else 
+  Msg::Error("performAlphaShapeAndRefine requires the mesh and hxt modules");
+#endif
+}
+
+GMSH_API void
+gmsh::model::mesh::computeAlphaShape3D(const int dim, 
+                                     const std::vector<int> & alphaShapeTags, 
+                                     const double alpha, const double hMean, 
+                                     std::function<double(int, int, double, double, double, double)> sizeFieldCallback, 
+                                     const int triangulate,
+                                     const int refine)
+{
+#if defined(HAVE_MESH) && defined(HAVE_HXT)
+  if (dim == 2)
+    Msg::Error("Use computeAlphaShape2D for 2D alpha shape");
+  else if (dim == 3)
+    _computeAlphaShape3D(alphaShapeTags, alpha, hMean, sizeFieldCallback, triangulate, refine);
+  else 
+    Msg::Error("Wrong dimension in alpha shape; 2 or 3");
+#else 
+  Msg::Error("performAlphaShapeAndRefine requires the mesh and hxt modules");
+#endif
+}
+
+GMSH_API void
+gmsh::model::mesh::decimateTriangulation(const int faceTag, 
+                                         const double thresholdDistance)
+{
+#if defined(HAVE_MESH)
+    _decimateTriangulation(faceTag, thresholdDistance);
+#else 
+  Msg::Error("decimateTriangulation requires the mesh and hxt modules");
 #endif
 }
 
@@ -6926,52 +6979,6 @@ GMSH_API void gmsh::model::occ::chamfer(const std::vector<int> &volumeTags,
     volumeTags, curveTags, surfaceTags, distances, outDimTags, removeVolume);
 }
 
-GMSH_API void gmsh::model::occ::defeature(const std::vector<int> &volumeTags,
-                                          const std::vector<int> &surfaceTags,
-                                          vectorpair &outDimTags,
-                                          const bool removeVolume)
-{
-  if(!_checkInit()) return;
-  _createOcc();
-  outDimTags.clear();
-  GModel::current()->getOCCInternals()->defeature(
-    volumeTags, surfaceTags, outDimTags, removeVolume);
-}
-
-GMSH_API int gmsh::model::occ::fillet2D(const int edgeTag1,
-                                        const int edgeTag2,
-                                        const double radius, const int tag)
-{
-  if(!_checkInit()) return -1;
-  _createOcc();
-  int outTag = tag;
-  GModel::current()->getOCCInternals()->fillet2D(outTag, edgeTag1, edgeTag2, radius);
-  return outTag;
-}
-
-GMSH_API int gmsh::model::occ::chamfer2D(const int edgeTag1,
-                                          const int edgeTag2,
-                                          const double distance1,
-                                          const double distance2, const int tag)
-{
-  if(!_checkInit()) return -1;
-  _createOcc();
-  int outTag = tag;
-  GModel::current()->getOCCInternals()->chamfer2D(outTag, edgeTag1, edgeTag2, distance1,
-                                                  distance2);
-  return outTag;
-}
-
-GMSH_API void gmsh::model::occ::offsetCurve( const int curveLoopTag,
-                                              double offset,
-                                              vectorpair &outDimTags)
-{
-  if(!_checkInit()) return;
-  _createOcc();
-  outDimTags.clear();
-  GModel::current()->getOCCInternals()->offsetCurve(curveLoopTag, offset, outDimTags);
-}
-
 GMSH_API void gmsh::model::occ::fuse(const vectorpair &objectDimTags,
                                      const vectorpair &toolDimTags,
                                      vectorpair &outDimTags,
@@ -6986,21 +6993,6 @@ GMSH_API void gmsh::model::occ::fuse(const vectorpair &objectDimTags,
   GModel::current()->getOCCInternals()->booleanUnion(
     tag, objectDimTags, toolDimTags, outDimTags, outDimTagsMap, removeObject,
     removeTool);
-}
-
-GMSH_API void gmsh::model::occ::getDistance(int dim1, int tag1,
-                                  int dim2, int tag2,
-                                  double &distance,
-                                  double &x1, double &y1, double &z1,
-                                  double &x2, double &y2, double &z2)
-{
-  if(!_checkInit()) return;
-  _createOcc();
-  GModel::current()->getOCCInternals()->getDistance(dim1, tag1,
-                                  dim2, tag2,
-                                  distance,
-                                  x1, y1, z1,
-                                  x2, y2, z2);
 }
 
 GMSH_API void gmsh::model::occ::intersect(
@@ -8316,7 +8308,7 @@ static void _createFltk()
 
 GMSH_API void gmsh::fltk::initialize()
 {
-
+  
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
   _createFltk();
@@ -8860,7 +8852,7 @@ public:
   apiMsg() {}
   virtual void operator()(std::string level, std::string message)
   {
-#pragma omp critical(apiMsg)
+#pragma omp critical
     _log.push_back(level + ": " + message);
   }
   void get(std::vector<std::string> &log) const { log = _log; }
@@ -8910,18 +8902,6 @@ GMSH_API double gmsh::logger::getCpuTime()
 {
   if(!_checkInit()) return -1;
   return Cpu();
-}
-
-GMSH_API double gmsh::logger::getMemory()
-{
-  if(!_checkInit()) return -1;
-  return GetMemoryUsage()/1024./1024.;
-}
-
-GMSH_API double gmsh::logger::getTotalMemory()
-{
-  if(!_checkInit()) return -1;
-  return TotalRam();
 }
 
 GMSH_API void gmsh::logger::getLastError(std::string &error)

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -97,6 +97,11 @@ inline double crossProd(double a[3], double b[3], int i)
   return a[i1] * b[i2] - a[i2] * b[i1];
 }
 
+inline double scalProd(double a[3], double b[3])
+{
+  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
 inline void prodve(double a[3], double b[3], double c[3])
 {
   c[2] = a[0] * b[1] - a[1] * b[0];
@@ -182,13 +187,11 @@ void signedDistancesPointsTriangle(std::vector<double> &distances,
 
 void signedDistancePointLine(const SPoint3 &p1, const SPoint3 &p2,
                              const SPoint3 &p, double &distance,
-                             SPoint3 &closePt,
-                             const SVector3 &perp=SVector3());
+                             SPoint3 &closePt);
 void signedDistancesPointsLine(std::vector<double> &distances,
                                std::vector<SPoint3> &closePts,
                                const std::vector<SPoint3> &pts,
-                               const SPoint3 &p1, const SPoint3 &p2,
-                               const SVector3 &perp=SVector3());
+                               const SPoint3 &p1, const SPoint3 &p2);
 
 void changeReferential(const int direction, const SPoint3 &p,
                        const SPoint3 &closePt, const SPoint3 &p1,

@@ -1,6 +1,6 @@
 fact = 1;
 lc = .03 * fact;
-Point(1) = {0.0,0.0,0,lc/30};
+Point(1) = {0.0,0.0,0,lc};
 Point(2) = {1* fact,0.0,0,lc};
 Point(3) = {1* fact,1* fact,0,lc};
 Point(4) = {0,1* fact,0,lc};
@@ -15,4 +15,4 @@ Plane Surface(6) = {5};
 //+
 Physical Surface(7) = {6};
 //+
-Recombine Surface {6};
+//Recombine Surface {6};

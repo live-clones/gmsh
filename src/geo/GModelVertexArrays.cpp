@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -145,16 +145,11 @@ bool isElementVisible(MElement *ele)
   return true;
 }
 
-template <class T> static bool areOnlySomeElementsVisible(std::vector<T *> &elements)
+template <class T> static bool areAllElementsVisible(std::vector<T *> &elements)
 {
-  bool visible = false, hidden = false;
-  for(std::size_t i = 0; i < elements.size(); i++) {
-    bool v = isElementVisible(elements[i]);
-    if(v) visible = true;
-    else hidden = true;
-    if(hidden && visible) return true;
-  }
-  return false;
+  for(std::size_t i = 0; i < elements.size(); i++)
+    if(!isElementVisible(elements[i])) return false;
+  return true;
 }
 
 template <class T> static bool areSomeElementsCurved(std::vector<T *> &elements)
@@ -229,7 +224,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
           for(int k = 0; k < 2; k++)
             e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1],
                                      n[k][2]);
-#pragma omp critical(addElementsInArrays1)
+#pragma omp critical
         {
           e->va_lines->add(x, y, z, n, col, ele, unique);
         }
@@ -254,7 +249,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
           for(int k = 0; k < 3; k++)
             e->model()->normals->get(x[k], y[k], z[k], n[k][0], n[k][1],
                                      n[k][2]);
-#pragma omp critical(addElementsInArrays2)
+#pragma omp critical
         {
           e->va_triangles->add(x, y, z, n, col, ele, unique, skin);
         }
@@ -280,7 +275,7 @@ public:
   {
     e->deleteVertexArrays();
     if(!e->getVisibility()) return;
-    e->setOnlySomeElementsVisible(areOnlySomeElementsVisible(e->lines));
+    e->setAllElementsVisible(areAllElementsVisible(e->lines));
 
     if(CTX::instance()->mesh.lines) {
       e->va_lines = new VertexArray(2, _estimateNumLines(e));
@@ -331,8 +326,8 @@ public:
   {
     f->deleteVertexArrays();
     if(!f->getVisibility()) return;
-    f->setOnlySomeElementsVisible(areOnlySomeElementsVisible(f->triangles) ||
-                                  areOnlySomeElementsVisible(f->quadrangles));
+    f->setAllElementsVisible(areAllElementsVisible(f->triangles) &&
+                             areAllElementsVisible(f->quadrangles));
 
     bool edg = CTX::instance()->mesh.surfaceEdges;
     bool fac = CTX::instance()->mesh.surfaceFaces;
@@ -415,11 +410,11 @@ public:
   {
     r->deleteVertexArrays();
     if(!r->getVisibility()) return;
-    r->setOnlySomeElementsVisible(areOnlySomeElementsVisible(r->tetrahedra) ||
-                                  areOnlySomeElementsVisible(r->hexahedra) ||
-                                  areOnlySomeElementsVisible(r->prisms) ||
-                                  areOnlySomeElementsVisible(r->pyramids) ||
-                                  areOnlySomeElementsVisible(r->trihedra));
+    r->setAllElementsVisible(areAllElementsVisible(r->tetrahedra) &&
+                             areAllElementsVisible(r->hexahedra) &&
+                             areAllElementsVisible(r->prisms) &&
+                             areAllElementsVisible(r->pyramids) &&
+                             areAllElementsVisible(r->trihedra));
 
     bool edg = CTX::instance()->mesh.volumeEdges;
     bool fac = CTX::instance()->mesh.volumeFaces;

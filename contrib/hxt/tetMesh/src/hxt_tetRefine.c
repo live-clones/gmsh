@@ -83,7 +83,7 @@ HXTStatus hxtEmptyMesh(HXTMesh* mesh, HXTDelaunayOptions* delOptions)
  * return 0 if the computed point does respect the interpolated nodalsize
  * return 1 if the computed point does not respect the interpolated nodalsize
  * the interpolated nodalsize is placed into center[3]  */
-static int getBestCenter(double p[4][4], double nodalSize[4], double center[4], HXTNodalSizes* ns)
+int getBestCenter(double p[4][4], double nodalSize[4], double center[4], HXTNodalSizes* ns)
 {
   double avg = 0.0;
   double num = 0;

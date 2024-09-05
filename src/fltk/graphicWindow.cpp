@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -119,7 +119,6 @@ static const char *input_formats =
 #endif
 #if defined(HAVE_OCC)
   "Geometry - OpenCASCADE BRep\t*.brep\n"
-  "Geometry - OpenCASCADE XAO\t*.xao\n"
 #endif
 #if defined(HAVE_PARASOLID)
   "Geometry - Parasolid XMT\t*.xmt_txt\n"
@@ -301,11 +300,6 @@ static int _save_geo(const char *name) { return geoFileDialog(name); }
 static int _save_brep(const char *name)
 {
   CreateOutputFile(name, FORMAT_BREP);
-  return 1;
-}
-static int _save_xao(const char *name)
-{
-  CreateOutputFile(name, FORMAT_XAO);
   return 1;
 }
 static int _save_step(const char *name)
@@ -490,7 +484,6 @@ static int _save_auto(const char *name)
   case FORMAT_OPT: return _save_options(name);
   case FORMAT_GEO: return _save_geo(name);
   case FORMAT_BREP: return _save_brep(name);
-  case FORMAT_XAO: return _save_xao(name);
   case FORMAT_STEP: return _save_step(name);
   case FORMAT_IGES: return _save_iges(name);
   case FORMAT_CGNS: return _save_cgns(name);
@@ -547,7 +540,6 @@ static void file_export_cb(Fl_Widget *w, void *data)
     {"Geometry - Gmsh Unrolled GEO\t*.geo_unrolled", _save_geo},
 #if defined(HAVE_OCC)
     {"Geometry - OpenCASCADE BRep\t*.brep", _save_brep},
-    {"Geometry - OpenCASCADE XAO\t*.xao", _save_xao},
 #endif
 #if defined(HAVE_PARASOLID)
     {"Geometry - Parasolid XMT\t*.xmt_txt", _save_xmt},
@@ -2448,9 +2440,7 @@ static void mesh_cross_compute_cb(Fl_Widget *w, void *data)
 static void mesh_refine_cb(Fl_Widget *w, void *data)
 {
   GModel::current()->refineMesh(CTX::instance()->mesh.secondOrderLinear,
-                                CTX::instance()->mesh.algoSubdivide == 1,
-                                CTX::instance()->mesh.algoSubdivide == 2,
-                                CTX::instance()->mesh.algoSubdivide == 3);
+                                CTX::instance()->mesh.algoSubdivide);
   drawContext::global()->draw();
   FlGui::instance()->updateStatistics();
 }
@@ -4456,7 +4446,7 @@ void graphicWindow::addMessage(const char *msg)
     // this routine can be called from multiple threads, e.g. via Msg::Info
     // calls in meshGFace(). We should use FlGui::lock/unlock, but currently
     // this does not seem to work (17/02/2017)
-#pragma omp critical(addMessage)
+#pragma omp critical
   {
     _messages.push_back(msg);
     _browser->add(msg);

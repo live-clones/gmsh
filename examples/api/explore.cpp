@@ -10,12 +10,7 @@ int main(int argc, char **argv)
 
   gmsh::initialize();
 
-  try{
-    gmsh::open(argv[1]);
-  }
-  catch(...) {
-    return 0;
-  }
+  gmsh::open(argv[1]);
 
   // get all elementary entities in the model
   std::vector<std::pair<int, int> > entities;

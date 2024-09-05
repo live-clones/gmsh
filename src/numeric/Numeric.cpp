@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -906,8 +906,7 @@ void signedDistancesPointsTriangle(std::vector<double> &distances,
 }
 
 void signedDistancePointLine(const SPoint3 &p1, const SPoint3 &p2,
-                             const SPoint3 &p, double &d, SPoint3 &closePt,
-                             const SVector3 &perp)
+                             const SPoint3 &p, double &d, SPoint3 &closePt)
 {
   SVector3 v12 = p2 - p1;
   SVector3 v1p = p - p1;
@@ -919,20 +918,12 @@ void signedDistancePointLine(const SPoint3 &p1, const SPoint3 &p2,
   else
     closePt = p1 + (p2 - p1) * alpha;
   d = p.distance(closePt);
-
-  if(perp.normSq() > 0) { // perpendicular direction is given, we can orient
-    SVector3 vcp = p - closePt;
-    SVector3 n = crossprod(v12, perp);
-    double sign = dot(vcp, n);
-    if(sign < 0) d *= -1.;
-  }
 }
 
 void signedDistancesPointsLine(std::vector<double> &distances,
                                std::vector<SPoint3> &closePts,
                                const std::vector<SPoint3> &pts,
-                               const SPoint3 &p1, const SPoint3 &p2,
-                               const SVector3 &perp)
+                               const SPoint3 &p1, const SPoint3 &p2)
 {
   distances.clear();
   distances.resize(pts.size());
@@ -942,7 +933,7 @@ void signedDistancesPointsLine(std::vector<double> &distances,
     double d;
     SPoint3 closePt;
     const SPoint3 &p = pts[i];
-    signedDistancePointLine(p1, p2, p, d, closePt, perp);
+    signedDistancePointLine(p1, p2, p, d, closePt);
     distances[i] = d;
     closePts[i] = closePt;
   }

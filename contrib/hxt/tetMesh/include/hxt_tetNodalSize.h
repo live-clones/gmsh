@@ -40,6 +40,7 @@ static inline int isTooClose(double s0, double s1, double squareDist, const HXTN
 {
   if(s0>0.0 && s1>0.0) {
     double meanSize = fmin(ns->max, fmax(ns->min, 0.5*(s0+s1))) * ns->factor;
+    // printf("meanSize square : %f \n", meanSize*meanSize);
     if(squareDist < meanSize * meanSize) { // we won't enter this on overflow of meansize when max is too big...
       return 1;
     }

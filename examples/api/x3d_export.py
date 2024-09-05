@@ -15,9 +15,7 @@ x3dvolume = args.split
 x3dcolorize = args.colorize
 
 gmsh.initialize()
-
-path = os.path.dirname(os.path.abspath(__file__))
-gmsh.open(os.path.join(path, 'as1-tu-203.stp'))
+gmsh.open('as1-tu-203.stp') # change to any input stp in directory
 
 path = os.path.join(os.curdir,"x3d_output")
 if not os.path.exists(path):

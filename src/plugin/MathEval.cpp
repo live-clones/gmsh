@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -17,7 +17,7 @@ StringXNumber MathEvalOptions_Number[] = {
   {GMSH_FULLRC, "OtherTimeStep", nullptr, -1.},
   {GMSH_FULLRC, "OtherView", nullptr, -1.},
   {GMSH_FULLRC, "ForceInterpolation", nullptr, 0.},
-  {GMSH_FULLRC, "PhysicalGroup", nullptr, -1.},
+  {GMSH_FULLRC, "PhysicalRegion", nullptr, -1.},
   {GMSH_FULLRC, "Dimension", nullptr, -1.}};
 
 StringXString MathEvalOptions_String[] = {
@@ -61,7 +61,7 @@ std::string GMSH_MathEvalPlugin::getHelp() const
          "the time steps in the view.\n\n"
          "If `View' < 0, the plugin is run on the current view.\n\n"
          "Plugin(MathEval) creates one new view."
-         "If `PhysicalGroup' < 0, the plugin is run "
+         "If `PhysicalRegion' < 0, the plugin is run "
          "on all physical regions."
          "If `Dimension' > 0, only search for elements of the given "
          "dimension.\n\n"
@@ -95,7 +95,7 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
   int otherTimeStep = (int)MathEvalOptions_Number[2].def;
   int iOtherView = (int)MathEvalOptions_Number[3].def;
   int forceInterpolation = (int)MathEvalOptions_Number[4].def;
-  int physicalGroup = (int)MathEvalOptions_Number[5].def;
+  int physicalRegion = (int)MathEvalOptions_Number[5].def;
   int dimension = (int)MathEvalOptions_Number[6].def;
   std::vector<std::string> expr(9);
   for(int i = 0; i < 9; i++) expr[i] = MathEvalOptions_String[i].def;
@@ -184,12 +184,12 @@ PView *GMSH_MathEvalPlugin::execute(PView *view)
   int timeBeg = (timeStep < 0) ? firstNonEmptyStep : timeStep;
   int timeEnd = (timeStep < 0) ? -timeStep : timeStep + 1;
   for(int ent = 0; ent < data1->getNumEntities(timeBeg); ent++) {
-    bool ok = (physicalGroup <= 0);
-    if(physicalGroup > 0) {
+    bool ok = (physicalRegion <= 0);
+    if(physicalRegion > 0) {
       GEntity *ge = data1->getEntity(timeBeg, ent);
       if(ge) {
         auto it =
-          std::find(ge->physicals.begin(), ge->physicals.end(), physicalGroup);
+          std::find(ge->physicals.begin(), ge->physicals.end(), physicalRegion);
         ok = (it != ge->physicals.end());
       }
     }

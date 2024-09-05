@@ -31,10 +31,8 @@ class GFace;
  *
  * @return True if the smoothing have been applied (mesh may still be tangled)
  */
-bool untangleGFaceMeshConstrained(GFace *gf,
-				  int iterMax = 1000,
-                                  double timeMax = 9999.);//,
-//				  int  curveInteriorEdges = false);
+bool untangleGFaceMeshConstrained(GFace *gf, int iterMax = 1000,
+                                  double timeMax = 9999.);
 
 
 
@@ -53,17 +51,14 @@ bool untangleGFaceMeshConstrained(GFace *gf,
  * quad subdivided into four corner triangles.
  * @param[out] triIdealShapes The target shapes, equilateral tri for triangles
  * and right-angled triangles for quad.
+ * @param[in] preserveQuadAnisotropy If true, the triangles built from quads will
+ * preserve the anisotropy of the input quads. Very experimental, does not work well.
  *
  * @return True if success
  */
 bool buildTrianglesAndTargetsFromElements(
-    std::vector<std::array<double,2> >& points,
-    std::vector<std::array<uint32_t,6> >& elements,
+    const std::vector<std::array<double,2> >& points,
+    const std::vector<std::array<uint32_t,4> >& elements,
     std::vector<std::array<uint32_t, 3> >& triangles,
-    std::vector<std::array<std::array<double,2>, 3> >& triIdealShapes);
-
-bool buildTrianglesAndTargetsFromElements(
-    std::vector<std::array<double,2> >& points,
-    std::vector<std::array<uint32_t,4> >& elements,
-    std::vector<std::array<uint32_t, 3> >& triangles,
-    std::vector<std::array<std::array<double,2>, 3> >& triIdealShapes);
+    std::vector<std::array<std::array<double,2>, 3> >& triIdealShapes,
+    bool preserveQuadAnisotropy = false);

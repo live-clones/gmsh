@@ -1,40 +1,40 @@
-/* -*- c++ -*- (enables emacs c++ mode) */
-/*===========================================================================
-
- Copyright (C) 2002-2020 Yves Renard
-
- This file is a part of GetFEM
-
- GetFEM  is  free software;  you  can  redistribute  it  and/or modify it
- under  the  terms  of the  GNU  Lesser General Public License as published
- by  the  Free Software Foundation;  either version 3 of the License,  or
- (at your option) any later version along with the GCC Runtime Library
- Exception either version 3.1 or (at your option) any later version.
- This program  is  distributed  in  the  hope  that it will be useful,  but
- WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
- License and GCC Runtime Library Exception for more details.
- You  should  have received a copy of the GNU Lesser General Public License
- along  with  this program;  if not, write to the Free Software Foundation,
- Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
-
- As a special exception, you  may use  this file  as it is a part of a free
- software  library  without  restriction.  Specifically,  if   other  files
- instantiate  templates  or  use macros or inline functions from this file,
- or  you compile this  file  and  link  it  with other files  to produce an
- executable, this file  does  not  by itself cause the resulting executable
- to be covered  by the GNU Lesser General Public License.  This   exception
- does not  however  invalidate  any  other  reasons why the executable file
- might be covered by the GNU Lesser General Public License.
-
-===========================================================================*/
+// -*- c++ -*- (enables emacs c++ mode)
+//===========================================================================
+//
+// Copyright (C) 1997-2008 Yves Renard
+//
+// This file is a part of GETFEM++
+//
+// Getfem++  is  free software;  you  can  redistribute  it  and/or modify it
+// under  the  terms  of the  GNU  Lesser General Public License as published
+// by  the  Free Software Foundation;  either version 2.1 of the License,  or
+// (at your option) any later version.
+// This program  is  distributed  in  the  hope  that it will be useful,  but
+// WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+// or  FITNESS  FOR  A PARTICULAR PURPOSE.  See the GNU Lesser General Public
+// License for more details.
+// You  should  have received a copy of the GNU Lesser General Public License
+// along  with  this program;  if not, write to the Free Software Foundation,
+// Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301, USA.
+//
+// As a special exception, you may use this file as part of a free software
+// library without restriction.  Specifically, if other files instantiate
+// templates or use macros or inline functions from this file, or you compile
+// this file and link it with other files to produce an executable, this
+// file does not by itself cause the resulting executable to be covered by
+// the GNU General Public License.  This exception does not however
+// invalidate any other reasons why the executable file might be covered by
+// the GNU General Public License.
+//
+//===========================================================================
 
 // This file is a modified version of ilu.h from ITL.
 // See http://osl.iu.edu/research/itl/
 // Following the corresponding Copyright notice.
 //===========================================================================
 //
-// Copyright (c) 1998-2020, University of Notre Dame. All rights reserved.
+// Copyright (c) 1997-2001, The Trustees of Indiana University.
+// All rights reserved.
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 //
@@ -43,7 +43,7 @@
 //    * Redistributions in binary form must reproduce the above copyright
 //      notice, this list of conditions and the following disclaimer in the
 //      documentation and/or other materials provided with the distribution.
-//    * Neither the name of the University of Notre Dame nor the
+//    * Neither the name of the University of California, Berkeley nor the
 //      names of its contributors may be used to endorse or promote products
 //      derived from this software without specific prior written permission.
 //
@@ -142,7 +142,7 @@ namespace gmm {
       for (i = 0; i < n; ++i) {
 	typedef typename linalg_traits<M>::const_sub_row_type row_type;
 	row_type row = mat_const_row(A, i);
-	typename linalg_traits<typename org_type<row_type>::t>::const_iterator
+	typename linalg_traits<row_type>::const_iterator
 	  it = vect_const_begin(row), ite = vect_const_end(row);
 	
 	if (count) { U_val[U_loc] = T(0); U_ind[U_loc] = i; }
@@ -192,16 +192,16 @@ namespace gmm {
 	qn = j + 1;
 	rn = U_ptr[i];
 	
-	for (pn++; pn < U_ptr[L_ind[j]+1] && U_ind[pn] < i; pn++) {
-	  while (qn < L_ptr[i+1] && L_ind[qn] < U_ind[pn])
+	for (pn++; U_ind[pn] < i && pn < U_ptr[L_ind[j]+1]; pn++) {
+	  while (L_ind[qn] < U_ind[pn] && qn < L_ptr[i+1])
 	    qn++;
-	  if (qn < L_ptr[i+1] && U_ind[pn] == L_ind[qn])
+	  if (U_ind[pn] == L_ind[qn] && qn < L_ptr[i+1])
 	    L_val[qn] -= multiplier * U_val[pn];
 	}
 	for (; pn < U_ptr[L_ind[j]+1]; pn++) {
-	  while (rn < U_ptr[i+1] && U_ind[rn] < U_ind[pn])
+	  while (U_ind[rn] < U_ind[pn] && rn < U_ptr[i+1])
 	    rn++;
-	  if (rn < U_ptr[i+1] && U_ind[pn] == U_ind[rn])
+	  if (U_ind[pn] == U_ind[rn] && rn < U_ptr[i+1])
 	    U_val[rn] -= multiplier * U_val[pn];
 	}
       }

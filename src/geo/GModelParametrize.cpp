@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -778,7 +778,7 @@ static int isTriangulationParametrizable(const std::vector<MTriangle *> &t,
     double u2 = stl_nodes_uv[stl_triangles[i + 2]].x();
     double v2 = stl_nodes_uv[stl_triangles[i + 2]].y();
     double det = fabs((u1 - u0) * (v2 - v0) - (v1 - v0) * (u2 - u0));
-    if(det < 1.e-8) {
+    if(det < 1.e-12) {
       why << "parametrized triangles are too small (" << det << ")";
       return 2;
     }
@@ -852,7 +852,7 @@ makePartitionSimplyConnected(std::vector<MTriangle *> &t,
 void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
                     int max_elems_per_cut)
 {
-  Msg::Info("Splitting triangulations to make them parametrizable:");
+  Msg::Info("Splitting triangulations to make them parametrizable");
 
   for(auto it = gm->firstFace(); it != gm->lastFace(); ++it) {
     int part = 0;

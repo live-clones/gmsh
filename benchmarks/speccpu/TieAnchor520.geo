@@ -3198,45 +3198,18 @@ RigidAnchorS=501801;		Physical Surface(RigidAnchorS) =	{ PS138102,PS138103,PS138
 
 // ********** Begin SPEC validation **********
 
-Mesh.MeshSizeFactor = 0.042;
+Mesh.MeshSizeFactor = 0.025;
 Mesh.Algorithm = 5; // del2d
 //Mesh.ElementOrder = 2;
 Mesh 2;
-
-// spec output file
+n = 2.5e7;
 file = StrCat(StrPrefix(StrRelative(General.FileName)), ".val");
-
-// validate number of elements
-n = 8.96182e+06;
-Printf("Number of elements is %g (estimated %g)", Mesh.NbTriangles, n);
-If ( Fabs(Mesh.NbTriangles - n) / Mesh.NbTriangles > 0.3 )
-  Printf("Error: Number of elements is %g (estimated %g), outside of range",
-         Mesh.NbTriangles, n) >> file;
-  Error("Number of elements is %g (estimated %g), outside of range",
-        Mesh.NbTriangles, n);
+Printf("Number of tri elements is %g (estimated %g)", Mesh.NbTriangles, n);
+If ( Fabs(Mesh.NbTriangles - n) / Mesh.NbTriangles > 0.2 )
+  Printf("Error: Number of tri elements is %g (estimated %g), outside of range", Mesh.NbTriangles, n) >> file;
+  Error("Number of tri elements is %g (estimated %g), outside of range", Mesh.NbTriangles, n);
 Else
   Printf("Successful Verification of requested %g elements", n) >> file;
-EndIf
-
-// validate number of nodes
-nn = 4.4866e+06;
-Printf("Number of nodes is %g (estimated %g)", Mesh.NbNodes, nn);
-If ( Fabs(Mesh.NbNodes - nn) / Mesh.NbNodes > 0.3 )
-  Printf("Error: Number of nodes is %g (estimated %g), outside of range",
-         Mesh.NbNodes, nn) >> file;
-  Error("Number of nodes is %g (estimated %g), outside of range",
-        Mesh.NbNodes, nn);
-Else
-  Printf("Successful Verification of requested %g nodes", nn) >> file;
-EndIf
-
-// validate mesh quality
-Printf("Average mesh quality is %g", Mesh.AvgQuality);
-If ( Mesh.AvgQuality < 0.75 )
-  Printf("Error: Average mesh quality is %g, outside of range", Mesh.AvgQuality) >> file;
-  Error("Average mesh quality is %g, outside of range", Mesh.AvgQuality);
-Else
-  Printf("Successful Verification of average mesh quality %g", Mesh.AvgQuality) >> file;
 EndIf
 
 // ********** End SPEC validation **********

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -896,7 +896,7 @@ static MTri3 *search4Triangle(MTri3 *t, double pt[2], bidimMeshData &data,
       if(intersection_segments_2(p1, p2, q1, q2)) break;
     }
     if(i >= 3) {
-      Msg::Error("Impossible case in triangle search");
+      printf("impossible\n");
       break;
     }
     t = t->getNeigh(i);
@@ -1286,6 +1286,10 @@ static bool optimalPointFrontalB(GFace *gf, MTri3 *worst, int active_edge,
   return true;
 }
 
+#if 1
+#include "meshTriangulation.h"
+#endif
+
 void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
                          std::map<MVertex *, SPoint2> *parametricCoordinates,
                          std::vector<SPoint2> *true_boundary)
@@ -1360,7 +1364,31 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
   transferDataStructure(gf, AllTris, DATA);
 
   splitElementsInBoundaryLayerIfNeeded(gf);
+#if 0
+  PolyMesh *pm;
+  GFace2PolyMesh(gf->tag(), &pm);
+  std::map<PolyMesh::Vertex*,double> dist_exact;
 
+  // Choose a source  
+  PolyMesh::VertexOnFace _source;
+  _source.u = 0.33;
+  _source.v = 0.33;
+  _source.he = pm->vertices[rand() % (pm->vertices.size() -1)]->he;
+  pm->exactGeodesicDistance(_source,dist_exact);
+
+  for (int i=0;i<120;i++){    
+    PolyMesh::VertexOnFace _target;
+    _target.u = 0.33;
+    _target.v = 0.33;
+    _target.he = pm->vertices[rand() % (pm->vertices.size() -1)]->he;
+    if (_target.he !=_source.he){
+      PolyMesh::Path P = pm->backTrack (_source, _target, dist_exact );
+      P.print4debug(i);
+    }
+  }
+  
+#endif
+  
 }
 
 static void optimalPointFrontalQuad(GFace *gf, MTri3 *worst, int active_edge,
@@ -1635,7 +1663,7 @@ void bowyerWatsonParallelograms(
     return;
   }
 
-
+  
 #if defined(HAVE_DOMHEX)
   if(old_algo_hexa()) {
     Msg::Debug("bowyerWatsonParallelograms: call packingOfParallelograms()");

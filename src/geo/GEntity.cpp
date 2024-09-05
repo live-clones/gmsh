@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -18,7 +18,7 @@
 
 GEntity::GEntity(GModel *m, int t)
   : _model(m), _tag(t), _meshMaster(this), _visible(1), _selection(0),
-    _onlySomeElementsVisible(1), _obb(nullptr), va_lines(nullptr),
+    _allElementsVisible(1), _obb(nullptr), va_lines(nullptr),
     va_triangles(nullptr)
 {
   // default color when none is explicitly specified - don't change this, as it
@@ -116,13 +116,10 @@ std::string GEntity::getInfoString(bool additional, bool multiline)
 }
 
 // removes a MeshVertex
-void GEntity::removeMeshVertex(MVertex *v, bool del)
+void GEntity::removeMeshVertex(MVertex *v)
 {
   auto it = std::find(mesh_vertices.begin(), mesh_vertices.end(), v);
-  if(it != mesh_vertices.end()) {
-    mesh_vertices.erase(it);
-    if(del) delete v;
-  }
+  if(it != mesh_vertices.end()) mesh_vertices.erase(it);
 }
 
 GVertex *GEntity::cast2Vertex() { return dynamic_cast<GVertex *>(this); }

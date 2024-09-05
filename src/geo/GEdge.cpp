@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -54,7 +54,8 @@ void GEdge::deleteMesh()
 {
   for(std::size_t i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
   mesh_vertices.clear();
-  removeElements(true);
+  for(std::size_t i = 0; i < lines.size(); i++) delete lines[i];
+  lines.clear();
   correspondingVertices.clear();
   correspondingHighOrderVertices.clear();
   deleteVertexArrays();
@@ -771,37 +772,35 @@ static void _discretize(double tol, GEdge *edge, std::vector<sortedPoint> &upts,
   _discretize(tol, edge, upts, posmid);
 }
 
-void GEdge::addElement(MElement *e)
+void GEdge::addElement(int type, MElement *e)
 {
-  switch(e->getType()) {
+  switch(type) {
   case TYPE_LIN: addLine(reinterpret_cast<MLine *>(e)); break;
   default:
     Msg::Error("Trying to add unsupported element in curve %d", tag());
   }
 }
 
-void GEdge::removeElement(MElement *e, bool del)
+void GEdge::removeElement(int type, MElement *e)
 {
-  switch(e->getType()) {
+  switch(type) {
   case TYPE_LIN: {
     auto it =
       std::find(lines.begin(), lines.end(), reinterpret_cast<MLine *>(e));
-    if(it != lines.end()) {
-      lines.erase(it);
-      if(del) delete e;
-    }
+    if(it != lines.end()) lines.erase(it);
   } break;
   default:
     Msg::Error("Trying to remove unsupported element in curve %d", tag());
   }
 }
 
-void GEdge::removeElements(bool del)
+void GEdge::removeElements(int type)
 {
-  if(del) {
-    for(auto e : lines) delete e;
+  switch(type) {
+  case TYPE_LIN: lines.clear(); break;
+  default:
+    Msg::Error("Trying to remove unsupported elements in curve %d", tag());
   }
-  lines.clear();
 }
 
 void GEdge::discretize(double tol, std::vector<SPoint3> &dpts,

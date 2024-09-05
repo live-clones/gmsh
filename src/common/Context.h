@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -31,7 +31,7 @@ struct contextMeshOptions {
   int recombineNodeRepositioning;
   double recombineMinimumQuality;
   int recombine3DAll, recombine3DLevel, recombine3DConformity;
-  int flexibleTransfinite, quasiTransfinite, transfiniteTri, maxRetries;
+  int flexibleTransfinite, transfiniteTri, maxRetries;
   int order, secondOrderLinear, secondOrderIncomplete;
   int meshOnlyVisible, meshOnlyEmpty;
   int minCircleNodes, minCurveNodes, minLineNodes;
@@ -88,10 +88,6 @@ struct contextMeshOptions {
   double nodeSize, lineWidth;
   int dual, voronoi, drawSkinOnly, colorCarousel, labelSampling;
   int smoothNormals, clip;
-  // records cpu times for 1D, 2D and 3D mesh generation
-  double timer[3];
-  // records minimal and average mesh quality after 2D and 3D mesh generation
-  double minQuality, avgQuality;
 };
 
 struct contextGeometryOptions {
@@ -104,29 +100,11 @@ struct contextGeometryOptions {
   double tolerance, toleranceBoolean, snap[3], transform[3][3], offset[3];
   int occAutoFix, occAutoEmbed, occFastUnbind;
   int occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
-  int occSewFaces, occMakeSolids, occParallel;
+  int occSewFaces, occMakeSolids, occParallel, occBooleanPreserveNumbering;
   int occBoundsUseSTL, occDisableSTL, occImportLabels, occExportOnlyVisible;
-  int occBooleanCheckInverted, occBooleanGlue, occBooleanNonDestructive;
-  int occBooleanPreserveNumbering, occBooleanSimplify;
-  int occThruSectionsDegree, occUseGenericClosestPoint;
-  int occBrepFormatVersion;
+  int occUnionUnify, occThruSectionsDegree, occUseGenericClosestPoint;
   double occScaling;
   std::string occTargetUnit;
-  // STEP file outputs
-  // header section: FILE_DESCRIPTION
-  std::string occStepDescription;
-  std::string occStepImplementationLevel;
-  // header section: FILE_NAME
-  std::string occStepModelName;
-  std::string occStepTimeStamp;
-  std::string occStepAuthor;
-  std::string occStepOrganization;
-  std::string occStepPreprocessorVersion;
-  std::string occStepOriginatingSystem;
-  std::string occStepAuthorization;
-  // header section: FILE_SCHEMA
-  std::string occStepSchemaIdentifier;
-
   int copyMeshingMethod, exactExtrusion;
   int matchGeomAndMesh;
   double matchMeshScaleFactor;
@@ -170,8 +148,6 @@ public:
   std::string homeDir;
   // file history
   std::vector<std::string> recentFiles;
-  // default number format in graphics window
-  std::string numberFormat;
   // create mesh statistics report (0: do nothing, 1: create, 2: append)
   int createAppendMeshStatReport;
   // behavior on error
@@ -311,6 +287,8 @@ public:
   // vector display type and options (for normals, etc.)
   int vectorType;
   double arrowRelHeadRadius, arrowRelStemRadius, arrowRelStemLength;
+  // records cpu times for 1-D, 2-D and 3-D mesh generation
+  double meshTimer[3];
   // dynamic variable tracking if the bbox is currently imposed
   int forcedBBox;
   // enable selection/hover/picking using the mouse

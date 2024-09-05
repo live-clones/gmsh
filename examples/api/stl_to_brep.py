@@ -13,10 +13,7 @@ if len(sys.argv) < 2:
 gmsh.initialize()
 
 # load the STL mesh and retrieve the element, node and edge data
-try:
-    gmsh.open(sys.argv[1])
-except:
-    exit(0)
+gmsh.open(sys.argv[1])
 typ = 2 # 3-node triangles
 elementTags, elementNodes = gmsh.model.mesh.getElementsByType(typ)
 nodeTags, nodeCoord, _ = gmsh.model.mesh.getNodesByElementType(typ)

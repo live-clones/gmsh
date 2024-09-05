@@ -108,7 +108,6 @@ static HXTStatus ReadMeshFormatFromGmsh(FILE *fp)
       break;
     }
   }
-
   if(!found)
     return HXT_ERROR_MSG(HXT_STATUS_READ_ERROR, "Unrecognized format. HXT only support Gmsh's MSH2 ASCII file format");
 
@@ -377,3 +376,24 @@ HXTStatus  hxtMeshWriteGmsh  ( HXTMesh* mesh , const char *filename) {
   return HXT_STATUS_OK;
 }
 
+
+HXTStatus hxtAddNodes(HXTMesh* mesh, double* pts, size_t numPts){
+  HXTStatus status;
+
+  size_t v = mesh->vertices.num;
+  mesh->vertices.num += numPts;
+  status=hxtAlignedRealloc(&mesh->vertices.coord, sizeof(double)*4*mesh->vertices.num);
+
+  if(status==HXT_STATUS_OK){
+    for (uint64_t i=0; i<numPts; i++){
+      mesh->vertices.coord[v*4  ] = pts[3*i + 0];
+      mesh->vertices.coord[v*4+1] = pts[3*i + 1];
+      mesh->vertices.coord[v*4+2] = pts[3*i + 2];
+      mesh->vertices.coord[v*4+3] = 1.0;
+      v++;
+    }
+  }
+  return HXT_STATUS_OK;
+
+}
+  

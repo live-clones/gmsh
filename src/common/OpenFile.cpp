@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -294,7 +294,8 @@ static int DefineSolver(const std::string &name)
 #endif
 
 int MergeFile(const std::string &fileName, bool errorIfMissing,
-              bool setBoundingBox, bool importPhysicalsInOnelab)
+              bool setBoundingBox, bool importPhysicalsInOnelab,
+              int partitionToRead)
 {
   // added 'b' for pure Windows programs, since some of these files
   // contain binary data
@@ -366,15 +367,8 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
     status =
       GModel::current()->readSTL(fileName, CTX::instance()->geom.tolerance);
   }
-  else if(ext == ".NII" || ext == ".nii") {
-    status =
-      GModel::current()->readNII(fileName);
-  }
   else if(ext == ".brep" || ext == ".rle" || ext == ".brp" || ext == ".BRP") {
     status = GModel::current()->readOCCBREP(fileName);
-  }
-  else if(ext == ".xao" || ext == ".XAO") {
-    status = GModel::current()->readOCCXAO(fileName);
   }
   else if(ext == ".iges" || ext == ".IGES" || ext == ".igs" || ext == ".IGS") {
     status = GModel::current()->readOCCIGES(fileName);
@@ -518,6 +512,9 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
         CTX::instance()->geom.matchMeshScaleFactor = 1;
         status = GModel::current()->readMSH(fileName);
       }
+#if defined(HAVE_POST)
+      if(status > 1) status = PView::readMSH(fileName, -1, partitionToRead);
+#endif
     }
 #if defined(HAVE_POST)
     else if(ext == ".pch") {

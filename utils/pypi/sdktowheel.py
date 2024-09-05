@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -95,7 +95,7 @@ with tempfile.TemporaryDirectory() as wheel_dir:
     with open(os.path.join(wheel_dir, dist_info_dir, 'RECORD'), 'w') as f:
         for r in records:
             f.write(r+"\n")
-        relpath = os.path.join(dist_info_dir, 'RECORD')
+        relpath = os.path.join(wheel_dir, dist_info_dir, 'RECORD')
         f.write(f'{relpath},,\n')
 
     # zip

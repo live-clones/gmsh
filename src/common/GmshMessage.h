@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -77,7 +77,7 @@ public:
   Msg() {}
   static void Initialize(int argc, char **argv);
   static void Finalize();
-  static void Exit(int level, bool forceLevel = false);
+  static void Exit(int level);
   static int GetCommRank();
   static int GetCommSize();
   static void SetCommRank(int val);
