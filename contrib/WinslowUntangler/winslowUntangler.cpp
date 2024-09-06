@@ -280,7 +280,7 @@ namespace WinslowUntangler {
       for(size_t t = 0; t < nElements; t++) {
 	// Update jacobian with current triangle coordinates
 	const double det = /*dets[t];//*/update_jacobian_matrix(t, w, X);//
-	//      printf("det = %12.5E vs %12.5E\n",det,dets[t]);
+	//	printf("det = %12.5E\n",det);
 	double OneOverSize2 = 1.0;
 	if (!sizes.empty()){
 	  double size = (sizes[w.triangles[t][0]]+sizes[w.triangles[t][1]]+sizes[w.triangles[t][2]])/3.0;
@@ -622,6 +622,7 @@ namespace WinslowUntangler {
                     {0, .5, 1. / (2. * std::sqrt(2.))},
                     {0, -.5, 1. / (2. * std::sqrt(2.))}};
     double reg_vol = tet_volume(equi[0], equi[1], equi[2], equi[3]);
+
     for(size_t lv = 0; lv < 4; ++lv) {
       equi[lv] = equi[lv] * (1. / std::pow(reg_vol, 1. / 3.));
     }
@@ -629,14 +630,14 @@ namespace WinslowUntangler {
     constexpr int facet_vertex[4][3] = {
       {1, 3, 2}, {0, 2, 3}, {3, 1, 0}, {0, 1, 2}};
 
-    double avg_ideal_vol = 1.;
-    if(tetIdealShapes.size() > 0.) {
-      for(size_t t = 0; t < tetIdealShapes.size(); ++t) {
-        avg_ideal_vol += tet_volume(tetIdealShapes[t][0], tetIdealShapes[t][1],
-                                    tetIdealShapes[t][2], tetIdealShapes[t][3]);
-      }
-      avg_ideal_vol /= double(tetIdealShapes.size());
-    }
+    //    double avg_ideal_vol = 1.;
+    //    if(tetIdealShapes.size() > 0.) {
+    //      for(size_t t = 0; t < tetIdealShapes.size(); ++t) {
+    //        avg_ideal_vol += tet_volume(tetIdealShapes[t][0], tetIdealShapes[t][1],
+    //                                    tetIdealShapes[t][2], tetIdealShapes[t][3]);
+    //      }
+    //      avg_ideal_vol /= double(tetIdealShapes.size());
+    //    }
 
     // Build ideal tet normals
     for(size_t t = 0; t < tets.size(); ++t) {
@@ -648,10 +649,10 @@ namespace WinslowUntangler {
         shape[3] = tetIdealShapes[t][3];
       }
 
-      for(size_t lv = 0; lv < 4; ++lv) {
-        shape[lv] = shape[lv] * (1. / std::pow(avg_ideal_vol, 1. / 3.) *
-                                 std::pow(avg_tet_vol, 1. / 3.));
-      }
+      //      for(size_t lv = 0; lv < 4; ++lv) {
+      //        shape[lv] = shape[lv] * (1. / std::pow(avg_ideal_vol, 1. / 3.) *
+      //                                 std::pow(avg_tet_vol, 1. / 3.));
+      //      }
 
       double vol = tet_volume(shape[0], shape[1], shape[2], shape[3]);
       if(std::isnan(vol)) {
@@ -686,6 +687,7 @@ namespace WinslowUntangler {
     data.energy = 0.;
     for(size_t t = 0; t < data.tetrahedra.size(); t++) {
       const double det = update_jacobian_matrix(t, data, x0);
+      //      printf("det = %12.5E\n",det);
       if(det < data.J_det_min) data.J_det_min = det;
       if(det <= 0.) data.nb_invalid += 1;
     }
