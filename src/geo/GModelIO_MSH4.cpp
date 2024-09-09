@@ -2911,15 +2911,51 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool partitioned,
 {
   if(model->getNumMEdges() == 0) return;
 
+  std::set<GRegion *, GEntityPtrLessThan> regions;
+  std::set<GFace *, GEntityPtrLessThan> faces;
+  std::set<GEdge *, GEntityPtrLessThan> edges;
+  std::set<GVertex *, GEntityPtrLessThan> vertices;
+  getEntitiesToSave(model, partitioned, partitionToSave, saveAll, regions,
+                    faces, edges, vertices);
+  getAdditionalEntities(regions, faces, edges, vertices);
+
+  // Additional entities ?
+  std::set<std::size_t> ownedVertices;
+  for (GRegion* r : regions) {
+    for (std::size_t i = 0; i < r->getNumMeshVertices(); i++) {
+      ownedVertices.insert(r->getMeshVertex(i)->getNum());
+    }
+  }
+  for (GFace* f : faces) {
+    for (std::size_t i = 0; i < f->getNumMeshVertices(); i++) {
+      ownedVertices.insert(f->getMeshVertex(i)->getNum());
+    }
+  }
+  for (GEdge* e : edges) {
+    for (std::size_t i = 0; i < e->getNumMeshVertices(); i++) {
+      ownedVertices.insert(e->getMeshVertex(i)->getNum());
+    }
+  }
+  for (GVertex* v : vertices) {
+    for (std::size_t i = 0; i < v->getNumMeshVertices(); i++) {
+      ownedVertices.insert(v->getMeshVertex(i)->getNum());
+    }
+  }
+
   std::vector<std::size_t> edgeTags;
   std::vector<std::size_t> edgeNodes;
   edgeTags.reserve(model->getNumMEdges());
   edgeNodes.reserve(model->getNumMEdges() * 2);
   for(auto it = model->firstMEdge(); it != model->lastMEdge(); ++it) {
+    // If the first node is missing, don't save the edge
+    if (ownedVertices.find(it->first.getVertex(0)->getNum()) == ownedVertices.end()) {
+      continue;
+    }
     edgeTags.push_back(it->second);
     edgeNodes.push_back(it->first.getVertex(0)->getNum());
     edgeNodes.push_back(it->first.getVertex(1)->getNum());
   }
+  Msg::Info("Writing %lu edges", edgeTags.size());
 
   fprintf(fp, "$EdgeTags\n");
   size_t numEdgeTags = edgeTags.size();
@@ -2954,9 +2990,53 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool partitioned,
   size_t numFaceTags = model->getNumMFaces();
   if(numFaceTags == 0) return;
 
+  std::set<GRegion *, GEntityPtrLessThan> regions;
+  std::set<GFace *, GEntityPtrLessThan> faces;
+  std::set<GEdge *, GEntityPtrLessThan> edges;
+  std::set<GVertex *, GEntityPtrLessThan> vertices;
+  getEntitiesToSave(model, partitioned, partitionToSave, saveAll, regions,
+                    faces, edges, vertices);
+  getAdditionalEntities(regions, faces, edges, vertices);
+
+  // Additional entities ?
+  std::set<std::size_t> ownedVertices;
+  for (GRegion* r : regions) {
+    for (std::size_t i = 0; i < r->getNumMeshVertices(); i++) {
+      ownedVertices.insert(r->getMeshVertex(i)->getNum());
+    }
+  }
+  for (GFace* f : faces) {
+    for (std::size_t i = 0; i < f->getNumMeshVertices(); i++) {
+      ownedVertices.insert(f->getMeshVertex(i)->getNum());
+    }
+  }
+  for (GEdge* e : edges) {
+    for (std::size_t i = 0; i < e->getNumMeshVertices(); i++) {
+      ownedVertices.insert(e->getMeshVertex(i)->getNum());
+    }
+  }
+  for (GVertex* v : vertices) {
+    for (std::size_t i = 0; i < v->getNumMeshVertices(); i++) {
+      ownedVertices.insert(v->getMeshVertex(i)->getNum());
+    }
+  }
+
+
+  std::unordered_map<MFace, std::size_t, MFaceHash, MFaceEqual> faceTagsToKeep;
+  for (auto it = model->firstMFace(); it != model->lastMFace(); ++it) {
+    // Check only for 1 vertex (faster)
+    if (ownedVertices.find(it->first.getVertex(0)->getNum()) == ownedVertices.end()) {
+      continue;
+    }
+    faceTagsToKeep.insert(*it);
+  }
+
+  Msg::Info("Writing %lu faces instead of %lu", faceTagsToKeep.size(), numFaceTags);
+  numFaceTags = faceTagsToKeep.size();
   fprintf(fp, "$FaceTags\n");
   fwrite(&numFaceTags, sizeof(std::size_t), 1, fp);
-  for(auto it = model->firstMFace(); it != model->lastMFace(); ++it) {
+  //for(auto it = model->firstMFace(); it != model->lastMFace(); ++it) {
+  for(auto it = faceTagsToKeep.begin(); it != faceTagsToKeep.end(); ++it) {
     // TAG NUM_VERT VERT1 VERT2 ... VERTN
     auto nVert = it->first.getNumVertices();
     std::size_t buffer[2] = {it->second, nVert};
