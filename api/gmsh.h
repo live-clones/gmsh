@@ -1865,6 +1865,16 @@ namespace gmsh { // Top-level functions
                                         const int triangulate,
                                         const int refine);
 
+      // gmsh::model::mesh::advectMeshNodes
+      //
+      // Advect nodes of a mesh with displacement vector dxNodes
+      GMSH_API void advectMeshNodes(const int dim,
+                                    const int tag,
+                                    const int bndTag,
+                                    const std::string & boundaryModel,
+                                    const std::vector<double> & dxNodes,
+                                    const double boundaryTolerance = 1e-6);
+
       // gmsh::model::mesh::computeAlphaShape
       //
       // Compute the alpha shape - improved function
@@ -1875,8 +1885,10 @@ namespace gmsh { // Top-level functions
                                       const double alpha,
                                       const int alphaShapeSizeField,
                                       const int refineSizeField,
-                                      const bool usePreviousMesh,
-                                      const double boundaryTolerance = 1e-6);
+                                      const std::vector<double> & nodesDx = std::vector<double>(),
+                                      const bool usePreviousMesh = false,
+                                      const double boundaryTolerance = 1e-6,
+                                      const bool refine = true);
 
       // gmsh::model::mesh::decimateTriangulation
       //

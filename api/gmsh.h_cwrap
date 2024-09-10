@@ -3232,6 +3232,23 @@ namespace gmsh { // Top-level functions
         gmshFree(api_alphaShapeTags_);
       }
 
+      // gmsh::model::mesh::advectMeshNodes
+      //
+      // Advect nodes of a mesh with displacement vector dxNodes
+      inline void advectMeshNodes(const int dim,
+                                  const int tag,
+                                  const int bndTag,
+                                  const std::string & boundaryModel,
+                                  const std::vector<double> & dxNodes,
+                                  const double boundaryTolerance = 1e-6)
+      {
+        int ierr = 0;
+        double *api_dxNodes_; size_t api_dxNodes_n_; vector2ptr(dxNodes, &api_dxNodes_, &api_dxNodes_n_);
+        gmshModelMeshAdvectMeshNodes(dim, tag, bndTag, boundaryModel.c_str(), api_dxNodes_, api_dxNodes_n_, boundaryTolerance, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_dxNodes_);
+      }
+
       // gmsh::model::mesh::computeAlphaShape
       //
       // Compute the alpha shape - improved function
@@ -3242,12 +3259,16 @@ namespace gmsh { // Top-level functions
                                     const double alpha,
                                     const int alphaShapeSizeField,
                                     const int refineSizeField,
-                                    const bool usePreviousMesh,
-                                    const double boundaryTolerance = 1e-6)
+                                    const std::vector<double> & nodesDx = std::vector<double>(),
+                                    const bool usePreviousMesh = false,
+                                    const double boundaryTolerance = 1e-6,
+                                    const bool refine = true)
       {
         int ierr = 0;
-        gmshModelMeshComputeAlphaShape(dim, tag, bndTag, boundaryModel.c_str(), alpha, alphaShapeSizeField, refineSizeField, (int)usePreviousMesh, boundaryTolerance, &ierr);
+        double *api_nodesDx_; size_t api_nodesDx_n_; vector2ptr(nodesDx, &api_nodesDx_, &api_nodesDx_n_);
+        gmshModelMeshComputeAlphaShape(dim, tag, bndTag, boundaryModel.c_str(), alpha, alphaShapeSizeField, refineSizeField, api_nodesDx_, api_nodesDx_n_, (int)usePreviousMesh, boundaryTolerance, (int)refine, &ierr);
         if(ierr) throwLastError();
+        gmshFree(api_nodesDx_);
       }
 
       // gmsh::model::mesh::decimateTriangulation

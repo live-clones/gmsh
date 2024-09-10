@@ -582,8 +582,11 @@ mesh.add('tetrahedralize', doc, None, ivectordouble('coord'), ovectorsize('tetra
 doc = '''Compute the alpha shape of the set of points on the discrete entity defined by the first tag of `alphaShapeTags', with the second tag its boundary. The alpha shape is computed with respect to a constant mean mesh size `hMean' (if `hMean' > 0) or to the size field defined by `sizeFieldCallback'. If desired, also refine the elements in the alpha shape so as to respect the size field defined by `sizeFieldCallback'. The new mesh will be stored in the discrete entities with tags `alphaShapeTags' = [alphaShapeTag, alphaShapeBoundaryTag]. If the alpha shape entity already contains elements and no new mesh should be generated, triangulate should be 0.'''
 mesh.add('computeAlphaShape3D', doc, None, iint('dim'), ivectorint('alphaShapeTags'), idouble('alpha'), idouble('hMean'), isizefun('sizeFieldCallback'), iint('triangulate'), iint('refine'))
 
+doc = '''Advect nodes of a mesh with displacement vector dxNodes'''
+mesh.add('advectMeshNodes', doc, None, iint('dim'), iint('tag'), iint('bndTag'), istring('boundaryModel'), ivectordouble('dxNodes'), idouble('boundaryTolerance', '1e-6'))
+
 doc = '''Compute the alpha shape - improved function'''
-mesh.add('computeAlphaShape', doc, None, iint('dim'), iint('tag'), iint('bndTag'), istring('boundaryModel'), idouble('alpha'), iint('alphaShapeSizeField'), iint('refineSizeField'), ibool('usePreviousMesh', False), idouble('boundaryTolerance', '1e-6'))
+mesh.add('computeAlphaShape', doc, None, iint('dim'), iint('tag'), iint('bndTag'), istring('boundaryModel'), idouble('alpha'), iint('alphaShapeSizeField'), iint('refineSizeField'), ivectordouble('nodesDx', 'std::vector<double>()', '[]', '[]'), ibool('usePreviousMesh', 'false', 'False'), idouble('boundaryTolerance', '1e-6'), ibool('refine', 'true', 'True'))
 
 doc = '''Decimate a triangulation'''
 mesh.add('decimateTriangulation', doc, None, iint('faceTag'), idouble('distanceThreshold'))

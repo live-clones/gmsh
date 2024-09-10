@@ -2437,11 +2437,24 @@ GMSH_API void gmshModelMeshComputeAlphaShape3D(const int dim, const int * alphaS
   }
 }
 
-GMSH_API void gmshModelMeshComputeAlphaShape(const int dim, const int tag, const int bndTag, const char * boundaryModel, const double alpha, const int alphaShapeSizeField, const int refineSizeField, const int usePreviousMesh, const double boundaryTolerance, int * ierr)
+GMSH_API void gmshModelMeshAdvectMeshNodes(const int dim, const int tag, const int bndTag, const char * boundaryModel, const double * dxNodes, const size_t dxNodes_n, const double boundaryTolerance, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh, boundaryTolerance);
+    std::vector<double> api_dxNodes_(dxNodes, dxNodes + dxNodes_n);
+    gmsh::model::mesh::advectMeshNodes(dim, tag, bndTag, boundaryModel, api_dxNodes_, boundaryTolerance);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshComputeAlphaShape(const int dim, const int tag, const int bndTag, const char * boundaryModel, const double alpha, const int alphaShapeSizeField, const int refineSizeField, const double * nodesDx, const size_t nodesDx_n, const int usePreviousMesh, const double boundaryTolerance, const int refine, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_nodesDx_(nodesDx, nodesDx + nodesDx_n);
+    gmsh::model::mesh::computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, api_nodesDx_, usePreviousMesh, boundaryTolerance, refine);
   }
   catch(...){
     if(ierr) *ierr = 1;

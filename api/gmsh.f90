@@ -720,6 +720,8 @@ module gmsh
         gmshModelMeshTetrahedralize
     procedure, nopass :: computeAlphaShape3D => &
         gmshModelMeshComputeAlphaShape3D
+    procedure, nopass :: advectMeshNodes => &
+        gmshModelMeshAdvectMeshNodes
     procedure, nopass :: computeAlphaShape => &
         gmshModelMeshComputeAlphaShape
     procedure, nopass :: decimateTriangulation => &
@@ -7493,6 +7495,52 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelMeshComputeAlphaShape3D
 
+  !> Advect nodes of a mesh with displacement vector dxNodes
+  subroutine gmshModelMeshAdvectMeshNodes(dim, &
+                                          tag, &
+                                          bndTag, &
+                                          boundaryModel, &
+                                          dxNodes, &
+                                          boundaryTolerance, &
+                                          ierr)
+    interface
+    subroutine C_API(dim, &
+                     tag, &
+                     bndTag, &
+                     boundaryModel, &
+                     api_dxNodes_, &
+                     api_dxNodes_n_, &
+                     boundaryTolerance, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshAdvectMeshNodes")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), value, intent(in) :: bndTag
+      character(len=1, kind=c_char), dimension(*), intent(in) :: boundaryModel
+      real(c_double), dimension(*) :: api_dxNodes_
+      integer(c_size_t), value, intent(in) :: api_dxNodes_n_
+      real(c_double), value, intent(in) :: boundaryTolerance
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    integer, intent(in) :: bndTag
+    character(len=*), intent(in) :: boundaryModel
+    real(c_double), dimension(:), intent(in) :: dxNodes
+    real(c_double), intent(in), optional :: boundaryTolerance
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(dim=int(dim, c_int), &
+         tag=int(tag, c_int), &
+         bndTag=int(bndTag, c_int), &
+         boundaryModel=istring_(boundaryModel), &
+         api_dxNodes_=dxNodes, &
+         api_dxNodes_n_=size_gmsh_double(dxNodes), &
+         boundaryTolerance=optval_c_double(1e-6, boundaryTolerance), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshAdvectMeshNodes
+
   !> Compute the alpha shape - improved function
   subroutine gmshModelMeshComputeAlphaShape(dim, &
                                             tag, &
@@ -7501,8 +7549,10 @@ module gmsh
                                             alpha, &
                                             alphaShapeSizeField, &
                                             refineSizeField, &
+                                            nodesDx, &
                                             usePreviousMesh, &
                                             boundaryTolerance, &
+                                            refine, &
                                             ierr)
     interface
     subroutine C_API(dim, &
@@ -7512,8 +7562,11 @@ module gmsh
                      alpha, &
                      alphaShapeSizeField, &
                      refineSizeField, &
+                     api_nodesDx_, &
+                     api_nodesDx_n_, &
                      usePreviousMesh, &
                      boundaryTolerance, &
+                     refine, &
                      ierr_) &
       bind(C, name="gmshModelMeshComputeAlphaShape")
       use, intrinsic :: iso_c_binding
@@ -7524,8 +7577,11 @@ module gmsh
       real(c_double), value, intent(in) :: alpha
       integer(c_int), value, intent(in) :: alphaShapeSizeField
       integer(c_int), value, intent(in) :: refineSizeField
+      real(c_double), dimension(*), optional :: api_nodesDx_
+      integer(c_size_t), value, intent(in) :: api_nodesDx_n_
       integer(c_int), value, intent(in) :: usePreviousMesh
       real(c_double), value, intent(in) :: boundaryTolerance
+      integer(c_int), value, intent(in) :: refine
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
@@ -7536,8 +7592,10 @@ module gmsh
     real(c_double), intent(in) :: alpha
     integer, intent(in) :: alphaShapeSizeField
     integer, intent(in) :: refineSizeField
-    logical, intent(in) :: usePreviousMesh
+    real(c_double), dimension(:), intent(in), optional :: nodesDx
+    logical, intent(in), optional :: usePreviousMesh
     real(c_double), intent(in), optional :: boundaryTolerance
+    logical, intent(in), optional :: refine
     integer(c_int), intent(out), optional :: ierr
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
@@ -7546,8 +7604,11 @@ module gmsh
          alpha=real(alpha, c_double), &
          alphaShapeSizeField=int(alphaShapeSizeField, c_int), &
          refineSizeField=int(refineSizeField, c_int), &
-         usePreviousMesh=optval_c_bool(.False., usePreviousMesh), &
+         api_nodesDx_=nodesDx, &
+         api_nodesDx_n_=size_gmsh_double(nodesDx), &
+         usePreviousMesh=optval_c_bool(.false., usePreviousMesh), &
          boundaryTolerance=optval_c_double(1e-6, boundaryTolerance), &
+         refine=optval_c_bool(.true., refine), &
          ierr_=ierr)
   end subroutine gmshModelMeshComputeAlphaShape
 

@@ -4541,7 +4541,30 @@ end
 const compute_alpha_shape3_d = computeAlphaShape3D
 
 """
-    gmsh.model.mesh.computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh, boundaryTolerance = 1e-6)
+    gmsh.model.mesh.advectMeshNodes(dim, tag, bndTag, boundaryModel, dxNodes, boundaryTolerance = 1e-6)
+
+Advect nodes of a mesh with displacement vector dxNodes
+
+Types:
+ - `dim`: integer
+ - `tag`: integer
+ - `bndTag`: integer
+ - `boundaryModel`: string
+ - `dxNodes`: vector of doubles
+ - `boundaryTolerance`: double
+"""
+function advectMeshNodes(dim, tag, bndTag, boundaryModel, dxNodes, boundaryTolerance = 1e-6)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshAdvectMeshNodes, gmsh.lib), Cvoid,
+          (Cint, Cint, Cint, Ptr{Cchar}, Ptr{Cdouble}, Csize_t, Cdouble, Ptr{Cint}),
+          dim, tag, bndTag, boundaryModel, convert(Vector{Cdouble}, dxNodes), length(dxNodes), boundaryTolerance, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const advect_mesh_nodes = advectMeshNodes
+
+"""
+    gmsh.model.mesh.computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, nodesDx = Cdouble[], usePreviousMesh = false, boundaryTolerance = 1e-6, refine = true)
 
 Compute the alpha shape - improved function
 
@@ -4553,14 +4576,16 @@ Types:
  - `alpha`: double
  - `alphaShapeSizeField`: integer
  - `refineSizeField`: integer
+ - `nodesDx`: vector of doubles
  - `usePreviousMesh`: boolean
  - `boundaryTolerance`: double
+ - `refine`: boolean
 """
-function computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh, boundaryTolerance = 1e-6)
+function computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, nodesDx = Cdouble[], usePreviousMesh = false, boundaryTolerance = 1e-6, refine = true)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshComputeAlphaShape, gmsh.lib), Cvoid,
-          (Cint, Cint, Cint, Ptr{Cchar}, Cdouble, Cint, Cint, Cint, Cdouble, Ptr{Cint}),
-          dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh, boundaryTolerance, ierr)
+          (Cint, Cint, Cint, Ptr{Cchar}, Cdouble, Cint, Cint, Ptr{Cdouble}, Csize_t, Cint, Cdouble, Cint, Ptr{Cint}),
+          dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, convert(Vector{Cdouble}, nodesDx), length(nodesDx), usePreviousMesh, boundaryTolerance, refine, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end

@@ -1651,6 +1651,15 @@ GMSH_API void gmshModelMeshComputeAlphaShape3D(const int dim,
                                                const int refine,
                                                int * ierr);
 
+/* Advect nodes of a mesh with displacement vector dxNodes */
+GMSH_API void gmshModelMeshAdvectMeshNodes(const int dim,
+                                           const int tag,
+                                           const int bndTag,
+                                           const char * boundaryModel,
+                                           const double * dxNodes, const size_t dxNodes_n,
+                                           const double boundaryTolerance,
+                                           int * ierr);
+
 /* Compute the alpha shape - improved function */
 GMSH_API void gmshModelMeshComputeAlphaShape(const int dim,
                                              const int tag,
@@ -1659,8 +1668,10 @@ GMSH_API void gmshModelMeshComputeAlphaShape(const int dim,
                                              const double alpha,
                                              const int alphaShapeSizeField,
                                              const int refineSizeField,
+                                             const double * nodesDx, const size_t nodesDx_n,
                                              const int usePreviousMesh,
                                              const double boundaryTolerance,
+                                             const int refine,
                                              int * ierr);
 
 /* Decimate a triangulation */

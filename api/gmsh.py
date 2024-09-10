@@ -5148,9 +5148,38 @@ class model:
         compute_alpha_shape3_d = computeAlphaShape3D
 
         @staticmethod
-        def computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh, boundaryTolerance=1e-6):
+        def advectMeshNodes(dim, tag, bndTag, boundaryModel, dxNodes, boundaryTolerance=1e-6):
             """
-            gmsh.model.mesh.computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh, boundaryTolerance=1e-6)
+            gmsh.model.mesh.advectMeshNodes(dim, tag, bndTag, boundaryModel, dxNodes, boundaryTolerance=1e-6)
+
+            Advect nodes of a mesh with displacement vector dxNodes
+
+            Types:
+            - `dim': integer
+            - `tag': integer
+            - `bndTag': integer
+            - `boundaryModel': string
+            - `dxNodes': vector of doubles
+            - `boundaryTolerance': double
+            """
+            api_dxNodes_, api_dxNodes_n_ = _ivectordouble(dxNodes)
+            ierr = c_int()
+            lib.gmshModelMeshAdvectMeshNodes(
+                c_int(dim),
+                c_int(tag),
+                c_int(bndTag),
+                c_char_p(boundaryModel.encode()),
+                api_dxNodes_, api_dxNodes_n_,
+                c_double(boundaryTolerance),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        advect_mesh_nodes = advectMeshNodes
+
+        @staticmethod
+        def computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, nodesDx=[], usePreviousMesh=False, boundaryTolerance=1e-6, refine=True):
+            """
+            gmsh.model.mesh.computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, nodesDx=[], usePreviousMesh=False, boundaryTolerance=1e-6, refine=True)
 
             Compute the alpha shape - improved function
 
@@ -5162,9 +5191,12 @@ class model:
             - `alpha': double
             - `alphaShapeSizeField': integer
             - `refineSizeField': integer
+            - `nodesDx': vector of doubles
             - `usePreviousMesh': boolean
             - `boundaryTolerance': double
+            - `refine': boolean
             """
+            api_nodesDx_, api_nodesDx_n_ = _ivectordouble(nodesDx)
             ierr = c_int()
             lib.gmshModelMeshComputeAlphaShape(
                 c_int(dim),
@@ -5174,8 +5206,10 @@ class model:
                 c_double(alpha),
                 c_int(alphaShapeSizeField),
                 c_int(refineSizeField),
+                api_nodesDx_, api_nodesDx_n_,
                 c_int(bool(usePreviousMesh)),
                 c_double(boundaryTolerance),
+                c_int(bool(refine)),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
