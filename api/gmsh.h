@@ -3059,11 +3059,16 @@ namespace gmsh { // Top-level functions
       //
       // Create a fillet edge between edges `edgeTag1' and `edgeTag2' with radius
       // `radius'. The modifed edges keep their tag. If `tag' is positive, set the
-      // tag explicitly; otherwise a new tag is selected automatically.
+      // tag explicitly; otherwise a new tag is selected automatically. If
+      // ´pointTag' is positive, set the point on the edge at which the fillet is
+      // created. If `reverse' is set, the normal of the plance through the two
+      // planes is reversed before the fillet is created.
       GMSH_API int fillet2D(const int edgeTag1,
                             const int edgeTag2,
                             const double radius,
-                            const int tag = -1);
+                            const int tag = -1,
+                            const int pointTag = -1,
+                            const bool reverse = false);
 
       // gmsh::model::occ::chamfer2D
       //
