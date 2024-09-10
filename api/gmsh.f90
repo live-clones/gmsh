@@ -11658,8 +11658,8 @@ module gmsh
   !> Create a fillet edge between edges `edgeTag1' and `edgeTag2' with radius
   !! `radius'. The modifed edges keep their tag. If `tag' is positive, set the
   !! tag explicitly; otherwise a new tag is selected automatically. If
-  !! ´pointTag' is positive, set the point on the edge at which the fillet is
-  !! created. If `reverse' is set, the normal of the plance through the two
+  !! `pointTag' is positive, set the point on the edge at which the fillet is
+  !! created. If `reverse' is set, the normal of the plane through the two
   !! planes is reversed before the fillet is created.
   function gmshModelOccFillet2D(edgeTag1, &
                                 edgeTag2, &

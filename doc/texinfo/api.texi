@@ -4169,7 +4169,7 @@ Defeature the volumes @code{volumeTags} by removing the surfaces @code{surfaceTa
 @end table
 
 @item gmsh/model/occ/fillet2D
-Create a fillet edge between edges @code{edgeTag1} and @code{edgeTag2} with radius @code{radius}. The modifed edges keep their tag. If @code{tag} is positive, set the tag explicitly; otherwise a new tag is selected automatically. If ´pointTag} is positive, set the point on the edge at which the fillet is created. If @code{reverse} is set, the normal of the plance through the two planes is reversed before the fillet is created.
+Create a fillet edge between edges @code{edgeTag1} and @code{edgeTag2} with radius @code{radius}. The modifed edges keep their tag. If @code{tag} is positive, set the tag explicitly; otherwise a new tag is selected automatically. If @code{pointTag} is positive, set the point on the edge at which the fillet is created. If @code{reverse} is set, the normal of the plane through the two planes is reversed before the fillet is created.
 
 @table @asis
 @item Input:
