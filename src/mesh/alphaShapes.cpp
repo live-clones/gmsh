@@ -29,6 +29,17 @@
 extern "C" {
 #include "libol1.h"
 }
+extern "C" {
+#include "hxt_tetMesh.h"
+#include "hxt_tetDelaunay.h"
+#include "hxt_tetOpti.h"
+#include "hxt_tetColor.h"
+#include "hxt_tetFlag.h"
+#include "hxt_tetRefine.h"
+#include "hxt_alphashape.h"
+}
+
+using namespace AlphaShape;
 
 /* verify if circumscribed radius is smaller than alpha threshold -- 3D */
 double alphaShape (const size_t *t, const std::vector<double> &p, const double hMean){
@@ -235,7 +246,7 @@ double qualityFunForOptimize(double* p0, double* p1, double* p2, double* p3, voi
   return hMean/R;
 }
 
-void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double alpha, const double hMean,
+void AlphaShape::_computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double alpha, const double hMean,
                         std::function<double(int, int, double, double, double, double)> sizeFieldCallback, 
                         const int triangulate, const int refine){
   
@@ -914,7 +925,7 @@ static PolyMesh::Face *WalkGeneral(PolyMesh::Face *f, double x, double y, PolyMe
   return nullptr;
 }
 
-void _decimateTriangulation(const int faceTag, const double thresholdDistance){
+void AlphaShape::_decimateTriangulation(const int faceTag, const double thresholdDistance){
   PolyMesh* pm;
   GFace2PolyMesh(faceTag, &pm);
   pm->decimate(thresholdDistance);
@@ -979,7 +990,7 @@ public:
     return sqrt(outDistSqr);
   }
 };
-void registerAlphaShapeField(FieldManager* fm)
+void AlphaShape::registerAlphaShapeField(FieldManager* fm)
 {
   fm->mapTypeName["AlphaShapeDistance"] = new FieldFactoryT<AlphaShapeDistanceField>();
 }
@@ -988,7 +999,7 @@ static double _faceSizeFromMap(PolyMesh::HalfEdge *he, std::unordered_map<int, d
   return 1./3.* (sizeAtNodes[he->v->data] + sizeAtNodes[he->next->v->data] + sizeAtNodes[he->next->next->v->data]);
 }
 
-PolyMesh* _alphaShapeDelaunay2D(const int tag, const std::string boundaryModelName){
+PolyMesh* AlphaShape::_alphaShapeDelaunay2D(const int tag, const std::string boundaryModelName){
   GModel *current = GModel::current();
   GModel *model_boundary = GModel::findByName(boundaryModelName);
   if (model_boundary == nullptr) {
@@ -1061,31 +1072,31 @@ bool isInMesh(PolyMesh::Face* f, OctreeNode<2, 32, MElement*> &octree){
   return false;
 }
 
-void _alphaShape2D(PolyMesh* pm, const double alpha, const int faceTag, const int bndTag, const int sizeFieldTag, const bool usePreviousMesh){
-  // Here, define an octree based on the previous, advected time step mesh, to check whether the triangle we are computing is in the mesh or not
-  auto gf = GModel::current()->getFaceByTag(faceTag);
+void AlphaShape::_createOctreeForFace(GFace* gf, ElementOctree &octree){
   auto gmsh_bb = gf->bounds();
   BBox<2> bb; 
   bb.extends({gmsh_bb.min().x(), gmsh_bb.min().y()});
   bb.extends({gmsh_bb.max().x(), gmsh_bb.max().y()});
   bb *= 1.1;
-  OctreeNode<2, 32, MElement*> octree_prev(bb);
-  if (usePreviousMesh){
-    size_t n_tri = gf->getNumMeshElementsByType(TYPE_TRI);
-    for (size_t i=0; i<n_tri; i++){
-      MElement* elem = gf->getMeshElementByType(TYPE_TRI, i);
-      // check orientation of element
-      SPoint3 p0 = elem->getVertex(0)->point();
-      SPoint3 p1 = elem->getVertex(1)->point();
-      SPoint3 p2 = elem->getVertex(2)->point();
-      if (robustPredicates::orient2d(p0.data(), p1.data(), p2.data()) <= 0) continue;
-      BBox<2> bb_tri;
-      for (size_t i = 0; i < elem->getNumVertices(); i++){
-        bb_tri.extends({elem->getVertex(i)->point().x(), elem->getVertex(i)->point().y()});
-      }
-      octree_prev.add(elem, bb_tri);
+  octree.set_bbox(bb);
+  size_t n_tri = gf->getNumMeshElementsByType(TYPE_TRI);
+  for (size_t i=0; i<n_tri; i++){
+    MElement* elem = gf->getMeshElementByType(TYPE_TRI, i);
+    // check orientation of element
+    SPoint3 p0 = elem->getVertex(0)->point();
+    SPoint3 p1 = elem->getVertex(1)->point();
+    SPoint3 p2 = elem->getVertex(2)->point();
+    if (robustPredicates::orient2d(p0.data(), p1.data(), p2.data()) <= 0) continue;
+    BBox<2> bb_tri;
+    for (size_t i = 0; i < elem->getNumVertices(); i++){
+      bb_tri.extends({elem->getVertex(i)->point().x(), elem->getVertex(i)->point().y()});
     }
+    octree.add(elem, bb_tri);
   }
+}
+
+void AlphaShape::_alphaShape2D(PolyMesh* pm, const double alpha, const int faceTag, const int bndTag, const int sizeFieldTag, OctreeNode<2, 32, MElement*> *octree_prev){
+  // Here, define an octree based on the previous, advected time step mesh, to check whether the triangle we are computing is in the mesh or not
   // printf("previous mesh octree created \n");
   Field* field = GModel::current()->getFields()->get(sizeFieldTag);
   if (field == nullptr) {
@@ -1123,11 +1134,11 @@ void _alphaShape2D(PolyMesh* pm, const double alpha, const int faceTag, const in
     PolyMesh::Face *f = pm->faces[i];
     hTriangle = _faceSizeFromMap(f->he, sizeAtNodes);
     // check if element is in the advected mesh
-    bool is_in_mesh = usePreviousMesh ? isInMesh(f, octree_prev) : true;
+    bool is_in_mesh = (octree_prev != nullptr) ? isInMesh(f, *octree_prev) : true;
     hTriangle = is_in_mesh ? hTriangle : hTriangle*outsideLimit;
     // if (usePreviousMesh && is_in_mesh &&  abs(hTriangle-hMin)/hMin < 1e-2) hTriangle*=bndLimit;
     faceInfo(f->he, cc, &R, &q);
-    if (usePreviousMesh && abs(hTriangle-hMin)/hMin < sizeLimit && R/hTriangle < constrainR) {
+    if ((octree_prev != nullptr) && abs(hTriangle-hMin)/hMin < sizeLimit && R/hTriangle < constrainR) {
       // printf("yes, removing ! \n");
       // ce sont les plus petits éléments que je veux enlever, pas les grands... 
       R*=1000; //
@@ -1149,10 +1160,10 @@ void _alphaShape2D(PolyMesh* pm, const double alpha, const int faceTag, const in
           else if (!_touched[_he->opposite->f]){
             PolyMesh::Face *f_neigh = _he->opposite->f;
             hTriangle = _faceSizeFromMap(f_neigh->he, sizeAtNodes);
-            bool is_in_mesh = usePreviousMesh ? isInMesh(f_neigh, octree_prev) : true;
+            bool is_in_mesh = (octree_prev != nullptr) ? isInMesh(f_neigh, *octree_prev) : true;
             hTriangle = is_in_mesh ? hTriangle : hTriangle*outsideLimit;
             faceInfo(f_neigh->he, cc, &R, &q);
-            if (usePreviousMesh && abs(hTriangle-hMin)/hMin < sizeLimit && R/hTriangle < constrainR) {
+            if ((octree_prev != nullptr) && abs(hTriangle-hMin)/hMin < sizeLimit && R/hTriangle < constrainR) {
               // printf("yes, removing ! \n");
               // ce sont les plus petits éléments que je veux enlever, pas les grands... 
               R*=1000;
@@ -1392,7 +1403,7 @@ bool bndIsStraight(GEntity* e){
   return true;
 }
 
-void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::string & boundaryModel, std::vector<PolyMesh::Vertex*> & controlNodes, OctreeNode<2, 32, alphaShapeBndEdge*> &bnd_octree, const double boundary_tol){
+void AlphaShape::_edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::string & boundaryModel, std::vector<PolyMesh::Vertex*> & controlNodes, OctreeNode<2, 32, alphaShapeBndEdge*> &bnd_octree, const double boundary_tol){
   GModel* gm_alphaShape = GModel::current();
   size_t newTag = gm_alphaShape->getMaxVertexNumber()+1;
   GModel* gm_boundary = GModel::findByName(boundaryModel);
@@ -1863,7 +1874,7 @@ bool _deletionAllowed(PolyMesh* pm, PolyMesh::HalfEdge* he_delete){
   return true;
 }
 
-void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const int sizeFieldTag, std::vector<PolyMesh::Vertex*> & controlNodes){
+void AlphaShape::_delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const int sizeFieldTag, std::vector<PolyMesh::Vertex*> & controlNodes){
   for (auto it : *GModel::current()->getFields()){
     auto field = it.second;
     if (field->getName() == std::string("AlphaShapeDistance")){
@@ -2085,7 +2096,7 @@ void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const in
   printf("refine done \n");
 }
 
-void _createBoundaryOctree(const std::string & boundaryModel, const int bndTag, OctreeNode<2, 32, alphaShapeBndEdge*>& octree, std::vector<alphaShapeBndEdge>& bndEdges){
+void AlphaShape::_createBoundaryOctree(const std::string & boundaryModel, const int bndTag, OctreeNode<2, 32, alphaShapeBndEdge*>& octree, std::vector<alphaShapeBndEdge>& bndEdges){
     GModel* gm_alphaShape = GModel::current();
     GModel* gm_boundary = GModel::findByName(boundaryModel);
     if (gm_boundary == nullptr) {
@@ -2121,7 +2132,103 @@ void _createBoundaryOctree(const std::string & boundaryModel, const int bndTag, 
     // return &octree;
 }
 
-void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, const std::string & boundaryModel, OctreeNode<2, 32, alphaShapeBndEdge*> &octree, const double boundary_tol){
+void AlphaShape::filterNodes(PolyMesh *pm, const int tag) {
+  for (auto v : pm->vertices){
+    if (v->he == nullptr || !checkVertexConnection(pm, v, tag)) {
+      v->data = -1;
+    }
+  }
+}
+
+static std::pair<double, double> projectPointOnSegment(SPoint2 p, SPoint2 a, SPoint2 b){
+  SPoint2 ab = b-a;
+  SPoint2 ap = p-a;
+  double t = dot(ap, ab)/dot(ab, ab);
+  if (t < 0) t = 0;
+  if (t > 1) t = 1;
+  SPoint2 proj(a.x() + t*ab.x(), a.y() + t*ab.y());
+  double dist = hypot(p.x()-proj.x(), p.y()-proj.y());
+  return std::make_pair(dist, t);
+}
+
+void AlphaShape::getNewNodesOnOldMesh(PolyMesh *pm, ElementOctree &octree_prev, std::vector<size_t> &newNodeTags, std::vector<size_t> &elementTags, std::vector<double> &parametricCoords) {
+  std::vector<MElement*> candidates;
+  double hmean = 0;
+  size_t nh = 0;
+  for (auto he : pm->hedges){
+    if (he->data == -1) continue;
+    double d = norm(he->v->position - he->next->v->position);
+    hmean += d;
+    nh ++;
+  }
+  hmean /= nh;
+  for (auto v : pm->vertices) {
+    if (v->data == -1) continue;
+    newNodeTags.push_back(v->data);
+    BBox<2> search_bbox;
+    search_bbox.extends({v->position.x(), v->position.y()});
+    candidates.clear();
+    octree_prev.search(search_bbox, candidates);
+    bool found = false;
+    for (auto elem : candidates){
+      double uvw[3];
+      elem->xyz2uvw(v->position, uvw);
+      if (elem->isInside(uvw[0], uvw[1], uvw[2])){
+        found = true;
+        elementTags.push_back(elem->getNum());
+        parametricCoords.push_back(uvw[0]);
+        parametricCoords.push_back(uvw[1]);
+        parametricCoords.push_back(uvw[2]);
+        break;
+      }
+    }
+    double tol = hmean;
+    while (!found) {
+      candidates.clear();
+      search_bbox.extends({v->position.x()+tol, v->position.y()+tol});
+      search_bbox.extends({v->position.x()-tol, v->position.y()-tol});
+      octree_prev.search(search_bbox, candidates);
+      double dmin = std::numeric_limits<double>::max();
+      size_t etag = 0;
+      double xi, eta;
+      for (auto elem : candidates) {
+        for (int i = 0; i < 3; ++i) {
+          SPoint2 a(elem->getVertex(i)->x(), elem->getVertex(i)->y());
+          SPoint2 b(elem->getVertex((i+1)%3)->x(), elem->getVertex((i+1)%3)->y());
+          SPoint2 p(v->position.x(), v->position.y());
+          double d, t;
+          std::tie(d, t) = projectPointOnSegment(p, a, b);
+          if (d < dmin) {
+            dmin = d;
+            found = true;
+            etag = elem->getNum();
+            if (i == 0) {
+              xi = t;
+              eta = 0;
+            }
+            else if (i == 1) {
+              xi = 1-t;
+              eta = t;
+            }
+            else {
+              xi = 0;
+              eta = 1-t;
+            }
+          }
+        }
+      }
+      if (found) {
+        elementTags.push_back(etag);
+        parametricCoords.push_back(xi);
+        parametricCoords.push_back(eta);
+        parametricCoords.push_back(0);
+      }
+      tol *= 2;
+    }
+  }
+}
+
+void AlphaShape::alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, const std::string & boundaryModel, OctreeNode<2, 32, alphaShapeBndEdge*> &octree, const double boundary_tol){
   // std::vector<std::pair<int, int>> dimTag;
   // dimTag.push_back(std::make_pair(2, tag));
 
@@ -2210,7 +2317,7 @@ void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, cons
   std::vector<size_t> nodeTags;
   std::vector<double> coords;
   for (auto v : pm->vertices){
-    if (v->data == -1 || v->he == nullptr || !checkVertexConnection(pm, v, tag)) continue;
+    if (v->data == -1) continue;
     coords.push_back(v->position.x());
     coords.push_back(v->position.y());
     coords.push_back(v->position.z());
@@ -2237,7 +2344,7 @@ void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, cons
   gm_alphaShape->setAsCurrent();
 }
 
-void _moveNodes(const int tag, const int freeSurfaceTag, const std::vector<double> & nodesDx, OctreeNode<2, 32, alphaShapeBndEdge*> &bnd_octree, double boundary_tol){
+void AlphaShape::_moveNodes(const int tag, const int freeSurfaceTag, const std::vector<double> & nodesDx, OctreeNode<2, 32, alphaShapeBndEdge*> &bnd_octree, double boundary_tol){
   // check if size of nodesDx is the same as the number of nodes
   GModel* gm = GModel::current();
   GFace* gf = gm->getFaceByTag(tag);

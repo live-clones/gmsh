@@ -118,7 +118,7 @@ public:
                             GEntity *ge = nullptr) = 0;
   // vector value
   virtual void operator()(double x, double y, double z, SVector3 &,
-                          GEntity *ge = 0)
+                          GEntity *ge = nullptr)
   {
   }
   // anisotropic

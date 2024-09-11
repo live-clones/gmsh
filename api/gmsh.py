@@ -5183,6 +5183,8 @@ class model:
 
             Compute the alpha shape - improved function
 
+            Return `newNodeTags', `newNodeElementTags', `newNodeParametricCoord'.
+
             Types:
             - `dim': integer
             - `tag': integer
@@ -5191,11 +5193,17 @@ class model:
             - `alpha': double
             - `alphaShapeSizeField': integer
             - `refineSizeField': integer
+            - `newNodeTags': vector of sizes
+            - `newNodeElementTags': vector of sizes
+            - `newNodeParametricCoord': vector of doubles
             - `nodesDx': vector of doubles
             - `usePreviousMesh': boolean
             - `boundaryTolerance': double
             - `refine': boolean
             """
+            api_newNodeTags_, api_newNodeTags_n_ = POINTER(c_size_t)(), c_size_t()
+            api_newNodeElementTags_, api_newNodeElementTags_n_ = POINTER(c_size_t)(), c_size_t()
+            api_newNodeParametricCoord_, api_newNodeParametricCoord_n_ = POINTER(c_double)(), c_size_t()
             api_nodesDx_, api_nodesDx_n_ = _ivectordouble(nodesDx)
             ierr = c_int()
             lib.gmshModelMeshComputeAlphaShape(
@@ -5206,6 +5214,9 @@ class model:
                 c_double(alpha),
                 c_int(alphaShapeSizeField),
                 c_int(refineSizeField),
+                byref(api_newNodeTags_), byref(api_newNodeTags_n_),
+                byref(api_newNodeElementTags_), byref(api_newNodeElementTags_n_),
+                byref(api_newNodeParametricCoord_), byref(api_newNodeParametricCoord_n_),
                 api_nodesDx_, api_nodesDx_n_,
                 c_int(bool(usePreviousMesh)),
                 c_double(boundaryTolerance),
@@ -5213,6 +5224,10 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+            return (
+                _ovectorsize(api_newNodeTags_, api_newNodeTags_n_.value),
+                _ovectorsize(api_newNodeElementTags_, api_newNodeElementTags_n_.value),
+                _ovectordouble(api_newNodeParametricCoord_, api_newNodeParametricCoord_n_.value))
         compute_alpha_shape = computeAlphaShape
 
         @staticmethod

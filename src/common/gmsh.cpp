@@ -5691,8 +5691,8 @@ gmsh::model::mesh::advectMeshNodes(const int dim,
 #if defined(HAVE_MESH) && defined(HAVE_HXT)
   std::vector<alphaShapeBndEdge> bndEdges;
   OctreeNode<2, 32, alphaShapeBndEdge*> bnd_octree;
-  _createBoundaryOctree(boundaryModel, bndTag, bnd_octree, bndEdges);
-  _moveNodes(tag, bndTag, nodesDx, bnd_octree, boundaryTolerance);
+  AlphaShape::_createBoundaryOctree(boundaryModel, bndTag, bnd_octree, bndEdges);
+  AlphaShape::_moveNodes(tag, bndTag, nodesDx, bnd_octree, boundaryTolerance);
 #endif
 }
 
@@ -5704,6 +5704,9 @@ gmsh::model::mesh::computeAlphaShape(const int dim,
                                       const double alpha,
                                       const int alphaShapeSizeField,
                                       const int refineSizeField,
+                                      std::vector<size_t> &newNodeTags,
+                                      std::vector<size_t> &newNodeElementTags,
+                                      std::vector<double> &newNodeParametricCoords,
                                       const std::vector<double> & nodesDx,
                                       const bool usePreviousMesh,
                                       const double boundaryTolerance,
@@ -5715,7 +5718,7 @@ gmsh::model::mesh::computeAlphaShape(const int dim,
 
     std::vector<alphaShapeBndEdge> bndEdges;
     OctreeNode<2, 32, alphaShapeBndEdge*> bnd_octree;
-    _createBoundaryOctree(boundaryModel, bndTag, bnd_octree, bndEdges);
+    AlphaShape::_createBoundaryOctree(boundaryModel, bndTag, bnd_octree, bndEdges);
 
     // Move nodes if nodesDX is not empty
     // if (nodesDx.size() > 0){
@@ -5724,27 +5727,37 @@ gmsh::model::mesh::computeAlphaShape(const int dim,
 
     // Delaunay
     auto tic = std::chrono::high_resolution_clock::now();
-    PolyMesh* pm = _alphaShapeDelaunay2D(tag, boundaryModel);
+    PolyMesh* pm = AlphaShape::_alphaShapeDelaunay2D(tag, boundaryModel);
     auto toc = std::chrono::high_resolution_clock::now();
     std::cout << "Triangulate  : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
 
     // alpha shape
-    _alphaShape2D(pm, alpha, tag, bndTag, alphaShapeSizeField, usePreviousMesh);
+    OctreeNode<2, 32, MElement*> octree_prev;
+    if (usePreviousMesh) {
+      AlphaShape::_createOctreeForFace(GModel::current()->getFaceByTag(tag), octree_prev);
+    }
+    AlphaShape::_alphaShape2D(pm, alpha, tag, bndTag, alphaShapeSizeField, usePreviousMesh ? &octree_prev : nullptr);
     tic = std::chrono::high_resolution_clock::now();
     std::cout << "Alpha Shape  : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
     // edge recover
-    _edgeRecover(pm, tag, bndTag, boundaryModel, controlNodes, bnd_octree, boundaryTolerance);
+    AlphaShape::_edgeRecover(pm, tag, bndTag, boundaryModel, controlNodes, bnd_octree, boundaryTolerance);
     toc = std::chrono::high_resolution_clock::now();
     std::cout << "Edge recover : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
     // mesh adapt
     if (refine){
-      _delaunayRefinement(pm, tag, bndTag, refineSizeField, controlNodes);
+      AlphaShape::_delaunayRefinement(pm, tag, bndTag, refineSizeField, controlNodes);
       tic = std::chrono::high_resolution_clock::now();
       std::cout << "Refine       : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
     }
 
+    AlphaShape::filterNodes(pm, tag);
+
+    if (usePreviousMesh) {
+      AlphaShape::getNewNodesOnOldMesh(pm, octree_prev, newNodeTags, newNodeElementTags, newNodeParametricCoords);
+    }
+
     // back to gmsh
-    alphaShapePolyMesh2Gmsh(pm, tag, bndTag, boundaryModel, bnd_octree, boundaryTolerance);
+    AlphaShape::alphaShapePolyMesh2Gmsh(pm, tag, bndTag, boundaryModel, bnd_octree, boundaryTolerance);
     toc = std::chrono::high_resolution_clock::now();
     std::cout << "To Gmsh      : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
 
@@ -5770,7 +5783,7 @@ gmsh::model::mesh::computeAlphaShape3D(const int dim,
   if (dim == 2)
     Msg::Error("Use computeAlphaShape2D for 2D alpha shape");
   else if (dim == 3)
-    _computeAlphaShape3D(alphaShapeTags, alpha, hMean, sizeFieldCallback, triangulate, refine);
+    AlphaShape::_computeAlphaShape3D(alphaShapeTags, alpha, hMean, sizeFieldCallback, triangulate, refine);
   else 
     Msg::Error("Wrong dimension in alpha shape; 2 or 3");
 #else 
@@ -5783,7 +5796,7 @@ gmsh::model::mesh::decimateTriangulation(const int faceTag,
                                          const double thresholdDistance)
 {
 #if defined(HAVE_MESH)
-    _decimateTriangulation(faceTag, thresholdDistance);
+  AlphaShape::_decimateTriangulation(faceTag, thresholdDistance);
 #else 
   Msg::Error("decimateTriangulation requires the mesh and hxt modules");
 #endif

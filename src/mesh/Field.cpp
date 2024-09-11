@@ -3192,7 +3192,7 @@ FieldManager::FieldManager()
   mapTypeName["Gradient"] = new FieldFactoryT<GradientField>();
   mapTypeName["Octree"] = new FieldFactoryT<OctreeField>();
   mapTypeName["Distance"] = new FieldFactoryT<DistanceField>();
-  registerAlphaShapeField(this);
+  AlphaShape::registerAlphaShapeField(this);
   mapTypeName["Attractor"] = new FieldFactoryT<DistanceField>();
   mapTypeName["Extend"] = new FieldFactoryT<ExtendField>();
   mapTypeName["Restrict"] = new FieldFactoryT<RestrictField>();

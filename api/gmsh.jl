@@ -4568,6 +4568,8 @@ const advect_mesh_nodes = advectMeshNodes
 
 Compute the alpha shape - improved function
 
+Return `newNodeTags`, `newNodeElementTags`, `newNodeParametricCoord`.
+
 Types:
  - `dim`: integer
  - `tag`: integer
@@ -4576,18 +4578,30 @@ Types:
  - `alpha`: double
  - `alphaShapeSizeField`: integer
  - `refineSizeField`: integer
+ - `newNodeTags`: vector of sizes
+ - `newNodeElementTags`: vector of sizes
+ - `newNodeParametricCoord`: vector of doubles
  - `nodesDx`: vector of doubles
  - `usePreviousMesh`: boolean
  - `boundaryTolerance`: double
  - `refine`: boolean
 """
 function computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, nodesDx = Cdouble[], usePreviousMesh = false, boundaryTolerance = 1e-6, refine = true)
+    api_newNodeTags_ = Ref{Ptr{Csize_t}}()
+    api_newNodeTags_n_ = Ref{Csize_t}()
+    api_newNodeElementTags_ = Ref{Ptr{Csize_t}}()
+    api_newNodeElementTags_n_ = Ref{Csize_t}()
+    api_newNodeParametricCoord_ = Ref{Ptr{Cdouble}}()
+    api_newNodeParametricCoord_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshComputeAlphaShape, gmsh.lib), Cvoid,
-          (Cint, Cint, Cint, Ptr{Cchar}, Cdouble, Cint, Cint, Ptr{Cdouble}, Csize_t, Cint, Cdouble, Cint, Ptr{Cint}),
-          dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, convert(Vector{Cdouble}, nodesDx), length(nodesDx), usePreviousMesh, boundaryTolerance, refine, ierr)
+          (Cint, Cint, Cint, Ptr{Cchar}, Cdouble, Cint, Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cdouble}, Csize_t, Cint, Cdouble, Cint, Ptr{Cint}),
+          dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, api_newNodeTags_, api_newNodeTags_n_, api_newNodeElementTags_, api_newNodeElementTags_n_, api_newNodeParametricCoord_, api_newNodeParametricCoord_n_, convert(Vector{Cdouble}, nodesDx), length(nodesDx), usePreviousMesh, boundaryTolerance, refine, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    return nothing
+    newNodeTags = unsafe_wrap(Array, api_newNodeTags_[], api_newNodeTags_n_[], own = true)
+    newNodeElementTags = unsafe_wrap(Array, api_newNodeElementTags_[], api_newNodeElementTags_n_[], own = true)
+    newNodeParametricCoord = unsafe_wrap(Array, api_newNodeParametricCoord_[], api_newNodeParametricCoord_n_[], own = true)
+    return newNodeTags, newNodeElementTags, newNodeParametricCoord
 end
 const compute_alpha_shape = computeAlphaShape
 

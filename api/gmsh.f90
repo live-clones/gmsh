@@ -7549,6 +7549,9 @@ module gmsh
                                             alpha, &
                                             alphaShapeSizeField, &
                                             refineSizeField, &
+                                            newNodeTags, &
+                                            newNodeElementTags, &
+                                            newNodeParametricCoord, &
                                             nodesDx, &
                                             usePreviousMesh, &
                                             boundaryTolerance, &
@@ -7562,6 +7565,12 @@ module gmsh
                      alpha, &
                      alphaShapeSizeField, &
                      refineSizeField, &
+                     api_newNodeTags_, &
+                     api_newNodeTags_n_, &
+                     api_newNodeElementTags_, &
+                     api_newNodeElementTags_n_, &
+                     api_newNodeParametricCoord_, &
+                     api_newNodeParametricCoord_n_, &
                      api_nodesDx_, &
                      api_nodesDx_n_, &
                      usePreviousMesh, &
@@ -7577,6 +7586,12 @@ module gmsh
       real(c_double), value, intent(in) :: alpha
       integer(c_int), value, intent(in) :: alphaShapeSizeField
       integer(c_int), value, intent(in) :: refineSizeField
+      type(c_ptr), intent(out) :: api_newNodeTags_
+      integer(c_size_t), intent(out) :: api_newNodeTags_n_
+      type(c_ptr), intent(out) :: api_newNodeElementTags_
+      integer(c_size_t), intent(out) :: api_newNodeElementTags_n_
+      type(c_ptr), intent(out) :: api_newNodeParametricCoord_
+      integer(c_size_t) :: api_newNodeParametricCoord_n_
       real(c_double), dimension(*), optional :: api_nodesDx_
       integer(c_size_t), value, intent(in) :: api_nodesDx_n_
       integer(c_int), value, intent(in) :: usePreviousMesh
@@ -7592,11 +7607,20 @@ module gmsh
     real(c_double), intent(in) :: alpha
     integer, intent(in) :: alphaShapeSizeField
     integer, intent(in) :: refineSizeField
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: newNodeTags
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: newNodeElementTags
+    real(c_double), dimension(:), allocatable, intent(out) :: newNodeParametricCoord
     real(c_double), dimension(:), intent(in), optional :: nodesDx
     logical, intent(in), optional :: usePreviousMesh
     real(c_double), intent(in), optional :: boundaryTolerance
     logical, intent(in), optional :: refine
     integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_newNodeTags_
+    integer(c_size_t) :: api_newNodeTags_n_
+    type(c_ptr) :: api_newNodeElementTags_
+    integer(c_size_t) :: api_newNodeElementTags_n_
+    type(c_ptr) :: api_newNodeParametricCoord_
+    integer(c_size_t) :: api_newNodeParametricCoord_n_
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          bndTag=int(bndTag, c_int), &
@@ -7604,12 +7628,24 @@ module gmsh
          alpha=real(alpha, c_double), &
          alphaShapeSizeField=int(alphaShapeSizeField, c_int), &
          refineSizeField=int(refineSizeField, c_int), &
+         api_newNodeTags_=api_newNodeTags_, &
+         api_newNodeTags_n_=api_newNodeTags_n_, &
+         api_newNodeElementTags_=api_newNodeElementTags_, &
+         api_newNodeElementTags_n_=api_newNodeElementTags_n_, &
+         api_newNodeParametricCoord_=api_newNodeParametricCoord_, &
+         api_newNodeParametricCoord_n_=api_newNodeParametricCoord_n_, &
          api_nodesDx_=nodesDx, &
          api_nodesDx_n_=size_gmsh_double(nodesDx), &
          usePreviousMesh=optval_c_bool(.false., usePreviousMesh), &
          boundaryTolerance=optval_c_double(1e-6, boundaryTolerance), &
          refine=optval_c_bool(.true., refine), &
          ierr_=ierr)
+    newNodeTags = ovectorsize_(api_newNodeTags_, &
+      api_newNodeTags_n_)
+    newNodeElementTags = ovectorsize_(api_newNodeElementTags_, &
+      api_newNodeElementTags_n_)
+    newNodeParametricCoord = ovectordouble_(api_newNodeParametricCoord_, &
+      api_newNodeParametricCoord_n_)
   end subroutine gmshModelMeshComputeAlphaShape
 
   !> Decimate a triangulation
