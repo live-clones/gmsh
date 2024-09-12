@@ -27,12 +27,6 @@ public:
 		{
 			m_edge_interval_lists[i].initialize(&mesh->edges()[i]);
 		}
-	};
-
-        GeodesicAlgorithmExact(geodesic::Mesh* mesh, std::vector<double>* metric):
-	  GeodesicAlgorithmExact(mesh)
-	{
-	        _metric = metric;
 	};	
 
 	~GeodesicAlgorithmExact(){};
@@ -51,7 +45,6 @@ public:
 
 private:
 	typedef std::set<interval_pointer, Interval> IntervalQueue;
-        std::vector<double>* _metric = NULL;
 
 	void update_list_and_queue(list_pointer list,
 							   IntervalWithStop* candidates,	//up to two candidates
@@ -89,7 +82,7 @@ private:
 	interval_pointer best_first_interval(SurfacePoint& point, 
 										double& best_total_distance, 
 										double& best_interval_position,
-					                                        unsigned& best_source_index);
+										unsigned& best_source_index);
 
 	bool check_stop_conditions(unsigned& index);
 
@@ -310,21 +303,9 @@ inline void GeodesicAlgorithmExact::list_edges_visible_from_source(MeshElementBa
 	else			//VERTEX
 	{
 		vertex_pointer v = static_cast<vertex_pointer>(p);
-		if (_metric == NULL) {
-		  for(unsigned i=0; i<v->adjacent_edges().size(); ++i)
-		    {
-		      storage.push_back(v->adjacent_edges()[i]);
-		    }
-		}
-		else {
-		  for(unsigned i=0; i<v->adjacent_faces().size(); ++i)
-		    {
-		      auto f = v->adjacent_faces()[i];
-		      for (unsigned j = 0; j < f->adjacent_edges().size(); ++j) {
-			auto e = f->adjacent_edges()[j];
-			storage.push_back(e);
-		      }
-		    }
+		for(unsigned i=0; i<v->adjacent_edges().size(); ++i)
+		{
+			storage.push_back(v->adjacent_edges()[i]);
 		}
 
 	}
@@ -570,7 +551,7 @@ inline void GeodesicAlgorithmExact::propagate(std::vector<SurfacePoint>& sources
 		m_queue_max_size = std::max<int>(m_queue.size(), m_queue_max_size);
 
 		unsigned const check_period = 10;
-		if(++m_iterations % check_period == 0)          //check if we covered all required vertices
+    	if(++m_iterations % check_period == 0)		//check if we covered all required vertices
 		{
 			if (check_stop_conditions(satisfied_index))
 			{
@@ -589,12 +570,8 @@ inline void GeodesicAlgorithmExact::propagate(std::vector<SurfacePoint>& sources
 		//bool const last_interval = min_interval->stop() == edge->length();
 		bool const last_interval = min_interval->next() == NULL;
 
-		bool turn_left = edge->v0()->saddle_or_boundary();
-		bool turn_right = edge->v1()->saddle_or_boundary();
-		if (_metric != NULL) {
-		  turn_left = true;
-		  turn_right = true;
-		}
+		bool const turn_left = edge->v0()->saddle_or_boundary();
+		bool const turn_right = edge->v1()->saddle_or_boundary();
 
 		for(unsigned i=0; i<edge->adjacent_faces().size(); ++i)		//two possible faces to propagate
 		{
@@ -610,30 +587,12 @@ inline void GeodesicAlgorithmExact::propagate(std::vector<SurfacePoint>& sources
 			face_pointer face = edge->adjacent_faces()[i];			//if we come from 1, go to 2
 			edge_pointer next_edge = face->next_edge(edge,edge->v0());
 
-			double l = 0.;
-			double edgeMetric = 0.;
-			if (_metric != NULL) {
-			  for (int j = 0; j < 3; ++j) {
-			    auto v0 = face->adjacent_vertices()[j];
-			    auto v1 = face->adjacent_vertices()[(j+1)%3];
-			    l += norm(SVector3(v1->x()-v0->x(),
-					       v1->y()-v0->y(),
-					       v1->z()-v0->z()));
-			    size_t id = v0->id();
-			    edgeMetric += (*_metric)[id];
-			  }
-			  l /= 3;
-			  edgeMetric *= l;
-			  edgeMetric /= 3;
-			}
-
-			unsigned num_propagated = compute_propagated_parameters(min_interval->pseudo_x(),
+			unsigned num_propagated = compute_propagated_parameters(min_interval->pseudo_x(), 
 																	 min_interval->pseudo_y(), 
-
-					 min_interval->d() + edgeMetric,		//parameters of the interval
+																	 min_interval->d(),		//parameters of the interval
 																	 min_interval->start(), 
 																	 min_interval->stop(),		//start/end of the interval
-																	 face->vertex_angle(edge->v0()),        //corner angle
+																	 face->vertex_angle(edge->v0()),	//corner angle
 																	 next_edge->length(),		//length of the new edge
 																	 first_interval,		//if it is the first interval on the edge
 																	 last_interval,
@@ -671,7 +630,7 @@ inline void GeodesicAlgorithmExact::propagate(std::vector<SurfacePoint>& sources
 
 				num_propagated = compute_propagated_parameters(length - min_interval->pseudo_x(), 
 															 min_interval->pseudo_y(), 
-									       min_interval->d() + edgeMetric,		//parameters of the interval
+															 min_interval->d(),		//parameters of the interval
 															 length - min_interval->stop(), 
 															 length - min_interval->start(),		//start/end of the interval
 															 face->vertex_angle(edge->v1()),	//corner angle
@@ -844,8 +803,7 @@ inline void GeodesicAlgorithmExact::update_list_and_queue(list_pointer list,
 
 			if(N == 1)			
 			{
-
-			        if(map[0]==OLD)	//if "p" is always better, we do not need to update anything)
+				if(map[0]==OLD)	//if "p" is always better, we do not need to update anything)
 				{
 					if(previous)		//close previous interval and put in into the queue
 					{
@@ -995,7 +953,7 @@ inline unsigned GeodesicAlgorithmExact::compute_propagated_parameters(double pse
 																		bool turn_left,
 																		bool turn_right,
 																		IntervalWithStop* candidates)		//if it is the last interval on the edge
-{
+{				
 	assert(pseudo_y<=0.0);
 	assert(d<GEODESIC_INF/10.0);
 	assert(begin<=end);
@@ -1224,6 +1182,7 @@ inline unsigned GeodesicAlgorithmExact::best_source(SurfacePoint& point,			//qui
 {
 	double best_interval_position; 
 	unsigned best_source_index;
+
 	best_first_interval(point, 
 						best_source_distance, 
 						best_interval_position, 
@@ -1337,7 +1296,6 @@ inline void GeodesicAlgorithmExact::trace_back(SurfacePoint& destination,		//tra
 										std::vector<SurfacePoint>& path)
 {					
 	path.clear();
-	
 	double best_total_distance; 
 	double best_interval_position;
 	unsigned source_index = std::numeric_limits<unsigned>::max();
@@ -1357,10 +1315,10 @@ inline void GeodesicAlgorithmExact::trace_back(SurfacePoint& destination,		//tra
 	{
 		std::vector<edge_pointer> possible_edges;
 		possible_edges.reserve(10);
-
+	
 		while(visible_from_source(path.back()) < 0)		//while this point is not in the direct visibility of some source (if we are inside the FACE, we obviously hit the source)
 		{
-		        SurfacePoint& q = path.back();
+			SurfacePoint& q = path.back();
 
 			possible_traceback_edges(q, possible_edges);
 
@@ -1379,26 +1337,19 @@ inline void GeodesicAlgorithmExact::trace_back(SurfacePoint& destination,		//tra
 			source_index = interval->source_index();
 
 			edge_pointer e = interval->edge();
-
 			double local_epsilon = SMALLEST_INTERVAL_RATIO*e->length();
-			if (_metric == NULL) {
-			  if(position < local_epsilon)
-			    {
-			      path.push_back(SurfacePoint(e->v0()));
-			    }
-			  else if(position > e->length()-local_epsilon)
-			    {
-			      path.push_back(SurfacePoint(e->v1()));
-			    }
-			  else
-			    {
-			      double normalized_position = position/e->length();
-			      path.push_back(SurfacePoint(e, normalized_position));
-			    }
+			if(position < local_epsilon)
+			{
+				path.push_back(SurfacePoint(e->v0()));
 			}
-			else {
-			  double normalized_position = position/e->length();
-			  path.push_back(SurfacePoint(e, normalized_position));
+			else if(position > e->length()-local_epsilon)
+			{
+				path.push_back(SurfacePoint(e->v1()));
+			}
+			else
+			{
+				double normalized_position = position/e->length();
+				path.push_back(SurfacePoint(e, normalized_position));
 			}
 		}
 	}
