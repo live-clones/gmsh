@@ -249,6 +249,7 @@ int GFace2PolyMesh(int faceTag, PolyMesh **pm)
       }
 
       PolyMesh::Face *ff = new PolyMesh::Face(he[0]);
+      ff->data = (*pm)->faces.size();
       (*pm)->faces.push_back(ff);
 
       for(int j = 0; j < nNod; j++) {
@@ -526,7 +527,7 @@ static int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
     }
   }
 
-  int nbIntersection = _list.size();
+  // int nbIntersection = _list.size();
   //  printf("%d intersections\n", nbIntersection);
   int K = 100;
   int _iter = 0;
@@ -550,7 +551,7 @@ static int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
     if(_iter++ > 1000) return -1;
   }
   //  printf("%d intersections done\n", nbIntersection);
-  return nbIntersection;
+  return _list.size();
 }
 
 static PolyMesh::HalfEdge *Color(PolyMesh::HalfEdge *he, int color)
@@ -1132,7 +1133,7 @@ int meshTriangulate2d(const std::vector<double> &coord,
     for(size_t i = 0; i < rec->size(); i += 2) {
       if(recover_edge(pm, pm->vertices[4 + (*rec)[i]],
                       pm->vertices[4 + (*rec)[i + 1]]))
-        Msg::Debug("impossible to recover an edge");
+        Msg::Error("impossible to recover an edge");
       else {
         PolyMesh::HalfEdge *he_ = pm->getEdge(pm->vertices[4 + (*rec)[i]],
                                               pm->vertices[4 + (*rec)[i + 1]]);
