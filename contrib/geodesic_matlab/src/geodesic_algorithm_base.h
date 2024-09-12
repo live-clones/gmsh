@@ -68,8 +68,7 @@ protected:
 
 	AlgorithmType m_type;					   // type of the algorithm
 
-	typedef std::pair<vertex_pointer, double> stop_vertex_with_distace_type;
-	std::vector<stop_vertex_with_distace_type> m_stop_vertices; // algorithm stops propagation after covering certain vertices
+	std::vector<SurfacePoint *> m_stop_vertices; // algorithm stops propagation after covering certain surface points
 	double m_max_propagation_distance;			 // or reaching the certain distance
 
 	geodesic::Mesh* m_mesh;
@@ -159,31 +158,8 @@ inline void GeodesicAlgorithmBase::set_stop_conditions(std::vector<SurfacePoint>
 	}
 
 	m_stop_vertices.resize(stop_points->size());
-
-	std::vector<vertex_pointer> possible_vertices;
 	for(unsigned i = 0; i < stop_points->size(); ++i)
-	{
-		SurfacePoint* point = &(*stop_points)[i];
-
-		possible_vertices.clear();
-		m_mesh->closest_vertices(point, &possible_vertices);
-		
-		vertex_pointer closest_vertex = NULL;
-		double min_distance = 1e100;
-		for(unsigned j = 0; j < possible_vertices.size(); ++j)
-		{
-			double distance = point->distance(possible_vertices[j]);
-			if(distance < min_distance)
-			{
-				min_distance = distance;
-				closest_vertex = possible_vertices[j];
-			}
-		}
-		assert(closest_vertex);
-
-		m_stop_vertices[i].first = closest_vertex;
-		m_stop_vertices[i].second = min_distance;
-	}
+		m_stop_vertices[i] = &(*stop_points)[i];
 }
 
 }//geodesic

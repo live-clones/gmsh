@@ -689,14 +689,11 @@ inline bool GeodesicAlgorithmExact::check_stop_conditions(unsigned& index)
 
 	while(index < m_stop_vertices.size())
 	{
-		vertex_pointer v = m_stop_vertices[index].first;
-		edge_pointer edge = v->adjacent_edges()[0];				//take any edge
-
-		double distance = edge->v0()->id() == v->id() ? 
-						  interval_list(edge)->signal(0.0) :
-						  interval_list(edge)->signal(edge->length());
-
-		if(queue_distance < distance + m_stop_vertices[index].second)
+		SurfacePoint *sp = m_stop_vertices[index];
+		double best_total_distance = GEODESIC_INF, best_interval_position;
+		unsigned best_source_index;
+		interval_pointer interval = best_first_interval(*sp, best_total_distance, best_interval_position, best_source_index);
+		if (queue_distance <= best_total_distance + 1e-6)
 		{
 			return false;
 		}
@@ -1281,15 +1278,7 @@ inline interval_pointer GeodesicAlgorithmExact::best_first_interval(SurfacePoint
 		}
 	}
 
-	if(best_total_distance > m_propagation_distance_stopped)		//result is unreliable
-	{
-		best_total_distance = GEODESIC_INF;
-		return NULL;
-	}
-	else
-	{
-		return best_interval;
-	}
+	return best_interval;
 }
 
 inline void GeodesicAlgorithmExact::trace_back(SurfacePoint& destination,		//trace back piecewise-linear path
