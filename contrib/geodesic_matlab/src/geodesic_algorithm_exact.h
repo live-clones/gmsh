@@ -2,6 +2,8 @@
 #ifndef GEODESIC_ALGORITHM_EXACT_20071231
 #define GEODESIC_ALGORITHM_EXACT_20071231
 
+#define ASTAR true
+
 #include "geodesic_memory.h"
 #include "geodesic_algorithm_base.h"
 #include "geodesic_algorithm_exact_elements.h"
@@ -139,6 +141,9 @@ private:
 	unsigned m_iterations;			//used for statistics
 
 	SortedSources m_sources;
+#if ASTAR
+	SurfacePoint *next_destination;
+#endif
 };
 
 inline void GeodesicAlgorithmExact::best_point_on_the_edge_set(SurfacePoint& point, 
@@ -518,9 +523,17 @@ inline void GeodesicAlgorithmExact::initialize_propagation_data()
 		for(unsigned j=0; j<edges_visible_from_source.size(); ++j)
 		{
 			edge_pointer e = edges_visible_from_source[j];
+		#if not ASTAR
 			candidate.initialize(e, source, i);
+		#else
+			candidate.initialize(e, source, i, next_destination);
+		#endif
             candidate.stop() = e->length();
+		#if not ASTAR
 			candidate.compute_min_distance(candidate.stop());
+		#else
+			candidate.compute_min_distance(candidate.stop(), next_destination);
+		#endif
 			candidate.direction() = Interval::FROM_SOURCE;
 
 			update_list_and_queue(interval_list(e), &candidate, 1);
@@ -533,12 +546,15 @@ inline void GeodesicAlgorithmExact::propagate(std::vector<SurfacePoint>& sources
 									   std::vector<SurfacePoint>* stop_points)
 {
 	set_stop_conditions(stop_points, max_propagation_distance);
+	unsigned next_stop_index = 0;
+#if ASTAR
+	next_destination = m_stop_vertices.size() ? m_stop_vertices[next_stop_index] : nullptr;
+#endif
+
 	set_sources(sources);
 	initialize_propagation_data();
 
 	clock_t start = clock();
-
-	unsigned satisfied_index = 0;
 
 	m_iterations = 0;		//for statistics
 	m_queue_max_size = 0;
@@ -553,7 +569,7 @@ inline void GeodesicAlgorithmExact::propagate(std::vector<SurfacePoint>& sources
 		unsigned const check_period = 10;
     	if(++m_iterations % check_period == 0)		//check if we covered all required vertices
 		{
-			if (check_stop_conditions(satisfied_index))
+			if (check_stop_conditions(next_stop_index))
 			{
 				break;
 			}
@@ -699,6 +715,17 @@ inline bool GeodesicAlgorithmExact::check_stop_conditions(unsigned& index)
 		}
 
 		++index;
+	#if ASTAR
+		if (index >= m_stop_vertices.size()) break;
+		next_destination = m_stop_vertices[index];
+
+		std::vector<interval_pointer> tmp(m_queue.begin(), m_queue.end());
+		m_queue.clear();
+		for (auto &p : tmp)
+			p->compute_min_distance(p->stop(), next_destination);
+		m_queue.insert(tmp.begin(), tmp.end());
+		queue_distance = (*m_queue.begin())->min();
+	#endif
 	}
 	return true;
 }
@@ -723,7 +750,11 @@ inline void GeodesicAlgorithmExact::update_list_and_queue(list_pointer list,
 		{
 			first = candidates;
 			second = candidates;
+		#if not ASTAR
 			first->compute_min_distance(first->stop());
+		#else
+			first->compute_min_distance(first->stop(), next_destination);
+		#endif
 		}
 		else 
 		{	
@@ -739,8 +770,13 @@ inline void GeodesicAlgorithmExact::update_list_and_queue(list_pointer list,
 			}
 			assert(first->stop() == second->start());
 
+		#if not ASTAR
 			first->compute_min_distance(first->stop());
 			second->compute_min_distance(second->stop());
+		#else
+			first->compute_min_distance(first->stop(), next_destination);
+			second->compute_min_distance(second->stop(), next_destination);
+		#endif
 		}
 
 		if(first->start() > 0.0)
@@ -805,7 +841,11 @@ inline void GeodesicAlgorithmExact::update_list_and_queue(list_pointer list,
 					if(previous)		//close previous interval and put in into the queue
 					{
 						previous->next() = p;
+					#if not ASTAR
 						previous->compute_min_distance(p->start());
+					#else
+						previous->compute_min_distance(p->start(), next_destination);
+					#endif
 						m_queue.insert(previous);
 						previous = NULL;
 					}
@@ -853,7 +893,11 @@ inline void GeodesicAlgorithmExact::update_list_and_queue(list_pointer list,
 				if(previous)
 				{
 					previous->next() = p;
+				#if not ASTAR
 					previous->compute_min_distance(previous->stop());
+				#else
+					previous->compute_min_distance(previous->stop(), next_destination);
+				#endif
 					m_queue.insert(previous);
 					previous = NULL;
 				}
@@ -917,7 +961,11 @@ inline void GeodesicAlgorithmExact::update_list_and_queue(list_pointer list,
 				{
 					interval_pointer current_interval = i_new[j];
 
+				#if not ASTAR
 					current_interval->compute_min_distance(current_interval->stop());					//compute minimal distance
+				#else
+					current_interval->compute_min_distance(current_interval->stop(), next_destination);					//compute minimal distance
+				#endif
 
 					if(map[j]==NEW || (map[j]==OLD && propagate_flag))
 					{
@@ -931,7 +979,11 @@ inline void GeodesicAlgorithmExact::update_list_and_queue(list_pointer list,
 
 		if(previous)		//close previous interval and put in into the queue
 		{
+		#if not ASTAR
 			previous->compute_min_distance(previous->stop());
+		#else
+			previous->compute_min_distance(previous->stop(), next_destination);
+		#endif
 			m_queue.insert(previous);
 			previous = NULL;
 		}

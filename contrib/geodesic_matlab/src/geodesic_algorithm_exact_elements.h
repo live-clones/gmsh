@@ -74,6 +74,7 @@ public:
 		}
 	}
 
+#if not ASTAR
 	void compute_min_distance(double stop)			//compute min, given c,d theta, start, end.
 	{
 		assert(stop > m_start);
@@ -96,6 +97,23 @@ public:
 			m_min = m_d - m_pseudo_y;
 		} 
 	}
+#else
+	void compute_min_distance(double stop, SurfacePoint *destination = nullptr)			//compute min, given c,d theta, start, end.
+	{
+		assert(stop > m_start);
+
+		if(m_d == GEODESIC_INF)
+		{
+			m_min = GEODESIC_INF;
+			return;
+		}
+
+		double x, y, offset, distance;
+		m_edge->local_coordinates(destination, x, y);
+		find_closest_point(x, y, offset, distance);
+		m_min = distance;
+	}
+#endif
 			//compare two intervals in the queue
 	bool operator()(interval_pointer const x, interval_pointer const y) const
 	{
@@ -141,7 +159,12 @@ public:
 
 	void initialize(edge_pointer edge, 
 					SurfacePoint* point = NULL, 
+				#if not ASTAR
 					unsigned source_index = 0);
+				#else
+					unsigned source_index = 0,
+					SurfacePoint *destination = nullptr);
+				#endif
 
 protected:
 	double m_start;						//initial point of the interval on the edge
@@ -398,7 +421,12 @@ inline void Interval::find_closest_point(double const rs,
 
 inline void Interval::initialize(edge_pointer edge, 
 								 SurfacePoint* source,		
+							#if not ASTAR
 								 unsigned source_index)
+							#else
+								 unsigned source_index,
+								 SurfacePoint *destination)
+							#endif
 {
 	m_next = NULL;
 	//m_geodesic_previous = NULL;	
@@ -437,7 +465,11 @@ inline void Interval::initialize(edge_pointer edge,
 	edge->local_coordinates(source, m_pseudo_x, m_pseudo_y);
 	m_pseudo_y = -m_pseudo_y;
 
+#if not ASTAR
 	compute_min_distance(stop());
+#else
+	compute_min_distance(stop(), destination);
+#endif
 } 
 
 }		//geodesic
