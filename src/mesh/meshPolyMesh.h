@@ -9,6 +9,8 @@
 #include <vector>
 #include <map>
 #include <algorithm>
+#include <set>
+#include <unordered_set>
 #include <stack>
 #include <stdio.h>
 #include "SVector3.h"
@@ -23,13 +25,14 @@ public:
 
   class Vertex {
   public:
-    Vertex(double x, double y, double z, int _d = -1)
-      : position(x, y, z), he(NULL), data(_d)
+    Vertex(double x, double y, double z, int _d = -1, double _cl = 1.0)
+      : position(x, y, z), he(NULL), data(_d), cl(_cl)
     {
     }
     SVector3 position;
     PolyMesh::HalfEdge *he; // one incident half edge
     int data;
+    double cl;
 
     inline double gaussianCurvature() const
     {
@@ -162,10 +165,11 @@ public:
 
   void print4debug(const int debugTag)
   {
-    char name[256];
-    sprintf(name, "polyMesh%d.pos", debugTag);
-    FILE *f = fopen(name, "w");
-    fprintf(f, "View \" %s \"{\n", name);
+    std::string name = "polyMesh" + std::to_string(debugTag) + ".pos";
+    // char name[256];
+    // sprintf(name, "polyMesh%d.pos", debugTag);
+    FILE *f = fopen(name.c_str(), "w");
+    fprintf(f, "View \" %s \"{\n", name.c_str());
     for(auto it : faces) {
       HalfEdge *he0 = it->he;
       HalfEdge *he1 = it->he->next;
@@ -810,6 +814,47 @@ public:
     return 0;
   }
 
+  inline int split_edges(const std::vector<HalfEdge *> &hes,
+                         const std::vector<SVector3> &positions,
+                         const std::vector<double> &datas = {})
+  {
+    std::map<PolyMesh::Face *, int> nbSplits;
+    for (auto f: faces)
+      nbSplits[f] = 0;
+    for (auto he: hes) {
+      ++nbSplits[he->f];
+      if (he->opposite != nullptr)
+        ++nbSplits[he->opposite->f];
+    }
+
+    std::vector<PolyMesh::HalfEdge *> hesToSwap;
+    for (size_t i = 0; i < hes.size(); ++i) {
+      PolyMesh::HalfEdge *he = hes[i];
+      SVector3 position = positions[i];
+      int r;
+      if (he->opposite != nullptr)
+        r = split_edge(he, position, datas.empty() ? -1 : datas[i]);
+      else {
+        std::vector<HalfEdge *> new_bnd_hes;
+        r = split_boundary_edge(he, position, datas.empty() ? -1 : datas[i], &new_bnd_hes);
+      }
+      if (r != 0)
+        return r;
+
+      if (nbSplits[he->f]-- == 3)
+        hesToSwap.push_back(he->next);
+      if (he->opposite != nullptr) {
+        he = he->opposite->prev->opposite;
+        if (nbSplits[he->f]-- == 3)
+          hesToSwap.push_back(he);
+      }
+    }
+
+    for (auto he: hesToSwap)
+      swap_edge(he);
+    return 0;
+  }
+
   //
   // v0   he0
   // ------------------>------ v1
@@ -861,7 +906,7 @@ public:
 
   inline int split_triangle(int index, double x, double y, double z, Face *f,
                             int (*doSwap)(PolyMesh::HalfEdge *, void *) = NULL,
-                            void *data = NULL,
+                            void *data = NULL, 
                             std::vector<HalfEdge *> *_t = NULL)
   {
     Vertex *v = new PolyMesh::Vertex(x, y, z); // one more vertex
@@ -958,20 +1003,29 @@ public:
     }
     return 0;
   }
-  void fastMarching(std::vector<Vertex *> &seeds,
-                    std::map<Vertex *, double> &d);
-  void fastMarching(Vertex *v, std::map<Vertex *, double> &d)
+  void fastMarching(const std::unordered_set<Vertex *> &seeds,
+                    std::unordered_map<Vertex *, double> &d,
+                    const std::unordered_set<Vertex *> &destination = {});
+  void fastMarching(Vertex *v, std::unordered_map<Vertex *, double> &d)
   {
-    std::vector<Vertex *> seeds;
-    seeds.push_back(v);
+    std::unordered_set<Vertex *> seeds;
+    seeds.insert(v);
     fastMarching(seeds, d);
   }
 
-  int decimate(double d, std::map<Vertex *, SVector3> *cogs = nullptr,
+  double computeDistanceToAverage(Vertex *v,
+                          std::map<Vertex *, SVector3> *cogs = nullptr,
+                          std::map<Vertex *, SVector3> *nrms = nullptr);
+  int decimate(double thresholdDistance, const std::set<Vertex *> & keep = {},
+                       std::map<Vertex *, SVector3> *cogs = nullptr,
+                       std::map<Vertex *, SVector3> *nrms = nullptr);
+  int decimateInOrder(double d, const std::set<Vertex *> & keep = {},
+               std::map<Vertex *, SVector3> *cogs = nullptr,
                std::map<Vertex *, SVector3> *nrms = nullptr);
   void computeNormalsAndCentersOfGravity(
     std::map<PolyMesh::Vertex *, SVector3> &cogs,
     std::map<PolyMesh::Vertex *, SVector3> &nrms);
+  int collapseEdges(double d, const std::set<Vertex *> & keep = {});
 };
 
 struct HalfEdgePtrLessThan {

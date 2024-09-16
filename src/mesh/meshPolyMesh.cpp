@@ -8,6 +8,7 @@
 #include "meshPolyMesh.h"
 #include "Numeric.h"
 #include "OS.h"
+#include <iostream>
 
 // #include "geodesic_mesh.h"
 // #include "geodesic_algorithm_exact.h"
@@ -50,11 +51,13 @@ PolyMesh::PolyMesh(const PolyMesh &p)
 }
 
 static void update(double lsit, PolyMesh::Vertex *vi,
-                   std::map<PolyMesh::Vertex *, double> &ls,
+                   std::unordered_map<PolyMesh::Vertex *, double> &ls,
                    std::set<std::pair<double, PolyMesh::Vertex *>> &front)
 {
-  std::pair<double, PolyMesh::Vertex *> pp = std::make_pair(ls[vi], vi);
-  front.erase(pp);
+  if (ls.find(vi) != ls.end()) { 
+    std::pair<double, PolyMesh::Vertex *> pp = std::make_pair(ls[vi], vi);
+    front.erase(pp);
+  }
   std::pair<double, PolyMesh::Vertex *> pp_new = std::make_pair(lsit, vi);
   front.insert(pp_new);
   ls[vi] = lsit;
@@ -70,60 +73,155 @@ static double trialedge(PolyMesh::Vertex *vi, PolyMesh::Vertex *vj, double lsi)
 double trialtriangle(PolyMesh::Vertex *vi, PolyMesh::Vertex *vj,
                      PolyMesh::Vertex *vk, double lsi, double lsj)
 {
-  SVector3 ki = vk->position - vi->position;
-  SVector3 kj = vk->position - vj->position;
-  SVector3 pv = crossprod(ki, kj);
+  // SVector3 ki = vk->position - vi->position;
+  // SVector3 kj = vk->position - vj->position;
+  // SVector3 pv = crossprod(ki, kj);
 
-  SPoint2 pk(0.0, 0.0);
-  SPoint2 pi(ki.norm(), 0.0);
-  double xj = dot(ki, kj) / ki.norm();
-  double yj = pv.norm() / ki.norm();
-  SPoint2 pj(xj, yj);
+  // SPoint2 pk(0.0, 0.0);
+  // SPoint2 pi(ki.norm(), 0.0);
+  // double xj = dot(ki, kj) / ki.norm();
+  // double yj = pv.norm() / ki.norm();
+  // SPoint2 pj(xj, yj);
 
-  double base[2][2] = {{pk.x() - pi.x(), pk.x() - pj.x()},
-                       {pk.y() - pi.y(), pk.y() - pj.y()}};
-  double m00 = base[0][0] * base[0][0] + base[1][0] * base[1][0];
-  double m11 = base[0][1] * base[0][1] + base[1][1] * base[1][1];
-  double m01 = base[0][0] * base[0][1] + base[1][0] * base[1][1];
-  double detm = m00 * m11 - m01 * m01;
-  double dm00 = m11 / detm;
-  double dm11 = m00 / detm;
-  double dm01 = -m01 / detm;
-  double a = dm00 + dm11 + 2 * dm01;
-  double dmd0 = dm00 * lsi + dm01 * lsj;
-  double dmd1 = dm01 * lsi + dm11 * lsj;
-  double b = -2. * (dmd0 + dmd1);
-  double c = lsi * dmd0 + lsj * dmd1 - 1.;
-  double delta = b * b - 4. * a * c;
-  if(delta < 0) return -1.0;
-  double sdelta = sqrt(delta);
-  double lskt = (-b - sdelta) / 2. / a;
-  if(lskt <= lsi) lskt = (-b + sdelta) / 2. / a;
-  if(lskt < lsi) return -1.0;
-  double gduali = lskt - lsi;
-  double gdualj = lskt - lsj;
-  double g1 = dm00 * gduali + dm01 * gdualj;
-  double g2 = dm01 * gduali + dm11 * gdualj;
-  if(g1 >= 0 && g2 >= 0) return lskt;
-  return -1.0;
+  // double base[2][2] = {{pk.x() - pi.x(), pk.x() - pj.x()},
+  //                      {pk.y() - pi.y(), pk.y() - pj.y()}};
+  // double m00 = base[0][0] * base[0][0] + base[1][0] * base[1][0];
+  // double m11 = base[0][1] * base[0][1] + base[1][1] * base[1][1];
+  // double m01 = base[0][0] * base[0][1] + base[1][0] * base[1][1];
+  // double detm = m00 * m11 - m01 * m01;
+  // double dm00 = m11 / detm;
+  // double dm11 = m00 / detm;
+  // double dm01 = -m01 / detm;
+  // double a = dm00 + dm11 + 2 * dm01;
+  // double dmd0 = dm00 * lsi + dm01 * lsj;
+  // double dmd1 = dm01 * lsi + dm11 * lsj;
+  // double b = -2. * (dmd0 + dmd1);
+  // double c = lsi * dmd0 + lsj * dmd1 - 1.;
+  // double delta = b * b - 4. * a * c;
+  // if(delta < 0) return -1.0;
+  // double sdelta = sqrt(delta);
+  // double lskt = (-b - sdelta) / 2. / a;
+  // if(lskt <= lsi) lskt = (-b + sdelta) / 2. / a;
+  // if(lskt < lsi) return -1.0;
+  // double gduali = lskt - lsi;
+  // double gdualj = lskt - lsj;
+  // double g1 = dm00 * gduali + dm01 * gdualj;
+  // double g2 = dm01 * gduali + dm11 * gdualj;
+  // if(g1 >= 0 && g2 >= 0) return lskt;
+  // return -1.0;
+
+  PolyMesh::Vertex *v1 = vi;
+  PolyMesh::Vertex *v2 = vj;
+  double l1 = lsi;
+  double l2 = lsj;
+  if (l1 > l2) {
+    std::swap(v1, v2);
+    std::swap(l1, l2);
+  }
+  
+  SVector3 e1 = v2->position - v1->position;
+  double l12 = e1.norm();
+  if (l12 < 1.e-12) Msg::Error("norm is zero");
+  e1 *= 1./l12;
+  SVector3 e2 = vk->position - v1->position;
+  double l = dot(e1, e2);
+  e2 -= l * e1;
+  l = e2.norm();
+  if (l < 1.e-12) Msg::Error("norm is zero");
+  e2 *= 1./l;
+
+  SVector3 n = (l2 - l1) * e1 + l12 * e2;
+  l = n.norm();
+  if (l < 1.e-12) Msg::Error("norm is zero");
+  n *= 1./l;
+
+  // SVector3 v23 = vk->position - v2->position;
+  // if (dot(v23, n) < 0) return -1.0;
+  // double lskt = l2 + dot(v23, n);
+
+  // SVector3 v13 = vk->position - v1->position;
+  // double lskt2 = l1 + norm(v13);
+  // if (lskt2 < lskt) {
+  //   lskt = lskt2;
+  // }
+
+  // if (vk->data == 1050)
+  //   std::cout << "l1=" << l1 << " l2=" << l2 << " lskt=" << lskt << " lskt2=" << lskt2 << std::endl;
+
+
+  SVector3 v13 = vk->position - v1->position;
+  SVector3 v23 = vk->position - v2->position;
+  double d = dot(v13, n);
+  SVector3 tmp = v13 - d * n;
+  double t = dot(tmp, e1) / l12;
+  double lskt;
+  if (t < 0) {
+    lskt = l1 + norm(v13);
+  }
+  else if (t > 1) {
+    lskt = l2 + norm(v23);
+  }
+  else {
+    lskt = l2 + dot(v23, n);
+  }
+
+  // SVector3 v13 = vk->position - v1->position;
+  // double lskt = l1 + norm(v13);
+
+  // SVector3 v23 = vk->position - v2->position;
+  // lskt = std::min(lskt, l2 + norm(v23));
+
+  // SVector3 cp1 = crossprod(v13, n);
+  // SVector3 cp2 = crossprod(n, v23);
+  // if (dot(cp1, crossprod(e1,e2)) > 0 && dot(cp2, crossprod(e1,e2)) > 0) {
+  //   lskt = std::min(lskt, l2 + dot(v23, n));
+  // }
+
+  return lskt;
+
 }
 
 static void treatedge(PolyMesh::Vertex *vi, PolyMesh::Vertex *vj,
-                      std::map<PolyMesh::Vertex *, double> &ls,
-                      std::set<std::pair<double, PolyMesh::Vertex *>> &front)
+                      std::unordered_map<PolyMesh::Vertex *, double> &ls,
+                      std::set<std::pair<double, PolyMesh::Vertex *>> &front,
+                      const std::unordered_set<PolyMesh::Vertex *> &destinations = {},
+                      std::unordered_map<PolyMesh::Vertex *, double> *hls = nullptr)
 {
   double lsjt = trialedge(vi, vj, ls[vi]);
-  if(lsjt < ls[vj]) update(lsjt, vj, ls, front);
+  // if (lsjt >= ls[vj]) return;
+  if (ls.find(vj) != ls.end() && lsjt >= ls[vj]) return;
+  if (hls == nullptr) {
+    update(lsjt, vj, ls, front);
+  }
+  else {
+    double hlsjt = lsjt;
+    for (auto d: destinations)
+      hlsjt += (vj->position - d->position).norm();
+    ls[vj] = lsjt;
+    update(hlsjt, vj, *hls, front);
+  }
 }
 
 static void
 treattriangle(PolyMesh::Vertex *vi, PolyMesh::Vertex *vj, PolyMesh::Vertex *vk,
-              std::map<PolyMesh::Vertex *, double> &ls,
-              std::set<std::pair<double, PolyMesh::Vertex *>> &front)
+              std::unordered_map<PolyMesh::Vertex *, double> &ls,
+              std::set<std::pair<double, PolyMesh::Vertex *>> &front,
+              const std::unordered_set<PolyMesh::Vertex *> &destinations = {},
+              std::unordered_map<PolyMesh::Vertex *, double> *hls = nullptr)
 {
   double lskt = trialtriangle(vi, vj, vk, ls[vi], ls[vj]);
   if(lskt < 0) return;
-  if(lskt < ls[vk]) update(lskt, vk, ls, front);
+  // if (lskt >= ls[vk]) return;
+  if (ls.find(vk) != ls.end() && lskt >= ls[vk]) return;
+  if (hls == nullptr) {
+    update(lskt, vk, ls, front);
+  } else {
+    double hlskt = lskt;
+    for (auto d: destinations)
+      hlskt += (vk->position - d->position).norm();
+    ls[vk] = lskt;
+    update(hlskt, vk, *hls, front);
+  }
 }
 
 void print__(const char *fn, PolyMesh *pm,
@@ -334,54 +432,114 @@ void print__(const char *fn, PolyMesh *pm,
 //   }
 // }
 
-void PolyMesh::fastMarching(std::vector<Vertex *> &seeds,
-                            std::map<Vertex *, double> &ls)
+void PolyMesh::fastMarching(const std::unordered_set<Vertex *> &seeds,
+                            std::unordered_map<Vertex *, double> &ls,
+                            const std::unordered_set<Vertex *> &destinations)
 {
   double t1 = Cpu();
   std::set<std::pair<double, PolyMesh::Vertex *>> front;
-  std::set<PolyMesh::Vertex *> visited;
-  for(auto v : vertices)
-    if(ls.find(v) == ls.end()) ls[v] = 1.e22;
+  std::unordered_set<PolyMesh::Vertex *> visited;
+  std::unordered_map<PolyMesh::Vertex *, double> hls;
+  // for(auto v : vertices) {
+  //   if(ls.find(v) == ls.end()) ls[v] = 1.e22;
+  //   if(hls.find(v) == hls.end()) hls[v] = 1.e22;
+  // }
   for(auto v : seeds) {
     // if(ls.find(v) == ls.end()) ls[v] = 0.0;
     ls[v] = 0.0;
-    front.insert(std::make_pair(0.0, v));
+    hls[v] = 0.0;
+    for (auto d: destinations)
+      hls[v] += (v->position - d->position).norm();
+    front.insert(std::make_pair(hls[v], v));
+    // visited.insert(v);
   }
 
+
+  HalfEdge virtualHe(nullptr);
   while(!front.empty()) {
     auto it = front.begin();
-    front.erase(it);
     Vertex *vi = it->second;
+    front.erase(it);
+    // if (visited.find(vi) != visited.end()) continue;  // simplified FMM
     visited.insert(vi);
     HalfEdge *he = vi->he;
+
     // take into account boundary vertices
     do {
-      if(he->prev->opposite == nullptr) break;
+      if(he->prev->opposite == nullptr) {
+        virtualHe.opposite = he->prev;
+        virtualHe.v = he->v;
+        virtualHe.next = he->prev;
+        he = &virtualHe;
+        break;
+      }
       he = he->prev->opposite;
     } while(he != vi->he);
+
     // loop around vert
     do {
       Vertex *vj = he->next->v;
-      if(visited.find(vj) == visited.end()) { treatedge(vi, vj, ls, front); }
+      if(visited.find(vj) == visited.end()) {
+        // treatedge(vi, vj, ls, front)
+        // treatedge(vi, vj, ls, front, destinations);
+        treatedge(vi, vj, ls, front, destinations, &hls);
+      }
       else {
         HalfEdge *ij = getEdge(vi, vj);
         HalfEdge *ji = getEdge(vj, vi);
         if(ij) {
           Vertex *vk = ij->prev->v;
-          treattriangle(vi, vj, vk, ls, front);
+          if (visited.find(vk) == visited.end()) {
+            // treattriangle(vi, vj, vk, ls, front);
+            // treattriangle(vi, vj, vk, ls, front, destinations);
+            treattriangle(vi, vj, vk, ls, front, destinations, &hls);
+          }
         }
         if(ji) {
           Vertex *vk = ji->prev->v;
-          treattriangle(vi, vj, vk, ls, front);
+          if (visited.find(vk) == visited.end()) {
+            // treattriangle(vi, vj, vk, ls, front);
+            // treattriangle(vi, vj, vk, ls, front, destinations);
+            treattriangle(vi, vj, vk, ls, front, destinations, &hls);
+          }
         }
       }
       if(he->opposite == nullptr) break;
       he = he->opposite->next;
     } while(he != vi->he);
+
+    if (destinations.size() == 0)
+      continue;
+
+    bool reached = true;
+    for (auto d: destinations) {
+      // if (ls[d] >= 1.e22) {
+      if (ls.find(d) == ls.end()) {
+        reached = false;
+        break;
+      }
+    }
+    if (reached) break;
   }
   double t2 = Cpu();
-  Msg::Info("fast marching time : %g", t2 - t1);
-  print__("fm.pos", this, ls);
+
+  // for (auto d: destinations) {
+  //   std::cout << d->position.x() << " " << d->position.y() << " " << d->position.z() << ": ";
+  //   if (ls.find(d) == ls.end())
+  //     std::cout << "not reached" << std::endl;
+  //   else
+  //     std::cout << "reached" << std::endl;
+  // }
+  // std::cout << front.size() << " remaining front points" << std::endl;
+  // std::cout << std::endl;
+
+
+
+  // Msg::Info("fast marching time : %g", t2 - t1);
+  // std::map<Vertex *,double> ls_;
+  // for (auto kv: ls)
+  //   ls_[kv.first] = kv.second;
+  // print__("fm.pos", this, ls_);
 }
 
 /// DECIMATION OF TRIANGLE MESHES
@@ -395,7 +553,16 @@ void PolyMesh::computeNormalsAndCentersOfGravity(
     std::vector<Vertex *> neigh;
     bool onBoundary = false;
     vertexNeighbors(v, &neigh, &onBoundary);
-    if(onBoundary) continue;
+
+    if (onBoundary) {
+      SVector3 cog = (neigh.front()->position + neigh.back()->position) * 0.5;
+      SVector3 nrm = v->position - cog;
+      nrm.normalize();
+      cogs[v] = cog;
+      nrms[v] = nrm;
+      continue;
+    }
+
     SVector3 nrm(0, 0, 0);
     SVector3 cog(0, 0, 0);
     double sumai = 0;
@@ -417,10 +584,49 @@ void PolyMesh::computeNormalsAndCentersOfGravity(
   }
 }
 
-int PolyMesh::decimate(double thresholdDistance,
+double PolyMesh::computeDistanceToAverage(Vertex *v,
+                                          std::map<Vertex *, SVector3> *cogs,
+                                          std::map<Vertex *, SVector3> *nrms)
+{
+  std::vector<Vertex *> neigh;
+  bool onBoundary = false;
+  vertexNeighbors(v, &neigh, &onBoundary);
+
+  SVector3 nrm(0, 0, 0);
+  SVector3 cog(0, 0, 0);
+  double sumai = 0;
+  for(size_t i = 0; i < neigh.size(); i++) {
+    if (i == neigh.size()-1 && onBoundary) break;
+    Vertex *v0 = neigh[i];
+    Vertex *v1 = neigh[(i + 1) % neigh.size()];
+    SVector3 t1 = v1->position - v->position;
+    SVector3 t0 = v0->position - v->position;
+    SVector3 ni = crossprod(t1, t0);
+    double ai = ni.norm();
+    sumai += ai;
+    nrm += ni;
+    cog += (v0->position * ai);
+  }
+  nrm.normalize();
+  cog *= (1. / sumai);
+  (*cogs)[v] = cog;
+  (*nrms)[v] = nrm;
+
+  if (onBoundary) { // distance to average edge
+    SVector3 t1 = neigh[neigh.size()-1]->position - neigh[0]->position;
+    SVector3 t2 = v->position                     - neigh[0]->position;
+    return norm(crossprod(t1,t2)) / norm(t1);
+  }
+
+  // distance to average plane
+  return fabs(dot(nrm, v->position - cog));
+}
+
+int PolyMesh::decimate(double thresholdDistance, const std::set<Vertex *> & keep,
                        std::map<Vertex *, SVector3> *cogs,
                        std::map<Vertex *, SVector3> *nrms)
 {
+  auto start = std::chrono::high_resolution_clock::now();
   Msg::Info(
     "Decimating a surface with %8lu vertices (threshold distance %12.5E)",
     vertices.size(), thresholdDistance);
@@ -428,17 +634,60 @@ int PolyMesh::decimate(double thresholdDistance,
   size_t nbRemove = 0;
   size_t nbProcessed = 0;
 
+  if (!cogs) cogs = new std::map<Vertex *, SVector3>;
+  if (!nrms) nrms = new std::map<Vertex *, SVector3>;
+  std::map<const Vertex *, double> minEdgeLength;
+  std::map<const Vertex *, double> distanceToAverage;
+  auto compare = [&](const Vertex* v1, const Vertex* v2) {
+    if (distanceToAverage[v1] < distanceToAverage[v2])
+      return true;
+    if (distanceToAverage[v1] > distanceToAverage[v2])
+      return false;
+    return minEdgeLength[v1] < minEdgeLength[v2]; 
+    // return distanceToAverage[v1] < distanceToAverage[v2]; 
+  };
+  std::multiset<Vertex *, decltype(compare)> verticesSet(compare);
+
+  for (auto he: hedges) {
+    // std::cout << he->v->cl << std::endl;
+    double l = norm(he->v->position - he->next->v->position) * 2 / (he->v->cl + he->next->v->cl);
+    for (int j = 0; j < 2; ++j) {
+      if (minEdgeLength.find(he->v) == minEdgeLength.end())
+        minEdgeLength[he->v] = l;
+      else
+        minEdgeLength[he->v] = std::min(minEdgeLength[he->v], l);
+      he = he->next;
+    }
+  }
+
+  for (auto v: vertices) {
+    if (keep.find(v) != keep.end()) continue;
+    double d = computeDistanceToAverage(v, cogs, nrms);
+    distanceToAverage[v] = d;
+    verticesSet.insert(v);
+  }
+
   for(auto v : vertices) {
     nbProcessed++;
+
+    if (keep.find(v) != keep.end()) continue;
 
     std::vector<Vertex *> neigh;
     bool onBoundary = false;
     vertexNeighbors(v, &neigh, &onBoundary);
 
-    if (neigh.size() == 2) { // check for isolated triangle
-      HalfEdge *he = getEdge(neigh[0], neigh[1]);
-      if (he == nullptr || he->opposite == nullptr)
-        continue;
+    if (onBoundary) { // check for triangular loop boundary
+      HalfEdge *he = v->he;
+      bool skip = false;
+      for (int i = 0; i < 3; ++i) {
+        while (he->opposite != nullptr) he = he->opposite->next;
+        he = he->next;
+        if (he->v == v) {
+          skip = true;
+          break;
+        }
+      }
+      if (skip) continue;
     }
 
     //    printf("%d (%d) ",v->data,onBoundary);
@@ -492,6 +741,8 @@ int PolyMesh::decimate(double thresholdDistance,
       //            for (auto aaa : loop)printf("%d ",aaa->data);
       //            printf("\n");
       loops.pop();
+
+
 
       if (loop.size() == 2) // Triangle with 2 boundary edges
         continue;
@@ -635,7 +886,872 @@ int PolyMesh::decimate(double thresholdDistance,
 
   Msg::Debug("Pass done -- %8lu vertices removed \n", nbRemove);
 
+  auto end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> elapsed = end - start;
+  Msg::Info("Decimation done in %g seconds", elapsed.count());
+
   return nbRemove;
+}
+
+
+
+int PolyMesh::decimateInOrder(double thresholdDistance, const std::set<Vertex *> & keep,
+                       std::map<Vertex *, SVector3> *cogs,
+                       std::map<Vertex *, SVector3> *nrms)
+{
+  auto start = std::chrono::high_resolution_clock::now();
+  Msg::Info(
+    "Decimating a surface with %8lu vertices (threshold distance %12.5E)",
+    vertices.size(), thresholdDistance);
+
+  size_t nbRemove = 0;
+  size_t nbProcessed = 0;
+
+  if (!cogs) cogs = new std::map<Vertex *, SVector3>;
+  if (!nrms) nrms = new std::map<Vertex *, SVector3>;
+  std::map<const Vertex *, double> minEdgeLength;
+  std::map<const Vertex *, double> distanceToAverage;
+  auto compare = [&](const Vertex* v1, const Vertex* v2) {
+    if (distanceToAverage[v1] < distanceToAverage[v2])
+      return true;
+    if (distanceToAverage[v1] > distanceToAverage[v2])
+      return false;
+    return minEdgeLength[v1] < minEdgeLength[v2]; 
+    // return distanceToAverage[v1] < distanceToAverage[v2]; 
+  };
+  std::multiset<Vertex *, decltype(compare)> verticesSet(compare);
+
+  for (auto he: hedges) {
+    // std::cout << he->v->cl << std::endl;
+    double l = norm(he->v->position - he->next->v->position) * 2 / (he->v->cl + he->next->v->cl);
+    for (int j = 0; j < 2; ++j) {
+      if (minEdgeLength.find(he->v) == minEdgeLength.end())
+        minEdgeLength[he->v] = l;
+      else
+        minEdgeLength[he->v] = std::min(minEdgeLength[he->v], l);
+      he = he->next;
+    }
+  }
+
+  for (auto v: vertices) {
+    if (keep.find(v) != keep.end()) continue;
+    double d = computeDistanceToAverage(v, cogs, nrms);
+    distanceToAverage[v] = d;
+    verticesSet.insert(v);
+  }
+
+  while (!verticesSet.empty()) {
+    Vertex *v = *verticesSet.begin();
+    verticesSet.erase(verticesSet.begin());
+
+
+    // if (distanceToAverage[v] > thresholdDistance) break;
+    // std::cout << "minEdgeLength: " << minEdgeLength[v] << " vs " << thresholdDistance << std::endl;
+    // if (minEdgeLength[v] > thresholdDistance) break;
+    // double d = computeDistanceToAverage(v, cogs, nrms);
+    // distanceToAverage[v] = d;
+    if (distanceToAverage[v] > thresholdDistance) continue;
+
+    std::vector<Vertex *> neigh;
+    bool onBoundary = false;
+    vertexNeighbors(v, &neigh, &onBoundary);
+
+    if (onBoundary) {
+      // check for 3-nodes loop boundary
+      HalfEdge *he = v->he;
+      bool skip = false;
+      for (int i = 0; i < 3; ++i) {
+        while (he->opposite != nullptr) he = he->opposite->next;
+        he = he->next;
+        if (he->v == v)
+          skip = true;
+      }
+      if (skip) continue;
+    }
+
+
+    std::stack<std::vector<Vertex *>> loops;
+    std::vector<std::vector<Vertex *>> triangles;
+    // std::cout << "neigh size: " << neigh.size() << std::endl;
+    if (neigh.size() < 3) continue;
+    loops.push(neigh);
+
+    bool remove_vertex = true;
+
+    while(!loops.empty()) {
+      ++nbProcessed;
+      std::vector<Vertex *> loop = loops.top();
+      //      //            printf("total size %lu loop size %lu loop
+      //      :",loops.size(),loop.size());
+      //            for (auto aaa : loop)printf("%d ",aaa->data);
+      //            printf("\n");
+      loops.pop();
+
+      if (loop.size() < 3)
+        Msg::Error("Triangle with 2 boundary edges");
+
+      if(loop.size() == 3) { // Add the triangle
+        // Check triangle area
+        SVector3 t0 = loop[2]->position - loop[0]->position;
+        SVector3 t1 = loop[1]->position - loop[0]->position;
+        if (dot(crossprod(t0,t1), (*nrms)[v]) <= 0) {
+          printf("Zero or negative area triangle\n");
+          remove_vertex = false;
+          break;
+        }
+
+        std::reverse(loop.begin(), loop.end());
+        triangles.push_back(loop);
+        continue;
+      }
+
+      // split the loop
+      int best_start = -1;
+      int best_end = -1;
+      double best_aspect_ratio = -1.0;
+      for(size_t _start = 0; _start < loop.size(); _start++) {
+        for(size_t end = _start + 2; end < _start + loop.size() - 1; end++) {
+          size_t _end = end % loop.size();
+          // only consider split edge once
+          if(_end < _start) break;
+
+          Vertex *vi = loop[_start];
+          Vertex *vj = loop[_end];
+
+          //	      printf("CUTTING WITH %d %d\n",vi->data,vj->data);
+
+          SVector3 t = vj->position - vi->position;
+          double L = t.norm();
+          t.normalize();
+          SVector3 b = crossprod(t, (*nrms)[v]);
+          double aspect_ratio = 1.e22;
+          bool sign_consistency = true;
+          double firstDist = 0;
+          for(size_t j = _start + 1; j < _end; j++) {
+            Vertex *vk = loop[j % loop.size()];
+            SVector3 tik = vk->position - vi->position;
+            double dist = dot(b, tik);
+            //	printf("side 1 vertex %d dist %g\n",vk->data,dist);
+            if(j == _start + 1)
+              firstDist = dist;
+            else if(dist * firstDist < 0)
+              sign_consistency = false;
+            aspect_ratio = std::min(aspect_ratio, fabs(dist) / L);
+          }
+          firstDist = -firstDist;
+          for(size_t j = _end + 1; j < _start + loop.size(); j++) {
+            Vertex *vk = loop[j % loop.size()];
+            SVector3 tik = vk->position - vi->position;
+            double dist = dot(b, tik);
+            //		printf("side 2 vertex %d dist %g\n",vk->data,dist);
+            //		if (j == _end+1)firstDist = dist;
+            if(dist * firstDist < 0) sign_consistency = false;
+            aspect_ratio = std::min(aspect_ratio, fabs(dist) / L);
+          }
+          //	      printf("considering %d %d -- %g %g %g AR
+          //%12.5E\n",vi->data,vj->data,_end,b.x(),b.y(),b.z(),aspect_ratio);
+          if(!sign_consistency) continue;
+          if(aspect_ratio < 0.1) continue;
+          if(aspect_ratio > best_aspect_ratio) {
+            best_aspect_ratio = aspect_ratio;
+            best_start = _start;
+            best_end = _end;
+          }
+        }
+      }
+      if(best_start >= 0) {
+        std::vector<Vertex *> newLoop;
+        for(int i = best_start; i < best_end + 1; i++)
+          newLoop.push_back(loop[i % loop.size()]);
+        // std::cout << "new loop size: " << newLoop.size() << std::endl;
+        loops.push(newLoop);
+        newLoop.clear();
+        for(size_t i = best_end; i < best_start + loop.size() + 1; i++)
+          newLoop.push_back(loop[i % loop.size()]);
+        // std::cout << "new loop size: " << newLoop.size() << std::endl;
+        loops.push(newLoop);
+      }
+      else {
+        remove_vertex = false;
+        break;
+      }
+    }
+
+    // impossible to unrefine that pattern so continue
+
+    if(!remove_vertex) continue;
+
+    //    if (triangles.size() == 2)
+
+    if(deleteVertexAndRemeshCavity2(v, triangles)) {
+      //      printf("%d remeshed with %lu
+      //      triangles\n",v->data,triangles.size());
+      v->he = nullptr;
+      nbRemove++;
+      if(nbProcessed % 10000 == 0) {
+        Msg::Info("vertex %ld / %lu -- %lu processed -- %lu removed\n", v->data,
+                  vertices.size(), nbProcessed, nbRemove);
+      }
+      if(v->data == 2322 && 0) {
+        std::map<PolyMesh::Vertex *, double> nothing;
+        char name[123];
+        sprintf(name, "x%d.pos", v->data);
+        print__(name, this, nothing);
+      }
+
+      // Update distances
+      for (auto n: neigh) {
+        if (keep.find(n) != keep.end()) continue;
+
+        auto range = verticesSet.equal_range(n);
+        for (auto it = range.first; it != range.second; ++it) {
+          if (*it == n) {  // Additional check to find the exact element
+            verticesSet.erase(it);
+            break;  // Exit after erasing to avoid invalidating the iterator
+          }
+        }
+
+        double d = computeDistanceToAverage(n, cogs, nrms);
+        distanceToAverage[n] = d;
+        HalfEdge *he = n->he;
+        double minL = 1.e22;
+        do {
+          double l = norm(he->v->position - he->next->v->position);
+          minL = std::min(minL, l);
+          if (he->opposite == nullptr) {
+            he = he->prev;
+            while (he->opposite != nullptr) he = he->opposite->prev;
+            l = norm(he->v->position - he->next->v->position) * 2 / (he->v->cl + he->next->v->cl);
+            minL = std::min(minL, l);
+            he = he->next;
+          } else
+            he = he->opposite->next;
+        } while (he != n->he);
+        minEdgeLength[n] = minL;
+        verticesSet.insert(n);
+      }
+
+    }
+    //    if (triangles.size() == 2)printf("%d remeshing with %lu triangles
+    //    done\n",v->data,triangles.size());
+
+
+  }
+
+
+
+
+
+  // for(auto v : vertices) {
+  //   nbProcessed++;
+
+  //   if (keep.find(v) != keep.end()) continue;
+
+  //   std::vector<Vertex *> neigh;
+  //   bool onBoundary = false;
+  //   vertexNeighbors(v, &neigh, &onBoundary);
+
+  //   if (onBoundary) { // check for triangular loop boundary
+  //     HalfEdge *he = v->he;
+  //     bool skip = false;
+  //     for (int i = 0; i < 3; ++i) {
+  //       while (he->opposite != nullptr) he = he->opposite->next;
+  //       he = he->next;
+  //       if (he->v == v) {
+  //         skip = true;
+  //         break;
+  //       }
+  //     }
+  //     if (skip) continue;
+  //   }
+
+  //   //    printf("%d (%d) ",v->data,onBoundary);
+  //   //    for (auto nsa : neigh) printf("%d ",nsa->data);
+  //   //    printf("\n");
+
+  //   SVector3 nrm(0, 0, 0);
+  //   SVector3 cog(0, 0, 0);
+  //   if(nrms && cogs) {
+  //     cog = (*cogs)[v];
+  //     nrm = (*nrms)[v];
+  //   }
+  //   else {
+  //     double sumai = 0;
+  //     for(size_t i = 0; i < neigh.size(); i++) {
+  //       if (i == neigh.size()-1 && onBoundary) break;
+  //       Vertex *v0 = neigh[i];
+  //       Vertex *v1 = neigh[(i + 1) % neigh.size()];
+  //       SVector3 t1 = v1->position - v->position;
+  //       SVector3 t0 = v0->position - v->position;
+  //       SVector3 ni = crossprod(t1, t0);
+  //       double ai = ni.norm();
+  //       sumai += ai;
+  //       cog += (v0->position * ai);
+  //       nrm += ni;
+  //     }
+  //     cog *= (1. / sumai);
+  //     nrm.normalize();
+  //   }
+
+  //   double d;
+  //   if (onBoundary) { // distance to the boundary
+  //     SVector3 t1 = neigh[neigh.size()-1]->position - neigh[0]->position;
+  //     SVector3 t2 = v->position                     - neigh[0]->position;
+  //     d = norm(crossprod(t1,t2)) / norm(t1);
+  //   }
+  //   else // distance to the average plane
+  //     d = fabs(dot(nrm, v->position - cog));
+
+  //   if(d > thresholdDistance) continue;
+  //   std::stack<std::vector<Vertex *>> loops;
+  //   std::vector<std::vector<Vertex *>> triangles;
+  //   loops.push(neigh);
+
+  //   bool remove_vertex = true;
+
+  //   while(!loops.empty()) {
+  //     std::vector<Vertex *> loop = loops.top();
+  //     //      //            printf("total size %lu loop size %lu loop
+  //     //      :",loops.size(),loop.size());
+  //     //            for (auto aaa : loop)printf("%d ",aaa->data);
+  //     //            printf("\n");
+  //     loops.pop();
+
+
+
+  //     if (loop.size() == 2) // Triangle with 2 boundary edges
+  //       continue;
+
+  //     if(loop.size() == 3) { // Add the triangle
+  //       // Check triangle area
+  //       SVector3 t0 = loop[2]->position - loop[0]->position;
+  //       SVector3 t1 = loop[1]->position - loop[0]->position;
+  //       if (dot(crossprod(t0,t1), nrm) < 0) {
+  //         // printf("Zero or negative area triangle\n");
+  //         remove_vertex = false;
+  //         break;
+  //       }
+
+  //       std::reverse(loop.begin(), loop.end());
+  //       triangles.push_back(loop);
+  //       continue;
+  //     }
+
+  //     // split the loop
+  //     int best_start = -1;
+  //     int best_end = -1;
+  //     double best_aspect_ratio = -1.0;
+  //     for(size_t _start = 0; _start < loop.size(); _start++) {
+  //       for(size_t end = _start + 2; end < _start + loop.size() - 1; end++) {
+  //         size_t _end = end % loop.size();
+  //         // only consider split edge once
+  //         if(_end < _start) break;
+
+  //         Vertex *vi = loop[_start];
+  //         Vertex *vj = loop[_end];
+
+  //         //	      printf("CUTTING WITH %d %d\n",vi->data,vj->data);
+
+  //         SVector3 t = vj->position - vi->position;
+  //         double L = t.norm();
+  //         t.normalize();
+  //         SVector3 b = crossprod(t, nrm);
+  //         double aspect_ratio = 1.e22;
+  //         bool sign_consistency = true;
+  //         double firstDist = 0;
+  //         for(size_t j = _start + 1; j < _end; j++) {
+  //           Vertex *vk = loop[j % loop.size()];
+  //           SVector3 tik = vk->position - vi->position;
+  //           double dist = dot(b, tik);
+  //           //	printf("side 1 vertex %d dist %g\n",vk->data,dist);
+  //           if(j == _start + 1)
+  //             firstDist = dist;
+  //           else if(dist * firstDist < 0)
+  //             sign_consistency = false;
+  //           aspect_ratio = std::min(aspect_ratio, fabs(dist) / L);
+  //         }
+  //         firstDist = -firstDist;
+  //         for(size_t j = _end + 1; j < _start + loop.size(); j++) {
+  //           Vertex *vk = loop[j % loop.size()];
+  //           SVector3 tik = vk->position - vi->position;
+  //           double dist = dot(b, tik);
+  //           //		printf("side 2 vertex %d dist %g\n",vk->data,dist);
+  //           //		if (j == _end+1)firstDist = dist;
+  //           if(dist * firstDist < 0) sign_consistency = false;
+  //           aspect_ratio = std::min(aspect_ratio, fabs(dist) / L);
+  //         }
+  //         //	      printf("considering %d %d -- %g %g %g AR
+  //         //%12.5E\n",vi->data,vj->data,_end,b.x(),b.y(),b.z(),aspect_ratio);
+  //         if(!sign_consistency) continue;
+  //         if(aspect_ratio < 0.1) continue;
+  //         if(aspect_ratio > best_aspect_ratio) {
+  //           best_aspect_ratio = aspect_ratio;
+  //           best_start = _start;
+  //           best_end = _end;
+  //         }
+  //       }
+  //     }
+  //     if(best_start >= 0) {
+  //       std::vector<Vertex *> newLoop;
+  //       for(int i = best_start; i < best_end + 1; i++)
+  //         newLoop.push_back(loop[i % loop.size()]);
+  //       loops.push(newLoop);
+  //       newLoop.clear();
+  //       for(size_t i = best_end; i < best_start + loop.size() + 1; i++)
+  //         newLoop.push_back(loop[i % loop.size()]);
+  //       loops.push(newLoop);
+  //     }
+  //     else {
+  //       remove_vertex = false;
+  //       break;
+  //     }
+  //   }
+
+  //   // impossible to unrefine that pattern so continue
+
+  //   if(!remove_vertex) continue;
+
+  //   //    if (triangles.size() == 2)
+
+  //   if(deleteVertexAndRemeshCavity2(v, triangles)) {
+  //     //      printf("%d remeshed with %lu
+  //     //      triangles\n",v->data,triangles.size());
+  //     v->he = nullptr;
+  //     nbRemove++;
+  //     if(nbProcessed % 100000 == 0) {
+  //       Msg::Info("vertex %ld / %lu -- %lu processed -- %lu removed\n", v->data,
+  //                 vertices.size(), nbProcessed, nbRemove);
+  //     }
+  //     if(v->data == 2322 && 0) {
+  //       std::map<PolyMesh::Vertex *, double> nothing;
+  //       char name[123];
+  //       sprintf(name, "x%d.pos", v->data);
+  //       print__(name, this, nothing);
+  //     }
+  //   }
+  //   //    if (triangles.size() == 2)printf("%d remeshing with %lu triangles
+  //   //    done\n",v->data,triangles.size());
+  // }
+
+  if(nbRemove == 0) return 0;
+
+  {
+    std::vector<Vertex *> new_v;
+    for(auto v : vertices) {
+      if(v->he == nullptr) { delete v; }
+      else
+        new_v.push_back(v);
+    }
+    vertices = new_v;
+    std::vector<HalfEdge *> new_edges;
+    for(auto e : hedges) {
+      if(e->v == nullptr) { delete e; }
+      else
+        new_edges.push_back(e);
+    }
+    hedges = new_edges;
+    std::vector<Face *> new_faces;
+    for(auto f : faces) {
+      if(f->he == nullptr) { delete f; } // delete f;
+      else
+        new_faces.push_back(f);
+    }
+    faces = new_faces;
+  }
+
+  Msg::Debug("Pass done -- %8lu vertices removed \n", nbRemove);
+
+  auto end = std::chrono::high_resolution_clock::now();
+  std::chrono::duration<double> elapsed = end - start;
+  Msg::Info("Decimation done in %g seconds", elapsed.count());
+
+  return nbRemove;
+}
+
+int PolyMesh::collapseEdges(double thresholdLength, const std::set<Vertex *> & keep)
+{
+  std::map<const HalfEdge *, double> edgeLength;
+  auto compare = [&](const HalfEdge* he1, const HalfEdge* he2) {
+    return edgeLength[he1] < edgeLength[he2]; 
+  };
+  std::set<HalfEdge *, decltype(compare)> edges(compare);
+
+  for (auto he: hedges) {
+    if (he->opposite && edges.find(he->opposite) != edges.end()) continue;
+    double l = norm(he->v->position - he->next->v->position);
+    edgeLength[he] = l;
+    edges.insert(he);
+  }
+
+  // std::cout << "nb edges: " << edges.size() << std::endl;
+  // for (auto e: edges) {
+  //   std::cout << "edge: " << e->v->data << " " << e->next->v->data << " with edge length: " << edgeLength[e] << std::endl;
+  // }
+
+  int nbCollapse = 0;
+  int nbTreated = 0;
+  while (!edges.empty()) {
+    ++nbTreated;
+    if (nbTreated % 10000 == 0) {
+      Msg::Info("edges: %d treated -- %d remaining in the queue -- %d collapsed\n", nbTreated, edges.size(), nbCollapse);
+    }
+
+    HalfEdge *removeHe = *edges.begin();
+    if (removeHe->v == nullptr) Msg::Error("null vertex");
+    HalfEdge *he = removeHe;
+    edges.erase(edges.begin());
+
+    if (he->v == nullptr) Msg::Error("null vertex");
+
+    // std::cout << "edge: " << he->v->data << " " << he->next->v->data << " with edge length: " << edgeLength[he] << " vs " << thresholdLength << std::endl;
+    auto it = edgeLength.find(he);
+    if (it->second > thresholdLength) continue;
+    // if (it->second > thresholdLength) break;
+    edgeLength.erase(it);
+
+    Vertex *v0 = he->v;
+    Vertex *v1 = he->next->v;
+    if (v0->he == nullptr || v1->he == nullptr) Msg::Error("null halfedge");
+
+
+    std::vector<Vertex *> neigh;
+    he = he->next;
+    while (true) {
+      if (he->opposite != nullptr) {
+        he = he->opposite->next;
+      }
+      else {
+        while (he->prev->opposite != nullptr) {
+          he = he->prev->opposite;
+        }
+        he = he->prev;
+        if (he->v != v0 || he->next->v != v1) {
+          neigh.clear();
+          break;
+        }
+        while (he->prev->opposite != nullptr) he = he->prev->opposite;
+      }
+
+      if (he->next->v == v0) {
+        he = he->next;
+        continue;
+      }
+      if (he->next->v == v1) {
+        break;
+      }
+      neigh.push_back(he->next->v);
+    }
+    if (neigh.empty()) continue;
+
+
+
+
+    bool wrongTopology = false;
+    for (size_t i = 0; i < neigh.size(); ++i) {
+      for (size_t j = i + 1; j < neigh.size(); ++j) {
+        if (neigh[i] == neigh[j]) {
+          wrongTopology = true;
+          break;
+        }
+      }
+      if (wrongTopology) break;
+    }
+    if (wrongTopology) continue;
+
+    double maxLength0 = 0, maxLength1 = 0;
+    for (auto n: neigh) {
+      double l = norm(n->position - v0->position);
+      maxLength0 = std::max(maxLength0, l);
+      l = norm(n->position - v1->position);
+      maxLength1 = std::max(maxLength1, l);
+    }
+
+    SVector3 nrm(0,0,0);
+    for (size_t i = 0; i < neigh.size(); ++i) {
+      Vertex *n0 = neigh[i];
+      Vertex *n1 = neigh[(i + 1) % neigh.size()];
+      SVector3 t1 = n1->position - v0->position;
+      SVector3 t2 = n0->position - v0->position;
+      t1.normalize();
+      t2.normalize();
+      nrm += crossprod(t1,t2);
+    }
+
+    he = removeHe;
+    if (he->v == nullptr) Msg::Error("null vertex");
+    do {
+      if (he->prev->opposite == nullptr)
+        break;
+      he = he->prev->opposite;
+      if (he->v == nullptr) Msg::Error("null vertex");
+      // std::cout << "edge: " << he->v->data << " " << he->next->v->data << " vs " << v0->he->v->data << " " << v0->he->next->v->data << std::endl;
+    } while (he != removeHe);
+    v0->he = he;
+    do {
+      Vertex *f1 = he->next->v;
+      Vertex *f2 = he->next->next->v;
+      if (f1 != v1 && f2 != v1) {
+        SVector3 t1 = f1->position - v1->position;
+        SVector3 t2 = f2->position - v1->position;
+        double cos = dot(t1,t2);
+        double sin = norm(crossprod(t1,t2));
+        if (dot(nrm, crossprod(t1,t2)) < 0) sin = -sin;
+        double angle = atan2(sin, cos);
+        // std::cout << angle << std::endl;
+        if (angle <= 1e-3) {
+          maxLength1 = std::numeric_limits<double>::max();
+        }
+      }
+
+      if (he->opposite == nullptr)
+        break;
+      he = he->opposite->next;
+      // std::cout << "edge: " << he->v->data << " " << he->next->v->data << " vs " << v0->he->v->data << " " << v0->he->next->v->data << std::endl;
+    } while (he != v0->he);
+
+    // for (size_t i = 0; i < faces.size(); ++i) {
+    //   HalfEdge *he = faces[i]->he;
+    //   if (he == nullptr) continue;
+    //   for (int j = 0; j < 3; ++j) {
+    //     he = he->next;
+    //     Vertex *f0 = he->v;
+    //     if (f0 != v0) continue;
+    //     Vertex *f1 = he->next->v;
+    //     Vertex *f2 = he->next->next->v;
+    //     if (f0 == v1 || f1 == v1 || f2 == v1) continue;
+    //     SVector3 t1 = f1->position - v1->position;
+    //     SVector3 t2 = f2->position - v1->position;
+    //     double cos = dot(t1,t2);
+    //     double sin = norm(crossprod(t1,t2));
+    //     if (dot(nrm, crossprod(t1,t2)) < 0) sin = -sin;
+    //     double angle = atan2(sin, cos);
+    //     // std::cout << angle << std::endl;
+    //     if (angle <= 1e-3) {
+    //       maxLength1 = std::numeric_limits<double>::max();
+    //     }
+    //   }
+    // }
+
+    he = removeHe->next;
+    v1->he = he;
+    while (he->opposite != nullptr && he->opposite != removeHe) {
+      he = he->opposite->next;
+      Vertex *f1 = he->next->v;
+      Vertex *f2 = he->next->next->v;
+      if (f1 != v0 && f2 != v0) {
+        SVector3 t1 = f1->position - v0->position;
+        SVector3 t2 = f2->position - v0->position;
+        double cos = dot(t1,t2);
+        double sin = norm(crossprod(t1,t2));
+        if (dot(nrm, crossprod(t1,t2)) < 0) sin = -sin;
+        double angle = atan2(sin, cos);
+        // std::cout << angle << std::endl;
+        if (angle <= 1e-3) {
+          maxLength0 = std::numeric_limits<double>::max();
+        }
+      }
+
+    }
+
+    // for (size_t i = 0; i < faces.size(); ++i) {
+    //   HalfEdge *he = faces[i]->he;
+    //   if (he == nullptr) continue;
+    //   for (int j = 0; j < 3; ++j) {
+    //     he = he->next;
+    //     Vertex *f0 = he->v;
+    //     if (f0 != v1) continue;
+    //     Vertex *f1 = he->next->v;
+    //     Vertex *f2 = he->next->next->v;
+    //     if (f0 == v0 || f1 == v0 || f2 == v0) continue;
+    //     SVector3 t1 = f1->position - v0->position;
+    //     SVector3 t2 = f2->position - v0->position;
+    //     double cos = dot(t1,t2);
+    //     double sin = norm(crossprod(t1,t2));
+    //     if (dot(nrm, crossprod(t1,t2)) < 0) sin = -sin;
+    //     double angle = atan2(sin, cos);
+    //     // std::cout << angle << std::endl;
+    //     if (angle <= 1e-3) {
+    //       maxLength0 = std::numeric_limits<double>::max();
+    //     }
+    //   }
+    // }
+
+
+    if (maxLength0 < maxLength1) {
+      std::swap(v0, v1);
+      std::swap(maxLength0, maxLength1);
+    }
+    if (maxLength0 == std::numeric_limits<double>::max()) continue;
+
+    // std::cout << "edge: " << he->v->data << " " << he->next->v->data << " with edge length: " << edgeLength[he] << " vs " << thresholdLength << std::endl;
+
+
+    // Remove vertex v0 and keep v1
+
+    // for (auto he: hedges) {
+    //   if (he->v != v0 && he->next->v != v0 &&
+    //       he->v != v1 && he->next->v != v1) continue;
+    //   auto it = edges.find(he);
+    //   if (it != edges.end()) edges.erase(it);
+    //   auto itt = edgeLength.find(he);
+    //   if (itt != edgeLength.end()) edgeLength.erase(itt);
+    // }
+
+    std::vector<HalfEdge *> queueRemoveHe;
+    he = v0->he;
+    do {
+      if (he->prev->opposite == nullptr)
+        break;
+      he = he->prev->opposite;
+    } while (he != v0->he);
+    if (he->prev->opposite == nullptr) {
+      queueRemoveHe.push_back(he->prev);
+    }
+    do {
+      queueRemoveHe.push_back(he);
+      he->v = v1;
+
+      if (he->opposite == nullptr)
+        break;
+      queueRemoveHe.push_back(he->opposite);
+      he = he->opposite->next;
+    } while (he != v0->he);
+
+    he = v1->he;
+    do {
+      if (he->prev->opposite == nullptr)
+        break;
+      he = he->prev->opposite;
+    } while (he != v1->he);
+    if (he->prev->opposite == nullptr) {
+      queueRemoveHe.push_back(he->prev);
+    }
+    do {
+      queueRemoveHe.push_back(he);
+
+      if (he->opposite == nullptr)
+        break;
+      queueRemoveHe.push_back(he->opposite); 
+      he = he->opposite->next;
+    } while (he != v1->he);
+
+    for (auto he: queueRemoveHe) {
+      auto it = edgeLength.find(he);
+      if (it != edgeLength.end()) {
+        edges.erase(he);
+        edgeLength.erase(it);
+      }
+    }
+
+
+    // for (auto he: hedges) {
+    //   if (he->v == v0) he->v = v1;
+    //   if (he->next->v == v0) he->next->v = v1;
+    // }
+
+
+    he = removeHe;
+    if (he->opposite != nullptr) {
+      he = he->opposite;
+      if (he->next->opposite != nullptr)
+        he->next->opposite->opposite = he->prev->opposite;
+      if (he->prev->opposite != nullptr)
+        he->prev->opposite->opposite = he->next->opposite;
+      he->f->he = nullptr;
+      he->next->v = nullptr;
+      he->prev->v = nullptr;
+      he->v = nullptr;
+    }
+    he = removeHe;
+    if (he->next->opposite != nullptr)
+      he->next->opposite->opposite = he->prev->opposite;
+    if (he->prev->opposite != nullptr)
+      he->prev->opposite->opposite = he->next->opposite;
+    if (he->prev->opposite != nullptr) {
+      v1->he = he->prev->opposite;
+    }
+    he->f->he = nullptr;
+    he->next->v = nullptr;
+    he->prev->v = nullptr;
+    he->v = nullptr;
+
+    // vertices.erase(std::find(vertices.begin(), vertices.end(), v0));
+    v0->he = nullptr;
+
+
+
+
+    // std::cout << v0->data << " " << v1->data << std::endl;
+    // std::cout << "ok4" << std::endl;
+    he = v1->he;
+    if (he->v == nullptr) Msg::Error("null vertex");
+    do {
+      // std::cout << " " << he->v->data << " " << he->next->v->data << std::endl;
+      if (he->prev->opposite == nullptr)
+        break;
+      he = he->prev->opposite;
+    } while (he != v1->he);
+    v1->he = he;
+    // std::cout << "ok5" << std::endl;
+
+    do {
+      for (int j = 0; j < 3; ++j) {
+        he = he->next;
+        // add to queue
+        if (he->opposite != nullptr && edges.find(he->opposite) != edges.end()) continue;
+        if (edges.find(he) != edges.end()) continue;
+        double l = norm(he->v->position - he->next->v->position);
+        edgeLength[he] = l;
+        edges.insert(he);
+      }
+      // std::cout << " " << he->v->data << " " << he->next->v->data << " " << he->next->next->v->data << std::endl;
+      if (he->opposite == nullptr) break;
+      he = he->opposite->next;
+    } while (he != v1->he);
+    // std::cout << "ok6" << std::endl;
+
+
+    // for (auto he: hedges) {
+    //   if (he->v != v1 && he->next->v != v1) continue;
+    //   if (edges.find(he->opposite) != edges.end()) continue;
+    //   if (edges.find(he) != edges.end()) continue;
+    //   double l = norm(he->v->position - he->next->v->position);
+    //   edgeLength[he] = l;
+    //   edges.insert(he);
+    // }
+
+    // std::cout << "collapse" << std::endl;
+    nbCollapse++;
+    // if (nbCollapse > 780) break;
+  }
+
+  {
+    std::vector<Vertex *> new_v;
+    for(auto v : vertices) {
+      if(v->he == nullptr) { delete v; }
+      else
+        new_v.push_back(v);
+    }
+    vertices = new_v;
+    std::vector<HalfEdge *> new_edges;
+    for(auto e : hedges) {
+      if(e->v == nullptr) { delete e; }
+      else
+        new_edges.push_back(e);
+    }
+    hedges = new_edges;
+    std::vector<Face *> new_faces;
+    for(auto f : faces) {
+      if(f->he == nullptr) { delete f; } // delete f;
+      else
+        new_faces.push_back(f);
+    }
+    faces = new_faces;
+  }
+
+
+  return nbCollapse;
+  // return 0;
 }
 
 /*void PolyMesh::deleteIsolatedVertex (PolyMesh::Vertex* he){
