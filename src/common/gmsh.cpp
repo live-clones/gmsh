@@ -3605,8 +3605,7 @@ GMSH_API void gmsh::model::mesh::createEdges(const vectorpair &dimTags)
   if(!_checkInit()) return;
   std::vector<GEntity *> entities;
   _getEntities(dimTags, entities);
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
+  for(GEntity *ge : entities) {
     for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
       MElement *e = ge->getMeshElement(j);
       for(int k = 0; k < e->getNumEdges(); k++) {
@@ -3622,8 +3621,7 @@ GMSH_API void gmsh::model::mesh::createFaces(const vectorpair &dimTags)
   if(!_checkInit()) return;
   std::vector<GEntity *> entities;
   _getEntities(dimTags, entities);
-  for(std::size_t i = 0; i < entities.size(); i++) {
-    GEntity *ge = entities[i];
+  for(GEntity *ge : entities) {
     for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
       MElement *e = ge->getMeshElement(j);
       for(int k = 0; k < e->getNumFaces(); k++) {
@@ -4822,10 +4820,13 @@ gmsh::model::mesh::setTransfiniteCurve(const int tag, const int numNodes,
         (meshType == "Progression" || meshType == "Power") ? 1 :
         (meshType == "Bump")                               ? 2 :
         (meshType == "Beta")                               ? 3 :
+        (meshType == "Progression_HWall")                  ? 5 :
+        (meshType == "Bump_HWall")                         ? 6 :
+        (meshType == "Beta_HWall")                         ? 7 :
                                                              1;
-      ge->meshAttributes.coeffTransfinite = std::abs(coef);
+      ge->meshAttributes.coeffTransfinite =  ge->meshAttributes.typeTransfinite > 4 ? coef : std::abs(coef);
       // in .geo file we use a negative tag to do this trick; it's a bad idea
-      if(coef < 0) ge->meshAttributes.typeTransfinite *= -1;
+      if(coef < 0 && ge->meshAttributes.typeTransfinite < 4) ge->meshAttributes.typeTransfinite *= -1;
     }
     else {
       if(t > 0) {
@@ -6925,13 +6926,25 @@ GMSH_API void gmsh::model::occ::chamfer(const std::vector<int> &volumeTags,
     volumeTags, curveTags, surfaceTags, distances, outDimTags, removeVolume);
 }
 
+GMSH_API void gmsh::model::occ::defeature(const std::vector<int> &volumeTags,
+                                          const std::vector<int> &surfaceTags,
+                                          vectorpair &outDimTags,
+                                          const bool removeVolume)
+{
+  if(!_checkInit()) return;
+  _createOcc();
+  outDimTags.clear();
+  GModel::current()->getOCCInternals()->defeature(
+    volumeTags, surfaceTags, outDimTags, removeVolume);
+}
+
 GMSH_API int gmsh::model::occ::fillet2D(const int edgeTag1,
-                                        const int edgeTag2, 
+                                        const int edgeTag2,
                                         const double radius, const int tag)
 {
   if(!_checkInit()) return -1;
   _createOcc();
-  int outTag = tag;  
+  int outTag = tag;
   GModel::current()->getOCCInternals()->fillet2D(outTag, edgeTag1, edgeTag2, radius);
   return outTag;
 }
@@ -6943,13 +6956,13 @@ GMSH_API int gmsh::model::occ::chamfer2D(const int edgeTag1,
 {
   if(!_checkInit()) return -1;
   _createOcc();
-  int outTag = tag;  
+  int outTag = tag;
   GModel::current()->getOCCInternals()->chamfer2D(outTag, edgeTag1, edgeTag2, distance1,
                                                   distance2);
   return outTag;
 }
 
-GMSH_API void gmsh::model::occ::offsetCurve( const int curveLoopTag, 
+GMSH_API void gmsh::model::occ::offsetCurve( const int curveLoopTag,
                                               double offset,
                                               vectorpair &outDimTags)
 {
@@ -8847,7 +8860,7 @@ public:
   apiMsg() {}
   virtual void operator()(std::string level, std::string message)
   {
-#pragma omp critical
+#pragma omp critical(apiMsg)
     _log.push_back(level + ": " + message);
   }
   void get(std::vector<std::string> &log) const { log = _log; }

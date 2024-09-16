@@ -15,7 +15,7 @@
 // scripting language (.geo files), or through the C++, C, Python, Julia and
 // Fortran application programming interface (API).
 //
-// This file redefines the Gmsh C++ API in terms of the C API (v4.13.0).
+// This file redefines the Gmsh C++ API in terms of the C API (v4.14.0).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
@@ -1261,7 +1261,8 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::setOrder
       //
-      // Set the order of the elements in the mesh of the current model to `order'.
+      // Change the order of the elements in the mesh of the current model to
+      // `order'.
       inline void setOrder(const int order)
       {
         int ierr = 0;
@@ -3682,10 +3683,11 @@ namespace gmsh { // Top-level functions
       // Add a `geometry' in the built-in CAD representation. `geometry' can
       // currently be one of "Sphere" or "PolarSphere" (where `numbers' should
       // contain the x, y, z coordinates of the center, followed by the radius), or
-      // "Parametric" (where `strings' should contains three expression evaluating
-      // to the x, y and z coordinates. If `tag' is positive, set the tag of the
-      // geometry explicitly; otherwise a new tag is selected automatically. Return
-      // the tag of the geometry.
+      // "ParametricSurface" (where `strings' should contains three expression
+      // evaluating to the x, y and z coordinates in terms of parametric
+      // coordinates u and v). If `tag' is positive, set the tag of the geometry
+      // explicitly; otherwise a new tag is selected automatically. Return the tag
+      // of the geometry.
       inline int addGeometry(const std::string & geometry,
                              const std::vector<double> & numbers = std::vector<double>(),
                              const std::vector<std::string> & strings = std::vector<std::string>(),
@@ -4007,8 +4009,8 @@ namespace gmsh { // Top-level functions
       //
       // Split the curve of tag `tag' in the built-in CAD representation, on the
       // specified control points `pointTags'. This feature is only available for
-      // lines, splines and b-splines. Return the tag(s) `curveTags' of the newly
-      // created curve(s).
+      // splines and b-splines. Return the tag(s) `curveTags' of the newly created
+      // curve(s).
       inline void splitCurve(const int tag,
                              const std::vector<int> & pointTags,
                              std::vector<int> & curveTags)
@@ -4583,7 +4585,7 @@ namespace gmsh { // Top-level functions
       inline int addSurfaceFilling(const int wireTag,
                                    const int tag = -1,
                                    const std::vector<int> & pointTags = std::vector<int>(),
-                                   const int degree = 3,
+                                   const int degree = 2,
                                    const int numPointsOnCurves = 15,
                                    const int numIter = 2,
                                    const bool anisotropic = false,
@@ -5124,6 +5126,27 @@ namespace gmsh { // Top-level functions
         outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
       }
 
+      // gmsh::model::occ::defeature
+      //
+      // Defeature the volumes `volumeTags' by removing the surfaces `surfaceTags'.
+      // Return the defeatured entities in `outDimTags'. Remove the original volume
+      // if `removeVolume' is set.
+      inline void defeature(const std::vector<int> & volumeTags,
+                            const std::vector<int> & surfaceTags,
+                            gmsh::vectorpair & outDimTags,
+                            const bool removeVolume = true)
+      {
+        int ierr = 0;
+        int *api_volumeTags_; size_t api_volumeTags_n_; vector2ptr(volumeTags, &api_volumeTags_, &api_volumeTags_n_);
+        int *api_surfaceTags_; size_t api_surfaceTags_n_; vector2ptr(surfaceTags, &api_surfaceTags_, &api_surfaceTags_n_);
+        int *api_outDimTags_; size_t api_outDimTags_n_;
+        gmshModelOccDefeature(api_volumeTags_, api_volumeTags_n_, api_surfaceTags_, api_surfaceTags_n_, &api_outDimTags_, &api_outDimTags_n_, (int)removeVolume, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_volumeTags_);
+        gmshFree(api_surfaceTags_);
+        outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
+      }
+
       // gmsh::model::occ::fillet2D
       //
       // Create a fillet edge between edges `edgeTag1' and `edgeTag2' with radius
@@ -5161,8 +5184,8 @@ namespace gmsh { // Top-level functions
       // gmsh::model::occ::offsetCurve
       //
       // Create an offset curve based on the curve loop `curveLoopTag' with offset
-      // `offset'. Return the curve loop in `outDimTags' as a vector of (dim, tag)
-      // pairs.
+      // `offset'. Return the offset curves in `outDimTags' as a vector of (dim,
+      // tag) pairs.
       inline void offsetCurve(const int curveLoopTag,
                               const double offset,
                               gmsh::vectorpair & outDimTags)

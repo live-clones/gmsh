@@ -730,7 +730,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
         }
       }
 
-#pragma omp critical
+#pragma omp critical(BuildBackgroundMeshAndGuidingField)
       {
         append(global_triangles, triangles);
         append(global_triangle_directions, triangleDirections);

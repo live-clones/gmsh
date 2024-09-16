@@ -2681,7 +2681,7 @@ class API:
                 for line in file[1]:
                     l = l + 1
                     # allow white space between func name and (
-                    if re.search(func + '\s*\(', line):
+                    if re.search(func + '\\s*\\(', line):
                         strip = re.sub(r'\s+', '', line)
                         # don't report matches in comments
                         if not in_comments and strip.startswith(comment):

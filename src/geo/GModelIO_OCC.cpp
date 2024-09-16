@@ -141,6 +141,11 @@
 #include <ShapeUpgrade_UnifySameDomain.hxx>
 #endif
 
+#if OCC_VERSION_HEX >= 0x070700
+#include <BRepAlgoAPI_Defeaturing.hxx>
+#include <Message_ProgressIndicator.hxx>
+#endif
+
 #if defined(HAVE_OCC_CAF)
 #include <IGESCAFControl_Reader.hxx>
 #include <Quantity_Color.hxx>
@@ -3515,10 +3520,87 @@ bool OCC_Internals::chamfer(const std::vector<int> &volumeTags,
                  removeVolume);
 }
 
+bool OCC_Internals::defeature(const std::vector<int> &volumeTags,
+                              const std::vector<int> &surfaceTags,
+                              std::vector<std::pair<int, int>> &outDimTags,
+                              bool removeVolume)
+{
+#if OCC_VERSION_HEX >= 0x070700
+  // build a single compound shape
+  BRep_Builder b;
+  TopoDS_Compound c;
+  b.MakeCompound(c);
+  for(std::size_t i = 0; i < volumeTags.size(); i++) {
+    if(!_isBound(3, volumeTags[i])) {
+      Msg::Error("Unknown OpenCASCADE volume with tag %d", volumeTags[i]);
+      return false;
+    }
+    TopoDS_Shape shape = _find(3, volumeTags[i]);
+    if(CTX::instance()->geom.occAutoFix) {
+      // make sure the volume is finite
+      ShapeFix_Solid fix(TopoDS::Solid(shape));
+      fix.Perform();
+      shape = fix.Solid();
+    }
+    b.Add(c, shape);
+  }
+  BRepAlgoAPI_Defeaturing defeat;
+  defeat.SetShape(c);
+  for(std::size_t i = 0; i < surfaceTags.size(); i++) {
+    if(!_isBound(2, surfaceTags[i])) {
+      Msg::Error("Unknown OpenCASCADE surface with tag %d", surfaceTags[i]);
+      return false;
+    }
+    TopoDS_Face face = TopoDS::Face(_tagFace.Find(surfaceTags[i]));
+    defeat.AddFaceToRemove(face);
+  }
+
+  if(removeVolume) {
+    for(std::size_t i = 0; i < volumeTags.size(); i++) {
+      TopoDS_Shape shape = _find(3, volumeTags[i]);
+      _unbind(shape, 3, volumeTags[i], true);
+    }
+  }
+
+  defeat.SetRunParallel(CTX::instance()->geom.occParallel);
+  defeat.Build();
+  if(!defeat.IsDone()) {
+    std::ostringstream os;
+    defeat.DumpErrors(os);
+    std::string s = ReplaceSubString("\n", " ", os.str());
+    Msg::Error("Could not defeature shapes%s%s", os.str().size() ? " - " : "",
+               s.c_str());
+    return false;
+  }
+  if(defeat.HasWarnings()) {
+    std::ostringstream os;
+    defeat.DumpWarnings(os);
+    std::string s = ReplaceSubString("\n", " ", os.str());
+    Msg::Warning("%s", s.c_str());
+  }
+
+  TopoDS_Shape result = defeat.Shape();
+
+  if(result.IsNull()) {
+    Msg::Error("Defeaturing produced empty shape");
+    return false;
+  }
+
+  // TODO: if removeVolume and CTX::instance()->geom.occBooleanPreserveNumbering
+  // are set we could use Generated(), Modified() and IsDeleted() in a similar
+  // way as what we do for boolean operation, in order to try to preserve tags
+
+  _multiBind(result, -1, outDimTags, true, true);
+  return true;
+#else
+  Msg::Error("Defeaturing requires OpenCASCADE >= 7.5.0");
+  return false;
+#endif
+}
+
 bool OCC_Internals::fillet2D(int &tag, const int edgeTag1, const int edgeTag2,
                              double radius)
 {
-  
   if(tag >= 0 && _tagEdge.IsBound(tag)) {
     Msg::Error("OpenCASCADE curve with tag %d already exists", tag);
     return false;
@@ -3542,7 +3624,8 @@ bool OCC_Internals::fillet2D(int &tag, const int edgeTag1, const int edgeTag2,
   w.Add(ed2);
   w.Build();
   if(!w.IsDone()) {
-    Msg::Error("Could not create temporary wire from given edges. Are edges connected?");
+    Msg::Error(
+      "Could not create temporary wire from given edges. Are edges connected?");
     return false;
   }
   wire = w.Wire();
@@ -3552,7 +3635,8 @@ bool OCC_Internals::fillet2D(int &tag, const int edgeTag1, const int edgeTag2,
 
   mf.Build();
   if(!mf.IsDone()) {
-    Msg::Error("Could not create temporary face from given edges. Are edges planar?");
+    Msg::Error(
+      "Could not create temporary face from given edges. Are edges planar?");
     return false;
   }
   face = mf.Face();
@@ -3564,12 +3648,10 @@ bool OCC_Internals::fillet2D(int &tag, const int edgeTag1, const int edgeTag2,
   }
 
   Handle(Geom_Surface) gSurface = BRep_Tool::Surface(face);
-	Handle(Geom_ElementarySurface) aElementarySurface = Handle(Geom_ElementarySurface)::DownCast(gSurface);
-	gp_Dir normal = aElementarySurface->Axis().Direction();
-	if (face.Orientation() == TopAbs_REVERSED)
-	{
-    normal = -normal;
-  }
+  Handle(Geom_ElementarySurface) aElementarySurface =
+    Handle(Geom_ElementarySurface)::DownCast(gSurface);
+  gp_Dir normal = aElementarySurface->Axis().Direction();
+  if(face.Orientation() == TopAbs_REVERSED) { normal = -normal; }
 
   TopoDS_Vertex v1 = ShapeAnalysis_Edge().FirstVertex(ed1);
   gp_Pnt point = BRep_Tool().Pnt(v1);
@@ -3581,7 +3663,7 @@ bool OCC_Internals::fillet2D(int &tag, const int edgeTag1, const int edgeTag2,
     Msg::Error("Could not compute fillet");
     return false;
   }
- 
+
   TopoDS_Edge filletEd = f.Result(point, ed1, ed2, -1);
 
   _unbind(_find(1, edgeTag1), 1, edgeTag1, true);
@@ -3603,7 +3685,7 @@ bool OCC_Internals::chamfer2D(int &tag, const int edgeTag1, const int edgeTag2,
     Msg::Error("OpenCASCADE curve with tag %d already exists", tag);
     return false;
   }
-  
+
   if(!_tagEdge.IsBound(edgeTag1)) {
     Msg::Error("Unknown OpenCASCADE curve with tag %d", edgeTag1);
     return false;
@@ -3658,14 +3740,73 @@ bool OCC_Internals::offsetCurve(const int curveLoopTag, double offset,
   return true;
 }
 
-static void _filterTags(std::vector<std::pair<int, int>> &outDimTags,
-                        int minDim)
-{
-  std::vector<std::pair<int, int>> tmp(outDimTags);
-  outDimTags.clear();
-  for(std::size_t i = 0; i < tmp.size(); i++) {
-    if(tmp[i].first >= minDim) outDimTags.push_back(tmp[i]);
+#if OCC_VERSION_HEX >= 0x070700
+
+class OCCBooleanProgress : public Message_ProgressIndicator {
+private:
+  std::string _name;
+public:
+  OCCBooleanProgress(std::string name) : _name(name)
+  {
+    Msg::StartProgressMeter(100);
   }
+  ~OCCBooleanProgress() { Msg::StopProgressMeter(); }
+  void Show(const Message_ProgressScope &theScope,
+            const Standard_Boolean theToForce)
+  {
+    const char *str = theScope.Name();
+    Msg::ProgressMeter((int)(100. * GetPosition()), true, "%s%s%s",
+                       _name.c_str(), str ? " - " : " ", str ? str : " ");
+  }
+};
+
+#endif
+
+template <class T> static void _setBooleanOptions(T &algo)
+{
+  algo.SetRunParallel(CTX::instance()->geom.occParallel);
+  if(CTX::instance()->geom.toleranceBoolean > 0.0)
+    algo.SetFuzzyValue(CTX::instance()->geom.toleranceBoolean);
+#if OCC_VERSION_HEX >= 0x070100
+  if(CTX::instance()->geom.occBooleanNonDestructive)
+    algo.SetNonDestructive(true);
+#endif
+#if OCC_VERSION_HEX >= 0x070200
+  switch(CTX::instance()->geom.occBooleanGlue) {
+  case 1: algo.SetGlue(BOPAlgo_GlueShift); break;
+  case 2: algo.SetGlue(BOPAlgo_GlueFull); break;
+  default: algo.SetGlue(BOPAlgo_GlueOff); break;
+  }
+#endif
+#if OCC_VERSION_HEX >= 0x070300
+  if(CTX::instance()->geom.occBooleanCheckInverted) algo.SetCheckInverted(true);
+#endif
+}
+
+template <class T>
+static bool _printBooleanErrors(T &algo, const std::string &what)
+{
+  std::ostringstream os;
+#if OCC_VERSION_HEX >= 0x070200
+  algo.DumpErrors(os);
+#endif
+  std::string s = ReplaceSubString("\n", " ", os.str());
+  Msg::Error("%s failed%s%s", what.c_str(), os.str().size() ? " - " : "",
+             s.c_str());
+  return false;
+}
+
+template <class T>
+static void _printBooleanWarnings(T &algo, const std::string &what)
+{
+#if OCC_VERSION_HEX >= 0x070200
+  if(algo.HasWarnings()) {
+    std::ostringstream os;
+    algo.DumpWarnings(os);
+    std::string s = ReplaceSubString("\n", " ", os.str());
+    if(!s.empty()) Msg::Warning("%s - %s", what.c_str(), s.c_str());
+  }
+#endif
 }
 
 bool OCC_Internals::booleanOperator(
@@ -3676,10 +3817,6 @@ bool OCC_Internals::booleanOperator(
   std::vector<std::vector<std::pair<int, int>>> &outDimTagsMap,
   bool removeObject, bool removeTool)
 {
-  double tolerance = CTX::instance()->geom.toleranceBoolean;
-  bool parallel = CTX::instance()->geom.occParallel;
-  bool preserveNumbering = CTX::instance()->geom.occBooleanPreserveNumbering;
-
   if(objectDimTags.empty()) return true;
 
   if(tag >= 0 && _isBound(objectDimTags[0].first, tag)) {
@@ -3726,42 +3863,29 @@ bool OCC_Internals::booleanOperator(
     switch(op) {
     case OCC_Internals::Union: {
       BRepAlgoAPI_Fuse fuse;
-      fuse.SetRunParallel(parallel);
       fuse.SetArguments(objectShapes);
       fuse.SetTools(toolShapes);
-      if(tolerance > 0.0) fuse.SetFuzzyValue(tolerance);
-
-      // TODO: add gluing option to speed-up operations when no "real"
-      // intersections are present
-      // * default:
-      // fuse.SetGlue(BOPAlgo_GlueOff);
-      // * speed up if no real intersection but partial or full overlapping
-      //   faces/edges:
-      // fuse.SetGlue(BOPAlgo_Shift);
-      // * speed up if no real intersection and no partial overlaps:
-      // fuse.SetGlue(BOPAlgo_GlueFull);
-
-      // TODO: add option to prevent reuse of existing shapes:
-      // fuse.SetNonDestructive(true);
-
+      _setBooleanOptions(fuse);
+#if OCC_VERSION_HEX >= 0x070700
+      OCCBooleanProgress progress("Union");
+      fuse.Build(progress.Start());
+#else
       fuse.Build();
-      if(!fuse.IsDone()) {
-        Msg::Error("Fuse operation cannot be performed");
-        return false;
-      }
-      if(CTX::instance()->geom.occUnionUnify) {
+#endif
+      if(!fuse.IsDone()) return _printBooleanErrors(fuse, "Union");
+      _printBooleanWarnings(fuse, "Union");
+      if(CTX::instance()->geom.occBooleanSimplify >= 1) {
+#if OCC_VERSION_HEX >= 0x070400
+        // better than ShapeUpgrade_UnifySameDomain, as it preserves the history
+        fuse.SimplifyResult();
+        result = fuse.Shape();
+#else
         // try to unify faces and edges of the shape (remove internal seams)
         // which lie on the same geometry
-#if OCC_VERSION_HEX < 0x070400
         result = fuse.Shape();
         ShapeUpgrade_UnifySameDomain unify(result);
         unify.Build();
         result = unify.Shape();
-#else
-        // better, as it preserves the history; TODO: maybe we should also make
-        // this available for the other boolean operations
-        fuse.SimplifyResult();
-        result = fuse.Shape();
 #endif
       }
       else {
@@ -3784,15 +3908,20 @@ bool OCC_Internals::booleanOperator(
     } break;
     case OCC_Internals::Intersection: {
       BRepAlgoAPI_Common common;
-      common.SetRunParallel(parallel);
       common.SetArguments(objectShapes);
       common.SetTools(toolShapes);
-      if(tolerance > 0.0) common.SetFuzzyValue(tolerance);
+      _setBooleanOptions(common);
+#if OCC_VERSION_HEX >= 0x070700
+      OCCBooleanProgress progress("Intersection");
+      common.Build(progress.Start());
+#else
       common.Build();
-      if(!common.IsDone()) {
-        Msg::Error("Intersection operation cannot be performed");
-        return false;
-      }
+#endif
+      if(!common.IsDone()) return _printBooleanErrors(common, "Intersection");
+      _printBooleanWarnings(common, "Intersection");
+#if OCC_VERSION_HEX >= 0x070400
+      if(CTX::instance()->geom.occBooleanSimplify >= 2) common.SimplifyResult();
+#endif
       result = common.Shape();
       TopTools_ListIteratorOfListOfShape it(objectShapes);
       for(; it.More(); it.Next()) {
@@ -3812,15 +3941,20 @@ bool OCC_Internals::booleanOperator(
 
     case OCC_Internals::Difference: {
       BRepAlgoAPI_Cut cut;
-      cut.SetRunParallel(parallel);
       cut.SetArguments(objectShapes);
       cut.SetTools(toolShapes);
-      if(tolerance > 0.0) cut.SetFuzzyValue(tolerance);
+      _setBooleanOptions(cut);
+#if OCC_VERSION_HEX >= 0x070700
+      OCCBooleanProgress progress("Difference");
+      cut.Build(progress.Start());
+#else
       cut.Build();
-      if(!cut.IsDone()) {
-        Msg::Error("Intersection operation cannot be performed");
-        return false;
-      }
+#endif
+      if(!cut.IsDone()) return _printBooleanErrors(cut, "Difference");
+      _printBooleanWarnings(cut, "Difference");
+#if OCC_VERSION_HEX >= 0x070400
+      if(CTX::instance()->geom.occBooleanSimplify >= 2) cut.SimplifyResult();
+#endif
       result = cut.Shape();
       TopTools_ListIteratorOfListOfShape it(objectShapes);
       for(; it.More(); it.Next()) {
@@ -3838,15 +3972,21 @@ bool OCC_Internals::booleanOperator(
       }
     } break;
 
+    // TODO: implement OCC_Internals::Section:
+
     case OCC_Internals::Fragments:
     default: {
       BRepAlgoAPI_BuilderAlgo fragments;
-      fragments.SetRunParallel(parallel);
       objectShapes.Append(toolShapes);
       toolShapes.Clear();
       fragments.SetArguments(objectShapes);
-      if(tolerance > 0.0) fragments.SetFuzzyValue(tolerance);
+      _setBooleanOptions(fragments);
+#if OCC_VERSION_HEX >= 0x070700
+      OCCBooleanProgress progress("Fragments");
+      fragments.Build(progress.Start());
+#else
       fragments.Build();
+#endif
 #if OCC_VERSION_HEX > 0x070100
       if(fragments.HasErrors() &&
          fragments.HasError(STANDARD_TYPE(BOPAlgo_AlertTooFewArguments))) {
@@ -3854,10 +3994,13 @@ bool OCC_Internals::booleanOperator(
         return true;
       }
 #endif
-      if(!fragments.IsDone()) {
-        Msg::Error("Boolean fragments failed");
-        return false;
-      }
+      if(!fragments.IsDone())
+        return _printBooleanErrors(fragments, "Fragments");
+      _printBooleanWarnings(fragments, "Fragments");
+#if OCC_VERSION_HEX >= 0x070400
+      if(CTX::instance()->geom.occBooleanSimplify >= 2)
+        fragments.SimplifyResult();
+#endif
       result = fragments.Shape();
       TopTools_ListIteratorOfListOfShape it(objectShapes);
       for(; it.More(); it.Next()) {
@@ -3878,7 +4021,7 @@ bool OCC_Internals::booleanOperator(
   inDimTags.insert(inDimTags.end(), toolDimTags.begin(), toolDimTags.end());
   std::size_t numObjects = objectDimTags.size();
 
-  if(tag >= 0 || !preserveNumbering) {
+  if(tag >= 0 || !CTX::instance()->geom.occBooleanPreserveNumbering) {
     // if we specify the tag explicitly, or if we don't care about preserving
     // the numering, just go ahead and bind the resulting shape (and sub-shapes)
     for(std::size_t i = 0; i < inDimTags.size(); i++) {
@@ -3896,7 +4039,6 @@ bool OCC_Internals::booleanOperator(
     }
     _multiBind(result, tag, outDimTags, (tag >= 0) ? true : false, true,
                (tag >= 0) ? false : true);
-    _filterTags(outDimTags, minDim);
   }
   else {
     // otherwise, try to preserve the numbering of the input shapes that did not
@@ -3918,9 +4060,7 @@ bool OCC_Internals::booleanOperator(
         Msg::Debug("BOOL (%d,%d) deleted", dim, tag);
       }
       else if(mapModified[i].Extent() == 0) { // not modified
-        auto ins = _toPreserve.insert(std::make_pair(dim, tag));
-        if(ins.second) // it's not yet in outDimTags
-          outDimTags.push_back(std::make_pair(dim, tag));
+        _toPreserve.insert(std::make_pair(dim, tag));
         Msg::Debug("BOOL (%d,%d) not modified", dim, tag);
       }
       else if(mapModified[i].Extent() == 1) { // replaced by single one
@@ -3934,9 +4074,7 @@ bool OCC_Internals::booleanOperator(
           if(tag != t)
             Msg::Info("Could not preserve tag of %dD object %d (->%d)", dim,
                       tag, t);
-          auto ins = _toPreserve.insert(std::make_pair(dim, t));
-          if(ins.second) // it's not yet in outDimTags
-            outDimTags.push_back(std::make_pair(dim, t));
+          _toPreserve.insert(std::make_pair(dim, t));
         }
         Msg::Debug("BOOL (%d,%d) replaced by 1", dim, tag);
       }
@@ -3953,19 +4091,16 @@ bool OCC_Internals::booleanOperator(
     for(int d = -2; d <= 3; d++) _recomputeMaxTag(d);
     // bind all remaining entities and add the new ones to the returned list
     _multiBind(result, -1, outDimTags, false, true, true);
-    _filterTags(outDimTags, minDim);
     _toPreserve.clear();
   }
 
-  // return input/output correspondence maps
+  // return output and input/output correspondence maps
   for(std::size_t i = 0; i < inDimTags.size(); i++) {
     int dim = inDimTags[i].first;
     int tag = inDimTags[i].second;
     std::pair<int, int> dimTag(dim, tag);
     std::vector<std::pair<int, int>> dimTags;
-    if(mapDeleted[i]) { // deleted
-    }
-    else if(mapModified[i].Extent() == 0) { // not modified
+    if(mapModified[i].Extent() == 0) { // not modified
       if(_isBound(dim, tag)) dimTags.push_back(dimTag);
     }
     else {
@@ -3990,6 +4125,22 @@ bool OCC_Internals::booleanOperator(
       sstream << " (" << dimTags[j].first << "," << dimTags[j].second << ")";
     Msg::Debug("%s", sstream.str().c_str());
     outDimTagsMap.push_back(dimTags);
+  }
+
+  outDimTags.clear();
+  for(auto v : outDimTagsMap)
+    for(auto e : v)
+      outDimTags.push_back(e);
+  // keep the ordering but remove duplicates - maybe we should leave them?
+  std::set<std::pair<int, int>> s;
+  for(auto it = outDimTags.begin(); it != outDimTags.end(); ) {
+    if(s.find(*it) == s.end()) {
+      s.insert(*it);
+      it++;
+    }
+    else {
+      it = outDimTags.erase(it);
+    }
   }
 
   return true;
@@ -4612,6 +4763,11 @@ bool OCC_Internals::importShapes(const std::string &fileName,
                                  std::vector<std::pair<int, int>> &outDimTags,
                                  const std::string &format)
 {
+  if(StatFile(fileName)) {
+    Msg::Error("File '%s' does not exist", fileName.c_str());
+    return false;
+  }
+
   std::vector<std::string> split = SplitFileName(fileName);
 
   TopoDS_Shape result;
@@ -6337,9 +6493,9 @@ int GModel::readOCCXAO(const std::string &fn)
 {
   if(!_occ_internals) _occ_internals = new OCC_Internals;
 
-  // We cannot use importShapes(fn) directly, as 1) we don't want to apply any
-  // changes to the OCC shape through healing; and 2) we need access to GModel
-  // to make the link between subshapes and model entities
+    // We cannot use importShapes(fn) directly, as 1) we don't want to apply any
+    // changes to the OCC shape through healing; and 2) we need access to GModel
+    // to make the link between subshapes and model entities
 
 #if defined(HAVE_OCC) && defined(HAVE_TINYXML2)
   // get XML elements

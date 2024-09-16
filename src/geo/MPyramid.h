@@ -244,8 +244,6 @@ public:
  *
  */
 
-//------------------------------------------------------------------------------
-
 typedef std::vector<int> IndicesReversed;
 
 class MPyramidN : public MPyramid {
@@ -313,7 +311,6 @@ public:
     for(int i = num * (_order - 1); i != ie; ++i) v[j++] = _vs[i];
   }
   virtual void getFaceVertices(const int num, std::vector<MVertex *> &v) const;
-
   virtual int getNumVolumeVertices() const
   {
     if(getIsAssimilatedSerendipity())
@@ -352,6 +349,18 @@ public:
       Msg::Warning("No INP type found for P%d pyramid with %d nodes", _order,
                    5 + _vs.size());
       return "C3D5";
+    }
+  }
+  virtual MVertex *getVertexINP(int num)
+  {
+    if(_order == 2 && _vs.size() + 5 == 13) {
+      static const int map[13] = {0, 1, 2, 3, 4, 5, 8, 10, 6, 7, 9, 11, 12};
+      return getVertex(map[num]);
+    }
+    else {
+      Msg::Error("No INP type found for P%d pyramid with %d nodes", _order,
+                 5 + _vs.size());
+      return getVertex(num);
     }
   }
   virtual void reverse();

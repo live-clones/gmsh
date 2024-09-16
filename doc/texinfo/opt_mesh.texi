@@ -36,6 +36,11 @@ Threshold angle (in degrees) between faces normals under which we allow an edge 
 Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.AvgQuality
+Average mesh quality (inverse conditioning number, ICN) after the generation of the current mesh (read-only)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.BdfFieldFormat
 Field format for Nastran BDF files (0: free, 1: small, 2: large)@*
 Default value: @code{1}@*
@@ -332,7 +337,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MaxRetries
-Maximum number of times meshing is retried on curves and surfaces with a pending mesh@*
+Maximum number of times meshing is retried on curves and surfaces with a pending mesh; also controls maximum number of recursive subdivisions when self-intersecting 1D meshes are detected@*
 Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -416,23 +421,23 @@ METIS algorithm for k-way refinement 'rtype' (1: FM-based cut, 2: Greedy, 3: Two
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.MinimumLineNodes
+@item Mesh.MinLineNodes
 Minimum number of nodes used to mesh (straight) lines@*
 Default value: @code{2}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.MinimumCircleNodes
+@item Mesh.MinCircleNodes
 Minimum number of nodes used to mesh circles and ellipses@*
 Default value: @code{7}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.MinimumCurveNodes
+@item Mesh.MinCurveNodes
 Minimum number of nodes used to mesh curves other than lines, circles and ellipses@*
 Default value: @code{3}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.MinimumElementsPerTwoPi
-[Deprecated]@*
+@item Mesh.MinQuality
+Minimum mesh quality (inverse conditioning number, ICN) after the generation of the current mesh (read-only)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -684,6 +689,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.QualityType
 Type of quality measure (0: SICN~signed inverse condition number, 1: SIGE~signed inverse gradient error, 2: gamma~vol/sum_face/max_edge, 3: Disto~minJ/maxJ@*
 Default value: @code{2}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.QuasiTransfinite
+Allow quasi-transfinite meshing of surfaces with non-matching number of nodes on opposite sides@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.RadiusInf

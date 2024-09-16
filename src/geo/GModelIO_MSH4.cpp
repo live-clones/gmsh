@@ -41,6 +41,10 @@
 #include "MTrihedron.h"
 #include "StringUtils.h"
 
+#if defined(HAVE_POST)
+#include "PView.h"
+#endif
+
 static bool readMSH4Physicals(GModel *const model, FILE *fp,
                               GEntity *const entity, bool binary,
                               bool swap)
@@ -1227,7 +1231,7 @@ int GModel::_readMSH4(const std::string &name)
 
   char str[1024] = "x";
   double version = 1.0;
-  bool binary = false, swap = false, postpro = false;
+  bool binary = false, swap = false;
 
   while(1) {
     while(str[0] != '$') {
@@ -1412,12 +1416,22 @@ int GModel::_readMSH4(const std::string &name)
         return 0;
       }
     }
+#if defined(HAVE_POST)
+    else if(!strncmp(&str[1], "InterpolationScheme", 19)) {
+      if(!PView::readMSHInterpolationScheme(fp)) {
+        fclose(fp);
+        return 0;
+      }
+    }
     else if(!strncmp(&str[1], "NodeData", 8) ||
             !strncmp(&str[1], "ElementData", 11) ||
             !strncmp(&str[1], "ElementNodeData", 15)) {
-      postpro = true;
-      break;
+      if(!PView::readMSHViewData(name, fp, binary, swap, &str[1])) {
+        fclose(fp);
+        return 0;
+      }
     }
+#endif
     else if(strlen(&str[1]) > 0){
       if(!CTX::instance()->mesh.ignoreUnknownSections) {
         sectionName.pop_back();
@@ -1490,7 +1504,7 @@ int GModel::_readMSH4(const std::string &name)
     }
   }
 
-  return postpro ? 2 : 1;
+  return 1;
 }
 
 static void writeMSH4Physicals(FILE *fp, GEntity *const entity, bool binary)

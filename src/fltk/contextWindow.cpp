@@ -1606,6 +1606,11 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
         {"Progression", 0, nullptr, nullptr},
         {"Bump", 0, nullptr, nullptr},
         {"Beta", 0, nullptr, nullptr},
+        {"Progression_HWall", 0, nullptr, nullptr},
+        {"Bump_HWall", 0, nullptr, nullptr},
+        {"Beta_HWall", 0, nullptr, nullptr},
+	//        {"Beta_Symmetrical", 0, nullptr, nullptr},
+	//        {"Beta_Symmetrical_HWall", 0, nullptr, nullptr},
         {nullptr}};
       choice[0] = new Fl_Choice(2 * WB, 2 * WB + 2 * BH, IW, BH, "Type");
       choice[0]->menu(menu_trsf_mesh);

@@ -18,7 +18,7 @@ Extrude { {0.0,1,0}, {0,0.0,0.0}, 1*3.14159} { Surface{6}; }
 // ********** Begin SPEC validation **********
 
 Mesh.Smoothing = 3;
-Mesh.MeshSizeFactor = 0.250;
+Mesh.MeshSizeFactor = 0.1;
 Mesh.Algorithm = 5; // del2d
 Mesh.Algorithm3D = 10; // hxt
 Mesh 3;
@@ -27,25 +27,20 @@ Mesh 3;
 file = StrCat(StrPrefix(StrRelative(General.FileName)), ".val");
 
 // validate number of elements
-n = 5.84666e6;
+n = 9.06218e+07;
 Printf("Number of elements is %g (estimated %g)", Mesh.NbTetrahedra, n);
-If ( Fabs(Mesh.NbTetrahedra - n) / Mesh.NbTetrahedra > 0.3 )
-  Printf("Error: Number of elements is %g (estimated %g), outside of range",
-         Mesh.NbTetrahedra, n) >> file;
-  Error("Number of elements is %g (estimated %g), outside of range",
-        Mesh.NbTetrahedra, n);
+If ( Fabs(Mesh.NbTetrahedra - n) / Mesh.NbTetrahedra > 0.03 )
+  Printf("Error: Number of elements is %g (estimated %g), outside of range", Mesh.NbTetrahedra, n) >> file;
 Else
   Printf("Successful Verification of requested %g elements", n) >> file;
 EndIf
 
 // validate number of nodes
-nn = 988607;
+nn = 1.47395e+07;
 Printf("Number of nodes is %g (estimated %g)", Mesh.NbNodes, nn);
-If ( Fabs(Mesh.NbNodes - nn) / Mesh.NbNodes > 0.3 )
+If ( Fabs(Mesh.NbNodes - nn) / Mesh.NbNodes > 0.1 )
   Printf("Error: Number of nodes is %g (estimated %g), outside of range",
          Mesh.NbNodes, nn) >> file;
-  Error("Number of nodes is %g (estimated %g), outside of range",
-        Mesh.NbNodes, nn);
 Else
   Printf("Successful Verification of requested %g nodes", nn) >> file;
 EndIf

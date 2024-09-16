@@ -35,7 +35,7 @@ int main(int argc, char **argv)
     return 0;
   }
 
-  // We apply a boolean difference to create the "cube minus one eigth" shape:
+  // We apply a boolean difference to create the "cube minus one eighth" shape:
   std::vector<std::pair<int, int> > ov;
   std::vector<std::vector<std::pair<int, int> > > ovv;
   gmsh::model::occ::cut({{3, 1}}, {{3, 2}}, ov, ovv, 3);
