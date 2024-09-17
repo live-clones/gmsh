@@ -11,7 +11,7 @@
 #include <fullMatrix.h>
 
 namespace IFF{
-  int PORDER = 4;
+  int PORDER = 1;
   std::vector<ObjectiveFunction*> ObjectiveFunction::objectiveFunctionsCollector;
 
   void ObjectiveFunction::checkGradient(Element *element, const std::vector<std::vector<double>> &solTri){
@@ -37,7 +37,72 @@ namespace IFF{
         solTriPerturbed[iN][iF] -= epsilon;
       }
   }
+  
+  // ------------------------------- Coupled potential (2) objective function
+  void DoublePotential::getFEMOperators(Element *element, const std::vector<std::vector<double>> &elementPots, std::vector<std::vector<double>> &localMat, std::vector<double> &localRhs){
+    int pOrder = PORDER;
+    size_t nNodes = element->getNumVertices();
+    localMat.clear();
+    localRhs.clear();
 
+    localMat.resize(m_nFields*nNodes);
+    localRhs.resize(m_nFields*nNodes, 0.0);
+    for(size_t l=0; l<m_nFields*nNodes ; l++)
+      localMat[l].resize(m_nFields*nNodes, 0.0);
+
+    std::vector<std::vector<double>> intPoints= element->getIntegrationPoints(pOrder);
+    std::vector<double> intWeights = element->getIntegrationWeights(pOrder);
+    std::vector<double> dets = element->getDet(pOrder);
+
+    // std::cout << "intw:" << std::endl;
+    // std::cout << intWeights << std::endl;
+    // std::cout << "dets" << std::endl;
+    // std::cout << dets << std::endl;
+
+    std::vector<double> gradPotsXG = element->interpolateCR(0.5, 0.5, elementPots);
+    
+    for(int k=0; k<intWeights.size(); k++){
+      // std::cout << "INt w " << k << std::endl;
+      // std::cout << "w: " << intWeights[k] << ", det: " << dets[k] << std::endl;
+      std::vector<std::vector<double>> gradSF = element->getGradSF(intPoints[k][0], intPoints[k][1], 0.0);//Only ok for order 1
+      // std::cout << "gradsf: " << std::endl;
+      // std::cout << gradSF << std::endl;
+      double w = intWeights[k];
+      double det = dets[k];
+
+
+      std::vector<double> gradPotsXG = element->interpolateCR(intPoints[k][0], intPoints[k][1], elementPots);
+      // std::cout << "Elements Pots" << std::endl;
+      // std::cout << elementPots << std::endl;
+      // std::cout << "interpolated grad" << std::endl;
+      // std::cout << gradPotsXG << std::endl;
+      // exit(0);
+      std::vector<std::vector<double>> gradgradT(nNodes);
+      for(auto &v: gradgradT)
+        v.resize(nNodes, 0.0);
+      for(size_t m=0; m<nNodes; m++)
+	for(size_t n=0; n<nNodes; n++)
+	  for(size_t l=0; l<3; l++)
+	    gradgradT[m][n] += gradSF[m][l]*gradSF[n][l];
+
+      for(size_t iF=0; iF<m_nFields; iF++){
+	for(size_t iN=0; iN<nNodes; iN++){
+	  size_t localIndI = m_nFields*iN + iF;
+	  for(size_t l=0; l<3; l++)
+	    localRhs[localIndI] += gradSF[iN][l]*gradPotsXG[3*iF+l]*w*det;
+	  size_t jF = iF;
+	  for(size_t jN=0; jN<nNodes; jN++){
+	    size_t localIndJ = m_nFields*jN + jF;
+	    localMat[localIndI][localIndJ] += gradgradT[iN][jN]*w*det;
+	  }
+	}
+      }
+    }
+    // exit(0);
+    // std::cout << "local mat: " <<std::endl;
+    // std::cout << localMat << std::endl;
+  }
+  
   // ------------------------------- Dirichlet energy for CR GL framefield objective function
   void DirichletEnergieVectCR::evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc){
     int pOrder = PORDER;
@@ -152,10 +217,10 @@ namespace IFF{
     }
   }
 
-  void DirichletEnergieVectCR::getHessianAndGradient(Element *element, const std::vector<std::vector<double>> &solEl, std::vector<std::vector<double>> &localHess, std::vector<double> &localRhs){
+  void DirichletEnergieVectCR::getHessianAndGradient(Element *element, const std::vector<std::vector<double>> &solEl, std::vector<std::vector<double>> &localHess, std::vector<double> &localRhs){ // TODO seems there is a bug. gradient we get do not correspond to gradient from getGradient...
     std::vector<double> localRhsRotated;
     std::vector<std::vector<double>> localHessRotated;
-    // std::vector<std::vector<double>> localHess;
+
     _getRotatedFEMOperators(element, localHessRotated, localRhsRotated);
     if(_getInvertRotatedHessianAndGradient){
       _getInvertRotatedHessianAndGradient(element, localHessRotated, localRhsRotated, localHess, localRhs);

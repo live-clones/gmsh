@@ -195,7 +195,7 @@ namespace IFF{
 	m_frame[2] = norm*2*sin(4*theta)*sqrt(M_PI)/8.0;
       }
       else{
-	std::cout << "Wrong argument for OdecoIso2D instantiation from directions" << std::endl;
+	std::cout << "Wrong argument for OdecoIso2D instantiation from directions. Size dir is: " << dir.size() <<  std::endl;
 	exit(0);
       }
     }

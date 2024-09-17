@@ -7,6 +7,7 @@
 
 #include <gmsh.h>
 #include <Visualization.hxx>
+#include <limits>
 
 // gmsh::view::add
 //     GMSH_API int add(const std::string & name,
@@ -79,6 +80,30 @@ namespace IFF{
       gmsh::view::option::setNumber(tagView, "Visible", visible);
       return tagView;
     }
+
+    int vectorField(const std::map<Edge *, std::vector<double>> &mapEdgVect, const std::string & nameView, int visible){
+      if(!gmsh::isInitialized())
+        gmsh::initialize();
+      std::string modelName;
+      gmsh::model::getCurrent(modelName);
+      int numEl = mapEdgVect.size();
+      std::vector<double> data;
+      data.reserve(numEl*4);
+      for(const auto &kv: mapEdgVect){
+        std::vector<double> nodeCoord = kv.first->getBarycenter();
+        for(int j=0; j<3; j++)
+          data.push_back(nodeCoord[j]);
+        for(int j=0; j<3; j++)
+          data.push_back(kv.second[j]);
+      }
+      int tagView = gmsh::view::add(nameView);
+      if(mapEdgVect.size()>0){
+        gmsh::view::addListData(tagView, "VP", numEl, data);
+      }
+      // gmsh::view::option::setNumber(tagView, "GlyphLocation", 2);
+      gmsh::view::option::setNumber(tagView, "Visible", visible);
+      return tagView;
+    }
     
     int scalarField(const std::map<Vertex*, double> &mapVertScalar, const std::string & nameView, int visible){
       if(!gmsh::isInitialized())
@@ -107,29 +132,108 @@ namespace IFF{
       gmsh::view::option::setNumber(tagView, "Visible", visible);
       return tagView;
     }
-    int scalarField(const std::map<Edge*, double> &mapEdgScalar, const std::string & nameView, int visible){
+
+    int scalarFieldOnMesh(const std::map<Element*, std::vector<double>> &mapVertScalar, const std::string & nameView, int visible){
+      if(!gmsh::isInitialized())
+        gmsh::initialize();
+      std::string modelName;
+      gmsh::model::getCurrent(modelName);
+      int numEl = mapVertScalar.size();
+      std::vector<std::size_t> tags;
+      tags.reserve(numEl);
+      std::vector<std::vector<double>> data;
+      data.reserve(mapVertScalar.size());
+      for(const auto &kv: mapVertScalar){
+        tags.push_back(kv.first->getGmshTag());
+        data.push_back({kv.second});
+      }
+      int tagView = gmsh::view::add(nameView);
+      if(mapVertScalar.size()>0){
+        // gmsh::view::addListData(tagView, "SP", numEl, data);
+        gmsh::view::addModelData(tagView, 0, modelName, "ElementNodeData", tags, data, 0.0, 1);
+      }
+
+      // gmsh::view::option::setNumber(tagView, "PointType", 1);
+      // gmsh::view::option::setNumber(tagView, "PointSize", 8);
+
+      // gmsh::view::option::setNumber(tagView, "GlyphLocation", 2);
+      gmsh::view::option::setNumber(tagView, "Visible", visible);
+      return tagView;
+    }
+
+    int integerPotentialOnMesh(const std::map<Element*, std::vector<double>> &mapVertScalar, const std::string & nameView, int visible){
+      if(!gmsh::isInitialized())
+        gmsh::initialize();
+      std::string modelName;
+      gmsh::model::getCurrent(modelName);
+      int numEl = mapVertScalar.size();
+      std::vector<std::size_t> tags;
+      tags.reserve(numEl);
+      std::vector<std::vector<double>> data;
+      data.reserve(mapVertScalar.size());
+      for(const auto &kv: mapVertScalar){
+        tags.push_back(kv.first->getGmshTag());
+        data.push_back({kv.second});
+      }
+      int tagView = gmsh::view::add(nameView);
+      if(mapVertScalar.size()>0){
+        // gmsh::view::addListData(tagView, "SP", numEl, data);
+        gmsh::view::addModelData(tagView, 0, modelName, "ElementNodeData", tags, data, 0.0, 1);
+      }
+
+      // gmsh::view::option::setNumber(tagView, "PointType", 1);
+      // gmsh::view::option::setNumber(tagView, "PointSize", 8);
+
+      // gmsh::view::option::setNumber(tagView, "GlyphLocation", 2);
+      double valMax = -1.0*std::numeric_limits<double>::max();
+      double valMin = 1.0*std::numeric_limits<double>::max();
+      for(auto &kv: mapVertScalar)
+        for(double d: kv.second){
+          if(d>valMax)
+            valMax = d;
+          if(d<valMin)
+            valMin = d;
+        }
+      valMin = std::round(valMin);
+      valMax = std::round(valMax);
+      double nbIso = std::round(valMax-valMin+1.0);
+      gmsh::view::option::setNumber(tagView, "RangeType", 2);
+      gmsh::view::option::setNumber(tagView, "CustomMin", valMin);
+      gmsh::view::option::setNumber(tagView, "CustomMax", valMax);
+      gmsh::view::option::setNumber(tagView, "ColormapNumber", 0);
+      gmsh::view::option::setNumber(tagView, "IntervalsType", 1);
+      gmsh::view::option::setNumber(tagView, "NbIso", nbIso);
+      gmsh::view::option::setNumber(tagView, "LineType", 1);
+      gmsh::view::option::setNumber(tagView, "LineWidth", 2);
+      gmsh::view::option::setNumber(tagView, "Visible", visible);
+      return tagView;
+    }
+    
+    int scalarField(const std::map<Edge*, std::vector<double>> &mapEdgScalar, const std::string & nameView, int visible){
       if(!gmsh::isInitialized())
         gmsh::initialize();
       std::string modelName;
       gmsh::model::getCurrent(modelName);
       int numEl = mapEdgScalar.size();
       std::vector<double> data;
-      data.reserve(mapEdgScalar.size()*4);
+      data.reserve(mapEdgScalar.size()*8);
       for(const auto &kv: mapEdgScalar){
-        std::vector<double> nodeCoord = kv.first->getBarycenter();
-        for(int j=0; j<nodeCoord.size(); j++)
-          data.push_back(nodeCoord[j]);
-        data.push_back(kv.second);
+        for(size_t k=0; k<3; k++){
+          for(Vertex *v: kv.first->getVertices()){
+            std::vector<double> nodeCoord = v->getCoord();
+            data.push_back(nodeCoord[k]);
+          }
+        }
+        data.push_back(kv.second[0]);
+        data.push_back(kv.second[1]);
       }
       int tagView = gmsh::view::add(nameView);
       if(mapEdgScalar.size()>0){
-        gmsh::view::addListData(tagView, "SP", numEl, data);
-        // gmsh::view::addModelData(tagView, 0, modelName, "NodeData", tags, data, 0.0, 1);
+        gmsh::view::addListData(tagView, "SL", numEl, data);
       }
       
-      // gmsh::view::option::setNumber(tagView, "GlyphLocation", 2);
-      gmsh::view::option::setNumber(tagView, "PointType", 1);
-      gmsh::view::option::setNumber(tagView, "PointSize", 8);
+      gmsh::view::option::setNumber(tagView, "ColormapNumber", 0);
+      gmsh::view::option::setNumber(tagView, "LineWidth", 5);
       gmsh::view::option::setNumber(tagView, "Visible", visible);
       return tagView;
     }

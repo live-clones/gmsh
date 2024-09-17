@@ -20,7 +20,7 @@ namespace IFF{
       objectiveFunctionsCollector.clear();
     }
     // constructor to be call in each child class.
-    ObjectiveFunction(): m_useNodeData(false){objectiveFunctionsCollector.push_back(this);}
+    ObjectiveFunction(): m_useNodeData(false), m_useElementData(false){objectiveFunctionsCollector.push_back(this);}
 
     // Methods to be defined for LBFGS solver
     virtual void evaluateFunction(Element *element, const std::vector<std::vector<double>> &solTri, double &valFunc){std::cout << "OjectiveFunction::evaluateFunction not implemented" << std::endl; exit(0);}
@@ -29,16 +29,38 @@ namespace IFF{
     virtual void getHessianAndGradient(Element *element, const std::vector<std::vector<double>> &solEl, std::vector<std::vector<double>> &localMat, std::vector<double> &localRhs){std::cout << "OjectiveFunction::getFEMHessianAndGradient not implemented" << std::endl; exit(0);}
     // Tools for new objective functions implementation check
     void checkGradient(Element *element, const std::vector<std::vector<double>> &solTri);
-
+    virtual void getFEMOperators(Element *element, std::vector<std::vector<double>> &localMat, std::vector<double> &localRhs){std::cout << "OjectiveFunction::getFEMOperators not implemented" << std::endl; exit(0);}
+    virtual void getFEMOperators(Element *element, const std::vector<std::vector<double>> &elementData, std::vector<std::vector<double>> &localMat, std::vector<double> &localRhs){std::cout << "OjectiveFunction::getFEMOperators with element data not implemented" << std::endl; exit(0);}
 
     // Set to true for objective functions needing extra data other than solution
     bool m_useNodeData;
+    bool m_useElementData;
   
   protected:
     // Forbid instanciation
     virtual ~ObjectiveFunction(){}
   };
+  
+  // ------------------------------- Coupled potential (2) objective function
+  class DoublePotential : public ObjectiveFunction{
+  public:
+    DoublePotential(): ObjectiveFunction(), m_nFields(2){
+      m_useElementData = true;
+    }
+  
+    virtual double testEvaluate(){return 1.0;}
 
+    virtual void getFEMOperators(Element *element, const std::vector<std::vector<double>> &elementPots, std::vector<std::vector<double>> &localMat, std::vector<double> &localRhs);
+
+    size_t m_nFields;
+  
+  protected:
+    ~DoublePotential(){}
+  private:
+    std::vector<double> m_localIntegrationPoint;
+    std::vector<double> m_integrationWeights;
+  };
+  
   // ------------------------------- Dirichlet energy for CR GL framefield objective function
   class DirichletEnergieVectCR : public ObjectiveFunction{
   public:

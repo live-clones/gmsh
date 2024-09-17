@@ -42,7 +42,7 @@ namespace IFF{
   class Mesh;
   
   namespace manifoldTools{//Tools for 2D discrete manifolds. Need all mesh classes
-    std::vector<double> transportToNeighbourElement(Element *eRef, Element *eTarget, const std::vector<double> &vectToTransport);
+    std::vector<double> transportToNeighbourElement(Element *eRef, Element *eTarget, const std::vector<double> &vectToTransport, Edge *commonEdge=NULL);
   }
   
   class Element{
@@ -61,6 +61,7 @@ namespace IFF{
     size_t getGmshTag(){return m_e->getNum();}
     size_t getNumEdges(){return m_edges.size();}
     std::vector<Vertex*> getVertices(){return m_vertices;}
+    size_t getNumVertices(){return m_vertices.size();}
     Vertex* getVertex(int k){return m_vertices[k];}
 
     std::vector<Element*> getNeighboursElements(){return m_neighbourElements;}
@@ -79,6 +80,7 @@ namespace IFF{
     std::vector<std::vector<double>> getIntegrationPoints(int pOrder);
     std::vector<double> getIntegrationWeights(int pOrder);
     std::vector<std::vector<double>> getCRSF(int pOrder);
+    std::vector<std::vector<double>> getGradSF(double u, double v, double w);
     std::vector<std::vector<std::vector<double>>> getCRGradSF(int pOrder);
     std::vector<double> interpolateCR(double u, double v, const std::vector<std::vector<double>> &solTri);
     
@@ -124,7 +126,7 @@ namespace IFF{
     static std::vector<Vertex*> vertexCollector;
   public:
     static Vertex* create(MVertex *v){Vertex *newV = new Vertex(v); vertexCollector.push_back(newV); return newV;}
-    Vertex(MVertex *v): m_isGeometryBoundary(false), m_isGeoNode(false){m_v = v; vertexCollector.push_back(this);}
+    Vertex(MVertex *v): m_isGeometryBoundary(false), m_isGeoNode(false), m_isVertOfinterest(false), m_isVertOfinterestBoundary(false), m_valence(0){m_v = v; vertexCollector.push_back(this);}
     ~Vertex(){}
 
     std::vector<double> getCoord(){std::vector<double> coord{m_v->x(), m_v->y(), m_v->z()}; return coord;};
@@ -153,6 +155,15 @@ namespace IFF{
         exit(0);
       }
     }
+
+    std::vector<Element*> getLines(){
+      if(m_lines.size() != 0)
+        return m_elements;
+      else{
+        std::cout << "Vertex::getLines: lines empty" << std::endl;
+        exit(0);
+      }
+    }
     
     std::vector<Element*> getOrientedElements(){
       if(m_sortedElements.size() != 0)
@@ -169,6 +180,15 @@ namespace IFF{
     bool isGeometryBoundary(){return m_isGeometryBoundary;}
     bool isGeoNode(){return m_isGeoNode;}
 
+    bool isVertOfInterest(){return m_isVertOfinterest;}
+    void setVertOfInterest(bool val){m_isVertOfinterest = val;}
+
+    bool isVertOfInterestBoundary(){return m_isVertOfinterestBoundary;}
+    void setVertOfInterestBoundary(bool val){m_isVertOfinterestBoundary = val;}
+
+    void setValence(int val){m_valence = val;}
+    int getValence(){return m_valence;}
+    
     int getLocIndexInElem(Element *e){
       int locIndex = -1;
       std::vector<Vertex*> verts = e->getVertices();
@@ -179,7 +199,8 @@ namespace IFF{
       exit(0);
       return locIndex;
     }
-    
+
+    size_t m_tempIndex;
   private:
     MVertex *m_v;
     std::vector<Edge*> m_edges;
@@ -193,6 +214,10 @@ namespace IFF{
     bool m_isGeoNode;
     //Cutgraph tools
     Vertex *m_parentVert;
+
+    bool m_isVertOfinterest;
+    int m_valence;
+    bool m_isVertOfinterestBoundary;
   };
     
   class Edge{
@@ -201,19 +226,28 @@ namespace IFF{
     
     static std::vector<Edge*> edgeCollector;
   public:
+    static Edge* getCommonEdge(Vertex *v0, Vertex *v1){
+      for(Edge* edg: v0->getEdges()){
+        if(edg->getVertex(0)->getIndex() == v1->getIndex() || edg->getVertex(1)->getIndex() == v1->getIndex())
+          return edg;
+      }
+      return NULL;
+    }
     static Edge* create(Vertex* v0, Vertex* v1){Edge *newE = new Edge(v0, v1); edgeCollector.push_back(newE); return newE;}
     Edge(Vertex* v0, Vertex* v1):m_isOnCutGraph(false){m_vertices[0] = v0; m_vertices[1] = v1;}
     ~Edge(){}
 
     double getLength();
-    size_t getIndex(){return m_index;}
-    Vertex *getVertex(int indV){return m_vertices[indV];}
-    std::array<Vertex*, 2> getVertices(){return m_vertices;}
-    std::vector<Element*> getElements(){return m_elements;}
-    size_t getNumLines(){return m_lines.size();}
-    std::vector<Element*> getLines(){return m_lines;}
+    size_t getIndex() const {return m_index;}
+    Vertex *getVertex(int indV) const {return m_vertices[indV];}
+    std::array<Vertex*, 2> getVertices() const {return m_vertices;}
+    std::vector<Element*> getElements() const {return m_elements;}
+    Element* getElement(size_t kEl) const {return m_elements[kEl];}
+    size_t getNumElements() const {return m_elements.size();}
+    size_t getNumLines() const {return m_lines.size();}
+    std::vector<Element*> getLines() const {return m_lines;}
 
-    int getLocIndexInElem(Element *e){
+    int getLocIndexInElem(Element *e) const {
       int locIndex = -1;
       std::vector<Edge*> edges = e->getEdges();
       for(int k=0; k<edges.size(); k++)
@@ -224,26 +258,47 @@ namespace IFF{
       return locIndex;
     }
     
-    std::vector<double> getDir(){
+    std::vector<double> getDir() const {
       std::vector<double> v = tools::diff(m_vertices[1]->getCoord(), m_vertices[0]->getCoord());
       tools::normalize(v);
       return v;
     }
     
-    std::vector<double> getBarycenter(){
+    std::vector<double> getBarycenter() const {
       std::vector<double> res = tools::sum(m_vertices[0]->getCoord(), m_vertices[1]->getCoord());
       tools::scale(res, 0.5);
       return res;
     };
+
+    std::vector<double> getGeodesicNormal(){
+      if(m_geodesicNormal.size() == 0)
+        _computeGeodesicNormal();
+      return m_geodesicNormal;
+    }
     
+    bool isOnCutGraph() const{return m_isOnCutGraph;}
+    Element* getNeighbourElementAcrossCut(){return m_neighbourElemAcrossCut;}
+    Edge* getNeighbourEdgeAcrossCut(){return m_neighbourEdgeAcrossCut;}
   private:
     std::array<Vertex*, 2> m_vertices;
     std::vector<Element*> m_elements;
     std::vector<Element*> m_lines;
 
+    std::vector<double> m_geodesicNormal;
+
     size_t m_index;
 
+    //Storing infos when created after cutting a mesh
     bool m_isOnCutGraph;
+    Element *m_neighbourElemAcrossCut;
+    Edge *m_neighbourEdgeAcrossCut;
+
+    void _computeGeodesicNormal(){
+      Element *elem = m_elements[0];
+      size_t iLoc = getLocIndexInElem(elem);
+      m_geodesicNormal = tools::crossprod(elem->getDirEdg(iLoc), elem->getNormal());
+      tools::normalize(m_geodesicNormal);
+    }
   };
 
   class MeshRefiner;
@@ -267,9 +322,15 @@ namespace IFF{
     
     Element* getElement(size_t iElem){return m_elements[iElem];}
     std::vector<Element*> getElements(){return m_elements;}
+    size_t getNumElements(){return m_elements.size();}
+    Vertex* getVertex(size_t iV){return m_vertices[iV];}
     std::vector<Vertex*> getVertices(){return m_vertices;}
+    size_t getNumVertices(){return m_vertices.size();}
+    Edge* getEdge(size_t iEdg){return m_edges[iEdg];}
     std::vector<Edge*> getEdges(){return m_edges;}
+    size_t getNumEdges(){return m_edges.size();}
     std::vector<Element*> getLines(){return m_lines;}
+    Element* getLine(size_t iLine){return m_lines[iLine];}
     std::vector<std::vector<Element*>> getLineGroups(){return m_lineGroups;}
     
     double getMinEdgeLength(){return m_minEdgeLenght;}
@@ -312,6 +373,8 @@ namespace IFF{
     ~MeshRefiner(){}
 
     void refineMesh(const std::vector<size_t> &indicesElemToRefine);
+    void customRefineMesh(const std::vector<Edge*> &edgesToSplit);
+    void cutMeshOnEdges(const std::vector<Edge*> &cutEdges);
     std::vector<Edge*> getFineCommonEdges(){return m_fineCommonEdges;}
     std::vector<Edge*> getEdgesCLMultiGrille(){return m_edgesElemRefinedUnmodifiedBar;}
     std::vector<Element*> getFineElemRefinedUnmodified(){return m_fineElemRefinedUnmodified;}
@@ -330,8 +393,68 @@ namespace IFF{
     std::vector<Element*> m_fineElemRefined;
 
   private:
-
+    void _executeRefinement(const std::vector<Element*> &elementsFractalRefine, const std::vector<std::pair<Element*, int>> &elementsHalfRefine, std::vector<bool> &coarseElementsRefined);
   };
+  
+  template <class T>
+  std::map<Edge*, T> transferCoarseToFine(MeshRefiner *mr, std::map<Edge*, T> &mapEdgeFrameCoarse){
+    // static_assert(std::is_base_of<Frame, T>::value, "transferCoarseToFine: T must derive from Frame");
+    std::map<Edge*, std::vector<T>> commonSol;
+    for(Element *e: mr->m_coarseElemNotRefined)
+      for(size_t k=0; k<e->getNumEdges(); k++){
+        Edge *edgOnRefineMesh = mr->m_refinedMesh->getElements()[e->getIndex()]->getEdge(k);
+        commonSol[edgOnRefineMesh] = {};
+      }
+    for(Element *e: mr->m_coarseElemNotRefined){
+      for(size_t k=0; k<e->getNumEdges(); k++){
+        Edge *edgOnRefineMesh = mr->m_refinedMesh->getElement(e->getIndex())->getEdge(k);
+        commonSol[edgOnRefineMesh].push_back(mapEdgeFrameCoarse[e->getEdge(k)]);
+      }
+    }
+
+    for(Element *e: mr->m_coarseElemRefined){
+      std::vector<std::vector<double>> solElCoarse;
+      solElCoarse.resize(e->getNumEdges());
+      for(auto &v: solElCoarse)
+        v.resize(T::nUnknown);
+      for(size_t iN=0; iN<e->getNumEdges(); iN++)
+        solElCoarse[iN] = mapEdgeFrameCoarse[e->getEdge(iN)].m_frame;
+      std::vector<std::vector<double>> solElCoarseRotated;
+      T::getRotatedSolEl(e, solElCoarse, solElCoarseRotated);
+
+      std::vector<double> vRef = e->getDirEdg(0);
+      std::vector<double> n = e->getNormal();
+      std::vector<double> t = tools::crossprod(n, vRef);
+    
+      for(Element *eFine: e->getChildren()){
+        std::vector<std::vector<double>> coordParam = eFine->getEdgesParamCoordInParentElem();
+        for(size_t k=0; k<eFine->getNumEdges(); k++){
+          std::vector<double> solInterp = e->interpolateCR(coordParam[k][0], coordParam[k][1], solElCoarseRotated);
+          std::vector<double> dirEdgFine = eFine->getEdge(k)->getDir();
+          double alpha = -atan2(tools::dotprod(t,dirEdgFine), tools::dotprod(vRef,dirEdgFine));
+          std::vector<double> rotatedSol;
+          T::getRotatedSol(solInterp, rotatedSol, alpha);
+          T f(rotatedSol);
+          commonSol[eFine->getEdge(k)].push_back(f);
+        }
+      }
+    }
+
+    std::map<Edge*, T> commonSolReduced;
+    for(auto &kv: commonSol){
+      std::vector<double> averageFrame(T::nUnknown, 0.0);
+      double nFrames = 0.0;
+      for(auto &f: kv.second){
+        averageFrame = tools::sum(averageFrame, f.m_frame);
+        nFrames += 1.0;
+      }
+      tools::scale(averageFrame, 1.0/nFrames);
+      T newFrame(averageFrame);
+      newFrame.projectOnCrossManifold();
+      commonSolReduced[kv.first] = newFrame;
+    }
+    return commonSolReduced;
+  }
   
   // To print vectors easily
   template<class T> std::ostream &operator<<(std::ostream &os, std::vector<T> v) {

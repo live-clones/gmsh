@@ -21,112 +21,6 @@
 
 using namespace IFF;
 
-std::map<Edge*, OdecoIso2D> transferCoarseToFine(MeshRefiner *mr, std::map<Edge*, OdecoIso2D> &mapEdgeFrameCoarse){
-  std::map<Edge*, std::vector<OdecoIso2D>> commonSol;
-  for(Element *e: mr->m_coarseElemNotRefined){
-    for(size_t k=0; k<e->getNumEdges(); k++){
-      Edge *edgOnRefineMesh = mr->m_refinedMesh->getElements()[e->getIndex()]->getEdge(k);
-      commonSol[edgOnRefineMesh].push_back(mapEdgeFrameCoarse[e->getEdge(k)]);
-    }
-  }
-
-  for(Element *e: mr->m_coarseElemRefined){
-    std::vector<std::vector<double>> solElCoarse;
-    solElCoarse.resize(e->getNumEdges());
-    for(auto &v: solElCoarse)
-      v.resize(OdecoIso2D::nUnknown);
-    for(size_t iN=0; iN<e->getNumEdges(); iN++)
-      solElCoarse[iN] = mapEdgeFrameCoarse[e->getEdge(iN)].m_frame;
-    std::vector<std::vector<double>> solElCoarseRotated;
-    OdecoIso2D::getRotatedSolEl(e, solElCoarse, solElCoarseRotated);
-
-    std::vector<double> vRef = e->getDirEdg(0);
-    std::vector<double> n = e->getNormal();
-    std::vector<double> t = tools::crossprod(n, vRef);
-    
-    for(Element *eFine: e->getChildren()){
-      std::vector<std::vector<double>> coordParam = eFine->getEdgesParamCoordInParentElem();
-      for(size_t k=0; k<eFine->getNumEdges(); k++){
-        std::vector<double> solInterp = e->interpolateCR(coordParam[k][0], coordParam[k][1], solElCoarseRotated);
-        std::vector<double> dirEdgFine = eFine->getEdge(k)->getDir();
-        double alpha = -atan2(tools::dotprod(t,dirEdgFine), tools::dotprod(vRef,dirEdgFine));
-        std::vector<double> rotatedSol;
-        OdecoIso2D::getRotatedSol(solInterp, rotatedSol, alpha);
-        OdecoIso2D f(rotatedSol);
-        commonSol[eFine->getEdge(k)].push_back(f);
-      }
-    }
-  }
-
-  std::map<Edge*, OdecoIso2D> commonSolReduced;
-  for(auto &kv: commonSol){
-    std::vector<double> averageFrame(OdecoIso2D::nUnknown, 0.0);
-    double nFrames = 0.0;
-    for(auto &f: kv.second){
-      averageFrame = tools::sum(averageFrame, f.m_frame);
-      nFrames += 1.0;
-    }
-    tools::scale(averageFrame, 1.0/nFrames);
-    OdecoIso2D newFrame(averageFrame);
-    newFrame.projectOnCrossManifold();
-    commonSolReduced[kv.first] = newFrame;
-  }
-  return commonSolReduced;
-}
-
-std::map<Edge*, OdecoAniso2D> transferCoarseToFine(MeshRefiner *mr, std::map<Edge*, OdecoAniso2D> &mapEdgeFrameCoarse){
-  std::map<Edge*, std::vector<OdecoAniso2D>> commonSol;
-  for(Element *e: mr->m_coarseElemNotRefined){
-    for(size_t k=0; k<e->getNumEdges(); k++){
-      Edge *edgOnRefineMesh = mr->m_refinedMesh->getElements()[e->getIndex()]->getEdge(k);
-      commonSol[edgOnRefineMesh].push_back(mapEdgeFrameCoarse[e->getEdge(k)]);
-    }
-  }
-
-  for(Element *e: mr->m_coarseElemRefined){
-    std::vector<std::vector<double>> solElCoarse;
-    solElCoarse.resize(e->getNumEdges());
-    for(auto &v: solElCoarse)
-      v.resize(OdecoAniso2D::nUnknown);
-    for(size_t iN=0; iN<e->getNumEdges(); iN++)
-      solElCoarse[iN] = mapEdgeFrameCoarse[e->getEdge(iN)].m_frame;
-    std::vector<std::vector<double>> solElCoarseRotated;
-    OdecoAniso2D::getRotatedSolEl(e, solElCoarse, solElCoarseRotated);
-
-    std::vector<double> vRef = e->getDirEdg(0);
-    std::vector<double> n = e->getNormal();
-    std::vector<double> t = tools::crossprod(n, vRef);
-    
-    for(Element *eFine: e->getChildren()){
-      std::vector<std::vector<double>> coordParam = eFine->getEdgesParamCoordInParentElem();
-      for(size_t k=0; k<eFine->getNumEdges(); k++){
-        std::vector<double> solInterp = e->interpolateCR(coordParam[k][0], coordParam[k][1], solElCoarseRotated);
-        std::vector<double> dirEdgFine = eFine->getEdge(k)->getDir();
-        double alpha = -atan2(tools::dotprod(t,dirEdgFine), tools::dotprod(vRef,dirEdgFine));
-        std::vector<double> rotatedSol;
-        OdecoAniso2D::getRotatedSol(solInterp, rotatedSol, alpha);
-        OdecoAniso2D f(rotatedSol);
-        commonSol[eFine->getEdge(k)].push_back(f);
-      }
-    }
-  }
-
-  std::map<Edge*, OdecoAniso2D> commonSolReduced;
-  for(auto &kv: commonSol){
-    std::vector<double> averageFrame(OdecoAniso2D::nUnknown, 0.0);
-    double nFrames = 0.0;
-    for(auto &f: kv.second){
-      averageFrame = tools::sum(averageFrame, f.m_frame);
-      nFrames += 1.0;
-    }
-    tools::scale(averageFrame, 1.0/nFrames);
-    OdecoAniso2D newFrame(averageFrame);
-    newFrame.projectOnCrossManifold();
-    commonSolReduced[kv.first] = newFrame;
-  }
-  return commonSolReduced;
-}
-
 void iffComputeIntegrableFrameField(GModel *gm){
   std::vector<MElement*> elements;
   std::vector<MLine*> lines;
@@ -151,23 +45,27 @@ void iffComputeIntegrableFrameField(GModel *gm){
   std::map<Edge*, OdecoIso2D> edgeFrameInit;
   // std::map<Edge*, OdecoIso2D> edgeFrameInit;
   std::map<Edge*, OdecoAniso2D> edgeFrameInitAniso;
-  
+
+  FrameField<OdecoIso2D> cleanedFramesIso(&m_orig, 0.0, "hardBC");
+  FrameField<OdecoAniso2D> cleanedFramesAniso(&m_orig, 0.0, "hardBC");
+  // FrameField<OdecoIso2D> cleanedFramesIso(&m_orig, 0.0, "smoothBC");
+  // FrameField<OdecoAniso2D> cleanedFramesAniso(&m_orig, 0.0, "smoothBC");
+
+  // FrameField<OdecoAniso2D> finalFrameField(&m_orig, 1.0, "smoothBC");
+  FrameField<OdecoAniso2D> finalFrameField(&m_orig, 1.0, "hardBC");
   int nRefinementsMax = 0;
   while(nRefinement < nRefinementsMax){
     std::cout << "++++++++++++++++++++++++++++++++++++ Refinement stage " << nRefinement + 1 << " ++++++++++++++++++++++++++++++++++++" << std::endl;
     Mesh *m = listMeshes[listMeshes.size()-1];
     
     double fact = 1.0;
-    // FrameField<GLIso2D> framefield(m);
-    // FrameField<OdecoIso2D> framefield(m, fact);
-    // FrameField<OdecoAniso2D> framefieldAniso(m, fact, "smoothBC");
     FrameField<OdecoAniso2D> framefieldAniso(m, fact, "hardBC");
+    // FrameField<OdecoAniso2D> framefieldAniso(m, fact, "smoothBC");
     FrameField<OdecoIso2D> framefield(m, fact, "hardBC");
     // framefield.m_typeBC = "hardBC";
     // FrameField<OdecoAniso2D> framefield(m, fact);
     
     if(edgeFrameInit.size() == 0){
-    // if(1){
       framefield.generateLaplacianSolution();
       std::map<Element *, std::vector<std::vector<double>>> mapElemDirInit = framefield.getDirectionsPerElem();
       visu::framefield(mapElemDirInit, "Laplacian frames");
@@ -190,19 +88,13 @@ void iffComputeIntegrableFrameField(GModel *gm){
     framefield.projectFrames();
     framefield.printFrameFieldData("Smooth frames");
     
-    // framefield.generateIntegrableFrameField();
-    // framefield.printFrameFieldData("Integrable frames glob");
+    framefield.generateIntegrableFrameField();
 
-    // double integrabilityErrorGlob = 0.0;
-    // std::map<Element*, double> mapElemErrorIntGlob = framefield.getIntegrabilityError();
-    // for(auto &kv: mapElemErrorIntGlob)
-    //   integrabilityErrorGlob += kv.second;
+    framefield.printFrameFieldData("Integrable frames glob");
+
     std::cout << "+++ --- +++ Integrability error glob before proj: " << framefield.getTotalIntegrabilityError() << " +++ --- +++" << std::endl;
     framefield.projectFrames();
-    // mapElemErrorIntGlob = framefield.getIntegrabilityError();
-    // integrabilityErrorGlob = 0.0;
-    // for(auto &kv: mapElemErrorIntGlob)
-    //   integrabilityErrorGlob += kv.second;
+
     std::cout << "+++ --- +++ Integrability error glob after proj: " << framefield.getTotalIntegrabilityError() << " +++ --- +++" << std::endl;
     // // ------------
     // framefield.generateIntegrableFrameFieldCustom();
@@ -211,6 +103,7 @@ void iffComputeIntegrableFrameField(GModel *gm){
     
     framefield._generateIntegrableFrameFieldImposedDIrections();
     framefield.printFrameFieldData("Integrable frames glob with imposed dir");
+
     std::cout << "+++ --- +++ Integrability error glob with imposed dir: " << framefield.getTotalIntegrabilityError() << " +++ --- +++" << std::endl;
 
     //Compute anisotrope integrable framefield based on isotrope solution
@@ -221,21 +114,17 @@ void iffComputeIntegrableFrameField(GModel *gm){
     }
     framefieldAniso.setInitFrameField(initAnisoFrames);
     framefieldAniso._generateIntegrableFrameFieldImposedDIrections();
+    
     framefieldAniso.generateIntegrableFrameField();
+    
     framefieldAniso.printFrameFieldData("Integrable anisotrope frames");
-    // double integrabilityErrorAniso = 0.0;
-    // std::map<Element*, double> mapElemErrorIntAniso = framefieldAniso.getIntegrabilityError();
-    // for(auto &kv: mapElemErrorIntAniso)
-    //   integrabilityErrorAniso += kv.second;
+
     std::cout << "+++ --- +++ Integrability error aniso before proj: " << framefieldAniso.getTotalIntegrabilityError() << " +++ --- +++" << std::endl;
-    framefieldAniso.projectFrames();
-    // mapElemErrorIntAniso = framefieldAniso.getIntegrabilityError();
-    // integrabilityErrorAniso = 0.0;
-    // for(auto &kv: mapElemErrorIntAniso)
-    //   integrabilityErrorAniso += kv.second;
+
     std::cout << "+++ --- +++ Integrability error aniso after proj: " << framefieldAniso.getTotalIntegrabilityError() << " +++ --- +++" << std::endl;
     framefieldAniso._generateIntegrableFrameFieldImposedDIrections();
     framefieldAniso.printFrameFieldData("Integrable anisotrope frames with imposed dir");
+    framefieldAniso.projectFrames();
     std::cout << "+++ --- +++ Integrability error aniso with imposed dir: " << framefieldAniso.getTotalIntegrabilityError() << " +++ --- +++" << std::endl;
     //
     
@@ -258,7 +147,7 @@ void iffComputeIntegrableFrameField(GModel *gm){
     }
 
     double integrabilityError = 0.0;
-    std::map<Element*, double> mapElemErrorInt = framefield.getIntegrabilityError();
+    std::map<Element*, double> mapElemErrorInt = framefieldAniso.getIntegrabilityError();
     for(auto &kv: mapElemErrorInt)
       integrabilityError += kv.second;
     std::cout << "+++ --- +++ Integrability error: " << integrabilityError << " +++ --- +++" << std::endl;
@@ -271,7 +160,117 @@ void iffComputeIntegrableFrameField(GModel *gm){
     auto ff = framefield.getFrameField();
     edgeFrameInit = transferCoarseToFine(mr, ff);
     nRefinement++;
+
+    if(nRefinement >= nRefinementsMax){
+      cleanedFramesIso = framefield.getCleanedFramefield();
+      finalFrameField = framefieldAniso;
+      cleanedFramesAniso = framefieldAniso.getCleanedFramefield();
+    }
   }
+
+  if(0){
+    std::vector<Edge*> cg;
+    std::map<Edge*, std::vector<double>> cgVisu;
+    // cleanedFramesIso.printFrameFieldData("Cleaned Iso");
+    // cg = cleanedFramesIso.getCutGraph();
+    // for(Edge *edg: cg)
+    //   cgVisu[edg] = {1.0, 1.0};
+    // visu::scalarField(cgVisu, "CutGraph");
+
+    // Mesh *cutMesh = new Mesh;
+    // MeshRefiner meshCutter(cleanedFramesIso.getMesh(), cutMesh);
+    // meshCutter.cutMeshOnEdges(cg);
+
+    // FrameField<OdecoIso2D> frameFieldOnCutMeshIso(cutMesh);
+    // std::map<Edge*, OdecoIso2D> mapFramesOnCutMesh;
+    // std::map<Edge*, OdecoIso2D> mapFramesCleaned = cleanedFramesIso.getFrameField();
+    // for(size_t kEl=0; kEl<cleanedFramesIso.getMesh()->getNumElements(); kEl++){
+    //   Element *e = cleanedFramesIso.getMesh()->getElement(kEl);
+    //   Element *eCut = cutMesh->getElement(kEl);
+    //   for(size_t kEdg=0; kEdg<e->getNumEdges(); kEdg++)
+    //     mapFramesOnCutMesh[eCut->getEdge(kEdg)] = mapFramesCleaned[e->getEdge(kEdg)];
+    // }
+    // for(auto &kv: mapFramesOnCutMesh){
+    //   std::vector<std::vector<double>> dirFrames = kv.second.getDirections();
+    //   for(auto &v: dirFrames){
+    //     tools::normalize(v);
+    //     tools::scale(v, 0.1);
+    //   }
+    //   std::vector<std::vector<double>> newDirs{dirFrames[0], dirFrames[1]};
+    //   OdecoIso2D newF(newDirs);
+    //   kv.second = newF;
+    // }
+    // frameFieldOnCutMeshIso.setInitFrameField(mapFramesOnCutMesh);
+    // frameFieldOnCutMeshIso.printFrameFieldData("ON CUT MESH");
+    // frameFieldOnCutMeshIso.computeParametrization();
+
+
+    cleanedFramesAniso.printFrameFieldData("Cleaned Aniso");
+    cg = cleanedFramesAniso.getCutGraph();
+    cgVisu.clear();
+    for(Edge *edg: cg)
+      cgVisu[edg] = {1.0, 1.0};
+    visu::scalarField(cgVisu, "CutGraph");
+    
+    Mesh *cutMeshAniso = new Mesh;
+    MeshRefiner meshCutterAniso(cleanedFramesAniso.getMesh(), cutMeshAniso);
+    meshCutterAniso.cutMeshOnEdges(cg);
+
+    std::cout << "uncut mesh: " << std::endl;
+    cleanedFramesAniso.getMesh()->printInfos();
+    std::cout << "cutmesh: " << std::endl;
+    cutMeshAniso->printInfos();
+    FrameField<OdecoAniso2D> frameFieldOnCutMeshAniso(cutMeshAniso);
+    std::map<Edge*, OdecoAniso2D> mapFramesOnCutMeshAniso;
+    std::map<Edge*, OdecoAniso2D> mapFramesCleanedAniso = cleanedFramesAniso.getFrameField();
+    for(size_t kEl=0; kEl<cleanedFramesAniso.getMesh()->getNumElements(); kEl++){
+      Element *e = cleanedFramesAniso.getMesh()->getElement(kEl);
+      Element *eCut = cutMeshAniso->getElement(kEl);
+      for(size_t kEdg=0; kEdg<e->getNumEdges(); kEdg++)
+        mapFramesOnCutMeshAniso[eCut->getEdge(kEdg)] = mapFramesCleanedAniso[e->getEdge(kEdg)];
+    }
+    frameFieldOnCutMeshAniso.setInitFrameField(mapFramesOnCutMeshAniso);
+    std::vector<std::tuple<size_t, size_t, OdecoAniso2D>> listFrameFieldBC;
+    frameFieldOnCutMeshAniso.getQuantizedFrameFieldBC(listFrameFieldBC);
+
+    // frameFieldOnCutMeshIso.printFrameFieldData("ON CUT MESH");
+    frameFieldOnCutMeshAniso.computeParametrization();
+    std::vector<Edge*> fixedEdgesQuantized;
+    for(auto &tpl: listFrameFieldBC){
+      Mesh *currMesh = cleanedFramesAniso.getMesh();
+      Element *e = currMesh->getElement(std::get<0>(tpl));
+      size_t iLocEdg = std::get<1>(tpl);
+      OdecoAniso2D frameToImpose = std::get<2>(tpl);
+      Edge *edg = e->getEdge(iLocEdg);
+      fixedEdgesQuantized.push_back(edg);
+      cleanedFramesAniso.m_mapEdgeFrames[edg] = frameToImpose;
+    }
+    cleanedFramesAniso.addFixedEdges(fixedEdgesQuantized);
+    cleanedFramesAniso._generateIntegrableFrameFieldImposedDIrections();
+    cleanedFramesAniso.printFrameFieldData("Cleaned Aniso Quantized");
+
+    mapFramesOnCutMeshAniso.clear();
+    mapFramesCleanedAniso = cleanedFramesAniso.getFrameField();
+    for(size_t kEl=0; kEl<cleanedFramesAniso.getMesh()->getNumElements(); kEl++){
+      Element *e = cleanedFramesAniso.getMesh()->getElement(kEl);
+      Element *eCut = cutMeshAniso->getElement(kEl);
+      for(size_t kEdg=0; kEdg<e->getNumEdges(); kEdg++)
+        mapFramesOnCutMeshAniso[eCut->getEdge(kEdg)] = mapFramesCleanedAniso[e->getEdge(kEdg)];
+    }
+    frameFieldOnCutMeshAniso.setInitFrameField(mapFramesOnCutMeshAniso);
+
+    // frameFieldOnCutMeshIso.printFrameFieldData("ON CUT MESH");
+    frameFieldOnCutMeshAniso.computeParametrization();
+    std::map<Edge*, std::vector<double>> cgVisuDbg;
+    for(Edge *edg: frameFieldOnCutMeshAniso.getMesh()->getEdges()){
+      if(edg->isOnCutGraph())
+        cgVisuDbg[edg] = {1.0, 1.0};
+    }
+    visu::scalarField(cgVisuDbg, "CutGraphDBG");
+
+  }
+  
+  // visu::scalarField(checkData, "TEST DATA");
   // for(MElement *e: Mesh::hangingGmshElementsCollector)
   //   delete e;
   // Mesh::hangingGmshElementsCollector.clear();

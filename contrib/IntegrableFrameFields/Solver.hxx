@@ -16,7 +16,7 @@ namespace IFF{
     
     enum class TYPEUNKNOWN{VERTEX, EDGE, ELEMENT};
 
-    Solver(Mesh *m, int nFields, ObjectiveFunction *objFunc, TYPEUNKNOWN unknownType=TYPEUNKNOWN::VERTEX, size_t maxItLbfgs = 100000);
+    Solver(Mesh *m, int nFields, ObjectiveFunction *objFunc, TYPEUNKNOWN unknownType=TYPEUNKNOWN::VERTEX, size_t maxItLbfgs = 100000, double deltaFMax = 0.0);
     ~Solver(){}
 
     void printInfos(){
@@ -25,12 +25,20 @@ namespace IFF{
       std::cout << "-- nLagMult: " << getNLagMult() << std::endl;
       std::cout << "--- ---" << std::endl;
     }
+    void solve(std::map<Vertex *, std::vector<double>> &mapSolution);
     void solveLBFGS(std::map<Edge*, std::vector<double>> &mapSolution);
     void solveNewton(std::map<Edge *, std::vector<double>> &mapSolution);
+
+    void solveLBFGS(std::map<Vertex*, std::vector<double>> &mapSolution);
+    void solveNewton(std::map<Vertex*, std::vector<double>> &mapSolution);
     
     void addBCDirichlet(const std::pair<Edge*, int> &pairEdgeField, double valBC);
     void addBCDirichlet(const std::vector<std::pair<Edge*, int>> &pairEdgeField, const std::vector<double> &valBC);
     void addBCLinearCombination(const std::vector<std::vector<double>> &mat, const std::vector<double> &vect, const std::vector<std::pair<Edge*, int>> &pairEdgeField);
+
+    void addBCDirichlet(const std::pair<Vertex*, int> &pairVertexField, double valBC);
+    void addBCDirichlet(const std::vector<std::pair<Vertex*, int>> &pairVertexField, const std::vector<double> &valBC);
+    void addBCLinearCombination(const std::vector<std::vector<double>> &mat, const std::vector<double> &vect, const std::vector<std::pair<Vertex*, int>> &pairVertexField);
 
     size_t getNDof(){return m_nDof;}
     size_t getNTotalDof(){return m_nDof+m_nLagMult;}
@@ -62,9 +70,15 @@ namespace IFF{
 
     //Public for Alglib, not to be used outside of the class
     size_t _getIndex(std::pair<Edge*, int> pairEdgeField){return m_nFields*pairEdgeField.first->getIndex() + pairEdgeField.second;}
+    size_t _getIndex(std::pair<Vertex*, int> pairVertexField){return m_nFields*pairVertexField.first->getIndex() + pairVertexField.second;}
     size_t _getIndex(Element *e, int iUnknown, int iField){
       if(m_unknownType == TYPEUNKNOWN::EDGE){
+        // std::cout << "get index edge" << std::endl;
         return _getIndex(std::make_pair(e->getEdge(iUnknown), iField));
+      }
+      else if(m_unknownType == TYPEUNKNOWN::VERTEX){
+        // std::cout << "get index vertex" << std::endl;
+        return _getIndex(std::make_pair(e->getVertex(iUnknown), iField));
       }
       else{
         std::cout << "Unkown type not implemented" << std::endl;
@@ -88,6 +102,7 @@ namespace IFF{
       for(size_t k=0; k<linBCIndex; k++)
 	index += m_linearBC[k].mat.size();
       index += locLagMultIndex;
+      // std::cout << "index lag mult in func: " << index << std::endl;
       return index;
     }
     
@@ -106,7 +121,9 @@ namespace IFF{
     bool m_linearBCorthonormalized;
     
     //
-    
+
+    void setElementData(const std::map<Element*, std::vector<std::vector<double>>> &elemData){m_elementData = elemData;}
+    std::map<Element*, std::vector<std::vector<double>>> m_elementData;
   private:
 
   };

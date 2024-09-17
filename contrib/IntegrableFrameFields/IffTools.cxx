@@ -214,16 +214,17 @@ namespace IFF{
   }
   
   namespace manifoldTools{
-    std::vector<double> transportToNeighbourElement(Element *eRef, Element *eTarget, const std::vector<double> &vectToTransport){
+    std::vector<double> transportToNeighbourElement(Element *eRef, Element *eTarget, const std::vector<double> &vectToTransport, Edge *commonEdge){
       std::vector<double> normalRef = eRef->getNormal();
       std::vector<double> normalTarget = eTarget->getNormal();
-      Edge* commonEdge = NULL;
-      // std::cout << "Edg point prev: " << commonEdge << std::endl;
-      for(Edge *edg: eRef->getEdges()){
-        int locIndEdgTarget = edg->getLocIndexInElem(eTarget);
-        if(locIndEdgTarget >= 0){
-          commonEdge = eTarget->getEdge(locIndEdgTarget);
-          break;
+      if(commonEdge == NULL){
+        // std::cout << "Edg point prev: " << commonEdge << std::endl;
+        for(Edge *edg: eRef->getEdges()){
+          int locIndEdgTarget = edg->getLocIndexInElem(eTarget);
+          if(locIndEdgTarget >= 0){
+            commonEdge = eTarget->getEdge(locIndEdgTarget);
+            break;
+          }
         }
       }
       // std::cout << "Edg point next: " << commonEdge << std::endl;
@@ -492,6 +493,50 @@ namespace IFF{
     else
       return m_CRsf;
   }
+
+  std::vector<std::vector<double>> Element::getGradSF(double u, double v, double w){
+    std::vector<std::vector<double>> gradSF;
+    std::vector<std::vector<double>> dxdxi;
+    std::vector<std::vector<double>> dxidx;
+    gradSF.resize(3);
+    dxdxi.resize(3);
+    dxidx.resize(3);
+    for(size_t k=0; k<3; k++){
+      gradSF[k].resize(3, 0.0);
+      dxdxi[k].resize(3, 0.0);
+      dxidx[k].resize(3, 0.0);
+    }
+    for (int i = 0; i < 2; ++i)
+      for (int j = 0; j < 3; ++j){
+        dxdxi[j][i] = m_vertices[i+1]->getCoord()[j]-m_vertices[0]->getCoord()[j];
+      }
+    for (int j = 0; j < 3; ++j)
+      dxdxi[j][2] = m_normal[j];
+    
+    double det = dxdxi[0][0]*dxdxi[1][1]*dxdxi[2][2]+dxdxi[0][1]*dxdxi[1][2]*dxdxi[2][0]+dxdxi[0][2]*dxdxi[1][0]*dxdxi[2][1]-dxdxi[0][2]*dxdxi[1][1]*dxdxi[2][0]-dxdxi[0][1]*dxdxi[1][0]*dxdxi[2][2]-dxdxi[0][0]*dxdxi[1][2]*dxdxi[2][1];
+
+    dxidx[0][0] = (dxdxi[1][1]*dxdxi[2][2]-dxdxi[1][2]*dxdxi[2][1])/(det);
+    dxidx[1][0] = (dxdxi[1][2]*dxdxi[2][0]-dxdxi[1][0]*dxdxi[2][2])/(det);
+    dxidx[2][0] = (dxdxi[1][0]*dxdxi[2][1]-dxdxi[1][1]*dxdxi[2][0])/(det);
+    
+    dxidx[0][1] = (dxdxi[0][2]*dxdxi[2][1]-dxdxi[0][1]*dxdxi[2][2])/(det);
+    dxidx[1][1] = (dxdxi[0][0]*dxdxi[2][2]-dxdxi[0][2]*dxdxi[2][0])/(det);
+    dxidx[2][1] = (dxdxi[0][1]*dxdxi[2][0]-dxdxi[0][0]*dxdxi[2][1])/(det);
+    
+    dxidx[0][2] = (dxdxi[0][1]*dxdxi[1][2]-dxdxi[0][2]*dxdxi[1][1])/(det);
+    dxidx[1][2] = (dxdxi[0][2]*dxdxi[1][0]-dxdxi[0][0]*dxdxi[1][2])/(det);
+    dxidx[2][2] = (dxdxi[0][0]*dxdxi[1][1]-dxdxi[0][1]*dxdxi[1][0])/(det);
+
+    for(int j=0; j<3; j++){
+      gradSF[0][j] = 0;
+      for(int i=0; i<2; ++i){
+        gradSF[0][j] -= dxidx[i][j];
+        gradSF[i+1][j] = dxidx[i][j];
+      }
+    }
+    
+    return gradSF;
+  }
   
   std::vector<std::vector<std::vector<double>>> Element::getCRGradSF(int pOrder){
     if(m_CRgsf.size()==0){
@@ -652,11 +697,15 @@ namespace IFF{
 
     size_t nMaxEdges = 0;
     //Build Vertex vector
+    GModel *gm = GModel::current();
     m_vertices.reserve(origMesh.m_vertices.size());
     for(Vertex *origV: origMesh.m_vertices){
       MVertex *newGmshV = new MVertex(*(origV->m_v));
       hangingGmshVerticesCollector.push_back(newGmshV);
-
+      for(auto gf: gm->getFaces()){//TODO: this is temporary, we have to add new elements to the good face. Let Gmsh handle memory for Elements created
+        gf->addMeshVertex(newGmshV);
+        break;
+      }
       Vertex *v = Vertex::create(newGmshV);
       m_vertices.push_back(v);
       v->m_index = m_vertices.size()-1;
@@ -664,7 +713,7 @@ namespace IFF{
       v->m_isGeoNode = origV->m_isGeoNode;
     }
     //Build Elements vector
-    GModel *gm = GModel::current();
+
     m_elements.reserve(origMesh.m_elements.size());
     for(Element* eOrig: origMesh.m_elements){
       std::vector<MVertex *> verts;
@@ -958,88 +1007,39 @@ namespace IFF{
 
   }
 
-  void MeshRefiner::refineMesh(const std::vector<size_t> &indicesElemToRefine){
-    std::vector<Element*> coarseElemToRefineUnmodified;
-    coarseElemToRefineUnmodified.reserve(indicesElemToRefine.size());
-    for(size_t indEl: indicesElemToRefine)
-      coarseElemToRefineUnmodified.push_back(m_origMesh->m_elements[indEl]);
-      
-    std::vector<bool> coarseElementsRefined(m_origMesh->m_elements.size(), false);
-    //Flag elements to refine fractal
-    std::vector<bool> flagElemToRefine;
-    flagElemToRefine.resize(m_origMesh->m_elements.size(), false);
-    //Add one layer to elements to refine 
-    for(size_t indE: indicesElemToRefine){
-      flagElemToRefine[indE] = true;
-      for(Vertex *v: m_origMesh->m_elements[indE]->getVertices()){
-        for(Element *e: v->getOrientedElements())
-          flagElemToRefine[e->getIndex()] = true;
-      }
-      // for(Element *e: m_origMesh->m_elements[indE]->getNeighboursElements()){
-      //   flagElemToRefine[e->getIndex()] = true;
-      // }
+  void MeshRefiner::_executeRefinement(const std::vector<Element*> &elementsFractalRefine, const std::vector<std::pair<Element*, int>> &elementsHalfRefine, std::vector<bool> &coarseElementsRefined){
+    //Delete all preexisting children
+    for(Element *e: m_origMesh->getElements()){
+      e->m_childElem.clear();
     }
-    //Add elements having 2 neighbours to be refined
-    bool flagModified = true;
-    while(flagModified){
-      flagModified = false;
-      for(Element *e: m_origMesh->m_elements){
-        if(!flagElemToRefine[e->getIndex()]){
-          int nNeigToRefine = 0;
-          for(Element *eNeig: e->getNeighboursElements())
-            if(flagElemToRefine[eNeig->getIndex()])
-              nNeigToRefine++;
-          if(nNeigToRefine > 1){
-            flagElemToRefine[e->getIndex()] = true;
-            flagModified = true;
-          }
-        }
-      }
-    }
-    //Store elements to refine fractal
-    std::vector<Element*> elementsFractalRefine;
-    elementsFractalRefine.reserve(m_origMesh->m_elements.size());
-    for(Element *e: m_origMesh->m_elements)
-      if(flagElemToRefine[e->getIndex()])
-        elementsFractalRefine.push_back(e);
-    elementsFractalRefine.shrink_to_fit();
-    //Store pairs (element to refine half split, localIndexEdg).
-    std::vector<std::pair<Element*, int>> elementsHalfRefine;
-    elementsHalfRefine.reserve(m_origMesh->m_elements.size());
-    for(Element *e: elementsFractalRefine){
-      for(Element *eNeigh: e->getNeighboursElements())
-        if(!flagElemToRefine[eNeigh->getIndex()]){
-          Edge *commonEdg = eNeigh->getCommonEdge(e);
-          elementsHalfRefine.push_back(std::make_pair(eNeigh, commonEdg->getLocIndexInElem(eNeigh)));
-        }
-    }
-    elementsHalfRefine.shrink_to_fit();
+    coarseElementsRefined.clear();
+    coarseElementsRefined.resize(m_origMesh->m_elements.size(), false);
     //Flag edges to be split
     std::vector<bool> edgesToSplit(m_origMesh->m_edges.size(), false);
 
     for(Element *e: elementsFractalRefine)
-      for(Edge*edg: e->getEdges())
+      for(Edge *edg: e->getEdges())
         edgesToSplit[edg->getIndex()] = true;
-    // std::cout << "N fractal elements: " << elementsFractalRefine.size() << std::endl;
-    // std::cout << "gmsh tag element to split: " << elementsFractalRefine[0]->getGmshTag() << std::endl;
-    int cpt= 0;
-    for(bool isRef: edgesToSplit)
-      if(isRef)
-        cpt++;
-    // std::cout << "edges to split size: " << cpt << std::endl;
-    for(auto &kv: elementsHalfRefine)
+
+    for(auto &kv: elementsHalfRefine){
       edgesToSplit[kv.first->getEdge(kv.second)->getIndex()] = true;
+    }
     //Create new vertices which will be added to refined mesh
     std::vector<Vertex*> newVertices(m_origMesh->m_edges.size(), NULL);
+    GModel *gm = GModel::current();
     for(size_t k=0; k<m_origMesh->m_edges.size(); k++)
       if(edgesToSplit[k]){
         Edge *e = m_origMesh->m_edges[k];
         std::vector<double> coords = e->getBarycenter();
         MVertex *newGmshV = new MVertex(coords[0], coords[1], coords[2]);
         Mesh::hangingGmshVerticesCollector.push_back(newGmshV);
+        for(auto gf: gm->getFaces()){//TODO: this is temporary, we have to add new elements to the good face. Let Gmsh handle memory for Elements created
+          gf->addMeshVertex(newGmshV);
+          break;
+        }
         newVertices[k] = Vertex::create(newGmshV);
       }
-    //TODO: add new vertices to refined mesh
+
     int cpt2 = 0;
     for(Vertex *v: newVertices){
       if(v){
@@ -1050,10 +1050,11 @@ namespace IFF{
         v->m_v->setIndex(v->m_index);
       }
     }
+
     // std::cout << "n new vertices: " << cpt2 << std::endl;
     // std::cout << "n lines in refined mesh before splitting: " << m_refinedMesh->m_lines.size()<<std::endl;;
     //For element creation and memory management
-    GModel *gm = GModel::current();
+
     MElementFactory elemfact;
     //Create new lines
     for(Edge *edg: m_origMesh->getEdges()){
@@ -1233,6 +1234,132 @@ namespace IFF{
     m_refinedMesh->_buildStructure(nMaxEdges);
     // std::cout << "flag5" << std::endl;
     m_refinedMesh->_checkSanity();
+  }
+  
+  void MeshRefiner::refineMesh(const std::vector<size_t> &indicesElemToRefine){
+    std::vector<Element*> coarseElemToRefineUnmodified;
+    coarseElemToRefineUnmodified.reserve(indicesElemToRefine.size());
+    for(size_t indEl: indicesElemToRefine)
+      coarseElemToRefineUnmodified.push_back(m_origMesh->m_elements[indEl]);
+      
+    std::vector<bool> coarseElementsRefined(m_origMesh->m_elements.size(), false);
+    //Flag elements to refine fractal
+    std::vector<bool> flagElemToRefine;
+    flagElemToRefine.resize(m_origMesh->m_elements.size(), false);
+    //Add one layer to elements to refine 
+    for(size_t indE: indicesElemToRefine){
+      flagElemToRefine[indE] = true;
+      for(Vertex *v: m_origMesh->m_elements[indE]->getVertices()){
+        for(Element *e: v->getOrientedElements())
+          flagElemToRefine[e->getIndex()] = true;
+      }
+      // for(Element *e: m_origMesh->m_elements[indE]->getNeighboursElements()){
+      //   flagElemToRefine[e->getIndex()] = true;
+      // }
+    }
+    //Add elements having 2 neighbours to be refined
+    bool flagModified = true;
+    while(flagModified){
+      flagModified = false;
+      for(Element *e: m_origMesh->m_elements){
+        if(!flagElemToRefine[e->getIndex()]){
+          int nNeigToRefine = 0;
+          for(Element *eNeig: e->getNeighboursElements())
+            if(flagElemToRefine[eNeig->getIndex()])
+              nNeigToRefine++;
+          if(nNeigToRefine > 1){
+            flagElemToRefine[e->getIndex()] = true;
+            flagModified = true;
+          }
+        }
+      }
+    }
+    //Store elements to refine fractal
+    std::vector<Element*> elementsFractalRefine;
+    elementsFractalRefine.reserve(m_origMesh->m_elements.size());
+    for(Element *e: m_origMesh->m_elements)
+      if(flagElemToRefine[e->getIndex()])
+        elementsFractalRefine.push_back(e);
+    elementsFractalRefine.shrink_to_fit();
+    //Store pairs (element to refine half split, localIndexEdg).
+    std::vector<std::pair<Element*, int>> elementsHalfRefine;
+    elementsHalfRefine.reserve(m_origMesh->m_elements.size());
+    for(Element *e: elementsFractalRefine){
+      for(Element *eNeigh: e->getNeighboursElements())
+        if(!flagElemToRefine[eNeigh->getIndex()]){
+          Edge *commonEdg = eNeigh->getCommonEdge(e);
+          elementsHalfRefine.push_back(std::make_pair(eNeigh, commonEdg->getLocIndexInElem(eNeigh)));
+        }
+    }
+    elementsHalfRefine.shrink_to_fit();
+
+    _executeRefinement(elementsFractalRefine, elementsHalfRefine, coarseElementsRefined);
+
+    //Store coarse elements not refined
+    for(Element *e: m_origMesh->m_elements)
+      if(coarseElementsRefined[e->getIndex()]){
+        for(Element *eChild: e->m_childElem)
+          m_fineElemRefined.push_back(eChild);
+        m_coarseElemRefined.push_back(e);
+      }
+      else{
+        m_coarseElemNotRefined.push_back(e);
+      }
+
+
+    //Store Edges of elements to refine unmodified
+    std::vector<bool> isEdgToStore;
+    isEdgToStore.resize(m_refinedMesh->m_edges.size(), false);
+    for(Element *e: coarseElemToRefineUnmodified)
+      for(Element *eFine: e->getChildren()){
+        m_fineElemRefinedUnmodified.push_back(eFine);
+        for(Edge *edg: eFine->getEdges()){
+          isEdgToStore[edg->getIndex()] = true;
+        }
+      }
+    for(size_t k=0; k<m_refinedMesh->m_edges.size(); k++)
+      if(isEdgToStore[k])
+        m_edgesElemRefinedUnmodified.push_back(m_refinedMesh->m_edges[k]);
+      else{
+        // std::cout << "k: " << k << std::endl;
+        m_edgesElemRefinedUnmodifiedBar.push_back(m_refinedMesh->m_edges[k]);
+      }
+    
+    //Store common edges (pointers from coarse mesh)
+    std::vector<bool> isCoarseCommonEdges(m_origMesh->m_edges.size(), false);
+    std::vector<bool> isFineCommonEdges(m_refinedMesh->m_edges.size(), false);
+    for(Element *e: m_coarseElemNotRefined){
+      for(Edge *edg: e->getEdges())
+        isCoarseCommonEdges[edg->getIndex()] = true;
+      Element *eFine = m_refinedMesh->m_elements[e->getIndex()];
+      for(Edge *edg: eFine->getEdges()){
+        isFineCommonEdges[edg->getIndex()] = true;
+      }
+    }
+    for(Edge *edg: m_origMesh->getEdges())
+      if(isCoarseCommonEdges[edg->getIndex()])
+        m_coarseCommonEdges.push_back(edg);
+    for(Edge *edg: m_refinedMesh->getEdges())
+      if(isFineCommonEdges[edg->getIndex()])
+        m_fineCommonEdges.push_back(edg);
+  }
+
+  void MeshRefiner::customRefineMesh(const std::vector<Edge*> &edgesToSplit){
+    std::vector<Element*> coarseElemToRefineUnmodified;
+      
+    std::vector<bool> coarseElementsRefined(m_origMesh->m_elements.size(), false);
+    
+    //Store elements to refine fractal
+    std::vector<Element*> elementsFractalRefine;
+    //Store pairs (element to refine half split, localIndexEdg).
+    std::vector<std::pair<Element*, int>> elementsHalfRefine;
+    elementsHalfRefine.reserve(2*edgesToSplit.size());
+    for(const auto &edg: edgesToSplit)
+      for(Element *e: edg->getElements())
+        elementsHalfRefine.push_back(std::make_pair(e, edg->getLocIndexInElem(e)));
+    elementsHalfRefine.shrink_to_fit();
+
+    _executeRefinement(elementsFractalRefine, elementsHalfRefine, coarseElementsRefined);
 
     //Store coarse elements not refined
     for(Element *e: m_origMesh->m_elements)
@@ -1261,7 +1388,7 @@ namespace IFF{
       else
         m_edgesElemRefinedUnmodifiedBar.push_back(m_refinedMesh->m_edges[k]);
     
-    //Store common edges (pointers from corase mesh)
+    //Store common edges (pointers from coarse mesh)
     std::vector<bool> isCoarseCommonEdges(m_origMesh->m_edges.size(), false);
     std::vector<bool> isFineCommonEdges(m_refinedMesh->m_edges.size(), false);
     for(Element *e: m_coarseElemNotRefined){
@@ -1278,5 +1405,155 @@ namespace IFF{
     for(Edge *edg: m_refinedMesh->getEdges())
       if(isFineCommonEdges[edg->getIndex()])
         m_fineCommonEdges.push_back(edg);
+  }
+
+  void MeshRefiner::cutMeshOnEdges(const std::vector<Edge*> &cutEdges){
+    std::vector<bool> isCutEdgeOrBnd(m_origMesh->getNumEdges(), false);
+    for(Edge *edg: m_origMesh->getEdges())
+      if(edg->getNumElements() == 1)
+        isCutEdgeOrBnd[edg->getIndex()] = true;
+    for(Edge *edg: cutEdges)
+      isCutEdgeOrBnd[edg->getIndex()] = true;
+
+    std::vector<int> multVert(m_origMesh->getNumVertices(), 0);
+    for(Edge *edg: cutEdges)
+      for(Vertex *v: edg->getVertices())
+        multVert[v->getIndex()]++;
+    for(Vertex *v: m_origMesh->getVertices())
+      if(v->isGeometryBoundary())
+        multVert[v->getIndex()]--;
+
+    for(Vertex *v: m_origMesh->getVertices()){
+      if(v->isVertOfInterest()){
+        m_refinedMesh->getVertex(v->getIndex())->setVertOfInterest(true);
+        m_refinedMesh->getVertex(v->getIndex())->setValence(v->getValence());
+      }
+      if(v->isVertOfInterestBoundary())
+        m_refinedMesh->getVertex(v->getIndex())->setVertOfInterestBoundary(true);
+    }
+    
+    for(Vertex *v: m_origMesh->getVertices())
+      //Cut mesh on vertex if need
+      if(multVert[v->getIndex()] > 1){
+        size_t totalQuadrant = multVert[v->getIndex()];
+        //Find first element to loop on
+        size_t indexOrientedElement = 0;
+        for(size_t kEl=0; kEl<v->getOrientedElements().size(); kEl++){
+          Element *e = v->getOrientedElements()[kEl];
+          if(isCutEdgeOrBnd[v->getLocIndexInElem(e)]){
+            indexOrientedElement = kEl;
+            break;
+          }
+        }
+        size_t currentQuadrant = 0;
+        bool reachedCutEdge = false;
+        //Loop on first quadrant without doin anything
+        int cpt = 0;
+        while(!reachedCutEdge && cpt<100){
+          size_t nOrientedElem = v->getOrientedElements().size();
+          Element *currentElem = v->getOrientedElements()[(indexOrientedElement)%nOrientedElem];
+          size_t nEdgesCurrentElem = currentElem->getNumEdges();
+          Edge *nextEdg = currentElem->getEdge((v->getLocIndexInElem(currentElem)+nEdgesCurrentElem-1)%nEdgesCurrentElem);
+          if(isCutEdgeOrBnd[nextEdg->getIndex()])
+            reachedCutEdge = true;
+
+          indexOrientedElement++;
+          cpt++;
+        }
+        currentQuadrant++;
+        while(currentQuadrant < totalQuadrant){
+          size_t nOrientedElem = v->getOrientedElements().size();
+          reachedCutEdge = false;
+          //Create new vertex here
+          std::vector<double> coords = v->getCoord();
+          MVertex *newGmshV = new MVertex(coords[0], coords[1], coords[2]);
+          Mesh::hangingGmshVerticesCollector.push_back(newGmshV);
+          Vertex *newV = Vertex::create(newGmshV);
+          GModel *gm = GModel::current();
+          for(auto gf: gm->getFaces()){//TODO: this is temporary, we have to add new elements to the good face. Let Gmsh handle memory for Elements created
+            gf->addMeshVertex(newGmshV);
+            break;
+          }
+          m_refinedMesh->m_vertices.push_back(newV);
+          newV->m_index = m_refinedMesh->m_vertices.size() - 1;
+          newV->m_v->setIndex(newV->m_index);
+          newV->m_isVertOfinterest = v->isVertOfInterest();
+          newV->setValence(v->getValence());
+          newV->m_isVertOfinterestBoundary = v->isVertOfInterestBoundary();
+          //
+          while(!reachedCutEdge){
+            Element *currentElem = v->getOrientedElements()[(indexOrientedElement)%nOrientedElem];
+            size_t nEdgesCurrentElem = currentElem->getNumEdges();
+            Edge *nextEdg = currentElem->getEdge((v->getLocIndexInElem(currentElem)+nEdgesCurrentElem-1)%nEdgesCurrentElem);
+            if(isCutEdgeOrBnd[nextEdg->getIndex()])
+              reachedCutEdge = true;
+            m_refinedMesh->getElement(currentElem->getIndex())->m_vertices[v->getLocIndexInElem(currentElem)] = newV;
+            m_refinedMesh->getElement(currentElem->getIndex())->m_e->setVertex(v->getLocIndexInElem(currentElem), newV->m_v);
+            indexOrientedElement++;
+          }
+          currentQuadrant++;
+        }
+      }
+    //Modify existing lines and create new ones if need
+    MElementFactory elemfact;
+    for(Element *l: m_origMesh->getLines()){
+      Edge *edg = l->getEdge(0);
+      int nLines = 0;
+      for(Element *e: edg->getElements()){
+        Element *newL;
+        if(nLines == 0)
+          newL = m_refinedMesh->getLine(l->getIndex());
+        else{
+          std::vector<MVertex*> gmshVerts;
+          std::vector<Vertex*> verts = l->getVertices();
+          gmshVerts.reserve(verts.size());
+          for(Vertex *v: verts){
+            gmshVerts.push_back(v->m_v);
+          }
+          MElement *newGmshElem = elemfact.create(l->m_e->getTypeForMSH(), gmshVerts);
+          Mesh::hangingGmshElementsCollector.push_back(newGmshElem);
+          newL = Element::create(m_refinedMesh, newGmshElem);
+          m_refinedMesh->m_lines.push_back(newL);
+          newL->m_index = m_refinedMesh->m_lines.size() - 1;
+        }
+        size_t locIndexN0 = l->getVertex(0)->getLocIndexInElem(e);
+        size_t locIndexN1 = l->getVertex(1)->getLocIndexInElem(e);
+        newL->m_vertices[0] = m_refinedMesh->getElement(e->getIndex())->getVertex(locIndexN0);
+        newL->m_vertices[1] = m_refinedMesh->getElement(e->getIndex())->getVertex(locIndexN1);
+        newL->m_e->setVertex(0, m_refinedMesh->getElement(e->getIndex())->getVertex(locIndexN0)->m_v);
+        newL->m_e->setVertex(1, m_refinedMesh->getElement(e->getIndex())->getVertex(locIndexN1)->m_v);
+      }
+    }
+    size_t nMaxEdges = 0;
+    for(Element *e: m_refinedMesh->m_elements)
+      nMaxEdges += e->getNumEdges();
+    for(Element *l: m_refinedMesh->m_lines)
+      nMaxEdges += l->getNumEdges();
+    m_refinedMesh->_buildStructure(nMaxEdges);
+    m_refinedMesh->_checkSanity();
+
+    //Store info for edges which were on cutedges and are not geometry boundary
+    for(const Edge *edg: cutEdges){
+      if(edg->getNumElements() > 1){
+        for(Element *e: edg->getElements()){
+          Element *refinedElem = m_refinedMesh->getElement(e->getIndex());
+          size_t locIndEdg = edg->getLocIndexInElem(e);
+          Edge *edgOnRefinedMesh = refinedElem->getEdge(locIndEdg);
+          edgOnRefinedMesh->m_isOnCutGraph = true;
+          Element *neighElem;
+          if(e->getIndex() == edg->getElement(0)->getIndex())
+            neighElem = edg->getElement(1);
+          else
+            neighElem = edg->getElement(0);
+          size_t locIndEdgOnNeighElem = edg->getLocIndexInElem(neighElem);
+          
+          Element *neighElemOnRefinedMesh = m_refinedMesh->getElement(neighElem->getIndex());
+          edgOnRefinedMesh->m_neighbourElemAcrossCut = neighElemOnRefinedMesh;
+          edgOnRefinedMesh->m_neighbourEdgeAcrossCut = neighElemOnRefinedMesh->getEdge(locIndEdgOnNeighElem);
+            
+          // refinedElem->getEdge(locIndEdg)->m_neighbourEdgeAcrossCut = m_refinedMesh->getEdge(edg->getLocIndexInElem(neighElem));
+        }
+      }
+    }
   }
 }
