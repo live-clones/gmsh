@@ -224,115 +224,115 @@ struct VertexOnEdge {
   }
 };
 
-static PolyMesh *
-createPolyMesh(GModel *gm,
-               std::map<MVertex *, int, MVertexPtrLessThan> &trianglePositions)
-{
-  const double eps = 1.e-8; // FIXME
-  MVertexRTree pos(eps);
-  PolyMesh *pm = new PolyMesh;
+// static PolyMesh *
+// createPolyMesh(GModel *gm,
+//                std::map<MVertex *, int, MVertexPtrLessThan> &trianglePositions)
+// {
+//   const double eps = 1.e-8; // FIXME
+//   MVertexRTree pos(eps);
+//   PolyMesh *pm = new PolyMesh;
 
-  int counter = 0;
-  for(GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++) {
-    discreteFace *df = static_cast<discreteFace *>(*fit);
-    if(!df) continue;
-    for(std::size_t i = 0; i < df->_param.v3d.size(); i++)
-      df->_param.v3d[i].setIndex(-1);
-  }
+//   int counter = 0;
+//   for(GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++) {
+//     discreteFace *df = static_cast<discreteFace *>(*fit);
+//     if(!df) continue;
+//     for(std::size_t i = 0; i < df->_param.v3d.size(); i++)
+//       df->_param.v3d[i].setIndex(-1);
+//   }
 
-  size_t faceCounter = 0;
+//   size_t faceCounter = 0;
 
-  for(GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++) {
-    std::set<MVertex *> vs;
-    for(auto t : (*fit)->triangles) {
-      vs.insert(t->getVertex(0));
-      vs.insert(t->getVertex(1));
-      vs.insert(t->getVertex(2));
-    }
-    discreteFace *df = static_cast<discreteFace *>(*fit);
-    //-------------------------------------------------------------
-    for(auto _v : vs) {
-      MFaceVertex *vk = dynamic_cast<MFaceVertex *>(_v);
-      if(vk) {
-        double u, v, uloc, vloc;
-        vk->getParameter(0, u);
-        vk->getParameter(1, v);
-        int tp = df->trianglePosition(u, v, uloc, vloc);
-        //	printf("face %d vertex %d param %g %g triangle position %d
-        //parametric ? %d\n",
-        //	       df->tag(),vk->getNum(),u,v,tp,vk->getParameter(0,u));
-        trianglePositions[vk] = tp + faceCounter;
-      }
-      MEdgeVertex *ve = dynamic_cast<MEdgeVertex *>(_v);
-      if(ve) {
-        GEdge *ge = dynamic_cast<GEdge *>(ve->onWhat());
-        if(ge) {
-          double epar;
-          ve->getParameter(0, epar);
-          SPoint2 p2 = ge->reparamOnFace(df, epar, 0);
-          double uloc, vloc;
-          int tp = df->trianglePosition(p2.x(), p2.y(), uloc, vloc);
-          trianglePositions[ve] = tp + faceCounter;
-        }
-      }
-      if(!ve && !vk) { trianglePositions[_v] = -1; }
-    }
-    //-------------------------------------------------------------
-    for(std::size_t i = 0; i < df->_param.t3d.size(); i++) {
-      for(std::size_t j = 0; j < 3; j++) {
-        MVertex *vv = pos.insert(df->_param.t3d[i].getVertex(j));
-        if(!vv)
-          vv = df->_param.t3d[i].getVertex(j);
-        else
-          df->_param.t3d[i].getVertex(j)->setIndex(vv->getIndex());
-        //	else   printf("FOUND face %d t %lu v %lu %p\n",df->tag(),i,j,vv);
-        if(vv->getIndex() == -1) {
-          pm->vertices.push_back(
-            new PolyMesh::Vertex(vv->x(), vv->y(), vv->z(), counter));
-          vv->setIndex(counter++);
-        }
-      }
-    }
-    faceCounter += df->_param.t3d.size();
-  }
+//   for(GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++) {
+//     std::set<MVertex *> vs;
+//     for(auto t : (*fit)->triangles) {
+//       vs.insert(t->getVertex(0));
+//       vs.insert(t->getVertex(1));
+//       vs.insert(t->getVertex(2));
+//     }
+//     discreteFace *df = static_cast<discreteFace *>(*fit);
+//     //-------------------------------------------------------------
+//     for(auto _v : vs) {
+//       MFaceVertex *vk = dynamic_cast<MFaceVertex *>(_v);
+//       if(vk) {
+//         double u, v, uloc, vloc;
+//         vk->getParameter(0, u);
+//         vk->getParameter(1, v);
+//         int tp = df->trianglePosition(u, v, uloc, vloc);
+//         //	printf("face %d vertex %d param %g %g triangle position %d
+//         //parametric ? %d\n",
+//         //	       df->tag(),vk->getNum(),u,v,tp,vk->getParameter(0,u));
+//         trianglePositions[vk] = tp + faceCounter;
+//       }
+//       MEdgeVertex *ve = dynamic_cast<MEdgeVertex *>(_v);
+//       if(ve) {
+//         GEdge *ge = dynamic_cast<GEdge *>(ve->onWhat());
+//         if(ge) {
+//           double epar;
+//           ve->getParameter(0, epar);
+//           SPoint2 p2 = ge->reparamOnFace(df, epar, 0);
+//           double uloc, vloc;
+//           int tp = df->trianglePosition(p2.x(), p2.y(), uloc, vloc);
+//           trianglePositions[ve] = tp + faceCounter;
+//         }
+//       }
+//       if(!ve && !vk) { trianglePositions[_v] = -1; }
+//     }
+//     //-------------------------------------------------------------
+//     for(std::size_t i = 0; i < df->_param.t3d.size(); i++) {
+//       for(std::size_t j = 0; j < 3; j++) {
+//         MVertex *vv = pos.insert(df->_param.t3d[i].getVertex(j));
+//         if(!vv)
+//           vv = df->_param.t3d[i].getVertex(j);
+//         else
+//           df->_param.t3d[i].getVertex(j)->setIndex(vv->getIndex());
+//         //	else   printf("FOUND face %d t %lu v %lu %p\n",df->tag(),i,j,vv);
+//         if(vv->getIndex() == -1) {
+//           pm->vertices.push_back(
+//             new PolyMesh::Vertex(vv->x(), vv->y(), vv->z(), counter));
+//           vv->setIndex(counter++);
+//         }
+//       }
+//     }
+//     faceCounter += df->_param.t3d.size();
+//   }
 
-  for(GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++) {
-    discreteFace *df = static_cast<discreteFace *>(*fit);
-    if(!df) continue;
-    for(std::size_t i = 0; i < df->_param.t3d.size(); i++) {
-      PolyMesh::HalfEdge *he[3];
-      for(std::size_t j = 0; j < 3; j++) {
-        PolyMesh::Vertex *vv =
-          pm->vertices[df->_param.t3d[i].getVertex(j)->getIndex()];
-        he[j] = new PolyMesh::HalfEdge(vv);
-        pm->hedges.push_back(he[j]);
-        vv->he = he[j];
-      }
-      PolyMesh::Face *ff = new PolyMesh::Face(he[0]);
-      pm->faces.push_back(ff);
-      for(int j = 0; j < 3; j++) {
-        he[j]->next = he[(j + 1) % 3];
-        he[j]->prev = he[(j - 1 + 3) % 3];
-        he[j]->f = ff;
-      }
-    }
-  }
+//   for(GModel::fiter fit = gm->firstFace(); fit != gm->lastFace(); fit++) {
+//     discreteFace *df = static_cast<discreteFace *>(*fit);
+//     if(!df) continue;
+//     for(std::size_t i = 0; i < df->_param.t3d.size(); i++) {
+//       PolyMesh::HalfEdge *he[3];
+//       for(std::size_t j = 0; j < 3; j++) {
+//         PolyMesh::Vertex *vv =
+//           pm->vertices[df->_param.t3d[i].getVertex(j)->getIndex()];
+//         he[j] = new PolyMesh::HalfEdge(vv);
+//         pm->hedges.push_back(he[j]);
+//         vv->he = he[j];
+//       }
+//       PolyMesh::Face *ff = new PolyMesh::Face(he[0]);
+//       pm->faces.push_back(ff);
+//       for(int j = 0; j < 3; j++) {
+//         he[j]->next = he[(j + 1) % 3];
+//         he[j]->prev = he[(j - 1 + 3) % 3];
+//         he[j]->f = ff;
+//       }
+//     }
+//   }
 
-  HalfEdgePtrLessThan compare;
-  std::sort(pm->hedges.begin(), pm->hedges.end(), compare);
+//   HalfEdgePtrLessThan compare;
+//   std::sort(pm->hedges.begin(), pm->hedges.end(), compare);
 
-  HalfEdgePtrEqual equal;
-  for(size_t i = 0; i < pm->hedges.size() - 1; i++) {
-    PolyMesh::HalfEdge *h0 = pm->hedges[i];
-    PolyMesh::HalfEdge *h1 = pm->hedges[i + 1];
-    if(equal(h0, h1)) {
-      h0->opposite = h1;
-      h1->opposite = h0;
-      i++;
-    }
-  }
-  return pm;
-}
+//   HalfEdgePtrEqual equal;
+//   for(size_t i = 0; i < pm->hedges.size() - 1; i++) {
+//     PolyMesh::HalfEdge *h0 = pm->hedges[i];
+//     PolyMesh::HalfEdge *h1 = pm->hedges[i + 1];
+//     if(equal(h0, h1)) {
+//       h0->opposite = h1;
+//       h1->opposite = h0;
+//       i++;
+//     }
+//   }
+//   return pm;
+// }
 
 static int onBoundary(PolyMesh::VertexOnSurface &vof, double eps,
                       int expectedDim)
@@ -1707,7 +1707,11 @@ bool highOrderPolyMesh::intersectGeodesicPath(
         double lambda = dot(A, n1) / dot(d1, n1);
         if(lambda >= 0 && lambda <= 1) {
           intersection = v0 + lambda * d1;
-          return true;
+         
+          double mu = dot(intersection - w0, d2) / dot(d2, d2);
+          if(mu >= 0 && mu <= 1) {
+              return true;
+          }
         }
       }
     }
@@ -2853,7 +2857,7 @@ bool highOrderPolyMesh::collapseEdge(std::pair<int,int> edge,
   // if (maxL == std::numeric_limits<double>::max())
   //   return false;
 
-  int p = p01.second, opp = p01.first;
+  // int p = p01.second, opp = p01.first;
 
 
 

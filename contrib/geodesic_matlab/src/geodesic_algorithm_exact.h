@@ -44,6 +44,10 @@ public:
 		double& best_source_distance); 
 
 	void print_statistics();
+	void get_interval_lists(std::vector<IntervalList>& lists)
+	{
+		lists = m_edge_interval_lists;
+	};
 
 private:
 	typedef std::set<interval_pointer, Interval> IntervalQueue;
@@ -708,7 +712,7 @@ inline bool GeodesicAlgorithmExact::check_stop_conditions(unsigned& index)
 		SurfacePoint *sp = m_stop_vertices[index];
 		double best_total_distance = GEODESIC_INF, best_interval_position;
 		unsigned best_source_index;
-		interval_pointer interval = best_first_interval(*sp, best_total_distance, best_interval_position, best_source_index);
+		best_first_interval(*sp, best_total_distance, best_interval_position, best_source_index);
 		if (queue_distance <= best_total_distance + 1e-6)
 		{
 			return false;

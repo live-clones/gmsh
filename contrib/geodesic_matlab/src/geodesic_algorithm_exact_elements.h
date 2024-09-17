@@ -74,7 +74,6 @@ public:
 		}
 	}
 
-#if not ASTAR
 	void compute_min_distance(double stop)			//compute min, given c,d theta, start, end.
 	{
 		assert(stop > m_start);
@@ -97,14 +96,20 @@ public:
 			m_min = m_d - m_pseudo_y;
 		} 
 	}
-#else
-	void compute_min_distance(double stop, SurfacePoint *destination = nullptr)			//compute min, given c,d theta, start, end.
+#if ASTAR
+	void compute_min_distance(double stop, SurfacePoint *destination)			//compute min, given c,d theta, start, end.
 	{
 		assert(stop > m_start);
 
 		if(m_d == GEODESIC_INF)
 		{
 			m_min = GEODESIC_INF;
+			return;
+		}
+
+		if (destination == nullptr)
+		{
+			compute_min_distance(stop);
 			return;
 		}
 
