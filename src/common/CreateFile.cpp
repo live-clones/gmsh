@@ -558,7 +558,8 @@ void CreateOutputFile(const std::string &fileName, int format,
         break;
       }
 
-      PixelBuffer *buffer = GetCompositePixelBuffer(GL_RGB, GL_UNSIGNED_BYTE);
+      int gl_format = (format == FORMAT_PNG) ? GL_RGBA : GL_RGB;
+      PixelBuffer *buffer = GetCompositePixelBuffer(gl_format, GL_UNSIGNED_BYTE);
 
       if(format == FORMAT_PPM)
         create_ppm(fp, buffer);
