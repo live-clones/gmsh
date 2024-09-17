@@ -717,7 +717,7 @@ geo.add('addSurfaceLoop', doc, oint, ivectorint('surfaceTags'), iint('tag', '-1'
 doc = '''Add a volume (a region) in the built-in CAD representation, defined by one or more shells `shellTags'. The first surface loop defines the exterior boundary; additional surface loop define holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the volume.'''
 geo.add('addVolume', doc, oint, ivectorint('shellTags'), iint('tag', '-1'))
 
-doc = '''Add a `geometry' in the built-in CAD representation. `geometry' can currently be one of "Sphere" or "PolarSphere" (where `numbers' should contain the x, y, z coordinates of the center, followed by the radius), or "Parametric" (where `strings' should contains three expression evaluating to the x, y and z coordinates. If `tag' is positive, set the tag of the geometry explicitly; otherwise a new tag is selected automatically. Return the tag of the geometry.'''
+doc = '''Add a `geometry' in the built-in CAD representation. `geometry' can currently be one of "Sphere" or "PolarSphere" (where `numbers' should contain the x, y, z coordinates of the center, followed by the radius), or "ParametricSurface" (where `strings' should contains three expression evaluating to the x, y and z coordinates in terms of parametric coordinates u and v). If `tag' is positive, set the tag of the geometry explicitly; otherwise a new tag is selected automatically. Return the tag of the geometry.'''
 geo.add('addGeometry', doc, oint, istring('geometry'), ivectordouble('numbers', 'std::vector<double>()', '[]', '[]'), ivectorstring('strings', 'std::vector<std::string>()', '[]', '[]'), iint('tag', '-1'))
 
 doc = '''Add a point in the built-in CAD representation, at coordinates (`x', `y', `z') on the geometry `geometryTag'. If `meshSize' is > 0, add a meshing constraint at that point. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the point. For surface geometries, only the `x' and `y' coordinates are used.'''
@@ -758,7 +758,7 @@ geo.add('remove', doc, None, ivectorpair('dimTags'), ibool('recursive', 'false',
 doc = '''Remove all duplicate entities in the built-in CAD representation (different entities at the same geometrical location).'''
 geo.add('removeAllDuplicates', doc, None)
 
-doc = '''Split the curve of tag `tag' in the built-in CAD representation, on the specified control points `pointTags'. This feature is only available for lines, splines and b-splines. Return the tag(s) `curveTags' of the newly created curve(s).'''
+doc = '''Split the curve of tag `tag' in the built-in CAD representation, on the specified control points `pointTags'. This feature is only available for splines and b-splines. Return the tag(s) `curveTags' of the newly created curve(s).'''
 geo.add('splitCurve', doc, None, iint('tag'), ivectorint('pointTags'), ovectorint('curveTags'))
 
 doc = '''Get the maximum tag of entities of dimension `dim' in the built-in CAD representation.'''

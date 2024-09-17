@@ -309,21 +309,56 @@ static void GetQualityFast(GModel *m, int dim, double &qmin, double &qavg)
   std::size_t N = 0;
   std::vector<GEntity *> entities;
   m->getEntities(entities, dim);
-  qmin = 1e200;
-  qavg = 0;
+  double qm = 1e200, qa = 0;
   for(auto ge : entities) {
     if(ge->dim() < 2) continue;
     std::size_t ne = ge->getNumMeshElements();
     N += ne;
-#pragma omp parallel for num_threads(nthreads) reduction(min:qmin) reduction(+:qavg)
+#pragma omp parallel for num_threads(nthreads) reduction(min:qm) reduction(+:qa)
     for(std::size_t i = 0; i < ne; i++) {
       MElement *e = ge->getMeshElement(i);
       double q = e->minSICNShapeMeasure();
-      qmin = std::min(qmin, q);
-      qavg += q;
+      qm = std::min(qm, q);
+      qa += q;
     }
   }
-  if(N) qavg /= N;
+  if(N) qa /= N;
+  qmin = qm;
+  qavg = qa;
+}
+
+static void CheckEmptyMesh(GModel *m, int dim)
+{
+  std::vector<int> tags;
+  std::vector<GEntity *> entities;
+  m->getEntities(entities, dim);
+  for(auto ge : entities) {
+    if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) {
+      continue;
+    }
+    else if(dim == 1) {
+      if(ge->geomType() == GEntity::BoundaryLayerCurve || ge->degenerate(0))
+        continue;
+      GEdge *ged = static_cast<GEdge*>(ge);
+      if(ged->meshStatistics.status == GFace::DONE)
+        continue;
+    }
+    else if(dim == 2) {
+      if(ge->geomType() == GEntity::BoundaryLayerSurface)
+        continue;
+      GFace *gf = static_cast<GFace*>(ge);
+      if(gf->meshStatistics.status == GFace::DONE)
+        continue;
+    }
+    // mesh still pending, failed, ...
+    if(ge->getNumMeshElements() == 0) tags.push_back(ge->tag());
+  }
+  if(!tags.empty()) {
+    std::stringstream msg;
+    for(auto t : tags) msg << " " << t;
+    Msg::Error("No elements in %s%s", (dim == 3) ? "volume" :
+               (dim == 2) ? "surface" : "curve", msg.str().c_str());
+  }
 }
 
 static void Mesh0D(GModel *m)
@@ -419,6 +454,7 @@ static void Mesh1D(GModel *m)
 
   Msg::StopProgressMeter();
 
+  CheckEmptyMesh(m, 1);
   double t2 = Cpu(), w2 = TimeOfDay();
   CTX::instance()->mesh.timer[0] = w2 - w1;
   Msg::StatusBar(true, "Done meshing 1D (Wall %gs, CPU %gs)",
@@ -591,6 +627,7 @@ static void Mesh2D(GModel *m)
     OptimizeMesh(m, "QuadQuasiStructured");
   }
 
+  CheckEmptyMesh(m, 2);
   double t2 = Cpu(), w2 = TimeOfDay();
   CTX::instance()->mesh.timer[1] = w2 - w1;
   Msg::StatusBar(true, "Done meshing 2D (Wall %gs, CPU %gs)",
@@ -784,29 +821,12 @@ static void Mesh3D(GModel *m)
     std::for_each(m->firstRegion(), m->lastRegion(),
                   EmbeddedCompatibilityTest());
 
-  std::stringstream debugInfo;
-  debugInfo << "No elements in volume ";
-  bool emptyRegionFound = false;
-  for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
-    GRegion *gr = *it;
-    if(CTX::instance()->mesh.meshOnlyVisible && !gr->getVisibility()) continue;
-    if(CTX::instance()->mesh.meshOnlyEmpty && gr->getNumMeshElements())
-      continue;
-    if(gr->getNumMeshElements() == 0) {
-      debugInfo << gr->tag() << " ";
-      emptyRegionFound = true;
-    }
-  }
-  if(emptyRegionFound) {
-    debugInfo << std::endl;
-    Msg::Error(debugInfo.str().c_str());
-  }
-
   if(m->getNumRegions()) {
     Msg::ProgressMeter(1, false, "Meshing 3D...");
     Msg::StopProgressMeter();
   }
 
+  CheckEmptyMesh(m, 3);
   double t2 = Cpu(), w2 = TimeOfDay();
   CTX::instance()->mesh.timer[2] = w2 - w1;
   Msg::StatusBar(true, "Done meshing 3D (Wall %gs, CPU %gs)",

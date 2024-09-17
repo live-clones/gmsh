@@ -85,21 +85,53 @@ double bissection_get_a (double r0, double hw, double length, int n){
   return 1;
 }
 
+double f_prog(double r, double hw, double length, int n){
+  if (r == 1)return (n*hw/length);
+  double f = hw*(pow(r,n)-1)/(r-1)/length ;
+  return f;
+}
+
+// hwall given for the progression
+double newton_get_r /*bissection_get_r*/ (double r0, double hw, double length, int n){
+  n = n-1;
+
+  double r1 = 1;
+  double r2 = 4;
+  double f1 = f_prog(r1,hw,length,n);
+  double f2 = f_prog(r2,hw,length,n);
+  //  printf("%g %g\n",f1,f2);
+  if (f1 < 1 && f2 > 1){
+    while(1){
+      double r3 = (r1+r2)*0.5;
+      double f3 = f_prog(r3,hw,length,n);
+      //      printf("%22.15E %12.5E %12.5E\n",r1,r2,r3);
+      if (fabs(f3-1) < 1.e-12)return r3;
+      if (f3 < 1)r1 = r3;
+      else r2 = r3;
+    }    
+  }
+  return 1;
+}
+
 
 // for a progression -- transform h_wall to ratio
-
-double newton_get_r (double r0, double hw, double length, int n){
+double newton_get_2r (double r0, double hw, double length, int n){
+  n = n-1;
   double r = r0;
   int it = 0;
   while(1){
     double slope = ((n-1) * pow(r,n+1) - n*pow(r,n) + r) / ((r-1)*(r-1)*r);
     double f = (pow(r,n)-1)/(r-1) - length/hw;
+    //    printf("%g %g\n",f,r);
     double dr = -f / slope;
     r = r + dr;
-    if (f < 1.e-8){
+    if (fabs(f) < 1.e-12){
       return r;
     }
-    if (it++ > 100)break;
+    if (it++ > 100){
+      //      printf("convergence impossible %g\n",f);
+      break;
+    }
   }
   return r;
 }
@@ -254,6 +286,8 @@ struct F_Transfinite {
     int type = ge->meshAttributes.typeTransfinite;
     int nbpt = ge->meshAttributes.nbPointsTransfinite;
 
+    //    printf("type = %d coef %g\n",type, coef);
+
     // transform type = 5 onto type = 1
     if (type == 5){
       // for a progression -- transform h_wall to ratio
@@ -261,6 +295,8 @@ struct F_Transfinite {
       coef = newton_get_r (1.1, fabs(coef), length, nbpt);
       if (!sgn) coef = 1./coef;
       type = 1;
+      ge->meshAttributes.typeTransfinite = 1;
+      ge->meshAttributes.coeffTransfinite = coef;
     }
     if (type == 6){
       // for a bump -- transform h_wall to a

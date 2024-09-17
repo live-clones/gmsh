@@ -1712,7 +1712,8 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
       Msg::Info(":-( There are %d intersections in the 1D mesh (curves%s)",
                 edgesNotRecovered.size(), sstream.str().c_str());
       if(repairSelfIntersecting1dMesh)
-        Msg::Info("8-| Splitting those edges and trying again");
+        Msg::Info("8-| Splitting those edges and trying again - level %d",
+                  RECUR_ITER);
     }
     if(debug) {
       char name[245];
@@ -1737,11 +1738,13 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
 
     // delete the mesh
     delete m;
-    if(RECUR_ITER < 10) {
+    if(RECUR_ITER < CTX::instance()->mesh.maxRetries) {
       return meshGenerator(gf, RECUR_ITER + 1, repairSelfIntersecting1dMesh,
                            onlyInitialMesh, debug, replacementEdges);
     }
-    return false;
+    else {
+      return false;
+    }
   }
 
   if(RECUR_ITER > 0)
@@ -2781,7 +2784,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       outputScalarField(m->triangles, name, 1, gf);
     }
     delete m;
-    if(RECUR_ITER < 10) {
+    if(RECUR_ITER < CTX::instance()->mesh.maxRetries) {
       return meshGeneratorPeriodic(gf, RECUR_ITER + 1,
                                    repairSelfIntersecting1dMesh, debug);
     }

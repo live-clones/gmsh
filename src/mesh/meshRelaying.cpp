@@ -1036,7 +1036,7 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
     std::set<std::pair<size_t,size_t> > cuts;
     std::vector<edgeCut> moves;
 
-    printf("%lu\n",v2v.size());
+    //    printf("%lu\n",v2v.size());
     
     for (size_t i = 0; i< v2v.size() ; i++){
       for (auto j : v2v[i]){
@@ -1082,7 +1082,7 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
     if (moves.empty())break;
     std::sort(moves.begin(), moves.end());
 
-    printf("%lu moves\n",moves.size());
+    //    printf("%lu moves\n",moves.size());
     
     for (auto c : moves){
       size_t i = c.a;
@@ -1109,7 +1109,7 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
       pos[3*i+1] = pOpt.y();
       pos[3*i+2] = pOpt.z();
     }    
-    printf("coucou %lu fn\n",front_nodes.size());
+    //    printf("coucou %lu fn\n",front_nodes.size());
     std::sort(front_nodes.begin(),front_nodes.end());
   }
 
@@ -1384,10 +1384,12 @@ void meshRelaying::untangle(double lambda, int nIterOut, int nIterIn, double dis
     double C = totArea/totOneOverWeight;  
     double newArea = 0;
     //    printf("coucou C = %12.5E d %lu\n",C, triangles.size());
+    FILE *ff = fopen("size.pos","w");
+    fprintf(ff,"View \" \" {\n");
     for (size_t i=0;i<triangles.size();i++){
-      //      vec2 v0 = points[triangles[i][0]];
-      //      vec2 v1 = points[triangles[i][1]];
-      //      vec2 v2 = points[triangles[i][2]];
+      vec2 v0 = points[triangles[i][0]];
+      vec2 v1 = points[triangles[i][1]];
+      vec2 v2 = points[triangles[i][2]];
       double density = myDensity2D(i, _distMax, fabs(_RATIO), distances);
       double fact = sqrt(C/density);
       vec2 p0 = equi[0] * fact;
@@ -1395,10 +1397,14 @@ void meshRelaying::untangle(double lambda, int nIterOut, int nIterIn, double dis
       vec2 p2 = equi[2] * fact;
       std::array<vec2, 3> perfect = {p0,p1,p2};
       double area = triangle_area_2d(p0,p1,p2);
+      double aa = sqrt(fabs(triangle_area_2d(v0,v1,v2)))+1.e-12;
+      fprintf(ff,"ST(%g,%g,0,%g,%g,0,%g,%g,0){%g,%g,%g,%g,%g,%g,%g,%g,%g};\n",v0[0],v0[1],v1[0],v1[1],v2[0],v2[1],fact,fact,fact, aa,aa,aa,fact/aa,fact/aa,fact/aa);
       //      printf("area[%lu] = %12.5E density %12.5E\n",i,area,density);
       newArea += area;
       triIdealShapes.push_back(perfect);
     }
+    fprintf(ff,"};\n");
+    fclose(ff);
   };
 
   _distMax = distMax;

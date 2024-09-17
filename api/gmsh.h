@@ -2203,10 +2203,11 @@ namespace gmsh { // Top-level functions
       // Add a `geometry' in the built-in CAD representation. `geometry' can
       // currently be one of "Sphere" or "PolarSphere" (where `numbers' should
       // contain the x, y, z coordinates of the center, followed by the radius), or
-      // "Parametric" (where `strings' should contains three expression evaluating
-      // to the x, y and z coordinates. If `tag' is positive, set the tag of the
-      // geometry explicitly; otherwise a new tag is selected automatically. Return
-      // the tag of the geometry.
+      // "ParametricSurface" (where `strings' should contains three expression
+      // evaluating to the x, y and z coordinates in terms of parametric
+      // coordinates u and v). If `tag' is positive, set the tag of the geometry
+      // explicitly; otherwise a new tag is selected automatically. Return the tag
+      // of the geometry.
       GMSH_API int addGeometry(const std::string & geometry,
                                const std::vector<double> & numbers = std::vector<double>(),
                                const std::vector<std::string> & strings = std::vector<std::string>(),
@@ -2404,8 +2405,8 @@ namespace gmsh { // Top-level functions
       //
       // Split the curve of tag `tag' in the built-in CAD representation, on the
       // specified control points `pointTags'. This feature is only available for
-      // lines, splines and b-splines. Return the tag(s) `curveTags' of the newly
-      // created curve(s).
+      // splines and b-splines. Return the tag(s) `curveTags' of the newly created
+      // curve(s).
       GMSH_API void splitCurve(const int tag,
                                const std::vector<int> & pointTags,
                                std::vector<int> & curveTags);
