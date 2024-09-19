@@ -5707,7 +5707,6 @@ gmsh::model::mesh::computeAlphaShape(const int dim,
                                       std::vector<size_t> &newNodeTags,
                                       std::vector<size_t> &newNodeElementTags,
                                       std::vector<double> &newNodeParametricCoords,
-                                      const std::vector<double> & nodesDx,
                                       const bool usePreviousMesh,
                                       const double boundaryTolerance,
                                       const bool refine)

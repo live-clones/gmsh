@@ -586,7 +586,7 @@ doc = '''Advect nodes of a mesh with displacement vector dxNodes'''
 mesh.add('advectMeshNodes', doc, None, iint('dim'), iint('tag'), iint('bndTag'), istring('boundaryModel'), ivectordouble('dxNodes'), idouble('boundaryTolerance', '1e-6'))
 
 doc = '''Compute the alpha shape - improved function'''
-mesh.add('computeAlphaShape', doc, None, iint('dim'), iint('tag'), iint('bndTag'), istring('boundaryModel'), idouble('alpha'), iint('alphaShapeSizeField'), iint('refineSizeField'), ovectorsize('newNodeTags'), ovectorsize('newNodeElementTags'), ovectordouble('newNodeParametricCoord'), ivectordouble('nodesDx', 'std::vector<double>()', '[]', '[]'), ibool('usePreviousMesh', 'false', 'False'), idouble('boundaryTolerance', '1e-6'), ibool('refine', 'true', 'True'))
+mesh.add('computeAlphaShape', doc, None, iint('dim'), iint('tag'), iint('bndTag'), istring('boundaryModel'), idouble('alpha'), iint('alphaShapeSizeField'), iint('refineSizeField'), ovectorsize('newNodeTags'), ovectorsize('newNodeElementTags'), ovectordouble('newNodeParametricCoord'), ibool('usePreviousMesh', 'false', 'False'), idouble('boundaryTolerance', '1e-6'), ibool('refine', 'true', 'True'))
 
 doc = '''Decimate a triangulation'''
 mesh.add('decimateTriangulation', doc, None, iint('faceTag'), idouble('distanceThreshold'))

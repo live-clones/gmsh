@@ -1403,6 +1403,28 @@ bool bndIsStraight(GEntity* e){
   return true;
 }
 
+bool linelineIntersect(SVector3 p0, SVector3 p1, SVector3 p2, SVector3 p3){
+  double o0 = robustPredicates::orient2d(p0, p1, p2);
+  double o1 = robustPredicates::orient2d(p0, p1, p3);
+  double o2 = robustPredicates::orient2d(p2, p3, p0);
+  double o3 = robustPredicates::orient2d(p2, p3, p1);
+  if (o0*o1 <= 0 && o2*o3 <= 0){
+    return true;
+  }
+  // check if the lines are colinear
+  if (o0 == 0 && o1 == 0 && o2 == 0 && o3 == 0){
+    double d0 = dot(p2-p0, p1-p0);
+    double d1 = dot(p3-p0, p1-p0);
+    double d2 = dot(p0-p2, p3-p2);
+    double d3 = dot(p1-p2, p3-p2);
+    if (d0*d1 <= 0 && d2*d3 <= 0){
+      return true;
+    }
+  }
+  return false;
+
+}
+
 void AlphaShape::_edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::string & boundaryModel, std::vector<PolyMesh::Vertex*> & controlNodes, OctreeNode<2, 32, alphaShapeBndEdge*> &bnd_octree, const double boundary_tol){
   GModel* gm_alphaShape = GModel::current();
   size_t newTag = gm_alphaShape->getMaxVertexNumber()+1;
@@ -1588,33 +1610,62 @@ void AlphaShape::_edgeRecover(PolyMesh* pm, const int tag, const int bndTag, con
   // std::cout << "    Octree search  : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
 
   // check and remove elements that are outside the domain
-  
   // tic = std::chrono::high_resolution_clock::now();
-  BBox<2> bb_geo;
-  for (auto e : bndEntities){
-    size_t n_v = e->getNumMeshVertices();
-    for (size_t i_v = 0; i_v<n_v; i_v++){
-      MVertex *elem = e->getMeshVertex(i_v);
-      bb_geo.extends({elem->point().x(), elem->point().y()});
-    }
-  }
-  OctreeNode<2, 64, MElement*> octree_geo(bb_geo);
-  for (auto face : gm_boundary->getFaces()){
-    size_t n_elem = face->getNumMeshElements();
-    for (size_t i_el = 0; i_el<n_elem; i_el++){
-      MElement *elem = face->getMeshElement(i_el);
-      if(elem->getDim() != 2) continue;
-      BBox<2> bb_tri;
-      for (size_t i = 0; i < elem->getNumVertices(); i++){
-        bb_tri.extends({elem->getVertex(i)->point().x(), elem->getVertex(i)->point().y()});
-      }
-      octree_geo.add(elem, bb_tri);
-    }
-  }
-  // toc = std::chrono::high_resolution_clock::now();
-  // std::cout << "    init geo octree : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
-  
-  
+  // BBox<2> bb_geo;
+  // for (auto e : bndEntities){
+  //   size_t n_v = e->getNumMeshVertices();
+  //   for (size_t i_v = 0; i_v<n_v; i_v++){
+  //     MVertex *elem = e->getMeshVertex(i_v);
+  //     bb_geo.extends({elem->point().x(), elem->point().y()});
+  //   }
+  // }
+  // OctreeNode<2, 64, MElement*> octree_geo(bb_geo);
+  // for (auto face : gm_boundary->getFaces()){
+  //   size_t n_elem = face->getNumMeshElements();
+  //   for (size_t i_el = 0; i_el<n_elem; i_el++){
+  //     MElement *elem = face->getMeshElement(i_el);
+  //     if(elem->getDim() != 2) continue;
+  //     BBox<2> bb_tri;
+  //     for (size_t i = 0; i < elem->getNumVertices(); i++){
+  //       bb_tri.extends({elem->getVertex(i)->point().x(), elem->getVertex(i)->point().y()});
+  //     }
+  //     octree_geo.add(elem, bb_tri);
+  //   }
+  // }  
+  // // toc = std::chrono::high_resolution_clock::now();
+  // // std::cout << "    init geo octree : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
+  // for (auto f : pm->faces){
+  //   PolyMesh::Vertex* v0 = f->he->v;
+  //   PolyMesh::Vertex* v1 = f->he->next->v;
+  //   PolyMesh::Vertex* v2 = f->he->next->next->v;
+  //   if (v0->data < 0 || v1->data < 0 || v2->data < 0){
+  //     f->data = -1; continue;
+  //   }
+  //   SVector3 p0 = v0->position;
+  //   SVector3 p1 = v1->position;
+  //   SVector3 p2 = v2->position;
+  //   SVector3 pc = 1./3.*(p0+p1+p2);
+  //   BBox<2> bb_tri;
+  //   bb_tri.extends({pc.x(), pc.y()});
+  //   std::vector<MElement*> found;
+  //   octree_geo.search(bb_tri, found);
+  //   bool inside = false;
+  //   for (auto elem : found){
+  //     double uvw[3];
+  //     elem->xyz2uvw(pc, uvw);
+  //     if (elem->isInside(uvw[0], uvw[1], uvw[2])){
+  //       inside = true;
+  //       break;
+  //     }
+  //   }
+  //   if (!inside) f->data = -1; 
+  // }
+  // tic = std::chrono::high_resolution_clock::now();
+  // std::cout << "    Remove outside  : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
+
+  // Other solution : ray trace the points to see if they are inside the domain using bnd_octree
+  auto tic = std::chrono::high_resolution_clock::now();
+  SVector3 P1(bnd_octree.bbox_.min[0], bnd_octree.bbox_.max[1], 0);
   for (auto f : pm->faces){
     PolyMesh::Vertex* v0 = f->he->v;
     PolyMesh::Vertex* v1 = f->he->next->v;
@@ -1625,26 +1676,32 @@ void AlphaShape::_edgeRecover(PolyMesh* pm, const int tag, const int bndTag, con
     SVector3 p0 = v0->position;
     SVector3 p1 = v1->position;
     SVector3 p2 = v2->position;
-    SVector3 pc = 1./3.*(p0+p1+p2);
-    BBox<2> bb_tri;
-    bb_tri.extends({pc.x(), pc.y()});
-    std::vector<MElement*> found;
-    octree_geo.search(bb_tri, found);
-    bool inside = false;
-    for (auto elem : found){
-      double uvw[3];
-      elem->xyz2uvw(pc, uvw);
-      if (elem->isInside(uvw[0], uvw[1], uvw[2])){
-        inside = true;
-        break;
+    SVector3 P0 = 1./3.*(p0+p1+p2);
+    P1[1] = P0.y();
+    BBox<2> bb_ray;
+    bb_ray.extends({P0.x(), P0.y()});
+    bb_ray.extends({P1.x(), P1.y()});
+    std::vector<alphaShapeBndEdge*> found;
+    bnd_octree.search(bb_ray, found);
+    // remove duplicates in found
+    std::sort(found.begin(), found.end());
+    found.erase(std::unique(found.begin(), found.end()), found.end());
+    size_t n_intersect = 0;
+    for (auto bnd_edg : found){
+      SVector3 P2(bnd_edg->x0, bnd_edg->y0, 0);
+      SVector3 P3(bnd_edg->x1, bnd_edg->y1, 0);
+      // check ray - a intersection
+      if (linelineIntersect(P0, P1, P2, P3)){
+          n_intersect++;
       }
     }
-    if (!inside) f->data = -1; 
+    if (n_intersect%2 == 0){
+      f->data = -1;
+    }
   }
-  // tic = std::chrono::high_resolution_clock::now();
-  // std::cout << "    Remove outside  : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
-  std::vector<PolyMesh::HalfEdge *> _touched;
-
+  auto toc = std::chrono::high_resolution_clock::now();
+  std::cout << "    Remove outside  : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
+  // print4debug(pm, 0);
   // Color boundary edges
   std::set<int> resultTags0;
   std::set<int> resultTags1;
@@ -1700,6 +1757,8 @@ void AlphaShape::_edgeRecover(PolyMesh* pm, const int tag, const int bndTag, con
       he->opposite->data = bndTag;
     }
   }
+
+  std::vector<PolyMesh::HalfEdge *> _touched;
   _delaunayCheckColors(pm, pm->hedges, &_touched);
   // toc = std::chrono::high_resolution_clock::now();
   // std::cout << "    Delaunay check  : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;

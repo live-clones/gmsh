@@ -7552,7 +7552,6 @@ module gmsh
                                             newNodeTags, &
                                             newNodeElementTags, &
                                             newNodeParametricCoord, &
-                                            nodesDx, &
                                             usePreviousMesh, &
                                             boundaryTolerance, &
                                             refine, &
@@ -7571,8 +7570,6 @@ module gmsh
                      api_newNodeElementTags_n_, &
                      api_newNodeParametricCoord_, &
                      api_newNodeParametricCoord_n_, &
-                     api_nodesDx_, &
-                     api_nodesDx_n_, &
                      usePreviousMesh, &
                      boundaryTolerance, &
                      refine, &
@@ -7592,8 +7589,6 @@ module gmsh
       integer(c_size_t), intent(out) :: api_newNodeElementTags_n_
       type(c_ptr), intent(out) :: api_newNodeParametricCoord_
       integer(c_size_t) :: api_newNodeParametricCoord_n_
-      real(c_double), dimension(*), optional :: api_nodesDx_
-      integer(c_size_t), value, intent(in) :: api_nodesDx_n_
       integer(c_int), value, intent(in) :: usePreviousMesh
       real(c_double), value, intent(in) :: boundaryTolerance
       integer(c_int), value, intent(in) :: refine
@@ -7610,7 +7605,6 @@ module gmsh
     integer(c_size_t), dimension(:), allocatable, intent(out) :: newNodeTags
     integer(c_size_t), dimension(:), allocatable, intent(out) :: newNodeElementTags
     real(c_double), dimension(:), allocatable, intent(out) :: newNodeParametricCoord
-    real(c_double), dimension(:), intent(in), optional :: nodesDx
     logical, intent(in), optional :: usePreviousMesh
     real(c_double), intent(in), optional :: boundaryTolerance
     logical, intent(in), optional :: refine
@@ -7634,8 +7628,6 @@ module gmsh
          api_newNodeElementTags_n_=api_newNodeElementTags_n_, &
          api_newNodeParametricCoord_=api_newNodeParametricCoord_, &
          api_newNodeParametricCoord_n_=api_newNodeParametricCoord_n_, &
-         api_nodesDx_=nodesDx, &
-         api_nodesDx_n_=size_gmsh_double(nodesDx), &
          usePreviousMesh=optval_c_bool(.false., usePreviousMesh), &
          boundaryTolerance=optval_c_double(1e-6, boundaryTolerance), &
          refine=optval_c_bool(.true., refine), &

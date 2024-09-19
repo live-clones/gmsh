@@ -5177,9 +5177,9 @@ class model:
         advect_mesh_nodes = advectMeshNodes
 
         @staticmethod
-        def computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, nodesDx=[], usePreviousMesh=False, boundaryTolerance=1e-6, refine=True):
+        def computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh=False, boundaryTolerance=1e-6, refine=True):
             """
-            gmsh.model.mesh.computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, nodesDx=[], usePreviousMesh=False, boundaryTolerance=1e-6, refine=True)
+            gmsh.model.mesh.computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh=False, boundaryTolerance=1e-6, refine=True)
 
             Compute the alpha shape - improved function
 
@@ -5196,7 +5196,6 @@ class model:
             - `newNodeTags': vector of sizes
             - `newNodeElementTags': vector of sizes
             - `newNodeParametricCoord': vector of doubles
-            - `nodesDx': vector of doubles
             - `usePreviousMesh': boolean
             - `boundaryTolerance': double
             - `refine': boolean
@@ -5204,7 +5203,6 @@ class model:
             api_newNodeTags_, api_newNodeTags_n_ = POINTER(c_size_t)(), c_size_t()
             api_newNodeElementTags_, api_newNodeElementTags_n_ = POINTER(c_size_t)(), c_size_t()
             api_newNodeParametricCoord_, api_newNodeParametricCoord_n_ = POINTER(c_double)(), c_size_t()
-            api_nodesDx_, api_nodesDx_n_ = _ivectordouble(nodesDx)
             ierr = c_int()
             lib.gmshModelMeshComputeAlphaShape(
                 c_int(dim),
@@ -5217,7 +5215,6 @@ class model:
                 byref(api_newNodeTags_), byref(api_newNodeTags_n_),
                 byref(api_newNodeElementTags_), byref(api_newNodeElementTags_n_),
                 byref(api_newNodeParametricCoord_), byref(api_newNodeParametricCoord_n_),
-                api_nodesDx_, api_nodesDx_n_,
                 c_int(bool(usePreviousMesh)),
                 c_double(boundaryTolerance),
                 c_int(bool(refine)),

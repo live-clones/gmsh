@@ -4564,7 +4564,7 @@ end
 const advect_mesh_nodes = advectMeshNodes
 
 """
-    gmsh.model.mesh.computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, nodesDx = Cdouble[], usePreviousMesh = false, boundaryTolerance = 1e-6, refine = true)
+    gmsh.model.mesh.computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh = false, boundaryTolerance = 1e-6, refine = true)
 
 Compute the alpha shape - improved function
 
@@ -4581,12 +4581,11 @@ Types:
  - `newNodeTags`: vector of sizes
  - `newNodeElementTags`: vector of sizes
  - `newNodeParametricCoord`: vector of doubles
- - `nodesDx`: vector of doubles
  - `usePreviousMesh`: boolean
  - `boundaryTolerance`: double
  - `refine`: boolean
 """
-function computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, nodesDx = Cdouble[], usePreviousMesh = false, boundaryTolerance = 1e-6, refine = true)
+function computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh = false, boundaryTolerance = 1e-6, refine = true)
     api_newNodeTags_ = Ref{Ptr{Csize_t}}()
     api_newNodeTags_n_ = Ref{Csize_t}()
     api_newNodeElementTags_ = Ref{Ptr{Csize_t}}()
@@ -4595,8 +4594,8 @@ function computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSiz
     api_newNodeParametricCoord_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshComputeAlphaShape, gmsh.lib), Cvoid,
-          (Cint, Cint, Cint, Ptr{Cchar}, Cdouble, Cint, Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cdouble}, Csize_t, Cint, Cdouble, Cint, Ptr{Cint}),
-          dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, api_newNodeTags_, api_newNodeTags_n_, api_newNodeElementTags_, api_newNodeElementTags_n_, api_newNodeParametricCoord_, api_newNodeParametricCoord_n_, convert(Vector{Cdouble}, nodesDx), length(nodesDx), usePreviousMesh, boundaryTolerance, refine, ierr)
+          (Cint, Cint, Cint, Ptr{Cchar}, Cdouble, Cint, Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cdouble, Cint, Ptr{Cint}),
+          dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, api_newNodeTags_, api_newNodeTags_n_, api_newNodeElementTags_, api_newNodeElementTags_n_, api_newNodeParametricCoord_, api_newNodeParametricCoord_n_, usePreviousMesh, boundaryTolerance, refine, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     newNodeTags = unsafe_wrap(Array, api_newNodeTags_[], api_newNodeTags_n_[], own = true)
     newNodeElementTags = unsafe_wrap(Array, api_newNodeElementTags_[], api_newNodeElementTags_n_[], own = true)

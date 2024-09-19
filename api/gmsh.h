@@ -1888,7 +1888,6 @@ namespace gmsh { // Top-level functions
                                       std::vector<std::size_t> & newNodeTags,
                                       std::vector<std::size_t> & newNodeElementTags,
                                       std::vector<double> & newNodeParametricCoord,
-                                      const std::vector<double> & nodesDx = std::vector<double>(),
                                       const bool usePreviousMesh = false,
                                       const double boundaryTolerance = 1e-6,
                                       const bool refine = true);

@@ -74,12 +74,12 @@ class OctreeNode {
     }
   };
 
-  BBox<dim> bbox_;
   Leaf *leaf_;
   OctreeNode *children_;
 
 
   public:
+  BBox<dim> bbox_;
   void set_bbox(BBox<dim> bbox) {
     bbox_ = bbox;
   }
