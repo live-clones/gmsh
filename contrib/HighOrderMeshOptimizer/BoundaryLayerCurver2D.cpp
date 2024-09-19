@@ -189,7 +189,7 @@ namespace BoundaryLayerCurver {
     _Frame::_Frame(const MEdgeN *edge, const GFace *gface, const GEdge *gedge,
                    const SVector3 &normal)
       : _normalToTheMesh(normal), _gface(gface), _gedge(gedge),
-        _edgeOnBoundary(edge)
+        _edgeOnBoundary(edge), _newIdea(false)
     {
       const int nVert = (int)edge->getNumVertices();
 
@@ -232,9 +232,35 @@ namespace BoundaryLayerCurver {
       }
     }
 
+    _Frame::_Frame(const MEdgeN *edge, const GFace *gface,
+                   const SVector3 &normal)
+      : _normalToTheMesh(normal), _gface(gface), _gedge(nullptr),
+        _edgeOnBoundary(edge), _newIdea(true)
+    {
+      const int nVert = (int)edge->getNumVertices();
+
+      if(gface) {
+        for(int i = 0; i < nVert; ++i) {
+          SPoint2 param;
+          bool success =
+            reparamMeshVertexOnFace(edge->getVertex(i), gface, param, true);
+          _paramVerticesOnGFace[2 * i + 0] = param[0];
+          _paramVerticesOnGFace[2 * i + 1] = param[1];
+          if(!success) {
+            Msg::Warning("Could not compute param of node %d on surface %d",
+                         edge->getVertex(i)->getNum(), gface->tag());
+          }
+          // TODO: Check if periodic face
+        }
+      }
+    }
+
     void _Frame::computeFrame(double paramEdge, SVector3 &t, SVector3 &n,
                               SVector3 &w, bool atExtremity) const
     {
+      // Make sure that we execute the right code:
+      if (_newIdea && _gedge) Msg::Error("There was an error in BLCurver computeFrame");
+
       if(_gedge) {
         double paramGeoEdge;
         if(atExtremity) {
@@ -281,6 +307,8 @@ namespace BoundaryLayerCurver {
 
     SPoint3 _Frame::pnt(double u) const
     {
+      if (_newIdea) return _edgeOnBoundary->pnt(u);
+
       if(!_gedge) return SPoint3();
 
       double paramGeoEdge =
@@ -389,6 +417,43 @@ namespace BoundaryLayerCurver {
                    const GEdge *gedge, const SVector3 &normal)
     {
       _Frame frame(baseEdge, gface, gedge, normal);
+
+      double coeffs[2][3];
+      _computeParameters(baseEdge, edge, frame, coeffs);
+
+      const int orderCurve = baseEdge->getPolynomialOrder();
+      const int orderGauss = orderCurve * 2;
+      const int sizeSystem = getNGQLPts(orderGauss);
+      const IntPt *gaussPnts = getGQLPts(orderGauss);
+
+      // Least square projection
+      fullMatrix<double> xyz(sizeSystem + 2, 3);
+      _idealPositionEdge(baseEdge, frame, coeffs, sizeSystem, gaussPnts, xyz);
+      //      _drawIdealPositionEdge(baseEdge, frame, coeffs, (GEdge*)gedge);
+      for(int i = 0; i < 2; ++i) {
+        xyz(sizeSystem + i, 0) = edge->getVertex(i)->x();
+        xyz(sizeSystem + i, 1) = edge->getVertex(i)->y();
+        xyz(sizeSystem + i, 2) = edge->getVertex(i)->z();
+      }
+
+      LeastSquareData *data =
+        getLeastSquareData(TYPE_LIN, orderCurve, orderGauss);
+      fullMatrix<double> newxyz(orderCurve + 1, 3);
+      data->invA.mult(xyz, newxyz);
+
+      for(int i = 2; i < edge->getNumVertices(); ++i) {
+        edge->getVertex(i)->x() = newxyz(i, 0);
+        edge->getVertex(i)->y() = newxyz(i, 1);
+        edge->getVertex(i)->z() = newxyz(i, 2);
+      }
+
+      if(gface) projectVerticesIntoGFace(edge, gface, false);
+    }
+
+    void curveEdge_newIdea(const MEdgeN *baseEdge, MEdgeN *edge, const GFace *gface,
+                           const SVector3 &normal)
+    {
+      _Frame frame(baseEdge, gface, normal);
 
       double coeffs[2][3];
       _computeParameters(baseEdge, edge, frame, coeffs);
@@ -1341,6 +1406,43 @@ namespace BoundaryLayerCurver {
     return true;
   }
 
+  bool curve2Dcolumn_newIdea(PairMElemVecMElem &column, const GFace *gface,
+                     const GEdge *gedge, const SVector3 &normal)
+  {
+    // This approach consists in:
+    // 1. Curving the edges of the column sequentially. For each, the data
+    //    that is used to compute the curving is taken from the previous edge.
+    // 2. Positioning the interior nodes of each element.
+    //
+    // Some quality checks will be needed but are not yet implemented (FIXME)
+    //
+    // Note: Here, either gface is defined and not normal, or the normal
+    // is defined and not gface.
+
+    if(column.second.size() < 2) return true;
+
+    // Compute stack high order edges and faces
+    std::vector<MEdgeN> stackEdges;
+    std::vector<MFaceN> stackFaces;
+    computeStackHOEdgesFaces(column, stackEdges, stackFaces);
+
+    // Curve topEdge of first element and last edge
+    int iFirst = 1, iLast = (int)stackEdges.size() - 1;
+    MEdgeN *baseEdge = &stackEdges[0];
+    for(auto i = 1; i < stackEdges.size(); ++i) {
+      EdgeCurver2D::curveEdge_newIdea(&stackEdges[i-1], &stackEdges[i], gface, normal);
+      // FIXME: Should we check the quality of first element? In which case, if
+      //  the quality is not good, what do we do? I don't know for now
+    }
+    // TODO: Here we need to check the validity/quality of the two last elements
+    //  (last of BL and exterior one) and reduce the curvature if necessary.
+
+    repositionInnerVertices(stackFaces, gface);
+
+    // FIXME: Should we check the quality of all the elements?
+    return true;
+  }
+
   void computeThicknessQuality(std::vector<MVertex *> &bottomVertices,
                                std::vector<MVertex *> &topVertices,
                                std::vector<double> &thickness, SVector3 &w)
@@ -1494,7 +1596,8 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
     //    symetric of concave if (bndEl2column[i].first->getNum() != 1156)
     //    continue; // Strange if (bndEl2column[i].first->getNum() != 1157)
     //    continue; // next to Strange
-    BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], nullptr, gedge, normal);
+    //BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], nullptr, gedge, normal);
+    BoundaryLayerCurver::curve2Dcolumn_newIdea(bndEl2column[i], nullptr, gedge, normal);
   }
 }
 
@@ -1516,6 +1619,8 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
   //  }
 
   for(int i = 0; i < bndEl2column.size(); ++i)
-    BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], gface, gedge,
+//    BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], gface, gedge,
+//                                       SVector3());
+    BoundaryLayerCurver::curve2Dcolumn_newIdea(bndEl2column[i], gface, gedge,
                                        SVector3());
 }

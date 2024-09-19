@@ -82,13 +82,15 @@ namespace BoundaryLayerCurver {
       SVector3 _normalToTheMesh;
       const GFace *_gface;
       const GEdge *_gedge;
-      const MEdgeN *_edgeOnBoundary;
+      const MEdgeN *_edgeOnBoundary; // TODO: rename into _edge if accept new idea
       double _paramVerticesOnGFace[40];
       double _paramVerticesOnGEdge[20];
+      bool _newIdea;
 
     public:
       _Frame(const MEdgeN *edge, const GFace *gface, const GEdge *gedge,
              const SVector3 &normal);
+      _Frame(const MEdgeN *edge, const GFace *gface, const SVector3 &normal);
 
       void computeFrame(double paramEdge, SVector3 &t, SVector3 &n, SVector3 &w,
                         bool atExtremity = false) const;
