@@ -1319,6 +1319,7 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
     // Compute normal if planar surface
     SVector3 normal;
     if(p.dim == 2) {
+      // FIXME: Need better code for planar mesh
       if(gEnt->geomType() == GEntity::Plane && gEnt->haveParametrization()) {
         double u = gEnt->parBounds(0).low();
         double v = gEnt->parBounds(1).low();

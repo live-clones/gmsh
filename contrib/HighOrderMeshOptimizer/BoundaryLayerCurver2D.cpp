@@ -216,11 +216,14 @@ namespace BoundaryLayerCurver {
             Msg::Warning("Could not compute param of node %d on edge %d",
                          edge->getVertex(i)->getNum(), gedge->tag());
           }
+          // Periodicity check
           else if(gedge->periodic(0) && gedge->getBeginVertex() &&
                   edge->getVertex(i) ==
                     gedge->getBeginVertex()->mesh_vertices[0]) {
             double u0 = gedge->getLowerBound();
             double un = gedge->getUpperBound();
+            // FIXME: It seems incorrect, in particular when nVert == 2 and i = 1. In this case
+            //  _paramVerticesOnGEdge[0] is not defined yet.
             int k = (nVert == 2 ? 1 - i : (i == 0 ? 2 : nVert - 1));
             double uk = _paramVerticesOnGEdge[k];
             _paramVerticesOnGEdge[i] = uk - u0 < un - uk ? u0 : un;
@@ -300,9 +303,9 @@ namespace BoundaryLayerCurver {
       coeffs[0][1] = dot(h, t);
       coeffs[0][2] = dot(h, w);
 
-      SPoint3 p1 = frame.pnt(-1);
-      //      SPoint3 p1(vb->x(), vb->y(), vb->z());
-      draw3DFrame(p1, t, n, w, .0004);
+//      SPoint3 p1 = frame.pnt(-1);
+//      //      SPoint3 p1(vb->x(), vb->y(), vb->z());
+//      draw3DFrame(p1, t, n, w, .0004);
 
       frame.computeFrame(1, t, n, w, true);
       vb = baseEdge->getVertex(1);
@@ -312,9 +315,9 @@ namespace BoundaryLayerCurver {
       coeffs[1][1] = dot(h, t);
       coeffs[1][2] = dot(h, w);
       //
-      SPoint3 p2 = frame.pnt(1);
-      //      SPoint3 p2(vb->x(), vb->y(), vb->z());
-      draw3DFrame(p2, t, n, w, .0004);
+//      SPoint3 p2 = frame.pnt(1);
+//      //      SPoint3 p2(vb->x(), vb->y(), vb->z());
+//      draw3DFrame(p2, t, n, w, .0004);
     }
 
     void _idealPositionEdge(const MEdgeN *baseEdge, const _Frame &frame,
@@ -327,9 +330,9 @@ namespace BoundaryLayerCurver {
         SVector3 t, n, w;
         frame.computeFrame(u, t, n, w);
 
-        //        draw3DFrame(p, t, n, w, .0002);
-        SPoint3 pp = frame.pnt(u);
-        draw3DFrame(pp, t, n, w, .0002);
+//        //        draw3DFrame(p, t, n, w, .0002);
+//        SPoint3 pp = frame.pnt(u);
+//        draw3DFrame(pp, t, n, w, .0002);
 
         double interpolatedCoeffs[3];
         for(int j = 0; j < 3; ++j) {
@@ -1296,8 +1299,19 @@ namespace BoundaryLayerCurver {
   bool curve2Dcolumn(PairMElemVecMElem &column, const GFace *gface,
                      const GEdge *gedge, const SVector3 &normal)
   {
-    // Here, either gface is defined and not normal, or the normal
-    // is defined and not gface!
+    // This approach consists in:
+    // 1. Curving the first edge not on the boundary of the geometry and
+    //    the last edge of the column, using data from the edge on the boundary
+    //    for both.
+    // 2. In `recoverQualityElements`, checking that the curving computed
+    //    in `1.` will allow to generate good quality elements.
+    //    If this is not the case, the order and/or the curving
+    //    of the last edge is reduced.
+    // 3. In `curveEdgesAndPreserveQuality`, curving the other edges
+    //    of the column and positioning the interior nodes of each element.
+    //
+    // Note: Here, either gface is defined and not normal, or the normal
+    // is defined and not gface.
 
     if(column.second.size() < 2) return true;
 

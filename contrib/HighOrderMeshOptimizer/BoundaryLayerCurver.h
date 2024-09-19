@@ -77,6 +77,8 @@ namespace BoundaryLayerCurver {
                                 int iFirst, int iLast, const GFace *gface);
 
     class _Frame {
+      // _Frame provides the local reference frame at any point of the edge
+
       SVector3 _normalToTheMesh;
       const GFace *_gface;
       const GEdge *_gedge;
