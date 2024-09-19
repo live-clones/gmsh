@@ -15,10 +15,10 @@
 #include <cstddef>
 
 std::map<int, nodalBasis *> BasisFactory::fs;
-std::map<int, CondNumBasis *> BasisFactory::cs;
-std::map<FuncSpaceData, JacobianBasis *> BasisFactory::js;
 std::map<FuncSpaceData, bezierBasis *> BasisFactory::bs;
-std::map<FuncSpaceData, GradientBasis *> BasisFactory::gs;
+std::map<std::pair<int, int>, CondNumBasis *> BasisFactory::cs;
+std::map<std::pair<int, FuncSpaceData>, JacobianBasis *> BasisFactory::js;
+std::map<std::pair<int, FuncSpaceData>, GradientBasis *> BasisFactory::gs;
 
 const nodalBasis *BasisFactory::getNodalBasis(int tag)
 {
@@ -63,11 +63,12 @@ const JacobianBasis *BasisFactory::getJacobianBasis(int tag, FuncSpaceData fsd)
 {
   FuncSpaceData data = fsd.getForNonSerendipitySpace();
 
-  auto it = js.find(data);
+  std::pair<int, FuncSpaceData> pairData(tag, data);
+  auto it = js.find(pairData);
   if(it != js.end()) return it->second;
 
   JacobianBasis *J = new JacobianBasis(tag, data);
-  js.insert(std::make_pair(data, J));
+  js.insert(std::make_pair(pairData, J));
   return J;
 }
 
@@ -94,11 +95,12 @@ const JacobianBasis *BasisFactory::getJacobianBasis(int tag)
 
 const CondNumBasis *BasisFactory::getCondNumBasis(int tag, int cnOrder)
 {
-  auto it = cs.find(tag);
+  std::pair<int, int> pairData(tag, cnOrder);
+  auto it = cs.find(pairData);
   if(it != cs.end()) return it->second;
 
   CondNumBasis *M = new CondNumBasis(tag, cnOrder);
-  cs.insert(std::make_pair(tag, M));
+  cs.insert(std::make_pair(pairData, M));
   return M;
 }
 
@@ -106,11 +108,12 @@ const GradientBasis *BasisFactory::getGradientBasis(int tag, FuncSpaceData fsd)
 {
   FuncSpaceData data = fsd.getForNonSerendipitySpace();
 
-  auto it = gs.find(data);
+  std::pair<int, FuncSpaceData> pairData(tag, data);
+  auto it = gs.find(pairData);
   if(it != gs.end()) return it->second;
 
   GradientBasis *G = new GradientBasis(tag, data);
-  gs.insert(std::make_pair(data, G));
+  gs.insert(std::make_pair(pairData, G));
   return G;
 }
 

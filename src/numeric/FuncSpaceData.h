@@ -22,7 +22,7 @@ private:
   bool _serendipity;
   // For pyramids, '_spaceOrder' is not used.
 
-  // Pyramids:
+  // The following is for pyramids only:
   int _nij, _nk;
   bool _pyramidalSpace;
   // There are two possible spaces in function of '_pyramidalSpace'.
