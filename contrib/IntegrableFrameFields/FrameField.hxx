@@ -17,7 +17,8 @@
 #include <queue>
 
 namespace IFF{
-  double TARGETMESHSIZE(const std::vector<double> &coords){return 0.1;};
+  // double TARGETMESHSIZE(const std::vector<double> &coords){return 0.1;};
+  double TARGETMESHSIZE(const std::vector<double> &coords){return 10.0;};
   // double TARGETMESHSIZE(const std::vector<double> &coords){return 0.5;};
   // double TARGETMESHSIZE(const std::vector<double> &coords){return 0.4;};
   // double TARGETMESHSIZE(const std::vector<double> &coords){return 0.02*(49.0*(coords[0]+2.0)/4.0 + 1.0);};
@@ -3076,6 +3077,10 @@ namespace IFF{
     Mesh* getMesh(){return m_m;}
 
     std::map<Edge*, T> m_mapEdgeFrames;
+
+    std::map<Vertex*, double> m_seamLessPot0;
+    std::map<Vertex*, double> m_seamLessPot1;
+    
   private:
     Mesh *m_m;
 
@@ -3092,8 +3097,7 @@ namespace IFF{
     std::vector<std::pair<std::vector<Element*>, std::vector<double>>> m_lineGroupsHardConstraint;
 
     std::map<Element*, std::vector<std::vector<std::vector<double>>>> m_lifting;
-    std::map<Vertex*, double> m_seamLessPot0;
-    std::map<Vertex*, double> m_seamLessPot1;
+
     std::map<Vertex*, double> m_seamLessPot0intSing;
     std::map<Vertex*, double> m_seamLessPot1intSing;
   };

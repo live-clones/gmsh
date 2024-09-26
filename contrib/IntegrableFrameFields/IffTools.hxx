@@ -11,6 +11,7 @@
 #include <MElement.h>
 #include <MLine.h>
 #include <vector>
+#include <fstream>
 
 namespace IFF{
   namespace tools{
@@ -395,6 +396,12 @@ namespace IFF{
   private:
     void _executeRefinement(const std::vector<Element*> &elementsFractalRefine, const std::vector<std::pair<Element*, int>> &elementsHalfRefine, std::vector<bool> &coarseElementsRefined);
   };
+
+  void exportObj(Mesh *m, Mesh *m_cut, std::map<Vertex*, double> &u, std::map<Vertex*, double> &v);
+    // std::ofstream objFile("test.obj");
+    // objFile << "Test" << std::endl;
+    // objFile.close();
+  // }
   
   template <class T>
   std::map<Edge*, T> transferCoarseToFine(MeshRefiner *mr, std::map<Edge*, T> &mapEdgeFrameCoarse){
@@ -455,6 +462,7 @@ namespace IFF{
     }
     return commonSolReduced;
   }
+
   
   // To print vectors easily
   template<class T> std::ostream &operator<<(std::ostream &os, std::vector<T> v) {

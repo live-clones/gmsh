@@ -168,7 +168,7 @@ void iffComputeIntegrableFrameField(GModel *gm){
     }
   }
 
-  if(0){
+  if(1){
     std::vector<Edge*> cg;
     std::map<Edge*, std::vector<double>> cgVisu;
     // cleanedFramesIso.printFrameFieldData("Cleaned Iso");
@@ -268,6 +268,7 @@ void iffComputeIntegrableFrameField(GModel *gm){
     }
     visu::scalarField(cgVisuDbg, "CutGraphDBG");
 
+    exportObj(cleanedFramesAniso.getMesh(), frameFieldOnCutMeshAniso.getMesh(), frameFieldOnCutMeshAniso.m_seamLessPot0, frameFieldOnCutMeshAniso.m_seamLessPot1);
   }
   
   // visu::scalarField(checkData, "TEST DATA");

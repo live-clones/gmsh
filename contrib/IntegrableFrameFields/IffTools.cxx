@@ -8,6 +8,7 @@
 #include <GModel.h>
 #include <Visualization.hxx>
 #include <queue>
+#include <gmsh.h>
 
 namespace IFF{
   namespace tools{
@@ -1555,5 +1556,36 @@ namespace IFF{
         }
       }
     }
+  }
+
+  void exportObj(Mesh *m, Mesh *m_cut, std::map<Vertex*, double> &u, std::map<Vertex*, double> &v){
+    std::string fileName;
+    gmsh::model::getCurrent(fileName);
+    std::ofstream objFile(fileName + "SeamlessParam.obj");
+    objFile << "# Geometric vertices" << std::endl;
+    for(Vertex *vert: m->getVertices()){
+      objFile << "v " << vert->getCoord()[0] << " " << vert->getCoord()[1] << " " << vert->getCoord()[2] << " 1.0" << std::endl;
+    }
+    objFile << "# List of parametric coordinates" << std::endl;
+    for(Vertex *vert: m_cut->getVertices()){
+      objFile << "vt " << u[vert] << " " << v[vert] << std::endl;
+    }
+    objFile << "# List of normals" << std::endl;
+    for(Element *e: m->getElements()){
+      std::vector<double> normal = e->getNormal();
+      objFile << "vn " << normal[0] << " " << normal[1] << " " << normal[2] << std::endl;
+    }
+    objFile << "# List of faces with corresponding parametric coordinates and normals" << std::endl;
+    for(Element *e: m->getElements()){
+      std::vector<double> normal = e->getNormal();
+      objFile << "f ";
+      for(size_t kLoc=0; kLoc<e->getNumVertices(); kLoc++){
+        Vertex *vCut = m_cut->getElement(e->getIndex())->getVertex(kLoc);
+        Vertex *v = e->getVertex(kLoc);
+        objFile << v->getIndex() + 1 << "/" << vCut->getIndex() + 1 << "/" << e->getIndex() + 1 << " ";
+      }
+      objFile << std::endl;
+    }
+    objFile.close();
   }
 }
