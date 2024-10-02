@@ -5728,7 +5728,7 @@ gmsh::model::mesh::computeAlphaShape(const int dim,
     auto tic = std::chrono::high_resolution_clock::now();
     PolyMesh* pm = AlphaShape::_alphaShapeDelaunay2D(tag, boundaryModel);
     auto toc = std::chrono::high_resolution_clock::now();
-    std::cout << "Triangulate  : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
+    // std::cout << "Triangulate  : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
 
     // alpha shape
     OctreeNode<2, 32, MElement*> octree_prev;
@@ -5737,16 +5737,16 @@ gmsh::model::mesh::computeAlphaShape(const int dim,
     }
     AlphaShape::_alphaShape2D(pm, alpha, tag, bndTag, alphaShapeSizeField, usePreviousMesh ? &octree_prev : nullptr);
     tic = std::chrono::high_resolution_clock::now();
-    std::cout << "Alpha Shape  : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
+    // std::cout << "Alpha Shape  : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
     // edge recover
     AlphaShape::_edgeRecover(pm, tag, bndTag, boundaryModel, controlNodes, bnd_octree, boundaryTolerance);
     toc = std::chrono::high_resolution_clock::now();
-    std::cout << "Edge recover : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
+    // std::cout << "Edge recover : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
     // mesh adapt
     if (refine){
       AlphaShape::_delaunayRefinement(pm, tag, bndTag, refineSizeField, controlNodes);
       tic = std::chrono::high_resolution_clock::now();
-      std::cout << "Refine       : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
+      // std::cout << "Refine       : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
     }
 
     AlphaShape::filterNodes(pm, tag);
@@ -5758,7 +5758,7 @@ gmsh::model::mesh::computeAlphaShape(const int dim,
     // back to gmsh
     AlphaShape::alphaShapePolyMesh2Gmsh(pm, tag, bndTag, boundaryModel, bnd_octree, boundaryTolerance);
     toc = std::chrono::high_resolution_clock::now();
-    std::cout << "To Gmsh      : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
+    // std::cout << "To Gmsh      : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
 
   }
   else if (dim == 3)
