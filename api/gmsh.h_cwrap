@@ -3239,13 +3239,16 @@ namespace gmsh { // Top-level functions
                                   const int tag,
                                   const int bndTag,
                                   const std::string & boundaryModel,
+                                  const std::vector<std::size_t> & nodeTags,
                                   const std::vector<double> & dxNodes,
                                   const double boundaryTolerance = 1e-6)
       {
         int ierr = 0;
+        size_t *api_nodeTags_; size_t api_nodeTags_n_; vector2ptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_);
         double *api_dxNodes_; size_t api_dxNodes_n_; vector2ptr(dxNodes, &api_dxNodes_, &api_dxNodes_n_);
-        gmshModelMeshAdvectMeshNodes(dim, tag, bndTag, boundaryModel.c_str(), api_dxNodes_, api_dxNodes_n_, boundaryTolerance, &ierr);
+        gmshModelMeshAdvectMeshNodes(dim, tag, bndTag, boundaryModel.c_str(), api_nodeTags_, api_nodeTags_n_, api_dxNodes_, api_dxNodes_n_, boundaryTolerance, &ierr);
         if(ierr) throwLastError();
+        gmshFree(api_nodeTags_);
         gmshFree(api_dxNodes_);
       }
 

@@ -7500,6 +7500,7 @@ module gmsh
                                           tag, &
                                           bndTag, &
                                           boundaryModel, &
+                                          nodeTags, &
                                           dxNodes, &
                                           boundaryTolerance, &
                                           ierr)
@@ -7508,6 +7509,8 @@ module gmsh
                      tag, &
                      bndTag, &
                      boundaryModel, &
+                     api_nodeTags_, &
+                     api_nodeTags_n_, &
                      api_dxNodes_, &
                      api_dxNodes_n_, &
                      boundaryTolerance, &
@@ -7518,6 +7521,8 @@ module gmsh
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: bndTag
       character(len=1, kind=c_char), dimension(*), intent(in) :: boundaryModel
+      integer(c_size_t), dimension(*) :: api_nodeTags_
+      integer(c_size_t), value, intent(in) :: api_nodeTags_n_
       real(c_double), dimension(*) :: api_dxNodes_
       integer(c_size_t), value, intent(in) :: api_dxNodes_n_
       real(c_double), value, intent(in) :: boundaryTolerance
@@ -7528,6 +7533,7 @@ module gmsh
     integer, intent(in) :: tag
     integer, intent(in) :: bndTag
     character(len=*), intent(in) :: boundaryModel
+    integer(c_size_t), dimension(:), intent(in) :: nodeTags
     real(c_double), dimension(:), intent(in) :: dxNodes
     real(c_double), intent(in), optional :: boundaryTolerance
     integer(c_int), intent(out), optional :: ierr
@@ -7535,6 +7541,8 @@ module gmsh
          tag=int(tag, c_int), &
          bndTag=int(bndTag, c_int), &
          boundaryModel=istring_(boundaryModel), &
+         api_nodeTags_=nodeTags, &
+         api_nodeTags_n_=size_gmsh_size(nodeTags), &
          api_dxNodes_=dxNodes, &
          api_dxNodes_n_=size_gmsh_double(dxNodes), &
          boundaryTolerance=optval_c_double(1e-6, boundaryTolerance), &

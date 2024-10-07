@@ -4541,7 +4541,7 @@ end
 const compute_alpha_shape3_d = computeAlphaShape3D
 
 """
-    gmsh.model.mesh.advectMeshNodes(dim, tag, bndTag, boundaryModel, dxNodes, boundaryTolerance = 1e-6)
+    gmsh.model.mesh.advectMeshNodes(dim, tag, bndTag, boundaryModel, nodeTags, dxNodes, boundaryTolerance = 1e-6)
 
 Advect nodes of a mesh with displacement vector dxNodes
 
@@ -4550,14 +4550,15 @@ Types:
  - `tag`: integer
  - `bndTag`: integer
  - `boundaryModel`: string
+ - `nodeTags`: vector of sizes
  - `dxNodes`: vector of doubles
  - `boundaryTolerance`: double
 """
-function advectMeshNodes(dim, tag, bndTag, boundaryModel, dxNodes, boundaryTolerance = 1e-6)
+function advectMeshNodes(dim, tag, bndTag, boundaryModel, nodeTags, dxNodes, boundaryTolerance = 1e-6)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshAdvectMeshNodes, gmsh.lib), Cvoid,
-          (Cint, Cint, Cint, Ptr{Cchar}, Ptr{Cdouble}, Csize_t, Cdouble, Ptr{Cint}),
-          dim, tag, bndTag, boundaryModel, convert(Vector{Cdouble}, dxNodes), length(dxNodes), boundaryTolerance, ierr)
+          (Cint, Cint, Cint, Ptr{Cchar}, Ptr{Csize_t}, Csize_t, Ptr{Cdouble}, Csize_t, Cdouble, Ptr{Cint}),
+          dim, tag, bndTag, boundaryModel, convert(Vector{Csize_t}, nodeTags), length(nodeTags), convert(Vector{Cdouble}, dxNodes), length(dxNodes), boundaryTolerance, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end

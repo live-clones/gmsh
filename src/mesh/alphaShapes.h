@@ -35,7 +35,7 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
 
 void _decimateTriangulation(const int faceTag, const double thresholdDistance);
 
-void _moveNodes(const int tag, const int freeSurfaceTag, const std::vector<double> & nodesDx, BoundaryOctree &bnd_octree, double boundary_tol);
+void _moveNodes(const int tag, const int freeSurfaceTag, const std::vector<size_t> & nodeTags, const std::vector<double> & nodesDx, BoundaryOctree &bnd_octree, double boundary_tol);
 
 PolyMesh* _alphaShapeDelaunay2D(const int tag, const std::string boundaryModelName);
 

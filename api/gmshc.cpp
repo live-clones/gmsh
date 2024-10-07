@@ -2437,12 +2437,13 @@ GMSH_API void gmshModelMeshComputeAlphaShape3D(const int dim, const int * alphaS
   }
 }
 
-GMSH_API void gmshModelMeshAdvectMeshNodes(const int dim, const int tag, const int bndTag, const char * boundaryModel, const double * dxNodes, const size_t dxNodes_n, const double boundaryTolerance, int * ierr)
+GMSH_API void gmshModelMeshAdvectMeshNodes(const int dim, const int tag, const int bndTag, const char * boundaryModel, const size_t * nodeTags, const size_t nodeTags_n, const double * dxNodes, const size_t dxNodes_n, const double boundaryTolerance, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
+    std::vector<std::size_t> api_nodeTags_(nodeTags, nodeTags + nodeTags_n);
     std::vector<double> api_dxNodes_(dxNodes, dxNodes + dxNodes_n);
-    gmsh::model::mesh::advectMeshNodes(dim, tag, bndTag, boundaryModel, api_dxNodes_, boundaryTolerance);
+    gmsh::model::mesh::advectMeshNodes(dim, tag, bndTag, boundaryModel, api_nodeTags_, api_dxNodes_, boundaryTolerance);
   }
   catch(...){
     if(ierr) *ierr = 1;

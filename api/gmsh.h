@@ -1872,6 +1872,7 @@ namespace gmsh { // Top-level functions
                                     const int tag,
                                     const int bndTag,
                                     const std::string & boundaryModel,
+                                    const std::vector<std::size_t> & nodeTags,
                                     const std::vector<double> & dxNodes,
                                     const double boundaryTolerance = 1e-6);
 

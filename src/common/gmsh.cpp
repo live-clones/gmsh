@@ -5685,6 +5685,7 @@ gmsh::model::mesh::advectMeshNodes(const int dim,
                                    const int tag,
                                    const int bndTag,
                                    const std::string & boundaryModel,
+                                   const std::vector<size_t> &nodeTags,
                                    const std::vector<double> &nodesDx, 
                                    const double boundaryTolerance)
 {
@@ -5692,7 +5693,7 @@ gmsh::model::mesh::advectMeshNodes(const int dim,
   std::vector<alphaShapeBndEdge> bndEdges;
   OctreeNode<2, 32, alphaShapeBndEdge*> bnd_octree;
   AlphaShape::_createBoundaryOctree(boundaryModel, bndTag, bnd_octree, bndEdges);
-  AlphaShape::_moveNodes(tag, bndTag, nodesDx, bnd_octree, boundaryTolerance);
+  AlphaShape::_moveNodes(tag, bndTag, nodeTags, nodesDx, bnd_octree, boundaryTolerance);
 #endif
 }
 

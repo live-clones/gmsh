@@ -1656,6 +1656,7 @@ GMSH_API void gmshModelMeshAdvectMeshNodes(const int dim,
                                            const int tag,
                                            const int bndTag,
                                            const char * boundaryModel,
+                                           const size_t * nodeTags, const size_t nodeTags_n,
                                            const double * dxNodes, const size_t dxNodes_n,
                                            const double boundaryTolerance,
                                            int * ierr);

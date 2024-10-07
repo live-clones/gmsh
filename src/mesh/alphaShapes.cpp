@@ -2425,7 +2425,7 @@ void AlphaShape::alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int 
   gm_alphaShape->setAsCurrent();
 }
 
-void AlphaShape::_moveNodes(const int tag, const int freeSurfaceTag, const std::vector<double> & nodesDx, OctreeNode<2, 32, alphaShapeBndEdge*> &bnd_octree, double boundary_tol){
+void AlphaShape::_moveNodes(const int tag, const int freeSurfaceTag, const std::vector<size_t> & nodeTags, const std::vector<double> & nodesDx, OctreeNode<2, 32, alphaShapeBndEdge*> &bnd_octree, double boundary_tol){
   // check if size of nodesDx is the same as the number of nodes
   GModel* gm = GModel::current();
   GFace* gf = gm->getFaceByTag(tag);
@@ -2451,7 +2451,8 @@ void AlphaShape::_moveNodes(const int tag, const int freeSurfaceTag, const std::
 
   std::unordered_set<size_t> projectedControlNodes;
   for (size_t i=0; i<gf->getNumMeshVertices(); i++){
-    MVertex* v = gf->getMeshVertex(i);
+    // MVertex* v = gf->getMeshVertex(i);
+    MVertex* v = gm->getMeshVertexByTag(nodeTags[i]);
     bool intersect = false;
     SVector3 x0(v->point());
     SVector3 dx(nodesDx[3*i], nodesDx[3*i+1], nodesDx[3*i+2]);
@@ -2553,6 +2554,7 @@ void AlphaShape::_moveNodes(const int tag, const int freeSurfaceTag, const std::
     if (intersect) {
         x1 = x1_projected;
     }
+    // printf("moving node %zu from (%.15f, %.15f) to (%.15f, %.15f) (dx was : %.15f, %.15f) \n", v->getNum(), x0[0], x0[1], x1[0], x1[1], dx[0], dx[1]);
     v->setXYZ(x1[0], x1[1], x1[2]);
   }
 }

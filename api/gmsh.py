@@ -5148,9 +5148,9 @@ class model:
         compute_alpha_shape3_d = computeAlphaShape3D
 
         @staticmethod
-        def advectMeshNodes(dim, tag, bndTag, boundaryModel, dxNodes, boundaryTolerance=1e-6):
+        def advectMeshNodes(dim, tag, bndTag, boundaryModel, nodeTags, dxNodes, boundaryTolerance=1e-6):
             """
-            gmsh.model.mesh.advectMeshNodes(dim, tag, bndTag, boundaryModel, dxNodes, boundaryTolerance=1e-6)
+            gmsh.model.mesh.advectMeshNodes(dim, tag, bndTag, boundaryModel, nodeTags, dxNodes, boundaryTolerance=1e-6)
 
             Advect nodes of a mesh with displacement vector dxNodes
 
@@ -5159,9 +5159,11 @@ class model:
             - `tag': integer
             - `bndTag': integer
             - `boundaryModel': string
+            - `nodeTags': vector of sizes
             - `dxNodes': vector of doubles
             - `boundaryTolerance': double
             """
+            api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
             api_dxNodes_, api_dxNodes_n_ = _ivectordouble(dxNodes)
             ierr = c_int()
             lib.gmshModelMeshAdvectMeshNodes(
@@ -5169,6 +5171,7 @@ class model:
                 c_int(tag),
                 c_int(bndTag),
                 c_char_p(boundaryModel.encode()),
+                api_nodeTags_, api_nodeTags_n_,
                 api_dxNodes_, api_dxNodes_n_,
                 c_double(boundaryTolerance),
                 byref(ierr))
