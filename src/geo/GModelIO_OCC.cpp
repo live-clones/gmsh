@@ -68,6 +68,7 @@
 #include <ChFi2d_FilletAPI.hxx>
 #include <GeomAPI_Interpolate.hxx>
 #include <GeomConvert.hxx>
+#include <GeomFill_Pipe.hxx>
 #include <GeomFill_BSplineCurves.hxx>
 #include <GeomFill_BezierCurves.hxx>
 #include <GeomProjLib.hxx>
@@ -3394,6 +3395,95 @@ bool OCC_Internals::addPipe(const std::vector<std::pair<int, int>> &inDimTags,
   if(t.empty()) t = CTX::instance()->geom.pipeDefaultTrihedron;
   return _extrude(2, inDimTags, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., wireTag,
                   outDimTags, nullptr, t);
+}
+
+bool OCC_Internals::addLoft(const int wireTag, const int inwire1, 
+        const int inwire2, int &tag)
+{
+  if(!_tagWire.IsBound(wireTag)) {
+    Msg::Error("Unknown OpenCASCADE wire with tag %d", wireTag);
+    return false;
+  }
+
+  TopoDS_Face result;
+  try {
+    // get 3 curves and make a call to opencascade API
+    TopoDS_Wire wire = TopoDS::Wire(_tagWire.Find(wireTag));
+    TopoDS_Wire c1 = TopoDS::Wire(_tagWire.Find(inwire1));
+    TopoDS_Wire c2 = TopoDS::Wire(_tagWire.Find(inwire2));
+    
+    // convert shapes to geom_curve
+    TopExp_Explorer exp0;
+    std::vector<Handle(Geom_Curve)> guidePaths;
+    for(exp0.Init(wire, TopAbs_EDGE); exp0.More(); exp0.Next()) {
+      TopoDS_Edge edge = TopoDS::Edge(exp0.Current());
+      double s0, s1;
+      Handle(Geom_Curve) curve = BRep_Tool::Curve(edge, s0, s1);
+      guidePaths.push_back(curve);
+    }
+
+    TopExp_Explorer exp1;
+    std::vector<Handle(Geom_Curve)> c1s;
+    for(exp1.Init(c1, TopAbs_EDGE); exp1.More(); exp1.Next()) {
+      TopoDS_Edge edge = TopoDS::Edge(exp1.Current());
+      double s0, s1;
+      Handle(Geom_Curve) curve = BRep_Tool::Curve(edge, s0, s1);
+      c1s.push_back(curve);
+    }
+
+    TopExp_Explorer exp2;
+    std::vector<Handle(Geom_Curve)> c2s;
+    for(exp2.Init(c2, TopAbs_EDGE); exp2.More(); exp2.Next()) {
+      TopoDS_Edge edge = TopoDS::Edge(exp2.Current());
+      double s0, s1;
+      Handle(Geom_Curve) curve = BRep_Tool::Curve(edge, s0, s1);
+      c2s.push_back(curve);
+    }
+
+    if(guidePaths.size()!=1) {
+      Msg::Error("Unable to convert %d wire into a single geomcurve(%d)",
+       wireTag,
+       guidePaths.size()
+       );
+      return false;
+    }
+
+    if(c1s.size()!=1) {
+      Msg::Error("Unable to convert %d wire into a single geomcurve(%d)",
+       inwire1,
+       c1s.size()
+       );
+      return false;
+    }
+
+    if(c2s.size()!=1) {
+      Msg::Error("Unable to convert %d wire into a single geomcurve(%d)",
+       inwire2,
+       c2s.size()
+       );
+      return false;
+    }
+
+    GeomFill_Pipe pipe = GeomFill_Pipe(guidePaths.at(0), c1s.at(0), c2s.at(0));
+    pipe.Perform();
+    if(!pipe.IsDone()) {
+      Msg::Error("Could not create loft");
+      return false;
+    }
+    const Handle(Geom_Surface) &surf = pipe.Surface();
+    // convert from geom_surface to topo_face
+    result = BRepBuilderAPI_MakeFace(surf, CTX::instance()->geom.tolerance);
+  } catch(Standard_Failure &err) {
+    Msg::Error("OpenCASCADE exception %s", err.GetMessageString());
+    return false;
+  }
+
+  if(tag < 0) tag = getMaxTag(2) + 1;
+  _bind(result, tag, true);
+
+  // return outdims
+  // outDimTag = std::make_pair(_find(result))
+  return true;
 }
 
 bool OCC_Internals::_fillet(int mode, const std::vector<int> &volumeTags,
