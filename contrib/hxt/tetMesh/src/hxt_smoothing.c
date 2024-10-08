@@ -9,6 +9,8 @@
 #include "hxt_smoothing.h"
 #include "hxt_tetFlag.h"
 
+static const double ONE_THIRD = 1.0/3.0;
+
 /**************************************************************************
                     smoothing related functions
  **************************************************************************/
@@ -233,7 +235,7 @@ HXTStatus hxtSmoothing(ThreadLocal* local,
     double* b = mesh->vertices.coord + 4*mesh->tetrahedra.node[4*tet + (face+2)%4];
     double* c = mesh->vertices.coord + 4*mesh->tetrahedra.node[4*tet + (face+3)%4];
     for (int j=0; j<3; j++) {
-      centerCoord[j] += (a[j]+b[j]+c[j])/3.0;
+      centerCoord[j] += (a[j]+b[j]+c[j])*ONE_THIRD;
     }
   }
 
