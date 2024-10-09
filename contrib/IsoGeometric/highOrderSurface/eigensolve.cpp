@@ -12,8 +12,7 @@ using namespace gmshfem::function;
 using namespace gmshfem::post;
 using namespace gmshfem::equation;
 
-#define OPT true
-
+#define EXACT false
 
 int main(int argc, char **argv)
 {
@@ -28,7 +27,11 @@ int main(int argc, char **argv)
   std::string gauss = "Gauss" + std::to_string(2 * basisOrder + 1);
   gmshFem.userDefinedParameter(gauss, "gauss");
 
+#if EXACT
+  gmsh::open("../Vertebra.stl");
+#else
   gmsh::open("polyfit"+std::to_string(basisOrder)+".msh");
+#endif
   int physicalGroup = gmsh::model::addPhysicalGroup(2, {1});
   gmsh::model::setPhysicalName(2, physicalGroup, "surface");
 
@@ -39,8 +42,8 @@ int main(int argc, char **argv)
   Formulation< std::complex< double > > formulation("Laplacian modes");
   Domain omega("surface");
 
-  Field< std::complex< double >, Form::Form0 > u("u", omega, FunctionSpaceTypeForm0::HierarchicalH1, basisOrder);
-  //Field< std::complex< double >, Form::Form0 > u("u", omega, FunctionSpaceTypeForm0::Lagrange, basisOrder);
+  // Field< std::complex< double >, Form::Form0 > u("u", omega, FunctionSpaceTypeForm0::HierarchicalH1, basisOrder);
+  Field< std::complex< double >, Form::Form0 > u("u", omega, FunctionSpaceTypeForm0::Lagrange, basisOrder);
 
   // Mass
   formulation.integral(dt2_dof(u), tf(u), omega, gauss);
@@ -60,7 +63,20 @@ int main(int argc, char **argv)
   eigenvalues.save("eigenvalues");
   for(unsigned int i = 0; i < eigenvalues.size(); ++i) {
     msg::info << "Mode " << i << " of eigenvalue " << eigenvalues[i] << msg::endl;
-    save(eigenfunction(u, i), omega, "mode_" + std::to_string(i));
+
+    auto func = eigenfunction(u, i);
+    std::complex<double> norm = integrate(conj(func)*func, omega, gauss);
+    msg::info << "Norm of mode " << i << " is " << norm << msg::endl;
+    double n = 1./sqrt(norm.real());
+    Function< std::complex< double >, Degree::Degree0 > invNormFunc = n;
+    func = func * invNormFunc;
+
+  #if EXACT
+    save(func, omega, "mode_" + std::to_string(i), "pos");
+  #else
+    save(func, omega, "mode_" + std::to_string(i), "msh");
+  #endif
+
   }
 
   return 0;
