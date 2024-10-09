@@ -473,27 +473,23 @@ static geodesic::SurfacePoint getSP(const PolyMesh::VertexOnSurface &_start,
 
 static void filterPath(std::vector<geodesic::SurfacePoint> &path, double eps)
 {
+  for(size_t i = 1; i+1 < path.size(); i++) {
+    if (path[i].type() == geodesic::VERTEX) continue;
+    for (auto v: path[i].base_element()->adjacent_vertices()) {
+      SVector3 dx(v->x() - path[i].x(), v->y() - path[i].y(), v->z() - path[i].z());
+      if(dx.norm() < eps) {
+        path[i] = geodesic::SurfacePoint(v, v->x(), v->y(), v->z(), geodesic::VERTEX);
+        break;
+      }
+    }
+  }
   std::vector<geodesic::SurfacePoint> filtered_path;
   filtered_path.push_back(path[0]);
   for(size_t i = 1; i < path.size(); i++) {
-    SVector3 dx(filtered_path[filtered_path.size() - 1].x() - path[i].x(),
-                filtered_path[filtered_path.size() - 1].y() - path[i].y(),
-                filtered_path[filtered_path.size() - 1].z() - path[i].z());
-    if(dx.norm() > eps) { filtered_path.push_back(path[i]); }
-    else {
-      // if(filtered_path[filtered_path.size() - 1].type() > path[i].type()) {
-      //   printf("filtering %22.15E %22.15E %22.15E %d %22.15E %22.15E %22.15E "
-      //          "%d %lu/%lu\n",
-      //          filtered_path[filtered_path.size() - 1].x(),
-      //          filtered_path[filtered_path.size() - 1].y(),
-      //          filtered_path[filtered_path.size() - 1].z(),
-      //          filtered_path[filtered_path.size() - 1].type(), path[i].x(),
-      //          path[i].y(), path[i].z(), path[i].type(), i, path.size());
-      //   //	filtered_path[filtered_path.size() - 1] = path[i];
-      // }
-    }
+    if (path[i].base_element() == filtered_path[filtered_path.size() - 1].base_element())
+      continue;
+    filtered_path.push_back(path[i]);
   }
-
   filtered_path[filtered_path.size() - 1] = path[path.size() - 1];
 
   path = filtered_path;
