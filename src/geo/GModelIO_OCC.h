@@ -322,7 +322,7 @@ public:
   // 2D fillet and chamfer
   bool fillet2D(int &tag, const int edgeTag1,
                 const int edgeTag2,
-                double radius);
+                double radius,  int pointTag = -1, bool reverse = false);
 
   bool chamfer2D(int &tag, const int edgeTag1,
                  const int edgeTag2,
@@ -727,7 +727,7 @@ public:
   }
   bool fillet2D(int &tag, const int edgeTag1,
                 const int edgeTag2,
-                double radius)
+                double radius,  int pointTag,  bool reverse)
   {
     return _error("create fillet in 2D");
   }
