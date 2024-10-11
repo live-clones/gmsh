@@ -1678,42 +1678,132 @@ void highOrderPolyMesh::getPath(std::pair<int,int> edge, std::vector<geodesic::S
 // END GET GEODESIC PATH
 
 // INTERSECT GEODESIC PATH
+void getFacesForSegment(geodesic::SurfacePoint &sp0, geodesic::SurfacePoint &sp1, std::vector<geodesic::Face *> &faces)
+{
+  std::vector<geodesic::Face *> fs[2];
+  for (int i = 0; i < 2; ++i) {
+    geodesic::SurfacePoint sp = (i == 0) ? sp0 : sp1;
+    if (sp.type() == geodesic::FACE)
+      fs[i].push_back(static_cast<geodesic::Face *>(sp.base_element()));
+    else {
+      for (auto f: sp.base_element()->adjacent_faces())
+        fs[i].push_back(f);
+    }
+  }
+  if (fs[0].size() == 0 || fs[1].size() == 0)
+    Msg::Error("Error: no adjacent faces to a point");
+  faces.clear();
+  for (int i = 0; i < fs[0].size(); ++i) {
+    for (int j = 0; j < fs[1].size(); ++j) {
+      if (fs[0][i] == fs[1][j]) {
+        faces.push_back(fs[0][i]);
+        break;
+      }
+    }
+  }
+  if (faces.size() == 0)
+    Msg::Error("Error: no common face between two points");
+}
+
 bool highOrderPolyMesh::intersectGeodesicPath(
   std::vector<geodesic::SurfacePoint> &p0,
   std::vector<geodesic::SurfacePoint> &p1, SVector3 &intersection)
 {
+  std::map<geodesic::Face *, std::vector<size_t>> faceSegments;
+  std::map<geodesic::Vertex *, std::vector<size_t>> vertexSegments;
   for(size_t i = 1; i < p0.size(); i++) {
-    SVector3 v0(p0[i - 1].x(), p0[i - 1].y(), p0[i - 1].z());
-    SVector3 v1(p0[i].x(), p0[i].y(), p0[i].z());
-    for(size_t j = 1; j < p1.size(); j++) {
-      SVector3 w0(p1[j - 1].x(), p1[j - 1].y(), p1[j - 1].z());
-      SVector3 w1(p1[j].x(), p1[j].y(), p1[j].z());
-      if (i == 1 && (norm(v0 - w0) < 1e-6 || norm(v0 - w1) < 1e-6)) continue;
-      if (i == p0.size()-1 && (norm(v1 - w0) < 1e-6 || norm(v1 - w1) < 1e-6)) continue;
-      // if (j == 1 && (norm(v0 - w0) < 1e-6 || norm(v1 - w0) < 1e-6)) continue;
-      // if (j == p1.size()-1 && (norm(v0 - w1) < 1e-6 || norm(v1 - w1) < 1e-6)) continue;
-      double ori = robustPredicates::orient3d(v0, v1, w0, w1);
+    std::vector<geodesic::Face *> faces;
+    getFacesForSegment(p0[i - 1], p0[i], faces);
+    for (auto f: faces)
+      faceSegments[f].push_back(i);
+
+    if (p0[i-1].type() == geodesic::VERTEX)
+      vertexSegments[static_cast<geodesic::Vertex *>(p0[i-1].base_element())].push_back(i);
+    if (p0[i].type() == geodesic::VERTEX)
+      vertexSegments[static_cast<geodesic::Vertex *>(p0[i].base_element())].push_back(i);
+  }
+
+
+  for(size_t j = 1; j < p1.size(); j++) {
+    SVector3 w0(p1[j - 1].x(), p1[j - 1].y(), p1[j - 1].z());
+    SVector3 w1(p1[j].x(), p1[j].y(), p1[j].z());
+
+    std::vector<size_t> segments;
+    std::vector<geodesic::Face *> faces;
+    getFacesForSegment(p1[j - 1], p1[j], faces);
+    for (auto f: faces)
+      segments.insert(segments.end(), faceSegments[f].begin(), faceSegments[f].end());
+
+    if (p1[j-1].type() == geodesic::VERTEX) {
+      auto vs = vertexSegments[static_cast<geodesic::Vertex *>(p1[j-1].base_element())];
+      segments.insert(segments.end(), vs.begin(), vs.end());
+    }
+    if (p1[j].type() == geodesic::VERTEX) {
+      auto vs = vertexSegments[static_cast<geodesic::Vertex *>(p1[j].base_element())];
+      segments.insert(segments.end(), vs.begin(), vs.end());
+    }
+
+    for (auto i: segments) {
+      SVector3 v0(p0[i - 1].x(), p0[i - 1].y(), p0[i - 1].z());
+      SVector3 v1(p0[i].x(), p0[i].y(), p0[i].z());
       SVector3 d1 = v1 - v0;
       SVector3 d2 = w1 - w0;
-      SVector3 n = crossprod(d1, d2);
-      if(n.norm() == 0.0) continue;
-      n.normalize();
+      double l1 = d1.norm(), l2 = d2.norm();
+      d1 *= 1. / l1; d2 *= 1. / l2;
       SVector3 A = w0 - v0;
-      // FIXME TOLERANCE
-      if(fabs(ori) < 1.e-12) {
-        SVector3 n1 = crossprod(n, d2);
-        double lambda = dot(A, n1) / dot(d1, n1);
-        if(lambda >= 0 && lambda <= 1) {
-          intersection = v0 + lambda * d1;
-         
-          double mu = dot(intersection - w0, d2) / dot(d2, d2);
-          if(mu >= 0 && mu <= 1) {
-              return true;
-          }
+      double lA = A.norm();
+      if (lA > 1e-10) A *= 1. / lA;
+      SVector3 n = crossprod(d1, d2);
+
+      if(n.norm() < 1e-12) {  // parallel lines
+        if (norm(crossprod(A,d2)) > 1e-12) continue;  // not coincident lines
+        double pv0 = 0;
+        double pv1 = l1;
+        double pw0 = dot(A, d1) * lA;
+        double pw1 = dot(w1-v0, d1);
+        SVector3 s0 = v0, s1 = v1, s2 = w0, s3 = w1;
+        if (pw0 > pw1) {
+          std::swap(pw0, pw1);
+          std::swap(s2, s3);
         }
+        if (pv0 > pw0) {
+          std::swap(pv0, pw0);
+          std::swap(pv1, pw1);
+          std::swap(s0, s2);
+          std::swap(s1, s3);
+        }
+        if (pv1 - pw0 < -1e-10) continue;
+        intersection = .5 * (s1 + s2);
+
+        if ((i == 1 && norm(intersection - v0) < 1e-10) ||
+            (i == p0.size()-1 && norm(intersection - v1) < 1e-10))
+          continue;
+        if ((j == 1 && norm(intersection - w0) < 1e-10) ||
+            (j == p1.size()-1 && norm(intersection - w1) < 1e-10))
+          continue;
+        return true;
       }
+
+      n.normalize();
+      SVector3 n1 = crossprod(n, d2);
+      if (abs(dot(d1, n1)) < 1e-10) continue;
+      double lambda = dot(A, n1) * lA / (dot(d1, n1) * l1);
+      if(lambda < -1e-10 || 1 +1e-10 < lambda) continue;
+      intersection = v0 + lambda * d1 * l1;
+      double mu = dot(intersection - w0, d2) / l2;
+      if(mu < -1e-10 || 1 +1e-10 < mu) continue;
+
+      if ((i == 1 && norm(intersection - v0) < 1e-10) ||
+          (i == p0.size()-1 && norm(intersection - v1) < 1e-10))
+        continue;
+      if ((j == 1 && norm(intersection - w0) < 1e-10) ||
+          (j == p1.size()-1 && norm(intersection - w1) < 1e-10))
+        continue;
+      return true;
     }
+
   }
+
   return false;
 }
 // END INTERSECT GEODESIC PATH
