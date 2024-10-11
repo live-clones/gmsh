@@ -2359,15 +2359,15 @@ std::vector<size_t>& highOrderPolyMesh::adjacentTriangles(std::pair<int,int> edg
 
 // SWAP EDGE
 /*
-          p2                            p2
-        /    \                        / | \
-      /        \                    /   |   \
-    /     t0     \                /     |     \
-  p0 ------------ p1     =>     p0   t0 | t1   p1
-    \     t1     /                \     |     /
-      \        /                    \   |   /
-        \    /                        \ | /
-          p3                            p3
+             p2                                 p2
+           /   \                              / | \
+        /         \                        /    |    \
+     /       t0      \                  /       |       \
+  p0 ----------------- p1     =>     p0    t0   |   t1    p1
+     \       t1      /                  \       |       /
+        \         /                        \    |    /
+           \   /                              \ | /
+             p3                                 p3
 */
 bool highOrderPolyMesh::swapEdge(const std::pair<int, int> &edge,
                                  std::vector<std::pair<int,int>> & adjacentEdges)
@@ -2378,53 +2378,70 @@ bool highOrderPolyMesh::swapEdge(const std::pair<int, int> &edge,
 
   std::pair<int,int> oppEdge;
   getOppEdge(edge, oppEdge);
-  std::vector<size_t> tsOpp = adjacentTriangles(oppEdge);
-  if (tsOpp.size() != 0) {
-    Msg::Warning("Could not swap edge %d %d: opposite edge %d %d has %d adjacent triangles", edge.first, edge.second, oppEdge.first, oppEdge.second, tsOpp.size());
-    return false;
-  }
-
   std::vector<geodesic::SurfacePoint> p01, p23;
   getPath(edge, p01);
   getPath(oppEdge, p23);
+
+  // Check topology
+  if (adjacentTriangles(oppEdge).size() != 0) {
+    // Msg::Warning("Could not swap edge %d %d: opposite edge %d %d has %d adjacent triangles", edge.first, edge.second, oppEdge.first, oppEdge.second, tsOpp.size());
+    return false;
+  }
   SVector3 intersection;
   if (!intersectGeodesicPath(p01, p23, intersection)) {
-    Msg::Warning("Could not swap edge %d %d: geodesics do not intersect", edge.first, edge.second);
+    // Msg::Warning("Could not swap edge %d %d: geodesics do not intersect", edge.first, edge.second);
     return false;
   }
 
+  // For degenerate cases, check intersection with the border
+  std::vector<geodesic::SurfacePoint> borderPath, tmp;
+  getPath({oppEdge.first, edge.first}, borderPath);
+  getPath({edge.first, oppEdge.second}, tmp);
+  borderPath.insert(borderPath.end(), tmp.begin()+1, tmp.end());
+  getPath({oppEdge.second, edge.second}, tmp);
+  borderPath.insert(borderPath.end(), tmp.begin()+1, tmp.end());
+  getPath({edge.second, oppEdge.first}, tmp);
+  borderPath.insert(borderPath.end(), tmp.begin()+1, tmp.end());
+  if (intersectGeodesicPath(borderPath, p23, intersection)) {
+    // Msg::Warning("Could not swap edge %d %d: geodesic intersects border", edge.first, edge.second);
+    return false;
+  }
+
+  // Swap edge
+  for (auto t: ts) {
+    for (int j = 0; j < 3; ++j) {
+      auto &ats = adjacentTriangles({triangles[3*t+j], triangles[3*t+(j+1)%3]});
+      if (ats[0] == t) std::swap(ats[0], ats.back());
+      ats.pop_back();
+    }
+  }
 
   edges.erase(edge);
-  edges[{std::min(oppEdge.first,oppEdge.second), std::max(oppEdge.first,oppEdge.second)}] = {};
-  adjacentEdges.resize(4);
-  for (size_t i = 0; i < 2; ++i) {
-    auto beginTriangle = triangles.begin() + 3*ts[0], endTriangle = beginTriangle + 3;
-    int ps[4] = {edge.first, edge.second, oppEdge.first, oppEdge.second};
-    auto p2 = std::find(beginTriangle, endTriangle, ps[2]);
-    if (p2 == endTriangle) {
-      std::swap(ps[0], ps[1]);
-      std::swap(ps[2], ps[3]);
-      p2 = std::find(beginTriangle, endTriangle, ps[2]);
-      if (p2 == endTriangle)
-        Msg::Error("In swapEdge: could not find vertex %d or %d in triangle %d", oppEdge.first, oppEdge.second, ts[0]);
+  for (auto t: ts) {
+    int *ps = &(triangles[3*t]);
+    for (int j = 0; j < 3; ++j) {
+      if (ps[j] == edge.first && ps[(j+1)%3] == edge.second) {
+        ps[(j+1)%3] = oppEdge.second;
+        break;
+      }
+      if (ps[j] == edge.second && ps[(j+1)%3] == edge.first) {
+        ps[(j+1)%3] = oppEdge.first;
+        break;
+      }
     }
+  }
 
-    auto p1 = (p2 == beginTriangle ? endTriangle : p2) - 1;
-    *p1 = ps[3];
-
-    std::vector<size_t>& ts23 = adjacentTriangles({ps[2], ps[3]});
-    ts23.push_back(ts[0]);
-
-    std::vector<size_t>& ts03 = adjacentTriangles({ps[0], ps[3]});
-    auto t1 = std::find(ts03.begin(), ts03.end(), ts[1]);
-    if (t1 == ts03.end())
-      Msg::Error("In swapEdge: could not find triangle %d adjacent to edge %d %d", ts[1], ps[0], ps[3]);
-    *t1 = ts[0];
-
-    adjacentEdges[2*i] = {std::min(ps[0],ps[3]), std::max(ps[0],ps[3])};
-    adjacentEdges[2*i+1] = {std::min(ps[0],ps[2]), std::max(ps[0],ps[2])};
-
-    std::swap(ts[0], ts[1]);
+  adjacentEdges.clear();
+  for (auto t: ts) {
+    for (int j = 0; j < 3; ++j) {
+      std::pair<int,int> e = {triangles[3*t+j], triangles[3*t+(j+1)%3]};
+      if (e.first > e.second) std::swap(e.first, e.second);
+      edges[e].push_back(t);
+      if ((e.first == oppEdge.first && e.second == oppEdge.second) ||
+          (e.first == oppEdge.second && e.second == oppEdge.first))
+        continue;
+      adjacentEdges.push_back(e);
+    }
   }
 
   return true;
@@ -2452,6 +2469,7 @@ void highOrderPolyMesh::getOppEdge(const std::pair<int, int> &p01, std::pair<int
 
 bool highOrderPolyMesh::doWeSwap(const std::pair<int,int> & edge)
 {
+  int OPTION = 0;
   std::pair<int,int> oppEdge;
   getOppEdge(edge, oppEdge);
 
@@ -2469,48 +2487,24 @@ bool highOrderPolyMesh::doWeSwap(const std::pair<int,int> & edge)
 
   std::vector<double> A_before = {as[0], as[1], as[11], as[4], as[5], as[9]};
   std::vector<double> A_after = {as[2], as[3], as[10], as[6], as[7], as[8]};
-  std::sort(A_before.begin(), A_before.end());
-  std::sort(A_after.begin(), A_after.end());
 
-  // if (edge.first == 128 || edge.second == 128 || oppEdge.first == 128 || oppEdge.second == 128) {
-  //   if (edge.first == 124 || edge.second == 124 || oppEdge.first == 124 || oppEdge.second == 124) {
-  //     if (edge.first == 123 || edge.second == 123 || oppEdge.first == 123 || oppEdge.second == 123) {
-  //       std::cout << "n(124):" << normal(124).x() << " " << normal(124).y() << " " << normal(124).z() << std::endl;
-  //       std::vector<geodesic::SurfacePoint> p01, p20;
-  //       getPath({124,128}, p01);
-  //       getPath({123,124}, p20);
-  //       SVector3 v01(getTrueCoords(p01[0]), getTrueCoords(p01[1]));
-  //       SVector3 v02(getTrueCoords(p20[p20.size()-1]), getTrueCoords(p20[p20.size()-2]));
-  //       std::cout << "p01: " << v01.x() << " " << v01.y() << " " << v01.z() << std::endl;
-  //       std::cout << "p02: " << v02.x() << " " << v02.y() << " " << v02.z() << std::endl;
+  if (OPTION == 0) {
+    std::sort(A_before.begin(), A_before.end());
+    std::sort(A_after.begin(), A_after.end());
+    if (A_after[0] <= A_before[0] || A_after[0] <= 1e-6)
+      return false;
 
-  //       std::cout << "edge: " << edge.first << " " << edge.second << std::endl;
-  //       std::cout << "oppEdge: " << oppEdge.first << " " << oppEdge.second << std::endl;
-  //       std::cout << adjacentTriangles(edge).size() << " " << adjacentTriangles(oppEdge).size() << std::endl;
-  //       std::cout << adjacentTriangles({edge.first, oppEdge.first}).size() << " " << adjacentTriangles({edge.second, oppEdge.first}).size() << std::endl;
-  //       std::cout << adjacentTriangles({edge.first, oppEdge.second}).size() << " " << adjacentTriangles({edge.second, oppEdge.second}).size() << std::endl;
-  //       std::cout << "as: ";
-  //       for (int i = 0; i < 12; ++i) std::cout << as[i] << " ";
-  //       std::cout << std::endl;
-  //     A_before = {as[0], as[1], as[11], as[4], as[5], as[9]};
-  //     A_after = {as[2], as[3], as[10], as[6], as[7], as[8]};
-  //       std::cout << "A_before: ";
-  //       for (auto a: A_before) std::cout << a << " ";
-  //       std::cout << std::endl;
-  //       std::cout << "A_after: ";
-  //       for (auto a: A_after) std::cout << a << " ";
-  //       std::cout << std::endl;
-  //       std::cout << std::endl;
-  //     std::sort(A_before.begin(), A_before.end());
-  //     std::sort(A_after.begin(), A_after.end());
-  //     }
-  //   }
-  // }
-
-  if (A_after[0] <= A_before[0] || A_after[0] <= 1e-6)
-    return false;
-
-  return true;
+    return true;
+  }
+  else {
+    for (int i = 0; i < 6; ++i) {
+      A_before[i] = fabs(A_before[i] - M_PI/3);
+      A_after[i] = fabs(A_after[i] - M_PI/3);
+    }
+    std::sort(A_before.begin(), A_before.end());
+    std::sort(A_after.begin(), A_after.end());
+    return A_after[5] < A_before[5];
+  }
 }
 
 int highOrderPolyMesh::swapEdges()
@@ -2541,20 +2535,9 @@ int highOrderPolyMesh::swapEdges()
 
       if (!doWeSwap(edge)) continue;
 
-    // //
-    //   std::pair<int,int> oppEdge;
-    //   getOppEdge(edge, oppEdge);
-    // //
-
-
       std::vector<std::pair<int,int>> adjacentEdges;
       if (!swapEdge(edge, adjacentEdges)) continue;
       ++count;
-
-    // //
-    //   doWeSwap({std::min(oppEdge.first,oppEdge.second), std::max(oppEdge.first,oppEdge.second)});
-    // //
-
 
       for (auto e : adjacentEdges) {
         if (edges[e].size() != 2) continue;
