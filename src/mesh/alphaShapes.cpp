@@ -1126,7 +1126,7 @@ void AlphaShape::_alphaShape2D(PolyMesh* pm, const double alpha, const int faceT
   }
   double sizeLimit = 0.01;
   double constrainR = .1;
-  double outsideLimit = 0.2;
+  double outsideLimit = 0.15;
 
   std::unordered_map<PolyMesh::Face*, bool> _touched;
   double hTriangle, R, q;
