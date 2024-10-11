@@ -115,7 +115,7 @@ double MTetrahedron::getVolume()
 {
   double mat[3][3];
   getMat(mat);
-  return det3x3(mat) / 6.;
+  return det3x3(mat) * 0.166666666666666666; /* divide by 6 */
 }
 
 void MTetrahedron::xyz2uvw(double xyz[3], double uvw[3]) const
