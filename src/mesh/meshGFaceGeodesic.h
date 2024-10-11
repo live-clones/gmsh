@@ -90,20 +90,12 @@ public:
   int splitEdges(const double MAXE, double cl);
 
   bool collapseEdge(std::pair<int, int> edge,
-                   std::set<size_t> & keep,
-                   std::vector<std::pair<int, int>> &adjacentEdges,
-                   std::vector<std::pair<int, int>> &removedEdges,
-                   double MINA = 1e-6);
-  void adjacentVertices(std::pair<int,int> p01, std::vector<int> & iXs);
-  bool canWeCollapse(std::pair<int,int> p01, std::vector<int> & iXs, double MINA = 1e-6);
-  std::pair<bool,bool> doWeCollapse(std::pair<int,int> & edge, std::set<size_t> & keep);
+                         std::set<size_t> & keep,
+                         std::vector<std::pair<int, int>> &adjacentEdges,
+                         std::vector<std::pair<int, int>> &removedEdges,
+                         double MINA = 1e-6);
+  void adjacentVertices(int iFirst, int iSecond, int iStart, std::vector<int> & adjVertices);
   int collapseEdges(const double MINE, double MINA, std::set<size_t> & keep);
-  // int intrinsicCollapseEdge(std::pair<int, int> edge,
-  //                  std::set<size_t> & keep,
-  //                  std::vector<std::pair<int, int>> &adjacentEdges,
-  //                  std::vector<std::pair<int, int>> &removedEdges,
-  //                  double MINA = 1e-6);
-  // int intrinsicCollapseEdges(const double MINE, double MINA, std::set<size_t> & keep);
 
   SPoint3 getTrueCoords(geodesic::SurfacePoint &sp);
   double cl(geodesic::SurfacePoint &sp);
