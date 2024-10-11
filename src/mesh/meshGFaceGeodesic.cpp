@@ -816,8 +816,8 @@ void highOrderPolyMesh::classifyGeodesic(std::pair<int, int> pair,
             }*/
       PolyMesh::Vertex *newv =
         new PolyMesh::Vertex(_s.x(), _s.y(), _s.z(), pm->vertices.size());
-      addVertexOnEdge(he, pm->vertices.size());
       pm->vertices.push_back(newv);
+      addVertexOnEdge(he, pm->vertices.size()-1);
       addPolyMeshVertexTag(newv, tag);
     }
     else if(_s.type() ==
@@ -826,8 +826,8 @@ void highOrderPolyMesh::classifyGeodesic(std::pair<int, int> pair,
       PolyMesh::Vertex *newv =
         new PolyMesh::Vertex(_s.x(), _s.y(), _s.z(), pm->vertices.size());
       //	printf("point %lu geodesic face %d \n",i,pf->id());
-      addVertexOnSurface(pm->faces[pf->id()], pm->vertices.size());
       pm->vertices.push_back(newv);
+      addVertexOnSurface(pm->faces[pf->id()], pm->vertices.size()-1);
       addPolyMeshVertexTag(newv, tag);
     }
   }
