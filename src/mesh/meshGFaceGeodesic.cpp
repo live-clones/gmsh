@@ -606,8 +606,10 @@ bool compareVertexOnHalfEdge(const PolyMesh::Vertex *v0,
     double cos = dot(v01, v02);
     SVector3 cp = crossprod(v01, v02);
     double sin = norm(cp);
-    if (dot(cp, n) < 0) sin = -sin;
-    return atan2(sin, cos);
+
+    double angle = atan2(sin, cos);
+    if (dot(cp, n) < 0) angle = 2 * M_PI - angle;
+    return angle;
   }
 
   double highOrderPolyMesh::computeAngle(std::vector<geodesic::SurfacePoint> & p01,
