@@ -2848,34 +2848,34 @@ bool highOrderPolyMesh::collapseEdge(std::pair<int,int> edge,
 
   // Check if both vertices of the edge need to be kept
   if (keep[0] && keep[1]) {
-    Msg::Warning("Could not collapse edge %d %d: both vertices must be kept", edge.first, edge.second);
+    // Msg::Warning("Could not collapse edge %d %d: both vertices must be kept", edge.first, edge.second);
     return false;
   }
   if (onBoundary[0] && onBoundary[1] && edgeTriangles.size() == 2) {
-    Msg::Warning("Could not collapse edge %d %d: both vertices are on different boundaries", edge.first, edge.second);
+    // Msg::Warning("Could not collapse edge %d %d: both vertices are on different boundaries", edge.first, edge.second);
     return false;
   }
   for (int i = 0; i < 2; ++i) {
     if (keep[i] && !onBoundary[i] && onBoundary[1-i]) {
-      Msg::Warning("Could not collapse edge %d %d: vertex %d is kept while %d is on a boundary", edg[0], edg[1], edg[i], edg[1-i]);
+      // Msg::Warning("Could not collapse edge %d %d: vertex %d is kept while %d is on a boundary", edg[0], edg[1], edg[i], edg[1-i]);
       return false;
     }
   }
 
   // Check topology
   if (adjVertices.size() <= 1) {
-    Msg::Warning("Could not collapse edge %d %d: not enough adjacent vertices", edge.first, edge.second);
+    // Msg::Warning("Could not collapse edge %d %d: not enough adjacent vertices", edge.first, edge.second);
     return false;
   }
   if (edgeTriangles.size() == 1 && adjVertices.front() == adjVertices.back()) {
-    Msg::Warning("Could not collapse edge %d %d: the boundary is made of three points %d %d %d", edge.first, edge.second, edge.first, adjVertices.front(), edge.second);
+    // Msg::Warning("Could not collapse edge %d %d: the boundary is made of three points %d %d %d", edge.first, edge.second, edge.first, adjVertices.front(), edge.second);
     return false;
   }
   int i = (onBoundary[0] || onBoundary[1]) ? 0 : 1;
   for (; i < adjVertices.size(); ++i) {
     for (int j = i + 1; j < adjVertices.size(); ++j) {
       if (adjVertices[i] == adjVertices[j]) {
-        Msg::Warning("Could not collapse edge %d %d: vertex %d is connected to both edge vertices", edge.first, edge.second, adjVertices[i], edge.first, edge.second);
+        // Msg::Warning("Could not collapse edge %d %d: vertex %d is connected to both edge vertices", edge.first, edge.second, adjVertices[i], edge.first, edge.second);
         return false;
       }
     }
@@ -2928,7 +2928,7 @@ bool highOrderPolyMesh::collapseEdge(std::pair<int,int> edge,
   for (auto np: newPaths) {
     SVector3 intersection;
     if (intersectGeodesicPath(borderPath, np, intersection)) {
-      Msg::Warning("Could not collapse edge %d %d: new geodesic intersects border", edge.first, edge.second);
+      // Msg::Warning("Could not collapse edge %d %d: new geodesic intersects border", edge.first, edge.second);
       return false;
     }
   }
@@ -3259,7 +3259,7 @@ bool highOrderPolyMesh::splitTriangle(const size_t iTriangle)
 
 
 
-      double l = .5 * (adimLength(path10) + adimLength(path12));
+      // double l = .5 * (adimLength(path10) + adimLength(path12));
 
 
 

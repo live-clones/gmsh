@@ -535,7 +535,8 @@ void PolyMesh::fastMarching(const std::unordered_set<Vertex *> &seeds,
 
 
 
-  // Msg::Info("fast marching time : %g", t2 - t1);
+  if (false)
+    Msg::Info("fast marching time : %g", t2 - t1);
   // std::map<Vertex *,double> ls_;
   // for (auto kv: ls)
   //   ls_[kv.first] = kv.second;
