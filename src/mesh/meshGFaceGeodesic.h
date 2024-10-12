@@ -89,6 +89,12 @@ public:
   bool splitEdge(const std::pair<int, int> &edge, std::vector<std::pair<int,int>> & adjacentEdges);
   int splitEdges(const double MAXE, double cl);
 
+  void getCovering(const size_t iTriangle, std::set<PolyMesh::Face *> &faces);
+  bool splitTriangle(const size_t iTriangle);
+  int splitTriangles();
+
+  void walk(geodesic::SurfacePoint & sp, SVector3 direction, double length, std::vector<geodesic::SurfacePoint> & path);
+
   bool collapseEdge(std::pair<int, int> edge,
                          std::set<size_t> & keep,
                          std::vector<std::pair<int, int>> &adjacentEdges,
