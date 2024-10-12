@@ -486,8 +486,10 @@ static void filterPath(std::vector<geodesic::SurfacePoint> &path, double eps)
   std::vector<geodesic::SurfacePoint> filtered_path;
   filtered_path.push_back(path[0]);
   for(size_t i = 1; i < path.size(); i++) {
-    if (path[i].base_element() == filtered_path[filtered_path.size() - 1].base_element())
-      continue;
+    if (path[i].base_element() == filtered_path[filtered_path.size() - 1].base_element()) {
+      SVector3 dx(filtered_path.back().xyz(), path[i].xyz());
+      if (dx.norm() < eps) continue;
+    }
     filtered_path.push_back(path[i]);
   }
   filtered_path[filtered_path.size() - 1] = path[path.size() - 1];
@@ -2560,7 +2562,7 @@ int highOrderPolyMesh::swapEdges()
           /   \                          / | \
         /       \        =>            /   |   \
       /     t     \                  /     |     \
-    /               \              /   t   | newT  \
+    /               \              /   t   | tNew  \
   p0 --------------- p1          p0 ----- mid ------ p1
 */
 bool highOrderPolyMesh::splitEdge(const std::pair<int, int> & edge,
@@ -2570,100 +2572,109 @@ bool highOrderPolyMesh::splitEdge(const std::pair<int, int> & edge,
   if (ts.size() == 0 || ts.size() > 2)
     Msg::Error("In splitEdge: edge has %d triangles", ts.size());
 
-
+  // Compute new point
   std::vector<geodesic::SurfacePoint> path, firstHalf, secondHalf;
   getPath(edge, path);
   splitPath(path, .5 * adimLength(path), firstHalf, secondHalf);
+  geodesic::SurfacePoint newSP = firstHalf.back();
 
-
-  std::vector<int> oppositeVertices(ts.size(), -1);
-  for (int i = 0; i < ts.size(); ++i) {
-    auto ps = triangles.begin() + 3*ts[i];
+  std::vector<int> border = {edge.first, edge.second};
+  for (auto t: ts) {
+    int * ps = &(triangles[3*t]);
     for (int j = 0; j < 3; ++j) {
-      if (ps[j] != edge.first && ps[j] != edge.second) {
-        oppositeVertices[i] = ps[j];
-        break;
-      }
+      if (ps[j] == edge.first || ps[j] == edge.second) continue;
+      auto it = std::find(border.begin(), border.end(), ps[(j+1)%3]);
+      border.insert(it, ps[j]);
     }
-    if (oppositeVertices[i] == -1)
-      Msg::Error("In splitEdge: edge %d %d not found in triangle %d", edge.first, edge.second, ts[i]);
   }
 
-  std::vector<geodesic::SurfacePoint> pts_start = {firstHalf.back()};
+  std::vector<geodesic::SurfacePoint> pts_start = {newSP};
   std::vector<geodesic::SurfacePoint> pts_end;
-  for (auto i: oppositeVertices)
+  std::vector<int> dests;
+  for (auto i: border) {
+    if (i == edge.first || i == edge.second) continue;
+    dests.push_back(i);
     pts_end.push_back(points[i]);
+  }
   std::vector<std::vector<geodesic::SurfacePoint>> newPaths;
   createGeodesic(pts_start, pts_end, newPaths);
 
+
+  // For degenerate cases, check intersection with the border
+  std::vector<geodesic::SurfacePoint> borderPath, tmp;
+  getPath({border[0], border[1]}, borderPath);
+  for (int i = 1; i < border.size(); ++i) {
+    getPath({border[i], border[(i+1)%border.size()]}, tmp);
+    borderPath.insert(borderPath.end(), tmp.begin()+1, tmp.end());
+  }
   SVector3 intersection;
-  std::vector<geodesic::SurfacePoint> borderEdge[2];
-  for (int i = 0; i < newPaths.size(); ++i) {
-    getPath({oppositeVertices[1-i], edge.first}, borderEdge[0]);
-    getPath({oppositeVertices[1-i], edge.second}, borderEdge[1]);
-    if (!intersectGeodesicPath(newPaths[i], borderEdge[0], intersection) &&
-        !intersectGeodesicPath(newPaths[i], borderEdge[1], intersection)) continue;
-    Msg::Warning("Could not split edge %d %d: new geodesics intersect opposite border", edge.first, edge.second);
-    return false;
+  for (auto np: newPaths) {
+    if (intersectGeodesicPath(borderPath, np, intersection)) {
+      Msg::Warning("Could not split edge %d %d: new geodesic intersects border", edge.first, edge.second);
+      return false;
+    }
   }
 
+  // Check new lengths
   std::vector<double> newLengths(newPaths.size());
   for (int i = 0; i < newPaths.size(); ++i) {
     newLengths[i] = adimLength(newPaths[i]);
-    if (newLengths[i] > 0.9 * adimLength(edge)) {
-      Msg::Warning("Could not split edge %d %d: new edge %d %d is too long (%g) w.r.t. the edge to split (%g)", edge.first, edge.second, edge.first, oppositeVertices[i], newLengths[i], adimLength(edge));
+    if (newLengths[i] > 0.95 * adimLength(edge)) {
+      Msg::Warning("Could not split edge %d %d (%g): new geodesic to %d is too long (%g)", edge.first, edge.second, adimLength(edge), dests[i], newLengths[i]);
       return false;
     }
   }
 
 
-  int mid = points.size();
-  points.push_back(firstHalf.back());
+  // Split edge
+  for (auto t: ts) {
+    int *ps = &(triangles[3*t]);
+    for (int j = 0; j < 3; ++j) {
+      auto & ats = adjacentTriangles({ps[j], ps[(j+1)%3]});
+      if (ats[0] == t) std::swap(ats[0], ats.back());
+      ats.pop_back();
+    }
+  }
 
   edges.erase(edge);
-  edges[{std::min(edge.first,mid), std::max(edge.first,mid)}] = {};
-  edges[{std::min(mid,edge.second), std::max(mid,edge.second)}] = {};
-  for (auto i: oppositeVertices)
-    edges[{std::min(mid,i), std::max(mid,i)}] = {};
-  adjacentEdges.resize(3*ts.size() + 2);
-  for (int i = 0; i < ts.size(); ++i) {
-    int t = ts[i];
-    auto beginTriangles = triangles.begin() + 3*t, endTriangles = beginTriangles + 3;
-    auto p2 = std::find(beginTriangles, endTriangles, oppositeVertices[i]);
-    auto p1 = (p2 == beginTriangles ? endTriangles : p2) - 1;
-    int ps[3] = {p2 == endTriangles - 1 ? *beginTriangles : *(p2+1), *p1, *p2};
-
-    *p1 = mid;
-    std::vector<size_t>& ts0mid = adjacentTriangles({ps[0], mid});
-    ts0mid.push_back(t);
-    std::vector<size_t>& ts2mid = adjacentTriangles({ps[2], mid});
-    ts2mid.push_back(t);
-
-    int newT = triangles.size() / 3;
-    triangles.push_back(mid);
-    triangles.push_back(ps[1]);
-    triangles.push_back(ps[2]);
-    ts2mid.push_back(newT);
-    std::vector<size_t>& ts1mid = adjacentTriangles({ps[1], mid});
-    ts1mid.push_back(newT);
-    std::vector<size_t>& ts12 = adjacentTriangles({ps[1], ps[2]});
-    auto it = std::find(ts12.begin(), ts12.end(), t);
-    if (it == ts12.end())
-      Msg::Error("In splitEdge: could not find triangle %d adjacent to edge %d %d", t, ps[1], ps[2]);
-    *it = newT;
-
-
-    adjacentEdges[3*i] = {std::min(ps[2],ps[0]), std::max(ps[2],ps[0])};
-    adjacentEdges[3*i + 1] = {std::min(ps[2],mid), std::max(ps[2],mid)};
-    adjacentEdges[3*i + 2] = {std::min(ps[2],ps[1]), std::max(ps[2],ps[1])};
+  int mid = points.size();
+  points.push_back(newSP);
+  triangles.reserve(3 * (triangles.size() + ts.size()));
+  for (int i = 0; i < dests.size(); ++i) {
+    int *ps = &(triangles[3*ts[i]]);
+    for (int j = 0; j < 3; ++j) {
+      if ((ps[j] == edge.first && ps[(j+1)%3] == edge.second) ||
+          (ps[j] == edge.second && ps[(j+1)%3] == edge.first)) {
+        ts.push_back(triangles.size()/3);
+        triangles.push_back(mid);
+        triangles.push_back(ps[(j+1)%3]);
+        triangles.push_back(ps[(j+2)%3]);
+        ps[(j+1)%3] = mid;
+        break;
+      }
+    }
   }
-  adjacentEdges[3*ts.size()] = {std::min(edge.first,mid), std::max(edge.first,mid)};
-  adjacentEdges[3*ts.size()+1] = {std::min(mid,edge.second), std::max(mid,edge.second)};
+
+  for (auto t: ts) {
+    for (int j = 0; j < 3; ++j) {
+      std::pair<int,int> e = {triangles[3*t+j], triangles[3*t+(j+1)%3]};
+      if (e.first > e.second) std::swap(e.first, e.second);
+      edges[e].push_back(t);
+    }
+  }
+
+
+  adjacentEdges.reserve(8);
+  adjacentEdges.clear();
+  for (int i = 0; i < border.size(); ++i) {
+    adjacentEdges.push_back({std::min(border[i], mid), std::max(border[i], mid)});
+    adjacentEdges.push_back({std::min(border[i], border[(i+1)%border.size()]), std::max(border[i], border[(i+1)%border.size()])});
+  }
 
   geodesics[{edge.first, mid}] = firstHalf;
   geodesics[{mid, edge.second}] = secondHalf;
-  for (int i = 0; i < newPaths.size(); ++i) {
-    std::pair<int,int> e = {oppositeVertices[i],mid};
+  for (int i = 0; i < dests.size(); ++i) {
+    std::pair<int,int> e = {dests[i], mid};
     geodesics[e] = newPaths[i];
     if (e.first > e.second) std::swap(e.first, e.second);
     lengths[e] = newLengths[i];
@@ -2768,27 +2779,29 @@ void highOrderPolyMesh::splitPath(std::vector<geodesic::SurfacePoint> & path, co
 int highOrderPolyMesh::splitEdges(const double MAXE, double MINA)
 {
   int count = 0;
-  auto compare = [this](std::pair<int, int> a, std::pair<int, int> b) { return adimLength(a) > adimLength(b); };
-  std::set<std::pair<int, int>, decltype(compare)> queue(compare);
+  auto compare = [this](std::pair<int, int> a, std::pair<int, int> b) { return adimLength(a) < adimLength(b); };
+  std::priority_queue<std::pair<int, int>, std::vector<std::pair<int,int>>, decltype(compare)> queue(compare);
 
   for (auto it : edges) {
     if (it.second.size() != 1 && it.second.size() != 2)
-      Msg::Error("In splitEdges: edge %d %d has %d triangles", it.first.first, it.first.second, it.second.size());
-    queue.insert(it.first);
+      Msg::Error("Before splitEdges: edge %d %d has %d triangles", it.first.first, it.first.second, it.second.size());
+    queue.push(it.first);
   }
 
   while (!queue.empty()) {
-    std::pair<int,int> edge = *queue.begin();
-    queue.erase(queue.begin());
+    std::pair<int,int> edge = queue.top();
+    queue.pop();
 
     if (adimLength(edge) <= MAXE) break;
+    if (adjacentTriangles(edge).size() == 0) continue;
 
     std::vector<std::pair<int,int>> adjacentEdges;
     if (!splitEdge(edge, adjacentEdges)) continue;
     ++count;
 
-    for (auto e: adjacentEdges)
-      queue.insert(e);
+    for (auto e: adjacentEdges) {
+      queue.push(e);
+    }
   }
 
   return count;
