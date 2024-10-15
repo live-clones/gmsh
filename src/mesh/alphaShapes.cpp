@@ -542,6 +542,72 @@ static void faceCircumCenter(PolyMesh::HalfEdge *he, double *res, double* R)
   *R = norm3(v);
 }
 
+void print4debugSizeField(PolyMesh* pm, const int debugTag, std::unordered_map<int, double> &sizeAtNodes)
+  {
+    char name[256];
+    sprintf(name, "polyMesh%d.pos", debugTag);
+    FILE *f = fopen(name, "w");
+    fprintf(f, "View \" %s \"{\n", name);
+    for(auto it : pm->faces) {
+      // if (it->data == -2) continue;
+      // if (it->he && (it->he->v->data == -1 || it->he->next->v->data == -1 || it->he->next->next->v->data == -1)) continue;
+      if (it->he){
+        
+        PolyMesh::HalfEdge *he0 = it->he;
+        PolyMesh::HalfEdge *he1 = it->he->next;
+        PolyMesh::HalfEdge *he2 = it->he->next->next;
+        // double cy[3], Ry;
+        // double s[3];
+        double s0, s1, s2;
+        if (it->data < 0){
+          s0 = 0.;
+          s1 = 0.;
+          s2 = 0.;
+        }
+        else {
+          s0 = sizeAtNodes[he0->v->data];
+          s1 = sizeAtNodes[he1->v->data];
+          s2 = sizeAtNodes[he2->v->data];
+        }
+        fprintf(f, "ST(%g,%g,0,%g,%g,0,%g,%g,0){%f,%f,%f};\n",
+                he0->v->position.x(), he0->v->position.y(), he1->v->position.x(),
+                he1->v->position.y(), he2->v->position.x(), he2->v->position.y(),
+                s0, s1, s2);
+        // else {
+        // }
+        // fprintf(f, "ST(%g,%g,0,%g,%g,0,%g,%g,0){%d,%d,%d};\n",
+        //         he0->v->position.x(), he0->v->position.y(), he1->v->position.x(),
+        //         he1->v->position.y(), he2->v->position.x(), he2->v->position.y(),
+        //         it->data, it->data, it->data);
+      }
+        // else faceCircumCenter(it->he, cy, &Ry);
+      //   fprintf(f, "ST(%g,%g,0,%g,%g,0,%g,%g,0){%f,%f,%f};\n",
+      //           he0->v->position.x(), he0->v->position.y(), he1->v->position.x(),
+      //           he1->v->position.y(), he2->v->position.x(), he2->v->position.y(),
+      //           Ry, Ry, Ry);
+      // }
+    }
+    for(auto it : pm->hedges) {
+      PolyMesh::HalfEdge *he = it;
+      if(he->opposite && he->f) {
+        fprintf(f, "SL(%g,%g,0,%g,%g,0){%d,%d};\n", he->v->position.x(),
+                he->v->position.y(), he->opposite->v->position.x(),
+                he->opposite->v->position.y(), he->data, he->data);
+      }
+      else if (he->f) {
+        fprintf(f, "SL(%g,%g,0,%g,%g,0){%d,%d};\n", he->v->position.x(),
+                he->v->position.y(), he->next->v->position.x(),
+                he->next->v->position.y(), he->data, he->data);
+      }
+    }
+    for (auto v : pm->vertices){
+      fprintf(f, "SP(%g,%g,0){%g};\n", v->position.x(), v->position.y(), sizeAtNodes[v->data]);
+    }
+
+    fprintf(f, "};\n");
+    fclose(f);
+    printf("wrote mesh polyMesh%d.pos\n", debugTag);
+  }
 // void print4debug(PolyMesh* pm, const int debugTag, std::unordered_map<int, double> &sizeAtNodes)
 void print4debug(PolyMesh* pm, const int debugTag)
   {
@@ -1117,6 +1183,8 @@ void AlphaShape::_alphaShape2D(PolyMesh* pm, const double alpha, const int faceT
     if (v->data == -1) continue;
     sizeAtNodes[v->data] = field->operator()(v->position.x(), v->position.y(), 0, NULL);
   }
+
+  
   // auto toc = std::chrono::high_resolution_clock::now();
   // std::cout << "Alpha shape size field : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
   // // Get min size field
@@ -1141,7 +1209,9 @@ void AlphaShape::_alphaShape2D(PolyMesh* pm, const double alpha, const int faceT
     // if (usePreviousMesh && is_in_mesh &&  abs(hTriangle-hMin)/hMin < 1e-2) hTriangle*=bndLimit;
     faceInfo(f->he, cc, &R, &q);
     if ((octree_prev != nullptr) && abs(hTriangle-hMin)/hMin < sizeLimit && R/hTriangle < constrainR) {
-      // printf("yes, removing ! \n");
+      printf("yes, removing! element at %g %g %g \n", cc.x(), cc.y(), cc.z());
+      printf(" test 1 : %g %g %g \n", hTriangle, hMin, abs(hTriangle-hMin)/hMin);
+      printf(" test 2 : %g %g %g \n", R, hTriangle, R/hTriangle);
       // ce sont les plus petits éléments que je veux enlever, pas les grands... 
       R*=1000; //
     }
@@ -2062,7 +2132,7 @@ void AlphaShape::_delaunayRefinement(PolyMesh* pm, const int tag, const int bndT
   std::vector<PolyMesh::Face *> _badFaces;
   double _limit = .4;         // Values to discuss...
   double _size = 1.;          // Values to discuss...
-  double _sizeMinFactor = .1; // Values to discuss...
+  double _sizeMinFactor = .2; // Values to discuss...
   for(auto f : pm->faces) {
     if (f->he && f->data == tag){
       double q, R, s;
