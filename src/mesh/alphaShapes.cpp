@@ -878,7 +878,7 @@ void hedgeCollapseBoundaryEdge(PolyMesh* pm, PolyMesh::HalfEdge* he, int volTag,
       if (debug++ > 1e4){
         printf("stuck in boundary check");
         print4debug(pm, 0);
-        exit(0);
+        exit(-1);
       }
       checkColorHedge(heTurn, volTag, bndTag);
       heTurn = heTurn->opposite->next;
@@ -1209,9 +1209,9 @@ void AlphaShape::_alphaShape2D(PolyMesh* pm, const double alpha, const int faceT
     // if (usePreviousMesh && is_in_mesh &&  abs(hTriangle-hMin)/hMin < 1e-2) hTriangle*=bndLimit;
     faceInfo(f->he, cc, &R, &q);
     if ((octree_prev != nullptr) && abs(hTriangle-hMin)/hMin < sizeLimit && R/hTriangle < constrainR) {
-      printf("yes, removing! element at %g %g %g \n", cc.x(), cc.y(), cc.z());
-      printf(" test 1 : %g %g %g \n", hTriangle, hMin, abs(hTriangle-hMin)/hMin);
-      printf(" test 2 : %g %g %g \n", R, hTriangle, R/hTriangle);
+      // printf("yes, removing! element at %g %g %g \n", cc.x(), cc.y(), cc.z());
+      // printf(" test 1 : %g %g %g \n", hTriangle, hMin, abs(hTriangle-hMin)/hMin);
+      // printf(" test 2 : %g %g %g \n", R, hTriangle, R/hTriangle);
       // ce sont les plus petits éléments que je veux enlever, pas les grands... 
       R*=1000; //
     }
@@ -1420,7 +1420,7 @@ void _delaunayCheckColors(PolyMesh* pm, std::vector<PolyMesh::HalfEdge* > hes, s
     // if (debug++ > 1e4){
     //   printf("stuck in delaunay check colors \n");
     //   print4debug(pm, 0);
-    //   exit(0);
+    //   exit(-1);
     // }
     PolyMesh::HalfEdge *he = _stack.top();
     _touched.push_back(he);
@@ -1874,7 +1874,7 @@ bool boundaryCheck(PolyMesh* pm, PolyMesh::Vertex* v){
     if (debug++ > 1e4){
       printf("stuck in boundary check");
       print4debug(pm, 0);
-      exit(0);
+      exit(-1);
     }
   } while(he != v->he);
   return false;
@@ -2087,7 +2087,7 @@ void AlphaShape::_delaunayRefinement(PolyMesh* pm, const int tag, const int bndT
     if (debug++ > 10*size_init){
       printf("exceeded size in coarsening \n");
       print4debug(pm, 0);
-      exit(0);
+      exit(-1);
     }
     PolyMesh::HalfEdge *he = heVector.back();
     heVector.erase(heVector.end()-1);
@@ -2148,10 +2148,10 @@ void AlphaShape::_delaunayRefinement(PolyMesh* pm, const int tag, const int bndT
 
   size_t n_faces_init = _badFaces.size();
   while (!_badFaces.empty()){
-    if (_badFaces.size() > 100*n_faces_init){
+    if (_badFaces.size() > 1000*n_faces_init){
       printf("too many faces in refine, most likely a bug in geometry \n");
       print4debug(pm, 0); 
-      exit(0);
+      exit(-1);
     }
     PolyMesh::Face *f = _badFaces.back();
     _badFaces.erase(_badFaces.end()-1);
@@ -2406,7 +2406,7 @@ void AlphaShape::alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int 
     if (he->v->data == -1 || he->next->v->data == -1){
       printf("oh oh... data of v = -1 \n");
       //print4debug(pm, 10);
-      exit(0);
+      exit(-1);
     }
     // if (bndMap.find(he->data) == bndMap.end()) bndMap[he->data] = std::vector<size_t>();
     resultTags0.clear();
