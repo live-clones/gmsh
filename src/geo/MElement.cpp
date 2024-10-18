@@ -527,9 +527,10 @@ SPoint3 MElement::barycenter(bool primary) const
     p[1] += v->y();
     p[2] += v->z();
   }
-  p[0] /= (double)n;
-  p[1] /= (double)n;
-  p[2] /= (double)n;
+  double inv_n = 1.0/n;
+  p[0] *= inv_n;
+  p[1] *= inv_n;
+  p[2] *= inv_n;
   return p;
 }
 
@@ -558,9 +559,10 @@ SPoint3 MElement::barycenterUVW() const
     p[1] += y;
     p[2] += z;
   }
-  p[0] /= (double)n;
-  p[1] /= (double)n;
-  p[2] /= (double)n;
+  double inv_n = 1.0/n;
+  p[0] *= inv_n;
+  p[1] *= inv_n;
+  p[2] *= inv_n;
   return p;
 }
 

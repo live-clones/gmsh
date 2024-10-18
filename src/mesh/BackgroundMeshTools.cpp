@@ -138,7 +138,7 @@ static double LC_MVertex_PNTS(GEntity *ge, double U, double V)
     GVertex *gv = (GVertex *)ge;
     double lc = gv->prescribedMeshSizeAtVertex();
     // FIXME we might want to remove this to make all lc treatment consistent
-    if(lc >= MAX_LC) return CTX::instance()->lc / 10.;
+    if(lc >= MAX_LC) return CTX::instance()->lc * 0.1;
     return lc;
   }
   case 1: {
@@ -151,7 +151,7 @@ static double LC_MVertex_PNTS(GEntity *ge, double U, double V)
       if(lc1 >= MAX_LC && lc2 >= MAX_LC) {
         // FIXME we might want to remove this to make all lc treatment
         // consistent
-        return CTX::instance()->lc / 10.;
+        return CTX::instance()->lc * 0.1;
       }
       else {
         Range<double> range = ged->parBounds(0);
