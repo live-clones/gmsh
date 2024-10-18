@@ -8161,13 +8161,16 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def fillet2D(edgeTag1, edgeTag2, radius, tag=-1):
+        def fillet2D(edgeTag1, edgeTag2, radius, tag=-1, pointTag=-1, reverse=False):
             """
-            gmsh.model.occ.fillet2D(edgeTag1, edgeTag2, radius, tag=-1)
+            gmsh.model.occ.fillet2D(edgeTag1, edgeTag2, radius, tag=-1, pointTag=-1, reverse=False)
 
             Create a fillet edge between edges `edgeTag1' and `edgeTag2' with radius
             `radius'. The modifed edges keep their tag. If `tag' is positive, set the
-            tag explicitly; otherwise a new tag is selected automatically.
+            tag explicitly; otherwise a new tag is selected automatically. If
+            `pointTag' is positive, set the point on the edge at which the fillet is
+            created. If `reverse' is set, the normal of the plane through the two
+            planes is reversed before the fillet is created.
 
             Return an integer.
 
@@ -8176,6 +8179,8 @@ class model:
             - `edgeTag2': integer
             - `radius': double
             - `tag': integer
+            - `pointTag': integer
+            - `reverse': boolean
             """
             ierr = c_int()
             api_result_ = lib.gmshModelOccFillet2D(
@@ -8183,6 +8188,8 @@ class model:
                 c_int(edgeTag2),
                 c_double(radius),
                 c_int(tag),
+                c_int(pointTag),
+                c_int(bool(reverse)),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
