@@ -163,6 +163,42 @@ void GEdge::getNumMeshElements(unsigned *const c) const
   c[0] += lines.size();
 }
 
+std::set<MLine *> GEdge::getNearbyEdges(const GEdge &origin,
+                                        unsigned levels) const
+{
+  // Find points appearing in only one element, i.e. vertices from the boundary
+  // Could be simplified to "vertices such that onWhat() has dimension 0 or 1 ?"
+  std::map<MVertex *, unsigned> counts; // 0 initialized
+  for(auto l : origin.lines) {
+    counts[l->getVertex(0)]++;
+    counts[l->getVertex(1)]++;
+  }
+
+  std::set<MVertex *> singletons;
+  for(auto c : counts)
+    if(c.second == 1) singletons.insert(c.first);
+
+  // Now find all vertices touching the boundary vertices. Afterwards, use the
+  // new vertices as boundary vertices and repeat.
+  std::set<MLine *> result;
+  while(levels) {
+    std::set<MVertex *> nextSingletons;
+    for(auto l : lines) {
+      for(int i = 0; i < 2; i++) {
+        if(singletons.find(l->getVertex(i)) != singletons.end()) {
+          result.insert(l);
+          nextSingletons.insert(l->getVertex(
+            1 - i)); // The other vertex from the line is a new boundary
+          break;
+        }
+      }
+    }
+    levels--;
+    singletons = std::move(nextSingletons); // Recur
+  }
+  return result;
+}
+
 MElement *const *GEdge::getStartElementType(int type) const
 {
   if(lines.empty()) return nullptr; // msvc would throw an exception

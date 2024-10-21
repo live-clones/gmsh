@@ -203,6 +203,9 @@ public:
   std::size_t getNumMeshParentElements();
   void getNumMeshElements(unsigned *const c) const;
 
+  std::set<MLine *> getNearbyEdges(const GEdge &origin,
+                                       unsigned levels = 1) const;
+
   // get the start of the array of a type of element
   MElement *const *getStartElementType(int type) const;
 

@@ -2498,6 +2498,50 @@ void GFace::removeElements(bool del)
   polygons.clear();
 }
 
+
+std::set<MTriangle *>
+GFace::getTrianglesTouchingVertices(std::set<MVertex *> touching, unsigned levels) const
+{
+  std::set<MTriangle*> boundaryTriangles;
+  std::set<MVertex*> touchingForNext;
+
+  for(unsigned l = 0; l < levels; ++l) {
+    touchingForNext.clear();
+    for(const auto &triangle : triangles) {
+      for(int i = 0; i < 3; i++) {
+        int tag = triangle->getVertex(i)->getNum();
+        if(touching.find(triangle->getVertex(i)) != touching.end()) {
+          boundaryTriangles.insert(triangle);
+          // Add this layer as reference for the next level
+          for(int j = 0; j < 3; j++) {
+            touchingForNext.insert(triangle->getVertex(j));
+          }
+          break;
+        }
+      }
+    }
+
+    Msg::Info("Touching vertices at level %d: %d. Overlap size : %d", l, touching.size(), boundaryTriangles.size());
+    touching = std::move(touchingForNext);
+  }
+
+  return boundaryTriangles;
+}
+
+std::set<MTriangle *> GFace::getNearbyTriangles(const GFace &origin,
+                                                unsigned levels) const
+{
+  std::set<MVertex *> touchingVertices;
+
+  for(auto &triangle : triangles) {
+    for(int i = 0; i < 3; i++) {
+      touchingVertices.insert(triangle->getVertex(i));
+    }
+  }
+
+  return getTrianglesTouchingVertices(touchingVertices, levels);
+}
+
 bool GFace::reorder(const int elementType,
                     const std::vector<std::size_t> &ordering)
 {

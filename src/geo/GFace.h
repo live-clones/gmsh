@@ -25,6 +25,7 @@ class MTriangle;
 class MQuadrangle;
 class MPolygon;
 class ExtrudeParams;
+class MEdge;
 
 class GRegion;
 
@@ -397,6 +398,9 @@ public:
 
   // get the boundary layer columns
   BoundaryLayerColumns *getColumns() { return &_columns; }
+
+  std::set<MTriangle*> getTrianglesTouchingVertices(std::set<MVertex*> , unsigned levels = 1) const;
+  std::set<MTriangle*> getNearbyTriangles(const GFace& origin, unsigned levels = 1) const;
 
   std::vector<SPoint3> storage1; // sizes and directions storage
   std::vector<SVector3> storage2; // sizes and directions storage
