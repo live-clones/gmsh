@@ -776,7 +776,7 @@ void GEdge::addElement(MElement *e)
   switch(e->getType()) {
   case TYPE_LIN: addLine(reinterpret_cast<MLine *>(e)); break;
   default:
-    Msg::Error("Trying to add unsupported element in curve %d", tag());
+    Msg::Error("Trying to add unsupported element in curve %d. Type is %d", tag(), e->getType());
   }
 }
 
