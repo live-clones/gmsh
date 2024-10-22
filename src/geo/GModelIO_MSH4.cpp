@@ -2386,14 +2386,16 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
 
 static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
                                  int saveParametric, double scalingFactor,
-                                 double version)
+                                 double version, std::vector<MVertex*> *optionalRestrictedVertices = nullptr)
 {
   int parametric = saveParametric;
   if(ge->dim() != 1 && ge->dim() != 2)
     parametric = 0; // Gmsh only stores parametric coordinates for dim 1 and 2
 
   std::size_t numVerts = ge->getNumMeshVertices();
-
+  if(optionalRestrictedVertices) {
+    numVerts = optionalRestrictedVertices->size();
+  }
   if(binary) {
     int entityDim = ge->dim();
     int entityTag = ge->tag();
@@ -2405,11 +2407,19 @@ static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
   else {
     fprintf(fp, "%d %d %d %lu\n", (version >= 4.1) ? ge->dim() : ge->tag(),
             (version >= 4.1) ? ge->tag() : ge->dim(), parametric,
-            ge->getNumMeshVertices());
+            numVerts);
   }
 
   if(!numVerts) {
     return;
+  }
+
+  std::vector<MVertex *> nodesToSave(numVerts);
+  if(optionalRestrictedVertices) { nodesToSave = *optionalRestrictedVertices; }
+  else {
+    for(std::size_t i = 0; i < numVerts; i++) {
+      nodesToSave[i] = ge->getMeshVertex(i);
+    }
   }
 
   std::size_t n = 3;
@@ -2417,13 +2427,13 @@ static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
 
   if(binary) {
     std::vector<size_t> tags(numVerts);
-    for(std::size_t i = 0; i < numVerts; i++)
-      tags[i] = ge->getMeshVertex(i)->getNum();
+    for(std::size_t i = 0; i < numVerts; i++) tags[i] = nodesToSave[i]->getNum();
+
     fwrite(&tags[0], sizeof(std::size_t), numVerts, fp);
     std::vector<double> coord(n * numVerts);
     std::size_t j = 0;
     for(std::size_t i = 0; i < numVerts; i++) {
-      MVertex *mv = ge->getMeshVertex(i);
+      MVertex *mv = nodesToSave.at(i);
       coord[j++] = mv->x() * scalingFactor;
       coord[j++] = mv->y() * scalingFactor;
       coord[j++] = mv->z() * scalingFactor;
@@ -2435,10 +2445,10 @@ static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
   else {
     if(version >= 4.1) {
       for(std::size_t i = 0; i < numVerts; i++)
-        fprintf(fp, "%lu\n", ge->getMeshVertex(i)->getNum());
+        fprintf(fp, "%lu\n", nodesToSave[i]->getNum());
     }
     for(std::size_t i = 0; i < numVerts; i++) {
-      MVertex *mv = ge->getMeshVertex(i);
+      MVertex *mv = nodesToSave[i];
       double x = mv->x() * scalingFactor;
       double y = mv->y() * scalingFactor;
       double z = mv->z() * scalingFactor;
