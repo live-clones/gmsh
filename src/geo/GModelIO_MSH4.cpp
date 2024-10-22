@@ -2113,6 +2113,92 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     fprintf(fp, "$EndEntities\n");
 }
 
+static void writeMSH4Overlaps(GModel *const model, FILE *fp,
+                              int partitionToSave, bool binary,
+                              double scalingFactor, double version,
+                              std::map<GEntity *, SBoundingBox3d> *entityBounds)
+{
+  size_t numPoints{0}, numLines{0}, numFaces{0}, numRegions{0};
+  numLines = model->getOverlapEdgeManagers().size();
+  numFaces = model->getOverlapFaceManagers().size();
+
+  if(binary) {
+    Msg::Error("Binary format not supported for overlaps");
+    return;
+  }
+  else {
+    fprintf(fp, "$OverlapEntities\n");
+    fprintf(fp, "%lu %lu %lu %lu\n", numPoints, numLines, numFaces, numRegions);
+    // For each edgeManagers, write number of subdomains
+    for(auto const &[parentTag, manager] : model->getOverlapEdgeManagers()) {
+      size_t numEntities = 0;
+      if(partitionToSave == 0) {
+        for(const auto [i, submap] : manager->getOverlaps()) {
+          numEntities += submap.size();
+        }
+      }
+      else {
+        auto ptr = manager->getOverlapsOf(partitionToSave);
+        if(ptr) numEntities = ptr->size();
+      }
+      fprintf(fp, "%d %lu\n", parentTag, numEntities);
+
+      // For each overlap entity (a ij pair) write first "i j tag numElements"
+      // Then the physicals, then the elements
+      for(const auto [i, submap] : manager->getOverlaps()) {
+        if(partitionToSave != 0 && partitionToSave != i) {
+          continue; // Only save this part unless we save all
+        }
+        for(const auto [j, overlap] : submap) {
+          size_t numElements = overlap->getNumMeshElements();
+          fprintf(fp, "%d %d %d %lu ", i, j, overlap->tag(), numElements);
+          // Not exporting BB so far, they were buggy
+          writeMSH4Physicals(fp, overlap, binary);
+          fprintf(fp, "\n");
+          for(size_t k = 0; k < numElements; k++) {
+            fprintf(fp, "%lu ", overlap->getMeshElement(k)->getNum());
+          }
+          fprintf(fp, "\n");
+        }
+      }
+    }
+    // For each faceManager, write number of subdomains
+    for(auto const &[parentTag, manager] : model->getOverlapFaceManagers()) {
+      size_t numEntities = 0;
+      if(partitionToSave == 0) {
+        for(const auto [i, submap] : manager->getOverlaps()) {
+          numEntities += submap.size();
+        }
+      }
+      else {
+        auto ptr = manager->getOverlapsOf(partitionToSave);
+        if(ptr) numEntities = ptr->size();
+      }
+      fprintf(fp, "%d %lu\n", parentTag, numEntities);
+
+      // For each overlap entity (a ij pair) write first "i j tag numElements"
+      // Then the physicals, then the elements
+      for(const auto [i, submap] : manager->getOverlaps()) {
+        if(partitionToSave != 0 && partitionToSave != i) {
+          continue; // Only save this part unless we save all
+        }
+        for(const auto [j, overlap] : submap) {
+          size_t numElements = overlap->getNumMeshElements();
+          fprintf(fp, "%d %d %d %lu ", i, j, overlap->tag(), numElements);
+          // Not exporting BB so far, they were buggy
+          writeMSH4Physicals(fp, overlap, binary);
+          fprintf(fp, "\n");
+          for(size_t k = 0; k < numElements; k++) {
+            fprintf(fp, "%lu ", overlap->getMeshElement(k)->getNum());
+          }
+          fprintf(fp, "\n");
+        }
+      }
+    }
+    fprintf(fp, "$EndOverlapEntities\n");
+  }
+}
+
 static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
                                  int saveParametric, double scalingFactor,
                                  double version)
