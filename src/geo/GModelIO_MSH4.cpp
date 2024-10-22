@@ -2796,79 +2796,136 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
   getEntitiesToSave(model, partitioned, partitionToSave, saveAll, regions,
                     faces, edges, vertices);
 
+  /*
+  If we write only one partition, we don't save the neighboring entities, but the overlap entities
+  They know their elements, but we will export them with the entity tag of the
+  partitioned entity they cover
+  */
+  if(partitionToSave != 0) {
+    for(const auto &[parentEdgeTag, manager] :
+        model->getOverlapEdgeManagers()) {
+      const auto overlapsOnPartition = manager->getOverlapsOf(partitionToSave);
+      if(!overlapsOnPartition) { continue; }
+      for(const auto &[j, overlapFace] : *overlapsOnPartition) {
+        edges.insert(overlapFace);
+      }
+    }
+    for(const auto &[parentFaceTag, manager] :
+        model->getOverlapFaceManagers()) {
+      const auto &overlapsOnPartition = manager->getOverlapsOf(partitionToSave);
+      if(!overlapsOnPartition) { continue; }
+      for(const auto &[j, overlapFace] : *overlapsOnPartition) {
+        faces.insert(overlapFace);
+      }
+    }
+  }
+
   std::map<std::pair<int, int>, std::vector<MElement *> > elementsByType[4];
   std::size_t numElements = 0;
 
   for(auto it = vertices.begin(); it != vertices.end(); ++it) {
-    if(!saveAll && (*it)->physicals.size() == 0) continue;
+    GVertex *vertex = *it;
+    if(!saveAll && vertex->physicals.size() == 0) continue;
 
-    numElements += (*it)->points.size();
-    for(std::size_t i = 0; i < (*it)->points.size(); i++) {
-      std::pair<int, int> p((*it)->tag(), (*it)->points[i]->getTypeForMSH());
-      elementsByType[0][p].push_back((*it)->points[i]);
+    int entityTag = vertex->tag();
+    // If it is an overlap, put the tag of the parent entity
+    if (vertex->geomType() == GEntity::OverlapPoint) {
+      // TODO: implement
+      //overlapVertex *or = static_cast<overlapVertex *>(vertex);
+      //entityTag = or->getOverlapOn()->tag();
+    }
+
+    numElements += vertex->points.size();
+    for(std::size_t i = 0; i < vertex->points.size(); i++) {
+      std::pair<int, int> p(vertex->tag(), vertex->points[i]->getTypeForMSH());
+      elementsByType[0][p].push_back(vertex->points[i]);
     }
   }
 
   for(auto it = edges.begin(); it != edges.end(); ++it) {
-    if(!saveAll && (*it)->physicals.size() == 0 &&
-       (*it)->geomType() != GEntity::GhostCurve)
+    GEdge *edge = *it;
+    if(!saveAll && edge->physicals.size() == 0 &&
+       edge->geomType() != GEntity::GhostCurve)
       continue;
 
-    numElements += (*it)->lines.size();
-    for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
-      std::pair<int, int> p((*it)->tag(), (*it)->lines[i]->getTypeForMSH());
-      elementsByType[1][p].push_back((*it)->lines[i]);
+    int entityTag = edge->tag();
+    // If it is an overlap, put the tag of the parent entity
+    if(edge->geomType() == GEntity::OverlapCurve) {
+      overlapEdge *oe = static_cast<overlapEdge *>(edge);
+      entityTag = oe->getOverlapOn()->tag();
+    }
+
+    numElements += edge->lines.size();
+    for(std::size_t i = 0; i < edge->lines.size(); i++) {
+      std::pair<int, int> p(entityTag, edge->lines[i]->getTypeForMSH());
+      elementsByType[1][p].push_back(edge->lines[i]);
     }
   }
 
   for(auto it = faces.begin(); it != faces.end(); ++it) {
-    if(!saveAll && (*it)->physicals.size() == 0 &&
-       (*it)->geomType() != GEntity::GhostSurface)
+    GFace *face = *it;
+    if(!saveAll && face->physicals.size() == 0 &&
+       face->geomType() != GEntity::GhostSurface)
       continue;
 
-    numElements += (*it)->triangles.size();
-    for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
-      std::pair<int, int> p((*it)->tag(), (*it)->triangles[i]->getTypeForMSH());
-      elementsByType[2][p].push_back((*it)->triangles[i]);
+    int entityTag = face->tag();
+    // If it is an overlap, put the tag of the parent entity
+    if(face->geomType() == GEntity::OverlapSurface) {
+      overlapFace *of = static_cast<overlapFace *>(face);
+      entityTag = of->getOverlapOn()->tag();
     }
-    numElements += (*it)->quadrangles.size();
-    for(std::size_t i = 0; i < (*it)->quadrangles.size(); i++) {
-      std::pair<int, int> p((*it)->tag(),
-                            (*it)->quadrangles[i]->getTypeForMSH());
-      elementsByType[2][p].push_back((*it)->quadrangles[i]);
+
+    numElements += face->triangles.size();
+    for(std::size_t i = 0; i < face->triangles.size(); i++) {
+      std::pair<int, int> p(entityTag, face->triangles[i]->getTypeForMSH());
+      elementsByType[2][p].push_back(face->triangles[i]);
+    }
+    numElements += face->quadrangles.size();
+    for(std::size_t i = 0; i < face->quadrangles.size(); i++) {
+      std::pair<int, int> p(face->tag(), face->quadrangles[i]->getTypeForMSH());
+      elementsByType[2][p].push_back(face->quadrangles[i]);
     }
   }
 
   for(auto it = regions.begin(); it != regions.end(); ++it) {
-    if(!saveAll && (*it)->physicals.size() == 0 &&
-       (*it)->geomType() != GEntity::GhostVolume)
+    GRegion* region = *it;
+    if(!saveAll && region->physicals.size() == 0 &&
+       region->geomType() != GEntity::GhostVolume)
       continue;
 
-    numElements += (*it)->tetrahedra.size();
-    for(std::size_t i = 0; i < (*it)->tetrahedra.size(); i++) {
-      std::pair<int, int> p((*it)->tag(),
-                            (*it)->tetrahedra[i]->getTypeForMSH());
-      elementsByType[3][p].push_back((*it)->tetrahedra[i]);
+    int entityTag = region->tag();
+    // If it is an overlap, put the tag of the parent entity
+    if (region->geomType() == GEntity::OverlapVolume) {
+      // TODO: implement
+      //overlapRegion *or = static_cast<overlapRegion *>(region);
+      //entityTag = or->getOverlapOn()->tag();
     }
-    numElements += (*it)->hexahedra.size();
-    for(std::size_t i = 0; i < (*it)->hexahedra.size(); i++) {
-      std::pair<int, int> p((*it)->tag(), (*it)->hexahedra[i]->getTypeForMSH());
-      elementsByType[3][p].push_back((*it)->hexahedra[i]);
+
+    numElements += region->tetrahedra.size();
+    for(std::size_t i = 0; i < region->tetrahedra.size(); i++) {
+      std::pair<int, int> p(entityTag,
+                            region->tetrahedra[i]->getTypeForMSH());
+      elementsByType[3][p].push_back(region->tetrahedra[i]);
     }
-    numElements += (*it)->prisms.size();
-    for(std::size_t i = 0; i < (*it)->prisms.size(); i++) {
-      std::pair<int, int> p((*it)->tag(), (*it)->prisms[i]->getTypeForMSH());
-      elementsByType[3][p].push_back((*it)->prisms[i]);
+    numElements += region->hexahedra.size();
+    for(std::size_t i = 0; i < region->hexahedra.size(); i++) {
+      std::pair<int, int> p(entityTag, region->hexahedra[i]->getTypeForMSH());
+      elementsByType[3][p].push_back(region->hexahedra[i]);
     }
-    numElements += (*it)->pyramids.size();
-    for(std::size_t i = 0; i < (*it)->pyramids.size(); i++) {
-      std::pair<int, int> p((*it)->tag(), (*it)->pyramids[i]->getTypeForMSH());
-      elementsByType[3][p].push_back((*it)->pyramids[i]);
+    numElements += region->prisms.size();
+    for(std::size_t i = 0; i < region->prisms.size(); i++) {
+      std::pair<int, int> p(entityTag, region->prisms[i]->getTypeForMSH());
+      elementsByType[3][p].push_back(region->prisms[i]);
     }
-    numElements += (*it)->trihedra.size();
-    for(std::size_t i = 0; i < (*it)->trihedra.size(); i++) {
-      std::pair<int, int> p((*it)->tag(), (*it)->trihedra[i]->getTypeForMSH());
-      elementsByType[3][p].push_back((*it)->trihedra[i]);
+    numElements += region->pyramids.size();
+    for(std::size_t i = 0; i < region->pyramids.size(); i++) {
+      std::pair<int, int> p(entityTag, region->pyramids[i]->getTypeForMSH());
+      elementsByType[3][p].push_back(region->pyramids[i]);
+    }
+    numElements += region->trihedra.size();
+    for(std::size_t i = 0; i < region->trihedra.size(); i++) {
+      std::pair<int, int> p(entityTag, region->trihedra[i]->getTypeForMSH());
+      elementsByType[3][p].push_back(region->trihedra[i]);
     }
   }
 
