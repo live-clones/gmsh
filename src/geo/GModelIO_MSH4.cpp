@@ -1608,6 +1608,14 @@ int GModel::_readMSH4(const std::string &name)
       }
       partitioned = true;
     }
+    else if(!strncmp(&str[1], "OverlapEntities", 15)) {
+      Msg::Info("Reading overlap entities");
+      if(!readMSH4Overlaps(this, fp, true, binary, swap, version)) {
+        Msg::Error("Could not read overlap entities");
+        fclose(fp);
+        return 0;
+      }
+    }
     else if(!strncmp(&str[1], "Nodes", 5)) {
       _vertexVectorCache.clear();
       _vertexMapCache.clear();
@@ -3415,6 +3423,12 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   // elements
   writeMSH4Elements(this, fp, partitioned, partitionToSave, binary, saveAll,
                     version);
+
+  // write overlaps, AFTER the elements
+  if(partitioned && hasOverlaps()) {
+    writeMSH4Overlaps(this, fp, partitionToSave, binary, scalingFactor, version,
+                      entityBounds);
+  }
 
   // Edge tags
   writeMSH4Edges(this, fp, partitioned, partitionToSave, binary, saveAll,
