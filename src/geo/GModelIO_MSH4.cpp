@@ -2911,6 +2911,23 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
     model->getNumMeshVertices() :
     getAdditionalEntities(regions, faces, edges, vertices);
 
+  // If overlapping, fill additional entities, with only a subset of nodes.
+  std::map<GRegion *, std::vector<MVertex *>, GEntityPtrLessThan>
+    additionalRegions;
+  std::map<GFace *, std::vector<MVertex *>, GEntityPtrLessThan> additionalFaces;
+  std::map<GEdge *, std::vector<MVertex *>, GEntityPtrLessThan> additionalEdges;
+  std::map<GVertex *, std::vector<MVertex *>, GEntityPtrLessThan>
+    additionalVertices;
+  if(partitioned && partitionToSave != 0 && model->hasOverlaps()) {
+    size_t numAdditionalNodes = getPartialEntitiesToSaveForOverlaps(
+      model, partitionToSave, regions, faces, edges, vertices,
+      additionalRegions, additionalFaces, additionalEdges, additionalVertices);
+    Msg::Debug("Adding %lu additional nodes to the %lu original ones for "
+              "overlaps on partition %d",
+              numAdditionalNodes, numNodes, partitionToSave);
+    numNodes += numAdditionalNodes;
+  }
+
   if(!numNodes) return;
 
   fprintf(fp, "$Nodes\n");
@@ -2941,10 +2958,39 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
     }
   }
 
+  // Include additional entities for min-max
+  for (auto [entity, vertices] : additionalVertices) {
+    for (auto vertex : vertices) {
+      minTag = std::min(minTag, vertex->getNum());
+      maxTag = std::max(maxTag, vertex->getNum());
+    }
+  }
+  for (auto [entity, vertices] : additionalEdges) {
+    for (auto vertex : vertices) {
+      minTag = std::min(minTag, vertex->getNum());
+      maxTag = std::max(maxTag, vertex->getNum());
+    }
+  }
+  for (auto [entity, vertices] : additionalFaces) {
+    for (auto vertex : vertices) {
+      minTag = std::min(minTag, vertex->getNum());
+      maxTag = std::max(maxTag, vertex->getNum());
+    }
+  }
+  for (auto [entity, vertices] : additionalRegions) {
+    for (auto vertex : vertices) {
+      minTag = std::min(minTag, vertex->getNum());
+      maxTag = std::max(maxTag, vertex->getNum());
+    }
+  }
+
+  size_t totalNumEntities = vertices.size() + edges.size() + faces.size() +
+                            regions.size() + additionalVertices.size() +
+                            additionalEdges.size() + additionalFaces.size() +
+                            additionalRegions.size();
+
   if(binary) {
-    std::size_t numSection =
-      vertices.size() + edges.size() + faces.size() + regions.size();
-    fwrite(&numSection, sizeof(std::size_t), 1, fp);
+    fwrite(&totalNumEntities, sizeof(std::size_t), 1, fp);
     fwrite(&numNodes, sizeof(std::size_t), 1, fp);
     fwrite(&minTag, sizeof(std::size_t), 1, fp);
     fwrite(&maxTag, sizeof(std::size_t), 1, fp);
@@ -2952,12 +2998,12 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
   else {
     if(version >= 4.1) {
       fprintf(fp, "%lu %lu %lu %lu\n",
-              vertices.size() + edges.size() + faces.size() + regions.size(),
+              totalNumEntities,
               numNodes, minTag, maxTag);
     }
     else {
       fprintf(fp, "%lu %lu\n",
-              vertices.size() + edges.size() + faces.size() + regions.size(),
+              totalNumEntities,
               numNodes);
     }
   }
@@ -2966,17 +3012,33 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
     writeMSH4EntityNodes(*it, fp, binary, saveParametric, scalingFactor,
                          version);
   }
+  for (auto it = additionalVertices.begin(); it != additionalVertices.end(); ++it) {
+    writeMSH4EntityNodes(it->first, fp, binary, saveParametric, scalingFactor,
+                         version, &it->second);
+  }
   for(auto it = edges.begin(); it != edges.end(); ++it) {
     writeMSH4EntityNodes(*it, fp, binary, saveParametric, scalingFactor,
                          version);
+  }
+  for (auto it = additionalEdges.begin(); it != additionalEdges.end(); ++it) {
+    writeMSH4EntityNodes(it->first, fp, binary, saveParametric, scalingFactor,
+                         version, &it->second);
   }
   for(auto it = faces.begin(); it != faces.end(); ++it) {
     writeMSH4EntityNodes(*it, fp, binary, saveParametric, scalingFactor,
                          version);
   }
+  for (auto it = additionalFaces.begin(); it != additionalFaces.end(); ++it) {
+    writeMSH4EntityNodes(it->first, fp, binary, saveParametric, scalingFactor,
+                         version, &it->second);
+  }
   for(auto it = regions.begin(); it != regions.end(); ++it) {
     writeMSH4EntityNodes(*it, fp, binary, saveParametric, scalingFactor,
                          version);
+  }
+  for (auto it = additionalRegions.begin(); it != additionalRegions.end(); ++it) {
+    writeMSH4EntityNodes(it->first, fp, binary, saveParametric, scalingFactor,
+                         version, &it->second);
   }
 
   if(binary) fprintf(fp, "\n");
