@@ -30,6 +30,10 @@
 #include "ghostFace.h"
 #include "ghostEdge.h"
 #include "ghostRegion.h"
+#include "overlapFace.h"
+#include "overlapFaceManager.h"
+#include "overlapEdge.h"
+#include "overlapEdgeManager.h"
 #include "MPoint.h"
 #include "MLine.h"
 #include "MTriangle.h"
@@ -1722,14 +1726,16 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
         continue;
       if((*it)->geomType() != GEntity::PartitionCurve &&
-         (*it)->geomType() != GEntity::GhostCurve)
+         (*it)->geomType() != GEntity::GhostCurve && 
+         (*it)->geomType() != GEntity::OverlapCurve)
         edges.insert(*it);
     }
     for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
       if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
         continue;
       if((*it)->geomType() != GEntity::PartitionSurface &&
-         (*it)->geomType() != GEntity::GhostSurface)
+         (*it)->geomType() != GEntity::GhostSurface &&
+         (*it)->geomType() != GEntity::OverlapSurface)
         faces.insert(*it);
     }
     for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
