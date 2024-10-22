@@ -2606,6 +2606,195 @@ getAdditionalEntities(std::set<GRegion *, GEntityPtrLessThan> &regions,
   return numVertices;
 }
 
+// Find all entities that are to be saved but with only some nodes, and give
+// these nodes. Returns the number of extra nodes
+static std::size_t getPartialEntitiesToSaveForOverlaps(
+  GModel *const model, int partitionToSave,
+  const std::set<GRegion *, GEntityPtrLessThan> &regions,
+  const std::set<GFace *, GEntityPtrLessThan> &faces,
+  const std::set<GEdge *, GEntityPtrLessThan> &edges,
+  const std::set<GVertex *, GEntityPtrLessThan> &vertices,
+  std::map<GRegion *, std::vector<MVertex *>, GEntityPtrLessThan>
+    &additionalRegions,
+  std::map<GFace *, std::vector<MVertex *>, GEntityPtrLessThan>
+    &additionalFaces,
+  std::map<GEdge *, std::vector<MVertex *>, GEntityPtrLessThan>
+    &additionalEdges,
+  std::map<GVertex *, std::vector<MVertex *>, GEntityPtrLessThan>
+    &additionalVertices)
+{
+  size_t numVertices = 0;
+
+  // Build set then cast as vectors later
+  std::map<GRegion *, std::set<MVertex *>, GEntityPtrLessThan>
+    additionalRegionsSet;
+  std::map<GFace *, std::set<MVertex *>, GEntityPtrLessThan> additionalFacesSet;
+  std::map<GEdge *, std::set<MVertex *>, GEntityPtrLessThan> additionalEdgesSet;
+  std::map<GVertex *, std::set<MVertex *>, GEntityPtrLessThan>
+    additionalVerticeSet;
+
+  for(const auto &[parentEdgeTag, manager] : model->_overlapEdgeManagers) {
+    for(const auto &[i, submap] : manager->getOverlaps()) {
+      if(i != partitionToSave) { continue; }
+      for(const auto &[j, overlap] : submap) {
+        Msg::Info("Edge overlap of %lu elements",
+                  overlap->getNumMeshElements());
+        for(std::size_t k = 0; k < overlap->getNumMeshElements(); k++) {
+          MElement *elem = overlap->getMeshElement(k);
+          if(!elem) {
+            Msg::Error("Element %lu not found", k);
+            continue;
+          }
+          size_t numVertices = elem->getNumVertices();
+          for(std::size_t l = 0; l < numVertices; l++) {
+            MVertex *vertex = elem->getVertex(l);
+            GEntity *entity = vertex->onWhat();
+            if(!entity) {
+              Msg::Error("Vertex %lu has no entity", vertex->getNum());
+              continue;
+            }
+            if(entity && entity != overlap) {
+              switch(entity->dim()) {
+              case 0:
+                if(vertices.find(dynamic_cast<GVertex *>(entity)) ==
+                   vertices.end()) {
+                  additionalVerticeSet[static_cast<GVertex *>(entity)].insert(
+                    vertex);
+                }
+                break;
+              case 1:
+                if(edges.find(dynamic_cast<GEdge *>(entity)) == edges.end()) {
+                  additionalEdgesSet[static_cast<GEdge *>(entity)].insert(
+                    vertex);
+                }
+                break;
+              case 2:
+                if(faces.find(dynamic_cast<GFace *>(entity)) == faces.end()) {
+                  additionalFacesSet[static_cast<GFace *>(entity)].insert(
+                    vertex);
+                }
+                break;
+              case 3:
+                if(regions.find(dynamic_cast<GRegion *>(entity)) ==
+                   regions.end()) {
+                  additionalRegionsSet[static_cast<GRegion *>(entity)].insert(
+                    vertex);
+                }
+                break;
+              default: break;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  for(const auto &[parentFaceTag, manager] : model->_overlapFaceManagers) {
+    for(const auto &[i, submap] : manager->getOverlaps()) {
+      if(i != partitionToSave) { continue; }
+      for(const auto &[j, overlap] : submap) {
+        Msg::Info("Face overlap of %lu elements",
+                  overlap->getNumMeshElements());
+        for(std::size_t k = 0; k < overlap->getNumMeshElements(); k++) {
+          MElement *elem = overlap->getMeshElement(k);
+          if(!elem) {
+            Msg::Error("Element %lu not found", k);
+            continue;
+          }
+          size_t numVertices = elem->getNumVertices();
+          for(std::size_t l = 0; l < numVertices; l++) {
+            MVertex *vertex = elem->getVertex(l);
+            GEntity *entity = vertex->onWhat();
+            if(!entity) {
+              Msg::Error("Vertex %lu has no entity", vertex->getNum());
+              continue;
+            }
+            if(entity && entity != overlap) {
+              switch(entity->dim()) {
+              case 0:
+                if(vertices.find(dynamic_cast<GVertex *>(entity)) ==
+                   vertices.end()) {
+                  additionalVerticeSet[static_cast<GVertex *>(entity)].insert(
+                    vertex);
+                }
+                break;
+              case 1:
+                if(edges.find(dynamic_cast<GEdge *>(entity)) == edges.end()) {
+                  additionalEdgesSet[static_cast<GEdge *>(entity)].insert(
+                    vertex);
+                }
+                break;
+              case 2:
+                if(faces.find(dynamic_cast<GFace *>(entity)) == faces.end()) {
+                  additionalFacesSet[static_cast<GFace *>(entity)].insert(
+                    vertex);
+                }
+                break;
+              case 3:
+                if(regions.find(dynamic_cast<GRegion *>(entity)) ==
+                   regions.end()) {
+                  additionalRegionsSet[static_cast<GRegion *>(entity)].insert(
+                    vertex);
+                }
+                break;
+              default: break;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Convert sets to vectors
+  for(const auto &[entity, nodes] : additionalVerticeSet) {
+    additionalVertices[entity] =
+      std::vector<MVertex *>(nodes.begin(), nodes.end());
+
+    for(MVertex *node : nodes)
+      Msg::Info("Additional node on vertices %d", node->getNum());
+  }
+  for(const auto &[entity, nodes] : additionalEdgesSet) {
+    additionalEdges[entity] =
+      std::vector<MVertex *>(nodes.begin(), nodes.end());
+    for(MVertex *node : nodes)
+      Msg::Info("Additional node on edges %d", node->getNum());
+  }
+  for(const auto &[entity, nodes] : additionalFacesSet) {
+    additionalFaces[entity] =
+      std::vector<MVertex *>(nodes.begin(), nodes.end());
+    for(MVertex *node : nodes)
+      Msg::Info("Additional node on faces %d", node->getNum());
+  }
+  for(const auto &[entity, nodes] : additionalRegionsSet) {
+    additionalRegions[entity] =
+      std::vector<MVertex *>(nodes.begin(), nodes.end());
+    for(MVertex *node : nodes)
+      Msg::Info("Additional node on regions %d", node->getNum());
+  }
+
+  // Compute number of vertices
+  for(const auto &[entity, nodes] : additionalVertices) {
+    numVertices += nodes.size();
+  }
+  for(const auto &[entity, nodes] : additionalEdges) {
+    numVertices += nodes.size();
+  }
+  for(const auto &[entity, nodes] : additionalFaces) {
+    numVertices += nodes.size();
+  }
+  for(const auto &[entity, nodes] : additionalRegions) {
+    numVertices += nodes.size();
+  }
+
+  Msg::Debug("Number of entities partially saved: %lu %lu %lu %lu",
+            additionalVertices.size(), additionalEdges.size(),
+            additionalFaces.size(), additionalRegions.size());
+
+  return numVertices;
+}
+
 static void
 getEntitiesToSave(GModel *const model, bool partitioned,
                   int partitionToSave, bool saveAll,
