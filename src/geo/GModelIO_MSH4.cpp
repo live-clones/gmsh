@@ -2357,7 +2357,6 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
     else {
       fprintf(fp, "%lu %lu %lu %lu\n", numPoints, numLines, numFaces, numRegions);
     }
-    Msg::Info("Wrote %lu %lu %lu %lu", numPoints, numLines, numFaces, numRegions);
     // For each edgeManagers, write number of subdomains
     for(auto const &[parentTag, manager] : model->getOverlapEdgeManagers()) {
       int numEntities = 0;
@@ -2377,7 +2376,6 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
       else {
         fprintf(fp, "%d %lu\n", parentTag, numEntities);
       }
-      Msg::Info("Wrote %d %lu", parentTag, numEntities);
       // For each overlap entity (a ij pair) write first "i j tag numElements"
       // Then the physicals, then the elements
       for(const auto [i, submap] : manager->getOverlaps()) {
@@ -2396,7 +2394,6 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
           else {
             fprintf(fp, "%d %d %d %lu ", i, j, entityTag, numElements);
           }
-          Msg::Info("Wrote %d %d %d %lu", i, j, entityTag, numElements);
           // Not exporting BB so far, they were buggy
           writeMSH4Physicals(fp, overlap, binary);
           if(binary) {
@@ -2413,7 +2410,6 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
             }
             fprintf(fp, "\n");
           }
-          Msg::Info("First and last element are %lu and %lu", overlap->getMeshElement(0)->getNum(), overlap->getMeshElement(numElements-1)->getNum());
         }
       }
     }
@@ -2436,7 +2432,6 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
       else {
         fprintf(fp, "%d %lu\n", parentTag, numEntities);
       }
-      Msg::Info("Wrote %d %lu", parentTag, numEntities);
       // For each overlap entity (a ij pair) write first "i j tag numElements"
       // Then the physicals, then the elements
       for(const auto [i, submap] : manager->getOverlaps()) {
@@ -2455,7 +2450,6 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
           else {
             fprintf(fp, "%d %d %d %lu ", i, j, entityTag, numElements);
           }
-          Msg::Info("Wrote %d %d %d %lu", i, j, entityTag, numElements);
           // Not exporting BB so far, they were buggy
           writeMSH4Physicals(fp, overlap, binary);
           if(binary) {
@@ -2472,7 +2466,6 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
             }
             fprintf(fp, "\n");
           }
-          Msg::Info("First and last element are %lu and %lu", overlap->getMeshElement(0)->getNum(), overlap->getMeshElement(numElements-1)->getNum());
         }
       }
     }
