@@ -3584,6 +3584,7 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool partitioned,
                               double version)
 {
   if(model->getNumMEdges() == 0) return;
+  // Future option: only save tags from overlaps and interfaces
 
   std::set<GRegion *, GEntityPtrLessThan> regions;
   std::set<GFace *, GEntityPtrLessThan> faces;
@@ -3593,6 +3594,26 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool partitioned,
                     faces, edges, vertices);
   getAdditionalEntities(regions, faces, edges, vertices);
 
+  // add overlaps
+  if(partitionToSave != 0) {
+    for(const auto &[parentEdgeTag, manager] :
+        model->getOverlapEdgeManagers()) {
+      const auto overlapsOnPartition = manager->getOverlapsOf(partitionToSave);
+      if(!overlapsOnPartition) { continue; }
+      for(const auto &[j, overlapFace] : *overlapsOnPartition) {
+        edges.insert(overlapFace);
+      }
+    }
+    for(const auto &[parentFaceTag, manager] :
+        model->getOverlapFaceManagers()) {
+      const auto &overlapsOnPartition = manager->getOverlapsOf(partitionToSave);
+      if(!overlapsOnPartition) { continue; }
+      for(const auto &[j, overlapFace] : *overlapsOnPartition) {
+        faces.insert(overlapFace);
+      }
+    }
+  }
+
   // Additional entities ?
   std::set<std::size_t> ownedVertices;
   for (GRegion* r : regions) {
@@ -3600,14 +3621,36 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool partitioned,
       ownedVertices.insert(r->getMeshVertex(i)->getNum());
     }
   }
-  for (GFace* f : faces) {
-    for (std::size_t i = 0; i < f->getNumMeshVertices(); i++) {
-      ownedVertices.insert(f->getMeshVertex(i)->getNum());
+  for(GFace *f : faces) {
+    overlapFace *of = dynamic_cast<overlapFace *>(f);
+    if(of) {
+      for(std::size_t i = 0; i < of->getNumMeshElements(); i++) {
+        MElement *e = of->getMeshElement(i);
+        for(std::size_t j = 0; j < e->getNumVertices(); j++) {
+          ownedVertices.insert(e->getVertex(j)->getNum());
+        }
+      }
+    }
+    else {
+      for(std::size_t i = 0; i < f->getNumMeshVertices(); i++) {
+        ownedVertices.insert(f->getMeshVertex(i)->getNum());
+      }
     }
   }
-  for (GEdge* e : edges) {
-    for (std::size_t i = 0; i < e->getNumMeshVertices(); i++) {
-      ownedVertices.insert(e->getMeshVertex(i)->getNum());
+  for(GEdge *e : edges) {
+    overlapEdge *oe = dynamic_cast<overlapEdge *>(e);
+    if(oe) {
+      for(std::size_t i = 0; i < oe->getNumMeshElements(); i++) {
+        MElement *e = oe->getMeshElement(i);
+        for(std::size_t j = 0; j < e->getNumVertices(); j++) {
+          ownedVertices.insert(e->getVertex(j)->getNum());
+        }
+      }
+    }
+    else {
+      for(std::size_t i = 0; i < e->getNumMeshVertices(); i++) {
+        ownedVertices.insert(e->getMeshVertex(i)->getNum());
+      }
     }
   }
   for (GVertex* v : vertices) {
