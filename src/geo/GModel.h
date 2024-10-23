@@ -13,6 +13,7 @@
 #include <string>
 #include <unordered_map>
 #include <functional>
+#include <memory>
 #include "GVertex.h"
 #include "GEdge.h"
 #include "GFace.h"
@@ -35,6 +36,11 @@ class gLevelset;
 class discreteFace;
 class discreteRegion;
 class MElementOctree;
+
+class overlapEdge;
+class overlapEdgeManager;
+class overlapFace;
+class overlapFaceManager;
 
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
 class GModel {
@@ -618,6 +624,15 @@ public:
                       std::vector<std::pair<MElement *, int> >());
   // unpartition the mesh
   int unpartitionMesh();
+  
+  int generateOverlapForEntity(int dim, int tag);
+  // For each entity, have for each entity a list of elements (of same dimension) in the overlap
+  std::map<int, std::unique_ptr<overlapFaceManager>> _overlapFaceManagers; // Key is tag of a 2D parent entity
+  std::map<int, std::unique_ptr<overlapEdgeManager>> _overlapEdgeManagers; // Key is tag of a 1D parent entity
+  const std::map<int, std::unique_ptr<overlapFaceManager>> &getOverlapFaceManagers() const { return _overlapFaceManagers; }
+  const std::map<int, std::unique_ptr<overlapEdgeManager>> &getOverlapEdgeManagers() const { return _overlapEdgeManagers; }
+  bool hasOverlaps() const { return !_overlapEdgeManagers.empty() || !_overlapFaceManagers.empty(); }
+
   // import a mesh partitionned by a tag given by element (i.e. the old way we
   // stored partitions) and create the new topology-based partition entitiesx
   int convertOldPartitioningToNewOne();

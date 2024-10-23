@@ -2521,7 +2521,6 @@ GFace::getTrianglesTouchingVertices(std::set<MVertex *> touching, unsigned level
       }
     }
 
-    Msg::Info("Touching vertices at level %d: %d. Overlap size : %d", l, touching.size(), boundaryTriangles.size());
     touching = std::move(touchingForNext);
   }
 

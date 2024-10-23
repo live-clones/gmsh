@@ -2751,27 +2751,18 @@ static std::size_t getPartialEntitiesToSaveForOverlaps(
   for(const auto &[entity, nodes] : additionalVerticeSet) {
     additionalVertices[entity] =
       std::vector<MVertex *>(nodes.begin(), nodes.end());
-
-    for(MVertex *node : nodes)
-      Msg::Info("Additional node on vertices %d", node->getNum());
   }
   for(const auto &[entity, nodes] : additionalEdgesSet) {
     additionalEdges[entity] =
       std::vector<MVertex *>(nodes.begin(), nodes.end());
-    for(MVertex *node : nodes)
-      Msg::Info("Additional node on edges %d", node->getNum());
   }
   for(const auto &[entity, nodes] : additionalFacesSet) {
     additionalFaces[entity] =
       std::vector<MVertex *>(nodes.begin(), nodes.end());
-    for(MVertex *node : nodes)
-      Msg::Info("Additional node on faces %d", node->getNum());
   }
   for(const auto &[entity, nodes] : additionalRegionsSet) {
     additionalRegions[entity] =
       std::vector<MVertex *>(nodes.begin(), nodes.end());
-    for(MVertex *node : nodes)
-      Msg::Info("Additional node on regions %d", node->getNum());
   }
 
   // Compute number of vertices

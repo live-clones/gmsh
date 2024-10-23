@@ -82,7 +82,6 @@ void overlapEdgeManager::create(int overlapSize, bool createPhysicals)
     for(unsigned i = 1; i <= numPartitions; ++i) {
       const auto *overlaps = this->getOverlapsOf(i);
       if(!overlaps) {
-        Msg::Warning("No overlaps for partition %d", i);
         continue;
       }
       std::vector<int> overlapTags;
@@ -93,7 +92,7 @@ void overlapEdgeManager::create(int overlapSize, bool createPhysicals)
                                     basis_name + std::to_string(i));
       ++nPhysicalsCreated;
     }
-    Msg::Info("Created %d physicals for entity 1 %d", nPhysicalsCreated,
+    Msg::Debug("Created %d physicals for entity 1 %d", nPhysicalsCreated,
               tagParent);
   }
 }
