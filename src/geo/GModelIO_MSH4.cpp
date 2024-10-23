@@ -461,150 +461,189 @@ static bool readMSH4Overlaps(GModel *const model, FILE *fp, bool partition,
                              bool binary, bool swap, double version)
 {
   size_t numPoints, numEdges, numFaces, numRegions;
-  if(binary) { Msg::Error("Binary MSH4 overlaps not supported"); }
-  else {
+  if (binary) {
+    if(fread(&numPoints, sizeof(size_t), 1, fp) != 1) return false;
+    if(fread(&numEdges, sizeof(size_t), 1, fp) != 1) return false;
+    if(fread(&numFaces, sizeof(size_t), 1, fp) != 1) return false;
+    if(fread(&numRegions, sizeof(size_t), 1, fp) != 1) return false;
+  } else {
     if(fscanf(fp, "%lu %lu %lu %lu", &numPoints, &numEdges, &numFaces,
               &numRegions) != 4) {
       return false;
     }
-    for(size_t ipoint = 0; ipoint < numPoints; ++ipoint) {
-      // Todo: implement 0D
+  }
+  Msg::Info("Reading overlaps: %lu points, %lu edges, %lu faces, %lu regions", numPoints,
+            numEdges, numFaces, numRegions);
+  for(size_t ipoint = 0; ipoint < numPoints; ++ipoint) {
+    // Todo: implement 0D
+  }
+  // Read all edges.
+  for(size_t iedge = 0; iedge < numEdges; ++iedge) {
+    int tagParent, numOverlaps;
+    if (binary) {
+      if(fread(&tagParent, sizeof(int), 1, fp) != 1) return false;
+      if(fread(&numOverlaps, sizeof(int), 1, fp) != 1) return false;
+    } else {
+      if(fscanf(fp, "%d %d", &tagParent, &numOverlaps) != 2) return false;
     }
-    // Read all edges.
-    for(size_t iedge = 0; iedge < numEdges; ++iedge) {
-      int tagParent, numOverlaps;
-      if(fscanf(fp, "%d %d", &tagParent, &numOverlaps) != 2) { return false; }
-      GEntity *ge = model->getEntityByTag(1, tagParent);
-      GEdge *parentEdge = dynamic_cast<GEdge *>(ge);
-      if(!parentEdge) {
-        Msg::Error("Edge overlaps: Parent edge %d not found", tagParent);
-        return false;
+    GEntity *ge = model->getEntityByTag(1, tagParent);
+    GEdge *parentEdge = dynamic_cast<GEdge *>(ge);
+    if(!parentEdge) {
+      Msg::Error("Edge overlaps: Parent edge %d not found", tagParent);
+      return false;
+    }
+    // For each (i,j) pair of the overlap of this entity, read its tag,
+    // physical and elements
+    for(size_t ioverlap = 0; ioverlap < numOverlaps; ++ioverlap) {
+      int i, j, tagOverlap;
+      size_t numElements;
+      if(binary) {
+        if(fread(&i, sizeof(int), 1, fp) != 1) return false;
+        if(fread(&j, sizeof(int), 1, fp) != 1) return false;
+        if(fread(&tagOverlap, sizeof(int), 1, fp) != 1) return false;
+        if(fread(&numElements, sizeof(size_t), 1, fp) != 1) return false;
       }
-      // For each (i,j) pair of the overlap of this entity, read its tag,
-      // physical and elements
-      for(size_t ioverlap = 0; ioverlap < numOverlaps; ++ioverlap) {
-        int i, j, tagOverlap;
-        size_t numElements;
+      else {
         if(fscanf(fp, "%d %d %d %lu", &i, &j, &tagOverlap, &numElements) != 4) {
           Msg::Error("Edge overlaps: Could not read overlap %d", ioverlap);
           return false;
         }
-
-        // Should not happen
-        GEntity *previousEntity = model->getEntityByTag(2, tagOverlap);
-        if(previousEntity) {
-          Msg::Warning("Edge overlap %d -> %d with tag %d already exsists as a "
-                       "non-overlap entity. Deleting it",
-                       i, j, tagOverlap);
-          GEdge *f = dynamic_cast<GEdge *>(previousEntity);
-          model->remove(f);
-          delete previousEntity;
-        }
-
-        auto I =
-          dynamic_cast<partitionEdge *>(findChild(model, 1, tagParent, i));
-        auto J =
-          dynamic_cast<partitionEdge *>(findChild(model, 1, tagParent, j));
-        if(!I || !J) {
-          Msg::Error(
-            "Edge overlaps: could not find children %d and %d for overlap %d",
-            i, j, tagOverlap);
-          return false;
-        }
-        // Create the overlap entity and add it to the model
-        overlapEdge *overlapEntity = new overlapEdge(model, tagOverlap, I, J);
-        model->add(overlapEntity);
-        if(!readMSH4Physicals(model, fp, overlapEntity, binary, swap)) {
-          return false;
-        }
-        // Skipping BB for now
-        /*if(!readMSH4BoundingEntities(model, fp, g, binary, swap)) {
-          return false;
-        }*/
-
-        // Read elements
-        for(size_t ielem = 0; ielem < numElements; ++ielem) {
-          int tagElement;
-          if(fscanf(fp, "%d", &tagElement) != 1) { return false; }
-          auto elem = model->getMeshElementByTag(tagElement);
-          if(!elem) {
-            auto totalNumElem = model->getNumMeshElements();
-            Msg::Error("Edge overlaps: Could not find element %d for overlap "
-                       "%d. Total numEleme is %lu",
-                       tagElement, tagOverlap, totalNumElem);
-            return false;
-          }
-          overlapEntity->addElement(elem);
-        }
       }
-    }
-    for(size_t iface = 0; iface < numFaces; ++iface) {
-      int tagParent, numOverlaps;
-      if(fscanf(fp, "%d %d", &tagParent, &numOverlaps) != 2) { return false; }
-      GEntity *ge = model->getEntityByTag(2, tagParent);
-      GFace *parentFace = dynamic_cast<GFace *>(ge);
-      if(!parentFace) {
-        Msg::Error("Face overlaps: Parent face %d not found", tagParent);
+
+      // Should not happen
+      GEntity *previousEntity = model->getEntityByTag(2, tagOverlap);
+      if(previousEntity) {
+        Msg::Warning("Edge overlap %d -> %d with tag %d already exsists as a "
+                     "non-overlap entity. Deleting it",
+                     i, j, tagOverlap);
+        GEdge *f = dynamic_cast<GEdge *>(previousEntity);
+        model->remove(f);
+        delete previousEntity;
+      }
+
+      auto I = dynamic_cast<partitionEdge *>(findChild(model, 1, tagParent, i));
+      auto J = dynamic_cast<partitionEdge *>(findChild(model, 1, tagParent, j));
+      if(!I || !J) {
+        Msg::Error(
+          "Edge overlaps: could not find children %d and %d for overlap %d", i,
+          j, tagOverlap);
         return false;
       }
-      // For each (i,j) pair of the overlap of this entity, read its tag,
-      // physical and elements
-      for(size_t ioverlap = 0; ioverlap < numOverlaps; ++ioverlap) {
-        int i, j, tagOverlap;
-        size_t numElements;
+      // Create the overlap entity and add it to the model
+      overlapEdge *overlapEntity = new overlapEdge(model, tagOverlap, I, J);
+      model->add(overlapEntity);
+      if(!readMSH4Physicals(model, fp, overlapEntity, binary, swap)) {
+        return false;
+      }
+      // Skipping BB for now
+      /*if(!readMSH4BoundingEntities(model, fp, g, binary, swap)) {
+        return false;
+      }*/
+
+      // Read elements
+      for(size_t ielem = 0; ielem < numElements; ++ielem) {
+        size_t tagElement;
+        if (binary) {
+          if(fread(&tagElement, sizeof(size_t), 1, fp) != 1) return false;
+        } else {
+          if(fscanf(fp, "%lu", &tagElement) != 1) return false;
+        }
+        auto elem = model->getMeshElementByTag(tagElement);
+        if(!elem) {
+          auto totalNumElem = model->getNumMeshElements();
+          Msg::Error("Edge overlaps: Could not find element %d for overlap "
+                     "%d. Total numEleme is %lu",
+                     tagElement, tagOverlap, totalNumElem);
+          return false;
+        }
+        overlapEntity->addElement(elem);
+      }
+    }
+  }
+  for(size_t iface = 0; iface < numFaces; ++iface) {
+    int tagParent, numOverlaps;
+    if (binary) {
+      if(fread(&tagParent, sizeof(int), 1, fp) != 1) return false;
+      if(fread(&numOverlaps, sizeof(int), 1, fp) != 1) return false;
+    } else {
+      if(fscanf(fp, "%d %d", &tagParent, &numOverlaps) != 2) return false;
+    }
+    GEntity *ge = model->getEntityByTag(2, tagParent);
+    GFace *parentFace = dynamic_cast<GFace *>(ge);
+    if(!parentFace) {
+      Msg::Error("Face overlaps: Parent face %d not found", tagParent);
+      return false;
+    }
+    // For each (i,j) pair of the overlap of this entity, read its tag,
+    // physical and elements
+    for(size_t ioverlap = 0; ioverlap < numOverlaps; ++ioverlap) {
+      int i, j, tagOverlap;
+      size_t numElements;
+      if(binary) {
+        if(fread(&i, sizeof(int), 1, fp) != 1) return false;
+        if(fread(&j, sizeof(int), 1, fp) != 1) return false;
+        if(fread(&tagOverlap, sizeof(int), 1, fp) != 1) return false;
+        if(fread(&numElements, sizeof(size_t), 1, fp) != 1) return false;
+      }
+      else {
         if(fscanf(fp, "%d %d %d %lu", &i, &j, &tagOverlap, &numElements) != 4) {
           Msg::Error("Face overlaps: Could not read overlap %d", ioverlap);
           return false;
         }
+      }
 
-        // Should not happen
-        GEntity *previousEntity = model->getEntityByTag(2, tagOverlap);
-        if(previousEntity) {
-          Msg::Warning("Face overlap %d -> %d with tag %d already exsists as a "
-                    "non-overlap entity. Deleting it",
-                    i, j, tagOverlap);
-          GFace *f = dynamic_cast<GFace *>(previousEntity);
-          model->remove(f);
-          delete previousEntity;
+      // Should not happen
+      GEntity *previousEntity = model->getEntityByTag(2, tagOverlap);
+      if(previousEntity) {
+        Msg::Warning("Face overlap %d -> %d with tag %d already exsists as a "
+                     "non-overlap entity. Deleting it",
+                     i, j, tagOverlap);
+        GFace *f = dynamic_cast<GFace *>(previousEntity);
+        model->remove(f);
+        delete previousEntity;
+      }
+
+      auto I = dynamic_cast<partitionFace *>(findChild(model, 2, tagParent, i));
+      auto J = dynamic_cast<partitionFace *>(findChild(model, 2, tagParent, j));
+      if(!I || !J) {
+        Msg::Error(
+          "Face overlaps: could not find children %d and %d for overlap %d", i,
+          j, tagOverlap);
+        return false;
+      }
+      // Create the overlap entity and add it to the model
+      overlapFace *overlapEntity = new overlapFace(model, tagOverlap, I, J);
+      model->add(overlapEntity);
+      if(!readMSH4Physicals(model, fp, overlapEntity, binary, swap)) {
+        return false;
+      }
+      // Skipping BB for now
+      /*if(!readMSH4BoundingEntities(model, fp, g, binary, swap)) {
+        return false;
+      }*/
+
+      // Read elements
+      for(size_t ielem = 0; ielem < numElements; ++ielem) {
+        size_t tagElement;
+        if (binary) {
+          if(fread(&tagElement, sizeof(size_t), 1, fp) != 1) return false;
+        } else {
+          if(fscanf(fp, "%lu", &tagElement) != 1) return false;
         }
-
-        auto I =
-          dynamic_cast<partitionFace *>(findChild(model, 2, tagParent, i));
-        auto J =
-          dynamic_cast<partitionFace *>(findChild(model, 2, tagParent, j));
-        if(!I || !J) {
-          Msg::Error("Face overlaps: could not find children %d and %d for overlap %d", i, j,
-                     tagOverlap);
+        auto elem = model->getMeshElementByTag(tagElement);
+        if(!elem) {
+          auto totalNumElem = model->getNumMeshElements();
+          Msg::Error("Face overlaps: Could not find element %d for overlap "
+                     "%d. Total numEleme is %lu",
+                     tagElement, tagOverlap, totalNumElem);
           return false;
         }
-        // Create the overlap entity and add it to the model
-        overlapFace *overlapEntity = new overlapFace(model, tagOverlap, I, J);
-        model->add(overlapEntity);
-        if(!readMSH4Physicals(model, fp, overlapEntity, binary, swap)) { return false; }
-        // Skipping BB for now
-        /*if(!readMSH4BoundingEntities(model, fp, g, binary, swap)) {
-          return false;
-        }*/
-
-        // Read elements
-        for(size_t ielem = 0; ielem < numElements; ++ielem) {
-          int tagElement;
-          if(fscanf(fp, "%d", &tagElement) != 1) { return false; }
-          auto elem = model->getMeshElementByTag(tagElement);
-          if(!elem) {
-            auto totalNumElem = model->getNumMeshElements();
-            Msg::Error("Face overlaps: Could not find element %d for overlap "
-                       "%d. Total numEleme is %lu",
-                       tagElement, tagOverlap, totalNumElem);
-            return false;
-          }
-          overlapEntity->addElement(elem);
-        }
+        overlapEntity->addElement(elem);
       }
     }
-    for(size_t ireg = 0; ireg < numRegions; ++ireg) {
-      // Todo: implement 3D
-    }
+  }
+  for(size_t ireg = 0; ireg < numRegions; ++ireg) {
+    // Todo: implement 3D
   }
 
   return true;
@@ -2307,16 +2346,21 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
   numLines = model->getOverlapEdgeManagers().size();
   numFaces = model->getOverlapFaceManagers().size();
 
-  if(binary) {
-    Msg::Error("Binary format not supported for overlaps");
-    return;
-  }
-  else {
+  
     fprintf(fp, "$OverlapEntities\n");
-    fprintf(fp, "%lu %lu %lu %lu\n", numPoints, numLines, numFaces, numRegions);
+    if (binary) {
+      fwrite(&numPoints, sizeof(size_t), 1, fp);
+      fwrite(&numLines, sizeof(size_t), 1, fp);
+      fwrite(&numFaces, sizeof(size_t), 1, fp);
+      fwrite(&numRegions, sizeof(size_t), 1, fp);
+    }
+    else {
+      fprintf(fp, "%lu %lu %lu %lu\n", numPoints, numLines, numFaces, numRegions);
+    }
+    Msg::Info("Wrote %lu %lu %lu %lu", numPoints, numLines, numFaces, numRegions);
     // For each edgeManagers, write number of subdomains
     for(auto const &[parentTag, manager] : model->getOverlapEdgeManagers()) {
-      size_t numEntities = 0;
+      int numEntities = 0;
       if(partitionToSave == 0) {
         for(const auto [i, submap] : manager->getOverlaps()) {
           numEntities += submap.size();
@@ -2326,8 +2370,14 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
         auto ptr = manager->getOverlapsOf(partitionToSave);
         if(ptr) numEntities = ptr->size();
       }
-      fprintf(fp, "%d %lu\n", parentTag, numEntities);
-
+      if (binary) {
+        fwrite(&parentTag, sizeof(int), 1, fp);
+        fwrite(&numEntities, sizeof(int), 1, fp);
+      }
+      else {
+        fprintf(fp, "%d %lu\n", parentTag, numEntities);
+      }
+      Msg::Info("Wrote %d %lu", parentTag, numEntities);
       // For each overlap entity (a ij pair) write first "i j tag numElements"
       // Then the physicals, then the elements
       for(const auto [i, submap] : manager->getOverlaps()) {
@@ -2336,20 +2386,40 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
         }
         for(const auto [j, overlap] : submap) {
           size_t numElements = overlap->getNumMeshElements();
-          fprintf(fp, "%d %d %d %lu ", i, j, overlap->tag(), numElements);
+          int entityTag = overlap->tag();
+          if (binary) {
+            fwrite(&i, sizeof(int), 1, fp);
+            fwrite(&j, sizeof(int), 1, fp);
+            fwrite(&entityTag, sizeof(int), 1, fp);
+            fwrite(&numElements, sizeof(size_t), 1, fp);
+          }
+          else {
+            fprintf(fp, "%d %d %d %lu ", i, j, entityTag, numElements);
+          }
+          Msg::Info("Wrote %d %d %d %lu", i, j, entityTag, numElements);
           // Not exporting BB so far, they were buggy
           writeMSH4Physicals(fp, overlap, binary);
-          fprintf(fp, "\n");
-          for(size_t k = 0; k < numElements; k++) {
-            fprintf(fp, "%lu ", overlap->getMeshElement(k)->getNum());
+          if(binary) {
+            for(size_t k = 0; k < numElements; k++) {
+              size_t num = overlap->getMeshElement(k)->getNum();
+              fwrite(&num, sizeof(size_t), 1, fp);
+            }
+            // Add endline here ?
           }
-          fprintf(fp, "\n");
+          else {
+            fprintf(fp, "\n");
+            for(size_t k = 0; k < numElements; k++) {
+              fprintf(fp, "%lu ", overlap->getMeshElement(k)->getNum());
+            }
+            fprintf(fp, "\n");
+          }
+          Msg::Info("First and last element are %lu and %lu", overlap->getMeshElement(0)->getNum(), overlap->getMeshElement(numElements-1)->getNum());
         }
       }
     }
     // For each faceManager, write number of subdomains
     for(auto const &[parentTag, manager] : model->getOverlapFaceManagers()) {
-      size_t numEntities = 0;
+      int numEntities = 0;
       if(partitionToSave == 0) {
         for(const auto [i, submap] : manager->getOverlaps()) {
           numEntities += submap.size();
@@ -2359,8 +2429,14 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
         auto ptr = manager->getOverlapsOf(partitionToSave);
         if(ptr) numEntities = ptr->size();
       }
-      fprintf(fp, "%d %lu\n", parentTag, numEntities);
-
+      if (binary) {
+        fwrite(&parentTag, sizeof(int), 1, fp);
+        fwrite(&numEntities, sizeof(int), 1, fp);
+      }
+      else {
+        fprintf(fp, "%d %lu\n", parentTag, numEntities);
+      }
+      Msg::Info("Wrote %d %lu", parentTag, numEntities);
       // For each overlap entity (a ij pair) write first "i j tag numElements"
       // Then the physicals, then the elements
       for(const auto [i, submap] : manager->getOverlaps()) {
@@ -2369,19 +2445,38 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
         }
         for(const auto [j, overlap] : submap) {
           size_t numElements = overlap->getNumMeshElements();
-          fprintf(fp, "%d %d %d %lu ", i, j, overlap->tag(), numElements);
+          int entityTag = overlap->tag();
+          if(binary) {
+            fwrite(&i, sizeof(int), 1, fp);
+            fwrite(&j, sizeof(int), 1, fp);
+            fwrite(&entityTag, sizeof(int), 1, fp);
+            fwrite(&numElements, sizeof(size_t), 1, fp);
+          }
+          else {
+            fprintf(fp, "%d %d %d %lu ", i, j, entityTag, numElements);
+          }
+          Msg::Info("Wrote %d %d %d %lu", i, j, entityTag, numElements);
           // Not exporting BB so far, they were buggy
           writeMSH4Physicals(fp, overlap, binary);
-          fprintf(fp, "\n");
-          for(size_t k = 0; k < numElements; k++) {
-            fprintf(fp, "%lu ", overlap->getMeshElement(k)->getNum());
+          if(binary) {
+            for(size_t k = 0; k < numElements; k++) {
+              size_t num = overlap->getMeshElement(k)->getNum();
+              fwrite(&num, sizeof(size_t), 1, fp);
+            }
+            // Add endline here ?
           }
-          fprintf(fp, "\n");
+          else {
+            fprintf(fp, "\n");
+            for(size_t k = 0; k < numElements; k++) {
+              fprintf(fp, "%lu ", overlap->getMeshElement(k)->getNum());
+            }
+            fprintf(fp, "\n");
+          }
+          Msg::Info("First and last element are %lu and %lu", overlap->getMeshElement(0)->getNum(), overlap->getMeshElement(numElements-1)->getNum());
         }
       }
     }
     fprintf(fp, "$EndOverlapEntities\n");
-  }
 }
 
 static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
