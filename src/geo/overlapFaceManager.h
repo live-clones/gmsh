@@ -9,12 +9,15 @@
 #include "overlapFace.h"
 #include <map>
 
+class MLine; // For overlap boundary
+
 // Collection of overlap of a common parent face. No ownership of elements, it is a read-only view
 class overlapFaceManager {
 private:
   GModel* model;
   int tagParent;
   std::map<int, std::map<int, overlapFace*>> overlaps;
+  std::map<int, std::map<int, partitionEdge*>> boundaries;
 public:
   overlapFaceManager(GModel* model, int tagParent, int overlapSize = 1, bool createPhysicals = true);
   void create(int overlapSize = 1, bool createPhysicals = true);
@@ -37,10 +40,18 @@ public:
     overlaps[overlap->of()][overlap->on()] = overlap;
   }
 
+
   std::map<int, std::map<int, overlapFace*>> getOverlaps() const {
     return overlaps;
   }
 
+  std::map<int, std::map<int, partitionEdge*>> getBoundaries() const {
+    return boundaries;
+  }
+
+private:
+  std::vector<MLine *>
+  _createBoundary(const std::set<MTriangle *> &trianglesInOverlap) const;
 };
 
 #endif

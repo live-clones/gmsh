@@ -2563,7 +2563,8 @@ static std::size_t
 getAdditionalEntities(std::set<GRegion *, GEntityPtrLessThan> &regions,
                       std::set<GFace *, GEntityPtrLessThan> &faces,
                       std::set<GEdge *, GEntityPtrLessThan> &edges,
-                      std::set<GVertex *, GEntityPtrLessThan> &vertices)
+                      std::set<GVertex *, GEntityPtrLessThan> &vertices,
+                      const std::set<GEntity *, GEntityPtrFullLessThan> &toIgnore)
 {
   std::size_t numVertices = 0;
 
@@ -2988,7 +2989,7 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
   std::size_t numNodes = (saveAll && !partitioned &&
                           !CTX::instance()->mesh.saveWithoutOrphans) ?
     model->getNumMeshVertices() :
-    getAdditionalEntities(regions, faces, edges, vertices);
+    getAdditionalEntities(regions, faces, edges, vertices, model->getAllOverlapBoundaries());
 
   // If overlapping, fill additional entities, with only a subset of nodes.
   std::map<GRegion *, std::vector<MVertex *>, GEntityPtrLessThan>
@@ -3592,7 +3593,7 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool partitioned,
   std::set<GVertex *, GEntityPtrLessThan> vertices;
   getEntitiesToSave(model, partitioned, partitionToSave, saveAll, regions,
                     faces, edges, vertices);
-  getAdditionalEntities(regions, faces, edges, vertices);
+  getAdditionalEntities(regions, faces, edges, vertices, model->getAllOverlapBoundaries());
 
   // add overlaps
   if(partitionToSave != 0) {
@@ -3713,7 +3714,7 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool partitioned,
   std::set<GVertex *, GEntityPtrLessThan> vertices;
   getEntitiesToSave(model, partitioned, partitionToSave, saveAll, regions,
                     faces, edges, vertices);
-  getAdditionalEntities(regions, faces, edges, vertices);
+  getAdditionalEntities(regions, faces, edges, vertices, model->getAllOverlapBoundaries());
 
   // Additional entities ?
   std::set<std::size_t> ownedVertices;

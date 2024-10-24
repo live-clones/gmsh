@@ -632,6 +632,7 @@ public:
   const std::map<int, std::unique_ptr<overlapFaceManager>> &getOverlapFaceManagers() const { return _overlapFaceManagers; }
   const std::map<int, std::unique_ptr<overlapEdgeManager>> &getOverlapEdgeManagers() const { return _overlapEdgeManagers; }
   bool hasOverlaps() const { return !_overlapEdgeManagers.empty() || !_overlapFaceManagers.empty(); }
+  std::set<GEntity *, GEntityPtrFullLessThan> getAllOverlapBoundaries() const;
 
   // import a mesh partitionned by a tag given by element (i.e. the old way we
   // stored partitions) and create the new topology-based partition entitiesx

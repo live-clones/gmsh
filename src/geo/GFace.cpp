@@ -2531,15 +2531,52 @@ std::set<MTriangle *> GFace::getNearbyTriangles(const GFace &origin,
                                                 unsigned levels) const
 {
   std::set<MVertex *> touchingVertices;
-
-  for(auto &triangle : triangles) {
-    for(int i = 0; i < 3; i++) {
-      touchingVertices.insert(triangle->getVertex(i));
-    }
+  for(auto triangle : origin.triangles) {
+    touchingVertices.insert(triangle->getVertex(0));
+    touchingVertices.insert(triangle->getVertex(1));
+    touchingVertices.insert(triangle->getVertex(2));
   }
 
   return getTrianglesTouchingVertices(touchingVertices, levels);
 }
+
+/*std::vector<MEdge> GFace::getEdgesOfOverlap(const std::set<MTriangle *> &triangles)
+{
+  struct EdgeHasher {
+    std::size_t operator()(const MEdge &edge) const
+    {
+      return std::hash<MVertex *>()(edge.getSortedVertex(0)) ^
+             std::hash<MVertex *>()(edge.getSortedVertex(1));
+    }
+  };
+
+  std::vector<MEdge> result;
+  std::unordered_map<MEdge, int, EdgeHasher> edgeCount;
+
+  for(auto &triangle : triangles) {
+    for(int i = 0; i < 3; i++) {
+      auto edge = triangle->getEdge(i);
+      edgeCount[edge]++;
+    }
+  }
+
+  for(auto &edge : edgeCount) {
+    if(edge.second == 1) {
+      bool valid = true;
+        MVertex *vert1 = edge.first.getVertex(0);
+        MVertex *vert2 = edge.first.getVertex(1);
+        if((vert1->onWhat()->dim() <= 1) && (vert2->onWhat()->dim() <= 1)) {
+          valid = false;
+          continue;
+        }
+
+      if (valid)
+        result.push_back(edge.first);
+    }
+  }
+
+  return result;
+}*/
 
 bool GFace::reorder(const int elementType,
                     const std::vector<std::size_t> &ordering)

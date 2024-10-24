@@ -31,6 +31,10 @@
 #include "partitionFace.h"
 #include "partitionEdge.h"
 #include "partitionVertex.h"
+#include "overlapEdge.h"
+#include "overlapEdgeManager.h"
+#include "overlapFace.h"
+#include "overlapFaceManager.h"
 #include "gmshSurface.h"
 #include "SmoothData.h"
 #include "Context.h"
@@ -2362,6 +2366,30 @@ int GModel::unpartitionMesh()
   Msg::Error("Mesh module not compiled");
   return 1;
 #endif
+}
+
+int GModel::generateOverlapForEntity(int dim, int tag) {
+  if (dim == 1)
+    _overlapEdgeManagers[tag] = std::make_unique<overlapEdgeManager>(this, tag);
+  else if (dim == 2)
+    _overlapFaceManagers[tag] = std::make_unique<overlapFaceManager>(this, tag);
+
+  return 0;
+}
+
+std::set<GEntity *, GEntityPtrFullLessThan>
+GModel::getAllOverlapBoundaries() const
+{
+  std::set<GEntity *, GEntityPtrFullLessThan> result;
+  for (const auto& [parent, manager]: _overlapFaceManagers) {
+    const auto& map = manager->getBoundaries();
+    for (const auto& [i, submap]: map) {
+      for (const auto& [j, boundary]: submap) {
+        result.insert(boundary);
+      }
+    }
+  }
+  return result;
 }
 
 int GModel::convertOldPartitioningToNewOne()

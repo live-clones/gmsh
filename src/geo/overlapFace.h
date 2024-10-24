@@ -8,6 +8,7 @@
 
 #include "GModel.h"
 #include "partitionFace.h"
+#include "partitionEdge.h"
 
 class overlapFaceManager;
 
