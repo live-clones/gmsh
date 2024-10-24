@@ -682,6 +682,9 @@ namespace gmsh { // Top-level functions
       // Unpartition the mesh of the current model.
       GMSH_API void unpartition();
 
+      GMSH_API void generateOverlapForEntity(const int dim,
+                                             const int tag);
+
       // gmsh::model::mesh::optimize
       //
       // Optimize the mesh of the current model using `method' (empty for default

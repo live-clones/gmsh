@@ -1332,6 +1332,14 @@ GMSH_API void gmsh::model::mesh::unpartition()
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
+GMSH_API void gmsh::model::mesh::generateOverlapForEntity(const int dim,
+                                                          const int tag)
+{
+  if(!_checkInit()) return;
+  GModel::current()->generateOverlapForEntity(dim, tag);
+  CTX::instance()->mesh.changed = ENT_ALL;
+}
+
 GMSH_API void gmsh::model::mesh::refine()
 {
   if(!_checkInit()) return;
