@@ -27,6 +27,8 @@ void overlapEdgeManager::create(int overlapSize, bool createPhysicals)
 
   int elementaryNumber =
     model->getMaxElementaryNumber(1); // Tags of new 1D entites
+  int elementaryNumberBnd =
+    model->getMaxElementaryNumber(0); // Tags of new 0D entites
   unsigned nOverlapsCreated = 0;
 
   for(unsigned i = 1; i <= numPartitions; ++i) {
@@ -73,9 +75,15 @@ void overlapEdgeManager::create(int overlapSize, bool createPhysicals)
       this->addOverlap(overlapij);
       model->add(overlapij);
       ++nOverlapsCreated;
+
+      // Handle boundary
+      auto boundary = _createBoundary(lines);
+      partitionVertex* bnd = new partitionVertex(model, ++elementaryNumberBnd, {i});
+      bnd->points = boundary; // Take ownership
+      model->add(bnd);
+      this->boundaries[i][j] = bnd;
     }
   }
-  Msg::Info("Created %d overlaps for entity 1 %d", nOverlapsCreated, tagParent);
   unsigned nPhysicalsCreated = 0;
   if(createPhysicals) {
     std::string basis_name = "overlapOfEdge" + std::to_string(tagParent) + "_";
@@ -88,11 +96,39 @@ void overlapEdgeManager::create(int overlapSize, bool createPhysicals)
       for(auto [j, overlap] : *overlaps) {
         overlapTags.push_back(overlap->tag());
       }
+      std::vector<int> bndTags;
+      if(boundaries.find(i) != boundaries.end()) {
+        for(auto [j, bnd] : boundaries[i]) { bndTags.push_back(bnd->tag());}
+      }
       gmsh::model::addPhysicalGroup(1, overlapTags, -1,
                                     basis_name + std::to_string(i));
+
+      gmsh::model::addPhysicalGroup(0, bndTags, -1,
+                                    basis_name + std::to_string(i) + "_bnd");
+      Msg::Info("Created physical group %s",
+                (basis_name + std::to_string(i) + "_bnd").c_str());
       ++nPhysicalsCreated;
     }
     Msg::Debug("Created %d physicals for entity 1 %d", nPhysicalsCreated,
               tagParent);
   }
+}
+
+std::vector<MPoint *> overlapEdgeManager::_createBoundary(
+  const std::set<MLine *> &overlapElements) const
+{
+  std::vector<MPoint *> result;
+  std::unordered_map<MVertex *, int> pointCount;
+  for(auto line : overlapElements) {
+    pointCount[line->getVertex(0)]++;
+    pointCount[line->getVertex(1)]++;
+  }
+
+  for(auto [vertex, count] : pointCount) {
+    if(count == 1) {
+      result.push_back(new MPoint(vertex));
+    }
+  }
+
+  return result;
 }

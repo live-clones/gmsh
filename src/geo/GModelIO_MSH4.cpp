@@ -691,7 +691,21 @@ static bool readMSH4OverlapBoundaries(GModel *const model, FILE *fp, bool partit
       }
     }
     Msg::Info("Overlap boundary %d: %d %d %d %d %d", k, buffer[0], buffer[1], buffer[2], buffer[3], buffer[4]);
-    if (buffer[0] == 2) {
+    if (buffer[0] == 1) {
+      int parentEdgeTag = buffer[1];
+      auto it = model->getOverlapEdgeManagers().find(parentEdgeTag);
+      if (it == model->getOverlapEdgeManagers().end()) {
+        Msg::Error("Edge overlap boundary: Could not find manager for parent edge %d", parentEdgeTag);
+        return false;
+      }
+      partitionVertex* entity = dynamic_cast<partitionVertex*>(model->getEntityByTag(0, buffer[4]));
+      if (!entity) {
+        Msg::Error("Edge overlap boundary: Could not find entity %d", buffer[4]);
+        return false;
+      }
+      it->second->addBoundary(entity, buffer[2], buffer[3]);
+    }
+    else if (buffer[0] == 2) {
       int parentFaceTag = buffer[1];
       auto it = model->getOverlapFaceManagers().find(parentFaceTag);
       if (it == model->getOverlapFaceManagers().end()) {
@@ -2469,7 +2483,6 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
               size_t num = overlap->getMeshElement(k)->getNum();
               fwrite(&num, sizeof(size_t), 1, fp);
             }
-            // Add endline here ?
           }
           else {
             fprintf(fp, "\n");
@@ -2525,8 +2538,6 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
               size_t num = overlap->getMeshElement(k)->getNum();
               fwrite(&num, sizeof(size_t), 1, fp);
             }
-            // Add endline here ?
-            fprintf(fp, "\n");
           }
           else {
             fprintf(fp, "\n");
@@ -2538,6 +2549,7 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
         }
       }
     }
+    if(binary) fprintf(fp, "\n");
     fprintf(fp, "$EndOverlapEntities\n");
 }
 
@@ -2550,6 +2562,20 @@ writeMSH4OverlapBoundaries(GModel *const model, FILE *fp, int partitionToSave,
   using EntryType = std::array<int, 5>;
   // Dimension entity i j tag (tag of smaller entity)
   std::vector<EntryType> entries;
+  for (auto it = model->getOverlapEdgeManagers().begin(); it != model->getOverlapEdgeManagers().end(); ++it) {
+    int parent = it->first;
+    int dim = 1;
+    const auto &map = it->second->getBoundaries();
+    for (const auto& [i, submap]: map) {
+      if(partitionToSave != 0 && partitionToSave != i) {
+        continue; // Only save this part unless we save all
+      }
+      for (const auto& [j, boundary]: submap) {
+        int tag = boundary->tag();
+        entries.push_back({dim, parent, i, j, tag});
+      }
+    }
+  }
   for (auto it = model->getOverlapFaceManagers().begin(); it != model->getOverlapFaceManagers().end(); ++it) {
     int parent = it->first;
     int dim = 2;

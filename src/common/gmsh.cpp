@@ -1392,18 +1392,18 @@ GMSH_API void gmsh::model::mesh::findOverlapBoundariesEntities(
 
   switch(dim) {
   case 1: {
-    /*const auto &managers = GModel::current()->getOverlapEdgeManagers();
+    const auto &managers = GModel::current()->getOverlapEdgeManagers();
     auto manager = managers.find(tag);
     if(manager == managers.end()) {
       Msg::Error("No overlap edge manager found for entity %d", tag);
       return;
     }
-    auto map = manager->second->getOverlapsOf(partition);
+    auto map = manager->second->getOverlapBoundariesOf(partition);
     if (!map)
       return;
     for(auto it = map->begin(); it != map->end(); ++it) {
       overlapEntities.push_back(it->second->tag());
-    }*/
+    }
   } break;
   case 2: {
     const auto &managers = GModel::current()->getOverlapFaceManagers();

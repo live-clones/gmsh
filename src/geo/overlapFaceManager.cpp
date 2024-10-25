@@ -81,14 +81,11 @@ void overlapFaceManager::create(int overlapSize, bool createPhysicals)
       // Handle boundary
       auto boundary = _createBoundary(triangles);
       partitionEdge* bnd = new partitionEdge(model, ++elementaryNumberBnd, {i});
-      Msg::Info("Created boundary with tag %d", elementaryNumberBnd);
-      //bnd->partition = i;
       bnd->lines = boundary; // Take ownership
       model->add(bnd);
       this->boundaries[i][j] = bnd;
     }
   }
-  Msg::Info("Created %d overlaps for entity 2 %d", nOverlapsCreated, tagParent);
   unsigned nPhysicalsCreated = 0;
   if(createPhysicals) {
     std::string basis_name = "overlapOfFace" + std::to_string(tagParent) + "_";
@@ -111,7 +108,7 @@ void overlapFaceManager::create(int overlapSize, bool createPhysicals)
                                     basis_name + std::to_string(i));
       gmsh::model::addPhysicalGroup(1, bndTags, -1,
                                     basis_name + std::to_string(i) + "_bnd");
-                                    Msg::Info("Created physical group %s", basis_name + std::to_string(i) + "_bnd");
+                                    Msg::Info("Created physical group %s", (basis_name + std::to_string(i) + "_bnd").c_str()) ;
       ++nPhysicalsCreated;
     }
     Msg::Debug("Created %d physicals for entity 2 %d", nPhysicalsCreated,
@@ -140,7 +137,6 @@ std::vector<MLine *> overlapFaceManager::_createBoundary(
 
   for (auto edge: boundaryEdges) {
     result.push_back(new MLine(edge.getVertex(0), edge.getVertex(1)));
-    //Msg::Info("created line element %d %d with tag %d", edge.getVertex(0)->getNum(), edge.getVertex(1)->getNum(), result.back()->getNum());
   }
 
   return result;

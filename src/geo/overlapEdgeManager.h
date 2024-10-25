@@ -7,6 +7,8 @@
 #define OVERLAP_EDGE_MANAGER_H
 
 #include "overlapEdge.h"
+#include "MPoint.h"
+#include "partitionVertex.h"
 #include <map>
 
 // Collection of overlap of a common parent edge. No ownership of elements, it is a read-only view
@@ -14,7 +16,9 @@ class overlapEdgeManager {
 private:
   GModel* model;
   int tagParent;
-  std::map<int, std::map<int, overlapEdge*>> overlaps;
+  std::map<int, std::map<int, overlapEdge *>> overlaps;
+  std::map<int, std::map<int, partitionVertex *>> boundaries;
+
 public:
   overlapEdgeManager(GModel* model, int tagParent, int overlapSize = 1, bool createPhysicals = true);
   void create(int overlapSize = 1, bool createPhysicals = true);
@@ -33,13 +37,32 @@ public:
     return &it->second;
   }
 
+  const std::map<int, partitionVertex *> *getOverlapBoundariesOf(int of) const
+  {
+    auto it = boundaries.find(of);
+    if(it == boundaries.end()) return nullptr;
+    return &it->second;
+  }
+
   void addOverlap(overlapEdge* overlap) {
     overlaps[overlap->of()][overlap->on()] = overlap;
+  }
+
+  void addBoundary(partitionVertex* boundary, int i, int j) {
+    boundaries[i][j] = boundary;
   }
 
   std::map<int, std::map<int, overlapEdge*>> getOverlaps() const {
     return overlaps;
   }
+
+  std::map<int, std::map<int, partitionVertex*>> getBoundaries() const {
+    return boundaries;
+  }
+
+  private:
+  std::vector<MPoint *>
+  _createBoundary(const std::set<MLine *> &overlapElements) const;
 
 };
 
