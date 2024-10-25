@@ -36,10 +36,19 @@ public:
     return &it->second;
   }
 
+  const std::map<int, partitionEdge*>* getOverlapBoundariesOf(int of) const {
+    auto it = boundaries.find(of);
+    if (it == boundaries.end()) return nullptr;
+    return &it->second;
+  }
+
   void addOverlap(overlapFace* overlap) {
     overlaps[overlap->of()][overlap->on()] = overlap;
   }
 
+  void addBoundary(partitionEdge* boundary, int i, int j) {
+    boundaries[i][j] = boundary;
+  }
 
   std::map<int, std::map<int, overlapFace*>> getOverlaps() const {
     return overlaps;

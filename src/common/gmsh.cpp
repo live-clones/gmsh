@@ -25,6 +25,8 @@
 #include "partitionEdge.h"
 #include "partitionFace.h"
 #include "partitionRegion.h"
+#include "overlapEdgeManager.h"
+#include "overlapFaceManager.h"
 #include "ghostEdge.h"
 #include "ghostFace.h"
 #include "ghostRegion.h"
@@ -1338,6 +1340,89 @@ GMSH_API void gmsh::model::mesh::generateOverlapForEntity(const int dim,
   if(!_checkInit()) return;
   GModel::current()->generateOverlapForEntity(dim, tag);
   CTX::instance()->mesh.changed = ENT_ALL;
+}
+
+GMSH_API void
+gmsh::model::mesh::findOverlapEntities(const int dim, const int tag,
+                                       const int partition,
+                                       std::vector<int> &overlapEntities)
+{
+  if(!_checkInit()) return;
+  overlapEntities.clear();
+
+  switch(dim) {
+  case 1: {
+    const auto &managers = GModel::current()->getOverlapEdgeManagers();
+    auto manager = managers.find(tag);
+    if(manager == managers.end()) {
+      Msg::Error("No overlap edge manager found for entity %d", tag);
+      return;
+    }
+    auto map = manager->second->getOverlapsOf(partition);
+    if (!map)
+      return;
+    for(auto it = map->begin(); it != map->end(); ++it) {
+      overlapEntities.push_back(it->second->tag());
+    }
+  } break;
+  case 2: {
+    const auto &managers = GModel::current()->getOverlapFaceManagers();
+    auto manager = managers.find(tag);
+    if(manager == managers.end()) {
+      Msg::Error("No overlap face manager found for entity %d", tag);
+      return;
+    }
+    auto map = manager->second->getOverlapsOf(partition);
+    if (!map)
+      return;
+    for(auto it = map->begin(); it != map->end(); ++it) {
+      overlapEntities.push_back(it->second->tag());
+    }
+  } break;
+  default: Msg::Error("Invalid dimension %d", dim); break;
+  }
+}
+
+GMSH_API void gmsh::model::mesh::findOverlapBoundariesEntities(
+  const int dim, const int tag, const int partition,
+  std::vector<int> &overlapEntities)
+{
+  if(!_checkInit()) return;
+  overlapEntities.clear();
+
+  switch(dim) {
+  case 1: {
+    /*const auto &managers = GModel::current()->getOverlapEdgeManagers();
+    auto manager = managers.find(tag);
+    if(manager == managers.end()) {
+      Msg::Error("No overlap edge manager found for entity %d", tag);
+      return;
+    }
+    auto map = manager->second->getOverlapsOf(partition);
+    if (!map)
+      return;
+    for(auto it = map->begin(); it != map->end(); ++it) {
+      overlapEntities.push_back(it->second->tag());
+    }*/
+  } break;
+  case 2: {
+    const auto &managers = GModel::current()->getOverlapFaceManagers();
+    auto manager = managers.find(tag);
+    if(manager == managers.end()) {
+      Msg::Error("No overlap face manager found for entity %d", tag);
+      return;
+    }
+    auto map = manager->second->getOverlapBoundariesOf(partition);
+    if (!map)
+      return;
+    for(auto it = map->begin(); it != map->end(); ++it) {
+      overlapEntities.push_back(it->second->tag());
+    }
+  } break;
+  default: Msg::Error("Invalid dimension %d", dim); break;
+  }
+  
+ 
 }
 
 GMSH_API void gmsh::model::mesh::refine()

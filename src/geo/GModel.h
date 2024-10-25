@@ -629,8 +629,12 @@ public:
   // For each entity, have for each entity a list of elements (of same dimension) in the overlap
   std::map<int, std::unique_ptr<overlapFaceManager>> _overlapFaceManagers; // Key is tag of a 2D parent entity
   std::map<int, std::unique_ptr<overlapEdgeManager>> _overlapEdgeManagers; // Key is tag of a 1D parent entity
+  void addOverlapEdgeManager(int tag, std::unique_ptr<overlapEdgeManager>&& manager);
+  void addOverlapFaceManager(int tag, std::unique_ptr<overlapFaceManager>&& manager);
   const std::map<int, std::unique_ptr<overlapFaceManager>> &getOverlapFaceManagers() const { return _overlapFaceManagers; }
   const std::map<int, std::unique_ptr<overlapEdgeManager>> &getOverlapEdgeManagers() const { return _overlapEdgeManagers; }
+  std::map<int, std::unique_ptr<overlapFaceManager>> &getOverlapFaceManagers() { return _overlapFaceManagers; }
+  std::map<int, std::unique_ptr<overlapEdgeManager>> &getOverlapEdgeManagers() { return _overlapEdgeManagers; }
   bool hasOverlaps() const { return !_overlapEdgeManagers.empty() || !_overlapFaceManagers.empty(); }
   std::set<GEntity *, GEntityPtrFullLessThan> getAllOverlapBoundaries() const;
 

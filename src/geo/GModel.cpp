@@ -2369,12 +2369,27 @@ int GModel::unpartitionMesh()
 }
 
 int GModel::generateOverlapForEntity(int dim, int tag) {
-  if (dim == 1)
+  if(dim == 1) {
     _overlapEdgeManagers[tag] = std::make_unique<overlapEdgeManager>(this, tag);
-  else if (dim == 2)
+    _overlapEdgeManagers[tag]->create(1, true);
+  }
+  else if(dim == 2) {
     _overlapFaceManagers[tag] = std::make_unique<overlapFaceManager>(this, tag);
-
+    _overlapFaceManagers[tag]->create(1, true); // Only 1 layer so far
+  }
   return 0;
+}
+
+void GModel::addOverlapEdgeManager(
+  int tag, std::unique_ptr<overlapEdgeManager> &&manager)
+{
+  _overlapEdgeManagers[tag] = std::move(manager);
+}
+
+void GModel::addOverlapFaceManager(
+  int tag, std::unique_ptr<overlapFaceManager> &&manager)
+{
+  _overlapFaceManagers[tag] = std::move(manager);
 }
 
 std::set<GEntity *, GEntityPtrFullLessThan>

@@ -682,8 +682,31 @@ namespace gmsh { // Top-level functions
       // Unpartition the mesh of the current model.
       GMSH_API void unpartition();
 
+      // gmsh::model::mesh::generateOverlapForEntity
+      //
+      // Generate an overlap mesh for the entity of dimension `dim' and tag `tag'.
+      // Tag must be the parent entity, not a partitioned entity.
+      // Also generates overlap boundaries
       GMSH_API void generateOverlapForEntity(const int dim,
                                              const int tag);
+
+      // gmsh::model::mesh::findOverlapEntities
+      //
+      // Find all the overlaps for the entity of dimension `dim' and tag `tag' on partition `partition'
+      // Returns one tag for each entity covering another partition
+      GMSH_API void findOverlapEntities(const int dim,
+                                        const int tag,
+                                        const int partition,
+                                        std::vector<int> & overlapEntities);
+
+      // gmsh::model::mesh::findOverlapBounariesEntities
+      //
+      // Find all the overlaps for the entity of dimension `dim' and tag `tag'
+      // on partition `partition' Returns one tag for each entity covering
+      // another partition
+      GMSH_API void findOverlapBoundariesEntities(const int dim, const int tag,
+                                        const int partition,
+                                        std::vector<int> &overlapEntities);
 
       // gmsh::model::mesh::optimize
       //

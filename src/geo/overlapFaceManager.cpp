@@ -13,7 +13,6 @@ overlapFaceManager::overlapFaceManager(GModel *model, int tagParent,
                                        int overlapSize, bool createPhysicals)
   : model(model), tagParent(tagParent)
 {
-  create(overlapSize, createPhysicals);
 }
 
 void overlapFaceManager::create(int overlapSize, bool createPhysicals)
