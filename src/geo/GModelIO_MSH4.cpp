@@ -2374,7 +2374,7 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
         fwrite(&numEntities, sizeof(int), 1, fp);
       }
       else {
-        fprintf(fp, "%d %lu\n", parentTag, numEntities);
+        fprintf(fp, "%d %d\n", parentTag, numEntities);
       }
       // For each overlap entity (a ij pair) write first "i j tag numElements"
       // Then the physicals, then the elements
@@ -2430,7 +2430,7 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
         fwrite(&numEntities, sizeof(int), 1, fp);
       }
       else {
-        fprintf(fp, "%d %lu\n", parentTag, numEntities);
+        fprintf(fp, "%d %d\n", parentTag, numEntities);
       }
       // For each overlap entity (a ij pair) write first "i j tag numElements"
       // Then the physicals, then the elements
@@ -2458,6 +2458,7 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
               fwrite(&num, sizeof(size_t), 1, fp);
             }
             // Add endline here ?
+            fprintf(fp, "\n");
           }
           else {
             fprintf(fp, "\n");
