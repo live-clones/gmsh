@@ -2684,10 +2684,14 @@ getAdditionalEntities(std::set<GRegion *, GEntityPtrLessThan> &regions,
   std::size_t numVertices = 0;
 
   for(auto it = vertices.begin(); it != vertices.end(); ++it) {
+    if(toIgnore.count(*it)) continue;
+
     numVertices += (*it)->getNumMeshVertices();
   }
 
   for(auto it = edges.begin(); it != edges.end(); ++it) {
+    if(toIgnore.count(*it)) continue;
+
     numVertices += (*it)->getNumMeshVertices();
     for(std::size_t i = 0; i < (*it)->getNumMeshElements(); i++) {
       for(std::size_t j = 0; j < (*it)->getMeshElement(i)->getNumVertices();
@@ -2728,6 +2732,8 @@ getAdditionalEntities(std::set<GRegion *, GEntityPtrLessThan> &regions,
   }
 
   for(auto it = faces.begin(); it != faces.end(); ++it) {
+    if(toIgnore.count(*it)) continue;
+
     numVertices += (*it)->getNumMeshVertices();
     for(std::size_t i = 0; i < (*it)->getNumMeshElements(); i++) {
       for(std::size_t j = 0; j < (*it)->getMeshElement(i)->getNumVertices();
@@ -2768,6 +2774,8 @@ getAdditionalEntities(std::set<GRegion *, GEntityPtrLessThan> &regions,
   }
 
   for(auto it = regions.begin(); it != regions.end(); ++it) {
+    if(toIgnore.count(*it)) continue;
+
     numVertices += (*it)->getNumMeshVertices();
     for(std::size_t i = 0; i < (*it)->getNumMeshElements(); i++) {
       for(std::size_t j = 0; j < (*it)->getMeshElement(i)->getNumVertices();
