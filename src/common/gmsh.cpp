@@ -27,6 +27,7 @@
 #include "partitionRegion.h"
 #include "overlapEdgeManager.h"
 #include "overlapFaceManager.h"
+#include "overlapRegionManager.h"
 #include "ghostEdge.h"
 #include "ghostFace.h"
 #include "ghostRegion.h"
@@ -1379,6 +1380,20 @@ gmsh::model::mesh::findOverlapEntities(const int dim, const int tag,
       overlapEntities.push_back(it->second->tag());
     }
   } break;
+  case 3: {
+    const auto &managers = GModel::current()->getOverlapRegionManagers();
+    auto manager = managers.find(tag);
+    if(manager == managers.end()) {
+      Msg::Error("No overlap region manager found for entity %d", tag);
+      return;
+    }
+    auto map = manager->second->getOverlapsOf(partition);
+    if (!map)
+      return;
+    for(auto it = map->begin(); it != map->end(); ++it) {
+      overlapEntities.push_back(it->second->tag());
+    }
+  } break;
   default: Msg::Error("Invalid dimension %d", dim); break;
   }
 }
@@ -1410,6 +1425,20 @@ GMSH_API void gmsh::model::mesh::findOverlapBoundariesEntities(
     auto manager = managers.find(tag);
     if(manager == managers.end()) {
       Msg::Error("No overlap face manager found for entity %d", tag);
+      return;
+    }
+    auto map = manager->second->getOverlapBoundariesOf(partition);
+    if (!map)
+      return;
+    for(auto it = map->begin(); it != map->end(); ++it) {
+      overlapEntities.push_back(it->second->tag());
+    }
+  } break;
+  case 3: {
+    const auto &managers = GModel::current()->getOverlapRegionManagers();
+    auto manager = managers.find(tag);
+    if(manager == managers.end()) {
+      Msg::Error("No overlap region manager found for entity %d", tag);
       return;
     }
     auto map = manager->second->getOverlapBoundariesOf(partition);

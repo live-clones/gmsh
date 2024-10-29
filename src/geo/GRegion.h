@@ -177,6 +177,10 @@ public:
   void removeElement(MElement *e, bool del);
   void removeElements(bool del);
 
+  // For overlap computations
+  std::set<MTetrahedron *> getNearbyTetra(const GRegion &origin,
+                                          unsigned levels = 1) const;
+
   // get the boundary layer columns
   BoundaryLayerColumns *getColumns() { return &_columns; }
 

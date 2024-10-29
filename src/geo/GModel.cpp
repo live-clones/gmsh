@@ -35,6 +35,8 @@
 #include "overlapEdgeManager.h"
 #include "overlapFace.h"
 #include "overlapFaceManager.h"
+#include "overlapRegion.h"
+#include "overlapRegionManager.h"
 #include "gmshSurface.h"
 #include "SmoothData.h"
 #include "Context.h"
@@ -2377,6 +2379,14 @@ int GModel::generateOverlapForEntity(int dim, int tag) {
     _overlapFaceManagers[tag] = std::make_unique<overlapFaceManager>(this, tag);
     _overlapFaceManagers[tag]->create(1, true); // Only 1 layer so far
   }
+  else if (dim == 3) {
+    _overlapRegionManagers[tag] = std::make_unique<overlapRegionManager>(this, tag);
+    _overlapRegionManagers[tag]->create(1, true); // Only 1 layer so far
+  }
+  else {
+    Msg::Error("Invalid dimension for overlap generation");
+    return 1;
+  }
   return 0;
 }
 
@@ -2392,11 +2402,31 @@ void GModel::addOverlapFaceManager(
   _overlapFaceManagers[tag] = std::move(manager);
 }
 
+void GModel::addOverlapRegionManager(
+  int tag, std::unique_ptr<overlapRegionManager> &&manager)
+{
+  _overlapRegionManagers[tag] = std::move(manager);
+}
+
 std::set<GEntity *, GEntityPtrFullLessThan>
 GModel::getAllOverlapBoundaries() const
 {
   std::set<GEntity *, GEntityPtrFullLessThan> result;
+  /*for (const auto& [parent, manager]: _overlapEdgeManagers) {
+    const auto& map = manager->getBoundaries();
+    for (const auto& [i, boundary]: map) {
+      result.insert(boundary);
+    }
+  }*/
   for (const auto& [parent, manager]: _overlapFaceManagers) {
+    const auto& map = manager->getBoundaries();
+    for (const auto& [i, submap]: map) {
+      for (const auto& [j, boundary]: submap) {
+        result.insert(boundary);
+      }
+    }
+  }
+  for (const auto& [parent, manager]: _overlapRegionManagers) {
     const auto& map = manager->getBoundaries();
     for (const auto& [i, submap]: map) {
       for (const auto& [j, boundary]: submap) {

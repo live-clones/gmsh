@@ -689,6 +689,31 @@ void GRegion::removeElements(bool del)
   polyhedra.clear();
 }
 
+std::set<MTetrahedron *> GRegion::getNearbyTetra(const GRegion &origin,
+                                                 unsigned levels) const
+{
+  std::set<MTetrahedron *> result;
+  std::set<MVertex *> boundaryVertices;
+
+  for (MElement* e : origin.tetrahedra) {
+    for (int i = 0; i < e->getNumVertices(); i++) {
+      boundaryVertices.insert(e->getVertex(i));
+    }
+  }
+
+  for (MTetrahedron* e : tetrahedra) {
+    for (int i = 0; i < e->getNumVertices(); i++) {
+      if (boundaryVertices.find(e->getVertex(i)) != boundaryVertices.end()) {
+        result.insert(e);
+        break;
+      }
+    }
+  }
+
+  Msg::Info("Found %d nearby tetrahedra", result.size());
+  return result;
+}
+
 bool GRegion::reorder(const int elementType,
                       const std::vector<std::size_t> &ordering)
 {

@@ -30,6 +30,8 @@
 #include "ghostFace.h"
 #include "ghostEdge.h"
 #include "ghostRegion.h"
+#include "overlapRegion.h"
+#include "overlapRegionManager.h"
 #include "overlapFace.h"
 #include "overlapFaceManager.h"
 #include "overlapEdge.h"
@@ -451,6 +453,11 @@ static GEntity *findChild(GModel *model, int dim, int parentTag, int partition)
         if(pf->getPartitions().at(0) == partition) return entity;
         break;
       }
+      case 3: {
+        auto pr = dynamic_cast<partitionRegion *>(entity);
+        if(pr->getPartitions().at(0) == partition) return entity;
+        break;
+      }
       }
     }
   }
@@ -660,8 +667,98 @@ static bool readMSH4Overlaps(GModel *const model, FILE *fp, bool partition,
     // Add the manager to the model
     model->addOverlapFaceManager(tagParent, std::move(manager));
   }
-  Msg::Info("Number of managers created: %lu and %lu", model->getOverlapEdgeManagers().size(),
-            model->getOverlapFaceManagers().size());
+  for(size_t iregion = 0; iregion < numRegions; ++iregion) {
+    int tagParent, numOverlaps;
+    if (binary) {
+      if(fread(&tagParent, sizeof(int), 1, fp) != 1) return false;
+      if(fread(&numOverlaps, sizeof(int), 1, fp) != 1) return false;
+    } else {
+      if(fscanf(fp, "%d %d", &tagParent, &numOverlaps) != 2) return false;
+    }
+    GEntity *ge = model->getEntityByTag(3, tagParent);
+    GRegion *parentFace = dynamic_cast<GRegion *>(ge);
+    if(!parentFace) {
+      Msg::Error("Volume overlaps: Parent face %d not found", tagParent);
+      return false;
+    }
+    // Only create the manager if there are overlaps
+    if (numOverlaps == 0) continue;
+    auto manager = std::make_unique<overlapRegionManager>(model, tagParent);
+    // For each (i,j) pair of the overlap of this entity, read its tag,
+    // physical and elements
+    for(size_t ioverlap = 0; ioverlap < numOverlaps; ++ioverlap) {
+      int i, j, tagOverlap;
+      size_t numElements;
+      if(binary) {
+        if(fread(&i, sizeof(int), 1, fp) != 1) return false;
+        if(fread(&j, sizeof(int), 1, fp) != 1) return false;
+        if(fread(&tagOverlap, sizeof(int), 1, fp) != 1) return false;
+        if(fread(&numElements, sizeof(size_t), 1, fp) != 1) return false;
+      }
+      else {
+        if(fscanf(fp, "%d %d %d %lu", &i, &j, &tagOverlap, &numElements) != 4) {
+          Msg::Error("Volume overlaps: Could not read overlap %d", ioverlap);
+          return false;
+        }
+      }
+
+      // Should not happen
+      GEntity *previousEntity = model->getEntityByTag(3, tagOverlap);
+      if(previousEntity) {
+        Msg::Warning("Volume overlap %d -> %d with tag %d already exsists as a "
+                     "non-overlap entity. Deleting it",
+                     i, j, tagOverlap);
+        GRegion *f = dynamic_cast<GRegion *>(previousEntity);
+        model->remove(f);
+        delete previousEntity;
+      }
+
+      auto I = dynamic_cast<partitionRegion *>(findChild(model, 3, tagParent, i));
+      auto J = dynamic_cast<partitionRegion *>(findChild(model, 3, tagParent, j));
+      if(!I || !J) {
+        Msg::Error(
+          "Volume overlaps: could not find children %d and %d for overlap %d", i,
+          j, tagOverlap);
+        return false;
+      }
+      // Create the overlap entity and add it to the model
+      overlapRegion *overlapEntity = new overlapRegion(model, tagOverlap, I, J);
+      model->add(overlapEntity);
+      manager->addOverlap(overlapEntity);
+      overlapEntity->setManager(manager.get());
+      if(!readMSH4Physicals(model, fp, overlapEntity, binary, swap)) {
+        return false;
+      }
+      // Skipping BB for now
+      /*if(!readMSH4BoundingEntities(model, fp, g, binary, swap)) {
+        return false;
+      }*/
+
+      // Read elements
+      for(size_t ielem = 0; ielem < numElements; ++ielem) {
+        size_t tagElement;
+        if (binary) {
+          if(fread(&tagElement, sizeof(size_t), 1, fp) != 1) return false;
+        } else {
+          if(fscanf(fp, "%lu", &tagElement) != 1) return false;
+        }
+        auto elem = model->getMeshElementByTag(tagElement);
+        if(!elem) {
+          auto totalNumElem = model->getNumMeshElements();
+          Msg::Error("Face overlaps: Could not find element %d for overlap "
+                     "%d. Total numEleme is %lu",
+                     tagElement, tagOverlap, totalNumElem);
+          return false;
+        }
+        overlapEntity->addElement(elem);
+      }
+    }
+
+    // Add the manager to the model
+    model->addOverlapRegionManager(tagParent, std::move(manager));
+  }
+  Msg::Info("Number of managers created: %lu edges %lu faces %lu regions", model->getOverlapEdgeManagers().size(),
+            model->getOverlapFaceManagers().size(), model->getOverlapRegionManagers().size());
   for(size_t ireg = 0; ireg < numRegions; ++ireg) {
     // Todo: implement 3D
   }
@@ -715,6 +812,20 @@ static bool readMSH4OverlapBoundaries(GModel *const model, FILE *fp, bool partit
       partitionEdge* entity = dynamic_cast<partitionEdge*>(model->getEntityByTag(1, buffer[4]));
       if (!entity) {
         Msg::Error("Face overlap boundary: Could not find entity %d", buffer[4]);
+        return false;
+      }
+      it->second->addBoundary(entity, buffer[2], buffer[3]);
+    }
+    else if (buffer[0] == 3) {
+      int parentVolumeTag = buffer[1];
+      auto it = model->getOverlapRegionManagers().find(parentVolumeTag);
+      if (it == model->getOverlapRegionManagers().end()) {
+        Msg::Error("Face overlap boundary: Could not find manager for parent face %d", parentVolumeTag);
+        return false;
+      }
+      partitionFace* entity = dynamic_cast<partitionFace*>(model->getEntityByTag(2, buffer[4]));
+      if (!entity) {
+        Msg::Error("Region overlap boundary: Could not find entity %d", buffer[4]);
         return false;
       }
       it->second->addBoundary(entity, buffer[2], buffer[3]);
@@ -2046,7 +2157,8 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     }
     for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
       if((*it)->geomType() != GEntity::PartitionVolume &&
-         (*it)->geomType() != GEntity::GhostVolume)
+         (*it)->geomType() != GEntity::GhostVolume &&
+         (*it)->geomType() != GEntity::OverlapVolume)
         regions.insert(*it);
     }
   }
@@ -2427,7 +2539,7 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
   size_t numPoints{0}, numLines{0}, numFaces{0}, numRegions{0};
   numLines = model->getOverlapEdgeManagers().size();
   numFaces = model->getOverlapFaceManagers().size();
-
+  numRegions = model->getOverlapRegionManagers().size();
   
     fprintf(fp, "$OverlapEntities\n");
     if (binary) {
@@ -2549,6 +2661,61 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
         }
       }
     }
+    // For each regionManager, write number of subdomains
+    for(auto const &[parentTag, manager] : model->getOverlapRegionManagers()) {
+      int numEntities = 0;
+      if(partitionToSave == 0) {
+        for(const auto [i, submap] : manager->getOverlaps()) {
+          numEntities += submap.size();
+        }
+      }
+      else {
+        auto ptr = manager->getOverlapsOf(partitionToSave);
+        if(ptr) numEntities = ptr->size();
+      }
+      if (binary) {
+        fwrite(&parentTag, sizeof(int), 1, fp);
+        fwrite(&numEntities, sizeof(int), 1, fp);
+      }
+      else {
+        fprintf(fp, "%d %d\n", parentTag, numEntities);
+      }
+      // For each overlap entity (a ij pair) write first "i j tag numElements"
+      // Then the physicals, then the elements
+      for(const auto [i, submap] : manager->getOverlaps()) {
+        if(partitionToSave != 0 && partitionToSave != i) {
+          continue; // Only save this part unless we save all
+        }
+        for(const auto [j, overlap] : submap) {
+          size_t numElements = overlap->getNumMeshElements();
+          int entityTag = overlap->tag();
+          if(binary) {
+            fwrite(&i, sizeof(int), 1, fp);
+            fwrite(&j, sizeof(int), 1, fp);
+            fwrite(&entityTag, sizeof(int), 1, fp);
+            fwrite(&numElements, sizeof(size_t), 1, fp);
+          }
+          else {
+            fprintf(fp, "%d %d %d %lu ", i, j, entityTag, numElements);
+          }
+          // Not exporting BB so far, they were buggy
+          writeMSH4Physicals(fp, overlap, binary);
+          if(binary) {
+            for(size_t k = 0; k < numElements; k++) {
+              size_t num = overlap->getMeshElement(k)->getNum();
+              fwrite(&num, sizeof(size_t), 1, fp);
+            }
+          }
+          else {
+            fprintf(fp, "\n");
+            for(size_t k = 0; k < numElements; k++) {
+              fprintf(fp, "%lu ", overlap->getMeshElement(k)->getNum());
+            }
+            fprintf(fp, "\n");
+          }
+        }
+      }
+    }
     if(binary) fprintf(fp, "\n");
     fprintf(fp, "$EndOverlapEntities\n");
 }
@@ -2579,6 +2746,20 @@ writeMSH4OverlapBoundaries(GModel *const model, FILE *fp, int partitionToSave,
   for (auto it = model->getOverlapFaceManagers().begin(); it != model->getOverlapFaceManagers().end(); ++it) {
     int parent = it->first;
     int dim = 2;
+    const auto &map = it->second->getBoundaries();
+    for (const auto& [i, submap]: map) {
+      if(partitionToSave != 0 && partitionToSave != i) {
+        continue; // Only save this part unless we save all
+      }
+      for (const auto& [j, boundary]: submap) {
+        int tag = boundary->tag();
+        entries.push_back({dim, parent, i, j, tag});
+      }
+    }
+  }
+  for (auto it = model->getOverlapRegionManagers().begin(); it != model->getOverlapRegionManagers().end(); ++it) {
+    int parent = it->first;
+    int dim = 3;
     const auto &map = it->second->getBoundaries();
     for (const auto& [i, submap]: map) {
       if(partitionToSave != 0 && partitionToSave != i) {
@@ -2985,6 +3166,63 @@ static std::size_t getPartialEntitiesToSaveForOverlaps(
     }
   }
 
+  for(const auto &[parentRegionTag, manager] : model->_overlapRegionManagers) {
+    for(const auto &[i, submap] : manager->getOverlaps()) {
+      if(i != partitionToSave) { continue; }
+      for(const auto &[j, overlap] : submap) {
+        Msg::Info("Region overlap of %lu elements",
+                  overlap->getNumMeshElements());
+        for(std::size_t k = 0; k < overlap->getNumMeshElements(); k++) {
+          MElement *elem = overlap->getMeshElement(k);
+          if(!elem) {
+            Msg::Error("Element %lu not found", k);
+            continue;
+          }
+          size_t numVertices = elem->getNumVertices();
+          for(std::size_t l = 0; l < numVertices; l++) {
+            MVertex *vertex = elem->getVertex(l);
+            GEntity *entity = vertex->onWhat();
+            if(!entity) {
+              Msg::Error("Vertex %lu has no entity", vertex->getNum());
+              continue;
+            }
+            if(entity && entity != overlap) {
+              switch(entity->dim()) {
+              case 0:
+                if(vertices.find(dynamic_cast<GVertex *>(entity)) ==
+                   vertices.end()) {
+                  additionalVerticeSet[static_cast<GVertex *>(entity)].insert(
+                    vertex);
+                }
+                break;
+              case 1:
+                if(edges.find(dynamic_cast<GEdge *>(entity)) == edges.end()) {
+                  additionalEdgesSet[static_cast<GEdge *>(entity)].insert(
+                    vertex);
+                }
+                break;
+              case 2:
+                if(faces.find(dynamic_cast<GFace *>(entity)) == faces.end()) {
+                  additionalFacesSet[static_cast<GFace *>(entity)].insert(
+                    vertex);
+                }
+                break;
+              case 3:
+                if(regions.find(dynamic_cast<GRegion *>(entity)) ==
+                   regions.end()) {
+                  additionalRegionsSet[static_cast<GRegion *>(entity)].insert(
+                    vertex);
+                }
+                break;
+              default: break;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   // Convert sets to vectors
   for(const auto &[entity, nodes] : additionalVerticeSet) {
     additionalVertices[entity] =
@@ -3017,7 +3255,7 @@ static std::size_t getPartialEntitiesToSaveForOverlaps(
     numVertices += nodes.size();
   }
 
-  Msg::Debug("Number of entities partially saved: %lu %lu %lu %lu",
+  Msg::Info("Number of entities partially saved: %lu %lu %lu %lu",
             additionalVertices.size(), additionalEdges.size(),
             additionalFaces.size(), additionalRegions.size());
 
@@ -3308,6 +3546,14 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
         faces.insert(overlapFace);
       }
     }
+    for(const auto &[parentRegionTag, manager] :
+        model->getOverlapRegionManagers()) {
+      const auto &overlapsOnPartition = manager->getOverlapsOf(partitionToSave);
+      if(!overlapsOnPartition) { continue; }
+      for(const auto &[j, overlapRegion] : *overlapsOnPartition) {
+        regions.insert(overlapRegion);
+      }
+    }
   }
 
   std::map<std::pair<int, int>, std::vector<MElement *> > elementsByType[4];
@@ -3320,7 +3566,6 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
     int entityTag = vertex->tag();
     // If it is an overlap, put the tag of the parent entity
     if (vertex->geomType() == GEntity::OverlapPoint) {
-      // TODO: implement
       //overlapVertex *or = static_cast<overlapVertex *>(vertex);
       //entityTag = or->getOverlapOn()->tag();
     }
@@ -3387,8 +3632,8 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
     // If it is an overlap, put the tag of the parent entity
     if (region->geomType() == GEntity::OverlapVolume) {
       // TODO: implement
-      //overlapRegion *or = static_cast<overlapRegion *>(region);
-      //entityTag = or->getOverlapOn()->tag();
+      overlapRegion *oregion = static_cast<overlapRegion *>(region);
+      entityTag = oregion->getOverlapOn()->tag();
     }
 
     numElements += region->tetrahedra.size();
@@ -3762,6 +4007,14 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool partitioned,
         faces.insert(overlapFace);
       }
     }
+    for(const auto &[parentVolumeTag, manager] :
+        model->getOverlapRegionManagers()) {
+      const auto &overlapsOnPartition = manager->getOverlapsOf(partitionToSave);
+      if(!overlapsOnPartition) { continue; }
+      for(const auto &[j, overlapFace] : *overlapsOnPartition) {
+        regions.insert(overlapFace);
+      }
+    }
   }
 
   // Additional entities ?
@@ -3865,11 +4118,45 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool partitioned,
                     faces, edges, vertices);
   getAdditionalEntities(regions, faces, edges, vertices, model->getAllOverlapBoundaries());
 
+  // add overlaps
+  if(partitionToSave != 0) {
+    for(const auto &[parentEdgeTag, manager] :
+        model->getOverlapEdgeManagers()) {
+      const auto overlapsOnPartition = manager->getOverlapsOf(partitionToSave);
+      if(!overlapsOnPartition) { continue; }
+      for(const auto &[j, overlapFace] : *overlapsOnPartition) {
+        edges.insert(overlapFace);
+      }
+    }
+    for(const auto &[parentFaceTag, manager] :
+        model->getOverlapFaceManagers()) {
+      const auto &overlapsOnPartition = manager->getOverlapsOf(partitionToSave);
+      if(!overlapsOnPartition) { continue; }
+      for(const auto &[j, overlapFace] : *overlapsOnPartition) {
+        faces.insert(overlapFace);
+      }
+    }
+    for(const auto &[parentVolumeTag, manager] :
+        model->getOverlapRegionManagers()) {
+      const auto &overlapsOnPartition = manager->getOverlapsOf(partitionToSave);
+      if(!overlapsOnPartition) { continue; }
+      for(const auto &[j, overlapRegion] : *overlapsOnPartition) {
+        regions.insert(overlapRegion);
+      }
+    }
+  }
+
   // Additional entities ?
   std::set<std::size_t> ownedVertices;
   for (GRegion* r : regions) {
     for (std::size_t i = 0; i < r->getNumMeshVertices(); i++) {
       ownedVertices.insert(r->getMeshVertex(i)->getNum());
+    }
+    for (size_t k = 0; k < r->getNumMeshElements(); ++k) {
+      MElement* e = r->getMeshElement(k);
+      for (std::size_t j = 0; j < e->getNumVertices(); j++) {
+        ownedVertices.insert(e->getVertex(j)->getNum());
+      }
     }
   }
   for (GFace* f : faces) {
@@ -3901,7 +4188,8 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool partitioned,
   Msg::Info("Writing %lu faces instead of %lu", faceTagsToKeep.size(), numFaceTags);
   numFaceTags = faceTagsToKeep.size();
   fprintf(fp, "$FaceTags\n");
-  fwrite(&numFaceTags, sizeof(std::size_t), 1, fp);
+  if(binary) { fwrite(&numFaceTags, sizeof(std::size_t), 1, fp); }
+  else { fprintf(fp, "%lu\n", numFaceTags); }
   //for(auto it = model->firstMFace(); it != model->lastMFace(); ++it) {
   for(auto it = faceTagsToKeep.begin(); it != faceTagsToKeep.end(); ++it) {
     // TAG NUM_VERT VERT1 VERT2 ... VERTN
