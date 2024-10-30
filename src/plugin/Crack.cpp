@@ -2,6 +2,10 @@
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+//
+// Contributor(s):
+//   Erik Schnaubelt
+//   Louis Denis
 
 #include "Crack.h"
 #include "GModel.h"
@@ -22,7 +26,8 @@ StringXNumber CrackOptions_Number[] = {
   {GMSH_FULLRC, "NormalY", nullptr, 0.},
   {GMSH_FULLRC, "NormalZ", nullptr, 1.},
   {GMSH_FULLRC, "NewPhysicalGroup", nullptr, 0},
-  {GMSH_FULLRC, "DebugView", nullptr, 0}
+  {GMSH_FULLRC, "DebugView", nullptr, 0},
+  {GMSH_FULLRC, "SwapOrientation", nullptr, 0}
 };
 
 extern "C" {
@@ -49,7 +54,9 @@ std::string GMSH_CrackPlugin::getHelp() const
          "in which the crack is supposed to be embedded. If "
          "`NewPhysicalGroup' is positive, use it as the tag of "
          "the newly created curve or surface; otherwise use "
-         "`PhysicalGroup'.";
+         "`PhysicalGroup'. If `SwapOrientation' is set to 1, "
+         "the orientation of the duplicated elements on the "
+         "crack is reversed.";
 }
 
 int GMSH_CrackPlugin::getNbOptions() const
@@ -89,6 +96,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
                     CrackOptions_Number[5].def);
   int newPhysical = (int)CrackOptions_Number[6].def;
   int debug = (int)CrackOptions_Number[7].def;
+  int swapOrientation = (int)CrackOptions_Number[8].def;
 
   if(dim != 1 && dim != 2) {
     Msg::Error("Crack dimension should be 1 or 2");
@@ -286,6 +294,8 @@ PView *GMSH_CrackPlugin::execute(PView *view)
     }
     MElementFactory f;
     MElement *newe = f.create(e->getTypeForMSH(), verts, 0, e->getPartition());
+    if(swapOrientation)
+      newe->reverse();
     if(crackEdge && newe->getType() == TYPE_LIN)
       crackEdge->lines.push_back((MLine *)newe);
     else if(crackFace && newe->getType() == TYPE_TRI)
