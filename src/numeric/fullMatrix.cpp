@@ -404,11 +404,15 @@ bool fullMatrix<double>::eig(fullVector<double> &DR, fullVector<double> &DI,
    work, &lwork, &info);
   delete[] work;
 
-  if(info > 0)
+  if(info > 0){
     Msg::Error("QR Algorithm failed to compute all the eigenvalues", info,
                info);
-  else if(info < 0)
+    return false;
+  }
+  else if(info < 0){
     Msg::Error("Wrong %d-th argument in eig", -info);
+    return false; 
+  }
   else if(sortRealPart)
     eigSort(N, DR._data, DI._data, VL._data, VR._data);
 
