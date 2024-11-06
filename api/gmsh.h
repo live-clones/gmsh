@@ -694,7 +694,7 @@ namespace gmsh { // Top-level functions
       //
       // Find all the overlaps for the entity of dimension `dim' and tag `tag' on partition `partition'
       // Returns one tag for each entity covering another partition
-      GMSH_API void findOverlapEntities(const int dim,
+      GMSH_API bool findOverlapEntities(const int dim,
                                         const int tag,
                                         const int partition,
                                         std::vector<int> & overlapEntities);
@@ -704,7 +704,7 @@ namespace gmsh { // Top-level functions
       // Find all the overlaps for the entity of dimension `dim' and tag `tag'
       // on partition `partition' Returns one tag for each entity covering
       // another partition
-      GMSH_API void findOverlapBoundariesEntities(const int dim, const int tag,
+      GMSH_API bool findOverlapBoundariesEntities(const int dim, const int tag,
                                         const int partition,
                                         std::vector<int> &overlapEntities);
 
