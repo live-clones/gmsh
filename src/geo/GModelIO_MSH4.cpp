@@ -4002,27 +4002,47 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool partitioned,
     for(const auto &[parentFaceTag, manager] :
         model->getOverlapFaceManagers()) {
       const auto &overlapsOnPartition = manager->getOverlapsOf(partitionToSave);
+      const auto &boundary = manager->getOverlapBoundariesOf(partitionToSave);
       if(!overlapsOnPartition) { continue; }
       for(const auto &[j, overlapFace] : *overlapsOnPartition) {
         faces.insert(overlapFace);
+      }
+      for(const auto &[j, overlapEdge] : *boundary) {
+        edges.insert(overlapEdge);
       }
     }
     for(const auto &[parentVolumeTag, manager] :
         model->getOverlapRegionManagers()) {
       const auto &overlapsOnPartition = manager->getOverlapsOf(partitionToSave);
+      const auto &boundary = manager->getOverlapBoundariesOf(partitionToSave);
       if(!overlapsOnPartition) { continue; }
       for(const auto &[j, overlapFace] : *overlapsOnPartition) {
         regions.insert(overlapFace);
+      }
+      for(const auto &[j, overlapFace] : *boundary) {
+        faces.insert(overlapFace);
       }
     }
   }
 
   // Additional entities ?
   std::set<std::size_t> ownedVertices;
-  for (GRegion* r : regions) {
-    for (std::size_t i = 0; i < r->getNumMeshVertices(); i++) {
-      ownedVertices.insert(r->getMeshVertex(i)->getNum());
+  for(GRegion *r : regions) {
+    overlapRegion *oregion = dynamic_cast<overlapRegion *>(r);
+    if(oregion) {
+      for(std::size_t i = 0; i < oregion->getNumMeshElements(); i++) {
+        MElement *e = oregion->getMeshElement(i);
+        for(std::size_t j = 0; j < e->getNumVertices(); j++) {
+          ownedVertices.insert(e->getVertex(j)->getNum());
+        }
+      }
     }
+    else {
+      for(std::size_t i = 0; i < r->getNumMeshVertices(); i++) {
+        ownedVertices.insert(r->getMeshVertex(i)->getNum());
+      }
+    }
+    
   }
   for(GFace *f : faces) {
     overlapFace *of = dynamic_cast<overlapFace *>(f);
