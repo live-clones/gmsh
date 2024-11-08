@@ -1888,7 +1888,8 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::get_front_nodes_position
       //
       // Antoine put a comment here.
-      GMSH_API void get_front_nodes_position(std::vector<double> & api_position);
+      GMSH_API void get_front_nodes_position(std::vector<double> & api_position,
+                                             std::vector<int> & front_nodes);
 
       // gmsh::model::mesh::get_nodes_position
       //

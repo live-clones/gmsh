@@ -4640,21 +4640,25 @@ const get__df_position = get_DF_position
 
 Antoine put a comment here.
 
-Return `api_position`.
+Return `api_position`, `front_nodes`.
 
 Types:
  - `api_position`: vector of doubles
+ - `front_nodes`: vector of integers
 """
 function get_front_nodes_position()
     api_api_position_ = Ref{Ptr{Cdouble}}()
     api_api_position_n_ = Ref{Csize_t}()
+    api_front_nodes_ = Ref{Ptr{Cint}}()
+    api_front_nodes_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGet_front_nodes_position, gmsh.lib), Cvoid,
-          (Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          api_api_position_, api_api_position_n_, ierr)
+          (Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_api_position_, api_api_position_n_, api_front_nodes_, api_front_nodes_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     api_position = unsafe_wrap(Array, api_api_position_[], api_api_position_n_[], own = true)
-    return api_position
+    front_nodes = unsafe_wrap(Array, api_front_nodes_[], api_front_nodes_n_[], own = true)
+    return api_position, front_nodes
 end
 
 """

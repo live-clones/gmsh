@@ -1668,6 +1668,7 @@ GMSH_API void gmshModelMeshGet_DF_position(double ** api_position, size_t * api_
 
 /* Antoine put a comment here. */
 GMSH_API void gmshModelMeshGet_front_nodes_position(double ** api_position, size_t * api_position_n,
+                                                    int ** front_nodes, size_t * front_nodes_n,
                                                     int * ierr);
 
 /* Antoine put a comment here. */

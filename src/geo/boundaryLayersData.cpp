@@ -173,6 +173,7 @@ static void treat2Connections(GFace *gf, MVertex *_myVert, MEdge &e1, MEdge &e2,
   if(N1.size() == N2.size()) {
     for(std::size_t SIDE = 0; SIDE < N1.size(); SIDE++) {
       if(!fan) {
+	//	printf("copucou\n");
         SVector3 x = N1[SIDE] * 1.01 + N2[SIDE];
         x.normalize();
         // fix for #1054: the size should be divided by cos(theta/2) where
@@ -582,6 +583,7 @@ bool buildAdditionalPoints2D(GFace *gf)
         // now create the BL points
         for(std::size_t DIR = 0; DIR < _dirs.size(); DIR++) {
           SVector3 n = _dirs[DIR];
+	  n.normalize();
 
           // < ------------------------------- > //
           //   N = X(p0+ e n) - X(p0)            //
@@ -629,8 +631,9 @@ bool buildAdditionalPoints2D(GFace *gf)
             SPoint2 par =
               gf->parFromPoint(SPoint3(first->x(), first->y(), first->z()));
             double L = hWall;
+	    //	    printf("START -- %g %g -- N %g %g \n",first->x(), first->y(),n.x(),n.y());
             while(1) {
-              // printf("L = %g\n",L);
+	      //              printf("L = %g\n",L);
               if(L > blf->thickness) break;
               SPoint2 pnew(par.x() + L * n.x(), par.y() + L * n.y());
               GPoint pp = gf->point(pnew);
@@ -642,7 +645,7 @@ bool buildAdditionalPoints2D(GFace *gf)
               // ADD BETA LAW HERE !!!
               L += hWall * pow(blf->ratio, ith);
             }
-            _columns->addColumn(n, *it, _column /*,_metrics*/);
+            _columns->addColumn(n, *it, _column /*,_metrics*/);	    
           }
         }
       }

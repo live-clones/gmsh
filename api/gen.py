@@ -598,7 +598,7 @@ doc = '''Antoine put a comment here.'''
 mesh.add('get_DF_position', doc, None, ovectordouble('api_position'),ovectorint('api_tags') )
 
 doc = '''Antoine put a comment here.'''
-mesh.add('get_front_nodes_position', doc, None, ovectordouble('api_position') )
+mesh.add('get_front_nodes_position', doc, None, ovectordouble('api_position'), ovectorint('front_nodes') )
 
 doc = '''Antoine put a comment here.'''
 mesh.add('get_nodes_position', doc, None, ovectordouble('api_position') )

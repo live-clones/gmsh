@@ -2502,13 +2502,15 @@ GMSH_API void gmshModelMeshGet_DF_position(double ** api_position, size_t * api_
   }
 }
 
-GMSH_API void gmshModelMeshGet_front_nodes_position(double ** api_position, size_t * api_position_n, int * ierr)
+GMSH_API void gmshModelMeshGet_front_nodes_position(double ** api_position, size_t * api_position_n, int ** front_nodes, size_t * front_nodes_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_api_position_;
-    gmsh::model::mesh::get_front_nodes_position(api_api_position_);
+    std::vector<int> api_front_nodes_;
+    gmsh::model::mesh::get_front_nodes_position(api_api_position_, api_front_nodes_);
     vector2ptr(api_api_position_, api_position, api_position_n);
+    vector2ptr(api_front_nodes_, front_nodes, front_nodes_n);
   }
   catch(...){
     if(ierr) *ierr = 1;

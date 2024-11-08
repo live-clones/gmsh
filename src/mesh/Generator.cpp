@@ -894,13 +894,13 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
     int nIterWinslow = 10;
     double timeMax = 100.;
     for(GFace *gf : m->getFaces()) {
-      if(gf->geomType() == GFace::Plane) {
+      //      if(gf->geomType() == GFace::Plane) {
         untangleGFaceMeshConstrained(gf, nIterWinslow, timeMax);
-      }
-      else {
-        Msg::Debug("- Surface %i: not planar, do not apply Winslow untangling",
-                   gf->tag());
-      }
+	//      }
+	//      else {
+	//        Msg::Debug("- Surface %i: not planar, do not apply Winslow untangling",
+	//                   gf->tag());
+	//      }
     }
 #endif
   }

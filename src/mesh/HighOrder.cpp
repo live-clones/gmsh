@@ -29,6 +29,514 @@
 #include "MFace.h"
 #include "ExtrudeParams.h"
 
+// --> Optimize C1-NESS BEG -----------------------------------------------
+// we look for tangent vector at every low order vertex
+
+#if defined(HAVE_ALGLIB)
+#include <stdafx.h>
+#include <optimization.h>
+
+class C1NessData2DP2{
+public:
+  std::map<MEdge, MVertex*,MEdgeLessThan> p2v;
+  std::vector<std::vector<MVertex *> > vs;
+  std::vector<double> param;
+  C1NessData2DP2(GModel*gm) {
+    int index = 0;
+    std::vector<MEdge> eds;
+    for (GModel::eiter ite = gm->firstEdge(); ite != gm->lastEdge() ; ++ite) {
+      for(auto l : (*ite)->lines){
+	MEdge me = l->getEdge(0);
+	//	printf("(%lu %lu)\n",me.getVertex(0)->getNum(),me.getVertex(1)->getNum());
+	eds.push_back(me);      
+	p2v[me]=l->getVertex(2);
+	double p;
+	l->getVertex(2)->getParameter(0,p);
+	param.push_back(p);
+	l->getVertex(2)->setIndex(index++);
+      }
+    }
+    SortEdgeConsecutive(eds, vs);
+  }
+};
+
+class C1NessData2DPN{
+public:
+  std::map<std::pair<size_t,size_t> , std::vector<MVertex*> > p2v;
+  std::vector<std::vector<MVertex *> > vs;
+  std::vector<double> param;
+  C1NessData2DPN(GModel*gm) {
+    int index = 0;
+    std::vector<MEdge> eds;
+    for (GModel::eiter ite = gm->firstEdge(); ite != gm->lastEdge() ; ++ite) {
+      for(auto l : (*ite)->lines){
+	MEdge me = l->getEdge(0);
+	//	printf("(%lu %lu)\n",me.getVertex(0)->getNum(),me.getVertex(1)->getNum());
+	eds.push_back(me);
+	std::pair<size_t,size_t> pp = std::make_pair(me.getVertex(0)->getNum(),me.getVertex(1)->getNum());
+	std::pair<size_t,size_t> ppinv = std::make_pair(me.getVertex(1)->getNum(),me.getVertex(0)->getNum());
+
+	std::vector<MVertex *>hov;
+	for (size_t i=2 ; i<l->getNumVertices();i++){
+	  hov.push_back(l->getVertex(i));
+	  double p;
+	  l->getVertex(i)->getParameter(0,p);
+	  param.push_back(p);
+	  l->getVertex(i)->setIndex(index++);
+	}
+	p2v[pp] = hov;
+	std::reverse(hov.begin(), hov.end());
+	p2v[ppinv] = hov;
+      }
+    }
+    SortEdgeConsecutive(eds, vs);
+  }
+};
+
+
+static double compute_C1NessDefault (const SVector3 &p0,
+				     const SVector3 &p1,
+				     const SVector3 &p2,
+				     const SVector3 &p01,
+				     const SVector3 &p12){
+  SVector3 t01 = p1 - (2*p01 - (p0+p1)*0.5);
+  SVector3 t12 = (2*p12 - (p1+p2)*0.5) - p1;
+  //  printf("%g %g vs %g %g\n",t01.x(),t01.y(),t12.x(),t12.y());
+  //  printf("%g %g %g %g %g %g\n",p0_01,p1_01,p1_12,p2_12,p_01,p_12);
+  //  printf("%g %g %g %g %g %g\n",p1_01-p_01,);
+  SVector3 q01   = p1 - p0;
+  SVector3 q12   = p2 - p1;
+
+  double lac = q01.norm();
+  double lab = (p0-p01).norm();
+  double lbc = (p1-p01).norm();
+  if (lab > 0.7*lac)return 1.e16;
+  if (lbc > 0.7*lac)return 1.e16;
+  lac = q12.norm();
+  lab = (p2-p12).norm();
+  lbc = (p1-p12).norm();
+  if (lab > 0.7*lac)return 1.e16;
+  if (lbc > 0.7*lac)return 1.e16;
+  
+  t01.normalize();
+  t12.normalize();  
+  
+  q01.normalize();
+  q12.normalize();
+
+  
+  if (dot(t01,q01) < 0)return 1.e16;
+  if (dot(t12,q12) < 0)return 1.e16;
+  
+  return dot(t12-t01,t12-t01);
+}
+
+
+static double _t3 (double param[4]){
+
+  double coef[4][3] = {{-27./2, 36./2, -11./2.},
+		       {81./2, -90./2, 18./2.},
+		       {-81./2, 72./2, -9./2.},
+		       {27./2, -9, 1.}};
+  
+  double a = 0, b = 0, c = 0;
+  for (int i=0;i<4;i++){
+    a += coef[i][0]*param[i];
+    b += coef[i][1]*param[i];
+    c += coef[i][2]*param[i];
+  }
+  double d0 = c;
+  double d1 = a+b+c;
+  if (a !=0){
+    double t = -b/(2*a);
+    if (a > 0 && t > 0 && t < 1){
+      double d2 = a*t*t+b*t+c;
+      return std::min(std::min(d0,d1),d2);
+    }
+  }
+  return std::min(d0,d1);
+}
+
+/*
+d(f_1)/dt = 1/2(-27 t^2 + 36t - 11)
+d(f_2)/dt = 9/2(9 t^2 - 10t + 2)
+d(f_3)/dt = 9/2(-9 t^2 + 8t - 1)
+d(f_4)/dt = 27/2 t^2 - 9t + 1
+
+  n(0) = -11/2 p0 + 9 p1 -9/2 p2 + p3  
+  n(1) = - p0 + 9/2 p1 -9 p2 + 11/2 p3  
+  
+*/
+
+static double compute_C1NessDefault (const SVector3 &p0,
+				     const SVector3 &p3,
+				     const SVector3 &p6,
+				     const SVector3 &p1,
+				     const SVector3 &p2,
+				     const SVector3 &p4,
+				     const SVector3 &p5){
+
+  SVector3 t01 = -p0+p1*(9./2.)-p2*9.+p3*(11./2.); 
+  SVector3 t12 = -p3*(11./2.)+p4*9.-p5*(9./2.)+p6; 
+
+  t01.normalize();
+  t12.normalize();
+  
+  auto t03   = (p3 - p0);
+  auto t36   = (p6 - p3);
+
+  double d03 = (p1-p0).norm() + (p1-p2).norm() + (p2-p3).norm();
+  double d36 = (p3-p4).norm() + (p4-p5).norm() + (p5-p6).norm();
+  
+  double param[4] = { (p1-p0).norm()/d03,
+		      (p2-p0).norm()/d03,
+		      (p4-p3).norm()/d36,
+		      (p5-p3).norm()/d36};
+  double param1[4] = {0,param[0],param[1],1.};
+  double param2[4] = {0,param[2],param[3],1.};
+
+  double min1 = _t3(param1);
+  double min2 = _t3(param2);
+
+  double energy = dot(t12-t01,t12-t01);
+
+  double eps = 1.e-3;
+  double feas1 = min1 > 0 ? min1 : (min1+sqrt(min1*min1+ eps*eps))/2;
+  double feas2 = min2 > 0 ? min2 : (min2+sqrt(min2*min2+ eps*eps))/2;
+
+  energy = energy + 0.00001*((min1*min1+1)/feas1+(min2*min2+1)/feas2);
+  
+  return energy;
+}
+
+
+static double compute_energy_and_gradient(C1NessData2DPN &data,
+					  const alglib::real_1d_array &X,
+					  alglib::real_1d_array &gradient){
+  double energy = 0.0;
+  double epsilon = 1.e-8;
+  for(size_t i = 0; i < gradient.length(); ++i) gradient[i] = 0.;
+
+  for (auto loop : data.vs){
+    if (loop[loop.size()-1] == loop[0])loop.pop_back();
+    size_t s = loop.size();
+    //    printf("LOOOPPPE %lu\n",s);
+    for (size_t i=0;i<s;i++){
+
+      MVertex *v0 = loop[i];
+      MVertex *v3 = loop[(i+1)%s];
+      MVertex *v6 = loop[(i+2)%s];
+
+
+      if (v3->onWhat()->dim() == 0 &&
+	  !v3->onWhat()->periodic(0))continue;
+      
+      std::pair<size_t,size_t> e03 = std::make_pair(v0->getNum(),v3->getNum());
+      std::pair<size_t,size_t> e36 = std::make_pair(v3->getNum(),v6->getNum());
+
+      //      MEdge e03 = MEdge(v0,v3);
+      //      MEdge e36 = MEdge(v3,v6);
+      
+      MVertex *v1 = data.p2v[e03][0];
+      MVertex *v2 = data.p2v[e03][1];
+      MVertex *v4 = data.p2v[e36][0];
+      MVertex *v5 = data.p2v[e36][1];
+      double t1 = X[v1->getIndex()];
+      double t2 = X[v2->getIndex()];
+      double t4 = X[v4->getIndex()];
+      double t5 = X[v5->getIndex()];
+
+      //  printf("%lu (%lu,%lu,%lu)(%d,%d,%d) (%d,%d,%d) t (%g,%g,%g,%g)\n",i,v0->getNum(),v3->getNum(),v6->getNum(),
+      //	     v0->onWhat()->dim(),
+      //	     v3->onWhat()->dim(),
+      //	     v6->onWhat()->dim(),
+      //	     v0->onWhat()->tag(),
+      //	     v3->onWhat()->tag(),
+      //	     v6->onWhat()->tag(),
+      //      	     t1,t2,t4,t5);
+
+      
+      GEdge *ge03 = (GEdge*)v1->onWhat();
+      GEdge *ge36 = (GEdge*)v4->onWhat();
+      
+      GPoint g1 = ge03->point(t1);
+      GPoint g2 = ge03->point(t2);
+      GPoint g4 = ge36->point(t4);
+      GPoint g5 = ge36->point(t5);
+
+      t1 += epsilon;
+      GPoint g1p = ge03->point(t1);
+      t1 -= 2*epsilon;
+      GPoint g1m = ge03->point(t1);
+      t2 += epsilon;
+      GPoint g2p = ge03->point(t2);
+      t2 -= 2*epsilon;
+      GPoint g2m = ge03->point(t2);
+
+      t4 += epsilon;
+      GPoint g4p = ge36->point(t4);
+      t4 -= 2*epsilon;
+      GPoint g4m = ge36->point(t4);
+      t5 += epsilon;
+      GPoint g5p = ge36->point(t5);
+      t5 -= 2*epsilon;
+      GPoint g5m = ge36->point(t5);
+
+      SVector3 V0 (v0->x(),v0->y(),v0->z());
+      SVector3 V3 (v3->x(),v3->y(),v3->z());
+      SVector3 V6 (v6->x(),v6->y(),v6->z());
+
+      SVector3 V1 (g1.x(),g1.y(),g1.z());
+      SVector3 V1p (g1p.x(),g1p.y(),g1p.z());
+      SVector3 V1m (g1m.x(),g1m.y(),g1m.z());
+      SVector3 V2 (g2.x(),g2.y(),g2.z());
+      SVector3 V2p (g2p.x(),g2p.y(),g2p.z());
+      SVector3 V2m (g2m.x(),g2m.y(),g2m.z());
+      SVector3 V4 (g4.x(),g4.y(),g4.z());
+      SVector3 V4p (g4p.x(),g4p.y(),g4p.z());
+      SVector3 V4m (g4m.x(),g4m.y(),g4m.z());
+      SVector3 V5 (g5.x(),g5.y(),g5.z());
+      SVector3 V5p (g5p.x(),g5p.y(),g5p.z());
+      SVector3 V5m (g5m.x(),g5m.y(),g5m.z());
+
+      double energy_i = compute_C1NessDefault (V0,V3,V6,V1,V2,V4,V5);
+      
+      //      printf("energy(%lu) = %12.5E\n",i,energy_i);
+      
+      double de = 0.5/epsilon;
+      
+      double ded1 = (compute_C1NessDefault (V0,V3,V6,V1p,V2,V4,V5)-
+		     compute_C1NessDefault (V0,V3,V6,V1m,V2,V4,V5))*de;
+      double ded2 = (compute_C1NessDefault (V0,V3,V6,V1,V2p,V4,V5)-
+		     compute_C1NessDefault (V0,V3,V6,V1,V2m,V4,V5))*de;
+      double ded4 = (compute_C1NessDefault (V0,V3,V6,V1,V2,V4p,V5)-
+		     compute_C1NessDefault (V0,V3,V6,V1,V2,V4m,V5))*de;
+      double ded5 = (compute_C1NessDefault (V0,V3,V6,V1,V2,V4,V5p)-
+		     compute_C1NessDefault (V0,V3,V6,V1,V2,V4,V5m))*de;
+      
+      energy += energy_i;            
+      gradient[v1->getIndex()] += ded1;
+      gradient[v2->getIndex()] += ded2;
+      gradient[v4->getIndex()] += ded4;
+      gradient[v5->getIndex()] += ded5;
+    }
+  }
+  //  printf("ENERGY = %12.5E\n",energy);
+  //  exit(1);
+  return energy;
+}
+
+
+static double compute_energy_and_gradient(C1NessData2DP2 &data,
+					  const alglib::real_1d_array &X,
+					  alglib::real_1d_array &gradient){
+  double energy = 0.0;
+  double epsilon = 1.e-8;
+  for(size_t i = 0; i < gradient.length(); ++i) gradient[i] = 0.;
+  printf("%lu loops\n",data.vs.size());
+  for (auto loop : data.vs){
+    if (loop[loop.size()-1] == loop[0])loop.pop_back();
+    size_t s = loop.size();
+    for (size_t i=0;i<s;i++){
+      MVertex *v0 = loop[i];
+      MVertex *v1 = loop[(i+1)%s];
+
+      if (v1->onWhat()->dim() == 0 &&
+	  !v1->onWhat()->periodic(0))continue;
+      
+      MVertex *v2 = loop[(i+2)%s];      
+      MEdge e01 = MEdge(v0,v1);
+      MEdge e12 = MEdge(v1,v2);
+      MVertex *v01 = data.p2v[e01];
+      MVertex *v12 = data.p2v[e12];
+      double p01 = X[v01->getIndex()];
+      double p12 = X[v12->getIndex()];
+
+      GEdge *ge01 = (GEdge*)v01->onWhat();
+      GEdge *ge12 = (GEdge*)v12->onWhat();
+
+      
+      GPoint g01 = ge01->point(p01);
+      GPoint g12 = ge12->point(p12);
+      
+      double energy_i = compute_C1NessDefault (SVector3 (v0->x(),v0->y(),v0->z()),
+					       SVector3 (v1->x(),v1->y(),v1->z()),
+					       SVector3 (v2->x(),v2->y(),v2->z()),
+					       SVector3 (g01.x(),g01.y(),g01.z()),
+					       SVector3 (g12.x(),g12.y(),g12.z()));
+      p01 += epsilon;
+      GPoint g01_ = ge01->point(p01);
+      p01 -= 2*epsilon;
+      GPoint _g01 = ge01->point(p01);
+
+      p12 += epsilon;
+      GPoint g12_ = ge12->point(p12);
+      p12 -= 2*epsilon;
+      GPoint _g12 = ge12->point(p12);
+
+
+      double denergy_01 = (compute_C1NessDefault (SVector3 (v0->x(),v0->y(),v0->z()),
+						 SVector3 (v1->x(),v1->y(),v1->z()),
+						 SVector3 (v2->x(),v2->y(),v2->z()),
+						 SVector3 (g01_.x(),g01_.y(),g01_.z()),
+						  SVector3 (g12.x(),g12.y(),g12.z())) -
+			   compute_C1NessDefault (SVector3 (v0->x(),v0->y(),v0->z()),
+						  SVector3 (v1->x(),v1->y(),v1->z()),
+						  SVector3 (v2->x(),v2->y(),v2->z()),
+						  SVector3 (_g01.x(),_g01.y(),_g01.z()),
+						  SVector3 (g12.x(),g12.y(),g12.z())))/(2*epsilon);
+      gradient[v01->getIndex()] += denergy_01;
+      
+      double denergy_12 = (compute_C1NessDefault (SVector3 (v0->x(),v0->y(),v0->z()),
+						 SVector3 (v1->x(),v1->y(),v1->z()),
+						 SVector3 (v2->x(),v2->y(),v2->z()),
+						 SVector3 (g01.x(),g01.y(),g01.z()),
+						  SVector3 (g12_.x(),g12_.y(),g12_.z())) -
+			   compute_C1NessDefault (SVector3 (v0->x(),v0->y(),v0->z()),
+						  SVector3 (v1->x(),v1->y(),v1->z()),
+						  SVector3 (v2->x(),v2->y(),v2->z()),
+						  SVector3 (g01.x(),g01.y(),g01.z()),
+						  SVector3 (_g12.x(),_g12.y(),_g12.z())))/(2*epsilon);
+      //  printf("dg[%lu] = %12.5E dg[%lu] = %12.5E \n",v01->getIndex(),denergy_01,v12->getIndex(),
+      //      	     denergy_12); 
+	
+      gradient[v12->getIndex()] += denergy_12;
+         
+      energy += energy_i;      
+    }   
+  }
+  printf("ENERGY = %12.5E\n",energy);
+  //  for(size_t i = 0; i < gradient.length(); ++i) printf("gradient[%lu] = %12.5E\n",i,gradient[i]);
+  //  exit(1);
+  return energy;
+
+}
+
+static void lbfgs_callback_P2(const alglib::real_1d_array &x, double &f,
+			      alglib::real_1d_array &grad, void *ptr)
+{
+  C1NessData2DP2 *wp = static_cast<C1NessData2DP2 *>(ptr);
+  C1NessData2DP2 &w = *wp;
+  f = compute_energy_and_gradient(w, x, grad);
+}
+
+static void lbfgs_callback_PN(const alglib::real_1d_array &x, double &f,
+			      alglib::real_1d_array &grad, void *ptr)
+{
+  C1NessData2DPN *wp = static_cast<C1NessData2DPN *>(ptr);
+  C1NessData2DPN &w = *wp;
+  f = compute_energy_and_gradient(w, x, grad);
+}
+
+
+void optimizeC1Ness2DP2 (GModel *gm) {
+
+  //  return;
+  C1NessData2DP2 data (gm);
+  int iterMax = 400;
+  // Setup of the LBFGS solver
+  double epsg = 1.e-8;
+  double epsf = 1.e-12;
+  double epsx = 1.e-12;
+  alglib::ae_int_t N = data.p2v.size();
+  alglib::real_1d_array x;
+  x.setcontent(N, data.param.data());
+  alglib::real_1d_array grad;
+  grad.setcontent(N, data.param.data());
+
+  
+  alglib::ae_int_t corr = 5; // Num of corrections in the scheme in [3,7]
+  alglib::minlbfgsstate state;
+  alglib::minlbfgsreport rep;
+  minlbfgscreate(N, corr, x, state);
+  // LBFGS stopping criteria
+  minlbfgssetcond(state, epsg, epsf, epsx,
+		  (alglib::ae_int_t)iterMax);
+
+  // Run LBFGS
+  minlbfgsoptimize(state, lbfgs_callback_P2, nullptr, &data);
+  minlbfgsresults(state, x, rep);
+  printf("%lu iter term %lu\n",rep.iterationscount,rep.terminationtype);
+  printf("ENERGY = %12.5E\n",compute_energy_and_gradient(data,x,grad));
+  
+  
+  for (auto loop : data.vs){
+    if (loop[loop.size()-1] == loop[0])loop.pop_back();
+    size_t s = loop.size();
+    for (size_t i=0;i<s;i++){
+      MVertex *v0 = loop[i];
+      MVertex *v1 = loop[(i+1)%s];
+      MEdge e01 = MEdge(v0,v1);
+      MEdgeVertex *v01 = (MEdgeVertex*)data.p2v[e01];
+      double p01 = x[v01->getIndex()];
+      GEdge *ge01 = (GEdge*)v01->onWhat();
+      GPoint g01 = ge01->point(p01);
+      v01->setParameter(0,p01);
+      v01->setXYZ(g01.x(),g01.y(),g01.z());
+    }
+  }
+
+}
+
+void optimizeC1Ness2DPN (GModel *gm) {
+
+  //  return;
+  C1NessData2DPN data (gm);
+  int iterMax = 1400;
+  // Setup of the LBFGS solver
+  double epsg = 1.e-8;
+  double epsf = 1.e-12;
+  double epsx = 1.e-12;
+  alglib::ae_int_t N = data.p2v.size();
+  alglib::real_1d_array x;
+  x.setcontent(N, data.param.data());
+  alglib::real_1d_array grad;
+  grad.setcontent(N, data.param.data());
+
+  
+  alglib::ae_int_t corr = 5; // Num of corrections in the scheme in [3,7]
+  alglib::minlbfgsstate state;
+  alglib::minlbfgsreport rep;
+  minlbfgscreate(N, corr, x, state);
+  // LBFGS stopping criteria
+  minlbfgssetcond(state, epsg, epsf, epsx,
+		  (alglib::ae_int_t)iterMax);
+  printf("INITIAL ENERGY = %12.5E\n",compute_energy_and_gradient(data,x,grad));
+  // Run LBFGS
+  minlbfgsoptimize(state, lbfgs_callback_PN, nullptr, &data);
+  minlbfgsresults(state, x, rep);
+  printf("%lu iter term %lu\n",rep.iterationscount,rep.terminationtype);
+  printf("ENERGY = %12.5E\n",compute_energy_and_gradient(data,x,grad));
+  
+  
+  for (auto loop : data.vs){
+    if (loop[loop.size()-1] == loop[0])loop.pop_back();
+    size_t s = loop.size();
+    for (size_t i=0;i<s;i++){
+      MVertex *v0 = loop[i];
+      MVertex *v1 = loop[(i+1)%s];
+      auto e01 = std::make_pair(v0->getNum(),v1->getNum());
+      //      MEdge e01 = MEdge(v0,v1);
+      MEdgeVertex *v010 = (MEdgeVertex*)data.p2v[e01][0];
+      MEdgeVertex *v011 = (MEdgeVertex*)data.p2v[e01][1];
+      double p010 = x[v010->getIndex()];
+      double p011 = x[v011->getIndex()];
+      GEdge *ge01 = (GEdge*)v010->onWhat();
+      GPoint g010 = ge01->point(p010);
+      GPoint g011 = ge01->point(p011);
+      v010->setParameter(0,p010);
+      v010->setXYZ(g010.x(),g010.y(),g010.z());
+      v011->setParameter(0,p011);
+      v011->setXYZ(g011.x(),g011.y(),g011.z());
+    }
+  }
+}
+
+#endif
+
+// --> Optimize C1-NESS END -----------------------------------------------
+
+
 // for each pair of vertices (an edge), we build a list of vertices that are the
 // high order representation of the edge. The ordering of vertices in the list
 // is supposed to be (by construction) consistent with the ordering of the pair.
@@ -361,6 +869,7 @@ static bool getEdgeVerticesOnGeo(GFace *gf, MVertex *v0, MVertex *v1,
     GPoint pc = gf->point(US[j + 1], VS[j + 1]);
     MVertex *v =
       new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, US[j + 1], VS[j + 1]);
+    //    printf("%lu %g %g\n",v->getNum(),US[j + 1], VS[j + 1]);
     ve.push_back(v);
   }
 
@@ -1007,24 +1516,46 @@ static void setHighOrder(GFace *gf, edgeContainer &edgeVertices,
                          bool incomplete, int nPts = 1)
 {
   std::vector<MTriangle *> triangles2;
+  std::map<MElement*,MElement*> e2e;
   for(std::size_t i = 0; i < gf->triangles.size(); i++) {
     MTriangle *t = gf->triangles[i];
     MTriangle *tNew =
       setHighOrder(t, gf, edgeVertices, faceVertices, linear, incomplete, nPts);
     triangles2.push_back(tNew);
+    e2e[t] = tNew;
     delete t;
   }
-  gf->triangles = triangles2;
 
+  gf->triangles = triangles2;  
+  
   std::vector<MQuadrangle *> quadrangles2;
   for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
     MQuadrangle *q = gf->quadrangles[i];
     MQuadrangle *qNew =
       setHighOrder(q, gf, edgeVertices, faceVertices, linear, incomplete, nPts);
     quadrangles2.push_back(qNew);
+    e2e[q] = qNew;
     delete q;
   }
   gf->quadrangles = quadrangles2;
+
+  // restore boundary layer data
+  if(gf->getColumns() != nullptr) {
+    std::map<MElement *, std::vector<MElement *> > newColumns;
+    std::map<MElement *, MElement *> newToFirst;
+    for (std::map<MElement *, std::vector<MElement *> >::iterator it = gf->getColumns()->_elemColumns.begin();
+	 it != gf->getColumns()->_elemColumns.end(); ++it){
+      MElement *firstNew = e2e[it->first];
+      std::vector<MElement*> columnNew;
+      for (auto ei : it->second){
+	columnNew.push_back(e2e[ei]);
+	newToFirst[ei] = firstNew;
+      }
+      newColumns[firstNew] = columnNew;
+    }
+    gf->getColumns()->_elemColumns = newColumns;
+    gf->getColumns()->_toFirst = newToFirst;
+  }
   gf->deleteVertexArrays();
 }
 
@@ -1456,7 +1987,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
       setHighOrder(*it, edgeVertices, faceVertices, linear, incomplete, nPts);
     else
       setHighOrderFromExistingMesh(*it, edgeVertices, faceVertices);
-    if((*it)->getColumns() != nullptr) (*it)->getColumns()->clearElementData();
+    //    if((*it)->getColumns() != nullptr) (*it)->getColumns()->clearElementData();
   }
 
   for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
@@ -1481,6 +2012,14 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
     checkHighOrderTetrahedron("Volume mesh", m, bad, worst);
   }
 
+  // EXPERIMENTAL
+  if(!linear && order == 2) {
+    optimizeC1Ness2DP2 (m);
+  }
+  else if(!linear && order == 3) {
+    optimizeC1Ness2DPN (m);
+  }
+  
   Msg::StatusBar(true, "Done meshing order %d (Wall %gs, CPU %gs)", order,
                  w2 - w1, t2 - t1);
 }
