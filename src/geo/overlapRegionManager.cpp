@@ -7,6 +7,8 @@
 #include "gmsh.h"
 #include "MTriangle.h"
 #include "partitionFace.h"
+#include "partitionEdge.h"
+#include "partitionVertex.h"
 #include <unordered_set>
 
 overlapRegionManager::overlapRegionManager(GModel *model, int tagParent,
@@ -48,6 +50,8 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
       continue;
     }
     partitionRegion *thisRegion = dynamic_cast<partitionRegion *>(*it);
+    std::set<MTetrahedron*> allElementsInOverlap; // Union over j of all overlaps, for full bnd;
+
 
     for(unsigned j = 1; j <= numPartitions; ++j) {
       if(i == j) continue;
@@ -67,28 +71,77 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
         Msg::Error("Neighbor region is not a partitionRegion");
         continue;
       }
-      auto tetras = neighborRegion->getNearbyTetra(*thisRegion, 1);
+      auto tetras = neighborRegion->getNearbyTetra(*thisRegion, overlapSize);
       if(tetras.empty()) { continue; }
       overlapRegion *overlapij =
         new overlapRegion(model, ++elementaryNumber, thisRegion, neighborRegion);
       for(auto tetra : tetras) { overlapij->addElement(tetra); }
+      for(auto tetra : tetras) { allElementsInOverlap.insert(tetra); }
 
       overlapij->setManager(this);
       this->addOverlap(overlapij);
       model->add(overlapij);
       ++nOverlapsCreated;
-
-      // Handle boundary
-      auto boundary = _createBoundary(tetras);
-      partitionFace* bnd = new partitionFace(model, ++elementaryNumberBnd, {i});
-      bnd->triangles = boundary; // Take ownership
-      model->add(bnd);
-      this->boundaries[i][j] = bnd;
+     
     }
+      std::unordered_map<MFace, int, MFaceHash, MFaceEqual> faceCount;
+      for(auto tetra : allElementsInOverlap) {
+        for(int k = 0; k < tetra->getNumFaces(); ++k)
+          faceCount[tetra->getFace(k)]++;
+      }
+      std::unordered_set<MFace, MFaceHash, MFaceEqual> boundaryFaces;
+      for(auto [face, count] : faceCount) {
+        if(count != 1) continue;
+        bool isBoundary = false;
+        // Add if at least one point is not shared with the domain and has the
+        // volume as parent
+
+        for(int k = 0; k < face.getNumVertices(); ++k) {
+          MVertex *v = face.getVertex(k);
+          GEntity* parent = v->onWhat();
+          if (parent->getParentEntity() != parentRegion) {
+            continue;
+          }
+          std::vector<int> partitions;
+          if (parent->geomType() == GEntity::PartitionVolume)
+            partitions = static_cast<partitionRegion*>(parent)->getPartitions();
+          else if (parent->geomType() == GEntity::PartitionSurface)
+            partitions = static_cast<partitionFace*>(parent)->getPartitions();
+          else if (parent->geomType() == GEntity::PartitionCurve)
+            partitions = static_cast<partitionEdge*>(parent)->getPartitions();
+          else if (parent->geomType() == GEntity::PartitionPoint)
+            partitions = static_cast<partitionVertex*>(parent)->getPartitions();
+          else
+            Msg::Error("Unknown entity type in overlap boundary construction: %s", parent->getTypeString().c_str());
+
+          if (std::find(partitions.begin(), partitions.end(), i) == partitions.end()) {
+            isBoundary = true;
+            break;
+          }
+        }
+
+        if(isBoundary) { boundaryFaces.insert(face); }
+      }
+      std::vector<MTriangle *> bndElems;
+      for (auto face: boundaryFaces) {
+        if (face.getNumVertices() != 3) {
+          Msg::Error("Boundary face is not a triangle");
+          continue;
+        }
+        bndElems.push_back(new MTriangle(face.getVertex(0), face.getVertex(1), face.getVertex(2)));
+      }
+      /* End full boundary computation */
+      partitionFace *fullBnd =
+        new partitionFace(model, ++elementaryNumberBnd, {i});
+        Msg::Info("Num elements in full boundary %d", bndElems.size());
+      fullBnd->triangles = std::move(bndElems); // Take ownership
+      model->add(fullBnd);
+      Msg::Info("Created full boundary %d for i = %d", fullBnd->tag(), i);
+      this->fullBoundaries[i] = fullBnd;
   }
   unsigned nPhysicalsCreated = 0;
   if(createPhysicals) {
-    std::string basis_name = "overlapOfFace" + std::to_string(tagParent) + "_";
+    std::string basis_name = "overlapOfRegion" + std::to_string(tagParent) + "_";
     for(unsigned i = 1; i <= numPartitions; ++i) {
       const auto overlaps = this->getOverlapsOf(i);
       if(!overlaps) {
@@ -98,15 +151,9 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
       for(auto [j, overlap] : *overlaps) {
         overlapTags.push_back(overlap->tag());
       }
-      std::vector<int> bndTags;
-      if (boundaries.find(i) != boundaries.end()) {
-        for(auto [j, bnd] : boundaries[i]) {
-          bndTags.push_back(bnd->tag());
-        }
-      }
       gmsh::model::addPhysicalGroup(3, overlapTags, -1,
                                     basis_name + std::to_string(i));
-      gmsh::model::addPhysicalGroup(2, bndTags, -1,
+      gmsh::model::addPhysicalGroup(2, {fullBoundaries.at(i)->tag()}, -1,
                                     basis_name + std::to_string(i) + "_bnd");
                                     Msg::Info("Created physical group %s", (basis_name + std::to_string(i) + "_bnd").c_str()) ;
       ++nPhysicalsCreated;
@@ -116,39 +163,3 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
   }
 }
 
-std::vector<MTriangle *> overlapRegionManager::_createBoundary(
-  const std::set<MTetrahedron *> &tetrasInOverlap) const
-{
-  std::vector<MTriangle*> result;
-  std::unordered_map<MFace, int, MFaceHash, MFaceEqual> faceCount;
-  for (auto tetra: tetrasInOverlap) {
-    for (int k = 0; k < tetra->getNumFaces(); ++k)
-      faceCount[tetra->getFace(k)]++;
-  }
-
-  std::unordered_set<MFace, MFaceHash, MFaceEqual> boundaryFaces;
-  for (auto [face, count]: faceCount) {
-    if (count != 1) continue;
-    bool isBoundary = false;
-    // If any of the vertices lies on the inner region, it is a boundary face
-    for (int k = 0; k < face.getNumVertices(); ++k) {
-      if (face.getVertex(k)->onWhat()->dim() == 3) {
-        isBoundary = true;
-        break;
-      }
-    }
-    if (isBoundary) {
-      boundaryFaces.insert(face);
-    }
-  }
-
-  for (auto face: boundaryFaces) {
-    if (face.getNumVertices() != 3) {
-      Msg::Error("Boundary face is not a triangle");
-      continue;
-    }
-    result.push_back(new MTriangle(face.getVertex(0), face.getVertex(1), face.getVertex(2)));
-  }
-
-  return result;
-}

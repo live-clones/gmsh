@@ -19,6 +19,7 @@ private:
   int tagParent;
   std::map<int, std::map<int, overlapRegion*>> overlaps;
   std::map<int, std::map<int, partitionFace*>> boundaries;
+  std::map<int, partitionFace*> fullBoundaries;
 public:
   overlapRegionManager(GModel* model, int tagParent, int overlapSize = 1, bool createPhysicals = true);
   void create(int overlapSize = 1, bool createPhysicals = true);
@@ -59,9 +60,14 @@ public:
     return boundaries;
   }
 
-private:
-  std::vector<MTriangle *>
-  _createBoundary(const std::set<MTetrahedron *> &tetrasInOverlap) const;
+  std::map<int, partitionFace*> getFullBoundaries() const {
+    return fullBoundaries;
+  }
+
+  void setFullBoundary(int i, partitionFace* fullBoundary) {
+    fullBoundaries[i] = fullBoundary;
+  }
+
 };
 
 #endif
