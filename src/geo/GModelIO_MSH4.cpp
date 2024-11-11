@@ -500,8 +500,6 @@ static bool readMSH4Overlaps(GModel *const model, FILE *fp, bool partition,
       return false;
     }
 
-    // Only create the manager if there are overlaps
-    if (numOverlaps == 0) continue;
     auto manager = std::make_unique<overlapEdgeManager>(model, tagParent);
 
     // For each (i,j) pair of the overlap of this entity, read its tag,
@@ -591,8 +589,7 @@ static bool readMSH4Overlaps(GModel *const model, FILE *fp, bool partition,
       Msg::Error("Face overlaps: Parent face %d not found", tagParent);
       return false;
     }
-    // Only create the manager if there are overlaps
-    if (numOverlaps == 0) continue;
+
     auto manager = std::make_unique<overlapFaceManager>(model, tagParent);
     // For each (i,j) pair of the overlap of this entity, read its tag,
     // physical and elements
@@ -681,8 +678,6 @@ static bool readMSH4Overlaps(GModel *const model, FILE *fp, bool partition,
       Msg::Error("Volume overlaps: Parent face %d not found", tagParent);
       return false;
     }
-    // Only create the manager if there are overlaps
-    if (numOverlaps == 0) continue;
     auto manager = std::make_unique<overlapRegionManager>(model, tagParent);
     // For each (i,j) pair of the overlap of this entity, read its tag,
     // physical and elements
