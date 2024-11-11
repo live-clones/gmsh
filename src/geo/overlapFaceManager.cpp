@@ -48,6 +48,7 @@ void overlapFaceManager::create(int overlapSize, bool createPhysicals)
       continue;
     }
     partitionFace *thisFace = dynamic_cast<partitionFace *>(*it);
+    std::set<MTriangle *> allTrianglesInOverlap;
 
     for(unsigned j = 1; j <= numPartitions; ++j) {
       if(i == j) continue;
@@ -72,6 +73,8 @@ void overlapFaceManager::create(int overlapSize, bool createPhysicals)
       overlapFace *overlapij =
         new overlapFace(model, ++elementaryNumber, thisFace, neighborFace);
       for(auto triangle : triangles) { overlapij->addElement(triangle); }
+      // Fill the "overlap of i" set
+      for (auto t: triangles) {allTrianglesInOverlap.insert(t);}
 
       overlapij->setManager(this);
       this->addOverlap(overlapij);
@@ -85,6 +88,47 @@ void overlapFaceManager::create(int overlapSize, bool createPhysicals)
       model->add(bnd);
       this->boundaries[i][j] = bnd;
     }
+    std::set<MVertex*> verticesI;
+    for (auto t: thisFace->triangles) {
+      for (int i = 0; i < 3; ++i) {
+        verticesI.insert(t->getVertex(i));
+      }
+    }
+
+    /* Begin full boundary computation */
+    std::unordered_map<MEdge, int, MEdgeHash, MEdgeEqual> edgeCount;
+    for(auto triangle : allTrianglesInOverlap) {
+      for(int k = 0; k < 3; ++k) edgeCount[triangle->getEdge(k)]++;
+    }
+    std::unordered_set<MEdge, MEdgeHash, MEdgeEqual> boundaryEdges;
+    for(auto [edge, count] : edgeCount) {
+      // Exterior boundary if edge appears once and one of its vertices is not in the covered surface (boundary)
+      if(count != 1) continue;
+      if(verticesI.count(edge.getVertex(0)) && verticesI.count(edge.getVertex(1))) continue;
+
+      // One of the vertices must be inside the global surface (not on the boundary of domain i)
+      for (int i = 0; i < 2; ++i) {
+        if (verticesI.count(edge.getVertex(i))) continue;
+        // Is it on the surface ?
+        GEntity* onWhat = edge.getVertex(i)->onWhat();
+        GEntity* parent = onWhat->getParentEntity();
+        if (parent == nullptr)
+          Msg::Error("Boundary of face overlap: Vertex %d has not parent", edge.getVertex(i)->getNum());
+        if(parent->dim() == 2 && parent->tag() == tagParent) {
+          boundaryEdges.insert(edge);
+        }
+      }
+    }
+
+    std::vector<MLine*> linesBnd;
+    for (MEdge edge: boundaryEdges) {
+      linesBnd.push_back(new MLine(edge.getVertex(0), edge.getVertex(1)));
+    }
+    /* End full boundary computation */
+    partitionEdge* fullBnd = new partitionEdge(model, ++elementaryNumberBnd, {i});
+    fullBnd->lines = std::move(linesBnd); // Take ownership
+    model->add(fullBnd);
+    this->fullBoundaries[i] = fullBnd;
   }
   unsigned nPhysicalsCreated = 0;
   if(createPhysicals) {
@@ -106,7 +150,7 @@ void overlapFaceManager::create(int overlapSize, bool createPhysicals)
       }
       gmsh::model::addPhysicalGroup(2, overlapTags, -1,
                                     basis_name + std::to_string(i));
-      gmsh::model::addPhysicalGroup(1, bndTags, -1,
+      gmsh::model::addPhysicalGroup(1, {fullBoundaries.at(i)->tag()}, -1,
                                     basis_name + std::to_string(i) + "_bnd");
                                     Msg::Info("Created physical group %s", (basis_name + std::to_string(i) + "_bnd").c_str()) ;
       ++nPhysicalsCreated;

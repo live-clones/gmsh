@@ -18,6 +18,7 @@ private:
   int tagParent;
   std::map<int, std::map<int, overlapFace*>> overlaps;
   std::map<int, std::map<int, partitionEdge*>> boundaries;
+  std::map<int, partitionEdge*> fullBoundaries;
 public:
   overlapFaceManager(GModel* model, int tagParent, int overlapSize = 1, bool createPhysicals = true);
   void create(int overlapSize = 1, bool createPhysicals = true);
@@ -56,6 +57,14 @@ public:
 
   std::map<int, std::map<int, partitionEdge*>> getBoundaries() const {
     return boundaries;
+  }
+
+  std::map<int, partitionEdge*> getFullBoundaries() const {
+    return fullBoundaries;
+  }
+
+  void setFullBoundary(int i, partitionEdge* bnd) {
+    fullBoundaries[i] = bnd;
   }
 
 private:
