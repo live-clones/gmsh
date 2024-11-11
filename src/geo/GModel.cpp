@@ -2417,6 +2417,9 @@ GModel::getAllOverlapBoundaries() const
     for (const auto& [i, boundary]: map) {
       result.insert(boundary);
     }
+    for (const auto& [i, boundary]: manager->getFullBoundaries()) {
+      result.insert(boundary);
+    }
   }*/
   for (const auto& [parent, manager]: _overlapFaceManagers) {
     const auto& map = manager->getBoundaries();
@@ -2425,6 +2428,9 @@ GModel::getAllOverlapBoundaries() const
         result.insert(boundary);
       }
     }
+    for (const auto& [i, boundary]: manager->getFullBoundaries()) {
+      result.insert(boundary);
+    }
   }
   for (const auto& [parent, manager]: _overlapRegionManagers) {
     const auto& map = manager->getBoundaries();
@@ -2432,6 +2438,9 @@ GModel::getAllOverlapBoundaries() const
       for (const auto& [j, boundary]: submap) {
         result.insert(boundary);
       }
+    }
+    for (const auto& [i, boundary]: manager->getFullBoundaries()) {
+      result.insert(boundary);
     }
   }
   return result;
