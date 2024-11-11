@@ -701,13 +701,21 @@ std::set<MTetrahedron *> GRegion::getNearbyTetra(const GRegion &origin,
     }
   }
 
-  for (MTetrahedron* e : tetrahedra) {
-    for (int i = 0; i < e->getNumVertices(); i++) {
-      if (boundaryVertices.find(e->getVertex(i)) != boundaryVertices.end()) {
-        result.insert(e);
-        break;
+  for(unsigned l = 0; l < levels; ++l)
+  {
+    std::set<MVertex *> newBoundaryVertices;
+    for(MTetrahedron *e : tetrahedra) {
+      for(int i = 0; i < e->getNumVertices(); i++) {
+        if(boundaryVertices.find(e->getVertex(i)) != boundaryVertices.end()) {
+          result.insert(e);
+          for (int j = 0; j < e->getNumVertices(); j++) {
+            newBoundaryVertices.insert(e->getVertex(j));
+          }
+          break;
+        }
       }
     }
+    boundaryVertices = std::move(newBoundaryVertices);
   }
 
   Msg::Info("Found %d nearby tetrahedra", result.size());
