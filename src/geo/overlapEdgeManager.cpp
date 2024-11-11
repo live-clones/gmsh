@@ -46,6 +46,7 @@ void overlapEdgeManager::create(int overlapSize, bool createPhysicals)
       continue;
     }
     partitionEdge *thisEdge = dynamic_cast<partitionEdge *>(*it);
+    std::set<MLine *> allLinesInOverlap;
 
     for(unsigned j = 1; j <= numPartitions; ++j) {
       if(i == j) continue;
@@ -70,19 +71,47 @@ void overlapEdgeManager::create(int overlapSize, bool createPhysicals)
       overlapEdge *overlapij =
         new overlapEdge(model, ++elementaryNumber, thisEdge, neighborEdge);
       for(auto line : lines) { overlapij->addElement(line); }
+      for(auto line : lines) {
+        allLinesInOverlap.insert(line);
+      }
 
       overlapij->setManager(this);
       this->addOverlap(overlapij);
       model->add(overlapij);
       ++nOverlapsCreated;
 
-      // Handle boundary
-      auto boundary = _createBoundary(lines);
-      partitionVertex* bnd = new partitionVertex(model, ++elementaryNumberBnd, {i});
-      bnd->points = boundary; // Take ownership
-      model->add(bnd);
-      this->boundaries[i][j] = bnd;
     }
+    std::set<MVertex*> verticesI;
+    for (auto l: thisEdge->lines) {
+      verticesI.insert(l->getVertex(0));
+      verticesI.insert(l->getVertex(1));
+    }
+
+    /* Begin full boundary computation */
+    std::map<MVertex*, int> vertexCount;
+    for(auto line : allLinesInOverlap) {
+      vertexCount[line->getVertex(0)]++;
+      vertexCount[line->getVertex(1)]++;
+    }
+    std::set<MVertex*> boundaryVertices;
+    for(auto [vertex, count] : vertexCount) {
+      if(count == 1) {
+        boundaryVertices.insert(vertex);
+        // Further checks ?
+      }
+    }
+
+    std::vector<MPoint*> bndElems;
+    for(auto vertex : boundaryVertices) {
+      bndElems.push_back(new MPoint(vertex));
+    }
+    /* End full boundary computation */
+    partitionVertex*  fullBnd = new partitionVertex(model, ++elementaryNumberBnd, {i});
+    fullBnd->points = std::move(bndElems); // Take ownership
+    model->add(fullBnd);
+    this->fullBoundaries[i] = fullBnd;
+    std::string physName = "fullBoundaryOfEdge" + std::to_string(tagParent) +
+                           "_" + std::to_string(i);
   }
   unsigned nPhysicalsCreated = 0;
   if(createPhysicals) {
@@ -96,17 +125,11 @@ void overlapEdgeManager::create(int overlapSize, bool createPhysicals)
       for(auto [j, overlap] : *overlaps) {
         overlapTags.push_back(overlap->tag());
       }
-      std::vector<int> bndTags;
-      if(boundaries.find(i) != boundaries.end()) {
-        for(auto [j, bnd] : boundaries[i]) { bndTags.push_back(bnd->tag());}
-      }
       gmsh::model::addPhysicalGroup(1, overlapTags, -1,
                                     basis_name + std::to_string(i));
 
-      gmsh::model::addPhysicalGroup(0, bndTags, -1,
+      gmsh::model::addPhysicalGroup(0, {fullBoundaries.at(i)->tag()}, -1,
                                     basis_name + std::to_string(i) + "_bnd");
-      Msg::Info("Created physical group %s",
-                (basis_name + std::to_string(i) + "_bnd").c_str());
       ++nPhysicalsCreated;
     }
     Msg::Debug("Created %d physicals for entity 1 %d", nPhysicalsCreated,
