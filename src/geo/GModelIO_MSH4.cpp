@@ -761,69 +761,86 @@ static bool readMSH4Overlaps(GModel *const model, FILE *fp, bool partition,
   return true;
 }
 
-static bool readMSH4OverlapBoundaries(GModel *const model, FILE *fp, bool partition,
-                             bool binary, bool swap, double version)
+static bool readMSH4OverlapBoundaries(GModel *const model, FILE *fp,
+                                      bool partition, bool binary, bool swap,
+                                      double version)
 {
   int numBlocks;
-  if (binary) {
+  if(binary) {
     if(fread(&numBlocks, sizeof(int), 1, fp) != 1) return false;
-  } else {
+  }
+  else {
     if(fscanf(fp, "%d", &numBlocks) != 1) return false;
   }
   Msg::Info("Reading %d overlap boundaries", numBlocks);
   // Now read numBlocks lines of 5 int, formatted as dim parent i j tag
-  int buffer[5];
-  for (int k = 0; k < numBlocks; ++k) {
-    if (binary) {
-      if (fread(buffer, sizeof(int), 5, fp) != 5) return false;
+  int buffer[4];
+  for(int k = 0; k < numBlocks; ++k) {
+    if(binary) {
+      if(fread(buffer, sizeof(int), 4, fp) != 4) return false;
     }
     else {
-      if(fscanf(fp, "%d %d %d %d %d", &buffer[0], &buffer[1], &buffer[2], &buffer[3], &buffer[4]) != 5) {
+      if(fscanf(fp, "%d %d %d %d", &buffer[0], &buffer[1], &buffer[2],
+                &buffer[3]) != 4) {
         return false;
       }
     }
-    Msg::Info("Overlap boundary %d: %d %d %d %d %d", k, buffer[0], buffer[1], buffer[2], buffer[3], buffer[4]);
-    if (buffer[0] == 1) {
+    Msg::Info("Overlap boundary %d: %d %d %d %d", k, buffer[0], buffer[1],
+              buffer[2], buffer[3]);
+    if(buffer[0] == 1) {
       int parentEdgeTag = buffer[1];
       auto it = model->getOverlapEdgeManagers().find(parentEdgeTag);
-      if (it == model->getOverlapEdgeManagers().end()) {
-        Msg::Error("Edge overlap boundary: Could not find manager for parent edge %d", parentEdgeTag);
+      if(it == model->getOverlapEdgeManagers().end()) {
+        Msg::Error(
+          "Edge overlap boundary: Could not find manager for parent edge %d",
+          parentEdgeTag);
         return false;
       }
-      partitionVertex* entity = dynamic_cast<partitionVertex*>(model->getEntityByTag(0, buffer[4]));
-      if (!entity) {
-        Msg::Error("Edge overlap boundary: Could not find entity %d", buffer[4]);
+      partitionVertex *entity =
+        dynamic_cast<partitionVertex *>(model->getEntityByTag(0, buffer[3]));
+      if(!entity) {
+        Msg::Error("Edge overlap boundary: Could not find entity %d",
+                   buffer[3]);
         return false;
       }
-      it->second->addBoundary(entity, buffer[2], buffer[3]);
+      it->second->setFullBoundary(buffer[2], entity);
     }
-    else if (buffer[0] == 2) {
+    else if(buffer[0] == 2) {
       int parentFaceTag = buffer[1];
       auto it = model->getOverlapFaceManagers().find(parentFaceTag);
-      if (it == model->getOverlapFaceManagers().end()) {
-        Msg::Error("Face overlap boundary: Could not find manager for parent face %d", parentFaceTag);
+      if(it == model->getOverlapFaceManagers().end()) {
+        Msg::Error(
+          "Face overlap boundary: Could not find manager for parent face %d",
+          parentFaceTag);
         return false;
       }
-      partitionEdge* entity = dynamic_cast<partitionEdge*>(model->getEntityByTag(1, buffer[4]));
-      if (!entity) {
-        Msg::Error("Face overlap boundary: Could not find entity %d", buffer[4]);
+      partitionEdge *entity =
+        dynamic_cast<partitionEdge *>(model->getEntityByTag(1, buffer[3]));
+      if(!entity) {
+        Msg::Error("Face overlap boundary: Could not find entity %d",
+                   buffer[3]);
         return false;
       }
-      it->second->addBoundary(entity, buffer[2], buffer[3]);
+      it->second->setFullBoundary(buffer[2], entity);
     }
-    else if (buffer[0] == 3) {
+    else if(buffer[0] == 3) {
       int parentVolumeTag = buffer[1];
       auto it = model->getOverlapRegionManagers().find(parentVolumeTag);
-      if (it == model->getOverlapRegionManagers().end()) {
-        Msg::Error("Face overlap boundary: Could not find manager for parent face %d", parentVolumeTag);
+      if(it == model->getOverlapRegionManagers().end()) {
+        Msg::Error(
+          "Region overlap boundary: Could not find manager for parent volume %d",
+          parentVolumeTag);
         return false;
       }
-      partitionFace* entity = dynamic_cast<partitionFace*>(model->getEntityByTag(2, buffer[4]));
-      if (!entity) {
-        Msg::Error("Region overlap boundary: Could not find entity %d", buffer[4]);
+      partitionFace *entity =
+        dynamic_cast<partitionFace *>(model->getEntityByTag(2, buffer[3]));
+      if(!entity) {
+        Msg::Error("Region overlap boundary: Could not find entity %d",
+                   buffer[3]);
         return false;
       }
-      it->second->addBoundary(entity, buffer[2], buffer[3]);
+      it->second->setFullBoundary(buffer[2], entity);
+      Msg::Info("Setting full boundary %d %d", buffer[2], entity->tag());
     }
   }
   return true;
@@ -2721,49 +2738,40 @@ writeMSH4OverlapBoundaries(GModel *const model, FILE *fp, int partitionToSave,
                            std::map<GEntity *, SBoundingBox3d> *entityBounds)
 {
   fprintf(fp, "$OverlapBoundaries\n");
-  using EntryType = std::array<int, 5>;
-  // Dimension entity i j tag (tag of smaller entity)
+  using EntryType = std::array<int, 4>;
+  // Dimension entity i tag (of the bnd)
   std::vector<EntryType> entries;
   for (auto it = model->getOverlapEdgeManagers().begin(); it != model->getOverlapEdgeManagers().end(); ++it) {
     int parent = it->first;
     int dim = 1;
-    const auto &map = it->second->getBoundaries();
-    for (const auto& [i, submap]: map) {
+    const auto &map = it->second->getFullBoundaries();
+    for(const auto &[i, entity] : map) {
       if(partitionToSave != 0 && partitionToSave != i) {
-        continue; // Only save this part unless we save all
+        //continue; // Only save this part unless we save all
       }
-      for (const auto& [j, boundary]: submap) {
-        int tag = boundary->tag();
-        entries.push_back({dim, parent, i, j, tag});
-      }
+      entries.push_back({dim, parent, i, entity->tag()});
     }
   }
   for (auto it = model->getOverlapFaceManagers().begin(); it != model->getOverlapFaceManagers().end(); ++it) {
     int parent = it->first;
     int dim = 2;
-    const auto &map = it->second->getBoundaries();
-    for (const auto& [i, submap]: map) {
+    const auto &map = it->second->getFullBoundaries();
+    for (const auto& [i, entity]: map) {
       if(partitionToSave != 0 && partitionToSave != i) {
-        continue; // Only save this part unless we save all
+        //continue; // Only save this part unless we save all
       }
-      for (const auto& [j, boundary]: submap) {
-        int tag = boundary->tag();
-        entries.push_back({dim, parent, i, j, tag});
-      }
+      entries.push_back({dim, parent, i, entity->tag()});
     }
   }
   for (auto it = model->getOverlapRegionManagers().begin(); it != model->getOverlapRegionManagers().end(); ++it) {
     int parent = it->first;
     int dim = 3;
-    const auto &map = it->second->getBoundaries();
-    for (const auto& [i, submap]: map) {
+    const auto &map = it->second->getFullBoundaries();
+    for(const auto &[i, entity] : map) {
       if(partitionToSave != 0 && partitionToSave != i) {
-        continue; // Only save this part unless we save all
+        //continue; // Only save this part unless we save all
       }
-      for (const auto& [j, boundary]: submap) {
-        int tag = boundary->tag();
-        entries.push_back({dim, parent, i, j, tag});
-      }
+      entries.push_back({dim, parent, i, entity->tag()});
     }
   }
   int numEntries = static_cast<int>(entries.size());
@@ -2778,10 +2786,9 @@ writeMSH4OverlapBoundaries(GModel *const model, FILE *fp, int partitionToSave,
       fwrite(&entry[1], sizeof(int), 1, fp);
       fwrite(&entry[2], sizeof(int), 1, fp);
       fwrite(&entry[3], sizeof(int), 1, fp);
-      fwrite(&entry[4], sizeof(int), 1, fp);
     }
     else {
-      fprintf(fp, "%d %d %d %d %d\n", entry[0], entry[1], entry[2], entry[3], entry[4]);
+      fprintf(fp, "%d %d %d %d\n", entry[0], entry[1], entry[2], entry[3]);
     }
   }
   if (binary)
@@ -4002,9 +4009,9 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool partitioned,
       for(const auto &[j, overlapFace] : *overlapsOnPartition) {
         faces.insert(overlapFace);
       }
-      for(const auto &[j, overlapEdge] : *boundary) {
+      /*for(const auto &[j, overlapEdge] : *boundary) {
         edges.insert(overlapEdge);
-      }
+      }*/
     }
     for(const auto &[parentVolumeTag, manager] :
         model->getOverlapRegionManagers()) {
@@ -4014,9 +4021,9 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool partitioned,
       for(const auto &[j, overlapFace] : *overlapsOnPartition) {
         regions.insert(overlapFace);
       }
-      for(const auto &[j, overlapFace] : *boundary) {
+      /*for(const auto &[j, overlapFace] : *boundary) {
         faces.insert(overlapFace);
-      }
+      }*/
     }
   }
 
