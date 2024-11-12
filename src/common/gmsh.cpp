@@ -1442,12 +1442,17 @@ GMSH_API bool gmsh::model::mesh::findOverlapBoundariesEntities(
       Msg::Warning("No overlap region manager found for entity %d", tag);
       return false;
     }
-    auto map = manager->second->getOverlapBoundariesOf(partition);
-    if (!map)
+    auto bndDict = manager->second->getFullBoundaries();
+    auto it = bndDict.find(partition);
+    if(it == bndDict.end()) {
+      Msg::Error("No overlap boundaries found for entity %d and partition %d. Dictionary has size %lu and first is %d",
+                 tag, partition, bndDict.size(), bndDict.begin()->first);
+                 for (auto [key, _] : bndDict) {
+                   Msg::Error("Key: %d", key);
+                 }
       return false;
-    for(auto it = map->begin(); it != map->end(); ++it) {
-      overlapEntities.push_back(it->second->tag());
     }
+    overlapEntities.push_back(it->second->tag());
   } break;
   default: Msg::Error("Invalid dimension %d", dim); break;
   }
