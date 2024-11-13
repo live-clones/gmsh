@@ -785,8 +785,6 @@ static bool readMSH4OverlapBoundaries(GModel *const model, FILE *fp,
         return false;
       }
     }
-    Msg::Info("Overlap boundary %d: %d %d %d %d", k, buffer[0], buffer[1],
-              buffer[2], buffer[3]);
     if(buffer[0] == 1) {
       int parentEdgeTag = buffer[1];
       auto it = model->getOverlapEdgeManagers().find(parentEdgeTag);
@@ -840,7 +838,6 @@ static bool readMSH4OverlapBoundaries(GModel *const model, FILE *fp,
         return false;
       }
       it->second->setFullBoundary(buffer[2], entity);
-      Msg::Info("Setting full boundary %d %d", buffer[2], entity->tag());
     }
   }
   return true;
