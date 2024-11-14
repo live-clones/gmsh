@@ -3359,6 +3359,15 @@ getEntitiesToSave(GModel *const model, bool partitioned,
         regions.insert(*it);
     }
   }
+
+  // HOTFIX: If we save an entity which as an overlap, save the embedded entities in the overlapped entity
+   for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) { 
+    GRegion* gr = static_cast<GRegion*>(*it);
+    auto embVertices = gr->embeddedVertices();
+    for (GVertex* vertex : embVertices) {
+      vertices.insert(vertex);
+    }
+   }
 }
 
 static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
