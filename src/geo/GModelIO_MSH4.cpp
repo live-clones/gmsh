@@ -3366,6 +3366,13 @@ getEntitiesToSave(GModel *const model, bool partitioned,
     auto embVertices = gr->embeddedVertices();
     for (GVertex* vertex : embVertices) {
       vertices.insert(vertex);
+      Msg::Info("Adding embedded vertex %d", vertex->tag());
+      for (auto it2 = model->firstVertex(); it2 != model->lastVertex(); ++it2) {
+        if ((*it2)->geomType() == GEntity::PartitionPoint && (*it2)->getParentEntity() == vertex) {
+          vertices.insert(*it2);
+          Msg::Info("Adding partitioned vertex %d", (*it2)->tag());
+        }
+      }
     }
    }
 }
