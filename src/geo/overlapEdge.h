@@ -40,20 +40,6 @@ public:
   overlapEdgeManager *getManager() const { return _manager; }
   void setManager(overlapEdgeManager *manager) { _manager = manager; }
 
-  // All entites which must be exported for this to have all needed nodes
-  std::set<GEntity *> getCoveredEntities() const
-  {
-    std::set<GEntity *> entities;
-    entities.insert(_overlapOn);
-    for(MLine *line : this->lines) {
-      for(unsigned n = 0; n < 2; n++) {
-        MVertex *v = line->getVertex(n);
-        entities.insert(v->onWhat());
-      }
-    }
-    return entities;
-  }
-
   virtual ~overlapEdge() { deleteMesh(); }
   virtual void deleteMesh() override
   {

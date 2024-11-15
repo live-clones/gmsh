@@ -40,19 +40,6 @@ public:
   overlapFaceManager *getManager() const { return _manager; }
   void setManager(overlapFaceManager *manager) { _manager = manager; }
 
-  // All entites which must be exported for this to have all needed nodes
-  std::set<GEntity *> getCoveredEntities() const
-  {
-    std::set<GEntity *> entities;
-    entities.insert(_overlapOn);
-    for(MTriangle *t : this->triangles) {
-      for(unsigned n = 0; n < 3; n++) {
-        MVertex *v = t->getVertex(n);
-        entities.insert(v->onWhat());
-      }
-    }
-    return entities;
-  }
 
   virtual ~overlapFace() { deleteMesh(); }
   virtual void deleteMesh() override
