@@ -4198,10 +4198,22 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool partitioned,
     for (std::size_t i = 0; i < f->getNumMeshVertices(); i++) {
       ownedVertices.insert(f->getMeshVertex(i)->getNum());
     }
+    for (size_t k = 0; k < f->getNumMeshElements(); ++k) {
+      MElement* e = f->getMeshElement(k);
+      for (std::size_t j = 0; j < e->getNumVertices(); j++) {
+        ownedVertices.insert(e->getVertex(j)->getNum());
+      }
+    }
   }
   for (GEdge* e : edges) {
     for (std::size_t i = 0; i < e->getNumMeshVertices(); i++) {
       ownedVertices.insert(e->getMeshVertex(i)->getNum());
+    }
+    for (size_t k = 0; k < e->getNumMeshElements(); ++k) {
+      MElement* el = e->getMeshElement(k);
+      for (std::size_t j = 0; j < el->getNumVertices(); j++) {
+        ownedVertices.insert(el->getVertex(j)->getNum());
+      }
     }
   }
   for (GVertex* v : vertices) {
