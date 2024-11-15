@@ -4102,8 +4102,11 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool partitioned,
   edgeTags.reserve(model->getNumMEdges());
   edgeNodes.reserve(model->getNumMEdges() * 2);
   for(auto it = model->firstMEdge(); it != model->lastMEdge(); ++it) {
-    // If the first node is missing, don't save the edge
-    if (ownedVertices.find(it->first.getVertex(0)->getNum()) == ownedVertices.end()) {
+    // If both nodes are missing, don't save the edge
+    if(ownedVertices.find(it->first.getVertex(0)->getNum()) ==
+         ownedVertices.end() &&
+       ownedVertices.find(it->first.getVertex(1)->getNum()) ==
+         ownedVertices.end()) {
       continue;
     }
     edgeTags.push_back(it->second);
