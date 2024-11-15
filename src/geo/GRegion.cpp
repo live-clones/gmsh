@@ -697,7 +697,9 @@ std::set<MTetrahedron *> GRegion::getNearbyTetra(const GRegion &origin,
 
   for (MElement* e : origin.tetrahedra) {
     for (int i = 0; i < e->getNumVertices(); i++) {
-      boundaryVertices.insert(e->getVertex(i));
+      auto v = e->getVertex(i);
+      if (v->onWhat()->dim() != 3) // Smaller set !
+        boundaryVertices.insert(v);
     }
   }
 
