@@ -48,12 +48,28 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
                               // entity
       partitionRegion *region = dynamic_cast<partitionRegion *>(e);
       if(!region) continue; // Skip the "full" entities
-      auto boundaryVertices = region->getBoundaryVertices();
 
       if(!region || region->geomType() == GEntity::OverlapVolume)
         continue; // Avoid overlaps of overlaps ?
       if(region->getPartitions().size() != 1 || region->getPartitions()[0] != i)
         continue;
+
+      // Get all the valid "j"
+      std::set<int> touchingPartitions;
+      {
+        auto neighborFaces = region->faces();
+        for(GFace *f : neighborFaces) {
+          partitionFace *pf = dynamic_cast<partitionFace *>(f);
+          if(!pf) continue;
+          for(int p : pf->getPartitions()) {
+            if(p != i) touchingPartitions.insert(p);
+          }
+        }
+      }
+      Msg::Info("Region %d has %d touching partitions", region->tag(), touchingPartitions.size());
+      
+      
+      auto boundaryVertices = region->getBoundaryVertices();
 
       std::vector<int> tagsForPhysicals;
 
@@ -66,6 +82,9 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
         if(otherRegion->getPartitions().size() != 1 ||
            otherRegion->getPartitions()[0] == i)
           continue;
+
+        int j = otherRegion->getPartitions()[0];
+        if (touchingPartitions.find(j) == touchingPartitions.end()) continue; // Skip non-touching partitions
 
         // Fill the overlap
         auto tetras =
