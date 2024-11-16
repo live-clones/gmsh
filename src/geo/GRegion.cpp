@@ -689,26 +689,43 @@ void GRegion::removeElements(bool del)
   polyhedra.clear();
 }
 
-std::set<MTetrahedron *> GRegion::getNearbyTetra(const GRegion &origin,
-                                                 unsigned levels) const
+std::set<MVertex *> GRegion::getBoundaryVertices() const
+{
+  std::set<MVertex *> result;
+  for(MElement *e : tetrahedra) {
+    for(int i = 0; i < e->getNumVertices(); i++) {
+      auto v = e->getVertex(i);
+      if(v->onWhat()->dim() != 3) // Smaller set !
+        result.insert(v); // Also includes embedded points maybe ?
+    }
+  }
+  return result;
+}
+
+std::set<MTetrahedron *>
+GRegion::getNearbyTetra(const GRegion &origin,
+                        const std::set<MVertex *> &boundaryVertices,
+                        unsigned levels) const
 {
   std::set<MTetrahedron *> result;
-  std::set<MVertex *> boundaryVertices;
 
-  for (MElement* e : origin.tetrahedra) {
+  /*for (MElement* e : origin.tetrahedra) {
     for (int i = 0; i < e->getNumVertices(); i++) {
       auto v = e->getVertex(i);
       if (v->onWhat()->dim() != 3) // Smaller set !
         boundaryVertices.insert(v);
     }
-  }
+  }*/
+
+
+  auto currentBoundaryVertices = boundaryVertices;
 
   for(unsigned l = 0; l < levels; ++l)
   {
     std::set<MVertex *> newBoundaryVertices;
     for(MTetrahedron *e : tetrahedra) {
       for(int i = 0; i < e->getNumVertices(); i++) {
-        if(boundaryVertices.find(e->getVertex(i)) != boundaryVertices.end()) {
+        if(currentBoundaryVertices.find(e->getVertex(i)) != currentBoundaryVertices.end()) {
           result.insert(e);
           for (int j = 0; j < e->getNumVertices(); j++) {
             newBoundaryVertices.insert(e->getVertex(j));
@@ -717,7 +734,7 @@ std::set<MTetrahedron *> GRegion::getNearbyTetra(const GRegion &origin,
         }
       }
     }
-    boundaryVertices = std::move(newBoundaryVertices);
+    currentBoundaryVertices = std::move(newBoundaryVertices);
   }
 
   Msg::Info("Found %d nearby tetrahedra", result.size());

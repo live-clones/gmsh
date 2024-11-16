@@ -18,6 +18,8 @@ private:
   GModel* model;
   int tagParent;
   std::map<int, std::map<int, overlapRegion*>> overlaps;
+  std::map<int, std::set<overlapRegion*>> overlapsByPartition;
+  std::map<int, std::set<partitionFace*>> boundariesByPartition;
   std::map<int, std::map<int, partitionFace*>> boundaries;
   std::map<int, partitionFace*> fullBoundaries;
 public:
@@ -32,11 +34,20 @@ public:
     return it2->second;
   }
 
-  const std::map<int, overlapRegion*>* getOverlapsOf(int of) const {
-    auto it = overlaps.find(of);
-    if (it == overlaps.end()) return nullptr;
-    return &it->second;
+  const std::map<int, std::set<overlapRegion*>>& getOverlapsByPartition() const {
+    return overlapsByPartition;
   }
+  std::map<int, std::set<overlapRegion*>>& getOverlapsByPartition() {
+    return overlapsByPartition;
+  }
+
+  const std::map<int, std::set<partitionFace*>>& getBoundariesByPartition() const {
+    return boundariesByPartition;
+  }
+  std::map<int, std::set<partitionFace*>>& getBoundariesByPartition() {
+    return boundariesByPartition;
+  }
+  
 
   const std::map<int, partitionFace*>* getOverlapBoundariesOf(int of) const {
     auto it = boundaries.find(of);

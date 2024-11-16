@@ -1387,12 +1387,20 @@ gmsh::model::mesh::findOverlapEntities(const int dim, const int tag,
       Msg::Warning("No overlap region manager found for entity %d", tag);
       return false;
     }
+    const auto& ovlpDict = manager->second->getOverlapsByPartition();
+    auto it = ovlpDict.find(partition);
+    if (it != ovlpDict.end()) {
+      for (overlapRegion* ovlp : it->second) {
+        overlapEntities.push_back(ovlp->tag());
+      }
+    }
+    /*
     auto map = manager->second->getOverlapsOf(partition);
     if (!map)
       return false;
     for(auto it = map->begin(); it != map->end(); ++it) {
       overlapEntities.push_back(it->second->tag());
-    }
+    }*/
   } break;
   default: Msg::Error("Invalid dimension %d", dim); break;
   }
@@ -1442,6 +1450,14 @@ GMSH_API bool gmsh::model::mesh::findOverlapBoundariesEntities(
       Msg::Warning("No overlap region manager found for entity %d", tag);
       return false;
     }
+    auto bndDict = manager->second->getBoundariesByPartition();
+    auto it = bndDict.find(partition);
+    if (it != bndDict.end()) {
+      for (partitionFace* f : it->second) {
+        overlapEntities.push_back(f->tag());
+      }
+    }
+    /*
     auto bndDict = manager->second->getFullBoundaries();
     auto it = bndDict.find(partition);
     if(it == bndDict.end()) {
@@ -1452,7 +1468,7 @@ GMSH_API bool gmsh::model::mesh::findOverlapBoundariesEntities(
                  }
       return false;
     }
-    overlapEntities.push_back(it->second->tag());
+    overlapEntities.push_back(it->second->tag());*/
   } break;
   default: Msg::Error("Invalid dimension %d", dim); break;
   }

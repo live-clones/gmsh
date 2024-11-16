@@ -12,7 +12,8 @@
 #include <unordered_set>
 
 overlapRegionManager::overlapRegionManager(GModel *model, int tagParent,
-                                       int overlapSize, bool createPhysicals)
+                                           int overlapSize,
+                                           bool createPhysicals)
   : model(model), tagParent(tagParent)
 {
 }
@@ -30,60 +31,65 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
   }
 
   int elementaryNumber =
-    model->getMaxElementaryNumber(3); // Tags of new 2D entites
-    int elementaryNumberBnd =
-    model->getMaxElementaryNumber(2); // Tags of new 1D entites
+    model->getMaxElementaryNumber(3); // Tags of new 3D entites
+  int elementaryNumberBnd =
+    model->getMaxElementaryNumber(2); // Tags of new 2D entites
   unsigned nOverlapsCreated = 0;
 
   for(unsigned i = 1; i <= numPartitions; ++i) {
     // Generate overlaps of partition i
-    auto it = std::find_if(
-      entities.begin(), entities.end(), [i, parentRegion](GEntity *e) {
-        if(e->getParentEntity() != parentRegion) return false;
-        partitionRegion *gf = dynamic_cast<partitionRegion *>(e);
-        if(!gf) return false;
-        return gf->getPartitions().size() == 1 && gf->getPartitions()[0] == i;
-      });
 
-    if(it == entities.end()) {
-      // It is not necassary for all partitions to have an entity, just skip
-      continue;
-    }
-    partitionRegion *thisRegion = dynamic_cast<partitionRegion *>(*it);
-    std::set<MTetrahedron*> allElementsInOverlap; // Union over j of all overlaps, for full bnd;
+    unsigned nOverlapsInI = 0;
 
+    // Loop over all partitioned regions with only one partition that is i
+    for(auto e : entities) {
+      std::set<MTetrahedron *>
+        allElementsInOverlap; // Total set of elements in the overlaps of this
+                              // entity
+      partitionRegion *region = dynamic_cast<partitionRegion *>(e);
+      if(!region) continue; // Skip the "full" entities
+      auto boundaryVertices = region->getBoundaryVertices();
 
-    for(unsigned j = 1; j <= numPartitions; ++j) {
-      if(i == j) continue;
-      auto it = std::find_if(
-        entities.begin(), entities.end(), [j, parentRegion](GEntity *e) {
-          if(e->getParentEntity() != parentRegion) return false;
-          partitionRegion *gf = dynamic_cast<partitionRegion *>(e);
-          if(!gf) return false;
-          return gf->getPartitions().size() == 1 && gf->getPartitions()[0] == j;
-        });
-
-      if(it == entities.end()) {
+      if(!region || region->geomType() == GEntity::OverlapVolume)
+        continue; // Avoid overlaps of overlaps ?
+      if(region->getPartitions().size() != 1 || region->getPartitions()[0] != i)
         continue;
-      }
-      partitionRegion *neighborRegion = dynamic_cast<partitionRegion *>(*it);
-      if(!neighborRegion) {
-        Msg::Error("Neighbor region is not a partitionRegion");
-        continue;
-      }
-      auto tetras = neighborRegion->getNearbyTetra(*thisRegion, overlapSize);
-      if(tetras.empty()) { continue; }
-      overlapRegion *overlapij =
-        new overlapRegion(model, ++elementaryNumber, thisRegion, neighborRegion);
-      for(auto tetra : tetras) { overlapij->addElement(tetra); }
-      for(auto tetra : tetras) { allElementsInOverlap.insert(tetra); }
 
-      overlapij->setManager(this);
-      this->addOverlap(overlapij);
-      model->add(overlapij);
-      ++nOverlapsCreated;
-     
-    }
+      std::vector<int> tagsForPhysicals;
+
+      for(auto e2 : entities) {
+        partitionRegion *otherRegion = dynamic_cast<partitionRegion *>(e2);
+        if(!otherRegion || otherRegion->geomType() == GEntity::OverlapVolume)
+          continue;
+        if(e != e2 && otherRegion->getPartitions()[0] == i)
+          Msg::Warning("Region %d has more than one partitions", i);
+        if(otherRegion->getPartitions().size() != 1 ||
+           otherRegion->getPartitions()[0] == i)
+          continue;
+
+        // Fill the overlap
+        auto tetras =
+          otherRegion->getNearbyTetra(*region, boundaryVertices, overlapSize);
+        if(tetras.empty()) continue;
+        overlapRegion *overlap =
+          new overlapRegion(model, ++elementaryNumber, region, otherRegion);
+        overlap->setManager(this);
+        this->overlapsByPartition[i].insert(overlap);
+        model->add(overlap);
+        ++nOverlapsCreated;
+        tagsForPhysicals.push_back(overlap->tag());
+
+        for(auto tetra : tetras) { overlap->addElement(tetra); }
+        for(auto tetra : tetras) { allElementsInOverlap.insert(tetra); }
+      }
+
+      // Create Physical
+      gmsh::model::addPhysicalGroup(
+        3, tagsForPhysicals, -1,
+        "OverlapOfRegion_" + std::to_string(tagParent) + "_part_" +
+          std::to_string(i) + "_num_" + std::to_string(++nOverlapsInI));
+
+      // Find all faces at the boundary of the overlap of e.
       std::unordered_map<MFace, int, MFaceHash, MFaceEqual> faceCount;
       for(auto tetra : allElementsInOverlap) {
         for(int k = 0; k < tetra->getNumFaces(); ++k)
@@ -92,74 +98,43 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
       std::unordered_set<MFace, MFaceHash, MFaceEqual> boundaryFaces;
       for(auto [face, count] : faceCount) {
         if(count != 1) continue;
-        bool isBoundary = false;
         // Add if at least one point is not shared with the domain and has the
         // volume as parent
 
         for(int k = 0; k < face.getNumVertices(); ++k) {
           MVertex *v = face.getVertex(k);
-          GEntity* parent = v->onWhat();
-          if (parent->getParentEntity() != parentRegion) {
+          GEntity *parent = v->onWhat();
+          if(parent->getParentEntity() != parentRegion) { continue; }
+          if(std::find(boundaryVertices.begin(), boundaryVertices.end(), v) !=
+             boundaryVertices.end()) {
             continue;
           }
-          std::vector<int> partitions;
-          if (parent->geomType() == GEntity::PartitionVolume)
-            partitions = static_cast<partitionRegion*>(parent)->getPartitions();
-          else if (parent->geomType() == GEntity::PartitionSurface)
-            partitions = static_cast<partitionFace*>(parent)->getPartitions();
-          else if (parent->geomType() == GEntity::PartitionCurve)
-            partitions = static_cast<partitionEdge*>(parent)->getPartitions();
-          else if (parent->geomType() == GEntity::PartitionPoint)
-            partitions = static_cast<partitionVertex*>(parent)->getPartitions();
-          else
-            Msg::Error("Unknown entity type in overlap boundary construction: %s", parent->getTypeString().c_str());
-
-          if (std::find(partitions.begin(), partitions.end(), i) == partitions.end()) {
-            isBoundary = true;
-            break;
-          }
+          boundaryFaces.insert(face);
+          break;
         }
-
-        if(isBoundary) { boundaryFaces.insert(face); }
       }
+
+      // Create a full boundary for each overlap
+      partitionFace *fullBnd =
+        new partitionFace(model, ++elementaryNumberBnd, {i});
+
       std::vector<MTriangle *> bndElems;
-      for (auto face: boundaryFaces) {
-        if (face.getNumVertices() != 3) {
+      for(auto face : boundaryFaces) {
+        if(face.getNumVertices() != 3) {
           Msg::Error("Boundary face is not a triangle");
           continue;
         }
-        bndElems.push_back(new MTriangle(face.getVertex(0), face.getVertex(1), face.getVertex(2)));
+        bndElems.push_back(new MTriangle(face.getVertex(0), face.getVertex(1),
+                                         face.getVertex(2)));
       }
-      /* End full boundary computation */
-      partitionFace *fullBnd =
-        new partitionFace(model, ++elementaryNumberBnd, {i});
-        Msg::Info("Num elements in full boundary %d", bndElems.size());
       fullBnd->triangles = std::move(bndElems); // Take ownership
       model->add(fullBnd);
       Msg::Info("Created full boundary %d for i = %d", fullBnd->tag(), i);
-      this->fullBoundaries[i] = fullBnd;
-  }
-  unsigned nPhysicalsCreated = 0;
-  if(createPhysicals) {
-    std::string basis_name = "overlapOfRegion" + std::to_string(tagParent) + "_";
-    for(unsigned i = 1; i <= numPartitions; ++i) {
-      const auto overlaps = this->getOverlapsOf(i);
-      if(!overlaps) {
-        continue;
-      }
-      std::vector<int> overlapTags;
-      for(auto [j, overlap] : *overlaps) {
-        overlapTags.push_back(overlap->tag());
-      }
-      gmsh::model::addPhysicalGroup(3, overlapTags, -1,
-                                    basis_name + std::to_string(i));
-      gmsh::model::addPhysicalGroup(2, {fullBoundaries.at(i)->tag()}, -1,
-                                    basis_name + std::to_string(i) + "_bnd");
-                                    Msg::Info("Created physical group %s", (basis_name + std::to_string(i) + "_bnd").c_str()) ;
-      ++nPhysicalsCreated;
+      this->boundariesByPartition[i].insert(fullBnd);
+      gmsh::model::addPhysicalGroup(
+        2, {fullBnd->tag()}, -1,
+        "OverlapBndOfRegion_" + std::to_string(tagParent) + "_part_" +
+          std::to_string(i) + "_num_" + std::to_string(nOverlapsInI));
     }
-    Msg::Debug("Created %d physicals for entity 3 %d", nPhysicalsCreated,
-              tagParent);
   }
 }
-

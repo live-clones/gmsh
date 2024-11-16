@@ -68,7 +68,7 @@ void overlapFaceManager::create(int overlapSize, bool createPhysicals)
         Msg::Error("Neighbor face is not a partitionFace");
         continue;
       }
-      auto triangles = neighborFace->getNearbyTriangles(*thisFace, 1);
+      auto triangles = neighborFace->getNearbyTriangles(*thisFace, overlapSize);
       if(triangles.empty()) { continue; }
       overlapFace *overlapij =
         new overlapFace(model, ++elementaryNumber, thisFace, neighborFace);
