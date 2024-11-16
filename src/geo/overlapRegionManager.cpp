@@ -82,6 +82,9 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
         if(otherRegion->getPartitions().size() != 1 ||
            otherRegion->getPartitions()[0] == i)
           continue;
+        if(region->getParentEntity() != otherRegion->getParentEntity()) {
+          continue;
+        }
 
         int j = otherRegion->getPartitions()[0];
         if (touchingPartitions.find(j) == touchingPartitions.end()) continue; // Skip non-touching partitions

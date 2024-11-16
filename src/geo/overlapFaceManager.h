@@ -18,6 +18,8 @@ private:
   int tagParent;
   std::map<int, std::map<int, overlapFace*>> overlaps;
   std::map<int, std::map<int, partitionEdge*>> boundaries;
+  std::map<int, std::set<overlapFace*>> overlapsByPartition;
+  std::map<int, std::set<partitionEdge*>> boundariesByPartition;
   std::map<int, partitionEdge*> fullBoundaries;
 public:
   overlapFaceManager(GModel* model, int tagParent, int overlapSize = 1, bool createPhysicals = true);
@@ -29,6 +31,20 @@ public:
     auto it2 = it->second.find(on);
     if (it2 == it->second.end()) return nullptr;
     return it2->second;
+  }
+
+  const std::map<int, std::set<overlapFace*>>& getOverlapsByPartition() const {
+    return overlapsByPartition;
+  }
+  std::map<int, std::set<overlapFace*>>& getOverlapsByPartition() {
+    return overlapsByPartition;
+  }
+
+  const std::map<int, std::set<partitionEdge*>>& getBoundariesByPartition() const {
+    return boundariesByPartition;
+  }
+  std::map<int, std::set<partitionEdge*>>& getBoundariesByPartition() {
+    return boundariesByPartition;
   }
 
   const std::map<int, overlapFace*>* getOverlapsOf(int of) const {
@@ -66,10 +82,6 @@ public:
   void setFullBoundary(int i, partitionEdge* bnd) {
     fullBoundaries[i] = bnd;
   }
-
-private:
-  std::vector<MLine *>
-  _createBoundary(const std::set<MTriangle *> &trianglesInOverlap) const;
 };
 
 #endif

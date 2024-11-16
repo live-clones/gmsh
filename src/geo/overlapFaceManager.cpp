@@ -35,69 +35,78 @@ void overlapFaceManager::create(int overlapSize, bool createPhysicals)
 
   for(unsigned i = 1; i <= numPartitions; ++i) {
     // Generate overlaps of partition i
-    auto it = std::find_if(
-      entities.begin(), entities.end(), [i, parentFace](GEntity *e) {
-        if(e->getParentEntity() != parentFace) return false;
-        partitionFace *gf = dynamic_cast<partitionFace *>(e);
-        if(!gf) return false;
-        return gf->getPartitions().size() == 1 && gf->getPartitions()[0] == i;
-      });
 
-    if(it == entities.end()) {
-      // It is not necassary for all partitions to have an entity, just skip
+        unsigned nOverlapsInI = 0;
+        unsigned nDomInI = 0;
+for(auto e : entities) {
+  std::set<MTriangle *> allElementsInOverlap; // Total set of elements in the
+                                              // overlaps of this entity
+  partitionFace *surface = dynamic_cast<partitionFace *>(e);
+  if(!surface) continue; // Skip the "full" entities
+
+  if(!surface || surface->geomType() == GEntity::OverlapSurface)
+    continue; // Avoid overlaps of overlaps ?
+  if(surface->getPartitions().size() != 1 || surface->getPartitions()[0] != i)
+    continue;
+
+  if (surface->getParentEntity() != parentFace) {
+    continue;
+  }
+
+  ++nDomInI;
+
+  //auto boundaryVertices = region->getBoundaryVertices();
+
+  std::vector<int> tagsForPhysicals;
+
+  for(auto e2 : entities) {
+    partitionFace *otherSurface = dynamic_cast<partitionFace *>(e2);
+    if(!otherSurface || otherSurface->geomType() == GEntity::OverlapSurface)
+      continue;
+    
+    if(otherSurface->getPartitions().size() != 1 ||
+       otherSurface->getPartitions()[0] == i)
+      continue;
+
+    if (surface->getParentEntity() != otherSurface->getParentEntity()) {
       continue;
     }
-    partitionFace *thisFace = dynamic_cast<partitionFace *>(*it);
-    std::set<MTriangle *> allTrianglesInOverlap;
 
-    for(unsigned j = 1; j <= numPartitions; ++j) {
-      if(i == j) continue;
-      auto it = std::find_if(
-        entities.begin(), entities.end(), [j, parentFace](GEntity *e) {
-          if(e->getParentEntity() != parentFace) return false;
-          partitionFace *gf = dynamic_cast<partitionFace *>(e);
-          if(!gf) return false;
-          return gf->getPartitions().size() == 1 && gf->getPartitions()[0] == j;
-        });
+    /*int j = otherRegion->getPartitions()[0];
+    if(touchingPartitions.find(j) == touchingPartitions.end())
+      continue; // Skip non-touching partitions*/
 
-      if(it == entities.end()) {
-        continue;
-      }
-      partitionFace *neighborFace = dynamic_cast<partitionFace *>(*it);
-      if(!neighborFace) {
-        Msg::Error("Neighbor face is not a partitionFace");
-        continue;
-      }
-      auto triangles = neighborFace->getNearbyTriangles(*thisFace, overlapSize);
-      if(triangles.empty()) { continue; }
-      overlapFace *overlapij =
-        new overlapFace(model, ++elementaryNumber, thisFace, neighborFace);
-      for(auto triangle : triangles) { overlapij->addElement(triangle); }
-      // Fill the "overlap of i" set
-      for (auto t: triangles) {allTrianglesInOverlap.insert(t);}
+    // Fill the overlap
+    auto triangles = otherSurface->getNearbyTriangles(*surface, overlapSize);
+    if(triangles.empty()) continue;
+    overlapFace *overlap =
+      new overlapFace(model, ++elementaryNumber, surface, otherSurface);
+    overlap->setManager(this);
+    this->overlapsByPartition[i].insert(overlap);
+    model->add(overlap);
+    ++nOverlapsCreated;
+    tagsForPhysicals.push_back(overlap->tag());
 
-      overlapij->setManager(this);
-      this->addOverlap(overlapij);
-      model->add(overlapij);
-      ++nOverlapsCreated;
+    for(auto triangle : triangles) { overlap->addElement(triangle); }
+    for(auto triangle : triangles) { allElementsInOverlap.insert(triangle); }
+  }
 
-      // Handle boundary
-      auto boundary = _createBoundary(triangles);
-      partitionEdge* bnd = new partitionEdge(model, ++elementaryNumberBnd, {i});
-      bnd->lines = boundary; // Take ownership
-      model->add(bnd);
-      this->boundaries[i][j] = bnd;
-    }
-    std::set<MVertex*> verticesI;
-    for (auto t: thisFace->triangles) {
+  // Create Physical
+  gmsh::model::addPhysicalGroup(2, tagsForPhysicals, -1,
+                                "OverlapOfFace_" + std::to_string(tagParent) +
+                                  "_part_" + std::to_string(i) + "_num_" +
+                                  std::to_string(++nOverlapsInI));
+
+  // TO UPDATE BELOW
+  std::set<MVertex*> verticesI;
+    for (auto t: surface->triangles) {
       for (int i = 0; i < 3; ++i) {
         verticesI.insert(t->getVertex(i));
       }
     }
 
-    /* Begin full boundary computation */
-    std::unordered_map<MEdge, int, MEdgeHash, MEdgeEqual> edgeCount;
-    for(auto triangle : allTrianglesInOverlap) {
+  std::unordered_map<MEdge, int, MEdgeHash, MEdgeEqual> edgeCount;
+    for(auto triangle : allElementsInOverlap) {
       for(int k = 0; k < 3; ++k) edgeCount[triangle->getEdge(k)]++;
     }
     std::unordered_set<MEdge, MEdgeHash, MEdgeEqual> boundaryEdges;
@@ -120,68 +129,27 @@ void overlapFaceManager::create(int overlapSize, bool createPhysicals)
       }
     }
 
-    std::vector<MLine*> linesBnd;
-    for (MEdge edge: boundaryEdges) {
-      linesBnd.push_back(new MLine(edge.getVertex(0), edge.getVertex(1)));
-    }
-    /* End full boundary computation */
-    partitionEdge* fullBnd = new partitionEdge(model, ++elementaryNumberBnd, {i});
-    fullBnd->lines = std::move(linesBnd); // Take ownership
-    model->add(fullBnd);
-    this->fullBoundaries[i] = fullBnd;
-  }
-  unsigned nPhysicalsCreated = 0;
-  if(createPhysicals) {
-    std::string basis_name = "overlapOfFace" + std::to_string(tagParent) + "_";
-    for(unsigned i = 1; i <= numPartitions; ++i) {
-      const auto overlaps = this->getOverlapsOf(i);
-      if(!overlaps) {
-        continue;
+      // Create a full boundary for each overlap
+      partitionEdge *fullBnd =
+        new partitionEdge(model, ++elementaryNumberBnd, {i});
+
+      std::vector<MLine *> bndElems;
+      for(auto face : boundaryEdges) {
+        bndElems.push_back(new MLine(face.getVertex(0), face.getVertex(1)));
       }
-      std::vector<int> overlapTags;
-      for(auto [j, overlap] : *overlaps) {
-        overlapTags.push_back(overlap->tag());
-      }
-      std::vector<int> bndTags;
-      if (boundaries.find(i) != boundaries.end()) {
-        for(auto [j, bnd] : boundaries[i]) {
-          bndTags.push_back(bnd->tag());
-        }
-      }
-      gmsh::model::addPhysicalGroup(2, overlapTags, -1,
-                                    basis_name + std::to_string(i));
-      gmsh::model::addPhysicalGroup(1, {fullBoundaries.at(i)->tag()}, -1,
-                                    basis_name + std::to_string(i) + "_bnd");
-                                    Msg::Info("Created physical group %s", (basis_name + std::to_string(i) + "_bnd").c_str()) ;
-      ++nPhysicalsCreated;
+      fullBnd->lines = std::move(bndElems); // Take ownership
+      model->add(fullBnd);
+      Msg::Info("Created full boundary %d for i = %d", fullBnd->tag(), i);
+      this->boundariesByPartition[i].insert(fullBnd);
+      gmsh::model::addPhysicalGroup(
+        1, {fullBnd->tag()}, -1,
+        "OverlapBndOfFace_" + std::to_string(tagParent) + "_part_" +
+          std::to_string(i) + "_num_" + std::to_string(nOverlapsInI));
     }
-    Msg::Debug("Created %d physicals for entity 2 %d", nPhysicalsCreated,
-              tagParent);
-  }
-}
 
-std::vector<MLine *> overlapFaceManager::_createBoundary(
-  const std::set<MTriangle *> &trianglesInOverlap) const
-{
-  std::vector<MLine*> result;
-  std::unordered_map<MEdge, int, MEdgeHash, MEdgeEqual> edgeCount;
-  for (auto triangle: trianglesInOverlap) {
-    for (int k = 0; k < 3; ++k)
-      edgeCount[triangle->getEdge(k)]++;
-  }
+  Msg::Info("Created %d overlaps on %d entites for face %d", nOverlapsCreated, nDomInI, tagParent);
 
-  std::unordered_set<MEdge, MEdgeHash, MEdgeEqual> boundaryEdges;
-  for (auto [edge, count]: edgeCount) {
-    if (count != 1) continue;
-    // This edge is on the boundary if one of its point is in the covered surface. TODO: add physical boundaries
-    if (edge.getVertex(0)->onWhat()->dim() == 2 || edge.getVertex(1)->onWhat()->dim() == 2) {
-      boundaryEdges.insert(edge);
-    }
-  }
 
-  for (auto edge: boundaryEdges) {
-    result.push_back(new MLine(edge.getVertex(0), edge.getVertex(1)));
-  }
 
-  return result;
+  }
 }

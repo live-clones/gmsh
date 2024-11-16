@@ -1349,7 +1349,7 @@ static void createNewEntities(GModel *model, hashmapelementpart &elmToPartition)
   faces = model->getFaces();
   edges = model->getEdges();
   vertices = model->getVertices();
-  //divideNonConnectedEntities(model, -1, regions, faces, edges, vertices);
+  divideNonConnectedEntities(model, -1, regions, faces, edges, vertices);
 }
 
 static void fillElementToEntity(GModel *model, hashmapelement &elmToEntity,
@@ -1860,7 +1860,7 @@ static void createPartitionTopology(
     faceToElement.clear();
 
     faces = model->getFaces();
-    //divideNonConnectedEntities(model, 2, regions, faces, edges, vertices);
+    divideNonConnectedEntities(model, 2, regions, faces, edges, vertices);
     elementToEntity.clear();
     fillElementToEntity(model, elementToEntity, 2);
   }
@@ -1947,7 +1947,7 @@ static void createPartitionTopology(
     edgeToElement.clear();
 
     edges = model->getEdges();
-    //divideNonConnectedEntities(model, 1, regions, faces, edges, vertices);
+    divideNonConnectedEntities(model, 1, regions, faces, edges, vertices);
     elementToEntity.clear();
     fillElementToEntity(model, elementToEntity, 1);
   }
@@ -2028,7 +2028,7 @@ static void createPartitionTopology(
     vertexToElement.clear();
 
     vertices = model->getVertices();
-    //divideNonConnectedEntities(model, 0, regions, faces, edges, vertices);
+    divideNonConnectedEntities(model, 0, regions, faces, edges, vertices);
   }
 }
 
