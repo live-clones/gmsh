@@ -72,7 +72,7 @@ for libpath_to_look in possible_libpaths:
 # if we couldn't find it, use ctype's find_library utility...
 if not libpath:
     if platform.system() == "Windows":
-        libpath = find_library("gmsh-4.11")
+        libpath = find_library("gmsh-4.14")
         if not libpath:
             libpath = find_library("gmsh")
     else:
