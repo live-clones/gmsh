@@ -1352,13 +1352,13 @@ static void setHighOrderFromExistingMesh(GEdge *ge, edgeContainer &edgeVertices)
     std::vector<MVertex *> v;
     e->getVertices(v);
     MVertex *vMin, *vMax;
-    getMinMaxVert(v[0], v[1], vMin, vMax);
+    const bool increasing = getMinMaxVert(v[0], v[1], vMin, vMax);
     std::pair<MVertex *, MVertex *> p(vMin, vMax);
     if(edgeVertices.count(p) == 0) {
-      for(std::size_t j = e->getNumPrimaryVertices(); j < e->getNumVertices();
-          j++) {
-        edgeVertices[p].push_back(v[j]);
-      }
+      if(increasing)
+        edgeVertices[p].insert(edgeVertices[p].end(), v.begin() + e->getNumPrimaryVertices(), v.end());
+      else
+        edgeVertices[p].insert(edgeVertices[p].end(), v.rbegin(), v.rend() - e->getNumPrimaryVertices());
     }
   }
 }
@@ -1371,14 +1371,15 @@ static void setHighOrderFromExistingMesh(GFace *gf, edgeContainer &edgeVertices,
     for(int j = 0; j < e->getNumEdges(); j++) {
       MEdge edg = e->getEdge(j);
       MVertex *vMin, *vMax;
-      getMinMaxVert(edg.getVertex(0), edg.getVertex(1), vMin, vMax);
+      const bool increasing = getMinMaxVert(edg.getVertex(0), edg.getVertex(1), vMin, vMax);
       std::pair<MVertex *, MVertex *> p(vMin, vMax);
       if(edgeVertices.count(p) == 0) {
         std::vector<MVertex *> edgv;
         e->getEdgeVertices(j, edgv);
-        for(std::size_t k = 2; k < edgv.size(); k++) {
-          edgeVertices[p].push_back(edgv[k]);
-        }
+        if(increasing)
+          edgeVertices[p].insert(edgeVertices[p].end(), edgv.begin() + 2, edgv.end());
+        else
+          edgeVertices[p].insert(edgeVertices[p].end(), edgv.rbegin(), edgv.rend() - 2);
       }
     }
     MFace f = e->getFace(0);
