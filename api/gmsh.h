@@ -706,7 +706,7 @@ namespace gmsh { // Top-level functions
       // another partition
       GMSH_API bool findOverlapBoundariesEntities(const int dim, const int tag,
                                         const int partition,
-                                        std::vector<int> &overlapEntities);
+                                        std::vector<int> &innerBoundaries, std::vector<int> &overlapOfBoundaries);
 
       // gmsh::model::mesh::optimize
       //

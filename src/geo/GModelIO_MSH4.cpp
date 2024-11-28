@@ -753,7 +753,6 @@ static bool readMSH4Overlaps(GModel *const model, FILE *fp, bool partition,
       // Create the overlap entity and add it to the model
       overlapRegion *overlapEntity = new overlapRegion(model, tagOverlap, I, J);
       model->add(overlapEntity);
-      manager->addOverlap(overlapEntity);
       manager->getOverlapsByPartition()[I->getPartitions()[0]].insert(overlapEntity);
       overlapEntity->setManager(manager.get());
       if(!readMSH4Physicals(model, fp, overlapEntity, binary, swap)) {
@@ -3265,60 +3264,6 @@ static std::size_t getPartialEntitiesToSaveForOverlaps(
   }
 
   for(const auto &[parentRegionTag, manager] : model->_overlapRegionManagers) {
-    for(const auto &[i, submap] : manager->getOverlaps()) {
-      if(i != partitionToSave) { continue; }
-      for(const auto &[j, overlap] : submap) {
-        Msg::Info("Region overlap of %lu elements",
-                  overlap->getNumMeshElements());
-        for(std::size_t k = 0; k < overlap->getNumMeshElements(); k++) {
-          MElement *elem = overlap->getMeshElement(k);
-          if(!elem) {
-            Msg::Error("Element %lu not found", k);
-            continue;
-          }
-          size_t numVertices = elem->getNumVertices();
-          for(std::size_t l = 0; l < numVertices; l++) {
-            MVertex *vertex = elem->getVertex(l);
-            GEntity *entity = vertex->onWhat();
-            if(!entity) {
-              Msg::Error("Vertex %lu has no entity", vertex->getNum());
-              continue;
-            }
-            if(entity && entity != overlap) {
-              switch(entity->dim()) {
-              case 0:
-                if(vertices.find(dynamic_cast<GVertex *>(entity)) ==
-                   vertices.end()) {
-                  additionalVerticeSet[static_cast<GVertex *>(entity)].insert(
-                    vertex);
-                }
-                break;
-              case 1:
-                if(edges.find(dynamic_cast<GEdge *>(entity)) == edges.end()) {
-                  additionalEdgesSet[static_cast<GEdge *>(entity)].insert(
-                    vertex);
-                }
-                break;
-              case 2:
-                if(faces.find(dynamic_cast<GFace *>(entity)) == faces.end()) {
-                  additionalFacesSet[static_cast<GFace *>(entity)].insert(
-                    vertex);
-                }
-                break;
-              case 3:
-                if(regions.find(dynamic_cast<GRegion *>(entity)) ==
-                   regions.end()) {
-                  additionalRegionsSet[static_cast<GRegion *>(entity)].insert(
-                    vertex);
-                }
-                break;
-              default: break;
-              }
-            }
-          }
-        }
-      }
-    }
     for(const auto &[i, submap] : manager->getOverlapsByPartition()) {
       if(i != partitionToSave) { continue; }
       for(overlapRegion* overlap : submap) {

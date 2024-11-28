@@ -1403,10 +1403,11 @@ gmsh::model::mesh::findOverlapEntities(const int dim, const int tag,
 
 GMSH_API bool gmsh::model::mesh::findOverlapBoundariesEntities(
   const int dim, const int tag, const int partition,
-  std::vector<int> &overlapEntities)
+  std::vector<int> &innerBoundaries, std::vector<int> &overlapOfBoundaries)
 {
   if(!_checkInit()) return false;
-  overlapEntities.clear();
+  innerBoundaries.clear();
+  overlapOfBoundaries.clear();
 
   switch(dim) {
   case 1: {
@@ -1420,7 +1421,7 @@ GMSH_API bool gmsh::model::mesh::findOverlapBoundariesEntities(
     if (!map)
       return false;
     for(auto it = map->begin(); it != map->end(); ++it) {
-      overlapEntities.push_back(it->second->tag());
+      innerBoundaries.push_back(it->second->tag());
     }
   } break;
   case 2: {
@@ -1434,14 +1435,14 @@ GMSH_API bool gmsh::model::mesh::findOverlapBoundariesEntities(
     auto it = bndDict.find(partition);
     if(it != bndDict.end()) {
       for(partitionEdge *f : it->second) {
-        overlapEntities.push_back(f->tag());
+        innerBoundaries.push_back(f->tag());
       }
     }
     auto map = manager->second->getOverlapBoundariesOf(partition);
     if (!map)
       return false;
     for(auto it = map->begin(); it != map->end(); ++it) {
-      overlapEntities.push_back(it->second->tag());
+      innerBoundaries.push_back(it->second->tag());
     }
   } break;
   case 3: {
@@ -1455,7 +1456,13 @@ GMSH_API bool gmsh::model::mesh::findOverlapBoundariesEntities(
     auto it = bndDict.find(partition);
     if (it != bndDict.end()) {
       for (partitionFace* f : it->second) {
-        overlapEntities.push_back(f->tag());
+        auto parent = f->getParentEntity();
+        if (!parent)
+          Msg::Error("No parent entity found for boundary %d", f->tag());
+        if (parent->dim() == 3)
+          innerBoundaries.push_back(f->tag());
+        else
+          overlapOfBoundaries.push_back(f->tag());
       }
     }
     /*
