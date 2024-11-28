@@ -2478,6 +2478,75 @@ GMSH_API void gmshModelMeshDecimateTriangulation(const int faceTag, const double
   }
 }
 
+GMSH_API void gmshModelMeshTetrahedralizePoints(const int tag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::tetrahedralizePoints(tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshAlphaShape3D(const int tag, const double alpha, const int sizeFieldTag, const int tagAlpha, const int tagAlphaBoundary, size_t ** tri2TetMap, size_t * tri2TetMap_n, const int removeDisconnectedNodes, const int returnTri2TetMap, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_tri2TetMap_;
+    gmsh::model::mesh::alphaShape3D(tag, alpha, sizeFieldTag, tagAlpha, tagAlphaBoundary, api_tri2TetMap_, removeDisconnectedNodes, returnTri2TetMap);
+    vector2ptr(api_tri2TetMap_, tri2TetMap, tri2TetMap_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshSurfaceEdgeSplitting(const int fullTag, const int surfaceTag, const int sizeFieldTag, const size_t * tri2TetMap, const size_t tri2TetMap_n, const int tetrahedralize, const int buildElementOctree, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_tri2TetMap_(tri2TetMap, tri2TetMap + tri2TetMap_n);
+    gmsh::model::mesh::surfaceEdgeSplitting(fullTag, surfaceTag, sizeFieldTag, api_tri2TetMap_, tetrahedralize, buildElementOctree);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshVolumeMeshRefinement(const int fullTag, const int surfaceTag, const int volumeTag, const int sizeFieldTag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshFilterCloseNodes(const int tag, const int sizeFieldTag, const double tolerance, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::filterCloseNodes(tag, sizeFieldTag, tolerance);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshColourBoundaryFaces(const int tag, const char * boundaryModel, const double tolerance, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::colourBoundaryFaces(tag, boundaryModel, tolerance);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API int gmshModelMeshFieldAdd(const char * fieldType, const int tag, int * ierr)
 {
   int result_api_ = 0;

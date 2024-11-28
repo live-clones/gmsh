@@ -4625,6 +4625,145 @@ end
 const decimate_triangulation = decimateTriangulation
 
 """
+    gmsh.model.mesh.tetrahedralizePoints(tag)
+
+Tetrahedralize points in entity of tag `tag
+
+Types:
+ - `tag`: integer
+"""
+function tetrahedralizePoints(tag)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshTetrahedralizePoints, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cint}),
+          tag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const tetrahedralize_points = tetrahedralizePoints
+
+"""
+    gmsh.model.mesh.alphaShape3D(tag, alpha, sizeFieldTag, tagAlpha, tagAlphaBoundary, removeDisconnectedNodes = false, returnTri2TetMap = false)
+
+Compute alpha shape of the mesh in entity of tag `tag
+
+Return `tri2TetMap`.
+
+Types:
+ - `tag`: integer
+ - `alpha`: double
+ - `sizeFieldTag`: integer
+ - `tagAlpha`: integer
+ - `tagAlphaBoundary`: integer
+ - `tri2TetMap`: vector of sizes
+ - `removeDisconnectedNodes`: boolean
+ - `returnTri2TetMap`: boolean
+"""
+function alphaShape3D(tag, alpha, sizeFieldTag, tagAlpha, tagAlphaBoundary, removeDisconnectedNodes = false, returnTri2TetMap = false)
+    api_tri2TetMap_ = Ref{Ptr{Csize_t}}()
+    api_tri2TetMap_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshAlphaShape3D, gmsh.lib), Cvoid,
+          (Cint, Cdouble, Cint, Cint, Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
+          tag, alpha, sizeFieldTag, tagAlpha, tagAlphaBoundary, api_tri2TetMap_, api_tri2TetMap_n_, removeDisconnectedNodes, returnTri2TetMap, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tri2TetMap = unsafe_wrap(Array, api_tri2TetMap_[], api_tri2TetMap_n_[], own = true)
+    return tri2TetMap
+end
+const alpha_shape3_d = alphaShape3D
+
+"""
+    gmsh.model.mesh.surfaceEdgeSplitting(fullTag, surfaceTag, sizeFieldTag, tri2TetMap, tetrahedralize = false, buildElementOctree = false)
+
+Mesh refinement/derefinement through edge splitting of (surface) entity of tag
+`tag
+
+Types:
+ - `fullTag`: integer
+ - `surfaceTag`: integer
+ - `sizeFieldTag`: integer
+ - `tri2TetMap`: vector of sizes
+ - `tetrahedralize`: boolean
+ - `buildElementOctree`: boolean
+"""
+function surfaceEdgeSplitting(fullTag, surfaceTag, sizeFieldTag, tri2TetMap, tetrahedralize = false, buildElementOctree = false)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSurfaceEdgeSplitting, gmsh.lib), Cvoid,
+          (Cint, Cint, Cint, Ptr{Csize_t}, Csize_t, Cint, Cint, Ptr{Cint}),
+          fullTag, surfaceTag, sizeFieldTag, convert(Vector{Csize_t}, tri2TetMap), length(tri2TetMap), tetrahedralize, buildElementOctree, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const surface_edge_splitting = surfaceEdgeSplitting
+
+"""
+    gmsh.model.mesh.volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag)
+
+Volume mesh refinement/derefinement using hxt refinement approaches of volume
+entity of tag `tag`, and bounded by surface entity of tag `surfaceTag`.
+
+Types:
+ - `fullTag`: integer
+ - `surfaceTag`: integer
+ - `volumeTag`: integer
+ - `sizeFieldTag`: integer
+"""
+function volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshVolumeMeshRefinement, gmsh.lib), Cvoid,
+          (Cint, Cint, Cint, Cint, Ptr{Cint}),
+          fullTag, surfaceTag, volumeTag, sizeFieldTag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const volume_mesh_refinement = volumeMeshRefinement
+
+"""
+    gmsh.model.mesh.filterCloseNodes(tag, sizeFieldTag, tolerance)
+
+Filter out points in the region with tag `tag` that are too close to each other
+based on the size field with tag `sizeFieldTag` and a given tolerance
+`tolerance`.
+
+Types:
+ - `tag`: integer
+ - `sizeFieldTag`: integer
+ - `tolerance`: double
+"""
+function filterCloseNodes(tag, sizeFieldTag, tolerance)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshFilterCloseNodes, gmsh.lib), Cvoid,
+          (Cint, Cint, Cdouble, Ptr{Cint}),
+          tag, sizeFieldTag, tolerance, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const filter_close_nodes = filterCloseNodes
+
+"""
+    gmsh.model.mesh.colourBoundaryFaces(tag, boundaryModel, tolerance)
+
+Color the faces of tag `tag` based on the entities in the boundary model
+`boundarModel`. Colouring is done using an octree that colour the faces using
+the colours of the boundary entities, if they are within a given tolerance
+`tolerance`.
+
+Types:
+ - `tag`: integer
+ - `boundaryModel`: string
+ - `tolerance`: double
+"""
+function colourBoundaryFaces(tag, boundaryModel, tolerance)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshColourBoundaryFaces, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cchar}, Cdouble, Ptr{Cint}),
+          tag, boundaryModel, tolerance, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const colour_boundary_faces = colourBoundaryFaces
+
+"""
     module gmsh.model.mesh.field
 
 Mesh size field functions

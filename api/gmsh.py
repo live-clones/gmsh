@@ -5250,6 +5250,165 @@ class model:
                 raise Exception(logger.getLastError())
         decimate_triangulation = decimateTriangulation
 
+        @staticmethod
+        def tetrahedralizePoints(tag):
+            """
+            gmsh.model.mesh.tetrahedralizePoints(tag)
+
+            Tetrahedralize points in entity of tag `tag
+
+            Types:
+            - `tag': integer
+            """
+            ierr = c_int()
+            lib.gmshModelMeshTetrahedralizePoints(
+                c_int(tag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        tetrahedralize_points = tetrahedralizePoints
+
+        @staticmethod
+        def alphaShape3D(tag, alpha, sizeFieldTag, tagAlpha, tagAlphaBoundary, removeDisconnectedNodes=False, returnTri2TetMap=False):
+            """
+            gmsh.model.mesh.alphaShape3D(tag, alpha, sizeFieldTag, tagAlpha, tagAlphaBoundary, removeDisconnectedNodes=False, returnTri2TetMap=False)
+
+            Compute alpha shape of the mesh in entity of tag `tag
+
+            Return `tri2TetMap'.
+
+            Types:
+            - `tag': integer
+            - `alpha': double
+            - `sizeFieldTag': integer
+            - `tagAlpha': integer
+            - `tagAlphaBoundary': integer
+            - `tri2TetMap': vector of sizes
+            - `removeDisconnectedNodes': boolean
+            - `returnTri2TetMap': boolean
+            """
+            api_tri2TetMap_, api_tri2TetMap_n_ = POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshAlphaShape3D(
+                c_int(tag),
+                c_double(alpha),
+                c_int(sizeFieldTag),
+                c_int(tagAlpha),
+                c_int(tagAlphaBoundary),
+                byref(api_tri2TetMap_), byref(api_tri2TetMap_n_),
+                c_int(bool(removeDisconnectedNodes)),
+                c_int(bool(returnTri2TetMap)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorsize(api_tri2TetMap_, api_tri2TetMap_n_.value)
+        alpha_shape3_d = alphaShape3D
+
+        @staticmethod
+        def surfaceEdgeSplitting(fullTag, surfaceTag, sizeFieldTag, tri2TetMap, tetrahedralize=False, buildElementOctree=False):
+            """
+            gmsh.model.mesh.surfaceEdgeSplitting(fullTag, surfaceTag, sizeFieldTag, tri2TetMap, tetrahedralize=False, buildElementOctree=False)
+
+            Mesh refinement/derefinement through edge splitting of (surface) entity of
+            tag `tag
+
+            Types:
+            - `fullTag': integer
+            - `surfaceTag': integer
+            - `sizeFieldTag': integer
+            - `tri2TetMap': vector of sizes
+            - `tetrahedralize': boolean
+            - `buildElementOctree': boolean
+            """
+            api_tri2TetMap_, api_tri2TetMap_n_ = _ivectorsize(tri2TetMap)
+            ierr = c_int()
+            lib.gmshModelMeshSurfaceEdgeSplitting(
+                c_int(fullTag),
+                c_int(surfaceTag),
+                c_int(sizeFieldTag),
+                api_tri2TetMap_, api_tri2TetMap_n_,
+                c_int(bool(tetrahedralize)),
+                c_int(bool(buildElementOctree)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        surface_edge_splitting = surfaceEdgeSplitting
+
+        @staticmethod
+        def volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag):
+            """
+            gmsh.model.mesh.volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag)
+
+            Volume mesh refinement/derefinement using hxt refinement approaches of
+            volume entity of tag `tag', and bounded by surface entity of tag
+            `surfaceTag'.
+
+            Types:
+            - `fullTag': integer
+            - `surfaceTag': integer
+            - `volumeTag': integer
+            - `sizeFieldTag': integer
+            """
+            ierr = c_int()
+            lib.gmshModelMeshVolumeMeshRefinement(
+                c_int(fullTag),
+                c_int(surfaceTag),
+                c_int(volumeTag),
+                c_int(sizeFieldTag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        volume_mesh_refinement = volumeMeshRefinement
+
+        @staticmethod
+        def filterCloseNodes(tag, sizeFieldTag, tolerance):
+            """
+            gmsh.model.mesh.filterCloseNodes(tag, sizeFieldTag, tolerance)
+
+            Filter out points in the region with tag `tag' that are too close to each
+            other based on the size field with tag `sizeFieldTag' and a given tolerance
+            `tolerance'.
+
+            Types:
+            - `tag': integer
+            - `sizeFieldTag': integer
+            - `tolerance': double
+            """
+            ierr = c_int()
+            lib.gmshModelMeshFilterCloseNodes(
+                c_int(tag),
+                c_int(sizeFieldTag),
+                c_double(tolerance),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        filter_close_nodes = filterCloseNodes
+
+        @staticmethod
+        def colourBoundaryFaces(tag, boundaryModel, tolerance):
+            """
+            gmsh.model.mesh.colourBoundaryFaces(tag, boundaryModel, tolerance)
+
+            Color the faces of tag `tag' based on the entities in the boundary model
+            `boundarModel'. Colouring is done using an octree that colour the faces
+            using the colours of the boundary entities, if they are within a given
+            tolerance `tolerance'.
+
+            Types:
+            - `tag': integer
+            - `boundaryModel': string
+            - `tolerance': double
+            """
+            ierr = c_int()
+            lib.gmshModelMeshColourBoundaryFaces(
+                c_int(tag),
+                c_char_p(boundaryModel.encode()),
+                c_double(tolerance),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        colour_boundary_faces = colourBoundaryFaces
+
 
         class field:
             """

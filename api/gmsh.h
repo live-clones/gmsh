@@ -1899,6 +1899,63 @@ namespace gmsh { // Top-level functions
       GMSH_API void decimateTriangulation(const int faceTag,
                                           const double distanceThreshold);
 
+      // gmsh::model::mesh::tetrahedralizePoints
+      //
+      // Tetrahedralize points in entity of tag `tag
+      GMSH_API void tetrahedralizePoints(const int tag);
+
+      // gmsh::model::mesh::alphaShape3D
+      //
+      // Compute alpha shape of the mesh in entity of tag `tag
+      GMSH_API void alphaShape3D(const int tag,
+                                 const double alpha,
+                                 const int sizeFieldTag,
+                                 const int tagAlpha,
+                                 const int tagAlphaBoundary,
+                                 std::vector<std::size_t> & tri2TetMap,
+                                 const bool removeDisconnectedNodes = false,
+                                 const bool returnTri2TetMap = false);
+
+      // gmsh::model::mesh::surfaceEdgeSplitting
+      //
+      // Mesh refinement/derefinement through edge splitting of (surface) entity of
+      // tag `tag
+      GMSH_API void surfaceEdgeSplitting(const int fullTag,
+                                         const int surfaceTag,
+                                         const int sizeFieldTag,
+                                         const std::vector<std::size_t> & tri2TetMap,
+                                         const bool tetrahedralize = false,
+                                         const bool buildElementOctree = false);
+
+      // gmsh::model::mesh::volumeMeshRefinement
+      //
+      // Volume mesh refinement/derefinement using hxt refinement approaches of
+      // volume entity of tag `tag', and bounded by surface entity of tag
+      // `surfaceTag'.
+      GMSH_API void volumeMeshRefinement(const int fullTag,
+                                         const int surfaceTag,
+                                         const int volumeTag,
+                                         const int sizeFieldTag);
+
+      // gmsh::model::mesh::filterCloseNodes
+      //
+      // Filter out points in the region with tag `tag' that are too close to each
+      // other based on the size field with tag `sizeFieldTag' and a given
+      // tolerance `tolerance'.
+      GMSH_API void filterCloseNodes(const int tag,
+                                     const int sizeFieldTag,
+                                     const double tolerance);
+
+      // gmsh::model::mesh::colourBoundaryFaces
+      //
+      // Color the faces of tag `tag' based on the entities in the boundary model
+      // `boundarModel'. Colouring is done using an octree that colour the faces
+      // using the colours of the boundary entities, if they are within a given
+      // tolerance `tolerance'.
+      GMSH_API void colourBoundaryFaces(const int tag,
+                                        const std::string & boundaryModel,
+                                        const double tolerance);
+
       namespace field { // Mesh size field functions
 
         // gmsh::model::mesh::field::add

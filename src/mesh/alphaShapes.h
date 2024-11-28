@@ -29,11 +29,6 @@ struct alphaShapeBndEdge {
 namespace AlphaShape {
 using ElementOctree = OctreeNode<2, 32, MElement*>;
 using BoundaryOctree = OctreeNode<2, 32, alphaShapeBndEdge*>;
-void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double alpha, const double hMean,
-                        std::function<double(int, int, double, double, double, double)> sizeFieldCallback, 
-                        const int triangulate, const int refine);
-
-void _decimateTriangulation(const int faceTag, const double thresholdDistance);
 
 void _moveNodes(const int tag, const int freeSurfaceTag, const std::vector<size_t> & nodeTags, const std::vector<double> & nodesDx, BoundaryOctree &bnd_octree, double boundary_tol);
 
@@ -56,6 +51,28 @@ void getNewNodesOnOldMesh(PolyMesh *pm, ElementOctree &octree_prev, std::vector<
 
 // mark all nodes not coonected to a fluid element as disabled
 void filterNodes(PolyMesh *pm, const int tag);
+
+// 3D functions 
+void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double alpha, const double hMean,
+                        std::function<double(int, int, double, double, double, double)> sizeFieldCallback, 
+                        const int triangulate, const int refine);
+
+void _decimateTriangulation(const int faceTag, const double thresholdDistance);
+
+void _tetrahedralizePoints(const int tag);
+
+void _alphaShape3D(const int tag, const double alpha, const int sizeFieldTag, const int tagAlpha, const int tagAlphaBoundary, const bool removeDisconnectedNodes, const bool returnTri2TetMap, std::vector<std::size_t>& tri2Tet);
+
+void _surfaceEdgeSplitting(const int fullTag, const int surfaceTag, const int sizeFieldTag, const bool tetrahealize, const bool buildElementOctree, const std::vector<size_t> tri2TetMap);
+
+void _volumeMeshRefinement(const int fullTag, const int surfaceTag, const int volumeTag, const int sizeFieldTag);
+
+void _filterCloseNodes(const int fullTag, const int sizeFieldTag, const double tolerance);
+
+void _colourBoundaries(const int faceTag, const std::string & boundaryModel, const double tolerance);
+
+void _moveNodes3D(const int tag, const int freeSurfaceTag, const std::vector<size_t> & nodeTags, const std::vector<double> & nodesDx, double boundary_tol, const std::string & boundaryModel);
+
 
 };
 

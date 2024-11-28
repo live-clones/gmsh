@@ -3291,6 +3291,97 @@ namespace gmsh { // Top-level functions
         if(ierr) throwLastError();
       }
 
+      // gmsh::model::mesh::tetrahedralizePoints
+      //
+      // Tetrahedralize points in entity of tag `tag
+      inline void tetrahedralizePoints(const int tag)
+      {
+        int ierr = 0;
+        gmshModelMeshTetrahedralizePoints(tag, &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // gmsh::model::mesh::alphaShape3D
+      //
+      // Compute alpha shape of the mesh in entity of tag `tag
+      inline void alphaShape3D(const int tag,
+                               const double alpha,
+                               const int sizeFieldTag,
+                               const int tagAlpha,
+                               const int tagAlphaBoundary,
+                               std::vector<std::size_t> & tri2TetMap,
+                               const bool removeDisconnectedNodes = false,
+                               const bool returnTri2TetMap = false)
+      {
+        int ierr = 0;
+        size_t *api_tri2TetMap_; size_t api_tri2TetMap_n_;
+        gmshModelMeshAlphaShape3D(tag, alpha, sizeFieldTag, tagAlpha, tagAlphaBoundary, &api_tri2TetMap_, &api_tri2TetMap_n_, (int)removeDisconnectedNodes, (int)returnTri2TetMap, &ierr);
+        if(ierr) throwLastError();
+        tri2TetMap.assign(api_tri2TetMap_, api_tri2TetMap_ + api_tri2TetMap_n_); gmshFree(api_tri2TetMap_);
+      }
+
+      // gmsh::model::mesh::surfaceEdgeSplitting
+      //
+      // Mesh refinement/derefinement through edge splitting of (surface) entity of
+      // tag `tag
+      inline void surfaceEdgeSplitting(const int fullTag,
+                                       const int surfaceTag,
+                                       const int sizeFieldTag,
+                                       const std::vector<std::size_t> & tri2TetMap,
+                                       const bool tetrahedralize = false,
+                                       const bool buildElementOctree = false)
+      {
+        int ierr = 0;
+        size_t *api_tri2TetMap_; size_t api_tri2TetMap_n_; vector2ptr(tri2TetMap, &api_tri2TetMap_, &api_tri2TetMap_n_);
+        gmshModelMeshSurfaceEdgeSplitting(fullTag, surfaceTag, sizeFieldTag, api_tri2TetMap_, api_tri2TetMap_n_, (int)tetrahedralize, (int)buildElementOctree, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_tri2TetMap_);
+      }
+
+      // gmsh::model::mesh::volumeMeshRefinement
+      //
+      // Volume mesh refinement/derefinement using hxt refinement approaches of
+      // volume entity of tag `tag', and bounded by surface entity of tag
+      // `surfaceTag'.
+      inline void volumeMeshRefinement(const int fullTag,
+                                       const int surfaceTag,
+                                       const int volumeTag,
+                                       const int sizeFieldTag)
+      {
+        int ierr = 0;
+        gmshModelMeshVolumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag, &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // gmsh::model::mesh::filterCloseNodes
+      //
+      // Filter out points in the region with tag `tag' that are too close to each
+      // other based on the size field with tag `sizeFieldTag' and a given
+      // tolerance `tolerance'.
+      inline void filterCloseNodes(const int tag,
+                                   const int sizeFieldTag,
+                                   const double tolerance)
+      {
+        int ierr = 0;
+        gmshModelMeshFilterCloseNodes(tag, sizeFieldTag, tolerance, &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // gmsh::model::mesh::colourBoundaryFaces
+      //
+      // Color the faces of tag `tag' based on the entities in the boundary model
+      // `boundarModel'. Colouring is done using an octree that colour the faces
+      // using the colours of the boundary entities, if they are within a given
+      // tolerance `tolerance'.
+      inline void colourBoundaryFaces(const int tag,
+                                      const std::string & boundaryModel,
+                                      const double tolerance)
+      {
+        int ierr = 0;
+        gmshModelMeshColourBoundaryFaces(tag, boundaryModel.c_str(), tolerance, &ierr);
+        if(ierr) throwLastError();
+      }
+
       namespace field { // Mesh size field functions
 
         // gmsh::model::mesh::field::add

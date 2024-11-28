@@ -591,6 +591,24 @@ mesh.add('computeAlphaShape', doc, None, iint('dim'), iint('tag'), iint('bndTag'
 doc = '''Decimate a triangulation'''
 mesh.add('decimateTriangulation', doc, None, iint('faceTag'), idouble('distanceThreshold'))
 
+doc = '''Tetrahedralize points in entity of tag `tag'''
+mesh.add('tetrahedralizePoints', doc, None, iint('tag'))
+
+doc = '''Compute alpha shape of the mesh in entity of tag `tag'''
+mesh.add('alphaShape3D', doc, None, iint('tag'), idouble('alpha'), iint('sizeFieldTag'), iint('tagAlpha'), iint('tagAlphaBoundary'), ovectorsize('tri2TetMap'),  ibool('removeDisconnectedNodes', 'false', 'False'), ibool('returnTri2TetMap', 'false', 'False'))
+
+doc = '''Mesh refinement/derefinement through edge splitting of (surface) entity of tag `tag'''
+mesh.add('surfaceEdgeSplitting', doc, None, iint('fullTag'), iint('surfaceTag'), iint('sizeFieldTag'), ivectorsize('tri2TetMap'), ibool('tetrahedralize', 'false', 'False'), ibool('buildElementOctree', 'false', 'False'))
+
+doc = '''Volume mesh refinement/derefinement using hxt refinement approaches of volume entity of tag `tag', and bounded by surface entity of tag `surfaceTag'.'''
+mesh.add('volumeMeshRefinement', doc, None, iint('fullTag'), iint('surfaceTag'), iint('volumeTag'), iint('sizeFieldTag'))
+
+doc = '''Filter out points in the region with tag `tag' that are too close to each other based on the size field with tag `sizeFieldTag' and a given tolerance `tolerance'.'''
+mesh.add('filterCloseNodes', doc, None, iint('tag'), iint('sizeFieldTag'), idouble('tolerance'))
+
+doc = '''Color the faces of tag `tag' based on the entities in the boundary model `boundarModel'. Colouring is done using an octree that colour the faces using the colours of the boundary entities, if they are within a given tolerance `tolerance'.'''
+mesh.add('colourBoundaryFaces', doc, None, iint('tag'), istring('boundaryModel'), idouble('tolerance'))
+
 ################################################################################
 
 field = mesh.add_module('field', 'mesh size field functions')

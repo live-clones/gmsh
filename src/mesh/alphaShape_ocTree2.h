@@ -37,19 +37,16 @@ struct BBox {
 
   void operator*=(double scale)
   {
-    double center[2] = {(min[0]+max[0])*.5, (min[1]+max[1])*.5};
-    min[0] -= center[0];
-    min[1] -= center[1];
-    max[0] -= center[0];
-    max[1] -= center[1];
-    min[0] *= scale;
-    min[1] *= scale;
-    max[0] *= scale;
-    max[1] *= scale;
-    min[0] += center[0];
-    min[1] += center[1];
-    max[0] += center[0];
-    max[1] += center[1];
+    double center[dim];
+    for (int i=0; i<dim; i++) center[i] = (min[i]+max[i])*.5;
+    for (int i=0; i<dim; i++) {
+      min[i] -= center[i];
+      max[i] -= center[i];
+      min[i] *= scale;
+      max[i] *= scale;
+      min[i] += center[i];
+      max[i] += center[i];
+    }
   }
 };
 

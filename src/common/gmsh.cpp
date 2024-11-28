@@ -5690,10 +5690,17 @@ gmsh::model::mesh::advectMeshNodes(const int dim,
                                    const double boundaryTolerance)
 {
 #if defined(HAVE_MESH) && defined(HAVE_HXT)
-  std::vector<alphaShapeBndEdge> bndEdges;
-  OctreeNode<2, 32, alphaShapeBndEdge*> bnd_octree;
-  AlphaShape::_createBoundaryOctree(boundaryModel, bndTag, bnd_octree, bndEdges);
-  AlphaShape::_moveNodes(tag, bndTag, nodeTags, nodesDx, bnd_octree, boundaryTolerance);
+  if (dim == 2){
+    std::vector<alphaShapeBndEdge> bndEdges;
+    OctreeNode<2, 32, alphaShapeBndEdge*> bnd_octree;
+    AlphaShape::_createBoundaryOctree(boundaryModel, bndTag, bnd_octree, bndEdges);
+    AlphaShape::_moveNodes(tag, bndTag, nodeTags, nodesDx, bnd_octree, boundaryTolerance);
+  }
+  else if (dim == 3){
+    AlphaShape::_moveNodes3D(tag, bndTag, nodeTags, nodesDx, boundaryTolerance, boundaryModel);
+  }
+  else 
+    Msg::Error("Wrong dimension in advectMeshNodes; 2 or 3");
 #endif
 }
 
@@ -5719,7 +5726,10 @@ gmsh::model::mesh::computeAlphaShape(const int dim,
     std::vector<alphaShapeBndEdge> bndEdges;
     OctreeNode<2, 32, alphaShapeBndEdge*> bnd_octree;
     AlphaShape::_createBoundaryOctree(boundaryModel, bndTag, bnd_octree, bndEdges);
-
+    bool canComputeParams = false;
+    if (GModel::current()->getFaceByTag(tag)->getNumMeshElementsByType(TYPE_TRI) > 0){
+      canComputeParams = true;
+    }
     // Move nodes if nodesDX is not empty
     // if (nodesDx.size() > 0){
     //   _moveNodes(tag, bndTag, nodesDx, bnd_octree, boundaryTolerance);
@@ -5733,7 +5743,7 @@ gmsh::model::mesh::computeAlphaShape(const int dim,
 
     // alpha shape
     OctreeNode<2, 32, MElement*> octree_prev;
-    if (usePreviousMesh) {
+    if (canComputeParams) {
       AlphaShape::_createOctreeForFace(GModel::current()->getFaceByTag(tag), octree_prev);
     }
     AlphaShape::_alphaShape2D(pm, alpha, tag, bndTag, alphaShapeSizeField, usePreviousMesh ? &octree_prev : nullptr);
@@ -5752,7 +5762,7 @@ gmsh::model::mesh::computeAlphaShape(const int dim,
 
     AlphaShape::filterNodes(pm, tag);
 
-    if (usePreviousMesh) {
+    if (canComputeParams){
       AlphaShape::getNewNodesOnOldMesh(pm, octree_prev, newNodeTags, newNodeElementTags, newNodeParametricCoords);
     }
 
@@ -5799,6 +5809,60 @@ gmsh::model::mesh::decimateTriangulation(const int faceTag,
   AlphaShape::_decimateTriangulation(faceTag, thresholdDistance);
 #else 
   Msg::Error("decimateTriangulation requires the mesh and hxt modules");
+#endif
+}
+
+GMSH_API void
+gmsh::model::mesh::tetrahedralizePoints(const int tag){
+#if defined(HAVE_MESH) && defined(HAVE_HXT)
+  AlphaShape::_tetrahedralizePoints(tag);
+#else
+  Msg::Error("tetrahedralizePoints requires the mesh and hxt modules");
+#endif
+}
+
+GMSH_API void
+gmsh::model::mesh::alphaShape3D(const int tag, const double alpha, const int sizeFieldTag, const int tagAlpha, const int tagAlphaBoundary, std::vector<size_t>& tri2Tet, const bool removeDisconnectedNodes, const bool returnTri2TetMap){
+#if defined(HAVE_MESH) && defined(HAVE_HXT)
+  AlphaShape::_alphaShape3D(tag, alpha, sizeFieldTag, tagAlpha, tagAlphaBoundary, removeDisconnectedNodes, returnTri2TetMap, tri2Tet);
+#else
+  Msg::Error("alphaShape3D requires the mesh and hxt modules");
+#endif
+}
+
+GMSH_API void
+gmsh::model::mesh::surfaceEdgeSplitting(const int fullTag, const int surfaceTag, const int sizeFieldTag, const std::vector<std::size_t>& tri2TetMap, const bool tetrahedralize, const bool buildElementOctree){
+#if defined(HAVE_MESH) && defined(HAVE_HXT)
+  AlphaShape::_surfaceEdgeSplitting(fullTag, surfaceTag, sizeFieldTag, tetrahedralize, buildElementOctree, tri2TetMap);
+#else
+  Msg::Error("surfaceEdgeSplitting requires the mesh and hxt modules");
+#endif
+}
+
+GMSH_API void
+gmsh::model::mesh::volumeMeshRefinement(const int fullTag, const int surfaceTag, const int volumeTag, const int sizeFieldTag){
+#if defined(HAVE_MESH) && defined(HAVE_HXT)
+  AlphaShape::_volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag);
+#else
+  Msg::Error("volumeMeshRefinement requires the mesh and hxt modules");
+#endif
+}
+
+GMSH_API void
+gmsh::model::mesh::filterCloseNodes(const int tag, const int sizeFieldTag, const double tolerance){
+#if defined(HAVE_MESH) && defined(HAVE_HXT)
+  AlphaShape::_filterCloseNodes(tag, sizeFieldTag, tolerance);
+#else
+  Msg::Error("volumeMeshRefinement requires the mesh and hxt modules");
+#endif
+}
+
+GMSH_API void
+gmsh::model::mesh::colourBoundaryFaces(const int tag, const std::string & boundaryModel, const double tolerance){
+#if defined(HAVE_MESH) && defined(HAVE_HXT)
+  AlphaShape::_colourBoundaries(tag, boundaryModel, tolerance);
+#else
+  Msg::Error("volumeMeshRefinement requires the mesh and hxt modules");
 #endif
 }
 
