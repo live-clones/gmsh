@@ -791,9 +791,9 @@ void AlphaShape::_alphaShape2D(PolyMesh* pm, const double alpha, const int faceT
     hMin = std::min(hMin, ss.second);
   }
   // double sizeLimit = field->getDescription() == "AlphaShapeDistance" ? 0.01 : 0;
-  double sizeLimit = 0.05;
+  double sizeLimit = 0.01;
   // double sizeLimit = 0.0;
-  double constrainR = .1;
+  double constrainR = .2;
   double outsideLimit = 0.15;
 
   std::unordered_map<PolyMesh::Face*, bool> _touched;
@@ -1732,7 +1732,7 @@ void AlphaShape::_delaunayRefinement(PolyMesh* pm, const int tag, const int bndT
   std::vector<PolyMesh::Face *> _badFaces;
   double _limit = .4;         // Values to discuss...
   double _size = 1.;          // Values to discuss...
-  double _sizeMinFactor = .1; // Values to discuss...
+  double _sizeMinFactor = .2; // Values to discuss...
   for(auto f : pm->faces) {
     if (f->he && f->data == tag){
       double q, R, s;
