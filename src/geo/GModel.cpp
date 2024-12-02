@@ -2439,6 +2439,11 @@ GModel::getAllOverlapBoundaries() const
         result.insert(boundary);
       }
     }*/
+    for (const auto& [i, boundary]: manager->getBoundariesByPartition()) {
+      for (const auto& b: boundary) {
+        result.insert(b);
+      }
+    }
   }
   return result;
 }
