@@ -47,6 +47,15 @@ static std::set<int> computeTouchingPartitions(GRegion* reg) {
       touchingPartitions.insert(p);
     }
   }
+
+  // Add partitions with a common partition vertex
+  for (GVertex* v: reg->vertices()) {
+    partitionVertex* pv = dynamic_cast<partitionVertex*>(v);
+    if (!pv) continue;
+    for (int p: pv->getPartitions()) {
+      touchingPartitions.insert(p);
+    }
+  }
   return touchingPartitions;
 }
 
@@ -160,7 +169,7 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
 
         
         int j = otherRegion->getPartitions()[0];
-        //if (touchingPartitions.find(j) == touchingPartitions.end()) continue; // Skip non-touching partitions
+        if (touchingPartitions.find(j) == touchingPartitions.end()) continue; // Skip non-touching partitions
 
         // Fill the overlap
         auto tetras =
