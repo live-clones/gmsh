@@ -4096,6 +4096,7 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool partitioned,
 {
   if(model->getNumMEdges() == 0) return;
   // Future option: only save tags from overlaps and interfaces
+  double t1 = TimeOfDay();
 
   std::set<GRegion *, GEntityPtrLessThan> regions;
   std::set<GFace *, GEntityPtrLessThan> faces;
@@ -4105,7 +4106,7 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool partitioned,
                     faces, edges, vertices);
   getAdditionalEntities(regions, faces, edges, vertices, model->getAllOverlapBoundaries());
 
-  // add overlaps
+  // Add overlaps. Overlap boundaries shouldn't be necessary!
   if(partitionToSave != 0) {
     for(const auto &[parentEdgeTag, manager] :
         model->getOverlapEdgeManagers()) {
@@ -4135,73 +4136,43 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool partitioned,
       for (overlapRegion* oregion : it->second) {
         regions.insert(oregion);
       }
-
-      //const auto &overlapsOnPartition = manager->getOverlapsOf(partitionToSave);
-      /*const auto &boundary = manager->getOverlapBoundariesOf(partitionToSave);
-      if(!overlapsOnPartition) { continue; }
-      for(const auto &[j, overlapFace] : *overlapsOnPartition) {
-        regions.insert(overlapFace);
-      }*/
-      /*for(const auto &[j, overlapFace] : *boundary) {
-        faces.insert(overlapFace);
-      }*/
     }
   }
 
   // Additional entities ?
-  std::set<std::size_t> ownedVertices;
+  std::unordered_map<MEdge, size_t, MEdgeHash, MEdgeEqual> edgeTagsDict;
+  auto& allEdges = model->getMapEdgeNum();
   for(GRegion *r : regions) {
-    overlapRegion *oregion = dynamic_cast<overlapRegion *>(r);
-    if(oregion) {
-      for(std::size_t i = 0; i < oregion->getNumMeshElements(); i++) {
-        MElement *e = oregion->getMeshElement(i);
-        for(std::size_t j = 0; j < e->getNumVertices(); j++) {
-          ownedVertices.insert(e->getVertex(j)->getNum());
-        }
+    for(size_t k = 0; k < r->getNumMeshElements(); ++k) {
+      MElement *e = r->getMeshElement(k);
+      for(std::size_t j = 0; j < e->getNumEdges(); j++) {
+        MEdge edge = e->getEdge(j);
+        if(edgeTagsDict.count(edge)) continue;
+        auto it = allEdges.find(edge);
+        if(it != allEdges.end()) { edgeTagsDict[edge] = it->second; }
       }
     }
-    else {
-      for(std::size_t i = 0; i < r->getNumMeshVertices(); i++) {
-        ownedVertices.insert(r->getMeshVertex(i)->getNum());
-      }
-    }
-    
   }
   for(GFace *f : faces) {
-    overlapFace *of = dynamic_cast<overlapFace *>(f);
-    if(of) {
-      for(std::size_t i = 0; i < of->getNumMeshElements(); i++) {
-        MElement *e = of->getMeshElement(i);
-        for(std::size_t j = 0; j < e->getNumVertices(); j++) {
-          ownedVertices.insert(e->getVertex(j)->getNum());
-        }
-      }
-    }
-    else {
-      for(std::size_t i = 0; i < f->getNumMeshVertices(); i++) {
-        ownedVertices.insert(f->getMeshVertex(i)->getNum());
+    for(size_t k = 0; k < f->getNumMeshElements(); ++k) {
+      MElement *e = f->getMeshElement(k);
+      for(std::size_t j = 0; j < e->getNumEdges(); j++) {
+        MEdge edge = e->getEdge(j);
+        if(edgeTagsDict.count(edge)) continue;
+        auto it = allEdges.find(edge);
+        if(it != allEdges.end()) { edgeTagsDict[edge] = it->second; }
       }
     }
   }
   for(GEdge *e : edges) {
-    overlapEdge *oe = dynamic_cast<overlapEdge *>(e);
-    if(oe) {
-      for(std::size_t i = 0; i < oe->getNumMeshElements(); i++) {
-        MElement *e = oe->getMeshElement(i);
-        for(std::size_t j = 0; j < e->getNumVertices(); j++) {
-          ownedVertices.insert(e->getVertex(j)->getNum());
-        }
+    for(size_t k = 0; k < e->getNumMeshElements(); ++k) {
+      MElement *el = e->getMeshElement(k);
+      for(std::size_t j = 0; j < el->getNumEdges(); j++) {
+        MEdge edge = el->getEdge(j);
+        if(edgeTagsDict.count(edge)) continue;
+        auto it = allEdges.find(edge);
+        if(it != allEdges.end()) { edgeTagsDict[edge] = it->second; }
       }
-    }
-    else {
-      for(std::size_t i = 0; i < e->getNumMeshVertices(); i++) {
-        ownedVertices.insert(e->getMeshVertex(i)->getNum());
-      }
-    }
-  }
-  for (GVertex* v : vertices) {
-    for (std::size_t i = 0; i < v->getNumMeshVertices(); i++) {
-      ownedVertices.insert(v->getMeshVertex(i)->getNum());
     }
   }
 
@@ -4209,19 +4180,11 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool partitioned,
   std::vector<std::size_t> edgeNodes;
   edgeTags.reserve(model->getNumMEdges());
   edgeNodes.reserve(model->getNumMEdges() * 2);
-  for(auto it = model->firstMEdge(); it != model->lastMEdge(); ++it) {
-    // If both nodes are missing, don't save the edge
-    if(ownedVertices.find(it->first.getVertex(0)->getNum()) ==
-         ownedVertices.end() &&
-       ownedVertices.find(it->first.getVertex(1)->getNum()) ==
-         ownedVertices.end()) {
-      continue;
-    }
+  for(auto it = edgeTagsDict.begin(); it != edgeTagsDict.end(); ++it) {
     edgeTags.push_back(it->second);
     edgeNodes.push_back(it->first.getVertex(0)->getNum());
     edgeNodes.push_back(it->first.getVertex(1)->getNum());
   }
-  Msg::Info("Writing %lu edges", edgeTags.size());
 
   fprintf(fp, "$EdgeTags\n");
   size_t numEdgeTags = edgeTags.size();
@@ -4247,14 +4210,17 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool partitioned,
   if(binary) fprintf(fp, "\n");
 
   fprintf(fp, "$EndEdgeTags\n");
+
+  Msg::StatusBar(true, "Done writing %lu edges in %gs.", edgeTags.size(), TimeOfDay() - t1);
 }
 
 static void writeMSH4Faces(GModel *const model, FILE *fp, bool partitioned,
-                              int partitionToSave, bool binary, bool saveAll,
-                              double version)
+                           int partitionToSave, bool binary, bool saveAll,
+                           double version)
 {
   size_t numFaceTags = model->getNumMFaces();
   if(numFaceTags == 0) return;
+  double t1 = TimeOfDay();
 
   std::set<GRegion *, GEntityPtrLessThan> regions;
   std::set<GFace *, GEntityPtrLessThan> faces;
@@ -4262,7 +4228,8 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool partitioned,
   std::set<GVertex *, GEntityPtrLessThan> vertices;
   getEntitiesToSave(model, partitioned, partitionToSave, saveAll, regions,
                     faces, edges, vertices);
-  getAdditionalEntities(regions, faces, edges, vertices, model->getAllOverlapBoundaries());
+  getAdditionalEntities(regions, faces, edges, vertices,
+                        model->getAllOverlapBoundaries());
 
   // add overlaps
   if(partitionToSave != 0) {
@@ -4276,85 +4243,60 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool partitioned,
     }
     for(const auto &[parentFaceTag, manager] :
         model->getOverlapFaceManagers()) {
-      const auto& dict = manager->getOverlapsByPartition();
+      const auto &dict = manager->getOverlapsByPartition();
       auto it = dict.find(partitionToSave);
-      if (it == dict.end()) continue;
+      if(it == dict.end()) continue;
 
-      for (overlapFace* ovlp : it->second) {
-        faces.insert(ovlp);
-      }
+      for(overlapFace *ovlp : it->second) { faces.insert(ovlp); }
     }
     for(const auto &[parentVolumeTag, manager] :
         model->getOverlapRegionManagers()) {
-
-      const auto& dict = manager->getOverlapsByPartition();
+      const auto &dict = manager->getOverlapsByPartition();
       auto it = dict.find(partitionToSave);
-      if (it == dict.end()) continue;
+      if(it == dict.end()) continue;
 
-      for (overlapRegion* oregion : it->second) {
-        regions.insert(oregion);
-      }
-
+      for(overlapRegion *oregion : it->second) { regions.insert(oregion); }
     }
   }
-
-  // Additional entities ?
-  std::set<std::size_t> ownedVertices;
-  for (GRegion* r : regions) {
-    for (std::size_t i = 0; i < r->getNumMeshVertices(); i++) {
-      ownedVertices.insert(r->getMeshVertex(i)->getNum());
-    }
-    for (size_t k = 0; k < r->getNumMeshElements(); ++k) {
-      MElement* e = r->getMeshElement(k);
-      for (std::size_t j = 0; j < e->getNumVertices(); j++) {
-        ownedVertices.insert(e->getVertex(j)->getNum());
-      }
-    }
-  }
-  for (GFace* f : faces) {
-    for (std::size_t i = 0; i < f->getNumMeshVertices(); i++) {
-      ownedVertices.insert(f->getMeshVertex(i)->getNum());
-    }
-    for (size_t k = 0; k < f->getNumMeshElements(); ++k) {
-      MElement* e = f->getMeshElement(k);
-      for (std::size_t j = 0; j < e->getNumVertices(); j++) {
-        ownedVertices.insert(e->getVertex(j)->getNum());
-      }
-    }
-  }
-  for (GEdge* e : edges) {
-    for (std::size_t i = 0; i < e->getNumMeshVertices(); i++) {
-      ownedVertices.insert(e->getMeshVertex(i)->getNum());
-    }
-    for (size_t k = 0; k < e->getNumMeshElements(); ++k) {
-      MElement* el = e->getMeshElement(k);
-      for (std::size_t j = 0; j < el->getNumVertices(); j++) {
-        ownedVertices.insert(el->getVertex(j)->getNum());
-      }
-    }
-  }
-  for (GVertex* v : vertices) {
-    for (std::size_t i = 0; i < v->getNumMeshVertices(); i++) {
-      ownedVertices.insert(v->getMeshVertex(i)->getNum());
-    }
-  }
-
 
   std::unordered_map<MFace, std::size_t, MFaceHash, MFaceEqual> faceTagsToKeep;
-  for (auto it = model->firstMFace(); it != model->lastMFace(); ++it) {
-    // Check only for 1 vertex (faster)
-    if (ownedVertices.find(it->first.getVertex(0)->getNum()) == ownedVertices.end()) {
-      continue;
+
+  for(GRegion *r : regions) {
+    for(std::size_t k = 0; k < r->getNumMeshElements(); ++k) {
+      MElement *e = r->getMeshElement(k);
+      for(std::size_t j = 0; j < e->getNumFaces(); j++) {
+        MFace face = e->getFace(j);
+        if(faceTagsToKeep.find(face) == faceTagsToKeep.end()) {
+          auto it = model->getMapFaceNum().find(face);
+          if(it != model->getMapFaceNum().end()) {
+            faceTagsToKeep[face] = it->second;
+          }
+        }
+      }
     }
-    faceTagsToKeep.insert(*it);
+  }
+  for(GFace *f : faces) {
+    for(std::size_t k = 0; k < f->getNumMeshElements(); ++k) {
+      MElement *e = f->getMeshElement(k);
+      for(std::size_t j = 0; j < e->getNumFaces(); j++) {
+        MFace face = e->getFace(j);
+        if(faceTagsToKeep.find(face) == faceTagsToKeep.end()) {
+          auto it = model->getMapFaceNum().find(face);
+          if(it != model->getMapFaceNum().end()) {
+            faceTagsToKeep[face] = it->second;
+          }
+        }
+      }
+    }
   }
 
-  Msg::Info("Writing %lu faces instead of %lu", faceTagsToKeep.size(), numFaceTags);
   numFaceTags = faceTagsToKeep.size();
   fprintf(fp, "$FaceTags\n");
   if(binary) { fwrite(&numFaceTags, sizeof(std::size_t), 1, fp); }
-  else { fprintf(fp, "%lu\n", numFaceTags); }
-  //for(auto it = model->firstMFace(); it != model->lastMFace(); ++it) {
+  else {
+    fprintf(fp, "%lu\n", numFaceTags);
+  }
+  // for(auto it = model->firstMFace(); it != model->lastMFace(); ++it) {
   for(auto it = faceTagsToKeep.begin(); it != faceTagsToKeep.end(); ++it) {
     // TAG NUM_VERT VERT1 VERT2 ... VERTN
     auto nVert = it->first.getNumVertices();
@@ -4375,6 +4317,8 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool partitioned,
 
   if(binary) fprintf(fp, "\n");
   fprintf(fp, "$EndFaceTags\n");
+  Msg::StatusBar(true, "Done writing %lu faces in %gs.", faceTagsToKeep.size(),
+                 TimeOfDay() - t1);
 }
 
 int GModel::_writeMSH4(const std::string &name, double version, bool binary,
