@@ -17,18 +17,20 @@ overlapRegionManager::overlapRegionManager(GModel *model, int tagParent,
 {
 }
 
-static std::vector<MTriangle*> fromFacePatchToElements(partitionFace* pf, const std::unordered_set<MFace, MFaceHash, MFaceEqual>& faceSet)
+static std::vector<MTriangle *> fromFacePatchToElements(
+  partitionFace *pf,
+  const std::unordered_set<MFace, MFaceHash, MFaceEqual> &faceSet)
 {
-  std::vector<MTriangle*> elems;
-  for(MTriangle* t: pf->triangles) {
-    if(faceSet.find(t->getFace(0)) != faceSet.end()) {
-      elems.push_back(t);
-    }
+  std::vector<MTriangle *> elems;
+  for(MTriangle *t : pf->triangles) {
+    if(faceSet.find(t->getFace(0)) != faceSet.end()) { elems.push_back(t); }
   }
   return elems;
 }
 
-static std::unordered_set<MFace, MFaceHash, MFaceEqual> boundaryOfRegion(GRegion* reg) {
+static std::unordered_set<MFace, MFaceHash, MFaceEqual>
+boundaryOfRegion(GRegion *reg)
+{
   auto facesOfThisEntity = reg->faces();
   std::unordered_set<MFace, MFaceHash, MFaceEqual> entityFaces;
   for(auto f : facesOfThisEntity) {
@@ -37,24 +39,21 @@ static std::unordered_set<MFace, MFaceHash, MFaceEqual> boundaryOfRegion(GRegion
   return entityFaces;
 }
 
-static std::set<int> computeTouchingPartitions(GRegion* reg) {
+static std::set<int> computeTouchingPartitions(GRegion *reg)
+{
   std::set<int> touchingPartitions;
   auto neighborFaces = reg->faces();
   for(GFace *f : neighborFaces) {
     partitionFace *pf = dynamic_cast<partitionFace *>(f);
     if(!pf) continue;
-    for(int p : pf->getPartitions()) {
-      touchingPartitions.insert(p);
-    }
+    for(int p : pf->getPartitions()) { touchingPartitions.insert(p); }
   }
 
   // Add partitions with a common partition vertex
-  for (GVertex* v: reg->vertices()) {
-    partitionVertex* pv = dynamic_cast<partitionVertex*>(v);
-    if (!pv) continue;
-    for (int p: pv->getPartitions()) {
-      touchingPartitions.insert(p);
-    }
+  for(GVertex *v : reg->vertices()) {
+    partitionVertex *pv = dynamic_cast<partitionVertex *>(v);
+    if(!pv) continue;
+    for(int p : pv->getPartitions()) { touchingPartitions.insert(p); }
   }
   return touchingPartitions;
 }
@@ -62,49 +61,54 @@ static std::set<int> computeTouchingPartitions(GRegion* reg) {
 static void fillFaceToEntities(
   std::unordered_map<MFace, partitionFace *, MFaceHash, MFaceEqual>
     &faceToEntities,
-  const std::vector<GFace *> &outerFaces, GModel* model)
+  const std::vector<GFace *> &outerFaces, GModel *model)
 {
   std::vector<GEntity *> entities;
   model->getEntities(entities, 2);
-  for (GEntity *e : entities) {
+  for(GEntity *e : entities) {
     partitionFace *pf = dynamic_cast<partitionFace *>(e);
     // For all PF that have the region boundary as parent, fill.
-    if (!pf) continue;
-    if (std::find(outerFaces.begin(), outerFaces.end(), pf->getParentEntity()) == outerFaces.end())
+    if(!pf) continue;
+    if(std::find(outerFaces.begin(), outerFaces.end(), pf->getParentEntity()) ==
+       outerFaces.end())
       continue;
 
-    for (size_t k = 0; k < pf->getNumMeshElements(); ++k) {
+    for(size_t k = 0; k < pf->getNumMeshElements(); ++k) {
       auto elem = pf->getMeshElement(k);
-      for (int i = 0; i < elem->getNumFaces(); ++i) {
+      for(int i = 0; i < elem->getNumFaces(); ++i) {
         faceToEntities[elem->getFace(i)] = pf;
       }
     }
   }
 }
 
-  /* 
-  Thoughts about boundary overlaps 
-  
-  The boundary overlaps will be made of the outer part of overlap boundaries. When building the volume overlap,
-  each partitionFace will know which of its elements are covered. Then we must decide whom they are overlap of.
-  This can come from BREP information of the volume whose overlap is computed.
-  If each partitionRegion has only one face with the correct tag, it is trivial. Pathological cases are weird. But does it matter ?
+/*
+Thoughts about boundary overlaps
 
-  Suggestion:
-  1) Build a MFace->partitionFace* dict
-  2) For all surfaces bounding the volume, When building overlap of partitionRegion "r", check how many of its faces match the boundaries ?
-  ASSUMING A PARTITION REGION HAS PARTITIONFACE AS BOUNDARY ?
-  3) Attribute these faces accordingly (as future part j of overlap i of ...)
-  4) Build a FaceOverlapManager ?
-  
-  */
+The boundary overlaps will be made of the outer part of overlap boundaries. When
+building the volume overlap, each partitionFace will know which of its elements
+are covered. Then we must decide whom they are overlap of. This can come from
+BREP information of the volume whose overlap is computed. If each
+partitionRegion has only one face with the correct tag, it is trivial.
+Pathological cases are weird. But does it matter ?
+
+Suggestion:
+1) Build a MFace->partitionFace* dict
+2) For all surfaces bounding the volume, When building overlap of
+partitionRegion "r", check how many of its faces match the boundaries ? ASSUMING
+A PARTITION REGION HAS PARTITIONFACE AS BOUNDARY ? 3) Attribute these faces
+accordingly (as future part j of overlap i of ...) 4) Build a FaceOverlapManager
+?
+
+*/
 
 void overlapRegionManager::create(int overlapSize, bool createPhysicals)
 {
   int numPartitions = model->getNumPartitions();
   std::vector<GEntity *> entities;
   model->getEntities(entities, 3);
-  GRegion *parentRegion = dynamic_cast<GRegion *>(model->getEntityByTag(3, tagParent));
+  GRegion *parentRegion =
+    dynamic_cast<GRegion *>(model->getEntityByTag(3, tagParent));
   if(!parentRegion) {
     Msg::Error("overlapRegionManager: Parent region %d not found", tagParent);
     return;
@@ -117,12 +121,15 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
     model->getMaxElementaryNumber(2); // Tags of new 2D entites
   unsigned nOverlapsCreated = 0;
 
-  // For building "boundaries of overlap", we keep track for all partitionFace whose parent is a boundary of this region, of their faces
-  std::unordered_map<MFace, partitionFace*, MFaceHash, MFaceEqual> faceToEntities;
-  Msg::Info("Volume has %d surfaces as boundary. These will get an overlap too.", parentRegion->faces().size());
+  // For building "boundaries of overlap", we keep track for all partitionFace
+  // whose parent is a boundary of this region, of their faces
+  std::unordered_map<MFace, partitionFace *, MFaceHash, MFaceEqual>
+    faceToEntities;
+  Msg::Info(
+    "Volume has %d surfaces as boundary. These will get an overlap too.",
+    parentRegion->faces().size());
   fillFaceToEntities(faceToEntities, parentRegion->faces(), model);
   Msg::Info("Face to PF map has %lu entries", faceToEntities.size());
-
 
   for(unsigned i = 1; i <= numPartitions; ++i) {
     // Generate overlaps of partition i
@@ -134,8 +141,9 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
       std::set<MTetrahedron *>
         allElementsInOverlap; // Total set of elements in the overlaps of this
                               // entity
-        std::map<partitionFace*, std::unordered_set<MFace, MFaceHash, MFaceEqual>> faceToOverlaps;
-        
+      std::map<partitionFace *,
+               std::unordered_set<MFace, MFaceHash, MFaceEqual>>
+        faceToOverlaps;
 
       partitionRegion *region = dynamic_cast<partitionRegion *>(e);
       // Skip the "full" entities as well as overlap entities
@@ -146,8 +154,8 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
 
       // Get all the valid "j"
       std::set<int> touchingPartitions = computeTouchingPartitions(region);
-      Msg::Info("Region %d has %d touching partitions", region->tag(), touchingPartitions.size());
-      
+      Msg::Info("Region %d has %d touching partitions", region->tag(),
+                touchingPartitions.size());
 
       // ALL MFACE ON MY BOUNDARY
       auto entityFaces = boundaryOfRegion(region);
@@ -167,13 +175,13 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
           continue;
         }
 
-        
         int j = otherRegion->getPartitions()[0];
-        if (touchingPartitions.find(j) == touchingPartitions.end()) continue; // Skip non-touching partitions
+        if(touchingPartitions.find(j) == touchingPartitions.end())
+          continue; // Skip non-touching partitions
 
         // Fill the overlap
-        auto tetras =
-          otherRegion->getNearbyTetra(*region, region->getBoundaryVertices(), overlapSize);
+        auto tetras = otherRegion->getNearbyTetra(
+          *region, region->getBoundaryVertices(), overlapSize);
         if(tetras.empty()) continue;
         overlapRegion *overlap =
           new overlapRegion(model, ++elementaryNumber, region, otherRegion);
@@ -205,19 +213,18 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
       for(auto [face, count] : faceCount) {
         if(count != 1) continue;
 
-
         auto itEntity = faceToEntities.find(face);
-        if (itEntity == faceToEntities.end()) {
+        if(itEntity == faceToEntities.end()) {
           // Either an internal or artifical face, but not the physical boundary
-          if (entityFaces.find(face) == entityFaces.end()) {
+          if(entityFaces.find(face) == entityFaces.end()) {
             boundaryFaces.insert(face);
           }
           // Else, neglect: internal face
           continue;
         }
 
-        // This face belongs to the physical boundary of the region (and is on a partitionFace
-        // neighbor of the region)
+        // This face belongs to the physical boundary of the region (and is on a
+        // partitionFace neighbor of the region)
         GEntity *parentFace = (itEntity->second)->getParentEntity();
         int numFacesWithThisParent = std::count_if(
           regionFaces.begin(), regionFaces.end(), [parentFace](GEntity *f) {
@@ -225,8 +232,9 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
             return f->getParentEntity() == parentFace;
           });
         if(numFacesWithThisParent > 1) {
-          Msg::Warning("Boundary face has more than one parent face: %d on partition %d. Overlap of boundary can be messy",
-                     numFacesWithThisParent, i);
+          Msg::Warning("Boundary face has more than one parent face: %d on "
+                       "partition %d. Overlap of boundary can be messy",
+                       numFacesWithThisParent, i);
         }
         auto pf = std::find_if(regionFaces.begin(), regionFaces.end(),
                                [parentFace](GEntity *f) {
@@ -241,12 +249,13 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
           faceToOverlaps[faceWithOverlap].insert(face);
         }
         else {
-          //What does this represetn ? FIXME
-          //Msg::Error("Parent face not found");
+          // What does this represetn ? FIXME
+          // Msg::Error("Parent face not found");
         }
       }
 
-      // Create an artificial boundary of all the overlaps of this entity, with new elements.
+      // Create an artificial boundary of all the overlaps of this entity, with
+      // new elements.
       partitionFace *fullBnd =
         new partitionFace(model, ++elementaryNumberBnd, {i});
       fullBnd->setParentEntity(region->getParentEntity());
@@ -273,7 +282,7 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
       findElementsForBoundaryOverlap(fullBnd, faceToOverlaps,
                                      faceToOverlapElements,
                                      model);*/
-                                     
+
       // Now create overlap of physical boundaries
 
       for(const auto &[pf, set] : faceToOverlaps) {
@@ -292,7 +301,7 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
         Msg::Info("Created overlap of boundary %d with %d elements", bnd->tag(),
                   elems.size());
         auto parentFace = pf->getParentEntity();
-        if (!parentFace) {
+        if(!parentFace) {
           Msg::Error("Parent face not found");
           continue;
         }
@@ -309,8 +318,6 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
     }
   }
 
- 
-
   // Create all the boundaries
   /*for (const auto& [pf, set]: faceToOverlaps) {
     std::vector<MTriangle*> bndElems;
@@ -326,7 +333,8 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
       new partitionFace(model, ++elementaryNumberBnd, {pf->getPartitions()[0]});
     fullBnd->triangles = std::move(bndElems); // Take ownership
     model->add(fullBnd);
-    Msg::Info("Created full boundary %d for i = %d", fullBnd->tag(), pf->getPartitions()[0]);
+    Msg::Info("Created full boundary %d for i = %d", fullBnd->tag(),
+  pf->getPartitions()[0]);
     this->boundariesByPartition[pf->getPartitions()[0]].insert(fullBnd);
     gmsh::model::addPhysicalGroup(
       2, {fullBnd->tag()}, -1,
@@ -334,7 +342,6 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
         std::to_string(pf->getPartitions()[0]) + "_num_" + std::to_string(0));
   }*/
 }
-
 
 /*
 void overlapRegionManager::findElementsForBoundaryOverlap(
@@ -358,9 +365,8 @@ void overlapRegionManager::findElementsForBoundaryOverlap(
       if(other == pf) continue;
       const auto& otherEdges = other->edges();
       for (GEdge* edge: myEdges) {
-        if (std::find(otherEdges.begin(), otherEdges.end(), edge) != otherEdges.end()) {
-          others.insert(other);
-          break;
+        if (std::find(otherEdges.begin(), otherEdges.end(), edge) !=
+otherEdges.end()) { others.insert(other); break;
         }
       }
     }
@@ -377,4 +383,3 @@ void overlapRegionManager::findElementsForBoundaryOverlap(
   }
 }
 */
-
