@@ -1433,16 +1433,16 @@ GMSH_API bool gmsh::model::mesh::findOverlapBoundariesEntities(
     }
     auto bndDict = manager->second->getBoundariesByPartition();
     auto it = bndDict.find(partition);
-    if(it != bndDict.end()) {
-      for(partitionEdge *f : it->second) {
-        innerBoundaries.push_back(f->tag());
+    if (it != bndDict.end()) {
+      for (partitionEdge* f : it->second) {
+        auto parent = f->getParentEntity();
+        if (!parent)
+          Msg::Error("No parent entity found for boundary %d", f->tag());
+        if (parent->dim() == 2)
+          innerBoundaries.push_back(f->tag());
+        else
+          overlapOfBoundaries.push_back(f->tag());
       }
-    }
-    auto map = manager->second->getOverlapBoundariesOf(partition);
-    if (!map)
-      return false;
-    for(auto it = map->begin(); it != map->end(); ++it) {
-      innerBoundaries.push_back(it->second->tag());
     }
   } break;
   case 3: {

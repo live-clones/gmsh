@@ -25,13 +25,6 @@ public:
   overlapFaceManager(GModel* model, int tagParent, int overlapSize = 1, bool createPhysicals = true);
   void create(int overlapSize = 1, bool createPhysicals = true);
 
-  overlapFace* getOverlap(int of, int on) const {
-    auto it = overlaps.find(of);
-    if (it == overlaps.end()) return nullptr;
-    auto it2 = it->second.find(on);
-    if (it2 == it->second.end()) return nullptr;
-    return it2->second;
-  }
 
   const std::map<int, std::set<overlapFace*>>& getOverlapsByPartition() const {
     return overlapsByPartition;
@@ -47,26 +40,6 @@ public:
     return boundariesByPartition;
   }
 
-  const std::map<int, overlapFace*>* getOverlapsOf(int of) const {
-    auto it = overlaps.find(of);
-    if (it == overlaps.end()) return nullptr;
-    return &it->second;
-  }
-
-  const std::map<int, partitionEdge*>* getOverlapBoundariesOf(int of) const {
-    auto it = boundaries.find(of);
-    if (it == boundaries.end()) return nullptr;
-    return &it->second;
-  }
-
-  void addOverlap(overlapFace* overlap) {
-    overlaps[overlap->of()][overlap->on()] = overlap;
-  }
-
-  void addBoundary(partitionEdge* boundary, int i, int j) {
-    boundaries[i][j] = boundary;
-  }
-
   std::map<int, std::map<int, overlapFace*>> getOverlaps() const {
     return overlaps;
   }
@@ -75,13 +48,7 @@ public:
     return boundaries;
   }
 
-  std::map<int, partitionEdge*> getFullBoundaries() const {
-    return fullBoundaries;
-  }
 
-  void setFullBoundary(int i, partitionEdge* bnd) {
-    fullBoundaries[i] = bnd;
-  }
 };
 
 #endif

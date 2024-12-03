@@ -2422,23 +2422,14 @@ GModel::getAllOverlapBoundaries() const
     }
   }*/
   for (const auto& [parent, manager]: _overlapFaceManagers) {
-    const auto& map = manager->getBoundaries();
-    for (const auto& [i, submap]: map) {
-      for (const auto& [j, boundary]: submap) {
-        result.insert(boundary);
+    for (const auto& [i, boundary]: manager->getBoundariesByPartition()) {
+      for (const auto& b: boundary) {
+        result.insert(b);
       }
-    }
-    for (const auto& [i, boundary]: manager->getFullBoundaries()) {
-      result.insert(boundary);
     }
   }
   for (const auto& [parent, manager]: _overlapRegionManagers) {
-    /*const auto& map = manager->getBoundaries();
-    for (const auto& [i, submap]: map) {
-      for (const auto& [j, boundary]: submap) {
-        result.insert(boundary);
-      }
-    }*/
+
     for (const auto& [i, boundary]: manager->getBoundariesByPartition()) {
       for (const auto& b: boundary) {
         result.insert(b);

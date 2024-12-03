@@ -647,7 +647,6 @@ static bool readMSH4Overlaps(GModel *const model, FILE *fp, bool partition,
       // Create the overlap entity and add it to the model
       overlapFace *overlapEntity = new overlapFace(model, tagOverlap, I, J);
       model->add(overlapEntity);
-      manager->addOverlap(overlapEntity);
       manager->getOverlapsByPartition()[I->getPartitions()[0]].insert(overlapEntity);
       overlapEntity->setManager(manager.get());
       if(!readMSH4Physicals(model, fp, overlapEntity, binary, swap)) {
@@ -853,7 +852,6 @@ static bool readMSH4OverlapBoundaries(GModel *const model, FILE *fp,
                    buffer[3]);
         return false;
       }
-      //it->second->setFullBoundary(buffer[2], entity);
       it->second->getBoundariesByPartition()[buffer[2]].insert(entity);
     }
     else if(buffer[0] == 3) {
