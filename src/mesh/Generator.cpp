@@ -412,7 +412,8 @@ static void Mesh1D(GModel *m)
 
   std::vector<GEdge *> temp;
   for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) {
-    (*it)->meshStatistics.status = GEdge::PENDING;
+    if((*it)->getFixedMeshIF()) (*it)->meshStatistics.status = GEdge::DONE;
+    else     (*it)->meshStatistics.status = GEdge::PENDING;
     temp.push_back(*it);
   }
 
@@ -563,7 +564,8 @@ static void Mesh2D(GModel *m)
   }
 
   for(auto it = m->firstFace(); it != m->lastFace(); ++it)
-    (*it)->meshStatistics.status = GFace::PENDING;
+    if((*it)->getFixedMeshIF()) (*it)->meshStatistics.status = GFace::DONE;
+    else (*it)->meshStatistics.status = GFace::PENDING;
 
   // boundary layers are special: their generation (including vertices and curve
   // meshes) is global as it depends on a smooth normal field generated from the
@@ -988,7 +990,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
   }
   else if(how == "DiskQuadrangulation") {
     for(GFace *gf : m->getFaces()) {
-      if(gf->meshStatistics.status == GFace::DONE) {
+      if(gf->meshStatistics.status == GFace::DONE && !gf->getFixedMeshIF()) {
         gf->meshStatistics.status = GFace::PENDING;
       }
     }
@@ -1002,7 +1004,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
   }
   else if(how == "QuadCavityRemeshing") {
     for(GFace *gf : m->getFaces()) {
-      if(gf->meshStatistics.status == GFace::DONE) {
+      if(gf->meshStatistics.status == GFace::DONE && !gf->getFixedMeshIF()) {
         gf->meshStatistics.status = GFace::PENDING;
       }
     }
@@ -1017,7 +1019,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
   else if(how == "QuadQuasiStructured") {
     // The following methods only act on faces whose status is PENDING
     for(GFace *gf : m->getFaces()) {
-      if(gf->meshStatistics.status == GFace::DONE) {
+      if(gf->meshStatistics.status == GFace::DONE && !gf->getFixedMeshIF()) {
         gf->meshStatistics.status = GFace::PENDING;
       }
     }
@@ -1457,7 +1459,7 @@ void GenerateMesh(GModel *m, int ask)
   // 1D mesh
   if(ask == 1 || (ask > 1 && old < 1)) {
     std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
-    std::for_each(m->firstFace(), m->lastFace(), deMeshGFace());
+    for(auto it = m->firstFace(); it != m->lastFace(); ++it) if(!(*it)->getFixedMeshIF()) deMeshGFace(*it);
     Mesh0D(m);
     Mesh1D(m);
   }
