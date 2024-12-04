@@ -302,8 +302,6 @@ void GetStatistics(double stat[50], double quality[3][101], bool visibleOnly)
 static void GetQualityFast(GModel *m, int dim, double &qmin, double &qavg)
 {
   int nthreads = CTX::instance()->numThreads;
-  if(CTX::instance()->mesh.maxNumThreads1D > 0)
-    nthreads = CTX::instance()->mesh.maxNumThreads1D;
   if(!nthreads) nthreads = Msg::GetMaxThreads();
 
   std::size_t N = 0;
