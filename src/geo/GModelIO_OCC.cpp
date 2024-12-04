@@ -3604,7 +3604,7 @@ bool OCC_Internals::defeature(const std::vector<int> &volumeTags,
 }
 
 bool OCC_Internals::fillet2D(int &tag, const int edgeTag1, const int edgeTag2,
-                             double radius)
+                             double radius, int pointTag, bool reverse)
 {
   if(tag >= 0 && _tagEdge.IsBound(tag)) {
     Msg::Error("OpenCASCADE curve with tag %d already exists", tag);
@@ -3658,8 +3658,21 @@ bool OCC_Internals::fillet2D(int &tag, const int edgeTag1, const int edgeTag2,
   gp_Dir normal = aElementarySurface->Axis().Direction();
   if(face.Orientation() == TopAbs_REVERSED) { normal = -normal; }
 
-  TopoDS_Vertex v1 = ShapeAnalysis_Edge().FirstVertex(ed1);
-  gp_Pnt point = BRep_Tool().Pnt(v1);
+  if(reverse) {normal = -normal; }
+
+  gp_Pnt point;
+  if (pointTag != -1) {
+    if (!_tagVertex.IsBound(pointTag)) {
+      Msg::Error("Unknown OpenCASCADE point with tag %d", pointTag);
+      return false;
+    }
+    TopoDS_Vertex v = TopoDS::Vertex(_tagVertex.Find(pointTag));
+    point = BRep_Tool::Pnt(v);
+  } else {
+    // Use the first vertex of the first edge as before
+    TopoDS_Vertex v1 = ShapeAnalysis_Edge().FirstVertex(ed1);
+    point = BRep_Tool::Pnt(v1);
+  }
 
   gp_Pln p(point, normal);
 
