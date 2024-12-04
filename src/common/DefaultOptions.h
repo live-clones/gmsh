@@ -1562,6 +1562,8 @@ StringXNumber MeshOptions_Number[] = {
     "Renumber nodes and elements in a continuous sequence after mesh generation" },
   { F|O, "ReparamMaxTriangles" , opt_mesh_reparam_max_triangles , 250000 ,
     "Maximum number of triangles in a single parametrization patch" },
+  { F|O, "Reproducible" , opt_mesh_reproducible , 1 ,
+    "Try to produce reproducible meshes even when multi-threaded" },
 
   { F,   "SaveAll" , opt_mesh_save_all , 0. ,
     "Save all elements, even if they don't belong to physical groups (for some "
