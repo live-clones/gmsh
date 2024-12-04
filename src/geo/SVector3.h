@@ -37,10 +37,11 @@ public:
   double normalize()
   {
     double n = norm();
+    double inv_n = 1.0/n;
     if(n) {
-      P[0] /= n;
-      P[1] /= n;
-      P[2] /= n;
+      P[0] *= inv_n;
+      P[1] *= inv_n;
+      P[2] *= inv_n;
     }
     return n;
   }
