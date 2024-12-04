@@ -3224,7 +3224,8 @@ void AlphaShape::_colourBoundaries(const int faceTag, const std::string & bounda
         common_entities.push_back(ent);
       }
     }
-    if (common_entities.size() == 1){
+
+    if (common_entities.size() >= 1){
       bndMap[common_entities[0]].push_back(tri);
     }
     else {
@@ -3288,6 +3289,8 @@ void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std
   std::unordered_set<size_t> projectedControlNodes;
   auto gr = gm_alphaShape->getRegionByTag(tag);
   for (size_t i=0; i<nodeTags.size(); i++){
+    bool onPoint = false;
+    bool onLine = false;
     // MVertex* v = gf->getMeshVertex(i);
     // printf("new vertex \n");
     MVertex* v = gm_alphaShape->getMeshVertexByTag(nodeTags[i]);
@@ -3327,10 +3330,12 @@ void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std
               x1_projected = p;
               intersect = true;
               minDist = d;
-              // printf("Projected on point \n");
+              printf("Projected on point \n");
           }
+          onPoint = true;
         }
         else if (tri->getType() == TYPE_LIN){
+          // if (onPoint) continue;
           // project on a line
           SVector3 pa(tri->getVertex(0)->point());
           SVector3 pb(tri->getVertex(1)->point());
@@ -3347,10 +3352,12 @@ void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std
               x1_projected = x;
               intersect = true;
               minDist = d;
-              // printf("Projected on line \n");
+              printf("Projected on line \n");
           }
+          onLine = true;
         }
         else if (tri->getType() == TYPE_TRI){
+          if (onPoint || onLine) continue;
           SVector3 pa(tri->getVertex(0)->x(), tri->getVertex(0)->y(),tri->getVertex(0)->z());
           SVector3 pb(tri->getVertex(1)->x(), tri->getVertex(1)->y(),tri->getVertex(1)->z());
           SVector3 pc(tri->getVertex(2)->x(), tri->getVertex(2)->y(),tri->getVertex(2)->z());
