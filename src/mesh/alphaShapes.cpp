@@ -3330,7 +3330,7 @@ void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std
               x1_projected = p;
               intersect = true;
               minDist = d;
-              printf("Projected on point \n");
+              // printf("Projected on point \n");
           }
           onPoint = true;
         }
@@ -3352,7 +3352,7 @@ void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std
               x1_projected = x;
               intersect = true;
               minDist = d;
-              printf("Projected on line \n");
+              // printf("Projected on line \n");
           }
           onLine = true;
         }
