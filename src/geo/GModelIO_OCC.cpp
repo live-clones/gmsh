@@ -4640,13 +4640,13 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
     TopoDS_Shape shape = shapeTool->GetShape(label);
     shape.Location(isRef ? loc : partLoc);
 
-#if 0
-    // this is necessary for endcaps.stp (cf. #693), but has a big performance
-    // hit on STEP files with lots of references -- leaving out until we
-    // understand why it's necessary: there should be a better way ;-)
-    if(isRef && !loc.IsIdentity() && loc != shapeTool->GetLocation(label))
-      shapeTool->SetShape(label, shape);
-#endif
+    if(CTX::instance()->geom.occImportLabels == 2) {
+      // FIXME: this is necessary for endcaps.stp (cf. #693), but has a big
+      // performance hit on STEP files with lots of references -- leaving out
+      // until we understand why it's necessary: there should be a better way!)
+      if(isRef && !loc.IsIdentity() && loc != shapeTool->GetLocation(label))
+        shapeTool->SetShape(label, shape);
+    }
 
     int dim =
       (shape.ShapeType() == TopAbs_VERTEX) ? 0 :

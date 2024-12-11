@@ -1004,7 +1004,8 @@ StringXNumber GeometryOptions_Number[] = {
     "Only consider visible shapes when exporting STEP or BREP models with the "
     "OpenCASCADE kernel" },
   { F|O, "OCCImportLabels" , opt_geometry_occ_import_labels , 1. ,
-    "Import labels and colors when importing STEP models with the OpenCASCADE kernel" },
+    "Import labels and colors when importing STEP models with the OpenCASCADE "
+    "kernel (0: no, 1: yes, 2: use slow workaround for bad shape locations)" },
   { F|O, "OCCMakeSolids" , opt_geometry_occ_make_solids , 0. ,
     "Fix shells and make solids when importing STEP, IGES and BRep models with the "
     "OpenCASCADE kernel" },

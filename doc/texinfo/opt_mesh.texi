@@ -781,6 +781,11 @@ Maximum number of triangles in a single parametrization patch@*
 Default value: @code{250000}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.Reproducible
+Try to produce reproducible meshes even when multi-threaded@*
+Default value: @code{1}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.SaveAll
 Save all elements, even if they don't belong to physical groups (for some mesh formats, this removes physical groups altogether)@*
 Default value: @code{0}@*
