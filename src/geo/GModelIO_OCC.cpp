@@ -2265,7 +2265,7 @@ bool OCC_Internals::addBSplineSurface(
   }
   bool periodicV = true;
   for(int i = 0; i < numPointsU; i++) {
-    if(pointTags[i * numPointsV] != pointTags[(i + 1) * numPointsV - 1]) {
+    if(pointTags[i] != pointTags[i + numPointsU * (numPointsV - 1)]) {
       periodicV = false;
       break;
     }
