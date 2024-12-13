@@ -2542,8 +2542,9 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
     for (auto tri : _df->triangles){
       delete tri;
     }
+    _df->removeElements(TYPE_TRI);
   }
-  df->removeElements(TYPE_TRI);
+  // df->removeElements(TYPE_TRI);
   for (size_t i=0; i<alphaFaces.size(); i++){
     size_t tetIndex = alphaFaces[i]/4;
     size_t faceIndex = alphaFaces[i]%4;
