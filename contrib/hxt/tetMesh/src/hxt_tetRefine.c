@@ -127,7 +127,7 @@ static int getBestCenter(double p[4][4], double nodalSize[4], double center[4], 
 
   // these formula accumulate a lot of errors...
   double xa = sqrt(e0l2);
-  double invtwoxa = 1/(2*xa);
+  double invtwoxa = 1./(2*xa);
   double xb = (e1l2 + e0l2 - e3l2)*invtwoxa;
   double yb = sqrt(e1l2 - xb*xb);
   double xc = (e2l2 + e0l2 - e4l2)*invtwoxa;
