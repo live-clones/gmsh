@@ -62,11 +62,11 @@ Calhoun-Lopez, Michel Zou, Sir Sunsheep, Mariano Forti, Walter Steffe, Nico
 Schloemer, Simon Tournier, Alexandru Dadalau, Thomas Ulrich, Matthias Diener,
 Jamie Border, Kenneth Jansen, Steven Masfaraud, Sai Sumanth Moturu, Arie
 Westland, Andreas Farley, Mahesh Madhav, Zoltan Csati, Thierry Hocquellet,
-Christophe Bourcier, Mattéo Couplet, Mahesh Madhav, Giuseppe Musacchio, Romin
-Tomasetti, Lin Qi Chen, Tim Furlan, Matthias Lang, Tim Gabriel, Julien Chapelat,
-Boris Martin, Thomas Pirottin, Kazuyoshi Furutaka, Mariusz Wozniak, Christophe
-Friebel, Thierry Thomas, Joonas Haapsaari, Jani V"alimaa, Erik Schaubelt, Louis
-Denis, Francis Franklin.
+Christophe Bourcier, Mattéo Couplet, Giuseppe Musacchio, Romin Tomasetti, Lin Qi
+Chen, Tim Furlan, Matthias Lang, Tim Gabriel, Julien Chapelat, Boris Martin,
+Thomas Pirottin, Kazuyoshi Furutaka, Mariusz Wozniak, Christophe Friebel,
+Thierry Thomas, Joonas Haapsaari, Jani V"alimaa, Erik Schaubelt, Louis Denis,
+Francis Franklin.
 
 Special thanks to Bill Spitzak, Michael Sweet, Matthias Melcher, Greg Ercolano
 and others for the Fast Light Tool Kit on which Gmsh's GUI is based. See
