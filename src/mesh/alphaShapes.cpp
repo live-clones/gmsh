@@ -2489,6 +2489,9 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
     return;
   }
 
+  for (auto tet : dr->tetrahedra){
+    delete tet;
+  }
   dr->tetrahedra.clear();
   for (size_t i=0; i<alphaTets.size(); i++){
     dr->tetrahedra.push_back(alphaTets[i]);
@@ -2535,7 +2538,11 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
   if (returnTri2TetMap){
     tri2Tet.resize(2*alphaFaces.size());
   }
-
+  for (auto _df : gm->getFaces()){
+    for (auto tri : _df->triangles){
+      delete tri;
+    }
+  }
   df->removeElements(TYPE_TRI);
   for (size_t i=0; i<alphaFaces.size(); i++){
     size_t tetIndex = alphaFaces[i]/4;
@@ -2887,6 +2894,9 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
   }
 
   // Add faces to surfaceTag
+  for (auto tri : df->triangles){
+    delete tri;
+  }
   df->removeElements(TYPE_TRI);
   for (auto f : pm->faces){
     MVertex* v0 = gm->getMeshVertexByTag(f->he->v->data);
@@ -3073,7 +3083,12 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
     c2v.push_back(v);
     v2c[v] = i;
   }
+
+  for (auto tet : dr->tetrahedra){
+    delete tet;
+  }
   dr->removeElements(TYPE_TET);
+  
   for (uint64_t i=0; i<m->tetrahedra.num; i++){
     if (m->tetrahedra.color[i] == HXT_COLOR_OUT) continue;
     auto t = &m->tetrahedra.node[4*i];
@@ -3263,6 +3278,9 @@ void AlphaShape::_colourBoundaries(const int faceTag, const std::string & bounda
       Msg::Error("Face with tag %d not found", it.first);
       return;
     }
+    // for (auto tri : gf_bnd->triangles){
+    //   delete tri;
+    // }
     gf_bnd->removeElements(TYPE_TRI);
     for (auto tri : it.second){
       gf_bnd->triangles.push_back(tri);
