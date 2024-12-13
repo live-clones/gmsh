@@ -2443,7 +2443,10 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
   for (size_t i=0; i<n_tets; i++){
     auto tet = gr->tetrahedra[i];
     R = _tetCircumCenter(tet);
-    hTet = tetSizeFromSizeField(tet, sizeAtNodes);
+    // hTet = tetSizeFromSizeField(tet, sizeAtNodes);
+    auto tet_bary = tet->barycenter();
+    // printf("tet_bary : %f, %f, %f \n", tet_bary.x(), tet_bary.y(), tet_bary.z());
+    hTet = field->operator()(tet_bary.x(), tet_bary.y(), tet_bary.z(), NULL);
     if (R/hTet < alpha && !_touched[i]){
       std::stack<size_t> _s;
       _s.push(i);
@@ -2462,7 +2465,9 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
             size_t i_t_neigh = neighbors[4*i_t+j]/4;
             auto tet_neigh = gr->tetrahedra[i_t_neigh];
             R = _tetCircumCenter(tet_neigh);
-            hTet = tetSizeFromSizeField(tet_neigh, sizeAtNodes);
+            // hTet = tetSizeFromSizeField(tet, sizeAtNodes);
+            auto tet_bary = tet_neigh->barycenter();
+            hTet = field->operator()(tet_bary.x(), tet_bary.y(), tet_bary.z(), NULL);
             if (R/hTet < alpha){
               auto tet_alpha = new MTetrahedron(tet_neigh->getVertex(0), tet_neigh->getVertex(1), tet_neigh->getVertex(2), tet_neigh->getVertex(3));
               alphaTets.push_back(tet_alpha);
@@ -2499,14 +2504,18 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
         verticesInConnected.insert(tet->getVertex(j));
       }
     }
-    for (auto _gr : gm->getRegions()){
-      for(MVertex *v : _gr->mesh_vertices) {
+    // for (auto _gr : gm->getRegions()){
+      for(MVertex *v : gr->mesh_vertices) {
         if (verticesInConnected.find(v) == verticesInConnected.end()){
-          _gr->removeMeshVertex(v);
+          gr->removeMeshVertex(v);
+          // gm->gm->addMVertexToVertexCache(vm);
+          // gm->MVertex
+          // delete v;
+          // v->setEntity(NULL);
           n_removed++;
         }
       }
-    }
+    // }
     Msg::Info("Removed %zu disconnected nodes in alpha shape\n", n_removed);
   }
   
@@ -2567,7 +2576,7 @@ struct pair_hash {
   }
 };
 
-int _GFace2PolyMesh(int faceTag, PolyMesh **pm)
+int _GFace2PolyMesh(int faceTag, PolyMesh **pm, std::vector<PolyMesh::Face*>& toRemove)
 {
   // FIXME using the public API inside Gmsh is not a good idea
   if(!gmsh::isInitialized()) gmsh::initialize();
@@ -2639,7 +2648,7 @@ int _GFace2PolyMesh(int faceTag, PolyMesh **pm)
 
   HalfEdgePtrEqual equal;
 
-  std::vector<PolyMesh::Face*> toRemove;
+  // std::vector<PolyMesh::Face*> toRemove;
 
   for(size_t i = 0; i < (*pm)->hedges.size() - 1; i++) {
     PolyMesh::HalfEdge *h0 = (*pm)->hedges[i];
@@ -2655,7 +2664,7 @@ int _GFace2PolyMesh(int faceTag, PolyMesh **pm)
 		      //  h0->v->data,h0->next->v->data);
 	  toRemove.push_back(h2->f);
 	  i++;
-    return 1;
+    // return 1;
 	}
 	else break;
       }
@@ -2665,19 +2674,19 @@ int _GFace2PolyMesh(int faceTag, PolyMesh **pm)
 
   //  printf("%lu %lu -->",(*pm)->hedges.size(),(*pm)->faces.size());
   
-  for (auto f : toRemove){
-    if (f->he->opposite)f->he->opposite->opposite = nullptr;
-    if (f->he->next->opposite)f->he->next->opposite->opposite = nullptr;
-    if (f->he->next->next->opposite)f->he->next->next->opposite->opposite = nullptr;
-    (*pm)->hedges.erase(std::find((*pm)->hedges.begin(),(*pm)->hedges.end(), f->he));
-    (*pm)->hedges.erase(std::find((*pm)->hedges.begin(),(*pm)->hedges.end(), f->he->next));
-    (*pm)->hedges.erase(std::find((*pm)->hedges.begin(),(*pm)->hedges.end(), f->he->next->next));
-    (*pm)->faces.erase(std::find((*pm)->faces.begin(),(*pm)->faces.end(), f));
-  }
-  for(size_t i = 0; i < (*pm)->hedges.size(); i++) {
-    PolyMesh::HalfEdge *h0 = (*pm)->hedges[i];
-    h0->v->he = h0;
-  }
+  // for (auto f : toRemove){
+  //   if (f->he->opposite)f->he->opposite->opposite = nullptr;
+  //   if (f->he->next->opposite)f->he->next->opposite->opposite = nullptr;
+  //   if (f->he->next->next->opposite)f->he->next->next->opposite->opposite = nullptr;
+  //   (*pm)->hedges.erase(std::find((*pm)->hedges.begin(),(*pm)->hedges.end(), f->he));
+  //   (*pm)->hedges.erase(std::find((*pm)->hedges.begin(),(*pm)->hedges.end(), f->he->next));
+  //   (*pm)->hedges.erase(std::find((*pm)->hedges.begin(),(*pm)->hedges.end(), f->he->next->next));
+  //   (*pm)->faces.erase(std::find((*pm)->faces.begin(),(*pm)->faces.end(), f));
+  // }
+  // for(size_t i = 0; i < (*pm)->hedges.size(); i++) {
+  //   PolyMesh::HalfEdge *h0 = (*pm)->hedges[i];
+  //   h0->v->he = h0;
+  // }
   //  printf(" %lu %lu\n",(*pm)->hedges.size(),(*pm)->faces.size());
   
   return 0;
@@ -2756,7 +2765,6 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
     }
   }
 
-  printf("size field set \n");
 
   // create size field on nodes
   Field* field = GModel::current()->getFields()->get(sizeFieldTag);
@@ -2772,11 +2780,18 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
   }
   
   PolyMesh* pm; 
-  int nonManifold = _GFace2PolyMesh(surfaceTag, &pm);
-  if (nonManifold==1){
-    Msg::Warning("Non-manifold surface mesh, skipping edge splitting");
-    return;
+  std::vector<PolyMesh::Face*> toRemove;
+  int nonManifold = _GFace2PolyMesh(surfaceTag, &pm, toRemove);
+  // Make set of toRemove
+  std::set<PolyMesh::Face*> toRemoveSet;
+  for (auto f : toRemove){
+    toRemoveSet.insert(f);
   }
+
+  // if (nonManifold==1){
+  //   Msg::Warning("Non-manifold surface mesh, skipping edge splitting");
+  //   return;
+  // }
 
   std::unordered_map<int, PolyMesh::Vertex*> vertexTagMap;
   for (auto v : pm->vertices){
@@ -2821,6 +2836,10 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
         edgeNodesSorted.erase(it);
         continue;
     }
+    if (toRemoveSet.find(heToSplit->f) != toRemoveSet.end()){
+      edgeNodesSorted.erase(it);
+      continue;
+    }
     double l = edgeLength(*it);
     edgeNodesSorted.erase(it);
     std::vector<PolyMesh::Face*> newFaces;
@@ -2830,27 +2849,27 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
     double h1 = sizeAtNodes[it->second];
     // printf("edge %d -> %d, length %f, h0 %f, h1 %f \n", it->first, it->second, l, h0, h1);
     if (l > dimensionFactor*(h0+h1)*0.5){
-      if (useMap){
-        // We test if the tetrahedron is not too distorted
-        auto tetId = tri2Tet[heToSplit->f->data];
-        auto tet = num2Tet[tetId];
+      // if (useMap){
+      //   // We test if the tetrahedron is not too distorted
+      //   auto tetId = tri2Tet[heToSplit->f->data];
+      //   auto tet = num2Tet[tetId];
         
-        printf("testing tet distorsion \n");
-        printf("found the tet ? %d\n", tet != nullptr);
-        if (tet == nullptr){
-          printf("tet %d not found, skipping\n", tetId);
-          continue;
-        }
-        double R = tet->circumcenter().distance(tet->getVertex(0)->point());
-        double r = tet->barycenter().distance(tet->getVertex(0)->point());
-        double vol = tet->getVolume();
-        printf("r %f, R %f, volume %f\n", r, R, vol);
-        // if (R < 0.3*minSize){
-        if (r < 0.5*minSize){
-          printf("tet %d is too distorted, skipping\n", tetId);
-          continue;
-        }
-      }
+      //   printf("testing tet distorsion \n");
+      //   printf("found the tet ? %d\n", tet != nullptr);
+      //   if (tet == nullptr){
+      //     printf("tet %d not found, skipping\n", tetId);
+      //     continue;
+      //   }
+      //   double R = tet->circumcenter().distance(tet->getVertex(0)->point());
+      //   double r = tet->barycenter().distance(tet->getVertex(0)->point());
+      //   double vol = tet->getVolume();
+      //   printf("r %f, R %f, volume %f\n", r, R, vol);
+      //   // if (R < 0.3*minSize){
+      //   if (r < 0.5*minSize){
+      //     printf("tet %d is too distorted, skipping\n", tetId);
+      //     continue;
+      //   }
+      // }
       SVector3 midPoint = 0.5*(heToSplit->v->position + heToSplit->next->v->position);
       MVertex* vm = new MVertex(midPoint[0], midPoint[1], midPoint[2]);
       split_edge(pm, heToSplit, midPoint, vm->getNum(), newFaces, linkedVertices);
@@ -3060,8 +3079,12 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
     auto t = &m->tetrahedra.node[4*i];
     auto tet = new MTetrahedron(c2v[t[0]], c2v[t[1]], c2v[t[2]], c2v[t[3]]);
     dr->tetrahedra.push_back(tet);
+    // gr->tetrahedra.push_back(tet);
   }
   // Remove triangles and add them again? Don't think it's necessary...
+
+
+
   hxtMeshDelete(&m);
 }
 
@@ -3130,7 +3153,7 @@ void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, co
   }
   for (auto v : _deleted){
     gr->removeMeshVertex(v);
-    delete v;
+    // delete v;
   }
   Msg::Info("Filtered out %lu vertices from mesh\n", _deleted.size());
 }
