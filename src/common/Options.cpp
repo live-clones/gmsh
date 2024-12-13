@@ -6837,6 +6837,12 @@ double opt_mesh_reparam_max_triangles(OPT_ARGS_NUM)
   return CTX::instance()->mesh.reparamMaxTriangles;
 }
 
+double opt_mesh_reproducible(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.reproducible = (int)val;
+  return CTX::instance()->mesh.reproducible;
+}
+
 double opt_mesh_ignore_parametrization(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

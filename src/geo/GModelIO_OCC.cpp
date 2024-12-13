@@ -2265,7 +2265,7 @@ bool OCC_Internals::addBSplineSurface(
   }
   bool periodicV = true;
   for(int i = 0; i < numPointsU; i++) {
-    if(pointTags[i * numPointsV] != pointTags[(i + 1) * numPointsV - 1]) {
+    if(pointTags[i] != pointTags[i + numPointsU * (numPointsV - 1)]) {
       periodicV = false;
       break;
     }
@@ -2972,7 +2972,12 @@ bool OCC_Internals::addThickSolid(int tag, int solidTag,
 #if OCC_VERSION_HEX > 0x070400
     BRepOffsetAPI_MakeThickSolid ts;
     ts.MakeThickSolidByJoin(shape, exclude, offset,
-                            CTX::instance()->geom.tolerance);
+                            CTX::instance()->geom.tolerance,
+                            BRepOffset_Skin,
+                            Standard_True, // Intersection
+                            Standard_False, // SelfInter (not available yet)
+                            GeomAbs_Arc, // Join
+                            Standard_False); // RemoveIntEdges
 #else
     BRepOffsetAPI_MakeThickSolid ts(shape, exclude, offset,
                                     CTX::instance()->geom.tolerance);
@@ -4635,13 +4640,13 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
     TopoDS_Shape shape = shapeTool->GetShape(label);
     shape.Location(isRef ? loc : partLoc);
 
-#if 0
-    // this is necessary for endcaps.stp (cf. #693), but has a big performance
-    // hit on STEP files with lots of references -- leaving out until we
-    // understand why it's necessary: there should be a better way ;-)
-    if(isRef && !loc.IsIdentity() && loc != shapeTool->GetLocation(label))
-      shapeTool->SetShape(label, shape);
-#endif
+    if(CTX::instance()->geom.occImportLabels == 2) {
+      // FIXME: this is necessary for endcaps.stp (cf. #693), but has a big
+      // performance hit on STEP files with lots of references -- leaving out
+      // until we understand why it's necessary: there should be a better way!)
+      if(isRef && !loc.IsIdentity() && loc != shapeTool->GetLocation(label))
+        shapeTool->SetShape(label, shape);
+    }
 
     int dim =
       (shape.ShapeType() == TopAbs_VERTEX) ? 0 :

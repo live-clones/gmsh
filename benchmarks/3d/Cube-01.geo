@@ -1,6 +1,6 @@
-Mesh.Algorithm3D = 9;
-Mesh.Algorithm = 9;
-Mesh.Recombine3DAll = 1;
+//Mesh.Algorithm3D = 9;
+//Mesh.Algorithm = 9;
+//Mesh.Recombine3DAll = 1;
 Mesh.Smoothing=1;
 //Mesh.Dual = 1;
 //Mesh.Voronoi=1;

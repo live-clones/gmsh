@@ -806,7 +806,9 @@ bool PViewDataGModel::combineTime(nameData &nd)
 bool PViewDataGModel::skipEntity(int step, int ent)
 {
   if(step >= getNumTimeSteps()) return true;
-  return !_steps[step]->getEntity(ent)->getVisibility();
+  if(!_steps[step]->getModel()->getVisibility()) return true;
+  if(!_steps[step]->getEntity(ent)->getVisibility()) return true;
+  return false;
 }
 
 bool PViewDataGModel::skipElement(int step, int ent, int ele,

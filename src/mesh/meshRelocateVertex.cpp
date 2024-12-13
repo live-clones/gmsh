@@ -455,13 +455,6 @@ void RelocateVertices(GRegion *region, int niter, double tol)
 #if defined(HAVE_WINSLOWUNTANGLER)
 int _untanglePyramids(GRegion *region, bool topological, bool geometrical)
 {
-  const std::array<std::array<double, 3>, 4> tet_ideal_shape = {
-    std::array<double, 3>{.5, 0, -1. / (2. * std::sqrt(2.))},
-    std::array<double, 3>{-.5, 0, -1. / (2. * std::sqrt(2.))},
-    std::array<double, 3>{0, .5, 1. / (2. * std::sqrt(2.))},
-    std::array<double, 3>{0, -.5, 1. / (2. * std::sqrt(2.))},
-  };
-
   std::vector<MVertex *> _v_pyr;
   for(size_t i = 0; i < region->pyramids.size(); i++) {
     _v_pyr.push_back(region->pyramids[i]->getVertex(4));
@@ -502,7 +495,13 @@ int _untanglePyramids(GRegion *region, bool topological, bool geometrical)
     v->setIndex(count++);
   }
   std::vector<std::array<uint32_t, 4>> tets;
+
+  double avgEdgeSize = 0.0;
+  
   for(auto t : _tets) {
+    for(size_t k=0;k<4;k++)
+      for(size_t l=k+1;l<4;l++)
+	avgEdgeSize += t->getVertex(k)->distance(t->getVertex(l));
     uint32_t n0 = t->getVertex(0)->getIndex();
     uint32_t n1 = t->getVertex(1)->getIndex();
     uint32_t n2 = t->getVertex(2)->getIndex();
@@ -510,7 +509,21 @@ int _untanglePyramids(GRegion *region, bool topological, bool geometrical)
     std::array<uint32_t, 4> _tt = {n0, n3, n2, n1};
     tets.push_back(_tt);
   }
+  avgEdgeSize /= (6.0*_tets.size());
+  double ee[4][3] = {{.5, 0, -1. / (2. * std::sqrt(2.))},
+		     {-.5, 0, -1. / (2. * std::sqrt(2.))},
+		     {0, .5, 1. / (2. * std::sqrt(2.))},
+		     {0, -.5, 1. / (2. * std::sqrt(2.))}};
 
+  std::array<std::array<double, 3>, 4> equi;
+
+  for(size_t lv = 0; lv < 4; ++lv) {
+    equi[0][lv] = ee[lv][0] * (avgEdgeSize);
+    equi[1][lv] = ee[lv][1] * (avgEdgeSize);
+    equi[2][lv] = ee[lv][2] * (avgEdgeSize);
+  }
+
+  
   for(size_t i = 0; i < region->pyramids.size(); i++) {
     MFace mf = region->pyramids[i]->getFace(0);
     auto mf2 = _fcs.find(mf);
@@ -541,19 +554,21 @@ int _untanglePyramids(GRegion *region, bool topological, bool geometrical)
     MVertex *v3 = region->pyramids[i]->getVertex(3);
     MVertex *v4 = region->pyramids[i]->getVertex(4);
     tets.push_back({(uint32_t)v0->getIndex(), (uint32_t)v4->getIndex(),
-                    (uint32_t)v2->getIndex(), (uint32_t)v1->getIndex()});
+	  (uint32_t)v2->getIndex(), (uint32_t)v1->getIndex()});
     tets.push_back({(uint32_t)v2->getIndex(), (uint32_t)v4->getIndex(),
-                    (uint32_t)v0->getIndex(), (uint32_t)v3->getIndex()});
-
+	  (uint32_t)v0->getIndex(), (uint32_t)v3->getIndex()});
+    
     tets.push_back({(uint32_t)v1->getIndex(), (uint32_t)v4->getIndex(),
-                    (uint32_t)v3->getIndex(), (uint32_t)v2->getIndex()});
+	  (uint32_t)v3->getIndex(), (uint32_t)v2->getIndex()});
     tets.push_back({(uint32_t)v3->getIndex(), (uint32_t)v4->getIndex(),
-                    (uint32_t)v1->getIndex(), (uint32_t)v0->getIndex()});
+	  (uint32_t)v1->getIndex(), (uint32_t)v0->getIndex()});
   }
   if(geometrical) {
     std::vector<std::array<std::array<double, 3>, 4>> tetIdealShapes;
-    for(size_t i = 0; i < tets.size(); i++)
-      tetIdealShapes.push_back(tet_ideal_shape);
+
+    for(size_t i = 0; i < tets.size(); i++){
+      tetIdealShapes.push_back(equi);
+    }
     untangle_tetrahedra(points, locked, tets, tetIdealShapes, 1, 100, 10);
 
     for(auto v : _v_pyr) {

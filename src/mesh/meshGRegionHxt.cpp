@@ -577,7 +577,7 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
     nthreads, // int defaultThreads;
     nthreads, // int delaunayThreads;
     nthreads, // int improveThreads;
-    1, // int reproducible;
+    CTX::instance()->mesh.reproducible, // int reproducible;
     (Msg::GetVerbosity() > 5) ? 2 : 1, // int verbosity;
     1, // int stat;
     1, // int refine;
