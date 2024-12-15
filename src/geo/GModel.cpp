@@ -2390,6 +2390,49 @@ int GModel::generateOverlapForEntity(int dim, int tag) {
   return 0;
 }
 
+void GModel::clearOverlaps() {
+  #warning "TODO: Check Destry relevant entities, not just the managers"
+  for (auto& [tag, manager]: _overlapEdgeManagers) {
+    // TODO
+  }
+  /*for (auto& [tag, manager]: _overlapFaceManagers) {
+    auto& overlaps = manager->getOverlapsByPartition();
+    for (auto& [i, overlapSet]: overlaps) {
+      for (overlapFace* overlap: overlapSet) {
+        this->remove(overlap);
+        delete overlap;
+      }
+    }
+    auto& boundaries = manager->getBoundariesByPartition();
+    for (auto& [i, boundarySet]: boundaries) {
+      for (partitionEdge* boundary: boundarySet) {
+        this->remove(boundary);
+        delete boundary;
+      }
+    }
+  }*/
+  for (auto& [tag, manager]: _overlapRegionManagers) {
+    auto& boundaries = manager->getBoundariesByPartition();
+    for (auto& [i, boundarySet]: boundaries) {
+      for (partitionFace* boundary: boundarySet) {
+        this->remove(boundary);
+        delete boundary;
+      }
+    }
+    auto& overlaps = manager->getOverlapsByPartition();
+    for (auto& [i, overlapSet]: overlaps) {
+      for (overlapRegion* overlap: overlapSet) {
+        this->remove(overlap);
+        delete overlap;
+      }
+    }
+    
+  }
+  _overlapEdgeManagers.clear();
+  _overlapFaceManagers.clear();
+  _overlapRegionManagers.clear();
+}
+
 void GModel::addOverlapEdgeManager(
   int tag, std::unique_ptr<overlapEdgeManager> &&manager)
 {

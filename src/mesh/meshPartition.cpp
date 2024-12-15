@@ -2371,6 +2371,9 @@ static void assignToParent(std::set<MVertex *> &verts, PART_ENTITY *entity,
 // success, 1 = error.
 int UnpartitionMesh(GModel *model)
 {
+  // If overlaps existed, delete them
+  model->clearOverlaps();
+
   // make a copy so we can iterate safely (we will remove some entities)
   std::set<GRegion *, GEntityPtrLessThan> regions = model->getRegions();
   std::set<GFace *, GEntityPtrLessThan> faces = model->getFaces();

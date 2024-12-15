@@ -630,6 +630,7 @@ public:
   int unpartitionMesh();
   
   int generateOverlapForEntity(int dim, int tag);
+  void clearOverlaps(); // Remove all overlap entities and the partition entities that are overlap boundaries
   // For each entity, have for each entity a list of elements (of same dimension) in the overlap
   std::map<int, std::unique_ptr<overlapRegionManager>> _overlapRegionManagers; // Key is tag of a 2D parent entity
   std::map<int, std::unique_ptr<overlapFaceManager>> _overlapFaceManagers; // Key is tag of a 2D parent entity
