@@ -818,6 +818,7 @@ static int insertVertexB(std::list<edgeXface> &shell,
 
     if(std::abs(oldVolume - newVolume) > EPS * oldVolume) return -3;
     if(onePointIsTooClose) return -4;
+    if(cavity.size() == 2) return -6;
     return -5;
   }
 }
@@ -1006,9 +1007,36 @@ insertAPoint(GFace *gf, std::set<MTri3 *, compareTri3Ptr>::iterator it,
         Msg::Debug("Point %g %g cannot be inserted because it is out of the "
                    "parametric domain)",
                    center[0], center[1]);
+      if (result == -6)
+        Msg::Debug("Point %g %g cannot be inserted because it is not improving "
+                   "the quality of the 2 elements",
+                   center[0], center[1]);
 
       AllTris.erase(it);
-      worst->forceRadius(-1);
+
+      // As in case of result = -6 it might happen that inside we would like to
+      // refine the mesh, we should not force the radius to -1, but pretend that
+      // the radius is good enough (less than LIMIT_ but higher than 0).
+      if (result == -6){
+        Msg::Debug("Forcing radius to %g", 0.5 * LIMIT_);
+        worst->forceRadius(0.5 * LIMIT_);
+        if(ActiveTris){
+          // Go over its neighbours to check whether they should become active
+          for (size_t index = 0; index < 3; index++){
+            MTri3 *pNeighbour = worst->getNeigh(index); // TODO C++11 use auto
+            if (pNeighbour == 0) continue;
+            int active_edge;
+            if(isActive(pNeighbour, LIMIT_, active_edge) &&
+               pNeighbour->getRadius() > LIMIT_){
+              if((*ActiveTris).find(pNeighbour) == (*ActiveTris).end())
+                (*ActiveTris).insert(pNeighbour);
+            }
+          }
+        }
+      }
+      else
+        worst->forceRadius(-1);
+
       AllTris.insert(worst);
       delete v;
       for(auto itc = cavity.begin(); itc != cavity.end(); ++itc)
