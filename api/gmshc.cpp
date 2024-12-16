@@ -3709,6 +3709,17 @@ GMSH_API void gmshModelOccAddPipe(const int * dimTags, const size_t dimTags_n, c
   }
 }
 
+GMSH_API void gmshModelOccAddLoft(const int wireTag, const int inwire1, const int inwire2, int * tag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::occ::addLoft(wireTag, inwire1, inwire2, *tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelOccFillet(const int * volumeTags, const size_t volumeTags_n, const int * curveTags, const size_t curveTags_n, const double * radii, const size_t radii_n, int ** outDimTags, size_t * outDimTags_n, const int removeVolume, int * ierr)
 {
   if(ierr) *ierr = 0;

@@ -8051,6 +8051,34 @@ class model:
         add_pipe = addPipe
 
         @staticmethod
+        def addLoft(wireTag, inwire1, inwire2):
+            """
+            gmsh.model.occ.addLoft(wireTag, inwire1, inwire2)
+
+            Add a loft in the OpenCASCADE CAD representation
+
+            Return `tag'.
+
+            Types:
+            - `wireTag': integer
+            - `inwire1': integer
+            - `inwire2': integer
+            - `tag': integer
+            """
+            api_tag_ = c_int()
+            ierr = c_int()
+            lib.gmshModelOccAddLoft(
+                c_int(wireTag),
+                c_int(inwire1),
+                c_int(inwire2),
+                byref(api_tag_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return api_tag_.value
+        add_loft = addLoft
+
+        @staticmethod
         def fillet(volumeTags, curveTags, radii, removeVolume=True):
             """
             gmsh.model.occ.fillet(volumeTags, curveTags, radii, removeVolume=True)
@@ -8059,8 +8087,8 @@ class model:
             `radii'. The `radii' vector can either contain a single radius, as many
             radii as `curveTags', or twice as many as `curveTags' (in which case
             different radii are provided for the begin and end points of the curves).
-            Return the filleted entities in `outDimTags' as a vector of (dim, tag)
-            pairs. Remove the original volume if `removeVolume' is set.
+            Return the filleted entities in `outDimTags'. Remove the original volume if
+            `removeVolume' is set.
 
             Return `outDimTags'.
 
