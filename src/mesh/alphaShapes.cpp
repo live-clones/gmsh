@@ -2434,6 +2434,7 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
     }
   }
   computeTetNeighbors_(tetNodes, neighbors);
+  std::unordered_set<MVertex*> verticesInConnected;
   // Compute the alpha shape
   std::vector<bool> _touched(n_tets, false);
   std::vector<size_t> alphaFaces;
@@ -2453,6 +2454,7 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
       _touched[i] = true;
       // we create a new tetrahedron
       auto tet_alpha = new MTetrahedron(tet->getVertex(0), tet->getVertex(1), tet->getVertex(2), tet->getVertex(3));
+      for (size_t jn=0; jn<4; jn++) {verticesInConnected.insert(tet_alpha->getVertex(jn));}
       alphaTets.push_back(tet_alpha);
       while(!_s.empty()){
         auto i_t = _s.top();
@@ -2470,6 +2472,7 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
             hTet = field->operator()(tet_bary.x(), tet_bary.y(), tet_bary.z(), NULL);
             if (R/hTet < alpha){
               auto tet_alpha = new MTetrahedron(tet_neigh->getVertex(0), tet_neigh->getVertex(1), tet_neigh->getVertex(2), tet_neigh->getVertex(3));
+              for (size_t jn=0; jn<4; jn++) {verticesInConnected.insert(tet_alpha->getVertex(jn));}
               alphaTets.push_back(tet_alpha);
               _s.push(i_t_neigh);
               _touched[i_t_neigh] = true;
@@ -2499,27 +2502,28 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
 
   if (removeDisconnectedNodes){
     size_t n_removed = 0;
-    std::unordered_set<MVertex*> verticesInConnected;
-    size_t n_tets_in_connected = dr->getNumMeshElementsByType(TYPE_TET);
-    for (size_t i=0; i<n_tets_in_connected; i++){
-      auto tet = dr->tetrahedra[i];
-      for (size_t j=0; j<4; j++){
-        verticesInConnected.insert(tet->getVertex(j));
+    // std::unordered_set<MVertex*> verticesInConnected;
+    // size_t n_tets_in_connected = dr->getNumMeshElementsByType(TYPE_TET);
+    // for (size_t i=0; i<n_tets_in_connected; i++){
+    //   auto tet = dr->tetrahedra[i];
+    //   for (size_t j=0; j<4; j++){
+    //     verticesInConnected.insert(tet->getVertex(j));
+    //   }
+    // }
+    // for (auto _gr : gm->getRegions()){
+    for(MVertex *v : gr->mesh_vertices) {
+      if (verticesInConnected.find(v) == verticesInConnected.end()){
+        gr->removeMeshVertex(v);
+        printf("removing node %zu \n", v->getNum());
+        // gm->gm->addMVertexToVertexCache(vm);
+        // gm->MVertex
+        // delete v;
+        // v->setEntity(NULL);
+        n_removed++;
       }
     }
-    // for (auto _gr : gm->getRegions()){
-      for(MVertex *v : gr->mesh_vertices) {
-        if (verticesInConnected.find(v) == verticesInConnected.end()){
-          gr->removeMeshVertex(v);
-          // gm->gm->addMVertexToVertexCache(vm);
-          // gm->MVertex
-          // delete v;
-          // v->setEntity(NULL);
-          n_removed++;
-        }
-      }
     // }
-    Msg::Info("Removed %zu disconnected nodes in alpha shape\n", n_removed);
+    Msg::Info("Removed %zu disconnected node(s) in alpha shape\n", n_removed);
   }
   
   // for (auto tet : dr->tetrahedra){
@@ -2719,6 +2723,8 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
     return;
   }
 
+  printf("hmm 0 \n");
+
   // if (buildElementOctree){
   //   SPoint3 p0(0., 0., 0.);
   //   SPoint3 p_param;
@@ -2738,6 +2744,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
     }
   }
 
+  printf("hmm 1 \n");
   // Update the alpha shape size field
   // Update the distance field
   std::vector<SPoint3> points;
@@ -2773,6 +2780,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
     }
   }
 
+  printf("hmm 2 \n");
 
   // create size field on nodes
   Field* field = GModel::current()->getFields()->get(sizeFieldTag);
@@ -2788,6 +2796,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
   }
   
   PolyMesh* pm; 
+  printf("hmm 3 \n");
   std::vector<PolyMesh::Face*> toRemove;
   int nonManifold = _GFace2PolyMesh(surfaceTag, &pm, toRemove);
   // Make set of toRemove
@@ -2796,6 +2805,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
     toRemoveSet.insert(f);
   }
 
+  printf("hmm 4 \n");
   // if (nonManifold==1){
   //   Msg::Warning("Non-manifold surface mesh, skipping edge splitting");
   //   return;
@@ -2817,6 +2827,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
   }
   std::multiset<std::pair<int,int>, decltype(&edgeLengthCompare)> edgeNodesSorted(edgeLengthCompare);
   for (auto en : edgeNodes) edgeNodesSorted.insert(en);
+  printf("hmm 5 \n");
 
   std::set<int> flaggedVertices;
   double dimensionFactor = 4/sqrt(6);
@@ -2829,7 +2840,9 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
 
   while (!edgeNodesSorted.empty()){
     auto it = edgeNodesSorted.begin();
+    // printf("hereS 0\n");
     if (flaggedVertices.find(it->first) != flaggedVertices.end() || flaggedVertices.find(it->second) != flaggedVertices.end()){
+        // printf("hereS 1\n");
         edgeNodesSorted.erase(it);
         continue;
     }
@@ -2837,7 +2850,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
     PolyMesh::Vertex* v1 = vertexTagMap[it->second];
     PolyMesh::HalfEdge *heToSplit = pm->getEdge(v0, v1);
     if (heToSplit == nullptr){
-        printf("uh oh, edge %d -> %d not found \n", it->first, it->second);
+        // printf("uh oh, edge %d -> %d not found \n", it->first, it->second);
         // add to flagged vertices and skip it
         flaggedVertices.insert(it->first);
         flaggedVertices.insert(it->second);
@@ -2848,11 +2861,12 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
       edgeNodesSorted.erase(it);
       continue;
     }
-    double l = edgeLength(*it);
+    // double l = edgeLength(*it);
+    double l = norm(v0->position - v1->position);
     edgeNodesSorted.erase(it);
     std::vector<PolyMesh::Face*> newFaces;
     std::vector<PolyMesh::Vertex*> linkedVertices;
-    
+    // printf("hereS 2\n");
     double h0 = sizeAtNodes[it->first];
     double h1 = sizeAtNodes[it->second];
     // printf("edge %d -> %d, length %f, h0 %f, h1 %f \n", it->first, it->second, l, h0, h1);
@@ -2888,11 +2902,13 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
       sizeAtNodes[vm->getNum()] = 0.5*(h0+h1);
       // onSurface.push_back(1);
       // nodalSizes.push_back(0.5*(s0+s1));
+      // printf("hereS 3\n");
       for (auto v : linkedVertices){
         edgeNodesSorted.insert(std::make_pair(vm->getNum(), size_t(v->data)));
       }
     }
   }
+  printf("hereS 4\n");
 
   // Add faces to surfaceTag
   for (auto tri : df->triangles){
@@ -2909,6 +2925,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
 
   delete pm;
 
+  printf("hereS 5\n");
   // Update the 3D mesh
   if (tetrahedralize)
     _tetrahedralizePoints(fullTag);
@@ -3077,7 +3094,9 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
 
   // Back to gmsh
   for (uint32_t i=n_nodesInMesh; i<m->vertices.num; i++){
+    // if (m->vertices.coord[4*i+3] == HXT_COLOR_OUT) continue;
     MVertex* v = new MVertex(m->vertices.coord[4*i+0], m->vertices.coord[4*i+1], m->vertices.coord[4*i+2]);
+
     gr->addMeshVertex(v);
     gm->addMVertexToVertexCache(v);
     v->setEntity(gr);
@@ -3098,8 +3117,6 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
     // gr->tetrahedra.push_back(tet);
   }
   // Remove triangles and add them again? Don't think it's necessary...
-
-
 
   hxtMeshDelete(&m);
 }
@@ -3169,6 +3186,7 @@ void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, co
   }
   for (auto v : _deleted){
     gr->removeMeshVertex(v);
+    printf("deleting vertex %d\n", v->getNum());
     // delete v;
   }
   Msg::Info("Filtered out %lu vertices from mesh\n", _deleted.size());
@@ -3466,45 +3484,80 @@ void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std
       // printf("node %zu - num bnd tris : %lu \n", v->getNum(), triangles_on_boundary.size());
       for (auto tri : triangles_on_boundary) {
         double minDist = 1e10;
-        if (tri->getType() != TYPE_TRI) continue;
-        SVector3 pa(tri->getVertex(0)->x(), tri->getVertex(0)->y(),tri->getVertex(0)->z());
-        SVector3 pb(tri->getVertex(1)->x(), tri->getVertex(1)->y(),tri->getVertex(1)->z());
-        SVector3 pc(tri->getVertex(2)->x(), tri->getVertex(2)->y(),tri->getVertex(2)->z());
-        double orient1 = robustPredicates::orient3d(pa.data(), pb.data(), pc.data(), x0);
-        double orient2 = robustPredicates::orient3d(pa.data(), pb.data(), pc.data(), x1);
-        // printf("node %zu - orient test : %d \n", v->getNum(), orient1*orient2 > 0);
-        double t=0;
-        if (abs(orient1-orient2) > 1e-10) 
-          t = orient1/(orient1-orient2);
-        t *= 0.9999999; // This ensures that the node stays inside the domain
-        SVector3 nx = x0 + t*(x1-x0);
-        auto v0 = pc-pa;
-        auto v1 = pb-pa;
-        auto v2 = nx-pa;
-        double dot00 = dot(v0, v0);
-        double dot01 = dot(v0, v1);
-        double dot02 = dot(v0, v2);
-        double dot11 = dot(v1, v1);
-        double dot12 = dot(v1, v2);
-        double invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
-        double u = (dot11 * dot02 - dot01 * dot12) * invDenom;
-        double v = (dot00 * dot12 - dot01 * dot02) * invDenom;
-        // printf("u = %f, v = %f, u+v = %f\n", u, v, u+v);
-        if (u >= 0 && v >= 0 && u + v <= 1){
-          double dist = (nx-x0).norm();
-          if (dist < minDist){
-            x1_projected = nx;
-            intersect = true;
-            minDist = dist;
+        if (tri->getType() == TYPE_PNT){
+          auto pt = tri->getVertex(0)->point();
+          SVector3 p = SVector3(pt);
+          double d = norm(p-x1);
+          if (d < minDist){
+              x1_projected = p;
+              intersect = true;
+              minDist = d;
+              // printf("Projected on point \n");
           }
+          onPoint = true;
         }
-        // x1_projected = x0 + t*(x1-x0);
-        // intersect = true;
-        // printf("node %zu intersects but is not boundary \n", v->getNum());
-        // break;
-      }
-      if (triangles_on_boundary.size() > 0 && !intersect){
-        printf("node %zu does not intersect but is close to boundary \n", v->getNum());
+        else if (tri->getType() == TYPE_LIN){
+          // if (onPoint) continue;
+          // project on a line
+          SVector3 pa(tri->getVertex(0)->point());
+          SVector3 pb(tri->getVertex(1)->point());
+          SVector3 v = pb-pa;
+          SVector3 w = x1-pa;
+          double c1 = dot(w,v);
+          double c2 = dot(v,v);
+          double b = c1/c2;
+          if (b < 0) b = 0;
+          if (b > 1) b = 1;
+          SVector3 x = pa + b*v;
+          double d = norm(x-x1);
+          if (d < minDist){
+              x1_projected = x;
+              intersect = true;
+              minDist = d;
+              // printf("Projected on line \n");
+          }
+          onLine = true;
+        }
+        else if (tri->getType() == TYPE_TRI){ // continue;
+          SVector3 pa(tri->getVertex(0)->x(), tri->getVertex(0)->y(),tri->getVertex(0)->z());
+          SVector3 pb(tri->getVertex(1)->x(), tri->getVertex(1)->y(),tri->getVertex(1)->z());
+          SVector3 pc(tri->getVertex(2)->x(), tri->getVertex(2)->y(),tri->getVertex(2)->z());
+          double orient1 = robustPredicates::orient3d(pa.data(), pb.data(), pc.data(), x0);
+          double orient2 = robustPredicates::orient3d(pa.data(), pb.data(), pc.data(), x1);
+          // printf("node %zu - orient test : %d \n", v->getNum(), orient1*orient2 > 0);
+          double t=0;
+          if (abs(orient1-orient2) > 1e-10) 
+            t = orient1/(orient1-orient2);
+          t *= 0.9999999; // This ensures that the node stays inside the domain
+          SVector3 nx = x0 + t*(x1-x0);
+          auto v0 = pc-pa;
+          auto v1 = pb-pa;
+          auto v2 = nx-pa;
+          double dot00 = dot(v0, v0);
+          double dot01 = dot(v0, v1);
+          double dot02 = dot(v0, v2);
+          double dot11 = dot(v1, v1);
+          double dot12 = dot(v1, v2);
+          double invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
+          double u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+          double v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+          // printf("u = %f, v = %f, u+v = %f\n", u, v, u+v);
+          if (u >= 0 && v >= 0 && u + v <= 1){
+            double dist = (nx-x0).norm();
+            if (dist < minDist){
+              x1_projected = nx;
+              intersect = true;
+              minDist = dist;
+            }
+          }
+          // x1_projected = x0 + t*(x1-x0);
+          // intersect = true;
+          // printf("node %zu intersects but is not boundary \n", v->getNum());
+          // break;
+        }
+        if (triangles_on_boundary.size() > 0 && !intersect){
+          printf("node %zu does not intersect but is close to boundary \n", v->getNum());
+        }
       }
     }
     if (intersect) {
