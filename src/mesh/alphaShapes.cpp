@@ -163,9 +163,10 @@ void print4debug(PolyMesh* pm, const int debugTag)
         // }
         // else {
         // }
-        fprintf(f, "ST(%g,%g,0,%g,%g,0,%g,%g,0){%d,%d,%d};\n",
-                he0->v->position.x(), he0->v->position.y(), he1->v->position.x(),
-                he1->v->position.y(), he2->v->position.x(), he2->v->position.y(),
+        fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
+                he0->v->position.x(), he0->v->position.y(), he0->v->position.z(),
+                he1->v->position.x(), he1->v->position.y(), he1->v->position.z(),
+                he2->v->position.x(), he2->v->position.y(), he2->v->position.z(),
                 it->data, it->data, it->data);
       }
         // else faceCircumCenter(it->he, cy, &Ry);
@@ -178,18 +179,18 @@ void print4debug(PolyMesh* pm, const int debugTag)
     for(auto it : pm->hedges) {
       PolyMesh::HalfEdge *he = it;
       if(he->opposite && he->f) {
-        fprintf(f, "SL(%g,%g,0,%g,%g,0){%d,%d};\n", he->v->position.x(),
-                he->v->position.y(), he->opposite->v->position.x(),
-                he->opposite->v->position.y(), he->data, he->data);
+        fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", he->v->position.x(),
+                he->v->position.y(), he->v->position.z(), he->opposite->v->position.x(),
+                he->opposite->v->position.y(), he->opposite->v->position.z(), he->data, he->data);
       }
-      else if (he->f) {
-        fprintf(f, "SL(%g,%g,0,%g,%g,0){%d,%d};\n", he->v->position.x(),
-                he->v->position.y(), he->next->v->position.x(),
-                he->next->v->position.y(), he->data, he->data);
-      }
+      // else if (he->f) {
+      //   fprintf(f, "SL(%g,%g,0,%g,%g,0){%d,%d};\n", he->v->position.x(),
+      //           he->v->position.y(), he->next->v->position.x(),
+      //           he->next->v->position.y(), he->data, he->data);
+      // }
     }
     for (auto v : pm->vertices){
-      fprintf(f, "SP(%g,%g,0){%d};\n", v->position.x(), v->position.y(), v->data);
+      fprintf(f, "SP(%g,%g,%g){%d};\n", v->position.x(), v->position.y(), v->position.z(), v->data);
     }
 
     fprintf(f, "};\n");
@@ -791,7 +792,7 @@ void AlphaShape::_alphaShape2D(PolyMesh* pm, const double alpha, const int faceT
     hMin = std::min(hMin, ss.second);
   }
   // double sizeLimit = field->getDescription() == "AlphaShapeDistance" ? 0.01 : 0;
-  double sizeLimit = 0.01;
+  double sizeLimit = 0.1;
   // double sizeLimit = 0.0;
   double constrainR = .2;
   double outsideLimit = 0.15;
@@ -799,6 +800,7 @@ void AlphaShape::_alphaShape2D(PolyMesh* pm, const double alpha, const int faceT
   std::unordered_map<PolyMesh::Face*, bool> _touched;
   double hTriangle, R, q;
   SPoint3 cc;
+  bool tooSmall = false;
   for (size_t i = 0; i < pm->faces.size(); i++){
     if (pm->faces[i]->data == -2) continue;
     PolyMesh::Face *f = pm->faces[i];
@@ -808,14 +810,16 @@ void AlphaShape::_alphaShape2D(PolyMesh* pm, const double alpha, const int faceT
     hTriangle = is_in_mesh ? hTriangle : hTriangle*outsideLimit;
     // if (usePreviousMesh && is_in_mesh &&  abs(hTriangle-hMin)/hMin < 1e-2) hTriangle*=bndLimit;
     faceInfo(f->he, cc, &R, &q);
+    tooSmall = false;
     if ((octree_prev != nullptr) && abs(hTriangle-hMin)/hMin < sizeLimit && R/hTriangle < constrainR) {
       // printf("yes, removing! element at %g %g %g \n", cc.x(), cc.y(), cc.z());
       // printf(" test 1 : %g %g %g \n", hTriangle, hMin, abs(hTriangle-hMin)/hMin);
       // printf(" test 2 : %g %g %g \n", R, hTriangle, R/hTriangle);
       // ce sont les plus petits éléments que je veux enlever, pas les grands... 
-      R*=1000; //
+      // R*=1e6; //
+      tooSmall = true;
     }
-    if (R/hTriangle < alpha && !_touched[f]){
+    if (R/hTriangle < alpha && !_touched[f] && !tooSmall){
       std::stack<PolyMesh::Face *> _s;
       _s.push(f);
       _touched[f] = true;
@@ -835,12 +839,14 @@ void AlphaShape::_alphaShape2D(PolyMesh* pm, const double alpha, const int faceT
             bool is_in_mesh = (octree_prev != nullptr) ? isInMesh(f_neigh, *octree_prev) : true;
             hTriangle = is_in_mesh ? hTriangle : hTriangle*outsideLimit;
             faceInfo(f_neigh->he, cc, &R, &q);
+            tooSmall = false;
             if ((octree_prev != nullptr) && abs(hTriangle-hMin)/hMin < sizeLimit && R/hTriangle < constrainR) {
               // printf("yes, removing ! \n");
               // ce sont les plus petits éléments que je veux enlever, pas les grands... 
-              R*=1000;
+              // R*=1e6;
+              tooSmall = true;
             }
-            if (R/hTriangle < alpha){
+            if (R/hTriangle < alpha && !tooSmall){
               _s.push(f_neigh);
               _touched[f_neigh] = true;
               f_neigh->data = faceTag;    
@@ -2810,6 +2816,11 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
   //   Msg::Warning("Non-manifold surface mesh, skipping edge splitting");
   //   return;
   // }
+  for (auto he : pm->hedges){
+    if (he->f == nullptr){
+      printf("he has no face \n");
+    }
+  }
 
   std::unordered_map<int, PolyMesh::Vertex*> vertexTagMap;
   for (auto v : pm->vertices){
@@ -2826,7 +2837,9 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
     }
   }
   std::multiset<std::pair<int,int>, decltype(&edgeLengthCompare)> edgeNodesSorted(edgeLengthCompare);
-  for (auto en : edgeNodes) edgeNodesSorted.insert(en);
+  for (auto en : edgeNodes){
+    edgeNodesSorted.insert(en);
+  }
   printf("hmm 5 \n");
 
   std::set<int> flaggedVertices;
@@ -2837,8 +2850,12 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
 
   int nNodesDeleted = 0;
 
-
+  size_t ii=0;
   while (!edgeNodesSorted.empty()){
+    // printf("edgeNodesSorted size : %lu \n", edgeNodesSorted.size());
+    // if (edgeNodesSorted.size()> 7000 ) 
+    //   exit(0);
+      // print4debug(pm, ii++);
     auto it = edgeNodesSorted.begin();
     // printf("hereS 0\n");
     if (flaggedVertices.find(it->first) != flaggedVertices.end() || flaggedVertices.find(it->second) != flaggedVertices.end()){
@@ -2849,7 +2866,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
     PolyMesh::Vertex* v0 = vertexTagMap[it->first];
     PolyMesh::Vertex* v1 = vertexTagMap[it->second];
     PolyMesh::HalfEdge *heToSplit = pm->getEdge(v0, v1);
-    if (heToSplit == nullptr){
+    if (heToSplit == nullptr || heToSplit->f == nullptr || heToSplit->opposite == nullptr || heToSplit->opposite->f == nullptr){
         // printf("uh oh, edge %d -> %d not found \n", it->first, it->second);
         // add to flagged vertices and skip it
         flaggedVertices.insert(it->first);
@@ -2857,7 +2874,9 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
         edgeNodesSorted.erase(it);
         continue;
     }
-    if (toRemoveSet.find(heToSplit->f) != toRemoveSet.end()){
+    if (toRemoveSet.find(heToSplit->f) != toRemoveSet.end() || toRemoveSet.find(heToSplit->opposite->f) != toRemoveSet.end()){
+      flaggedVertices.insert(it->first);
+      flaggedVertices.insert(it->second);
       edgeNodesSorted.erase(it);
       continue;
     }
@@ -2903,6 +2922,8 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
       // onSurface.push_back(1);
       // nodalSizes.push_back(0.5*(s0+s1));
       // printf("hereS 3\n");
+      if (fabs(midPoint[0]-0.050278) < 1e-6)
+        print4debug(pm, ii++);
       for (auto v : linkedVertices){
         edgeNodesSorted.insert(std::make_pair(vm->getNum(), size_t(v->data)));
       }
