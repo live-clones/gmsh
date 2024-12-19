@@ -782,8 +782,8 @@ Default value: @code{250000}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.Reproducible
-Try to produce reproducible meshes even when multi-threaded@*
-Default value: @code{1}@*
+Try to produce reproducible meshes even when multi-threaded (experimental)@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SaveAll
