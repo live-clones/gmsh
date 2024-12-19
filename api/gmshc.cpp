@@ -3757,12 +3757,12 @@ GMSH_API void gmshModelOccDefeature(const int * volumeTags, const size_t volumeT
   }
 }
 
-GMSH_API int gmshModelOccFillet2D(const int edgeTag1, const int edgeTag2, const double radius, const int tag, int * ierr)
+GMSH_API int gmshModelOccFillet2D(const int edgeTag1, const int edgeTag2, const double radius, const int tag, const int pointTag, const int reverse, int * ierr)
 {
   int result_api_ = 0;
   if(ierr) *ierr = 0;
   try {
-    result_api_ = gmsh::model::occ::fillet2D(edgeTag1, edgeTag2, radius, tag);
+    result_api_ = gmsh::model::occ::fillet2D(edgeTag1, edgeTag2, radius, tag, pointTag, reverse);
   }
   catch(...){
     if(ierr) *ierr = 1;

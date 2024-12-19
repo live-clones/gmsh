@@ -6940,12 +6940,12 @@ GMSH_API void gmsh::model::occ::defeature(const std::vector<int> &volumeTags,
 
 GMSH_API int gmsh::model::occ::fillet2D(const int edgeTag1,
                                         const int edgeTag2,
-                                        const double radius, const int tag)
+                                        const double radius, const int tag, const int pointTag, const bool reverse)
 {
   if(!_checkInit()) return -1;
   _createOcc();
   int outTag = tag;
-  GModel::current()->getOCCInternals()->fillet2D(outTag, edgeTag1, edgeTag2, radius);
+  GModel::current()->getOCCInternals()->fillet2D(outTag, edgeTag1, edgeTag2, radius, pointTag, reverse);
   return outTag;
 }
 
