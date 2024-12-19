@@ -91,8 +91,9 @@ SPoint3 gmshPolarSphere::point(double u, double v) const
   // at the center of the sphere
   // u=-x/(r+z) v=-y/(r+z)
   double rp2 = u * u + v * v;
-  SPoint3 p(-2 * r * u / (1 + rp2), -2 * r * v / (1 + rp2),
-            r * (1 - rp2) / (1 + rp2));
+  double inv_rp21 = 1.0 / (1 + rp2);
+  SPoint3 p(-2 * r * u * inv_rp21, -2 * r * v * inv_rp21,
+            r * (1 - rp2) * inv_rp21);
   p += o;
   return p;
 }

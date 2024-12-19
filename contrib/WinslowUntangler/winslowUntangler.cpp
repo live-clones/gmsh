@@ -867,8 +867,9 @@ namespace WinslowUntangler {
 
         if(rep.terminationtype != 4 && rep.terminationtype != 5) { nFail += 1; }
         lbfgsIter = rep.iterationscount;
-	printf(" detmin = %22.15E eps= %22.15E %lu iter term %lu\n",data.J_det_min,data.eps, rep.iterationscount,
-	       rep.terminationtype);
+        Msg::Info(" detmin = %22.15E eps= %22.15E %lu iter term %lu",
+                  data.J_det_min, data.eps, rep.iterationscount,
+                  rep.terminationtype);
       } catch(alglib::ap_error e) {
         Msg::Warning("Winslow untangler, iter %i: Alglib exception thrown in "
                      "LBFGS step, error: %s",

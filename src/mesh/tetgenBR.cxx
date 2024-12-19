@@ -38,6 +38,8 @@
 //                                                                           //
 ///////////////////////////////////////////////////////////////////////////////
 
+static constexpr double ONE_THIRD = 1.0 / 3.0;
+
 bool tetgenbehavior::parse_commandline(int argc, char **argv)
 {
   int startindex;
@@ -2059,13 +2061,14 @@ int tetgenmesh::tri_edge_2d(point A, point B, point C, point P, point Q,
       facenormal(A, B, C, n, 1, NULL);
       len = sqrt(dot(n, n));
       if (len != 0) {
-        n[0] /= len;
-        n[1] /= len;
-        n[2] /= len;
+        double inv_len = 1.0/len;
+        n[0] *= inv_len;
+        n[1] *= inv_len;
+        n[2] *= inv_len;
         len = distance(A, B);
         len += distance(B, C);
         len += distance(C, A);
-        len /= 3.0;
+        len *= ONE_THIRD;
         R = abovept; //dummypoint;
         R[0] = A[0] + len * n[0];
         R[1] = A[1] + len * n[1];

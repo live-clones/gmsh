@@ -46,7 +46,7 @@ struct contextMeshOptions {
   int boundaryLayerFanElements;
   int maxNumThreads1D, maxNumThreads2D, maxNumThreads3D;
   double angleToleranceFacetOverlap, toleranceReferenceElement;
-  int renumber, compoundClassify, reparamMaxTriangles;
+  int renumber, compoundClassify, reparamMaxTriangles, reproducible;
   double compoundLcFactor;
   unsigned int randomSeed;
   int nLayersPerGap;
