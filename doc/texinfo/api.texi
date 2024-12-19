@@ -1221,7 +1221,7 @@ Clear the mesh, i.e. delete all the nodes and elements, for the entities @code{d
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L738,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L631,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L2225,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L1895,Julia}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/copy_mesh.py#L53,copy_mesh.py}, @url{@value{GITLAB-PREFIX}/examples/api/flatten.py#L35,flatten.py}, @url{@value{GITLAB-PREFIX}/examples/api/remove_elements.py#L13,remove_elements.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/copy_mesh.py#L53,copy_mesh.py}, @url{@value{GITLAB-PREFIX}/examples/api/flatten.py#L35,flatten.py}, @url{@value{GITLAB-PREFIX}/examples/api/remesh_partial_move.py#L19,remesh_partial_move.py}, @url{@value{GITLAB-PREFIX}/examples/api/remove_elements.py#L13,remove_elements.py})
 @end table
 
 @item gmsh/model/mesh/removeElements
@@ -1283,7 +1283,7 @@ Apply the affine transformation @code{affineTransform} (16 entries of a 4x4 matr
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L769,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L658,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L2312,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L1980,Julia}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/flatten2.py#L19,flatten2.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/flatten2.py#L19,flatten2.py}, @url{@value{GITLAB-PREFIX}/examples/api/remesh_partial_move.py#L30,remesh_partial_move.py})
 @end table
 
 @item gmsh/model/mesh/getNodes
@@ -1535,7 +1535,7 @@ Get the types of elements in the entity of dimension @code{dim} and tag @code{ta
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L980,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L849,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L2890,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L2496,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x6.cpp#L38,x6.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/x6.py#L33,x6.py}, @url{@value{GITLAB-PREFIX}/examples/api/poisson.py#L92,poisson.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x6.cpp#L38,x6.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/tri.py#L10,tri.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/x6.py#L33,x6.py}, @url{@value{GITLAB-PREFIX}/examples/api/poisson.py#L92,poisson.py})
 @end table
 
 @item gmsh/model/mesh/getElementType
@@ -1583,7 +1583,7 @@ Get the elements of type @code{elementType} classified on the entity of tag @cod
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1020,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L886,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L2995,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L2596,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x7.cpp#L58,x7.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/x7.py#L50,x7.py}, @url{@value{GITLAB-PREFIX}/examples/api/adapt_mesh.py#L18,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/examples/api/neighbors.py#L15,neighbors.py}, @url{@value{GITLAB-PREFIX}/examples/api/poisson.py#L95,poisson.py}, @url{@value{GITLAB-PREFIX}/examples/api/stl_to_brep.py#L21,stl_to_brep.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x7.cpp#L58,x7.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/tri.py#L11,tri.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/x7.py#L50,x7.py}, @url{@value{GITLAB-PREFIX}/examples/api/adapt_mesh.py#L18,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/examples/api/neighbors.py#L15,neighbors.py}, @url{@value{GITLAB-PREFIX}/examples/api/poisson.py#L95,poisson.py}, ...)
 @end table
 
 @item gmsh/model/mesh/getMaxElementTag
@@ -1629,7 +1629,7 @@ Get the quality @code{elementQualities} of the elements with tags @code{elementT
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1058,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L921,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L3060,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L2658,Julia}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/mesh_quality.py#L12,mesh_quality.py}, @url{@value{GITLAB-PREFIX}/examples/api/view_element_size.py#L16,view_element_size.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/mesh_quality.py#L12,mesh_quality.py}, @url{@value{GITLAB-PREFIX}/examples/api/min_edge.py#L7,min_edge.py}, @url{@value{GITLAB-PREFIX}/examples/api/view_element_size.py#L16,view_element_size.py})
 @end table
 
 @item gmsh/model/mesh/addElements
@@ -2017,7 +2017,7 @@ Get the nodes on the edges of all elements of type @code{elementType} classified
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1397,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1234,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L3871,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3383,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x7.cpp#L34,x7.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/x7.py#L30,x7.py}, @url{@value{GITLAB-PREFIX}/examples/api/stl_to_brep.py#L23,stl_to_brep.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x7.cpp#L34,x7.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/tri.py#L12,tri.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/x7.py#L30,x7.py}, @url{@value{GITLAB-PREFIX}/examples/api/stl_to_brep.py#L23,stl_to_brep.py})
 @end table
 
 @item gmsh/model/mesh/getElementFaceNodes
@@ -3725,7 +3725,7 @@ integer
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2595,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2290,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7035,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6252,Julia}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/bspline_filling.py#L18,bspline_filling.py}, @url{@value{GITLAB-PREFIX}/examples/api/spline.py#L13,spline.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/bspline_filling.py#L18,bspline_filling.py}, @url{@value{GITLAB-PREFIX}/examples/api/spline.py#L13,spline.py}, @url{@value{GITLAB-PREFIX}/examples/api/torus_bspline.py#L292,torus_bspline.py})
 @end table
 
 @item gmsh/model/occ/addBezier
@@ -3773,7 +3773,7 @@ integer
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2632,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2324,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7131,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6329,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t19.cpp#L26,t19.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t19.py#L24,t19.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L73,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/relocate_nodes.py#L15,relocate_nodes.py}, @url{@value{GITLAB-PREFIX}/examples/api/stl_to_brep.py#L49,stl_to_brep.py}, @url{@value{GITLAB-PREFIX}/examples/api/surface_filling.py#L16,surface_filling.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t19.cpp#L26,t19.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t19.py#L24,t19.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L73,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/relocate_nodes.py#L15,relocate_nodes.py}, @url{@value{GITLAB-PREFIX}/examples/api/stl_to_brep.py#L49,stl_to_brep.py}, @url{@value{GITLAB-PREFIX}/examples/api/surface_filling.py#L16,surface_filling.py}, ...)
 @end table
 
 @item gmsh/model/occ/addRectangle
@@ -3789,7 +3789,7 @@ integer
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2642,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2333,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7163,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6359,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t17.cpp#L28,t17.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t20.cpp#L62,t20.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t21.cpp#L39,t21.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/x6.cpp#L20,x6.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t17.py#L27,t17.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t20.py#L52,t20.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t21.py#L31,t21.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/x6.py#L19,x6.py}, @url{@value{GITLAB-PREFIX}/examples/api/adapt_mesh.py#L75,adapt_mesh.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t17.cpp#L28,t17.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t20.cpp#L62,t20.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t21.cpp#L39,t21.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/x6.cpp#L20,x6.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t17.py#L27,t17.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t20.py#L52,t20.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t21.py#L31,t21.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/tri.py#L5,tri.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/x6.py#L19,x6.py}, ...)
 @end table
 
 @item gmsh/model/occ/addDisk
@@ -3821,7 +3821,7 @@ integer
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2675,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2364,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7243,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6416,Julia}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L118,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/stl_to_brep.py#L50,stl_to_brep.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_2d.py#L118,naca_boundary_layer_2d.py}, @url{@value{GITLAB-PREFIX}/examples/api/stl_to_brep.py#L50,stl_to_brep.py}, @url{@value{GITLAB-PREFIX}/examples/api/torus_bspline.py#L276,torus_bspline.py})
 @end table
 
 @item gmsh/model/occ/addSurfaceFilling
@@ -3883,7 +3883,7 @@ integer
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L2752,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2436,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L7396,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L6561,Julia}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/bspline_bezier_patches.py#L55,bspline_bezier_patches.py}, @url{@value{GITLAB-PREFIX}/examples/api/bspline_bezier_trimmed.py#L41,bspline_bezier_trimmed.py}, @url{@value{GITLAB-PREFIX}/examples/api/terrain_bspline.py#L20,terrain_bspline.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/bspline_bezier_patches.py#L55,bspline_bezier_patches.py}, @url{@value{GITLAB-PREFIX}/examples/api/bspline_bezier_trimmed.py#L41,bspline_bezier_trimmed.py}, @url{@value{GITLAB-PREFIX}/examples/api/terrain_bspline.py#L20,terrain_bspline.py}, @url{@value{GITLAB-PREFIX}/examples/api/torus_bspline.py#L353,torus_bspline.py})
 @end table
 
 @item gmsh/model/occ/addBezierSurface
@@ -4877,7 +4877,7 @@ Set interpolation matrices for the element family @code{type} ("Line", "Triangle
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L3610,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3217,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L9634,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L8562,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x3.cpp#L126,x3.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/x3.py#L110,x3.py}, @url{@value{GITLAB-PREFIX}/examples/api/view_adaptive_to_mesh.py#L22,view_adaptive_to_mesh.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x3.cpp#L126,x3.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/x3.py#L110,x3.py}, @url{@value{GITLAB-PREFIX}/examples/api/view_adaptive_to_mesh.py#L22,view_adaptive_to_mesh.py}, @url{@value{GITLAB-PREFIX}/examples/api/view_list_isoparametric.py#L33,view_list_isoparametric.py}, @url{@value{GITLAB-PREFIX}/examples/api/view_list_subparametric.py#L35,view_list_subparametric.py}, @url{@value{GITLAB-PREFIX}/examples/api/view_list_superparametric.py#L35,view_list_superparametric.py})
 @end table
 
 @item gmsh/view/addAlias
@@ -4977,7 +4977,7 @@ Set the numerical option @code{name} to value @code{value} for the view with tag
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L3692,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3291,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L9850,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L8727,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t8.cpp#L88,t8.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t9.cpp#L78,t9.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/x3.cpp#L87,x3.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/x5.cpp#L82,x5.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t8.py#L84,t8.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t9.py#L67,t9.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/x3.py#L79,x3.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/x5.py#L70,x5.py}, @url{@value{GITLAB-PREFIX}/examples/api/view_adaptive_to_mesh.py#L45,view_adaptive_to_mesh.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t8.cpp#L88,t8.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t9.cpp#L78,t9.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/x3.cpp#L87,x3.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/x5.cpp#L82,x5.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t8.py#L84,t8.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t9.py#L67,t9.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/x3.py#L79,x3.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/x5.py#L70,x5.py}, @url{@value{GITLAB-PREFIX}/examples/api/view_adaptive_to_mesh.py#L45,view_adaptive_to_mesh.py}, ...)
 @end table
 
 @item gmsh/view/option/getNumber
