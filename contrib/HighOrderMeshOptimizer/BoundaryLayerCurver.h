@@ -95,6 +95,10 @@ namespace BoundaryLayerCurver {
       void computeFrame(double paramEdge, SVector3 &t, SVector3 &n, SVector3 &w,
                         bool atExtremity = false) const;
 
+      SVector3 tangentBSpline(const MEdgeN *edge, double u) const;
+      double computeBSpline(size_t n, double u, const std::vector<double>& t) const;
+      double computeBSplineDerivative(size_t n, double u, const std::vector<double>& t) const;
+
       SPoint3 pnt(double u) const;
     };
   } // namespace EdgeCurver2D

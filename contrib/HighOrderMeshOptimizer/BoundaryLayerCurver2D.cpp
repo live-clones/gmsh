@@ -277,7 +277,15 @@ namespace BoundaryLayerCurver {
         t = _gedge->firstDer(paramGeoEdge);
         t.normalize();
       }
-      if(!_gedge || t.norm() == 0) { t = _edgeOnBoundary->tangent(paramEdge); }
+      if(!_gedge || t.norm() == 0) {
+        if (_newIdea) {
+          Msg::Error("TO BE IMPLEMENTED");
+          t = tangentBSpline(_edgeOnBoundary, paramEdge);
+          // TODO: Here, I have to change to compute smooth tangent
+        }
+        else
+          t = _edgeOnBoundary->tangent(paramEdge);
+      }
 
       if(_gface) {
         SPoint2 paramGFace;
@@ -304,6 +312,84 @@ namespace BoundaryLayerCurver {
         Msg::Error("normal to the CAD or 2Dmesh is nul. BL curving will fail.");
       }
       n = crossprod(w, t);
+    }
+
+    SVector3 _Frame::tangentBSpline(const MEdgeN *edge, double u) const
+    {
+      const int orderBSpline = 2;
+
+      // J'ai l'impression qu'il faut que je calcule _computeBSpline pour différent
+      // knots (k1, k2, k3, k4) puis (k2, k3, k4, k5), puis (..) ...
+      // De cette facon, j'aurais chaque fonction de la base auquel j'associe un
+      // noeud de 'edge'.
+      // Et puis je dois régulariser.
+      //
+      // u in [0, 1]
+      // Il y a une transformation à faire pour le domaine.
+      // Ou pas ?
+      // Si N = nombre points
+      // step = 1 / (N-1)
+      // knots = -5*step/2:step:1+5*step/2. Il y en a N+3
+      // Si je donne (k0,...,k3) à (kN+1,...,kN+4), j'en ai N+2...
+      // -1.5 -.5 .5 1.5 2.5 3.5
+
+      const int N = static_cast<double>(edge->getNumVertices());
+      double stepKnots = 2. / (N - 1.);
+
+      std::vector<double> knots(4); // if orderBSpline=2
+      std::vector<double> coeff(N+2); // if orderBSpline=2
+      for (int i = 0; i < N+2; ++i) {
+        for (int j = 0; j < 4; ++j) {
+          knots[j] = -1 + stepKnots * (-2.5 + i + j); // if orderBSpline=2
+        }
+        coeff[i] = computeBSplineDerivative(orderBSpline, u, knots);
+      }
+
+      // Regularize (for orderBSpline=2)
+      coeff[1] += 3 * coeff[0];
+      coeff[2] -= 3 * coeff[0];
+      coeff[3] += 1 * coeff[0];
+      coeff[N-2] += 1 * coeff[N+1];
+      coeff[N-1] -= 3 * coeff[N+1];
+      coeff[N]   += 3 * coeff[N+1];
+
+      coeff[0] = coeff[1];
+      coeff[1] = coeff[N];
+      double dx = 0, dy = 0, dz = 0;
+      for (size_t i = 0; i < N; ++i) {
+        const MVertex *v = edge->getVertex(i);
+        dx += coeff[i] * v->x();
+        dy += coeff[i] * v->y();
+        dz += coeff[i] * v->z();
+      }
+
+      return SVector3(dx, dy, dz).unit();
+    }
+
+    double _Frame::computeBSpline(size_t n, double u, const std::vector<double>& t) const
+    {
+      if (n == 0) {
+        return (u >= t[0] && u < t[1])? 1.0 : 0.0;
+      }
+      else {
+        double a = (u - t[0]) / (t[n] - t[0]) * computeBSpline(n - 1, u, std::vector<double>(t.begin(), t.begin() + n + 1));
+        double b = (t[n + 1] - u) / (t[n + 1] - t[1]) * computeBSpline(n - 1, u, std::vector<double>(t.begin() + 1, t.begin() + n + 2));
+        return a + b;
+      }
+    }
+
+    double _Frame::computeBSplineDerivative(size_t n, double u, const std::vector<double>& t) const
+    {
+      if (n == 0) {
+        return 0.0;
+      }
+      else {
+        double a = 1 / (t[n] - t[0]) * computeBSpline(n - 1, u, std::vector<double>(t.begin(), t.begin() + n + 1))
+                   + (u - t[0]) / (t[n] - t[0]) * computeBSplineDerivative(n - 1, u, std::vector<double>(t.begin(), t.begin() + n + 1));
+        double b = -1 / (t[n + 1] - t[1]) * computeBSpline(n - 1, u, std::vector<double>(t.begin() + 1, t.begin() + n + 2))
+                   + (t[n + 1] - u) / (t[n + 1] - t[1]) * computeBSplineDerivative(n - 1, u, std::vector<double>(t.begin() + 1, t.begin() + n + 2));
+        return a + b;
+      }
     }
 
     SPoint3 _Frame::pnt(double u) const
@@ -1629,6 +1715,6 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
   for(int i = 0; i < bndEl2column.size(); ++i)
 //    BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], gface, gedge,
 //                                       SVector3());
-    BoundaryLayerCurver::curve2Dcolumn_newIdea(bndEl2column[i], gface, gedge,
+    BoundaryLayerCurver::curve2Dcolumn_newIdea(bndEl2column[i], nullptr, gedge,
                                        SVector3());
 }
