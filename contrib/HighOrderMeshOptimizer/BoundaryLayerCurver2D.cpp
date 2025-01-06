@@ -124,7 +124,7 @@ namespace {
   void draw3DFrame(SPoint3 &p, SVector3 &t, SVector3 &n, SVector3 &w,
                    double unitDimension, GFace *gFace = nullptr)
   {
-    return;
+    //return;
     if(!gFace) gFace = *GModel::current()->firstFace();
 
     MVertex *v = new MVertex(p.x(), p.y(), p.z(), gFace);
@@ -140,7 +140,8 @@ namespace {
 
     gFace->addMeshVertex(v);
     gFace->addMeshVertex(vn);
-    gFace->addMeshVertex(vw);
+    //gFace->addMeshVertex(vw);
+    //gFace->addMeshVertex(vt);
 
     MLine *line = new MLine(v, vn);
     gFace->edges().front()->addLine(line);
@@ -360,7 +361,7 @@ namespace BoundaryLayerCurver {
 
 //        //        draw3DFrame(p, t, n, w, .0002);
 //        SPoint3 pp = frame.pnt(u);
-//        draw3DFrame(pp, t, n, w, .0002);
+//        draw3DFrame(pp, t, n, w, .005);
 
         double interpolatedCoeffs[3];
         for(int j = 0; j < 3; ++j) {
@@ -485,6 +486,9 @@ namespace BoundaryLayerCurver {
       }
 
       if(gface) projectVerticesIntoGFace(edge, gface, false);
+
+
+      //drawBezierControlPolygon(edge->getVertices());
     }
 
     void _reduceCurving(MEdgeN *edge, double factor, const GFace *gface)
@@ -1579,10 +1583,13 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
     //    if (bndEl2column[i].first->getNum() != 205) continue; // t161
     //    if (bndEl2column[i].first->getNum() != 316) continue; // t161
     //    if (bndEl2column[i].first->getNum() != 1156) continue; // trimesh
-    //    if (   bndEl2column[i].first->getNum() != 1156
-    //        && bndEl2column[i].first->getNum() != 1079
-    //        && bndEl2column[i].first->getNum() != 1102
-    //        && bndEl2column[i].first->getNum() != 1119) continue;
+    //std::cout << bndEl2column[i].first->getNum() << std::endl;
+//    if (   bndEl2column[i].first->getNum() != 1156
+//       && bndEl2column[i].first->getNum() != 1079
+//       && bndEl2column[i].first->getNum() != 1102
+//       && bndEl2column[i].first->getNum() != 1119) continue;
+    //    if (   bndEl2column[i].first->getNum() != 1156) continue;
+//        if (   bndEl2column[i].first->getNum() != 1157) continue;
     //    std::cout << std::endl;
     //    std::cout << "column " << bndEl2column[i].first->getNum() <<
     //    std::endl; if (bndEl2column[i].first->getNum() != 1079) continue; //
@@ -1597,6 +1604,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
     //    continue; // Strange if (bndEl2column[i].first->getNum() != 1157)
     //    continue; // next to Strange
     //BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], nullptr, gedge, normal);
+    //if (bndEl2column[i].first->getNum() != 12882) continue;
     BoundaryLayerCurver::curve2Dcolumn_newIdea(bndEl2column[i], nullptr, gedge, normal);
   }
 }
