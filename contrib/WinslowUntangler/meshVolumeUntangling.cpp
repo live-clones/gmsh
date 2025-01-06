@@ -34,6 +34,10 @@ using std::array;
 using std::vector;
 
 namespace WinslowUntanglerVolume {
+  const uint32_t pyr2tet_corners[4][4] = {
+    {0, 1, 2, 4}, {1, 2, 3, 4}, {1, 2, 3, 4}, {2, 3, 0, 4}
+  };
+
   const uint32_t hex2tet_corners[8][4] = {
     {0, 1, 2, 5}, {1, 2, 3, 6}, {2, 3, 0, 7}, {3, 0, 1, 4},
     {6, 5, 4, 1}, {5, 4, 7, 0}, {4, 7, 6, 3}, {7, 6, 5, 2},
@@ -68,10 +72,6 @@ namespace WinslowUntanglerVolume {
     return tets;
   }
 
-  const std::vector<std::array<double, 3> > unit_cube = {
-    {0., 0., 0.}, {1., 0., 0.}, {1., 1., 0.}, {0., 1., 0.},
-    {0., 0., 1.}, {1., 0., 1.}, {1., 1., 1.}, {0., 1., 1.}};
-
   const std::array<std::array<double, 3>, 4> tet_ideal_shape = {
     array<double, 3>{.5, 0, -1. / (2. * std::sqrt(2.))},
     array<double, 3>{-.5, 0, -1. / (2. * std::sqrt(2.))},
@@ -79,6 +79,14 @@ namespace WinslowUntanglerVolume {
     array<double, 3>{0, -.5, 1. / (2. * std::sqrt(2.))},
   };
 
+  const std::vector<std::array<double, 3> > unit_cube = {
+    {0., 0., 0.}, {1., 0., 0.}, {1., 1., 0.}, {0., 1., 0.},
+    {0., 0., 1.}, {1., 0., 1.}, {1., 1., 1.}, {0., 1., 1.}};
+
+  const std::vector<std::array<double, 3> > unit_pyr = {
+    {0., 0., 0.}, {1., 0., 0.}, {1., 1., 0.}, {0., 1., 0.},
+    {0.5, 0.5, 1./std::sqrt(2.)}};
+    
   std::vector<std::array<std::array<double, 3>, 4> > tetsFromHexTargetShape(
     HexDcp dcp = TO_32TETS,
     const std::vector<std::array<double, 3> > &target = unit_cube)
@@ -227,8 +235,24 @@ bool buildTetrahedraFromElements(
       }
     }
     else if(vert.size() == 5) {
-      Msg::Error("pyramid not supported yet, abort");
-      return false;
+      const array<uint32_t, 5> pyr = {vert[0], vert[1], vert[2], vert[3], vert[4]};
+
+      for(size_t j = 0; j < 4; ++j) {
+        array<uint32_t, 4> tet = {vert[pyr2tet_corners[j][0]],
+				  vert[pyr2tet_corners[j][1]],
+				  vert[pyr2tet_corners[j][2]],
+				  vert[pyr2tet_corners[j][3]]};
+        array<array<double, 3>, 4> shape = {unit_pyr[pyr2tet_corners[j][0]],
+					    unit_pyr[pyr2tet_corners[j][1]],
+					    unit_pyr[pyr2tet_corners[j][2]],
+					    unit_pyr[pyr2tet_corners[j][3]]};
+
+        tet = invert_tet(tet);
+        shape = invert_shape(shape);
+
+        tets.push_back(tet);
+        tetIdealShapes.push_back(shape);
+      }
     }
     else if(vert.size() == 6) {
       Msg::Error("prism not supported yet, abort");
@@ -319,7 +343,7 @@ bool untangleGRegionMeshConstrained(GRegion *gr, int iterMax, double timeMax)
   /* Call Winslow untangler */
   int iterMaxInner = 300;
   int iterFailMax = 10;
-  double lambda = 0.25;
+  double lambda = 1.025;
 
   bool converged =
     untangle_tetrahedra(points, locked, tets, tetIdealShapes, lambda,
@@ -342,7 +366,7 @@ bool untangleGRegionMeshConstrained(GRegion *gr, int iterMax, double timeMax)
 }
 
 #else
-bool untangleGRegionMeshConstrained(GFace *gf, int iterMax, double timeMax)
+bool untangleGRegionMeshConstrained(GRegion *gr, int iterMax, double timeMax)
 {
   Msg::Error(
     "Module QuadMeshingTools required for untangleGRegionMeshConstrained");

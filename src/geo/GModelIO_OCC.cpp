@@ -141,7 +141,7 @@
 #include <ShapeUpgrade_UnifySameDomain.hxx>
 #endif
 
-#if OCC_VERSION_HEX >= 0x080700
+#if OCC_VERSION_HEX >= 0x070700
 #include <BRepAlgoAPI_Defeaturing.hxx>
 #include <Message_ProgressIndicator.hxx>
 #endif
@@ -2265,7 +2265,7 @@ bool OCC_Internals::addBSplineSurface(
   }
   bool periodicV = true;
   for(int i = 0; i < numPointsU; i++) {
-    if(pointTags[i * numPointsV] != pointTags[(i + 1) * numPointsV - 1]) {
+    if(pointTags[i] != pointTags[i + numPointsU * (numPointsV - 1)]) {
       periodicV = false;
       break;
     }
@@ -2972,7 +2972,12 @@ bool OCC_Internals::addThickSolid(int tag, int solidTag,
 #if OCC_VERSION_HEX > 0x070400
     BRepOffsetAPI_MakeThickSolid ts;
     ts.MakeThickSolidByJoin(shape, exclude, offset,
-                            CTX::instance()->geom.tolerance);
+                            CTX::instance()->geom.tolerance,
+                            BRepOffset_Skin,
+                            Standard_True, // Intersection
+                            Standard_False, // SelfInter (not available yet)
+                            GeomAbs_Arc, // Join
+                            Standard_False); // RemoveIntEdges
 #else
     BRepOffsetAPI_MakeThickSolid ts(shape, exclude, offset,
                                     CTX::instance()->geom.tolerance);
@@ -3525,7 +3530,7 @@ bool OCC_Internals::defeature(const std::vector<int> &volumeTags,
                               std::vector<std::pair<int, int>> &outDimTags,
                               bool removeVolume)
 {
-#if OCC_VERSION_HEX >= 0x080500
+#if OCC_VERSION_HEX >= 0x070700
   // build a single compound shape
   BRep_Builder b;
   TopoDS_Compound c;
@@ -3599,7 +3604,7 @@ bool OCC_Internals::defeature(const std::vector<int> &volumeTags,
 }
 
 bool OCC_Internals::fillet2D(int &tag, const int edgeTag1, const int edgeTag2,
-                             double radius)
+                             double radius, int pointTag, bool reverse)
 {
   if(tag >= 0 && _tagEdge.IsBound(tag)) {
     Msg::Error("OpenCASCADE curve with tag %d already exists", tag);
@@ -3653,8 +3658,21 @@ bool OCC_Internals::fillet2D(int &tag, const int edgeTag1, const int edgeTag2,
   gp_Dir normal = aElementarySurface->Axis().Direction();
   if(face.Orientation() == TopAbs_REVERSED) { normal = -normal; }
 
-  TopoDS_Vertex v1 = ShapeAnalysis_Edge().FirstVertex(ed1);
-  gp_Pnt point = BRep_Tool().Pnt(v1);
+  if(reverse) {normal = -normal; }
+
+  gp_Pnt point;
+  if (pointTag != -1) {
+    if (!_tagVertex.IsBound(pointTag)) {
+      Msg::Error("Unknown OpenCASCADE point with tag %d", pointTag);
+      return false;
+    }
+    TopoDS_Vertex v = TopoDS::Vertex(_tagVertex.Find(pointTag));
+    point = BRep_Tool::Pnt(v);
+  } else {
+    // Use the first vertex of the first edge as before
+    TopoDS_Vertex v1 = ShapeAnalysis_Edge().FirstVertex(ed1);
+    point = BRep_Tool::Pnt(v1);
+  }
 
   gp_Pln p(point, normal);
 
@@ -4635,13 +4653,13 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
     TopoDS_Shape shape = shapeTool->GetShape(label);
     shape.Location(isRef ? loc : partLoc);
 
-#if 0
-    // this is necessary for endcaps.stp (cf. #693), but has a big performance
-    // hit on STEP files with lots of references -- leaving out until we
-    // understand why it's necessary: there should be a better way ;-)
-    if(isRef && !loc.IsIdentity() && loc != shapeTool->GetLocation(label))
-      shapeTool->SetShape(label, shape);
-#endif
+    if(CTX::instance()->geom.occImportLabels == 2) {
+      // FIXME: this is necessary for endcaps.stp (cf. #693), but has a big
+      // performance hit on STEP files with lots of references -- leaving out
+      // until we understand why it's necessary: there should be a better way!)
+      if(isRef && !loc.IsIdentity() && loc != shapeTool->GetLocation(label))
+        shapeTool->SetShape(label, shape);
+    }
 
     int dim =
       (shape.ShapeType() == TopAbs_VERTEX) ? 0 :
@@ -4763,6 +4781,11 @@ bool OCC_Internals::importShapes(const std::string &fileName,
                                  std::vector<std::pair<int, int>> &outDimTags,
                                  const std::string &format)
 {
+  if(StatFile(fileName)) {
+    Msg::Error("File '%s' does not exist", fileName.c_str());
+    return false;
+  }
+
   std::vector<std::string> split = SplitFileName(fileName);
 
   TopoDS_Shape result;

@@ -31,6 +31,7 @@
 #include "surfaceFiller.h"
 #endif
 
+static constexpr double ONE_THIRD = 1.0 / 3.0;
 static double LIMIT_ = 0.5 * std::sqrt(2.0) * 1;
 int MTri3::radiusNorm = 2;
 
@@ -370,8 +371,8 @@ int inCircumCircleAniso(GFace *gf, MTriangle *base, const double *uv,
     int index0 = data.getIndex(base->getVertex(0));
     int index1 = data.getIndex(base->getVertex(1));
     int index2 = data.getIndex(base->getVertex(2));
-    double pa[2] = {(data.Us[index0] + data.Us[index1] + data.Us[index2]) / 3.,
-                    (data.Vs[index0] + data.Vs[index1] + data.Vs[index2]) / 3.};
+    double pa[2] = {(data.Us[index0] + data.Us[index1] + data.Us[index2]) * ONE_THIRD,
+                    (data.Vs[index0] + data.Vs[index1] + data.Vs[index2]) * ONE_THIRD};
     buildMetric(gf, pa, metric);
   }
   else {
@@ -438,8 +439,8 @@ MTri3::MTri3(MTriangle *t, double lc, SMetric3 *metric, bidimMeshData *data,
       double const p2[2] = {data->Us[index1], data->Vs[index1]};
       double const p3[2] = {data->Us[index2], data->Vs[index2]};
 
-      double midpoint[2] = {(p1[0] + p2[0] + p3[0]) / 3.0,
-                            (p1[1] + p2[1] + p3[1]) / 3.0};
+      double midpoint[2] = {(p1[0] + p2[0] + p3[0]) * ONE_THIRD,
+                            (p1[1] + p2[1] + p3[1]) * ONE_THIRD};
 
       double quadAngle =
         backgroundMesh::current() ?
@@ -729,7 +730,6 @@ static int insertVertexB(std::list<edgeXface> &shell,
     int index0 = data.getIndex(t->getVertex(0));
     int index1 = data.getIndex(t->getVertex(1));
     int index2 = data.getIndex(t->getVertex(2));
-    constexpr double ONE_THIRD = 1. / 3.;
     double lc = ONE_THIRD * (data.vSizes[index0] + data.vSizes[index1] +
                              data.vSizes[index2]);
     double lcBGM =
@@ -885,8 +885,8 @@ static MTri3 *search4Triangle(MTri3 *t, double pt[2], bidimMeshData &data,
     int index0 = data.getIndex(t->tri()->getVertex(0));
     int index1 = data.getIndex(t->tri()->getVertex(1));
     int index2 = data.getIndex(t->tri()->getVertex(2));
-    SPoint3 q2((data.Us[index0] + data.Us[index1] + data.Us[index2]) / 3.0,
-               (data.Vs[index0] + data.Vs[index1] + data.Vs[index2]) / 3.0, 0);
+    SPoint3 q2((data.Us[index0] + data.Us[index1] + data.Us[index2]) * ONE_THIRD,
+               (data.Vs[index0] + data.Vs[index1] + data.Vs[index2]) * ONE_THIRD, 0);
     int i;
     for(i = 0; i < 3; i++) {
       int i1 = data.getIndex(t->tri()->getVertex(i == 0 ? 2 : i - 1));
@@ -896,7 +896,7 @@ static MTri3 *search4Triangle(MTri3 *t, double pt[2], bidimMeshData &data,
       if(intersection_segments_2(p1, p2, q1, q2)) break;
     }
     if(i >= 3) {
-      printf("impossible\n");
+      Msg::Error("Impossible case in triangle search");
       break;
     }
     t = t->getNeigh(i);
@@ -1075,8 +1075,8 @@ void bowyerWatson(GFace *gf, int MAXPNT,
       int index1 = DATA.getIndex(base->getVertex(1));
       int index2 = DATA.getIndex(base->getVertex(2));
       double pa[2] = {
-        (DATA.Us[index0] + DATA.Us[index1] + DATA.Us[index2]) / 3.,
-        (DATA.Vs[index0] + DATA.Vs[index1] + DATA.Vs[index2]) / 3.};
+        (DATA.Us[index0] + DATA.Us[index1] + DATA.Us[index2]) * ONE_THIRD,
+        (DATA.Vs[index0] + DATA.Vs[index1] + DATA.Vs[index2]) * ONE_THIRD};
 
       buildMetric(gf, pa, metric);
       circumCenterMetric(worst->tri(), metric, DATA, center, r2);
@@ -1170,8 +1170,8 @@ static double optimalPointFrontal(GFace *gf, MTri3 *worst, int active_edge,
   int index0 = data.getIndex(base->getVertex(0));
   int index1 = data.getIndex(base->getVertex(1));
   int index2 = data.getIndex(base->getVertex(2));
-  double pa[2] = {(data.Us[index0] + data.Us[index1] + data.Us[index2]) / 3.,
-                  (data.Vs[index0] + data.Vs[index1] + data.Vs[index2]) / 3.};
+  double pa[2] = {(data.Us[index0] + data.Us[index1] + data.Us[index2]) * ONE_THIRD,
+                  (data.Vs[index0] + data.Vs[index1] + data.Vs[index2]) * ONE_THIRD};
   buildMetric(gf, pa, metric);
   circumCenterMetric(worst->tri(), metric, data, center, r2);
   // compute the middle point of the edge
@@ -1635,7 +1635,7 @@ void bowyerWatsonParallelograms(
     return;
   }
 
-  
+
 #if defined(HAVE_DOMHEX)
   if(old_algo_hexa()) {
     Msg::Debug("bowyerWatsonParallelograms: call packingOfParallelograms()");

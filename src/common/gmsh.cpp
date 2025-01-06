@@ -4820,10 +4820,13 @@ gmsh::model::mesh::setTransfiniteCurve(const int tag, const int numNodes,
         (meshType == "Progression" || meshType == "Power") ? 1 :
         (meshType == "Bump")                               ? 2 :
         (meshType == "Beta")                               ? 3 :
+        (meshType == "Progression_HWall")                  ? 5 :
+        (meshType == "Bump_HWall")                         ? 6 :
+        (meshType == "Beta_HWall")                         ? 7 :
                                                              1;
-      ge->meshAttributes.coeffTransfinite = std::abs(coef);
+      ge->meshAttributes.coeffTransfinite =  ge->meshAttributes.typeTransfinite > 4 ? coef : std::abs(coef);
       // in .geo file we use a negative tag to do this trick; it's a bad idea
-      if(coef < 0) ge->meshAttributes.typeTransfinite *= -1;
+      if(coef < 0 && ge->meshAttributes.typeTransfinite < 4) ge->meshAttributes.typeTransfinite *= -1;
     }
     else {
       if(t > 0) {
@@ -6937,12 +6940,12 @@ GMSH_API void gmsh::model::occ::defeature(const std::vector<int> &volumeTags,
 
 GMSH_API int gmsh::model::occ::fillet2D(const int edgeTag1,
                                         const int edgeTag2,
-                                        const double radius, const int tag)
+                                        const double radius, const int tag, const int pointTag, const bool reverse)
 {
   if(!_checkInit()) return -1;
   _createOcc();
   int outTag = tag;
-  GModel::current()->getOCCInternals()->fillet2D(outTag, edgeTag1, edgeTag2, radius);
+  GModel::current()->getOCCInternals()->fillet2D(outTag, edgeTag1, edgeTag2, radius, pointTag, reverse);
   return outTag;
 }
 
