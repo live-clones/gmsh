@@ -593,6 +593,301 @@ namespace BoundaryLayerCurver {
       if(gface) projectVerticesIntoGFace(edge, gface, false);
     }
 
+    void _reduceCurving_newIdea(const fullMatrix<double> &xyz,
+                                fullMatrix<double> &new_xyz, double coeff_tang)
+    {
+      fullMatrix<double> A(15, 7);
+      fullMatrix<double> c(15, 3);
+
+      A(0, 0) = -7.3459;
+      A(0, 1) = 17.9843;
+      A(0, 2) = -22.4737;
+      A(0, 3) = 19.9746;
+      A(0, 4) = -11.2352;
+      A(0, 5) = 3.5951;
+      A(0, 6) = -0.49932;
+      A(1, 0) = -3.0189;
+      A(1, 1) = 2.4697;
+      A(1, 2) = 1.7465;
+      A(1, 3) = -2.1449;
+      A(1, 4) = 1.3297;
+      A(1, 5) = -0.44567;
+      A(1, 6) = 0.063588;
+      A(2, 0) = 0.068021;
+      A(2, 1) = -3.4377;
+      A(2, 2) = 3.7162;
+      A(2, 3) = -0.38885;
+      A(2, 4) = 0.037655;
+      A(2, 5) = 0.0068591;
+      A(2, 6) = -0.002186;
+      A(3, 0) = -0.013929;
+      A(3, 1) = 0.19409;
+      A(3, 2) = -3.5155;
+      A(3, 3) = 3.5192;
+      A(3, 4) = -0.19866;
+      A(3, 5) = 0.014904;
+      A(3, 6) = -0.00010118;
+      A(4, 0) = 0.00010118;
+      A(4, 1) = -0.014904;
+      A(4, 2) = 0.19866;
+      A(4, 3) = -3.5192;
+      A(4, 4) = 3.5155;
+      A(4, 5) = -0.19409;
+      A(4, 6) = 0.013929;
+      A(5, 0) = 0.002186;
+      A(5, 1) = -0.0068591;
+      A(5, 2) = -0.037655;
+      A(5, 3) = 0.38885;
+      A(5, 4) = -3.7162;
+      A(5, 5) = 3.4377;
+      A(5, 6) = -0.068021;
+      A(6, 0) = -0.063588;
+      A(6, 1) = 0.44567;
+      A(6, 2) = -1.3297;
+      A(6, 3) = 2.1449;
+      A(6, 4) = -1.7465;
+      A(6, 5) = -2.4697;
+      A(6, 6) = 3.0189;
+      A(7, 0) = 0.49932;
+      A(7, 1) = -3.5951;
+      A(7, 2) = 11.2352;
+      A(7, 3) = -19.9746;
+      A(7, 4) = 22.4737;
+      A(7, 5) = -17.9843;
+      A(7, 6) = 7.3459;
+
+//      c(0, 0) =  (+ -12 * xyz(0, 0) + 21 * xyz(1, 0) + -12 * xyz(2, 0) + 3 * xyz(3, 0))/2;
+//      c(0, 1) =  (+ -12 * xyz(0, 1) + 21 * xyz(1, 1) + -12 * xyz(2, 1) + 3 * xyz(3, 1))/2;
+//      c(0, 2) =  (+ -12 * xyz(0, 2) + 21 * xyz(1, 2) + -12 * xyz(2, 2) + 3 * xyz(3, 2))/2;
+//      c(7, 0) =  (+ -3 * xyz(3, 0) + 12 * xyz(4, 0) + -21 * xyz(5, 0) + 12 * xyz(6, 0))/2;
+//      c(7, 1) =  (+ -3 * xyz(3, 1) + 12 * xyz(4, 1) + -21 * xyz(5, 1) + 12 * xyz(6, 1))/2;
+//      c(7, 2) =  (+ -3 * xyz(3, 2) + 12 * xyz(4, 2) + -21 * xyz(5, 2) + 12 * xyz(6, 2))/2;
+//      c(1, 0) =  (+ -6.408 * xyz(0, 0) + 6.816 * xyz(1, 0) + -0.408 * xyz(2, 0))/2;
+//      c(1, 1) =  (+ -6.408 * xyz(0, 1) + 6.816 * xyz(1, 1) + -0.408 * xyz(2, 1))/2;
+//      c(1, 2) =  (+ -6.408 * xyz(0, 2) + 6.816 * xyz(1, 2) + -0.408 * xyz(2, 2))/2;
+//      c(6, 0) =  (+ 0.408 * xyz(4, 0) + -6.816 * xyz(5, 0) + 6.408 * xyz(6, 0))/2;
+//      c(6, 1) =  (+ 0.408 * xyz(4, 1) + -6.816 * xyz(5, 1) + 6.408 * xyz(6, 1))/2;
+//      c(6, 2) =  (+ 0.408 * xyz(4, 2) + -6.816 * xyz(5, 2) + 6.408 * xyz(6, 2))/2;
+//      c(2, 0) =  + 0.068021 * xyz(0, 0) + -3.4377 * xyz(1, 0) + 3.7162 * xyz(2, 0) + -0.38885 * xyz(3, 0) + 0.037655 * xyz(4, 0) + 0.0068591 * xyz(5, 0) + -0.002186 * xyz(6, 0);
+//      c(2, 1) =  + 0.068021 * xyz(0, 1) + -3.4377 * xyz(1, 1) + 3.7162 * xyz(2, 1) + -0.38885 * xyz(3, 1) + 0.037655 * xyz(4, 1) + 0.0068591 * xyz(5, 1) + -0.002186 * xyz(6, 1);
+//      c(2, 2) =  + 0.068021 * xyz(0, 2) + -3.4377 * xyz(1, 2) + 3.7162 * xyz(2, 2) + -0.38885 * xyz(3, 2) + 0.037655 * xyz(4, 2) + 0.0068591 * xyz(5, 2) + -0.002186 * xyz(6, 2);
+//      c(3, 0) =  + -0.013929 * xyz(0, 0) + 0.19409 * xyz(1, 0) + -3.5155 * xyz(2, 0) + 3.5192 * xyz(3, 0) + -0.19866 * xyz(4, 0) + 0.014904 * xyz(5, 0) + -0.00010118 * xyz(6, 0);
+//      c(3, 1) =  + -0.013929 * xyz(0, 1) + 0.19409 * xyz(1, 1) + -3.5155 * xyz(2, 1) + 3.5192 * xyz(3, 1) + -0.19866 * xyz(4, 1) + 0.014904 * xyz(5, 1) + -0.00010118 * xyz(6, 1);
+//      c(3, 2) =  + -0.013929 * xyz(0, 2) + 0.19409 * xyz(1, 2) + -3.5155 * xyz(2, 2) + 3.5192 * xyz(3, 2) + -0.19866 * xyz(4, 2) + 0.014904 * xyz(5, 2) + -0.00010118 * xyz(6, 2);
+//      c(4, 0) =  + 0.00010118 * xyz(0, 0) + -0.014904 * xyz(1, 0) + 0.19866 * xyz(2, 0) + -3.5192 * xyz(3, 0) + 3.5155 * xyz(4, 0) + -0.19409 * xyz(5, 0) + 0.013929 * xyz(6, 0);
+//      c(4, 1) =  + 0.00010118 * xyz(0, 1) + -0.014904 * xyz(1, 1) + 0.19866 * xyz(2, 1) + -3.5192 * xyz(3, 1) + 3.5155 * xyz(4, 1) + -0.19409 * xyz(5, 1) + 0.013929 * xyz(6, 1);
+//      c(4, 2) =  + 0.00010118 * xyz(0, 2) + -0.014904 * xyz(1, 2) + 0.19866 * xyz(2, 2) + -3.5192 * xyz(3, 2) + 3.5155 * xyz(4, 2) + -0.19409 * xyz(5, 2) + 0.013929 * xyz(6, 2);
+//      c(5, 0) =  + 0.002186 * xyz(0, 0) + -0.0068591 * xyz(1, 0) + -0.037655 * xyz(2, 0) + 0.38885 * xyz(3, 0) + -3.7162 * xyz(4, 0) + 3.4377 * xyz(5, 0) + -0.068021 * xyz(6, 0);
+//      c(5, 1) =  + 0.002186 * xyz(0, 1) + -0.0068591 * xyz(1, 1) + -0.037655 * xyz(2, 1) + 0.38885 * xyz(3, 1) + -3.7162 * xyz(4, 1) + 3.4377 * xyz(5, 1) + -0.068021 * xyz(6, 1);
+//      c(5, 2) =  + 0.002186 * xyz(0, 2) + -0.0068591 * xyz(1, 2) + -0.037655 * xyz(2, 2) + 0.38885 * xyz(3, 2) + -3.7162 * xyz(4, 2) + 3.4377 * xyz(5, 2) + -0.068021 * xyz(6, 2);
+
+//      c(0, 0) =  (-1 * xyz(0, 0) + 1 * xyz(6, 0))/2;
+//      c(0, 1) =  (-1 * xyz(0, 1) + 1 * xyz(6, 1))/2;
+//      c(0, 2) =  (-1 * xyz(0, 2) + 1 * xyz(6, 2))/2;
+//      c(1, 0) =  (-1 * xyz(0, 0) + 1 * xyz(6, 0))/2;
+//      c(1, 1) =  (-1 * xyz(0, 1) + 1 * xyz(6, 1))/2;
+//      c(1, 2) =  (-1 * xyz(0, 2) + 1 * xyz(6, 2))/2;
+//      c(2, 0) =  (-1 * xyz(0, 0) + 1 * xyz(6, 0))/2;
+//      c(2, 1) =  (-1 * xyz(0, 1) + 1 * xyz(6, 1))/2;
+//      c(2, 2) =  (-1 * xyz(0, 2) + 1 * xyz(6, 2))/2;
+//      c(3, 0) =  (-1 * xyz(0, 0) + 1 * xyz(6, 0))/2;
+//      c(3, 1) =  (-1 * xyz(0, 1) + 1 * xyz(6, 1))/2;
+//      c(3, 2) =  (-1 * xyz(0, 2) + 1 * xyz(6, 2))/2;
+//      c(4, 0) =  (-1 * xyz(0, 0) + 1 * xyz(6, 0))/2;
+//      c(4, 1) =  (-1 * xyz(0, 1) + 1 * xyz(6, 1))/2;
+//      c(4, 2) =  (-1 * xyz(0, 2) + 1 * xyz(6, 2))/2;
+//      c(5, 0) =  (-1 * xyz(0, 0) + 1 * xyz(6, 0))/2;
+//      c(5, 1) =  (-1 * xyz(0, 1) + 1 * xyz(6, 1))/2;
+//      c(5, 2) =  (-1 * xyz(0, 2) + 1 * xyz(6, 2))/2;
+//      c(6, 0) =  (-1 * xyz(0, 0) + 1 * xyz(6, 0))/2;
+//      c(6, 1) =  (-1 * xyz(0, 1) + 1 * xyz(6, 1))/2;
+//      c(6, 2) =  (-1 * xyz(0, 2) + 1 * xyz(6, 2))/2;
+//      c(7, 0) =  (-1 * xyz(0, 0) + 1 * xyz(6, 0))/2;
+//      c(7, 1) =  (-1 * xyz(0, 1) + 1 * xyz(6, 1))/2;
+//      c(7, 2) =  (-1 * xyz(0, 2) + 1 * xyz(6, 2))/2;
+
+      SVector3 tangents[8];
+      double norms[8];
+      double normsSorted[8];
+      tangents[0](0) = ( + -9 * xyz(0, 0) + 12 * xyz(1, 0) + -3 * xyz(2, 0))/2;
+      tangents[0](1) = ( + -9 * xyz(0, 1) + 12 * xyz(1, 1) + -3 * xyz(2, 1))/2;
+      tangents[0](2) = ( + -9 * xyz(0, 2) + 12 * xyz(1, 2) + -3 * xyz(2, 2))/2;
+      tangents[1](0) = ( + -6.4257 * xyz(0, 0) + 6.8515 * xyz(1, 0) + -0.42574 * xyz(2, 0))/2;
+      tangents[1](1) = ( + -6.4257 * xyz(0, 1) + 6.8515 * xyz(1, 1) + -0.42574 * xyz(2, 1))/2;
+      tangents[1](2) = ( + -6.4257 * xyz(0, 2) + 6.8515 * xyz(1, 2) + -0.42574 * xyz(2, 2))/2;
+      tangents[2](0) = ( + -0.37714 * xyz(0, 0) + -5.2457 * xyz(1, 0) + 5.6229 * xyz(2, 0))/2;
+      tangents[2](1) = ( + -0.37714 * xyz(0, 1) + -5.2457 * xyz(1, 1) + 5.6229 * xyz(2, 1))/2;
+      tangents[2](2) = ( + -0.37714 * xyz(0, 2) + -5.2457 * xyz(1, 2) + 5.6229 * xyz(2, 2))/2;
+      tangents[3](0) = ( + -0.0045005 * xyz(1, 0) + -5.991 * xyz(2, 0) + 5.9955 * xyz(3, 0))/2;
+      tangents[3](1) = ( + -0.0045005 * xyz(1, 1) + -5.991 * xyz(2, 1) + 5.9955 * xyz(3, 1))/2;
+      tangents[3](2) = ( + -0.0045005 * xyz(1, 2) + -5.991 * xyz(2, 2) + 5.9955 * xyz(3, 2))/2;
+      tangents[4](0) = ( + -5.9955 * xyz(3, 0) + 5.991 * xyz(4, 0) + 0.0045005 * xyz(5, 0))/2;
+      tangents[4](1) = ( + -5.9955 * xyz(3, 1) + 5.991 * xyz(4, 1) + 0.0045005 * xyz(5, 1))/2;
+      tangents[4](2) = ( + -5.9955 * xyz(3, 2) + 5.991 * xyz(4, 2) + 0.0045005 * xyz(5, 2))/2;
+      tangents[5](0) = ( + -5.6229 * xyz(4, 0) + 5.2457 * xyz(5, 0) + 0.37714 * xyz(6, 0))/2;
+      tangents[5](1) = ( + -5.6229 * xyz(4, 1) + 5.2457 * xyz(5, 1) + 0.37714 * xyz(6, 1))/2;
+      tangents[5](2) = ( + -5.6229 * xyz(4, 2) + 5.2457 * xyz(5, 2) + 0.37714 * xyz(6, 2))/2;
+      tangents[6](0) = ( + 0.42574 * xyz(4, 0) + -6.8515 * xyz(5, 0) + 6.4257 * xyz(6, 0))/2;
+      tangents[6](1) = ( + 0.42574 * xyz(4, 1) + -6.8515 * xyz(5, 1) + 6.4257 * xyz(6, 1))/2;
+      tangents[6](2) = ( + 0.42574 * xyz(4, 2) + -6.8515 * xyz(5, 2) + 6.4257 * xyz(6, 2))/2;
+      tangents[7](0) = ( + 3 * xyz(4, 0) + -12 * xyz(5, 0) + 9 * xyz(6, 0))/2;
+      tangents[7](1) = ( + 3 * xyz(4, 1) + -12 * xyz(5, 1) + 9 * xyz(6, 1))/2;
+      tangents[7](2) = ( + 3 * xyz(4, 2) + -12 * xyz(5, 2) + 9 * xyz(6, 2))/2;
+      for (int i = 0; i < 8; ++i) {
+        norms[i] = tangents[i].norm();
+        normsSorted[i] = norms[i];
+      }
+      std::sort(&(normsSorted[0]), &(normsSorted[8]));
+      double myNorm = .9*.5 * (normsSorted[3] + normsSorted[4]);
+      for (int i = 0; i < 8; ++i) {
+//        std::cout << norms[i] << " ";
+        tangents[i](0) = tangents[i](0) / norms[i] * myNorm;
+        tangents[i](1) = tangents[i](1) / norms[i] * myNorm;
+        tangents[i](2) = tangents[i](2) / norms[i] * myNorm;
+      }
+      for (int i = 0; i < 8; ++i) {
+                c(i, 0) = tangents[i](0);
+                c(i, 1) = tangents[i](1);
+                c(i, 2) = tangents[i](2);
+      }
+
+//      std::cout << " => " << norms[7] << "-" << norms[0] << " = " << norms[7] - norms[0];
+//      std::cout << "  tang0 (" << tangents[0](0) << ", " << tangents[0](1) << ", " << tangents[0](2) << ")";
+//      std::cout << "  tang7 (" << tangents[7](0) << ", " << tangents[7](1) << ", " << tangents[7](2) << ")";
+//      std::cout << std::endl;
+
+
+
+      for (int i = 0; i < 8; ++i) {
+        c(i, 0) -= A(i, 0) * xyz(0, 0);
+        c(i, 1) -= A(i, 0) * xyz(0, 1);
+        c(i, 2) -= A(i, 0) * xyz(0, 2);
+        A(i, 0) = 0;
+        c(i, 0) -= A(i, 6) * xyz(6, 0);
+        c(i, 1) -= A(i, 6) * xyz(6, 1);
+        c(i, 2) -= A(i, 6) * xyz(6, 2);
+        A(i, 6) = 0;
+      }
+
+      A.scale(coeff_tang);
+      c.scale(coeff_tang);
+
+//      A(8, 0) = 1;
+//      c(8, 0) = xyz(0, 0);
+//      c(8, 1) = xyz(0, 1);
+//      c(8, 2) = xyz(0, 2);
+//      A(9, 6) = 1;
+//      c(9, 0) = xyz(6, 0);
+//      c(9, 1) = xyz(6, 1);
+//      c(9, 2) = xyz(6, 2);
+
+      for (int i = 0; i < 7; ++i) {
+        A(8+i, i) = 1;
+        c(8+i, 0) = xyz(i, 0);
+        c(8+i, 1) = xyz(i, 1);
+        c(8+i, 2) = xyz(i, 2);
+      }
+
+      fullMatrix<double> B = A.transpose();
+      fullMatrix<double> C(7, 7);
+      fullMatrix<double> d(7, 3);
+      //fullMatrix<double> x(7, 3);
+      B.mult(A, C);
+      B.mult(c, d);
+      C.invertInPlace();
+      new_xyz.resize(7, 3);
+      C.mult(d, new_xyz);
+
+
+
+      // extremity (from bspln3 : -12 21 -12 3)
+      // at .0715 (from bspln2 : -6.408	6.816	-0.408)
+      // at .2395 .4165 from curve
+    }
+
+    void _reduceCurving_newIdea(MEdgeN *edge, double max_diff, const GFace *gface)
+    {
+      int order = edge->getPolynomialOrder();
+
+      if (order != 6) {
+        Msg::Error("_reduceCurving_newIdea not implemented for order not 6");
+        return;
+      }
+
+      fullMatrix<double> xyz(order + 1, 3);
+      fullMatrix<double> new_xyz;
+
+      MVertex *v0 = edge->getVertex(0);
+      MVertex *v1 = edge->getVertex(1);
+      xyz(0, 0) = v0->x();
+      xyz(0, 1) = v0->y();
+      xyz(0, 2) = v0->z();
+      xyz(order, 0) = v1->x();
+      xyz(order, 1) = v1->y();
+      xyz(order, 2) = v1->z();
+
+      for (int i = 2; i < order + 1; ++i) {
+        MVertex *v = edge->getVertex(i);
+        xyz(i - 1, 0) = v->x();
+        xyz(i - 1, 1) = v->y();
+        xyz(i - 1, 2) = v->z();
+        //std::cout << " (" << xyz(i-2, 0) << "," << xyz(i-2, 1) << "," << xyz(i-2, 2) << ")  ";
+      }
+      //std::cout << "(max=" << max_diff << ")" << std::endl;
+
+      double coeff = 1;
+      double diff = 2 * max_diff;
+
+      int k = 1;
+      while (diff > max_diff || diff < .9 * max_diff) {
+        _reduceCurving_newIdea(xyz, new_xyz, coeff);
+        double thisMaxDiff = 0;
+        for (int i = 0; i < order + 1; ++i) {
+          double dx = xyz(i, 0) - new_xyz(i, 0);
+          double dy = xyz(i, 1) - new_xyz(i, 1);
+          double dz = xyz(i, 2) - new_xyz(i, 2);
+          double diff = std::sqrt(dx*dx + dy*dy + dz*dz);
+          thisMaxDiff = std::max(thisMaxDiff, diff);
+          //std::cout << diff << " (" << xyz(i, 0) << "," << xyz(i, 1) << "," << xyz(i, 2) << ")-(" << new_xyz(i, 0) << "," << new_xyz(i, 1) << "," << new_xyz(i, 2) << ")  ";
+        }
+        //std::cout << "(max=" << max_diff << ")" << std::endl;
+        std::cout << coeff << ": " << thisMaxDiff << "/" << max_diff << std::endl;
+        coeff = coeff / thisMaxDiff * max_diff * .95;
+        if (++k == 40) break;
+        diff = thisMaxDiff;
+      }
+
+      for (int i = 0; i < order + 1; ++i) {
+        double dx = xyz(i, 0) - new_xyz(i, 0);
+        double dy = xyz(i, 1) - new_xyz(i, 1);
+        double dz = xyz(i, 2) - new_xyz(i, 2);
+        double diff = std::sqrt(dx*dx + dy*dy + dz*dz);
+        std::cout << diff << " (" << xyz(i, 0) << "," << xyz(i, 1) << "," << xyz(i, 2) << ")-(" << new_xyz(i, 0) << "," << new_xyz(i, 1) << "," << new_xyz(i, 2) << ")  ";
+      }
+      std::cout << "(max=" << max_diff << ")" << std::endl;
+
+      v0->x() = new_xyz(0, 0);
+      v0->y() = new_xyz(0, 1);
+      v0->z() = new_xyz(0, 2);
+      v1->x() = new_xyz(order, 0);
+      v1->y() = new_xyz(order, 1);
+      v1->z() = new_xyz(order, 2);
+
+      for (int i = 2; i < order + 1; ++i) {
+        MVertex *v = edge->getVertex(i);
+        v->x() = new_xyz(i - 1, 0);
+        v->y() = new_xyz(i - 1, 1);
+        v->z() = new_xyz(i - 1, 2);
+      }
+
+      // 1) Create matrix to assemble
+      // 2) Add equation tangent
+      // 3) Fix extremity nodes
+      // 4) solve
+      // 5) iterate
+      if(gface) projectVerticesIntoGFace(edge, gface, false);
+    }
+
     void curveEdge_newIdea(const MEdgeN *baseEdge, MEdgeN *edge, const GFace *gface,
                            const SVector3 &normal)
     {
@@ -626,6 +921,22 @@ namespace BoundaryLayerCurver {
         edge->getVertex(i)->y() = newxyz(i, 1);
         edge->getVertex(i)->z() = newxyz(i, 2);
       }
+
+      double minThickness = 1e10;
+      MVertex *v0 = edge->getVertex(0);
+      MVertex *v1 = baseEdge->getVertex(0);
+      if (v0 != v1) {
+        SVector3 vec = v0->point() - v1->point();
+        minThickness = std::min(minThickness, vec.norm());
+      }
+      v0 = edge->getVertex(6);
+      v1 = baseEdge->getVertex(6);
+      if (v0 != v1) {
+        SVector3 vec = v0->point() - v1->point();
+        minThickness = std::min(minThickness, vec.norm());
+      }
+
+      _reduceCurving_newIdea(edge, minThickness*.5, gface);
 
       if(gface) projectVerticesIntoGFace(edge, gface, false);
 
