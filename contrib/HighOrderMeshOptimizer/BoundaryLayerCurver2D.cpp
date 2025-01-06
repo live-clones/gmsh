@@ -439,6 +439,49 @@ namespace BoundaryLayerCurver {
                             double coeffs[2][3], int nbPoints,
                             const IntPt *points, fullMatrix<double> &xyz)
     {
+      // TODO : Calculer la courbe idéale telle que sa param soit curviligne
+      //   Actuellement, à tout point de l'arête précédente, j'associe un point
+      //   de la courbe shiftée qui a le même point de référence (dit autrement,
+      //   avec les notations décrite plus loin, je fais s(r) = r).
+      //   Puis j'applique la correction pour que ça match avec
+      //   les noeuds P1 de l'arête en court, ce qui me donne la courbe idéale
+      //   dont la paramétrisation n'est pas curviligne. Je pense qu'il faut
+      //   essayer d'avoir une paramétrisation proche de la curviligne (je pense
+      //   surtout pour l'élément dans le coin). Pour faire ça, voici une idée.
+      //   - Soit l'arête précédente : P_0(t)
+      //   (- Soit la courbe idéale : R(r) = P_0(s(r)) + C(r)
+      //       où s(r) est à définir
+      //       et C(r) est la correction.)
+      //   - Soit la courbe shiftée : Q(r) = P_0(s(r)) + N(s(r))
+      //       où N(r) est le shift constant dans la direction de la normale.
+      //   - Objectif : On veut s(r) tel que Q(r) soit une courbe de
+      //      paramétrisation curviligne
+      //   - Soit les points de Gauss (augmentés) : g_i (g_-1 = -1 et g_n+1 = 1)
+      //      et leur différence : h_i = g_i+1 - g_i
+      //   - Soit P_i = P(g_i)
+      //   - Soit Q_i = Q(g_i) = P_0(s(g_i)) + N(s(g_i))  (donc pas forcément
+      //      en face des P_i, ça dépend de s(r))
+      //   - Soit p_i et q_i : o_i = norm(O_i+1 - O_i)  (remplacer o et O)
+      //   - On doit calculer s_i = s(g_i) mais on ne connait pas s(r).
+      //   - Ici, je fais une approximation (qui est faible si l'épaisseur est
+      //      faible. Et si l'épaisseur est importante, c'est moins grave qu'il
+      //      y a une grosse erreur). Sachant que h_i est proportionnel à la
+      //      longueur du segment de courbe, je dis que
+      //        h_i / p_i = tau_i / q_i,
+      //      où tau_i est approximativement proportionnel à la longeur du
+      //      segment de la courbe shiftée. Donc vu l'objectif, on veut
+      //        tau_i / sum(tau_i) = g_i
+      //   - Soit une première approximation s^0(r) = r. On a s^0_i = g_i.
+      //      Q^0_i = P_0(s^0_i) + N(s^0_i)
+      //      q^0_i = norm(Q^0_i+1 - Q^0_i)
+      //      tau^0_i = h_i / p_i * q^0_i
+      //      kappa^0_i = tau^0_i / sum(tau^0_i)
+      //   - On calcule s^1_i sur l'interpolation linéaire f^0(s) des points
+      //      (s^0_i, kappa^0_i) tel que f^0(s^1_i) = g_i
+      //
+
+      // TODO : Interpolation angulaire si ouverture, linéaire si fermeture
+
       for(int i = 0; i < nbPoints; ++i) {
         double u = points[i].pt[0];
         SPoint3 p = baseEdge->pnt(u);
