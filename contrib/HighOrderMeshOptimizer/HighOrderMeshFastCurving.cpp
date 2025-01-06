@@ -1325,7 +1325,7 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
         double v = gEnt->parBounds(1).low();
         normal = dynamic_cast<GFace *>(gEnt)->normal(SPoint2(u, v));
       }
-      else if(gEnt->geomType() == GEntity::DiscreteSurface) {
+      else if(gEnt->geomType() == GEntity::DiscreteSurface || gEnt->geomType() == GEntity::PartitionSurface) {
         SBoundingBox3d bb = gEnt->bounds();
         // If we don't have the CAD, check if the mesh is 2D:
         if(!bb.empty() && bb.max().z() - bb.min().z() == .0) {
