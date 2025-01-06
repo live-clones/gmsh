@@ -497,9 +497,22 @@ namespace BoundaryLayerCurver {
           interpolatedCoeffs[j] =
             coeffs[0][j] * (1 - u) / 2 + coeffs[1][j] * (1 + u) / 2;
         }
-        SVector3 h;
+        SVector3 h, h2;
         h = interpolatedCoeffs[0] * n + interpolatedCoeffs[1] * t +
             interpolatedCoeffs[2] * w;
+
+        // TODO: this is for a plane only, adapt the code for 3d!
+        double angle1 = atan2(coeffs[0][1], coeffs[0][0]);
+        double angle2 = atan2(coeffs[1][1], coeffs[1][0]);
+        double angle = angle1 * (1 - u) / 2 + angle2 * (1 + u) / 2;
+        double dist1 = norm3(coeffs[0]);
+        double dist2 = norm3(coeffs[1]);
+        double dist = dist1 * (1 - u) / 2 + dist2 * (1 + u) / 2;
+        h2 = dist * (std::cos(angle) * n + std::sin(angle) * t);
+        double uu = dist * std::cos(angle);
+        double vv = dist * std::sin(angle);
+        // TODO: choose in function of expansion/reduction
+        h = h2;
         xyz(i, 0) = p.x() + h.x();
         xyz(i, 1) = p.y() + h.y();
         xyz(i, 2) = p.z() + h.z();
