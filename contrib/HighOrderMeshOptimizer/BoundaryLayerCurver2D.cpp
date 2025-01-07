@@ -464,18 +464,18 @@ namespace BoundaryLayerCurver {
       //   dont la paramétrisation n'est pas curviligne. Je pense qu'il faut
       //   essayer d'avoir une paramétrisation proche de la curviligne (je pense
       //   surtout pour l'élément dans le coin). Pour faire ça, voici une idée.
-      //   - Soit l'arête précédente : P_0(t)
-      //   (- Soit la courbe idéale : R(r) = P_0(s(r)) + C(r)
+      //   - Soit l'arête précédente : C(t)
+      //   (- Soit la courbe idéale : R(r) = C(s(r)) + D(r)
       //       où s(r) est à définir
-      //       et C(r) est la correction.)
-      //   - Soit la courbe shiftée : Q(r) = P_0(s(r)) + N(s(r))
+      //       et D(r) est la correction.)
+      //   - Soit la courbe shiftée : Q(r) = C(s(r)) + N(s(r))
       //       où N(r) est le shift constant dans la direction de la normale.
       //   - Objectif : On veut s(r) tel que Q(r) soit une courbe de
       //      paramétrisation curviligne
       //   - Soit les points de Gauss (augmentés) : g_i (g_-1 = -1 et g_n+1 = 1)
       //      et leur différence : h_i = g_i+1 - g_i
-      //   - Soit P_i = P(g_i)
-      //   - Soit Q_i = Q(g_i) = P_0(s(g_i)) + N(s(g_i))  (donc pas forcément
+      //   - Soit P_i = C(g_i)
+      //   - Soit Q_i = Q(g_i) = C(s(g_i)) + N(s(g_i))  (donc pas forcément
       //      en face des P_i, ça dépend de s(r))
       //   - Soit p_i et q_i : o_i = norm(O_i+1 - O_i)  (remplacer o et O)
       //   - On doit calculer s_i = s(g_i) mais on ne connait pas s(r).
@@ -491,7 +491,7 @@ namespace BoundaryLayerCurver {
       //      Q^0_i = P_0(s^0_i) + N(s^0_i)
       //      q^0_i = norm(Q^0_i+1 - Q^0_i)
       //      tau^0_i = h_i / p_i * q^0_i
-      //      kappa^0_i = tau^0_i / sum(tau^0_i)
+      //      kappa^0_i = sum_0_to_i(tau^0_k) / sum(tau^0_i)
       //   - On calcule s^1_i sur l'interpolation linéaire f^0(s) des points
       //      (s^0_i, kappa^0_i) tel que f^0(s^1_i) = g_i
 
@@ -505,15 +505,15 @@ namespace BoundaryLayerCurver {
       size_t nbPoints = refTarget.size();
 
       // ratios h_i / p_i
-      std::vector<SPoint3> points(nbPoints+2);
+      std::vector<SPoint3> points(nbPoints);
       points[0] = baseEdge->pnt(-1);
-      points[nbPoints+1] = baseEdge->pnt(1);
-      for(int i = 0; i < nbPoints; ++i) {
+      points[nbPoints-1] = baseEdge->pnt(1);
+      for(size_t i = 0; i < nbPoints-2; ++i) {
         double u = refTarget[i];
         points[i+1] = baseEdge->pnt(u);
       }
-      std::vector<double> ratios(nbPoints+1);
-      for(int i = 0; i < nbPoints+1; ++i) {
+      std::vector<double> ratios(nbPoints-1);
+      for(size_t i = 0; i < nbPoints-1; ++i) {
         double numerator = norm(points[i+1]-points[i]);
         ratios[i] = numerator / (refTarget[i+1] - refTarget[i]);
       }
@@ -523,58 +523,56 @@ namespace BoundaryLayerCurver {
       frame.computeFrame(-1, t, n, w);
       points[0] = points[0] + thickness * n;
       frame.computeFrame(1, t, n, w);
-      points[nbPoints+1] = points[nbPoints+1] + thickness * n;
+      points[nbPoints-1] = points[nbPoints-1] + thickness * n;
 
-      // Init refOnPrevEdge with refTarget (s^0_i = g_i)
-      std::vector<double> refOnPrevEdge(nbPoints+2);
-      for(int i = 0; i < nbPoints+2; ++i) refOnPrevEdge[i] = refTarget[i];
+      // Init refForExtrusion with refTarget (s^0_i = g_i)
+      for(size_t i = 0; i < nbPoints; ++i) refForExtrusion[i] = refTarget[i];
 
-      std::vector<double> taui(nbPoints+1);
-      std::vector<double> kappai(nbPoints+2);
-      std::vector<double> refNew(nbPoints+2);
+      std::vector<double> taui(nbPoints-1);
+      std::vector<double> kappai(nbPoints);
+      std::vector<double> refNew(nbPoints);
       int k = 0;
       double maxChanged = 1;
 
       while(k < 10 && maxChanged > 1e-4) {
-
         // Compute shifted points
-        for(int i = 0; i < nbPoints; ++i) {
-          double u = refOnPrevEdge[i+1];
+        for(size_t i = 1; i < nbPoints-1; ++i) {
+          double u = refForExtrusion[i];
           frame.computeFrame(u, t, n, w);
-          points[i+1] = baseEdge->pnt(u) + thickness * n;
+          points[i] = baseEdge->pnt(u) + thickness * n;
         }
 
         // Compute corresponding Kappa_i
         double accumulator = 0;
         kappai[0] = 0;
-        for(int i = 0; i < nbPoints+1; ++i) {
+        for(size_t i = 0; i < nbPoints-1; ++i) {
           taui[i] = norm(points[i+1]-points[i]);
           kappai[i+1] = kappai[i] + taui[i];
           accumulator += taui[i];
         }
         double scale = 2 / accumulator;
-        for(int i = 0; i < nbPoints+2; ++i) {
+        for(size_t i = 0; i < nbPoints; ++i) {
           kappai[i] = scale * kappai[i] - 1;
         }
 
         // Interpolate
-        for(int i = 1; i < nbPoints+1; ++i) {
+        for(size_t i = 1; i < nbPoints-1; ++i) {
           if(kappai[i] < refTarget[i]) {
             double f = (refTarget[i]-kappai[i]) / (refTarget[i]-refTarget[i-1]);
-            refNew[i] = f * refOnPrevEdge[i-1] + (1-f) * refOnPrevEdge[i];
+            refNew[i] = f * refForExtrusion[i-1] + (1-f) * refForExtrusion[i];
           }
           else {
             double f = (kappai[i]-refTarget[i]) / (refTarget[i+1]-refTarget[i]);
-            refNew[i] = (1-f) * refOnPrevEdge[i] + f * refOnPrevEdge[i+1];
+            refNew[i] = (1-f) * refForExtrusion[i] + f * refForExtrusion[i+1];
           }
         }
 
         // Update
         maxChanged = 0;
-        for(int i = 1; i < nbPoints+1; ++i) {
-          double diff = std::abs(refNew[i]-refOnPrevEdge[i]);
+        for(size_t i = 1; i < nbPoints+1; ++i) {
+          double diff = std::abs(refNew[i]-refForExtrusion[i]);
           maxChanged = std::max(maxChanged, diff);
-          refOnPrevEdge[i] = refNew[i];
+          refForExtrusion[i] = refNew[i];
         }
       }
     }
@@ -594,9 +592,9 @@ namespace BoundaryLayerCurver {
       std::vector<double> refPnts(nbPoints+2);
       _refPntsForALPShiftedCurve(baseEdge, frame, coeffs, refTarget, refPnts);
 
-      for
 
       // TODO : Interpolation angulaire si ouverture, linéaire si fermeture
+
 
       for(int i = 0; i < nbPoints; ++i) {
         double u = points[i].pt[0];
