@@ -435,11 +435,27 @@ namespace BoundaryLayerCurver {
 //      draw3DFrame(p2, t, n, w, .0004);
     }
 
-    void _idealPositionEdge(const MEdgeN *baseEdge, const _Frame &frame,
-                            double coeffs[2][3], int nbPoints,
-                            const IntPt *points, fullMatrix<double> &xyz)
+    void _refPntsForALPShiftedCurve(const MEdgeN *baseEdge, const _Frame &frame,
+                                    double coeffs[2][3], 
+                                    const std::vector<double> &refTarget,
+                                    std::vector<double> &refForExtrusion)
     {
-      // TODO : Calculer la courbe idéale telle que sa param soit curviligne
+      // ALP is for 'arc-length parameterized'
+      // The idea is the following:
+      //  Consider the points C_i of 'baseEdge' sampled at 'refTarget'.
+      //  'baseEdge' is supposed to be ALP, which means that the
+      //  arc lengths between the C_i have the same proportions than
+      //  the difference between the ref-points 'refTarget'.
+      //  Consider the points P_i of 'baseEdge' sampled at 'refForExtrusion'.
+      //  Consider the points Q_i of the shifted curve facing the P_i.
+      //  Then we want that the arc lengths between the Q_i to have the same
+      //  proportions (than the difference between the ref-points 'refTarget').
+      // Output:
+      //  - 'refForExtrusion' are the ref-points such that the corresponding
+      //  shifted xy-points, when associated with ref-points 'refTarget',
+      //  implies an ALP of the shifted curve.
+
+      // DONE : Calculer la courbe idéale telle que sa param soit curviligne
       //   Actuellement, à tout point de l'arête précédente, j'associe un point
       //   de la courbe shiftée qui a le même point de référence (dit autrement,
       //   avec les notations décrite plus loin, je fais s(r) = r).
@@ -478,7 +494,107 @@ namespace BoundaryLayerCurver {
       //      kappa^0_i = tau^0_i / sum(tau^0_i)
       //   - On calcule s^1_i sur l'interpolation linéaire f^0(s) des points
       //      (s^0_i, kappa^0_i) tel que f^0(s^1_i) = g_i
-      //
+
+      // FIXME: thickness should be an input, this is a naive code:
+      //  or we should keep it and check that ideal curve is ALP instead
+      //  of shifted curve
+      // FIXME norm3 should be norm3(const double a[3]) 
+      //  so that I can have const double coeffs[2][3] here  
+      double thickness = .5 * (norm3(coeffs[0]) + norm3(coeffs[1]));
+  
+      size_t nbPoints = refTarget.size();
+
+      // ratios h_i / p_i
+      std::vector<SPoint3> points(nbPoints+2);
+      points[0] = baseEdge->pnt(-1);
+      points[nbPoints+1] = baseEdge->pnt(1);
+      for(int i = 0; i < nbPoints; ++i) {
+        double u = refTarget[i];
+        points[i+1] = baseEdge->pnt(u);
+      }
+      std::vector<double> ratios(nbPoints+1);
+      for(int i = 0; i < nbPoints+1; ++i) {
+        double numerator = norm(points[i+1]-points[i]);
+        ratios[i] = numerator / (refTarget[i+1] - refTarget[i]);
+      }
+
+      // use now 'points' for shifted ones, extremities are fixed
+      SVector3 t, n, w;
+      frame.computeFrame(-1, t, n, w);
+      points[0] = points[0] + thickness * n;
+      frame.computeFrame(1, t, n, w);
+      points[nbPoints+1] = points[nbPoints+1] + thickness * n;
+
+      // Init refOnPrevEdge with refTarget (s^0_i = g_i)
+      std::vector<double> refOnPrevEdge(nbPoints+2);
+      for(int i = 0; i < nbPoints+2; ++i) refOnPrevEdge[i] = refTarget[i];
+
+      std::vector<double> taui(nbPoints+1);
+      std::vector<double> kappai(nbPoints+2);
+      std::vector<double> refNew(nbPoints+2);
+      int k = 0;
+      double maxChanged = 1;
+
+      while(k < 10 && maxChanged > 1e-4) {
+
+        // Compute shifted points
+        for(int i = 0; i < nbPoints; ++i) {
+          double u = refOnPrevEdge[i+1];
+          frame.computeFrame(u, t, n, w);
+          points[i+1] = baseEdge->pnt(u) + thickness * n;
+        }
+
+        // Compute corresponding Kappa_i
+        double accumulator = 0;
+        kappai[0] = 0;
+        for(int i = 0; i < nbPoints+1; ++i) {
+          taui[i] = norm(points[i+1]-points[i]);
+          kappai[i+1] = kappai[i] + taui[i];
+          accumulator += taui[i];
+        }
+        double scale = 2 / accumulator;
+        for(int i = 0; i < nbPoints+2; ++i) {
+          kappai[i] = scale * kappai[i] - 1;
+        }
+
+        // Interpolate
+        for(int i = 1; i < nbPoints+1; ++i) {
+          if(kappai[i] < refTarget[i]) {
+            double f = (refTarget[i]-kappai[i]) / (refTarget[i]-refTarget[i-1]);
+            refNew[i] = f * refOnPrevEdge[i-1] + (1-f) * refOnPrevEdge[i];
+          }
+          else {
+            double f = (kappai[i]-refTarget[i]) / (refTarget[i+1]-refTarget[i]);
+            refNew[i] = (1-f) * refOnPrevEdge[i] + f * refOnPrevEdge[i+1];
+          }
+        }
+
+        // Update
+        maxChanged = 0;
+        for(int i = 1; i < nbPoints+1; ++i) {
+          double diff = std::abs(refNew[i]-refOnPrevEdge[i]);
+          maxChanged = std::max(maxChanged, diff);
+          refOnPrevEdge[i] = refNew[i];
+        }
+      }
+    }
+
+    void _idealPositionEdge(const MEdgeN *baseEdge, const _Frame &frame,
+                            double coeffs[2][3], int nbPoints,
+                            const IntPt *points, fullMatrix<double> &xyz)
+    {
+      // Gauss points + the two extremities
+      std::vector<double> refTarget(nbPoints+2);
+      refTarget[0] = -1;
+      refTarget[nbPoints+1] = 1;
+      for(int i = 0; i < nbPoints; ++i) {
+        refTarget[i+1] = points[i].pt[0];
+      }
+
+      std::vector<double> refPnts(nbPoints+2);
+      _refPntsForALPShiftedCurve(baseEdge, frame, coeffs, refTarget, refPnts);
+
+      for
 
       // TODO : Interpolation angulaire si ouverture, linéaire si fermeture
 
