@@ -10,7 +10,7 @@ overlapEdgeManager::overlapEdgeManager(GModel *model, int tagParent,
                                        int overlapSize, bool createPhysicals)
   : model(model), tagParent(tagParent)
 {
-  
+
 }
 
 void overlapEdgeManager::create(int overlapSize, bool createPhysicals)
@@ -106,7 +106,7 @@ void overlapEdgeManager::create(int overlapSize, bool createPhysicals)
       bndElems.push_back(new MPoint(vertex));
     }
     /* End full boundary computation */
-    partitionVertex*  fullBnd = new partitionVertex(model, ++elementaryNumberBnd, {i});
+    partitionVertex*  fullBnd = new partitionVertex(model, ++elementaryNumberBnd, {static_cast<int>(i)});
     fullBnd->points = std::move(bndElems); // Take ownership
     model->add(fullBnd);
     this->fullBoundaries[i] = fullBnd;

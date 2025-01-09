@@ -85,7 +85,7 @@ void overlapFaceManager::create(int overlapSize, bool createPhysicals)
     for(auto e : entities) {
       std::set<MTriangle *> allElementsInOverlap; // Total set of elements in
                                                   // the overlaps of this entity
-      
+
       std::map<partitionEdge*, std::unordered_set<MEdge, MEdgeHash, MEdgeEqual>>
         edgeToOverlaps;
 
@@ -158,7 +158,7 @@ void overlapFaceManager::create(int overlapSize, bool createPhysicals)
       std::unordered_set<MEdge, MEdgeHash, MEdgeEqual> boundaryEdges;
       for (auto [edge, count]: edgeCount) {
         if (count != 1) continue;
-        
+
         auto itEntity = edgeToEntities.find(edge);
         if (itEntity == edgeToEntities.end()) {
           // Either an internal or artificial edge, but not the physical boundary
@@ -206,7 +206,7 @@ void overlapFaceManager::create(int overlapSize, bool createPhysicals)
       // Create an artificial boundary of all the overlaps of this entity, with
       // new elements.
       partitionEdge *fullBnd =
-        new partitionEdge(model, ++elementaryNumberBnd, {i});
+        new partitionEdge(model, ++elementaryNumberBnd, {static_cast<int>(i)});
       fullBnd->setParentEntity(parentFace);
 
       std::vector<MLine *> bndElems;
@@ -225,7 +225,7 @@ void overlapFaceManager::create(int overlapSize, bool createPhysicals)
       // Create overlaps of the physical boundaries
       for (auto [pe, edges]: edgeToOverlaps) {
         partitionEdge *bnd =
-          new partitionEdge(model, ++elementaryNumberBnd, {i});
+          new partitionEdge(model, ++elementaryNumberBnd, {static_cast<int>(i)});
         bnd->setParentEntity(pe);
         std::vector<MLine *> elems;
         for(auto edge : edges) {
@@ -242,6 +242,6 @@ void overlapFaceManager::create(int overlapSize, bool createPhysicals)
       }
     }
 
-    
+
   }
 }

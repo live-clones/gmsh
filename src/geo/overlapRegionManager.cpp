@@ -257,7 +257,7 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
       // Create an artificial boundary of all the overlaps of this entity, with
       // new elements.
       partitionFace *fullBnd =
-        new partitionFace(model, ++elementaryNumberBnd, {i});
+        new partitionFace(model, ++elementaryNumberBnd, {static_cast<int>(i)});
       fullBnd->setParentEntity(region->getParentEntity());
 
       std::vector<MTriangle *> bndElems;
@@ -297,7 +297,7 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
                                         face.getVertex(2)));
         }
         partitionFace *bnd =
-          new partitionFace(model, ++elementaryNumberBnd, {i});
+          new partitionFace(model, ++elementaryNumberBnd, {static_cast<int>(i)});
         Msg::Info("Created overlap of boundary %d with %d elements", bnd->tag(),
                   elems.size());
         auto parentFace = pf->getParentEntity();
