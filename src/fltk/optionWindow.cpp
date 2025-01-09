@@ -2189,6 +2189,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Physical tag(s)", 0, nullptr, nullptr},
         {"Elementary name", 0, nullptr, nullptr},
         {"Physical name(s)", 0, nullptr, nullptr},
+        {"Coordinates", 0, nullptr, nullptr},
         {nullptr}};
       geo.choice[4] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Label type");

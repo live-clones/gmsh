@@ -4528,7 +4528,7 @@ double opt_geometry_label_type(OPT_ARGS_NUM)
   if(action & GMSH_SET) {
     CTX::instance()->geom.labelType = (int)val;
     if(CTX::instance()->geom.labelType < 0 ||
-       CTX::instance()->geom.labelType > 4)
+       CTX::instance()->geom.labelType > 5)
       CTX::instance()->geom.labelType = 0;
   }
 #if defined(HAVE_FLTK)

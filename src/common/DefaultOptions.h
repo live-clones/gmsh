@@ -937,7 +937,8 @@ StringXNumber GeometryOptions_Number[] = {
 
   { F|O, "LabelType" , opt_geometry_label_type , 0. ,
     "Type of entity label (0: description, 1: elementary entity tag, "
-    "2: physical group tag, 3: elementary name, 4: physical name)" },
+    "2: physical group tag, 3: elementary name, 4: physical name, "
+    "5: coordinates)" },
   { F|O, "Light" , opt_geometry_light , 1. ,
     "Enable lighting for the geometry" },
   { F|O, "LightTwoSide" , opt_geometry_light_two_side , 1. ,
