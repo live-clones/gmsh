@@ -604,7 +604,7 @@ doc = '''Volume mesh refinement/derefinement using hxt refinement approaches of 
 mesh.add('volumeMeshRefinement', doc, None, iint('fullTag'), iint('surfaceTag'), iint('volumeTag'), iint('sizeFieldTag'))
 
 doc = '''Filter out points in the region with tag `tag' that are too close to each other based on the size field with tag `sizeFieldTag' and a given tolerance `tolerance'.'''
-mesh.add('filterCloseNodes', doc, None, iint('tag'), iint('sizeFieldTag'), idouble('tolerance'))
+mesh.add('filterCloseNodes', doc, None, iint('tag'), iint('sizeFieldTag'), idouble('tolerance'), istring('boundaryModel'))
 
 doc = '''Color the faces of tag `tag' based on the entities in the boundary model `boundarModel'. Colouring is done using an octree that colour the faces using the colours of the boundary entities, if they are within a given tolerance `tolerance'.'''
 mesh.add('colourBoundaryFaces', doc, None, iint('tag'), istring('boundaryModel'), idouble('tolerance'))

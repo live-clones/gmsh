@@ -5361,9 +5361,9 @@ class model:
         volume_mesh_refinement = volumeMeshRefinement
 
         @staticmethod
-        def filterCloseNodes(tag, sizeFieldTag, tolerance):
+        def filterCloseNodes(tag, sizeFieldTag, tolerance, boundaryModel):
             """
-            gmsh.model.mesh.filterCloseNodes(tag, sizeFieldTag, tolerance)
+            gmsh.model.mesh.filterCloseNodes(tag, sizeFieldTag, tolerance, boundaryModel)
 
             Filter out points in the region with tag `tag' that are too close to each
             other based on the size field with tag `sizeFieldTag' and a given tolerance
@@ -5373,12 +5373,14 @@ class model:
             - `tag': integer
             - `sizeFieldTag': integer
             - `tolerance': double
+            - `boundaryModel': string
             """
             ierr = c_int()
             lib.gmshModelMeshFilterCloseNodes(
                 c_int(tag),
                 c_int(sizeFieldTag),
                 c_double(tolerance),
+                c_char_p(boundaryModel.encode()),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())

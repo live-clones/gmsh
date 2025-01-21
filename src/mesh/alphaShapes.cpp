@@ -179,14 +179,14 @@ void print4debug(PolyMesh* pm, const int debugTag)
     for(auto it : pm->hedges) {
       PolyMesh::HalfEdge *he = it;
       if(he->opposite && he->f) {
+        // fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", he->v->position.x(),
+        //         he->v->position.y(), he->v->position.z(), he->next->v->position.x(),
+        //         he->next->v->position.y(), he->next->v->position.z(), he->data, he->data);
         fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", he->v->position.x(),
-                he->v->position.y(), he->v->position.z(), he->opposite->v->position.x(),
-                he->opposite->v->position.y(), he->opposite->v->position.z(), he->data, he->data);
+                he->v->position.y(), he->v->position.z(), he->next->v->position.x(),
+                he->next->v->position.y(), he->opposite->v->position.z(), he->data, he->data);
       }
-      // else if (he->f) {
-      //   fprintf(f, "SL(%g,%g,0,%g,%g,0){%d,%d};\n", he->v->position.x(),
-      //           he->v->position.y(), he->next->v->position.x(),
-      //           he->next->v->position.y(), he->data, he->data);
+      // if (he->f) {
       // }
     }
     for (auto v : pm->vertices){
@@ -2805,10 +2805,12 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
   printf("hmm 3 \n");
   std::vector<PolyMesh::Face*> toRemove;
   int nonManifold = _GFace2PolyMesh(surfaceTag, &pm, toRemove);
+  // int nonManifold = GFace2PolyMesh(surfaceTag, &pm);
   // Make set of toRemove
   std::set<PolyMesh::Face*> toRemoveSet;
   for (auto f : toRemove){
     toRemoveSet.insert(f);
+    printf("removing face %d \n", f->data);
   }
 
   printf("hmm 4 \n");
@@ -2816,11 +2818,6 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
   //   Msg::Warning("Non-manifold surface mesh, skipping edge splitting");
   //   return;
   // }
-  for (auto he : pm->hedges){
-    if (he->f == nullptr){
-      printf("he has no face \n");
-    }
-  }
 
   std::unordered_map<int, PolyMesh::Vertex*> vertexTagMap;
   for (auto v : pm->vertices){
@@ -2850,12 +2847,14 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
 
   int nNodesDeleted = 0;
 
+  // print4debug(pm, 0);
+
   size_t ii=0;
   while (!edgeNodesSorted.empty()){
+
     // printf("edgeNodesSorted size : %lu \n", edgeNodesSorted.size());
     // if (edgeNodesSorted.size()> 7000 ) 
     //   exit(0);
-      // print4debug(pm, ii++);
     auto it = edgeNodesSorted.begin();
     // printf("hereS 0\n");
     if (flaggedVertices.find(it->first) != flaggedVertices.end() || flaggedVertices.find(it->second) != flaggedVertices.end()){
@@ -2880,6 +2879,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
       edgeNodesSorted.erase(it);
       continue;
     }
+    // printf("edge %d -> %d\n", it->first, it->second);
     // double l = edgeLength(*it);
     double l = norm(v0->position - v1->position);
     edgeNodesSorted.erase(it);
@@ -2914,6 +2914,8 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
       SVector3 midPoint = 0.5*(heToSplit->v->position + heToSplit->next->v->position);
       MVertex* vm = new MVertex(midPoint[0], midPoint[1], midPoint[2]);
       split_edge(pm, heToSplit, midPoint, vm->getNum(), newFaces, linkedVertices);
+      // print4debug(pm, ii++);
+      // printf("split an edge! \n");
       gr->addMeshVertex(vm);
       vm->setEntity(gr);
       gm->addMVertexToVertexCache(vm);
@@ -2922,8 +2924,6 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
       // onSurface.push_back(1);
       // nodalSizes.push_back(0.5*(s0+s1));
       // printf("hereS 3\n");
-      if (fabs(midPoint[0]-0.050278) < 1e-6)
-        print4debug(pm, ii++);
       for (auto v : linkedVertices){
         edgeNodesSorted.insert(std::make_pair(vm->getNum(), size_t(v->data)));
       }
@@ -3116,6 +3116,9 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
   // Back to gmsh
   for (uint32_t i=n_nodesInMesh; i<m->vertices.num; i++){
     // if (m->vertices.coord[4*i+3] == HXT_COLOR_OUT) continue;
+
+    //  HERE : CHECK WHETHER THE NODE TO BE ADDED IS INSIDE THE GEOMETRICAL DOMAIN
+
     MVertex* v = new MVertex(m->vertices.coord[4*i+0], m->vertices.coord[4*i+1], m->vertices.coord[4*i+2]);
 
     gr->addMeshVertex(v);
@@ -3142,7 +3145,43 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
   hxtMeshDelete(&m);
 }
 
-void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, const double tolerance){
+void _createVolumeOctree3D(const std::string & boundaryModel, OctreeNode<3, 64, MElement*>& octree){
+    GModel* gm_alphaShape = GModel::current();
+    GModel* gm_boundary = GModel::findByName(boundaryModel);
+    if (gm_boundary == nullptr) {
+      Msg::Error("Boundary model not found");
+      return;
+    }
+    
+    BBox<3> bbox;
+    std::vector<GEntity*> bndEntities;
+    gm_boundary->getEntities(bndEntities, 3); 
+    std::vector<MElement*> allElements;
+    for (auto e : bndEntities){
+      // if (e->dim() < 2) continue;
+      size_t n_elem = e->getNumMeshElements();
+      for (size_t i_el = 0; i_el<n_elem; i_el++){
+        MElement *elem = e->getMeshElement(i_el);
+        allElements.push_back(elem);
+        for (size_t i=0; i<elem->getNumVertices(); i++){
+          bbox.extends({elem->getVertex(i)->x(), elem->getVertex(i)->y(), elem->getVertex(i)->z()});
+        }
+      }
+    }
+    bbox*=1.1;
+    octree.set_bbox(bbox);
+    for (auto el : allElements){
+      BBox<3> el_bbox;
+      for (size_t i=0; i<el->getNumVertices(); i++){
+        el_bbox.extends({el->getVertex(i)->x(), el->getVertex(i)->y(), el->getVertex(i)->z()});
+      }
+      
+      octree.add(el, el_bbox);
+    }
+    gm_alphaShape->setAsCurrent();
+}
+
+void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, const double tolerance, const std::string & boundaryModel){
   auto gm = GModel::current();
   auto gr = GModel::current()->getRegionByTag(fullTag);
   // create size field on nodes
@@ -3182,9 +3221,27 @@ void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, co
     v_bbox.extends({v->x(), v->y(), v->z()});
     octree.add(v, v_bbox);
   }
+
+  OctreeNode<3, 64, MElement*> volume_octree;
+  _createVolumeOctree3D(boundaryModel, volume_octree);
+
   
   std::unordered_set<MVertex*> _deleted;
   for (auto v : allVertices){
+    
+    // CHECK THAT THE NODE IS INDEED INSIDE THE GEOMETRICAL DOMAIN
+    BBox<3> bbox_pnt;
+    bbox_pnt.extends({v->x(), v->y(), v->z()});
+    std::vector<MElement*> volume_elements;
+    volume_octree.search(bbox_pnt, volume_elements);
+    if (volume_elements.size() == 0){
+      Msg::Warning("Node %d (%f, %f, %f) is outside the volume", v->getNum(), v->x(), v->y(), v->z());
+      _deleted.insert(v);
+      continue;
+      // gr->removeMeshVertex(v);
+      // continue;
+    }
+
     // if (vertices2D.find(v) != vertices2D.end()) continue;
     BBox<3> search_bbox; 
     double h = tolerance*sizeAtNodes[v];
@@ -3210,6 +3267,8 @@ void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, co
     printf("deleting vertex %d\n", v->getNum());
     // delete v;
   }
+
+
   Msg::Info("Filtered out %lu vertices from mesh\n", _deleted.size());
 }
 
@@ -3315,8 +3374,9 @@ void AlphaShape::_colourBoundaries(const int faceTag, const std::string & bounda
   for (auto it : bndMap){
     GFace* gf_bnd = gm_alphaShape->getFaceByTag(it.first);
     if (gf_bnd == nullptr) {
-      Msg::Error("Face with tag %d not found", it.first);
-      return;
+      Msg::Warning("Face with tag %d not found", it.first);
+      // return;
+      continue;
     }
     // for (auto tri : gf_bnd->triangles){
     //   delete tri;
@@ -3370,6 +3430,8 @@ void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std
   std::unordered_set<size_t> projectedControlNodes;
   auto gr = gm_alphaShape->getRegionByTag(tag);
   for (size_t i=0; i<nodeTags.size(); i++){
+    
+    
     bool onPoint = false;
     bool onLine = false;
     // MVertex* v = gf->getMeshVertex(i);
@@ -3379,21 +3441,27 @@ void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std
       Msg::Warning("Vertex with tag %d not found", nodeTags[i]);
       continue;
     }
+    
+
     // printf("got vertex %zu \n", v->getNum());
     bool intersect = false;
     SVector3 x0(v->point());
     SVector3 dx(nodesDx[3*i], nodesDx[3*i+1], nodesDx[3*i+2]);
     SVector3 x1 = x0 + dx;
+   
+    
+   
     // We check if it is a boundary node -> if yes, it is forced to stay on the boundary
     SVector3 x1_projected;
     if (boundaryNodesSet.find(v) != boundaryNodesSet.end()) {
+      
       BBox<3> bbox;
       bbox.extends({x0[0], x0[1], x0[2]});
       bbox.extends({x1[0], x1[1], x1[2]});
       
       bbox.extends({bbox.min[0]-boundary_tol, bbox.min[1]-boundary_tol, bbox.min[2]-boundary_tol});
       bbox.extends({bbox.max[0]+boundary_tol, bbox.max[1]+boundary_tol, bbox.max[2]+boundary_tol});
-      
+
       std::vector<MElement *> triangles_on_boundary;
 
       bnd_octree.search(bbox, triangles_on_boundary);
@@ -3404,6 +3472,7 @@ void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std
       // printf("node %zu - num bnd tris : %lu \n", v->getNum(), triangles_on_boundary.size());
       for (auto tri : triangles_on_boundary) {
         if (tri->getType() == TYPE_PNT){
+          if (!onPoint) minDist = 1e10;
           auto pt = tri->getVertex(0)->point();
           SVector3 p = SVector3(pt);
           double d = norm(p-x1);
@@ -3411,11 +3480,13 @@ void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std
               x1_projected = p;
               intersect = true;
               minDist = d;
-              // printf("Projected on point \n");
+              // printf("Projected on point at %f, %f, %f\n", p[0], p[1], p[2]);
           }
           onPoint = true;
         }
         else if (tri->getType() == TYPE_LIN){
+          // printf("teesting line \n");
+          if (!onLine) minDist = 1e10; 
           // if (onPoint) continue;
           // project on a line
           SVector3 pa(tri->getVertex(0)->point());
@@ -3425,15 +3496,15 @@ void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std
           double c1 = dot(w,v);
           double c2 = dot(v,v);
           double b = c1/c2;
-          if (b < 0) b = 0;
-          if (b > 1) b = 1;
+          // if (b < 0) b = 0;
+          // if (b > 1) b = 1;
           SVector3 x = pa + b*v;
           double d = norm(x-x1);
           if (d < minDist){
               x1_projected = x;
               intersect = true;
               minDist = d;
-              // printf("Projected on line \n");
+              // printf("Projected on line at %f, %f, %f \n", x[0], x[1], x[2]);
           }
           onLine = true;
         }
@@ -3443,8 +3514,8 @@ void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std
           SVector3 pb(tri->getVertex(1)->x(), tri->getVertex(1)->y(),tri->getVertex(1)->z());
           SVector3 pc(tri->getVertex(2)->x(), tri->getVertex(2)->y(),tri->getVertex(2)->z());
 
-          double orient1 = robustPredicates::orient3d(pa, pb, pc, x0);
-          double orient2 = robustPredicates::orient3d(pa, pb, pc, x1);
+          // double orient1 = robustPredicates::orient3d(pa, pb, pc, x0);
+          // double orient2 = robustPredicates::orient3d(pa, pb, pc, x1);
           // printf("%lu orient 1 : %f \n", v->getNum(), orient1);
           // printf("%lu orient 2 : %f \n", v->getNum(), orient2);
           // if (orient1 < 0) {
@@ -3471,7 +3542,7 @@ void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std
           double invDenom = 1. / (dot00 * dot11 - dot01 * dot01);
           double u = (dot11 * dot02 - dot01 * dot12) * invDenom;
           double v = (dot00 * dot12 - dot01 * dot02) * invDenom;
-          
+          // printf("u %f, v %f \n", u, v);
           if (u >= 0 && v >= 0 && u + v <= 1){
             double dist = (nx-x0).norm();
             if (dist < minDist){
