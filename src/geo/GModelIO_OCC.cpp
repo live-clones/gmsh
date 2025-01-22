@@ -4146,9 +4146,16 @@ bool OCC_Internals::booleanOperator(
   }
 
   outDimTags.clear();
-  for(auto v : outDimTagsMap)
-    for(auto e : v)
+  for(std::size_t i = 0; i < outDimTagsMap.size(); i++) {
+    // for cut, only return entities for object (not tool): this is what is
+    // expected for cut (I think...) and is consistent with what was done in
+    // Gmsh <= 4.13
+    if(op == OCC_Internals::Difference && i >= objectDimTags.size()) {
+      break;
+    }
+    for(auto e : outDimTagsMap[i])
       outDimTags.push_back(e);
+  }
   // keep the ordering but remove duplicates - maybe we should leave them?
   std::set<std::pair<int, int>> s;
   for(auto it = outDimTags.begin(); it != outDimTags.end(); ) {
