@@ -2520,7 +2520,7 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
     for(MVertex *v : gr->mesh_vertices) {
       if (verticesInConnected.find(v) == verticesInConnected.end()){
         gr->removeMeshVertex(v);
-        printf("removing node %zu \n", v->getNum());
+        // printf("removing node %zu \n", v->getNum());
         // gm->gm->addMVertexToVertexCache(vm);
         // gm->MVertex
         // delete v;
@@ -2675,16 +2675,17 @@ int _GFace2PolyMesh(int faceTag, PolyMesh **pm, std::vector<PolyMesh::Face*>& to
       h0->opposite = h1;
       h1->opposite = h0;
       while (1){
-	if (i+2 == (*pm)->hedges.size())break;
-	PolyMesh::HalfEdge *h2 = (*pm)->hedges[i + 2];
-	if(equal(h0, h2)){
-	  // Msg::Warning("Non Manifold Mesh cannot be encoded in a half edge data structure (edge %d %d) -- removing a face",
-		      //  h0->v->data,h0->next->v->data);
-	  toRemove.push_back(h2->f);
-	  i++;
-    // return 1;
-	}
-	else break;
+	      if (i+2 == (*pm)->hedges.size())
+          break;
+	      PolyMesh::HalfEdge *h2 = (*pm)->hedges[i + 2];
+	      if(equal(h0, h2)){
+          // Msg::Warning("Non Manifold Mesh cannot be encoded in a half edge data structure (edge %d %d) -- removing a face",
+                //  h0->v->data,h0->next->v->data);
+          toRemove.push_back(h2->f);
+          i++;
+          // return 1;
+        }
+	      else break;
       }
       i++;
     }
@@ -2729,7 +2730,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
     return;
   }
 
-  printf("hmm 0 \n");
+  // printf("hmm 0 \n");
 
   // if (buildElementOctree){
   //   SPoint3 p0(0., 0., 0.);
@@ -2750,7 +2751,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
     }
   }
 
-  printf("hmm 1 \n");
+  // printf("hmm 1 \n");
   // Update the alpha shape size field
   // Update the distance field
   std::vector<SPoint3> points;
@@ -2786,7 +2787,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
     }
   }
 
-  printf("hmm 2 \n");
+  // printf("hmm 2 \n");
 
   // create size field on nodes
   Field* field = GModel::current()->getFields()->get(sizeFieldTag);
@@ -2802,7 +2803,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
   }
   
   PolyMesh* pm; 
-  printf("hmm 3 \n");
+  // printf("hmm 3 \n");
   std::vector<PolyMesh::Face*> toRemove;
   int nonManifold = _GFace2PolyMesh(surfaceTag, &pm, toRemove);
   // int nonManifold = GFace2PolyMesh(surfaceTag, &pm);
@@ -2810,10 +2811,10 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
   std::set<PolyMesh::Face*> toRemoveSet;
   for (auto f : toRemove){
     toRemoveSet.insert(f);
-    printf("removing face %d \n", f->data);
+    // printf("removing face %d \n", f->data);
   }
 
-  printf("hmm 4 \n");
+  // printf("hmm 4 \n");
   // if (nonManifold==1){
   //   Msg::Warning("Non-manifold surface mesh, skipping edge splitting");
   //   return;
@@ -2837,7 +2838,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
   for (auto en : edgeNodes){
     edgeNodesSorted.insert(en);
   }
-  printf("hmm 5 \n");
+  // printf("hmm 5 \n");
 
   std::set<int> flaggedVertices;
   double dimensionFactor = 4/sqrt(6);
@@ -2929,7 +2930,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
       }
     }
   }
-  printf("hereS 4\n");
+  // printf("hereS 4\n");
 
   // Add faces to surfaceTag
   for (auto tri : df->triangles){
@@ -2946,7 +2947,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
 
   delete pm;
 
-  printf("hereS 5\n");
+  // printf("hereS 5\n");
   // Update the 3D mesh
   if (tetrahedralize)
     _tetrahedralizePoints(fullTag);
@@ -3264,7 +3265,7 @@ void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, co
   }
   for (auto v : _deleted){
     gr->removeMeshVertex(v);
-    printf("deleting vertex %d\n", v->getNum());
+    // printf("deleting vertex %d\n", v->getNum());
     // delete v;
   }
 
@@ -3863,7 +3864,7 @@ void AlphaShape::_computeAlphaShape3D(const std::vector<int> & alphaShapeTags, c
 
   /* Generate the tet mesh */
   hxtDelaunay(mesh, &delOptions);
-  printf("initial delaunay done \n");
+  // printf("initial delaunay done \n");
   mesh->tetrahedra.color = (uint32_t*) malloc(sizeof(uint32_t) * mesh->tetrahedra.num);
 
   
