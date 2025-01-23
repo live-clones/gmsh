@@ -2420,8 +2420,7 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
   std::unordered_map<MVertex*, double> sizeAtNodes;
   for (auto _gr : gm->getRegions()){
     for(MVertex *v : _gr->mesh_vertices) {
-       sizeAtNodes[v] = field->operator()(v->x(), v->y(), v->z(), NULL);
-      //  printf("size : %f \n", sizeAtNodes[v]);
+      sizeAtNodes[v] = field->operator()(v->x(), v->y(), v->z(), NULL);
     }
   }
   
@@ -2454,6 +2453,8 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
     auto tet_bary = tet->barycenter();
     // printf("tet_bary : %f, %f, %f \n", tet_bary.x(), tet_bary.y(), tet_bary.z());
     hTet = field->operator()(tet_bary.x(), tet_bary.y(), tet_bary.z(), NULL);
+    if (hTet == MAX_LC) 
+      hTet = 1e-12;
     if (R/hTet < alpha && !_touched[i]){
       std::stack<size_t> _s;
       _s.push(i);
@@ -2476,6 +2477,8 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
             // hTet = tetSizeFromSizeField(tet, sizeAtNodes);
             auto tet_bary = tet_neigh->barycenter();
             hTet = field->operator()(tet_bary.x(), tet_bary.y(), tet_bary.z(), NULL);
+            if (hTet == MAX_LC) 
+              hTet = 1e-12;
             if (R/hTet < alpha){
               auto tet_alpha = new MTetrahedron(tet_neigh->getVertex(0), tet_neigh->getVertex(1), tet_neigh->getVertex(2), tet_neigh->getVertex(3));
               for (size_t jn=0; jn<4; jn++) {verticesInConnected.insert(tet_alpha->getVertex(jn));}
@@ -2753,39 +2756,39 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
 
   // printf("hmm 1 \n");
   // Update the alpha shape size field
-  // Update the distance field
-  std::vector<SPoint3> points;
-  for (auto it : *GModel::current()->getFields()){
-    auto field = it.second;
-    if (field->getName() == std::string("AlphaShapeDistance")){
-      AlphaShapeDistanceField * asdf = dynamic_cast<AlphaShapeDistanceField*>(field);
-      std::vector<SPoint3> points;
+  // // Update the distance field
+  // std::vector<SPoint3> points;
+  // for (auto it : *GModel::current()->getFields()){
+  //   auto field = it.second;
+  //   if (field->getName() == std::string("AlphaShapeDistance")){
+  //     AlphaShapeDistanceField * asdf = dynamic_cast<AlphaShapeDistanceField*>(field);
+  //     std::vector<SPoint3> points;
       
-      auto gf = gm->getFaceByTag(asdf->tag);
-      if (gf == nullptr){
-        Msg::Error("Incorrect tag %d in AlphaShapeDistance size field (face does not exist)", asdf->tag);
-      }
-      for (auto tri : gf->triangles){
-        SVector3 p0 = tri->getVertex(0)->point();
-        SVector3 p1 = tri->getVertex(1)->point();
-        SVector3 p2 = tri->getVertex(2)->point();
-        auto d0 = p2 - p0;
-        auto d1 = p2 - p1;
-        auto d_norm = std::max(norm(d0), norm(d1));
-        int n = asdf->sampling_length == 0 ? 2 : std::max(2, int(d_norm/asdf->sampling_length));
-        for (int i=0; i<n+1; i++){
-          auto p_start = p0 + double(i)/double(n) * d0;
-          auto p_end = p1 + double(i)/double(n)*d1;
-          auto hor_shift = p_end - p_start;
-          for (int j=0; j<n+1-i; j++){
-            auto pInter = p_start + double(j)/double(n+1-i) * hor_shift;
-            points.push_back(pInter.point());
-          }
-        } 
-      }
-      asdf->set(points);
-    }
-  }
+  //     auto gf = gm->getFaceByTag(asdf->tag);
+  //     if (gf == nullptr){
+  //       Msg::Error("Incorrect tag %d in AlphaShapeDistance size field (face does not exist)", asdf->tag);
+  //     }
+  //     for (auto tri : gf->triangles){
+  //       SVector3 p0 = tri->getVertex(0)->point();
+  //       SVector3 p1 = tri->getVertex(1)->point();
+  //       SVector3 p2 = tri->getVertex(2)->point();
+  //       auto d0 = p2 - p0;
+  //       auto d1 = p2 - p1;
+  //       auto d_norm = std::max(norm(d0), norm(d1));
+  //       int n = asdf->sampling_length == 0 ? 2 : std::max(2, int(d_norm/asdf->sampling_length));
+  //       for (int i=0; i<n+1; i++){
+  //         auto p_start = p0 + double(i)/double(n) * d0;
+  //         auto p_end = p1 + double(i)/double(n)*d1;
+  //         auto hor_shift = p_end - p_start;
+  //         for (int j=0; j<n+1-i; j++){
+  //           auto pInter = p_start + double(j)/double(n+1-i) * hor_shift;
+  //           points.push_back(pInter.point());
+  //         }
+  //       } 
+  //     }
+  //     asdf->set(points);
+  //   }
+  // }
 
   // printf("hmm 2 \n");
 
@@ -2806,6 +2809,23 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
   // printf("hmm 3 \n");
   std::vector<PolyMesh::Face*> toRemove;
   int nonManifold = _GFace2PolyMesh(surfaceTag, &pm, toRemove);
+
+  // Check for distorted elements
+  // for (auto f : pm->faces){
+  //   auto v0 = f->he->v;
+  //   auto v1 = f->he->next->v;
+  //   auto v2 = f->he->next->next->v;
+  //   auto p0 = v0->position;
+  //   auto p1 = v1->position;
+  //   auto p2 = v2->position;
+  //   auto check = robustPredicates::orient2d(p0, p1, p2);
+  //   printf("check : %f \n", check);
+  //   if (check <= 0){
+  //     Msg::Warning("Degenerate face %d, skipping edge splitting", f->data);
+  //     exit(0);
+  //   }
+  // }
+
   // int nonManifold = GFace2PolyMesh(surfaceTag, &pm);
   // Make set of toRemove
   std::set<PolyMesh::Face*> toRemoveSet;
@@ -2839,6 +2859,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
     edgeNodesSorted.insert(en);
   }
   // printf("hmm 5 \n");
+  // print4debug(pm, 0);
 
   std::set<int> flaggedVertices;
   double dimensionFactor = 4/sqrt(6);
@@ -3185,6 +3206,41 @@ void _createVolumeOctree3D(const std::string & boundaryModel, OctreeNode<3, 64, 
 void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, const double tolerance, const std::string & boundaryModel){
   auto gm = GModel::current();
   auto gr = GModel::current()->getRegionByTag(fullTag);
+  
+  // Update the distance field
+  std::vector<SPoint3> points;
+  for (auto it : *GModel::current()->getFields()){
+    auto field = it.second;
+    if (field->getName() == std::string("AlphaShapeDistance")){
+      AlphaShapeDistanceField * asdf = dynamic_cast<AlphaShapeDistanceField*>(field);
+      std::vector<SPoint3> points;
+      
+      auto gf = gm->getFaceByTag(asdf->tag);
+      if (gf == nullptr){
+        Msg::Error("Incorrect tag %d in AlphaShapeDistance size field (face does not exist)", asdf->tag);
+      }
+      for (auto tri : gf->triangles){
+        SVector3 p0 = tri->getVertex(0)->point();
+        SVector3 p1 = tri->getVertex(1)->point();
+        SVector3 p2 = tri->getVertex(2)->point();
+        auto d0 = p2 - p0;
+        auto d1 = p2 - p1;
+        auto d_norm = std::max(norm(d0), norm(d1));
+        int n = asdf->sampling_length == 0 ? 2 : std::max(2, int(d_norm/asdf->sampling_length));
+        for (int i=0; i<n+1; i++){
+          auto p_start = p0 + double(i)/double(n) * d0;
+          auto p_end = p1 + double(i)/double(n)*d1;
+          auto hor_shift = p_end - p_start;
+          for (int j=0; j<n+1-i; j++){
+            auto pInter = p_start + double(j)/double(n+1-i) * hor_shift;
+            points.push_back(pInter.point());
+          }
+        } 
+      }
+      asdf->set(points);
+    }
+  }
+  
   // create size field on nodes
   Field* field = GModel::current()->getFields()->get(sizeFieldTag);
   std::unordered_map<MVertex*, double> sizeAtNodes;
