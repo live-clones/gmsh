@@ -2130,6 +2130,28 @@ class model:
                 raise Exception(logger.getLastError())
 
         @staticmethod
+        def captureFront(nodeTags, nodePhases):
+            """
+            gmsh.model.mesh.captureFront(nodeTags, nodePhases)
+
+            Capture a front by swapping edges.
+
+            Types:
+            - `nodeTags': vector of integers
+            - `nodePhases': vector of integers
+            """
+            api_nodeTags_, api_nodeTags_n_ = _ivectorint(nodeTags)
+            api_nodePhases_, api_nodePhases_n_ = _ivectorint(nodePhases)
+            ierr = c_int()
+            lib.gmshModelMeshCaptureFront(
+                api_nodeTags_, api_nodeTags_n_,
+                api_nodePhases_, api_nodePhases_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        capture_front = captureFront
+
+        @staticmethod
         def recombine():
             """
             gmsh.model.mesh.recombine()

@@ -44,6 +44,7 @@ set(SRC
   meshOctreeLibOL.cpp
   meshCombine3D.cpp
   meshRelaying.cpp
+  meshCaptureFront.cpp
 )
 
 

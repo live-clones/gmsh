@@ -1786,6 +1786,25 @@ function optimize(method = "", force = false, niter = 1, dimTags = Tuple{Cint,Ci
 end
 
 """
+    gmsh.model.mesh.captureFront(nodeTags, nodePhases)
+
+Capture a front by swapping edges.
+
+Types:
+ - `nodeTags`: vector of integers
+ - `nodePhases`: vector of integers
+"""
+function captureFront(nodeTags, nodePhases)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshCaptureFront, gmsh.lib), Cvoid,
+          (Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          convert(Vector{Cint}, nodeTags), length(nodeTags), convert(Vector{Cint}, nodePhases), length(nodePhases), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const capture_front = captureFront
+
+"""
     gmsh.model.mesh.recombine()
 
 Recombine the mesh of the current model.

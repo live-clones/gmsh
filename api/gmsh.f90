@@ -524,6 +524,8 @@ module gmsh
         gmshModelMeshUnpartition
     procedure, nopass :: optimize => &
         gmshModelMeshOptimize
+    procedure, nopass :: captureFront => &
+        gmshModelMeshCaptureFront
     procedure, nopass :: recombine => &
         gmshModelMeshRecombine
     procedure, nopass :: refine => &
@@ -3234,6 +3236,35 @@ module gmsh
          api_dimTags_n_=size_gmsh_pair(dimTags), &
          ierr_=ierr)
   end subroutine gmshModelMeshOptimize
+
+  !> Capture a front by swapping edges.
+  subroutine gmshModelMeshCaptureFront(nodeTags, &
+                                       nodePhases, &
+                                       ierr)
+    interface
+    subroutine C_API(api_nodeTags_, &
+                     api_nodeTags_n_, &
+                     api_nodePhases_, &
+                     api_nodePhases_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshCaptureFront")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), dimension(*) :: api_nodeTags_
+      integer(c_size_t), value, intent(in) :: api_nodeTags_n_
+      integer(c_int), dimension(*) :: api_nodePhases_
+      integer(c_size_t), value, intent(in) :: api_nodePhases_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), dimension(:), intent(in) :: nodeTags
+    integer(c_int), dimension(:), intent(in) :: nodePhases
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(api_nodeTags_=nodeTags, &
+         api_nodeTags_n_=size_gmsh_int(nodeTags), &
+         api_nodePhases_=nodePhases, &
+         api_nodePhases_n_=size_gmsh_int(nodePhases), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshCaptureFront
 
   !> Recombine the mesh of the current model.
   subroutine gmshModelMeshRecombine(ierr)

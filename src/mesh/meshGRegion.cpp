@@ -183,6 +183,8 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
 
   if(!success) return;
 
+  //  printf("CTX::instance()->mesh.algo3d = %d\n",CTX::instance()->mesh.algo3d);
+  
   // now do insertion of points
   if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D) {
     for(std::size_t i = 0; i < regions.size(); i++) {

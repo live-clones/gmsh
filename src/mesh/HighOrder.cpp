@@ -2014,7 +2014,7 @@ void SetOrderN(GModel *m, int order, bool linear, bool incomplete,
 
   // EXPERIMENTAL
   if(!linear && order == 2) {
-    optimizeC1Ness2DP2 (m);
+    //    optimizeC1Ness2DP2 (m);
   }
   else if(!linear && order == 3) {
     optimizeC1Ness2DPN (m);

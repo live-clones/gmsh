@@ -90,6 +90,7 @@ namespace WinslowUntangler {
     for(size_t i = 0; i < tets.size(); ++i) {
       double tvol = tet_volume(points[tets[i][0]], points[tets[i][1]],
                                points[tets[i][2]], points[tets[i][3]]);
+      //      printf("%12.5E\n",tvol);
       sum += tvol;
     }
     return sum;
@@ -326,7 +327,7 @@ namespace WinslowUntangler {
                                      alglib::real_1d_array &grad)
   {
 
-    if(w.isP3)
+    if(w.dim == 2 && w.isP3)
       return compute_energy_and_gradient_p3(w,X,grad);
 
     // Initial values
@@ -341,9 +342,10 @@ namespace WinslowUntangler {
     for(size_t i = 0; i < grad.length(); ++i) grad[i] = 0.;
 
     // Loop over triangle/tet contributions
-    const size_t nElements =
+    size_t nElements =
       w.isP2 ? 4*(w.triangles.size()/perTriangleP2) : ((w.dim == 2) ? w.triangles.size() : w.tetrahedra.size());
-
+    if (w.dim == 3)nElements =  w.tetrahedra.size();
+    
     int nthreads = 1;
     int thread_num = 0;
     std::vector<double> GL(nthreads*  grad.length());
@@ -353,6 +355,8 @@ namespace WinslowUntangler {
     for(size_t i = 0; i < nthreads; ++i) DM[i] = 1.e22;
     for(size_t i = 0; i < nthreads; ++i) EN[i] = 0.0;
 
+    //    printf("nElements = %lu\n",nElements);
+    
     {    
       for(size_t t = 0; t < nElements; t++) {
 	// Update jacobian with current triangle coordinates
@@ -372,7 +376,7 @@ namespace WinslowUntangler {
           (w.J_mat_3D[t].transpose() * w.J_mat_3D[t]).trace() /
 	  std::pow(chi, 2. / 3.);
 	const double g_eps = (det * det * OneOverSize2 * OneOverSize2 + 1.) / (chi*OneOverSize2);
-	printf("det -> %12.5E , chi -> %12.5E chip -> %12.5E eps --> %12.5E (%g %g)\n",det,chi,chip,w.eps,f_eps,g_eps);
+	//	printf("det -> %12.5E , chi -> %12.5E chip -> %12.5E eps --> %12.5E (%g %g)\n",det,chi,chip,w.eps,f_eps,g_eps);
 	const double Ec = f_eps + w.lambda * g_eps;
 	//	printf("%12.5E %12.5E %12.5E %12.5E\n",f_eps,g_eps,det,chi);
 	if(det < DM[thread_num]) DM[thread_num]= det;
@@ -427,11 +431,13 @@ namespace WinslowUntangler {
     }
 #pragma omp barrier
 
-    for(size_t i = 0; i < GL.size(); ++i) grad[i%grad.length()] += GL[i];
+    if (w.dim == 2){
+      for(size_t i = 0; i < GL.size(); ++i) grad[i%grad.length()] += GL[i];
+    }
     for(size_t i = 0; i < nthreads; ++i) if(DM[i] <w.J_det_min) w.J_det_min = DM[i];
     for(size_t i = 0; i < nthreads; ++i) energy += EN[i];
 
-    if (w.isP2){
+    if (w.dim == 2 && w.isP2){
       size_t dT = (perTriangleP2 - 4)/3;
       //      printf("%lu %lu\n",(w.triangles.size()-nElements)/dT,nElements);
       double signs[5] = {1,1,-1,-1,-1};
@@ -494,10 +500,10 @@ namespace WinslowUntangler {
     energy /= nElements;
     for(size_t i = 0; i < grad.length(); ++i) grad[i]/=nElements;
     //    printf("energy = %22.15E detMin = %22.15E\n",energy,w.J_det_min);
-    for(size_t i = 0; i < grad.length(); ++i) printf("%12.5E ",grad[i]);
-    printf("\n %12.5E\n",energy);
+    //    for(size_t i = 0; i < grad.length(); ++i) printf("%12.5E ",grad[i]);
+    //    printf("ENERGY ---> %12.5E\n",energy);
     w.energy = energy;
-    exit(1);
+    //    exit(1);
     return w.energy;
   }
 
@@ -571,8 +577,8 @@ namespace WinslowUntangler {
     // to verify the positivity of P2 triangles ...
     std::vector<size_t> permut;
     checkIfP2 (data,permut, 19, data.isP2); // should be better
-    //    if (tris.size()%21 == 0)data.isP3 = true;
-    data.isP3 = true;
+    if (tris.size()%9 == 0)data.isP3 = true;
+    //    data.isP3 = true;
     // ----------------------------------------------------
     data.locked = locked;
     data.J_mat_2D.resize(data.triangles.size());
@@ -655,15 +661,22 @@ namespace WinslowUntangler {
     }
     data.dim = 3;
     data.tetrahedra = tets;
+
+    //    printf("%lu tets\n",tets.size());
+    
+    // should be passed as an argument !!!
+    // we do not need for now
+    if (tets.size()%5 == 0)data.isP2 = true;
+    
     data.locked = locked;
     data.J_mat_3D.resize(tets.size());
     data.J_det.resize(tets.size(), 0.);
     data.tet_normals.resize(tets.size());
-    double avg_tet_vol = volume(points, tets) / double(tets.size());
-    if(avg_tet_vol <= 0) {
-      Msg::Warning("Winslow untangler 3D: average tet area is negative: %.3e",
-                   avg_tet_vol);
-    }
+    //    double avg_tet_vol = volume(points, tets) / double(tets.size());
+    //    if(avg_tet_vol <= 0) {
+    //      Msg::Warning("Winslow untangler 3D: average tet area is negative: %.3e",
+    //                   avg_tet_vol);
+    //    }
 
     // Build regular tet centered in origin
     // with unit volume
@@ -680,15 +693,6 @@ namespace WinslowUntangler {
     constexpr int facet_vertex[4][3] = {
       {1, 3, 2}, {0, 2, 3}, {3, 1, 0}, {0, 1, 2}};
 
-    //    double avg_ideal_vol = 1.;
-    //    if(tetIdealShapes.size() > 0.) {
-    //      for(size_t t = 0; t < tetIdealShapes.size(); ++t) {
-    //        avg_ideal_vol += tet_volume(tetIdealShapes[t][0], tetIdealShapes[t][1],
-    //                                    tetIdealShapes[t][2], tetIdealShapes[t][3]);
-    //      }
-    //      avg_ideal_vol /= double(tetIdealShapes.size());
-    //    }
-
     // Build ideal tet normals
     for(size_t t = 0; t < tets.size(); ++t) {
       vec3 shape[4] = {equi[0], equi[1], equi[2], equi[3]};
@@ -698,11 +702,6 @@ namespace WinslowUntangler {
         shape[2] = tetIdealShapes[t][2];
         shape[3] = tetIdealShapes[t][3];
       }
-
-      //      for(size_t lv = 0; lv < 4; ++lv) {
-      //        shape[lv] = shape[lv] * (1. / std::pow(avg_ideal_vol, 1. / 3.) *
-      //                                 std::pow(avg_tet_vol, 1. / 3.));
-      //      }
 
       double vol = tet_volume(shape[0], shape[1], shape[2], shape[3]);
       if(std::isnan(vol)) {
@@ -721,7 +720,7 @@ namespace WinslowUntangler {
       for(size_t lf = 0; lf < 4; ++lf) {
         vec3 e0 = shape[facet_vertex[lf][1]] - shape[facet_vertex[lf][0]];
         vec3 e1 = shape[facet_vertex[lf][2]] - shape[facet_vertex[lf][0]];
-        vec3 n = 0.5 * cross(e1, e0) * (1. / (3. * avg_tet_vol));
+        vec3 n = 0.5 * cross(e1, e0) * (1./(3.*vol));
 
         data.tet_normals[t](lf, 0) = n[0];
         data.tet_normals[t](lf, 1) = n[1];
@@ -737,7 +736,7 @@ namespace WinslowUntangler {
     data.energy = 0.;
     for(size_t t = 0; t < data.tetrahedra.size(); t++) {
       const double det = update_jacobian_matrix(t, data, x0);
-      //      printf("det = %12.5E\n",det);
+      printf("det(%lu) = %12.5E\n",t%5,det);
       if(det < data.J_det_min) data.J_det_min = det;
       if(det <= 0.) data.nb_invalid += 1;
     }
@@ -756,7 +755,7 @@ namespace WinslowUntangler {
       const double Ec = f_eps + data.lambda * g_eps;
       data.energy += Ec;
     }
-
+    
     return true;
   }
 
@@ -871,7 +870,7 @@ namespace WinslowUntangler {
     bool converged = false;
     int nFail = 0;
     double t0 = Cpu();
-    double E_prev = data.energy;
+    double E_prev = data.energy;   
     // Copy positions in solver array
     alglib::real_1d_array x;
     x.setcontent(dim * NV, points);
@@ -903,7 +902,7 @@ namespace WinslowUntangler {
 	minlbfgssetcond(state, epsg, epsf, epsx,maxit);
         // Run LBFGS
 	minlbfgsoptimize(state, lbfgs_callback, optional_lbfgs_callback, &data);
-
+	
         // Extract coordinates
 	minlbfgsresults(state, x, rep);
 	for(size_t v = 0; v < NV; ++v) {

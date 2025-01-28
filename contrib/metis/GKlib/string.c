@@ -14,7 +14,7 @@ of standard functions (but with enhanced functionality).
 /************************************************************************/
 
 /* the following is for strptime() */
-#define _XOPEN_SOURCE
+#define _XOPEN_SOURCE 700
 #include <time.h>
 #undef _XOPEN_SOURCE
 #include "GKlib.h"

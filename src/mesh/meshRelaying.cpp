@@ -999,6 +999,7 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
     auto front_edges = discreteFront::instance()->getFrontEdges();
     
     if (ITTT++ == MAXIT)break;
+    
     if (tets.empty()){      
       for (size_t i=0;i<tris.size();i+=3){
         std::vector<SVector3> c;
@@ -1109,7 +1110,7 @@ void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double,
       pos[3*i+1] = pOpt.y();
       pos[3*i+2] = pOpt.z();
     }    
-    //    printf("coucou %lu fn\n",front_nodes.size());
+    printf("coucou %lu fn\n",front_nodes.size());
     std::sort(front_nodes.begin(),front_nodes.end());
   }
 
@@ -1437,7 +1438,7 @@ void meshRelaying::untangle(double lambda, int nIterOut, int nIterIn, double dis
       avgQual /= (tets.size()/4);
       Msg::Info ("Avg Quality Before Untangling %12.5E",avgQual);
     }
-    buildTetrahedraFromElements(_elements,_elementTargetShapes, _tets,_tetIdealShapes);
+    buildTetrahedraFromElements(_points,_elements,_elementTargetShapes, _tets,_tetIdealShapes);
     untangle_tetrahedra(_points, _locked, _tets, _tetIdealShapes);
     for (size_t i=0;i<_points.size();i++){
       pos[3*i] = _points[i][0];

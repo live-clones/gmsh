@@ -601,6 +601,11 @@ GMSH_API void gmshModelMeshOptimize(const char * method,
                                     const int * dimTags, const size_t dimTags_n,
                                     int * ierr);
 
+/* Capture a front by swapping edges. */
+GMSH_API void gmshModelMeshCaptureFront(const int * nodeTags, const size_t nodeTags_n,
+                                        const int * nodePhases, const size_t nodePhases_n,
+                                        int * ierr);
+
 /* Recombine the mesh of the current model. */
 GMSH_API void gmshModelMeshRecombine(int * ierr);
 

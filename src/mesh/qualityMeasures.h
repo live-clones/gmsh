@@ -65,7 +65,7 @@ public:
 
 class qmTetrahedron {
 public:
-  enum Measures { QMTET_GAMMA, QMTET_ETA, QMTET_ONE, QMTET_COND };
+  enum Measures { QMTET_GAMMA, QMTET_ETA, QMTET_ONE, QMTET_COND, QMTET_FRONT};
   static double qm(MTetrahedron *t, const Measures &cr,
                    double *volume = nullptr);
   static double qm(const BDS_Point *p1, const BDS_Point *p2,
@@ -94,6 +94,7 @@ public:
                      const double &x4, const double &y4, const double &z4,
                      double *volume = nullptr);
   static double minNCJ(const MTetrahedron *e);
+  static double captureFront(const MTetrahedron *e);
   //  static void NCJRange(const MTetrahedron *e, double &valMin, double
   //  &valMax);
   static inline int numNCJVal() { return 4; }

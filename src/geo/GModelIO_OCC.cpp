@@ -2972,7 +2972,12 @@ bool OCC_Internals::addThickSolid(int tag, int solidTag,
 #if OCC_VERSION_HEX > 0x070400
     BRepOffsetAPI_MakeThickSolid ts;
     ts.MakeThickSolidByJoin(shape, exclude, offset,
-                            CTX::instance()->geom.tolerance);
+                            CTX::instance()->geom.tolerance,
+                            BRepOffset_Skin,
+                            Standard_True, // Intersection
+                            Standard_False, // SelfInter (not available yet)
+                            GeomAbs_Arc, // Join
+                            Standard_False); // RemoveIntEdges
 #else
     BRepOffsetAPI_MakeThickSolid ts(shape, exclude, offset,
                                     CTX::instance()->geom.tolerance);

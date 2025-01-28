@@ -270,6 +270,9 @@ mesh.add('unpartition', doc, None)
 doc = '''Optimize the mesh of the current model using `method' (empty for default tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D" for Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation, "QuadQuasiStructured" for quad mesh optimization, "UntangleMeshGeometry" for untangling). If `force' is set apply the optimization also to discrete entities. If `dimTags' (given as a vector of (dim, tag) pairs) is given, only apply the optimizer to the given entities.'''
 mesh.add('optimize', doc, None, istring('method', '""'), ibool('force', 'false', 'False'), iint('niter', '1'), ivectorpair('dimTags', 'gmsh::vectorpair()', '[]', '[]'))
 
+doc = '''Capture a front by swapping edges.'''
+mesh.add('captureFront', doc, None, ivectorint('nodeTags'), ivectorint('nodePhases'))
+
 doc = '''Recombine the mesh of the current model.'''
 mesh.add('recombine', doc, None)
 

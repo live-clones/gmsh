@@ -1001,6 +1001,19 @@ GMSH_API void gmshModelMeshOptimize(const char * method, const int force, const 
   }
 }
 
+GMSH_API void gmshModelMeshCaptureFront(const int * nodeTags, const size_t nodeTags_n, const int * nodePhases, const size_t nodePhases_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_nodeTags_(nodeTags, nodeTags + nodeTags_n);
+    std::vector<int> api_nodePhases_(nodePhases, nodePhases + nodePhases_n);
+    gmsh::model::mesh::captureFront(api_nodeTags_, api_nodePhases_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshRecombine(int * ierr)
 {
   if(ierr) *ierr = 0;

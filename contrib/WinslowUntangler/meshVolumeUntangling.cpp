@@ -34,6 +34,15 @@ using std::array;
 using std::vector;
 
 namespace WinslowUntanglerVolume {
+
+  const uint32_t tetp2_corners[5][4] = {
+    {0, 1, 3, 2},
+    {0, 4, 7, 6},
+    {1, 5, 9, 4},
+    {2, 8, 5, 6},
+    {3, 7, 9, 8}
+  };
+
   const uint32_t pyr2tet_corners[4][4] = {
     {0, 1, 2, 4}, {1, 2, 3, 4}, {1, 2, 3, 4}, {2, 3, 0, 4}
   };
@@ -140,29 +149,30 @@ namespace WinslowUntanglerVolume {
     return sum;
   }
 
-  void invertTetsIfNecessary(
-    const std::vector<std::array<double, 3> > &points,
-    std::vector<std::array<uint32_t, 4> > &tets,
-    std::vector<std::array<std::array<double, 3>, 4> > &tetIdealShapes)
-  {
-    if(tetIdealShapes.size() > 0) {
-      double volIdealShapes = 0.;
-      for(size_t i = 0; i < tetIdealShapes.size(); ++i) {
-        volIdealShapes += volume(tetIdealShapes[i][0], tetIdealShapes[i][1],
-                                 tetIdealShapes[i][2], tetIdealShapes[i][3]);
-      }
-      volIdealShapes /= double(tetIdealShapes.size());
-      Msg::Debug("average volume ideal tets: %f", volIdealShapes);
-    }
+  // void invertTetsIfNecessary(
+  //   const std::vector<std::array<double, 3> > &points,
+  //   std::vector<std::array<uint32_t, 4> > &tets,
+  //   std::vector<std::array<std::array<double, 3>, 4> > &tetIdealShapes)
+  // {
+  //   if(tetIdealShapes.size() > 0) {
+  //     double volIdealShapes = 0.;
+  //     for(size_t i = 0; i < tetIdealShapes.size(); ++i) {
+  //       volIdealShapes += volume(tetIdealShapes[i][0], tetIdealShapes[i][1],
+  //                                tetIdealShapes[i][2], tetIdealShapes[i][3]);
+  //     }
+  //     volIdealShapes /= double(tetIdealShapes.size());
+  //     Msg::Debug("average volume ideal tets: %f", volIdealShapes);
+  //   }
 
-    double vol = volume(points, tets);
-    Msg::Debug("region volume: %f", vol);
-  }
+  //   double vol = volume(points, tets);
+  //   Msg::Debug("region volume: %f", vol);
+  // }
 } // namespace WinslowUntanglerVolume
 
 using namespace WinslowUntanglerVolume;
 
 bool buildTetrahedraFromElements(
+  std::vector<std::array<double, 3> > &points,
   const std::vector<std::vector<uint32_t> > &elements,
   const std::vector<std::vector<std::array<double, 3> > > &elementTargetShapes,
   std::vector<std::array<uint32_t, 4> > &tets,
@@ -185,6 +195,7 @@ bool buildTetrahedraFromElements(
     return false;
   }
 
+  std::vector<std::array<double, 3> > pold = points;
   std::unordered_map<MVertex *, uint32_t> old2new;
   for(size_t e = 0; e < elements.size(); ++e) {
     const vector<uint32_t> &vert = elements[e];
@@ -207,6 +218,58 @@ bool buildTetrahedraFromElements(
       }
       else {
         tetIdealShapes.push_back(tet_ideal_shape);
+      }
+    }
+    else if(vert.size() == 10) {
+
+      int _edp2[6][3] = {{0,1,4},{1,2,5},{2,0,6},{0,3,7},{2,3,8},{1,3,9}};
+
+      std::array<double, 3> p [10] = {pold[elements[e][0]], pold[elements[e][1]],
+				      pold[elements[e][2]], pold[elements[e][3]],
+				      pold[elements[e][4]], pold[elements[e][5]],
+				      pold[elements[e][6]], pold[elements[e][7]],
+				      pold[elements[e][8]], pold[elements[e][9]]};      
+      for (size_t k = 0; k < 6 ; k++){
+	int start = _edp2[k][0];
+	int end = _edp2[k][1];
+	int mid = _edp2[k][2];
+	double xmid = 0.5*(p[start][0] + p[end][0]); 
+	double ymid = 0.5*(p[start][1] + p[end][1]);
+	double zmid = 0.5*(p[start][2] + p[end][2]);
+	double x2   = p[mid][0]; 
+	double y2   = p[mid][1];
+	double z2   = p[mid][2];
+	points[elements[e][mid]][0] = xmid + 2.0*(x2-xmid);
+	points[elements[e][mid]][1] = ymid + 2.0*(y2-ymid);
+	points[elements[e][mid]][2] = zmid + 2.0*(z2-zmid);
+		//	printf ("%d %d %g %g %g\n",e,mid,x2,y2,z2);
+      }
+
+      std::array<vec3, 4> corners = {vec3{pold[elements[e][0]][0], pold[elements[e][0]][1] ,pold[elements[e][0]][2]},
+				     vec3{pold[elements[e][1]][0], pold[elements[e][1]][1], pold[elements[e][1]][2]},
+				     vec3{pold[elements[e][2]][0], pold[elements[e][2]][1], pold[elements[e][2]][2]},
+				     vec3{pold[elements[e][3]][0], pold[elements[e][3]][1], pold[elements[e][3]][2]}};
+      std::array<vec3, 10> straight = {corners[0],corners[1],corners[2],corners[3],
+				       (corners[0]+corners[1])*.5,
+				       (corners[1]+corners[2])*.5,
+				       (corners[2]+corners[0])*.5,
+				       (corners[0]+corners[3])*.5,
+				       (corners[2]+corners[3])*.5,
+				       (corners[1]+corners[3])*.5};	
+      
+      
+      for(size_t j = 0; j < 5; ++j) {
+        array<uint32_t, 4> tet = {vert[tetp2_corners[j][0]],
+				  vert[tetp2_corners[j][1]],
+				  vert[tetp2_corners[j][2]],
+				  vert[tetp2_corners[j][3]]};
+	tets.push_back(tet);
+	std::array<std::array<double, 3>, 4> target = {
+	  straight [tetp2_corners[j][0]],
+	  straight [tetp2_corners[j][1]],
+	  straight [tetp2_corners[j][2]],
+	  straight [tetp2_corners[j][3]]};
+	tetIdealShapes.push_back(target);
       }
     }
     else if(vert.size() == 8) {
@@ -269,6 +332,7 @@ bool buildTetrahedraFromElements(
 
 bool buildVerticesAndTetrahedra(
   GRegion *gr, vector<MVertex *> &vertices, vector<vec3> &points,
+  vector<vector<uint32_t> > &elements,
   vector<bool> &locked, vector<std::array<uint32_t, 4> > &tets,
   std::vector<std::array<std::array<double, 3>, 4> > &tetIdealShapes)
 {
@@ -279,7 +343,6 @@ bool buildVerticesAndTetrahedra(
   tets.clear();
 
   std::unordered_map<MVertex *, uint32_t> old2new;
-  vector<vector<uint32_t> > elements(gr->getNumMeshElements());
   for(size_t e = 0; e < gr->getNumMeshElements(); ++e) {
     MElement *elt = gr->getMeshElement(e);
     size_t n = elt->getNumVertices();
@@ -309,7 +372,7 @@ bool buildVerticesAndTetrahedra(
 
   const int dcpHex = 32;
   std::vector<std::vector<std::array<double, 3> > > elementTargetShapes;
-  bool okb = buildTetrahedraFromElements(elements, elementTargetShapes, tets,
+  bool okb = buildTetrahedraFromElements(points, elements, elementTargetShapes, tets,
                                          tetIdealShapes, dcpHex);
   if(!okb) {
     Msg::Error("Failed to build tets from elements");
@@ -336,9 +399,10 @@ bool untangleGRegionMeshConstrained(GRegion *gr, int iterMax, double timeMax)
   vector<bool> locked;
   vector<std::array<uint32_t, 4> > tets;
   std::vector<std::array<std::array<double, 3>, 4> > tetIdealShapes;
-  buildVerticesAndTetrahedra(gr, vertices, points, locked, tets,
+  vector<vector<uint32_t> > elements(gr->getNumMeshElements());
+  buildVerticesAndTetrahedra(gr, vertices, points, elements, locked, tets,
                              tetIdealShapes);
-  invertTetsIfNecessary(points, tets, tetIdealShapes);
+  //  invertTetsIfNecessary(points, tets, tetIdealShapes);
 
   /* Call Winslow untangler */
   int iterMaxInner = 300;
@@ -349,6 +413,34 @@ bool untangleGRegionMeshConstrained(GRegion *gr, int iterMax, double timeMax)
     untangle_tetrahedra(points, locked, tets, tetIdealShapes, lambda,
                         iterMaxInner, iterMax, iterFailMax, timeMax);
 
+  std::vector<std::array<double, 3> > pold = points;
+
+  for(size_t e = 0; e < elements.size(); ++e) {
+    const vector<uint32_t> &vert = elements[e];
+    if(vert.size() == 10) { // P2
+      int _edp2[6][3] = {{0,1,4},{1,2,5},{2,0,6},{0,3,7},{2,3,8},{1,3,9}};
+      std::array<double, 3> p [10] = {pold[elements[e][0]], pold[elements[e][1]],
+				      pold[elements[e][2]], pold[elements[e][3]],
+				      pold[elements[e][4]], pold[elements[e][5]],
+				      pold[elements[e][6]], pold[elements[e][7]],
+				      pold[elements[e][8]], pold[elements[e][9]]};
+      for (size_t k = 0; k < 6 ; k++){
+	int start = _edp2[k][0];
+	int end = _edp2[k][1];
+	int mid = _edp2[k][2];
+	double xmid = 0.5*(p[start][0] + p[end][0]); 
+	double ymid = 0.5*(p[start][1] + p[end][1]);
+	double zmid = 0.5*(p[start][2] + p[end][2]);
+	double x2   = p[mid][0]; 
+	double y2   = p[mid][1];
+	double z2   = p[mid][2];
+	points[elements[e][mid]][0] = 0.5*(x2+xmid);
+	points[elements[e][mid]][1] = 0.5*(y2+ymid);
+	points[elements[e][mid]][2] = 0.5*(z2+zmid);
+      }      
+    }
+  }
+  
   for(size_t v = 0; v < points.size(); ++v)
     if(!locked[v]) {
       vertices[v]->setXYZ(points[v][0], points[v][1], points[v][2]);

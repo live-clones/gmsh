@@ -447,7 +447,10 @@ static void Mesh1D(GModel *m)
       }
       if(!nIter) Msg::ProgressMeter(localPending, false, "Meshing 1D...");
     }
-    if(exceptions) throw std::runtime_error(Msg::GetLastError());
+    if(exceptions) {
+      CTX::instance()->lock = 0;
+      throw std::runtime_error(Msg::GetLastError());
+    }
     if(!nPending) break;
     if(nIter++ > CTX::instance()->mesh.maxRetries) break;
   }
@@ -603,7 +606,10 @@ static void Mesh2D(GModel *m)
         }
         if(!nIter) Msg::ProgressMeter(localPending, false, "Meshing 2D...");
       }
-      if(exceptions) throw std::runtime_error(Msg::GetLastError());
+      if(exceptions){
+        CTX::instance()->lock = 0;
+        throw std::runtime_error(Msg::GetLastError());
+      }
       if(!nPending) break;
       // iter == 2 is for meshing re-parametrized surfaces; after that, we
       // serialize (self-intersections of 1D meshes are not thread safe)!

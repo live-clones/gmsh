@@ -699,6 +699,12 @@ namespace gmsh { // Top-level functions
                              const int niter = 1,
                              const gmsh::vectorpair & dimTags = gmsh::vectorpair());
 
+      // gmsh::model::mesh::captureFront
+      //
+      // Capture a front by swapping edges.
+      GMSH_API void captureFront(const std::vector<int> & nodeTags,
+                                 const std::vector<int> & nodePhases);
+
       // gmsh::model::mesh::recombine
       //
       // Recombine the mesh of the current model.

@@ -73,6 +73,7 @@
 #include "qualityMeasuresJacobian.h"
 #include "meshRenumber.h"
 #include "meshRelaying.h"
+#include "meshCaptureFront.h"
 #endif
 
 #if defined(HAVE_POST)
@@ -1360,6 +1361,14 @@ GMSH_API void gmsh::model::mesh::optimize(const std::string &how,
       "Optimization of specified model entities is not interfaced yet");
   }
   GModel::current()->optimizeMesh(how, force, niter);
+  CTX::instance()->mesh.changed = ENT_ALL;
+}
+
+GMSH_API void gmsh::model::mesh::captureFront(const std::vector<int> &nodes,
+					      const std::vector<int> &phases)
+{
+  if(!_checkInit()) return;  
+  meshCaptureFront (nodes, phases);
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 

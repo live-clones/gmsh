@@ -1239,6 +1239,21 @@ namespace gmsh { // Top-level functions
         gmshFree(api_dimTags_);
       }
 
+      // gmsh::model::mesh::captureFront
+      //
+      // Capture a front by swapping edges.
+      inline void captureFront(const std::vector<int> & nodeTags,
+                               const std::vector<int> & nodePhases)
+      {
+        int ierr = 0;
+        int *api_nodeTags_; size_t api_nodeTags_n_; vector2ptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_);
+        int *api_nodePhases_; size_t api_nodePhases_n_; vector2ptr(nodePhases, &api_nodePhases_, &api_nodePhases_n_);
+        gmshModelMeshCaptureFront(api_nodeTags_, api_nodeTags_n_, api_nodePhases_, api_nodePhases_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_nodeTags_);
+        gmshFree(api_nodePhases_);
+      }
+
       // gmsh::model::mesh::recombine
       //
       // Recombine the mesh of the current model.

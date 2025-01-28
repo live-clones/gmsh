@@ -547,7 +547,8 @@ void CreateOutputFile(const std::string &fileName, int format,
   case FORMAT_PNG:
     {
       if(!FlGui::available()){
-        Msg::Error("Creating '%s' requires a graphical interface context", name.c_str());
+        Msg::Error("Creating '%s' requires a graphical interface context",
+                   name.c_str());
         break;
       }
 
@@ -558,7 +559,8 @@ void CreateOutputFile(const std::string &fileName, int format,
         break;
       }
 
-      PixelBuffer *buffer = GetCompositePixelBuffer(GL_RGB, GL_UNSIGNED_BYTE);
+      PixelBuffer *buffer = GetCompositePixelBuffer
+        ((format == FORMAT_PNG) ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE);
 
       if(format == FORMAT_PPM)
         create_ppm(fp, buffer);

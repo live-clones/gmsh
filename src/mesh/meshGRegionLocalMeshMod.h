@@ -16,6 +16,9 @@ enum localMeshModAction { GMSH_DOIT, GMSH_EVALONLY };
 
 int LaplaceSmoothing(GRegion *gr);
 
+bool edgeSwapCustom(std::vector<MTet4 *> &newTets, MTet4 *tet, int iLocalEdge, void *data,
+		    double (*qualityFct) (MVertex *v0, MVertex *v1, std::vector<MVertex*> &cavity, void *data) );
+
 bool edgeSwap(std::vector<MTet4 *> &newTets, MTet4 *tet, int iLocalEdge,
               const qmTetrahedron::Measures &cr,
               const std::set<MFace, MFaceLessThan> &embeddedFaces);
