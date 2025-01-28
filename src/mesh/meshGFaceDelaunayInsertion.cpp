@@ -1318,6 +1318,7 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
   Range<double> RV = gf->parBounds(1);
   // THIS WAS ACTUALLY WRONG IF high is 0 !!!
   //  SPoint2 FAR(2 * RU.high(), 2 * RV.high());
+  /// This is better !
   SPoint2 FAR(RU.high() + (RU.high()-RU.low()), RV.high() + (RV.high()-RV.low()));
 
 
