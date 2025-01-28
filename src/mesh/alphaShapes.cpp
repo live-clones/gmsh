@@ -13,6 +13,7 @@
 #include "meshOctreeLibOL.h"
 #include "discreteRegion.h"
 #include "discreteFace.h"
+#include "meshGRegion.h"
 
 #ifdef _OPENMP
 #include "omp.h"
@@ -2256,13 +2257,69 @@ void AlphaShape::_tetrahedralizePoints(const int tag){
     Msg::Error("No points in entity with tag %d\n", tag);
     return;
   }
-  std::vector<MTetrahedron *> tets;
-  delaunayMeshIn3DHxt(gr->mesh_vertices, tets);
-  
+
   for(auto tet: gr->tetrahedra) delete tet;
   gr->tetrahedra.clear();
-  
-  for(auto tet: tets) gr->tetrahedra.push_back(tet);
+
+  std::vector<MTetrahedron *> tets;
+  // delaunayMeshIn3DHxt(vertices, tets);
+  // delaunayMeshIn3DHxt(gr->mesh_vertices, tets);
+  HXTMesh *mesh;
+  hxtMeshCreate(&mesh);
+
+  size_t nvert = gr->mesh_vertices.size();
+  hxtAlignedMalloc(&mesh->vertices.coord, nvert * 4 * sizeof(double));
+  for(size_t i = 0; i < nvert; i++) {
+    mesh->vertices.coord[4 * i + 0] = gr->mesh_vertices[i]->x();
+    mesh->vertices.coord[4 * i + 1] = gr->mesh_vertices[i]->y();
+    mesh->vertices.coord[4 * i + 2] = gr->mesh_vertices[i]->z();
+    mesh->vertices.coord[4 * i + 3] = 0.;
+  }
+  mesh->vertices.num = nvert;
+  mesh->vertices.size = nvert;
+
+  int nthreads = Msg::GetMaxThreads();
+
+  HXTDelaunayOptions delOptions = {
+    nullptr, // bbox
+    nullptr, // nodalSizes
+    0, // numVertcesInMesh
+    0, // insertionFirst
+    0, // partitionability
+    1, // perfectDelaunay
+    0, // verbosity
+    0, // reproducible
+    nthreads // delaunayThreads (0 = omp_get_max_threads)
+  };
+
+  HXTNodeInfo *nodeInfo;
+  hxtAlignedMalloc(&nodeInfo, sizeof(HXTNodeInfo) * mesh->vertices.num);
+  for(uint32_t i = 0; i < mesh->vertices.num; i++) {
+    nodeInfo[i].node = i;
+    nodeInfo[i].status = HXT_STATUS_TRYAGAIN;
+  }
+  hxtDelaunaySteadyVertices(mesh, &delOptions, nodeInfo, mesh->vertices.num);
+  hxtAlignedFree(&nodeInfo);
+
+  for(size_t i = 0; i < mesh->tetrahedra.num; i++) {
+    if(mesh->tetrahedra.node[i * 4 + 3] != UINT32_MAX) {
+      uint32_t myColor = mesh->tetrahedra.color ? mesh->tetrahedra.color[i] : 0;
+      if(myColor != HXT_COLOR_OUT) {
+        uint32_t *n = &mesh->tetrahedra.node[4 * i];
+        tets.push_back(
+          new MTetrahedron(gr->mesh_vertices[n[0]], gr->mesh_vertices[n[1]], gr->mesh_vertices[n[2]], gr->mesh_vertices[n[3]], i+1));
+      }
+    }
+  }
+
+  hxtMeshDelete(&mesh);
+
+  size_t i = 1;
+  for(auto tet: tets){
+    gm->setMaxElementNumber(i);
+    tet->forceNum(i++);
+    gr->tetrahedra.push_back(tet);
+  }
 
 }
 
@@ -2469,7 +2526,7 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
       _s.push(i);
       _touched[i] = true;
       // we create a new tetrahedron
-      auto tet_alpha = new MTetrahedron(tet->getVertex(0), tet->getVertex(1), tet->getVertex(2), tet->getVertex(3));
+      auto tet_alpha = new MTetrahedron(tet->getVertex(0), tet->getVertex(1), tet->getVertex(2), tet->getVertex(3), tet->getNum());
       for (size_t jn=0; jn<4; jn++) {verticesInConnected.insert(tet_alpha->getVertex(jn));}
       alphaTets.push_back(tet_alpha);
       while(!_s.empty()){
@@ -2490,7 +2547,7 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
               hTet = 1e-12;
             }
             if (R/hTet < alpha){
-              auto tet_alpha = new MTetrahedron(tet_neigh->getVertex(0), tet_neigh->getVertex(1), tet_neigh->getVertex(2), tet_neigh->getVertex(3));
+              auto tet_alpha = new MTetrahedron(tet_neigh->getVertex(0), tet_neigh->getVertex(1), tet_neigh->getVertex(2), tet_neigh->getVertex(3), tet_neigh->getNum());
               for (size_t jn=0; jn<4; jn++) {verticesInConnected.insert(tet_alpha->getVertex(jn));}
               alphaTets.push_back(tet_alpha);
               _s.push(i_t_neigh);
@@ -2577,7 +2634,7 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
     MVertex* v0 = f_i.getVertex(0);
     MVertex* v1 = f_i.getVertex(1);
     MVertex* v2 = f_i.getVertex(2);
-    MTriangle* tri = new MTriangle(v0, v1, v2);
+    MTriangle* tri = new MTriangle(v0, v1, v2, i+1);
     df->triangles.push_back(tri);
     if (returnTri2TetMap){
       tri2Tet[2*i+0] = tri->getNum();
@@ -2977,11 +3034,12 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
     delete tri;
   }
   df->removeElements(TYPE_TRI);
+  size_t i=1;
   for (auto f : pm->faces){
     MVertex* v0 = gm->getMeshVertexByTag(f->he->v->data);
     MVertex* v1 = gm->getMeshVertexByTag(f->he->next->v->data);
     MVertex* v2 = gm->getMeshVertexByTag(f->he->next->next->v->data);
-    MTriangle* tri = new MTriangle(v0, v1, v2);
+    MTriangle* tri = new MTriangle(v0, v1, v2, i++);
     df->triangles.push_back(tri);
   }
 
@@ -3188,9 +3246,8 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
     for (uint64_t i=0; i<m->tetrahedra.num; i++){
       if (m->tetrahedra.color[i] == HXT_COLOR_OUT) continue;
       auto t = &m->tetrahedra.node[4*i];
-      auto tet = new MTetrahedron(c2v[t[0]], c2v[t[1]], c2v[t[2]], c2v[t[3]]);
+      auto tet = new MTetrahedron(c2v[t[0]], c2v[t[1]], c2v[t[2]], c2v[t[3]], i+1);
       dr->tetrahedra.push_back(tet);
-      // gr->tetrahedra.push_back(tet);
     }
     // Remove triangles and add them again? Don't think it's necessary...
 
@@ -3314,6 +3371,7 @@ void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, co
   OctreeNode<3, 64, MElement*> volume_octree;
   _createVolumeOctree3D(boundaryModel, volume_octree);
 
+  printf("number of nodes in the mesh : %lu\n", gr->mesh_vertices.size());
   
   std::unordered_set<MVertex*> _deleted;
   for (auto v : allVertices){
@@ -3352,10 +3410,12 @@ void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, co
     }
   }
   for (auto v : _deleted){
+    printf("deleting vertex %d (%f, %f, %f)\n", v->getNum(), v->x(), v->y(), v->z());
     gr->removeMeshVertex(v);
-    // printf("deleting vertex %d\n", v->getNum());
     // delete v;
   }
+
+  printf("number of nodes in the mesh : %lu\n", gr->mesh_vertices.size());
 
 
   Msg::Info("Filtered out %lu vertices from mesh\n", _deleted.size());
