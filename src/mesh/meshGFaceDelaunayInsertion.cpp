@@ -1252,6 +1252,7 @@ static bool optimalPointFrontalB(GFace *gf, MTri3 *worst, int active_edge,
                v3->z() - middle.z());
   SVector3 n1 = crossprod(v1v2, tmp);
   if(n1.norm() < 1.e-12) return true;
+
   SVector3 n2 = crossprod(n1, v1v2);
   n1.normalize();
   n2.normalize();
@@ -1315,7 +1316,9 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
 
   Range<double> RU = gf->parBounds(0);
   Range<double> RV = gf->parBounds(1);
-  SPoint2 FAR(2 * RU.high(), 2 * RV.high());
+  // THIS WAS ACTUALLY WRONG IF high is 0 !!!
+  //  SPoint2 FAR(2 * RU.high(), 2 * RV.high());
+  SPoint2 FAR(RU.high() + (RU.high()-RU.low()), RV.high() + (RV.high()-RV.low()));
 
 
   // insert points
@@ -1351,6 +1354,7 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
           insertAPoint(gf, AllTris.end(), newPoint, metric, DATA, AllTris,
                        &ActiveTris, worst, nullptr, testStarShapeness);
       }
+      else printf("no point found\n");
     }
   }
 

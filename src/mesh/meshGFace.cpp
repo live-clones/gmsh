@@ -59,6 +59,7 @@ bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
     }
   }
   N = count;
+  //  printf("point %22.5E %22.5E out %22.5E %22.5E in parametric domain (bnd size %lu) : %d %d\n",p.x(),p.y(),out.x(), out.y(), bnd.size(),count, count%2);
   if(count % 2 == 0) return false;
   return true;
 }
