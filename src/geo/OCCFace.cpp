@@ -67,7 +67,14 @@ void OCCFace::_setup()
     // periodic surfaces the location of degenerate edges linking 2 sides of the
     // parametric space is crucial) - so always make sure to reorder the edges
     ShapeFix_Wire sfw(wire, _s, CTX::instance()->geom.tolerance);
-    sfw.FixReorder();
+    if(sfw.FixReorder())
+      Msg::Debug("Fixed order of curves in surface %d", tag());
+#if 0
+    // it is also crucial that the pcurves (in the parametric plane of the
+    // surface) are correct - we could enable this to try to fix incorrect ones
+    if(sfw.FixEdgeCurves())
+      Msg::Debug("Fixed curves in surface %d", tag());
+#endif
     wire = sfw.Wire();
 
     Msg::Debug("OCC surface %d - new wire", tag());
