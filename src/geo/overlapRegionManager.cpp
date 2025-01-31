@@ -131,6 +131,46 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
   fillFaceToEntities(faceToEntities, parentRegion->faces(), model);
   Msg::Info("Face to PF map has %lu entries", faceToEntities.size());
 
+  
+  // JAN 25: optimized overlaps
+  std::unordered_map<partitionRegion*, std::unordered_set<MFace, MFaceHash, MFaceEqual>> regionFaces;
+  for (auto e: entities) {
+    partitionRegion* region = dynamic_cast<partitionRegion*>(e);
+    if (!region) continue;
+    auto faces = boundaryOfRegion(region);
+    regionFaces.insert({region, faces});
+  }
+  for (const auto& [pr, faces]: regionFaces) {
+    Msg::Info("Region %d has %lu faces", pr->tag(), faces.size());
+  }
+  std::unordered_map<MVertex*, std::set<partitionRegion *>> skeletonVerticesOwner;
+  for (const auto& [pr, faces]: regionFaces) {
+    for (const auto& f: faces) {
+      for (int i = 0; i < f.getNumVertices(); ++i) {
+        skeletonVerticesOwner[f.getVertex(i)].insert(pr);
+      }
+    }
+  }
+  
+  std::unordered_map<partitionRegion*, std::set<partitionRegion*>> regionToTouchingRegions;
+for (const auto& [v, regions]: skeletonVerticesOwner) {
+    if (regions.size() > 1) {
+      //Msg::Info("Vertex %d is shared by %lu regions", v->getNum(), regions.size());
+      for (auto r1: regions) {
+        for (auto r2: regions) {
+          if (r1 == r2) continue;
+          regionToTouchingRegions[r1].insert(r2);
+        }
+      }
+    }
+  }
+
+  for (const auto& [r, touching]: regionToTouchingRegions) {
+    //Msg::Info("Region %d has %lu touching regions", r->tag(), touching.size());
+  }
+
+  std::unordered_map<int, std::set<overlapRegion *>> overlapsByPartition;
+
   for(unsigned i = 1; i <= numPartitions; ++i) {
     // Generate overlaps of partition i
 
@@ -158,7 +198,7 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
                 touchingPartitions.size());
 
       // ALL MFACE ON MY BOUNDARY
-      auto entityFaces = boundaryOfRegion(region);
+      auto& entityFaces = regionFaces.at(region);
       std::vector<int> tagsForPhysicals;
 
       for(auto e2 : entities) {
@@ -178,6 +218,9 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
         int j = otherRegion->getPartitions()[0];
         if(touchingPartitions.find(j) == touchingPartitions.end())
           continue; // Skip non-touching partitions
+        if(regionToTouchingRegions[region].find(otherRegion) ==
+           regionToTouchingRegions[region].end())
+          continue; // Skip non-touching regions
 
         // Fill the overlap
         auto tetras = otherRegion->getNearbyTetra(
