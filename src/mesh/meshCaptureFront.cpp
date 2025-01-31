@@ -8,22 +8,25 @@
 #include "meshGRegionDelaunayInsertion.h"
 #include "meshCaptureFront.h"
 
-static double faceQuality (MFace &mf, std::map<int,int> &n2p){
-  MVertex *v0 = mf.getVertex(0);
-  MVertex *v1 = mf.getVertex(1);
-  MVertex *v2 = mf.getVertex(2);
-  int p0 = n2p[v0->getNum()];
-  int p1 = n2p[v1->getNum()];
-  int p2 = n2p[v2->getNum()];
-  double qual= -1;
-  if (p0 == p1 && p0 == p2) qual = 10000;
-  else if (p0*p2 >= 0 && p0*p1 >= 0 && p2*p1 >=0) qual = drand48()*1000;
-  else qual = - drand48()*10000 ;
+bool RANDOMIZE_MAX = false;
 
-  //  printf("edge %lu %lu p %d %d -> qual %g\n",v0->getNum(),v1->getNum(),p0,p1,qual);
 
-  return qual;
-}
+// static double faceQuality (MFace &mf, std::map<int,int> &n2p){
+//   MVertex *v0 = mf.getVertex(0);
+//   MVertex *v1 = mf.getVertex(1);
+//   MVertex *v2 = mf.getVertex(2);
+//   int p0 = n2p[v0->getNum()];
+//   int p1 = n2p[v1->getNum()];
+//   int p2 = n2p[v2->getNum()];
+//   double qual= -1;
+//   if (p0 == p1 && p0 == p2) qual = 10000;
+//   else if (p0*p2 >= 0 && p0*p1 >= 0 && p2*p1 >=0) qual = drand48()*1000;
+//   else qual = - drand48()*10000 ;
+
+//   //  printf("edge %lu %lu p %d %d -> qual %g\n",v0->getNum(),v1->getNum(),p0,p1,qual);
+
+//   return qual;
+// }
 
 static double edgeQuality (MEdge &me, std::map<int,int> &n2p){
   MVertex *v0 = me.getVertex(0);
@@ -31,9 +34,12 @@ static double edgeQuality (MEdge &me, std::map<int,int> &n2p){
   int p0 = n2p[v0->getNum()];
   int p1 = n2p[v1->getNum()];
   double qual;
+
+  if (RANDOMIZE_MAX) return drand48()*1000;
+  
   if (p0 == p1) qual = 10000;
   else if (p0 * p1 == 0) qual = drand48()*1000;
-  else qual = - drand48()*10000 ;
+  else qual = -drand48()*1000 ;
 
   //  printf("edge %lu %lu p %d %d -> qual %g\n",v0->getNum(),v1->getNum(),p0,p1,qual);
 
@@ -45,29 +51,29 @@ static double qualityFct (MVertex *v00, MVertex *v11, std::vector<MVertex*> &cav
   std::set<MFace, MFaceLessThan> fcs;
   std::map<int,int> *n2p = (std::map<int,int> *) data;
 
-  //  double qmin = 1.0;
-  for (size_t i=0; i<cavity.size(); i+=4){
-    MVertex *v0 = cavity[i];
-    MVertex *v1 = cavity[i+1];
-    MVertex *v2 = cavity[i+2];
-    MVertex *v3 = cavity[i+3];
-    fcs.insert(MFace(v0,v1,v2));
-    fcs.insert(MFace(v0,v1,v3));
-    fcs.insert(MFace(v0,v2,v3));
-    fcs.insert(MFace(v1,v2,v3));
-    double vol;
-    double qi = qmTetrahedron::qm(v0,v1,v2,v3,qmTetrahedron::QMTET_GAMMA,&vol);
-    //    qmin = std::min(qi,qmin);
-  }
+  // //  double qmin = 1.0;
+  // for (size_t i=0; i<cavity.size(); i+=4){
+  //   MVertex *v0 = cavity[i];
+  //   MVertex *v1 = cavity[i+1];
+  //   MVertex *v2 = cavity[i+2];
+  //   MVertex *v3 = cavity[i+3];
+  //   fcs.insert(MFace(v0,v1,v2));
+  //   fcs.insert(MFace(v0,v1,v3));
+  //   fcs.insert(MFace(v0,v2,v3));
+  //   fcs.insert(MFace(v1,v2,v3));
+  //   double vol;
+  //   double qi = qmTetrahedron::qm(v0,v1,v2,v3,qmTetrahedron::QMTET_GAMMA,&vol);
+  //   //    qmin = std::min(qi,qmin);
+  // }
   
-  {
-    double qual = 0.0;
-    for (auto f : fcs){
-      qual += faceQuality (f, *n2p);
-    }
-    //  printf("nedges %lu quality %g\n",eds.size(),qual);
-    return qual;///eds.size();  
-  }
+  // {
+  //   double qual = 0.0;
+  //   for (auto f : fcs){
+  //     qual += faceQuality (f, *n2p);
+  //   }
+  //   //  printf("nedges %lu quality %g\n",eds.size(),qual);
+  //   return qual;///eds.size();  
+  // }
   
 
   std::set<MEdge, MEdgeLessThan> eds;
@@ -131,7 +137,7 @@ static void swapEdgesForCapturingTheFront (std::vector<MTet4 *> &allTets, std::m
 							(*it)->tet()->getVertex(edges[i][1])->getNum()),
 					       std::max((*it)->tet()->getVertex(edges[i][0])->getNum(),
 							(*it)->tet()->getVertex(edges[i][1])->getNum()));	
-	if (eds.find(pp) == eds.end() && closed && p1*p0 < 0){
+	if ((eds.find(pp) == eds.end() && closed && p1*p0 <= 0) || (closed && RANDOMIZE_MAX == true)){
 	  if (!closed) printf("Error -- invlaid bndry edge\n");
 	  eds.insert(pp);
 	  //	  printf("edge swap custom -- %d %d\n",(*it)->tet()->getVertex(edges[i][0])->getNum(),
@@ -199,13 +205,15 @@ static void meshCaptureFront3D (GRegion *gr, std::map<int,int> &n2p)
     iter ++;
     swapEdgesForCapturingTheFront (allTets, n2p,ns,ninv);
     printf("ITER %d %d %d\n",iter,ns,ninv);
-    if (ns == 0){
+    //    if (ns==0) RANDOMIZE_MAX = true;
+    //    else RANDOMIZE_MAX = false;
+    if (ninv == 0){
       if (ninv == 0)Msg::Info("Front captured for region %d",gr->tag());
       if (ninv != 0)Msg::Info("Front not totally captured for region %d -- %d invalid edges",gr->tag(),ninv);
       break;
     }
     if (iter == 160){
-      Msg::Info("Front not captured for region %d -- %d illegal edges remain",gr->tag(),ns);
+      Msg::Info("Front not captured for region %d -- %d illegal edges remain",gr->tag(),ninv);
       break;
     }
   }

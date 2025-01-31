@@ -1152,7 +1152,7 @@ static void initialCube(std::vector<Vert *> &v, Vert *box[8],
     Vert *pv = v[i];
     bbox += SPoint3(pv->x(), pv->y(), pv->z());
   }
-  bbox *= 1.3;
+  bbox *= 21.3;
   box[0] =
     new Vert(bbox.min().x(), bbox.min().y(), bbox.min().z(), bbox.diag());
   box[1] =

@@ -294,10 +294,10 @@ bool edgeSwapCustom(std::vector<MTet4 *> &newTets, MTet4 *tet, int iLocalEdge, v
     }
 
     
-    if (fabs(volumeNew- volumeRef) < 1.e-6*fabs(volumeNew+volumeRef)){
+    if (fabs(volumeNew- volumeRef) < 1.e-12*fabs(volumeNew+volumeRef)){
       double quality_i = qualityFct (v1,v2,_c, data);
       //      printf("qualityNew = %g current_quality = %g quality_i = %g\n",qualityNew,current_quality,quality_i);
-      if (qualityNew > 4.e-12){
+      if (qualityNew > 4.e-6){
 	if (quality_i > current_quality || (quality_i == current_quality && qualityBest < qualityNew)){
 	  iBest = i;
 	  current_quality = quality_i;
