@@ -137,10 +137,9 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   }
 
   char buffer[256], buffer2[256];
-  // physicals: one per dimension (0: points, 1: curves, 2: surfaces, 3: volumes)
   std::map<int, std::map<int, std::string> > physicals[4];
 
-  // Read header lines (version and title)
+  
   if(!fgets(buffer, sizeof(buffer), fp)) { fclose(fp); return 0; }
   if(!fgets(buffer, sizeof(buffer), fp)) { fclose(fp); return 0; }
 
@@ -230,7 +229,6 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
     return 0;
   }
 
-  // Initialize counters using current maximum elementary numbers:
   int iPoint   = getMaxElementaryNumber(0) + 1;
   int iCurve   = getMaxElementaryNumber(1) + 1;
   int iSurface = getMaxElementaryNumber(2) + 1;
@@ -353,43 +351,43 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
           elements[2][iSurface++].push_back(elem);
           break;
         case 23:
-          elem = new MQuadrangle(cells[i]); 
+          elem = new MQuadrangle(cells[i]); // Replace with MQuadrangle8 if available
           oldId = iSurface;
           d = 2;
           elements[3][iSurface++].push_back(elem);
           break;
         case 28:
-          elem = new MQuadrangle(cells[i]);
+          elem = new MQuadrangle(cells[i]); // Replace with MQuadrangle9 if available
           oldId = iSurface;
           d = 2;
           elements[3][iSurface++].push_back(elem);
           break;
         case 24:
-          elem = new MTetrahedron(cells[i]); 
+          elem = new MTetrahedron(cells[i]); // Replace with MTetrahedron10 if needed
           oldId = iVolume;
           d = 3;
           elements[4][iVolume++].push_back(elem);
           break;
         case 25:
-          elem = new MHexahedron(cells[i]);
+          elem = new MHexahedron(cells[i]); // Replace with MHexahedron20 if needed
           oldId = iVolume;
           d = 3;
           elements[5][iVolume++].push_back(elem);
           break;
         case 29:
-          elem = new MHexahedron(cells[i]);
+          elem = new MHexahedron(cells[i]); // Replace with MHexahedron27 if needed
           oldId = iVolume;
           d = 3;
           elements[5][iVolume++].push_back(elem);
           break;
         case 26:
-          elem = new MPrism(cells[i]);
+          elem = new MPrism(cells[i]); // Replace with MPrism15 if needed
           oldId = iVolume;
           d = 3;
           elements[6][iVolume++].push_back(elem);
           break;
         case 32:
-          elem = new MPrism(cells[i]); 
+          elem = new MPrism(cells[i]); // Replace with MPrism18 if needed
           oldId = iVolume;
           d = 3;
           elements[6][iVolume++].push_back(elem);
