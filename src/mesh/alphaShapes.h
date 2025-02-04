@@ -59,13 +59,13 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
 
 void _decimateTriangulation(const int faceTag, const double thresholdDistance);
 
-void _tetrahedralizePoints(const int tag);
+void _tetrahedralizePoints(const int tag, const bool optimize);
 
 void _alphaShape3D(const int tag, const double alpha, const int sizeFieldTag, const int tagAlpha, const int tagAlphaBoundary, const bool removeDisconnectedNodes, const bool returnTri2TetMap, std::vector<std::size_t>& tri2Tet);
 
 void _surfaceEdgeSplitting(const int fullTag, const int surfaceTag, const int sizeFieldTag, const bool tetrahealize, const bool buildElementOctree, const std::vector<size_t> tri2TetMap);
 
-void _volumeMeshRefinement(const int fullTag, const int surfaceTag, const int volumeTag, const int sizeFieldTag);
+void _volumeMeshRefinement(const int fullTag, const int surfaceTag, const int volumeTag, const int sizeFieldTag, const bool returnNodalCurvature, std::vector<double>& nodalCurvature);
 
 void _filterCloseNodes(const int fullTag, const int sizeFieldTag, const double tolerance, const std::string & boundaryModel);
 

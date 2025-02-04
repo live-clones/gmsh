@@ -3294,10 +3294,11 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::tetrahedralizePoints
       //
       // Tetrahedralize points in entity of tag `tag
-      inline void tetrahedralizePoints(const int tag)
+      inline void tetrahedralizePoints(const int tag,
+                                       const bool optimize = false)
       {
         int ierr = 0;
-        gmshModelMeshTetrahedralizePoints(tag, &ierr);
+        gmshModelMeshTetrahedralizePoints(tag, (int)optimize, &ierr);
         if(ierr) throwLastError();
       }
 
@@ -3346,11 +3347,15 @@ namespace gmsh { // Top-level functions
       inline void volumeMeshRefinement(const int fullTag,
                                        const int surfaceTag,
                                        const int volumeTag,
-                                       const int sizeFieldTag)
+                                       const int sizeFieldTag,
+                                       const bool returnNodalCurvature,
+                                       std::vector<double> & nodalCurvature)
       {
         int ierr = 0;
-        gmshModelMeshVolumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag, &ierr);
+        double *api_nodalCurvature_; size_t api_nodalCurvature_n_;
+        gmshModelMeshVolumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag, (int)returnNodalCurvature, &api_nodalCurvature_, &api_nodalCurvature_n_, &ierr);
         if(ierr) throwLastError();
+        nodalCurvature.assign(api_nodalCurvature_, api_nodalCurvature_ + api_nodalCurvature_n_); gmshFree(api_nodalCurvature_);
       }
 
       // gmsh::model::mesh::filterCloseNodes

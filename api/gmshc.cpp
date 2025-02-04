@@ -2478,11 +2478,11 @@ GMSH_API void gmshModelMeshDecimateTriangulation(const int faceTag, const double
   }
 }
 
-GMSH_API void gmshModelMeshTetrahedralizePoints(const int tag, int * ierr)
+GMSH_API void gmshModelMeshTetrahedralizePoints(const int tag, const int optimize, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::tetrahedralizePoints(tag);
+    gmsh::model::mesh::tetrahedralizePoints(tag, optimize);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2514,11 +2514,13 @@ GMSH_API void gmshModelMeshSurfaceEdgeSplitting(const int fullTag, const int sur
   }
 }
 
-GMSH_API void gmshModelMeshVolumeMeshRefinement(const int fullTag, const int surfaceTag, const int volumeTag, const int sizeFieldTag, int * ierr)
+GMSH_API void gmshModelMeshVolumeMeshRefinement(const int fullTag, const int surfaceTag, const int volumeTag, const int sizeFieldTag, const int returnNodalCurvature, double ** nodalCurvature, size_t * nodalCurvature_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag);
+    std::vector<double> api_nodalCurvature_;
+    gmsh::model::mesh::volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag, returnNodalCurvature, api_nodalCurvature_);
+    vector2ptr(api_nodalCurvature_, nodalCurvature, nodalCurvature_n);
   }
   catch(...){
     if(ierr) *ierr = 1;

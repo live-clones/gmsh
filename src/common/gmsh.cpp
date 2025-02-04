@@ -5813,9 +5813,9 @@ gmsh::model::mesh::decimateTriangulation(const int faceTag,
 }
 
 GMSH_API void
-gmsh::model::mesh::tetrahedralizePoints(const int tag){
+gmsh::model::mesh::tetrahedralizePoints(const int tag, const bool optimize){
 #if defined(HAVE_MESH) && defined(HAVE_HXT)
-  AlphaShape::_tetrahedralizePoints(tag);
+  AlphaShape::_tetrahedralizePoints(tag, optimize);
 #else
   Msg::Error("tetrahedralizePoints requires the mesh and hxt modules");
 #endif
@@ -5840,9 +5840,9 @@ gmsh::model::mesh::surfaceEdgeSplitting(const int fullTag, const int surfaceTag,
 }
 
 GMSH_API void
-gmsh::model::mesh::volumeMeshRefinement(const int fullTag, const int surfaceTag, const int volumeTag, const int sizeFieldTag){
+gmsh::model::mesh::volumeMeshRefinement(const int fullTag, const int surfaceTag, const int volumeTag, const int sizeFieldTag, const bool returnNodalCurvature, std::vector<double>& nodalCurvature){
 #if defined(HAVE_MESH) && defined(HAVE_HXT)
-  AlphaShape::_volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag);
+  AlphaShape::_volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag, returnNodalCurvature, nodalCurvature);
 #else
   Msg::Error("volumeMeshRefinement requires the mesh and hxt modules");
 #endif

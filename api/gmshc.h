@@ -1684,6 +1684,7 @@ GMSH_API void gmshModelMeshDecimateTriangulation(const int faceTag,
 
 /* Tetrahedralize points in entity of tag `tag */
 GMSH_API void gmshModelMeshTetrahedralizePoints(const int tag,
+                                                const int optimize,
                                                 int * ierr);
 
 /* Compute alpha shape of the mesh in entity of tag `tag */
@@ -1714,6 +1715,8 @@ GMSH_API void gmshModelMeshVolumeMeshRefinement(const int fullTag,
                                                 const int surfaceTag,
                                                 const int volumeTag,
                                                 const int sizeFieldTag,
+                                                const int returnNodalCurvature,
+                                                double ** nodalCurvature, size_t * nodalCurvature_n,
                                                 int * ierr);
 
 /* Filter out points in the region with tag `tag' that are too close to each

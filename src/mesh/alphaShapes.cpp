@@ -41,6 +41,7 @@ extern "C" {
 #include "hxt_tetRefine.h"
 #include "hxt_alphashape.h"
 #include "hxt_tetRepair.h"
+#include "hxt_curvature.h"
 }
 
 using namespace AlphaShape;
@@ -2241,7 +2242,7 @@ void AlphaShape::_moveNodes(const int tag, const int freeSurfaceTag, const std::
 // ======================
 
 // Tetrahedralize points in discrete entity dim, tag
-void AlphaShape::_tetrahedralizePoints(const int tag){
+void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize){
   GModel* gm = GModel::current();
   // cast to GRegion
   GRegion* gr = gm->getRegionByTag(tag);
@@ -2300,6 +2301,19 @@ void AlphaShape::_tetrahedralizePoints(const int tag){
   }
   hxtDelaunaySteadyVertices(mesh, &delOptions, nodeInfo, mesh->vertices.num);
   hxtAlignedFree(&nodeInfo);
+
+  if (optimize){
+    for (uint64_t i=0; i<mesh->tetrahedra.num; i++){
+      if (mesh->tetrahedra.node[4*i+3]==HXT_GHOST_VERTEX)
+        setProcessedFlag(mesh, i);
+    }
+    HXTOptimizeOptions options = {
+                                  .numThreads = nthreads,
+                                  .numVerticesConstrained = mesh->vertices.num,
+                                  .reproducible = 0
+                                  } ;
+    hxtOptimizeTetrahedra(mesh, &options);
+  }
 
   for(size_t i = 0; i < mesh->tetrahedra.num; i++) {
     if(mesh->tetrahedra.node[i * 4 + 3] != UINT32_MAX) {
@@ -2448,15 +2462,19 @@ double tetSizeFromSizeField(MTetrahedron* tet, std::unordered_map<MVertex*, doub
   return size/4.;
 }
 
-void postProPoints(std::vector<SPoint3> points, const int debugTag)
+void postProPoints(std::vector<SPoint3> points, std::vector<double> data, const int debugTag)
 {
   char name[256];
   sprintf(name, "postProPoints%d.pos", debugTag);
   FILE *f = fopen(name, "w");
   fprintf(f, "View \" %s \"{\n", name);
-  for(auto p : points) {
-      fprintf(f, "SP(%g,%g,%g){%d};\n",
-              p.x(), p.y(), p.z(), 0);
+  for(size_t i=0; i<points.size(); i++){
+    auto p = points[i];
+    auto d = data[i];
+    // fprintf(f, "VP(%g,%g,%g){%g, %g, %g};\n",
+    //         p.x(), p.y(), p.z(), d[0], d[1], d[2]);
+    fprintf(f, "SP(%g,%g,%g){%g};\n",
+            p.x(), p.y(), p.z(), d);
   }
   fprintf(f, "};\n");
   fclose(f);
@@ -3050,7 +3068,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
   // printf("hereS 5\n");
   // Update the 3D mesh
   if (tetrahedralize)
-    _tetrahedralizePoints(fullTag);
+    _tetrahedralizePoints(fullTag, false);
 
 }
 
@@ -3078,7 +3096,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
 
 
 
-void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, const int volumeTag, const int sizeFieldTag){
+void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, const int volumeTag, const int sizeFieldTag, const bool returnNodalCurvature, std::vector<double>& nodalCurvature){
   auto gm = GModel::current();
   auto dr = GModel::current()->getRegionByTag(volumeTag);
   if (dr == nullptr) {
@@ -3253,7 +3271,49 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
 
     // hxtMeshWriteGmsh(m, "tetMesh.msh");
   }
+
+  if (returnNodalCurvature){
+    double *nodalCurvatures = NULL;
+    double *nodeNormals = NULL;
+    // HXTEdges* edges = NULL;
+    // hxtCurvatureRusinkiewicz(m, &nodalCurvatures, &crossField, edges, 1);
+    printf("here \n");
+    hxtCurvatureAndNormalRusinkiewicz(m, &nodalCurvatures, &nodeNormals, 1);
+    printf("here1\n");
+
+    nodalCurvature.resize(2*m->vertices.num);
+    std::vector<double> dataDebug(m->vertices.num);
+    // std::vector<SPoint3> dataDebug0(m->vertices.num);
+    // std::vector<SPoint3> dataDebug1(m->vertices.num);
+    // std::vector<SPoint3> dataDebug2(m->vertices.num);
+    std::vector<SPoint3> coordsDebug(m->vertices.num);
+    for (uint64_t i=0; i<m->triangles.num; i++){
+      for (size_t j=0; j<3; j++){
+        uint32_t node = m->triangles.node[3*i+j];
+        // SVector3 k1(nodalCurvatures[6*node+0], nodalCurvatures[6*node+1], nodalCurvatures[6*node+2]);
+        // SVector3 k2(nodalCurvatures[6*node+3], nodalCurvatures[6*node+4], nodalCurvatures[6*node+5]);
+        // auto k1k2cross = crossprod(k1, k2);
+        // double k1n = norm(k1);
+        // double k2n = norm(k2);
+        double k1 = nodalCurvatures[2*node+0];
+        double k2 = nodalCurvatures[2*node+1];
+        double sign = (k1+k2)/2 > 0 ? 1 : -1;
+        nodalCurvature[2*node+0] = c2v[node]->getNum();
+        nodalCurvature[2*node+1] = k1*k2*sign;
+        dataDebug[node] = sign;
+        // dataDebug0[node] = SPoint3(k1[0], k1[1], k1[2]);
+        // dataDebug1[node] = SPoint3(k2[0], k2[1], k2[2]);
+        // dataDebug2[node] = SPoint3(k1k2cross[0], k1k2cross[1], k1k2cross[2]);
+        coordsDebug[node] = SPoint3(m->vertices.coord[4*node+0], m->vertices.coord[4*node+1], m->vertices.coord[4*node+2]);
+      }  
+    }
+    postProPoints(coordsDebug, dataDebug, 0);
+    // postProPoints(coordsDebug, dataDebug0, 0);
+    // postProPoints(coordsDebug, dataDebug1, 1);
+    // postProPoints(coordsDebug, dataDebug2, 2);
+  }
   hxtMeshDelete(&m);
+
 }
 
 void _createVolumeOctree3D(const std::string & boundaryModel, OctreeNode<3, 64, MElement*>& octree){
@@ -3807,12 +3867,6 @@ void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std
     v->setXYZ(x1[0], x1[1], x1[2]);
   }
 }
-
-
-
-
-
-
 
 
 

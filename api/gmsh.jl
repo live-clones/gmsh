@@ -4625,18 +4625,19 @@ end
 const decimate_triangulation = decimateTriangulation
 
 """
-    gmsh.model.mesh.tetrahedralizePoints(tag)
+    gmsh.model.mesh.tetrahedralizePoints(tag, optimize = false)
 
 Tetrahedralize points in entity of tag `tag
 
 Types:
  - `tag`: integer
+ - `optimize`: boolean
 """
-function tetrahedralizePoints(tag)
+function tetrahedralizePoints(tag, optimize = false)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshTetrahedralizePoints, gmsh.lib), Cvoid,
-          (Cint, Ptr{Cint}),
-          tag, ierr)
+          (Cint, Cint, Ptr{Cint}),
+          tag, optimize, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
@@ -4697,24 +4698,31 @@ end
 const surface_edge_splitting = surfaceEdgeSplitting
 
 """
-    gmsh.model.mesh.volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag)
+    gmsh.model.mesh.volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag, returnNodalCurvature)
 
 Volume mesh refinement/derefinement using hxt refinement approaches of volume
 entity of tag `tag`, and bounded by surface entity of tag `surfaceTag`.
+
+Return `nodalCurvature`.
 
 Types:
  - `fullTag`: integer
  - `surfaceTag`: integer
  - `volumeTag`: integer
  - `sizeFieldTag`: integer
+ - `returnNodalCurvature`: boolean
+ - `nodalCurvature`: vector of doubles
 """
-function volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag)
+function volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag, returnNodalCurvature)
+    api_nodalCurvature_ = Ref{Ptr{Cdouble}}()
+    api_nodalCurvature_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshVolumeMeshRefinement, gmsh.lib), Cvoid,
-          (Cint, Cint, Cint, Cint, Ptr{Cint}),
-          fullTag, surfaceTag, volumeTag, sizeFieldTag, ierr)
+          (Cint, Cint, Cint, Cint, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          fullTag, surfaceTag, volumeTag, sizeFieldTag, returnNodalCurvature, api_nodalCurvature_, api_nodalCurvature_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    return nothing
+    nodalCurvature = unsafe_wrap(Array, api_nodalCurvature_[], api_nodalCurvature_n_[], own = true)
+    return nodalCurvature
 end
 const volume_mesh_refinement = volumeMeshRefinement
 

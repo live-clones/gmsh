@@ -5251,18 +5251,20 @@ class model:
         decimate_triangulation = decimateTriangulation
 
         @staticmethod
-        def tetrahedralizePoints(tag):
+        def tetrahedralizePoints(tag, optimize=False):
             """
-            gmsh.model.mesh.tetrahedralizePoints(tag)
+            gmsh.model.mesh.tetrahedralizePoints(tag, optimize=False)
 
             Tetrahedralize points in entity of tag `tag
 
             Types:
             - `tag': integer
+            - `optimize': boolean
             """
             ierr = c_int()
             lib.gmshModelMeshTetrahedralizePoints(
                 c_int(tag),
+                c_int(bool(optimize)),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
@@ -5335,29 +5337,37 @@ class model:
         surface_edge_splitting = surfaceEdgeSplitting
 
         @staticmethod
-        def volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag):
+        def volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag, returnNodalCurvature):
             """
-            gmsh.model.mesh.volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag)
+            gmsh.model.mesh.volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag, returnNodalCurvature)
 
             Volume mesh refinement/derefinement using hxt refinement approaches of
             volume entity of tag `tag', and bounded by surface entity of tag
             `surfaceTag'.
+
+            Return `nodalCurvature'.
 
             Types:
             - `fullTag': integer
             - `surfaceTag': integer
             - `volumeTag': integer
             - `sizeFieldTag': integer
+            - `returnNodalCurvature': boolean
+            - `nodalCurvature': vector of doubles
             """
+            api_nodalCurvature_, api_nodalCurvature_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshVolumeMeshRefinement(
                 c_int(fullTag),
                 c_int(surfaceTag),
                 c_int(volumeTag),
                 c_int(sizeFieldTag),
+                c_int(bool(returnNodalCurvature)),
+                byref(api_nodalCurvature_), byref(api_nodalCurvature_n_),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+            return _ovectordouble(api_nodalCurvature_, api_nodalCurvature_n_.value)
         volume_mesh_refinement = volumeMeshRefinement
 
         @staticmethod

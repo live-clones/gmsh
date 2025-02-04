@@ -1902,7 +1902,8 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::tetrahedralizePoints
       //
       // Tetrahedralize points in entity of tag `tag
-      GMSH_API void tetrahedralizePoints(const int tag);
+      GMSH_API void tetrahedralizePoints(const int tag,
+                                         const bool optimize = false);
 
       // gmsh::model::mesh::alphaShape3D
       //
@@ -1935,7 +1936,9 @@ namespace gmsh { // Top-level functions
       GMSH_API void volumeMeshRefinement(const int fullTag,
                                          const int surfaceTag,
                                          const int volumeTag,
-                                         const int sizeFieldTag);
+                                         const int sizeFieldTag,
+                                         const bool returnNodalCurvature,
+                                         std::vector<double> & nodalCurvature);
 
       // gmsh::model::mesh::filterCloseNodes
       //

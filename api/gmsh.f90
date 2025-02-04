@@ -7685,19 +7685,24 @@ module gmsh
 
   !> Tetrahedralize points in entity of tag `tag
   subroutine gmshModelMeshTetrahedralizePoints(tag, &
+                                               optimize, &
                                                ierr)
     interface
     subroutine C_API(tag, &
+                     optimize, &
                      ierr_) &
       bind(C, name="gmshModelMeshTetrahedralizePoints")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: tag
+      integer(c_int), value, intent(in) :: optimize
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer, intent(in) :: tag
+    logical, intent(in), optional :: optimize
     integer(c_int), intent(out), optional :: ierr
     call C_API(tag=int(tag, c_int), &
+         optimize=optval_c_bool(.false., optimize), &
          ierr_=ierr)
   end subroutine gmshModelMeshTetrahedralizePoints
 
@@ -7815,12 +7820,17 @@ module gmsh
                                                surfaceTag, &
                                                volumeTag, &
                                                sizeFieldTag, &
+                                               returnNodalCurvature, &
+                                               nodalCurvature, &
                                                ierr)
     interface
     subroutine C_API(fullTag, &
                      surfaceTag, &
                      volumeTag, &
                      sizeFieldTag, &
+                     returnNodalCurvature, &
+                     api_nodalCurvature_, &
+                     api_nodalCurvature_n_, &
                      ierr_) &
       bind(C, name="gmshModelMeshVolumeMeshRefinement")
       use, intrinsic :: iso_c_binding
@@ -7828,6 +7838,9 @@ module gmsh
       integer(c_int), value, intent(in) :: surfaceTag
       integer(c_int), value, intent(in) :: volumeTag
       integer(c_int), value, intent(in) :: sizeFieldTag
+      integer(c_int), value, intent(in) :: returnNodalCurvature
+      type(c_ptr), intent(out) :: api_nodalCurvature_
+      integer(c_size_t) :: api_nodalCurvature_n_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
@@ -7835,12 +7848,21 @@ module gmsh
     integer, intent(in) :: surfaceTag
     integer, intent(in) :: volumeTag
     integer, intent(in) :: sizeFieldTag
+    logical, intent(in) :: returnNodalCurvature
+    real(c_double), dimension(:), allocatable, intent(out) :: nodalCurvature
     integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_nodalCurvature_
+    integer(c_size_t) :: api_nodalCurvature_n_
     call C_API(fullTag=int(fullTag, c_int), &
          surfaceTag=int(surfaceTag, c_int), &
          volumeTag=int(volumeTag, c_int), &
          sizeFieldTag=int(sizeFieldTag, c_int), &
+         returnNodalCurvature=merge(1_c_int, 0_c_int, returnNodalCurvature), &
+         api_nodalCurvature_=api_nodalCurvature_, &
+         api_nodalCurvature_n_=api_nodalCurvature_n_, &
          ierr_=ierr)
+    nodalCurvature = ovectordouble_(api_nodalCurvature_, &
+      api_nodalCurvature_n_)
   end subroutine gmshModelMeshVolumeMeshRefinement
 
   !> Filter out points in the region with tag `tag' that are too close to each
