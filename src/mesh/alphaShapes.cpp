@@ -3278,7 +3278,7 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
     // HXTEdges* edges = NULL;
     // hxtCurvatureRusinkiewicz(m, &nodalCurvatures, &crossField, edges, 1);
     printf("here \n");
-    hxtCurvatureAndNormalRusinkiewicz(m, &nodalCurvatures, &nodeNormals, 1);
+    hxtCurvatureAndNormalRusinkiewicz(m, &nodalCurvatures, &nodeNormals, 0);
     printf("here1\n");
 
     nodalCurvature.resize(2*m->vertices.num);
@@ -3307,7 +3307,7 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
         coordsDebug[node] = SPoint3(m->vertices.coord[4*node+0], m->vertices.coord[4*node+1], m->vertices.coord[4*node+2]);
       }  
     }
-    postProPoints(coordsDebug, dataDebug, 0);
+    // postProPoints(coordsDebug, dataDebug, 0);
     // postProPoints(coordsDebug, dataDebug0, 0);
     // postProPoints(coordsDebug, dataDebug1, 1);
     // postProPoints(coordsDebug, dataDebug2, 2);
