@@ -2142,9 +2142,50 @@ static void writeMSH4BoundingBox(SBoundingBox3d boundBox, FILE *fp,
   }
 }
 
+static std::set<int> getPartitionsNeighbors(GModel* const model, int partitionToSave) {
+  if(partitionToSave == -1) { return {}; }
+
+  std::set<int> result;
+
+  if(partitionToSave == 0) {
+    // Return all partitions
+    for(int i = 1; i <= model->getNumPartitions(); i++) { result.insert(i); }
+    return result;
+  }
+  result.insert(partitionToSave);
+
+  const auto& regionsOvlp = model->getOverlapRegionManagers();
+  for (const auto& [_, managerPtr]: regionsOvlp) {
+    const auto& manager = *managerPtr;
+    try {
+      auto ovlpSet = manager.getOverlapsByPartition().at(partitionToSave);
+      for(overlapRegion *reg : ovlpSet) { result.insert(reg->on()); }
+    }
+    catch (const std::out_of_range& e) {
+      Msg::Error("Partition %d not found in overlaps", partitionToSave);
+    }
+    
+  }
+
+  // GUESS: We need to store boundaries of overlaps of me?
+
+
+  Msg::Info("Partitions neighbors for partition %d: %u", partitionToSave, result.size());
+  return result;
+}
+
+bool vectorSetIntersection(const std::vector<int>& a, const std::set<int>& b) {
+  for (int elem: a) {
+    if (b.count(elem) > 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
 static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
                               bool binary, double scalingFactor, double version,
-                              std::map<GEntity*, SBoundingBox3d> *entityBounds)
+                              std::map<GEntity*, SBoundingBox3d> *entityBounds, int partitionToSave = -1)
 {
   std::set<GEntity *, GEntityPtrFullLessThan> ghost;
   std::set<GRegion *, GEntityPtrLessThan> regions;
@@ -2152,27 +2193,68 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
   std::set<GEdge *, GEntityPtrLessThan> edges;
   std::set<GVertex *, GEntityPtrLessThan> vertices;
 
+  using std::find;
+  auto partitionsToInclude = getPartitionsNeighbors(model, partitionToSave);
+  auto ovlpBoundaries = model->getAllOverlapBoundaries();
+
   if(partition) {
     for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
       if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
         continue;
-      if((*it)->geomType() == GEntity::PartitionPoint) vertices.insert(*it);
+      if((*it)->geomType() == GEntity::PartitionPoint) { 
+        partitionVertex* pv = static_cast<partitionVertex *>(*it);
+        const auto& parts = pv->getPartitions();
+        if (partitionToSave == -1 || false || vectorSetIntersection(parts, partitionsToInclude))
+          vertices.insert(*it);
+        }
     }
     for(auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
       if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
         continue;
-      if((*it)->geomType() == GEntity::PartitionCurve) edges.insert(*it);
+      if((*it)->geomType() == GEntity::PartitionCurve) {
+        partitionEdge* pe = static_cast<partitionEdge *>(*it);
+        const auto& parts = pe->getPartitions();
+        if (partitionToSave == -1 || false || vectorSetIntersection(parts, partitionsToInclude))
+          edges.insert(*it);
+      }
       if((*it)->geomType() == GEntity::GhostCurve) ghost.insert(*it);
     }
     for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
       if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
         continue;
-      if((*it)->geomType() == GEntity::PartitionSurface) faces.insert(*it);
+      if((*it)->geomType() == GEntity::PartitionSurface) {
+        partitionFace* pf = static_cast<partitionFace *>(*it);
+        const auto& parts = pf->getPartitions();
+        if (partitionToSave == -1 || false || find(parts.begin(), parts.end(), partitionToSave) != parts.end())
+          faces.insert(*it);
+        else if (ovlpBoundaries.count(*it) > 0) {
+          // If the face is an overlap boundary, we need to save it
+          faces.insert(*it);
+        }
+      }
       if((*it)->geomType() == GEntity::GhostSurface) ghost.insert(*it);
     }
     for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
-      if((*it)->geomType() == GEntity::PartitionVolume) regions.insert(*it);
+      if((*it)->geomType() == GEntity::PartitionVolume) {
+        partitionRegion* pr = static_cast<partitionRegion *>(*it);
+        const auto& parts = pr->getPartitions();
+        if (partitionToSave == -1 || vectorSetIntersection(parts, partitionsToInclude))
+          regions.insert(*it);
+      }
       if((*it)->geomType() == GEntity::GhostVolume) ghost.insert(*it);
+    }
+
+    // Add overlap boundaries
+    //for (const auto& managers: model->getAllOverlapBoundaries())
+    // Ensure boundary consistency
+    for(GRegion *reg : regions) {
+      for(auto face : reg->faces()) { faces.insert(face); }
+    }
+    for(GFace *face : faces) {
+      for(auto line : face->edges()) { edges.insert(line); }
+    }
+    for(GEdge *edge : edges) {
+      for(auto vertex : edge->vertices()) { vertices.insert(vertex); }
     }
   }
   else {
@@ -4398,7 +4480,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   // partitioned entities
   if(partitioned)
     writeMSH4Entities(this, fp, true, binary, scalingFactor, version,
-                      entityBounds);
+                      entityBounds, partitionToSave);
 
   // nodes
   writeMSH4Nodes(this, fp, partitioned, partitionToSave, binary,
