@@ -2198,6 +2198,14 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
   auto ovlpBoundaries = model->getAllOverlapBoundaries();
 
   if(partition) {
+    std::set<GVertex *, GEntityPtrLessThan> embeddedVerticesToSave;
+    for(GRegion *reg : model->getRegions()) {
+      for(auto vert : reg->embeddedVertices()) {
+        embeddedVerticesToSave.insert(vert);
+        //Msg::Info("Adding embedded vertex %d", vert->tag());
+      }
+    }
+
     for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
       if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
         continue;
@@ -2242,6 +2250,20 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
           regions.insert(*it);
       }
       if((*it)->geomType() == GEntity::GhostVolume) ghost.insert(*it);
+
+      // Also ensure embedded vertices are included.
+      for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
+        partitionVertex *pv = dynamic_cast<partitionVertex *>(*it);
+        if(!pv) continue;
+        // Msg::Info("Checking vertex %d of type %s", (*it)->tag(),
+        // (*it)->getTypeString().c_str());
+        GVertex *parent = dynamic_cast<GVertex *>(pv->getParentEntity());
+        if(!parent) continue;
+        if(embeddedVerticesToSave.count(parent) > 0) {
+          // Msg::Info("Adding embedded pvertex %d", (*it)->tag());
+          vertices.insert(*it);
+        }
+      }
     }
 
     // Add overlap boundaries
