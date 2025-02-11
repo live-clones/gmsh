@@ -2269,25 +2269,100 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize){
   hxtMeshCreate(&mesh);
 
   size_t nvert = gr->mesh_vertices.size();
-  hxtAlignedMalloc(&mesh->vertices.coord, nvert * 4 * sizeof(double));
+  // printf("nvert : %lu \n", nvert);
+  // hxtAlignedMalloc(&mesh->vertices.coord, (nvert) * 4 * sizeof(double));
+  hxtAlignedMalloc(&mesh->vertices.coord, (nvert+8) * 4 * sizeof(double));
+  double coord_max[3] = {-1e10, -1e10, -1e10};
+  double coord_min[3] = {1e10, 1e10, 1e10};
   for(size_t i = 0; i < nvert; i++) {
     mesh->vertices.coord[4 * i + 0] = gr->mesh_vertices[i]->x();
     mesh->vertices.coord[4 * i + 1] = gr->mesh_vertices[i]->y();
     mesh->vertices.coord[4 * i + 2] = gr->mesh_vertices[i]->z();
     mesh->vertices.coord[4 * i + 3] = 0.;
+    for (int j=0; j<3; j++){
+      if (mesh->vertices.coord[4 * i + j] > coord_max[j]) coord_max[j] = mesh->vertices.coord[4 * i + j];
+      if (mesh->vertices.coord[4 * i + j] < coord_min[j]) coord_min[j] = mesh->vertices.coord[4 * i + j];
+    }
   }
-  mesh->vertices.num = nvert;
-  mesh->vertices.size = nvert;
+
+  for (int i=0; i<3; i++){
+    coord_max[i] += 0.5*(coord_max[i]-coord_min[i]);
+    coord_min[i] -= 0.5*(coord_max[i]-coord_min[i]);
+  }
+
+  size_t i_vert = nvert;
+  mesh->vertices.coord[4*i_vert+0] = coord_min[0];
+  mesh->vertices.coord[4*i_vert+1] = coord_min[1];
+  mesh->vertices.coord[4*i_vert+2] = coord_min[2];
+  mesh->vertices.coord[4*i_vert+3] = 0.;
+
+  i_vert++;
+  mesh->vertices.coord[4*i_vert+0] = coord_max[0];
+  mesh->vertices.coord[4*i_vert+1] = coord_min[1];
+  mesh->vertices.coord[4*i_vert+2] = coord_min[2];
+  mesh->vertices.coord[4*i_vert+3] = 0.;
+
+  i_vert++;
+  mesh->vertices.coord[4*i_vert+0] = coord_min[0];
+  mesh->vertices.coord[4*i_vert+1] = coord_max[1];
+  mesh->vertices.coord[4*i_vert+2] = coord_min[2];
+  mesh->vertices.coord[4*i_vert+3] = 0.;
+
+  i_vert++;
+  mesh->vertices.coord[4*i_vert+0] = coord_min[0];
+  mesh->vertices.coord[4*i_vert+1] = coord_min[1];
+  mesh->vertices.coord[4*i_vert+2] = coord_max[2];
+  mesh->vertices.coord[4*i_vert+3] = 0.;
+  
+  i_vert++;
+  mesh->vertices.coord[4*i_vert+0] = coord_max[0];
+  mesh->vertices.coord[4*i_vert+1] = coord_max[1];
+  mesh->vertices.coord[4*i_vert+2] = coord_min[2];
+  mesh->vertices.coord[4*i_vert+3] = 0.;
+
+  i_vert++;
+  mesh->vertices.coord[4*i_vert+0] = coord_min[0];
+  mesh->vertices.coord[4*i_vert+1] = coord_max[1];
+  mesh->vertices.coord[4*i_vert+2] = coord_max[2];
+  mesh->vertices.coord[4*i_vert+3] = 0.;
+
+  i_vert++;
+  mesh->vertices.coord[4*i_vert+0] = coord_max[0];
+  mesh->vertices.coord[4*i_vert+1] = coord_min[1];
+  mesh->vertices.coord[4*i_vert+2] = coord_max[2];
+  mesh->vertices.coord[4*i_vert+3] = 0.;
+
+  i_vert++;
+  mesh->vertices.coord[4*i_vert+0] = coord_max[0];
+  mesh->vertices.coord[4*i_vert+1] = coord_max[1];
+  mesh->vertices.coord[4*i_vert+2] = coord_max[2];
+  mesh->vertices.coord[4*i_vert+3] = 0.;
+
+  mesh->vertices.num = nvert+8;
+  mesh->vertices.size = nvert+8;
+
+
+  // mesh->vertices.num = nvert;
+  // mesh->vertices.size = nvert;
 
   int nthreads = Msg::GetMaxThreads();
+  // int nthreads = Msg::GetMaxThreads();
+
+  // create the bounding box of the mesh
+	HXTBbox bbox;
+	hxtBboxInit(&bbox);
+	// hxtBboxAdd(&bbox, mesh->vertices.coord, mesh->vertices.num);
+  hxtBboxAddOne(&bbox, coord_max);
+  hxtBboxAddOne(&bbox, coord_min);
 
   HXTDelaunayOptions delOptions = {
+    // &bbox, // bbox
     nullptr, // bbox
     nullptr, // nodalSizes
     0, // numVertcesInMesh
     0, // insertionFirst
     0, // partitionability
-    1, // perfectDelaunay
+    0, // perfectDelaunay
     0, // verbosity
     0, // reproducible
     nthreads // delaunayThreads (0 = omp_get_max_threads)
@@ -2300,24 +2375,50 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize){
     nodeInfo[i].status = HXT_STATUS_TRYAGAIN;
   }
   hxtDelaunaySteadyVertices(mesh, &delOptions, nodeInfo, mesh->vertices.num);
+  
+  mesh->tetrahedra.color = (uint32_t*) malloc(sizeof(uint32_t) * mesh->tetrahedra.num);
+
   hxtAlignedFree(&nodeInfo);
 
-  if (optimize){
-    for (uint64_t i=0; i<mesh->tetrahedra.num; i++){
-      if (mesh->tetrahedra.node[4*i+3]==HXT_GHOST_VERTEX)
-        setProcessedFlag(mesh, i);
+  #pragma omp parallel for
+  for (uint64_t i=0; i<mesh->tetrahedra.num; i++){
+    int32_t nod = mesh->tetrahedra.node[4*i+3];
+    bool ext = false;
+    for (int j=0; j<4; j++){
+      if (mesh->tetrahedra.node[4*i+j] >= nvert){
+        ext = true;
+        break;
+      }
     }
+    if (nod == HXT_GHOST_VERTEX || ext){
+    // if (nod == HXT_GHOST_VERTEX){
+      setProcessedFlag(mesh, i);
+      auto tet_neigh = mesh->tetrahedra.neigh[4*i+3]/4;
+      auto tet_face = mesh->tetrahedra.neigh[4*i+3]%4;
+      mesh->tetrahedra.neigh[4*tet_neigh+tet_face] = HXT_NO_ADJACENT;
+      setFacetConstraint(mesh, tet_neigh, tet_face);
+      mesh->tetrahedra.color[i] = HXT_COLOR_OUT;
+    }
+    else {
+      mesh->tetrahedra.color[i] = tag;
+    }
+  }
+
+  if (optimize){
     HXTOptimizeOptions options = {
                                   .numThreads = nthreads,
                                   .numVerticesConstrained = mesh->vertices.num,
-                                  .reproducible = 0
+                                  .qualityMin = 1e-3,
+                                  .reproducible = 0,
+                                  .verbosity = 2
                                   } ;
     hxtOptimizeTetrahedra(mesh, &options);
+    printf("finished optim? \n");
   }
 
   for(size_t i = 0; i < mesh->tetrahedra.num; i++) {
     if(mesh->tetrahedra.node[i * 4 + 3] != UINT32_MAX) {
-      uint32_t myColor = mesh->tetrahedra.color ? mesh->tetrahedra.color[i] : 0;
+      uint32_t myColor = mesh->tetrahedra.color[i];
       if(myColor != HXT_COLOR_OUT) {
         uint32_t *n = &mesh->tetrahedra.node[4 * i];
         tets.push_back(
@@ -3278,7 +3379,7 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
     // HXTEdges* edges = NULL;
     // hxtCurvatureRusinkiewicz(m, &nodalCurvatures, &crossField, edges, 1);
     printf("here \n");
-    hxtCurvatureAndNormalRusinkiewicz(m, &nodalCurvatures, &nodeNormals, 0);
+    hxtCurvatureAndNormalRusinkiewicz(m, &nodalCurvatures, &nodeNormals, 1);
     printf("here1\n");
 
     nodalCurvature.resize(2*m->vertices.num);
