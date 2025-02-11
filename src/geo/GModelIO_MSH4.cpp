@@ -2233,7 +2233,6 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       if((*it)->geomType() == GEntity::PartitionSurface) {
         partitionFace* pf = static_cast<partitionFace *>(*it);
         const auto& parts = pf->getPartitions();
-        Msg::Info("Face %d has %u partitions", (*it)->tag(), parts.size());
         if (partitionToSave == -1 || false || vectorSetIntersection(parts, partitionsToInclude))
           faces.insert(*it);
         else if (ovlpBoundaries.count(*it) > 0) {
