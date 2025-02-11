@@ -2233,7 +2233,8 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       if((*it)->geomType() == GEntity::PartitionSurface) {
         partitionFace* pf = static_cast<partitionFace *>(*it);
         const auto& parts = pf->getPartitions();
-        if (partitionToSave == -1 || false || find(parts.begin(), parts.end(), partitionToSave) != parts.end())
+        Msg::Info("Face %d has %u partitions", (*it)->tag(), parts.size());
+        if (partitionToSave == -1 || false || vectorSetIntersection(parts, partitionsToInclude))
           faces.insert(*it);
         else if (ovlpBoundaries.count(*it) > 0) {
           // If the face is an overlap boundary, we need to save it
@@ -2255,12 +2256,9 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
         partitionVertex *pv = dynamic_cast<partitionVertex *>(*it);
         if(!pv) continue;
-        // Msg::Info("Checking vertex %d of type %s", (*it)->tag(),
-        // (*it)->getTypeString().c_str());
         GVertex *parent = dynamic_cast<GVertex *>(pv->getParentEntity());
         if(!parent) continue;
         if(embeddedVerticesToSave.count(parent) > 0) {
-          // Msg::Info("Adding embedded pvertex %d", (*it)->tag());
           vertices.insert(*it);
         }
       }
