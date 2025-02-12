@@ -2351,6 +2351,9 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     }
   }
 
+  Msg::Info("Writing %lu vertices, %lu edges, %lu faces, %lu regions",
+            vertices.size(), edges.size(), faces.size(), regions.size());
+
   if(partition)
     fprintf(fp, "$PartitionedEntities\n");
   else
@@ -3744,6 +3747,11 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
     }
   }
   
+  Msg::Info("Writing %lu vertices, %lu edges, %lu faces, %lu regions",
+            vertices.size(), edges.size(), faces.size(), regions.size());
+
+  Msg::Info("Writing %lu additional vertices, %lu additional edges, %lu additional faces, %lu additional regions",
+            additionalVertices.size(), additionalEdges.size(), additionalFaces.size(), additionalRegions.size());
 
   fprintf(fp, "$Nodes\n");
 
