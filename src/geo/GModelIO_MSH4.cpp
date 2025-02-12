@@ -3559,21 +3559,47 @@ getEntitiesToSave(GModel *const model, bool partitioned,
     }
   }
 
-  // HOTFIX: If we save an entity which as an overlap, save the embedded entities in the overlapped entity
-   for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) { 
+   // HOTFIX: If we save an entity which as an overlap, save ALL the embedded entities in the overlapped entity
+   // 12 feb 25: only if parent is embedded
+  //for (auto it = model->firstVertex(); it != model->lastVertex(); ++it)
+  //      vertices.insert(*it);
+
+  unsigned nEmbeddedSaved = 0;
+  std::set<GEntity *, GEntityPtrLessThan> embeddedVerticesToSave;
+  for(GRegion *reg : model->getRegions()) {
+    for(auto vert : reg->embeddedVertices()) {
+      embeddedVerticesToSave.insert(vert);
+    }
+  }
+  for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
+    partitionVertex *pv = dynamic_cast<partitionVertex *>(*it);
+    if(!pv) continue;
+    if(pv->getParentEntity() &&
+       embeddedVerticesToSave.find(pv->getParentEntity()) !=
+         embeddedVerticesToSave.end()) {
+      vertices.insert(pv);
+      nEmbeddedSaved++;
+    }
+  }
+  Msg::Info("Saved %d embedded vertices", nEmbeddedSaved);
+
+  /*for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
     GRegion* gr = static_cast<GRegion*>(*it);
     auto embVertices = gr->embeddedVertices();
     for (GVertex* vertex : embVertices) {
       vertices.insert(vertex);
-      //Msg::Info("Adding embedded vertex %d", vertex->tag());
+      int numMatches = 0;
+      Msg::Info("Adding embedded vertex %d...", vertex->tag());
       for (auto it2 = model->firstVertex(); it2 != model->lastVertex(); ++it2) {
         if ((*it2)->geomType() == GEntity::PartitionPoint && (*it2)->getParentEntity() == vertex) {
           vertices.insert(*it2);
-          //Msg::Info("Adding partitioned vertex %d", (*it2)->tag());
+         Msg::Info("Adding partitioned vertex %d. It has %d elements", (*it2)->tag(), (*it2)->points.size());
+          ++numMatches;
         }
       }
+      Msg::Info("Added %d partitioned vertices", numMatches);
     }
-   }
+   }*/
 }
 
 static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
