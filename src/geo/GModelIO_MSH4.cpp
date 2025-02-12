@@ -3672,6 +3672,11 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
     for (GVertex* vertex: vertices) {
       if (entities->vertices.count(vertex) == 0) {
         Msg::Warning("Vertex %d not found in entities pack on partition %d", vertex->tag(), partitionToSave);
+        partitionVertex* pv = dynamic_cast<partitionVertex*>(vertex);
+        if (!pv)
+        Msg::Warning("It is not a partitioned vertex");
+        else
+        Msg::Warning("It is a partitioned vertex with parent %d of dimension", pv->getParentEntity()->tag(), pv->getParentEntity()->dim());
       }
     }
 
