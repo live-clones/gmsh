@@ -3596,7 +3596,7 @@ getEntitiesToSave(GModel *const model, bool partitioned,
       nEmbeddedSaved++;
     }
   }
-  Msg::Info("Saved %d embedded vertices", embeddedVerticesToSave);
+  Msg::Info("Saved %d embedded vertices", embeddedVerticesToSave.size());
 
   /*for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
     GRegion* gr = static_cast<GRegion*>(*it);
@@ -3676,7 +3676,7 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
         if (!pv)
         Msg::Warning("It is not a partitioned vertex");
         else
-        Msg::Warning("It is a partitioned vertex with parent %d of dimension", pv->getParentEntity()->tag(), pv->getParentEntity()->dim());
+        Msg::Warning("It is a partitioned vertex with parent %d of dimension %d", pv->getParentEntity()->tag(), pv->getParentEntity()->dim());
       }
     }
 
