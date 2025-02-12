@@ -2204,6 +2204,8 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
   using std::find;
   auto partitionsToInclude = getPartitionsNeighbors(model, partitionToSave);
   auto ovlpBoundaries = model->getAllOverlapBoundaries();
+  
+  std::set<overlapFace*> ovlpFacesToSave;
 
   if(partition) {
     std::set<GVertex *, GEntityPtrLessThan> embeddedVerticesToSave;
@@ -2249,6 +2251,15 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
         }
       }
       if((*it)->geomType() == GEntity::GhostSurface) ghost.insert(*it);
+
+      if ((*it)->geomType() == GEntity::OverlapSurface) {
+        overlapFace* of = dynamic_cast<overlapFace *>(*it);
+        if (!of) Msg::Error("Inconsistent overlapFace cast");
+        if (partitionToSave == -1 || partitionsToInclude.count(of->on()) > 0) {
+          ovlpFacesToSave.insert(of);
+        }
+      }
+
     }
     for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
       if((*it)->geomType() == GEntity::PartitionVolume) {
@@ -2267,6 +2278,31 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       GVertex *parent = dynamic_cast<GVertex *>(pv->getParentEntity());
       if(!parent) continue;
       if(embeddedVerticesToSave.count(parent) > 0) { vertices.insert(*it); }
+    }
+
+    // Add entities used in overlaps
+    for (overlapFace* of: ovlpFacesToSave) {
+      size_t numElem = of->getNumMeshElements();
+      for (size_t e = 0; e < numElem; ++e) {
+        for (size_t i = 0; i < of->getMeshElement(e)->getNumVertices(); ++i) {
+         GEntity* entity = of->getMeshElement(e)->getVertex(i)->onWhat();
+          if (entity->geomType() == GEntity::PartitionPoint) {
+            vertices.insert(static_cast<GVertex *>(entity));
+          }
+          else if (entity->geomType() == GEntity::PartitionCurve) {
+            edges.insert(static_cast<GEdge *>(entity));
+          }
+          else if (entity->geomType() == GEntity::PartitionSurface) {
+            faces.insert(static_cast<GFace *>(entity));
+          }
+          else if (entity->geomType() == GEntity::PartitionVolume) {
+            regions.insert(static_cast<GRegion *>(entity));
+          }
+          else {
+            Msg::Error("Unknown entity type %d", entity->geomType());
+          }
+        }
+      }
     }
 
     // Add overlap boundaries
