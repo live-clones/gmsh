@@ -2276,6 +2276,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     // Ensure boundary consistency
     for(GRegion *reg : regions) {
       for(auto face : reg->faces()) { faces.insert(face); }
+      for(auto edge: reg->edges()) { edges.insert(edge); }
       for(auto vertex: reg->vertices()) {vertices.insert(vertex);}
     }
     for(GFace *face : faces) {
