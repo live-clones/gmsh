@@ -2258,17 +2258,15 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
           regions.insert(*it);
       }
       if((*it)->geomType() == GEntity::GhostVolume) ghost.insert(*it);
+    }
 
-      // Also ensure embedded vertices are included.
-      for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
-        partitionVertex *pv = dynamic_cast<partitionVertex *>(*it);
-        if(!pv) continue;
-        GVertex *parent = dynamic_cast<GVertex *>(pv->getParentEntity());
-        if(!parent) continue;
-        if(embeddedVerticesToSave.count(parent) > 0) {
-          vertices.insert(*it);
-        }
-      }
+    // Also ensure embedded vertices are included.
+    for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
+      partitionVertex *pv = dynamic_cast<partitionVertex *>(*it);
+      if(!pv) continue;
+      GVertex *parent = dynamic_cast<GVertex *>(pv->getParentEntity());
+      if(!parent) continue;
+      if(embeddedVerticesToSave.count(parent) > 0) { vertices.insert(*it); }
     }
 
     // Add overlap boundaries
