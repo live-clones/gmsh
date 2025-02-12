@@ -47,6 +47,14 @@
 #include "MTrihedron.h"
 #include "StringUtils.h"
 
+struct EntitiesPack {
+  std::set<GEntity *, GEntityPtrFullLessThan> ghost;
+  std::set<GRegion *, GEntityPtrLessThan> regions;
+  std::set<GFace *, GEntityPtrLessThan> faces;
+  std::set<GEdge *, GEntityPtrLessThan> edges;
+  std::set<GVertex *, GEntityPtrLessThan> vertices;
+};
+
 static bool readMSH4Physicals(GModel *const model, FILE *fp,
                               GEntity *const entity, bool binary,
                               bool swap)
@@ -2185,7 +2193,7 @@ bool vectorSetIntersection(const std::vector<int>& a, const std::set<int>& b) {
 
 static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
                               bool binary, double scalingFactor, double version,
-                              std::map<GEntity*, SBoundingBox3d> *entityBounds, int partitionToSave = -1)
+                              std::map<GEntity*, SBoundingBox3d> *entityBounds, int partitionToSave = -1, EntitiesPack* outEntities = nullptr)
 {
   std::set<GEntity *, GEntityPtrFullLessThan> ghost;
   std::set<GRegion *, GEntityPtrLessThan> regions;
@@ -2674,6 +2682,13 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     fprintf(fp, "$EndPartitionedEntities\n");
   else
     fprintf(fp, "$EndEntities\n");
+
+  if (outEntities) {
+    outEntities->vertices = vertices;
+    outEntities->edges = edges;
+    outEntities->faces = faces;
+    outEntities->regions = regions;
+  }
 }
 
 static void writeMSH4Overlaps(GModel *const model, FILE *fp,
@@ -3581,7 +3596,7 @@ getEntitiesToSave(GModel *const model, bool partitioned,
       nEmbeddedSaved++;
     }
   }
-  Msg::Info("Saved %d embedded vertices", nEmbeddedSaved);
+  Msg::Info("Saved %d embedded vertices", embeddedVerticesToSave);
 
   /*for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
     GRegion* gr = static_cast<GRegion*>(*it);
@@ -3604,7 +3619,7 @@ getEntitiesToSave(GModel *const model, bool partitioned,
 
 static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
                            int partitionToSave, bool binary, int saveParametric,
-                           double scalingFactor, bool saveAll, double version)
+                           double scalingFactor, bool saveAll, double version, EntitiesPack* entities = nullptr)
 {
   std::set<GRegion *, GEntityPtrLessThan> regions;
   std::set<GFace *, GEntityPtrLessThan> faces;
@@ -3636,6 +3651,53 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
   }
 
   if(!numNodes) return;
+
+  /* Checks */
+  if (entities) {
+    for(GRegion *region : regions) {
+      if (entities->regions.count(region) == 0) {
+        Msg::Warning("Region %d not found in entities pack on partition %d", region->tag(), partitionToSave);
+      }
+    }
+    for (GFace* face: faces) {
+      if (entities->faces.count(face) == 0) {
+        Msg::Warning("Face %d not found in entities pack on partition %d", face->tag(), partitionToSave);
+      }
+    }
+    for (GEdge* edge: edges) {
+      if (entities->edges.count(edge) == 0) {
+        Msg::Warning("Edge %d not found in entities pack on partition %d", edge->tag(), partitionToSave);
+      }
+    }
+    for (GVertex* vertex: vertices) {
+      if (entities->vertices.count(vertex) == 0) {
+        Msg::Warning("Vertex %d not found in entities pack on partition %d", vertex->tag(), partitionToSave);
+      }
+    }
+
+    // Now for additional entities
+    for (auto [entity, vertices] : additionalVertices) {
+      if (entities->vertices.count(entity) == 0) {
+        Msg::Warning("Additional vertex %d not found in entities pack on partition %d", entity->tag(), partitionToSave);
+      }
+    }
+    for (auto [entity, vertices] : additionalEdges) {
+      if (entities->edges.count(entity) == 0) {
+        Msg::Warning("Additional edge %d not found in entities pack on partition %d", entity->tag(), partitionToSave);
+      }
+    }
+    for (auto [entity, vertices] : additionalFaces) {
+      if (entities->faces.count(entity) == 0) {
+        Msg::Warning("Additional face %d not found in entities pack on partition %d", entity->tag(), partitionToSave);
+      }
+    }
+    for (auto [entity, vertices] : additionalRegions) {
+      if (entities->regions.count(entity) == 0) {
+        Msg::Warning("Additional region %d not found in entities pack on partition %d", entity->tag(), partitionToSave);
+      }
+    }
+  }
+  
 
   fprintf(fp, "$Nodes\n");
 
@@ -4525,13 +4587,14 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   }
 
   // partitioned entities
+  EntitiesPack savePartitionedEntities;
   if(partitioned)
     writeMSH4Entities(this, fp, true, binary, scalingFactor, version,
-                      entityBounds, partitionToSave);
+                      entityBounds, partitionToSave, &savePartitionedEntities);
 
   // nodes
   writeMSH4Nodes(this, fp, partitioned, partitionToSave, binary,
-                 saveParametric ? 1 : 0, scalingFactor, saveAll, version);
+                 saveParametric ? 1 : 0, scalingFactor, saveAll, version, &savePartitionedEntities);
 
   // elements
   writeMSH4Elements(this, fp, partitioned, partitionToSave, binary, saveAll,
