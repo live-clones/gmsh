@@ -3676,8 +3676,14 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
         partitionVertex* pv = dynamic_cast<partitionVertex*>(vertex);
         if (!pv)
         Msg::Warning("It is not a partitioned vertex");
-        else
-        Msg::Warning("It is a partitioned vertex with parent %d of dimension %d", pv->getParentEntity()->tag(), pv->getParentEntity()->dim());
+        else {
+          Msg::Warning(
+            "It is a partitioned vertex with parent %d of dimension %d",
+            pv->getParentEntity()->tag(), pv->getParentEntity()->dim());
+            for (auto part: pv->getPartitions()) {
+              Msg::Warning("Partition %d", part);
+            }
+        }
       }
     }
 
