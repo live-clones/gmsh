@@ -600,6 +600,7 @@ double opt_mesh_dual(OPT_ARGS_NUM);
 double opt_mesh_voronoi(OPT_ARGS_NUM);
 double opt_mesh_draw_skin_only(OPT_ARGS_NUM);
 double opt_mesh_save_all(OPT_ARGS_NUM);
+double opt_mesh_save_full_brep(OPT_ARGS_NUM);
 double opt_mesh_save_element_tag_type(OPT_ARGS_NUM);
 double opt_mesh_save_parametric(OPT_ARGS_NUM);
 double opt_mesh_save_without_orphans(OPT_ARGS_NUM);

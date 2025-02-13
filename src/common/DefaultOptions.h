@@ -1540,6 +1540,9 @@ StringXNumber MeshOptions_Number[] = {
   { F,   "SaveAll" , opt_mesh_save_all , 0. ,
     "Save all elements, even if they don't belong to physical groups (for some "
     "mesh formats, this removes physical groups altogether)" },
+  { F,   "SaveFullBrep" , opt_mesh_save_full_brep , 1. ,
+    "When the mesh is partitioned, save the complete BREP, including the partitions where no elements will be saved."
+    "Otherwise, only necessary parts (saved entities, their boundaries, overlaps) will be exported" },
   { F|O, "SaveElementTagType" , opt_mesh_save_element_tag_type , 1. ,
     "Type of the element tag saved in mesh formats that don't support saving "
     "physical or partition ids (1: elementary, 2: physical, 3: partition)" },

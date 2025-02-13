@@ -6498,6 +6498,12 @@ double opt_mesh_save_all(OPT_ARGS_NUM)
   return CTX::instance()->mesh.saveAll;
 }
 
+double opt_mesh_save_full_brep(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.saveFullBrep = (int)val;
+  return CTX::instance()->mesh.saveFullBrep;
+}
+
 double opt_mesh_save_element_tag_type(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.saveElementTagType = (int)val;

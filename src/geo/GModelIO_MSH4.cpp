@@ -2152,6 +2152,8 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
   std::set<GEdge *, GEntityPtrLessThan> edges;
   std::set<GVertex *, GEntityPtrLessThan> vertices;
 
+  const bool saveAllEntities = CTX::instance()->mesh.saveFullBrep != 0;
+
   if(partition) {
     for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
       if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
