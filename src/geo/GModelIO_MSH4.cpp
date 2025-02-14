@@ -2149,6 +2149,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
                               std::map<GEntity*, SBoundingBox3d> *entityBounds, int partitionToSave = -1)
 {
   using std::set;
+  using std::for_each;
   using std::find;
 
   set<GEntity *, GEntityPtrFullLessThan> ghost;
@@ -2274,6 +2275,36 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
             vertices.insert(*it);
           }
         }
+      }
+
+      // Final consistency inserts
+      for (GRegion* reg: regions) {
+        // Reg faces produces data on the fly, not a const ref
+        auto regFaces = reg->faces();
+        for_each(regFaces.begin(), regFaces.end(), [&faces](GFace *face) {
+          if(!face) Msg::Error("Null face in region");
+          if(face->geomType() != GEntity::PartitionSurface)
+            Msg::Error("Non partition face in region");
+          faces.insert(face);
+        });
+        for_each(reg->edges().begin(), reg->edges().end(), [&edges](GEdge* edge) { edges.insert(edge); });
+        auto regVerts = reg->vertices(); for_each(regVerts.begin(), regVerts.end(), [&vertices](GVertex* vertex) { vertices.insert(vertex); });
+      }
+      for (GFace* face: faces)
+      {
+        auto faceEdges = face->edges();
+        for_each(faceEdges.begin(), faceEdges.end(), [&edges](GEdge *edge) {
+          if(!edge) Msg::Error("Null edge in face");
+          if(edge->geomType() != GEntity::PartitionCurve)
+            Msg::Error("Non partition edge in face");
+          edges.insert(edge);
+        });
+        auto faceVerts = face->vertices(); for_each(faceVerts.begin(), faceVerts.end(),
+                 [&vertices](GVertex *vertex) { vertices.insert(vertex); });
+      }
+      for (GEdge* edge: edges)
+      {
+        auto edgeVerts = edge->vertices(); for_each(edgeVerts.begin(), edgeVerts.end(), [&vertices](GVertex* vertex) { vertices.insert(vertex); });
       }
     }
   }
