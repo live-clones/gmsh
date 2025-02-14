@@ -97,8 +97,8 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
       GEntity *brep =
         model->getEntityByTag(entity->dim() - 1, std::abs(brepTags[i]));
       if(!brep) {
-        Msg::Warning("Entity %d not found in the Brep of entity %d",
-                     brepTags[i], entity->tag());
+        Msg::Warning("Entity %d not found in the Brep of entity %d of dim %d",
+                     brepTags[i], entity->tag(), entity->dim());
       }
       else {
         boundingEntities.push_back(brep);
@@ -114,8 +114,8 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
       GEntity *brep =
         model->getEntityByTag(entity->dim() - 1, std::abs(entityTag));
       if(!brep) {
-        Msg::Warning("Entity %d not found in the Brep of entity %d", entityTag,
-                     entity->tag());
+        Msg::Warning("Entity %d not found in the Brep of entity %d of dim %d", entityTag,
+                     entity->tag(), entity->dim());
       }
       else {
         boundingEntities.push_back(brep);
