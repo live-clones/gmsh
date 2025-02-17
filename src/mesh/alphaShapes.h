@@ -59,7 +59,7 @@ void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double 
 
 void _decimateTriangulation(const int faceTag, const double thresholdDistance);
 
-void _tetrahedralizePoints(const int tag, const bool optimize);
+void _tetrahedralizePoints(const int tag, const bool optimize, const double qualityMin);
 
 void _alphaShape3D(const int tag, const double alpha, const int sizeFieldTag, const int tagAlpha, const int tagAlphaBoundary, const bool removeDisconnectedNodes, const bool returnTri2TetMap, std::vector<std::size_t>& tri2Tet);
 

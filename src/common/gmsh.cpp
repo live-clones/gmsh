@@ -5813,9 +5813,9 @@ gmsh::model::mesh::decimateTriangulation(const int faceTag,
 }
 
 GMSH_API void
-gmsh::model::mesh::tetrahedralizePoints(const int tag, const bool optimize){
+gmsh::model::mesh::tetrahedralizePoints(const int tag, const bool optimize, const double qualityMin){
 #if defined(HAVE_MESH) && defined(HAVE_HXT)
-  AlphaShape::_tetrahedralizePoints(tag, optimize);
+  AlphaShape::_tetrahedralizePoints(tag, optimize, qualityMin);
 #else
   Msg::Error("tetrahedralizePoints requires the mesh and hxt modules");
 #endif

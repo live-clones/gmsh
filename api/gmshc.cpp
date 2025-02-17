@@ -2478,11 +2478,11 @@ GMSH_API void gmshModelMeshDecimateTriangulation(const int faceTag, const double
   }
 }
 
-GMSH_API void gmshModelMeshTetrahedralizePoints(const int tag, const int optimize, int * ierr)
+GMSH_API void gmshModelMeshTetrahedralizePoints(const int tag, const int optimize, const double quality, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::tetrahedralizePoints(tag, optimize);
+    gmsh::model::mesh::tetrahedralizePoints(tag, optimize, quality);
   }
   catch(...){
     if(ierr) *ierr = 1;

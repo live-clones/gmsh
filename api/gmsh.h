@@ -1903,7 +1903,8 @@ namespace gmsh { // Top-level functions
       //
       // Tetrahedralize points in entity of tag `tag
       GMSH_API void tetrahedralizePoints(const int tag,
-                                         const bool optimize = false);
+                                         const bool optimize = false,
+                                         const double quality = 0.00001);
 
       // gmsh::model::mesh::alphaShape3D
       //

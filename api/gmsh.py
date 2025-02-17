@@ -5251,20 +5251,22 @@ class model:
         decimate_triangulation = decimateTriangulation
 
         @staticmethod
-        def tetrahedralizePoints(tag, optimize=False):
+        def tetrahedralizePoints(tag, optimize=False, quality=0.00001):
             """
-            gmsh.model.mesh.tetrahedralizePoints(tag, optimize=False)
+            gmsh.model.mesh.tetrahedralizePoints(tag, optimize=False, quality=0.00001)
 
             Tetrahedralize points in entity of tag `tag
 
             Types:
             - `tag': integer
             - `optimize': boolean
+            - `quality': double
             """
             ierr = c_int()
             lib.gmshModelMeshTetrahedralizePoints(
                 c_int(tag),
                 c_int(bool(optimize)),
+                c_double(quality),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())

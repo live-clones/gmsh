@@ -4625,19 +4625,20 @@ end
 const decimate_triangulation = decimateTriangulation
 
 """
-    gmsh.model.mesh.tetrahedralizePoints(tag, optimize = false)
+    gmsh.model.mesh.tetrahedralizePoints(tag, optimize = false, quality = 0.00001)
 
 Tetrahedralize points in entity of tag `tag
 
 Types:
  - `tag`: integer
  - `optimize`: boolean
+ - `quality`: double
 """
-function tetrahedralizePoints(tag, optimize = false)
+function tetrahedralizePoints(tag, optimize = false, quality = 0.00001)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshTetrahedralizePoints, gmsh.lib), Cvoid,
-          (Cint, Cint, Ptr{Cint}),
-          tag, optimize, ierr)
+          (Cint, Cint, Cdouble, Ptr{Cint}),
+          tag, optimize, quality, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end

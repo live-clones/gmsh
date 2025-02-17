@@ -3295,10 +3295,11 @@ namespace gmsh { // Top-level functions
       //
       // Tetrahedralize points in entity of tag `tag
       inline void tetrahedralizePoints(const int tag,
-                                       const bool optimize = false)
+                                       const bool optimize = false,
+                                       const double quality = 0.00001)
       {
         int ierr = 0;
-        gmshModelMeshTetrahedralizePoints(tag, (int)optimize, &ierr);
+        gmshModelMeshTetrahedralizePoints(tag, (int)optimize, quality, &ierr);
         if(ierr) throwLastError();
       }
 

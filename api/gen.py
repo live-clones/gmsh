@@ -592,7 +592,7 @@ doc = '''Decimate a triangulation'''
 mesh.add('decimateTriangulation', doc, None, iint('faceTag'), idouble('distanceThreshold'))
 
 doc = '''Tetrahedralize points in entity of tag `tag'''
-mesh.add('tetrahedralizePoints', doc, None, iint('tag'), ibool('optimize', 'false', 'False'))
+mesh.add('tetrahedralizePoints', doc, None, iint('tag'), ibool('optimize', 'false', 'False'), idouble('quality', '0.00001'))
 
 doc = '''Compute alpha shape of the mesh in entity of tag `tag'''
 mesh.add('alphaShape3D', doc, None, iint('tag'), idouble('alpha'), iint('sizeFieldTag'), iint('tagAlpha'), iint('tagAlphaBoundary'), ovectorsize('tri2TetMap'),  ibool('removeDisconnectedNodes', 'false', 'False'), ibool('returnTri2TetMap', 'false', 'False'))

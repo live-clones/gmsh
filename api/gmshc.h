@@ -1685,6 +1685,7 @@ GMSH_API void gmshModelMeshDecimateTriangulation(const int faceTag,
 /* Tetrahedralize points in entity of tag `tag */
 GMSH_API void gmshModelMeshTetrahedralizePoints(const int tag,
                                                 const int optimize,
+                                                const double quality,
                                                 int * ierr);
 
 /* Compute alpha shape of the mesh in entity of tag `tag */

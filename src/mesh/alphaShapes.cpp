@@ -794,7 +794,7 @@ void AlphaShape::_alphaShape2D(PolyMesh* pm, const double alpha, const int faceT
     hMin = std::min(hMin, ss.second);
   }
   // double sizeLimit = field->getDescription() == "AlphaShapeDistance" ? 0.01 : 0;
-  double sizeLimit = 0.1;
+  double sizeLimit = 0.02;
   // double sizeLimit = 0.0;
   double constrainR = .2;
   double outsideLimit = 0.15;
@@ -2242,7 +2242,7 @@ void AlphaShape::_moveNodes(const int tag, const int freeSurfaceTag, const std::
 // ======================
 
 // Tetrahedralize points in discrete entity dim, tag
-void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize){
+void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize, const double qualityMin){
   GModel* gm = GModel::current();
   // cast to GRegion
   GRegion* gr = gm->getRegionByTag(tag);
@@ -2261,6 +2261,7 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize){
 
   for(auto tet: gr->tetrahedra) delete tet;
   gr->tetrahedra.clear();
+  gr->removeElements(TYPE_TET);
 
   std::vector<MTetrahedron *> tets;
   // delaunayMeshIn3DHxt(vertices, tets);
@@ -2269,9 +2270,13 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize){
   hxtMeshCreate(&mesh);
 
   size_t nvert = gr->mesh_vertices.size();
-  // printf("nvert : %lu \n", nvert);
+
+  printf("nvert : %lu \n", nvert);
   // hxtAlignedMalloc(&mesh->vertices.coord, (nvert) * 4 * sizeof(double));
   hxtAlignedMalloc(&mesh->vertices.coord, (nvert+8) * 4 * sizeof(double));
+  
+  printf("malloced %lu \n", (nvert+8));
+
   double coord_max[3] = {-1e10, -1e10, -1e10};
   double coord_min[3] = {1e10, 1e10, 1e10};
   for(size_t i = 0; i < nvert; i++) {
@@ -2286,8 +2291,10 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize){
   }
 
   for (int i=0; i<3; i++){
-    coord_max[i] += 0.5*(coord_max[i]-coord_min[i]);
-    coord_min[i] -= 0.5*(coord_max[i]-coord_min[i]);
+    double c_max = coord_max[i];
+    double c_min = coord_min[i];
+    coord_max[i] = 0.5*(c_max + c_min) + 1*abs(c_max - c_min);
+    coord_min[i] = 0.5*(c_max + c_min) - 1*abs(c_max - c_min);
   }
 
   size_t i_vert = nvert;
@@ -2383,43 +2390,47 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize){
   #pragma omp parallel for
   for (uint64_t i=0; i<mesh->tetrahedra.num; i++){
     int32_t nod = mesh->tetrahedra.node[4*i+3];
-    bool ext = false;
+    int ext = -1;
     for (int j=0; j<4; j++){
       if (mesh->tetrahedra.node[4*i+j] >= nvert){
-        ext = true;
+        ext = j;
         break;
       }
     }
-    if (nod == HXT_GHOST_VERTEX || ext){
+    if (nod == HXT_GHOST_VERTEX || ext > -1){
     // if (nod == HXT_GHOST_VERTEX){
       setProcessedFlag(mesh, i);
-      auto tet_neigh = mesh->tetrahedra.neigh[4*i+3]/4;
-      auto tet_face = mesh->tetrahedra.neigh[4*i+3]%4;
-      mesh->tetrahedra.neigh[4*tet_neigh+tet_face] = HXT_NO_ADJACENT;
+      size_t i_face = nod == HXT_GHOST_VERTEX ? 3 : ext;
+      auto tet_neigh = mesh->tetrahedra.neigh[4*i+i_face]/4;
+      auto tet_face = mesh->tetrahedra.neigh[4*i+i_face]%4;
+      // mesh->tetrahedra.neigh[4*tet_neigh+tet_face] = HXT_NO_ADJACENT;
       setFacetConstraint(mesh, tet_neigh, tet_face);
-      mesh->tetrahedra.color[i] = HXT_COLOR_OUT;
+      mesh->tetrahedra.color[i] = tag+1;
+      // mesh->tetrahedra.color[i] = 10;
     }
     else {
       mesh->tetrahedra.color[i] = tag;
     }
   }
 
+  hxtMeshWriteGmsh(mesh, "myMesh.msh");
+
   if (optimize){
     HXTOptimizeOptions options = {
                                   .numThreads = nthreads,
                                   .numVerticesConstrained = mesh->vertices.num,
-                                  .qualityMin = 1e-3,
+                                  .qualityMin = 1e-4,
                                   .reproducible = 0,
                                   .verbosity = 2
                                   } ;
     hxtOptimizeTetrahedra(mesh, &options);
-    printf("finished optim? \n");
   }
 
+  
   for(size_t i = 0; i < mesh->tetrahedra.num; i++) {
     if(mesh->tetrahedra.node[i * 4 + 3] != UINT32_MAX) {
       uint32_t myColor = mesh->tetrahedra.color[i];
-      if(myColor != HXT_COLOR_OUT) {
+      if(myColor == tag) {
         uint32_t *n = &mesh->tetrahedra.node[4 * i];
         tets.push_back(
           new MTetrahedron(gr->mesh_vertices[n[0]], gr->mesh_vertices[n[1]], gr->mesh_vertices[n[2]], gr->mesh_vertices[n[3]], i+1));
@@ -3169,7 +3180,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
   // printf("hereS 5\n");
   // Update the 3D mesh
   if (tetrahedralize)
-    _tetrahedralizePoints(fullTag, false);
+    _tetrahedralizePoints(fullTag, false, 0);
 
 }
 
@@ -4236,7 +4247,7 @@ void AlphaShape::_computeAlphaShape3D(const std::vector<int> & alphaShapeTags, c
     mesh->triangles.node[3*i+2] = alphaShapeOptions.boundaryFacets[3*i+2];
     mesh->triangles.color[i] = alphaShapeOptions.colorBoundary;
   }
-  hxtMeshWriteGmsh(mesh, "alphaShape0Mesh.msh");
+
   if (refine == 1){
 
     hxtRefineSurfaceTriangulation(&mesh, &delOptions, &alphaShapeOptions);
