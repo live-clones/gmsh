@@ -2293,8 +2293,8 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize, const
   for (int i=0; i<3; i++){
     double c_max = coord_max[i];
     double c_min = coord_min[i];
-    coord_max[i] = 0.5*(c_max + c_min) + 1*abs(c_max - c_min);
-    coord_min[i] = 0.5*(c_max + c_min) - 1*abs(c_max - c_min);
+    coord_max[i] = 0.5*(c_max + c_min) + 100*abs(c_max - c_min);
+    coord_min[i] = 0.5*(c_max + c_min) - 100*abs(c_max - c_min);
   }
 
   size_t i_vert = nvert;
@@ -2403,9 +2403,10 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize, const
       size_t i_face = nod == HXT_GHOST_VERTEX ? 3 : ext;
       auto tet_neigh = mesh->tetrahedra.neigh[4*i+i_face]/4;
       auto tet_face = mesh->tetrahedra.neigh[4*i+i_face]%4;
-      // mesh->tetrahedra.neigh[4*tet_neigh+tet_face] = HXT_NO_ADJACENT;
       setFacetConstraint(mesh, tet_neigh, tet_face);
-      mesh->tetrahedra.color[i] = tag+1;
+      mesh->tetrahedra.neigh[4*tet_neigh+tet_face] = HXT_NO_ADJACENT;
+      // mesh->tetrahedra.color[i] = tag+1;
+      mesh->tetrahedra.color[i] = HXT_COLOR_OUT;
       // mesh->tetrahedra.color[i] = 10;
     }
     else {
@@ -2413,17 +2414,18 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize, const
     }
   }
 
-  hxtMeshWriteGmsh(mesh, "myMesh.msh");
+  // hxtMeshWriteGmsh(mesh, "myMesh.msh");
 
   if (optimize){
     HXTOptimizeOptions options = {
                                   .numThreads = nthreads,
                                   .numVerticesConstrained = mesh->vertices.num,
-                                  .qualityMin = 1e-4,
+                                  .qualityMin = qualityMin,
                                   .reproducible = 0,
                                   .verbosity = 2
                                   } ;
     hxtOptimizeTetrahedra(mesh, &options);
+    // printf("finished optim \n");
   }
 
   
