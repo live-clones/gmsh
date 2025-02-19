@@ -5021,6 +5021,18 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
                       entityBounds);
     writeMSH4OverlapBoundaries(this, fp, partitionToSave, binary, scalingFactor,
                                version, entityBounds);
+
+    constexpr bool checkConsistency = true;
+    if constexpr(checkConsistency) {
+      auto adjacency = computeVertexAdjacencyFull(this);
+      bool success = partitionedEntitiesToSave->checkAdjacencyIsValid(this, adjacency);
+      if (!success) {
+        Msg::Error("Adjacency is not consistent with the mesh");
+        return 0;
+      }
+      else
+      Msg::Warning("Passed adjacency check");
+    }
   }
 
   // Edge tags

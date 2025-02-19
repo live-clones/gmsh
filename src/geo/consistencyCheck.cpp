@@ -14,6 +14,9 @@
 #include <overlapRegionManager.h>
 #include <Context.h>
 
+using std::begin;
+using std::end;
+using std::for_each;
 
 // TODO: use indices instead ?
 std::unordered_map<MVertex *, int> countVertexOccurences(
@@ -132,6 +135,32 @@ std::vector<std::set<MVertex *>> computeVertexAdjacency(GModel *model)
   return result;
 }
 
+std::unordered_map<MVertex *, std::unordered_set<MVertex *>>
+computeVertexAdjacencyFull(GModel *model)
+{
+
+std::unordered_map<MVertex *, std::unordered_set<MVertex *>> result;
+  auto addEntitiesVertices = [&result](GEntity* entity) {
+    for (size_t i = 0; i < entity->getNumMeshElements(); ++i) {
+      auto elem = entity->getMeshElement(i);
+      for (int j = 0; j < elem->getNumVertices(); ++j) {
+        auto vertex = elem->getVertex(j);
+        for (int l = 0; l < elem->getNumVertices(); ++l) {
+          if (l != j) {
+            result[vertex].insert(elem->getVertex(l));
+          }
+        }
+      }
+    }
+  };
+
+  for_each(model->firstRegion(), model->lastRegion(), addEntitiesVertices);
+  for_each(model->firstFace(), model->lastFace(), addEntitiesVertices);
+  for_each(model->firstEdge(), model->lastEdge(), addEntitiesVertices);
+  for_each(model->firstVertex(), model->lastVertex(), addEntitiesVertices);
+  return result;
+}
+
 std::vector<std::set<MVertex *>>
 computeVertexAdjacency(GModel *model,
                        const std::set<GRegion *, GEntityPtrLessThan> &regions,
@@ -182,7 +211,7 @@ bool vertexInPartition(const MVertex *vert, int partition) {
 
 
 
-EntityPackage::EntityPackage(const GModel *model, int partitionToSave) {
+EntityPackage::EntityPackage(const GModel *model, int partitionToSave) : _partitionToSave(partitionToSave) {
 
   if (partitionToSave == 0) {
     setupAllEntities(model);
@@ -230,6 +259,39 @@ EntityPackage::EntityPackage(const GModel *model, int partitionToSave) {
   enforceBREPConsistency();
 }
 
+bool EntityPackage::checkAdjacencyIsValid(
+  const GModel *model,
+  const std::unordered_map<MVertex *, std::unordered_set<MVertex *>> &global)
+  const
+{
+  bool correct = true;
+
+  if(!model->hasOverlaps()) {
+    Msg::Error("checkAdjacencyIsValid(): model has no overlaps");
+    correct = false;
+  }
+
+  for(MVertex *ownedVert : this->ownedVertices) {
+    auto it = global.find(ownedVert);
+    auto it2 = this->vertexAdjacencyThisPart.find(ownedVert);
+    if(it == global.end()) {
+      Msg::Error(
+        "checkAdjacencyIsValid(): owned vertex not found in global adjacency");
+    }
+    if(it2 == this->vertexAdjacencyThisPart.end()) {
+      Msg::Error(
+        "checkAdjacencyIsValid(): owned vertex not found in local adjacency");
+    }
+    if(it->second.size() != it2->second.size()) {
+      Msg::Warning("checkAdjacencyIsValid(): Vertex %lu has %d local "
+                   "connections but %d global connections",
+                   ownedVert->getNum(), it2->second.size(), it->second.size());
+      correct = false;
+    }
+  }
+
+  return correct;
+}
 
 void EntityPackage::fillFromNodes(const GModel *model)
 {
@@ -368,9 +430,7 @@ void EntityPackage::setupAllEntities(const GModel *model) {
 
 void EntityPackage::enforceBREPConsistency() 
 {
-  using std::for_each;
-  using std::begin;
-  using std::end;
+  
 
   for (GRegion* reg: regions) {
     auto facesToAdd = reg->faces();
@@ -390,4 +450,68 @@ void EntityPackage::enforceBREPConsistency()
     auto verticesToAdd = edge->vertices();
     for_each(begin(verticesToAdd), end(verticesToAdd), [this](GVertex* vertex) { this->vertices.insert(vertex); });
   }
+}
+
+void EntityPackage::buildAdjacencyPartition() {
+  if (_partitionToSave == 0) {
+    Msg::Error("buildAdjacencyPartition(): partitionToSave is 0");
+  }
+
+  this->vertexAdjacencyThisPart.clear();
+
+  auto getEntityParts = [](GEntity *entity) {
+    // Checking parts should eliminat overlap boundaries
+    IndicesReoriented parts;
+    int dim = entity->dim();
+    if(dim == 0) {
+      auto pv = dynamic_cast<partitionVertex *>(entity);
+      parts = pv->getPartitions();
+    }
+    else if(dim == 1) {
+      auto pe = dynamic_cast<partitionEdge *>(entity);
+      parts = pe->getPartitions();
+    }
+    else if(dim == 2) {
+      auto pf = dynamic_cast<partitionFace *>(entity);
+      parts = pf->getPartitions();
+    }
+    else if(dim == 3) {
+      auto pr = dynamic_cast<partitionRegion *>(entity);
+      parts = pr->getPartitions();
+    }
+    else {
+      Msg::Error("getEntityParts() called on an non-partitioned entity");
+    }
+    return parts;
+  };
+
+  auto addEntitiesVertices = [this, &getEntityParts](GEntity* entity) {
+    // See if it is an owned entity (i.e. partitionedEntity with partitions containing partitionToSave)
+    bool isOwned = false;
+    auto parts = getEntityParts(entity);
+    if(find(begin(parts), end(parts), _partitionToSave) != end(parts)) {
+      isOwned = true;
+    }
+
+    for (size_t i = 0; i < entity->getNumMeshElements(); ++i) {
+      auto elem = entity->getMeshElement(i);
+      for (int j = 0; j < elem->getNumVertices(); ++j) {
+        auto vertex = elem->getVertex(j);
+        if (isOwned)
+          this->ownedVertices.insert(vertex);
+        for (int l = 0; l < elem->getNumVertices(); ++l) {
+          if (l != j) {
+            this->vertexAdjacencyThisPart[vertex].insert(elem->getVertex(l));
+          }
+        }
+      }
+    }
+  };
+
+  for_each(begin(regions), end(regions), addEntitiesVertices);
+  for_each(begin(faces), end(faces), addEntitiesVertices);
+  for_each(begin(edges), end(edges), addEntitiesVertices);
+  for_each(begin(vertices), end(vertices), addEntitiesVertices);
+
+
 }

@@ -15,6 +15,7 @@
 #include <GVertex.h>
 #include <unordered_map>
 #include <set>
+#include <unordered_set>
 #include <optional>
 #include <tuple>
 
@@ -26,12 +27,14 @@ std::unordered_map<MVertex*, int> countVertexOccurences(GModel* model, const std
 std::set<std::tuple<MVertex*, int, int>> findMismatch(const std::unordered_map<MVertex*, int>& saved, const std::unordered_map<MVertex*, int>& expected);
 
 std::vector<std::set<MVertex*>> computeVertexAdjacency(GModel* model);
+std::unordered_map<MVertex*, std::unordered_set<MVertex*>> computeVertexAdjacencyFull(GModel* model);
 std::vector<std::set<MVertex*>> computeVertexAdjacency(GModel* model,
 const std::set<GRegion*, GEntityPtrLessThan>& regions,
 const std::set<GFace*, GEntityPtrLessThan>& faces,
 const std::set<GEdge*, GEntityPtrLessThan>& edges,
 const std::set<GVertex*, GEntityPtrLessThan>& vertices);
 
+bool vertexInPartition(const MVertex* vert, int partition);
 bool vertexInPartition(const MVertex* vert, int partition);
 
 
@@ -45,8 +48,14 @@ struct EntityPackage {
     std::set<GEdge*, GEntityPtrLessThan> edges;
     std::set<GVertex*, GEntityPtrLessThan> vertices;
 
+    // Owned vertex = any vertex used by an element on our partition
+    std::unordered_map<MVertex*, std::unordered_set<MVertex*>> vertexAdjacencyThisPart;
+    std::unordered_set<MVertex*> ownedVertices;
+    unsigned int _partitionToSave;
+
     EntityPackage() = delete;
     EntityPackage(const GModel* model, int partitionToSave);
+    bool checkAdjacencyIsValid(const GModel* model, const std::unordered_map<MVertex*, std::unordered_set<MVertex*>>& global) const;
     // For all entities, loop over nodes from elements. Add the entities of the odes
     void fillFromNodes(const GModel* model);
     void addEntitiesFromNodes(const GEntity* entity);
@@ -55,6 +64,7 @@ struct EntityPackage {
     void addOverlappedEntities(const GModel* model, int partitionToSave);
     void setupAllEntities(const GModel* model);
     void enforceBREPConsistency();
+    void buildAdjacencyPartition();
 };
 
 
