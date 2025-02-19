@@ -184,7 +184,10 @@ bool vertexInPartition(const MVertex *vert, int partition) {
 
 EntityPackage::EntityPackage(const GModel *model, int partitionToSave) {
 
-  
+  if (partitionToSave == 0) {
+    setupAllEntities(model);
+    return;
+  }
 
   const bool saveAllEntities = CTX::instance()->mesh.saveFullBrep != 0;
   auto isPartitionInParts = [partitionToSave, saveAllEntities](const IndicesReoriented& part) {
@@ -224,6 +227,7 @@ EntityPackage::EntityPackage(const GModel *model, int partitionToSave) {
   addOverlappedEntities(model, partitionToSave);
   fillFromNodes(model);
 }
+
 
 void EntityPackage::fillFromNodes(const GModel *model)
 {
@@ -333,6 +337,29 @@ void EntityPackage::addOverlappedEntities(const GModel *model, int partitionToSa
       for(partitionFace *bnd : mapbnd[partitionToSave]) {
         this->faces.insert(bnd);
       }
+    }
+  }
+}
+
+void EntityPackage::setupAllEntities(const GModel *model) {
+  for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
+    if((*it)->geomType() == GEntity::GeomType::PartitionVolume) {
+      regions.insert(static_cast<GRegion *>(*it));
+    }
+  }
+  for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
+    if((*it)->geomType() == GEntity::GeomType::PartitionSurface) {
+      faces.insert(static_cast<GFace *>(*it));
+    }
+  }
+  for(auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
+    if((*it)->geomType() == GEntity::GeomType::PartitionCurve) {
+      edges.insert(static_cast<GEdge *>(*it));
+    }
+  }
+  for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
+    if((*it)->geomType() == GEntity::GeomType::PartitionPoint) {
+      vertices.insert(static_cast<GVertex *>(*it));
     }
   }
 }

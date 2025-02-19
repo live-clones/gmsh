@@ -2749,7 +2749,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
 
 static EntityPackage writeMSH4PartitionedEntities(GModel *const model, FILE *fp, bool binary,
                                double scalingFactor, double version,
-                              std::map<GEntity*, SBoundingBox3d> *entityBounds, int partitionToSave = -1)
+                              std::map<GEntity*, SBoundingBox3d> *entityBounds, int partitionToSave)
 {
   using std::set;
   using std::for_each;
@@ -2762,50 +2762,8 @@ static EntityPackage writeMSH4PartitionedEntities(GModel *const model, FILE *fp,
   Msg::Info("Saving all entities ? %d", saveAllEntities);
 
   EntityPackage entitiesToSave(model, partitionToSave);
-  
 
-    if(model->hasOverlaps()) {
-      // Now add the overlapped entities and the boundaries
-      for(const auto &[tag, manager] : model->getOverlapFaceManagers()) {
-        auto map = manager->getOverlapsByPartition();
-        for(overlapFace *ov : map[partitionToSave]) {
-          entitiesToSave.faces.insert(ov->getOverlapOn());
-          for (GEdge* edge : ov->getOverlapOn()->edges()) {
-            entitiesToSave.edges.insert(edge);
-          }
-          for (GVertex* vertex : ov->getOverlapOn()->vertices()) {
-            entitiesToSave.vertices.insert(vertex);
-          }
-        }
-        auto mapbnd = manager->getBoundariesByPartition();
-        for(partitionEdge *bnd : mapbnd[partitionToSave]) { entitiesToSave.edges.insert(bnd); }
-      }
-
-      for (const auto&[tag, manager] : model->getOverlapRegionManagers()) {
-        auto map = manager->getOverlapsByPartition();
-        for(overlapRegion *ov : map[partitionToSave]) {
-          auto overlappedRegion = ov->getOverlapOn();
-          entitiesToSave.regions.insert(overlappedRegion);
-          for (GFace* face : overlappedRegion->faces()) {
-            entitiesToSave.faces.insert(face);
-          }
-          for (GEdge* edge : overlappedRegion->edges()) {
-            entitiesToSave.edges.insert(edge);
-          }
-          for (GVertex* vertex : overlappedRegion->vertices()) {
-            entitiesToSave.vertices.insert(vertex);
-          }
-        }
-        auto mapbnd = manager->getBoundariesByPartition();
-        for(partitionFace *bnd : mapbnd[partitionToSave]) { entitiesToSave.faces.insert(bnd); }
-      }
-    }
-    entitiesToSave.fillFromNodes(model);
-
-
-
-    fprintf(fp, "$PartitionedEntities\n");
-
+  fprintf(fp, "$PartitionedEntities\n");
   if(binary) {
     if(true) {
       std::size_t numPartitions = model->getNumPartitions();
@@ -2845,7 +2803,8 @@ static EntityPackage writeMSH4PartitionedEntities(GModel *const model, FILE *fp,
     fwrite(&facesSize, sizeof(std::size_t), 1, fp);
     fwrite(&regionsSize, sizeof(std::size_t), 1, fp);
 
-    for(auto it = entitiesToSave.vertices.begin(); it != entitiesToSave.vertices.end(); ++it) {
+    for(auto it = entitiesToSave.vertices.begin();
+        it != entitiesToSave.vertices.end(); ++it) {
       int entityTag = (*it)->tag();
       fwrite(&entityTag, sizeof(int), 1, fp);
       if(true) {
@@ -2868,7 +2827,8 @@ static EntityPackage writeMSH4PartitionedEntities(GModel *const model, FILE *fp,
       writeMSH4Physicals(fp, *it, binary);
     }
 
-    for(auto it = entitiesToSave.edges.begin(); it != entitiesToSave.edges.end(); ++it) {
+    for(auto it = entitiesToSave.edges.begin();
+        it != entitiesToSave.edges.end(); ++it) {
       std::vector<GVertex *> vertices;
       std::vector<int> ori;
       if((*it)->getBeginVertex()) {
