@@ -46,6 +46,7 @@
 #include "MPyramid.h"
 #include "MTrihedron.h"
 #include "StringUtils.h"
+#include "consistencyCheck.h"
 
 static bool readMSH4Physicals(GModel *const model, FILE *fp,
                               GEntity *const entity, bool binary,
@@ -2146,7 +2147,8 @@ static void writeMSH4BoundingBox(SBoundingBox3d boundBox, FILE *fp,
 
 static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
                               bool binary, double scalingFactor, double version,
-                              std::map<GEntity*, SBoundingBox3d> *entityBounds, int partitionToSave = -1)
+                              std::map<GEntity*, SBoundingBox3d> *entityBounds, int partitionToSave = -1,
+                              std::vector<std::set<MVertex*>> *adjacency = nullptr)
 {
   using std::set;
   using std::for_each;
@@ -2305,6 +2307,45 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       for (GEdge* edge: edges)
       {
         auto edgeVerts = edge->vertices(); for_each(edgeVerts.begin(), edgeVerts.end(), [&vertices](GVertex* vertex) { vertices.insert(vertex); });
+      }
+    }
+
+    // Check adjacency
+    auto regionsWithOvlp = regions;
+    std::set<GRegion*, GEntityPtrLessThan> regionsNew;
+    std::set<GFace*, GEntityPtrLessThan> facesNew;
+    std::set<GEdge*, GEntityPtrLessThan> edgesNew;
+    std::set<GVertex*, GEntityPtrLessThan> verticesNew;
+    if(model->hasOverlaps() && partitionToSave) {
+      for(const auto &[_, managerPtr] : model->getOverlapRegionManagers()) {
+        auto map = managerPtr->getOverlapsByPartition().at(partitionToSave);
+        for(overlapRegion *ovlp : map) {
+          regionsNew.insert(ovlp);
+          regionsNew.insert(ovlp->getOverlapOn());
+        }
+      }
+
+      auto localAdjacency =
+        computeVertexAdjacency(model, regionsNew, facesNew, edgesNew, verticesNew);
+      if(localAdjacency.size() != model->getMaxVertexNumber()) {
+        Msg::Error("Inconsistent adjacency size: %lu vs %lu",
+                   localAdjacency.size(), model->getMaxVertexNumber());
+      }
+      if(adjacency->size() != model->getMaxVertexNumber()) {
+        Msg::Error("Inconsistent adjacency size: %lu vs %lu", adjacency->size(),
+                   model->getMaxVertexNumber());
+      }
+      for(size_t v = 0; v < model->getMaxVertexNumber(); ++v) {
+        if(localAdjacency.at(v).size() > 0 &&
+           localAdjacency.at(v).size() != adjacency->at(v).size()) {
+          bool isInPartition =
+            vertexInPartition(model->getMeshVertexByTag(v), partitionToSave);
+          if(isInPartition)
+            Msg::Warning("Vertex %lu has inconsistent adjacency: %u vs %u. In "
+                         "partition  %d",
+                         v, localAdjacency.at(v).size(),
+                         adjacency->at(v).size(), partitionToSave);
+        }
       }
     }
   }
@@ -2701,6 +2742,446 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
   }
 
   if(partition)
+    fprintf(fp, "$EndPartitionedEntities\n");
+  else
+    fprintf(fp, "$EndEntities\n");
+}
+
+static void writeMSH4PartitionedEntities(GModel *const model, FILE *fp, bool binary,
+                               double scalingFactor, double version,
+                              std::map<GEntity*, SBoundingBox3d> *entityBounds, int partitionToSave = -1)
+{
+  using std::set;
+  using std::for_each;
+  using std::find;
+
+  set<GEntity *, GEntityPtrFullLessThan> ghost;
+
+
+  const bool saveAllEntities = CTX::instance()->mesh.saveFullBrep > 0.1 || partitionToSave == 0;
+  Msg::Info("Saving all entities ? %d", saveAllEntities);
+
+  EntityPackage entitiesToSave(model, partitionToSave);
+  // Ensure all embedded vertices are there
+  std::set<GVertex *, GEntityPtrLessThan> embeddedVerticesEntities;
+  for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
+    GRegion *gr = static_cast<GRegion *>(*it);
+    auto embVertices = gr->embeddedVertices();
+    for(GVertex *vertex : embVertices) {
+      embeddedVerticesEntities.insert(vertex);
+    }
+  }
+
+  for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
+    partitionVertex *pv = dynamic_cast<partitionVertex *>(*it);
+    if(pv) {
+      GVertex *parentVert = dynamic_cast<GVertex *>(pv->getParentEntity());
+      if(parentVert && embeddedVerticesEntities.count(parentVert) > 0) {
+        entitiesToSave.vertices.insert(*it);
+      }
+    }
+  }
+
+    if(model->hasOverlaps()) {
+      // Now add the overlapped entities and the boundaries
+      for(const auto &[tag, manager] : model->getOverlapFaceManagers()) {
+        auto map = manager->getOverlapsByPartition();
+        for(overlapFace *ov : map[partitionToSave]) {
+          entitiesToSave.faces.insert(ov->getOverlapOn());
+          for (GEdge* edge : ov->getOverlapOn()->edges()) {
+            entitiesToSave.edges.insert(edge);
+          }
+          for (GVertex* vertex : ov->getOverlapOn()->vertices()) {
+            entitiesToSave.vertices.insert(vertex);
+          }
+        }
+        auto mapbnd = manager->getBoundariesByPartition();
+        for(partitionEdge *bnd : mapbnd[partitionToSave]) { entitiesToSave.edges.insert(bnd); }
+      }
+
+      for (const auto&[tag, manager] : model->getOverlapRegionManagers()) {
+        auto map = manager->getOverlapsByPartition();
+        for(overlapRegion *ov : map[partitionToSave]) {
+          auto overlappedRegion = ov->getOverlapOn();
+          entitiesToSave.regions.insert(overlappedRegion);
+          for (GFace* face : overlappedRegion->faces()) {
+            entitiesToSave.faces.insert(face);
+          }
+          for (GEdge* edge : overlappedRegion->edges()) {
+            entitiesToSave.edges.insert(edge);
+          }
+          for (GVertex* vertex : overlappedRegion->vertices()) {
+            entitiesToSave.vertices.insert(vertex);
+          }
+        }
+        auto mapbnd = manager->getBoundariesByPartition();
+        for(partitionFace *bnd : mapbnd[partitionToSave]) { entitiesToSave.faces.insert(bnd); }
+      }
+    }
+    entitiesToSave.fillFromNodes(model);
+
+
+
+    fprintf(fp, "$PartitionedEntities\n");
+
+  if(binary) {
+    if(true) {
+      std::size_t numPartitions = model->getNumPartitions();
+      fwrite(&numPartitions, sizeof(std::size_t), 1, fp);
+
+      // write the ghostentities' tag
+      std::size_t ghostSize = ghost.size();
+      std::vector<int> tags;
+      if(ghostSize) {
+        tags.resize(2 * ghostSize);
+        int index = 0;
+        for(auto it = ghost.begin(); it != ghost.end(); ++it) {
+          if((*it)->geomType() == GEntity::GhostCurve) {
+            tags[index] = (*it)->tag();
+            tags[++index] = static_cast<ghostEdge *>(*it)->getPartition();
+          }
+          else if((*it)->geomType() == GEntity::GhostSurface) {
+            tags[index] = (*it)->tag();
+            tags[++index] = static_cast<ghostFace *>(*it)->getPartition();
+          }
+          else if((*it)->geomType() == GEntity::GhostVolume) {
+            tags[index] = (*it)->tag();
+            tags[++index] = static_cast<ghostRegion *>(*it)->getPartition();
+          }
+          index++;
+        }
+      }
+      fwrite(&ghostSize, sizeof(std::size_t), 1, fp);
+      if(ghostSize) { fwrite(&tags[0], sizeof(int), 2 * ghostSize, fp); }
+    }
+    std::size_t verticesSize = entitiesToSave.vertices.size();
+    std::size_t edgesSize = entitiesToSave.edges.size();
+    std::size_t facesSize = entitiesToSave.faces.size();
+    std::size_t regionsSize = entitiesToSave.regions.size();
+    fwrite(&verticesSize, sizeof(std::size_t), 1, fp);
+    fwrite(&edgesSize, sizeof(std::size_t), 1, fp);
+    fwrite(&facesSize, sizeof(std::size_t), 1, fp);
+    fwrite(&regionsSize, sizeof(std::size_t), 1, fp);
+
+    for(auto it = entitiesToSave.vertices.begin(); it != entitiesToSave.vertices.end(); ++it) {
+      int entityTag = (*it)->tag();
+      fwrite(&entityTag, sizeof(int), 1, fp);
+      if(true) {
+        partitionVertex *pv = static_cast<partitionVertex *>(*it);
+        int parentEntityDim = 0, parentEntityTag = 0;
+        if(pv->getParentEntity()) {
+          parentEntityDim = pv->getParentEntity()->dim();
+          parentEntityTag = pv->getParentEntity()->tag();
+        }
+        fwrite(&parentEntityDim, sizeof(int), 1, fp);
+        fwrite(&parentEntityTag, sizeof(int), 1, fp);
+        std::vector<int> partitions(pv->getPartitions().begin(),
+                                    pv->getPartitions().end()); // FIXME
+        std::size_t numPart = partitions.size();
+        fwrite(&numPart, sizeof(std::size_t), 1, fp);
+        fwrite(&partitions[0], sizeof(int), partitions.size(), fp);
+      }
+      SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
+      writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 0, version);
+      writeMSH4Physicals(fp, *it, binary);
+    }
+
+    for(auto it = entitiesToSave.edges.begin(); it != entitiesToSave.edges.end(); ++it) {
+      std::vector<GVertex *> vertices;
+      std::vector<int> ori;
+      if((*it)->getBeginVertex()) {
+        vertices.push_back((*it)->getBeginVertex());
+        ori.push_back(1);
+      }
+      if((*it)->getEndVertex()) { // convention that the end vertex is negative
+        vertices.push_back((*it)->getEndVertex());
+        ori.push_back(-1);
+      }
+      std::size_t verticesSize = vertices.size();
+      int entityTag = (*it)->tag();
+      fwrite(&entityTag, sizeof(int), 1, fp);
+      if(true) {
+        partitionEdge *pe = static_cast<partitionEdge *>(*it);
+        int parentEntityDim = 0, parentEntityTag = 0;
+        if(pe->getParentEntity()) {
+          parentEntityDim = pe->getParentEntity()->dim();
+          parentEntityTag = pe->getParentEntity()->tag();
+        }
+        fwrite(&parentEntityDim, sizeof(int), 1, fp);
+        fwrite(&parentEntityTag, sizeof(int), 1, fp);
+        std::vector<int> partitions(pe->getPartitions().begin(),
+                                    pe->getPartitions().end()); // FIXME
+        std::size_t numPart = partitions.size();
+        fwrite(&numPart, sizeof(std::size_t), 1, fp);
+        fwrite(&partitions[0], sizeof(int), partitions.size(), fp);
+      }
+      SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
+      writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 1, version);
+      writeMSH4Physicals(fp, *it, binary);
+      fwrite(&verticesSize, sizeof(std::size_t), 1, fp);
+      int oriI = 0;
+      for(auto itv = vertices.begin(); itv != vertices.end(); itv++) {
+        int brepTag = ori[oriI] * (*itv)->tag();
+        fwrite(&brepTag, sizeof(int), 1, fp);
+        oriI++;
+      }
+    }
+
+    for(auto it = entitiesToSave.faces.begin(); it != entitiesToSave.faces.end(); ++it) {
+      std::vector<GEdge *> const &edges = (*it)->edges();
+      std::vector<int> const &ori = (*it)->edgeOrientations();
+      std::size_t edgesSize = edges.size();
+      int entityTag = (*it)->tag();
+      fwrite(&entityTag, sizeof(int), 1, fp);
+      if(true) {
+        partitionFace *pf = static_cast<partitionFace *>(*it);
+        int parentEntityDim = 0, parentEntityTag = 0;
+        if(pf->getParentEntity()) {
+          parentEntityDim = pf->getParentEntity()->dim();
+          parentEntityTag = pf->getParentEntity()->tag();
+        }
+        fwrite(&parentEntityDim, sizeof(int), 1, fp);
+        fwrite(&parentEntityTag, sizeof(int), 1, fp);
+        std::vector<int> partitions(pf->getPartitions().begin(),
+                                    pf->getPartitions().end()); // FIXME
+        std::size_t numPart = partitions.size();
+        fwrite(&numPart, sizeof(std::size_t), 1, fp);
+        fwrite(&partitions[0], sizeof(int), partitions.size(), fp);
+      }
+      SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
+      writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 2, version);
+      writeMSH4Physicals(fp, *it, binary);
+      fwrite(&edgesSize, sizeof(std::size_t), 1, fp);
+      std::vector<int> tags, signs;
+      for(auto ite = edges.begin(); ite != edges.end(); ite++)
+        tags.push_back((*ite)->tag());
+
+      signs.insert(signs.end(), ori.begin(), ori.end());
+
+      if(tags.size() == signs.size()) {
+        for(std::size_t i = 0; i < tags.size(); i++)
+          tags[i] *= (signs[i] > 0 ? 1 : -1);
+      }
+      for(std::size_t i = 0; i < tags.size(); i++) {
+        int brepTag = tags[i];
+        fwrite(&brepTag, sizeof(int), 1, fp);
+      }
+    }
+
+    for(auto it = entitiesToSave.regions.begin(); it != entitiesToSave.regions.end(); ++it) {
+      std::vector<GFace *> faces = (*it)->faces();
+      std::vector<int> const &ori = (*it)->faceOrientations();
+      std::size_t facesSize = faces.size();
+      int entityTag = (*it)->tag();
+      fwrite(&entityTag, sizeof(int), 1, fp);
+      if(true) {
+        partitionRegion *pr = static_cast<partitionRegion *>(*it);
+        int parentEntityDim = 0, parentEntityTag = 0;
+        if(pr->getParentEntity()) {
+          parentEntityDim = pr->getParentEntity()->dim();
+          parentEntityTag = pr->getParentEntity()->tag();
+        }
+        fwrite(&parentEntityDim, sizeof(int), 1, fp);
+        fwrite(&parentEntityTag, sizeof(int), 1, fp);
+        std::vector<int> partitions(pr->getPartitions().begin(),
+                                    pr->getPartitions().end()); // FIXME
+        std::size_t numPart = partitions.size();
+        fwrite(&numPart, sizeof(std::size_t), 1, fp);
+        fwrite(&partitions[0], sizeof(int), partitions.size(), fp);
+      }
+      SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
+      writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 3, version);
+      writeMSH4Physicals(fp, *it, binary);
+      fwrite(&facesSize, sizeof(std::size_t), 1, fp);
+      std::vector<int> tags, signs;
+      for(auto itf = faces.begin(); itf != faces.end(); itf++)
+        tags.push_back((*itf)->tag());
+      for(auto itf = ori.begin(); itf != ori.end(); itf++)
+        signs.push_back(*itf);
+      if(tags.size() == signs.size()) {
+        for(std::size_t i = 0; i < tags.size(); i++)
+          tags[i] *= (signs[i] > 0 ? 1 : -1);
+      }
+      for(std::size_t i = 0; i < tags.size(); i++) {
+        int brepTag = tags[i];
+        fwrite(&brepTag, sizeof(int), 1, fp);
+      }
+    }
+    fprintf(fp, "\n");
+  }
+  else {
+    if(true) {
+      fprintf(fp, "%lu\n", model->getNumPartitions());
+
+      // write the ghostentities' tag
+      std::size_t ghostSize = ghost.size();
+      std::vector<int> tags;
+      if(ghostSize) {
+        tags.resize(2 * ghostSize);
+        int index = 0;
+        for(auto it = ghost.begin(); it != ghost.end(); ++it) {
+          if((*it)->geomType() == GEntity::GhostCurve) {
+            tags[index] = (*it)->tag();
+            tags[++index] = static_cast<ghostEdge *>(*it)->getPartition();
+          }
+          else if((*it)->geomType() == GEntity::GhostSurface) {
+            tags[index] = (*it)->tag();
+            tags[++index] = static_cast<ghostFace *>(*it)->getPartition();
+          }
+          else if((*it)->geomType() == GEntity::GhostVolume) {
+            tags[index] = (*it)->tag();
+            tags[++index] = static_cast<ghostRegion *>(*it)->getPartition();
+          }
+          index++;
+        }
+      }
+      fprintf(fp, "%lu\n", ghostSize);
+      if(ghostSize) {
+        for(std::size_t i = 0; i < 2 * ghostSize; i += 2) {
+          fprintf(fp, "%d %d\n", tags[i], tags[i + 1]);
+        }
+      }
+    }
+    fprintf(fp, "%lu %lu %lu %lu\n", entitiesToSave.vertices.size(), entitiesToSave.edges.size(),
+            entitiesToSave.faces.size(), entitiesToSave.regions.size());
+
+    for(auto it = entitiesToSave.vertices.begin(); it != entitiesToSave.vertices.end(); ++it) {
+      fprintf(fp, "%d ", (*it)->tag());
+      if(true) {
+        partitionVertex *pv = static_cast<partitionVertex *>(*it);
+        int parentEntityDim = 0, parentEntityTag = 0;
+        if(pv->getParentEntity()) {
+          parentEntityDim = pv->getParentEntity()->dim();
+          parentEntityTag = pv->getParentEntity()->tag();
+        }
+        fprintf(fp, "%d %d ", parentEntityDim, parentEntityTag);
+        std::vector<int> partitions(pv->getPartitions().begin(),
+                                    pv->getPartitions().end()); // FIXME
+        fprintf(fp, "%lu ", partitions.size());
+        for(std::size_t i = 0; i < partitions.size(); i++)
+          fprintf(fp, "%d ", partitions[i]);
+      }
+      SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
+      writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 0, version);
+      writeMSH4Physicals(fp, *it, binary);
+      fprintf(fp, "\n");
+    }
+
+    for(auto it = entitiesToSave.edges.begin(); it != entitiesToSave.edges.end(); ++it) {
+      std::vector<GVertex *> vertices;
+      std::vector<int> ori;
+      if((*it)->getBeginVertex()) {
+        vertices.push_back((*it)->getBeginVertex());
+        ori.push_back(1);
+      }
+      if((*it)->getEndVertex()) { // I use the convention that the end vertex is
+                                  // negative
+        vertices.push_back((*it)->getEndVertex());
+        ori.push_back(-1);
+      }
+      fprintf(fp, "%d ", (*it)->tag());
+      if(true) {
+        partitionEdge *pe = static_cast<partitionEdge *>(*it);
+        int parentEntityDim = 0, parentEntityTag = 0;
+        if(pe->getParentEntity()) {
+          parentEntityDim = pe->getParentEntity()->dim();
+          parentEntityTag = pe->getParentEntity()->tag();
+        }
+        fprintf(fp, "%d %d ", parentEntityDim, parentEntityTag);
+        std::vector<int> partitions(pe->getPartitions().begin(),
+                                    pe->getPartitions().end()); // FIXME
+        fprintf(fp, "%lu ", partitions.size());
+        for(std::size_t i = 0; i < partitions.size(); i++)
+          fprintf(fp, "%d ", partitions[i]);
+      }
+      SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
+      writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 1, version);
+      writeMSH4Physicals(fp, *it, binary);
+      fprintf(fp, "%lu ", vertices.size());
+      int oriI = 0;
+      for(auto itv = vertices.begin(); itv != vertices.end(); itv++) {
+        fprintf(fp, "%d ", ori[oriI] * (*itv)->tag());
+        oriI++;
+      }
+      fprintf(fp, "\n");
+    }
+
+    for(auto it = entitiesToSave.faces.begin(); it != entitiesToSave.faces.end(); ++it) {
+      std::vector<GEdge *> const &edges = (*it)->edges();
+      std::vector<int> const &ori = (*it)->edgeOrientations();
+      fprintf(fp, "%d ", (*it)->tag());
+      if(true) {
+        partitionFace *pf = static_cast<partitionFace *>(*it);
+        int parentEntityDim = 0, parentEntityTag = 0;
+        if(pf->getParentEntity()) {
+          parentEntityDim = pf->getParentEntity()->dim();
+          parentEntityTag = pf->getParentEntity()->tag();
+        }
+        fprintf(fp, "%d %d ", parentEntityDim, parentEntityTag);
+        std::vector<int> partitions(pf->getPartitions().begin(),
+                                    pf->getPartitions().end()); // FIXME
+        fprintf(fp, "%lu ", partitions.size());
+        for(std::size_t i = 0; i < partitions.size(); i++)
+          fprintf(fp, "%d ", partitions[i]);
+      }
+      SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
+      writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 2, version);
+      writeMSH4Physicals(fp, *it, binary);
+      fprintf(fp, "%lu ", edges.size());
+      std::vector<int> tags, signs;
+      for(auto ite = edges.begin(); ite != edges.end(); ite++)
+        tags.push_back((*ite)->tag());
+      for(auto ite = ori.begin(); ite != ori.end(); ite++)
+        signs.push_back(*ite);
+      if(tags.size() == signs.size()) {
+        for(std::size_t i = 0; i < tags.size(); i++)
+          tags[i] *= (signs[i] > 0 ? 1 : -1);
+      }
+      for(std::size_t i = 0; i < tags.size(); i++) fprintf(fp, "%d ", tags[i]);
+      fprintf(fp, "\n");
+    }
+
+    for(auto it = entitiesToSave.regions.begin(); it != entitiesToSave.regions.end(); ++it) {
+      std::vector<GFace *> const &faces = (*it)->faces();
+      std::vector<int> const &ori = (*it)->faceOrientations();
+      fprintf(fp, "%d ", (*it)->tag());
+      if(true) {
+        partitionRegion *pr = static_cast<partitionRegion *>(*it);
+        int parentEntityDim = 0, parentEntityTag = 0;
+        if(pr->getParentEntity()) {
+          parentEntityDim = pr->getParentEntity()->dim();
+          parentEntityTag = pr->getParentEntity()->tag();
+        }
+        fprintf(fp, "%d %d ", parentEntityDim, parentEntityTag);
+
+        fprintf(fp, "%lu ", pr->getPartitions().size());
+
+        for(auto const partition : pr->getPartitions()) {
+          fprintf(fp, "%d ", partition);
+        }
+      }
+      SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
+      writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 3, version);
+      writeMSH4Physicals(fp, *it, binary);
+      fprintf(fp, "%lu ", faces.size());
+
+      std::vector<int> tags(faces.size());
+      std::transform(begin(faces), end(faces), begin(tags),
+                     [](const GFace *const face) { return face->tag(); });
+
+      std::vector<int> signs(ori.begin(), ori.end());
+
+      if(tags.size() == signs.size()) {
+        for(std::size_t i = 0; i < tags.size(); i++)
+          tags[i] *= (signs[i] > 0 ? 1 : -1);
+      }
+
+      for(auto const tag : tags) { fprintf(fp, "%d ", tag); }
+      fprintf(fp, "\n");
+    }
+  }
+
+  if(true)
     fprintf(fp, "$EndPartitionedEntities\n");
   else
     fprintf(fp, "$EndEntities\n");
@@ -4499,6 +4980,9 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
     fprintf(fp, "$EndPhysicalNames\n");
   }
 
+  // Compute adjacency
+  //auto adjacency = computeVertexAdjacency(this);
+
   // entities
   writeMSH4Entities(this, fp, false, binary, scalingFactor, version,
                     entityBounds);
@@ -4530,7 +5014,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
 
   // partitioned entities
   if(partitioned)
-    writeMSH4Entities(this, fp, true, binary, scalingFactor, version,
+    writeMSH4PartitionedEntities(this, fp, binary, scalingFactor, version,
                       entityBounds, partitionToSave);
 
   // nodes

@@ -52,6 +52,7 @@ set(SRC
   overlapEdgeManager.cpp
   overlapFaceManager.cpp
   overlapRegionManager.cpp
+  consistencyCheck.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
