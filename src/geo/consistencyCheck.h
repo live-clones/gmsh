@@ -45,11 +45,13 @@ struct EntityPackage {
     std::set<GEdge*, GEntityPtrLessThan> edges;
     std::set<GVertex*, GEntityPtrLessThan> vertices;
 
-    EntityPackage() = default;
+    EntityPackage() = delete;
     EntityPackage(const GModel* model, int partitionToSave);
     // For all entities, loop over nodes from elements. Add the entities of the odes
     void fillFromNodes(const GModel* model);
     void addEntitiesFromNodes(const GEntity* entity);
+    private:
+    void addEmbeddedVertices(const GModel* model);
 };
 
 

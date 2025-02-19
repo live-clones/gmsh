@@ -218,6 +218,8 @@ EntityPackage::EntityPackage(const GModel *model, int partitionToSave) {
     }
   }
 
+  addEmbeddedVertices(model);
+
   fillFromNodes(model);
 }
 
@@ -266,4 +268,26 @@ void EntityPackage::addEntitiesFromNodes(const GEntity* entity)
             }
         }
     }
+}
+
+void EntityPackage::addEmbeddedVertices(const GModel *model) {
+  // Ensure all embedded vertices are there
+  std::set<GVertex *, GEntityPtrLessThan> embeddedVerticesEntities;
+  for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
+    GRegion *gr = static_cast<GRegion *>(*it);
+    auto embVertices = gr->embeddedVertices();
+    for(GVertex *vertex : embVertices) {
+      embeddedVerticesEntities.insert(vertex);
+    }
+  }
+
+  for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
+    partitionVertex *pv = dynamic_cast<partitionVertex *>(*it);
+    if(pv) {
+      GVertex *parentVert = dynamic_cast<GVertex *>(pv->getParentEntity());
+      if(parentVert && embeddedVerticesEntities.count(parentVert) > 0) {
+        this->vertices.insert(*it);
+      }
+    }
+  }
 }
