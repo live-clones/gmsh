@@ -2747,7 +2747,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     fprintf(fp, "$EndEntities\n");
 }
 
-static void writeMSH4PartitionedEntities(GModel *const model, FILE *fp, bool binary,
+static EntityPackage writeMSH4PartitionedEntities(GModel *const model, FILE *fp, bool binary,
                                double scalingFactor, double version,
                               std::map<GEntity*, SBoundingBox3d> *entityBounds, int partitionToSave = -1)
 {
@@ -3163,10 +3163,9 @@ static void writeMSH4PartitionedEntities(GModel *const model, FILE *fp, bool bin
     }
   }
 
-  if(true)
-    fprintf(fp, "$EndPartitionedEntities\n");
-  else
-    fprintf(fp, "$EndEntities\n");
+  fprintf(fp, "$EndPartitionedEntities\n");
+
+  return entitiesToSave;
 }
 
 static void writeMSH4Overlaps(GModel *const model, FILE *fp,
