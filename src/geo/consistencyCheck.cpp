@@ -10,6 +10,8 @@
 #include <partitionFace.h>
 #include <partitionEdge.h>
 #include <partitionVertex.h>
+#include <overlapFaceManager.h>
+#include <overlapRegionManager.h>
 #include <Context.h>
 
 
@@ -219,7 +221,7 @@ EntityPackage::EntityPackage(const GModel *model, int partitionToSave) {
   }
 
   addEmbeddedVertices(model);
-
+  addOverlappedEntities(model, partitionToSave);
   fillFromNodes(model);
 }
 
@@ -287,6 +289,49 @@ void EntityPackage::addEmbeddedVertices(const GModel *model) {
       GVertex *parentVert = dynamic_cast<GVertex *>(pv->getParentEntity());
       if(parentVert && embeddedVerticesEntities.count(parentVert) > 0) {
         this->vertices.insert(*it);
+      }
+    }
+  }
+}
+
+void EntityPackage::addOverlappedEntities(const GModel *model, int partitionToSave) {
+  if(model->hasOverlaps()) {
+    // Now add the overlapped entities and the boundaries
+    for(const auto &[tag, manager] : model->getOverlapFaceManagers()) {
+      auto map = manager->getOverlapsByPartition();
+      for(overlapFace *ov : map[partitionToSave]) {
+        this->faces.insert(ov->getOverlapOn());
+        for(GEdge *edge : ov->getOverlapOn()->edges()) {
+          this->edges.insert(edge);
+        }
+        for(GVertex *vertex : ov->getOverlapOn()->vertices()) {
+          this->vertices.insert(vertex);
+        }
+      }
+      auto mapbnd = manager->getBoundariesByPartition();
+      for(partitionEdge *bnd : mapbnd[partitionToSave]) {
+        this->edges.insert(bnd);
+      }
+    }
+
+    for(const auto &[tag, manager] : model->getOverlapRegionManagers()) {
+      auto map = manager->getOverlapsByPartition();
+      for(overlapRegion *ov : map[partitionToSave]) {
+        auto overlappedRegion = ov->getOverlapOn();
+        this->regions.insert(overlappedRegion);
+        for(GFace *face : overlappedRegion->faces()) {
+          this->faces.insert(face);
+        }
+        for(GEdge *edge : overlappedRegion->edges()) {
+          this->edges.insert(edge);
+        }
+        for(GVertex *vertex : overlappedRegion->vertices()) {
+          this->vertices.insert(vertex);
+        }
+      }
+      auto mapbnd = manager->getBoundariesByPartition();
+      for(partitionFace *bnd : mapbnd[partitionToSave]) {
+        this->faces.insert(bnd);
       }
     }
   }

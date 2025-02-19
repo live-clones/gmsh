@@ -47,11 +47,13 @@ struct EntityPackage {
 
     EntityPackage() = delete;
     EntityPackage(const GModel* model, int partitionToSave);
+    EntityPackage(const GModel* model); // Save all entities
     // For all entities, loop over nodes from elements. Add the entities of the odes
     void fillFromNodes(const GModel* model);
     void addEntitiesFromNodes(const GEntity* entity);
     private:
     void addEmbeddedVertices(const GModel* model);
+    void addOverlappedEntities(const GModel* model, int partitionToSave);
 };
 
 
