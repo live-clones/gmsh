@@ -5033,6 +5033,12 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
       else
       Msg::Warning("Passed adjacency check");
     }
+    else {
+      Msg::Warning("Skipping adjacency check");
+    }
+  }
+  else {
+    Msg::Warning("No overlaps found -> no adjacency check");
   }
 
   // Edge tags
