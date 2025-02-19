@@ -4663,7 +4663,35 @@ std::set<GRegion *, GEntityPtrLessThan> regions;
     vertices = entities->vertices;
   }
   else {
-    Msg::Warning("Todo: export edges in non partitioned mesh?");
+    for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
+      if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
+        continue;
+      if((*it)->geomType() != GEntity::PartitionPoint &&
+         (saveAll || (!saveAll && (*it)->getPhysicalEntities().size() != 0)))
+        vertices.insert(*it);
+    }
+    for(auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
+      if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
+        continue;
+      if((*it)->geomType() != GEntity::PartitionCurve &&
+         (saveAll || (!saveAll && (*it)->getPhysicalEntities().size() != 0) ||
+          (*it)->geomType() == GEntity::GhostCurve))
+        edges.insert(*it);
+    }
+    for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
+      if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
+        continue;
+      if((*it)->geomType() != GEntity::PartitionSurface &&
+         (saveAll || (!saveAll && (*it)->getPhysicalEntities().size() != 0) ||
+          (*it)->geomType() == GEntity::GhostSurface))
+        faces.insert(*it);
+    }
+    for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
+      if((*it)->geomType() != GEntity::PartitionVolume &&
+         (saveAll || (!saveAll && (*it)->getPhysicalEntities().size() != 0) ||
+          (*it)->geomType() == GEntity::GhostVolume))
+        regions.insert(*it);
+    }
   }
   //getEntitiesToSave(model, partitioned, partitionToSave, saveAll, regions,
   //                  faces, edges, vertices);

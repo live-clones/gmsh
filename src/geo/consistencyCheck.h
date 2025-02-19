@@ -54,6 +54,7 @@ struct EntityPackage {
     void addEmbeddedVertices(const GModel* model);
     void addOverlappedEntities(const GModel* model, int partitionToSave);
     void setupAllEntities(const GModel* model);
+    void enforceBREPConsistency();
 };
 
 

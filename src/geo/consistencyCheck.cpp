@@ -186,6 +186,7 @@ EntityPackage::EntityPackage(const GModel *model, int partitionToSave) {
 
   if (partitionToSave == 0) {
     setupAllEntities(model);
+    enforceBREPConsistency();
     return;
   }
 
@@ -226,6 +227,7 @@ EntityPackage::EntityPackage(const GModel *model, int partitionToSave) {
   addEmbeddedVertices(model);
   addOverlappedEntities(model, partitionToSave);
   fillFromNodes(model);
+  enforceBREPConsistency();
 }
 
 
@@ -361,5 +363,31 @@ void EntityPackage::setupAllEntities(const GModel *model) {
     if((*it)->geomType() == GEntity::GeomType::PartitionPoint) {
       vertices.insert(static_cast<GVertex *>(*it));
     }
+  }
+}
+
+void EntityPackage::enforceBREPConsistency() 
+{
+  using std::for_each;
+  using std::begin;
+  using std::end;
+
+  for (GRegion* reg: regions) {
+    auto facesToAdd = reg->faces();
+    for_each(begin(facesToAdd), end(facesToAdd), [this](GFace* face) { this->faces.insert(face); });
+    auto edgesToAdd = reg->edges();
+    for_each(begin(edgesToAdd), end(edgesToAdd), [this](GEdge* edge) { this->edges.insert(edge); });
+    auto verticesToAdd = reg->vertices();
+    for_each(begin(verticesToAdd), end(verticesToAdd), [this](GVertex* vertex) { this->vertices.insert(vertex); });
+  }
+  for (GFace* face: faces) {
+    auto edgesToAdd = face->edges();
+    for_each(begin(edgesToAdd), end(edgesToAdd), [this](GEdge* edge) { this->edges.insert(edge); });
+    auto verticesToAdd = face->vertices();
+    for_each(begin(verticesToAdd), end(verticesToAdd), [this](GVertex* vertex) { this->vertices.insert(vertex); });
+  }
+  for (GEdge* edge: edges) {
+    auto verticesToAdd = edge->vertices();
+    for_each(begin(verticesToAdd), end(verticesToAdd), [this](GVertex* vertex) { this->vertices.insert(vertex); });
   }
 }
