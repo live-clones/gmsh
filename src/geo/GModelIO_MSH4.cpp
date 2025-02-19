@@ -4685,22 +4685,32 @@ static void writeMSH4Parametrizations(GModel *const model, FILE *fp,
 
 static void writeMSH4Edges(GModel *const model, FILE *fp, bool partitioned,
                               int partitionToSave, bool binary, bool saveAll,
-                              double version)
+                              double version, std::optional<EntityPackage>& entities)
 {
   if(model->getNumMEdges() == 0) return;
   // Future option: only save tags from overlaps and interfaces
   double t1 = TimeOfDay();
 
-  std::set<GRegion *, GEntityPtrLessThan> regions;
+std::set<GRegion *, GEntityPtrLessThan> regions;
   std::set<GFace *, GEntityPtrLessThan> faces;
   std::set<GEdge *, GEntityPtrLessThan> edges;
   std::set<GVertex *, GEntityPtrLessThan> vertices;
-  getEntitiesToSave(model, partitioned, partitionToSave, saveAll, regions,
-                    faces, edges, vertices);
-  getAdditionalEntities(regions, faces, edges, vertices, model->getAllOverlapBoundaries());
+
+  if(entities.has_value()) {
+    regions = entities->regions;
+    faces = entities->faces;
+    edges = entities->edges;
+    vertices = entities->vertices;
+  }
+  else {
+    Msg::Warning("Todo: export edges in non partitioned mesh?");
+  }
+  //getEntitiesToSave(model, partitioned, partitionToSave, saveAll, regions,
+  //                  faces, edges, vertices);
+  //getAdditionalEntities(regions, faces, edges, vertices, model->getAllOverlapBoundaries());
 
   // Add overlaps. Overlap boundaries shouldn't be necessary!
-  if(partitionToSave != 0) {
+  /*if(partitionToSave != 0) {
     for(const auto &[parentEdgeTag, manager] :
         model->getOverlapEdgeManagers()) {
       const auto overlapsOnPartition = manager->getOverlapsOf(partitionToSave);
@@ -4730,7 +4740,7 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool partitioned,
         regions.insert(oregion);
       }
     }
-  }
+  }*/
 
   // Additional entities ?
   std::unordered_map<MEdge, size_t, MEdgeHash, MEdgeEqual> edgeTagsDict;
@@ -4809,23 +4819,33 @@ static void writeMSH4Edges(GModel *const model, FILE *fp, bool partitioned,
 
 static void writeMSH4Faces(GModel *const model, FILE *fp, bool partitioned,
                            int partitionToSave, bool binary, bool saveAll,
-                           double version)
+                           double version, std::optional<EntityPackage>& entities)
 {
   size_t numFaceTags = model->getNumMFaces();
   if(numFaceTags == 0) return;
   double t1 = TimeOfDay();
 
+
   std::set<GRegion *, GEntityPtrLessThan> regions;
   std::set<GFace *, GEntityPtrLessThan> faces;
   std::set<GEdge *, GEntityPtrLessThan> edges;
   std::set<GVertex *, GEntityPtrLessThan> vertices;
-  getEntitiesToSave(model, partitioned, partitionToSave, saveAll, regions,
-                    faces, edges, vertices);
-  getAdditionalEntities(regions, faces, edges, vertices,
-                        model->getAllOverlapBoundaries());
+
+  if (entities.has_value()) {
+    regions = entities->regions;
+    faces = entities->faces;
+    edges = entities->edges;
+    vertices = entities->vertices;
+  }
+  else {
+    getEntitiesToSave(model, partitioned, partitionToSave, saveAll, regions,
+                      faces, edges, vertices);
+    getAdditionalEntities(regions, faces, edges, vertices,
+                          model->getAllOverlapBoundaries());
+  }
 
   // add overlaps
-  if(partitionToSave != 0) {
+  if(model->hasOverlaps() && partitionToSave != 0) {
     for(const auto &[parentEdgeTag, manager] :
         model->getOverlapEdgeManagers()) {
       const auto overlapsOnPartition = manager->getOverlapsOf(partitionToSave);
@@ -4994,8 +5014,9 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   }
 
   // partitioned entities
+  std::optional<EntityPackage> partitionedEntitiesToSave;
   if(partitioned)
-    writeMSH4PartitionedEntities(this, fp, binary, scalingFactor, version,
+    partitionedEntitiesToSave = writeMSH4PartitionedEntities(this, fp, binary, scalingFactor, version,
                       entityBounds, partitionToSave);
 
   // nodes
@@ -5016,11 +5037,11 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
 
   // Edge tags
   writeMSH4Edges(this, fp, partitioned, partitionToSave, binary, saveAll,
-                 version);
+                 version, partitionedEntitiesToSave);
 
   // Face tags
   writeMSH4Faces(this, fp, partitioned, partitionToSave, binary, saveAll,
-                 version);
+                 version, partitionedEntitiesToSave);
   // periodic
   writeMSH4PeriodicNodes(this, fp, binary, version);
 
