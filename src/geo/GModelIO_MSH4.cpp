@@ -4679,15 +4679,20 @@ static void writeMSH4Parametrizations(GModel *const model, FILE *fp,
   fprintf(fp, "$EndParametrizations\n");
 }
 
-static void writeMSH4Edges(GModel *const model, FILE *fp, bool partitioned,
+static optional<std::unordered_set<MEdge, MEdgeHash>> writeMSH4Edges(GModel *const model, FILE *fp, bool partitioned,
                               int partitionToSave, bool binary, bool saveAll,
                               double version, std::optional<EntityPackage>& entities)
 {
-  if(model->getNumMEdges() == 0) return;
   // Future option: only save tags from overlaps and interfaces
   double t1 = TimeOfDay();
 
-std::set<GRegion *, GEntityPtrLessThan> regions;
+  optional<std::unordered_set<MEdge, MEdgeHash>> logEdges;
+  constexpr bool exportEdges = true;
+  if(exportEdges) { logEdges = std::unordered_set<MEdge, MEdgeHash>(); }
+
+  if(model->getNumMEdges() == 0) return logEdges;
+
+  std::set<GRegion *, GEntityPtrLessThan> regions;
   std::set<GFace *, GEntityPtrLessThan> faces;
   std::set<GEdge *, GEntityPtrLessThan> edges;
   std::set<GVertex *, GEntityPtrLessThan> vertices;
@@ -4811,6 +4816,9 @@ std::set<GRegion *, GEntityPtrLessThan> regions;
     edgeTags.push_back(it->second);
     edgeNodes.push_back(it->first.getVertex(0)->getNum());
     edgeNodes.push_back(it->first.getVertex(1)->getNum());
+    if (exportEdges) {
+      logEdges->insert(it->first);
+    }
   }
 
   fprintf(fp, "$EdgeTags\n");
@@ -4839,6 +4847,7 @@ std::set<GRegion *, GEntityPtrLessThan> regions;
   fprintf(fp, "$EndEdgeTags\n");
 
   Msg::StatusBar(true, "Done writing %lu edges in %gs (Instead of %lu edges).", edgeTags.size(), TimeOfDay() - t1, model->getNumMEdges());
+  return logEdges;
 }
 
 static void writeMSH4Faces(GModel *const model, FILE *fp, bool partitioned,
@@ -5060,7 +5069,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
         }
       }
     }
-    Msg::Info("Checked all the %lu elements had access to the %lu nodes", savedElems->size(), savedNodes->size());
+    Msg::Info("Checked all the %lu elements had enough nodes with the %lu exported", savedElems->size(), savedNodes->size());
   }
 
   // write overlaps, AFTER the elements
@@ -5090,8 +5099,20 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   }
 
   // Edge tags
-  writeMSH4Edges(this, fp, partitioned, partitionToSave, binary, saveAll,
+  auto savedEdges = writeMSH4Edges(this, fp, partitioned, partitionToSave, binary, saveAll,
                  version, partitionedEntitiesToSave);
+
+  if (savedEdges && savedElems) {
+    for (MElement* el: *savedElems) {
+      for (unsigned k = 0; k < el->getNumEdges(); ++k) {
+        if (savedEdges->count(el->getEdge(k)) == 0) {
+          Msg::Error("Element %lu references an edge %lu which is not saved", el->getNum());
+          return 0;
+        }
+      }
+    }
+    Msg::Info("Checked all the %lu elements had enough edges with the %lu edges exported", savedElems->size(), savedEdges->size());
+  }
 
   // Face tags
   writeMSH4Faces(this, fp, partitioned, partitionToSave, binary, saveAll,
