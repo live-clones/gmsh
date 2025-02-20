@@ -4203,7 +4203,7 @@ static optional<std::unordered_set<MVertex*>> writeMSH4Nodes(GModel *const model
 
 static optional<std::unordered_set<MElement*>> writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
                               int partitionToSave, bool binary, bool saveAll,
-                              double version)
+                              double version, const std::optional<EntityPackage>& entitiesToSave)
 {
   std::set<GRegion *, GEntityPtrLessThan> regions;
   std::set<GFace *, GEntityPtrLessThan> faces;
@@ -4211,6 +4211,15 @@ static optional<std::unordered_set<MElement*>> writeMSH4Elements(GModel *const m
   std::set<GVertex *, GEntityPtrLessThan> vertices;
   getEntitiesToSave(model, partitioned, partitionToSave, saveAll, regions,
                     faces, edges, vertices);
+
+  // More entities to be sure
+  if (entitiesToSave) {
+    for (auto entity : entitiesToSave->vertices) vertices.insert(entity);
+    for (auto entity : entitiesToSave->edges) edges.insert(entity);
+    for (auto entity : entitiesToSave->faces) faces.insert(entity);
+    for (auto entity : entitiesToSave->regions) regions.insert(entity);
+  }
+
 
   constexpr bool exportElements = true;
   optional<std::unordered_set<MElement*>> allElements;
@@ -4961,7 +4970,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
 
   // elements
   auto savedElems = writeMSH4Elements(this, fp, partitioned, partitionToSave, binary, saveAll,
-                    version);
+                    version, partitionedEntitiesToSave);
 
   if (savedNodes && savedElems) {
     for (MElement* el: *savedElems) {
