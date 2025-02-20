@@ -4030,7 +4030,8 @@ getEntitiesToSave(GModel *const model, bool partitioned,
 
 static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
                            int partitionToSave, bool binary, int saveParametric,
-                           double scalingFactor, bool saveAll, double version)
+                           double scalingFactor, bool saveAll, double version,
+                           const std::optional<EntityPackage>& entitiesToSave)
 {
   std::set<GRegion *, GEntityPtrLessThan> regions;
   std::set<GFace *, GEntityPtrLessThan> faces;
@@ -4051,6 +4052,27 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
   std::map<GEdge *, std::vector<MVertex *>, GEntityPtrLessThan> additionalEdges;
   std::map<GVertex *, std::vector<MVertex *>, GEntityPtrLessThan>
     additionalVertices;
+
+  // DEBUG: add all entities from the package
+  if(entitiesToSave.has_value()) {
+    for(auto vertex : entitiesToSave->vertices) {
+      vertices.insert(vertex);
+      additionalVertices.erase(vertex);
+    }
+    for(auto edge : entitiesToSave->edges) {
+      edges.insert(edge);
+      additionalEdges.erase(edge);
+    }
+    for(auto face : entitiesToSave->faces) {
+      faces.insert(face);
+      additionalFaces.erase(face);
+    }
+    for(auto region : entitiesToSave->regions) {
+      regions.insert(region);
+      additionalRegions.erase(region);
+    }
+  }
+
   if(partitioned && partitionToSave != 0 && model->hasOverlaps()) {
     size_t numAdditionalNodes = getPartialEntitiesToSaveForOverlaps(
       model, partitionToSave, regions, faces, edges, vertices,
@@ -5009,7 +5031,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
 
   // nodes
   writeMSH4Nodes(this, fp, partitioned, partitionToSave, binary,
-                 saveParametric ? 1 : 0, scalingFactor, saveAll, version);
+                 saveParametric ? 1 : 0, scalingFactor, saveAll, version, partitionedEntitiesToSave);
 
   // elements
   writeMSH4Elements(this, fp, partitioned, partitionToSave, binary, saveAll,
