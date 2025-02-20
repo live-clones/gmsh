@@ -1978,7 +1978,7 @@ int GModel::_readMSH4(const std::string &name)
           this->_mapEdgeNum.insert({std::move(edge), elem[0]});
         }
       }
-      Msg::Info("Total number of edges is now %lu", this->_mapEdgeNum.size());
+      Msg::Info("Total number of edges is now %lu (from %lu read tags)", this->_mapEdgeNum.size(), edgeTags.size());
     }
     else if(!strncmp(&str[1], "FaceTags", 8)) {
       auto faceTags = 
