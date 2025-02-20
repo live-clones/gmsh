@@ -4802,7 +4802,7 @@ std::set<GRegion *, GEntityPtrLessThan> regions;
 
   fprintf(fp, "$EndEdgeTags\n");
 
-  Msg::StatusBar(true, "Done writing %lu edges in %gs (Instead of %g edges).", edgeTags.size(), TimeOfDay() - t1, model->getNumMEdges());
+  Msg::StatusBar(true, "Done writing %lu edges in %gs (Instead of %lu edges).", edgeTags.size(), TimeOfDay() - t1, model->getNumMEdges());
 }
 
 static void writeMSH4Faces(GModel *const model, FILE *fp, bool partitioned,
