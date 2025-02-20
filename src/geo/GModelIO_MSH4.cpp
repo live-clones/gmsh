@@ -4681,7 +4681,7 @@ static void writeMSH4Parametrizations(GModel *const model, FILE *fp,
 
 static optional<std::unordered_set<MEdge, MEdgeHash>> writeMSH4Edges(GModel *const model, FILE *fp, bool partitioned,
                               int partitionToSave, bool binary, bool saveAll,
-                              double version, std::optional<EntityPackage>& entities)
+                              double version, optional<std::unordered_set<MElement*>> elems)
 {
   // Future option: only save tags from overlaps and interfaces
   double t1 = TimeOfDay();
@@ -4692,132 +4692,35 @@ static optional<std::unordered_set<MEdge, MEdgeHash>> writeMSH4Edges(GModel *con
 
   if(model->getNumMEdges() == 0) return logEdges;
 
-  std::set<GRegion *, GEntityPtrLessThan> regions;
-  std::set<GFace *, GEntityPtrLessThan> faces;
-  std::set<GEdge *, GEntityPtrLessThan> edges;
-  std::set<GVertex *, GEntityPtrLessThan> vertices;
-
-  if(entities.has_value()) {
-    regions = entities->regions;
-    faces = entities->faces;
-    edges = entities->edges;
-    vertices = entities->vertices;
-  }
-  else {
-    for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
-      if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
-        continue;
-      if((*it)->geomType() != GEntity::PartitionPoint &&
-         (saveAll || (!saveAll && (*it)->getPhysicalEntities().size() != 0)))
-        vertices.insert(*it);
-    }
-    for(auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
-      if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
-        continue;
-      if((*it)->geomType() != GEntity::PartitionCurve &&
-         (saveAll || (!saveAll && (*it)->getPhysicalEntities().size() != 0) ||
-          (*it)->geomType() == GEntity::GhostCurve))
-        edges.insert(*it);
-    }
-    for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
-      if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
-        continue;
-      if((*it)->geomType() != GEntity::PartitionSurface &&
-         (saveAll || (!saveAll && (*it)->getPhysicalEntities().size() != 0) ||
-          (*it)->geomType() == GEntity::GhostSurface))
-        faces.insert(*it);
-    }
-    for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
-      if((*it)->geomType() != GEntity::PartitionVolume &&
-         (saveAll || (!saveAll && (*it)->getPhysicalEntities().size() != 0) ||
-          (*it)->geomType() == GEntity::GhostVolume))
-        regions.insert(*it);
-    }
-  }
-  //getEntitiesToSave(model, partitioned, partitionToSave, saveAll, regions,
-  //                  faces, edges, vertices);
-  //getAdditionalEntities(regions, faces, edges, vertices, model->getAllOverlapBoundaries());
-
-  // Add overlaps. Overlap boundaries shouldn't be necessary!
-  /*if(partitionToSave != 0) {
-    for(const auto &[parentEdgeTag, manager] :
-        model->getOverlapEdgeManagers()) {
-      const auto overlapsOnPartition = manager->getOverlapsOf(partitionToSave);
-      if(!overlapsOnPartition) { continue; }
-      for(const auto &[j, overlapFace] : *overlapsOnPartition) {
-        edges.insert(overlapFace);
-      }
-    }
-    for(const auto &[parentFaceTag, manager] :
-        model->getOverlapFaceManagers()) {
-      const auto& dict = manager->getOverlapsByPartition();
-      auto it = dict.find(partitionToSave);
-      if (it == dict.end()) continue;
-
-      for (auto ovlp : it->second) {
-        faces.insert(ovlp);
-      }
-    }
-    for(const auto &[parentVolumeTag, manager] :
-        model->getOverlapRegionManagers()) {
-
-      const auto& dict = manager->getOverlapsByPartition();
-      auto it = dict.find(partitionToSave);
-      if (it == dict.end()) continue;
-
-      for (overlapRegion* oregion : it->second) {
-        regions.insert(oregion);
-      }
-    }
-  }*/
-
-  // Additional entities ?
-  std::unordered_map<MEdge, size_t, MEdgeHash, MEdgeEqual> edgeTagsDict;
-  auto& allEdges = model->getMapEdgeNum();
-  for(GRegion *r : regions) {
-    for(size_t k = 0; k < r->getNumMeshElements(); ++k) {
-      MElement *e = r->getMeshElement(k);
-      for(std::size_t j = 0; j < e->getNumEdges(); j++) {
-        MEdge edge = e->getEdge(j);
-        if(edgeTagsDict.count(edge)) continue;
-        auto it = allEdges.find(edge);
-        if(it != allEdges.end()) { edgeTagsDict[edge] = it->second; }
-      }
-    }
-  }
-  for(GFace *f : faces) {
-    for(size_t k = 0; k < f->getNumMeshElements(); ++k) {
-      MElement *e = f->getMeshElement(k);
-      for(std::size_t j = 0; j < e->getNumEdges(); j++) {
-        MEdge edge = e->getEdge(j);
-        if(edgeTagsDict.count(edge)) continue;
-        auto it = allEdges.find(edge);
-        if(it != allEdges.end()) { edgeTagsDict[edge] = it->second; }
-      }
-    }
-  }
-  for(GEdge *e : edges) {
-    for(size_t k = 0; k < e->getNumMeshElements(); ++k) {
-      MElement *el = e->getMeshElement(k);
-      for(std::size_t j = 0; j < el->getNumEdges(); j++) {
-        MEdge edge = el->getEdge(j);
-        if(edgeTagsDict.count(edge)) continue;
-        auto it = allEdges.find(edge);
-        if(it != allEdges.end()) { edgeTagsDict[edge] = it->second; }
-      }
-    }
-  }
-
   std::vector<std::size_t> edgeTags;
   std::vector<std::size_t> edgeNodes;
   edgeTags.reserve(model->getNumMEdges());
   edgeNodes.reserve(model->getNumMEdges() * 2);
-  for(auto it = edgeTagsDict.begin(); it != edgeTagsDict.end(); ++it) {
-    edgeTags.push_back(it->second);
-    edgeNodes.push_back(it->first.getVertex(0)->getNum());
-    edgeNodes.push_back(it->first.getVertex(1)->getNum());
-    if (exportEdges) {
-      logEdges->insert(it->first);
+  if(elems) {
+    std::unordered_map<MEdge, std::size_t, MEdgeHash, MEdgeEqual> edgeTagsToKeep;
+    for (MElement* el: *elems) {
+      for (std::size_t j = 0; j < el->getNumEdges(); j++) {
+        MEdge edge = el->getEdge(j);
+        auto found = model->getMapEdgeNum().find(edge);
+        if (found != model->getMapEdgeNum().end()) {
+          edgeTagsToKeep.insert({edge, found->second});
+        }
+      }
+    }
+    for (auto [edge, tag] : edgeTagsToKeep) {
+      edgeTags.push_back(tag);
+      edgeNodes.push_back(edge.getMinVertex()->getNum());
+      edgeNodes.push_back(edge.getMaxVertex()->getNum());
+      if(exportEdges) { logEdges->insert(edge); }
+    }
+  }
+  else {
+    // Export ALL tags
+    for (auto it = model->firstMEdge(); it != model->lastMEdge(); ++it) {
+      edgeTags.push_back(it->second);
+      edgeNodes.push_back(it->first.getMinVertex()->getNum());
+      edgeNodes.push_back(it->first.getMaxVertex()->getNum());
+      if(exportEdges) { logEdges->insert(it->first); }
     }
   }
 
@@ -5100,7 +5003,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
 
   // Edge tags
   auto savedEdges = writeMSH4Edges(this, fp, partitioned, partitionToSave, binary, saveAll,
-                 version, partitionedEntitiesToSave);
+                 version, savedElems);
 
   if (savedEdges && savedElems) {
     for (MElement* el: *savedElems) {
