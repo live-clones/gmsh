@@ -48,6 +48,9 @@
 #include "StringUtils.h"
 #include "consistencyCheck.h"
 
+using std::optional;
+using std::nullopt;
+
 static bool readMSH4Physicals(GModel *const model, FILE *fp,
                               GEntity *const entity, bool binary,
                               bool swap)
@@ -3392,7 +3395,8 @@ writeMSH4OverlapBoundaries(GModel *const model, FILE *fp, int partitionToSave,
 
 static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
                                  int saveParametric, double scalingFactor,
-                                 double version, std::vector<MVertex*> *optionalRestrictedVertices = nullptr)
+                                 double version, optional<std::unordered_set<MVertex*>>& log,
+                                 std::vector<MVertex*> *optionalRestrictedVertices = nullptr)
 {
   int parametric = saveParametric;
   if(ge->dim() != 1 && ge->dim() != 2)
@@ -3425,6 +3429,13 @@ static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
   else {
     for(std::size_t i = 0; i < numVerts; i++) {
       nodesToSave[i] = ge->getMeshVertex(i);
+    }
+  }
+
+  // Logging
+  if(log) {
+    for(auto node : nodesToSave) {
+      log->insert(node);
     }
   }
 
@@ -4028,7 +4039,7 @@ getEntitiesToSave(GModel *const model, bool partitioned,
    }
 }
 
-static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
+static optional<std::unordered_set<MVertex*>> writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
                            int partitionToSave, bool binary, int saveParametric,
                            double scalingFactor, bool saveAll, double version,
                            const std::optional<EntityPackage>& entitiesToSave)
@@ -4045,6 +4056,12 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
     model->getNumMeshVertices() :
     getAdditionalEntities(regions, faces, edges, vertices, model->getAllOverlapBoundaries());
 
+  optional<std::unordered_set<MVertex*>> allNodes;
+  constexpr bool exportNodes = true;
+  if (exportNodes) {
+    allNodes = std::unordered_set<MVertex*>();
+  }
+
   // If overlapping, fill additional entities, with only a subset of nodes.
   std::map<GRegion *, std::vector<MVertex *>, GEntityPtrLessThan>
     additionalRegions;
@@ -4053,25 +4070,6 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
   std::map<GVertex *, std::vector<MVertex *>, GEntityPtrLessThan>
     additionalVertices;
 
-  // DEBUG: add all entities from the package
-  if(entitiesToSave.has_value()) {
-    for(auto vertex : entitiesToSave->vertices) {
-      vertices.insert(vertex);
-      additionalVertices.erase(vertex);
-    }
-    for(auto edge : entitiesToSave->edges) {
-      edges.insert(edge);
-      additionalEdges.erase(edge);
-    }
-    for(auto face : entitiesToSave->faces) {
-      faces.insert(face);
-      additionalFaces.erase(face);
-    }
-    for(auto region : entitiesToSave->regions) {
-      regions.insert(region);
-      additionalRegions.erase(region);
-    }
-  }
 
   if(partitioned && partitionToSave != 0 && model->hasOverlaps()) {
     size_t numAdditionalNodes = getPartialEntitiesToSaveForOverlaps(
@@ -4083,7 +4081,7 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
     numNodes += numAdditionalNodes;
   }
 
-  if(!numNodes) return;
+  if(!numNodes) return allNodes;
 
   fprintf(fp, "$Nodes\n");
 
@@ -4165,43 +4163,45 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
 
   for(auto it = vertices.begin(); it != vertices.end(); ++it) {
     writeMSH4EntityNodes(*it, fp, binary, saveParametric, scalingFactor,
-                         version);
+                         version, allNodes);
   }
   for (auto it = additionalVertices.begin(); it != additionalVertices.end(); ++it) {
     writeMSH4EntityNodes(it->first, fp, binary, saveParametric, scalingFactor,
-                         version, &it->second);
+                         version, allNodes, &it->second);
   }
   for(auto it = edges.begin(); it != edges.end(); ++it) {
     writeMSH4EntityNodes(*it, fp, binary, saveParametric, scalingFactor,
-                         version);
+                         version, allNodes);
   }
   for (auto it = additionalEdges.begin(); it != additionalEdges.end(); ++it) {
     writeMSH4EntityNodes(it->first, fp, binary, saveParametric, scalingFactor,
-                         version, &it->second);
+                         version, allNodes, &it->second);
   }
   for(auto it = faces.begin(); it != faces.end(); ++it) {
     writeMSH4EntityNodes(*it, fp, binary, saveParametric, scalingFactor,
-                         version);
+                         version, allNodes);
   }
   for (auto it = additionalFaces.begin(); it != additionalFaces.end(); ++it) {
     writeMSH4EntityNodes(it->first, fp, binary, saveParametric, scalingFactor,
-                         version, &it->second);
+                         version, allNodes, &it->second);
   }
   for(auto it = regions.begin(); it != regions.end(); ++it) {
     writeMSH4EntityNodes(*it, fp, binary, saveParametric, scalingFactor,
-                         version);
+                         version, allNodes);
   }
   for (auto it = additionalRegions.begin(); it != additionalRegions.end(); ++it) {
     writeMSH4EntityNodes(it->first, fp, binary, saveParametric, scalingFactor,
-                         version, &it->second);
+                         version, allNodes, &it->second);
   }
 
   if(binary) fprintf(fp, "\n");
 
   fprintf(fp, "$EndNodes\n");
+
+  return allNodes;
 }
 
-static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
+static optional<std::unordered_set<MElement*>> writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
                               int partitionToSave, bool binary, bool saveAll,
                               double version)
 {
@@ -4211,6 +4211,12 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
   std::set<GVertex *, GEntityPtrLessThan> vertices;
   getEntitiesToSave(model, partitioned, partitionToSave, saveAll, regions,
                     faces, edges, vertices);
+
+  constexpr bool exportElements = true;
+  optional<std::unordered_set<MElement*>> allElements;
+  if (exportElements) {
+    allElements = std::unordered_set<MElement*>();
+  }
 
   /*
   If we write only one partition, we don't save the neighboring entities, but the overlap entities
@@ -4355,7 +4361,7 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
     }
   }
 
-  if(!numElements) return;
+  if(!numElements) return allElements;
 
   fprintf(fp, "$Elements\n");
 
@@ -4404,6 +4410,12 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
       }
 
       std::size_t N = it->second.size();
+      if (exportElements) {
+        for (auto element : it->second) {
+          allElements->insert(element);
+        }
+      }
+
       if(binary) {
         const int numVertPerElm = MElement::getInfoMSH(elmType);
         std::size_t n = 1 + numVertPerElm;
@@ -4435,6 +4447,8 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
   if(binary) fprintf(fp, "\n");
 
   fprintf(fp, "$EndElements\n");
+
+  return allElements;
 }
 
 static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
@@ -5030,12 +5044,24 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
                       entityBounds, partitionToSave);
 
   // nodes
-  writeMSH4Nodes(this, fp, partitioned, partitionToSave, binary,
+  auto savedNodes = writeMSH4Nodes(this, fp, partitioned, partitionToSave, binary,
                  saveParametric ? 1 : 0, scalingFactor, saveAll, version, partitionedEntitiesToSave);
 
   // elements
-  writeMSH4Elements(this, fp, partitioned, partitionToSave, binary, saveAll,
+  auto savedElems = writeMSH4Elements(this, fp, partitioned, partitionToSave, binary, saveAll,
                     version);
+
+  if (savedNodes && savedElems) {
+    for (MElement* el: *savedElems) {
+      for (unsigned k = 0; k < el->getNumVertices(); ++k) {
+        if (savedNodes->count(el->getVertex(k)) == 0) {
+          Msg::Error("Element %lu references node %lu which is not saved", el->getNum(), el->getVertex(k)->getNum());
+          return 0;
+        }
+      }
+    }
+    Msg::Info("Checked all the %lu elements had access to the %lu nodes", savedElems->size(), savedNodes->size());
+  }
 
   // write overlaps, AFTER the elements
   if(partitioned && hasOverlaps()) {
