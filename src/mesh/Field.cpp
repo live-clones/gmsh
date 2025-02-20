@@ -3193,6 +3193,7 @@ FieldManager::FieldManager()
   mapTypeName["Octree"] = new FieldFactoryT<OctreeField>();
   mapTypeName["Distance"] = new FieldFactoryT<DistanceField>();
   AlphaShape::registerAlphaShapeField(this);
+  AlphaShape::registerAlphaShapeInOutField(this);
   mapTypeName["Attractor"] = new FieldFactoryT<DistanceField>();
   mapTypeName["Extend"] = new FieldFactoryT<ExtendField>();
   mapTypeName["Restrict"] = new FieldFactoryT<RestrictField>();

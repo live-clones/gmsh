@@ -44,6 +44,8 @@ void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, cons
 
 void registerAlphaShapeField(FieldManager* fm);
 
+void registerAlphaShapeInOutField(FieldManager* fm);
+
 void _createBoundaryOctree(const std::string & boundaryModel, const int bndTag, BoundaryOctree & octree, std::vector<alphaShapeBndEdge>& bndEdges);
 void _createOctreeForFace(GFace* gf, ElementOctree &octree);
 

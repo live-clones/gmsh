@@ -594,9 +594,6 @@ public:
     _kdtree = new SPoint3KDTree(3, _pc2kdtree,
                                 nanoflann::KDTreeSingleIndexAdaptorParams(10));
     _kdtree->buildIndex();
-    // if (dim == 3){
-    //   createOctree(volumeTag, _octree);
-    // }
     updateNeeded = false;
   }
   void update()
@@ -614,38 +611,6 @@ public:
     res.init(&_outIndex, &outDistSqr);
     _kdtree->findNeighbors(res, &pt[0], nanoflann::SearchParams(10));
     double inOrOut = 1;
-    // if (dim == 3){
-    //   BBox<3> search_bbox;
-    //   search_bbox.extends({X, Y, Z});
-    //   std::vector<MElement*> el_search;
-    //   _octree.search(search_bbox, el_search);
-    //   std::sort(el_search.begin(), el_search.end());
-    //   el_search.erase(std::unique(el_search.begin(), el_search.end()), el_search.end());      
-    //   for (auto e : el_search){
-    //     inOrOut = -1.;
-    //     auto a = e->getVertex(0)->point();
-    //     auto b = e->getVertex(1)->point();
-    //     auto c = e->getVertex(2)->point();
-    //     auto d = e->getVertex(3)->point();
-    //     // printf("a  : %.8f %.8f %.8f\n", a.x(), a.y(), a.z());
-    //     // printf("b  : %.8f %.8f %.8f\n", b.x(), b.y(), b.z());
-    //     // printf("c  : %.8f %.8f %.8f\n", c.x(), c.y(), c.z());
-    //     // printf("d  : %.8f %.8f %.8f\n", d.x(), d.y(), d.z());
-    //     // printf("pt : %.8f %.8f %.8f\n", X, Y, Z);
-    //     // printf("robusPredicates0 : %.8f\n", robustPredicates::orient3d(a, b, c, pt));
-    //     // printf("robusPredicates1 : %.8f\n", robustPredicates::orient3d(a, d, b, pt));
-    //     // printf("robusPredicates2 : %.8f\n", robustPredicates::orient3d(a, c, d, pt));
-    //     // printf("robusPredicates3 : %.8f\n", robustPredicates::orient3d(b, d, c, pt));
-    //     if (robustPredicates::orient3d(a, b, c, pt) <= 0 &
-    //         robustPredicates::orient3d(a, b, d, pt) <= 0 &
-    //         robustPredicates::orient3d(a, c, d, pt) <= 0 &
-    //         robustPredicates::orient3d(b, c, d, pt) <= 0){
-    //       inOrOut = 1;
-    //       break;
-    //     }
-    //   }
-    // }
-    // printf("node (%f, %f, %f) is %f\n", X, Y, Z, inOrOut); 
     return inOrOut*sqrt(outDistSqr);
   }
 };
@@ -653,6 +618,131 @@ void AlphaShape::registerAlphaShapeField(FieldManager* fm)
 {
   fm->mapTypeName["AlphaShapeDistance"] = new FieldFactoryT<AlphaShapeDistanceField>();
 }
+
+class AlphaShapeInOutField : public Field {
+  OctreeNode<3, 32, MTriangle*>* _octree;
+
+
+public:
+  int tag;
+  double size_in;
+  double size_out;
+
+  AlphaShapeInOutField()
+  {
+    tag = -1;
+    size_in = 0.;
+    size_out = 0.;
+    options["Tag"] = new FieldOptionInt(
+      tag, "Tag of discrete three-dimensional surface entity", &updateNeeded);
+    options["Size_in"] = new FieldOptionDouble(
+      size_in, "Mesh size inside the volume", &updateNeeded);
+    options["Size_out"] = new FieldOptionDouble(
+      size_out, "Mesh size outside the volume", &updateNeeded);
+    updateNeeded = true;
+  }
+
+  ~AlphaShapeInOutField()
+  {
+    if(_octree != nullptr) 
+      delete _octree;
+  }
+  const char *getName() { return "AlphaShapeInOut"; }
+  std::string getDescription()
+  {
+    return "Return value of size_in if the point is inside the volume, size_out otherwise.";
+  }
+  // Useless here
+  void set(int tag)
+  {
+    updateNeeded = false;
+  }
+  void update()
+  {
+    if (updateNeeded == true){
+      if (_octree != nullptr) delete _octree;
+      _octree = new OctreeNode<3, 32, MTriangle*>();
+      
+      GFace* df = GModel::current()->getFaceByTag(tag);
+      
+      // Set bbox
+      BBox<3> bbox;
+      for (auto f: df->triangles){
+        for (size_t i=0; i<3; i++){
+          bbox.extends({f->getVertex(i)->x(), f->getVertex(i)->y(), f->getVertex(i)->z()});
+        }
+      }
+      bbox*=1.1;
+      _octree->set_bbox(bbox);
+      for (auto f : df->triangles){
+        BBox<3> bb;
+        for (size_t i=0; i<3; i++){
+          auto v = f->getVertex(i);
+          bb.extends({v->x(), v->y(), v->z()});
+        }
+        _octree->add(f, bb);
+      }
+    }
+    updateNeeded = false;
+      // Msg::Error("Set must be called explicitly with AlphaShapeInOut field");
+      // --> TODO !! Octree creation and update
+  }
+  using Field::operator();
+  virtual double operator()(double X, double Y, double Z, GEntity *ge = nullptr)
+  {
+    if (updateNeeded){
+      update();
+    }
+    if(!_octree) return MAX_LC;
+    SVector3 pt(X, Y, Z);
+    SVector3 pt_inf(_octree->bbox_.max[0], Y, Z);
+    bool in = false;
+    int counter = 0; 
+    BBox<3> bbox_search; 
+    bbox_search.extends({pt[0], pt[1], pt[2]});
+    bbox_search.extends({pt_inf[0], pt_inf[1], pt_inf[2]});
+    std::vector<MTriangle*> res;
+    _octree->search(bbox_search, res);
+    std::sort(res.begin(), res.end());
+    res.erase(std::unique(res.begin(), res.end()), res.end());
+    #pragma omp parallel for
+    for (auto tri : res){
+      SVector3 pa(tri->getVertex(0)->x(), tri->getVertex(0)->y(),tri->getVertex(0)->z());
+      SVector3 pb(tri->getVertex(1)->x(), tri->getVertex(1)->y(),tri->getVertex(1)->z());
+      SVector3 pc(tri->getVertex(2)->x(), tri->getVertex(2)->y(),tri->getVertex(2)->z());
+      auto orient1 = robustPredicates::orient3d(pa.data(), pb.data(), pc.data(), pt.data());
+      auto orient2 = robustPredicates::orient3d(pa.data(), pb.data(), pc.data(), pt_inf.data());
+      if (orient1*orient2 >= 0)
+        continue;
+      double t = orient1/(orient1-orient2);
+      SVector3 p_intersect = pt + t*(pt_inf-pt);
+      auto v0 = pc-pa;
+      auto v1 = pb-pa;
+      auto normal = crossprod(v0, v1).unit();
+      auto v2 = p_intersect-pa;
+      double dot00 = dot(v0, v0);
+      double dot01 = dot(v0, v1);
+      double dot02 = dot(v0, v2);
+      double dot11 = dot(v1, v1);
+      double dot12 = dot(v1, v2);
+      double invDenom = 1. / (dot00 * dot11 - dot01 * dot01);
+      double u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+      double v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+      // printf("u %f, v %f \n", u, v);
+      if (u >= 0 && v >= 0 && u + v <= 1){
+        counter++;
+      }
+    }
+    in = (counter % 2 == 1);
+    return in ? size_in : size_out;
+  }
+};
+void AlphaShape::registerAlphaShapeInOutField(FieldManager* fm)
+{
+  fm->mapTypeName["AlphaShapeInOut"] = new FieldFactoryT<AlphaShapeInOutField>();
+
+}
+
 
 static double _faceSizeFromMap(PolyMesh::HalfEdge *he, std::unordered_map<int, double> & sizeAtNodes){
   return 1./3.* (sizeAtNodes[he->v->data] + sizeAtNodes[he->next->v->data] + sizeAtNodes[he->next->next->v->data]);
@@ -2264,19 +2354,13 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize, const
   gr->removeElements(TYPE_TET);
 
   std::vector<MTetrahedron *> tets;
-  // delaunayMeshIn3DHxt(vertices, tets);
-  // delaunayMeshIn3DHxt(gr->mesh_vertices, tets);
   HXTMesh *mesh;
   hxtMeshCreate(&mesh);
 
   size_t nvert = gr->mesh_vertices.size();
 
-  printf("nvert : %lu \n", nvert);
-  // hxtAlignedMalloc(&mesh->vertices.coord, (nvert) * 4 * sizeof(double));
   hxtAlignedMalloc(&mesh->vertices.coord, (nvert+8) * 4 * sizeof(double));
   
-  printf("malloced %lu \n", (nvert+8));
-
   double coord_max[3] = {-1e10, -1e10, -1e10};
   double coord_min[3] = {1e10, 1e10, 1e10};
   for(size_t i = 0; i < nvert; i++) {
@@ -2403,8 +2487,10 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize, const
       size_t i_face = nod == HXT_GHOST_VERTEX ? 3 : ext;
       auto tet_neigh = mesh->tetrahedra.neigh[4*i+i_face]/4;
       auto tet_face = mesh->tetrahedra.neigh[4*i+i_face]%4;
-      setFacetConstraint(mesh, tet_neigh, tet_face);
-      mesh->tetrahedra.neigh[4*tet_neigh+tet_face] = HXT_NO_ADJACENT;
+      if (tet_neigh < mesh->tetrahedra.num){
+        setFacetConstraint(mesh, tet_neigh, tet_face);
+        mesh->tetrahedra.neigh[4*tet_neigh+tet_face] = HXT_NO_ADJACENT;
+      }
       // mesh->tetrahedra.color[i] = tag+1;
       mesh->tetrahedra.color[i] = HXT_COLOR_OUT;
       // mesh->tetrahedra.color[i] = 10;
@@ -2597,7 +2683,7 @@ void postProPoints(std::vector<SPoint3> points, std::vector<double> data, const 
 
 // Compute alpha shape of tetrahedra in discrete entity dim, tag
 void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int sizeFieldTag, const int tagAlpha, const int tagAlphaBoundary, const bool removeDisconnectedNodes, const bool returnTri2TetMap, std::vector<size_t>& tri2Tet){
-  auto t1 = std::chrono::steady_clock::now(); 
+  // auto t1 = std::chrono::steady_clock::now(); 
   
 
   GModel* gm = GModel::current();
@@ -2608,19 +2694,12 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
     return;
   }
   // create size field on nodes
-  auto t2 = std::chrono::steady_clock::now(); 
-  
+
+
   Field* field = GModel::current()->getFields()->get(sizeFieldTag);
-  std::unordered_map<MVertex*, double> sizeAtNodes;
-  for (auto _gr : gm->getRegions()){
-    for(MVertex *v : _gr->mesh_vertices) {
-      sizeAtNodes[v] = field->operator()(v->x(), v->y(), v->z(), NULL);
-    }
-  }
-
-  auto t3 = std::chrono::steady_clock::now(); 
-
   
+  // std::unordered_map<MTetrahedron*, double> sizeAtTetBarycenter;
+  std::vector<double> sizeAtTetBarycenter(gr->getNumMeshElementsByType(TYPE_TET));
   if (gr->getNumMeshElementsByType(TYPE_TET) == 0) {
     Msg::Error("No tetrahedra in entity with tag %d\n", tag);
     return;
@@ -2629,30 +2708,30 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
   // Create list of neighbors, using node indices (!)
   std::vector<size_t> neighbors;
   std::vector<size_t> tetNodes(4*n_tets);
+  // auto t2 = std::chrono::steady_clock::now(); 
+  field->operator()(0,0,0, NULL); // this does the update of the size field
+  #pragma omp parallel for
   for (size_t i=0; i<gr->getNumMeshElementsByType(TYPE_TET); i++){
     MTetrahedron* tet = gr->tetrahedra[i];
     for (size_t j=0; j<4; j++){
       tetNodes[4*i+j] = tet->getVertex(j)->getNum();
     }
+    auto tet_bary = tet->barycenter();
+    sizeAtTetBarycenter[i] = field->operator()(tet_bary.x(), tet_bary.y(), tet_bary.z(), NULL);
   }
+  // auto t3 = std::chrono::steady_clock::now(); 
   computeTetNeighbors_(tetNodes, neighbors);
   std::unordered_set<MVertex*> verticesInConnected;
   // Compute the alpha shape
   std::vector<bool> _touched(n_tets, false);
   std::vector<size_t> alphaFaces;
   std::vector<MTetrahedron*> alphaTets;
-  double hTet, R, q;
+  double hTet, R;
   SPoint3 cc;
   for (size_t i=0; i<n_tets; i++){
     auto tet = gr->tetrahedra[i];
     R = _tetCircumCenter(tet);
-    // hTet = tetSizeFromSizeField(tet, sizeAtNodes);
-    auto tet_bary = tet->barycenter();
-    // printf("tet_bary : %f, %f, %f \n", tet_bary.x(), tet_bary.y(), tet_bary.z());
-    hTet = field->operator()(tet_bary.x(), tet_bary.y(), tet_bary.z(), NULL);
-    if (hTet == MAX_LC){
-      hTet = 1e-12;
-    } 
+    hTet = sizeAtTetBarycenter[i];
     if (R/hTet < alpha && !_touched[i]){
       std::stack<size_t> _s;
       _s.push(i);
@@ -2672,9 +2751,7 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
             size_t i_t_neigh = neighbors[4*i_t+j]/4;
             auto tet_neigh = gr->tetrahedra[i_t_neigh];
             R = _tetCircumCenter(tet_neigh);
-            // hTet = tetSizeFromSizeField(tet, sizeAtNodes);
-            auto tet_bary = tet_neigh->barycenter();
-            hTet = field->operator()(tet_bary.x(), tet_bary.y(), tet_bary.z(), NULL);
+            hTet = sizeAtTetBarycenter[i_t_neigh];
             if (hTet == MAX_LC){
               hTet = 1e-12;
             }
@@ -2761,7 +2838,6 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
     size_t tetIndex = alphaFaces[i]/4;
     size_t faceIndex = alphaFaces[i]%4;
     auto tet = gr->tetrahedra[tetIndex];
-    size_t* t = &tetNodes[tetIndex];
     auto f_i = tet->getFace(faceIndex);
     MVertex* v0 = f_i.getVertex(0);
     MVertex* v1 = f_i.getVertex(1);
@@ -2774,14 +2850,15 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
     }
   }
   // auto t4 = std::chrono::steady_clock::now(); 
-  // auto dur0 = std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1);
-  // auto dur1 = std::chrono::duration_cast<std::chrono::milliseconds>(t3-t2);
-  // auto dur2 = std::chrono::duration_cast<std::chrono::milliseconds>(t4-t3);
-  // auto durTotal = std::chrono::duration_cast<std::chrono::milliseconds>(t4-t1);
+  // auto dur0 = std::chrono::duration_cast<std::chrono::microseconds>(t2-t1);
+  // auto dur1 = std::chrono::duration_cast<std::chrono::microseconds>(t3-t2);
+  // auto dur2 = std::chrono::duration_cast<std::chrono::microseconds>(t4-t3);
+  // auto durTotal = std::chrono::duration_cast<std::chrono::microseconds>(t4-t1);
   // printf("initial      time : %f percent \n", 100*double(dur0.count())/double(durTotal.count()) );
   // printf("size field   time : %f percent \n", 100*double(dur1.count())/double(durTotal.count()) );
   // printf("rest of as   time : %f percent \n", 100*double(dur2.count())/double(durTotal.count()) );
 }
+
 
 int split_edge(PolyMesh* pm, PolyMesh::HalfEdge* he, SVector3& position, int data, std::vector<PolyMesh::Face*>& newFaces, std::vector<PolyMesh::Vertex*>& linkedVertices){
     linkedVertices.push_back(he->v);
@@ -3018,25 +3095,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
   PolyMesh* pm; 
   // printf("hmm 3 \n");
   std::vector<PolyMesh::Face*> toRemove;
-  int nonManifold = _GFace2PolyMesh(surfaceTag, &pm, toRemove);
-  // print4debug(pm, 0);
-  // Check for distorted elements
-  // for (auto f : pm->faces){
-  //   auto v0 = f->he->v;
-  //   auto v1 = f->he->next->v;
-  //   auto v2 = f->he->next->next->v;
-  //   auto p0 = v0->position;
-  //   auto p1 = v1->position;
-  //   auto p2 = v2->position;
-  //   auto check = robustPredicates::orient2d(p0, p1, p2);
-  //   printf("check : %f \n", check);
-  //   if (check <= 0){
-  //     Msg::Warning("Degenerate face %d, skipping edge splitting", f->data);
-  //     exit(0);
-  //   }
-  // }
-
-  // int nonManifold = GFace2PolyMesh(surfaceTag, &pm);
+  _GFace2PolyMesh(surfaceTag, &pm, toRemove);
   // Make set of toRemove
   std::set<PolyMesh::Face*> toRemoveSet;
   for (auto f : toRemove){
@@ -3072,14 +3131,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
 
   std::set<int> flaggedVertices;
   double dimensionFactor = 4/sqrt(6);
-  // double h0 = h;
-  // double h1 = h;
-  int ptIndex = gm->getMaxVertexNumber();
 
-  int nNodesDeleted = 0;
-
-
-  size_t ii=0;
   while (!edgeNodesSorted.empty()){
 
     // printf("edgeNodesSorted size : %lu \n", edgeNodesSorted.size());
@@ -3391,9 +3443,7 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
     double *nodeNormals = NULL;
     // HXTEdges* edges = NULL;
     // hxtCurvatureRusinkiewicz(m, &nodalCurvatures, &crossField, edges, 1);
-    printf("here \n");
-    hxtCurvatureAndNormalRusinkiewicz(m, &nodalCurvatures, &nodeNormals, 1);
-    printf("here1\n");
+    hxtCurvatureAndNormalRusinkiewicz(m, &nodalCurvatures, &nodeNormals, 0);
 
     nodalCurvature.resize(2*m->vertices.num);
     std::vector<double> dataDebug(m->vertices.num);
@@ -3443,7 +3493,7 @@ void _createVolumeOctree3D(const std::string & boundaryModel, OctreeNode<3, 64, 
     gm_boundary->getEntities(bndEntities, 3); 
     std::vector<MElement*> allElements;
     for (auto e : bndEntities){
-      // if (e->dim() < 2) continue;
+      if (e->dim() < 2) continue;
       size_t n_elem = e->getNumMeshElements();
       for (size_t i_el = 0; i_el<n_elem; i_el++){
         MElement *elem = e->getMeshElement(i_el);
@@ -3460,7 +3510,6 @@ void _createVolumeOctree3D(const std::string & boundaryModel, OctreeNode<3, 64, 
       for (size_t i=0; i<el->getNumVertices(); i++){
         el_bbox.extends({el->getVertex(i)->x(), el->getVertex(i)->y(), el->getVertex(i)->z()});
       }
-      
       octree.add(el, el_bbox);
     }
     gm_alphaShape->setAsCurrent();
@@ -3470,6 +3519,9 @@ void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, co
   auto gm = GModel::current();
   auto gr = GModel::current()->getRegionByTag(fullTag);
   
+  auto t1 = std::chrono::steady_clock::now(); 
+  
+
   // Update the distance field
   std::vector<SPoint3> points;
   for (auto it : *GModel::current()->getFields()){
@@ -3504,6 +3556,8 @@ void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, co
     }
   }
   
+  auto t2 = std::chrono::steady_clock::now(); 
+  
   // create size field on nodes
   Field* field = GModel::current()->getFields()->get(sizeFieldTag);
   std::unordered_map<MVertex*, double> sizeAtNodes;
@@ -3517,6 +3571,8 @@ void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, co
       allVertices.push_back(v);
     }
   }
+  auto t3 = std::chrono::steady_clock::now(); 
+  
   std::unordered_set<MVertex*> verticesInConnected;
 
   std::vector<GEntity*> entities;
@@ -3542,9 +3598,11 @@ void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, co
     octree.add(v, v_bbox);
   }
 
+  auto t4 = std::chrono::steady_clock::now(); 
   OctreeNode<3, 64, MElement*> volume_octree;
   _createVolumeOctree3D(boundaryModel, volume_octree);
 
+  auto t5 = std::chrono::steady_clock::now(); 
   printf("number of nodes in the mesh : %lu\n", gr->mesh_vertices.size());
   
   std::unordered_set<MVertex*> _deleted;
@@ -3584,10 +3642,23 @@ void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, co
     }
   }
   for (auto v : _deleted){
-    printf("deleting vertex %d (%f, %f, %f)\n", v->getNum(), v->x(), v->y(), v->z());
+    printf("deleting vertex %lu (%f, %f, %f)\n", v->getNum(), v->x(), v->y(), v->z());
     gr->removeMeshVertex(v);
     // delete v;
   }
+  auto t6 = std::chrono::steady_clock::now(); 
+
+  auto dur1 = std::chrono::duration_cast<std::chrono::microseconds>(t2-t1);
+  auto dur2 = std::chrono::duration_cast<std::chrono::microseconds>(t3-t2);
+  auto dur3 = std::chrono::duration_cast<std::chrono::microseconds>(t4-t3);
+  auto dur4 = std::chrono::duration_cast<std::chrono::microseconds>(t5-t4);
+  auto dur5 = std::chrono::duration_cast<std::chrono::microseconds>(t6-t5);
+  auto durTotal = std::chrono::duration_cast<std::chrono::microseconds>(t6-t1);
+  printf("alpha dist fi time : %f percent \n", 100*double(dur1.count())/double(durTotal.count()) );
+  printf("size field    time : %f percent \n", 100*double(dur2.count())/double(durTotal.count()) );
+  printf("2D entities   time : %f percent \n", 100*double(dur3.count())/double(durTotal.count()) );
+  printf("octree        time : %f percent \n", 100*double(dur4.count())/double(durTotal.count()) );
+  printf("deletion      time : %f percent \n", 100*double(dur5.count())/double(durTotal.count()) );
 
   printf("number of nodes in the mesh : %lu\n", gr->mesh_vertices.size());
 
@@ -3751,29 +3822,20 @@ void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std
   }
 
   std::unordered_set<size_t> projectedControlNodes;
-  auto gr = gm_alphaShape->getRegionByTag(tag);
   for (size_t i=0; i<nodeTags.size(); i++){
-    
     
     bool onPoint = false;
     bool onLine = false;
-    // MVertex* v = gf->getMeshVertex(i);
-    // printf("new vertex \n");
     MVertex* v = gm_alphaShape->getMeshVertexByTag(nodeTags[i]);
     if (v == nullptr) {
       Msg::Warning("Vertex with tag %d not found", nodeTags[i]);
       continue;
     }
-    
-
-    // printf("got vertex %zu \n", v->getNum());
     bool intersect = false;
     SVector3 x0(v->point());
     SVector3 dx(nodesDx[3*i], nodesDx[3*i+1], nodesDx[3*i+2]);
     SVector3 x1 = x0 + dx;
-   
-    
-   
+
     // We check if it is a boundary node -> if yes, it is forced to stay on the boundary
     SVector3 x1_projected;
     if (boundaryNodesSet.find(v) != boundaryNodesSet.end()) {
