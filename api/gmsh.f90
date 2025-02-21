@@ -15573,16 +15573,22 @@ module gmsh
   end function ivectordouble_
 
   subroutine ivectorstring_(o, cstrs, cptrs)
-    character(len=*), intent(in) :: o(:)
+    character(len=*), intent(in), optional :: o(:)
     character(len=GMSH_API_MAX_STR_LEN, kind=c_char), target, allocatable, intent(out) :: cstrs(:)
     type(c_ptr), allocatable, intent(out) :: cptrs(:)
     integer :: i
-    allocate(cstrs(size(o)))    ! Return to keep references from cptrs
-    allocate(cptrs(size(o)))
-    do i = 1, size(o)
+
+    if (present(o)) then
+      allocate(cstrs(size(o)))  ! Return to keep references from cptrs
+      allocate(cptrs(size(o)))
+      do i = 1, size(o)
         cstrs(i) = istring_(o(i))
         cptrs(i) = c_loc(cstrs(i))
-    end do
+      end do
+    else
+      allocate(cstrs(0))
+      allocate(cptrs(0))
+    end if
   end subroutine ivectorstring_
 
   function ivectorpair_(o) result(v)
