@@ -4256,6 +4256,34 @@ static optional<std::unordered_set<MVertex*>> writeMSH4Nodes(GModel *const model
   return allNodes;
 }
 
+template <int dim>
+static void fillElementsToSaveForOverlaps(
+  GModel *const model, int partitionToSave,
+  std::unordered_map<GEntity *, std::unordered_set<MElement *>>
+    &elementsToSaveByEntity,
+  const std::set<typename OverlapTypes<dim>::Entity *, GEntityPtrLessThan>
+    &entities)
+{
+  for(const auto &[parentRegionTag, manager] :
+      OverlapTypes<dim>::getManagers(model)) {
+    const auto &map = manager->getOverlapsByPartition();
+    auto it = map.find(partitionToSave);
+    if(it == map.end()) continue;
+    for(auto *ovlpr : it->second) {
+      auto *on = ovlpr->getOverlapOn();
+      if(entities.count(on) == 0) {
+        Msg::Error("Saving elements of an overlap but the covered entity of "
+                   "dim %d is not exported.",
+                   dim);
+      }
+      auto &set = elementsToSaveByEntity[on];
+      for(std::size_t i = 0; i < ovlpr->getNumMeshElements(); i++) {
+        set.insert(ovlpr->getMeshElement(i));
+      }
+    }
+  }
+}
+
 static optional<std::unordered_set<MElement*>> writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
                               int partitionToSave, bool binary, bool saveAll,
                               double version, const std::optional<EntityPackage>& entitiesToSave)
@@ -4275,6 +4303,26 @@ static optional<std::unordered_set<MElement*>> writeMSH4Elements(GModel *const m
     for (auto entity : entitiesToSave->regions) regions.insert(entity);
   }
 
+  std::unordered_map<GEntity*, std::unordered_set<MElement*>> elementsToSaveByEntity; // Save all elements if not entry
+  auto isParititionedOnMe= [partitionToSave, partitioned] (GEntity* ent) -> bool {
+    if (!partitioned || partitionToSave == 0) return true;
+    if (ent->geomType() == GEntity::PartitionPoint) {
+      auto parts = static_cast<partitionVertex*>(ent)->getPartitions();
+      return std::find(parts.begin(), parts.end(), partitionToSave) != parts.end();
+    }
+    if (ent->geomType() == GEntity::PartitionCurve) {
+      auto parts = static_cast<partitionEdge*>(ent)->getPartitions();
+      return std::find(parts.begin(), parts.end(), partitionToSave) != parts.end();
+    }
+    if (ent->geomType() == GEntity::PartitionSurface) {
+      auto parts = static_cast<partitionFace*>(ent)->getPartitions();
+      return std::find(parts.begin(), parts.end(), partitionToSave) != parts.end();
+    }
+    if (ent->geomType() == GEntity::PartitionVolume) {
+      auto parts = static_cast<partitionRegion*>(ent)->getPartitions();
+      return std::find(parts.begin(), parts.end(), partitionToSave) != parts.end();
+    }
+  };
 
   constexpr bool exportElements = true;
   optional<std::unordered_set<MElement*>> allElements;
@@ -4283,53 +4331,26 @@ static optional<std::unordered_set<MElement*>> writeMSH4Elements(GModel *const m
   }
 
   /*
-  If we write only one partition, we don't save the neighboring entities, but the overlap entities
-  They know their elements, but we will export them with the entity tag of the
-  partitioned entity they cover
+  We do not anymore export the overlap entities, but the entities they cover instead.
+  Then we filter to only save relevant elements on each overlapped entity.
   */
-  if(partitionToSave != 0) {
-    for(const auto &[parentEdgeTag, manager] :
-        model->getOverlapEdgeManagers()) {
-      const auto overlapsOnPartition = manager->getOverlapsOf(partitionToSave);
-      if(!overlapsOnPartition) { continue; }
-      for(const auto &[j, overlapFace] : *overlapsOnPartition) {
-        edges.insert(overlapFace);
-      }
-    }
-    for(const auto &[parentFaceTag, manager] :
-        model->getOverlapFaceManagers()) {
-      /*const auto &overlapsOnPartition = manager->getOverlapsOf(partitionToSave);
-      if(!overlapsOnPartition) { continue; }
-      for(const auto &[j, overlapFace] : *overlapsOnPartition) {
-        faces.insert(overlapFace);
-      }*/
-      auto it = manager->getOverlapsByPartition().find(partitionToSave);
-      if(it == manager->getOverlapsByPartition().end()) { continue; }
-      for(overlapFace *ovlpr : it->second) faces.insert(ovlpr);
-    }
-    for(const auto &[parentRegionTag, manager] :
-        model->getOverlapRegionManagers()) {
 
-      auto it = manager->getOverlapsByPartition().find(partitionToSave);
-      if(it == manager->getOverlapsByPartition().end()) { continue; }
-      for(overlapRegion *ovlpr : it->second) regions.insert(ovlpr);
-
-    }
-  }
+  fillElementsToSaveForOverlaps<3>(model, partitionToSave, elementsToSaveByEntity, regions);
+  fillElementsToSaveForOverlaps<2>(model, partitionToSave, elementsToSaveByEntity, faces);
 
   std::map<std::pair<int, int>, std::vector<MElement *> > elementsByType[4];
   std::size_t numElements = 0;
 
+  for (const auto& [entity, elements] : elementsToSaveByEntity) {
+    Msg::Info("Partial save on entity of dim %d and tag %d", entity->dim(), entity->tag());
+  }
+  Msg::Info("Num of region overlap managers is %lu", model->getOverlapRegionManagers().size());
+  Msg::Info("Num of face overlap managers is %lu", model->getOverlapFaceManagers().size());
+
   for(auto it = vertices.begin(); it != vertices.end(); ++it) {
     GVertex *vertex = *it;
     if(!saveAll && vertex->physicals.size() == 0) continue;
-
     int entityTag = vertex->tag();
-    // If it is an overlap, put the tag of the parent entity
-    if (vertex->geomType() == GEntity::OverlapPoint) {
-      //overlapVertex *or = static_cast<overlapVertex *>(vertex);
-      //entityTag = or->getOverlapOn()->tag();
-    }
 
     numElements += vertex->points.size();
     for(std::size_t i = 0; i < vertex->points.size(); i++) {
@@ -4345,11 +4366,6 @@ static optional<std::unordered_set<MElement*>> writeMSH4Elements(GModel *const m
       continue;
 
     int entityTag = edge->tag();
-    // If it is an overlap, put the tag of the parent entity
-    if(edge->geomType() == GEntity::OverlapCurve) {
-      overlapEdge *oe = static_cast<overlapEdge *>(edge);
-      entityTag = oe->getOverlapOn()->tag();
-    }
 
     numElements += edge->lines.size();
     for(std::size_t i = 0; i < edge->lines.size(); i++) {
@@ -4365,21 +4381,26 @@ static optional<std::unordered_set<MElement*>> writeMSH4Elements(GModel *const m
       continue;
 
     int entityTag = face->tag();
-    // If it is an overlap, put the tag of the parent entity
-    if(face->geomType() == GEntity::OverlapSurface) {
-      overlapFace *of = static_cast<overlapFace *>(face);
-      entityTag = of->getOverlapOn()->tag();
+    auto restricted = elementsToSaveByEntity.find(face);
+    if(restricted != elementsToSaveByEntity.end()) {
+      numElements += restricted->second.size();
+      for(auto element : restricted->second) {
+        std::pair<int, int> p(entityTag, element->getTypeForMSH());
+        elementsByType[2][p].push_back(element);
+      }
     }
-
-    numElements += face->triangles.size();
-    for(std::size_t i = 0; i < face->triangles.size(); i++) {
-      std::pair<int, int> p(entityTag, face->triangles[i]->getTypeForMSH());
-      elementsByType[2][p].push_back(face->triangles[i]);
-    }
-    numElements += face->quadrangles.size();
-    for(std::size_t i = 0; i < face->quadrangles.size(); i++) {
-      std::pair<int, int> p(face->tag(), face->quadrangles[i]->getTypeForMSH());
-      elementsByType[2][p].push_back(face->quadrangles[i]);
+    else if(isParititionedOnMe(face)) {
+      numElements += face->triangles.size();
+      for(std::size_t i = 0; i < face->triangles.size(); i++) {
+        std::pair<int, int> p(entityTag, face->triangles[i]->getTypeForMSH());
+        elementsByType[2][p].push_back(face->triangles[i]);
+      }
+      numElements += face->quadrangles.size();
+      for(std::size_t i = 0; i < face->quadrangles.size(); i++) {
+        std::pair<int, int> p(face->tag(),
+                              face->quadrangles[i]->getTypeForMSH());
+        elementsByType[2][p].push_back(face->quadrangles[i]);
+      }
     }
   }
 
@@ -4390,38 +4411,42 @@ static optional<std::unordered_set<MElement*>> writeMSH4Elements(GModel *const m
       continue;
 
     int entityTag = region->tag();
-    // If it is an overlap, put the tag of the parent entity
-    if (region->geomType() == GEntity::OverlapVolume) {
-      // TODO: implement
-      overlapRegion *oregion = static_cast<overlapRegion *>(region);
-      entityTag = oregion->getOverlapOn()->tag();
-    }
+    auto restricted = elementsToSaveByEntity.find(region);
 
-    numElements += region->tetrahedra.size();
-    for(std::size_t i = 0; i < region->tetrahedra.size(); i++) {
-      std::pair<int, int> p(entityTag,
-                            region->tetrahedra[i]->getTypeForMSH());
-      elementsByType[3][p].push_back(region->tetrahedra[i]);
+    if(restricted != elementsToSaveByEntity.end()) {
+      numElements += restricted->second.size();
+      for(auto element : restricted->second) {
+        std::pair<int, int> p(entityTag, element->getTypeForMSH());
+        elementsByType[3][p].push_back(element);
+      }
     }
-    numElements += region->hexahedra.size();
-    for(std::size_t i = 0; i < region->hexahedra.size(); i++) {
-      std::pair<int, int> p(entityTag, region->hexahedra[i]->getTypeForMSH());
-      elementsByType[3][p].push_back(region->hexahedra[i]);
-    }
-    numElements += region->prisms.size();
-    for(std::size_t i = 0; i < region->prisms.size(); i++) {
-      std::pair<int, int> p(entityTag, region->prisms[i]->getTypeForMSH());
-      elementsByType[3][p].push_back(region->prisms[i]);
-    }
-    numElements += region->pyramids.size();
-    for(std::size_t i = 0; i < region->pyramids.size(); i++) {
-      std::pair<int, int> p(entityTag, region->pyramids[i]->getTypeForMSH());
-      elementsByType[3][p].push_back(region->pyramids[i]);
-    }
-    numElements += region->trihedra.size();
-    for(std::size_t i = 0; i < region->trihedra.size(); i++) {
-      std::pair<int, int> p(entityTag, region->trihedra[i]->getTypeForMSH());
-      elementsByType[3][p].push_back(region->trihedra[i]);
+    else if(isParititionedOnMe(region)) {
+      numElements += region->tetrahedra.size();
+      for(std::size_t i = 0; i < region->tetrahedra.size(); i++) {
+        auto tetra = region->tetrahedra[i];
+        std::pair<int, int> p(entityTag, tetra->getTypeForMSH());
+        elementsByType[3][p].push_back(tetra);
+      }
+      numElements += region->hexahedra.size();
+      for(std::size_t i = 0; i < region->hexahedra.size(); i++) {
+        std::pair<int, int> p(entityTag, region->hexahedra[i]->getTypeForMSH());
+        elementsByType[3][p].push_back(region->hexahedra[i]);
+      }
+      numElements += region->prisms.size();
+      for(std::size_t i = 0; i < region->prisms.size(); i++) {
+        std::pair<int, int> p(entityTag, region->prisms[i]->getTypeForMSH());
+        elementsByType[3][p].push_back(region->prisms[i]);
+      }
+      numElements += region->pyramids.size();
+      for(std::size_t i = 0; i < region->pyramids.size(); i++) {
+        std::pair<int, int> p(entityTag, region->pyramids[i]->getTypeForMSH());
+        elementsByType[3][p].push_back(region->pyramids[i]);
+      }
+      numElements += region->trihedra.size();
+      for(std::size_t i = 0; i < region->trihedra.size(); i++) {
+        std::pair<int, int> p(entityTag, region->trihedra[i]->getTypeForMSH());
+        elementsByType[3][p].push_back(region->trihedra[i]);
+      }
     }
   }
 
@@ -5023,15 +5048,38 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   auto savedNodes = writeMSH4Nodes(this, fp, partitioned, partitionToSave, binary,
                  saveParametric ? 1 : 0, scalingFactor, saveAll, version, partitionedEntitiesToSave);
 
+  /* We must export the nodes then the elements, but we want to use exported elements to find the nodes */
+
   // elements
+  if (hasOverlaps() && partitionToSave) {
+    for (const auto& [_, ovlpManager]: this->getOverlapRegionManagers()) {
+      auto volSet = ovlpManager->getOverlapsByPartition().at(partitionToSave);
+      for (overlapRegion* ovlp: volSet)
+        Msg::Info("Overlap region %d has for partition %d and extends %d into %d", ovlp->tag(), partitionToSave,
+                  ovlp->getOverlapOf()->tag(), ovlp->getOverlapOn()->tag());
+      auto set = ovlpManager->getBoundariesByPartition().at(partitionToSave); 
+      for (partitionFace* pf: set)
+        Msg::Info("Partition face %d has for partition %d", pf->tag(), partitionToSave);
+    }
+  }
   auto savedElems = writeMSH4Elements(this, fp, partitioned, partitionToSave, binary, saveAll,
                     version, partitionedEntitiesToSave);
 
   if (savedNodes && savedElems) {
     for (MElement* el: *savedElems) {
       for (unsigned k = 0; k < el->getNumVertices(); ++k) {
-        if (savedNodes->count(el->getVertex(k)) == 0) {
-          Msg::Error("Element %lu references node %lu which is not saved", el->getNum(), el->getVertex(k)->getNum());
+        auto vert = el->getVertex(k);
+        if (savedNodes->count(vert) == 0) {
+          std::string elementDescr = "";
+          for (unsigned l = 0; l < el->getNumVertices(); ++l) {
+            elementDescr += "vert " + std::to_string(el->getVertex(l)->getNum())
+            + " on entity of dim " + std::to_string(el->getVertex(l)->onWhat()->dim()) + " and tag " + std::to_string(el->getVertex(l)->onWhat()->tag()) + "\n";
+          }
+
+          Msg::Error("Element %lu references node %lu which is not saved.\n"
+          "Vertex type is on a entity of dim %d an tag %d.\n"
+          "Element is of type %s.\n Vertices are \n%s",
+          el->getNum(), vert->getNum(), vert->onWhat()->dim(), vert->onWhat()->tag(), el->getStringForINP(), elementDescr.c_str());
           return 0;
         }
       }

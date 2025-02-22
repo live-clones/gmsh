@@ -364,7 +364,7 @@ void EntityPackage::addEmbeddedVertices(const GModel *model) {
 
 void EntityPackage::addOverlappedEntities(const GModel *model, int partitionToSave) {
   if(model->hasOverlaps()) {
-    // Now add the overlapped entities and the boundaries
+    // Now add the overlapped entities and the overlap boundaries, but *not* the overlap themselsves
     for(const auto &[tag, manager] : model->getOverlapFaceManagers()) {
       auto map = manager->getOverlapsByPartition();
       for(overlapFace *ov : map[partitionToSave]) {
