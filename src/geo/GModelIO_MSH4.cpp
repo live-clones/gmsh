@@ -4194,7 +4194,7 @@ static optional<std::unordered_set<MVertex*>> writeMSH4Nodes(GModel *const model
   }
   for (auto it = additionalVertices.begin(); it != additionalVertices.end(); ++it) {
     writeMSH4EntityNodes(it->first, fp, binary, saveParametric, scalingFactor,
-                         version, allNodes, &it->second);
+                         version, allNodes /*,&it->second*/);
   }
   for(auto it = edges.begin(); it != edges.end(); ++it) {
     writeMSH4EntityNodes(*it, fp, binary, saveParametric, scalingFactor,
@@ -4202,7 +4202,7 @@ static optional<std::unordered_set<MVertex*>> writeMSH4Nodes(GModel *const model
   }
   for (auto it = additionalEdges.begin(); it != additionalEdges.end(); ++it) {
     writeMSH4EntityNodes(it->first, fp, binary, saveParametric, scalingFactor,
-                         version, allNodes, &it->second);
+                         version, allNodes /*,&it->second*/);
   }
   for(auto it = faces.begin(); it != faces.end(); ++it) {
     writeMSH4EntityNodes(*it, fp, binary, saveParametric, scalingFactor,
@@ -4210,7 +4210,7 @@ static optional<std::unordered_set<MVertex*>> writeMSH4Nodes(GModel *const model
   }
   for (auto it = additionalFaces.begin(); it != additionalFaces.end(); ++it) {
     writeMSH4EntityNodes(it->first, fp, binary, saveParametric, scalingFactor,
-                         version, allNodes, &it->second);
+                         version, allNodes /*,&it->second*/);
   }
   for(auto it = regions.begin(); it != regions.end(); ++it) {
     writeMSH4EntityNodes(*it, fp, binary, saveParametric, scalingFactor,
@@ -4218,7 +4218,7 @@ static optional<std::unordered_set<MVertex*>> writeMSH4Nodes(GModel *const model
   }
   for (auto it = additionalRegions.begin(); it != additionalRegions.end(); ++it) {
     writeMSH4EntityNodes(it->first, fp, binary, saveParametric, scalingFactor,
-                         version, allNodes, &it->second);
+                         version, allNodes /*,&it->second*/);
   }
 
   if(binary) fprintf(fp, "\n");
