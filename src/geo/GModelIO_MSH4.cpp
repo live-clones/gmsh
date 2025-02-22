@@ -51,6 +51,33 @@
 using std::optional;
 using std::nullopt;
 
+template <int dim>
+struct OverlapTypes;
+
+template <>
+struct OverlapTypes<3> {
+  using Entity = GRegion;
+  using PartitionEntity = partitionRegion;
+  using OverlapEntity = overlapRegion;
+  using OverlapManager = overlapRegionManager;
+  static const std::map<int, std::unique_ptr<overlapRegionManager>> &getManagers(const GModel* model) {
+    return model->getOverlapRegionManagers();
+  }
+  static constexpr int dim = 3;
+};
+
+template <>
+struct OverlapTypes<2> {
+  using Entity = GFace;
+  using PartitionEntity = partitionFace;
+  using OverlapEntity = overlapFace;
+  using OverlapManager = overlapFaceManager;
+  static const std::map<int, std::unique_ptr<overlapFaceManager>> &getManagers(const GModel* model) {
+    return model->getOverlapFaceManagers();
+  }
+  static constexpr int dim = 2;
+};
+
 static bool readMSH4Physicals(GModel *const model, FILE *fp,
                               GEntity *const entity, bool binary,
                               bool swap)
