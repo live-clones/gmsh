@@ -4098,15 +4098,43 @@ static optional<std::unordered_set<MVertex*>> writeMSH4Nodes(GModel *const model
     additionalVertices;
 
 
-  if(partitioned && partitionToSave != 0 && model->hasOverlaps()) {
+  /*if(partitioned && partitionToSave != 0 && model->hasOverlaps()) {
     size_t numAdditionalNodes = getPartialEntitiesToSaveForOverlaps(
       model, partitionToSave, regions, faces, edges, vertices,
       additionalRegions, additionalFaces, additionalEdges, additionalVertices);
-    Msg::Debug("Adding %lu additional nodes to the %lu original ones for "
+    Msg::Info("Adding %lu additional nodes to the %lu original ones for "
               "overlaps on partition %d",
               numAdditionalNodes, numNodes, partitionToSave);
     numNodes += numAdditionalNodes;
-  }
+  }*/
+
+  if (entitiesToSave.has_value())
+  {std::for_each(entitiesToSave->vertices.begin(), entitiesToSave->vertices.end(), [&vertices, additionalVertices](GVertex* vertex) {
+    if (additionalVertices.count(vertex) == 0) vertices.insert(vertex);
+  });
+  std::for_each(entitiesToSave->edges.begin(), entitiesToSave->edges.end(), [&edges, additionalEdges](GEdge* edge) {
+    if (additionalEdges.count(edge) == 0) edges.insert(edge);
+  });
+  std::for_each(entitiesToSave->faces.begin(), entitiesToSave->faces.end(), [&faces, additionalFaces](GFace* face) {
+    if (additionalFaces.count(face) == 0) faces.insert(face);
+  });
+  std::for_each(entitiesToSave->regions.begin(), entitiesToSave->regions.end(), [&regions, additionalRegions](GRegion* region) {
+    if (additionalRegions.count(region) == 0) regions.insert(region);
+  });}
+
+  numNodes = 0;
+  std::for_each(vertices.begin(), vertices.end(), [&numNodes](GVertex* vertex) {
+    numNodes += vertex->getNumMeshVertices();
+  });
+  std::for_each(edges.begin(), edges.end(), [&numNodes](GEdge* edge) {
+    numNodes += edge->getNumMeshVertices();
+  });
+  std::for_each(faces.begin(), faces.end(), [&numNodes](GFace* face) {
+    numNodes += face->getNumMeshVertices();
+  });
+  std::for_each(regions.begin(), regions.end(), [&numNodes](GRegion* region) {
+    numNodes += region->getNumMeshVertices();
+  });
 
   if(!numNodes) return allNodes;
 
