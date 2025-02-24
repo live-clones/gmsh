@@ -116,32 +116,34 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
     auto faces = boundaryOfRegion(region);
     regionFaces.insert({region, std::move(faces)});
   }
-  
-  std::unordered_map<MVertex*, std::set<partitionRegion *>> skeletonVerticesOwner;
-  for (const auto& [pr, faces]: regionFaces) {
-    for (const auto& f: faces) {
-      for (int i = 0; i < f.getNumVertices(); ++i) {
+
+  std::unordered_map<MVertex *, std::set<partitionRegion *>>
+    skeletonVerticesOwner;
+  for(const auto &[pr, faces] : regionFaces) {
+    for(const auto &f : faces) {
+      for(int i = 0; i < f.getNumVertices(); ++i) {
         skeletonVerticesOwner[f.getVertex(i)].insert(pr);
       }
     }
   }
-  
-  std::unordered_map<partitionRegion*, std::set<partitionRegion*>> regionToTouchingRegions;
-for (const auto& [v, regions]: skeletonVerticesOwner) {
-    if (regions.size() > 1) {
-      //Msg::Info("Vertex %d is shared by %lu regions", v->getNum(), regions.size());
-      for (auto r1: regions) {
-        for (auto r2: regions) {
-          if (r1 == r2) continue;
+
+  std::unordered_map<partitionRegion *, std::set<partitionRegion *>>
+    regionToTouchingRegions;
+  wt1 = TimeOfDay();
+  for(const auto &[v, regions] : skeletonVerticesOwner) {
+    if(regions.size() > 1) {
+      for(auto r1 : regions) {
+        for(auto r2 : regions) {
+          if(r1 == r2) continue;
           regionToTouchingRegions[r1].insert(r2);
         }
       }
     }
   }
+  wt2 = TimeOfDay();
+  Msg::Info("Wall time to compute touching regions: %fs.", wt2 - wt1);
 
-  for (const auto& [r, touching]: regionToTouchingRegions) {
-    //Msg::Info("Region %d has %lu touching regions", r->tag(), touching.size());
-  }
+  
 
   std::unordered_map<int, std::set<overlapRegion *>> overlapsByPartition;
 
