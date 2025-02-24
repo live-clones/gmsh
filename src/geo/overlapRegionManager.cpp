@@ -203,8 +203,8 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
         ++nOverlapsCreated;
         tagsForPhysicals.push_back(overlap->tag());
 
-        for(auto tetra : tetras) { overlap->addElement(tetra); }
-        for(auto tetra : tetras) { allElementsInOverlap.insert(tetra); }
+        for(auto tetra : tetras) { overlap->addElement(tetra); allElementsInOverlap.insert(tetra); }
+        // TODO: add other elements
       }
 
       // Create Physical
