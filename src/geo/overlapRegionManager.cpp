@@ -112,9 +112,9 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
   std::unordered_map<partitionRegion*, std::unordered_set<MFace, MFaceHash, MFaceEqual>> regionFaces;
   for (auto e: entities) {
     partitionRegion* region = dynamic_cast<partitionRegion*>(e);
-    if (!region) continue;
+    if (!region || region->getParentEntity() != parentRegion) continue;
     auto faces = boundaryOfRegion(region);
-    regionFaces.insert({region, faces});
+    regionFaces.insert({region, std::move(faces)});
   }
   for (const auto& [pr, faces]: regionFaces) {
     Msg::Info("Region %d has %lu faces", pr->tag(), faces.size());
