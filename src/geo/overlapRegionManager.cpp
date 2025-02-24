@@ -150,9 +150,9 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
 
     // Loop over all partitioned regions with only one partition that is i
     for(auto e : entities) {
+      // Todo: extend to other elements
       std::set<MTetrahedron *>
-        allElementsInOverlap; // Total set of elements in the overlaps of this
-                              // entity
+        allElementsInOverlap;
       std::map<partitionFace *,
                std::unordered_set<MFace, MFaceHash, MFaceEqual>>
         faceToOverlaps;
