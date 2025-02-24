@@ -41,8 +41,8 @@ static void fillBndFaceToEntities(
   model->getEntities(entities, 2);
   for(GEntity *e : entities) {
     partitionFace *pf = dynamic_cast<partitionFace *>(e);
-    if(!pf) Msg::Error("A face of a partitionRegion is not a partitionFace.");
-    // N.B. This should be equivalent to "pf->getParentEntity()->dim() == 2" ?
+    if(!pf) continue;
+    // N.B. This would be equivalent to "pf->getParentEntity()->dim() == 2" when all faces are boundary of a unique volume.
     if(std::find(outerFaces.begin(), outerFaces.end(), pf->getParentEntity()) ==
        outerFaces.end())
       continue;
