@@ -708,15 +708,6 @@ GRegion::getNearbyTetra(const std::set<MVertex *> &boundaryVertices,
 {
   std::set<MTetrahedron *> result;
 
-  /*for (MElement* e : origin.tetrahedra) {
-    for (int i = 0; i < e->getNumVertices(); i++) {
-      auto v = e->getVertex(i);
-      if (v->onWhat()->dim() != 3) // Smaller set !
-        boundaryVertices.insert(v);
-    }
-  }*/
-
-
   auto currentBoundaryVertices = boundaryVertices;
 
   for(unsigned l = 0; l < levels; ++l)
