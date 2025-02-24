@@ -31,24 +31,6 @@ boundaryOfRegion(GRegion *reg)
   return entityFaces;
 }
 
-static std::set<int> computeTouchingPartitions(GRegion *reg)
-{
-  std::set<int> touchingPartitions;
-  auto neighborFaces = reg->faces();
-  for(GFace *f : neighborFaces) {
-    partitionFace *pf = dynamic_cast<partitionFace *>(f);
-    if(!pf) continue;
-    for(int p : pf->getPartitions()) { touchingPartitions.insert(p); }
-  }
-
-  // Add partitions with a common partition vertex
-  for(GVertex *v : reg->vertices()) {
-    partitionVertex *pv = dynamic_cast<partitionVertex *>(v);
-    if(!pv) continue;
-    for(int p : pv->getPartitions()) { touchingPartitions.insert(p); }
-  }
-  return touchingPartitions;
-}
 
 static void fillFaceToEntities(
   std::unordered_map<MFace, partitionFace *, MFaceHash, MFaceEqual>
@@ -184,10 +166,6 @@ for (const auto& [v, regions]: skeletonVerticesOwner) {
       if(region->getPartitions().size() != 1 || region->getPartitions()[0] != i)
         continue;
 
-      // Get all the valid "j"
-      std::set<int> touchingPartitions = computeTouchingPartitions(region);
-      Msg::Info("Region %d has %d touching partitions", region->tag(),
-                touchingPartitions.size());
 
       // ALL MFACE ON MY BOUNDARY
       auto& entityFaces = regionFaces.at(region);
@@ -208,8 +186,7 @@ for (const auto& [v, regions]: skeletonVerticesOwner) {
         }
 
         int j = otherRegion->getPartitions()[0];
-        if(touchingPartitions.find(j) == touchingPartitions.end())
-          continue; // Skip non-touching partitions
+
         if(regionToTouchingRegions[region].find(otherRegion) ==
            regionToTouchingRegions[region].end())
           continue; // Skip non-touching regions
