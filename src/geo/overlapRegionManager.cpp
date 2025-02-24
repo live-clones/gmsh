@@ -18,16 +18,6 @@ overlapRegionManager::overlapRegionManager(GModel *model, int tagParent,
 {
 }
 
-static std::vector<MTriangle *> fromFacePatchToElements(
-  partitionFace *pf,
-  const std::unordered_set<MFace, MFaceHash, MFaceEqual> &faceSet)
-{
-  std::vector<MTriangle *> elems;
-  for(MTriangle *t : pf->triangles) {
-    if(faceSet.find(t->getFace(0)) != faceSet.end()) { elems.push_back(t); }
-  }
-  return elems;
-}
 
 static std::unordered_set<MFace, MFaceHash, MFaceEqual>
 boundaryOfRegion(GRegion *reg)
