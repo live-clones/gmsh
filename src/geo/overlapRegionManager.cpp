@@ -33,11 +33,9 @@ boundaryOfRegion(GRegion *reg)
 }
 
 
-static void fillBndFaceToEntities(
-  std::unordered_map<MFace, partitionFace *, MFaceHash, MFaceEqual>
-    &faceToEntities,
-  const std::vector<GFace *> &outerFaces, const GModel *model)
+static std::unordered_map<MFace, partitionFace *, MFaceHash, MFaceEqual> fillBndFaceToEntities(const std::vector<GFace *> &outerFaces, const GModel *model)
 {
+  std::unordered_map<MFace, partitionFace *, MFaceHash, MFaceEqual> faceToEntities;
   std::vector<GEntity *> entities;
   model->getEntities(entities, 2);
   for(GEntity *e : entities) {
@@ -55,6 +53,7 @@ static void fillBndFaceToEntities(
       }
     }
   }
+  return faceToEntities;
 }
 
 /*
@@ -99,13 +98,11 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
 
   // For building "boundaries of overlap", we keep track for all partitionFace
   // whose parent is a boundary of this region, of their faces
-  std::unordered_map<MFace, partitionFace *, MFaceHash, MFaceEqual>
-    faceToEntities;
   Msg::Info(
     "Volume has %d surfaces as boundary. These will get an overlap too.",
     parentRegion->faces().size());
   wt1 = TimeOfDay();
-  fillBndFaceToEntities(faceToEntities, parentRegion->faces(), model);
+  auto faceToEntities = fillBndFaceToEntities(parentRegion->faces(), model);
   wt2 = TimeOfDay();
   Msg::Info("Wall time to compute boundary mesh face to partition face entity dict: %fs.", wt2 - wt1);
 
