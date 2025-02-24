@@ -5,6 +5,7 @@
 
 #include "overlapRegionManager.h"
 #include "gmsh.h"
+#include "OS.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "partitionFace.h"
@@ -79,6 +80,7 @@ accordingly (as future part j of overlap i of ...) 4) Build a FaceOverlapManager
 void overlapRegionManager::create(int overlapSize, bool createPhysicals)
 {
   const int numPartitions = model->getNumPartitions();
+  double wt1, wt2;
   std::vector<GEntity *> entities;
   model->getEntities(entities, 3);
   const GRegion *parentRegion =
@@ -102,10 +104,11 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
   Msg::Info(
     "Volume has %d surfaces as boundary. These will get an overlap too.",
     parentRegion->faces().size());
+  wt1 = TimeOfDay();
   fillBndFaceToEntities(faceToEntities, parentRegion->faces(), model);
+  wt2 = TimeOfDay();
+  Msg::Info("Wall time to compute boundary mesh face to partition face entity dict: %fs.", wt2 - wt1);
 
-  
-  // JAN 25: optimized overlaps
   std::unordered_map<partitionRegion*, std::unordered_set<MFace, MFaceHash, MFaceEqual>> regionFaces;
   for (auto e: entities) {
     partitionRegion* region = dynamic_cast<partitionRegion*>(e);
