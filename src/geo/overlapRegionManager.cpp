@@ -164,26 +164,22 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
       if(region->getPartitions().size() != 1 || region->getPartitions()[0] != i)
         continue;
 
+
       std::vector<int> tagsForPhysicals;
-      auto isRegionValid = [&](partitionRegion *r) {
-        if(!r) return false;
-        if(r->geomType() == GEntity::OverlapVolume) return false;
-        if(r->getPartitions().size() != 1 || r->getPartitions()[0] != i)
-          return false;
-        if(r->getParentEntity() != region->getParentEntity()) return false;
-        if(regionToTouchingRegions[region].find(r) ==
-           regionToTouchingRegions[region].end())
-          return false;
-        return true;
-      };
 
       for(auto e2 : entities) {
         partitionRegion *otherRegion = dynamic_cast<partitionRegion *>(e2);
         // Check validity of the region
+        if(!otherRegion || otherRegion->geomType() == GEntity::OverlapVolume)
+          continue;
         if(e != e2 && otherRegion->getPartitions()[0] == i)
-          Msg::Warning("Partition %d has more than one region. (This shouldn't be a problem.)", i);
-        
-        if(!isRegionValid(otherRegion)) continue;
+          Msg::Warning("Region %d has more than one partitions", i);
+        if(otherRegion->getPartitions().size() != 1 ||
+           otherRegion->getPartitions()[0] == i)
+          continue;
+        if(region->getParentEntity() != otherRegion->getParentEntity()) {
+          continue;
+        }
 
         if(regionToTouchingRegions[region].find(otherRegion) ==
            regionToTouchingRegions[region].end())
