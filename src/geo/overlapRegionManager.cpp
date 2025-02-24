@@ -168,8 +168,6 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
         continue;
 
 
-      // ALL MFACE ON MY BOUNDARY
-      auto& entityFaces = regionFaces.at(region);
       std::vector<int> tagsForPhysicals;
 
       for(auto e2 : entities) {
@@ -219,15 +217,17 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
           faceCount[tetra->getFace(k)]++;
       }
 
-      auto regionFaces = region->faces();
+      auto facesOfThisRegion = region->faces();
       std::unordered_set<MFace, MFaceHash, MFaceEqual> boundaryFaces;
+      auto& entityMFaces = regionFaces.at(region);
+
       for(auto [face, count] : faceCount) {
         if(count != 1) continue;
 
         auto itEntity = faceToEntities.find(face);
         if(itEntity == faceToEntities.end()) {
           // Either an internal or artifical face, but not the physical boundary
-          if(entityFaces.find(face) == entityFaces.end()) {
+          if(entityMFaces.find(face) == entityMFaces.end()) {
             boundaryFaces.insert(face);
           }
           // Else, neglect: internal face
@@ -238,7 +238,7 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
         // partitionFace neighbor of the region)
         GEntity *parentFace = (itEntity->second)->getParentEntity();
         int numFacesWithThisParent = std::count_if(
-          regionFaces.begin(), regionFaces.end(), [parentFace](GEntity *f) {
+          facesOfThisRegion.begin(), facesOfThisRegion.end(), [parentFace](GEntity *f) {
             if(!f) return false;
             return f->getParentEntity() == parentFace;
           });
@@ -247,12 +247,12 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
                        "partition %d. Overlap of boundary can be messy",
                        numFacesWithThisParent, i);
         }
-        auto pf = std::find_if(regionFaces.begin(), regionFaces.end(),
+        auto pf = std::find_if(facesOfThisRegion.begin(), facesOfThisRegion.end(),
                                [parentFace](GEntity *f) {
                                  return f->getParentEntity() == parentFace;
                                });
         // For now, we look for any PF on this entity and add the overlap there
-        if(pf != regionFaces.end()) {
+        if(pf != facesOfThisRegion.end()) {
           partitionFace *faceWithOverlap = dynamic_cast<partitionFace *>(*pf);
           if(!faceWithOverlap) {
             Msg::Error("Boundary face is not a partitionFace");
