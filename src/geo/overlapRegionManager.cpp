@@ -6,6 +6,7 @@
 #include "overlapRegionManager.h"
 #include "gmsh.h"
 #include "MTriangle.h"
+#include "MQuadrangle.h"
 #include "partitionFace.h"
 #include "partitionEdge.h"
 #include "partitionVertex.h"
@@ -35,6 +36,7 @@ boundaryOfRegion(GRegion *reg)
   std::unordered_set<MFace, MFaceHash, MFaceEqual> entityFaces;
   for(auto f : facesOfThisEntity) {
     for(auto t : f->triangles) { entityFaces.insert(t->getFace(0)); }
+    for(auto q: f->quadrangles) { entityFaces.insert(q->getFace(0)); }
   }
   return entityFaces;
 }
