@@ -703,8 +703,7 @@ std::set<MVertex *> GRegion::getBoundaryVertices() const
 }
 
 std::set<MTetrahedron *>
-GRegion::getNearbyTetra(const GRegion &origin,
-                        const std::set<MVertex *> &boundaryVertices,
+GRegion::getNearbyTetra(const std::set<MVertex *> &boundaryVertices,
                         unsigned levels) const
 {
   std::set<MTetrahedron *> result;

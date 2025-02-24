@@ -179,7 +179,7 @@ public:
 
   // For overlap computations
   std::set<MVertex *> getBoundaryVertices() const;
-  std::set<MTetrahedron *> getNearbyTetra(const GRegion &origin, const std::set<MVertex *>& boundaryVertices,
+  std::set<MTetrahedron *> getNearbyTetra(const std::set<MVertex *>& boundaryVertices,
                                           unsigned levels = 1) const;
 
   // get the boundary layer columns

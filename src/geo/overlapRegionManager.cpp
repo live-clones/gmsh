@@ -186,8 +186,15 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
           continue; // Skip non-touching regions
 
         // Fill the overlap
+        wt1 = TimeOfDay();
+        auto bndVertices = region->getBoundaryVertices();
+        wt2 = TimeOfDay();
+        Msg::Info("Wall time to compute boundary vertices: %fs.", wt2 - wt1);
+        wt1 = TimeOfDay();
         auto tetras = otherRegion->getNearbyTetra(
-          *region, region->getBoundaryVertices(), overlapSize);
+          *region, bndVertices, overlapSize);
+        wt2 = TimeOfDay();
+        Msg::Info("Wall time to compute nearby tetra: %fs.", wt2 - wt1);
         if(tetras.empty()) continue;
         overlapRegion *overlap =
           new overlapRegion(model, ++elementaryNumber, region, otherRegion);
