@@ -32,17 +32,17 @@ boundaryOfRegion(GRegion *reg)
 }
 
 
-static void fillFaceToEntities(
+static void fillBndFaceToEntities(
   std::unordered_map<MFace, partitionFace *, MFaceHash, MFaceEqual>
     &faceToEntities,
-  const std::vector<GFace *> &outerFaces, GModel *model)
+  const std::vector<GFace *> &outerFaces, const GModel *model)
 {
   std::vector<GEntity *> entities;
   model->getEntities(entities, 2);
   for(GEntity *e : entities) {
     partitionFace *pf = dynamic_cast<partitionFace *>(e);
-    // For all PF that have the region boundary as parent, fill.
-    if(!pf) continue;
+    if(!pf) Msg::Error("A face of a partitionRegion is not a partitionFace.");
+    // N.B. This should be equivalent to "pf->getParentEntity()->dim() == 2" ?
     if(std::find(outerFaces.begin(), outerFaces.end(), pf->getParentEntity()) ==
        outerFaces.end())
       continue;
@@ -102,8 +102,7 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
   Msg::Info(
     "Volume has %d surfaces as boundary. These will get an overlap too.",
     parentRegion->faces().size());
-  fillFaceToEntities(faceToEntities, parentRegion->faces(), model);
-  Msg::Info("Face to PF map has %lu entries", faceToEntities.size());
+  fillBndFaceToEntities(faceToEntities, parentRegion->faces(), model);
 
   
   // JAN 25: optimized overlaps
