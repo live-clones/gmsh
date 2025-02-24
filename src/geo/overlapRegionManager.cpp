@@ -116,9 +116,7 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
     auto faces = boundaryOfRegion(region);
     regionFaces.insert({region, std::move(faces)});
   }
-  for (const auto& [pr, faces]: regionFaces) {
-    Msg::Info("Region %d has %lu faces", pr->tag(), faces.size());
-  }
+  
   std::unordered_map<MVertex*, std::set<partitionRegion *>> skeletonVerticesOwner;
   for (const auto& [pr, faces]: regionFaces) {
     for (const auto& f: faces) {
