@@ -121,7 +121,7 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
     skeletonVerticesOwner;
   for(const auto &[pr, faces] : regionFaces) {
     for(const auto &f : faces) {
-      for(int i = 0; i < f.getNumVertices(); ++i) {
+      for(size_t i = 0; i < f.getNumVertices(); ++i) {
         skeletonVerticesOwner[f.getVertex(i)].insert(pr);
       }
     }
@@ -147,9 +147,8 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
 
   std::unordered_map<int, std::set<overlapRegion *>> overlapsByPartition;
 
-  for(unsigned i = 1; i <= numPartitions; ++i) {
+  for(int i = 1; i <= numPartitions; ++i) {
     // Generate overlaps of partition i
-
     unsigned nOverlapsInI = 0;
 
     // Loop over all partitioned regions with only one partition that is i
@@ -186,8 +185,6 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
         if(region->getParentEntity() != otherRegion->getParentEntity()) {
           continue;
         }
-
-        int j = otherRegion->getPartitions()[0];
 
         if(regionToTouchingRegions[region].find(otherRegion) ==
            regionToTouchingRegions[region].end())
