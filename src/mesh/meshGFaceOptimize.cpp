@@ -1171,10 +1171,11 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
       sprintf(MATCHFILE, ".face.match");
       if(perfect_match(ncount, nullptr, ecount, &elist, &elen, nullptr,
                        MATCHFILE, 0, 0, 0, 0, &matzeit)) {
-        Msg::Error(
+        Msg::Warning(
           "Perfect Match failed in quadrangulation, try something else");
         free(elist);
         pairs.clear();
+	_recombineIntoQuads(gf, false, cubicGraph);
       }
       else {
         // TEST
