@@ -78,10 +78,10 @@ accordingly (as future part j of overlap i of ...) 4) Build a FaceOverlapManager
 
 void overlapRegionManager::create(int overlapSize, bool createPhysicals)
 {
-  int numPartitions = model->getNumPartitions();
+  const int numPartitions = model->getNumPartitions();
   std::vector<GEntity *> entities;
   model->getEntities(entities, 3);
-  GRegion *parentRegion =
+  const GRegion *parentRegion =
     dynamic_cast<GRegion *>(model->getEntityByTag(3, tagParent));
   if(!parentRegion) {
     Msg::Error("overlapRegionManager: Parent region %d not found", tagParent);
