@@ -171,6 +171,9 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
         if(r->getPartitions().size() != 1 || r->getPartitions()[0] != i)
           return false;
         if(r->getParentEntity() != region->getParentEntity()) return false;
+        if(regionToTouchingRegions[region].find(r) ==
+           regionToTouchingRegions[region].end())
+          return false;
         return true;
       };
 
@@ -180,6 +183,7 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
         if(e != e2 && otherRegion->getPartitions()[0] == i)
           Msg::Warning("Partition %d has more than one region. (This shouldn't be a problem.)", i);
         
+        if(!isRegionValid(otherRegion)) continue;
 
         if(regionToTouchingRegions[region].find(otherRegion) ==
            regionToTouchingRegions[region].end())
