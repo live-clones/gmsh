@@ -274,6 +274,7 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
 
       // Create an artificial boundary of all the overlaps of this entity, with
       // new elements.
+      wt1 = TimeOfDay();
       partitionFace *fullBnd =
         new partitionFace(model, ++elementaryNumberBnd, {static_cast<int>(i)});
       fullBnd->setParentEntity(region->getParentEntity());
@@ -290,22 +291,19 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
       }
       fullBnd->triangles = std::move(bndElems); // Take ownership
       model->add(fullBnd);
-      Msg::Info("Created full boundary %d for i = %d", fullBnd->tag(), i);
       this->boundariesByPartition[i].insert(fullBnd);
       gmsh::model::addPhysicalGroup(
         2, {fullBnd->tag()}, -1,
         "OverlapBndOfRegion_" + std::to_string(tagParent) + "_part_" +
           std::to_string(i) + "_num_" + std::to_string(nOverlapsInI));
+      wt2 = TimeOfDay();
+      Msg::Info("Wall time to create boundary of overlap: %fs.", wt2 - wt1);
 
-      /*std::map<partitionFace *, std::set<MTriangle *>> faceToOverlapElements;
-      findElementsForBoundaryOverlap(fullBnd, faceToOverlaps,
-                                     faceToOverlapElements,
-                                     model);*/
 
       // Now create overlap of physical boundaries
 
+      wt1 = TimeOfDay();
       for(const auto &[pf, set] : faceToOverlaps) {
-        Msg::Info("PF %d has %lu faces", pf->tag(), set.size());
         std::vector<MTriangle *> elems;
         for(auto face : set) {
           if(face.getNumVertices() != 3) {
@@ -334,6 +332,8 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
           "OverlapOfBnd_" + std::to_string(tagParent) + "_part_" +
             std::to_string(i) + "_pf_" + std::to_string(pf->tag()));
       }
+      wt2 = TimeOfDay();
+      Msg::Info("Wall time to create overlap of boundary: %fs.", wt2 - wt1);
     }
   }
 
