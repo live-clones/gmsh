@@ -281,7 +281,8 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
       std::vector<MTriangle *> bndElems;
       for(auto face : boundaryFaces) {
         if(face.getNumVertices() != 3) {
-          Msg::Error("Boundary face is not a triangle");
+          Msg::Error("Boundary face is not a triangle. Support for quadrangles "
+                     "is not implemented yet");
           continue;
         }
         bndElems.push_back(new MTriangle(face.getVertex(0), face.getVertex(1),
