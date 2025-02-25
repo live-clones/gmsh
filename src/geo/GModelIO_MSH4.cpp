@@ -2191,7 +2191,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
   set<GVertex *, GEntityPtrLessThan> vertices;
 
   const bool saveAllEntities = CTX::instance()->mesh.saveFullBrep > 0.1 || partitionToSave == 0;
-  Msg::Info("Saving all entities ? %d", saveAllEntities);
+  //Msg::Info("Saving all entities ? %d", saveAllEntities);
 
   if(partition) {
     for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
@@ -2787,9 +2787,9 @@ static EntityPackage writeMSH4PartitionedEntities(GModel *const model, FILE *fp,
 
   set<GEntity *, GEntityPtrFullLessThan> ghost;
 
-
-  const bool saveAllEntities = CTX::instance()->mesh.saveFullBrep > 0.1 || partitionToSave == 0;
-  Msg::Info("Saving all entities ? %d", saveAllEntities);
+  #warning Use again?
+  //const bool saveAllEntities = CTX::instance()->mesh.saveFullBrep > 0.1 || partitionToSave == 0;
+  //Msg::Info("Saving all entities ? %d", saveAllEntities);
 
   EntityPackage entitiesToSave(model, partitionToSave);
 
