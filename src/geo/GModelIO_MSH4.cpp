@@ -5071,13 +5071,14 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   }
 
   // write overlaps, AFTER the elements
+  constexpr bool checkConsistency = true;
+
   if(partitioned && hasOverlaps()) {
     writeMSH4Overlaps(this, fp, partitionToSave, binary, scalingFactor, version,
                       entityBounds);
     writeMSH4OverlapBoundaries(this, fp, partitionToSave, binary, scalingFactor,
                                version, entityBounds);
 
-    constexpr bool checkConsistency = true;
     if constexpr(checkConsistency) {
       auto adjacency = computeVertexAdjacencyFull(this);
       bool success = partitionedEntitiesToSave->checkAdjacencyIsValid(this, adjacency);
@@ -5100,7 +5101,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   auto savedEdges = writeMSH4Edges(this, fp, partitioned, partitionToSave, binary, saveAll,
                  version, savedElems);
 
-  if (savedEdges && savedElems) {
+  if (checkConsistency && savedEdges && savedElems) {
     for (MElement* el: *savedElems) {
       for (unsigned k = 0; k < el->getNumEdges(); ++k) {
         if (savedEdges->count(el->getEdge(k)) == 0) {
