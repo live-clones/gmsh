@@ -5048,7 +5048,8 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   auto savedElems = writeMSH4Elements(this, fp, partitioned, partitionToSave, binary, saveAll,
                     version, partitionedEntitiesToSave);
 
-  if (savedNodes && savedElems) {
+  constexpr bool checkConsistency = false;
+  if (checkConsistency && savedNodes && savedElems) {
     for (MElement* el: *savedElems) {
       for (unsigned k = 0; k < el->getNumVertices(); ++k) {
         auto vert = el->getVertex(k);
@@ -5071,7 +5072,6 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   }
 
   // write overlaps, AFTER the elements
-  constexpr bool checkConsistency = false;
 
   if(partitioned && hasOverlaps()) {
     writeMSH4Overlaps(this, fp, partitionToSave, binary, scalingFactor, version,
