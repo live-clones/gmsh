@@ -4838,7 +4838,7 @@ static optional<std::unordered_set<MEdge, MEdgeHash>> writeMSH4Edges(GModel *con
 
 static void writeMSH4Faces(GModel *const model, FILE *fp, bool partitioned,
                            int partitionToSave, bool binary, bool saveAll,
-                           double version, std::optional<EntityPackage>& entities)
+                           double version, optional<std::unordered_set<MElement*>> elems)
 {
   size_t numFaceTags = model->getNumMFaces();
   if(numFaceTags == 0) return;
@@ -4850,7 +4850,7 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool partitioned,
   std::set<GEdge *, GEntityPtrLessThan> edges;
   std::set<GVertex *, GEntityPtrLessThan> vertices;
 
-  if (entities.has_value()) {
+  /*if (entities.has_value()) {
     regions = entities->regions;
     faces = entities->faces;
     edges = entities->edges;
@@ -4889,11 +4889,28 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool partitioned,
 
       for(overlapRegion *oregion : it->second) { regions.insert(oregion); }
     }
-  }
+  }*/
 
   std::unordered_map<MFace, std::size_t, MFaceHash, MFaceEqual> faceTagsToKeep;
+  if(elems) {
+    for (MElement* el: *elems) {
+      for (std::size_t j = 0; j < el->getNumFaces(); j++) {
+        MFace face = el->getFace(j);
+        auto found = model->getMapFaceNum().find(face);
+        if (found != model->getMapFaceNum().end()) {
+          faceTagsToKeep.insert({face, found->second});
+        }
+      }
+    }
+  }
+  else {
+    // Export ALL tags
+    for (auto it = model->firstMFace(); it != model->lastMFace(); ++it) {
+      faceTagsToKeep.insert({it->first, it->second});
+    }
+  }
 
-  for(GRegion *r : regions) {
+  /*for(GRegion *r : regions) {
     for(std::size_t k = 0; k < r->getNumMeshElements(); ++k) {
       MElement *e = r->getMeshElement(k);
       for(std::size_t j = 0; j < e->getNumFaces(); j++) {
@@ -4920,7 +4937,7 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool partitioned,
         }
       }
     }
-  }
+  }*/
 
   numFaceTags = faceTagsToKeep.size();
   fprintf(fp, "$FaceTags\n");
@@ -5115,7 +5132,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
 
   // Face tags
   writeMSH4Faces(this, fp, partitioned, partitionToSave, binary, saveAll,
-                 version, partitionedEntitiesToSave);
+                 version, savedElems);
   // periodic
   writeMSH4PeriodicNodes(this, fp, binary, version);
 
