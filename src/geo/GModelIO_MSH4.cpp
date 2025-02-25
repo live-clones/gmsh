@@ -535,7 +535,7 @@ static bool readMSH4Overlaps(GModel *const model, FILE *fp, bool partition,
 
     // For each (i,j) pair of the overlap of this entity, read its tag,
     // physical and elements
-    for(size_t ioverlap = 0; ioverlap < numOverlaps; ++ioverlap) {
+    for(int ioverlap = 0; ioverlap < numOverlaps; ++ioverlap) {
       int i, j, tagOverlap;
       size_t numElements;
       if(binary) {
@@ -623,7 +623,7 @@ static bool readMSH4Overlaps(GModel *const model, FILE *fp, bool partition,
     auto manager = std::make_unique<overlapFaceManager>(model, tagParent);
     // For each (i,j) pair of the overlap of this entity, read its tag,
     // physical and elements
-    for(size_t ioverlap = 0; ioverlap < numOverlaps; ++ioverlap) {
+    for(int ioverlap = 0; ioverlap < numOverlaps; ++ioverlap) {
       int of, on, tagOverlap;
       size_t numElements;
       if(binary) {
@@ -728,7 +728,7 @@ static bool readMSH4Overlaps(GModel *const model, FILE *fp, bool partition,
     auto manager = std::make_unique<overlapRegionManager>(model, tagParent);
     // For each (i,j) pair of the overlap of this entity, read its tag,
     // physical and elements
-    for(size_t ioverlap = 0; ioverlap < numOverlaps; ++ioverlap) {
+    for(int ioverlap = 0; ioverlap < numOverlaps; ++ioverlap) {
       int of, on, tagOverlap;
       size_t numElements;
       if(binary) {
@@ -3183,7 +3183,7 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
     for(auto const &[parentTag, manager] : model->getOverlapEdgeManagers()) {
       int numEntities = 0;
       if(partitionToSave == 0) {
-        for(const auto [i, submap] : manager->getOverlaps()) {
+        for(const auto& [i, submap] : manager->getOverlaps()) {
           numEntities += submap.size();
         }
       }
@@ -3200,7 +3200,7 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
       }
       // For each overlap entity (a ij pair) write first "i j tag numElements"
       // Then the physicals, then the elements
-      for(const auto [i, submap] : manager->getOverlaps()) {
+      for(const auto& [i, submap] : manager->getOverlaps()) {
         if(partitionToSave != 0 && partitionToSave != i) {
           continue; // Only save this part unless we save all
         }
@@ -3238,7 +3238,7 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
     for(auto const &[parentTag, manager] : model->getOverlapFaceManagers()) {
       int numEntities = 0;
       if(partitionToSave == 0) {
-        for(const auto [i, subset] : manager->getOverlapsByPartition()) {
+        for(const auto& [i, subset] : manager->getOverlapsByPartition()) {
           numEntities += subset.size();
         }
       }
@@ -3254,7 +3254,7 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
         fprintf(fp, "%d %d\n", parentTag, numEntities);
       }
       // New format : "of on tagOfOverlapNumElements"
-      for (const auto [i, setOfOverlaps]: manager->getOverlapsByPartition()) {
+      for (const auto& [i, setOfOverlaps]: manager->getOverlapsByPartition()) {
         if(partitionToSave != 0 && partitionToSave != i) {
           continue; // Only save this part unless we save all
         }
@@ -3295,7 +3295,7 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
     for(auto const &[parentTag, manager] : model->getOverlapRegionManagers()) {
       int numEntities = 0;
       if(partitionToSave == 0) {
-        for(const auto [i, subset] : manager->getOverlapsByPartition()) {
+        for(const auto& [i, subset] : manager->getOverlapsByPartition()) {
           numEntities += subset.size();
         }
       }
@@ -3311,7 +3311,7 @@ static void writeMSH4Overlaps(GModel *const model, FILE *fp,
         fprintf(fp, "%d %d\n", parentTag, numEntities);
       }
       // New format : "of on tagOfOverlapNumElements"
-      for (const auto [i, setOfOverlaps]: manager->getOverlapsByPartition()) {
+      for (const auto& [i, setOfOverlaps]: manager->getOverlapsByPartition()) {
         if(partitionToSave != 0 && partitionToSave != i) {
           continue; // Only save this part unless we save all
         }
