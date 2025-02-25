@@ -5071,7 +5071,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   }
 
   // write overlaps, AFTER the elements
-  constexpr bool checkConsistency = true;
+  constexpr bool checkConsistency = false;
 
   if(partitioned && hasOverlaps()) {
     writeMSH4Overlaps(this, fp, partitionToSave, binary, scalingFactor, version,
