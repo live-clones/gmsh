@@ -2577,8 +2577,10 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
         BDS_Point *p0 = facile[(*ite)->lines[i]->getVertex(0)];
         BDS_Point *p1 = facile[(*ite)->lines[i]->getVertex(1)];
-        edgesEmbedded.push_back(p0->iD);
-        edgesEmbedded.push_back(p1->iD);
+        if(p0 && p1) {
+          edgesEmbedded.push_back(p0->iD);
+          edgesEmbedded.push_back(p1->iD);
+        }
       }
       ++ite;
     }
