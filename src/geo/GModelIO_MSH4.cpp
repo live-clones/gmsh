@@ -4341,12 +4341,6 @@ static optional<std::unordered_set<MElement*>> writeMSH4Elements(GModel *const m
   std::map<std::pair<int, int>, std::vector<MElement *> > elementsByType[4];
   std::size_t numElements = 0;
 
-  for (const auto& [entity, elements] : elementsToSaveByEntity) {
-    Msg::Info("Partial save on entity of dim %d and tag %d", entity->dim(), entity->tag());
-  }
-  Msg::Info("Num of region overlap managers is %lu", model->getOverlapRegionManagers().size());
-  Msg::Info("Num of face overlap managers is %lu", model->getOverlapFaceManagers().size());
-
   for(auto it = vertices.begin(); it != vertices.end(); ++it) {
     GVertex *vertex = *it;
     if(!saveAll && vertex->physicals.size() == 0) continue;
@@ -5051,17 +5045,6 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   /* We must export the nodes then the elements, but we want to use exported elements to find the nodes */
 
   // elements
-  if (hasOverlaps() && partitionToSave) {
-    for (const auto& [_, ovlpManager]: this->getOverlapRegionManagers()) {
-      auto volSet = ovlpManager->getOverlapsByPartition().at(partitionToSave);
-      for (overlapRegion* ovlp: volSet)
-        Msg::Info("Overlap region %d has for partition %d and extends %d into %d", ovlp->tag(), partitionToSave,
-                  ovlp->getOverlapOf()->tag(), ovlp->getOverlapOn()->tag());
-      auto set = ovlpManager->getBoundariesByPartition().at(partitionToSave); 
-      for (partitionFace* pf: set)
-        Msg::Info("Partition face %d has for partition %d", pf->tag(), partitionToSave);
-    }
-  }
   auto savedElems = writeMSH4Elements(this, fp, partitioned, partitionToSave, binary, saveAll,
                     version, partitionedEntitiesToSave);
 
