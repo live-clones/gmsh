@@ -13,9 +13,9 @@
 #include "SVector3.h"
 #include "MElementOctree.h"
 
-class GEdge;
-class GFace;
-class MVertex;
+class GCurve;
+class GSurface;
+class MNode;
 
 // Create the mesh of the face
 class meshGFace {
@@ -23,14 +23,14 @@ class meshGFace {
 
 public:
   meshGFace(bool r = true) : repairSelfIntersecting1dMesh(r) {}
-  void operator()(GFace *, bool print = true);
+  void operator()(GSurface *, bool print = true);
 };
 
 // Destroy the mesh of the face
 class deMeshGFace {
 public:
   deMeshGFace() {}
-  void operator()(GFace *);
+  void operator()(GSurface *);
 };
 
 // Orient the mesh of a face to match the orientation of the underlying
@@ -41,14 +41,14 @@ public:
 // 3) users can choose to reverse the natural orientation
 class orientMeshGFace {
 public:
-  void operator()(GFace *);
+  void operator()(GSurface *);
 };
 
-void findTransfiniteCorners(GFace *gf, std::vector<MVertex *> &corners);
-int MeshTransfiniteSurface(GFace *gf);
+void findTransfiniteCorners(GSurface *gf, std::vector<MNode *> &corners);
+int MeshTransfiniteSurface(GSurface *gf);
 int MeshExtrudedSurface(
-  GFace *gf,
-  std::set<std::pair<MVertex *, MVertex *> > *constrainedEdges = nullptr);
+  GSurface *gf,
+  std::set<std::pair<MNode *, MNode *> > *constrainedEdges = nullptr);
 bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
                                  SPoint2 &out, int &N);
 
@@ -69,7 +69,7 @@ bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
  *
  * @return true if success
  */
-bool MeshSetTransfiniteFacesAutomatic(std::set<GFace *> &candidate_faces,
+bool MeshSetTransfiniteFacesAutomatic(std::set<GSurface *> &candidate_faces,
                                       double cornerAngle = 2.35,
                                       bool setRecombine = true,
                                       double maxDiffRel = 1.,

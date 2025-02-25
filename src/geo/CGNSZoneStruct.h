@@ -37,7 +37,7 @@ public:
   virtual void nodeFromList(const std::vector<cgsize_t> &range,
                             std::vector<cgsize_t> &node) const;
 
-  virtual int readElements(std::vector<MVertex *> &allVert,
+  virtual int readElements(std::vector<MNode *> &allVert,
                            std::map<int, std::vector<MElement *> > *allElt,
                            std::vector<MElement *> &zoneElt,
                            std::vector<std::string> &allGeomName);
@@ -50,7 +50,7 @@ protected:
                        const std::map<std::string, int> &name2Zone,
                        std::vector<CGNSZone *> &allZones);
   MElement *makeBndElement(const cgsize_t *ijk, const int *dir, int order,
-                           int defaultEntity, std::vector<MVertex *> &allVert,
+                           int defaultEntity, std::vector<MNode *> &allVert,
                            std::map<int, std::vector<MElement *> > *allElt);
 };
 

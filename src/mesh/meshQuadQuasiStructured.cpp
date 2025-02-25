@@ -96,7 +96,7 @@ static int getNumThreads()
 int buildBackgroundField(
   GModel *gm, const std::vector<MTriangle *> &global_triangles,
   const std::vector<std::array<double, 9> > &global_triangle_directions,
-  const std::unordered_map<MVertex *, double> &global_size_map,
+  const std::unordered_map<MNode *, double> &global_size_map,
   const std::vector<std::array<double, 5> > &global_singularity_list,
   const std::string &viewName = "guiding_field")
 {
@@ -118,7 +118,7 @@ int buildBackgroundField(
     }
     /* Vector field */
     for(size_t lv = 0; lv < 3; ++lv) {
-      MVertex *v = t->getVertex(lv);
+      MNode *v = t->getVertex(lv);
       auto it = global_size_map.find(v);
       if(it == global_size_map.end()) {
         Msg::Error("Building background field, triangle vertex not found in "
@@ -202,7 +202,7 @@ void showCrossFieldInView(
 {
   for(size_t i = 0; i < global_triangles.size(); ++i) {
     for(size_t lv = 0; lv < 3; ++lv) {
-      MVertex *v = global_triangles[i]->getVertex(lv);
+      MNode *v = global_triangles[i]->getVertex(lv);
       vec3 dir = {{global_triangle_directions[i][3 * lv + 0],
                    global_triangle_directions[i][3 * lv + 1],
                    global_triangle_directions[i][3 * lv + 2]}};
@@ -213,7 +213,7 @@ void showCrossFieldInView(
   GeoLog::flush();
 }
 
-void showUVParametrization(GFace *gf, const std::vector<MElement *> &elts,
+void showUVParametrization(GSurface *gf, const std::vector<MElement *> &elts,
                            const std::string &viewName = "uv")
 {
   std::vector<std::vector<double> > values_u;
@@ -237,7 +237,7 @@ void showUVParametrization(GlobalBackgroundMesh &bgm,
                            const std::string &viewName = "uv")
 {
   for(auto &kv : bgm.faceBackgroundMeshes) {
-    GFace *gf = kv.first;
+    GSurface *gf = kv.first;
     if(!gf->haveParametrization()) continue;
     std::vector<MElement *> tris;
     for(MTriangle &t : kv.second.triangles) { tris.push_back(&t); }
@@ -247,7 +247,7 @@ void showUVParametrization(GlobalBackgroundMesh &bgm,
 }
 
 void printSizeMapStats(const std::vector<MTriangle *> &triangles,
-                       std::unordered_map<MVertex *, double> &sizemap)
+                       std::unordered_map<MNode *, double> &sizemap)
 {
   double vmin = DBL_MAX;
   double vmax = -DBL_MAX;
@@ -259,7 +259,7 @@ void printSizeMapStats(const std::vector<MTriangle *> &triangles,
   for(MTriangle *t : triangles) {
     double values[3] = {0, 0, 0};
     for(size_t lv = 0; lv < 3; ++lv) {
-      MVertex *v = t->getVertex(lv);
+      MNode *v = t->getVertex(lv);
       auto it = sizemap.find(v);
       values[lv] = it->second;
       ;
@@ -273,16 +273,16 @@ void printSizeMapStats(const std::vector<MTriangle *> &triangles,
 }
 
 int fillSizemapFromTriangleSizes(const std::vector<MTriangle *> &triangles,
-                                 std::unordered_map<MVertex *, double> &sizeMap)
+                                 std::unordered_map<MNode *, double> &sizeMap)
 {
   const double tol = CTX::instance()->geom.tolerance;
-  std::unordered_map<MVertex *, std::vector<MVertex *> > v2v;
+  std::unordered_map<MNode *, std::vector<MNode *> > v2v;
   buildVertexToVertexMap(triangles, v2v);
   for(auto &kv : v2v) {
-    MVertex *v = kv.first;
+    MNode *v = kv.first;
     double sum = 0.;
     double avg = 0.;
-    for(MVertex *v2 : kv.second) {
+    for(MNode *v2 : kv.second) {
       double dist = v->distance(v2);
       if(dist > tol) {
         avg += dist;
@@ -297,11 +297,11 @@ int fillSizemapFromTriangleSizes(const std::vector<MTriangle *> &triangles,
   size_t iterMax = 3;
   for(size_t iter = 0; iter < iterMax; ++iter) {
     for(auto &kv : v2v) {
-      MVertex *v = kv.first;
+      MNode *v = kv.first;
       // if (v->onWhat()->dim() < 2) continue;
       double sum = 0.;
       double avg = 0.;
-      for(MVertex *v2 : kv.second) {
+      for(MNode *v2 : kv.second) {
         avg += sizeMap[v2];
         sum += 1.;
       }
@@ -317,7 +317,7 @@ int fillSizemapFromTriangleSizes(const std::vector<MTriangle *> &triangles,
 
 int fillSizemapFromScalarBackgroundField(
   GModel *gm, const std::vector<MTriangle *> &triangles,
-  std::unordered_map<MVertex *, double> &sizeMap)
+  std::unordered_map<MNode *, double> &sizeMap)
 {
   Field *field = nullptr;
   FieldManager *fields = gm->getFields();
@@ -331,7 +331,7 @@ int fillSizemapFromScalarBackgroundField(
   }
   for(MTriangle *t : triangles)
     for(size_t lv = 0; lv < 3; ++lv) {
-      MVertex *v = t->getVertex(lv);
+      MNode *v = t->getVertex(lv);
       auto it = sizeMap.find(v);
       if(it == sizeMap.end()) {
         double value = (*field)(v->point().x(), v->point().y(), v->point().z());
@@ -408,19 +408,19 @@ bool generateMeshWithSpecialParameters(GModel *gm,
 }
 
 bool getGFaceBackgroundMeshLinesAndTriangles(
-  GlobalBackgroundMesh &bmesh, GFace *gf, std::vector<MLine *> &lines,
+  GlobalBackgroundMesh &bmesh, GSurface *gf, std::vector<MLine *> &lines,
   std::vector<MTriangle *> &triangles)
 {
   lines.clear();
   triangles.clear();
 
   /* Collect pointers to background mesh elements */
-  std::vector<GEdge *> edges = face_edges(gf);
-  for(GEdge *ge : edges) {
+  std::vector<GCurve *> edges = face_edges(gf);
+  for(GCurve *ge : edges) {
     auto it = bmesh.edgeBackgroundMeshes.find(ge);
     if(it == bmesh.edgeBackgroundMeshes.end()) {
       Msg::Warning(
-        "getGFaceBackgroundMeshLinesAndTriangles: GEdge %i not found "
+        "getGFaceBackgroundMeshLinesAndTriangles: GCurve %i not found "
         "in background mesh",
         ge->tag());
       continue;
@@ -432,7 +432,7 @@ bool getGFaceBackgroundMeshLinesAndTriangles(
   }
   auto it = bmesh.faceBackgroundMeshes.find(gf);
   if(it == bmesh.faceBackgroundMeshes.end()) {
-    Msg::Warning("getGFaceBackgroundMeshLinesAndTriangles: GFace %i not found "
+    Msg::Warning("getGFaceBackgroundMeshLinesAndTriangles: GSurface %i not found "
                  "in background mesh",
                  gf->tag());
     return false;
@@ -513,7 +513,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   bool surfaceMeshed = true;
   {
     bool onlyVisible = CTX::instance()->mesh.meshOnlyVisible;
-    for(GFace *gf : gm->getFaces())
+    for(GSurface *gf : gm->getFaces())
       if(gf->getNumMeshElements() == 0) {
         if(onlyVisible && !gf->getVisibility()) continue;
         surfaceMeshed = false;
@@ -541,7 +541,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   }
 
   /* Build guiding field on background mesh:
-   * - per GFace:
+   * - per GSurface:
    *   - cross field (unit vectors, one value per edge)
    *   - conformal scaling (scalar, one value per vertex)
    *   - offset conformal scaling by target number of quads
@@ -553,10 +553,10 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
    */
   std::vector<MTriangle *> global_triangles;
   std::vector<std::array<double, 9> > global_triangle_directions;
-  std::vector<std::pair<MVertex *, double> > global_size_map;
+  std::vector<std::pair<MNode *, double> > global_size_map;
   std::vector<std::array<double, 5> >
     global_singularity_list; /* format: gf->tag(), index, x, y, z */
-  /* Per GFace computations, in parallel */
+  /* Per GSurface computations, in parallel */
   {
     Msg::Info(
       "- quadqs sizemap method: %s (%i), expect midpoint subdivision: %i, "
@@ -565,10 +565,10 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
       CTX::instance()->mesh.quadqsSizemapMethod, midpointSubdivisionAfter,
       edgeScaling);
 
-    std::vector<GFace *> faces = model_faces(gm);
+    std::vector<GSurface *> faces = model_faces(gm);
     size_t ntris = 0;
     for(size_t f = 0; f < faces.size(); ++f) {
-      GFace *gf = faces[f];
+      GSurface *gf = faces[f];
       auto it = bmesh.faceBackgroundMeshes.find(gf);
       if(it != bmesh.faceBackgroundMeshes.end()) {
         ntris += it->second.triangles.size();
@@ -580,7 +580,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
     int nthreads = getNumThreads();
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
     for(size_t f = 0; f < faces.size(); ++f) {
-      GFace *gf = faces[f];
+      GSurface *gf = faces[f];
 
       if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility())
         continue;
@@ -654,7 +654,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
       }
 
       /* Build the size map of the guiding field */
-      std::unordered_map<MVertex *, double> localSizemap;
+      std::unordered_map<MNode *, double> localSizemap;
       if(externalSizemap) { /* Size map from background field */
         int sts =
           fillSizemapFromScalarBackgroundField(gm, triangles, localSizemap);
@@ -767,7 +767,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   double minSizeClampMin = factor * smMin;
 
   /* Minimal size on curves */
-  std::unordered_map<MVertex *, double> cadMinimalSizeOnCurves;
+  std::unordered_map<MNode *, double> cadMinimalSizeOnCurves;
   if(!externalSizemap) {
     if(qqsSizemapMethod == SizeMapDefault ||
        qqsSizemapMethod == SizeMapCrossFieldAndBMeshOnCurves ||
@@ -787,9 +787,9 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   }
 
   /* Initialize global size map defined on the background mesh */
-  std::unordered_map<MVertex *, double> sizeMap = cadMinimalSizeOnCurves;
+  std::unordered_map<MNode *, double> sizeMap = cadMinimalSizeOnCurves;
   for(auto &kv : global_size_map) {
-    MVertex *v = kv.first;
+    MNode *v = kv.first;
     auto it = sizeMap.find(v);
     if(it == sizeMap.end()) {
       sizeMap[kv.first] = kv.second; /* "natural" size */
@@ -833,9 +833,9 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
     GeoLog::add(elements, sizeMap, "size_map");
     GeoLog::flush();
     // showUVParametrization(bmesh);
-    std::unordered_map<MVertex *, double> sizemap_init;
+    std::unordered_map<MNode *, double> sizemap_init;
     for(auto &kv : global_size_map) {
-      MVertex *v = kv.first;
+      MNode *v = kv.first;
       auto it = sizemap_init.find(v);
       if(it == sizemap_init.end()) {
         sizemap_init[kv.first] = kv.second; /* "natural" size */
@@ -875,7 +875,7 @@ bool backgroundMeshAndGuidingFieldExists(GModel *gm)
 }
 
 bool getSingularitiesFromBackgroundField(
-  GFace *gf, std::vector<std::pair<SPoint3, int> > &singularities)
+  GSurface *gf, std::vector<std::pair<SPoint3, int> > &singularities)
 {
   singularities.clear();
 
@@ -923,7 +923,7 @@ bool getSingularitiesFromBackgroundField(
 }
 
 bool getSingularitiesFromNewCrossFieldComputation(
-  GlobalBackgroundMesh &bmesh, GFace *gf,
+  GlobalBackgroundMesh &bmesh, GSurface *gf,
   std::vector<std::pair<SPoint3, int> > &singularities)
 {
   const int N = 4;
@@ -969,16 +969,16 @@ bool getSingularitiesFromNewCrossFieldComputation(
 }
 
 void computeBdrVertexIdealValence(const std::vector<MQuadrangle *> &quads,
-                                  unordered_map<MVertex *, double> &qValIdeal)
+                                  unordered_map<MNode *, double> &qValIdeal)
 {
   qValIdeal.clear();
   for(MQuadrangle *f : quads) {
     for(size_t lv = 0; lv < 4; ++lv) {
-      MVertex *v = f->getVertex(lv);
-      GFace *gf = dynamic_cast<GFace *>(v->onWhat());
+      MNode *v = f->getVertex(lv);
+      GSurface *gf = dynamic_cast<GSurface *>(v->onWhat());
       if(gf == nullptr) { /* On boundary */
-        MVertex *vPrev = f->getVertex((4 + lv - 1) % 4);
-        MVertex *vNext = f->getVertex((lv + 1) % 4);
+        MNode *vPrev = f->getVertex((4 + lv - 1) % 4);
+        MNode *vNext = f->getVertex((lv + 1) % 4);
         SVector3 pNext = vNext->point();
         SVector3 pPrev = vPrev->point();
         SVector3 pCurr = v->point();
@@ -994,7 +994,7 @@ inline int clamp(int val, int lower, int upper)
   return std::min(upper, std::max(val, lower));
 }
 
-size_t idealBoundaryValence(const MVertex *v, double ideal)
+size_t idealBoundaryValence(const MNode *v, double ideal)
 {
   if(v->onWhat() && v->onWhat()->dim() == 1) {
     /* Regular on curves */
@@ -1014,8 +1014,8 @@ bool getBoundaryIdealAndAllowedValences(
   int fixingDim, /* 0 when fixing corners, 1 when fixing curves, 2 when fixing
                     surfaces */
   GFaceMeshPatch &patch,
-  const unordered_map<MVertex *, std::vector<MElement *> > &adj,
-  const unordered_map<MVertex *, double> &qValIdeal,
+  const unordered_map<MNode *, std::vector<MElement *> > &adj,
+  const unordered_map<MNode *, double> &qValIdeal,
   std::vector<int> &bndIdealValence,
   std::vector<std::pair<int, int> > &bndAllowedValenceRange)
 {
@@ -1024,10 +1024,10 @@ bool getBoundaryIdealAndAllowedValences(
   bndIdealValence.resize(N);
   bndAllowedValenceRange.resize(N);
   for(size_t i = 0; i < N; ++i) {
-    MVertex *bv = patch.bdrVertices.front()[i];
-    GVertex *gv = dynamic_cast<GVertex *>(bv->onWhat());
-    GEdge *ge = dynamic_cast<GEdge *>(bv->onWhat());
-    GFace *gf = dynamic_cast<GFace *>(bv->onWhat());
+    MNode *bv = patch.bdrVertices.front()[i];
+    GPoint *gv = dynamic_cast<GPoint *>(bv->onWhat());
+    GCurve *ge = dynamic_cast<GCurve *>(bv->onWhat());
+    GSurface *gf = dynamic_cast<GSurface *>(bv->onWhat());
     int idealTot = 4;
     if(gf == nullptr) {
       auto it = qValIdeal.find(bv);
@@ -1123,14 +1123,14 @@ bool getBoundaryIdealAndAllowedValences(
   return true;
 }
 
-bool meshOrientationIsOppositeOfCadOrientation(GFace *gf)
+bool meshOrientationIsOppositeOfCadOrientation(GSurface *gf)
 {
   size_t nOk = 0;
   size_t nInv = 0;
   for(std::size_t iEl = 0; iEl < gf->getNumMeshElements(); iEl++) {
     MElement *e = gf->getMeshElement(iEl);
     SVector3 ne = e->getFace(0).normal();
-    MVertex *v = e->getVertex(0);
+    MNode *v = e->getVertex(0);
     SPoint2 param;
     if(v->onWhat() == gf && v->getParameter(0, param[0]) &&
        v->getParameter(1, param[1])) {
@@ -1146,16 +1146,16 @@ bool meshOrientationIsOppositeOfCadOrientation(GFace *gf)
 
 void updateAdjacencies(const GFaceMeshPatch &before,
                        const GFaceMeshPatch &after,
-                       unordered_map<MVertex *, std::vector<MElement *> > &adj)
+                       unordered_map<MNode *, std::vector<MElement *> > &adj)
 {
   /* Remove old vertices from adjacency keys */
-  for(MVertex *v : before.intVertices) {
+  for(MNode *v : before.intVertices) {
     auto it = adj.find(v);
     if(it != adj.end()) { adj.erase(it); }
   }
   /* Remove old elements from adjacency values */
   for(auto &loop : before.bdrVertices) {
-    for(MVertex *bv : loop) {
+    for(MNode *bv : loop) {
       auto it = adj.find(bv);
       if(it != adj.end()) {
         it->second = difference(it->second, before.elements);
@@ -1165,7 +1165,7 @@ void updateAdjacencies(const GFaceMeshPatch &before,
   /* Add new keys and values */
   for(MElement *e : after.elements) {
     for(size_t lv = 0; lv < e->getNumVertices(); ++lv) {
-      MVertex *v = e->getVertex(lv);
+      MNode *v = e->getVertex(lv);
       adj[v].push_back(e);
     }
   }
@@ -1173,12 +1173,12 @@ void updateAdjacencies(const GFaceMeshPatch &before,
 
 std::vector<MElement *>
 getNeighbors(const std::vector<MElement *> &elements,
-             const unordered_map<MVertex *, std::vector<MElement *> > &adj)
+             const unordered_map<MNode *, std::vector<MElement *> > &adj)
 {
   std::vector<MElement *> neighbors;
   for(MElement *e : elements) {
     for(size_t lv = 0; lv < e->getNumVertices(); ++lv) {
-      MVertex *v = e->getVertex(lv);
+      MNode *v = e->getVertex(lv);
       auto it = adj.find(v);
       if(it != adj.end()) {
         for(MElement *e2 : it->second) { neighbors.push_back(e2); }
@@ -1190,17 +1190,17 @@ getNeighbors(const std::vector<MElement *> &elements,
 }
 
 bool smoothThePool(
-  GFace *gf, const std::vector<MVertex *> &smoothingPool,
-  const unordered_map<MVertex *, std::vector<MElement *> > &adj,
+  GSurface *gf, const std::vector<MNode *> &smoothingPool,
+  const unordered_map<MNode *, std::vector<MElement *> > &adj,
   bool invertNormalsForQuality, SurfaceProjector *sp = nullptr)
 {
   /* Get all quads used for smoothing */
   std::vector<MElement *> elements;
   {
-    std::vector<MVertex *> unq = smoothingPool;
+    std::vector<MNode *> unq = smoothingPool;
     sort_unique(unq);
     elements.reserve(unq.size());
-    for(MVertex *v : unq) {
+    for(MNode *v : unq) {
       auto it = adj.find(v);
       if(it != adj.end()) {
         auto it2 =
@@ -1211,7 +1211,7 @@ bool smoothThePool(
   }
   sort_unique(elements);
 
-  // ensures all the elements are in the GFace. Should not be different,
+  // ensures all the elements are in the GSurface. Should not be different,
   // but there are some bugs in the smoothing pool
   std::vector<MElement *> faceElements =
     dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles);
@@ -1296,27 +1296,27 @@ struct DQStats {
 };
 
 int improveCornerValences(
-  GFace *gf,
-  const unordered_map<MVertex *, double>
+  GSurface *gf,
+  const unordered_map<MNode *, double>
     &qValIdeal, /* valence on bdr vertices */
-  unordered_map<MVertex *, std::vector<MElement *> > &adj, DQOptions &opt,
+  unordered_map<MNode *, std::vector<MElement *> > &adj, DQOptions &opt,
   DQStats &stats)
 {
   Msg::Debug("- Face %i: improve corner valences", gf->tag());
-  std::vector<MVertex *>
+  std::vector<MNode *>
     smoothingPool; /* for smoothing after topological changes */
   smoothingPool.reserve(gf->mesh_vertices.size());
 
   /* qValIdeal is unordered_map and its ordering is random, we replace
    * it with a deterministic ordering, containing only the corners */
-  std::vector<std::pair<MVertex *, double> > cornerAndIdeal;
+  std::vector<std::pair<MNode *, double> > cornerAndIdeal;
   for(auto &kv : qValIdeal) {
-    GVertex *gv = dynamic_cast<GVertex *>(kv.first->onWhat());
+    GPoint *gv = dynamic_cast<GPoint *>(kv.first->onWhat());
     if(gv != nullptr) { cornerAndIdeal.push_back({kv.first, kv.second}); }
   }
   std::sort(cornerAndIdeal.begin(), cornerAndIdeal.end(),
-            [](const std::pair<MVertex *, double> &lhs,
-               const std::pair<MVertex *, double> &rhs) {
+            [](const std::pair<MNode *, double> &lhs,
+               const std::pair<MNode *, double> &rhs) {
               return lhs.second < rhs.second ||
                      (lhs.second == rhs.second &&
                       lhs.first->getNum() < rhs.first->getNum());
@@ -1333,8 +1333,8 @@ int improveCornerValences(
    * so we try the small cavity after */
   for(int pass : {CORNER_PATCH, CORNER_PATCH_2, LARGER_PATCH, SMALL_PATCH}) {
     for(const auto &kv : cornerAndIdeal) {
-      MVertex *v = kv.first;
-      GVertex *gv = dynamic_cast<GVertex *>(v->onWhat());
+      MNode *v = kv.first;
+      GPoint *gv = dynamic_cast<GPoint *>(v->onWhat());
       if(gv == nullptr) continue;
 
       auto it = adj.find(v);
@@ -1356,15 +1356,15 @@ int improveCornerValences(
          quads.size() == 2) {
         /* The corner is valence and has been extruded
          * take all the quads around the extruded vertex */
-        std::vector<MVertex *> vert1 = {
+        std::vector<MNode *> vert1 = {
           quads[0]->getVertex(0), quads[0]->getVertex(1),
           quads[0]->getVertex(2), quads[0]->getVertex(3)};
-        std::vector<MVertex *> vert2 = {
+        std::vector<MNode *> vert2 = {
           quads[1]->getVertex(0), quads[1]->getVertex(1),
           quads[1]->getVertex(2), quads[1]->getVertex(3)};
-        std::vector<MVertex *> shared = intersection(vert1, vert2);
+        std::vector<MNode *> shared = intersection(vert1, vert2);
         if(shared.size() != 2) continue;
-        MVertex *ext = nullptr;
+        MNode *ext = nullptr;
         if(shared[0] == v) { ext = shared[1]; }
         else if(shared[1] == v) {
           ext = shared[0];
@@ -1435,7 +1435,7 @@ int improveCornerValences(
         }
 
         /* Execute the diff on the mesh */
-        bool ok = diff.execute(true); /* warning: GFace mesh changes here */
+        bool ok = diff.execute(true); /* warning: GSurface mesh changes here */
         if(PARANO_VALIDITY) {
           errorAndAbortIfInvalidSurfaceMesh(
             gf, "improveCornerValences | after execute");
@@ -1470,8 +1470,8 @@ int improveCornerValences(
 
   /* Remaining cases, just for stats */
   for(const auto &kv : cornerAndIdeal) {
-    MVertex *v = kv.first;
-    GVertex *gv = dynamic_cast<GVertex *>(v->onWhat());
+    MNode *v = kv.first;
+    GPoint *gv = dynamic_cast<GPoint *>(v->onWhat());
     if(gv == nullptr) continue;
     auto it = adj.find(v);
     if(it == adj.end()) continue;
@@ -1485,37 +1485,37 @@ int improveCornerValences(
 }
 
 int improveCurveValences(
-  GFace *gf,
-  const unordered_map<MVertex *, double>
+  GSurface *gf,
+  const unordered_map<MNode *, double>
     &qValIdeal, /* valence on bdr vertices */
-  unordered_map<MVertex *, std::vector<MElement *> > &adj, DQOptions &opt,
+  unordered_map<MNode *, std::vector<MElement *> > &adj, DQOptions &opt,
   DQStats &stats)
 {
   Msg::Debug("- Face %i: improve curve valences", gf->tag());
-  std::vector<MVertex *>
+  std::vector<MNode *>
     smoothingPool; /* for smoothing after topological changes */
   smoothingPool.reserve(gf->mesh_vertices.size());
 
   /* qValIdeal is unordered_map and its ordering is random, we replace
    * it with a deterministic ordering, containing only the corners */
-  std::vector<std::pair<MVertex *, double> > curveVertexAndIdeal;
+  std::vector<std::pair<MNode *, double> > curveVertexAndIdeal;
   curveVertexAndIdeal.reserve(qValIdeal.size());
   for(auto &kv : qValIdeal) {
-    MVertex *v = kv.first;
-    GEdge *ge = dynamic_cast<GEdge *>(v->onWhat());
+    MNode *v = kv.first;
+    GCurve *ge = dynamic_cast<GCurve *>(v->onWhat());
     if(ge != nullptr) { curveVertexAndIdeal.push_back({kv.first, kv.second}); }
   }
   std::sort(curveVertexAndIdeal.begin(), curveVertexAndIdeal.end(),
-            [](const std::pair<MVertex *, double> &lhs,
-               const std::pair<MVertex *, double> &rhs) {
+            [](const std::pair<MNode *, double> &lhs,
+               const std::pair<MNode *, double> &rhs) {
               return lhs.second < rhs.second ||
                      (lhs.second == rhs.second &&
                       lhs.first->getNum() < rhs.first->getNum());
             });
 
   for(const auto &kv : curveVertexAndIdeal) {
-    MVertex *v = kv.first;
-    GEdge *ge = dynamic_cast<GEdge *>(v->onWhat());
+    MNode *v = kv.first;
+    GCurve *ge = dynamic_cast<GCurve *>(v->onWhat());
     if(ge == nullptr) continue;
     auto it = adj.find(v);
     if(it == adj.end()) continue;
@@ -1572,7 +1572,7 @@ int improveCurveValences(
       }
 
       /* Execute the diff on the mesh */
-      bool ok = diff.execute(true); /* warning: GFace mesh changes here */
+      bool ok = diff.execute(true); /* warning: GSurface mesh changes here */
       if(PARANO_VALIDITY) {
         errorAndAbortIfInvalidSurfaceMesh(
           gf, "improveCurveValences | after execute");
@@ -1623,8 +1623,8 @@ int improveCurveValences(
 
   /* Remaining cases, just for stats */
   for(const auto &kv : curveVertexAndIdeal) {
-    MVertex *v = kv.first;
-    GEdge *ge = dynamic_cast<GEdge *>(v->onWhat());
+    MNode *v = kv.first;
+    GCurve *ge = dynamic_cast<GCurve *>(v->onWhat());
     if(ge == nullptr) continue;
     auto it = adj.find(v);
     if(it == adj.end()) continue;
@@ -1639,12 +1639,12 @@ int improveCurveValences(
 
 double irregularityEnergy(
   const GFaceMeshPatch &patch,
-  const unordered_map<MVertex *, double> &qValIdeal,
-  const unordered_map<MVertex *, std::vector<MElement *> > &adj)
+  const unordered_map<MNode *, double> &qValIdeal,
+  const unordered_map<MNode *, std::vector<MElement *> > &adj)
 {
   double Ir = 0.;
   /* Boundary vertices */
-  for(MVertex *v : patch.bdrVertices.front()) {
+  for(MNode *v : patch.bdrVertices.front()) {
     double valIdeal = 4.;
     auto it = qValIdeal.find(v);
     if(it != qValIdeal.end()) { valIdeal = it->second; }
@@ -1656,7 +1656,7 @@ double irregularityEnergy(
     Ir += std::pow(valIdeal - val, 2);
   }
   /* Interior vertices */
-  for(MVertex *v : patch.intVertices) {
+  for(MNode *v : patch.intVertices) {
     double valIdeal = 4.;
     auto it2 = adj.find(v);
     if(it2 == adj.end()) { continue; }
@@ -1668,9 +1668,9 @@ double irregularityEnergy(
 }
 
 double irregularityEnergy(
-  GFace *gf, const std::vector<MElement *> &quads,
-  const unordered_map<MVertex *, double> &qValIdeal,
-  const unordered_map<MVertex *, std::vector<MElement *> > &adj)
+  GSurface *gf, const std::vector<MElement *> &quads,
+  const unordered_map<MNode *, double> &qValIdeal,
+  const unordered_map<MNode *, std::vector<MElement *> > &adj)
 {
   GFaceMeshPatch patch;
   bool okp = patchFromElements(gf, quads, patch);
@@ -1679,27 +1679,27 @@ double irregularityEnergy(
 }
 
 int improveInteriorValences(
-  GFace *gf,
-  const unordered_map<MVertex *, double>
+  GSurface *gf,
+  const unordered_map<MNode *, double>
     &qValIdeal, /* valence on bdr vertices */
-  unordered_map<MVertex *, std::vector<MElement *> > &adj, DQOptions &opt,
+  unordered_map<MNode *, std::vector<MElement *> > &adj, DQOptions &opt,
   DQStats &stats)
 {
   Msg::Debug("- Face %i: improve interior valences", gf->tag());
 
-  std::vector<MVertex *>
+  std::vector<MNode *>
     smoothingPool; /* for smoothing after topological changes */
   smoothingPool.reserve(gf->mesh_vertices.size());
 
   /* Priority queue */
-  std::priority_queue<std::pair<double, MVertex *>,
-                      std::vector<std::pair<double, MVertex *> > >
+  std::priority_queue<std::pair<double, MNode *>,
+                      std::vector<std::pair<double, MNode *> > >
     Q;
 
   /* Initialize with all very irregular vertices of the face */
   for(const auto &kv : adj) {
-    MVertex *v = kv.first;
-    GFace *gf = dynamic_cast<GFace *>(v->onWhat());
+    MNode *v = kv.first;
+    GSurface *gf = dynamic_cast<GSurface *>(v->onWhat());
     if(gf == nullptr) continue;
     auto it = adj.find(v);
     if(it == adj.end()) continue;
@@ -1724,7 +1724,7 @@ int improveInteriorValences(
 
   /* Topological replacement loop */
   while(Q.size() > 0) {
-    MVertex *v = Q.top().second;
+    MNode *v = Q.top().second;
     Q.pop();
 
     auto it = adj.find(v);
@@ -1770,7 +1770,7 @@ int improveInteriorValences(
       }
 
       /* Execute the diff on the mesh */
-      bool ok = diff.execute(true); /* warning: GFace mesh changes here */
+      bool ok = diff.execute(true); /* warning: GSurface mesh changes here */
       if(PARANO_VALIDITY) {
         errorAndAbortIfInvalidSurfaceMesh(
           gf, "improveInteriorValences | after execute");
@@ -1783,7 +1783,7 @@ int improveInteriorValences(
 
         /* If new very irregular vertices have been created,
          * add them to the queue */
-        for(MVertex *bv : patchAfter.bdrVertices.front()) {
+        for(MNode *bv : patchAfter.bdrVertices.front()) {
           auto it2 = adj.find(bv);
           if(it2 == adj.end()) continue;
           const std::vector<MElement *> &quads2 = it2->second;
@@ -1811,8 +1811,8 @@ int improveInteriorValences(
 
   /* Remaining cases, just for stats */
   for(const auto &kv : adj) {
-    MVertex *v = kv.first;
-    GFace *gf = dynamic_cast<GFace *>(v->onWhat());
+    MNode *v = kv.first;
+    GSurface *gf = dynamic_cast<GSurface *>(v->onWhat());
     if(gf == nullptr) continue;
     auto it = adj.find(v);
     if(it == adj.end()) continue;
@@ -1827,14 +1827,14 @@ int improveInteriorValences(
 
 bool patchIsValidForDiskRequadrangulation(
   const GFaceMeshPatch &patch,
-  const unordered_map<MVertex *, std::vector<MElement *> > &adj)
+  const unordered_map<MNode *, std::vector<MElement *> > &adj)
 {
   if(patch.bdrVertices.size() != 1) return false;
-  for(MVertex *v : patch.intVertices) {
+  for(MNode *v : patch.intVertices) {
     auto it = adj.find(v);
     if(it == adj.end()) return false;
   }
-  for(MVertex *v : patch.bdrVertices[0]) {
+  for(MNode *v : patch.bdrVertices[0]) {
     auto it = adj.find(v);
     if(it == adj.end()) return false;
   }
@@ -1843,7 +1843,7 @@ bool patchIsValidForDiskRequadrangulation(
       std::find(patch.gf->quadrangles.begin(), patch.gf->quadrangles.end(), e);
     if(it == patch.gf->quadrangles.end()) return false;
   }
-  std::vector<MVertex *> bndt;
+  std::vector<MNode *> bndt;
   bool okbb = buildBoundary(patch.elements, bndt);
   if(!okbb) return false;
 
@@ -1851,13 +1851,13 @@ bool patchIsValidForDiskRequadrangulation(
 }
 
 bool getIrregularPatchesAroundVertices(
-  const std::vector<MVertex *> &vert,
-  const unordered_map<MVertex *, std::vector<MElement *> > &adj,
-  const unordered_map<MVertex *, double> &qValIdeal,
+  const std::vector<MNode *> &vert,
+  const unordered_map<MNode *, std::vector<MElement *> > &adj,
+  const unordered_map<MNode *, double> &qValIdeal,
   std::vector<std::pair<double, GFaceMeshPatch> > &patches)
 {
-  for(MVertex *v : vert) {
-    GFace *gf = dynamic_cast<GFace *>(v->onWhat());
+  for(MNode *v : vert) {
+    GSurface *gf = dynamic_cast<GSurface *>(v->onWhat());
     if(gf == nullptr) continue;
     auto it = adj.find(v);
     if(it == adj.end()) continue;
@@ -1877,8 +1877,8 @@ bool getIrregularPatchesAroundVertices(
       /* Loop on edges around v */
       for(MElement *q : quads)
         for(size_t le = 0; le < 4; ++le) {
-          MVertex *v1 = q->getVertex(le);
-          MVertex *v2 = q->getVertex((le + 1) % 4);
+          MNode *v1 = q->getVertex(le);
+          MNode *v2 = q->getVertex((le + 1) % 4);
           if(v1 != v && v2 != v) continue;
           if(v1->getNum() > v2->getNum()) continue;
           auto it2 = (v1 == v) ? adj.find(v2) : adj.find(v1);
@@ -1927,15 +1927,15 @@ bool getIrregularPatchesAroundVertices(
 }
 
 int improveInteriorValencesV2(
-  GFace *gf,
-  const unordered_map<MVertex *, double>
+  GSurface *gf,
+  const unordered_map<MNode *, double>
     &qValIdeal, /* valence on bdr vertices */
-  unordered_map<MVertex *, std::vector<MElement *> > &adj, DQOptions &opt,
+  unordered_map<MNode *, std::vector<MElement *> > &adj, DQOptions &opt,
   DQStats &stats)
 {
   Msg::Debug("- Face %i: improve interior valences", gf->tag());
 
-  std::vector<MVertex *>
+  std::vector<MNode *>
     smoothingPool; /* for smoothing after topological changes */
   smoothingPool.reserve(gf->mesh_vertices.size());
 
@@ -1951,8 +1951,8 @@ int improveInteriorValencesV2(
 
   /* Initialize with patches around irregular vertices of the face */
   for(const auto &kv : adj) {
-    MVertex *v = kv.first;
-    GFace *gf = dynamic_cast<GFace *>(v->onWhat());
+    MNode *v = kv.first;
+    GSurface *gf = dynamic_cast<GSurface *>(v->onWhat());
     if(gf == nullptr) continue;
     auto it = adj.find(v);
     if(it == adj.end()) continue;
@@ -2004,7 +2004,7 @@ int improveInteriorValencesV2(
       }
 
       /* Execute the diff on the mesh */
-      bool ok = diff.execute(true); /* warning: GFace mesh changes here */
+      bool ok = diff.execute(true); /* warning: GSurface mesh changes here */
       if(PARANO_VALIDITY) {
         errorAndAbortIfInvalidSurfaceMesh(
           gf, "improveInteriorValencesV2 | after execute");
@@ -2040,8 +2040,8 @@ int improveInteriorValencesV2(
 
   /* Remaining cases, just for stats */
   for(const auto &kv : adj) {
-    MVertex *v = kv.first;
-    GFace *gf = dynamic_cast<GFace *>(v->onWhat());
+    MNode *v = kv.first;
+    GSurface *gf = dynamic_cast<GSurface *>(v->onWhat());
     if(gf == nullptr) continue;
     auto it = adj.find(v);
     if(it == adj.end()) continue;
@@ -2063,28 +2063,28 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
   RefineMesh(gm, linear, true, false);
 
   /* Convert vertex types:
-   * - MVertex on curve -> MEdgeVertex
-   * - MVertex on face  -> MFaceVertex */
-  std::vector<GEdge *> edges = model_edges(gm);
-  std::vector<GFace *> faces = model_faces(gm);
+   * - MNode on curve -> MEdgeVertex
+   * - MNode on face  -> MFaceVertex */
+  std::vector<GCurve *> edges = model_edges(gm);
+  std::vector<GSurface *> faces = model_faces(gm);
 
   /* old2new use to update mesh elements after */
-  unordered_map<MVertex *, MVertex *> old2new;
+  unordered_map<MNode *, MNode *> old2new;
 
   // FIXME: crash #1799
   int nthreads = 1; //getNumThreads();
 
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t e = 0; e < edges.size(); ++e) {
-    GEdge *ge = edges[e];
+    GCurve *ge = edges[e];
     if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) continue;
     if(ge->mesh_vertices.size() == 0) continue;
-    std::vector<MVertex *> toProj;
+    std::vector<MNode *> toProj;
     toProj.reserve(ge->mesh_vertices.size() / 2);
 
-    /* Replace MVertex by MEdgeVertex */
+    /* Replace MNode by MEdgeVertex */
     for(size_t i = 0; i < ge->mesh_vertices.size(); ++i) {
-      MVertex *v = ge->mesh_vertices[i];
+      MNode *v = ge->mesh_vertices[i];
       if(v->onWhat() != ge) {
         Msg::Error("- Edge %i: vertex %li is associated to entity (%i,%i)",
                    ge->tag(), v->getNum(), v->onWhat()->dim(),
@@ -2093,7 +2093,7 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
       }
       MEdgeVertex *mev = dynamic_cast<MEdgeVertex *>(v);
       if(mev == nullptr) {
-        MVertex *v2 = new MEdgeVertex(v->point().x(), v->point().y(),
+        MNode *v2 = new MEdgeVertex(v->point().x(), v->point().y(),
                                       v->point().z(), ge, 0.);
         ge->mesh_vertices[i] = v2;
         old2new[v] = v2;
@@ -2105,10 +2105,10 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
     double tMin = ge->parBounds(0).low();
     double tMax = ge->parBounds(0).high();
     for(size_t i = 0; i < toProj.size(); ++i) {
-      MVertex *v = toProj[i];
+      MNode *v = toProj[i];
       double tGuess =
         tMin + (tMax - tMin) * double(i + 1) / double(toProj.size());
-      GPoint proj = ge->closestPoint(v->point(), tGuess);
+      GVertex proj = ge->closestPoint(v->point(), tGuess);
       if(proj.succeeded()) {
         v->setXYZ(proj.x(), proj.y(), proj.z());
         v->setParameter(0, proj.u());
@@ -2131,16 +2131,16 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
 
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t f = 0; f < faces.size(); ++f) {
-    GFace *gf = faces[f];
+    GSurface *gf = faces[f];
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
     if(CTX::instance()->debugSurface > 0 &&
        gf->tag() != CTX::instance()->debugSurface)
       continue;
     if(gf->triangles.size() == 0 && gf->quadrangles.size() == 0) continue;
-    std::vector<MVertex *> toProj;
+    std::vector<MNode *> toProj;
     toProj.reserve(gf->mesh_vertices.size() / 2);
     for(size_t i = 0; i < gf->mesh_vertices.size(); ++i) {
-      MVertex *v = gf->mesh_vertices[i];
+      MNode *v = gf->mesh_vertices[i];
       if(v->onWhat() != gf) {
         Msg::Error("- Face %i: vertex %li is associated to entity (%i,%i)",
                    gf->tag(), v->getNum(), v->onWhat()->dim(),
@@ -2148,10 +2148,10 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
         continue;
       }
 
-      /* Replace MVertex by MFaceVertex */
+      /* Replace MNode by MFaceVertex */
       MFaceVertex *mfv = dynamic_cast<MFaceVertex *>(v);
       if(mfv == nullptr) {
-        MVertex *v2 = new MFaceVertex(v->point().x(), v->point().y(),
+        MNode *v2 = new MFaceVertex(v->point().x(), v->point().y(),
                                       v->point().z(), gf, 0., 0.);
         gf->mesh_vertices[i] = v2;
         old2new[v] = v2;
@@ -2194,8 +2194,8 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
     // evalOnCAD = true;
 
     for(size_t i = 0; i < toProj.size(); ++i) {
-      MVertex *v = toProj[i];
-      GPoint proj;
+      MNode *v = toProj[i];
+      GVertex proj;
       if(sp != nullptr) {
         proj = sp->closestPoint(v->point().data(), evalOnCAD, projOnCad);
         if(!proj.succeeded() && gf->haveParametrization()) {
@@ -2225,10 +2225,10 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
 /* Update elements */
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t e = 0; e < edges.size(); ++e) {
-    GEdge *ge = edges[e];
+    GCurve *ge = edges[e];
     for(MLine *l : ge->lines) {
       for(size_t lv = 0; lv < 2; ++lv) {
-        MVertex *v = l->getVertex(lv);
+        MNode *v = l->getVertex(lv);
         auto it = old2new.find(v);
         if(it != old2new.end()) { l->setVertex(lv, it->second); }
       }
@@ -2237,11 +2237,11 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
 
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t f = 0; f < faces.size(); ++f) {
-    GFace *gf = faces[f];
+    GSurface *gf = faces[f];
     for(size_t i = 0; i < gf->getNumMeshElements(); ++i) {
       MElement *e = gf->getMeshElement(i);
       for(size_t lv = 0; lv < e->getNumVertices(); ++lv) {
-        MVertex *v = e->getVertex(lv);
+        MNode *v = e->getVertex(lv);
         auto it2 = old2new.find(v);
         if(it2 != old2new.end()) { e->setVertex(lv, it2->second); }
       }
@@ -2287,7 +2287,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
   const bool SHOW_INTERMEDIATE_VIEWS = (Msg::GetVerbosity() >= 99);
   if(SHOW_INTERMEDIATE_VIEWS) {
     std::vector<MElement *> elements;
-    for(GFace *gf : model_faces(gm)) {
+    for(GSurface *gf : model_faces(gm)) {
       append(elements,
              dynamic_cast_vector<MTriangle *, MElement *>(gf->triangles));
       append(elements,
@@ -2312,34 +2312,34 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
   }
 
   /* Convert vertex types:
-   * - MVertex on curve -> MEdgeVertex
-   * - MVertex on face  -> MFaceVertex */
-  std::vector<GEdge *> edges = model_edges(gm);
-  std::vector<GFace *> faces = model_faces(gm);
+   * - MNode on curve -> MEdgeVertex
+   * - MNode on face  -> MFaceVertex */
+  std::vector<GCurve *> edges = model_edges(gm);
+  std::vector<GSurface *> faces = model_faces(gm);
   /* Build custom edgeToFaces because ge->faces() does not work
    * for embedded edges */
-  std::unordered_map<GEdge *, std::vector<MVertex *> > toProjectOnCurve;
-  std::unordered_map<GFace *, std::vector<MVertex *> > toProjectOnFace;
-  std::unordered_map<GEdge *, std::unordered_set<GFace *> > edgeToFaces;
-  for(GFace *gf : model_faces(gm)) {
-    std::vector<GEdge *> fedges = face_edges(gf);
-    for(GEdge *ge : fedges) edgeToFaces[ge].insert(gf);
+  std::unordered_map<GCurve *, std::vector<MNode *> > toProjectOnCurve;
+  std::unordered_map<GSurface *, std::vector<MNode *> > toProjectOnFace;
+  std::unordered_map<GCurve *, std::unordered_set<GSurface *> > edgeToFaces;
+  for(GSurface *gf : model_faces(gm)) {
+    std::vector<GCurve *> fedges = face_edges(gf);
+    for(GCurve *ge : fedges) edgeToFaces[ge].insert(gf);
   }
 
   int nthreads = getNumThreads();
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t e = 0; e < edges.size(); ++e) {
-    GEdge *ge = edges[e];
+    GCurve *ge = edges[e];
     if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) continue;
     if(ge->lines.size() == 0 || ge->mesh_vertices.size() == 0) continue;
-    unordered_map<MVertex *, MVertex *> old2new_ge;
-    std::vector<MVertex *> &projList = toProjectOnCurve[ge];
+    unordered_map<MNode *, MNode *> old2new_ge;
+    std::vector<MNode *> &projList = toProjectOnCurve[ge];
     projList.reserve(ge->mesh_vertices.size());
     for(size_t i = 0; i < ge->mesh_vertices.size(); ++i) {
-      MVertex *v = ge->mesh_vertices[i];
+      MNode *v = ge->mesh_vertices[i];
       MEdgeVertex *mev = dynamic_cast<MEdgeVertex *>(v);
       if(mev == nullptr) {
-        MVertex *v2 = new MEdgeVertex(v->point().x(), v->point().y(),
+        MNode *v2 = new MEdgeVertex(v->point().x(), v->point().y(),
                                       v->point().z(), ge, 0.);
         ge->mesh_vertices[i] = v2;
         old2new_ge[v] = v2;
@@ -2350,17 +2350,17 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     /* Update lines */
     for(MLine *l : ge->lines) {
       for(size_t lv = 0; lv < 2; ++lv) {
-        MVertex *v = l->getVertex(lv);
+        MNode *v = l->getVertex(lv);
         auto it = old2new_ge.find(v);
         if(it != old2new_ge.end()) { l->setVertex(lv, it->second); }
       }
     }
     /* Update elements in adjacent faces */
-    for(GFace *gf : edgeToFaces[ge]) {
+    for(GSurface *gf : edgeToFaces[ge]) {
       for(size_t i = 0; i < gf->getNumMeshElements(); ++i) {
         MElement *e = gf->getMeshElement(i);
         for(size_t lv = 0; lv < e->getNumVertices(); ++lv) {
-          MVertex *v = e->getVertex(lv);
+          MNode *v = e->getVertex(lv);
           auto it = old2new_ge.find(v);
           if(it != old2new_ge.end()) { e->setVertex(lv, it->second); }
         }
@@ -2370,17 +2370,17 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
 
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t f = 0; f < faces.size(); ++f) {
-    GFace *gf = faces[f];
+    GSurface *gf = faces[f];
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
     if(CTX::instance()->debugSurface > 0 &&
        gf->tag() != CTX::instance()->debugSurface)
       continue;
     if(gf->triangles.size() == 0 && gf->quadrangles.size() == 0) continue;
-    unordered_map<MVertex *, MVertex *> old2new_gf;
-    std::vector<MVertex *> &projList = toProjectOnFace[gf];
+    unordered_map<MNode *, MNode *> old2new_gf;
+    std::vector<MNode *> &projList = toProjectOnFace[gf];
     projList.reserve(gf->mesh_vertices.size());
     for(size_t i = 0; i < gf->mesh_vertices.size(); ++i) {
-      MVertex *v = gf->mesh_vertices[i];
+      MNode *v = gf->mesh_vertices[i];
       if(v->onWhat() != gf) {
         Msg::Error("- Face %i: vertex %li is associated to entity (%i,%i)",
                    gf->tag(), v->getNum(), v->onWhat()->dim(),
@@ -2389,7 +2389,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
       }
       MFaceVertex *mfv = dynamic_cast<MFaceVertex *>(v);
       if(mfv == nullptr) {
-        MVertex *v2 = new MFaceVertex(v->point().x(), v->point().y(),
+        MNode *v2 = new MFaceVertex(v->point().x(), v->point().y(),
                                       v->point().z(), gf, 0., 0.);
         gf->mesh_vertices[i] = v2;
         old2new_gf[v] = v2;
@@ -2401,7 +2401,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     for(size_t i = 0; i < gf->getNumMeshElements(); ++i) {
       MElement *e = gf->getMeshElement(i);
       for(size_t lv = 0; lv < e->getNumVertices(); ++lv) {
-        MVertex *v = e->getVertex(lv);
+        MNode *v = e->getVertex(lv);
         auto it2 = old2new_gf.find(v);
         if(it2 != old2new_gf.end()) { e->setVertex(lv, it2->second); }
       }
@@ -2413,7 +2413,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
 /* - projections on curves */
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t e = 0; e < edges.size(); ++e) {
-    GEdge *ge = edges[e];
+    GCurve *ge = edges[e];
     auto it = toProjectOnCurve.find(ge);
     if(it == toProjectOnCurve.end()) continue;
 
@@ -2421,10 +2421,10 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     double tMax = ge->parBounds(0).high();
 
     for(size_t j = 0; j < it->second.size(); ++j) {
-      MVertex *v = it->second[j];
+      MNode *v = it->second[j];
       double tGuess =
         tMin + (tMax - tMin) * double(j + 1) / double(it->second.size() + 1);
-      GPoint proj = ge->closestPoint(v->point(), tGuess);
+      GVertex proj = ge->closestPoint(v->point(), tGuess);
       if(proj.succeeded()) {
         v->setXYZ(proj.x(), proj.y(), proj.z());
         v->setParameter(0, proj.u());
@@ -2448,7 +2448,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
 /* - projections on faces */
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t f = 0; f < faces.size(); ++f) {
-    GFace *gf = faces[f];
+    GSurface *gf = faces[f];
 
     auto it = toProjectOnFace.find(gf);
     if(it == toProjectOnFace.end()) continue;
@@ -2485,8 +2485,8 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
     if(gf->haveParametrization() && haveNiceParametrization(gf))
       evalOnCAD = true;
     for(size_t j = 0; j < it->second.size(); ++j) {
-      MVertex *v = it->second[j];
-      GPoint proj;
+      MNode *v = it->second[j];
+      GVertex proj;
       if(sp != nullptr) {
         proj = sp->closestPoint(v->point().data(), evalOnCAD, projOnCad);
         if(!proj.succeeded() && gf->haveParametrization()) {
@@ -2525,7 +2525,7 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
 
   if(SHOW_INTERMEDIATE_VIEWS) {
     std::vector<MElement *> elements;
-    for(GFace *gf : model_faces(gm)) {
+    for(GSurface *gf : model_faces(gm)) {
       append(elements,
              dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles));
       // showUVParametrization(gf,dynamic_cast_vector<MQuadrangle*,MElement*>(gf->quadrangles),"quad_uvs");
@@ -2550,11 +2550,11 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
   return 0;
 }
 
-int checkAndReplaceQuadDominantMesh(GFace *gf, int valenceMaxBdr = 6,
+int checkAndReplaceQuadDominantMesh(GSurface *gf, int valenceMaxBdr = 6,
                                     int valenceMaxIn = 8)
 {
   /* Check valence */
-  unordered_map<MVertex *, int> valence;
+  unordered_map<MNode *, int> valence;
   for(MQuadrangle *q : gf->quadrangles)
     for(size_t lv = 0; lv < 4; ++lv) { valence[q->getVertex(lv)] += 1; }
   for(MTriangle *t : gf->triangles)
@@ -2578,7 +2578,7 @@ int checkAndReplaceQuadDominantMesh(GFace *gf, int valenceMaxBdr = 6,
   gf->mesh(false);
   gf->setMeshingAlgo(algo2d);
 
-  if(gf->meshStatistics.status != GFace::DONE) {
+  if(gf->meshStatistics.status != GSurface::DONE) {
     Msg::Warning("- Face %i: failed to build triangulation", gf->tag());
     return -1;
   }
@@ -2591,12 +2591,12 @@ int checkAndReplaceQuadDominantMesh(GFace *gf, int valenceMaxBdr = 6,
 
 int replaceBadQuadDominantMeshes(GModel *gm)
 {
-  std::vector<GFace *> faces = model_faces(gm);
+  std::vector<GSurface *> faces = model_faces(gm);
 
   int nthreads = getNumThreads();
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t f = 0; f < faces.size(); ++f) {
-    GFace *gf = faces[f];
+    GSurface *gf = faces[f];
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
     if(CTX::instance()->debugSurface > 0 &&
        gf->tag() != CTX::instance()->debugSurface)
@@ -2612,7 +2612,7 @@ int replaceBadQuadDominantMeshes(GModel *gm)
   return 0;
 }
 
-int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace *gf)
+int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GSurface *gf)
 {
   if(gf->triangles.size() > 0 || gf->quadrangles.size() == 0) return -1;
 
@@ -2622,14 +2622,14 @@ int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace *gf)
 
   /* For each bdr vertex, compute the ideal valence (based on angle viewed from
    * the face) */
-  unordered_map<MVertex *, double> qValIdeal;
+  unordered_map<MNode *, double> qValIdeal;
   computeBdrVertexIdealValence(gf->quadrangles, qValIdeal);
 
   /* Vertex to quads */
-  unordered_map<MVertex *, std::vector<MElement *> > adj;
+  unordered_map<MNode *, std::vector<MElement *> > adj;
   for(MQuadrangle *f : gf->quadrangles)
     for(size_t lv = 0; lv < 4; ++lv) {
-      MVertex *v = f->getVertex(lv);
+      MNode *v = f->getVertex(lv);
       adj[v].push_back(f);
     }
 
@@ -2722,14 +2722,14 @@ int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace *gf)
 }
 
 int insertExtrudedBoundaryLayer(
-  GFace *gf, const std::vector<MVertex *> &loop,
-  const unordered_map<MVertex *, std::vector<MElement *> > &adj)
+  GSurface *gf, const std::vector<MNode *> &loop,
+  const unordered_map<MNode *, std::vector<MElement *> > &adj)
 {
   if(loop.size() < 2) return -1;
-  unordered_map<MVertex *, MVertex *> extrusion;
+  unordered_map<MNode *, MNode *> extrusion;
   for(size_t i = 0; i < loop.size(); ++i) {
     if(i > 0 && i == loop.size() - 1 && loop[i] == loop[0]) continue;
-    MVertex *v = loop[i];
+    MNode *v = loop[i];
     auto it = adj.find(v);
     if(it == adj.end()) {
       Msg::Error("insert extruded layer: vertex not found in adj");
@@ -2743,7 +2743,7 @@ int insertExtrudedBoundaryLayer(
     double sumuv = 0.;
     for(auto &q : it->second) {
       for(size_t lv = 0; lv < 4; ++lv) {
-        MVertex *qv = q->getVertex(lv);
+        MNode *qv = q->getVertex(lv);
         MFaceVertex *mfv = dynamic_cast<MFaceVertex *>(qv);
         if(mfv) {
           double u, v;
@@ -2759,7 +2759,7 @@ int insertExtrudedBoundaryLayer(
     if(sum > 0.) pos = pos * double(1. / sum);
     if(sumuv > 0.) uv = uv * double(1. / sumuv);
 
-    MVertex *v2 =
+    MNode *v2 =
       new MFaceVertex(pos.x(), pos.y(), pos.z(), gf, uv.x(), uv.y());
     gf->mesh_vertices.push_back(v2);
     gf->model()->addMVertexToVertexCache(v2);
@@ -2768,7 +2768,7 @@ int insertExtrudedBoundaryLayer(
     /* Update adjacent quads */
     for(auto &q : it->second) {
       for(size_t lv = 0; lv < 4; ++lv) {
-        MVertex *qv = q->getVertex(lv);
+        MNode *qv = q->getVertex(lv);
         if(qv == v) { q->setVertex(lv, v2); }
       }
     }
@@ -2776,11 +2776,11 @@ int insertExtrudedBoundaryLayer(
 
   /* Create new quads */
   for(size_t i = 0; i < loop.size(); ++i) {
-    MVertex *v0 = loop[i];
-    MVertex *v1 = loop[(i + 1) % loop.size()];
+    MNode *v0 = loop[i];
+    MNode *v1 = loop[(i + 1) % loop.size()];
     if(v0 == v1) continue;
-    MVertex *v2 = extrusion[v1];
-    MVertex *v3 = extrusion[v0];
+    MNode *v2 = extrusion[v1];
+    MNode *v3 = extrusion[v0];
     MQuadrangle *nq = new MQuadrangle(v0, v1, v2, v3);
     gf->quadrangles.push_back(nq);
   }
@@ -2788,7 +2788,7 @@ int insertExtrudedBoundaryLayer(
   return 0;
 }
 
-int optimizeFaceQuadMeshBoundaries(GFace *gf, bool ignoreAcuteCorners = false)
+int optimizeFaceQuadMeshBoundaries(GSurface *gf, bool ignoreAcuteCorners = false)
 {
   if(gf->triangles.size() > 0 || gf->quadrangles.size() == 0) return -1;
 
@@ -2800,7 +2800,7 @@ int optimizeFaceQuadMeshBoundaries(GFace *gf, bool ignoreAcuteCorners = false)
   std::vector<MElement *> elts =
     dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles);
   computeSICN(elts, minSICNb, avgSICNb);
-  std::vector<std::array<MVertex *, 4> > quadsInit(gf->quadrangles.size());
+  std::vector<std::array<MNode *, 4> > quadsInit(gf->quadrangles.size());
   for(size_t i = 0; i < gf->quadrangles.size(); ++i)
     for(size_t lv = 0; lv < 4; ++lv) {
       quadsInit[i][lv] = gf->quadrangles[i]->getVertex(lv);
@@ -2811,11 +2811,11 @@ int optimizeFaceQuadMeshBoundaries(GFace *gf, bool ignoreAcuteCorners = false)
 
   /* For each bdr vertex, compute the ideal valence (based on angle viewed from
    * the face) */
-  unordered_map<MVertex *, double> qValIdeal;
+  unordered_map<MNode *, double> qValIdeal;
   computeBdrVertexIdealValence(gf->quadrangles, qValIdeal);
 
   /* Face boundary loops */
-  std::vector<std::vector<MVertex *> > loops;
+  std::vector<std::vector<MNode *> > loops;
   bool okb = buildBoundaries(elts, loops);
   if(!okb) {
     Msg::Warning("failed to build boundary loops on face %i", gf->tag());
@@ -2823,10 +2823,10 @@ int optimizeFaceQuadMeshBoundaries(GFace *gf, bool ignoreAcuteCorners = false)
   }
 
   /* Vertex to quads */
-  unordered_map<MVertex *, std::vector<MElement *> > adj;
+  unordered_map<MNode *, std::vector<MElement *> > adj;
   for(MQuadrangle *f : gf->quadrangles)
     for(size_t lv = 0; lv < 4; ++lv) {
-      MVertex *v = f->getVertex(lv);
+      MNode *v = f->getVertex(lv);
       adj[v].push_back(f);
     }
 
@@ -2835,7 +2835,7 @@ int optimizeFaceQuadMeshBoundaries(GFace *gf, bool ignoreAcuteCorners = false)
   for(size_t i = 0; i < loops.size(); ++i) {
     bool goodAcute = false;
     bool loopIsGood = true;
-    for(MVertex *v : loops[i]) {
+    for(MNode *v : loops[i]) {
       auto it = adj.find(v);
       if(it == adj.end()) continue;
       size_t val = it->second.size();
@@ -2909,13 +2909,13 @@ int ensureEvenNumberOfEdgesOnCurvesAfterInitialSurfaceMesh(GModel *gm)
   int algo2d = CTX::instance()->mesh.algo2d;
   CTX::instance()->mesh.algo2d = ALGO_2D_INITIAL_ONLY;
 
-  std::vector<GFace *> faces = model_faces(gm);
+  std::vector<GSurface *> faces = model_faces(gm);
   int nIter = 0;
   while(1) {
     int nPending = 0;
     for(size_t f = 0; f < faces.size(); ++f) {
-      GFace *gf = faces[f];
-      if(gf->meshStatistics.status != GFace::PENDING) continue;
+      GSurface *gf = faces[f];
+      if(gf->meshStatistics.status != GSurface::PENDING) continue;
       if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility())
         continue;
       if(CTX::instance()->debugSurface > 0 &&
@@ -2941,16 +2941,16 @@ int ensureEvenNumberOfEdgesOnCurvesAfterInitialSurfaceMesh(GModel *gm)
   CTX::instance()->mesh.algo2d = algo2d;
 
   /* Remove the meshes */
-  std::vector<GEdge *> edges;
+  std::vector<GCurve *> edges;
 
   Msg::Info("Deleting empty surface meshes ...");
   for(size_t f = 0; f < faces.size(); ++f) {
-    GFace *gf = faces[f];
+    GSurface *gf = faces[f];
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
     if(CTX::instance()->debugSurface > 0 &&
        gf->tag() != CTX::instance()->debugSurface)
       continue;
-    if(gf->meshStatistics.status == GFace::PENDING) {
+    if(gf->meshStatistics.status == GSurface::PENDING) {
       Msg::Warning("- Face %i not meshed !", gf->tag());
     }
     deMeshGFace killer;
@@ -2963,21 +2963,21 @@ int ensureEvenNumberOfEdgesOnCurvesAfterInitialSurfaceMesh(GModel *gm)
   /* Verify the curves */
   sort_unique(edges);
   for(size_t e = 0; e < edges.size(); ++e) {
-    GEdge *ge = edges[e];
+    GCurve *ge = edges[e];
     if(ge->lines.size() % 2 != 0) {
       Msg::Warning(
         "- Curve %i has %li lines (due to boundary recovery), splitting one",
         ge->tag(), ge->lines.size());
       size_t i = ge->lines.size() / 2;
       MLine *l = ge->lines[i];
-      MVertex *v1 = l->getVertex(0);
-      MVertex *v2 = l->getVertex(1);
+      MNode *v1 = l->getVertex(0);
+      MNode *v2 = l->getVertex(1);
       double t1, t2;
       v1->getParameter(0, t1);
       v2->getParameter(0, t2);
       double t = 0.5 * (t1 + t2);
       SPoint3 mid = (v1->point() + v2->point()) * 0.5;
-      GPoint proj = ge->closestPoint(mid, t);
+      GVertex proj = ge->closestPoint(mid, t);
       if(!proj.succeeded()) { /* force values */
         proj.x() = mid.x();
         proj.y() = mid.y();
@@ -3005,7 +3005,7 @@ int ensureEvenNumberOfEdgesOnCurvesAfterInitialSurfaceMesh(GModel *gm)
 
   /* Undo transfinite which are no longer possibles */
   for(size_t f = 0; f < faces.size(); ++f) {
-    GFace *gf = faces[f];
+    GSurface *gf = faces[f];
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
     if(CTX::instance()->debugSurface > 0 &&
        gf->tag() != CTX::instance()->debugSurface)
@@ -3013,7 +3013,7 @@ int ensureEvenNumberOfEdgesOnCurvesAfterInitialSurfaceMesh(GModel *gm)
     if(gf->meshAttributes.method == MESH_TRANSFINITE &&
        gf->edges().size() == 4) {
       std::vector<size_t> sizes;
-      for(GEdge *ge : gf->edges()) { sizes.push_back(ge->lines.size()); }
+      for(GCurve *ge : gf->edges()) { sizes.push_back(ge->lines.size()); }
       std::sort(sizes.begin(), sizes.end());
       if(sizes.size() != 4 || sizes[0] != sizes[1] || sizes[2] != sizes[3]) {
         Msg::Warning(
@@ -3041,7 +3041,7 @@ int quadMeshingOfSimpleFacesWithPatterns(GModel *gm,
     return 0;
   }
 
-  std::vector<GFace *> faces = model_faces(gm);
+  std::vector<GSurface *> faces = model_faces(gm);
   Msg::Info("Pattern-based quad meshing of simple CAD faces ...", faces.size());
 
   initQuadPatterns();
@@ -3049,8 +3049,8 @@ int quadMeshingOfSimpleFacesWithPatterns(GModel *gm,
   int nthreads = getNumThreads();
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t f = 0; f < faces.size(); ++f) {
-    GFace *gf = faces[f];
-    if(gf->meshStatistics.status != GFace::PENDING) continue;
+    GSurface *gf = faces[f];
+    if(gf->meshStatistics.status != GSurface::PENDING) continue;
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
     if(CTX::instance()->debugSurface > 0 &&
        gf->tag() != CTX::instance()->debugSurface)
@@ -3100,13 +3100,13 @@ int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel *gm)
 
   initDiskQuadrangulations();
 
-  std::vector<GFace *> faces = model_faces(gm);
+  std::vector<GSurface *> faces = model_faces(gm);
 
   int nthreads = getNumThreads();
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t f = 0; f < faces.size(); ++f) {
-    GFace *gf = faces[f];
-    if(gf->meshStatistics.status != GFace::PENDING) continue;
+    GSurface *gf = faces[f];
+    if(gf->meshStatistics.status != GSurface::PENDING) continue;
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
     if(CTX::instance()->debugSurface > 0 &&
        gf->tag() != CTX::instance()->debugSurface)
@@ -3152,7 +3152,7 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
     return 0;
   }
 
-  std::vector<GFace *> faces = model_faces(gm);
+  std::vector<GSurface *> faces = model_faces(gm);
   Msg::Info(
     "Optimize topology of quad meshes with cavity remeshing (%li faces) ...",
     faces.size());
@@ -3174,14 +3174,14 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
   int nthreads = getNumThreads();
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t f = 0; f < faces.size(); ++f) {
-    GFace *gf = faces[f];
-    if(gf->meshStatistics.status != GFace::PENDING) continue;
+    GSurface *gf = faces[f];
+    if(gf->meshStatistics.status != GSurface::PENDING) continue;
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
     if(CTX::instance()->debugSurface > 0 &&
        gf->tag() != CTX::instance()->debugSurface)
       continue;
     if(gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
-    gf->meshStatistics.status = GFace::DONE;
+    gf->meshStatistics.status = GSurface::DONE;
 
     /* Get singularities from global storage */
     std::vector<std::pair<SPoint3, int> > singularities;
@@ -3227,13 +3227,13 @@ int optimizeQuadMeshBoundaries(GModel *gm)
   Msg::Info("Optimize topology of quad mesh boundaries with extrusion and "
             "remeshing ...");
 
-  std::vector<GFace *> faces = model_faces(gm);
+  std::vector<GSurface *> faces = model_faces(gm);
 
   int nthreads = getNumThreads();
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t f = 0; f < faces.size(); ++f) {
-    GFace *gf = faces[f];
-    if(gf->meshStatistics.status != GFace::PENDING) continue;
+    GSurface *gf = faces[f];
+    if(gf->meshStatistics.status != GSurface::PENDING) continue;
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
     if(CTX::instance()->debugSurface > 0 &&
        gf->tag() != CTX::instance()->debugSurface)
@@ -3306,20 +3306,20 @@ int optimizeQuadMeshBoundaries(GModel *gm)
 
 int transferSeamGEdgesVerticesToGFace(GModel *gm)
 {
-  for(GFace *gf : gm->getFaces()) {
-    /* Transfer the vertices from seam GEdge to associated GFace */
-    std::unordered_map<MVertex *, MVertex *> old2new;
-    for(GEdge *ge : gf->edges()) {
+  for(GSurface *gf : gm->getFaces()) {
+    /* Transfer the vertices from seam GCurve to associated GSurface */
+    std::unordered_map<MNode *, MNode *> old2new;
+    for(GCurve *ge : gf->edges()) {
       if(ge->isSeam(gf) && ge->faces().size() == 1 && ge->faces()[0] == gf) {
-        /* GEdge interior vertices */
-        for(MVertex *ov : ge->mesh_vertices) {
+        /* GCurve interior vertices */
+        for(MNode *ov : ge->mesh_vertices) {
           auto it = old2new.find(ov);
           if(it != old2new.end()) continue; /* already changed */
           SPoint3 p = ov->point();
           double t;
           ov->getParameter(0, t);
           SPoint2 uv = ge->reparamOnFace(gf, t, -1);
-          MVertex *nv = new MFaceVertex(p.x(), p.y(), p.z(), gf, uv[0], uv[1]);
+          MNode *nv = new MFaceVertex(p.x(), p.y(), p.z(), gf, uv[0], uv[1]);
           nv->setParameter(0, uv[0]);
           nv->setParameter(1, uv[1]);
           gf->mesh_vertices.push_back(nv);
@@ -3330,11 +3330,11 @@ int transferSeamGEdgesVerticesToGFace(GModel *gm)
         for(size_t i = 0; i < ge->lines.size(); ++i) { delete ge->lines[i]; }
         ge->lines.clear();
 
-        /* GEdge boundary vertices */
-        for(GVertex *gv : ge->vertices())
+        /* GCurve boundary vertices */
+        for(GPoint *gv : ge->vertices())
           if(gv->mesh_vertices.size() == 1) {
-            std::vector<GEdge *> otherCurves;
-            for(GEdge *ge2 : gv->edges())
+            std::vector<GCurve *> otherCurves;
+            for(GCurve *ge2 : gv->edges())
               if(ge2 != ge) {
                 if(ge2->vertices().front() == ge2->vertices().back() &&
                    ge2->length() <
@@ -3349,7 +3349,7 @@ int transferSeamGEdgesVerticesToGFace(GModel *gm)
               otherCurves.end());
 
             if(otherCurves.size() > 0) continue;
-            MVertex *ov = gv->mesh_vertices[0];
+            MNode *ov = gv->mesh_vertices[0];
             auto it = old2new.find(ov);
             if(it != old2new.end()) continue; /* already changed */
             Msg::Debug(
@@ -3357,16 +3357,16 @@ int transferSeamGEdgesVerticesToGFace(GModel *gm)
               gv->tag(), gf->tag());
             SPoint3 p = ov->point();
             SPoint2 uv = gv->reparamOnFace(gf, 0);
-            MVertex *nv =
+            MNode *nv =
               new MFaceVertex(p.x(), p.y(), p.z(), gf, uv[0], uv[1]);
             nv->setParameter(0, uv[0]);
             nv->setParameter(1, uv[1]);
             gf->mesh_vertices.push_back(nv);
             old2new[ov] = nv;
 
-            /* Note/warning: let the MVertex on the GVertex live. If the MVertex
+            /* Note/warning: let the MNode on the GPoint live. If the MNode
              * is deleted, I/O is broken.
-             * FIXME: support for GVertex without MVertex in mesh I/O */
+             * FIXME: support for GPoint without MNode in mesh I/O */
             // delete ov;
             // gv->mesh_vertices.clear();
           }
@@ -3375,13 +3375,13 @@ int transferSeamGEdgesVerticesToGFace(GModel *gm)
     if(old2new.size() > 0) {
       for(MElement *f : gf->triangles)
         for(size_t lv = 0; lv < 3; ++lv) {
-          MVertex *v = f->getVertex(lv);
+          MNode *v = f->getVertex(lv);
           auto it = old2new.find(v);
           if(it != old2new.end()) { f->setVertex(lv, it->second); }
         }
       for(MElement *f : gf->quadrangles)
         for(size_t lv = 0; lv < 4; ++lv) {
-          MVertex *v = f->getVertex(lv);
+          MNode *v = f->getVertex(lv);
           auto it = old2new.find(v);
           if(it != old2new.end()) { f->setVertex(lv, it->second); }
         }
@@ -3418,8 +3418,8 @@ QuadqsContextUpdater::QuadqsContextUpdater()
   backups_int.push_back(
     new RestoreValueAtEndOfLife<int>(&CTX::instance()->abortOnError));
 
-  // Backup GEdge meshing attributes
-  for(GEdge *ge : model_edges(GModel::current())) {
+  // Backup GCurve meshing attributes
+  for(GCurve *ge : model_edges(GModel::current())) {
     backups_char.push_back(
       new RestoreValueAtEndOfLife<char>(&ge->meshAttributes.method));
     backups_double.push_back(new RestoreValueAtEndOfLife<double>(
@@ -3438,8 +3438,8 @@ QuadqsContextUpdater::QuadqsContextUpdater()
       new RestoreValueAtEndOfLife<bool>(&ge->meshAttributes.reverseMesh));
   }
 
-  // Backup GFace meshing attributes
-  for(GFace *gf : model_faces(GModel::current())) {
+  // Backup GSurface meshing attributes
+  for(GSurface *gf : model_faces(GModel::current())) {
     backups_int.push_back(
       new RestoreValueAtEndOfLife<int>(&gf->meshAttributes.recombine));
     backups_double.push_back(
@@ -3529,15 +3529,15 @@ int quadqsCleanup(GModel *gm)
 }
 
 void getAcuteCorners(
-  GFace *gf,
-  std::unordered_map<MVertex *, std::vector<MVertex *> > &acuteCorners,
+  GSurface *gf,
+  std::unordered_map<MNode *, std::vector<MNode *> > &acuteCorners,
   double angle_threshold_rad)
 {
-  std::unordered_map<MVertex *, std::vector<MVertex *> > corner2vertices;
-  for(GEdge *ge : gf->edges()) {
+  std::unordered_map<MNode *, std::vector<MNode *> > corner2vertices;
+  for(GCurve *ge : gf->edges()) {
     for(MLine *line : ge->lines) {
-      MVertex *v1 = line->getVertex(0);
-      MVertex *v2 = line->getVertex(1);
+      MNode *v1 = line->getVertex(0);
+      MNode *v2 = line->getVertex(1);
       if(v1->onWhat() && v1->onWhat()->dim() == 0) {
         corner2vertices[v1].push_back(v2);
       }
@@ -3548,9 +3548,9 @@ void getAcuteCorners(
   }
   for(auto &kv : corner2vertices) {
     if(kv.second.size() == 2) {
-      MVertex *v = kv.first;
-      MVertex *v2 = kv.second[0];
-      MVertex *v3 = kv.second[1];
+      MNode *v = kv.first;
+      MNode *v2 = kv.second[0];
+      MNode *v3 = kv.second[1];
       double agl = angle3Vertices(v2, v, v3);
       if(agl < angle_threshold_rad) {
         acuteCorners[v].push_back(v2);
@@ -3563,10 +3563,10 @@ void getAcuteCorners(
 int optimize1DMeshAtAcuteCorners(GModel *gm)
 {
   /* Collect acute corners */
-  std::unordered_map<MVertex *, std::vector<MVertex *> > acuteCorners;
+  std::unordered_map<MNode *, std::vector<MNode *> > acuteCorners;
   double threshold = 30. * M_PI / 180.;
-  for(GFace *gf : gm->getFaces()) {
-    for(GEdge *ge : gf->edges())
+  for(GSurface *gf : gm->getFaces()) {
+    for(GCurve *ge : gf->edges())
       if(ge->lines.size() == 0) {
         Msg::Warning("Optimize 1D mesh at acute corners: no lines in curve %i",
                      ge->tag());
@@ -3581,13 +3581,13 @@ int optimize1DMeshAtAcuteCorners(GModel *gm)
   /* Move vertices */
   size_t n = 0;
   for(auto &kv : acuteCorners) {
-    MVertex *v = kv.first;
+    MNode *v = kv.first;
     /* Compute averaged distance */
     double avgLen = 0.;
     double avgN = 0.;
     double forcedLen = 0.;
     double forcedLenN = 0.;
-    for(MVertex *v2 : kv.second) {
+    for(MNode *v2 : kv.second) {
       double len = v->distance(v2);
       avgLen += len;
       avgN += 1.;
@@ -3600,16 +3600,16 @@ int optimize1DMeshAtAcuteCorners(GModel *gm)
     if(forcedLenN > 0.) forcedLen /= forcedLenN;
 
     /* Move vertices */
-    for(MVertex *v2 : kv.second)
+    for(MNode *v2 : kv.second)
       if(v2->onWhat() && v2->onWhat()->dim() == 1) {
         SVector3 dir = v2->point() - v->point();
         if(dir.normSq() > 0.) { dir.normalize(); }
         double len = (forcedLen > 0.) ? forcedLen : avgLen;
         SPoint3 newPos = v->point() + len * dir;
-        GEdge *ge = dynamic_cast<GEdge *>(v2->onWhat());
+        GCurve *ge = dynamic_cast<GCurve *>(v2->onWhat());
         double t = 0.;
         v2->getParameter(0, t);
-        GPoint proj = ge->closestPoint(newPos, t);
+        GVertex proj = ge->closestPoint(newPos, t);
         if(proj.succeeded()) {
           v2->setXYZ(proj.x(), proj.y(), proj.z());
           v2->setParameter(0, proj.u());

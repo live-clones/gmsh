@@ -65,7 +65,7 @@ using namespace voro;
 
 void voroMetal3D::execute(double h)
 {
-  GRegion *gr;
+  GVolume *gr;
   GModel *model = GModel::current();
   GModel::riter it;
   for(it = model->firstRegion(); it != model->lastRegion(); it++) {
@@ -74,15 +74,15 @@ void voroMetal3D::execute(double h)
   }
 }
 
-void voroMetal3D::execute(GRegion *gr, double h)
+void voroMetal3D::execute(GVolume *gr, double h)
 {
-  std::set<MVertex *> vertices;
-  std::set<MVertex *>::iterator it;
+  std::set<MNode *> vertices;
+  std::set<MNode *>::iterator it;
 
   for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
     MElement *element = gr->getMeshElement(i);
     for(std::size_t j = 0; j < element->getNumVertices(); j++) {
-      MVertex *vertex = element->getVertex(j);
+      MNode *vertex = element->getVertex(j);
       vertices.insert(vertex);
     }
   }
@@ -483,38 +483,38 @@ void voroMetal3D::correspondence(double e, double xMax, double yMax,
   double delta_z;
   SPoint3 p1;
   SPoint3 p2;
-  GFace *gf;
-  GFace *gf1;
-  GFace *gf2;
-  GVertex *v1;
-  GVertex *v2;
-  GVertex *v3;
-  GVertex *v4;
+  GSurface *gf;
+  GSurface *gf1;
+  GSurface *gf2;
+  GPoint *v1;
+  GPoint *v2;
+  GPoint *v3;
+  GPoint *v4;
   GModel *model = GModel::current();
   GModel::fiter it;
-  std::vector<GFace *> faces;
-  std::vector<std::pair<GFace *, GFace *> > pairs;
+  std::vector<GSurface *> faces;
+  std::vector<std::pair<GSurface *, GSurface *> > pairs;
   std::vector<int> categories;
   std::vector<int> indices1;
   std::vector<int> indices2;
   std::vector<int> indices3;
-  std::vector<GVertex *> vertices;
-  std::vector<GEdge *> edges1;
-  std::vector<GEdge *> edges2;
+  std::vector<GPoint *> vertices;
+  std::vector<GCurve *> edges1;
+  std::vector<GCurve *> edges2;
   std::vector<int> orientations1;
   std::vector<int> orientations2;
-  std::map<GFace *, SPoint3> centers;
-  std::map<GFace *, bool> markings;
-  std::vector<GVertex *>::iterator it2;
-  std::map<GFace *, SPoint3>::iterator it3;
-  std::map<GFace *, SPoint3>::iterator it4;
-  std::map<GFace *, bool>::iterator it5;
-  std::map<GFace *, bool>::iterator it6;
-  std::vector<GEdge *>::iterator it7;
-  std::vector<GEdge *>::iterator it8;
+  std::map<GSurface *, SPoint3> centers;
+  std::map<GSurface *, bool> markings;
+  std::vector<GPoint *>::iterator it2;
+  std::map<GSurface *, SPoint3>::iterator it3;
+  std::map<GSurface *, SPoint3>::iterator it4;
+  std::map<GSurface *, bool>::iterator it5;
+  std::map<GSurface *, bool>::iterator it6;
+  std::vector<GCurve *>::iterator it7;
+  std::vector<GCurve *>::iterator it8;
   std::vector<int>::iterator it9;
   std::vector<int>::iterator it10;
-  std::vector<GEdge *>::iterator mem;
+  std::vector<GCurve *>::iterator mem;
 
   faces.clear();
 
@@ -799,8 +799,8 @@ void voroMetal3D::correspondence(double e, double xMax, double yMax,
   for(i = 0; i < pairs.size(); i++) {
     gf1 = pairs[i].first;
     gf2 = pairs[i].second;
-    std::vector<GVertex *> gv1 = gf1->vertices();
-    std::vector<GVertex *> gv2 = gf2->vertices();
+    std::vector<GPoint *> gv1 = gf1->vertices();
+    std::vector<GPoint *> gv2 = gf2->vertices();
     auto it1 = gv1.begin();
     auto it2 = gv2.begin();
     SPoint3 cg1(0, 0, 0);
@@ -1112,9 +1112,9 @@ static void computeBestSeeds(const char *filename)
         double distMinTmp = 1000.0;
         // GModel *m = GModel::current();
         for(auto ite = m->firstEdge(); ite != m->lastEdge(); ite++) {
-          GEdge *eTmp = (*ite);
-          GVertex *vTmp1 = eTmp->getBeginVertex();
-          GVertex *vTmp2 = eTmp->getEndVertex();
+          GCurve *eTmp = (*ite);
+          GPoint *vTmp1 = eTmp->getBeginVertex();
+          GPoint *vTmp2 = eTmp->getEndVertex();
           double distTmp =
             sqrt((vTmp1->x() - vTmp2->x()) * (vTmp1->x() - vTmp2->x()) +
                  (vTmp1->y() - vTmp2->y()) * (vTmp1->y() - vTmp2->y()) +
@@ -1151,9 +1151,9 @@ static void computeBestSeeds(const char *filename)
         double distMinTmp = 1000.0;
         // GModel *m = GModel::current();
         for(auto ite = m->firstEdge(); ite != m->lastEdge(); ite++) {
-          GEdge *eTmp = (*ite);
-          GVertex *vTmp1 = eTmp->getBeginVertex();
-          GVertex *vTmp2 = eTmp->getEndVertex();
+          GCurve *eTmp = (*ite);
+          GPoint *vTmp1 = eTmp->getBeginVertex();
+          GPoint *vTmp2 = eTmp->getEndVertex();
           double distTmp =
             sqrt((vTmp1->x() - vTmp2->x()) * (vTmp1->x() - vTmp2->x()) +
                  (vTmp1->y() - vTmp2->y()) * (vTmp1->y() - vTmp2->y()) +
@@ -1190,9 +1190,9 @@ static void computeBestSeeds(const char *filename)
         double distMinTmp = 1000.0;
         // GModel *m = GModel::current();
         for(auto ite = m->firstEdge(); ite != m->lastEdge(); ite++) {
-          GEdge *eTmp = (*ite);
-          GVertex *vTmp1 = eTmp->getBeginVertex();
-          GVertex *vTmp2 = eTmp->getEndVertex();
+          GCurve *eTmp = (*ite);
+          GPoint *vTmp1 = eTmp->getBeginVertex();
+          GPoint *vTmp2 = eTmp->getEndVertex();
           double distTmp =
             sqrt((vTmp1->x() - vTmp2->x()) * (vTmp1->x() - vTmp2->x()) +
                  (vTmp1->y() - vTmp2->y()) * (vTmp1->y() - vTmp2->y()) +
@@ -1229,9 +1229,9 @@ static void computeBestSeeds(const char *filename)
         double distMinTmp = 1000.0;
         // GModel *m = GModel::current();
         for(auto ite = m->firstEdge(); ite != m->lastEdge(); ite++) {
-          GEdge *eTmp = (*ite);
-          GVertex *vTmp1 = eTmp->getBeginVertex();
-          GVertex *vTmp2 = eTmp->getEndVertex();
+          GCurve *eTmp = (*ite);
+          GPoint *vTmp1 = eTmp->getBeginVertex();
+          GPoint *vTmp2 = eTmp->getEndVertex();
           double distTmp =
             sqrt((vTmp1->x() - vTmp2->x()) * (vTmp1->x() - vTmp2->x()) +
                  (vTmp1->y() - vTmp2->y()) * (vTmp1->y() - vTmp2->y()) +
@@ -1268,9 +1268,9 @@ static void computeBestSeeds(const char *filename)
         double distMinTmp = 1000.0;
         // GModel *m = GModel::current();
         for(auto ite = m->firstEdge(); ite != m->lastEdge(); ite++) {
-          GEdge *eTmp = (*ite);
-          GVertex *vTmp1 = eTmp->getBeginVertex();
-          GVertex *vTmp2 = eTmp->getEndVertex();
+          GCurve *eTmp = (*ite);
+          GPoint *vTmp1 = eTmp->getBeginVertex();
+          GPoint *vTmp2 = eTmp->getEndVertex();
           double distTmp =
             sqrt((vTmp1->x() - vTmp2->x()) * (vTmp1->x() - vTmp2->x()) +
                  (vTmp1->y() - vTmp2->y()) * (vTmp1->y() - vTmp2->y()) +
@@ -1307,9 +1307,9 @@ static void computeBestSeeds(const char *filename)
         double distMinTmp = 1000.0;
         // GModel *m = GModel::current();
         for(auto ite = m->firstEdge(); ite != m->lastEdge(); ite++) {
-          GEdge *eTmp = (*ite);
-          GVertex *vTmp1 = eTmp->getBeginVertex();
-          GVertex *vTmp2 = eTmp->getEndVertex();
+          GCurve *eTmp = (*ite);
+          GPoint *vTmp1 = eTmp->getBeginVertex();
+          GPoint *vTmp2 = eTmp->getEndVertex();
           double distTmp =
             sqrt((vTmp1->x() - vTmp2->x()) * (vTmp1->x() - vTmp2->x()) +
                  (vTmp1->y() - vTmp2->y()) * (vTmp1->y() - vTmp2->y()) +

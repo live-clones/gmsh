@@ -88,7 +88,7 @@ static double evalClipPlane(int clip, double x, double y, double z)
 
 static double intersectClipPlane(int clip, MElement *ele)
 {
-  MVertex *v = ele->getVertex(0);
+  MNode *v = ele->getVertex(0);
   double val = evalClipPlane(clip, v->x(), v->y(), v->z());
   for(std::size_t i = 1; i < ele->getNumVertices(); i++) {
     v = ele->getVertex(i);
@@ -265,7 +265,7 @@ static void addElementsInArrays(GEntity *e, std::vector<T *> &elements,
 
 class initMeshGEdge {
 private:
-  int _estimateNumLines(GEdge *e)
+  int _estimateNumLines(GCurve *e)
   {
     int num = 0;
     if(CTX::instance()->mesh.lines) {
@@ -276,7 +276,7 @@ private:
   }
 
 public:
-  void operator()(GEdge *e)
+  void operator()(GCurve *e)
   {
     e->deleteVertexArrays();
     if(!e->getVisibility()) return;
@@ -292,7 +292,7 @@ public:
 
 class initSmoothNormalsGFace {
 public:
-  void operator()(GFace *f)
+  void operator()(GSurface *f)
   {
     addSmoothNormals(f, f->triangles);
     addSmoothNormals(f, f->quadrangles);
@@ -303,7 +303,7 @@ public:
 class initMeshGFace {
 private:
   bool _curved;
-  int _estimateNumLines(GFace *f)
+  int _estimateNumLines(GSurface *f)
   {
     int num = 0;
     if(CTX::instance()->mesh.surfaceEdges) {
@@ -315,7 +315,7 @@ private:
     }
     return num + 100;
   }
-  int _estimateNumTriangles(GFace *f)
+  int _estimateNumTriangles(GSurface *f)
   {
     int num = 0;
     if(CTX::instance()->mesh.surfaceFaces) {
@@ -327,7 +327,7 @@ private:
   }
 
 public:
-  void operator()(GFace *f)
+  void operator()(GSurface *f)
   {
     f->deleteVertexArrays();
     if(!f->getVisibility()) return;
@@ -374,7 +374,7 @@ private:
     }
     return num;
   }
-  int _estimateNumLines(GRegion *r)
+  int _estimateNumLines(GVolume *r)
   {
     int num = 0;
     if(CTX::instance()->mesh.volumeEdges) {
@@ -392,7 +392,7 @@ private:
     }
     return num + 100;
   }
-  int _estimateNumTriangles(GRegion *r)
+  int _estimateNumTriangles(GVolume *r)
   {
     int num = 0;
     if(CTX::instance()->mesh.volumeFaces) {
@@ -411,7 +411,7 @@ private:
   }
 
 public:
-  void operator()(GRegion *r)
+  void operator()(GVolume *r)
   {
     r->deleteVertexArrays();
     if(!r->getVisibility()) return;

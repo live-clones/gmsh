@@ -367,7 +367,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.ReparamOnFaceRobust
-Use projection for reparametrization of a point classified on GEdge on a GFace@*
+Use projection for reparametrization of a point classified on GCurve on a GSurface@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

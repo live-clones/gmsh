@@ -6,8 +6,8 @@
 #ifndef MESH_GREGION_MMG_H
 #define MESH_GREGION_MMG_H
 
-class GRegion;
+class GVolume;
 
-void refineMeshMMG(GRegion *gr);
+void refineMeshMMG(GVolume *gr);
 
 #endif

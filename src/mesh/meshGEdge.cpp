@@ -7,7 +7,7 @@
 #include "GModel.h"
 #include "discreteEdge.h"
 #include "meshGEdge.h"
-#include "GEdge.h"
+#include "GCurve.h"
 #include "MLine.h"
 #include "BackgroundMeshTools.h"
 #include "boundaryLayersData.h"
@@ -146,7 +146,7 @@ typedef struct {
   double t, lc, p, xp;
 } IntPoint;
 
-static double smoothPrimitive(GEdge *ge, double alpha,
+static double smoothPrimitive(GCurve *ge, double alpha,
                               std::vector<IntPoint> &Points)
 {
   int ITER = 0;
@@ -197,17 +197,17 @@ static double smoothPrimitive(GEdge *ge, double alpha,
 }
 
 struct F_LcB {
-  double operator()(GEdge *ge, double t)
+  double operator()(GCurve *ge, double t)
   {
-    GPoint p = ge->point(t);
+    GVertex p = ge->point(t);
     return BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z());
   }
 };
 
 struct F_Lc {
-  double operator()(GEdge *ge, double t)
+  double operator()(GCurve *ge, double t)
   {
-    GPoint p = ge->point(t);
+    GVertex p = ge->point(t);
     Range<double> bounds = ge->parBounds(0);
     double t_begin = bounds.low();
     double t_end = bounds.high();
@@ -224,9 +224,9 @@ struct F_Lc {
 };
 
 struct F_Lc_aniso {
-  double operator()(GEdge *ge, double t)
+  double operator()(GCurve *ge, double t)
   {
-    GPoint p = ge->point(t);
+    GVertex p = ge->point(t);
     SMetric3 lc_here;
 
     Range<double> bounds = ge->parBounds(0);
@@ -272,7 +272,7 @@ static double dfbeta(double t, double beta)
 }
 
 struct F_Transfinite {
-  double operator()(GEdge *ge, double t_)
+  double operator()(GCurve *ge, double t_)
   {
     double length = ge->length();
     if(length == 0.0) {
@@ -380,7 +380,7 @@ struct F_Transfinite {
 };
 
 struct F_One {
-  double operator()(GEdge *ge, double t)
+  double operator()(GCurve *ge, double t)
   {
     SVector3 der = ge->firstDer(t);
     return norm(der);
@@ -393,7 +393,7 @@ static double trapezoidal(IntPoint *const P1, IntPoint *const P2)
 }
 
 template <typename function>
-static void RecursiveIntegration(GEdge *ge, IntPoint *from, IntPoint *to,
+static void RecursiveIntegration(GCurve *ge, IntPoint *from, IntPoint *to,
                                  function f, std::vector<IntPoint> &Points,
                                  double Prec, int *depth)
 {
@@ -427,7 +427,7 @@ static void RecursiveIntegration(GEdge *ge, IntPoint *from, IntPoint *to,
 }
 
 template <typename function>
-static double Integration(GEdge *ge, double t1, double t2, function f,
+static double Integration(GCurve *ge, double t1, double t2, function f,
                           std::vector<IntPoint> &Points, double Prec)
 {
   IntPoint from, to;
@@ -447,7 +447,7 @@ static double Integration(GEdge *ge, double t1, double t2, function f,
   return Points.back().p;
 }
 
-static SPoint3 transform(MVertex *vsource, const std::vector<double> &tfo)
+static SPoint3 transform(MNode *vsource, const std::vector<double> &tfo)
 {
   double ps[4] = {vsource->x(), vsource->y(), vsource->z(), 1.};
   double res[4] = {0., 0., 0., 0.};
@@ -458,7 +458,7 @@ static SPoint3 transform(MVertex *vsource, const std::vector<double> &tfo)
   return SPoint3(res[0], res[1], res[2]);
 }
 
-static void copyMesh(GEdge *from, GEdge *to, int direction)
+static void copyMesh(GCurve *from, GCurve *to, int direction)
 {
   if(!from->getBeginVertex() || !from->getEndVertex() ||
      !to->getBeginVertex() || !to->getEndVertex()) {
@@ -474,18 +474,18 @@ static void copyMesh(GEdge *from, GEdge *to, int direction)
   double to_u_min = to_u_bounds.low();
 
   // include begin and end point to avoid conflicts when realigning
-  MVertex *vt0 = to->getBeginVertex()->mesh_vertices[0];
-  MVertex *vt1 = to->getEndVertex()->mesh_vertices[0];
-  MVertex *vs0 = from->getBeginVertex()->mesh_vertices[0];
-  MVertex *vs1 = from->getEndVertex()->mesh_vertices[0];
+  MNode *vt0 = to->getBeginVertex()->mesh_vertices[0];
+  MNode *vt1 = to->getEndVertex()->mesh_vertices[0];
+  MNode *vs0 = from->getBeginVertex()->mesh_vertices[0];
+  MNode *vs1 = from->getEndVertex()->mesh_vertices[0];
 
   to->correspondingVertices[vt0] = direction > 0 ? vs0 : vs1;
   to->correspondingVertices[vt1] = direction > 0 ? vs1 : vs0;
 
   for(std::size_t i = 0; i < from->mesh_vertices.size(); i++) {
     int index = (direction < 0) ? (from->mesh_vertices.size() - 1 - i) : i;
-    MVertex *v = from->mesh_vertices[index];
-    GPoint gp;
+    MNode *v = from->mesh_vertices[index];
+    GVertex gp;
     double newu;
     if(to->affineTransform.size() < 16) {
       // assume identical parametrisations (dangerous...)
@@ -507,9 +507,9 @@ static void copyMesh(GEdge *from, GEdge *to, int direction)
     to->correspondingVertices[vv] = v;
   }
   for(std::size_t i = 0; i < to->mesh_vertices.size() + 1; i++) {
-    MVertex *v0 = (i == 0) ? to->getBeginVertex()->mesh_vertices[0] :
+    MNode *v0 = (i == 0) ? to->getBeginVertex()->mesh_vertices[0] :
                              to->mesh_vertices[i - 1];
-    MVertex *v1 = (i == to->mesh_vertices.size()) ?
+    MNode *v1 = (i == to->mesh_vertices.size()) ?
                     to->getEndVertex()->mesh_vertices[0] :
                     to->mesh_vertices[i];
     to->lines.push_back(new MLine(v0, v1));
@@ -517,7 +517,7 @@ static void copyMesh(GEdge *from, GEdge *to, int direction)
 }
 
 
-static void fillCorrespondingNodes(GEdge *from, GEdge *to, int direction)
+static void fillCorrespondingNodes(GCurve *from, GCurve *to, int direction)
 {
   if(!from->getBeginVertex() || !from->getEndVertex() ||
      !to->getBeginVertex() || !to->getEndVertex()) {
@@ -526,10 +526,10 @@ static void fillCorrespondingNodes(GEdge *from, GEdge *to, int direction)
   }
 
   // include begin and end point to avoid conflicts when realigning
-  MVertex *vt0 = to->getBeginVertex()->mesh_vertices[0];
-  MVertex *vt1 = to->getEndVertex()->mesh_vertices[0];
-  MVertex *vs0 = from->getBeginVertex()->mesh_vertices[0];
-  MVertex *vs1 = from->getEndVertex()->mesh_vertices[0];
+  MNode *vt0 = to->getBeginVertex()->mesh_vertices[0];
+  MNode *vt1 = to->getEndVertex()->mesh_vertices[0];
+  MNode *vs0 = from->getBeginVertex()->mesh_vertices[0];
+  MNode *vs1 = from->getEndVertex()->mesh_vertices[0];
 
   to->correspondingVertices[vt0] = direction > 0 ? vs0 : vs1;
   to->correspondingVertices[vt1] = direction > 0 ? vs1 : vs0;
@@ -541,17 +541,17 @@ static void fillCorrespondingNodes(GEdge *from, GEdge *to, int direction)
 
   for(std::size_t i = 0; i < from->mesh_vertices.size(); i++) {
     int index = (direction < 0) ? (from->mesh_vertices.size() - 1 - i) : i;
-    MVertex *v = from->mesh_vertices[index];
+    MNode *v = from->mesh_vertices[index];
     // FIXME: verify that the nodes follow the transformation!
     to->correspondingVertices[to->mesh_vertices[i]] = v;
   }
 }
 
-void deMeshGEdge::operator()(GEdge *ge)
+void deMeshGEdge::operator()(GCurve *ge)
 {
   if(ge->isFullyDiscrete()) return;
   ge->deleteMesh();
-  ge->meshStatistics.status = GEdge::PENDING;
+  ge->meshStatistics.status = GCurve::PENDING;
 }
 
 /*
@@ -580,7 +580,7 @@ static int increaseN(int N)
 
 // ensure not to have points that are too close to each other.
 // can be caused by a coarse 1D mesh or by a noisy curve
-static void filterPoints(GEdge *ge, int nMinimumPoints)
+static void filterPoints(GCurve *ge, int nMinimumPoints)
 {
   if(ge->mesh_vertices.empty()) return;
   if(ge->meshAttributes.method == MESH_TRANSFINITE) return;
@@ -594,8 +594,8 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
 
   if(!ge->getBeginVertex() || !ge->getEndVertex()) return;
 
-  MVertex *v0 = ge->getBeginVertex()->mesh_vertices[0];
-  std::vector<std::pair<double, MVertex *> > lengths;
+  MNode *v0 = ge->getBeginVertex()->mesh_vertices[0];
+  std::vector<std::pair<double, MNode *> > lengths;
   for(std::size_t i = 0; i < ge->mesh_vertices.size(); i++) {
     MEdgeVertex *v = dynamic_cast<MEdgeVertex *>(ge->mesh_vertices[i]);
     if(!v) {
@@ -651,8 +651,8 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
   }
 }
 
-static void createPoints(GVertex *gv, GEdge *ge, BoundaryLayerField *blf,
-                         std::vector<MVertex *> &v, const SVector3 &dir)
+static void createPoints(GPoint *gv, GCurve *ge, BoundaryLayerField *blf,
+                         std::vector<MNode *> &v, const SVector3 &dir)
 {
   if(!ge->getBeginVertex() || !ge->getEndVertex()) return;
 
@@ -690,9 +690,9 @@ static void createPoints(GVertex *gv, GEdge *ge, BoundaryLayerField *blf,
   }
 }
 
-static void addBoundaryLayerPoints(GEdge *ge, double &t_begin, double &t_end,
-                                   std::vector<MVertex *> &_addBegin,
-                                   std::vector<MVertex *> &_addEnd)
+static void addBoundaryLayerPoints(GCurve *ge, double &t_begin, double &t_end,
+                                   std::vector<MNode *> &_addBegin,
+                                   std::vector<MNode *> &_addEnd)
 {
   _addBegin.clear();
   _addEnd.clear();
@@ -719,8 +719,8 @@ static void addBoundaryLayerPoints(GEdge *ge, double &t_begin, double &t_end,
                ge->getEndVertex()->y() - ge->getBeginVertex()->y(),
                ge->getEndVertex()->z() - ge->getBeginVertex()->z());
   dir.normalize();
-  GVertex *gvb = ge->getBeginVertex();
-  GVertex *gve = ge->getEndVertex();
+  GPoint *gvb = ge->getBeginVertex();
+  GPoint *gve = ge->getEndVertex();
 
   // Check if extremity nodes are BL node
   for(int i = 0; i < n; ++i) {
@@ -760,7 +760,7 @@ static void addBoundaryLayerPoints(GEdge *ge, double &t_begin, double &t_end,
   }
 }
 
-int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
+int meshGEdgeProcessing(GCurve *ge, const double t_begin, double t_end, int &N,
                         std::vector<IntPoint> &Points, double &a,
                         int &filterMinimumN)
 {
@@ -844,7 +844,7 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
   if((ge->meshAttributes.method != MESH_TRANSFINITE ||
       CTX::instance()->mesh.flexibleTransfinite) &&
      CTX::instance()->mesh.algoRecombine != 0) {
-    std::vector<GFace *> const &faces = ge->faces();
+    std::vector<GSurface *> const &faces = ge->faces();
     if(CTX::instance()->mesh.recombineAll) {
       if(N % 2 == 0) N++;
       if(CTX::instance()->mesh.algoRecombine == 2 ||
@@ -867,11 +867,11 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
   return N;
 }
 
-void meshGEdge::operator()(GEdge *ge)
+void meshGEdge::operator()(GCurve *ge)
 {
   // debug stuff
   if(CTX::instance()->debugSurface > 0) {
-    std::vector<GFace *> f = ge->faces();
+    std::vector<GSurface *> f = ge->faces();
     bool found = false;
     for(size_t i = 0; i < f.size(); i++) {
       if(f[i]->tag() == CTX::instance()->debugSurface) { found = true; }
@@ -882,7 +882,7 @@ void meshGEdge::operator()(GEdge *ge)
   ge->model()->setCurrentMeshEntity(ge);
 
   if(ge->degenerate(1)) {
-    ge->meshStatistics.status = GEdge::DONE;
+    ge->meshStatistics.status = GCurve::DONE;
     return;
   }
 
@@ -899,19 +899,19 @@ void meshGEdge::operator()(GEdge *ge)
 
     // if there is a periodic constraint, fill the corresponding node arrays
     if(ge->getMeshMaster() != ge) {
-      GEdge *gef = dynamic_cast<GEdge *>(ge->getMeshMaster());
+      GCurve *gef = dynamic_cast<GCurve *>(ge->getMeshMaster());
       fillCorrespondingNodes(gef, ge, ge->masterOrientation);
     }
     return;
   }
 
   if(ge->getMeshMaster() != ge) {
-    GEdge *gef = dynamic_cast<GEdge *>(ge->getMeshMaster());
-    if(gef->meshStatistics.status == GEdge::PENDING) return;
+    GCurve *gef = dynamic_cast<GCurve *>(ge->getMeshMaster());
+    if(gef->meshStatistics.status == GCurve::PENDING) return;
     Msg::Info("Meshing curve %d (%s) as a copy of curve %d", ge->tag(),
               ge->getTypeString().c_str(), ge->getMeshMaster()->tag());
     copyMesh(gef, ge, ge->masterOrientation);
-    ge->meshStatistics.status = GEdge::DONE;
+    ge->meshStatistics.status = GCurve::DONE;
     return;
   }
 
@@ -923,7 +923,7 @@ void meshGEdge::operator()(GEdge *ge)
   double t_end = bounds.high();
 
   // if a BL is ending at one of the ends, then create specific points
-  std::vector<MVertex *> _addBegin, _addEnd;
+  std::vector<MNode *> _addBegin, _addEnd;
   addBoundaryLayerPoints(ge, t_begin, t_end, _addBegin, _addEnd);
 
   // integration to get length, number of points, etc
@@ -942,9 +942,9 @@ void meshGEdge::operator()(GEdge *ge)
   // necessary at the same location
 
   // look if we are doing the STL triangulation
-  std::vector<MVertex *> &mesh_vertices = ge->mesh_vertices;
+  std::vector<MNode *> &mesh_vertices = ge->mesh_vertices;
 
-  GPoint beg_p, end_p;
+  GVertex beg_p, end_p;
   if(!ge->getBeginVertex() || !ge->getEndVertex()) {
     Msg::Warning("Skipping curve with no begin or end point");
     return;
@@ -956,10 +956,10 @@ void meshGEdge::operator()(GEdge *ge)
                N);
   }
   else {
-    MVertex *v0 = ge->getBeginVertex()->mesh_vertices[0];
-    MVertex *v1 = ge->getEndVertex()->mesh_vertices[0];
-    beg_p = GPoint(v0->x(), v0->y(), v0->z());
-    end_p = GPoint(v1->x(), v1->y(), v1->z());
+    MNode *v0 = ge->getBeginVertex()->mesh_vertices[0];
+    MNode *v1 = ge->getEndVertex()->mesh_vertices[0];
+    beg_p = GVertex(v0->x(), v0->y(), v0->z());
+    end_p = GVertex(v1->x(), v1->y(), v1->z());
   }
 
   // do not consider the first and the last vertex (those are not
@@ -982,7 +982,7 @@ void meshGEdge::operator()(GEdge *ge)
         SVector3 der = ge->firstDer(t);
         const double d = norm(der);
         double lc = d / (P1.lc + dlc / dp * (d - P1.p));
-        GPoint V = ge->point(t);
+        GVertex V = ge->point(t);
         mesh_vertices[NUMP - 1] =
           new MEdgeVertex(V.x(), V.y(), V.z(), ge, t, 0, lc);
         NUMP++;
@@ -996,7 +996,7 @@ void meshGEdge::operator()(GEdge *ge)
 
   // Boundary Layer points are added
   {
-    std::vector<MVertex *> vv;
+    std::vector<MNode *> vv;
     vv.insert(vv.end(), _addBegin.begin(), _addBegin.end());
     vv.insert(vv.end(), mesh_vertices.begin(), mesh_vertices.end());
     for(std::size_t i = 0; i < _addEnd.size(); i++)
@@ -1013,10 +1013,10 @@ void meshGEdge::operator()(GEdge *ge)
   std::vector<MLine *> &lines = ge->lines;
 
   for(std::size_t i = 0; i <= mesh_vertices.size(); i++) {
-    MVertex *v0 =
+    MNode *v0 =
       (i == 0) ? ge->getBeginVertex()->mesh_vertices[0] : mesh_vertices[i - 1];
 
-    MVertex *v1 = (i == mesh_vertices.size()) ?
+    MNode *v1 = (i == mesh_vertices.size()) ?
                     ge->getEndVertex()->mesh_vertices[0] :
                     mesh_vertices[i];
     lines.push_back(new MLine(v0, v1));
@@ -1024,7 +1024,7 @@ void meshGEdge::operator()(GEdge *ge)
 
   if(ge->getBeginVertex() == ge->getEndVertex() &&
      ge->getBeginVertex()->edges().size() == 1) {
-    MVertex *v0 = ge->getBeginVertex()->mesh_vertices[0];
+    MNode *v0 = ge->getBeginVertex()->mesh_vertices[0];
     v0->x() = beg_p.x();
     v0->y() = beg_p.y();
     v0->z() = beg_p.z();
@@ -1033,10 +1033,10 @@ void meshGEdge::operator()(GEdge *ge)
   Msg::Debug("Meshing curve %d (%s): %li interior vertices", ge->tag(),
              ge->getTypeString().c_str(), ge->mesh_vertices.size());
 
-  ge->meshStatistics.status = GEdge::DONE;
+  ge->meshStatistics.status = GCurve::DONE;
 }
 
-void orientMeshGEdge::operator()(GEdge *ge)
+void orientMeshGEdge::operator()(GCurve *ge)
 {
   // apply user-specified mesh orientation constraints
   if(ge->meshAttributes.reverseMesh)
@@ -1044,7 +1044,7 @@ void orientMeshGEdge::operator()(GEdge *ge)
       ge->getMeshElement(k)->reverse();
 }
 
-int meshGEdgeTargetNumberOfPoints(GEdge *ge)
+int meshGEdgeTargetNumberOfPoints(GCurve *ge)
 {
   Range<double> bounds = ge->parBounds(0);
   double t_begin = bounds.low();

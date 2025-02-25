@@ -32,21 +32,21 @@
 class GradientBasis;
 class MLine;
 class MElement;
-class GEdge;
-class GFace;
+class GCurve;
+class GSurface;
 class SVector3;
 class GModel;
 
 enum { CADDIST_GEN, CADDIST_DECASTELJAU };
 enum { CADDIST_TAYLOR, CADDIST_FRECHET, CADDIST_HAUSFAST, CADDIST_HAUSBRUTE };
 
-double discreteFrechetDistanceEdge(MLine *l, GEdge *ed, double tol,
+double discreteFrechetDistanceEdge(MLine *l, GCurve *ed, double tol,
                                    int meshDiscr = CADDIST_GEN,
                                    int geomDiscr = CADDIST_GEN);
-double discreteHausdorffDistanceBruteEdge(MLine *l, GEdge *ed, double tol,
+double discreteHausdorffDistanceBruteEdge(MLine *l, GCurve *ed, double tol,
                                           int meshDiscr = CADDIST_GEN,
                                           int geomDiscr = CADDIST_GEN);
-double discreteHausdorffDistanceFastEdge(MLine *l, GEdge *ed, double tol,
+double discreteHausdorffDistanceFastEdge(MLine *l, GCurve *ed, double tol,
                                          int meshDiscr = CADDIST_GEN,
                                          int geomDiscr = CADDIST_GEN);
 double taylorDistanceSq1D(const GradientBasis *gb,
@@ -55,8 +55,8 @@ double taylorDistanceSq1D(const GradientBasis *gb,
 double taylorDistanceSq2D(const GradientBasis *gb,
                           const fullMatrix<double> &nodesXYZ,
                           const std::vector<SVector3> &normCAD);
-double taylorDistanceEdge(MLine *l, GEdge *ge);
-double taylorDistanceFace(MElement *el, GFace *gf);
+double taylorDistanceEdge(MLine *l, GCurve *ge);
+double taylorDistanceFace(MElement *el, GSurface *gf);
 
 void distanceFromElementsToGeometry(GModel *gm, int dim,
                                     std::map<MElement *, double> &distances);

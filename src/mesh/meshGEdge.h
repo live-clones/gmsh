@@ -6,30 +6,30 @@
 #ifndef MESH_GEDGE_H
 #define MESH_GEDGE_H
 
-class GEdge;
+class GCurve;
 
 // Create the mesh of the edge
 struct meshGEdge {
   meshGEdge() {}
-  void operator()(GEdge *);
+  void operator()(GCurve *);
 };
 
 // destroy the mesh of the edge
 struct deMeshGEdge {
   deMeshGEdge() {}
-  void operator()(GEdge *);
+  void operator()(GCurve *);
 };
 
 // Orient the mesh of an edge. This is necessary to comply with the orientation
 // constraints
 struct orientMeshGEdge {
-  void operator()(GEdge *);
+  void operator()(GCurve *);
 };
 
-int MeshExtrudedCurve(GEdge *ge);
+int MeshExtrudedCurve(GCurve *ge);
 
 // compute the target number of points on the curve considering all meshing
 // options, counting the boundary vertices
-int meshGEdgeTargetNumberOfPoints(GEdge *);
+int meshGEdgeTargetNumberOfPoints(GCurve *);
 
 #endif

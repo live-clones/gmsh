@@ -6,8 +6,8 @@
 #ifndef MESH_GREGION_NETGEN_H
 #define MESH_GREGION_NETGEN_H
 
-class GRegion;
+class GVolume;
 
-void meshGRegionNetgen(GRegion *gr);
+void meshGRegionNetgen(GVolume *gr);
 
 #endif

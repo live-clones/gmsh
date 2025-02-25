@@ -16,11 +16,11 @@
 #include "OS.h"
 #include "SPoint3.h"
 #include "SVector3.h"
-#include "MVertex.h"
+#include "MNode.h"
 #include "MElement.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
-#include "GFace.h"
+#include "GSurface.h"
 #include "Numeric.h"
 
 #if defined(HAVE_QUADMESHINGTOOLS)
@@ -237,17 +237,17 @@ bool buildTrianglesAndTargetsFromElements(
   return true;
 }
 
-bool buildVerticesAndElements(GFace *gf, vector<MVertex *> &vertices,
+bool buildVerticesAndElements(GSurface *gf, vector<MNode *> &vertices,
                               vector<std::array<uint32_t, 6> > &elements)
 {
-  std::unordered_map<MVertex *, uint32_t> old2new;
+  std::unordered_map<MNode *, uint32_t> old2new;
   vector<uint32_t> fvert;
   for(size_t e = 0; e < gf->getNumMeshElements(); ++e) {
     MElement *elt = gf->getMeshElement(e);
     size_t n = elt->getNumVertices();
     fvert.resize(n);
     for(size_t lv = 0; lv < n; ++lv) {
-      MVertex *v = elt->getVertex(lv);
+      MNode *v = elt->getVertex(lv);
       auto it = old2new.find(v);
       if(it == old2new.end()) {
         old2new[v] = vertices.size();
@@ -273,7 +273,7 @@ bool buildVerticesAndElements(GFace *gf, vector<MVertex *> &vertices,
 }
 
 bool buildPlanarTriProblem(
-  GFace *gf, vector<MVertex *> &vertices, vector<vec2> &points,
+  GSurface *gf, vector<MNode *> &vertices, vector<vec2> &points,
   std::vector<std::array<uint32_t, 6> > &elements,
   vector<bool> &locked, std::vector<std::array<uint32_t, 3> > &triangles,
   std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes)
@@ -383,10 +383,10 @@ void myUpdateIdealShapes (const std::vector<std::array<double, 2> > &points,
 // ENDTEST ---------------------------------------------------------
 
 
-bool untangleGFaceMeshConstrained(GFace *gf, int iterMax, double timeMax)
+bool untangleGFaceMeshConstrained(GSurface *gf, int iterMax, double timeMax)
 {
   const uint32_t NO_U32 = (uint32_t)-1;
-  if(gf->geomType() != GFace::Plane) {
+  if(gf->geomType() != GSurface::Plane) {
     Msg::Error("- Face %i: untangleGFaceMeshConstrained only implemented for "
                "planar faces",
                gf->tag());
@@ -404,7 +404,7 @@ bool untangleGFaceMeshConstrained(GFace *gf, int iterMax, double timeMax)
   computeSICNquality(gf, sicnMinB, sicnAvgB);
 
   /* Build planar problem by projection on mean plane */
-  vector<MVertex *> vertices;
+  vector<MNode *> vertices;
   vector<vec2> points;
   vector<bool> locked;
   vector<std::array<uint32_t, 3> > triangles;
@@ -493,7 +493,7 @@ bool untangleGFaceMeshConstrained(GFace *gf, int iterMax, double timeMax)
                                 points[v][1],0);
       
       double initGuess[2] = {0., 0.};
-      GPoint proj = gf->closestPoint(onPlane, initGuess);
+      GVertex proj = gf->closestPoint(onPlane, initGuess);
       if(proj.succeeded()) {
         vertices[v]->setXYZ(proj.x(), proj.y(), proj.z());
         vertices[v]->setParameter(0, proj.u());
@@ -516,7 +516,7 @@ bool untangleGFaceMeshConstrained(GFace *gf, int iterMax, double timeMax)
 }
 
 #else
-bool untangleGFaceMeshConstrained(GFace *gf, int iterMax, double timeMax)
+bool untangleGFaceMeshConstrained(GSurface *gf, int iterMax, double timeMax)
 {
   Msg::Error(
     "Module QuadMeshingTools required for untangleGFaceMeshConstrained");

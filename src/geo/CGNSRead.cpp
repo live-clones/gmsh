@@ -9,7 +9,7 @@
 #include <cstring>
 #include "GmshMessage.h"
 #include "GModel.h"
-#include "MVertex.h"
+#include "MNode.h"
 #include "MElement.h"
 #include "BergotBasis.h"
 #include "BasisFactory.h"
@@ -270,11 +270,11 @@ void setPeriodicityInEntities(const std::vector<CGNSZone *> &allZones)
     // loop over periodic connections
     for(int iPer = 0; iPer < zone->nbPerConnect(); iPer++) {
       // loop over slave and master vertices
-      const std::vector<MVertex *> &slaveVert = zone->slaveVert(iPer);
-      const std::vector<MVertex *> &masterVert = zone->masterVert(iPer);
+      const std::vector<MNode *> &slaveVert = zone->slaveVert(iPer);
+      const std::vector<MNode *> &masterVert = zone->masterVert(iPer);
       for(std::size_t iV = 0; iV < slaveVert.size(); iV++) {
         // get slave and master entities
-        MVertex *sVert = slaveVert[iV], *mVert = masterVert[iV];
+        MNode *sVert = slaveVert[iV], *mVert = masterVert[iV];
         GEntity *sEnt = sVert->onWhat(), *mEnt = mVert->onWhat();
 
         // skip if entities of different dimensions (can happen if a zone has

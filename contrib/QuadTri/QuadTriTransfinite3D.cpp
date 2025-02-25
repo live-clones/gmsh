@@ -15,46 +15,46 @@ cited appropriately. See the README.txt file for license information.
 
 #include "QuadTriTransfinite3D.h"
 
-// Does the pair of MVertex pointers v1 and v2 exist in the set 'edges'?
-static int edgeExists(MVertex *v1, MVertex *v2,
-                      std::set<std::pair<MVertex *, MVertex *> > &edges)
+// Does the pair of MNode pointers v1 and v2 exist in the set 'edges'?
+static int edgeExists(MNode *v1, MNode *v2,
+                      std::set<std::pair<MNode *, MNode *> > &edges)
 {
-  std::pair<MVertex *, MVertex *> p(std::min(v1, v2), std::max(v1, v2));
+  std::pair<MNode *, MNode *> p(std::min(v1, v2), std::max(v1, v2));
   return edges.count(p);
 }
 
-// Create the pair of MVertex pointers v1 and v2 exist in the set 'edges.'
-static void createEdge(MVertex *v1, MVertex *v2,
-                       std::set<std::pair<MVertex *, MVertex *> > &edges)
+// Create the pair of MNode pointers v1 and v2 exist in the set 'edges.'
+static void createEdge(MNode *v1, MNode *v2,
+                       std::set<std::pair<MNode *, MNode *> > &edges)
 {
-  std::pair<MVertex *, MVertex *> p(std::min(v1, v2), std::max(v1, v2));
+  std::pair<MNode *, MNode *> p(std::min(v1, v2), std::max(v1, v2));
   edges.insert(p);
 }
 
-static void addTetrahedron(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
-                           GRegion *to)
+static void addTetrahedron(MNode *v1, MNode *v2, MNode *v3, MNode *v4,
+                           GVolume *to)
 {
   MTetrahedron *newElem = new MTetrahedron(v1, v2, v3, v4);
   to->tetrahedra.push_back(newElem);
 }
 
-static void addPyramid(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
-                       MVertex *v5, GRegion *to)
+static void addPyramid(MNode *v1, MNode *v2, MNode *v3, MNode *v4,
+                       MNode *v5, GVolume *to)
 {
   MPyramid *newElem = new MPyramid(v1, v2, v3, v4, v5);
   to->pyramids.push_back(newElem);
 }
 
-static void addPrism(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
-                     MVertex *v5, MVertex *v6, GRegion *to)
+static void addPrism(MNode *v1, MNode *v2, MNode *v3, MNode *v4,
+                     MNode *v5, MNode *v6, GVolume *to)
 {
   MPrism *newElem = new MPrism(v1, v2, v3, v4, v5, v6);
   to->prisms.push_back(newElem);
 }
 
-static void addHexahedron(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
-                          MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8,
-                          GRegion *to)
+static void addHexahedron(MNode *v1, MNode *v2, MNode *v3, MNode *v4,
+                          MNode *v5, MNode *v6, MNode *v7, MNode *v8,
+                          GVolume *to)
 {
   MHexahedron *newElem = new MHexahedron(v1, v2, v3, v4, v5, v6, v7, v8);
   to->hexahedra.push_back(newElem);
@@ -63,10 +63,10 @@ static void addHexahedron(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
 // Function to get all the diagonals from external surfaces of a given
 // Transfinite region tr and place them in boundary_diags.
 int getTransfiniteBoundaryDiags(
-  GRegion *gr, std::set<std::pair<MVertex *, MVertex *> > *boundary_diags)
+  GVolume *gr, std::set<std::pair<MNode *, MNode *> > *boundary_diags)
 {
   // Get list of faces
-  std::vector<GFace *> faces = gr->faces();
+  std::vector<GSurface *> faces = gr->faces();
 
   // Perform some tests of the Transfinite volume
 
@@ -88,7 +88,7 @@ int getTransfiniteBoundaryDiags(
   }
 
   // Are all the faces Transfinite?
-  std::vector<GFace *>::iterator itf;
+  std::vector<GSurface *>::iterator itf;
   for(itf = faces.begin(); itf != faces.end(); itf++) {
     if((*itf)->meshAttributes.method != MESH_TRANSFINITE) {
       Msg::Error(
@@ -114,7 +114,7 @@ int getTransfiniteBoundaryDiags(
     // For this face, loop through all sets of 4 vertices that could form a
     // quadrangle if not subdivided.  Find which of the 4 vertices are on the
     // diagonal that subdivides the four vertices.
-    std::vector<GEdge *> const &edges = (*itf)->edges();
+    std::vector<GCurve *> const &edges = (*itf)->edges();
     int index_guess = 0;
     int i_low = 0;
     if(edges.size() == 3) {
@@ -127,7 +127,7 @@ int getTransfiniteBoundaryDiags(
         i++) {
       for(unsigned int j = 0; j < (*itf)->transfinite_vertices[i].size() - 1;
           j++) {
-        std::vector<MVertex *> verts;
+        std::vector<MNode *> verts;
         verts.resize(4);
         verts[0] = (*itf)->transfinite_vertices[i][j];
         verts[1] = (*itf)->transfinite_vertices[i + 1][j];
@@ -149,8 +149,8 @@ int getTransfiniteBoundaryDiags(
 // Meshes either a prism or a hexahedral set of mesh vertices in a Transfinite
 // Region with an internal vertex that is created here in the function.
 void meshTransfElemWithInternalVertex(
-  GRegion *gr, std::vector<MVertex *> v,
-  std::set<std::pair<MVertex *, MVertex *> > *boundary_diags)
+  GVolume *gr, std::vector<MNode *> v,
+  std::set<std::pair<MNode *, MNode *> > *boundary_diags)
 {
   int v_size = v.size();
   int n_lat_tmp;
@@ -224,7 +224,7 @@ void meshTransfElemWithInternalVertex(
 
   // make the internal vertex
   std::vector<double> centroid = QtFindVertsCentroid(v);
-  MVertex *v_int = new MVertex(centroid[0], centroid[1], centroid[2], gr);
+  MNode *v_int = new MNode(centroid[0], centroid[1], centroid[2], gr);
   gr->mesh_vertices.push_back(v_int);
 
   // build all pyramids/tetra
@@ -233,9 +233,9 @@ void meshTransfElemWithInternalVertex(
     if(v[p] == v[p + n_lat] && v[p2] == v[p2 + n_lat])
       continue;
     else if(v[p] == v[p + n_lat] || v[p2] == v[p2 + n_lat]) {
-      MVertex *v_dup = (v[p] == v[p + n_lat]) ? v[p] : v[p2];
-      MVertex *v_non_dup = (v_dup == v[p]) ? v[p2] : v[p];
-      MVertex *v_non_dup2 = (v_non_dup == v[p]) ? v[p + n_lat] : v[p2 + n_lat];
+      MNode *v_dup = (v[p] == v[p + n_lat]) ? v[p] : v[p2];
+      MNode *v_non_dup = (v_dup == v[p]) ? v[p2] : v[p];
+      MNode *v_non_dup2 = (v_non_dup == v[p]) ? v[p + n_lat] : v[p2 + n_lat];
       addTetrahedron(v_dup, v_non_dup, v_non_dup2, v_int, gr);
     }
     else if(n1[p] == p || n2[p] == p) {

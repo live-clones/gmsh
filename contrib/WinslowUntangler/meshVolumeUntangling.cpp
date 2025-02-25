@@ -17,11 +17,11 @@
 #include "OS.h"
 #include "SPoint3.h"
 #include "SVector3.h"
-#include "MVertex.h"
+#include "MNode.h"
 #include "MElement.h"
 #include "MTetrahedron.h"
 #include "MHexahedron.h"
-#include "GRegion.h"
+#include "GVolume.h"
 #include "Numeric.h"
 
 #if defined(HAVE_QUADMESHINGTOOLS)
@@ -185,7 +185,7 @@ bool buildTetrahedraFromElements(
     return false;
   }
 
-  std::unordered_map<MVertex *, uint32_t> old2new;
+  std::unordered_map<MNode *, uint32_t> old2new;
   for(size_t e = 0; e < elements.size(); ++e) {
     const vector<uint32_t> &vert = elements[e];
     if(vert.size() == 4) {
@@ -268,7 +268,7 @@ bool buildTetrahedraFromElements(
 }
 
 bool buildVerticesAndTetrahedra(
-  GRegion *gr, vector<MVertex *> &vertices, vector<vec3> &points,
+  GVolume *gr, vector<MNode *> &vertices, vector<vec3> &points,
   vector<bool> &locked, vector<std::array<uint32_t, 4> > &tets,
   std::vector<std::array<std::array<double, 3>, 4> > &tetIdealShapes)
 {
@@ -278,7 +278,7 @@ bool buildVerticesAndTetrahedra(
   tetIdealShapes.clear();
   tets.clear();
 
-  std::unordered_map<MVertex *, uint32_t> old2new;
+  std::unordered_map<MNode *, uint32_t> old2new;
   vector<vector<uint32_t> > elements(gr->getNumMeshElements());
   for(size_t e = 0; e < gr->getNumMeshElements(); ++e) {
     MElement *elt = gr->getMeshElement(e);
@@ -286,7 +286,7 @@ bool buildVerticesAndTetrahedra(
     vector<uint32_t> &vert = elements[e];
     vert.resize(n);
     for(size_t lv = 0; lv < n; ++lv) {
-      MVertex *v = elt->getVertex(lv);
+      MNode *v = elt->getVertex(lv);
       auto it = old2new.find(v);
       if(it == old2new.end()) {
         old2new[v] = vertices.size();
@@ -319,7 +319,7 @@ bool buildVerticesAndTetrahedra(
   return true;
 }
 
-bool untangleGRegionMeshConstrained(GRegion *gr, int iterMax, double timeMax)
+bool untangleGRegionMeshConstrained(GVolume *gr, int iterMax, double timeMax)
 {
   if(gr->getNumMeshElements() == 0) {
     Msg::Debug("- Region %i: no elements", gr->tag());
@@ -331,7 +331,7 @@ bool untangleGRegionMeshConstrained(GRegion *gr, int iterMax, double timeMax)
   double sicnMinB, sicnAvgB;
   computeSICNquality(gr, sicnMinB, sicnAvgB);
 
-  vector<MVertex *> vertices;
+  vector<MNode *> vertices;
   vector<vec3> points;
   vector<bool> locked;
   vector<std::array<uint32_t, 4> > tets;
@@ -366,7 +366,7 @@ bool untangleGRegionMeshConstrained(GRegion *gr, int iterMax, double timeMax)
 }
 
 #else
-bool untangleGRegionMeshConstrained(GRegion *gr, int iterMax, double timeMax)
+bool untangleGRegionMeshConstrained(GVolume *gr, int iterMax, double timeMax)
 {
   Msg::Error(
     "Module QuadMeshingTools required for untangleGRegionMeshConstrained");

@@ -35,14 +35,14 @@
 #include "VertexCoord.h"
 
 class GEntity;
-class MVertex;
+class MNode;
 class MElement;
 
 class Patch {
 public:
   Patch(const std::map<MElement *, GEntity *> &element2entity,
         const std::map<MElement *, GEntity *> &bndEl2Ent,
-        const std::set<MElement *> &els, std::set<MVertex *> &toFix,
+        const std::set<MElement *> &els, std::set<MNode *> &toFix,
         const std::set<MElement *> &bndEls, int fixBndNodes);
 
   // Mesh entities and variables
@@ -125,7 +125,7 @@ private:
   std::vector<MElement *> _el; // List of elements
   std::vector<GEntity *>
     _gEnt; // Geometric entity corresponding to each element
-  std::vector<MVertex *> _vert, _freeVert; // List of vert., free vert.
+  std::vector<MNode *> _vert, _freeVert; // List of vert., free vert.
   std::vector<int> _fv2V; // Index of free vert. -> index of vert.
   std::vector<SPoint3> _xyz,
     _ixyz; // Physical coord. of ALL vertices (current, straight, init.)
@@ -140,9 +140,9 @@ private:
   std::vector<std::vector<int> >
     _indPCEl; // Index of parametric coord. for an el.
   std::vector<VertexCoord *> _coordFV; // Parametrization for a free vertex
-  int addVert(MVertex *vert);
-  int addFreeVert(MVertex *vert, const int iV, const int nPCV,
-                  VertexCoord *param, std::set<MVertex *> &toFix);
+  int addVert(MNode *vert);
+  int addFreeVert(MNode *vert, const int iV, const int nPCV,
+                  VertexCoord *param, std::set<MNode *> &toFix);
   static inline int indJB2DBase(int nNod, int l, int i, int j)
   {
     return (l * nNod + i) * nNod + j;

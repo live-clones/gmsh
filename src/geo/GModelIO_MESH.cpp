@@ -14,8 +14,8 @@
 #include "MHexahedron.h"
 #include "Context.h"
 
-static bool getMeshVertices(int num, int *indices, std::vector<MVertex *> &vec,
-                            std::vector<MVertex *> &vertices)
+static bool getMeshVertices(int num, int *indices, std::vector<MNode *> &vec,
+                            std::vector<MNode *> &vertices)
 {
   for(int i = 0; i < num; i++) {
     if(indices[i] < 0 || indices[i] > (int)(vec.size() - 1)) {
@@ -51,7 +51,7 @@ int GModel::readMESH(const std::string &name)
     return 0;
   }
 
-  std::vector<MVertex *> vertexVector;
+  std::vector<MNode *> vertexVector;
   std::map<int, std::vector<MElement *> > elements[5];
 
   int Dimension = 3;
@@ -84,7 +84,7 @@ int GModel::readMESH(const std::string &name)
 	    sscanf(buffer, "%lf %lf %lf %d", &x, &y, &z, &dum);
 	  else
 	    sscanf(buffer, "%lf %lf %d", &x, &y, &dum);
-          vertexVector[i] = new MVertex(x, y, z);
+          vertexVector[i] = new MNode(x, y, z);
         }
       }
       else if(!strcmp(str, "Edges")) {
@@ -97,7 +97,7 @@ int GModel::readMESH(const std::string &name)
           int n[2], cl;
           sscanf(buffer, "%d %d %d", &n[0], &n[1], &cl);
           for(int j = 0; j < 2; j++) n[j]--;
-          std::vector<MVertex *> vertices;
+          std::vector<MNode *> vertices;
           if(!getMeshVertices(2, n, vertexVector, vertices)) {
             fclose(fp);
             return 0;
@@ -115,7 +115,7 @@ int GModel::readMESH(const std::string &name)
           int n[3], cl;
           sscanf(buffer, "%d %d %d %d", &n[0], &n[1], &n[2], &cl);
           for(int j = 0; j < 3; j++) n[j]--;
-          std::vector<MVertex *> vertices;
+          std::vector<MNode *> vertices;
           if(!getMeshVertices(3, n, vertexVector, vertices)) {
             fclose(fp);
             return 0;
@@ -133,7 +133,7 @@ int GModel::readMESH(const std::string &name)
           int n[3], cl;
           sscanf(buffer, "%d %d %d %d", &n[0], &n[1], &n[2], &cl);
           for(int j = 0; j < 3; j++) n[j]--;
-          std::vector<MVertex *> vertices;
+          std::vector<MNode *> vertices;
           if(!getMeshVertices(3, n, vertexVector, vertices)) {
             fclose(fp);
             return 0;
@@ -152,7 +152,7 @@ int GModel::readMESH(const std::string &name)
           sscanf(buffer, "%d %d %d %d %d %d %d", &n[0], &n[1], &n[2], &n[3],
                  &n[4], &n[5], &cl);
           for(int j = 0; j < 6; j++) n[j]--;
-          std::vector<MVertex *> vertices;
+          std::vector<MNode *> vertices;
           if(!getMeshVertices(6, n, vertexVector, vertices)) {
             fclose(fp);
             return 0;
@@ -170,7 +170,7 @@ int GModel::readMESH(const std::string &name)
           int n[4], cl;
           sscanf(buffer, "%d %d %d %d %d", &n[0], &n[1], &n[2], &n[3], &cl);
           for(int j = 0; j < 4; j++) n[j]--;
-          std::vector<MVertex *> vertices;
+          std::vector<MNode *> vertices;
           if(!getMeshVertices(4, n, vertexVector, vertices)) {
             fclose(fp);
             return 0;
@@ -188,7 +188,7 @@ int GModel::readMESH(const std::string &name)
           int n[4], cl;
           sscanf(buffer, "%d %d %d %d %d", &n[0], &n[1], &n[2], &n[3], &cl);
           for(int j = 0; j < 4; j++) n[j]--;
-          std::vector<MVertex *> vertices;
+          std::vector<MNode *> vertices;
           if(!getMeshVertices(4, n, vertexVector, vertices)) {
             fclose(fp);
             return 0;
@@ -207,7 +207,7 @@ int GModel::readMESH(const std::string &name)
           sscanf(buffer, "%d %d %d %d %d %d %d %d %d %d %d", &n[0], &n[1],
                  &n[2], &n[3], &n[4], &n[5], &n[6], &n[7], &n[9], &n[8], &cl);
           for(int j = 0; j < 10; j++) n[j]--;
-          std::vector<MVertex *> vertices;
+          std::vector<MNode *> vertices;
           if(!getMeshVertices(10, n, vertexVector, vertices)) {
             fclose(fp);
             return 0;
@@ -226,7 +226,7 @@ int GModel::readMESH(const std::string &name)
           sscanf(buffer, "%d %d %d %d %d %d %d %d %d", &n[0], &n[1], &n[2],
                  &n[3], &n[4], &n[5], &n[6], &n[7], &cl);
           for(int j = 0; j < 8; j++) n[j]--;
-          std::vector<MVertex *> vertices;
+          std::vector<MNode *> vertices;
           if(!getMeshVertices(8, n, vertexVector, vertices)) {
             fclose(fp);
             return 0;

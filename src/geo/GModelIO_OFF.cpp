@@ -30,17 +30,17 @@ int GModel::readOFF(const std::string &name)
     return 1;
   }
 
-  GFace *gf = new discreteFace(this, getMaxElementaryNumber(2) + 1);
+  GSurface *gf = new discreteFace(this, getMaxElementaryNumber(2) + 1);
   add(gf);
 
-  std::vector<MVertex*> vertices(numVertices);
+  std::vector<MNode*> vertices(numVertices);
   for(int i = 0; i < numVertices; i++) {
     double x, y, z;
     if(fscanf(fp, "%lf %lf %lf", &x, &y, &z) != 3) {
       Msg::Error("Could not read vertex");
       return 0;
     }
-    vertices[i] = new MVertex(x, y, z, gf);
+    vertices[i] = new MNode(x, y, z, gf);
   }
 
   for(int i = 0; i < numFaces; i++) {
@@ -92,7 +92,7 @@ int GModel::writeOFF(const std::string &name, bool saveAll, double scalingFactor
   int numVertices = indexMeshVertices(saveAll);
   int numFaces = 0;
   for(auto it = faces.begin(); it != faces.end(); ++it) {
-    GFace *gf = *it;
+    GSurface *gf = *it;
     if(saveAll || gf->physicals.size())
       numFaces += gf->getNumMeshElements();
   }
@@ -106,7 +106,7 @@ int GModel::writeOFF(const std::string &name, bool saveAll, double scalingFactor
       entities[i]->mesh_vertices[j]->writeOFF(fp, scalingFactor);
 
   for(auto it = faces.begin(); it != faces.end(); ++it) {
-    GFace *gf = *it;
+    GSurface *gf = *it;
     if(saveAll || gf->physicals.size()) {
       for(std::size_t i = 0; i < gf->triangles.size(); i++)
         fprintf(fp, "3 %d %d %d\n",

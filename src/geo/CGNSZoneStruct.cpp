@@ -8,7 +8,7 @@
 
 #include "Context.h"
 #include "GmshMessage.h"
-#include "MVertex.h"
+#include "MNode.h"
 #include "MElement.h"
 #include "pointsGenerators.h"
 #include "CGNSCommon.h"
@@ -22,7 +22,7 @@ namespace {
   template <int DIM>
   MElement *createElement(const cgsize_t *ijk, const cgsize_t *nijk, int order,
                           std::size_t vertShift,
-                          std::vector<MVertex *> &allVert,
+                          std::vector<MNode *> &allVert,
                           std::map<int, std::vector<MElement *> > *allElt);
 
   void initLinShift(int order, int *shift)
@@ -54,7 +54,7 @@ namespace {
   template <>
   MElement *createElement<2>(const cgsize_t *ijk, const cgsize_t *nijk,
                              int order, std::size_t vertShift,
-                             std::vector<MVertex *> &allVert,
+                             std::vector<MNode *> &allVert,
                              std::map<int, std::vector<MElement *> > *allElt)
   {
     // node shift from (i, j, k) depending on order
@@ -74,7 +74,7 @@ namespace {
       s = (int *)shiftP1;
     }
     int nbEltNode = ElementType::getNumVertices(mshEltType);
-    std::vector<MVertex *> eltVert(nbEltNode);
+    std::vector<MNode *> eltVert(nbEltNode);
     for(int iN = 0; iN < nbEltNode; iN++) {
       const cgsize_t ijN[3] = {ijk[0] + s[2 * iN], ijk[1] + s[2 * iN + 1]};
       const int ind = vertShift + ijk2Ind<2>(ijN, nijk);
@@ -95,7 +95,7 @@ namespace {
   template <>
   MElement *createElement<3>(const cgsize_t *ijk, const cgsize_t *nijk,
                              int order, std::size_t vertShift,
-                             std::vector<MVertex *> &allVert,
+                             std::vector<MNode *> &allVert,
                              std::map<int, std::vector<MElement *> > *allElt)
   {
     // node shift from (i, j, k) depending on order
@@ -152,7 +152,7 @@ namespace {
       break;
     }
     int nbEltNode = ElementType::getNumVertices(mshEltType);
-    std::vector<MVertex *> eltVert(nbEltNode);
+    std::vector<MNode *> eltVert(nbEltNode);
     for(int iN = 0; iN < nbEltNode; iN++) {
       const cgsize_t ijkN[3] = {ijk[0] + s[3 * iN], ijk[1] + s[3 * iN + 1],
                                 ijk[2] + s[3 * iN + 2]};
@@ -175,7 +175,7 @@ namespace {
   MElement *createBndElement(const cgsize_t *ijk, const cgsize_t *nijk,
                              const int *dir, int order, int entity,
                              std::size_t vertShift,
-                             std::vector<MVertex *> &allVert,
+                             std::vector<MNode *> &allVert,
                              std::map<int, std::vector<MElement *> > *allElt,
                              const std::vector<bool> &interfaceNode);
 
@@ -183,7 +183,7 @@ namespace {
   MElement *createBndElement<2>(const cgsize_t *ijk, const cgsize_t *nijk,
                                 const int *dir, int order, int entity,
                                 std::size_t vertShift,
-                                std::vector<MVertex *> &allVert,
+                                std::vector<MNode *> &allVert,
                                 std::map<int, std::vector<MElement *> > *allElt,
                                 const std::vector<bool> &interfaceNode)
   {
@@ -240,7 +240,7 @@ namespace {
       break;
     }
     int nbEltNode = ElementType::getNumVertices(mshEltType);
-    std::vector<MVertex *> eltVert(nbEltNode);
+    std::vector<MNode *> eltVert(nbEltNode);
     bool isInternalInterface = true;
     for(int iN = 0; iN < nbEltNode; iN++) {
       cgsize_t ijN[2] = {ijk[0], ijk[1]};
@@ -267,7 +267,7 @@ namespace {
   MElement *createBndElement<3>(const cgsize_t *ijk, const cgsize_t *nijk,
                                 const int *dir, int order, int entity,
                                 std::size_t vertShift,
-                                std::vector<MVertex *> &allVert,
+                                std::vector<MNode *> &allVert,
                                 std::map<int, std::vector<MElement *> > *allElt,
                                 const std::vector<bool> &interfaceNode)
   {
@@ -324,7 +324,7 @@ namespace {
       break;
     }
     int nbEltNode = ElementType::getNumVertices(mshEltType);
-    std::vector<MVertex *> eltVert(nbEltNode);
+    std::vector<MNode *> eltVert(nbEltNode);
     bool isInternalInterface = true;
     for(int iN = 0; iN < nbEltNode; iN++) {
       cgsize_t ijkN[3] = {ijk[0], ijk[1], ijk[2]};
@@ -380,7 +380,7 @@ CGNSZoneStruct<DIM>::CGNSZoneStruct(
 
 template <int DIM>
 int CGNSZoneStruct<DIM>::readElements(
-  std::vector<MVertex *> &allVert,
+  std::vector<MNode *> &allVert,
   std::map<int, std::vector<MElement *> > *allElt,
   std::vector<MElement *> &zoneElt, std::vector<std::string> &allGeomName)
 {
@@ -478,7 +478,7 @@ int CGNSZoneStruct<DIM>::readElements(
 template <int DIM>
 MElement *CGNSZoneStruct<DIM>::makeBndElement(
   const cgsize_t *ijk, const int *dir, int order, int defaultEntity,
-  std::vector<MVertex *> &allVert,
+  std::vector<MNode *> &allVert,
   std::map<int, std::vector<MElement *> > *allElt)
 {
   cgsize_t iElt = ijk2Ind<DIM>(ijk, nbNodeIJK());
@@ -598,12 +598,12 @@ int CGNSZoneStruct<DIM>::readOneInterface(
   // zone.slaveNode.push_back(std::vector<cgsize_t>());
   // std::vector<cgsize_t> &slaveNode = zone.slaveNode.back();
   // slaveNode.reserve(nbNode);
-  // zone.slaveVert.push_back(std::vector<MVertex *>());
+  // zone.slaveVert.push_back(std::vector<MNode *>());
   // zone.slaveVert.back().reserve(nbNode);
   // zone.masterNode.push_back(std::vector<cgsize_t>());
   // std::vector<cgsize_t> &masterNode = zone.masterNode.back();
   // masterNode.reserve(nbNode);
-  // zone.masterVert.push_back(std::vector<MVertex *>());
+  // zone.masterVert.push_back(std::vector<MNode *>());
   // zone.masterVert.back().reserve(nbNode);
 
   // // store periodic node correspondence

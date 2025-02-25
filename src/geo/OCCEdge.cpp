@@ -35,8 +35,8 @@
 #include <BRep_Builder.hxx>
 #include <BOPTools_AlgoTools.hxx>
 
-OCCEdge::OCCEdge(GModel *m, TopoDS_Edge c, int num, GVertex *v1, GVertex *v2)
-  : GEdge(m, num, v1, v2), _c(c), _trimmed(nullptr)
+OCCEdge::OCCEdge(GModel *m, TopoDS_Edge c, int num, GPoint *v1, GPoint *v2)
+  : GCurve(m, num, v1, v2), _c(c), _trimmed(nullptr)
 {
   // force orientation of internal/external edges: otherwise reverse will not
   // produce the expected result
@@ -72,10 +72,10 @@ OCCEdge::OCCEdge(GModel *m, TopoDS_Edge c, int num, GVertex *v1, GVertex *v2)
   }
 }
 
-void OCCEdge::delFace(GFace *f)
+void OCCEdge::delFace(GSurface *f)
 {
   if(_trimmed == f) _trimmed = nullptr;
-  GEdge::delFace(f);
+  GCurve::delFace(f);
 }
 
 SBoundingBox3d OCCEdge::bounds(bool fast)
@@ -113,7 +113,7 @@ Range<double> OCCEdge::parBounds(int i) const
   return Range<double>(_s0, _s1);
 }
 
-Range<double> OCCEdge::parBoundsOnFace(GFace *face) const
+Range<double> OCCEdge::parBoundsOnFace(GSurface *face) const
 {
   if(face->getNativeType() != GEntity::OpenCascadeModel || !degenerate(0)) {
     return parBounds(0);
@@ -135,10 +135,10 @@ void OCCEdge::setTrimmed(OCCFace *f)
   }
 }
 
-SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
+SPoint2 OCCEdge::reparamOnFace(const GSurface *face, double epar, int dir) const
 {
   if(face->getNativeType() != GEntity::OpenCascadeModel) {
-    const GPoint pt = point(epar);
+    const GVertex pt = point(epar);
     SPoint3 sp(pt.x(), pt.y(), pt.z());
     return face->parFromPoint(sp);
   }
@@ -155,10 +155,10 @@ SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
     if(c2d.IsNull()) {
       Msg::Warning("Curve %d is not on surface %d - computing closest point",
                    tag(), face->tag());
-      const GPoint pt = point(epar);
+      const GVertex pt = point(epar);
       SPoint3 sp(pt.x(), pt.y(), pt.z());
       double guess[2] = {0, 0};
-      GPoint pp = face->closestPoint(sp, guess);
+      GVertex pp = face->closestPoint(sp, guess);
       return SPoint2(pp.u(), pp.v());
     }
 
@@ -168,8 +168,8 @@ SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
 
     // sometimes OCC miserably fails ...
     if(CTX::instance()->geom.reparamOnFaceRobust) {
-      GPoint p1 = point(epar);
-      GPoint p2 = face->point(u, v);
+      GVertex p1 = point(epar);
+      GVertex p2 = face->point(u, v);
       double dx = p1.x() - p2.x();
       double dy = p1.y() - p2.y();
       double dz = p1.z() - p2.z();
@@ -183,11 +183,11 @@ SPoint2 OCCEdge::reparamOnFace(const GFace *face, double epar, int dir) const
         Msg::Debug("On the curve %d local (%g) global (%g %g %g)", tag(), epar,
                    p1.x(), p1.y(), p1.z());
         double guess[2] = {u, v};
-        GPoint pp = face->closestPoint(SPoint3(p1.x(), p1.y(), p1.z()), guess);
+        GVertex pp = face->closestPoint(SPoint3(p1.x(), p1.y(), p1.z()), guess);
         u = pp.u();
         v = pp.v();
 
-        GPoint p2 = face->point(u, v);
+        GVertex p2 = face->point(u, v);
         dx = p1.x() - p2.x();
         dy = p1.y() - p2.y();
         dz = p1.z() - p2.z();
@@ -238,28 +238,28 @@ bool OCCEdge::_project(const double p[3], double &u, double xyz[3]) const
   return true;
 }
 
-GPoint OCCEdge::closestPoint(const SPoint3 &qp, double &param) const
+GVertex OCCEdge::closestPoint(const SPoint3 &qp, double &param) const
 {
   // less robust but can be faster
   if(CTX::instance()->geom.occUseGenericClosestPoint)
-    return GEdge::closestPoint(qp, param);
+    return GCurve::closestPoint(qp, param);
   double u, xyz[3];
   if(_project(qp.data(), u, xyz))
-    return GPoint(xyz[0], xyz[1], xyz[2], this, u);
+    return GVertex(xyz[0], xyz[1], xyz[2], this, u);
   else
-    return GEdge::closestPoint(qp, param);
+    return GCurve::closestPoint(qp, param);
 }
 
 double OCCEdge::parFromPoint(const SPoint3 &qp) const
 {
   // less robust but can be faster
   if(CTX::instance()->geom.occUseGenericClosestPoint)
-    return GEdge::parFromPoint(qp);
+    return GCurve::parFromPoint(qp);
   double u;
   if(_project(qp.data(), u, nullptr))
     return u;
   else
-    return GEdge::parFromPoint(qp);
+    return GCurve::parFromPoint(qp);
 }
 
 bool OCCEdge::containsPoint(const SPoint3 &pt) const
@@ -273,7 +273,7 @@ bool OCCEdge::containsPoint(const SPoint3 &pt) const
   return false;
 }
 
-bool OCCEdge::isSeam(const GFace *face) const
+bool OCCEdge::isSeam(const GSurface *face) const
 {
   if(face->getNativeType() != GEntity::OpenCascadeModel) return false;
   const TopoDS_Face *s = (TopoDS_Face *)face->getNativePtr();
@@ -288,7 +288,7 @@ bool OCCEdge::isSeam(const GFace *face) const
   return ret;
 }
 
-GPoint OCCEdge::point(double par) const
+GVertex OCCEdge::point(double par) const
 {
   if(_trimmed) {
     double u, v;
@@ -297,16 +297,16 @@ GPoint OCCEdge::point(double par) const
   }
   else if(!_curve.IsNull()) {
     gp_Pnt pnt = _curve->Value(par);
-    return GPoint(pnt.X(), pnt.Y(), pnt.Z(), this, par);
+    return GVertex(pnt.X(), pnt.Y(), pnt.Z(), this, par);
   }
   else if(degenerate(0)) {
-    return GPoint(getBeginVertex()->x(), getBeginVertex()->y(),
+    return GVertex(getBeginVertex()->x(), getBeginVertex()->y(),
                   getBeginVertex()->z());
   }
   else {
     Msg::Warning(
       "OpenCASCADE curve %d is neither a 3D curve nor a trimmed curve", tag());
-    return GPoint(0, 0, 0);
+    return GVertex(0, 0, 0);
   }
 }
 
@@ -401,7 +401,7 @@ int OCCEdge::minimumMeshSegments() const
 int OCCEdge::minimumDrawSegments() const
 {
   int n = _nbpoles;
-  if(n <= 0) n = GEdge::minimumDrawSegments();
+  if(n <= 0) n = GCurve::minimumDrawSegments();
 
   if(geomType() == Line)
     return n;
@@ -456,10 +456,10 @@ void OCCEdge::writeGEO(FILE *fp)
               getBeginVertex()->tag(), tag(), getEndVertex()->tag());
     }
     else
-      GEdge::writeGEO(fp);
+      GCurve::writeGEO(fp);
   }
   else
-    GEdge::writeGEO(fp);
+    GCurve::writeGEO(fp);
 }
 
 #endif

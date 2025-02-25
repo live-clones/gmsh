@@ -15,10 +15,10 @@
 #include "Context.h"
 
 static bool getMeshVertices(GModel *m, int num, int *n,
-                            std::vector<MVertex *> &vec)
+                            std::vector<MNode *> &vec)
 {
   for(int i = 0; i < num; i++) {
-    MVertex *v = m->getMeshVertexByTag(n[i]);
+    MNode *v = m->getMeshVertexByTag(n[i]);
     if(!v) {
       Msg::Error("Wrong node tag %d", n[i]);
       return false;
@@ -77,7 +77,7 @@ int GModel::readACTRAN(const std::string &name)
           sscanf(buffer, "%d %lf %lf %lf", &num, &x, &y, &z);
         else
           sscanf(buffer, "%d %lf %lf", &num, &x, &y);
-        _vertexMapCache[num] = new MVertex(x, y, z, nullptr, num);
+        _vertexMapCache[num] = new MNode(x, y, z, nullptr, num);
       }
     }
     else if(!strcmp(str, "BEGIN") && !strcmp(str2, "ELEMENT")) {
@@ -86,7 +86,7 @@ int GModel::readACTRAN(const std::string &name)
         if(!fgets(buffer, sizeof(buffer), fp)) break;
         int num, type, reg, n[8];
         sscanf(buffer, "%d %d %d", &num, &type, &reg);
-        std::vector<MVertex *> vertices;
+        std::vector<MNode *> vertices;
         if(type == 2) {
           sscanf(buffer, "%d %d %d %d %d", &num, &type, &reg, &n[0], &n[1]);
           if(!getMeshVertices(this, 2, n, vertices)) break;

@@ -80,8 +80,8 @@ static void addVP(PViewDataList *data, const SVector3 p0, SVector3 v)
 */
 
 #include <limits>
-static void drawElementDist(PViewDataList *data, GEdge *edge,
-                            const std::vector<MVertex *> &vertices,
+static void drawElementDist(PViewDataList *data, GCurve *edge,
+                            const std::vector<MNode *> &vertices,
                             const nodalBasis &basis)
 {
   std::vector<double> gradient;
@@ -89,7 +89,7 @@ static void drawElementDist(PViewDataList *data, GEdge *edge,
   std::vector<bool> onEdge(vertices.size());
   std::vector<SPoint3> xyz(vertices.size());
   for(size_t i = 0; i < vertices.size(); ++i) {
-    MVertex *v = vertices[i];
+    MNode *v = vertices[i];
     reparamMeshVertexOnEdge(v, edge, param[i]);
     onEdge[i] = v->onWhat() == edge;
     xyz[i] = v->point();
@@ -104,8 +104,8 @@ static void drawElementDist(PViewDataList *data, GEdge *edge,
 }
 
 /*
-static void drawElement(PViewDataList *data, GEdge *edge,
-                        const std::vector<MVertex *>&vertices, const
+static void drawElement(PViewDataList *data, GCurve *edge,
+                        const std::vector<MNode *>&vertices, const
 nodalBasis &basis)
 {
   std::vector<double> gradient;
@@ -113,7 +113,7 @@ nodalBasis &basis)
   std::vector<bool> onEdge(vertices.size());
   std::vector<SPoint3> xyz(vertices.size());
   for (size_t i = 0; i < vertices.size(); ++i) {
-    MVertex *v = vertices[i];
+    MNode *v = vertices[i];
     reparamMeshVertexOnEdge(v, edge, param[i]);
     onEdge[i] = v->onWhat() == edge;
     xyz[i] = v->point();
@@ -122,7 +122,7 @@ nodalBasis &basis)
 gradient,1.e-6); for (size_t i = 0; i < vertices.size(); ++i) { double t0;
     reparamMeshVertexOnEdge(vertices[i], edge, t0);
     SPoint3 p = vertices[i]->point();
-    GPoint gpt =  edge->point(t0 + 1e-8);
+    GVertex gpt =  edge->point(t0 + 1e-8);
     SPoint3 pt(gpt.x(), gpt.y(), gpt.z());
     SVector3 t = (pt - p);
     t.normalize();
@@ -142,7 +142,7 @@ PView *GMSH_CurvedBndDistPlugin::execute(PView *v)
   data->Time.push_back(0.);
   GModel *m = GModel::current();
   for(auto iface = m->firstFace(); iface != m->lastFace(); ++iface) {
-    GFace *face = *iface;
+    GSurface *face = *iface;
     for(size_t iElement = 0; iElement < face->getNumMeshElements();
         ++iElement) {
       MElement *element = face->getMeshElement(iElement);
@@ -150,10 +150,10 @@ PView *GMSH_CurvedBndDistPlugin::execute(PView *v)
       for(int iEdge = 0; iEdge < element->getNumEdges(); ++iEdge) {
         int clId = elbasis.getClosureId(iEdge, 1);
         const std::vector<int> &closure = elbasis.closures[clId];
-        std::vector<MVertex *> vertices;
-        GEdge *edge = nullptr;
+        std::vector<MNode *> vertices;
+        GCurve *edge = nullptr;
         for(size_t i = 0; i < closure.size(); ++i) {
-          MVertex *v = element->getVertex(closure[i]);
+          MNode *v = element->getVertex(closure[i]);
           vertices.push_back(v);
           if((int)i >= 2 && v->onWhat() && v->onWhat()->dim() == 1) {
             edge = v->onWhat()->cast2Edge();

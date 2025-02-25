@@ -7,7 +7,7 @@
 #define GENERATOR_H
 
 class GModel;
-class GRegion;
+class GVolume;
 
 void GenerateMesh(GModel *m, int dimension);
 void OptimizeMesh(GModel *m, const std::string &how = "", bool force = false,

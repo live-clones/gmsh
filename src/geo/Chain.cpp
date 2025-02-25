@@ -34,12 +34,12 @@ std::string convertInt(int number)
   return stream.str();
 }
 
-std::map<GEntity *, std::set<MVertex *, MVertexPtrLessThan>, GEntityPtrLessThan>
+std::map<GEntity *, std::set<MNode *, MVertexPtrLessThan>, GEntityPtrLessThan>
   ElemChain::_vertexCache;
 
 inline void ElemChain::_sortVertexIndices()
 {
-  std::map<MVertex *, int, MVertexPtrLessThan> si;
+  std::map<MNode *, int, MVertexPtrLessThan> si;
 
   for(std::size_t i = 0; i < _v.size(); i++) si[_v[i]] = i;
 
@@ -70,7 +70,7 @@ void findEntitiesInPhysicalGroups(GModel *m,
   }
 }
 
-bool ElemChain::_equalVertices(const std::vector<MVertex *> &v2) const
+bool ElemChain::_equalVertices(const std::vector<MNode *> &v2) const
 {
   if(_v.size() != v2.size()) return false;
   for(std::size_t i = 0; i < _v.size(); i++)
@@ -86,7 +86,7 @@ ElemChain::ElemChain(MElement *e)
   _sortVertexIndices();
 }
 
-ElemChain::ElemChain(int dim, std::vector<MVertex *> &v) : _dim(dim), _v(v)
+ElemChain::ElemChain(int dim, std::vector<MNode *> &v) : _dim(dim), _v(v)
 {
   _sortVertexIndices();
 }
@@ -127,13 +127,13 @@ int ElemChain::getTypeMSH() const
 MElement *ElemChain::createMeshElement() const
 {
   MElementFactory factory;
-  std::vector<MVertex *> v(_v);
+  std::vector<MNode *> v(_v);
   return factory.create(this->getTypeMSH(), v);
 }
 
 int ElemChain::compareOrientation(const ElemChain &c2) const
 {
-  std::vector<MVertex *> v2;
+  std::vector<MNode *> v2;
   c2.getMeshVertices(v2);
 
   int perm = 1;
@@ -193,8 +193,8 @@ int ElemChain::getNumBoundaryElemChains() const
 }
 
 void ElemChain::getBoundaryVertices(int i, int dim, int numVertices,
-                                    const std::vector<MVertex *> &v,
-                                    std::vector<MVertex *> &vertices)
+                                    const std::vector<MNode *> &v,
+                                    std::vector<MNode *> &vertices)
 {
   vertices.clear();
   switch(dim) {
@@ -245,7 +245,7 @@ void ElemChain::getBoundaryVertices(int i, int dim, int numVertices,
 
 ElemChain ElemChain::getBoundaryElemChain(int i) const
 {
-  std::vector<MVertex *> vertices;
+  std::vector<MNode *> vertices;
   ElemChain::getBoundaryVertices(i, _dim, this->getNumVertices(), _v, vertices);
   return ElemChain(_dim - 1, vertices);
 }

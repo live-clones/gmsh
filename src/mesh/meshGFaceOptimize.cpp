@@ -7,11 +7,11 @@
 #include "GmshConfig.h"
 #include "meshGFaceOptimize.h"
 #include "qualityMeasures.h"
-#include "GFace.h"
-#include "GEdge.h"
-#include "GVertex.h"
+#include "GSurface.h"
+#include "GCurve.h"
+#include "GPoint.h"
 #include "GModel.h"
-#include "MVertex.h"
+#include "MNode.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "MLine.h"
@@ -100,7 +100,7 @@ RecombineTriangle::RecombineTriangle(const MEdge &me, MElement *_t1,
   }
 }
 
-edge_angle::edge_angle(MVertex *_v1, MVertex *_v2, MElement *t1, MElement *t2)
+edge_angle::edge_angle(MNode *_v1, MNode *_v2, MElement *t1, MElement *t2)
   : v1(_v1), v2(_v2)
 {
   if(!t2)
@@ -110,9 +110,9 @@ edge_angle::edge_angle(MVertex *_v1, MVertex *_v2, MElement *t1, MElement *t2)
     double c2[3];
     double c3[3];
     {
-      MVertex *p1 = t1->getVertex(0);
-      MVertex *p2 = t1->getVertex(1);
-      MVertex *p3 = t1->getVertex(2);
+      MNode *p1 = t1->getVertex(0);
+      MNode *p2 = t1->getVertex(1);
+      MNode *p3 = t1->getVertex(2);
       double a[3] = {p1->x() - p2->x(), p1->y() - p2->y(), p1->z() - p2->z()};
       double b[3] = {p1->x() - p3->x(), p1->y() - p3->y(), p1->z() - p3->z()};
       c1[2] = a[0] * b[1] - a[1] * b[0];
@@ -120,9 +120,9 @@ edge_angle::edge_angle(MVertex *_v1, MVertex *_v2, MElement *t1, MElement *t2)
       c1[0] = a[1] * b[2] - a[2] * b[1];
     }
     {
-      MVertex *p1 = t2->getVertex(0);
-      MVertex *p2 = t2->getVertex(1);
-      MVertex *p3 = t2->getVertex(2);
+      MNode *p1 = t2->getVertex(0);
+      MNode *p2 = t2->getVertex(1);
+      MNode *p3 = t2->getVertex(2);
       double a[3] = {p1->x() - p2->x(), p1->y() - p2->y(), p1->z() - p2->z()};
       double b[3] = {p1->x() - p3->x(), p1->y() - p3->y(), p1->z() - p3->z()};
       c2[2] = a[0] * b[1] - a[1] * b[0];
@@ -138,25 +138,25 @@ edge_angle::edge_angle(MVertex *_v1, MVertex *_v2, MElement *t1, MElement *t2)
   }
 }
 
-static void setLcsInit(MTriangle *t, std::map<MVertex *, double> &vSizes)
+static void setLcsInit(MTriangle *t, std::map<MNode *, double> &vSizes)
 {
   for(int i = 0; i < 3; i++) {
     for(int j = i + 1; j < 3; j++) {
-      MVertex *vi = t->getVertex(i);
-      MVertex *vj = t->getVertex(j);
+      MNode *vi = t->getVertex(i);
+      MNode *vj = t->getVertex(j);
       vSizes[vi] = -1;
       vSizes[vj] = -1;
     }
   }
 }
 
-static void setLcs(MTriangle *t, std::map<MVertex *, double> &vSizes,
+static void setLcs(MTriangle *t, std::map<MNode *, double> &vSizes,
                    bidimMeshData &data)
 {
   for(int i = 0; i < 3; i++) {
     for(int j = i + 1; j < 3; j++) {
-      MVertex *vi = t->getVertex(i);
-      MVertex *vj = t->getVertex(j);
+      MNode *vi = t->getVertex(i);
+      MNode *vj = t->getVertex(j);
       if(vi != data.equivalent(vj) && vj != data.equivalent(vi)) {
         double dx = vi->x() - vj->x();
         double dy = vi->y() - vj->y();
@@ -172,9 +172,9 @@ static void setLcs(MTriangle *t, std::map<MVertex *, double> &vSizes,
 }
 
 bool buildMeshGenerationDataStructures(
-  GFace *gf, std::set<MTri3 *, compareTri3Ptr> &AllTris, bidimMeshData &data)
+  GSurface *gf, std::set<MTri3 *, compareTri3Ptr> &AllTris, bidimMeshData &data)
 {
-  std::map<MVertex *, double> vSizesMap;
+  std::map<MNode *, double> vSizesMap;
 
   for(std::size_t i = 0; i < gf->triangles.size(); i++)
     setLcsInit(gf->triangles[i], vSizesMap);
@@ -189,13 +189,13 @@ bool buildMeshGenerationDataStructures(
     setLcs(gf->triangles[i], vSizesMap, data);
 
   // take care of embedded vertices
-  std::set<MVertex *> embeddedVertices;
+  std::set<MNode *> embeddedVertices;
   {
-    std::vector<GVertex *> emb_vertx = gf->getEmbeddedVertices();
+    std::vector<GPoint *> emb_vertx = gf->getEmbeddedVertices();
     auto itvx = emb_vertx.begin();
     while(itvx != emb_vertx.end()) {
       if((*itvx)->mesh_vertices.size()) {
-        MVertex *v = *((*itvx)->mesh_vertices.begin());
+        MNode *v = *((*itvx)->mesh_vertices.begin());
         vSizesMap[v] =
           std::min(vSizesMap[v], (*itvx)->prescribedMeshSizeAtVertex());
         embeddedVertices.insert(v);
@@ -206,7 +206,7 @@ bool buildMeshGenerationDataStructures(
 
   // take good care of embedded edges
   {
-    std::vector<GEdge *> embedded_edges = gf->getEmbeddedEdges();
+    std::vector<GCurve *> embedded_edges = gf->getEmbeddedEdges();
     auto ite = embedded_edges.begin();
     while(ite != embedded_edges.end()) {
       if(!(*ite)->isMeshDegenerated()) {
@@ -220,7 +220,7 @@ bool buildMeshGenerationDataStructures(
 
   // take care of small edges in  order not to "pollute" the size field
   {
-    std::vector<GEdge *> _edges = gf->edges();
+    std::vector<GCurve *> _edges = gf->edges();
     auto ite = _edges.begin();
     while(ite != _edges.end()) {
       if(!(*ite)->isMeshDegenerated()) {
@@ -268,13 +268,13 @@ bool buildMeshGenerationDataStructures(
   return true;
 }
 
-void computeEquivalences(GFace *gf, bidimMeshData &data)
+void computeEquivalences(GSurface *gf, bidimMeshData &data)
 {
   if(data.equivalence) {
     std::vector<MTriangle *> newT;
     for(std::size_t i = 0; i < gf->triangles.size(); i++) {
       MTriangle *t = gf->triangles[i];
-      MVertex *v[3];
+      MNode *v[3];
       for(int j = 0; j < 3; j++) {
         v[j] = t->getVertex(j);
         auto it = data.equivalence->find(v[j]);
@@ -290,12 +290,12 @@ void computeEquivalences(GFace *gf, bidimMeshData &data)
 
 struct equivalentTriangle {
   MTriangle *_t;
-  MVertex *_v[3];
-  equivalentTriangle(MTriangle *t, std::map<MVertex *, MVertex *> *equivalence)
+  MNode *_v[3];
+  equivalentTriangle(MTriangle *t, std::map<MNode *, MNode *> *equivalence)
     : _t(t)
   {
     for(int i = 0; i < 3; i++) {
-      MVertex *v = t->getVertex(i);
+      MNode *v = t->getVertex(i);
       auto it = equivalence->find(v);
       if(it == equivalence->end())
         _v[i] = v;
@@ -314,8 +314,8 @@ struct equivalentTriangle {
   }
 };
 
-bool computeEquivalentTriangles(GFace *gf,
-                                std::map<MVertex *, MVertex *> *equivalence)
+bool computeEquivalentTriangles(GSurface *gf,
+                                std::map<MNode *, MNode *> *equivalence)
 {
   if(!equivalence) return false;
   std::vector<MTriangle *> WTF;
@@ -340,12 +340,12 @@ bool computeEquivalentTriangles(GFace *gf,
   return false;
 }
 
-void splitEquivalentTriangles(GFace *gf, bidimMeshData &data)
+void splitEquivalentTriangles(GSurface *gf, bidimMeshData &data)
 {
   computeEquivalentTriangles(gf, data.equivalence);
 }
 
-void transferDataStructure(GFace *gf,
+void transferDataStructure(GSurface *gf,
                            std::set<MTri3 *, compareTri3Ptr> &AllTris,
                            bidimMeshData &data)
 {
@@ -372,7 +372,7 @@ void transferDataStructure(GFace *gf,
 
     double n1[3], n2[3];
     MTriangle *t = gf->triangles[0];
-    MVertex *v0 = t->getVertex(0), *v1 = t->getVertex(1), *v2 = t->getVertex(2);
+    MNode *v0 = t->getVertex(0), *v1 = t->getVertex(1), *v2 = t->getVertex(2);
 
     if(!BL) {
       int index0 = data.getIndex(v0);
@@ -433,7 +433,7 @@ void buildEdgeToElement(std::vector<T *> &elements, e2t_cont &adj)
   }
 }
 
-void buildEdgeToElement(GFace *gf, e2t_cont &adj)
+void buildEdgeToElement(GSurface *gf, e2t_cont &adj)
 {
   adj.clear();
   buildEdgeToElement(gf->triangles, adj);
@@ -469,11 +469,11 @@ void buildListOfEdgeAngle(e2t_cont adj, std::vector<edge_angle> &edges_detected,
   std::sort(edges_detected.begin(), edges_detected.end());
 }
 
-static void parametricCoordinates(MElement *t, GFace *gf, double u[4],
-                                  double v[4], MVertex *close = nullptr)
+static void parametricCoordinates(MElement *t, GSurface *gf, double u[4],
+                                  double v[4], MNode *close = nullptr)
 {
   for(std::size_t j = 0; j < t->getNumVertices(); j++) {
-    MVertex *ver = t->getVertex(j);
+    MNode *ver = t->getVertex(j);
     SPoint2 param, dummy;
     if(!close)
       reparamMeshVertexOnFace(ver, gf, param);
@@ -484,7 +484,7 @@ static void parametricCoordinates(MElement *t, GFace *gf, double u[4],
   }
 }
 
-double surfaceFaceUV(MElement *t, GFace *gf, bool maximal = true)
+double surfaceFaceUV(MElement *t, GSurface *gf, bool maximal = true)
 {
   const int N = t->getNumVertices();
   if(N > 4) {
@@ -510,16 +510,16 @@ double surfaceFaceUV(MElement *t, GFace *gf, bool maximal = true)
   }
 }
 
-static int _removeTwoQuadsNodes(GFace *gf)
+static int _removeTwoQuadsNodes(GSurface *gf)
 {
   v2t_cont adj;
   buildVertexToElement(gf->triangles, adj);
   buildVertexToElement(gf->quadrangles, adj);
   auto it = adj.begin();
   std::set<MElement *> touched;
-  std::set<MVertex *> vtouched;
+  std::set<MNode *> vtouched;
   while(it != adj.end()) {
-    MVertex *v = it->first;
+    MNode *v = it->first;
     if(it->second.size() == 2 && v->onWhat() == gf) {
       MElement *q1 = it->second[0];
       MElement *q2 = it->second[1];
@@ -533,10 +533,10 @@ static int _removeTwoQuadsNodes(GFace *gf)
             break;
           }
         }
-        MVertex *v1 = q1->getVertex((comm + 1) % 4);
-        MVertex *v2 = q1->getVertex((comm + 2) % 4);
-        MVertex *v3 = q1->getVertex((comm + 3) % 4);
-        MVertex *v4 = nullptr;
+        MNode *v1 = q1->getVertex((comm + 1) % 4);
+        MNode *v2 = q1->getVertex((comm + 2) % 4);
+        MNode *v3 = q1->getVertex((comm + 3) % 4);
+        MNode *v4 = nullptr;
         for(int i = 0; i < 4; i++) {
           if(q2->getVertex(i) != v1 && q2->getVertex(i) != v3 &&
              q2->getVertex(i) != v) {
@@ -571,7 +571,7 @@ static int _removeTwoQuadsNodes(GFace *gf)
   }
   gf->quadrangles = quadrangles2;
 
-  std::vector<MVertex *> mesh_vertices2;
+  std::vector<MNode *> mesh_vertices2;
   mesh_vertices2.reserve(gf->mesh_vertices.size() - vtouched.size());
   for(std::size_t i = 0; i < gf->mesh_vertices.size(); i++) {
     if(vtouched.find(gf->mesh_vertices[i]) == vtouched.end()) {
@@ -586,7 +586,7 @@ static int _removeTwoQuadsNodes(GFace *gf)
   return vtouched.size();
 }
 
-int removeTwoQuadsNodes(GFace *gf)
+int removeTwoQuadsNodes(GSurface *gf)
 {
   int nbRemove = 0;
   while(1) {
@@ -598,9 +598,9 @@ int removeTwoQuadsNodes(GFace *gf)
   return nbRemove;
 }
 
-static bool _tryToCollapseThatVertex2(GFace *gf, std::vector<MElement *> &e1,
+static bool _tryToCollapseThatVertex2(GSurface *gf, std::vector<MElement *> &e1,
                                       std::vector<MElement *> &e2, MElement *q,
-                                      MVertex *v1, MVertex *v2)
+                                      MNode *v1, MNode *v2)
 {
   std::vector<MElement *> e = e1;
   e.insert(e.end(), e2.begin(), e2.end());
@@ -615,7 +615,7 @@ static bool _tryToCollapseThatVertex2(GFace *gf, std::vector<MElement *> &e1,
 
   // new position of v1 && v2
   double initialGuess[2] = {0, 0};
-  GPoint pp = gf->closestPoint(
+  GVertex pp = gf->closestPoint(
     SPoint3(0.5 * (x1 + x2), 0.5 * (y1 + y2), 0.5 * (z1 + z2)), initialGuess);
 
   double worst_quality_old = 1.0;
@@ -659,9 +659,9 @@ static bool _tryToCollapseThatVertex2(GFace *gf, std::vector<MElement *> &e1,
 }
 
 // collapse v1 & v2 to their middle and replace into e1 & e2
-static bool _tryToCollapseThatVertex(GFace *gf, std::vector<MElement *> &e1,
+static bool _tryToCollapseThatVertex(GSurface *gf, std::vector<MElement *> &e1,
                                      std::vector<MElement *> &e2, MElement *q,
-                                     MVertex *v1, MVertex *v2)
+                                     MNode *v1, MNode *v2)
 {
   std::vector<MElement *> e = e1;
   e.insert(e.end(), e2.begin(), e2.end());
@@ -683,7 +683,7 @@ static bool _tryToCollapseThatVertex(GFace *gf, std::vector<MElement *> &e1,
   double z2 = v2->z();
 
   // new position of v1 && v2
-  GPoint pp = gf->point(0.5 * (uu1 + uu2), 0.5 * (vv1 + vv2));
+  GVertex pp = gf->point(0.5 * (uu1 + uu2), 0.5 * (vv1 + vv2));
   double worst_quality_old = 1.0;
   double worst_quality_new = 1.0;
   //int count = 0;
@@ -733,15 +733,15 @@ static bool _tryToCollapseThatVertex(GFace *gf, std::vector<MElement *> &e1,
   return false;
 }
 
-static bool _isItAGoodIdeaToMoveThatVertex(GFace *gf,
+static bool _isItAGoodIdeaToMoveThatVertex(GSurface *gf,
                                            const std::vector<MElement *> &e1,
-                                           MVertex *v1, const SPoint2 &before,
+                                           MNode *v1, const SPoint2 &before,
                                            const SPoint2 &after)
 {
   double surface_old = 0;
   double surface_new = 0;
 
-  GPoint gp = gf->point(after);
+  GVertex gp = gf->point(after);
   if(!gp.succeeded()) return false;
   SPoint3 pafter(gp.x(), gp.y(), gp.z());
   SPoint3 pbefore(v1->x(), v1->y(), v1->z());
@@ -771,7 +771,7 @@ static bool _isItAGoodIdeaToMoveThatVertex(GFace *gf,
   return true;
 }
 
-void getAllBoundaryLayerVertices(GFace *gf, std::set<MVertex *> &vs)
+void getAllBoundaryLayerVertices(GSurface *gf, std::set<MNode *> &vs)
 {
   vs.clear();
   BoundaryLayerColumns *_columns = gf->getColumns();
@@ -782,16 +782,16 @@ void getAllBoundaryLayerVertices(GFace *gf, std::set<MVertex *> &vs)
   }
 }
 
-static bool has_none_of(std::set<MVertex *> const &touched, MVertex *const v1,
-                        MVertex *const v2, MVertex *const v3, MVertex *const v4)
+static bool has_none_of(std::set<MNode *> const &touched, MNode *const v1,
+                        MNode *const v2, MNode *const v3, MNode *const v4)
 {
   return touched.find(v1) == touched.end() &&
          touched.find(v2) == touched.end() &&
          touched.find(v3) == touched.end() && touched.find(v4) == touched.end();
 }
 
-static bool are_all_on_surface(MVertex *const v1, MVertex *const v2,
-                               MVertex *const v3, MVertex *const v4, GFace *gf)
+static bool are_all_on_surface(MNode *const v1, MNode *const v2,
+                               MNode *const v3, MNode *const v4, GSurface *gf)
 {
   return v1->onWhat() == gf && v2->onWhat() == gf && v3->onWhat() == gf &&
          v4->onWhat() == gf;
@@ -803,14 +803,14 @@ bool are_size_three(InputIterator iterator1, InputIterator iterator2)
   return iterator1->second.size() == 3 && iterator2->second.size() == 3;
 }
 
-static int _removeDiamonds(GFace *const gf)
+static int _removeDiamonds(GSurface *const gf)
 {
   v2t_cont adj;
   buildVertexToElement(gf->quadrangles, adj);
 
   std::vector<MElement *> diamonds;
-  std::set<MVertex *> touched;
-  std::vector<MVertex *> deleted;
+  std::set<MNode *> touched;
+  std::vector<MNode *> deleted;
 
   std::vector<MQuadrangle *> quadrangles2;
   quadrangles2.reserve(gf->quadrangles.size());
@@ -821,17 +821,17 @@ static int _removeDiamonds(GFace *const gf)
     touched.insert(gf->triangles[i]->getVertex(2));
   }
 
-  std::set<MVertex *> vs;
+  std::set<MNode *> vs;
   getAllBoundaryLayerVertices(gf, vs);
   touched.insert(vs.begin(), vs.end());
 
   for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
     MQuadrangle *const q = gf->quadrangles[i];
 
-    MVertex *const v1 = q->getVertex(0);
-    MVertex *const v2 = q->getVertex(1);
-    MVertex *const v3 = q->getVertex(2);
-    MVertex *const v4 = q->getVertex(3);
+    MNode *const v1 = q->getVertex(0);
+    MNode *const v2 = q->getVertex(1);
+    MNode *const v3 = q->getVertex(2);
+    MNode *const v4 = q->getVertex(3);
 
     if(has_none_of(touched, v1, v2, v3, v4)) {
       auto it1 = adj.find(v1);
@@ -876,7 +876,7 @@ static int _removeDiamonds(GFace *const gf)
 
   gf->quadrangles = quadrangles2;
 
-  std::vector<MVertex *> mesh_vertices2;
+  std::vector<MNode *> mesh_vertices2;
   mesh_vertices2.reserve(gf->mesh_vertices.size());
 
   for(std::size_t i = 0; i < gf->mesh_vertices.size(); i++) {
@@ -896,7 +896,7 @@ static int _removeDiamonds(GFace *const gf)
                        std::unique(diamonds.begin(), diamonds.end()));
 }
 
-int removeDiamonds(GFace *gf)
+int removeDiamonds(GSurface *gf)
 {
   std::size_t nbRemove = 0;
   while(1) {
@@ -909,10 +909,10 @@ int removeDiamonds(GFace *gf)
 }
 
 struct p1p2p3 {
-  MVertex *p1, *p2;
+  MNode *p1, *p2;
 };
 
-static void _relocate(GFace *gf, MVertex *ver,
+static void _relocate(GSurface *gf, MNode *ver,
                       const std::vector<MElement *> &lt)
 {
   if(ver->onWhat() != gf) return;
@@ -924,7 +924,7 @@ static void _relocate(GFace *gf, MVertex *ver,
   ver->getParameter(1, initv);
 
   // compute the vertices connected to that one
-  std::map<MVertex *, SPoint2, MVertexPtrLessThan> pts;
+  std::map<MNode *, SPoint2, MVertexPtrLessThan> pts;
   for(std::size_t i = 0; i < lt.size(); i++) {
     for(int j = 0; j < lt[i]->getNumEdges(); j++) {
       MEdge e = lt[i]->getEdge(j);
@@ -965,7 +965,7 @@ static void _relocate(GFace *gf, MVertex *ver,
     SPoint2 trial = after * FACTOR + before * (1. - FACTOR);
     bool success = _isItAGoodIdeaToMoveThatVertex(gf, lt, ver, actual, trial);
     if(success) {
-      GPoint pt = gf->point(trial);
+      GVertex pt = gf->point(trial);
       if(pt.succeeded()) {
         actual = trial;
         ver->setParameter(0, trial.x());
@@ -979,7 +979,7 @@ static void _relocate(GFace *gf, MVertex *ver,
   }
 }
 
-void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
+void laplaceSmoothing(GSurface *gf, int niter, bool infinity_norm)
 {
   if((gf->triangles.size() > 0 && gf->triangles[0]->getPolynomialOrder() > 1) ||
      (gf->quadrangles.size() > 0 &&
@@ -994,7 +994,7 @@ void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
 
   Msg::Debug("laplacian smoothing ...");
 
-  std::set<MVertex *> vs;
+  std::set<MNode *> vs;
   getAllBoundaryLayerVertices(gf, vs);
   v2t_cont adj;
   buildVertexToElement(gf->triangles, adj);
@@ -1010,14 +1010,14 @@ void laplaceSmoothing(GFace *gf, int niter, bool infinity_norm)
   }
 }
 
-static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
+static void _recombineIntoQuads(GSurface *gf, bool blossom, bool cubicGraph = 1)
 {
   if(gf->triangles.empty()) return;
   if(gf->compound.size()) return;
 
-  std::vector<MVertex *> emb_edgeverts;
+  std::vector<MNode *> emb_edgeverts;
   {
-    std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
+    std::vector<GCurve *> emb_edges = gf->getEmbeddedEdges();
     auto ite = emb_edges.begin();
     while(ite != emb_edges.end()) {
       if(!(*ite)->isMeshDegenerated()) {
@@ -1037,7 +1037,7 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
   }
 
   {
-    std::vector<GEdge *> const &_edges = gf->edges();
+    std::vector<GCurve *> const &_edges = gf->edges();
     auto ite = _edges.begin();
     while(ite != _edges.end()) {
       if(!(*ite)->isMeshDegenerated()) {
@@ -1081,7 +1081,7 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
 
   std::vector<RecombineTriangle> pairs;
 
-  std::map<MVertex *, std::pair<MElement *, MElement *> > makeGraphPeriodic;
+  std::map<MNode *, std::pair<MElement *, MElement *> > makeGraphPeriodic;
 
   for(auto it = adj.begin(); it != adj.end(); ++it) {
     if(it->second.second && it->second.first->getNumVertices() == 3 &&
@@ -1095,7 +1095,7 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
     }
     else if(!it->second.second && it->second.first->getNumVertices() == 3) {
       for(int i = 0; i < 2; i++) {
-        MVertex *const v = it->first.getVertex(i);
+        MNode *const v = it->first.getVertex(i);
         auto itv = makeGraphPeriodic.find(v);
         if(itv == makeGraphPeriodic.end()) {
           makeGraphPeriodic[v] =
@@ -1193,7 +1193,7 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
             MElement *t2 = n2t[i2];
             touched.insert(t1);
             touched.insert(t2);
-            MVertex *other = nullptr;
+            MNode *other = nullptr;
             for(int i = 0; i < 3; i++) {
               if(t1->getVertex(0) != t2->getVertex(i) &&
                  t1->getVertex(1) != t2->getVertex(i) &&
@@ -1270,7 +1270,7 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
   gf->triangles = triangles2;
 }
 
-static double printStats(GFace *gf, const char *message)
+static double printStats(GSurface *gf, const char *message)
 {
   int nbBad = 0;
   int nbInv = 0;
@@ -1299,7 +1299,7 @@ static double printStats(GFace *gf, const char *message)
 static bool _isModelOkForTopologicalOpti(GModel *m)
 {
   for(auto it = m->firstFace(); it != m->lastFace(); it++) {
-    GFace *gf = *it;
+    GSurface *gf = *it;
     for(std::size_t j = 0; j < gf->getNumMeshElements(); j++) {
       MElement *e = gf->getMeshElement(j);
       for(std::size_t k = 0; k < e->getNumVertices(); k++) {
@@ -1312,7 +1312,7 @@ static bool _isModelOkForTopologicalOpti(GModel *m)
   return true;
 }
 
-void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
+void recombineIntoQuads(GSurface *gf, bool blossom, int topologicalOptiPasses,
                         bool nodeRepositioning, double minqual)
 {
   double t1 = Cpu(), w1 = TimeOfDay();
@@ -1375,7 +1375,7 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
   if(debug) gf->model()->writeMSH("recombine_5final.msh");
 }
 
-void quadsToTriangles(GFace *gf, double minqual)
+void quadsToTriangles(GSurface *gf, double minqual)
 {
   std::vector<MQuadrangle *> qds;
   std::map<MElement *, std::pair<MElement *, MElement *> > change;
@@ -1458,7 +1458,7 @@ void quadsToTriangles(GFace *gf, double minqual)
   _columns->_elemColumns = newElemColumns;
 }
 
-void splitElementsInBoundaryLayerIfNeeded(GFace *gf)
+void splitElementsInBoundaryLayerIfNeeded(GSurface *gf)
 {
   if(!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine) {
     int numSplit = 0;

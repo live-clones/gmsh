@@ -24,9 +24,9 @@ class BDS_Face;
 class BDS_Mesh;
 class BDS_Point;
 class BDS_Vector;
-class GFace;
-class GEdge;
-class GVertex;
+class GSurface;
+class GCurve;
+class GPoint;
 
 class BDS_GeomEntity {
 public:
@@ -300,11 +300,11 @@ public:
 };
 
 class BDS_SwapEdgeTestNormals : public BDS_SwapEdgeTest {
-  GFace *gf;
+  GSurface *gf;
   double _ori;
 
 public:
-  BDS_SwapEdgeTestNormals(GFace *_gf, double ori) : gf(_gf), _ori(ori) {}
+  BDS_SwapEdgeTestNormals(GSurface *_gf, double ori) : gf(_gf), _ori(ori) {}
   virtual bool operator()(BDS_Point *p1, BDS_Point *p2, BDS_Point *q1,
                           BDS_Point *q2) const;
   virtual bool operator()(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3,
@@ -315,8 +315,8 @@ public:
 
 struct EdgeToRecover {
   int p1, p2;
-  GEdge *ge;
-  EdgeToRecover(int _p1, int _p2, GEdge *_ge) : ge(_ge)
+  GCurve *ge;
+  EdgeToRecover(int _p1, int _p2, GCurve *_ge) : ge(_ge)
   {
     if(_p1 < _p2) {
       p1 = _p1;
@@ -349,7 +349,7 @@ public:
   std::vector<BDS_Face *> triangles;
   // Points
   BDS_Point *add_point(int num, double x, double y, double z);
-  BDS_Point *add_point(int num, double u, double v, GFace *gf);
+  BDS_Point *add_point(int num, double u, double v, GSurface *gf);
   void del_point(BDS_Point *p);
   BDS_Point *find_point(int num);
   // Edges
@@ -377,7 +377,7 @@ public:
   bool swap_edge(BDS_Edge *, const BDS_SwapEdgeTest &theTest,
                  bool force = false);
   bool collapse_edge_parametric(BDS_Edge *, BDS_Point *, bool = false);
-  bool smooth_point_centroid(BDS_Point *p, GFace *gf, double thresh);
+  bool smooth_point_centroid(BDS_Point *p, GSurface *gf, double thresh);
   bool split_edge(BDS_Edge *, BDS_Point *, bool check_area_param = false);
   bool edge_constraint(BDS_Point *p1, BDS_Point *p2);
   // Global operators
@@ -386,10 +386,10 @@ public:
 
 void normal_triangle(BDS_Point *p1, BDS_Point *p2, BDS_Point *p3, double c[3]);
 void outputScalarField(std::vector<BDS_Face *> &t, const char *fn, int param,
-                       GFace *gf = nullptr);
+                       GSurface *gf = nullptr);
 void recur_tag(BDS_Face *t, BDS_GeomEntity *g);
 int Intersect_Edges_2d(double x1, double y1, double x2, double y2, double x3,
                        double y3, double x4, double y4, double x[2]);
-double BDS_Face_Validity(GFace *gf, BDS_Face *f);
+double BDS_Face_Validity(GSurface *gf, BDS_Face *f);
 
 #endif

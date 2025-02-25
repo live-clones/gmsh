@@ -28,7 +28,7 @@
 #include "MQuadrangle.h"
 #include "MTriangle.h"
 #include "BasisFactory.h"
-#include "GFace.h"
+#include "GSurface.h"
 #include "orthogonalBasis.h"
 #include "bezierBasis.h"
 #include "gmshVertex.h"
@@ -50,7 +50,7 @@
 #endif
 
 namespace {
-  void drawEquidistantPoints(GEdge *gedge, int N)
+  void drawEquidistantPoints(GCurve *gedge, int N)
   {
     return;
     const std::size_t numLine = gedge->getNumMeshElements();
@@ -64,20 +64,20 @@ namespace {
 
     for(int i = 0; i < N; ++i) {
       const double u = umin + i * step;
-      const GPoint p = gedge->point(u);
-      MVertex *v = new MVertex(p.x(), p.y(), p.z());
+      const GVertex p = gedge->point(u);
+      MNode *v = new MNode(p.x(), p.y(), p.z());
       gedge->addMeshVertex(v);
       gedge->addLine(new MLine(v, v));
     }
   }
 
-  void drawBezierControlPolygon(const bezierCoeff &controlPoints, GEdge *gedge)
+  void drawBezierControlPolygon(const bezierCoeff &controlPoints, GCurve *gedge)
   {
     const int nVert = controlPoints.getNumCoeff();
 
-    MVertex *previous = nullptr;
+    MNode *previous = nullptr;
     for(int i = 0; i < nVert; ++i) {
-      MVertex *v = new MVertex(controlPoints(i, 0), controlPoints(i, 1),
+      MNode *v = new MNode(controlPoints(i, 0), controlPoints(i, 1),
                                controlPoints(i, 2), gedge);
       if(previous) {
         MLine *line = new MLine(v, previous);
@@ -88,8 +88,8 @@ namespace {
     }
   }
 
-  void drawBezierControlPolygon(const std::vector<MVertex *> &vertices,
-                                GEdge *gedge = nullptr)
+  void drawBezierControlPolygon(const std::vector<MNode *> &vertices,
+                                GCurve *gedge = nullptr)
   {
     if(!gedge) { gedge = *GModel::current()->firstEdge(); }
 
@@ -122,21 +122,21 @@ namespace {
   }
 
   void draw3DFrame(SPoint3 &p, SVector3 &t, SVector3 &n, SVector3 &w,
-                   double unitDimension, GFace *gFace = nullptr)
+                   double unitDimension, GSurface *gFace = nullptr)
   {
     return;
     if(!gFace) gFace = *GModel::current()->firstFace();
 
-    MVertex *v = new MVertex(p.x(), p.y(), p.z(), gFace);
+    MNode *v = new MNode(p.x(), p.y(), p.z(), gFace);
 
     SPoint3 pnt = p + n * unitDimension * .75;
-    MVertex *vn = new MVertex(pnt.x(), pnt.y(), pnt.z(), gFace);
+    MNode *vn = new MNode(pnt.x(), pnt.y(), pnt.z(), gFace);
 
     pnt = p + w * unitDimension * 2;
-    MVertex *vw = new MVertex(pnt.x(), pnt.y(), pnt.z(), gFace);
+    MNode *vw = new MNode(pnt.x(), pnt.y(), pnt.z(), gFace);
 
     pnt = p + t * unitDimension;
-    MVertex *vt = new MVertex(pnt.x(), pnt.y(), pnt.z(), gFace);
+    MNode *vt = new MNode(pnt.x(), pnt.y(), pnt.z(), gFace);
 
     gFace->addMeshVertex(v);
     gFace->addMeshVertex(vn);
@@ -154,17 +154,17 @@ namespace {
 } // namespace
 
 namespace BoundaryLayerCurver {
-  void projectVertexIntoGFace(MVertex *v, const GFace *gface)
+  void projectVertexIntoGFace(MNode *v, const GSurface *gface)
   {
     SPoint3 p = v->point();
     SPoint2 param = gface->parFromPoint(p);
-    GPoint projected = gface->point(param);
+    GVertex projected = gface->point(param);
     v->x() = projected.x();
     v->y() = projected.y();
     v->z() = projected.z();
   }
 
-  void projectVerticesIntoGFace(const MEdgeN *edge, const GFace *gface,
+  void projectVerticesIntoGFace(const MEdgeN *edge, const GSurface *gface,
                                 bool alsoExtremity = true)
   {
     int i = alsoExtremity ? 0 : 2;
@@ -173,7 +173,7 @@ namespace BoundaryLayerCurver {
       projectVertexIntoGFace(edge->getVertex(i), gface);
   }
 
-  void projectVerticesIntoGFace(const MFaceN *face, const GFace *gface,
+  void projectVerticesIntoGFace(const MFaceN *face, const GSurface *gface,
                                 bool alsoBoundary = true)
   {
     int i = alsoBoundary ? 0 : face->getNumVerticesOnBoundary();
@@ -186,7 +186,7 @@ namespace BoundaryLayerCurver {
     // TODO: smooth normals if CAD not available
     // TODO: check quality of elements
 
-    _Frame::_Frame(const MEdgeN *edge, const GFace *gface, const GEdge *gedge,
+    _Frame::_Frame(const MEdgeN *edge, const GSurface *gface, const GCurve *gedge,
                    const SVector3 &normal)
       : _normalToTheMesh(normal), _gface(gface), _gedge(gedge),
         _edgeOnBoundary(edge)
@@ -282,7 +282,7 @@ namespace BoundaryLayerCurver {
 
       double paramGeoEdge =
         _edgeOnBoundary->interpolate(_paramVerticesOnGEdge, u);
-      GPoint p = _gedge->point(paramGeoEdge);
+      GVertex p = _gedge->point(paramGeoEdge);
       return SPoint3(p.x(), p.y(), p.z());
     }
 
@@ -290,7 +290,7 @@ namespace BoundaryLayerCurver {
                             const _Frame &frame, double coeffs[2][3])
     {
       SVector3 t, n, w, h;
-      MVertex *vb, *vt;
+      MNode *vb, *vt;
 
       frame.computeFrame(-1, t, n, w, true);
       vb = baseEdge->getVertex(0);
@@ -346,10 +346,10 @@ namespace BoundaryLayerCurver {
     }
 
     void _drawIdealPositionEdge(const MEdgeN *baseEdge, const _Frame &frame,
-                                double coeffs[2][3], GEdge *gedge)
+                                double coeffs[2][3], GCurve *gedge)
     {
       int N = 100;
-      MVertex *previous = nullptr;
+      MNode *previous = nullptr;
 
       for(int i = 0; i < N + 1; ++i) {
         const double u = (double)i / N * 2 - 1;
@@ -369,21 +369,21 @@ namespace BoundaryLayerCurver {
         double y = p.y() + h.y();
         double z = p.z() + h.z();
 
-        MVertex *current = new MVertex(x, y, z, gedge);
+        MNode *current = new MNode(x, y, z, gedge);
         gedge->addMeshVertex(current);
         if(previous) {
           MLine *line = new MLine(previous, current);
           gedge->addLine(line);
         }
-        //        MVertex *base = new MVertex(p.x(), p.y(), p.z(), gedge);
+        //        MNode *base = new MNode(p.x(), p.y(), p.z(), gedge);
         //        MLine *line = new MLine(base, current);
         //        gedge->addLine(line);
         previous = current;
       }
     }
 
-    void curveEdge(const MEdgeN *baseEdge, MEdgeN *edge, const GFace *gface,
-                   const GEdge *gedge, const SVector3 &normal)
+    void curveEdge(const MEdgeN *baseEdge, MEdgeN *edge, const GSurface *gface,
+                   const GCurve *gedge, const SVector3 &normal)
     {
       _Frame frame(baseEdge, gface, gedge, normal);
 
@@ -398,7 +398,7 @@ namespace BoundaryLayerCurver {
       // Least square projection
       fullMatrix<double> xyz(sizeSystem + 2, 3);
       _idealPositionEdge(baseEdge, frame, coeffs, sizeSystem, gaussPnts, xyz);
-      //      _drawIdealPositionEdge(baseEdge, frame, coeffs, (GEdge*)gedge);
+      //      _drawIdealPositionEdge(baseEdge, frame, coeffs, (GCurve*)gedge);
       for(int i = 0; i < 2; ++i) {
         xyz(sizeSystem + i, 0) = edge->getVertex(i)->x();
         xyz(sizeSystem + i, 1) = edge->getVertex(i)->y();
@@ -419,16 +419,16 @@ namespace BoundaryLayerCurver {
       if(gface) projectVerticesIntoGFace(edge, gface, false);
     }
 
-    void _reduceCurving(MEdgeN *edge, double factor, const GFace *gface)
+    void _reduceCurving(MEdgeN *edge, double factor, const GSurface *gface)
     {
       int order = edge->getPolynomialOrder();
 
-      MVertex *v0 = edge->getVertex(0);
-      MVertex *v1 = edge->getVertex(1);
+      MNode *v0 = edge->getVertex(0);
+      MNode *v1 = edge->getVertex(1);
 
       for(int i = 2; i < order + 1; ++i) {
         double f = (double)(i - 1) / order;
-        MVertex *v = edge->getVertex(i);
+        MNode *v = edge->getVertex(i);
         v->x() =
           (1 - factor) * v->x() + factor * ((1 - f) * v0->x() + f * v1->x());
         v->y() =
@@ -439,7 +439,7 @@ namespace BoundaryLayerCurver {
       if(gface) projectVerticesIntoGFace(edge, gface, false);
     }
 
-    void _reduceOrderCurve(MEdgeN *edge, int order, const GFace *gface)
+    void _reduceOrderCurve(MEdgeN *edge, int order, const GSurface *gface)
     {
       const int orderCurve = edge->getPolynomialOrder();
       const int orderGauss = order * 2;
@@ -464,7 +464,7 @@ namespace BoundaryLayerCurver {
       fullMatrix<double> newxyzLow(order + 1, 3);
       data->invA.mult(xyz, newxyzLow);
 
-      std::vector<MVertex *> vertices = edge->getVertices();
+      std::vector<MNode *> vertices = edge->getVertices();
       vertices.resize(static_cast<std::size_t>(order) + 1);
       MEdgeN lowOrderEdge(vertices);
 
@@ -498,7 +498,7 @@ namespace BoundaryLayerCurver {
     void recoverQualityElements(std::vector<MEdgeN> &stackEdges,
                                 std::vector<MFaceN> &stackFaces,
                                 std::vector<MElement *> &stackElements,
-                                int iFirst, int iLast, const GFace *gface)
+                                int iFirst, int iLast, const GSurface *gface)
     {
       std::vector<MEdgeN> subsetEdges(4);
       subsetEdges[0] = stackEdges[0];
@@ -710,12 +710,12 @@ namespace BoundaryLayerCurver {
     {
       eta.resize(stack.size());
       eta[0] = std::make_pair(0, 0);
-      MVertex *vb0 = stack[0].getVertex(0);
-      MVertex *vb1 = stack[0].getVertex(1);
+      MNode *vb0 = stack[0].getVertex(0);
+      MNode *vb1 = stack[0].getVertex(1);
 
       for(std::size_t i = 1; i < stack.size(); ++i) {
-        MVertex *v0 = stack[i].getVertex(0);
-        MVertex *v1 = stack[i].getVertex(1);
+        MNode *v0 = stack[i].getVertex(0);
+        MNode *v1 = stack[i].getVertex(1);
         eta[i].first = vb0->distance(v0);
         eta[i].second = vb1->distance(v1);
       }
@@ -815,7 +815,7 @@ namespace BoundaryLayerCurver {
     void _generalTFI(std::vector<MEdgeN> &stack, int iLast,
                      const std::vector<std::pair<double, double> > &eta,
                      const fullMatrix<double> terms[8], double coeffHermite,
-                     const GFace *gface)
+                     const GSurface *gface)
     {
       // Let L() be the linear TFI transformation
       // Let H() be the semi-Hermite TFI transformation
@@ -838,7 +838,7 @@ namespace BoundaryLayerCurver {
 
         fullMatrix<double> x(numVertices, 3);
         for(int j = 0; j < numVertices; ++j) {
-          MVertex *v = stack[i].getVertex(j);
+          MNode *v = stack[i].getVertex(j);
           x(j, 0) = v->x();
           x(j, 1) = v->y();
           x(j, 2) = v->z();
@@ -856,7 +856,7 @@ namespace BoundaryLayerCurver {
         x.axpy(term22, c * eta[i].second * eta[i].second);
 
         for(int j = 2; j < numVertices; ++j) {
-          MVertex *v = stack[i].getVertex(j);
+          MNode *v = stack[i].getVertex(j);
           v->x() = x(j, 0);
           v->y() = x(j, 1);
           v->z() = x(j, 2);
@@ -882,7 +882,7 @@ namespace BoundaryLayerCurver {
     }
 
     void curveEdges(std::vector<MEdgeN> &stack, int iFirst, int iLast,
-                    const GFace *gface)
+                    const GSurface *gface)
     {
       std::vector<std::pair<double, double> > eta;
       fullMatrix<double> terms[8];
@@ -894,7 +894,7 @@ namespace BoundaryLayerCurver {
     void curveEdgesAndPreserveQuality(std::vector<MEdgeN> &stackEdges,
                                       std::vector<MFaceN> &stackFaces,
                                       std::vector<MElement *> &stackElements,
-                                      int iFirst, int iLast, const GFace *gface)
+                                      int iFirst, int iLast, const GSurface *gface)
     {
       std::vector<std::pair<double, double> > eta;
       fullMatrix<double> terms[8];
@@ -934,7 +934,7 @@ namespace BoundaryLayerCurver {
   MElement *createPrimaryElement(MElement *el)
   {
     int tagLinear = ElementType::getType(el->getType(), 1);
-    std::vector<MVertex *> vertices;
+    std::vector<MNode *> vertices;
     el->getVertices(vertices);
     MElementFactory f;
     return f.create(tagLinear, vertices, -1);
@@ -1164,7 +1164,7 @@ namespace BoundaryLayerCurver {
   }
 
   void compute2DstackPrimaryVertices(const PairMElemVecMElem &column,
-                                     std::vector<MVertex *> &stack)
+                                     std::vector<MNode *> &stack)
   {
     MElement *bottomElement = column.first;
     const std::vector<MElement *> &stackElements = column.second;
@@ -1190,7 +1190,7 @@ namespace BoundaryLayerCurver {
         MEdge edge = currentElement->getEdge(j);
         if(edge == bottomEdge || edge == topEdge) continue;
 
-        MVertex *vbot, *vtop;
+        MNode *vbot, *vtop;
         if(edge.getVertex(0) == bottomEdge.getVertex(0) ||
            edge.getVertex(0) == bottomEdge.getVertex(1)) {
           vbot = edge.getVertex(0);
@@ -1226,7 +1226,7 @@ namespace BoundaryLayerCurver {
     stackEdges.resize(numElements);
     stackFaces.resize(numElements);
 
-    std::vector<MVertex *> primVert;
+    std::vector<MNode *> primVert;
     compute2DstackPrimaryVertices(column, primVert);
 
     for(std::size_t i = 0; i < numElements; ++i) {
@@ -1252,10 +1252,10 @@ namespace BoundaryLayerCurver {
 
   bool edgesShareVertex(MEdgeN *e0, MEdgeN *e1)
   {
-    MVertex *v = e0->getVertex(0);
-    MVertex *v0 = e1->getVertex(0);
+    MNode *v = e0->getVertex(0);
+    MNode *v0 = e1->getVertex(0);
     if(v == v0) return true;
-    MVertex *v1 = e1->getVertex(1);
+    MNode *v1 = e1->getVertex(1);
     if(v == v1) return true;
     v = e0->getVertex(1);
     if(v == v0) return true;
@@ -1264,7 +1264,7 @@ namespace BoundaryLayerCurver {
   }
 
   void repositionInnerVertices(const std::vector<MFaceN> &stackFaces,
-                               const GFace *gface)
+                               const GSurface *gface)
   {
     if(stackFaces.empty()) return;
 
@@ -1293,8 +1293,8 @@ namespace BoundaryLayerCurver {
     if(gface) projectVerticesIntoGFace(&stackFaces.back(), gface, false);
   }
 
-  bool curve2Dcolumn(PairMElemVecMElem &column, const GFace *gface,
-                     const GEdge *gedge, const SVector3 &normal)
+  bool curve2Dcolumn(PairMElemVecMElem &column, const GSurface *gface,
+                     const GCurve *gedge, const SVector3 &normal)
   {
     // Here, either gface is defined and not normal, or the normal
     // is defined and not gface!
@@ -1327,8 +1327,8 @@ namespace BoundaryLayerCurver {
     return true;
   }
 
-  void computeThicknessQuality(std::vector<MVertex *> &bottomVertices,
-                               std::vector<MVertex *> &topVertices,
+  void computeThicknessQuality(std::vector<MNode *> &bottomVertices,
+                               std::vector<MNode *> &topVertices,
                                std::vector<double> &thickness, SVector3 &w)
   {
     int nVertices = (int)bottomVertices.size();
@@ -1336,8 +1336,8 @@ namespace BoundaryLayerCurver {
     const nodalBasis *fs = BasisFactory::getNodalBasis(tagLine);
 
     for(int i = 0; i < nVertices; ++i) {
-      const MVertex *v0 = bottomVertices[i];
-      const MVertex *v1 = topVertices[i];
+      const MNode *v0 = bottomVertices[i];
+      const MNode *v1 = topVertices[i];
       SVector3 t, n, h;
       h = SVector3(v1->x() - v0->x(), v1->y() - v0->y(), v1->z() - v0->z());
 
@@ -1350,7 +1350,7 @@ namespace BoundaryLayerCurver {
         fs->f(xi, 0, 0, f);
         fs->df(xi, 0, 0, sf);
         for(int j = 0; j < fs->getNumShapeFunctions(); j++) {
-          const MVertex *v = bottomVertices[j];
+          const MNode *v = bottomVertices[j];
           xc += f[j] * v->x();
           yc += f[j] * v->y();
           zc += f[j] * v->z();
@@ -1385,7 +1385,7 @@ namespace BoundaryLayerCurver {
                              std::map<int, std::vector<double> > &data)
   {
     //    if (el->getType() == TYPE_QUA) {
-    //      std::vector<MVertex *> bottomVertices, topVertices;
+    //      std::vector<MNode *> bottomVertices, topVertices;
     //
     //      el->getEdgeVertices(0, bottomVertices);
     //      el->getEdgeVertices(2, topVertices);
@@ -1444,7 +1444,7 @@ namespace BoundaryLayerCurver {
 } // namespace BoundaryLayerCurver
 
 void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
-                          const GEdge *gedge)
+                          const GCurve *gedge)
 {
   double length = normal.normalize();
   if(length == 0) {
@@ -1485,7 +1485,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
 }
 
 void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
-                          const GFace *gface, const GEdge *gedge)
+                          const GSurface *gface, const GCurve *gedge)
 {
   if(!gface || !gedge) {
     Msg::Error("both gface and gedge are needed for boundary layer curving "

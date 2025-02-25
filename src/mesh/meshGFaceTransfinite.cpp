@@ -12,10 +12,10 @@
 #include "meshGFace.h"
 #include "meshGEdge.h"
 #include "GModel.h"
-#include "GVertex.h"
-#include "GEdge.h"
-#include "GFace.h"
-#include "MVertex.h"
+#include "GPoint.h"
+#include "GCurve.h"
+#include "GSurface.h"
+#include "MNode.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "Context.h"
@@ -44,7 +44,7 @@
 #define TRAN_TRI(c1, c2, c3, s1, s2, s3, u, v)                                 \
   u * c2 + (1. - v) * c1 + v * c3 - (u * (1. - v) * s2 + u * v * s3)
 
-void findTransfiniteCorners(GFace *gf, std::vector<MVertex *> &corners)
+void findTransfiniteCorners(GSurface *gf, std::vector<MNode *> &corners)
 {
   if(gf->meshAttributes.corners.size()) {
     // corners have been specified explicitly
@@ -53,14 +53,14 @@ void findTransfiniteCorners(GFace *gf, std::vector<MVertex *> &corners)
   }
   else {
     // try to find the corners automatically
-    std::vector<GEdge *> fedges = gf->edges();
+    std::vector<GCurve *> fedges = gf->edges();
     GEdgeLoop el(fedges);
     for(auto it = el.begin(); it != el.end(); it++)
       corners.push_back(it->getBeginVertex()->mesh_vertices[0]);
 
     // try reaaally hard for 3-sided faces
     if(corners.size() == 3) {
-      GEdge *first = nullptr, *last = nullptr;
+      GCurve *first = nullptr, *last = nullptr;
       for(auto it = fedges.begin(); it != fedges.end(); it++) {
         if(((*it)->getBeginVertex()->mesh_vertices[0] == corners[0] &&
             (*it)->getEndVertex()->mesh_vertices[0] == corners[1]) ||
@@ -77,7 +77,7 @@ void findTransfiniteCorners(GFace *gf, std::vector<MVertex *> &corners)
       }
       if(first && last) {
         if(first->mesh_vertices.size() != last->mesh_vertices.size()) {
-          std::vector<MVertex *> corners2(3);
+          std::vector<MNode *> corners2(3);
           corners2[0] = corners[1];
           corners2[1] = corners[2];
           corners2[2] = corners[0];
@@ -88,14 +88,14 @@ void findTransfiniteCorners(GFace *gf, std::vector<MVertex *> &corners)
   }
 }
 
-static void computeEdgeLoops(const GFace *gf,
-                             std::vector<MVertex *> &all_mvertices,
+static void computeEdgeLoops(const GSurface *gf,
+                             std::vector<MNode *> &all_mvertices,
                              std::vector<int> &indices)
 {
-  std::vector<GEdge *> const &e = gf->edges();
+  std::vector<GCurve *> const &e = gf->edges();
   std::vector<int> const &o = gf->edgeOrientations();
 
-  std::vector<GEdge *> edges;
+  std::vector<GCurve *> edges;
   std::vector<int> ori;
   for(std::size_t i = 0; i < e.size(); i++) {
     if(!e[i]->degenerate(0)) { // skip degenerate curves
@@ -107,9 +107,9 @@ static void computeEdgeLoops(const GFace *gf,
   auto it = edges.begin();
   auto ito = ori.begin();
   indices.push_back(0);
-  GVertex *start =
+  GPoint *start =
     ((*ito) == 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
-  GVertex *v_end =
+  GPoint *v_end =
     ((*ito) != 1) ? (*it)->getBeginVertex() : (*it)->getEndVertex();
 
   all_mvertices.push_back(start->mesh_vertices[0]);
@@ -120,7 +120,7 @@ static void computeEdgeLoops(const GFace *gf,
     for(int i = (*it)->mesh_vertices.size() - 1; i >= 0; i--)
       all_mvertices.push_back((*it)->mesh_vertices[i]);
 
-  GVertex *v_start = start;
+  GPoint *v_start = start;
   while(1) {
     ++it;
     ++ito;
@@ -167,14 +167,14 @@ double maxDistParam(const std::vector<double> &U, const std::vector<double> &V)
 }
 
 static void rescaleIrregularTransfinite(int &L, int &Lb, int &H, int &Hb,
-                                        std::vector<MVertex *> &m_vertices,
+                                        std::vector<MNode *> &m_vertices,
                                         std::vector<double> &U,
                                         std::vector<double> &V)
 {
   if(L == Lb && H == Hb) return;
 
   std::vector<double> U_new, V_new;
-  std::vector<MVertex *> m_vertices_new;
+  std::vector<MNode *> m_vertices_new;
 
   size_t duplicate_start_H = 0;
   size_t duplicate_size_H = 0;
@@ -282,7 +282,7 @@ static void rescaleIrregularTransfinite(int &L, int &Lb, int &H, int &Hb,
   m_vertices = m_vertices_new;
 }
 
-static void _addTriangle(GFace *gf, MVertex *v1, MVertex *v2, MVertex *v3)
+static void _addTriangle(GSurface *gf, MNode *v1, MNode *v2, MNode *v3)
 {
   if(v1 == v2) return;
   if(v1 == v3) return;
@@ -290,8 +290,8 @@ static void _addTriangle(GFace *gf, MVertex *v1, MVertex *v2, MVertex *v3)
   gf->triangles.push_back(new MTriangle(v1, v2, v3));
 }
 
-static void _addQuadrangle(GFace *gf, MVertex *v1, MVertex *v2, MVertex *v3,
-                           MVertex *v4)
+static void _addQuadrangle(GSurface *gf, MNode *v1, MNode *v2, MNode *v3,
+                           MNode *v4)
 {
   if(v1 == v2)
     _addTriangle(gf, v1, v3, v4);
@@ -309,7 +309,7 @@ static void _addQuadrangle(GFace *gf, MVertex *v1, MVertex *v2, MVertex *v3,
     gf->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
 }
 
-int MeshTransfiniteSurface(GFace *gf)
+int MeshTransfiniteSurface(GSurface *gf)
 {
   if(gf->meshAttributes.method != MESH_TRANSFINITE) return 0;
 
@@ -317,7 +317,7 @@ int MeshTransfiniteSurface(GFace *gf)
 
   // make sure that all bounding edges have begin/end points: everything in here
   // depends on it
-  const std::vector<GEdge *> &edges = gf->edges();
+  const std::vector<GCurve *> &edges = gf->edges();
   for(auto it = edges.begin(); it != edges.end(); it++) {
     if(!(*it)->getBeginVertex() || !(*it)->getEndVertex()) {
       Msg::Error(
@@ -328,7 +328,7 @@ int MeshTransfiniteSurface(GFace *gf)
     }
   }
 
-  std::vector<MVertex *> corners;
+  std::vector<MNode *> corners;
   findTransfiniteCorners(gf, corners);
   if(corners.size() != 3 && corners.size() != 4) {
     Msg::Error("Surface %d is transfinite but has %d corner%s", gf->tag(),
@@ -336,7 +336,7 @@ int MeshTransfiniteSurface(GFace *gf)
     return 0;
   }
 
-  std::vector<MVertex *> d_vertices;
+  std::vector<MNode *> d_vertices;
   std::vector<int> indices;
   computeEdgeLoops(gf, d_vertices, indices);
 
@@ -349,7 +349,7 @@ int MeshTransfiniteSurface(GFace *gf)
 
   // create a list of all boundary vertices, starting at the first
   // transfinite corner
-  std::vector<MVertex *> m_vertices;
+  std::vector<MNode *> m_vertices;
   std::size_t I;
   for(I = 0; I < d_vertices.size(); I++)
     if(d_vertices[I] == corners[0]) break;
@@ -361,7 +361,7 @@ int MeshTransfiniteSurface(GFace *gf)
   // corner, just reverse the list)
   bool reverse = false;
   for(std::size_t i = 1; i < m_vertices.size(); i++) {
-    MVertex *v = m_vertices[i];
+    MNode *v = m_vertices[i];
     if(v == corners[1] || v == corners[2] ||
        (corners.size() == 4 && v == corners[3])) {
       if(v != corners[1]) reverse = true;
@@ -369,7 +369,7 @@ int MeshTransfiniteSurface(GFace *gf)
     }
   }
   if(reverse) {
-    std::vector<MVertex *> tmp;
+    std::vector<MNode *> tmp;
     tmp.push_back(m_vertices[0]);
     for(int i = m_vertices.size() - 1; i > 0; i--) tmp.push_back(m_vertices[i]);
     m_vertices = tmp;
@@ -380,7 +380,7 @@ int MeshTransfiniteSurface(GFace *gf)
   int iCorner = 0, N[4] = {0, 0, 0, 0};
   std::vector<double> U, V, U2, V2;
   for(std::size_t i = 0; i < m_vertices.size(); i++) {
-    MVertex *v = m_vertices[i];
+    MNode *v = m_vertices[i];
     if(v == corners[0] || v == corners[1] || v == corners[2] ||
        (corners.size() == 4 && v == corners[3])) {
       if(iCorner > 3) {
@@ -469,13 +469,13 @@ int MeshTransfiniteSurface(GFace *gf)
   lengths_i.push_back(0.0);
   double L_i = 0.0;
   for(int i = 0; i < L; i++) {
-    MVertex *v1 = m_vertices[i];
-    MVertex *v2 = m_vertices[i + 1];
+    MNode *v1 = m_vertices[i];
+    MNode *v2 = m_vertices[i + 1];
     double d1 = v1->distance(v2);
     if(symmetric) {
-      MVertex *v3 =
+      MNode *v3 =
         m_vertices[(corners.size() == 3 && !i) ? 0 : (2 * L + H - i)];
-      MVertex *v4 = m_vertices[2 * L + H - i - 1];
+      MNode *v4 = m_vertices[2 * L + H - i - 1];
       double d2 = v3->distance(v4);
       L_i += 0.5 * (d1 + d2);
     }
@@ -490,12 +490,12 @@ int MeshTransfiniteSurface(GFace *gf)
   lengths_j.push_back(0.0);
   double L_j = 0.0;
   for(int i = 0; i < H; i++) {
-    MVertex *v1 = m_vertices[L + i];
-    MVertex *v2 = m_vertices[L + i + 1];
+    MNode *v1 = m_vertices[L + i];
+    MNode *v2 = m_vertices[L + i + 1];
     double d1 = v1->distance(v2);
     if(symmetric && corners.size() == 4) {
-      MVertex *v3 = m_vertices[(!i) ? 0 : (2 * L + 2 * H - i)];
-      MVertex *v4 = m_vertices[2 * L + 2 * H - i - 1];
+      MNode *v3 = m_vertices[(!i) ? 0 : (2 * L + 2 * H - i)];
+      MNode *v4 = m_vertices[2 * L + 2 * H - i - 1];
       double d2 = v3->distance(v4);
       L_j += 0.5 * (d1 + d2);
     }
@@ -505,7 +505,7 @@ int MeshTransfiniteSurface(GFace *gf)
     lengths_j.push_back(L_j);
   }
 
-  std::vector<std::vector<MVertex *>> &tab(gf->transfinite_vertices);
+  std::vector<std::vector<MNode *>> &tab(gf->transfinite_vertices);
   tab.resize(L + 1);
   for(int i = 0; i <= L; i++) tab[i].resize(H + 1);
 
@@ -559,7 +559,7 @@ int MeshTransfiniteSurface(GFace *gf)
           TRAN_QUA(U[iP1], U[iP2], U[iP3], U[iP4], UC1, UC2, UC3, UC4, u, v);
         double Vp =
           TRAN_QUA(V[iP1], V[iP2], V[iP3], V[iP4], VC1, VC2, VC3, VC4, u, v);
-        GPoint gp = gf->point(SPoint2(Up, Vp));
+        GVertex gp = gf->point(SPoint2(Up, Vp));
         MFaceVertex *newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, Up, Vp);
         gf->mesh_vertices.push_back(newv);
         tab[i][j] = newv;
@@ -664,7 +664,7 @@ int MeshTransfiniteSurface(GFace *gf)
           // xp,yp,zp can be off the surface so we cannot use parFromPoint
           gf->XYZtoUV(xp, yp, zp, Up, Vp, 1.0, false);
         }
-        GPoint gp = gf->point(SPoint2(Up, Vp));
+        GVertex gp = gf->point(SPoint2(Up, Vp));
         MFaceVertex *newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, Up, Vp);
         gf->mesh_vertices.push_back(newv);
         tab[i][j] = newv;
@@ -748,7 +748,7 @@ int MeshTransfiniteSurface(GFace *gf)
     }
     for(int i = 1; i < L; i++) {
       for(int j = 1; j < H; j++) {
-        GPoint p = gf->point(SPoint2(u[i][j], v[i][j]));
+        GVertex p = gf->point(SPoint2(u[i][j], v[i][j]));
         tab[i][j]->x() = p.x();
         tab[i][j]->y() = p.y();
         tab[i][j]->z() = p.z();
@@ -763,17 +763,17 @@ int MeshTransfiniteSurface(GFace *gf)
     for(int it = 1; it <= numSmooth; ++it) {
       for(int i = 1; i < L; ++i) {
         for(int j = 1; j < i; ++j) {
-          MVertex const *v0 = tab[i][j];
+          MNode const *v0 = tab[i][j];
           double Uc, Vc;
 
           gf->XYZtoUV(v0->x(), v0->y(), v0->z(), Uc, Vc, 1.0, true);
 
-          MVertex const *v1 = tab[i - 1][j - 1];
-          MVertex const *v2 = tab[i - 1][j];
-          MVertex const *v3 = tab[i][j - 1];
-          MVertex const *v4 = tab[i][j + 1];
-          MVertex const *v5 = tab[i + 1][j];
-          MVertex const *v6 = tab[i + 1][j + 1];
+          MNode const *v1 = tab[i - 1][j - 1];
+          MNode const *v2 = tab[i - 1][j];
+          MNode const *v3 = tab[i][j - 1];
+          MNode const *v4 = tab[i][j + 1];
+          MNode const *v5 = tab[i + 1][j];
+          MNode const *v6 = tab[i + 1][j + 1];
 
           //        calculate elastic forces
           double fx = v1->x() - v0->x() + v2->x() - v0->x() + v3->x() -
@@ -787,10 +787,10 @@ int MeshTransfiniteSurface(GFace *gf)
                       v6->z() - v0->z();
 
           double const eps = 1e-4;
-          GPoint fup = gf->point(SPoint2(Uc + eps, Vc));
-          GPoint fum = gf->point(SPoint2(Uc - eps, Vc));
-          GPoint fvp = gf->point(SPoint2(Uc, Vc + eps));
-          GPoint fvm = gf->point(SPoint2(Uc, Vc - eps));
+          GVertex fup = gf->point(SPoint2(Uc + eps, Vc));
+          GVertex fum = gf->point(SPoint2(Uc - eps, Vc));
+          GVertex fvp = gf->point(SPoint2(Uc, Vc + eps));
+          GVertex fvm = gf->point(SPoint2(Uc, Vc - eps));
 
           double fupx = v1->x() - fup.x() + v2->x() - fup.x() + v3->x() -
                         fup.x() + v4->x() - fup.x() + v5->x() - fup.x() +
@@ -885,7 +885,7 @@ int MeshTransfiniteSurface(GFace *gf)
           Vc = Vc + dv;
 
           //        store x, y, z
-          GPoint fc = gf->point(SPoint2(Uc, Vc));
+          GVertex fc = gf->point(SPoint2(Uc, Vc));
           tab[i][j]->x() = fc.x();
           tab[i][j]->y() = fc.y();
           tab[i][j]->z() = fc.z();
@@ -899,10 +899,10 @@ int MeshTransfiniteSurface(GFace *gf)
   if(corners.size() == 4) {
     for(int i = 0; i < L; i++) {
       for(int j = 0; j < H; j++) {
-        MVertex *v1 = tab[i][j];
-        MVertex *v2 = tab[i + 1][j];
-        MVertex *v3 = tab[i + 1][j + 1];
-        MVertex *v4 = tab[i][j + 1];
+        MNode *v1 = tab[i][j];
+        MNode *v2 = tab[i + 1][j];
+        MNode *v3 = tab[i + 1][j + 1];
+        MNode *v4 = tab[i][j + 1];
         if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine)
           _addQuadrangle(gf, v1, v2, v3, v4);
         else if(gf->meshAttributes.transfiniteArrangement == 1 ||
@@ -924,17 +924,17 @@ int MeshTransfiniteSurface(GFace *gf)
   else {
     if(!gf->meshAttributes.transfinite3) {
       for(int j = 0; j < H; j++) {
-        MVertex *v1 = tab[0][0];
-        MVertex *v2 = tab[1][j];
-        MVertex *v3 = tab[1][j + 1];
+        MNode *v1 = tab[0][0];
+        MNode *v2 = tab[1][j];
+        MNode *v3 = tab[1][j + 1];
         _addTriangle(gf, v1, v2, v3);
       }
       for(int i = 1; i < L; i++) {
         for(int j = 0; j < H; j++) {
-          MVertex *v1 = tab[i][j];
-          MVertex *v2 = tab[i + 1][j];
-          MVertex *v3 = tab[i + 1][j + 1];
-          MVertex *v4 = tab[i][j + 1];
+          MNode *v1 = tab[i][j];
+          MNode *v2 = tab[i + 1][j];
+          MNode *v3 = tab[i + 1][j + 1];
+          MNode *v4 = tab[i][j + 1];
           if(CTX::instance()->mesh.recombineAll || gf->meshAttributes.recombine)
             _addQuadrangle(gf, v1, v2, v3, v4);
           else if(gf->meshAttributes.transfiniteArrangement == 1 ||
@@ -959,11 +959,11 @@ int MeshTransfiniteSurface(GFace *gf)
       bool message = true;
       for(int i = 0; i < L; i++) {
         for(int j = 0; j <= i; j++) {
-          MVertex *v1 = tab[i][j];
-          MVertex *v2 = tab[i + 1][j];
-          MVertex *v3 = tab[i + 1][j + 1];
-          MVertex *v4 = tab[i][j + 1];
-          MVertex *v5;
+          MNode *v1 = tab[i][j];
+          MNode *v2 = tab[i + 1][j];
+          MNode *v3 = tab[i + 1][j + 1];
+          MNode *v4 = tab[i][j + 1];
+          MNode *v5;
 
           if(CTX::instance()->mesh.recombineAll ||
              gf->meshAttributes.recombine) {
@@ -1019,7 +1019,7 @@ int MeshTransfiniteSurface(GFace *gf)
     }
   }
 
-  gf->meshStatistics.status = GFace::DONE;
+  gf->meshStatistics.status = GSurface::DONE;
   return 1;
 }
 
@@ -1062,12 +1062,12 @@ bool id_loop_from_closed_pairs(const std::vector<std::array<int, 2>> &pairs,
   return true;
 }
 
-bool faceIsValidQuad(GFace *gf, double angle_threshold_rad)
+bool faceIsValidQuad(GSurface *gf, double angle_threshold_rad)
 {
   if(gf->edges().size() != 4) return false;
 
   std::vector<std::array<int, 2>> vpairs;
-  for(GEdge *ge : gf->edges()) {
+  for(GCurve *ge : gf->edges()) {
     vpairs.push_back(
       {{ge->getBeginVertex()->tag(), ge->getEndVertex()->tag()}});
   }
@@ -1082,7 +1082,7 @@ bool faceIsValidQuad(GFace *gf, double angle_threshold_rad)
       int v2 = loop[(i + 1) % loop.size()];
       int v3 = loop[(i + 2) % loop.size()];
       SVector3 t21, t23;
-      for(GEdge *ge : gf->edges()) {
+      for(GCurve *ge : gf->edges()) {
         int e_v1 = ge->getBeginVertex()->tag();
         int e_v2 = ge->getEndVertex()->tag();
         if(e_v1 == v1 && e_v2 == v2) {
@@ -1124,14 +1124,14 @@ bool faceIsValidQuad(GFace *gf, double angle_threshold_rad)
   return true;
 }
 
-GEdge *quad_face_opposite_edge(GFace *face, GEdge *edge)
+GCurve *quad_face_opposite_edge(GSurface *face, GCurve *edge)
 {
   if(face->edges().size() != 4) return nullptr;
-  GEdge *op = nullptr;
+  GCurve *op = nullptr;
   int v1 = edge->getBeginVertex()->tag();
   int v2 = edge->getEndVertex()->tag();
   bool edgeInside = false;
-  for(GEdge *ge : face->edges()) {
+  for(GCurve *ge : face->edges()) {
     if(ge == edge) {
       edgeInside = true;
       continue;
@@ -1149,40 +1149,40 @@ GEdge *quad_face_opposite_edge(GFace *face, GEdge *edge)
   return op;
 }
 
-void build_chords(const std::set<GFace *> &faces,
-                  std::vector<std::set<GEdge *>> &chords, double maxDiffRel,
+void build_chords(const std::set<GSurface *> &faces,
+                  std::vector<std::set<GCurve *>> &chords, double maxDiffRel,
                   bool ignoreEmbedded = false)
 {
   /* Connectivity */
-  std::map<GEdge *, std::vector<GFace *>> edge2faces;
-  for(GFace *gf : faces) {
+  std::map<GCurve *, std::vector<GSurface *>> edge2faces;
+  for(GSurface *gf : faces) {
     if(!ignoreEmbedded &&
        (gf->embeddedEdges().size() > 0 || gf->embeddedVertices().size() > 0))
       continue;
-    for(GEdge *ge : gf->edges()) { edge2faces[ge].push_back(gf); }
+    for(GCurve *ge : gf->edges()) { edge2faces[ge].push_back(gf); }
   }
 
   Msg::Debug("build chords: %li faces, %li edges", faces.size(),
              edge2faces.size());
 
-  std::map<GEdge *, bool> done;
+  std::map<GCurve *, bool> done;
   for(auto &kv : edge2faces) {
-    GEdge *geInit = kv.first;
+    GCurve *geInit = kv.first;
     if(done.find(geInit) != done.end()) continue;
 
-    /* Breath first search starting from a GEdge */
-    std::queue<GEdge *> Q;
+    /* Breath first search starting from a GCurve */
+    std::queue<GCurve *> Q;
     Q.push(geInit);
     done[geInit] = true;
 
-    std::set<GEdge *> chord;
+    std::set<GCurve *> chord;
     while(Q.size() > 0) {
-      GEdge *ge = Q.front();
+      GCurve *ge = Q.front();
       Q.pop();
       int n = meshGEdgeTargetNumberOfPoints(ge);
       chord.insert(ge);
-      for(GFace *gf : edge2faces[ge]) {
-        GEdge *ge2 = quad_face_opposite_edge(gf, ge);
+      for(GSurface *gf : edge2faces[ge]) {
+        GCurve *ge2 = quad_face_opposite_edge(gf, ge);
         if(ge2 && done.find(ge2) == done.end()) {
           int n2 = meshGEdgeTargetNumberOfPoints(ge2);
           if(double(std::abs(n2 - n)) / double(std::max(n, n2)) > maxDiffRel) {
@@ -1198,13 +1198,13 @@ void build_chords(const std::set<GFace *> &faces,
   }
 }
 
-bool MeshSetTransfiniteFacesAutomatic(std::set<GFace *> &candidate_faces,
+bool MeshSetTransfiniteFacesAutomatic(std::set<GSurface *> &candidate_faces,
                                       double cornerAngle, bool setRecombine,
                                       double maxDiffRel, bool ignoreEmbedded)
 {
   /* Filter with topology and geometry */
-  std::set<GFace *> faces;
-  for(GFace *gf : candidate_faces) {
+  std::set<GSurface *> faces;
+  for(GSurface *gf : candidate_faces) {
     if(!ignoreEmbedded &&
        (gf->embeddedEdges().size() > 0 || gf->embeddedVertices().size() > 0))
       continue;
@@ -1215,16 +1215,16 @@ bool MeshSetTransfiniteFacesAutomatic(std::set<GFace *> &candidate_faces,
   Msg::Debug(
     "transfinite automatic: building chords from %li quadrangular faces...",
     faces.size());
-  std::vector<std::set<GEdge *>> chords;
+  std::vector<std::set<GCurve *>> chords;
   build_chords(faces, chords, maxDiffRel);
   Msg::Debug("... found %li chords", chords.size());
 
   /* Determine the number of points, set the transfinite curves */
   Msg::Debug("transfinite automatic: assigning number of points ...");
   std::size_t ne = 0;
-  for(std::set<GEdge *> &chord : chords) {
+  for(std::set<GCurve *> &chord : chords) {
     double avgNbPoints = 0;
-    for(GEdge *ge : chord) {
+    for(GCurve *ge : chord) {
       int n = meshGEdgeTargetNumberOfPoints(ge);
       avgNbPoints += double(n);
     }
@@ -1236,7 +1236,7 @@ bool MeshSetTransfiniteFacesAutomatic(std::set<GFace *> &candidate_faces,
 
     Msg::Debug("- chord with %li edges -> %i points\n", chord.size(), N);
 
-    for(GEdge *ge : chord) {
+    for(GCurve *ge : chord) {
       ge->meshAttributes.method = MESH_TRANSFINITE;
       ge->meshAttributes.nbPointsTransfinite = N;
       ge->meshAttributes.typeTransfinite = 1; /* Progression */
@@ -1250,11 +1250,11 @@ bool MeshSetTransfiniteFacesAutomatic(std::set<GFace *> &candidate_faces,
   Msg::Debug("transfinite automatic: transfinite set on %li edges", ne);
 
   std::size_t nf = 0;
-  for(GFace *gf : faces) {
+  for(GSurface *gf : faces) {
     bool transfinite = true;
     std::vector<int> nPoints(4, 0);
     std::size_t count = 0;
-    for(GEdge *ge : gf->edges()) {
+    for(GCurve *ge : gf->edges()) {
       if(ge->meshAttributes.method != MESH_TRANSFINITE) {
         transfinite = false;
         break;

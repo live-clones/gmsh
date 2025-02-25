@@ -12,12 +12,12 @@
 #include "nodalBasis.h"
 #include "BasisFactory.h"
 
-bool compare(const MVertex *const v0, const MVertex *const v1)
+bool compare(const MNode *const v0, const MNode *const v1)
 {
   return v0->getNum() < v1->getNum();
 }
 
-void sortVertices(const std::vector<MVertex *> &v, std::vector<char> &s)
+void sortVertices(const std::vector<MNode *> &v, std::vector<char> &s)
 {
   if(v.size() == 3) {
     s.resize(3);
@@ -47,7 +47,7 @@ void sortVertices(const std::vector<MVertex *> &v, std::vector<char> &s)
   }
   else if(v.size() == 4) {
     // avoid overhead of general case below
-    MVertex * sorted[4] {v[0], v[1], v[2], v[3]};
+    MNode * sorted[4] {v[0], v[1], v[2], v[3]};
     std::sort(&sorted[0], &sorted[4], compare);
     s.reserve(4);
     for(int i = 0; i < 4; ++i) {
@@ -57,7 +57,7 @@ void sortVertices(const std::vector<MVertex *> &v, std::vector<char> &s)
     return;
   }
 
-  std::vector<MVertex *> sorted = v;
+  std::vector<MNode *> sorted = v;
   std::sort(sorted.begin(), sorted.end(), compare);
   s.reserve(sorted.size());
   for(std::size_t i = 0; i < sorted.size(); i++)
@@ -65,7 +65,7 @@ void sortVertices(const std::vector<MVertex *> &v, std::vector<char> &s)
       std::distance(v.begin(), std::find(v.begin(), v.end(), sorted[i])));
 }
 
-MFace::MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3)
+MFace::MFace(MNode *v0, MNode *v1, MNode *v2, MNode *v3)
 {
   _v.reserve(v3 ? 4 : 3);
   _v.push_back(v0);
@@ -75,7 +75,7 @@ MFace::MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3)
   sortVertices(_v, _si);
 }
 
-MFace::MFace(const std::vector<MVertex *> &v)
+MFace::MFace(const std::vector<MNode *> &v)
 {
   _v.reserve(v.size());
   for(std::size_t i = 0; i < v.size(); i++) _v.push_back(v[i]);
@@ -231,7 +231,7 @@ bool MFace::computeCorrespondence(const MFace &other, int &rotation,
   return false;
 }
 
-MFaceN::MFaceN(int type, int order, const std::vector<MVertex *> &v)
+MFaceN::MFaceN(int type, int order, const std::vector<MNode *> &v)
   : _type(type), _order(order)
 {
   _v.resize(v.size());
@@ -241,7 +241,7 @@ MFaceN::MFaceN(int type, int order, const std::vector<MVertex *> &v)
 MEdgeN MFaceN::getHighOrderEdge(int num, int sign) const
 {
   int nCorner = getNumCorners();
-  std::vector<MVertex *> vertices(static_cast<std::size_t>(_order) + 1);
+  std::vector<MNode *> vertices(static_cast<std::size_t>(_order) + 1);
   if(sign == 1) {
     vertices[0] = _v[num];
     vertices[1] = _v[(num + 1) % nCorner];
@@ -387,7 +387,7 @@ void MFaceN::repositionInnerVertices(const fullMatrix<double> *placement) const
   int nCorner = getNumCorners();
   int start = nCorner + (_order - 1) * nCorner;
   for(int i = start; i < (int)_v.size(); ++i) {
-    MVertex *v = _v[i];
+    MNode *v = _v[i];
     v->x() = 0;
     v->y() = 0;
     v->z() = 0;

@@ -14,8 +14,8 @@
 #include <map>
 #include <set>
 
-class GFace;
-class GRegion;
+class GSurface;
+class GVolume;
 class MTriangle;
 class BoundaryLayerField;
 
@@ -23,9 +23,9 @@ const int USEFANS__ = 1;
 
 struct BoundaryLayerData {
   SVector3 _n;
-  std::vector<MVertex *> _column;
+  std::vector<MNode *> _column;
   BoundaryLayerData() {}
-  BoundaryLayerData(const SVector3 &dir, const std::vector<MVertex *> &column)
+  BoundaryLayerData(const SVector3 &dir, const std::vector<MNode *> &column)
     : _n(dir), _column(column)
   {
   }
@@ -50,18 +50,18 @@ struct edgeColumn {
 };
 
 class BoundaryLayerColumns {
-  std::map<MVertex *, BoundaryLayerFan> _fans;
+  std::map<MNode *, BoundaryLayerFan> _fans;
 
 public:
   // Element columns
   std::map<MElement *, MElement *> _toFirst;
   std::map<MElement *, std::vector<MElement *> > _elemColumns;
-  std::map<MFace, GFace *, MFaceLessThan> _inverse_classification;
-  std::multimap<MVertex *, BoundaryLayerData> _data;
+  std::map<MFace, GSurface *, MFaceLessThan> _inverse_classification;
+  std::multimap<MNode *, BoundaryLayerData> _data;
   size_t size() const { return _data.size(); }
-  typedef std::multimap<MVertex *, BoundaryLayerData>::iterator iter;
-  typedef std::map<MVertex *, BoundaryLayerFan>::iterator iterf;
-  std::multimap<MVertex *, MVertex *> _non_manifold_edges;
+  typedef std::multimap<MNode *, BoundaryLayerData>::iterator iter;
+  typedef std::map<MNode *, BoundaryLayerFan>::iterator iterf;
+  std::multimap<MNode *, MNode *> _non_manifold_edges;
   std::multimap<MEdge, SVector3, MEdgeLessThan> _normals;
   void clearData()
   {
@@ -84,22 +84,22 @@ public:
   iterf beginf() { return _fans.begin(); }
   iterf endf() { return _fans.end(); }
   BoundaryLayerColumns() {}
-  inline void addColumn(const SVector3 &dir, MVertex *v,
-                        const std::vector<MVertex *> &_column)
+  inline void addColumn(const SVector3 &dir, MNode *v,
+                        const std::vector<MNode *> &_column)
   {
     _data.insert(std::make_pair(v, BoundaryLayerData(dir, _column)));
   }
-  inline void addFan(MVertex *v, MEdge e1, MEdge e2, bool s, int type)
+  inline void addFan(MNode *v, MEdge e1, MEdge e2, bool s, int type)
   {
     _fans.insert(std::make_pair(v, BoundaryLayerFan(e1, e2, s, type)));
   }
-  inline const BoundaryLayerFan *getFan(MVertex *v) const
+  inline const BoundaryLayerFan *getFan(MNode *v) const
   {
     auto it = _fans.find(v);
     if(it != _fans.end()) { return &it->second; }
     return nullptr;
   }
-  inline const BoundaryLayerData &getColumn(MVertex *v, MEdge e) const
+  inline const BoundaryLayerData &getColumn(MNode *v, MEdge e) const
   {
     auto it = _fans.find(v);
     int N = getNbColumns(v);
@@ -115,9 +115,9 @@ public:
     static BoundaryLayerData error;
     return error;
   }
-  edgeColumn getColumns(MVertex *v1, MVertex *v2, int side);
-  inline int getNbColumns(MVertex *v) const { return (int)_data.count(v); }
-  inline const BoundaryLayerData &getColumn(MVertex *v, int iColumn) const
+  edgeColumn getColumns(MNode *v1, MNode *v2, int side);
+  inline int getNbColumns(MNode *v) const { return (int)_data.count(v); }
+  inline const BoundaryLayerData &getColumn(MNode *v, int iColumn) const
   {
     int count = 0;
     for(auto itm = _data.lower_bound(v); itm != _data.upper_bound(v); ++itm) {
@@ -129,8 +129,8 @@ public:
 };
 
 BoundaryLayerField *getBLField(GModel *gm);
-bool buildAdditionalPoints2D(GFace *gf);
-bool buildAdditionalPoints3D(GRegion *gr);
-void buildMeshMetric(GFace *gf, double *uv, SMetric3 &m, double metric[3]);
+bool buildAdditionalPoints2D(GSurface *gf);
+bool buildAdditionalPoints3D(GVolume *gr);
+void buildMeshMetric(GSurface *gf, double *uv, SMetric3 &m, double metric[3]);
 
 #endif

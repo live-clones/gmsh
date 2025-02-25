@@ -20,11 +20,11 @@
 /* Gmsh includes */
 #include "GmshMessage.h"
 #include "OS.h"
-#include "GVertex.h"
-#include "GEdge.h"
-#include "GFace.h"
+#include "GPoint.h"
+#include "GCurve.h"
+#include "GSurface.h"
 #include "GModel.h"
-#include "MVertex.h"
+#include "MNode.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -48,38 +48,38 @@ using std::unordered_map;
 using std::unordered_set;
 using std::vector;
 
-std::vector<GFace *> model_faces(const GModel *gm)
+std::vector<GSurface *> model_faces(const GModel *gm)
 {
-  std::vector<GFace *> faces;
+  std::vector<GSurface *> faces;
   for(GModel::fiter it = gm->firstFace(); it != gm->lastFace(); ++it) {
     faces.push_back(*it);
   }
   return faces;
 }
 
-std::vector<GEdge *> face_edges(const GFace *gf)
+std::vector<GCurve *> face_edges(const GSurface *gf)
 {
-  std::vector<GEdge *> edges;
-  for(GEdge *ge : gf->edges()) { edges.push_back(ge); }
-  GFace *gfc = const_cast<GFace *>(gf);
-  for(GEdge *ge : gfc->embeddedEdges()) { edges.push_back(ge); }
+  std::vector<GCurve *> edges;
+  for(GCurve *ge : gf->edges()) { edges.push_back(ge); }
+  GSurface *gfc = const_cast<GSurface *>(gf);
+  for(GCurve *ge : gfc->embeddedEdges()) { edges.push_back(ge); }
   sort_unique(edges);
   return edges;
 }
 
-std::vector<GEdge *> model_edges(const GModel *gm)
+std::vector<GCurve *> model_edges(const GModel *gm)
 {
-  std::vector<GEdge *> edges;
-  std::vector<GFace *> faces = model_faces(gm);
-  for(GFace *gf : faces) append(edges, face_edges(gf));
+  std::vector<GCurve *> edges;
+  std::vector<GSurface *> faces = model_faces(gm);
+  for(GSurface *gf : faces) append(edges, face_edges(gf));
   sort_unique(edges);
   return edges;
 }
 
-bool haveNiceParametrization(GFace *gf)
+bool haveNiceParametrization(GSurface *gf)
 {
   if(!gf->haveParametrization()) return false;
-  if(gf->geomType() == GFace::GeomType::Sphere) return false;
+  if(gf->geomType() == GSurface::GeomType::Sphere) return false;
   if(gf->periodic(0) || gf->periodic(1)) return false;
 
   return true;
@@ -87,7 +87,7 @@ bool haveNiceParametrization(GFace *gf)
 
 bool buildVertexToVertexMap(
   const std::vector<MTriangle *> &triangles,
-  std::unordered_map<MVertex *, std::vector<MVertex *> > &v2v)
+  std::unordered_map<MNode *, std::vector<MNode *> > &v2v)
 {
   v2v.clear();
   v2v.rehash(3 * triangles.size());
@@ -95,8 +95,8 @@ bool buildVertexToVertexMap(
   size_t N = 3;
   for(MTriangle *f : triangles) {
     for(size_t le = 0; le < N; ++le) {
-      MVertex *v1 = f->getVertex(le);
-      MVertex *v2 = f->getVertex((le + 1) % N);
+      MNode *v1 = f->getVertex(le);
+      MNode *v2 = f->getVertex((le + 1) % N);
       v2v[v1].push_back(v2);
       v2v[v2].push_back(v1);
     }
@@ -108,15 +108,15 @@ bool buildVertexToVertexMap(
 
 bool buildVertexToVertexMap(
   const std::vector<MElement *> &elements,
-  std::unordered_map<MVertex *, std::vector<MVertex *> > &v2v)
+  std::unordered_map<MNode *, std::vector<MNode *> > &v2v)
 {
   v2v.clear();
   v2v.rehash(4 * elements.size());
   for(size_t i = 0; i < elements.size(); ++i) {
     size_t N = elements[i]->getNumVertices();
     for(size_t le = 0; le < N; ++le) {
-      MVertex *v1 = elements[i]->getVertex(le);
-      MVertex *v2 = elements[i]->getVertex((le + 1) % N);
+      MNode *v1 = elements[i]->getVertex(le);
+      MNode *v2 = elements[i]->getVertex((le + 1) % N);
       v2v[v1].push_back(v2);
       v2v[v2].push_back(v1);
     }
@@ -126,7 +126,7 @@ bool buildVertexToVertexMap(
 }
 
 bool buildBoundary(const std::vector<MElement *> &elements,
-                   std::vector<MVertex *> &bnd)
+                   std::vector<MNode *> &bnd)
 {
   std::vector<MEdge> eds, veds;
 
@@ -145,7 +145,7 @@ bool buildBoundary(const std::vector<MElement *> &elements,
       veds.push_back(eds[i]);
   }
 
-  std::vector<std::vector<MVertex *> > vsorted;
+  std::vector<std::vector<MNode *> > vsorted;
   bool oks = SortEdgeConsecutive(veds, vsorted);
   if(!oks) { return false; }
   if(vsorted.empty()) { return false; }
@@ -158,8 +158,8 @@ bool buildBoundary(const std::vector<MElement *> &elements,
    */
   {
     MEdge e = veds[0];
-    MVertex *v1 = e.getVertex(0);
-    MVertex *v2 = e.getVertex(1);
+    MNode *v1 = e.getVertex(0);
+    MNode *v2 = e.getVertex(1);
     auto it = std::find(vsorted[0].begin(), vsorted[0].end(), v1);
     if(it == vsorted[0].end()) {
       Msg::Error("buildBoundary(): vertex not found in sorted vertices, weird");
@@ -185,7 +185,7 @@ bool buildBoundary(const std::vector<MElement *> &elements,
 }
 
 bool buildBoundaries(const std::vector<MElement *> &elements,
-                     std::vector<std::vector<MVertex *> > &loops)
+                     std::vector<std::vector<MNode *> > &loops)
 {
   loops.clear();
   std::vector<MEdge> eds, veds;
@@ -207,20 +207,20 @@ bool buildBoundaries(const std::vector<MElement *> &elements,
 
   if(veds.size() == 0) return true; /* No boundary, e.g. sphere */
 
-  std::vector<std::vector<MVertex *> > vsorted;
+  std::vector<std::vector<MNode *> > vsorted;
   bool oks = SortEdgeConsecutive(veds, vsorted);
   if(!oks || vsorted.empty()) { return false; }
 
   /* Reverse vertices if necessary, to keep coherent with elements orientation
    */
   for(size_t l = 0; l < vsorted.size(); ++l) {
-    std::vector<MVertex *> &loop = vsorted[l];
+    std::vector<MNode *> &loop = vsorted[l];
     /* Find a MEdge on the loop */
-    MVertex *a = nullptr;
-    MVertex *b = nullptr;
+    MNode *a = nullptr;
+    MNode *b = nullptr;
     for(MEdge e : veds) {
-      MVertex *v1 = e.getVertex(0);
-      MVertex *v2 = e.getVertex(1);
+      MNode *v1 = e.getVertex(0);
+      MNode *v2 = e.getVertex(1);
       auto it = std::find(loop.begin(), loop.end(), v1);
       if(it != loop.end()) {
         /* v1 from the MEdge found on the loop */
@@ -261,7 +261,7 @@ bool getConnectedComponents(const std::vector<MElement *> &elements,
 {
   components.clear();
 
-  unordered_map<MVertex *, std::vector<MElement *> > v2q;
+  unordered_map<MNode *, std::vector<MElement *> > v2q;
   for(MElement *e : elements) {
     for(size_t lv = 0; lv < e->getNumVertices(); ++lv) {
       v2q[e->getVertex(lv)].push_back(e);
@@ -285,7 +285,7 @@ bool getConnectedComponents(const std::vector<MElement *> &elements,
       MElement *e = Q.front();
       Q.pop();
       for(size_t lv = 0; lv < e->getNumVertices(); ++lv) {
-        MVertex *v = e->getVertex(lv);
+        MNode *v = e->getVertex(lv);
         auto it = v2q.find(v);
         if(it == v2q.end()) continue;
         for(MElement *e2 : it->second)
@@ -307,7 +307,7 @@ bool getConnectedComponents(const std::vector<MElement *> &elements,
   return true;
 }
 
-bool patchFromElements(GFace *gf, const std::vector<MElement *> &elements,
+bool patchFromElements(GSurface *gf, const std::vector<MElement *> &elements,
                        GFaceMeshPatch &patch, bool forceEvenIfBadBoundary)
 {
   patch.gf = gf;
@@ -319,7 +319,7 @@ bool patchFromElements(GFace *gf, const std::vector<MElement *> &elements,
       patch.bdrVertices[0].clear();
       for(MElement *e : elements) {
         for(size_t lv = 0; lv < e->getNumVertices(); ++lv) {
-          MVertex *v = e->getVertex(lv);
+          MNode *v = e->getVertex(lv);
           if(v == nullptr) {
             Msg::Warning("patchFromElements: quad vertex is null");
             return false;
@@ -340,7 +340,7 @@ bool patchFromElements(GFace *gf, const std::vector<MElement *> &elements,
   }
 
   /* Ensure no repetition in the boundary loops */
-  for(std::vector<MVertex *> &loop : patch.bdrVertices) {
+  for(std::vector<MNode *> &loop : patch.bdrVertices) {
     if(loop.back() == loop.front()) loop.pop_back();
   }
 
@@ -354,16 +354,16 @@ bool patchFromElements(GFace *gf, const std::vector<MElement *> &elements,
       patch.intVertices.push_back(e->getVertex(lv));
     }
   }
-  std::vector<MVertex *> bdr;
+  std::vector<MNode *> bdr;
   for(size_t i = 0; i < patch.bdrVertices.size(); ++i)
     append(bdr, patch.bdrVertices[i]);
   patch.intVertices = difference(patch.intVertices, bdr);
 
-  /* Vertices associated to embedded GVertex/GEdge in GFace */
+  /* Vertices associated to embedded GPoint/GCurve in GSurface */
   patch.embVertices.clear();
-  for(MVertex *v : patch.intVertices) {
+  for(MNode *v : patch.intVertices) {
     if(v->onWhat()->cast2Face() ==
-       nullptr) { /* MVertex assigned to GVertex or GEdge */
+       nullptr) { /* MNode assigned to GPoint or GCurve */
       patch.embVertices.push_back(v);
     }
   }
@@ -376,7 +376,7 @@ bool patchFromElements(GFace *gf, const std::vector<MElement *> &elements,
   return true;
 }
 
-bool patchFromQuads(GFace *gf, const std::vector<MQuadrangle *> &quads,
+bool patchFromQuads(GSurface *gf, const std::vector<MQuadrangle *> &quads,
                     GFaceMeshPatch &patch, bool forceEvenIfBadBoundary)
 {
   std::vector<MElement *> elts =
@@ -397,8 +397,8 @@ bool patchIsTopologicallyValid(const GFaceMeshPatch &patch)
   for(MElement *f : patch.elements) {
     size_t n = f->getNumVertices();
     for(size_t lv = 0; lv < n; ++lv) {
-      MVertex *v = f->getVertex(lv);
-      MVertex *v2 = f->getVertex((lv + 1) % n);
+      MNode *v = f->getVertex(lv);
+      MNode *v2 = f->getVertex((lv + 1) % n);
       if(v->getNum() < v2->getNum()) {
         std::array<size_t, 2> vpair = {v->getNum(), v2->getNum()};
         edgeVal[vpair] += 1;
@@ -439,7 +439,7 @@ bool GFaceMeshDiff::execute(bool verifyPatchTopology)
 
   /* Replace the interior vertices */
   while(before.intVertices.size() > 0) {
-    MVertex *ov = before.intVertices.back();
+    MNode *ov = before.intVertices.back();
     before.intVertices.pop_back();
     auto it = std::find(gf->mesh_vertices.begin(), gf->mesh_vertices.end(), ov);
     if(it == gf->mesh_vertices.end()) {
@@ -458,7 +458,7 @@ bool GFaceMeshDiff::execute(bool verifyPatchTopology)
     }
     if(after.intVertices.size() > 0) {
       /* Replace old vertex by new one, in place */
-      MVertex *nv = after.intVertices.back();
+      MNode *nv = after.intVertices.back();
       after.intVertices.pop_back();
 
       size_t pos = it - gf->mesh_vertices.begin();
@@ -473,7 +473,7 @@ bool GFaceMeshDiff::execute(bool verifyPatchTopology)
 
   /* Append remaining vertices */
   while(after.intVertices.size() > 0) {
-    MVertex *nv = after.intVertices.back();
+    MNode *nv = after.intVertices.back();
     after.intVertices.pop_back();
     gf->addMeshVertex(nv);
   }
@@ -557,7 +557,7 @@ GFaceMeshDiff::~GFaceMeshDiff()
   if(done) {
     /* execute() should have already cleared these vectors, just doing by
      * security */
-    for(MVertex *v : before.intVertices)
+    for(MNode *v : before.intVertices)
       if(v != nullptr) {
         delete v;
         v = nullptr;
@@ -569,7 +569,7 @@ GFaceMeshDiff::~GFaceMeshDiff()
       }
   }
   else {
-    for(MVertex *v : after.intVertices)
+    for(MNode *v : after.intVertices)
       if(v != nullptr) {
         delete v;
         v = nullptr;
@@ -585,9 +585,9 @@ GFaceMeshDiff::~GFaceMeshDiff()
 PatchGeometryBackup::PatchGeometryBackup(GFaceMeshPatch &p,
                                          bool includeBoundary)
 {
-  for(MVertex *v : p.intVertices) {
+  for(MNode *v : p.intVertices) {
     SPoint2 uv(DBL_MAX, DBL_MAX);
-    GFace *gf = dynamic_cast<GFace *>(v->onWhat());
+    GSurface *gf = dynamic_cast<GSurface *>(v->onWhat());
     if(gf != nullptr) {
       MFaceVertex *mfv = dynamic_cast<MFaceVertex *>(v);
       if(mfv != nullptr) {
@@ -598,10 +598,10 @@ PatchGeometryBackup::PatchGeometryBackup(GFaceMeshPatch &p,
     old[v] = {uv, v->point()};
   }
   if(includeBoundary) {
-    for(std::vector<MVertex *> &bdr : p.bdrVertices) {
-      for(MVertex *v : bdr) {
+    for(std::vector<MNode *> &bdr : p.bdrVertices) {
+      for(MNode *v : bdr) {
         SPoint2 uv(DBL_MAX, DBL_MAX);
-        GFace *gf = dynamic_cast<GFace *>(v->onWhat());
+        GSurface *gf = dynamic_cast<GSurface *>(v->onWhat());
         if(gf != nullptr) {
           MFaceVertex *mfv = dynamic_cast<MFaceVertex *>(v);
           if(mfv != nullptr) {
@@ -618,7 +618,7 @@ PatchGeometryBackup::PatchGeometryBackup(GFaceMeshPatch &p,
 bool PatchGeometryBackup::restore()
 {
   for(auto &kv : old) {
-    MVertex *v = kv.first;
+    MNode *v = kv.first;
     SPoint2 uv = kv.second.first;
     SPoint3 pt = kv.second.second;
     if(uv.x() != DBL_MAX) {
@@ -630,30 +630,30 @@ bool PatchGeometryBackup::restore()
   return true;
 }
 
-MVertex *centerOfElements(const std::vector<MElement *> &elements)
+MNode *centerOfElements(const std::vector<MElement *> &elements)
 {
   if(elements.size() == 0) return NULL;
 
-  std::map<std::array<MVertex *, 2>, size_t> vPairCount;
-  unordered_map<MVertex *, unordered_set<MVertex *> > v2v;
+  std::map<std::array<MNode *, 2>, size_t> vPairCount;
+  unordered_map<MNode *, unordered_set<MNode *> > v2v;
   for(MElement *f : elements) {
     size_t N = f->getNumEdges();
     for(size_t le = 0; le < N; ++le) {
-      MVertex *v1 = f->getVertex(le);
-      MVertex *v2 = f->getVertex((le + 1) % N);
+      MNode *v1 = f->getVertex(le);
+      MNode *v2 = f->getVertex((le + 1) % N);
       v2v[v1].insert(v2);
       v2v[v2].insert(v1);
-      std::array<MVertex *, 2> vPair = {v1, v2};
+      std::array<MNode *, 2> vPair = {v1, v2};
       if(v2 < v1) { vPair = {v2, v1}; }
       vPairCount[vPair] += 1;
     }
   }
 
   /* Init from boundary */
-  unordered_map<MVertex *, double> dist;
-  std::priority_queue<std::pair<double, MVertex *>,
-                      std::vector<std::pair<double, MVertex *> >,
-                      std::greater<std::pair<double, MVertex *> > >
+  unordered_map<MNode *, double> dist;
+  std::priority_queue<std::pair<double, MNode *>,
+                      std::vector<std::pair<double, MNode *> >,
+                      std::greater<std::pair<double, MNode *> > >
     Q;
   for(const auto &kv : vPairCount)
     if(kv.second == 1) {
@@ -665,10 +665,10 @@ MVertex *centerOfElements(const std::vector<MElement *> &elements)
 
   /* Dijkstra propagation */
   while(Q.size() > 0) {
-    MVertex *v = Q.top().second;
+    MNode *v = Q.top().second;
     double cdist = Q.top().first;
     Q.pop();
-    for(MVertex *v2 : v2v[v]) {
+    for(MNode *v2 : v2v[v]) {
       double w_ij = v->distance(v2);
       auto it = dist.find(v2);
       if(it == dist.end() || cdist + w_ij < it->second) {
@@ -680,7 +680,7 @@ MVertex *centerOfElements(const std::vector<MElement *> &elements)
   }
 
   double dmax = 0.;
-  MVertex *center = NULL;
+  MNode *center = NULL;
   for(const auto &kv : dist) {
     if(kv.second > dmax) {
       dmax = kv.second;
@@ -690,16 +690,16 @@ MVertex *centerOfElements(const std::vector<MElement *> &elements)
   return center;
 }
 
-bool setVertexGFaceUV(GFace *gf, MVertex *v, double uv[2])
+bool setVertexGFaceUV(GSurface *gf, MNode *v, double uv[2])
 {
-  bool onGf = (dynamic_cast<GFace *>(v->onWhat()) == gf);
+  bool onGf = (dynamic_cast<GSurface *>(v->onWhat()) == gf);
   if(onGf) {
     v->getParameter(0, uv[0]);
     v->getParameter(1, uv[1]);
     return true;
   }
   else {
-    GEdge *ge = dynamic_cast<GEdge *>(v->onWhat());
+    GCurve *ge = dynamic_cast<GCurve *>(v->onWhat());
     if(ge != NULL) {
       double t;
       v->getParameter(0, t);
@@ -709,7 +709,7 @@ bool setVertexGFaceUV(GFace *gf, MVertex *v, double uv[2])
       return true;
     }
     else {
-      GVertex *gv = dynamic_cast<GVertex *>(v->onWhat());
+      GPoint *gv = dynamic_cast<GPoint *>(v->onWhat());
       if(gv != NULL) {
         SPoint2 uvp = gv->reparamOnFace(gf, 0);
         uv[0] = uvp.x();
@@ -723,15 +723,15 @@ bool setVertexGFaceUV(GFace *gf, MVertex *v, double uv[2])
   return false;
 }
 
-bool orientElementsAccordingToBoundarySegment(MVertex *a, MVertex *b,
+bool orientElementsAccordingToBoundarySegment(MNode *a, MNode *b,
                                               std::vector<MElement *> &elements)
 {
   int reorient = 0;
   for(MElement *e : elements) {
     size_t n = e->getNumVertices();
     for(size_t lv = 0; lv < n; ++lv) {
-      MVertex *v0 = e->getVertex(lv);
-      MVertex *v1 = e->getVertex((lv + 1) % n);
+      MNode *v0 = e->getVertex(lv);
+      MNode *v1 = e->getVertex((lv + 1) % n);
       if(v0 == a && v1 == b) {
         reorient = -1;
         break;
@@ -754,7 +754,7 @@ bool orientElementsAccordingToBoundarySegment(MVertex *a, MVertex *b,
   return true;
 }
 
-void getAllParametersWithPeriodJump(MVertex *v, GFace *gf,
+void getAllParametersWithPeriodJump(MNode *v, GSurface *gf,
                                     std::vector<SPoint2> &params)
 {
   params.clear();
@@ -765,8 +765,8 @@ void getAllParametersWithPeriodJump(MVertex *v, GFace *gf,
   }
 
   if(v->onWhat()->dim() == 0) {
-    GVertex *gv = (GVertex *)v->onWhat();
-    std::vector<GEdge *> const &ed = gv->edges();
+    GPoint *gv = (GPoint *)v->onWhat();
+    std::vector<GCurve *> const &ed = gv->edges();
     bool seam = false;
     for(auto it = ed.begin(); it != ed.end(); it++) {
       if((*it)->isSeam(gf)) {
@@ -788,7 +788,7 @@ void getAllParametersWithPeriodJump(MVertex *v, GFace *gf,
     if(!seam) params.push_back(gv->reparamOnFace(gf, 1));
   }
   else if(v->onWhat()->dim() == 1) {
-    GEdge *ge = (GEdge *)v->onWhat();
+    GCurve *ge = (GCurve *)v->onWhat();
     if(!ge->haveParametrization()) return;
     double UU;
     v->getParameter(0, UU);
@@ -822,7 +822,7 @@ void getAllParametersWithPeriodJump(MVertex *v, GFace *gf,
   }
 }
 
-bool reparamMeshVertexOnFaceWithRef(GFace *gf, MVertex *v, const SPoint2 &ref,
+bool reparamMeshVertexOnFaceWithRef(GSurface *gf, MNode *v, const SPoint2 &ref,
                                     SPoint2 &param)
 {
   std::vector<SPoint2> p1s;
@@ -845,7 +845,7 @@ bool reparamMeshVertexOnFaceWithRef(GFace *gf, MVertex *v, const SPoint2 &ref,
   return true;
 }
 
-std::vector<SPoint2> paramOnElement(GFace *gf, MElement *t)
+std::vector<SPoint2> paramOnElement(GSurface *gf, MElement *t)
 {
   if(t == nullptr) return {};
   const size_t n = t->getNumVertices();
@@ -853,8 +853,8 @@ std::vector<SPoint2> paramOnElement(GFace *gf, MElement *t)
 
   bool reparam = false;
   for(size_t lv = 0; lv < n; ++lv) {
-    MVertex *v = t->getVertex(lv);
-    bool onGf = (dynamic_cast<GFace *>(v->onWhat()) == gf);
+    MNode *v = t->getVertex(lv);
+    bool onGf = (dynamic_cast<GSurface *>(v->onWhat()) == gf);
     if(onGf) {
       v->getParameter(0, uvs[lv][0]);
       v->getParameter(1, uvs[lv][1]);
@@ -867,13 +867,13 @@ std::vector<SPoint2> paramOnElement(GFace *gf, MElement *t)
   if(reparam) {
     bool found = false;
     for(size_t lv = 0; lv < n; ++lv) {
-      MVertex *v = t->getVertex(lv);
-      bool onGf = (dynamic_cast<GFace *>(v->onWhat()) == gf);
+      MNode *v = t->getVertex(lv);
+      bool onGf = (dynamic_cast<GSurface *>(v->onWhat()) == gf);
       if(onGf) {
         v->getParameter(0, uvs[lv][0]);
         v->getParameter(1, uvs[lv][1]);
         for(size_t k = 1; k < n; ++k) {
-          MVertex *v2 = t->getVertex((lv + k) % n);
+          MNode *v2 = t->getVertex((lv + k) % n);
           reparamMeshVertexOnFaceWithRef(gf, v2, uvs[lv], uvs[(lv + k) % n]);
         }
         found = true;
@@ -881,16 +881,16 @@ std::vector<SPoint2> paramOnElement(GFace *gf, MElement *t)
       }
     }
     if(!found) {
-      /* Element with no vertex inside the GFace, difficult to get
+      /* Element with no vertex inside the GSurface, difficult to get
        * good UV parametrization, we use center projection to get
        * a initial guess */
       SPoint3 center = t->barycenter();
       double initialGuess[2] = {0., 0.};
-      GPoint proj = gf->closestPoint(center, initialGuess);
+      GVertex proj = gf->closestPoint(center, initialGuess);
       if(proj.succeeded()) {
         SPoint2 ref(proj.u(), proj.v());
         for(size_t k = 0; k < n; ++k) {
-          MVertex *v = t->getVertex(k);
+          MNode *v = t->getVertex(k);
           reparamMeshVertexOnFaceWithRef(gf, v, ref, uvs[k]);
         }
       }
@@ -925,14 +925,14 @@ trianglesFromQuads(const std::vector<MQuadrangle *> &quads)
   return tris;
 }
 
-bool getGFaceTriangles(GFace *gf, std::vector<MTriangle *> &triangles,
+bool getGFaceTriangles(GSurface *gf, std::vector<MTriangle *> &triangles,
                        std::vector<MTriangle *> &requireDelete,
                        bool copyExisting)
 {
   triangles.clear();
   requireDelete.clear();
 
-  /* Existing pure tri or pure quad mesh on the GFace */
+  /* Existing pure tri or pure quad mesh on the GSurface */
   if(gf->triangles.size() > 0 && gf->quadrangles.size() == 0) {
     if(copyExisting) {
       triangles.resize(gf->triangles.size());
@@ -1016,7 +1016,7 @@ bool getGFaceTriangles(GFace *gf, std::vector<MTriangle *> &triangles,
   return false;
 }
 
-bool fillSurfaceProjector(GFace *gf, SurfaceProjector *sp)
+bool fillSurfaceProjector(GSurface *gf, SurfaceProjector *sp)
 {
   if(sp == nullptr) {
     Msg::Error("fillSurfaceProjector: given SurfaceProjector* is null !");
@@ -1090,7 +1090,7 @@ inline double angleVectors(SVector3 a, SVector3 b)
   return acos(ArrayGeometry::clamp(dot(a, b), -1., 1.));
 }
 
-bool fillGFaceInfo(GFace *gf, GFaceInfo &info,
+bool fillGFaceInfo(GSurface *gf, GFaceInfo &info,
                    const std::vector<MTriangle *> &triangles)
 {
   info.gf = gf;
@@ -1100,15 +1100,15 @@ bool fillGFaceInfo(GFace *gf, GFaceInfo &info,
   info.intSumVal3mVal5 = 0;
 
   /* Compute geometric info */
-  robin_hood::unordered_map<GVertex *, std::vector<MElement *> > corner2tris;
-  robin_hood::unordered_map<GVertex *, double> corner2angle;
+  robin_hood::unordered_map<GPoint *, std::vector<MElement *> > corner2tris;
+  robin_hood::unordered_map<GPoint *, double> corner2angle;
   for(MTriangle *t : triangles) {
     for(size_t lv = 0; lv < 3; ++lv) {
-      MVertex *v = t->getVertex(lv);
-      GVertex *gv = v->onWhat()->cast2Vertex();
+      MNode *v = t->getVertex(lv);
+      GPoint *gv = v->onWhat()->cast2Vertex();
       if(gv != nullptr) {
-        MVertex *vPrev = t->getVertex((3 + lv - 1) % 3);
-        MVertex *vNext = t->getVertex((lv + 1) % 3);
+        MNode *vPrev = t->getVertex((3 + lv - 1) % 3);
+        MNode *vNext = t->getVertex((lv + 1) % 3);
         SVector3 pNext = vNext->point();
         SVector3 pPrev = vPrev->point();
         SVector3 pCurr = v->point();
@@ -1118,19 +1118,19 @@ bool fillGFaceInfo(GFace *gf, GFaceInfo &info,
       }
     }
   }
-  robin_hood::unordered_set<GVertex *> boundaryCADcorners;
-  for(GEdge *ge : gf->edges())
-    for(GVertex *gv : ge->vertices()) { boundaryCADcorners.insert(gv); }
+  robin_hood::unordered_set<GPoint *> boundaryCADcorners;
+  for(GCurve *ge : gf->edges())
+    for(GPoint *gv : ge->vertices()) { boundaryCADcorners.insert(gv); }
 
   for(const auto &kv : corner2tris) {
-    GVertex *gv = kv.first;
+    GPoint *gv = kv.first;
     /* Check if corner is manifold */
     {
       auto it = boundaryCADcorners.find(gv);
-      if(it == boundaryCADcorners.end()) continue; /* ignore interior GVertex */
+      if(it == boundaryCADcorners.end()) continue; /* ignore interior GPoint */
     }
     std::vector<MElement *> elts = kv.second;
-    std::vector<MVertex *> bnd;
+    std::vector<MNode *> bnd;
     bool okb = buildBoundary(elts, bnd);
     if(!okb) {
       info.cornerIsNonManifold.insert(gv);
@@ -1166,7 +1166,7 @@ bool fillGFaceInfo(GFace *gf, GFaceInfo &info,
   return true;
 }
 
-bool fillGFaceInfo(GFace *gf, GFaceInfo &info)
+bool fillGFaceInfo(GSurface *gf, GFaceInfo &info)
 {
   info.gf = gf;
   info.chi = 0;
@@ -1200,44 +1200,44 @@ bool haveConcaveCorners(const GFaceInfo &info)
 }
 
 bool faceOrderedSideLoops(
-  GFace *gf, const GFaceInfo &info,
-  std::vector<std::vector<std::vector<std::pair<GEdge *, bool> > > >
+  GSurface *gf, const GFaceInfo &info,
+  std::vector<std::vector<std::vector<std::pair<GCurve *, bool> > > >
     &loopSideEdgesAndInv)
 {
   if(info.gf != gf) return false;
   loopSideEdgesAndInv.clear();
 
-  std::unordered_set<GVertex *> isCorner;
-  for(GVertex *gv : info.bdrValVertices[1]) isCorner.insert(gv);
-  for(GVertex *gv : info.bdrValVertices[3]) isCorner.insert(gv);
-  for(GVertex *gv : info.bdrValVertices[4]) isCorner.insert(gv);
+  std::unordered_set<GPoint *> isCorner;
+  for(GPoint *gv : info.bdrValVertices[1]) isCorner.insert(gv);
+  for(GPoint *gv : info.bdrValVertices[3]) isCorner.insert(gv);
+  for(GPoint *gv : info.bdrValVertices[4]) isCorner.insert(gv);
 
-  const std::vector<GEdge *> &edges = gf->edges();
-  std::unordered_map<GVertex *, std::vector<GEdge *> > v2e;
-  for(GEdge *ge : edges) {
-    for(GVertex *gv : ge->vertices()) v2e[gv].push_back(ge);
+  const std::vector<GCurve *> &edges = gf->edges();
+  std::unordered_map<GPoint *, std::vector<GCurve *> > v2e;
+  for(GCurve *ge : edges) {
+    for(GPoint *gv : ge->vertices()) v2e[gv].push_back(ge);
   }
   for(auto &kv : v2e) sort_unique(kv.second);
 
-  std::unordered_set<GEdge *> visited;
+  std::unordered_set<GCurve *> visited;
 
   int withCorner = 0;
   int withoutCorner = 1;
   for(int pass : {withCorner, withoutCorner}) {
-    for(GEdge *e0 : edges) {
+    for(GCurve *e0 : edges) {
       bool already = (visited.find(e0) != visited.end());
       if(already) continue;
 
       if(e0->periodic(0)) {
-        /* New loop with a single periodic GEdge */
+        /* New loop with a single periodic GCurve */
         loopSideEdgesAndInv.resize(loopSideEdgesAndInv.size() + 1);
         loopSideEdgesAndInv.back() = {{{e0, false}}};
         visited.insert(e0);
         continue;
       }
 
-      GVertex *v1 = e0->vertices()[0];
-      GVertex *v2 = e0->vertices()[1];
+      GPoint *v1 = e0->vertices()[0];
+      GPoint *v2 = e0->vertices()[1];
       if(pass == withCorner) {
         bool v1IsCorner = (isCorner.find(v1) != isCorner.end());
         if(!v1IsCorner) continue;
@@ -1252,8 +1252,8 @@ bool faceOrderedSideLoops(
       }
 
       size_t infLoop = 0;
-      GVertex *v = v1;
-      GEdge *e = e0;
+      GPoint *v = v1;
+      GCurve *e = e0;
       bool inv = false;
       do {
         infLoop += 1;
@@ -1277,12 +1277,12 @@ bool faceOrderedSideLoops(
 
         visited.insert(e);
 
-        GVertex *v_next = NULL;
+        GPoint *v_next = NULL;
         if(v2 != v) { v_next = v2; }
         else {
           v_next = v1;
         }
-        GEdge *e_next = NULL;
+        GCurve *e_next = NULL;
         if(v2e[v_next].size() == 2) {
           e_next = (v2e[v_next][0] != e) ? v2e[v_next][0] : v2e[v_next][1];
         }
@@ -1335,25 +1335,25 @@ bool appendQuadMeshStatistics(GModel *gm,
     std::vector<int> nValFace(10, 0);
     std::vector<int> nValCurve(10, 0);
     std::vector<int> nValCorner(10, 0);
-    double nVert = 0.; /* repetition on shared GVertex / GEdge */
+    double nVert = 0.; /* repetition on shared GPoint / GCurve */
     double nQuad = 0.;
-    for(GFace *gf : model_faces(gm)) {
+    for(GSurface *gf : model_faces(gm)) {
       append(all_quads, gf->quadrangles);
-      unordered_map<MVertex *, std::vector<MElement *> > adj;
+      unordered_map<MNode *, std::vector<MElement *> > adj;
       for(MQuadrangle *f : gf->quadrangles) {
         nQuad += 1.;
         for(size_t lv = 0; lv < 4; ++lv) {
-          MVertex *v = f->getVertex(lv);
+          MNode *v = f->getVertex(lv);
           adj[v].push_back(f);
         }
       }
       for(auto &kv : adj) {
         nVert += 1.;
-        MVertex *v = kv.first;
+        MNode *v = kv.first;
         GEntity *ent = v->onWhat();
-        bool onCorner = (dynamic_cast<GVertex *>(ent) != NULL);
-        bool onCurve = (dynamic_cast<GEdge *>(ent) != NULL);
-        bool onFace = (dynamic_cast<GFace *>(ent) != NULL);
+        bool onCorner = (dynamic_cast<GPoint *>(ent) != NULL);
+        bool onCurve = (dynamic_cast<GCurve *>(ent) != NULL);
+        bool onFace = (dynamic_cast<GSurface *>(ent) != NULL);
         int val = (int)kv.second.size();
         if(onCorner) {
           if((size_t)val >= nValCorner.size()) nValCorner.resize(val + 1);
@@ -1581,7 +1581,7 @@ void computeSICNquality(const std::vector<MElement *> &elements,
   if(elements.size() > 0) sicnAvg /= double(elements.size());
 }
 
-void computeSICNquality(GFace *gf, double &sicnMin, double &sicnAvg)
+void computeSICNquality(GSurface *gf, double &sicnMin, double &sicnAvg)
 {
   std::vector<MElement *> elts =
     CppUtils::dynamic_cast_vector<MTriangle *, MElement *>(gf->triangles);
@@ -1591,7 +1591,7 @@ void computeSICNquality(GFace *gf, double &sicnMin, double &sicnAvg)
   return computeSICNquality(elts, sicnMin, sicnAvg);
 }
 
-void computeSICNquality(GRegion *gr, double &sicnMin, double &sicnAvg)
+void computeSICNquality(GVolume *gr, double &sicnMin, double &sicnAvg)
 {
   std::vector<MElement *> elts =
     CppUtils::dynamic_cast_vector<MTetrahedron *, MElement *>(gr->tetrahedra);
@@ -1605,7 +1605,7 @@ void computeSICNquality(GRegion *gr, double &sicnMin, double &sicnAvg)
   return computeSICNquality(elts, sicnMin, sicnAvg);
 }
 
-void errorAndAbortIfNegativeElement(GFace *gf,
+void errorAndAbortIfNegativeElement(GSurface *gf,
                                     const std::vector<MElement *> &elts,
                                     const std::string &msg)
 {
@@ -1622,7 +1622,7 @@ void errorAndAbortIfNegativeElement(GFace *gf,
   }
 }
 
-void errorAndAbortIfInvalidVertex(MVertex *v, const std::string &msg)
+void errorAndAbortIfInvalidVertex(MNode *v, const std::string &msg)
 {
   size_t numMax = GModel::current()->getMaxVertexNumber();
   if(v == nullptr) {
@@ -1657,7 +1657,7 @@ void errorAndAbortIfInvalidVertexInElements(const std::vector<MElement *> &elts,
   for(MElement *e : elts) {
     if(e == nullptr) continue;
     for(size_t lv = 0; lv < e->getNumVertices(); ++lv) {
-      MVertex *v = e->getVertex(lv);
+      MNode *v = e->getVertex(lv);
       if(v == nullptr) {
         Msg::Error(
           "Element %li (dim %i), invalid vertex: lv = %li: v = %p | %s",
@@ -1690,7 +1690,7 @@ void errorAndAbortIfInvalidVertexInElements(const std::vector<MElement *> &elts,
       }
 
       // // this ones require to rebuild vertex cache
-      // MVertex* v2 = GModel::current()->getMeshVertexByTag(v->getNum());
+      // MNode* v2 = GModel::current()->getMeshVertexByTag(v->getNum());
       // if (v2 != v) {
       //   Msg::Error("Element %li (dim %i), invalid vertex: lv = %li: v = %p,
       //   num = %li -> getMeshVertexByTag -> v = %p | %s",
@@ -1709,8 +1709,8 @@ void errorAndAbortIfNonManifoldElements(const std::vector<MElement *> &elts,
   for(MElement *f : elts) {
     size_t n = f->getNumVertices();
     for(size_t lv = 0; lv < n; ++lv) {
-      MVertex *v = f->getVertex(lv);
-      MVertex *v2 = f->getVertex((lv + 1) % n);
+      MNode *v = f->getVertex(lv);
+      MNode *v2 = f->getVertex((lv + 1) % n);
       if(v->getNum() < v2->getNum()) {
         std::array<size_t, 2> vpair = {v->getNum(), v2->getNum()};
         edgeVal[vpair] += 1;
@@ -1731,8 +1731,8 @@ void errorAndAbortIfNonManifoldElements(const std::vector<MElement *> &elts,
       abort();
     }
     else if(kv.second == 1 && checkVal1OnBdr) {
-      MVertex *v1 = GModel::current()->getMeshVertexByTag(kv.first[0]);
-      MVertex *v2 = GModel::current()->getMeshVertexByTag(kv.first[1]);
+      MNode *v1 = GModel::current()->getMeshVertexByTag(kv.first[0]);
+      MNode *v2 = GModel::current()->getMeshVertexByTag(kv.first[1]);
       if(v1->onWhat()->dim() >= 2 || v2->onWhat()->dim() >= 2) {
         Msg::Error("surface mesh | edge (%i,%i) has valence =  %i but vertices "
                    "not on bdr: v1dim = %i, v2dim=%i",
@@ -1747,16 +1747,16 @@ void errorAndAbortIfNonManifoldElements(const std::vector<MElement *> &elts,
 void errorAndAbortIfInvalidVertexInModel(GModel *gm, const std::string &msg)
 {
   Msg::Debug("errorAndAbortIfInvalidVertexInModel ... (! SLOW !)");
-  for(GVertex *gv : gm->getVertices()) {
-    for(MVertex *v : gv->mesh_vertices) {
+  for(GPoint *gv : gm->getVertices()) {
+    for(MNode *v : gv->mesh_vertices) {
       errorAndAbortIfInvalidVertex(v, msg);
     }
   }
-  for(GEdge *ge : model_edges(gm)) {
+  for(GCurve *ge : model_edges(gm)) {
     errorAndAbortIfInvalidVertexInElements(
       dynamic_cast_vector<MLine *, MElement *>(ge->lines), msg);
   }
-  for(GFace *gf : model_faces(gm)) {
+  for(GSurface *gf : model_faces(gm)) {
     errorAndAbortIfInvalidVertexInElements(
       dynamic_cast_vector<MTriangle *, MElement *>(gf->triangles), msg);
     errorAndAbortIfInvalidVertexInElements(
@@ -1764,7 +1764,7 @@ void errorAndAbortIfInvalidVertexInModel(GModel *gm, const std::string &msg)
   }
 }
 
-void errorAndAbortIfInvalidSurfaceMesh(GFace *gf, const std::string &msg)
+void errorAndAbortIfInvalidSurfaceMesh(GSurface *gf, const std::string &msg)
 {
   vector<MElement *> elts;
   append(elts, dynamic_cast_vector<MTriangle *, MElement *>(gf->triangles));

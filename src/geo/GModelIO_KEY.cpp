@@ -136,7 +136,7 @@ int GModel::writeKEY(const std::string &name, int saveAll,
   if(saveGroupsOfNodes & 0x1) {
     for(int dim = 1; dim <= 3; dim++) {
       for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
-        std::set<MVertex *> nodes;
+        std::set<MNode *> nodes;
         std::vector<GEntity *> &entities = it->second;
         for(std::size_t i = 0; i < entities.size(); i++) {
           for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {

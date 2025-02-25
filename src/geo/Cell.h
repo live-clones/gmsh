@@ -59,7 +59,7 @@ protected:
 
 private:
   char _dim;
-  std::vector<MVertex *> _v;
+  std::vector<MNode *> _v;
   // sorted vertices of this cell (used for ordering of the cells)
   std::vector<char> _si;
 
@@ -81,7 +81,7 @@ public:
   int getTypeMSH() const;
   virtual int getDim() const { return _dim; }
   bool inSubdomain() const { return _domain ? true : false; }
-  void getMeshVertices(std::vector<MVertex *> &v) const { v = _v; }
+  void getMeshVertices(std::vector<MNode *> &v) const { v = _v; }
 
   void setImmune(bool immune) { _immune = immune; };
   bool getImmune() const { return _immune; };
@@ -89,9 +89,9 @@ public:
   int getNumSortedVertices() const { return _si.size(); }
   inline int getSortedVertex(int vertex) const;
   int getNumVertices() const { return _v.size(); }
-  MVertex *getMeshVertex(int vertex) const { return _v.at(vertex); }
+  MNode *getMeshVertex(int vertex) const { return _v.at(vertex); }
 
-  void findBdElement(int i, std::vector<MVertex *> &vertices) const;
+  void findBdElement(int i, std::vector<MNode *> &vertices) const;
   int getNumBdElements() const;
   int findBdCellOrientation(Cell *cell, int i) const;
 

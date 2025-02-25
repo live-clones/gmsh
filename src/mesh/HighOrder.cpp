@@ -32,26 +32,26 @@
 // for each pair of vertices (an edge), we build a list of vertices that are the
 // high order representation of the edge. The ordering of vertices in the list
 // is supposed to be (by construction) consistent with the ordering of the pair.
-// FIXME: replace this by std::map<MEdge, std::vector<MVertex *>,
+// FIXME: replace this by std::map<MEdge, std::vector<MNode *>,
 // MEdgeLessThan>!
-typedef std::map<std::pair<MVertex *, MVertex *>, std::vector<MVertex *> >
+typedef std::map<std::pair<MNode *, MNode *>, std::vector<MNode *> >
   edgeContainer;
 
 // for each face (a list of vertices) we build a list of vertices that are the
 // high order representation of the face
-typedef std::map<MFace, std::vector<MVertex *>, MFaceLessThan> faceContainer;
+typedef std::map<MFace, std::vector<MNode *>, MFaceLessThan> faceContainer;
 
 // Functions that help optimizing placement of points on geometry
 
 // The aim here is to build a polynomial representation that consist
 // in polynomial segments of equal length
 
-static double mylength(GEdge *ge, int i, double *u)
+static double mylength(GCurve *ge, int i, double *u)
 {
   return ge->length(u[i], u[i + 1], 10);
 }
 
-static void myresid(int N, GEdge *ge, double *u, fullVector<double> &r,
+static void myresid(int N, GCurve *ge, double *u, fullVector<double> &r,
                     double *weight = nullptr)
 {
   double L[100];
@@ -63,7 +63,7 @@ static void myresid(int N, GEdge *ge, double *u, fullVector<double> &r,
     for(int i = 0; i < N - 2; i++) r(i) = L[i + 1] - L[i];
 }
 
-static bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N,
+static bool computeEquidistantParameters(GCurve *ge, double u0, double uN, int N,
                                          double *u, double underRelax)
 {
   const double PRECISION = 1.e-6;
@@ -117,7 +117,7 @@ static bool computeEquidistantParameters(GEdge *ge, double u0, double uN, int N,
   return false;
 }
 
-static bool computeGLLParametersP6(GEdge *ge, double u0, double uN, int N,
+static bool computeGLLParametersP6(GCurve *ge, double u0, double uN, int N,
                                    double *u, double underRelax)
 {
   static const double GLLQL[7] = {
@@ -177,7 +177,7 @@ static bool computeGLLParametersP6(GEdge *ge, double u0, double uN, int N,
   return false;
 }
 
-static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
+static bool computeEquidistantParameters(GSurface *gf, double u0, double uN,
                                          double v0, double vN, SPoint3 &p0,
                                          SPoint3 &pN, int N, bool geodesic,
                                          double *u, double *v)
@@ -197,7 +197,7 @@ static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
     if(geodesic && gf->geomType() != GEntity::Plane) {
       SPoint3 pc(t * pN + (1. - t) * p0);
       double guess[2] = {u[i], v[i]};
-      GPoint gp = gf->closestPoint(pc, guess);
+      GVertex gp = gf->closestPoint(pc, guess);
       if(gp.succeeded()) {
         u[i] = gp.u();
         v[i] = gp.v();
@@ -244,8 +244,8 @@ void createMatLob2LagP6()
 
 // Creation of high-order edge vertices
 
-static bool getEdgeVerticesOnGeo(GEdge *ge, MVertex *v0, MVertex *v1,
-                                 std::vector<MVertex *> &ve, int nPts = 1)
+static bool getEdgeVerticesOnGeo(GCurve *ge, MNode *v0, MNode *v1,
+                                 std::vector<MNode *> &ve, int nPts = 1)
 {
   static bool GLLquad = false;
   static const double relaxFail = 1e-2;
@@ -295,7 +295,7 @@ static bool getEdgeVerticesOnGeo(GEdge *ge, MVertex *v0, MVertex *v1,
     M(6, 2) = u0 < u1 ? v1->z() : v0->z();
     for(int j = 0; j < nPts; j++) {
       int count = u0 < u1 ? j + 1 : nPts + 1 - (j + 1);
-      GPoint pc = ge->point(US[count]);
+      GVertex pc = ge->point(US[count]);
       M(j + 1, 0) = pc.x();
       M(j + 1, 1) = pc.y();
       M(j + 1, 2) = pc.z();
@@ -305,7 +305,7 @@ static bool getEdgeVerticesOnGeo(GEdge *ge, MVertex *v0, MVertex *v1,
     lob2lagP6->mult(M, Mlag);
 
     for(int j = 0; j < nPts; j++) {
-      MVertex *v;
+      MNode *v;
       int count = u0 < u1 ? j + 1 : nPts + 1 - (j + 1);
       // FIXME US[count] false!!!
       v = new MEdgeVertex(Mlag(count, 0), Mlag(count, 1), Mlag(count, 2), ge,
@@ -316,9 +316,9 @@ static bool getEdgeVerticesOnGeo(GEdge *ge, MVertex *v0, MVertex *v1,
   }
   else {
     for(int j = 0; j < nPts; j++) {
-      MVertex *v;
+      MNode *v;
       int count = u0 < u1 ? j + 1 : nPts + 1 - (j + 1);
-      GPoint pc = ge->point(US[count]);
+      GVertex pc = ge->point(US[count]);
       v = new MEdgeVertex(pc.x(), pc.y(), pc.z(), ge, US[count]);
       // this destroys the ordering of the mesh vertices on the edge
       ve.push_back(v);
@@ -329,8 +329,8 @@ static bool getEdgeVerticesOnGeo(GEdge *ge, MVertex *v0, MVertex *v1,
   return true;
 }
 
-static bool getEdgeVerticesOnGeo(GFace *gf, MVertex *v0, MVertex *v1,
-                                 std::vector<MVertex *> &ve, int nPts = 1)
+static bool getEdgeVerticesOnGeo(GSurface *gf, MNode *v0, MNode *v1,
+                                 std::vector<MNode *> &ve, int nPts = 1)
 {
   SPoint2 p0, p1;
   double US[100], VS[100];
@@ -358,8 +358,8 @@ static bool getEdgeVerticesOnGeo(GFace *gf, MVertex *v0, MVertex *v1,
   }
 
   for(int j = 0; j < nPts; j++) {
-    GPoint pc = gf->point(US[j + 1], VS[j + 1]);
-    MVertex *v =
+    GVertex pc = gf->point(US[j + 1], VS[j + 1]);
+    MNode *v =
       new MFaceVertex(pc.x(), pc.y(), pc.z(), gf, US[j + 1], VS[j + 1]);
     ve.push_back(v);
   }
@@ -368,7 +368,7 @@ static bool getEdgeVerticesOnGeo(GFace *gf, MVertex *v0, MVertex *v1,
 }
 
 static void interpVerticesInExistingEdge(GEntity *ge, const MElement *edgeEl,
-                                         std::vector<MVertex *> &veEdge,
+                                         std::vector<MNode *> &veEdge,
                                          int nPts)
 {
   fullMatrix<double> points;
@@ -376,13 +376,13 @@ static void interpVerticesInExistingEdge(GEntity *ge, const MElement *edgeEl,
   for(int k = 2; k < nPts + 2; k++) {
     SPoint3 pos;
     edgeEl->pnt(points(k, 0), 0., 0., pos);
-    MVertex *v = new MVertex(pos.x(), pos.y(), pos.z(), ge);
+    MNode *v = new MNode(pos.x(), pos.y(), pos.z(), ge);
     veEdge.push_back(v);
   }
 }
 
-inline static bool getMinMaxVert(MVertex *v0, MVertex *v1, MVertex *&vMin,
-                                 MVertex *&vMax)
+inline static bool getMinMaxVert(MNode *v0, MNode *v1, MNode *&vMin,
+                                 MNode *&vMax)
 {
   const bool increasing = (v0->getNum() < v1->getNum());
   if(increasing) {
@@ -397,20 +397,20 @@ inline static bool getMinMaxVert(MVertex *v0, MVertex *v1, MVertex *&vMin,
 }
 
 // Get new interior vertices for a 1D element
-static void getEdgeVertices(GEdge *ge, MElement *ele,
-                            std::vector<MVertex *> &ve,
+static void getEdgeVertices(GCurve *ge, MElement *ele,
+                            std::vector<MNode *> &ve,
                             edgeContainer &edgeVertices, bool linear,
                             int nPts = 1)
 {
   if(!ge->haveParametrization()) linear = true;
 
-  std::vector<MVertex *> veOld;
+  std::vector<MNode *> veOld;
   ele->getVertices(veOld);
-  MVertex *vMin, *vMax;
+  MNode *vMin, *vMax;
   const bool increasing = getMinMaxVert(veOld[0], veOld[1], vMin, vMax);
-  std::pair<MVertex *, MVertex *> p(vMin, vMax);
+  std::pair<MNode *, MNode *> p(vMin, vMax);
 
-  std::vector<MVertex *> veEdge;
+  std::vector<MNode *> veEdge;
   // Get vertices on geometry if asked
   bool gotVertOnGeo =
     linear ? false : getEdgeVerticesOnGeo(ge, veOld[0], veOld[1], veEdge, nPts);
@@ -435,25 +435,25 @@ static void getEdgeVertices(GEdge *ge, MElement *ele,
 }
 
 // Get new interior vertices for an edge in a 2D element
-static void getEdgeVertices(GFace *gf, MElement *ele,
-                            std::vector<MVertex *> &ve,
+static void getEdgeVertices(GSurface *gf, MElement *ele,
+                            std::vector<MNode *> &ve,
                             edgeContainer &edgeVertices, bool linear,
                             int nPts = 1)
 {
   if(!gf->haveParametrization()) linear = true;
 
   for(int i = 0; i < ele->getNumEdges(); i++) {
-    std::vector<MVertex *> veOld;
+    std::vector<MNode *> veOld;
     ele->getEdgeVertices(i, veOld);
-    MVertex *vMin, *vMax;
+    MNode *vMin, *vMax;
     const bool increasing = getMinMaxVert(veOld[0], veOld[1], vMin, vMax);
-    std::pair<MVertex *, MVertex *> p(vMin, vMax);
-    std::vector<MVertex *> veEdge;
+    std::pair<MNode *, MNode *> p(vMin, vMax);
+    std::vector<MNode *> veEdge;
 
     auto eIter = edgeVertices.find(p);
 
     if(eIter != edgeVertices.end()) { // Vertices already exist
-      std::vector<MVertex *> &eVtcs = eIter->second;
+      std::vector<MNode *> &eVtcs = eIter->second;
       if(increasing)
         veEdge.assign(eVtcs.begin(), eVtcs.end());
       else
@@ -470,7 +470,7 @@ static void getEdgeVertices(GFace *gf, MElement *ele,
         interpVerticesInExistingEdge(gf, &edgeEl, veEdge, nPts);
       }
 
-      std::vector<MVertex *> &eVtcs = edgeVertices[p];
+      std::vector<MNode *> &eVtcs = edgeVertices[p];
 
       if(increasing) // Add newly created vertices to list
         eVtcs.insert(eVtcs.end(), veEdge.begin(), veEdge.end());
@@ -482,17 +482,17 @@ static void getEdgeVertices(GFace *gf, MElement *ele,
 }
 
 // Get new interior vertices for an edge in a 3D element
-static void getEdgeVertices(GRegion *gr, MElement *ele,
-                            std::vector<MVertex *> &ve,
+static void getEdgeVertices(GVolume *gr, MElement *ele,
+                            std::vector<MNode *> &ve,
                             edgeContainer &edgeVertices, int nPts = 1)
 {
   for(int i = 0; i < ele->getNumEdges(); i++) {
-    std::vector<MVertex *> veOld;
+    std::vector<MNode *> veOld;
     ele->getEdgeVertices(i, veOld);
-    MVertex *vMin, *vMax;
+    MNode *vMin, *vMax;
     const bool increasing = getMinMaxVert(veOld[0], veOld[1], vMin, vMax);
-    std::pair<MVertex *, MVertex *> p(vMin, vMax);
-    std::vector<MVertex *> veEdge;
+    std::pair<MNode *, MNode *> p(vMin, vMax);
+    std::vector<MNode *> veEdge;
     if(edgeVertices.count(p)) { // Vertices already exist
       if(increasing)
         veEdge.assign(edgeVertices[p].begin(), edgeVertices[p].end());
@@ -515,12 +515,12 @@ static void getEdgeVertices(GRegion *gr, MElement *ele,
 
 // Creation of high-order face vertices
 
-static void reorientTrianglePoints(std::vector<MVertex *> &vtcs,
+static void reorientTrianglePoints(std::vector<MNode *> &vtcs,
                                    int orientation, bool swap)
 {
   int nbPts = vtcs.size();
   if(nbPts <= 1) return;
-  std::vector<MVertex *> tmp(nbPts);
+  std::vector<MNode *> tmp(nbPts);
   int interiorOrder = (int)((sqrt(1. + 8. * nbPts) - 3) / 2);
   int pos = 0;
   for(int o = interiorOrder; o > 0; o -= 3) {
@@ -544,12 +544,12 @@ static void reorientTrianglePoints(std::vector<MVertex *> &vtcs,
   }
 }
 
-static void reorientQuadPoints(std::vector<MVertex *> &vtcs, int orientation,
+static void reorientQuadPoints(std::vector<MNode *> &vtcs, int orientation,
                                bool swap, int order)
 {
   int nbPts = vtcs.size();
   if(nbPts <= 1) return;
-  std::vector<MVertex *> tmp(nbPts);
+  std::vector<MNode *> tmp(nbPts);
 
   int start = 0;
   while(1) {
@@ -667,25 +667,25 @@ static void reorientQuadPoints(std::vector<MVertex *> &vtcs, int orientation,
 
 static void interpVerticesInExistingFace(GEntity *ge,
                                          const fullMatrix<double> &coefficients,
-                                         const std::vector<MVertex *> &vertices,
-                                         std::vector<MVertex *> &vFace)
+                                         const std::vector<MNode *> &vertices,
+                                         std::vector<MNode *> &vFace)
 {
   for(int k = 0; k < coefficients.size1(); k++) {
     double x(0), y(0), z(0);
     for(int j = 0; j < coefficients.size2(); j++) {
-      MVertex *v = vertices[j];
+      MNode *v = vertices[j];
       x += coefficients(k, j) * v->x();
       y += coefficients(k, j) * v->y();
       z += coefficients(k, j) * v->z();
     }
-    vFace.push_back(new MVertex(x, y, z, ge));
+    vFace.push_back(new MNode(x, y, z, ge));
   }
 }
 
-static bool getFaceVerticesOnExtrudedGeo(GFace *gf,
+static bool getFaceVerticesOnExtrudedGeo(GSurface *gf,
                                          const fullMatrix<double> &coefficients,
-                                         const std::vector<MVertex *> &vertices,
-                                         std::vector<MVertex *> &vf)
+                                         const std::vector<MNode *> &vertices,
+                                         std::vector<MNode *> &vf)
 {
   // special case for 9 node quads...
   if(coefficients.size1() != 1 || vertices.size() != 8) return false;
@@ -701,10 +701,10 @@ static bool getFaceVerticesOnExtrudedGeo(GFace *gf,
   return true;
 }
 
-static void getFaceVerticesOnGeo(GFace *gf,
+static void getFaceVerticesOnGeo(GSurface *gf,
                                  const fullMatrix<double> &coefficients,
-                                 const std::vector<MVertex *> &vertices,
-                                 std::vector<MVertex *> &vf)
+                                 const std::vector<MNode *> &vertices,
+                                 std::vector<MNode *> &vf)
 {
   SPoint2 pts[1000];
   bool reparamOK = true;
@@ -713,7 +713,7 @@ static void getFaceVerticesOnGeo(GFace *gf,
   for(int k = 0; k < coefficients.size1(); k++) {
     double X(0), Y(0), Z(0), GUESS[2] = {0, 0};
     for(int j = 0; j < coefficients.size2(); j++) {
-      MVertex *vt = vertices[j];
+      MNode *vt = vertices[j];
       X += coefficients(k, j) * vt->x();
       Y += coefficients(k, j) * vt->y();
       Z += coefficients(k, j) * vt->z();
@@ -722,11 +722,11 @@ static void getFaceVerticesOnGeo(GFace *gf,
         GUESS[1] += coefficients(k, j) * pts[j][1];
       }
     }
-    MVertex *v;
+    MNode *v;
     if(reparamOK) {
       // closestPoint is absolutely necessary when the parameterization is
       // degenerate
-      GPoint gp;
+      GVertex gp;
       if(gf->geomType() == GEntity::Plane) {
         gp = gf->point(SPoint2(GUESS[0], GUESS[1]));
       }
@@ -737,29 +737,29 @@ static void getFaceVerticesOnGeo(GFace *gf,
         v = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
       }
       else {
-        v = new MVertex(X, Y, Z, gf);
+        v = new MNode(X, Y, Z, gf);
       }
     }
     else {
-      GPoint gp = gf->closestPoint(SPoint3(X, Y, Z), GUESS);
+      GVertex gp = gf->closestPoint(SPoint3(X, Y, Z), GUESS);
       if(gp.succeeded())
-        v = new MVertex(gp.x(), gp.y(), gp.z(), gf);
+        v = new MNode(gp.x(), gp.y(), gp.z(), gf);
       else
-        v = new MVertex(X, Y, Z, gf);
+        v = new MNode(X, Y, Z, gf);
     }
     vf.push_back(v);
   }
 }
 
 // Get new interior vertices for a 2D element
-static void getFaceVertices(GFace *gf, MElement *ele,
-                            std::vector<MVertex *> &newVertices,
+static void getFaceVertices(GSurface *gf, MElement *ele,
+                            std::vector<MNode *> &newVertices,
                             faceContainer &faceVertices, bool linear,
                             int nPts = 1)
 {
   if(!gf->haveParametrization()) linear = true;
 
-  std::vector<MVertex *> boundaryVertices;
+  std::vector<MNode *> boundaryVertices;
   {
     std::size_t nCorner = ele->getNumPrimaryVertices();
     boundaryVertices.reserve(nCorner + newVertices.size());
@@ -770,7 +770,7 @@ static void getFaceVertices(GFace *gf, MElement *ele,
   }
   int type = ele->getType();
   fullMatrix<double> *coefficients = getInnerVertexPlacement(type, nPts + 1);
-  std::vector<MVertex *> vFace;
+  std::vector<MNode *> vFace;
   if(!linear) { // Get vertices on geometry if asked...
     // special case for 2nd order quads on surfaces generated by extrusion
     // (translation): this allows to speed up a common case (extruded OCC
@@ -791,9 +791,9 @@ static void getFaceVertices(GFace *gf, MElement *ele,
 }
 
 static int retrieveFaceBoundaryVertices(int k, int type, int nPts,
-                                        const std::vector<MVertex *> &vCorner,
-                                        const std::vector<MVertex *> &vEdges,
-                                        std::vector<MVertex *> &v)
+                                        const std::vector<MNode *> &vCorner,
+                                        const std::vector<MNode *> &vEdges,
+                                        std::vector<MNode *> &v)
 {
   v.clear();
   int nCorner;
@@ -856,20 +856,20 @@ static int retrieveFaceBoundaryVertices(int k, int type, int nPts,
 }
 
 // Get new face (excluding edge) vertices for a face of a 3D element
-static void getFaceVertices(GRegion *gr, MElement *ele,
-                            std::vector<MVertex *> &newVertices,
+static void getFaceVertices(GVolume *gr, MElement *ele,
+                            std::vector<MNode *> &newVertices,
                             faceContainer &faceVertices, int nPts = 1)
 {
-  std::vector<MVertex *> vCorner;
+  std::vector<MNode *> vCorner;
   ele->getVertices(vCorner);
   // NB: We can get more than corner vertices but we use only corners
 
   for(int i = 0; i < ele->getNumFaces(); i++) {
     MFace face = ele->getFace(i);
-    std::vector<MVertex *> vFace;
+    std::vector<MNode *> vFace;
     auto fIter = faceVertices.find(face);
     if(fIter != faceVertices.end()) { // Vertices already exist
-      std::vector<MVertex *> vtcs = fIter->second;
+      std::vector<MNode *> vtcs = fIter->second;
       int orientation;
       bool swap;
       if(fIter->first.computeCorrespondence(face, orientation, swap)) {
@@ -885,7 +885,7 @@ static void getFaceVertices(GRegion *gr, MElement *ele,
       vFace.assign(vtcs.begin(), vtcs.end());
     }
     else { // Vertices do not exist, create them by interpolation
-      std::vector<MVertex *> faceBoundaryVertices;
+      std::vector<MNode *> faceBoundaryVertices;
       int type = retrieveFaceBoundaryVertices(
         i, ele->getType(), nPts, vCorner, newVertices, faceBoundaryVertices);
       fullMatrix<double> *coefficients =
@@ -900,10 +900,10 @@ static void getFaceVertices(GRegion *gr, MElement *ele,
 }
 
 // Get new interior vertices for a 3D element
-static void getVolumeVertices(GRegion *gr, MElement *ele,
-                              std::vector<MVertex *> &newVertices, int nPts = 1)
+static void getVolumeVertices(GVolume *gr, MElement *ele,
+                              std::vector<MNode *> &newVertices, int nPts = 1)
 {
-  std::vector<MVertex *> boundaryVertices;
+  std::vector<MNode *> boundaryVertices;
   {
     std::size_t nCorner = ele->getNumPrimaryVertices();
     boundaryVertices.reserve(nCorner + newVertices.size());
@@ -918,25 +918,25 @@ static void getVolumeVertices(GRegion *gr, MElement *ele,
   for(int k = 0; k < coefficients.size1(); k++) {
     double x(0), y(0), z(0);
     for(int j = 0; j < coefficients.size2(); j++) {
-      MVertex *v = boundaryVertices[j];
+      MNode *v = boundaryVertices[j];
       x += coefficients(k, j) * v->x();
       y += coefficients(k, j) * v->y();
       z += coefficients(k, j) * v->z();
     }
-    MVertex *v = new MVertex(x, y, z, gr);
+    MNode *v = new MNode(x, y, z, gr);
     newVertices.push_back(v);
   }
 }
 
 // Creation of high-order elements
 
-static void setHighOrder(GEdge *ge, edgeContainer &edgeVertices, bool linear,
+static void setHighOrder(GCurve *ge, edgeContainer &edgeVertices, bool linear,
                          int nbPts = 1)
 {
   std::vector<MLine *> lines2;
   for(std::size_t i = 0; i < ge->lines.size(); i++) {
     MLine *l = ge->lines[i];
-    std::vector<MVertex *> ve;
+    std::vector<MNode *> ve;
     getEdgeVertices(ge, l, ve, edgeVertices, linear, nbPts);
     if(nbPts == 1)
       lines2.push_back(
@@ -950,12 +950,12 @@ static void setHighOrder(GEdge *ge, edgeContainer &edgeVertices, bool linear,
   ge->deleteVertexArrays();
 }
 
-static MTriangle *setHighOrder(MTriangle *t, GFace *gf,
+static MTriangle *setHighOrder(MTriangle *t, GSurface *gf,
                                edgeContainer &edgeVertices,
                                faceContainer &faceVertices, bool linear,
                                bool incomplete, int nPts)
 {
-  std::vector<MVertex *> v;
+  std::vector<MNode *> v;
   getEdgeVertices(gf, t, v, edgeVertices, linear, nPts);
   if(nPts == 1) {
     return new MTriangle6(t->getVertex(0), t->getVertex(1), t->getVertex(2),
@@ -968,12 +968,12 @@ static MTriangle *setHighOrder(MTriangle *t, GFace *gf,
   }
 }
 
-static MQuadrangle *setHighOrder(MQuadrangle *q, GFace *gf,
+static MQuadrangle *setHighOrder(MQuadrangle *q, GSurface *gf,
                                  edgeContainer &edgeVertices,
                                  faceContainer &faceVertices, bool linear,
                                  bool incomplete, int nPts)
 {
-  std::vector<MVertex *> v;
+  std::vector<MNode *> v;
   getEdgeVertices(gf, q, v, edgeVertices, linear, nPts);
   if(incomplete) {
     if(nPts == 1) {
@@ -1002,7 +1002,7 @@ static MQuadrangle *setHighOrder(MQuadrangle *q, GFace *gf,
   }
 }
 
-static void setHighOrder(GFace *gf, edgeContainer &edgeVertices,
+static void setHighOrder(GSurface *gf, edgeContainer &edgeVertices,
                          faceContainer &faceVertices, bool linear,
                          bool incomplete, int nPts = 1)
 {
@@ -1028,12 +1028,12 @@ static void setHighOrder(GFace *gf, edgeContainer &edgeVertices,
   gf->deleteVertexArrays();
 }
 
-static MTetrahedron *setHighOrder(MTetrahedron *t, GRegion *gr,
+static MTetrahedron *setHighOrder(MTetrahedron *t, GVolume *gr,
                                   edgeContainer &edgeVertices,
                                   faceContainer &faceVertices, bool incomplete,
                                   int nPts)
 {
-  std::vector<MVertex *> v;
+  std::vector<MNode *> v;
   getEdgeVertices(gr, t, v, edgeVertices, nPts);
   if(nPts == 1) {
     return new MTetrahedron10(t->getVertex(0), t->getVertex(1), t->getVertex(2),
@@ -1051,12 +1051,12 @@ static MTetrahedron *setHighOrder(MTetrahedron *t, GRegion *gr,
   }
 }
 
-static MHexahedron *setHighOrder(MHexahedron *h, GRegion *gr,
+static MHexahedron *setHighOrder(MHexahedron *h, GVolume *gr,
                                  edgeContainer &edgeVertices,
                                  faceContainer &faceVertices, bool incomplete,
                                  int nPts)
 {
-  std::vector<MVertex *> v;
+  std::vector<MNode *> v;
   getEdgeVertices(gr, h, v, edgeVertices, nPts);
   if(incomplete) {
     if(nPts == 1) {
@@ -1093,11 +1093,11 @@ static MHexahedron *setHighOrder(MHexahedron *h, GRegion *gr,
   }
 }
 
-static MPrism *setHighOrder(MPrism *p, GRegion *gr, edgeContainer &edgeVertices,
+static MPrism *setHighOrder(MPrism *p, GVolume *gr, edgeContainer &edgeVertices,
                             faceContainer &faceVertices, bool incomplete,
                             int nPts)
 {
-  std::vector<MVertex *> v;
+  std::vector<MNode *> v;
   getEdgeVertices(gr, p, v, edgeVertices, nPts);
   if(incomplete) {
     if(nPts == 1) {
@@ -1129,12 +1129,12 @@ static MPrism *setHighOrder(MPrism *p, GRegion *gr, edgeContainer &edgeVertices,
   }
 }
 
-static MPyramid *setHighOrder(MPyramid *p, GRegion *gr,
+static MPyramid *setHighOrder(MPyramid *p, GVolume *gr,
                               edgeContainer &edgeVertices,
                               faceContainer &faceVertices, bool incomplete,
                               int nPts)
 {
-  std::vector<MVertex *> v;
+  std::vector<MNode *> v;
   getEdgeVertices(gr, p, v, edgeVertices, nPts);
   if(!incomplete) {
     getFaceVertices(gr, p, v, faceVertices, nPts);
@@ -1145,7 +1145,7 @@ static MPyramid *setHighOrder(MPyramid *p, GRegion *gr,
                        p->getPartition());
 }
 
-static void setHighOrder(GRegion *gr, edgeContainer &edgeVertices,
+static void setHighOrder(GVolume *gr, edgeContainer &edgeVertices,
                          faceContainer &faceVertices, bool incomplete,
                          int nPts = 1)
 {
@@ -1204,7 +1204,7 @@ static void setFirstOrder(GEntity *e, std::vector<T *> &elements,
   for(std::size_t i = 0; i < elements.size(); i++) {
     T *ele = elements[i];
     std::size_t n = ele->getNumPrimaryVertices();
-    std::vector<MVertex *> v1;
+    std::vector<MNode *> v1;
     v1.reserve(n);
     for(std::size_t j = 0; j < n; j++) v1.push_back(ele->getVertex(j));
     elements1.push_back(new T(v1, 0, ele->getPartition()));
@@ -1219,7 +1219,7 @@ static void deleteHighOrderVertices(GEntity *e, bool onlyVisible,
 {
   if(onlyVisible && !e->getVisibility()) return;
   if(skipDiscrete && e->isFullyDiscrete()) return;
-  std::vector<MVertex *> v1;
+  std::vector<MNode *> v1;
   for(std::size_t i = 0; i < e->mesh_vertices.size(); i++) {
     if(e->mesh_vertices[i]->getPolynomialOrder() > 1)
       delete e->mesh_vertices[i];
@@ -1345,15 +1345,15 @@ static int getOrder(GEntity *ge)
   return 0;
 }
 
-static void setHighOrderFromExistingMesh(GEdge *ge, edgeContainer &edgeVertices)
+static void setHighOrderFromExistingMesh(GCurve *ge, edgeContainer &edgeVertices)
 {
   for(std::size_t i = 0; i < ge->getNumMeshElements(); i++) {
     MElement *e = ge->getMeshElement(i);
-    std::vector<MVertex *> v;
+    std::vector<MNode *> v;
     e->getVertices(v);
-    MVertex *vMin, *vMax;
+    MNode *vMin, *vMax;
     const bool increasing = getMinMaxVert(v[0], v[1], vMin, vMax);
-    std::pair<MVertex *, MVertex *> p(vMin, vMax);
+    std::pair<MNode *, MNode *> p(vMin, vMax);
     if(edgeVertices.count(p) == 0) {
       if(increasing)
         edgeVertices[p].insert(edgeVertices[p].end(), v.begin() + e->getNumPrimaryVertices(), v.end());
@@ -1363,18 +1363,18 @@ static void setHighOrderFromExistingMesh(GEdge *ge, edgeContainer &edgeVertices)
   }
 }
 
-static void setHighOrderFromExistingMesh(GFace *gf, edgeContainer &edgeVertices,
+static void setHighOrderFromExistingMesh(GSurface *gf, edgeContainer &edgeVertices,
                                          faceContainer &faceVertices)
 {
   for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
     MElement *e = gf->getMeshElement(i);
     for(int j = 0; j < e->getNumEdges(); j++) {
       MEdge edg = e->getEdge(j);
-      MVertex *vMin, *vMax;
+      MNode *vMin, *vMax;
       const bool increasing = getMinMaxVert(edg.getVertex(0), edg.getVertex(1), vMin, vMax);
-      std::pair<MVertex *, MVertex *> p(vMin, vMax);
+      std::pair<MNode *, MNode *> p(vMin, vMax);
       if(edgeVertices.count(p) == 0) {
-        std::vector<MVertex *> edgv;
+        std::vector<MNode *> edgv;
         e->getEdgeVertices(j, edgv);
         if(increasing)
           edgeVertices[p].insert(edgeVertices[p].end(), edgv.begin() + 2, edgv.end());
@@ -1383,7 +1383,7 @@ static void setHighOrderFromExistingMesh(GFace *gf, edgeContainer &edgeVertices,
       }
     }
     MFace f = e->getFace(0);
-    std::vector<MVertex *> facev;
+    std::vector<MNode *> facev;
     if(faceVertices.count(f) == 0) {
       e->getFaceVertices(0, facev);
       for(std::size_t j = e->getNumPrimaryVertices() + e->getNumEdgeVertices();

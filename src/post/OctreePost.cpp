@@ -459,7 +459,7 @@ static MElement *getElement(double P[3], GModel *m, int qn, double *qx,
       if(qn == static_cast<int>(elements[i]->getNumVertices())) {
         bool ok = true;
         for(int j = 0; j < qn; j++) {
-          MVertex *v = elements[i]->getVertex(j);
+          MNode *v = elements[i]->getVertex(j);
           ok &=
             (std::abs(v->x() - qx[j]) < eps && std::abs(v->y() - qy[j]) < eps &&
              std::abs(v->z() - qz[j]) < eps);

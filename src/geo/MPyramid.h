@@ -31,13 +31,13 @@
  */
 class MPyramid : public MElement {
 protected:
-  MVertex *_v[5];
-  void _getEdgeVertices(const int num, std::vector<MVertex *> &v) const
+  MNode *_v[5];
+  void _getEdgeVertices(const int num, std::vector<MNode *> &v) const
   {
     v[0] = _v[edges_pyramid(num, 0)];
     v[1] = _v[edges_pyramid(num, 1)];
   }
-  void _getFaceVertices(const int num, std::vector<MVertex *> &v) const
+  void _getFaceVertices(const int num, std::vector<MNode *> &v) const
   {
     if(num < 4) {
       v[0] = _v[faces_pyramid(num, 0)];
@@ -53,7 +53,7 @@ protected:
   }
 
 public:
-  MPyramid(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
+  MPyramid(MNode *v0, MNode *v1, MNode *v2, MNode *v3, MNode *v4,
            int num = 0, int part = 0)
     : MElement(num, part)
   {
@@ -63,7 +63,7 @@ public:
     _v[3] = v3;
     _v[4] = v4;
   }
-  MPyramid(const std::vector<MVertex *> &v, int num = 0, int part = 0)
+  MPyramid(const std::vector<MNode *> &v, int num = 0, int part = 0)
     : MElement(num, part)
   {
     for(int i = 0; i < 5; i++) _v[i] = v[i];
@@ -71,9 +71,9 @@ public:
   ~MPyramid() {}
   virtual int getDim() const { return 3; }
   virtual std::size_t getNumVertices() const { return 5; }
-  virtual MVertex *getVertex(int num) { return _v[num]; }
-  virtual const MVertex *getVertex(int num) const { return _v[num]; }
-  virtual void setVertex(int num, MVertex *v) { _v[num] = v; }
+  virtual MNode *getVertex(int num) { return _v[num]; }
+  virtual const MNode *getVertex(int num) const { return _v[num]; }
+  virtual void setVertex(int num, MNode *v) { _v[num] = v; }
   virtual int getNumEdges() const { return 8; }
   virtual MEdge getEdge(int num) const
   {
@@ -91,7 +91,7 @@ public:
     MEdge e(getEdge(num));
     _getEdgeRep(e.getVertex(0), e.getVertex(1), x, y, z, n, f[num]);
   }
-  virtual void getEdgeVertices(const int num, std::vector<MVertex *> &v) const
+  virtual void getEdgeVertices(const int num, std::vector<MNode *> &v) const
   {
     v.resize(2);
     _getEdgeVertices(num, v);
@@ -108,7 +108,7 @@ public:
   virtual int getNumFacesRep(bool curved);
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
-  virtual void getFaceVertices(const int num, std::vector<MVertex *> &v) const
+  virtual void getFaceVertices(const int num, std::vector<MNode *> &v) const
   {
     v.resize((num < 4) ? 3 : 4);
     _getFaceVertices(num, v);
@@ -123,7 +123,7 @@ public:
   virtual const char *getStringForINP() const { return "C3D5"; }
   virtual void reverse()
   {
-    MVertex *tmp = _v[0];
+    MNode *tmp = _v[0];
     _v[0] = _v[2];
     _v[2] = tmp;
   }
@@ -197,7 +197,7 @@ public:
     return e[face][edge];
   }
   virtual int numCommonNodesInDualGraph(const MElement *const other) const;
-  virtual MVertex *getVertexNEU(int num)
+  virtual MNode *getVertexNEU(int num)
   {
     static const int map[5] = {0, 1, 3, 2, 4};
     return getVertex(map[num]);
@@ -250,15 +250,15 @@ class MPyramidN : public MPyramid {
   static std::map<int, IndicesReversed> _order2indicesReversedPyr;
 
 protected:
-  std::vector<MVertex *> _vs;
+  std::vector<MNode *> _vs;
   const char _order;
 
-  void _addHOEdgePoints(int num, std::vector<MVertex *> &v,
+  void _addHOEdgePoints(int num, std::vector<MNode *> &v,
                         bool fw = true) const;
 
 public:
-  MPyramidN(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
-            const std::vector<MVertex *> &v, char order, int num = 0,
+  MPyramidN(MNode *v0, MNode *v1, MNode *v2, MNode *v3, MNode *v4,
+            const std::vector<MNode *> &v, char order, int num = 0,
             int part = 0)
     : MPyramid(v0, v1, v2, v3, v4, num, part), _vs(v), _order(order)
   {
@@ -266,7 +266,7 @@ public:
       _vs[i]->setPolynomialOrder(_order);
     getFunctionSpace(order);
   }
-  MPyramidN(const std::vector<MVertex *> &v, char order, int num = 0,
+  MPyramidN(const std::vector<MNode *> &v, char order, int num = 0,
             int part = 0)
     : MPyramid(v[0], v[1], v[2], v[3], v[4], num, part), _order(order)
   {
@@ -278,15 +278,15 @@ public:
   ~MPyramidN();
   virtual int getPolynomialOrder() const { return _order; }
   virtual std::size_t getNumVertices() const { return 5 + _vs.size(); }
-  virtual MVertex *getVertex(int num)
+  virtual MNode *getVertex(int num)
   {
     return num < 5 ? _v[num] : _vs[num - 5];
   }
-  virtual const MVertex *getVertex(int num) const
+  virtual const MNode *getVertex(int num) const
   {
     return num < 5 ? _v[num] : _vs[num - 5];
   }
-  virtual void setVertex(int num, MVertex *v)
+  virtual void setVertex(int num, MNode *v)
   {
     if(num < 5)
       _v[num] = v;
@@ -302,7 +302,7 @@ public:
       return (_order - 1) * (_order - 1) +
              4 * ((_order - 1) * (_order - 2)) / 2;
   }
-  virtual void getEdgeVertices(const int num, std::vector<MVertex *> &v) const
+  virtual void getEdgeVertices(const int num, std::vector<MNode *> &v) const
   {
     v.resize(_order + 1);
     MPyramid::_getEdgeVertices(num, v);
@@ -310,7 +310,7 @@ public:
     const int ie = (num + 1) * (_order - 1);
     for(int i = num * (_order - 1); i != ie; ++i) v[j++] = _vs[i];
   }
-  virtual void getFaceVertices(const int num, std::vector<MVertex *> &v) const;
+  virtual void getFaceVertices(const int num, std::vector<MNode *> &v) const;
   virtual int getNumVolumeVertices() const
   {
     if(getIsAssimilatedSerendipity())
@@ -351,7 +351,7 @@ public:
       return "C3D5";
     }
   }
-  virtual MVertex *getVertexINP(int num)
+  virtual MNode *getVertexINP(int num)
   {
     if(_order == 2 && _vs.size() + 5 == 13) {
       static const int map[13] = {0, 1, 2, 3, 4, 5, 8, 10, 6, 7, 9, 11, 12};

@@ -8,7 +8,7 @@
 
 class GModel;
 class MElement;
-class GFace;
+class GSurface;
 
 int PartitionMesh(GModel *model, int numPart);
 int UnpartitionMesh(GModel *model);
@@ -17,6 +17,6 @@ int PartitionUsingThisSplit(GModel *model,
   std::vector<std::pair<MElement *, int> > &elmToPartition);
 int ConvertOldPartitioningToNewOne(GModel *model);
 
-int PartitionFaceMinEdgeLength(GFace *gf, int np, double tol = 1.02);
+int PartitionFaceMinEdgeLength(GSurface *gf, int np, double tol = 1.02);
 
 #endif

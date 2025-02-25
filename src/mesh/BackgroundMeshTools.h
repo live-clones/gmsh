@@ -8,9 +8,9 @@
 
 #include "STensor3.h"
 
-class GFace;
-class GVertex;
-class GEdge;
+class GSurface;
+class GPoint;
+class GCurve;
 class GEntity;
 
 SMetric3 buildMetricTangentToCurve(SVector3 &t, double l_t, double l_n);
@@ -22,11 +22,11 @@ double BGM_MeshSizeWithoutScaling(GEntity *ge, double U, double V, double X,
                                   double Y, double Z);
 SMetric3 BGM_MeshMetric(GEntity *ge, double U, double V, double X, double Y,
                         double Z);
-bool Extend1dMeshIn2dSurfaces(GFace *gf);
+bool Extend1dMeshIn2dSurfaces(GSurface *gf);
 bool Extend2dMeshIn3dVolumes();
-SMetric3 max_edge_curvature_metric(const GVertex *gv);
-SMetric3 max_edge_curvature_metric(const GEdge *ge, double u, double &l);
-SMetric3 metric_based_on_surface_curvature(const GFace *gf, double u, double v,
+SMetric3 max_edge_curvature_metric(const GPoint *gv);
+SMetric3 max_edge_curvature_metric(const GCurve *ge, double u, double &l);
+SMetric3 metric_based_on_surface_curvature(const GSurface *gf, double u, double v,
                                            bool surface_isotropic = false,
                                            double d_normal = 1.e12,
                                            double d_tangent_max = 1.e12);

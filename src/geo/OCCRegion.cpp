@@ -24,7 +24,7 @@
 #include <TopoDS_Compound.hxx>
 
 OCCRegion::OCCRegion(GModel *m, TopoDS_Solid s, int num)
-  : GRegion(m, num), _s(s)
+  : GVolume(m, num), _s(s)
 {
   _setup();
 
@@ -40,7 +40,7 @@ void OCCRegion::_setup()
     Msg::Debug("OCC volume %d - new shell", tag());
     for(exp3.Init(shell, TopAbs_FACE); exp3.More(); exp3.Next()) {
       TopoDS_Face face = TopoDS::Face(exp3.Current());
-      GFace *f = nullptr;
+      GSurface *f = nullptr;
       if(model()->getOCCInternals())
         f = model()->getOCCInternals()->getFaceForOCCShape(model(), face);
       if(!f) { Msg::Error("Unknown surface in volume %d", tag()); }
@@ -65,7 +65,7 @@ void OCCRegion::_setup()
 
   for(exp3.Init(_s, TopAbs_EDGE, TopAbs_FACE); exp3.More(); exp3.Next()) {
     TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
-    GEdge *e = nullptr;
+    GCurve *e = nullptr;
     if(model()->getOCCInternals())
       e = model()->getOCCInternals()->getEdgeForOCCShape(model(), edge);
     if(!e) { Msg::Error("Unknown curve in volume %d", tag()); }
@@ -80,7 +80,7 @@ void OCCRegion::_setup()
 
   for(exp3.Init(_s, TopAbs_VERTEX, TopAbs_FACE); exp3.More(); exp3.Next()) {
     TopoDS_Vertex vertex = TopoDS::Vertex(exp3.Current());
-    GVertex *v = nullptr;
+    GPoint *v = nullptr;
     if(model()->getOCCInternals())
       v = model()->getOCCInternals()->getVertexForOCCShape(model(), vertex);
     if(!v) { Msg::Error("Unknown point in volume %d", tag()); }
@@ -97,7 +97,7 @@ void OCCRegion::_setup()
 SBoundingBox3d OCCRegion::bounds(bool fast)
 {
   if(CTX::instance()->geom.occBoundsUseSTL) {
-    std::vector<GFace *> f = faces();
+    std::vector<GSurface *> f = faces();
     SBoundingBox3d bbox;
     for(std::size_t i = 0; i < f.size(); i++) {
       f[i]->buildSTLTriangulation();

@@ -19,7 +19,7 @@
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
 #include "delaunay3d.h"
-#include "MVertex.h"
+#include "MNode.h"
 #include "MTetrahedron.h"
 #include "meshGRegionLocalMeshMod.h"
 #include "Context.h"
@@ -1228,16 +1228,16 @@ static void delaunayTriangulation(const int numThreads, const int nptsatonce,
 }
 
 void delaunayTriangulation(const int numThreads, const int nptsatonce,
-                           std::vector<MVertex *> &S,
+                           std::vector<MNode *> &S,
                            std::vector<MTetrahedron *> &T, bool removeBox)
 {
-  std::vector<MVertex *> _temp;
+  std::vector<MNode *> _temp;
   std::vector<Vert *> _vertices;
   std::size_t N = S.size();
   _temp.resize(N + 1 + 8);
   double maxx = 0, maxy = 0, maxz = 0;
   for(std::size_t i = 0; i < N; i++) {
-    MVertex *mv = S[i];
+    MNode *mv = S[i];
     maxx = std::max(maxx, fabs(mv->x()));
     maxy = std::max(maxy, fabs(mv->y()));
     maxz = std::max(maxz, fabs(mv->z()));
@@ -1247,7 +1247,7 @@ void delaunayTriangulation(const int numThreads, const int nptsatonce,
   tetContainer allocator(numThreads, S.size() * 10);
 
   for(std::size_t i = 0; i < N; i++) {
-    MVertex *mv = S[i];
+    MNode *mv = S[i];
     double dx =
       d * CTX::instance()->mesh.randFactor3d * (double)rand() / RAND_MAX;
     double dy =
@@ -1273,7 +1273,7 @@ void delaunayTriangulation(const int numThreads, const int nptsatonce,
     if(removeBox) { v->setNum(0); }
     else {
       v->setNum(N + i + 1);
-      MVertex *mv = new MVertex(v->x(), v->y(), v->z(), nullptr, N + (i + 1));
+      MNode *mv = new MNode(v->x(), v->y(), v->z(), nullptr, N + (i + 1));
       _temp[v->getNum()] = mv;
       S.push_back(mv);
     }
@@ -1285,10 +1285,10 @@ void delaunayTriangulation(const int numThreads, const int nptsatonce,
       if(t->V[0]) {
         if(t->V[0]->getNum() && t->V[1]->getNum() && t->V[2]->getNum() &&
            t->V[3]->getNum()) {
-          MVertex *v1 = _temp[t->V[0]->getNum()];
-          MVertex *v2 = _temp[t->V[1]->getNum()];
-          MVertex *v3 = _temp[t->V[2]->getNum()];
-          MVertex *v4 = _temp[t->V[3]->getNum()];
+          MNode *v1 = _temp[t->V[0]->getNum()];
+          MNode *v2 = _temp[t->V[1]->getNum()];
+          MNode *v3 = _temp[t->V[2]->getNum()];
+          MNode *v4 = _temp[t->V[3]->getNum()];
           MTetrahedron *tr = new MTetrahedron(v1, v2, v3, v4);
           T.push_back(tr);
         }

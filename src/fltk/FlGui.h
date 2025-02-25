@@ -41,10 +41,10 @@ class helpWindow;
 class Fl_Widget;
 class drawContext;
 
-class GVertex;
-class GEdge;
-class GFace;
-class GRegion;
+class GPoint;
+class GCurve;
+class GSurface;
+class GVolume;
 class MElement;
 class PView;
 
@@ -58,10 +58,10 @@ private:
   bool _quitShouldExit;
 
 public:
-  std::vector<GVertex *> selectedVertices;
-  std::vector<GEdge *> selectedEdges;
-  std::vector<GFace *> selectedFaces;
-  std::vector<GRegion *> selectedRegions;
+  std::vector<GPoint *> selectedVertices;
+  std::vector<GCurve *> selectedEdges;
+  std::vector<GSurface *> selectedFaces;
+  std::vector<GVolume *> selectedRegions;
   std::vector<MElement *> selectedElements;
   std::vector<SPoint2> selectedPoints;
   std::vector<PView *> selectedViews;

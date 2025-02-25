@@ -30,7 +30,7 @@
 #include "automaticMeshSizeField.h"
 #include "fullMatrix.h"
 #include "SPoint3KDTree.h"
-#include "MVertex.h"
+#include "MNode.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -2002,21 +2002,21 @@ public:
       return (*f)(x, y, z, ge);
     if(_boundary) {
       if(ge->dim() <= 2) {
-        std::list<GRegion *> volumes = ge->regions();
+        std::list<GVolume *> volumes = ge->regions();
         for(auto v : volumes) {
           if(std::find(_volumeTags.begin(), _volumeTags.end(), v->tag()) !=
              _volumeTags.end()) return (*f)(x, y, z, ge);
         }
       }
       if(ge->dim() <= 1) {
-        std::vector<GFace *> surfaces = ge->faces();
+        std::vector<GSurface *> surfaces = ge->faces();
         for(auto s : surfaces) {
           if(std::find(_surfaceTags.begin(), _surfaceTags.end(), s->tag()) !=
              _surfaceTags.end()) return (*f)(x, y, z, ge);
         }
       }
       if(ge->dim() == 0) {
-        std::vector<GEdge *> curves = ge->edges();
+        std::vector<GCurve *> curves = ge->edges();
         for(auto c : curves) {
           if(std::find(_curveTags.begin(), _curveTags.end(), c->tag()) !=
              _curveTags.end()) return (*f)(x, y, z, ge);
@@ -2069,21 +2069,21 @@ public:
       return _vIn;
     if(_boundary) {
       if(ge->dim() <= 2) {
-        std::list<GRegion *> volumes = ge->regions();
+        std::list<GVolume *> volumes = ge->regions();
         for(auto v : volumes) {
           if(std::find(_volumeTags.begin(), _volumeTags.end(), v->tag()) !=
              _volumeTags.end()) return _vIn;
         }
       }
       if(ge->dim() <= 1) {
-        std::vector<GFace *> surfaces = ge->faces();
+        std::vector<GSurface *> surfaces = ge->faces();
         for(auto s : surfaces) {
           if(std::find(_surfaceTags.begin(), _surfaceTags.end(), s->tag()) !=
              _surfaceTags.end()) return _vIn;
         }
       }
       if(ge->dim() == 0) {
-        std::vector<GEdge *> curves = ge->edges();
+        std::vector<GCurve *> curves = ge->edges();
         for(auto c : curves) {
           if(std::find(_curveTags.begin(), _curveTags.end(), c->tag()) !=
              _curveTags.end()) return _vIn;
@@ -2205,13 +2205,13 @@ public:
     _tg.resize(totpoints);
     int k = 0;
     for(auto it = _curveTags.begin(); it != _curveTags.end(); ++it) {
-      GEdge *e = GModel::current()->getEdgeByTag(*it);
+      GCurve *e = GModel::current()->getEdgeByTag(*it);
       if(e) {
         for(int i = 0; i < _sampling; i++) {
           double u = (double)i / (_sampling - 1);
           Range<double> b = e->parBounds(0);
           double t = b.low() + u * (b.high() - b.low());
-          GPoint gp = e->point(t);
+          GVertex gp = e->point(t);
           SVector3 d = e->firstDer(t);
           _zeroNodes[k][0] = gp.x();
           _zeroNodes[k][1] = gp.y();
@@ -2539,7 +2539,7 @@ public:
       if(_kdtree) delete _kdtree;
 
       for(auto it = _pointTags.begin(); it != _pointTags.end(); ++it) {
-        GVertex *gv = GModel::current()->getVertexByTag(*it);
+        GPoint *gv = GModel::current()->getVertexByTag(*it);
         if(gv) {
           _pc.pts.push_back(SPoint3(gv->x(), gv->y(), gv->z()));
           _infos.push_back(AttractorInfo(*it, 0, 0, 0));
@@ -2550,7 +2550,7 @@ public:
       }
 
       for(auto it = _curveTags.begin(); it != _curveTags.end(); ++it) {
-        GEdge *e = GModel::current()->getEdgeByTag(*it);
+        GCurve *e = GModel::current()->getEdgeByTag(*it);
         if(e) {
           if(e->mesh_vertices.size()) {
             for(std::size_t i = 0; i < e->mesh_vertices.size(); i++) {
@@ -2567,7 +2567,7 @@ public:
             double u = (double)i / (NNN - 1);
             Range<double> b = e->parBounds(0);
             double t = b.low() + u * (b.high() - b.low());
-            GPoint gp = e->point(t);
+            GVertex gp = e->point(t);
             _pc.pts.push_back(SPoint3(gp.x(), gp.y(), gp.z()));
             _infos.push_back(AttractorInfo(*it, 1, t, 0));
           }
@@ -2578,7 +2578,7 @@ public:
       }
 
       for(auto it = _surfaceTags.begin(); it != _surfaceTags.end(); ++it) {
-        GFace *f = GModel::current()->getFaceByTag(*it);
+        GSurface *f = GModel::current()->getFaceByTag(*it);
         if(f) {
           double maxDist = f->bounds().diag() / _sampling;
           std::vector<SPoint2> uvpoints;
@@ -2662,7 +2662,7 @@ public:
     _pcCurves.pts.clear();
     if(_kdtreeCurves) delete _kdtreeCurves;
     for(auto t : _tagCurves) {
-      GEdge *ge = GModel::current()->getEdgeByTag(t);
+      GCurve *ge = GModel::current()->getEdgeByTag(t);
       if(ge) {
         for(auto e : ge->lines) {
           _pcCurves.pts.push_back(e->barycenter());
@@ -2688,7 +2688,7 @@ public:
     _pcSurfaces.pts.clear();
     if(_kdtreeSurfaces) delete _kdtreeSurfaces;
     for(auto t : _tagSurfaces) {
-      GFace *gf = GModel::current()->getFaceByTag(t);
+      GSurface *gf = GModel::current()->getFaceByTag(t);
       if(gf) {
         for(auto e : gf->triangles) {
           _pcSurfaces.pts.push_back(e->barycenter());
@@ -2879,15 +2879,15 @@ void BoundaryLayerField::setupFor1d(int iE)
                _curveTagsSaved.end();
 
   if(!found) {
-    GEdge *ge = GModel::current()->getEdgeByTag(iE);
+    GCurve *ge = GModel::current()->getEdgeByTag(iE);
     if(ge) {
-      GVertex *gv0 = ge->getBeginVertex();
+      GPoint *gv0 = ge->getBeginVertex();
       if(gv0) {
         found = std::find(_pointTagsSaved.begin(), _pointTagsSaved.end(),
                           gv0->tag()) != _pointTagsSaved.end();
         if(found) _pointTags.push_back(gv0->tag());
       }
-      GVertex *gv1 = ge->getEndVertex();
+      GPoint *gv1 = ge->getEndVertex();
       if(gv1) {
         found = std::find(_pointTagsSaved.begin(), _pointTagsSaved.end(),
                           gv1->tag()) != _pointTagsSaved.end();
@@ -2921,13 +2921,13 @@ bool BoundaryLayerField::setupFor2d(int iF)
   // THIS COULD BE PART OF THE INPUT
   // OR (better) CHANGE THE PHILOSOPHY
 
-  GFace *gf = GModel::current()->getFaceByTag(iF);
+  GSurface *gf = GModel::current()->getFaceByTag(iF);
   if(!gf) {
     Msg::Warning("Unknown surface %d", iF);
     return false;
   }
-  std::vector<GEdge *> ed = gf->edges();
-  std::vector<GEdge *> const &embedded_edges = gf->embeddedEdges();
+  std::vector<GCurve *> ed = gf->edges();
+  std::vector<GCurve *> const &embedded_edges = gf->embeddedEdges();
   ed.insert(ed.begin(), embedded_edges.begin(), embedded_edges.end());
 
   for(auto it = ed.begin(); it != ed.end(); ++it) {
@@ -2937,7 +2937,7 @@ bool BoundaryLayerField::setupFor2d(int iF)
                            iE) != _curveTagsSaved.end();
     // this edge is a BL Edge
     if(found) {
-      std::vector<GFace *> fc = (*it)->faces();
+      std::vector<GSurface *> fc = (*it)->faces();
       int numf = 0;
       for(auto it = fc.begin(); it != fc.end(); it++) {
         if((*it)->meshAttributes.extrude &&
@@ -3011,7 +3011,7 @@ void BoundaryLayerField::computeFor1dMesh(double x, double y, double z,
   double xpk = 0., ypk = 0., zpk = 0.;
   double distk = 1.e22;
   for(auto it = _pointTags.begin(); it != _pointTags.end(); ++it) {
-    GVertex *v = GModel::current()->getVertexByTag(*it);
+    GPoint *v = GModel::current()->getVertexByTag(*it);
     if(v) {
       double xp = v->x();
       double yp = v->y();
@@ -3067,7 +3067,7 @@ void BoundaryLayerField::operator()(DistanceField *cc, double dist, double x,
   std::pair<AttractorInfo, SPoint3> pp = cc->getAttractorInfo();
   double beta = CTX::instance()->mesh.smoothRatio;
   if(pp.first.dim == 0) {
-    GVertex *v = GModel::current()->getVertexByTag(pp.first.ent);
+    GPoint *v = GModel::current()->getVertexByTag(pp.first.ent);
     if(!v) return;
     SVector3 t1;
     if(dist < thickness) { t1 = SVector3(1, 0, 0); }
@@ -3078,7 +3078,7 @@ void BoundaryLayerField::operator()(DistanceField *cc, double dist, double x,
     return;
   }
   else if(pp.first.dim == 1) {
-    GEdge *e = GModel::current()->getEdgeByTag(pp.first.ent);
+    GCurve *e = GModel::current()->getEdgeByTag(pp.first.ent);
     if(!e) {
       Msg::Warning("Unknown curve %d", pp.first.ent);
       return;
@@ -3096,14 +3096,14 @@ void BoundaryLayerField::operator()(DistanceField *cc, double dist, double x,
       return;
     }
     else {
-      GPoint p = e->point(pp.first.u);
+      GVertex p = e->point(pp.first.u);
       SVector3 t2 = SVector3(p.x() - x, p.y() - y, p.z() - z);
       metr = buildMetricTangentToCurve(t2, lc_t, lc_n);
       return;
     }
   }
   else {
-    GFace *gf = GModel::current()->getFaceByTag(pp.first.ent);
+    GSurface *gf = GModel::current()->getFaceByTag(pp.first.ent);
     if(!gf) {
       Msg::Warning("Unknown surface %d", pp.first.ent);
       return;
@@ -3130,7 +3130,7 @@ void BoundaryLayerField::operator()(DistanceField *cc, double dist, double x,
       return;
     }
     else {
-      GPoint p = gf->point(SPoint2(pp.first.u, pp.first.v));
+      GVertex p = gf->point(SPoint2(pp.first.u, pp.first.v));
       SVector3 t2 = SVector3(p.x() - x, p.y() - y, p.z() - z);
       metr = buildMetricTangentToCurve(t2, lc_n, lc_t);
       return;

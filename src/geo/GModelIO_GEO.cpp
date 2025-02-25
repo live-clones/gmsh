@@ -1398,7 +1398,7 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
   // combined with GEO entities; but they are not GmshModel entities.
   std::vector<std::pair<int, int> > toRemove;
   for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
-    GVertex *gv = *it;
+    GPoint *gv = *it;
     if(gv->getNativeType() == GEntity::GmshModel ||
        gv->getNativeType() == GEntity::UnknownModel) {
       if(!FindPoint(gv->tag()))
@@ -1406,7 +1406,7 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
     }
   }
   for(auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
-    GEdge *ge = *it;
+    GCurve *ge = *it;
     if(ge->getNativeType() == GEntity::GmshModel ||
        ge->getNativeType() == GEntity::UnknownModel) {
       if(!FindCurve(ge->tag()))
@@ -1414,7 +1414,7 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
     }
   }
   for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
-    GFace *gf = *it;
+    GSurface *gf = *it;
     if(gf->getNativeType() == GEntity::GmshModel ||
        gf->getNativeType() == GEntity::UnknownModel) {
       if(!FindSurface(gf->tag()))
@@ -1422,7 +1422,7 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
     }
   }
   for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
-    GRegion *gr = *it;
+    GVolume *gr = *it;
     if(gr->getNativeType() == GEntity::GmshModel ||
        gr->getNativeType() == GEntity::UnknownModel) {
       if(!FindVolume(gr->tag()))
@@ -1442,7 +1442,7 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
     for(int i = 0; i < List_Nbr(points); i++) {
       Vertex *p;
       List_Read(points, i, &p);
-      GVertex *v = model->getVertexByTag(p->Num);
+      GPoint *v = model->getVertexByTag(p->Num);
       if(!v) {
         v = new gmshVertex(model, p);
         model->add(v);
@@ -1462,8 +1462,8 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
       Curve *c;
       List_Read(curves, i, &c);
       if(c->Num >= 0) {
-        GEdge *e = model->getEdgeByTag(c->Num);
-        GVertex *beg = nullptr, *end = nullptr;
+        GCurve *e = model->getEdgeByTag(c->Num);
+        GPoint *beg = nullptr, *end = nullptr;
         if(c->begByTag) beg = model->getVertexByTag(c->begByTag);
         if(!beg && c->beg) beg = model->getVertexByTag(c->beg->Num);
         if(c->endByTag) end = model->getVertexByTag(c->endByTag);
@@ -1496,7 +1496,7 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
     for(int i = 0; i < List_Nbr(surfaces); i++) {
       Surface *s;
       List_Read(surfaces, i, &s);
-      GFace *f = model->getFaceByTag(s->Num);
+      GSurface *f = model->getFaceByTag(s->Num);
       if(!f) {
         f = new gmshFace(model, s);
         model->add(f);
@@ -1515,7 +1515,7 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
     for(int i = 0; i < List_Nbr(volumes); i++) {
       Volume *v;
       List_Read(volumes, i, &v);
-      GRegion *r = model->getRegionByTag(v->Num);
+      GVolume *r = model->getRegionByTag(v->Num);
       if(!r) {
         r = new gmshRegion(model, v);
         model->add(r);
@@ -1784,36 +1784,36 @@ public:
   }
 };
 
-static bool skipRegion(GRegion *gr)
+static bool skipRegion(GVolume *gr)
 {
   if(gr->physicals.size()) return false;
   return true;
 }
 
-static bool skipFace(GFace *gf)
+static bool skipFace(GSurface *gf)
 {
   if(gf->physicals.size()) return false;
-  std::list<GRegion *> regions(gf->regions());
+  std::list<GVolume *> regions(gf->regions());
   for(auto itr = regions.begin(); itr != regions.end(); itr++) {
     if(!skipRegion(*itr)) return false;
   }
   return true;
 }
 
-static bool skipEdge(GEdge *ge)
+static bool skipEdge(GCurve *ge)
 {
   if(ge->physicals.size()) return false;
-  std::vector<GFace *> faces(ge->faces());
+  std::vector<GSurface *> faces(ge->faces());
   for(auto itf = faces.begin(); itf != faces.end(); itf++) {
     if(!skipFace(*itf)) return false;
   }
   return true;
 }
 
-static bool skipVertex(GVertex *gv)
+static bool skipVertex(GPoint *gv)
 {
   if(gv->physicals.size()) return false;
-  std::vector<GEdge *> const &edges = gv->edges();
+  std::vector<GCurve *> const &edges = gv->edges();
   for(auto ite = edges.begin(); ite != edges.end(); ite++) {
     if(!skipEdge(*ite)) return false;
   }
@@ -1945,7 +1945,7 @@ int GModel::exportDiscreteGEOInternals()
       Curve *c = CreateCurve((*it)->tag(), MSH_SEGM_DISCRETE, 1, nullptr,
                              nullptr, -1, -1, 0., 1., ok);
       c->Control_Points = List_Create(2, 1, sizeof(Vertex *));
-      GVertex *gvb = (*it)->getBeginVertex();
+      GPoint *gvb = (*it)->getBeginVertex();
       if(gvb) {
         Vertex *v = FindPoint(gvb->tag());
         if(v) {
@@ -1959,7 +1959,7 @@ int GModel::exportDiscreteGEOInternals()
       else {
         Msg::Warning("Discrete curve %d has no begin point", (*it)->tag());
       }
-      GVertex *gve = (*it)->getEndVertex();
+      GPoint *gve = (*it)->getEndVertex();
       if(gve) {
         Vertex *v = FindPoint(gve->tag());
         if(v) {
@@ -1982,7 +1982,7 @@ int GModel::exportDiscreteGEOInternals()
   for(auto it = firstFace(); it != lastFace(); it++) {
     if((*it)->geomType() == GEntity::DiscreteSurface) {
       Surface *s = CreateSurface((*it)->tag(), MSH_SURF_DISCRETE);
-      std::vector<GEdge *> const &edges = (*it)->edges();
+      std::vector<GCurve *> const &edges = (*it)->edges();
       s->Generatrices = List_Create(edges.size() + 1, 1, sizeof(Curve *));
       for(auto ite = edges.begin(); ite != edges.end(); ite++) {
         Curve *c = FindCurve((*ite)->tag());
@@ -1999,7 +1999,7 @@ int GModel::exportDiscreteGEOInternals()
   for(auto it = firstRegion(); it != lastRegion(); it++) {
     if((*it)->geomType() == GEntity::DiscreteVolume) {
       Volume *v = CreateVolume((*it)->tag(), MSH_VOLUME_DISCRETE);
-      std::vector<GFace *> faces = (*it)->faces();
+      std::vector<GSurface *> faces = (*it)->faces();
       v->Surfaces = List_Create(faces.size() + 1, 1, sizeof(Surface *));
       for(auto itf = faces.begin(); itf != faces.end(); itf++) {
         Surface *s = FindSurface((*itf)->tag());

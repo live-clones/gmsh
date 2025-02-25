@@ -22,14 +22,14 @@
 #include "Generator.h"
 #include "Context.h"
 
-typedef std::map<MFace, std::vector<MVertex *>, MFaceLessThan> faceContainer;
+typedef std::map<MFace, std::vector<MNode *>, MFaceLessThan> faceContainer;
 
-void subdivide_pyramid(MElement *element, GRegion *gr,
+void subdivide_pyramid(MElement *element, GVolume *gr,
                        faceContainer &faceVertices,
                        std::vector<MHexahedron *> &dwarfs88);
 
 struct MVertexPtrLessThanParam {
-  bool operator()(const MVertex *v1, const MVertex *v2) const
+  bool operator()(const MNode *v1, const MNode *v2) const
   {
     double u1 = 0., u2 = 1.;
     v1->getParameter(0, u1);
@@ -39,7 +39,7 @@ struct MVertexPtrLessThanParam {
 };
 
 // Set BM data on vertex
-static void setBLData(MVertex *v)
+static void setBLData(MNode *v)
 {
   switch(v->onWhat()->dim()) {
   case 1: {
@@ -61,7 +61,7 @@ static bool setBLData(MElement *el)
 {
   // Check whether all low-order nodes are marked as BL nodes (only works in 2D)
   for(std::size_t i = 0; i < el->getNumPrimaryVertices(); i++) {
-    MVertex *v = el->getVertex(i);
+    MNode *v = el->getVertex(i);
     bool isBL = false;
     switch(v->onWhat()->dim()) {
     case 0: isBL = true; break;
@@ -85,7 +85,7 @@ static bool setBLData(MElement *el)
   return true;
 }
 
-static void Subdivide(GEdge *ge)
+static void Subdivide(GCurve *ge)
 {
   std::vector<MLine *> lines2;
   for(std::size_t i = 0; i < ge->lines.size(); i++) {
@@ -110,7 +110,7 @@ static void Subdivide(GEdge *ge)
   ge->deleteVertexArrays();
 }
 
-static void Subdivide(GFace *gf, bool splitIntoQuads, bool splitIntoHexas,
+static void Subdivide(GSurface *gf, bool splitIntoQuads, bool splitIntoHexas,
                       faceContainer &faceVertices, bool linear)
 {
   if(!splitIntoQuads && !splitIntoHexas) {
@@ -153,16 +153,16 @@ static void Subdivide(GFace *gf, bool splitIntoQuads, bool splitIntoHexas,
     for(std::size_t i = 0; i < gf->triangles.size(); i++) {
       MTriangle *t = gf->triangles[i];
       if(t->getNumVertices() == 6) {
-        MVertex *newv;
+        MNode *newv;
         if(linear) {
           SPoint3 ptx;
           t->pnt(1. / 3., 1. / 3., 0., ptx); // is the barycenter
-          newv = new MVertex(ptx.x(), ptx.y(), ptx.z(), gf);
+          newv = new MNode(ptx.x(), ptx.y(), ptx.z(), gf);
         }
         else {
           SPoint3 ctr = t->barycenter();
           const double pp[2] = {0.5, 0.5}; // should be improved...
-          GPoint gp = gf->closestPoint(ctr, pp); // orthogonal projection
+          GVertex gp = gf->closestPoint(ctr, pp); // orthogonal projection
           newv = new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
         }
         gf->mesh_vertices.push_back(newv);
@@ -189,7 +189,7 @@ static void Subdivide(GFace *gf, bool splitIntoQuads, bool splitIntoHexas,
   gf->deleteVertexArrays();
 }
 
-static void Subdivide(GRegion *gr, bool splitIntoHexas,
+static void Subdivide(GVolume *gr, bool splitIntoHexas,
                       faceContainer &faceVertices)
 {
   if(!splitIntoHexas) {
@@ -269,20 +269,20 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas,
     for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
       MTetrahedron *t = gr->tetrahedra[i];
       if(t->getNumVertices() == 10) {
-        std::vector<MVertex *> newv;
+        std::vector<MNode *> newv;
         for(int j = 0; j < t->getNumFaces(); j++) {
           MFace face = t->getFace(j);
           auto fIter = faceVertices.find(face);
           if(fIter != faceVertices.end()) { newv.push_back(fIter->second[0]); }
           else {
             SPoint3 pc = face.barycenter();
-            newv.push_back(new MVertex(pc.x(), pc.y(), pc.z(), gr));
+            newv.push_back(new MNode(pc.x(), pc.y(), pc.z(), gr));
             faceVertices[face].push_back(newv.back());
             gr->mesh_vertices.push_back(newv.back());
           }
         }
         SPoint3 pc = t->barycenter();
-        newv.push_back(new MVertex(pc.x(), pc.y(), pc.z(), gr));
+        newv.push_back(new MNode(pc.x(), pc.y(), pc.z(), gr));
         gr->mesh_vertices.push_back(newv.back());
         hexahedra2.push_back(new MHexahedron(
           t->getVertex(0), t->getVertex(4), newv[0], t->getVertex(6),
@@ -311,20 +311,20 @@ static void Subdivide(GRegion *gr, bool splitIntoHexas,
     for(std::size_t i = 0; i < gr->prisms.size(); i++) {
       MPrism *p = gr->prisms[i];
       if(p->getNumVertices() == 18) {
-        std::vector<MVertex *> newv;
+        std::vector<MNode *> newv;
         for(int j = 0; j < 2; j++) {
           MFace face = p->getFace(j);
           auto fIter = faceVertices.find(face);
           if(fIter != faceVertices.end()) { newv.push_back(fIter->second[0]); }
           else {
             SPoint3 pc = face.barycenter();
-            newv.push_back(new MVertex(pc.x(), pc.y(), pc.z(), gr));
+            newv.push_back(new MNode(pc.x(), pc.y(), pc.z(), gr));
             faceVertices[face].push_back(newv.back());
             gr->mesh_vertices.push_back(newv.back());
           }
         }
         SPoint3 pc = p->barycenter();
-        newv.push_back(new MVertex(pc.x(), pc.y(), pc.z(), gr));
+        newv.push_back(new MNode(pc.x(), pc.y(), pc.z(), gr));
         gr->mesh_vertices.push_back(newv.back());
         hexahedra2.push_back(new MHexahedron(
           p->getVertex(0), p->getVertex(6), newv[0], p->getVertex(7),
@@ -514,7 +514,7 @@ void BarycentricRefineMesh(GModel *m)
   // Only update triangles in 2D, only update tets in 3D
   if(m->getNumRegions() == 0) {
     for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
-      GFace *gf = *it;
+      GSurface *gf = *it;
       std::size_t numt = gf->triangles.size();
       if(!numt) continue;
       std::vector<MTriangle *> triangles2(3 * numt);
@@ -522,7 +522,7 @@ void BarycentricRefineMesh(GModel *m)
         MTriangle *t = gf->triangles[i];
         SPoint3 bary = t->barycenter();
         // FIXME: create an MFaceVertex (with correct parametric coordinates)?
-        MVertex *v = new MVertex(bary.x(), bary.y(), bary.z(), gf);
+        MNode *v = new MNode(bary.x(), bary.y(), bary.z(), gf);
         triangles2[3 * i] = new MTriangle(t->getVertex(0), t->getVertex(1), v);
         triangles2[3 * i + 1] =
           new MTriangle(t->getVertex(1), t->getVertex(2), v);
@@ -537,7 +537,7 @@ void BarycentricRefineMesh(GModel *m)
   }
   else {
     for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
-      GRegion *gr = *it;
+      GVolume *gr = *it;
       std::size_t numt = gr->tetrahedra.size();
       if(!numt) continue;
       std::vector<MTetrahedron *> tetrahedra2(4 * numt);
@@ -545,7 +545,7 @@ void BarycentricRefineMesh(GModel *m)
         MTetrahedron *t = gr->tetrahedra[i];
         SPoint3 bary = t->barycenter();
         // FIXME: create an MFaceVertex (with correct parametric coordinates)?
-        MVertex *v = new MVertex(bary.x(), bary.y(), bary.z(), gr);
+        MNode *v = new MNode(bary.x(), bary.y(), bary.z(), gr);
         tetrahedra2[4 * i] = new MTetrahedron(t->getVertex(0), t->getVertex(1),
                                               t->getVertex(2), v);
         tetrahedra2[4 * i + 1] = new MTetrahedron(
@@ -719,11 +719,11 @@ static int schneiders_connect(int i, int j)
   }
 }
 
-void subdivide_pyramid(MElement *element, GRegion *gr,
+void subdivide_pyramid(MElement *element, GVolume *gr,
                        faceContainer &faceVertices,
                        std::vector<MHexahedron *> &dwarfs88)
 {
-  std::vector<MVertex *> v(105, (MVertex *)nullptr);
+  std::vector<MNode *> v(105, (MNode *)nullptr);
 
   v[29] = element->getVertex(0);
   v[27] = element->getVertex(1);
@@ -750,7 +750,7 @@ void subdivide_pyramid(MElement *element, GRegion *gr,
     v[25] = fIter->second[0];
   else {
     element->pnt(0.0, -0.666667, 0.471405 / 1.414213, point);
-    v[25] = new MVertex(point.x(), point.y(), point.z(), gr);
+    v[25] = new MNode(point.x(), point.y(), point.z(), gr);
     gr->addMeshVertex(v[25]);
     faceVertices[MFace(v[29], v[27], v[102])].push_back(v[25]);
   }
@@ -760,7 +760,7 @@ void subdivide_pyramid(MElement *element, GRegion *gr,
     v[95] = fIter->second[0];
   else {
     element->pnt(0.666667, 0.0, 0.471405 / 1.414213, point);
-    v[95] = new MVertex(point.x(), point.y(), point.z(), gr);
+    v[95] = new MNode(point.x(), point.y(), point.z(), gr);
     gr->addMeshVertex(v[95]);
     faceVertices[MFace(v[27], v[3], v[102])].push_back(v[95]);
   }
@@ -770,7 +770,7 @@ void subdivide_pyramid(MElement *element, GRegion *gr,
     v[1] = fIter->second[0];
   else {
     element->pnt(0.0, 0.666667, 0.471405 / 1.414213, point);
-    v[1] = new MVertex(point.x(), point.y(), point.z(), gr);
+    v[1] = new MNode(point.x(), point.y(), point.z(), gr);
     gr->addMeshVertex(v[1]);
     faceVertices[MFace(v[3], v[5], v[102])].push_back(v[1]);
   }
@@ -780,7 +780,7 @@ void subdivide_pyramid(MElement *element, GRegion *gr,
     v[99] = fIter->second[0];
   else {
     element->pnt(-0.666667, 0.0, 0.471405 / 1.414213, point);
-    v[99] = new MVertex(point.x(), point.y(), point.z(), gr);
+    v[99] = new MNode(point.x(), point.y(), point.z(), gr);
     gr->addMeshVertex(v[99]);
     faceVertices[MFace(v[5], v[29], v[102])].push_back(v[99]);
   }
@@ -789,7 +789,7 @@ void subdivide_pyramid(MElement *element, GRegion *gr,
     if(!v[i]) {
       element->pnt(schneiders_z(i), schneiders_x(i), schneiders_y(i) / 1.414213,
                    point);
-      v[i] = new MVertex(point.x(), point.y(), point.z(), gr);
+      v[i] = new MNode(point.x(), point.y(), point.z(), gr);
       gr->addMeshVertex(v[i]);
     }
   }

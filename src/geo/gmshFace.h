@@ -6,11 +6,11 @@
 #ifndef GMSH_FACE_H
 #define GMSH_FACE_H
 
-#include "GFace.h"
+#include "GSurface.h"
 
 class Surface;
 
-class gmshFace : public GFace {
+class gmshFace : public GSurface {
 private:
   Surface *_s;
   Range<double> _parBounds[2];
@@ -19,9 +19,9 @@ public:
   gmshFace(GModel *m, Surface *s);
   virtual ~gmshFace() {}
   virtual Range<double> parBounds(int i) const { return _parBounds[i]; }
-  using GFace::point;
-  virtual GPoint point(double par1, double par2) const;
-  virtual GPoint closestPoint(const SPoint3 &queryPoint,
+  using GSurface::point;
+  virtual GVertex point(double par1, double par2) const;
+  virtual GVertex closestPoint(const SPoint3 &queryPoint,
                               const double initialGuess[2]) const;
   virtual bool containsPoint(const SPoint3 &pt) const;
   virtual double getMetricEigenvalue(const SPoint2 &);

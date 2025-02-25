@@ -17,13 +17,13 @@ cited appropriately. See the README.txt file for license information.
 #define QTEXTR3D_H
 
 #include "GEntity.h"
-#include "GFace.h"
-#include "GRegion.h"
-#include "GEdge.h"
+#include "GSurface.h"
+#include "GVolume.h"
+#include "GCurve.h"
 #include "GModel.h"
 #include "ExtrudeParams.h"
 #include "GmshDefines.h"
-#include "MVertex.h"
+#include "MNode.h"
 #include "Context.h"
 #include "GModel.h"
 #include "meshGFace.h"
@@ -42,17 +42,17 @@ cited appropriately. See the README.txt file for license information.
 // Determines whether the region is a valid QuadToTri region.  Performs some
 // basic checks, including whether there is a valid top, valid source, and that
 // the surfaces serving as laterals are structured Added 2010-12-30
-bool IsValidQuadToTriRegion(GRegion *region, bool *allNonGlobalSharedLaterals);
+bool IsValidQuadToTriRegion(GVolume *region, bool *allNonGlobalSharedLaterals);
 
 // Mesh QuadToTri region from extrudeMesh() from meshGRegionExtruded.cpp.  Added
 // 04/08/2011:
-int meshQuadToTriRegion(GRegion *gr, MVertexRTree &pos);
+int meshQuadToTriRegion(GVolume *gr, MVertexRTree &pos);
 
 // The function that is called from meshGRegionExtruded.cpp to mesh QuadToTri
 // regions that are adjacent to subdivided regions, after the global Subdivide
 // command is called.  Added 04/08/11.
 int meshQuadToTriRegionAfterGlobalSubdivide(
-  GRegion *gr, std::set<std::pair<MVertex *, MVertex *> > *edges,
+  GVolume *gr, std::set<std::pair<MNode *, MNode *> > *edges,
   MVertexRTree &pos);
 
 #endif

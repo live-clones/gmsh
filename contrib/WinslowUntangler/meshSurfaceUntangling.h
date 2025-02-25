@@ -11,7 +11,7 @@
 #include <array>
 #include <cstdint>
 
-class GFace;
+class GSurface;
 
 /**
  * @brief Untangling/smoothing of volume mesh based on minimization of the
@@ -31,7 +31,7 @@ class GFace;
  *
  * @return True if the smoothing have been applied (mesh may still be tangled)
  */
-bool untangleGFaceMeshConstrained(GFace *gf,
+bool untangleGFaceMeshConstrained(GSurface *gf,
 				  int iterMax = 1000,
                                   double timeMax = 9999.);//,
 //				  int  curveInteriorEdges = false);

@@ -10,7 +10,7 @@ set(SRC
     closestVertex.cpp
   intersectCurveSurface.cpp
   GEntity.cpp STensor3.cpp
-    GVertex.cpp GEdge.cpp GFace.cpp GRegion.cpp
+    GPoint.cpp GCurve.cpp GSurface.cpp GVolume.cpp
     GEdgeLoop.cpp
     gmshVertex.cpp gmshEdge.cpp gmshFace.cpp gmshRegion.cpp
     gmshSurface.cpp
@@ -36,7 +36,7 @@ set(SRC
   findLinks.cpp
   SOrientedBoundingBox.cpp
   GeomMeshMatcher.cpp
-  MVertex.cpp
+  MNode.cpp
   MEdge.cpp
   MFace.cpp
   MElement.cpp MElementOctree.cpp

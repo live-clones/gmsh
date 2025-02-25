@@ -19,11 +19,11 @@
 /* Gmsh includes */
 #include "GmshMessage.h"
 #include "OS.h"
-#include "GVertex.h"
-#include "GEdge.h"
-#include "GFace.h"
+#include "GPoint.h"
+#include "GCurve.h"
+#include "GSurface.h"
 #include "GModel.h"
-#include "MVertex.h"
+#include "MNode.h"
 #include "Context.h"
 #include "MLine.h"
 #include "MTriangle.h"
@@ -38,7 +38,7 @@ using namespace CppUtils;
 
 namespace QMT {
 
-  void setMinimum(MVertex *v, std::unordered_map<MVertex *, double> &minSize,
+  void setMinimum(MNode *v, std::unordered_map<MNode *, double> &minSize,
                   double value)
   {
     auto it = minSize.find(v);
@@ -76,8 +76,8 @@ namespace QMT {
     // warning: not very efficient ...
     double mdist2 = DBL_MAX;
     for(const MLine &l : lines) {
-      const MVertex *v1 = l.getVertex(0);
-      const MVertex *v2 = l.getVertex(1);
+      const MNode *v1 = l.getVertex(0);
+      const MNode *v2 = l.getVertex(1);
       mdist2 = std::min(mdist2, distance_point_segment_squared(
                                   query, v1->point(), v2->point()));
     }
@@ -85,7 +85,7 @@ namespace QMT {
   }
 
   double distanceToGEdgeBackgroundMesh(const SPoint3 &query,
-                                       GlobalBackgroundMesh &gbm, GEdge *ge)
+                                       GlobalBackgroundMesh &gbm, GCurve *ge)
   {
     auto it = gbm.edgeBackgroundMeshes.find(ge);
     if(it == gbm.edgeBackgroundMeshes.end()) {
@@ -102,7 +102,7 @@ using namespace QMT;
 
 int computeMinimalSizeOnCurves(GlobalBackgroundMesh &gbm,
                                bool clampMinWithTriEdges,
-                               std::unordered_map<MVertex *, double> &minSize)
+                               std::unordered_map<MNode *, double> &minSize)
 {
   Msg::Debug("compute minimal size on curves (using background mesh) ...");
   /* Important information: all mesh elements are queried in the
@@ -111,27 +111,27 @@ int computeMinimalSizeOnCurves(GlobalBackgroundMesh &gbm,
   GModel *gm = gbm.gm;
   if(gm == NULL) return -1;
 
-  /* Initialize minimal size on vertex associated to GVertex
+  /* Initialize minimal size on vertex associated to GPoint
    * prescribed size */
-  for(MVertex *v : gbm.mesh_vertices) {
-    GVertex *gv = dynamic_cast<GVertex *>(v->onWhat());
+  for(MNode *v : gbm.mesh_vertices) {
+    GPoint *gv = dynamic_cast<GPoint *>(v->onWhat());
     if(gv == NULL) continue;
     /* Mesh size */
     double size = gv->prescribedMeshSizeAtVertex();
     if(size > 0 && size < 1.e22) setMinimum(v, minSize, size);
   }
 
-  std::unordered_map<GVertex *, std::vector<GEdge *> > gv2ge;
-  for(GEdge *ge : model_edges(gm))
-    for(GVertex *gv : ge->vertices()) { gv2ge[gv].push_back(ge); }
+  std::unordered_map<GPoint *, std::vector<GCurve *> > gv2ge;
+  for(GCurve *ge : model_edges(gm))
+    for(GPoint *gv : ge->vertices()) { gv2ge[gv].push_back(ge); }
   for(auto &kv : gv2ge) sort_unique(kv.second);
 
   /* On curve vertices, minimum size is minimum of:
    * - existing size
    * - curve length
    * - distance of projection to non adjacent curves */
-  for(GFace *gf : model_faces(gm)) {
-    for(GEdge *ge : face_edges(gf)) {
+  for(GSurface *gf : model_faces(gm)) {
+    for(GCurve *ge : face_edges(gf)) {
       auto it = gbm.edgeBackgroundMeshes.find(ge);
       if(it == gbm.edgeBackgroundMeshes.end()) {
         Msg::Error("curve %i not found in background mesh", ge->tag());
@@ -139,25 +139,25 @@ int computeMinimalSizeOnCurves(GlobalBackgroundMesh &gbm,
       }
 
       /* Collect curve vertices, including extremities */
-      std::vector<MVertex *> curve_vertices;
+      std::vector<MNode *> curve_vertices;
       for(MLine &e : it->second.lines)
         for(size_t lv : {0, 1}) {
-          MVertex *v = e.getVertex(lv);
+          MNode *v = e.getVertex(lv);
           curve_vertices.push_back(v);
         }
       sort_unique(curve_vertices);
 
       /* Collect non-adjacent curves */
-      std::vector<GEdge *> curvesAjacent;
-      for(GVertex *gv : ge->vertices()) {
-        for(GEdge *ge2 : gv2ge[gv])
+      std::vector<GCurve *> curvesAjacent;
+      for(GPoint *gv : ge->vertices()) {
+        for(GCurve *ge2 : gv2ge[gv])
           if(ge2 != ge) {
             curvesAjacent.push_back(ge2);
 
             if(ge2->length() <=
                CTX::instance()->geom.tolerance) { /* yes CAD is annoying ... */
-              for(GVertex *gv2 : ge2->vertices()) {
-                for(GEdge *ge3 : gv2ge[gv2])
+              for(GPoint *gv2 : ge2->vertices()) {
+                for(GCurve *ge3 : gv2ge[gv2])
                   if(ge3 != ge) { curvesAjacent.push_back(ge3); }
               }
             }
@@ -165,19 +165,19 @@ int computeMinimalSizeOnCurves(GlobalBackgroundMesh &gbm,
       }
       sort_unique(curvesAjacent);
 
-      std::vector<GEdge *> curvesNotAdjacent;
-      for(GFace *gf : ge->faces())
-        for(GEdge *ge2 : gf->edges())
+      std::vector<GCurve *> curvesNotAdjacent;
+      for(GSurface *gf : ge->faces())
+        for(GCurve *ge2 : gf->edges())
           if(ge2 != ge) { curvesNotAdjacent.push_back(ge2); }
       curvesNotAdjacent = difference(curvesNotAdjacent, curvesAjacent);
       sort_unique(curvesNotAdjacent);
 
       double len = ge->length();
-      for(MVertex *v : curve_vertices) {
+      for(MNode *v : curve_vertices) {
         double vMin = len; /* curve length */
 
         /* Size: minimum of projection to non-adj curves */
-        for(GEdge *ge2 : curvesNotAdjacent) {
+        for(GCurve *ge2 : curvesNotAdjacent) {
           /* Warning: testing all MLine, slow, should have kdtree acceleration
            */
           double dist = distanceToGEdgeBackgroundMesh(v->point(), gbm, ge2);
@@ -190,7 +190,7 @@ int computeMinimalSizeOnCurves(GlobalBackgroundMesh &gbm,
   }
 
   if(clampMinWithTriEdges) {
-    for(GFace *gf : model_faces(gm)) {
+    for(GSurface *gf : model_faces(gm)) {
       auto it = gbm.faceBackgroundMeshes.find(gf);
       if(it == gbm.faceBackgroundMeshes.end()) {
         Msg::Error("face %i not found in background mesh", gf->tag());
@@ -198,8 +198,8 @@ int computeMinimalSizeOnCurves(GlobalBackgroundMesh &gbm,
       }
       for(MTriangle &t : it->second.triangles)
         for(size_t le = 0; le < 3; ++le) {
-          MVertex *v1 = t.getVertex(le);
-          MVertex *v2 = t.getVertex((le + 1) % 3);
+          MNode *v1 = t.getVertex(le);
+          MNode *v2 = t.getVertex((le + 1) % 3);
           double len = v1->distance(v2);
           if(v1->onWhat()->cast2Face() == nullptr) {
             auto itv = minSize.find(v1);
@@ -215,7 +215,7 @@ int computeMinimalSizeOnCurves(GlobalBackgroundMesh &gbm,
 }
 
 int sizeMapOneWaySmoothing(const std::vector<MTriangle *> &triangles,
-                           std::unordered_map<MVertex *, double> &values,
+                           std::unordered_map<MNode *, double> &values,
                            double gradientMax)
 {
   Msg::Debug(
@@ -224,21 +224,21 @@ int sizeMapOneWaySmoothing(const std::vector<MTriangle *> &triangles,
   if(triangles.size() == 0) return -1;
   if(gradientMax <= 0.) return -1;
 
-  std::unordered_map<MVertex *, std::vector<MVertex *> > v2v;
+  std::unordered_map<MNode *, std::vector<MNode *> > v2v;
   buildVertexToVertexMap(triangles, v2v);
 
-  std::priority_queue<std::pair<double, MVertex *>,
-                      std::vector<std::pair<double, MVertex *> >,
-                      std::greater<std::pair<double, MVertex *> > >
+  std::priority_queue<std::pair<double, MNode *>,
+                      std::vector<std::pair<double, MNode *> >,
+                      std::greater<std::pair<double, MNode *> > >
     Q;
   for(const auto &kv : values) { Q.push({kv.second, kv.first}); }
 
   /* Dijkstra propagation */
   while(Q.size() > 0) {
-    MVertex *v = Q.top().second;
+    MNode *v = Q.top().second;
     double cdist = Q.top().first;
     Q.pop();
-    for(MVertex *v2 : v2v[v]) {
+    for(MNode *v2 : v2v[v]) {
       double w_ij = v->distance(v2) * (gradientMax - 1.);
       auto it = values.find(v2);
       if(it == values.end() || cdist + w_ij < it->second) {
@@ -258,7 +258,7 @@ int sizeMapOneWaySmoothing(const std::vector<MTriangle *> &triangles,
   return 0;
 }
 
-void quantileFiltering(std::unordered_map<MVertex *, double> &scaling,
+void quantileFiltering(std::unordered_map<MNode *, double> &scaling,
                        double critera)
 {
   std::vector<double> values(scaling.size());

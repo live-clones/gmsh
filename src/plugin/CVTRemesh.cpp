@@ -90,7 +90,7 @@ PView *GMSH_CVTRemeshPlugin::execute(PView *v)
   for(GModel::fiter it = m->firstFace(); it != m->lastFace(); ++it) {
     (*it)->buildSTLTriangulation();
     for(std::size_t i = 0; i < (*it)->stl_vertices_uv.size(); ++i) {
-      GPoint p = (*it)->point((*it)->stl_vertices_uv[i]);
+      GVertex p = (*it)->point((*it)->stl_vertices_uv[i]);
       vertices.push_back(p.x());
       vertices.push_back(p.y());
       vertices.push_back(p.z());
@@ -284,14 +284,14 @@ PView *GMSH_CVTRemeshPlugin::execute(PView *v)
   rvd.set_mesh(&lifted_mesh);
   rvd.compute(build_rdt);
 
-  GFace *res_face = new discreteFace(m, m->getMaxElementaryNumber(2) + 1);
+  GSurface *res_face = new discreteFace(m, m->getMaxElementaryNumber(2) + 1);
   m->add(res_face);
 
   // scale back and transfer to gmsh
-  std::vector<MVertex *> m_verts(nsites);
+  std::vector<MNode *> m_verts(nsites);
   for(std::size_t i = 0; i < nsites; ++i) {
     m_verts[i] =
-      new MVertex(lifted_sites[6 * i] * mesh_scale + mesh_center[0],
+      new MNode(lifted_sites[6 * i] * mesh_scale + mesh_center[0],
                   lifted_sites[6 * i + 1] * mesh_scale + mesh_center[1],
                   lifted_sites[6 * i + 2] * mesh_scale + mesh_center[2]);
     res_face->addMeshVertex(m_verts[i]);

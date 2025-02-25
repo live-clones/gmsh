@@ -51,43 +51,43 @@ public:
 
   void addTetrahedron(MTetrahedron *t, int onWhichPartition)
   {
-    GRegion::addTetrahedron(t);
+    GVolume::addTetrahedron(t);
     _ghostCells.insert(std::pair<MElement *, int>(t, onWhichPartition));
     model()->addGhostCells(t, _partition);
   }
   void addHexahedron(MHexahedron *h, int onWhichPartition)
   {
-    GRegion::addHexahedron(h);
+    GVolume::addHexahedron(h);
     _ghostCells.insert(std::pair<MElement *, int>(h, onWhichPartition));
     model()->addGhostCells(h, _partition);
   }
   void addPrism(MPrism *p, int onWhichPartition)
   {
-    GRegion::addPrism(p);
+    GVolume::addPrism(p);
     _ghostCells.insert(std::pair<MElement *, int>(p, onWhichPartition));
     model()->addGhostCells(p, _partition);
   }
   void addPyramid(MPyramid *p, int onWhichPartition)
   {
-    GRegion::addPyramid(p);
+    GVolume::addPyramid(p);
     _ghostCells.insert(std::pair<MElement *, int>(p, onWhichPartition));
     model()->addGhostCells(p, _partition);
   }
   void addPolyhedron(MPolyhedron *p, int onWhichPartition)
   {
-    GRegion::addPolyhedron(p);
+    GVolume::addPolyhedron(p);
     _ghostCells.insert(std::pair<MElement *, int>(p, onWhichPartition));
     model()->addGhostCells(p, _partition);
   }
   void addTrihedron(MTrihedron *t, int onWhichPartition)
   {
-    GRegion::addTrihedron(t);
+    GVolume::addTrihedron(t);
     _ghostCells.insert(std::pair<MElement *, int>(t, onWhichPartition));
     model()->addGhostCells(t, _partition);
   }
   void addElement(MElement *e, int onWhichPartition)
   {
-    GRegion::addElement(e);
+    GVolume::addElement(e);
     _ghostCells.insert(std::pair<MElement *, int>(e, onWhichPartition));
     model()->addGhostCells(e, _partition);
   }

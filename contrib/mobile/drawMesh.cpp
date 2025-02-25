@@ -17,13 +17,13 @@
 // from GModelVertexArrays
 extern unsigned int getColorByEntity(GEntity *e);
 
-void drawMeshVertex(GVertex *e)
+void drawMeshVertex(GPoint *e)
 {
   if(!CTX::instance()->mesh.nodes) return;
   std::vector<GLfloat> vertex;
   std::vector<GLubyte> color;
   for(unsigned int i = 0; i < e->mesh_vertices.size(); i++) {
-    MVertex *v = e->mesh_vertices[i];
+    MNode *v = e->mesh_vertices[i];
     if(!v->getVisibility()) continue;
     unsigned int col;
     if(CTX::instance()->mesh.colorCarousel == 0 ||
@@ -53,20 +53,20 @@ void drawMeshVertex(GVertex *e)
   glDisableClientState(GL_COLOR_ARRAY);
 }
 
-void drawMeshEdge(GEdge *e)
+void drawMeshEdge(GCurve *e)
 {
   if(!e->getVisibility()) return;
   glLineWidth(CTX::instance()->mesh.lineWidth);
   drawArray(e->va_lines, GL_LINES, true);
 }
 
-void drawMeshFace(GFace *f)
+void drawMeshFace(GSurface *f)
 {
   if(!f->getVisibility()) return;
   drawArray(f->va_lines, GL_LINES, true);
 }
 
-void drawMeshRegion(GRegion *r)
+void drawMeshRegion(GVolume *r)
 {
   if(!r->getVisibility()) return;
   drawArray(r->va_lines, GL_LINES, true);

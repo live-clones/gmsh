@@ -272,8 +272,8 @@ double thermicSolver::computeLagNorm(int tag, simpleFunction<double> *sol)
 PView *thermicSolver::buildTemperatureView(const std::string postFileName)
 {
   std::cout << "build Temperature View" << std::endl;
-  std::set<MVertex *> v;
-  std::map<MVertex *, MElement *> vCut;
+  std::set<MNode *> v;
+  std::map<MNode *, MElement *> vCut;
   for(std::size_t i = 0; i < thermicFields.size(); ++i) {
     for(auto it =
           thermicFields[i].g->begin();
@@ -322,7 +322,7 @@ thermicSolver::buildLagrangeMultiplierView(const std::string &postFileName)
 {
   std::cout << "build Lagrange Multiplier View" << std::endl;
   if(!LagrangeMultiplierSpace) return new PView();
-  std::set<MVertex *> v;
+  std::set<MNode *> v;
   for(std::size_t i = 0; i < LagrangeMultiplierFields.size(); ++i) {
     for(auto it =
           LagrangeMultiplierFields[i].g->begin();

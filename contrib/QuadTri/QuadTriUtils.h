@@ -19,12 +19,12 @@ cited appropriately. See the README.txt file for license information.
 #include <stdlib.h>
 #include "ExtrudeParams.h"
 #include "GEntity.h"
-#include "GFace.h"
-#include "GRegion.h"
-#include "GEdge.h"
+#include "GSurface.h"
+#include "GVolume.h"
+#include "GCurve.h"
 #include "GModel.h"
 #include "GmshDefines.h"
-#include "MVertex.h"
+#include "MNode.h"
 #include "MVertexRTree.h"
 #include "Context.h"
 #include "GModel.h"
@@ -88,8 +88,8 @@ cited appropriately. See the README.txt file for license information.
 
 struct CategorizedSourceElements {
 public:
-  GRegion *region;
-  GFace *source_face;
+  GVolume *region;
+  GSurface *source_face;
   bool valid;
   std::set<unsigned int> three_bnd_pt_tri, four_bnd_pt_quad, other_bnd_tri,
     other_bnd_quad;
@@ -99,15 +99,15 @@ public:
   std::set<unsigned int> internal_tri, internal_quad;
   std::vector<bool> tri_bool, quad_bool;
   // constructor
-  CategorizedSourceElements(GRegion *gr);
+  CategorizedSourceElements(GVolume *gr);
 };
 
 // this determines if a face is a non-lateral face in a structured toroidal
 // volume extrusion with at least one QuadToTri region...
-int IsInToroidalQuadToTri(GFace *face);
+int IsInToroidalQuadToTri(GSurface *face);
 
 // replace boundary quads in a source surface for toroidal quadtri extrusion
-void ReplaceBndQuadsInFace(GFace *face);
+void ReplaceBndQuadsInFace(GSurface *face);
 
 // This is a member function for the element map in ExtrudeParams.
 // This allows insertion of a whole vector at once.
@@ -119,51 +119,51 @@ std::vector<MElement*> *extrudedVector );
 // Insert all vertices on a region's source edge, including corners,
 // into pos_src_edge set.
 // Added 2010-01-09
-void QuadToTriInsertSourceEdgeVertices(GRegion *gr, MVertexRTree &pos_src_edge);
+void QuadToTriInsertSourceEdgeVertices(GVolume *gr, MVertexRTree &pos_src_edge);
 
 // Insert all vertices on a faces edges, including corners,
 // into pos_edges set.
 // Added 2010-01-18
-void QuadToTriInsertFaceEdgeVertices(GFace *face, MVertexRTree &pos_edges);
+void QuadToTriInsertFaceEdgeVertices(GSurface *face, MVertexRTree &pos_edges);
 
 // Find centroid of vertices in vector v, return in vector
-std::vector<double> QtFindVertsCentroid(std::vector<MVertex *> v);
+std::vector<double> QtFindVertsCentroid(std::vector<MNode *> v);
 
 // Add a new vertex at the centroid of a vector of vertices (this goes into a
 // region Added 2010-02-06
-MVertex *QtMakeCentroidVertex(const std::vector<MVertex *> &v,
-                              std::vector<MVertex *> *target, GEntity *entity,
+MNode *QtMakeCentroidVertex(const std::vector<MNode *> &v,
+                              std::vector<MNode *> *target, GEntity *entity,
                               MVertexRTree &pos);
 
-// Finds the index of the lowest valued pointer in a vector of MVertex pointers
+// Finds the index of the lowest valued pointer in a vector of MNode pointers
 // Added 2011-03-10
-int getIndexForLowestVertexPointer(std::vector<MVertex *> v);
+int getIndexForLowestVertexPointer(std::vector<MNode *> v);
 
 // Given 4 verts on a face, find an existent diagonal, if any.
 // Two possible methods:  If the 'index_guess' argument is the index of the
 // correct triangle, finding it is simple. If not, have to do a complete
 // pedantic search. Added 2010-01-26
-std::pair<int, int> FindDiagonalEdgeIndices(std::vector<MVertex *> verts,
-                                            GFace *face, bool lateral,
+std::pair<int, int> FindDiagonalEdgeIndices(std::vector<MNode *> verts,
+                                            GSurface *face, bool lateral,
                                             unsigned int index_guess = 0);
 
 // Get number of regions neighboring a face
-int GetNeighborRegionsOfFace(GFace *face, std::vector<GRegion *> &neighbors);
+int GetNeighborRegionsOfFace(GSurface *face, std::vector<GVolume *> &neighbors);
 
 // Tests whether a surface is a lateral of a region
 // Added 12/09/10
-int IsSurfaceALateralForRegion(GRegion *region, GFace *face);
+int IsSurfaceALateralForRegion(GVolume *region, GSurface *face);
 
 // Function to determine if a face is a top surface for a region.  It returns 1
 // if the face is COPIED_ENTITY with source = region's source and if face
 // belongs to region. Otherwise, return 0 (NOTE: ReplaceDuplicateSurfaces() can
 // remove a top surface and replace it.  If that happens, this will return 0.
 // That is INTENDED for THIS function. Added 2010-12-13
-int IsSurfaceATopForRegion(GRegion *region, GFace *face);
+int IsSurfaceATopForRegion(GVolume *region, GSurface *face);
 
 // Find the bottom root source surface of an extruded surface (source of source
 // of source, etc.)
-GFace *findRootSourceFaceForFace(GFace *face);
+GSurface *findRootSourceFaceForFace(GSurface *face);
 
 // Input is vert_bnd[], which describes some 2D element: vert_bnd[i] is true if
 // the ith vertex the element touches a lateral edge boundary of the surface the

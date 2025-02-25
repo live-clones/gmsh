@@ -26,8 +26,8 @@ static bool sortDirCount(const std::pair<SVector3, int> &a,
 
 class extrudeInfo {
 private:
-  GRegion *_region;
-  GFace *_sourceFace, *_targetFace;
+  GVolume *_region;
+  GSurface *_sourceFace, *_targetFace;
   SVector3 _direction;
   void _fillExtrudeParams(ExtrudeParams *ep, int sourceTag,
                           const std::vector<int> &numElements,
@@ -70,7 +70,7 @@ private:
   }
 
 public:
-  extrudeInfo(GRegion *r, GFace *s, GFace *t, SVector3 d)
+  extrudeInfo(GVolume *r, GSurface *s, GSurface *t, SVector3 d)
     : _region(r), _sourceFace(s), _targetFace(t), _direction(d)
   {}
   SVector3 getDirection() { return _direction; }
@@ -88,9 +88,9 @@ public:
                          bool checkOnly)
   {
     auto se = _sourceFace->edges();
-    std::set<GEdge *, GEntityPtrLessThan> sourceEdges(se.begin(), se.end());
+    std::set<GCurve *, GEntityPtrLessThan> sourceEdges(se.begin(), se.end());
     auto te = _targetFace->edges();
-    std::set<GEdge *, GEntityPtrLessThan> targetEdges(te.begin(), te.end());
+    std::set<GCurve *, GEntityPtrLessThan> targetEdges(te.begin(), te.end());
 
     // volume
     {
@@ -129,10 +129,10 @@ public:
     }
 
     // lateral surfaces and top curves
-    std::vector<GFace *> regionFaces = _region->faces();
+    std::vector<GSurface *> regionFaces = _region->faces();
     for(auto e : _sourceFace->edges()) {
       auto f = e->faces();
-      std::set<GFace *, GEntityPtrLessThan> edgeFaces(f.begin(), f.end());
+      std::set<GSurface *, GEntityPtrLessThan> edgeFaces(f.begin(), f.end());
       for(auto f : regionFaces) {
         if(f == _sourceFace || f == _targetFace) continue;
         if(edgeFaces.find(f) != edgeFaces.end()) {
@@ -175,10 +175,10 @@ public:
     }
 
     // lateral curves
-    std::vector<GEdge *> regionEdges = _region->edges();
+    std::vector<GCurve *> regionEdges = _region->edges();
     for(auto v : _sourceFace->vertices()) {
       auto ve = v->edges();
-      std::set<GEdge*, GEntityPtrLessThan> vertexEdges(ve.begin(), ve.end());
+      std::set<GCurve*, GEntityPtrLessThan> vertexEdges(ve.begin(), ve.end());
       for(auto e : regionEdges) {
         if(sourceEdges.find(e) != sourceEdges.end()) continue;
         if(targetEdges.find(e) != targetEdges.end()) continue;
@@ -205,15 +205,15 @@ public:
   }
 };
 
-void getCandidateExtrudeInfo(GRegion *gr, std::vector<extrudeInfo> &info,
+void getCandidateExtrudeInfo(GVolume *gr, std::vector<extrudeInfo> &info,
                              std::vector<std::pair<SVector3, int>> &count)
 {
-  std::vector<GFace*> f = gr->faces();
+  std::vector<GSurface*> f = gr->faces();
   for(auto f1 : f) {
     auto f1v = f1->vertices();
     auto f1e = f1->edges();
-    std::set<GVertex *, GEntityPtrLessThan> v1(f1v.begin(), f1v.end());
-    std::set<GEdge *, GEntityPtrLessThan> e1(f1e.begin(), f1e.end());
+    std::set<GPoint *, GEntityPtrLessThan> v1(f1v.begin(), f1v.end());
+    std::set<GCurve *, GEntityPtrLessThan> e1(f1e.begin(), f1e.end());
     for(auto f2 : f) {
       // for each pair of surfaces
       if(f1 == f2) continue;
@@ -221,8 +221,8 @@ void getCandidateExtrudeInfo(GRegion *gr, std::vector<extrudeInfo> &info,
       Msg::Debug("Testing surface pair %d - %d:", f1->tag(), f2->tag());
       auto f2v = f2->vertices();
       auto f2e = f2->edges();
-      std::set<GVertex *, GEntityPtrLessThan> v2(f2v.begin(), f2v.end());
-      std::set<GEdge *, GEntityPtrLessThan> e2(f2e.begin(), f2e.end());
+      std::set<GPoint *, GEntityPtrLessThan> v2(f2v.begin(), f2v.end());
+      std::set<GCurve *, GEntityPtrLessThan> e2(f2e.begin(), f2e.end());
       // abort if different topology
       if((v1.size() != v2.size()) || (e1.size() != e2.size())) {
         Msg::Debug(" - incompatible surfaces %d (#points=%lu, #curves=%lu) - "
@@ -235,7 +235,7 @@ void getCandidateExtrudeInfo(GRegion *gr, std::vector<extrudeInfo> &info,
       SVector3 t0(0., 0., 0.);
       bool translated = true;
 
-      std::set<GEdge*> perp;
+      std::set<GCurve*> perp;
       for(auto e : gr->edges()) {
         // skip curves that are on the boundary of the 2 surfaces
         if(e1.find(e) != e1.end() || e2.find(e) != e2.end()) {
@@ -264,7 +264,7 @@ void getCandidateExtrudeInfo(GRegion *gr, std::vector<extrudeInfo> &info,
       for(auto e : perp) {
         // straight lines with the same translation vector?
         if(e->geomType() == GEntity::Line) {
-          GVertex *vs = e->getBeginVertex(), *vt = e->getEndVertex();
+          GPoint *vs = e->getBeginVertex(), *vt = e->getEndVertex();
           if(vs && vt) {
             SVector3 t;
             if(v1.find(vs) != v1.end() && v2.find(vt) != v2.end()) {
@@ -324,13 +324,13 @@ bool GModel::addAutomaticExtrusionConstraints(const std::vector<int> &numElement
                                               const bool recombine,
                                               const std::vector<int> &regionTags)
 {
-  std::vector<GRegion *> regs;
+  std::vector<GVolume *> regs;
   if(regionTags.empty()) {
     regs.insert(regs.end(), regions.begin(), regions.end());
   }
   else {
     for(auto t : regionTags) {
-      GRegion *r = getRegionByTag(t);
+      GVolume *r = getRegionByTag(t);
       if(r) regs.push_back(r);
       else Msg::Error("Unknown volume %d for automatic extrusion constraints");
     }

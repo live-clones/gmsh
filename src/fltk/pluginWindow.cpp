@@ -27,7 +27,7 @@ typedef unsigned long intptr_t;
 #include "PluginManager.h"
 #include "Plugin.h"
 #include "GModel.h"
-#include "MVertex.h"
+#include "MNode.h"
 #include "Context.h"
 #include "scriptStringInterface.h"
 #include "StringUtils.h"
