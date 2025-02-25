@@ -4322,6 +4322,7 @@ static optional<std::unordered_set<MElement*>> writeMSH4Elements(GModel *const m
       auto parts = static_cast<partitionRegion*>(ent)->getPartitions();
       return std::find(parts.begin(), parts.end(), partitionToSave) != parts.end();
     }
+    else throw std::runtime_error("Unknown entity type");
   };
 
   constexpr bool exportElements = true;
@@ -4348,7 +4349,7 @@ static optional<std::unordered_set<MElement*>> writeMSH4Elements(GModel *const m
 
     numElements += vertex->points.size();
     for(std::size_t i = 0; i < vertex->points.size(); i++) {
-      std::pair<int, int> p(vertex->tag(), vertex->points[i]->getTypeForMSH());
+      std::pair<int, int> p(entityTag, vertex->points[i]->getTypeForMSH());
       elementsByType[0][p].push_back(vertex->points[i]);
     }
   }
@@ -4782,7 +4783,7 @@ static optional<std::unordered_set<MEdge, MEdgeHash>> writeMSH4Edges(GModel *con
   if(elems) {
     std::unordered_map<MEdge, std::size_t, MEdgeHash, MEdgeEqual> edgeTagsToKeep;
     for (MElement* el: *elems) {
-      for (std::size_t j = 0; j < el->getNumEdges(); j++) {
+      for (int j = 0; j < el->getNumEdges(); j++) {
         MEdge edge = el->getEdge(j);
         auto found = model->getMapEdgeNum().find(edge);
         if (found != model->getMapEdgeNum().end()) {
@@ -4894,7 +4895,7 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool partitioned,
   std::unordered_map<MFace, std::size_t, MFaceHash, MFaceEqual> faceTagsToKeep;
   if(elems) {
     for (MElement* el: *elems) {
-      for (std::size_t j = 0; j < el->getNumFaces(); j++) {
+      for (int j = 0; j < el->getNumFaces(); j++) {
         MFace face = el->getFace(j);
         auto found = model->getMapFaceNum().find(face);
         if (found != model->getMapFaceNum().end()) {
@@ -5120,7 +5121,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
 
   if (checkConsistency && savedEdges && savedElems) {
     for (MElement* el: *savedElems) {
-      for (unsigned k = 0; k < el->getNumEdges(); ++k) {
+      for (int k = 0; k < el->getNumEdges(); ++k) {
         if (savedEdges->count(el->getEdge(k)) == 0) {
           Msg::Error("Element %lu references an edge %lu which is not saved", el->getNum());
           return 0;
