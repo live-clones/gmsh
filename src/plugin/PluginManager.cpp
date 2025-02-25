@@ -72,6 +72,7 @@
 #include "Summation.h"
 #include "BoundaryAngles.h"
 #include "MeshSizeFieldView.h"
+#include "BoundaryLayer.h"
 
 // for testing purposes only :-)
 #undef HAVE_DLOPEN
@@ -299,6 +300,8 @@ void PluginManager::registerDefaultPlugins()
 #endif
     allPlugins.insert(
       std::make_pair("SpanningTree", GMSH_RegisterSpanningTreePlugin()));
+    allPlugins.insert(
+      std::make_pair("BoundaryLayer", GMSH_RegisterBoundaryLayerPlugin()));
   }
 
 #if defined(HAVE_FLTK)
