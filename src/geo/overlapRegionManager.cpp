@@ -143,7 +143,7 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
   
 
   std::unordered_map<int, std::set<overlapRegion *>> overlapsByPartition;
-
+  double wt1AllOverlaps = TimeOfDay();
   for(int i = 1; i <= numPartitions; ++i) {
     // Generate overlaps of partition i
     unsigned nOverlapsInI = 0;
@@ -336,5 +336,7 @@ void overlapRegionManager::create(int overlapSize, bool createPhysicals)
       Msg::Info("Wall time to create overlap of boundary: %fs.", wt2 - wt1);
     }
   }
+  double wt2AllOverlaps = TimeOfDay();
+  Msg::Info("Wall time to create all overlaps on %u partitions: %fs.", numPartitions, wt2AllOverlaps - wt1AllOverlaps);
 
 }
