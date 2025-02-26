@@ -2540,11 +2540,11 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize, const
 
   if (optimize){
     HXTOptimizeOptions options = {
+                                  .qualityMin = qualityMin,
                                   .numThreads = nthreads,
                                   .numVerticesConstrained = mesh->vertices.num,
-                                  .qualityMin = qualityMin,
-                                  .reproducible = 0,
-                                  .verbosity = 2
+                                  .verbosity = 2,
+                                  .reproducible = 0
                                   } ;
     hxtOptimizeTetrahedra(mesh, &options);
     // printf("finished optim \n");
