@@ -137,8 +137,8 @@ void print4debug(PolyMesh* pm, const int debugTag)
     FILE *f = fopen(name, "w");
     fprintf(f, "View \" %s \"{\n", name);
     for(auto it : pm->faces) {
-      // if (it->data == -2) continue;
-      // if (it->he && (it->he->v->data == -1 || it->he->next->v->data == -1 || it->he->next->next->v->data == -1)) continue;
+      if (it->data == -2) continue;
+      if (it->he && (it->he->v->data == -1 || it->he->next->v->data == -1 || it->he->next->next->v->data == -1)) continue;
       if (it->he){
         
         PolyMesh::HalfEdge *he0 = it->he;
@@ -178,22 +178,22 @@ void print4debug(PolyMesh* pm, const int debugTag)
       //           Ry, Ry, Ry);
       // }
     }
-    for(auto it : pm->hedges) {
-      PolyMesh::HalfEdge *he = it;
-      if(he->opposite && he->f) {
-        // fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", he->v->position.x(),
-        //         he->v->position.y(), he->v->position.z(), he->next->v->position.x(),
-        //         he->next->v->position.y(), he->next->v->position.z(), he->data, he->data);
-        fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", he->v->position.x(),
-                he->v->position.y(), he->v->position.z(), he->next->v->position.x(),
-                he->next->v->position.y(), he->opposite->v->position.z(), he->data, he->data);
-      }
-      // if (he->f) {
-      // }
-    }
-    for (auto v : pm->vertices){
-      fprintf(f, "SP(%g,%g,%g){%d};\n", v->position.x(), v->position.y(), v->position.z(), v->data);
-    }
+    // for(auto it : pm->hedges) {
+    //   PolyMesh::HalfEdge *he = it;
+    //   if(he->opposite && he->f && he->v->data != -1 && he->opposite->v->data != -1) {
+    //     // fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", he->v->position.x(),
+    //     //         he->v->position.y(), he->v->position.z(), he->next->v->position.x(),
+    //     //         he->next->v->position.y(), he->next->v->position.z(), he->data, he->data);
+    //     fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", he->v->position.x(),
+    //             he->v->position.y(), he->v->position.z(), he->next->v->position.x(),
+    //             he->next->v->position.y(), he->opposite->v->position.z(), he->data, he->data);
+    //   }
+    //   // if (he->f) {
+    //   // }
+    // }
+    // for (auto v : pm->vertices){
+    //   fprintf(f, "SP(%g,%g,%g){%d};\n", v->position.x(), v->position.y(), v->position.z(), v->data);
+    // }
 
     fprintf(f, "};\n");
     fclose(f);
@@ -2148,16 +2148,52 @@ void AlphaShape::alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int 
       if (distPointSegment(he->next->v->position, a, b) < boundary_tol)
         resultTags1.insert(ed->tag);
     }
-    std::set_intersection(resultTags0.begin(), resultTags0.end(), resultTags1.begin(), resultTags1.end(), std::inserter(intersection, intersection.begin()));
-    if (intersection.size() == 1){
-      bndMap[*intersection.begin()].push_back(he->v->data);
-      bndMap[*intersection.begin()].push_back(he->next->v->data);
-      he->data = *intersection.begin();
+
+    bool usePhysicalTags = false;
+    if (usePhysicalTags){
+      std::set<int> physTags0;
+      std::set<int> physTags1;
+      std::set<int> physTagsIntersection;
+      std::unordered_map<int, int> physTag2EntityTag;
+      for (auto t : resultTags0){
+        for (auto pt : gm_alphaShape->getEntityByTag(1, t)->getPhysicalEntities()){
+          physTags0.insert(pt);
+          physTag2EntityTag[pt] = t; 
+        }
+      }
+      for (auto t : resultTags1){
+        for (auto pt : gm_alphaShape->getEntityByTag(1, t)->getPhysicalEntities()){
+          physTags1.insert(pt);
+          physTag2EntityTag[pt] = t;
+        }
+      }
+      std::set_intersection(physTags0.begin(), physTags0.end(), physTags1.begin(), physTags1.end(), std::inserter(physTagsIntersection, physTagsIntersection.begin()));
+      if (physTagsIntersection.size() == 1){
+        bndMap[physTag2EntityTag[*physTagsIntersection.begin()]].push_back(he->v->data);
+        bndMap[physTag2EntityTag[*physTagsIntersection.begin()]].push_back(he->next->v->data);
+        he->data = physTag2EntityTag[*physTagsIntersection.begin()];
+      }
+      else {
+        bndMap[bndTag].push_back(he->v->data);
+        bndMap[bndTag].push_back(he->next->v->data); 
+        he->data = bndTag; 
+      }
     }
     else {
-      bndMap[bndTag].push_back(he->v->data);
-      bndMap[bndTag].push_back(he->next->v->data); 
-      he->data = bndTag; 
+      std::set_intersection(resultTags0.begin(), resultTags0.end(), resultTags1.begin(), resultTags1.end(), std::inserter(intersection, intersection.begin()));
+      if (intersection.size() == 1){
+        bndMap[*intersection.begin()].push_back(he->v->data);
+        bndMap[*intersection.begin()].push_back(he->next->v->data);
+        he->data = *intersection.begin();
+      }
+      else {
+        bndMap[*intersection.begin()].push_back(he->v->data);
+        bndMap[*intersection.begin()].push_back(he->next->v->data); 
+        he->data = *intersection.begin(); 
+        // bndMap[bndTag].push_back(he->v->data);
+        // bndMap[bndTag].push_back(he->next->v->data); 
+        // he->data = bndTag; 
+      }
     }
   }
 
