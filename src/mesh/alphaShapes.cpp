@@ -620,7 +620,7 @@ void AlphaShape::registerAlphaShapeField(FieldManager* fm)
 }
 
 class AlphaShapeInOutField : public Field {
-  OctreeNode<3, 32, MTriangle*>* _octree;
+  OctreeNode<3, 32, MTriangle*>* _octree = nullptr;
 
 
 public:
@@ -3555,7 +3555,7 @@ void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, co
   auto gm = GModel::current();
   auto gr = GModel::current()->getRegionByTag(fullTag);
   
-  auto t1 = std::chrono::steady_clock::now(); 
+  // auto t1 = std::chrono::steady_clock::now(); 
   
 
   // Update the distance field
@@ -3592,7 +3592,7 @@ void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, co
     }
   }
   
-  auto t2 = std::chrono::steady_clock::now(); 
+  // auto t2 = std::chrono::steady_clock::now(); 
   
   // create size field on nodes
   Field* field = GModel::current()->getFields()->get(sizeFieldTag);
@@ -3607,7 +3607,7 @@ void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, co
       allVertices.push_back(v);
     }
   }
-  auto t3 = std::chrono::steady_clock::now(); 
+  // auto t3 = std::chrono::steady_clock::now(); 
   
   std::unordered_set<MVertex*> verticesInConnected;
 
@@ -3634,11 +3634,11 @@ void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, co
     octree.add(v, v_bbox);
   }
 
-  auto t4 = std::chrono::steady_clock::now(); 
+  // auto t4 = std::chrono::steady_clock::now(); 
   OctreeNode<3, 64, MElement*> volume_octree;
   _createVolumeOctree3D(boundaryModel, volume_octree);
 
-  auto t5 = std::chrono::steady_clock::now(); 
+  // auto t5 = std::chrono::steady_clock::now(); 
   printf("number of nodes in the mesh : %lu\n", gr->mesh_vertices.size());
   
   std::unordered_set<MVertex*> _deleted;
@@ -3682,21 +3682,21 @@ void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, co
     gr->removeMeshVertex(v);
     // delete v;
   }
-  auto t6 = std::chrono::steady_clock::now(); 
+  // auto t6 = std::chrono::steady_clock::now(); 
 
-  auto dur1 = std::chrono::duration_cast<std::chrono::microseconds>(t2-t1);
-  auto dur2 = std::chrono::duration_cast<std::chrono::microseconds>(t3-t2);
-  auto dur3 = std::chrono::duration_cast<std::chrono::microseconds>(t4-t3);
-  auto dur4 = std::chrono::duration_cast<std::chrono::microseconds>(t5-t4);
-  auto dur5 = std::chrono::duration_cast<std::chrono::microseconds>(t6-t5);
-  auto durTotal = std::chrono::duration_cast<std::chrono::microseconds>(t6-t1);
-  printf("alpha dist fi time : %f percent \n", 100*double(dur1.count())/double(durTotal.count()) );
-  printf("size field    time : %f percent \n", 100*double(dur2.count())/double(durTotal.count()) );
-  printf("2D entities   time : %f percent \n", 100*double(dur3.count())/double(durTotal.count()) );
-  printf("octree        time : %f percent \n", 100*double(dur4.count())/double(durTotal.count()) );
-  printf("deletion      time : %f percent \n", 100*double(dur5.count())/double(durTotal.count()) );
+  // auto dur1 = std::chrono::duration_cast<std::chrono::microseconds>(t2-t1);
+  // auto dur2 = std::chrono::duration_cast<std::chrono::microseconds>(t3-t2);
+  // auto dur3 = std::chrono::duration_cast<std::chrono::microseconds>(t4-t3);
+  // auto dur4 = std::chrono::duration_cast<std::chrono::microseconds>(t5-t4);
+  // auto dur5 = std::chrono::duration_cast<std::chrono::microseconds>(t6-t5);
+  // auto durTotal = std::chrono::duration_cast<std::chrono::microseconds>(t6-t1);
+  // printf("alpha dist fi time : %f percent \n", 100*double(dur1.count())/double(durTotal.count()) );
+  // printf("size field    time : %f percent \n", 100*double(dur2.count())/double(durTotal.count()) );
+  // printf("2D entities   time : %f percent \n", 100*double(dur3.count())/double(durTotal.count()) );
+  // printf("octree        time : %f percent \n", 100*double(dur4.count())/double(durTotal.count()) );
+  // printf("deletion      time : %f percent \n", 100*double(dur5.count())/double(durTotal.count()) );
 
-  printf("number of nodes in the mesh : %lu\n", gr->mesh_vertices.size());
+  // printf("number of nodes in the mesh : %lu\n", gr->mesh_vertices.size());
 
 
   Msg::Info("Filtered out %lu vertices from mesh\n", _deleted.size());
