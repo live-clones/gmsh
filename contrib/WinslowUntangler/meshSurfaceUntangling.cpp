@@ -95,7 +95,7 @@ bool buildTrianglesAndTargetsFromElements(
   // Equilateral triangle centered in origin with unit area
 
   vec2 one = {1., 1.};
-  
+
   std::array<vec2, 3> equi = {vec2{1., 0.},
                               vec2{cos(2. * M_PI / 3.), sin(2 * M_PI / 3.)},
                               vec2{cos(4. * M_PI / 3.), sin(4 * M_PI / 3.)}};
@@ -117,12 +117,12 @@ bool buildTrianglesAndTargetsFromElements(
 			       {0, 1, 5}, {0, 1, 4}, {0, 1, 3},
 			       {1, 2, 3}, {1, 2, 5}, {1, 2, 4},
 			       {2, 0, 4}, {2, 0, 3}, {2, 0, 5}};
-  
+
   const int p2_cp_19[19][4] = {{0, 3, 5}, {1, 4, 3}, {2, 5, 4}, {0, 1, 2},
 			       {0, 1, 5}, {0, 1, 4}, {0, 1, 3}, {0, 3, 5}, {3, 1, 4},
 			       {1, 2, 3}, {1, 2, 5}, {1, 2, 4}, {3, 1, 4}, {5, 4, 2},
 			       {2, 0, 4}, {2, 0, 3}, {2, 0, 5}, {5, 4, 2}, {0, 3, 5}};
-  
+
   triIdealShapes.clear();
   triangles.clear();
   std::set<std::pair<uint32_t,uint32_t> > p2edges;
@@ -137,7 +137,7 @@ bool buildTrianglesAndTargetsFromElements(
       std::array<vec2, 4> qtarget = {vec2{0., 0.}, vec2{1., 0.}, vec2{1., 1.},
                                      vec2{0., 1.}};
       std::array<double, 2> p [4] = {points[elements[i][0]], points[elements[i][1]],
-				     points[elements[i][2]], points[elements[i][3]]};     
+				     points[elements[i][2]], points[elements[i][3]]};
       for(size_t k = 0; k < 4; ++k) {
         triangles.push_back({elements[i][quad_dcp[k][0]],
                              elements[i][quad_dcp[k][1]],
@@ -148,33 +148,33 @@ bool buildTrianglesAndTargetsFromElements(
 	double l = 1;//sqrt(fabs(area));
 
 	//printf("l = %g\n",l);
-	
+
         std::array<vec2, 3> target = {qtarget[quad_dcp[k][0]]*l,
                                       qtarget[quad_dcp[k][1]]*l,
                                       qtarget[quad_dcp[k][2]]*l};
-	// 2DO --> control sizes 
+	// 2DO --> control sizes
 	//        normalizeTargetArea(target);
         triIdealShapes.push_back(target);
       }
     }
-    else if(elements[i][5] != NO_U32) { // P2 triangles -- 
+    else if(elements[i][5] != NO_U32) { // P2 triangles --
       // replace point positions by bezier polygons
       std::array<double, 2> p [6] = {points[elements[i][0]], points[elements[i][1]],
 				     points[elements[i][2]], points[elements[i][3]],
-				     points[elements[i][4]], points[elements[i][5]]};     
+				     points[elements[i][4]], points[elements[i][5]]};
       for (size_t k = 0; k < 3 ; k++){
 	std::pair<uint32_t,uint32_t> pair =
 	  std::make_pair(std::min(elements[i][k],elements[i][(k+1)%3]),
 			 std::max(elements[i][k],elements[i][(k+1)%3]));
 	if (p2edges.find(pair) == p2edges.end()){
 	  p2edges.insert(pair);
-	  double xmid = 0.5*(p[k][0] + p[(k+1)%3][0]); 
+	  double xmid = 0.5*(p[k][0] + p[(k+1)%3][0]);
 	  double ymid = 0.5*(p[k][1] + p[(k+1)%3][1]);
-	  double x2   = p[k+3][0]; 
+	  double x2   = p[k+3][0];
 	  double y2   = p[k+3][1];
 	  points[elements[i][k+3]][0] = xmid + 2.0*(x2-xmid);
 	  points[elements[i][k+3]][1] = ymid + 2.0*(y2-ymid);
-	}	
+	}
       }
 
       std::array<vec2, 3> corners = {vec2{points[elements[i][0]][0], points[elements[i][0]][1]},
@@ -183,7 +183,7 @@ bool buildTrianglesAndTargetsFromElements(
       std::array<vec2, 6> straight = {corners[0],corners[1],corners[2],
 				      (corners[0]+corners[1])*.5,
 				      (corners[1]+corners[2])*.5,
-				      (corners[2]+corners[0])*.5};	
+				      (corners[2]+corners[0])*.5};
       vec2 dx = (corners[0] + corners[1] + corners[2]) * (-1./3.);
       for (size_t k=0;k<6;k++)straight[k] = (straight[k] + dx);
 
@@ -234,13 +234,13 @@ bool buildTrianglesAndTargetsFromElements(
 	}
 	double fact =sqrt(a);
 	std::array<vec2, 3> target = {equi[0]*fact,equi[1]*fact,equi[2]*fact};
-	for (size_t l=0; l<NUMT2; l++){	
+	for (size_t l=0; l<NUMT2; l++){
 	  triIdealShapes.push_back(target);
 	}
       }
     }
   }
-    
+
   return true;
 }
 
@@ -359,7 +359,7 @@ void myUpdateIdealShapes (const std::vector<std::array<double, 2> > &points,
   //  printf("Updating %lu ideal shapes area %g\n",triangles.size(),areaEqui);
   double totArea = 0.0;
   double totOneOverWeight = 0.0;
-  
+
   for (size_t i=0;i<triangles.size();i++){
     vec2 v0 = points[triangles[i][0]];
     vec2 v1 = points[triangles[i][1]];
@@ -371,11 +371,11 @@ void myUpdateIdealShapes (const std::vector<std::array<double, 2> > &points,
     totArea += area;
     totOneOverWeight += 1./density;
   }
-  double C = totArea/totOneOverWeight;  
-  
-  // \rho (x_i,y_i) * s_i = c --> s_i = c / \rho_i 
-  // \sum_i s_i = S --> S = c \sum (1/\rho_i) 
-  // 
+  double C = totArea/totOneOverWeight;
+
+  // \rho (x_i,y_i) * s_i = c --> s_i = c / \rho_i
+  // \sum_i s_i = S --> S = c \sum (1/\rho_i)
+  //
 
   double newArea = 0;
   for (size_t i=0;i<triangles.size();i++){
@@ -433,12 +433,12 @@ static bool untangleGFaceMeanPlane(GFace *gf,
 
   std::vector<MVertex*> vall, vbound;
   getVertices (els,vall,vbound);
-  
+
   vector<vec2> points;
   vector<bool> locked;
   vector<std::array<uint32_t, 3> > triangles;
   std::vector<std::array<std::array<double, 2>, 3> > triIdealShapes;
-    
+
   int i = 0;
   SVector3 t1 (mp.plan[0][0],mp.plan[0][1],mp.plan[0][2]);
   SVector3 t2 (mp.plan[1][0],mp.plan[1][1],mp.plan[1][2]);
@@ -462,9 +462,9 @@ static bool untangleGFaceMeanPlane(GFace *gf,
   //quad_dcp
 
   int nbPos = 0, nbNeg = 0;
-  
+
   for (auto e : els){
-    
+
     MVertex *v[4]{e->getVertex(0),
 	e->getVertex(1),
 	e->getVertex(2),
@@ -472,10 +472,10 @@ static bool untangleGFaceMeanPlane(GFace *gf,
 
     int numSubdiv = e->getNumVertices() == 4 ? 4 : 1;
 
-    const double NRM = 0.5; 
+    const double NRM = 0.5;
     std::array<vec2, 4> qt = {vec2{-NRM,-NRM},vec2{NRM,-NRM},vec2{NRM,NRM},vec2{-NRM,NRM}};
-    
-    for (size_t j=0;j<numSubdiv;j++){     
+
+    for (size_t j=0;j<numSubdiv;j++){
       int i0 = v[quad_dcp[j][0]]->getIndex();
       int i1 = v[quad_dcp[j][1]]->getIndex();
       int i2 = v[quad_dcp[j][2]]->getIndex();
@@ -487,7 +487,7 @@ static bool untangleGFaceMeanPlane(GFace *gf,
       double area = triangleArea(points[i0], points[i1], points[i2]);
       if (area > 0)nbPos ++;
       else nbNeg ++;
-      
+
       if (!(locked[i0] && locked[i1] && locked[i2])){
 	triangles.push_back({(uint32_t)i0,(uint32_t)i1,(uint32_t)i2});
 	triIdealShapes.push_back({qt[quad_dcp[j][0]]*sqrt(fabs(area)),qt[quad_dcp[j][1]]*sqrt(fabs(area)),
@@ -495,7 +495,7 @@ static bool untangleGFaceMeanPlane(GFace *gf,
       }
     }
   }
-  
+
   if (nbPos < nbNeg && iter > 0){
     if (iter >= 0)
       return untangleGFaceMeanPlane(gf,els,mp, -iter);
@@ -506,17 +506,17 @@ static bool untangleGFaceMeanPlane(GFace *gf,
   }
 
   //  Msg::Info("%d triangles ",triangles.size());
-  
+
   double lambda = 1.e-8;
   int iterMaxInner = 200;
   int iterMax = 3;
   int iterFailMax = 300;
   double timeMax = 1.e+3;
-  
+
   bool converged =
     untangle_triangles_2D(points, locked, triangles, triIdealShapes, lambda,
                           iterMaxInner, iterMax, iterFailMax, timeMax,nullptr);
-  
+
   if (localDebug){
     char name[245];
     sprintf(name,"unt%d-%d.pos",gf->tag(),iter);
@@ -544,7 +544,7 @@ static bool untangleGFaceMeanPlane(GFace *gf,
       v->setXYZ(gp.x(),gp.y(),gp.z());
       v->setParameter(gp.u(),gp.v());
     }
-  } 
+  }
 }
 
 static mean_plane computeMeanPlaneSimple (std::vector<MVertex*> &vs){
@@ -563,7 +563,7 @@ static bool tooFarFromPlane (std::vector<MVertex*> &vs,
     double d = fabs(mp.a*v->x()+mp.b*v->y()+mp.c*v->z()-mp.d)/fact;
     if (d > threshold)return true;
   }
-  return false;  
+  return false;
 }
 
 bool untangleGFaceRANSAC(GFace *gf, double threshold){
@@ -609,14 +609,14 @@ bool untangleGFaceRANSAC(GFace *gf, double threshold){
       es = esNew;
     }
     for (auto vv : vall)
-      if (std::find(vbound.begin(), vbound.end(), vv) == vbound.end()) 
+      if (std::find(vbound.begin(), vbound.end(), vv) == vbound.end())
 	touched.insert(vv);
     //    printf("iter %d -- winslow on plane for %lu elements\n",iter,es.size());
     untangleGFaceMeanPlane(gf,es,mp,iter);
   }
   return true;
 }
-  
+
 
 bool untangleGFaceMeshConstrained(GFace *gf, int iterMax, double timeMax)
 {
@@ -657,7 +657,7 @@ bool untangleGFaceMeshConstrained(GFace *gf, int iterMax, double timeMax)
   int iterFailMax = 10;
   double lambda = 1.e-13;
 
-  #if 1
+#if 1
   {
     char name[245];
     sprintf(name,"x%d.pos",gf->tag());
@@ -712,9 +712,9 @@ bool untangleGFaceMeshConstrained(GFace *gf, int iterMax, double timeMax)
 			   std::max(elements[i][k],elements[i][(k+1)%3]));
 	  if (p2edges.find(pair) == p2edges.end()){
 	    p2edges.insert(pair);
-	    double xmid = 0.5*(p[k][0] + p[(k+1)%3][0]); 
+	    double xmid = 0.5*(p[k][0] + p[(k+1)%3][0]);
 	    double ymid = 0.5*(p[k][1] + p[(k+1)%3][1]);
-	    double xb   = p[k+3][0]; 
+	    double xb   = p[k+3][0];
 	    double yb   = p[k+3][1];
 	    points[elements[i][k+3]][0] = 0.5*(xmid + xb);
 	    points[elements[i][k+3]][1] = 0.5*(ymid + yb);
@@ -730,7 +730,7 @@ bool untangleGFaceMeshConstrained(GFace *gf, int iterMax, double timeMax)
       GPoint gp = gf->point(points[v][0],points[v][1]);
       vertices[v]->setXYZ(gp.x(),gp.y(),gp.z());
     }
-  
+
   double sicnMinA, sicnAvgA;
   computeSICNquality(gf, sicnMinA, sicnAvgA);
 

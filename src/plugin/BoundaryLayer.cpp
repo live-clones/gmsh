@@ -5,6 +5,9 @@
 
 #include <set>
 #include "GModel.h"
+#include "MLine.h"
+#include "MTriangle.h"
+#include "MQuadrangle.h"
 #include "BoundaryLayer.h"
 
 StringXNumber BoundaryLayerOptions_Number[] = {
@@ -58,6 +61,7 @@ bool bl2d(GModel *m,
 
   printf("input %lu %lu\n", ges.size(), gvs.size());
 
+  // spawn nodes for model points
   for(auto gv : gvs) {
     if(gv->mesh_vertices.empty()) {
       Msg::Error("No mesh node on model point %d - abort!", gv->tag());
@@ -81,8 +85,17 @@ bool bl2d(GModel *m,
         if(gfs.find(gf) != gfs.end()) {
           printf("insert vertex %d in face %d\n", gv->tag(), gf->tag());
           MVertex *v = gv->mesh_vertices[0];
-          MVertex *newv = new MFaceVertex(v->x(), v->y(), v->z(), gf, 0., 0.);
-          spawned[v].push_back(newv);
+          SPoint2 param;
+          if(reparamMeshVertexOnFace(v, gf, param)) {
+            MVertex *newv = new MFaceVertex(v->x(), v->y(), v->z(), gf,
+                                            param.x(), param.y());
+            gf->mesh_vertices.push_back(newv);
+            spawned[v].push_back(newv);
+          }
+          else {
+            Msg::Warning("Could not compute parametric coordinates of node on "
+                         "surface %d - maybe on seam?", gf->tag());
+          }
         }
       }
     }
@@ -90,8 +103,59 @@ bool bl2d(GModel *m,
       for(auto ge : toinsert) {
         printf("insert vertex %d in edge %d\n", gv->tag(), ge->tag());
         MVertex *v = gv->mesh_vertices[0];
-        MVertex *newv = new MEdgeVertex(v->x(), v->y(), v->z(), ge, 0.);
-        spawned[v].push_back(newv);
+        double param;
+        if(reparamMeshVertexOnEdge(v, ge, param)){
+          MVertex *newv = new MEdgeVertex(v->x(), v->y(), v->z(), ge, param);
+          ge->mesh_vertices.push_back(newv);
+          spawned[v].push_back(newv);
+        }
+        else{
+          Msg::Warning("Could not compute parametric coordinates of node on "
+                       "curve %d", ge->tag());
+        }
+      }
+    }
+  }
+
+  // spawn nodes for curves
+  for(auto ge : input) {
+    std::vector<GFace*> connectedFaces = ge->faces();
+    for(auto gf : connectedFaces) {
+      for(auto v : ge->mesh_vertices) {
+        SPoint2 param;
+        if(reparamMeshVertexOnFace(v, gf, param)) {
+          MVertex *newv = new MFaceVertex(v->x(), v->y(), v->z(), gf,
+                                          param.x(), param.y());
+          gf->mesh_vertices.push_back(newv);
+          spawned[v].push_back(newv);
+        }
+      }
+    }
+  }
+
+  // create zero-sized elements:
+  for(auto ge : input) {
+    std::vector<GFace*> connectedFaces = ge->faces();
+    for(auto gf : connectedFaces) {
+      for(std::size_t i = 0; i < ge->lines.size(); i++) {
+        MLine *l = ge->lines[i];
+        auto sp0 = spawned[l->getVertex(0)];
+        auto sp1 = spawned[l->getVertex(1)];
+        if(sp0.empty() || sp1.empty()) {
+          Msg::Warning("Could not find spawned boundary layer node for node(s) "
+                       "%lu and/or %lu", l->getVertex(0)->getNum(),
+                       l->getVertex(1)->getNum());
+        }
+        else {
+          gf->quadrangles.push_back(new MQuadrangle(l->getVertex(0), l->getVertex(1),
+                                                    sp0.back(), sp1.front()));
+          for(std::size_t j = 1; j < sp0.size(); j++)
+            gf->triangles.push_back(new MTriangle(l->getVertex(0),
+                                                  sp0[j - 1], sp0[j]));
+          for(std::size_t j = 1; j < sp1.size(); j++)
+            gf->triangles.push_back(new MTriangle(l->getVertex(1),
+                                                  sp1[j - 1], sp1[j]));
+        }
       }
     }
   }
