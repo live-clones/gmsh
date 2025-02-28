@@ -208,9 +208,11 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   GModel *m = GModel::current();
   GEdge *ge1 = m->getEdgeByTag(1);
   GEdge *ge2 = m->getEdgeByTag(2);
+  GEdge *ge3 = m->getEdgeByTag(3);
+  GEdge *ge4 = m->getEdgeByTag(4);
   GFace *gf = m->getFaceByTag(1);
 
-  if(ge1 && ge2 && gf) {
+  if(ge1 && ge2 && ge3 && ge4 && gf) {
     std::vector<GEdge*> e = {ge1, ge2};
     std::vector<GFace*> f = {gf};
     bl2d(m, e, f);
