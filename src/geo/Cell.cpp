@@ -31,8 +31,8 @@ bool CellPtrLessThan::operator()(const Cell *c1, const Cell *c2) const
   return false;
 }
 
-bool equalVertices(const std::vector<MNode *> &v1,
-                   const std::vector<MNode *> &v2)
+bool equalVertices(const std::vector<MVertex *> &v1,
+                   const std::vector<MVertex *> &v2)
 {
   if(v1.size() != v2.size()) return false;
   for(std::size_t i = 0; i < v1.size(); i++)
@@ -98,7 +98,7 @@ Cell::Cell(Cell *parent, int i)
 
 bool Cell::_sortVertexIndices()
 {
-  std::map<MNode *, int, MVertexPtrLessThan> si;
+  std::map<MVertex *, int, MVertexPtrLessThan> si;
 
   bool noinsert = false;
   for(std::size_t i = 0; i < _v.size(); i++)
@@ -119,7 +119,7 @@ inline int Cell::getSortedVertex(int vertex) const
   return _v[(int)_si[vertex]]->getNum();
 }
 
-void Cell::findBdElement(int i, std::vector<MNode *> &vertices) const
+void Cell::findBdElement(int i, std::vector<MVertex *> &vertices) const
 {
   vertices.clear();
   switch(_dim) {
@@ -193,8 +193,8 @@ int Cell::getNumBdElements() const
 
 int Cell::findBdCellOrientation(Cell *cell, int i) const
 {
-  /*std::vector<MNode*> v1;
-  std::vector<MNode*> v2;
+  /*std::vector<MVertex*> v1;
+  std::vector<MVertex*> v2;
   this->findBdElement(i, v1);
   cell->getMeshVertices(v2);
 
@@ -212,7 +212,7 @@ int Cell::findBdCellOrientation(Cell *cell, int i) const
   }
   return 0;*/
 
-  std::vector<MNode *> v;
+  std::vector<MVertex *> v;
   cell->getMeshVertices(v);
   switch(_dim) {
   case 0: return 0;

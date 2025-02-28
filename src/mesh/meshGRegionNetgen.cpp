@@ -9,8 +9,8 @@
 #include "GmshMessage.h"
 #include "meshGRegion.h"
 #include "GModel.h"
-#include "GVolume.h"
-#include "GSurface.h"
+#include "GRegion.h"
+#include "GFace.h"
 #include "MTriangle.h"
 #include "MTetrahedron.h"
 #include "ExtrudeParams.h"
@@ -25,13 +25,13 @@ namespace nglib {
 using namespace nglib;
 
 static void getAllBoundingVertices(
-  GVolume *gr, std::set<MNode *, MVertexPtrLessThan> &allBoundingVertices)
+  GRegion *gr, std::set<MVertex *, MVertexPtrLessThan> &allBoundingVertices)
 {
-  std::vector<GSurface *> faces = gr->faces();
+  std::vector<GFace *> faces = gr->faces();
   auto it = faces.begin();
 
   while(it != faces.end()) {
-    GSurface *gf = (*it);
+    GFace *gf = (*it);
     for(std::size_t i = 0; i < gf->triangles.size(); i++) {
       MTriangle *t = gf->triangles[i];
       for(int k = 0; k < 3; k++)
@@ -43,13 +43,13 @@ static void getAllBoundingVertices(
   }
 }
 
-static Ng_Mesh *buildNetgenStructure(GVolume *gr, bool importVolumeMesh,
-                                     std::vector<MNode *> &numberedV)
+static Ng_Mesh *buildNetgenStructure(GRegion *gr, bool importVolumeMesh,
+                                     std::vector<MVertex *> &numberedV)
 {
   Ng_Init();
   Ng_Mesh *ngmesh = Ng_NewMesh();
 
-  std::set<MNode *, MVertexPtrLessThan> allBoundingVertices;
+  std::set<MVertex *, MVertexPtrLessThan> allBoundingVertices;
   getAllBoundingVertices(gr, allBoundingVertices);
 
   auto itv = allBoundingVertices.begin();
@@ -75,10 +75,10 @@ static Ng_Mesh *buildNetgenStructure(GVolume *gr, bool importVolumeMesh,
       Ng_AddPoint(ngmesh, tmp);
     }
   }
-  std::vector<GSurface *> faces = gr->faces();
+  std::vector<GFace *> faces = gr->faces();
   auto it = faces.begin();
   while(it != faces.end()) {
-    GSurface *gf = (*it);
+    GFace *gf = (*it);
     for(std::size_t i = 0; i < gf->triangles.size(); i++) {
       MTriangle *t = gf->triangles[i];
       int tmp[3];
@@ -107,8 +107,8 @@ static Ng_Mesh *buildNetgenStructure(GVolume *gr, bool importVolumeMesh,
   return ngmesh;
 }
 
-static void TransferVolumeMesh(GVolume *gr, Ng_Mesh *ngmesh,
-                               std::vector<MNode *> &numberedV)
+static void TransferVolumeMesh(GRegion *gr, Ng_Mesh *ngmesh,
+                               std::vector<MVertex *> &numberedV)
 {
   // get total number of vertices and elements of Netgen's mesh
   int nbv = Ng_GetNP(ngmesh);
@@ -133,7 +133,7 @@ static void TransferVolumeMesh(GVolume *gr, Ng_Mesh *ngmesh,
     double tmp[3];
     Ng_GetPoint(ngmesh, i + 1, tmp);
     if(used.count(i + 1)) {
-      MNode *v = new MNode(tmp[0], tmp[1], tmp[2], gr);
+      MVertex *v = new MVertex(tmp[0], tmp[1], tmp[2], gr);
       numberedV.push_back(v);
       gr->mesh_vertices.push_back(v);
     }
@@ -146,7 +146,7 @@ static void TransferVolumeMesh(GVolume *gr, Ng_Mesh *ngmesh,
   for(int i = 0; i < nbe; i++) {
     int tmp[4];
     Ng_GetVolumeElement(ngmesh, i + 1, tmp);
-    MNode *v[4];
+    MVertex *v[4];
     for(int j = 0; j < 4; j++)
       v[j] = numberedV[tmp[j] - 1];
     if(v[0] && v[1] && v[2] && v[3])
@@ -210,9 +210,9 @@ static void setRand(double r[6])
     r[i] = 0.0001 * ((double)rand() / (double)RAND_MAX);
 }
 
-static void meshNormalsPointOutOfTheRegion(GVolume *gr)
+static void meshNormalsPointOutOfTheRegion(GRegion *gr)
 {
-  std::vector<GSurface *> faces = gr->faces();
+  std::vector<GFace *> faces = gr->faces();
   auto it = faces.begin();
 
   // perform intersection check in normalized coordinates
@@ -227,7 +227,7 @@ static void meshNormalsPointOutOfTheRegion(GVolume *gr)
   setRand(rrr);
 
   while(it != faces.end()) {
-    GSurface *gf = (*it);
+    GFace *gf = (*it);
     int nb_intersect = 0;
     for(std::size_t i = 0; i < gf->triangles.size(); i++) {
       MTriangle *t = gf->triangles[i];
@@ -258,7 +258,7 @@ static void meshNormalsPointOutOfTheRegion(GVolume *gr)
       norme(N);
       auto it_b = faces.begin();
       while(it_b != faces.end()) {
-        GSurface *gf_b = (*it_b);
+        GFace *gf_b = (*it_b);
         for(std::size_t i_b = 0; i_b < gf_b->triangles.size(); i_b++) {
           MTriangle *t_b = gf_b->triangles[i_b];
           if(t_b != t) {
@@ -310,13 +310,13 @@ static void meshNormalsPointOutOfTheRegion(GVolume *gr)
 
 #endif
 
-void meshGRegionNetgen(GVolume *gr)
+void meshGRegionNetgen(GRegion *gr)
 {
 #if !defined(HAVE_NETGEN)
   Msg::Error("Frontal algorithm requires Netgen");
 #else
   // sanity check for frontal algo
-  std::vector<GSurface *> faces = gr->faces();
+  std::vector<GFace *> faces = gr->faces();
   for(auto it = faces.begin(); it != faces.end(); it++) {
     if((*it)->quadrangles.size()) {
       Msg::Error(
@@ -328,7 +328,7 @@ void meshGRegionNetgen(GVolume *gr)
   Msg::Info("Meshing volume %d (Frontal)", gr->tag());
   // orient the triangles of with respect to this region
   meshNormalsPointOutOfTheRegion(gr);
-  std::vector<MNode *> numberedV;
+  std::vector<MVertex *> numberedV;
   Ng_Mesh *ngmesh = buildNetgenStructure(gr, false, numberedV);
   SPoint3 pt = gr->bounds().center();
   double lc = BGM_MeshSize(gr, 0, 0, pt.x(), pt.y(), pt.z());
@@ -339,7 +339,7 @@ void meshGRegionNetgen(GVolume *gr)
 #endif
 }
 
-void optimizeMeshGRegionNetgen::operator()(GVolume *gr, bool always)
+void optimizeMeshGRegionNetgen::operator()(GRegion *gr, bool always)
 {
   gr->model()->setCurrentMeshEntity(gr);
 
@@ -360,7 +360,7 @@ void optimizeMeshGRegionNetgen::operator()(GVolume *gr, bool always)
 #else
   Msg::Info("Optimizing volume %d", gr->tag());
   // import mesh into netgen, including volume tets
-  std::vector<MNode *> numberedV;
+  std::vector<MVertex *> numberedV;
   Ng_Mesh *ngmesh = buildNetgenStructure(gr, true, numberedV);
   // delete volume vertices and tets
   deMeshGRegion dem;

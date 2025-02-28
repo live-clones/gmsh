@@ -6,9 +6,9 @@
 #ifndef MESH_UNTANGLE_H
 #define MESH_UNTANGLE_H
 
-class GVolume;
-class GSurface;
+class GRegion;
+class GFace;
 
-void untangleMesh(GVolume *gr);
+void untangleMesh(GRegion *gr);
 
 #endif

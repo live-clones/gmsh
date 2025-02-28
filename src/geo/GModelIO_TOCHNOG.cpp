@@ -176,7 +176,7 @@ int GModel::writeTOCHNOG(const std::string &name, bool saveAll,
          (saveGroupsOfNodes < 0 &&
           ((-saveGroupsOfNodes / (int)std::pow(10, dim)) % 10) == 1)) {
         for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
-          std::set<MNode *, MVertexPtrLessThan> nodes;
+          std::set<MVertex *, MVertexPtrLessThan> nodes;
           std::vector<GEntity *> &entities = it->second;
           for(std::size_t i = 0; i < entities.size(); i++) {
             for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {

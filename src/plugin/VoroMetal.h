@@ -42,7 +42,7 @@ public:
   voroMetal3D() {}
   ~voroMetal3D() {}
   void execute(double);
-  void execute(GVolume *, double);
+  void execute(GRegion *, double);
   void execute(std::vector<SPoint3> &, std::vector<double> &, int, double,
                double, double, double);
   void execute(std::vector<double> &, int, double, double, double, double);

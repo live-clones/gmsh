@@ -25,8 +25,8 @@
 #include "SPoint3.h"
 #include "SVector3.h"
 #include "nodalBasis.h"
-#include "GCurve.h"
-#include "GSurface.h"
+#include "GEdge.h"
+#include "GFace.h"
 #include "MElement.h"
 #include "MLine.h"
 #include "MTriangle.h"
@@ -74,11 +74,11 @@ namespace {
   };
 
   class parametricLineGEdge : public parametricLine {
-    const GCurve *_edge;
+    const GEdge *_edge;
     double _t0, _t1;
 
   public:
-    parametricLineGEdge(const GCurve *edge, double t0, double t1);
+    parametricLineGEdge(const GEdge *edge, double t0, double t1);
     virtual SPoint3 operator()(double xi) const;
     virtual SVector3 derivative(double xi) const;
     virtual SVector3 secondDerivative(double xi) const;
@@ -176,7 +176,7 @@ namespace {
     return p;
   }
 
-  parametricLineGEdge::parametricLineGEdge(const GCurve *edge, double t0,
+  parametricLineGEdge::parametricLineGEdge(const GEdge *edge, double t0,
                                            double t1)
     : _edge(edge), _t0(t0), _t1(t1)
   {
@@ -184,7 +184,7 @@ namespace {
 
   SPoint3 parametricLineGEdge::operator()(double xi) const
   {
-    GVertex gp = _edge->point(_t0 + (_t1 - _t0) * xi);
+    GPoint gp = _edge->point(_t0 + (_t1 - _t0) * xi);
     return SPoint3(gp.x(), gp.y(), gp.z());
   }
 
@@ -352,7 +352,7 @@ namespace {
   }
 
   template <int distDef>
-  double discreteDistance(MLine *l, GCurve *ed, double tol, int meshDiscr,
+  double discreteDistance(MLine *l, GEdge *ed, double tol, int meshDiscr,
                           int geomDiscr)
   {
     if(ed->geomType() == GEntity::Line) return 0.;
@@ -399,19 +399,19 @@ namespace {
 
 } // namespace
 
-double discreteHausdorffDistanceBruteEdge(MLine *l, GCurve *ed, double tol,
+double discreteHausdorffDistanceBruteEdge(MLine *l, GEdge *ed, double tol,
                                           int meshDiscr, int geomDiscr)
 {
   return discreteDistance<1>(l, ed, tol, meshDiscr, geomDiscr);
 }
 
-double discreteHausdorffDistanceFastEdge(MLine *l, GCurve *ed, double tol,
+double discreteHausdorffDistanceFastEdge(MLine *l, GEdge *ed, double tol,
                                          int meshDiscr, int geomDiscr)
 {
   return discreteDistance<2>(l, ed, tol, meshDiscr, geomDiscr);
 }
 
-double discreteFrechetDistanceEdge(MLine *l, GCurve *ed, double tol,
+double discreteFrechetDistanceEdge(MLine *l, GEdge *ed, double tol,
                                    int meshDiscr, int geomDiscr)
 {
   return discreteDistance<3>(l, ed, tol, meshDiscr, geomDiscr);
@@ -466,7 +466,7 @@ double taylorDistanceSq2D(const GradientBasis *gb,
   return distSq;
 }
 
-double taylorDistanceEdge(MLine *l, GCurve *ge)
+double taylorDistanceEdge(MLine *l, GEdge *ge)
 {
   const int nV = l->getNumVertices();
   const GradientBasis *gb;
@@ -489,7 +489,7 @@ double taylorDistanceEdge(MLine *l, GCurve *ge)
   return sqrt(taylorDistanceSq1D(gb, nodesXYZ, tanCAD));
 }
 
-double taylorDistanceFace(MElement *el, GSurface *gf)
+double taylorDistanceFace(MElement *el, GFace *gf)
 {
   const int nV = el->getNumVertices();
   const GradientBasis *gb;
@@ -626,7 +626,7 @@ double distanceToGeometry(GModel *gm, int dim, int tag, int distType,
   double maxDist = 0.;
 
   if(dim == 2) {
-    GCurve *ge = gm->getEdgeByTag(tag);
+    GEdge *ge = gm->getEdgeByTag(tag);
     if(ge->geomType() == GEntity::Line) return 0.;
     for(unsigned int i = 0; i < ge->lines.size(); i++) {
       double dist;
@@ -654,7 +654,7 @@ double distanceToGeometry(GModel *gm, int dim, int tag, int distType,
   }
   else if(dim == 3) {
     if(distType == CADDIST_TAYLOR) {
-      GSurface *gf = gm->getFaceByTag(tag);
+      GFace *gf = gm->getFaceByTag(tag);
       if(gf->geomType() == GEntity::Plane) return 0.;
       for(unsigned int i = 0; i < gf->triangles.size(); i++)
         maxDist = std::max(taylorDistanceFace(gf->triangles[i], gf), maxDist);

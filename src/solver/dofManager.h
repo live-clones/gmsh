@@ -12,7 +12,7 @@
 #include <map>
 #include <list>
 #include <iostream>
-#include "MNode.h"
+#include "MVertex.h"
 #include "linearSystem.h"
 #include "fullMatrix.h"
 
@@ -167,7 +167,7 @@ public:
     std::pair<Dof,Dof> p = std::make_pair(from,to);
     associatedWith.insert(p);
   }
-  void fixVertex(MNode const *v, int iComp, int iField, const dataVec &value)
+  void fixVertex(MVertex const *v, int iComp, int iField, const dataVec &value)
   {
     fixDof(v->getNum(), Dof::createTypeWithTwoInts(iComp, iField), value);
   }
@@ -199,7 +199,7 @@ public:
   {
     return isFixed(Dof(ent, type));
   }
-  inline bool isFixed(MNode *v, int iComp, int iField) const
+  inline bool isFixed(MVertex *v, int iComp, int iField) const
   {
     return isFixed(v->getNum(), Dof::createTypeWithTwoInts(iComp, iField));
   }
@@ -228,7 +228,7 @@ public:
     for(std::size_t i = 0; i < R.size(); i++) this->numberDof(R[i]);
   }
   inline void numberDof(long int ent, int type) { numberDof(Dof(ent, type)); }
-  inline void numberVertex(MNode *v, int iComp, int iField)
+  inline void numberVertex(MVertex *v, int iComp, int iField)
   {
     numberDof(v->getNum(), Dof::createTypeWithTwoInts(iComp, iField));
   }
@@ -326,7 +326,7 @@ public:
   {
     getDofValue(Dof(ent, type), v);
   }
-  inline void getDofValue(MNode *v, int iComp, int iField,
+  inline void getDofValue(MVertex *v, int iComp, int iField,
                           dataVec &value) const
   {
     getDofValue(v->getNum(), Dof::createTypeWithTwoInts(iComp, iField), value);
@@ -566,7 +566,7 @@ public:
   {
     assemble(Dof(entR, typeR), Dof(entC, typeC), value);
   }
-  inline void assemble(MNode *vR, int iCompR, int iFieldR, MNode *vC,
+  inline void assemble(MVertex *vR, int iCompR, int iFieldR, MVertex *vC,
                        int iCompC, int iFieldC, const dataMat &value)
   {
     assemble(vR->getNum(), Dof::createTypeWithTwoInts(iCompR, iFieldR),
@@ -598,7 +598,7 @@ public:
   {
     assemble(Dof(entR, typeR), value);
   }
-  inline void assemble(MNode *vR, int iCompR, int iFieldR,
+  inline void assemble(MVertex *vR, int iCompR, int iFieldR,
                        const dataMat &value)
   {
     assemble(vR->getNum(), Dof::createTypeWithTwoInts(iCompR, iFieldR), value);

@@ -5,7 +5,7 @@
 
 #include "GmshConfig.h"
 #include "GModel.h"
-#include "GVolume.h"
+#include "GRegion.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -21,7 +21,7 @@
 #include "winslowUntangler.h"
 #endif
 
-static double objective_function(double xi, MNode *ver, double xTarget,
+static double objective_function(double xi, MVertex *ver, double xTarget,
                                  double yTarget, double zTarget,
                                  const std::vector<MElement *> &lt,
                                  bool onlytet = false)
@@ -56,7 +56,7 @@ static double objective_function(double xi, MNode *ver, double xTarget,
   return minQual;
 }
 
-static double objective_function(double xi, MNode *ver, GSurface *gf,
+static double objective_function(double xi, MVertex *ver, GFace *gf,
                                  SPoint2 &p1, SPoint2 &p2,
                                  const std::vector<MElement *> &lt)
 {
@@ -64,7 +64,7 @@ static double objective_function(double xi, MNode *ver, GSurface *gf,
   double y = ver->y();
   double z = ver->z();
   SPoint2 p = p1 * (1. - xi) + p2 * xi;
-  GVertex pp = gf->point(p);
+  GPoint pp = gf->point(p);
   ver->x() = pp.x();
   ver->y() = pp.y();
   ver->z() = pp.z();
@@ -81,8 +81,8 @@ static double objective_function(double xi, MNode *ver, GSurface *gf,
   return minQual;
 }
 
-static double objective_function(double const xi, MNode *const ver,
-                                 GSurface *const gf, SPoint3 &p1, SPoint3 &p2,
+static double objective_function(double const xi, MVertex *const ver,
+                                 GFace *const gf, SPoint3 &p1, SPoint3 &p2,
                                  const std::vector<MElement *> &lt)
 {
   double const x = ver->x();
@@ -92,7 +92,7 @@ static double objective_function(double const xi, MNode *const ver,
 
   double initialGuess[2] = {0, 0};
 
-  GVertex pp = gf->closestPoint(p, initialGuess);
+  GPoint pp = gf->closestPoint(p, initialGuess);
   ver->x() = pp.x();
   ver->y() = pp.y();
   ver->z() = pp.z();
@@ -114,7 +114,7 @@ static bool Stopping_Rule(double const x0, double const x1, double const tol)
   return std::abs(x1 - x0) < tol;
 }
 
-static double Maximize_Quality_Golden_Section(MNode *ver, double xTarget,
+static double Maximize_Quality_Golden_Section(MVertex *ver, double xTarget,
                                               double yTarget, double zTarget,
                                               const std::vector<MElement *> &lt,
                                               double const tol, double &q)
@@ -155,7 +155,7 @@ static double Maximize_Quality_Golden_Section(MNode *ver, double xTarget,
   return a;
 }
 
-static double Maximize_Quality_Golden_Section(MNode *ver, GSurface *gf,
+static double Maximize_Quality_Golden_Section(MVertex *ver, GFace *gf,
                                               SPoint2 &p1, SPoint2 &p2,
                                               const std::vector<MElement *> &lt,
                                               double tol, double &worst)
@@ -202,7 +202,7 @@ static double Maximize_Quality_Golden_Section(MNode *ver, GSurface *gf,
   return a;
 }
 
-static double Maximize_Quality_Golden_Section(MNode *ver, GSurface *gf,
+static double Maximize_Quality_Golden_Section(MVertex *ver, GFace *gf,
                                               SPoint3 &p1, SPoint3 &p2,
                                               const std::vector<MElement *> &lt,
                                               double tol, double &worst)
@@ -249,7 +249,7 @@ static double Maximize_Quality_Golden_Section(MNode *ver, GSurface *gf,
   return a;
 }
 
-void relocateVertexOfPyramid(MNode *ver,
+void relocateVertexOfPyramid(MVertex *ver,
                              const std::vector<MElement *> &lt,
                              double relax)
 {
@@ -301,7 +301,7 @@ void relocateVertexOfPyramid(MNode *ver,
   }
 }
 
-static void relocateVertexGolden(MNode *ver,
+static void relocateVertexGolden(MVertex *ver,
                                  const std::vector<MElement *> &lt,
                                  double relax, double tol)
 {
@@ -340,14 +340,14 @@ static void relocateVertexGolden(MNode *ver,
 }
 
 // use real space + projection at the end
-static double relocateVertex2(GSurface *gf, MNode *ver,
+static double relocateVertex2(GFace *gf, MVertex *ver,
                               const std::vector<MElement *> &lt, double tol)
 {
   SPoint3 p1(0, 0, 0);
   std::size_t counter = 0;
   for(std::size_t i = 0; i < lt.size(); i++) {
     for(std::size_t j = 0; j < lt[i]->getNumVertices(); j++) {
-      MNode *v = lt[i]->getVertex(j);
+      MVertex *v = lt[i]->getVertex(j);
       p1 += SPoint3(v->x(), v->y(), v->z());
       counter++;
     }
@@ -359,7 +359,7 @@ static double relocateVertex2(GSurface *gf, MNode *ver,
 
   SPoint3 p = p1 * (1 - xi) + p2 * xi;
   double initialGuess[2] = {0, 0};
-  GVertex pp = gf->closestPoint(p, initialGuess);
+  GPoint pp = gf->closestPoint(p, initialGuess);
   if(!pp.succeeded()) return 2.0;
   ver->x() = pp.x();
   ver->y() = pp.y();
@@ -367,7 +367,7 @@ static double relocateVertex2(GSurface *gf, MNode *ver,
   return worst;
 }
 
-static double relocateVertex(GSurface *gf, MNode *ver,
+static double relocateVertex(GFace *gf, MVertex *ver,
                              const std::vector<MElement *> &lt, double tol)
 {
   if(ver->onWhat()->dim() != 2) return 2.0;
@@ -382,12 +382,12 @@ static double relocateVertex(GSurface *gf, MNode *ver,
   std::size_t counter = 0;
   for(std::size_t i = 0; i < lt.size(); i++) {
     for(std::size_t j = 0; j < lt[i]->getNumVertices(); j++) {
-      MNode *v = lt[i]->getVertex(j);
+      MVertex *v = lt[i]->getVertex(j);
       SPoint2 pp;
       reparamMeshVertexOnFace(v, gf, pp);
       counter++;
       if(v->onWhat()->dim() == 1) {
-        GCurve *ge = dynamic_cast<GCurve *>(v->onWhat());
+        GEdge *ge = dynamic_cast<GEdge *>(v->onWhat());
         // do not take any chance
         if(ge->isSeam(gf)) return 2.0;
       }
@@ -399,7 +399,7 @@ static double relocateVertex(GSurface *gf, MNode *ver,
   double xi = Maximize_Quality_Golden_Section(ver, gf, p1, p2, lt, tol, worst);
   // if (xi != 0) printf("xi = %g\n",xi);
   SPoint2 p = p1 * (1 - xi) + p2 * xi;
-  GVertex pp = gf->point(p);
+  GPoint pp = gf->point(p);
   if(!pp.succeeded()) return 2.0;
   ver->x() = pp.x();
   ver->y() = pp.y();
@@ -409,14 +409,14 @@ static double relocateVertex(GSurface *gf, MNode *ver,
   return worst;
 }
 
-void getAllBoundaryLayerVertices(GSurface *gf, std::set<MNode *> &vs);
+void getAllBoundaryLayerVertices(GFace *gf, std::set<MVertex *> &vs);
 
-void RelocateVertices(GSurface *gf, int niter, double tol)
+void RelocateVertices(GFace *gf, int niter, double tol)
 {
   if(!niter) return;
   Msg::Debug("relocate vertices (face %i)", gf->tag());
 
-  std::set<MNode *> vs;
+  std::set<MVertex *> vs;
   getAllBoundaryLayerVertices(gf, vs);
 
   v2t_cont adj;
@@ -433,7 +433,7 @@ void RelocateVertices(GSurface *gf, int niter, double tol)
   }
 }
 
-void RelocateVertices(GVolume *region, int niter, double tol)
+void RelocateVertices(GRegion *region, int niter, double tol)
 {
   if(!niter) return;
 
@@ -453,16 +453,16 @@ void RelocateVertices(GVolume *region, int niter, double tol)
 }
 
 #if defined(HAVE_WINSLOWUNTANGLER)
-int _untanglePyramids(GVolume *region, bool topological, bool geometrical)
+int _untanglePyramids(GRegion *region, bool topological, bool geometrical)
 {
-  std::vector<MNode *> _v_pyr;
+  std::vector<MVertex *> _v_pyr;
   for(size_t i = 0; i < region->pyramids.size(); i++) {
     _v_pyr.push_back(region->pyramids[i]->getVertex(4));
   }
   std::sort(_v_pyr.begin(), _v_pyr.end());
 
   // get all vertices ...
-  std::set<MNode *> _vts;
+  std::set<MVertex *> _vts;
   std::set<MFace, MFaceLessThan> _fcs;
 
   std::vector<MTetrahedron *> _tets;
@@ -470,7 +470,7 @@ int _untanglePyramids(GVolume *region, bool topological, bool geometrical)
     MTetrahedron *t = region->tetrahedra[i];
     for(size_t j = 0; j < 4; j++) _fcs.insert(t->getFace(j));
     for(size_t j = 0; j < 4; j++) {
-      MNode *v = t->getVertex(j);
+      MVertex *v = t->getVertex(j);
       if(std::binary_search(_v_pyr.begin(), _v_pyr.end(), v)) {
         _tets.push_back(t);
         _vts.insert(t->getVertex(0));
@@ -536,8 +536,8 @@ int _untanglePyramids(GVolume *region, bool topological, bool geometrical)
       SVector3 nf2 = (*mf2).normal();
       //      printf("%12.5E\n",dot(nf,nf2));
       if(dot(nf, nf2) > 0) {
-        MNode *v1 = region->pyramids[i]->getVertex(1);
-        MNode *v3 = region->pyramids[i]->getVertex(3);
+        MVertex *v1 = region->pyramids[i]->getVertex(1);
+        MVertex *v3 = region->pyramids[i]->getVertex(3);
         region->pyramids[i]->setVertex(1, v3);
         region->pyramids[i]->setVertex(3, v1);
         // printf("reverting pyramid %d %d %d %d
@@ -548,11 +548,11 @@ int _untanglePyramids(GVolume *region, bool topological, bool geometrical)
         //        region->pyramids[i]->getVertex(4)->getIndex());
       }
     }
-    MNode *v0 = region->pyramids[i]->getVertex(0);
-    MNode *v1 = region->pyramids[i]->getVertex(1);
-    MNode *v2 = region->pyramids[i]->getVertex(2);
-    MNode *v3 = region->pyramids[i]->getVertex(3);
-    MNode *v4 = region->pyramids[i]->getVertex(4);
+    MVertex *v0 = region->pyramids[i]->getVertex(0);
+    MVertex *v1 = region->pyramids[i]->getVertex(1);
+    MVertex *v2 = region->pyramids[i]->getVertex(2);
+    MVertex *v3 = region->pyramids[i]->getVertex(3);
+    MVertex *v4 = region->pyramids[i]->getVertex(4);
     tets.push_back({(uint32_t)v0->getIndex(), (uint32_t)v4->getIndex(),
 	  (uint32_t)v2->getIndex(), (uint32_t)v1->getIndex()});
     tets.push_back({(uint32_t)v2->getIndex(), (uint32_t)v4->getIndex(),
@@ -581,7 +581,7 @@ int _untanglePyramids(GVolume *region, bool topological, bool geometrical)
 }
 #endif
 
-void RelocateVerticesOfPyramids(GVolume *region, int niter, double tol)
+void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
 {
 #if defined(HAVE_WINSLOWUNTANGLER)
   Msg::Info("Using new pyramid optimization");
@@ -591,17 +591,17 @@ void RelocateVerticesOfPyramids(GVolume *region, int niter, double tol)
 
   Msg::Info("Using old pyramid optimization");
 
-  std::vector<MNode *> _v_pyr;
+  std::vector<MVertex *> _v_pyr;
   for(size_t i = 0; i < region->pyramids.size(); i++) {
     _v_pyr.push_back(region->pyramids[i]->getVertex(4));
   }
   std::sort(_v_pyr.begin(), _v_pyr.end());
 
-  std::set<MNode *> _vts;
+  std::set<MVertex *> _vts;
   for(size_t i = 0; i < region->tetrahedra.size(); i++) {
     MTetrahedron *t = region->tetrahedra[i];
     for(size_t j = 0; j < 4; j++) {
-      MNode *v = t->getVertex(j);
+      MVertex *v = t->getVertex(j);
       if(std::binary_search(_v_pyr.begin(), _v_pyr.end(), v)) {
         _vts.insert(t->getVertex(0));
         _vts.insert(t->getVertex(1));
@@ -616,7 +616,7 @@ void RelocateVerticesOfPyramids(GVolume *region, int niter, double tol)
   for(size_t i = 0; i < region->tetrahedra.size(); i++) {
     MTetrahedron *t = region->tetrahedra[i];
     for(size_t j = 0; j < 4; j++) {
-      MNode *v = t->getVertex(j);
+      MVertex *v = t->getVertex(j);
       if(_vts.find(v) != _vts.end()) {
         _tets.push_back(t);
         break;
@@ -652,7 +652,7 @@ void RelocateVerticesOfPyramids(GVolume *region, int niter, double tol)
 #endif
 }
 
-void RelocateVerticesOfPyramids(std::vector<GVolume *> &regions, int niter,
+void RelocateVerticesOfPyramids(std::vector<GRegion *> &regions, int niter,
                                 double tol)
 {
   for(std::size_t k = 0; k < regions.size(); k++) {
@@ -660,7 +660,7 @@ void RelocateVerticesOfPyramids(std::vector<GVolume *> &regions, int niter,
   }
 }
 
-void RelocateVertices(std::vector<GVolume *> &regions, int niter, double tol)
+void RelocateVertices(std::vector<GRegion *> &regions, int niter, double tol)
 {
   for(std::size_t k = 0; k < regions.size(); k++) {
     RelocateVertices(regions[k], niter, tol);

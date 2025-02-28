@@ -47,7 +47,7 @@ int GModel::writeSU2(const std::string &name, bool saveAll,
 
   fprintf(fp, "NDIME= %d\n", ndime);
 
-  std::set<MNode*, MVertexPtrLessThan> verts;
+  std::set<MVertex*, MVertexPtrLessThan> verts;
   std::set<MElement*, MElementPtrLessThan> elems;
 
   // all interior elements are printed in a single section; indices start at 0;

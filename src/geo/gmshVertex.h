@@ -6,11 +6,11 @@
 #ifndef GMSH_VERTEX_H
 #define GMSH_VERTEX_H
 
-#include "GPoint.h"
+#include "GVertex.h"
 
 class Vertex;
 
-class gmshVertex : public GPoint {
+class gmshVertex : public GVertex {
 private:
   Vertex *_v;
 
@@ -18,16 +18,16 @@ public:
   gmshVertex(GModel *m, Vertex *v);
   virtual ~gmshVertex() {}
   virtual void resetMeshAttributes();
-  virtual GVertex point() const;
+  virtual GPoint point() const;
   virtual double x() const;
   virtual double y() const;
   virtual double z() const;
-  virtual void setPosition(GVertex &p);
+  virtual void setPosition(GPoint &p);
   virtual GeomType geomType() const;
   virtual ModelType getNativeType() const { return GmshModel; }
   virtual void *getNativePtr() const { return _v; }
   virtual void setPrescribedMeshSizeAtVertex(double l);
-  virtual SPoint2 reparamOnFace(const GSurface *gf, int) const;
+  virtual SPoint2 reparamOnFace(const GFace *gf, int) const;
   virtual void writeGEO(FILE *fp, const std::string &meshSizeParameter = "");
   virtual void writePY(FILE *fp, const std::string &meshSizeParameter = "");
   void resetNativePtr(Vertex *v);

@@ -50,7 +50,7 @@ public:
     return _enrichement_t;
   }
   int getNumNodalShapeFunctions() const;
-  inline MNode *getVertex(int i) const
+  inline MVertex *getVertex(int i) const
   {
     return _e->getParent() ? _e->getParent()->getVertex(i) : _e->getVertex(i);
   }

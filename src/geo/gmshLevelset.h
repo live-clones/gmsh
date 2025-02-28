@@ -17,7 +17,7 @@
 #include "GmshMessage.h"
 #include "fullMatrix.h"
 #include "GModel.h"
-#include "MNode.h"
+#include "MVertex.h"
 #include "GmshConfig.h"
 #include "cartesian.h"
 #include "simpleFunction.h"
@@ -243,7 +243,7 @@ public:
   virtual gLevelset *clone() const { return new gLevelsetPoints(*this); }
   // return negative value inward and positive value outward
   virtual double operator()(double x, double y, double z) const;
-  void computeLS(std::vector<MNode *> &vert);
+  void computeLS(std::vector<MVertex *> &vert);
   int type() const { return LSPOINTS; }
 };
 
@@ -380,8 +380,8 @@ public:
 class gLevelsetDistMesh : public gLevelsetPrimitive {
   const int _nbClose;
   std::vector<GEntity *> _entities;
-  std::vector<MNode *> _vertices;
-  std::multimap<MNode *, MElement *> _v2e;
+  std::vector<MVertex *> _vertices;
+  std::multimap<MVertex *, MElement *> _v2e;
   ANNkd_tree *_kdtree;
 
 public:

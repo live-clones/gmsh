@@ -34,7 +34,7 @@ protected:
   int _npts;
   IntPt *_pts;
 
-  MSubTetrahedron(const std::vector<MNode *> &v, int num, int part,
+  MSubTetrahedron(const std::vector<MVertex *> &v, int num, int part,
                   bool owner, int orig)
     : MTetrahedron(v, num, part), _owner(owner), _orig_N(orig), _base(nullptr),
       _pOrder(-1), _npts(0), _pts(nullptr)
@@ -44,14 +44,14 @@ protected:
     GModel *gm); // NEVER ever use this ! (except for reading msh files !)
 
 public:
-  MSubTetrahedron(MNode *v0, MNode *v1, MNode *v2, MNode *v3,
+  MSubTetrahedron(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
                   int num = 0, int part = 0, bool owner = false,
                   MElement *orig = nullptr)
     : MTetrahedron(v0, v1, v2, v3, num, part), _owner(owner), _orig(orig),
       _base(nullptr), _pOrder(-1), _npts(0), _pts(nullptr)
   {
   }
-  MSubTetrahedron(const std::vector<MNode *> &v, int num = 0, int part = 0,
+  MSubTetrahedron(const std::vector<MVertex *> &v, int num = 0, int part = 0,
                   bool owner = false, MElement *orig = nullptr)
     : MTetrahedron(v, num, part), _owner(owner), _orig(orig), _base(nullptr),
       _pOrder(-1), _npts(0), _pts(nullptr)
@@ -89,8 +89,8 @@ public:
                                     double jac[3][3]) const;
   virtual std::size_t getNumShapeFunctions() const;
   virtual std::size_t getNumPrimaryShapeFunctions() const;
-  virtual const MNode *getShapeFunctionNode(int i) const;
-  virtual MNode *getShapeFunctionNode(int i);
+  virtual const MVertex *getShapeFunctionNode(int i) const;
+  virtual MVertex *getShapeFunctionNode(int i);
   virtual void xyz2uvw(double xyz[3], double uvw[3]) const;
   virtual void movePointFromParentSpaceToElementSpace(double &u, double &v,
                                                       double &w) const;
@@ -144,7 +144,7 @@ protected:
   int _npts;
   IntPt *_pts;
 
-  MSubTriangle(const std::vector<MNode *> &v, int num, int part, bool owner,
+  MSubTriangle(const std::vector<MVertex *> &v, int num, int part, bool owner,
                int orig)
     : MTriangle(v, num, part), _owner(owner), _orig_N(orig), _base(nullptr),
       _pOrder(-1), _npts(0), _pts(nullptr)
@@ -153,13 +153,13 @@ protected:
   virtual void updateParent(
     GModel *gm); // NEVER ever use this ! (except for reading msh files !)
 public:
-  MSubTriangle(MNode *v0, MNode *v1, MNode *v2, int num = 0, int part = 0,
+  MSubTriangle(MVertex *v0, MVertex *v1, MVertex *v2, int num = 0, int part = 0,
                bool owner = false, MElement *orig = nullptr)
     : MTriangle(v0, v1, v2, num, part), _owner(owner), _orig(orig),
       _base(nullptr), _pOrder(-1), _npts(0), _pts(nullptr)
   {
   }
-  MSubTriangle(const std::vector<MNode *> &v, int num = 0, int part = 0,
+  MSubTriangle(const std::vector<MVertex *> &v, int num = 0, int part = 0,
                bool owner = false, MElement *orig = nullptr)
     : MTriangle(v, num, part), _owner(owner), _orig(orig), _base(nullptr),
       _pOrder(-1), _npts(0), _pts(nullptr)
@@ -197,8 +197,8 @@ public:
                                     double jac[3][3]) const;
   virtual std::size_t getNumShapeFunctions() const;
   virtual std::size_t getNumPrimaryShapeFunctions() const;
-  virtual const MNode *getShapeFunctionNode(int i) const;
-  virtual MNode *getShapeFunctionNode(int i);
+  virtual const MVertex *getShapeFunctionNode(int i) const;
+  virtual MVertex *getShapeFunctionNode(int i);
   virtual void xyz2uvw(double xyz[3], double uvw[3]) const;
   virtual void movePointFromParentSpaceToElementSpace(double &u, double &v,
                                                       double &w) const;
@@ -252,7 +252,7 @@ protected:
   int _npts;
   IntPt *_pts;
 
-  MSubLine(const std::vector<MNode *> &v, int num, int part, bool owner,
+  MSubLine(const std::vector<MVertex *> &v, int num, int part, bool owner,
            int orig)
     : MLine(v, num, part), _owner(owner), _orig_N(orig), _base(nullptr),
       _pOrder(-1), _npts(0), _pts(nullptr)
@@ -261,13 +261,13 @@ protected:
   virtual void updateParent(
     GModel *gm); // NEVER ever use this ! (except for reading msh files !)
 public:
-  MSubLine(MNode *v0, MNode *v1, int num = 0, int part = 0,
+  MSubLine(MVertex *v0, MVertex *v1, int num = 0, int part = 0,
            bool owner = false, MElement *orig = nullptr)
     : MLine(v0, v1, num, part), _owner(owner), _orig(orig), _base(nullptr),
       _pOrder(-1), _npts(0), _pts(nullptr)
   {
   }
-  MSubLine(const std::vector<MNode *> &v, int num = 0, int part = 0,
+  MSubLine(const std::vector<MVertex *> &v, int num = 0, int part = 0,
            bool owner = false, MElement *orig = nullptr)
     : MLine(v, num, part), _owner(owner), _orig(orig), _base(nullptr),
       _pOrder(-1), _npts(0), _pts(nullptr)
@@ -304,8 +304,8 @@ public:
                                     double jac[3][3]) const;
   virtual std::size_t getNumShapeFunctions() const;
   virtual std::size_t getNumPrimaryShapeFunctions() const;
-  virtual const MNode *getShapeFunctionNode(int i) const;
-  virtual MNode *getShapeFunctionNode(int i);
+  virtual const MVertex *getShapeFunctionNode(int i) const;
+  virtual MVertex *getShapeFunctionNode(int i);
   virtual void xyz2uvw(double xyz[3], double uvw[3]) const;
   virtual void movePointFromParentSpaceToElementSpace(double &u, double &v,
                                                       double &w) const;
@@ -359,7 +359,7 @@ protected:
   int _npts;
   IntPt *_pts;
 
-  MSubPoint(const std::vector<MNode *> &v, int num, int part, bool owner,
+  MSubPoint(const std::vector<MVertex *> &v, int num, int part, bool owner,
             int orig)
     : MPoint(v, num, part), _owner(owner), _orig_N(orig), _base(nullptr),
       _pOrder(-1), _npts(0), _pts(nullptr)
@@ -368,13 +368,13 @@ protected:
   virtual void updateParent(
     GModel *gm); // NEVER ever use this ! (except for reading msh files !)
 public:
-  MSubPoint(MNode *v0, int num = 0, int part = 0, bool owner = false,
+  MSubPoint(MVertex *v0, int num = 0, int part = 0, bool owner = false,
             MElement *orig = nullptr)
     : MPoint(v0, num, part), _owner(owner), _orig(orig), _base(nullptr),
       _pOrder(-1), _npts(0), _pts(nullptr)
   {
   }
-  MSubPoint(const std::vector<MNode *> &v, int num = 0, int part = 0,
+  MSubPoint(const std::vector<MVertex *> &v, int num = 0, int part = 0,
             bool owner = false, MElement *orig = nullptr)
     : MPoint(v, num, part), _owner(owner), _orig(orig), _base(nullptr),
       _pOrder(-1), _npts(0), _pts(nullptr)
@@ -411,8 +411,8 @@ public:
                                     double jac[3][3]) const;
   virtual std::size_t getNumShapeFunctions() const;
   virtual std::size_t getNumPrimaryShapeFunctions() const;
-  virtual const MNode *getShapeFunctionNode(int i) const;
-  virtual MNode *getShapeFunctionNode(int i);
+  virtual const MVertex *getShapeFunctionNode(int i) const;
+  virtual MVertex *getShapeFunctionNode(int i);
   virtual void xyz2uvw(double xyz[3], double uvw[3]) const;
   virtual void movePointFromParentSpaceToElementSpace(double &u, double &v,
                                                       double &w) const;

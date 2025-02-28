@@ -23,8 +23,8 @@
 // OF THIS SOFTWARE.
 
 #include "GEntity.h"
-#include "GSurface.h"
-#include "GVolume.h"
+#include "GFace.h"
+#include "GRegion.h"
 #include "GModel.h"
 #include "MElement.h"
 #include "MTriangle.h"
@@ -87,9 +87,9 @@ double QualPatchDefParameters::elBadness(MElement *el, GEntity *gEnt) const
   if(_excludeBL) {
     BoundaryLayerColumns *blc = nullptr;
     if(gEnt->dim() == 2)
-      blc = static_cast<GSurface *>(gEnt)->getColumns();
+      blc = static_cast<GFace *>(gEnt)->getColumns();
     else if(gEnt->dim() == 3)
-      blc = static_cast<GVolume *>(gEnt)->getColumns();
+      blc = static_cast<GRegion *>(gEnt)->getColumns();
     if(blc) {
       auto itBLEl = blc->_toFirst.find(el);
       if(itBLEl != blc->_toFirst.end()) return 1.;
@@ -122,9 +122,9 @@ int QualPatchDefParameters::inPatch(const SPoint3 &badBary, double limDist,
   if(_excludeBL) {
     BoundaryLayerColumns *blc = nullptr;
     if(gEnt->dim() == 2)
-      blc = static_cast<GSurface *>(gEnt)->getColumns();
+      blc = static_cast<GFace *>(gEnt)->getColumns();
     else if(gEnt->dim() == 3)
-      blc = static_cast<GVolume *>(gEnt)->getColumns();
+      blc = static_cast<GRegion *>(gEnt)->getColumns();
     if(blc) {
       auto itBLEl = blc->_toFirst.find(el);
       if(itBLEl != blc->_toFirst.end()) return -1;

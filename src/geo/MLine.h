@@ -20,21 +20,21 @@
  */
 class MLine : public MElement {
 protected:
-  MNode *_v[2];
-  void _getEdgeVertices(std::vector<MNode *> &v) const
+  MVertex *_v[2];
+  void _getEdgeVertices(std::vector<MVertex *> &v) const
   {
     v[0] = _v[0];
     v[1] = _v[1];
   }
 
 public:
-  MLine(MNode *v0, MNode *v1, int num = 0, int part = 0)
+  MLine(MVertex *v0, MVertex *v1, int num = 0, int part = 0)
     : MElement(num, part)
   {
     _v[0] = v0;
     _v[1] = v1;
   }
-  MLine(const std::vector<MNode *> &v, int num = 0, int part = 0)
+  MLine(const std::vector<MVertex *> &v, int num = 0, int part = 0)
     : MElement(num, part)
   {
     for(int i = 0; i < 2; i++) _v[i] = v[i];
@@ -42,13 +42,13 @@ public:
   ~MLine() {}
   virtual int getDim() const { return 1; }
   virtual std::size_t getNumVertices() const { return 2; }
-  virtual MNode *getVertex(int num) { return _v[num]; }
-  virtual const MNode *getVertex(int num) const { return _v[num]; }
-  virtual void setVertex(int num, MNode *v) { _v[num] = v; }
+  virtual MVertex *getVertex(int num) { return _v[num]; }
+  virtual const MVertex *getVertex(int num) const { return _v[num]; }
+  virtual void setVertex(int num, MVertex *v) { _v[num] = v; }
   virtual double getInnerRadius(); // half-length of segment line
   virtual double getLength(); // length of segment line
   virtual double getVolume();
-  virtual void getVertexInfo(const MNode *vertex, int &ithVertex) const
+  virtual void getVertexInfo(const MVertex *vertex, int &ithVertex) const
   {
     ithVertex = _v[0] == vertex ? 0 : 1;
   }
@@ -60,7 +60,7 @@ public:
   {
     _getEdgeRep(_v[0], _v[1], x, y, z, n);
   }
-  virtual void getEdgeVertices(const int num, std::vector<MNode *> &v) const
+  virtual void getEdgeVertices(const int num, std::vector<MVertex *> &v) const
   {
     v.resize(2);
     _getEdgeVertices(v);
@@ -84,7 +84,7 @@ public:
   virtual const char *getStringForTOCHNOG() const { return "-bar2"; }
   virtual void reverse()
   {
-    MNode *tmp = _v[0];
+    MVertex *tmp = _v[0];
     _v[0] = _v[1];
     _v[1] = tmp;
   }
@@ -127,16 +127,16 @@ public:
  */
 class MLine3 : public MLine {
 protected:
-  MNode *_vs[1];
+  MVertex *_vs[1];
 
 public:
-  MLine3(MNode *v0, MNode *v1, MNode *v2, int num = 0, int part = 0)
+  MLine3(MVertex *v0, MVertex *v1, MVertex *v2, int num = 0, int part = 0)
     : MLine(v0, v1, num, part)
   {
     _vs[0] = v2;
     _vs[0]->setPolynomialOrder(2);
   }
-  MLine3(const std::vector<MNode *> &v, int num = 0, int part = 0)
+  MLine3(const std::vector<MVertex *> &v, int num = 0, int part = 0)
     : MLine(v, num, part)
   {
     _vs[0] = v[2];
@@ -145,34 +145,34 @@ public:
   ~MLine3() {}
   virtual int getPolynomialOrder() const { return 2; }
   virtual std::size_t getNumVertices() const { return 3; }
-  virtual MNode *getVertex(int num)
+  virtual MVertex *getVertex(int num)
   {
     return num < 2 ? _v[num] : _vs[num - 2];
   }
-  virtual const MNode *getVertex(int num) const
+  virtual const MVertex *getVertex(int num) const
   {
     return num < 2 ? _v[num] : _vs[num - 2];
   }
-  virtual void setVertex(int num, MNode *v)
+  virtual void setVertex(int num, MVertex *v)
   {
     if(num < 2)
       _v[num] = v;
     else
       _vs[num - 2] = v;
   }
-  virtual MNode *getVertexUNV(int num)
+  virtual MVertex *getVertexUNV(int num)
   {
     static const int map[3] = {0, 2, 1};
     return getVertex(map[num]);
   }
-  virtual MNode *getVertexINP(int num) { return getVertexUNV(num); }
-  virtual MNode *getVertexKEY(int num) { return getVertexUNV(num); }
-  virtual MNode *getVertexRAD(int num) { return getVertexUNV(num); }
+  virtual MVertex *getVertexINP(int num) { return getVertexUNV(num); }
+  virtual MVertex *getVertexKEY(int num) { return getVertexUNV(num); }
+  virtual MVertex *getVertexRAD(int num) { return getVertexUNV(num); }
   virtual int getNumEdgeVertices() const { return 1; }
   virtual int getNumEdgesRep(bool curved);
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
-  virtual void getEdgeVertices(const int num, std::vector<MNode *> &v) const
+  virtual void getEdgeVertices(const int num, std::vector<MVertex *> &v) const
   {
     v.resize(3);
     MLine::_getEdgeVertices(v);
@@ -206,17 +206,17 @@ public:
  */
 class MLineN : public MLine {
 protected:
-  std::vector<MNode *> _vs;
+  std::vector<MVertex *> _vs;
 
 public:
-  MLineN(MNode *v0, MNode *v1, const std::vector<MNode *> &vs,
+  MLineN(MVertex *v0, MVertex *v1, const std::vector<MVertex *> &vs,
          int num = 0, int part = 0)
     : MLine(v0, v1, num, part), _vs(vs)
   {
     for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_vs.size() + 1);
   }
-  MLineN(const std::vector<MNode *> &v, int num = 0, int part = 0)
+  MLineN(const std::vector<MVertex *> &v, int num = 0, int part = 0)
     : MLine(v[0], v[1], num, part)
   {
     for(std::size_t i = 2; i < v.size(); i++) _vs.push_back(v[i]);
@@ -226,15 +226,15 @@ public:
   ~MLineN() {}
   virtual int getPolynomialOrder() const { return _vs.size() + 1; }
   virtual std::size_t getNumVertices() const { return _vs.size() + 2; }
-  virtual MNode *getVertex(int num)
+  virtual MVertex *getVertex(int num)
   {
     return num < 2 ? _v[num] : _vs[num - 2];
   }
-  virtual const MNode *getVertex(int num) const
+  virtual const MVertex *getVertex(int num) const
   {
     return num < 2 ? _v[num] : _vs[num - 2];
   }
-  virtual void setVertex(int num, MNode *v)
+  virtual void setVertex(int num, MVertex *v)
   {
     if(num < 2)
       _v[num] = v;
@@ -245,7 +245,7 @@ public:
   virtual int getNumEdgesRep(bool curved);
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
-  virtual void getEdgeVertices(const int num, std::vector<MNode *> &v) const
+  virtual void getEdgeVertices(const int num, std::vector<MVertex *> &v) const
   {
     v.resize(2 + _vs.size());
     MLine::_getEdgeVertices(v);
@@ -271,10 +271,10 @@ public:
   }
   virtual void reverse()
   {
-    MNode *tmp = _v[0];
+    MVertex *tmp = _v[0];
     _v[0] = _v[1];
     _v[1] = tmp;
-    std::vector<MNode *> inv;
+    std::vector<MVertex *> inv;
     inv.insert(inv.begin(), _vs.rbegin(), _vs.rend());
     _vs = inv;
   }

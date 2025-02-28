@@ -12,7 +12,7 @@
 #include "GEntity.h"
 #include "fullMatrix.h"
 
-surfacePointWithExclusionRegion::surfacePointWithExclusionRegion(MNode *v, SPoint2 p[8], SPoint2 &_mp, SMetric3 &meshMetric,
+surfacePointWithExclusionRegion::surfacePointWithExclusionRegion(MVertex *v, SPoint2 p[8], SPoint2 &_mp, SMetric3 &meshMetric,
 								 surfacePointWithExclusionRegion *father)
 {
   _v = v;
@@ -33,7 +33,7 @@ surfacePointWithExclusionRegion::surfacePointWithExclusionRegion(MNode *v, SPoin
   }
 }
 
-bool surfacePointWithExclusionRegion::inExclusionZone(const SPoint2 &p, MNode *parent)
+bool surfacePointWithExclusionRegion::inExclusionZone(const SPoint2 &p, MVertex *parent)
 {
   if (_father == parent) {
     //    printf("parent = me\n");
@@ -100,7 +100,7 @@ bool rtree_callback(surfacePointWithExclusionRegion *neighbour, void *point)
 }
 
 bool inExclusionZone(
-  MNode *parent,
+  MVertex *parent,
   SPoint2 &p,
   RTree<surfacePointWithExclusionRegion *, double, 2, double> &rtree)
 {
@@ -114,7 +114,7 @@ bool inExclusionZone(
 
 frameFieldBackgroundMesh3D *Wrapper3D::bgmesh = NULL;
 
-double infinity_distance_3D(const MNode *v1, const MNode *v2, STensor3 &cf)
+double infinity_distance_3D(const MVertex *v1, const MVertex *v2, STensor3 &cf)
 {
   SPoint3 p1 = v1->point();
   SPoint3 p2 = v2->point();
@@ -149,15 +149,15 @@ void fill_min_max(double x, double y, double z, double h, double *min,
   max[2] = z + sqrt3 * h;
 };
 
-bool rtree_callback_3D(MNode *neighbour, void *w)
+bool rtree_callback_3D(MVertex *neighbour, void *w)
 {
   Wrapper3D *wrapper;
   wrapper = static_cast<Wrapper3D *>(w);
-  const MNode *individual = wrapper->get_individual();
-  const MNode *parent = wrapper->get_parent();
+  const MVertex *individual = wrapper->get_individual();
+  const MVertex *parent = wrapper->get_parent();
   if(parent == neighbour) return true;
   // frameFieldBackgroundMesh3D* bgm = wrapper->bgm();
-  // const MNode *closest = bgm->get_nearest_neighbor(individual);
+  // const MVertex *closest = bgm->get_nearest_neighbor(individual);
   // const double h = bgm->size(closest);// get approximate size, closest
   // vertex, faster ?! STensor3 crossfield;
   // bgm->eval_approximate_crossfield(closest, crossfield);
@@ -173,7 +173,7 @@ bool rtree_callback_3D(MNode *neighbour, void *w)
   return true;
 };
 
-bool far_from_boundary_3D(frameFieldBackgroundMesh3D *bgm, MNode *v, double h)
+bool far_from_boundary_3D(frameFieldBackgroundMesh3D *bgm, MVertex *v, double h)
 {
   // check if the box (v->point +- k2*h) is in domain
 

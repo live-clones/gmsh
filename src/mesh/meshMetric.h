@@ -13,7 +13,7 @@
 #include "meshGFaceOptimize.h"
 
 template <class scalar> class simpleFunction;
-class MNode;
+class MVertex;
 class gLevelset;
 class MElementOctree;
 class STensor3;
@@ -45,15 +45,15 @@ private:
   std::vector<MElement *> _elements;
   v2t_cont _adj;
   MElementOctree *_octree;
-  std::map<std::size_t, MNode *> _vertexMap;
+  std::map<std::size_t, MVertex *> _vertexMap;
 
-  std::map<MNode *, double> vals;
-  std::map<MNode *, SVector3> grads;
-  std::map<MNode *, SMetric3> hessians;
+  std::map<MVertex *, double> vals;
+  std::map<MVertex *, SVector3> grads;
+  std::map<MVertex *, SMetric3> hessians;
 
 public:
-  typedef std::map<MNode *, SMetric3> nodalMetricTensor;
-  typedef std::map<MNode *, double> nodalField;
+  typedef std::map<MVertex *, SMetric3> nodalMetricTensor;
+  typedef std::map<MVertex *, double> nodalField;
 
 private:
   nodalMetricTensor _nodalMetrics;
@@ -100,7 +100,7 @@ public:
   void addMetric(int technique, simpleFunction<double> *fct,
                  const std::vector<double> &parameters);
 
-  inline SMetric3 metricAtVertex(MNode *v)
+  inline SMetric3 metricAtVertex(MVertex *v)
   {
     if(needMetricUpdate) updateMetrics();
     return _nodalMetrics[v];
@@ -110,27 +110,27 @@ public:
   void scaleMetric(int nbElementsTarget, nodalMetricTensor &nmt);
 
   void computeMetric(int metricNumber);
-  void computeMetricLevelSet(MNode *ver, SMetric3 &hessian, SMetric3 &metric,
+  void computeMetricLevelSet(MVertex *ver, SMetric3 &hessian, SMetric3 &metric,
                              double &size, double x = 0.0, double y = 0.0,
                              double z = 0.0);
-  void computeMetricHessian(MNode *ver, SMetric3 &hessian, SMetric3 &metric,
+  void computeMetricHessian(MVertex *ver, SMetric3 &hessian, SMetric3 &metric,
                             double &size, double x = 0.0, double y = 0.0,
                             double z = 0.0);
-  void computeMetricFrey(MNode *ver, SMetric3 &hessian, SMetric3 &metric,
+  void computeMetricFrey(MVertex *ver, SMetric3 &hessian, SMetric3 &metric,
                          double &size, double x = 0.0, double y = 0.0,
                          double z = 0.0);
-  void computeMetricEigenDir(MNode *ver, SMetric3 &hessian, SMetric3 &metric,
+  void computeMetricEigenDir(MVertex *ver, SMetric3 &hessian, SMetric3 &metric,
                              double &size, double x = 0.0, double y = 0.0,
                              double z = 0.0);
-  void computeMetricIsoLinInterp(MNode *ver, SMetric3 &hessian,
+  void computeMetricIsoLinInterp(MVertex *ver, SMetric3 &hessian,
                                  SMetric3 &metric, double &size, double x = 0.0,
                                  double y = 0.0, double z = 0.0);
 
   void computeValues();
   void computeHessian();
 
-  double getLaplacian(MNode *v);
-  SVector3 getGradient(MNode *v);
+  double getLaplacian(MVertex *v);
+  SVector3 getGradient(MVertex *v);
   virtual bool isotropic() const { return false; }
   virtual const char *getName() { return "metricField"; }
   virtual std::string getDescription()

@@ -4,18 +4,18 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "BackgroundMeshTools.h"
-#include "GSurface.h"
-#include "GPoint.h"
-#include "GCurve.h"
+#include "GFace.h"
+#include "GVertex.h"
+#include "GEdge.h"
 #include "GEntity.h"
 #include "Context.h"
 #include "Field.h"
 #include "GModel.h"
 
-static double max_surf_curvature(const GCurve *ge, double u)
+static double max_surf_curvature(const GEdge *ge, double u)
 {
   double val = 0;
-  std::vector<GSurface *> faces = ge->faces();
+  std::vector<GFace *> faces = ge->faces();
   auto it = faces.begin();
   while(it != faces.end()) {
     SPoint2 par = ge->reparamOnFace((*it), u, 1);
@@ -26,12 +26,12 @@ static double max_surf_curvature(const GCurve *ge, double u)
   return val;
 }
 
-static double max_edge_curvature(const GPoint *gv)
+static double max_edge_curvature(const GVertex *gv)
 {
   double val = 0;
-  std::vector<GCurve *> const &l_edges = gv->edges();
+  std::vector<GEdge *> const &l_edges = gv->edges();
   for(auto ite = l_edges.begin(); ite != l_edges.end(); ++ite) {
-    GCurve *_myGEdge = *ite;
+    GEdge *_myGEdge = *ite;
     Range<double> range = _myGEdge->parBounds(0);
     double t = (gv == _myGEdge->getBeginVertex()) ? range.low() : range.high();
     double EC = _myGEdge->curvature(t);
@@ -50,17 +50,17 @@ static double LC_MVertex_CURV(GEntity *ge, double U, double V)
   double Crv = 0;
   switch(ge->dim()) {
   case 0:
-    Crv = max_edge_curvature((const GPoint *)ge);
-    // Crv = std::max(max_surf_curvature_vertex((const GPoint *)ge), Crv);
-    // Crv = max_surf_curvature((const GPoint *)ge);
+    Crv = max_edge_curvature((const GVertex *)ge);
+    // Crv = std::max(max_surf_curvature_vertex((const GVertex *)ge), Crv);
+    // Crv = max_surf_curvature((const GVertex *)ge);
     break;
   case 1: {
-    GCurve *ged = (GCurve *)ge;
+    GEdge *ged = (GEdge *)ge;
     Crv = ged->curvature(U);
     Crv = std::max(Crv, max_surf_curvature(ged, U));
   } break;
   case 2: {
-    GSurface *gf = (GSurface *)ge;
+    GFace *gf = (GFace *)ge;
     Crv = gf->curvatureMax(SPoint2(U, V));
   } break;
   }
@@ -73,7 +73,7 @@ static double LC_MVertex_CURV(GEntity *ge, double U, double V)
   return lc;
 }
 
-SMetric3 max_edge_curvature_metric(const GCurve *ge, double u)
+SMetric3 max_edge_curvature_metric(const GEdge *ge, double u)
 {
   SVector3 t = ge->firstDer(u);
   t.normalize();
@@ -87,11 +87,11 @@ SMetric3 max_edge_curvature_metric(const GCurve *ge, double u)
   return buildMetricTangentToCurve(t, l_t, l_n);
 }
 
-static SMetric3 metric_based_on_surface_curvature(const GCurve *ge, double u,
+static SMetric3 metric_based_on_surface_curvature(const GEdge *ge, double u,
                                                   bool iso_surf)
 {
   SMetric3 mesh_size(1.e-12);
-  std::vector<GSurface *> faces = ge->faces();
+  std::vector<GFace *> faces = ge->faces();
   auto it = faces.begin();
   // we choose the metric eigenvectors to be the ones
   // related to the edge ...
@@ -106,7 +106,7 @@ static SMetric3 metric_based_on_surface_curvature(const GCurve *ge, double u,
   return curvMetric;
 }
 
-static SMetric3 metric_based_on_surface_curvature(const GPoint *gv,
+static SMetric3 metric_based_on_surface_curvature(const GVertex *gv,
                                                   bool iso_surf)
 {
   SMetric3 mesh_size(1.e-15);
@@ -119,11 +119,11 @@ SMetric3 LC_MVertex_CURV_ANISO(GEntity *ge, double U, double V)
 
   switch(ge->dim()) {
   case 0:
-    return metric_based_on_surface_curvature((const GPoint *)ge, iso_surf);
+    return metric_based_on_surface_curvature((const GVertex *)ge, iso_surf);
   case 1:
-    return metric_based_on_surface_curvature((const GCurve *)ge, U, iso_surf);
+    return metric_based_on_surface_curvature((const GEdge *)ge, U, iso_surf);
   case 2:
-    return metric_based_on_surface_curvature((const GSurface *)ge, U, V, iso_surf);
+    return metric_based_on_surface_curvature((const GFace *)ge, U, V, iso_surf);
   }
   Msg::Error("Curvature control impossible to compute for a volume");
   return SMetric3();
@@ -135,16 +135,16 @@ static double LC_MVertex_PNTS(GEntity *ge, double U, double V)
 {
   switch(ge->dim()) {
   case 0: {
-    GPoint *gv = (GPoint *)ge;
+    GVertex *gv = (GVertex *)ge;
     double lc = gv->prescribedMeshSizeAtVertex();
     // FIXME we might want to remove this to make all lc treatment consistent
     if(lc >= MAX_LC) return CTX::instance()->lc * 0.1;
     return lc;
   }
   case 1: {
-    GCurve *ged = (GCurve *)ge;
-    GPoint *v1 = ged->getBeginVertex();
-    GPoint *v2 = ged->getEndVertex();
+    GEdge *ged = (GEdge *)ge;
+    GVertex *v1 = ged->getBeginVertex();
+    GVertex *v2 = ged->getEndVertex();
     if(v1 && v2) {
       double lc1 = v1->prescribedMeshSizeAtVertex();
       double lc2 = v2->prescribedMeshSizeAtVertex();
@@ -235,7 +235,7 @@ double BGM_MeshSizeWithoutScaling(GEntity *ge, double U, double V, double X,
   double l4 = ge ? ge->getMeshSize() : MAX_LC;
 
   double l5 = (ge && ge->dim() == 1) ?
-                ((GCurve *)ge)->prescribedMeshSizeAtParam(U) :
+                ((GEdge *)ge)->prescribedMeshSizeAtParam(U) :
                 MAX_LC;
 
   // take the minimum
@@ -336,7 +336,7 @@ SMetric3 BGM_MeshMetric(GEntity *ge, double U, double V, double X, double Y,
   return m;
 }
 
-bool Extend1dMeshIn2dSurfaces(GSurface *gf)
+bool Extend1dMeshIn2dSurfaces(GFace *gf)
 {
   int val = gf->getMeshSizeFromBoundary();
   return (val > 0 || val == -2);
@@ -348,12 +348,12 @@ bool Extend2dMeshIn3dVolumes()
   return (val > 0 || val == -3);
 }
 
-SMetric3 max_edge_curvature_metric(const GPoint *gv)
+SMetric3 max_edge_curvature_metric(const GVertex *gv)
 {
   SMetric3 val(1.e-12);
-  std::vector<GCurve *> const &l_edges = gv->edges();
+  std::vector<GEdge *> const &l_edges = gv->edges();
   for(auto ite = l_edges.begin(); ite != l_edges.end(); ++ite) {
-    GCurve *_myGEdge = *ite;
+    GEdge *_myGEdge = *ite;
     Range<double> range = _myGEdge->parBounds(0);
     SMetric3 cc;
     double ne = CTX::instance()->mesh.lcFromCurvature;
@@ -380,7 +380,7 @@ SMetric3 max_edge_curvature_metric(const GPoint *gv)
   return val;
 }
 
-SMetric3 metric_based_on_surface_curvature(const GSurface *gf, double u, double v,
+SMetric3 metric_based_on_surface_curvature(const GFace *gf, double u, double v,
                                            bool surface_isotropic,
                                            double d_normal,
                                            double d_tangent_max)

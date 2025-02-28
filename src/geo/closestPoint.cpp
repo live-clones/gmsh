@@ -5,8 +5,8 @@
 
 #include "closestPoint.h"
 #include "GEntity.h"
-#include "GCurve.h"
-#include "GSurface.h"
+#include "GEdge.h"
+#include "GFace.h"
 #include <vector>
 
 #if defined(HAVE_ANN)
@@ -34,7 +34,7 @@ closestPointFinder::closestPointFinder(GEntity *ge, double e) : _tolerance(e)
 #if defined(HAVE_ANN)
   std::vector<SPoint3> pts;
   if(ge->dim() == 1) {
-    GCurve *edge = ge->cast2Edge();
+    GEdge *edge = ge->cast2Edge();
     if(edge) {
       std::vector<double> ts;
       edge->discretize(_tolerance, pts, ts);

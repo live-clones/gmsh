@@ -14,8 +14,8 @@
 #include "BackgroundMeshManager.h"
 #include "BackgroundMesh2D.h"
 #include "BackgroundMesh3D.h"
-#include "GSurface.h"
-#include "GVolume.h"
+#include "GFace.h"
+#include "GRegion.h"
 #include "OS.h"
 #include "Context.h"
 #include "meshGRegion.h"
@@ -26,26 +26,26 @@
 
 bool old_algo_hexa() { return true; }
 
-void computeSixNeighbors(frameFieldBackgroundMesh3D *bgm, MNode *parent,
-                         std::vector<MNode *> &spawns, STensor3 dir, double h)
+void computeSixNeighbors(frameFieldBackgroundMesh3D *bgm, MVertex *parent,
+                         std::vector<MVertex *> &spawns, STensor3 dir, double h)
 {
   // using approximate size, RK1...
   double x = parent->x();
   double y = parent->y();
   double z = parent->z();
   double newx, newy, newz;
-  GVolume *gr = dynamic_cast<GVolume *>(bgm->getBackgroundGEntity());
+  GRegion *gr = dynamic_cast<GRegion *>(bgm->getBackgroundGEntity());
 
   for(int i = 0; i < 3; i++) {
     newx = x + h * dir(0, i);
     newy = y + h * dir(1, i);
     newz = z + h * dir(2, i);
-    spawns[i * 2] = new MNode(newx, newy, newz, gr, 0);
+    spawns[i * 2] = new MVertex(newx, newy, newz, gr, 0);
 
     newx = x - h * dir(0, i);
     newy = y - h * dir(1, i);
     newz = z - h * dir(2, i);
-    spawns[i * 2 + 1] = new MNode(newx, newy, newz, gr, 0);
+    spawns[i * 2 + 1] = new MVertex(newx, newy, newz, gr, 0);
   }
 }
 
@@ -58,12 +58,12 @@ Filler2D::~Filler2D()
 {
 }
 
-void Filler2D::pointInsertion2D(GSurface *gf, std::vector<MNode *> &packed,
+void Filler2D::pointInsertion2D(GFace *gf, std::vector<MVertex *> &packed,
                                 std::vector<SMetric3> &metrics)
 {
 }
 
-bool Filler3D::treat_region(GVolume *gr)
+bool Filler3D::treat_region(GRegion *gr)
 {
   BGMManager::set_use_cross_field(true);
 
@@ -140,7 +140,7 @@ bool Filler3D::treat_region(GVolume *gr)
 
   // ----- initialize fifo list -----
 
-  RTree<MNode *, double, 3, double> rtree;
+  RTree<MVertex *, double, 3, double> rtree;
   listOfPoints *fifo;
   if(use_fifo)
     fifo = new listOfPointsFifo();
@@ -149,16 +149,16 @@ bool Filler3D::treat_region(GVolume *gr)
   else
     fifo = new listOfPointsScalarSmoothness();
 
-  std::set<MNode *> temp;
-  std::vector<MNode *> boundary_vertices;
-  std::map<MNode *, int> vert_priority;
-  std::map<MNode *, double> smoothness_forplot;
+  std::set<MVertex *> temp;
+  std::vector<MVertex *> boundary_vertices;
+  std::map<MVertex *, int> vert_priority;
+  std::map<MVertex *, double> smoothness_forplot;
   MElement *element;
-  MNode *vertex;
-  std::vector<GSurface *> faces = gr->faces();
-  for(std::vector<GSurface *>::iterator it = faces.begin(); it != faces.end();
+  MVertex *vertex;
+  std::vector<GFace *> faces = gr->faces();
+  for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
       it++) {
-    GSurface *gf = *it;
+    GFace *gf = *it;
     // int limit = code_kesskessai(gf->tag());
     for(unsigned int i = 0; i < gf->getNumMeshElements(); i++) {
       element = gf->getMeshElement(i);
@@ -172,7 +172,7 @@ bool Filler3D::treat_region(GVolume *gr)
   }
 
   int geodim;
-  for(std::set<MNode *>::iterator it = temp.begin(); it != temp.end(); it++) {
+  for(std::set<MVertex *>::iterator it = temp.begin(); it != temp.end(); it++) {
     geodim = (*it)->onWhat()->dim();
     if((geodim == 0) || (geodim == 1) || (geodim == 2))
       boundary_vertices.push_back(*it);
@@ -185,7 +185,7 @@ bool Filler3D::treat_region(GVolume *gr)
     z = boundary_vertices[i]->z();
 
     // "on boundary since working on boundary_vertices ...
-    MNode *closest =
+    MVertex *closest =
       bgm->get_nearest_neighbor_on_boundary(boundary_vertices[i]);
     h = bgm->size(closest); // get approximate size, closest vertex, faster ?!
 
@@ -230,7 +230,7 @@ bool Filler3D::treat_region(GVolume *gr)
   // TODO: si fifo était list of *PTR -> pas de copies, gain temps ?
   Wrapper3D wrapper;
   wrapper.set_bgm(bgm);
-  MNode *parent, *individual;
+  MVertex *parent, *individual;
   new_vertices.clear();
   bool spawn_created;
   int priority_counter = 0;
@@ -246,7 +246,7 @@ bool Filler3D::treat_region(GVolume *gr)
     //      continue;
     //    }
 
-    std::vector<MNode *> spawns;
+    std::vector<MVertex *> spawns;
     spawns.resize(6);
     computeSixNeighbors(bgm, parent, spawns, fifo->get_first_crossfield(),
 			fifo->get_first_size());
@@ -269,7 +269,7 @@ bool Filler3D::treat_region(GVolume *gr)
       if(bgm->inDomain(x, y, z)) {
         //        std::cout << "   spawn " << i << " in domain" << std::endl;
 
-        MNode *closest = bgm->get_nearest_neighbor(individual);
+        MVertex *closest = bgm->get_nearest_neighbor(individual);
         h =
           bgm->size(closest); // get approximate size, closest vertex, faster ?!
 
@@ -349,7 +349,7 @@ bool Filler3D::treat_region(GVolume *gr)
 
   deMeshGRegion deleter;
   deleter(gr);
-  std::vector<GVolume *> regions;
+  std::vector<GRegion *> regions;
   regions.push_back(gr);
   meshGRegion mesher(regions); //?
   mesher(gr); //?
@@ -371,7 +371,7 @@ bool Filler3D::treat_region(GVolume *gr)
 
 int Filler3D::get_nbr_new_vertices() { return new_vertices.size(); }
 
-MNode *Filler3D::get_new_vertex(int i) { return new_vertices[i]; }
+MVertex *Filler3D::get_new_vertex(int i) { return new_vertices[i]; }
 
 Filler3D::Filler3D() {}
 
@@ -389,7 +389,7 @@ Filler3D::~Filler3D()
             << std::endl;
 }
 
-std::vector<MNode *> Filler3D::new_vertices;
+std::vector<MVertex *> Filler3D::new_vertices;
 
 double Filler3D::time_smoothing = 0.;
 double Filler3D::time_insert_points = 0.;

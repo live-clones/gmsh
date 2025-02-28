@@ -14,22 +14,22 @@
 #include "meshGFaceDelaunayInsertion.h"
 #include "STensor3.h"
 
-class GSurface;
-class GPoint;
-class MNode;
+class GFace;
+class GVertex;
+class MVertex;
 class Field;
 
 struct edge_angle {
-  MNode *v1, *v2;
+  MVertex *v1, *v2;
   double angle;
-  edge_angle(MNode *_v1, MNode *_v2, MElement *t1, MElement *t2);
+  edge_angle(MVertex *_v1, MVertex *_v2, MElement *t1, MElement *t2);
   bool operator<(const edge_angle &other) const { return other.angle < angle; }
 };
 
 // TODO: switch to unordered_map here & verify deterministic behavior
-typedef std::map<MNode *, std::vector<MElement *>, MVertexPtrLessThan>
+typedef std::map<MVertex *, std::vector<MElement *>, MVertexPtrLessThan>
   v2t_cont;
-// typedef std::unordered_map<MNode *, std::vector<MElement *> > v2t_cont;
+// typedef std::unordered_map<MVertex *, std::vector<MElement *> > v2t_cont;
 
 typedef std::map<MEdge, std::pair<MElement *, MElement *>, MEdgeLessThan>
   e2t_cont;
@@ -56,21 +56,21 @@ void buildListOfEdgeAngle(e2t_cont adj, std::vector<edge_angle> &edges_detected,
                           std::vector<edge_angle> &edges_lonly);
 void buildEdgeToElements(std::vector<MElement *> &tris, e2t_cont &adj);
 
-void laplaceSmoothing(GSurface *gf, int niter = 1, bool infinity_norm = false);
+void laplaceSmoothing(GFace *gf, int niter = 1, bool infinity_norm = false);
 
 bool buildMeshGenerationDataStructures(
-  GSurface *gf, std::set<MTri3 *, compareTri3Ptr> &AllTris, bidimMeshData &data);
-void transferDataStructure(GSurface *gf,
+  GFace *gf, std::set<MTri3 *, compareTri3Ptr> &AllTris, bidimMeshData &data);
+void transferDataStructure(GFace *gf,
                            std::set<MTri3 *, compareTri3Ptr> &AllTris,
                            bidimMeshData &DATA);
-void computeEquivalences(GSurface *gf, bidimMeshData &DATA);
-void recombineIntoQuads(GSurface *gf, bool blossom, int topologicalOptiPasses,
+void computeEquivalences(GFace *gf, bidimMeshData &DATA);
+void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
                         bool nodeRepositioning, double minqual);
 
 // used for meshGFaceRecombine development
-void quadsToTriangles(GSurface *gf, double minqual);
+void quadsToTriangles(GFace *gf, double minqual);
 
-void splitElementsInBoundaryLayerIfNeeded(GSurface *gf);
+void splitElementsInBoundaryLayerIfNeeded(GFace *gf);
 
 struct swapquad {
   int v[4];
@@ -86,7 +86,7 @@ struct swapquad {
     return false;
   }
 
-  swapquad(MNode *v1, MNode *v2, MNode *v3, MNode *v4)
+  swapquad(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4)
   {
     v[0] = v1->getNum();
     v[1] = v2->getNum();
@@ -109,7 +109,7 @@ struct RecombineTriangle {
   MElement *t1, *t2;
   double angle;
   double quality;
-  MNode *n1, *n2, *n3, *n4;
+  MVertex *n1, *n2, *n3, *n4;
 
   RecombineTriangle(const MEdge &me, MElement *_t1, MElement *_t2, Field *f);
 

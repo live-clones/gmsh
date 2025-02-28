@@ -5,7 +5,7 @@
 
 #include "MVertexBoundaryLayerData.h"
 
-std::vector<MNode *> *MVertexBoundaryLayerData::getChildren(int i)
+std::vector<MVertex *> *MVertexBoundaryLayerData::getChildren(int i)
 {
   if(i < (int)this->children.size() && i >= 0) { return &(children[i]); }
   else {
@@ -29,7 +29,7 @@ int MVertexBoundaryLayerData::getNumChildrenFamilies()
 }
 
 void MVertexBoundaryLayerData::addChildrenFamily(
-  const std::vector<MNode *> &family)
+  const std::vector<MVertex *> &family)
 {
   this->children.push_back(family);
 }

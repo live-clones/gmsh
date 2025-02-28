@@ -8,11 +8,11 @@
 
 #include <vector>
 
-class GVolume;
-class MNode;
+class GRegion;
+class MVertex;
 class MTetrahedron;
 
-int meshGRegionHxt(std::vector<GVolume *> &regions);
-void delaunayMeshIn3DHxt(std::vector<MNode *> &points,
+int meshGRegionHxt(std::vector<GRegion *> &regions);
+void delaunayMeshIn3DHxt(std::vector<MVertex *> &points,
                          std::vector<MTetrahedron *> &tets);
 #endif

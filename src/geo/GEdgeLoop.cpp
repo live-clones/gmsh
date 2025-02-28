@@ -17,43 +17,43 @@ void GEdgeSigned::print() const
     Msg::Info("Curve %d sign %d, no begin or end points", _ge->tag(), _sign);
 }
 
-int countInList(std::list<GCurve *> &wire, GCurve *ge)
+int countInList(std::list<GEdge *> &wire, GEdge *ge)
 {
   return std::count(wire.begin(), wire.end(), ge);
 }
 
-GEdgeSigned nextOne(GEdgeSigned *thisOne, std::list<GCurve *> &wire)
+GEdgeSigned nextOne(GEdgeSigned *thisOne, std::list<GEdge *> &wire)
 {
   if(!thisOne) {
-    GCurve *ge = *(wire.begin());
+    GEdge *ge = *(wire.begin());
     wire.erase(wire.begin());
     return GEdgeSigned(1, ge);
   }
 
-  GPoint *gv = thisOne->getEndVertex();
+  GVertex *gv = thisOne->getEndVertex();
 
-  std::list<GCurve *> possibleChoices;
+  std::list<GEdge *> possibleChoices;
 
   auto it = wire.begin();
   auto ite = wire.end();
   while(it != ite) {
-    GCurve *ge = *it;
-    GPoint *v1 = ge->getBeginVertex();
-    GPoint *v2 = ge->getEndVertex();
+    GEdge *ge = *it;
+    GVertex *v1 = ge->getBeginVertex();
+    GVertex *v2 = ge->getEndVertex();
     if(v1 == gv || v2 == gv) possibleChoices.push_back(ge);
     ++it;
   }
   it = possibleChoices.begin();
   ite = possibleChoices.end();
   while(it != ite) {
-    GCurve *ge = *it;
+    GEdge *ge = *it;
     if(countInList(possibleChoices, ge) == 2) {
       wire.erase(std::remove_if(wire.begin(), wire.end(),
-                                [ge](GCurve *ptr){ return ptr == ge; }),
+                                [ge](GEdge *ptr){ return ptr == ge; }),
                  wire.end());
       wire.push_back(ge);
-      GPoint *v1 = ge->getBeginVertex();
-      GPoint *v2 = ge->getEndVertex();
+      GVertex *v1 = ge->getBeginVertex();
+      GVertex *v2 = ge->getEndVertex();
       if(v1 == gv) return GEdgeSigned(1, ge);
       if(v2 == gv) return GEdgeSigned(-1, ge);
       Msg::Error("Something wrong in curve loop 1");
@@ -64,13 +64,13 @@ GEdgeSigned nextOne(GEdgeSigned *thisOne, std::list<GCurve *> &wire)
   it = possibleChoices.begin();
   ite = possibleChoices.end();
   while(it != ite) {
-    GCurve *ge = *it;
+    GEdge *ge = *it;
     if(ge != thisOne->getEdge()) {
       wire.erase(std::remove_if(wire.begin(), wire.end(),
-                                [ge](GCurve *ptr){ return ptr == ge; }),
+                                [ge](GEdge *ptr){ return ptr == ge; }),
                  wire.end());
-      GPoint *v1 = ge->getBeginVertex();
-      GPoint *v2 = ge->getEndVertex();
+      GVertex *v1 = ge->getBeginVertex();
+      GVertex *v2 = ge->getEndVertex();
       if(v1 == gv) return GEdgeSigned(1, ge);
       if(v2 == gv) return GEdgeSigned(-1, ge);
       Msg::Error("Something wrong in curve loop 2");
@@ -83,7 +83,7 @@ GEdgeSigned nextOne(GEdgeSigned *thisOne, std::list<GCurve *> &wire)
   return GEdgeSigned(1, nullptr);
 }
 
-int GEdgeLoop::count(GCurve *ge) const
+int GEdgeLoop::count(GEdge *ge) const
 {
   int count = 0;
   for(auto it = begin(); it != end(); ++it) {
@@ -97,7 +97,7 @@ void GEdgeLoop::print() const
   for(auto it = begin(); it != end(); ++it) { it->print(); }
 }
 
-void GEdgeLoop::getEdges(std::vector<GCurve *> &edges) const
+void GEdgeLoop::getEdges(std::vector<GEdge *> &edges) const
 {
   edges.clear();
   for(auto it = begin(); it != end(); ++it) { edges.push_back(it->getEdge()); }
@@ -109,8 +109,8 @@ void GEdgeLoop::getSigns(std::vector<int> &signs) const
   for(auto it = begin(); it != end(); ++it) { signs.push_back(it->getSign()); }
 }
 
-static void loopTheLoop(std::list<GCurve *> &wire, std::list<GEdgeSigned> &loop,
-                        GCurve **degeneratedToInsert)
+static void loopTheLoop(std::list<GEdge *> &wire, std::list<GEdgeSigned> &loop,
+                        GEdge **degeneratedToInsert)
 {
   GEdgeSigned *prevOne = nullptr;
   GEdgeSigned ges(1, nullptr);
@@ -134,17 +134,17 @@ static void loopTheLoop(std::list<GCurve *> &wire, std::list<GEdgeSigned> &loop,
   }
 }
 
-void GEdgeLoop::recompute(const std::vector<GCurve *> &cwire)
+void GEdgeLoop::recompute(const std::vector<GEdge *> &cwire)
 {
   loop.clear();
 #if 0
   // Sometimes OCC puts a degenerated edge in the middle of the wire: this
   // pushes it to front. This "fix" should not be necessary anymore.
-  std::list<GCurve *> wire;
-  std::vector<GCurve *> degenerated;
-  GCurve *degeneratedToInsert = nullptr;
+  std::list<GEdge *> wire;
+  std::vector<GEdge *> degenerated;
+  GEdge *degeneratedToInsert = nullptr;
   for(auto it = cwire.begin(); it != cwire.end(); ++it) {
-    GCurve *ed = *it;
+    GEdge *ed = *it;
     if(ed->degenerate(0))
       degenerated.push_back(ed);
     else
@@ -161,14 +161,14 @@ void GEdgeLoop::recompute(const std::vector<GCurve *> &cwire)
       "More than two degenerated edges in one model face of an OCC model");
   }
 #else
-  std::list<GCurve *> wire(cwire.begin(), cwire.end());
-  GCurve *degeneratedToInsert = nullptr;
+  std::list<GEdge *> wire(cwire.begin(), cwire.end());
+  GEdge *degeneratedToInsert = nullptr;
 #endif
 
   while(!wire.empty()) { loopTheLoop(wire, loop, &degeneratedToInsert); }
 }
 
-GEdgeLoop::GEdgeLoop(const std::vector<GCurve *> &wire)
+GEdgeLoop::GEdgeLoop(const std::vector<GEdge *> &wire)
 {
   recompute(wire);
 }

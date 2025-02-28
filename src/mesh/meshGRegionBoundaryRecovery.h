@@ -6,9 +6,9 @@
 #ifndef MESH_GREGION_BOUNDARY_RECOVERY_H
 #define MESH_GREGION_BOUNDARY_RECOVERY_H
 
-class GVolume;
+class GRegion;
 class splitQuadRecovery;
 
-bool meshGRegionBoundaryRecovery(GVolume *gr, splitQuadRecovery *sqr = nullptr);
+bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr = nullptr);
 
 #endif

@@ -7,8 +7,8 @@
 #include "BGMBase.h"
 #include "BackgroundMesh2D.h"
 #include "GEntity.h"
-#include "GSurface.h"
-#include "GVolume.h"
+#include "GFace.h"
+#include "GRegion.h"
 #include "BackgroundMesh3D.h"
 
 std::map<GEntity *, BGMBase *> BGMManager::data =
@@ -24,7 +24,7 @@ void BGMManager::set_use_cross_field(bool b)
   BGMManager::use_cross_field = b;
 }
 
-BGMBase *BGMManager::get(GVolume *gf)
+BGMBase *BGMManager::get(GRegion *gf)
 {
   std::map<GEntity *, BGMBase *>::iterator itfind = data.find(gf);
   if(itfind != data.end()) {
@@ -38,7 +38,7 @@ BGMBase *BGMManager::get(GVolume *gf)
   return bgm;
 }
 
-BGMBase *BGMManager::get(GSurface *gf)
+BGMBase *BGMManager::get(GFace *gf)
 {
   std::map<GEntity *, BGMBase *>::iterator itfind = data.find(gf);
   if(itfind != data.end()) {

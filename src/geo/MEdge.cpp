@@ -13,11 +13,11 @@
 
 // FIXME
 // remove that when MElementCut is removed
-bool MEdge::isInside(MNode *v) const
+bool MEdge::isInside(MVertex *v) const
 {
   double tol = MVertexPtrLessThanLexicographic::getTolerance();
-  MNode *v0 = _v[0];
-  MNode *v1 = _v[1];
+  MVertex *v0 = _v[0];
+  MVertex *v1 = _v[1];
   MVertexPtrLessThanLexicographic lt;
   if(lt(v0, v1)) {
     v0 = _v[1];
@@ -66,19 +66,19 @@ bool MEdge::isInside(MNode *v) const
 }
 
 bool SortEdgeConsecutive(const std::vector<MEdge> &e,
-                         std::vector<std::vector<MNode *> > &vs)
+                         std::vector<std::vector<MVertex *> > &vs)
 {
   vs.clear();
   if(e.empty()) return true;
-  std::map<MNode *, std::pair<MNode *, MNode *>, MVertexPtrLessThan> c;
+  std::map<MVertex *, std::pair<MVertex *, MVertex *>, MVertexPtrLessThan> c;
 
   for(size_t i = 0; i < e.size(); i++) {
-    MNode *v0 = e[i].getVertex(0);
-    MNode *v1 = e[i].getVertex(1);
+    MVertex *v0 = e[i].getVertex(0);
+    MVertex *v1 = e[i].getVertex(1);
 
     auto it0 = c.find(v0), it1 = c.find(v1);
     if(it0 == c.end())
-      c[v0] = std::make_pair(v1, (MNode *)nullptr);
+      c[v0] = std::make_pair(v1, (MVertex *)nullptr);
     else {
       if(it0->second.second == nullptr) { it0->second.second = v1; }
       else {
@@ -87,7 +87,7 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
       }
     }
     if(it1 == c.end())
-      c[v1] = std::make_pair(v0, (MNode *)nullptr);
+      c[v1] = std::make_pair(v0, (MVertex *)nullptr);
     else {
       if(it1->second.second == nullptr) { it1->second.second = v0; }
       else {
@@ -101,8 +101,8 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
   }
 
   while(!c.empty()) {
-    std::vector<MNode *> v;
-    MNode *start = nullptr;
+    std::vector<MVertex *> v;
+    MVertex *start = nullptr;
     {
       auto it = c.begin();
       start = it->first;
@@ -116,9 +116,9 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
 
     auto its = c.find(start);
 
-    MNode *prev =
+    MVertex *prev =
       (its->second.second == start) ? its->second.first : its->second.second;
-    MNode *current = start;
+    MVertex *current = start;
 
     do {
       if(c.size() == 0) {
@@ -131,10 +131,10 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
         Msg::Error("Impossible to find %d", current->getNum());
         return false;
       }
-      MNode *v1 = it->second.first;
-      MNode *v2 = it->second.second;
+      MVertex *v1 = it->second.first;
+      MVertex *v2 = it->second.second;
       c.erase(it);
-      MNode *temp = current;
+      MVertex *temp = current;
       if(v1 == prev)
         current = v2;
       else if(v2 == prev)
@@ -153,7 +153,7 @@ bool SortEdgeConsecutive(const std::vector<MEdge> &e,
   return true;
 }
 
-MEdgeN::MEdgeN(const std::vector<MNode *> &v)
+MEdgeN::MEdgeN(const std::vector<MVertex *> &v)
 {
   _v.resize(v.size());
   for(std::size_t i = 0; i < v.size(); i++) _v[i] = v[i];

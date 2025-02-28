@@ -7,21 +7,21 @@
 #define DISCRETE_EDGE_H
 
 #include "GModel.h"
-#include "GCurve.h"
+#include "GEdge.h"
 
-class discreteEdge : public GCurve {
+class discreteEdge : public GEdge {
 private:
   std::vector<double> _pars;
   std::vector<SPoint3> _discretization;
   bool _getLocalParameter(const double &t, int &iEdge, double &tLoc) const;
 
 public:
-  discreteEdge(GModel *model, int num, GPoint *_v0, GPoint *_v1);
+  discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1);
   discreteEdge(GModel *model, int num);
   discreteEdge(GModel *model);
   virtual ~discreteEdge() {}
   virtual GeomType geomType() const { return DiscreteCurve; }
-  virtual GVertex point(double p) const;
+  virtual GPoint point(double p) const;
   virtual SVector3 firstDer(double par) const;
   virtual double curvature(double par) const;
   virtual bool haveParametrization() { return !_pars.empty(); }
@@ -30,7 +30,7 @@ public:
   virtual void mesh(bool verbose);
   int minimumDrawSegments() const { return 2 * _pars.size(); }
   virtual int minimumMeshSegments() const { return periodic(0) ? 3 : 2; }
-  virtual SPoint2 reparamOnFace(const GSurface *face, double epar, int dir) const;
+  virtual SPoint2 reparamOnFace(const GFace *face, double epar, int dir) const;
   bool writeParametrization(FILE *fp, bool binary);
   bool readParametrization(FILE *fp, bool binary);
 };

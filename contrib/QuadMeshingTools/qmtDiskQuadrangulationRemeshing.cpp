@@ -19,11 +19,11 @@
 /* Gmsh includes */
 #include "GmshMessage.h"
 #include "OS.h"
-#include "GPoint.h"
-#include "GCurve.h"
-#include "GSurface.h"
+#include "GVertex.h"
+#include "GEdge.h"
+#include "GFace.h"
 #include "GModel.h"
-#include "MNode.h"
+#include "MVertex.h"
 #include "MLine.h"
 #include "MElement.h"
 #include "MTriangle.h"
@@ -180,20 +180,20 @@ namespace QMT {
 
   double computeInputIrregularity(
     const std::vector<MElement *> &elements,
-    const std::vector<MNode *> &intVertices,
-    const std::vector<MNode *> &bdrVertices,
+    const std::vector<MVertex *> &intVertices,
+    const std::vector<MVertex *> &bdrVertices,
     const std::vector<int> &bndIdealValence,
     const std::vector<std::pair<int, int> > &bndAllowedValenceRange)
   {
     /* Warning: the two way to compute irregularity must be the same than
      * computeIrregularity(), because the values are compared */
     double irregularity = 0.;
-    std::unordered_map<MNode *, int> valence;
+    std::unordered_map<MVertex *, int> valence;
     for(MElement *e : elements)
       for(size_t lv = 0; lv < 4; ++lv) { valence[e->getVertex(lv)] += 1; }
     /* Boundary vertices */
     for(size_t bv = 0; bv < bdrVertices.size(); ++bv) {
-      MNode *v = bdrVertices[bv];
+      MVertex *v = bdrVertices[bv];
       if(valence[v] < bndAllowedValenceRange[bv].first) return DBL_MAX;
       if(valence[v] > bndAllowedValenceRange[bv].second) return DBL_MAX;
       irregularity += std::pow(bndIdealValence[bv] - valence[v], 2);
@@ -292,15 +292,15 @@ namespace QMT {
     return (best != DBL_MAX);
   }
 
-  /* WARNING: GSurface is not modified, just the "floating" MNode
-   * and MQuadrangle are created, they must be inserted in the GSurface
+  /* WARNING: GFace is not modified, just the "floating" MVertex
+   * and MQuadrangle are created, they must be inserted in the GFace
    * later is the pattern is kept.
    * The vertex positions are random ! Need geometric smoothing after */
   bool getDiskQuadrangulationRemeshing(
-    GSurface *gf, const std::vector<MNode *> &bnd,
+    GFace *gf, const std::vector<MVertex *> &bnd,
     int rotation, /* rotation to apply to input */
     const std::vector<id4> &quads, /* pattern */
-    std::vector<MNode *> &newVertices, /* new vertices inside the cavity */
+    std::vector<MVertex *> &newVertices, /* new vertices inside the cavity */
     std::vector<MElement *> &newElements /* new quads inside the cavity */
   )
   {
@@ -308,7 +308,7 @@ namespace QMT {
 
     const double EPS_RANDOM = 1.e-16;
 
-    std::vector<MNode *> bndr = bnd;
+    std::vector<MVertex *> bndr = bnd;
     if(rotation > 0) {
       std::rotate(bndr.begin(), bndr.begin() + (size_t)rotation, bndr.end());
     }
@@ -322,7 +322,7 @@ namespace QMT {
     SPoint3 defaultPoint;
     SPoint2 defaultParam;
     size_t num = (size_t)-1;
-    for(MNode *v : bnd) {
+    for(MVertex *v : bnd) {
       if(v->onWhat() == gf && v->getNum() < num) {
         defaultPoint = v->point();
         v->getParameter(0, defaultParam[0]);
@@ -336,9 +336,9 @@ namespace QMT {
     }
 
     size_t count = 1;
-    unordered_map<id, MNode *> pv2mv;
+    unordered_map<id, MVertex *> pv2mv;
     for(size_t f = 0; f < quads.size(); ++f) {
-      std::array<MNode *, 4> vert;
+      std::array<MVertex *, 4> vert;
       for(size_t lv = 0; lv < 4; ++lv) {
         size_t pv = quads[f][lv];
         if(pv < bndr.size()) { vert[lv] = bndr[pv]; }
@@ -352,7 +352,7 @@ namespace QMT {
             double uv[2] = {defaultParam.x(), defaultParam.y()};
             uv[0] = uv[0] + count * EPS_RANDOM;
             uv[1] = uv[1] + count * EPS_RANDOM;
-            MNode *mv =
+            MVertex *mv =
               new MFaceVertex(p.x(), p.y(), p.z(), gf, uv[0], uv[1]);
             pv2mv[pv] = mv;
             vert[lv] = mv;
@@ -375,7 +375,7 @@ namespace QMT {
     bool oko =
       orientElementsAccordingToBoundarySegment(bnd[0], bnd[1], newElements);
     if(!oko) {
-      for(MNode *v : newVertices) delete v;
+      for(MVertex *v : newVertices) delete v;
       for(MElement *e : newElements) delete e;
       newVertices.clear();
       newElements.clear();
@@ -462,9 +462,9 @@ int initDiskQuadrangulations()
 }
 
 int remeshLocalWithDiskQuadrangulation(
-  GSurface *gf, const std::vector<MElement *> &elements,
-  const std::vector<MNode *> &intVertices,
-  const std::vector<MNode *> &bdrVertices,
+  GFace *gf, const std::vector<MElement *> &elements,
+  const std::vector<MVertex *> &intVertices,
+  const std::vector<MVertex *> &bdrVertices,
   const std::vector<int> &bndIdealValence,
   const std::vector<std::pair<int, int> > &bndAllowedValenceRange,
   const std::vector<MElement *> &neighborsForGeometry, double minSICNrequired,
@@ -539,7 +539,7 @@ int remeshLocalWithDiskQuadrangulation(
     int rotation = irregularity_pattern_rotation[i].second.second;
     const vector<id4> &quads = qmeshes[no];
 
-    /* New GSurface mesh patch */
+    /* New GFace mesh patch */
     GFaceMeshPatch patch;
     patch.gf = gf;
     patch.bdrVertices = {bdrVertices};

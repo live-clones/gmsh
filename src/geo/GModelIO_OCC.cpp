@@ -3091,7 +3091,7 @@ int OCC_Internals::_getFuzzyTag(int dim, const TopoDS_Shape &s)
   return -1;
 }
 
-void OCC_Internals::_copyExtrudedAttributes(TopoDS_Edge edge, GCurve *ge)
+void OCC_Internals::_copyExtrudedAttributes(TopoDS_Edge edge, GEdge *ge)
 {
   int sourceDim = -1;
   TopoDS_Shape sourceShape;
@@ -3112,7 +3112,7 @@ void OCC_Internals::_copyExtrudedAttributes(TopoDS_Edge edge, GCurve *ge)
         e = nullptr;
         break;
       }
-      GCurve *src = ge->model()->getEdgeByTag(p->geo.Source);
+      GEdge *src = ge->model()->getEdgeByTag(p->geo.Source);
       if(src && src->meshAttributes.extrude &&
          src->meshAttributes.extrude->geo.Mode == COPIED_ENTITY) {
         p = src->meshAttributes.extrude;
@@ -3125,7 +3125,7 @@ void OCC_Internals::_copyExtrudedAttributes(TopoDS_Edge edge, GCurve *ge)
   ge->meshAttributes.extrude = e;
 }
 
-void OCC_Internals::_copyExtrudedAttributes(TopoDS_Face face, GSurface *gf)
+void OCC_Internals::_copyExtrudedAttributes(TopoDS_Face face, GFace *gf)
 {
   int sourceDim = -1;
   TopoDS_Shape sourceShape;
@@ -3146,7 +3146,7 @@ void OCC_Internals::_copyExtrudedAttributes(TopoDS_Face face, GSurface *gf)
         e = nullptr;
         break;
       }
-      GSurface *src = gf->model()->getFaceByTag(p->geo.Source);
+      GFace *src = gf->model()->getFaceByTag(p->geo.Source);
       if(src && src->meshAttributes.extrude &&
          src->meshAttributes.extrude->geo.Mode == COPIED_ENTITY) {
         p = src->meshAttributes.extrude;
@@ -3159,7 +3159,7 @@ void OCC_Internals::_copyExtrudedAttributes(TopoDS_Face face, GSurface *gf)
   gf->meshAttributes.extrude = e;
 }
 
-void OCC_Internals::_copyExtrudedAttributes(TopoDS_Solid solid, GVolume *gr)
+void OCC_Internals::_copyExtrudedAttributes(TopoDS_Solid solid, GRegion *gr)
 {
   int sourceDim = -1;
   TopoDS_Shape sourceShape;
@@ -5016,7 +5016,7 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
   TopoDS_Compound c;
   b.MakeCompound(c);
   for(auto it = model->firstRegion(); it != model->lastRegion(); it++) {
-    GVolume *gr = *it;
+    GRegion *gr = *it;
     if(onlyVisible) {
       if(!gr->getVisibility()) continue;
     }
@@ -5026,7 +5026,7 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
     }
   }
   for(auto it = model->firstFace(); it != model->lastFace(); it++) {
-    GSurface *gf = *it;
+    GFace *gf = *it;
     if(onlyVisible) {
       if(!gf->getVisibility()) continue;
       auto regions = gf->regions();
@@ -5048,7 +5048,7 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
     }
   }
   for(auto it = model->firstEdge(); it != model->lastEdge(); it++) {
-    GCurve *ge = *it;
+    GEdge *ge = *it;
     if(onlyVisible) {
       if(!ge->getVisibility()) continue;
       auto faces = ge->faces();
@@ -5070,7 +5070,7 @@ bool OCC_Internals::exportShapes(GModel *model, const std::string &fileName,
     }
   }
   for(auto it = model->firstVertex(); it != model->lastVertex(); it++) {
-    GPoint *gv = *it;
+    GVertex *gv = *it;
     if(onlyVisible) {
       if(!gv->getVisibility()) continue;
       auto edges = gv->edges();
@@ -5510,7 +5510,7 @@ void OCC_Internals::synchronize(GModel *model)
   int rTagMax = std::max(model->getMaxElementaryNumber(3), getMaxTag(3));
   for(int i = 1; i <= _vmap.Extent(); i++) {
     TopoDS_Vertex vertex = TopoDS::Vertex(_vmap(i));
-    GPoint *occv = getVertexForOCCShape(model, vertex);
+    GVertex *occv = getVertexForOCCShape(model, vertex);
     if(!occv) {
       int tag;
       if(_vertexTag.IsBound(vertex))
@@ -5535,10 +5535,10 @@ void OCC_Internals::synchronize(GModel *model)
   }
   for(int i = 1; i <= _emap.Extent(); i++) {
     TopoDS_Edge edge = TopoDS::Edge(_emap(i));
-    GCurve *occe = getEdgeForOCCShape(model, edge);
+    GEdge *occe = getEdgeForOCCShape(model, edge);
     if(!occe) {
-      GPoint *v1 = getVertexForOCCShape(model, TopExp::FirstVertex(edge));
-      GPoint *v2 = getVertexForOCCShape(model, TopExp::LastVertex(edge));
+      GVertex *v1 = getVertexForOCCShape(model, TopExp::FirstVertex(edge));
+      GVertex *v2 = getVertexForOCCShape(model, TopExp::LastVertex(edge));
       int tag;
       if(_edgeTag.IsBound(edge))
         tag = _edgeTag.Find(edge);
@@ -5561,7 +5561,7 @@ void OCC_Internals::synchronize(GModel *model)
   }
   for(int i = 1; i <= _fmap.Extent(); i++) {
     TopoDS_Face face = TopoDS::Face(_fmap(i));
-    GSurface *occf = getFaceForOCCShape(model, face);
+    GFace *occf = getFaceForOCCShape(model, face);
     if(!occf) {
       int tag;
       if(_faceTag.IsBound(face))
@@ -5582,7 +5582,7 @@ void OCC_Internals::synchronize(GModel *model)
     if(!occf->useColor() && _attributes->getColor(2, face, col, boundary)) {
       occf->setColor(col);
       if(boundary == 2) {
-        std::vector<GCurve *> edges = occf->edges();
+        std::vector<GEdge *> edges = occf->edges();
         for(std::size_t j = 0; j < edges.size(); j++) {
           if(!edges[j]->useColor()) edges[j]->setColor(col);
         }
@@ -5591,7 +5591,7 @@ void OCC_Internals::synchronize(GModel *model)
   }
   for(int i = 1; i <= _somap.Extent(); i++) {
     TopoDS_Solid region = TopoDS::Solid(_somap(i));
-    GVolume *occr = getRegionForOCCShape(model, region);
+    GRegion *occr = getRegionForOCCShape(model, region);
     if(!occr) {
       int tag;
       if(_solidTag.IsBound(region))
@@ -5612,13 +5612,13 @@ void OCC_Internals::synchronize(GModel *model)
     if(!occr->useColor() && _attributes->getColor(3, region, col, boundary)) {
       occr->setColor(col);
       if(boundary == 1) {
-        std::vector<GSurface *> faces = occr->faces();
+        std::vector<GFace *> faces = occr->faces();
         for(std::size_t j = 0; j < faces.size(); j++) {
           if(!faces[j]->useColor()) faces[j]->setColor(col);
         }
       }
       else if(boundary == 2) {
-        std::vector<GCurve *> edges = occr->edges();
+        std::vector<GEdge *> edges = occr->edges();
         for(std::size_t j = 0; j < edges.size(); j++) {
           if(!edges[j]->useColor()) edges[j]->setColor(col);
         }
@@ -5641,7 +5641,7 @@ void OCC_Internals::synchronize(GModel *model)
   _changed = false;
 }
 
-GPoint *OCC_Internals::getVertexForOCCShape(GModel *model,
+GVertex *OCC_Internals::getVertexForOCCShape(GModel *model,
                                              const TopoDS_Vertex &toFind)
 {
   if(_vertexTag.IsBound(toFind))
@@ -5649,7 +5649,7 @@ GPoint *OCC_Internals::getVertexForOCCShape(GModel *model,
   return nullptr;
 }
 
-GCurve *OCC_Internals::getEdgeForOCCShape(GModel *model,
+GEdge *OCC_Internals::getEdgeForOCCShape(GModel *model,
                                          const TopoDS_Edge &toFind)
 {
   if(_edgeTag.IsBound(toFind))
@@ -5657,7 +5657,7 @@ GCurve *OCC_Internals::getEdgeForOCCShape(GModel *model,
   return nullptr;
 }
 
-GSurface *OCC_Internals::getFaceForOCCShape(GModel *model,
+GFace *OCC_Internals::getFaceForOCCShape(GModel *model,
                                          const TopoDS_Face &toFind)
 {
   if(_faceTag.IsBound(toFind))
@@ -5665,7 +5665,7 @@ GSurface *OCC_Internals::getFaceForOCCShape(GModel *model,
   return nullptr;
 }
 
-GVolume *OCC_Internals::getRegionForOCCShape(GModel *model,
+GRegion *OCC_Internals::getRegionForOCCShape(GModel *model,
                                              const TopoDS_Solid &toFind)
 {
   if(_solidTag.IsBound(toFind))
@@ -6601,7 +6601,7 @@ int GModel::readOCCXAO(const std::string &fn)
       }
       else {
         TopoDS_Shape subShape = mainMap.FindKey(ref);
-        GPoint *gv = getVertexForOCCShape(&subShape);
+        GVertex *gv = getVertexForOCCShape(&subShape);
         if(gv) {
           entities[0][index] = gv;
           const char *name = nullptr;
@@ -6627,7 +6627,7 @@ int GModel::readOCCXAO(const std::string &fn)
       }
       else {
         TopoDS_Shape subShape = mainMap.FindKey(ref);
-        GCurve *ge = getEdgeForOCCShape(&subShape);
+        GEdge *ge = getEdgeForOCCShape(&subShape);
         if(ge) {
           entities[1][index] = ge;
           const char *name = nullptr;
@@ -6653,7 +6653,7 @@ int GModel::readOCCXAO(const std::string &fn)
       }
       else {
         TopoDS_Shape subShape = mainMap.FindKey(ref);
-        GSurface *gf = getFaceForOCCShape(&subShape);
+        GFace *gf = getFaceForOCCShape(&subShape);
         if(gf) {
           entities[2][index] = gf;
           const char *name = nullptr;
@@ -6679,7 +6679,7 @@ int GModel::readOCCXAO(const std::string &fn)
       }
       else {
         TopoDS_Shape subShape = mainMap.FindKey(ref);
-        GVolume *gr = getRegionForOCCShape(&subShape);
+        GRegion *gr = getRegionForOCCShape(&subShape);
         if(gr) {
           entities[3][index] = gr;
           const char *name = nullptr;
@@ -6829,7 +6829,7 @@ int GModel::importOCCShape(const void *shape)
   return 1;
 }
 
-GPoint *GModel::getVertexForOCCShape(const void *shape)
+GVertex *GModel::getVertexForOCCShape(const void *shape)
 {
   if(!_occ_internals) return nullptr;
 #if defined(HAVE_OCC)
@@ -6839,7 +6839,7 @@ GPoint *GModel::getVertexForOCCShape(const void *shape)
 #endif
 }
 
-GCurve *GModel::getEdgeForOCCShape(const void *shape)
+GEdge *GModel::getEdgeForOCCShape(const void *shape)
 {
   if(!_occ_internals) return nullptr;
 #if defined(HAVE_OCC)
@@ -6849,7 +6849,7 @@ GCurve *GModel::getEdgeForOCCShape(const void *shape)
 #endif
 }
 
-GSurface *GModel::getFaceForOCCShape(const void *shape)
+GFace *GModel::getFaceForOCCShape(const void *shape)
 {
   if(!_occ_internals) return nullptr;
 #if defined(HAVE_OCC)
@@ -6859,7 +6859,7 @@ GSurface *GModel::getFaceForOCCShape(const void *shape)
 #endif
 }
 
-GVolume *GModel::getRegionForOCCShape(const void *shape)
+GRegion *GModel::getRegionForOCCShape(const void *shape)
 {
   if(!_occ_internals) return nullptr;
 #if defined(HAVE_OCC)

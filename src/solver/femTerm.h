@@ -106,7 +106,7 @@ public:
                         const simpleFunction<dataVec> &e,
                         dofManager<dataVec> &dm)
   {
-    std::vector<MNode *> v;
+    std::vector<MVertex *> v;
     GModel *m = _gm;
     m->getMeshVerticesForPhysicalGroup(dim, physical, v);
     for(std::size_t i = 0; i < v.size(); i++)

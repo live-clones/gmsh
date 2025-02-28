@@ -14,7 +14,7 @@
 
 #include "drawContext.h"
 
-void drawGeomVertex(GPoint *v)
+void drawGeomVertex(GVertex *v)
 {
   if(!v->getVisibility()) return;
   if(v->geomType() == GEntity::BoundaryLayerPoint) return;
@@ -33,7 +33,7 @@ void drawGeomVertex(GPoint *v)
   glPointSize(1);
 }
 
-void drawGeomEdge(GCurve *e)
+void drawGeomEdge(GEdge *e)
 {
   if(!e->getVisibility()) return;
   if(e->geomType() == GEntity::DiscreteCurve) return;
@@ -54,7 +54,7 @@ void drawGeomEdge(GCurve *e)
   std::vector<GLfloat> edge(N * 3);
   for(unsigned int i = 0; i < N; i++) {
     double t = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
-    GVertex p = e->point(t);
+    GPoint p = e->point(t);
     edge[i * 3] = p.x();
     edge[i * 3 + 1] = p.y();
     edge[i * 3 + 2] = p.z();
@@ -69,7 +69,7 @@ void drawGeomEdge(GCurve *e)
   glDisableClientState(GL_VERTEX_ARRAY);
 }
 
-void drawGeomFace(GSurface *f)
+void drawGeomFace(GFace *f)
 {
   // TODO
 }

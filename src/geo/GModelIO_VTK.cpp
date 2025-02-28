@@ -188,7 +188,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
     return 0;
   }
   Msg::Info("Reading %d points", numVertices);
-  std::vector<MNode *> vertices(numVertices);
+  std::vector<MVertex *> vertices(numVertices);
   for(int i = 0; i < numVertices; i++) {
     double xyz[3];
     if(binary) {
@@ -215,7 +215,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
         return 0;
       }
     }
-    vertices[i] = new MNode(xyz[0], xyz[1], xyz[2]);
+    vertices[i] = new MVertex(xyz[0], xyz[1], xyz[2]);
   }
 
   // read mesh elements
@@ -250,7 +250,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   std::map<int, std::vector<MElement *> > elements[8];
 
   if(haveCells) {
-    std::vector<std::vector<MNode *> > cells(numElements);
+    std::vector<std::vector<MVertex *> > cells(numElements);
     for(std::size_t i = 0; i < cells.size(); i++) {
       int numVerts, n[100];
       if(binary) {

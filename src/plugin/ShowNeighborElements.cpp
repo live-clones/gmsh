@@ -6,7 +6,7 @@
 #include "ShowNeighborElements.h"
 #include "GModel.h"
 #include "MElement.h"
-#include "MNode.h"
+#include "MVertex.h"
 #include "Options.h"
 #include "Context.h"
 #include "GmshDefines.h"
@@ -57,13 +57,13 @@ PView *GMSH_ShowNeighborElementsPlugin::execute(PView *v)
   _nel5 = static_cast<int>(ShowNeighborElementsOptions_Number[5].def);
 
   for(auto it = m->firstFace(); it != m->lastFace(); it++) {
-    GSurface *f = *it;
+    GFace *f = *it;
     _init(f);
     _showLayers(f, _nLayers);
   }
 
   for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
-    GVolume *r = *it;
+    GRegion *r = *it;
     _init(r);
     _showLayers(r, _nLayers);
   }
@@ -104,11 +104,11 @@ void GMSH_ShowNeighborElementsPlugin::_showLayers(GEntity *ent, int nLayer)
 {
   if(_vertices.empty() || nLayer < 1) return;
 
-  std::set<MNode *> &vert = _vertices;
+  std::set<MVertex *> &vert = _vertices;
   std::map<MElement *, int> el2cnt;
 
   for(auto it = vert.begin(); it != vert.end(); ++it) {
-    MNode *v = *it;
+    MVertex *v = *it;
     auto ite = _vert2elem.lower_bound(v);
     auto itstop = _vert2elem.upper_bound(v);
     for(; ite != itstop; ++ite) {

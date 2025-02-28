@@ -7,10 +7,10 @@
 #define DISCRETE_REGION_H
 
 #include "GModel.h"
-#include "GVolume.h"
+#include "GRegion.h"
 #include "MFace.h"
 
-class discreteRegion : public GVolume {
+class discreteRegion : public GRegion {
 private:
   bool _geometry;
 

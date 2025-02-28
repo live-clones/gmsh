@@ -25,13 +25,13 @@
  */
 class MQuadrangle : public MElement {
 protected:
-  MNode *_v[4];
-  void _getEdgeVertices(const int num, std::vector<MNode *> &v) const
+  MVertex *_v[4];
+  void _getEdgeVertices(const int num, std::vector<MVertex *> &v) const
   {
     v[0] = _v[edges_quad(num, 0)];
     v[1] = _v[edges_quad(num, 1)];
   }
-  void _getFaceVertices(std::vector<MNode *> &v) const
+  void _getFaceVertices(std::vector<MVertex *> &v) const
   {
     v[0] = _v[0];
     v[1] = _v[1];
@@ -41,7 +41,7 @@ protected:
   void projectInMeanPlane(double *xn, double *yn);
 
 public:
-  MQuadrangle(MNode *v0, MNode *v1, MNode *v2, MNode *v3, int num = 0,
+  MQuadrangle(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, int num = 0,
               int part = 0)
     : MElement(num, part)
   {
@@ -50,7 +50,7 @@ public:
     _v[2] = v2;
     _v[3] = v3;
   }
-  MQuadrangle(const std::vector<MNode *> &v, int num = 0, int part = 0)
+  MQuadrangle(const std::vector<MVertex *> &v, int num = 0, int part = 0)
     : MElement(num, part)
   {
     for(int i = 0; i < 4; i++) _v[i] = v[i];
@@ -61,10 +61,10 @@ public:
   virtual double gammaShapeMeasure();
   virtual int getDim() const { return 2; }
   virtual std::size_t getNumVertices() const { return 4; }
-  virtual MNode *getVertex(int num) { return _v[num]; }
-  virtual const MNode *getVertex(int num) const { return _v[num]; }
-  virtual void setVertex(int num, MNode *v) { _v[num] = v; }
-  virtual MNode *getVertexDIFF(int num)
+  virtual MVertex *getVertex(int num) { return _v[num]; }
+  virtual const MVertex *getVertex(int num) const { return _v[num]; }
+  virtual void setVertex(int num, MVertex *v) { _v[num] = v; }
+  virtual MVertex *getVertexDIFF(int num)
   {
     static const int map[4] = {0, 1, 3, 2};
     return getVertex(map[num]);
@@ -81,7 +81,7 @@ public:
   virtual int getNumEdgesRep(bool curved) { return 4; }
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
-  virtual void getEdgeVertices(const int num, std::vector<MNode *> &v) const
+  virtual void getEdgeVertices(const int num, std::vector<MVertex *> &v) const
   {
     v.resize(2);
     _getEdgeVertices(num, v);
@@ -97,7 +97,7 @@ public:
   virtual int getNumFacesRep(bool curved);
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
-  virtual void getFaceVertices(const int num, std::vector<MNode *> &v) const
+  virtual void getFaceVertices(const int num, std::vector<MVertex *> &v) const
   {
     v.resize(4);
     _getFaceVertices(v);
@@ -146,7 +146,7 @@ public:
   virtual double getVolume();
   virtual void reverse()
   {
-    MNode *tmp = _v[1];
+    MVertex *tmp = _v[1];
     _v[1] = _v[3];
     _v[3] = tmp;
   }
@@ -186,7 +186,7 @@ public:
   {
     return MFace(_v[0], _v[1], _v[3], _v[2]);
   }
-  virtual double getAngleAtVertex(MNode *v);
+  virtual double getAngleAtVertex(MVertex *v);
 };
 
 /*
@@ -203,11 +203,11 @@ public:
  */
 class MQuadrangle8 : public MQuadrangle {
 protected:
-  MNode *_vs[4];
+  MVertex *_vs[4];
 
 public:
-  MQuadrangle8(MNode *v0, MNode *v1, MNode *v2, MNode *v3, MNode *v4,
-               MNode *v5, MNode *v6, MNode *v7, int num = 0, int part = 0)
+  MQuadrangle8(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
+               MVertex *v5, MVertex *v6, MVertex *v7, int num = 0, int part = 0)
     : MQuadrangle(v0, v1, v2, v3, num, part)
   {
     _vs[0] = v4;
@@ -216,7 +216,7 @@ public:
     _vs[3] = v7;
     for(int i = 0; i < 4; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MQuadrangle8(const std::vector<MNode *> &v, int num = 0, int part = 0)
+  MQuadrangle8(const std::vector<MVertex *> &v, int num = 0, int part = 0)
     : MQuadrangle(v, num, part)
   {
     for(int i = 0; i < 4; i++) _vs[i] = v[4 + i];
@@ -225,15 +225,15 @@ public:
   ~MQuadrangle8() {}
   virtual int getPolynomialOrder() const { return 2; }
   virtual std::size_t getNumVertices() const { return 8; }
-  virtual MNode *getVertex(int num)
+  virtual MVertex *getVertex(int num)
   {
     return num < 4 ? _v[num] : _vs[num - 4];
   }
-  virtual const MNode *getVertex(int num) const
+  virtual const MVertex *getVertex(int num) const
   {
     return num < 4 ? _v[num] : _vs[num - 4];
   }
-  virtual void setVertex(int num, MNode *v)
+  virtual void setVertex(int num, MVertex *v)
   {
     if(num < 4)
       _v[num] = v;
@@ -241,12 +241,12 @@ public:
       _vs[num - 4] = v;
   }
 
-  virtual MNode *getVertexUNV(int num)
+  virtual MVertex *getVertexUNV(int num)
   {
     static const int map[8] = {0, 4, 1, 5, 2, 6, 3, 7};
     return getVertex(map[num]);
   }
-  virtual MNode *getVertexDIFF(int num)
+  virtual MVertex *getVertexDIFF(int num)
   {
     static const int map[8] = {0, 1, 3, 2, 4, 7, 5, 6};
     return getVertex(map[num]);
@@ -255,7 +255,7 @@ public:
   virtual int getNumEdgesRep(bool curved);
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
-  virtual void getEdgeVertices(const int num, std::vector<MNode *> &v) const
+  virtual void getEdgeVertices(const int num, std::vector<MVertex *> &v) const
   {
     v.resize(3);
     MQuadrangle::_getEdgeVertices(num, v);
@@ -265,7 +265,7 @@ public:
   virtual int getNumFacesRep(bool curved);
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
-  virtual void getFaceVertices(const int num, std::vector<MNode *> &v) const
+  virtual void getFaceVertices(const int num, std::vector<MVertex *> &v) const
   {
     v.resize(8);
     MQuadrangle::_getFaceVertices(v);
@@ -286,7 +286,7 @@ public:
   virtual const char *getStringForKEY() const { return "_SHELL"; }
   virtual void reverse()
   {
-    MNode *tmp;
+    MVertex *tmp;
     tmp = _v[1];
     _v[1] = _v[3];
     _v[3] = tmp;
@@ -325,11 +325,11 @@ public:
  */
 class MQuadrangle9 : public MQuadrangle {
 protected:
-  MNode *_vs[5];
+  MVertex *_vs[5];
 
 public:
-  MQuadrangle9(MNode *v0, MNode *v1, MNode *v2, MNode *v3, MNode *v4,
-               MNode *v5, MNode *v6, MNode *v7, MNode *v8, int num = 0,
+  MQuadrangle9(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
+               MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, int num = 0,
                int part = 0)
     : MQuadrangle(v0, v1, v2, v3, num, part)
   {
@@ -340,7 +340,7 @@ public:
     _vs[4] = v8;
     for(int i = 0; i < 5; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MQuadrangle9(const std::vector<MNode *> &v, int num = 0, int part = 0)
+  MQuadrangle9(const std::vector<MVertex *> &v, int num = 0, int part = 0)
     : MQuadrangle(v, num, part)
   {
     for(int i = 0; i < 5; i++) _vs[i] = v[4 + i];
@@ -349,22 +349,22 @@ public:
   ~MQuadrangle9() {}
   virtual int getPolynomialOrder() const { return 2; }
   virtual std::size_t getNumVertices() const { return 9; }
-  virtual MNode *getVertex(int num)
+  virtual MVertex *getVertex(int num)
   {
     return num < 4 ? _v[num] : _vs[num - 4];
   }
-  virtual const MNode *getVertex(int num) const
+  virtual const MVertex *getVertex(int num) const
   {
     return num < 4 ? _v[num] : _vs[num - 4];
   }
-  virtual void setVertex(int num, MNode *v)
+  virtual void setVertex(int num, MVertex *v)
   {
     if(num < 4)
       _v[num] = v;
     else
       _vs[num - 4] = v;
   }
-  virtual MNode *getVertexDIFF(int num)
+  virtual MVertex *getVertexDIFF(int num)
   {
     static const int map[9] = {0, 2, 8, 6, 1, 5, 7, 3, 4};
     return getVertex(map[num]);
@@ -374,7 +374,7 @@ public:
   virtual int getNumEdgesRep(bool curved);
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
-  virtual void getEdgeVertices(const int num, std::vector<MNode *> &v) const
+  virtual void getEdgeVertices(const int num, std::vector<MVertex *> &v) const
   {
     v.resize(3);
     MQuadrangle::_getEdgeVertices(num, v);
@@ -384,7 +384,7 @@ public:
   virtual int getNumFacesRep(bool curved);
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
-  virtual void getFaceVertices(const int num, std::vector<MNode *> &v) const
+  virtual void getFaceVertices(const int num, std::vector<MVertex *> &v) const
   {
     v.resize(9);
     MQuadrangle::_getFaceVertices(v);
@@ -403,7 +403,7 @@ public:
   virtual const char *getStringForTOCHNOG() const { return "-quad9"; }
   virtual void reverse()
   {
-    MNode *tmp;
+    MVertex *tmp;
     tmp = _v[1];
     _v[1] = _v[3];
     _v[3] = tmp;
@@ -452,19 +452,19 @@ class MQuadrangleN : public MQuadrangle {
     _tuple2indicesReoriented;
 
 protected:
-  std::vector<MNode *> _vs;
+  std::vector<MVertex *> _vs;
   const char _order;
 
 public:
-  MQuadrangleN(MNode *v0, MNode *v1, MNode *v2, MNode *v3,
-               const std::vector<MNode *> &v, char order, int num = 0,
+  MQuadrangleN(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
+               const std::vector<MVertex *> &v, char order, int num = 0,
                int part = 0)
     : MQuadrangle(v0, v1, v2, v3, num, part), _vs(v), _order(order)
   {
     for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_order);
   }
-  MQuadrangleN(const std::vector<MNode *> &v, char order, int num = 0,
+  MQuadrangleN(const std::vector<MVertex *> &v, char order, int num = 0,
                int part = 0)
     : MQuadrangle(v[0], v[1], v[2], v[3], num, part), _order(order)
   {
@@ -475,15 +475,15 @@ public:
   ~MQuadrangleN() {}
   virtual int getPolynomialOrder() const { return _order; }
   virtual std::size_t getNumVertices() const { return 4 + _vs.size(); }
-  virtual MNode *getVertex(int num)
+  virtual MVertex *getVertex(int num)
   {
     return num < 4 ? _v[num] : _vs[num - 4];
   }
-  virtual const MNode *getVertex(int num) const
+  virtual const MVertex *getVertex(int num) const
   {
     return num < 4 ? _v[num] : _vs[num - 4];
   }
-  virtual void setVertex(int num, MNode *v)
+  virtual void setVertex(int num, MVertex *v)
   {
     if(num < 4)
       _v[num] = v;
@@ -502,7 +502,7 @@ public:
   virtual int getNumFacesRep(bool curved);
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
-  virtual void getEdgeVertices(const int num, std::vector<MNode *> &v) const
+  virtual void getEdgeVertices(const int num, std::vector<MVertex *> &v) const
   {
     v.resize(_order + 1);
     MQuadrangle::_getEdgeVertices(num, v);
@@ -513,7 +513,7 @@ public:
   virtual MFaceN getHighOrderFace(int num, int sign, int rot);
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
-  virtual void getFaceVertices(const int num, std::vector<MNode *> &v) const
+  virtual void getFaceVertices(const int num, std::vector<MVertex *> &v) const
   {
     v.resize(4 + _vs.size());
     MQuadrangle::_getFaceVertices(v);
@@ -591,9 +591,9 @@ template <class T> void sort4(T *t[4])
 struct compareMQuadrangleLexicographic {
   bool operator()(MQuadrangle *t1, MQuadrangle *t2) const
   {
-    MNode *_v1[] = {t1->getVertex(0), t1->getVertex(1), t1->getVertex(2),
+    MVertex *_v1[] = {t1->getVertex(0), t1->getVertex(1), t1->getVertex(2),
                       t1->getVertex(3)};
-    MNode *_v2[] = {t2->getVertex(0), t2->getVertex(1), t2->getVertex(2),
+    MVertex *_v2[] = {t2->getVertex(0), t2->getVertex(1), t2->getVertex(2),
                       t2->getVertex(3)};
     sort4(_v1);
     sort4(_v2);

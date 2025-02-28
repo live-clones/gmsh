@@ -125,8 +125,8 @@ template <typename T>
 static void
 createVertexToVertexGraph(GModel *gm,
                           const std::vector<std::size_t> &elementTags,
-                          std::map<MNode *, std::size_t> &initial_numbering,
-                          std::map<std::size_t, MNode *> &invert_numbering,
+                          std::map<MVertex *, std::size_t> &initial_numbering,
+                          std::map<std::size_t, MVertex *> &invert_numbering,
                           std::vector<T> &ai, std::vector<T> &aj)
 {
   ai.clear();
@@ -152,7 +152,7 @@ createVertexToVertexGraph(GModel *gm,
   std::size_t numbers[1000];
   for(auto e : elements) {
     for(std::size_t i = 0; i < e->getNumVertices(); i++) {
-      MNode *v = e->getVertex(i);
+      MVertex *v = e->getVertex(i);
       auto it = initial_numbering.find(v);
       if(it == initial_numbering.end()) {
         numbers[i] = count;
@@ -193,8 +193,8 @@ int meshRenumber_Vertices_RCMK(const std::vector<std::size_t> &elementTags,
 
   Msg::Info("RCMK renumbering...");
 
-  std::map<MNode *, std::size_t> initial_numbering;
-  std::map<std::size_t, MNode *> inverse_numbering;
+  std::map<MVertex *, std::size_t> initial_numbering;
+  std::map<std::size_t, MVertex *> inverse_numbering;
   std::vector<std::size_t> ai, aj;
   createVertexToVertexGraph(gm, elementTags, initial_numbering,
                             inverse_numbering, ai, aj);
@@ -226,7 +226,7 @@ int meshRenumber_Vertices_Hilbert(
 
   Msg::Info("Hilbert renumbering...");
 
-  std::set<MNode *> allv;
+  std::set<MVertex *> allv;
   if(elementTags.empty()) {
     std::vector<GEntity *> entities;
     gm->getEntities(entities);
@@ -245,7 +245,7 @@ int meshRenumber_Vertices_Hilbert(
     }
   }
 
-  std::vector<MNode *> v(allv.begin(), allv.end());
+  std::vector<MVertex *> v(allv.begin(), allv.end());
 
   SortHilbert_Without_Brio(v);
 
@@ -269,8 +269,8 @@ int meshRenumber_Vertices_Metis(
   Msg::Info("METIS renumbering (nested dissection)...");
 
   GModel *gm = GModel ::current();
-  std::map<MNode *, std::size_t> initial_numbering;
-  std::map<std::size_t, MNode *> invert_numbering;
+  std::map<MVertex *, std::size_t> initial_numbering;
+  std::map<std::size_t, MVertex *> invert_numbering;
   std::vector<idx_t> ai, aj;
   createVertexToVertexGraph(gm, elementTags, initial_numbering,
                             invert_numbering, ai, aj);

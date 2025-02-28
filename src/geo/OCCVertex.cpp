@@ -5,7 +5,7 @@
 
 #include "GmshConfig.h"
 #include "GModel.h"
-#include "MNode.h"
+#include "MVertex.h"
 #include "MPoint.h"
 #include "OCCVertex.h"
 #include "OCCEdge.h"
@@ -17,7 +17,7 @@
 #include <gp_Pnt.hxx>
 
 OCCVertex::OCCVertex(GModel *m, TopoDS_Vertex v, int num, double lc)
-  : GPoint(m, num, lc), _v(v)
+  : GVertex(m, num, lc), _v(v)
 {
   gp_Pnt pnt = BRep_Tool::Pnt(_v);
   _x = pnt.X();
@@ -25,7 +25,7 @@ OCCVertex::OCCVertex(GModel *m, TopoDS_Vertex v, int num, double lc)
   _z = pnt.Z();
 }
 
-void OCCVertex::setPosition(GVertex &p)
+void OCCVertex::setPosition(GPoint &p)
 {
   _x = p.x();
   _y = p.y();
@@ -37,9 +37,9 @@ void OCCVertex::setPosition(GVertex &p)
   }
 }
 
-SPoint2 OCCVertex::reparamOnFace(const GSurface *gf, int dir) const
+SPoint2 OCCVertex::reparamOnFace(const GFace *gf, int dir) const
 {
-  std::vector<GCurve *> const &l = gf->edges();
+  std::vector<GEdge *> const &l = gf->edges();
   for(auto ge : l_edges) {
     if(std::find(l.begin(), l.end(), ge) != l.end()) {
       if(gf->getNativeType() == GEntity::OpenCascadeModel &&
@@ -55,7 +55,7 @@ SPoint2 OCCVertex::reparamOnFace(const GSurface *gf, int dir) const
           return ge->reparamOnFace(gf, s1, dir);
       }
       else {
-        const GVertex pt = point();
+        const GPoint pt = point();
         SPoint3 sp(pt.x(), pt.y(), pt.z());
         return gf->parFromPoint(sp);
       }
@@ -63,7 +63,7 @@ SPoint2 OCCVertex::reparamOnFace(const GSurface *gf, int dir) const
   }
 
   // normally never here
-  return GPoint::reparamOnFace(gf, dir);
+  return GVertex::reparamOnFace(gf, dir);
 }
 
 #endif

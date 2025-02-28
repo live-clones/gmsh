@@ -41,8 +41,8 @@ extern void readMSHPeriodicNodes(FILE *fp, GModel *gm);
 extern void writeMSHEntities(FILE *fp, GModel *gm);
 
 static bool getMeshVertices(int num, int *indices,
-                            std::map<std::size_t, MNode *> &map,
-                            std::vector<MNode *> &vertices)
+                            std::map<std::size_t, MVertex *> &map,
+                            std::vector<MVertex *> &vertices)
 {
   for(int i = 0; i < num; i++) {
     if(!map.count(indices[i])) {
@@ -55,8 +55,8 @@ static bool getMeshVertices(int num, int *indices,
   return true;
 }
 
-static bool getMeshVertices(int num, int *indices, std::vector<MNode *> &vec,
-                            std::vector<MNode *> &vertices, int minVertex = 0)
+static bool getMeshVertices(int num, int *indices, std::vector<MVertex *> &vec,
+                            std::vector<MVertex *> &vertices, int minVertex = 0)
 {
   for(int i = 0; i < num; i++) {
     if(indices[i] < minVertex ||
@@ -72,7 +72,7 @@ static bool getMeshVertices(int num, int *indices, std::vector<MNode *> &vec,
 
 static MElement *
 createElementMSH2(GModel *m, int num, int typeMSH, int physical, int reg,
-                  unsigned int part, std::vector<MNode *> &v,
+                  unsigned int part, std::vector<MVertex *> &v,
                   std::map<int, std::vector<MElement *> > elements[10],
                   std::map<int, std::map<int, std::string> > physicals[4],
                   bool owner = false, MElement *parent = nullptr,
@@ -114,8 +114,8 @@ int GModel::_readMSH2(const std::string &name)
   bool binary = false, swap = false;
   std::map<int, std::vector<MElement *> > elements[10];
   std::map<int, std::map<int, std::string> > physicals[4];
-  std::map<std::size_t, MNode *> vertexMap;
-  std::vector<MNode *> vertexVector;
+  std::map<std::size_t, MVertex *> vertexMap;
+  std::vector<MVertex *> vertexVector;
   int minVertex = 0;
   std::size_t oldNumPartitions = getNumPartitions();
 
@@ -205,7 +205,7 @@ int GModel::_readMSH2(const std::string &name)
       for(int i = 0; i < numVertices; i++) {
         int num;
         double xyz[3], uv[2];
-        MNode *newVertex = nullptr;
+        MVertex *newVertex = nullptr;
         if(!parametric) {
           if(!binary) {
             if(fscanf(fp, "%d %lf %lf %lf", &num, &xyz[0], &xyz[1], &xyz[2]) !=
@@ -226,7 +226,7 @@ int GModel::_readMSH2(const std::string &name)
             }
             if(swap) SwapBytes((char *)xyz, sizeof(double), 3);
           }
-          newVertex = new MNode(xyz[0], xyz[1], xyz[2], nullptr, num);
+          newVertex = new MVertex(xyz[0], xyz[1], xyz[2], nullptr, num);
         }
         else {
           int iClasDim, iClasTag;
@@ -260,12 +260,12 @@ int GModel::_readMSH2(const std::string &name)
             if(swap) SwapBytes((char *)&iClasTag, sizeof(int), 1);
           }
           if(iClasDim == 0) {
-            GPoint *gv = getVertexByTag(iClasTag);
+            GVertex *gv = getVertexByTag(iClasTag);
             if(gv) gv->mesh_vertices.clear();
-            newVertex = new MNode(xyz[0], xyz[1], xyz[2], gv, num);
+            newVertex = new MVertex(xyz[0], xyz[1], xyz[2], gv, num);
           }
           else if(iClasDim == 1) {
-            GCurve *ge = getEdgeByTag(iClasTag);
+            GEdge *ge = getEdgeByTag(iClasTag);
             if(!binary) {
               if(fscanf(fp, "%lf", &uv[0]) != 1) {
                 fclose(fp);
@@ -282,7 +282,7 @@ int GModel::_readMSH2(const std::string &name)
             newVertex = new MEdgeVertex(xyz[0], xyz[1], xyz[2], ge, uv[0], num);
           }
           else if(iClasDim == 2) {
-            GSurface *gf = getFaceByTag(iClasTag);
+            GFace *gf = getFaceByTag(iClasTag);
             if(!binary) {
               if(fscanf(fp, "%lf %lf", &uv[0], &uv[1]) != 2) {
                 fclose(fp);
@@ -300,8 +300,8 @@ int GModel::_readMSH2(const std::string &name)
               new MFaceVertex(xyz[0], xyz[1], xyz[2], gf, uv[0], uv[1], num);
           }
           else if(iClasDim == 3) {
-            GVolume *gr = getRegionByTag(iClasTag);
-            newVertex = new MNode(xyz[0], xyz[1], xyz[2], gr, num);
+            GRegion *gr = getRegionByTag(iClasTag);
+            newVertex = new MVertex(xyz[0], xyz[1], xyz[2], gr, num);
           }
         }
         minVertex = std::min(minVertex, num);
@@ -420,7 +420,7 @@ int GModel::_readMSH2(const std::string &name)
               return 0;
             }
           }
-          std::vector<MNode *> vertices;
+          std::vector<MVertex *> vertices;
           if(vertexVector.size()) {
             if(!getMeshVertices(numVertices, indices, vertexVector, vertices,
                                 minVertex)) {
@@ -529,7 +529,7 @@ int GModel::_readMSH2(const std::string &name)
                            data[numTags] :
                            0;
             int *indices = &data[numTags + 1];
-            std::vector<MNode *> vertices;
+            std::vector<MVertex *> vertices;
             if(vertexVector.size()) {
               if(!getMeshVertices(numVertices, indices, vertexVector, vertices,
                                   minVertex)) {

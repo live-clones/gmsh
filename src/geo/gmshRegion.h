@@ -6,11 +6,11 @@
 #ifndef GMSH_REGION_H
 #define GMSH_REGION_H
 
-#include "GVolume.h"
+#include "GRegion.h"
 
 class Volume;
 
-class gmshRegion : public GVolume {
+class gmshRegion : public GRegion {
 private:
   ::Volume *_v;
 

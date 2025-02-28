@@ -77,7 +77,7 @@ PView *GMSH_DiscretizationErrorPlugin::execute(PView *v)
                          -1 + 5 * tol + paramQuandtQuad * j, 0.0,
                          quadDist[j * (nEdgeNodes) + i].first);
           SPoint3 *point = &quadDist[j * (nEdgeNodes) + i].first;
-          GVertex closest = (*itFace)->closestPoint(*point, startEstimate);
+          GPoint closest = (*itFace)->closestPoint(*point, startEstimate);
           dx = closest.x() - point->x();
           dy = closest.y() - point->y();
           dz = closest.z() - point->z();
@@ -114,7 +114,7 @@ PView *GMSH_DiscretizationErrorPlugin::execute(PView *v)
                         5 * tol + paramQuandt * j, 0.0, triDist[counter].first);
           SPoint3 *point =
             &triDist[counter].first; // Check : the points are good
-          GVertex closest = (*itFace)->closestPoint(*point, startEstimate);
+          GPoint closest = (*itFace)->closestPoint(*point, startEstimate);
           dx = (closest.x() - point->x());
           dy = (closest.y() - point->y());
           dz = (closest.z() - point->z());

@@ -12,9 +12,9 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "meshGFace.h"
-#include "GSurface.h"
-#include "GVolume.h"
-#include "MNode.h"
+#include "GFace.h"
+#include "GRegion.h"
+#include "MVertex.h"
 #include "MTetrahedron.h"
 #include "MHexahedron.h"
 #include "MPrism.h"
@@ -146,13 +146,13 @@ static double transfiniteHex(double f1, double f2, double f3, double f4,
          (1 - u) * v * w * s8;
 }
 
-static MNode *
-transfiniteHex(GVolume *gr, MNode *f1, MNode *f2, MNode *f3, MNode *f4,
-               MNode *f5, MNode *f6, MNode *c1, MNode *c2, MNode *c3,
-               MNode *c4, MNode *c5, MNode *c6, MNode *c7, MNode *c8,
-               MNode *c9, MNode *c10, MNode *c11, MNode *c12,
-               MNode *s1, MNode *s2, MNode *s3, MNode *s4, MNode *s5,
-               MNode *s6, MNode *s7, MNode *s8, double u, double v,
+static MVertex *
+transfiniteHex(GRegion *gr, MVertex *f1, MVertex *f2, MVertex *f3, MVertex *f4,
+               MVertex *f5, MVertex *f6, MVertex *c1, MVertex *c2, MVertex *c3,
+               MVertex *c4, MVertex *c5, MVertex *c6, MVertex *c7, MVertex *c8,
+               MVertex *c9, MVertex *c10, MVertex *c11, MVertex *c12,
+               MVertex *s1, MVertex *s2, MVertex *s3, MVertex *s4, MVertex *s5,
+               MVertex *s6, MVertex *s7, MVertex *s8, double u, double v,
                double w)
 {
   double x = transfiniteHex(
@@ -170,22 +170,22 @@ transfiniteHex(GVolume *gr, MNode *f1, MNode *f2, MNode *f3, MNode *f4,
     c3->z(), c4->z(), c5->z(), c6->z(), c7->z(), c8->z(), c9->z(), c10->z(),
     c11->z(), c12->z(), s1->z(), s2->z(), s3->z(), s4->z(), s5->z(), s6->z(),
     s7->z(), s8->z(), u, v, w);
-  return new MNode(x, y, z, gr);
+  return new MVertex(x, y, z, gr);
 }
 
 class GOrientedTransfiniteFace {
 private:
-  GSurface *_gf;
+  GFace *_gf;
   int _ll, _hh;
   int _permutation, _index;
-  std::vector<MNode *> _list;
+  std::vector<MVertex *> _list;
 
 public:
   GOrientedTransfiniteFace()
     : _gf(nullptr), _ll(0), _hh(0), _permutation(-1), _index(-1)
   {
   }
-  GOrientedTransfiniteFace(GSurface *gf, std::vector<MNode *> &corners)
+  GOrientedTransfiniteFace(GFace *gf, std::vector<MVertex *> &corners)
     : _gf(gf), _ll(0), _hh(0), _permutation(-1), _index(-1)
   {
     _ll = gf->transfinite_vertices.size() - 1;
@@ -195,7 +195,7 @@ public:
     Msg::Debug("Surface %d: L = %d  H = %d", gf->tag(), _ll, _hh);
 
     // get the corners of the transfinite volume interpolation
-    std::vector<MNode *> s(8);
+    std::vector<MVertex *> s(8);
     if(corners.size() == 8) {
       for(int i = 0; i < 8; i++) s[i] = corners[i];
     }
@@ -213,7 +213,7 @@ public:
       return;
 
     // get the corners of the transfinite surface mesh
-    std::vector<MNode *> c(4);
+    std::vector<MVertex *> c(4);
     if(_gf->meshAttributes.corners.empty() ||
        _gf->meshAttributes.corners.size() == 4) {
       c[0] = _gf->transfinite_vertices[0][0];
@@ -254,7 +254,7 @@ public:
         _list.push_back(_gf->transfinite_vertices[i][j]);
   }
   // returns the surface
-  GSurface *getSurface() { return _gf; }
+  GFace *getSurface() { return _gf; }
   // returns the index of the face in the reference hexahedron
   int index() const { return _index; }
   // returns true if the face is recombined
@@ -268,7 +268,7 @@ public:
   int getNumV() { return (_permutation % 2) ? _ll + 1 : _hh + 1; }
   // returns the (i,j) vertex in the face, i and j being defined in
   // the coordinate system of the reference transfinite hexahedron
-  MNode *getVertex(int i, int j)
+  MVertex *getVertex(int i, int j)
   {
     int index = -1, m = i, n = j, M = getNumU(), N = getNumV();
     switch(_permutation) {
@@ -281,7 +281,7 @@ public:
     case 6: index = (M * N - N * (m + 1) + n); break;
     case 7: index = (m + M * n); break;
     }
-    MNode *v = nullptr;
+    MVertex *v = nullptr;
     if(index >= 0 && index < (int)_list.size()) v = _list[index];
     if(index < 0 || index >= (int)_list.size() || !v) {
       Msg::Error("Wrong node index in transfinite mesh of surface %d: "
@@ -293,7 +293,7 @@ public:
   }
 };
 
-void findTransfiniteCorners(GVolume *gr, std::vector<MNode *> &corners)
+void findTransfiniteCorners(GRegion *gr, std::vector<MVertex *> &corners)
 {
   if(gr->meshAttributes.corners.size()) {
     // corners have been specified explicitly
@@ -302,22 +302,22 @@ void findTransfiniteCorners(GVolume *gr, std::vector<MNode *> &corners)
   }
   else {
     // try to find the corners automatically
-    std::vector<GSurface *> faces = gr->faces();
-    GSurface *gf = nullptr;
+    std::vector<GFace *> faces = gr->faces();
+    GFace *gf = nullptr;
     if(faces.size() == 6) {
       // any face will do as a starting face
       gf = faces.front();
     }
     else if(faces.size() == 5) {
       // we need to start with a triangular face
-      auto found_it = std::find_if(begin(faces), end(faces), [](GSurface *face) {
+      auto found_it = std::find_if(begin(faces), end(faces), [](GFace *face) {
         return face->edges().size() == 3 ||
                face->meshAttributes.corners.size() == 3;
       });
       if(found_it != end(faces)) { gf = *found_it; }
     }
     if(gf) {
-      std::vector<GCurve *> redges = gr->edges();
+      std::vector<GEdge *> redges = gr->edges();
       for(auto *fedge : gf->edges()) {
         const auto found_it = std::find(begin(redges), end(redges), fedge);
         if(found_it != end(redges)) { redges.erase(found_it); }
@@ -340,13 +340,13 @@ void findTransfiniteCorners(GVolume *gr, std::vector<MNode *> &corners)
   }
 }
 
-int MeshTransfiniteVolume(GVolume *gr)
+int MeshTransfiniteVolume(GRegion *gr)
 {
   if(gr->meshAttributes.method != MESH_TRANSFINITE) return 0;
 
   Msg::Info("Meshing volume %d (Transfinite)", gr->tag());
 
-  std::vector<GSurface *> faces = gr->faces();
+  std::vector<GFace *> faces = gr->faces();
   if(faces.size() != 5 && faces.size() != 6) {
     Msg::Error("Transfinite algorithm only available for volumes bounded by "
                "5 or 6 surfaces");
@@ -355,7 +355,7 @@ int MeshTransfiniteVolume(GVolume *gr)
 
   // make sure that all bounding edges have begin/end points: everything in here
   // depends on it
-  const std::vector<GCurve *> &edges = gr->edges();
+  const std::vector<GEdge *> &edges = gr->edges();
   for(auto it = edges.begin(); it != edges.end(); it++) {
     if(!(*it)->getBeginVertex() || !(*it)->getEndVertex()) {
       Msg::Error("Transfinite algorithm cannot be applied to volume with bounding "
@@ -365,7 +365,7 @@ int MeshTransfiniteVolume(GVolume *gr)
     }
   }
 
-  std::vector<MNode *> corners;
+  std::vector<MVertex *> corners;
   findTransfiniteCorners(gr, corners);
   if(corners.size() != 6 && corners.size() != 8) {
     Msg::Error("Volume %d is transfinite but has %d corners", gr->tag(),
@@ -401,37 +401,37 @@ int MeshTransfiniteVolume(GVolume *gr)
   lengths_j.push_back(0.);
   lengths_k.push_back(0.);
   for(int i = 0; i < N_i - 1; i++) {
-    MNode *v1 = orientedFaces[4].getVertex(i, 0);
-    MNode *v2 = orientedFaces[4].getVertex(i + 1, 0);
+    MVertex *v1 = orientedFaces[4].getVertex(i, 0);
+    MVertex *v2 = orientedFaces[4].getVertex(i + 1, 0);
     L_i += v1->distance(v2);
     lengths_i.push_back(L_i);
   }
   for(int i = 0; i < N_j - 1; i++) {
-    MNode *v1 = orientedFaces[1].getVertex(i, 0);
-    MNode *v2 = orientedFaces[1].getVertex(i + 1, 0);
+    MVertex *v1 = orientedFaces[1].getVertex(i, 0);
+    MVertex *v2 = orientedFaces[1].getVertex(i + 1, 0);
     L_j += v1->distance(v2);
     lengths_j.push_back(L_j);
   }
   for(int i = 0; i < N_k - 1; i++) {
-    MNode *v1 = orientedFaces[1].getVertex(0, i);
-    MNode *v2 = orientedFaces[1].getVertex(0, i + 1);
+    MVertex *v1 = orientedFaces[1].getVertex(0, i);
+    MVertex *v2 = orientedFaces[1].getVertex(0, i + 1);
     L_k += v1->distance(v2);
     lengths_k.push_back(L_k);
   }
 
   // create points using transfinite interpolation
 
-  MNode *s0 = orientedFaces[4].getVertex(0, 0);
-  MNode *s1 = orientedFaces[4].getVertex(N_i - 1, 0);
-  MNode *s2 = orientedFaces[4].getVertex(N_i - 1, N_j - 1);
-  MNode *s3 = orientedFaces[4].getVertex(0, N_j - 1);
+  MVertex *s0 = orientedFaces[4].getVertex(0, 0);
+  MVertex *s1 = orientedFaces[4].getVertex(N_i - 1, 0);
+  MVertex *s2 = orientedFaces[4].getVertex(N_i - 1, N_j - 1);
+  MVertex *s3 = orientedFaces[4].getVertex(0, N_j - 1);
 
-  MNode *s4 = orientedFaces[5].getVertex(0, 0);
-  MNode *s5 = orientedFaces[5].getVertex(N_i - 1, 0);
-  MNode *s6 = orientedFaces[5].getVertex(N_i - 1, N_j - 1);
-  MNode *s7 = orientedFaces[5].getVertex(0, N_j - 1);
+  MVertex *s4 = orientedFaces[5].getVertex(0, 0);
+  MVertex *s5 = orientedFaces[5].getVertex(N_i - 1, 0);
+  MVertex *s6 = orientedFaces[5].getVertex(N_i - 1, N_j - 1);
+  MVertex *s7 = orientedFaces[5].getVertex(0, N_j - 1);
 
-  std::vector<std::vector<std::vector<MNode *> > > &tab(
+  std::vector<std::vector<std::vector<MVertex *> > > &tab(
     gr->transfinite_vertices);
   tab.resize(N_i);
   for(int i = 0; i < N_i; i++) {
@@ -445,38 +445,38 @@ int MeshTransfiniteVolume(GVolume *gr)
     for(int j = 0; j < N_j; j++) {
       double v = lengths_j[j] / L_j;
 
-      MNode *c0 = orientedFaces[4].getVertex(i, 0);
-      MNode *c1 = orientedFaces[4].getVertex(N_i - 1, j);
-      MNode *c2 = orientedFaces[4].getVertex(i, N_j - 1);
-      MNode *c3 = orientedFaces[4].getVertex(0, j);
+      MVertex *c0 = orientedFaces[4].getVertex(i, 0);
+      MVertex *c1 = orientedFaces[4].getVertex(N_i - 1, j);
+      MVertex *c2 = orientedFaces[4].getVertex(i, N_j - 1);
+      MVertex *c3 = orientedFaces[4].getVertex(0, j);
 
-      MNode *c4 = orientedFaces[5].getVertex(i, 0);
-      MNode *c5 = orientedFaces[5].getVertex(N_i - 1, j);
-      MNode *c6 = orientedFaces[5].getVertex(i, N_j - 1);
-      MNode *c7 = orientedFaces[5].getVertex(0, j);
+      MVertex *c4 = orientedFaces[5].getVertex(i, 0);
+      MVertex *c5 = orientedFaces[5].getVertex(N_i - 1, j);
+      MVertex *c6 = orientedFaces[5].getVertex(i, N_j - 1);
+      MVertex *c7 = orientedFaces[5].getVertex(0, j);
 
-      MNode *f4 = orientedFaces[4].getVertex(i, j);
-      MNode *f5 = orientedFaces[5].getVertex(i, j);
+      MVertex *f4 = orientedFaces[4].getVertex(i, j);
+      MVertex *f5 = orientedFaces[5].getVertex(i, j);
 
       for(int k = 0; k < N_k; k++) {
         double w = lengths_k[k] / L_k;
 
-        MNode *c8 = orientedFaces[0].getVertex(0, k);
-        MNode *c9 = orientedFaces[0].getVertex(N_i - 1, k);
-        MNode *c10 = orientedFaces[2].getVertex(N_i - 1, k);
-        MNode *c11 = orientedFaces[2].getVertex(0, k);
+        MVertex *c8 = orientedFaces[0].getVertex(0, k);
+        MVertex *c9 = orientedFaces[0].getVertex(N_i - 1, k);
+        MVertex *c10 = orientedFaces[2].getVertex(N_i - 1, k);
+        MVertex *c11 = orientedFaces[2].getVertex(0, k);
 
-        MNode *f0 = orientedFaces[0].getVertex(i, k);
-        MNode *f1 = orientedFaces[1].getVertex(j, k);
-        MNode *f2 = orientedFaces[2].getVertex(i, k);
-        MNode *f3;
+        MVertex *f0 = orientedFaces[0].getVertex(i, k);
+        MVertex *f1 = orientedFaces[1].getVertex(j, k);
+        MVertex *f2 = orientedFaces[2].getVertex(i, k);
+        MVertex *f3;
         if(corners.size() == 8)
           f3 = orientedFaces[3].getVertex(j, k);
         else
           f3 = c8;
 
         if(i && j && k && i != N_i - 1 && j != N_j - 1 && k != N_k - 1) {
-          MNode *newv = transfiniteHex(
+          MVertex *newv = transfiniteHex(
             gr, f0, f1, f2, f3, f4, f5, c0, c1, c2, c3, c4, c5, c6, c7, c8, c9,
             c10, c11, s0, s1, s2, s3, s4, s5, s6, s7, u, v, w);
           gr->mesh_vertices.push_back(newv);
@@ -507,7 +507,7 @@ int MeshTransfiniteVolume(GVolume *gr)
 #if defined(HAVE_QUADTRI)
   // for QuadTri, get external boundary diagonals for element subdivision
   // purposes
-  std::set<std::pair<MNode *, MNode *> > boundary_diags;
+  std::set<std::pair<MVertex *, MVertex *> > boundary_diags;
   if(gr->meshAttributes.QuadTri) {
     if(!getTransfiniteBoundaryDiags(gr, &boundary_diags)) {
       Msg::Error("Could not get surface diagonals during transfinite meshing "
@@ -526,7 +526,7 @@ int MeshTransfiniteVolume(GVolume *gr)
 #if defined(HAVE_QUADTRI)
           if(gr->meshAttributes.QuadTri) {
             // create vertex array
-            std::vector<MNode *> verts;
+            std::vector<MVertex *> verts;
             verts.resize(8);
             verts[0] = tab[i][j][k];
             verts[1] = tab[i + 1][j][k];
@@ -632,7 +632,7 @@ int MeshTransfiniteVolume(GVolume *gr)
         for(int k = 0; k < N_k - 1; k++) {
 #if defined(HAVE_QUADTRI)
           if(gr->meshAttributes.QuadTri) {
-            std::vector<MNode *> verts;
+            std::vector<MVertex *> verts;
             verts.resize(6);
             verts[0] = tab[0][j][k];
             verts[1] = tab[1][j][k];
@@ -691,7 +691,7 @@ int MeshTransfiniteVolume(GVolume *gr)
 #if defined(HAVE_QUADTRI)
             if(gr->meshAttributes.QuadTri) {
               // create vertex array
-              std::vector<MNode *> verts;
+              std::vector<MVertex *> verts;
               verts.resize(8);
               verts[0] = tab[i][j][k];
               verts[1] = tab[i + 1][j][k];

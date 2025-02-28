@@ -27,20 +27,20 @@
 #include <iostream>
 #include <algorithm>
 #include "GmshMessage.h"
-#include "GSurface.h"
-#include "GCurve.h"
-#include "MNode.h"
+#include "GFace.h"
+#include "GEdge.h"
+#include "MVertex.h"
 #include "MLine.h"
 #include "VertexCoord.h"
 
-SPoint3 VertexCoordParent::getUvw(MNode *vert) const
+SPoint3 VertexCoordParent::getUvw(MVertex *vert) const
 {
   GEntity *ge = vert->onWhat();
   switch(ge->dim()) {
   case 1: {
     SPoint3 p(0., 0., 0.);
     reparamMeshVertexOnEdge(
-      vert, static_cast<GCurve *>(ge),
+      vert, static_cast<GEdge *>(ge),
       p[0]); // Overkill if vert. well classified and parametrized
     return p;
     break;
@@ -48,7 +48,7 @@ SPoint3 VertexCoordParent::getUvw(MNode *vert) const
   case 2: {
     SPoint2 p;
     reparamMeshVertexOnFace(
-      vert, static_cast<GSurface *>(ge),
+      vert, static_cast<GFace *>(ge),
       p); // Overkill if vert. well classified and parametrized
     return SPoint3(p[0], p[1], 0.);
     break;
@@ -60,9 +60,9 @@ SPoint3 VertexCoordParent::getUvw(MNode *vert) const
 SPoint3 VertexCoordParent::uvw2Xyz(const SPoint3 &uvw) const
 {
   GEntity *ge = _vert->onWhat();
-  GVertex gp = (ge->dim() == 1) ?
-                static_cast<GCurve *>(ge)->point(uvw[0]) :
-                static_cast<GSurface *>(ge)->point(uvw[0], uvw[1]);
+  GPoint gp = (ge->dim() == 1) ?
+                static_cast<GEdge *>(ge)->point(uvw[0]) :
+                static_cast<GFace *>(ge)->point(uvw[0], uvw[1]);
   return SPoint3(gp.x(), gp.y(), gp.z());
 }
 
@@ -72,12 +72,12 @@ void VertexCoordParent::gXyz2gUvw(const SPoint3 &uvw, const SPoint3 &gXyz,
   GEntity *ge = _vert->onWhat();
 
   if(ge->dim() == 1) {
-    SVector3 der = static_cast<GCurve *>(ge)->firstDer(uvw[0]);
+    SVector3 der = static_cast<GEdge *>(ge)->firstDer(uvw[0]);
     gUvw[0] = gXyz.x() * der.x() + gXyz.y() * der.y() + gXyz.z() * der.z();
   }
   else {
     std::pair<SVector3, SVector3> der =
-      static_cast<GSurface *>(ge)->firstDer(SPoint2(uvw[0], uvw[1]));
+      static_cast<GFace *>(ge)->firstDer(SPoint2(uvw[0], uvw[1]));
     gUvw[0] = gXyz.x() * der.first.x() + gXyz.y() * der.first.y() +
               gXyz.z() * der.first.z();
     gUvw[1] = gXyz.x() * der.second.x() + gXyz.y() * der.second.y() +
@@ -92,7 +92,7 @@ void VertexCoordParent::gXyz2gUvw(const SPoint3 &uvw,
   GEntity *ge = _vert->onWhat();
 
   if(ge->dim() == 1) {
-    SVector3 der = static_cast<GCurve *>(ge)->firstDer(uvw[0]);
+    SVector3 der = static_cast<GEdge *>(ge)->firstDer(uvw[0]);
     auto itUvw = gUvw.begin();
     for(auto itXyz = gXyz.begin(); itXyz != gXyz.end(); itXyz++) {
       (*itUvw)[0] =
@@ -102,7 +102,7 @@ void VertexCoordParent::gXyz2gUvw(const SPoint3 &uvw,
   }
   else {
     std::pair<SVector3, SVector3> der =
-      static_cast<GSurface *>(ge)->firstDer(SPoint2(uvw[0], uvw[1]));
+      static_cast<GFace *>(ge)->firstDer(SPoint2(uvw[0], uvw[1]));
     auto itUvw = gUvw.begin();
     for(auto itXyz = gXyz.begin(); itXyz != gXyz.end(); itXyz++) {
       (*itUvw)[0] = itXyz->x() * der.first.x() +
@@ -165,7 +165,7 @@ namespace {
 
 } // namespace
 
-VertexCoordLocalLine::VertexCoordLocalLine(MNode *v)
+VertexCoordLocalLine::VertexCoordLocalLine(MVertex *v)
   : dir(0.), x0(v->x()), y0(v->y()), z0(v->z())
 {
   GEntity *ge = v->onWhat();
@@ -173,7 +173,7 @@ VertexCoordLocalLine::VertexCoordLocalLine(MNode *v)
 
   for(unsigned iEl = 0; iEl < nEl; iEl++) {
     MElement *el = ge->getMeshElement(iEl);
-    std::vector<MNode *> lVerts;
+    std::vector<MVertex *> lVerts;
     el->getVertices(lVerts);
     auto itV = std::find(lVerts.begin(), lVerts.end(), v);
     if(itV != lVerts.end()) {
@@ -184,7 +184,7 @@ VertexCoordLocalLine::VertexCoordLocalLine(MNode *v)
   dir.normalize();
 }
 
-VertexCoordLocalSurf::VertexCoordLocalSurf(MNode *v)
+VertexCoordLocalSurf::VertexCoordLocalSurf(MVertex *v)
   : x0(v->x()), y0(v->y()), z0(v->z())
 {
   GEntity *ge = v->onWhat();
@@ -193,7 +193,7 @@ VertexCoordLocalSurf::VertexCoordLocalSurf(MNode *v)
   SVector3 n(0.);
   for(unsigned iEl = 0; iEl < nEl; iEl++) {
     MElement *el = ge->getMeshElement(iEl);
-    std::vector<MNode *> lVerts;
+    std::vector<MVertex *> lVerts;
     el->getVertices(lVerts);
     auto itV = std::find(lVerts.begin(), lVerts.end(), v);
     if(itV != lVerts.end()) {

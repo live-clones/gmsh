@@ -13,7 +13,7 @@
 #include "yamakawa.h"
 #include "GModel.h"
 #include "OS.h"
-#include "MNode.h"
+#include "MVertex.h"
 #include "MElement.h"
 #include "MHexahedron.h"
 #include "MQuadrangle.h"
@@ -38,7 +38,7 @@ namespace {
   // Helper functions for the recombination of hex into hexes
   // No reason to put them in the already huge Recombinator class
 
-  typedef std::map<MNode *, std::set<MElement *> > Vertex2Elements;
+  typedef std::map<MVertex *, std::set<MElement *> > Vertex2Elements;
 
   // Hex facet to hex vertex mapping
   // Previously explicitely built each time
@@ -77,12 +77,12 @@ namespace {
   }
 
   // Is this vertex in that hex?
-  // bool inclusion(MNode* vertex, const Hex& hex) {
+  // bool inclusion(MVertex* vertex, const Hex& hex) {
   //  return hex.contains(vertex);
   //}
 
   // Is that vertex in that tet?
-  bool tet_contains_vertex(MElement *tet, MNode *v)
+  bool tet_contains_vertex(MElement *tet, MVertex *v)
   {
     return tet->getVertex(0) == v || tet->getVertex(1) == v ||
            tet->getVertex(2) == v || tet->getVertex(3) == v;
@@ -90,7 +90,7 @@ namespace {
 
   // Check the given 3 vertices are vertices of one of the tets given in
   // the input set
-  bool inclusion(MNode *v1, MNode *v2, MNode *v3,
+  bool inclusion(MVertex *v1, MVertex *v2, MVertex *v3,
                  const std::set<MElement *> &tets)
   {
     for(std::set<MElement *>::const_iterator it = tets.begin();
@@ -110,7 +110,7 @@ namespace {
     for(unsigned int f = 0; f < 6; ++f) {
       bool tet_in_facet = true;
       for(unsigned int v = 0; v < 4; ++v) {
-        MNode *tet_vertex = tet->getVertex(v);
+        MVertex *tet_vertex = tet->getVertex(v);
         bool vertex_found = false;
         for(unsigned int vface = 0; vface < 4; ++vface) {
           unsigned int v_hex = hex_facet_to_vertex[f][vface];
@@ -135,7 +135,7 @@ namespace {
   }
 
   /*
-  double distance(MNode* v1, MNode* v2) {
+  double distance(MVertex* v1, MVertex* v2) {
     double val;
     double x, y, z;
 
@@ -148,7 +148,7 @@ namespace {
   }
   */
 
-  double distance(MNode *v, MNode *v1, MNode *v2)
+  double distance(MVertex *v, MVertex *v1, MVertex *v2)
   {
     double val;
     double x, y, z;
@@ -168,10 +168,10 @@ namespace {
     double max;
     double l1, l2, l3, l4, l5, l6;
 
-    MNode *a = tet->getVertex(0);
-    MNode *b = tet->getVertex(1);
-    MNode *c = tet->getVertex(2);
-    MNode *d = tet->getVertex(3);
+    MVertex *a = tet->getVertex(0);
+    MVertex *b = tet->getVertex(1);
+    MVertex *c = tet->getVertex(2);
+    MVertex *d = tet->getVertex(3);
 
     max = 1000000.0;
     l1 = ::distance(a, b);
@@ -214,7 +214,7 @@ namespace {
     return max;
   }
 
-  double scalar(MNode *v1, MNode *v2, MNode *v3, MNode *v4)
+  double scalar(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4)
   {
     SVector3 vec1(v1->point(), v2->point());
     SVector3 vec2(v3->point(), v4->point());
@@ -256,9 +256,9 @@ namespace {
     for(unsigned int f = 0; f < 6; f++) {
       std::vector<bool> triangle_found(4);
       for(unsigned int triangle = 0; triangle < 4; triangle++) {
-        MNode *v0 = hex.getVertex(hex_facet_triangulation(f, triangle, 0));
-        MNode *v1 = hex.getVertex(hex_facet_triangulation(f, triangle, 1));
-        MNode *v2 = hex.getVertex(hex_facet_triangulation(f, triangle, 2));
+        MVertex *v0 = hex.getVertex(hex_facet_triangulation(f, triangle, 0));
+        MVertex *v1 = hex.getVertex(hex_facet_triangulation(f, triangle, 1));
+        MVertex *v2 = hex.getVertex(hex_facet_triangulation(f, triangle, 2));
 
         triangle_found[triangle] = inclusion(v0, v1, v2, tets);
       }
@@ -271,7 +271,7 @@ namespace {
   }
 
   /*
-  bool is_vertex_on_gmodel_boundary(MNode* v) {
+  bool is_vertex_on_gmodel_boundary(MVertex* v) {
     return v->onWhat()->dim() < 3;
   }
   */
@@ -280,7 +280,7 @@ namespace {
     int count_boundary_vertices = 0;
     for (unsigned int i = 0; i < 4; ++i) {
       unsigned int v_index = hex_facet_to_vertex[f][i];
-      MNode* v = hex.getVertex(v_index);
+      MVertex* v = hex.getVertex(v_index);
       if (is_vertex_on_gmodel_boundary(v)) {
         count_boundary_vertices++;
       }
@@ -308,7 +308,7 @@ namespace {
     }
   }
   */
-  unsigned int nb_tets_sharing_vertices(MNode *v1, MNode *v2, MNode *v3,
+  unsigned int nb_tets_sharing_vertices(MVertex *v1, MVertex *v2, MVertex *v3,
                                         TetMeshConnectivity &tet_mesh)
   {
     TetMeshConnectivity::TetSet tets;
@@ -355,7 +355,7 @@ namespace {
     return true;
   }
 
-  double eta(MNode *a, MNode *b, MNode *c, MNode *d)
+  double eta(MVertex *a, MVertex *b, MVertex *c, MVertex *d)
   {
     MQuadrangle quad(a, b, c, d);
     return quad.etaShapeMeasure();
@@ -388,7 +388,7 @@ namespace {
   // For all tets around the input vertex
   // Check if its 4 vertices are vertices of the input hex
   // Insert the tet in the final set if they are
-  void find(MNode *vertex, const Hex &hex, std::set<MElement *> &result,
+  void find(MVertex *vertex, const Hex &hex, std::set<MElement *> &result,
             TetMeshConnectivity &tet_mesh)
   {
     TetMeshConnectivity::TetSet tets_around_v =
@@ -407,10 +407,10 @@ namespace {
     }
   }
 
-  MNode *last_tet_vertex(MElement *tet, MNode *v1, MNode *v2, MNode *v3)
+  MVertex *last_tet_vertex(MElement *tet, MVertex *v1, MVertex *v2, MVertex *v3)
   {
     for(unsigned int i = 0; i < 4; ++i) {
-      MNode *v = tet->getVertex(i);
+      MVertex *v = tet->getVertex(i);
       if(v != v1 && v != v2 && v != v3) { return v; }
     }
     return NULL;
@@ -421,7 +421,7 @@ namespace {
   // Dis-donc c'est vraiment tordu !!
   // Tout ca pour avoir le voisin d'un tet la face opposée à v4 et prendre le
   // point opposé dans le tet voisin.
-  MNode *find(MNode *v1, MNode *v2, MNode *v3, MNode *v4,
+  MVertex *find(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
                 const std::set<MElement *> &tets)
   {
     for(std::set<MElement *>::const_iterator it = tets.begin();
@@ -469,8 +469,8 @@ namespace {
 
   // Compute the intersection of bin1 and bin2
   // And add to final the elements that are not in the already vector
-  // void Recombinator::intersection(const std::set<MNode*>& bin1, const
-  // std::set<MNode*>& bin2,
+  // void Recombinator::intersection(const std::set<MVertex*>& bin1, const
+  // std::set<MVertex*>& bin2,
 
   std::ostream &operator<<(std::ostream &os, const Hex &hex)
   {
@@ -486,12 +486,12 @@ namespace {
 
 } // anonymous namespace
 
-void export_gregion_mesh(GVolume *gr, const string &filename)
+void export_gregion_mesh(GRegion *gr, const string &filename)
 {
   // FIXME: use MElement::writeMSH
 
   // create set of all tets
-  map<MNode *, int> vertices;
+  map<MVertex *, int> vertices;
   int counterv = 1;
 
   for(vector<MTetrahedron *>::iterator it = gr->tetrahedra.begin();
@@ -531,7 +531,7 @@ void export_gregion_mesh(GVolume *gr, const string &filename)
       << "$Nodes" << endl
       << vertices.size() << endl;
   // write vertices
-  for(map<MNode *, int>::iterator it = vertices.begin(); it != vertices.end();
+  for(map<MVertex *, int>::iterator it = vertices.begin(); it != vertices.end();
       it++)
     out << it->second << " " << it->first->x() << " " << it->first->y() << " "
         << it->first->z() << endl;
@@ -547,7 +547,7 @@ void export_gregion_mesh(GVolume *gr, const string &filename)
       it != gr->tetrahedra.end(); it++) {
     out << counter << " 4 2 0 26";
     for(std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
-      MNode *v = (*it)->getVertex(i);
+      MVertex *v = (*it)->getVertex(i);
       out << " " << vertices[v];
     }
     out << endl;
@@ -557,7 +557,7 @@ void export_gregion_mesh(GVolume *gr, const string &filename)
       it != gr->hexahedra.end(); it++) {
     out << counter << " 5 2 0 26";
     for(std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
-      MNode *v = (*it)->getVertex(i);
+      MVertex *v = (*it)->getVertex(i);
       out << " " << vertices[v];
     }
     out << endl;
@@ -567,7 +567,7 @@ void export_gregion_mesh(GVolume *gr, const string &filename)
       it != gr->prisms.end(); it++) {
     out << counter << " 6 2 0 26";
     for(std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
-      MNode *v = (*it)->getVertex(i);
+      MVertex *v = (*it)->getVertex(i);
       out << " " << vertices[v];
     }
     out << endl;
@@ -577,7 +577,7 @@ void export_gregion_mesh(GVolume *gr, const string &filename)
       it != gr->pyramids.end(); it++) {
     out << counter << " 7 2 0 26";
     for(std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
-      MNode *v = (*it)->getVertex(i);
+      MVertex *v = (*it)->getVertex(i);
       out << " " << vertices[v];
     }
     out << endl;
@@ -592,7 +592,7 @@ void export_gregion_mesh(GVolume *gr, const string &filename)
 /****************class Recombinator****************/
 /**************************************************/
 
-MNode *Hex::vertex_in_facet(unsigned int facet, unsigned int v_in_facet) const
+MVertex *Hex::vertex_in_facet(unsigned int facet, unsigned int v_in_facet) const
 {
   unsigned int v = hex_facet_to_vertex[facet][v_in_facet];
   return getVertex(v);
@@ -619,13 +619,13 @@ void Recombinator::execute()
 
   for(GModel::riter region_itr = model->firstRegion();
       region_itr != model->lastRegion(); region_itr++) {
-    GVolume *region = *region_itr;
+    GRegion *region = *region_itr;
 
     if(region->getNumMeshElements() > 0) { execute(region); }
   }
 }
 
-void Recombinator::execute(GVolume *gr)
+void Recombinator::execute(GRegion *gr)
 {
   Msg::Info(" ................HEXAHEDRA.... RECOMBINATOR................\n");
 
@@ -697,20 +697,20 @@ void Recombinator::pattern1()
 
     for(int index = 0; index < 4; index++) {
       // max_scaled_jacobian(element,index);
-      MNode *a = tet->getVertex(index);
-      MNode *b = tet->getVertex((index + 1) % 4);
-      MNode *c = tet->getVertex((index + 2) % 4);
-      MNode *d = tet->getVertex((index + 3) % 4);
+      MVertex *a = tet->getVertex(index);
+      MVertex *b = tet->getVertex((index + 1) % 4);
+      MVertex *c = tet->getVertex((index + 2) % 4);
+      MVertex *d = tet->getVertex((index + 3) % 4);
 
-      std::vector<MNode *> added(4);
+      std::vector<MVertex *> added(4);
       added[0] = a;
       added[1] = b;
       added[2] = c;
       added[3] = d;
 
-      std::set<MNode *> bin1;
-      std::set<MNode *> bin2;
-      std::set<MNode *> bin3;
+      std::set<MVertex *> bin1;
+      std::set<MVertex *> bin2;
+      std::set<MVertex *> bin3;
 
       tet_mesh.vertices_around_vertices(b, d, bin1); // candidates for F - p
       tet_mesh.vertices_around_vertices(b, c, bin2); // candidates for C - q
@@ -723,23 +723,23 @@ void Recombinator::pattern1()
 
       added.resize(7);
       for(vertex_set_itr it1 = bin1.begin(); it1 != bin1.end(); it1++) {
-        MNode *p = *it1;
+        MVertex *p = *it1;
         added[4] = p;
         for(vertex_set_itr it2 = bin2.begin(); it2 != bin2.end(); it2++) {
-          MNode *q = *it2;
+          MVertex *q = *it2;
           added[5] = q;
           for(vertex_set_itr it3 = bin3.begin(); it3 != bin3.end(); it3++) {
-            MNode *r = *it3;
+            MVertex *r = *it3;
             added[6] = r;
             if(p != q && p != r && q != r) {
-              std::set<MNode *>
+              std::set<MVertex *>
                 bin4; // candidates for G - s vertices linked to p,q and r
               tet_mesh.vertices_around_vertices(p, q, r, bin4);
               remove_values_from_set(bin4, added);
 
-              for(std::set<MNode *>::iterator it4 = bin4.begin();
+              for(std::set<MVertex *>::iterator it4 = bin4.begin();
                   it4 != bin4.end(); it4++) {
-                MNode *s = *it4;
+                MVertex *s = *it4;
                 Hex *hex = new Hex(a, b, q, c, d, p, s, r);
 
                 add_or_free_potential_hex(hex);
@@ -769,11 +769,11 @@ void Recombinator::pattern2()
     diagonal(tet, index1, index2);
     two_others(index1, index2, index3, index4);
 
-    MNode *b =
+    MVertex *b =
       tet->getVertex(index1); // b and d are the vertices of the longest edge
-    MNode *d = tet->getVertex(index2);
-    MNode *a = tet->getVertex(index3); // a and c are the other two vertices
-    MNode *c = tet->getVertex(index4);
+    MVertex *d = tet->getVertex(index2);
+    MVertex *a = tet->getVertex(index3); // a and c are the other two vertices
+    MVertex *c = tet->getVertex(index4);
 
     std::set<MElement *> verif;
     tet_mesh.tets_around_vertices(b, d, verif);
@@ -782,12 +782,12 @@ void Recombinator::pattern2()
     // of the input tet - proceed
     // And get the other 4 vertices of the hex
     if(verif.size() == 6) {
-      MNode *s = find(a, b, d, c, verif);
-      MNode *p = find(b, c, d, a, verif);
+      MVertex *s = find(a, b, d, c, verif);
+      MVertex *p = find(b, c, d, a, verif);
 
       if(s != NULL && p != NULL) {
-        MNode *r = find(s, b, d, a, verif);
-        MNode *q = find(p, b, d, c, verif);
+        MVertex *r = find(s, b, d, a, verif);
+        MVertex *q = find(p, b, d, c, verif);
         if(r != 0 && q != 0) {
           // 2 possible hexes
           Hex *hex = new Hex(a, s, b, c, d, r, q, p);
@@ -816,10 +816,10 @@ void Recombinator::pattern3()
     diagonal(tet, index1, index2);
     two_others(index1, index2, index3, index4);
 
-    MNode *b = tet->getVertex(index1);
-    MNode *d = tet->getVertex(index2);
-    MNode *a = tet->getVertex(index3);
-    MNode *c = tet->getVertex(index4);
+    MVertex *b = tet->getVertex(index1);
+    MVertex *d = tet->getVertex(index2);
+    MVertex *a = tet->getVertex(index3);
+    MVertex *c = tet->getVertex(index4);
 
     std::set<MElement *> verif1;
     std::set<MElement *> verif2;
@@ -827,16 +827,16 @@ void Recombinator::pattern3()
     tet_mesh.tets_around_vertices(a, c, verif2);
 
     if(verif1.size() == 4 && verif2.size() == 4) {
-      MNode *fA = find(b, d, a, c, verif1);
-      MNode *fB = find(b, d, c, a, verif1);
-      MNode *bA = find(a, c, b, d, verif2);
-      MNode *bB = find(a, c, d, b, verif2);
+      MVertex *fA = find(b, d, a, c, verif1);
+      MVertex *fB = find(b, d, c, a, verif1);
+      MVertex *bA = find(a, c, b, d, verif2);
+      MVertex *bB = find(a, c, d, b, verif2);
 
       if(fA != 0 && fB != 0 && bA != 0 && bB != 0 && fA != fB && bA != bB) {
         if(scalar(fA, fB, a, b) > scalar(fA, fB, b, c) &&
            scalar(bA, bB, a, b) > scalar(bA, bB, b, c)) {
-          MNode *p = NULL;
-          MNode *q = NULL;
+          MVertex *p = NULL;
+          MVertex *q = NULL;
           if(distance(fA, b, c) < distance(fB, b, c)) {
             p = fA;
             q = fB;
@@ -846,8 +846,8 @@ void Recombinator::pattern3()
             q = fA;
           }
 
-          MNode *r = NULL;
-          MNode *s = NULL;
+          MVertex *r = NULL;
+          MVertex *s = NULL;
           if(distance(bA, b, c) < distance(bB, b, c)) {
             r = bA;
             s = bB;
@@ -876,8 +876,8 @@ void Recombinator::pattern3()
         } // copy paste alert
         else if(scalar(fA, fB, a, b) <= scalar(fA, fB, b, c) &&
                 scalar(bA, bB, a, b) <= scalar(bA, bB, b, c)) {
-          MNode *p = NULL;
-          MNode *q = NULL;
+          MVertex *p = NULL;
+          MVertex *q = NULL;
           if(distance(fA, a, b) < distance(fB, a, b)) {
             p = fA;
             q = fB;
@@ -886,8 +886,8 @@ void Recombinator::pattern3()
             p = fB;
             q = fA;
           }
-          MNode *r = NULL;
-          MNode *s = NULL;
+          MVertex *r = NULL;
+          MVertex *s = NULL;
           if(distance(bA, a, b) < distance(bB, a, b)) {
             r = bA;
             s = bB;
@@ -928,7 +928,7 @@ void Recombinator::add_or_free_potential_hex(Hex *candidate)
   }
 }
 
-void add_hex_to_region(GVolume *region, const Hex &hex)
+void add_hex_to_region(GRegion *region, const Hex &hex)
 {
   region->addHexahedron(new MHexahedron(hex.vertices()));
 }
@@ -1068,26 +1068,26 @@ void Recombinator::print_statistics()
 }
 
 // Get all the triangle facets defining the boundary of the input region
-// Each Tuple stores its 3 vertices, the triangle, and the GSurface
+// Each Tuple stores its 3 vertices, the triangle, and the GFace
 // to which it belongs
 void Recombinator::build_tuples()
 {
   tuples.clear();
   triangles.clear();
 
-  std::vector<GSurface *> faces = current_region->faces();
+  std::vector<GFace *> faces = current_region->faces();
 
-  for(std::vector<GSurface *>::iterator it = faces.begin(); it != faces.end();
+  for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
       it++) {
-    GSurface *gf = *it;
+    GFace *gf = *it;
 
     for(unsigned int i = 0; i < gf->getNumMeshElements(); i++) {
       MElement *element = gf->getMeshElement(i);
 
       if(element->getNumVertices() == 3) {
-        MNode *a = element->getVertex(0);
-        MNode *b = element->getVertex(1);
-        MNode *c = element->getVertex(2);
+        MVertex *a = element->getVertex(0);
+        MVertex *b = element->getVertex(1);
+        MVertex *c = element->getVertex(2);
 
         tuples.insert(Tuple(a, b, c, element, gf));
       }
@@ -1101,14 +1101,14 @@ void Recombinator::create_quads_on_boundary()
     MElement *element = current_region->getMeshElement(i);
 
     if(element->getNumVertices() == 8) {
-      MNode *a = element->getVertex(0);
-      MNode *b = element->getVertex(1);
-      MNode *c = element->getVertex(2);
-      MNode *d = element->getVertex(3);
-      MNode *e = element->getVertex(4);
-      MNode *f = element->getVertex(5);
-      MNode *g = element->getVertex(6);
-      MNode *h = element->getVertex(7);
+      MVertex *a = element->getVertex(0);
+      MVertex *b = element->getVertex(1);
+      MVertex *c = element->getVertex(2);
+      MVertex *d = element->getVertex(3);
+      MVertex *e = element->getVertex(4);
+      MVertex *f = element->getVertex(5);
+      MVertex *g = element->getVertex(6);
+      MVertex *h = element->getVertex(7);
       // WARNING: not the same facets than those used to build the hex !!
       create_quads_on_boundary(a, b, c, d);
       create_quads_on_boundary(e, f, g, h);
@@ -1123,10 +1123,10 @@ void Recombinator::create_quads_on_boundary()
 
 void Recombinator::delete_quad_triangles_in_boundary() const
 {
-  std::vector<GSurface *> faces = current_region->faces();
-  for(std::vector<GSurface *>::iterator it = faces.begin(); it != faces.end();
+  std::vector<GFace *> faces = current_region->faces();
+  for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
       it++) {
-    GSurface *gf = *it;
+    GFace *gf = *it;
     std::vector<MElement *> triangles_to_keep;
     triangles_to_keep.reserve(gf->triangles.size());
 
@@ -1149,11 +1149,11 @@ void Recombinator::delete_quad_triangles_in_boundary() const
 // For the two possible triangulations
 // of these 4 points - check if they are part of the input
 // boundary of the region
-// If they are, create the corrsponding quad in the GSurface mesh.
+// If they are, create the corrsponding quad in the GFace mesh.
 // TODO - check and get out fast if the vertices are not on the boundary of the
 // region
-void Recombinator::create_quads_on_boundary(MNode *a, MNode *b, MNode *c,
-                                            MNode *d)
+void Recombinator::create_quads_on_boundary(MVertex *a, MVertex *b, MVertex *c,
+                                            MVertex *d)
 {
   Tuple tuple0(a, b, c);
   Tuple tuple1(c, d, a);
@@ -1169,7 +1169,7 @@ void Recombinator::create_quads_on_boundary(MNode *a, MNode *b, MNode *c,
     triangles.insert(stored_tuple0.get_element());
     triangles.insert(stored_tuple1.get_element());
 
-    GSurface *face = stored_tuple0.get_gf();
+    GFace *face = stored_tuple0.get_gf();
     assert(stored_tuple1.get_gf() == face);
     face->addQuadrangle(new MQuadrangle(a, b, c, d));
     quad_added = true;
@@ -1189,7 +1189,7 @@ void Recombinator::create_quads_on_boundary(MNode *a, MNode *b, MNode *c,
     triangles.insert(stored_tuple2.get_element());
     triangles.insert(stored_tuple3.get_element());
 
-    GSurface *face = stored_tuple2.get_gf();
+    GFace *face = stored_tuple2.get_gf();
     assert(stored_tuple3.get_gf() == face);
     if(!quad_added) { face->addQuadrangle(new MQuadrangle(a, b, c, d)); }
     else {
@@ -1279,10 +1279,10 @@ bool Recombinator::faces_statuquo(const Hex &hex)
 }
 
 // Return false when two triangles in the facets that are not
-// on the same boundary (same GSurface) of the region.
+// on the same boundary (same GFace) of the region.
 // In other words, when a geo edge is a diagonal of the current facet.
-bool Recombinator::faces_statuquo(MNode *a, MNode *b, MNode *c,
-                                  MNode *d)
+bool Recombinator::faces_statuquo(MVertex *a, MVertex *b, MVertex *c,
+                                  MVertex *d)
 {
   {
     Tuple tuple1(a, b, c);
@@ -1291,8 +1291,8 @@ bool Recombinator::faces_statuquo(MNode *a, MNode *b, MNode *c,
     std::multiset<Tuple>::iterator it1 = tuples.find(tuple1);
     std::multiset<Tuple>::iterator it2 = tuples.find(tuple2);
 
-    GSurface *gf1 = NULL;
-    GSurface *gf2 = NULL;
+    GFace *gf1 = NULL;
+    GFace *gf2 = NULL;
 
     while(it1 != tuples.end() && it1->get_hash() == tuple1.get_hash()) {
       if(tuple1.same_vertices(*it1)) { gf1 = it1->get_gf(); }
@@ -1322,8 +1322,8 @@ bool Recombinator::faces_statuquo(MNode *a, MNode *b, MNode *c,
     std::multiset<Tuple>::iterator it1 = tuples.find(tuple1);
     std::multiset<Tuple>::iterator it2 = tuples.find(tuple2);
 
-    GSurface *gf1 = NULL;
-    GSurface *gf2 = NULL;
+    GFace *gf1 = NULL;
+    GFace *gf2 = NULL;
 
     while(it1 != tuples.end() && it1->get_hash() == tuple1.get_hash()) {
       if(tuple1.same_vertices(*it1)) { gf1 = it1->get_gf(); }
@@ -1350,9 +1350,9 @@ void Recombinator::build_hash_tableA(const Hex &hex)
 {
   for(unsigned int f = 0; f < 6; ++f) {
     for(unsigned int t = 0; t < 4; ++t) {
-      MNode *v0 = hex.getVertex(hex_facet_triangulation(f, t, 0));
-      MNode *v1 = hex.getVertex(hex_facet_triangulation(f, t, 1));
-      MNode *v2 = hex.getVertex(hex_facet_triangulation(f, t, 2));
+      MVertex *v0 = hex.getVertex(hex_facet_triangulation(f, t, 0));
+      MVertex *v1 = hex.getVertex(hex_facet_triangulation(f, t, 1));
+      MVertex *v2 = hex.getVertex(hex_facet_triangulation(f, t, 2));
       add_value_to_multiset(hash_tableA, Facet(v0, v1, v2));
     }
   }
@@ -1362,8 +1362,8 @@ void Recombinator::build_hash_tableA(const Hex &hex)
 void Recombinator::build_hash_tableB(const Hex &hex)
 {
   for(unsigned int i = 0; i < 12; ++i) {
-    MNode *v0 = hex.getVertex(hex_facet_diagonal[i][0]);
-    MNode *v1 = hex.getVertex(hex_facet_diagonal[i][1]);
+    MVertex *v0 = hex.getVertex(hex_facet_diagonal[i][0]);
+    MVertex *v1 = hex.getVertex(hex_facet_diagonal[i][1]);
     add_value_to_multiset(hash_tableB, Diagonal(v0, v1));
   }
 }
@@ -1372,8 +1372,8 @@ void Recombinator::build_hash_tableB(const Hex &hex)
 void Recombinator::build_hash_tableC(const Hex &hex)
 {
   for(unsigned int e = 0; e < 12; ++e) {
-    MNode *v0 = hex.getVertex(hex_edge_to_vertex[e][0]);
-    MNode *v1 = hex.getVertex(hex_edge_to_vertex[e][1]);
+    MVertex *v0 = hex.getVertex(hex_edge_to_vertex[e][0]);
+    MVertex *v1 = hex.getVertex(hex_edge_to_vertex[e][1]);
     add_value_to_multiset(hash_tableC, Diagonal(v0, v1));
   }
 }
@@ -1395,8 +1395,8 @@ void Recombinator::print_segment(const SPoint3 &p1, const SPoint3 &p2,
        << "{10, 20};\n";
 }
 
-double Recombinator::scaled_jacobian(MNode *a, MNode *b, MNode *c,
-                                     MNode *d)
+double Recombinator::scaled_jacobian(MVertex *a, MVertex *b, MVertex *c,
+                                     MVertex *d)
 {
   SVector3 ab(a->point(), b->point());
   SVector3 ac(a->point(), c->point());
@@ -1410,8 +1410,8 @@ double Recombinator::scaled_jacobian(MNode *a, MNode *b, MNode *c,
   return val / (l_ab * l_ac * l_ad);
 }
 
-/*double Recombinator::scaled_jacobian_face(MNode* a,MNode* b,MNode*
-c,MNode* d){ double j1, j2, j3, j4;
+/*double Recombinator::scaled_jacobian_face(MVertex* a,MVertex* b,MVertex*
+c,MVertex* d){ double j1, j2, j3, j4;
 
   j1 = std::abs(scaled_jacobian(a,b,d,c));
   j2 = std::abs(scaled_jacobian(b,c,a,d));
@@ -1425,7 +1425,7 @@ double Recombinator::max_scaled_jacobian(MElement *element, int &index)
 {
   double val;
   double j1, j2, j3, j4;
-  MNode *a, *b, *c, *d;
+  MVertex *a, *b, *c, *d;
 
   a = element->getVertex(0);
   b = element->getVertex(1);
@@ -1459,14 +1459,14 @@ double Recombinator::max_scaled_jacobian(MElement *element, int &index)
 
 double Recombinator::min_scaled_jacobian(Hex &hex)
 {
-  MNode *a = hex.getVertex(0);
-  MNode *b = hex.getVertex(1);
-  MNode *c = hex.getVertex(2);
-  MNode *d = hex.getVertex(3);
-  MNode *e = hex.getVertex(4);
-  MNode *f = hex.getVertex(5);
-  MNode *g = hex.getVertex(6);
-  MNode *h = hex.getVertex(7);
+  MVertex *a = hex.getVertex(0);
+  MVertex *b = hex.getVertex(1);
+  MVertex *c = hex.getVertex(2);
+  MVertex *d = hex.getVertex(3);
+  MVertex *e = hex.getVertex(4);
+  MVertex *f = hex.getVertex(5);
+  MVertex *g = hex.getVertex(6);
+  MVertex *h = hex.getVertex(7);
 
   double j1 = scaled_jacobian(a, b, d, e);
   double j2 = scaled_jacobian(b, c, a, f);
@@ -1540,8 +1540,8 @@ double Recombinator::min_scaled_jacobian(Hex &hex)
 
 Prism::Prism() {}
 
-Prism::Prism(MNode *a2, MNode *b2, MNode *c2, MNode *d2, MNode *e2,
-             MNode *f2)
+Prism::Prism(MVertex *a2, MVertex *b2, MVertex *c2, MVertex *d2, MVertex *e2,
+             MVertex *f2)
 {
   a = a2;
   b = b2;
@@ -1557,20 +1557,20 @@ double Prism::get_quality() const { return quality; }
 
 void Prism::set_quality(double new_quality) { quality = new_quality; }
 
-MNode *Prism::get_a() { return a; }
+MVertex *Prism::get_a() { return a; }
 
-MNode *Prism::get_b() { return b; }
+MVertex *Prism::get_b() { return b; }
 
-MNode *Prism::get_c() { return c; }
+MVertex *Prism::get_c() { return c; }
 
-MNode *Prism::get_d() { return d; }
+MVertex *Prism::get_d() { return d; }
 
-MNode *Prism::get_e() { return e; }
+MVertex *Prism::get_e() { return e; }
 
-MNode *Prism::get_f() { return f; }
+MVertex *Prism::get_f() { return f; }
 
-void Prism::set_vertices(MNode *a2, MNode *b2, MNode *c2, MNode *d2,
-                         MNode *e2, MNode *f2)
+void Prism::set_vertices(MVertex *a2, MVertex *b2, MVertex *c2, MVertex *d2,
+                         MVertex *e2, MVertex *f2)
 {
   a = a2;
   b = b2;
@@ -1595,7 +1595,7 @@ Supplementary::~Supplementary() {}
 
 void Supplementary::execute()
 {
-  GVolume *gr;
+  GRegion *gr;
   GModel *model = GModel::current();
   GModel::riter it;
 
@@ -1605,12 +1605,12 @@ void Supplementary::execute()
   }
 }
 
-void Supplementary::execute(GVolume *gr)
+void Supplementary::execute(GRegion *gr)
 {
   unsigned int i;
   MElement *element;
-  MNode *a, *b, *c, *d;
-  MNode *e, *f, *g, *h;
+  MVertex *a, *b, *c, *d;
+  MVertex *e, *f, *g, *h;
 
   printf("................PRISMS................\n");
   build_tuples(gr);
@@ -1683,7 +1683,7 @@ void Supplementary::execute(GVolume *gr)
   create_quads_on_boundary(gr);
 }
 
-void Supplementary::init_markings(GVolume *gr)
+void Supplementary::init_markings(GRegion *gr)
 {
   unsigned int i;
   MElement *element;
@@ -1698,18 +1698,18 @@ void Supplementary::init_markings(GVolume *gr)
   }
 }
 
-void Supplementary::pattern(GVolume *gr)
+void Supplementary::pattern(GRegion *gr)
 {
   size_t i;
   int j, k;
   double quality;
   MElement *element;
-  MNode *a, *b, *c, *d;
-  MNode *p, *q;
-  std::vector<MNode *> vertices;
-  std::vector<MNode *> already;
-  std::set<MNode *> bin1;
-  std::set<MNode *> bin2;
+  MVertex *a, *b, *c, *d;
+  MVertex *p, *q;
+  std::vector<MVertex *> vertices;
+  std::vector<MVertex *> already;
+  std::set<MVertex *> bin1;
+  std::set<MVertex *> bin2;
   vertex_set_itr it1;
   vertex_set_itr it2;
   Prism prism;
@@ -1755,15 +1755,15 @@ void Supplementary::pattern(GVolume *gr)
   }
 }
 
-void Supplementary::merge(GVolume *gr)
+void Supplementary::merge(GRegion *gr)
 {
   unsigned int i;
   int count;
   bool flag;
   double threshold;
   double quality;
-  MNode *a, *b, *c;
-  MNode *d, *e, *f;
+  MVertex *a, *b, *c;
+  MVertex *d, *e, *f;
   MElement *element;
   std::set<MElement *> parts;
   std::vector<MTetrahedron *> opt;
@@ -1848,7 +1848,7 @@ void Supplementary::merge(GVolume *gr)
   printf("prisms average quality (0->1) : %f\n", quality / count);
 }
 
-void Supplementary::rearrange(GVolume *gr)
+void Supplementary::rearrange(GRegion *gr)
 {
   size_t i;
   MElement *element;
@@ -1859,7 +1859,7 @@ void Supplementary::rearrange(GVolume *gr)
   }
 }
 
-void Supplementary::statistics(GVolume *gr)
+void Supplementary::statistics(GRegion *gr)
 {
   size_t i;
   int all_nbr, prism_nbr;
@@ -1889,18 +1889,18 @@ void Supplementary::statistics(GVolume *gr)
          prism_volume * 100.0 / all_volume);
 }
 
-void Supplementary::build_tuples(GVolume *gr)
+void Supplementary::build_tuples(GRegion *gr)
 {
   unsigned int i;
-  MNode *a, *b, *c;
+  MVertex *a, *b, *c;
   MElement *element;
-  GSurface *gf;
+  GFace *gf;
 
   tuples.clear();
   triangles.clear();
 
-  std::vector<GSurface *> faces = gr->faces();
-  std::vector<GSurface *>::iterator it;
+  std::vector<GFace *> faces = gr->faces();
+  std::vector<GFace *>::iterator it;
 
   for(it = faces.begin(); it != faces.end(); it++) {
     gf = *it;
@@ -1919,13 +1919,13 @@ void Supplementary::build_tuples(GVolume *gr)
   }
 }
 
-void Supplementary::create_quads_on_boundary(GVolume *gr)
+void Supplementary::create_quads_on_boundary(GRegion *gr)
 {
   unsigned int i;
-  MNode *a, *b, *c;
-  MNode *d, *e, *f;
+  MVertex *a, *b, *c;
+  MVertex *d, *e, *f;
   MElement *element;
-  GSurface *gf;
+  GFace *gf;
   std::vector<MElement *> opt;
   element_set_itr it2;
 
@@ -1946,8 +1946,8 @@ void Supplementary::create_quads_on_boundary(GVolume *gr)
     }
   }
 
-  std::vector<GSurface *> faces = gr->faces();
-  std::vector<GSurface *>::iterator it;
+  std::vector<GFace *> faces = gr->faces();
+  std::vector<GFace *>::iterator it;
 
   for(it = faces.begin(); it != faces.end(); it++) {
     gf = *it;
@@ -1971,12 +1971,12 @@ void Supplementary::create_quads_on_boundary(GVolume *gr)
   }
 }
 
-void Supplementary::create_quads_on_boundary(MNode *a, MNode *b, MNode *c,
-                                             MNode *d)
+void Supplementary::create_quads_on_boundary(MVertex *a, MVertex *b, MVertex *c,
+                                             MVertex *d)
 {
   bool flag1, flag2;
   MElement *element1, *element2;
-  GSurface *gf1; //,*gf2;
+  GFace *gf1; //,*gf2;
   Tuple tuple1, tuple2;
   std::multiset<Tuple>::iterator it1;
   std::multiset<Tuple>::iterator it2;
@@ -2101,7 +2101,7 @@ bool Supplementary::sliver(MElement *element, Prism prism)
 {
   bool val;
   bool flag1, flag2, flag3, flag4;
-  MNode *a, *b, *c, *d;
+  MVertex *a, *b, *c, *d;
 
   val = 0;
   a = element->getVertex(0);
@@ -2149,8 +2149,8 @@ bool Supplementary::valid(Prism prism, const std::set<MElement *> &parts)
   bool flag2A, flag2B, flag2C, flag2D;
   bool flag3A, flag3B, flag3C, flag3D;
   bool flag4, flag5;
-  MNode *a, *b, *c;
-  MNode *d, *e, *f;
+  MVertex *a, *b, *c;
+  MVertex *d, *e, *f;
 
   a = prism.get_a();
   b = prism.get_b();
@@ -2189,11 +2189,11 @@ bool Supplementary::valid(Prism prism, const std::set<MElement *> &parts)
 
 // Need this awful terrible removed function from Recombinator for what is below
 // ....
-bool validFace(MNode *a, MNode *b, MNode *c, MNode *d,
-               std::map<MNode *, std::set<MElement *> > &vertexToElements)
+bool validFace(MVertex *a, MVertex *b, MVertex *c, MVertex *d,
+               std::map<MVertex *, std::set<MElement *> > &vertexToElements)
 {
-  std::map<MNode *, std::set<MElement *> >::iterator itElV[4];
-  MNode *faceV[4] = {a, b, c, d};
+  std::map<MVertex *, std::set<MElement *> >::iterator itElV[4];
+  MVertex *faceV[4] = {a, b, c, d};
   for(int iV = 0; iV < 4; iV++) {
     itElV[iV] = vertexToElements.find(faceV[iV]);
   }
@@ -2260,8 +2260,8 @@ bool validFace(MNode *a, MNode *b, MNode *c, MNode *d,
 bool validFaces(Prism &prism, Vertex2Elements &vertexToElements)
 {
   bool v1, v2, v3;
-  MNode *a, *b, *c;
-  MNode *d, *e, *f;
+  MVertex *a, *b, *c;
+  MVertex *d, *e, *f;
 
   a = prism.get_a();
   b = prism.get_b();
@@ -2281,8 +2281,8 @@ bool Supplementary::valid(Prism prism)
 {
   double k;
   double eta1, eta2, eta3;
-  MNode *a, *b, *c;
-  MNode *d, *e, *f;
+  MVertex *a, *b, *c;
+  MVertex *d, *e, *f;
 
   k = 0.000001;
 
@@ -2305,7 +2305,7 @@ bool Supplementary::valid(Prism prism)
   }
 }
 
-double Supplementary::eta(MNode *a, MNode *b, MNode *c, MNode *d)
+double Supplementary::eta(MVertex *a, MVertex *b, MVertex *c, MVertex *d)
 {
   double val;
   MQuadrangle *quad;
@@ -2316,7 +2316,7 @@ double Supplementary::eta(MNode *a, MNode *b, MNode *c, MNode *d)
   return val;
 }
 
-bool Supplementary::linked(MNode *v1, MNode *v2)
+bool Supplementary::linked(MVertex *v1, MVertex *v2)
 {
   bool flag;
   Vertex2Vertices::iterator it;
@@ -2337,9 +2337,9 @@ bool Supplementary::linked(MNode *v1, MNode *v2)
   return flag;
 }
 
-void Supplementary::find(MNode *v1, MNode *v2,
-                         const std::vector<MNode *> &already,
-                         std::set<MNode *> &final)
+void Supplementary::find(MVertex *v1, MVertex *v2,
+                         const std::vector<MVertex *> &already,
+                         std::set<MVertex *> &final)
 {
   Vertex2Vertices::iterator it1;
   Vertex2Vertices::iterator it2;
@@ -2352,11 +2352,11 @@ void Supplementary::find(MNode *v1, MNode *v2,
   }
 }
 
-void Supplementary::find(MNode *getVertex, const Prism &prism,
+void Supplementary::find(MVertex *getVertex, const Prism &prism,
                          std::set<MElement *> &final)
 {
   bool flag1, flag2, flag3, flag4;
-  MNode *a, *b, *c, *d;
+  MVertex *a, *b, *c, *d;
   Vertex2Elements::iterator it;
   element_set_itr it2;
 
@@ -2379,14 +2379,14 @@ void Supplementary::find(MNode *getVertex, const Prism &prism,
   }
 }
 
-void Supplementary::intersection(const std::set<MNode *> &bin1,
-                                 const std::set<MNode *> &bin2,
-                                 const std::vector<MNode *> &already,
-                                 std::set<MNode *> &final)
+void Supplementary::intersection(const std::set<MVertex *> &bin1,
+                                 const std::set<MVertex *> &bin2,
+                                 const std::vector<MVertex *> &already,
+                                 std::set<MVertex *> &final)
 {
   size_t i;
   bool ok;
-  std::set<MNode *> temp;
+  std::set<MVertex *> temp;
   vertex_set_itr it;
 
   std::set_intersection(bin1.begin(), bin1.end(), bin2.begin(), bin2.end(),
@@ -2406,7 +2406,7 @@ void Supplementary::intersection(const std::set<MNode *> &bin1,
   }
 }
 
-bool Supplementary::inclusion(MNode *getVertex, Prism prism)
+bool Supplementary::inclusion(MVertex *getVertex, Prism prism)
 {
   bool flag;
 
@@ -2428,8 +2428,8 @@ bool Supplementary::inclusion(MNode *getVertex, Prism prism)
   return flag;
 }
 
-bool Supplementary::inclusion(MNode *getVertex, MNode *a, MNode *b,
-                              MNode *c, MNode *d)
+bool Supplementary::inclusion(MVertex *getVertex, MVertex *a, MVertex *b,
+                              MVertex *c, MVertex *d)
 {
   bool flag;
 
@@ -2447,12 +2447,12 @@ bool Supplementary::inclusion(MNode *getVertex, MNode *a, MNode *b,
   return flag;
 }
 
-bool Supplementary::inclusion(MNode *v1, MNode *v2, MNode *v3,
+bool Supplementary::inclusion(MVertex *v1, MVertex *v2, MVertex *v3,
                               const std::set<MElement *> &bin)
 {
   bool ok;
   bool flag1, flag2, flag3;
-  MNode *a, *b, *c, *d;
+  MVertex *a, *b, *c, *d;
   MElement *element;
   std::set<MElement *>::const_iterator it;
 
@@ -2548,8 +2548,8 @@ bool Supplementary::duplicate(const Diagonal &diagonal)
 bool Supplementary::conformityA(Prism prism)
 {
   bool c1, c2, c3;
-  MNode *a, *b, *c;
-  MNode *d, *e, *f;
+  MVertex *a, *b, *c;
+  MVertex *d, *e, *f;
 
   a = prism.get_a();
   b = prism.get_b();
@@ -2565,7 +2565,7 @@ bool Supplementary::conformityA(Prism prism)
   return c1 && c2 && c3;
 }
 
-bool Supplementary::conformityA(MNode *a, MNode *b, MNode *c, MNode *d)
+bool Supplementary::conformityA(MVertex *a, MVertex *b, MVertex *c, MVertex *d)
 {
   bool c1, c2, c3, c4;
 
@@ -2583,8 +2583,8 @@ bool Supplementary::conformityB(Prism prism)
   bool flag2;
   bool c1, c2, c3;
   bool c4, c5, c6;
-  MNode *a, *b, *c;
-  MNode *d, *e, *f;
+  MVertex *a, *b, *c;
+  MVertex *d, *e, *f;
 
   a = prism.get_a();
   b = prism.get_b();
@@ -2622,8 +2622,8 @@ bool Supplementary::conformityB(Prism prism)
 bool Supplementary::conformityC(Prism prism)
 {
   bool flag;
-  MNode *a, *b, *c;
-  MNode *d, *e, *f;
+  MVertex *a, *b, *c;
+  MVertex *d, *e, *f;
 
   a = prism.get_a();
   b = prism.get_b();
@@ -2648,8 +2648,8 @@ bool Supplementary::conformityC(Prism prism)
 bool Supplementary::faces_statuquo(Prism prism)
 {
   bool c1, c2, c3;
-  MNode *a, *b, *c;
-  MNode *d, *e, *f;
+  MVertex *a, *b, *c;
+  MVertex *d, *e, *f;
 
   a = prism.get_a();
   b = prism.get_b();
@@ -2665,11 +2665,11 @@ bool Supplementary::faces_statuquo(Prism prism)
   return c1 && c2 && c3;
 }
 
-bool Supplementary::faces_statuquo(MNode *a, MNode *b, MNode *c,
-                                   MNode *d)
+bool Supplementary::faces_statuquo(MVertex *a, MVertex *b, MVertex *c,
+                                   MVertex *d)
 {
   bool flag1, flag2;
-  GSurface *gf1, *gf2;
+  GFace *gf1, *gf2;
   std::multiset<Tuple>::iterator it1;
   std::multiset<Tuple>::iterator it2;
 
@@ -2751,19 +2751,19 @@ bool Supplementary::faces_statuquo(MNode *a, MNode *b, MNode *c,
   return ok;
 }
 
-void Supplementary::build_vertex_to_vertices(GVolume *gr)
+void Supplementary::build_vertex_to_vertices(GRegion *gr)
 {
-  std::set<MNode *> bin;
+  std::set<MVertex *> bin;
   vertex_to_vertices.clear();
 
   for(std::size_t i = 0; i < gr->getNumMeshElements(); i++) {
     MElement *element = gr->getMeshElement(i);
     if(four(element)) {
       for(std::size_t j = 0; j < element->getNumVertices(); j++) {
-        MNode *a = element->getVertex(j);
-        MNode *b = element->getVertex((j + 1) % 4);
-        MNode *c = element->getVertex((j + 2) % 4);
-        MNode *d = element->getVertex((j + 3) % 4);
+        MVertex *a = element->getVertex(j);
+        MVertex *b = element->getVertex((j + 1) % 4);
+        MVertex *c = element->getVertex((j + 2) % 4);
+        MVertex *d = element->getVertex((j + 3) % 4);
 
         Vertex2Vertices::iterator it = vertex_to_vertices.find(a);
         if(it != vertex_to_vertices.end()) {
@@ -2777,14 +2777,14 @@ void Supplementary::build_vertex_to_vertices(GVolume *gr)
           bin.insert(c);
           bin.insert(d);
           vertex_to_vertices.insert(
-            std::pair<MNode *, std::set<MNode *> >(a, bin));
+            std::pair<MVertex *, std::set<MVertex *> >(a, bin));
         }
       }
     }
   }
 }
 
-void Supplementary::build_vertex_to_tetrahedra(GVolume *gr)
+void Supplementary::build_vertex_to_tetrahedra(GRegion *gr)
 {
   std::set<MElement *> bin;
   vertex_to_tetrahedra.clear();
@@ -2793,7 +2793,7 @@ void Supplementary::build_vertex_to_tetrahedra(GVolume *gr)
     MElement *element = gr->getMeshElement(i);
     if(four(element)) {
       for(std::size_t j = 0; j < element->getNumVertices(); j++) {
-        MNode *getVertex = element->getVertex(j);
+        MVertex *getVertex = element->getVertex(j);
 
         Vertex2Elements::iterator it = vertex_to_tetrahedra.find(getVertex);
         if(it != vertex_to_tetrahedra.end()) { it->second.insert(element); }
@@ -2801,7 +2801,7 @@ void Supplementary::build_vertex_to_tetrahedra(GVolume *gr)
           bin.clear();
           bin.insert(element);
           vertex_to_tetrahedra.insert(
-            std::pair<MNode *, std::set<MElement *> >(getVertex, bin));
+            std::pair<MVertex *, std::set<MElement *> >(getVertex, bin));
         }
       }
     }
@@ -2810,8 +2810,8 @@ void Supplementary::build_vertex_to_tetrahedra(GVolume *gr)
 
 void Supplementary::build_hash_tableA(Prism prism)
 {
-  MNode *a, *b, *c;
-  MNode *d, *e, *f;
+  MVertex *a, *b, *c;
+  MVertex *d, *e, *f;
 
   a = prism.get_a();
   b = prism.get_b();
@@ -2825,8 +2825,8 @@ void Supplementary::build_hash_tableA(Prism prism)
   build_hash_tableA(b, c, f, e);
 }
 
-void Supplementary::build_hash_tableA(MNode *a, MNode *b, MNode *c,
-                                      MNode *d)
+void Supplementary::build_hash_tableA(MVertex *a, MVertex *b, MVertex *c,
+                                      MVertex *d)
 {
   build_hash_tableA(Facet(a, b, c));
   build_hash_tableA(Facet(a, c, d));
@@ -2858,8 +2858,8 @@ void Supplementary::build_hash_tableA(const Facet &facet)
 
 void Supplementary::build_hash_tableB(Prism prism)
 {
-  MNode *a, *b, *c;
-  MNode *d, *e, *f;
+  MVertex *a, *b, *c;
+  MVertex *d, *e, *f;
 
   a = prism.get_a();
   b = prism.get_b();
@@ -2873,8 +2873,8 @@ void Supplementary::build_hash_tableB(Prism prism)
   build_hash_tableB(b, e, f, c);
 }
 
-void Supplementary::build_hash_tableB(MNode *a, MNode *b, MNode *c,
-                                      MNode *d)
+void Supplementary::build_hash_tableB(MVertex *a, MVertex *b, MVertex *c,
+                                      MVertex *d)
 {
   build_hash_tableB(Diagonal(a, c));
   build_hash_tableB(Diagonal(b, d));
@@ -2904,8 +2904,8 @@ void Supplementary::build_hash_tableB(const Diagonal &diagonal)
 
 void Supplementary::build_hash_tableC(Prism prism)
 {
-  MNode *a, *b, *c;
-  MNode *d, *e, *f;
+  MVertex *a, *b, *c;
+  MVertex *d, *e, *f;
 
   a = prism.get_a();
   b = prism.get_b();
@@ -2947,8 +2947,8 @@ void Supplementary::build_hash_tableC(const Diagonal &diagonal)
   if(flag) { hash_tableC.insert(diagonal); }
 }
 
-double Supplementary::scaled_jacobian(MNode *a, MNode *b, MNode *c,
-                                      MNode *d)
+double Supplementary::scaled_jacobian(MVertex *a, MVertex *b, MVertex *c,
+                                      MVertex *d)
 {
   double val;
   double l1, l2, l3, l4;
@@ -2975,8 +2975,8 @@ double Supplementary::min_scaled_jacobian(Prism prism)
   int i;
   double min, max;
   double j1, j2, j3, j4, j5, j6;
-  MNode *a, *b, *c;
-  MNode *d, *e, *f;
+  MVertex *a, *b, *c;
+  MVertex *d, *e, *f;
   std::vector<double> jacobians;
 
   a = prism.get_a();
@@ -3032,7 +3032,7 @@ PostOp::~PostOp() {}
 
 void PostOp::execute(int level, int conformity)
 {
-  GVolume *gr;
+  GRegion *gr;
   GModel *model = GModel::current();
   GModel::riter it;
 
@@ -3042,7 +3042,7 @@ void PostOp::execute(int level, int conformity)
   }
 }
 
-void PostOp::executeNew(GVolume *gr)
+void PostOp::executeNew(GRegion *gr)
 {
   printf("..............PYRAMIDS NEW................\n");
   build_vertex_to_tetrahedra(gr);
@@ -3061,10 +3061,10 @@ void PostOp::executeNew(GVolume *gr)
   while(tetrahedra.size()) {
     MElement *t = *tetrahedra.begin();
 
-    MNode *a = t->getVertex(0);
-    MNode *b = t->getVertex(1);
-    MNode *c = t->getVertex(2);
-    MNode *d = t->getVertex(3);
+    MVertex *a = t->getVertex(0);
+    MVertex *b = t->getVertex(1);
+    MVertex *c = t->getVertex(2);
+    MVertex *d = t->getVertex(3);
 
     boundaryTriangles.clear();
     pendingTriangles.clear();
@@ -3096,10 +3096,10 @@ void PostOp::executeNew(GVolume *gr)
       else if(potential.size() == 1) {
         MElement *t = *potential.begin();
 
-        MNode *a = t->getVertex(0);
-        MNode *b = t->getVertex(1);
-        MNode *c = t->getVertex(2);
-        MNode *d = t->getVertex(3);
+        MVertex *a = t->getVertex(0);
+        MVertex *b = t->getVertex(1);
+        MVertex *c = t->getVertex(2);
+        MVertex *d = t->getVertex(3);
 
         removeElseAdd(pendingTriangles, a, b, c);
         removeElseAdd(pendingTriangles, a, c, d);
@@ -3154,8 +3154,8 @@ void PostOp::executeNew(GVolume *gr)
   }
 }
 
-void PostOp::removeElseAdd(std::set<Facet> &set, MNode *a, MNode *b,
-                           MNode *c)
+void PostOp::removeElseAdd(std::set<Facet> &set, MVertex *a, MVertex *b,
+                           MVertex *c)
 {
   Facet f = Facet(a, b, c);
   if(set.find(f) != set.end()) { set.erase(f); }
@@ -3166,7 +3166,7 @@ void PostOp::removeElseAdd(std::set<Facet> &set, MNode *a, MNode *b,
 
 void PostOp::writeMSH(const char *filename, std::vector<MElement *> &elements)
 {
-  std::set<MNode *> vertices;
+  std::set<MVertex *> vertices;
   for(std::size_t i = 0; i < elements.size(); ++i) {
     for(std::size_t k = 0; k < elements[i]->getNumVertices(); ++k)
       vertices.insert(elements[i]->getVertex(k));
@@ -3202,7 +3202,7 @@ void PostOp::writeMSH(const char *filename, std::vector<MElement *> &elements)
   fclose(f);
 }
 
-MFace PostOp::find_quadFace(MNode *v1, MNode *v2, MNode *v3)
+MFace PostOp::find_quadFace(MVertex *v1, MVertex *v2, MVertex *v3)
 {
   Vertex2Elements::iterator it1;
   Vertex2Elements::iterator it2;
@@ -3243,11 +3243,11 @@ MFace PostOp::find_quadFace(MNode *v1, MNode *v2, MNode *v3)
   return MFace();
 }
 
-MNode *PostOp::otherVertexQuadFace(MFace &f, MNode *v1, MNode *v2,
-                                     MNode *v3)
+MVertex *PostOp::otherVertexQuadFace(MFace &f, MVertex *v1, MVertex *v2,
+                                     MVertex *v3)
 {
   int n = 0;
-  MNode *v = 0;
+  MVertex *v = 0;
   for(int i = 0; i < 4; ++i) {
     if(f.getVertex(i) != v1 && f.getVertex(i) != v2 && f.getVertex(i) != v3) {
       ++n;
@@ -3258,11 +3258,11 @@ MNode *PostOp::otherVertexQuadFace(MFace &f, MNode *v1, MNode *v2,
   return NULL;
 }
 
-void PostOp::matchQuadFace(MFace &f, MNode *v1, MNode *v2, MNode *v3)
+void PostOp::matchQuadFace(MFace &f, MVertex *v1, MVertex *v2, MVertex *v3)
 {
-  MNode *vertices[3] = {v1, v2, v3};
+  MVertex *vertices[3] = {v1, v2, v3};
   int n = 0, ind = -1;
-  // MNode *v;
+  // MVertex *v;
   for(int i = 0; i < 4; ++i) {
     if(f.getVertex(i) != v1 && f.getVertex(i) != v2 && f.getVertex(i) != v3) {
       ++n;
@@ -3286,7 +3286,7 @@ void PostOp::matchQuadFace(MFace &f, MNode *v1, MNode *v2, MNode *v3)
   }
 }
 
-void PostOp::execute(GVolume *gr, int level, int conformity)
+void PostOp::execute(GRegion *gr, int level, int conformity)
 {
   printf("................PYRAMIDS................\n");
   estimate1 = 0;
@@ -3343,7 +3343,7 @@ void PostOp::execute(GVolume *gr, int level, int conformity)
   create_quads_on_boundary(gr);
 }
 
-void PostOp::init_markings_hex(GVolume *gr)
+void PostOp::init_markings_hex(GRegion *gr)
 {
   unsigned int i;
   MElement *element;
@@ -3356,7 +3356,7 @@ void PostOp::init_markings_hex(GVolume *gr)
   }
 }
 
-void PostOp::init_markings_pri(GVolume *gr)
+void PostOp::init_markings_pri(GRegion *gr)
 {
   unsigned int i;
   MElement *element;
@@ -3369,7 +3369,7 @@ void PostOp::init_markings_pri(GVolume *gr)
   }
 }
 
-void PostOp::init_markings_pyr(GVolume *gr)
+void PostOp::init_markings_pyr(GRegion *gr)
 {
   unsigned int i;
   MElement *element;
@@ -3382,7 +3382,7 @@ void PostOp::init_markings_pyr(GVolume *gr)
   }
 }
 
-void PostOp::init_markings(GVolume *gr)
+void PostOp::init_markings(GRegion *gr)
 {
   unsigned int i;
   MElement *element;
@@ -3397,7 +3397,7 @@ void PostOp::init_markings(GVolume *gr)
   }
 }
 
-void PostOp::split_hexahedra(GVolume *gr)
+void PostOp::split_hexahedra(GRegion *gr)
 {
   std::vector<MElement *> hexahedra;
   std::vector<MHexahedron *> opt;
@@ -3412,14 +3412,14 @@ void PostOp::split_hexahedra(GVolume *gr)
 
   for(size_t i = 0; i < hexahedra.size(); i++) {
     MElement *element = hexahedra[i];
-    MNode *a = element->getVertex(0);
-    MNode *b = element->getVertex(1);
-    MNode *c = element->getVertex(2);
-    MNode *d = element->getVertex(3);
-    MNode *e = element->getVertex(4);
-    MNode *f = element->getVertex(5);
-    MNode *g = element->getVertex(6);
-    MNode *h = element->getVertex(7);
+    MVertex *a = element->getVertex(0);
+    MVertex *b = element->getVertex(1);
+    MVertex *c = element->getVertex(2);
+    MVertex *d = element->getVertex(3);
+    MVertex *e = element->getVertex(4);
+    MVertex *f = element->getVertex(5);
+    MVertex *g = element->getVertex(6);
+    MVertex *h = element->getVertex(7);
 
     bool conform = true;
     conform &= (nonConformDiag(b, a, d, c, gr) == 0);
@@ -3438,7 +3438,7 @@ void PostOp::split_hexahedra(GVolume *gr)
       double z = (a->z() + b->z() + c->z() + d->z() + e->z() + f->z() + g->z() +
                   h->z()) /
                  8.0;
-      MNode *mid = new MNode(x, y, z, gr);
+      MVertex *mid = new MVertex(x, y, z, gr);
       gr->addMeshVertex(mid);
 
       MPyramid *temp = new MPyramid(a, b, c, d, mid);
@@ -3473,7 +3473,7 @@ void PostOp::split_hexahedra(GVolume *gr)
   }
 }
 
-void PostOp::split_prisms(GVolume *gr)
+void PostOp::split_prisms(GRegion *gr)
 {
   std::vector<MElement *> prisms;
   std::vector<MPrism *> opt;
@@ -3488,12 +3488,12 @@ void PostOp::split_prisms(GVolume *gr)
 
   for(size_t i = 0; i < prisms.size(); i++) {
     MElement *element = prisms[i];
-    MNode *a = element->getVertex(0);
-    MNode *b = element->getVertex(1);
-    MNode *c = element->getVertex(2);
-    MNode *d = element->getVertex(3);
-    MNode *e = element->getVertex(4);
-    MNode *f = element->getVertex(5);
+    MVertex *a = element->getVertex(0);
+    MVertex *b = element->getVertex(1);
+    MVertex *c = element->getVertex(2);
+    MVertex *d = element->getVertex(3);
+    MVertex *e = element->getVertex(4);
+    MVertex *f = element->getVertex(5);
 
     pyramids1(a, d, f, c, gr);
     pyramids1(a, b, e, d, gr);
@@ -3507,7 +3507,7 @@ void PostOp::split_prisms(GVolume *gr)
       double x = (a->x() + b->x() + c->x() + d->x() + e->x() + f->x()) / 6.0;
       double y = (a->y() + b->y() + c->y() + d->y() + e->y() + f->y()) / 6.0;
       double z = (a->z() + b->z() + c->z() + d->z() + e->z() + f->z()) / 6.0;
-      MNode *mid = new MNode(x, y, z, gr);
+      MVertex *mid = new MVertex(x, y, z, gr);
       gr->addMeshVertex(mid);
 
       MPyramid *temp = new MPyramid(c, f, d, a, mid);
@@ -3540,7 +3540,7 @@ void PostOp::split_prisms(GVolume *gr)
   }
 }
 
-void PostOp::split_pyramids(GVolume *gr)
+void PostOp::split_pyramids(GRegion *gr)
 {
   std::vector<MElement *> pyramids;
   std::vector<MPyramid *> opt;
@@ -3558,11 +3558,11 @@ void PostOp::split_pyramids(GVolume *gr)
     it = markings.find(element);
     if(it->second == 1) continue;
 
-    MNode *a = element->getVertex(0);
-    MNode *b = element->getVertex(1);
-    MNode *c = element->getVertex(2);
-    MNode *d = element->getVertex(3);
-    MNode *apex = element->getVertex(4);
+    MVertex *a = element->getVertex(0);
+    MVertex *b = element->getVertex(1);
+    MVertex *c = element->getVertex(2);
+    MVertex *d = element->getVertex(3);
+    MVertex *apex = element->getVertex(4);
 
     int nDiag = nonConformDiag(a, b, c, d, gr);
     if(nDiag == 1) {
@@ -3592,11 +3592,11 @@ void PostOp::split_pyramids(GVolume *gr)
       MTetrahedron *tempA2 = new MTetrahedron(a, c, d, apex);
       MTetrahedron *tempB1 = new MTetrahedron(a, b, d, apex);
       MTetrahedron *tempB2 = new MTetrahedron(b, c, d, apex);
-      MNode *a2 = other->getVertex(0);
-      MNode *b2 = other->getVertex(1);
-      MNode *c2 = other->getVertex(2);
-      MNode *d2 = other->getVertex(3);
-      MNode *apex2 = other->getVertex(4);
+      MVertex *a2 = other->getVertex(0);
+      MVertex *b2 = other->getVertex(1);
+      MVertex *c2 = other->getVertex(2);
+      MVertex *d2 = other->getVertex(3);
+      MVertex *apex2 = other->getVertex(4);
       MTetrahedron *tempA3, *tempA4, *tempB3, *tempB4;
       if(a2 == a || a2 == c) {
         tempA3 = new MTetrahedron(a2, b2, c2, apex2);
@@ -3701,8 +3701,8 @@ void PostOp::split_pyramids(GVolume *gr)
   }
 }
 
-int PostOp::nonConformDiag(MNode *a, MNode *b, MNode *c, MNode *d,
-                           GVolume *gr)
+int PostOp::nonConformDiag(MVertex *a, MVertex *b, MVertex *c, MVertex *d,
+                           GRegion *gr)
 {
   std::set<MElement *> diag1a;
   std::set<MElement *> diag1b;
@@ -3724,11 +3724,11 @@ int PostOp::nonConformDiag(MNode *a, MNode *b, MNode *c, MNode *d,
   return 0;
 }
 
-void PostOp::pyramids1(GVolume *gr)
+void PostOp::pyramids1(GRegion *gr)
 {
   unsigned int i;
-  MNode *a, *b, *c, *d;
-  MNode *e, *f, *g, *h;
+  MVertex *a, *b, *c, *d;
+  MVertex *e, *f, *g, *h;
   MElement *element;
   std::vector<MElement *> hexahedra;
   std::vector<MElement *> prisms;
@@ -3796,11 +3796,11 @@ void PostOp::pyramids1(GVolume *gr)
   }
 }
 
-void PostOp::pyramids2(GVolume *gr, bool allowNonConforming)
+void PostOp::pyramids2(GRegion *gr, bool allowNonConforming)
 {
   unsigned int i;
-  MNode *a, *b, *c, *d;
-  MNode *e, *f, *g, *h;
+  MVertex *a, *b, *c, *d;
+  MVertex *e, *f, *g, *h;
   MElement *element;
   std::vector<MElement *> hexahedra;
   std::vector<MElement *> prisms;
@@ -3883,10 +3883,10 @@ void PostOp::pyramids2(GVolume *gr, bool allowNonConforming)
   }
 }
 
-void PostOp::pyramids1(MNode *a, MNode *b, MNode *c, MNode *d,
-                       GVolume *gr)
+void PostOp::pyramids1(MVertex *a, MVertex *b, MVertex *c, MVertex *d,
+                       GRegion *gr)
 {
-  MNode *getVertex;
+  MVertex *getVertex;
   std::set<MElement *> bin;
   std::set<MElement *> bin1a;
   std::set<MElement *> bin2a;
@@ -3924,7 +3924,7 @@ void PostOp::pyramids1(MNode *a, MNode *b, MNode *c, MNode *d,
 
     if(it1->second == 0 && it2->second == 0) {
       getVertex = find(a, b, c, d, *it);
-      MNode *vertex1 = find(a, b, c, d, *bin.begin());
+      MVertex *vertex1 = find(a, b, c, d, *bin.begin());
       if(!getVertex || !vertex1) {
         Msg::Error("Topological error");
         return;
@@ -3941,11 +3941,11 @@ void PostOp::pyramids1(MNode *a, MNode *b, MNode *c, MNode *d,
   }
 }
 
-void PostOp::trihedra(GVolume *gr)
+void PostOp::trihedra(GRegion *gr)
 {
   unsigned int i;
-  MNode *a, *b, *c, *d;
-  MNode *e, *f, *g, *h;
+  MVertex *a, *b, *c, *d;
+  MVertex *e, *f, *g, *h;
   MElement *element;
   std::vector<MElement *> hexahedra;
   std::vector<MElement *> prisms;
@@ -3997,8 +3997,8 @@ void PostOp::trihedra(GVolume *gr)
   }
 }
 
-void PostOp::trihedra(MNode *a, MNode *b, MNode *c, MNode *d,
-                      GVolume *gr)
+void PostOp::trihedra(MVertex *a, MVertex *b, MVertex *c, MVertex *d,
+                      GRegion *gr)
 {
   std::set<MElement *> diag1a;
   std::set<MElement *> diag1b;
@@ -4035,19 +4035,19 @@ void PostOp::trihedra(MNode *a, MNode *b, MNode *c, MNode *d,
   }
 }
 
-void PostOp::pyramids2(MNode *a, MNode *b, MNode *c, MNode *d,
-                       GVolume *gr, bool allowNonConforming)
+void PostOp::pyramids2(MVertex *a, MVertex *b, MVertex *c, MVertex *d,
+                       GRegion *gr, bool allowNonConforming)
 {
   bool flag;
   double x, y, z;
-  MNode *mid;
-  MNode *diagA, *diagB, *nDiagA, *nDiagB;
-  MNode *N1, *N2;
-  MNode *v1, *v2, *v3, *v4, *v5;
+  MVertex *mid;
+  MVertex *diagA, *diagB, *nDiagA, *nDiagB;
+  MVertex *N1, *N2;
+  MVertex *v1, *v2, *v3, *v4, *v5;
   MTetrahedron *temp;
   MPyramid *temp2;
   std::vector<MElement *> movables;
-  std::set<MNode *> Ns;
+  std::set<MVertex *> Ns;
   std::set<MElement *> bin1a, bin1b;
   std::set<MElement *> bin2a, bin2b;
   std::set<MElement *> bin3a, bin3b;
@@ -4147,7 +4147,7 @@ void PostOp::pyramids2(MNode *a, MNode *b, MNode *c, MNode *d,
       return;
     }
 
-    MNode *otherV[2];
+    MVertex *otherV[2];
     int i = 0;
     for(it = tetrahedra.begin(); it != tetrahedra.end(); it++) {
       otherV[i++] = findInTriFace(diagA, diagB, nDiagA, nDiagB, *it);
@@ -4180,7 +4180,7 @@ void PostOp::pyramids2(MNode *a, MNode *b, MNode *c, MNode *d,
       y = (y + otherV[0]->y()) / 2;
       z = (z + otherV[0]->z()) / 2;
 
-      mid = new MNode(x, y, z, gr);
+      mid = new MVertex(x, y, z, gr);
       gr->addMeshVertex(mid);
 
       temp2 = new MPyramid(a, b, c, d, mid);
@@ -4193,8 +4193,8 @@ void PostOp::pyramids2(MNode *a, MNode *b, MNode *c, MNode *d,
       //      mid->getNum());
 
       for(it = tetrahedra.begin(); it != tetrahedra.end(); it++) {
-        MNode *Nout = findInTriFace(diagA, diagB, nDiagA, nDiagB, *it);
-        MNode *Nin = other(*it, diagA, diagB, Nout);
+        MVertex *Nout = findInTriFace(diagA, diagB, nDiagA, nDiagB, *it);
+        MVertex *Nin = other(*it, diagA, diagB, Nout);
         //        N1 = other(*it,diagA,diagB);
 
         if(Nout != 0 && Nin != 0) {
@@ -4241,16 +4241,16 @@ void PostOp::pyramids2(MNode *a, MNode *b, MNode *c, MNode *d,
         markings.insert(std::pair<MElement *, bool>(temp2, false));
         build_vertex_to_pyramids(temp2);
 
-        MNode *NoutDiag = findInTriFace(diagA, diagB, nDiagA, nDiagB, *it);
-        MNode *NoutNDiag = NULL;
+        MVertex *NoutDiag = findInTriFace(diagA, diagB, nDiagA, nDiagB, *it);
+        MVertex *NoutNDiag = NULL;
         for(int iV = 0; iV < 5; iV++) {
-          MNode *v = (*it)->getVertex(iV);
+          MVertex *v = (*it)->getVertex(iV);
           if(v != a && v != b && v != c && v != d && v != NoutDiag) {
             NoutNDiag = v;
             break;
           }
         }
-        MNode *NinNDiag =
+        MVertex *NinNDiag =
           findInTriFace(diagA, diagB, NoutDiag, NoutNDiag, *it);
         if(v5 == diagA) {
           temp = new MTetrahedron(diagA, mid, NinNDiag, NoutNDiag);
@@ -4340,7 +4340,7 @@ void PostOp::pyramids2(MNode *a, MNode *b, MNode *c, MNode *d,
   }
 }
 
-void PostOp::rearrange(GVolume *gr)
+void PostOp::rearrange(GRegion *gr)
 {
   unsigned int i;
   MElement *element;
@@ -4351,7 +4351,7 @@ void PostOp::rearrange(GVolume *gr)
   }
 }
 
-void PostOp::statistics(GVolume *gr)
+void PostOp::statistics(GRegion *gr)
 {
   unsigned int i;
   MElement *element;
@@ -4418,18 +4418,18 @@ void PostOp::statistics(GVolume *gr)
   printf("Misc : %d %d %d\n", estimate1, estimate2, iterations);
 }
 
-void PostOp::build_tuples(GVolume *gr)
+void PostOp::build_tuples(GRegion *gr)
 {
   unsigned int i;
-  MNode *a, *b, *c;
+  MVertex *a, *b, *c;
   MElement *element;
-  GSurface *gf;
+  GFace *gf;
 
   tuples.clear();
   triangles.clear();
 
-  std::vector<GSurface *> faces = gr->faces();
-  std::vector<GSurface *>::iterator it;
+  std::vector<GFace *> faces = gr->faces();
+  std::vector<GFace *>::iterator it;
 
   for(it = faces.begin(); it != faces.end(); it++) {
     gf = *it;
@@ -4448,12 +4448,12 @@ void PostOp::build_tuples(GVolume *gr)
   }
 }
 
-void PostOp::create_quads_on_boundary(GVolume *gr)
+void PostOp::create_quads_on_boundary(GRegion *gr)
 {
   unsigned int i;
-  MNode *a, *b, *c, *d; //,*e;
+  MVertex *a, *b, *c, *d; //,*e;
   MElement *element;
-  GSurface *gf;
+  GFace *gf;
   std::vector<MElement *> opt;
   element_set_itr it2;
 
@@ -4471,8 +4471,8 @@ void PostOp::create_quads_on_boundary(GVolume *gr)
     }
   }
 
-  std::vector<GSurface *> faces = gr->faces();
-  std::vector<GSurface *>::iterator it;
+  std::vector<GFace *> faces = gr->faces();
+  std::vector<GFace *>::iterator it;
 
   for(it = faces.begin(); it != faces.end(); it++) {
     gf = *it;
@@ -4496,12 +4496,12 @@ void PostOp::create_quads_on_boundary(GVolume *gr)
   }
 }
 
-void PostOp::create_quads_on_boundary(MNode *a, MNode *b, MNode *c,
-                                      MNode *d)
+void PostOp::create_quads_on_boundary(MVertex *a, MVertex *b, MVertex *c,
+                                      MVertex *d)
 {
   bool flag1, flag2;
   MElement *element1, *element2;
-  GSurface *gf1; //,*gf2;
+  GFace *gf1; //,*gf2;
   Tuple tuple1, tuple2;
   std::multiset<Tuple>::iterator it1;
   std::multiset<Tuple>::iterator it2;
@@ -4630,15 +4630,15 @@ bool PostOp::eight(MElement *element)
     return 0;
 }
 
-bool PostOp::equal(MNode *v1, MNode *v2, MNode *v3, MNode *v4)
+bool PostOp::equal(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4)
 {
   if((v1 == v3 && v2 == v4) || (v1 == v4 && v2 == v3)) { return 1; }
   else {
     return 0;
   }
 }
-bool PostOp::equal(MNode *v1, MNode *v2, MNode *v3, MNode *v4,
-                   MNode *va, MNode *vb, MNode *vc, MNode *vd)
+bool PostOp::equal(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
+                   MVertex *va, MVertex *vb, MVertex *vc, MVertex *vd)
 {
   //  return (v1==vd && v2==vc && v3==vb && v4==va) ||
   //         (v1==vc && v2==vb && v3==va && v4==vd) ||
@@ -4672,7 +4672,7 @@ bool PostOp::equal(MNode *v1, MNode *v2, MNode *v3, MNode *v4,
          (v4 == va || v4 == vb || v4 == vc || v4 == vd);
 }
 
-bool PostOp::different(MNode *v1, MNode *v2, MNode *v3, MNode *v4)
+bool PostOp::different(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4)
 {
   if(v1 != v3 && v1 != v4 && v2 != v3 && v2 != v4) { return 1; }
   else {
@@ -4680,12 +4680,12 @@ bool PostOp::different(MNode *v1, MNode *v2, MNode *v3, MNode *v4)
   }
 }
 
-MNode *PostOp::other(MElement *element, MNode *v1, MNode *v2)
+MVertex *PostOp::other(MElement *element, MVertex *v1, MVertex *v2)
 {
-  MNode *pointer = NULL;
+  MVertex *pointer = NULL;
 
   for(std::size_t i = 0; i < element->getNumVertices(); i++) {
-    MNode *getVertex = element->getVertex(i);
+    MVertex *getVertex = element->getVertex(i);
     if(getVertex != v1 && getVertex != v2) {
       pointer = getVertex;
       break;
@@ -4695,12 +4695,12 @@ MNode *PostOp::other(MElement *element, MNode *v1, MNode *v2)
   return pointer;
 }
 
-MNode *PostOp::other(MElement *element, MNode *v1, MNode *v2, MNode *v3)
+MVertex *PostOp::other(MElement *element, MVertex *v1, MVertex *v2, MVertex *v3)
 {
-  MNode *pointer = NULL;
+  MVertex *pointer = NULL;
 
   for(std::size_t i = 0; i < element->getNumVertices(); i++) {
-    MNode *getVertex = element->getVertex(i);
+    MVertex *getVertex = element->getVertex(i);
     if(getVertex != v1 && getVertex != v2 && getVertex != v3) {
       pointer = getVertex;
       break;
@@ -4710,7 +4710,7 @@ MNode *PostOp::other(MElement *element, MNode *v1, MNode *v2, MNode *v3)
   return pointer;
 }
 
-void PostOp::mean(const std::set<MNode *> &Ns, MNode *mid,
+void PostOp::mean(const std::set<MVertex *> &Ns, MVertex *mid,
                   const std::vector<MElement *> &movables)
 {
   unsigned int i;
@@ -4718,7 +4718,7 @@ void PostOp::mean(const std::set<MNode *> &Ns, MNode *mid,
   bool flag;
   double x, y, z;
   double init_x, init_y, init_z;
-  std::set<MNode *>::const_iterator it;
+  std::set<MVertex *>::const_iterator it;
 
   x = 0.0;
   y = 0.0;
@@ -4801,8 +4801,8 @@ double PostOp::workaround(MElement *element)
 }
 
 // For an element find a getVertex which is in a face inluding in but not out
-MNode *PostOp::findInTriFace(MNode *in0, MNode *in1, MNode *out0,
-                               MNode *out1, MElement *element)
+MVertex *PostOp::findInTriFace(MVertex *in0, MVertex *in1, MVertex *out0,
+                               MVertex *out1, MElement *element)
 {
   for(int iF = 0; iF < element->getNumFaces(); iF++) {
     const MFace &face = element->getFace(iF);
@@ -4824,13 +4824,13 @@ MNode *PostOp::findInTriFace(MNode *in0, MNode *in1, MNode *out0,
   return NULL;
 }
 
-MNode *PostOp::find(MNode *v1, MNode *v2, MNode *v3, MNode *v4,
+MVertex *PostOp::find(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
                       MElement *element)
 {
-  MNode *pointer = NULL;
+  MVertex *pointer = NULL;
 
   for(std::size_t i = 0; i < element->getNumVertices(); i++) {
-    MNode *getVertex = element->getVertex(i);
+    MVertex *getVertex = element->getVertex(i);
     if(getVertex != v1 && getVertex != v2 && getVertex != v3 &&
        getVertex != v4) {
       pointer = getVertex;
@@ -4841,7 +4841,7 @@ MNode *PostOp::find(MNode *v1, MNode *v2, MNode *v3, MNode *v4,
   return pointer;
 }
 
-void PostOp::find_tetrahedra(MNode *v1, MNode *v2,
+void PostOp::find_tetrahedra(MVertex *v1, MVertex *v2,
                              std::set<MElement *> &final)
 {
   Vertex2Elements::iterator it1;
@@ -4855,7 +4855,7 @@ void PostOp::find_tetrahedra(MNode *v1, MNode *v2,
   }
 }
 
-void PostOp::find_tetrahedra(MNode *v1, MNode *v2, MNode *v3,
+void PostOp::find_tetrahedra(MVertex *v1, MVertex *v2, MVertex *v3,
                              std::set<MElement *> &final)
 {
   Vertex2Elements::iterator it1;
@@ -4875,7 +4875,7 @@ void PostOp::find_tetrahedra(MNode *v1, MNode *v2, MNode *v3,
   }
 }
 
-void PostOp::find_pyramids_from_tri(MNode *v1, MNode *v2, MNode *v3,
+void PostOp::find_pyramids_from_tri(MVertex *v1, MVertex *v2, MVertex *v3,
                                     std::set<MElement *> &final)
 {
   bool flag;
@@ -4923,8 +4923,8 @@ void PostOp::find_pyramids_from_tri(MNode *v1, MNode *v2, MNode *v3,
     if(flag) { final.insert(*it); }
   }
 }
-void PostOp::find_pyramids_from_quad(MNode *v1, MNode *v2, MNode *v3,
-                                     MNode *v4, std::set<MElement *> &final)
+void PostOp::find_pyramids_from_quad(MVertex *v1, MVertex *v2, MVertex *v3,
+                                     MVertex *v4, std::set<MElement *> &final)
 {
   element_set_itr it;
   Vertex2Elements::iterator it1;
@@ -4959,7 +4959,7 @@ void PostOp::find_pyramids_from_quad(MNode *v1, MNode *v2, MNode *v3,
   }
 }
 
-void PostOp::find_pyramids(MNode *v1, MNode *v2,
+void PostOp::find_pyramids(MVertex *v1, MVertex *v2,
                            std::set<MElement *> &final)
 {
   bool flag1, flag2, flag3, flag4;
@@ -4993,13 +4993,13 @@ void PostOp::find_pyramids(MNode *v1, MNode *v2,
   }
 }
 
-// void PostOp::find_pyramids(MNode* v1,MNode* v2,std::set<MElement*>&
+// void PostOp::find_pyramids(MVertex* v1,MVertex* v2,std::set<MElement*>&
 // final){
 //  bool flag1,flag2,flag3,flag4;
 //  bool flag5,flag6,flag7,flag8;
 //  element_set_itr it;
-//  std::map<MNode*,std::set<MElement*> >::iterator it1;
-//  std::map<MNode*,std::set<MElement*> >::iterator it2;
+//  std::map<MVertex*,std::set<MElement*> >::iterator it1;
+//  std::map<MVertex*,std::set<MElement*> >::iterator it2;
 //  std::set<MElement*> temp;
 //
 //  it1 = vertex_to_pyramids.find(v1);
@@ -5034,7 +5034,7 @@ void PostOp::intersection(const std::set<MElement *> &bin1,
                         std::inserter(final, final.end()));
 }
 
-void PostOp::build_vertex_to_tetrahedra(GVolume *gr)
+void PostOp::build_vertex_to_tetrahedra(GRegion *gr)
 {
   unsigned int i;
   MElement *element;
@@ -5052,7 +5052,7 @@ void PostOp::build_vertex_to_tetrahedra(MElement *element)
   std::set<MElement *> bin;
 
   for(std::size_t i = 0; i < element->getNumVertices(); i++) {
-    MNode *getVertex = element->getVertex(i);
+    MVertex *getVertex = element->getVertex(i);
 
     Vertex2Elements::iterator it = vertex_to_tetrahedra.find(getVertex);
     if(it != vertex_to_tetrahedra.end()) { it->second.insert(element); }
@@ -5060,7 +5060,7 @@ void PostOp::build_vertex_to_tetrahedra(MElement *element)
       bin.clear();
       bin.insert(element);
       vertex_to_tetrahedra.insert(
-        std::pair<MNode *, std::set<MElement *> >(getVertex, bin));
+        std::pair<MVertex *, std::set<MElement *> >(getVertex, bin));
     }
   }
 }
@@ -5068,14 +5068,14 @@ void PostOp::build_vertex_to_tetrahedra(MElement *element)
 void PostOp::erase_vertex_to_tetrahedra(MElement *element)
 {
   for(std::size_t i = 0; i < element->getNumVertices(); i++) {
-    MNode *getVertex = element->getVertex(i);
+    MVertex *getVertex = element->getVertex(i);
 
     Vertex2Elements::iterator it = vertex_to_tetrahedra.find(getVertex);
     if(it != vertex_to_tetrahedra.end()) { it->second.erase(element); }
   }
 }
 
-void PostOp::build_vertex_to_pyramids(GVolume *gr)
+void PostOp::build_vertex_to_pyramids(GRegion *gr)
 {
   vertex_to_pyramids.clear();
 
@@ -5090,7 +5090,7 @@ void PostOp::build_vertex_to_pyramids(MElement *element)
   std::set<MElement *> bin;
 
   for(std::size_t i = 0; i < element->getNumVertices(); i++) {
-    MNode *getVertex = element->getVertex(i);
+    MVertex *getVertex = element->getVertex(i);
 
     Vertex2Elements::iterator it = vertex_to_pyramids.find(getVertex);
     if(it != vertex_to_pyramids.end()) { it->second.insert(element); }
@@ -5098,7 +5098,7 @@ void PostOp::build_vertex_to_pyramids(MElement *element)
       bin.clear();
       bin.insert(element);
       vertex_to_pyramids.insert(
-        std::pair<MNode *, std::set<MElement *> >(getVertex, bin));
+        std::pair<MVertex *, std::set<MElement *> >(getVertex, bin));
     }
   }
 }
@@ -5106,14 +5106,14 @@ void PostOp::build_vertex_to_pyramids(MElement *element)
 void PostOp::erase_vertex_to_pyramids(MElement *element)
 {
   for(std::size_t i = 0; i < element->getNumVertices(); i++) {
-    MNode *getVertex = element->getVertex(i);
+    MVertex *getVertex = element->getVertex(i);
 
     Vertex2Elements::iterator it = vertex_to_pyramids.find(getVertex);
     if(it != vertex_to_pyramids.end()) { it->second.erase(element); }
   }
 }
 
-void PostOp::build_vertex_to_hexPrism(GVolume *gr)
+void PostOp::build_vertex_to_hexPrism(GRegion *gr)
 {
   vertex_to_hexPrism.clear();
 
@@ -5128,7 +5128,7 @@ void PostOp::build_vertex_to_hexPrism(MElement *element)
   std::set<MElement *> bin;
 
   for(std::size_t i = 0; i < element->getNumVertices(); i++) {
-    MNode *getVertex = element->getVertex(i);
+    MVertex *getVertex = element->getVertex(i);
 
     Vertex2Elements::iterator it = vertex_to_hexPrism.find(getVertex);
     if(it != vertex_to_hexPrism.end()) { it->second.insert(element); }
@@ -5136,7 +5136,7 @@ void PostOp::build_vertex_to_hexPrism(MElement *element)
       bin.clear();
       bin.insert(element);
       vertex_to_hexPrism.insert(
-        std::pair<MNode *, std::set<MElement *> >(getVertex, bin));
+        std::pair<MVertex *, std::set<MElement *> >(getVertex, bin));
     }
   }
 }
@@ -5144,7 +5144,7 @@ void PostOp::build_vertex_to_hexPrism(MElement *element)
 void PostOp::erase_vertex_to_hexPrism(MElement *element)
 {
   for(std::size_t i = 0; i < element->getNumVertices(); i++) {
-    MNode *getVertex = element->getVertex(i);
+    MVertex *getVertex = element->getVertex(i);
 
     Vertex2Elements::iterator it = vertex_to_hexPrism.find(getVertex);
     if(it != vertex_to_hexPrism.end()) { it->second.erase(element); }
@@ -5155,9 +5155,9 @@ void PostOp::erase_vertex_to_hexPrism(MElement *element)
 // enough
 bool PostOp::valid(MPyramid *pyr)
 {
-  MNode *V[4] = {pyr->getVertex(0), pyr->getVertex(1), pyr->getVertex(2),
+  MVertex *V[4] = {pyr->getVertex(0), pyr->getVertex(1), pyr->getVertex(2),
                    pyr->getVertex(3)};
-  MNode *apex = pyr->getVertex(4);
+  MVertex *apex = pyr->getVertex(4);
 
   if(apex->onWhat()->dim() < 3) {
     for(int iP = 0; iP < 4; iP++) { // loop on pairs of triangles
@@ -5299,7 +5299,7 @@ void clique_stop_criteria<T>::export_corresponding_mesh(
   // create set of all tets
   set<MElement *> tets;
   set<MElement *> hexs;
-  map<MNode *, int> vertices;
+  map<MVertex *, int> vertices;
   int counterv = 1;
   typename map<T, std::set<MElement *> >::const_iterator it =
     hex_to_tet.begin();
@@ -5357,7 +5357,7 @@ void clique_stop_criteria<T>::export_corresponding_mesh(
           << "$Nodes" << endl
           << vertices.size() << endl;
   // write vertices
-  for(map<MNode *, int>::iterator it = vertices.begin(); it != vertices.end();
+  for(map<MVertex *, int>::iterator it = vertices.begin(); it != vertices.end();
       it++) {
     out << it->second << " " << it->first->x() << " " << it->first->y() << " "
         << it->first->z() << endl;
@@ -5376,7 +5376,7 @@ void clique_stop_criteria<T>::export_corresponding_mesh(
   for(set<MElement *>::iterator it = hexs.begin(); it != hexs.end(); it++) {
     out << counter << " 5 2 0 26";
     for(std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
-      MNode *v = (*it)->getVertex(i);
+      MVertex *v = (*it)->getVertex(i);
       out << " " << vertices[v];
     }
     out << endl;
@@ -5387,7 +5387,7 @@ void clique_stop_criteria<T>::export_corresponding_mesh(
     out << counter << " 4 2 0 26";
     outtets << counter << " 4 2 0 26";
     for(std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
-      MNode *v = (*it)->getVertex(i);
+      MVertex *v = (*it)->getVertex(i);
       out << " " << vertices[v];
       outtets << " " << vertices[v];
     }
@@ -5793,7 +5793,7 @@ template <class T> cliques_losses_graph<T>::~cliques_losses_graph(){};
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-PEEntity::PEEntity(const vector<MNode *> &_v) : vertices(_v)
+PEEntity::PEEntity(const vector<MVertex *> &_v) : vertices(_v)
 {
   compute_hash();
 }
@@ -5804,7 +5804,7 @@ PEEntity::PEEntity(const vector<MNode *> &_v) : vertices(_v)
 void PEEntity::compute_hash()
 {
   hash = 0;
-  for(vector<MNode *>::const_iterator it = vertices.begin();
+  for(vector<MVertex *>::const_iterator it = vertices.begin();
       it != vertices.end(); it++)
     hash += (*it)->getNum();
 }
@@ -5813,7 +5813,7 @@ size_t PEEntity::get_hash() const { return hash; }
 
 PEEntity::~PEEntity() {}
 
-MNode *PEEntity::getVertex(size_t n) const
+MVertex *PEEntity::getVertex(size_t n) const
 {
   if((n > get_max_nb_vertices()) || vertices.empty()) {
     cout << " PEEntity::getVertex : wrong getVertex number : int n = " << n
@@ -5823,14 +5823,14 @@ MNode *PEEntity::getVertex(size_t n) const
   return vertices[n];
 }
 
-bool PEEntity::hasVertex(MNode *v) const
+bool PEEntity::hasVertex(MVertex *v) const
 {
   return std::find(vertices.begin(), vertices.end(), v) != vertices.end();
 }
 
 bool PEEntity::same_vertices(const PEEntity *t) const
 {
-  for(vector<MNode *>::const_iterator it = vertices.begin();
+  for(vector<MVertex *>::const_iterator it = vertices.begin();
       it != vertices.end(); it++) {
     if(!(t->hasVertex(*it))) return false;
   }
@@ -5852,7 +5852,7 @@ bool PEEntity::operator<(const PEEntity &t) const
 
 PELine::~PELine(){};
 
-PELine::PELine(const vector<MNode *> &_v) : PEEntity(_v)
+PELine::PELine(const vector<MVertex *> &_v) : PEEntity(_v)
 {
   if(vertices.size() != get_max_nb_vertices()) {
     cout << "PELine: wrong number of vertices given !!! aborting ! " << endl;
@@ -5865,7 +5865,7 @@ size_t PELine::get_max_nb_vertices() const { return 2; };
 
 PETriangle::~PETriangle(){};
 
-PETriangle::PETriangle(const vector<MNode *> &_v) : PEEntity(_v)
+PETriangle::PETriangle(const vector<MVertex *> &_v) : PEEntity(_v)
 {
   if(vertices.size() != get_max_nb_vertices()) {
     cout << "PETriangle: wrong number of vertices given !!! aborting ! "
@@ -5882,7 +5882,7 @@ size_t PETriangle::get_max_nb_vertices() const { return 3; };
 
 PEQuadrangle::~PEQuadrangle(){};
 
-PEQuadrangle::PEQuadrangle(const vector<MNode *> &_v) : PEEntity(_v)
+PEQuadrangle::PEQuadrangle(const vector<MVertex *> &_v) : PEEntity(_v)
 {
   if(vertices.size() != get_max_nb_vertices()) {
     cout << "PEQuadrangle: wrong number of vertices given !!! aborting ! "
@@ -5937,7 +5937,7 @@ void Recombinator_Graph::fill_tet_to_hex_table(Hex *hex)
   // first, check if the hex has the right number of vertices (=8 !!!)
   // non, c'est pas toujours le cas !!! ???
 
-  set<MNode *> vertices;
+  set<MVertex *> vertices;
   for(element_set_itr it = parts.begin(); it != parts.end(); it++) {
     element = *it;
     for(int i = 0; i < 4; i++) { vertices.insert(element->getVertex(i)); }
@@ -6043,7 +6043,7 @@ void Recombinator_Graph::fill_tet_to_hex_table(Hex *hex)
 void Recombinator_Graph::buildGraphOnly(unsigned int max_nb_cliques,
                                         string filename)
 {
-  GVolume *gr;
+  GRegion *gr;
   GModel *model = GModel::current();
   GModel::riter it;
 
@@ -6055,7 +6055,7 @@ void Recombinator_Graph::buildGraphOnly(unsigned int max_nb_cliques,
   }
 }
 
-void Recombinator_Graph::buildGraphOnly(GVolume *gr,
+void Recombinator_Graph::buildGraphOnly(GRegion *gr,
                                         unsigned int max_nb_cliques,
                                         string filename)
 {
@@ -6078,7 +6078,7 @@ void Recombinator_Graph::buildGraphOnly(GVolume *gr,
 void Recombinator_Graph::execute_blossom(unsigned int max_nb_cliques,
                                          const std::string &filename)
 {
-  GVolume *gr;
+  GRegion *gr;
   GModel *model = GModel::current();
   GModel::riter it;
 
@@ -6110,7 +6110,7 @@ void Recombinator_Graph::createBlossomInfo()
 {
   throw;
 
-  GVolume *gr;
+  GRegion *gr;
   GModel *model = GModel::current();
   GModel::riter it;
 
@@ -6122,20 +6122,20 @@ void Recombinator_Graph::createBlossomInfo()
   }
 }
 
-void Recombinator_Graph::createBlossomInfo(GVolume *gr)
+void Recombinator_Graph::createBlossomInfo(GRegion *gr)
 {
   throw;
 
   // remove quads, create triangles, and store blossom information (triangles
   // pairs)
-  std::vector<GSurface *> faces = gr->faces();
-  GSurface *gf;
+  std::vector<GFace *> faces = gr->faces();
+  GFace *gf;
   MElement *element;
   PETriangle *t11, *t12, *t21, *t22;
 
   cout << "recover blossom info" << endl;
 
-  for(std::vector<GSurface *>::iterator it = faces.begin(); it != faces.end();
+  for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
       it++) {
     gf = *it;
 
@@ -6174,7 +6174,7 @@ void Recombinator_Graph::createBlossomInfo(GVolume *gr)
   //  // cut pyramids in 2 tets, remove pyramids
   //  std::vector<MPyramid*>::iterator it_pyramid = gr->pyramids.begin();
   //  MPyramid *p;
-  //  vector<MNode*>v;
+  //  vector<MVertex*>v;
   //  citer it_find_tri;
   //  cout << "start cutting pyramids" << endl;
   //  for (;it_pyramid!=gr->pyramids.end();it_pyramid++){
@@ -6186,7 +6186,7 @@ void Recombinator_Graph::createBlossomInfo(GVolume *gr)
   //    gr->addTetrahedron(new MTetrahedron(p->getVertex(0),
   //    p->getVertex(2),p->getVertex(3),p->getVertex(4)));
   //
-  //    // add triangles to the right GSurface
+  //    // add triangles to the right GFace
   //    v.clear();
   //    v.push_back(p->getVertex(0));
   //    v.push_back(p->getVertex(1));
@@ -6194,7 +6194,7 @@ void Recombinator_Graph::createBlossomInfo(GVolume *gr)
   //    t11 = new PETriangle(v);
   //    it_find_tri = find_the_triangle(t11, triangular_faces);
   //    if (it_find_tri != triangular_faces.end()){
-  //      std::list<GSurface*>::iterator it_find_face = std::find(faces.begin(),
+  //      std::list<GFace*>::iterator it_find_face = std::find(faces.begin(),
   //      faces.end(),tri_to_gface_info[it_find_tri->second]); if
   //      (it_find_face!=faces.end()){
   //        (*it_find_face)->addTriangle(new MTriangle(p->getVertex(0),
@@ -6215,7 +6215,7 @@ void Recombinator_Graph::createBlossomInfo(GVolume *gr)
   //    t11 = new PETriangle(v);
   //    it_find_tri = find_the_triangle(t11, triangular_faces);
   //    if (it_find_tri != triangular_faces.end()){
-  //      std::list<GSurface*>::iterator it_find_face = std::find(faces.begin(),
+  //      std::list<GFace*>::iterator it_find_face = std::find(faces.begin(),
   //      faces.end(),tri_to_gface_info[it_find_tri->second]); if
   //      (it_find_face!=faces.end()){
   //        (*it_find_face)->addTriangle(new MTriangle(p->getVertex(0),
@@ -6234,7 +6234,7 @@ void Recombinator_Graph::createBlossomInfo(GVolume *gr)
   //  gr->pyramids.clear();
 }
 
-void Recombinator_Graph::execute_blossom(GVolume *gr,
+void Recombinator_Graph::execute_blossom(GRegion *gr,
                                          unsigned int max_nb_cliques,
                                          const std::string &filename)
 {
@@ -6317,7 +6317,7 @@ void Recombinator_Graph::execute_blossom(GVolume *gr,
 PETriangle *Recombinator_Graph::get_triangle(MElement *element, int i, int j,
                                              int k)
 {
-  vector<MNode *> v;
+  vector<MVertex *> v;
   PETriangle *t;
   v.push_back(element->getVertex(i));
   v.push_back(element->getVertex(j));
@@ -6340,7 +6340,7 @@ Recombinator_Graph::Recombinator_Graph(unsigned int _n,
 {
 }
 
-void Recombinator_Graph::execute(GVolume *gr)
+void Recombinator_Graph::execute(GRegion *gr)
 {
   printf("................HEXAHEDRA...GRAPH RECOMBINATOR................\n");
 
@@ -6436,7 +6436,7 @@ void Recombinator_Graph::execute(GVolume *gr)
   create_quads_on_boundary();
 }
 
-void Recombinator_Graph::merge_clique(GVolume *gr,
+void Recombinator_Graph::merge_clique(GRegion *gr,
                                       cliques_losses_graph<Hex *> &cl,
                                       int clique_number)
 {
@@ -6473,7 +6473,7 @@ void Recombinator_Graph::merge_clique(GVolume *gr,
   }
 }
 
-bool Recombinator_Graph::merge_hex(GVolume *gr, Hex *hex)
+bool Recombinator_Graph::merge_hex(GRegion *gr, Hex *hex)
 {
   if(!post_check_validation(hex)) return false;
 
@@ -6500,7 +6500,7 @@ bool Recombinator_Graph::merge_hex(GVolume *gr, Hex *hex)
 }
 
 // Why derive then ?? this is quite stupid
-void Recombinator_Graph::merge(GVolume *gr) { throw; }
+void Recombinator_Graph::merge(GRegion *gr) { throw; }
 
 void Recombinator_Graph::export_tets(set<MElement *> &tetset, Hex *hex,
                                      const string &s)
@@ -6519,7 +6519,7 @@ void Recombinator_Graph::export_tets(set<MElement *> &tetset, Hex *hex,
   for(; it != iten; it++, count++) {
     out << "SS(";
     for(int n = 0; n < 4; n++) {
-      MNode *v = (*it)->getVertex(n);
+      MVertex *v = (*it)->getVertex(n);
       out << v->x() << "," << v->y() << "," << v->z();
       if(n != 3) out << ",";
     }
@@ -6550,7 +6550,7 @@ void Recombinator_Graph::export_single_hex_tet(Hex *hex, const string &s)
   for(; it != iten; it++, count++) {
     out << "SS(";
     for(int n = 0; n < 4; n++) {
-      MNode *v = (*it)->getVertex(n);
+      MVertex *v = (*it)->getVertex(n);
       out << v->x() << "," << v->y() << "," << v->z();
       if(n != 3) out << ",";
     }
@@ -6584,7 +6584,7 @@ void Recombinator_Graph::export_single_hex(Hex *hex, const string &s)
   out << "View \"hex\" {" << endl;
   out << "SH(";
   for(int n = 0; n < 8; n++) {
-    MNode *v = hex->getVertex(n);
+    MVertex *v = hex->getVertex(n);
     out << v->x() << "," << v->y() << "," << v->z();
     if(n != 7) out << ",";
   }
@@ -6615,7 +6615,7 @@ void Recombinator_Graph::export_single_hex_faces(Hex *hex, const string &s)
   for(; it != iten; it++, count++) {
     out << "ST(";
     for(int n = 0; n < 3; n++) {
-      MNode *v = (*it)->getVertex(n);
+      MVertex *v = (*it)->getVertex(n);
       out << v->x() << "," << v->y() << "," << v->z();
       if(n != 2) out << ",";
     }
@@ -6631,7 +6631,7 @@ void Recombinator_Graph::export_single_hex_faces(Hex *hex, const string &s)
 }
 
 void Recombinator_Graph::export_hex_init_degree(
-  GVolume *gr, const std::map<Hex *, int> &init_degree,
+  GRegion *gr, const std::map<Hex *, int> &init_degree,
   const vector<Hex *> &chosen_hex)
 {
   stringstream ss;
@@ -6644,7 +6644,7 @@ void Recombinator_Graph::export_hex_init_degree(
   for(; it != chosen_hex.end(); it++) {
     out << "SH(";
     for(int n = 0; n < 8; n++) {
-      MNode *v = (*it)->getVertex(n);
+      MVertex *v = (*it)->getVertex(n);
       out << v->x() << "," << v->y() << "," << v->z();
       if(n != 7) out << ",";
     }
@@ -6678,7 +6678,7 @@ void Recombinator_Graph::export_hexmesh_so_far(int &file)
   out.close();
 }
 
-void Recombinator_Graph::export_all_hex(int &file, GVolume *gr)
+void Recombinator_Graph::export_all_hex(int &file, GRegion *gr)
 {
   stringstream ss;
   stringstream ssinit;
@@ -6699,7 +6699,7 @@ void Recombinator_Graph::export_all_hex(int &file, GVolume *gr)
   for(; it != gr->hexahedra.end(); it++, i++) {
     out << "SH(";
     for(int n = 0; n < 8; n++) {
-      MNode *v = (*it)->getVertex(n);
+      MVertex *v = (*it)->getVertex(n);
       out << v->x() << "," << v->y() << "," << v->z();
       if(n != 7) out << ",";
     }
@@ -6840,7 +6840,7 @@ void Recombinator_Graph::export_direct_neighbor_table(int max)
     out2 << "View \"hex\" {" << endl;
     out2 << "SH(";
     for(int n = 0; n < 8; n++) {
-      MNode *v = hex->getVertex(n);
+      MVertex *v = hex->getVertex(n);
       out2 << v->x() << "," << v->y() << "," << v->z();
       if(n != 7) out2 << ",";
     }
@@ -6871,7 +6871,7 @@ void print_stats_graph(const Recombinator_Graph::graph &in)
        << "   #connectivité moyenne: " << average_connectivity << endl;
 }
 
-void Recombinator_Graph::create_losses_graph(GVolume *gr)
+void Recombinator_Graph::create_losses_graph(GRegion *gr)
 {
   incompatibility_graph.clear();
   create_indirect_neighbors_graph();
@@ -6999,10 +6999,10 @@ bool Recombinator_Graph::post_check_validation(Hex *current_hex)
 }
 
 void Recombinator_Graph::add_face(
-  MNode *a, MNode *b, MNode *c,
+  MVertex *a, MVertex *b, MVertex *c,
   std::multimap<unsigned long long, pair<PETriangle *, int> > &f)
 {
-  vector<MNode *> v;
+  vector<MVertex *> v;
   v.push_back(a);
   v.push_back(b);
   v.push_back(c);
@@ -7015,9 +7015,9 @@ void Recombinator_Graph::add_face(
   }
 }
 
-void Recombinator_Graph::add_face(MNode *a, MNode *b, MNode *c, Hex *hex)
+void Recombinator_Graph::add_face(MVertex *a, MVertex *b, MVertex *c, Hex *hex)
 {
-  vector<MNode *> v;
+  vector<MVertex *> v;
   v.push_back(a);
   v.push_back(b);
   v.push_back(c);
@@ -7038,7 +7038,7 @@ void Recombinator_Graph::add_face(MNode *a, MNode *b, MNode *c, Hex *hex)
 void Recombinator_Graph::add_edges(Hex *hex)
 {
   for(unsigned int f = 0; f < 6; ++f) {
-    std::vector<MNode *> facet_vertices(4);
+    std::vector<MVertex *> facet_vertices(4);
     for(unsigned int v = 0; v < 4; ++v) {
       facet_vertices[v] = hex->vertex_in_facet(f, v);
     }
@@ -7049,11 +7049,11 @@ void Recombinator_Graph::add_edges(Hex *hex)
 // For all pairs of two vertices among the 4 input vertices
 // set the mapping between the edge (PELine) and the input hex.
 void Recombinator_Graph::fill_edges_table(
-  const std::vector<MNode *> &quad_vertices, Hex *hex)
+  const std::vector<MVertex *> &quad_vertices, Hex *hex)
 {
   for(unsigned int i = 0; i < 4; ++i) {
     for(unsigned int j = i + 1; j < 4; ++j) {
-      std::vector<MNode *> edge;
+      std::vector<MVertex *> edge;
       edge.push_back(quad_vertices[i]);
       edge.push_back(quad_vertices[j]);
 
@@ -7168,7 +7168,7 @@ void Recombinator_Graph::create_faces_connectivity()
 void Recombinator_Graph::add_face_connectivity(MElement *tet, int i, int j,
                                                int k)
 {
-  vector<MNode *> v;
+  vector<MVertex *> v;
   PETriangle *t;
   v.push_back(tet->getVertex(i));
   v.push_back(tet->getVertex(j));
@@ -7208,8 +7208,8 @@ void Recombinator_Graph::compute_hex_ranks_blossom()
   }
 }
 
-bool Recombinator_Graph::find_face_in_blossom_info(MNode *a, MNode *b,
-                                                   MNode *c, MNode *d)
+bool Recombinator_Graph::find_face_in_blossom_info(MVertex *a, MVertex *b,
+                                                   MVertex *c, MVertex *d)
 {
   PETriangle *t1, *t2;
 
@@ -7225,9 +7225,9 @@ bool Recombinator_Graph::find_face_in_blossom_info(MNode *a, MNode *b,
   return false;
 }
 
-PETriangle *Recombinator_Graph::get_triangle(MNode *a, MNode *b, MNode *c)
+PETriangle *Recombinator_Graph::get_triangle(MVertex *a, MVertex *b, MVertex *c)
 {
-  vector<MNode *> v;
+  vector<MVertex *> v;
   v.push_back(a);
   v.push_back(b);
   v.push_back(c);

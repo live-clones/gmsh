@@ -14,14 +14,14 @@ class GModel;
  * WARNING: work in progress, NOT READY for generic usage
  *
  *
- * @brief Determine the number of points on each GCurve
+ * @brief Determine the number of points on each GEdge
  *        for quad meshing. Try to match the opposite
  *        sides to get regular meshes.
- *        The GCurve meshing properties are changed and
- *        some GCurve are set to transfinite.
- *        The GSurface whose boundary curves are all transfinite
+ *        The GEdge meshing properties are changed and
+ *        some GEdge are set to transfinite.
+ *        The GFace whose boundary curves are all transfinite
  *        are set to transfinite.
- *        Requires a mesh. Use the existing GSurface meshes
+ *        Requires a mesh. Use the existing GFace meshes
  *        or a background mesh if available.
  *
  * @param gm The model containing the curves

@@ -148,8 +148,8 @@ static void readLineBDF(char *buffer, int format, std::vector<char *> &fields)
 
 static int readElementBDF(FILE *fp, char *buffer, int keySize, int numVertices,
                           int &num, int &region,
-                          std::vector<MNode *> &vertices,
-                          std::map<std::size_t, MNode *> &vertexMap)
+                          std::vector<MVertex *> &vertices,
+                          std::map<std::size_t, MVertex *> &vertexMap)
 {
   char buffer2[256], buffer3[256];
   std::vector<char *> fields;
@@ -224,7 +224,7 @@ int GModel::readBDF(const std::string &name)
   }
 
   char buffer[256];
-  std::map<std::size_t, MNode *> vertexMap;
+  std::map<std::size_t, MVertex *> vertexMap;
   std::map<int, std::vector<MElement *> > elements[7];
 
   // nodes can be defined after elements, so parse the file twice
@@ -237,7 +237,7 @@ int GModel::readBDF(const std::string &name)
         int num;
         double x, y, z;
         if(!readVertexBDF(fp, buffer, 4, &num, &x, &y, &z)) break;
-        vertexMap[num] = new MNode(x, y, z, nullptr, num);
+        vertexMap[num] = new MVertex(x, y, z, nullptr, num);
       }
     }
   }
@@ -249,7 +249,7 @@ int GModel::readBDF(const std::string &name)
     if(!fgets(buffer, sizeof(buffer), fp)) break;
     if(buffer[0] != '$') { // skip comments
       int num, region;
-      std::vector<MNode *> vertices;
+      std::vector<MVertex *> vertices;
       if(!strncmp(buffer, "CBAR", 4)) {
         if(readElementBDF(fp, buffer, 4, 2, num, region, vertices, vertexMap))
           elements[0][region].push_back(new MLine(vertices, num));

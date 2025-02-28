@@ -73,7 +73,7 @@ class EdgeData {
 public:
   EdgeData(MEdge e) : edge(e) {}
   MEdge edge;
-  std::vector<MNode *> data;
+  std::vector<MVertex *> data;
 };
 
 struct MEdgeDataLessThan
@@ -134,16 +134,16 @@ PView *GMSH_CrackPlugin::execute(PView *view)
       crackElements.push_back(entities[i]->getMeshElement(j));
 
   // get internal crack nodes as well as and boundary nodes
-  std::set<MNode *, MVertexPtrLessThan> crackVertices, bndVertices;
+  std::set<MVertex *, MVertexPtrLessThan> crackVertices, bndVertices;
   if(dim == 1) {
     for(std::size_t i = 0; i < crackElements.size(); i++) {
       for(std::size_t j = 0; j < crackElements[i]->getNumVertices(); j++) {
-        MNode *v = crackElements[i]->getVertex(j);
+        MVertex *v = crackElements[i]->getVertex(j);
         crackVertices.insert(v);
       }
       for(std::size_t j = 0; j < crackElements[i]->getNumPrimaryVertices();
           j++) {
-        MNode *v = crackElements[i]->getVertex(j);
+        MVertex *v = crackElements[i]->getVertex(j);
         if(bndVertices.find(v) == bndVertices.end())
           bndVertices.insert(v);
         else
@@ -155,7 +155,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
     std::set<EdgeData, MEdgeDataLessThan> bnd;
     for(std::size_t i = 0; i < crackElements.size(); i++) {
       for(std::size_t j = 0; j < crackElements[i]->getNumVertices(); j++) {
-        MNode *v = crackElements[i]->getVertex(j);
+        MVertex *v = crackElements[i]->getVertex(j);
         crackVertices.insert(v);
       }
       for(int j = 0; j < crackElements[i]->getNumEdges(); j++) {
@@ -174,13 +174,13 @@ PView *GMSH_CrackPlugin::execute(PView *view)
 
   // compute the boundary nodes (if any) of the "OpenBoundary" physical group if
   // it's a curve
-  std::set<MNode *, MVertexPtrLessThan> bndVerticesFromOpenBoundary;
+  std::set<MVertex *, MVertexPtrLessThan> bndVerticesFromOpenBoundary;
   for(std::size_t i = 0; i < openEntities.size(); i++) {
     if(openEntities[i]->dim() < 1) continue;
     for(std::size_t j = 0; j < openEntities[i]->getNumMeshElements(); j++) {
       MElement *e = openEntities[i]->getMeshElement(j);
       for(std::size_t k = 0; k < e->getNumPrimaryVertices(); k++) {
-        MNode *v = e->getVertex(k);
+        MVertex *v = e->getVertex(k);
         if(bndVerticesFromOpenBoundary.find(v) ==
            bndVerticesFromOpenBoundary.end())
           bndVerticesFromOpenBoundary.insert(v);
@@ -200,7 +200,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
     for(std::size_t j = 0; j < openEntities[i]->getNumMeshElements(); j++) {
       MElement *e = openEntities[i]->getMeshElement(j);
       for(std::size_t k = 0; k < e->getNumVertices(); k++) {
-        MNode *v = e->getVertex(k);
+        MVertex *v = e->getVertex(k);
         if(bndVerticesFromOpenBoundary.find(v) ==
            bndVerticesFromOpenBoundary.end())
           bndVertices.erase(v);
@@ -260,8 +260,8 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   // single new surface/curve, which is probably fine as in solvers we won't use
   // the internal seams.
 
-  GCurve *crackEdge = nullptr;
-  GSurface *crackFace = nullptr;
+  GEdge *crackEdge = nullptr;
+  GFace *crackFace = nullptr;
   if(dim == 1) {
     crackEdge =
       new discreteEdge(m, m->getMaxElementaryNumber(1) + 1, nullptr, nullptr);
@@ -276,10 +276,10 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   crackEntity->physicals.push_back(newPhysical ? newPhysical : physical);
 
   // duplicate internal crack nodes
-  std::map<MNode *, MNode *> vxv;
+  std::map<MVertex *, MVertex *> vxv;
   for(auto it = crackVertices.begin(); it != crackVertices.end(); it++) {
-    MNode *v = *it;
-    MNode *newv = new MNode(v->x(), v->y(), v->z(), crackEntity);
+    MVertex *v = *it;
+    MVertex *newv = new MVertex(v->x(), v->y(), v->z(), crackEntity);
     crackEntity->mesh_vertices.push_back(newv);
     vxv[v] = newv;
   }
@@ -287,7 +287,7 @@ PView *GMSH_CrackPlugin::execute(PView *view)
   // duplicate crack elements
   for(std::size_t i = 0; i < crackElements.size(); i++) {
     MElement *e = crackElements[i];
-    std::vector<MNode *> verts;
+    std::vector<MVertex *> verts;
     e->getVertices(verts);
     for(std::size_t j = 0; j < verts.size(); j++) {
       if(vxv.count(verts[j])) verts[j] = vxv[verts[j]];

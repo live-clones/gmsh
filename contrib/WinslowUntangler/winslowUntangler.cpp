@@ -840,7 +840,7 @@ namespace WinslowUntangler {
 
         // Setup of the LBFGS solver
         alglib::ae_int_t N = dim * NV;
-        alglib::ae_int_t corr = 15; // Num of corrections in the scheme in [3,7]
+        alglib::ae_int_t corr = N < 15 ? N : 15; // Num of corrections in the scheme in [3,7]
         alglib::minlbfgsstate state;
         alglib::minlbfgsreport rep;
 	minlbfgscreate(N, corr, x, state);
@@ -867,7 +867,7 @@ namespace WinslowUntangler {
 
         if(rep.terminationtype != 4 && rep.terminationtype != 5) { nFail += 1; }
         lbfgsIter = rep.iterationscount;
-        Msg::Info(" detmin = %22.15E eps= %22.15E %lu iter term %lu",
+        Msg::Debug(" detmin = %22.15E eps= %22.15E %lu iter term %lu",
                   data.J_det_min, data.eps, rep.iterationscount,
                   rep.terminationtype);
       } catch(alglib::ap_error e) {

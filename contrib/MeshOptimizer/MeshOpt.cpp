@@ -44,7 +44,7 @@
 
 MeshOpt::MeshOpt(const std::map<MElement *, GEntity *> &element2entity,
                  const std::map<MElement *, GEntity *> &bndEl2Ent,
-                 const std::set<MElement *> &els, std::set<MNode *> &toFix,
+                 const std::set<MElement *> &els, std::set<MVertex *> &toFix,
                  const std::set<MElement *> &bndEls,
                  const MeshOptParameters &par)
   : patch(element2entity, bndEl2Ent, els, toFix, bndEls, par.fixBndNodes),

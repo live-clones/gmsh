@@ -41,7 +41,7 @@ public:
   Fl_Button *buttons[7];
   Fl_Check_Button *toggles[4];
   Fl_Value_Input *inputs[1];
-  GCurve *selected;
+  GEdge *selected;
 #if defined(HAVE_MESH)
   std::vector<edge_angle> edges_detected, edges_lonly;
 #else

@@ -12,7 +12,7 @@ class SPoint3;
 class SVector3;
 class BDS_Point;
 class BDS_Face;
-class MNode;
+class MVertex;
 class MTriangle;
 class MQuadrangle;
 class MTetrahedron;
@@ -28,7 +28,7 @@ public:
   static double gamma(BDS_Face *f);
   static double gamma(const BDS_Point *p1, const BDS_Point *p2,
                       const BDS_Point *p3);
-  static double gamma(const MNode *v1, const MNode *v2, const MNode *v3);
+  static double gamma(const MVertex *v1, const MVertex *v2, const MVertex *v3);
   static double gamma(const double *d1, const double *d2, const double *d3);
   static double gamma(const double &x1, const double &y1, const double &z1,
                       const double &x2, const double &y2, const double &z2,
@@ -70,8 +70,8 @@ public:
                    double *volume = nullptr);
   static double qm(const BDS_Point *p1, const BDS_Point *p2,
                    const BDS_Point *p3);
-  static double qm(const MNode *v1, const MNode *v2, const MNode *v3,
-                   const MNode *v4, const Measures &cr,
+  static double qm(const MVertex *v1, const MVertex *v2, const MVertex *v3,
+                   const MVertex *v4, const Measures &cr,
                    double *volume = nullptr);
   static double qm(const double &x1, const double &y1, const double &z1,
                    const double &x2, const double &y2, const double &z2,

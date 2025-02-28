@@ -601,7 +601,7 @@ void Homology::_createChain(std::map<Cell *, int, CellPtrLessThan> &preChain,
     int coeff = cit->second;
     if(coeff == 0) continue;
 
-    std::vector<MNode *> v;
+    std::vector<MVertex *> v;
     cell->getMeshVertices(v);
     chain->addElemChain(ElemChain(cell->getDim(), v), coeff);
   }
@@ -659,7 +659,7 @@ void Homology::storeCells(CellComplex *cellComplex, int dim)
     cell->getCells(cells);
     for(auto it = cells.begin(); it != cells.end(); it++) {
       Cell *subCell = it->first;
-      std::vector<MNode *> v;
+      std::vector<MVertex *> v;
       subCell->getMeshVertices(v);
 
       MElement *e = factory.create(subCell->getTypeMSH(), v);

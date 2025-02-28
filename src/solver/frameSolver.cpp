@@ -5,8 +5,8 @@
 
 #include "GmshConfig.h"
 #include "GModel.h"
-#include "GPoint.h"
-#include "GCurve.h"
+#include "GVertex.h"
+#include "GEdge.h"
 #include "frameSolver.h"
 #include "linearSystemCSR.h"
 #include "linearSystemPETSc.h"
@@ -24,7 +24,7 @@ void frameSolver2d::addFixations(const std::vector<int> &dirs,
                                  double value)
 {
   for(std::size_t j = 0; j < modelVertices.size(); j++) {
-    GPoint *gv = _myModel->getVertexByTag(modelVertices[j]);
+    GVertex *gv = _myModel->getVertexByTag(modelVertices[j]);
     if(gv) {
       for(std::size_t i = 0; i < dirs.size(); i++) {
         _fixations.push_back(gmshFixation(gv, dirs[i], value));
@@ -37,7 +37,7 @@ void frameSolver2d::addNodalForces(const std::vector<int> &modelVertices,
                                    const std::vector<double> &force)
 {
   for(std::size_t j = 0; j < modelVertices.size(); j++) {
-    GPoint *gv = _myModel->getVertexByTag(modelVertices[j]);
+    GVertex *gv = _myModel->getVertexByTag(modelVertices[j]);
     if(gv) {
       _nodalForces.push_back(std::make_pair(gv, force));
     }
@@ -50,7 +50,7 @@ void frameSolver2d::addBeamsOrBars(const std::vector<int> &modelEdges, double E,
   int r_middle[2] = {1, 1}, r_left[2] = {r[0], 1}, r_right[2] = {0, r[1]};
   //  printf("adding %d beams\n",modelEdges.size());
   for(std::size_t i = 0; i < modelEdges.size(); i++) {
-    GCurve *ge = _myModel->getEdgeByTag(modelEdges[i]);
+    GEdge *ge = _myModel->getEdgeByTag(modelEdges[i]);
     if(ge) {
       //      printf("model edge %d found\n",ge->tag());
       for(std::size_t j = 0; j < ge->lines.size(); ++j) {
@@ -98,7 +98,7 @@ void frameSolver2d::createDofs()
     const gmshFixation &f = _fixations[i];
     //    printf("f._vertex(%d) = %p %d
     //    %g\n",i,f._vertex,f._direction,f._value);
-    MNode *v = f._vertex->mesh_vertices[0];
+    MVertex *v = f._vertex->mesh_vertices[0];
     Dof DOF(v->getNum(), f._direction);
     pAssembler->fixDof(DOF, f._value);
   }
@@ -110,7 +110,7 @@ void frameSolver2d::createDofs()
     //    printf("beam[%d] rot %d
     //    %d\n",i,_beams[i]._rotationTags[0],_beams[i]._rotationTags[1]);
     for(std::size_t j = 0; j < 2; j++) {
-      MNode *v = _beams[i]._element->getVertex(j);
+      MVertex *v = _beams[i]._element->getVertex(j);
       Dof theta(v->getNum(),
                 Dof::createTypeWithTwoInts(2, _beams[i]._rotationTags[j]));
       pAssembler->numberDof(theta);
@@ -128,8 +128,8 @@ void frameSolver2d::computeStiffnessMatrix(int iBeam, fullMatrix<double> &K)
   const gmshBeam2d &b = _beams[iBeam];
   const double BS = b._e * b._i / (b._l * b._l * b._l);
   const double TS = b._e * b._a / b._l;
-  const MNode *v1 = b._element->getVertex(0);
-  const MNode *v2 = b._element->getVertex(1);
+  const MVertex *v1 = b._element->getVertex(0);
+  const MVertex *v2 = b._element->getVertex(1);
   const double alpha = atan2(v2->y() - v1->y(), v2->x() - v1->x());
   const double C = cos(alpha);
   const double S = sin(alpha);
@@ -183,7 +183,7 @@ void frameSolver2d::solve()
   auto it =
     _nodalForces.begin();
   for(; it != _nodalForces.end(); ++it) {
-    MNode *v = it->first->mesh_vertices[0];
+    MVertex *v = it->first->mesh_vertices[0];
     const std::vector<double> &F = it->second;
     Dof DOFX(v->getNum(), 0);
     Dof DOFY(v->getNum(), 1);
@@ -196,8 +196,8 @@ void frameSolver2d::solve()
     fullMatrix<double> K(6, 6);
     computeStiffnessMatrix(i, K);
     _beams[i]._stiffness = K;
-    MNode *v0 = _beams[i]._element->getVertex(0);
-    MNode *v1 = _beams[i]._element->getVertex(1);
+    MVertex *v0 = _beams[i]._element->getVertex(0);
+    MVertex *v1 = _beams[i]._element->getVertex(1);
     Dof theta0(v0->getNum(),
                Dof::createTypeWithTwoInts(2, _beams[i]._rotationTags[0]));
     Dof theta1(v1->getNum(),
@@ -217,8 +217,8 @@ void frameSolver2d::solve()
 
   // save the solution
   for(std::size_t i = 0; i < _beams.size(); i++) {
-    MNode *v0 = _beams[i]._element->getVertex(0);
-    MNode *v1 = _beams[i]._element->getVertex(1);
+    MVertex *v0 = _beams[i]._element->getVertex(0);
+    MVertex *v1 = _beams[i]._element->getVertex(1);
     Dof theta0(v0->getNum(),
                Dof::createTypeWithTwoInts(2, _beams[i]._rotationTags[0]));
     Dof theta1(v1->getNum(),
@@ -276,18 +276,18 @@ void frameSolver2d::exportFrameData(const char *DISPL, const char *M)
 
 void frameSolver2d::computeRotationTags()
 {
-  std::multimap<MNode *, gmshBeam2d *> v2b;
+  std::multimap<MVertex *, gmshBeam2d *> v2b;
   for(std::size_t i = 0; i < _beams.size(); i++) {
     v2b.insert(std::make_pair(_beams[i]._element->getVertex(0), &_beams[i]));
     v2b.insert(std::make_pair(_beams[i]._element->getVertex(1), &_beams[i]));
   }
 
-  std::multimap<MNode *, gmshBeam2d *>::iterator s_it;
+  std::multimap<MVertex *, gmshBeam2d *>::iterator s_it;
   for(auto it = v2b.begin(); it != v2b.end(); it = s_it) {
-    MNode *theKey = it->first;
+    MVertex *theKey = it->first;
 
-    std::pair<std::multimap<MNode *, gmshBeam2d *>::iterator,
-              std::multimap<MNode *, gmshBeam2d *>::iterator>
+    std::pair<std::multimap<MVertex *, gmshBeam2d *>::iterator,
+              std::multimap<MVertex *, gmshBeam2d *>::iterator>
       keyRange = v2b.equal_range(theKey);
     int countRotules = 0;
     for(s_it = keyRange.first; s_it != keyRange.second; ++s_it) {

@@ -5,7 +5,7 @@
 
 #include "GmshMessage.h"
 #include "PViewDataGModel.h"
-#include "MNode.h"
+#include "MVertex.h"
 #include "Context.h"
 #include "fullMatrix.h"
 #include "StringUtils.h"
@@ -212,7 +212,7 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version,
       }
       for(std::size_t i = 0; i < _steps[step]->getNumData(); i++) {
         if(_steps[step]->getData(i)) {
-          MNode *v = _steps[step]->getModel()->getMeshVertexByTag(i);
+          MVertex *v = _steps[step]->getModel()->getMeshVertexByTag(i);
           if(!v) {
             Msg::Error("Unknown node %d in data", i);
             fclose(fp);

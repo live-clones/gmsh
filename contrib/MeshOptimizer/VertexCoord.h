@@ -29,14 +29,14 @@
 
 #include "SPoint3.h"
 #include "GEntity.h"
-#include "MNode.h"
+#include "MVertex.h"
 
 class VertexCoord {
 public:
-  // Set param. coord. of MNode if applicable
+  // Set param. coord. of MVertex if applicable
   virtual void exportVertexCoord(const SPoint3 &uvw) {}
   // Get parametric coordinates of vertex
-  virtual SPoint3 getUvw(MNode *v) const = 0;
+  virtual SPoint3 getUvw(MVertex *v) const = 0;
   // Calculate physical coordinates from parametric coordinates of vertex
   virtual SPoint3 uvw2Xyz(const SPoint3 &uvw) const = 0;
   // Calculate derivatives w.r.t parametric coordinates
@@ -50,7 +50,7 @@ public:
 
 class VertexCoordPhys3D : public VertexCoord {
 public:
-  SPoint3 getUvw(MNode *v) const { return v->point(); }
+  SPoint3 getUvw(MVertex *v) const { return v->point(); }
   SPoint3 uvw2Xyz(const SPoint3 &uvw) const { return uvw; }
   void gXyz2gUvw(const SPoint3 &uvw, const SPoint3 &gXyz, SPoint3 &gUvw) const
   {
@@ -69,26 +69,26 @@ public:
 
 class VertexCoordParent : public VertexCoord {
 public:
-  VertexCoordParent(MNode *v) : _vert(v) {}
+  VertexCoordParent(MVertex *v) : _vert(v) {}
   void exportVertexCoord(const SPoint3 &uvw)
   {
     for(int d = 0; d < _vert->onWhat()->dim(); ++d)
       _vert->setParameter(d, uvw[d]);
   }
-  SPoint3 getUvw(MNode *v) const;
+  SPoint3 getUvw(MVertex *v) const;
   SPoint3 uvw2Xyz(const SPoint3 &uvw) const;
   void gXyz2gUvw(const SPoint3 &uvw, const SPoint3 &gXyz, SPoint3 &gUvw) const;
   void gXyz2gUvw(const SPoint3 &uvw, const std::vector<SPoint3> &gXyz,
                  std::vector<SPoint3> &gUvw) const;
 
 protected:
-  MNode *_vert;
+  MVertex *_vert;
 };
 
 class VertexCoordLocalLine : public VertexCoord {
 public:
-  VertexCoordLocalLine(MNode *v);
-  SPoint3 getUvw(MNode *v) const { return SPoint3(0., 0., 0.); }
+  VertexCoordLocalLine(MVertex *v);
+  SPoint3 getUvw(MVertex *v) const { return SPoint3(0., 0., 0.); }
   SPoint3 uvw2Xyz(const SPoint3 &uvw) const
   {
     return SPoint3(x0 + uvw[0] * dir[0], y0 + uvw[0] * dir[1],
@@ -116,8 +116,8 @@ protected:
 
 class VertexCoordLocalSurf : public VertexCoord {
 public:
-  VertexCoordLocalSurf(MNode *v);
-  SPoint3 getUvw(MNode *v) const { return SPoint3(0., 0., 0.); }
+  VertexCoordLocalSurf(MVertex *v);
+  SPoint3 getUvw(MVertex *v) const { return SPoint3(0., 0., 0.); }
   SPoint3 uvw2Xyz(const SPoint3 &uvw) const
   {
     return SPoint3(x0 + uvw[0] * dir0[0] + uvw[1] * dir1[0],

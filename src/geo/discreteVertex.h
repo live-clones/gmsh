@@ -7,12 +7,12 @@
 #define DISCRETE_VERTEX_H
 
 #include "GModel.h"
-#include "GPoint.h"
-#include "MNode.h"
+#include "GVertex.h"
+#include "MVertex.h"
 
 class Vertex;
 
-class discreteVertex : public GPoint {
+class discreteVertex : public GVertex {
 private:
   Vertex *_v;
 
@@ -21,11 +21,11 @@ public:
                  double z = 0.);
   discreteVertex(GModel *m);
   virtual ~discreteVertex();
-  virtual GVertex point() const;
+  virtual GPoint point() const;
   virtual double x() const;
   virtual double y() const;
   virtual double z() const;
-  virtual void setPosition(GVertex &p);
+  virtual void setPosition(GPoint &p);
 };
 
 #endif

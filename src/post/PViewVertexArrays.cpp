@@ -657,10 +657,10 @@ static void addScalarPolygon(PView *p, double **xyz, double **val, bool pre,
   if(opt->boundary > 0) {
     const int il[3][2] = {{0, 1}, {1, 2}, {2, 0}};
     std::map<MEdge, int, MEdgeLessThan> edges;
-    std::vector<MNode *> verts;
+    std::vector<MVertex *> verts;
     verts.reserve(numNodes);
     for(int i = 0; i < numNodes; i++)
-      verts.push_back(new MNode(xyz[i][0], xyz[i][1], xyz[i][2]));
+      verts.push_back(new MVertex(xyz[i][0], xyz[i][1], xyz[i][2]));
     for(int i = 0; i < numNodes / 3; i++) {
       for(int j = 0; j < 3; j++) {
         MEdge ed(verts[3 * i + il[j][0]], verts[3 * i + il[j][1]]);
@@ -880,10 +880,10 @@ static void addOutlinePolyhedron(PView *p, double **xyz, unsigned int color,
   // FIXME: this code is horribly slow
   const int it[4][3] = {{0, 2, 1}, {0, 1, 3}, {0, 3, 2}, {3, 1, 2}};
   std::map<MFace, int, MFaceLessThan> triFaces;
-  std::vector<MNode *> verts;
+  std::vector<MVertex *> verts;
   verts.reserve(numNodes);
   for(int i = 0; i < numNodes; i++)
-    verts.push_back(new MNode(xyz[i][0], xyz[i][1], xyz[i][2]));
+    verts.push_back(new MVertex(xyz[i][0], xyz[i][1], xyz[i][2]));
   for(int i = 0; i < numNodes / 4; i++) {
     for(int j = 0; j < 4; j++) {
       MFace f(verts[4 * i + it[j][0]], verts[4 * i + it[j][1]],

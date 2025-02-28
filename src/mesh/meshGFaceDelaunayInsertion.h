@@ -16,19 +16,19 @@
 #include <map>
 
 class GModel;
-class GSurface;
+class GFace;
 class BDS_Mesh;
 class BDS_Point;
 
 struct bidimMeshData {
-  std::map<MNode *, int> indices;
+  std::map<MVertex *, int> indices;
   std::vector<double> Us, Vs, vSizes, vSizesBGM;
   std::vector<SMetric3> vMetricsBGM;
-  std::map<MNode *, MNode *> *equivalence;
-  std::map<MNode *, SPoint2> *parametricCoordinates;
+  std::map<MVertex *, MVertex *> *equivalence;
+  std::map<MVertex *, SPoint2> *parametricCoordinates;
   std::set<MEdge, MEdgeLessThan> internalEdges; // embedded edges
-  //  std::set<MNode*> internalVertices; // embedded vertices
-  inline void addVertex(MNode *mv, double u, double v, double size,
+  //  std::set<MVertex*> internalVertices; // embedded vertices
+  inline void addVertex(MVertex *mv, double u, double v, double size,
                         double sizeBGM)
   {
     int index = Us.size();
@@ -48,12 +48,12 @@ struct bidimMeshData {
     vSizes.push_back(size);
     vSizesBGM.push_back(sizeBGM);
   }
-  inline int getIndex(MNode *mv)
+  inline int getIndex(MVertex *mv)
   {
     if(mv->onWhat()->dim() == 2) return mv->getIndex();
     return indices[mv];
   }
-  inline MNode *equivalent(MNode *v1) const
+  inline MVertex *equivalent(MVertex *v1) const
   {
     if(equivalence) {
       auto it = equivalence->find(v1);
@@ -62,17 +62,17 @@ struct bidimMeshData {
     }
     return nullptr;
   }
-  bidimMeshData(std::map<MNode *, MNode *> *e = nullptr,
-                std::map<MNode *, SPoint2> *p = nullptr)
+  bidimMeshData(std::map<MVertex *, MVertex *> *e = nullptr,
+                std::map<MVertex *, SPoint2> *p = nullptr)
     : equivalence(e), parametricCoordinates(p)
   {
   }
 };
 
-void buildMetric(GSurface *gf, double *uv, double *metric);
-int inCircumCircleAniso(GSurface *gf, double *p1, double *p2, double *p3,
+void buildMetric(GFace *gf, double *uv, double *metric);
+int inCircumCircleAniso(GFace *gf, double *p1, double *p2, double *p3,
                         double *p4, double *metric);
-int inCircumCircleAniso(GSurface *gf, MTriangle *base, const double *uv,
+int inCircumCircleAniso(GFace *gf, MTriangle *base, const double *uv,
                         const double *metric, bidimMeshData &data);
 
 class MTri3 {
@@ -88,19 +88,19 @@ public:
   bool isDeleted() const { return deleted; }
   void forceRadius(double r) { circum_radius = r; }
   inline double getRadius() const { return circum_radius; }
-  inline MNode *otherSide(int i)
+  inline MVertex *otherSide(int i)
   {
     MTri3 *n = neigh[i];
     if(!n) return nullptr;
-    MNode *v1 = base->getVertex((i + 2) % 3);
-    MNode *v2 = base->getVertex(i);
+    MVertex *v1 = base->getVertex((i + 2) % 3);
+    MVertex *v2 = base->getVertex(i);
     for(int j = 0; j < 3; j++)
       if(n->tri()->getVertex(j) != v1 && n->tri()->getVertex(j) != v2)
         return n->tri()->getVertex(j);
     return nullptr;
   }
   MTri3(MTriangle *t, double lc, SMetric3 *m = nullptr,
-        bidimMeshData *data = nullptr, GSurface *gf = nullptr);
+        bidimMeshData *data = nullptr, GFace *gf = nullptr);
   inline void setTri(MTriangle *t) { base = t; }
   inline MTriangle *tri() const { return base; }
   inline void setNeigh(int iN, MTri3 *n) { neigh[iN] = n; }
@@ -111,7 +111,7 @@ public:
     const double p[2] = {x, y};
     return inCircumCircle(p);
   }
-  inline int inCircumCircle(const MNode *v) const
+  inline int inCircumCircle(const MVertex *v) const
   {
     return inCircumCircle(v->x(), v->y());
   }
@@ -147,35 +147,35 @@ void connectTriangles(std::list<MTri3 *> &);
 void connectTriangles(std::vector<MTri3 *> &);
 void connectTriangles(std::set<MTri3 *, compareTri3Ptr> &AllTris);
 void bowyerWatson(
-  GSurface *gf, int MAXPNT = 1000000000,
-  std::map<MNode *, MNode *> *equivalence = nullptr,
-  std::map<MNode *, SPoint2> *parametricCoordinates = nullptr);
+  GFace *gf, int MAXPNT = 1000000000,
+  std::map<MVertex *, MVertex *> *equivalence = nullptr,
+  std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr);
 void bowyerWatsonFrontal(
-  GSurface *gf, std::map<MNode *, MNode *> *equivalence = nullptr,
-  std::map<MNode *, SPoint2> *parametricCoordinates = nullptr,
+  GFace *gf, std::map<MVertex *, MVertex *> *equivalence = nullptr,
+  std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr,
   std::vector<SPoint2> *true_boundary = nullptr);
 void bowyerWatsonFrontalLayers(
-  GSurface *gf, bool quad, std::map<MNode *, MNode *> *equivalence = nullptr,
-  std::map<MNode *, SPoint2> *parametricCoordinates = nullptr);
+  GFace *gf, bool quad, std::map<MVertex *, MVertex *> *equivalence = nullptr,
+  std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr);
 void bowyerWatsonParallelograms(
-  GSurface *gf, std::map<MNode *, MNode *> *equivalence = nullptr,
-  std::map<MNode *, SPoint2> *parametricCoordinates = nullptr);
+  GFace *gf, std::map<MVertex *, MVertex *> *equivalence = nullptr,
+  std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr);
 void bowyerWatsonParallelogramsConstrained(
-  GSurface *gf, const std::set<MNode *> &constr_vertices,
-  std::map<MNode *, MNode *> *equivalence = nullptr,
-  std::map<MNode *, SPoint2> *parametricCoordinates = nullptr);
+  GFace *gf, const std::set<MVertex *> &constr_vertices,
+  std::map<MVertex *, MVertex *> *equivalence = nullptr,
+  std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr);
 void buildBackgroundMesh(
-  GSurface *gf, bool crossFieldClosestPoint = false,
-  std::map<MNode *, MNode *> *equivalence = nullptr,
-  std::map<MNode *, SPoint2> *parametricCoordinates = nullptr);
+  GFace *gf, bool crossFieldClosestPoint = false,
+  std::map<MVertex *, MVertex *> *equivalence = nullptr,
+  std::map<MVertex *, SPoint2> *parametricCoordinates = nullptr);
 
-void delaunayMeshIn2D(std::vector<MNode *> &, std::vector<MTriangle *> &,
+void delaunayMeshIn2D(std::vector<MVertex *> &, std::vector<MTriangle *> &,
                       bool removeBox = true,
                       std::vector<MEdge> *edgesToRecover = nullptr,
                       bool hilbertSort = true);
 
 struct edgeXface {
-  MNode *v[2];
+  MVertex *v[2];
   MTri3 *t1;
   int i1;
   int ori;
@@ -185,12 +185,12 @@ struct edgeXface {
     v[1] = t1->tri()->getVertex(iFac);
     if(v[0]->getNum() > v[1]->getNum()) {
       ori = -1;
-      MNode *tmp = v[0];
+      MVertex *tmp = v[0];
       v[0] = v[1];
       v[1] = tmp;
     }
   }
-  inline MNode *_v(int i) const { return v[i]; }
+  inline MVertex *_v(int i) const { return v[i]; }
   inline bool operator<(const edgeXface &other) const
   {
     if(_v(0)->getNum() < other._v(0)->getNum()) return true;

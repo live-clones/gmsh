@@ -92,7 +92,7 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
   // get the mesh of the current model, and iterate on the surfaces
   GModel *m = GModel::current();
   for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
-    GSurface *gf = *it;
+    GFace *gf = *it;
     std::set<std::pair<MEdge, MElement *>, Less_EdgeEle> boundaryEdges;
     for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
       MElement *e = gf->getMeshElement(i);
@@ -115,7 +115,7 @@ PView *GMSH_BoundaryAnglesPlugin::execute(PView *v)
       edges.push_back(it->first);
       if(it == boundaryEdges.begin()) normal = it->second->getFace(0).normal();
     }
-    std::vector<std::vector<MNode *> > nodes;
+    std::vector<std::vector<MVertex *> > nodes;
     if(SortEdgeConsecutive(edges, nodes)) {
       if(nodes.size() != 1) { Msg::Warning("Non connected boundary!"); }
       else {

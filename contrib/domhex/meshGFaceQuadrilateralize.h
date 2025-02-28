@@ -6,7 +6,7 @@
 #ifndef MESH_GFACE_QUADRILATERALIZE
 #define MESH_GFACE_QUADRILATERALIZE
 
-class GSurface;
-int gmshQMorph(GSurface *gf);
+class GFace;
+int gmshQMorph(GFace *gf);
 
 #endif

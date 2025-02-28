@@ -531,9 +531,9 @@ int PViewDataGModel::getNumNodes(int step, int ent, int ele)
   }
 }
 
-MNode *PViewDataGModel::_getNode(MElement *e, int nod)
+MVertex *PViewDataGModel::_getNode(MElement *e, int nod)
 {
-  MNode *v;
+  MVertex *v;
   if(!e->getNumChildren())
     v = e->getVertex(nod);
   else {
@@ -547,7 +547,7 @@ int PViewDataGModel::getNode(int step, int ent, int ele, int nod, double &x,
                              double &y, double &z)
 {
   MElement *e = _getElement(step, ent, ele);
-  MNode *v = _getNode(e, nod);
+  MVertex *v = _getNode(e, nod);
   if(_type == GaussPointData) {
     std::vector<double> &p(_steps[step]->getGaussPoints(e->getTypeForMSH()));
     if(p[0] == 1.e22) {
@@ -581,7 +581,7 @@ void PViewDataGModel::setNode(int step, int ent, int ele, int nod, double x,
                               double y, double z)
 {
   MElement *e = _getElement(step, ent, ele);
-  MNode *v = _getNode(e, nod);
+  MVertex *v = _getNode(e, nod);
   v->x() = x;
   v->y() = y;
   v->z() = z;
@@ -590,7 +590,7 @@ void PViewDataGModel::setNode(int step, int ent, int ele, int nod, double x,
 void PViewDataGModel::tagNode(int step, int ent, int ele, int nod, int tag)
 {
   MElement *e = _getElement(step, ent, ele);
-  MNode *v = _getNode(e, nod);
+  MVertex *v = _getNode(e, nod);
   v->setIndex(tag);
 }
 
@@ -727,7 +727,7 @@ void PViewDataGModel::smooth()
         double val;
         if(!getValueByIndex(step, e->getNum(), 0, 0, val)) continue;
         for(std::size_t nod = 0; nod < e->getNumVertices(); nod++) {
-          MNode *v = e->getVertex(nod);
+          MVertex *v = e->getVertex(nod);
           if(nodeConnect.count(v->getNum()))
             nodeConnect[v->getNum()]++;
           else

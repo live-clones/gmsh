@@ -13,7 +13,7 @@
 #include "dofManager.h"
 #include "terms.h"
 #include "quadratureRules.h"
-#include "MNode.h"
+#include "MVertex.h"
 
 template <class Iterator, class Assembler>
 void Assemble(BilinearTermBase &term, FunctionSpaceBase &space,
@@ -271,7 +271,7 @@ void FixNodalDofs(FunctionSpaceBase &space, MElement *e, Assembler &assembler,
                   simpleFunction<typename Assembler::dataVec> &fct,
                   FilterDof &filter)
 {
-  std::vector<MNode *> tabV;
+  std::vector<MVertex *> tabV;
   int nv = e->getNumVertices();
   std::vector<Dof> R;
   space.getKeys(e, R);

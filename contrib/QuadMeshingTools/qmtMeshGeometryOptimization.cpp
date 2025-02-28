@@ -13,11 +13,11 @@
 /* Gmsh includes */
 #include "GmshMessage.h"
 #include "OS.h"
-#include "GPoint.h"
-#include "GCurve.h"
-#include "GSurface.h"
+#include "GVertex.h"
+#include "GEdge.h"
+#include "GFace.h"
 #include "GModel.h"
-#include "MNode.h"
+#include "MVertex.h"
 #include "MLine.h"
 #include "MElement.h"
 #include "MTriangle.h"
@@ -338,10 +338,10 @@ namespace QMT {
       const vec3 &p1 = stencil[2 * i + 1];
       const size_t i2 = (2 * i + 2) % (2 * N);
       const vec3 &p2 = stencil[i2];
-      MNode a(p0[0], p0[1], p0[2]);
-      MNode b(p1[0], p1[1], p1[2]);
-      MNode c(p2[0], p2[1], p2[2]);
-      MNode d(center[0], center[1], center[2]);
+      MVertex a(p0[0], p0[1], p0[2]);
+      MVertex b(p1[0], p1[1], p1[2]);
+      MVertex c(p2[0], p2[1], p2[2]);
+      MVertex d(center[0], center[1], center[2]);
       MQuadrangle quad(&a, &b, &c, &d);
       double q = quad.minSICNShapeMeasure();
       if(std::isnan(q)) q = -1.;
@@ -364,10 +364,10 @@ namespace QMT {
       const vec3 &p1 = stencil[2 * i + 1];
       const size_t i2 = (2 * i + 2) % (2 * N);
       const vec3 &p2 = stencil[i2];
-      MNode a(p0[0], p0[1], p0[2]);
-      MNode b(p1[0], p1[1], p1[2]);
-      MNode c(p2[0], p2[1], p2[2]);
-      MNode d(center[0], center[1], center[2]);
+      MVertex a(p0[0], p0[1], p0[2]);
+      MVertex b(p1[0], p1[1], p1[2]);
+      MVertex c(p2[0], p2[1], p2[2]);
+      MVertex d(center[0], center[1], center[2]);
       MQuadrangle quad(&a, &b, &c, &d);
       double q = quad.minSICNShapeMeasure();
       qmin = std::min(q, qmin);
@@ -383,14 +383,14 @@ namespace QMT {
     vec3 range = {{0., 0., 0.}};
   };
 
-  bool buildCondensedStructure(const std::vector<MNode *> &freeVertices,
+  bool buildCondensedStructure(const std::vector<MVertex *> &freeVertices,
                                const std::vector<MElement *> &elements,
-                               std::unordered_map<MNode *, size_t> &old2new,
+                               std::unordered_map<MVertex *, size_t> &old2new,
                                std::vector<vector<size_t> > &v2v)
   {
     /* Build the old2new mapping */
     size_t vcount = 0;
-    for(MNode *v : freeVertices) {
+    for(MVertex *v : freeVertices) {
       old2new[v] = vcount;
       vcount += 1;
     }
@@ -399,10 +399,10 @@ namespace QMT {
     v2v.resize(nInterior);
     for(MElement *f : elements) {
       for(size_t le = 0; le < 4; ++le) {
-        MNode *vs[2] = {f->getVertex(le), f->getVertex((le + 1) % 4)};
+        MVertex *vs[2] = {f->getVertex(le), f->getVertex((le + 1) % 4)};
         size_t nvs[2];
         for(size_t lv = 0; lv < 2; ++lv) {
-          MNode *v = vs[lv];
+          MVertex *v = vs[lv];
           size_t nv = NO_SIZE_T;
           auto it = old2new.find(v);
           if(it == old2new.end()) {
@@ -421,7 +421,7 @@ namespace QMT {
       constexpr bool addDiags = false;
       if(addDiags) {
         for(size_t d = 0; d < 2; ++d) {
-          MNode *vs[2] = {f->getVertex(d), f->getVertex((d + 2) % 4)};
+          MVertex *vs[2] = {f->getVertex(d), f->getVertex((d + 2) % 4)};
           size_t nvs[2] = {old2new[vs[0]], old2new[vs[1]]};
           if(nvs[0] < nInterior) v2v[old2new[vs[0]]].push_back(old2new[vs[1]]);
           if(nvs[1] < nInterior) v2v[old2new[vs[1]]].push_back(old2new[vs[0]]);
@@ -432,9 +432,9 @@ namespace QMT {
   }
 
   bool buildCondensedStructure(const std::vector<MElement *> &elements,
-                               const std::vector<MNode *> &freeVertices,
-                               std::unordered_map<MNode *, uint32_t> &old2new,
-                               std::vector<MNode *> &new2old,
+                               const std::vector<MVertex *> &freeVertices,
+                               std::unordered_map<MVertex *, uint32_t> &old2new,
+                               std::vector<MVertex *> &new2old,
                                std::vector<std::array<uint32_t, 4> > &quads,
                                std::vector<std::vector<uint32_t> > &v2q,
                                std::vector<std::vector<uint32_t> > &oneRings,
@@ -445,7 +445,7 @@ namespace QMT {
     points.reserve(2 * freeVertices.size());
 
     size_t vcount = 0;
-    for(MNode *v : freeVertices) {
+    for(MVertex *v : freeVertices) {
       old2new[v] = vcount;
       vec3 pt = SVector3(v->point());
       points.push_back(pt);
@@ -465,7 +465,7 @@ namespace QMT {
         return false;
       }
       for(size_t lv = 0; lv < q->getNumVertices(); ++lv) {
-        MNode *v = q->getVertex(lv);
+        MVertex *v = q->getVertex(lv);
         auto it = old2new.find(v);
         size_t nv;
         if(it == old2new.end()) {
@@ -497,7 +497,7 @@ namespace QMT {
       for(size_t lq = 0; lq < v2q[v].size(); ++lq) {
         adjElts[lq] = elements[v2q[v][lq]];
       }
-      std::vector<MNode *> bnd;
+      std::vector<MVertex *> bnd;
       bool okb = buildBoundary(adjElts, bnd);
       if(!okb) {
         Msg::Warning(
@@ -508,13 +508,13 @@ namespace QMT {
 
       /* Be sure the first vertex on the boundary is edge-connected to v */
       /* Start of the stencil */
-      MNode *vp = freeVertices[v];
-      MNode *v0 = NULL;
+      MVertex *vp = freeVertices[v];
+      MVertex *v0 = NULL;
       for(MElement *e : adjElts) {
         size_t N = e->getNumVertices();
         for(size_t j = 0; j < N; ++j) {
-          MNode *a = e->getVertex(j);
-          MNode *b = e->getVertex((j + 1) % N);
+          MVertex *a = e->getVertex(j);
+          MVertex *b = e->getVertex((j + 1) % N);
           if(a == vp) {
             v0 = b;
             break;
@@ -563,12 +563,12 @@ namespace QMT {
   }
 
   bool buildUVSmoothingDataStructures(
-    GSurface *gf, const std::vector<MElement *> &elements,
-    const std::vector<MNode *> &freeVertices, std::vector<vec5> &point_uv,
+    GFace *gf, const std::vector<MElement *> &elements,
+    const std::vector<MVertex *> &freeVertices, std::vector<vec5> &point_uv,
     std::vector<size_t> &one_ring_first, std::vector<uint32_t> &one_ring_values,
-    std::vector<MNode *> &new2old)
+    std::vector<MVertex *> &new2old)
   {
-    std::unordered_map<MNode *, uint32_t> old2new;
+    std::unordered_map<MVertex *, uint32_t> old2new;
     std::vector<std::array<uint32_t, 4> > quads;
     std::vector<std::vector<uint32_t> > v2q;
     std::vector<std::vector<uint32_t> > oneRings;
@@ -581,7 +581,7 @@ namespace QMT {
       return false;
     }
 
-    /* Get associated uv in GSurface */
+    /* Get associated uv in GFace */
     std::vector<std::array<double, 2> > uvs(old2new.size(), {DBL_MAX, DBL_MAX});
     for(size_t i = 0; i < elements.size(); ++i) {
       std::vector<SPoint2> quad_uvs = paramOnElement(gf, elements[i]);
@@ -611,8 +611,8 @@ namespace QMT {
     return true;
   }
 
-  bool getContinuousUVOnLoop(GSurface *gf,
-                             const std::vector<MNode *> &bndOrdered,
+  bool getContinuousUVOnLoop(GFace *gf,
+                             const std::vector<MVertex *> &bndOrdered,
                              std::vector<SPoint2> &bndUvs)
   {
     if(bndOrdered.size() < 3) return false;
@@ -622,10 +622,10 @@ namespace QMT {
     if(gf->periodic(0)) Ts[0] = gf->period(0);
     if(gf->periodic(1)) Ts[1] = gf->period(1);
 
-    /* Get start point on the loop, inside GSurface if possible */
+    /* Get start point on the loop, inside GFace if possible */
     size_t i0 = 0;
     for(size_t i = 0; i < bndOrdered.size(); ++i) {
-      MNode *v = bndOrdered[i];
+      MVertex *v = bndOrdered[i];
       if(v->onWhat() == gf) {
         i0 = i;
         break;
@@ -641,7 +641,7 @@ namespace QMT {
     const size_t N = bndOrdered.size();
     for(size_t k = 1; k < N; ++k) {
       size_t i = (i0 + k) % N;
-      MNode *v = bndOrdered[i];
+      MVertex *v = bndOrdered[i];
       bool okr = reparamMeshVertexOnFaceWithRef(gf, v, prevUV, bndUvs[i]);
       if(!okr) return false;
 
@@ -674,10 +674,10 @@ namespace QMT {
 
   bool
   getPlanarParametrization(const GFaceMeshPatch &patch,
-                           std::unordered_map<MNode *, SPoint2> &vertexParam)
+                           std::unordered_map<MVertex *, SPoint2> &vertexParam)
   {
     if(patch.intVertices.size() == 0) return false;
-    GSurface *gf = patch.gf;
+    GFace *gf = patch.gf;
     if(!gf->haveParametrization()) return false;
     vertexParam.clear();
 
@@ -686,21 +686,21 @@ namespace QMT {
     if(gf->periodic(0)) Ts[0] = gf->period(0);
     if(gf->periodic(1)) Ts[1] = gf->period(1);
 
-    std::unordered_map<MNode *, std::vector<MNode *> > v2v;
+    std::unordered_map<MVertex *, std::vector<MVertex *> > v2v;
     buildVertexToVertexMap(patch.elements, v2v);
-    MNode *v0 = patch.intVertices[0];
+    MVertex *v0 = patch.intVertices[0];
 
-    std::queue<MNode *> Q;
+    std::queue<MVertex *> Q;
     Q.push(v0);
     SPoint2 uv0(0., 0.);
     v0->getParameter(0, uv0.data()[0]);
     v0->getParameter(1, uv0.data()[1]);
     vertexParam[v0] = uv0;
     while(Q.size() > 0) {
-      MNode *v = Q.front();
+      MVertex *v = Q.front();
       Q.pop();
       SPoint2 uv = vertexParam[v];
-      for(MNode *v2 : v2v[v]) {
+      for(MVertex *v2 : v2v[v]) {
         auto it = vertexParam.find(v2);
         if(it != vertexParam.end()) {
           if(Ts[0] != 0. || Ts[1] != 0.) {
@@ -979,7 +979,7 @@ namespace QMT {
     return grid;
   }
 
-  vec5 dmoOptimizeVertexPosition(GSurface *gf, vec5 v, const OneRing &ring,
+  vec5 dmoOptimizeVertexPosition(GFace *gf, vec5 v, const OneRing &ring,
                                  size_t n, size_t nIter, vec3 normal,
                                  double &qmax)
   {
@@ -1009,7 +1009,7 @@ namespace QMT {
         for(size_t j = 0; j < n; ++j) {
           uv.data()[1] = double(j) / double(n - 1) * grid[1] +
                          double(n - 1 - j) / double(n - 1) * grid[3];
-          GVertex newPos = gf->point(uv);
+          GPoint newPos = gf->point(uv);
           if(!newPos.succeeded()) continue;
           if(checkDisplacement) {
             double disp = length(vec3{newPos.x(), newPos.y(), newPos.z()} -
@@ -1055,7 +1055,7 @@ void computeSICN(const std::vector<MElement *> &elements, double &sicnMin,
 
 int patchOptimizeGeometryGlobal(GFaceMeshPatch &patch, GeomOptimStats &stats)
 {
-  GSurface *gf = patch.gf;
+  GFace *gf = patch.gf;
   if(gf == NULL) return -1;
   if(!gf->haveParametrization()) {
     Msg::Debug("optimize geometry global: face %i have no parametrization",
@@ -1085,7 +1085,7 @@ int patchOptimizeGeometryGlobal(GFaceMeshPatch &patch, GeomOptimStats &stats)
 
   double t1 = Cpu();
 
-  std::unordered_map<MNode *, size_t> old2new;
+  std::unordered_map<MVertex *, size_t> old2new;
   std::vector<vector<size_t> > v2v;
   bool oks =
     buildCondensedStructure(patch.intVertices, patch.elements, old2new, v2v);
@@ -1113,10 +1113,10 @@ int patchOptimizeGeometryGlobal(GFaceMeshPatch &patch, GeomOptimStats &stats)
       return -2;
     }
     for(size_t i = 0; i < patch.bdrVertices[loop].size(); ++i) {
-      MNode *v = patch.bdrVertices[loop][i];
+      MVertex *v = patch.bdrVertices[loop][i];
       auto it = old2new.find(v);
       if(it == old2new.end()) {
-        Msg::Error("optimize geometry global: bdr vertex not found in old2new");
+        Msg::Warning("optimize geometry global: bdr vertex not found in old2new");
         return -1;
       }
       size_t idx = it->second;
@@ -1144,15 +1144,15 @@ int patchOptimizeGeometryGlobal(GFaceMeshPatch &patch, GeomOptimStats &stats)
   }
 
   /* Apply CAD mapping */
-  for(MNode *v : patch.intVertices) {
+  for(MVertex *v : patch.intVertices) {
     size_t idx = old2new[v];
     SPoint2 uv = uvs[idx];
     v->setParameter(0, uv[0]);
     v->setParameter(1, uv[1]);
-    GVertex p = gf->point(uv);
+    GPoint p = gf->point(uv);
     if(p.succeeded()) { v->setXYZ(p.x(), p.y(), p.z()); }
     else {
-      Msg::Error("optimize geometry global: CAD evaluation failed on face %i "
+      Msg::Warning("optimize geometry global: CAD evaluation failed on face %i "
                  "at uv=(%f,%f)",
                  gf->tag(), uv[0], uv[1]);
     }
@@ -1185,7 +1185,7 @@ bool kernelLoopWithParametrization(GFaceMeshPatch &patch,
                                    const GeomOptimOptions &opt,
                                    GeomOptimStats &stats)
 {
-  GSurface *gf = patch.gf;
+  GFace *gf = patch.gf;
   if(!gf->haveParametrization()) {
     Msg::Error("optimize geometry kernel: face %i have no parametrization",
                gf->tag());
@@ -1196,7 +1196,7 @@ bool kernelLoopWithParametrization(GFaceMeshPatch &patch,
   std::vector<vec5> point_uv;
   std::vector<size_t> one_ring_first;
   std::vector<uint32_t> one_ring_values;
-  std::vector<MNode *> new2old;
+  std::vector<MVertex *> new2old;
   bool okb = buildUVSmoothingDataStructures(
     gf, patch.elements, patch.intVertices, point_uv, one_ring_first,
     one_ring_values, new2old);
@@ -1320,7 +1320,7 @@ bool movePointWithKernelAndProjection(
 
   size_t n = one_ring_first[v + 1] - one_ring_first[v];
 
-  GVertex proj;
+  GPoint proj;
   double stDx = 0.;
   double sicnMinB = 0.; /* only used if smartVariant */
   double sicnMinA = 0.; /* only used if smartVariant */
@@ -1419,7 +1419,7 @@ bool kernelLoopWithProjection(GFaceMeshPatch &patch,
                               GeomOptimStats &stats,
                               bool finalCADprojection = false)
 {
-  GSurface *gf = patch.gf;
+  GFace *gf = patch.gf;
   if(opt.sp == nullptr) {
     Msg::Error("kernel loop with projection: no surface projector");
     return false;
@@ -1428,8 +1428,8 @@ bool kernelLoopWithProjection(GFaceMeshPatch &patch,
   /* Data for smoothing */
   std::vector<size_t> one_ring_first;
   std::vector<uint32_t> one_ring_values;
-  std::vector<MNode *> new2old;
-  std::unordered_map<MNode *, uint32_t> old2new;
+  std::vector<MVertex *> new2old;
+  std::unordered_map<MVertex *, uint32_t> old2new;
   std::vector<std::array<double, 3> > points;
   {
     std::vector<std::array<uint32_t, 4> > quads;
@@ -1469,7 +1469,7 @@ bool kernelLoopWithProjection(GFaceMeshPatch &patch,
   }
 
   bool project = opt.project;
-  if(opt.project && gf->geomType() == GSurface::GeomType::Plane) project = false;
+  if(opt.project && gf->geomType() == GFace::GeomType::Plane) project = false;
 
   /* Initialization: all vertices unlocked */
   std::vector<bool> locked(patch.intVertices.size(), false);
@@ -1538,7 +1538,7 @@ bool kernelLoopWithProjection(GFaceMeshPatch &patch,
 
   /* Update the positions */
   for(size_t i = 0; i < patch.intVertices.size(); ++i) {
-    MNode *v = new2old[i];
+    MVertex *v = new2old[i];
     v->setXYZ(points[i][0], points[i][1], points[i][2]);
     if(point_uvs.size()) {
       v->setParameter(0, point_uvs[i][0]);
@@ -1546,7 +1546,7 @@ bool kernelLoopWithProjection(GFaceMeshPatch &patch,
 
       if(finalCADprojection) {
         SPoint3 query = v->point();
-        GVertex proj = gf->closestPoint(query, point_uvs[i].data());
+        GPoint proj = gf->closestPoint(query, point_uvs[i].data());
         if(proj.succeeded()) {
           v->setXYZ(proj.x(), proj.y(), proj.z());
           v->setParameter(0, proj.u());
@@ -1569,21 +1569,21 @@ vec3 quad_opposite_right_angled_corner(vec3 pPrev, vec3 pCorner, vec3 pNext)
   return center + radius * dir;
 }
 
-bool quadMeshSpecialAcuteCornerOptimization(GSurface *gf,
+bool quadMeshSpecialAcuteCornerOptimization(GFace *gf,
                                             SurfaceProjector *sp = nullptr)
 {
-  std::unordered_map<MNode *, int> bdrVal;
-  std::unordered_map<MNode *, double> bdrAgl;
-  std::unordered_map<MNode *, std::vector<MQuadrangle *> > corner2quads;
-  std::unordered_map<MNode *, std::vector<MQuadrangle *> > v2quads;
+  std::unordered_map<MVertex *, int> bdrVal;
+  std::unordered_map<MVertex *, double> bdrAgl;
+  std::unordered_map<MVertex *, std::vector<MQuadrangle *> > corner2quads;
+  std::unordered_map<MVertex *, std::vector<MQuadrangle *> > v2quads;
   for(MQuadrangle *q : gf->quadrangles) {
     bool keep = false;
     for(size_t lv = 0; lv < 4; ++lv) {
-      MNode *v = q->getVertex(lv);
+      MVertex *v = q->getVertex(lv);
       if(v->onWhat() != nullptr && v->onWhat()->dim() < 2) {
         bdrVal[v] += 1;
-        MNode *vp = q->getVertex((lv - 1 + 4) % 4);
-        MNode *vn = q->getVertex((lv + 1) % 4);
+        MVertex *vp = q->getVertex((lv - 1 + 4) % 4);
+        MVertex *vn = q->getVertex((lv + 1) % 4);
         double agl = std::abs(angle3Vertices(vp, v, vn));
         bdrAgl[v] += agl;
         if(v->onWhat()->dim() == 0) {
@@ -1594,7 +1594,7 @@ bool quadMeshSpecialAcuteCornerOptimization(GSurface *gf,
     }
     if(keep) {
       for(size_t lv = 0; lv < 4; ++lv) {
-        MNode *v = q->getVertex(lv);
+        MVertex *v = q->getVertex(lv);
         v2quads[v].push_back(q);
       }
     }
@@ -1603,16 +1603,16 @@ bool quadMeshSpecialAcuteCornerOptimization(GSurface *gf,
   size_t nMoved = 0;
   for(auto &kv : corner2quads)
     if(kv.second.size() == 1) {
-      MNode *v = kv.first;
+      MVertex *v = kv.first;
       MQuadrangle *q = kv.second[0];
       double agl = bdrAgl[v];
       if(agl * 180. / M_PI > 30) continue; // not acute corner
       for(size_t lv = 0; lv < 4; ++lv) {
-        MNode *vc = q->getVertex(lv);
+        MVertex *vc = q->getVertex(lv);
         if(vc != v) continue;
-        MNode *vp = q->getVertex((lv - 1 + 4) % 4);
-        MNode *vn = q->getVertex((lv + 1) % 4);
-        MNode *vo = q->getVertex((lv + 2) % 4);
+        MVertex *vp = q->getVertex((lv - 1 + 4) % 4);
+        MVertex *vn = q->getVertex((lv + 1) % 4);
+        MVertex *vo = q->getVertex((lv + 2) % 4);
         if(vo->onWhat() != nullptr && vo->onWhat()->dim() != 2) continue;
 
         const bool BY_OPTIM = true;
@@ -1641,7 +1641,7 @@ bool quadMeshSpecialAcuteCornerOptimization(GSurface *gf,
           vec3 po = quad_opposite_right_angled_corner(pp, pc, pn);
           vo->setXYZ(po[0], po[1], po[2]);
           if(sp) {
-            GVertex proj = sp->closestPoint(po.data(), false, false);
+            GPoint proj = sp->closestPoint(po.data(), false, false);
             if(proj.succeeded()) { vo->setXYZ(proj.x(), proj.y(), proj.z()); }
           }
           double sige_after = q->minSIGEShapeMeasure();
@@ -1682,7 +1682,7 @@ bool patchOptimizeGeometryWithKernel(GFaceMeshPatch &patch,
   const int rdi = (int)(((double)rand() / RAND_MAX) *
                         1e4); /* only to get a random name for debugging */
 
-  GSurface *gf = patch.gf;
+  GFace *gf = patch.gf;
   if(gf == NULL || patch.elements.size() == 0) return false;
   if(patch.intVertices.size() == 0) return false;
 
@@ -1791,8 +1791,8 @@ bool patchProjectOnSurface(GFaceMeshPatch &patch, SurfaceProjector *sp)
   Msg::Debug("patch surface projection (%i vertices) ...",
              patch.intVertices.size());
   bool useParam = patch.gf->haveParametrization();
-  for(MNode *v : patch.intVertices) {
-    GVertex proj;
+  for(MVertex *v : patch.intVertices) {
+    GPoint proj;
     if(sp != nullptr) {
       /* Triangulation projection */
       proj = sp->closestPoint(v->point().data(), false, false);
@@ -1800,7 +1800,7 @@ bool patchProjectOnSurface(GFaceMeshPatch &patch, SurfaceProjector *sp)
       if(useParam) {
         /* CAD projection */
         double uv[2] = {proj.u(), proj.v()};
-        GVertex proj2 = patch.gf->closestPoint(v->point(), uv);
+        GPoint proj2 = patch.gf->closestPoint(v->point(), uv);
         if(proj2.succeeded()) {
           v->setXYZ(proj2.x(), proj2.y(), proj2.z());
           v->setParameter(0, proj2.u());
@@ -1813,7 +1813,7 @@ bool patchProjectOnSurface(GFaceMeshPatch &patch, SurfaceProjector *sp)
       v->getParameter(0, uv[0]);
       v->getParameter(1, uv[1]);
       /* CAD projection */
-      GVertex proj2 = patch.gf->closestPoint(v->point(), uv);
+      GPoint proj2 = patch.gf->closestPoint(v->point(), uv);
       if(proj2.succeeded()) {
         v->setXYZ(proj2.x(), proj2.y(), proj2.z());
         v->setParameter(0, proj2.u());
@@ -1829,7 +1829,7 @@ bool patchProjectOnSurface(GFaceMeshPatch &patch, SurfaceProjector *sp)
   return true;
 }
 
-bool optimizeGeometryQuadMesh(GSurface *gf, SurfaceProjector *sp, double timeMax,
+bool optimizeGeometryQuadMesh(GFace *gf, SurfaceProjector *sp, double timeMax,
                               bool withBackup)
 {
   // TODO FIXME: replace by optimizeGeometryQuadTriMesh when it works well
@@ -1893,11 +1893,11 @@ bool optimizeGeometryQuadMesh(GSurface *gf, SurfaceProjector *sp, double timeMax
     //         should enable it only if param has no large distortion ?
     // oku = optu.smoothWithWinslowUntangler(method, iter, backupRestore,
     // projectOnCad);
-    if(!oku) { /* try mean plane ... */
-      method = GeometryOptimizer::PlanarMethod::MeanPlane;
-      oku = optu.smoothWithWinslowUntangler(method, iter, backupRestore,
-                                            projectOnCad);
-    }
+    //    if(!oku) { /* try mean plane ... */
+    //      method = GeometryOptimizer::PlanarMethod::MeanPlane;
+    //      oku = optu.smoothWithWinslowUntangler(method, iter, backupRestore,
+    //                                            projectOnCad);
+    //    }
   }
 
   double minSICN = DBL_MAX;
@@ -2016,7 +2016,7 @@ bool optimizeGeometryQuadMesh(GSurface *gf, SurfaceProjector *sp, double timeMax
   return true;
 }
 
-bool optimizeGeometryQuadTriMesh(GSurface *gf, SurfaceProjector *sp,
+bool optimizeGeometryQuadTriMesh(GFace *gf, SurfaceProjector *sp,
                                  double timeMax)
 {
   // TODO FIXME: replace by optimizeGeometryQuadMesh when it works well
@@ -2260,7 +2260,7 @@ bool GeometryOptimizer::smoothWithKernel(
 
   /* Update the positions */
   for(size_t i = 0; i < nFree; ++i) {
-    MNode *v = new2old[i];
+    MVertex *v = new2old[i];
     v->setXYZ(points[i][0], points[i][1], points[i][2]);
     if(uvs.size()) {
       v->setParameter(0, uvs[i][0]);
@@ -2268,7 +2268,7 @@ bool GeometryOptimizer::smoothWithKernel(
 
       if(finalCADprojection) {
         SPoint3 query = v->point();
-        GVertex proj = patchPtr->gf->closestPoint(query, uvs[i].data());
+        GPoint proj = patchPtr->gf->closestPoint(query, uvs[i].data());
         if(proj.succeeded()) {
           v->setXYZ(proj.x(), proj.y(), proj.z());
           v->setParameter(0, proj.u());
@@ -2396,7 +2396,7 @@ bool GeometryOptimizer::smoothWithWinslowUntangler(PlanarMethod planar,
     }
   }
   else if(planar == PlanarMethod::ParamCAD) {
-    std::unordered_map<MNode *, SPoint2> vertexParam;
+    std::unordered_map<MVertex *, SPoint2> vertexParam;
     bool okp = getPlanarParametrization(*patchPtr, vertexParam);
     if(!okp) {
       Msg::Debug("- Untangle: failed to get planar parametrization from CAD");
@@ -2474,7 +2474,7 @@ bool GeometryOptimizer::smoothWithWinslowUntangler(PlanarMethod planar,
       SPoint3 onPlane =
         pop + points_2D[v][0] * tangent + points_2D[v][1] * binormal;
 
-      GVertex proj;
+      GPoint proj;
       if(sp != nullptr) {
         proj = sp->closestPoint(onPlane.data(), false, false);
         if(proj.succeeded()) {
@@ -2513,7 +2513,7 @@ bool GeometryOptimizer::smoothWithWinslowUntangler(PlanarMethod planar,
   }
   else if(planar == PlanarMethod::ParamCAD) {
     for(size_t v = 0; v < nFree; ++v) {
-      GVertex p = patchPtr->gf->point(points_2D[v][0], points_2D[v][1]);
+      GPoint p = patchPtr->gf->point(points_2D[v][0], points_2D[v][1]);
       new2old[v]->setXYZ(p.x(), p.y(), p.z());
       new2old[v]->setParameter(0, points_2D[v][0]);
       new2old[v]->setParameter(1, points_2D[v][1]);
@@ -2570,9 +2570,9 @@ bool optimizeGeometryQuadqs(GModel *gm)
 {
   Msg::Info("Optimize geometry of quad mesh ...");
 
-  vector<GSurface *> faces = model_faces(gm);
+  vector<GFace *> faces = model_faces(gm);
   for(size_t f = 0; f < faces.size(); ++f) {
-    GSurface *gf = faces[f];
+    GFace *gf = faces[f];
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
     if(CTX::instance()->debugSurface > 0 &&
        gf->tag() != CTX::instance()->debugSurface)

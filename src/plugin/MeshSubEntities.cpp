@@ -81,18 +81,18 @@ PView *GMSH_MeshSubEntitiesPlugin::execute(PView *view)
       elements.push_back(entities[i]->getMeshElement(j));
 
   if(outputdim == 0) { // create point elements for mesh vertices
-    std::set<MNode *> vertices;
+    std::set<MVertex *> vertices;
     for(std::size_t i = 0; i < elements.size(); i++) {
       for(std::size_t j = 0; j < elements[i]->getNumVertices(); j++) {
-        MNode *v = elements[i]->getVertex(j);
+        MVertex *v = elements[i]->getVertex(j);
         vertices.insert(v);
       }
     }
     for(auto it = vertices.begin(); it != vertices.end(); ++it) {
-      MNode *v = *it;
-      GPoint *gv = nullptr;
+      MVertex *v = *it;
+      GVertex *gv = nullptr;
       if(v->onWhat() && v->onWhat()->dim() == 0) {
-        gv = (GPoint *)v->onWhat();
+        gv = (GVertex *)v->onWhat();
       }
       else {
         gv = new discreteVertex(m, m->getMaxElementaryNumber(0) + 1);
@@ -114,17 +114,17 @@ PView *GMSH_MeshSubEntitiesPlugin::execute(PView *view)
     }
     for(auto it = edges.begin(); it != edges.end(); ++it) {
       const MEdge &e = *it;
-      GCurve *ge = nullptr;
-      MNode *v0 = e.getVertex(0), *v1 = e.getVertex(1);
+      GEdge *ge = nullptr;
+      MVertex *v0 = e.getVertex(0), *v1 = e.getVertex(1);
       if(v0->onWhat() && v1->onWhat()) {
         if(v0->onWhat()->dim() == 1 &&
            ((v1->onWhat()->dim() == 1 && v0->onWhat() == v1->onWhat()) ||
             v1->onWhat()->dim() == 0))
-          ge = (GCurve *)v0->onWhat();
+          ge = (GEdge *)v0->onWhat();
         else if(v1->onWhat()->dim() == 1 &&
                 ((v0->onWhat()->dim() == 1 && v0->onWhat() == v1->onWhat()) ||
                  v0->onWhat()->dim() == 0))
-          ge = (GCurve *)v1->onWhat();
+          ge = (GEdge *)v1->onWhat();
       }
       if(!ge) {
         ge = new discreteEdge(m, m->getMaxElementaryNumber(1) + 1, nullptr,

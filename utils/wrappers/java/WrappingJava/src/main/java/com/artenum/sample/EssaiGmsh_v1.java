@@ -15,13 +15,13 @@ import org.geuz.gmsh.generated.EdgeVector;
 import org.geuz.gmsh.generated.EdgeVectorOfVector;
 import org.geuz.gmsh.generated.FaceVector;
 import org.geuz.gmsh.generated.FaceVectorOfVector;
-import org.geuz.gmsh.generated.GCurve;
+import org.geuz.gmsh.generated.GEdge;
 import org.geuz.gmsh.generated.GEntity;
 import org.geuz.gmsh.generated.GEntityVector;
-import org.geuz.gmsh.generated.GSurface;
+import org.geuz.gmsh.generated.GFace;
 import org.geuz.gmsh.generated.GModel;
-import org.geuz.gmsh.generated.GVolume;
-import org.geuz.gmsh.generated.GPoint;
+import org.geuz.gmsh.generated.GRegion;
+import org.geuz.gmsh.generated.GVertex;
 import org.geuz.gmsh.generated.GVertexVector;
 import org.geuz.gmsh.generated.IntVector;
 import org.geuz.gmsh.generated.List_T;
@@ -113,7 +113,7 @@ public class EssaiGmsh_v1 {
         // point
         final GVertexVector bindingsGetVertices = m.bindingsGetVertices();
         for (int indexVertex = 0; indexVertex < bindingsGetVertices.size(); indexVertex++) {
-            final GPoint it = bindingsGetVertices.get(indexVertex);
+            final GVertex it = bindingsGetVertices.get(indexVertex);
             for (int k = 0; k < it.getPoints().size(); k++) {
                 for (int j = 0; j < it.getPhysicals().size(); j++) {
                     final int physical = it.getPhysicals().get(j);
@@ -144,7 +144,7 @@ public class EssaiGmsh_v1 {
 
         final EdgeVector bindingsGetEdges = m.bindingsGetEdges();
         for (int indexEdges = 0; indexEdges < bindingsGetEdges.size(); indexEdges++) {
-            final GCurve it = bindingsGetEdges.get(indexEdges);
+            final GEdge it = bindingsGetEdges.get(indexEdges);
             for (int j = 0; j < it.getLines().size(); j++) {
                 for (int k = 0; k < it.getPhysicals().size(); k++) {
                     final int physical = it.getPhysicals().get(k);
@@ -167,7 +167,7 @@ public class EssaiGmsh_v1 {
 
         final FaceVector bindingsGetFaces = m.bindingsGetFaces();
         for (int indexFace = 0; indexFace < bindingsGetFaces.size(); indexFace++) {
-            final GSurface it = bindingsGetFaces.get(indexFace);
+            final GFace it = bindingsGetFaces.get(indexFace);
             for (int j = 0; j < it.getTriangles().size(); j++) {
                 for (int k = 0; k < it.getPhysicals().size(); k++) {
                     final int physical = it.getPhysicals().get(k);
@@ -191,7 +191,7 @@ public class EssaiGmsh_v1 {
         final RegionVector bindingsGetRegions = m.bindingsGetRegions();
 
         for (int indexRegion = 0; indexRegion < bindingsGetRegions.size(); indexRegion++) {
-            final GVolume it = bindingsGetRegions.get(indexRegion);
+            final GRegion it = bindingsGetRegions.get(indexRegion);
             for (int j = 0; j < it.getTetrahedra().size(); j++) {
                 for (int k = 0; k < it.getPhysicals().size(); k++) {
                     final int physical = it.getPhysicals().get(k);

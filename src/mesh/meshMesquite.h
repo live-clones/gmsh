@@ -6,10 +6,10 @@
 #ifndef MESH_MESQUITE_H
 #define MESH_MESQUITE_H
 
-class GVolume;
-class GSurface;
+class GRegion;
+class GFace;
 
-int mesquiteImprove(GVolume *gr);
-int mesquiteImprove(GSurface *gr);
+int mesquiteImprove(GRegion *gr);
+int mesquiteImprove(GFace *gr);
 
 #endif

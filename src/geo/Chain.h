@@ -120,23 +120,23 @@ public:
 class ElemChain : public PosetCat<ElemChain> {
 private:
   char _dim;
-  std::vector<MNode *> _v;
+  std::vector<MVertex *> _v;
   std::vector<char> _si;
   inline void _sortVertexIndices();
-  bool _equalVertices(const std::vector<MNode *> &v2) const;
+  bool _equalVertices(const std::vector<MVertex *> &v2) const;
 
-  static std::map<GEntity *, std::set<MNode *, MVertexPtrLessThan>,
+  static std::map<GEntity *, std::set<MVertex *, MVertexPtrLessThan>,
                   GEntityPtrLessThan>
     _vertexCache;
 
 public:
   ElemChain(MElement *e);
-  ElemChain(int dim, std::vector<MNode *> &v);
+  ElemChain(int dim, std::vector<MVertex *> &v);
 
   int getDim() const { return _dim; }
   int getNumVertices() const { return _v.size(); }
-  MNode *getMeshVertex(int i) const { return _v.at(i); }
-  void getMeshVertices(std::vector<MNode *> &v) const { v = _v; }
+  MVertex *getMeshVertex(int i) const { return _v.at(i); }
+  void getMeshVertices(std::vector<MVertex *> &v) const { v = _v; }
   int getNumSortedVertices() const { return _v.size(); }
   inline int getSortedVertex(int i) const;
 
@@ -155,8 +155,8 @@ public:
   static int getTypeMSH(int dim, int numVertices);
   static int getNumBoundaries(int dim, int numVertices);
   static void getBoundaryVertices(int i, int dim, int numVertices,
-                                  const std::vector<MNode *> &v,
-                                  std::vector<MNode *> &vertices);
+                                  const std::vector<MVertex *> &v,
+                                  std::vector<MVertex *> &vertices);
 };
 
 void findEntitiesInPhysicalGroups(GModel *m,
@@ -280,10 +280,10 @@ template <class C> C Chain<C>::getCoefficient(MElement *e, int subElement) const
     return this->getCoefficient(ec);
   }
   if(subElement == -1) return 0;
-  std::vector<MNode *> v;
+  std::vector<MVertex *> v;
   if(this->getDim() == 0) {
     if(subElement >= e->getNumVertices()) return 0;
-    v = std::vector<MNode *>(1, e->getVertex(subElement));
+    v = std::vector<MVertex *>(1, e->getVertex(subElement));
   }
   else if(this->getDim() == 1) {
     if(subElement >= e->getNumEdges()) return 0;

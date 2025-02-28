@@ -211,7 +211,7 @@ int GModel::writeRAD(const std::string &name, int saveAll,
   if(saveGroupsOfNodes & 0x1) {
     for(int dim = 1; dim <= 3; dim++) {
       for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
-        std::set<MNode *> nodes;
+        std::set<MVertex *> nodes;
         std::vector<GEntity *> &entities = it->second;
         bool hasNodes = false; // Flag to track if there are any nodes
         for(std::size_t i = 0; i < entities.size(); i++) {

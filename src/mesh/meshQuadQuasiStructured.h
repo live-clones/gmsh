@@ -9,8 +9,8 @@
 #include <vector>
 
 class GModel;
-class GSurface;
-class GCurve;
+class GFace;
+class GEdge;
 
 namespace CppUtils {
   template <typename T> class RestoreValueAtEndOfLife;
@@ -72,7 +72,7 @@ bool backgroundMeshAndGuidingFieldExists(GModel *gm);
  *        local remeshing by looking into all disk quadrangulations.
  *        Quad quality (SICN) is monitored and the minimum will not decrease.
  *        Executes over CAD faces in parallel if multiple threads available.
- *        Only faces whose meshing status is GSurface::PENDING are processed
+ *        Only faces whose meshing status is GFace::PENDING are processed
  *
  * @param gm The model containing the face quad meshes.
  *
@@ -82,7 +82,7 @@ int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel *gm);
 
 /**
  * @brief Mesh vertices on seam curves (and isolated corners) are
- *        reparametrized on the associated GSurface and transfered.
+ *        reparametrized on the associated GFace and transfered.
  *        The seam curves have empty meshes in the end.
  *
  * @param gm The model containing the meshes
@@ -98,7 +98,7 @@ int transferSeamGEdgesVerticesToGFace(GModel *gm);
  *        Irregular vertices matching cross field singularities are
  *        preserved.
  *        Executes over CAD faces in parallel if multiple threads available.
- *        Only faces whose meshing status is GSurface::PENDING are processed
+ *        Only faces whose meshing status is GFace::PENDING are processed
  *
  * @param gm The model containing the face quad meshes.
  *
@@ -111,7 +111,7 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm);
  *        which can be remeshed with simple quad patterns.
  *        The patterns are the same that are used in cavity remeshing.
  *        Executes over CAD faces in parallel if multiple threads available.
- *        Only faces whose meshing status is GSurface::PENDING are processed
+ *        Only faces whose meshing status is GFace::PENDING are processed
  *
  * @param gm The model containing the face quad meshes.
  * @param minimumQualityRequired Minimum quality (SICN) required to accept a new

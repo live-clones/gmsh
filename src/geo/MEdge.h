@@ -6,14 +6,14 @@
 #ifndef MEDGE_H
 #define MEDGE_H
 
-#include "MNode.h"
+#include "MVertex.h"
 #include "SVector3.h"
 #include <iostream>
 
 // A mesh edge.
 class MEdge {
 private:
-  MNode *_v[2];
+  MVertex *_v[2];
   char _si[2]; // sorted indices
 
 public:
@@ -22,7 +22,7 @@ public:
     _v[0] = _v[1] = nullptr;
     _si[0] = _si[1] = 0;
   }
-  MEdge(MNode *v0, MNode *v1)
+  MEdge(MVertex *v0, MVertex *v1)
   {
     _v[0] = v0;
     _v[1] = v1;
@@ -36,10 +36,10 @@ public:
     }
   }
   std::size_t getNumVertices() const { return 2; }
-  MNode *getVertex(std::size_t i) const { return _v[i]; }
-  MNode *getSortedVertex(std::size_t i) const { return _v[int(_si[i])]; }
-  MNode *getMinVertex() const { return _v[int(_si[0])]; }
-  MNode *getMaxVertex() const { return _v[int(_si[1])]; }
+  MVertex *getVertex(std::size_t i) const { return _v[i]; }
+  MVertex *getSortedVertex(std::size_t i) const { return _v[int(_si[i])]; }
+  MVertex *getMinVertex() const { return _v[int(_si[0])]; }
+  MVertex *getMaxVertex() const { return _v[int(_si[1])]; }
 
   int computeCorrespondence(MEdge &other)
   {
@@ -100,7 +100,7 @@ public:
                    t * _v[1]->y() + (1. - t) * _v[0]->y(),
                    t * _v[1]->z() + (1. - t) * _v[0]->z());
   }
-  bool isInside(MNode *v) const;
+  bool isInside(MVertex *v) const;
 };
 
 inline bool operator==(const MEdge &e1, const MEdge &e2)
@@ -131,18 +131,18 @@ struct MEdgeLessThan {
 
 // assume a set of MEdge, give consecutive list of vertices
 bool SortEdgeConsecutive(const std::vector<MEdge> &,
-                         std::vector<std::vector<MNode *> > &vs);
+                         std::vector<std::vector<MVertex *> > &vs);
 
 class MEdgeN {
 private:
-  std::vector<MNode *> _v;
+  std::vector<MVertex *> _v;
 
 public:
   MEdgeN() {}
-  MEdgeN(const std::vector<MNode *> &v);
+  MEdgeN(const std::vector<MVertex *> &v);
   std::size_t getNumVertices() const { return _v.size(); }
-  MNode *getVertex(std::size_t i) const { return _v[i]; }
-  const std::vector<MNode *> &getVertices() const { return _v; }
+  MVertex *getVertex(std::size_t i) const { return _v[i]; }
+  const std::vector<MVertex *> &getVertices() const { return _v; }
   int getPolynomialOrder() const { return (int)(getNumVertices() - 1); }
 
   MEdge getEdge() const;

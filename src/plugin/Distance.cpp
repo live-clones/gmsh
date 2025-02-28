@@ -67,7 +67,7 @@ StringXNumber *GMSH_DistancePlugin::getOption(int iopt)
 }
 
 void GMSH_DistancePlugin::printView(std::vector<GEntity *> &entities,
-                                    std::map<MNode *, double> &distanceMap)
+                                    std::map<MVertex *, double> &distanceMap)
 {
   double minScale = (double)DistanceOptions_Number[4].def;
   double maxScale = (double)DistanceOptions_Number[5].def;
@@ -91,7 +91,7 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity *> &entities,
         std::vector<double> x(numNodes), y(numNodes), z(numNodes);
         std::vector<double> *out =
           _data->incrementList(1, e->getType(), numNodes);
-        std::vector<MNode *> nods;
+        std::vector<MVertex *> nods;
 
         if(!e->getNumChildren())
           for(std::size_t i = 0; i < numNodes; i++)
@@ -110,7 +110,7 @@ void GMSH_DistancePlugin::printView(std::vector<GEntity *> &entities,
 
         std::vector<double> dist;
         for(std::size_t j = 0; j < numNodes; j++) {
-          MNode *v = nods[j];
+          MVertex *v = nods[j];
           auto it = distanceMap.find(v);
           dist.push_back(it->second);
         }
@@ -152,14 +152,14 @@ PView *GMSH_DistancePlugin::execute(PView *v)
 
   std::vector<SPoint3> pts(totNumNodes);
   std::vector<double> distances(totNumNodes, 1.e22);
-  std::vector<MNode *> pt2Vertex(totNumNodes);
-  std::map<MNode *, double> distanceMap;
+  std::vector<MVertex *> pt2Vertex(totNumNodes);
+  std::map<MVertex *, double> distanceMap;
 
   std::size_t k = 0;
   for(std::size_t i = 0; i < entities.size(); i++) {
     GEntity *ge = entities[i];
     for(std::size_t j = 0; j < ge->mesh_vertices.size(); j++) {
-      MNode *v = ge->mesh_vertices[j];
+      MVertex *v = ge->mesh_vertices[j];
       pts[k] = SPoint3(v->x(), v->y(), v->z());
       pt2Vertex[k] = v;
       distanceMap.insert(std::make_pair(v, 0.0));
@@ -194,15 +194,15 @@ PView *GMSH_DistancePlugin::execute(PView *v)
           std::vector<SPoint3> iClosePts;
           std::vector<double> iDistancesE;
           MElement *e = g2->getMeshElement(k);
-          MNode *v1 = e->getVertex(0);
-          MNode *v2 = e->getVertex(1);
+          MVertex *v1 = e->getVertex(0);
+          MVertex *v2 = e->getVertex(1);
           SPoint3 p1(v1->x(), v1->y(), v1->z());
           SPoint3 p2(v2->x(), v2->y(), v2->z());
           if(e->getType() == TYPE_LIN) {
             signedDistancesPointsLine(iDistances, iClosePts, pts, p1, p2);
           }
           else if(e->getType() == TYPE_TRI) {
-            MNode *v3 = e->getVertex(2);
+            MVertex *v3 = e->getVertex(2);
             SPoint3 p3(v3->x(), v3->y(), v3->z());
             signedDistancesPointsTriangle(iDistances, iClosePts, pts, p1, p2,
                                           p3);
@@ -210,7 +210,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
           for(std::size_t kk = 0; kk < pts.size(); kk++) {
             if(std::abs(iDistances[kk]) < distances[kk]) {
               distances[kk] = std::abs(iDistances[kk]);
-              MNode *v = pt2Vertex[kk];
+              MVertex *v = pt2Vertex[kk];
               distanceMap[v] = distances[kk];
             }
           }
@@ -262,7 +262,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
         for(std::size_t i = 0; i < ge->getNumMeshElements(); ++i) {
           MElement *t = ge->getMeshElement(i);
           for(std::size_t k = 0; k < t->getNumVertices(); k++) {
-            MNode *v = t->getVertex(k);
+            MVertex *v = t->getVertex(k);
             dofView->fixVertex(v, 0, 1, 0.);
             bbox += SPoint3(v->x(), v->y(), v->z());
           }
@@ -299,7 +299,7 @@ PView *GMSH_DistancePlugin::execute(PView *v)
       distance.addToRightHandSide(*dofView, gr);
       lsys->systemSolve();
       for(auto itv = distanceMap.begin(); itv != distanceMap.end(); ++itv) {
-        MNode *v = itv->first;
+        MVertex *v = itv->first;
         double value;
         dofView->getDofValue(v, 0, 1, value);
         value = std::min(0.9999, value);

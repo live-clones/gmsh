@@ -6,7 +6,7 @@
 #include "meshGFaceQuadrilateralize.h"
 #include "GmshMessage.h"
 #include "Numeric.h"
-#include "GSurface.h"
+#include "GFace.h"
 #include "meshGFaceDelaunayInsertion.h"
 #include "meshGFaceOptimize.h"
 #include "meshGFaceBDS.h"
@@ -19,7 +19,7 @@ public:
 
 private:
   BDS_Mesh *m;
-  GSurface *gf;
+  GFace *gf;
   void getFrontEdges(BDS_Point *p, eiter &it1, eiter &it2) const;
   void getFrontEdges(BDS_Point *p, std::vector<eiter> &f) const;
 
@@ -28,7 +28,7 @@ public:
   std::set<BDS_Edge *> stat[5];
   eiter begin() { return edges.begin(); }
   eiter end() { return edges.end(); }
-  edgeFront(BDS_Mesh *_m, GSurface *_gf) : m(_m), gf(_gf) {}
+  edgeFront(BDS_Mesh *_m, GFace *_gf) : m(_m), gf(_gf) {}
   // initiate edges in the front i.e.
   // take all edges that have one neighbor
   // and all edges that have a quad and a triangle
@@ -535,7 +535,7 @@ static int numQuads(BDS_Mesh *m)
   return N;
 }
 
-int gmshQMorph(GSurface *gf)
+int gmshQMorph(GFace *gf)
 {
   // assert first that there exist a triangulation of
   // the face
@@ -545,7 +545,7 @@ int gmshQMorph(GSurface *gf)
   }
 
   // create data structures for mesh manipulations
-  std::list<GSurface *> l;
+  std::list<GFace *> l;
   l.push_back(gf);
   BDS_Mesh *pm = gmsh2BDS(l);
 

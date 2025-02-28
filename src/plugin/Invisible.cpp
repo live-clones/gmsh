@@ -63,7 +63,7 @@ PView *GMSH_InvisiblePlugin::execute(PView *v)
         MElement *e = entities[i]->getMeshElement(j);
         bool visible = false;
         for(std::size_t k = 0; k < e->getNumVertices(); k++) {
-          MNode *v = e->getVertex(k);
+          MVertex *v = e->getVertex(k);
           if(v->x() >= xmin && v->x() <= xmax &&
              v->y() >= ymin && v->y() <= ymax &&
              v->z() >= zmin && v->z() <= zmax) {

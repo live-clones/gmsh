@@ -10,10 +10,10 @@
 #include "MElement.h"
 #include "VertexArray.h"
 #include "Context.h"
-#include "GPoint.h"
-#include "GCurve.h"
-#include "GSurface.h"
-#include "GVolume.h"
+#include "GVertex.h"
+#include "GEdge.h"
+#include "GFace.h"
+#include "GRegion.h"
 #include "closestVertex.h"
 
 GEntity::GEntity(GModel *m, int t)
@@ -116,7 +116,7 @@ std::string GEntity::getInfoString(bool additional, bool multiline)
 }
 
 // removes a MeshVertex
-void GEntity::removeMeshVertex(MNode *v, bool del)
+void GEntity::removeMeshVertex(MVertex *v, bool del)
 {
   auto it = std::find(mesh_vertices.begin(), mesh_vertices.end(), v);
   if(it != mesh_vertices.end()) {
@@ -125,10 +125,10 @@ void GEntity::removeMeshVertex(MNode *v, bool del)
   }
 }
 
-GPoint *GEntity::cast2Vertex() { return dynamic_cast<GPoint *>(this); }
-GCurve *GEntity::cast2Edge() { return dynamic_cast<GCurve *>(this); }
-GSurface *GEntity::cast2Face() { return dynamic_cast<GSurface *>(this); }
-GVolume *GEntity::cast2Region() { return dynamic_cast<GVolume *>(this); }
+GVertex *GEntity::cast2Vertex() { return dynamic_cast<GVertex *>(this); }
+GEdge *GEntity::cast2Edge() { return dynamic_cast<GEdge *>(this); }
+GFace *GEntity::cast2Face() { return dynamic_cast<GFace *>(this); }
+GRegion *GEntity::cast2Region() { return dynamic_cast<GRegion *>(this); }
 
 // sets the entity m from which the mesh will be copied
 void GEntity::setMeshMaster(GEntity *gMaster)
@@ -169,28 +169,28 @@ void GEntity::setMeshMaster(GEntity *gMaster, const std::vector<double> &tfo,
   if(updateCorrespVert) updateCorrespondingVertices();
 }
 
-void GEntity::addVerticesInSet(std::set<MNode *> &vtcs, bool closure) const
+void GEntity::addVerticesInSet(std::set<MVertex *> &vtcs, bool closure) const
 {
   vtcs.insert(mesh_vertices.begin(), mesh_vertices.end());
 
   if(closure) {
     switch(dim()) {
     case 3: {
-      std::vector<GSurface *> clos = faces();
+      std::vector<GFace *> clos = faces();
       auto cIter = clos.begin();
       for(; cIter != clos.end(); ++cIter)
         (*cIter)->addVerticesInSet(vtcs, true);
       break;
     }
     case 2: {
-      std::vector<GCurve *> clos = edges();
+      std::vector<GEdge *> clos = edges();
       auto cIter = clos.begin();
       for(; cIter != clos.end(); ++cIter)
         (*cIter)->addVerticesInSet(vtcs, true);
       break;
     }
     case 1: {
-      std::vector<GPoint *> clos = vertices();
+      std::vector<GVertex *> clos = vertices();
       auto cIter = clos.begin();
       for(; cIter != clos.end(); ++cIter)
         (*cIter)->addVerticesInSet(vtcs, true);
@@ -211,19 +211,19 @@ void GEntity::updateCorrespondingVertices()
       std::vector<double> inv;
       invertAffineTransformation(tfo, inv);
 
-      std::set<MNode *> vtcs;
+      std::set<MVertex *> vtcs;
       this->addVerticesInSet(vtcs, true);
 
       auto vIter = vtcs.begin();
       for(; vIter != vtcs.end(); ++vIter) {
-        MNode *tv = *vIter;
+        MVertex *tv = *vIter;
         // double tgt[4] = {tv->x(),tv->y(),tv->z(),1};
         // double xyz[4] = {0,0,0,0};
 
         // int idx = 0;
         // for (int i=0;i<3;i++) for (int j=0;j<4;j++) tgt[i] += inv[idx++] *
         // ori[j];
-        MNode *sv = cvf(tv->point(), inv);
+        MVertex *sv = cvf(tv->point(), inv);
 
         correspondingVertices[tv] = sv;
 
@@ -249,8 +249,8 @@ void GEntity::copyMasterCoordinates()
     auto cvIter = correspondingVertices.begin();
 
     for(; cvIter != correspondingVertices.end(); ++cvIter) {
-      MNode *tv = cvIter->first;
-      MNode *sv = cvIter->second;
+      MVertex *tv = cvIter->first;
+      MVertex *sv = cvIter->second;
       double src[4] = {sv->x(), sv->y(), sv->z(), 1};
       double tgt[3] = {0, 0, 0};
       int idx = 0;
@@ -264,8 +264,8 @@ void GEntity::copyMasterCoordinates()
     cvIter = correspondingHighOrderVertices.begin();
 
     for(; cvIter != correspondingHighOrderVertices.end(); ++cvIter) {
-      MNode *tv = cvIter->first;
-      MNode *sv = cvIter->second;
+      MVertex *tv = cvIter->first;
+      MVertex *sv = cvIter->second;
 
       double src[4] = {sv->x(), sv->y(), sv->z(), 1};
       double tgt[3] = {0, 0, 0};

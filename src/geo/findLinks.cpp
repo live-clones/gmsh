@@ -39,7 +39,7 @@ static int complink(const void *a, const void *b)
 static void recurFindLinkedEdges(int ed, List_T *edges, Tree_T *points,
                                  Tree_T *links)
 {
-  GCurve *ge = GModel::current()->getEdgeByTag(ed);
+  GEdge *ge = GModel::current()->getEdgeByTag(ed);
   if(!ge) {
     Msg::Error("Unknown curve %d", ed);
     return;
@@ -77,7 +77,7 @@ static int createEdgeLinks(Tree_T *links)
 {
   GModel *m = GModel::current();
   for(auto it = m->firstEdge(); it != m->lastEdge(); it++) {
-    GCurve *ge = *it;
+    GEdge *ge = *it;
     if(!ge->getBeginVertex() || !ge->getEndVertex()) {
       Msg::Error("Cannot link curve %d with no begin or end point", ge->tag());
       return 0;
@@ -113,7 +113,7 @@ static void orientAndSortEdges(List_T *edges, Tree_T *links)
   List_Read(temp, 0, &num);
   List_Add(edges, &num);
 
-  GCurve *ge0 = GModel::current()->getEdgeByTag(abs(num));
+  GEdge *ge0 = GModel::current()->getEdgeByTag(abs(num));
   if(!ge0) {
     Msg::Error("Unknown curve %d", abs(num));
     List_Delete(temp);
@@ -136,7 +136,7 @@ static void orientAndSortEdges(List_T *edges, Tree_T *links)
       nxa na;
       List_Read(lk.l, j, &na);
       if(ge0->tag() != na.a && List_Search(temp, &na.a, fcmp_absint)) {
-        GCurve *ge1 = GModel::current()->getEdgeByTag(abs(na.a));
+        GEdge *ge1 = GModel::current()->getEdgeByTag(abs(na.a));
         if(!ge1) {
           Msg::Error("Unknown curve %d", abs(na.a));
           List_Delete(temp);
@@ -175,7 +175,7 @@ int allEdgesLinked(int ed, List_T *edges)
   for(int i = 0; i < List_Nbr(edges); i++) {
     int num;
     List_Read(edges, i, &num);
-    GCurve *ge = GModel::current()->getEdgeByTag(abs(num));
+    GEdge *ge = GModel::current()->getEdgeByTag(abs(num));
     if(!ge) {
       Msg::Error("Unknown curve %d", abs(num));
       Tree_Delete(links, freeLink);
@@ -225,15 +225,15 @@ int allEdgesLinked(int ed, List_T *edges)
 static void recurFindLinkedFaces(int fac, List_T *faces, Tree_T *edges,
                                  Tree_T *links)
 {
-  GSurface *gf = GModel::current()->getFaceByTag(abs(fac));
+  GFace *gf = GModel::current()->getFaceByTag(abs(fac));
   if(!gf) {
     Msg::Error("Unknown surface %d", abs(fac));
     return;
   }
 
-  std::vector<GCurve *> const &l = gf->edges();
+  std::vector<GEdge *> const &l = gf->edges();
   for(auto it = l.begin(); it != l.end(); it++) {
-    GCurve *ge = *it;
+    GEdge *ge = *it;
     if(ge->degenerate(0)) continue;
     lnk lk;
     lk.n = std::abs(ge->tag());
@@ -261,13 +261,13 @@ static void createFaceLinks(Tree_T *links)
 {
   GModel *m = GModel::current();
   for(auto it = m->firstFace(); it != m->lastFace(); it++) {
-    GSurface *gf = *it;
+    GFace *gf = *it;
     if(gf->tag() > 0) {
       nxa na;
       na.a = gf->tag();
-      std::vector<GCurve *> const &l = gf->edges();
+      std::vector<GEdge *> const &l = gf->edges();
       for(auto ite = l.begin(); ite != l.end(); ite++) {
-        GCurve *ge = *ite;
+        GEdge *ge = *ite;
         if(ge->degenerate(0)) continue;
         lnk li, *pli;
         li.n = std::abs(ge->tag());
@@ -293,16 +293,16 @@ int allFacesLinked(int fac, List_T *faces)
   for(int i = 0; i < List_Nbr(faces); i++) {
     int num;
     List_Read(faces, i, &num);
-    GSurface *gf = GModel::current()->getFaceByTag(abs(num));
+    GFace *gf = GModel::current()->getFaceByTag(abs(num));
     if(!gf) {
       Msg::Error("Unknown surface %d", abs(num));
       Tree_Delete(links, freeLink);
       Tree_Delete(edges);
       return 0;
     }
-    std::vector<GCurve *> const &l = gf->edges();
+    std::vector<GEdge *> const &l = gf->edges();
     for(auto it = l.begin(); it != l.end(); it++) {
-      GCurve *ge = *it;
+      GEdge *ge = *it;
       if(ge->degenerate(0)) continue;
       int ic = std::abs(ge->tag());
       if(!Tree_Search(edges, &ic))

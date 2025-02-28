@@ -8,14 +8,14 @@
 #include "Geo.h"
 
 discreteRegion::discreteRegion(GModel *model, int num)
-  : GVolume(model, num), _geometry(false)
+  : GRegion(model, num), _geometry(false)
 {
   ::Volume *v = CreateVolume(num, MSH_VOLUME_DISCRETE);
   Tree_Add(model->getGEOInternals()->Volumes, &v);
 }
 
 discreteRegion::discreteRegion(GModel *model)
-  : GVolume(model, 0), _geometry(false)
+  : GRegion(model, 0), _geometry(false)
 {
 }
 

@@ -9,7 +9,7 @@
 #include <vector>
 #include <map>
 #include <string>
-#include "MNode.h"
+#include "MVertex.h"
 #include "MElement.h"
 #include "SPoint3.h"
 
@@ -136,7 +136,7 @@ public:
   static bool readMSHViewData(const std::string &fileName, FILE *fp,
                               bool binary, bool swap, const char *dataType,
                               int partitionToRead = -1);
-  static bool readCGNS(const std::vector<std::vector<MNode *> > &vertPerZone,
+  static bool readCGNS(const std::vector<std::vector<MVertex *> > &vertPerZone,
                        const std::vector<std::vector<MElement *> > &eltPerZone,
                        const std::string &fileName);
   static bool readMED(const std::string &fileName, int fileIndex = -1);

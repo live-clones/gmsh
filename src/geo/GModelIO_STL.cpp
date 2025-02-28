@@ -161,7 +161,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
                    names[i].end());
   }
 
-  std::vector<GSurface *> faces;
+  std::vector<GFace *> faces;
   for(std::size_t i = 0; i < points.size(); i++) {
     if(points[i].empty()) {
       Msg::Error("No facets found in STL file for solid %d %s", i,
@@ -178,7 +178,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
     Msg::Info("%d facets in solid %d %s", points[i].size() / 3, i,
               names[i].c_str());
     // create face
-    GSurface *face = new discreteFace(this, getMaxElementaryNumber(2) + 1);
+    GFace *face = new discreteFace(this, getMaxElementaryNumber(2) + 1);
     faces.push_back(face);
     add(face);
     if(!names[i].empty()) setElementaryName(2, face->tag(), names[i]);
@@ -186,11 +186,11 @@ int GModel::readSTL(const std::string &name, double tolerance)
 
   // create triangles using unique vertices
   double eps = norm(SVector3(bbox.max(), bbox.min())) * tolerance;
-  std::vector<MNode *> vertices;
+  std::vector<MVertex *> vertices;
   for(std::size_t i = 0; i < points.size(); i++)
     for(std::size_t j = 0; j < points[i].size(); j++)
       vertices.push_back(
-        new MNode(points[i][j].x(), points[i][j].y(), points[i][j].z()));
+        new MVertex(points[i][j].x(), points[i][j].y(), points[i][j].z()));
   MVertexRTree pos(eps);
   pos.insert(vertices);
 
@@ -198,7 +198,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
   int nbDuplic = 0, nbDegen = 0;
   for(std::size_t i = 0; i < points.size(); i++) {
     for(std::size_t j = 0; j < points[i].size(); j += 3) {
-      MNode *v[3];
+      MVertex *v[3];
       for(int k = 0; k < 3; k++) {
         double x = points[i][j + k].x();
         double y = points[i][j + k].y();
@@ -244,7 +244,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
   return 1;
 }
 
-static void writeSTLfaces(FILE *fp, std::vector<GSurface *> &faces, bool binary,
+static void writeSTLfaces(FILE *fp, std::vector<GFace *> &faces, bool binary,
                           double scalingFactor, const std::string &name)
 {
   bool useGeoSTL = false;
@@ -275,9 +275,9 @@ static void writeSTLfaces(FILE *fp, std::vector<GSurface *> &faces, bool binary,
         SPoint2 &p1((*it)->stl_vertices_uv[(*it)->stl_triangles[i]]);
         SPoint2 &p2((*it)->stl_vertices_uv[(*it)->stl_triangles[i + 1]]);
         SPoint2 &p3((*it)->stl_vertices_uv[(*it)->stl_triangles[i + 2]]);
-        GVertex gp1 = (*it)->point(p1);
-        GVertex gp2 = (*it)->point(p2);
-        GVertex gp3 = (*it)->point(p3);
+        GPoint gp1 = (*it)->point(p1);
+        GPoint gp2 = (*it)->point(p2);
+        GPoint gp3 = (*it)->point(p3);
         double x[3] = {gp1.x(), gp2.x(), gp3.x()};
         double y[3] = {gp1.y(), gp2.y(), gp3.y()};
         double z[3] = {gp1.z(), gp2.z(), gp3.z()};
@@ -333,7 +333,7 @@ int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
   if(oneSolidPerSurface == 1) { // one solid per surface
     for(auto it = firstFace(); it != lastFace(); ++it) {
       if(saveAll || (*it)->physicals.size()) {
-        std::vector<GSurface *> faces(1, *it);
+        std::vector<GFace *> faces(1, *it);
         std::string name = getElementaryName(2, (*it)->tag());
         if(name.empty()) {
           std::ostringstream s;
@@ -348,9 +348,9 @@ int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
     std::map<int, std::vector<GEntity *> > phys;
     getPhysicalGroups(2, phys);
     for(auto it = phys.begin(); it != phys.end(); it++) {
-      std::vector<GSurface *> faces;
+      std::vector<GFace *> faces;
       for(std::size_t i = 0; i < it->second.size(); i++) {
-        faces.push_back(static_cast<GSurface *>(it->second[i]));
+        faces.push_back(static_cast<GFace *>(it->second[i]));
       }
       std::string name = getPhysicalName(2, it->first);
       if(name.empty()) {
@@ -362,7 +362,7 @@ int GModel::writeSTL(const std::string &name, bool binary, bool saveAll,
     }
   }
   else { // one solid
-    std::vector<GSurface *> faces;
+    std::vector<GFace *> faces;
     for(auto it = firstFace(); it != lastFace(); ++it) {
       if(saveAll || (*it)->physicals.size()) { faces.push_back(*it); }
     }

@@ -17,12 +17,12 @@ cited appropriately. See the README.txt file for license information.
 #define QTEXTR2D_H
 
 #include "GEntity.h"
-#include "GSurface.h"
-#include "GCurve.h"
+#include "GFace.h"
+#include "GEdge.h"
 #include "GModel.h"
 #include "ExtrudeParams.h"
 #include "GmshDefines.h"
-#include "MNode.h"
+#include "MVertex.h"
 #include "Context.h"
 #include "GModel.h"
 #include "meshGFace.h"
@@ -41,7 +41,7 @@ cited appropriately. See the README.txt file for license information.
 // determins whether the surface should be meshed with triangles or quadrangles:
 // tri_quad_values: 0 = no override, 1 = mesh as quads, 2 = mesh as triangles.
 // Added 2010-12-09.
-int IsValidQuadToTriLateral(GSurface *face, int *tri_quad_flag,
+int IsValidQuadToTriLateral(GFace *face, int *tri_quad_flag,
                             bool *detectQuadToTriLateral);
 
 // The function that tests whether a surface is a QuadToTri top surface and
@@ -49,12 +49,12 @@ int IsValidQuadToTriLateral(GSurface *face, int *tri_quad_flag,
 // region or if there are QuadToTri conflicts, return 0.  Note that
 // RemoveDuplicateSurfaces() makes this DIFFICULT. Also, the type of QuadToTri
 // interface is placed into the pointer argument quadToTri. .  Added 2010-12-09.
-int IsValidQuadToTriTop(GSurface *face, int *quadToTri, bool *detectQuadToTriTop);
+int IsValidQuadToTriTop(GFace *face, int *quadToTri, bool *detectQuadToTriTop);
 
 // This function meshes the top surface of a QuadToTri extrusion.  It returns 0
-// if it is given a non-quadToTri extrusion or if it fails.  Args: 'GSurface *to'
+// if it is given a non-quadToTri extrusion or if it fails.  Args: 'GFace *to'
 // is the top surface to mesh, 'from' is the source surface, 'pos' is a tree
 // of vertex positions for the top surface.
-int MeshQuadToTriTopSurface(GSurface *from, GSurface *to, MVertexRTree &pos);
+int MeshQuadToTriTopSurface(GFace *from, GFace *to, MVertexRTree &pos);
 
 #endif

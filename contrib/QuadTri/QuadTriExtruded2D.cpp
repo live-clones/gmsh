@@ -17,7 +17,7 @@ cited appropriately. See the README.txt file for license information.
 #include "QuadTriExtruded2D.h"
 
 // By Geuzaine, Remacle...
-static void addTriangle(MNode *v1, MNode *v2, MNode *v3, GSurface *to)
+static void addTriangle(MVertex *v1, MVertex *v2, MVertex *v3, GFace *to)
 {
   MTriangle *newTri = new MTriangle(v1, v2, v3);
   to->triangles.push_back(newTri);
@@ -30,7 +30,7 @@ static void addTriangle(MNode *v1, MNode *v2, MNode *v3, GSurface *to)
 // determins whether the surface should be meshed with triangles or quadrangles:
 // tri_quad_values: 0 = no override, 1 = mesh as quads, 2 = mesh as triangles.
 // Added 2010-12-09.
-int IsValidQuadToTriLateral(GSurface *face, int *tri_quad_flag,
+int IsValidQuadToTriLateral(GFace *face, int *tri_quad_flag,
                             bool *detectQuadToTriLateral)
 {
   (*tri_quad_flag) = 0;
@@ -47,7 +47,7 @@ int IsValidQuadToTriLateral(GSurface *face, int *tri_quad_flag,
     return 0;
   }
 
-  GCurve *face_source = model->getEdgeByTag(std::abs(ep->geo.Source));
+  GEdge *face_source = model->getEdgeByTag(std::abs(ep->geo.Source));
   if(!face_source) {
     Msg::Error("In IsValidQuadToTriLateral(), face %d has no source edge.",
                face->tag());
@@ -61,14 +61,14 @@ int IsValidQuadToTriLateral(GSurface *face, int *tri_quad_flag,
   // (including whether the region is even extruded).  After that information is
   // determined, function can test for QuadToTri neighbor conflicts.
 
-  std::vector<GVolume *> lateral_regions;
-  std::vector<GVolume *> adjacent_regions;
+  std::vector<GRegion *> lateral_regions;
+  std::vector<GRegion *> adjacent_regions;
   int numRegions = 0;
   int numLateralRegions = 0;
 
   numRegions = GetNeighborRegionsOfFace(face, adjacent_regions);
   for(int i_reg = 0; i_reg < numRegions; i_reg++) {
-    GVolume *region = adjacent_regions[i_reg];
+    GRegion *region = adjacent_regions[i_reg];
 
     // is the region mesh extruded?
     if(!region->meshAttributes.extrude ||
@@ -122,7 +122,7 @@ int IsValidQuadToTriLateral(GSurface *face, int *tri_quad_flag,
       (*tri_quad_flag) = 0;
   }
   else if(adjacent_regions.size() > 1) {
-    GVolume *adj_region = NULL;
+    GRegion *adj_region = NULL;
     ExtrudeParams *adj_ep = NULL;
     if(lateral_regions[0] == adjacent_regions[0])
       adj_region = adjacent_regions[1];
@@ -196,7 +196,7 @@ int IsValidQuadToTriLateral(GSurface *face, int *tri_quad_flag,
 // considerations).  Note that RemoveDuplicateSurfaces() makes this DIFFICULT.
 // Also, the type of QuadToTri interface is placed into the pointer argument
 // quadToTri. .  Added 2010-12-09.
-int IsValidQuadToTriTop(GSurface *face, int *quadToTri, bool *detectQuadToTriTop)
+int IsValidQuadToTriTop(GFace *face, int *quadToTri, bool *detectQuadToTriTop)
 {
   (*quadToTri) = NO_QUADTRI;
   (*detectQuadToTriTop) = false;
@@ -222,12 +222,12 @@ int IsValidQuadToTriTop(GSurface *face, int *quadToTri, bool *detectQuadToTriTop
   if(is_toroidal_quadtri)
     (*detectQuadToTriTop) = true;
   else {
-    std::vector<GVolume *> top_regions;
-    std::vector<GVolume *> adjacent_regions;
-    std::vector<GVolume *> all_regions;
+    std::vector<GRegion *> top_regions;
+    std::vector<GRegion *> adjacent_regions;
+    std::vector<GRegion *> all_regions;
     int numRegions = 0;
     int numTopRegions = 0;
-    std::set<GVolume *, GEntityPtrLessThan>::iterator itreg;
+    std::set<GRegion *, GEntityPtrLessThan>::iterator itreg;
 
     for(itreg = model->firstRegion(); itreg != model->lastRegion(); itreg++)
       all_regions.push_back((*itreg));
@@ -236,10 +236,10 @@ int IsValidQuadToTriTop(GSurface *face, int *quadToTri, bool *detectQuadToTriTop
       // save time
       if(numRegions >= 2) break;
 
-      GVolume *region = all_regions[i_reg];
+      GRegion *region = all_regions[i_reg];
 
       // does face belong to region?
-      std::vector<GSurface *> region_faces = region->faces();
+      std::vector<GFace *> region_faces = region->faces();
       if(std::find(region_faces.begin(), region_faces.end(), face) !=
          region_faces.end()) {
         adjacent_regions.push_back(region);
@@ -291,7 +291,7 @@ int IsValidQuadToTriTop(GSurface *face, int *quadToTri, bool *detectQuadToTriTop
       return 0;
     }
 
-    GSurface *face_source = model->getFaceByTag(std::abs(ep->geo.Source));
+    GFace *face_source = model->getFaceByTag(std::abs(ep->geo.Source));
     if(!face_source) {
       Msg::Error("In IsValidQuadToTriTop(), unknown source face number %d.",
                  face->meshAttributes.extrude->geo.Source);
@@ -337,7 +337,7 @@ int IsValidQuadToTriTop(GSurface *face, int *quadToTri, bool *detectQuadToTriTop
 // this function specifically meshes a quadToTri top in an unstructured way
 // return 1 if success, return 0 if failed.
 // Added 2010-12-20
-static int MeshQuadToTriTopUnstructured(GSurface *from, GSurface *to,
+static int MeshQuadToTriTopUnstructured(GFace *from, GFace *to,
                                         MVertexRTree &pos)
 {
   // if the source is all triangles, then just return 1.
@@ -360,14 +360,14 @@ static int MeshQuadToTriTopUnstructured(GSurface *from, GSurface *to,
   to->triangles.reserve(to->triangles.size() + from->quadrangles.size() * 2);
 
   for(unsigned int i = 0; i < from->quadrangles.size(); i++) {
-    std::vector<MNode *> verts;
+    std::vector<MVertex *> verts;
     for(std::size_t j = 0; j < from->quadrangles[i]->getNumVertices(); j++) {
-      MNode *v = from->quadrangles[i]->getVertex(j);
+      MVertex *v = from->quadrangles[i]->getVertex(j);
       double x = v->x(), y = v->y(), z = v->z();
       ExtrudeParams *ep = to->meshAttributes.extrude;
       ep->Extrude(ep->mesh.NbLayer - 1,
                   ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1], x, y, z);
-      MNode *tmp = pos.find(x, y, z);
+      MVertex *tmp = pos.find(x, y, z);
       if(!tmp) {
         Msg::Error(
           "Could not find extruded vertex (%.16g, %.16g, %.16g) in surface %d",
@@ -414,10 +414,10 @@ static int MeshQuadToTriTopUnstructured(GSurface *from, GSurface *to,
 // This function meshes the top surface of a QuadToTri extrusion.  It returns 0
 // if it is given a non-quadToTri extrusion or if it fails.
 // Args:
-//       'GSurface *to' is the top surface to mesh,
+//       'GFace *to' is the top surface to mesh,
 //       'from' is the source surface
 //       'pos' is a tree of vertex positions for the top surface.
-int MeshQuadToTriTopSurface(GSurface *from, GSurface *to, MVertexRTree &pos)
+int MeshQuadToTriTopSurface(GFace *from, GFace *to, MVertexRTree &pos)
 {
   if(!to->meshAttributes.extrude || !to->meshAttributes.extrude->mesh.QuadToTri)
     return 0;
@@ -457,14 +457,14 @@ int MeshQuadToTriTopSurface(GSurface *from, GSurface *to, MVertexRTree &pos)
 
     // loop through each element source quadrangle and extrude
     for(unsigned int i = 0; i < from->quadrangles.size(); i++) {
-      std::vector<MNode *> verts;
+      std::vector<MVertex *> verts;
       for(std::size_t j = 0; j < from->quadrangles[i]->getNumVertices(); j++) {
-        MNode *v = from->quadrangles[i]->getVertex(j);
+        MVertex *v = from->quadrangles[i]->getVertex(j);
         double x = v->x(), y = v->y(), z = v->z();
         ExtrudeParams *ep = to->meshAttributes.extrude;
         ep->Extrude(ep->mesh.NbLayer - 1,
                     ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1], x, y, z);
-        MNode *tmp = pos.find(x, y, z);
+        MVertex *tmp = pos.find(x, y, z);
         if(!tmp) {
           Msg::Error("In MeshQuadToTriTopSurface(), Could not find "
                      "extruded vertex (%.16g, %.16g, %.16g) in surface %d",
@@ -536,7 +536,7 @@ int MeshQuadToTriTopSurface(GSurface *from, GSurface *to, MVertexRTree &pos)
 
   // if source face is unstructured, can try to make the top mesh a little
   // neater
-  GSurface *root_source = findRootSourceFaceForFace(from);
+  GFace *root_source = findRootSourceFaceForFace(from);
   ExtrudeParams *ep_src = root_source->meshAttributes.extrude;
   bool struct_root = false;
   if(root_source && ((ep_src && ep_src->mesh.ExtrudeMesh &&
@@ -551,14 +551,14 @@ int MeshQuadToTriTopSurface(GSurface *from, GSurface *to, MVertexRTree &pos)
     // And top surface for the 'added internal vertex' method can be meshed
     // quite easily. Loop through each element source quadrangle and extrude
     for(unsigned int i = 0; i < from->quadrangles.size(); i++) {
-      std::vector<MNode *> verts;
+      std::vector<MVertex *> verts;
       for(std::size_t j = 0; j < from->quadrangles[i]->getNumVertices(); j++) {
-        MNode *v = from->quadrangles[i]->getVertex(j);
+        MVertex *v = from->quadrangles[i]->getVertex(j);
         double x = v->x(), y = v->y(), z = v->z();
         ExtrudeParams *ep = to->meshAttributes.extrude;
         ep->Extrude(ep->mesh.NbLayer - 1,
                     ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1], x, y, z);
-        MNode *tmp = pos.find(x, y, z);
+        MVertex *tmp = pos.find(x, y, z);
         if(!tmp) {
           Msg::Error("In MeshQuadToTriTopSurface(), Could not find "
                      "extruded vertex (%.16g, %.16g, %.16g) in surface %d",

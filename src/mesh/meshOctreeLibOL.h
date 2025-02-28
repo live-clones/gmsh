@@ -9,8 +9,8 @@
 #include <vector>
 #include <array>
 #include <string>
-#include "GVertex.h"
-#include "GSurface.h"
+#include "GPoint.h"
+#include "GFace.h"
 
 class MTriangle;
 
@@ -24,7 +24,7 @@ class MTriangle;
 class SurfaceProjector {
 public:
   SurfaceProjector() : gf(NULL), OctIdx(0) {}
-  SurfaceProjector(GSurface *gf); /* read triangles and quads from GSurface */
+  SurfaceProjector(GFace *gf); /* read triangles and quads from GFace */
   SurfaceProjector(SurfaceProjector const &) = delete;
   SurfaceProjector &operator=(SurfaceProjector const &) = delete;
   ~SurfaceProjector();
@@ -40,7 +40,7 @@ public:
    *
    * @return true if success
    */
-  bool initialize(GSurface *gf, const std::vector<MTriangle *> &triangles, bool useCADStl = false);
+  bool initialize(GFace *gf, const std::vector<MTriangle *> &triangles, bool useCADStl = false);
 
   /**
    * @brief Clear the triangulation and delete the octree
@@ -55,7 +55,7 @@ public:
    *
    * @return true if success
    */
-  bool setAnalyticalProjection(GSurface *gf);
+  bool setAnalyticalProjection(GFace *gf);
 
   /**
    * @brief Get the query closest point on the triangulated surface.
@@ -66,14 +66,14 @@ public:
    * @param projectOnCAD If param available, call closestPoint from the CAD
    * geometry engine, with the interpolated UV as initial guess
    *
-   * @return the projection, check GVertex::succeeded() for projection success /
+   * @return the projection, check GPoint::succeeded() for projection success /
    * failure
    */
-  GVertex closestPoint(const double query[3], bool evalOnCAD = false,
+  GPoint closestPoint(const double query[3], bool evalOnCAD = false,
                       bool projectOnCAD = false) const;
 
 public:
-  GSurface *gf;
+  GFace *gf;
 
 protected:
   std::vector<std::array<double, 3> > points;
@@ -84,7 +84,7 @@ protected:
 
   /* For simple CAD shapes, we have analytical formula for projection */
   bool useAnalyticalFormula = false;
-  GSurface::GeomType analyticalShape = GSurface::GeomType::Unknown;
+  GFace::GeomType analyticalShape = GFace::GeomType::Unknown;
   std::array<double, 10> analyticalParameters;
 };
 

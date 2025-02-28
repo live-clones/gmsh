@@ -14,7 +14,7 @@
 #include "SPoint3.h"
 #include "GmshMessage.h"
 #include "MHexahedron.h"
-#include "MNode.h"
+#include "MVertex.h"
 
 // A cartesian grid that encompasses an oriented 3-D box, with values
 // stored at vertices:
@@ -225,14 +225,14 @@ public:
     SPoint3 p7 = getNodeCoordinates(it7->first);
     SPoint3 p8 = getNodeCoordinates(it8->first);
 
-    MNode *v1 = new MNode(p1.x(), p1.y(), p1.z());
-    MNode *v2 = new MNode(p2.x(), p2.y(), p2.z());
-    MNode *v3 = new MNode(p3.x(), p3.y(), p3.z());
-    MNode *v4 = new MNode(p4.x(), p4.y(), p4.z());
-    MNode *v5 = new MNode(p5.x(), p5.y(), p5.z());
-    MNode *v6 = new MNode(p6.x(), p6.y(), p6.z());
-    MNode *v7 = new MNode(p7.x(), p7.y(), p7.z());
-    MNode *v8 = new MNode(p8.x(), p8.y(), p8.z());
+    MVertex *v1 = new MVertex(p1.x(), p1.y(), p1.z());
+    MVertex *v2 = new MVertex(p2.x(), p2.y(), p2.z());
+    MVertex *v3 = new MVertex(p3.x(), p3.y(), p3.z());
+    MVertex *v4 = new MVertex(p4.x(), p4.y(), p4.z());
+    MVertex *v5 = new MVertex(p5.x(), p5.y(), p5.z());
+    MVertex *v6 = new MVertex(p6.x(), p6.y(), p6.z());
+    MVertex *v7 = new MVertex(p7.x(), p7.y(), p7.z());
+    MVertex *v8 = new MVertex(p8.x(), p8.y(), p8.z());
 
     MHexahedron *newElem = new MHexahedron(v1, v2, v3, v4, v5, v6, v7, v8);
     double uvw[3];

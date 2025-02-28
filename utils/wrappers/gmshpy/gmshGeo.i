@@ -12,12 +12,12 @@
   #include "GmshConfig.h"
 
   #include "GModel.h"
-  #include "GVertex.h"
-  #include "GEntity.h"
   #include "GPoint.h"
-  #include "GCurve.h"
-  #include "GSurface.h"
-  #include "GVolume.h"
+  #include "GEntity.h"
+  #include "GVertex.h"
+  #include "GEdge.h"
+  #include "GFace.h"
+  #include "GRegion.h"
   #include "discreteFace.h"
   #include "discreteEdge.h"
   #include "discreteRegion.h"
@@ -25,7 +25,7 @@
   #include "gmshLevelset.h"
   #include "MElement.h"
   #include "MElementOctree.h"
-  #include "MNode.h"
+  #include "MVertex.h"
   #include "MTriangle.h"
   #include "MTetrahedron.h"
   #include "MPrism.h"
@@ -47,11 +47,11 @@
 
 namespace std {
   %template(GEntityVector) vector<GEntity*, std::allocator<GEntity*> >;
-  %template(GVertexVector) vector<GPoint*, std::allocator<GPoint*> >;
-  %template(GEdgeVector) vector<GCurve*, std::allocator<GCurve*> >;
-  %template(GFaceVector) vector<GSurface*, std::allocator<GSurface*> >;
-  %template(GRegionVector) vector<GVolume*, std::allocator<GVolume*> >;
-  %template(MVertexVector) vector< MNode *,std::allocator< MNode * > >;
+  %template(GVertexVector) vector<GVertex*, std::allocator<GVertex*> >;
+  %template(GEdgeVector) vector<GEdge*, std::allocator<GEdge*> >;
+  %template(GFaceVector) vector<GFace*, std::allocator<GFace*> >;
+  %template(GRegionVector) vector<GRegion*, std::allocator<GRegion*> >;
+  %template(MVertexVector) vector< MVertex *,std::allocator< MVertex * > >;
   %template(MElementVector) vector< MElement *,std::allocator< MElement * > >;
   %template(MTriangleVector) vector< MTriangle *,std::allocator< MTriangle * > >;
   %template(MTetrahedronVector) vector< MTetrahedron *,std::allocator< MTetrahedron * > >;
@@ -60,10 +60,10 @@ namespace std {
   %template(MTrihedronVector) vector< MTrihedron *,std::allocator< MTrihedron * > >;
   %template(MHexahedronVector) vector< MHexahedron *,std::allocator< MHexahedron * > >;
   %template(MPrismVector) vector< MPrism *,std::allocator< MPrism * > >;
-  %template(GEdgeVectorVector) vector< std::vector< GCurve *,std::allocator< GCurve * > >,std::allocator< std::vector< GCurve *,std::allocator< GCurve * > > > >;
-  %template(GFaceVectorVector) vector< std::vector< GSurface *,std::allocator< GSurface * > >,std::allocator< std::vector< GSurface *,std::allocator< GSurface * > > > >;
-  %template(GFaceList) list<GSurface*, std::allocator<GSurface*> >;
-  %template(GEdgeList) list<GCurve*, std::allocator<GCurve*> >;
+  %template(GEdgeVectorVector) vector< std::vector< GEdge *,std::allocator< GEdge * > >,std::allocator< std::vector< GEdge *,std::allocator< GEdge * > > > >;
+  %template(GFaceVectorVector) vector< std::vector< GFace *,std::allocator< GFace * > >,std::allocator< std::vector< GFace *,std::allocator< GFace * > > > >;
+  %template(GFaceList) list<GFace*, std::allocator<GFace*> >;
+  %template(GEdgeList) list<GEdge*, std::allocator<GEdge*> >;
   %template(GLevelsetVector) vector<gLevelset *, std::allocator<gLevelset *> >;
   %template(IntVector) std::vector<int>;
   %template(DoubleVector) std::vector<double, std::allocator<double> >;
@@ -98,18 +98,18 @@ namespace std {
 }
 
 %include "GModel.h"
-%ignore GVertex::x();
-%ignore GVertex::y();
-%ignore GVertex::z();
-%include "GVertex.h"
-%include "GEntity.h"
+%ignore GPoint::x();
+%ignore GPoint::y();
+%ignore GPoint::z();
 %include "GPoint.h"
+%include "GEntity.h"
+%include "GVertex.h"
 %apply std::vector<double> &OUTPUT{std::vector<double> &ts}
 %apply std::vector<SPoint3> &OUTPUT{std::vector<SPoint3> &dpts}
-%include "GCurve.h"
-%ignore GSurface::computeMeanPlane(std::vector< MNode *>const&);
-%include "GSurface.h"
-%include "GVolume.h"
+%include "GEdge.h"
+%ignore GFace::computeMeanPlane(std::vector< MVertex *>const&);
+%include "GFace.h"
+%include "GRegion.h"
 %include "discreteFace.h"
 %include "discreteEdge.h"
 %include "discreteVertex.h"
@@ -118,10 +118,10 @@ namespace std {
 %include "MElement.h"
 %ignore MElementOctree::MElementOctree(GModel*);
 %include "MElementOctree.h"
-%ignore MNode::x();
-%ignore MNode::y();
-%ignore MNode::z();
-%include "MNode.h"
+%ignore MVertex::x();
+%ignore MVertex::y();
+%ignore MVertex::z();
+%include "MVertex.h"
 %include "MTriangle.h"
 %include "MTetrahedron.h"
 %include "MPrism.h"
@@ -160,24 +160,24 @@ namespace std {
     return elements;
   }
 
-  std::vector<GVolume*> bindingsGetRegions()
+  std::vector<GRegion*> bindingsGetRegions()
   {
-    return std::vector<GVolume*> ($self->firstRegion(), $self->lastRegion());
+    return std::vector<GRegion*> ($self->firstRegion(), $self->lastRegion());
   }
 
-  std::vector<GSurface*> bindingsGetFaces()
+  std::vector<GFace*> bindingsGetFaces()
   {
-    return std::vector<GSurface*> ($self->firstFace(), $self->lastFace());
+    return std::vector<GFace*> ($self->firstFace(), $self->lastFace());
   }
 
-  std::vector<GCurve*> bindingsGetEdges()
+  std::vector<GEdge*> bindingsGetEdges()
   {
-    return std::vector<GCurve*> ($self->firstEdge(), $self->lastEdge());
+    return std::vector<GEdge*> ($self->firstEdge(), $self->lastEdge());
   }
 
-  std::vector<GPoint*> bindingsGetVertices()
+  std::vector<GVertex*> bindingsGetVertices()
   {
-    return std::vector<GPoint*> ($self->firstVertex(), $self->lastVertex());
+    return std::vector<GVertex*> ($self->firstVertex(), $self->lastVertex());
   }
 
 }
@@ -194,14 +194,14 @@ namespace std {
     $self->xyz2uvw(xyz, &uvw[0]);
     return uvw;
   }
-  std::vector<MNode*> getVertices() {
-    std::vector <MNode*> vertices;
+  std::vector<MVertex*> getVertices() {
+    std::vector <MVertex*> vertices;
     $self->getVertices(vertices);
     return vertices;
   }
 }
 
-%extend GCurve {
+%extend GEdge {
   void setTransfinite(int nbPointsTransfinite, int typeTransfinite = 0, double coeffTransfinite = 1) {
     $self->meshAttributes.method = MESH_TRANSFINITE;
     $self->meshAttributes.typeTransfinite = typeTransfinite;
@@ -210,7 +210,7 @@ namespace std {
   }
 }
 
-%extend GSurface {
+%extend GFace {
   void setTransfinite() {
     $self->meshAttributes.method = MESH_TRANSFINITE;
   }
@@ -219,7 +219,7 @@ namespace std {
   }
 }
 
-%extend GVolume {
+%extend GRegion {
   void setTransfinite() {
     $self->meshAttributes.method = MESH_TRANSFINITE;
   }

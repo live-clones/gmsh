@@ -84,7 +84,7 @@ bool discreteFace::param::checkPlanar()
   for(size_t i = 0; i < t2d.size(); i++) {
     for(int j = 0; j < 3; j++) {
       SVector3 DX = vp[count++] - XP;
-      MNode *v = t2d[i].getVertex(j);
+      MVertex *v = t2d[i].getVertex(j);
       v->x() = dot(DX, VX);
       v->y() = dot(DX, VY);
       umin = std::min(umin, v->x());
@@ -96,14 +96,14 @@ bool discreteFace::param::checkPlanar()
   return true;
 }
 
-discreteFace::discreteFace(GModel *model, int num) : GSurface(model, num)
+discreteFace::discreteFace(GModel *model, int num) : GFace(model, num)
 {
   Surface *s = CreateSurface(num, MSH_SURF_DISCRETE);
   Tree_Add(model->getGEOInternals()->Surfaces, &s);
-  meshStatistics.status = GSurface::DONE;
+  meshStatistics.status = GFace::DONE;
 }
 
-discreteFace::discreteFace(GModel *model) : GSurface(model, 0)
+discreteFace::discreteFace(GModel *model) : GFace(model, 0)
 {
   // used for temporary discrete faces, that should not lead to the creation of
   // the corresponding entity in GEO internals
@@ -145,15 +145,15 @@ static void MYxyz2uvw(const MElement *t, double xyz[3], double uvw[3])
   return;
 }
 
-GVertex discreteFace::point(double par1, double par2) const
+GPoint discreteFace::point(double par1, double par2) const
 {
-  if(_param.empty()) return GVertex();
+  if(_param.empty()) return GPoint();
 
   double xy[3] = {par1, par2, 0};
   double uv[3];
   const MElement *e = _param.oct->find(par1, par2, 0.0, -1, true);
   if(!e) {
-    GVertex gp = GVertex(1.e21, 1.e21, 1.e21, this, xy);
+    GPoint gp = GPoint(1.e21, 1.e21, 1.e21, this, xy);
     gp.setNoSuccess();
     return gp;
   }
@@ -167,7 +167,7 @@ GVertex discreteFace::point(double par1, double par2) const
     Y += t3d.getVertex(io)->y() * eval[io];
     Z += t3d.getVertex(io)->z() * eval[io];
   }
-  return GVertex(X, Y, Z, this, xy);
+  return GPoint(X, Y, Z, this, xy);
 }
 
 class dfWrapper {
@@ -207,11 +207,11 @@ bool discreteFace_rtree_callback(std::pair<MTriangle *, MTriangle *> *t,
   return true;
 }
 
-GVertex discreteFace::closestPoint(const SPoint3 &queryPoint, double maxDistance,
+GPoint discreteFace::closestPoint(const SPoint3 &queryPoint, double maxDistance,
                                   SVector3 *normal) const
 {
   if(_param.empty()) {
-    auto pp = GVertex();
+    auto pp = GPoint();
     pp.setNoSuccess();
     return pp;
   }
@@ -244,12 +244,12 @@ GVertex discreteFace::closestPoint(const SPoint3 &queryPoint, double maxDistance
                    wrapper._closestPoint.z()};
   double uvw[3];
   wrapper._t3d->xyz2uvw(xyz, uvw);
-  const MNode *v0 = wrapper._t2d->getVertex(0);
-  const MNode *v1 = wrapper._t2d->getVertex(1);
-  const MNode *v2 = wrapper._t2d->getVertex(2);
-  const MNode *v03 = wrapper._t3d->getVertex(0);
-  const MNode *v13 = wrapper._t3d->getVertex(1);
-  const MNode *v23 = wrapper._t3d->getVertex(2);
+  const MVertex *v0 = wrapper._t2d->getVertex(0);
+  const MVertex *v1 = wrapper._t2d->getVertex(1);
+  const MVertex *v2 = wrapper._t2d->getVertex(2);
+  const MVertex *v03 = wrapper._t3d->getVertex(0);
+  const MVertex *v13 = wrapper._t3d->getVertex(1);
+  const MVertex *v23 = wrapper._t3d->getVertex(2);
   double U = 1 - uvw[0] - uvw[1];
   double V = uvw[0];
   double W = uvw[1];
@@ -259,10 +259,10 @@ GVertex discreteFace::closestPoint(const SPoint3 &queryPoint, double maxDistance
               U * v03->y() + V * v13->y() + W * v23->y(),
               U * v03->z() + V * v13->z() + W * v23->z());
 
-  return GVertex(pp3.x(), pp3.y(), pp3.z(), this, pp);
+  return GPoint(pp3.x(), pp3.y(), pp3.z(), this, pp);
 }
 
-GVertex discreteFace::closestPoint(const SPoint3 &queryPoint,
+GPoint discreteFace::closestPoint(const SPoint3 &queryPoint,
                                   const double initialGuess[2]) const
 {
   return closestPoint(queryPoint, 1e-1);
@@ -271,7 +271,7 @@ GVertex discreteFace::closestPoint(const SPoint3 &queryPoint,
 SPoint2 discreteFace::parFromPoint(const SPoint3 &p, bool onSurface,
                                    bool convTestXYZ) const
 {
-  GVertex gp = closestPoint(p, 1e-6);
+  GPoint gp = closestPoint(p, 1e-6);
   return SPoint2(gp.u(), gp.v());
 }
 
@@ -292,7 +292,7 @@ bool discreteFace::containsParam(const SPoint2 &pt)
 
 SBoundingBox3d discreteFace::bounds(bool fast)
 {
-  if(_param.empty()) return GSurface::bounds(fast);
+  if(_param.empty()) return GFace::bounds(fast);
   return _param.bbox;
 }
 
@@ -302,7 +302,7 @@ SVector3 discreteFace::normal(const SPoint2 &param) const
 
   MElement *e = _param.oct->find(param.x(), param.y(), 0.0, -1, true);
   if(!e) {
-    Msg::Info("Triangle not found at uv=(%g,%g) on discrete surface %d",
+    Msg::Debug("Triangle not found at uv=(%g,%g) on discrete surface %d",
               param.x(), param.y(), tag());
     return SVector3(0, 0, 1);
   }
@@ -378,9 +378,9 @@ std::pair<SVector3, SVector3> discreteFace::firstDer(const SPoint2 &param) const
   int position = (int)((MTriangle *)e - &_param.t2d[0]);
 
   const MTriangle &t3d = _param.t3d[position];
-  const MNode *v1 = t3d.getVertex(0);
-  const MNode *v2 = t3d.getVertex(1);
-  const MNode *v3 = t3d.getVertex(2);
+  const MVertex *v1 = t3d.getVertex(0);
+  const MVertex *v2 = t3d.getVertex(1);
+  const MVertex *v3 = t3d.getVertex(2);
 
   double M3D[3][2] = {{v2->x() - v1->x(), v3->x() - v1->x()},
                       {v2->y() - v1->y(), v3->y() - v1->y()},
@@ -571,7 +571,7 @@ int discreteFace::createGeometry()
                  "parametrization",
                  minq);
 
-  std::vector<MNode *> nodes;
+  std::vector<MVertex *> nodes;
   computeParametrization(triangles, nodes, stl_vertices_uv, stl_vertices_xyz,
                          stl_triangles);
 
@@ -631,8 +631,8 @@ void discreteFace::_createGeometryFromSTL()
 
   for(size_t i = 0; i < stl_vertices_uv.size(); i++) {
     _param.v2d.push_back(
-      MNode(stl_vertices_uv[i].x(), stl_vertices_uv[i].y(), 0.0));
-    _param.v3d.push_back(MNode(stl_vertices_xyz[i].x(),
+      MVertex(stl_vertices_uv[i].x(), stl_vertices_uv[i].y(), 0.0));
+    _param.v3d.push_back(MVertex(stl_vertices_xyz[i].x(),
                                  stl_vertices_xyz[i].y(),
                                  stl_vertices_xyz[i].z()));
     _param.bbox += _param.v3d.back().point();
@@ -686,10 +686,10 @@ void discreteFace::_createGeometryFromSTL()
 void discreteFace::mesh(bool verbose)
 {
   if(_param.empty()) return;
-  GSurface::mesh(verbose);
+  GFace::mesh(verbose);
 }
 
-GVertex discreteFace::intersectionWithCircle(const SVector3 &n1,
+GPoint discreteFace::intersectionWithCircle(const SVector3 &n1,
                                             const SVector3 &n2,
                                             const SVector3 &p, const double &R,
                                             double uv[2])
@@ -790,13 +790,13 @@ GVertex discreteFace::intersectionWithCircle(const SVector3 &n1,
             v0_2d * (1. - uv[0] - uv[1]) + v1_2d * uv[0] + v2_2d * uv[1];
           uv[0] = pp.x();
           uv[1] = pp.y();
-          return GVertex(s[IT].x(), s[IT].y(), s[IT].z(), this, uv);
+          return GPoint(s[IT].x(), s[IT].y(), s[IT].z(), this, uv);
         }
       }
     }
   }
 
-  GVertex pp(0);
+  GPoint pp(0);
   pp.setNoSuccess();
   // Msg::Warning("Could not intersect with circle");
   return pp;
@@ -907,7 +907,7 @@ void discreteFace::resetMeshAttributes()
 {
   Surface *_s = FindSurface(tag());
   if(!_s) {
-    GSurface ::resetMeshAttributes();
+    GFace ::resetMeshAttributes();
     return;
   }
   meshAttributes.recombine = _s->Recombine;
@@ -921,7 +921,7 @@ void discreteFace::resetMeshAttributes()
     for(int i = 0; i < List_Nbr(_s->TrsfPoints); i++) {
       Vertex *corn;
       List_Read(_s->TrsfPoints, i, &corn);
-      GPoint *gv = model()->getVertexByTag(corn->Num);
+      GVertex *gv = model()->getVertexByTag(corn->Num);
       if(gv)
         meshAttributes.corners.push_back(gv);
       else

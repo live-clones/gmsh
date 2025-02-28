@@ -8,7 +8,7 @@
 #include <vector>
 #include "SPoint3.h"
 #include "SVector3.h"
-#include "GCurve.h"
+#include "GEdge.h"
 #include "gmshEdge.h"
 #include "Geo.h"
 

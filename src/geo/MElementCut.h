@@ -24,14 +24,14 @@ protected:
   MElement *_orig;
   IntPt *_intpt;
   std::vector<MTetrahedron *> _parts;
-  std::vector<MNode *> _vertices;
-  std::vector<MNode *> _innerVertices;
+  std::vector<MVertex *> _vertices;
+  std::vector<MVertex *> _innerVertices;
   std::vector<MEdge> _edges;
   std::vector<MFace> _faces;
   void _init();
 
 public:
-  MPolyhedron(std::vector<MNode *> v, int num = 0, int part = 0,
+  MPolyhedron(std::vector<MVertex *> v, int num = 0, int part = 0,
               bool owner = false, MElement *orig = nullptr)
     : MElement(num, part), _owner(owner), _orig(orig), _intpt(nullptr)
   {
@@ -62,13 +62,13 @@ public:
     return _vertices.size() + _innerVertices.size();
   }
   virtual int getNumVolumeVertices() const { return _innerVertices.size(); }
-  virtual MNode *getVertex(int num)
+  virtual MVertex *getVertex(int num)
   {
     return (num < (int)_vertices.size()) ?
              _vertices[num] :
              _innerVertices[num - _vertices.size()];
   }
-  virtual const MNode *getVertex(int num) const
+  virtual const MVertex *getVertex(int num) const
   {
     return (num < (int)_vertices.size()) ?
              _vertices[num] :
@@ -86,7 +86,7 @@ public:
         if(_faces[i].getEdge(j) == e)
           _getEdgeRep(e.getVertex(0), e.getVertex(1), x, y, z, n, i);
   }
-  virtual void getEdgeVertices(const int num, std::vector<MNode *> &v) const
+  virtual void getEdgeVertices(const int num, std::vector<MVertex *> &v) const
   {
     v.resize(2);
     v[0] = _edges[num].getVertex(0);
@@ -101,7 +101,7 @@ public:
     _getFaceRep(_faces[num].getVertex(0), _faces[num].getVertex(1),
                 _faces[num].getVertex(2), x, y, z, n);
   }
-  virtual void getFaceVertices(const int num, std::vector<MNode *> &v) const
+  virtual void getFaceVertices(const int num, std::vector<MVertex *> &v) const
   {
     v.resize(3);
     v[0] = _faces[num].getVertex(0);
@@ -158,11 +158,11 @@ public:
   {
     return (_orig ? _orig->getNumPrimaryShapeFunctions() : 0);
   }
-  virtual const MNode *getShapeFunctionNode(int i) const
+  virtual const MVertex *getShapeFunctionNode(int i) const
   {
     return (_orig ? _orig->getShapeFunctionNode(i) : nullptr);
   }
-  virtual MNode *getShapeFunctionNode(int i)
+  virtual MVertex *getShapeFunctionNode(int i)
   {
     return (_orig ? _orig->getShapeFunctionNode(i) : nullptr);
   }
@@ -201,13 +201,13 @@ protected:
   MElement *_orig;
   IntPt *_intpt;
   std::vector<MTriangle *> _parts;
-  std::vector<MNode *> _vertices;
-  std::vector<MNode *> _innerVertices;
+  std::vector<MVertex *> _vertices;
+  std::vector<MVertex *> _innerVertices;
   std::vector<MEdge> _edges;
   void _initVertices();
 
 public:
-  MPolygon(std::vector<MNode *> v, int num = 0, int part = 0,
+  MPolygon(std::vector<MVertex *> v, int num = 0, int part = 0,
            bool owner = false, MElement *orig = nullptr)
     : MElement(num, part), _owner(owner), _orig(orig), _intpt(nullptr)
   {
@@ -237,13 +237,13 @@ public:
     return _vertices.size() + _innerVertices.size();
   }
   virtual int getNumFaceVertices() const { return _innerVertices.size(); }
-  virtual MNode *getVertex(int num)
+  virtual MVertex *getVertex(int num)
   {
     return (num < (int)_vertices.size()) ?
              _vertices[num] :
              _innerVertices[num - _vertices.size()];
   }
-  virtual const MNode *getVertex(int num) const
+  virtual const MVertex *getVertex(int num) const
   {
     return (num < (int)_vertices.size()) ?
              _vertices[num] :
@@ -258,7 +258,7 @@ public:
     MEdge e(getEdge(num));
     _getEdgeRep(e.getVertex(0), e.getVertex(1), x, y, z, n, 0);
   }
-  virtual void getEdgeVertices(const int num, std::vector<MNode *> &v) const
+  virtual void getEdgeVertices(const int num, std::vector<MVertex *> &v) const
   {
     v.resize(2);
     v[0] = _edges[num].getVertex(0);
@@ -273,7 +273,7 @@ public:
     _getFaceRep(_parts[num]->getVertex(0), _parts[num]->getVertex(1),
                 _parts[num]->getVertex(2), x, y, z, n);
   }
-  virtual void getFaceVertices(const int num, std::vector<MNode *> &v) const
+  virtual void getFaceVertices(const int num, std::vector<MVertex *> &v) const
   {
     v.resize(_vertices.size() + _innerVertices.size());
     for(std::size_t i = 0; i < _vertices.size() + _innerVertices.size(); i++)
@@ -331,11 +331,11 @@ public:
   {
     return (_orig ? _orig->getNumPrimaryShapeFunctions() : 0);
   }
-  virtual const MNode *getShapeFunctionNode(int i) const
+  virtual const MVertex *getShapeFunctionNode(int i) const
   {
     return (_orig ? _orig->getShapeFunctionNode(i) : nullptr);
   }
-  virtual MNode *getShapeFunctionNode(int i)
+  virtual MVertex *getShapeFunctionNode(int i)
   {
     return (_orig ? _orig->getShapeFunctionNode(i) : nullptr);
   }
@@ -366,12 +366,12 @@ protected:
   IntPt *_intpt;
 
 public:
-  MLineChild(MNode *v0, MNode *v1, int num = 0, int part = 0,
+  MLineChild(MVertex *v0, MVertex *v1, int num = 0, int part = 0,
              bool owner = false, MElement *orig = nullptr)
     : MLine(v0, v1, num, part), _owner(owner), _orig(orig), _intpt(nullptr)
   {
   }
-  MLineChild(const std::vector<MNode *> &v, int num = 0, int part = 0,
+  MLineChild(const std::vector<MVertex *> &v, int num = 0, int part = 0,
              bool owner = false, MElement *orig = nullptr)
     : MLine(v, num, part), _owner(owner), _orig(orig), _intpt(nullptr)
   {
@@ -428,14 +428,14 @@ protected:
   IntPt *_intpt;
 
 public:
-  MTriangleBorder(MNode *v0, MNode *v1, MNode *v2, int num = 0,
+  MTriangleBorder(MVertex *v0, MVertex *v1, MVertex *v2, int num = 0,
                   int part = 0, MElement *d1 = nullptr, MElement *d2 = nullptr)
     : MTriangle(v0, v1, v2, num, part), _intpt(nullptr)
   {
     _domains[0] = d1;
     _domains[1] = d2;
   }
-  MTriangleBorder(const std::vector<MNode *> &v, int num = 0, int part = 0,
+  MTriangleBorder(const std::vector<MVertex *> &v, int num = 0, int part = 0,
                   MElement *d1 = nullptr, MElement *d2 = nullptr)
     : MTriangle(v, num, part), _intpt(nullptr)
   {
@@ -472,7 +472,7 @@ public:
     _domains[0] = d1;
     _domains[1] = d2;
   }
-  MPolygonBorder(const std::vector<MNode *> &v, int num = 0, int part = 0,
+  MPolygonBorder(const std::vector<MVertex *> &v, int num = 0, int part = 0,
                  bool own = false, MElement *p = nullptr,
                  MElement *d1 = nullptr, MElement *d2 = nullptr)
     : MPolygon(v, num, part, own, p), _intpt(nullptr)
@@ -498,14 +498,14 @@ protected:
   IntPt *_intpt;
 
 public:
-  MLineBorder(MNode *v0, MNode *v1, int num = 0, int part = 0,
+  MLineBorder(MVertex *v0, MVertex *v1, int num = 0, int part = 0,
               MElement *d1 = nullptr, MElement *d2 = nullptr)
     : MLine(v0, v1, num, part), _intpt(nullptr)
   {
     _domains[0] = d1;
     _domains[1] = d2;
   }
-  MLineBorder(const std::vector<MNode *> &v, int num = 0, int part = 0,
+  MLineBorder(const std::vector<MVertex *> &v, int num = 0, int part = 0,
               MElement *d1 = nullptr, MElement *d2 = nullptr)
     : MLine(v, num, part), _intpt(nullptr)
   {
@@ -539,7 +539,7 @@ public:
 // (points, lines, surfaces and then volumes).
 GModel *buildCutMesh(GModel *gm, gLevelset *ls,
                      std::map<int, std::vector<MElement *> > elements[10],
-                     std::map<std::size_t, MNode *> &vertexMap,
+                     std::map<std::size_t, MVertex *> &vertexMap,
                      std::map<int, std::map<int, std::string> > physicals[4],
                      bool cutElem);
 

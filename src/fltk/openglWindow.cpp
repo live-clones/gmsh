@@ -384,10 +384,10 @@ int openglWindow::handle(int event)
     if(Fl::event_clicks() == 1 && !selectionMode &&
        CTX::instance()->mouseSelection) {
       // double-click and not in selection mode, but with mouse selection enabled
-      std::vector<GPoint *> vertices;
-      std::vector<GCurve *> edges;
-      std::vector<GSurface *> faces;
-      std::vector<GVolume *> regions;
+      std::vector<GVertex *> vertices;
+      std::vector<GEdge *> edges;
+      std::vector<GFace *> faces;
+      std::vector<GRegion *> regions;
       std::vector<MElement *> elements;
       std::vector<SPoint2> points;
       std::vector<PView *> views;
@@ -699,10 +699,10 @@ int openglWindow::handle(int event)
     }
     else { // hover mode
       if(_curr.win[0] != _prev.win[0] || _curr.win[1] != _prev.win[1]) {
-        std::vector<GPoint *> vertices;
-        std::vector<GCurve *> edges;
-        std::vector<GSurface *> faces;
-        std::vector<GVolume *> regions;
+        std::vector<GVertex *> vertices;
+        std::vector<GEdge *> edges;
+        std::vector<GFace *> faces;
+        std::vector<GRegion *> regions;
         std::vector<MElement *> elements;
         std::vector<SPoint2> points;
         std::vector<PView *> views;
@@ -802,8 +802,8 @@ int openglWindow::pixel_h()
 
 bool openglWindow::_select(
   int type, bool multiple, bool mesh, bool post, int x, int y, int w, int h,
-  std::vector<GPoint *> &vertices, std::vector<GCurve *> &edges,
-  std::vector<GSurface *> &faces, std::vector<GVolume *> &regions,
+  std::vector<GVertex *> &vertices, std::vector<GEdge *> &edges,
+  std::vector<GFace *> &faces, std::vector<GRegion *> &regions,
   std::vector<MElement *> &elements, std::vector<SPoint2> &points,
   std::vector<PView *> &views)
 {
@@ -827,10 +827,10 @@ bool openglWindow::_select(
   return ret;
 }
 
-char openglWindow::selectEntity(int type, std::vector<GPoint *> &vertices,
-                                std::vector<GCurve *> &edges,
-                                std::vector<GSurface *> &faces,
-                                std::vector<GVolume *> &regions,
+char openglWindow::selectEntity(int type, std::vector<GVertex *> &vertices,
+                                std::vector<GEdge *> &edges,
+                                std::vector<GFace *> &faces,
+                                std::vector<GRegion *> &regions,
                                 std::vector<MElement *> &elements,
                                 std::vector<SPoint2> &points,
                                 std::vector<PView *> &views)

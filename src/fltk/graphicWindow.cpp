@@ -1010,7 +1010,7 @@ static void add_new_multiline(const std::string &type)
     }
     if(ib == 'u') {
       if(p.size()) {
-        GPoint *gv = GModel::current()->getVertexByTag(p.back());
+        GVertex *gv = GModel::current()->getVertexByTag(p.back());
         if(gv) gv->setSelection(0);
         drawContext::global()->draw();
         p.pop_back();
@@ -1055,7 +1055,7 @@ static void add_new_line()
     }
     if(ib == 'u') {
       if(p.size()) {
-        GPoint *gv = GModel::current()->getVertexByTag(p.back());
+        GVertex *gv = GModel::current()->getVertexByTag(p.back());
         if(gv) gv->setSelection(0);
         drawContext::global()->draw();
         p.pop_back();
@@ -1110,7 +1110,7 @@ static void add_new_circle_arc()
     }
     if(ib == 'u') {
       if(p.size()) {
-        GPoint *gv = GModel::current()->getVertexByTag(p.back());
+        GVertex *gv = GModel::current()->getVertexByTag(p.back());
         if(gv) gv->setSelection(0);
         drawContext::global()->draw();
         p.pop_back();
@@ -1169,7 +1169,7 @@ static void add_new_ellipse_arc()
     }
     if(ib == 'u') {
       if(p.size()) {
-        GPoint *gv = GModel::current()->getVertexByTag(p.back());
+        GVertex *gv = GModel::current()->getVertexByTag(p.back());
         if(gv) gv->setSelection(0);
         drawContext::global()->draw();
         p.pop_back();
@@ -1203,7 +1203,7 @@ static int selectContour(int type, int num, List_T *List)
     for(int i = 0; i < List_Nbr(List); i++) {
       int ip;
       List_Read(List, i, &ip);
-      GCurve *ge = GModel::current()->getEdgeByTag(abs(ip));
+      GEdge *ge = GModel::current()->getEdgeByTag(abs(ip));
       if(ge) ge->setSelection(1);
     }
     break;
@@ -1212,7 +1212,7 @@ static int selectContour(int type, int num, List_T *List)
     for(int i = 0; i < List_Nbr(List); i++) {
       int ip;
       List_Read(List, i, &ip);
-      GSurface *gf = GModel::current()->getFaceByTag(abs(ip));
+      GFace *gf = GModel::current()->getFaceByTag(abs(ip));
       if(gf) gf->setSelection(1);
     }
     break;
@@ -1277,11 +1277,11 @@ static void add_new_surface_volume(int mode)
           int num;
           List_Read(List1, List_Nbr(List1) - 1, &num);
           if(type == ENT_CURVE) {
-            GCurve *ge = GModel::current()->getEdgeByTag(abs(num));
+            GEdge *ge = GModel::current()->getEdgeByTag(abs(num));
             if(ge) ge->setSelection(0);
           }
           else {
-            GSurface *gf = GModel::current()->getFaceByTag(abs(num));
+            GFace *gf = GModel::current()->getFaceByTag(abs(num));
             if(gf) gf->setSelection(0);
           }
           List_Pop(List1);
@@ -1332,11 +1332,11 @@ static void add_new_surface_volume(int mode)
                 int num;
                 List_Read(List1, List_Nbr(List1) - 1, &num);
                 if(type == ENT_CURVE) {
-                  GCurve *ge = GModel::current()->getEdgeByTag(abs(num));
+                  GEdge *ge = GModel::current()->getEdgeByTag(abs(num));
                   if(ge) ge->setSelection(0);
                 }
                 else {
-                  GSurface *gf = GModel::current()->getFaceByTag(abs(num));
+                  GFace *gf = GModel::current()->getFaceByTag(abs(num));
                   if(gf) gf->setSelection(0);
                 }
                 List_Pop(List1);
@@ -2042,12 +2042,12 @@ static void geometry_elementary_fillet_cb(Fl_Widget *w, void *data)
     }
     if(ib == 'u') {
       if(selectRegions && regions.size()) {
-        GVolume *ge = GModel::current()->getRegionByTag(regions.back());
+        GRegion *ge = GModel::current()->getRegionByTag(regions.back());
         if(ge) ge->setSelection(0);
         regions.pop_back();
       }
       else if(edges.size()) {
-        GCurve *ge = GModel::current()->getEdgeByTag(edges.back());
+        GEdge *ge = GModel::current()->getEdgeByTag(edges.back());
         if(ge) ge->setSelection(0);
         edges.pop_back();
       }
@@ -2089,7 +2089,7 @@ static void geometry_elementary_split_cb(Fl_Widget *w, void *data)
   drawContext::global()->draw();
   Msg::StatusGl("Select curve to split\n"
                 "[Press 'q' to abort]");
-  GCurve *edge_to_split = nullptr;
+  GEdge *edge_to_split = nullptr;
   while(1) {
     if(!FlGui::available()) return;
 
@@ -2580,7 +2580,7 @@ static void mesh_define_transfinite(int dim)
     if(ib == 'u') {
       if(dim == 1) {
         if(p.size()) {
-          GCurve *ge = GModel::current()->getEdgeByTag(p.back());
+          GEdge *ge = GModel::current()->getEdgeByTag(p.back());
           if(ge) ge->setSelection(0);
           drawContext::global()->draw();
           p.pop_back();
@@ -2642,7 +2642,7 @@ static void mesh_define_transfinite(int dim)
           }
           if(ib == 'u') {
             if(p.size() > 1) {
-              GPoint *gv = GModel::current()->getVertexByTag(p.back());
+              GVertex *gv = GModel::current()->getVertexByTag(p.back());
               if(gv) gv->setSelection(0);
               drawContext::global()->draw();
               p.pop_back();

@@ -11,7 +11,7 @@
 #include <vector>
 #include <array>
 
-class GVolume;
+class GRegion;
 
 /**
  * @brief Untangling/smoothing of volume mesh based on minimization of the
@@ -31,7 +31,7 @@ class GVolume;
  *
  * @return True if the smoothing have been applied (mesh may still be tangled)
  */
-bool untangleGRegionMeshConstrained(GVolume *gr, int iterMax = 10,
+bool untangleGRegionMeshConstrained(GRegion *gr, int iterMax = 10,
                                     double timeMax = 9999.);
 
 

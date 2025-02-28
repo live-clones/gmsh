@@ -6,7 +6,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "PViewDataGModel.h"
-#include "MNode.h"
+#include "MVertex.h"
 #include "Context.h"
 
 #if defined(HAVE_MED)
@@ -466,7 +466,7 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
   std::vector<med_int> profile, indices;
   for(std::size_t i = 0; i < _steps[0]->getNumData(); i++) {
     if(_steps[0]->getData(i)) {
-      MNode *v = _steps[0]->getModel()->getMeshVertexByTag(i);
+      MVertex *v = _steps[0]->getModel()->getMeshVertexByTag(i);
       if(!v) {
         Msg::Error("Unknown node %d in data", i);
         return false;

@@ -6,66 +6,126 @@
 #ifndef GVERTEX_H
 #define GVERTEX_H
 
-#include <cmath>
+#include <list>
+#include <string>
+#include <vector>
+#include <stdio.h>
+#include "GmshDefines.h"
+#include "GEntity.h"
+#include "GPoint.h"
+#include "SPoint2.h"
+#include "SPoint3.h"
 
-class GEntity;
+class MElement;
+class MPoint;
 
-class GVertex {
-private:
-  double X, Y, Z;
-  const GEntity *e;
-  double par[2];
-  bool success;
+// A model vertex.
+class GVertex : public GEntity {
+protected:
+  std::vector<GEdge *> l_edges;
+  double meshSize;
 
 public:
-  inline double x() const { return X; }
-  inline double y() const { return Y; }
-  inline double z() const { return Z; }
-  inline double &x() { return X; }
-  inline double &y() { return Y; }
-  inline double &z() { return Z; }
-  inline double u() const { return par[0]; }
-  inline double v() const { return par[1]; }
-  inline const GEntity *g() const { return e; }
-  GVertex(double _x = 0, double _y = 0, double _z = 0,
-         const GEntity *onwhat = nullptr)
-    : X(_x), Y(_y), Z(_z), e(onwhat), success(true)
+  GVertex(GModel *m, int tag, double ms = MAX_LC);
+  virtual ~GVertex();
+
+  // delete mesh data
+  virtual void deleteMesh();
+
+  // reset the mesh attributes to default values
+  virtual void resetMeshAttributes();
+
+  // get/set the coordinates of the vertex
+  virtual GPoint point() const = 0;
+  virtual double x() const = 0;
+  virtual double y() const = 0;
+  virtual double z() const = 0;
+  virtual SPoint3 xyz() const { return SPoint3(x(), y(), z()); }
+  virtual void setPosition(GPoint &p);
+
+  // add/delete an edge bounded by this vertex
+  void addEdge(GEdge *e);
+  void delEdge(GEdge *e);
+
+  // regions that bound this entity or that this entity bounds.
+  virtual std::list<GRegion *> regions() const;
+
+  // get the edges that this vertex bounds
+  virtual std::vector<GEdge *> const &edges() const { return l_edges; }
+
+  // get number of edges
+  virtual std::size_t numEdges() const { return l_edges.size(); }
+
+  // faces that bound this entity or that this entity bounds.
+  virtual std::vector<GFace *> faces() const;
+
+  // get the dimension of the vertex (0)
+  virtual int dim() const { return 0; }
+
+  // returns the parent entity for partitioned entities
+  virtual GEntity *getParentEntity() { return nullptr; }
+
+  // is this entity an orphan?
+  virtual bool isOrphan();
+
+  // get the geometric type of the vertex
+  virtual GeomType geomType() const { return Point; }
+
+  // get/set the prescribed mesh size at the vertex
+  virtual inline double prescribedMeshSizeAtVertex() const { return meshSize; }
+  virtual void setPrescribedMeshSizeAtVertex(double l) { meshSize = l; }
+
+  // get the bounding box
+  virtual SBoundingBox3d bounds(bool fast = false)
   {
-    par[0] = -1.;
-    par[1] = -1.;
+    return SBoundingBox3d(SPoint3(x(), y(), z()));
   }
-  GVertex(double _x, double _y, double _z, const GEntity *onwhat, double p)
-    : X(_x), Y(_y), Z(_z), e(onwhat), success(true)
+
+  // reparmaterize the point onto the given face
+  virtual SPoint2 reparamOnFace(const GFace *gf, int) const;
+
+  // return a type-specific additional information string
+  virtual std::string getAdditionalInfoString(bool multline = false);
+
+  // export in GEO format
+  virtual void writeGEO(FILE *fp, const std::string &meshSizeParameter = "");
+
+  // export in Python
+  virtual void writePY(FILE *fp, const std::string &meshSizeParameter = "");
+
+  // types of elements
+  virtual void getElementTypes(std::vector<int> &types) const
   {
-    par[0] = p;
-    par[1] = -1.;
-  }
-  GVertex(double _x, double _y, double _z, const GEntity *onwhat, double p[2])
-    : X(_x), Y(_y), Z(_z), e(onwhat), success(true)
-  {
-    par[0] = p[0];
-    par[1] = p[1];
-  }
-  GVertex(double _x, double _y, double _z, const GEntity *onwhat, double p1,
-         double p2)
-    : X(_x), Y(_y), Z(_z), e(onwhat), success(true)
-  {
-    par[0] = p1;
-    par[1] = p2;
-  }
-  double distance(GVertex &p)
-  {
-    double dx = X - p.x();
-    double dy = Y - p.y();
-    double dz = Z - p.z();
-    return sqrt(dx * dx + dy * dy + dz * dz);
-  }
-  bool succeeded() const { return success; }
-  bool setNoSuccess()
-  {
-    success = false;
-    return success;
-  }
+    types.clear();
+    types.push_back(TYPE_PNT);
+  };
+
+  // get number of elements in the mesh
+  std::size_t getNumMeshElements() const { return points.size(); }
+  std::size_t getNumMeshElementsByType(const int familyType) const;
+  void getNumMeshElements(unsigned *const c) const;
+
+  // get the element at the given index
+  MElement *getMeshElement(std::size_t index) const;
+  // get the element at the given index for a given familyType
+  MElement *getMeshElementByType(const int familyType,
+                                 const std::size_t index) const;
+
+  // return true if this vertex is on a seam of the given face
+  bool isOnSeam(const GFace *gf) const;
+
+  // relocate mesh vertex using GVertex coordinates
+  void relocateMeshVertices();
+
+  std::vector<MPoint *> points;
+
+  void addPoint(MPoint *p) { points.push_back(p); }
+  void addElement(MElement *e);
+  void removeElement(MElement *e, bool del=false);
+  void removeElements(bool del=false);
+
+  virtual bool reorder(const int elementType,
+                       const std::vector<std::size_t> &ordering);
 };
 
 #endif

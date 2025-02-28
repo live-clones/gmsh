@@ -14,7 +14,7 @@
 #include "MElement.h"
 
 template <class scalar> class fullMatrix;
-class GSurface;
+class GFace;
 
 typedef struct CDList DListRecord, *DListPeek;
 typedef int PointNumero;
@@ -108,9 +108,9 @@ public:
   {
     return std::binary_search(_hull, _hull + _hullSize, i);
   }
-  void makePosView(const std::string &, GSurface *gf = nullptr);
+  void makePosView(const std::string &, GFace *gf = nullptr);
   void printMedialAxis(Octree *_octree, const std::string &,
-                       GSurface *gf = nullptr, GCurve *ge = nullptr);
+                       GFace *gf = nullptr, GEdge *ge = nullptr);
   void voronoiCell(PointNumero pt, std::vector<SPoint2> &pts) const;
 
   std::set<std::pair<void *, void *> > boundaryEdges;
@@ -133,14 +133,14 @@ public:
     int, std::set<int> &,
     std::map<std::pair<void *, void *>, std::pair<int, int> > &);
   std::set<int> tagInterior(double, double);
-  void concave(double, double, GSurface *);
+  void concave(double, double, GFace *);
   bool contain(int, int, int);
   void add(int, int);
 
   void initialize();
   bool remove_point(int);
   void remove_all();
-  void add_point(double, double, GSurface *);
+  void add_point(double, double, GFace *);
 
   std::set<std::pair<void *, void *> > mesh_edges;
 
@@ -160,7 +160,7 @@ public:
 
   void build_edges();
   void clear_edges();
-  bool delaunay_conformity(GSurface *);
+  bool delaunay_conformity(GFace *);
 
   PointNumero *ConvertDlistToArray(DListPeek *dlist, int *n);
 };

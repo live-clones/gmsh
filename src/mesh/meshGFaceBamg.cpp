@@ -8,9 +8,9 @@
 #include <iostream>
 #include "meshGFaceBamg.h"
 #include "GmshMessage.h"
-#include "GSurface.h"
+#include "GFace.h"
 #include "GModel.h"
-#include "MNode.h"
+#include "MVertex.h"
 #include "MTriangle.h"
 #include "MLine.h"
 #include "GmshConfig.h"
@@ -30,7 +30,7 @@ long verbosity = 0;
 Mesh2 *Bamg(Mesh2 *Thh, double *args, double *mm11, double *mm12, double *mm22,
             bool);
 
-static void computeMeshMetricsForBamg(GSurface *gf, int numV,
+static void computeMeshMetricsForBamg(GFace *gf, int numV,
                                       Vertex2 *bamgVertices, double *mm11,
                                       double *mm12, double *mm22)
 {
@@ -45,7 +45,7 @@ static void computeMeshMetricsForBamg(GSurface *gf, int numV,
   for(int i = 0; i < numV; ++i) {
     double u = bamgVertices[i][0];
     double v = bamgVertices[i][1];
-    GVertex gp = gf->point(SPoint2(u, v));
+    GPoint gp = gf->point(SPoint2(u, v));
     SMetric3 m = BGM_MeshMetric(gf, u, v, gp.x(), gp.y(), gp.z());
 
     // compute the derivatives of the parametrization
@@ -68,10 +68,10 @@ static void computeMeshMetricsForBamg(GSurface *gf, int numV,
   }
 }
 
-void meshGFaceBamg(GSurface *gf)
+void meshGFaceBamg(GFace *gf)
 {
-  std::vector<GCurve *> const &edges = gf->edges();
-  std::set<MNode *> bcVertex;
+  std::vector<GEdge *> const &edges = gf->edges();
+  std::set<MVertex *> bcVertex;
   for(auto it = edges.begin(); it != edges.end(); it++) {
     for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
       bcVertex.insert((*it)->lines[i]->getVertex(0));
@@ -80,8 +80,8 @@ void meshGFaceBamg(GSurface *gf)
   }
 
   // fill mesh data fo bamg (bamgVertices, bamgTriangles, bamgBoundary)
-  std::set<MNode *> all;
-  std::map<int, MNode *> recover;
+  std::set<MVertex *> all;
+  std::map<int, MVertex *> recover;
   for(std::size_t i = 0; i < gf->triangles.size(); i++) {
     for(std::size_t j = 0; j < 3; j++)
       all.insert(gf->triangles[i]->getVertex(j));
@@ -115,7 +115,7 @@ void meshGFaceBamg(GSurface *gf)
   }
 
   std::vector<MElement *> myParamElems;
-  std::vector<MNode *> newVert;
+  std::vector<MVertex *> newVert;
   Triangle2 *bamgTriangles = new Triangle2[gf->triangles.size()];
   for(std::size_t i = 0; i < gf->triangles.size(); i++) {
     int nodes[3] = {(int)gf->triangles[i]->getVertex(0)->getIndex(),
@@ -138,7 +138,7 @@ void meshGFaceBamg(GSurface *gf)
 
   const auto numEdges =
     std::accumulate(begin(edges), end(edges), std::size_t(0),
-                    [](std::size_t const partial_sum, const GCurve *const edge) {
+                    [](std::size_t const partial_sum, const GEdge *const edge) {
                       return partial_sum + edge->lines.size();
                     });
 
@@ -194,11 +194,11 @@ void meshGFaceBamg(GSurface *gf)
     if(fabs((double)(nTnow - nT)) < 0.01 * nT) break;
   }
 
-  std::map<int, MNode *> yetAnother;
+  std::map<int, MVertex *> yetAnother;
   for(int i = 0; i < refinedBamgMesh->nv; i++) {
     Vertex2 &v = refinedBamgMesh->vertices[i];
     if(i >= nbFixedVertices) {
-      GVertex gp = gf->point(SPoint2(v[0], v[1]));
+      GPoint gp = gf->point(SPoint2(v[0], v[1]));
       // if (gp.x() > 2.){
       //  printf("wrong vertex index=%d %g %g %g (%g %g)\n",
       //         i, gp.x(), gp.y(), gp.z(), v[0], v[1]);
@@ -210,7 +210,7 @@ void meshGFaceBamg(GSurface *gf)
       gf->mesh_vertices.push_back(x);
     }
     else {
-      MNode *v = recover[i];
+      MVertex *v = recover[i];
       yetAnother[i] = v;
     }
   }
@@ -239,7 +239,7 @@ void meshGFaceBamg(GSurface *gf)
 
 #else
 
-void meshGFaceBamg(GSurface *gf)
+void meshGFaceBamg(GFace *gf)
 {
   Msg::Error("This version of Gmsh is not compiled with BAMG support");
 }

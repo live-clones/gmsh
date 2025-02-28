@@ -124,7 +124,7 @@ static void writeHTMLBody(FILE *fp, std::vector<std::string> &x3dfiles)
   fprintf(fp, "</html>\n");
 }
 
-static void writeX3dFaces(FILE *fp, std::vector<GSurface *> &faces,
+static void writeX3dFaces(FILE *fp, std::vector<GFace *> &faces,
                           bool useIndexedSet, double scalingFactor,
                           const std::string &name, bool useColor,
                           std::vector<unsigned int> &colors)
@@ -190,7 +190,7 @@ static void writeX3dFaces(FILE *fp, std::vector<GSurface *> &faces,
         if((*it)->stl_vertices_uv.size()) {
           for(std::size_t i = 0; i < (*it)->stl_vertices_uv.size(); i++) {
             SPoint2 &p((*it)->stl_vertices_uv[i]);
-            GVertex gp = (*it)->point(p);
+            GPoint gp = (*it)->point(p);
 
             fprintf(fp, "%g %g %g\n", gp.x() * scalingFactor,
                     gp.y() * scalingFactor, gp.z() * scalingFactor);
@@ -230,9 +230,9 @@ static void writeX3dFaces(FILE *fp, std::vector<GSurface *> &faces,
             SPoint2 &p1((*it)->stl_vertices_uv[(*it)->stl_triangles[i]]);
             SPoint2 &p2((*it)->stl_vertices_uv[(*it)->stl_triangles[i + 1]]);
             SPoint2 &p3((*it)->stl_vertices_uv[(*it)->stl_triangles[i + 2]]);
-            GVertex gp1 = (*it)->point(p1);
-            GVertex gp2 = (*it)->point(p2);
-            GVertex gp3 = (*it)->point(p3);
+            GPoint gp1 = (*it)->point(p1);
+            GPoint gp2 = (*it)->point(p2);
+            GPoint gp3 = (*it)->point(p3);
             double x[3] = {gp1.x(), gp2.x(), gp3.x()};
             double y[3] = {gp1.y(), gp2.y(), gp3.y()};
             double z[3] = {gp1.z(), gp2.z(), gp3.z()};
@@ -282,7 +282,7 @@ static void writeX3dFaces(FILE *fp, std::vector<GSurface *> &faces,
   fprintf(fp, "    </Shape>\n");
 }
 
-static void writeX3dEdges(FILE *fp, std::vector<GCurve *> &edges,
+static void writeX3dEdges(FILE *fp, std::vector<GEdge *> &edges,
                           double scalingFactor, const std::string &name)
 {
   for(auto it = edges.begin(); it != edges.end(); ++it) {
@@ -314,11 +314,11 @@ static void writeX3dEdges(FILE *fp, std::vector<GCurve *> &edges,
 
 int GModel::_writeX3dFile(FILE *fp, bool saveAll, double scalingFactor,
                           int x3dsurfaces, int x3dedges, int x3dvertices,
-                          int x3dcolorize, std::vector<GSurface *> &customFaces)
+                          int x3dcolorize, std::vector<GFace *> &customFaces)
 {
   if(noPhysicalGroups()) saveAll = true;
 
-  std::vector<GSurface *> modelFaces;
+  std::vector<GFace *> modelFaces;
   if(customFaces.size() > 0) {
     for(auto it = customFaces.begin(); it != customFaces.end(); ++it) {
       modelFaces.push_back(*it);
@@ -334,7 +334,7 @@ int GModel::_writeX3dFile(FILE *fp, bool saveAll, double scalingFactor,
     fprintf(fp, "   <Group DEF=\"faces\">\n");
     if(x3dsurfaces == 1) {
       // all surfaces in a single x3d object
-      std::vector<GSurface *> faces;
+      std::vector<GFace *> faces;
       std::vector<unsigned int> colors;
       // for(auto it = first_face; it != last_face; ++it) {
       for(auto it = modelFaces.begin(); it != modelFaces.end(); ++it) {
@@ -348,7 +348,7 @@ int GModel::_writeX3dFile(FILE *fp, bool saveAll, double scalingFactor,
       // for(auto it = first_face; it != last_face; ++it) {
       for(auto it = modelFaces.begin(); it != modelFaces.end(); ++it) {
         if(saveAll || (*it)->physicals.size()) {
-          std::vector<GSurface *> faces(1, *it);
+          std::vector<GFace *> faces(1, *it);
           std::vector<unsigned int> colors;
           std::string name = getElementaryName(2, (*it)->tag());
           // get color info
@@ -370,9 +370,9 @@ int GModel::_writeX3dFile(FILE *fp, bool saveAll, double scalingFactor,
       std::vector<unsigned int> colors;
       getPhysicalGroups(2, phys);
       for(auto it = phys.begin(); it != phys.end(); it++) {
-        std::vector<GSurface *> faces;
+        std::vector<GFace *> faces;
         for(std::size_t i = 0; i < it->second.size(); i++) {
-          faces.push_back(static_cast<GSurface *>(it->second[i]));
+          faces.push_back(static_cast<GFace *>(it->second[i]));
         }
         std::string name = getPhysicalName(2, it->first);
         if(name.empty()) {
@@ -392,7 +392,7 @@ int GModel::_writeX3dFile(FILE *fp, bool saveAll, double scalingFactor,
     fprintf(fp, "   <Group DEF=\"edges\">\n");
     if(x3dedges == 1) {
       // all edges in a single x3d object
-      std::vector<GCurve *> edges;
+      std::vector<GEdge *> edges;
       for(auto it = firstEdge(); it != lastEdge(); ++it) {
         if(saveAll || (*it)->physicals.size()) { edges.push_back(*it); }
       }
@@ -403,7 +403,7 @@ int GModel::_writeX3dFile(FILE *fp, bool saveAll, double scalingFactor,
       // one x3d object for each physical edge
       for(auto it = firstEdge(); it != lastEdge(); ++it) {
         if(saveAll || (*it)->physicals.size()) {
-          std::vector<GCurve *> edges(1, *it);
+          std::vector<GEdge *> edges(1, *it);
           std::string name = getElementaryName(1, (*it)->tag());
           if(name.empty()) {
             std::ostringstream s;
@@ -419,9 +419,9 @@ int GModel::_writeX3dFile(FILE *fp, bool saveAll, double scalingFactor,
       std::map<int, std::vector<GEntity *> > phys;
       getPhysicalGroups(1, phys);
       for(auto it = phys.begin(); it != phys.end(); it++) {
-        std::vector<GCurve *> edges;
+        std::vector<GEdge *> edges;
         for(std::size_t i = 0; i < it->second.size(); i++) {
-          edges.push_back(static_cast<GCurve *>(it->second[i]));
+          edges.push_back(static_cast<GEdge *>(it->second[i]));
         }
         std::string name = getPhysicalName(1, it->first);
         if(name.empty()) {
@@ -482,7 +482,7 @@ int GModel::writeX3D(const std::string &name, bool saveAll,
     return 0;
   }
 
-  std::vector<GSurface *> faces;
+  std::vector<GFace *> faces;
   if(x3dvolumes == 1) {
     Msg::Info("separating volumes into separate files");
     std::vector<GEntity *> volumes;

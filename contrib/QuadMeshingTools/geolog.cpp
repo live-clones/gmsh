@@ -14,7 +14,7 @@
 #if defined(GMSH_LINKED)
 #include "gmsh.h"
 #include "Context.h"
-#include "MNode.h"
+#include "MVertex.h"
 #include "MElement.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
@@ -148,7 +148,7 @@ namespace GeoLog {
       V.objs[e0 + i].pts.resize(nv);
       V.objs[e0 + i].values.resize(nv, 0.);
       for(size_t lv = 0; lv < nv; ++lv) {
-        MNode *v = elt->getVertex(lv);
+        MVertex *v = elt->getVertex(lv);
         V.objs[e0 + i].pts[lv][0] = v->x();
         V.objs[e0 + i].pts[lv][1] = v->y();
         V.objs[e0 + i].pts[lv][2] = v->z();
@@ -161,7 +161,7 @@ namespace GeoLog {
   }
 
   bool add(const std::vector<MElement *> &elements,
-           const std::unordered_map<MNode *, double> &field,
+           const std::unordered_map<MVertex *, double> &field,
            const std::string &view)
   {
 #if defined(GMSH_LINKED)
@@ -178,7 +178,7 @@ namespace GeoLog {
       V.objs[e0 + i].pts.resize(nv);
       V.objs[e0 + i].values.resize(nv, 0.);
       for(size_t lv = 0; lv < nv; ++lv) {
-        MNode *v = elt->getVertex(lv);
+        MVertex *v = elt->getVertex(lv);
         V.objs[e0 + i].pts[lv][0] = v->x();
         V.objs[e0 + i].pts[lv][1] = v->y();
         V.objs[e0 + i].pts[lv][2] = v->z();
@@ -212,7 +212,7 @@ namespace GeoLog {
       V.objs[e0 + i].pts.resize(nv);
       V.objs[e0 + i].values.resize(nv, 0.);
       for(size_t lv = 0; lv < nv; ++lv) {
-        MNode *v = elt->getVertex(lv);
+        MVertex *v = elt->getVertex(lv);
         V.objs[e0 + i].pts[lv][0] = v->x();
         V.objs[e0 + i].pts[lv][1] = v->y();
         V.objs[e0 + i].pts[lv][2] = v->z();

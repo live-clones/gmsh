@@ -6,8 +6,8 @@
 #include "GmshConfig.h"
 #include "sizeField.h"
 #include "GModel.h"
-#include "GSurface.h"
-#include "MNode.h"
+#include "GFace.h"
+#include "MVertex.h"
 #include "MTriangle.h"
 #include "BackgroundMeshTools.h"
 
@@ -19,7 +19,7 @@
 #endif
 
 static void printSizeField(const char *fn, std::vector<MTriangle *> &triangles,
-                           std::unordered_map<MNode *, double> &sizeField)
+                           std::unordered_map<MVertex *, double> &sizeField)
 {
   FILE *f = fopen(fn, "w");
   fprintf(f, "View\"SIZE FIELD\"{\n");
@@ -50,13 +50,13 @@ int createSizeFieldFromExistingMesh(GModel *gm, bool computeCrosses)
                        (*itf)->triangles.end());
   }
 
-  std::unordered_map<MNode *, std::vector<MNode *> > v2v;
+  std::unordered_map<MVertex *, std::vector<MVertex *> > v2v;
   buildVertexToVertexMap(triangles, v2v);
 
-  std::unordered_map<MNode *, double> sizeField;
+  std::unordered_map<MVertex *, double> sizeField;
 
   for(auto it : v2v) {
-    MNode *v = it.first;
+    MVertex *v = it.first;
     double size = 1.e22, U, V;
     if(v->onWhat()->dim() == 1) {
       v->getParameter(0, U);

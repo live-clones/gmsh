@@ -10,7 +10,7 @@
 
 #include "GmshConfig.h"
 #include "GModel.h"
-#include "GVolume.h"
+#include "GRegion.h"
 #include "MTriangle.h"
 #include "MLine.h"
 #include "Field.h"

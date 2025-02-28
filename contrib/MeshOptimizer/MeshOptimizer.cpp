@@ -45,11 +45,11 @@ typedef std::vector<MElement *> elVec;
 typedef elVec::const_iterator elVecConstIter;
 typedef std::set<MElement *> elSet;
 typedef elSet::iterator elSetIter;
-typedef std::set<MNode *> vertSet;
+typedef std::set<MVertex *> vertSet;
 typedef std::map<MElement *, GEntity *> elEntMap;
 typedef std::map<MElement *, MElement *> elElMap;
 
-typedef std::map<MNode *, elVec> vertElVecMap;
+typedef std::map<MVertex *, elVec> vertElVecMap;
 typedef std::map<MElement *, elSet> elElSetMap;
 typedef std::pair<elSet, vertSet> elSetVertSetPair;
 
@@ -175,7 +175,7 @@ namespace {
   }
 
   MElement *getFaceInBndElements(const MFace &f,
-                                 std::vector<GSurface *> const &gFaces)
+                                 std::vector<GFace *> const &gFaces)
   {
     for(auto itGF = gFaces.begin(); itGF != gFaces.end(); itGF++) {
       if(f.getNumVertices() == 3) {
@@ -193,7 +193,7 @@ namespace {
   }
 
   MElement *getEdgeInBndElements(const MEdge &e,
-                                 std::vector<GCurve *> const &gEdges)
+                                 std::vector<GEdge *> const &gEdges)
   {
     for(auto itGE = gEdges.begin(); itGE != gEdges.end(); itGE++) {
       std::vector<MLine *> &lines = (*itGE)->lines;
@@ -205,8 +205,8 @@ namespace {
 
   void calcBndInfo(GEntity *entity, elElMap &el2BndEl, elEntMap &bndEl2Ent)
   {
-    typedef std::vector<GSurface *> GFaceList;
-    typedef std::vector<GCurve *> GEdgeList;
+    typedef std::vector<GFace *> GFaceList;
+    typedef std::vector<GEdge *> GEdgeList;
 
     if(entity->dim() == 3) { // 3D
 

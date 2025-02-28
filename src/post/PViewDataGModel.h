@@ -27,11 +27,11 @@ private:
   // the number of components in the data (one stepData contains only
   // a single field type)
   int _numComp;
-  // the values, indexed by MNode or MElement id numbers (If the
+  // the values, indexed by MVertex or MElement id numbers (If the
   // numbering is sparse, or if we only have data for high-id
   // entities, the vector has zero entries and is thus not
   // optimal. This is the price to pay if we want 1) rapid access to
-  // the data and 2) not to store any additional info in MNode or
+  // the data and 2) not to store any additional info in MVertex or
   // MElement)
   //
   // FIXME: we should change this design and store a vector<int> of tags, and do
@@ -203,7 +203,7 @@ private:
   DataType _type;
   // cache last element to speed up loops
   MElement *_getElement(int step, int ent, int ele);
-  MNode *_getNode(MElement *e, int nod);
+  MVertex *_getNode(MElement *e, int nod);
 
 public:
   PViewDataGModel(DataType type = NodeData);
@@ -307,7 +307,7 @@ public:
   bool readCGNS(const std::pair<std::string, std::string> &solFieldName,
                 const std::string &fileName, int index, int fileIndex,
                 int baseIndex,
-                const std::vector<std::vector<MNode *> > &vertPerZone,
+                const std::vector<std::vector<MVertex *> > &vertPerZone,
                 const std::vector<std::vector<MElement *> > &eltPerZone);
   bool readMED(const std::string &fileName, int fileIndex);
   bool writeMED(const std::string &fileName);

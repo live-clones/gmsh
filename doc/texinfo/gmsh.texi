@@ -6276,13 +6276,13 @@ the other.
 The geometry module is based on a model class
 (@url{@value{GITLAB-PREFIX}/src/geo/GModel.h,src/geo/GModel.h}),
 and abstract entity classes for geometrical points
-(@url{@value{GITLAB-PREFIX}/src/geo/GPoint.h,src/geo/GPoint.h}),
+(@url{@value{GITLAB-PREFIX}/src/geo/GVertex.h,src/geo/GVertex.h}),
 curves
-(@url{@value{GITLAB-PREFIX}/src/geo/GCurve.h,src/geo/GCurve.h}),
+(@url{@value{GITLAB-PREFIX}/src/geo/GEdge.h,src/geo/GEdge.h}),
 surfaces
-(@url{@value{GITLAB-PREFIX}/src/geo/GSurface.h,src/geo/GSurface.h})
+(@url{@value{GITLAB-PREFIX}/src/geo/GFace.h,src/geo/GFace.h})
 and volumes
-(@url{@value{GITLAB-PREFIX}/src/geo/GVolume.h,src/geo/GVolume.h}).
+(@url{@value{GITLAB-PREFIX}/src/geo/GRegion.h,src/geo/GRegion.h}).
 Concrete implementations of these classes are provided for each
 supported CAD kernel
 (e.g. @url{@value{GITLAB-PREFIX}/src/geo/gmshVertex.h,src/geo/gmshVertex.h}
@@ -6309,7 +6309,7 @@ and are stored in the corresponding model entities: one mesh point per
 geometrical point, mesh lines in geometrical curves, triangles and
 quadrangles in surfaces, etc. The elements are defined in terms of their
 nodes
-(@url{@value{GITLAB-PREFIX}/src/geo/MNode.h,src/geo/MNode.h}).
+(@url{@value{GITLAB-PREFIX}/src/geo/MVertex.h,src/geo/MVertex.h}).
 Each model entity stores only its internal nodes: nodes on boundaries or
 on embedded entities are stored in the associated bounding/embedded
 entity.

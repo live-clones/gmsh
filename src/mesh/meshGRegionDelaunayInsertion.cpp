@@ -14,7 +14,7 @@
 #include "meshGRegionLocalMeshMod.h"
 #include "meshGRegionDelaunayInsertion.h"
 #include "GModel.h"
-#include "GVolume.h"
+#include "GRegion.h"
 #include "MTriangle.h"
 #include "Numeric.h"
 #include "Context.h"
@@ -27,13 +27,13 @@ int MTet4::radiusNorm = 2;
 
 #ifdef DEBUG_BOUNDARY_RECOVERY
 
-static void testIfBoundaryIsRecovered(GVolume *gr)
+static void testIfBoundaryIsRecovered(GRegion *gr)
 {
-  std::vector<GCurve *> const &e = gr->edges();
-  std::vector<GSurface *> f = gr->faces();
+  std::vector<GEdge *> const &e = gr->edges();
+  std::vector<GFace *> f = gr->faces();
 
-  std::map<MEdge, GCurve *, MEdgeLessThan> edges;
-  std::map<MFace, GSurface *, MFaceLessThan> faces;
+  std::map<MEdge, GEdge *, MEdgeLessThan> edges;
+  std::map<MFace, GFace *, MFaceLessThan> faces;
 
   auto it = e.begin();
   auto itf = f.begin();
@@ -112,10 +112,10 @@ struct edgeContainerB {
 };
 
 static void
-createAllEmbeddedEdges(GVolume *gr,
+createAllEmbeddedEdges(GRegion *gr,
                        std::set<MEdge, MEdgeLessThan> &allEmbeddedEdges)
 {
-  std::vector<GCurve *> const &e = gr->embeddedEdges();
+  std::vector<GEdge *> const &e = gr->embeddedEdges();
   for(auto it = e.begin(); it != e.end(); ++it) {
     for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
       allEmbeddedEdges.insert(
@@ -124,9 +124,9 @@ createAllEmbeddedEdges(GVolume *gr,
   }
 }
 
-static void createAllEmbeddedEdges(GVolume *gr, edgeContainerB &embedded)
+static void createAllEmbeddedEdges(GRegion *gr, edgeContainerB &embedded)
 {
-  std::vector<GCurve *> const &e = gr->embeddedEdges();
+  std::vector<GEdge *> const &e = gr->embeddedEdges();
   for(auto it = e.begin(); it != e.end(); ++it) {
     for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
       embedded.addNewEdge(
@@ -136,10 +136,10 @@ static void createAllEmbeddedEdges(GVolume *gr, edgeContainerB &embedded)
 }
 
 static void
-createAllEmbeddedFaces(GVolume *gr,
+createAllEmbeddedFaces(GRegion *gr,
                        std::set<MFace, MFaceLessThan> &allEmbeddedFaces)
 {
-  std::vector<GSurface *> const &f = gr->embeddedFaces();
+  std::vector<GFace *> const &f = gr->embeddedFaces();
   for(auto it = f.begin(); it != f.end(); ++it) {
     for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
       allEmbeddedFaces.insert((*it)->triangles[i]->getFace(0));
@@ -165,14 +165,14 @@ int MTet4::inCircumSphere(const double *p) const
 static int faces[4][3] = {{0, 1, 2}, {0, 2, 3}, {0, 3, 1}, {1, 3, 2}};
 
 struct vertex_comparator {
-  bool operator()(MNode *const a, MNode *const b) const
+  bool operator()(MVertex *const a, MVertex *const b) const
   {
     return a->getNum() < b->getNum();
   }
 };
 
 struct faceXtet {
-  MNode *v[3], *unsorted[3];
+  MVertex *v[3], *unsorted[3];
   MTet4 *t1;
   int i1;
 
@@ -185,7 +185,7 @@ struct faceXtet {
     std::sort(v, v + 3, vertex_comparator());
   }
 
-  MNode *getVertex(int i) const { return unsorted[i]; }
+  MVertex *getVertex(int i) const { return unsorted[i]; }
 
   bool operator<(const faceXtet &other) const
   {
@@ -204,11 +204,11 @@ struct faceXtet {
             v[2]->getNum() == other.v[2]->getNum());
   }
 
-  bool visible(MNode *v)
+  bool visible(MVertex *v)
   {
-    MNode const *const v0 = t1->tet()->getVertex(faces[i1][0]);
-    MNode const *const v1 = t1->tet()->getVertex(faces[i1][1]);
-    MNode const *const v2 = t1->tet()->getVertex(faces[i1][2]);
+    MVertex const *const v0 = t1->tet()->getVertex(faces[i1][0]);
+    MVertex const *const v1 = t1->tet()->getVertex(faces[i1][1]);
+    MVertex const *const v2 = t1->tet()->getVertex(faces[i1][2]);
 
     double a[3] = {v0->x(), v0->y(), v0->z()};
     double b[3] = {v1->x(), v1->y(), v1->z()};
@@ -344,7 +344,7 @@ static void extendCavity(std::vector<faceXtet> &shell,
 
 // if all faces of the tet that are not in the shell see v, then it is ok
 // either to add or to remove t from the shell
-static bool verifyShell(MNode *v, MTet4 *t, std::vector<faceXtet> &shell)
+static bool verifyShell(MVertex *v, MTet4 *t, std::vector<faceXtet> &shell)
 {
   if(!t) return false;
   return 1;
@@ -365,7 +365,7 @@ static bool verifyShell(MNode *v, MTet4 *t, std::vector<faceXtet> &shell)
 }
 
 int makeCavityStarShaped(std::vector<faceXtet> &shell,
-                         std::vector<MTet4 *> &cavity, MNode *v)
+                         std::vector<MTet4 *> &cavity, MVertex *v)
 {
   std::vector<faceXtet> wrong;
   for(auto it = shell.begin(); it != shell.end(); ++it) {
@@ -401,7 +401,7 @@ int makeCavityStarShaped(std::vector<faceXtet> &shell,
 }
 
 void findCavity(std::vector<faceXtet> &shell, std::vector<MTet4 *> &cavity,
-                MNode *v, MTet4 *t)
+                MVertex *v, MTet4 *t)
 {
   t->setDeleted(true);
   cavity.push_back(t);
@@ -457,7 +457,7 @@ static void printTets(const char *fn, std::list<MTet4 *> &cavity,
 #endif
 
 bool insertVertexB(std::vector<faceXtet> &shell, std::vector<MTet4 *> &cavity,
-                   MNode *v, double lc1, double lc2,
+                   MVertex *v, double lc1, double lc2,
                    std::vector<double> &vSizes, std::vector<double> &vSizesBGM,
                    MTet4 *t, MTet4Factory &myFactory,
                    std::set<MTet4 *, compareTet4Ptr> &allTets,
@@ -517,14 +517,14 @@ bool insertVertexB(std::vector<faceXtet> &shell, std::vector<MTet4 *> &cavity,
 }
 
 static void setLcs(MTriangle *t,
-                   std::map<MNode *, double, MVertexPtrLessThan> &vSizes,
-                   std::set<MNode *, MVertexPtrLessThan> &bndVertices)
+                   std::map<MVertex *, double, MVertexPtrLessThan> &vSizes,
+                   std::set<MVertex *, MVertexPtrLessThan> &bndVertices)
 {
   for(int i = 0; i < 3; i++) {
     bndVertices.insert(t->getVertex(i));
     MEdge e = t->getEdge(i);
-    MNode *vi = e.getVertex(0);
-    MNode *vj = e.getVertex(1);
+    MVertex *vi = e.getVertex(0);
+    MVertex *vj = e.getVertex(1);
     double dx = vi->x() - vj->x();
     double dy = vi->y() - vj->y();
     double dz = vi->z() - vj->z();
@@ -548,8 +548,8 @@ static void setLcs(MTriangle *t,
   double l = 0;
   for(int i = 0; i < 3; i++){
     MEdge e = t->getEdge(i);
-    MNode *vi = e.getVertex(0);
-    MNode *vj = e.getVertex(1);
+    MVertex *vi = e.getVertex(0);
+    MVertex *vj = e.getVertex(1);
     double dx = vi->x()-vj->x();
     double dy = vi->y()-vj->y();
     double dz = vi->z()-vj->z();
@@ -559,8 +559,8 @@ static void setLcs(MTriangle *t,
   for(int i = 0; i < 3; i++){
     bndVertices.insert(t->getVertex(i));
     MEdge e = t->getEdge(i);
-    MNode *vi = e.getVertex(0);
-    MNode *vj = e.getVertex(1);
+    MVertex *vi = e.getVertex(0);
+    MVertex *vj = e.getVertex(1);
     auto iti = vSizes.find(vi);
     auto itj = vSizes.find(vj);
     // use largest edge length
@@ -571,13 +571,13 @@ static void setLcs(MTriangle *t,
 }
 
 static void setLcs(MTetrahedron *t,
-                   std::map<MNode *, double, MVertexPtrLessThan> &vSizes,
-                   std::set<MNode *, MVertexPtrLessThan> &bndVertices)
+                   std::map<MVertex *, double, MVertexPtrLessThan> &vSizes,
+                   std::set<MVertex *, MVertexPtrLessThan> &bndVertices)
 {
   for(int i = 0; i < 4; i++) {
     for(int j = i + 1; j < 4; j++) {
-      MNode *vi = t->getVertex(i);
-      MNode *vj = t->getVertex(j);
+      MVertex *vi = t->getVertex(i);
+      MVertex *vj = t->getVertex(j);
 
       // smallest tet edge
       if(bndVertices.find(vi) == bndVertices.end()) {
@@ -601,14 +601,14 @@ static void setLcs(MTetrahedron *t,
   }
 }
 
-static void completeTheSetOfFaces(GModel *model, std::set<GSurface *> &faces_bound)
+static void completeTheSetOfFaces(GModel *model, std::set<GFace *> &faces_bound)
 {
-  std::set<GSurface *> toAdd;
+  std::set<GFace *> toAdd;
   for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
     if(faces_bound.find(*it) != faces_bound.end()) {
       if((*it)->compound.size()) {
         for(std::size_t i = 0; i < (*it)->compound.size(); ++i) {
-          GSurface *gf = static_cast<GSurface *>((*it)->compound[i]);
+          GFace *gf = static_cast<GFace *>((*it)->compound[i]);
           if(gf) toAdd.insert(gf);
         }
       }
@@ -617,21 +617,21 @@ static void completeTheSetOfFaces(GModel *model, std::set<GSurface *> &faces_bou
   faces_bound.insert(toAdd.begin(), toAdd.end());
 }
 
-GVolume *getRegionFromBoundingFaces(GModel *model,
-                                    std::set<GSurface *> &faces_bound)
+GRegion *getRegionFromBoundingFaces(GModel *model,
+                                    std::set<GFace *> &faces_bound)
 {
   completeTheSetOfFaces(model, faces_bound);
 
   auto git = model->firstRegion();
   while(git != model->lastRegion()) {
-    GVolume *gr = *git;
+    GRegion *gr = *git;
     ExtrudeParams *ep = gr->meshAttributes.extrude;
     if((ep && ep->mesh.ExtrudeMesh) ||
        gr->meshAttributes.method == MESH_TRANSFINITE) {
       // extruded meshes or transfinite should be considered as "void"
     }
     else {
-      std::vector<GSurface *> _faces = (*git)->faces();
+      std::vector<GFace *> _faces = (*git)->faces();
       if(_faces.size() == faces_bound.size()) {
         bool ok = true;
         for(auto it = _faces.begin(); it != _faces.end(); ++it) {
@@ -646,7 +646,7 @@ GVolume *getRegionFromBoundingFaces(GModel *model,
 }
 
 void non_recursive_classify(MTet4 *t, std::list<MTet4 *> &theRegion,
-                            std::set<GSurface *> &faces_bound, GVolume *bidon,
+                            std::set<GFace *> &faces_bound, GRegion *bidon,
                             GModel *model, const fs_cont &search)
 {
   std::stack<MTet4 *> _stackounette;
@@ -666,7 +666,7 @@ void non_recursive_classify(MTet4 *t, std::list<MTet4 *> &theRegion,
       t->setOnWhat(bidon);
       bool FF[4] = {0, 0, 0, 0};
       for(int i = 0; i < 4; i++) {
-        GSurface *gfound = findInFaceSearchStructure(
+        GFace *gfound = findInFaceSearchStructure(
           t->tet()->getVertex(faces[i][0]), t->tet()->getVertex(faces[i][1]),
           t->tet()->getVertex(faces[i][2]), search);
         if(gfound) {
@@ -683,7 +683,7 @@ void non_recursive_classify(MTet4 *t, std::list<MTet4 *> &theRegion,
   if(touchesOutsideBox) faces_bound.clear();
 }
 
-void adaptMeshGRegion::operator()(GVolume *gr)
+void adaptMeshGRegion::operator()(GRegion *gr)
 {
   const qmTetrahedron::Measures qm = qmTetrahedron::QMTET_GAMMA;
 
@@ -873,7 +873,7 @@ void adaptMeshGRegion::operator()(GVolume *gr)
   }
 }
 
-void optimizeMesh(GVolume *gr, const qmTetrahedron::Measures &qm)
+void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm)
 {
   double qMin = CTX::instance()->mesh.optimizeThreshold;
 
@@ -1195,9 +1195,9 @@ static int isCavityCompatibleWithEmbeddedFace(
   return 1;
 }
 
-static void _deleteUnusedVertices(GVolume *gr)
+static void _deleteUnusedVertices(GRegion *gr)
 {
-  std::set<MNode *, MVertexPtrLessThan> allverts;
+  std::set<MVertex *, MVertexPtrLessThan> allverts;
   for(std::size_t i = 0; i < gr->tetrahedra.size(); i++) {
     for(int j = 0; j < 4; j++) {
       if(gr->tetrahedra[i]->getVertex(j)->onWhat() == gr)
@@ -1214,7 +1214,7 @@ static void _deleteUnusedVertices(GVolume *gr)
                            allverts.end());
 }
 
-void insertVerticesInRegion(GVolume *gr, int maxIter,
+void insertVerticesInRegion(GRegion *gr, int maxIter,
                             double worstTetRadiusTarget, bool _classify,
                             splitQuadRecovery *sqr)
 {
@@ -1229,16 +1229,16 @@ void insertVerticesInRegion(GVolume *gr, int maxIter,
 
   // leave this in a block so the map gets deallocated directly
   {
-    std::map<MNode *, double, MVertexPtrLessThan> vSizesMap;
-    std::set<MNode *, MVertexPtrLessThan> bndVertices;
+    std::map<MVertex *, double, MVertexPtrLessThan> vSizesMap;
+    std::set<MVertex *, MVertexPtrLessThan> bndVertices;
 
     for(auto rit = gr->model()->firstRegion(); rit != gr->model()->lastRegion();
         ++rit) {
-      std::vector<GCurve *> const &e = (*rit)->embeddedEdges();
+      std::vector<GEdge *> const &e = (*rit)->embeddedEdges();
       for(auto it = e.begin(); it != e.end(); ++it) {
         for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
-          MNode *vi = (*it)->lines[i]->getVertex(0);
-          MNode *vj = (*it)->lines[i]->getVertex(1);
+          MVertex *vi = (*it)->lines[i]->getVertex(0);
+          MVertex *vj = (*it)->lines[i]->getVertex(1);
           double dx = vi->x() - vj->x();
           double dy = vi->y() - vj->y();
           double dz = vi->z() - vj->z();
@@ -1256,9 +1256,9 @@ void insertVerticesInRegion(GVolume *gr, int maxIter,
 
     for(auto rit = gr->model()->firstRegion(); rit != gr->model()->lastRegion();
         ++rit) {
-      std::vector<GPoint *> const &vertices = (*rit)->embeddedVertices();
+      std::vector<GVertex *> const &vertices = (*rit)->embeddedVertices();
       for(auto it = vertices.begin(); it != vertices.end(); ++it) {
-        MNode *v = (*it)->getMeshVertex(0);
+        MVertex *v = (*it)->getMeshVertex(0);
         double l = (*it)->prescribedMeshSizeAtVertex();
         auto itv = vSizesMap.find(v);
         if(itv == vSizesMap.end() || itv->second > l) vSizesMap[v] = l;
@@ -1267,7 +1267,7 @@ void insertVerticesInRegion(GVolume *gr, int maxIter,
 
     for(auto it = gr->model()->firstFace(); it != gr->model()->lastFace();
         ++it) {
-      GSurface *gf = *it;
+      GFace *gf = *it;
       for(std::size_t i = 0; i < gf->triangles.size(); i++) {
         setLcs(gf->triangles[i], vSizesMap, bndVertices);
       }
@@ -1302,8 +1302,8 @@ void insertVerticesInRegion(GVolume *gr, int maxIter,
     for(auto it = allTets.begin(); it != allTets.end(); ++it) {
       if(!(*it)->onWhat()) {
         std::list<MTet4 *> theRegion;
-        std::set<GSurface *> faces_bound;
-        GVolume *bidon = (GVolume *)123;
+        std::set<GFace *> faces_bound;
+        GRegion *bidon = (GRegion *)123;
         double _t1 = Cpu(), _w1 = TimeOfDay();
         Msg::Debug("start with a non classified tet");
         non_recursive_classify(*it, theRegion, faces_bound, bidon, gr->model(),
@@ -1311,7 +1311,7 @@ void insertVerticesInRegion(GVolume *gr, int maxIter,
         double _t2 = Cpu(), _w2 = TimeOfDay();
         Msg::Debug("Found %d tets with %d faces (Wall %gs, CPU %gs)",
                    theRegion.size(), faces_bound.size(), _w2 - _w1, _t2 - _t1);
-        GVolume *myGRegion =
+        GRegion *myGRegion =
           getRegionFromBoundingFaces(gr->model(), faces_bound);
         if(myGRegion && myGRegion->tetrahedra.empty()) {
           // a geometrical region (with no mesh) associated to the list of faces
@@ -1321,7 +1321,7 @@ void insertVerticesInRegion(GVolume *gr, int maxIter,
             (*it2)->setOnWhat(myGRegion);
 
             // Make sure that Steiner points will end up in the right region
-            std::vector<MNode *> vertices;
+            std::vector<MVertex *> vertices;
             (*it2)->tet()->getVertices(vertices);
             for(auto itv = vertices.begin(); itv != vertices.end(); ++itv) {
               if((*itv)->onWhat() != nullptr && (*itv)->onWhat()->dim() == 3 &&
@@ -1420,7 +1420,7 @@ void insertVerticesInRegion(GVolume *gr, int maxIter,
       // A TEST !!!
       std::vector<faceXtet> shell;
       std::vector<MTet4 *> cavity;
-      MNode vv(center[0], center[1], center[2], worst->onWhat());
+      MVertex vv(center[0], center[1], center[2], worst->onWhat());
       findCavity(shell, cavity, &vv, worst);
       bool FOUND = false;
       for(auto itc = cavity.begin(); itc != cavity.end(); ++itc) {
@@ -1445,8 +1445,8 @@ void insertVerticesInRegion(GVolume *gr, int maxIter,
       bool correctedCavityIncompatibleWithEmbeddedEntities = false;
 
       if(FOUND) {
-        MNode *v =
-          new MNode(center[0], center[1], center[2], worst->onWhat());
+        MVertex *v =
+          new MVertex(center[0], center[1], center[2], worst->onWhat());
         v->setIndex(NUM++);
 #ifdef PRINT_TETS
         printTets("before.pos", cavity, true);
@@ -1558,7 +1558,7 @@ void insertVerticesInRegion(GVolume *gr, int maxIter,
 
 // do a 3D delaunay mesh assuming a set of vertices
 
-void delaunayMeshIn3D(std::vector<MNode *> &v,
+void delaunayMeshIn3D(std::vector<MVertex *> &v,
                       std::vector<MTetrahedron *> &result, bool removeBox)
 {
   Msg::Info("Tetrahedrizing %d nodes...", v.size());

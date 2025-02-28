@@ -5,25 +5,25 @@
 
 #include "closestVertex.h"
 #include "GEntity.h"
-#include "GCurve.h"
-#include "GSurface.h"
+#include "GEdge.h"
+#include "GFace.h"
 #include <vector>
 
 closestVertexFinder::closestVertexFinder(GEntity *ge, bool closure) : nbVtcs(0)
 {
 #if defined(HAVE_ANN)
-  std::set<MNode *> vtcs;
+  std::set<MVertex *> vtcs;
   ge->addVerticesInSet(vtcs, closure);
   nbVtcs = vtcs.size();
   if(nbVtcs) {
-    vertex = new MNode *[nbVtcs];
+    vertex = new MVertex *[nbVtcs];
     index = new ANNidx[1];
     dist = new ANNdist[1];
     vCoord = annAllocPts(nbVtcs, 3);
     int k = 0;
     auto vIter = vtcs.begin();
     for(; vIter != vtcs.end(); ++vIter, ++k) {
-      MNode *mv = *vIter;
+      MVertex *mv = *vIter;
       vCoord[k][0] = mv->x();
       vCoord[k][1] = mv->y();
       vCoord[k][2] = mv->z();
@@ -50,7 +50,7 @@ closestVertexFinder::~closestVertexFinder()
 #endif
 }
 
-MNode *closestVertexFinder::operator()(const SPoint3 &p)
+MVertex *closestVertexFinder::operator()(const SPoint3 &p)
 {
 #if defined(HAVE_ANN)
   if(nbVtcs == 0) return nullptr;
@@ -62,7 +62,7 @@ MNode *closestVertexFinder::operator()(const SPoint3 &p)
 #endif
 }
 
-MNode *closestVertexFinder::operator()(const SPoint3 &p,
+MVertex *closestVertexFinder::operator()(const SPoint3 &p,
                                          const std::vector<double> &tfo)
 {
 #if defined(HAVE_ANN)

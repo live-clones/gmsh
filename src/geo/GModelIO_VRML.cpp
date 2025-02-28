@@ -26,21 +26,21 @@ static int skipUntil(FILE *fp, const char *key)
   return 0;
 }
 
-static int readVerticesVRML(FILE *fp, std::vector<MNode *> &vertexVector,
-                            std::vector<MNode *> &allVertexVector)
+static int readVerticesVRML(FILE *fp, std::vector<MVertex *> &vertexVector,
+                            std::vector<MVertex *> &allVertexVector)
 {
   double x, y, z;
   if(fscanf(fp, "%lf %lf %lf", &x, &y, &z) != 3) return 0;
-  vertexVector.push_back(new MNode(x, y, z));
+  vertexVector.push_back(new MVertex(x, y, z));
   while(fscanf(fp, " , %lf %lf %lf", &x, &y, &z) == 3)
-    vertexVector.push_back(new MNode(x, y, z));
+    vertexVector.push_back(new MVertex(x, y, z));
   for(std::size_t i = 0; i < vertexVector.size(); i++)
     allVertexVector.push_back(vertexVector[i]);
   Msg::Info("%d nodes", vertexVector.size());
   return 1;
 }
 
-static int readElementsVRML(FILE *fp, std::vector<MNode *> &vertexVector,
+static int readElementsVRML(FILE *fp, std::vector<MVertex *> &vertexVector,
                             int region,
                             std::map<int, std::vector<MElement *> > elements[3],
                             bool strips = false)
@@ -65,7 +65,7 @@ static int readElementsVRML(FILE *fp, std::vector<MNode *> &vertexVector,
   while(fscanf(fp, format, &i) == 1) {
     if(i != -1) { idx.push_back(i); }
     else {
-      std::vector<MNode *> vertices;
+      std::vector<MVertex *> vertices;
       for(std::size_t j = 0; j < idx.size(); j++) {
         if(idx[j] < 0 || idx[j] > (int)(vertexVector.size() - 1)) {
           Msg::Error("Wrong node index %d", idx[j]);
@@ -126,7 +126,7 @@ int GModel::readVRML(const std::string &name)
   // This is by NO means a complete VRML/Inventor parser (but it's
   // sufficient for reading simple Inventor files... which is all I
   // need)
-  std::vector<MNode *> vertexVector, allVertexVector;
+  std::vector<MVertex *> vertexVector, allVertexVector;
   std::map<int, std::vector<MElement *> > elements[3];
   int region = getMaxElementaryNumber(-1);
   char buffer[256], str[256];

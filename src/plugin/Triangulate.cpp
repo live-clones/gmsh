@@ -9,7 +9,7 @@
 #include "GModel.h"
 #include "discreteFace.h"
 #include "GmshMessage.h"
-#include "MNode.h"
+#include "MVertex.h"
 #include "Triangulate.h"
 #include "Context.h"
 
@@ -51,10 +51,10 @@ StringXNumber *GMSH_TriangulatePlugin::getOption(int iopt)
 #if defined(HAVE_MESH)
 
 namespace {
-  class PointData : public MNode {
+  class PointData : public MVertex {
   public:
     std::vector<double> v;
-    PointData(double x, double y, double z, int numVal) : MNode(x, y, z)
+    PointData(double x, double y, double z, int numVal) : MVertex(x, y, z)
     {
       v.resize(3 + numVal);
       v[0] = x;
@@ -78,7 +78,7 @@ PView *GMSH_TriangulatePlugin::execute(PView *v)
   }
 
   // create list of points with associated data
-  std::vector<MNode *> points;
+  std::vector<MVertex *> points;
   int numSteps = data1->getNumTimeSteps();
   for(int ent = 0; ent < data1->getNumEntities(0); ent++) {
     for(int ele = 0; ele < data1->getNumElements(0, ent); ele++) {

@@ -69,10 +69,10 @@ public:
 
 #endif
 
-class GPoint;
-class GCurve;
-class GSurface;
-class GVolume;
+class GVertex;
+class GEdge;
+class GFace;
+class GRegion;
 class MElement;
 
 class openglWindow : public Fl_Gl_Window {
@@ -89,9 +89,9 @@ private:
   void _drawScreenMessage();
   void _drawBorder();
   bool _select(int type, bool multiple, bool mesh, bool post, int x, int y,
-               int w, int h, std::vector<GPoint *> &vertices,
-               std::vector<GCurve *> &edges, std::vector<GSurface *> &faces,
-               std::vector<GVolume *> &regions,
+               int w, int h, std::vector<GVertex *> &vertices,
+               std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
+               std::vector<GRegion *> &regions,
                std::vector<MElement *> &elements, std::vector<SPoint2> &points,
                std::vector<PView *> &views);
 #if defined(NEW_TOOLTIPS)
@@ -116,9 +116,9 @@ public:
   ~openglWindow();
   void show();
   drawContext *getDrawContext() { return _ctx; }
-  char selectEntity(int type, std::vector<GPoint *> &vertices,
-                    std::vector<GCurve *> &edges, std::vector<GSurface *> &faces,
-                    std::vector<GVolume *> &regions,
+  char selectEntity(int type, std::vector<GVertex *> &vertices,
+                    std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
+                    std::vector<GRegion *> &regions,
                     std::vector<MElement *> &elements,
                     std::vector<SPoint2> &points, std::vector<PView *> &views);
   static openglWindow *getLastHandled() { return _lastHandled; }

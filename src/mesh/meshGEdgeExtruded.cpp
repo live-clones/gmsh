@@ -9,13 +9,13 @@
 #include "ExtrudeParams.h"
 #include "GmshMessage.h"
 
-static void createElements(GCurve *ge)
+static void createElements(GEdge *ge)
 {
   // create elements
   for(std::size_t i = 0; i < ge->mesh_vertices.size() + 1; i++) {
-    MNode *v0 = (i == 0) ? ge->getBeginVertex()->mesh_vertices[0] :
+    MVertex *v0 = (i == 0) ? ge->getBeginVertex()->mesh_vertices[0] :
                              ge->mesh_vertices[i - 1];
-    MNode *v1 = (i == ge->mesh_vertices.size()) ?
+    MVertex *v1 = (i == ge->mesh_vertices.size()) ?
                     ge->getEndVertex()->mesh_vertices[0] :
                     ge->mesh_vertices[i];
     MLine *newElem = new MLine(v0, v1);
@@ -23,11 +23,11 @@ static void createElements(GCurve *ge)
   }
 }
 
-static void extrudeMesh(GPoint *from, GCurve *to)
+static void extrudeMesh(GVertex *from, GEdge *to)
 {
   ExtrudeParams *ep = to->meshAttributes.extrude;
 
-  MNode *v = from->mesh_vertices[0];
+  MVertex *v = from->mesh_vertices[0];
   for(int j = 0; j < ep->mesh.NbLayer; j++) {
     for(int k = 0; k < ep->mesh.NbElmLayer[j]; k++) {
       double x = v->x(), y = v->y(), z = v->z();
@@ -43,7 +43,7 @@ static void extrudeMesh(GPoint *from, GCurve *to)
   createElements(to);
 }
 
-static void copyMesh(GCurve *from, GCurve *to)
+static void copyMesh(GEdge *from, GEdge *to)
 {
   ExtrudeParams *ep = to->meshAttributes.extrude;
 
@@ -59,7 +59,7 @@ static void copyMesh(GCurve *from, GCurve *to)
   // e.g. if createTopology() has been called
   for(std::size_t i = 0; i < from->mesh_vertices.size(); i++) {
     int index = (direction < 0) ? (from->mesh_vertices.size() - 1 - i) : i;
-    MNode *v = from->mesh_vertices[index];
+    MVertex *v = from->mesh_vertices[index];
     double x = v->x(), y = v->y(), z = v->z();
     ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
                 x, y, z);
@@ -74,7 +74,7 @@ static void copyMesh(GCurve *from, GCurve *to)
   // in the correct order
   for(int i = 0; i < (int)from->lines.size() - 1; i++) {
     int index = (direction < 0) ? (from->lines.size() - i - 2) : i;
-    MNode *v = from->lines[index]->getVertex(1);
+    MVertex *v = from->lines[index]->getVertex(1);
     double x = v->x(), y = v->y(), z = v->z();
     ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
                 x, y, z);
@@ -89,7 +89,7 @@ static void copyMesh(GCurve *from, GCurve *to)
   createElements(to);
 }
 
-int MeshExtrudedCurve(GCurve *ge)
+int MeshExtrudedCurve(GEdge *ge)
 {
   ExtrudeParams *ep = ge->meshAttributes.extrude;
 
@@ -104,7 +104,7 @@ int MeshExtrudedCurve(GCurve *ge)
 
   if(ep->geo.Mode == EXTRUDED_ENTITY) {
     // curve is extruded from a point
-    GPoint *from = ge->model()->getVertexByTag(std::abs(ep->geo.Source));
+    GVertex *from = ge->model()->getVertexByTag(std::abs(ep->geo.Source));
     if(!from) {
       Msg::Error("Unknown source point %d for extrusion", ep->geo.Source);
       return 0;
@@ -112,20 +112,20 @@ int MeshExtrudedCurve(GCurve *ge)
     extrudeMesh(from, ge);
   }
   else {
-    GCurve *from = ge->model()->getEdgeByTag(std::abs(ep->geo.Source));
+    GEdge *from = ge->model()->getEdgeByTag(std::abs(ep->geo.Source));
     // curve is a copy of another curve (the "top" of the extrusion)
     if(!from) {
       Msg::Error("Unknown source curve %d for extrusion", ep->geo.Source);
       return 0;
     }
     else if(from->geomType() != GEntity::DiscreteCurve &&
-            from->meshStatistics.status != GCurve::DONE) {
+            from->meshStatistics.status != GEdge::DONE) {
       // cannot mesh this edge yet: will do it later
       return 1;
     }
     else if(ge->getMeshMaster() != ge) {
-      GCurve *gef = dynamic_cast<GCurve *>(ge->getMeshMaster());
-      if(gef->meshStatistics.status != GCurve::DONE) {
+      GEdge *gef = dynamic_cast<GEdge *>(ge->getMeshMaster());
+      if(gef->meshStatistics.status != GEdge::DONE) {
         // there is a periodicity constraint, and the source has not been
         // meshed: will do it later
         return 1;
@@ -139,6 +139,6 @@ int MeshExtrudedCurve(GCurve *ge)
     }
   }
 
-  ge->meshStatistics.status = GCurve::DONE;
+  ge->meshStatistics.status = GEdge::DONE;
   return 1;
 }

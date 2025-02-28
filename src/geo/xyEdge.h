@@ -6,20 +6,20 @@
 #ifndef XY_EDGE_H
 #define XY_EDGE_H
 
-#include "GCurve.h"
+#include "GEdge.h"
 
-class xyEdge : public GCurve {
+class xyEdge : public GEdge {
 public:
-  xyEdge(GModel *gm, int t) : GCurve(gm, t){};
+  xyEdge(GModel *gm, int t) : GEdge(gm, t){};
   virtual ~xyEdge() {}
   virtual Range<double> parBounds(int i) const { return Range<double>(0, 1); }
   virtual GeomType geomType() const { return GEntity::Line; }
-  virtual GVertex point(double p) const { return GVertex(); }
+  virtual GPoint point(double p) const { return GPoint(); }
   virtual SVector3 firstDer(double par) const { return SVector3(); }
   virtual SVector3 secondDer(double par) const { return SVector3(); }
   ModelType getNativeType() const { return GmshModel; }
   void *getNativePtr() const { return nullptr; }
-  virtual SPoint2 reparamOnFace(const GSurface *face, double epar, int dir) const
+  virtual SPoint2 reparamOnFace(const GFace *face, double epar, int dir) const
   {
     return SPoint2();
   }

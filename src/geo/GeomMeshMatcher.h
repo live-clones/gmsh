@@ -12,24 +12,24 @@
 
 #include <vector>
 #include "GModel.h"
-#include "GPoint.h"
-#include "GCurve.h"
-#include "GSurface.h"
-#include "GVolume.h"
+#include "GVertex.h"
+#include "GEdge.h"
+#include "GFace.h"
+#include "GRegion.h"
 
 class GeomMeshMatcher {
 private:
-  std::vector<std::pair<GPoint *, GPoint *> > *
+  std::vector<std::pair<GVertex *, GVertex *> > *
   matchVertices(GModel *m1, GModel *m2, bool &ok);
-  std::vector<std::pair<GCurve *, GCurve *> > *
+  std::vector<std::pair<GEdge *, GEdge *> > *
   matchEdges(GModel *m1, GModel *m2,
-             std::vector<std::pair<GPoint *, GPoint *> > *coresp_v, bool &ok);
-  std::vector<std::pair<GSurface *, GSurface *> > *
+             std::vector<std::pair<GVertex *, GVertex *> > *coresp_v, bool &ok);
+  std::vector<std::pair<GFace *, GFace *> > *
   matchFaces(GModel *m1, GModel *m2,
-             std::vector<std::pair<GCurve *, GCurve *> > *coresp_e, bool &ok);
-  std::vector<std::pair<GVolume *, GVolume *> > *
+             std::vector<std::pair<GEdge *, GEdge *> > *coresp_e, bool &ok);
+  std::vector<std::pair<GRegion *, GRegion *> > *
   matchRegions(GModel *m1, GModel *m2,
-               std::vector<std::pair<GSurface *, GSurface *> > *coresp_f, bool &ok);
+               std::vector<std::pair<GFace *, GFace *> > *coresp_f, bool &ok);
   static GeomMeshMatcher *_gmm_instance;
   GeomMeshMatcher() {}
   ~GeomMeshMatcher() {}

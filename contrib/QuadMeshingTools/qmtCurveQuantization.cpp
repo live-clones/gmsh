@@ -20,11 +20,11 @@
 #include "Context.h"
 #include "GmshMessage.h"
 #include "OS.h"
-#include "GPoint.h"
-#include "GCurve.h"
-#include "GSurface.h"
+#include "GVertex.h"
+#include "GEdge.h"
+#include "GFace.h"
 #include "GModel.h"
-#include "MNode.h"
+#include "MVertex.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "meshGEdge.h"
@@ -48,10 +48,10 @@ namespace QMT {
   constexpr int UNASSIGNED = -1;
   constexpr int START = -2;
 
-  vec3 gedgeCenter(GCurve *ge)
+  vec3 gedgeCenter(GEdge *ge)
   {
     double t = 0.5 * (ge->parBounds(0).low() + ge->parBounds(0).high());
-    GVertex p = ge->point(t);
+    GPoint p = ge->point(t);
     return {p.x(), p.y(), p.z()};
   }
 
@@ -170,9 +170,9 @@ namespace QMT {
   }
 
   bool solveQuantizationWithGreedyApproach(
-    const vector<pair<vector<GCurve *>, vector<GCurve *> > > &oppositeSides,
-    const unordered_map<GCurve *, double> &x_ideal,
-    unordered_map<GCurve *, int> &x)
+    const vector<pair<vector<GEdge *>, vector<GEdge *> > > &oppositeSides,
+    const unordered_map<GEdge *, double> &x_ideal,
+    unordered_map<GEdge *, int> &x)
   {
     vector<pair<vector<int>, vector<int> > > oppositeSideTags(
       oppositeSides.size());
@@ -187,10 +187,10 @@ namespace QMT {
     }
 
     int count = 0;
-    unordered_map<GCurve *, int> old2new;
-    vector<GCurve *> new2old;
+    unordered_map<GEdge *, int> old2new;
+    vector<GEdge *> new2old;
     for(auto &kv : oppositeSides) {
-      for(GCurve *ge : merge(kv.first, kv.second)) {
+      for(GEdge *ge : merge(kv.first, kv.second)) {
         auto it = old2new.find(ge);
         if(it == old2new.end()) {
           old2new[ge] = count;
@@ -205,20 +205,20 @@ namespace QMT {
     for(auto &kv : x_ideal) { c_x_ideal[old2new[kv.first]] = kv.second; }
 
     /* In the dual graph,
-     * - a GCurve is a node
-     * - the opposite GCurve in a GSurface are edges */
+     * - a GEdge is a node
+     * - the opposite GEdge in a GFace are edges */
     vector<vector<vector<int> > > node2side2nodes(count);
     for(auto &kv : oppositeSides) {
       /* Create a new side for each node */
-      for(GCurve *ge : merge(kv.first, kv.second)) {
+      for(GEdge *ge : merge(kv.first, kv.second)) {
         int node = old2new[ge];
         node2side2nodes[node].resize(node2side2nodes[node].size() + 1);
       }
 
       /* Fill the side with the opposite nodes */
-      for(GCurve *ge1 : kv.first) {
+      for(GEdge *ge1 : kv.first) {
         int node1 = old2new[ge1];
-        for(GCurve *ge2 : kv.second) {
+        for(GEdge *ge2 : kv.second) {
           int node2 = old2new[ge2];
 
           node2side2nodes[node1].back().push_back(node2);
@@ -325,18 +325,18 @@ const std::string BMESH_NAME = "bmesh_quadqs";
 
 int initialCurveQuantization(
   GModel *gm, double maxDiffNbLines,
-  std::unordered_map<GSurface *, vector<GPoint *> > &faceCorners)
+  std::unordered_map<GFace *, vector<GVertex *> > &faceCorners)
 {
-  std::vector<GSurface *> faces = model_faces(gm);
-  std::vector<GCurve *> edges = model_edges(gm);
+  std::vector<GFace *> faces = model_faces(gm);
+  std::vector<GEdge *> edges = model_edges(gm);
 
   Msg::Debug("initial curve quantization (%li curves) ...", edges.size());
 
   /* Collect opposite sides in the CAD */
-  vector<pair<vector<GCurve *>, vector<GCurve *> > > oppositeSides;
-  std::unordered_map<GCurve *, double> x_ideal;
+  vector<pair<vector<GEdge *>, vector<GEdge *> > > oppositeSides;
+  std::unordered_map<GEdge *, double> x_ideal;
 
-  for(GSurface *gf : faces) {
+  for(GFace *gf : faces) {
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;
     if(CTX::instance()->debugSurface > 0 &&
        gf->tag() != CTX::instance()->debugSurface)
@@ -349,7 +349,7 @@ int initialCurveQuantization(
       return -1;
     }
 
-    std::vector<std::vector<std::vector<std::pair<GCurve *, bool> > > >
+    std::vector<std::vector<std::vector<std::pair<GEdge *, bool> > > >
       loopSideEdgesAndInv;
     bool oksl = faceOrderedSideLoops(gf, info, loopSideEdgesAndInv);
     if(!oksl) {
@@ -365,7 +365,7 @@ int initialCurveQuantization(
     /* Rectangular face with 4 convex corners */
     if(isTopologicalDisk(info) && !haveConcaveCorners(info) &&
        info.bdrValVertices[1].size() == 4) {
-      vector<pair<vector<GCurve *>, vector<GCurve *> > > GFoppositeSides;
+      vector<pair<vector<GEdge *>, vector<GEdge *> > > GFoppositeSides;
       size_t NS = 0;
       for(size_t k = 0; k < 2; ++k) { /* direction */
         double len_a = 0.;
@@ -374,10 +374,10 @@ int initialCurveQuantization(
         int nl_b = 0;
         size_t Na = 0;
         size_t Nb = 0;
-        vector<GCurve *> side_a;
-        vector<GCurve *> side_b;
+        vector<GEdge *> side_a;
+        vector<GEdge *> side_b;
         for(auto &kv : loopSideEdgesAndInv[0][k]) {
-          GCurve *ge = kv.first;
+          GEdge *ge = kv.first;
           len_a += ge->length();
           int npts = meshGEdgeTargetNumberOfPoints(ge);
           if(npts >= 2) {
@@ -389,7 +389,7 @@ int initialCurveQuantization(
           side_a.push_back(ge);
         }
         for(auto &kv : loopSideEdgesAndInv[0][k + 2]) {
-          GCurve *ge = kv.first;
+          GEdge *ge = kv.first;
           len_b += ge->length();
           int npts = meshGEdgeTargetNumberOfPoints(ge);
           if(npts >= 2) {
@@ -416,12 +416,12 @@ int initialCurveQuantization(
       }
 
       if(NS == 2) { /* transfinite face, both direction equal */
-        std::vector<GPoint *> corners;
+        std::vector<GVertex *> corners;
         for(size_t k = 0; k < 4; ++k) {
           for(auto &kv : loopSideEdgesAndInv[0][k]) {
-            GCurve *ge = kv.first;
+            GEdge *ge = kv.first;
             bool inv = kv.second;
-            GPoint *gv1 = inv ? ge->vertices()[1] : ge->vertices()[0];
+            GVertex *gv1 = inv ? ge->vertices()[1] : ge->vertices()[0];
             bool isCorner1 = std::find(info.bdrValVertices[1].begin(),
                                        info.bdrValVertices[1].end(),
                                        gv1) != info.bdrValVertices[1].end();
@@ -441,7 +441,7 @@ int initialCurveQuantization(
 
   if(oppositeSides.size() == 0) return 0;
 
-  unordered_map<GCurve *, int> n;
+  unordered_map<GEdge *, int> n;
   bool okq =
     QMT::solveQuantizationWithGreedyApproach(oppositeSides, x_ideal, n);
   if(!okq) {
@@ -452,7 +452,7 @@ int initialCurveQuantization(
   /* Transfinite constraints on curve */
   for(auto &kv : n) {
     if(kv.second > 0) {
-      GCurve *ge = kv.first;
+      GEdge *ge = kv.first;
       int nLines = kv.second;
       if(ge->meshAttributes.method != MESH_TRANSFINITE) {
         ge->meshAttributes.method = MESH_TRANSFINITE;
@@ -471,14 +471,14 @@ int setQuadqsTransfiniteConstraints(GModel *gm, double maxDiffNbLines)
 {
   Msg::Debug("set quadqs transfinite constraints ...");
 
-  std::unordered_map<GSurface *, vector<GPoint *> > faceCorners;
+  std::unordered_map<GFace *, vector<GVertex *> > faceCorners;
 
   int si = initialCurveQuantization(gm, maxDiffNbLines, faceCorners);
   if(si != 0) return si;
 
-  for(GSurface *gf : gm->getFaces()) {
+  for(GFace *gf : gm->getFaces()) {
     bool allTransfi = true;
-    for(GCurve *ge : gf->edges()) {
+    for(GEdge *ge : gf->edges()) {
       if(ge->meshAttributes.method != MESH_TRANSFINITE) allTransfi = false;
     }
     if(allTransfi) {
@@ -488,7 +488,7 @@ int setQuadqsTransfiniteConstraints(GModel *gm, double maxDiffNbLines)
       gf->meshAttributes.recombineAngle = 45.;
       auto it = faceCorners.find(gf);
       if(it != faceCorners.end()) {
-        std::vector<GPoint *> corners = it->second;
+        std::vector<GVertex *> corners = it->second;
         gf->meshAttributes.corners = corners; /* warning: must be ordered ! */
       }
       Msg::Debug("- set transfinite on surface %i", gf->tag());

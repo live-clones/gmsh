@@ -47,25 +47,25 @@ public:
 
   virtual void addTriangle(MTriangle *t, int onWhichPartition)
   {
-    GSurface::addTriangle(t);
+    GFace::addTriangle(t);
     _ghostCells.insert(std::pair<MElement *, int>(t, onWhichPartition));
     model()->addGhostCells(t, _partition);
   }
   virtual void addQuadrangle(MQuadrangle *q, int onWhichPartition)
   {
-    GSurface::addQuadrangle(q);
+    GFace::addQuadrangle(q);
     _ghostCells.insert(std::pair<MElement *, int>(q, onWhichPartition));
     model()->addGhostCells(q, _partition);
   }
   virtual void addPolygon(MPolygon *p, int onWhichPartition)
   {
-    GSurface::addPolygon(p);
+    GFace::addPolygon(p);
     _ghostCells.insert(std::pair<MElement *, int>(p, onWhichPartition));
     model()->addGhostCells(p, _partition);
   }
   virtual void addElement(MElement *e, int onWhichPartition)
   {
-    GSurface::addElement(e);
+    GFace::addElement(e);
     _ghostCells.insert(std::pair<MElement *, int>(e, onWhichPartition));
     model()->addGhostCells(e, _partition);
   }

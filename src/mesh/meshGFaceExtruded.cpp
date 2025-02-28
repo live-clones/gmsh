@@ -18,20 +18,20 @@
 #include "QuadTriExtruded2D.h"
 #endif
 
-static void addTriangle(MNode *v1, MNode *v2, MNode *v3, GSurface *to)
+static void addTriangle(MVertex *v1, MVertex *v2, MVertex *v3, GFace *to)
 {
   to->triangles.push_back(new MTriangle(v1, v2, v3));
 }
 
-static void addQuadrangle(MNode *v1, MNode *v2, MNode *v3, MNode *v4,
-                          GSurface *to)
+static void addQuadrangle(MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
+                          GFace *to)
 {
   to->quadrangles.push_back(new MQuadrangle(v1, v2, v3, v4));
 }
 
 static void
-createQuaTri(std::vector<MNode *> &v, GSurface *to,
-             std::set<std::pair<MNode *, MNode *> > *constrainedEdges,
+createQuaTri(std::vector<MVertex *> &v, GFace *to,
+             std::set<std::pair<MVertex *, MVertex *> > *constrainedEdges,
              MLine *source, int tri_quad_flag)
 {
   ExtrudeParams *ep = to->meshAttributes.extrude;
@@ -47,9 +47,9 @@ createQuaTri(std::vector<MNode *> &v, GSurface *to,
       if(!constrainedEdges)
         addQuadrangle(v[0], v[1], v[3], v[2], to);
       else {
-        std::pair<MNode *, MNode *> p1(std::min(v[1], v[2]),
+        std::pair<MVertex *, MVertex *> p1(std::min(v[1], v[2]),
                                            std::max(v[1], v[2]));
-        std::pair<MNode *, MNode *> p2(std::min(v[0], v[3]),
+        std::pair<MVertex *, MVertex *> p2(std::min(v[0], v[3]),
                                            std::max(v[0], v[3]));
         if(constrainedEdges->count(p1)) {
           addTriangle(v[2], v[1], v[0], to);
@@ -68,7 +68,7 @@ createQuaTri(std::vector<MNode *> &v, GSurface *to,
       addTriangle(v[0], v[3], v[2], to);
     }
     else {
-      std::pair<MNode *, MNode *> p(std::min(v[1], v[2]),
+      std::pair<MVertex *, MVertex *> p(std::min(v[1], v[2]),
                                         std::max(v[1], v[2]));
       if(constrainedEdges->count(p)) {
         addTriangle(v[2], v[1], v[0], to);
@@ -83,16 +83,16 @@ createQuaTri(std::vector<MNode *> &v, GSurface *to,
 }
 
 static void
-extrudeMesh(GCurve *from, GSurface *to, MVertexRTree &pos,
-            std::set<std::pair<MNode *, MNode *> > *constrainedEdges)
+extrudeMesh(GEdge *from, GFace *to, MVertexRTree &pos,
+            std::set<std::pair<MVertex *, MVertex *> > *constrainedEdges)
 {
   ExtrudeParams *ep = to->meshAttributes.extrude;
 
   // create vertices (if the edges are constrained, they already exist)
   if(!constrainedEdges) {
     for(std::size_t i = 0; i < from->mesh_vertices.size(); i++) {
-      std::vector<MNode *> extruded_vertices;
-      MNode *v = from->mesh_vertices[i];
+      std::vector<MVertex *> extruded_vertices;
+      MVertex *v = from->mesh_vertices[i];
       MEdgeVertex *mv = dynamic_cast<MEdgeVertex *>(v);
       if(mv) mv->bl_data = new MVertexBoundaryLayerData();
       for(int j = 0; j < ep->mesh.NbLayer; j++) {
@@ -100,7 +100,7 @@ extrudeMesh(GCurve *from, GSurface *to, MVertexRTree &pos,
           double x = v->x(), y = v->y(), z = v->z();
           ep->Extrude(j, k + 1, x, y, z);
           if(j != ep->mesh.NbLayer - 1 || k != ep->mesh.NbElmLayer[j] - 1) {
-            MNode *newv = pos.find(x, y, z);
+            MVertex *newv = pos.find(x, y, z);
             if(!newv) {
               if(from->geomType() != GEntity::DiscreteCurve &&
                  to->geomType() != GEntity::DiscreteSurface &&
@@ -112,7 +112,7 @@ extrudeMesh(GCurve *from, GSurface *to, MVertexRTree &pos,
                 newv = new MFaceVertex(x, y, z, to, uv[0], uv[1]);
               }
               else {
-                newv = new MNode(x, y, z, to);
+                newv = new MVertex(x, y, z, to);
               }
               to->mesh_vertices.push_back(newv);
             }
@@ -145,11 +145,11 @@ extrudeMesh(GCurve *from, GSurface *to, MVertexRTree &pos,
   // nodes by direct indexing, but it's just simpler to query everything by
   // position)
   for(std::size_t i = 0; i < from->lines.size(); i++) {
-    MNode *v0 = from->lines[i]->getVertex(0);
-    MNode *v1 = from->lines[i]->getVertex(1);
+    MVertex *v0 = from->lines[i]->getVertex(0);
+    MVertex *v1 = from->lines[i]->getVertex(1);
     for(int j = 0; j < ep->mesh.NbLayer; j++) {
       for(int k = 0; k < ep->mesh.NbElmLayer[j]; k++) {
-        std::vector<MNode *> verts;
+        std::vector<MVertex *> verts;
         double x[4] = {v0->x(), v1->x(), v0->x(), v1->x()};
         double y[4] = {v0->y(), v1->y(), v0->y(), v1->y()};
         double z[4] = {v0->z(), v1->z(), v0->z(), v1->z()};
@@ -158,7 +158,7 @@ extrudeMesh(GCurve *from, GSurface *to, MVertexRTree &pos,
           ep->Extrude(j, k + 1, x[p + 2], y[p + 2], z[p + 2]);
         }
         for(int p = 0; p < 4; p++) {
-          MNode *tmp = pos.find(x[p], y[p], z[p]);
+          MVertex *tmp = pos.find(x[p], y[p], z[p]);
           if(!tmp) {
             Msg::Error("Could not find extruded node (%.16g, %.16g, %.16g) "
                        "in surface %d",
@@ -174,24 +174,24 @@ extrudeMesh(GCurve *from, GSurface *to, MVertexRTree &pos,
   }
 }
 
-static void copyMesh(GSurface *from, GSurface *to, MVertexRTree &pos)
+static void copyMesh(GFace *from, GFace *to, MVertexRTree &pos)
 {
   ExtrudeParams *ep = to->meshAttributes.extrude;
 
   // interior vertices
-  std::vector<MNode *> mesh_vertices = from->mesh_vertices;
+  std::vector<MVertex *> mesh_vertices = from->mesh_vertices;
 
   // add all embedded vertices
-  std::vector<MNode *> embedded = from->getEmbeddedMeshVertices();
+  std::vector<MVertex *> embedded = from->getEmbeddedMeshVertices();
   mesh_vertices.insert(mesh_vertices.end(), embedded.begin(), embedded.end());
 
   // create extruded vertices
   for(std::size_t i = 0; i < mesh_vertices.size(); i++) {
-    MNode *v = mesh_vertices[i];
+    MVertex *v = mesh_vertices[i];
     double x = v->x(), y = v->y(), z = v->z();
     ep->Extrude(ep->mesh.NbLayer - 1, ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1],
                 x, y, z);
-    MNode *newv = pos.find(x, y, z);
+    MVertex *newv = pos.find(x, y, z);
     if(!newv) {
       if(to->geomType() != GEntity::DiscreteSurface &&
          to->geomType() != GEntity::BoundaryLayerSurface) {
@@ -200,7 +200,7 @@ static void copyMesh(GSurface *from, GSurface *to, MVertexRTree &pos)
         newv = new MFaceVertex(x, y, z, to, uv[0], uv[1]);
       }
       else {
-        newv = new MNode(x, y, z, to);
+        newv = new MVertex(x, y, z, to);
       }
       to->mesh_vertices.push_back(newv);
       pos.insert(newv);
@@ -225,7 +225,7 @@ static void copyMesh(GSurface *from, GSurface *to, MVertexRTree &pos)
   // if this is toroidal No New Vertices QuadToTri, then replace the root
   // dependency face's boundary quads with triangles for better meshing.
   if(is_toroidal && is_noaddverts) {
-    GSurface *root = findRootSourceFaceForFace(from);
+    GFace *root = findRootSourceFaceForFace(from);
     if(root == from) {
       ReplaceBndQuadsInFace(root);
       Msg::Warning(
@@ -239,13 +239,13 @@ static void copyMesh(GSurface *from, GSurface *to, MVertexRTree &pos)
 
   // create triangle elements
   for(std::size_t i = 0; i < from->triangles.size(); i++) {
-    std::vector<MNode *> verts;
+    std::vector<MVertex *> verts;
     for(int j = 0; j < 3; j++) {
-      MNode *v = from->triangles[i]->getVertex(j);
+      MVertex *v = from->triangles[i]->getVertex(j);
       double x = v->x(), y = v->y(), z = v->z();
       ep->Extrude(ep->mesh.NbLayer - 1,
                   ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1], x, y, z);
-      MNode *tmp = pos.find(x, y, z);
+      MVertex *tmp = pos.find(x, y, z);
       if(!tmp) {
         Msg::Error(
           "Could not find extruded node (%.16g, %.16g, %.16g) in surface %d", x,
@@ -269,13 +269,13 @@ static void copyMesh(GSurface *from, GSurface *to, MVertexRTree &pos)
 
   // create quadrangle elements if NOT QuadToTri and NOT toroidal
   for(std::size_t i = 0; i < from->quadrangles.size(); i++) {
-    std::vector<MNode *> verts;
+    std::vector<MVertex *> verts;
     for(int j = 0; j < 4; j++) {
-      MNode *v = from->quadrangles[i]->getVertex(j);
+      MVertex *v = from->quadrangles[i]->getVertex(j);
       double x = v->x(), y = v->y(), z = v->z();
       ep->Extrude(ep->mesh.NbLayer - 1,
                   ep->mesh.NbElmLayer[ep->mesh.NbLayer - 1], x, y, z);
-      MNode *tmp = pos.find(x, y, z);
+      MVertex *tmp = pos.find(x, y, z);
       if(!tmp) {
         Msg::Error(
           "Could not find extruded node (%.16g, %.16g, %.16g) in surface %d", x,
@@ -289,7 +289,7 @@ static void copyMesh(GSurface *from, GSurface *to, MVertexRTree &pos)
 }
 
 int MeshExtrudedSurface(
-  GSurface *gf, std::set<std::pair<MNode *, MNode *> > *constrainedEdges)
+  GFace *gf, std::set<std::pair<MVertex *, MVertex *> > *constrainedEdges)
 {
   ExtrudeParams *ep = gf->meshAttributes.extrude;
 
@@ -300,19 +300,19 @@ int MeshExtrudedSurface(
   // build an rtree with all the vertices on the face and its boundary
   MVertexRTree pos(CTX::instance()->geom.tolerance * CTX::instance()->lc);
   pos.insert(gf->mesh_vertices);
-  std::vector<GCurve *> const &edges = gf->edges();
+  std::vector<GEdge *> const &edges = gf->edges();
   for(auto it = edges.begin(); it != edges.end(); it++) {
     pos.insert((*it)->mesh_vertices);
     if((*it)->getBeginVertex())
       pos.insert((*it)->getBeginVertex()->mesh_vertices);
     if((*it)->getEndVertex()) pos.insert((*it)->getEndVertex()->mesh_vertices);
   }
-  std::vector<MNode *> embedded = gf->getEmbeddedMeshVertices();
+  std::vector<MVertex *> embedded = gf->getEmbeddedMeshVertices();
   pos.insert(embedded);
 
   if(ep->geo.Mode == EXTRUDED_ENTITY) {
     // surface is extruded from a curve
-    GCurve *from = gf->model()->getEdgeByTag(std::abs(ep->geo.Source));
+    GEdge *from = gf->model()->getEdgeByTag(std::abs(ep->geo.Source));
     if(!from) {
       Msg::Error("Unknown source curve %d for extrusion", ep->geo.Source);
       return 0;
@@ -321,13 +321,13 @@ int MeshExtrudedSurface(
   }
   else {
     // surface is a copy of another surface (the "top" of the extrusion)
-    GSurface *from = gf->model()->getFaceByTag(std::abs(ep->geo.Source));
+    GFace *from = gf->model()->getFaceByTag(std::abs(ep->geo.Source));
     if(!from) {
       Msg::Error("Unknown source surface %d for extrusion", ep->geo.Source);
       return 0;
     }
     else if(from->geomType() != GEntity::DiscreteSurface &&
-            from->meshStatistics.status != GSurface::DONE) {
+            from->meshStatistics.status != GFace::DONE) {
       // cannot mesh the face yet (the source face is not meshed):
       // will do it later
       return 1;
@@ -339,6 +339,6 @@ int MeshExtrudedSurface(
     }
   }
 
-  gf->meshStatistics.status = GSurface::DONE;
+  gf->meshStatistics.status = GFace::DONE;
   return 1;
 }

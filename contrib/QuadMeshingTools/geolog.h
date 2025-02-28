@@ -13,7 +13,7 @@
 #include <string>
 
 class MElement;
-class MNode;
+class MVertex;
 
 namespace GeoLog {
   using vec3 = std::array<double,3>;
@@ -49,7 +49,7 @@ namespace GeoLog {
 
   /* - interface for gmsh types */
   bool add(const std::vector<MElement*>& elements, const std::string& view);
-  bool add(const std::vector<MElement*>& elements, const std::unordered_map<MNode*,double>& field, const std::string& view);
+  bool add(const std::vector<MElement*>& elements, const std::unordered_map<MVertex*,double>& field, const std::string& view);
   bool add(const std::vector<MElement*>& elements, const std::vector<std::vector<double> >& field, const std::string& view);
 
   View& get_global_view(const std::string& name);

@@ -5,7 +5,7 @@
 
 #include "meshGRegionLocalMeshMod.h"
 #include "GEntity.h"
-#include "GVolume.h"
+#include "GRegion.h"
 #include "GmshMessage.h"
 #include "Numeric.h"
 #include "MHexahedron.h"
@@ -58,10 +58,10 @@ void computeNeighboringTetsOfACavity(const std::vector<MTet4 *> &cavity,
   }
 }
 
-bool buildEdgeCavity(MTet4 *t, int iLocalEdge, MNode **v1, MNode **v2,
+bool buildEdgeCavity(MTet4 *t, int iLocalEdge, MVertex **v1, MVertex **v2,
                      std::vector<MTet4 *> &cavity,
                      std::vector<MTet4 *> &outside,
-                     std::vector<MNode *> &ring)
+                     std::vector<MVertex *> &ring)
 {
   cavity.clear();
   ring.clear();
@@ -70,13 +70,13 @@ bool buildEdgeCavity(MTet4 *t, int iLocalEdge, MNode **v1, MNode **v2,
   *v2 = t->tet()->getVertex(edges[iLocalEdge][1]);
 
   // the 5 - i th edge contains the other 2 points of the tet
-  MNode *lastinring = t->tet()->getVertex(edges[5 - iLocalEdge][0]);
+  MVertex *lastinring = t->tet()->getVertex(edges[5 - iLocalEdge][0]);
   ring.push_back(lastinring);
   cavity.push_back(t);
 
   while(1) {
-    MNode *ov1 = t->tet()->getVertex(edges[5 - iLocalEdge][0]);
-    MNode *ov2 = t->tet()->getVertex(edges[5 - iLocalEdge][1]);
+    MVertex *ov1 = t->tet()->getVertex(edges[5 - iLocalEdge][0]);
+    MVertex *ov2 = t->tet()->getVertex(edges[5 - iLocalEdge][1]);
     int K = ov1 == lastinring ? 1 : 0;
     lastinring = ov1 == lastinring ? ov2 : ov1;
     // look in the 2 faces sharing this edge the one that has vertex
@@ -107,8 +107,8 @@ bool buildEdgeCavity(MTet4 *t, int iLocalEdge, MNode **v1, MNode **v2,
     cavity.push_back(t);
     iLocalEdge = -1;
     for(int i = 0; i < 6; i++) {
-      MNode *a = t->tet()->getVertex(edges[i][0]);
-      MNode *b = t->tet()->getVertex(edges[i][1]);
+      MVertex *a = t->tet()->getVertex(edges[i][0]);
+      MVertex *b = t->tet()->getVertex(edges[i][1]);
       if((a == *v1 && b == *v2) || (a == *v2 && b == *v1)) {
         iLocalEdge = i;
         break;
@@ -244,8 +244,8 @@ bool edgeSwap(std::vector<MTet4 *> &newTets, MTet4 *tet, int iLocalEdge,
 
   std::vector<MTet4 *> cavity;
   std::vector<MTet4 *> outside;
-  std::vector<MNode *> ring;
-  MNode *v1, *v2;
+  std::vector<MVertex *> ring;
+  MVertex *v1, *v2;
 
   //  printf("a\n");
   bool closed =
@@ -330,9 +330,9 @@ bool edgeSwap(std::vector<MTet4 *> &newTets, MTet4 *tet, int iLocalEdge,
     int p1 = sp.triangles[iT][0];
     int p2 = sp.triangles[iT][1];
     int p3 = sp.triangles[iT][2];
-    MNode *pv1 = ring[p1];
-    MNode *pv2 = ring[p2];
-    MNode *pv3 = ring[p3];
+    MVertex *pv1 = ring[p1];
+    MVertex *pv2 = ring[p2];
+    MVertex *pv3 = ring[p3];
     MTetrahedron *tr1 = new MTetrahedron(pv1, pv2, pv3, v1);
     MTetrahedron *tr2 = new MTetrahedron(pv3, pv2, pv1, v2);
     MTet4 *t41 = new MTet4(tr1, tetQuality1[iT]);
@@ -352,21 +352,21 @@ bool edgeSwap(std::vector<MTet4 *> &newTets, MTet4 *tet, int iLocalEdge,
   return true;
 }
 
-bool edgeSplit(std::vector<MTet4 *> &newTets, MTet4 *tet, MNode *newVertex,
+bool edgeSplit(std::vector<MTet4 *> &newTets, MTet4 *tet, MVertex *newVertex,
                int iLocalEdge, const qmTetrahedron::Measures &cr)
 {
   std::vector<MTet4 *> cavity;
   std::vector<MTet4 *> outside;
-  std::vector<MNode *> ring;
-  MNode *v1, *v2;
+  std::vector<MVertex *> ring;
+  MVertex *v1, *v2;
 
   bool closed =
     buildEdgeCavity(tet, iLocalEdge, &v1, &v2, cavity, outside, ring);
   if(!closed) return false;
 
   for(std::size_t j = 0; j < ring.size(); j++) {
-    MNode *pv1 = ring[j];
-    MNode *pv2 = ring[(j + 1) % ring.size()];
+    MVertex *pv1 = ring[j];
+    MVertex *pv2 = ring[(j + 1) % ring.size()];
     MTetrahedron *tr1 = new MTetrahedron(pv1, pv2, newVertex, v1);
     MTetrahedron *tr2 = new MTetrahedron(newVertex, pv2, pv1, v2);
     MTet4 *t41 = new MTet4(tr1, cr);
@@ -395,13 +395,13 @@ bool faceSwap(std::vector<MTet4 *> &newTets, MTet4 *t1, int iLocalFace,
   if(!t2) return false;
   if(t1->onWhat() != t2->onWhat()) return false;
 
-  MNode *v1 = t1->tet()->getVertex(vnofaces[iLocalFace]);
-  MNode *f1 = t1->tet()->getVertex(faces[iLocalFace][0]);
-  MNode *f2 = t1->tet()->getVertex(faces[iLocalFace][1]);
-  MNode *f3 = t1->tet()->getVertex(faces[iLocalFace][2]);
-  MNode *v2 = nullptr;
+  MVertex *v1 = t1->tet()->getVertex(vnofaces[iLocalFace]);
+  MVertex *f1 = t1->tet()->getVertex(faces[iLocalFace][0]);
+  MVertex *f2 = t1->tet()->getVertex(faces[iLocalFace][1]);
+  MVertex *f3 = t1->tet()->getVertex(faces[iLocalFace][2]);
+  MVertex *v2 = nullptr;
   for(int i = 0; i < 4; i++) {
-    MNode *v = t2->tet()->getVertex(i);
+    MVertex *v = t2->tet()->getVertex(i);
     if(v != f1 && v != f2 && v != f3) {
       v2 = v;
       break;
@@ -482,7 +482,7 @@ bool faceSwap(std::vector<MTet4 *> &newTets, MTet4 *t1, int iLocalFace,
   return true;
 }
 
-bool buildVertexCavity_recur(MTet4 *t, MNode *v, std::vector<MTet4 *> &cavity)
+bool buildVertexCavity_recur(MTet4 *t, MVertex *v, std::vector<MTet4 *> &cavity)
 {
   if(t->isDeleted()) {
     Msg::Warning("A deleted tet is a neighbor of a non deleted tet"
@@ -535,8 +535,8 @@ bool collapseVertex(std::vector<MTet4 *> &newTets, MTet4 *t, int iVertex,
     return false;
   }
 
-  MNode *v = t->tet()->getVertex(iVertex);
-  MNode *tg = t->tet()->getVertex(iTarget);
+  MVertex *v = t->tet()->getVertex(iVertex);
+  MVertex *tg = t->tet()->getVertex(iTarget);
 
   if(v->onWhat()->dim() < 3) return false;
   if(tg->onWhat()->dim() < 3) return false;
@@ -699,12 +699,12 @@ bool smoothVertex(MTet4 *t, int iVertex, const qmTetrahedron::Measures &cr)
 }
 
 struct smoothVertexData3D {
-  MNode *v;
+  MVertex *v;
   std::vector<MTet4 *> ts;
   double LC;
 };
 
-double smoothing_objective_function_3D(double X, double Y, double Z, MNode *v,
+double smoothing_objective_function_3D(double X, double Y, double Z, MVertex *v,
                                        std::vector<MTet4 *> &ts)
 {
   const double oldX = v->x();
@@ -732,7 +732,7 @@ void deriv_smoothing_objective_function_3D(double *XYZ, double *dF, double &F,
                                            void *data)
 {
   smoothVertexData3D *svd = (smoothVertexData3D *)data;
-  MNode *v = svd->v;
+  MVertex *v = svd->v;
   const double LARGE = svd->LC * 1.e5;
   const double SMALL = 1. / LARGE;
   F = smoothing_objective_function_3D(XYZ[0], XYZ[1], XYZ[2], v, svd->ts);
@@ -813,28 +813,28 @@ bool smoothVertexOptimize(MTet4 *t, int iVertex,
 }
 
 template <class ITERATOR>
-void fillv_(std::multimap<MNode *, MElement *> &vertexToElement,
+void fillv_(std::multimap<MVertex *, MElement *> &vertexToElement,
             ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR IT = it_beg; IT != it_end; ++IT) {
     MElement *el = *IT;
     for(std::size_t j = 0; j < el->getNumVertices(); j++) {
-      MNode *e = el->getVertex(j);
+      MVertex *e = el->getVertex(j);
       vertexToElement.insert(std::make_pair(e, el));
     }
   }
 }
 
-int LaplaceSmoothing(GVolume *gr)
+int LaplaceSmoothing(GRegion *gr)
 {
-  std::multimap<MNode *, MElement *> vertexToElement;
+  std::multimap<MVertex *, MElement *> vertexToElement;
   fillv_(vertexToElement, (gr)->tetrahedra.begin(), (gr)->tetrahedra.end());
   fillv_(vertexToElement, (gr)->hexahedra.begin(), (gr)->hexahedra.end());
   fillv_(vertexToElement, (gr)->prisms.begin(), (gr)->prisms.end());
   fillv_(vertexToElement, (gr)->pyramids.begin(), (gr)->pyramids.end());
   int N = 0;
   for(std::size_t i = 0; i < gr->mesh_vertices.size(); i++) {
-    MNode *v = gr->mesh_vertices[i];
+    MVertex *v = gr->mesh_vertices[i];
     auto it = vertexToElement.lower_bound(v);
     auto it_low = it;
     auto it_up = vertexToElement.upper_bound(v);

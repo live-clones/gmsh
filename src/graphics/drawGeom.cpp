@@ -73,7 +73,7 @@ private:
 
 public:
   drawGVertex(drawContext *ctx) : _ctx(ctx) {}
-  void operator()(GPoint *v)
+  void operator()(GVertex *v)
   {
     if(!v->getVisibility()) return;
     if(v->geomType() == GEntity::BoundaryLayerPoint) return;
@@ -151,7 +151,7 @@ private:
 
 public:
   drawGEdge(drawContext *ctx) : _ctx(ctx) {}
-  void operator()(GCurve *e)
+  void operator()(GEdge *e)
   {
     if(!e->getVisibility()) return;
     if(e->geomType() == GEntity::DiscreteCurve) return;
@@ -198,10 +198,10 @@ public:
       if(CTX::instance()->geom.curveType > 0) {
         for(int i = 0; i < N - 1; i++) {
           double t1 = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
-          GVertex p1 = e->point(t1);
+          GPoint p1 = e->point(t1);
           double t2 =
             t_min + (double)(i + 1) / (double)(N - 1) * (t_max - t_min);
-          GVertex p2 = e->point(t2);
+          GPoint p2 = e->point(t2);
           double x[2] = {p1.x(), p2.x()};
           double y[2] = {p1.y(), p2.y()};
           double z[2] = {p1.z(), p2.z()};
@@ -217,7 +217,7 @@ public:
         glBegin(GL_LINE_STRIP);
         for(int i = 0; i < N; i++) {
           double t = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
-          GVertex p = e->point(t);
+          GPoint p = e->point(t);
           double x = p.x(), y = p.y(), z = p.z();
           _ctx->transform(x, y, z);
           glVertex3d(x, y, z);
@@ -227,7 +227,7 @@ public:
     }
 
     if(CTX::instance()->geom.curveLabels || e->getSelection() > 1) {
-      GVertex p = e->point(t_min + 0.5 * (t_max - t_min));
+      GPoint p = e->point(t_min + 0.5 * (t_max - t_min));
       double offset = (0.5 * CTX::instance()->geom.curveWidth +
                        0.1 * CTX::instance()->glFontSize) *
                       _ctx->pixel_equiv_x;
@@ -240,7 +240,7 @@ public:
 
     if(CTX::instance()->geom.tangents) {
       double t = t_min + 0.5 * (t_max - t_min);
-      GVertex p = e->point(t);
+      GPoint p = e->point(t);
       SVector3 der = e->firstDer(t);
       der.normalize();
       for(int i = 0; i < 3; i++)
@@ -309,7 +309,7 @@ private:
 
 public:
   drawGFace(drawContext *ctx) : _ctx(ctx) {}
-  void operator()(GSurface *f)
+  void operator()(GFace *f)
   {
     if(!f->getVisibility()) return;
     if(f->geomType() == GEntity::PartitionSurface) return;
@@ -432,7 +432,7 @@ private:
 
 public:
   drawGRegion(drawContext *ctx) : _ctx(ctx) {}
-  void operator()(GVolume *r)
+  void operator()(GRegion *r)
   {
     if(!r->getVisibility()) return;
 

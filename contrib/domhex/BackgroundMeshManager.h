@@ -10,13 +10,13 @@
 #include "BGMBase.h"
 
 class GEntity;
-class GSurface;
-class GVolume;
+class GFace;
+class GRegion;
 
 class BGMManager {
 public:
-  static BGMBase *get(GSurface *gf);
-  static BGMBase *get(GVolume *gf);
+  static BGMBase *get(GFace *gf);
+  static BGMBase *get(GRegion *gf);
   static BGMBase *current2D();
   static void set_use_cross_field(bool b);
 

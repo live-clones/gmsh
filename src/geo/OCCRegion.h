@@ -7,13 +7,13 @@
 #define OCC_REGION_H
 
 #include "GmshConfig.h"
-#include "GVolume.h"
+#include "GRegion.h"
 
 #if defined(HAVE_OCC)
 
 #include <TopoDS_Solid.hxx>
 
-class OCCRegion : public GVolume {
+class OCCRegion : public GRegion {
 private:
   TopoDS_Solid _s;
   void _setup();

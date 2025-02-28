@@ -91,7 +91,7 @@ void GMSH_NewViewPlugin::nodeData(int numComp, double value,
   GModel::current()->getEntities(entities);
   for(std::size_t i = 0; i < entities.size(); i++) {
     for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
-      MNode *ve = entities[i]->mesh_vertices[j];
+      MVertex *ve = entities[i]->mesh_vertices[j];
       d[ve->getNum()].resize(numComp, value);
     }
   }

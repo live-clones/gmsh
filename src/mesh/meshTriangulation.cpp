@@ -10,10 +10,10 @@
 #include "Context.h"
 #include "gmsh.h"
 #include "GModel.h"
-#include "GSurface.h"
-#include "GCurve.h"
+#include "GFace.h"
+#include "GEdge.h"
 #include "MLine.h"
-#include "MNode.h"
+#include "MVertex.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "meshTriangulation.h"
@@ -87,7 +87,7 @@ struct pair_hash {
 
 int PolyMesh2GFace(PolyMesh *pm, int faceTag)
 {
-  GSurface *gf = GModel::current()->getFaceByTag(faceTag);
+  GFace *gf = GModel::current()->getFaceByTag(faceTag);
 
   if(!gf){
     Msg::Error("PolyMesh2GFace cannot find surface %d", faceTag);
@@ -99,8 +99,8 @@ int PolyMesh2GFace(PolyMesh *pm, int faceTag)
   gf->triangles.clear();
   gf->quadrangles.clear();
 
-  std::unordered_map<int, MNode *> news;
-  std::unordered_map<PolyMesh::HalfEdge *, GVertex> hon;
+  std::unordered_map<int, MVertex *> news;
+  std::unordered_map<PolyMesh::HalfEdge *, GPoint> hon;
 
   if(!pm->high_order_nodes.empty()) {
     for(size_t i = 0; i < pm->high_order_nodes.size(); i++) {
@@ -108,7 +108,7 @@ int PolyMesh2GFace(PolyMesh *pm, int faceTag)
       if(it == hon.end()) {
         double uv[2] = {0, 0};
         SVector3 p = pm->high_order_nodes[i];
-        GVertex gp = gf->closestPoint(SPoint3(p.x(), p.y(), p.z()), uv);
+        GPoint gp = gf->closestPoint(SPoint3(p.x(), p.y(), p.z()), uv);
         if(!gp.succeeded()) {
           gp.x() = p.x();
           gp.y() = p.y();
@@ -120,13 +120,13 @@ int PolyMesh2GFace(PolyMesh *pm, int faceTag)
     }
   }
 
-  std::map<MEdge, GVertex, MEdgeLessThan> hop;
+  std::map<MEdge, GPoint, MEdgeLessThan> hop;
 
   for(auto f : pm->faces) {
     if(f->data == faceTag) {
       PolyMesh::Vertex *v[4] = {f->he->v, f->he->next->v, f->he->next->next->v,
                                 f->he->next->next->next->v};
-      MNode *v_gmsh[4];
+      MVertex *v_gmsh[4];
 
       for(int i = 0; i < pm->num_sides(f->he); i++) {
         if(v[i]->data != -1) {
@@ -138,7 +138,7 @@ int PolyMesh2GFace(PolyMesh *pm, int faceTag)
         }
         else {
           double uv[2] = {0, 0};
-          GVertex gp = gf->closestPoint(
+          GPoint gp = gf->closestPoint(
             SPoint3(v[i]->position.x(), v[i]->position.y(), v[i]->position.z()),
             uv);
           if(gp.succeeded())
@@ -177,8 +177,8 @@ int PolyMesh2GFace(PolyMesh *pm, int faceTag)
     for(auto t : gf->triangles) {
       for(int i = 0; i < 3; i++) {
         MEdge li(t->getVertex(i), t->getVertex((i + 1) % 3));
-        GVertex gp = hop[li];
-        MNode *vint = t->getVertex(i + 3);
+        GPoint gp = hop[li];
+        MVertex *vint = t->getVertex(i + 3);
         vint->x() = gp.x();
         vint->y() = gp.y();
         vint->z() = gp.z();
@@ -332,15 +332,15 @@ static int enhanceQuality(PolyMesh::HalfEdge *he, void *)
 }
 
 
-static void faceCircumCenter(PolyMesh::HalfEdge *he, GSurface *gf, double *res,
+static void faceCircumCenter(PolyMesh::HalfEdge *he, GFace *gf, double *res,
                              double *uv)
 {
   PolyMesh::Vertex *v0 = he->v;
   PolyMesh::Vertex *v1 = he->next->v;
   PolyMesh::Vertex *v2 = he->next->next->v;
-  GVertex p0 = gf->point(v0->position.x(), v0->position.y());
-  GVertex p1 = gf->point(v1->position.x(), v1->position.y());
-  GVertex p2 = gf->point(v2->position.x(), v2->position.y());
+  GPoint p0 = gf->point(v0->position.x(), v0->position.y());
+  GPoint p1 = gf->point(v1->position.x(), v1->position.y());
+  GPoint p2 = gf->point(v2->position.x(), v2->position.y());
   double q0[3] = {p0.x(), p0.y(), p0.z()};
   double q1[3] = {p1.x(), p1.y(), p1.z()};
   double q2[3] = {p2.x(), p2.y(), p2.z()};
@@ -348,14 +348,14 @@ static void faceCircumCenter(PolyMesh::HalfEdge *he, GSurface *gf, double *res,
 }
 
 
-static double faceQuality(PolyMesh::HalfEdge *he, GSurface *gf)
+static double faceQuality(PolyMesh::HalfEdge *he, GFace *gf)
 {
   PolyMesh::Vertex *v0 = he->v;
   PolyMesh::Vertex *v1 = he->next->v;
   PolyMesh::Vertex *v2 = he->next->next->v;
-  GVertex p0 = gf->point(v0->position.x(), v0->position.y());
-  GVertex p1 = gf->point(v1->position.x(), v1->position.y());
-  GVertex p2 = gf->point(v2->position.x(), v2->position.y());
+  GPoint p0 = gf->point(v0->position.x(), v0->position.y());
+  GPoint p1 = gf->point(v1->position.x(), v1->position.y());
+  GPoint p2 = gf->point(v2->position.x(), v2->position.y());
   return qmTriangle::gamma(p0.x(), p0.y(), p0.z(), p1.x(), p1.y(), p1.z(),
                            p2.x(), p2.y(), p2.z());
 }
@@ -366,17 +366,17 @@ static int qualityCriterion3D(PolyMesh::HalfEdge *he, void *p){
   if (he->opposite == nullptr) return -1;
   if (p == nullptr) return -1;
 
-  GSurface *gf = (GSurface*)p;
+  GFace *gf = (GFace*)p;
 
   PolyMesh::Vertex *v0 = he->v;
   PolyMesh::Vertex *v1 = he->next->v;
   PolyMesh::Vertex *v2 = he->next->next->v;
   PolyMesh::Vertex *v3 = he->opposite->next->next->v;
 
-  GVertex p0 = gf->point (v0->position.x(),v0->position.y());
-  GVertex p1 = gf->point (v1->position.x(),v1->position.y());
-  GVertex p2 = gf->point (v2->position.x(),v2->position.y());
-  GVertex p3 = gf->point (v3->position.x(),v3->position.y());
+  GPoint p0 = gf->point (v0->position.x(),v0->position.y());
+  GPoint p1 = gf->point (v1->position.x(),v1->position.y());
+  GPoint p2 = gf->point (v2->position.x(),v2->position.y());
+  GPoint p3 = gf->point (v3->position.x(),v3->position.y());
 
   double q1 = qmTriangle::gamma
 (p0.x(),p0.y(),p0.z(),p1.x(),p1.y(),p1.z(),p2.x(),p2.y(),p2.z()); double q2 =
@@ -573,7 +573,7 @@ static PolyMesh::HalfEdge *Color(PolyMesh::HalfEdge *he, int color)
 
 void GFaceDelaunayRefinement(size_t faceTag)
 {
-  GSurface *gf = GModel::current()->getFaceByTag(faceTag);
+  GFace *gf = GModel::current()->getFaceByTag(faceTag);
 
   PolyMesh *pm = GFaceInitialMesh(faceTag, 1);
 
@@ -592,7 +592,7 @@ void GFaceDelaunayRefinement(size_t faceTag)
       double uv[2];
       SPoint3 cc;
       faceCircumCenter(he, gf, cc, uv);
-      GVertex gp = gf->closestPoint(cc, uv);
+      GPoint gp = gf->closestPoint(cc, uv);
       if(gp.succeeded()) {
         PolyMesh::Face *f = he->f;
         f = Walk(f, gp.u(), gp.v());
@@ -630,7 +630,7 @@ void GFaceDelaunayRefinementOldMesher(int faceTag)
 {
   PolyMesh *pm = GFaceInitialMesh(faceTag);
 
-  GSurface *gf = GModel::current()->getFaceByTag(faceTag);
+  GFace *gf = GModel::current()->getFaceByTag(faceTag);
 
   // use old code ---
 
@@ -639,9 +639,9 @@ void GFaceDelaunayRefinementOldMesher(int faceTag)
       size_t n0 = f->he->v->data;
       size_t n1 = f->he->next->v->data;
       size_t n2 = f->he->next->next->v->data;
-      MNode *v0 = GModel::current()->getMeshVertexByTag(n0);
-      MNode *v1 = GModel::current()->getMeshVertexByTag(n1);
-      MNode *v2 = GModel::current()->getMeshVertexByTag(n2);
+      MVertex *v0 = GModel::current()->getMeshVertexByTag(n0);
+      MVertex *v1 = GModel::current()->getMeshVertexByTag(n1);
+      MVertex *v2 = GModel::current()->getMeshVertexByTag(n2);
       gf->triangles.push_back(new MTriangle(v0, v1, v2));
     }
   }
@@ -650,11 +650,11 @@ void GFaceDelaunayRefinementOldMesher(int faceTag)
 }
 
 struct nodeCopies {
-  MNode *mv;
+  MVertex *mv;
   size_t nbCopies;
   double u[8], v[8]; // max 8 copies -- reduced to 4
   size_t id[8];
-  nodeCopies(MNode *_mv, double _u, double _v) : mv(_mv), nbCopies(1)
+  nodeCopies(MVertex *_mv, double _u, double _v) : mv(_mv), nbCopies(1)
   {
     u[0] = _u;
     v[0] = _v;
@@ -685,13 +685,13 @@ struct nodeCopies {
 
 // INITIAL MESH --------- colored
 
-static void getNodeCopies(GSurface *gf,
+static void getNodeCopies(GFace *gf,
                           std::unordered_map<size_t, nodeCopies> &copies)
 {
-  std::vector<GCurve *> edges = gf->edges();
-  std::vector<GCurve *> emb_edges = gf->getEmbeddedEdges();
+  std::vector<GEdge *> edges = gf->edges();
+  std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
   edges.insert(edges.end(), emb_edges.begin(), emb_edges.end());
-  std::set<GCurve *> touched;
+  std::set<GEdge *> touched;
 
   if(edges.empty())
     edges.insert(edges.end(), gf->model()->firstEdge(),
@@ -699,10 +699,10 @@ static void getNodeCopies(GSurface *gf,
 
   for(auto e : edges) {
     if(!e->isMeshDegenerated()) {
-      std::set<MNode *, MVertexPtrLessThan> e_vertices;
+      std::set<MVertex *, MVertexPtrLessThan> e_vertices;
       for(std::size_t i = 0; i < e->lines.size(); i++) {
-        MNode *v1 = e->lines[i]->getVertex(0);
-        MNode *v2 = e->lines[i]->getVertex(1);
+        MVertex *v1 = e->lines[i]->getVertex(0);
+        MVertex *v2 = e->lines[i]->getVertex(1);
         e_vertices.insert(v1);
         e_vertices.insert(v2);
       }
@@ -749,7 +749,7 @@ static void getNodeCopies(GSurface *gf,
     }
   }
 
-  std::vector<GPoint *> emb_vertx = gf->getEmbeddedVertices();
+  std::vector<GVertex *> emb_vertx = gf->getEmbeddedVertices();
   for(auto v : emb_vertx) {
     SPoint2 param;
     reparamMeshVertexOnFace(v->mesh_vertices[0], gf, param);
@@ -786,7 +786,7 @@ void addPoints(PolyMesh *pm, std::vector<double> &pts, SBoundingBox3d &bb)
 PolyMesh *GFaceInitialMesh(int faceTag, int recover,
                            std::vector<double> *additional)
 {
-  GSurface *gf = GModel::current()->getFaceByTag(faceTag);
+  GFace *gf = GModel::current()->getFaceByTag(faceTag);
 
   if(!gf) Msg::Error("GFaceInitialMesh: no face with tag %d", faceTag);
 
@@ -823,8 +823,8 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover,
   //pm->print4debug(faceTag);
 
   if(recover) {
-    std::vector<GCurve *> edges = gf->edges();
-    std::vector<GCurve *> emb_edges = gf->getEmbeddedEdges();
+    std::vector<GEdge *> edges = gf->edges();
+    std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
     edges.insert(edges.end(), emb_edges.begin(), emb_edges.end());
     if(edges.empty())
       edges.insert(edges.end(), gf->model()->firstEdge(),

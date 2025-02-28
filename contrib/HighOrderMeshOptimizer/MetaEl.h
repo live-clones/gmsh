@@ -33,8 +33,8 @@
 
 class MetaEl {
 public:
-  MetaEl(int type, int order, const std::vector<MNode *> &baseVert,
-         const std::vector<MNode *> &topPrimVert);
+  MetaEl(int type, int order, const std::vector<MVertex *> &baseVert,
+         const std::vector<MVertex *> &topPrimVert);
   ~MetaEl();
   void placeOtherNodes();
   void setCurvedTop(double factor);
@@ -70,14 +70,14 @@ private:
   static std::map<int, metaInfoType> _metaInfo;
 
   const metaInfoType &_mInfo;
-  std::vector<MNode *> _metaVert;
+  std::vector<MVertex *> _metaVert;
   MElement *_metaEl, *_metaEl0;
   std::vector<SVector3> _baseNorm;
 
   const metaInfoType &getMetaInfo(int elType, int order);
   void computeBaseNorm(const SVector3 &metaNorm,
-                       const std::vector<MNode *> &baseVert,
-                       const std::vector<MNode *> &topPrimVert,
+                       const std::vector<MVertex *> &baseVert,
+                       const std::vector<MVertex *> &topPrimVert,
                        std::vector<SVector3> &baseNorm);
 };
 

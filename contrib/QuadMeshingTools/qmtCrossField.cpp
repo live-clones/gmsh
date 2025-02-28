@@ -19,7 +19,7 @@
 /* Gmsh includes */
 #include "GmshMessage.h"
 #include "OS.h"
-#include "MNode.h"
+#include "MVertex.h"
 #include "MLine.h"
 #include "MTriangle.h"
 #include "gmsh.h"
@@ -877,7 +877,7 @@ namespace QMT {
            shape[2] * edge_values[2];
   }
 
-  int local_frame(const MNode *v, const std::vector<MTriangle *> &tris,
+  int local_frame(const MVertex *v, const std::vector<MTriangle *> &tris,
                   SVector3 &e_x, SVector3 &e_y, SVector3 &e_z)
   {
     e_x = SVector3(DBL_MAX, DBL_MAX, DBL_MAX);
@@ -886,8 +886,8 @@ namespace QMT {
       avg += tri_normal(t);
       if(e_x.x() == DBL_MAX) {
         for(size_t le = 0; le < 3; ++le) {
-          MNode *v1 = t->getVertex(le);
-          MNode *v2 = t->getVertex((le + 1) % 3);
+          MVertex *v1 = t->getVertex(le);
+          MVertex *v2 = t->getVertex((le + 1) % 3);
           if(v1 == v) {
             e_x = v2->point() - v1->point();
             break;
@@ -923,9 +923,9 @@ namespace QMT {
     return 0;
   }
 
-  int ordered_fan_around_vertex(const MNode *v,
+  int ordered_fan_around_vertex(const MVertex *v,
                                 const std::vector<MTriangle *> &tris,
-                                std::vector<std::array<MNode *, 2> > &vPairs)
+                                std::vector<std::array<MVertex *, 2> > &vPairs)
   {
     vPairs.clear();
     if(tris.size() < 3) return -1;
@@ -934,8 +934,8 @@ namespace QMT {
     { /* Init */
       MTriangle *t = tris[0];
       for(size_t le = 0; le < 3; ++le) {
-        MNode *v1 = t->getVertex(le);
-        MNode *v2 = t->getVertex((le + 1) % 3);
+        MVertex *v1 = t->getVertex(le);
+        MVertex *v2 = t->getVertex((le + 1) % 3);
         if(v1 != v && v2 != v) {
           vPairs.push_back({v1, v2});
           done.insert(t);
@@ -945,14 +945,14 @@ namespace QMT {
     }
 
     while(vPairs.back().back() != vPairs[0][0]) {
-      MNode *last = vPairs.back().back();
+      MVertex *last = vPairs.back().back();
       /* Look for next edge connected to last */
       bool found = false;
       for(MTriangle *t : tris) {
         if(done.find(t) != done.end()) continue;
         for(size_t le = 0; le < 3; ++le) {
-          MNode *v1 = t->getVertex(le);
-          MNode *v2 = t->getVertex((le + 1) % 3);
+          MVertex *v1 = t->getVertex(le);
+          MVertex *v2 = t->getVertex((le + 1) % 3);
           if(v1 != v && v2 != v) {
             if(v1 == last) {
               vPairs.push_back({v1, v2});
@@ -1002,7 +1002,7 @@ int computeCrossFieldWithHeatEquation(
     for(MLine *l : lines) {
       std::array<QMT::id, 2> line;
       for(size_t lv = 0; lv < 2; ++lv) {
-        MNode *v = l->getVertex(lv);
+        MVertex *v = l->getVertex(lv);
         size_t num = v->getNum();
         if(num >= old2new.size()) { old2new.resize(num + 1, X); }
         if(old2new[num] == X) {
@@ -1018,7 +1018,7 @@ int computeCrossFieldWithHeatEquation(
     for(MTriangle *t : triangles) {
       std::array<QMT::id, 3> tri;
       for(size_t lv = 0; lv < 3; ++lv) {
-        MNode *v = t->getVertex(lv);
+        MVertex *v = t->getVertex(lv);
         size_t num = v->getNum();
         if(num >= old2new.size()) { old2new.resize(num + 1, X); }
         if(old2new[num] == X) {
@@ -1164,7 +1164,7 @@ inline double cross_lifting(int Ns, double _a, double a)
 int computeCrossFieldConformalScaling(
   int Ns, const std::vector<MTriangle *> &triangles,
   const std::vector<std::array<double, 3> > &triEdgeTheta,
-  std::unordered_map<MNode *, double> &scaling)
+  std::unordered_map<MVertex *, double> &scaling)
 {
 #if defined(HAVE_SOLVER)
   Msg::Debug("compute cross field scaling (N=%i, %li triangles) ...", Ns,
@@ -1190,11 +1190,11 @@ int computeCrossFieldConformalScaling(
   dofManager<double> *myAssembler = new dofManager<double>(_lsys);
 
   /* Vertex unknowns */
-  std::set<MNode *, MVertexPtrLessThan> vs;
+  std::set<MVertex *, MVertexPtrLessThan> vs;
   for(MTriangle *t : triangles) {
     for(size_t k = 0; k < 3; k++) { vs.insert(t->getVertex(k)); }
   }
-  for(MNode *v : vs) myAssembler->numberVertex(v, 0, 1);
+  for(MVertex *v : vs) myAssembler->numberVertex(v, 0, 1);
 
   simpleFunction<double> ONE(1.0);
   laplaceTerm l(0, 1, &ONE);
@@ -1219,7 +1219,7 @@ int computeCrossFieldConformalScaling(
     SVector3 t_i, o_i, o_1, o_2, tgt0;
     for(size_t le = 0; le < 3; ++le) {
       /* Edge ordered lower index to largest */
-      std::array<MNode *, 2> edge = {t->getVertex(le),
+      std::array<MVertex *, 2> edge = {t->getVertex(le),
                                        t->getVertex((le + 1) % 3)};
       if(edge[0]->getNum() > edge[1]->getNum())
         std::reverse(edge.begin(), edge.end());
@@ -1323,7 +1323,7 @@ int computeCrossFieldConformalScaling(
     Msg::Warning("conformal scaling (%li triangles, %li variables), failed to "
                  "solve linear system, use uniform scaling",
                  triangles.size(), vs.size());
-    for(MNode *v : vs) { scaling[v] = 1.; }
+    for(MVertex *v : vs) { scaling[v] = 1.; }
     delete _lsys;
     delete myAssembler;
     return 0;
@@ -1333,7 +1333,7 @@ int computeCrossFieldConformalScaling(
   double sMin = DBL_MAX;
   double sMax = -DBL_MAX;
   size_t i = 0;
-  for(MNode *v : vs) {
+  for(MVertex *v : vs) {
     double h;
     myAssembler->getDofValue(v, 0, 1, h);
     double cs = exp(-h);
@@ -1346,7 +1346,7 @@ int computeCrossFieldConformalScaling(
     Msg::Warning("Conformal scaling computed (%d unknowns, %li triangles -> "
                  "min=%.3f, max=%.3f), wrong, use uniform scaling",
                  myAssembler->sizeOfR(), triangles.size(), sMin, sMax);
-    for(MNode *v : vs) { scaling[v] = 1.; }
+    for(MVertex *v : vs) { scaling[v] = 1.; }
     delete _lsys;
     return 0;
   }
@@ -1377,7 +1377,7 @@ int computeCrossFieldConformalScaling(
 
 int computeQuadSizeMapFromCrossFieldConformalFactor(
   const std::vector<MTriangle *> &triangles, std::size_t targetNumberOfQuads,
-  std::unordered_map<MNode *, double> &scaling)
+  std::unordered_map<MVertex *, double> &scaling)
 {
   Msg::Debug("Offset quad size map from cross field conformal factor to target "
              "%li quads ...",
@@ -1396,13 +1396,13 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
   size_t nWoCorner = 0;
   for(MTriangle *t : triangles) {
     for(size_t lv = 0; lv < 3; ++lv) {
-      MNode *v = t->getVertex(lv);
+      MVertex *v = t->getVertex(lv);
       auto it = scaling.find(v);
       if(it == scaling.end()) {
         Msg::Error("scaling not found for vertex %i", v->getNum());
         return -1;
       }
-      GPoint *gv = v->onWhat()->cast2Vertex();
+      GVertex *gv = v->onWhat()->cast2Vertex();
       if(gv != nullptr) continue; /* Remove corner values from range */
       csMin = std::min(csMin, it->second);
       csMax = std::max(csMax, it->second);
@@ -1416,7 +1416,7 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
                  scaling.size(), csMin, csMax);
     for(MTriangle *t : triangles) {
       for(size_t lv = 0; lv < 3; ++lv) {
-        MNode *v = t->getVertex(lv);
+        MVertex *v = t->getVertex(lv);
         scaling[v] = 1.;
       }
     }
@@ -1426,12 +1426,12 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
   double integral = 0.;
   double smin = DBL_MAX;
   double smax = -DBL_MAX;
-  std::vector<MNode *> vertices;
+  std::vector<MVertex *> vertices;
   vertices.reserve(3 * triangles.size());
   for(MTriangle *t : triangles) {
     double values[3] = {0, 0, 0};
     for(size_t lv = 0; lv < 3; ++lv) {
-      MNode *v = t->getVertex(lv);
+      MVertex *v = t->getVertex(lv);
       auto it = scaling.find(v);
       if(it == scaling.end()) {
         Msg::Error("scaling value not found for v=%li", v->getNum());
@@ -1470,7 +1470,7 @@ int computeQuadSizeMapFromCrossFieldConformalFactor(
   smin = DBL_MAX;
   smax = -DBL_MAX;
   for(size_t j = 0; j < vertices.size(); ++j) {
-    MNode *v = vertices[j];
+    MVertex *v = vertices[j];
     auto it = scaling.find(v);
     it->second = sf * it->second;
     smin = std::min(smin, it->second);
@@ -1501,7 +1501,7 @@ int convertToPerTriangleCrossFieldDirections(
     SVector3 lifted_dirs[3];
     for(size_t le = 0; le < 3; ++le) {
       /* Get cross angle */
-      std::array<MNode *, 2> edge = {t->getVertex(le),
+      std::array<MVertex *, 2> edge = {t->getVertex(le),
                                        t->getVertex((le + 1) % 3)};
       if(edge[0]->getNum() > edge[1]->getNum())
         std::reverse(edge.begin(), edge.end());
@@ -1592,7 +1592,7 @@ int detectCrossFieldSingularities(
   }
 
   /* Get interior vertices and adjacent triangles */
-  unordered_map<MNode *, vector<MTriangle *> > v2t;
+  unordered_map<MVertex *, vector<MTriangle *> > v2t;
 
   /* put edge angles here, maybe a bit slow ... */
   unordered_map<MEdge, double, MEdgeHash, MEdgeEqual> edgeTheta;
@@ -1600,22 +1600,22 @@ int detectCrossFieldSingularities(
   for(size_t i = 0; i < triangles.size(); ++i) {
     MTriangle *t = triangles[i];
     for(size_t le = 0; le < 3; ++le) {
-      MNode *v1 = t->getVertex(le);
-      MNode *v2 = t->getVertex((le + 1) % 3);
+      MVertex *v1 = t->getVertex(le);
+      MVertex *v2 = t->getVertex((le + 1) % 3);
 
       MEdge edg(v1, v2);
       edgeTheta[edg] = triEdgeTheta[i][le];
 
-      GSurface *gf = dynamic_cast<GSurface *>(v1->onWhat());
+      GFace *gf = dynamic_cast<GFace *>(v1->onWhat());
       if(gf == nullptr) continue;
       v2t[v1].push_back(t);
     }
   }
 
   /* Compute index at each vertex (looking on the one rings) */
-  unordered_map<MNode *, int> vertexIndex;
+  unordered_map<MVertex *, int> vertexIndex;
   for(auto &kv : v2t) {
-    MNode *v = kv.first;
+    MVertex *v = kv.first;
     const vector<MTriangle *> &tris = kv.second;
 
     SVector3 e_x, e_y, N;
@@ -1625,7 +1625,7 @@ int detectCrossFieldSingularities(
       continue;
     }
 
-    std::vector<std::array<MNode *, 2> > vPairs;
+    std::vector<std::array<MVertex *, 2> > vPairs;
     int st2 = QMT::ordered_fan_around_vertex(v, tris, vPairs);
     if(st2 != 0) {
       Msg::Error("no ordered fan around v=%li", v->getNum());
@@ -1637,8 +1637,8 @@ int detectCrossFieldSingularities(
       vPairs.size()); /* cross field representation vector in local frame
                          (+e_x,+e_y) */
     for(size_t j = 0; j < vPairs.size(); ++j) {
-      MNode *v1 = vPairs[j][0];
-      MNode *v2 = vPairs[j][1];
+      MVertex *v1 = vPairs[j][0];
+      MVertex *v2 = vPairs[j][1];
       angle_deficit -= angle3Vertices(v1, v, v2); /* gaussian curvature */
 
       SVector3 tgt;
@@ -1712,9 +1712,9 @@ int detectCrossFieldSingularities(
 
   /* triangle singularities */
   for(MTriangle *t : triangles) {
-    MNode *v1 = t->getVertex(0);
-    MNode *v2 = t->getVertex(1);
-    MNode *v3 = t->getVertex(2);
+    MVertex *v1 = t->getVertex(0);
+    MVertex *v2 = t->getVertex(1);
+    MVertex *v3 = t->getVertex(2);
     for(double index : {-1., 1.}) {
       if(vertexIndex[v1] == index && vertexIndex[v2] == index &&
          vertexIndex[v3] == index) {
@@ -1730,8 +1730,8 @@ int detectCrossFieldSingularities(
   /* edge singularities */
   for(MTriangle *t : triangles) {
     for(size_t le = 0; le < 3; ++le) {
-      MNode *v1 = t->getVertex(le);
-      MNode *v2 = t->getVertex((le + 1) % 3);
+      MVertex *v1 = t->getVertex(le);
+      MVertex *v2 = t->getVertex((le + 1) % 3);
       for(double index : {-1., 1.}) {
         if(vertexIndex[v1] == index && vertexIndex[v2] == index) {
           SPoint3 p = (v1->point() + v2->point()) * 0.5;
@@ -1755,14 +1755,14 @@ int detectCrossFieldSingularities(
 
   if(addSingularitiesAtAcuteCorners) {
     size_t nb = singularities.size();
-    unordered_map<MNode *, double> cornerAngle;
-    unordered_map<MNode *, std::vector<MTriangle *> > cornerToTris;
+    unordered_map<MVertex *, double> cornerAngle;
+    unordered_map<MVertex *, std::vector<MTriangle *> > cornerToTris;
     for(MTriangle *t : triangles) {
       for(size_t le = 0; le < 3; ++le) {
-        MNode *v2 = t->getVertex((le + 1) % 3);
+        MVertex *v2 = t->getVertex((le + 1) % 3);
         if(v2->onWhat()->cast2Vertex() != NULL) {
-          MNode *v1 = t->getVertex(le);
-          MNode *v3 = t->getVertex((le + 2) % 3);
+          MVertex *v1 = t->getVertex(le);
+          MVertex *v3 = t->getVertex((le + 2) % 3);
           double agl = std::abs(angle3Vertices(v1, v2, v3));
           cornerAngle[v2] += agl;
           cornerToTris[v2].push_back(t);
@@ -1770,7 +1770,7 @@ int detectCrossFieldSingularities(
       }
     }
     for(const auto &kv : cornerAngle) {
-      MNode *v = kv.first;
+      MVertex *v = kv.first;
       double agl = kv.second;
       if(agl * 180. / M_PI < thresholdInDeg) {
         std::vector<MTriangle *> &tris = cornerToTris[v];

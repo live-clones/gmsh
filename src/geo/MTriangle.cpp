@@ -24,8 +24,8 @@ void MTriangle::getEdgeRep(bool curved, int num, double *x, double *y,
   // don't use MElement::_getEdgeRep: it's slow due to the creation of MFace
   // could speed this up by computing and storing the normal only if num==0; we
   // always call getEdgeRep in sequence
-  MNode *v0 = _v[edges_tri(num, 0)];
-  MNode *v1 = _v[edges_tri(num, 1)];
+  MVertex *v0 = _v[edges_tri(num, 0)];
+  MVertex *v1 = _v[edges_tri(num, 1)];
   x[0] = v0->x();
   y[0] = v0->y();
   z[0] = v0->z();
@@ -34,7 +34,7 @@ void MTriangle::getEdgeRep(bool curved, int num, double *x, double *y,
   z[1] = v1->z();
   if(CTX::instance()->mesh.lightLines) {
     static const int vv[3] = {2, 0, 1};
-    MNode *v2 = _v[vv[num]];
+    MVertex *v2 = _v[vv[num]];
     SVector3 t1(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
     SVector3 t2(v2->x() - x[0], v2->y() - y[0], v2->z() - z[0]);
     SVector3 normal = crossprod(t1, t2);
@@ -173,7 +173,7 @@ int MTriangle::numCommonNodesInDualGraph(const MElement *const other) const
   }
 }
 
-double MTriangle::getAngleAtVertex(MNode *v)
+double MTriangle::getAngleAtVertex(MVertex *v)
 {
   if(v == _v[0])
     return angle3Vertices(_v[2], _v[0], _v[1]);
@@ -370,7 +370,7 @@ void MTriangle::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 
 void MTriangleN::reverse()
 {
-  MNode *tmp;
+  MVertex *tmp;
   tmp = _v[1];
   _v[1] = _v[2];
   _v[2] = tmp;
@@ -395,8 +395,8 @@ void MTriangle::reorient(int rot, bool swap)
 {
   if(rot == 0 && !swap) return;
 
-  MNode *tmp[3];
-  std::memcpy(tmp, _v, 3 * sizeof(MNode *));
+  MVertex *tmp[3];
+  std::memcpy(tmp, _v, 3 * sizeof(MVertex *));
   if(swap)
     for(int i = 0; i < 3; i++) _v[i] = tmp[(3 - i + rot) % 3];
   else
@@ -408,8 +408,8 @@ void MTriangle6::reorient(int rot, bool swap)
   if(rot == 0 && !swap) return;
 
   MTriangle::reorient(rot, swap);
-  MNode *tmp[3];
-  std::memcpy(tmp, _vs, 3 * sizeof(MNode *));
+  MVertex *tmp[3];
+  std::memcpy(tmp, _vs, 3 * sizeof(MVertex *));
   if(swap)
     for(int i = 0; i < 3; i++) _vs[i] = tmp[(5 + rot - i) % 3];
   else
@@ -473,7 +473,7 @@ void MTriangleN::reorient(int rot, bool swap)
   IndicesReoriented &indices = it->second;
 
   // copy vertices
-  std::vector<MNode *> oldv(3 + _vs.size());
+  std::vector<MVertex *> oldv(3 + _vs.size());
   std::copy(_v, _v + 3, oldv.begin());
   std::copy(_vs.begin(), _vs.end(), oldv.begin() + 3);
 
@@ -485,7 +485,7 @@ void MTriangleN::reorient(int rot, bool swap)
 MFaceN MTriangle::getHighOrderFace(int num, int sign, int rot)
 {
   const bool swap = sign == -1;
-  std::vector<MNode *> vertices(getNumVertices());
+  std::vector<MVertex *> vertices(getNumVertices());
 
   if(swap)
     for(int i = 0; i < 3; i++) vertices[i] = _v[(3 - i + rot) % 3];
@@ -498,7 +498,7 @@ MFaceN MTriangle::getHighOrderFace(int num, int sign, int rot)
 MFaceN MTriangle6::getHighOrderFace(int num, int sign, int rot)
 {
   const bool swap = sign == -1;
-  std::vector<MNode *> vertices(getNumVertices());
+  std::vector<MVertex *> vertices(getNumVertices());
 
   if(swap) {
     for(int i = 0; i < 3; i++) {
@@ -530,7 +530,7 @@ MFaceN MTriangleN::getHighOrderFace(int num, int sign, int rot)
 
   IndicesReoriented &indices = it->second;
 
-  std::vector<MNode *> vertices(getNumVertices());
+  std::vector<MVertex *> vertices(getNumVertices());
   for(std::size_t i = 0; i < getNumVertices(); ++i) {
     vertices[i] = getVertex(indices[i]);
   }

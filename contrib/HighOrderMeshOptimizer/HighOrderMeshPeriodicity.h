@@ -31,15 +31,15 @@
 #include <vector>
 
 class GEntity;
-class GSurface;
-class GVertex;
+class GFace;
+class GPoint;
 
-#include "MNode.h"
+#include "MVertex.h"
 
 class HighOrderMeshPeriodicity {
 private:
   std::multimap<GEntity *, GEntity *> _master2slave;
-  // std::map<GEntity*, std::map<MNode*, MNode*> > _ent2vv;
+  // std::map<GEntity*, std::map<MVertex*, MVertex*> > _ent2vv;
 
 public:
   HighOrderMeshPeriodicity(std::vector<GEntity *> &);
@@ -50,7 +50,7 @@ private:
   void _relocateMasterVertices();
   void _copyBackMasterVertices();
 
-  static SPoint3 _transform(MNode *, const std::vector<double> &);
+  static SPoint3 _transform(MVertex *, const std::vector<double> &);
   static std::vector<double> _inverse(const std::vector<double> &);
 };
 

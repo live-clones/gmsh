@@ -17,8 +17,8 @@
 #include "robustPredicates.h"
 
 //#define GMSH_PRE_ALLOCATE_STRATEGY 1
-class GVolume;
-class GSurface;
+class GRegion;
+class GFace;
 class GModel;
 class splitQuadRecovery;
 
@@ -35,7 +35,7 @@ class MTet4Factory;
 // * rb tree containing all pointers sorted with respect to tet
 //   radius: each bucket of the tree contains 4 pointers (16 Bytes)
 //   plus the data -> 20 MB
-// * sizeof(MNode) = 44 Bytes and there are about 200000 verts per
+// * sizeof(MVertex) = 44 Bytes and there are about 200000 verts per
 //   million tet -> 9MB
 // * vector of char lengths per vertex -> 1.6Mb
 // * vectors in GEntities to store the element and vertex pointers
@@ -51,7 +51,7 @@ private:
   double circum_radius;
   MTetrahedron *base;
   MTet4 *neigh[4];
-  GVolume *gr;
+  GRegion *gr;
 
 public:
   static int radiusNorm; // 2 is euclidian norm, -1 is infinite norm
@@ -74,10 +74,10 @@ public:
   }
   void circumcenter(double *res)
   {
-    MNode *v0 = base->getVertex(0);
-    MNode *v1 = base->getVertex(1);
-    MNode *v2 = base->getVertex(2);
-    MNode *v3 = base->getVertex(3);
+    MVertex *v0 = base->getVertex(0);
+    MVertex *v1 = base->getVertex(1);
+    MVertex *v2 = base->getVertex(2);
+    MVertex *v3 = base->getVertex(3);
     double A[4] = {v0->x(), v0->y(), v0->z()};
     double B[4] = {v1->x(), v1->y(), v1->z()};
     double C[4] = {v2->x(), v2->y(), v2->z()};
@@ -157,8 +157,8 @@ public:
     deleted = false;
   }
 
-  GVolume *onWhat() const { return gr; }
-  void setOnWhat(GVolume *g) { gr = g; }
+  GRegion *onWhat() const { return gr; }
+  void setOnWhat(GRegion *g) { gr = g; }
   bool isDeleted() const { return deleted; }
   void forceRadius(double r) { circum_radius = r; }
   double getRadius() const { return circum_radius; }
@@ -175,7 +175,7 @@ public:
     const double p[3] = {x, y, z};
     return inCircumSphere(p);
   }
-  int inCircumSphere(const MNode *v) const
+  int inCircumSphere(const MVertex *v) const
   {
     return inCircumSphere(v->x(), v->y(), v->z());
   }
@@ -211,12 +211,12 @@ void connectTets(std::list<MTet4 *> &,
                  const std::set<MFace, MFaceLessThan> * = nullptr);
 void connectTets(std::vector<MTet4 *> &,
                  const std::set<MFace, MFaceLessThan> * = nullptr);
-void delaunayMeshIn3D(std::vector<MNode *> &, std::vector<MTetrahedron *> &,
+void delaunayMeshIn3D(std::vector<MVertex *> &, std::vector<MTetrahedron *> &,
                       bool removeBox = false);
-void insertVerticesInRegion(GVolume *gr, int maxIter,
+void insertVerticesInRegion(GRegion *gr, int maxIter,
                             double worstTetRadiusTarget, bool _classify = true,
                             splitQuadRecovery *sqr = nullptr);
-void bowyerWatsonFrontalLayers(GVolume *gr, bool hex);
+void bowyerWatsonFrontalLayers(GRegion *gr, bool hex);
 
 struct compareTet4Ptr {
   bool operator()(MTet4 const *const a, MTet4 const *const b) const
@@ -314,6 +314,6 @@ public:
   container &getAllTets() { return allTets; }
 };
 
-void optimizeMesh(GVolume *gr, const qmTetrahedron::Measures &qm);
+void optimizeMesh(GRegion *gr, const qmTetrahedron::Measures &qm);
 
 #endif

@@ -533,7 +533,7 @@ public:
   }
 };
 
-static void _add_vertex(GPoint *gv, Fl_Tree *tree, const std::string &path)
+static void _add_vertex(GVertex *gv, Fl_Tree *tree, const std::string &path)
 {
   std::ostringstream vertex;
   vertex << path << "Point " << gv->tag();
@@ -547,7 +547,7 @@ static void _add_vertex(GPoint *gv, Fl_Tree *tree, const std::string &path)
   n->close();
 }
 
-static void _add_edge(GCurve *ge, Fl_Tree *tree, const std::string &path)
+static void _add_edge(GEdge *ge, Fl_Tree *tree, const std::string &path)
 {
   std::ostringstream edge;
   edge << path << "Curve " << ge->tag();
@@ -563,7 +563,7 @@ static void _add_edge(GCurve *ge, Fl_Tree *tree, const std::string &path)
   if(ge->getEndVertex()) _add_vertex(ge->getEndVertex(), tree, edge.str());
 }
 
-static void _add_face(GSurface *gf, Fl_Tree *tree, const std::string &path)
+static void _add_face(GFace *gf, Fl_Tree *tree, const std::string &path)
 {
   std::ostringstream face;
   face << path << "Surface " << gf->tag();
@@ -575,12 +575,12 @@ static void _add_face(GSurface *gf, Fl_Tree *tree, const std::string &path)
   if(gf->getVisibility()) n->select(1);
   n->user_data((void *)gf);
   n->close();
-  std::vector<GCurve *> const &edges = gf->edges();
+  std::vector<GEdge *> const &edges = gf->edges();
   for(auto it = edges.begin(); it != edges.end(); it++)
     _add_edge(*it, tree, face.str());
 }
 
-static void _add_region(GVolume *gr, Fl_Tree *tree, const std::string &path)
+static void _add_region(GRegion *gr, Fl_Tree *tree, const std::string &path)
 {
   std::ostringstream region;
   region << path << "Volume " << gr->tag();
@@ -592,7 +592,7 @@ static void _add_region(GVolume *gr, Fl_Tree *tree, const std::string &path)
   if(gr->getVisibility()) n->select(1);
   n->user_data((void *)gr);
   n->close();
-  std::vector<GSurface *> faces = gr->faces();
+  std::vector<GFace *> faces = gr->faces();
   for(auto it = faces.begin(); it != faces.end(); it++)
     _add_face(*it, tree, region.str());
 }
@@ -615,28 +615,28 @@ static void _add_physical_group(int dim, int num, std::vector<GEntity *> &ge,
     n = tree->add(group.str().c_str());
     if(n) n->close();
     for(std::size_t i = 0; i < ge.size(); i++)
-      _add_region((GVolume *)ge[i], tree, group.str());
+      _add_region((GRegion *)ge[i], tree, group.str());
     break;
   case 2:
     group << "Physical Surface " << num << name << "/";
     n = tree->add(group.str().c_str());
     if(n) n->close();
     for(std::size_t i = 0; i < ge.size(); i++)
-      _add_face((GSurface *)ge[i], tree, group.str());
+      _add_face((GFace *)ge[i], tree, group.str());
     break;
   case 1:
     group << "Physical Curve " << num << name << "/";
     n = tree->add(group.str().c_str());
     if(n) n->close();
     for(std::size_t i = 0; i < ge.size(); i++)
-      _add_edge((GCurve *)ge[i], tree, group.str());
+      _add_edge((GEdge *)ge[i], tree, group.str());
     break;
   case 0:
     group << "Physical Point " << num << name << "/";
     n = tree->add(group.str().c_str());
     if(n) n->close();
     for(std::size_t i = 0; i < ge.size(); i++)
-      _add_vertex((GPoint *)ge[i], tree, group.str());
+      _add_vertex((GVertex *)ge[i], tree, group.str());
     break;
   default: break;
   }
@@ -894,7 +894,7 @@ static void _set_visibility_by_number(int what, int num, char val,
       case 0: // nodes
         for(std::size_t i = 0; i < entities.size(); i++) {
           for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
-            MNode *v = entities[i]->mesh_vertices[j];
+            MVertex *v = entities[i]->mesh_vertices[j];
             if(all || (int)v->getNum() == num) v->setVisibility(val);
           }
         }
@@ -953,10 +953,10 @@ static void _set_visibility_by_number(int what, int num, char val,
 }
 
 static void _apply_visibility(char mode, bool physical,
-                              std::vector<GPoint *> &vertices,
-                              std::vector<GCurve *> &edges,
-                              std::vector<GSurface *> &faces,
-                              std::vector<GVolume *> &regions,
+                              std::vector<GVertex *> &vertices,
+                              std::vector<GEdge *> &edges,
+                              std::vector<GFace *> &faces,
+                              std::vector<GRegion *> &regions,
                               std::vector<MElement *> &elements)
 {
   bool recursive =
@@ -1131,10 +1131,10 @@ static void visibility_interactive_cb(Fl_Widget *w, void *data)
   else
     return;
 
-  std::vector<GPoint *> vertices;
-  std::vector<GCurve *> edges;
-  std::vector<GSurface *> faces;
-  std::vector<GVolume *> regions;
+  std::vector<GVertex *> vertices;
+  std::vector<GEdge *> edges;
+  std::vector<GFace *> faces;
+  std::vector<GRegion *> regions;
   std::vector<MElement *> elements;
 
   while(1) {

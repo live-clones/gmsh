@@ -9,23 +9,23 @@
 #define XY_FACE_H
 
 #include "xyEdge.h"
-#include "GSurface.h"
+#include "GFace.h"
 
-class xyFace : public GSurface {
+class xyFace : public GFace {
 public:
-  xyFace(GModel *gm, int t, xyEdge *e) : GSurface(gm, t) { l_edges.push_back(e); }
+  xyFace(GModel *gm, int t, xyEdge *e) : GFace(gm, t) { l_edges.push_back(e); }
   virtual ~xyFace() {}
   Range<double> parBounds(int i) const { return Range<double>(0, 1); }
-  virtual GVertex point(double par1, double par2) const
+  virtual GPoint point(double par1, double par2) const
   {
     double pp[2] = {par1, par2};
-    return GVertex(par1, par2, 0.0, this, pp);
+    return GPoint(par1, par2, 0.0, this, pp);
   }
-  virtual GVertex closestPoint(const SPoint3 &queryPoint,
+  virtual GPoint closestPoint(const SPoint3 &queryPoint,
                               const double initialGuess[2]) const
   {
     double u[2] = {queryPoint.x(), queryPoint.y()};
-    return GVertex(queryPoint.x(), queryPoint.y(), 0.0, this, u);
+    return GPoint(queryPoint.x(), queryPoint.y(), 0.0, this, u);
   }
   virtual bool containsPoint(const SPoint3 &pt) const { return true; }
   virtual SVector3 normal(const SPoint2 &param) const

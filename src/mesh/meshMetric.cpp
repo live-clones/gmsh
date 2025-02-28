@@ -85,7 +85,7 @@ void meshMetric::updateMetrics()
 
   auto it = _adj.begin();
   for(; it != _adj.end(); it++) {
-    MNode *ver = it->first;
+    MVertex *ver = it->first;
     _nodalMetrics[ver] = setOfMetrics[0][ver];
     _nodalSizes[ver] = setOfSizes[0][ver];
 
@@ -140,7 +140,7 @@ void meshMetric::exportInfo(const char *fileendname)
       out_hessmat << "TS(";
     }
     for(std::size_t i = 0; i < e->getNumVertices(); i++) {
-      MNode *ver = e->getVertex(i);
+      MVertex *ver = e->getVertex(i);
       out_metric << ver->x() << "," << ver->y() << "," << ver->z();
       out_grad << ver->x() << "," << ver->y() << "," << ver->z();
       out_ls << ver->x() << "," << ver->y() << "," << ver->z();
@@ -162,7 +162,7 @@ void meshMetric::exportInfo(const char *fileendname)
       }
     }
     for(std::size_t i = 0; i < e->getNumVertices(); i++) {
-      MNode *ver = e->getVertex(i);
+      MVertex *ver = e->getVertex(i);
       out_ls << vals[ver];
       out_hess << (hessians[ver](0, 0) + hessians[ver](1, 1) +
                    hessians[ver](2, 2));
@@ -218,14 +218,14 @@ void meshMetric::computeValues()
   auto it = _adj.begin();
   while(it != _adj.end()) {
     std::vector<MElement *> lt = it->second;
-    MNode *ver = it->first;
+    MVertex *ver = it->first;
     vals[ver] = (*_fct)(ver->x(), ver->y(), ver->z());
     it++;
   }
 }
 
 // Determines set of vertices to use for least squares
-std::vector<MNode *> getLSBlob(std::size_t minNbPt, v2t_cont::iterator it,
+std::vector<MVertex *> getLSBlob(std::size_t minNbPt, v2t_cont::iterator it,
                                  v2t_cont &adj)
 {
   //  static const double RADFACT = 3;
@@ -237,17 +237,17 @@ std::vector<MNode *> getLSBlob(std::size_t minNbPt, v2t_cont::iterator it,
   //    rad = std::max(rad,(*itEl)->getOuterRadius());
   //  rad *= RADFACT;
 
-  std::vector<MNode *> vv(1, it->first),
+  std::vector<MVertex *> vv(1, it->first),
     bvv = vv; // Vector of vertices in blob and in boundary of blob
   do {
-    std::set<MNode *> nbvv; // Set of vertices in new boundary
+    std::set<MVertex *> nbvv; // Set of vertices in new boundary
     for(auto itBV = bvv.begin(); itBV != bvv.end();
         itBV++) { // For each boundary vertex...
       std::vector<MElement *> &adjBV = adj[*itBV];
       for(auto itBVEl = adjBV.begin(); itBVEl != adjBV.end(); itBVEl++) {
         for(std::size_t iV = 0; iV < (*itBVEl)->getNumVertices();
             iV++) { // ... look for adjacent vertices...
-          MNode *v = (*itBVEl)->getVertex(iV);
+          MVertex *v = (*itBVEl)->getVertex(iV);
           //          if ((find(vv.begin(),vv.end(),v) == vv.end()) &&
           //          (p0.distance(v->point()) <= rad)) nbvv.insert(v);
           if(find(vv.begin(), vv.end(), v) == vv.end())
@@ -278,8 +278,8 @@ void meshMetric::computeHessian()
   std::size_t minNbPtBlob = 3 * sysDim;
 
   for(auto it = _adj.begin(); it != _adj.end(); it++) {
-    MNode *ver = it->first;
-    std::vector<MNode *> vv = getLSBlob(minNbPtBlob, it, _adj);
+    MVertex *ver = it->first;
+    std::vector<MVertex *> vv = getLSBlob(minNbPtBlob, it, _adj);
     fullMatrix<double> A(vv.size(), sysDim), ATA(sysDim, sysDim);
     fullVector<double> b(vv.size()), ATb(sysDim), coeffs(sysDim);
     for(std::size_t i = 0; i < vv.size(); i++) {
@@ -351,7 +351,7 @@ void meshMetric::computeHessian()
   }
 }
 
-void meshMetric::computeMetricLevelSet(MNode *ver, SMetric3 &hessian,
+void meshMetric::computeMetricLevelSet(MVertex *ver, SMetric3 &hessian,
                                        SMetric3 &metric, double &size, double x,
                                        double y, double z)
 {
@@ -403,7 +403,7 @@ void meshMetric::computeMetricLevelSet(MNode *ver, SMetric3 &hessian,
   metric = SMetric3(lambda1, lambda2, lambda3, t1, t2, t3);
 }
 
-void meshMetric::computeMetricHessian(MNode *ver, SMetric3 &hessian,
+void meshMetric::computeMetricHessian(MVertex *ver, SMetric3 &hessian,
                                       SMetric3 &metric, double &size, double x,
                                       double y, double z)
 {
@@ -449,7 +449,7 @@ void meshMetric::computeMetricHessian(MNode *ver, SMetric3 &hessian,
   metric = SMetric3(lambda1, lambda2, lambda3, t1, t2, t3);
 }
 
-void meshMetric::computeMetricFrey(MNode *ver, SMetric3 &hessian,
+void meshMetric::computeMetricFrey(MVertex *ver, SMetric3 &hessian,
                                    SMetric3 &metric, double &size, double x,
                                    double y, double z)
 {
@@ -514,7 +514,7 @@ void meshMetric::computeMetricFrey(MNode *ver, SMetric3 &hessian,
   metric = SMetric3(lambda1, lambda2, lambda3, t1, t2, t3);
 }
 
-void meshMetric::computeMetricEigenDir(MNode *ver, SMetric3 &hessian,
+void meshMetric::computeMetricEigenDir(MVertex *ver, SMetric3 &hessian,
                                        SMetric3 &metric, double &size, double x,
                                        double y, double z)
 {
@@ -648,7 +648,7 @@ void meshMetric::computeMetricEigenDir(MNode *ver, SMetric3 &hessian,
   }
 }
 
-void meshMetric::computeMetricIsoLinInterp(MNode *ver, SMetric3 &hessian,
+void meshMetric::computeMetricIsoLinInterp(MVertex *ver, SMetric3 &hessian,
                                            SMetric3 &metric, double &size,
                                            double x, double y, double z)
 {
@@ -764,7 +764,7 @@ void meshMetric::computeMetric(int metricNumber)
   computeHessian();
 
   for(auto it = _adj.begin(); it != _adj.end(); it++) {
-    MNode *ver = it->first;
+    MVertex *ver = it->first;
     SMetric3 hessian, metric;
     double size;
     switch(_technique) {
@@ -934,17 +934,17 @@ void meshMetric::operator()(double x, double y, double z, SMetric3 &metr,
   }
 }
 
-double meshMetric::getLaplacian(MNode *v)
+double meshMetric::getLaplacian(MVertex *v)
 {
-  MNode *vNew = _vertexMap[v->getNum()];
+  MVertex *vNew = _vertexMap[v->getNum()];
   auto it = hessians.find(vNew);
   SMetric3 h = it->second;
   return h(0, 0) + h(1, 1) + h(2, 2);
 }
 
-SVector3 meshMetric::getGradient(MNode *v)
+SVector3 meshMetric::getGradient(MVertex *v)
 {
-  MNode *vNew = _vertexMap[v->getNum()];
+  MVertex *vNew = _vertexMap[v->getNum()];
   auto it = grads.find(vNew);
   SVector3 gr = it->second;
   return gr;

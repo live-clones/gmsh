@@ -13,10 +13,10 @@
 #include <string>
 #include <unordered_map>
 #include <functional>
-#include "GPoint.h"
-#include "GCurve.h"
-#include "GSurface.h"
-#include "GVolume.h"
+#include "GVertex.h"
+#include "GEdge.h"
+#include "GFace.h"
+#include "GRegion.h"
 #include "SPoint3.h"
 #include "SBoundingBox3d.h"
 #include "MFaceHash.h"
@@ -46,10 +46,10 @@ private:
   std::multimap<std::pair<const std::vector<int>, const std::vector<int> >,
                 std::pair<const std::string, const std::vector<int> > >
     _homologyRequests;
-  std::set<GVolume *, GEntityPtrLessThan> _chainRegions;
-  std::set<GSurface *, GEntityPtrLessThan> _chainFaces;
-  std::set<GCurve *, GEntityPtrLessThan> _chainEdges;
-  std::set<GPoint *, GEntityPtrLessThan> _chainVertices;
+  std::set<GRegion *, GEntityPtrLessThan> _chainRegions;
+  std::set<GFace *, GEntityPtrLessThan> _chainFaces;
+  std::set<GEdge *, GEntityPtrLessThan> _chainEdges;
+  std::set<GVertex *, GEntityPtrLessThan> _chainVertices;
   hashmapMEdge _mapEdgeNum;
   hashmapMFace _mapFaceNum;
   // the maximum vertex and element id number in the mesh
@@ -83,7 +83,7 @@ private:
   int _writeX3dFile(FILE* fp, bool saveAll,
                     double scalingFactor, int x3dsurfaces, int x3dedges,
                     int x3dvertices, int x3dcolorize,
-                    std::vector<GSurface *> &customFaces);
+                    std::vector<GFace *> &customFaces);
 
 protected:
   // the name of the model
@@ -98,8 +98,8 @@ protected:
 
   // vertex and element caches to speed-up direct access by tag (mostly
   // used for post-processing I/O)
-  std::vector<MNode *> _vertexVectorCache;
-  std::map<std::size_t, MNode *> _vertexMapCache;
+  std::vector<MVertex *> _vertexVectorCache;
+  std::map<std::size_t, MVertex *> _vertexMapCache;
   std::vector<std::pair<MElement *, int> > _elementVectorCache;
   std::map<std::size_t, std::pair<MElement *, int> > _elementMapCache;
   std::map<int, int> _elementIndexCache;
@@ -113,7 +113,7 @@ protected:
   MElementOctree *_elementOctree;
 
   // global cache storage of discrete curvatures
-  std::map<MNode *, std::pair<SVector3, SVector3> > _curvatures;
+  std::map<MVertex *, std::pair<SVector3, SVector3> > _curvatures;
 
   // GEO (Gmsh native) model internal data
   GEO_Internals *_geo_internals;
@@ -132,7 +132,7 @@ protected:
 
   // last entities/vertices where a meshing error has been reported
   std::vector<GEntity *> _lastMeshEntityError;
-  std::vector<MNode *> _lastMeshVertexError;
+  std::vector<MVertex *> _lastMeshVertexError;
 
   // index of the current model (in the static list of all loaded
   // models)
@@ -140,10 +140,10 @@ protected:
 
   // the sets of geometrical regions, faces, edges and vertices in the
   // model
-  std::set<GVolume *, GEntityPtrLessThan> regions;
-  std::set<GSurface *, GEntityPtrLessThan> faces;
-  std::set<GCurve *, GEntityPtrLessThan> edges;
-  std::set<GPoint *, GEntityPtrLessThan> vertices;
+  std::set<GRegion *, GEntityPtrLessThan> regions;
+  std::set<GFace *, GEntityPtrLessThan> faces;
+  std::set<GEdge *, GEntityPtrLessThan> edges;
+  std::set<GVertex *, GEntityPtrLessThan> vertices;
 
   // map between the pair <dimension, elementary or physical number>
   // and an optional associated name
@@ -170,8 +170,8 @@ protected:
 
   // store the vertices in the geometrical entity they are associated
   // with, and delete those that are not associated with any entity
-  void _storeVerticesInEntities(std::map<std::size_t, MNode *> &vertices);
-  void _storeVerticesInEntities(std::vector<MNode *> &vertices);
+  void _storeVerticesInEntities(std::map<std::size_t, MVertex *> &vertices);
+  void _storeVerticesInEntities(std::vector<MVertex *> &vertices);
 
   // store the physical tags in the geometrical entities
   void
@@ -180,15 +180,15 @@ protected:
 
 public:
   // region, face, edge and vertex iterators
-  typedef std::set<GVolume *, GEntityPtrLessThan>::iterator riter;
-  typedef std::set<GSurface *, GEntityPtrLessThan>::iterator fiter;
-  typedef std::set<GCurve *, GEntityPtrLessThan>::iterator eiter;
-  typedef std::set<GPoint *, GEntityPtrLessThan>::iterator viter;
+  typedef std::set<GRegion *, GEntityPtrLessThan>::iterator riter;
+  typedef std::set<GFace *, GEntityPtrLessThan>::iterator fiter;
+  typedef std::set<GEdge *, GEntityPtrLessThan>::iterator eiter;
+  typedef std::set<GVertex *, GEntityPtrLessThan>::iterator viter;
 
-  typedef std::set<GVolume *, GEntityPtrLessThan>::const_iterator const_riter;
-  typedef std::set<GSurface *, GEntityPtrLessThan>::const_iterator const_fiter;
-  typedef std::set<GCurve *, GEntityPtrLessThan>::const_iterator const_eiter;
-  typedef std::set<GPoint *, GEntityPtrLessThan>::const_iterator const_viter;
+  typedef std::set<GRegion *, GEntityPtrLessThan>::const_iterator const_riter;
+  typedef std::set<GFace *, GEntityPtrLessThan>::const_iterator const_fiter;
+  typedef std::set<GEdge *, GEntityPtrLessThan>::const_iterator const_eiter;
+  typedef std::set<GVertex *, GEntityPtrLessThan>::const_iterator const_viter;
 
   // elementary/physical name iterator
   typedef std::map<std::pair<int, int>, std::string>::iterator piter;
@@ -283,8 +283,8 @@ public:
 
   // get the edge of face and its global number given mesh nodes (return 0 if
   // the edge or face does not exist in the edge or face map)
-  std::size_t getMEdge(MNode *v0, MNode *v1, MEdge &edge);
-  std::size_t getMFace(MNode *v0, MNode *v1, MNode *v2, MNode *v3,
+  std::size_t getMEdge(MVertex *v0, MVertex *v1, MEdge &edge);
+  std::size_t getMFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
                        MFace &face);
   // iterate on edges and faces
   hashmapMEdge::const_iterator firstMEdge() { return _mapEdgeNum.begin(); }
@@ -378,36 +378,36 @@ public:
   const_viter lastVertex() const { return vertices.end(); }
 
   // get the set of entities
-  std::set<GVolume *, GEntityPtrLessThan> getRegions() const
+  std::set<GRegion *, GEntityPtrLessThan> getRegions() const
   {
     return regions;
   };
-  std::set<GSurface *, GEntityPtrLessThan> getFaces() const { return faces; };
-  std::set<GCurve *, GEntityPtrLessThan> getEdges() const { return edges; };
-  std::set<GPoint *, GEntityPtrLessThan> getVertices() const
+  std::set<GFace *, GEntityPtrLessThan> getFaces() const { return faces; };
+  std::set<GEdge *, GEntityPtrLessThan> getEdges() const { return edges; };
+  std::set<GVertex *, GEntityPtrLessThan> getVertices() const
   {
     return vertices;
   };
 
   // find the entity with the given tag
-  GVolume *getRegionByTag(int n) const;
-  GSurface *getFaceByTag(int n) const;
-  GCurve *getEdgeByTag(int n) const;
-  GPoint *getVertexByTag(int n) const;
+  GRegion *getRegionByTag(int n) const;
+  GFace *getFaceByTag(int n) const;
+  GEdge *getEdgeByTag(int n) const;
+  GVertex *getVertexByTag(int n) const;
   GEntity *getEntityByTag(int dim, int n) const;
 
   // change entity tag (modifies the model entity sets)
   bool changeEntityTag(int dim, int tag, int newTag);
 
   // add/remove an entity in the model
-  bool add(GVolume *r) { return regions.insert(r).second; }
-  bool add(GSurface *f) { return faces.insert(f).second; }
-  bool add(GCurve *e) { return edges.insert(e).second; }
-  bool add(GPoint *v) { return vertices.insert(v).second; }
-  bool remove(GVolume *r);
-  bool remove(GSurface *f);
-  bool remove(GCurve *e);
-  bool remove(GPoint *v);
+  bool add(GRegion *r) { return regions.insert(r).second; }
+  bool add(GFace *f) { return faces.insert(f).second; }
+  bool add(GEdge *e) { return edges.insert(e).second; }
+  bool add(GVertex *v) { return vertices.insert(v).second; }
+  bool remove(GRegion *r);
+  bool remove(GFace *f);
+  bool remove(GEdge *e);
+  bool remove(GVertex *v);
   void remove(int dim, int tag, std::vector<GEntity*> &removed,
               bool recursive = false);
   void remove(const std::vector<std::pair<int, int> > &dimTags,
@@ -569,15 +569,15 @@ public:
   void rebuildMeshElementCache(bool onlyIfNecessary = false);
 
   // access a mesh vertex by tag, using the vertex cache
-  MNode *getMeshVertexByTag(std::size_t n);
+  MVertex *getMeshVertexByTag(std::size_t n);
 
   // add a mesh vertex to the global mesh vertex cache
-  void addMVertexToVertexCache(MNode* v);
+  void addMVertexToVertexCache(MVertex* v);
 
   // get all the mesh vertices associated with the physical group
   // of dimension "dim" and id number "num"
   void getMeshVerticesForPhysicalGroup(int dim, int num,
-                                       std::vector<MNode *> &);
+                                       std::vector<MVertex *> &);
 
   // index all the (used) mesh vertices in a continuous sequence,
   // starting at 1
@@ -599,8 +599,8 @@ public:
     return _lastMeshEntityError;
   }
   void clearLastMeshVertexError() { _lastMeshVertexError.clear(); }
-  void addLastMeshVertexError(MNode *v) { _lastMeshVertexError.push_back(v); }
-  std::vector<MNode *> getLastMeshVertexError()
+  void addLastMeshVertexError(MVertex *v) { _lastMeshVertexError.push_back(v); }
+  std::vector<MVertex *> getLastMeshVertexError()
   {
     return _lastMeshVertexError;
   }
@@ -727,7 +727,7 @@ public:
   void computeSizeField();
 
   // access global cache of discrete curvatures
-  std::map<MNode *, std::pair<SVector3, SVector3> > &getCurvatures()
+  std::map<MVertex *, std::pair<SVector3, SVector3> > &getCurvatures()
   {
     return _curvatures;
   }
@@ -768,10 +768,10 @@ public:
   int writeOCCSTEP(const std::string &name);
   int writeOCCIGES(const std::string &name);
   int importOCCShape(const void *shape);
-  GPoint *getVertexForOCCShape(const void *shape);
-  GCurve *getEdgeForOCCShape(const void *shape);
-  GSurface *getFaceForOCCShape(const void *shape);
-  GVolume *getRegionForOCCShape(const void *shape);
+  GVertex *getVertexForOCCShape(const void *shape);
+  GEdge *getEdgeForOCCShape(const void *shape);
+  GFace *getFaceForOCCShape(const void *shape);
+  GRegion *getRegionForOCCShape(const void *shape);
 
   // ACIS Model
   int readACISSAT(const std::string &name);
@@ -866,7 +866,7 @@ public:
 
   // CFD General Notation System files
   int readCGNS(const std::string &name,
-               std::vector<std::vector<MNode *> > &vertPerZone,
+               std::vector<std::vector<MVertex *> > &vertPerZone,
                std::vector<std::vector<MElement *> > &eltPerZone);
   int writeCGNS(const std::string &name, bool saveAll = false,
                 double scalingFactor = 1.0, bool structured = false);

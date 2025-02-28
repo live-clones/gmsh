@@ -38,7 +38,7 @@ private:
 };
 
 // difference with BackgroundMesh2D: no copy of components, working directly on
-// the vertices and elements of GVolume
+// the vertices and elements of GRegion
 
 class backgroundMesh3D : public BGMBase {
 protected:
@@ -46,7 +46,7 @@ protected:
   virtual void propagateValues(DoubleStorageType &dirichlet,
                                simpleFunction<double> &eval_diffusivity,
                                bool in_parametric_plane = false);
-  virtual GVertex get_GPoint_from_MVertex(const MNode *) const;
+  virtual GPoint get_GPoint_from_MVertex(const MVertex *) const;
 
   virtual const MElement *getElement(unsigned int i) const;
   virtual unsigned int getNumMeshElements() const;
@@ -55,27 +55,27 @@ protected:
   const bool verbose;
 
 public:
-  backgroundMesh3D(GVolume *_gr);
+  backgroundMesh3D(GRegion *_gr);
   virtual ~backgroundMesh3D();
 
   virtual MElementOctree *getOctree();
 
-  virtual MNode *get_nearest_neighbor(const double *xyz, double &distance);
-  virtual MNode *get_nearest_neighbor(const double *xyz);
-  virtual MNode *get_nearest_neighbor(const MNode *v);
-  virtual MNode *get_nearest_neighbor(double x, double y, double z);
-  virtual MNode *get_nearest_neighbor(double x, double y, double z,
+  virtual MVertex *get_nearest_neighbor(const double *xyz, double &distance);
+  virtual MVertex *get_nearest_neighbor(const double *xyz);
+  virtual MVertex *get_nearest_neighbor(const MVertex *v);
+  virtual MVertex *get_nearest_neighbor(double x, double y, double z);
+  virtual MVertex *get_nearest_neighbor(double x, double y, double z,
                                         double &distance);
 };
 
 class frameFieldBackgroundMesh3D : public backgroundMesh3D {
 public:
   //    typedef tr1::unordered_map<hash_key_ptr, std::set<MElement*> >
-  //    vert2elemtype; typedef tr1::unordered_map<MElement*, std::set<MNode*>
+  //    vert2elemtype; typedef tr1::unordered_map<MElement*, std::set<MVertex*>
   //    > elem2verttype;
   typedef std::map<hash_key_ptr, std::set<MElement *> > vert2elemtype;
-  typedef std::map<MElement *, std::set<MNode *> > elem2verttype;
-  typedef std::multimap<MNode const *const, std::pair<int, MNode const *> >
+  typedef std::map<MElement *, std::set<MVertex *> > elem2verttype;
+  typedef std::multimap<MVertex const *const, std::pair<int, MVertex const *> >
     graphtype;
 
 protected:
@@ -94,16 +94,16 @@ protected:
 
   // function called only by "build_neighbors", recursively recovering vertices
   // neighbors.
-  void get_recursive_neighbors(std::set<MNode const *> &start,
-                               std::set<MNode const *> &visited,
+  void get_recursive_neighbors(std::set<MVertex const *> &start,
+                               std::set<MVertex const *> &visited,
                                std::set<MElement const *> &visited_elements,
-                               std::multimap<int, MNode const *> &proximity,
+                               std::multimap<int, MVertex const *> &proximity,
                                int max_level, int level = 0);
 
   double
   compare_to_neighbors(const SPoint3 &current, STensor3 &ref,
-                       std::multimap<double, MNode const *>::iterator itbegin,
-                       std::multimap<double, MNode const *>::iterator itend,
+                       std::multimap<double, MVertex const *>::iterator itbegin,
+                       std::multimap<double, MVertex const *>::iterator itend,
                        SVector3 &mean_axis, double &mean_angle,
                        std::vector<double> &vectorial_smoothness);
 
@@ -127,7 +127,7 @@ protected:
   vert2elemtype vert2elem;
   elem2verttype elem2vert;
 
-  std::set<MNode *> listOfBndVertices;
+  std::set<MVertex *> listOfBndVertices;
   graphtype graph;
   double smoothness_threshold;
 
@@ -141,31 +141,31 @@ protected:
 #endif
 
 public:
-  frameFieldBackgroundMesh3D(GVolume *_gf);
+  frameFieldBackgroundMesh3D(GRegion *_gf);
   virtual ~frameFieldBackgroundMesh3D();
 
-  MNode *get_nearest_neighbor_on_boundary(MNode *v);
-  MNode *get_nearest_neighbor_on_boundary(MNode *v, double &distance);
+  MVertex *get_nearest_neighbor_on_boundary(MVertex *v);
+  MVertex *get_nearest_neighbor_on_boundary(MVertex *v, double &distance);
 
-  //    bool findvertex(const MNode *v)const{
-  //      std::map<MNode*,double>::const_iterator it =
-  //      sizeField.find(const_cast<MNode*>(v)); if (it==sizeField.end())
+  //    bool findvertex(const MVertex *v)const{
+  //      std::map<MVertex*,double>::const_iterator it =
+  //      sizeField.find(const_cast<MVertex*>(v)); if (it==sizeField.end())
   //      return false; return true;
   //    };
 
   double get_smoothness(double x, double y, double z);
-  double get_smoothness(MNode *v);
+  double get_smoothness(MVertex *v);
 
   double get_approximate_smoothness(double x, double y, double z);
-  double get_approximate_smoothness(MNode *v);
+  double get_approximate_smoothness(MVertex *v);
 
   void eval_approximate_crossfield(double x, double y, double z, STensor3 &cf);
-  void eval_approximate_crossfield(const MNode *vert, STensor3 &cf);
+  void eval_approximate_crossfield(const MVertex *vert, STensor3 &cf);
 
   void get_vectorial_smoothness(double x, double y, double z, SVector3 &cf);
-  void get_vectorial_smoothness(const MNode *vert, SVector3 &cf);
+  void get_vectorial_smoothness(const MVertex *vert, SVector3 &cf);
   double get_vectorial_smoothness(const int idir, double x, double y, double z);
-  double get_vectorial_smoothness(const int idir, const MNode *vert);
+  double get_vectorial_smoothness(const int idir, const MVertex *vert);
 
   inline void exportCrossField(const std::string &filename)
   {

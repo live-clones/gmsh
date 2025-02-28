@@ -68,7 +68,7 @@ int GModel::readUNV(const std::string &name, bool readGroupsOfElements)
           for(std::size_t i = 0; i < strlen(buffer); i++)
             if(buffer[i] == 'D') buffer[i] = 'E';
           if(sscanf(buffer, "%lf %lf %lf", &x, &y, &z) != 3) break;
-          _vertexMapCache[num] = new MNode(x, y, z, nullptr, num);
+          _vertexMapCache[num] = new MVertex(x, y, z, nullptr, num);
         }
       }
       else if(record == 2412) { // elements
@@ -115,7 +115,7 @@ int GModel::readUNV(const std::string &name, bool readGroupsOfElements)
             if(sscanf(buffer, "%d %d %d", &dum, &dum, &dum) != 3) break;
             break;
           }
-          std::vector<MNode *> vertices(numNodes);
+          std::vector<MVertex *> vertices(numNodes);
           for(int i = 0; i < numNodes; i++) {
             int n;
             if(!gmshgets(buffer, 11, fp)) {
@@ -458,7 +458,7 @@ int GModel::writeUNV(const std::string &name, bool saveAll,
       for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
         std::vector<GEntity *> &entities = it->second;
 
-        std::set<MNode *, MVertexPtrLessThan> nodes;
+        std::set<MVertex *, MVertexPtrLessThan> nodes;
         if(saveNodes) {
           for(std::size_t i = 0; i < entities.size(); i++) {
             for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {

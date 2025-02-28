@@ -38,7 +38,7 @@ struct GeomOptimStats {
  *        Not always applicable: if no param, if the patch contains a CAD uv singularity
  *
  * @param[in,out] patch The mesh patch to smooth. The new positions and uv are directly updated
- *                      in the MNode instances.
+ *                      in the MVertex instances.
  * @param[out] stats Some statistics on the smoothing
  *
  * @return 0 if success
@@ -86,7 +86,7 @@ struct GeomOptimOptions {
  *        Require a parametrization on the face.
  *
  * @param[in,out] patch The mesh patch to smooth. The new positions and uv are directly updated
- *                      in the MNode instances.
+ *                      in the MVertex instances.
  * @param[in] opt The optimization parameters
  * @param[out] stats Some statistics on the smoothing
  *
@@ -130,7 +130,7 @@ bool patchProjectOnSurface(GFaceMeshPatch& patch, SurfaceProjector* sp = nullptr
  *
  * @return true if success
  */
-bool optimizeGeometryQuadMesh(GSurface* gf, SurfaceProjector* sp = nullptr, double timeMax = DBL_MAX, bool withBackup = true);
+bool optimizeGeometryQuadMesh(GFace* gf, SurfaceProjector* sp = nullptr, double timeMax = DBL_MAX, bool withBackup = true);
 
 /**
  * @brief High-level function which try to make good parameter choices
@@ -142,7 +142,7 @@ bool optimizeGeometryQuadMesh(GSurface* gf, SurfaceProjector* sp = nullptr, doub
  *
  * @return true if success
  */
-bool optimizeGeometryQuadTriMesh(GSurface* gf, SurfaceProjector* sp = nullptr, double timeMax = DBL_MAX);
+bool optimizeGeometryQuadTriMesh(GFace* gf, SurfaceProjector* sp = nullptr, double timeMax = DBL_MAX);
 
 
 class GeometryOptimizer {
@@ -186,8 +186,8 @@ class GeometryOptimizer {
     std::vector<std::array<uint32_t,4> > quads;
     std::vector<size_t> one_ring_first;
     std::vector<uint32_t> one_ring_values;
-    std::vector<MNode*> new2old;
-    std::unordered_map<MNode*,uint32_t> old2new;
+    std::vector<MVertex*> new2old;
+    std::unordered_map<MVertex*,uint32_t> old2new;
     size_t nFree =0;
 };
 

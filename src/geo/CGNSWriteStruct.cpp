@@ -14,12 +14,12 @@
 
 #if defined(HAVE_LIBCGNS)
 
-static bool isTransfinite(GSurface *gf)
+static bool isTransfinite(GFace *gf)
 {
   return gf->transfinite_vertices.size() && gf->transfinite_vertices[0].size();
 }
 
-static bool isTransfinite(GVolume *gr)
+static bool isTransfinite(GRegion *gr)
 {
   return gr->transfinite_vertices.size() &&
          gr->transfinite_vertices[0].size() &&
@@ -109,14 +109,14 @@ static void computeTransform2D(const std::vector<cgsize_t> &pointRange,
   }
 }
 
-static bool findRange2D(GSurface *gf, GCurve *ge, int &ibeg, int &jbeg, int &iend,
+static bool findRange2D(GFace *gf, GEdge *ge, int &ibeg, int &jbeg, int &iend,
                         int &jend, int &type)
 {
-  GPoint *gv1 = ge->getBeginVertex(), *gv2 = ge->getEndVertex();
+  GVertex *gv1 = ge->getBeginVertex(), *gv2 = ge->getEndVertex();
   if(!gv1 || !gv1->getNumMeshVertices() || !gv2 || !gv2->getNumMeshVertices())
     return false;
-  MNode *v1 = gv1->getMeshVertex(0), *v2 = gv2->getMeshVertex(0);
-  std::vector<std::vector<MNode *> > &v = gf->transfinite_vertices;
+  MVertex *v1 = gv1->getMeshVertex(0), *v2 = gv2->getMeshVertex(0);
+  std::vector<std::vector<MVertex *> > &v = gf->transfinite_vertices;
   int imax = v.size(), jmax = v[0].size();
   ibeg = iend = jbeg = jend = type = -1;
   for(int i = 0; i < imax; i++) {
@@ -144,7 +144,7 @@ static bool findRange2D(GSurface *gf, GCurve *ge, int &ibeg, int &jbeg, int &ien
 }
 
 static int writeInterface2D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
-                            GSurface *gf, GCurve *ge, GSurface *gf2)
+                            GFace *gf, GEdge *ge, GFace *gf2)
 {
   std::vector<cgsize_t> pointRange, pointDonorRange;
   int ibeg, iend, jbeg, jend, type, typeDonor;
@@ -172,7 +172,7 @@ static int writeInterface2D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
 }
 
 static int writeBC2D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
-                     GSurface *gf, GCurve *ge)
+                     GFace *gf, GEdge *ge)
 {
   int ibeg, iend, jbeg, jend, type;
   if(findRange2D(gf, ge, ibeg, jbeg, iend, jend, type)) {
@@ -205,7 +205,7 @@ static int writeBC2D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
 }
 
 static int writeZonesStruct2D(int cgIndexFile, int cgIndexBase,
-                              std::vector<GSurface *> &faces, double scalingFactor)
+                              std::vector<GFace *> &faces, double scalingFactor)
 {
   for(auto gf : faces) {
     cgsize_t imax = gf->transfinite_vertices.size();
@@ -230,7 +230,7 @@ static int writeZonesStruct2D(int cgIndexFile, int cgIndexBase,
     std::vector<double> data(cgZoneSize[0] * cgZoneSize[1]);
     for(cgsize_t j = 0; j < jmax; j++) {
       for(cgsize_t i = 0; i < imax; i++) {
-        MNode *v = gf->transfinite_vertices[i][j];
+        MVertex *v = gf->transfinite_vertices[i][j];
         data[cgZoneSize[0] * j + i] = v->x() * scalingFactor;
       }
     }
@@ -242,7 +242,7 @@ static int writeZonesStruct2D(int cgIndexFile, int cgIndexBase,
     // write y coordinates
     for(cgsize_t j = 0; j < jmax; j++) {
       for(cgsize_t i = 0; i < imax; i++) {
-        MNode *v = gf->transfinite_vertices[i][j];
+        MVertex *v = gf->transfinite_vertices[i][j];
         data[cgZoneSize[0] * j + i] = v->y() * scalingFactor;
       }
     }
@@ -254,7 +254,7 @@ static int writeZonesStruct2D(int cgIndexFile, int cgIndexBase,
     // write z coordinates
     for(cgsize_t j = 0; j < jmax; j++) {
       for(cgsize_t i = 0; i < imax; i++) {
-        MNode *v = gf->transfinite_vertices[i][j];
+        MVertex *v = gf->transfinite_vertices[i][j];
         data[cgZoneSize[0] * j + i] = v->z() * scalingFactor;
       }
     }
@@ -316,15 +316,15 @@ static void computeTransform3D(const std::vector<cgsize_t> &pointRange,
   }
 }
 
-static bool findRange3D(GVolume *gr, GSurface *gf, int &ibeg, int &jbeg, int &kbeg,
+static bool findRange3D(GRegion *gr, GFace *gf, int &ibeg, int &jbeg, int &kbeg,
                         int &iend, int &jend, int &kend, int &type)
 {
   if(gf->transfinite_vertices.empty() || gf->transfinite_vertices[0].empty())
     return false;
-  MNode *v1 = gf->transfinite_vertices.front().front();
-  MNode *v2 = gf->transfinite_vertices.back().back();
+  MVertex *v1 = gf->transfinite_vertices.front().front();
+  MVertex *v2 = gf->transfinite_vertices.back().back();
 
-  std::vector<std::vector<std::vector<MNode *> > > &v =
+  std::vector<std::vector<std::vector<MVertex *> > > &v =
     gr->transfinite_vertices;
   int imax = v.size(), jmax = v[0].size(), kmax = v[0][0].size();
   ibeg = iend = jbeg = jend = kbeg = kend = type = -1;
@@ -360,7 +360,7 @@ static bool findRange3D(GVolume *gr, GSurface *gf, int &ibeg, int &jbeg, int &kb
 }
 
 static int writeInterface3D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
-                            GVolume *gr, GSurface *gf, GVolume *gr2)
+                            GRegion *gr, GFace *gf, GRegion *gr2)
 {
   std::vector<cgsize_t> pointRange, pointDonorRange;
   int ibeg, iend, jbeg, jend, kbeg, kend, type, typeDonor;
@@ -388,7 +388,7 @@ static int writeInterface3D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
 }
 
 static int writeBC3D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
-                     GVolume *gr, GSurface *gf)
+                     GRegion *gr, GFace *gf)
 {
   int ibeg, iend, jbeg, jend, kbeg, kend, type;
   if(findRange3D(gr, gf, ibeg, jbeg, kbeg, iend, jend, kend, type)) {
@@ -423,7 +423,7 @@ static int writeBC3D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
 }
 
 static int writeZonesStruct3D(int cgIndexFile, int cgIndexBase,
-                              std::vector<GVolume *> &regions,
+                              std::vector<GRegion *> &regions,
                               double scalingFactor)
 {
   for(auto gr : regions) {
@@ -452,7 +452,7 @@ static int writeZonesStruct3D(int cgIndexFile, int cgIndexBase,
     for(cgsize_t k = 0; k < kmax; k++) {
       for(cgsize_t j = 0; j < jmax; j++) {
         for(cgsize_t i = 0; i < imax; i++) {
-          MNode *v = gr->transfinite_vertices[i][j][k];
+          MVertex *v = gr->transfinite_vertices[i][j][k];
           data[imax * jmax * k + imax * j + i] = v->x() * scalingFactor;
         }
       }
@@ -466,7 +466,7 @@ static int writeZonesStruct3D(int cgIndexFile, int cgIndexBase,
     for(cgsize_t k = 0; k < kmax; k++) {
       for(cgsize_t j = 0; j < jmax; j++) {
         for(cgsize_t i = 0; i < imax; i++) {
-          MNode *v = gr->transfinite_vertices[i][j][k];
+          MVertex *v = gr->transfinite_vertices[i][j][k];
           data[imax * jmax * k + imax * j + i] = v->y() * scalingFactor;
         }
       }
@@ -480,7 +480,7 @@ static int writeZonesStruct3D(int cgIndexFile, int cgIndexBase,
     for(cgsize_t k = 0; k < kmax; k++) {
       for(cgsize_t j = 0; j < jmax; j++) {
         for(cgsize_t i = 0; i < imax; i++) {
-          MNode *v = gr->transfinite_vertices[i][j][k];
+          MVertex *v = gr->transfinite_vertices[i][j][k];
           data[imax * jmax * k + imax * j + i] = v->z() * scalingFactor;
         }
       }
@@ -509,7 +509,7 @@ int writeZonesStruct(GModel *model, double scalingFactor, int cgIndexFile,
 {
   int meshDim = -1;
 
-  std::vector<GSurface *> faces;
+  std::vector<GFace *> faces;
   for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
     if(isTransfinite(*it)) {
       meshDim = 2;
@@ -517,7 +517,7 @@ int writeZonesStruct(GModel *model, double scalingFactor, int cgIndexFile,
     }
   }
 
-  std::vector<GVolume *> regions;
+  std::vector<GRegion *> regions;
   for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
     if(isTransfinite(*it)) {
       meshDim = 3;

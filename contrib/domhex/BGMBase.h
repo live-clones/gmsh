@@ -19,18 +19,18 @@
 //#include <tr1/unordered_set>
 
 class MElementOctree;
-class GSurface;
-class GVolume;
-class GPoint;
-class GCurve;
+class GFace;
+class GRegion;
 class GVertex;
+class GEdge;
+class GPoint;
 class MElement;
-class MNode;
+class MVertex;
 class GEntity;
 
 class BGMBase {
 public:
-  typedef MNode const *const hash_key_ptr;
+  typedef MVertex const *const hash_key_ptr;
   //    typedef tr1::unordered_map<hash_key_ptr, STensor3 > TensorStorageType;
   //    typedef tr1::unordered_map<hash_key_ptr, double > DoubleStorageType;
   //    typedef tr1::unordered_map<hash_key_ptr, vector<double> >
@@ -59,7 +59,7 @@ protected:
                                simpleFunction<double> &eval_diffusivity,
                                bool in_parametric_plane = false) = 0;
   virtual void computeSizeField() = 0;
-  virtual GVertex get_GPoint_from_MVertex(const MNode *) const = 0;
+  virtual GPoint get_GPoint_from_MVertex(const MVertex *) const = 0;
   virtual const MElement *getElement(unsigned int i) const = 0;
   virtual unsigned int getNumMeshElements() const = 0;
 
@@ -69,8 +69,8 @@ protected:
   get_nodal_values(const MElement *e, const VectorStorageType &data) const;
 
   virtual std::vector<double>
-  get_nodal_value(const MNode *v, const VectorStorageType &data) const;
-  virtual double get_nodal_value(const MNode *v,
+  get_nodal_value(const MVertex *v, const VectorStorageType &data) const;
+  virtual double get_nodal_value(const MVertex *v,
                                  const DoubleStorageType &data) const;
 
   virtual std::vector<double> get_element_uvw_from_xyz(const MElement *e,
@@ -93,7 +93,7 @@ public:
   virtual double
   size(double u, double v,
        double w = 0.); // get the size field, element interpolation
-  virtual double size(const MNode *v); // get the nodal size field
+  virtual double size(const MVertex *v); // get the nodal size field
 
   virtual bool inDomain(double u, double v, double w = 0.);
 
@@ -103,7 +103,7 @@ public:
   };
 
   // warning: these are "3D", "real" vertices, not copies in a parametric domain
-  virtual std::set<MNode *> get_vertices_of_maximum_dim(int dim);
+  virtual std::set<MVertex *> get_vertices_of_maximum_dim(int dim);
   virtual const MElement *findElement(double u, double v, double w = 0.,
                                       bool strict = true);
 };

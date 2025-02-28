@@ -11,8 +11,8 @@
 #include <cmath>
 #include "SPoint3.h"
 #include "SVector3.h"
-#include "GSurface.h"
-#include "GCurve.h"
+#include "GFace.h"
+#include "GEdge.h"
 
 class surfaceFunctor {
 public:
@@ -27,25 +27,25 @@ public:
 };
 
 class surfaceFunctorGFace : public surfaceFunctor {
-  const GSurface *gf;
+  const GFace *gf;
 
 public:
-  surfaceFunctorGFace(const GSurface *_gf) : gf(_gf) {}
+  surfaceFunctorGFace(const GFace *_gf) : gf(_gf) {}
   virtual SPoint3 operator()(double u, double v) const
   {
-    GVertex gp = gf->point(u, v);
+    GPoint gp = gf->point(u, v);
     return SPoint3(gp.x(), gp.y(), gp.z());
   }
 };
 
 class curveFunctorGEdge : public curveFunctor {
-  const GCurve *ge;
+  const GEdge *ge;
 
 public:
-  curveFunctorGEdge(const GCurve *_ge) : ge(_ge) {}
+  curveFunctorGEdge(const GEdge *_ge) : ge(_ge) {}
   virtual SPoint3 operator()(double t) const
   {
-    GVertex gp = ge->point(t);
+    GPoint gp = ge->point(t);
     return SPoint3(gp.x(), gp.y(), gp.z());
   }
 };

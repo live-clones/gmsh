@@ -43,13 +43,13 @@ public:
 
   void addLine(MLine *l, int onWhichPartition)
   {
-    GCurve::addLine(l);
+    GEdge::addLine(l);
     _ghostCells.insert(std::pair<MElement *, int>(l, onWhichPartition));
     model()->addGhostCells(l, _partition);
   }
   void addElement(MElement *e, int onWhichPartition)
   {
-    GCurve::addElement(e);
+    GEdge::addElement(e);
     _ghostCells.insert(std::pair<MElement *, int>(e, onWhichPartition));
     model()->addGhostCells(e, _partition);
   }

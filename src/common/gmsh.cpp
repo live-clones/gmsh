@@ -13,10 +13,10 @@
 #include "GModel.h"
 #include "GModelIO_GEO.h"
 #include "GModelIO_OCC.h"
-#include "GPoint.h"
-#include "GCurve.h"
-#include "GSurface.h"
-#include "GVolume.h"
+#include "GVertex.h"
+#include "GEdge.h"
+#include "GFace.h"
+#include "GRegion.h"
 #include "discreteVertex.h"
 #include "discreteEdge.h"
 #include "discreteFace.h"
@@ -29,7 +29,7 @@
 #include "ghostFace.h"
 #include "ghostRegion.h"
 #include "gmshSurface.h"
-#include "MNode.h"
+#include "MVertex.h"
 #include "MPoint.h"
 #include "MLine.h"
 #include "MTriangle.h"
@@ -566,22 +566,22 @@ GMSH_API void gmsh::model::getAdjacencies(const int dim, const int tag,
   }
   switch(dim) {
   case 0:
-    for(auto &e : static_cast<GPoint *>(ge)->edges())
+    for(auto &e : static_cast<GVertex *>(ge)->edges())
       upward.push_back(e->tag());
     break;
   case 1:
-    for(auto &e : static_cast<GCurve *>(ge)->faces()) upward.push_back(e->tag());
-    for(auto &e : static_cast<GCurve *>(ge)->vertices())
+    for(auto &e : static_cast<GEdge *>(ge)->faces()) upward.push_back(e->tag());
+    for(auto &e : static_cast<GEdge *>(ge)->vertices())
       downward.push_back(e->tag());
     break;
   case 2:
-    for(auto &e : static_cast<GSurface *>(ge)->regions())
+    for(auto &e : static_cast<GFace *>(ge)->regions())
       upward.push_back(e->tag());
-    for(auto &e : static_cast<GSurface *>(ge)->edges())
+    for(auto &e : static_cast<GFace *>(ge)->edges())
       downward.push_back(e->tag());
     break;
   case 3:
-    for(auto &e : static_cast<GVolume *>(ge)->faces())
+    for(auto &e : static_cast<GRegion *>(ge)->faces())
       downward.push_back(e->tag());
     break;
   }
@@ -661,7 +661,7 @@ GMSH_API int gmsh::model::addDiscreteEntity(const int dim, const int tag,
     break;
   }
   case 1: {
-    GPoint *v0 = nullptr, *v1 = nullptr;
+    GVertex *v0 = nullptr, *v1 = nullptr;
     if(boundary.size() >= 1)
       v0 = GModel::current()->getVertexByTag(boundary[0]);
     if(boundary.size() >= 2)
@@ -789,14 +789,14 @@ GMSH_API void gmsh::model::getValue(const int dim, const int tag,
     return;
   }
   if(dim == 0) {
-    coord.push_back(static_cast<GPoint *>(entity)->x());
-    coord.push_back(static_cast<GPoint *>(entity)->y());
-    coord.push_back(static_cast<GPoint *>(entity)->z());
+    coord.push_back(static_cast<GVertex *>(entity)->x());
+    coord.push_back(static_cast<GVertex *>(entity)->y());
+    coord.push_back(static_cast<GVertex *>(entity)->z());
   }
   else if(dim == 1) {
-    GCurve *ge = static_cast<GCurve *>(entity);
+    GEdge *ge = static_cast<GEdge *>(entity);
     for(std::size_t i = 0; i < parametricCoord.size(); i++) {
-      GVertex gp = ge->point(parametricCoord[i]);
+      GPoint gp = ge->point(parametricCoord[i]);
       coord.push_back(gp.x());
       coord.push_back(gp.y());
       coord.push_back(gp.z());
@@ -807,10 +807,10 @@ GMSH_API void gmsh::model::getValue(const int dim, const int tag,
       Msg::Error("Number of parametric coordinates should be even");
       return;
     }
-    GSurface *gf = static_cast<GSurface *>(entity);
+    GFace *gf = static_cast<GFace *>(entity);
     for(std::size_t i = 0; i < parametricCoord.size(); i += 2) {
       SPoint2 param(parametricCoord[i], parametricCoord[i + 1]);
-      GVertex gp = gf->point(param);
+      GPoint gp = gf->point(param);
       coord.push_back(gp.x());
       coord.push_back(gp.y());
       coord.push_back(gp.z());
@@ -831,7 +831,7 @@ gmsh::model::getDerivative(const int dim, const int tag,
     return;
   }
   if(dim == 1) {
-    GCurve *ge = static_cast<GCurve *>(entity);
+    GEdge *ge = static_cast<GEdge *>(entity);
     for(std::size_t i = 0; i < parametricCoord.size(); i++) {
       SVector3 d = ge->firstDer(parametricCoord[i]);
       deriv.push_back(d.x());
@@ -844,7 +844,7 @@ gmsh::model::getDerivative(const int dim, const int tag,
       Msg::Error("Number of parametric coordinates should be even");
       return;
     }
-    GSurface *gf = static_cast<GSurface *>(entity);
+    GFace *gf = static_cast<GFace *>(entity);
     for(std::size_t i = 0; i < parametricCoord.size(); i += 2) {
       SPoint2 param(parametricCoord[i], parametricCoord[i + 1]);
       std::pair<SVector3, SVector3> d = gf->firstDer(param);
@@ -871,7 +871,7 @@ gmsh::model::getSecondDerivative(const int dim, const int tag,
     return;
   }
   if(dim == 1) {
-    GCurve *ge = static_cast<GCurve *>(entity);
+    GEdge *ge = static_cast<GEdge *>(entity);
     for(std::size_t i = 0; i < parametricCoord.size(); i++) {
       SVector3 d = ge->secondDer(parametricCoord[i]);
       deriv.push_back(d.x());
@@ -884,7 +884,7 @@ gmsh::model::getSecondDerivative(const int dim, const int tag,
       Msg::Error("Number of parametric coordinates should be even");
       return;
     }
-    GSurface *gf = static_cast<GSurface *>(entity);
+    GFace *gf = static_cast<GFace *>(entity);
     for(std::size_t i = 0; i < parametricCoord.size(); i += 2) {
       SPoint2 param(parametricCoord[i], parametricCoord[i + 1]);
       SVector3 dudu, dvdv, dudv;
@@ -915,7 +915,7 @@ gmsh::model::getCurvature(const int dim, const int tag,
     return;
   }
   if(dim == 1) {
-    GCurve *ge = static_cast<GCurve *>(entity);
+    GEdge *ge = static_cast<GEdge *>(entity);
     for(std::size_t i = 0; i < parametricCoord.size(); i++)
       curvatures.push_back(ge->curvature(parametricCoord[i]));
   }
@@ -924,7 +924,7 @@ gmsh::model::getCurvature(const int dim, const int tag,
       Msg::Error("Number of parametric coordinates should be even");
       return;
     }
-    GSurface *gf = static_cast<GSurface *>(entity);
+    GFace *gf = static_cast<GFace *>(entity);
     for(std::size_t i = 0; i < parametricCoord.size(); i += 2) {
       SPoint2 param(parametricCoord[i], parametricCoord[i + 1]);
       curvatures.push_back(gf->curvatureMax(param));
@@ -938,7 +938,7 @@ GMSH_API void gmsh::model::getPrincipalCurvatures(
   std::vector<double> &directionsMax, std::vector<double> &directionsMin)
 {
   if(!_checkInit()) return;
-  GSurface *gf = GModel::current()->getFaceByTag(tag);
+  GFace *gf = GModel::current()->getFaceByTag(tag);
   if(!gf) {
     Msg::Error("%s does not exist", _getEntityName(2, tag).c_str());
     return;
@@ -972,7 +972,7 @@ GMSH_API void gmsh::model::getNormal(const int tag,
                                      std::vector<double> &normals)
 {
   if(!_checkInit()) return;
-  GSurface *gf = GModel::current()->getFaceByTag(tag);
+  GFace *gf = GModel::current()->getFaceByTag(tag);
   if(!gf) {
     Msg::Error("%s does not exist", _getEntityName(2, tag).c_str());
     return;
@@ -1008,7 +1008,7 @@ gmsh::model::getParametrization(const int dim, const int tag,
     return;
   }
   if(dim == 1) {
-    GCurve *ge = static_cast<GCurve *>(entity);
+    GEdge *ge = static_cast<GEdge *>(entity);
     for(std::size_t i = 0; i < coord.size(); i += 3) {
       SPoint3 p(coord[i], coord[i + 1], coord[i + 2]);
       double t = ge->parFromPoint(p);
@@ -1016,7 +1016,7 @@ gmsh::model::getParametrization(const int dim, const int tag,
     }
   }
   else if(dim == 2) {
-    GSurface *gf = static_cast<GSurface *>(entity);
+    GFace *gf = static_cast<GFace *>(entity);
     for(std::size_t i = 0; i < coord.size(); i += 3) {
       SPoint3 p(coord[i], coord[i + 1], coord[i + 2]);
       SPoint2 uv = gf->parFromPoint(p, true, true);
@@ -1059,13 +1059,13 @@ GMSH_API int gmsh::model::isInside(const int dim, const int tag,
   int num = 0;
   if(parametric) {
     if(dim == 1) {
-      GCurve *ge = static_cast<GCurve *>(entity);
+      GEdge *ge = static_cast<GEdge *>(entity);
       for(std::size_t i = 0; i < coord.size(); i++) {
         if(ge->containsParam(coord[i])) num++;
       }
     }
     else if(dim == 2) {
-      GSurface *gf = static_cast<GSurface *>(entity);
+      GFace *gf = static_cast<GFace *>(entity);
       if(coord.size() % 2) {
         Msg::Error("Number of parametric coordinates should be even");
         return num;
@@ -1113,19 +1113,19 @@ GMSH_API void gmsh::model::reparametrizeOnSurface(
     Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
     return;
   }
-  GSurface *gf = GModel::current()->getFaceByTag(surfaceTag);
+  GFace *gf = GModel::current()->getFaceByTag(surfaceTag);
   if(!gf) {
     Msg::Error("%s does not exist", _getEntityName(2, surfaceTag).c_str());
     return;
   }
   if(dim == 0) {
-    GPoint *gv = static_cast<GPoint *>(entity);
+    GVertex *gv = static_cast<GVertex *>(entity);
     SPoint2 p = gv->reparamOnFace(gf, which);
     surfaceParametricCoord.push_back(p.x());
     surfaceParametricCoord.push_back(p.y());
   }
   else if(dim == 1) {
-    GCurve *ge = static_cast<GCurve *>(entity);
+    GEdge *ge = static_cast<GEdge *>(entity);
     for(std::size_t i = 0; i < parametricCoord.size(); i++) {
       SPoint2 p = ge->reparamOnFace(gf, parametricCoord[i], which);
       surfaceParametricCoord.push_back(p.x());
@@ -1152,11 +1152,11 @@ GMSH_API void gmsh::model::getClosestPoint(const int dim, const int tag,
     return;
   }
   if(dim == 1) {
-    GCurve *ge = static_cast<GCurve *>(entity);
+    GEdge *ge = static_cast<GEdge *>(entity);
     for(std::size_t i = 0; i < coord.size(); i += 3) {
       SPoint3 p(coord[i], coord[i + 1], coord[i + 2]);
       double t;
-      GVertex pp = ge->closestPoint(p, t);
+      GPoint pp = ge->closestPoint(p, t);
       closestCoord.push_back(pp.x());
       closestCoord.push_back(pp.y());
       closestCoord.push_back(pp.z());
@@ -1164,11 +1164,11 @@ GMSH_API void gmsh::model::getClosestPoint(const int dim, const int tag,
     }
   }
   else if(dim == 2) {
-    GSurface *gf = static_cast<GSurface *>(entity);
+    GFace *gf = static_cast<GFace *>(entity);
     for(std::size_t i = 0; i < coord.size(); i += 3) {
       SPoint3 p(coord[i], coord[i + 1], coord[i + 2]);
       double uv[2] = {0, 0};
-      GVertex pp = gf->closestPoint(p, uv);
+      GPoint pp = gf->closestPoint(p, uv);
       closestCoord.push_back(pp.x());
       closestCoord.push_back(pp.y());
       closestCoord.push_back(pp.z());
@@ -1251,12 +1251,12 @@ GMSH_API void gmsh::model::setCoordinates(const int tag, const double x,
                                           const double y, const double z)
 {
   if(!_checkInit()) return;
-  GPoint *gv = GModel::current()->getVertexByTag(tag);
+  GVertex *gv = GModel::current()->getVertexByTag(tag);
   if(!gv) {
     Msg::Error("%s does not exist", _getEntityName(0, tag).c_str());
     return;
   }
-  GVertex p(x, y, z);
+  GPoint p(x, y, z);
   gv->setPosition(p);
 }
 
@@ -1391,7 +1391,7 @@ GMSH_API void gmsh::model::mesh::splitQuadrangles(const double quality,
     entities.push_back(ge);
   }
   for(std::size_t i = 0; i < entities.size(); i++) {
-    GSurface *gf = static_cast<GSurface *>(entities[i]);
+    GFace *gf = static_cast<GFace *>(entities[i]);
     quadsToTriangles(gf, quality);
   }
   CTX::instance()->mesh.changed = ENT_ALL;
@@ -1422,7 +1422,7 @@ GMSH_API void
 gmsh::model::mesh::getLastNodeError(std::vector<std::size_t> &nodeTags)
 {
   if(!_checkInit()) return;
-  std::vector<MNode *> v = GModel::current()->getLastMeshVertexError();
+  std::vector<MVertex *> v = GModel::current()->getLastMeshVertexError();
   nodeTags.clear();
   for(std::size_t i = 0; i < v.size(); i++) nodeTags.push_back(v[i]->getNum());
 }
@@ -1527,7 +1527,7 @@ gmsh::model::mesh::affineTransform(const std::vector<double> &affineTransform,
   _getEntities(dimTags, entities);
   for(auto ge : entities) {
     for(std::size_t j = 0; j < ge->getNumMeshVertices(); j++) {
-      MNode *v = ge->getMeshVertex(j);
+      MVertex *v = ge->getMeshVertex(j);
       SPoint3 pt = v->point();
       if(pt.transform(affineTransform))
         v->setXYZ(pt);
@@ -1545,16 +1545,16 @@ static void _getAdditionalNodesOnBoundary(GEntity *entity,
                                           std::vector<double> &parametricCoord,
                                           bool parametric)
 {
-  std::vector<GSurface *> f;
-  std::vector<GCurve *> e;
-  std::vector<GPoint *> v;
+  std::vector<GFace *> f;
+  std::vector<GEdge *> e;
+  std::vector<GVertex *> v;
   if(entity->dim() > 2) f = entity->faces();
   if(entity->dim() > 1) e = entity->edges();
   if(entity->dim() > 0) v = entity->vertices();
   for(auto it = f.begin(); it != f.end(); it++) {
-    GSurface *gf = *it;
+    GFace *gf = *it;
     for(std::size_t j = 0; j < gf->mesh_vertices.size(); j++) {
-      MNode *v = gf->mesh_vertices[j];
+      MVertex *v = gf->mesh_vertices[j];
       nodeTags.push_back(v->getNum());
       coord.push_back(v->x());
       coord.push_back(v->y());
@@ -1562,16 +1562,16 @@ static void _getAdditionalNodesOnBoundary(GEntity *entity,
     }
   }
   for(auto it = e.begin(); it != e.end(); it++) {
-    GCurve *ge = *it;
+    GEdge *ge = *it;
     for(std::size_t j = 0; j < ge->mesh_vertices.size(); j++) {
-      MNode *v = ge->mesh_vertices[j];
+      MVertex *v = ge->mesh_vertices[j];
       nodeTags.push_back(v->getNum());
       coord.push_back(v->x());
       coord.push_back(v->y());
       coord.push_back(v->z());
       if(entity->dim() == 2 && parametric) {
         SPoint2 param;
-        if(!reparamMeshVertexOnFace(v, (GSurface *)entity, param, true, false))
+        if(!reparamMeshVertexOnFace(v, (GFace *)entity, param, true, false))
           Msg::Warning("Failed to compute parameters of node %d on surface %d",
                        v->getNum(), entity->tag());
         parametricCoord.push_back(param.x());
@@ -1580,16 +1580,16 @@ static void _getAdditionalNodesOnBoundary(GEntity *entity,
     }
   }
   for(auto it = v.begin(); it != v.end(); it++) {
-    GPoint *gv = *it;
+    GVertex *gv = *it;
     for(std::size_t j = 0; j < gv->mesh_vertices.size(); j++) {
-      MNode *v = gv->mesh_vertices[j];
+      MVertex *v = gv->mesh_vertices[j];
       nodeTags.push_back(v->getNum());
       coord.push_back(v->x());
       coord.push_back(v->y());
       coord.push_back(v->z());
       if(entity->dim() == 2 && parametric) {
         SPoint2 param;
-        if(!reparamMeshVertexOnFace(v, (GSurface *)entity, param, true, false))
+        if(!reparamMeshVertexOnFace(v, (GFace *)entity, param, true, false))
           Msg::Warning("Failed to compute parameters of node %d on surface %d",
                        v->getNum(), entity->tag());
         parametricCoord.push_back(param.x());
@@ -1597,7 +1597,7 @@ static void _getAdditionalNodesOnBoundary(GEntity *entity,
       }
       else if(entity->dim() == 1 && parametric) {
         double param;
-        if(!reparamMeshVertexOnEdge(v, (GCurve *)entity, param))
+        if(!reparamMeshVertexOnEdge(v, (GEdge *)entity, param))
           Msg::Warning("Failed to compute parameters of node %d on curve %d",
                        v->getNum(), entity->tag());
         parametricCoord.push_back(param);
@@ -1695,7 +1695,7 @@ GMSH_API void gmsh::model::mesh::getNodesByElementType(
         j < entities[i]->getNumMeshElementsByType(familyType); j++) {
       MElement *e = ge->getMeshElementByType(familyType, j);
       for(std::size_t k = 0; k < e->getNumVertices(); ++k) {
-        MNode *v = e->getVertex(k);
+        MVertex *v = e->getVertex(k);
         nodeTags.push_back(v->getNum());
         coord.push_back(v->x());
         coord.push_back(v->y());
@@ -1717,7 +1717,7 @@ GMSH_API void gmsh::model::mesh::getNode(const std::size_t nodeTag,
                                          int &dim, int &tag)
 {
   if(!_checkInit()) return;
-  MNode *v = GModel::current()->getMeshVertexByTag(nodeTag);
+  MVertex *v = GModel::current()->getMeshVertexByTag(nodeTag);
   if(!v) {
     Msg::Error("Unknown node %d", nodeTag);
     return;
@@ -1747,7 +1747,7 @@ gmsh::model::mesh::setNode(const std::size_t nodeTag,
                            const std::vector<double> &parametricCoord)
 {
   if(!_checkInit()) return;
-  MNode *v = GModel::current()->getMeshVertexByTag(nodeTag);
+  MVertex *v = GModel::current()->getMeshVertexByTag(nodeTag);
   if(!v) {
     Msg::Error("Unknown node %d", nodeTag);
     return;
@@ -1781,7 +1781,7 @@ gmsh::model::mesh::getNodesForPhysicalGroup(const int dim, const int tag,
   if(!_checkInit()) return;
   nodeTags.clear();
   coord.clear();
-  std::vector<MNode *> v;
+  std::vector<MVertex *> v;
   GModel::current()->getMeshVerticesForPhysicalGroup(dim, tag, v);
   if(v.empty()) return;
   nodeTags.resize(v.size());
@@ -1831,7 +1831,7 @@ GMSH_API void gmsh::model::mesh::addNodes(
     double x = coord[3 * i];
     double y = coord[3 * i + 1];
     double z = coord[3 * i + 2];
-    MNode *vv = nullptr;
+    MVertex *vv = nullptr;
     if(param && dim == 1) {
       double u = parametricCoord[i];
       vv = new MEdgeVertex(x, y, z, ge, u, tag);
@@ -1842,7 +1842,7 @@ GMSH_API void gmsh::model::mesh::addNodes(
       vv = new MFaceVertex(x, y, z, ge, u, v, tag);
     }
     else
-      vv = new MNode(x, y, z, ge, tag);
+      vv = new MVertex(x, y, z, ge, tag);
     ge->mesh_vertices.push_back(vv);
   }
   GModel::current()->destroyMeshCaches();
@@ -1893,19 +1893,19 @@ _getEntitiesForElementTypes(int dim, int tag,
     GEntity *ge = entities[i];
     switch(ge->dim()) {
     case 0: {
-      GPoint *v = static_cast<GPoint *>(ge);
+      GVertex *v = static_cast<GVertex *>(ge);
       if(v->points.size())
         typeEnt[v->points.front()->getTypeForMSH()].push_back(ge);
       break;
     }
     case 1: {
-      GCurve *e = static_cast<GCurve *>(ge);
+      GEdge *e = static_cast<GEdge *>(ge);
       if(e->lines.size())
         typeEnt[e->lines.front()->getTypeForMSH()].push_back(ge);
       break;
     }
     case 2: {
-      GSurface *f = static_cast<GSurface *>(ge);
+      GFace *f = static_cast<GFace *>(ge);
       if(f->triangles.size())
         typeEnt[f->triangles.front()->getTypeForMSH()].push_back(ge);
       if(f->quadrangles.size())
@@ -1913,7 +1913,7 @@ _getEntitiesForElementTypes(int dim, int tag,
       break;
     }
     case 3: {
-      GVolume *r = static_cast<GVolume *>(ge);
+      GRegion *r = static_cast<GRegion *>(ge);
       if(r->tetrahedra.size())
         typeEnt[r->tetrahedra.front()->getTypeForMSH()].push_back(ge);
       if(r->hexahedra.size())
@@ -1977,7 +1977,7 @@ GMSH_API void gmsh::model::mesh::getElement(const std::size_t elementTag,
   elementType = e->getTypeForMSH();
   nodeTags.clear();
   for(std::size_t i = 0; i < e->getNumVertices(); i++) {
-    MNode *v = e->getVertex(i);
+    MVertex *v = e->getVertex(i);
     if(!v) {
       Msg::Error("Unknown node in element %d", elementTag);
       return;
@@ -2007,7 +2007,7 @@ GMSH_API void gmsh::model::mesh::getElementByCoordinates(
   elementTag = e->getNum();
   elementType = e->getTypeForMSH();
   for(std::size_t i = 0; i < e->getNumVertices(); i++) {
-    MNode *v = e->getVertex(i);
+    MVertex *v = e->getVertex(i);
     if(!v) {
       Msg::Error("Unknown node in element %d", elementTag);
       return;
@@ -2077,7 +2077,7 @@ static void _addElements(int dim, int tag, GEntity *ge, int type,
     return;
   }
   std::vector<MElement *> elements(numEle);
-  std::vector<MNode *> nodes(numNodesPerEle);
+  std::vector<MVertex *> nodes(numNodesPerEle);
   for(std::size_t j = 0; j < numEle; j++) {
     std::size_t etag = (numEleTags ? elementTags[j] : 0); // 0 = automatic tag
     MElementFactory f;
@@ -2096,35 +2096,35 @@ static void _addElements(int dim, int tag, GEntity *ge, int type,
   switch(dim) {
   case 0:
     if(elements[0]->getType() == TYPE_PNT)
-      _addElements(dim, tag, elements, static_cast<GPoint *>(ge)->points);
+      _addElements(dim, tag, elements, static_cast<GVertex *>(ge)->points);
     else
       ok = false;
     break;
   case 1:
     if(elements[0]->getType() == TYPE_LIN)
-      _addElements(dim, tag, elements, static_cast<GCurve *>(ge)->lines);
+      _addElements(dim, tag, elements, static_cast<GEdge *>(ge)->lines);
     else
       ok = false;
     break;
   case 2:
     if(elements[0]->getType() == TYPE_TRI)
-      _addElements(dim, tag, elements, static_cast<GSurface *>(ge)->triangles);
+      _addElements(dim, tag, elements, static_cast<GFace *>(ge)->triangles);
     else if(elements[0]->getType() == TYPE_QUA)
-      _addElements(dim, tag, elements, static_cast<GSurface *>(ge)->quadrangles);
+      _addElements(dim, tag, elements, static_cast<GFace *>(ge)->quadrangles);
     else
       ok = false;
     break;
   case 3:
     if(elements[0]->getType() == TYPE_TET)
-      _addElements(dim, tag, elements, static_cast<GVolume *>(ge)->tetrahedra);
+      _addElements(dim, tag, elements, static_cast<GRegion *>(ge)->tetrahedra);
     else if(elements[0]->getType() == TYPE_HEX)
-      _addElements(dim, tag, elements, static_cast<GVolume *>(ge)->hexahedra);
+      _addElements(dim, tag, elements, static_cast<GRegion *>(ge)->hexahedra);
     else if(elements[0]->getType() == TYPE_PRI)
-      _addElements(dim, tag, elements, static_cast<GVolume *>(ge)->prisms);
+      _addElements(dim, tag, elements, static_cast<GRegion *>(ge)->prisms);
     else if(elements[0]->getType() == TYPE_PYR)
-      _addElements(dim, tag, elements, static_cast<GVolume *>(ge)->pyramids);
+      _addElements(dim, tag, elements, static_cast<GRegion *>(ge)->pyramids);
     else if(elements[0]->getType() == TYPE_TRIH)
-      _addElements(dim, tag, elements, static_cast<GVolume *>(ge)->trihedra);
+      _addElements(dim, tag, elements, static_cast<GRegion *>(ge)->trihedra);
     else
       ok = false;
     break;
@@ -2958,9 +2958,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
       }
     }
 
-    std::vector<MNode *> vertices(numVertices);
+    std::vector<MVertex *> vertices(numVertices);
     for(unsigned int i = 0; i < numVertices; ++i) {
-      vertices[i] = new MNode(0., 0., 0., nullptr, i + 1);
+      vertices[i] = new MVertex(0., 0., 0., nullptr, i + 1);
     }
     MElement *element = nullptr;
     switch(familyType) {
@@ -3367,7 +3367,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientation(
   else { // Hierarchical type
     const unsigned int numVertices =
       ElementType::getNumVertices(ElementType::getType(familyType, 1, false));
-    std::vector<MNode *> vertices(numVertices);
+    std::vector<MVertex *> vertices(numVertices);
     std::vector<unsigned int> verticesOrder(numVertices);
     const std::size_t factorial[8] = {1, 1, 2, 6, 24, 120, 720, 5040};
 
@@ -3446,7 +3446,7 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientationForElement(
   else { // Hierarchical type
     const unsigned int numVertices =
       ElementType::getNumVertices(ElementType::getType(familyType, 1, false));
-    std::vector<MNode *> vertices(numVertices);
+    std::vector<MVertex *> vertices(numVertices);
     std::vector<unsigned int> verticesOrder(numVertices);
     const std::size_t factorial[8] = {1, 1, 2, 6, 24, 120, 720, 5040};
 
@@ -3548,8 +3548,8 @@ gmsh::model::mesh::getEdges(const std::vector<std::size_t> &nodeTags,
   for(std::size_t i = 0; i < numEdges; i++) {
     std::size_t n0 = nodeTags[2 * i];
     std::size_t n1 = nodeTags[2 * i + 1];
-    MNode *v0 = GModel::current()->getMeshVertexByTag(n0);
-    MNode *v1 = GModel::current()->getMeshVertexByTag(n1);
+    MVertex *v0 = GModel::current()->getMeshVertexByTag(n0);
+    MVertex *v1 = GModel::current()->getMeshVertexByTag(n1);
     if(v0 && v1) {
       MEdge edge;
       edgeTags[i] = GModel::current()->getMEdge(v0, v1, edge);
@@ -3585,10 +3585,10 @@ GMSH_API void gmsh::model::mesh::getFaces(
     std::size_t n1 = nodeTags[faceType * i + 1];
     std::size_t n2 = nodeTags[faceType * i + 2];
     std::size_t n3 = (faceType == 4) ? nodeTags[faceType * i + 3] : 0;
-    MNode *v0 = GModel::current()->getMeshVertexByTag(n0);
-    MNode *v1 = GModel::current()->getMeshVertexByTag(n1);
-    MNode *v2 = GModel::current()->getMeshVertexByTag(n2);
-    MNode *v3 =
+    MVertex *v0 = GModel::current()->getMeshVertexByTag(n0);
+    MVertex *v1 = GModel::current()->getMeshVertexByTag(n1);
+    MVertex *v2 = GModel::current()->getMeshVertexByTag(n2);
+    MVertex *v3 =
       (faceType == 4) ? GModel::current()->getMeshVertexByTag(n3) : nullptr;
     if(v0 && v1 && v2) {
       MFace face;
@@ -3677,7 +3677,7 @@ GMSH_API void gmsh::model::mesh::addEdges(const std::vector<std::size_t> &edgeTa
   }
   GModel *m = GModel::current();
   for(std::size_t i = 0; i < edgeTags.size(); i++) {
-    MNode *v[2];
+    MVertex *v[2];
     for(int j = 0; j < 2; j++) {
       v[j] = m->getMeshVertexByTag(edgeNodes[2 * i + j]);
       if(!v[j]) {
@@ -3705,7 +3705,7 @@ GMSH_API void gmsh::model::mesh::addFaces(const int faceType,
   }
   GModel *m = GModel::current();
   for(std::size_t i = 0; i < faceTags.size(); i++) {
-    MNode *v[4] = {nullptr, nullptr, nullptr, nullptr};
+    MVertex *v[4] = {nullptr, nullptr, nullptr, nullptr};
     for(int j = 0; j < faceType; j++) {
       v[j] = m->getMeshVertexByTag(faceNodes[faceType * i + j]);
       if(!v[j]) {
@@ -3903,8 +3903,8 @@ GMSH_API void gmsh::model::mesh::getKeys(
           MEdge edge = e->getEdge(jj);
           double coordEdge[3];
           if(returnCoord) {
-            MNode *v1 = edge.getVertex(0);
-            MNode *v2 = edge.getVertex(1);
+            MVertex *v1 = edge.getVertex(0);
+            MVertex *v2 = edge.getVertex(1);
 
             coordEdge[0] = 0.5 * (v1->x() + v2->x());
             coordEdge[1] = 0.5 * (v1->y() + v2->y());
@@ -4129,8 +4129,8 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
       MEdge edge = e->getEdge(jj);
       double coordEdge[3];
       if(returnCoord) {
-        MNode *v1 = edge.getVertex(0);
-        MNode *v2 = edge.getVertex(1);
+        MVertex *v1 = edge.getVertex(0);
+        MVertex *v2 = edge.getVertex(1);
 
         coordEdge[0] = 0.5 * (v1->x() + v2->x());
         coordEdge[1] = 0.5 * (v1->y() + v2->y());
@@ -4598,7 +4598,7 @@ GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
       numEdgesPerEle = e->getNumEdges();
       if(primary) { numNodesPerEdge = 2; }
       else {
-        std::vector<MNode *> v;
+        std::vector<MVertex *> v;
         // we could use e->getHighOrderEdge() here if we decide to remove
         // getEdgeVertices
         e->getEdgeVertices(0, v);
@@ -4627,7 +4627,7 @@ GMSH_API void gmsh::model::mesh::getElementEdgeNodes(
       if(o >= begin && o < end) {
         MElement *e = ge->getMeshElementByType(familyType, j);
         for(int k = 0; k < numEdgesPerEle; k++) {
-          std::vector<MNode *> v;
+          std::vector<MVertex *> v;
           // we could use e->getHighOrderEdge() here if we decide to remove
           // getEdgeVertices
           e->getEdgeVertices(k, v);
@@ -4669,7 +4669,7 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
           if(!numNodesPerFace) {
             if(primary) { numNodesPerFace = faceType; }
             else {
-              std::vector<MNode *> v;
+              std::vector<MVertex *> v;
               // we could use e->getHighOrderFace() here if we decide to remove
               // getFaceVertices
               e->getFaceVertices(k, v);
@@ -4705,7 +4705,7 @@ GMSH_API void gmsh::model::mesh::getElementFaceNodes(
         for(int k = 0; k < nf; k++) {
           MFace f = e->getFace(k);
           if(faceType != (int)f.getNumVertices()) continue;
-          std::vector<MNode *> v;
+          std::vector<MVertex *> v;
           // we could use e->getHighOrderFace() here if we decide to remove
           // getFaceVertices
           e->getFaceVertices(k, v);
@@ -4754,7 +4754,7 @@ GMSH_API void gmsh::model::mesh::setSize(const vectorpair &dimTags,
   for(std::size_t i = 0; i < dimTags.size(); i++) {
     int dim = dimTags[i].first, tag = dimTags[i].second;
     if(dim == 0) {
-      GPoint *gv = GModel::current()->getVertexByTag(tag);
+      GVertex *gv = GModel::current()->getVertexByTag(tag);
       if(gv) gv->setPrescribedMeshSizeAtVertex(size);
     }
   }
@@ -4770,7 +4770,7 @@ GMSH_API void gmsh::model::mesh::getSizes(const vectorpair &dimTags,
   for(std::size_t i = 0; i < dimTags.size(); i++) {
     int dim = dimTags[i].first, tag = dimTags[i].second;
     if(dim == 0) {
-      GPoint *gv = GModel::current()->getVertexByTag(tag);
+      GVertex *gv = GModel::current()->getVertexByTag(tag);
       if(gv) {
         double s = gv->prescribedMeshSizeAtVertex();
         if(s != MAX_LC) sizes[i] = s;
@@ -4785,7 +4785,7 @@ GMSH_API void gmsh::model::mesh::setSizeAtParametricPoints(
 {
   if(!_checkInit()) return;
   if(dim == 1) {
-    GCurve *ge = GModel::current()->getEdgeByTag(tag);
+    GEdge *ge = GModel::current()->getEdgeByTag(tag);
     if(ge) ge->setMeshSizeParametric(parametricCoord, sizes);
   }
 }
@@ -4812,7 +4812,7 @@ gmsh::model::mesh::setTransfiniteCurve(const int tag, const int numNodes,
   // for compatibility with geo files, try both tag and -tag
   for(int sig = -1; sig <= 1; sig += 2) {
     int t = sig * tag;
-    GCurve *ge = GModel::current()->getEdgeByTag(t);
+    GEdge *ge = GModel::current()->getEdgeByTag(t);
     if(ge) {
       ge->meshAttributes.method = MESH_TRANSFINITE;
       ge->meshAttributes.nbPointsTransfinite = numNodes;
@@ -4843,7 +4843,7 @@ gmsh::model::mesh::setTransfiniteSurface(const int tag,
                                          const std::vector<int> &cornerTags)
 {
   if(!_checkInit()) return;
-  GSurface *gf = GModel::current()->getFaceByTag(tag);
+  GFace *gf = GModel::current()->getFaceByTag(tag);
   if(!gf) {
     Msg::Error("%s does not exist", _getEntityName(2, tag).c_str());
     return;
@@ -4858,7 +4858,7 @@ gmsh::model::mesh::setTransfiniteSurface(const int tag,
                                         -1;
   if(cornerTags.empty() || cornerTags.size() == 3 || cornerTags.size() == 4) {
     for(std::size_t j = 0; j < cornerTags.size(); j++) {
-      GPoint *gv = GModel::current()->getVertexByTag(cornerTags[j]);
+      GVertex *gv = GModel::current()->getVertexByTag(cornerTags[j]);
       if(gv) gf->meshAttributes.corners.push_back(gv);
     }
   }
@@ -4869,7 +4869,7 @@ gmsh::model::mesh::setTransfiniteVolume(const int tag,
                                         const std::vector<int> &cornerTags)
 {
   if(!_checkInit()) return;
-  GVolume *gr = GModel::current()->getRegionByTag(tag);
+  GRegion *gr = GModel::current()->getRegionByTag(tag);
   if(!gr) {
     Msg::Error("%s does not exist", _getEntityName(3, tag).c_str());
     return;
@@ -4877,20 +4877,20 @@ gmsh::model::mesh::setTransfiniteVolume(const int tag,
   gr->meshAttributes.method = MESH_TRANSFINITE;
   if(cornerTags.empty() || cornerTags.size() == 6 || cornerTags.size() == 8) {
     for(std::size_t i = 0; i < cornerTags.size(); i++) {
-      GPoint *gv = GModel::current()->getVertexByTag(cornerTags[i]);
+      GVertex *gv = GModel::current()->getVertexByTag(cornerTags[i]);
       if(gv) gr->meshAttributes.corners.push_back(gv);
     }
   }
 }
 
-int _eulerCharacteristic(GVolume *gr)
+int _eulerCharacteristic(GRegion *gr)
 {
-  std::set<GPoint *> vertices;
-  std::set<GCurve *> edges;
+  std::set<GVertex *> vertices;
+  std::set<GEdge *> edges;
   for(std::size_t _i = 0; _i < gr->faces().size(); ++_i) {
-    GSurface *gf = gr->faces()[_i];
+    GFace *gf = gr->faces()[_i];
     for(std::size_t j = 0; j < gf->edges().size(); ++j) {
-      GCurve *ge = gf->edges()[j];
+      GEdge *ge = gf->edges()[j];
       edges.insert(ge);
       vertices.insert(ge->getBeginVertex());
       vertices.insert(ge->getEndVertex());
@@ -4909,12 +4909,12 @@ GMSH_API void gmsh::model::mesh::setTransfiniteAutomatic(
              cornerAngle, int(recombine));
 
   // Collect all quad 4-sided faces (from given faces and volumes)
-  std::set<GSurface *> faces;
+  std::set<GFace *> faces;
   if(dimTags.size() == 0) { // Empty dimTag => all faces
     std::vector<GEntity *> entities;
     GModel::current()->getEntities(entities, 2);
     for(std::size_t i = 0; i < entities.size(); i++) {
-      GSurface *gf = static_cast<GSurface *>(entities[i]);
+      GFace *gf = static_cast<GFace *>(entities[i]);
       if(gf->edges().size() == 4) { faces.insert(gf); }
     }
   }
@@ -4922,7 +4922,7 @@ GMSH_API void gmsh::model::mesh::setTransfiniteAutomatic(
     for(std::size_t i = 0; i < dimTags.size(); ++i) {
       if(dimTags[i].first == 2) {
         int tag = dimTags[i].second;
-        GSurface *gf = GModel::current()->getFaceByTag(tag);
+        GFace *gf = GModel::current()->getFaceByTag(tag);
         if(!gf) {
           Msg::Error("%s does not exist", _getEntityName(2, tag).c_str());
           return;
@@ -4931,12 +4931,12 @@ GMSH_API void gmsh::model::mesh::setTransfiniteAutomatic(
       }
       else if(dimTags[i].first == 3) {
         int tag = dimTags[i].second;
-        GVolume *gr = GModel::current()->getRegionByTag(tag);
+        GRegion *gr = GModel::current()->getRegionByTag(tag);
         if(!gr) {
           Msg::Error("%s does not exist", _getEntityName(3, tag).c_str());
           return;
         }
-        for(GSurface *gf : gr->faces()) {
+        for(GFace *gf : gr->faces()) {
           if(gf->edges().size() == 4) { faces.insert(gf); }
         }
       }
@@ -4952,12 +4952,12 @@ GMSH_API void gmsh::model::mesh::setTransfiniteAutomatic(
   }
 
   // Collect the 6-sided volumes with Euler characteristic equal to 2 (ie ball)
-  std::set<GVolume *> regions;
+  std::set<GRegion *> regions;
   if(dimTags.size() == 0) { // Empty dimTag => all faces
     std::vector<GEntity *> entities;
     GModel::current()->getEntities(entities, 3);
     for(std::size_t i = 0; i < entities.size(); i++) {
-      GVolume *gr = static_cast<GVolume *>(entities[i]);
+      GRegion *gr = static_cast<GRegion *>(entities[i]);
       if(gr->faces().size() == 6 && _eulerCharacteristic(gr) == 2) {
         regions.insert(gr);
       }
@@ -4967,7 +4967,7 @@ GMSH_API void gmsh::model::mesh::setTransfiniteAutomatic(
     for(std::size_t i = 0; i < dimTags.size(); ++i) {
       if(dimTags[i].first == 3) {
         int tag = dimTags[i].second;
-        GVolume *gr = GModel::current()->getRegionByTag(tag);
+        GRegion *gr = GModel::current()->getRegionByTag(tag);
         if(!gr) {
           Msg::Error("%s does not exist", _getEntityName(3, tag).c_str());
           return;
@@ -4980,9 +4980,9 @@ GMSH_API void gmsh::model::mesh::setTransfiniteAutomatic(
   }
 
   std::size_t nr = 0;
-  for(GVolume *gr : regions) {
+  for(GRegion *gr : regions) {
     bool transfinite = true;
-    for(GSurface *gf : gr->faces()) {
+    for(GFace *gf : gr->faces()) {
       if(gf->meshAttributes.method != MESH_TRANSFINITE) {
         transfinite = false;
         break;
@@ -5005,7 +5005,7 @@ GMSH_API void gmsh::model::mesh::setRecombine(const int dim, const int tag,
 {
   if(!_checkInit()) return;
   if(dim == 2) {
-    GSurface *gf = GModel::current()->getFaceByTag(tag);
+    GFace *gf = GModel::current()->getFaceByTag(tag);
     if(!gf) {
       Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
       return;
@@ -5020,7 +5020,7 @@ GMSH_API void gmsh::model::mesh::setSmoothing(const int dim, const int tag,
 {
   if(!_checkInit()) return;
   if(dim == 2) {
-    GSurface *gf = GModel::current()->getFaceByTag(tag);
+    GFace *gf = GModel::current()->getFaceByTag(tag);
     if(!gf) {
       Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
       return;
@@ -5034,7 +5034,7 @@ GMSH_API void gmsh::model::mesh::setReverse(const int dim, const int tag,
 {
   if(!_checkInit()) return;
   if(dim == 1) {
-    GCurve *ge = GModel::current()->getEdgeByTag(tag);
+    GEdge *ge = GModel::current()->getEdgeByTag(tag);
     if(!ge) {
       Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
       return;
@@ -5042,7 +5042,7 @@ GMSH_API void gmsh::model::mesh::setReverse(const int dim, const int tag,
     ge->meshAttributes.reverseMesh = val;
   }
   else if(dim == 2) {
-    GSurface *gf = GModel::current()->getFaceByTag(tag);
+    GFace *gf = GModel::current()->getFaceByTag(tag);
     if(!gf) {
       Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
       return;
@@ -5056,7 +5056,7 @@ GMSH_API void gmsh::model::mesh::setAlgorithm(const int dim, const int tag,
 {
   if(!_checkInit()) return;
   if(dim == 2) {
-    GSurface *gf = GModel::current()->getFaceByTag(tag);
+    GFace *gf = GModel::current()->getFaceByTag(tag);
     if(!gf) {
       Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
       return;
@@ -5071,7 +5071,7 @@ GMSH_API void gmsh::model::mesh::setSizeFromBoundary(const int dim,
 {
   if(!_checkInit()) return;
   if(dim == 2) {
-    GSurface *gf = GModel::current()->getFaceByTag(tag);
+    GFace *gf = GModel::current()->getFaceByTag(tag);
     if(!gf) {
       Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
       return;
@@ -5098,7 +5098,7 @@ GMSH_API void gmsh::model::mesh::setCompound(const int dim,
 GMSH_API void gmsh::model::mesh::setOutwardOrientation(const int tag)
 {
   if(!_checkInit()) return;
-  GVolume *gr = GModel::current()->getRegionByTag(tag);
+  GRegion *gr = GModel::current()->getRegionByTag(tag);
   if(!gr) {
     Msg::Error("%s does not exist", _getEntityName(3, tag).c_str());
     return;
@@ -5121,14 +5121,14 @@ GMSH_API void gmsh::model::mesh::embed(const int dim,
 {
   if(!_checkInit()) return;
   if(inDim == 2) {
-    GSurface *gf = GModel::current()->getFaceByTag(inTag);
+    GFace *gf = GModel::current()->getFaceByTag(inTag);
     if(!gf) {
       Msg::Error("%s does not exist", _getEntityName(2, inTag).c_str());
       return;
     }
     for(std::size_t i = 0; i < tags.size(); i++) {
       if(dim == 0) {
-        GPoint *gv = GModel::current()->getVertexByTag(tags[i]);
+        GVertex *gv = GModel::current()->getVertexByTag(tags[i]);
         if(!gv) {
           Msg::Error("%s does not exist", _getEntityName(0, tags[i]).c_str());
           return;
@@ -5136,7 +5136,7 @@ GMSH_API void gmsh::model::mesh::embed(const int dim,
         gf->addEmbeddedVertex(gv);
       }
       else if(dim == 1) {
-        GCurve *ge = GModel::current()->getEdgeByTag(tags[i]);
+        GEdge *ge = GModel::current()->getEdgeByTag(tags[i]);
         if(!ge) {
           Msg::Error("%s does not exist", _getEntityName(1, tags[i]).c_str());
           return;
@@ -5146,14 +5146,14 @@ GMSH_API void gmsh::model::mesh::embed(const int dim,
     }
   }
   else if(inDim == 3) {
-    GVolume *gr = GModel::current()->getRegionByTag(inTag);
+    GRegion *gr = GModel::current()->getRegionByTag(inTag);
     if(!gr) {
       Msg::Error("%s does not exist", _getEntityName(3, inTag).c_str());
       return;
     }
     for(std::size_t i = 0; i < tags.size(); i++) {
       if(dim == 0) {
-        GPoint *gv = GModel::current()->getVertexByTag(tags[i]);
+        GVertex *gv = GModel::current()->getVertexByTag(tags[i]);
         if(!gv) {
           Msg::Error("%s does not exist", _getEntityName(0, tags[i]).c_str());
           return;
@@ -5161,7 +5161,7 @@ GMSH_API void gmsh::model::mesh::embed(const int dim,
         gr->addEmbeddedVertex(gv);
       }
       else if(dim == 1) {
-        GCurve *ge = GModel::current()->getEdgeByTag(tags[i]);
+        GEdge *ge = GModel::current()->getEdgeByTag(tags[i]);
         if(!ge) {
           Msg::Error("%s does not exist", _getEntityName(1, tags[i]).c_str());
           return;
@@ -5169,7 +5169,7 @@ GMSH_API void gmsh::model::mesh::embed(const int dim,
         gr->addEmbeddedEdge(ge);
       }
       else if(dim == 2) {
-        GSurface *gf = GModel::current()->getFaceByTag(tags[i]);
+        GFace *gf = GModel::current()->getFaceByTag(tags[i]);
         if(!gf) {
           Msg::Error("%s does not exist", _getEntityName(2, tags[i]).c_str());
           return;
@@ -5187,7 +5187,7 @@ GMSH_API void gmsh::model::mesh::removeEmbedded(const vectorpair &dimTags,
   for(std::size_t i = 0; i < dimTags.size(); i++) {
     int dim = dimTags[i].first, tag = dimTags[i].second;
     if(dim == 2) {
-      GSurface *gf = GModel::current()->getFaceByTag(tag);
+      GFace *gf = GModel::current()->getFaceByTag(tag);
       if(!gf) {
         Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
         return;
@@ -5196,7 +5196,7 @@ GMSH_API void gmsh::model::mesh::removeEmbedded(const vectorpair &dimTags,
       if(rdim < 0 || rdim == 0) gf->embeddedVertices().clear();
     }
     else if(dimTags[i].first == 3) {
-      GVolume *gr = GModel::current()->getRegionByTag(tag);
+      GRegion *gr = GModel::current()->getRegionByTag(tag);
       if(!gr) {
         Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
         return;
@@ -5214,7 +5214,7 @@ GMSH_API void gmsh::model::mesh::getEmbedded(const int dim, const int tag,
   if(!_checkInit()) return;
   dimTags.clear();
   if(dim == 2) {
-    GSurface *gf = GModel::current()->getFaceByTag(tag);
+    GFace *gf = GModel::current()->getFaceByTag(tag);
     if(!gf) {
       Msg::Error("%s does not exist", _getEntityName(2, tag).c_str());
       return;
@@ -5225,7 +5225,7 @@ GMSH_API void gmsh::model::mesh::getEmbedded(const int dim, const int tag,
       dimTags.push_back(std::make_pair(e->dim(), e->tag()));
   }
   else if(dim == 3) {
-    GVolume *gr = GModel::current()->getRegionByTag(tag);
+    GRegion *gr = GModel::current()->getRegionByTag(tag);
     if(!gr) {
       Msg::Error("%s does not exist", _getEntityName(3, tag).c_str());
       return;
@@ -5336,12 +5336,12 @@ gmsh::model::mesh::setPeriodic(const int dim, const std::vector<int> &tags,
   }
   for(std::size_t i = 0; i < tags.size(); i++) {
     if(dim == 1) {
-      GCurve *target = GModel::current()->getEdgeByTag(tags[i]);
+      GEdge *target = GModel::current()->getEdgeByTag(tags[i]);
       if(!target) {
         Msg::Error("%s does not exist", _getEntityName(dim, tags[i]).c_str());
         return;
       }
-      GCurve *source = GModel::current()->getEdgeByTag(tagsMaster[i]);
+      GEdge *source = GModel::current()->getEdgeByTag(tagsMaster[i]);
       if(!source) {
         Msg::Error("%s does not exist",
                    _getEntityName(dim, tagsMaster[i]).c_str());
@@ -5350,12 +5350,12 @@ gmsh::model::mesh::setPeriodic(const int dim, const std::vector<int> &tags,
       target->setMeshMaster(source, affineTransform);
     }
     else if(dim == 2) {
-      GSurface *target = GModel::current()->getFaceByTag(tags[i]);
+      GFace *target = GModel::current()->getFaceByTag(tags[i]);
       if(!target) {
         Msg::Error("%s does not exist", _getEntityName(dim, tags[i]).c_str());
         return;
       }
-      GSurface *source = GModel::current()->getFaceByTag(tagsMaster[i]);
+      GFace *source = GModel::current()->getFaceByTag(tagsMaster[i]);
       if(!source) {
         Msg::Error("%s does not exist",
                    _getEntityName(dim, tagsMaster[i]).c_str());
@@ -5456,7 +5456,7 @@ GMSH_API void gmsh::model::mesh::getPeriodicKeys(
      functionSpaceType == "Lagrange") {
 #pragma omp parallel for num_threads(nthreads)
     for(std::size_t i = 0; i < entityKeys.size(); i++) {
-      MNode *v = GModel::current()->getMeshVertexByTag(entityKeys[i]);
+      MVertex *v = GModel::current()->getMeshVertexByTag(entityKeys[i]);
       if(!v) {
         Msg::Warning("Unknown node %d", entityKeys[i]);
       }
@@ -5504,13 +5504,13 @@ GMSH_API void gmsh::model::mesh::getDuplicateNodes(std::vector<std::size_t> &nod
   double eps = lc * CTX::instance()->geom.tolerance;
   std::vector<GEntity *> entities;
   _getEntities(dimTags, entities);
-  std::vector<MNode *> vertices;
+  std::vector<MVertex *> vertices;
   for(std::size_t i = 0; i < entities.size(); i++) {
     vertices.insert(vertices.end(), entities[i]->mesh_vertices.begin(),
                     entities[i]->mesh_vertices.end());
   }
   MVertexRTree pos(eps);
-  std::set<MNode *, MVertexPtrLessThan> duplicates;
+  std::set<MVertex *, MVertexPtrLessThan> duplicates;
   pos.insert(vertices, true, &duplicates);
   for(auto n : duplicates) nodeTags.push_back(n->getNum());
 }
@@ -5644,12 +5644,12 @@ GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
   for(std::size_t i = 0; i < coord.size(); i += 2)
     bbox += SPoint3(coord[i], coord[i + 1], 0.);
   double lc = 10. * norm(SVector3(bbox.max(), bbox.min()));
-  std::vector<MNode *> verts(coord.size() / 2);
+  std::vector<MVertex *> verts(coord.size() / 2);
   std::size_t j = 0;
   for(std::size_t i = 0; i < coord.size(); i += 2) {
     double XX = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
     double YY = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
-    MNode *v = new MNode(coord[i] + XX, coord[i + 1] + YY, 0.);
+    MVertex *v = new MVertex(coord[i] + XX, coord[i + 1] + YY, 0.);
     v->setIndex(j);
     verts[j++] = v;
   }
@@ -5680,10 +5680,10 @@ gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
     return;
   }
 #if defined(HAVE_MESH)
-  std::vector<MNode *> verts(coord.size() / 3);
+  std::vector<MVertex *> verts(coord.size() / 3);
   std::size_t j = 0;
   for(std::size_t i = 0; i < coord.size(); i += 3) {
-    MNode *v = new MNode(coord[i], coord[i + 1], coord[i + 2]);
+    MVertex *v = new MVertex(coord[i], coord[i + 1], coord[i + 2]);
     v->setIndex(j);
     verts[j++] = v;
   }

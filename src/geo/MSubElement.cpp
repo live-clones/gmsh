@@ -99,13 +99,13 @@ std::size_t MSubTetrahedron::getNumPrimaryShapeFunctions() const
   return 0;
 }
 
-const MNode *MSubTetrahedron::getShapeFunctionNode(int i) const
+const MVertex *MSubTetrahedron::getShapeFunctionNode(int i) const
 {
   if(_orig) return _orig->getShapeFunctionNode(i);
   return nullptr;
 }
 
-MNode *MSubTetrahedron::getShapeFunctionNode(int i)
+MVertex *MSubTetrahedron::getShapeFunctionNode(int i)
 {
   if(_orig) return _orig->getShapeFunctionNode(i);
   return nullptr;
@@ -360,13 +360,13 @@ std::size_t MSubTriangle::getNumPrimaryShapeFunctions() const
   return 0;
 }
 
-const MNode *MSubTriangle::getShapeFunctionNode(int i) const
+const MVertex *MSubTriangle::getShapeFunctionNode(int i) const
 {
   if(_orig) return _orig->getShapeFunctionNode(i);
   return nullptr;
 }
 
-MNode *MSubTriangle::getShapeFunctionNode(int i)
+MVertex *MSubTriangle::getShapeFunctionNode(int i)
 {
   if(_orig) return _orig->getShapeFunctionNode(i);
   return nullptr;
@@ -607,13 +607,13 @@ std::size_t MSubLine::getNumPrimaryShapeFunctions() const
   return 0;
 }
 
-const MNode *MSubLine::getShapeFunctionNode(int i) const
+const MVertex *MSubLine::getShapeFunctionNode(int i) const
 {
   if(_orig) return _orig->getShapeFunctionNode(i);
   return nullptr;
 }
 
-MNode *MSubLine::getShapeFunctionNode(int i)
+MVertex *MSubLine::getShapeFunctionNode(int i)
 {
   if(_orig) return _orig->getShapeFunctionNode(i);
   return nullptr;
@@ -813,13 +813,13 @@ std::size_t MSubPoint::getNumPrimaryShapeFunctions() const
   return 0;
 }
 
-const MNode *MSubPoint::getShapeFunctionNode(int i) const
+const MVertex *MSubPoint::getShapeFunctionNode(int i) const
 {
   if(_orig) return _orig->getShapeFunctionNode(i);
   return nullptr;
 }
 
-MNode *MSubPoint::getShapeFunctionNode(int i)
+MVertex *MSubPoint::getShapeFunctionNode(int i)
 {
   if(_orig) return _orig->getShapeFunctionNode(i);
   return nullptr;
@@ -889,7 +889,7 @@ void MSubPoint::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
 
     _pts = new IntPt[1];
     // work in the parametric space of the parent element
-    MNode *vi = getVertex(0);
+    MVertex *vi = getVertex(0);
     double v_xyz[3] = {vi->x(), vi->y(), vi->z()};
     double v_uvw[3];
     _orig->xyz2uvw(v_xyz, v_uvw);

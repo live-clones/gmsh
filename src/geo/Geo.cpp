@@ -783,7 +783,7 @@ Vertex *DuplicateVertex(Vertex *v)
   return pv;
 }
 
-Vertex *DuplicateVertex(GPoint *gv)
+Vertex *DuplicateVertex(GVertex *gv)
 {
   // dummy version to handle generic GModel entities for boundary layers
   if(!gv) return nullptr;
@@ -845,7 +845,7 @@ Curve *DuplicateCurve(Curve *c)
   return pc;
 }
 
-Curve *DuplicateCurve(GCurve *ge)
+Curve *DuplicateCurve(GEdge *ge)
 {
   // dummy version to handle generic GModel entities for boundary layers
   bool ok = true;
@@ -905,12 +905,12 @@ Surface *DuplicateSurface(Surface *s)
   return ps;
 }
 
-Surface *DuplicateSurface(GSurface *gf, std::map<int, int> &source)
+Surface *DuplicateSurface(GFace *gf, std::map<int, int> &source)
 {
   // dummy version to handle generic GModel entities for boundary layers
   Surface *ps = CreateSurface(NEWSURFACE(), MSH_SURF_PLAN); // dummy
   Tree_Insert(GModel::current()->getGEOInternals()->Surfaces, &ps);
-  std::vector<GCurve *> edges = gf->edges();
+  std::vector<GEdge *> edges = gf->edges();
   ps->Generatrices = List_Create(edges.size() + 1, 1, sizeof(Curve *));
   for(std::size_t i = 0; i < edges.size(); i++) {
     if(!edges[i]->degenerate(0)) {
@@ -1761,13 +1761,13 @@ static void ReplaceDuplicatePointsNew(double tol = -1.)
 
   // create rtree
   MVertexRTree pos(tol);
-  std::map<MNode *, Vertex *> v2V;
-  std::vector<MNode *> used, unused;
+  std::map<MVertex *, Vertex *> v2V;
+  std::vector<MVertex *> used, unused;
   List_T *tmp = Tree2List(GModel::current()->getGEOInternals()->Points);
   for(int i = 0; i < List_Nbr(tmp); i++) {
     Vertex *V;
     List_Read(tmp, i, &V);
-    MNode *v = new MNode(V->Pos.X, V->Pos.Y, V->Pos.Z);
+    MVertex *v = new MVertex(V->Pos.X, V->Pos.Y, V->Pos.Z);
     if(!pos.insert(v))
       used.push_back(v);
     else
@@ -2587,7 +2587,7 @@ int ExtrudePoint(int type, int ip, double T0, double T1, double T2, double A0,
   pv->Num = ip;
   int found = Tree_Query(GModel::current()->getGEOInternals()->Points, &pv);
 
-  GPoint *gv = nullptr;
+  GVertex *gv = nullptr;
   if(!found && type == BOUNDARY_LAYER) {
     // we allow boundary layers from generic points
     gv = GModel::current()->getVertexByTag(ip);
@@ -2770,7 +2770,7 @@ int ExtrudeCurve(int type, int ic, double T0, double T1, double T2, double A0,
 
   Curve *pc = FindCurve(ic);
   Curve *revpc = FindCurve(-ic);
-  GCurve *ge = nullptr;
+  GEdge *ge = nullptr;
 
   if(!pc && !revpc && type == BOUNDARY_LAYER) {
     // we allow boundary layers from generic curves
@@ -3001,7 +3001,7 @@ int ExtrudeSurface(int type, int is, double T0, double T1, double T2, double A0,
   // creating boundary layers
   Surface *ps = FindSurface(std::abs(is));
 
-  GSurface *gf = nullptr;
+  GFace *gf = nullptr;
   if(!ps && type == BOUNDARY_LAYER) {
     // we allow boundary layers from generic surfaces
     gf = GModel::current()->getFaceByTag(std::abs(is));
@@ -3724,7 +3724,7 @@ bool SetSurfaceGeneratrices(Surface *s, List_T *loops)
       }
       for(std::size_t j = 0; j < fromModel.size(); j++) {
         ic = fromModel[j];
-        GCurve *ge = GModel::current()->getEdgeByTag(abs(ic));
+        GEdge *ge = GModel::current()->getEdgeByTag(abs(ic));
         if(ge) { List_Add(s->GeneratricesByTag, &ic); }
         else {
           Msg::Error("Unknown curve %d", ic);
@@ -3764,7 +3764,7 @@ bool SetVolumeSurfaces(Volume *v, List_T *loops)
           List_Add(v->SurfacesOrientations, &tmp);
         }
         else {
-          GSurface *gf = GModel::current()->getFaceByTag(abs(is));
+          GFace *gf = GModel::current()->getFaceByTag(abs(is));
           if(gf) { List_Add(v->SurfacesByTag, &is); }
           else {
             Msg::Error("Unknown surface %d in GEO volume %d", is, v->Num);

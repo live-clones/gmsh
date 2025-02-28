@@ -8,18 +8,18 @@
 
 #include <vector>
 #include "GmshMessage.h"
-#include "MNode.h"
+#include "MVertex.h"
 #include "rtree.h"
 
-// Stores MNode pointers in an R-Tree so we can query unique vertices by their
+// Stores MVertex pointers in an R-Tree so we can query unique vertices by their
 // coordinates, up to a prescribed tolerance.
 class MVertexRTree {
 private:
-  RTree<MNode *, double, 3, double> *_rtree;
+  RTree<MVertex *, double, 3, double> *_rtree;
   double _tol;
-  static bool rtree_callback(MNode *v, void *ctx)
+  static bool rtree_callback(MVertex *v, void *ctx)
   {
-    MNode **out = static_cast<MNode **>(ctx);
+    MVertex **out = static_cast<MVertex **>(ctx);
     *out = v;
     return false; // we're done searching
   }
@@ -27,7 +27,7 @@ private:
 public:
   MVertexRTree(double tolerance = 1.e-8)
   {
-    _rtree = new RTree<MNode *, double, 3, double>();
+    _rtree = new RTree<MVertex *, double, 3, double>();
     _tol = tolerance;
   }
   ~MVertexRTree()
@@ -35,10 +35,10 @@ public:
     _rtree->RemoveAll();
     delete _rtree;
   }
-  MNode *insert(MNode *v, bool warnIfExists = false,
-                  std::set<MNode *, MVertexPtrLessThan> *duplicates = nullptr)
+  MVertex *insert(MVertex *v, bool warnIfExists = false,
+                  std::set<MVertex *, MVertexPtrLessThan> *duplicates = nullptr)
   {
-    MNode *out;
+    MVertex *out;
     double _min[3] = {v->x() - _tol, v->y() - _tol, v->z() - _tol};
     double _max[3] = {v->x() + _tol, v->y() + _tol, v->z() + _tol};
     if(!_rtree->Search(_min, _max, rtree_callback, &out)) {
@@ -59,17 +59,17 @@ public:
       return out;
     }
   }
-  int insert(std::vector<MNode *> &v, bool warnIfExists = false,
-             std::set<MNode *, MVertexPtrLessThan> *duplicates = nullptr)
+  int insert(std::vector<MVertex *> &v, bool warnIfExists = false,
+             std::set<MVertex *, MVertexPtrLessThan> *duplicates = nullptr)
   {
     int num = 0;
     for(std::size_t i = 0; i < v.size(); i++)
       num += (insert(v[i], warnIfExists, duplicates) ? 1 : 0);
     return num; // number of vertices not inserted
   }
-  MNode *find(double x, double y, double z)
+  MVertex *find(double x, double y, double z)
   {
-    MNode *out;
+    MVertex *out;
     double _min[3] = {x - _tol, y - _tol, z - _tol};
     double _max[3] = {x + _tol, y + _tol, z + _tol};
     if(_rtree->Search(_min, _max, rtree_callback, &out)) return out;

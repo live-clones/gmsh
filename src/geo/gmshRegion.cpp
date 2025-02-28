@@ -9,7 +9,7 @@
 #include "Geo.h"
 #include "GmshMessage.h"
 
-gmshRegion::gmshRegion(GModel *m, ::Volume *v) : GVolume(m, v->Num)
+gmshRegion::gmshRegion(GModel *m, ::Volume *v) : GRegion(m, v->Num)
 {
   resetNativePtr(v);
   gmshRegion::resetMeshAttributes();
@@ -25,7 +25,7 @@ void gmshRegion::resetNativePtr(::Volume *v)
     List_Read(_v->Surfaces, i, &s);
     int ori;
     List_Read(_v->SurfacesOrientations, i, &ori);
-    GSurface *f = model()->getFaceByTag(abs(s->Num));
+    GFace *f = model()->getFaceByTag(abs(s->Num));
     if(f) {
       l_faces.push_back(f);
       l_dirs.push_back(ori);
@@ -37,7 +37,7 @@ void gmshRegion::resetNativePtr(::Volume *v)
   for(int i = 0; i < List_Nbr(_v->SurfacesByTag); i++) {
     int is;
     List_Read(_v->SurfacesByTag, i, &is);
-    GSurface *f = model()->getFaceByTag(abs(is));
+    GFace *f = model()->getFaceByTag(abs(is));
     if(f) {
       l_faces.push_back(f);
       l_dirs.push_back(gmsh_sign(is));
@@ -59,7 +59,7 @@ void gmshRegion::resetMeshAttributes()
     for(int i = 0; i < List_Nbr(_v->TrsfPoints); i++) {
       Vertex *corn;
       List_Read(_v->TrsfPoints, i, &corn);
-      GPoint *gv = model()->getVertexByTag(corn->Num);
+      GVertex *gv = model()->getVertexByTag(corn->Num);
       if(gv)
         meshAttributes.corners.push_back(gv);
       else

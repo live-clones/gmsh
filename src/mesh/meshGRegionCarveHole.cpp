@@ -16,7 +16,7 @@
 
 #if !defined(HAVE_ANN)
 
-void carveHole(GVolume *gr, int num, double distance,
+void carveHole(GRegion *gr, int num, double distance,
                std::vector<int> &surfaces)
 {
   Msg::Error("Gmsh must be compiled with ANN support to carve holes in meshes");
@@ -36,7 +36,7 @@ void carveHole(std::vector<T *> &elements, double distance, ANNkd_tree *kdtree)
   std::vector<T *> temp;
   for(std::size_t i = 0; i < elements.size(); i++) {
     for(std::size_t j = 0; j < elements[i]->getNumVertices(); j++) {
-      MNode *v = elements[i]->getVertex(j);
+      MVertex *v = elements[i]->getVertex(j);
       double xyz[3] = {v->x(), v->y(), v->z()};
       kdtree->annkSearch(xyz, 1, index, dist);
       double d = std::sqrt(dist[0]);
@@ -69,7 +69,7 @@ void addFaces(std::vector<T *> &elements, std::set<MFace, MFaceLessThan> &faces)
   }
 }
 
-void carveHole(GVolume *gr, int num, double distance,
+void carveHole(GRegion *gr, int num, double distance,
                std::vector<int> &surfaces)
 {
   Msg::Info("Carving hole %d from surface %d at distance %g", num, surfaces[0],
@@ -79,7 +79,7 @@ void carveHole(GVolume *gr, int num, double distance,
   // add all points from carving surfaces into kdtree
   int numnodes = 0;
   for(std::size_t i = 0; i < surfaces.size(); i++) {
-    GSurface *gf = m->getFaceByTag(surfaces[i]);
+    GFace *gf = m->getFaceByTag(surfaces[i]);
     if(!gf) {
       Msg::Error("Unknown carving surface %d", surfaces[i]);
       return;
@@ -90,7 +90,7 @@ void carveHole(GVolume *gr, int num, double distance,
   ANNpointArray kdnodes = annAllocPts(numnodes, 3);
   int k = 0;
   for(std::size_t i = 0; i < surfaces.size(); i++) {
-    GSurface *gf = m->getFaceByTag(surfaces[i]);
+    GFace *gf = m->getFaceByTag(surfaces[i]);
     for(std::size_t j = 0; j < gf->mesh_vertices.size(); j++) {
       kdnodes[k][0] = gf->mesh_vertices[j]->x();
       kdnodes[k][1] = gf->mesh_vertices[j]->y();
@@ -115,10 +115,10 @@ void carveHole(GVolume *gr, int num, double distance,
   // intersections o see who's inside)
 
   // generate discrete boundary mesh of the carved hole
-  GSurface *gf = m->getFaceByTag(num);
+  GFace *gf = m->getFaceByTag(num);
   if(!gf) return;
   std::set<MFace, MFaceLessThan> faces;
-  std::vector<GSurface *> f = gr->faces();
+  std::vector<GFace *> f = gr->faces();
   for(auto it = f.begin(); it != f.end(); it++) {
     addFaces((*it)->triangles, faces);
     addFaces((*it)->quadrangles, faces);
@@ -128,7 +128,7 @@ void carveHole(GVolume *gr, int num, double distance,
   addFaces(gr->prisms, faces);
   addFaces(gr->pyramids, faces);
 
-  std::set<MNode *> verts;
+  std::set<MVertex *> verts;
   for(auto it = faces.begin(); it != faces.end(); it++) {
     for(std::size_t i = 0; i < it->getNumVertices(); i++) {
       it->getVertex(i)->setEntity(gf);

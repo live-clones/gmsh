@@ -10,7 +10,7 @@
 #ifndef DIRECTION_3D_H
 #define DIRECTION_3D_H
 
-#include "GSurface.h"
+#include "GFace.h"
 #include "MEdge.h"
 #include "MElementOctree.h"
 #if defined(HAVE_ANN)
@@ -31,25 +31,25 @@ class Frame_field {
 private:
   static std::vector<std::pair<SPoint3, STensor3> > field;
   static std::vector<int> labels;
-  static std::map<MNode *, STensor3> crossField;
-  static std::map<MNode *, double> crossFieldSmoothness;
+  static std::map<MVertex *, STensor3> crossField;
+  static std::map<MVertex *, double> crossFieldSmoothness;
   static std::map<MEdge, double, MEdgeLessThan> crossDist;
-  static std::vector<MNode *> listVertices;
+  static std::vector<MVertex *> listVertices;
 #if defined(HAVE_ANN)
   static ANNkd_tree *kd_tree;
   static ANNkd_tree *annTree;
 #endif
   Frame_field();
-  static std::map<MNode *, std::set<MNode *> > vertex_to_vertices;
-  static std::map<MNode *, std::set<MElement *> > vertex_to_elements;
+  static std::map<MVertex *, std::set<MVertex *> > vertex_to_vertices;
+  static std::map<MVertex *, std::set<MElement *> > vertex_to_elements;
 
 public:
-  static void init_region(GVolume *);
-  static void init_face(GSurface *);
+  static void init_region(GRegion *);
+  static void init_face(GFace *);
   static STensor3 search(double, double, double);
   static STensor3 combine(double, double, double);
   static void print_field1();
-  static void print_field2(GVolume *);
+  static void print_field2(GRegion *);
   static void print_segment(const SPoint3 &, const SPoint3 &, double, double,
                             std::ofstream &);
   static int build_vertex_to_vertices(GEntity *gr, int onWhat,
@@ -60,35 +60,35 @@ public:
   static void deleteAnnData();
   static int findAnnIndex(const SPoint3 &p);
   static STensor3 findCross(double x, double y, double z);
-  static void initFace(GSurface *gf);
-  static void initRegion(GVolume *gr, int n);
+  static void initFace(GFace *gf);
+  static void initRegion(GRegion *gr, int n);
   static void buildSmoothness();
-  static double smoothFace(GSurface *gf, int n);
-  static double smoothRegion(GVolume *gr, int n);
+  static double smoothFace(GFace *gf, int n);
+  static double smoothRegion(GRegion *gr, int n);
   static double smooth();
   static double
-  findBarycenter(std::map<MNode *, std::set<MNode *> >::const_iterator iter,
+  findBarycenter(std::map<MVertex *, std::set<MVertex *> >::const_iterator iter,
                  STensor3 &m0);
   static void save(const std::vector<std::pair<SPoint3, STensor3> > &data,
                    const std::string &filename);
   static void saveCrossField(const std::string &filename, double scale,
                              bool full = true);
-  static void continuousCrossField(GVolume *gr, GSurface *gf);
-  static void recur_connect_vert(FILE *fi, int count, MNode *v,
+  static void continuousCrossField(GRegion *gr, GFace *gf);
+  static void recur_connect_vert(FILE *fi, int count, MVertex *v,
                                  STensor3 &cross,
-                                 std::multimap<MNode *, MNode *> &v2v,
-                                 std::set<MNode *> &touched);
-  static void save_energy(GVolume *gr, const std::string &filename);
+                                 std::multimap<MVertex *, MVertex *> &v2v,
+                                 std::set<MVertex *> &touched);
+  static void save_energy(GRegion *gr, const std::string &filename);
   static void save_dist(const std::string &filename);
   static void checkAnnData(GEntity *ge, const std::string &filename);
-  static GVolume *test();
+  static GRegion *test();
   static void clear();
 };
 
 class Size_field {
 private:
   static std::vector<std::pair<SPoint3, double> > field;
-  static std::map<MNode *, double> boundary;
+  static std::map<MVertex *, double> boundary;
   static MElementOctree *octree;
 #if defined(HAVE_ANN)
   static ANNkd_tree *kd_tree;
@@ -96,11 +96,11 @@ private:
   Size_field();
 
 public:
-  static void init_region(GVolume *);
-  static void solve(GVolume *);
+  static void init_region(GRegion *);
+  static void solve(GRegion *);
   static double search(double, double, double);
-  static void print_field(GVolume *);
-  static GVolume *test();
+  static void print_field(GRegion *);
+  static GRegion *test();
   static void clear();
 };
 
@@ -114,14 +114,14 @@ private:
   Nearest_point();
 
 public:
-  static void init_region(GVolume *);
+  static void init_region(GRegion *);
   static bool search(double, double, double, SVector3 &);
   static double T(double, double, double, double, double);
   static SPoint3 closest(MElement *, const SPoint3 &);
   static double clamp(double, double, double);
-  static void print_field(GVolume *);
+  static void print_field(GRegion *);
   static void print_segment(const SPoint3 &, const SPoint3 &, std::ofstream &);
-  static GVolume *test();
+  static GRegion *test();
   static void clear();
 };
 

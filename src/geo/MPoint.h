@@ -15,14 +15,14 @@
  */
 class MPoint : public MElement {
 protected:
-  MNode *_v[1];
+  MVertex *_v[1];
 
 public:
-  MPoint(MNode *v0, int num = 0, int part = 0) : MElement(num, part)
+  MPoint(MVertex *v0, int num = 0, int part = 0) : MElement(num, part)
   {
     _v[0] = v0;
   }
-  MPoint(const std::vector<MNode *> &v, int num = 0, int part = 0)
+  MPoint(const std::vector<MVertex *> &v, int num = 0, int part = 0)
     : MElement(num, part)
   {
     _v[0] = v[0];
@@ -30,9 +30,9 @@ public:
   ~MPoint() {}
   virtual int getDim() const { return 0; }
   virtual std::size_t getNumVertices() const { return 1; }
-  virtual MNode *getVertex(int num) { return _v[0]; }
-  virtual const MNode *getVertex(int num) const { return _v[0]; }
-  virtual void setVertex(int num, MNode *v) { _v[0] = v; }
+  virtual MVertex *getVertex(int num) { return _v[0]; }
+  virtual const MVertex *getVertex(int num) const { return _v[0]; }
+  virtual void setVertex(int num, MVertex *v) { _v[0] = v; }
   virtual int getNumEdges() const { return 0; }
   virtual MEdge getEdge(int num) const { return MEdge(); }
   virtual int getNumEdgesRep(bool curved) { return 0; }

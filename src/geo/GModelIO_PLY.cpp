@@ -16,8 +16,8 @@
 #include "PViewDataList.h"
 #endif
 
-static bool getMeshVertices(int num, int *indices, std::vector<MNode *> &vec,
-                            std::vector<MNode *> &vertices)
+static bool getMeshVertices(int num, int *indices, std::vector<MVertex *> &vec,
+                            std::vector<MVertex *> &vertices)
 {
   for(int i = 0; i < num; i++) {
     if(indices[i] < 0 || indices[i] > (int)(vec.size() - 1)) {
@@ -54,7 +54,7 @@ int GModel::readPLY(const std::string &name)
     return 0;
   }
 
-  std::vector<MNode *> vertexVector;
+  std::vector<MVertex *> vertexVector;
   std::map<int, std::vector<MElement *> > elements[5];
   std::map<int, std::vector<double> > properties;
 
@@ -107,7 +107,7 @@ int GModel::readPLY(const std::string &name)
             x = strtod(line, &pEnd);
             y = strtod(pEnd, &pEnd2);
             z = strtod(pEnd2, &pEnd3);
-            vertexVector[i] = new MNode(x, y, z);
+            vertexVector[i] = new MVertex(x, y, z);
 
             pEnd = pEnd3;
             std::vector<double> prop(nbView);
@@ -122,7 +122,7 @@ int GModel::readPLY(const std::string &name)
             if(!fgets(buffer, sizeof(buffer), fp)) break;
             int n[3], nbe;
             sscanf(buffer, "%d %d %d %d", &nbe, &n[0], &n[1], &n[2]);
-            std::vector<MNode *> vertices;
+            std::vector<MVertex *> vertices;
             if(!getMeshVertices(3, n, vertexVector, vertices)) {
               fclose(fp);
               return 0;
@@ -138,7 +138,7 @@ int GModel::readPLY(const std::string &name)
           }
           for(int i = 0; i < nbv; i++) {
             vertexVector[i] =
-              new MNode(coord[3 * i], coord[3 * i + 1], coord[3 * i + 2]);
+              new MVertex(coord[3 * i], coord[3 * i + 1], coord[3 * i + 2]);
           }
           // TODO add properties
           for(int i = 0; i < nbf; i++) {
@@ -153,7 +153,7 @@ int GModel::readPLY(const std::string &name)
               return 0;
             }
             if(swap) SwapBytes((char *)n, sizeof(int), 3);
-            std::vector<MNode *> vertices;
+            std::vector<MVertex *> vertices;
             if(!getMeshVertices(3, n, vertexVector, vertices)) {
               fclose(fp);
               return 0;
@@ -221,7 +221,7 @@ int GModel::readPLY2(const std::string &name)
     return 0;
   }
 
-  std::vector<MNode *> vertexVector;
+  std::vector<MVertex *> vertexVector;
   std::map<int, std::vector<MElement *> > elements[5];
 
   char buffer[256];
@@ -246,7 +246,7 @@ int GModel::readPLY2(const std::string &name)
           if(!fgets(buffer, sizeof(buffer), fp)) break;
           sscanf(buffer, "%lf", &z);
         }
-        vertexVector[i] = new MNode(x, y, z);
+        vertexVector[i] = new MVertex(x, y, z);
       }
       for(int i = 0; i < nbf; i++) {
         if(!fgets(buffer, sizeof(buffer), fp)) break;
@@ -260,7 +260,7 @@ int GModel::readPLY2(const std::string &name)
           if(!fgets(buffer, sizeof(buffer), fp)) break;
           sscanf(buffer, "%d", &n[2]);
         }
-        std::vector<MNode *> vertices;
+        std::vector<MVertex *> vertices;
         if(!getMeshVertices(3, n, vertexVector, vertices)) {
           fclose(fp);
           return 0;

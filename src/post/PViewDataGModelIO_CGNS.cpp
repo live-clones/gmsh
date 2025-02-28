@@ -6,7 +6,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "PViewDataGModel.h"
-#include "MNode.h"
+#include "MVertex.h"
 #include "MElement.h"
 #include "Numeric.h"
 #include "StringUtils.h"
@@ -147,7 +147,7 @@ namespace {
   }
 
   void getSolutionDataNode(
-    int zoneIndex, const std::vector<std::vector<MNode *> > &vertPerZone,
+    int zoneIndex, const std::vector<std::vector<MVertex *> > &vertPerZone,
     std::vector<cgsize_t> solEntSet, const std::vector<double> &data,
     stepData<double> *step, double &dataMin, double &dataMax)
   {
@@ -394,7 +394,7 @@ namespace {
                         int fileIndex, int baseIndex, int zoneIndex,
                         int zoneSolIndex, PViewDataGModel::DataType dataType,
                         const ZoneSolutionTransfo *zoneSolTransfo,
-                        const std::vector<std::vector<MNode *> > &vertPerZone,
+                        const std::vector<std::vector<MVertex *> > &vertPerZone,
                         const std::vector<std::vector<MElement *> > &eltPerZone,
                         stepData<double> *step, double &dataMin,
                         double &dataMax,
@@ -534,7 +534,7 @@ namespace {
 bool PViewDataGModel::readCGNS(
   const std::pair<std::string, std::string> &solFieldName,
   const std::string &fileName, int index, int fileIndex, int baseIndex,
-  const std::vector<std::vector<MNode *> > &vertPerZone,
+  const std::vector<std::vector<MVertex *> > &vertPerZone,
   const std::vector<std::vector<MElement *> > &eltPerZone)
 {
   // create step if needed
@@ -626,7 +626,7 @@ bool PViewDataGModel::readCGNS(
 bool PViewDataGModel::readCGNS(
   const std::pair<std::string, std::string> &solFieldName,
   const std::string &fileName, int index, int fileIndex, int baseIndex,
-  const std::vector<std::vector<MNode *> > &vertPerZone,
+  const std::vector<std::vector<MVertex *> > &vertPerZone,
   const std::vector<std::vector<MElement *> > &eltPerZone)
 {
   return false;

@@ -17,7 +17,7 @@
 #if defined(HAVE_LIBCGNS)
 
 class GModel;
-class MNode;
+class MVertex;
 class MElement;
 class CGNSZone;
 

@@ -7,7 +7,7 @@
 #define OCC_EDGE_H
 
 #include "GmshConfig.h"
-#include "GCurve.h"
+#include "GEdge.h"
 #include "GModel.h"
 #include "Range.h"
 
@@ -21,7 +21,7 @@ class OCCFace;
 #include <Geom_Curve.hxx>
 #include <TopoDS_Edge.hxx>
 
-class OCCEdge : public GCurve {
+class OCCEdge : public GEdge {
 private:
   TopoDS_Edge _c;
   TopoDS_Edge _c_rev;
@@ -29,24 +29,24 @@ private:
   int _nbpoles;
   Handle(Geom_Curve) _curve;
   mutable Handle(Geom2d_Curve) _curve2d;
-  mutable GSurface *_trimmed;
+  mutable GFace *_trimmed;
   mutable GeomAPI_ProjectPointOnCurve _projector;
   bool _project(const double p[3], double &u, double xyz[3]) const;
 
 public:
-  OCCEdge(GModel *model, TopoDS_Edge c, int num, GPoint *v1, GPoint *v2);
+  OCCEdge(GModel *model, TopoDS_Edge c, int num, GVertex *v1, GVertex *v2);
   virtual ~OCCEdge() {}
-  void delFace(GSurface *f);
+  void delFace(GFace *f);
   virtual SBoundingBox3d bounds(bool fast = false);
   virtual Range<double> parBounds(int i) const;
-  virtual Range<double> parBoundsOnFace(GSurface *face = nullptr) const;
+  virtual Range<double> parBoundsOnFace(GFace *face = nullptr) const;
   virtual GeomType geomType() const;
   virtual bool degenerate(int) const { return BRep_Tool::Degenerated(_c); }
-  virtual GVertex point(double p) const;
+  virtual GPoint point(double p) const;
   virtual SVector3 firstDer(double par) const;
   virtual double curvature(double par) const;
-  virtual SPoint2 reparamOnFace(const GSurface *face, double epar, int dir) const;
-  virtual GVertex closestPoint(const SPoint3 &queryPoint, double &param) const;
+  virtual SPoint2 reparamOnFace(const GFace *face, double epar, int dir) const;
+  virtual GPoint closestPoint(const SPoint3 &queryPoint, double &param) const;
   virtual double parFromPoint(const SPoint3 &P) const;
   virtual bool containsPoint(const SPoint3 &pt) const;
   virtual ModelType getNativeType() const { return OpenCascadeModel; }
@@ -55,7 +55,7 @@ public:
   virtual int minimumDrawSegments() const;
   virtual bool is3D() const { return !_curve.IsNull(); }
   void setTrimmed(OCCFace *);
-  virtual bool isSeam(const GSurface *) const;
+  virtual bool isSeam(const GFace *) const;
   virtual void writeGEO(FILE *fp);
 };
 

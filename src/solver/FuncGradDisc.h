@@ -11,7 +11,7 @@
 #define FUNCGRADDISC_H
 
 #include "gmshLevelset.h"
-#include "MNode.h"
+#include "MVertex.h"
 #include "GModel.h"
 
 template <class scalar> class simpleFunction;
@@ -42,7 +42,7 @@ public:
     e->getShapeFunctions(uvw[0], uvw[1], uvw[2], val);
     double f = 0;
     for(std::size_t i = 0; i < e->getNumShapeFunctions(); i++) {
-      MNode *v = e->getShapeFunctionNode(i);
+      MVertex *v = e->getShapeFunctionNode(i);
       // std::cout<<"val[i] :" << val[i] << "\n";
       // std::cout<<"ls(i) :" << (*_ls)(v->x(),v->y(),v->z()) << "\n";
       f = f + std::abs((*_ls)(v->x(), v->y(), v->z())) * val[i];
@@ -64,7 +64,7 @@ public:
     //        double f = 0;
     //        for (std::size_t i = 0; i < e->getNumShapeFunctions(); i++)
     //        {
-    //           MNode *v = e-<getShapeFunctionNode(i);
+    //           MVertex *v = e-<getShapeFunctionNode(i);
     //           f = f + (*_ls)(v->x(), v->y(), v->z()) * val[i];
     //        }
     //        f = std::abs(f);
@@ -105,7 +105,7 @@ public:
         dNdz = invjac[2][0] * gradsuvw[i][0] + invjac[2][1] * gradsuvw[i][1] +
                invjac[2][2] * gradsuvw[i][2];
 
-        MNode *v = e->getShapeFunctionNode(i);
+        MVertex *v = e->getShapeFunctionNode(i);
         dfdx = dfdx + std::abs((*_ls)(v->x(), v->y(), v->z())) * dNdx;
         dfdx = dfdx - (*_ls)(v->x(), v->y(), v->z()) * dNdx;
         dfdy = dfdy + std::abs((*_ls)(v->x(), v->y(), v->z())) * dNdy;
@@ -123,7 +123,7 @@ public:
         dNdz = invjac[2][0] * gradsuvw[i][0] + invjac[2][1] * gradsuvw[i][1] +
                invjac[2][2] * gradsuvw[i][2];
 
-        MNode *v = e->getShapeFunctionNode(i);
+        MVertex *v = e->getShapeFunctionNode(i);
         dfdx = dfdx + std::abs((*_ls)(v->x(), v->y(), v->z())) * dNdx;
         dfdx = dfdx + (*_ls)(v->x(), v->y(), v->z()) * dNdx;
         dfdy = dfdy + std::abs((*_ls)(v->x(), v->y(), v->z())) * dNdy;
@@ -168,7 +168,7 @@ public:
   //            gradsuvw[i][0] + invjac[2][1] * gradsuvw[i][1] + invjac[2][2] *
   //            gradsuvw[i][2];
   //
-  //            MNode *v = e->getShapeFunctionNode(i);
+  //            MVertex *v = e->getShapeFunctionNode(i);
   //            dfdx = dfdx + (*_ls)(v->x(), v->y(), v->z()) * dNdx;
   //            dfdy = dfdy + (*_ls)(v->x(), v->y(), v->z()) * dNdy;
   //            dfdz = dfdz + (*_ls)(v->x(), v->y(), v->z()) * dNdz;
@@ -184,7 +184,7 @@ public:
   //            gradsuvw[i][0] + invjac[2][1] * gradsuvw[i][1] + invjac[2][2] *
   //            gradsuvw[i][2];
   //
-  //            MNode *v = e->getShapeFunctionNode(i);
+  //            MVertex *v = e->getShapeFunctionNode(i);
   //            dfdx = dfdx - (*_ls)(v->x(), v->y(), v->z()) * dNdx;
   //            dfdy = dfdy - (*_ls)(v->x(), v->y(), v->z()) * dNdy;
   //            dfdz = dfdz - (*_ls)(v->x(), v->y(), v->z()) * dNdz;

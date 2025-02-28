@@ -25,7 +25,7 @@
 // Contributors: Thomas Toulorge, Jonathan Lambrechts
 
 #include "GmshMessage.h"
-#include "GSurface.h"
+#include "GFace.h"
 #include "BasisFactory.h"
 #include "CondNumBasis.h"
 #include "IntegralBoundaryDist.h"
@@ -38,7 +38,7 @@
 
 Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
              const std::map<MElement *, GEntity *> &bndEl2Ent,
-             const std::set<MElement *> &els, std::set<MNode *> &toFix,
+             const std::set<MElement *> &els, std::set<MVertex *> &toFix,
              const std::set<MElement *> &bndEls, int fixBndNodes)
   : _typeLengthScale(LS_NONE), _invLengthScaleSq(0.)
 {
@@ -49,14 +49,14 @@ Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
   if(fixBndNodes == 2) {
     GModel *m = GModel::current(); // FIXME get model from entities
     for(auto it = m->firstEdge(); it != m->lastEdge(); ++it) {
-      GCurve *ge = *it;
+      GEdge *ge = *it;
       if(ge->getMeshMaster() != ge) {
         fixBndEntities.insert(ge);
         fixBndEntities.insert(ge->getMeshMaster());
       }
     }
     for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
-      GSurface *gf = *it;
+      GFace *gf = *it;
       if(gf->getMeshMaster() != gf) {
         fixBndEntities.insert(gf);
         fixBndEntities.insert(gf->getMeshMaster());
@@ -86,7 +86,7 @@ Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
     }
     _nNodEl[iEl] = _el[iEl]->getNumVertices();
     for(int iVEl = 0; iVEl < _nNodEl[iEl]; iVEl++) {
-      MNode *vert = _el[iEl]->getVertex(iVEl);
+      MVertex *vert = _el[iEl]->getVertex(iVEl);
       GEntity *ge = vert->onWhat();
       const int vDim = ge->dim();
       const bool hasParam = ge->haveParametrization();
@@ -145,7 +145,7 @@ Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
       _bndEl2V[iBndEl].resize(nBndElVerts);
       _bndEl2FV[iBndEl].resize(nBndElVerts);
       for(int iVBndEl = 0; iVBndEl < nBndElVerts; iVBndEl++) {
-        MNode *vert = bndEl->getVertex(iVBndEl);
+        MVertex *vert = bndEl->getVertex(iVBndEl);
         auto itV = std::find(_vert.begin(), _vert.end(), vert);
         if(itV == _vert.end())
           unknownVert = true;
@@ -174,7 +174,7 @@ Patch::Patch(const std::map<MElement *, GEntity *> &element2entity,
   _uvw = _iuvw;
 }
 
-int Patch::addVert(MNode *vert)
+int Patch::addVert(MVertex *vert)
 {
   auto itVert = find(_vert.begin(), _vert.end(), vert);
   if(itVert == _vert.end()) {
@@ -185,8 +185,8 @@ int Patch::addVert(MNode *vert)
     return std::distance(_vert.begin(), itVert);
 }
 
-int Patch::addFreeVert(MNode *vert, const int iV, const int nPCV,
-                       VertexCoord *param, std::set<MNode *> &toFix)
+int Patch::addFreeVert(MVertex *vert, const int iV, const int nPCV,
+                       VertexCoord *param, std::set<MVertex *> &toFix)
 {
   auto itVert = find(_freeVert.begin(), _freeVert.end(), vert);
   if(itVert == _freeVert.end()) {
@@ -404,13 +404,13 @@ void Patch::calcNormalEl2D(int iEl, NormalScaling scaling,
       double u, v;
       _vert[iV]->getParameter(0, u);
       _vert[iV]->getParameter(1, v);
-      geoNorm += ((GSurface *)ge)->normal(SPoint2(u, v));
+      geoNorm += ((GFace *)ge)->normal(SPoint2(u, v));
     }
   }
   if(hasGeoNorm && (geoNorm.normSq() == 0.)) {
     SPoint2 param =
-      ((GSurface *)ge)->parFromPoint(_el[iEl]->barycenter(true), false);
-    geoNorm = ((GSurface *)ge)->normal(param);
+      ((GFace *)ge)->parFromPoint(_el[iEl]->barycenter(true), false);
+    geoNorm = ((GFace *)ge)->normal(param);
   }
 
   elNorm.resize(1, 3);
@@ -563,10 +563,10 @@ bool Patch::bndDistAndGradients(int iEl, double &f, std::vector<double> &gradF,
   for(int iEdge = 0; iEdge < element->getNumEdges(); ++iEdge) {
     int clId = elbasis.getClosureId(iEdge, 1);
     const std::vector<int> &closure = elbasis.closures[clId];
-    std::vector<MNode *> vertices;
-    GCurve *edge = nullptr;
+    std::vector<MVertex *> vertices;
+    GEdge *edge = nullptr;
     for(size_t i = 0; i < closure.size(); ++i) {
-      MNode *v = element->getVertex(closure[i]);
+      MVertex *v = element->getVertex(closure[i]);
       vertices.push_back(v);
       // only valid in 2D
       if((int)i >= 2 && v->onWhat() && v->onWhat()->dim() == 1) {
@@ -620,13 +620,13 @@ void Patch::scaledCADDistSqAndGradients(int iBndEl, double &scaledDist,
   // Compute distance and gradients (CAUTION: returns gradients w.r.t. vertices,
   // not free vertices)
   if(_dim == 2) { // 2D
-    const GCurve *ge = _bndEl2Ent[iBndEl]->cast2Edge();
+    const GEdge *ge = _bndEl2Ent[iBndEl]->cast2Edge();
     const Range<double> parBounds = ge->parBounds(0);
     const double eps = 1.e-6 * (parBounds.high() - parBounds.low());
     std::vector<SVector3> tanCAD(nV);
     for(int i = 0; i < nV; i++) {
       const int &iVi = iV[i], &iFVi = iFV[i];
-      MNode *&vert = _vert[iVi];
+      MVertex *&vert = _vert[iVi];
       double tCAD;
       if(iFVi >= 0) // If free vertex, ...
         tCAD =
@@ -654,7 +654,7 @@ void Patch::scaledCADDistSqAndGradients(int iBndEl, double &scaledDist,
         tanCAD[i]; // Save tangent to CAD at perturbed node
       const double tCAD =
         _uvw[iFVi].x() + eps; // New param. coord. of perturbed node
-      GVertex gp = ge->point(tCAD); // New coord. of perturbed node
+      GPoint gp = ge->point(tCAD); // New coord. of perturbed node
       nodesXYZ(i, 0) = gp.x();
       nodesXYZ(i, 1) = gp.y();
       nodesXYZ(i, 2) = gp.z();
@@ -672,7 +672,7 @@ void Patch::scaledCADDistSqAndGradients(int iBndEl, double &scaledDist,
     }
   }
   else { // 3D
-    const GSurface *gf = _bndEl2Ent[iBndEl]->cast2Face();
+    const GFace *gf = _bndEl2Ent[iBndEl]->cast2Face();
     const Range<double> parBounds0 = gf->parBounds(0),
                         parBounds1 = gf->parBounds(1);
     const double eps0 = 1.e-6 * (parBounds0.high() - parBounds0.low());
@@ -680,14 +680,14 @@ void Patch::scaledCADDistSqAndGradients(int iBndEl, double &scaledDist,
     std::vector<SVector3> normCAD(nV);
     for(int i = 0; i < nV; i++) {
       const int &iVi = iV[i], &iFVi = iFV[i];
-      MNode *&vert = _vert[iVi];
+      MVertex *&vert = _vert[iVi];
       SPoint2 pCAD;
       if(iFVi >= 0) { // If free vertex...
         if(vert->onWhat() == gf) // If on surface, ...
           pCAD = SPoint2(_uvw[iFVi].x(),
                          _uvw[iFVi].y()); // ... get stored param. coord.
         else { // Otherwise, reparametrize on surface
-          const GCurve *ge = vert->onWhat()->cast2Edge();
+          const GEdge *ge = vert->onWhat()->cast2Edge();
           pCAD = ge->reparamOnFace(gf, _uvw[iFVi].x(), 1);
         }
       }
@@ -711,7 +711,7 @@ void Patch::scaledCADDistSqAndGradients(int iBndEl, double &scaledDist,
         const SPoint2 pCAD0 = SPoint2(
           _uvw[iFVi].x() + eps0,
           _uvw[iFVi].y()); // New param. coord. of perturbed node in 1st dir.
-        GVertex gp0 =
+        GPoint gp0 =
           gf->point(pCAD0); // New coord. of perturbed node in 1st dir.
         nodesXYZ(i, 0) = gp0.x();
         nodesXYZ(i, 1) = gp0.y();
@@ -730,7 +730,7 @@ void Patch::scaledCADDistSqAndGradients(int iBndEl, double &scaledDist,
           SPoint2(_uvw[iFVi].x(),
                   _uvw[iFVi].y() +
                     eps1); // New param. coord. of perturbed node in 2nd dir.
-        GVertex gp1 =
+        GPoint gp1 =
           gf->point(pCAD1); // New coord. of perturbed node in 2nd dir.
         nodesXYZ(i, 0) = gp1.x();
         nodesXYZ(i, 1) = gp1.y();
@@ -747,13 +747,13 @@ void Patch::scaledCADDistSqAndGradients(int iBndEl, double &scaledDist,
           (sDistDiff1 - scaledDist) / eps1; // Compute gradient in 2nd dir.
       }
       else if(_nPCFV[iFVi] == 1) { // Vertex classified on edge, 1D gradient
-        MNode *&vert = _vert[iVi];
-        const GCurve *ge = vert->onWhat()->cast2Edge();
+        MVertex *&vert = _vert[iVi];
+        const GEdge *ge = vert->onWhat()->cast2Edge();
         const Range<double> parBounds = ge->parBounds(0);
         const double eps = 1.e-6 * (parBounds.high() - parBounds.low());
         const double tCAD =
           _uvw[iFVi].x() + eps; // New param. coord. of perturbed node
-        GVertex gp = ge->point(tCAD); // New coord. of perturbed node
+        GPoint gp = ge->point(tCAD); // New coord. of perturbed node
         nodesXYZ(i, 0) = gp.x();
         nodesXYZ(i, 1) = gp.y();
         nodesXYZ(i, 2) = gp.z();

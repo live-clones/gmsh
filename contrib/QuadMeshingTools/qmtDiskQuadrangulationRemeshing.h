@@ -24,7 +24,7 @@ int initDiskQuadrangulations();
  * @brief Look for the best topological disk quadrangulation remeshing
  *        which match the allowed valence ranges.
  *        Requires that the disk quadrangulation data is initialized, see initDiskQuadrangulations()
- *        The GSurface mesh is not changed, the changes are stored in the diff
+ *        The GFace mesh is not changed, the changes are stored in the diff
  *        which can executed by the caller.
  *
  * @param[in] gf CAD face containing the elements
@@ -40,15 +40,15 @@ int initDiskQuadrangulations();
  *                                    This flag invert invert the CAD normals in the measure.
  * @param[in] sp If not nullptr, the surface projector is used instead of the CAD parametrization
  *               in the smoothing. Required if there is no surface parametrization.
- * @param[out] diff The mesh diff (to the GSurface) containing the remeshing candidate
+ * @param[out] diff The mesh diff (to the GFace) containing the remeshing candidate
  *
  * @return 0 if a valid remeshing has been found
  */
 int remeshLocalWithDiskQuadrangulation(
-    GSurface* gf,
+    GFace* gf,
     const std::vector<MElement*>& elements,
-    const std::vector<MNode*>& intVertices,
-    const std::vector<MNode*>& bdrVertices,
+    const std::vector<MVertex*>& intVertices,
+    const std::vector<MVertex*>& bdrVertices,
     const std::vector<int>& bndIdealValence,
     const std::vector<std::pair<int,int> >& bndAllowedValenceRange,
     const std::vector<MElement*>& neighborsForGeometry,

@@ -33,7 +33,7 @@ int GModel::readP3D(const std::string &name)
 
   for(int n = 0; n < numBlocks; n++) {
     if(Nk[n] == 1) {
-      GSurface *gf = new discreteFace(this, getMaxElementaryNumber(2) + 1);
+      GFace *gf = new discreteFace(this, getMaxElementaryNumber(2) + 1);
       add(gf);
       gf->transfinite_vertices.resize(Ni[n]);
       for(int i = 0; i < Ni[n]; i++) gf->transfinite_vertices[i].resize(Nj[n]);
@@ -46,7 +46,7 @@ int GModel::readP3D(const std::string &name)
               return 0;
             }
             if(coord == 0) {
-              MNode *v = new MNode(d, 0., 0., gf);
+              MVertex *v = new MVertex(d, 0., 0., gf);
               gf->transfinite_vertices[i][j] = v;
               gf->mesh_vertices.push_back(v);
             }
@@ -67,7 +67,7 @@ int GModel::readP3D(const std::string &name)
             gf->transfinite_vertices[i][j + 1]));
     }
     else {
-      GVolume *gr = new discreteRegion(this, getMaxElementaryNumber(3) + 1);
+      GRegion *gr = new discreteRegion(this, getMaxElementaryNumber(3) + 1);
       add(gr);
       gr->transfinite_vertices.resize(Ni[n]);
       for(int i = 0; i < Ni[n]; i++) {
@@ -86,7 +86,7 @@ int GModel::readP3D(const std::string &name)
                 return 0;
               }
               if(coord == 0) {
-                MNode *v = new MNode(d, 0., 0., gr);
+                MVertex *v = new MVertex(d, 0., 0., gr);
                 gr->transfinite_vertices[i][j][k] = v;
                 gr->mesh_vertices.push_back(v);
               }
@@ -131,14 +131,14 @@ int GModel::writeP3D(const std::string &name, bool saveAll,
 
   if(noPhysicalGroups()) saveAll = true;
 
-  std::vector<GSurface *> faces;
+  std::vector<GFace *> faces;
   for(auto it = firstFace(); it != lastFace(); ++it)
     if((*it)->transfinite_vertices.size() &&
        (*it)->transfinite_vertices[0].size() &&
        ((*it)->physicals.size() || saveAll))
       faces.push_back(*it);
 
-  std::vector<GVolume *> regions;
+  std::vector<GRegion *> regions;
   for(auto it = firstRegion(); it != lastRegion(); ++it)
     if((*it)->transfinite_vertices.size() &&
        (*it)->transfinite_vertices[0].size() &&
@@ -164,11 +164,11 @@ int GModel::writeP3D(const std::string &name, bool saveAll,
             (int)regions[i]->transfinite_vertices[0][0].size());
 
   for(std::size_t i = 0; i < faces.size(); i++) {
-    GSurface *gf = faces[i];
+    GFace *gf = faces[i];
     for(int coord = 0; coord < 3; coord++) {
       for(std::size_t k = 0; k < gf->transfinite_vertices[0].size(); k++) {
         for(std::size_t j = 0; j < gf->transfinite_vertices.size(); j++) {
-          MNode *v = gf->transfinite_vertices[j][k];
+          MVertex *v = gf->transfinite_vertices[j][k];
           double d = (coord == 0) ? v->x() : (coord == 1) ? v->y() : v->z();
           fprintf(fp, "%.16g ", d * scalingFactor);
         }
@@ -178,12 +178,12 @@ int GModel::writeP3D(const std::string &name, bool saveAll,
   }
 
   for(std::size_t i = 0; i < regions.size(); i++) {
-    GVolume *gr = regions[i];
+    GRegion *gr = regions[i];
     for(int coord = 0; coord < 3; coord++) {
       for(std::size_t l = 0; l < gr->transfinite_vertices[0][0].size(); l++) {
         for(std::size_t k = 0; k < gr->transfinite_vertices[0].size(); k++) {
           for(std::size_t j = 0; j < gr->transfinite_vertices.size(); j++) {
-            MNode *v = gr->transfinite_vertices[j][k][l];
+            MVertex *v = gr->transfinite_vertices[j][k][l];
             double d = (coord == 0) ? v->x() : (coord == 1) ? v->y() : v->z();
             fprintf(fp, "%.16g ", d * scalingFactor);
           }

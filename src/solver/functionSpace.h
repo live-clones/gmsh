@@ -65,7 +65,7 @@ public:
   virtual int
   getNumKeys(MElement *ele) const = 0; // if one needs the number of dofs
   virtual void getKeys(MElement *ele, std::vector<Dof> &keys) const = 0;
-  virtual void getKeysOnVertex(MElement *ele, MNode *v,
+  virtual void getKeysOnVertex(MElement *ele, MVertex *v,
                                const std::vector<int> &comp,
                                std::vector<Dof> &keys) const
   {
@@ -125,7 +125,7 @@ public:
   typedef TensorialTraits<double>::HessType HessType;
 
 private:
-  virtual void getKeys(MNode *ver, std::vector<Dof> &keys) const
+  virtual void getKeys(MVertex *ver, std::vector<Dof> &keys) const
   {
     keys.push_back(Dof(ver->getNum(), _iField));
   }
@@ -244,7 +244,7 @@ public:
   typedef TensorialTraits<double>::HessType HessType;
 
 private:
-  virtual void getKeys(MNode *ver, std::vector<Dof> &keys) const
+  virtual void getKeys(MVertex *ver, std::vector<Dof> &keys) const
   {
     keys.push_back(Dof(ver->getNum(), _iField));
   }

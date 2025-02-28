@@ -14,7 +14,7 @@
 
 enum localMeshModAction { GMSH_DOIT, GMSH_EVALONLY };
 
-int LaplaceSmoothing(GVolume *gr);
+int LaplaceSmoothing(GRegion *gr);
 
 bool edgeSwap(std::vector<MTet4 *> &newTets, MTet4 *tet, int iLocalEdge,
               const qmTetrahedron::Measures &cr,
@@ -35,7 +35,7 @@ bool collapseVertex(std::vector<MTet4 *> &newTets, MTet4 *t, int iVertex,
                     const localMeshModAction = GMSH_DOIT,
                     double *result = nullptr);
 
-bool edgeSplit(std::vector<MTet4 *> &newTets, MTet4 *tet, MNode *newVertex,
+bool edgeSplit(std::vector<MTet4 *> &newTets, MTet4 *tet, MVertex *newVertex,
                int iLocalEdge, const qmTetrahedron::Measures &cr);
 
 #endif

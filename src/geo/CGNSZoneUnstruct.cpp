@@ -7,7 +7,7 @@
 //   Thomas Toulorge
 
 #include "GmshMessage.h"
-#include "MNode.h"
+#include "MVertex.h"
 #include "MElement.h"
 #include "CGNSCommon.h"
 #include "CGNSConventions.h"
@@ -19,7 +19,7 @@ namespace {
 
   MElement *createElement(CGNS_ENUMT(ElementType_t) sectEltType,
                           std::size_t vertShift, int entity,
-                          const std::vector<MNode *> &allVert,
+                          const std::vector<MVertex *> &allVert,
                           std::map<int, std::vector<MElement *> > *allElt,
                           const std::vector<cgsize_t> &sectData,
                           const ZoneEltNodeTransfo *eltNodeTransfo,
@@ -50,7 +50,7 @@ namespace {
       nodeTransfo = &(cgns2MshNodeIndex(mshEltType));
 
     // get element vertices
-    std::vector<MNode *> eltVert(nbEltNode);
+    std::vector<MVertex *> eltVert(nbEltNode);
     for(int iEltNode = 0; iEltNode < nbEltNode; iEltNode++, iSectData++) {
       const int indNode = vertShift + sectData[iSectData] - 1;
       eltVert[(*nodeTransfo)[iEltNode]] = allVert[indNode];
@@ -96,7 +96,7 @@ CGNSZoneUnstruct::CGNSZoneUnstruct(
 }
 
 int CGNSZoneUnstruct::readSection(
-  int iSect, const std::vector<MNode *> &allVert,
+  int iSect, const std::vector<MVertex *> &allVert,
   const std::vector<SPoint3> &rawNode,
   std::map<int, std::vector<MElement *> > *allElt,
   std::vector<MElement *> &zoneElt)
@@ -160,7 +160,7 @@ int CGNSZoneUnstruct::readSection(
 }
 
 int CGNSZoneUnstruct::readElements(
-  std::vector<MNode *> &allVert,
+  std::vector<MVertex *> &allVert,
   std::map<int, std::vector<MElement *> > *allElt,
   std::vector<MElement *> &zoneElt, std::vector<std::string> &allGeomName)
 {

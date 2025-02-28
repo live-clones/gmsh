@@ -8,8 +8,8 @@
 #ifndef YAMAKAWA_H
 #define YAMAKAWA_H
 
-#include "GVolume.h"
-#include "MNode.h"
+#include "GRegion.h"
+#include "MVertex.h"
 #include "MHexahedron.h"
 #include "qualityMeasuresJacobian.h"
 #include <set>
@@ -21,13 +21,13 @@
 
 using namespace std;
 
-extern void export_gregion_mesh(GVolume *gr, const std::string &filename);
+extern void export_gregion_mesh(GRegion *gr, const std::string &filename);
 
 class Hex {
 private:
   double quality;
   unsigned long long hash;
-  std::vector<MNode *> vertices_;
+  std::vector<MVertex *> vertices_;
 
 private:
   void set_hash()
@@ -48,13 +48,13 @@ private:
 
 public:
   Hex() : quality(0.), hash(0.) {}
-  Hex(const std::vector<MNode *> &vertices)
+  Hex(const std::vector<MVertex *> &vertices)
     : quality(0.), hash(0), vertices_(vertices)
   {
     initialize();
   }
-  Hex(MNode *a2, MNode *b2, MNode *c2, MNode *d2, MNode *e2,
-      MNode *f2, MNode *g2, MNode *h2)
+  Hex(MVertex *a2, MVertex *b2, MVertex *c2, MVertex *d2, MVertex *e2,
+      MVertex *f2, MVertex *g2, MVertex *h2)
     : quality(0.)
   {
     vertices_.push_back(a2);
@@ -69,7 +69,7 @@ public:
   }
   ~Hex(){};
   double get_quality() const { return quality; }
-  MNode *getVertex(unsigned int i) const
+  MVertex *getVertex(unsigned int i) const
   {
     if(i < 8) { return vertices_[i]; }
     else {
@@ -78,9 +78,9 @@ public:
       return NULL;
     }
   }
-  const std::vector<MNode *> &vertices() const { return vertices_; }
-  MNode *vertex_in_facet(unsigned int facet, unsigned int v_in_facet) const;
-  bool hasVertex(MNode *v) const
+  const std::vector<MVertex *> &vertices() const { return vertices_; }
+  MVertex *vertex_in_facet(unsigned int facet, unsigned int v_in_facet) const;
+  bool hasVertex(MVertex *v) const
   {
     for(int i = 0; i < 8; i++) {
       if(getVertex(i) == v) { return true; }
@@ -94,14 +94,14 @@ public:
     }
     return true;
   }
-  int vertex_index(MNode *v) const
+  int vertex_index(MVertex *v) const
   {
     for(unsigned int i = 0; i < 8; ++i) {
       if(vertices_[i] == v) { return i; }
     }
     return -1;
   }
-  bool contains(MNode *v) const { return vertex_index(v) != -1; }
+  bool contains(MVertex *v) const { return vertex_index(v) != -1; }
   unsigned long long get_hash()
   {
     if(hash == 0. && vertices_[0] != NULL) { set_hash(); }
@@ -116,7 +116,7 @@ public:
 
 class Facet {
 private:
-  MNode *a, *b, *c;
+  MVertex *a, *b, *c;
   int num[3];
   unsigned long long hash;
 
@@ -127,7 +127,7 @@ public:
     num[1] = -1;
     num[2] = -1;
   }
-  Facet(MNode *a2, MNode *b2, MNode *c2) : a(a2), b(b2), c(c2), hash(0.)
+  Facet(MVertex *a2, MVertex *b2, MVertex *c2) : a(a2), b(b2), c(c2), hash(0.)
   {
     num[0] = -1;
     num[1] = -1;
@@ -135,10 +135,10 @@ public:
     compute_hash();
   }
   ~Facet(){};
-  MNode *get_a() const { return a; }
-  MNode *get_b() const { return b; }
-  MNode *get_c() const { return c; }
-  void set_vertices(MNode *a2, MNode *b2, MNode *c2)
+  MVertex *get_a() const { return a; }
+  MVertex *get_b() const { return b; }
+  MVertex *get_c() const { return c; }
+  void set_vertices(MVertex *a2, MVertex *b2, MVertex *c2)
   {
     a = a2;
     b = b2;
@@ -169,7 +169,7 @@ public:
 
 class Diagonal {
 private:
-  MNode *a, *b;
+  MVertex *a, *b;
   unsigned long long hash;
 
 private:
@@ -177,11 +177,11 @@ private:
 
 public:
   Diagonal() : a(NULL), b(NULL), hash(){};
-  Diagonal(MNode *a2, MNode *b2) : a(a2), b(b2) { compute_hash(); }
+  Diagonal(MVertex *a2, MVertex *b2) : a(a2), b(b2) { compute_hash(); }
   ~Diagonal(){};
-  MNode *get_a() const { return a; }
-  MNode *get_b() const { return b; }
-  void set_vertices(MNode *a2, MNode *b2)
+  MVertex *get_a() const { return a; }
+  MVertex *get_b() const { return b; }
+  void set_vertices(MVertex *a2, MVertex *b2)
   {
     a = a2;
     b = b2;
@@ -199,9 +199,9 @@ public:
 
 class Tuple {
 private:
-  MNode *vertex1, *vertex2, *vertex3;
+  MVertex *vertex1, *vertex2, *vertex3;
   MElement *element;
-  GSurface *gf;
+  GFace *gf;
   unsigned long long hash;
 
 public:
@@ -211,23 +211,23 @@ public:
   {
   }
 
-  Tuple(MNode *const a, MNode *const b, MNode *const c,
-        MElement *const element2, GSurface *const gf2)
+  Tuple(MVertex *const a, MVertex *const b, MVertex *const c,
+        MElement *const element2, GFace *const gf2)
     : vertex1(NULL), vertex2(NULL), vertex3(NULL), element(element2), gf(gf2),
       hash(a->getNum() + b->getNum() + c->getNum())
   {
-    MNode *tmp[3] = {a, b, c};
+    MVertex *tmp[3] = {a, b, c};
     std::sort(tmp, tmp + 3);
     vertex1 = tmp[0];
     vertex2 = tmp[1];
     vertex2 = tmp[2];
   }
 
-  Tuple(MNode *const a, MNode *const b, MNode *const c)
+  Tuple(MVertex *const a, MVertex *const b, MVertex *const c)
     : vertex1(NULL), vertex2(NULL), vertex3(NULL), element(NULL), gf(NULL),
       hash(a->getNum() + b->getNum() + c->getNum())
   {
-    MNode *tmp[3] = {a, b, c};
+    MVertex *tmp[3] = {a, b, c};
     std::sort(tmp, tmp + 3);
     vertex1 = tmp[0];
     vertex2 = tmp[1];
@@ -236,13 +236,13 @@ public:
 
   ~Tuple() {}
 
-  MNode *get_v1() const { return vertex1; }
-  MNode *get_v2() const { return vertex2; }
-  MNode *get_v3() const { return vertex3; }
+  MVertex *get_v1() const { return vertex1; }
+  MVertex *get_v2() const { return vertex2; }
+  MVertex *get_v3() const { return vertex3; }
 
   MElement *get_element() const { return element; }
 
-  GSurface *get_gf() const { return gf; }
+  GFace *get_gf() const { return gf; }
 
   bool same_vertices(const Tuple &rhs) const
   {
@@ -258,11 +258,11 @@ public:
 // mesh
 class TetMeshConnectivity {
 public:
-  typedef std::set<MNode *> VertexSet;
+  typedef std::set<MVertex *> VertexSet;
   typedef std::set<MElement *> TetSet;
   TetMeshConnectivity(){};
   ~TetMeshConnectivity(){};
-  void initialize(GVolume *region)
+  void initialize(GRegion *region)
   {
     Msg::Info("Initialize Connectivity Information...");
     clear();
@@ -274,16 +274,16 @@ public:
     vertex_to_vertices_.clear();
     vertex_to_elements_.clear();
   }
-  VertexSet &vertices_around_vertex(MNode *v)
+  VertexSet &vertices_around_vertex(MVertex *v)
   {
     return vertex_to_vertices_[v];
   }
-  TetSet &tets_around_vertex(MNode *v) { return vertex_to_elements_[v]; }
-  bool are_vertex_neighbors(MNode *v0, MNode *v1)
+  TetSet &tets_around_vertex(MVertex *v) { return vertex_to_elements_[v]; }
+  bool are_vertex_neighbors(MVertex *v0, MVertex *v1)
   {
     return vertices_around_vertex(v0).count(v1) > 0;
   }
-  void vertices_around_vertices(MNode *v0, MNode *v1, VertexSet &result)
+  void vertices_around_vertices(MVertex *v0, MVertex *v1, VertexSet &result)
   {
     const VertexSet &neighbors0 = vertices_around_vertex(v0);
     const VertexSet &neighbors1 = vertices_around_vertex(v1);
@@ -291,7 +291,7 @@ public:
                           neighbors1.begin(), neighbors1.end(),
                           std::inserter(result, result.end()));
   }
-  void vertices_around_vertices(MNode *v0, MNode *v1, MNode *v2,
+  void vertices_around_vertices(MVertex *v0, MVertex *v1, MVertex *v2,
                                 VertexSet &result)
   {
     VertexSet tmp;
@@ -300,14 +300,14 @@ public:
     std::set_intersection(neighbors2.begin(), neighbors2.end(), tmp.begin(),
                           tmp.end(), std::inserter(result, result.end()));
   }
-  void tets_around_vertices(MNode *v0, MNode *v1, TetSet &result)
+  void tets_around_vertices(MVertex *v0, MVertex *v1, TetSet &result)
   {
     const TetSet &elements0 = tets_around_vertex(v0);
     const TetSet &elements1 = tets_around_vertex(v1);
     std::set_intersection(elements0.begin(), elements0.end(), elements1.begin(),
                           elements1.end(), std::inserter(result, result.end()));
   }
-  void tets_around_vertices(MNode *v0, MNode *v1, MNode *v2,
+  void tets_around_vertices(MVertex *v0, MVertex *v1, MVertex *v2,
                             TetSet &result)
   {
     TetSet tmp;
@@ -321,17 +321,17 @@ private:
   // TODO Change this costly  implementation
   // Replace maps by vectors and store adjacent vertices whose
   // index is bigger
-  void initialize_vertex_to_vertices(GVolume *region)
+  void initialize_vertex_to_vertices(GRegion *region)
   {
     int nbtets = region->getNumMeshElements();
     for(int i = 0; i < nbtets; i++) {
       MElement *tet = region->getMeshElement(i);
       for(int j = 0; j < 4; j++) {
-        MNode *a = tet->getVertex(j);
-        MNode *b = tet->getVertex((j + 1) % 4);
-        MNode *c = tet->getVertex((j + 2) % 4);
-        MNode *d = tet->getVertex((j + 3) % 4);
-        std::map<MNode *, std::set<MNode *> >::iterator it =
+        MVertex *a = tet->getVertex(j);
+        MVertex *b = tet->getVertex((j + 1) % 4);
+        MVertex *c = tet->getVertex((j + 2) % 4);
+        MVertex *d = tet->getVertex((j + 3) % 4);
+        std::map<MVertex *, std::set<MVertex *> >::iterator it =
           vertex_to_vertices_.find(a);
         if(it != vertex_to_vertices_.end()) {
           it->second.insert(b);
@@ -339,59 +339,59 @@ private:
           it->second.insert(d);
         }
         else {
-          std::set<MNode *> bin;
+          std::set<MVertex *> bin;
           bin.insert(b);
           bin.insert(c);
           bin.insert(d);
           vertex_to_vertices_.insert(
-            std::pair<MNode *, std::set<MNode *> >(a, bin));
+            std::pair<MVertex *, std::set<MVertex *> >(a, bin));
         }
       }
     }
   }
-  void initialize_vertex_to_elements(GVolume *region)
+  void initialize_vertex_to_elements(GRegion *region)
   {
     int nbtets = region->getNumMeshElements();
 
     for(int i = 0; i < nbtets; i++) {
       MElement *tet = region->getMeshElement(i);
       for(unsigned int j = 0; j < 4; j++) {
-        MNode *getVertex = tet->getVertex(j);
-        std::map<MNode *, std::set<MElement *> >::iterator it =
+        MVertex *getVertex = tet->getVertex(j);
+        std::map<MVertex *, std::set<MElement *> >::iterator it =
           vertex_to_elements_.find(getVertex);
         if(it != vertex_to_elements_.end()) { it->second.insert(tet); }
         else {
           std::set<MElement *> bin;
           bin.insert(tet);
           vertex_to_elements_.insert(
-            std::pair<MNode *, std::set<MElement *> >(getVertex, bin));
+            std::pair<MVertex *, std::set<MElement *> >(getVertex, bin));
         }
       }
     }
   }
 
 private:
-  std::map<MNode *, std::set<MNode *> > vertex_to_vertices_;
-  std::map<MNode *, std::set<MElement *> > vertex_to_elements_;
+  std::map<MVertex *, std::set<MVertex *> > vertex_to_vertices_;
+  std::map<MVertex *, std::set<MElement *> > vertex_to_elements_;
 };
 
 class Recombinator {
 public:
-  typedef std::set<MNode *>::iterator vertex_set_itr;
+  typedef std::set<MVertex *>::iterator vertex_set_itr;
   typedef std::set<MElement *>::iterator element_set_itr;
 
-  typedef std::map<MNode *, std::set<MNode *> > Vertex2Vertices;
-  typedef std::map<MNode *, std::set<MElement *> > Vertex2Elements;
+  typedef std::map<MVertex *, std::set<MVertex *> > Vertex2Vertices;
+  typedef std::map<MVertex *, std::set<MElement *> > Vertex2Elements;
 
   Recombinator() : current_region(NULL), hex_threshold_quality(0.6){};
   virtual ~Recombinator();
 
   virtual void execute();
-  virtual void execute(GVolume *);
+  virtual void execute(GRegion *);
 
 protected:
   // ---- Initialization of the structures
-  virtual void initialize_structures(GVolume *region)
+  virtual void initialize_structures(GRegion *region)
   {
     set_current_region(region);
     tet_mesh.initialize(current_region);
@@ -402,11 +402,11 @@ protected:
   }
   void init_markings();
   void build_tuples();
-  void set_current_region(GVolume *region) { current_region = region; }
+  void set_current_region(GRegion *region) { current_region = region; }
 
   // ---- Create the final mesh -------
   virtual void merge();
-  virtual void merge(GVolume *) {}
+  virtual void merge(GRegion *) {}
 
   void delete_marked_tets_in_region() const;
   // Check if the hex is valid and compatible with the
@@ -440,7 +440,7 @@ protected:
   bool conformityC(const Hex &);
 
   bool faces_statuquo(const Hex &);
-  bool faces_statuquo(MNode *, MNode *, MNode *, MNode *);
+  bool faces_statuquo(MVertex *, MVertex *, MVertex *, MVertex *);
 
   bool are_all_tets_free(const std::set<MElement *> &tets) const;
 
@@ -464,11 +464,11 @@ protected:
   // Reverse of of built elements with a negative volume
   void set_region_elements_positive();
   void create_quads_on_boundary();
-  void create_quads_on_boundary(MNode *, MNode *, MNode *, MNode *);
+  void create_quads_on_boundary(MVertex *, MVertex *, MVertex *, MVertex *);
   void delete_quad_triangles_in_boundary() const;
 
   // ---- Functions that should not be part of the class
-  double scaled_jacobian(MNode *, MNode *, MNode *, MNode *);
+  double scaled_jacobian(MVertex *, MVertex *, MVertex *, MVertex *);
   double max_scaled_jacobian(MElement *, int &);
   double min_scaled_jacobian(Hex &);
   void print_statistics();
@@ -478,7 +478,7 @@ protected:
   // in the initial region tetrahedral mesh
   TetMeshConnectivity tet_mesh;
 
-  GVolume *current_region;
+  GRegion *current_region;
   double hex_threshold_quality;
 
   std::vector<Hex *> potential;
@@ -496,16 +496,16 @@ protected:
 
 class PEEntity {
 protected:
-  vector<MNode *> vertices;
+  vector<MVertex *> vertices;
   size_t hash;
   void compute_hash();
 
 public:
-  PEEntity(const vector<MNode *> &_v);
+  PEEntity(const vector<MVertex *> &_v);
   virtual ~PEEntity();
   virtual size_t get_max_nb_vertices() const = 0;
-  MNode *getVertex(size_t n) const;
-  bool hasVertex(MNode *v) const;
+  MVertex *getVertex(size_t n) const;
+  bool hasVertex(MVertex *v) const;
   size_t get_hash() const;
   bool same_vertices(const PEEntity *t) const;
   bool operator<(const PEEntity &) const;
@@ -513,14 +513,14 @@ public:
 
 class PELine : public PEEntity {
 public:
-  PELine(const vector<MNode *> &_v);
+  PELine(const vector<MVertex *> &_v);
   virtual ~PELine();
   size_t get_max_nb_vertices() const;
 };
 
 class PETriangle : public PEEntity {
 public:
-  PETriangle(const vector<MNode *> &_v);
+  PETriangle(const vector<MVertex *> &_v);
   // PETriangle(size_t l);
   virtual ~PETriangle();
   size_t get_max_nb_vertices() const;
@@ -528,7 +528,7 @@ public:
 
 class PEQuadrangle : public PEEntity {
 public:
-  PEQuadrangle(const vector<MNode *> &_v);
+  PEQuadrangle(const vector<MVertex *> &_v);
   // PEQuadrangle(size_t l);
   virtual ~PEQuadrangle();
   size_t get_max_nb_vertices() const;
@@ -710,7 +710,7 @@ protected:
   trimap triangular_faces;
   linemap edges_and_diagonals;
 
-  map<PETriangle *, GSurface *> tri_to_gface_info;
+  map<PETriangle *, GFace *> tri_to_gface_info;
 
   vector<Hex *> chosen_hex;
   vector<MElement *> chosen_tet;
@@ -721,17 +721,17 @@ protected:
   void add_face_connectivity(MElement *tet, int i, int j, int k);
 
   void add_edges(Hex *hex);
-  void fill_edges_table(const std::vector<MNode *> &, Hex *hex);
-  void add_face(MNode *a, MNode *b, MNode *c, Hex *hex);
-  void add_face(MNode *a, MNode *b, MNode *c,
+  void fill_edges_table(const std::vector<MVertex *> &, Hex *hex);
+  void add_face(MVertex *a, MVertex *b, MVertex *c, Hex *hex);
+  void add_face(MVertex *a, MVertex *b, MVertex *c,
                 std::multimap<unsigned long long, pair<PETriangle *, int> > &f);
 
   // All the blossom related stuff is out of date - or not working
   // Cannot be called. To remove?
-  bool find_face_in_blossom_info(MNode *a, MNode *b, MNode *c,
-                                 MNode *d);
+  bool find_face_in_blossom_info(MVertex *a, MVertex *b, MVertex *c,
+                                 MVertex *d);
   void compute_hex_ranks_blossom();
-  PETriangle *get_triangle(MNode *a, MNode *b, MNode *c);
+  PETriangle *get_triangle(MVertex *a, MVertex *b, MVertex *c);
   bool is_blossom_pair(PETriangle *t1, PETriangle *t2);
 
   citer find_the_triangle(PETriangle *t, const trimap &list);
@@ -768,16 +768,16 @@ protected:
 
   // if two hex are not connected in the incompatibility_graph, they are
   // compatible
-  void create_losses_graph(GVolume *gr);
+  void create_losses_graph(GRegion *gr);
 
-  void merge_clique(GVolume *gr, cliques_losses_graph<Hex *> &cl,
+  void merge_clique(GRegion *gr, cliques_losses_graph<Hex *> &cl,
                     int clique_number = 0);
 
   /*
    * Tries to merge tetrahedra into one hexahedron. Returns false if the hex
    * that would be created does not pass some conformity checks.
    */
-  bool merge_hex(GVolume *gr, Hex *hex);
+  bool merge_hex(GRegion *gr, Hex *hex);
 
   void fill_tet_to_hex_table(Hex *hex);
 
@@ -793,7 +793,7 @@ protected:
     tet_to_hex.clear();
     created_potential_hex.clear();
   }
-  virtual void initialize_structures(GVolume *region)
+  virtual void initialize_structures(GRegion *region)
   {
     set_current_region(region);
     tet_mesh.initialize(current_region);
@@ -812,7 +812,7 @@ protected:
 
   // Throw an assertion
   using Recombinator::merge;
-  void merge(GVolume *);
+  void merge(GRegion *);
 
   // ------- exports --------
   // ---- seems that it won't export nothing since the
@@ -822,10 +822,10 @@ protected:
   void export_single_hex(Hex *hex, const string &s);
   void export_single_hex_faces(Hex *hex, const string &s);
   void export_single_hex_tet(Hex *hex, const string &s);
-  void export_all_hex(int &file, GVolume *gr);
+  void export_all_hex(int &file, GRegion *gr);
   void export_hexmesh_so_far(int &file);
   void export_direct_neighbor_table(int max);
-  void export_hex_init_degree(GVolume *gr,
+  void export_hex_init_degree(GRegion *gr,
                               const std::map<Hex *, int> &init_degree,
                               const vector<Hex *> &chosen_hex);
 
@@ -834,20 +834,20 @@ public:
                      const string &filename = string());
   virtual ~Recombinator_Graph();
   using Recombinator::execute;
-  virtual void execute(GVolume *);
+  virtual void execute(GRegion *);
 
   virtual void buildGraphOnly(unsigned int max_nb_cliques,
                               string filename = string());
-  virtual void buildGraphOnly(GVolume *, unsigned int max_nb_cliques,
+  virtual void buildGraphOnly(GRegion *, unsigned int max_nb_cliques,
                               string filename = string());
   virtual void execute_blossom(unsigned int max_nb_cliques,
                                const std::string &filename = string());
   // What is this function supposed to do?
   // Right now it throws at the first line. JP
-  virtual void execute_blossom(GVolume *, unsigned int max_nb_cliques,
+  virtual void execute_blossom(GRegion *, unsigned int max_nb_cliques,
                                const std::string &filename = "mygraph.dot");
   virtual void createBlossomInfo();
-  void createBlossomInfo(GVolume *gr);
+  void createBlossomInfo(GRegion *gr);
 
   const std::set<Hex *> &getHexInGraph() const
   {
@@ -859,25 +859,25 @@ public:
 class Prism {
 private:
   double quality;
-  MNode *a, *b, *c, *d, *e, *f;
+  MVertex *a, *b, *c, *d, *e, *f;
 
 public:
-  typedef std::set<MNode *>::iterator vertex_set_itr;
+  typedef std::set<MVertex *>::iterator vertex_set_itr;
   typedef std::set<MElement *>::iterator element_set_itr;
 
   Prism();
-  Prism(MNode *, MNode *, MNode *, MNode *, MNode *, MNode *);
+  Prism(MVertex *, MVertex *, MVertex *, MVertex *, MVertex *, MVertex *);
   ~Prism();
   double get_quality() const;
   void set_quality(double);
-  MNode *get_a();
-  MNode *get_b();
-  MNode *get_c();
-  MNode *get_d();
-  MNode *get_e();
-  MNode *get_f();
-  void set_vertices(MNode *, MNode *, MNode *, MNode *, MNode *,
-                    MNode *);
+  MVertex *get_a();
+  MVertex *get_b();
+  MVertex *get_c();
+  MVertex *get_d();
+  MVertex *get_e();
+  MVertex *get_f();
+  void set_vertices(MVertex *, MVertex *, MVertex *, MVertex *, MVertex *,
+                    MVertex *);
   bool operator<(const Prism &) const;
 };
 
@@ -886,8 +886,8 @@ class Supplementary {
 private:
   std::vector<Prism> potential;
   std::map<MElement *, bool> markings;
-  std::map<MNode *, std::set<MNode *> > vertex_to_vertices;
-  std::map<MNode *, std::set<MElement *> > vertex_to_tetrahedra;
+  std::map<MVertex *, std::set<MVertex *> > vertex_to_vertices;
+  std::map<MVertex *, std::set<MElement *> > vertex_to_tetrahedra;
   std::multiset<Facet> hash_tableA;
   std::multiset<Diagonal> hash_tableB;
   std::multiset<Diagonal> hash_tableC;
@@ -896,26 +896,26 @@ private:
   // std::fstream file; //fordebug
 
 public:
-  typedef std::set<MNode *>::iterator vertex_set_itr;
+  typedef std::set<MVertex *>::iterator vertex_set_itr;
   typedef std::set<MElement *>::iterator element_set_itr;
 
-  typedef std::map<MNode *, std::set<MNode *> > Vertex2Vertices;
-  typedef std::map<MNode *, std::set<MElement *> > Vertex2Elements;
+  typedef std::map<MVertex *, std::set<MVertex *> > Vertex2Vertices;
+  typedef std::map<MVertex *, std::set<MElement *> > Vertex2Elements;
 
   Supplementary();
   ~Supplementary();
 
   void execute();
-  void execute(GVolume *);
+  void execute(GRegion *);
 
-  void init_markings(GVolume *);
-  void pattern(GVolume *);
-  void merge(GVolume *);
-  void rearrange(GVolume *);
-  void statistics(GVolume *);
-  void build_tuples(GVolume *);
-  void create_quads_on_boundary(GVolume *);
-  void create_quads_on_boundary(MNode *, MNode *, MNode *, MNode *);
+  void init_markings(GRegion *);
+  void pattern(GRegion *);
+  void merge(GRegion *);
+  void rearrange(GRegion *);
+  void statistics(GRegion *);
+  void build_tuples(GRegion *);
+  void create_quads_on_boundary(GRegion *);
+  void create_quads_on_boundary(MVertex *, MVertex *, MVertex *, MVertex *);
 
   bool four(MElement *);
   bool five(MElement *);
@@ -925,44 +925,44 @@ public:
   bool sliver(MElement *, Prism);
   bool valid(Prism, const std::set<MElement *> &);
   bool valid(Prism);
-  double eta(MNode *, MNode *, MNode *, MNode *);
-  bool linked(MNode *, MNode *);
+  double eta(MVertex *, MVertex *, MVertex *, MVertex *);
+  bool linked(MVertex *, MVertex *);
 
-  void find(MNode *, MNode *, const std::vector<MNode *> &,
-            std::set<MNode *> &);
-  void find(MNode *, const Prism &, std::set<MElement *> &);
+  void find(MVertex *, MVertex *, const std::vector<MVertex *> &,
+            std::set<MVertex *> &);
+  void find(MVertex *, const Prism &, std::set<MElement *> &);
 
-  void intersection(const std::set<MNode *> &, const std::set<MNode *> &,
-                    const std::vector<MNode *> &, std::set<MNode *> &);
+  void intersection(const std::set<MVertex *> &, const std::set<MVertex *> &,
+                    const std::vector<MVertex *> &, std::set<MVertex *> &);
 
-  bool inclusion(MNode *, Prism);
-  bool inclusion(MNode *, MNode *, MNode *, MNode *, MNode *);
-  bool inclusion(MNode *, MNode *, MNode *, const std::set<MElement *> &);
+  bool inclusion(MVertex *, Prism);
+  bool inclusion(MVertex *, MVertex *, MVertex *, MVertex *, MVertex *);
+  bool inclusion(MVertex *, MVertex *, MVertex *, const std::set<MElement *> &);
   bool inclusion(const Facet &);
   bool inclusion(const Diagonal &);
   bool duplicate(const Diagonal &);
 
   bool conformityA(Prism);
-  bool conformityA(MNode *, MNode *, MNode *, MNode *);
+  bool conformityA(MVertex *, MVertex *, MVertex *, MVertex *);
   bool conformityB(Prism);
   bool conformityC(Prism);
 
   bool faces_statuquo(Prism);
-  bool faces_statuquo(MNode *, MNode *, MNode *, MNode *);
+  bool faces_statuquo(MVertex *, MVertex *, MVertex *, MVertex *);
 
-  void build_vertex_to_vertices(GVolume *);
-  void build_vertex_to_tetrahedra(GVolume *);
+  void build_vertex_to_vertices(GRegion *);
+  void build_vertex_to_tetrahedra(GRegion *);
 
   void build_hash_tableA(Prism);
-  void build_hash_tableA(MNode *, MNode *, MNode *, MNode *);
+  void build_hash_tableA(MVertex *, MVertex *, MVertex *, MVertex *);
   void build_hash_tableA(const Facet &);
   void build_hash_tableB(Prism);
-  void build_hash_tableB(MNode *, MNode *, MNode *, MNode *);
+  void build_hash_tableB(MVertex *, MVertex *, MVertex *, MVertex *);
   void build_hash_tableB(const Diagonal &);
   void build_hash_tableC(Prism);
   void build_hash_tableC(const Diagonal &);
 
-  double scaled_jacobian(MNode *, MNode *, MNode *, MNode *);
+  double scaled_jacobian(MVertex *, MVertex *, MVertex *, MVertex *);
   double min_scaled_jacobian(Prism);
 };
 
@@ -974,18 +974,18 @@ private:
   int estimate2;
   int iterations;
   std::map<MElement *, bool> markings;
-  std::map<MNode *, std::set<MElement *> > vertex_to_tetrahedra;
-  std::map<MNode *, std::set<MElement *> > vertex_to_pyramids;
-  std::map<MNode *, std::set<MElement *> > vertex_to_hexPrism;
+  std::map<MVertex *, std::set<MElement *> > vertex_to_tetrahedra;
+  std::map<MVertex *, std::set<MElement *> > vertex_to_pyramids;
+  std::map<MVertex *, std::set<MElement *> > vertex_to_hexPrism;
   std::multiset<Tuple> tuples;
   std::set<MElement *> triangles;
 
 public:
-  typedef std::set<MNode *>::iterator vertex_set_itr;
+  typedef std::set<MVertex *>::iterator vertex_set_itr;
   typedef std::set<MElement *>::iterator element_set_itr;
 
-  typedef std::map<MNode *, std::set<MNode *> > Vertex2Vertices;
-  typedef std::map<MNode *, std::set<MElement *> > Vertex2Elements;
+  typedef std::map<MVertex *, std::set<MVertex *> > Vertex2Vertices;
+  typedef std::map<MVertex *, std::set<MElement *> > Vertex2Elements;
 
   PostOp();
   ~PostOp();
@@ -994,35 +994,35 @@ public:
   // level - 0: hex, 1: hex+prisms, 2: hex+prism+pyramids
   // conformity - 0: nonconforming, 1: trihedra, 2: pyramids+trihedra,
   // 3:pyramids+hexPrismSplit+trihedra, 4:hexPrismSplit+trihedra
-  void execute(GVolume *, int level, int conformity);
-  void executeNew(GVolume *);
+  void execute(GRegion *, int level, int conformity);
+  void executeNew(GRegion *);
 
   inline int get_nb_hexahedra() const { return nbr8; };
   inline double get_vol_hexahedra() const { return vol8; };
   inline int get_nb_elements() const { return nbr; };
   inline double get_vol_elements() const { return vol; };
 
-  void init_markings(GVolume *);
-  void init_markings_hex(GVolume *);
-  void init_markings_pri(GVolume *);
-  void init_markings_pyr(GVolume *);
-  void pyramids1(GVolume *);
-  void pyramids2(GVolume *, bool allowNonConforming = false);
-  void trihedra(GVolume *);
-  void split_hexahedra(GVolume *);
-  void split_prisms(GVolume *);
-  void split_pyramids(GVolume *);
-  int nonConformDiag(MNode *a, MNode *b, MNode *c, MNode *d,
-                     GVolume *gr);
-  void pyramids1(MNode *, MNode *, MNode *, MNode *, GVolume *);
-  void pyramids2(MNode *, MNode *, MNode *, MNode *, GVolume *,
+  void init_markings(GRegion *);
+  void init_markings_hex(GRegion *);
+  void init_markings_pri(GRegion *);
+  void init_markings_pyr(GRegion *);
+  void pyramids1(GRegion *);
+  void pyramids2(GRegion *, bool allowNonConforming = false);
+  void trihedra(GRegion *);
+  void split_hexahedra(GRegion *);
+  void split_prisms(GRegion *);
+  void split_pyramids(GRegion *);
+  int nonConformDiag(MVertex *a, MVertex *b, MVertex *c, MVertex *d,
+                     GRegion *gr);
+  void pyramids1(MVertex *, MVertex *, MVertex *, MVertex *, GRegion *);
+  void pyramids2(MVertex *, MVertex *, MVertex *, MVertex *, GRegion *,
                  bool allowNonConforming);
-  void trihedra(MNode *, MNode *, MNode *, MNode *, GVolume *);
-  void rearrange(GVolume *);
-  void statistics(GVolume *);
-  void build_tuples(GVolume *);
-  void create_quads_on_boundary(GVolume *);
-  void create_quads_on_boundary(MNode *, MNode *, MNode *, MNode *);
+  void trihedra(MVertex *, MVertex *, MVertex *, MVertex *, GRegion *);
+  void rearrange(GRegion *);
+  void statistics(GRegion *);
+  void build_tuples(GRegion *);
+  void create_quads_on_boundary(GRegion *);
+  void create_quads_on_boundary(MVertex *, MVertex *, MVertex *, MVertex *);
 
   // returns the geometrical validity of the pyramid
   bool valid(MPyramid *pyr);
@@ -1033,47 +1033,47 @@ public:
   bool six(MElement *);
   bool eight(MElement *);
 
-  bool equal(MNode *, MNode *, MNode *, MNode *);
-  bool equal(MNode *, MNode *, MNode *, MNode *, MNode *, MNode *,
-             MNode *, MNode *);
-  bool different(MNode *, MNode *, MNode *, MNode *);
-  MNode *other(MElement *, MNode *, MNode *);
-  MNode *other(MElement *, MNode *, MNode *, MNode *);
-  void mean(const std::set<MNode *> &, MNode *,
+  bool equal(MVertex *, MVertex *, MVertex *, MVertex *);
+  bool equal(MVertex *, MVertex *, MVertex *, MVertex *, MVertex *, MVertex *,
+             MVertex *, MVertex *);
+  bool different(MVertex *, MVertex *, MVertex *, MVertex *);
+  MVertex *other(MElement *, MVertex *, MVertex *);
+  MVertex *other(MElement *, MVertex *, MVertex *, MVertex *);
+  void mean(const std::set<MVertex *> &, MVertex *,
             const std::vector<MElement *> &);
   double workaround(MElement *);
 
-  MNode *find(MNode *, MNode *, MNode *, MNode *, MElement *);
-  MNode *findInTriFace(MNode *in0, MNode *in1, MNode *out0,
-                         MNode *out1, MElement *element);
-  void find_tetrahedra(MNode *, MNode *, std::set<MElement *> &);
-  void find_tetrahedra(MNode *, MNode *, MNode *, std::set<MElement *> &);
-  void find_pyramids_from_tri(MNode *, MNode *, MNode *,
+  MVertex *find(MVertex *, MVertex *, MVertex *, MVertex *, MElement *);
+  MVertex *findInTriFace(MVertex *in0, MVertex *in1, MVertex *out0,
+                         MVertex *out1, MElement *element);
+  void find_tetrahedra(MVertex *, MVertex *, std::set<MElement *> &);
+  void find_tetrahedra(MVertex *, MVertex *, MVertex *, std::set<MElement *> &);
+  void find_pyramids_from_tri(MVertex *, MVertex *, MVertex *,
                               std::set<MElement *> &);
-  void find_pyramids_from_quad(MNode *, MNode *, MNode *, MNode *,
+  void find_pyramids_from_quad(MVertex *, MVertex *, MVertex *, MVertex *,
                                std::set<MElement *> &);
-  void find_pyramids(MNode *, MNode *, std::set<MElement *> &);
+  void find_pyramids(MVertex *, MVertex *, std::set<MElement *> &);
 
   void intersection(const std::set<MElement *> &, const std::set<MElement *> &,
                     std::set<MElement *> &);
 
-  void build_vertex_to_tetrahedra(GVolume *);
+  void build_vertex_to_tetrahedra(GRegion *);
   void build_vertex_to_tetrahedra(MElement *);
   void erase_vertex_to_tetrahedra(MElement *);
 
-  void build_vertex_to_pyramids(GVolume *);
+  void build_vertex_to_pyramids(GRegion *);
   void build_vertex_to_pyramids(MElement *);
   void erase_vertex_to_pyramids(MElement *);
 
-  void build_vertex_to_hexPrism(GVolume *);
+  void build_vertex_to_hexPrism(GRegion *);
   void build_vertex_to_hexPrism(MElement *);
   void erase_vertex_to_hexPrism(MElement *);
 
-  void removeElseAdd(std::set<Facet> &, MNode *, MNode *, MNode *);
+  void removeElseAdd(std::set<Facet> &, MVertex *, MVertex *, MVertex *);
   void writeMSH(const char *filename, std::vector<MElement *> &);
-  MFace find_quadFace(MNode *, MNode *, MNode *);
-  MNode *otherVertexQuadFace(MFace &, MNode *, MNode *, MNode *);
-  void matchQuadFace(MFace &, MNode *, MNode *, MNode *);
+  MFace find_quadFace(MVertex *, MVertex *, MVertex *);
+  MVertex *otherVertexQuadFace(MFace &, MVertex *, MVertex *, MVertex *);
+  void matchQuadFace(MFace &, MVertex *, MVertex *, MVertex *);
 };
 
 #endif

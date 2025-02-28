@@ -33,13 +33,13 @@
  */
 class MPrism : public MElement {
 protected:
-  MNode *_v[6];
-  void _getEdgeVertices(const int num, std::vector<MNode *> &v) const
+  MVertex *_v[6];
+  void _getEdgeVertices(const int num, std::vector<MVertex *> &v) const
   {
     v[0] = _v[edges_prism(num, 0)];
     v[1] = _v[edges_prism(num, 1)];
   }
-  void _getFaceVertices(const int num, std::vector<MNode *> &v) const
+  void _getFaceVertices(const int num, std::vector<MVertex *> &v) const
   {
     v[0] = _v[faces_prism(num, 0)];
     v[1] = _v[faces_prism(num, 1)];
@@ -48,8 +48,8 @@ protected:
   }
 
 public:
-  MPrism(MNode *v0, MNode *v1, MNode *v2, MNode *v3, MNode *v4,
-         MNode *v5, int num = 0, int part = 0)
+  MPrism(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
+         MVertex *v5, int num = 0, int part = 0)
     : MElement(num, part)
   {
     _v[0] = v0;
@@ -59,7 +59,7 @@ public:
     _v[4] = v4;
     _v[5] = v5;
   }
-  MPrism(const std::vector<MNode *> &v, int num = 0, int part = 0)
+  MPrism(const std::vector<MVertex *> &v, int num = 0, int part = 0)
     : MElement(num, part)
   {
     for(int i = 0; i < 6; i++) _v[i] = v[i];
@@ -68,9 +68,9 @@ public:
   virtual int getDim() const { return 3; }
   virtual std::size_t getNumVertices() const { return 6; }
   virtual double getInnerRadius();
-  virtual MNode *getVertex(int num) { return _v[num]; }
-  virtual const MNode *getVertex(int num) const { return _v[num]; }
-  virtual void setVertex(int num, MNode *v) { _v[num] = v; }
+  virtual MVertex *getVertex(int num) { return _v[num]; }
+  virtual const MVertex *getVertex(int num) const { return _v[num]; }
+  virtual void setVertex(int num, MVertex *v) { _v[num] = v; }
   virtual int getNumEdges() const { return 9; }
   virtual MEdge getEdge(int num) const
   {
@@ -83,7 +83,7 @@ public:
   virtual int getNumEdgesRep(bool curved) { return 9; }
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
-  virtual void getEdgeVertices(const int num, std::vector<MNode *> &v) const
+  virtual void getEdgeVertices(const int num, std::vector<MVertex *> &v) const
   {
     v.resize(2);
     _getEdgeVertices(num, v);
@@ -103,7 +103,7 @@ public:
   virtual int getNumFacesRep(bool curved);
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
-  virtual void getFaceVertices(const int num, std::vector<MNode *> &v) const
+  virtual void getFaceVertices(const int num, std::vector<MVertex *> &v) const
   {
     v.resize((num < 2) ? 3 : 4);
     _getFaceVertices(num, v);
@@ -119,7 +119,7 @@ public:
   virtual const char *getStringForRAD() const { return "/BRICK"; }
   virtual void reverse()
   {
-    MNode *tmp;
+    MVertex *tmp;
     tmp = _v[0];
     _v[0] = _v[1];
     _v[1] = tmp;
@@ -233,7 +233,7 @@ public:
                    _v[fSolin[num][2]], _v[fSolin[num][3]]);
     }
   }
-  virtual MNode *getVertexVTK(int num)
+  virtual MVertex *getVertexVTK(int num)
   {
     static const int map[6] = {0, 2, 1, 3, 5, 4};
     return getVertex(map[num]);
@@ -262,12 +262,12 @@ public:
  */
 class MPrism15 : public MPrism {
 protected:
-  MNode *_vs[9];
+  MVertex *_vs[9];
 
 public:
-  MPrism15(MNode *v0, MNode *v1, MNode *v2, MNode *v3, MNode *v4,
-           MNode *v5, MNode *v6, MNode *v7, MNode *v8, MNode *v9,
-           MNode *v10, MNode *v11, MNode *v12, MNode *v13, MNode *v14,
+  MPrism15(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
+           MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
+           MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13, MVertex *v14,
            int num = 0, int part = 0)
     : MPrism(v0, v1, v2, v3, v4, v5, num, part)
   {
@@ -282,7 +282,7 @@ public:
     _vs[8] = v14;
     for(int i = 0; i < 9; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MPrism15(const std::vector<MNode *> &v, int num = 0, int part = 0)
+  MPrism15(const std::vector<MVertex *> &v, int num = 0, int part = 0)
     : MPrism(v, num, part)
   {
     for(int i = 0; i < 9; i++) _vs[i] = v[6 + i];
@@ -291,51 +291,51 @@ public:
   ~MPrism15() {}
   virtual int getPolynomialOrder() const { return 2; }
   virtual std::size_t getNumVertices() const { return 15; }
-  virtual MNode *getVertex(int num)
+  virtual MVertex *getVertex(int num)
   {
     return num < 6 ? _v[num] : _vs[num - 6];
   }
-  virtual const MNode *getVertex(int num) const
+  virtual const MVertex *getVertex(int num) const
   {
     return num < 6 ? _v[num] : _vs[num - 6];
   }
-  virtual void setVertex(int num, MNode *v)
+  virtual void setVertex(int num, MVertex *v)
   {
     if(num < 6)
       _v[num] = v;
     else
       _vs[num - 6] = v;
   }
-  virtual MNode *getVertexUNV(int num)
+  virtual MVertex *getVertexUNV(int num)
   {
     static const int map[15] = {0,  6, 1,  9, 2,  7, 8, 10,
                                 11, 3, 12, 4, 14, 5, 13};
     return getVertex(map[num]);
   }
-  virtual MNode *getVertexBDF(int num)
+  virtual MVertex *getVertexBDF(int num)
   {
     static const int map[15] = {0, 1, 2,  3,  4,  5,  6, 9,
                                 7, 8, 10, 11, 12, 14, 13};
     return getVertex(map[num]);
   }
-  virtual MNode *getVertexINP(int num)
+  virtual MVertex *getVertexINP(int num)
   {
     static const int map[15] = {0, 1,  2,  3,  4, 5,  6, 9,
                                 7, 12, 14, 13, 8, 10, 11};
     return getVertex(map[num]);
   }
-  virtual MNode *getVertexVTK(int num)
+  virtual MVertex *getVertexVTK(int num)
   {
     static const int map[15] = {0, 1,  2,  3,  4, 5,  6, 9,
                                 7, 12, 14, 13, 8, 10, 11};
     return getVertex(map[num]);
   }
-  virtual MNode *getVertexKEY(int num) { return getVertexBDF(num); }
+  virtual MVertex *getVertexKEY(int num) { return getVertexBDF(num); }
   virtual int getNumEdgeVertices() const { return 9; }
   virtual int getNumEdgesRep(bool curved);
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
-  virtual void getEdgeVertices(const int num, std::vector<MNode *> &v) const
+  virtual void getEdgeVertices(const int num, std::vector<MVertex *> &v) const
   {
     v.resize(3);
     MPrism::_getEdgeVertices(num, v);
@@ -344,7 +344,7 @@ public:
   virtual int getNumFacesRep(bool curved);
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
-  virtual void getFaceVertices(const int num, std::vector<MNode *> &v) const
+  virtual void getFaceVertices(const int num, std::vector<MVertex *> &v) const
   {
     v.resize((num < 2) ? 6 : 8);
     MPrism::_getFaceVertices(num, v);
@@ -367,7 +367,7 @@ public:
   } /* not implemented yet */
   virtual void reverse()
   {
-    MNode *tmp;
+    MVertex *tmp;
     tmp = _v[0];
     _v[0] = _v[1];
     _v[1] = tmp;
@@ -412,13 +412,13 @@ public:
  */
 class MPrism18 : public MPrism {
 protected:
-  MNode *_vs[12];
+  MVertex *_vs[12];
 
 public:
-  MPrism18(MNode *v0, MNode *v1, MNode *v2, MNode *v3, MNode *v4,
-           MNode *v5, MNode *v6, MNode *v7, MNode *v8, MNode *v9,
-           MNode *v10, MNode *v11, MNode *v12, MNode *v13, MNode *v14,
-           MNode *v15, MNode *v16, MNode *v17, int num = 0, int part = 0)
+  MPrism18(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
+           MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
+           MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13, MVertex *v14,
+           MVertex *v15, MVertex *v16, MVertex *v17, int num = 0, int part = 0)
     : MPrism(v0, v1, v2, v3, v4, v5, num, part)
   {
     _vs[0] = v6;
@@ -435,7 +435,7 @@ public:
     _vs[11] = v17;
     for(int i = 0; i < 12; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MPrism18(const std::vector<MNode *> &v, int num = 0, int part = 0)
+  MPrism18(const std::vector<MVertex *> &v, int num = 0, int part = 0)
     : MPrism(v, num, part)
   {
     for(int i = 0; i < 12; i++) _vs[i] = v[6 + i];
@@ -444,15 +444,15 @@ public:
   ~MPrism18() {}
   virtual int getPolynomialOrder() const { return 2; }
   virtual std::size_t getNumVertices() const { return 18; }
-  virtual MNode *getVertex(int num)
+  virtual MVertex *getVertex(int num)
   {
     return num < 6 ? _v[num] : _vs[num - 6];
   }
-  virtual const MNode *getVertex(int num) const
+  virtual const MVertex *getVertex(int num) const
   {
     return num < 6 ? _v[num] : _vs[num - 6];
   }
-  virtual void setVertex(int num, MNode *v)
+  virtual void setVertex(int num, MVertex *v)
   {
     if(num < 6)
       _v[num] = v;
@@ -464,7 +464,7 @@ public:
   virtual int getNumEdgesRep(bool curved);
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
-  virtual void getEdgeVertices(const int num, std::vector<MNode *> &v) const
+  virtual void getEdgeVertices(const int num, std::vector<MVertex *> &v) const
   {
     v.resize(3);
     MPrism::_getEdgeVertices(num, v);
@@ -473,7 +473,7 @@ public:
   virtual int getNumFacesRep(bool curved);
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
-  virtual void getFaceVertices(const int num, std::vector<MNode *> &v) const
+  virtual void getFaceVertices(const int num, std::vector<MVertex *> &v) const
   {
     v.resize((num < 2) ? 6 : 9);
     MPrism::_getFaceVertices(num, v);
@@ -492,7 +492,7 @@ public:
   virtual const char *getStringForPOS() const { return "SI2"; }
   virtual void reverse()
   {
-    MNode *tmp;
+    MVertex *tmp;
     tmp = _v[0];
     _v[0] = _v[1];
     _v[1] = tmp;
@@ -519,7 +519,7 @@ public:
     num < 6 ? MPrism::getNode(num, u, v, w) : MElement::getNode(num, u, v, w);
   }
   virtual int getTypeForVTK() const { return 32; }
-  virtual MNode *getVertexVTK(int num)
+  virtual MVertex *getVertexVTK(int num)
   {
     static const int map[18] = {0,  1,  2,  3, 4,  5,  6,  9,  7,
                                 12, 14, 13, 8, 10, 11, 15, 17, 16};
@@ -537,19 +537,19 @@ class MPrismN : public MPrism {
   static std::map<int, IndicesReversed> _order2indicesReversedPri;
 
 protected:
-  std::vector<MNode *> _vs;
+  std::vector<MVertex *> _vs;
   const char _order;
 
 public:
-  MPrismN(MNode *v0, MNode *v1, MNode *v2, MNode *v3, MNode *v4,
-          MNode *v5, const std::vector<MNode *> &v, char order, int num = 0,
+  MPrismN(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
+          MVertex *v5, const std::vector<MVertex *> &v, char order, int num = 0,
           int part = 0)
     : MPrism(v0, v1, v2, v3, v4, v5, num, part), _vs(v), _order(order)
   {
     for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_order);
   }
-  MPrismN(const std::vector<MNode *> &v, char order, int num = 0,
+  MPrismN(const std::vector<MVertex *> &v, char order, int num = 0,
           int part = 0)
     : MPrism(v, num, part), _order(order)
   {
@@ -559,15 +559,15 @@ public:
   ~MPrismN() {}
   virtual int getPolynomialOrder() const { return _order; }
   virtual std::size_t getNumVertices() const { return 6 + _vs.size(); }
-  virtual MNode *getVertex(int num)
+  virtual MVertex *getVertex(int num)
   {
     return num < 6 ? _v[num] : _vs[num - 6];
   }
-  virtual const MNode *getVertex(int num) const
+  virtual const MVertex *getVertex(int num) const
   {
     return num < 6 ? _v[num] : _vs[num - 6];
   }
-  virtual void setVertex(int num, MNode *v)
+  virtual void setVertex(int num, MVertex *v)
   {
     if(num < 6)
       _v[num] = v;
@@ -596,7 +596,7 @@ public:
   virtual int getNumEdgesRep(bool curved);
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
-  virtual void getEdgeVertices(const int num, std::vector<MNode *> &v) const
+  virtual void getEdgeVertices(const int num, std::vector<MVertex *> &v) const
   {
     v.resize(_order + 1);
     MPrism::_getEdgeVertices(num, v);
@@ -606,7 +606,7 @@ public:
   virtual int getNumFacesRep(bool curved);
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
-  virtual void getFaceVertices(const int num, std::vector<MNode *> &v) const;
+  virtual void getFaceVertices(const int num, std::vector<MVertex *> &v) const;
   virtual int getTypeForMSH() const
   {
     switch(_order) {

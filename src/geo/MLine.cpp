@@ -112,7 +112,7 @@ void MLineN::discretize(double tol, std::vector<SPoint3> &dpts,
   }
   fullMatrix<double> lagNodes(order + 1, 3), bezNodes(order + 1, 3);
   for(int i = 0; i < order + 1; ++i) {
-    MNode *v = getVertex(i);
+    MVertex *v = getVertex(i);
     lagNodes(i, 0) = v->x();
     lagNodes(i, 1) = v->y();
     lagNodes(i, 2) = v->z();

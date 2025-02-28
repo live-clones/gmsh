@@ -3,7 +3,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <stack>
-#include "GVolume.h"
+#include "GRegion.h"
 #include "MTetrahedron.h"
 #include "MFace.h"
 
@@ -19,7 +19,7 @@ double alphaShape (MTetrahedron *t){
   return t->gammaShapeMeasure();
 }
 
-int alphaShapes (GVolume *gr, double threshold,
+int alphaShapes (GRegion *gr, double threshold,
 		 std::vector<std::vector<MTetrahedron*> > &domains,
 		 std::vector<std::vector<MFace> > &boundaries) {
 

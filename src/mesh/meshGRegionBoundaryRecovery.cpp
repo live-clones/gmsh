@@ -16,9 +16,9 @@
 #include "meshGRegionDelaunayInsertion.h"
 #include "robustPredicates.h"
 #include "GModel.h"
-#include "GVolume.h"
-#include "GSurface.h"
-#include "MNode.h"
+#include "GRegion.h"
+#include "GFace.h"
+#include "MVertex.h"
 #include "MLine.h"
 #include "MPoint.h"
 #include "MTriangle.h"
@@ -66,7 +66,7 @@ namespace tetgenBR {
 #define REAL double
 
   struct brdata {
-    GVolume *gr;
+    GRegion *gr;
     splitQuadRecovery *sqr;
   };
 
@@ -142,7 +142,7 @@ namespace tetgenBR {
 
   int tetgenmesh::reconstructmesh(void *p, double tol /* unused */)
   {
-    GVolume *_gr = ((brdata *)p)->gr;
+    GRegion *_gr = ((brdata *)p)->gr;
     splitQuadRecovery *_sqr = ((brdata *)p)->sqr;
 
     char opts[128];
@@ -151,18 +151,18 @@ namespace tetgenBR {
     b->parse_commandline(opts);
 
     double t_start = Cpu(), w_start = TimeOfDay();
-    std::vector<MNode *> _vertices;
-    std::map<int, MNode *> _extras;
-    // Get the set of vertices from GVolume.
+    std::vector<MVertex *> _vertices;
+    std::map<int, MVertex *> _extras;
+    // Get the set of vertices from GRegion.
     {
-      std::set<MNode *, MVertexPtrLessThan> all;
-      std::vector<GSurface *> const &f = _gr->faces();
+      std::set<MVertex *, MVertexPtrLessThan> all;
+      std::vector<GFace *> const &f = _gr->faces();
       for(auto it = f.begin(); it != f.end(); ++it) {
-        GSurface *gf = *it;
+        GFace *gf = *it;
         for(std::size_t i = 0; i < gf->triangles.size(); i++) {
-          MNode *v0 = gf->triangles[i]->getVertex(0);
-          MNode *v1 = gf->triangles[i]->getVertex(1);
-          MNode *v2 = gf->triangles[i]->getVertex(2);
+          MVertex *v0 = gf->triangles[i]->getVertex(0);
+          MVertex *v1 = gf->triangles[i]->getVertex(1);
+          MVertex *v2 = gf->triangles[i]->getVertex(2);
           all.insert(v0);
           all.insert(v1);
           all.insert(v2);
@@ -170,16 +170,16 @@ namespace tetgenBR {
         if(_sqr) {
 	  //printf("face %d %lu quadrangles\n", gf->tag(), gf->quadrangles.size());
           for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
-            MNode *v0 = gf->quadrangles[i]->getVertex(0);
-            MNode *v1 = gf->quadrangles[i]->getVertex(1);
-            MNode *v2 = gf->quadrangles[i]->getVertex(2);
-            MNode *v3 = gf->quadrangles[i]->getVertex(3);
-            MNode *newv =
-              new MNode((v0->x() + v1->x() + v2->x() + v3->x()) * 0.25,
+            MVertex *v0 = gf->quadrangles[i]->getVertex(0);
+            MVertex *v1 = gf->quadrangles[i]->getVertex(1);
+            MVertex *v2 = gf->quadrangles[i]->getVertex(2);
+            MVertex *v3 = gf->quadrangles[i]->getVertex(3);
+            MVertex *newv =
+              new MVertex((v0->x() + v1->x() + v2->x() + v3->x()) * 0.25,
                           (v0->y() + v1->y() + v2->y() + v3->y()) * 0.25,
                           (v0->z() + v1->z() + v2->z() + v3->z()) * 0.25, gf);
-            // the extra vertex will be added in a GVolume (and reclassified
-            // correctly on that GVolume) when the pyramid is generated
+            // the extra vertex will be added in a GRegion (and reclassified
+            // correctly on that GRegion) when the pyramid is generated
             MFace mf = gf->quadrangles[i]->getFace(0);
             _sqr->add(mf, newv, gf);
             all.insert(v0);
@@ -190,17 +190,17 @@ namespace tetgenBR {
           }
         }
       }
-      std::vector<GCurve *> const &e = _gr->embeddedEdges();
+      std::vector<GEdge *> const &e = _gr->embeddedEdges();
       for(auto it = e.begin(); it != e.end(); ++it) {
-        GCurve *ge = *it;
+        GEdge *ge = *it;
         for(std::size_t i = 0; i < ge->lines.size(); i++) {
           all.insert(ge->lines[i]->getVertex(0));
           all.insert(ge->lines[i]->getVertex(1));
         }
       }
-      std::vector<GPoint *> const &v = _gr->embeddedVertices();
+      std::vector<GVertex *> const &v = _gr->embeddedVertices();
       for(auto it = v.begin(); it != v.end(); ++it) {
-        GPoint *gv = *it;
+        GVertex *gv = *it;
         for(std::size_t i = 0; i < gv->points.size(); i++) {
           all.insert(gv->points[i]->getVertex(0));
         }
@@ -214,9 +214,9 @@ namespace tetgenBR {
 
     // Store all coordinates of the vertices as these will be pertubated in
     // function delaunayTriangulation
-    std::map<MNode *, SPoint3> originalCoordinates;
+    std::map<MVertex *, SPoint3> originalCoordinates;
     for(std::size_t i = 0; i < _vertices.size(); i++) {
-      MNode *v = _vertices[i];
+      MVertex *v = _vertices[i];
       originalCoordinates[v] = v->point();
     }
 
@@ -490,8 +490,8 @@ namespace tetgenBR {
     }
 #endif
 
-      std::vector<GSurface *> const &f_list = _gr->faces();
-      std::vector<GCurve *> const &e_list = _gr->embeddedEdges();
+      std::vector<GFace *> const &f_list = _gr->faces();
+      std::vector<GEdge *> const &e_list = _gr->embeddedEdges();
 
       {
         Msg::Info(" - Creating surface mesh");
@@ -501,7 +501,7 @@ namespace tetgenBR {
         int idx;
 
         for(auto it = f_list.begin(); it != f_list.end(); ++it) {
-          GSurface *gf = *it;
+          GFace *gf = *it;
           for(std::size_t i = 0; i < gf->triangles.size(); i++) {
             for(int j = 0; j < 3; j++) {
               p[j] = idx2verlist[gf->triangles[i]->getVertex(j)->getIndex()];
@@ -511,7 +511,7 @@ namespace tetgenBR {
             }
             makeshellface(subfaces, &newsh);
             setshvertices(newsh, p[0], p[1], p[2]);
-            setshellmark(newsh, gf->tag()); // the GSurface's tag.
+            setshellmark(newsh, gf->tag()); // the GFace's tag.
             recentsh = newsh;
             for(int j = 0; j < 3; j++) {
               makeshellface(subsegs, &newseg);
@@ -525,7 +525,7 @@ namespace tetgenBR {
         } // it
 
         if(_sqr) {
-          std::map<MFace, GSurface *, MFaceLessThan> f = _sqr->getTri();
+          std::map<MFace, GFace *, MFaceLessThan> f = _sqr->getTri();
           for(auto it = f.begin(); it != f.end(); it++) {
             const MFace &mf = it->first;
             for(int j = 0; j < 3; j++) {
@@ -567,7 +567,7 @@ namespace tetgenBR {
         // Remeber that all segments have default marker '-1'.
         //    int COUNTER = 0;
         for(auto it = e_list.begin(); it != e_list.end(); ++it) {
-          GCurve *ge = *it;
+          GEdge *ge = *it;
           for(std::size_t i = 0; i < ge->lines.size(); i++) {
             for(int j = 0; j < 2; j++) {
               p[j] = idx2verlist[ge->lines[i]->getVertex(j)->getIndex()];
@@ -730,9 +730,9 @@ namespace tetgenBR {
       if(0) { outmesh2medit("dump"); }
 
       {
-        // Write mesh into to GVolume.
+        // Write mesh into to GRegion.
 
-        Msg::Debug("Writing to GVolume...");
+        Msg::Debug("Writing to GRegion...");
 
         point p[4];
 
@@ -754,9 +754,9 @@ namespace tetgenBR {
                 sdecode(point2sh(pointloop), parentseg);
                 assert(parentseg.sh != nullptr);
                 l_edges.insert(shellmark(parentseg));
-                // Get the GCurve containing this vertex.
-                GCurve *ge = nullptr;
-                GSurface *gf = nullptr;
+                // Get the GEdge containing this vertex.
+                GEdge *ge = nullptr;
+                GFace *gf = nullptr;
                 int etag = shellmark(parentseg);
                 for(auto it = e_list.begin(); it != e_list.end(); ++it) {
                   if((*it)->tag() == etag) {
@@ -809,8 +809,8 @@ namespace tetgenBR {
                 }
                 if((ge == nullptr) && (gf == nullptr)) {
                   // Create an interior mesh vertex.
-                  MNode *v =
-                    new MNode(pointloop[0], pointloop[1], pointloop[2], _gr);
+                  MVertex *v =
+                    new MVertex(pointloop[0], pointloop[1], pointloop[2], _gr);
                   v->setIndex(pointmark(pointloop));
                   _extras[pointmark(pointloop) - in->firstnumber] = v;
                   _gr->mesh_vertices.push_back(v);
@@ -820,8 +820,8 @@ namespace tetgenBR {
                 sdecode(point2sh(pointloop), parentsh);
                 assert(parentsh.sh != nullptr);
                 l_faces.insert(shellmark(parentsh));
-                // Get the GSurface containing this vertex.
-                GSurface *gf = nullptr;
+                // Get the GFace containing this vertex.
+                GFace *gf = nullptr;
                 int ftag = shellmark(parentsh);
                 for(auto it = f_list.begin(); it != f_list.end(); ++it) {
                   if((*it)->tag() == ftag) {
@@ -843,16 +843,16 @@ namespace tetgenBR {
                 }
                 else {
                   // Create a mesh vertex.
-                  MNode *v =
-                    new MNode(pointloop[0], pointloop[1], pointloop[2], _gr);
+                  MVertex *v =
+                    new MVertex(pointloop[0], pointloop[1], pointloop[2], _gr);
                   v->setIndex(pointmark(pointloop));
                   _gr->mesh_vertices.push_back(v);
                   _extras[pointmark(pointloop) - in->firstnumber] = v;
                 }
               }
               else {
-                MNode *v =
-                  new MNode(pointloop[0], pointloop[1], pointloop[2], _gr);
+                MVertex *v =
+                  new MVertex(pointloop[0], pointloop[1], pointloop[2], _gr);
                 v->setIndex(pointmark(pointloop));
                 _gr->mesh_vertices.push_back(v);
                 _extras[pointmark(pointloop) - in->firstnumber] = v;
@@ -872,10 +872,10 @@ namespace tetgenBR {
           face segloop;
           // Re-create the segment mesh in the corresponding GEdges.
           for(auto it = l_edges.begin(); it != l_edges.end(); ++it) {
-            // Find the GCurve with tag = *it.
+            // Find the GEdge with tag = *it.
 
             int etag = *it;
-            GCurve *ge = nullptr;
+            GEdge *ge = nullptr;
             for(auto it = e_list.begin(); it != e_list.end(); ++it) {
               if((*it)->tag() == etag) {
                 ge = *it;
@@ -898,10 +898,10 @@ namespace tetgenBR {
                   p[0] = sorg(segloop);
                   p[1] = sdest(segloop);
                   int idx1 = pointmark(p[0]) - in->firstnumber;
-                  MNode *v1 = idx1 >= (int)_vertices.size() ? _extras[idx1] :
+                  MVertex *v1 = idx1 >= (int)_vertices.size() ? _extras[idx1] :
                     _vertices[idx1];
                   int idx2 = pointmark(p[1]) - in->firstnumber;
-                  MNode *v2 = idx2 >= (int)_vertices.size() ? _extras[idx2] :
+                  MVertex *v2 = idx2 >= (int)_vertices.size() ? _extras[idx2] :
                     _vertices[idx2];
                   MLine *t = new MLine(v1, v2);
                   ge->lines.push_back(t);
@@ -920,10 +920,10 @@ namespace tetgenBR {
           face subloop;
           // Re-create the surface mesh in the corresponding GFaces.
           for(auto it = l_faces.begin(); it != l_faces.end(); ++it) {
-            // Find the GSurface with tag = *it.
+            // Find the GFace with tag = *it.
 
             int ftag = *it;
-            GSurface *gf = nullptr;
+            GFace *gf = nullptr;
             for(auto it = f_list.begin(); it != f_list.end(); ++it) {
               if((*it)->tag() == ftag) {
                 gf = *it;
@@ -952,13 +952,13 @@ namespace tetgenBR {
                   p[1] = sdest(subloop);
                   p[2] = sapex(subloop);
                   int idx1 = pointmark(p[0]) - in->firstnumber;
-                  MNode *v1 = idx1 >= (int)_vertices.size() ? _extras[idx1] :
+                  MVertex *v1 = idx1 >= (int)_vertices.size() ? _extras[idx1] :
                     _vertices[idx1];
                   int idx2 = pointmark(p[1]) - in->firstnumber;
-                  MNode *v2 = idx2 >= (int)_vertices.size() ? _extras[idx2] :
+                  MVertex *v2 = idx2 >= (int)_vertices.size() ? _extras[idx2] :
                     _vertices[idx2];
                   int idx3 = pointmark(p[2]) - in->firstnumber;
-                  MNode *v3 = idx3 >= (int)_vertices.size() ? _extras[idx3] :
+                  MVertex *v3 = idx3 >= (int)_vertices.size() ? _extras[idx3] :
                     _vertices[idx3];
                   MTriangle *t = new MTriangle(v1, v2, v3);
                   gf->triangles.push_back(t);
@@ -985,16 +985,16 @@ namespace tetgenBR {
           p[3] = oppo(tetloop);
 
           int idx1 = pointmark(p[0]) - in->firstnumber;
-          MNode *v1 =
+          MVertex *v1 =
             idx1 >= (int)_vertices.size() ? _extras[idx1] : _vertices[idx1];
           int idx2 = pointmark(p[1]) - in->firstnumber;
-          MNode *v2 =
+          MVertex *v2 =
             idx2 >= (int)_vertices.size() ? _extras[idx2] : _vertices[idx2];
           int idx3 = pointmark(p[2]) - in->firstnumber;
-          MNode *v3 =
+          MVertex *v3 =
             idx3 >= (int)_vertices.size() ? _extras[idx3] : _vertices[idx3];
           int idx4 = pointmark(p[3]) - in->firstnumber;
-          MNode *v4 =
+          MVertex *v4 =
             idx4 >= (int)_vertices.size() ? _extras[idx4] : _vertices[idx4];
           MTetrahedron *t = new MTetrahedron(v1, v2, v3, v4);
           _gr->tetrahedra.push_back(t);
@@ -1215,7 +1215,7 @@ namespace tetgenBR {
 
   } // namespace tetgenBR
 
-  bool meshGRegionBoundaryRecovery(GVolume *gr, splitQuadRecovery *sqr)
+  bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr)
   {
     bool ret = false;
     try {
@@ -1233,37 +1233,37 @@ namespace tetgenBR {
         ret = false;
       }
       else if(err == 3) {
-        std::map<int, MNode *> all;
-        std::vector<GSurface *> f = gr->faces();
+        std::map<int, MVertex *> all;
+        std::vector<GFace *> f = gr->faces();
         for(auto it = f.begin(); it != f.end(); ++it) {
-          GSurface *gf = *it;
+          GFace *gf = *it;
           for(std::size_t i = 0; i < gf->triangles.size(); i++) {
             for(int j = 0; j < 3; j++) {
-              MNode *v = gf->triangles[i]->getVertex(j);
+              MVertex *v = gf->triangles[i]->getVertex(j);
               all[v->getIndex()] = v;
             }
           }
         }
-        std::vector<GCurve *> const &e = gr->embeddedEdges();
+        std::vector<GEdge *> const &e = gr->embeddedEdges();
         for(auto it = e.begin(); it != e.end(); ++it) {
-          GCurve *ge = *it;
+          GEdge *ge = *it;
           for(std::size_t i = 0; i < ge->lines.size(); i++) {
             for(int j = 0; j < 2; j++) {
-              MNode *v = ge->lines[i]->getVertex(j);
+              MVertex *v = ge->lines[i]->getVertex(j);
               all[v->getIndex()] = v;
             }
           }
         }
-        std::vector<GPoint *> const &v = gr->embeddedVertices();
+        std::vector<GVertex *> const &v = gr->embeddedVertices();
         for(auto it = v.begin(); it != v.end(); ++it) {
-          GPoint *gv = *it;
+          GVertex *gv = *it;
           for(std::size_t i = 0; i < gv->points.size(); i++) {
-            MNode *v = gv->points[i]->getVertex(0);
+            MVertex *v = gv->points[i]->getVertex(0);
             all[v->getIndex()] = v;
           }
         }
         for(std::size_t i = 0; i < gr->mesh_vertices.size(); i++) {
-          MNode *v = gr->mesh_vertices[i];
+          MVertex *v = gr->mesh_vertices[i];
           all[v->getIndex()] = v;
         }
         std::string what;
@@ -1299,21 +1299,21 @@ namespace tetgenBR {
         std::vector<double> x, y, z, val;
         for(int f = 0; f < 2; f++) {
           if(ftags[f] > 0) {
-            GSurface *gf = gr->model()->getFaceByTag(ftags[f]);
+            GFace *gf = gr->model()->getFaceByTag(ftags[f]);
             if(gf) {
               gr->model()->addLastMeshEntityError(gf);
               pb << " surface " << ftags[f];
             }
           }
           if(etags[f] > 0) {
-            GCurve *ge = gr->model()->getEdgeByTag(etags[f]);
+            GEdge *ge = gr->model()->getEdgeByTag(etags[f]);
             if(ge) {
               gr->model()->addLastMeshEntityError(ge);
               pb << " curve " << etags[f];
             }
           }
           for(int i = 0; i < 3; i++) {
-            MNode *v = all[vtags[f][i]];
+            MVertex *v = all[vtags[f][i]];
             if(v) {
               gr->model()->addLastMeshVertexError(v);
               x.push_back(v->x());
@@ -1354,7 +1354,7 @@ namespace tetgenBR {
 
 #else
 
-bool meshGRegionBoundaryRecovery(GVolume *gr, splitQuadRecovery *sqr)
+bool meshGRegionBoundaryRecovery(GRegion *gr, splitQuadRecovery *sqr)
 {
   return false;
 }

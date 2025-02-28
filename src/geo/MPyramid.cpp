@@ -424,7 +424,7 @@ void MPyramidN::reverse()
   IndicesReversed &indices = it->second;
 
   // copy vertices
-  std::vector<MNode *> oldv(5 + _vs.size());
+  std::vector<MVertex *> oldv(5 + _vs.size());
   std::copy(_v, _v + 5, oldv.begin());
   std::copy(_vs.begin(), _vs.end(), oldv.begin() + 5);
 
@@ -433,7 +433,7 @@ void MPyramidN::reverse()
   for(std::size_t i = 0; i < _vs.size(); ++i) { _vs[i] = oldv[indices[5 + i]]; }
 }
 
-void MPyramidN::_addHOEdgePoints(int num, std::vector<MNode *> &v,
+void MPyramidN::_addHOEdgePoints(int num, std::vector<MVertex *> &v,
                                  bool fwd) const
 {
   int minVtx = num * (_order - 1);
@@ -445,7 +445,7 @@ void MPyramidN::_addHOEdgePoints(int num, std::vector<MNode *> &v,
     for(int i = maxVtx; i >= minVtx; i--) v.push_back(_vs[i]);
 }
 
-void MPyramidN::getFaceVertices(const int num, std::vector<MNode *> &v) const
+void MPyramidN::getFaceVertices(const int num, std::vector<MVertex *> &v) const
 {
   bool complete = !getIsAssimilatedSerendipity();
 

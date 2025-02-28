@@ -4,7 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include "SBoundingBox3d.h"
-#include "MNode.h"
+#include "MVertex.h"
 
 struct HilbertSort {
   // The code for generating table transgc
@@ -15,11 +15,11 @@ struct HilbertSort {
   int Limit;
   SBoundingBox3d bbox;
   void ComputeGrayCode(int n);
-  int Split(MNode **vertices, int arraysize, int GrayCode0, int GrayCode1,
+  int Split(MVertex **vertices, int arraysize, int GrayCode0, int GrayCode1,
             double BoundingBoxXmin, double BoundingBoxXmax,
             double BoundingBoxYmin, double BoundingBoxYmax,
             double BoundingBoxZmin, double BoundingBoxZmax);
-  void Sort(MNode **vertices, int arraysize, int e, int d,
+  void Sort(MVertex **vertices, int arraysize, int e, int d,
             double BoundingBoxXmin, double BoundingBoxXmax,
             double BoundingBoxYmin, double BoundingBoxYmax,
             double BoundingBoxZmin, double BoundingBoxZmax, int depth);
@@ -27,7 +27,7 @@ struct HilbertSort {
   {
     ComputeGrayCode(3);
   }
-  void MultiscaleSortHilbert(MNode **vertices, int arraysize, int threshold,
+  void MultiscaleSortHilbert(MVertex **vertices, int arraysize, int threshold,
                              double ratio, int *depth)
   {
     int middle;
@@ -42,14 +42,14 @@ struct HilbertSort {
          bbox.max().x(), bbox.min().y(), bbox.max().y(), bbox.min().z(),
          bbox.max().z(), 0);
   }
-  void Apply(std::vector<MNode *> &v, int threshold = 10)
+  void Apply(std::vector<MVertex *> &v, int threshold = 10)
   {
     for(size_t i = 0; i < v.size(); i++) {
-      MNode *pv = v[i];
+      MVertex *pv = v[i];
       bbox += SPoint3(pv->x(), pv->y(), pv->z());
     }
     bbox *= 1.01;
-    MNode **pv = &v[0];
+    MVertex **pv = &v[0];
     int depth = 0; 
     MultiscaleSortHilbert(pv, (int)v.size(), threshold, 0.125, &depth);
   }
@@ -96,13 +96,13 @@ void HilbertSort::ComputeGrayCode(int n)
   }
 }
 
-int HilbertSort::Split(MNode **vertices, int arraysize, int GrayCode0,
+int HilbertSort::Split(MVertex **vertices, int arraysize, int GrayCode0,
                        int GrayCode1, double BoundingBoxXmin,
                        double BoundingBoxXmax, double BoundingBoxYmin,
                        double BoundingBoxYmax, double BoundingBoxZmin,
                        double BoundingBoxZmax)
 {
-  MNode *swapvert;
+  MVertex *swapvert;
   int axis, d;
   double split;
   int i, j;
@@ -170,7 +170,7 @@ int HilbertSort::Split(MNode **vertices, int arraysize, int GrayCode0,
 
 // The sorting code is inspired by Tetgen 1.5
 
-void HilbertSort::Sort(MNode **vertices, int arraysize, int e, int d,
+void HilbertSort::Sort(MVertex **vertices, int arraysize, int e, int d,
                        double BoundingBoxXmin, double BoundingBoxXmax,
                        double BoundingBoxYmin, double BoundingBoxYmax,
                        double BoundingBoxZmin, double BoundingBoxZmax,
@@ -263,13 +263,13 @@ void HilbertSort::Sort(MNode **vertices, int arraysize, int e, int d,
   }
 }
 
-void SortHilbert(std::vector<MNode *> &v)
+void SortHilbert(std::vector<MVertex *> &v)
 {
   HilbertSort h(1000);
   h.Apply(v);
 }
 
-void SortHilbert_Without_Brio(std::vector<MNode *> &v){
+void SortHilbert_Without_Brio(std::vector<MVertex *> &v){
   HilbertSort h(1000);
   h.Apply(v,v.size()+1);
 }

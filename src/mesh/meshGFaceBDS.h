@@ -10,19 +10,19 @@
 #include <list>
 #include "BDS.h"
 
-class GSurface;
-class MNode;
+class GFace;
+class MVertex;
 class BDS_Mesh;
 class BDS_Point;
 
 void refineMeshBDS(
-  GSurface *gf, BDS_Mesh &m, const int NIT, const bool computeNodalSizeField,
-  std::map<MNode *, BDS_Point *> *recoverMapInv = 0,
-  std::map<BDS_Point *, MNode *, PointLessThan> *recoverMap = 0,
+  GFace *gf, BDS_Mesh &m, const int NIT, const bool computeNodalSizeField,
+  std::map<MVertex *, BDS_Point *> *recoverMapInv = 0,
+  std::map<BDS_Point *, MVertex *, PointLessThan> *recoverMap = 0,
   std::vector<SPoint2> *true_boundary = 0);
 void modifyInitialMeshToRemoveDegeneracies(
-  GSurface *gf, BDS_Mesh &m,
-  std::map<BDS_Point *, MNode *, PointLessThan> *recoverMap);
-void delaunayizeBDS(GSurface *gf, BDS_Mesh &m, int &nb_swap);
+  GFace *gf, BDS_Mesh &m,
+  std::map<BDS_Point *, MVertex *, PointLessThan> *recoverMap);
+void delaunayizeBDS(GFace *gf, BDS_Mesh &m, int &nb_swap);
 
 #endif

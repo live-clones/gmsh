@@ -7,13 +7,13 @@
 #include "GModel.h"
 #include "GEntity.h"
 
-groupOfElements::groupOfElements(GSurface *gf)
+groupOfElements::groupOfElements(GFace *gf)
 {
   elementFilterTrivial filter;
   addElementary(gf, filter);
 }
 
-groupOfElements::groupOfElements(GVolume *gr)
+groupOfElements::groupOfElements(GRegion *gr)
 {
   elementFilterTrivial filter;
   addElementary(gr, filter);

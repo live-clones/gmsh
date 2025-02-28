@@ -28,7 +28,7 @@
 #include "MQuadrangle.h"
 #include "MTriangle.h"
 #include "BasisFactory.h"
-#include "GSurface.h"
+#include "GFace.h"
 #include "bezierBasis.h"
 #include "gmshVertex.h"
 #include "Geo.h"
@@ -48,7 +48,7 @@
 
 namespace {
   void draw3DFrame(SPoint3 &p, SVector3 &t, SVector3 &n, SVector3 &w,
-                   double unitDimension, GSurface *gFace)
+                   double unitDimension, GFace *gFace)
   {
     // Make sure to have 2 vector that are perpendicular to t assuming n !=
     // alpha * t, forall alpha
@@ -59,27 +59,27 @@ namespace {
     b *= unitDimension;
 
     SPoint3 pnt = p + a;
-    MNode *previous = new MNode(pnt.x(), pnt.y(), pnt.z(), gFace);
+    MVertex *previous = new MVertex(pnt.x(), pnt.y(), pnt.z(), gFace);
     gFace->addMeshVertex(previous);
 
     const int N = 30;
     for(int j = 1; j <= N; ++j) {
       const double theta = (double)j / N * 2 * M_PI;
       SPoint3 pnt = p + a * std::cos(theta) + b * std::sin(theta);
-      MNode *current = new MNode(pnt.x(), pnt.y(), pnt.z(), gFace);
+      MVertex *current = new MVertex(pnt.x(), pnt.y(), pnt.z(), gFace);
       gFace->addMeshVertex(current);
       MLine *line = new MLine(previous, current);
       gFace->edges().front()->addLine(line);
       previous = current;
     }
 
-    MNode *v = new MNode(p.x(), p.y(), p.z(), gFace);
+    MVertex *v = new MVertex(p.x(), p.y(), p.z(), gFace);
     pnt = p + n * unitDimension;
-    MNode *vn = new MNode(pnt.x(), pnt.y(), pnt.z(), gFace);
+    MVertex *vn = new MVertex(pnt.x(), pnt.y(), pnt.z(), gFace);
     pnt = p + w * unitDimension;
-    MNode *vw = new MNode(pnt.x(), pnt.y(), pnt.z(), gFace);
+    MVertex *vw = new MVertex(pnt.x(), pnt.y(), pnt.z(), gFace);
     pnt = p + t * unitDimension;
-    MNode *vt = new MNode(pnt.x(), pnt.y(), pnt.z(), gFace);
+    MVertex *vt = new MVertex(pnt.x(), pnt.y(), pnt.z(), gFace);
     gFace->addMeshVertex(v);
     gFace->addMeshVertex(vn);
     gFace->addMeshVertex(vw);
@@ -93,12 +93,12 @@ namespace {
 
   void drawIdealPositionEdge(
     const MElement *bottom1, const MElement *bottom2, const MEdgeN &baseEdge,
-    const BoundaryLayerCurver::Parameters3DCurve &parameters, GSurface *gFace,
+    const BoundaryLayerCurver::Parameters3DCurve &parameters, GFace *gFace,
     int triDirection = 0)
   {
     int N = 40;
 
-    MNode *previous = nullptr;
+    MVertex *previous = nullptr;
 
     for(int i = 0; i < N + 1; ++i) {
       const double u = (double)i / N * 2 - 1;
@@ -139,7 +139,7 @@ namespace {
       double y = pnt.y() + h.y();
       double z = pnt.z() + h.z();
 
-      MNode *current = new MNode(x, y, z, gFace);
+      MVertex *current = new MVertex(x, y, z, gFace);
       gFace->addMeshVertex(current);
       if(previous) {
         MLine *line = new MLine(previous, current);
@@ -149,11 +149,11 @@ namespace {
     }
   }
 
-  void drawNormal(SPoint3 &p, SVector3 &n, double unitDimension, GSurface *gFace)
+  void drawNormal(SPoint3 &p, SVector3 &n, double unitDimension, GFace *gFace)
   {
     SPoint3 pnt = p + n * unitDimension;
-    MNode *v = new MNode(p.x(), p.y(), p.z(), gFace);
-    MNode *vn = new MNode(pnt.x(), pnt.y(), pnt.z(), gFace);
+    MVertex *v = new MVertex(p.x(), p.y(), p.z(), gFace);
+    MVertex *vn = new MVertex(pnt.x(), pnt.y(), pnt.z(), gFace);
     gFace->addMeshVertex(v);
     gFace->addMeshVertex(vn);
     MLine *line = new MLine(v, vn);
@@ -393,8 +393,8 @@ namespace BoundaryLayerCurver {
       const double &v = refPoints(i, 1);
       SVector3 t0, t1, n, h;
       baseFace.frame(u, v, t0, t1, n);
-      MNode *vBase = baseFace.getVertex(i);
-      MNode *vTop = topFace.getVertex(i);
+      MVertex *vBase = baseFace.getVertex(i);
+      MVertex *vTop = topFace.getVertex(i);
       h = SVector3(vTop->x() - vBase->x(), vTop->y() - vBase->y(),
                    vTop->z() - vBase->z());
 
@@ -482,7 +482,7 @@ namespace BoundaryLayerCurver {
     int nVertices = f1.getNumVertices();
     if(f2.getNumVertices() != nVertices) return false;
 
-    MNode *v = f1.getVertex(0);
+    MVertex *v = f1.getVertex(0);
 
     // Find the vertex in f2
     int k = 0;
@@ -522,7 +522,7 @@ namespace BoundaryLayerCurver {
     return false;
   }
 
-  bool faceContainsVertex(const MFace &f, const MNode *v)
+  bool faceContainsVertex(const MFace &f, const MVertex *v)
   {
     for(int i = 0; i < f.getNumVertices(); ++i) {
       if(f.getVertex(i) == v) return true;
@@ -532,8 +532,8 @@ namespace BoundaryLayerCurver {
 
   bool faceContainsEdge(const MFace &f, const MEdge &e)
   {
-    MNode *v0 = e.getMinVertex();
-    MNode *v1 = e.getMaxVertex();
+    MVertex *v0 = e.getMinVertex();
+    MVertex *v1 = e.getMaxVertex();
     bool v0In = false;
     bool v1In = false;
     for(int i = 0; i < f.getNumVertices(); ++i) {
@@ -544,7 +544,7 @@ namespace BoundaryLayerCurver {
   }
 
   void computeStackPrimaryVertices(const PairMElemVecMElem &c1,
-                                   std::vector<MNode *> &stack)
+                                   std::vector<MVertex *> &stack)
   {
     int numVertexPerLayer = c1.first->getNumPrimaryVertices();
     std::size_t numLayers = c1.second.size();
@@ -570,7 +570,7 @@ namespace BoundaryLayerCurver {
            faceContainsEdge(topFace, edge))
           continue;
 
-        MNode *vbot, *vtop;
+        MVertex *vbot, *vtop;
         if(faceContainsVertex(bottomFace, edge.getVertex(0))) {
           vbot = edge.getVertex(0);
           vtop = edge.getVertex(1);
@@ -643,10 +643,10 @@ namespace BoundaryLayerCurver {
     }
 
     // Compute stack of Primary vertices
-    std::vector<MNode *> allPrimaryVertices;
+    std::vector<MVertex *> allPrimaryVertices;
     computeStackPrimaryVertices(column, allPrimaryVertices);
 
-    std::vector<MNode *> interfacePrimaryVertices;
+    std::vector<MVertex *> interfacePrimaryVertices;
     {
       int nVertexPerLayer = bottomElement->getNumPrimaryVertices();
       int n0 = -1;
@@ -671,10 +671,10 @@ namespace BoundaryLayerCurver {
     // Compute interface
     interface.clear();
     for(int i = 0; i < stackElements.size() - 1; ++i) {
-      MNode *v0 = interfacePrimaryVertices[2 * i + 0];
-      MNode *v1 = interfacePrimaryVertices[2 * i + 1];
-      MNode *v2 = interfacePrimaryVertices[2 * i + 3];
-      MNode *v3 = interfacePrimaryVertices[2 * i + 2];
+      MVertex *v0 = interfacePrimaryVertices[2 * i + 0];
+      MVertex *v1 = interfacePrimaryVertices[2 * i + 1];
+      MVertex *v2 = interfacePrimaryVertices[2 * i + 3];
+      MVertex *v3 = interfacePrimaryVertices[2 * i + 2];
       if(v2 == v1 && v3 == v0) {
         Msg::Error("Error in computeInterface: not an element");
       }
@@ -778,7 +778,7 @@ namespace BoundaryLayerCurver {
                          const MEdgeN &baseEdge,
                          const Parameters3DCurve &parameters, int nbPoints,
                          const IntPt *points, fullMatrix<double> &xyz,
-                         int triDirection = 0, const GSurface *gFace = nullptr)
+                         int triDirection = 0, const GFace *gFace = nullptr)
   {
     //  static int ITER = 0;
     //  ++ITER;
@@ -862,7 +862,7 @@ namespace BoundaryLayerCurver {
                              const MEdgeN &baseEdge, MEdgeN &topEdge,
                              const Parameters3DCurve &parameters,
                              int triDirection, double dampingFactor,
-                             const GSurface *gFace)
+                             const GFace *gFace)
   {
     // Let (t, n, w) be the local reference frame on 'baseEdge'
     // where t(u) is the unit tangent of the 'baseEdge'
@@ -887,7 +887,7 @@ namespace BoundaryLayerCurver {
     //  drawIdealPositionEdge(bottom1, bottom2, baseEdge, parameters, gFace,
     //  triDirection);
     for(int i = 0; i < 2; ++i) {
-      MNode *v = topEdge.getVertex(i);
+      MVertex *v = topEdge.getVertex(i);
       xyz(sizeSystem + i, 0) = v->x();
       xyz(sizeSystem + i, 1) = v->y();
       xyz(sizeSystem + i, 2) = v->z();
@@ -899,7 +899,7 @@ namespace BoundaryLayerCurver {
     data->invA.mult(xyz, newxyz);
 
     for(int i = 2; i < topEdge.getNumVertices(); ++i) {
-      MNode *v = topEdge.getVertex(i);
+      MVertex *v = topEdge.getVertex(i);
       v->x() = newxyz(i, 0);
       v->y() = newxyz(i, 1);
       v->z() = newxyz(i, 2);
@@ -912,7 +912,7 @@ namespace BoundaryLayerCurver {
                                     const MEdgeN &topEdge,
                                     Parameters3DCurve &parameters)
   {
-    MNode *vBase, *vTop;
+    MVertex *vBase, *vTop;
     SVector3 t, n1, n2, w, h;
 
     getBisectorsAtCommonCorners(bottom1, bottom2, baseEdge, n1, n2);
@@ -952,8 +952,8 @@ namespace BoundaryLayerCurver {
   {
     // Here, we assume that "thickness" is identical on the left and on the
     // right part of the column => identical eta_i
-    MNode *vbot = baseEdge.getVertex(0);
-    MNode *vtop = topEdge.getVertex(0);
+    MVertex *vbot = baseEdge.getVertex(0);
+    MVertex *vtop = topEdge.getVertex(0);
     double dX = vtop->x() - vbot->x();
     double dY = vtop->y() - vbot->y();
     double dZ = vtop->z() - vbot->z();
@@ -970,7 +970,7 @@ namespace BoundaryLayerCurver {
     // Go trough the whole column and compute TFI position of topVertices
     for(int i = 1; i < (int)column.size() - 1; ++i) {
       MEdgeN e = column[i].getHighOrderEdge(0, 1);
-      MNode *v = e.getVertex(0);
+      MVertex *v = e.getVertex(0);
       double factor;
       switch(componentToLookAt) {
       case 0: factor = (v->x() - vbot->x()) / dX; break;
@@ -978,9 +978,9 @@ namespace BoundaryLayerCurver {
       case 2: factor = (v->z() - vbot->z()) / dZ; break;
       }
       for(int j = 2; j < e.getNumVertices(); ++j) {
-        MNode *vbot = baseEdge.getVertex(j);
-        MNode *vtop = topEdge.getVertex(j);
-        MNode *v = e.getVertex(j);
+        MVertex *vbot = baseEdge.getVertex(j);
+        MVertex *vtop = topEdge.getVertex(j);
+        MVertex *v = e.getVertex(j);
         v->x() = (1 - factor) * vbot->x() + factor * vtop->x();
         v->y() = (1 - factor) * vbot->y() + factor * vtop->y();
         v->z() = (1 - factor) * vbot->z() + factor * vtop->z();
@@ -1007,7 +1007,7 @@ namespace BoundaryLayerCurver {
   void curveInterface(std::vector<MFaceN> &column, const MElement *bottom1,
                       const MElement *bottom2, const MEdgeN &baseEdge,
                       MEdgeN &topEdge, double dampingFactor,
-                      const GSurface *bndEnt, bool linear)
+                      const GFace *bndEnt, bool linear)
   {
     // inspired from curve2DQuadColumnTFI
 
@@ -1024,7 +1024,7 @@ namespace BoundaryLayerCurver {
   // compute then curve interfaces between columns
   void curveInterfaces(VecPairMElemVecMElem &bndEl2column,
                        std::vector<std::pair<int, int> > &adjacencies,
-                       const GSurface *boundary)
+                       const GFace *boundary)
   {
     for(std::size_t i = 0; i < adjacencies.size(); ++i) {
       MEdgeN bottomEdge, topEdge;
@@ -1057,7 +1057,7 @@ namespace BoundaryLayerCurver {
     const std::vector<MElement *> &column = bndEl2column.second;
     stack.resize(column.size());
 
-    std::vector<MNode *> allPrimaryVertices;
+    std::vector<MVertex *> allPrimaryVertices;
     computeStackPrimaryVertices(bndEl2column, allPrimaryVertices);
     // FIXME already calculated in computeInterfaces. Reuse them?
 
@@ -1090,7 +1090,7 @@ namespace BoundaryLayerCurver {
 
   void computePosition3DFace(const MFaceN &baseFace, MFaceN &topFace,
                              const Parameters3DSurface &parameters,
-                             const GSurface *gFace)
+                             const GFace *gFace)
   {
     // Let (t0, t1, n) be the local reference frame on 'baseFace'
     // We seek, for each component, the polynomial function that fit the best
@@ -1116,7 +1116,7 @@ namespace BoundaryLayerCurver {
     fullMatrix<double> xyz(sizeSystem + nVerticesBoundary, 3);
     idealPositionFace(baseFace, parameters, sizeSystem, gaussPnts, xyz);
     for(int i = 0; i < nVerticesBoundary; ++i) {
-      MNode *v = topFace.getVertex(i);
+      MVertex *v = topFace.getVertex(i);
       xyz(sizeSystem + i, 0) = v->x();
       xyz(sizeSystem + i, 1) = v->y();
       xyz(sizeSystem + i, 2) = v->z();
@@ -1129,7 +1129,7 @@ namespace BoundaryLayerCurver {
     data->invA.mult(xyz, newxyz);
 
     for(int i = nVerticesBoundary; i < topFace.getNumVertices(); ++i) {
-      MNode *v = topFace.getVertex(i);
+      MVertex *v = topFace.getVertex(i);
       v->x() = newxyz(i, 0);
       v->y() = newxyz(i, 1);
       v->z() = newxyz(i, 2);
@@ -1142,8 +1142,8 @@ namespace BoundaryLayerCurver {
   {
     // Here, we assume that "thickness" is identical on the boundary
     // => identical eta_i
-    MNode *vbot = baseFace.getVertex(0);
-    MNode *vtop = topFace.getVertex(0);
+    MVertex *vbot = baseFace.getVertex(0);
+    MVertex *vtop = topFace.getVertex(0);
     double dX = vtop->x() - vbot->x();
     double dY = vtop->y() - vbot->y();
     double dZ = vtop->z() - vbot->z();
@@ -1160,7 +1160,7 @@ namespace BoundaryLayerCurver {
     // Go trough the whole column and compute TFI position of topVertices
     for(int i = 1; i < (int)column.size() - 1; ++i) {
       MFaceN &f = column[i];
-      MNode *v = f.getVertex(0);
+      MVertex *v = f.getVertex(0);
       double factor;
       switch(componentToLookAt) {
       case 0: factor = (v->x() - vbot->x()) / dX; break;
@@ -1168,9 +1168,9 @@ namespace BoundaryLayerCurver {
       case 2: factor = (v->z() - vbot->z()) / dZ; break;
       }
       for(int j = f.getNumVerticesOnBoundary(); j < f.getNumVertices(); ++j) {
-        MNode *vbot = baseFace.getVertex(j);
-        MNode *vtop = topFace.getVertex(j);
-        MNode *v = f.getVertex(j);
+        MVertex *vbot = baseFace.getVertex(j);
+        MVertex *vtop = topFace.getVertex(j);
+        MVertex *v = f.getVertex(j);
         v->x() = (1 - factor) * vbot->x() + factor * vtop->x();
         v->y() = (1 - factor) * vbot->y() + factor * vtop->y();
         v->z() = (1 - factor) * vbot->z() + factor * vtop->z();
@@ -1183,13 +1183,13 @@ namespace BoundaryLayerCurver {
   {
     int start = el->getNumVertices() - el->getNumVolumeVertices();
     for(int i = start; i < el->getNumVertices(); ++i) {
-      MNode *v = el->getVertex(i);
+      MVertex *v = el->getVertex(i);
       v->x() = 0;
       v->y() = 0;
       v->z() = 0;
       for(int j = 0; j < placement.size2(); ++j) {
         const double coeff = placement(i - start, j);
-        MNode *other = el->getVertex(j);
+        MVertex *other = el->getVertex(j);
         v->x() += coeff * other->x();
         v->y() += coeff * other->y();
         v->z() += coeff * other->z();
@@ -1238,7 +1238,7 @@ namespace BoundaryLayerCurver {
     }
   }
 
-  void curveColumns(VecPairMElemVecMElem &bndEl2column, const GSurface *boundary)
+  void curveColumns(VecPairMElemVecMElem &bndEl2column, const GFace *boundary)
   {
     Parameters3DSurface parameters;
     for(std::size_t i = 0; i < bndEl2column.size(); ++i) {
@@ -1259,7 +1259,7 @@ namespace BoundaryLayerCurver {
 } // namespace BoundaryLayerCurver
 
 void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
-                          const GSurface *boundary)
+                          const GFace *boundary)
 {
   std::vector<std::pair<int, int> > adjacencies;
   BoundaryLayerCurver::computeAdjacencies(bndEl2column, adjacencies);

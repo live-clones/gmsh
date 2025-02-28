@@ -36,7 +36,7 @@ public:
   SolverField(dofManager<double> *dm_, FunctionSpace<T> *fs_) : dm(dm_), fs(fs_)
   {
   }
-  virtual int getNumKeys(MNode *ver) const { return 1; }
+  virtual int getNumKeys(MVertex *ver) const { return 1; }
   virtual int getNumKeys(MElement *ele) const { return 1; }
 
 private:
@@ -44,7 +44,7 @@ private:
   {
     Msg::Error("getKeys for SolverField shouldn't be called");
   }
-  virtual void getKeys(MNode *ver, std::vector<Dof> &keys) const
+  virtual void getKeys(MVertex *ver, std::vector<Dof> &keys) const
   {
     Msg::Error("getKeys for SolverField shouldn't be called");
   }

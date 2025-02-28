@@ -58,7 +58,7 @@ void insertActiveCells(double x, double y, double z, double rmax,
         box.insertActiveCell(box.getCellIndex(i, j, k));
 }
 
-void fillPointCloud(GCurve *ge, double sampling, std::vector<SPoint3> &points)
+void fillPointCloud(GEdge *ge, double sampling, std::vector<SPoint3> &points)
 {
   Range<double> t_bounds = ge->parBounds(0);
   double t_min = t_bounds.low();
@@ -67,7 +67,7 @@ void fillPointCloud(GCurve *ge, double sampling, std::vector<SPoint3> &points)
   int N = length / sampling;
   for(int i = 0; i < N; i++) {
     double t = t_min + (double)i / (double)(N - 1) * (t_max - t_min);
-    GVertex p = ge->point(t);
+    GPoint p = ge->point(t);
     points.push_back(SPoint3(p.x(), p.y(), p.z()));
   }
 }
@@ -161,9 +161,9 @@ void computeLevelset(GModel *gm, cartesianBox<double> &box)
         std::vector<double> iDistancesE;
         MElement *e = (*fit)->getMeshElement(k);
         if(e->getType() == TYPE_TRI) {
-          MNode *v1 = e->getVertex(0);
-          MNode *v2 = e->getVertex(1);
-          MNode *v3 = e->getVertex(2);
+          MVertex *v1 = e->getVertex(0);
+          MVertex *v2 = e->getVertex(1);
+          MVertex *v3 = e->getVertex(2);
           SPoint3 p1(v1->x(), v1->y(), v1->z());
           SPoint3 p2(v2->x(), v2->y(), v2->z());
           SPoint3 p3(v3->x(), v3->y(), v3->z());
@@ -582,7 +582,7 @@ double gLevelsetPoints::operator()(double x, double y, double z) const
   // return surf_eval(0,0);
 }
 
-void gLevelsetPoints::computeLS(std::vector<MNode *> &vert)
+void gLevelsetPoints::computeLS(std::vector<MVertex *> &vert)
 {
   fullMatrix<double> xyz_eval(vert.size(), 3), surf_eval(vert.size(), 1);
   for(std::size_t i = 0; i < vert.size(); i++) {
@@ -960,12 +960,12 @@ gLevelsetDistMesh::gLevelsetDistMesh(GModel *gm, const std::string &physical,
   }
 
   // setup
-  std::set<MNode *> _all;
+  std::set<MVertex *> _all;
   for(std::size_t i = 0; i < _entities.size(); i++) {
     for(std::size_t k = 0; k < _entities[i]->getNumMeshElements(); k++) {
       MElement *e = _entities[i]->getMeshElement(k);
       for(std::size_t j = 0; j < e->getNumVertices(); j++) {
-        MNode *v = _entities[i]->getMeshElement(k)->getVertex(j);
+        MVertex *v = _entities[i]->getMeshElement(k)->getVertex(j);
         _all.insert(v);
         _v2e.insert(std::make_pair(v, e));
       }
@@ -976,7 +976,7 @@ gLevelsetDistMesh::gLevelsetDistMesh(GModel *gm, const std::string &physical,
   auto itp = _all.begin();
   int ind = 0;
   while(itp != _all.end()) {
-    MNode *pt = *itp;
+    MVertex *pt = *itp;
     nodes[ind][0] = pt->x();
     nodes[ind][1] = pt->y();
     nodes[ind][2] = pt->z();
@@ -1008,7 +1008,7 @@ double gLevelsetDistMesh::operator()(double x, double y, double z) const
   int dimE = 1;
   for(int i = 0; i < _nbClose; i++) {
     int iVertex = index[i];
-    MNode *v = _vertices[iVertex];
+    MVertex *v = _vertices[iVertex];
     for(auto itm = _v2e.lower_bound(v); itm != _v2e.upper_bound(v); ++itm) {
       elements.insert(itm->second);
       dimE = itm->second->getDim();
@@ -1019,8 +1019,8 @@ double gLevelsetDistMesh::operator()(double x, double y, double z) const
   std::vector<MElement *> closestElements;
   for(auto it = elements.begin(); it != elements.end(); ++it) {
     double distance = 0.;
-    MNode *v1 = (*it)->getVertex(0);
-    MNode *v2 = (*it)->getVertex(1);
+    MVertex *v1 = (*it)->getVertex(0);
+    MVertex *v2 = (*it)->getVertex(1);
     SPoint3 p1(v1->x(), v1->y(), v1->z());
     SPoint3 p2(v2->x(), v2->y(), v2->z());
     SPoint3 closePt;
@@ -1028,7 +1028,7 @@ double gLevelsetDistMesh::operator()(double x, double y, double z) const
       signedDistancePointLine(p1, p2, pt, distance, closePt); // !! > 0
     }
     else if(dimE == 2) {
-      MNode *v3 = (*it)->getVertex(2);
+      MVertex *v3 = (*it)->getVertex(2);
       SPoint3 p3(v3->x(), v3->y(), v3->z());
       if(p1 == p2 || p1 == p3 || p2 == p3)
         distance = 1.e22;
@@ -1228,8 +1228,8 @@ double gLevelsetYarn::operator()(double x, double y, double z) const
     GEntity *g = entities[i];
     for(std::size_t j = 0; j < g->getNumMeshElements(); j++) {
       MElement *e = g->getMeshElement(j);
-      MNode *v1 = e->getVertex(0);
-      MNode *v2 = e->getVertex(1);
+      MVertex *v1 = e->getVertex(0);
+      MVertex *v2 = e->getVertex(1);
       SPoint3 p1(v1->x(), v1->y(), v1->z());
       SPoint3 p2(v2->x(), v2->y(), v2->z());
       /*if(e->getType() == TYPE_LIN){
@@ -1238,7 +1238,7 @@ double gLevelsetYarn::operator()(double x, double y, double z) const
       typeLs);
       }
       else if(e->getType() == TYPE_TRI){
-        MNode *v3 = e->getVertex(2);
+        MVertex *v3 = e->getVertex(2);
         SPoint3 p3(v3->x(),v3->y(),v3->z());
         signedDistancesPointsTriangle(iDistances, iClosePts, pts, p1, p2, p3);
       }*/

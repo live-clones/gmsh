@@ -10,11 +10,11 @@
 
 #include <cmath>
 #include <queue>
-#include "MNode.h"
+#include "MVertex.h"
 #include "STensor3.h"
 #include "BackgroundMesh3D.h"
 #include "GEntity.h"
-#include "GSurface.h"
+#include "GFace.h"
 #include "rtree.h"
 
 static const double k1 = 0.61; // k1*h is the minimal distance between two nodes
@@ -30,8 +30,8 @@ static const double FACTOR = .61;
 
 class surfacePointWithExclusionRegion {
 public:
-  MNode *_v;
-  MNode *_father;
+  MVertex *_v;
+  MVertex *_father;
   SPoint2 _center;
   SPoint2 _p[4];
   SPoint2 _q[4];
@@ -44,11 +44,11 @@ public:
      + p1
 
    */
-  surfacePointWithExclusionRegion(MNode *v, SPoint2 p[8],
+  surfacePointWithExclusionRegion(MVertex *v, SPoint2 p[8],
                                   SPoint2 &_mp, SMetric3 &meshMetric,
                                   surfacePointWithExclusionRegion *father = 0);
 
-  bool inExclusionZone(const SPoint2 &p, MNode *v);
+  bool inExclusionZone(const SPoint2 &p, MVertex *v);
   void minmax(double _min[2], double _max[2]) const;
   void print(FILE *f, int i);
 };
@@ -56,23 +56,23 @@ public:
 class my_wrapper {
 public:
   bool _tooclose;
-  MNode *_parent;
+  MVertex *_parent;
   SPoint2 _p;
-  my_wrapper(const SPoint2 &sp, MNode *parent) :
+  my_wrapper(const SPoint2 &sp, MVertex *parent) :
   _p(sp), _parent(parent), _tooclose(false){}
 };
 
  bool rtree_callback(surfacePointWithExclusionRegion *neighbour,
 		     void *point);
 
-bool inExclusionZone(MNode *parent,
+bool inExclusionZone(MVertex *parent,
 		     SPoint2 &p,
 		     RTree<surfacePointWithExclusionRegion *, double, 2, double> &rtree);
 
 class Wrapper3D {
 private:
   static frameFieldBackgroundMesh3D *bgmesh;
-  MNode *individual, *parent;
+  MVertex *individual, *parent;
   double *size;
   STensor3 *cf;
   SVector3 *vec;
@@ -80,31 +80,31 @@ private:
 
 public:
   Wrapper3D() : individual(0), parent(0), size(0), cf(0), vec(0), ok(true) {}
-  Wrapper3D(MNode *_i, MNode *_p)
+  Wrapper3D(MVertex *_i, MVertex *_p)
     : individual(_i), parent(_p), size(0), cf(0), vec(0), ok(true)
   {
   }
   ~Wrapper3D() {}
   void set_ok(bool b) { ok = b; }
-  void set_individual(MNode *vertex) { individual = vertex; }
-  void set_parent(MNode *vertex) { parent = vertex; }
+  void set_individual(MVertex *vertex) { individual = vertex; }
+  void set_parent(MVertex *vertex) { parent = vertex; }
   void set_size(double *h) { size = h; }
   void set_crossfield(STensor3 *_cf) { cf = _cf; }
   void set_direction(SVector3 *_v) { vec = _v; }
   bool get_ok() { return ok; }
   void set_bgm(frameFieldBackgroundMesh3D *bgm) { bgmesh = bgm; }
   frameFieldBackgroundMesh3D *bgm() { return bgmesh; }
-  MNode *get_individual() { return individual; }
-  MNode *get_parent() { return parent; }
+  MVertex *get_individual() { return individual; }
+  MVertex *get_parent() { return parent; }
   STensor3 *get_crossfield() { return cf; }
   SVector3 *get_direction() { return vec; }
   double *get_size() { return size; }
 };
 
-extern double infinity_distance_3D(const MNode *v1, const MNode *v2,
+extern double infinity_distance_3D(const MVertex *v1, const MVertex *v2,
                                    STensor3 &cf);
-extern bool rtree_callback_3D(MNode *neighbour, void *w);
-extern bool far_from_boundary_3D(frameFieldBackgroundMesh3D *bgm, MNode *v,
+extern bool rtree_callback_3D(MVertex *neighbour, void *w);
+extern bool far_from_boundary_3D(frameFieldBackgroundMesh3D *bgm, MVertex *v,
                                  double h);
 extern void fill_min_max(double x, double y, double z, double h, double *min,
                          double *max);
@@ -118,7 +118,7 @@ public:
   STensor3 cf;
   SVector3 direction;
   double rank, size;
-  MNode *v;
+  MVertex *v;
   int dir, layer;
 };
 
@@ -148,7 +148,7 @@ public:
   virtual ~listOfPoints(){};
   virtual void insert(smoothness_vertex_pair *svp) = 0;
   virtual unsigned int size() = 0;
-  virtual MNode *get_first_vertex() = 0;
+  virtual MVertex *get_first_vertex() = 0;
   virtual STensor3 get_first_crossfield() = 0;
   virtual double get_first_size() = 0;
   virtual int get_first_layer() = 0;
@@ -166,7 +166,7 @@ public:
   }
   virtual void insert(smoothness_vertex_pair *svp) { points.insert(svp); }
   virtual unsigned int size() { return points.size(); }
-  virtual MNode *get_first_vertex() { return (*points.begin())->v; }
+  virtual MVertex *get_first_vertex() { return (*points.begin())->v; }
   virtual STensor3 get_first_crossfield() { return (*points.begin())->cf; }
   virtual double get_first_size() { return (*points.begin())->size; }
   virtual int get_first_layer() { return (*points.begin())->layer; }
@@ -213,7 +213,7 @@ public:
   };
   virtual void insert(smoothness_vertex_pair *svp) { points.push(svp); }
   virtual unsigned int size() { return points.size(); }
-  virtual MNode *get_first_vertex() { return (points.front())->v; }
+  virtual MVertex *get_first_vertex() { return (points.front())->v; }
   virtual STensor3 get_first_crossfield() { return (points.front())->cf; }
   virtual double get_first_size() { return (points.front())->size; }
   virtual int get_first_layer() { return (points.front())->layer; }

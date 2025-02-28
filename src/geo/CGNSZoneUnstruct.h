@@ -30,13 +30,13 @@ public:
   virtual void nodeFromList(const std::vector<cgsize_t> &range,
                             std::vector<cgsize_t> &node) const;
 
-  virtual int readElements(std::vector<MNode *> &allVert,
+  virtual int readElements(std::vector<MVertex *> &allVert,
                            std::map<int, std::vector<MElement *> > *allElt,
                            std::vector<MElement *> &zoneElt,
                            std::vector<std::string> &allGeomName);
 
 protected:
-  int readSection(int iSect, const std::vector<MNode *> &allVert,
+  int readSection(int iSect, const std::vector<MVertex *> &allVert,
                   const std::vector<SPoint3> &rawNode,
                   std::map<int, std::vector<MElement *> > *allElt,
                   std::vector<MElement *> &zoneElt);

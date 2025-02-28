@@ -11,7 +11,7 @@
 
 #include "SVector3.h"
 #include <list>
-#include "GVolume.h"
+#include "GRegion.h"
 #include "MElementOctree.h"
 
 class Node;
@@ -19,7 +19,7 @@ class Metric;
 
 class Filler {
 private:
-  static std::vector<MNode *> new_vertices;
+  static std::vector<MVertex *> new_vertices;
   Metric get_metric(double, double, double);
   Metric get_metric(double, double, double, GEntity *);
   double get_size(double, double, double);
@@ -39,9 +39,9 @@ public:
   Filler();
   ~Filler();
   void treat_model();
-  void treat_region(GVolume *);
+  void treat_region(GRegion *);
   static int get_nbr_new_vertices();
-  static MNode *get_new_vertex(int);
+  static MVertex *get_new_vertex(int);
 };
 
 #endif

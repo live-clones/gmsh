@@ -15,7 +15,7 @@ private:
   GEntity *_parentEntity;
 
 public:
-  partitionEdge(GModel *model, int num, GPoint *_v0, GPoint *_v1,
+  partitionEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1,
                 const std::vector<int> &partitions)
     : discreteEdge(model, num, _v0, _v1), _partitions(partitions),
       _parentEntity(nullptr)

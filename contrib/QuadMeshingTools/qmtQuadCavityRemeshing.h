@@ -26,7 +26,7 @@ class SurfaceProjector;
  *
  * @return 0 if success
  */
-int improveQuadMeshTopologyWithCavityRemeshing(GSurface* gf,
+int improveQuadMeshTopologyWithCavityRemeshing(GFace* gf,
     const std::vector<std::pair<SPoint3,int> >& singularities,
     bool invertNormalsForQuality);
 
@@ -42,7 +42,7 @@ int improveQuadMeshTopologyWithCavityRemeshing(GSurface* gf,
  *
  * @return 0 if success
  */
-int meshFaceWithGlobalPattern(GSurface* gf, bool invertNormalsForQuality, double minimumQualityRequired);
+int meshFaceWithGlobalPattern(GFace* gf, bool invertNormalsForQuality, double minimumQualityRequired);
 
 
 /* List of patterns */
@@ -107,7 +107,7 @@ struct QualityConstraints {
  * @brief Look for the best topological disk quadrangulation remeshing
  *        which match the allowed valence ranges.
  *        Requires that the disk quadrangulation data is initialized, see initDiskQuadrangulations()
- *        The GSurface mesh is not changed, the changes are stored in the diff
+ *        The GFace mesh is not changed, the changes are stored in the diff
  *        which can executed by the caller.
  *
  * @param[in] gf CAD face containing the elements
@@ -122,16 +122,16 @@ struct QualityConstraints {
  *                                    This flag invert invert the CAD normals in the measure.
  * @param[in] sp If not nullptr, the surface projector is used instead of the CAD parametrization
  *               in the smoothing. Required if there is no surface parametrization.
- * @param[out] diff The mesh diff (to the GSurface) containing the remeshing candidate
+ * @param[out] diff The mesh diff (to the GFace) containing the remeshing candidate
  *
  * @return 0 if success
  */
 int remeshPatchWithQuadPattern(
-    GSurface* gf,
+    GFace* gf,
     const std::pair<size_t,int>& patternNoAndRot,
-    const std::vector<std::vector<MNode*> > & sides,
+    const std::vector<std::vector<MVertex*> > & sides,
     const std::vector<MElement*> & elements,
-    const std::vector<MNode*>& intVertices,
+    const std::vector<MVertex*>& intVertices,
     const QualityConstraints& qualityConstraints,
     bool invertNormalsForQuality,
     SurfaceProjector* sp,

@@ -3,16 +3,16 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#include "GSurface.h"
-#include "GCurve.h"
+#include "GFace.h"
+#include "GEdge.h"
 #include "gmshVertex.h"
 #include "Geo.h"
 #include "GeoInterpolation.h"
 #include "GmshMessage.h"
-#include "MNode.h"
+#include "MVertex.h"
 #include "MPoint.h"
 
-gmshVertex::gmshVertex(GModel *m, Vertex *v) : GPoint(m, v->Num, v->lc), _v(v)
+gmshVertex::gmshVertex(GModel *m, Vertex *v) : GVertex(m, v->Num, v->lc), _v(v)
 {
   gmshVertex::resetMeshAttributes();
 }
@@ -21,9 +21,9 @@ void gmshVertex::resetNativePtr(Vertex *v) { _v = v; }
 
 void gmshVertex::resetMeshAttributes() { meshSize = _v->lc; }
 
-GVertex gmshVertex::point() const
+GPoint gmshVertex::point() const
 {
-  return GVertex(_v->Pos.X, _v->Pos.Y, _v->Pos.Z, this);
+  return GPoint(_v->Pos.X, _v->Pos.Y, _v->Pos.Z, this);
 }
 
 double gmshVertex::x() const { return _v->Pos.X; }
@@ -32,7 +32,7 @@ double gmshVertex::y() const { return _v->Pos.Y; }
 
 double gmshVertex::z() const { return _v->Pos.Z; }
 
-void gmshVertex::setPosition(GVertex &p)
+void gmshVertex::setPosition(GPoint &p)
 {
   _v->Pos.X = p.x();
   _v->Pos.Y = p.y();
@@ -58,7 +58,7 @@ void gmshVertex::setPrescribedMeshSizeAtVertex(double l)
   _v->lc = meshSize;
 }
 
-SPoint2 gmshVertex::reparamOnFace(const GSurface *face, int dir) const
+SPoint2 gmshVertex::reparamOnFace(const GFace *face, int dir) const
 {
   Surface *s = (Surface *)face->getNativePtr();
 
@@ -106,7 +106,7 @@ SPoint2 gmshVertex::reparamOnFace(const GSurface *face, int dir) const
     }
     else {
       Msg::Info("Reparameterizing point %d on face %d", _v->Num, s->Num);
-      return GPoint::reparamOnFace(face, dir);
+      return GVertex::reparamOnFace(face, dir);
     }
     return SPoint2(U, V);
   }
@@ -137,12 +137,12 @@ SPoint2 gmshVertex::reparamOnFace(const GSurface *face, int dir) const
     }
     else {
       Msg::Info("Reparameterizing point %d on face %d", _v->Num, s->Num);
-      return GPoint::reparamOnFace(face, dir);
+      return GVertex::reparamOnFace(face, dir);
     }
     return SPoint2(U, V);
   }
   else {
-    return GPoint::reparamOnFace(face, dir);
+    return GVertex::reparamOnFace(face, dir);
   }
 }
 
