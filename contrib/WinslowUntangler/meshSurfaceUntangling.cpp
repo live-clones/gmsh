@@ -655,7 +655,7 @@ bool untangleGFaceMeshConstrained(GFace *gf, int iterMax, double timeMax)
   /* Call Winslow untangler */
   int iterMaxInner = 300;//0;
   int iterFailMax = 10;
-  double lambda = 1.e-13;
+  double lambda = 1;
 
 #if 1
   {
