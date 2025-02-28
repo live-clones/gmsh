@@ -340,6 +340,33 @@ void EntityPackage::addEntitiesFromNodes(const GEntity* entity)
     }
 }
 
+ std::vector<int> EntityPackage::getPartitions(GEntity *entity)
+ {
+   // Checking parts should eliminat overlap boundaries
+   std::vector<int> parts;
+   int dim = entity->dim();
+   if(dim == 0) {
+     auto pv = dynamic_cast<partitionVertex *>(entity);
+     parts = pv->getPartitions();
+   }
+   else if(dim == 1) {
+     auto pe = dynamic_cast<partitionEdge *>(entity);
+     parts = pe->getPartitions();
+   }
+   else if(dim == 2) {
+     auto pf = dynamic_cast<partitionFace *>(entity);
+     parts = pf->getPartitions();
+   }
+   else if(dim == 3) {
+     auto pr = dynamic_cast<partitionRegion *>(entity);
+     parts = pr->getPartitions();
+   }
+   else {
+     Msg::Error("getEntityParts() called on an non-partitioned entity");
+   }
+   return parts;
+ }
+
 void EntityPackage::addEmbeddedVertices(const GModel *model) {
   // Ensure all embedded vertices are there
   std::set<GVertex *, GEntityPtrLessThan> embeddedVerticesEntities;
@@ -459,36 +486,11 @@ void EntityPackage::buildAdjacencyPartition() {
 
   this->vertexAdjacencyThisPart.clear();
 
-  auto getEntityParts = [](GEntity *entity) {
-    // Checking parts should eliminat overlap boundaries
-    IndicesReoriented parts;
-    int dim = entity->dim();
-    if(dim == 0) {
-      auto pv = dynamic_cast<partitionVertex *>(entity);
-      parts = pv->getPartitions();
-    }
-    else if(dim == 1) {
-      auto pe = dynamic_cast<partitionEdge *>(entity);
-      parts = pe->getPartitions();
-    }
-    else if(dim == 2) {
-      auto pf = dynamic_cast<partitionFace *>(entity);
-      parts = pf->getPartitions();
-    }
-    else if(dim == 3) {
-      auto pr = dynamic_cast<partitionRegion *>(entity);
-      parts = pr->getPartitions();
-    }
-    else {
-      Msg::Error("getEntityParts() called on an non-partitioned entity");
-    }
-    return parts;
-  };
 
-  auto addEntitiesVertices = [this, &getEntityParts](GEntity* entity) {
+  auto addEntitiesVertices = [this](GEntity* entity) {
     // See if it is an owned entity (i.e. partitionedEntity with partitions containing partitionToSave)
     bool isOwned = false;
-    auto parts = getEntityParts(entity);
+    auto parts = EntityPackage::getPartitions(entity);
     if(find(begin(parts), end(parts), _partitionToSave) != end(parts)) {
       isOwned = true;
     }
