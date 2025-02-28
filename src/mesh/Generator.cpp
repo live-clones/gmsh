@@ -641,7 +641,6 @@ static void Mesh2D(GModel *m)
     quadMeshingOfSimpleFacesWithPatterns(m);
     optimizeTopologyWithDiskQuadrangulationRemeshing(m);
     optimizeTopologyWithCavityRemeshing(m);
-    OptimizeMesh(m, "Laplace2D");
     OptimizeMesh(m, "UntangleTris");
     for(GFace *gf : m->getFaces()) {
       if(gf->meshStatistics.status == GFace::PENDING) {

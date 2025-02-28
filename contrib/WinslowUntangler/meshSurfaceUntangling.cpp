@@ -429,6 +429,8 @@ static bool untangleGFaceMeanPlane(GFace *gf,
 				   std::vector<MElement*> &els,
 				   mean_plane &mp, int iter){
 
+  const bool localDebug = false;
+
   std::vector<MVertex*> vall, vbound;
   getVertices (els,vall,vbound);
   
@@ -436,7 +438,7 @@ static bool untangleGFaceMeanPlane(GFace *gf,
   vector<bool> locked;
   vector<std::array<uint32_t, 3> > triangles;
   std::vector<std::array<std::array<double, 2>, 3> > triIdealShapes;
-
+    
   int i = 0;
   SVector3 t1 (mp.plan[0][0],mp.plan[0][1],mp.plan[0][2]);
   SVector3 t2 (mp.plan[1][0],mp.plan[1][1],mp.plan[1][2]);
@@ -450,13 +452,17 @@ static bool untangleGFaceMeanPlane(GFace *gf,
     double X = dot(t1,D);
     double Y = dot(t2,D);
     points.push_back({X,Y});
-    if (std::find(vbound.begin(), vbound.end(), v) == vbound.end())
+    if (std::find(vbound.begin(), vbound.end(), v) == vbound.end() &&
+	v->onWhat()->dim() == 2)
       locked.push_back(false);
     else
       locked.push_back(true);
     v->setIndex(i++);
   }
   //quad_dcp
+
+  int nbPos = 0, nbNeg = 0;
+  
   for (auto e : els){
     
     MVertex *v[4]{e->getVertex(0),
@@ -466,66 +472,68 @@ static bool untangleGFaceMeanPlane(GFace *gf,
 
     int numSubdiv = e->getNumVertices() == 4 ? 4 : 1;
 
-    std::array<vec2, 4> qt = {vec2{-1,-1},vec2{1,-1},vec2{1,1},vec2{-1,1}};
+    const double NRM = 0.5; 
+    std::array<vec2, 4> qt = {vec2{-NRM,-NRM},vec2{NRM,-NRM},vec2{NRM,NRM},vec2{-NRM,NRM}};
     
     for (size_t j=0;j<numSubdiv;j++){     
       int i0 = v[quad_dcp[j][0]]->getIndex();
       int i1 = v[quad_dcp[j][1]]->getIndex();
       int i2 = v[quad_dcp[j][2]]->getIndex();
-      triangles.push_back({(uint32_t)i0,(uint32_t)i1,(uint32_t)i2});
-      triIdealShapes.push_back({qt[quad_dcp[j][0]],qt[quad_dcp[j][1]],
-	    qt[quad_dcp[j][2]]});
+      if (iter < 0){
+	int ii = i0;
+	i0 = i1;
+	i1 = ii;
+      }
+      double area = triangleArea(points[i0], points[i1], points[i2]);
+      if (area > 0)nbPos ++;
+      else nbNeg ++;
+      
+      if (!(locked[i0] && locked[i1] && locked[i2])){
+	triangles.push_back({(uint32_t)i0,(uint32_t)i1,(uint32_t)i2});
+	triIdealShapes.push_back({qt[quad_dcp[j][0]]*sqrt(fabs(area)),qt[quad_dcp[j][1]]*sqrt(fabs(area)),
+	      qt[quad_dcp[j][2]]*sqrt(fabs(area))});
+      }
     }
   }
   
-  double lambda = 1.e-12;
+  if (nbPos < nbNeg && iter > 0){
+    if (iter >= 0)
+      return untangleGFaceMeanPlane(gf,els,mp, -iter);
+    else {
+      Msg::Warning("All triangles are reversed %d %d",gf->tag(),iter);
+      return false;
+    }
+  }
+
+  //  Msg::Info("%d triangles ",triangles.size());
+  
+  double lambda = 1.e-8;
   int iterMaxInner = 200;
-  int iterMax = 2;
+  int iterMax = 3;
   int iterFailMax = 300;
   double timeMax = 1.e+3;
-
-#if 1
-  {
-    char name[245];
-    sprintf(name,"t%d.pos",iter);
-    FILE *f = fopen(name,"w");
-    fprintf(f,"View\"\"{\n");
-    int count = 0;
-    for (auto t : triangles){
-      fprintf(f,"ST(%g,%g,0,%g,%g,0,%g,%g,0){%d,%d,%d};\n",
-	      points[t[0]][0],points[t[0]][1],
-	      points[t[1]][0],points[t[1]][1],
-	      points[t[2]][0],points[t[2]][1],0,0,0);
-    }
-    fprintf(f,"}\n;");
-    fclose(f);
-  }
-#endif
-
   
   bool converged =
     untangle_triangles_2D(points, locked, triangles, triIdealShapes, lambda,
                           iterMaxInner, iterMax, iterFailMax, timeMax,nullptr);
-
-#if 1
-  {
+  
+  if (localDebug){
     char name[245];
     sprintf(name,"unt%d-%d.pos",gf->tag(),iter);
-    FILE *f = fopen(name,"w");
-    fprintf(f,"View\"\"{\n");
+    FILE *fiLe = fopen(name,"w");
+    fprintf(fiLe,"View\"\"{\n");
     for (auto t : triangles){
       SVector3 P0 = X0 + t1*points[t[0]][0]+t2*points[t[0]][1];
       SVector3 P1 = X0 + t1*points[t[1]][0]+t2*points[t[1]][1];
       SVector3 P2 = X0 + t1*points[t[2]][0]+t2*points[t[2]][1];
-      fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
+      fprintf(fiLe,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
 	      P0.x(),P0.y(),P0.z(),
 	      P1.x(),P1.y(),P1.z(),
 	      P2.x(),P2.y(),P2.z(),iter,iter,iter);
     }
-    fprintf(f,"}\n;");
-    fclose(f);
+    fprintf(fiLe,"}\n;");
+    fclose(fiLe);
   }
-#endif
 
   for(auto v : vall){
     int i = v->getIndex();
@@ -553,7 +561,6 @@ static bool tooFarFromPlane (std::vector<MVertex*> &vs,
   double fact = sqrt(mp.a*mp.a+mp.b*mp.b+mp.c*mp.c);
   for  (auto v : vs) {
     double d = fabs(mp.a*v->x()+mp.b*v->y()+mp.c*v->z()-mp.d)/fact;
-    //    printf("%12.5E %12.5E %12.5E %12.5E %12.5E\n",mp.a,mp.b,mp.c,mp.d,d);
     if (d > threshold)return true;
   }
   return false;  
@@ -561,38 +568,32 @@ static bool tooFarFromPlane (std::vector<MVertex*> &vs,
 
 bool untangleGFaceRANSAC(GFace *gf, double threshold){
 
+  ///if (gf->triangles.empty()) return true;
 
-  printf("UNTANGLING %d\n",gf->tag());
-  
   if(gf->mesh_vertices.empty())return true;
-  
   double L = gf->bounds().diag();
-  
+  Msg::Info("Winslow Untangler applied to %s face %d size %g",gf->getTypeString().c_str(),gf->tag(),L);
+
   std::map<MVertex*,std::vector<MElement*> > v2e;
   for (size_t i = 0; i< gf->getNumMeshElements(); i++){
     MElement *e = gf->getMeshElement(i);
     for (size_t j = 0; j< e->getNumVertices(); j++)
       v2e[e->getVertex(j)].push_back(e);
   }
-  
-  printf("map built with %d vertices\n",v2e.size());
-  
-  size_t count_elem_touched = 0;
+
   int iter = 0;
   std::vector<MVertex*> vall, vbound;
   std::set<MVertex*> touched;
   for (auto xxx : v2e){
-    //while (iter ++ < 10000){    
     MVertex *v = gf->mesh_vertices[iter%gf->mesh_vertices.size()];
     iter++;
-    if (iter > 100)break;
-    //    MVertex *v = xxx.first;
     if (touched.find(v) != touched.end())continue;
-    printf("-- iter %d %lu %lu -- \n",iter,touched.size(),v2e.size());
     if (touched.size() >= v2e.size())break;
+
     std::vector<MElement*> es = v2e[v];
     getVertices (es,vall,vbound);
-    //    printf("vertex %d -- %lu %lu %lu %lu\n",v->getIndex(), es.size(), vbound.size(),touched.size(),v2e.size());
+    mean_plane mp = computeMeanPlaneSimple (vall);
+    if (tooFarFromPlane (vall,mp,threshold*L))continue;
     while(1){
       std::vector<MElement*> esNew = es;
       for (auto b : vbound) {
@@ -601,47 +602,28 @@ bool untangleGFaceRANSAC(GFace *gf, double threshold){
 	  if (std::find(esNew.begin(), esNew.end(),el) == esNew.end())
 	    esNew.push_back(el);
       }
-      if (esNew.size() == es.size())break;
+      if (esNew.size() <= es.size())break;
       getVertices (esNew,vall,vbound);
-      printf("INCREASING vertex %d -- %lu %lu %lu\n",v->getIndex(), es.size(), esNew.size(), vbound.size());
-      mean_plane mp = computeMeanPlaneSimple (vall);
+      mp = computeMeanPlaneSimple (vall);
       if (tooFarFromPlane (vall,mp,threshold*L))break;
       es = esNew;
     }
-    count_elem_touched += es.size();
-    mean_plane mp = computeMeanPlaneSimple (vall);
     for (auto vv : vall)
       if (std::find(vbound.begin(), vbound.end(), vv) == vbound.end()) 
 	touched.insert(vv);
-    printf("iter %d -- winslow on plane for %lu elements\n",iter,es.size());
+    //    printf("iter %d -- winslow on plane for %lu elements\n",iter,es.size());
     untangleGFaceMeanPlane(gf,es,mp,iter);
-    //    if (count_elem_touched > 930 * gf->getNumMeshElements())break;
   }
-  
+  return true;
 }
   
 
 bool untangleGFaceMeshConstrained(GFace *gf, int iterMax, double timeMax)
 {
-  //test
-  //  int iter = 0;
-  //  while(iter++ < 10)
-  //    untangleGFaceParameterSpace(gf,iter);
-  //  untangleGFaceParametrization(gf);
-  //  return true;
-  //  if (gf->tag() == 198) printf("coucou1 %d %d\n",gf->geomType(),GFace::Plane);
-  //  else return true;
 
-  untangleGFaceRANSAC(gf, 1.e-2);
-  return true;
-  
   const uint32_t NO_U32 = (uint32_t)-1;
-  if(gf->geomType() != GFace::Plane && gf->geomType() != GFace::DiscreteSurface) {
-    Msg::Error("- Face %i: untangleGFaceMeshConstrained only implemented for "
-               "planar faces",
-               gf->tag());
-    return false;
-  }
+  if(gf->geomType() != GFace::Plane)
+    return untangleGFaceRANSAC(gf, 1.e-2);
 
   if(gf->getNumMeshElements() == 0) {
     Msg::Debug("- Face %i: no elements", gf->tag());
@@ -747,21 +729,8 @@ bool untangleGFaceMeshConstrained(GFace *gf, int iterMax, double timeMax)
     if(!locked[v]) {
       GPoint gp = gf->point(points[v][0],points[v][1]);
       vertices[v]->setXYZ(gp.x(),gp.y(),gp.z());
-      
-      //      SPoint3 onPlane = SPoint3(points[v][0],
-      //                                points[v][1],0);
-      //      
-      //      double initGuess[2] = {0., 0.};
-      //      GPoint proj = gf->closestPoint(onPlane, initGuess);
-      //      if(proj.succeeded()) {
-      //        vertices[v]->setXYZ(proj.x(), proj.y(), proj.z());
-      //        vertices[v]->setParameter(0, proj.u());
-      //        vertices[v]->setParameter(1, proj.v());
-      //      }
-      //      else {
-      //      }
     }
-
+  
   double sicnMinA, sicnAvgA;
   computeSICNquality(gf, sicnMinA, sicnAvgA);
 

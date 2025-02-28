@@ -868,7 +868,7 @@ static int isTriangulationParametrizable(const std::vector<MTriangle *> &t,
     double v2 = stl_nodes_uv[stl_triangles[i + 2]].y();
     double det = fabs((u1 - u0) * (v2 - v0) - (v1 - v0) * (u2 - u0));
     // FIXME TEST
-    if(det < 1.e-12) {
+    if(det < 1.e-7) {
       why << "parametrized triangles are too small (" << det << ")";
       return 2;
     }
