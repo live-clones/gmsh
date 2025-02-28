@@ -135,17 +135,6 @@ bool bl2d(GModel *m,
   }
 
   // connect old elements to new spawned vertices
-  for(auto ge : input) {
-    for(std::size_t i = 0; i < ge->getNumMeshElements(); i++) {
-      MElement *e = ge->getMeshElement(i);
-      for(std::size_t j = 0; j < e->getNumVertices(); j++) {
-        auto sp = spawned[e->getVertex(j)];
-        for(auto v : sp) {
-          if(v->onWhat() == ge) e->setVertex(j, v);
-        }
-      }
-    }
-  }
   for(auto gf : faces) {
     for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
       MElement *e = gf->getMeshElement(i);
@@ -156,6 +145,7 @@ bool bl2d(GModel *m,
             e->setVertex(j, v);
             break;
           }
+          // find better solution
           auto bnd = gf->edges();
           for(auto ge : bnd) {
             if(v->onWhat() == ge) {
