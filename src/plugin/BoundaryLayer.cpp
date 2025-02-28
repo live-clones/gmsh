@@ -105,7 +105,7 @@ bool bl2d(GModel *m,
         MVertex *v = gv->mesh_vertices[0];
         double param;
         if(reparamMeshVertexOnEdge(v, ge, param)){
-          MVertex *newv = new MEdgeVertex(v->x(), v->y(), v->z(), ge, param);
+          MVertex *newv = new MEdgeVertex(v->x(), v->y()+0.075, v->z(), ge, param);
           ge->mesh_vertices.push_back(newv);
           spawned[v].push_back(newv);
         }
@@ -121,6 +121,7 @@ bool bl2d(GModel *m,
   for(auto ge : input) {
     std::vector<GFace*> connectedFaces = ge->faces();
     for(auto gf : connectedFaces) {
+      if(gfs.find(gf) == gfs.end()) continue;
       for(auto v : ge->mesh_vertices) {
         SPoint2 param;
         if(reparamMeshVertexOnFace(v, gf, param)) {
@@ -133,10 +134,45 @@ bool bl2d(GModel *m,
     }
   }
 
+  // connect old elements to new spawned vertices
+  for(auto ge : input) {
+    for(std::size_t i = 0; i < ge->getNumMeshElements(); i++) {
+      MElement *e = ge->getMeshElement(i);
+      for(std::size_t j = 0; j < e->getNumVertices(); j++) {
+        auto sp = spawned[e->getVertex(j)];
+        for(auto v : sp) {
+          if(v->onWhat() == ge) e->setVertex(j, v);
+        }
+      }
+    }
+  }
+  for(auto gf : faces) {
+    for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
+      MElement *e = gf->getMeshElement(i);
+      for(std::size_t j = 0; j < e->getNumVertices(); j++) {
+        auto sp = spawned[e->getVertex(j)];
+        for(auto v : sp) {
+          if(v->onWhat() == gf) {
+            e->setVertex(j, v);
+            break;
+          }
+          auto bnd = gf->edges();
+          for(auto ge : bnd) {
+            if(v->onWhat() == ge) {
+              e->setVertex(j, v);
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+
   // create zero-sized elements:
   for(auto ge : input) {
     std::vector<GFace*> connectedFaces = ge->faces();
     for(auto gf : connectedFaces) {
+      if(gfs.find(gf) == gfs.end()) continue;
       for(std::size_t i = 0; i < ge->lines.size(); i++) {
         MLine *l = ge->lines[i];
         auto sp0 = spawned[l->getVertex(0)];
@@ -148,7 +184,7 @@ bool bl2d(GModel *m,
         }
         else {
           gf->quadrangles.push_back(new MQuadrangle(l->getVertex(0), l->getVertex(1),
-                                                    sp0.back(), sp1.front()));
+                                                    sp1.front(), sp0.front()));
           for(std::size_t j = 1; j < sp0.size(); j++)
             gf->triangles.push_back(new MTriangle(l->getVertex(0),
                                                   sp0[j - 1], sp0[j]));
@@ -158,7 +194,9 @@ bool bl2d(GModel *m,
         }
       }
     }
+    // TODO create missing line elements
   }
+
 
   // TOOD: fans
 }
