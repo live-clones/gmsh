@@ -73,7 +73,6 @@ public:
   bool writeParametrization(FILE *fp, bool binary);
   bool readParametrization(FILE *fp, bool binary);
   virtual void resetMeshAttributes();
-  discreteFace::param & getParam() {return _param;} 
 };
 
 #endif
