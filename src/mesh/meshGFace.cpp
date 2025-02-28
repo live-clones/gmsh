@@ -271,9 +271,10 @@ public:
     // only do it if a full recombination has to (and can) be done
     if(!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine)
       return;
-    if(CTX::instance()->mesh.algoRecombine < 2 &&
-       CTX::instance()->mesh.algoRecombine != 4)
+    if(CTX::instance()->mesh.algoRecombine < 2 ||
+       CTX::instance()->mesh.algoRecombine == 4)
       return;
+
     if(gf->compound.size()) return;
     if(periodic) {
       Msg::Error("Full-quad recombination not ready yet for periodic surfaces");
@@ -2577,8 +2578,10 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
         BDS_Point *p0 = facile[(*ite)->lines[i]->getVertex(0)];
         BDS_Point *p1 = facile[(*ite)->lines[i]->getVertex(1)];
-        edgesEmbedded.push_back(p0->iD);
-        edgesEmbedded.push_back(p1->iD);
+        if(p0 && p1) {
+          edgesEmbedded.push_back(p0->iD);
+          edgesEmbedded.push_back(p1->iD);
+        }
       }
       ++ite;
     }

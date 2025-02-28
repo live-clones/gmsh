@@ -302,7 +302,7 @@ SVector3 discreteFace::normal(const SPoint2 &param) const
 
   MElement *e = _param.oct->find(param.x(), param.y(), 0.0, -1, true);
   if(!e) {
-    Msg::Info("Triangle not found at uv=(%g,%g) on discrete surface %d",
+    Msg::Debug("Triangle not found at uv=(%g,%g) on discrete surface %d",
               param.x(), param.y(), tag());
     return SVector3(0, 0, 1);
   }

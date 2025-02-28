@@ -79,6 +79,7 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
 {
   std::size_t numBrep = 0;
   std::vector<GEntity *> boundingEntities;
+  std::vector<GEntity *> embeddedEntities;
   std::vector<int> boundingSign;
 
   if(binary) {
@@ -109,15 +110,29 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
     for(std::size_t i = 0; i < numBrep; i++) {
       int entityTag = 0;
       if(fscanf(fp, "%d", &entityTag) != 1) { return false; }
-      GEntity *brep =
-        model->getEntityByTag(entity->dim() - 1, std::abs(entityTag));
-      if(!brep) {
-        Msg::Warning("Entity %d not found in the Brep of entity %d", entityTag,
-                     entity->tag());
+
+      if (std::abs(entityTag) > model->getMaxElementaryNumber(entity->dim() - 1)){
+	GEntity *brep =
+	  model->getEntityByTag(entity->dim() - 1, std::abs(entityTag)-model->getMaxElementaryNumber(entity->dim() - 1));
+	if(!brep) {
+	  Msg::Warning("Entity %d not found in the Brep of entity %d", entityTag,
+		       entity->tag());
+	}
+	else {
+	  embeddedEntities.push_back(brep);
+	}
       }
       else {
-        boundingEntities.push_back(brep);
-        boundingSign.push_back((std::abs(entityTag) == entityTag ? 1 : -1));
+	GEntity *brep =
+	  model->getEntityByTag(entity->dim() - 1, std::abs(entityTag));
+	if(!brep) {
+	  Msg::Warning("Entity %d not found in the Brep of entity %d", entityTag,
+		       entity->tag());
+	}
+	else {
+	  boundingEntities.push_back(brep);
+	  boundingSign.push_back((std::abs(entityTag) == entityTag ? 1 : -1));
+	}
       }
     }
   }
@@ -146,6 +161,9 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
     for(std::size_t i = 0; i < boundingEntities.size(); i++)
       tags[i] = std::abs(boundingEntities[i]->tag());
     reinterpret_cast<GFace *>(entity)->setBoundEdges(tags, boundingSign);
+    for(std::size_t i = 0; i < embeddedEntities.size(); i++){
+      reinterpret_cast<GFace *>(entity)->addEmbeddedEdge(reinterpret_cast<GEdge *>(embeddedEntities[i]));
+    }
   } break;
   case 3: {
     std::vector<int> tags(boundingEntities.size());
@@ -1676,9 +1694,13 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       writeMSH4Physicals(fp, *it, binary);
     }
 
+    int maxEdgeTag = 0;
     for(auto it = edges.begin(); it != edges.end(); ++it) {
       std::vector<GVertex *> vertices;
       std::vector<int> ori;
+
+      maxEdgeTag = std::max(maxEdgeTag,(*it)->tag());
+
       if((*it)->getBeginVertex()) {
         vertices.push_back((*it)->getBeginVertex());
         ori.push_back(1);
@@ -1719,8 +1741,17 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
 
     for(auto it = faces.begin(); it != faces.end(); ++it) {
       std::vector<GEdge *> const &edges = (*it)->edges();
+      //-----------------------------------------
+      // JFR -- WE MUST ALSO STORE EMBEDDED EDGES
+      std::vector<GEdge *> const &embEdges = (*it)->embeddedEdges();
+      //-----------------------------------------
       std::vector<int> const &ori = (*it)->edgeOrientations();
       std::size_t edgesSize = edges.size();
+      //-----------------------------------------
+      // JFR -- WE MUST ALSO STORE EMBEDDED EDGES
+      edgesSize += embEdges.size();
+      //-----------------------------------------
+
       int entityTag = (*it)->tag();
       fwrite(&entityTag, sizeof(int), 1, fp);
       if(partition) {
@@ -1746,8 +1777,16 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       for(auto ite = edges.begin(); ite != edges.end(); ite++)
         tags.push_back((*ite)->tag());
 
+
       signs.insert(signs.end(), ori.begin(), ori.end());
 
+      //-----------------------------------------
+      // JFR -- WE MUST ALSO STORE EMBEDDED EDGES
+      for(auto ite = embEdges.begin(); ite != embEdges.end(); ite++){
+        tags.push_back((*ite)->tag()+maxEdgeTag);
+        signs.push_back(1);
+      }//----------------------------------------
+      
       if(tags.size() == signs.size()) {
         for(std::size_t i = 0; i < tags.size(); i++)
           tags[i] *= (signs[i] > 0 ? 1 : -1);
@@ -1799,7 +1838,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     }
     fprintf(fp, "\n");
   }
-  else {
+  else { // not binary --
     if(partition) {
       fprintf(fp, "%lu\n", model->getNumPartitions());
 
@@ -1857,7 +1896,9 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       fprintf(fp, "\n");
     }
 
+    int maxEdgeTag = 0;
     for(auto it = edges.begin(); it != edges.end(); ++it) {
+      maxEdgeTag = std::max(maxEdgeTag,(*it)->tag());
       std::vector<GVertex *> vertices;
       std::vector<int> ori;
       if((*it)->getBeginVertex()) {
@@ -1898,6 +1939,11 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
 
     for(auto it = faces.begin(); it != faces.end(); ++it) {
       std::vector<GEdge *> const &edges = (*it)->edges();
+      //-----------------------------------------
+      // JFR -- WE MUST ALSO STORE EMBEDDED EDGES
+      std::vector<GEdge *> const &embEdges = (*it)->embeddedEdges();
+      //-----------------------------------------
+
       std::vector<int> const &ori = (*it)->edgeOrientations();
       fprintf(fp, "%d ", (*it)->tag());
       if(partition) {
@@ -1917,12 +1963,16 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
       writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 2, version);
       writeMSH4Physicals(fp, *it, binary);
-      fprintf(fp, "%lu ", edges.size());
+      fprintf(fp, "%lu ", edges.size()+embEdges.size());
       std::vector<int> tags, signs;
       for(auto ite = edges.begin(); ite != edges.end(); ite++)
         tags.push_back((*ite)->tag());
       for(auto ite = ori.begin(); ite != ori.end(); ite++)
         signs.push_back(*ite);
+      for(auto ite = embEdges.begin(); ite != embEdges.end(); ite++){
+        tags.push_back((*ite)->tag()+maxEdgeTag);
+        signs.push_back(1);
+      }
       if(tags.size() == signs.size()) {
         for(std::size_t i = 0; i < tags.size(); i++)
           tags[i] *= (signs[i] > 0 ? 1 : -1);
