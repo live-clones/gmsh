@@ -6,8 +6,8 @@
 #ifndef MESHGFACE_BAMG
 #define MESHGFACE_BAMG
 
-class GFace;
+class GSurface;
 
-void meshGFaceBamg(GFace *gf);
+void meshGFaceBamg(GSurface *gf);
 
 #endif

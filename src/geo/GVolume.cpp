@@ -5,8 +5,8 @@
 
 #include <sstream>
 #include "GModel.h"
-#include "GRegion.h"
-#include "GFace.h"
+#include "GVolume.h"
+#include "GSurface.h"
 #include "MTetrahedron.h"
 #include "MHexahedron.h"
 #include "MPrism.h"
@@ -25,18 +25,18 @@
 #include "meshGFace.h"
 #endif
 
-GRegion::GRegion(GModel *model, int tag) : GEntity(model, tag)
+GVolume::GVolume(GModel *model, int tag) : GEntity(model, tag)
 {
-  GRegion::resetMeshAttributes();
+  GVolume::resetMeshAttributes();
 }
 
-GRegion::~GRegion()
+GVolume::~GVolume()
 {
   for(auto gf : l_faces) gf->delRegion(this);
-  GRegion::deleteMesh();
+  GVolume::deleteMesh();
 }
 
-void GRegion::deleteMesh()
+void GVolume::deleteMesh()
 {
   for(std::size_t i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
   mesh_vertices.clear();
@@ -46,13 +46,13 @@ void GRegion::deleteMesh()
   model()->destroyMeshCaches();
 }
 
-std::size_t GRegion::getNumMeshElements() const
+std::size_t GVolume::getNumMeshElements() const
 {
   return tetrahedra.size() + hexahedra.size() + prisms.size() +
          pyramids.size() + trihedra.size() + polyhedra.size();
 }
 
-std::size_t GRegion::getNumMeshElementsByType(const int familyType) const
+std::size_t GVolume::getNumMeshElementsByType(const int familyType) const
 {
   if(familyType == TYPE_TET)
     return tetrahedra.size();
@@ -70,7 +70,7 @@ std::size_t GRegion::getNumMeshElementsByType(const int familyType) const
   return 0;
 }
 
-std::size_t GRegion::getNumMeshParentElements()
+std::size_t GVolume::getNumMeshParentElements()
 {
   std::size_t n = 0;
   for(std::size_t i = 0; i < polyhedra.size(); i++)
@@ -78,7 +78,7 @@ std::size_t GRegion::getNumMeshParentElements()
   return n;
 }
 
-void GRegion::getNumMeshElements(unsigned *const c) const
+void GVolume::getNumMeshElements(unsigned *const c) const
 {
   c[0] += tetrahedra.size();
   c[1] += hexahedra.size();
@@ -88,7 +88,7 @@ void GRegion::getNumMeshElements(unsigned *const c) const
   c[5] += polyhedra.size();
 }
 
-MElement *const *GRegion::getStartElementType(int type) const
+MElement *const *GVolume::getStartElementType(int type) const
 {
   switch(type) {
   case 0:
@@ -113,7 +113,7 @@ MElement *const *GRegion::getStartElementType(int type) const
   return nullptr;
 }
 
-MElement *GRegion::getMeshElement(std::size_t index) const
+MElement *GVolume::getMeshElement(std::size_t index) const
 {
   if(index < tetrahedra.size())
     return tetrahedra[index];
@@ -137,7 +137,7 @@ MElement *GRegion::getMeshElement(std::size_t index) const
   return nullptr;
 }
 
-MElement *GRegion::getMeshElementByType(const int familyType,
+MElement *GVolume::getMeshElementByType(const int familyType,
                                         const std::size_t index) const
 {
   if(familyType == TYPE_TET)
@@ -156,7 +156,7 @@ MElement *GRegion::getMeshElementByType(const int familyType,
   return nullptr;
 }
 
-void GRegion::resetMeshAttributes()
+void GVolume::resetMeshAttributes()
 {
   meshAttributes.recombine3D = 0;
   meshAttributes.method = MESH_UNSTRUCTURED;
@@ -165,7 +165,7 @@ void GRegion::resetMeshAttributes()
   meshAttributes.meshSize = MAX_LC;
 }
 
-SBoundingBox3d GRegion::bounds(bool fast)
+SBoundingBox3d GVolume::bounds(bool fast)
 {
   SBoundingBox3d res;
   if(geomType() != DiscreteVolume && geomType() != PartitionVolume) {
@@ -180,23 +180,23 @@ SBoundingBox3d GRegion::bounds(bool fast)
   return res;
 }
 
-SOrientedBoundingBox GRegion::getOBB()
+SOrientedBoundingBox GVolume::getOBB()
 {
   if(!_obb) {
     std::vector<SPoint3> vertices;
-    std::vector<GFace *> b_faces = faces();
+    std::vector<GSurface *> b_faces = faces();
     for(auto b_face = b_faces.begin(); b_face != b_faces.end(); b_face++) {
       if((*b_face)->getNumMeshVertices() > 0) {
         int N = (*b_face)->getNumMeshVertices();
         for(int i = 0; i < N; i++) {
-          MVertex *mv = (*b_face)->getMeshVertex(i);
+          MNode *mv = (*b_face)->getMeshVertex(i);
           vertices.push_back(mv->point());
         }
-        std::vector<GEdge *> eds = (*b_face)->edges();
+        std::vector<GCurve *> eds = (*b_face)->edges();
         for(auto ed = eds.begin(); ed != eds.end(); ed++) {
           int N2 = (*ed)->getNumMeshVertices();
           for(int i = 0; i < N2; i++) {
-            MVertex *mv = (*ed)->getMeshVertex(i);
+            MNode *mv = (*ed)->getMeshVertex(i);
             vertices.push_back(mv->point());
           }
           // Don't forget to add the first and last vertices...
@@ -218,13 +218,13 @@ SOrientedBoundingBox GRegion::getOBB()
       }
       else {
         int N = 10;
-        std::vector<GEdge *> b_edges = (*b_face)->edges();
+        std::vector<GCurve *> b_edges = (*b_face)->edges();
         for(auto b_edge = b_edges.begin(); b_edge != b_edges.end(); b_edge++) {
           Range<double> tr = (*b_edge)->parBounds(0);
           for(int j = 0; j < N; j++) {
             double t =
               tr.low() + (double)j / (double)(N - 1) * (tr.high() - tr.low());
-            GPoint p = (*b_edge)->point(t);
+            GVertex p = (*b_edge)->point(t);
             SPoint3 pt(p.x(), p.y(), p.z());
             vertices.push_back(pt);
           }
@@ -236,7 +236,7 @@ SOrientedBoundingBox GRegion::getOBB()
   return SOrientedBoundingBox(_obb);
 }
 
-void GRegion::setVisibility(char val, bool recursive)
+void GVolume::setVisibility(char val, bool recursive)
 {
   GEntity::setVisibility(val);
   if(recursive) {
@@ -247,7 +247,7 @@ void GRegion::setVisibility(char val, bool recursive)
   }
 }
 
-void GRegion::setColor(unsigned int val, bool recursive)
+void GVolume::setColor(unsigned int val, bool recursive)
 {
   GEntity::setColor(val);
   if(recursive) {
@@ -258,7 +258,7 @@ void GRegion::setColor(unsigned int val, bool recursive)
   }
 }
 
-int GRegion::delFace(GFace *face)
+int GVolume::delFace(GSurface *face)
 {
   const auto found = std::find(l_faces.begin(), l_faces.end(), face);
 
@@ -282,10 +282,10 @@ int GRegion::delFace(GFace *face)
   return orientation;
 }
 
-void GRegion::setBoundFaces(const std::set<int> &tagFaces)
+void GVolume::setBoundFaces(const std::set<int> &tagFaces)
 {
   for(auto it = tagFaces.begin(); it != tagFaces.end(); ++it) {
-    GFace *gf = model()->getFaceByTag(*it);
+    GSurface *gf = model()->getFaceByTag(*it);
     if(gf) {
       if(std::find(l_faces.begin(), l_faces.end(), gf) == l_faces.end()) {
         l_faces.push_back(gf);
@@ -298,7 +298,7 @@ void GRegion::setBoundFaces(const std::set<int> &tagFaces)
   }
 }
 
-void GRegion::setBoundFaces(const std::vector<int> &tagFaces,
+void GVolume::setBoundFaces(const std::vector<int> &tagFaces,
                             const std::vector<int> &signFaces)
 {
   if(tagFaces.size() != signFaces.size()) {
@@ -308,7 +308,7 @@ void GRegion::setBoundFaces(const std::vector<int> &tagFaces,
     setBoundFaces(tags);
   }
   for(std::size_t i = 0; i != tagFaces.size(); i++) {
-    GFace *gf = model()->getFaceByTag(tagFaces[i]);
+    GSurface *gf = model()->getFaceByTag(tagFaces[i]);
     if(gf) {
       if(std::find(l_faces.begin(), l_faces.end(), gf) == l_faces.end()) {
         l_faces.push_back(gf);
@@ -322,7 +322,7 @@ void GRegion::setBoundFaces(const std::vector<int> &tagFaces,
   }
 }
 
-std::string GRegion::getAdditionalInfoString(bool multline)
+std::string GVolume::getAdditionalInfoString(bool multline)
 {
   std::ostringstream sstream;
   if(l_faces.size()) {
@@ -385,7 +385,7 @@ std::string GRegion::getAdditionalInfoString(bool multline)
   return str;
 }
 
-void GRegion::writeGEO(FILE *fp)
+void GVolume::writeGEO(FILE *fp)
 {
   if(geomType() == DiscreteVolume) return;
 
@@ -427,7 +427,7 @@ void GRegion::writeGEO(FILE *fp)
   }
 }
 
-void GRegion::writePY(FILE *fp)
+void GVolume::writePY(FILE *fp)
 {
   // This is by no means complete - merely a placeholder for a future
   // implementation
@@ -447,9 +447,9 @@ void GRegion::writePY(FILE *fp)
   }
 }
 
-std::vector<GEdge *> const &GRegion::edges() const
+std::vector<GCurve *> const &GVolume::edges() const
 {
-  static std::vector<GEdge *> e;
+  static std::vector<GCurve *> e;
   e.clear();
 
   for(auto *const face : l_faces) {
@@ -460,9 +460,9 @@ std::vector<GEdge *> const &GRegion::edges() const
   return e;
 }
 
-bool GRegion::edgeConnected(GRegion *r) const
+bool GVolume::edgeConnected(GVolume *r) const
 {
-  std::vector<GEdge *> e = edges(), e2 = r->edges();
+  std::vector<GCurve *> e = edges(), e2 = r->edges();
 
   auto it = e.begin();
   while(it != e.end()) {
@@ -472,7 +472,7 @@ bool GRegion::edgeConnected(GRegion *r) const
   return false;
 }
 
-double GRegion::computeSolidProperties(std::vector<double> cg,
+double GVolume::computeSolidProperties(std::vector<double> cg,
                                        std::vector<double> inertia)
 {
   auto it = l_faces.begin();
@@ -559,12 +559,12 @@ double GRegion::computeSolidProperties(std::vector<double> cg,
   return volume;
 }
 
-std::vector<MVertex *> GRegion::getEmbeddedMeshVertices() const
+std::vector<MNode *> GVolume::getEmbeddedMeshVertices() const
 {
-  std::set<MVertex *> tmp;
+  std::set<MNode *> tmp;
   for(auto it = embedded_faces.begin(); it != embedded_faces.end(); it++) {
     tmp.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
-    std::vector<GEdge *> ed = (*it)->edges();
+    std::vector<GCurve *> ed = (*it)->edges();
     for(auto it2 = ed.begin(); it2 != ed.end(); it2++) {
       tmp.insert((*it2)->mesh_vertices.begin(), (*it2)->mesh_vertices.end());
       if((*it2)->getBeginVertex())
@@ -588,20 +588,20 @@ std::vector<MVertex *> GRegion::getEmbeddedMeshVertices() const
       it++) {
     tmp.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
   }
-  return std::vector<MVertex *>(tmp.begin(), tmp.end());
+  return std::vector<MNode *>(tmp.begin(), tmp.end());
 }
 
-std::vector<GVertex *> GRegion::vertices() const
+std::vector<GPoint *> GVolume::vertices() const
 {
-  std::set<GVertex *, GEntityPtrLessThan> v;
+  std::set<GPoint *, GEntityPtrLessThan> v;
   for(auto gf : l_faces) {
-    std::vector<GVertex *> const &vs = gf->vertices();
+    std::vector<GPoint *> const &vs = gf->vertices();
     v.insert(vs.begin(), vs.end());
   }
-  return std::vector<GVertex *>(v.begin(), v.end());
+  return std::vector<GPoint *>(v.begin(), v.end());
 }
 
-void GRegion::addElement(MElement *e)
+void GVolume::addElement(MElement *e)
 {
   switch(e->getType()) {
   case TYPE_TET: addTetrahedron(reinterpret_cast<MTetrahedron *>(e)); break;
@@ -615,7 +615,7 @@ void GRegion::addElement(MElement *e)
   }
 }
 
-void GRegion::removeElement(MElement *e, bool del)
+void GVolume::removeElement(MElement *e, bool del)
 {
   switch(e->getType()) {
   case TYPE_TET: {
@@ -671,7 +671,7 @@ void GRegion::removeElement(MElement *e, bool del)
   }
 }
 
-void GRegion::removeElements(bool del)
+void GVolume::removeElements(bool del)
 {
   if(del) {
     for(auto e : tetrahedra) delete e;
@@ -689,7 +689,7 @@ void GRegion::removeElements(bool del)
   polyhedra.clear();
 }
 
-bool GRegion::reorder(const int elementType,
+bool GVolume::reorder(const int elementType,
                       const std::vector<std::size_t> &ordering)
 {
   if(tetrahedra.size() != 0) {
@@ -849,22 +849,22 @@ static int intersectLineTriangle(double X[3], double Y[3], double Z[3],
   }
 }
 
-bool GRegion::setOutwardOrientationMeshConstraint()
+bool GVolume::setOutwardOrientationMeshConstraint()
 {
   // perform intersection check in normalized coordinates
   SBoundingBox3d bbox = bounds();
   double scaling = norm(SVector3(bbox.max(), bbox.min()));
   if(!scaling) {
-    Msg::Warning("Bad scaling in GRegion::setOutwardOrientationMeshConstraint");
+    Msg::Warning("Bad scaling in GVolume::setOutwardOrientationMeshConstraint");
     scaling = 1.;
   }
   double rrr[6];
   setRand(rrr);
 
-  std::vector<GFace *> f = faces();
+  std::vector<GSurface *> f = faces();
   auto it = f.begin();
   while(it != f.end()) {
-    GFace *gf = (*it);
+    GSurface *gf = (*it);
     gf->buildSTLTriangulation();
     if(gf->stl_triangles.size() < 3) {
       Msg::Warning("No valid STL triangulation found for surface %d - skipping "
@@ -900,7 +900,7 @@ bool GRegion::setOutwardOrientationMeshConstraint()
       norme(N);
       auto it_b = f.begin();
       while(it_b != f.end()) {
-        GFace *gf_b = (*it_b);
+        GSurface *gf_b = (*it_b);
         gf_b->buildSTLTriangulation();
         if(gf_b->stl_triangles.size() < 3) { return false; }
         for(std::size_t i_b = 0; i_b < gf_b->stl_triangles.size(); i_b += 3) {
@@ -958,17 +958,17 @@ bool GRegion::setOutwardOrientationMeshConstraint()
   return true;
 }
 
-bool GRegion::isFullyDiscrete()
+bool GVolume::isFullyDiscrete()
 {
   if(geomType() != GEntity::DiscreteVolume) return false;
   if(haveParametrization()) return false;
-  std::vector<GFace *> f = faces();
+  std::vector<GSurface *> f = faces();
   for(std::size_t i = 0; i < f.size(); i++) {
     if(f[i]->geomType() != GEntity::DiscreteSurface) return false;
     auto *df = dynamic_cast<discreteFace *>(f[i]);
     if(df && df->haveParametrization()) return false;
   }
-  std::vector<GEdge *> e = edges();
+  std::vector<GCurve *> e = edges();
   for(std::size_t i = 0; i < e.size(); i++) {
     if(e[i]->geomType() != GEntity::DiscreteCurve) return false;
     auto *de = dynamic_cast<discreteEdge *>(e[i]);

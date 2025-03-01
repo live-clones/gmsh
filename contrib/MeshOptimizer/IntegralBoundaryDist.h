@@ -27,15 +27,15 @@
 
 #include <vector>
 
-class GEdge;
+class GCurve;
 class nodalBasis;
 class SPoint3;
 class MElement;
-class MVertex;
+class MNode;
 double computeBndDist(MElement *element, int distanceDefinition,
                       double tolerance);
-double computeBndDistAndGradient(GEdge *edge, std::vector<double> &param,
-                                 const std::vector<MVertex *> &vs,
+double computeBndDistAndGradient(GCurve *edge, std::vector<double> &param,
+                                 const std::vector<MNode *> &vs,
                                  const nodalBasis &basis,
                                  std::vector<SPoint3> &xyz,
                                  std::vector<bool> &onEdge,
@@ -72,11 +72,11 @@ public:
 };
 
 class parametricLineGEdge : public parametricLine {
-  const GEdge *_edge;
+  const GCurve *_edge;
   double _t0, _t1;
 
 public:
-  parametricLineGEdge(const GEdge *edge, double t0, double t1);
+  parametricLineGEdge(const GCurve *edge, double t0, double t1);
   virtual SPoint3 operator()(double xi) const;
   virtual SVector3 derivative(double xi) const;
   virtual SVector3 secondDerivative(double xi) const;

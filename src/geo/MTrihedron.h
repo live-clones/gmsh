@@ -30,13 +30,13 @@
 
 class MTrihedron : public MElement {
 protected:
-  MVertex *_v[4];
-  void _getEdgeVertices(const int num, std::vector<MVertex *> &v) const
+  MNode *_v[4];
+  void _getEdgeVertices(const int num, std::vector<MNode *> &v) const
   {
     v[0] = _v[edges_trihedron(num, 0)];
     v[1] = _v[edges_trihedron(num, 1)];
   }
-  void _getFaceVertices(const int num, std::vector<MVertex *> &v) const
+  void _getFaceVertices(const int num, std::vector<MNode *> &v) const
   {
     if(num > 0) {
       v[0] = _v[faces_trihedron(num, 0)];
@@ -52,7 +52,7 @@ protected:
   }
 
 public:
-  MTrihedron(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, int num = 0,
+  MTrihedron(MNode *v0, MNode *v1, MNode *v2, MNode *v3, int num = 0,
              int part = 0)
     : MElement(num, part)
   {
@@ -61,7 +61,7 @@ public:
     _v[2] = v2;
     _v[3] = v3;
   }
-  MTrihedron(const std::vector<MVertex *> &v, int num = 0, int part = 0)
+  MTrihedron(const std::vector<MNode *> &v, int num = 0, int part = 0)
     : MElement(num, part)
   {
     for(int i = 0; i < 4; i++) _v[i] = v[i];
@@ -69,9 +69,9 @@ public:
   ~MTrihedron() {}
   virtual int getDim() const { return 3; } // Can have a volume...
   virtual std::size_t getNumVertices() const { return 4; }
-  virtual MVertex *getVertex(int num) { return _v[num]; }
-  virtual const MVertex *getVertex(int num) const { return _v[num]; }
-  virtual void setVertex(int num, MVertex *v) { _v[num] = v; }
+  virtual MNode *getVertex(int num) { return _v[num]; }
+  virtual const MNode *getVertex(int num) const { return _v[num]; }
+  virtual void setVertex(int num, MNode *v) { _v[num] = v; }
   virtual int getNumEdges() const { return 5; }
   virtual MEdge getEdge(int num) const
   {
@@ -84,7 +84,7 @@ public:
     MEdge e(getEdge(num));
     _getEdgeRep(e.getVertex(0), e.getVertex(1), x, y, z, n, 0);
   }
-  virtual void getEdgeVertices(const int num, std::vector<MVertex *> &v) const
+  virtual void getEdgeVertices(const int num, std::vector<MNode *> &v) const
   {
     v.resize(2);
     _getEdgeVertices(num, v);
@@ -107,7 +107,7 @@ public:
     _getFaceRep(getVertex(f[num][0]), getVertex(f[num][1]),
                 getVertex(f[num][2]), x, y, z, n);
   }
-  virtual void getFaceVertices(const int num, std::vector<MVertex *> &v) const
+  virtual void getFaceVertices(const int num, std::vector<MNode *> &v) const
   {
     v.resize((num == 0) ? 4 : 3);
     _getFaceVertices(num, v);
@@ -117,7 +117,7 @@ public:
 
   virtual void reverse()
   {
-    MVertex *tmp = _v[1];
+    MNode *tmp = _v[1];
     _v[1] = _v[3];
     _v[3] = tmp;
   }

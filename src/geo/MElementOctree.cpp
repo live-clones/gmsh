@@ -19,7 +19,7 @@ void MElementBB(void *a, double *min, double *max)
   MElement *e = static_cast<MElement *>(a);
 
   if(e->getPolynomialOrder() == 1) {
-    MVertex *v = e->getVertex(0);
+    MNode *v = e->getVertex(0);
     min[0] = max[0] = v->x();
     min[1] = max[1] = v->y();
     min[2] = max[2] = v->z();
@@ -64,7 +64,7 @@ void MElementBB(void *a, double *min, double *max)
 static void MElementCentroid(void *a, double *x)
 {
   MElement *e = (MElement *)a;
-  MVertex *v = e->getVertex(0);
+  MNode *v = e->getVertex(0);
   int n = e->getNumVertices();
   x[0] = v->x();
   x[1] = v->y();
@@ -102,11 +102,11 @@ MElementOctree::MElementOctree(GModel *m) : _gm(m)
                           MElementCentroid, MElementInEle);
   std::vector<GEntity *> entities;
   m->getEntities(entities);
-  // do not add Gvertex non-associated to any GEdge
+  // do not add Gvertex non-associated to any GCurve
   for(std::size_t i = 0; i < entities.size(); i++) {
     for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
       if(entities[i]->dim() == 0) {
-        GVertex *gv = dynamic_cast<GVertex *>(entities[i]);
+        GPoint *gv = dynamic_cast<GPoint *>(entities[i]);
         if(gv && gv->edges().size() > 0) {
           Octree_Insert(entities[i]->getMeshElement(j), _octree);
         }

@@ -7,7 +7,7 @@
 #define OCC_FACE_H
 
 #include "GmshConfig.h"
-#include "GFace.h"
+#include "GSurface.h"
 #include "GModel.h"
 #include "Range.h"
 
@@ -17,7 +17,7 @@
 #include <GeomAPI_ProjectPointOnSurf.hxx>
 #include <TopoDS_Face.hxx>
 
-class OCCFace : public GFace {
+class OCCFace : public GSurface {
 private:
   TopoDS_Face _s;
   Handle(Geom_Surface) _occface;
@@ -36,8 +36,8 @@ public:
   virtual ~OCCFace() {}
   virtual SBoundingBox3d bounds(bool fast = false);
   virtual Range<double> parBounds(int i) const;
-  virtual GPoint point(double par1, double par2) const;
-  virtual GPoint closestPoint(const SPoint3 &queryPoint,
+  virtual GVertex point(double par1, double par2) const;
+  virtual GVertex closestPoint(const SPoint3 &queryPoint,
                               const double initialGuess[2]) const;
   virtual bool containsPoint(const SPoint3 &pt) const;
   virtual bool containsParam(const SPoint2 &pt);

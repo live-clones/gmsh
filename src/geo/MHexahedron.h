@@ -27,13 +27,13 @@
  */
 class MHexahedron : public MElement {
 protected:
-  MVertex *_v[8];
-  void _getEdgeVertices(const int num, std::vector<MVertex *> &v) const
+  MNode *_v[8];
+  void _getEdgeVertices(const int num, std::vector<MNode *> &v) const
   {
     v[0] = _v[edges_hexa(num, 0)];
     v[1] = _v[edges_hexa(num, 1)];
   }
-  void _getFaceVertices(const int num, std::vector<MVertex *> &v) const
+  void _getFaceVertices(const int num, std::vector<MNode *> &v) const
   {
     v[0] = _v[faces_hexa(num, 0)];
     v[1] = _v[faces_hexa(num, 1)];
@@ -42,8 +42,8 @@ protected:
   }
 
 public:
-  MHexahedron(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
-              MVertex *v5, MVertex *v6, MVertex *v7, int num = 0, int part = 0)
+  MHexahedron(MNode *v0, MNode *v1, MNode *v2, MNode *v3, MNode *v4,
+              MNode *v5, MNode *v6, MNode *v7, int num = 0, int part = 0)
     : MElement(num, part)
   {
     _v[0] = v0;
@@ -55,7 +55,7 @@ public:
     _v[6] = v6;
     _v[7] = v7;
   }
-  MHexahedron(const std::vector<MVertex *> &v, int num = 0, int part = 0)
+  MHexahedron(const std::vector<MNode *> &v, int num = 0, int part = 0)
     : MElement(num, part)
   {
     for(int i = 0; i < 8; i++) _v[i] = v[i];
@@ -63,10 +63,10 @@ public:
   ~MHexahedron() {}
   virtual int getDim() const { return 3; }
   virtual std::size_t getNumVertices() const { return 8; }
-  virtual MVertex *getVertex(int num) { return _v[num]; }
-  virtual const MVertex *getVertex(int num) const { return _v[num]; }
-  virtual void setVertex(int num, MVertex *v) { _v[num] = v; }
-  virtual MVertex *getVertexDIFF(int num)
+  virtual MNode *getVertex(int num) { return _v[num]; }
+  virtual const MNode *getVertex(int num) const { return _v[num]; }
+  virtual void setVertex(int num, MNode *v) { _v[num] = v; }
+  virtual MNode *getVertexDIFF(int num)
   {
     static const int map[8] = {2, 3, 7, 6, 0, 1, 5, 4};
     return getVertex(map[num]);
@@ -83,7 +83,7 @@ public:
   virtual int getNumEdgesRep(bool curved) { return 12; }
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
-  virtual void getEdgeVertices(const int num, std::vector<MVertex *> &v) const
+  virtual void getEdgeVertices(const int num, std::vector<MNode *> &v) const
   {
     v.resize(2);
     _getEdgeVertices(num, v);
@@ -101,7 +101,7 @@ public:
   virtual int getNumFacesRep(bool curved);
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
-  virtual void getFaceVertices(const int num, std::vector<MVertex *> &v) const
+  virtual void getFaceVertices(const int num, std::vector<MNode *> &v) const
   {
     v.resize(4);
     _getFaceVertices(num, v);
@@ -119,7 +119,7 @@ public:
   virtual const char *getStringForTOCHNOG() const { return "-hex8"; }
   virtual void reverse()
   {
-    MVertex *tmp;
+    MNode *tmp;
     tmp = _v[0];
     _v[0] = _v[2];
     _v[2] = tmp;
@@ -225,7 +225,7 @@ public:
     return MFace(_v[fSolin[num][0]], _v[fSolin[num][1]],
                  _v[fSolin[num][2]], _v[fSolin[num][3]]);
   }
-  virtual MVertex *getVertexNEU(int num)
+  virtual MNode *getVertexNEU(int num)
   {
     static const int map[8] = {0, 1, 3, 2, 4, 5, 7, 6};
     return getVertex(map[num]);
@@ -250,14 +250,14 @@ public:
  */
 class MHexahedron20 : public MHexahedron {
 protected:
-  MVertex *_vs[12];
+  MNode *_vs[12];
 
 public:
-  MHexahedron20(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
-                MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
-                MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13,
-                MVertex *v14, MVertex *v15, MVertex *v16, MVertex *v17,
-                MVertex *v18, MVertex *v19, int num = 0, int part = 0)
+  MHexahedron20(MNode *v0, MNode *v1, MNode *v2, MNode *v3, MNode *v4,
+                MNode *v5, MNode *v6, MNode *v7, MNode *v8, MNode *v9,
+                MNode *v10, MNode *v11, MNode *v12, MNode *v13,
+                MNode *v14, MNode *v15, MNode *v16, MNode *v17,
+                MNode *v18, MNode *v19, int num = 0, int part = 0)
     : MHexahedron(v0, v1, v2, v3, v4, v5, v6, v7, num, part)
   {
     _vs[0] = v8;
@@ -274,7 +274,7 @@ public:
     _vs[11] = v19;
     for(int i = 0; i < 12; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MHexahedron20(const std::vector<MVertex *> &v, int num = 0, int part = 0)
+  MHexahedron20(const std::vector<MNode *> &v, int num = 0, int part = 0)
     : MHexahedron(v, num, part)
   {
     for(int i = 0; i < 12; i++) _vs[i] = v[8 + i];
@@ -283,58 +283,58 @@ public:
   ~MHexahedron20() {}
   virtual int getPolynomialOrder() const { return 2; }
   virtual std::size_t getNumVertices() const { return 20; }
-  virtual MVertex *getVertex(int num)
+  virtual MNode *getVertex(int num)
   {
     return num < 8 ? _v[num] : _vs[num - 8];
   }
-  virtual const MVertex *getVertex(int num) const
+  virtual const MNode *getVertex(int num) const
   {
     return num < 8 ? _v[num] : _vs[num - 8];
   }
-  virtual void setVertex(int num, MVertex *v)
+  virtual void setVertex(int num, MNode *v)
   {
     if(num < 8)
       _v[num] = v;
     else
       _vs[num - 8] = v;
   }
-  virtual MVertex *getVertexUNV(int num)
+  virtual MNode *getVertexUNV(int num)
   {
     static const int map[20] = {0,  8,  1, 11, 2, 13, 3, 9,  10, 12,
                                 14, 15, 4, 16, 5, 18, 6, 19, 7,  17};
     return getVertex(map[num]);
   }
-  virtual MVertex *getVertexBDF(int num)
+  virtual MNode *getVertexBDF(int num)
   {
     static const int map[20] = {0,  1, 2,  3,  4,  5,  6,  7,  8,  11,
                                 13, 9, 10, 12, 14, 15, 16, 18, 19, 17};
     return getVertex(map[num]);
   }
-  virtual MVertex *getVertexINP(int num)
+  virtual MNode *getVertexINP(int num)
   {
     static const int map[20] = {0,  1, 2,  3,  4,  5,  6,  7,  8,  11,
                                 13, 9, 16, 18, 19, 17, 10, 12, 14, 15};
     return getVertex(map[num]);
   }
-  virtual MVertex *getVertexKEY(int num)
+  virtual MNode *getVertexKEY(int num)
   {
     static const int map[20] = {0,  1, 2,  3,  4,  5,  6,  7,  8,  11,
                                 13, 9, 16, 18, 19, 17, 10, 12, 14, 15};
     return getVertex(map[num]);
   }
-  virtual MVertex *getVertexRAD(int num)
+  virtual MNode *getVertexRAD(int num)
   {
     static const int map[20] = { 0,  1,  2,  3,  4,  5,  6,  7,  8, 11,
                                 13,  9, 10, 12, 14, 15, 16, 18, 19, 17};
     return getVertex(map[num]);
   }
-  virtual MVertex *getVertexDIFF(int num)
+  virtual MNode *getVertexDIFF(int num)
   {
     static const int map[20] = {2,  3,  7,  6,  0,  1,  5, 4,  9,  18,
                                 12, 19, 14, 11, 15, 13, 8, 16, 17, 10};
     return getVertex(map[num]);
   }
-  virtual MVertex *getVertexVTK(int num)
+  virtual MNode *getVertexVTK(int num)
   {
     static const int map[20] = {0,  1, 2,  3,  4,  5,  6,  7,  8,  11,
                                 13, 9, 16, 18, 19, 17, 10, 12, 14, 15};
@@ -344,7 +344,7 @@ public:
   virtual int getNumEdgesRep(bool curved);
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
-  virtual void getEdgeVertices(const int num, std::vector<MVertex *> &v) const
+  virtual void getEdgeVertices(const int num, std::vector<MNode *> &v) const
   {
     v.resize(3);
     MHexahedron::_getEdgeVertices(num, v);
@@ -353,7 +353,7 @@ public:
   virtual int getNumFacesRep(bool curved);
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
-  virtual void getFaceVertices(const int num, std::vector<MVertex *> &v) const
+  virtual void getFaceVertices(const int num, std::vector<MNode *> &v) const
   {
     v.resize(8);
     MHexahedron::_getFaceVertices(num, v);
@@ -374,14 +374,14 @@ public:
   virtual const char *getStringForDIFF() const { return "ElmB20n3D"; }
   virtual void reverse()
   {
-    MVertex *tmp;
+    MNode *tmp;
     tmp = _v[0];
     _v[0] = _v[2];
     _v[2] = tmp;
     tmp = _v[4];
     _v[4] = _v[6];
     _v[6] = tmp;
-    MVertex *old[12];
+    MNode *old[12];
     for(int i = 0; i < 12; i++) old[i] = _vs[i];
     _vs[0] = old[3];
     _vs[3] = old[0];
@@ -419,16 +419,16 @@ public:
  */
 class MHexahedron27 : public MHexahedron {
 protected:
-  MVertex *_vs[19];
+  MNode *_vs[19];
 
 public:
-  MHexahedron27(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
-                MVertex *v5, MVertex *v6, MVertex *v7, MVertex *v8, MVertex *v9,
-                MVertex *v10, MVertex *v11, MVertex *v12, MVertex *v13,
-                MVertex *v14, MVertex *v15, MVertex *v16, MVertex *v17,
-                MVertex *v18, MVertex *v19, MVertex *v20, MVertex *v21,
-                MVertex *v22, MVertex *v23, MVertex *v24, MVertex *v25,
-                MVertex *v26, int num = 0, int part = 0)
+  MHexahedron27(MNode *v0, MNode *v1, MNode *v2, MNode *v3, MNode *v4,
+                MNode *v5, MNode *v6, MNode *v7, MNode *v8, MNode *v9,
+                MNode *v10, MNode *v11, MNode *v12, MNode *v13,
+                MNode *v14, MNode *v15, MNode *v16, MNode *v17,
+                MNode *v18, MNode *v19, MNode *v20, MNode *v21,
+                MNode *v22, MNode *v23, MNode *v24, MNode *v25,
+                MNode *v26, int num = 0, int part = 0)
     : MHexahedron(v0, v1, v2, v3, v4, v5, v6, v7, num, part)
   {
     _vs[0] = v8;
@@ -452,7 +452,7 @@ public:
     _vs[18] = v26;
     for(int i = 0; i < 19; i++) _vs[i]->setPolynomialOrder(2);
   }
-  MHexahedron27(const std::vector<MVertex *> &v, int num = 0, int part = 0)
+  MHexahedron27(const std::vector<MNode *> &v, int num = 0, int part = 0)
     : MHexahedron(v, num, part)
   {
     for(int i = 0; i < 19; i++) _vs[i] = v[8 + i];
@@ -461,50 +461,50 @@ public:
   ~MHexahedron27() {}
   virtual int getPolynomialOrder() const { return 2; }
   virtual std::size_t getNumVertices() const { return 27; }
-  virtual MVertex *getVertex(int num)
+  virtual MNode *getVertex(int num)
   {
     return num < 8 ? _v[num] : _vs[num - 8];
   }
-  virtual const MVertex *getVertex(int num) const
+  virtual const MNode *getVertex(int num) const
   {
     return num < 8 ? _v[num] : _vs[num - 8];
   }
-  virtual void setVertex(int num, MVertex *v)
+  virtual void setVertex(int num, MNode *v)
   {
     if(num < 8)
       _v[num] = v;
     else
       _vs[num - 8] = v;
   }
-  virtual MVertex *getVertexINP(int num)
+  virtual MNode *getVertexINP(int num)
   {
     static const int map[27] = {0,  1,  2,  3,  4,  5,  6,  7,  8,
                                 11, 13, 9,  16, 18, 19, 17, 10, 12,
                                 14, 15, 26, 20, 25, 21, 23, 24, 22};
     return getVertex(map[num]);
   }
-  virtual MVertex *getVertexKEY(int num)
+  virtual MNode *getVertexKEY(int num)
   {
     static const int map[27] = {0,  1,  2,  3,  4,  5,  6,  7,  8,
                                 11, 13, 9,  16, 18, 19, 17, 10, 12,
                                 14, 15, 26, 20, 25, 21, 23, 24, 22};
     return getVertex(map[num]);
   }
-  virtual MVertex *getVertexRAD(int num)
+  virtual MNode *getVertexRAD(int num)
   {
     static const int map[27] = { 0,  1,  2,  3,  4,  5,  6,  7,  8, 11,
                                 13,  9, 10, 12, 14, 15, 16, 18, 19, 17,   
 				                        20, 21, 22, 23, 24, 25, 26};
     return getVertex(map[num]);
   }
-  virtual MVertex *getVertexDIFF(int num)
+  virtual MNode *getVertexDIFF(int num)
   {
     static const int map[27] = {6,  8,  26, 24, 0,  2,  20, 18, 7,
                                 15, 3,  17, 5,  25, 23, 21, 1,  9,
                                 11, 19, 16, 4,  12, 14, 22, 10, 13};
     return getVertex(map[num]);
   }
-  virtual MVertex *getVertexVTK(int num)
+  virtual MNode *getVertexVTK(int num)
   {
     static const int map[27] = {0,  1,  2,  3,  4,  5,  6,  7,  8,
                                 11, 13, 9,  16, 18, 19, 17, 10, 12,
@@ -517,7 +517,7 @@ public:
   virtual int getNumEdgesRep(bool curved);
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
-  virtual void getEdgeVertices(const int num, std::vector<MVertex *> &v) const
+  virtual void getEdgeVertices(const int num, std::vector<MNode *> &v) const
   {
     v.resize(3);
     MHexahedron::_getEdgeVertices(num, v);
@@ -526,7 +526,7 @@ public:
   virtual int getNumFacesRep(bool curved);
   virtual void getFaceRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
-  virtual void getFaceVertices(const int num, std::vector<MVertex *> &v) const
+  virtual void getFaceVertices(const int num, std::vector<MNode *> &v) const
   {
     v.resize(9);
     MHexahedron::_getFaceVertices(num, v);
@@ -548,14 +548,14 @@ public:
   virtual const char *getStringForTOCHNOG() const { return "-hex27"; }
   virtual void reverse()
   {
-    MVertex *tmp;
+    MNode *tmp;
     tmp = _v[0];
     _v[0] = _v[2];
     _v[2] = tmp;
     tmp = _v[4];
     _v[4] = _v[6];
     _v[6] = tmp;
-    MVertex *old[19];
+    MNode *old[19];
     for(int i = 0; i < 19; i++) old[i] = _vs[i];
     // edge vertices
     _vs[0] = old[3];
@@ -621,12 +621,12 @@ class MHexahedronN : public MHexahedron {
 
 protected:
   const char _order;
-  std::vector<MVertex *> _vs;
+  std::vector<MNode *> _vs;
 
 public:
-  MHexahedronN(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3, MVertex *v4,
-               MVertex *v5, MVertex *v6, MVertex *v7,
-               const std::vector<MVertex *> &v, char order, int num = 0,
+  MHexahedronN(MNode *v0, MNode *v1, MNode *v2, MNode *v3, MNode *v4,
+               MNode *v5, MNode *v6, MNode *v7,
+               const std::vector<MNode *> &v, char order, int num = 0,
                int part = 0)
     : MHexahedron(v0, v1, v2, v3, v4, v5, v6, v7, num, part), _order(order),
       _vs(v)
@@ -634,7 +634,7 @@ public:
     for(std::size_t i = 0; i < _vs.size(); i++)
       _vs[i]->setPolynomialOrder(_order);
   }
-  MHexahedronN(const std::vector<MVertex *> &v, char order, int num = 0,
+  MHexahedronN(const std::vector<MNode *> &v, char order, int num = 0,
                int part = 0)
     : MHexahedron(v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7], num, part),
       _order(order)
@@ -646,15 +646,15 @@ public:
   ~MHexahedronN() {}
   virtual int getPolynomialOrder() const { return (int)_order; }
   virtual std::size_t getNumVertices() const { return 8 + _vs.size(); }
-  virtual MVertex *getVertex(int num)
+  virtual MNode *getVertex(int num)
   {
     return num < 8 ? _v[num] : _vs[num - 8];
   }
-  virtual const MVertex *getVertex(int num) const
+  virtual const MNode *getVertex(int num) const
   {
     return num < 8 ? _v[num] : _vs[num - 8];
   }
-  virtual void setVertex(int num, MVertex *v)
+  virtual void setVertex(int num, MNode *v)
   {
     if(num < 8)
       _v[num] = v;
@@ -679,13 +679,13 @@ public:
   virtual int getNumEdgesRep(bool curved);
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);
-  virtual void getEdgeVertices(const int num, std::vector<MVertex *> &v) const
+  virtual void getEdgeVertices(const int num, std::vector<MNode *> &v) const
   {
     v.resize(_order + 1);
     MHexahedron::_getEdgeVertices(num, v);
     for(int i = 0; i < _order - 1; i++) v[2 + i] = _vs[(_order - 1) * num + i];
   }
-  virtual void getFaceVertices(const int num, std::vector<MVertex *> &v) const
+  virtual void getFaceVertices(const int num, std::vector<MNode *> &v) const
   {
     if(getIsAssimilatedSerendipity()) { v.resize(4 * _order); }
     else {

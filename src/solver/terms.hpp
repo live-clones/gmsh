@@ -59,7 +59,7 @@ template<class T2> void ScalarTermConstant<T2>::get(MElement *ele, int npts, Int
   }
 }
 
-template<class T2> void ScalarTermConstant<T2>::get(MVertex *ver, T2 &val) const
+template<class T2> void ScalarTermConstant<T2>::get(MNode *ver, T2 &val) const
 {
     val = cst;
 }

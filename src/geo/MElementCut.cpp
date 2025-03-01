@@ -88,14 +88,14 @@ bool MPolyhedron::isInside(double u, double v, double w) const
   for(std::size_t i = 0; i < _parts.size(); i++) {
     double verts[4][3];
     for(int j = 0; j < 4; j++) {
-      MVertex *vij = _parts[i]->getVertex(j);
+      MNode *vij = _parts[i]->getVertex(j);
       double v_xyz[3] = {vij->x(), vij->y(), vij->z()};
       _orig->xyz2uvw(v_xyz, verts[j]);
     }
-    MVertex v0(verts[0][0], verts[0][1], verts[0][2]);
-    MVertex v1(verts[1][0], verts[1][1], verts[1][2]);
-    MVertex v2(verts[2][0], verts[2][1], verts[2][2]);
-    MVertex v3(verts[3][0], verts[3][1], verts[3][2]);
+    MNode v0(verts[0][0], verts[0][1], verts[0][2]);
+    MNode v1(verts[1][0], verts[1][1], verts[1][2]);
+    MNode v2(verts[2][0], verts[2][1], verts[2][2]);
+    MNode v3(verts[3][0], verts[3][1], verts[3][2]);
     MTetrahedron t(&v0, &v1, &v2, &v3);
     double ksi[3];
     t.xyz2uvw(uvw, ksi);
@@ -122,10 +122,10 @@ void MPolyhedron::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
                        _parts[i]->getVertex(j)->z()};
       _orig->xyz2uvw(xyz, uvw[j]);
     }
-    MVertex v0(uvw[0][0], uvw[0][1], uvw[0][2]);
-    MVertex v1(uvw[1][0], uvw[1][1], uvw[1][2]);
-    MVertex v2(uvw[2][0], uvw[2][1], uvw[2][2]);
-    MVertex v3(uvw[3][0], uvw[3][1], uvw[3][2]);
+    MNode v0(uvw[0][0], uvw[0][1], uvw[0][2]);
+    MNode v1(uvw[1][0], uvw[1][1], uvw[1][2]);
+    MNode v2(uvw[2][0], uvw[2][1], uvw[2][2]);
+    MNode v3(uvw[3][0], uvw[3][1], uvw[3][2]);
     MTetrahedron tt(&v0, &v1, &v2, &v3);
 
     for(int ip = 0; ip < nptsi; ip++) {
@@ -220,7 +220,7 @@ void MPolygon::_initVertices()
   _edges.push_back(edg[0]);
   edg.erase(edg.begin());
   while(edg.size()) {
-    MVertex *v = _edges[_edges.size() - 1].getVertex(1);
+    MNode *v = _edges[_edges.size() - 1].getVertex(1);
     for(std::size_t i = 0; i < edg.size(); i++) {
       if(edg[i].getVertex(0) == v) {
         _edges.push_back(edg[i]);
@@ -261,13 +261,13 @@ bool MPolygon::isInside(double u, double v, double w) const
   for(std::size_t i = 0; i < _parts.size(); i++) {
     double v_uvw[3][3];
     for(int j = 0; j < 3; j++) {
-      MVertex *vij = _parts[i]->getVertex(j);
+      MNode *vij = _parts[i]->getVertex(j);
       double v_xyz[3] = {vij->x(), vij->y(), vij->z()};
       getParent()->xyz2uvw(v_xyz, v_uvw[j]);
     }
-    MVertex v0(v_uvw[0][0], v_uvw[0][1], v_uvw[0][2]);
-    MVertex v1(v_uvw[1][0], v_uvw[1][1], v_uvw[1][2]);
-    MVertex v2(v_uvw[2][0], v_uvw[2][1], v_uvw[2][2]);
+    MNode v0(v_uvw[0][0], v_uvw[0][1], v_uvw[0][2]);
+    MNode v1(v_uvw[1][0], v_uvw[1][1], v_uvw[1][2]);
+    MNode v2(v_uvw[2][0], v_uvw[2][1], v_uvw[2][2]);
     MTriangle t(&v0, &v1, &v2);
     double ksi[3];
     t.xyz2uvw(uvw, ksi);
@@ -294,9 +294,9 @@ void MPolygon::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
                        _parts[i]->getVertex(j)->z()};
       getParent()->xyz2uvw(xyz, uvw[j]);
     }
-    MVertex v0(uvw[0][0], uvw[0][1], uvw[0][2]);
-    MVertex v1(uvw[1][0], uvw[1][1], uvw[1][2]);
-    MVertex v2(uvw[2][0], uvw[2][1], uvw[2][2]);
+    MNode v0(uvw[0][0], uvw[0][1], uvw[0][2]);
+    MNode v1(uvw[1][0], uvw[1][1], uvw[1][2]);
+    MNode v2(uvw[2][0], uvw[2][1], uvw[2][2]);
     MTriangle tt(&v0, &v1, &v2);
     for(int ip = 0; ip < nptsi; ip++) {
       const double u = ptsi[ip].pt[0];
@@ -324,12 +324,12 @@ bool MLineChild::isInside(double u, double v, double w) const
   double uvw[3] = {u, v, w};
   double v_uvw[2][3];
   for(int i = 0; i < 2; i++) {
-    const MVertex *vi = getVertex(i);
+    const MNode *vi = getVertex(i);
     double v_xyz[3] = {vi->x(), vi->y(), vi->z()};
     _orig->xyz2uvw(v_xyz, v_uvw[i]);
   }
-  MVertex v0(v_uvw[0][0], v_uvw[0][1], v_uvw[0][2]);
-  MVertex v1(v_uvw[1][0], v_uvw[1][1], v_uvw[1][2]);
+  MNode v0(v_uvw[0][0], v_uvw[0][1], v_uvw[0][2]);
+  MNode v1(v_uvw[1][0], v_uvw[1][1], v_uvw[1][2]);
   MLine l(&v0, &v1);
   double ksi[3];
   l.xyz2uvw(uvw, ksi);
@@ -347,12 +347,12 @@ void MLineChild::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
   IntPt *ptsi;
   double v_uvw[2][3];
   for(int i = 0; i < 2; i++) {
-    MVertex *vi = getVertex(i);
+    MNode *vi = getVertex(i);
     double v_xyz[3] = {vi->x(), vi->y(), vi->z()};
     _orig->xyz2uvw(v_xyz, v_uvw[i]);
   }
-  MVertex v0(v_uvw[0][0], v_uvw[0][1], v_uvw[0][2]);
-  MVertex v1(v_uvw[1][0], v_uvw[1][1], v_uvw[1][2]);
+  MNode v0(v_uvw[0][0], v_uvw[0][1], v_uvw[0][2]);
+  MNode v1(v_uvw[1][0], v_uvw[1][1], v_uvw[1][2]);
   MLine l(&v0, &v1);
   l.getIntegrationPoints(pOrder, &nptsi, &ptsi);
   for(int ip = 0; ip < nptsi; ip++) {
@@ -379,13 +379,13 @@ bool MTriangleBorder::isInside(double u, double v, double w) const
   double uvw[3] = {u, v, w};
   double v_uvw[3][3];
   for(int i = 0; i < 3; i++) {
-    const MVertex *vi = getVertex(i);
+    const MNode *vi = getVertex(i);
     double v_xyz[3] = {vi->x(), vi->y(), vi->z()};
     getParent()->xyz2uvw(v_xyz, v_uvw[i]);
   }
-  MVertex v0(v_uvw[0][0], v_uvw[0][1], v_uvw[0][2]);
-  MVertex v1(v_uvw[1][0], v_uvw[1][1], v_uvw[1][2]);
-  MVertex v2(v_uvw[2][0], v_uvw[2][1], v_uvw[2][2]);
+  MNode v0(v_uvw[0][0], v_uvw[0][1], v_uvw[0][2]);
+  MNode v1(v_uvw[1][0], v_uvw[1][1], v_uvw[1][2]);
+  MNode v2(v_uvw[2][0], v_uvw[2][1], v_uvw[2][2]);
   MTriangle t(&v0, &v1, &v2);
   double ksi[3];
   t.xyz2uvw(uvw, ksi);
@@ -407,9 +407,9 @@ void MTriangleBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
     double xyz[3] = {_v[j]->x(), _v[j]->y(), _v[j]->z()};
     getParent()->xyz2uvw(xyz, uvw[j]);
   }
-  MVertex v0(uvw[0][0], uvw[0][1], uvw[0][2]);
-  MVertex v1(uvw[1][0], uvw[1][1], uvw[1][2]);
-  MVertex v2(uvw[2][0], uvw[2][1], uvw[2][2]);
+  MNode v0(uvw[0][0], uvw[0][1], uvw[0][2]);
+  MNode v1(uvw[1][0], uvw[1][1], uvw[1][2]);
+  MNode v2(uvw[2][0], uvw[2][1], uvw[2][2]);
   MTriangle tt(&v0, &v1, &v2);
   tt.getIntegrationPoints(pOrder, &nptsi, &ptsi);
   double jac[3][3];
@@ -438,12 +438,12 @@ bool MLineBorder::isInside(double u, double v, double w) const
   double uvw[3] = {u, v, w};
   double v_uvw[2][3];
   for(int i = 0; i < 2; i++) {
-    const MVertex *vi = getVertex(i);
+    const MNode *vi = getVertex(i);
     double v_xyz[3] = {vi->x(), vi->y(), vi->z()};
     getParent()->xyz2uvw(v_xyz, v_uvw[i]);
   }
-  MVertex v0(v_uvw[0][0], v_uvw[0][1], v_uvw[0][2]);
-  MVertex v1(v_uvw[1][0], v_uvw[1][1], v_uvw[1][2]);
+  MNode v0(v_uvw[0][0], v_uvw[0][1], v_uvw[0][2]);
+  MNode v1(v_uvw[1][0], v_uvw[1][1], v_uvw[1][2]);
   MLine l(&v0, &v1);
   double ksi[3];
   l.xyz2uvw(uvw, ksi);
@@ -465,8 +465,8 @@ void MLineBorder::getIntegrationPoints(int pOrder, int *npts, IntPt **pts)
     double xyz[3] = {_v[j]->x(), _v[j]->y(), _v[j]->z()};
     getParent()->xyz2uvw(xyz, uvw[j]);
   }
-  MVertex v0(uvw[0][0], uvw[0][1], uvw[0][2]);
-  MVertex v1(uvw[1][0], uvw[1][1], uvw[1][2]);
+  MNode v0(uvw[0][0], uvw[0][1], uvw[0][2]);
+  MNode v1(uvw[1][0], uvw[1][1], uvw[1][2]);
   MLine ll(&v0, &v1);
   ll.getIntegrationPoints(pOrder, &nptsi, &ptsi);
   for(int ip = 0; ip < nptsi; ip++) {
@@ -596,7 +596,7 @@ static int getBorderTag(int lsTag, int count, int &maxTag,
 static void elementSplitMesh(
   MElement *e, std::vector<gLevelset *> &RPN, fullMatrix<double> &verticesLs,
   GEntity *ge, GModel *GM, std::size_t &numEle,
-  std::map<std::size_t, MVertex *> &vertexMap,
+  std::map<std::size_t, MNode *> &vertexMap,
   std::map<MElement *, MElement *> &newParents,
   std::map<MElement *, MElement *> &newDomains,
   std::map<int, std::vector<MElement *> > elements[10],
@@ -705,10 +705,10 @@ static void elementSplitMesh(
   if(splitElem && e->getDim() == 2) {
     for(int k = 0; k < e->getNumEdges(); k++) {
       MEdge me = e->getEdge(k);
-      MVertex *v0 = me.getVertex(0);
-      MVertex *v1 = me.getVertex(1);
-      MVertex *v0N = vertexMap[v0->getNum()];
-      MVertex *v1N = vertexMap[v1->getNum()];
+      MNode *v0 = me.getVertex(0);
+      MNode *v1 = me.getVertex(1);
+      MNode *v0N = vertexMap[v0->getNum()];
+      MNode *v1N = vertexMap[v1->getNum()];
       double val0 = (verticesLs(iLs, v0->getIndex()) > eps) ? 1 : -1;
       double val1 = (verticesLs(iLs, v1->getIndex()) > eps) ? 1 : -1;
       if(val0 * val1 > 0.0 && val0 < 0.0) {
@@ -814,7 +814,7 @@ static void elementSplitMesh(
   }
 }
 
-static bool equalV(MVertex *v, const DI_Point *p)
+static bool equalV(MNode *v, const DI_Point *p)
 {
   return (fabs(v->x() - p->x()) < 1.e-15 && fabs(v->y() - p->y()) < 1.e-15 &&
           fabs(v->z() - p->z()) < 1.e-15);
@@ -827,13 +827,13 @@ static int getElementVertexNum(DI_Point *p, MElement *e)
   return -1;
 }
 
-typedef std::set<MVertex *, MVertexPtrLessThanLexicographic>
+typedef std::set<MNode *, MVertexPtrLessThanLexicographic>
   newVerticesContainer;
 
 static void elementCutMesh(
   MElement *e, std::vector<gLevelset *> &RPN, fullMatrix<double> &verticesLs,
   GEntity *ge, GModel *GM, std::size_t &numEle,
-  std::map<std::size_t, MVertex *> &vertexMap, newVerticesContainer &newVertices,
+  std::map<std::size_t, MNode *> &vertexMap, newVerticesContainer &newVertices,
   std::map<MElement *, MElement *> &newParents,
   std::map<MElement *, MElement *> &newDomains,
   std::multimap<MElement *, MElement *> borders[2],
@@ -984,12 +984,12 @@ static void elementCutMesh(
       std::vector<MTetrahedron *> poly[2];
 
       for(std::size_t i = nbTe; i < tetras.size(); i++) {
-        MVertex *mv[4] = {nullptr, nullptr, nullptr, nullptr};
+        MNode *mv[4] = {nullptr, nullptr, nullptr, nullptr};
         for(int j = 0; j < 4; j++) {
           int numV = getElementVertexNum(tetras[i]->pt(j), e);
           if(numV == -1) {
-            MVertex *newv =
-              new MVertex(tetras[i]->x(j), tetras[i]->y(j), tetras[i]->z(j));
+            MNode *newv =
+              new MNode(tetras[i]->x(j), tetras[i]->y(j), tetras[i]->z(j));
             auto it = newVertices.insert(newv);
             mv[j] = *(it.first);
             if(!it.second) newv->deleteLast();
@@ -997,7 +997,7 @@ static void elementCutMesh(
           else {
             auto it = vertexMap.find(numV);
             if(it == vertexMap.end()) {
-              mv[j] = new MVertex(tetras[i]->x(j), tetras[i]->y(j),
+              mv[j] = new MNode(tetras[i]->x(j), tetras[i]->y(j),
                                   tetras[i]->z(j), nullptr, numV);
               vertexMap[numV] = mv[j];
             }
@@ -1077,11 +1077,11 @@ static void elementCutMesh(
     }
 
     for(std::size_t i = nbTr; i < triangles.size(); i++) {
-      MVertex *mv[3] = {nullptr, nullptr, nullptr};
+      MNode *mv[3] = {nullptr, nullptr, nullptr};
       for(int j = 0; j < 3; j++) {
         int numV = getElementVertexNum(triangles[i]->pt(j), e);
         if(numV == -1) {
-          MVertex *newv = new MVertex(triangles[i]->x(j), triangles[i]->y(j),
+          MNode *newv = new MNode(triangles[i]->x(j), triangles[i]->y(j),
                                       triangles[i]->z(j));
           auto it = newVertices.insert(newv);
           mv[j] = *(it.first);
@@ -1090,7 +1090,7 @@ static void elementCutMesh(
         else {
           auto it = vertexMap.find(numV);
           if(it == vertexMap.end()) {
-            mv[j] = new MVertex(triangles[i]->x(j), triangles[i]->y(j),
+            mv[j] = new MNode(triangles[i]->x(j), triangles[i]->y(j),
                                 triangles[i]->z(j), nullptr, numV);
             vertexMap[numV] = mv[j];
           }
@@ -1179,11 +1179,11 @@ static void elementCutMesh(
       std::vector<MTriangle *> poly[2];
 
       for(std::size_t i = nbTr; i < triangles.size(); i++) {
-        MVertex *mv[3] = {nullptr, nullptr, nullptr};
+        MNode *mv[3] = {nullptr, nullptr, nullptr};
         for(int j = 0; j < 3; j++) {
           int numV = getElementVertexNum(triangles[i]->pt(j), e);
           if(numV == -1) {
-            MVertex *newv = new MVertex(triangles[i]->x(j), triangles[i]->y(j),
+            MNode *newv = new MNode(triangles[i]->x(j), triangles[i]->y(j),
                                         triangles[i]->z(j));
             auto it = newVertices.insert(newv);
             mv[j] = *(it.first);
@@ -1192,7 +1192,7 @@ static void elementCutMesh(
           else {
             auto it = vertexMap.find(numV);
             if(it == vertexMap.end()) {
-              mv[j] = new MVertex(triangles[i]->x(j), triangles[i]->y(j),
+              mv[j] = new MNode(triangles[i]->x(j), triangles[i]->y(j),
                                   triangles[i]->z(j), nullptr, numV);
               vertexMap[numV] = mv[j];
             }
@@ -1208,12 +1208,12 @@ static void elementCutMesh(
       }
       // if quads
       for(std::size_t i = nbQ; i < quads.size(); i++) {
-        MVertex *mv[4] = {nullptr, nullptr, nullptr, nullptr};
+        MNode *mv[4] = {nullptr, nullptr, nullptr, nullptr};
         for(int j = 0; j < 4; j++) {
           int numV = getElementVertexNum(quads[i]->pt(j), e);
           if(numV == -1) {
-            MVertex *newv =
-              new MVertex(quads[i]->x(j), quads[i]->y(j), quads[i]->z(j));
+            MNode *newv =
+              new MNode(quads[i]->x(j), quads[i]->y(j), quads[i]->z(j));
             auto it = newVertices.insert(newv);
             mv[j] = *(it.first);
             if(!it.second) newv->deleteLast();
@@ -1221,7 +1221,7 @@ static void elementCutMesh(
           else {
             auto it = vertexMap.find(numV);
             if(it == vertexMap.end()) {
-              mv[j] = new MVertex(quads[i]->x(j), quads[i]->y(j),
+              mv[j] = new MNode(quads[i]->x(j), quads[i]->y(j),
                                   quads[i]->z(j), nullptr, numV);
               vertexMap[numV] = mv[j];
             }
@@ -1319,12 +1319,12 @@ static void elementCutMesh(
     }
 
     for(std::size_t i = nbL; i < lines.size(); i++) {
-      MVertex *mv[2] = {nullptr, nullptr};
+      MNode *mv[2] = {nullptr, nullptr};
       for(int j = 0; j < 2; j++) {
         int numV = getElementVertexNum(lines[i]->pt(j), e);
         if(numV == -1) {
-          MVertex *newv =
-            new MVertex(lines[i]->x(j), lines[i]->y(j), lines[i]->z(j));
+          MNode *newv =
+            new MNode(lines[i]->x(j), lines[i]->y(j), lines[i]->z(j));
           auto it = newVertices.insert(newv);
           mv[j] = *(it.first);
           if(!it.second) newv->deleteLast();
@@ -1332,7 +1332,7 @@ static void elementCutMesh(
         else {
           auto it = vertexMap.find(numV);
           if(it == vertexMap.end()) {
-            mv[j] = new MVertex(lines[i]->x(j), lines[i]->y(j), lines[i]->z(j),
+            mv[j] = new MNode(lines[i]->x(j), lines[i]->y(j), lines[i]->z(j),
                                 nullptr, numV);
             vertexMap[numV] = mv[j];
           }
@@ -1382,12 +1382,12 @@ static void elementCutMesh(
     if(isCut) {
       bool own = (eParent && !e->ownsParent()) ? false : true;
       for(std::size_t i = nbL; i < lines.size(); i++) {
-        MVertex *mv[2] = {nullptr, nullptr};
+        MNode *mv[2] = {nullptr, nullptr};
         for(int j = 0; j < 2; j++) {
           int numV = getElementVertexNum(lines[i]->pt(j), e);
           if(numV == -1) {
-            MVertex *newv =
-              new MVertex(lines[i]->x(j), lines[i]->y(j), lines[i]->z(j));
+            MNode *newv =
+              new MNode(lines[i]->x(j), lines[i]->y(j), lines[i]->z(j));
             auto it = newVertices.insert(newv);
             mv[j] = *(it.first);
             if(!it.second) newv->deleteLast();
@@ -1395,7 +1395,7 @@ static void elementCutMesh(
           else {
             auto it = vertexMap.find(numV);
             if(it == vertexMap.end()) {
-              mv[j] = new MVertex(lines[i]->x(j), lines[i]->y(j),
+              mv[j] = new MNode(lines[i]->x(j), lines[i]->y(j),
                                   lines[i]->z(j), nullptr, numV);
               vertexMap[numV] = mv[j];
             }
@@ -1461,7 +1461,7 @@ static void elementCutMesh(
 
 GModel *buildCutMesh(GModel *gm, gLevelset *ls,
                      std::map<int, std::vector<MElement *> > elements[10],
-                     std::map<std::size_t, MVertex *> &vertexMap,
+                     std::map<std::size_t, MNode *> &vertexMap,
                      std::map<int, std::map<int, std::string> > physicals[4],
                      bool cutElem)
 {
@@ -1490,7 +1490,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
       break;
     }
   if(lsPoints) {
-    std::vector<MVertex *> vert;
+    std::vector<MNode *> vert;
     for(std::size_t i = 0; i < gmEntities.size(); i++) {
       for(std::size_t j = 0; j < gmEntities[i]->getNumMeshVertices(); j++) {
         vert.push_back(gmEntities[i]->getMeshVertex(j));
@@ -1506,7 +1506,7 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
   // compute and store levelset values + create new nodes
   for(std::size_t i = 0; i < gmEntities.size(); i++) {
     for(std::size_t j = 0; j < gmEntities[i]->getNumMeshVertices(); j++) {
-      MVertex *vi = gmEntities[i]->getMeshVertex(j);
+      MNode *vi = gmEntities[i]->getMeshVertex(j);
       if(vi->getIndex() < 0) continue;
       int k = 0;
       for(; k < primS; k++)
@@ -1515,8 +1515,8 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
       if(primS > 1)
         verticesLs(k, vi->getIndex()) = (*ls)(vi->x(), vi->y(), vi->z());
 
-      MVertex *vn =
-        new MVertex(vi->x(), vi->y(), vi->z(), nullptr, vi->getNum());
+      MNode *vn =
+        new MNode(vi->x(), vi->y(), vi->z(), nullptr, vi->getNum());
       vertexMap[vi->getNum()] = vn;
     }
   }
@@ -1610,11 +1610,11 @@ GModel *buildCutMesh(GModel *gm, gLevelset *ls,
           std::vector<MElement *> conLines;
           conLines.push_back(elements[1][nLR][0]);
           elements[1][nLR].erase(elements[1][nLR].begin());
-          MVertex *v1 = conLines[0]->getVertex(0);
-          MVertex *v2 = conLines[0]->getVertex(1);
+          MNode *v1 = conLines[0]->getVertex(0);
+          MNode *v2 = conLines[0]->getVertex(1);
           for(std::size_t k = 0; k < elements[1][nLR].size();) {
-            MVertex *va = elements[1][nLR][k]->getVertex(0);
-            MVertex *vb = elements[1][nLR][k]->getVertex(1);
+            MNode *va = elements[1][nLR][k]->getVertex(0);
+            MNode *vb = elements[1][nLR][k]->getVertex(1);
             if(va == v1 || vb == v1 || va == v2 || vb == v2) {
               conLines.push_back(elements[1][nLR][k]);
               elements[1][nLR].erase(elements[1][nLR].begin() + k);

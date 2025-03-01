@@ -5,7 +5,7 @@
 
 #include <sstream>
 #include "GModel.h"
-#include "GFace.h"
+#include "GSurface.h"
 #include "gmshEdge.h"
 #include "Geo.h"
 #include "GeoInterpolation.h"
@@ -13,7 +13,7 @@
 #include "Context.h"
 #include "decasteljau.h"
 
-static void setMeshSizeFromCurvePoints(GEdge &edge, const Curve &curve)
+static void setMeshSizeFromCurvePoints(GCurve &edge, const Curve &curve)
 {
   if(!CTX::instance()->mesh.lcFromParametricPoints) return;
   switch(curve.Typ) {
@@ -37,14 +37,14 @@ static void setMeshSizeFromCurvePoints(GEdge &edge, const Curve &curve)
   }
 }
 
-gmshEdge::gmshEdge(GModel *m, Curve *c, GVertex *v1, GVertex *v2)
-  : GEdge(m, c->Num, v1, v2), _c(c)
+gmshEdge::gmshEdge(GModel *m, Curve *c, GPoint *v1, GPoint *v2)
+  : GCurve(m, c->Num, v1, v2), _c(c)
 {
   gmshEdge::resetMeshAttributes();
   setMeshSizeFromCurvePoints(*this, *c);
 }
 
-void gmshEdge::resetNativePtr(Curve *c, GVertex *v1, GVertex *v2)
+void gmshEdge::resetNativePtr(Curve *c, GPoint *v1, GPoint *v2)
 {
   _c = c;
   _v0 = v1;
@@ -74,10 +74,10 @@ Range<double> gmshEdge::parBounds(int i) const
   return Range<double>(_c->ubeg, _c->uend);
 }
 
-GPoint gmshEdge::point(double par) const
+GVertex gmshEdge::point(double par) const
 {
   Vertex a = InterpolateCurve(_c, par, 0);
-  return GPoint(a.Pos.X, a.Pos.Y, a.Pos.Z, this, par);
+  return GVertex(a.Pos.X, a.Pos.Y, a.Pos.Z, this, par);
 }
 
 SVector3 gmshEdge::firstDer(double par) const
@@ -117,7 +117,7 @@ bool gmshEdge::haveParametrization()
 
 std::string gmshEdge::getAdditionalInfoString(bool multline)
 {
-  std::string info = GEdge::getAdditionalInfoString(multline);
+  std::string info = GCurve::getAdditionalInfoString(multline);
 
   if(List_Nbr(_c->Control_Points) > 2) {
     std::ostringstream sstream;
@@ -159,7 +159,7 @@ int gmshEdge::minimumMeshSegments() const
 int gmshEdge::minimumDrawSegments() const
 {
   int n = List_Nbr(_c->Control_Points) - 1;
-  if(n <= 0) n = GEdge::minimumDrawSegments();
+  if(n <= 0) n = GCurve::minimumDrawSegments();
 
   if(geomType() == Line && !_c->geometry)
     return n;
@@ -167,7 +167,7 @@ int gmshEdge::minimumDrawSegments() const
     return CTX::instance()->geom.numSubEdges * n;
 }
 
-SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar, int dir) const
+SPoint2 gmshEdge::reparamOnFace(const GSurface *face, double epar, int dir) const
 {
   Surface *s = (Surface *)face->getNativePtr();
 
@@ -283,7 +283,7 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar, int dir) const
     }
     else {
       Msg::Info("Reparameterizing curve %d on surface %d", _c->Num, s->Num);
-      return GEdge::reparamOnFace(face, epar, dir);
+      return GCurve::reparamOnFace(face, epar, dir);
     }
     return SPoint2(U, V);
   }
@@ -318,7 +318,7 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar, int dir) const
       }
       else {
         Msg::Info("Reparameterizing curve %d on surface %d", _c->Num, s->Num);
-        return GEdge::reparamOnFace(face, epar, dir);
+        return GCurve::reparamOnFace(face, epar, dir);
       }
     }
     else {
@@ -353,13 +353,13 @@ SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar, int dir) const
       }
       else {
         Msg::Info("Reparameterizing curve %d on surface %d", _c->Num, s->Num);
-        return GEdge::reparamOnFace(face, epar, dir);
+        return GCurve::reparamOnFace(face, epar, dir);
       }
     }
     return SPoint2(U, V);
   }
   else {
-    return GEdge::reparamOnFace(face, epar, dir);
+    return GCurve::reparamOnFace(face, epar, dir);
   }
 }
 
@@ -540,6 +540,6 @@ void gmshEdge::discretize(double tol, std::vector<SPoint3> &pts,
     }
     break;
   }
-  default: GEdge::discretize(tol, pts, ts);
+  default: GCurve::discretize(tol, pts, ts);
   }
 }

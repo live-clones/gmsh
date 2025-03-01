@@ -114,7 +114,7 @@ PView *GMSH_BubblesPlugin::execute(PView *v)
     int llbeg = ll;
 
     // compute vertex-to-triangle_barycenter map
-    std::map<MVertex *, std::vector<SPoint3> > v2t;
+    std::map<MNode *, std::vector<SPoint3> > v2t;
     for(std::size_t i = 0; i < (*fit)->triangles.size(); i++)
       for(int j = 0; j < 3; j++)
         v2t[(*fit)->triangles[i]->getVertex(j)].push_back(
@@ -122,7 +122,7 @@ PView *GMSH_BubblesPlugin::execute(PView *v)
 
     // add boundary vertices in map to get cells "closer" to the boundary
     for(auto it = v2t.begin(); it != v2t.end(); it++) {
-      MVertex *v = it->first;
+      MNode *v = it->first;
       if(v->onWhat() && v->onWhat()->dim() < 2)
         it->second.push_back(
           SPoint3(it->first->x(), it->first->y(), it->first->z()));

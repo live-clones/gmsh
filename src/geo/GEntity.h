@@ -19,11 +19,11 @@
 #define MAX_LC 1.e22
 
 class GModel;
-class GVertex;
-class GEdge;
-class GFace;
-class GRegion;
-class MVertex;
+class GPoint;
+class GCurve;
+class GSurface;
+class GVolume;
+class MNode;
 class MElement;
 class VertexArray;
 
@@ -54,13 +54,13 @@ protected:
 
 public: // these will become protected at some point
   // the mesh vertices uniquely owned by the entity
-  std::vector<MVertex *> mesh_vertices;
+  std::vector<MNode *> mesh_vertices;
 
   // a list of geometrical entities that form a compound mesh
   std::vector<GEntity *> compound;
 
   // the corresponding principal points of the entity in case of periodic mesh
-  std::map<GVertex *, GVertex *> vertexCounterparts;
+  std::map<GPoint *, GPoint *> vertexCounterparts;
 
   // the physical groups that contain this entity
   std::vector<int> physicals;
@@ -74,7 +74,7 @@ public: // these will become protected at some point
 
 public:
   // make a set of all the vertices in the entity, with/without closure
-  void addVerticesInSet(std::set<MVertex *> &, bool closure) const;
+  void addVerticesInSet(std::set<MNode *> &, bool closure) const;
 
 public:
   // all known native model types
@@ -205,40 +205,40 @@ public:
   virtual GEntity *getParentEntity() { return nullptr; }
 
   // regions that bound this entity or that this entity bounds
-  virtual std::list<GRegion *> regions() const
+  virtual std::list<GVolume *> regions() const
   {
-    return std::list<GRegion *>();
+    return std::list<GVolume *>();
   }
 
   // faces that bound this entity or that this entity bounds
-  virtual std::vector<GFace *> faces() const { return std::vector<GFace *>(); }
+  virtual std::vector<GSurface *> faces() const { return std::vector<GSurface *>(); }
 
   // edges that bound this entity or that this entity bounds
-  virtual std::vector<GEdge *> const &edges() const
+  virtual std::vector<GCurve *> const &edges() const
   {
-    static std::vector<GEdge *> i;
+    static std::vector<GCurve *> i;
     return i;
   }
 
   // vertices that bound this entity
-  virtual std::vector<GVertex *> vertices() const
+  virtual std::vector<GPoint *> vertices() const
   {
-    return std::vector<GVertex *>();
+    return std::vector<GPoint *>();
   }
 
   // is this entity an orphan?
   virtual bool isOrphan() { return false; }
 
   // for Python, temporary solution while iterators are not binded
-  std::vector<GRegion *> bindingsGetRegions()
+  std::vector<GVolume *> bindingsGetRegions()
   {
     // NOTE: two-line to not create two different lists with diff pointers
-    std::list<GRegion *> r = regions();
-    return std::vector<GRegion *>(r.begin(), r.end());
+    std::list<GVolume *> r = regions();
+    return std::vector<GVolume *>(r.begin(), r.end());
   }
-  std::vector<GFace *> bindingsGetFaces() { return faces(); }
-  std::vector<GEdge *> bindingsGetEdges() const { return edges(); }
-  std::vector<GVertex *> bindingsGetVertices() { return vertices(); }
+  std::vector<GSurface *> bindingsGetFaces() { return faces(); }
+  std::vector<GCurve *> bindingsGetEdges() const { return edges(); }
+  std::vector<GPoint *> bindingsGetVertices() { return vertices(); }
 
   // underlying geometric representation of this entity
   virtual GeomType geomType() const { return Unknown; }
@@ -387,14 +387,14 @@ public:
   std::size_t getNumMeshVertices() { return mesh_vertices.size(); }
 
   // get the mesh vertex at the given index
-  MVertex *getMeshVertex(std::size_t index) { return mesh_vertices[index]; }
+  MNode *getMeshVertex(std::size_t index) { return mesh_vertices[index]; }
 
   // add a mesh vertex
-  void addMeshVertex(MVertex *v) { mesh_vertices.push_back(v); }
+  void addMeshVertex(MNode *v) { mesh_vertices.push_back(v); }
   // remove a mesh vertex, and delete it as well if del=true (warning: this does
   // not invalidate the mesh cache and vertex arrays, which should be taken care
   // of after a delete)
-  void removeMeshVertex(MVertex *v, bool del=false);
+  void removeMeshVertex(MNode *v, bool del=false);
 
   // add a mesh element
   virtual void addElement(MElement *e) {}
@@ -408,19 +408,19 @@ public:
   virtual void relocateMeshVertices() {}
 
   // clean downcasts
-  GVertex *cast2Vertex();
-  GEdge *cast2Edge();
-  GFace *cast2Face();
-  GRegion *cast2Region();
+  GPoint *cast2Vertex();
+  GCurve *cast2Edge();
+  GSurface *cast2Face();
+  GVolume *cast2Region();
 
   // transformation from master
   std::vector<double> affineTransform;
 
   // corresponding mesh vertices
-  std::map<MVertex *, MVertex *> correspondingVertices;
+  std::map<MNode *, MNode *> correspondingVertices;
 
   // corresponding high order mesh vertices
-  std::map<MVertex *, MVertex *> correspondingHighOrderVertices;
+  std::map<MNode *, MNode *> correspondingHighOrderVertices;
 
   // reorder the mesh elements of the given type, according to ordering
   virtual bool reorder(const int elementType,

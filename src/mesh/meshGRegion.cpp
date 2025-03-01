@@ -18,9 +18,9 @@
 #include "meshRelocateVertex.h"
 #include "meshUntangle.h"
 #include "GModel.h"
-#include "GRegion.h"
-#include "GFace.h"
-#include "GEdge.h"
+#include "GVolume.h"
+#include "GSurface.h"
+#include "GCurve.h"
 #include "discreteFace.h"
 #include "discreteEdge.h"
 #include "MLine.h"
@@ -31,7 +31,7 @@
 #include "OS.h"
 #include "Context.h"
 
-void splitQuadRecovery::add(const MFace &f, MVertex *v, GFace *gf)
+void splitQuadRecovery::add(const MFace &f, MNode *v, GSurface *gf)
 {
   _quad[f] = v;
   MFace f0(f.getVertex(0), f.getVertex(1), v);
@@ -51,7 +51,7 @@ int splitQuadRecovery::buildPyramids(GModel *gm)
   Msg::Info("Generating pyramids for hybrid mesh...");
   int npyram = 0;
   for(auto it = gm->firstRegion(); it != gm->lastRegion(); it++) {
-    GRegion *gr = *it;
+    GVolume *gr = *it;
     if(gr->meshAttributes.method == MESH_TRANSFINITE) continue;
     if(gr->isFullyDiscrete()) {
       continue;
@@ -59,9 +59,9 @@ int splitQuadRecovery::buildPyramids(GModel *gm)
     ExtrudeParams *ep = gr->meshAttributes.extrude;
     if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) continue;
 
-    std::vector<GFace *> faces = gr->faces();
+    std::vector<GSurface *> faces = gr->faces();
     for(std::size_t i = 0; i < faces.size(); i++) {
-      GFace *gf = faces[i];
+      GSurface *gf = faces[i];
       for(std::size_t j = 0; j < gf->quadrangles.size(); j++) {
         auto it2 = _quad.find(gf->quadrangles[j]->getFace(0));
         if(it2 != _quad.end()) {
@@ -87,7 +87,7 @@ int splitQuadRecovery::buildPyramids(GModel *gm)
   return npyram;
 }
 
-void MeshDelaunayVolume(std::vector<GRegion *> &regions)
+void MeshDelaunayVolume(std::vector<GVolume *> &regions)
 {
   if(regions.empty()) return;
 
@@ -102,13 +102,13 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
      CTX::instance()->mesh.algo3d != ALGO_3D_MMG3D)
     return;
 
-  GRegion *gr = regions[0];
-  std::vector<GFace *> faces = gr->faces();
+  GVolume *gr = regions[0];
+  std::vector<GSurface *> faces = gr->faces();
 
-  std::set<GFace *, GEntityPtrLessThan> allFacesSet;
+  std::set<GSurface *, GEntityPtrLessThan> allFacesSet;
   for(std::size_t i = 0; i < regions.size(); i++) {
-    std::vector<GFace *> const &f = regions[i]->faces();
-    std::vector<GFace *> const &f_e = regions[i]->embeddedFaces();
+    std::vector<GSurface *> const &f = regions[i]->faces();
+    std::vector<GSurface *> const &f_e = regions[i]->embeddedFaces();
     allFacesSet.insert(f.begin(), f.end());
     allFacesSet.insert(f_e.begin(), f_e.end());
   }
@@ -116,9 +116,9 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
   // replace faces with compounds if elements from compound surface meshes are
   // not reclassified on the original surfaces
   if(CTX::instance()->mesh.compoundClassify == 0) {
-    std::set<GFace *, GEntityPtrLessThan> comp;
+    std::set<GSurface *, GEntityPtrLessThan> comp;
     for(auto it = allFacesSet.begin(); it != allFacesSet.end(); it++) {
-      GFace *gf = *it;
+      GSurface *gf = *it;
       if(!gf->compoundSurface)
         comp.insert(gf);
       else if(gf->compoundSurface)
@@ -127,27 +127,27 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
     allFacesSet = comp;
   }
 
-  std::vector<GFace *> allFaces(allFacesSet.begin(), allFacesSet.end());
+  std::vector<GSurface *> allFaces(allFacesSet.begin(), allFacesSet.end());
   gr->set(allFaces);
 
-  std::set<GEdge *, GEntityPtrLessThan> allEmbEdgesSet;
+  std::set<GCurve *, GEntityPtrLessThan> allEmbEdgesSet;
   for(std::size_t i = 0; i < regions.size(); i++) {
-    std::vector<GEdge *> const &e = regions[i]->embeddedEdges();
+    std::vector<GCurve *> const &e = regions[i]->embeddedEdges();
     allEmbEdgesSet.insert(e.begin(), e.end());
   }
-  std::vector<GEdge *> allEmbEdges(allEmbEdgesSet.begin(),
+  std::vector<GCurve *> allEmbEdges(allEmbEdgesSet.begin(),
                                    allEmbEdgesSet.end());
-  std::vector<GEdge *> oldEmbEdges = gr->embeddedEdges();
+  std::vector<GCurve *> oldEmbEdges = gr->embeddedEdges();
   gr->embeddedEdges() = allEmbEdges;
 
-  std::set<GVertex *> allEmbVerticesSet;
+  std::set<GPoint *> allEmbVerticesSet;
   for(std::size_t i = 0; i < regions.size(); i++) {
-    std::vector<GVertex *> const &e = regions[i]->embeddedVertices();
+    std::vector<GPoint *> const &e = regions[i]->embeddedVertices();
     allEmbVerticesSet.insert(e.begin(), e.end());
   }
-  std::vector<GVertex *> allEmbVertices(allEmbVerticesSet.begin(),
+  std::vector<GPoint *> allEmbVertices(allEmbVerticesSet.begin(),
                                         allEmbVerticesSet.end());
-  std::vector<GVertex *> oldEmbVertices = gr->embeddedVertices();
+  std::vector<GPoint *> oldEmbVertices = gr->embeddedVertices();
   gr->embeddedVertices() = allEmbVertices;
 
   splitQuadRecovery sqr;
@@ -163,15 +163,15 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
 
   // restore set of faces and embedded edges/vertices
   if(CTX::instance()->mesh.compoundClassify == 0) {
-    std::set<GFace *, GEntityPtrLessThan> comp;
+    std::set<GSurface *, GEntityPtrLessThan> comp;
     for(std::size_t i = 0; i < faces.size(); i++) {
-      GFace *gf = faces[i];
+      GSurface *gf = faces[i];
       if(!gf->compoundSurface)
         comp.insert(gf);
       else if(gf->compoundSurface)
         comp.insert(gf->compoundSurface);
     }
-    std::vector<GFace *> lcomp(comp.begin(), comp.end());
+    std::vector<GSurface *> lcomp(comp.begin(), comp.end());
     gr->set(lcomp);
   }
   else {
@@ -202,18 +202,18 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
     }
 
     // test:
-    // bool createBoundaryLayerOneLayer(GRegion *gr, std::vector<GFace *> &
+    // bool createBoundaryLayerOneLayer(GVolume *gr, std::vector<GSurface *> &
     // bls); createBoundaryLayerOneLayer(gr, allFaces);
   }
 }
 
-void deMeshGRegion::operator()(GRegion *gr)
+void deMeshGRegion::operator()(GVolume *gr)
 {
   if(gr->isFullyDiscrete()) return;
   gr->deleteMesh();
 }
 
-void meshGRegion::operator()(GRegion *gr)
+void meshGRegion::operator()(GVolume *gr)
 {
   gr->model()->setCurrentMeshEntity(gr);
 
@@ -239,7 +239,7 @@ void meshGRegion::operator()(GRegion *gr)
   }
 }
 
-void untangleMeshGRegion::operator()(GRegion *gr, bool always)
+void untangleMeshGRegion::operator()(GVolume *gr, bool always)
 {
   gr->model()->setCurrentMeshEntity(gr);
 
@@ -255,7 +255,7 @@ void untangleMeshGRegion::operator()(GRegion *gr, bool always)
 }
 
 
-void optimizeMeshGRegion::operator()(GRegion *gr, bool always)
+void optimizeMeshGRegion::operator()(GVolume *gr, bool always)
 {
   gr->model()->setCurrentMeshEntity(gr);
 
@@ -275,10 +275,10 @@ bool buildFaceSearchStructure(GModel *model, fs_cont &search,
 {
   search.clear();
 
-  std::set<GFace *> faces_to_consider;
+  std::set<GSurface *> faces_to_consider;
   auto rit = model->firstRegion();
   while(rit != model->lastRegion()) {
-    std::vector<GFace *> _faces = (*rit)->faces();
+    std::vector<GSurface *> _faces = (*rit)->faces();
     faces_to_consider.insert(_faces.begin(), _faces.end());
     rit++;
   }
@@ -301,18 +301,18 @@ bool buildEdgeSearchStructure(GModel *model, es_cont &search)
   auto eit = model->firstEdge();
   while(eit != model->lastEdge()) {
     for(std::size_t i = 0; i < (*eit)->lines.size(); i++) {
-      MVertex *p1 = (*eit)->lines[i]->getVertex(0);
-      MVertex *p2 = (*eit)->lines[i]->getVertex(1);
-      MVertex *p = std::min(p1, p2);
-      search.insert(std::pair<MVertex *, std::pair<MLine *, GEdge *> >(
-        p, std::pair<MLine *, GEdge *>((*eit)->lines[i], *eit)));
+      MNode *p1 = (*eit)->lines[i]->getVertex(0);
+      MNode *p2 = (*eit)->lines[i]->getVertex(1);
+      MNode *p = std::min(p1, p2);
+      search.insert(std::pair<MNode *, std::pair<MLine *, GCurve *> >(
+        p, std::pair<MLine *, GCurve *>((*eit)->lines[i], *eit)));
     }
     ++eit;
   }
   return true;
 }
 
-GFace *findInFaceSearchStructure(MVertex *p1, MVertex *p2, MVertex *p3,
+GSurface *findInFaceSearchStructure(MNode *p1, MNode *p2, MNode *p3,
                                  const fs_cont &search)
 {
   MFace ff(p1, p2, p3);
@@ -321,21 +321,21 @@ GFace *findInFaceSearchStructure(MVertex *p1, MVertex *p2, MVertex *p3,
   return it->second;
 }
 
-GFace *findInFaceSearchStructure(const MFace &ff, const fs_cont &search)
+GSurface *findInFaceSearchStructure(const MFace &ff, const fs_cont &search)
 {
   auto it = search.find(ff);
   if(it == search.end()) return nullptr;
   return it->second;
 }
 
-GEdge *findInEdgeSearchStructure(MVertex *p1, MVertex *p2,
+GCurve *findInEdgeSearchStructure(MNode *p1, MNode *p2,
                                  const es_cont &search)
 {
-  MVertex *p = std::min(p1, p2);
+  MNode *p = std::min(p1, p2);
 
   for(auto it = search.lower_bound(p); it != search.upper_bound(p); ++it) {
     MLine *l = it->second.first;
-    GEdge *ge = it->second.second;
+    GCurve *ge = it->second.second;
     if((l->getVertex(0) == p1 || l->getVertex(0) == p2) &&
        (l->getVertex(1) == p1 || l->getVertex(1) == p2))
       return ge;

@@ -8,16 +8,16 @@
 
 #include <vector>
 
-class GRegion;
-class GFace;
+class GVolume;
+class GSurface;
 class MElement;
 
-void RelocateVertices(GRegion *region, int niter, double tol = 1.e-2);
-void RelocateVertices(std::vector<GRegion *> &regions, int niter,
+void RelocateVertices(GVolume *region, int niter, double tol = 1.e-2);
+void RelocateVertices(std::vector<GVolume *> &regions, int niter,
                       double tol = 1.e-2);
-void RelocateVertices(GFace *, int niter, double tol = 1.e-6);
-void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol = 1.e-2);
-void RelocateVerticesOfPyramids(std::vector<GRegion *> &regions, int niter,
+void RelocateVertices(GSurface *, int niter, double tol = 1.e-6);
+void RelocateVerticesOfPyramids(GVolume *region, int niter, double tol = 1.e-2);
+void RelocateVerticesOfPyramids(std::vector<GVolume *> &regions, int niter,
                                 double tol = 1.e-2);
 
 #endif

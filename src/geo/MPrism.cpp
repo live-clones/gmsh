@@ -19,8 +19,8 @@ std::map<int, IndicesReversed> MPrismN::_order2indicesReversedPri;
 void MPrism::getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                         SVector3 *n)
 {
-  MVertex *v0 = _v[edges_prism(num, 0)];
-  MVertex *v1 = _v[edges_prism(num, 1)];
+  MNode *v0 = _v[edges_prism(num, 0)];
+  MNode *v1 = _v[edges_prism(num, 1)];
   x[0] = v0->x();
   y[0] = v0->y();
   z[0] = v0->z();
@@ -480,8 +480,8 @@ int MPrismN::getNumFacesRep(bool curved)
 }
 
 static void _addEdgeNodes(int num, bool reverse, int order,
-                          const std::vector<MVertex *> &vs, int &ind,
-                          std::vector<MVertex *> &v)
+                          const std::vector<MNode *> &vs, int &ind,
+                          std::vector<MNode *> &v)
 {
   const int nNode = order - 1, startNode = num * nNode,
             endNode = startNode + nNode - 1;
@@ -492,8 +492,8 @@ static void _addEdgeNodes(int num, bool reverse, int order,
     for(int i = startNode; i <= endNode; i++, ind++) v[ind] = vs[i];
 }
 
-static void _addFaceNodes(int num, int order, const std::vector<MVertex *> &vs,
-                          int &ind, std::vector<MVertex *> &v)
+static void _addFaceNodes(int num, int order, const std::vector<MNode *> &vs,
+                          int &ind, std::vector<MNode *> &v)
 {
   const int nNodeEd = order - 1, nNodeTri = (order - 2) * (order - 1) / 2;
 
@@ -512,7 +512,7 @@ static void _addFaceNodes(int num, int order, const std::vector<MVertex *> &vs,
 }
 
 // To be tested
-void MPrismN::getFaceVertices(const int num, std::vector<MVertex *> &v) const
+void MPrismN::getFaceVertices(const int num, std::vector<MNode *> &v) const
 {
   // FIXME serendipity case
   static const int edge[5][4] = {
@@ -587,7 +587,7 @@ void MPrismN::reverse()
   IndicesReversed &indices = it->second;
 
   // copy vertices
-  std::vector<MVertex *> oldv(6 + _vs.size());
+  std::vector<MNode *> oldv(6 + _vs.size());
   std::copy(_v, _v + 6, oldv.begin());
   std::copy(_vs.begin(), _vs.end(), oldv.begin() + 6);
 

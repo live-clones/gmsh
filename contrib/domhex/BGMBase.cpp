@@ -7,8 +7,8 @@
 
 #include <iostream>
 #include "OS.h"
-#include "GPoint.h"
-#include "GFace.h"
+#include "GVertex.h"
+#include "GSurface.h"
 #include "GmshDefines.h"
 #include "MElementOctree.h"
 
@@ -45,13 +45,13 @@ void BGMBase::export_scalar(const std::string &filename,
     }
 
     fprintf(f, "%s(", s);
-    const MVertex *v;
+    const MNode *v;
     std::vector<double> values(nvertex);
     for(int iv = 0; iv < nvertex; iv++) {
       v = elem->getVertex(iv);
       values[iv] = get_nodal_value(v, _whatToPrint);
-      // GPoint p = gf->point(SPoint2(v->x(),v->y()));
-      GPoint p = get_GPoint_from_MVertex(v);
+      // GVertex p = gf->point(SPoint2(v->x(),v->y()));
+      GVertex p = get_GPoint_from_MVertex(v);
       fprintf(f, "%g,%g,%g", p.x(), p.y(), p.z());
       if(iv != nvertex - 1)
         fprintf(f, ",");
@@ -103,13 +103,13 @@ void BGMBase::export_vector(const std::string &filename,
     }
 
     fprintf(f, "%s(", s);
-    const MVertex *v;
+    const MNode *v;
     std::vector<double> values(nvertex * 3);
     for(int iv = 0; iv < nvertex; iv++) {
       v = elem->getVertex(iv);
       std::vector<double> temp = get_nodal_value(v, _whatToPrint);
       for(int j = 0; j < 3; j++) values[iv * 3 + j] = temp[j];
-      GPoint p = get_GPoint_from_MVertex(v);
+      GVertex p = get_GPoint_from_MVertex(v);
       fprintf(f, "%g,%g,%g", p.x(), p.y(), p.z());
       if(iv != nvertex - 1)
         fprintf(f, ",");
@@ -145,7 +145,7 @@ void BGMBase::export_tensor_as_vectors(
   const char *s = "VP";
 
   for(; it != _whatToPrint.end(); it++) { // for all vertices
-    GPoint p = get_GPoint_from_MVertex(it->first);
+    GVertex p = get_GPoint_from_MVertex(it->first);
     for(int i = 0; i < 3; i++) {
       fprintf(f, "%s(%g,%g,%g){%g,%g,%g};\n", s, p.x(), p.y(), p.z(),
               (it->second)(0, i), (it->second)(1, i), (it->second)(2, i));
@@ -219,10 +219,10 @@ double BGMBase::size(double u, double v, double w)
   return get_field_value(u, v, w, sizeField);
 }
 
-double BGMBase::size(const MVertex *v) { return get_nodal_value(v, sizeField); }
+double BGMBase::size(const MNode *v) { return get_nodal_value(v, sizeField); }
 
 std::vector<double>
-BGMBase::get_nodal_value(const MVertex *v, const VectorStorageType &data) const
+BGMBase::get_nodal_value(const MNode *v, const VectorStorageType &data) const
 {
   VectorStorageType::const_iterator itfind = data.find(v);
   if(itfind == data.end()) {
@@ -232,7 +232,7 @@ BGMBase::get_nodal_value(const MVertex *v, const VectorStorageType &data) const
   return itfind->second;
 }
 
-double BGMBase::get_nodal_value(const MVertex *v,
+double BGMBase::get_nodal_value(const MNode *v,
                                 const DoubleStorageType &data) const
 {
   DoubleStorageType::const_iterator itfind = data.find(v);
@@ -251,7 +251,7 @@ BGMBase::get_nodal_values(const MElement *e,
 
   for(std::size_t i = 0; i < e->getNumVertices(); i++) {
     VectorStorageType::const_iterator itfind =
-      data.find(const_cast<MVertex *>(e->getVertex(i)));
+      data.find(const_cast<MNode *>(e->getVertex(i)));
     for(int j = 0; j < 3; j++) res[i].push_back((itfind->second)[j]);
   }
   return res;
@@ -264,7 +264,7 @@ BGMBase::get_nodal_values(const MElement *element,
   std::vector<double> res(element->getNumVertices(), 0.);
 
   for(std::size_t i = 0; i < element->getNumVertices(); i++)
-    // res[i] = (data.find(const_cast<MVertex*>(e->getVertex(i))))->second;
+    // res[i] = (data.find(const_cast<MNode*>(e->getVertex(i))))->second;
     res[i] = data.find(element->getVertex(i))->second;
   return res;
 }
@@ -281,13 +281,13 @@ std::vector<double> BGMBase::get_element_uvw_from_xyz(const MElement *e,
   return res;
 }
 
-std::set<MVertex *> BGMBase::get_vertices_of_maximum_dim(int dim)
+std::set<MNode *> BGMBase::get_vertices_of_maximum_dim(int dim)
 {
-  std::set<MVertex *> bnd_vertices;
+  std::set<MNode *> bnd_vertices;
   for(unsigned int i = 0; i < gf->getNumMeshElements(); i++) {
     MElement *element = gf->getMeshElement(i);
     for(std::size_t j = 0; j < element->getNumVertices(); j++) {
-      MVertex *vertex = element->getVertex(j);
+      MNode *vertex = element->getVertex(j);
       if(vertex->onWhat()->dim() <= dim) bnd_vertices.insert(vertex);
     }
   }

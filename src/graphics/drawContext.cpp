@@ -915,10 +915,10 @@ static MElement *getElement(GEntity *e, int va_type, int index)
 }
 
 bool drawContext::select(int type, bool multiple, bool mesh, bool post, int x,
-                         int y, int w, int h, std::vector<GVertex *> &vertices,
-                         std::vector<GEdge *> &edges,
-                         std::vector<GFace *> &faces,
-                         std::vector<GRegion *> &regions,
+                         int y, int w, int h, std::vector<GPoint *> &vertices,
+                         std::vector<GCurve *> &edges,
+                         std::vector<GSurface *> &faces,
+                         std::vector<GVolume *> &regions,
                          std::vector<MElement *> &elements,
                          std::vector<SPoint2> &points,
                          std::vector<PView *> &views)
@@ -1047,7 +1047,7 @@ bool drawContext::select(int type, bool multiple, bool mesh, bool post, int x,
        (type == ENT_VOLUME && hits[i].type == 3)) {
       switch(hits[i].type) {
       case 0: {
-        GVertex *v = m->getVertexByTag(hits[i].ient);
+        GPoint *v = m->getVertexByTag(hits[i].ient);
         if(!v) {
           Msg::Error("Problem in point selection processing");
           return false;
@@ -1056,7 +1056,7 @@ bool drawContext::select(int type, bool multiple, bool mesh, bool post, int x,
         if(!multiple) return true;
       } break;
       case 1: {
-        GEdge *e = m->getEdgeByTag(hits[i].ient);
+        GCurve *e = m->getEdgeByTag(hits[i].ient);
         if(!e) {
           Msg::Error("Problem in line selection processing");
           return false;
@@ -1069,7 +1069,7 @@ bool drawContext::select(int type, bool multiple, bool mesh, bool post, int x,
         if(!multiple) return true;
       } break;
       case 2: {
-        GFace *f = m->getFaceByTag(hits[i].ient);
+        GSurface *f = m->getFaceByTag(hits[i].ient);
         if(!f) {
           Msg::Error("Problem in surface selection processing");
           return false;
@@ -1082,7 +1082,7 @@ bool drawContext::select(int type, bool multiple, bool mesh, bool post, int x,
         if(!multiple) return true;
       } break;
       case 3: {
-        GRegion *r = m->getRegionByTag(hits[i].ient);
+        GVolume *r = m->getRegionByTag(hits[i].ient);
         if(!r) {
           Msg::Error("Problem in volume selection processing");
           return false;

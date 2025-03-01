@@ -377,7 +377,7 @@ bool MeshOptPatchDef::testElInDist(const SPoint3 &P, double limDist,
   if(el->getDim() == 2) { // 2D?
     for(int iEd = 0; iEd < el->getNumEdges();
         iEd++) { // Loop over edges of element
-      std::vector<MVertex *> edgeVert;
+      std::vector<MNode *> edgeVert;
       el->getEdgeVertices(iEd, edgeVert);
       const SPoint3 A = edgeVert[0]->point();
       const SPoint3 B = edgeVert[1]->point();
@@ -387,7 +387,7 @@ bool MeshOptPatchDef::testElInDist(const SPoint3 &P, double limDist,
   else { // 3D
     for(int iFace = 0; iFace < el->getNumFaces();
         iFace++) { // Loop over faces of element
-      std::vector<MVertex *> faceVert;
+      std::vector<MNode *> faceVert;
       el->getFaceVertices(iFace, faceVert);
       const SPoint3 A = faceVert[0]->point();
       const SPoint3 B = faceVert[1]->point();

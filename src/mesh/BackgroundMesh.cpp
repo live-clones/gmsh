@@ -7,9 +7,9 @@
 #include "BackgroundMesh.h"
 #include "Numeric.h"
 #include "Context.h"
-#include "GVertex.h"
-#include "GEdge.h"
-#include "GFace.h"
+#include "GPoint.h"
+#include "GCurve.h"
+#include "GSurface.h"
 #include "GModel.h"
 #include "OS.h"
 #include "Field.h"
@@ -18,7 +18,7 @@
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
-#include "MVertex.h"
+#include "MNode.h"
 
 #if defined(HAVE_SOLVER)
 #include "dofManager.h"
@@ -37,7 +37,7 @@ static const int MAX_THREADS = 256;
 std::vector<backgroundMesh *> backgroundMesh::_current =
   std::vector<backgroundMesh *>(MAX_THREADS, (backgroundMesh *)nullptr);
 
-void backgroundMesh::set(GFace *gf)
+void backgroundMesh::set(GSurface *gf)
 {
   int t = Msg::GetThreadNum();
   if(t >= MAX_THREADS) {
@@ -49,7 +49,7 @@ void backgroundMesh::set(GFace *gf)
   _current[t] = new backgroundMesh(gf);
 }
 
-void backgroundMesh::setCrossFieldsByDistance(GFace *gf)
+void backgroundMesh::setCrossFieldsByDistance(GSurface *gf)
 {
   int t = Msg::GetThreadNum();
   if(t >= MAX_THREADS) return;
@@ -72,7 +72,7 @@ backgroundMesh *backgroundMesh::current()
   return _current[t];
 }
 
-backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
+backgroundMesh::backgroundMesh(GSurface *_gf, bool cfd)
 #if defined(HAVE_ANN)
   : _octree(nullptr), uv_kdtree(nullptr), nodes(nullptr), angle_nodes(nullptr),
     angle_kdtree(nullptr)
@@ -91,15 +91,15 @@ backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
   std::set<SPoint2> myBCNodes;
   for(std::size_t i = 0; i < _gf->triangles.size(); i++) {
     MTriangle *e = _gf->triangles[i];
-    MVertex *news[3];
+    MNode *news[3];
     for(int j = 0; j < 3; j++) {
-      MVertex *v = e->getVertex(j);
+      MNode *v = e->getVertex(j);
       auto it = _3Dto2D.find(v);
-      MVertex *newv = nullptr;
+      MNode *newv = nullptr;
       if(it == _3Dto2D.end()) {
         SPoint2 p;
         reparamMeshVertexOnFace(v, _gf, p);
-        newv = new MVertex(p.x(), p.y(), 0.0);
+        newv = new MNode(p.x(), p.y(), 0.0);
         _vertices.push_back(newv);
         _3Dto2D[v] = newv;
         _2Dto3D[newv] = v;
@@ -166,8 +166,8 @@ backgroundMesh::~backgroundMesh()
 #endif
 }
 
-static void propagateValuesOnFace(GFace *_gf,
-                                  std::map<MVertex *, double> &dirichlet,
+static void propagateValuesOnFace(GSurface *_gf,
+                                  std::map<MNode *, double> &dirichlet,
                                   simpleFunction<double> *ONE,
                                   bool in_parametric_plane = false)
 {
@@ -189,13 +189,13 @@ static void propagateValuesOnFace(GFace *_gf,
   }
 
   // Number vertices
-  std::set<MVertex *> vs;
+  std::set<MNode *> vs;
   for(std::size_t k = 0; k < _gf->triangles.size(); k++)
     for(int j = 0; j < 3; j++) vs.insert(_gf->triangles[k]->getVertex(j));
   for(std::size_t k = 0; k < _gf->quadrangles.size(); k++)
     for(int j = 0; j < 4; j++) vs.insert(_gf->quadrangles[k]->getVertex(j));
 
-  std::map<MVertex *, SPoint3> theMap;
+  std::map<MNode *, SPoint3> theMap;
   if(in_parametric_plane) {
     for(auto it = vs.begin(); it != vs.end(); ++it) {
       SPoint2 p;
@@ -234,23 +234,23 @@ static void propagateValuesOnFace(GFace *_gf,
 #endif
 }
 
-void backgroundMesh::propagate1dMesh(GFace *_gf)
+void backgroundMesh::propagate1dMesh(GSurface *_gf)
 {
-  std::vector<GEdge *> const &e = _gf->edges();
+  std::vector<GCurve *> const &e = _gf->edges();
   auto it = e.begin();
-  std::map<MVertex *, double> sizes;
+  std::map<MNode *, double> sizes;
 
   for(; it != e.end(); ++it) {
     if(!(*it)->isSeam(_gf)) {
       for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
-        MVertex *v1 = (*it)->lines[i]->getVertex(0);
-        MVertex *v2 = (*it)->lines[i]->getVertex(1);
+        MNode *v1 = (*it)->lines[i]->getVertex(0);
+        MNode *v2 = (*it)->lines[i]->getVertex(1);
         if(v1 != v2) {
           double d = sqrt((v1->x() - v2->x()) * (v1->x() - v2->x()) +
                           (v1->y() - v2->y()) * (v1->y() - v2->y()) +
                           (v1->z() - v2->z()) * (v1->z() - v2->z()));
           for(int k = 0; k < 2; k++) {
-            MVertex *v = (*it)->lines[i]->getVertex(k);
+            MNode *v = (*it)->lines[i]->getVertex(k);
             auto itv = sizes.find(v);
             if(itv == sizes.end())
               sizes[v] = log(d);
@@ -267,13 +267,13 @@ void backgroundMesh::propagate1dMesh(GFace *_gf)
 
   auto itv2 = _2Dto3D.begin();
   for(; itv2 != _2Dto3D.end(); ++itv2) {
-    MVertex *v_2D = itv2->first;
-    MVertex *v_3D = itv2->second;
+    MNode *v_2D = itv2->first;
+    MNode *v_3D = itv2->second;
     _sizes[v_2D] = exp(sizes[v_3D]);
   }
 }
 
-crossField2d::crossField2d(MVertex *v, GEdge *ge)
+crossField2d::crossField2d(MNode *v, GCurve *ge)
 {
   double p;
   bool success = reparamMeshVertexOnEdge(v, ge, p);
@@ -288,17 +288,17 @@ crossField2d::crossField2d(MVertex *v, GEdge *ge)
   crossField2d::normalizeAngle(_angle);
 }
 
-void backgroundMesh::propagateCrossFieldByDistance(GFace *_gf)
+void backgroundMesh::propagateCrossFieldByDistance(GSurface *_gf)
 {
-  std::vector<GEdge *> const &e = _gf->edges();
+  std::vector<GCurve *> const &e = _gf->edges();
   auto it = e.begin();
-  std::map<MVertex *, double> _cosines4, _sines4;
-  std::map<MVertex *, SPoint2> _param;
+  std::map<MNode *, double> _cosines4, _sines4;
+  std::map<MNode *, SPoint2> _param;
 
   for(; it != e.end(); ++it) {
     if(!(*it)->isSeam(_gf)) {
       for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
-        MVertex *v[2];
+        MNode *v[2];
         v[0] = (*it)->lines[i]->getVertex(0);
         v[1] = (*it)->lines[i]->getVertex(1);
         SPoint2 p1, p2;
@@ -339,7 +339,7 @@ void backgroundMesh::propagateCrossFieldByDistance(GFace *_gf)
   _sin.clear();
   _cos.clear();
   while(itp != _cosines4.end()) {
-    MVertex *v = itp->first;
+    MNode *v = itp->first;
     double c = itp->second;
     SPoint2 pt = _param[v];
     double s = _sines4[v];
@@ -369,9 +369,9 @@ inline double myAngle(const SVector3 &a, const SVector3 &b, const SVector3 &d)
 // L --> domain size
 double backgroundMesh::getSmoothness(MElement *e)
 {
-  MVertex *v0 = _3Dto2D[e->getVertex(0)];
-  MVertex *v1 = _3Dto2D[e->getVertex(1)];
-  MVertex *v2 = _3Dto2D[e->getVertex(2)];
+  MNode *v0 = _3Dto2D[e->getVertex(0)];
+  MNode *v1 = _3Dto2D[e->getVertex(1)];
+  MNode *v2 = _3Dto2D[e->getVertex(2)];
   auto i0 = _angles.find(v0);
   auto i1 = _angles.find(v1);
   auto i2 = _angles.find(v2);
@@ -391,9 +391,9 @@ double backgroundMesh::getSmoothness(double u, double v, double w)
   if(!_octree) return 0.;
   MElement *e = _octree->find(u, v, w, 2, true);
   if(!e) return -1.0;
-  MVertex *v0 = e->getVertex(0);
-  MVertex *v1 = e->getVertex(1);
-  MVertex *v2 = e->getVertex(2);
+  MNode *v0 = e->getVertex(0);
+  MNode *v1 = e->getVertex(1);
+  MNode *v2 = e->getVertex(2);
   auto i0 = _angles.find(v0);
   auto i1 = _angles.find(v1);
   auto i2 = _angles.find(v2);
@@ -408,7 +408,7 @@ double backgroundMesh::getSmoothness(double u, double v, double w)
   return (gradcos /*+ gradsin*/) * h;
 }
 
-void backgroundMesh::propagateCrossField(GFace *_gf)
+void backgroundMesh::propagateCrossField(GSurface *_gf)
 {
   propagateCrossFieldHJ(_gf);
   // solve the non liear problem
@@ -439,22 +439,22 @@ void backgroundMesh::propagateCrossField(GFace *_gf)
 #endif
 }
 
-void backgroundMesh::propagateCrossFieldHJ(GFace *_gf)
+void backgroundMesh::propagateCrossFieldHJ(GSurface *_gf)
 {
   simpleFunction<double> ONE(1.0);
   propagateCrossField(_gf, &ONE);
 }
 
-void backgroundMesh::propagateCrossField(GFace *_gf,
+void backgroundMesh::propagateCrossField(GSurface *_gf,
                                          simpleFunction<double> *ONE)
 {
-  std::map<MVertex *, double> _cosines4, _sines4;
-  std::vector<GEdge *> const &e = _gf->edges();
+  std::map<MNode *, double> _cosines4, _sines4;
+  std::vector<GCurve *> const &e = _gf->edges();
   auto it = e.begin();
   for(; it != e.end(); ++it) {
     if(!(*it)->isSeam(_gf)) {
       for(std::size_t i = 0; i < (*it)->lines.size(); i++) {
-        MVertex *v[2];
+        MNode *v[2];
         v[0] = (*it)->lines[i]->getVertex(0);
         v[1] = (*it)->lines[i]->getVertex(1);
         SPoint2 p1, p2;
@@ -494,20 +494,20 @@ void backgroundMesh::propagateCrossField(GFace *_gf,
 
   auto itv2 = _2Dto3D.begin();
   for(; itv2 != _2Dto3D.end(); ++itv2) {
-    MVertex *v_2D = itv2->first;
-    MVertex *v_3D = itv2->second;
+    MNode *v_2D = itv2->first;
+    MNode *v_3D = itv2->second;
     double angle = atan2(_sines4[v_3D], _cosines4[v_3D]) / 4.0;
     crossField2d::normalizeAngle(angle);
     _angles[v_2D] = angle;
   }
 }
 
-void backgroundMesh::updateSizes(GFace *_gf)
+void backgroundMesh::updateSizes(GSurface *_gf)
 {
   auto itv = _sizes.begin();
   for(; itv != _sizes.end(); ++itv) {
     SPoint2 p;
-    MVertex *v = _2Dto3D[itv->first];
+    MNode *v = _2Dto3D[itv->first];
     double lc;
     if(v->onWhat()->dim() == 0) {
       lc = BGM_MeshSize(v->onWhat(), 0, 0, v->x(), v->y(), v->z());
@@ -538,10 +538,10 @@ void backgroundMesh::updateSizes(GFace *_gf)
   for(int i = 0; i < 3; i++) {
     auto it = edges.begin();
     for(; it != edges.end(); ++it) {
-      MVertex *v0 = it->getVertex(0);
-      MVertex *v1 = it->getVertex(1);
-      MVertex *V0 = _2Dto3D[v0];
-      MVertex *V1 = _2Dto3D[v1];
+      MNode *v0 = it->getVertex(0);
+      MNode *v1 = it->getVertex(1);
+      MNode *V0 = _2Dto3D[v0];
+      MNode *V1 = _2Dto3D[v1];
       auto s0 = _sizes.find(V0);
       auto s1 = _sizes.find(V1);
       if(s0 == _sizes.end() || s1 == _sizes.end()) {
@@ -669,8 +669,8 @@ double backgroundMesh::getAngle(double u, double v, double w) const
   return angle;
 }
 
-void backgroundMesh::print(const std::string &filename, GFace *gf,
-                           const std::map<MVertex *, double> &_whatToPrint,
+void backgroundMesh::print(const std::string &filename, GSurface *gf,
+                           const std::map<MNode *, double> &_whatToPrint,
                            int smooth)
 {
   FILE *f = Fopen(filename.c_str(), "w");
@@ -681,9 +681,9 @@ void backgroundMesh::print(const std::string &filename, GFace *gf,
   fprintf(f, "View \"Background Mesh\"{\n");
   if(smooth) {
     for(std::size_t i = 0; i < gf->triangles.size(); i++) {
-      MVertex *v1 = gf->triangles[i]->getVertex(0);
-      MVertex *v2 = gf->triangles[i]->getVertex(1);
-      MVertex *v3 = gf->triangles[i]->getVertex(2);
+      MNode *v1 = gf->triangles[i]->getVertex(0);
+      MNode *v2 = gf->triangles[i]->getVertex(1);
+      MNode *v3 = gf->triangles[i]->getVertex(2);
       double x = getSmoothness(gf->triangles[i]);
       fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n", v1->x(),
               v1->y(), v1->z(), v2->x(), v2->y(), v2->z(), v3->x(), v3->y(),
@@ -692,9 +692,9 @@ void backgroundMesh::print(const std::string &filename, GFace *gf,
   }
   else {
     for(std::size_t i = 0; i < _triangles.size(); i++) {
-      MVertex *v1 = _triangles[i]->getVertex(0);
-      MVertex *v2 = _triangles[i]->getVertex(1);
-      MVertex *v3 = _triangles[i]->getVertex(2);
+      MNode *v1 = _triangles[i]->getVertex(0);
+      MNode *v2 = _triangles[i]->getVertex(1);
+      MNode *v3 = _triangles[i]->getVertex(2);
       auto itv1 = _whatToPrint.find(v1);
       auto itv2 = _whatToPrint.find(v2);
       auto itv3 = _whatToPrint.find(v3);
@@ -704,9 +704,9 @@ void backgroundMesh::print(const std::string &filename, GFace *gf,
                 v3->z(), itv1->second, itv2->second, itv3->second);
       }
       else {
-        GPoint p1 = gf->point(SPoint2(v1->x(), v1->y()));
-        GPoint p2 = gf->point(SPoint2(v2->x(), v2->y()));
-        GPoint p3 = gf->point(SPoint2(v3->x(), v3->y()));
+        GVertex p1 = gf->point(SPoint2(v1->x(), v1->y()));
+        GVertex p2 = gf->point(SPoint2(v2->x(), v2->y()));
+        GVertex p3 = gf->point(SPoint2(v3->x(), v3->y()));
         fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%g,%g,%g};\n", p1.x(),
                 p1.y(), p1.z(), p2.x(), p2.y(), p2.z(), p3.x(), p3.y(), p3.z(),
                 itv1->second, itv2->second, itv3->second);
@@ -751,7 +751,7 @@ GlobalBackgroundMesh &getBackgroundMesh(const std::string &name)
 GlobalBackgroundMesh::~GlobalBackgroundMesh()
 {
   Msg::Debug("GlobalBackgroundMesh destructor call");
-  for(MVertex *v : mesh_vertices)
+  for(MNode *v : mesh_vertices)
     if(v) {
       delete v;
       v = nullptr;
@@ -769,7 +769,7 @@ int GlobalBackgroundMesh::importGModelMeshes(GModel *_gm,
 
   if(overwriteExisting && mesh_vertices.size() > 0) { /* Clear mesh */
     Msg::Debug("- delete existing mesh (for overwrite)");
-    for(MVertex *v : mesh_vertices)
+    for(MNode *v : mesh_vertices)
       if(v) {
         delete v;
         v = nullptr;
@@ -780,36 +780,36 @@ int GlobalBackgroundMesh::importGModelMeshes(GModel *_gm,
     Msg::Debug("- import mesh from GModel");
   }
 
-  std::unordered_map<MVertex *, MVertex *> old2new;
+  std::unordered_map<MNode *, MNode *> old2new;
 
-  std::set<GVertex *, GEntityPtrLessThan> vertices = gm->getVertices();
-  std::set<GEdge *, GEntityPtrLessThan> edges = gm->getEdges();
-  for(GFace *gf : gm->getFaces()) {
-    for(GVertex *e : gf->embeddedVertices()) vertices.insert(e);
-    for(GEdge *e : gf->embeddedEdges()) edges.insert(e);
+  std::set<GPoint *, GEntityPtrLessThan> vertices = gm->getVertices();
+  std::set<GCurve *, GEntityPtrLessThan> edges = gm->getEdges();
+  for(GSurface *gf : gm->getFaces()) {
+    for(GPoint *e : gf->embeddedVertices()) vertices.insert(e);
+    for(GCurve *e : gf->embeddedEdges()) edges.insert(e);
   }
 
-  /* MVertex from GVertex */
+  /* MNode from GPoint */
   mesh_vertices.reserve(mesh_vertices.size() + vertices.size());
-  for(GVertex *gv : vertices) {
+  for(GPoint *gv : vertices) {
     for(size_t i = 0; i < gv->mesh_vertices.size(); ++i) {
-      MVertex *v = gv->mesh_vertices[i];
+      MNode *v = gv->mesh_vertices[i];
       auto it = old2new.find(v);
       if(it == old2new.end()) {
-        mesh_vertices.push_back(new MVertex(v->x(), v->y(), v->z(), gv));
+        mesh_vertices.push_back(new MNode(v->x(), v->y(), v->z(), gv));
         old2new[v] = mesh_vertices.back();
       }
     }
   }
 
-  /* MLine from GEdge */
+  /* MLine from GCurve */
   size_t nlines = 0;
-  for(GEdge *ge : edges) {
+  for(GCurve *ge : edges) {
     edgeBackgroundMeshes[ge] = BackgroundMeshGEdge();
     BackgroundMeshGEdge &bm = edgeBackgroundMeshes[ge];
     bm.ge = ge;
     for(size_t i = 0; i < ge->mesh_vertices.size(); ++i) {
-      MVertex *v = ge->mesh_vertices[i];
+      MNode *v = ge->mesh_vertices[i];
       double t = 0.;
       v->setParameter(0, t);
       auto it = old2new.find(v);
@@ -821,8 +821,8 @@ int GlobalBackgroundMesh::importGModelMeshes(GModel *_gm,
     bm.lines.reserve(ge->lines.size());
     for(size_t i = 0; i < ge->lines.size(); ++i) {
       MElement *elt = ge->lines[i];
-      MVertex *v0 = old2new[elt->getVertex(0)];
-      MVertex *v1 = old2new[elt->getVertex(1)];
+      MNode *v0 = old2new[elt->getVertex(0)];
+      MNode *v1 = old2new[elt->getVertex(1)];
       if(v0 == NULL || v1 == NULL) {
         Msg::Error("GlobalBackgroundMesh: failed to import mesh (1)");
         // Note: some vertex are stored outside the GModel ?
@@ -833,15 +833,15 @@ int GlobalBackgroundMesh::importGModelMeshes(GModel *_gm,
     }
   }
 
-  /* MTriangle from GFace */
+  /* MTriangle from GSurface */
   size_t ntris = 0;
-  for(GFace *gf : gm->getFaces()) {
+  for(GSurface *gf : gm->getFaces()) {
     faceBackgroundMeshes[gf] = BackgroundMeshGFace();
     BackgroundMeshGFace &bm = faceBackgroundMeshes[gf];
     bm.gf = gf;
     /* Vertices */
     for(size_t i = 0; i < gf->mesh_vertices.size(); ++i) {
-      MVertex *v = gf->mesh_vertices[i];
+      MNode *v = gf->mesh_vertices[i];
       auto it = old2new.find(v);
       if(it == old2new.end()) {
         double uv0 = 0.;
@@ -858,9 +858,9 @@ int GlobalBackgroundMesh::importGModelMeshes(GModel *_gm,
     /* Triangles */
     for(size_t i = 0; i < gf->triangles.size(); ++i) {
       MElement *elt = gf->triangles[i];
-      MVertex *v0 = old2new[elt->getVertex(0)];
-      MVertex *v1 = old2new[elt->getVertex(1)];
-      MVertex *v2 = old2new[elt->getVertex(2)];
+      MNode *v0 = old2new[elt->getVertex(0)];
+      MNode *v1 = old2new[elt->getVertex(1)];
+      MNode *v2 = old2new[elt->getVertex(2)];
       if(v0 == NULL || v1 == NULL || v2 == NULL) {
         Msg::Error("GlobalBackgroundMesh: failed to import mesh (2)");
         // Note: some vertex are stored outside the GModel ?
@@ -874,10 +874,10 @@ int GlobalBackgroundMesh::importGModelMeshes(GModel *_gm,
     if(gf->quadrangles.size() > 0) {
       for(size_t i = 0; i < gf->quadrangles.size(); ++i) {
         MElement *elt = gf->quadrangles[i];
-        MVertex *v0 = old2new[elt->getVertex(0)];
-        MVertex *v1 = old2new[elt->getVertex(1)];
-        MVertex *v2 = old2new[elt->getVertex(2)];
-        MVertex *v3 = old2new[elt->getVertex(3)];
+        MNode *v0 = old2new[elt->getVertex(0)];
+        MNode *v1 = old2new[elt->getVertex(1)];
+        MNode *v2 = old2new[elt->getVertex(2)];
+        MNode *v3 = old2new[elt->getVertex(3)];
         if(v0 == NULL || v1 == NULL || v2 == NULL || v3 == NULL) {
           Msg::Error("GlobalBackgroundMesh: failed to import mesh (3)");
           // Note: some vertex are stored outside the GModel ?

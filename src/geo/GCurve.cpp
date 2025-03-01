@@ -10,8 +10,8 @@
 #include "GmshDefines.h"
 #include "GmshMessage.h"
 #include "GModel.h"
-#include "GEdge.h"
-#include "GFace.h"
+#include "GCurve.h"
+#include "GSurface.h"
 #include "MLine.h"
 #include "GaussLegendre1D.h"
 #include "Context.h"
@@ -23,34 +23,34 @@
 #include "meshGEdge.h"
 #endif
 
-GEdge::GEdge(GModel *model, int tag, GVertex *v0, GVertex *v1)
+GCurve::GCurve(GModel *model, int tag, GPoint *v0, GPoint *v1)
   : GEntity(model, tag), _length(0.), _tooSmall(false), _cp(nullptr), _v0(v0),
     _v1(v1), masterOrientation(0), compoundCurve(nullptr)
 {
   if(_v0) _v0->addEdge(this);
   if(_v1 && _v1 != _v0) _v1->addEdge(this);
-  meshStatistics.status = GEdge::PENDING;
-  GEdge::resetMeshAttributes();
+  meshStatistics.status = GCurve::PENDING;
+  GCurve::resetMeshAttributes();
 }
 
-GEdge::GEdge(GModel *model, int tag)
+GCurve::GCurve(GModel *model, int tag)
   : GEntity(model, tag), _length(0.), _tooSmall(false), _cp(nullptr),
     _v0(nullptr), _v1(nullptr), masterOrientation(0), compoundCurve(nullptr)
 {
-  meshStatistics.status = GEdge::PENDING;
-  GEdge::resetMeshAttributes();
+  meshStatistics.status = GCurve::PENDING;
+  GCurve::resetMeshAttributes();
 }
 
-GEdge::~GEdge()
+GCurve::~GCurve()
 {
   if(_v0) _v0->delEdge(this);
   if(_v1 && _v1 != _v0) _v1->delEdge(this);
 
   if(_cp) delete _cp;
-  GEdge::deleteMesh();
+  GCurve::deleteMesh();
 }
 
-void GEdge::deleteMesh()
+void GCurve::deleteMesh()
 {
   for(std::size_t i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
   mesh_vertices.clear();
@@ -61,7 +61,7 @@ void GEdge::deleteMesh()
   model()->destroyMeshCaches();
 }
 
-void GEdge::setMeshMaster(GEdge *ge, int ori)
+void GCurve::setMeshMaster(GCurve *ge, int ori)
 {
   // FIXME: missing computation of affine transformation during setMeshMaster
   GEntity::setMeshMaster(ge);
@@ -85,7 +85,7 @@ void GEdge::setMeshMaster(GEdge *ge, int ori)
   }
 }
 
-void GEdge::setMeshMaster(GEdge *ge, const std::vector<double> &tfo)
+void GCurve::setMeshMaster(GCurve *ge, const std::vector<double> &tfo)
 {
   if(!getBeginVertex() || !ge->getBeginVertex() || !getEndVertex() ||
      !ge->getEndVertex())
@@ -136,46 +136,46 @@ void GEdge::setMeshMaster(GEdge *ge, const std::vector<double> &tfo)
             fwd ? d11.norm() : d10.norm(), tol);
 }
 
-void GEdge::reverse()
+void GCurve::reverse()
 {
-  GVertex *tmp = _v0;
+  GPoint *tmp = _v0;
   _v0 = _v1;
   _v1 = tmp;
   for(auto l : lines) l->reverse();
 }
 
-std::size_t GEdge::getNumMeshElementsByType(const int familyType) const
+std::size_t GCurve::getNumMeshElementsByType(const int familyType) const
 {
   if(familyType == TYPE_LIN) return lines.size();
 
   return 0;
 }
 
-std::size_t GEdge::getNumMeshParentElements()
+std::size_t GCurve::getNumMeshParentElements()
 {
   return std::count_if(lines.begin(), lines.end(), [](const MLine *const line) {
     return line->ownsParent();
   });
 }
 
-void GEdge::getNumMeshElements(unsigned *const c) const
+void GCurve::getNumMeshElements(unsigned *const c) const
 {
   c[0] += lines.size();
 }
 
-MElement *const *GEdge::getStartElementType(int type) const
+MElement *const *GCurve::getStartElementType(int type) const
 {
   if(lines.empty()) return nullptr; // msvc would throw an exception
   return reinterpret_cast<MElement *const *>(&lines[0]);
 }
 
-MElement *GEdge::getMeshElement(std::size_t index) const
+MElement *GCurve::getMeshElement(std::size_t index) const
 {
   if(index < lines.size()) return lines[index];
   return nullptr;
 }
 
-MElement *GEdge::getMeshElementByType(const int familyType,
+MElement *GCurve::getMeshElementByType(const int familyType,
                                       const std::size_t index) const
 {
   if(familyType == TYPE_LIN) return lines[index];
@@ -183,7 +183,7 @@ MElement *GEdge::getMeshElementByType(const int familyType,
   return nullptr;
 }
 
-void GEdge::resetMeshAttributes()
+void GCurve::resetMeshAttributes()
 {
   meshAttributes.method = MESH_UNSTRUCTURED;
   meshAttributes.coeffTransfinite = 0.;
@@ -196,19 +196,19 @@ void GEdge::resetMeshAttributes()
   meshAttributes.reverseMesh = false;
 }
 
-void GEdge::addFace(GFace *f)
+void GCurve::addFace(GSurface *f)
 {
   if(std::find(_faces.begin(), _faces.end(), f) == _faces.end())
     _faces.push_back(f);
 }
 
-void GEdge::delFace(GFace *f)
+void GCurve::delFace(GSurface *f)
 {
   auto it = std::find(_faces.begin(), _faces.end(), f);
   if(it != _faces.end()) _faces.erase(it);
 }
 
-SBoundingBox3d GEdge::bounds(bool fast)
+SBoundingBox3d GCurve::bounds(bool fast)
 {
   SBoundingBox3d bbox;
   if(geomType() != DiscreteCurve && geomType() != BoundaryLayerCurve &&
@@ -218,7 +218,7 @@ SBoundingBox3d GEdge::bounds(bool fast)
     for(int i = 0; i < N; i++) {
       double t =
         tr.low() + (double)i / (double)(N - 1) * (tr.high() - tr.low());
-      GPoint p = point(t);
+      GVertex p = point(t);
       bbox += SPoint3(p.x(), p.y(), p.z());
     }
   }
@@ -230,14 +230,14 @@ SBoundingBox3d GEdge::bounds(bool fast)
   return bbox;
 }
 
-SOrientedBoundingBox GEdge::getOBB()
+SOrientedBoundingBox GCurve::getOBB()
 {
   if(!_obb) {
     std::vector<SPoint3> vertices;
     if(getNumMeshVertices() > 0) {
       int N = getNumMeshVertices();
       for(int i = 0; i < N; i++) {
-        MVertex *mv = getMeshVertex(i);
+        MNode *mv = getMeshVertex(i);
         vertices.push_back(mv->point());
       }
       // Don't forget to add the first and last vertices...
@@ -259,7 +259,7 @@ SOrientedBoundingBox GEdge::getOBB()
       for(int i = 0; i < N; i++) {
         double t =
           tr.low() + (double)i / (double)(N - 1) * (tr.high() - tr.low());
-        GPoint p = point(t);
+        GVertex p = point(t);
         SPoint3 pt(p.x(), p.y(), p.z());
         vertices.push_back(pt);
       }
@@ -273,7 +273,7 @@ SOrientedBoundingBox GEdge::getOBB()
   return SOrientedBoundingBox(_obb);
 }
 
-void GEdge::setVisibility(char val, bool recursive)
+void GCurve::setVisibility(char val, bool recursive)
 {
   GEntity::setVisibility(val);
   if(recursive) {
@@ -282,7 +282,7 @@ void GEdge::setVisibility(char val, bool recursive)
   }
 }
 
-void GEdge::setColor(unsigned int val, bool recursive)
+void GCurve::setColor(unsigned int val, bool recursive)
 {
   GEntity::setColor(val);
   if(recursive) {
@@ -291,15 +291,15 @@ void GEdge::setColor(unsigned int val, bool recursive)
   }
 }
 
-std::string GEdge::getAdditionalInfoString(bool multline)
+std::string GCurve::getAdditionalInfoString(bool multline)
 {
   std::ostringstream sstream;
   sstream.precision(12);
 
   if(_v0 && _v1) {
     sstream << "Boundary points: " << _v0->tag() << ", " << _v1->tag();
-    GPoint p0 = _v0->point();
-    GPoint p1 = _v1->point();
+    GVertex p0 = _v0->point();
+    GVertex p1 = _v1->point();
     sstream << " (distance = " << p0.distance(p1) << ")";
     if(multline)
       sstream << "\n";
@@ -350,7 +350,7 @@ std::string GEdge::getAdditionalInfoString(bool multline)
   return str;
 }
 
-void GEdge::writeGEO(FILE *fp)
+void GCurve::writeGEO(FILE *fp)
 {
   if(!getBeginVertex() || !getEndVertex() || geomType() == DiscreteCurve ||
      geomType() == BoundaryLayerCurve)
@@ -369,7 +369,7 @@ void GEdge::writeGEO(FILE *fp)
     int N = minimumDrawSegments();
     for(int i = 1; i < N; i++) {
       double u = umin + (double)i / N * (umax - umin);
-      GPoint p = point(u);
+      GVertex p = point(u);
       fprintf(fp, "Point(p%d + %d) = {%.16g, %.16g, %.16g};\n", tag(), i, p.x(),
               p.y(), p.z());
     }
@@ -401,7 +401,7 @@ void GEdge::writeGEO(FILE *fp)
   if(meshAttributes.reverseMesh) fprintf(fp, "Reverse Line {%d};\n", tag());
 }
 
-void GEdge::writePY(FILE *fp)
+void GCurve::writePY(FILE *fp)
 {
   // This is by no means complete - merely a placeholder for a future
   // implementation
@@ -421,7 +421,7 @@ void GEdge::writePY(FILE *fp)
   }
 }
 
-bool GEdge::storeSTLAsMesh()
+bool GCurve::storeSTLAsMesh()
 {
   // as the STL might be non-conforming, we make no effort to have a conformal
   // mesh - nodes will not be classified on boundaries, and not shared with
@@ -429,7 +429,7 @@ bool GEdge::storeSTLAsMesh()
   if(stl_vertices_xyz.size()) {
     for(std::size_t i = 0; i < stl_vertices_xyz.size(); i++) {
       SPoint3 &p(stl_vertices_xyz[i]);
-      mesh_vertices.push_back(new MVertex(p.x(), p.y(), p.z(), this));
+      mesh_vertices.push_back(new MNode(p.x(), p.y(), p.z(), this));
     }
   }
   else {
@@ -441,7 +441,7 @@ bool GEdge::storeSTLAsMesh()
   return true;
 }
 
-bool GEdge::containsPoint(const SPoint3 &pt) const
+bool GCurve::containsPoint(const SPoint3 &pt) const
 {
   if(geomType() == BoundaryLayerCurve) return false;
   double t;
@@ -449,14 +449,14 @@ bool GEdge::containsPoint(const SPoint3 &pt) const
   return containsParam(t);
 }
 
-bool GEdge::containsParam(double pt) const
+bool GCurve::containsParam(double pt) const
 {
   if(geomType() == BoundaryLayerCurve) return false;
   Range<double> rg = parBounds(0);
   return (pt >= rg.low() && pt <= rg.high());
 }
 
-SVector3 GEdge::secondDer(double par) const
+SVector3 GCurve::secondDer(double par) const
 {
   if(geomType() == BoundaryLayerCurve) return SVector3();
 
@@ -478,17 +478,17 @@ SVector3 GEdge::secondDer(double par) const
   return 500 * (x2 - x1);
 }
 
-SPoint2 GEdge::reparamOnFace(const GFace *face, double epar, int dir) const
+SPoint2 GCurve::reparamOnFace(const GSurface *face, double epar, int dir) const
 {
   if(geomType() == BoundaryLayerCurve) return SPoint2();
 
   // reparametrize the point onto the given face.
-  const GPoint p3 = point(epar);
+  const GVertex p3 = point(epar);
   SPoint3 sp3(p3.x(), p3.y(), p3.z());
   return face->parFromPoint(sp3);
 }
 
-double GEdge::curvature(double par) const
+double GCurve::curvature(double par) const
 {
   if(geomType() == Line || geomType() == BoundaryLayerCurve) return 0.;
 
@@ -496,7 +496,7 @@ double GEdge::curvature(double par) const
   return norm(crossprod(d1, secondDer(par))) * std::pow(1.0 / norm(d1), 3);
 }
 
-double GEdge::length(const double &u0, const double &u1, const int nbQuadPoints)
+double GCurve::length(const double &u0, const double &u1, const int nbQuadPoints)
 {
   if(geomType() == BoundaryLayerCurve) return 0.;
 
@@ -528,7 +528,7 @@ const double GOLDEN2 = 2.0 - GOLDEN;
 // x1 and x3 are the current bounds; the minimum is between them.
 // x2 is the center point, which is closer to x1 than to x3
 
-double goldenSectionSearch(const GEdge *ge, const SPoint3 &q, double x1,
+double goldenSectionSearch(const GCurve *ge, const SPoint3 &q, double x1,
                            double x2, double x3, double tau)
 {
   // Create a new possible center in the area between x2 and x3, closer to x2
@@ -548,9 +548,9 @@ double goldenSectionSearch(const GEdge *ge, const SPoint3 &q, double x1,
                    goldenSectionSearch(ge, q, x4, x2, x1, tau);
 }
 
-GPoint GEdge::closestPoint(const SPoint3 &q, double &t) const
+GVertex GCurve::closestPoint(const SPoint3 &q, double &t) const
 {
-  if(geomType() == BoundaryLayerCurve) return GPoint();
+  if(geomType() == BoundaryLayerCurve) return GVertex();
 
   // printf("looking for closest point in curve %d to point %g
   // %g\n",tag(),q.x(),q.y());
@@ -591,7 +591,7 @@ GPoint GEdge::closestPoint(const SPoint3 &q, double &t) const
   return point(t);
 }
 
-double GEdge::parFromPoint(const SPoint3 &P) const
+double GCurve::parFromPoint(const SPoint3 &P) const
 {
   if(geomType() == BoundaryLayerCurve) return 0.;
 
@@ -600,7 +600,7 @@ double GEdge::parFromPoint(const SPoint3 &P) const
   return t;
 }
 
-bool GEdge::refineProjection(const SVector3 &Q, double &u, int MaxIter,
+bool GCurve::refineProjection(const SVector3 &Q, double &u, int MaxIter,
                              double relax, double tol, double &err) const
 {
   if(geomType() == BoundaryLayerCurve) return false;
@@ -636,7 +636,7 @@ bool GEdge::refineProjection(const SVector3 &Q, double &u, int MaxIter,
   return err <= maxDist;
 }
 
-bool GEdge::XYZToU(const double X, const double Y, const double Z, double &u,
+bool GCurve::XYZToU(const double X, const double Y, const double Z, double &u,
                    const double relax, bool first) const
 {
   if(geomType() == BoundaryLayerCurve) return false;
@@ -688,20 +688,20 @@ bool GEdge::XYZToU(const double X, const double Y, const double Z, double &u,
 }
 
 // regions that bound this entity or that this entity bounds.
-std::list<GRegion *> GEdge::regions() const
+std::list<GVolume *> GCurve::regions() const
 {
-  std::vector<GFace *> _faces = faces();
-  std::set<GRegion *> _r;
+  std::vector<GSurface *> _faces = faces();
+  std::set<GVolume *> _r;
   for(auto it = _faces.begin(); it != _faces.end(); ++it) {
-    std::list<GRegion *> temp = (*it)->regions();
+    std::list<GVolume *> temp = (*it)->regions();
     _r.insert(temp.begin(), temp.end());
   }
-  std::list<GRegion *> ret;
+  std::list<GVolume *> ret;
   ret.insert(ret.begin(), _r.begin(), _r.end());
   return ret;
 }
 
-bool GEdge::isOrphan()
+bool GCurve::isOrphan()
 {
   if(model()->getNumRegions())
     return regions().empty();
@@ -710,13 +710,13 @@ bool GEdge::isOrphan()
   return false;
 }
 
-void GEdge::relocateMeshVertices()
+void GCurve::relocateMeshVertices()
 {
   for(std::size_t i = 0; i < mesh_vertices.size(); i++) {
-    MVertex *v = mesh_vertices[i];
+    MNode *v = mesh_vertices[i];
     double u0 = 0;
     if(v->getParameter(0, u0)) {
-      GPoint p = point(u0);
+      GVertex p = point(u0);
       v->x() = p.x();
       v->y() = p.y();
       v->z() = p.z();
@@ -724,7 +724,7 @@ void GEdge::relocateMeshVertices()
   }
 }
 
-SPoint3 GEdge::closestPointWithTol(SPoint3 &p, double tolerance)
+SPoint3 GCurve::closestPointWithTol(SPoint3 &p, double tolerance)
 {
   if(!_cp || _cp->tol() != tolerance) {
     if(_cp) delete _cp;
@@ -751,7 +751,7 @@ static double sqDistPointSegment(const SPoint3 &p, const SPoint3 &s0,
   return (dt2 + dn2) / d.normSq();
 }
 
-static void _discretize(double tol, GEdge *edge, std::vector<sortedPoint> &upts,
+static void _discretize(double tol, GCurve *edge, std::vector<sortedPoint> &upts,
                         int pos0)
 {
   const int pos1 = upts[pos0].next;
@@ -771,7 +771,7 @@ static void _discretize(double tol, GEdge *edge, std::vector<sortedPoint> &upts,
   _discretize(tol, edge, upts, posmid);
 }
 
-void GEdge::addElement(MElement *e)
+void GCurve::addElement(MElement *e)
 {
   switch(e->getType()) {
   case TYPE_LIN: addLine(reinterpret_cast<MLine *>(e)); break;
@@ -780,7 +780,7 @@ void GEdge::addElement(MElement *e)
   }
 }
 
-void GEdge::removeElement(MElement *e, bool del)
+void GCurve::removeElement(MElement *e, bool del)
 {
   switch(e->getType()) {
   case TYPE_LIN: {
@@ -796,7 +796,7 @@ void GEdge::removeElement(MElement *e, bool del)
   }
 }
 
-void GEdge::removeElements(bool del)
+void GCurve::removeElements(bool del)
 {
   if(del) {
     for(auto e : lines) delete e;
@@ -804,7 +804,7 @@ void GEdge::removeElements(bool del)
   lines.clear();
 }
 
-void GEdge::discretize(double tol, std::vector<SPoint3> &dpts,
+void GCurve::discretize(double tol, std::vector<SPoint3> &dpts,
                        std::vector<double> &ts)
 {
   std::vector<sortedPoint> upts;
@@ -829,13 +829,13 @@ void GEdge::discretize(double tol, std::vector<SPoint3> &dpts,
 
 #if defined(HAVE_MESH)
 
-static bool recreateConsecutiveElements(GEdge *ge)
+static bool recreateConsecutiveElements(GCurve *ge)
 {
   std::size_t ss = ge->lines.size();
   if(!ss) return true;
 
   std::vector<MEdge> ed;
-  std::vector<std::vector<MVertex *> > vs;
+  std::vector<std::vector<MNode *> > vs;
   for(std::size_t i = 0; i < ge->lines.size(); i++) {
     ed.push_back(MEdge(ge->lines[i]->getVertex(0), ge->lines[i]->getVertex(1)));
   }
@@ -864,7 +864,7 @@ static bool recreateConsecutiveElements(GEdge *ge)
 
   ge->mesh_vertices.clear();
   for(std::size_t i = 0; i < ge->lines.size() - 1; ++i) {
-    MVertex *v11 = ge->lines[i]->getVertex(1);
+    MNode *v11 = ge->lines[i]->getVertex(1);
     if(v11->onWhat() == ge || !v11->onWhat()) {
       v11->setEntity(ge);
       ge->mesh_vertices.push_back(v11);
@@ -874,7 +874,7 @@ static bool recreateConsecutiveElements(GEdge *ge)
   return true;
 }
 
-static void meshCompound(GEdge *ge)
+static void meshCompound(GCurve *ge)
 {
   discreteEdge *de = dynamic_cast<discreteEdge*>
     (ge->model()->getEdgeByTag(ge->tag() + 100000));
@@ -895,7 +895,7 @@ static void meshCompound(GEdge *ge)
 
   std::vector<int> phys;
   for(std::size_t i = 0; i < ge->compound.size(); i++) {
-    auto *c = (GEdge *)ge->compound[i];
+    auto *c = (GCurve *)ge->compound[i];
     de->lines.insert(de->lines.end(), c->lines.begin(), c->lines.end());
     c->compoundCurve = de;
     phys.insert(phys.end(), c->physicals.begin(), c->physicals.end());
@@ -916,7 +916,7 @@ static void meshCompound(GEdge *ge)
 
 #endif
 
-void GEdge::mesh(bool verbose)
+void GCurve::mesh(bool verbose)
 {
 #if defined(HAVE_MESH)
   if(compound.size())
@@ -931,13 +931,13 @@ void GEdge::mesh(bool verbose)
     if(compound[0] == this) { // I'm the one that makes the compound job
       bool ok = true;
       for(std::size_t i = 0; i < compound.size(); i++) {
-        auto *ge = (GEdge *)compound[i];
-        ok &= (ge->meshStatistics.status == GEdge::DONE);
+        auto *ge = (GCurve *)compound[i];
+        ok &= (ge->meshStatistics.status == GCurve::DONE);
       }
-      if(!ok) { meshStatistics.status = GEdge::PENDING; }
+      if(!ok) { meshStatistics.status = GCurve::PENDING; }
       else {
         meshCompound(this);
-        meshStatistics.status = GEdge::DONE;
+        meshStatistics.status = GCurve::DONE;
         return;
       }
     }
@@ -945,7 +945,7 @@ void GEdge::mesh(bool verbose)
 #endif
 }
 
-bool GEdge::reorder(const int elementType,
+bool GCurve::reorder(const int elementType,
                     const std::vector<std::size_t> &ordering)
 {
   if(lines.size() != 0) {
@@ -969,15 +969,15 @@ bool GEdge::reorder(const int elementType,
   return false;
 }
 
-std::vector<GVertex *> GEdge::vertices() const
+std::vector<GPoint *> GCurve::vertices() const
 {
-  std::vector<GVertex *> res;
+  std::vector<GPoint *> res;
   if(getBeginVertex()) res.push_back(getBeginVertex());
   if(getEndVertex()) res.push_back(getEndVertex());
   return res;
 }
 
-double GEdge::prescribedMeshSizeAtParam(double u)
+double GCurve::prescribedMeshSizeAtParam(double u)
 {
   if(_lc.empty()) { return MAX_LC; }
   const auto &it = std::lower_bound(_u_lc.begin(), _u_lc.end(), u);
@@ -996,7 +996,7 @@ struct vindexsort {
   bool operator()(size_t i0, size_t i1) { return v[i0] < v[i1]; }
 };
 
-void GEdge::setMeshSizeParametric(const std::vector<double> u,
+void GCurve::setMeshSizeParametric(const std::vector<double> u,
                                   const std::vector<double> lc)
 {
   if(u.size() != lc.size()) {

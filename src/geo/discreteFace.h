@@ -8,22 +8,22 @@
 
 #include <algorithm>
 #include "GModel.h"
-#include "GFace.h"
+#include "GSurface.h"
 #include "MTriangle.h"
 #include "SBoundingBox3d.h"
 #include "rtree.h"
 
 class MElementOctree;
 
-class discreteFace : public GFace {
+class discreteFace : public GSurface {
 private:
   class param {
   public:
     MElementOctree *oct;
     mutable RTree<std::pair<MTriangle *, MTriangle *> *, double, 3> rtree3d;
     std::vector<std::pair<MTriangle *, MTriangle *> *> rtree3dData;
-    std::vector<MVertex> v2d;
-    std::vector<MVertex> v3d;
+    std::vector<MNode> v2d;
+    std::vector<MNode> v3d;
     std::vector<MTriangle> t2d;
     std::vector<MTriangle> t3d;
     std::vector<SVector3> CURV;
@@ -44,16 +44,16 @@ public:
   discreteFace(GModel *model, int num);
   discreteFace(GModel *model);
   virtual ~discreteFace() {}
-  using GFace::point;
-  GPoint point(double par1, double par2) const;
+  using GSurface::point;
+  GVertex point(double par1, double par2) const;
   SPoint2 parFromPoint(const SPoint3 &p, bool onSurface = true,
                        bool convTestXYZ = false) const;
   Range<double> parBounds(int i) const;
   bool containsParam(const SPoint2 &pt);
   SBoundingBox3d bounds(bool fast = false);
-  GPoint closestPoint(const SPoint3 &queryPoint, double maxDistance,
+  GVertex closestPoint(const SPoint3 &queryPoint, double maxDistance,
                       SVector3 *normal = nullptr) const;
-  GPoint closestPoint(const SPoint3 &queryPoint,
+  GVertex closestPoint(const SPoint3 &queryPoint,
                       const double initialGuess[2]) const;
   SVector3 normal(const SPoint2 &param) const;
   double curvatureMax(const SPoint2 &param) const;
@@ -67,7 +67,7 @@ public:
   virtual bool haveParametrization() { return !_param.empty(); }
   virtual void mesh(bool verbose);
   int trianglePosition(double par1, double par2, double &u, double &v) const;
-  GPoint intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
+  GVertex intersectionWithCircle(const SVector3 &n1, const SVector3 &n2,
                                 const SVector3 &p, const double &R,
                                 double uv[2]);
   bool writeParametrization(FILE *fp, bool binary);

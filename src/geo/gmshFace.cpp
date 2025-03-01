@@ -20,7 +20,7 @@
 #include "Field.h"
 #endif
 
-gmshFace::gmshFace(GModel *m, Surface *s) : GFace(m, s->Num)
+gmshFace::gmshFace(GModel *m, Surface *s) : GSurface(m, s->Num)
 {
   resetNativePtr(s);
   gmshFace::resetMeshAttributes();
@@ -28,7 +28,7 @@ gmshFace::gmshFace(GModel *m, Surface *s) : GFace(m, s->Num)
 
 bool gmshFace::degenerate(int dim) const
 {
-  std::vector<GEdge *> const &eds = edges();
+  std::vector<GCurve *> const &eds = edges();
   int numNonDegenerate = 0;
   for(auto ge : eds) {
     if(!ge->degenerate(0)) numNonDegenerate++;
@@ -43,12 +43,12 @@ void gmshFace::resetNativePtr(Surface *s)
   l_dirs.clear();
   edgeLoops.clear();
 
-  std::vector<GEdge *> eds;
+  std::vector<GCurve *> eds;
   std::vector<int> nums;
   for(int i = 0; i < List_Nbr(_s->Generatrices); i++) {
     Curve *c;
     List_Read(_s->Generatrices, i, &c);
-    GEdge *e = model()->getEdgeByTag(abs(c->Num));
+    GCurve *e = model()->getEdgeByTag(abs(c->Num));
     if(e) {
       eds.push_back(e);
       nums.push_back(c->Num);
@@ -59,7 +59,7 @@ void gmshFace::resetNativePtr(Surface *s)
   for(int i = 0; i < List_Nbr(_s->GeneratricesByTag); i++) {
     int j;
     List_Read(_s->GeneratricesByTag, i, &j);
-    GEdge *e = model()->getEdgeByTag(abs(j));
+    GCurve *e = model()->getEdgeByTag(abs(j));
     if(e) {
       eds.push_back(e);
       nums.push_back(j);
@@ -68,15 +68,15 @@ void gmshFace::resetNativePtr(Surface *s)
       Msg::Error("Unknown curve %d", j);
   }
 
-  std::vector<GEdge *> l_wire;
+  std::vector<GCurve *> l_wire;
   l_wire.reserve(eds.size());
 
-  GVertex *first = nullptr;
+  GPoint *first = nullptr;
   for(std::size_t i = 0; i < eds.size(); i++) {
-    GEdge *e = eds[i];
+    GCurve *e = eds[i];
     int num = nums[i];
-    GVertex *start = (num > 0) ? e->getBeginVertex() : e->getEndVertex();
-    GVertex *next = (num > 0) ? e->getEndVertex() : e->getBeginVertex();
+    GPoint *start = (num > 0) ? e->getBeginVertex() : e->getEndVertex();
+    GPoint *next = (num > 0) ? e->getEndVertex() : e->getBeginVertex();
     if(!first) first = start;
     l_wire.push_back(e);
     if(next == first) {
@@ -110,7 +110,7 @@ void gmshFace::resetNativePtr(Surface *s)
         double t0 = t_bounds.low(), dt = t_bounds.high() - t_bounds.low();
         for(int i = 0; i < N; i++) {
           double t = t0 + dt / (double)(N - 1) * i;
-          GPoint p = ge->point(t);
+          GVertex p = ge->point(t);
           SPoint2 uv = parFromPoint(SPoint3(p.x(), p.y(), p.z()));
           bb += SPoint3(uv.x(), uv.y(), 0.);
         }
@@ -143,7 +143,7 @@ void gmshFace::resetMeshAttributes()
     for(int i = 0; i < List_Nbr(_s->TrsfPoints); i++) {
       Vertex *corn;
       List_Read(_s->TrsfPoints, i, &corn);
-      GVertex *gv = model()->getVertexByTag(corn->Num);
+      GPoint *gv = model()->getVertexByTag(corn->Num);
       if(gv)
         meshAttributes.corners.push_back(gv);
       else
@@ -175,7 +175,7 @@ SVector3 gmshFace::normal(const SPoint2 &param) const
 
     double n[3] = {meanPlane.a, meanPlane.b, meanPlane.c};
     norme(n);
-    GPoint pt = point(param.x(), param.y());
+    GVertex pt = point(param.x(), param.y());
     double v[3] = {pt.x(), pt.y(), pt.z()};
     int NP = 10, tries = 0;
     while(1) {
@@ -249,27 +249,27 @@ void gmshFace::secondDer(const SPoint2 &param, SVector3 &dudu, SVector3 &dvdv,
   }
 }
 
-GPoint gmshFace::point(double par1, double par2) const
+GVertex gmshFace::point(double par1, double par2) const
 {
   double pp[2] = {par1, par2};
   if(_s->Typ == MSH_SURF_PLAN && !_s->geometry) {
     double x, y, z, VX[3], VY[3];
     getMeanPlaneData(VX, VY, x, y, z);
-    return GPoint(x + VX[0] * par1 + VY[0] * par2,
+    return GVertex(x + VX[0] * par1 + VY[0] * par2,
                   y + VX[1] * par1 + VY[1] * par2,
                   z + VX[2] * par1 + VY[2] * par2, this, pp);
   }
   else {
     Vertex v = InterpolateSurface(_s, par1, par2, 0, 0);
-    return GPoint(v.Pos.X, v.Pos.Y, v.Pos.Z, this, pp);
+    return GVertex(v.Pos.X, v.Pos.Y, v.Pos.Z, this, pp);
   }
 }
 
-GPoint gmshFace::closestPoint(const SPoint3 &qp,
+GVertex gmshFace::closestPoint(const SPoint3 &qp,
                               const double initialGuess[2]) const
 {
 #if defined(HAVE_ALGLIB)
-  return GFace::closestPoint(qp, initialGuess);
+  return GSurface::closestPoint(qp, initialGuess);
 #endif
   if(_s->Typ == MSH_SURF_PLAN && !_s->geometry) {
     double XP = qp.x();
@@ -292,7 +292,7 @@ GPoint gmshFace::closestPoint(const SPoint3 &qp,
       }
     }
     sys2x2(MN, BN, UV);
-    return GPoint(XP, YP, ZP, this, UV);
+    return GVertex(XP, YP, ZP, this, UV);
   }
 
   Vertex v;
@@ -301,8 +301,8 @@ GPoint gmshFace::closestPoint(const SPoint3 &qp,
   v.Pos.Z = qp.z();
   double u[2] = {initialGuess[0], initialGuess[1]};
   bool result = ProjectPointOnSurface(_s, v, u);
-  if(!result) return GPoint(-1.e22, -1.e22, -1.e22, nullptr, u);
-  return GPoint(v.Pos.X, v.Pos.Y, v.Pos.Z, this, u);
+  if(!result) return GVertex(-1.e22, -1.e22, -1.e22, nullptr, u);
+  return GVertex(v.Pos.X, v.Pos.Y, v.Pos.Z, this, u);
 }
 
 SPoint2 gmshFace::parFromPoint(const SPoint3 &qp, bool onSurface,
@@ -317,7 +317,7 @@ SPoint2 gmshFace::parFromPoint(const SPoint3 &qp, bool onSurface,
     return SPoint2(u, v);
   }
   else {
-    return GFace::parFromPoint(qp, onSurface, convTestXYZ);
+    return GSurface::parFromPoint(qp, onSurface, convTestXYZ);
   }
 }
 

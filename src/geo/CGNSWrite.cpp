@@ -38,7 +38,7 @@ namespace {
   // contained in the given entities
   template <bool INCLUDE_HO_NODES>
   void getNodesInEntities(const std::vector<GEntity *> &entities,
-                          bool allElements, std::set<MVertex *> &nodeSet)
+                          bool allElements, std::set<MNode *> &nodeSet)
   {
     for(std::size_t i = 0; i < entities.size(); i++) {
       GEntity *ge = entities[i];
@@ -158,7 +158,7 @@ void getPartitionInterfaceEntities(const std::vector<GEntity *> &entities,
   } // loop on entities
 }
 
-// Initialize MVertex -> local data correspondence (only for primary vertices)
+// Initialize MNode -> local data correspondence (only for primary vertices)
 void initInterfVertex2LocalData(const std::vector<GEntity *> &entitiesPer,
                                 const std::vector<GEntity *> &entitiesInterf,
                                 Vertex2LocalData &interfVert2Local)
@@ -173,7 +173,7 @@ void initInterfVertex2LocalData(const std::vector<GEntity *> &entitiesPer,
   }
 
   // Partition interface boundaries
-  std::set<MVertex *> nodeSet;
+  std::set<MNode *> nodeSet;
   getNodesInEntities<false>(entitiesInterf, true, nodeSet);
   for(auto itN = nodeSet.begin(); itN != nodeSet.end(); ++itN) {
     interfVert2Local[*itN] = std::vector<LocalData>();
@@ -197,7 +197,7 @@ int writeZone(GModel *model, bool saveAll, double scalingFactor, int meshDim,
 
   // build set of nodes first, use elements because nodes not all in
   // GEntity::mesh_vertices if entities do not include partition interfaces
-  std::set<MVertex *> nodeSet;
+  std::set<MNode *> nodeSet;
   getNodesInEntities<true>(entities, saveAll, nodeSet);
 
   // build global -> partition-local node index correspondence and
@@ -525,7 +525,7 @@ int writeInterfaces(const std::vector<GEntity *> &entitiesInterf,
   typedef std::map<PartitionInterface, NodeCorrespondence> PartitionConnection;
 
   // get nodes in partition interface entities
-  std::set<MVertex *> nodeSet;
+  std::set<MNode *> nodeSet;
   getNodesInEntities<false>(entitiesInterf, true, nodeSet);
 
   // construct (two-way) partition connectivities with corresponding nodes

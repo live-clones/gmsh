@@ -525,7 +525,7 @@ bool PViewDataList::writePOS(const std::string &fileName, bool binary,
 }
 
 static void createVertices(std::vector<double> &list, int nbelm, int nbnod,
-                           std::vector<MVertex *> &nodes)
+                           std::vector<MNode *> &nodes)
 {
   if(!nbelm) return;
   int nb = list.size() / nbelm;
@@ -534,7 +534,7 @@ static void createVertices(std::vector<double> &list, int nbelm, int nbnod,
     double *y = &list[i + nbnod];
     double *z = &list[i + 2 * nbnod];
     for(int j = 0; j < nbnod; j++)
-      nodes.push_back(new MVertex(x[j], y[j], z[j]));
+      nodes.push_back(new MNode(x[j], y[j], z[j]));
   }
 }
 
@@ -552,7 +552,7 @@ public:
 
 static void createElements(std::vector<double> &list, int nbelm, int nbnod,
                            MVertexRTree &pos, std::vector<MElement *> &elements,
-                           int type, std::map<MVertex *, nodeData> *vertexData)
+                           int type, std::map<MNode *, nodeData> *vertexData)
 {
   if(!nbelm) return;
   int t = 0;
@@ -618,7 +618,7 @@ static void createElements(std::vector<double> &list, int nbelm, int nbnod,
     double *x = &list[i];
     double *y = &list[i + nbnod];
     double *z = &list[i + 2 * nbnod];
-    std::vector<MVertex *> verts(nbnod);
+    std::vector<MNode *> verts(nbnod);
     for(int j = 0; j < nbnod; j++) {
       verts[j] = pos.find(x[j], y[j], z[j]);
       if(vertexData)
@@ -649,7 +649,7 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
   double tol = CTX::instance()->geom.tolerance;
   double eps = norm(SVector3(BBox.max(), BBox.min())) * tol;
 
-  std::vector<MVertex *> vertices;
+  std::vector<MNode *> vertices;
   std::vector<MElement *> elements;
 
   int numComponents = 9;
@@ -661,13 +661,13 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
     createVertices(*list, *numEle, numNodes, vertices);
   }
   MVertexRTree pos(eps);
-  std::vector<MVertex *> unique;
+  std::vector<MNode *> unique;
   for(std::size_t i = 0; i < vertices.size(); i++) {
     if(!pos.insert(vertices[i])) unique.push_back(vertices[i]);
   }
   vertices.clear();
 
-  std::map<MVertex *, nodeData> vertexData;
+  std::map<MNode *, nodeData> vertexData;
 
   for(int i = 0; i < 24; i++) {
     std::vector<double> *list = nullptr;
@@ -691,7 +691,7 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
     fprintf(fp, "$Nodes\n");
     fprintf(fp, "%d\n", (int)unique.size());
     for(std::size_t i = 0; i < unique.size(); i++) {
-      MVertex *v = unique[i];
+      MNode *v = unique[i];
       fprintf(fp, "%ld %.16g %.16g %.16g\n", v->getIndex(), v->x(), v->y(),
               v->z());
     }
@@ -748,7 +748,7 @@ bool PViewDataList::writeMSH(const std::string &fileName, double version,
 
     if(forceNodeData) {
       for(std::size_t i = 0; i < unique.size(); i++) {
-        MVertex *v = unique[i];
+        MNode *v = unique[i];
         fprintf(fp, "%ld", v->getIndex());
         int nbnod = vertexData[v].nbnod;
         int nod = vertexData[v].nod;

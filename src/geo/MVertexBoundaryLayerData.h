@@ -8,26 +8,26 @@
 
 #include <vector>
 
-class MVertex;
+class MNode;
 
 // A simple data structure to keep track of the "children" of vertices
-// in a boundary layer mesh. It should be filled for each MVertex on
+// in a boundary layer mesh. It should be filled for each MNode on
 // the boundary of the geometry with the vertices along the normal
 // direction, in order.
 
 class MVertexBoundaryLayerData {
 private:
-  std::vector<std::vector<MVertex *> > children;
+  std::vector<std::vector<MNode *> > children;
 
 public:
   MVertexBoundaryLayerData(){};
   ~MVertexBoundaryLayerData(){};
 
-  std::vector<MVertex *> *getChildren(int i);
+  std::vector<MNode *> *getChildren(int i);
   int getNumChildren(int i);
 
   int getNumChildrenFamilies();
-  void addChildrenFamily(const std::vector<MVertex *> &family);
+  void addChildrenFamily(const std::vector<MNode *> &family);
 };
 
 #endif

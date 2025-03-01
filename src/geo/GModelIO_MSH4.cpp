@@ -140,19 +140,19 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
   switch(entity->dim()) {
   case 1:
     if(boundingEntities.size() == 2) {
-      reinterpret_cast<GEdge *>(entity)->setBeginVertex(
-        reinterpret_cast<GVertex *>(boundingEntities[0]));
-      reinterpret_cast<GEdge *>(entity)->setEndVertex(
-        reinterpret_cast<GVertex *>(boundingEntities[1]));
+      reinterpret_cast<GCurve *>(entity)->setBeginVertex(
+        reinterpret_cast<GPoint *>(boundingEntities[0]));
+      reinterpret_cast<GCurve *>(entity)->setEndVertex(
+        reinterpret_cast<GPoint *>(boundingEntities[1]));
     }
     else if(boundingEntities.size() == 1) {
       if(boundingSign[0] == 1) {
-        reinterpret_cast<GEdge *>(entity)->setBeginVertex(
-          reinterpret_cast<GVertex *>(boundingEntities[0]));
+        reinterpret_cast<GCurve *>(entity)->setBeginVertex(
+          reinterpret_cast<GPoint *>(boundingEntities[0]));
       }
       else {
-        reinterpret_cast<GEdge *>(entity)->setEndVertex(
-          reinterpret_cast<GVertex *>(boundingEntities[0]));
+        reinterpret_cast<GCurve *>(entity)->setEndVertex(
+          reinterpret_cast<GPoint *>(boundingEntities[0]));
       }
     }
     break;
@@ -160,16 +160,16 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
     std::vector<int> tags(boundingEntities.size());
     for(std::size_t i = 0; i < boundingEntities.size(); i++)
       tags[i] = std::abs(boundingEntities[i]->tag());
-    reinterpret_cast<GFace *>(entity)->setBoundEdges(tags, boundingSign);
+    reinterpret_cast<GSurface *>(entity)->setBoundEdges(tags, boundingSign);
     for(std::size_t i = 0; i < embeddedEntities.size(); i++){
-      reinterpret_cast<GFace *>(entity)->addEmbeddedEdge(reinterpret_cast<GEdge *>(embeddedEntities[i]));
+      reinterpret_cast<GSurface *>(entity)->addEmbeddedEdge(reinterpret_cast<GCurve *>(embeddedEntities[i]));
     }
   } break;
   case 3: {
     std::vector<int> tags(boundingEntities.size());
     for(std::size_t i = 0; i < boundingEntities.size(); i++)
       tags[i] = std::abs(boundingEntities[i]->tag());
-    reinterpret_cast<GRegion *>(entity)->setBoundFaces(tags, boundingSign);
+    reinterpret_cast<GVolume *>(entity)->setBoundFaces(tags, boundingSign);
   } break;
   default: break;
   }
@@ -365,7 +365,7 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
 
       switch(dim) {
       case 0: {
-        GVertex *gv = model->getVertexByTag(tag);
+        GPoint *gv = model->getVertexByTag(tag);
         if(!gv) {
           if(partition) {
             gv = new partitionVertex(model, tag, partitions);
@@ -383,7 +383,7 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
         }
       } break;
       case 1: {
-        GEdge *ge = model->getEdgeByTag(tag);
+        GCurve *ge = model->getEdgeByTag(tag);
         if(!ge) {
           if(partition) {
             ge = new partitionEdge(model, tag, nullptr, nullptr, partitions);
@@ -404,7 +404,7 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
         }
       } break;
       case 2: {
-        GFace *gf = model->getFaceByTag(tag);
+        GSurface *gf = model->getFaceByTag(tag);
         if(!gf) {
           if(partition) {
             gf = new partitionFace(model, tag, partitions);
@@ -425,7 +425,7 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
         }
       } break;
       case 3: {
-        GRegion *gr = model->getRegionByTag(tag);
+        GVolume *gr = model->getRegionByTag(tag);
         if(!gr) {
           if(partition) {
             gr = new partitionRegion(model, tag, partitions);
@@ -451,7 +451,7 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
   return true;
 }
 
-static std::pair<std::size_t, MVertex *> *
+static std::pair<std::size_t, MNode *> *
 readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
               std::size_t &totalNumNodes, std::size_t &maxNodeNum, bool swap,
               double version)
@@ -486,8 +486,8 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
   std::size_t nodeRead = 0;
   std::size_t minNodeNum = std::numeric_limits<std::size_t>::max();
 
-  std::pair<std::size_t, MVertex *> *vertexCache =
-    new std::pair<std::size_t, MVertex *>[totalNumNodes];
+  std::pair<std::size_t, MNode *> *vertexCache =
+    new std::pair<std::size_t, MNode *>[totalNumNodes];
 
   Msg::Info("%lu node%s", totalNumNodes, totalNumNodes > 1 ? "s" : "");
   Msg::StartProgressMeter(totalNumNodes);
@@ -536,28 +536,28 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
       switch(entityDim) {
       case 0: {
         Msg::Info("Creating discrete point %d", entityTag);
-        GVertex *gv = new discreteVertex(model, entityTag);
+        GPoint *gv = new discreteVertex(model, entityTag);
         GModel::current()->add(gv);
         entity = gv;
         break;
       }
       case 1: {
         Msg::Info("Creating discrete curve %d", entityTag);
-        GEdge *ge = new discreteEdge(model, entityTag, nullptr, nullptr);
+        GCurve *ge = new discreteEdge(model, entityTag, nullptr, nullptr);
         GModel::current()->add(ge);
         entity = ge;
         break;
       }
       case 2: {
         Msg::Info("Creating discrete surface %d", entityTag);
-        GFace *gf = new discreteFace(model, entityTag);
+        GSurface *gf = new discreteFace(model, entityTag);
         GModel::current()->add(gf);
         entity = gf;
         break;
       }
       case 3: {
         Msg::Info("Creating discrete volume %d", entityTag);
-        GRegion *gr = new discreteRegion(model, entityTag);
+        GVolume *gr = new discreteRegion(model, entityTag);
         GModel::current()->add(gr);
         entity = gr;
         break;
@@ -588,7 +588,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
       if(swap) SwapBytes((char *)&coord[0], sizeof(double), n * numNodes);
       std::size_t k = 0;
       for(std::size_t j = 0; j < numNodes; j++) {
-        MVertex *mv = nullptr;
+        MNode *mv = nullptr;
         std::size_t tagNode = tags[j];
         if(n == 5) {
           mv = new MFaceVertex(coord[k], coord[k + 1], coord[k + 2], entity,
@@ -600,7 +600,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
         }
         else {
           mv =
-            new MVertex(coord[k], coord[k + 1], coord[k + 2], entity, tagNode);
+            new MNode(coord[k], coord[k + 1], coord[k + 2], entity, tagNode);
         }
         k += n;
         entity->addMeshVertex(mv);
@@ -631,7 +631,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
             return nullptr;
           }
         }
-        MVertex *mv = nullptr;
+        MNode *mv = nullptr;
         if(n == 5) {
           double x, y, z, u, v;
           if(fscanf(fp, "%lf %lf %lf %lf %lf", &x, &y, &z, &u, &v) != 5) {
@@ -662,7 +662,7 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
               return nullptr;
             }
           }
-          mv = new MVertex(x, y, z, entity, tagNode);
+          mv = new MNode(x, y, z, entity, tagNode);
         }
         entity->addMeshVertex(mv);
         mv->setEntity(entity);
@@ -809,7 +809,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
       if(swap)
         SwapBytes((char *)&data[0], sizeof(std::size_t), numElements * n);
 
-      std::vector<MVertex *> vertices(numVertPerElm, (MVertex *)nullptr);
+      std::vector<MNode *> vertices(numVertPerElm, (MNode *)nullptr);
       for(std::size_t j = 0; j < numElements * n; j += n) {
         for(int k = 0; k < numVertPerElm; k++) {
           vertices[k] = model->getMeshVertexByTag(data[j + k + 1]);
@@ -865,7 +865,7 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
           return nullptr;
         }
 
-        std::vector<MVertex *> vertices(numVertPerElm, (MVertex *)nullptr);
+        std::vector<MNode *> vertices(numVertPerElm, (MNode *)nullptr);
 
         for(int k = 0; k < numVertPerElm; k++) {
           std::size_t vertexTag = 0;
@@ -1070,8 +1070,8 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
       else {
         if(fscanf(fp, "%lu %lu", &v1, &v2) != 2) { return false; }
       }
-      MVertex *mv1 = model->getMeshVertexByTag(v1);
-      MVertex *mv2 = model->getMeshVertexByTag(v2);
+      MNode *mv1 = model->getMeshVertexByTag(v1);
+      MNode *mv2 = model->getMeshVertexByTag(v2);
 
       if(mv1 && mv2) { slave->correspondingVertices[mv1] = mv2; }
       else {
@@ -1206,7 +1206,7 @@ static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
     else {
       if(fscanf(fp, "%d", &tag) != 1) { return false; }
     }
-    GEdge *ge = model->getEdgeByTag(tag);
+    GCurve *ge = model->getEdgeByTag(tag);
     if(ge) {
       discreteEdge *de = dynamic_cast<discreteEdge *>(ge);
       if(de) {
@@ -1223,7 +1223,7 @@ static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
     else {
       if(fscanf(fp, "%d", &tag) != 1) { return false; }
     }
-    GFace *gf = model->getFaceByTag(tag);
+    GSurface *gf = model->getFaceByTag(tag);
     if(gf) {
       discreteFace *df = dynamic_cast<discreteFace *>(gf);
       if(df) {
@@ -1347,7 +1347,7 @@ int GModel::_readMSH4(const std::string &name)
       _vertexMapCache.clear();
       bool dense = false;
       std::size_t totalNumNodes = 0, maxNodeNum;
-      std::pair<std::size_t, MVertex *> *vertexCache = readMSH4Nodes(
+      std::pair<std::size_t, MNode *> *vertexCache = readMSH4Nodes(
         this, fp, binary, dense, totalNumNodes, maxNodeNum, swap, version);
       Msg::StopProgressMeter();
       if(!vertexCache) {
@@ -1572,10 +1572,10 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
                               std::map<GEntity*, SBoundingBox3d> *entityBounds)
 {
   std::set<GEntity *, GEntityPtrFullLessThan> ghost;
-  std::set<GRegion *, GEntityPtrLessThan> regions;
-  std::set<GFace *, GEntityPtrLessThan> faces;
-  std::set<GEdge *, GEntityPtrLessThan> edges;
-  std::set<GVertex *, GEntityPtrLessThan> vertices;
+  std::set<GVolume *, GEntityPtrLessThan> regions;
+  std::set<GSurface *, GEntityPtrLessThan> faces;
+  std::set<GCurve *, GEntityPtrLessThan> edges;
+  std::set<GPoint *, GEntityPtrLessThan> vertices;
 
   if(partition) {
     for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
@@ -1696,7 +1696,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
 
     int maxEdgeTag = 0;
     for(auto it = edges.begin(); it != edges.end(); ++it) {
-      std::vector<GVertex *> vertices;
+      std::vector<GPoint *> vertices;
       std::vector<int> ori;
 
       maxEdgeTag = std::max(maxEdgeTag,(*it)->tag());
@@ -1740,10 +1740,10 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     }
 
     for(auto it = faces.begin(); it != faces.end(); ++it) {
-      std::vector<GEdge *> const &edges = (*it)->edges();
+      std::vector<GCurve *> const &edges = (*it)->edges();
       //-----------------------------------------
       // JFR -- WE MUST ALSO STORE EMBEDDED EDGES
-      std::vector<GEdge *> const &embEdges = (*it)->embeddedEdges();
+      std::vector<GCurve *> const &embEdges = (*it)->embeddedEdges();
       //-----------------------------------------
       std::vector<int> const &ori = (*it)->edgeOrientations();
       std::size_t edgesSize = edges.size();
@@ -1798,7 +1798,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     }
 
     for(auto it = regions.begin(); it != regions.end(); ++it) {
-      std::vector<GFace *> faces = (*it)->faces();
+      std::vector<GSurface *> faces = (*it)->faces();
       std::vector<int> const &ori = (*it)->faceOrientations();
       std::size_t facesSize = faces.size();
       int entityTag = (*it)->tag();
@@ -1899,7 +1899,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     int maxEdgeTag = 0;
     for(auto it = edges.begin(); it != edges.end(); ++it) {
       maxEdgeTag = std::max(maxEdgeTag,(*it)->tag());
-      std::vector<GVertex *> vertices;
+      std::vector<GPoint *> vertices;
       std::vector<int> ori;
       if((*it)->getBeginVertex()) {
         vertices.push_back((*it)->getBeginVertex());
@@ -1938,10 +1938,10 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     }
 
     for(auto it = faces.begin(); it != faces.end(); ++it) {
-      std::vector<GEdge *> const &edges = (*it)->edges();
+      std::vector<GCurve *> const &edges = (*it)->edges();
       //-----------------------------------------
       // JFR -- WE MUST ALSO STORE EMBEDDED EDGES
-      std::vector<GEdge *> const &embEdges = (*it)->embeddedEdges();
+      std::vector<GCurve *> const &embEdges = (*it)->embeddedEdges();
       //-----------------------------------------
 
       std::vector<int> const &ori = (*it)->edgeOrientations();
@@ -1982,7 +1982,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     }
 
     for(auto it = regions.begin(); it != regions.end(); ++it) {
-      std::vector<GFace *> const &faces = (*it)->faces();
+      std::vector<GSurface *> const &faces = (*it)->faces();
       std::vector<int> const &ori = (*it)->faceOrientations();
       fprintf(fp, "%d ", (*it)->tag());
       if(partition) {
@@ -2007,7 +2007,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
 
       std::vector<int> tags(faces.size());
       std::transform(begin(faces), end(faces), begin(tags),
-                     [](const GFace *const face) { return face->tag(); });
+                     [](const GSurface *const face) { return face->tag(); });
 
       std::vector<int> signs(ori.begin(), ori.end());
 
@@ -2066,7 +2066,7 @@ static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
     std::vector<double> coord(n * numVerts);
     std::size_t j = 0;
     for(std::size_t i = 0; i < numVerts; i++) {
-      MVertex *mv = ge->getMeshVertex(i);
+      MNode *mv = ge->getMeshVertex(i);
       coord[j++] = mv->x() * scalingFactor;
       coord[j++] = mv->y() * scalingFactor;
       coord[j++] = mv->z() * scalingFactor;
@@ -2081,7 +2081,7 @@ static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
         fprintf(fp, "%lu\n", ge->getMeshVertex(i)->getNum());
     }
     for(std::size_t i = 0; i < numVerts; i++) {
-      MVertex *mv = ge->getMeshVertex(i);
+      MNode *mv = ge->getMeshVertex(i);
       double x = mv->x() * scalingFactor;
       double y = mv->y() * scalingFactor;
       double z = mv->z() * scalingFactor;
@@ -2105,10 +2105,10 @@ static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
 }
 
 static std::size_t
-getAdditionalEntities(std::set<GRegion *, GEntityPtrLessThan> &regions,
-                      std::set<GFace *, GEntityPtrLessThan> &faces,
-                      std::set<GEdge *, GEntityPtrLessThan> &edges,
-                      std::set<GVertex *, GEntityPtrLessThan> &vertices)
+getAdditionalEntities(std::set<GVolume *, GEntityPtrLessThan> &regions,
+                      std::set<GSurface *, GEntityPtrLessThan> &faces,
+                      std::set<GCurve *, GEntityPtrLessThan> &edges,
+                      std::set<GPoint *, GEntityPtrLessThan> &vertices)
 {
   std::size_t numVertices = 0;
 
@@ -2125,27 +2125,27 @@ getAdditionalEntities(std::set<GRegion *, GEntityPtrLessThan> &regions,
         if(entity && entity != (*it)) {
           switch(entity->dim()) {
           case 0:
-            if(vertices.find(static_cast<GVertex *>(entity)) ==
+            if(vertices.find(static_cast<GPoint *>(entity)) ==
                vertices.end()) {
-              vertices.insert(static_cast<GVertex *>(entity));
+              vertices.insert(static_cast<GPoint *>(entity));
               numVertices += entity->getNumMeshVertices();
             }
             break;
           case 1:
-            if(edges.find(static_cast<GEdge *>(entity)) == edges.end()) {
-              edges.insert(static_cast<GEdge *>(entity));
+            if(edges.find(static_cast<GCurve *>(entity)) == edges.end()) {
+              edges.insert(static_cast<GCurve *>(entity));
               numVertices += entity->getNumMeshVertices();
             }
             break;
           case 2:
-            if(faces.find(static_cast<GFace *>(entity)) == faces.end()) {
-              faces.insert(static_cast<GFace *>(entity));
+            if(faces.find(static_cast<GSurface *>(entity)) == faces.end()) {
+              faces.insert(static_cast<GSurface *>(entity));
               numVertices += entity->getNumMeshVertices();
             }
             break;
           case 3:
-            if(regions.find(static_cast<GRegion *>(entity)) == regions.end()) {
-              regions.insert(static_cast<GRegion *>(entity));
+            if(regions.find(static_cast<GVolume *>(entity)) == regions.end()) {
+              regions.insert(static_cast<GVolume *>(entity));
               numVertices += entity->getNumMeshVertices();
             }
             break;
@@ -2165,27 +2165,27 @@ getAdditionalEntities(std::set<GRegion *, GEntityPtrLessThan> &regions,
         if(entity && entity != (*it)) {
           switch(entity->dim()) {
           case 0:
-            if(vertices.find(static_cast<GVertex *>(entity)) ==
+            if(vertices.find(static_cast<GPoint *>(entity)) ==
                vertices.end()) {
-              vertices.insert(static_cast<GVertex *>(entity));
+              vertices.insert(static_cast<GPoint *>(entity));
               numVertices += entity->getNumMeshVertices();
             }
             break;
           case 1:
-            if(edges.find(static_cast<GEdge *>(entity)) == edges.end()) {
-              edges.insert(static_cast<GEdge *>(entity));
+            if(edges.find(static_cast<GCurve *>(entity)) == edges.end()) {
+              edges.insert(static_cast<GCurve *>(entity));
               numVertices += entity->getNumMeshVertices();
             }
             break;
           case 2:
-            if(faces.find(static_cast<GFace *>(entity)) == faces.end()) {
-              faces.insert(static_cast<GFace *>(entity));
+            if(faces.find(static_cast<GSurface *>(entity)) == faces.end()) {
+              faces.insert(static_cast<GSurface *>(entity));
               numVertices += entity->getNumMeshVertices();
             }
             break;
           case 3:
-            if(regions.find(static_cast<GRegion *>(entity)) == regions.end()) {
-              regions.insert(static_cast<GRegion *>(entity));
+            if(regions.find(static_cast<GVolume *>(entity)) == regions.end()) {
+              regions.insert(static_cast<GVolume *>(entity));
               numVertices += entity->getNumMeshVertices();
             }
             break;
@@ -2205,27 +2205,27 @@ getAdditionalEntities(std::set<GRegion *, GEntityPtrLessThan> &regions,
         if(entity && entity != (*it)) {
           switch(entity->dim()) {
           case 0:
-            if(vertices.find(static_cast<GVertex *>(entity)) ==
+            if(vertices.find(static_cast<GPoint *>(entity)) ==
                vertices.end()) {
-              vertices.insert(static_cast<GVertex *>(entity));
+              vertices.insert(static_cast<GPoint *>(entity));
               numVertices += entity->getNumMeshVertices();
             }
             break;
           case 1:
-            if(edges.find(static_cast<GEdge *>(entity)) == edges.end()) {
-              edges.insert(static_cast<GEdge *>(entity));
+            if(edges.find(static_cast<GCurve *>(entity)) == edges.end()) {
+              edges.insert(static_cast<GCurve *>(entity));
               numVertices += entity->getNumMeshVertices();
             }
             break;
           case 2:
-            if(faces.find(static_cast<GFace *>(entity)) == faces.end()) {
-              faces.insert(static_cast<GFace *>(entity));
+            if(faces.find(static_cast<GSurface *>(entity)) == faces.end()) {
+              faces.insert(static_cast<GSurface *>(entity));
               numVertices += entity->getNumMeshVertices();
             }
             break;
           case 3:
-            if(regions.find(static_cast<GRegion *>(entity)) == regions.end()) {
-              regions.insert(static_cast<GRegion *>(entity));
+            if(regions.find(static_cast<GVolume *>(entity)) == regions.end()) {
+              regions.insert(static_cast<GVolume *>(entity));
               numVertices += entity->getNumMeshVertices();
             }
             break;
@@ -2242,10 +2242,10 @@ getAdditionalEntities(std::set<GRegion *, GEntityPtrLessThan> &regions,
 static void
 getEntitiesToSave(GModel *const model, bool partitioned,
                   int partitionToSave, bool saveAll,
-                  std::set<GRegion *, GEntityPtrLessThan> &regions,
-                  std::set<GFace *, GEntityPtrLessThan> &faces,
-                  std::set<GEdge *, GEntityPtrLessThan> &edges,
-                  std::set<GVertex *, GEntityPtrLessThan> &vertices)
+                  std::set<GVolume *, GEntityPtrLessThan> &regions,
+                  std::set<GSurface *, GEntityPtrLessThan> &faces,
+                  std::set<GCurve *, GEntityPtrLessThan> &edges,
+                  std::set<GPoint *, GEntityPtrLessThan> &vertices)
 {
   if(partitioned) {
     for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
@@ -2343,10 +2343,10 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
                            int partitionToSave, bool binary, int saveParametric,
                            double scalingFactor, bool saveAll, double version)
 {
-  std::set<GRegion *, GEntityPtrLessThan> regions;
-  std::set<GFace *, GEntityPtrLessThan> faces;
-  std::set<GEdge *, GEntityPtrLessThan> edges;
-  std::set<GVertex *, GEntityPtrLessThan> vertices;
+  std::set<GVolume *, GEntityPtrLessThan> regions;
+  std::set<GSurface *, GEntityPtrLessThan> faces;
+  std::set<GCurve *, GEntityPtrLessThan> edges;
+  std::set<GPoint *, GEntityPtrLessThan> vertices;
   getEntitiesToSave(model, partitioned, partitionToSave, saveAll, regions,
                     faces, edges, vertices);
 
@@ -2432,10 +2432,10 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
                               int partitionToSave, bool binary, bool saveAll,
                               double version)
 {
-  std::set<GRegion *, GEntityPtrLessThan> regions;
-  std::set<GFace *, GEntityPtrLessThan> faces;
-  std::set<GEdge *, GEntityPtrLessThan> edges;
-  std::set<GVertex *, GEntityPtrLessThan> vertices;
+  std::set<GVolume *, GEntityPtrLessThan> regions;
+  std::set<GSurface *, GEntityPtrLessThan> faces;
+  std::set<GCurve *, GEntityPtrLessThan> edges;
+  std::set<GPoint *, GEntityPtrLessThan> vertices;
   getEntitiesToSave(model, partitioned, partitionToSave, saveAll, regions,
                     faces, edges, vertices);
 
@@ -2628,7 +2628,7 @@ static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
     GEntity *g_master = g_slave->getMeshMaster();
 
     if(g_slave != g_master) {
-      std::map<MVertex *, MVertex *, MVertexPtrLessThan> corrVert;
+      std::map<MNode *, MNode *, MVertexPtrLessThan> corrVert;
       corrVert.insert(g_slave->correspondingVertices.begin(),
                       g_slave->correspondingVertices.end());
       if(CTX::instance()->mesh.hoSavePeriodic)

@@ -3,8 +3,8 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef GEDGE_H
-#define GEDGE_H
+#ifndef GCURVE_H
+#define GCURVE_H
 
 #include <string>
 #include <vector>
@@ -12,7 +12,7 @@
 #include "GmshMessage.h"
 #include "GmshDefines.h"
 #include "GEntity.h"
-#include "GVertex.h"
+#include "GPoint.h"
 #include "SVector3.h"
 #include "SPoint3.h"
 #include "SPoint2.h"
@@ -23,7 +23,7 @@ class ExtrudeParams;
 class closestPointFinder;
 
 // A model edge.
-class GEdge : public GEntity {
+class GCurve : public GEntity {
 private:
   double _length;
   bool _tooSmall;
@@ -32,8 +32,8 @@ private:
   std::vector<double> _u_lc, _lc;
 
 protected:
-  GVertex *_v0, *_v1;
-  std::vector<GFace *> _faces;
+  GPoint *_v0, *_v1;
+  std::vector<GSurface *> _faces;
 
 public:
   // same or opposite direction to the master
@@ -44,25 +44,25 @@ public:
   // when a compound of curves is created, both meshes should be kept alive
   // (because the 2D meshing procedure will need to access the mesh of each of
   // the original curves, in addition to the mesh of the compound curve)
-  GEdge *compoundCurve;
+  GCurve *compoundCurve;
 
   // the STL discretization
   std::vector<SPoint3> stl_vertices_xyz;
 
 public:
-  GEdge(GModel *model, int tag, GVertex *v0, GVertex *v1);
-  GEdge(GModel *model, int tag);
-  virtual ~GEdge();
+  GCurve(GModel *model, int tag, GPoint *v0, GPoint *v1);
+  GCurve(GModel *model, int tag);
+  virtual ~GCurve();
 
   // delete mesh data
   virtual void deleteMesh();
 
   // get the start/end vertices of the edge
-  void setBeginVertex(GVertex *gv) { _v0 = gv; if(gv) gv->addEdge(this); }
-  void setEndVertex(GVertex *gv) { _v1 = gv; if(gv) gv->addEdge(this); }
-  virtual GVertex *getBeginVertex() const { return _v0; }
-  virtual GVertex *getEndVertex() const { return _v1; }
-  void setVertex(GVertex *const f, const int orientation)
+  void setBeginVertex(GPoint *gv) { _v0 = gv; if(gv) gv->addEdge(this); }
+  void setEndVertex(GPoint *gv) { _v1 = gv; if(gv) gv->addEdge(this); }
+  virtual GPoint *getBeginVertex() const { return _v0; }
+  virtual GPoint *getEndVertex() const { return _v1; }
+  void setVertex(GPoint *const f, const int orientation)
   {
     if(orientation > 0)
       _v0 = f;
@@ -71,16 +71,16 @@ public:
   }
 
   // specify mesh master with transformation, deduce edgeCounterparts
-  void setMeshMaster(GEdge *master, const std::vector<double> &);
+  void setMeshMaster(GCurve *master, const std::vector<double> &);
 
   // specify mesh master and edgeCounterparts, deduce transformation
-  void setMeshMaster(GEdge *master, int sign);
+  void setMeshMaster(GCurve *master, int sign);
 
   void reverse();
 
   // add/delete a face bounded by this edge
-  void addFace(GFace *f);
-  virtual void delFace(GFace *f);
+  void addFace(GSurface *f);
+  virtual void delFace(GSurface *f);
 
   // get the dimension of the edge (1)
   virtual int dim() const { return 1; }
@@ -89,7 +89,7 @@ public:
   virtual GEntity *getParentEntity() { return nullptr; }
 
   // get the list of vertices
-  virtual std::vector<GVertex *> vertices() const;
+  virtual std::vector<GPoint *> vertices() const;
 
   // set the visibility flag
   virtual void setVisibility(char val, bool recursive = false);
@@ -98,7 +98,7 @@ public:
   virtual void setColor(unsigned int val, bool recursive = false);
 
   // true if the edge is a seam for the given face.
-  virtual bool isSeam(const GFace *face) const { return false; }
+  virtual bool isSeam(const GSurface *face) const { return false; }
 
   // get the bounding box
   virtual SBoundingBox3d bounds(bool fast = false);
@@ -107,10 +107,10 @@ public:
   virtual SOrientedBoundingBox getOBB();
 
   // regions that are bounded by this entity
-  virtual std::list<GRegion *> regions() const;
+  virtual std::list<GVolume *> regions() const;
 
   // faces that this entity bounds
-  virtual std::vector<GFace *> faces() const { return _faces; }
+  virtual std::vector<GSurface *> faces() const { return _faces; }
 
   // get number of faces
   virtual std::size_t numFaces() const { return _faces.size(); }
@@ -119,7 +119,7 @@ public:
   virtual bool isOrphan();
 
   // get the point for the given parameter location
-  virtual GPoint point(double p) const = 0;
+  virtual GVertex point(double p) const = 0;
 
   // true if the edge contains the given parameter
   virtual bool containsParam(double pt) const;
@@ -127,7 +127,7 @@ public:
   // get the position for the given parameter location
   virtual SVector3 position(double p) const
   {
-    GPoint gp = point(p);
+    GVertex gp = point(p);
     return SVector3(gp.x(), gp.y(), gp.z());
   }
 
@@ -142,7 +142,7 @@ public:
   virtual double curvature(double par) const;
 
   // reparmaterize the point onto the given face
-  virtual SPoint2 reparamOnFace(const GFace *face, double epar, int dir) const;
+  virtual SPoint2 reparamOnFace(const GSurface *face, double epar, int dir) const;
 
   // return the minimum number of segments used for meshing the edge
   virtual int minimumMeshSegments() const { return 1; }
@@ -220,7 +220,7 @@ public:
 
   // get bounds of parametric coordinate
   virtual Range<double> parBounds(int i) const = 0;
-  virtual Range<double> parBoundsOnFace(GFace *face = nullptr) const
+  virtual Range<double> parBoundsOnFace(GSurface *face = nullptr) const
   {
     return parBounds(0);
   }
@@ -231,7 +231,7 @@ public:
   virtual bool containsPoint(const SPoint3 &pt) const;
 
   // return the point on the face closest to the given point
-  virtual GPoint closestPoint(const SPoint3 &queryPoint, double &param) const;
+  virtual GVertex closestPoint(const SPoint3 &queryPoint, double &param) const;
 
   // return the parmater location on the edge given a point in space
   // that is on the edge

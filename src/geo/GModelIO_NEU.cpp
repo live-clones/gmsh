@@ -213,7 +213,7 @@ int GModel::writeNEU(const std::string &name, bool saveAll,
         unsigned numFaces = element->getNumFaces();
 
         for(unsigned faceNum = 0; faceNum < numFaces; ++faceNum) {
-          std::vector<MVertex *> verts;
+          std::vector<MNode *> verts;
           element->getFaceVertices(faceNum, verts);
 
           std::vector<unsigned> current = vertmap[verts[0]->getNum()];
@@ -436,7 +436,7 @@ int GModel::readNEU(const std::string &name)
     return 0;
   }
 
-  std::vector<MVertex *> vertexVector;
+  std::vector<MNode *> vertexVector;
   vertexVector.resize(numVertices);
 
   for(int i = 0; i < numVertices; i++) {
@@ -452,7 +452,7 @@ int GModel::readNEU(const std::string &name)
     }
 
     if(p > 0 && p <= (int)vertexVector.size()) {
-      vertexVector[p - 1] = new MVertex(x, y, z);
+      vertexVector[p - 1] = new MNode(x, y, z);
     }
     else {
       Msg::Error("Node tag %d out of range", p);
@@ -503,7 +503,7 @@ int GModel::readNEU(const std::string &name)
 
     int p[8];
     int len_p = -1;
-    std::vector<MVertex *> vertices;
+    std::vector<MNode *> vertices;
     std::string sstr(str);
     switch(ntype) {
     case GAMBIT_TYPE_HEX:
@@ -742,7 +742,7 @@ int GModel::readNEU(const std::string &name)
         return 0;
       }
 
-      std::vector<MVertex *> vertices;
+      std::vector<MNode *> vertices;
       for(std::size_t i = 0; i < sub.size(); i++)
         vertices.push_back(elementVector[num - 1]->getVertex(sub[i]));
       if(sub.size() == 3)

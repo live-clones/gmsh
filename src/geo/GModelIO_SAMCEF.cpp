@@ -16,10 +16,10 @@
 #include "Context.h"
 
 static bool getMeshVertices(GModel *m, int num, int *n,
-                            std::vector<MVertex *> &vec)
+                            std::vector<MNode *> &vec)
 {
   for(int i = 0; i < num; i++) {
-    MVertex *v = m->getMeshVertexByTag(n[i]);
+    MNode *v = m->getMeshVertexByTag(n[i]);
     if(!v) {
       Msg::Error("Wrong node number %d", n[i]);
       return false;
@@ -54,7 +54,7 @@ int GModel::readSAMCEF(const std::string &name)
         if(sscanf(buffer, "%s %d %s %lf %s %lf %s %lf", dummy, &num, dummy, &x,
                   dummy, &y, dummy, &z) != 8)
           return 0;
-        _vertexMapCache[num] = new MVertex(x, y, z, nullptr, num);
+        _vertexMapCache[num] = new MNode(x, y, z, nullptr, num);
       }
       Msg::Info("Read %d mesh nodes", (int)_vertexMapCache.size());
     }
@@ -68,7 +68,7 @@ int GModel::readSAMCEF(const std::string &name)
         int nn = 0;
         while(s >> word) nn++;
         int num, reg, n[4];
-        std::vector<MVertex *> vertices;
+        std::vector<MNode *> vertices;
         if(nn == 8) { // TRIA3
           if(sscanf(buffer, "%s %d %s %d %s %d %d %d", dummy, &num, dummy, &reg,
                     dummy, &n[0], &n[1], &n[2]) != 8)

@@ -67,7 +67,7 @@ public:
   virtual void get(MElement *ele, int npts, IntPt *GP, T2 &val) const;
   virtual void get(MElement *ele, int npts, IntPt *GP,
                    std::vector<T2> &vval) const;
-  virtual void get(MVertex *ver, T2 &val) const;
+  virtual void get(MNode *ver, T2 &val) const;
   virtual ScalarTermBase<T2> *clone() const
   {
     return new ScalarTermConstant<T2>(cst);
@@ -252,7 +252,7 @@ public:
   {
     Msg::Error("LaplaceTerm<S1, S2> w/ S1 != S2 not implemented");
   }
-  virtual void get(MVertex *ver, fullMatrix<double> &m)
+  virtual void get(MNode *ver, fullMatrix<double> &m)
   {
     Msg::Error("LaplaceTerm<S1, S2> w/ S1 != S2 not implemented");
   }

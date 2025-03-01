@@ -6,9 +6,9 @@
 // Author: Maxence Reberol
 
 #include "meshOctreeLibOL.h"
-#include "GFace.h"
+#include "GSurface.h"
 #include "discreteFace.h"
-#include "MVertex.h"
+#include "MNode.h"
 #include "MTriangle.h"
 #include "OS.h"
 
@@ -314,7 +314,7 @@ namespace SurfaceProjectorUtils {
 
 using namespace SurfaceProjectorUtils;
 
-SurfaceProjector::SurfaceProjector(GFace *gf_) : gf(NULL), OctIdx(0)
+SurfaceProjector::SurfaceProjector(GSurface *gf_) : gf(NULL), OctIdx(0)
 {
   std::vector<MTriangle *> triangles = gf->triangles;
   if(gf->quadrangles.size() > 0) {
@@ -340,13 +340,13 @@ void SurfaceProjector::clear()
 
 SurfaceProjector::~SurfaceProjector() { clear(); }
 
-bool SurfaceProjector::setAnalyticalProjection(GFace *gf)
+bool SurfaceProjector::setAnalyticalProjection(GSurface *gf)
 {
-  if(gf->geomType() == GFace::GeomType::Sphere) {
+  if(gf->geomType() == GSurface::GeomType::Sphere) {
     double radius = 0.;
     SPoint3 center;
     if(gf->isSphere(radius, center)) {
-      analyticalShape = GFace::GeomType::Sphere;
+      analyticalShape = GSurface::GeomType::Sphere;
       useAnalyticalFormula = true;
       analyticalParameters[0] = center.x();
       analyticalParameters[1] = center.y();
@@ -361,7 +361,7 @@ bool SurfaceProjector::setAnalyticalProjection(GFace *gf)
   return false;
 }
 
-bool SurfaceProjector::initialize(GFace *gf_,
+bool SurfaceProjector::initialize(GSurface *gf_,
     const std::vector<MTriangle *> &gfTriangles,
     bool useCADStl)
 {
@@ -412,7 +412,7 @@ bool SurfaceProjector::initialize(GFace *gf_,
     }
 
     /* Collect coordinates and triangle-continuous uv param */
-    robin_hood::unordered_map<MVertex *, int32_t> old2new;
+    robin_hood::unordered_map<MNode *, int32_t> old2new;
     int32_t count = 0;
     triangles.reserve(gfTriangles.size());
     points.reserve(gfTriangles.size());
@@ -426,7 +426,7 @@ bool SurfaceProjector::initialize(GFace *gf_,
       bool check_periodicity = false;
       bool no_eval = false;
       for(size_t lv = 0; lv < f->getNumVertices(); ++lv) {
-        MVertex *v = f->getVertex(lv);
+        MNode *v = f->getVertex(lv);
         auto it = old2new.find(v);
         if(it == old2new.end()) {
           old2new[v] = count;
@@ -438,8 +438,8 @@ bool SurfaceProjector::initialize(GFace *gf_,
           tri_pts[lv] = it->second + BasIdx;
         }
 
-        if(paramAvailable) { /* Get the uv in GFace */
-          bool onGf = (dynamic_cast<GFace *>(v->onWhat()) == gf);
+        if(paramAvailable) { /* Get the uv in GSurface */
+          bool onGf = (dynamic_cast<GSurface *>(v->onWhat()) == gf);
           if(onGf) {
             v->getParameter(0, tri_uvs[lv][0]);
             v->getParameter(1, tri_uvs[lv][1]);
@@ -453,11 +453,11 @@ bool SurfaceProjector::initialize(GFace *gf_,
       if(check_periodicity) {
         bool found = false;
         for(size_t lv = 0; lv < 3; ++lv) {
-          MVertex *v1 = f->getVertex(lv);
-          bool onGf = (dynamic_cast<GFace *>(v1->onWhat()) == gf);
+          MNode *v1 = f->getVertex(lv);
+          bool onGf = (dynamic_cast<GSurface *>(v1->onWhat()) == gf);
           if(onGf) { /* If neither of the 3 are on surface, takes random ... */
-            MVertex *v2 = f->getVertex((lv + 1) % 3);
-            MVertex *v3 = f->getVertex((lv + 2) % 3);
+            MNode *v2 = f->getVertex((lv + 1) % 3);
+            MNode *v3 = f->getVertex((lv + 2) % 3);
             SPoint2 param1;
             SPoint2 param2;
             SPoint2 param3;
@@ -471,17 +471,17 @@ bool SurfaceProjector::initialize(GFace *gf_,
           }
         }
         if(!found) {
-          /* Triangle with no vertex inside the GFace, difficult to get
+          /* Triangle with no vertex inside the GSurface, difficult to get
            * good UV parametrization, we use center projection to get
            * a initial guess */
           SPoint3 center = f->barycenter();
           double initialGuess[2] = {0., 0.};
-          GPoint proj = gf->closestPoint(center, initialGuess);
+          GVertex proj = gf->closestPoint(center, initialGuess);
           if(proj.succeeded()) {
             MFaceVertex cv(proj.x(), proj.y(), proj.z(), gf, proj.u(), proj.v());
-            MVertex *v1 = f->getVertex(0);
-            MVertex *v2 = f->getVertex(1);
-            MVertex *v3 = f->getVertex(2);
+            MNode *v1 = f->getVertex(0);
+            MNode *v2 = f->getVertex(1);
+            MNode *v3 = f->getVertex(2);
             SPoint2 paramc;
             SPoint2 param1;
             SPoint2 param2;
@@ -542,14 +542,14 @@ bool SurfaceProjector::initialize(GFace *gf_,
   return true;
 }
 
-GPoint failedProjection()
+GVertex failedProjection()
 {
-  GPoint fail(DBL_MAX, DBL_MAX, DBL_MAX, NULL);
+  GVertex fail(DBL_MAX, DBL_MAX, DBL_MAX, NULL);
   fail.setNoSuccess();
   return fail;
 }
 
-GPoint sphereProjection(GFace *gf, const double query[3],
+GVertex sphereProjection(GSurface *gf, const double query[3],
                         const std::array<double, 10> &analyticalParameters)
 {
   vec3 dir = {{query[0] - analyticalParameters[0],
@@ -561,14 +561,14 @@ GPoint sphereProjection(GFace *gf, const double query[3],
     analyticalParameters[0] + analyticalParameters[3] * dir[0],
     analyticalParameters[1] + analyticalParameters[3] * dir[1],
     analyticalParameters[2] + analyticalParameters[3] * dir[2]}};
-  return GPoint(newPos[0], newPos[1], newPos[2], gf);
+  return GVertex(newPos[0], newPos[1], newPos[2], gf);
 }
 
-GPoint SurfaceProjector::closestPoint(const double query[3], bool evalOnCAD,
+GVertex SurfaceProjector::closestPoint(const double query[3], bool evalOnCAD,
                                       bool projectOnCAD) const
 {
   if(useAnalyticalFormula) {
-    if(analyticalShape == GFace::GeomType::Sphere) {
+    if(analyticalShape == GSurface::GeomType::Sphere) {
       return sphereProjection(gf, query, analyticalParameters);
     }
     else {
@@ -614,7 +614,7 @@ GPoint SurfaceProjector::closestPoint(const double query[3], bool evalOnCAD,
   double lambda[3];
   vec3 cproj;
   project_point_triangle_l2(queryv3, p1, p2, p3, cproj, lambda);
-  GPoint proj;
+  GVertex proj;
   if(triangle_uvs.size() > 0) {
     double uv[2] = {0., 0.};
     uv[0] = lambda[0] * triangle_uvs[tri][0][0] +
@@ -625,14 +625,14 @@ GPoint SurfaceProjector::closestPoint(const double query[3], bool evalOnCAD,
             lambda[2] * triangle_uvs[tri][2][1];
     if(projectOnCAD) {
       SPoint3 queryp3(query[0], query[1], query[2]);
-      GPoint cadProj = gf->closestPoint(queryp3, uv);
+      GVertex cadProj = gf->closestPoint(queryp3, uv);
       if(cadProj.succeeded()) { proj = cadProj; }
     }
     else if(evalOnCAD) {
       if(triangle_no_uv_eval.size() > 0 && triangle_no_uv_eval[tri]) {
         /* 3D projection */
         SPoint3 queryp3(query[0], query[1], query[2]);
-        GPoint cadProj = gf->closestPoint(queryp3, uv);
+        GVertex cadProj = gf->closestPoint(queryp3, uv);
         if(cadProj.succeeded()) { proj = cadProj; }
       }
       else {
@@ -640,11 +640,11 @@ GPoint SurfaceProjector::closestPoint(const double query[3], bool evalOnCAD,
       }
     }
     else {
-      proj = GPoint(cproj[0], cproj[1], cproj[2], gf, uv[0], uv[1]);
+      proj = GVertex(cproj[0], cproj[1], cproj[2], gf, uv[0], uv[1]);
     }
   }
   else {
-    proj = GPoint(cproj[0], cproj[1], cproj[2], gf);
+    proj = GVertex(cproj[0], cproj[1], cproj[2], gf);
   }
 
   return proj;

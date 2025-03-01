@@ -13,10 +13,10 @@
 #include <utility>
 #include "SPoint3.h"
 
-class MVertex;
+class MNode;
 class MTriangle;
 class MLine;
-class GFace;
+class GSurface;
 
 /**
  * @brief Compute a smooth boundary-aligned cross field by alternating
@@ -68,7 +68,7 @@ int computeCrossFieldConformalScaling(
     int N,
     const std::vector<MTriangle*>& triangles,
     const std::vector<std::array<double,3> >& triEdgeTheta,
-    std::unordered_map<MVertex*,double>& scaling);
+    std::unordered_map<MNode*,double>& scaling);
 
 
 /**
@@ -84,7 +84,7 @@ int computeCrossFieldConformalScaling(
 int computeQuadSizeMapFromCrossFieldConformalFactor(
     const std::vector<MTriangle*>& triangles,
     std::size_t targetNumberOfQuads,
-    std::unordered_map<MVertex*,double>& scaling);
+    std::unordered_map<MNode*,double>& scaling);
 
 
 /**

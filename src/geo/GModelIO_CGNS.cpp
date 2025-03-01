@@ -80,7 +80,7 @@
 #if defined(HAVE_LIBCGNS)
 
 int GModel::readCGNS(const std::string &name,
-                     std::vector<std::vector<MVertex *> > &vertPerZone,
+                     std::vector<std::vector<MNode *> > &vertPerZone,
                      std::vector<std::vector<MElement *> > &eltPerZone)
 {
   int cgnsErr;
@@ -123,7 +123,7 @@ int GModel::readCGNS(const std::string &name,
               name2Zone, postpro);
 
   // data structures for element and vertices
-  std::vector<MVertex *> allVert; // all vertices
+  std::vector<MNode *> allVert; // all vertices
   std::map<int, std::vector<MElement *> > allElt[10]; // all elements by type
 
   // vertex and element (global) tags per zone for postpro
@@ -304,7 +304,7 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
 #else
 
 int GModel::readCGNS(const std::string &name,
-                     std::vector<std::vector<MVertex *> > &vertPerZone,
+                     std::vector<std::vector<MNode *> > &vertPerZone,
                      std::vector<std::vector<MElement *> > &eltPerZone)
 {
   Msg::Error("This version of Gmsh was compiled without CGNS support");

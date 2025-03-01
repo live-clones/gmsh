@@ -8,21 +8,21 @@
 #ifndef THINLAYER_H_
 #define THINLAYER_H_
 
-#include "MVertex.h"
+#include "MNode.h"
 #include "MTriangle.h"
 #include "meshGRegionDelaunayInsertion.h"
 
 static int faces[4][3] = {{0, 1, 2}, {0, 2, 3}, {0, 3, 1}, {1, 3, 2}};
 
 struct faceXtet {
-  MVertex *v[3], *unsorted[3];
+  MNode *v[3], *unsorted[3];
   MTet4 *t1;
   int i1;
   faceXtet(MTet4 *_t = 0, int iFac = 0) : t1(_t), i1(iFac)
   {
-    MVertex *v0 = t1->tet()->getVertex(faces[iFac][0]);
-    MVertex *v1 = t1->tet()->getVertex(faces[iFac][1]);
-    MVertex *v2 = t1->tet()->getVertex(faces[iFac][2]);
+    MNode *v0 = t1->tet()->getVertex(faces[iFac][0]);
+    MNode *v1 = t1->tet()->getVertex(faces[iFac][1]);
+    MNode *v2 = t1->tet()->getVertex(faces[iFac][2]);
 
     unsorted[0] = v0;
     unsorted[1] = v1;
@@ -36,7 +36,7 @@ struct faceXtet {
     //    std::sort(v, v + 3);
   }
 
-  inline MVertex *getVertex(int i) const { return unsorted[i]; }
+  inline MNode *getVertex(int i) const { return unsorted[i]; }
 
   inline bool operator<(const faceXtet &other) const
   {
@@ -51,11 +51,11 @@ struct faceXtet {
   {
     return (v[0] == other.v[0] && v[1] == other.v[1] && v[2] == other.v[2]);
   }
-  bool visible(MVertex *v)
+  bool visible(MNode *v)
   {
-    MVertex *v0 = t1->tet()->getVertex(faces[i1][0]);
-    MVertex *v1 = t1->tet()->getVertex(faces[i1][1]);
-    MVertex *v2 = t1->tet()->getVertex(faces[i1][2]);
+    MNode *v0 = t1->tet()->getVertex(faces[i1][0]);
+    MNode *v1 = t1->tet()->getVertex(faces[i1][1]);
+    MNode *v2 = t1->tet()->getVertex(faces[i1][2]);
     double a[3] = {v0->x(), v0->y(), v0->z()};
     double b[3] = {v1->x(), v1->y(), v1->z()};
     double c[3] = {v2->x(), v2->y(), v2->z()};
@@ -67,7 +67,7 @@ struct faceXtet {
 
 class CorrespVertices {
 private:
-  MVertex *StartPoint;
+  MNode *StartPoint;
   SPoint3 EndPoint;
   SVector3 StartNormal;
   SVector3 EndNormal;
@@ -82,7 +82,7 @@ private:
 public:
   CorrespVertices();
   ~CorrespVertices();
-  void setStartPoint(MVertex *v);
+  void setStartPoint(MNode *v);
   void setEndPoint(const SPoint3 &p);
   void setStartNormal(const SVector3 &v);
   void setEndNormal(const SVector3 &v);
@@ -93,7 +93,7 @@ public:
   void setEndTriangleActive(bool b);
   void setIsMaster(bool b);
   void setTagMaster(int i);
-  MVertex *getStartPoint();
+  MNode *getStartPoint();
   SPoint3 getEndPoint();
   SVector3 getStartNormal();
   SVector3 getEndNormal();
@@ -114,17 +114,17 @@ public:
   static void perform();
   static void checkOppositeTriangles();
   static void fillvecOfThinSheets();
-  static std::map<MVertex *, double> computeAllDistToOppSide();
-  static double computeDistToOppSide(MVertex *v);
-  static SVector3 computeInteriorNormal(MVertex *v);
-  static MTet4 *getTetFromPoint(MVertex *v, const SVector3 &InteriorNormal);
+  static std::map<MNode *, double> computeAllDistToOppSide();
+  static double computeDistToOppSide(MNode *v);
+  static SVector3 computeInteriorNormal(MNode *v);
+  static MTet4 *getTetFromPoint(MNode *v, const SVector3 &InteriorNormal);
   static bool IsPositivOrientation(const SVector3 &a, const SVector3 &b,
                                    const SVector3 &c);
   static void FindNewPoint(SPoint3 *CurrentPoint, int *CurrentTri,
                            MTet4 *CurrentTet, const SVector3 &InteriorNormal);
-  static std::map<MVertex *, std::vector<MTetrahedron *> > VertexToTets;
+  static std::map<MNode *, std::vector<MTetrahedron *> > VertexToTets;
   static std::map<MTetrahedron *, MTet4 *> TetToTet4;
-  static std::map<MVertex *, std::vector<CorrespVertices *> > VertexToCorresp;
+  static std::map<MNode *, std::vector<CorrespVertices *> > VertexToCorresp;
   static std::vector<std::vector<CorrespVertices *> > vecOfThinSheets;
   static const double epsilon;
   static const double angleMax;

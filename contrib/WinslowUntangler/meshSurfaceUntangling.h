@@ -11,7 +11,7 @@
 #include <array>
 #include <cstdint>
 
-class GFace;
+class GSurface;
 
 /**
  * @brief Untangling/smoothing of volume mesh based on minimization of the
@@ -31,7 +31,7 @@ class GFace;
  *
  * @return True if the smoothing have been applied (mesh may still be tangled)
  */
-bool untangleGFaceMeshConstrained(GFace *gf,
+bool untangleGFaceMeshConstrained(GSurface *gf,
 				  int iterMax = 1000,
                                   double timeMax = 9999.);//,
 //				  int  curveInteriorEdges = false);
@@ -60,10 +60,10 @@ bool buildTrianglesAndTargetsFromElements(
     std::vector<std::array<double,2> >& points,
     std::vector<std::array<uint32_t,6> >& elements,
     std::vector<std::array<uint32_t, 3> >& triangles,
-    std::vector<std::array<std::array<double,2>, 3> >& triIdealShapes,GFace *gf =nullptr);
+    std::vector<std::array<std::array<double,2>, 3> >& triIdealShapes,GSurface *gf =nullptr);
 
 bool buildTrianglesAndTargetsFromElements(
     std::vector<std::array<double,2> >& points,
     std::vector<std::array<uint32_t,4> >& elements,
     std::vector<std::array<uint32_t, 3> >& triangles,
-    std::vector<std::array<std::array<double,2>, 3> >& triIdealShapes,GFace *gf =nullptr);
+    std::vector<std::array<std::array<double,2>, 3> >& triIdealShapes,GSurface *gf =nullptr);

@@ -42,7 +42,7 @@
 #include <gp_Sphere.hxx>
 
 OCCFace::OCCFace(GModel *m, TopoDS_Face s, int num)
-  : GFace(m, num), _s(s), _sf(s, Standard_True), _radius(-1)
+  : GSurface(m, num), _s(s), _sf(s, Standard_True), _radius(-1)
 {
   _setup();
 
@@ -82,7 +82,7 @@ void OCCFace::_setup()
 
     for(exp3.Init(wire, TopAbs_EDGE); exp3.More(); exp3.Next()) {
       TopoDS_Edge edge = TopoDS::Edge(exp3.Current());
-      GEdge *e = nullptr;
+      GCurve *e = nullptr;
       if(model()->getOCCInternals())
         e = model()->getOCCInternals()->getEdgeForOCCShape(model(), edge);
       if(!e) { Msg::Error("Unknown curve in surface %d", tag()); }
@@ -107,7 +107,7 @@ void OCCFace::_setup()
     if(!el.check()) {
       // should not happen, since ShapeFix_Wire has been called before
       Msg::Warning("Recomputing incorrect OpenCASCADE wire in surface %d", tag());
-      std::vector<GEdge*> edges;
+      std::vector<GCurve*> edges;
       el.getEdges(edges);
       el.recompute(edges);
     }
@@ -134,7 +134,7 @@ void OCCFace::_setup()
   for(exp2.Init(_s.Oriented(TopAbs_FORWARD), TopAbs_VERTEX, TopAbs_EDGE);
       exp2.More(); exp2.Next()) {
     TopoDS_Vertex vertex = TopoDS::Vertex(exp2.Current());
-    GVertex *v = nullptr;
+    GPoint *v = nullptr;
     if(model()->getOCCInternals())
       v = model()->getOCCInternals()->getVertexForOCCShape(model(), vertex);
     if(!v) { Msg::Error("Unknown point in surface %d", tag()); }
@@ -188,13 +188,13 @@ void OCCFace::_setup()
   // Only store references to this new face in edges at the end of the
   // constructor, to avoid accessing it too early (e.g. when drawing an edge)
   for(std::size_t i = 0; i < l_edges.size(); i++) {
-    GEdge *e = l_edges[i];
+    GCurve *e = l_edges[i];
     e->addFace(this);
     OCCEdge *occe = dynamic_cast<OCCEdge *>(e);
     if(occe && !e->is3D()) occe->setTrimmed(this);
   }
   for(std::size_t i = 0; i < embedded_edges.size(); i++) {
-    GEdge *e = embedded_edges[i];
+    GCurve *e = embedded_edges[i];
     // should not addFace(), as the edge is not on the boundary
     //e->addFace(this);
     OCCEdge *occe = dynamic_cast<OCCEdge *>(e);
@@ -277,11 +277,11 @@ void OCCFace::secondDer(const SPoint2 &param, SVector3 &dudu, SVector3 &dvdv,
   dudv = SVector3(duv.X(), duv.Y(), duv.Z());
 }
 
-GPoint OCCFace::point(double par1, double par2) const
+GVertex OCCFace::point(double par1, double par2) const
 {
   double pp[2] = {par1, par2};
   gp_Pnt val = _occface->Value(par1, par2);
-  return GPoint(val.X(), val.Y(), val.Z(), this, pp);
+  return GVertex(val.X(), val.Y(), val.Z(), this, pp);
 }
 
 bool OCCFace::_project(const double p[3], double uv[2], double xyz[3]) const
@@ -307,19 +307,19 @@ bool OCCFace::_project(const double p[3], double uv[2], double xyz[3]) const
   return true;
 }
 
-GPoint OCCFace::closestPoint(const SPoint3 &qp,
+GVertex OCCFace::closestPoint(const SPoint3 &qp,
                              const double initialGuess[2]) const
 {
 #if defined(HAVE_ALGLIB)
   // less robust but can be much faster
   if(CTX::instance()->geom.occUseGenericClosestPoint)
-    return GFace::closestPoint(qp, initialGuess);
+    return GSurface::closestPoint(qp, initialGuess);
 #endif
   double uv[2], xyz[3];
   if(_project(qp.data(), uv, xyz))
-    return GPoint(xyz[0], xyz[1], xyz[2], this, uv);
+    return GVertex(xyz[0], xyz[1], xyz[2], this, uv);
   else
-    return GFace::closestPoint(qp, initialGuess);
+    return GSurface::closestPoint(qp, initialGuess);
 }
 
 SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface,
@@ -327,12 +327,12 @@ SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface,
 {
   // less robust but can be much faster
   if(CTX::instance()->geom.occUseGenericClosestPoint)
-    return GFace::parFromPoint(qp, onSurface, convTestXYZ);
+    return GSurface::parFromPoint(qp, onSurface, convTestXYZ);
   double uv[2];
   if(_project(qp.data(), uv, nullptr))
     return SPoint2(uv[0], uv[1]);
   else // fallback: force convergence test in XYZ coordinates
-    return GFace::parFromPoint(qp, true, true);
+    return GSurface::parFromPoint(qp, true, true);
 }
 
 GEntity::GeomType OCCFace::geomType() const
@@ -421,13 +421,13 @@ bool OCCFace::buildSTLTriangulation(bool force)
   if(!model()->getOCCInternals()->makeFaceSTL(
        _s, stl_vertices_uv, stl_vertices_xyz, stl_normals, stl_triangles)) {
     Msg::Info("OpenCASCADE triangulation of surface %d failed", tag());
-    // try the default algorithm in GFace
-    return GFace::buildSTLTriangulation(force);
+    // try the default algorithm in GSurface
+    return GSurface::buildSTLTriangulation(force);
   }
 
   // compute the triangulation of the edges which are the boundaries of this
   // face
-  std::vector<GEdge *> const &e = edges();
+  std::vector<GCurve *> const &e = edges();
   for(auto it = e.begin(); it != e.end(); it++) {
     if((*it)->stl_vertices_xyz.size() == 0) {
       const TopoDS_Edge *c = (TopoDS_Edge *)(*it)->getNativePtr();

@@ -10,8 +10,8 @@
 #include "MElement.h"
 
 static bool getMeshVertices(int num, int *indices,
-                            std::map<std::size_t, MVertex *> &map,
-                            std::vector<MVertex *> &vertices)
+                            std::map<std::size_t, MNode *> &map,
+                            std::vector<MNode *> &vertices)
 {
   for(int i = 0; i < num; i++) {
     if(!map.count(indices[i])) {
@@ -24,8 +24,8 @@ static bool getMeshVertices(int num, int *indices,
   return true;
 }
 
-static bool getMeshVertices(int num, int *indices, std::vector<MVertex *> &vec,
-                            std::vector<MVertex *> &vertices, int minVertex = 0)
+static bool getMeshVertices(int num, int *indices, std::vector<MNode *> &vec,
+                            std::vector<MNode *> &vertices, int minVertex = 0)
 {
   for(int i = 0; i < num; i++) {
     if(indices[i] < minVertex ||
@@ -49,8 +49,8 @@ int GModel::readDIFF(const std::string &name)
 
   char str[256] = "XXX";
   std::map<int, std::vector<MElement *> > elements[10];
-  std::map<std::size_t, MVertex *> vertexMap;
-  std::vector<MVertex *> vertexVector;
+  std::map<std::size_t, MNode *> vertexMap;
+  std::vector<MNode *> vertexVector;
 
   {
     while(strstr(str, "Number of space dim. =") == nullptr) {
@@ -184,7 +184,7 @@ int GModel::readDIFF(const std::string &name)
       if(vertexMap.count(num))
         Msg::Warning("Skipping duplicate node %d", num);
       else
-        vertexMap[num] = new MVertex(xyz[0], xyz[1], xyz[2], nullptr, num);
+        vertexMap[num] = new MNode(xyz[0], xyz[1], xyz[2], nullptr, num);
       if(numVertices > 100000) Msg::ProgressMeter(i + 1, true, "Reading nodes");
       // If the vertex numbering is dense, tranfer the map into a
       // vector to speed up element creation
@@ -331,7 +331,7 @@ int GModel::readDIFF(const std::string &name)
       }
       mapping.clear();
       for(int j = 0; j < NoVertices; j++) indices[j] = ElementsNodes[i - 1][j];
-      std::vector<MVertex *> vertices;
+      std::vector<MNode *> vertices;
       if(vertexVector.size()) {
         if(!getMeshVertices(numVerticesPerElement, indices, vertexVector,
                             vertices)) {
@@ -449,7 +449,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
     for(std::size_t i = 0; i < ge->getNumMeshElements(); i++) {
       MElement *e = ge->getMeshElement(i);
       for(std::size_t j = 0; j < e->getNumVertices(); j++) {
-        MVertex *v = e->getVertex(j);
+        MNode *v = e->getVertex(j);
         if(v->getIndex() > 0) {
           if(usePhysicalTags) {
             for(auto p : ge->physicals)
@@ -515,7 +515,7 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   // write mesh vertices
   for(std::size_t i = 0; i < entities.size(); i++) {
     for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
-      MVertex *v = entities[i]->mesh_vertices[j];
+      MNode *v = entities[i]->mesh_vertices[j];
       if(v->getIndex() > 0) {
         v->writeDIFF(fp, binary, scalingFactor);
         fprintf(fp, " [%d] ", (int)vertexTags[v->getIndex() - 1].size());

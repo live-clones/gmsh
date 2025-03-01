@@ -6,18 +6,18 @@
 #include <sstream>
 #include <algorithm>
 #include "GModel.h"
-#include "GVertex.h"
-#include "GFace.h"
+#include "GPoint.h"
+#include "GSurface.h"
 #include "MPoint.h"
 #include "GmshMessage.h"
 
-GVertex::GVertex(GModel *m, int tag, double ms) : GEntity(m, tag), meshSize(ms)
+GPoint::GPoint(GModel *m, int tag, double ms) : GEntity(m, tag), meshSize(ms)
 {
 }
 
-GVertex::~GVertex() { GVertex::deleteMesh(); }
+GPoint::~GPoint() { GPoint::deleteMesh(); }
 
-void GVertex::deleteMesh()
+void GPoint::deleteMesh()
 {
   for(auto v : mesh_vertices) delete v;
   mesh_vertices.clear();
@@ -26,31 +26,31 @@ void GVertex::deleteMesh()
   model()->destroyMeshCaches();
 }
 
-void GVertex::resetMeshAttributes() { meshSize = MAX_LC; }
+void GPoint::resetMeshAttributes() { meshSize = MAX_LC; }
 
-void GVertex::setPosition(GPoint &p)
+void GPoint::setPosition(GVertex &p)
 {
   Msg::Error("Cannot set position of this kind of point");
 }
 
-void GVertex::addEdge(GEdge *e)
+void GPoint::addEdge(GCurve *e)
 {
   if(std::find(l_edges.begin(), l_edges.end(), e) == l_edges.end())
     l_edges.push_back(e);
 }
 
-void GVertex::delEdge(GEdge *const e)
+void GPoint::delEdge(GCurve *const e)
 {
   auto it = std::find(l_edges.begin(), l_edges.end(), e);
   if(it != l_edges.end()) l_edges.erase(it);
 }
 
-SPoint2 GVertex::reparamOnFace(const GFace *gf, int) const
+SPoint2 GPoint::reparamOnFace(const GSurface *gf, int) const
 {
   return gf->parFromPoint(SPoint3(x(), y(), z()));
 }
 
-std::string GVertex::getAdditionalInfoString(bool multline)
+std::string GPoint::getAdditionalInfoString(bool multline)
 {
   std::ostringstream sstream;
   sstream.precision(12);
@@ -82,7 +82,7 @@ std::string GVertex::getAdditionalInfoString(bool multline)
   return str;
 }
 
-void GVertex::writeGEO(FILE *fp, const std::string &meshSizeParameter)
+void GPoint::writeGEO(FILE *fp, const std::string &meshSizeParameter)
 {
   if(meshSizeParameter.size())
     fprintf(fp, "Point(%d) = {%.16g, %.16g, %.16g, %s};\n", tag(), x(), y(),
@@ -94,7 +94,7 @@ void GVertex::writeGEO(FILE *fp, const std::string &meshSizeParameter)
     fprintf(fp, "Point(%d) = {%.16g, %.16g, %.16g};\n", tag(), x(), y(), z());
 }
 
-void GVertex::writePY(FILE *fp, const std::string &meshSizeParameter)
+void GPoint::writePY(FILE *fp, const std::string &meshSizeParameter)
 {
   const char *factory = getNativeType() == OpenCascadeModel ? "occ" : "geo";
   if(meshSizeParameter.size())
@@ -108,25 +108,25 @@ void GVertex::writePY(FILE *fp, const std::string &meshSizeParameter)
             factory, x(), y(), z(), tag());
 }
 
-std::size_t GVertex::getNumMeshElementsByType(const int familyType) const
+std::size_t GPoint::getNumMeshElementsByType(const int familyType) const
 {
   if(familyType == TYPE_PNT) return points.size();
 
   return 0;
 }
 
-void GVertex::getNumMeshElements(unsigned *const c) const
+void GPoint::getNumMeshElements(unsigned *const c) const
 {
   c[0] += points.size();
 }
 
-MElement *GVertex::getMeshElement(std::size_t index) const
+MElement *GPoint::getMeshElement(std::size_t index) const
 {
   if(index < points.size()) return points[index];
   return nullptr;
 }
 
-MElement *GVertex::getMeshElementByType(const int familyType,
+MElement *GPoint::getMeshElementByType(const int familyType,
                                         const std::size_t index) const
 {
   if(familyType == TYPE_PNT) return points[index];
@@ -134,21 +134,21 @@ MElement *GVertex::getMeshElementByType(const int familyType,
   return nullptr;
 }
 
-bool GVertex::isOnSeam(const GFace *gf) const
+bool GPoint::isOnSeam(const GSurface *gf) const
 {
   auto const location =
     std::find_if(begin(l_edges), end(l_edges),
-                 [&](GEdge *const edge) { return edge->isSeam(gf); });
+                 [&](GCurve *const edge) { return edge->isSeam(gf); });
   return location != end(l_edges);
 }
 
 // faces that bound this entity or that this entity bounds.
-std::vector<GFace *> GVertex::faces() const
+std::vector<GSurface *> GPoint::faces() const
 {
-  std::vector<GFace *> faces;
+  std::vector<GSurface *> faces;
 
   for(auto it = l_edges.begin(); it != l_edges.end(); ++it) {
-    std::vector<GFace *> const &temp = (*it)->faces();
+    std::vector<GSurface *> const &temp = (*it)->faces();
     faces.insert(faces.end(), temp.begin(), temp.end());
   }
   std::sort(faces.begin(), faces.end());
@@ -158,20 +158,20 @@ std::vector<GFace *> GVertex::faces() const
 }
 
 // regions that bound this entity or that this entity bounds.
-std::list<GRegion *> GVertex::regions() const
+std::list<GVolume *> GPoint::regions() const
 {
-  std::vector<GFace *> const _faces = faces();
-  std::set<GRegion *> _r;
+  std::vector<GSurface *> const _faces = faces();
+  std::set<GVolume *> _r;
   for(auto it = _faces.begin(); it != _faces.end(); ++it) {
-    std::list<GRegion *> temp = (*it)->regions();
+    std::list<GVolume *> temp = (*it)->regions();
     _r.insert(temp.begin(), temp.end());
   }
-  std::list<GRegion *> ret;
+  std::list<GVolume *> ret;
   ret.insert(ret.begin(), _r.begin(), _r.end());
   return ret;
 }
 
-bool GVertex::isOrphan()
+bool GPoint::isOrphan()
 {
   if(model()->getNumRegions())
     return regions().empty();
@@ -182,17 +182,17 @@ bool GVertex::isOrphan()
   return false;
 }
 
-void GVertex::relocateMeshVertices()
+void GPoint::relocateMeshVertices()
 {
   for(std::size_t i = 0; i < mesh_vertices.size(); i++) {
-    MVertex *v = mesh_vertices[i];
+    MNode *v = mesh_vertices[i];
     v->x() = x();
     v->y() = y();
     v->z() = z();
   }
 }
 
-void GVertex::addElement(MElement *e)
+void GPoint::addElement(MElement *e)
 {
   switch(e->getType()) {
   case TYPE_PNT: addPoint(reinterpret_cast<MPoint *>(e)); break;
@@ -201,7 +201,7 @@ void GVertex::addElement(MElement *e)
   }
 }
 
-void GVertex::removeElement(MElement *e, bool del)
+void GPoint::removeElement(MElement *e, bool del)
 {
   switch(e->getType()) {
   case TYPE_PNT: {
@@ -217,7 +217,7 @@ void GVertex::removeElement(MElement *e, bool del)
   }
 }
 
-void GVertex::removeElements(bool del)
+void GPoint::removeElements(bool del)
 {
   if(del) {
     for(auto e : points) delete e;
@@ -225,7 +225,7 @@ void GVertex::removeElements(bool del)
   points.clear();
 }
 
-bool GVertex::reorder(const int elementType,
+bool GPoint::reorder(const int elementType,
                       const std::vector<std::size_t> &ordering)
 {
   if(points.size() != 0) {

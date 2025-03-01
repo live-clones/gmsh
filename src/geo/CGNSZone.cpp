@@ -8,7 +8,7 @@
 
 #include "Context.h"
 #include "GmshMessage.h"
-#include "MVertex.h"
+#include "MNode.h"
 #include "affineTransformation.h"
 #include "CGNSCommon.h"
 #include "CGNSConventions.h"
@@ -137,7 +137,7 @@ int CGNSZone::readBoundaryCondition(int iZoneBC,
 
 int CGNSZone::readVertices(int dim, double scale,
                            std::vector<CGNSZone *> &allZones,
-                           std::vector<MVertex *> &zoneVert)
+                           std::vector<MNode *> &zoneVert)
 {
   int cgnsErr;
 
@@ -178,7 +178,7 @@ int CGNSZone::readVertices(int dim, double scale,
     const double x = xyz[0][i] * scale;
     const double y = (dim > 1) ? xyz[1][i] * scale : 0.;
     const double z = (dim > 2) ? xyz[2][i] * scale : 0.;
-    zoneVert.push_back(new MVertex(x, y, z));
+    zoneVert.push_back(new MNode(x, y, z));
   }
 
   return 1;
@@ -283,18 +283,18 @@ int CGNSZone::readConnectivities(const std::map<std::string, int> &name2Zone,
     computeAffineTransformation(rotCenter, rotAngle, trans, perTransfo_.back());
     masterZone_.push_back(masterZoneIndex);
     slaveNode_.push_back(sNode);
-    slaveVert_.push_back(std::vector<MVertex *>());
+    slaveVert_.push_back(std::vector<MNode *>());
     masterNode_.push_back(mNode);
-    masterVert_.push_back(std::vector<MVertex *>());
+    masterVert_.push_back(std::vector<MNode *>());
   }
 
   return 1;
 }
 
 int CGNSZone::readMesh(int dim, double scale, std::vector<CGNSZone *> &allZones,
-                       std::vector<MVertex *> &allVert,
+                       std::vector<MNode *> &allVert,
                        std::map<int, std::vector<MElement *> > *allElt,
-                       std::vector<MVertex *> &zoneVert,
+                       std::vector<MNode *> &zoneVert,
                        std::vector<MElement *> &zoneElt,
                        std::vector<std::string> &allGeomName)
 {
@@ -326,13 +326,13 @@ int CGNSZone::readMesh(int dim, double scale, std::vector<CGNSZone *> &allZones,
 }
 
 void CGNSZone::setPeriodicVertices(const std::vector<CGNSZone *> &allZones,
-                                   const std::vector<MVertex *> &allVert)
+                                   const std::vector<MNode *> &allVert)
 {
   for(int iPer = 0; iPer < nbPerConnect(); iPer++) {
     const std::vector<cgsize_t> &sNode = slaveNode(iPer);
     const std::vector<cgsize_t> &mNode = masterNode(iPer);
-    std::vector<MVertex *> &sVert = slaveVert(iPer);
-    std::vector<MVertex *> &mVert = masterVert(iPer);
+    std::vector<MNode *> &sVert = slaveVert(iPer);
+    std::vector<MNode *> &mVert = masterVert(iPer);
     CGNSZone *mZone = allZones[masterZone(iPer)];
     for(std::size_t iN = 0; iN < sNode.size(); iN++) {
       const cgsize_t sInd = startNode() + sNode[iN];

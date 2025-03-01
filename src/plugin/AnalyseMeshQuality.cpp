@@ -282,7 +282,7 @@ void GMSH_AnalyseMeshQualityPlugin::_computeMinMaxJandValidity(int dim)
                      entity->tag(), num);
       {
         SVector3 n;
-        if(((GFace *)entity)->normalToPlanarMesh(n)) {
+        if(((GSurface *)entity)->normalToPlanarMesh(n)) {
           normals = new fullMatrix<double>(1, 3);
           normals->set(0, 0, n(0));
           normals->set(0, 1, n(1));

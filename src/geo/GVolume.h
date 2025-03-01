@@ -3,8 +3,8 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef GREGION_H
-#define GREGION_H
+#ifndef GVOLUME_H
+#define GVOLUME_H
 
 #include <list>
 #include <string>
@@ -25,18 +25,18 @@ class ExtrudeParams;
 class BoundaryLayerColumns;
 
 // A model region.
-class GRegion : public GEntity {
+class GVolume : public GEntity {
 protected:
-  std::vector<GFace *> l_faces;
-  std::vector<GVertex *> embedded_vertices;
-  std::vector<GFace *> embedded_faces;
-  std::vector<GEdge *> embedded_edges;
+  std::vector<GSurface *> l_faces;
+  std::vector<GPoint *> embedded_vertices;
+  std::vector<GSurface *> embedded_faces;
+  std::vector<GCurve *> embedded_edges;
   std::vector<int> l_dirs;
   BoundaryLayerColumns _columns;
 
 public:
-  GRegion(GModel *model, int tag);
-  virtual ~GRegion();
+  GVolume(GModel *model, int tag);
+  virtual ~GVolume();
 
   // delete mesh data
   virtual void deleteMesh();
@@ -54,19 +54,19 @@ public:
   virtual void setColor(unsigned int val, bool recursive = false);
 
   // add embedded vertices/edges/faces
-  void addEmbeddedVertex(GVertex *v) { embedded_vertices.push_back(v); }
-  void addEmbeddedEdge(GEdge *e) { embedded_edges.push_back(e); }
-  void addEmbeddedFace(GFace *f) { embedded_faces.push_back(f); }
+  void addEmbeddedVertex(GPoint *v) { embedded_vertices.push_back(v); }
+  void addEmbeddedEdge(GCurve *e) { embedded_edges.push_back(e); }
+  void addEmbeddedFace(GSurface *f) { embedded_faces.push_back(f); }
 
   // get/set faces that bound the region
-  int delFace(GFace *face);
+  int delFace(GSurface *face);
 
-  virtual std::vector<GFace *> faces() const { return l_faces; }
+  virtual std::vector<GSurface *> faces() const { return l_faces; }
 
   virtual std::vector<int> faceOrientations() const { return l_dirs; }
-  void set(std::vector<GFace *> const &f) { l_faces = f; }
+  void set(std::vector<GSurface *> const &f) { l_faces = f; }
   void setOrientations(const std::vector<int> &f) { l_dirs = f; }
-  void setFace(GFace *const f, int const orientation)
+  void setFace(GSurface *const f, int const orientation)
   {
     l_faces.push_back(f);
     l_dirs.push_back(orientation);
@@ -76,16 +76,16 @@ public:
                      const std::vector<int> &signFaces);
 
   // direct access to embedded entities
-  std::vector<GVertex *> &embeddedVertices() { return embedded_vertices; }
-  std::vector<GEdge *> &embeddedEdges() { return embedded_edges; }
-  std::vector<GFace *> &embeddedFaces() { return embedded_faces; }
-  std::vector<MVertex *> getEmbeddedMeshVertices() const;
+  std::vector<GPoint *> &embeddedVertices() { return embedded_vertices; }
+  std::vector<GCurve *> &embeddedEdges() { return embedded_edges; }
+  std::vector<GSurface *> &embeddedFaces() { return embedded_faces; }
+  std::vector<MNode *> getEmbeddedMeshVertices() const;
 
   // edges that bound the region
-  virtual std::vector<GEdge *> const &edges() const;
+  virtual std::vector<GCurve *> const &edges() const;
 
   // vertices that bound the region
-  virtual std::vector<GVertex *> vertices() const;
+  virtual std::vector<GPoint *> vertices() const;
 
   // get the bounding box
   virtual SBoundingBox3d bounds(bool fast = false);
@@ -94,7 +94,7 @@ public:
   virtual SOrientedBoundingBox getOBB();
 
   // check if the region is connected to another region by an edge
-  bool edgeConnected(GRegion *r) const;
+  bool edgeConnected(GVolume *r) const;
 
   // compute volume, moment of intertia and center of gravity
   double computeSolidProperties(std::vector<double> cg,
@@ -147,7 +147,7 @@ public:
     // the extrusion parameters (if any)
     ExtrudeParams *extrude;
     // corners of the transfinite interpolation
-    std::vector<GVertex *> corners;
+    std::vector<GPoint *> corners;
     // structured/unstructured coupling using pyramids
     int QuadTri;
     // global mesh size constraint for the volume
@@ -158,7 +158,7 @@ public:
 
   // a array for accessing the transfinite vertices using a triplet of
   // indices
-  std::vector<std::vector<std::vector<MVertex *> > > transfinite_vertices;
+  std::vector<std::vector<std::vector<MNode *> > > transfinite_vertices;
 
   std::vector<MTetrahedron *> tetrahedra;
   std::vector<MHexahedron *> hexahedra;

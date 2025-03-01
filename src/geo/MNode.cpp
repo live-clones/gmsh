@@ -5,15 +5,15 @@
 
 #include <string.h>
 #include <cmath>
-#include "MVertex.h"
+#include "MNode.h"
 #include "GModel.h"
-#include "GVertex.h"
-#include "GEdge.h"
-#include "GFace.h"
+#include "GPoint.h"
+#include "GCurve.h"
+#include "GSurface.h"
 #include "GmshMessage.h"
 #include "StringUtils.h"
 
-double angle3Vertices(const MVertex *p1, const MVertex *p2, const MVertex *p3)
+double angle3Vertices(const MNode *p1, const MNode *p2, const MNode *p3)
 {
   SVector3 a(p1->x() - p2->x(), p1->y() - p2->y(), p1->z() - p2->z());
   SVector3 b(p3->x() - p2->x(), p3->y() - p2->y(), p3->z() - p2->z());
@@ -23,7 +23,7 @@ double angle3Vertices(const MVertex *p1, const MVertex *p2, const MVertex *p3)
   return std::atan2(sinA, cosA);
 }
 
-MVertex::MVertex(double x, double y, double z, GEntity *ge, std::size_t num)
+MNode::MNode(double x, double y, double z, GEntity *ge, std::size_t num)
   : _visible(1), _order(1), _x(x), _y(y), _z(z), _ge(ge)
 {
   // we should make GModel a mandatory argument to the constructor
@@ -38,21 +38,21 @@ MVertex::MVertex(double x, double y, double z, GEntity *ge, std::size_t num)
   _index = (long int)num;
 }
 
-void MVertex::deleteLast()
+void MNode::deleteLast()
 {
   GModel *m = GModel::current();
   if(_num == m->getMaxVertexNumber()) m->decrementMaxVertexNumber();
   delete this;
 }
 
-void MVertex::forceNum(std::size_t num)
+void MNode::forceNum(std::size_t num)
 {
   GModel *m = GModel::current();
   _num = num;
   m->setMaxVertexNumber(_num);
 }
 
-void MVertex::writeMSH(FILE *fp, bool binary, bool saveParametric,
+void MNode::writeMSH(FILE *fp, bool binary, bool saveParametric,
                        double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
@@ -121,7 +121,7 @@ void MVertex::writeMSH(FILE *fp, bool binary, bool saveParametric,
   }
 }
 
-void MVertex::writeMSH2(FILE *fp, bool binary, bool saveParametric,
+void MNode::writeMSH2(FILE *fp, bool binary, bool saveParametric,
                         double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
@@ -181,14 +181,14 @@ void MVertex::writeMSH2(FILE *fp, bool binary, bool saveParametric,
   }
 }
 
-void MVertex::writePLY2(FILE *fp)
+void MNode::writePLY2(FILE *fp)
 {
   if(_index < 0) return; // negative index vertices are never saved
 
   fprintf(fp, "%.16g %.16g %.16g\n", x(), y(), z());
 }
 
-void MVertex::writeVRML(FILE *fp, double scalingFactor)
+void MNode::writeVRML(FILE *fp, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
 
@@ -196,7 +196,7 @@ void MVertex::writeVRML(FILE *fp, double scalingFactor)
           z() * scalingFactor);
 }
 
-void MVertex::writeUNV(FILE *fp, bool officialExponentFormat,
+void MNode::writeUNV(FILE *fp, bool officialExponentFormat,
                        double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
@@ -222,7 +222,7 @@ void MVertex::writeUNV(FILE *fp, bool officialExponentFormat,
   }
 }
 
-void MVertex::writeVTK(FILE *fp, bool binary, double scalingFactor,
+void MNode::writeVTK(FILE *fp, bool binary, double scalingFactor,
                        bool bigEndian)
 {
   if(_index < 0) return; // negative index vertices are never saved
@@ -240,7 +240,7 @@ void MVertex::writeVTK(FILE *fp, bool binary, double scalingFactor,
   }
 }
 
-void MVertex::writeMATLAB(FILE *fp, int filetype, bool binary,
+void MNode::writeMATLAB(FILE *fp, int filetype, bool binary,
                           double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
@@ -252,7 +252,7 @@ void MVertex::writeMATLAB(FILE *fp, int filetype, bool binary,
           z() * scalingFactor);
 }
 
-void MVertex::writeTOCHNOG(FILE *fp, int dim, double scalingFactor)
+void MNode::writeTOCHNOG(FILE *fp, int dim, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
   if(dim == 2) {
@@ -271,7 +271,7 @@ void MVertex::writeTOCHNOG(FILE *fp, int dim, double scalingFactor)
   }
 }
 
-void MVertex::writeMESH(FILE *fp, double scalingFactor)
+void MNode::writeMESH(FILE *fp, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
 
@@ -280,7 +280,7 @@ void MVertex::writeMESH(FILE *fp, double scalingFactor)
           _ge ? _ge->tag() : 0);
 }
 
-void MVertex::writeOFF(FILE *fp, double scalingFactor)
+void MNode::writeOFF(FILE *fp, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
 
@@ -288,7 +288,7 @@ void MVertex::writeOFF(FILE *fp, double scalingFactor)
           z() * scalingFactor);
 }
 
-void MVertex::writeNEU(FILE *fp, int dim, double scalingFactor)
+void MNode::writeNEU(FILE *fp, int dim, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
 
@@ -332,7 +332,7 @@ static void double_to_char8(double val, char *str)
   str[8] = '\0';
 }
 
-void MVertex::writeBDF(FILE *fp, int format, double scalingFactor)
+void MNode::writeBDF(FILE *fp, int format, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
 
@@ -361,7 +361,7 @@ void MVertex::writeBDF(FILE *fp, int format, double scalingFactor)
   }
 }
 
-void MVertex::writeINP(FILE *fp, double scalingFactor)
+void MNode::writeINP(FILE *fp, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
 
@@ -369,7 +369,7 @@ void MVertex::writeINP(FILE *fp, double scalingFactor)
           y() * scalingFactor, z() * scalingFactor);
 }
 
-void MVertex::writeKEY(FILE *fp, double scalingFactor)
+void MNode::writeKEY(FILE *fp, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
 
@@ -377,7 +377,7 @@ void MVertex::writeKEY(FILE *fp, double scalingFactor)
           y() * scalingFactor, z() * scalingFactor);
 }
 
-void MVertex::writeRAD(FILE *fp, double scalingFactor)
+void MNode::writeRAD(FILE *fp, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
 
@@ -385,7 +385,7 @@ void MVertex::writeRAD(FILE *fp, double scalingFactor)
           y() * scalingFactor, z() * scalingFactor);
 }
 
-void MVertex::writeDIFF(FILE *fp, bool binary, double scalingFactor)
+void MNode::writeDIFF(FILE *fp, bool binary, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
 
@@ -393,7 +393,7 @@ void MVertex::writeDIFF(FILE *fp, bool binary, double scalingFactor)
           x() * scalingFactor, y() * scalingFactor, z() * scalingFactor);
 }
 
-void MVertex::writeSU2(FILE *fp, int dim, double scalingFactor)
+void MNode::writeSU2(FILE *fp, int dim, double scalingFactor)
 {
   if(_index < 0) return; // negative index vertices are never saved
 
@@ -409,8 +409,8 @@ double MVertexPtrLessThanLexicographic::tolerance = 1.e-6;
 
 double MVertexPtrLessThanLexicographic::getTolerance() { return tolerance; }
 
-bool MVertexPtrLessThanLexicographic::operator()(const MVertex *v1,
-                                                 const MVertex *v2) const
+bool MVertexPtrLessThanLexicographic::operator()(const MNode *v1,
+                                                 const MNode *v2) const
 {
   // you should not use this unless you know what you are doing; to create
   // unique vertices, use MVertexRTree
@@ -422,7 +422,7 @@ bool MVertexPtrLessThanLexicographic::operator()(const MVertex *v1,
   return false;
 }
 
-static void getAllParameters(MVertex *v, GFace *gf,
+static void getAllParameters(MNode *v, GSurface *gf,
                              std::vector<SPoint2> &params)
 {
   params.clear();
@@ -433,8 +433,8 @@ static void getAllParameters(MVertex *v, GFace *gf,
   }
 
   if(v->onWhat()->dim() == 0) {
-    GVertex *gv = (GVertex *)v->onWhat();
-    std::vector<GEdge *> const &ed = gv->edges();
+    GPoint *gv = (GPoint *)v->onWhat();
+    std::vector<GCurve *> const &ed = gv->edges();
     bool seam = false;
     for(auto it = ed.begin(); it != ed.end(); it++) {
       if((*it)->isSeam(gf)) {
@@ -456,7 +456,7 @@ static void getAllParameters(MVertex *v, GFace *gf,
     if(!seam) params.push_back(gv->reparamOnFace(gf, 1));
   }
   else if(v->onWhat()->dim() == 1) {
-    GEdge *ge = (GEdge *)v->onWhat();
+    GCurve *ge = (GCurve *)v->onWhat();
     if(!ge->haveParametrization()) return;
     double UU;
     v->getParameter(0, UU);
@@ -471,7 +471,7 @@ static void getAllParameters(MVertex *v, GFace *gf,
   }
 }
 
-bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf, SPoint2 &param1,
+bool reparamMeshEdgeOnFace(MNode *v1, MNode *v2, GSurface *gf, SPoint2 &param1,
                            SPoint2 &param2)
 {
   std::vector<SPoint2> p1, p2;
@@ -519,7 +519,7 @@ bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf, SPoint2 &param1,
   return true;
 }
 
-bool reparamMeshVertexOnFace(MVertex const *v, const GFace *gf, SPoint2 &param,
+bool reparamMeshVertexOnFace(MNode const *v, const GSurface *gf, SPoint2 &param,
                              bool onSurface, bool failOnSeam, int dir)
 {
   if(!v->onWhat()) {
@@ -540,7 +540,7 @@ bool reparamMeshVertexOnFace(MVertex const *v, const GFace *gf, SPoint2 &param,
       return true;
     }
 
-    GVertex *gv = (GVertex *)v->onWhat();
+    GPoint *gv = (GPoint *)v->onWhat();
     // hack for bug in periodic curves
     if(gv->getNativeType() == GEntity::GmshModel &&
        gf->geomType() == GEntity::Plane)
@@ -549,7 +549,7 @@ bool reparamMeshVertexOnFace(MVertex const *v, const GFace *gf, SPoint2 &param,
       param = gv->reparamOnFace(gf, dir);
     if(failOnSeam) {
       // shout, we could be on a seam
-      std::vector<GEdge *> const &ed = gv->edges();
+      std::vector<GCurve *> const &ed = gv->edges();
       for(auto it = ed.begin(); it != ed.end(); it++)
         if((*it)->isSeam(gf)) return false;
     }
@@ -560,7 +560,7 @@ bool reparamMeshVertexOnFace(MVertex const *v, const GFace *gf, SPoint2 &param,
       return true;
     }
 
-    GEdge *ge = (GEdge *)v->onWhat();
+    GCurve *ge = (GCurve *)v->onWhat();
     double t;
     v->getParameter(0, t);
     param = ge->reparamOnFace(gf, t, dir);
@@ -589,7 +589,7 @@ bool reparamMeshVertexOnFace(MVertex const *v, const GFace *gf, SPoint2 &param,
   return true;
 }
 
-bool reparamMeshVertexOnEdge(MVertex *v, const GEdge *ge, double &param)
+bool reparamMeshVertexOnEdge(MNode *v, const GCurve *ge, double &param)
 {
   param = 1.e6;
   Range<double> bounds = ge->parBounds(0);

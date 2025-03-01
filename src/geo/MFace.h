@@ -8,7 +8,7 @@
 
 #include <functional>
 #include <vector>
-#include "MVertex.h"
+#include "MNode.h"
 #include "MEdge.h"
 #include "SVector3.h"
 #include "GmshMessage.h"
@@ -19,16 +19,16 @@ template <class t> class fullMatrix;
 // A mesh face.
 class MFace {
 private:
-  std::vector<MVertex *> _v;
+  std::vector<MNode *> _v;
   std::vector<char> _si; // sorted indices
 
 public:
   MFace() {}
-  MFace(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3 = nullptr);
-  MFace(const std::vector<MVertex *> &v);
+  MFace(MNode *v0, MNode *v1, MNode *v2, MNode *v3 = nullptr);
+  MFace(const std::vector<MNode *> &v);
   std::size_t getNumVertices() const { return _v.size(); }
-  MVertex *getVertex(std::size_t i) const { return _v[i]; }
-  MVertex *getSortedVertex(std::size_t i) const
+  MNode *getVertex(std::size_t i) const { return _v[i]; }
+  MNode *getSortedVertex(std::size_t i) const
   {
     return _v[std::size_t(_si[i])];
   }
@@ -39,12 +39,12 @@ public:
   void getOrientationFlagForFace(std::vector<int> &faceOrientationFlag);
   bool computeCorrespondence(const MFace &, int &, bool &) const;
 
-  void getOrderedVertices(std::vector<MVertex *> &verts) const
+  void getOrderedVertices(std::vector<MNode *> &verts) const
   {
     for(std::size_t i = 0; i < getNumVertices(); i++)
       verts.push_back(getSortedVertex(i));
   }
-  void getOrderedVertices(const MVertex **const verts) const
+  void getOrderedVertices(const MNode **const verts) const
   {
     for(std::size_t i = 0; i < getNumVertices(); i++) {
       verts[i] = getSortedVertex(i);
@@ -67,7 +67,7 @@ public:
     SPoint3 p(0., 0., 0.);
     std::size_t n = getNumVertices();
     for(std::size_t i = 0; i < n; i++) {
-      const MVertex *v = getVertex(i);
+      const MNode *v = getVertex(i);
       p[0] += v->x();
       p[1] += v->y();
       p[2] += v->z();
@@ -84,7 +84,7 @@ public:
     if(n == 3) {
       const double ff[3] = {1.0 - u - v, u, v};
       for(std::size_t i = 0; i < n; i++) {
-        MVertex *v = getVertex(i);
+        MNode *v = getVertex(i);
         p[0] += v->x() * ff[i];
         p[1] += v->y() * ff[i];
         p[2] += v->z() * ff[i];
@@ -94,7 +94,7 @@ public:
       const double ff[4] = {(1 - u) * (1. - v), (1 + u) * (1. - v),
                             (1 + u) * (1. + v), (1 - u) * (1. + v)};
       for(std::size_t i = 0; i < n; i++) {
-        MVertex *v = getVertex(i);
+        MNode *v = getVertex(i);
         p[0] += v->x() * ff[i] * 0.25;
         p[1] += v->y() * ff[i] * 0.25;
         p[2] += v->z() * ff[i] * 0.25;
@@ -146,11 +146,11 @@ class MFaceN {
 private:
   int _type;
   int _order;
-  std::vector<MVertex *> _v;
+  std::vector<MNode *> _v;
 
 public:
   MFaceN() {}
-  MFaceN(int type, int order, const std::vector<MVertex *> &v);
+  MFaceN(int type, int order, const std::vector<MNode *> &v);
 
   int getPolynomialOrder() const { return _order; }
   int getType() const { return _type; }
@@ -159,8 +159,8 @@ public:
   int getNumCorners() const { return isTriangular() ? 3 : 4; }
   int getNumVerticesOnBoundary() const { return getNumCorners() * _order; }
 
-  MVertex *getVertex(std::size_t i) const { return _v[i]; }
-  const std::vector<MVertex *> &getVertices() const { return _v; }
+  MNode *getVertex(std::size_t i) const { return _v[i]; }
+  const std::vector<MNode *> &getVertices() const { return _v; }
 
   MEdgeN getHighOrderEdge(int num, int sign) const;
   MFace getFace() const;

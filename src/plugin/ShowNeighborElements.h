@@ -9,7 +9,7 @@
 #include "Plugin.h"
 #include <set>
 
-class MVertex;
+class MNode;
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterShowNeighborElementsPlugin();
@@ -19,8 +19,8 @@ class GMSH_ShowNeighborElementsPlugin : public GMSH_PostPlugin {
 private:
   int _nLayers;
   std::size_t _nel1, _nel2, _nel3, _nel4, _nel5;
-  std::multimap<MVertex *, MElement *> _vert2elem;
-  std::set<MVertex *> _vertices;
+  std::multimap<MNode *, MElement *> _vert2elem;
+  std::set<MNode *> _vertices;
 
 public:
   GMSH_ShowNeighborElementsPlugin() {}

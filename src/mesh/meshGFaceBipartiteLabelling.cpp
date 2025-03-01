@@ -10,7 +10,7 @@
 #include "meshTriangulation.h"
 #include "SVector3.h"
 #include "GModel.h"
-#include "GFace.h"
+#include "GSurface.h"
 #include "meshOctreeLibOL.h"
 
 #if defined(HAVE_QUADMESHINGTOOLS)
@@ -346,7 +346,7 @@ void meshGFaceQuadrangulateBipartiteLabelling(int faceTag)
 
   delete pm;
 
-  /*  GFace *gf = GModel::current()->getFaceByTag(faceTag);
+  /*  GSurface *gf = GModel::current()->getFaceByTag(faceTag);
   SurfaceProjector sp;
   fillSurfaceProjector(gf, &sp);
   optimizeGeometryQuadMesh(gf, &sp);

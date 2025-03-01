@@ -7,7 +7,7 @@
 #define GROUPOFELEMENTS_H
 
 #include <set>
-#include "GFace.h"
+#include "GSurface.h"
 #include "MElement.h"
 
 class elementFilter {
@@ -24,7 +24,7 @@ public:
 class groupOfElements {
 public:
   typedef std::set<MElement *> elementContainer;
-  typedef std::set<MVertex *> vertexContainer;
+  typedef std::set<MNode *> vertexContainer;
 
 protected:
   vertexContainer _vertices;
@@ -34,8 +34,8 @@ protected:
 public:
   groupOfElements() {}
   groupOfElements(int dim, int physical) { addPhysical(dim, physical); }
-  groupOfElements(GFace *);
-  groupOfElements(GRegion *);
+  groupOfElements(GSurface *);
+  groupOfElements(GVolume *);
   groupOfElements(std::vector<MElement *> &elems);
 
   virtual ~groupOfElements() {}
@@ -67,7 +67,7 @@ public:
     return (_elements.find(e) != _elements.end());
   }
 
-  bool find(MVertex *v) const { return (_vertices.find(v) != _vertices.end()); }
+  bool find(MNode *v) const { return (_vertices.find(v) != _vertices.end()); }
 
   inline void insert(MElement *e)
   {

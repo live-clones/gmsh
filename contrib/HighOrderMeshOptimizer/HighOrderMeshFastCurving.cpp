@@ -84,7 +84,7 @@ namespace {
     }
   }
 
-  void makeStraight(MElement *el, const std::set<MVertex *> &movedVert)
+  void makeStraight(MElement *el, const std::set<MNode *> &movedVert)
   {
     const nodalBasis *nb = el->getFunctionSpace();
     const fullMatrix<double> &pts = nb->points;
@@ -93,7 +93,7 @@ namespace {
 
     for(int iPt = el->getNumPrimaryVertices(); iPt < el->getNumVertices();
         iPt++) {
-      MVertex *vert = el->getVertex(iPt);
+      MNode *vert = el->getVertex(iPt);
       if(movedVert.find(vert) == movedVert.end()) {
         el->primaryPnt(pts(iPt, 0), pts(iPt, 1), pts(iPt, 2), p);
         vert->setXYZ(p.x(), p.y(), p.z());
@@ -303,8 +303,8 @@ namespace {
   }
 
   bool getColumn2D(MEdgeVecMEltMap &ed2el, const FastCurvingParameters &p,
-                   const MEdge &baseEd, std::vector<MVertex *> &baseVert,
-                   std::vector<MVertex *> &topPrimVert,
+                   const MEdge &baseEd, std::vector<MNode *> &baseVert,
+                   std::vector<MNode *> &topPrimVert,
                    std::vector<MElement *> &blob, MElement *&aboveElt)
   {
     // Get first element and base vertices
@@ -339,7 +339,7 @@ namespace {
 
     // Check side edges to find opposite vertices
     const int sideEd[3] = {2, 4, 5};
-    std::vector<MVertex *> topVert(3);
+    std::vector<MNode *> topVert(3);
     for(int iEd = 0; iEd < 3; iEd++) {
       MEdge ed = el->getEdge(sideEd[iEd]);
       for(int iV = 0; iV < 3; iV++) {
@@ -403,7 +403,7 @@ namespace {
     }
 
     // Check side edges to find opposite vertices
-    std::vector<MVertex *> topVert(4);
+    std::vector<MNode *> topVert(4);
     for(int iEd = 0; iEd < 4; iEd++) {
       MEdge ed = el->getEdge(sideEd[iEd]);
       for(int iV = 0; iV < 4; iV++) {
@@ -453,9 +453,9 @@ namespace {
     }
 
     // Build top face from max face (with right correspondence)
-    MVertex *maxVert[3] = {elMaxFace.getVertex(0), elMaxFace.getVertex(1),
+    MNode *maxVert[3] = {elMaxFace.getVertex(0), elMaxFace.getVertex(1),
                            elMaxFace.getVertex(2)};
-    std::vector<MVertex *> topVert(3, static_cast<MVertex *>(nullptr));
+    std::vector<MNode *> topVert(3, static_cast<MNode *>(nullptr));
     // Two vertices of elTopFace are those of elMaxFace coinciding with
     // elBaseFace
     for(int iBaseV = 0; iBaseV < 3; iBaseV++)
@@ -465,7 +465,7 @@ namespace {
           maxVert[iMaxV] = nullptr;
         }
     // Set last vertex of elTopFace as remaining vertex in elMaxFace
-    MVertex *thirdMaxVert = (maxVert[0] != nullptr) ? maxVert[0] :
+    MNode *thirdMaxVert = (maxVert[0] != nullptr) ? maxVert[0] :
                             (maxVert[1] != nullptr) ? maxVert[1] :
                                                       maxVert[2];
     if(topVert[0] == nullptr)
@@ -587,8 +587,8 @@ namespace {
   }
 
   bool getColumn3D(MFaceVecMEltMap &face2el, const FastCurvingParameters &p,
-                   const MFace &baseFace, std::vector<MVertex *> &baseVert,
-                   std::vector<MVertex *> &topPrimVert,
+                   const MFace &baseFace, std::vector<MNode *> &baseVert,
+                   std::vector<MNode *> &topPrimVert,
                    std::vector<MElement *> &blob, MElement *&aboveElt)
   {
     // Get first element and base vertices
@@ -710,17 +710,17 @@ namespace {
     }
 
   private:
-    std::set<MVertex *> vert_;
+    std::set<MNode *> vert_;
     std::vector<MElement *> elt_;
   };
 
-  void curveElement(const MetaEl &metaElt, std::set<MVertex *> &movedVert,
+  void curveElement(const MetaEl &metaElt, std::set<MNode *> &movedVert,
                     MElement *elt)
   {
     makeStraight(elt, movedVert);
     for(int iV = elt->getNumPrimaryVertices(); iV < elt->getNumVertices();
         iV++) { // Loop over HO vert. of each el. in blob
-      MVertex *vert = elt->getVertex(iV);
+      MNode *vert = elt->getVertex(iV);
       if(movedVert.find(vert) ==
          movedVert.end()) { // Try to move vert. not already moved
         double xyzS[3] = {vert->x(), vert->y(), vert->z()}, xyzC[3];
@@ -743,18 +743,18 @@ namespace {
     // Coordinates of nodes
     fullMatrix<double> nodesXYZ(nbVert, 3);
     for(int iV = 0; iV < nbVert; iV++) {
-      MVertex *vert = bndElt->getVertex(iV);
+      MNode *vert = bndElt->getVertex(iV);
       nodesXYZ(iV, 0) = vert->x();
       nodesXYZ(iV, 1) = vert->y();
       nodesXYZ(iV, 2) = vert->z();
     }
 
     // Compute distance
-    const GEdge *ge = geomEnt->cast2Edge();
+    const GCurve *ge = geomEnt->cast2Edge();
     const Range<double> parBounds = ge->parBounds(0);
     std::vector<SVector3> tanCAD(nbVert);
     for(int iV = 0; iV < nbVert; iV++) {
-      MVertex *vert = bndElt->getVertex(iV);
+      MNode *vert = bndElt->getVertex(iV);
       double tCAD;
       // If HO vertex, get stored param. coord. (can be only line).
       if(vert->onWhat() == geomEnt)
@@ -775,16 +775,16 @@ namespace {
     return taylorDistanceSq1D(gb, nodesXYZ, tanCAD);
   }
 
-  double moveAndGetDistSq2DP2(GEdge *ge, MLine3 *bndMetaElt, MVertex *vert,
+  double moveAndGetDistSq2DP2(GCurve *ge, MLine3 *bndMetaElt, MNode *vert,
                               double u)
   {
     vert->setParameter(0, u);
-    GPoint gp = ge->point(u);
+    GVertex gp = ge->point(u);
     vert->setXYZ(gp.x(), gp.y(), gp.z());
     return calcCADDistSq2D(ge, bndMetaElt);
   }
 
-  void optimizeCADDist2DP2(GEntity *geomEnt, std::vector<MVertex *> &baseVert)
+  void optimizeCADDist2DP2(GEntity *geomEnt, std::vector<MNode *> &baseVert)
   {
     // Parameters for secant method
     static const int MAXIT = 20;
@@ -792,8 +792,8 @@ namespace {
 
     // Boundary geometric and mesh entities, parametrization
     MLine3 bndMetaElt(baseVert);
-    MVertex *&vert = baseVert[2];
-    GEdge *ge = geomEnt->cast2Edge();
+    MNode *&vert = baseVert[2];
+    GCurve *ge = geomEnt->cast2Edge();
     const Range<double> parBounds = ge->parBounds(0);
     double uBV0, uBV1, uMin, uMax;
     reparamMeshVertexOnEdge(baseVert[0], ge, uBV0);
@@ -847,7 +847,7 @@ namespace {
     if(!converged || (u < uMin + TOL) || (u > uMax - TOL)) {
       u = uMin + 0.5 * du;
       vert->setParameter(0, u);
-      GPoint gp = ge->point(u);
+      GVertex gp = ge->point(u);
       vert->setXYZ(gp.x(), gp.y(), gp.z());
     }
   }
@@ -863,7 +863,7 @@ namespace {
   //   // Coordinates of nodes
   //   fullMatrix<double> nodesXYZ(nbVert, 3);
   //   for (int iV = 0; iV < nbVert; iV++) {
-  //     MVertex *vert = bndElt->getVertex(iV);
+  //     MNode *vert = bndElt->getVertex(iV);
   //     nodesXYZ(iV, 0) = vert->x();
   //     nodesXYZ(iV, 1) = vert->y();
   //     nodesXYZ(iV, 2) = vert->z();
@@ -871,12 +871,12 @@ namespace {
 
   //   // Compute distance and gradients
   //   if (dim == 2) { // 2D
-  //     const GEdge *ge = geomEnt->cast2Edge();
+  //     const GCurve *ge = geomEnt->cast2Edge();
   //     const Range<double> parBounds = ge->parBounds(0);
   //     const double eps = 1.e-6 * (parBounds.high()-parBounds.low());
   //     std::vector<SVector3> tanCAD(nbVert);
   //     for (int iV = 0; iV < nbVert; iV++) {
-  //       MVertex *vert = bndElt->getVertex(iV);
+  //       MNode *vert = bndElt->getVertex(iV);
   //       double tCAD;
   //       if (iV >= nbPrimVert) // If HO vertex, ...
   //         vert->getParameter(0, tCAD); // ... get stored param. coord. (can
@@ -901,7 +901,7 @@ namespace {
   //                    for FD
   //       const SVector3 tanCADS = tanCAD[iV]; // Save tangent to CAD at
   //       perturbed node double tCAD; bndElt->getVertex(iV)->getParameter(0,
-  //       tCAD); tCAD += eps; // New param. coord. of perturbed node GPoint gp
+  //       tCAD); tCAD += eps; // New param. coord. of perturbed node GVertex gp
   //       = ge->point(tCAD); // New coord. of perturbed node nodesXYZ(iV, 0) =
   //       gp.x(); nodesXYZ(iV, 1) = gp.y(); nodesXYZ(iV, 2) = gp.z();
   //       tanCAD[iV] = ge->firstDer(tCAD); // New tangent to CAD at perturbed
@@ -915,13 +915,13 @@ namespace {
   //     }
   //   }
   //   else { // 3D
-  //     const GFace *gf = geomEnt->cast2Face();
+  //     const GSurface *gf = geomEnt->cast2Face();
   //     const Range<double> parBounds0 = gf->parBounds(0), parBounds1 =
   //     gf->parBounds(1); const double eps0 = 1.e-6 *
   //     (parBounds0.high()-parBounds0.low()); const double eps1 = 1.e-6 *
   //     (parBounds1.high()-parBounds1.low()); std::vector<SVector3>
   //     normCAD(nbVert); for (int iV = 0; iV < nbVert; iV++) {
-  //       MVertex *vert = bndElt->getVertex(iV);
+  //       MNode *vert = bndElt->getVertex(iV);
   //       SPoint2 pCAD;
   //       if (iV >= nbPrimVert) { // If HO vertex, get parameters
   //         vert->getParameter(0, pCAD[0]);
@@ -935,7 +935,7 @@ namespace {
   //     }
   //     dist = taylorDistanceSq2D(gb, nodesXYZ, normCAD);
   //     for (int iV = nbPrimVert; iV < nbVert; iV++) {
-  //       MVertex *vert = bndElt->getVertex(iV);
+  //       MNode *vert = bndElt->getVertex(iV);
   //       const double xS = nodesXYZ(iV, 0), yS = nodesXYZ(iV, 1),
   //                    zS = nodesXYZ(iV, 2); // Save coord. of perturbed node
   //                    for FD
@@ -943,7 +943,7 @@ namespace {
   //       perturbed node SPoint2 pCAD0; // New param. coord. of perturbed node
   //       in 1st dir. vert->getParameter(0, pCAD0[0]); pCAD0 += eps0;
   //       vert->getParameter(1, pCAD0[1]);
-  //       GPoint gp0 = gf->point(pCAD0); // New coord. of perturbed node in 1st
+  //       GVertex gp0 = gf->point(pCAD0); // New coord. of perturbed node in 1st
   //       dir. nodesXYZ(iV, 0) = gp0.x(); nodesXYZ(iV, 1) = gp0.y();
   //       nodesXYZ(iV, 2) = gp0.z();
   //       normCAD[iV] = gf->normal(pCAD0); // New normal to CAD at perturbed
@@ -955,7 +955,7 @@ namespace {
   //       node in 2nd dir. vert->getParameter(0, pCAD1[0]);
   //       vert->getParameter(1, pCAD1[1]);
   //       pCAD1 += eps1;
-  //       GPoint gp1 = gf->point(pCAD1); // New coord. of perturbed node in 2nd
+  //       GVertex gp1 = gf->point(pCAD1); // New coord. of perturbed node in 2nd
   //       dir. nodesXYZ(iV, 0) = gp1.x(); nodesXYZ(iV, 1) = gp1.y();
   //       nodesXYZ(iV, 2) = gp1.z();
   //       normCAD[iV] = gf->normal(pCAD1); // New normal to CAD at perturbed
@@ -974,7 +974,7 @@ namespace {
                                 MElement *aboveElt, double deformFact)
   {
     metaElt.setCurvedTop(deformFact);
-    std::set<MVertex *> movedVertDum;
+    std::set<MNode *> movedVertDum;
     curveElement(metaElt, movedVertDum, lastElt);
     if(aboveElt == nullptr) return 1.;
     double minJacDet, maxJacDet;
@@ -985,10 +985,10 @@ namespace {
 
   void curveColumn(const FastCurvingParameters &p, GEntity *ent,
                    GEntity *bndEnt, int metaElType,
-                   std::vector<MVertex *> &baseVert,
-                   const std::vector<MVertex *> &topPrimVert,
+                   std::vector<MNode *> &baseVert,
+                   const std::vector<MNode *> &topPrimVert,
                    MElement *aboveElt, std::vector<MElement *> &blob,
-                   std::set<MVertex *> &movedVert, DbgOutputMeta &dbgOut)
+                   std::set<MNode *> &movedVert, DbgOutputMeta &dbgOut)
   {
     static const double MINQUAL = 0.01, TOL = 0.01, MAXITER = 10;
 
@@ -1044,29 +1044,29 @@ namespace {
 
   void curveMeshFromBndElt(MEdgeVecMEltMap &ed2el, MFaceVecMEltMap &face2el,
                            GEntity *ent, GEntity *bndEnt, MElement *bndElt,
-                           std::set<MVertex *> movedVert,
+                           std::set<MNode *> movedVert,
                            const FastCurvingParameters &p,
                            DbgOutputMeta &dbgOut)
   {
     const int bndType = bndElt->getType();
     int metaElType;
     bool foundCol;
-    std::vector<MVertex *> baseVert, topPrimVert;
+    std::vector<MNode *> baseVert, topPrimVert;
     std::vector<MElement *> blob;
     MElement *aboveElt = nullptr;
     if(bndType == TYPE_LIN) { // 1D boundary
-      MVertex *vb0 = bndElt->getVertex(0);
-      MVertex *vb1 = bndElt->getVertex(1);
+      MNode *vb0 = bndElt->getVertex(0);
+      MNode *vb1 = bndElt->getVertex(1);
       metaElType = TYPE_QUA;
       MEdge baseEd(vb0, vb1);
       foundCol =
         getColumn2D(ed2el, p, baseEd, baseVert, topPrimVert, blob, aboveElt);
     }
     else { // 2D boundary
-      MVertex *vb0 = bndElt->getVertex(0);
-      MVertex *vb1 = bndElt->getVertex(1);
-      MVertex *vb2 = bndElt->getVertex(2);
-      MVertex *vb3;
+      MNode *vb0 = bndElt->getVertex(0);
+      MNode *vb1 = bndElt->getVertex(1);
+      MNode *vb2 = bndElt->getVertex(2);
+      MNode *vb3;
       if(bndType == TYPE_QUA) {
         vb3 = bndElt->getVertex(3);
         metaElType = TYPE_HEX;
@@ -1109,12 +1109,12 @@ namespace {
       MElement *bndEl = *it;
       const int bndType = bndEl->getType();
       bool foundCol;
-      std::vector<MVertex *> baseVert, topPrimVert;
+      std::vector<MNode *> baseVert, topPrimVert;
       MElement *aboveElt = nullptr;
 
       if(bndType == TYPE_LIN) { // 1D boundary
-        MVertex *vb0 = bndEl->getVertex(0);
-        MVertex *vb1 = bndEl->getVertex(1);
+        MNode *vb0 = bndEl->getVertex(0);
+        MNode *vb1 = bndEl->getVertex(1);
         MEdge baseEd(vb0, vb1);
 
         // Check if baseEd is adjacent to an element of the face
@@ -1134,10 +1134,10 @@ namespace {
                       bndEl2column.back().second, aboveElements.back());
       }
       else { // 2D boundary
-        MVertex *vb0 = bndEl->getVertex(0);
-        MVertex *vb1 = bndEl->getVertex(1);
-        MVertex *vb2 = bndEl->getVertex(2);
-        MVertex *vb3 = nullptr;
+        MNode *vb0 = bndEl->getVertex(0);
+        MNode *vb1 = bndEl->getVertex(1);
+        MNode *vb2 = bndEl->getVertex(2);
+        MNode *vb3 = nullptr;
         if(bndType == TYPE_QUA) vb3 = bndEl->getVertex(3);
         MFace baseFace(vb0, vb1, vb2, vb3);
         bndEl2column.push_back(
@@ -1166,11 +1166,11 @@ namespace {
     if(p.dim == 2) {
       if(normal.norm() > .5) {
         curve2DBoundaryLayer(bndEl2column, normal,
-                             dynamic_cast<GEdge *>(bndEnt));
+                             dynamic_cast<GCurve *>(bndEnt));
       }
       else {
-        curve2DBoundaryLayer(bndEl2column, dynamic_cast<GFace *>(ent),
-                             dynamic_cast<GEdge *>(bndEnt));
+        curve2DBoundaryLayer(bndEl2column, dynamic_cast<GSurface *>(ent),
+                             dynamic_cast<GCurve *>(bndEnt));
       }
     }
     //  else curve3DBoundaryLayer(bndEl2column);
@@ -1196,13 +1196,13 @@ namespace {
     // Build list of bnd. elements to consider
     std::list<MElement *> bndEl;
     if(bndEnt->dim() == 1) {
-      GEdge *gEd = bndEnt->cast2Edge();
+      GCurve *gEd = bndEnt->cast2Edge();
       for(std::size_t i = 0; i < gEd->lines.size(); i++)
         //      insertIfCurved(gEd->lines[i], bndEl);
         bndEl.push_back(gEd->lines[i]);
     }
     else if(bndEnt->dim() == 2) {
-      GFace *gFace = bndEnt->cast2Face();
+      GSurface *gFace = bndEnt->cast2Face();
       for(std::size_t i = 0; i < gFace->triangles.size(); i++) {
         if(p.thickness)
           bndEl.push_back(gFace->triangles[i]);
@@ -1226,7 +1226,7 @@ namespace {
 
     // Loop over boundary elements to curve them by columns
     DbgOutputMeta dbgOut;
-    std::set<MVertex *> movedVert;
+    std::set<MNode *> movedVert;
     for(auto itBE = bndEl.begin(); itBE != bndEl.end();
         itBE++) // Loop over bnd. elements
       curveMeshFromBndElt(ed2el, face2el, ent, bndEnt, *itBE, movedVert, p,
@@ -1247,7 +1247,7 @@ namespace {
     }
 
     std::list<MElement *> bndElts;
-    GFace *gFace = bndEnt->cast2Face();
+    GSurface *gFace = bndEnt->cast2Face();
     for(std::size_t i = 0; i < gFace->triangles.size(); i++)
       bndElts.push_back(gFace->triangles[i]);
     for(std::size_t i = 0; i < gFace->quadrangles.size(); i++)
@@ -1258,12 +1258,12 @@ namespace {
       MElement *bndEl = *it;
       const int bndType = bndEl->getType();
       bool foundCol;
-      std::vector<MVertex *> baseVert, topPrimVert;
+      std::vector<MNode *> baseVert, topPrimVert;
 
-      MVertex *vb0 = bndEl->getVertex(0);
-      MVertex *vb1 = bndEl->getVertex(1);
-      MVertex *vb2 = bndEl->getVertex(2);
-      MVertex *vb3 = nullptr;
+      MNode *vb0 = bndEl->getVertex(0);
+      MNode *vb1 = bndEl->getVertex(1);
+      MNode *vb2 = bndEl->getVertex(2);
+      MNode *vb3 = nullptr;
       if(bndType == TYPE_QUA) vb3 = bndEl->getVertex(3);
       MFace baseFace(vb0, vb1, vb2, vb3);
       bndEl2column.push_back(std::make_pair(bndEl, std::vector<MElement *>()));
@@ -1322,7 +1322,7 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
       if(gEnt->geomType() == GEntity::Plane && gEnt->haveParametrization()) {
         double u = gEnt->parBounds(0).low();
         double v = gEnt->parBounds(1).low();
-        normal = dynamic_cast<GFace *>(gEnt)->normal(SPoint2(u, v));
+        normal = dynamic_cast<GSurface *>(gEnt)->normal(SPoint2(u, v));
       }
       else if(gEnt->geomType() == GEntity::DiscreteSurface) {
         SBoundingBox3d bb = gEnt->bounds();
@@ -1338,7 +1338,7 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
     std::vector<GEntity *> bndEnts;
     std::set<GEntity *> blBndEnts;
     if(p.dim == 2) {
-      std::vector<GEdge *> const &gEds = gEnt->edges();
+      std::vector<GCurve *> const &gEds = gEnt->edges();
       bndEnts = std::vector<GEntity *>(gEds.begin(), gEds.end());
       for(int iBndEnt = 0; iBndEnt < bndEnts.size(); iBndEnt++) {
         GEntity *&bndEnt = bndEnts[iBndEnt];
@@ -1351,7 +1351,7 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
       }
     }
     else {
-      std::vector<GFace *> gFaces = gEnt->faces();
+      std::vector<GSurface *> gFaces = gEnt->faces();
       bndEnts = std::vector<GEntity *>(gFaces.begin(), gFaces.end());
     }
     if(requireBLInfo && blBndEnts.empty())
@@ -1390,7 +1390,7 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
 
     if(p.thickness && p.dim == 3 && bndEnts.size()) {
       Msg::Info("Curving elements in %s...", entName(gEnt).c_str());
-      curve3DBoundaryLayer(bndEl2column, (GFace *)bndEnts[0]);
+      curve3DBoundaryLayer(bndEl2column, (GSurface *)bndEnts[0]);
     }
   }
 

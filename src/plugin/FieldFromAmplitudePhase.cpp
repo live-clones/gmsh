@@ -106,7 +106,7 @@ PView *GMSH_FieldFromAmplitudePhasePlugin::execute(PView *v)
   std::vector<GEntity *> _entities;
   umodel->getEntities(_entities);
 
-  std::set<MVertex *> ve;
+  std::set<MNode *> ve;
   std::map<int, std::vector<double> > dataR;
   std::map<int, std::vector<double> > dataI;
 

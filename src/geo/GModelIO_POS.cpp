@@ -27,7 +27,7 @@ int GModel::writePOS(const std::string &name, bool printElementary,
     getEntities(entities);
     for(std::size_t i = 0; i < entities.size(); i++)
       for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++){
-        MVertex *v = entities[i]->mesh_vertices[j];
+        MNode *v = entities[i]->mesh_vertices[j];
         fprintf(fp, "SP(%g,%g,%g){1};\n", v->x(), v->y(), v->z());
       }
     fprintf(fp, "};\n");

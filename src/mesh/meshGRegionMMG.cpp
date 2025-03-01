@@ -14,11 +14,11 @@
 #if defined(HAVE_MMG)
 
 #include <set>
-#include "GRegion.h"
-#include "GFace.h"
+#include "GVolume.h"
+#include "GSurface.h"
 #include "MTetrahedron.h"
 #include "MTriangle.h"
-#include "MVertex.h"
+#include "MNode.h"
 #include "BackgroundMeshTools.h"
 #include "Context.h"
 
@@ -26,10 +26,10 @@ extern "C" {
 #include <mmg/libmmg.h>
 }
 
-static void MMG2gmsh(GRegion *gr, MMG5_pMesh mmg,
-                     std::map<int, MVertex *> &mmg2gmsh)
+static void MMG2gmsh(GVolume *gr, MMG5_pMesh mmg,
+                     std::map<int, MNode *> &mmg2gmsh)
 {
-  std::map<int, MVertex *> kToMVertex;
+  std::map<int, MNode *> kToMVertex;
   int np, ne, nt, na, ref;
   double cx, cy, cz;
 
@@ -47,7 +47,7 @@ static void MMG2gmsh(GRegion *gr, MMG5_pMesh mmg,
     auto it = mmg2gmsh.find(ref);
 
     if(it == mmg2gmsh.end()) {
-      MVertex *v = new MVertex(cx, cy, cz, gr);
+      MNode *v = new MNode(cx, cy, cz, gr);
       gr->mesh_vertices.push_back(v);
       kToMVertex[k] = v;
     }
@@ -62,10 +62,10 @@ static void MMG2gmsh(GRegion *gr, MMG5_pMesh mmg,
                              nullptr) != 1)
       Msg::Error("Mmg3d: unable to get tetrahedron %d", k);
 
-    MVertex *v1 = kToMVertex[v1mmg];
-    MVertex *v2 = kToMVertex[v2mmg];
-    MVertex *v3 = kToMVertex[v3mmg];
-    MVertex *v4 = kToMVertex[v4mmg];
+    MNode *v1 = kToMVertex[v1mmg];
+    MNode *v2 = kToMVertex[v2mmg];
+    MNode *v3 = kToMVertex[v3mmg];
+    MNode *v4 = kToMVertex[v4mmg];
     if(!v1 || !v2 || !v3 || !v4) {
       Msg::Error("Mmg3d: unknown vertex in tetrahedron %d", k);
     }
@@ -84,9 +84,9 @@ static void MMG2gmsh(GRegion *gr, MMG5_pMesh mmg,
     if(MMG3D_Get_triangle(mmg, &v1mmg, &v2mmg, &v3mmg, &ref, nullptr) != 1)
       Msg::Error("Mmg3d: unable to get triangle %d", k);
 
-    MVertex *v1 = kToMVertex[v1mmg];
-    MVertex *v2 = kToMVertex[v2mmg];
-    MVertex *v3 = kToMVertex[v3mmg];
+    MNode *v1 = kToMVertex[v1mmg];
+    MNode *v2 = kToMVertex[v2mmg];
+    MNode *v3 = kToMVertex[v3mmg];
     if(!v1 || !v2 || !v3) {
       Msg::Error("Mmg3d: unknown vertex in triangle %d", k);
     }
@@ -97,11 +97,11 @@ static void MMG2gmsh(GRegion *gr, MMG5_pMesh mmg,
 #endif
 }
 
-static void gmsh2MMG(GRegion *gr, MMG5_pMesh mmg, MMG5_pSol sol,
-                     std::map<int, MVertex *> &mmg2gmsh)
+static void gmsh2MMG(GVolume *gr, MMG5_pMesh mmg, MMG5_pSol sol,
+                     std::map<int, MNode *> &mmg2gmsh)
 {
   // Count mesh vertices
-  std::set<MVertex *> allVertices;
+  std::set<MNode *> allVertices;
   for(unsigned int i = 0; i < gr->tetrahedra.size(); i++) {
     allVertices.insert(gr->tetrahedra[i]->getVertex(0));
     allVertices.insert(gr->tetrahedra[i]->getVertex(1));
@@ -111,7 +111,7 @@ static void gmsh2MMG(GRegion *gr, MMG5_pMesh mmg, MMG5_pSol sol,
   int np = allVertices.size();
 
   // Count boundary triangles
-  std::vector<GFace *> f = gr->faces();
+  std::vector<GSurface *> f = gr->faces();
   int nt = 0;
   for(auto it = f.begin(); it != f.end(); ++it) {
     nt += (*it)->triangles.size();
@@ -128,13 +128,13 @@ static void gmsh2MMG(GRegion *gr, MMG5_pMesh mmg, MMG5_pSol sol,
   if(MMG3D_Set_solSize(mmg, sol, MMG5_Vertex, np, MMG5_Tensor) != 1)
     Msg::Error("Mmg3d: unable to set metric size");
 
-  std::map<MVertex *, std::pair<double, int> > LCS;
+  std::map<MNode *, std::pair<double, int> > LCS;
   for(auto it = f.begin(); it != f.end(); ++it) {
     for(unsigned int i = 0; i < (*it)->triangles.size(); i++) {
       MTriangle *t = (*it)->triangles[i];
       double L = t->maxEdge();
       for(int k = 0; k < 3; k++) {
-        MVertex *v = t->getVertex(k);
+        MNode *v = t->getVertex(k);
         auto itv = LCS.find(v);
         if(itv != LCS.end()) {
           itv->second.first += L;
@@ -156,7 +156,7 @@ static void gmsh2MMG(GRegion *gr, MMG5_pMesh mmg, MMG5_pSol sol,
 
     gmsh2mmg_num[(*it)->getNum()] = k;
 
-    MVertex *v = *it;
+    MNode *v = *it;
     double U = 0, V = 0;
     if(!v->onWhat()) continue;
 
@@ -212,19 +212,19 @@ static void gmsh2MMG(GRegion *gr, MMG5_pMesh mmg, MMG5_pSol sol,
   }
 }
 
-static void updateSizes(GRegion *gr, MMG5_pMesh mmg, MMG5_pSol sol,
-                        std::map<int, MVertex *> &mmg2gmsh)
+static void updateSizes(GVolume *gr, MMG5_pMesh mmg, MMG5_pSol sol,
+                        std::map<int, MNode *> &mmg2gmsh)
 {
-  std::vector<GFace *> f = gr->faces();
+  std::vector<GSurface *> f = gr->faces();
 
-  std::map<MVertex *, std::pair<double, int> > LCS;
+  std::map<MNode *, std::pair<double, int> > LCS;
   // if (Extend2dMeshIn3dVolumes()){
   for(auto it = f.begin(); it != f.end(); ++it) {
     for(unsigned int i = 0; i < (*it)->triangles.size(); i++) {
       MTriangle *t = (*it)->triangles[i];
       double L = t->maxEdge();
       for(int k = 0; k < 3; k++) {
-        MVertex *v = t->getVertex(k);
+        MNode *v = t->getVertex(k);
         auto itv = LCS.find(v);
         if(itv != LCS.end()) {
           itv->second.first += L;
@@ -272,12 +272,12 @@ static void updateSizes(GRegion *gr, MMG5_pMesh mmg, MMG5_pSol sol,
   }
 }
 
-void refineMeshMMG(GRegion *gr)
+void refineMeshMMG(GVolume *gr)
 {
   MMG5_pMesh mmg = nullptr;
   MMG5_pSol sol = nullptr;
 
-  std::map<int, MVertex *> mmg2gmsh;
+  std::map<int, MNode *> mmg2gmsh;
 
   // Mmg structures allocations
   MMG3D_Init_mesh(MMG5_ARG_start, MMG5_ARG_ppMesh, &mmg, MMG5_ARG_ppMet, &sol,
@@ -356,7 +356,7 @@ void refineMeshMMG(GRegion *gr)
 
 #else
 
-void refineMeshMMG(GRegion *gr)
+void refineMeshMMG(GVolume *gr)
 {
   Msg::Warning("This version of Gmsh is not compiled with MMG support: "
                "skipping refinement");

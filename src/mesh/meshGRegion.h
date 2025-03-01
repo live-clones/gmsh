@@ -12,64 +12,64 @@
 #include "MFace.h"
 
 class GModel;
-class GRegion;
-class GFace;
-class GEdge;
-class MVertex;
+class GVolume;
+class GSurface;
+class GCurve;
+class MNode;
 class MLine;
 class MTriangle;
 
 // Create the mesh of the region
 class meshGRegion {
 public:
-  std::vector<GRegion *> &delaunay;
-  meshGRegion(std::vector<GRegion *> &d) : delaunay(d) {}
-  void operator()(GRegion *);
+  std::vector<GVolume *> &delaunay;
+  meshGRegion(std::vector<GVolume *> &d) : delaunay(d) {}
+  void operator()(GVolume *);
 };
 
 class meshGRegionExtruded {
 public:
-  void operator()(GRegion *);
+  void operator()(GVolume *);
 };
 
 
 // Optimize the mesh of the region using gmsh's algo
 class untangleMeshGRegion {
 public:
-  void operator()(GRegion *, bool always = false);
+  void operator()(GVolume *, bool always = false);
 };
 
 // Optimize the mesh of the region using gmsh's algo
 class optimizeMeshGRegion {
 public:
-  void operator()(GRegion *, bool always = false);
+  void operator()(GVolume *, bool always = false);
 };
 
 // Optimize the mesh of the region using netgen's algo
 class optimizeMeshGRegionNetgen {
 public:
-  void operator()(GRegion *, bool always = false);
+  void operator()(GVolume *, bool always = false);
 };
 
 // destroy the mesh of the region
 class deMeshGRegion {
 public:
-  void operator()(GRegion *);
+  void operator()(GVolume *);
 };
 
-void MeshDelaunayVolume(std::vector<GRegion *> &delaunay);
-bool CreateAnEmptyVolumeMesh(GRegion *gr);
-int MeshTransfiniteVolume(GRegion *gr);
+void MeshDelaunayVolume(std::vector<GVolume *> &delaunay);
+bool CreateAnEmptyVolumeMesh(GVolume *gr);
+int MeshTransfiniteVolume(GVolume *gr);
 int SubdivideExtrudedMesh(GModel *m);
-void carveHole(GRegion *gr, int num, double distance,
+void carveHole(GVolume *gr, int num, double distance,
                std::vector<int> &surfaces);
 
-typedef std::map<MFace, GFace *, MFaceLessThan> fs_cont;
-typedef std::multimap<MVertex *, std::pair<MLine *, GEdge *> > es_cont;
-GFace *findInFaceSearchStructure(MVertex *p1, MVertex *p2, MVertex *p3,
+typedef std::map<MFace, GSurface *, MFaceLessThan> fs_cont;
+typedef std::multimap<MNode *, std::pair<MLine *, GCurve *> > es_cont;
+GSurface *findInFaceSearchStructure(MNode *p1, MNode *p2, MNode *p3,
                                  const fs_cont &search);
-GFace *findInFaceSearchStructure(const MFace &f, const fs_cont &search);
-GEdge *findInEdgeSearchStructure(MVertex *p1, MVertex *p2,
+GSurface *findInFaceSearchStructure(const MFace &f, const fs_cont &search);
+GCurve *findInEdgeSearchStructure(MNode *p1, MNode *p2,
                                  const es_cont &search);
 bool buildFaceSearchStructure(GModel *model, fs_cont &search,
                               bool onlyTriangles = false);
@@ -78,21 +78,21 @@ bool buildEdgeSearchStructure(GModel *model, es_cont &search);
 // hybrid mesh recovery structure
 class splitQuadRecovery {
 private:
-  std::map<MFace, MVertex *, MFaceLessThan> _quad;
-  std::map<MFace, GFace *, MFaceLessThan> _tri;
+  std::map<MFace, MNode *, MFaceLessThan> _quad;
+  std::map<MFace, GSurface *, MFaceLessThan> _tri;
 
 public:
   splitQuadRecovery() {}
-  void add(const MFace &f, MVertex *v, GFace *gf);
-  std::map<MFace, GFace *, MFaceLessThan> &getTri() { return _tri; }
-  std::map<MFace, MVertex *, MFaceLessThan> &getQuad() { return _quad; }
+  void add(const MFace &f, MNode *v, GSurface *gf);
+  std::map<MFace, GSurface *, MFaceLessThan> &getTri() { return _tri; }
+  std::map<MFace, MNode *, MFaceLessThan> &getQuad() { return _quad; }
   int buildPyramids(GModel *gm);
 };
 
 // adapt the mesh of a region
 class adaptMeshGRegion {
 public:
-  void operator()(GRegion *);
+  void operator()(GVolume *);
 };
 
 #endif

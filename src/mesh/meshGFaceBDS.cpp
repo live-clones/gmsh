@@ -8,14 +8,14 @@
 #include "meshGFace.h"
 #include "meshGFaceOptimize.h"
 #include "BackgroundMesh.h"
-#include "GVertex.h"
-#include "GEdge.h"
-#include "GFace.h"
+#include "GPoint.h"
+#include "GCurve.h"
+#include "GSurface.h"
 #include "discreteFace.h"
-#include "MVertex.h"
+#include "MNode.h"
 #include "MElement.h"
 #include "Context.h"
-#include "GPoint.h"
+#include "GVertex.h"
 #include "GModel.h"
 #include "Numeric.h"
 #include "BDS.h"
@@ -24,8 +24,8 @@
 #include "robustPredicates.h"
 
 static void getDegeneratedVertices(
-  BDS_Mesh &m, std::map<BDS_Point *, MVertex *, PointLessThan> *recoverMap,
-  std::set<MVertex *, MVertexPtrLessThan> &degenerated,
+  BDS_Mesh &m, std::map<BDS_Point *, MNode *, PointLessThan> *recoverMap,
+  std::set<MNode *, MVertexPtrLessThan> &degenerated,
   std::vector<BDS_Edge *> &degenerated_edges)
 {
   degenerated.clear();
@@ -56,9 +56,9 @@ static double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2)
 }
 
 static inline double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2,
-                                             GFace *f)
+                                             GSurface *f)
 {
-  GPoint GP = f->point(SPoint2(0.5 * (p1->u + p2->u), 0.5 * (p1->v + p2->v)));
+  GVertex GP = f->point(SPoint2(0.5 * (p1->u + p2->u), 0.5 * (p1->v + p2->v)));
 
   if(!GP.succeeded()) return computeEdgeLinearLength(p1, p2);
 
@@ -75,7 +75,7 @@ static inline double computeEdgeLinearLength(BDS_Point *p1, BDS_Point *p2,
   return l1 + l2;
 }
 
-static double computeEdgeLinearLength(BDS_Edge *e, GFace *f)
+static double computeEdgeLinearLength(BDS_Edge *e, GSurface *f)
 {
   // FIXME !!!
   return f->geomType() == GEntity::Plane ?
@@ -83,13 +83,13 @@ static double computeEdgeLinearLength(BDS_Edge *e, GFace *f)
            computeEdgeLinearLength(e->p1, e->p2, f);
 }
 
-static double NewGetLc(BDS_Point *point, GFace *gf)
+static double NewGetLc(BDS_Point *point, GSurface *gf)
 {
   return Extend1dMeshIn2dSurfaces(gf) ? std::min(point->lc(), point->lcBGM()) :
                                         point->lcBGM();
 }
 
-static double correctLC_(BDS_Point *p1, BDS_Point *p2, GFace *f)
+static double correctLC_(BDS_Point *p1, BDS_Point *p2, GSurface *f)
 {
   double l1 = NewGetLc(p1, f);
   double l2 = NewGetLc(p2, f);
@@ -99,7 +99,7 @@ static double correctLC_(BDS_Point *p1, BDS_Point *p2, GFace *f)
   double U = coord * p1->u + (1 - coord) * p2->u;
   double V = coord * p1->v + (1 - coord) * p2->v;
 
-  GPoint gpp = f->point(U, V);
+  GVertex gpp = f->point(U, V);
   double lmid = BGM_MeshSize(f, U, V, gpp.x(), gpp.y(), gpp.z());
   l = std::min(l, lmid);
 
@@ -114,7 +114,7 @@ static double correctLC_(BDS_Point *p1, BDS_Point *p2, GFace *f)
   return l;
 }
 
-static double NewGetLc(BDS_Edge *const edge, GFace *const face)
+static double NewGetLc(BDS_Edge *const edge, GSurface *const face)
 {
   return computeEdgeLinearLength(edge, face) /
          correctLC_(edge->p1, edge->p2, face);
@@ -137,7 +137,7 @@ static bool edgeSwapTestAngle(BDS_Edge *e, double min_cos)
   return prosca(norm1, norm2) > min_cos;
 }
 
-static int edgeSwapTest(GFace *gf, BDS_Edge *e)
+static int edgeSwapTest(GSurface *gf, BDS_Edge *e)
 {
   BDS_Point *op[2];
 
@@ -176,7 +176,7 @@ static bool neighboringModified(BDS_Point *p)
   return false;
 }
 
-static void swapEdgePass(GFace *gf, BDS_Mesh &m, int &nb_swap, double &t,
+static void swapEdgePass(GSurface *gf, BDS_Mesh &m, int &nb_swap, double &t,
                          int FINALIZE = 0, double orientation = 1.0)
 {
   double t1 = Cpu();
@@ -205,7 +205,7 @@ static void swapEdgePass(GFace *gf, BDS_Mesh &m, int &nb_swap, double &t,
   t += (Cpu() - t1);
 }
 
-static bool edgeSwapTestDelaunayAniso(BDS_Edge *e, GFace *gf,
+static bool edgeSwapTestDelaunayAniso(BDS_Edge *e, GSurface *gf,
                                       std::set<swapquad> &configs)
 {
   BDS_Point *op[2];
@@ -233,7 +233,7 @@ static bool edgeSwapTestDelaunayAniso(BDS_Edge *e, GFace *gf,
   return true;
 }
 
-void delaunayizeBDS(GFace *gf, BDS_Mesh &m, int &nb_swap)
+void delaunayizeBDS(GSurface *gf, BDS_Mesh &m, int &nb_swap)
 {
   typedef std::vector<BDS_Edge *>::size_type size_type;
 
@@ -273,7 +273,7 @@ static bool edges_sort(std::pair<double, BDS_Edge *> a,
     return (a.first < b.first);
 }
 
-static bool middlePoint(GFace *gf, BDS_Edge *e, double &u, double &v)
+static bool middlePoint(GSurface *gf, BDS_Edge *e, double &u, double &v)
 {
   double u1 = e->p1->u;
   double u2 = e->p2->u;
@@ -288,7 +288,7 @@ static bool middlePoint(GFace *gf, BDS_Edge *e, double &u, double &v)
 
   SPoint3 pp(0.5 * (X1 + X2), 0.5 * (Y1 + Y2), 0.5 * (Z1 + Z2));
   double guess[2] = {0.5 * (u1 + u2), 0.5 * (v1 + v2)};
-  GPoint gp = gf->closestPoint(pp, guess);
+  GVertex gp = gf->closestPoint(pp, guess);
   if(0 && gp.succeeded()) {
     SPoint3 XX1(X1, Y1, Z1);
     SPoint3 XX2(X2, Y2, Z2);
@@ -326,7 +326,7 @@ static bool middlePoint(GFace *gf, BDS_Edge *e, double &u, double &v)
   while(1) {
     u = 0.5 * (u1 + u2);
     v = 0.5 * (v1 + v2);
-    GPoint gpp = gf->point(u, v);
+    GVertex gpp = gf->point(u, v);
     if(gpp.succeeded()) {
       double X = gpp.x();
       double Y = gpp.y();
@@ -373,7 +373,7 @@ static void setDegeneracy(std::vector<BDS_Point *> &deg, short d)
   for(size_t i = 0; i < deg.size(); i++) deg[i]->degenerated = d;
 }
 
-static void splitAllEdgesConnectedToSingularity(GFace *gf, BDS_Mesh &m)
+static void splitAllEdgesConnectedToSingularity(GSurface *gf, BDS_Mesh &m)
 {
   std::vector<BDS_Edge *> degenerated;
   for(size_t i = 0; i < m.edges.size(); i++) {
@@ -387,7 +387,7 @@ static void splitAllEdgesConnectedToSingularity(GFace *gf, BDS_Mesh &m)
     if(!e->deleted && e->numfaces() == 2) {
       double U = 0.5 * (e->p1->u + e->p2->u);
       double V = 0.5 * (e->p1->v + e->p2->v);
-      GPoint gpp = gf->point(U, V);
+      GVertex gpp = gf->point(U, V);
       BDS_Point *mid =
         m.add_point(++m.MAXPOINTNUMBER, gpp.x(), gpp.y(), gpp.z());
       mid->u = U;
@@ -402,7 +402,7 @@ static void splitAllEdgesConnectedToSingularity(GFace *gf, BDS_Mesh &m)
   }
 }
 
-static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
+static void splitEdgePass(GSurface *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
                           std::vector<SPoint2> *true_boundary, double &t)
 {
   double t1 = Cpu();
@@ -464,7 +464,7 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
       if(faceDiscrete)
         if(!middlePoint(gf, e, U, V)) continue;
 
-      GPoint gpp = gf->point(U, V);
+      GVertex gpp = gf->point(U, V);
       bool inside = true;
       if(true_boundary) {
         SPoint2 pp(U, V);
@@ -500,7 +500,7 @@ static void splitEdgePass(GFace *gf, BDS_Mesh &m, double MAXE_, int &nb_split,
   t += (Cpu() - t1);
 }
 
-double getMaxLcWhenCollapsingEdge(GFace *gf, BDS_Mesh &m, BDS_Edge *e,
+double getMaxLcWhenCollapsingEdge(GSurface *gf, BDS_Mesh &m, BDS_Edge *e,
                                   BDS_Point *p)
 {
   BDS_Point *o = e->othervertex(p);
@@ -529,7 +529,7 @@ double getMaxLcWhenCollapsingEdge(GFace *gf, BDS_Mesh &m, BDS_Edge *e,
   return maxLc;
 }
 
-void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP,
+void collapseEdgePass(GSurface *gf, BDS_Mesh &m, double MINE_, int MAXNP,
                       int &nb_collaps, double &t)
 {
   double t1 = Cpu();
@@ -584,7 +584,7 @@ void collapseEdgePass(GFace *gf, BDS_Mesh &m, double MINE_, int MAXNP,
   t += (Cpu() - t1);
 }
 
-void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q,
+void smoothVertexPass(GSurface *gf, BDS_Mesh &m, int &nb_smooth, bool q,
                       double threshold, double &t)
 {
   double t1 = Cpu();
@@ -601,8 +601,8 @@ void smoothVertexPass(GFace *gf, BDS_Mesh &m, int &nb_smooth, bool q,
 }
 
 static void
-computeNodalSizes(GFace *gf, BDS_Mesh &m,
-                  std::map<BDS_Point *, MVertex *, PointLessThan> *recoverMap)
+computeNodalSizes(GSurface *gf, BDS_Mesh &m,
+                  std::map<BDS_Point *, MNode *, PointLessThan> *recoverMap)
 {
   auto itp = m.points.begin();
   while(itp != m.points.end()) {
@@ -688,10 +688,10 @@ computeNodalSizes(GFace *gf, BDS_Mesh &m,
 }
 
 void modifyInitialMeshToRemoveDegeneracies(
-  GFace *gf, BDS_Mesh &m,
-  std::map<BDS_Point *, MVertex *, PointLessThan> *recoverMap)
+  GSurface *gf, BDS_Mesh &m,
+  std::map<BDS_Point *, MNode *, PointLessThan> *recoverMap)
 {
-  std::set<MVertex *, MVertexPtrLessThan> degenerated;
+  std::set<MNode *, MVertexPtrLessThan> degenerated;
   std::vector<BDS_Edge *> degenerated_edges;
   getDegeneratedVertices(m, recoverMap, degenerated, degenerated_edges);
 
@@ -723,10 +723,10 @@ void modifyInitialMeshToRemoveDegeneracies(
 
 //#define superdebug 1
 
-void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
+void refineMeshBDS(GSurface *gf, BDS_Mesh &m, const int NIT,
                    const bool computeNodalSizeField,
-                   std::map<MVertex *, BDS_Point *> *recoverMapInv,
-                   std::map<BDS_Point *, MVertex *, PointLessThan> *recoverMap,
+                   std::map<MNode *, BDS_Point *> *recoverMapInv,
+                   std::map<BDS_Point *, MNode *, PointLessThan> *recoverMap,
                    std::vector<SPoint2> *true_boundary)
 {
 #ifdef superdebug
@@ -740,10 +740,10 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
   // classify correctly the embedded vertices use a negative model
   // face number to avoid mesh motion
   if(recoverMapInv) {
-    std::vector<GVertex *> emb_vertx = gf->getEmbeddedVertices();
+    std::vector<GPoint *> emb_vertx = gf->getEmbeddedVertices();
     auto itvx = emb_vertx.begin();
     while(itvx != emb_vertx.end()) {
-      MVertex *v = *((*itvx)->mesh_vertices.begin());
+      MNode *v = *((*itvx)->mesh_vertices.begin());
       auto itp = recoverMapInv->find(v);
       if(itp != recoverMapInv->end()) {
         BDS_Point *p = itp->second;
@@ -933,7 +933,7 @@ void refineMeshBDS(GFace *gf, BDS_Mesh &m, const int NIT,
       }
       if(++ITER == 10) {
         if(invalid && !computeNodalSizeField) {
-          gf->meshStatistics.status = GFace::FAILED;
+          gf->meshStatistics.status = GSurface::FAILED;
           Msg::Warning("%d element%s remain invalid in surface %d", invalid,
                        (invalid > 1) ? "s" : "", gf->tag());
         }

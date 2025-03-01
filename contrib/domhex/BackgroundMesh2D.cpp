@@ -8,13 +8,13 @@
 
 #include "GmshMessage.h"
 #include "GModel.h"
-#include "GVertex.h"
-#include "GEdge.h"
-#include "GFace.h"
+#include "GPoint.h"
+#include "GCurve.h"
+#include "GSurface.h"
 #include "MElement.h"
 #include "MElementOctree.h"
 #include "MTriangle.h"
-#include "MVertex.h"
+#include "MNode.h"
 #include "Numeric.h"
 #include "MLine.h"
 #include "MTriangle.h"
@@ -58,7 +58,7 @@ void normalizeAngle(double &angle)
 
 void backgroundMesh2D::create_face_mesh()
 {
-  GFace *face = dynamic_cast<GFace *>(gf);
+  GSurface *face = dynamic_cast<GSurface *>(gf);
   if(!face) {
     Msg::Error("Entity is not a face in background mesh");
     return;
@@ -66,7 +66,7 @@ void backgroundMesh2D::create_face_mesh()
 
   quadsToTriangles(face, 100000);
 
-  // storing the initial mesh from GFace
+  // storing the initial mesh from GSurface
   tempTR.clear();
 
   for(unsigned int i = 0; i < face->triangles.size(); i++)
@@ -84,7 +84,7 @@ void backgroundMesh2D::create_face_mesh()
   //  Re-enable curv control if asked
   CTX::instance()->mesh.lcFromCurvature = CurvControl;
 
-  // creates a copy of GFace's vertices and triangles
+  // creates a copy of GSurface's vertices and triangles
   create_mesh_copy();
 }
 
@@ -115,7 +115,7 @@ void backgroundMesh2D::reset(bool erase_2D3D)
     computeSizeField();
   }
   else
-    for(std::map<MVertex const *const, MVertex *>::iterator itv2 =
+    for(std::map<MNode const *const, MNode *>::iterator itv2 =
           _2Dto3D.begin();
         itv2 != _2Dto3D.end(); ++itv2)
       sizeField[itv2->first] = CTX::instance()->mesh.lcMax;
@@ -141,23 +141,23 @@ void backgroundMesh2D::create_mesh_copy()
 {
   // TODO: useful to extend it to other elements ???
   // std::set<SPoint2> myBCNodes;
-  GFace *face = dynamic_cast<GFace *>(gf);
+  GSurface *face = dynamic_cast<GSurface *>(gf);
   if(!face) {
     Msg::Error("Entity is not a face in background mesh");
     return;
   }
   for(unsigned int i = 0; i < face->triangles.size(); i++) {
     MTriangle *e = face->triangles[i];
-    MVertex *news[3];
+    MNode *news[3];
     for(int j = 0; j < 3; j++) {
-      MVertex *v = e->getVertex(j);
-      std::map<MVertex const *const, MVertex *>::iterator it = _3Dto2D.find(v);
-      MVertex *newv = 0;
+      MNode *v = e->getVertex(j);
+      std::map<MNode const *const, MNode *>::iterator it = _3Dto2D.find(v);
+      MNode *newv = 0;
       if(it == _3Dto2D.end()) {
         SPoint2 p;
         reparamMeshVertexOnFace(v, face, p);
         newv =
-          new MVertex(p.x(), p.y(), 0.0); // creates new vertex with xyz= u,v,0.
+          new MNode(p.x(), p.y(), 0.0); // creates new vertex with xyz= u,v,0.
         vertices.push_back(newv);
         _3Dto2D[v] = newv;
         _2Dto3D[newv] = v;
@@ -172,25 +172,25 @@ void backgroundMesh2D::create_mesh_copy()
   }
 }
 
-GPoint backgroundMesh2D::get_GPoint_from_MVertex(const MVertex *v) const
+GVertex backgroundMesh2D::get_GPoint_from_MVertex(const MNode *v) const
 {
-  GFace *face = dynamic_cast<GFace *>(gf);
+  GSurface *face = dynamic_cast<GSurface *>(gf);
   if(!face) {
     Msg::Error("Entity is not a face in background mesh");
-    return GPoint();
+    return GVertex();
   }
   return face->point(SPoint2(v->x(), v->y()));
 }
 
-backgroundMesh2D::backgroundMesh2D(GFace *_gf, bool erase_2D3D)
+backgroundMesh2D::backgroundMesh2D(GSurface *_gf, bool erase_2D3D)
   : BGMBase(2, _gf), sizeFactor(1.)
 {
   reset(erase_2D3D);
 
   if(erase_2D3D) {
     // now, the new mesh has been copied in local in backgroundMesh2D, deleting
-    // the mesh from GFace, back to the previous one !
-    GFace *face = dynamic_cast<GFace *>(gf);
+    // the mesh from GSurface, back to the previous one !
+    GSurface *face = dynamic_cast<GSurface *>(gf);
     if(!face)
       Msg::Error("Entity is not a face in background mesh");
     else
@@ -223,8 +223,8 @@ void backgroundMesh2D::propagateValues(DoubleStorageType &dirichlet,
   }
 
   // Number vertices
-  std::set<MVertex *> vs;
-  GFace *face = dynamic_cast<GFace *>(gf);
+  std::set<MNode *> vs;
+  GSurface *face = dynamic_cast<GSurface *>(gf);
   if(!face) {
     Msg::Error("Entity is not a face in background mesh");
     delete _lsys;
@@ -235,9 +235,9 @@ void backgroundMesh2D::propagateValues(DoubleStorageType &dirichlet,
   for(unsigned int k = 0; k < face->quadrangles.size(); k++)
     for(int j = 0; j < 4; j++) vs.insert(face->quadrangles[k]->getVertex(j));
 
-  std::map<MVertex *, SPoint3> theMap;
+  std::map<MNode *, SPoint3> theMap;
   if(in_parametric_plane) {
-    for(std::set<MVertex *>::iterator it = vs.begin(); it != vs.end(); ++it) {
+    for(std::set<MNode *>::iterator it = vs.begin(); it != vs.end(); ++it) {
       SPoint2 p;
       reparamMeshVertexOnFace(*it, face, p);
       theMap[*it] = SPoint3((*it)->x(), (*it)->y(), (*it)->z());
@@ -245,7 +245,7 @@ void backgroundMesh2D::propagateValues(DoubleStorageType &dirichlet,
     }
   }
 
-  for(std::set<MVertex *>::iterator it = vs.begin(); it != vs.end(); ++it)
+  for(std::set<MNode *>::iterator it = vs.begin(); it != vs.end(); ++it)
     myAssembler.numberVertex(*it, 0, 1);
 
   // Assemble
@@ -262,12 +262,12 @@ void backgroundMesh2D::propagateValues(DoubleStorageType &dirichlet,
   }
 
   // save solution
-  for(std::set<MVertex *>::iterator it = vs.begin(); it != vs.end(); ++it) {
+  for(std::set<MNode *>::iterator it = vs.begin(); it != vs.end(); ++it) {
     myAssembler.getDofValue(*it, 0, 1, dirichlet[*it]);
   }
 
   if(in_parametric_plane) {
-    for(std::set<MVertex *>::iterator it = vs.begin(); it != vs.end(); ++it) {
+    for(std::set<MNode *>::iterator it = vs.begin(); it != vs.end(); ++it) {
       SPoint3 p = theMap[(*it)];
       (*it)->setXYZ(p.x(), p.y(), p.z());
     }
@@ -278,27 +278,27 @@ void backgroundMesh2D::propagateValues(DoubleStorageType &dirichlet,
 
 void backgroundMesh2D::computeSizeField()
 {
-  GFace *face = dynamic_cast<GFace *>(gf);
+  GSurface *face = dynamic_cast<GSurface *>(gf);
   if(!face) {
     Msg::Error("Entity is not a face in background mesh");
     return;
   }
 
-  std::vector<GEdge *> const &e = face->edges();
-  std::vector<GEdge *>::const_iterator it = e.begin();
+  std::vector<GCurve *> const &e = face->edges();
+  std::vector<GCurve *>::const_iterator it = e.begin();
   DoubleStorageType sizes;
 
   for(; it != e.end(); ++it) {
     if(!(*it)->isSeam(face)) {
       for(unsigned int i = 0; i < (*it)->lines.size(); i++) {
-        MVertex *v1 = (*it)->lines[i]->getVertex(0);
-        MVertex *v2 = (*it)->lines[i]->getVertex(1);
+        MNode *v1 = (*it)->lines[i]->getVertex(0);
+        MNode *v2 = (*it)->lines[i]->getVertex(1);
         if(v1 != v2) {
           double d = std::sqrt((v1->x() - v2->x()) * (v1->x() - v2->x()) +
                                (v1->y() - v2->y()) * (v1->y() - v2->y()) +
                                (v1->z() - v2->z()) * (v1->z() - v2->z()));
           for(int k = 0; k < 2; k++) {
-            MVertex *v = (*it)->lines[i]->getVertex(k);
+            MNode *v = (*it)->lines[i]->getVertex(k);
             DoubleStorageType::iterator itv = sizes.find(v);
             if(itv == sizes.end())
               sizes[v] = std::log(d);
@@ -313,10 +313,10 @@ void backgroundMesh2D::computeSizeField()
   simpleFunction<double> ONE(1.0);
   propagateValues(sizes, ONE);
 
-  std::map<MVertex const *const, MVertex *>::iterator itv2 = _2Dto3D.begin();
+  std::map<MNode const *const, MNode *>::iterator itv2 = _2Dto3D.begin();
   for(; itv2 != _2Dto3D.end(); ++itv2) {
-    MVertex const *const v_2D = itv2->first;
-    MVertex *v_3D = itv2->second;
+    MNode const *const v_2D = itv2->first;
+    MNode *v_3D = itv2->second;
     sizeField[v_2D] = std::exp(sizes[v_3D]);
   }
 }
@@ -333,7 +333,7 @@ void backgroundMesh2D::updateSizes()
   DoubleStorageType::iterator itv = sizeField.begin();
   for(; itv != sizeField.end(); ++itv) {
     SPoint2 p;
-    MVertex const *const v = _2Dto3D[itv->first];
+    MNode const *const v = _2Dto3D[itv->first];
     double lc;
     if(v->onWhat()->dim() == 0) {
       lc = sizeFactor * BGM_MeshSize(v->onWhat(), 0, 0, v->x(), v->y(), v->z());
@@ -344,7 +344,7 @@ void backgroundMesh2D::updateSizes()
       lc = sizeFactor * BGM_MeshSize(v->onWhat(), u, 0, v->x(), v->y(), v->z());
     }
     else {
-      GFace *face = dynamic_cast<GFace *>(gf);
+      GSurface *face = dynamic_cast<GSurface *>(gf);
       if(!face) {
         Msg::Error("Entity is not a face in background mesh");
         return;
@@ -373,10 +373,10 @@ void backgroundMesh2D::updateSizes()
   for(int i = 0; i < 0; i++) {
     std::set<MEdge, MEdgeLessThan>::iterator it = edges.begin();
     for(; it != edges.end(); ++it) {
-      MVertex *v0 = it->getVertex(0);
-      MVertex *v1 = it->getVertex(1);
-      MVertex *V0 = _2Dto3D[v0];
-      MVertex *V1 = _2Dto3D[v1];
+      MNode *v0 = it->getVertex(0);
+      MNode *v1 = it->getVertex(1);
+      MNode *V0 = _2Dto3D[v0];
+      MNode *V1 = _2Dto3D[v1];
       DoubleStorageType::iterator s0 = sizeField.find(V0);
       DoubleStorageType::iterator s1 = sizeField.find(V1);
       if(s0->second < s1->second)
@@ -387,14 +387,14 @@ void backgroundMesh2D::updateSizes()
   }
 }
 
-frameFieldBackgroundMesh2D::frameFieldBackgroundMesh2D(GFace *_gf)
+frameFieldBackgroundMesh2D::frameFieldBackgroundMesh2D(GSurface *_gf)
   : backgroundMesh2D(_gf, false)
 {
   reset();
 
   // now, the new mesh has been copied in local in backgroundMesh2D, deleting
-  // the mesh from GFace, back to the previous one !
-  GFace *face = dynamic_cast<GFace *>(gf);
+  // the mesh from GSurface, back to the previous one !
+  GSurface *face = dynamic_cast<GSurface *>(gf);
   if(!face)
     Msg::Error("Entity is not a face in background mesh");
   else
@@ -431,7 +431,7 @@ void frameFieldBackgroundMesh2D::reset(bool erase_2D3D)
   }
 }
 
-double frameFieldBackgroundMesh2D::get_smoothness(MVertex *v)
+double frameFieldBackgroundMesh2D::get_smoothness(MNode *v)
 {
   return get_nodal_value(v, smoothness);
 }
@@ -441,7 +441,7 @@ double frameFieldBackgroundMesh2D::get_smoothness(double u, double v)
   return get_field_value(u, v, 0., smoothness);
 }
 
-double frameFieldBackgroundMesh2D::angle(MVertex *v)
+double frameFieldBackgroundMesh2D::angle(MNode *v)
 {
   return get_nodal_value(v, angles);
 }
@@ -474,18 +474,18 @@ void frameFieldBackgroundMesh2D::computeCrossField(
 
   DoubleStorageType _cosines4, _sines4;
 
-  GFace *face = dynamic_cast<GFace *>(gf);
+  GSurface *face = dynamic_cast<GSurface *>(gf);
   if(!face) {
     Msg::Error("Entity is not a face in background mesh");
     return;
   }
-  std::vector<GEdge *> const &e = face->edges();
-  std::vector<GEdge *>::const_iterator it = e.begin();
+  std::vector<GCurve *> const &e = face->edges();
+  std::vector<GCurve *>::const_iterator it = e.begin();
 
   for(; it != e.end(); ++it) {
     if(!(*it)->isSeam(face)) {
       for(unsigned int i = 0; i < (*it)->lines.size(); i++) {
-        MVertex *v[2];
+        MNode *v[2];
         v[0] = (*it)->lines[i]->getVertex(0);
         v[1] = (*it)->lines[i]->getVertex(1);
         SPoint2 p1, p2;
@@ -520,10 +520,10 @@ void frameFieldBackgroundMesh2D::computeCrossField(
   propagateValues(_cosines4, eval_diffusivity, false);
   propagateValues(_sines4, eval_diffusivity, false);
 
-  std::map<MVertex const *const, MVertex *>::iterator itv2 = _2Dto3D.begin();
+  std::map<MNode const *const, MNode *>::iterator itv2 = _2Dto3D.begin();
   for(; itv2 != _2Dto3D.end(); ++itv2) {
-    MVertex const *const v_2D = itv2->first;
-    MVertex *v_3D = itv2->second;
+    MNode const *const v_2D = itv2->first;
+    MNode *v_3D = itv2->second;
     double angle = std::atan2(_sines4[v_3D], _cosines4[v_3D]) / 4.0;
     normalizeAngle(angle);
     angles[v_2D] = angle;
@@ -545,7 +545,7 @@ void frameFieldBackgroundMesh2D::eval_crossfield(double u, double v,
   }
 
   //  SVector3 t1,t2,n;
-  //  GFace *face = dynamic_cast<GFace*>(gf);
+  //  GSurface *face = dynamic_cast<GSurface*>(gf);
   //  std::pair<SVector3, SVector3> der = face->firstDer(SPoint2(u,v));
   //  SVector3 s1 = der.first;
   //  SVector3 s2 = der.second;
@@ -563,10 +563,10 @@ void frameFieldBackgroundMesh2D::eval_crossfield(double u, double v,
   //  }
 }
 
-void frameFieldBackgroundMesh2D::eval_crossfield(MVertex *vert, STensor3 &cf)
+void frameFieldBackgroundMesh2D::eval_crossfield(MNode *vert, STensor3 &cf)
 {
   SPoint2 parampoint;
-  GFace *face = dynamic_cast<GFace *>(gf);
+  GSurface *face = dynamic_cast<GSurface *>(gf);
   if(!face) {
     Msg::Error("Entity is not a face in background mesh");
     return;
@@ -580,36 +580,36 @@ void frameFieldBackgroundMesh2D::computeSmoothness()
   smoothness.clear();
 
   // build vertex -> neighbors table
-  std::multimap<MVertex *, MVertex *> vertex2vertex;
+  std::multimap<MNode *, MNode *> vertex2vertex;
   for(std::vector<MElement *>::iterator it = beginelements();
       it != endelements(); it++) {
     MElement *e = *it;
     for(std::size_t i = 0; i < e->getNumVertices(); i++) {
-      MVertex *current = e->getVertex(i);
+      MNode *current = e->getVertex(i);
       for(std::size_t j = 0; j < e->getNumVertices(); j++) {
         if(i == j) continue;
-        MVertex *neighbor = e->getVertex(j);
+        MNode *neighbor = e->getVertex(j);
         vertex2vertex.insert(std::make_pair(current, neighbor));
       }
     }
   }
 
   // compute smoothness
-  for(std::vector<MVertex *>::iterator it = beginvertices();
+  for(std::vector<MNode *>::iterator it = beginvertices();
       it != endvertices(); it++) {
-    MVertex *v = *it;
+    MNode *v = *it;
     double angle_current = angle(v);
     // compare to all neighbors...
-    std::pair<std::multimap<MVertex *, MVertex *>::iterator,
-              std::multimap<MVertex *, MVertex *>::iterator>
+    std::pair<std::multimap<MNode *, MNode *>::iterator,
+              std::multimap<MNode *, MNode *>::iterator>
       range = vertex2vertex.equal_range(v);
     double minangle, totalangle = 0.;
     int N = 0;
-    for(std::multimap<MVertex *, MVertex *>::iterator itneighbor = range.first;
+    for(std::multimap<MNode *, MNode *>::iterator itneighbor = range.first;
         itneighbor != range.second; itneighbor++) {
       N++;
       minangle = M_PI / 2;
-      MVertex *v_nb = itneighbor->second;
+      MNode *v_nb = itneighbor->second;
       double angle_nb = angle(v_nb);
       // angle comparison...
       minangle = std::min(minangle, std::abs(angle_current - angle_nb));
@@ -636,11 +636,11 @@ void frameFieldBackgroundMesh2D::exportCrossField(const std::string &filename)
   deltas[0] = 0.;
   deltas[1] = M_PI;
 
-  for(std::vector<MVertex *>::iterator it = beginvertices();
+  for(std::vector<MNode *>::iterator it = beginvertices();
       it != endvertices(); it++) {
-    MVertex *v = *it;
+    MNode *v = *it;
     double angle_current = angle(v);
-    GPoint p = get_GPoint_from_MVertex(v);
+    GVertex p = get_GPoint_from_MVertex(v);
     for(int i = 0; i < 2; i++) {
       std::pair<SVector3, SVector3> dirs = compute_crossfield_directions(
         v->x(), v->y(), angle_current + deltas[i]);
@@ -661,7 +661,7 @@ frameFieldBackgroundMesh2D::compute_crossfield_directions(double u, double v,
                                                           double angle_current)
 {
   // get the unit normal at that point
-  GFace *face = dynamic_cast<GFace *>(gf);
+  GSurface *face = dynamic_cast<GSurface *>(gf);
   if(!face) {
     Msg::Error("Entity is not a face in background mesh");
     return std::pair<SVector3, SVector3>(SVector3(), SVector3());
@@ -705,7 +705,7 @@ bool frameFieldBackgroundMesh2D::compute_RK_infos(double u, double v, double x,
   // compute t1,t2: cross field directions
 
   // get the unit normal at that point
-  GFace *face = dynamic_cast<GFace *>(gf);
+  GSurface *face = dynamic_cast<GSurface *>(gf);
   if(!face) {
     Msg::Error("Entity is not a face in background mesh");
     return false;

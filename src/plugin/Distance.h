@@ -8,7 +8,7 @@
 
 #include <string>
 #include "Plugin.h"
-#include "MVertex.h"
+#include "MNode.h"
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterDistancePlugin();
@@ -29,7 +29,7 @@ public:
   StringXNumber *getOption(int iopt);
   PView *execute(PView *);
   void printView(std::vector<GEntity *> &entities,
-                 std::map<MVertex *, double> &distance_map);
+                 std::map<MNode *, double> &distance_map);
 };
 
 #endif

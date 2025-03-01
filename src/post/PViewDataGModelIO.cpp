@@ -6,7 +6,7 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "PViewDataGModel.h"
-#include "MVertex.h"
+#include "MNode.h"
 #include "MElement.h"
 #include "Numeric.h"
 #include "fullMatrix.h"
@@ -297,7 +297,7 @@ void PViewDataGModel::sendToServer(const std::string &name)
 
   for(std::size_t i = 0; i < _steps[0]->getNumData(); i++) {
     if(_steps[0]->getData(i)) {
-      MVertex *v = _steps[0]->getModel()->getMeshVertexByTag(i);
+      MNode *v = _steps[0]->getModel()->getMeshVertexByTag(i);
       if(!v) {
         Msg::Error("Unknown node %d in data", i);
         return;

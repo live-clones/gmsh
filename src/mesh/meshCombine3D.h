@@ -6,10 +6,10 @@
 #ifndef _MESH_COMBINE_3D_
 #define _MESH_COMBINE_3D_
 
-class GRegion;
+class GVolume;
 class GModel;
 
-int meshCombine3D(GRegion *m);
+int meshCombine3D(GVolume *m);
 bool MakeHybridHexTetMeshConformalThroughTriHedron(GModel *gm);
 
 #endif

@@ -10,10 +10,10 @@
 #include "GmshConfig.h"
 #include "meshGRegionHxt.h"
 #include "Context.h"
-#include "MVertex.h"
-#include "GRegion.h"
+#include "MNode.h"
+#include "GVolume.h"
 #include "discreteRegion.h"
-#include "GFace.h"
+#include "GSurface.h"
 #include "MTetrahedron.h"
 #include "MTriangle.h"
 #include "MLine.h"
@@ -48,7 +48,7 @@ static HXTStatus messageCallback(HXTMessage *msg)
 static HXTStatus nodalSizesCallBack(double *pts, uint32_t *volume,
                                     size_t numPts, void *userData)
 {
-  std::vector<GRegion *> *allGR = (std::vector<GRegion *> *)userData;
+  std::vector<GVolume *> *allGR = (std::vector<GVolume *> *)userData;
 
   double lcGlob = CTX::instance()->lc;
   int useInterpolatedSize = Extend2dMeshIn3dVolumes();
@@ -64,7 +64,7 @@ static HXTStatus nodalSizesCallBack(double *pts, uint32_t *volume,
       Msg::Error("Invalid volume tag %d in mesh size calculation", volume[i]);
       continue;
     }
-    GRegion *gr = (*allGR)[volume[i]];
+    GVolume *gr = (*allGR)[volume[i]];
     try{ // OpenMP forbids leaving block via exception
       double lc = BGM_MeshSizeWithoutScaling(gr, 0, 0, pts[4 * i + 0],
                                              pts[4 * i + 1], pts[4 * i + 2]);
@@ -85,10 +85,10 @@ static HXTStatus nodalSizesCallBack(double *pts, uint32_t *volume,
   return HXT_STATUS_OK;
 }
 
-static HXTStatus getAllSurfaces(std::vector<GRegion *> &regions, HXTMesh *m,
-                                std::vector<GFace *> &allSurfaces)
+static HXTStatus getAllSurfaces(std::vector<GVolume *> &regions, HXTMesh *m,
+                                std::vector<GSurface *> &allSurfaces)
 {
-  std::set<GFace *, GEntityPtrLessThan> allSurfacesSet;
+  std::set<GSurface *, GEntityPtrLessThan> allSurfacesSet;
   if(m) {
     m->brep.numVolumes = regions.size();
     HXT_CHECK(hxtAlignedMalloc(&m->brep.numSurfacesPerVolume,
@@ -96,8 +96,8 @@ static HXTStatus getAllSurfaces(std::vector<GRegion *> &regions, HXTMesh *m,
   }
   uint32_t to_alloc = 0;
   for(std::size_t i = 0; i < regions.size(); i++) {
-    std::vector<GFace *> const &f = regions[i]->faces();
-    std::vector<GFace *> const &f_e = regions[i]->embeddedFaces();
+    std::vector<GSurface *> const &f = regions[i]->faces();
+    std::vector<GSurface *> const &f_e = regions[i]->embeddedFaces();
     if(m) {
       m->brep.numSurfacesPerVolume[i] = f.size() + f_e.size();
       to_alloc += m->brep.numSurfacesPerVolume[i];
@@ -127,8 +127,8 @@ static HXTStatus getAllSurfaces(std::vector<GRegion *> &regions, HXTMesh *m,
 
   uint32_t counter = 0;
   for(std::size_t i = 0; i < regions.size(); i++) {
-    std::vector<GFace *> const &f = regions[i]->faces();
-    std::vector<GFace *> const &f_e = regions[i]->embeddedFaces();
+    std::vector<GSurface *> const &f = regions[i]->faces();
+    std::vector<GSurface *> const &f_e = regions[i]->embeddedFaces();
     for(std::size_t j = 0; j < f.size(); j++)
       m->brep.surfacesPerVolume[counter++] = f[j]->tag();
     for(std::size_t j = 0; j < f_e.size(); j++)
@@ -138,9 +138,9 @@ static HXTStatus getAllSurfaces(std::vector<GRegion *> &regions, HXTMesh *m,
   return HXT_STATUS_OK;
 }
 
-static HXTStatus getAllCurves(std::vector<GRegion *> &regions,
-                              std::vector<GFace *> &surfaces, HXTMesh *m,
-                              std::vector<GEdge *> &allCurves)
+static HXTStatus getAllCurves(std::vector<GVolume *> &regions,
+                              std::vector<GSurface *> &surfaces, HXTMesh *m,
+                              std::vector<GCurve *> &allCurves)
 {
   if(m) {
     m->brep.numSurfaces = surfaces.size();
@@ -149,11 +149,11 @@ static HXTStatus getAllCurves(std::vector<GRegion *> &regions,
   }
   uint32_t to_alloc = 0;
 
-  std::set<GEdge *, GEntityPtrLessThan> allCurvesSet;
+  std::set<GCurve *, GEntityPtrLessThan> allCurvesSet;
 
   for(std::size_t i = 0; i < surfaces.size(); i++) {
-    std::vector<GEdge *> const &f = surfaces[i]->edges();
-    std::vector<GEdge *> const &f_e = surfaces[i]->embeddedEdges();
+    std::vector<GCurve *> const &f = surfaces[i]->edges();
+    std::vector<GCurve *> const &f_e = surfaces[i]->embeddedEdges();
     if(m) {
       m->brep.numCurvesPerSurface[i] = f.size() + f_e.size();
       to_alloc += m->brep.numCurvesPerSurface[i];
@@ -162,7 +162,7 @@ static HXTStatus getAllCurves(std::vector<GRegion *> &regions,
     allCurvesSet.insert(f_e.begin(), f_e.end());
   }
   for(std::size_t i = 0; i < regions.size(); i++) {
-    std::vector<GEdge *> const &r_e = regions[i]->embeddedEdges();
+    std::vector<GCurve *> const &r_e = regions[i]->embeddedEdges();
     allCurvesSet.insert(r_e.begin(), r_e.end());
   }
   allCurves.insert(allCurves.end(), allCurvesSet.begin(), allCurvesSet.end());
@@ -174,8 +174,8 @@ static HXTStatus getAllCurves(std::vector<GRegion *> &regions,
 
   uint32_t counter = 0;
   for(std::size_t i = 0; i < surfaces.size(); i++) {
-    std::vector<GEdge *> const &f = surfaces[i]->edges();
-    std::vector<GEdge *> const &f_e = surfaces[i]->embeddedEdges();
+    std::vector<GCurve *> const &f = surfaces[i]->edges();
+    std::vector<GCurve *> const &f_e = surfaces[i]->embeddedEdges();
     for(std::size_t j = 0; j < f.size(); j++)
       m->brep.curvesPerSurface[counter++] = f[j]->tag();
     for(std::size_t j = 0; j < f_e.size(); j++)
@@ -185,9 +185,9 @@ static HXTStatus getAllCurves(std::vector<GRegion *> &regions,
   return HXT_STATUS_OK;
 }
 
-static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
-                          std::map<MVertex *, uint32_t> &v2c,
-                          std::vector<MVertex *> &c2v)
+static HXTStatus Hxt2Gmsh(std::vector<GVolume *> &regions, HXTMesh *m,
+                          std::map<MNode *, uint32_t> &v2c,
+                          std::vector<MNode *> &c2v)
 {
   Msg::Debug("Start Hxt2Gmsh");
 
@@ -196,17 +196,17 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
   HXT_CHECK( hxtAlignedFree(&m->points.node) );
   HXT_CHECK( hxtAlignedFree(&m->points.color) );
 
-  std::map<uint32_t, GEdge *> i2e;
-  std::map<uint32_t, GFace *> i2f;
+  std::map<uint32_t, GCurve *> i2e;
+  std::map<uint32_t, GSurface *> i2f;
   { // deleting old faces and edges, and filling i2e
-    std::vector<GFace *> allSurfaces;
-    std::vector<GEdge *> allCurves;
+    std::vector<GSurface *> allSurfaces;
+    std::vector<GCurve *> allCurves;
     HXT_CHECK(getAllSurfaces(regions, nullptr, allSurfaces));
     HXT_CHECK(getAllCurves(regions, allSurfaces, nullptr, allCurves));
 
     for(std::size_t j = 0; j < allCurves.size(); j++) {
       i2e[allCurves[j]->tag()] = allCurves[j];
-      GEdge *ge = allCurves[j];
+      GCurve *ge = allCurves[j];
       for(std::size_t i = 0; i < ge->lines.size(); i++)
         delete ge->lines[i];
       ge->lines.clear();
@@ -214,7 +214,7 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
 
     for(std::size_t j = 0; j < allSurfaces.size(); j++) {
       i2f[allSurfaces[j]->tag()] = allSurfaces[j];
-      GFace *gf = allSurfaces[j];
+      GSurface *gf = allSurfaces[j];
       for(std::size_t i = 0; i < gf->triangles.size(); i++)
         delete gf->triangles[i];
       gf->triangles.clear();
@@ -377,9 +377,9 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
         if(c2v[pt]) continue;
 
         uint32_t c = vR_all[pt];
-        GRegion *gr = regions[c];
+        GVolume *gr = regions[c];
         double *x = &m->vertices.coord[4 * pt];
-        c2v[pt] = new MVertex(x[0], x[1], x[2], gr);
+        c2v[pt] = new MNode(x[0], x[1], x[2], gr);
         gr->mesh_vertices[hp_this[c]++] = c2v[pt];
       }
 
@@ -418,8 +418,8 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
       if(c >= regions.size())
         continue;
 
-      GRegion *gr = regions[c];
-      MVertex *vv[4];
+      GVolume *gr = regions[c];
+      MNode *vv[4];
       uint32_t *nodes = &m->tetrahedra.node[4 * i];
       for(int j = 0; j < 4; j++) {
         if(c2v[nodes[j]]){
@@ -427,7 +427,7 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
           continue;
         }
         double *x = &m->vertices.coord[4 * nodes[j]];
-        vv[j] = new MVertex(x[0], x[1], x[2], gr);
+        vv[j] = new MNode(x[0], x[1], x[2], gr);
         gr->mesh_vertices.push_back(vv[j]);
         c2v[nodes[j]] = vv[j];
       }
@@ -440,15 +440,15 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
   return HXT_STATUS_OK;
 }
 
-HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
-                   std::map<MVertex *, uint32_t> &v2c,
-                   std::vector<MVertex *> &c2v)
+HXTStatus Gmsh2Hxt(std::vector<GVolume *> &regions, HXTMesh *m,
+                   std::map<MNode *, uint32_t> &v2c,
+                   std::vector<MNode *> &c2v)
 {
-  std::set<MVertex *, MVertexPtrLessThan> all;
-  std::vector<GFace *> surfaces;
-  std::vector<GEdge *> curves;
-  std::vector<GVertex *> points;
-  std::map<MVertex *, double> vlc;
+  std::set<MNode *, MVertexPtrLessThan> all;
+  std::vector<GSurface *> surfaces;
+  std::vector<GCurve *> curves;
+  std::vector<GPoint *> points;
+  std::map<MNode *, double> vlc;
 
   HXT_CHECK(getAllSurfaces(regions, m, surfaces));
   HXT_CHECK(getAllCurves(regions, surfaces, m, curves));
@@ -457,12 +457,12 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
 
   // embedded points in volumes (all other embedded points will be in the
   // curve/surface meshes already)
-  for(GRegion *gr : regions) {
-    for(GVertex *gv : gr->embeddedVertices()) {
+  for(GVolume *gr : regions) {
+    for(GPoint *gv : gr->embeddedVertices()) {
       points.push_back(gv);
       npts += gv->points.size();
       for(std::size_t i = 0; i < gv->points.size(); i++) {
-        MVertex *v = gv->points[i]->getVertex(0);
+        MNode *v = gv->points[i]->getVertex(0);
         all.insert(v);
         if(gv->prescribedMeshSizeAtVertex() != MAX_LC)
           vlc[v] = gv->prescribedMeshSizeAtVertex();
@@ -471,7 +471,7 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
   }
 
   for(std::size_t j = 0; j < curves.size(); j++) {
-    GEdge *ge = curves[j];
+    GCurve *ge = curves[j];
     nedg += ge->lines.size();
     for(std::size_t i = 0; i < ge->lines.size(); i++) {
       all.insert(ge->lines[i]->getVertex(0));
@@ -480,7 +480,7 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
   }
 
   for(std::size_t j = 0; j < surfaces.size(); j++) {
-    GFace *gf = surfaces[j];
+    GSurface *gf = surfaces[j];
     ntri += gf->triangles.size();
     for(std::size_t i = 0; i < gf->triangles.size(); i++) {
       all.insert(gf->triangles[i]->getVertex(0));
@@ -495,7 +495,7 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
 
   std::size_t count = 0;
   c2v.resize(all.size());
-  for(MVertex *v : all) {
+  for(MNode *v : all) {
     m->vertices.coord[4 * count + 0] = v->x();
     m->vertices.coord[4 * count + 1] = v->y();
     m->vertices.coord[4 * count + 2] = v->z();
@@ -517,7 +517,7 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
     hxtAlignedMalloc(&m->points.color, (m->points.num) * sizeof(uint32_t)));
   index = 0;
   for(std::size_t j = 0; j < points.size(); j++) {
-    GVertex *gv = points[j];
+    GPoint *gv = points[j];
     for(std::size_t i = 0; i < gv->points.size(); i++) {
       m->points.node[index] = v2c[gv->points[i]->getVertex(0)];
       m->points.color[index] = gv->tag();
@@ -532,7 +532,7 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
     hxtAlignedMalloc(&m->lines.color, (m->lines.num) * sizeof(uint32_t)));
   index = 0;
   for(std::size_t j = 0; j < curves.size(); j++) {
-    GEdge *ge = curves[j];
+    GCurve *ge = curves[j];
     for(std::size_t i = 0; i < ge->lines.size(); i++) {
       m->lines.node[2 * index + 0] = v2c[ge->lines[i]->getVertex(0)];
       m->lines.node[2 * index + 1] = v2c[ge->lines[i]->getVertex(1)];
@@ -548,7 +548,7 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
                              (m->triangles.num) * sizeof(uint32_t)));
   index = 0;
   for(std::size_t j = 0; j < surfaces.size(); j++) {
-    GFace *gf = surfaces[j];
+    GSurface *gf = surfaces[j];
     for(std::size_t i = 0; i < gf->triangles.size(); i++) {
       m->triangles.node[3 * index + 0] = v2c[gf->triangles[i]->getVertex(0)];
       m->triangles.node[3 * index + 1] = v2c[gf->triangles[i]->getVertex(1)];
@@ -560,15 +560,15 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
   return HXT_STATUS_OK;
 }
 
-static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
+static HXTStatus _meshGRegionHxt(std::vector<GVolume *> &regions)
 {
   HXT_CHECK(hxtSetMessageCallback(messageCallback));
 
   HXTMesh *mesh;
   HXT_CHECK(hxtMeshCreate(&mesh));
 
-  std::map<MVertex *, uint32_t> v2c;
-  std::vector<MVertex *> c2v;
+  std::map<MNode *, uint32_t> v2c;
+  std::vector<MNode *> c2v;
   Gmsh2Hxt(regions, mesh, v2c, c2v);
 
   int nthreads = getNumThreads();
@@ -606,14 +606,14 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
   return HXT_STATUS_OK;
 }
 
-int meshGRegionHxt(std::vector<GRegion *> &regions)
+int meshGRegionHxt(std::vector<GVolume *> &regions)
 {
   HXTStatus status = _meshGRegionHxt(regions);
   if(status == HXT_STATUS_OK) return 0;
   return 1;
 }
 
-static HXTStatus _delaunayMeshIn3DHxt(std::vector<MVertex *> &verts,
+static HXTStatus _delaunayMeshIn3DHxt(std::vector<MNode *> &verts,
                                       std::vector<MTetrahedron *> &tets)
 {
   HXTMesh *mesh;
@@ -672,7 +672,7 @@ static HXTStatus _delaunayMeshIn3DHxt(std::vector<MVertex *> &verts,
   return HXT_STATUS_OK;
 }
 
-void delaunayMeshIn3DHxt(std::vector<MVertex *> &v,
+void delaunayMeshIn3DHxt(std::vector<MNode *> &v,
                          std::vector<MTetrahedron *> &tets)
 {
   Msg::Info("Tetrahedrizing %d nodes...", v.size());
@@ -685,13 +685,13 @@ void delaunayMeshIn3DHxt(std::vector<MVertex *> &v,
 
 #else
 
-int meshGRegionHxt(std::vector<GRegion *> &regions)
+int meshGRegionHxt(std::vector<GVolume *> &regions)
 {
   Msg::Error("Gmsh should be compiled with Hxt to enable this option");
   return -1;
 }
 
-void delaunayMeshIn3DHxt(std::vector<MVertex *> &v,
+void delaunayMeshIn3DHxt(std::vector<MNode *> &v,
                          std::vector<MTetrahedron *> &tets)
 {
   Msg::Error("Gmsh should be compiled with Hxt to enable this option");

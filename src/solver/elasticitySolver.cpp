@@ -605,7 +605,7 @@ void elasticitySolver::computeEffectiveStiffness(std::vector<double> stiff)
       double valy[256];
       double valz[256];
       for(int k = 0; k < nbVertex; k++) {
-        MVertex *v = e->getVertex(k);
+        MNode *v = e->getVertex(k);
         MPoint p(v);
         Field.f(&p, 0, 0, 0, val[k]);
         valx[k] = val[k](0);
@@ -662,7 +662,7 @@ void elasticitySolver::computeEffectiveStrain(std::vector<double> strain)
       double valy[256];
       double valz[256];
       for(int k = 0; k < nbVertex; k++) {
-        MVertex *v = e->getVertex(k);
+        MNode *v = e->getVertex(k);
         MPoint p(v);
         Field.f(&p, 0, 0, 0, val[k]);
         valx[k] = val[k](0);
@@ -697,8 +697,8 @@ double elasticitySolver::computeDisplacementError(simpleFunction<double> *f0,
 {
   std::cout << "compute displacement error" << std::endl;
   double err = 0.;
-  std::set<MVertex *> v;
-  std::map<MVertex *, MElement *> vCut;
+  std::set<MNode *> v;
+  std::map<MNode *, MElement *> vCut;
   for(std::size_t i = 0; i < elasticFields.size(); ++i) {
     if(elasticFields[i]._e == 0.) continue;
     for(auto it =
@@ -836,8 +836,8 @@ PView *elasticitySolver::buildErrorView(const std::string postFileName,
 PView *elasticitySolver::buildDisplacementView(const std::string postFileName)
 {
   std::cout << "build Displacement View" << std::endl;
-  std::set<MVertex *> v;
-  std::map<MVertex *, MElement *> vCut;
+  std::set<MNode *> v;
+  std::map<MNode *, MElement *> vCut;
   for(std::size_t i = 0; i < elasticFields.size(); ++i) {
     if(elasticFields[i]._e == 0.) continue;
     for(auto it =
@@ -908,7 +908,7 @@ PView *elasticitySolver::buildStressesView(const std::string postFileName)
       double valy[256];
       double valz[256];
       for(int k = 0; k < nbVertex; k++) {
-        MVertex *v = e->getVertex(k);
+        MNode *v = e->getVertex(k);
         MPoint p(v);
         Field.f(&p, 0, 0, 0, val[k]);
         valx[k] = val[k](0);
@@ -997,7 +997,7 @@ PView *elasticitySolver::buildStrainView(const std::string postFileName)
       double valy[256];
       double valz[256];
       for(int k = 0; k < nbVertex; k++) {
-        MVertex *v = e->getVertex(k);
+        MNode *v = e->getVertex(k);
         MPoint p(v);
         Field.f(&p, 0, 0, 0, val[k]);
         valx[k] = val[k](0);
@@ -1038,7 +1038,7 @@ elasticitySolver::buildLagrangeMultiplierView(const std::string &postFileName,
     for(; t < LagrangeMultiplierSpaces.size(); t++)
       if(LagrangeMultiplierSpaces[t]->getId() == tag) break;
   if(t == LagrangeMultiplierSpaces.size()) return new PView();
-  std::set<MVertex *> v;
+  std::set<MNode *> v;
   for(std::size_t i = 0; i < LagrangeMultiplierFields.size(); ++i) {
     for(auto it =
           LagrangeMultiplierFields[i].g->begin();

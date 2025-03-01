@@ -12,13 +12,13 @@
 #include "robustPredicates.h"
 #include "Numeric.h"
 #include "BDS.h"
-#include "GFace.h"
+#include "GSurface.h"
 #include "discreteFace.h"
 #include "meshGFaceDelaunayInsertion.h"
 #include "Numeric.h"
 #include "qualityMeasures.h"
 
-static double _cos_N(BDS_Point *_p1, BDS_Point *_p2, BDS_Point *_p3, GFace *gf)
+static double _cos_N(BDS_Point *_p1, BDS_Point *_p2, BDS_Point *_p3, GSurface *gf)
 {
   double n[3];
   normal_triangle(_p1, _p2, _p3, n);
@@ -38,7 +38,7 @@ static double _cos_N(BDS_Point *_p1, BDS_Point *_p2, BDS_Point *_p3, GFace *gf)
   return N.x() * n[0] + N.y() * n[1] + N.z() * n[2];
 }
 
-double BDS_Face_Validity(GFace *gf, BDS_Face *f)
+double BDS_Face_Validity(GSurface *gf, BDS_Face *f)
 {
   BDS_Point *pts[4];
   if(!f->getNodes(pts)) return 0.;
@@ -52,7 +52,7 @@ double BDS_Face_Validity(GFace *gf, BDS_Face *f)
 }
 
 void outputScalarField(std::vector<BDS_Face *> &t, const char *iii, int param,
-                       GFace *gf)
+                       GSurface *gf)
 {
   Msg::Info("Writing debug file '%s'", iii);
   if(gf && 0) {
@@ -82,8 +82,8 @@ void outputScalarField(std::vector<BDS_Face *> &t, const char *iii, int param,
           for(int k = 1; k < 30; k++) {
             double t = (double)k / 29;
             SPoint2 p = p1 * (1. - t) + p2 * t;
-            GPoint pa = gf->point(p.x(), p.y());
-            GPoint pb = gf->point(prev.x(), prev.y());
+            GVertex pa = gf->point(p.x(), p.y());
+            GVertex pb = gf->point(prev.x(), prev.y());
             fprintf(view_c, "SL(%g,%g,%g,%g,%g,%g){1,1,1};\n", pa.x(), pa.y(),
                     pa.z(), pb.x(), pb.y(), pb.z());
             prev = p;
@@ -271,9 +271,9 @@ BDS_Point *BDS_Mesh::add_point(int const num, double const x, double const y,
   return pp;
 }
 
-BDS_Point *BDS_Mesh::add_point(int num, double u, double v, GFace *gf)
+BDS_Point *BDS_Mesh::add_point(int num, double u, double v, GSurface *gf)
 {
-  GPoint gp = gf->point(u, v);
+  GVertex gp = gf->point(u, v);
   BDS_Point *pp = new BDS_Point(num, gp.x(), gp.y(), gp.z());
   pp->u = u;
   pp->v = v;
@@ -1345,7 +1345,7 @@ static inline double getTutteEnergy(const BDS_Point *p,
   return E;
 }
 
-static inline void getCentroidUV(const BDS_Point *p, GFace *gf,
+static inline void getCentroidUV(const BDS_Point *p, GSurface *gf,
                                  const std::vector<SPoint2> &kernel,
                                  const std::vector<double> &lc, double &U,
                                  double &V, double &LC)
@@ -1353,7 +1353,7 @@ static inline void getCentroidUV(const BDS_Point *p, GFace *gf,
   U = V = LC = 0.;
   double factSum = 0;
   for(size_t i = 0; i < kernel.size(); ++i) {
-    GPoint gp = gf->point(kernel[i]);
+    GVertex gp = gf->point(kernel[i]);
     double du = p->u - gp.u();
     double dv = p->v - gp.v();
     double denom = (du * du + dv * dv);
@@ -1490,7 +1490,7 @@ static inline void computeSomeKindOfKernel(const BDS_Point *p,
   // if (changed)getchar();
 }
 
-static GPoint _closestPoint(BDS_Point *p, GFace *gf,
+static GVertex _closestPoint(BDS_Point *p, GSurface *gf,
                             const std::vector<SPoint2> &kernel, SPoint3 &target,
                             int N)
 {
@@ -1506,7 +1506,7 @@ static GPoint _closestPoint(BDS_Point *p, GFace *gf,
         double xi = (double)j / (2 * N);
         double eta = (double)k / (2 * N);
         SPoint2 p = p0 * (1 - xi - eta) + p1 * xi + p2 * eta;
-        GPoint gp = gf->point(p);
+        GVertex gp = gf->point(p);
         double d = ((target.x() - gp.x()) * (target.x() - gp.x()) +
                     (target.y() - gp.y()) * (target.y() - gp.y()) +
                     (target.z() - gp.z()) * (target.z() - gp.z()));
@@ -1526,7 +1526,7 @@ static inline bool minimizeTutteEnergyProj(BDS_Point *p, double E_unmoved,
                                            const std::vector<BDS_Point *> &nbg,
                                            const std::vector<SPoint2> &kernel,
                                            const std::vector<double> &lc,
-                                           GFace *gf, int check)
+                                           GSurface *gf, int check)
 {
   SPoint3 x;
   double oldX = p->X, oldY = p->Y, oldZ = p->Z, oldU = p->u, oldV = p->v;
@@ -1545,7 +1545,7 @@ static inline bool minimizeTutteEnergyProj(BDS_Point *p, double E_unmoved,
   }
   x /= sum;
   if(p->iD == check) printf("%12.5E %12.5E %12.5E\n", x.x(), x.y(), x.z());
-  GPoint gp;
+  GVertex gp;
   if(gf->geomType() == GEntity::BSplineSurface ||
      gf->geomType() == GEntity::BezierSurface ||
      gf->geomType() == GEntity::Unknown) {
@@ -1585,13 +1585,13 @@ static inline bool minimizeTutteEnergyParam(BDS_Point *p, double E_unmoved,
                                             const std::vector<BDS_Point *> &nbg,
                                             const std::vector<SPoint2> &kernel,
                                             const std::vector<double> &lc,
-                                            GFace *gf, int check)
+                                            GSurface *gf, int check)
 {
   double U, V, LC, oldX = p->X, oldY = p->Y, oldZ = p->Z, oldU = p->u,
                    oldV = p->v;
   double RATIO2 = 0;
   getCentroidUV(p, gf, kernel, lc, U, V, LC);
-  GPoint gp = gf->point(U, V);
+  GVertex gp = gf->point(U, V);
   if(!gp.succeeded()) return false;
   p->X = gp.x();
   p->Y = gp.y();
@@ -1620,7 +1620,7 @@ static inline bool minimizeTutteEnergyParam(BDS_Point *p, double E_unmoved,
   return false;
 }
 
-bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GFace *gf, double threshold)
+bool BDS_Mesh::smooth_point_centroid(BDS_Point *p, GSurface *gf, double threshold)
 {
   if(p->degenerated) return false;
   if(p->g && p->g->classif_degree <= 1) return false;

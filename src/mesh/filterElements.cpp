@@ -54,7 +54,7 @@ inline double orientationTest(double a[2], double b[2], double c[2])
   return s >= 0 ? 1.0 : s <= 0 ? -1.0 : 0.0;
 }
 
-inline double orientationTest(MVertex *va, MVertex *vb, MVertex *vc)
+inline double orientationTest(MNode *va, MNode *vb, MNode *vc)
 {
   double a[2] = {va->x(), va->y()};
   double b[2] = {vb->x(), vb->y()};

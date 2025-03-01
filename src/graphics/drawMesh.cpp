@@ -110,7 +110,7 @@ static void drawTangents(drawContext *ctx, std::vector<T *> &elements)
   }
 }
 
-static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
+static void drawVertexLabel(drawContext *ctx, GEntity *e, MNode *v,
                             int partition = -1)
 {
   if(!v->getVisibility()) return;
@@ -168,7 +168,7 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
   if(CTX::instance()->mesh.nodes) {
     if(CTX::instance()->mesh.nodeType) {
       for(std::size_t i = 0; i < e->mesh_vertices.size(); i++) {
-        MVertex *v = e->mesh_vertices[i];
+        MNode *v = e->mesh_vertices[i];
         if(!v->getVisibility()) continue;
         if(CTX::instance()->mesh.colorCarousel == 0 ||
            CTX::instance()->mesh.volumeFaces ||
@@ -189,7 +189,7 @@ static void drawVerticesPerEntity(drawContext *ctx, GEntity *e)
     else {
       glBegin(GL_POINTS);
       for(std::size_t i = 0; i < e->mesh_vertices.size(); i++) {
-        MVertex *v = e->mesh_vertices[i];
+        MNode *v = e->mesh_vertices[i];
         if(!v->getVisibility()) continue;
         if(CTX::instance()->mesh.colorCarousel == 0 ||
            CTX::instance()->mesh.volumeFaces ||
@@ -223,7 +223,7 @@ static void drawVerticesPerElement(drawContext *ctx, GEntity *e,
   for(std::size_t i = 0; i < elements.size(); i++) {
     MElement *ele = elements[i];
     for(std::size_t j = 0; j < ele->getNumVertices(); j++) {
-      MVertex *v = ele->getVertex(j);
+      MNode *v = ele->getVertex(j);
       // FIXME isElementVisible() can be slow: we should also use a
       // vertex array for drawing vertices...
       if(isElementVisible(ele) && v->getVisibility()) {
@@ -418,7 +418,7 @@ static void drawArrays(drawContext *ctx, GEntity *e, VertexArray *va,
   glDisableClientState(GL_COLOR_ARRAY);
 }
 
-// GVertex drawing routines
+// GPoint drawing routines
 
 class drawMeshGVertex {
 private:
@@ -426,7 +426,7 @@ private:
 
 public:
   drawMeshGVertex(drawContext *ctx) : _ctx(ctx) {}
-  void operator()(GVertex *v)
+  void operator()(GPoint *v)
   {
     if(!v->getVisibility()) return;
 
@@ -449,7 +449,7 @@ public:
   }
 };
 
-// GEdge drawing routines
+// GCurve drawing routines
 
 class drawMeshGEdge {
 private:
@@ -457,7 +457,7 @@ private:
 
 public:
   drawMeshGEdge(drawContext *ctx) : _ctx(ctx) {}
-  void operator()(GEdge *e)
+  void operator()(GCurve *e)
   {
     if(!e->getVisibility()) {
       return;
@@ -493,7 +493,7 @@ public:
   }
 };
 
-// GFace drawing routines
+// GSurface drawing routines
 
 class drawMeshGFace {
 private:
@@ -501,7 +501,7 @@ private:
 
 public:
   drawMeshGFace(drawContext *ctx) : _ctx(ctx) {}
-  void operator()(GFace *f)
+  void operator()(GSurface *f)
   {
     if(!f->getVisibility()) {
       return;
@@ -576,7 +576,7 @@ public:
   }
 };
 
-// GRegion drawing routines
+// GVolume drawing routines
 
 class drawMeshGRegion {
 private:
@@ -584,7 +584,7 @@ private:
 
 public:
   drawMeshGRegion(drawContext *ctx) : _ctx(ctx) {}
-  void operator()(GRegion *r)
+  void operator()(GVolume *r)
   {
     if(!r->getVisibility()) return;
 
