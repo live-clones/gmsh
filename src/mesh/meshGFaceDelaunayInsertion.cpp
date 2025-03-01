@@ -1355,7 +1355,9 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
           insertAPoint(gf, AllTris.end(), newPoint, metric, DATA, AllTris,
                        &ActiveTris, worst, nullptr, testStarShapeness);
       }
-      else printf("no point found\n");
+      else {
+        Msg::Debug("no point found");
+      }
     }
   }
 
