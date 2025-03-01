@@ -46,15 +46,12 @@ getModelEdge(GModel *gm, std::vector<GFace *> &gfs,
              size_t &MAX1)
 {
 
-  if(gfs.size() == 2 && gfs[0] == gfs[1]) {
-    //    printf("ARGH %d\n",gfs[0]->tag());
-    return nullptr;
-  }    
+  if(gfs.size() == 2 && gfs[0] == gfs[1]) return nullptr;
 
   for(size_t i = 0; i < newEdges.size(); i++) {
     if(gfs.size() == newEdges[i].second.size()) {
       bool found = true;
-      for(size_t j = 0; j < newEdges[i].second.size(); j++){
+      for(size_t j = 0; j < newEdges[i].second.size(); j++) {
         if(std::find(gfs.begin(), gfs.end(), newEdges[i].second[j]) ==
            gfs.end()) {
           found = false;
@@ -66,27 +63,12 @@ getModelEdge(GModel *gm, std::vector<GFace *> &gfs,
 	  break;
 	}
       }
-      if(found) {
-	if ( newEdges[i].first->tag() == 1141){
-	  printf("using edge 1141 ");
-	  for (auto f : gfs)printf("%d ",f->tag());
-	  printf("\n");
-	}
-	return newEdges[i].first;
-      }
+      if(found) return newEdges[i].first;
     }
   }
 
   discreteEdge *ge = new discreteEdge(gm, (MAX1++) + 1, nullptr, nullptr);
-
-  if (ge->tag() == 1141){
-    printf("creating edge 1141 ");
-    for (auto f : gfs)printf("%d ",f->tag());
-    printf("\n");
-  }
-  
   newEdges.push_back(std::make_pair(ge, gfs));
-  
   return ge;
 }
 
@@ -133,8 +115,6 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
   size_t MAX1 = gm->getMaxElementaryNumber(1);
   size_t MAX2 = gm->getMaxElementaryNumber(2);
 
-  //  printf("coucou1\n");
-  
   // check if mesh is high-order
   bool ho = false;
   for(auto it = gm->firstFace(); it != gm->lastFace(); it++) {
@@ -235,10 +215,6 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
           }
         }
       }
-      if (gf->tag() == 141) {
-	printf("FACE %d with %lu triangles\n",gf->tag(),gf->triangles.size());
-      }
-      
       gm->add(gf);
       newf.push_back(gf);
 
@@ -271,67 +247,51 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
       auto itl = lines.find(&ml);
       if(itl != lines.end()) {
         std::vector<GFace *> faces;
-	// DEBUG
-	bool found = false;
-        for(size_t i = 0; i < it->second.size(); ++i){
+        for(size_t i = 0; i < it->second.size(); ++i) {
           faces.push_back(reverse[it->second[i]]);
-	  if (reverse[it->second[i]]->tag()== 141)found = true;
 	}
-	//	auto ip = std::unique(faces.begin(), faces.end());
-	//	faces.resize(std::distance(faces.begin(), ip));
-
         GEdge *ge = getModelEdge(gm, faces, newEdges, MAX1);
-	if (found) printf ("face %d is connected to gedge %d\n",141,ge->tag());
         if(ge) ge->lines.push_back(*itl);
       }
     }
   }
   Msg::Info("Found %d model curves", newEdges.size());
-  
+
   // check if an edge is embedded in a face
-  //  std::vector<std::pair<GEdge *, std::vector<GFace *> > > newEdges;
   std::set<MVertex*> forceSplit;
-  std::map<GEdge*,GFace*> embedded;
+  std::map<GEdge*, GFace*> embedded;
   for(auto ite = newEdges.begin(); ite != newEdges.end(); ++ite) {
-    GEdge *ge = ite->first;    
-    //    if (ge->tag() == 1141){
-    //    //      printf("EDGE 1141 :");
-    //      for (size_t i = 0;i<ite->second.size();++i) 
-    //	printf("%d ",ite->second[i]->tag());      
-    //      printf("\n");	
-    //    }
+    GEdge *ge = ite->first;
     for (size_t i = 0;i<ite->second.size();++i) {
       for (size_t j = i+1;j<ite->second.size();++j) {
 	if (ite->second[i] == ite->second[j]){
 	  embedded.insert({ge,ite->second[i]});
 	  std::vector<MEdge> allEdges;
-	  for(std::size_t i = 0; i < ite->first->lines.size(); i++) 
+	  for(std::size_t i = 0; i < ite->first->lines.size(); i++)
 	    allEdges.push_back(MEdge(ite->first->lines[i]->getVertex(0),
 				     ite->first->lines[i]->getVertex(1)));
 	  std::vector<std::vector<MVertex *> > vs_;
-	  SortEdgeConsecutive(allEdges, vs_);	  	  
-	  //	  printf("edge %d is embedded in %d (%lu %lu)\n",ge->tag(),ite->second[j]->tag(),
-	  //		 vs_[0][0]->getNum(),vs_[0][vs_[0].size() - 1]->getNum());
+	  SortEdgeConsecutive(allEdges, vs_);
 	  forceSplit.insert(vs_[0][0]);
-	  forceSplit.insert(vs_[0][vs_[0].size() - 1]);	  
+	  forceSplit.insert(vs_[0][vs_[0].size() - 1]);
 	}
-      }      
+      }
     }
-  }  
-      
-  // check if new curves should not be split;
+  }
+
+  // check if new curves should not be split
 
   std::map<discreteFace *, std::vector<int>, GEntityPtrLessThan>
     newFaceTopology;
   std::map<MVertex *, GVertex *> modelVertices;
-      
-      
+
   std::map<int,int> embedded_new;
   for(auto ite = newEdges.begin(); ite != newEdges.end(); ++ite) {
     std::vector<MEdge> allEdges;
 
-    GFace *emb = embedded.find(ite->first) != embedded.end() ? embedded[ite->first] : nullptr;
-    
+    GFace *emb = embedded.find(ite->first) != embedded.end() ?
+      embedded[ite->first] : nullptr;
+
     for(std::size_t i = 0; i < ite->first->lines.size(); i++) {
       allEdges.push_back(MEdge(ite->first->lines[i]->getVertex(0),
                                ite->first->lines[i]->getVertex(1)));
@@ -350,7 +310,8 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
           MVertex *v0 = vs_[i][j == 0 ? (vs_[i].size() - 2) : (j - 1)];
           MVertex *v1 = vs_[i][j];
           MVertex *v2 = vs_[i][j + 1];
-          if(forceSplit.find(v1)!=forceSplit.end() || breakForLargeAngle(v0, v1, v2, curveAngleThreshold)) {
+          if(forceSplit.find(v1) != forceSplit.end() ||
+             breakForLargeAngle(v0, v1, v2, curveAngleThreshold)) {
             std::vector<MVertex *> temp;
             for(size_t k = j; k < vs_[i].size() + j; k++) {
               temp.push_back(vs_[i][k % vs_[i].size()]);
@@ -367,7 +328,8 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
         MVertex *v0 = vs_[i][j - 1];
         MVertex *v1 = vs_[i][j];
         MVertex *v2 = vs_[i][j + 1];
-        if(forceSplit.find(v1)!=forceSplit.end() || breakForLargeAngle(v0, v1, v2, curveAngleThreshold))
+        if(forceSplit.find(v1) != forceSplit.end() ||
+           breakForLargeAngle(v0, v1, v2, curveAngleThreshold))
           cuts_.push_back(j);
       }
       cuts_.push_back(vs_[i].size() - 1);
@@ -387,9 +349,6 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
       }
     }
 
-
-    
-    //    printf("curve %d is split into ",ite->first->tag());
     for(size_t i = 0; i < vs.size(); i++) {
       MVertex *vB = vs[i][0];
       MVertex *vE = vs[i][vs[i].size() - 1];
@@ -416,8 +375,8 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
       }
       GEdge *newGe = new discreteEdge(gm, (MAX1++) + 1, modelVertices[vB],
                                       modelVertices[vE]);
-      printf("%d ",newGe->tag());
-      if (emb) embedded_new.insert({newGe->tag(),emb->tag()});
+
+      if(emb) embedded_new.insert({newGe->tag(),emb->tag()});
 
       for(size_t j = 1; j < vs[i].size(); j++) {
         MVertex *v1 = vs[i][j - 1];
@@ -445,15 +404,14 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
   for(auto itFT = newFaceTopology.begin(); itFT != newFaceTopology.end();
       ++itFT) {
 
-    std::vector<int> bndEdges;
-    std::vector<int> embEdges;
+    std::vector<int> bndEdges, embEdges;
     for (auto e : itFT->second){
       if (embedded_new.find(e) != embedded_new.end() &&
 	  embedded_new[e] == itFT->first->tag()) embEdges.push_back(e);
       else bndEdges.push_back(e);
     }
     itFT->first->setBoundEdges(bndEdges);
-    for (auto e : embEdges)itFT->first->addEmbeddedEdge (gm->getEdgeByTag(e));
+    for (auto e : embEdges)itFT->first->addEmbeddedEdge(gm->getEdgeByTag(e));
   }
 
   for(auto ite = newEdges.begin(); ite != newEdges.end(); ++ite) {
@@ -867,8 +825,7 @@ static int isTriangulationParametrizable(const std::vector<MTriangle *> &t,
     double u2 = stl_nodes_uv[stl_triangles[i + 2]].x();
     double v2 = stl_nodes_uv[stl_triangles[i + 2]].y();
     double det = fabs((u1 - u0) * (v2 - v0) - (v1 - v0) * (u2 - u0));
-    // FIXME TEST
-    if(det < 1.e-7) {
+    if(det < 1.e-8) {
       why << "parametrized triangles are too small (" << det << ")";
       return 2;
     }

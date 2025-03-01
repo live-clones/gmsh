@@ -648,7 +648,7 @@ static void Mesh2D(GModel *m)
       }
     }
   }
-  
+
   CheckEmptyMesh(m, 2);
   double t2 = Cpu(), w2 = TimeOfDay();
   CTX::instance()->mesh.timer[1] = w2 - w1;

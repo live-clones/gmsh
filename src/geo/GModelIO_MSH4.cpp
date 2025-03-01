@@ -78,8 +78,7 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
                                      bool swap)
 {
   std::size_t numBrep = 0;
-  std::vector<GEntity *> boundingEntities;
-  std::vector<GEntity *> embeddedEntities;
+  std::vector<GEntity *> boundingEntities, embeddedEntities;
   std::vector<int> boundingSign;
 
   if(binary) {
@@ -111,15 +110,20 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
       int entityTag = 0;
       if(fscanf(fp, "%d", &entityTag) != 1) { return false; }
 
+      // FIXME: temporary hack until we update the MSH4 format - assume entities
+      // with tag > maxTag are embedded entities of dimension (dim - 1); this
+      // does not work for e.g. points in surfaces (dimension == dim - 2)
       if (std::abs(entityTag) > model->getMaxElementaryNumber(entity->dim() - 1)){
-	GEntity *brep =
-	  model->getEntityByTag(entity->dim() - 1, std::abs(entityTag)-model->getMaxElementaryNumber(entity->dim() - 1));
-	if(!brep) {
-	  Msg::Warning("Entity %d not found in the Brep of entity %d", entityTag,
-		       entity->tag());
+        int embeddedTag = std::abs(entityTag) -
+          model->getMaxElementaryNumber(entity->dim() - 1);
+	GEntity *emb =
+	  model->getEntityByTag(entity->dim() - 1, embeddedTag);
+	if(!emb) {
+	  Msg::Warning("Embedded entity %d not found in the Brep of entity %d",
+                       embeddedTag, entity->tag());
 	}
 	else {
-	  embeddedEntities.push_back(brep);
+	  embeddedEntities.push_back(emb);
 	}
       }
       else {
@@ -162,7 +166,8 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
       tags[i] = std::abs(boundingEntities[i]->tag());
     reinterpret_cast<GFace *>(entity)->setBoundEdges(tags, boundingSign);
     for(std::size_t i = 0; i < embeddedEntities.size(); i++){
-      reinterpret_cast<GFace *>(entity)->addEmbeddedEdge(reinterpret_cast<GEdge *>(embeddedEntities[i]));
+      reinterpret_cast<GFace *>(entity)->addEmbeddedEdge
+        (reinterpret_cast<GEdge *>(embeddedEntities[i]));
     }
   } break;
   case 3: {
@@ -1741,16 +1746,15 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
 
     for(auto it = faces.begin(); it != faces.end(); ++it) {
       std::vector<GEdge *> const &edges = (*it)->edges();
-      //-----------------------------------------
-      // JFR -- WE MUST ALSO STORE EMBEDDED EDGES
+      // FIXME: temporary hack until we update the MSH4 format to handle
+      // embedded entities - save embedded entities with fake tag > maxTag
       std::vector<GEdge *> const &embEdges = (*it)->embeddedEdges();
-      //-----------------------------------------
+
       std::vector<int> const &ori = (*it)->edgeOrientations();
       std::size_t edgesSize = edges.size();
-      //-----------------------------------------
-      // JFR -- WE MUST ALSO STORE EMBEDDED EDGES
+      // FIXME: temporary hack until we update the MSH4 format to handle
+      // embedded entities
       edgesSize += embEdges.size();
-      //-----------------------------------------
 
       int entityTag = (*it)->tag();
       fwrite(&entityTag, sizeof(int), 1, fp);
@@ -1780,13 +1784,13 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
 
       signs.insert(signs.end(), ori.begin(), ori.end());
 
-      //-----------------------------------------
-      // JFR -- WE MUST ALSO STORE EMBEDDED EDGES
+      // FIXME: temporary hack until we update the MSH4 format to handle
+      // embedded entities
       for(auto ite = embEdges.begin(); ite != embEdges.end(); ite++){
-        tags.push_back((*ite)->tag()+maxEdgeTag);
+        tags.push_back((*ite)->tag() + maxEdgeTag);
         signs.push_back(1);
-      }//----------------------------------------
-      
+      }
+
       if(tags.size() == signs.size()) {
         for(std::size_t i = 0; i < tags.size(); i++)
           tags[i] *= (signs[i] > 0 ? 1 : -1);
@@ -1939,10 +1943,9 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
 
     for(auto it = faces.begin(); it != faces.end(); ++it) {
       std::vector<GEdge *> const &edges = (*it)->edges();
-      //-----------------------------------------
-      // JFR -- WE MUST ALSO STORE EMBEDDED EDGES
+      // FIXME: temporary hack until we update the MSH4 format to handle
+      // embedded entities
       std::vector<GEdge *> const &embEdges = (*it)->embeddedEdges();
-      //-----------------------------------------
 
       std::vector<int> const &ori = (*it)->edgeOrientations();
       fprintf(fp, "%d ", (*it)->tag());
@@ -1963,14 +1966,18 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
       SBoundingBox3d bb = entityBounds ? (*entityBounds)[*it] : (*it)->bounds();
       writeMSH4BoundingBox(bb, fp, scalingFactor, binary, 2, version);
       writeMSH4Physicals(fp, *it, binary);
-      fprintf(fp, "%lu ", edges.size()+embEdges.size());
+      // FIXME: temporary hack until we update the MSH4 format to handle
+      // embedded entities
+      fprintf(fp, "%lu ", edges.size() + embEdges.size());
       std::vector<int> tags, signs;
       for(auto ite = edges.begin(); ite != edges.end(); ite++)
         tags.push_back((*ite)->tag());
       for(auto ite = ori.begin(); ite != ori.end(); ite++)
         signs.push_back(*ite);
+      // FIXME: temporary hack until we update the MSH4 format to handle
+      // embedded entities
       for(auto ite = embEdges.begin(); ite != embEdges.end(); ite++){
-        tags.push_back((*ite)->tag()+maxEdgeTag);
+        tags.push_back((*ite)->tag() + maxEdgeTag);
         signs.push_back(1);
       }
       if(tags.size() == signs.size()) {
