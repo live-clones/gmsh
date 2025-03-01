@@ -12,7 +12,7 @@
 #include <unordered_map>
 #include <string>
 
-class MVertex;
+class MNode;
 class MTriangle;
 class GModel;
 class GlobalBackgroundMesh;
@@ -27,14 +27,14 @@ class GlobalBackgroundMesh;
  * @param[in] clampMinWithTriEdges If true, the minimum length is the maximum
  * of the previously computed size (from CAD) and local background mesh triangle size.
  * This option is useful to avoid over-refinement.
- * @param[out] minSize the minimal distance, for each MVertex of GVertex / GEdge
+ * @param[out] minSize the minimal distance, for each MNode of GPoint / GCurve
  *
  * @return 0 if success
  */
 int computeMinimalSizeOnCurves(
     GlobalBackgroundMesh& gbm,
     bool clampMinWithTriEdges,
-    std::unordered_map<MVertex*,double>& minSize);
+    std::unordered_map<MNode*,double>& minSize);
 
 /**
  * @brief One way smoothing to get a smooth scalar field where
@@ -53,7 +53,7 @@ int computeMinimalSizeOnCurves(
  */
 int sizeMapOneWaySmoothing(
     const std::vector<MTriangle*>& triangles,
-    std::unordered_map<MVertex*,double>& values,
+    std::unordered_map<MNode*,double>& values,
     double gradientMax = 1.2);
 
 
@@ -63,4 +63,4 @@ int sizeMapOneWaySmoothing(
  * @param scaling the values on which to apply the filtering
  * @param critera keep values which are in [critera,1-critera] in the histogram
  */
-void quantileFiltering(std::unordered_map<MVertex*,double>& scaling, double critera);
+void quantileFiltering(std::unordered_map<MNode*,double>& scaling, double critera);

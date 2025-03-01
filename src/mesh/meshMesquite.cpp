@@ -4,13 +4,13 @@
 
 #ifdef HAVE_MESQUITE
 #include "GModel.h"
-#include "GRegion.h"
+#include "GVolume.h"
 #include "MTriangle.h"
 #include "MTetrahedron.h"
-#include "MVertex.h"
+#include "MNode.h"
 #include "Mesquite_all_headers.hpp"
 
-int mesquiteImprove (GRegion *gr){
+int mesquiteImprove (GVolume *gr){
   for (auto t : gr->tetrahedra){
     t->getVertex(0)->setIndex(-1);
     t->getVertex(1)->setIndex(-1);
@@ -21,7 +21,7 @@ int mesquiteImprove (GRegion *gr){
   std::vector<double> verts;
   std::vector<size_t> tets;
   std::vector<int> fixed;
-  std::vector<MVertex*> vs;
+  std::vector<MNode*> vs;
   for (auto t : gr->tetrahedra){
     for (int i=0;i<4;i++){
       if (t->getVertex(i)->getIndex() == -1){
@@ -79,7 +79,7 @@ int mesquiteImprove (GRegion *gr){
 
 }
 
-int mesquiteImprove (GFace *gf){
+int mesquiteImprove (GSurface *gf){
   for (auto t : gf->triangles){
     t->getVertex(0)->setIndex(-1);
     t->getVertex(1)->setIndex(-1);
@@ -89,7 +89,7 @@ int mesquiteImprove (GFace *gf){
   std::vector<double> verts;
   std::vector<size_t> tris;
   std::vector<int> fixed;
-  std::vector<MVertex*> vs;
+  std::vector<MNode*> vs;
   for (auto t : gf->triangles){
     for (int i=0;i<3;i++){
       if (t->getVertex(i)->getIndex() == -1){
@@ -152,11 +152,11 @@ int mesquiteImprove (GFace *gf){
 
 
 #else
-int mesquiteImprove (GRegion *gr){
+int mesquiteImprove (GVolume *gr){
   Msg::Error("Gmsh must be compiled with the UNTANGLE lib to be able to untangle a tet mesh");
   return -1;
 }
-int mesquiteImprove (GFace *gf){
+int mesquiteImprove (GSurface *gf){
   Msg::Error("Gmsh must be compiled with the UNTANGLE lib to be able to untangle a tet mesh");
   return -1;
 }

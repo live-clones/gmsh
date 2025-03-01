@@ -468,7 +468,7 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
   }
 #if defined(HAVE_LIBCGNS)
   else if(ext == ".cgns" || ext == ".CGNS") {
-    std::vector<std::vector<MVertex *> > vertPerZone;
+    std::vector<std::vector<MNode *> > vertPerZone;
     std::vector<std::vector<MElement *> > eltPerZone;
     if(CTX::instance()->geom.matchGeomAndMesh && !GModel::current()->empty()) {
       GModel *tmp2 = GModel::current();

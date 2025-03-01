@@ -23,8 +23,8 @@
 #include "robustPredicates.h"
 #include "BackgroundMeshTools.h"
 #include "OS.h"
-#include "GPoint.h"
-#include "GFace.h"
+#include "GVertex.h"
+#include "GSurface.h"
 #include "MLine.h"
 
 #define Pred(x) ((x)->prev)
@@ -569,7 +569,7 @@ void DocRecord::voronoiCell(PointNumero pt, std::vector<SPoint2> &pts) const
   now in infinite norm, how to find X_P ?
 */
 
-void DocRecord::makePosView(const std::string &fileName, GFace *gf)
+void DocRecord::makePosView(const std::string &fileName, GSurface *gf)
 {
   FILE *f = Fopen(fileName.c_str(), "w");
   if(!f) {
@@ -582,15 +582,15 @@ void DocRecord::makePosView(const std::string &fileName, GFace *gf)
       std::vector<SPoint2> pts;
       double pc[2] = {(double)points[i].where.h, (double)points[i].where.v};
       if(!onHull(i)) {
-        GPoint p0(pc[0], pc[1], 0.0);
+        GVertex p0(pc[0], pc[1], 0.0);
         // if (gf) p0 = gf->point(pc[0], pc[1]);
         fprintf(f, "SP(%g,%g,%g){%g};\n", p0.x(), p0.y(), p0.z(), (double)i);
         voronoiCell(i, pts);
         for(std::size_t j = 0; j < pts.size(); j++) {
           SPoint2 pp1 = pts[j];
           SPoint2 pp2 = pts[(j + 1) % pts.size()];
-          GPoint p1(pp1.x(), pp1.y(), 0.0);
-          GPoint p2(pp2.x(), pp2.y(), 0.0);
+          GVertex p1(pp1.x(), pp1.y(), 0.0);
+          GVertex p2(pp2.x(), pp2.y(), 0.0);
           // if (gf) {
           //    p1 = gf->point(p1.x(), p1.y());
           //    p2 = gf->point(p2.x(), p2.y());
@@ -637,7 +637,7 @@ void DocRecord::makePosView(const std::string &fileName, GFace *gf)
 }
 
 void DocRecord::printMedialAxis(Octree *_octree, const std::string &fileName,
-                                GFace *gf, GEdge *ge)
+                                GSurface *gf, GCurve *ge)
 {
   FILE *f = Fopen(fileName.c_str(), "w");
   if(!f) {
@@ -650,7 +650,7 @@ void DocRecord::printMedialAxis(Octree *_octree, const std::string &fileName,
       std::vector<SPoint2> pts;
       SPoint2 pc((double)points[i].where.h, (double)points[i].where.v);
       if(!onHull(i)) {
-        GPoint p0(pc[0], pc[1], 0.0);
+        GVertex p0(pc[0], pc[1], 0.0);
         if(gf) p0 = gf->point(pc[0], pc[1]);
         fprintf(f, "SP(%g,%g,%g){%g};\n", p0.x(), p0.y(), p0.z(), (double)i);
         voronoiCell(i, pts);
@@ -660,8 +660,8 @@ void DocRecord::printMedialAxis(Octree *_octree, const std::string &fileName,
                        pts[(j + 1) % pts.size()].y(), 0.0);
           SVector3 v1(pp1.x() - pc.x(), pp1.y() - pc.y(), 0.0);
           SVector3 v2(pp2.x() - pc.x(), pp2.y() - pc.y(), 0.0);
-          GPoint p1(pp1.x(), pp1.y(), 0.0);
-          GPoint p2(pp2.x(), pp2.y(), 0.0);
+          GVertex p1(pp1.x(), pp1.y(), 0.0);
+          GVertex p2(pp2.x(), pp2.y(), 0.0);
           if(gf) {
             p1 = gf->point(p1.x(), p1.y());
             p2 = gf->point(p2.x(), p2.y());
@@ -671,8 +671,8 @@ void DocRecord::printMedialAxis(Octree *_octree, const std::string &fileName,
           MElement *m1 = (MElement *)Octree_Search(P1, _octree);
           MElement *m2 = (MElement *)Octree_Search(P2, _octree);
           if(m1 && m2) {
-            MVertex *v0 = new MVertex(p1.x(), p1.y(), p1.z());
-            MVertex *v1 = new MVertex(p2.x(), p2.y(), p2.z());
+            MNode *v0 = new MNode(p1.x(), p1.y(), p1.z());
+            MNode *v1 = new MNode(p2.x(), p2.y(), p2.z());
             ge->lines.push_back(new MLine(v0, v1));
             ge->mesh_vertices.push_back(v0);
             ge->mesh_vertices.push_back(v1);
@@ -950,18 +950,18 @@ std::set<int> DocRecord::tagInterior(double x, double y)
   return taggedTriangles;
 }
 
-void DocRecord::concave(double x, double y, GFace *gf)
+void DocRecord::concave(double x, double y, GSurface *gf)
 {
   int index1;
   int index2;
   int index3;
-  GEdge *edge;
+  GCurve *edge;
   MElement *element;
-  MVertex *vertex1;
-  MVertex *vertex2;
+  MNode *vertex1;
+  MNode *vertex2;
   std::set<int> set;
 
-  std::vector<GEdge *> list = gf->edges();
+  std::vector<GCurve *> list = gf->edges();
 
   for(auto it1 = list.begin(); it1 != list.end(); it1++) {
     edge = *it1;
@@ -1059,12 +1059,12 @@ void DocRecord::remove_all()
   numPoints = numPoints2;
 }
 
-void DocRecord::add_point(double x, double y, GFace *face)
+void DocRecord::add_point(double x, double y, GSurface *face)
 {
   PointRecord point;
   point.where.h = x;
   point.where.v = y;
-  point.data = new MVertex(x, y, 0.0, (GEntity *)face, 2);
+  point.data = new MNode(x, y, 0.0, (GEntity *)face, 2);
   points[numPoints] = point;
   numPoints = numPoints + 1;
 }
@@ -1072,11 +1072,11 @@ void DocRecord::add_point(double x, double y, GFace *face)
 void DocRecord::build_edges()
 {
   for(int i = 0; i < numPoints; i++) {
-    MVertex *vertex1 = (MVertex *)points[i].data;
+    MNode *vertex1 = (MNode *)points[i].data;
     int num = _adjacencies[i].t_length;
     for(int j = 0; j < num; j++) {
       int index = _adjacencies[i].t[j];
-      MVertex *vertex2 = (MVertex *)points[index].data;
+      MNode *vertex2 = (MNode *)points[index].data;
       add_edge(vertex1, vertex2);
     }
   }
@@ -1084,16 +1084,16 @@ void DocRecord::build_edges()
 
 void DocRecord::clear_edges() { mesh_edges.clear(); }
 
-bool DocRecord::delaunay_conformity(GFace *gf)
+bool DocRecord::delaunay_conformity(GSurface *gf)
 {
-  std::vector<GEdge *> const &list = gf->edges();
+  std::vector<GCurve *> const &list = gf->edges();
 
   for(auto it = list.begin(); it != list.end(); it++) {
-    GEdge *edge = *it;
+    GCurve *edge = *it;
     for(std::size_t i = 0; i < edge->getNumMeshElements(); i++) {
       MElement *element = edge->getMeshElement(i);
-      MVertex *vertex1 = element->getVertex(0);
-      MVertex *vertex2 = element->getVertex(1);
+      MNode *vertex1 = element->getVertex(0);
+      MNode *vertex2 = element->getVertex(1);
       bool flag = find_edge(vertex1, vertex2);
       if(!flag) return false;
     }

@@ -9,7 +9,7 @@
 #include <float.h>
 #include "SPoint3.h"
 #include "SVector3.h"
-#include "MVertex.h"
+#include "MNode.h"
 
 #if defined(WIN32)
 #undef min

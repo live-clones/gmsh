@@ -7,8 +7,8 @@
 #include "OS.h"
 #include "MTriangle.h"
 
-static bool getMeshVertices(int num, int *indices, std::vector<MVertex *> &vec,
-                            std::vector<MVertex *> &vertices)
+static bool getMeshVertices(int num, int *indices, std::vector<MNode *> &vec,
+                            std::vector<MNode *> &vertices)
 {
   for(int i = 0; i < num; i++) {
     if(indices[i] < 0 || indices[i] > (int)(vec.size() - 1)) {
@@ -45,14 +45,14 @@ int GModel::readGEOM(const std::string &name)
 
   Msg::Info("%d nodes, %d elements", numNodes, numElements);
 
-  std::vector<MVertex *> vertexVector;
+  std::vector<MNode *> vertexVector;
   std::map<int, std::vector<MElement *> > elements[1];
 
   vertexVector.resize(numNodes);
   for(int i = 0; i < numNodes; i++) {
     double x, y, z;
     if(fscanf(fp, "%lf %lf %lf", &x, &y, &z) != 3) break;
-    vertexVector[i] = new MVertex(x, y, z);
+    vertexVector[i] = new MNode(x, y, z);
   }
 
   for(int i = 0; i < numElements; i++) {
@@ -62,7 +62,7 @@ int GModel::readGEOM(const std::string &name)
     case 3: {
       if(fscanf(fp, "%d %d %d", &n[0], &n[1], &n[2]) != 3) break;
       for(int i = 0; i < 3; i++) n[i]--;
-      std::vector<MVertex *> vertices;
+      std::vector<MNode *> vertices;
       if(!getMeshVertices(3, n, vertexVector, vertices)) break;
       elements[0][1].push_back(new MTriangle(vertices));
     } break;

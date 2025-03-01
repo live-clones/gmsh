@@ -59,7 +59,7 @@ void exportMeshToDassault(GModel *gm, const std::string &fn, int dim)
   fprintf(f, "%lu %d\n", numVertices, dim);
   for(std::size_t i = 0; i < entities.size(); i++)
     for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
-      MVertex *v = entities[i]->mesh_vertices[j];
+      MNode *v = entities[i]->mesh_vertices[j];
       if(dim == 2)
         fprintf(f, "%ld %22.15E %22.15E\n", v->getIndex(), v->x(), v->y());
       else if(dim == 3)
@@ -191,7 +191,7 @@ static bool testElInDist(const SPoint3 &p, double limDist, MElement *el)
   if(el->getDim() == 2) { // 2D?
     for(int iEd = 0; iEd < el->getNumEdges();
         iEd++) { // Loop over edges of element
-      std::vector<MVertex *> edgeVert;
+      std::vector<MNode *> edgeVert;
       el->getEdgeVertices(iEd, edgeVert);
       const SPoint3 A = edgeVert[0]->point();
       const SPoint3 B = edgeVert[1]->point();
@@ -201,7 +201,7 @@ static bool testElInDist(const SPoint3 &p, double limDist, MElement *el)
   else { // 3D
     for(int iFace = 0; iFace < el->getNumFaces();
         iFace++) { // Loop over faces of element
-      std::vector<MVertex *> faceVert;
+      std::vector<MNode *> faceVert;
       el->getFaceVertices(iFace, faceVert);
       const SPoint3 A = faceVert[0]->point();
       const SPoint3 B = faceVert[1]->point();

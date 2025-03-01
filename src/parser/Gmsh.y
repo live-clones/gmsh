@@ -3780,7 +3780,7 @@ Command :
         GModel::current()->getEntities(entities);
         for(auto e : entities) {
           for(std::size_t j = 0; j < e->getNumMeshVertices(); j++) {
-            MVertex *v = e->getMeshVertex(j);
+            MNode *v = e->getMeshVertex(j);
             SPoint3 pt = v->point();
             pt.transform(affineTransform);
             v->setXYZ(pt);
@@ -3802,7 +3802,7 @@ Command :
           (dimTags[i].first, dimTags[i].second);
         if(e){
           for(std::size_t j = 0; j < e->getNumMeshVertices(); j++) {
-            MVertex *v = e->getMeshVertex(j);
+            MNode *v = e->getMeshVertex(j);
             SPoint3 pt = v->point();
             pt.transform(affineTransform);
             v->setXYZ(pt);
@@ -4572,7 +4572,7 @@ Constraints :
         if(GModel::current()->getOCCInternals())
           GModel::current()->getOCCInternals()->setMeshSize(0, tag, $4);
         GModel::current()->getGEOInternals()->setMeshSize(0, tag, $4);
-        GVertex *gv = GModel::current()->getVertexByTag(tag);
+        GPoint *gv = GModel::current()->getVertexByTag(tag);
         if(gv) gv->setPrescribedMeshSizeAtVertex($4);
       }
       List_Delete(tmp);
@@ -4592,7 +4592,7 @@ Constraints :
         if(GModel::current()->getOCCInternals())
           GModel::current()->getOCCInternals()->setMeshSize(0, tag, $5);
         GModel::current()->getGEOInternals()->setMeshSize(0, tag, $5);
-        GVertex *gv = GModel::current()->getVertexByTag(tag);
+        GPoint *gv = GModel::current()->getVertexByTag(tag);
         if(gv) gv->setPrescribedMeshSizeAtVertex($5);
       }
       List_Delete(tmp);
@@ -4626,7 +4626,7 @@ Constraints :
           for(int sig = -1; sig <= 1; sig += 2){
             GModel::current()->getGEOInternals()->setTransfiniteLine
               (sig * j, npoints, type * gmsh_sign(d), coef);
-            GEdge *ge = GModel::current()->getEdgeByTag(sig * j);
+            GCurve *ge = GModel::current()->getEdgeByTag(sig * j);
             if(ge){
               ge->meshAttributes.method = MESH_TRANSFINITE;
               ge->meshAttributes.nbPointsTransfinite = npoints;
@@ -4660,13 +4660,13 @@ Constraints :
           List_Read($3, i, &d);
           int tag = (int)d;
           GModel::current()->getGEOInternals()->setTransfiniteSurface(tag, $5, corners);
-          GFace *gf = GModel::current()->getFaceByTag(tag);
+          GSurface *gf = GModel::current()->getFaceByTag(tag);
           if(gf){
             gf->meshAttributes.method = MESH_TRANSFINITE;
             gf->meshAttributes.transfiniteArrangement = $5;
             if(corners.empty() || corners.size() == 3 || corners.size() == 4){
               for(std::size_t j = 0; j < corners.size(); j++){
-                GVertex *gv = GModel::current()->getVertexByTag(corners[j]);
+                GPoint *gv = GModel::current()->getVertexByTag(corners[j]);
                 if(gv)
                   gf->meshAttributes.corners.push_back(gv);
                 else
@@ -4703,12 +4703,12 @@ Constraints :
           List_Read($3, i, &d);
           int tag = (int)d;
           GModel::current()->getGEOInternals()->setTransfiniteVolume(tag, corners);
-          GRegion *gr = GModel::current()->getRegionByTag(tag);
+          GVolume *gr = GModel::current()->getRegionByTag(tag);
           if(gr){
             gr->meshAttributes.method = MESH_TRANSFINITE;
             if(corners.empty() || corners.size() == 6 || corners.size() == 8){
               for(std::size_t i = 0; i < corners.size(); i++){
-                GVertex *gv = GModel::current()->getVertexByTag(corners[i]);
+                GPoint *gv = GModel::current()->getVertexByTag(corners[i]);
                 if(gv)
                   gr->meshAttributes.corners.push_back(gv);
                 else
@@ -4740,7 +4740,7 @@ Constraints :
           List_Read($2, i, &d);
           int tag = (int)d;
           GModel::current()->getGEOInternals()->setTransfiniteVolumeQuadTri(tag);
-          GRegion *gr = GModel::current()->getRegionByTag(tag);
+          GVolume *gr = GModel::current()->getRegionByTag(tag);
           if(gr) gr->meshAttributes.QuadTri = TRANSFINITE_QUADTRI_1;
         }
         List_Delete($2);
@@ -4776,7 +4776,7 @@ Constraints :
         List_Read($4, i, &d);
         int tag = (int)d;
         GModel::current()->getGEOInternals()->setMeshAlgorithm(2, tag, (int)$7);
-        GFace *gf = GModel::current()->getFaceByTag(tag);
+        GSurface *gf = GModel::current()->getFaceByTag(tag);
         if(gf) gf->setMeshingAlgo((int)$7);
       }
       List_Delete($4);
@@ -4793,7 +4793,7 @@ Constraints :
         List_Read($4, i, &d);
         int tag = (int)d;
         GModel::current()->getGEOInternals()->setMeshSizeFromBoundary(2, tag, (int)$7);
-        GFace *gf = GModel::current()->getFaceByTag(tag);
+        GSurface *gf = GModel::current()->getFaceByTag(tag);
         if(gf) gf->setMeshSizeFromBoundary((int)$7);
       }
       List_Delete($4);
@@ -4819,7 +4819,7 @@ Constraints :
           List_Read($3, i, &d);
           int tag = (int)d;
           GModel::current()->getGEOInternals()->setRecombine(2, tag, $4);
-          GFace *gf = GModel::current()->getFaceByTag(tag);
+          GSurface *gf = GModel::current()->getFaceByTag(tag);
           if(gf){
             gf->meshAttributes.recombine = 1;
             gf->meshAttributes.recombineAngle = $4;
@@ -4848,7 +4848,7 @@ Constraints :
           List_Read($3, i, &d);
           int tag = (int)d;
           GModel::current()->getGEOInternals()->setRecombine(3, tag, 0.);
-          GRegion *gr = GModel::current()->getRegionByTag(tag);
+          GVolume *gr = GModel::current()->getRegionByTag(tag);
           if(gr) gr->meshAttributes.recombine3D = 1;
         }
         List_Delete($3);
@@ -4874,7 +4874,7 @@ Constraints :
           List_Read($3, i, &d);
           int tag = (int)d;
           GModel::current()->getGEOInternals()->setSmoothing(tag, (int)$5);
-          GFace *gf = GModel::current()->getFaceByTag(tag);
+          GSurface *gf = GModel::current()->getFaceByTag(tag);
           if(gf) gf->meshAttributes.transfiniteSmoothing = (int)$5;
         }
         List_Delete($3);
@@ -5111,13 +5111,13 @@ Constraints :
           switch ($2) {
           case 1:
             {
-              GEdge *ge = GModel::current()->getEdgeByTag(num);
+              GCurve *ge = GModel::current()->getEdgeByTag(num);
               if(ge) ge->meshAttributes.reverseMesh = 1;
             }
             break;
           case 2:
             {
-              GFace *gf = GModel::current()->getFaceByTag(num);
+              GSurface *gf = GModel::current()->getFaceByTag(num);
               if(gf) gf->meshAttributes.reverseMesh = 1;
             }
             break;
@@ -5159,19 +5159,19 @@ Constraints :
           switch ($2) {
           case 0:
             {
-              GVertex *gv = GModel::current()->getVertexByTag((int)d);
+              GPoint *gv = GModel::current()->getVertexByTag((int)d);
               if(gv) gv->relocateMeshVertices();
             }
             break;
           case 1:
             {
-              GEdge *ge = GModel::current()->getEdgeByTag((int)d);
+              GCurve *ge = GModel::current()->getEdgeByTag((int)d);
               if(ge) ge->relocateMeshVertices();
             }
             break;
           case 2:
             {
-              GFace *gf = GModel::current()->getFaceByTag((int)d);
+              GSurface *gf = GModel::current()->getFaceByTag((int)d);
               if(gf) gf->relocateMeshVertices();
             }
             break;
@@ -5190,7 +5190,7 @@ Constraints :
       for(int i = 0; i < List_Nbr($3); i++){
         double d;
         List_Read($3, i, &d);
-        GRegion *gr = GModel::current()->getRegionByTag((int)d);
+        GVolume *gr = GModel::current()->getRegionByTag((int)d);
         if(gr) gr->setOutwardOrientationMeshConstraint();
       }
       List_Delete($3);
@@ -5202,7 +5202,7 @@ Constraints :
 	List_Read($3, i, &dnum);
 	int num = (int)dnum;
         GModel::current()->getGEOInternals()->setDegenerated(1, num);
-        GEdge *ge = GModel::current()->getEdgeByTag(num);
+        GCurve *ge = GModel::current()->getEdgeByTag(num);
         if(ge) ge->setTooSmall(true);
       }
       List_Delete($3);
@@ -5904,7 +5904,7 @@ FExpr_Multi :
       if(!found && GModel::current()->getOCCInternals())
         found = GModel::current()->getOCCInternals()->getVertex(tag, x, y, z);
       if(!found){
-        GVertex *gv = GModel::current()->getVertexByTag(tag);
+        GPoint *gv = GModel::current()->getVertexByTag(tag);
         if(gv){
           x = gv->x();
           y = gv->y();
@@ -7102,8 +7102,8 @@ void addPeriodicFace(int iTarget, int iSource,
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
-  GFace *target = GModel::current()->getFaceByTag(std::abs(iTarget));
-  GFace *source = GModel::current()->getFaceByTag(std::abs(iSource));
+  GSurface *target = GModel::current()->getFaceByTag(std::abs(iTarget));
+  GSurface *source = GModel::current()->getFaceByTag(std::abs(iSource));
   if(!target || !source) {
     Msg::Error("Could not find surface %d or %d for periodic copy",
                iTarget, iSource);
@@ -7127,8 +7127,8 @@ void addPeriodicFace(int iTarget, int iSource,
     Msg::Info("%d - %d", sIter->first, sIter->second);
   }
 
-  GFace *target = GModel::current()->getFaceByTag(std::abs(iTarget));
-  GFace *source = GModel::current()->getFaceByTag(std::abs(iSource));
+  GSurface *target = GModel::current()->getFaceByTag(std::abs(iTarget));
+  GSurface *source = GModel::current()->getFaceByTag(std::abs(iSource));
   if(!target || !source) {
     Msg::Error("Could not find surface %d or %d for periodic copy",
                iTarget,iSource);
@@ -7146,8 +7146,8 @@ void addPeriodicEdge(int iTarget,int iSource,
   if(GModel::current()->getGEOInternals()->getChanged())
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
-  GEdge *target = GModel::current()->getEdgeByTag(std::abs(iTarget));
-  GEdge *source = GModel::current()->getEdgeByTag(std::abs(iSource));
+  GCurve *target = GModel::current()->getEdgeByTag(std::abs(iTarget));
+  GCurve *source = GModel::current()->getEdgeByTag(std::abs(iSource));
   if(!target || !source) {
     Msg::Error("Could not find curve %d or %d for periodic copy",
                iTarget,iSource);
@@ -7208,21 +7208,21 @@ void addEmbedded(int dim, std::vector<int> tags, int dim2, int tag2)
     GModel::current()->getGEOInternals()->synchronize(GModel::current());
 
   if(dim2 == 2){
-    GFace *gf = GModel::current()->getFaceByTag(tag2);
+    GSurface *gf = GModel::current()->getFaceByTag(tag2);
     if(!gf){
       yymsg(0, "Unknown model surface with tag %d", tag2);
       return;
     }
     for(std::size_t i = 0; i < tags.size(); i++){
       if(dim == 0){
-        GVertex *gv = GModel::current()->getVertexByTag(tags[i]);
+        GPoint *gv = GModel::current()->getVertexByTag(tags[i]);
         if(gv)
           gf->addEmbeddedVertex(gv);
         else
           yymsg(0, "Unknown model point %d", tags[i]);
       }
       else if(dim == 1){
-        GEdge *ge = GModel::current()->getEdgeByTag(tags[i]);
+        GCurve *ge = GModel::current()->getEdgeByTag(tags[i]);
         if(ge)
           gf->addEmbeddedEdge(ge);
         else
@@ -7231,28 +7231,28 @@ void addEmbedded(int dim, std::vector<int> tags, int dim2, int tag2)
     }
   }
   else if(dim2 == 3){
-    GRegion *gr = GModel::current()->getRegionByTag(tag2);
+    GVolume *gr = GModel::current()->getRegionByTag(tag2);
     if(!gr){
       yymsg(0, "Unknown model volume with tag %d", tag2);
       return;
     }
     for(std::size_t i = 0; i < tags.size(); i++){
       if(dim == 0){
-        GVertex *gv = GModel::current()->getVertexByTag(tags[i]);
+        GPoint *gv = GModel::current()->getVertexByTag(tags[i]);
         if(gv)
           gr->addEmbeddedVertex(gv);
         else
           yymsg(0, "Unknown model point with tag %d", tags[i]);
       }
       else if(dim == 1){
-        GEdge *ge = GModel::current()->getEdgeByTag(tags[i]);
+        GCurve *ge = GModel::current()->getEdgeByTag(tags[i]);
         if(ge)
           gr->addEmbeddedEdge(ge);
         else
           yymsg(0, "Unknown model curve with tag %d", tags[i]);
       }
       else if(dim == 2){
-        GFace *gf = GModel::current()->getFaceByTag(tags[i]);
+        GSurface *gf = GModel::current()->getFaceByTag(tags[i]);
         if(gf)
           gr->addEmbeddedFace(gf);
         else
@@ -7274,7 +7274,7 @@ void removeEmbedded(const std::vector<std::pair<int, int> > &dimTags,
   for(std::size_t i = 0; i < dimTags.size(); i++){
     int dim = dimTags[i].first, tag = dimTags[i].second;
     if(dim == 2){
-      GFace *gf = GModel::current()->getFaceByTag(tag);
+      GSurface *gf = GModel::current()->getFaceByTag(tag);
       if(gf) {
         if(rdim < 0 || rdim == 1) gf->embeddedEdges().clear();
         if(rdim < 0 || rdim == 0) gf->embeddedVertices().clear();
@@ -7283,7 +7283,7 @@ void removeEmbedded(const std::vector<std::pair<int, int> > &dimTags,
         yymsg(0, "Unknown model surface with tag %d", tag);
     }
     else if(dimTags[i].first == 3){
-      GRegion *gr = GModel::current()->getRegionByTag(tag);
+      GVolume *gr = GModel::current()->getRegionByTag(tag);
       if(gr) {
         if(rdim < 0 || rdim == 2) gr->embeddedFaces().clear();
         if(rdim < 0 || rdim == 1) gr->embeddedEdges().clear();

@@ -35,10 +35,10 @@
 
 class PView;
 class GModel;
-class GVertex;
-class GEdge;
-class GFace;
-class GRegion;
+class GPoint;
+class GCurve;
+class GSurface;
+class GVolume;
 class MElement;
 class PView;
 class openglWindow;
@@ -227,9 +227,9 @@ public:
   void viewport2World(double vp[3], double xyz[3]);
   void world2Viewport(double xyz[3], double vp[3]);
   bool select(int type, bool multiple, bool mesh, bool post, int x, int y,
-              int w, int h, std::vector<GVertex *> &vertices,
-              std::vector<GEdge *> &edges, std::vector<GFace *> &faces,
-              std::vector<GRegion *> &regions,
+              int w, int h, std::vector<GPoint *> &vertices,
+              std::vector<GCurve *> &edges, std::vector<GSurface *> &faces,
+              std::vector<GVolume *> &regions,
               std::vector<MElement *> &elements, std::vector<SPoint2> &points,
               std::vector<PView *> &views);
   void recenterForRotationCenterChange(SPoint3 newRotationCenter);

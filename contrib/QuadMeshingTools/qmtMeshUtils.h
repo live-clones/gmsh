@@ -16,48 +16,48 @@
 
 
 class GModel;
-class GRegion;
-class GVertex;
-class GFace;
-class GEdge;
+class GVolume;
+class GPoint;
+class GSurface;
+class GCurve;
 class MTriangle;
 class MQuadrangle;
-class MVertex;
+class MNode;
 class MElement;
 class SurfaceProjector;
 
-std::vector<GFace*> model_faces(const GModel* gm);
-std::vector<GEdge*> face_edges(const GFace* gf);
-std::vector<GEdge*> model_edges(const GModel* gm);
+std::vector<GSurface*> model_faces(const GModel* gm);
+std::vector<GCurve*> face_edges(const GSurface* gf);
+std::vector<GCurve*> model_edges(const GModel* gm);
 
-bool haveNiceParametrization(GFace* gf);
+bool haveNiceParametrization(GSurface* gf);
 
 bool buildVertexToVertexMap(
     const std::vector<MTriangle*>& triangles,
-    std::unordered_map<MVertex*,std::vector<MVertex*> >& v2v);
+    std::unordered_map<MNode*,std::vector<MNode*> >& v2v);
 
 bool buildVertexToVertexMap(
     const std::vector<MElement*>& elements,
-    std::unordered_map<MVertex*,std::vector<MVertex*> >& v2v);
+    std::unordered_map<MNode*,std::vector<MNode*> >& v2v);
 
 
 struct GFaceMeshPatch {
   /* Warning: simple container for pointers, memory not managed by this struct.
    * The GFaceMeshDiff wrapper is doing some memory management for the content. */
-  GFace* gf = nullptr;
+  GSurface* gf = nullptr;
   /* bdrVertices are the ordered boundary loops, there is only one
    * if patch is a topological disk */
-  std::vector<std::vector<MVertex*> > bdrVertices;
-  std::vector<MVertex*> intVertices; /* interior free vertices */
-  std::vector<MVertex*> embVertices; /* fixed vertices inside patch */
+  std::vector<std::vector<MNode*> > bdrVertices;
+  std::vector<MNode*> intVertices; /* interior free vertices */
+  std::vector<MNode*> embVertices; /* fixed vertices inside patch */
   std::vector<MElement*> elements;
 };
 
 
-bool buildBoundary (const std::vector<MElement*>& elements, std::vector<MVertex*>& bnd);
-bool buildBoundaries(const std::vector<MElement*>& elements, std::vector<std::vector<MVertex*> >& loops);
-bool patchFromElements(GFace* gf, const std::vector<MElement*>& elements, GFaceMeshPatch& patch, bool forceEvenIfBadBoundary = false);
-bool patchFromQuads(GFace* gf, const std::vector<MQuadrangle*>& quads, GFaceMeshPatch& patch, bool forceEvenIfBadBoundary = false);
+bool buildBoundary (const std::vector<MElement*>& elements, std::vector<MNode*>& bnd);
+bool buildBoundaries(const std::vector<MElement*>& elements, std::vector<std::vector<MNode*> >& loops);
+bool patchFromElements(GSurface* gf, const std::vector<MElement*>& elements, GFaceMeshPatch& patch, bool forceEvenIfBadBoundary = false);
+bool patchFromQuads(GSurface* gf, const std::vector<MQuadrangle*>& quads, GFaceMeshPatch& patch, bool forceEvenIfBadBoundary = false);
 
 
 void sicnQuality(const GFaceMeshPatch& patch, double& sicnMin, double& sicnAvg);
@@ -67,46 +67,46 @@ bool patchIsTopologicallyValid(const GFaceMeshPatch& patch);
 bool getConnectedComponents(const std::vector<MElement*>& elements,
     std::vector<std::vector<MElement*> >& components);
 
-bool setVertexGFaceUV(GFace* gf, MVertex* v, double uv[2]);
+bool setVertexGFaceUV(GSurface* gf, MNode* v, double uv[2]);
 
-MVertex* centerOfElements(const std::vector<MElement*>& elements);
+MNode* centerOfElements(const std::vector<MElement*>& elements);
 
-bool orientElementsAccordingToBoundarySegment(MVertex* a, MVertex* b, std::vector<MElement*>& elements);
+bool orientElementsAccordingToBoundarySegment(MNode* a, MNode* b, std::vector<MElement*>& elements);
 
-bool reparamMeshVertexOnFaceWithRef(GFace* gf, MVertex* v, const SPoint2& ref, SPoint2& param);
+bool reparamMeshVertexOnFaceWithRef(GSurface* gf, MNode* v, const SPoint2& ref, SPoint2& param);
 
-std::vector<SPoint2> paramOnElement(GFace* gf, MElement* e);
+std::vector<SPoint2> paramOnElement(GSurface* gf, MElement* e);
 
 /* warning: triangles are allocated, should be delete by the caller */
 std::vector<MTriangle*> trianglesFromQuads(const std::vector<MQuadrangle*>& quads);
 
-/* Find a way to get triangles associated to GFace (will look into current mesh, can split quads,
+/* Find a way to get triangles associated to GSurface (will look into current mesh, can split quads,
  * will check in background mesh)
  * If new triangles are allocated (e.g. by splitting quads), they are added to requireDelete
  * If copyExisting: existing triangles are copied into new ones (added to requireDelete) */
-bool getGFaceTriangles(GFace* gf, std::vector<MTriangle*>& triangles, std::vector<MTriangle*>& requireDelete,
+bool getGFaceTriangles(GSurface* gf, std::vector<MTriangle*>& triangles, std::vector<MTriangle*>& requireDelete,
     bool copyExisting = false);
 
-bool fillSurfaceProjector(GFace* gf, SurfaceProjector* sp);
+bool fillSurfaceProjector(GSurface* gf, SurfaceProjector* sp);
 
 int surfaceEulerCharacteristicDiscrete(const std::vector<MTriangle*>& triangles);
 
 struct GFaceInfo {
-  GFace* gf = NULL;
+  GSurface* gf = NULL;
   int chi = 0;
-  std::set<GVertex*> cornerIsNonManifold;
-  std::array<std::set<GVertex*>,5> bdrValVertices;
+  std::set<GPoint*> cornerIsNonManifold;
+  std::array<std::set<GPoint*>,5> bdrValVertices;
   int intSumVal3mVal5 = 0;
 };
 
-bool fillGFaceInfo(GFace* gf, GFaceInfo& info, const std::vector<MTriangle*>& triangles);
-bool fillGFaceInfo(GFace* gf, GFaceInfo& info);
+bool fillGFaceInfo(GSurface* gf, GFaceInfo& info, const std::vector<MTriangle*>& triangles);
+bool fillGFaceInfo(GSurface* gf, GFaceInfo& info);
 
 bool isTopologicalDisk(const GFaceInfo& info);
 bool haveConcaveCorners(const GFaceInfo& info);
 
-bool faceOrderedSideLoops(GFace* gf, const GFaceInfo& info,
-    std::vector<std::vector<std::vector<std::pair<GEdge*,bool> > > >& loopSideEdgesAndInv);
+bool faceOrderedSideLoops(GSurface* gf, const GFaceInfo& info,
+    std::vector<std::vector<std::vector<std::pair<GCurve*,bool> > > >& loopSideEdgesAndInv);
 
 bool appendCADStatistics(GModel* gm, std::unordered_map<std::string,double>& stats, const std::string& prefix = "CAD_");
 bool appendQuadMeshStatistics(GModel* gm, std::unordered_map<std::string,double>& stats, const std::string& prefix = "Mesh_");
@@ -114,24 +114,24 @@ void printStatistics(const std::unordered_map<std::string,double>& stats, const 
 void writeStatistics(const std::unordered_map<std::string,double>& stats, const std::string& path); /* json format */
 
 void computeSICNquality(const std::vector<MElement*>& elements, double& sicnMin, double& sicnAvg);
-void computeSICNquality(GFace* gf, double& sicnMin, double& sicnAvg);
-void computeSICNquality(GRegion* gr, double& sicnMin, double& sicnAvg);
+void computeSICNquality(GSurface* gf, double& sicnMin, double& sicnAvg);
+void computeSICNquality(GVolume* gr, double& sicnMin, double& sicnAvg);
 
-void errorAndAbortIfNegativeElement(GFace* gf, const std::vector<MElement*>& elts, const std::string& msg = "");
+void errorAndAbortIfNegativeElement(GSurface* gf, const std::vector<MElement*>& elts, const std::string& msg = "");
 void errorAndAbortIfInvalidVertexInElements(const std::vector<MElement*>& elts, const std::string& msg = "");
 void errorAndAbortIfInvalidVertexInModel(GModel* gm, const std::string& msg = "");
-void errorAndAbortIfInvalidSurfaceMesh(GFace* gf, const std::string& msg = "");
+void errorAndAbortIfInvalidSurfaceMesh(GSurface* gf, const std::string& msg = "");
 
 std::string randomIdentifier();
 
 struct GFaceMeshDiff {
-  GFace* gf = nullptr;
+  GSurface* gf = nullptr;
   GFaceMeshPatch before;
   GFaceMeshPatch after;
   bool done = false;
 
   /**
-   * @brief Update the GFace with the new vertices/elements
+   * @brief Update the GSurface with the new vertices/elements
    *        and remove/delete the old ones.
    *
    * @param[in] verifyPatchTopology Check if the patch after is manifold
@@ -154,10 +154,10 @@ struct GFaceMeshDiff {
  *        various smoothing operations that were not successful.
  */
 struct PatchGeometryBackup {
-  std::vector<MVertex*> vertices;
+  std::vector<MNode*> vertices;
   std::vector<SPoint2> UVs;
   std::vector<SPoint3> positions;
-  std::unordered_map<MVertex*,std::pair<SPoint2,SPoint3> > old;
+  std::unordered_map<MNode*,std::pair<SPoint2,SPoint3> > old;
 
   PatchGeometryBackup(GFaceMeshPatch& p, bool includeBoundary = false);
   bool restore();

@@ -96,7 +96,7 @@ static int readAtlas(GModel *gm, const char *atlasFilename, int dim[3],
       continue;
     }
 
-    GFace *face = new discreteFace(gm, gm->getMaxElementaryNumber(2) + 1);
+    GSurface *face = new discreteFace(gm, gm->getMaxElementaryNumber(2) + 1);
     gm->add(face);
 
     //    atlasLabels[i].str;
@@ -154,13 +154,13 @@ int GModel::readNII(const std::string &name, float isolevel,
                           0, (quality > 1));
   }
 
-  GFace *face = new discreteFace(this, getMaxElementaryNumber(2) + 1);
+  GSurface *face = new discreteFace(this, getMaxElementaryNumber(2) + 1);
   add(face);
 
-  std::vector<MVertex *> vertices;
+  std::vector<MNode *> vertices;
 
   for(int i = 0; i < npt; i++)
-    vertices.push_back(new MVertex(pts[i].x, pts[i].y, pts[i].z));
+    vertices.push_back(new MNode(pts[i].x, pts[i].y, pts[i].z));
 
   for(int i = 0; i < ntri; i++)
     face->triangles.push_back(new MTriangle(

@@ -18,7 +18,7 @@
 #include <cstring>
 
 class GEntity;
-class MVertex;
+class MNode;
 
 // object for locating closest mesh (principal) vertex on the entity,
 // in/excluding the closure
@@ -29,7 +29,7 @@ class closestVertexFinder {
   ANNpointArray vCoord;
   ANNidxArray index;
   ANNdistArray dist;
-  MVertex **vertex;
+  MNode **vertex;
 #endif
 
   unsigned int nbVtcs;
@@ -39,9 +39,9 @@ public:
   ~closestVertexFinder();
 
   // find closest vertex for given point
-  MVertex *operator()(const SPoint3 &p);
+  MNode *operator()(const SPoint3 &p);
   // find closest vertex for transformation of given point
-  MVertex *operator()(const SPoint3 &p, const std::vector<double> &tfo);
+  MNode *operator()(const SPoint3 &p, const std::vector<double> &tfo);
 
   unsigned int getNbVtcs() const { return nbVtcs; }
 };

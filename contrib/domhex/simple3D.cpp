@@ -278,7 +278,7 @@ Filler::~Filler() {}
 
 void Filler::treat_model()
 {
-  GRegion *gr;
+  GVolume *gr;
   GModel *model = GModel::current();
   GModel::riter it;
 
@@ -290,7 +290,7 @@ void Filler::treat_model()
   }
 }
 
-void Filler::treat_region(GRegion *gr)
+void Filler::treat_region(GVolume *gr)
 {
   int NumSmooth = CTX::instance()->mesh.smoothCrossField;
   if(NumSmooth && (gr->dim() == 3)) {
@@ -311,12 +311,12 @@ void Filler::treat_region(GRegion *gr)
   MElementOctree *octree;
   deMeshGRegion deleter;
   Wrapper wrapper;
-  GFace *gf;
+  GSurface *gf;
   //  std::vector<Node *> garbage;
-  std::vector<MVertex *> boundary_vertices;
-  std::set<MVertex *>::iterator it;
-  std::vector<GFace *>::iterator it2;
-  std::map<MVertex *, int>::iterator it3;
+  std::vector<MNode *> boundary_vertices;
+  std::set<MNode *>::iterator it;
+  std::vector<GSurface *>::iterator it2;
+  std::map<MNode *, int>::iterator it3;
   RTree<Node *, double, 3, double> rtree;
   
   Frame_field::init_region(gr);
@@ -332,10 +332,10 @@ void Filler::treat_region(GRegion *gr)
   boundary_vertices.clear();
   new_vertices.clear();
 
-  std::vector<GFace *> faces = gr->faces();
-  std::map<MVertex *, int> limits;
+  std::vector<GSurface *> faces = gr->faces();
+  std::map<MNode *, int> limits;
 
-  std::set<MVertex *> temp;
+  std::set<MNode *> temp;
 
   for(it2 = faces.begin(); it2 != faces.end(); it2++) {
     gf = *it2;
@@ -343,9 +343,9 @@ void Filler::treat_region(GRegion *gr)
     for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
       MElement *element = gf->getMeshElement(i);
       for(std::size_t j = 0; j < element->getNumVertices(); j++) {
-        MVertex *vertex = element->getVertex(j);
+        MNode *vertex = element->getVertex(j);
         temp.insert(vertex);
-        limits.insert(std::pair<MVertex *, int>(vertex, limit));
+        limits.insert(std::pair<MNode *, int>(vertex, limit));
       }
     }
   }
@@ -434,7 +434,7 @@ void Filler::treat_region(GRegion *gr)
           if(wrapper.get_ok()) {
             fifo.push(individual);
             rtree.Insert(individual->min, individual->max, individual);
-            new_vertices.push_back(new MVertex(x, y, z, gr, 0));
+            new_vertices.push_back(new MNode(x, y, z, gr, 0));
             ok2 = 1;
             // print_segment(individual->get_point(),parent->get_point(),file);
           }
@@ -451,8 +451,8 @@ void Filler::treat_region(GRegion *gr)
 
   deleter(gr);
 
-  std::vector<GVertex *> old_embedded = gr->embeddedVertices();
-  std::vector<GVertex *> new_embedded;
+  std::vector<GPoint *> old_embedded = gr->embeddedVertices();
+  std::vector<GPoint *> new_embedded;
   std::vector<Vertex *> new_vertex;
 
   // Cheat -- create embedded vertices....
@@ -477,7 +477,7 @@ void Filler::treat_region(GRegion *gr)
     fprintf(f,"};\n");
     fclose(f);
   
-  std::vector<GRegion *> regions;
+  std::vector<GVolume *> regions;
   regions.push_back(gr);
 
   MeshDelaunayVolume(regions);
@@ -767,7 +767,7 @@ int Filler::code(int tag)
 
 int Filler::get_nbr_new_vertices() { return new_vertices.size(); }
 
-MVertex *Filler::get_new_vertex(int i) { return new_vertices[i]; }
+MNode *Filler::get_new_vertex(int i) { return new_vertices[i]; }
 
 void Filler::print_segment(const SPoint3 &p1, const SPoint3 &p2,
                            std::ofstream &file)
@@ -831,4 +831,4 @@ void Filler::print_node(Node *node, std::ofstream &file)
 
 /*********static declarations*********/
 
-std::vector<MVertex *> Filler::new_vertices;
+std::vector<MNode *> Filler::new_vertices;

@@ -22,7 +22,7 @@
 // ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
 // OF THIS SOFTWARE.
 
-#include "GEdge.h"
+#include "GCurve.h"
 #include "nodalBasis.h"
 #include "SVector3.h"
 #include <algorithm>
@@ -31,7 +31,7 @@
 #include "discreteFrechetDistance.h"
 #include "MLine.h"
 #include "MElement.h"
-#include "MVertex.h"
+#include "MNode.h"
 #include "BasisFactory.h"
 
 parametricLineNodalBasis::parametricLineNodalBasis(
@@ -78,7 +78,7 @@ SVector3 parametricLineNodalBasis::secondDerivative(double xi) const
   return p;
 }
 
-parametricLineGEdge::parametricLineGEdge(const GEdge *edge, double t0,
+parametricLineGEdge::parametricLineGEdge(const GCurve *edge, double t0,
                                          double t1)
   : _edge(edge), _t0(t0), _t1(t1)
 {
@@ -86,7 +86,7 @@ parametricLineGEdge::parametricLineGEdge(const GEdge *edge, double t0,
 
 SPoint3 parametricLineGEdge::operator()(double xi) const
 {
-  GPoint gp = _edge->point(_t0 + (_t1 - _t0) * xi);
+  GVertex gp = _edge->point(_t0 + (_t1 - _t0) * xi);
   return SPoint3(gp.x(), gp.y(), gp.z());
 }
 
@@ -119,16 +119,16 @@ static void oversample(std::vector<SPoint3> &s, double tol)
 }
 
 // FAST IMPLEMENTATION OF DISCRETE UNIDIRECTIONAL HAUSDORFF DISTANCE
-double computeBndDistH(GEdge *edge,
+double computeBndDistH(GCurve *edge,
                        std::vector<double> &params, // the model edge
-                       const std::vector<MVertex *> &vs,
+                       const std::vector<MNode *> &vs,
                        const nodalBasis &basis, const std::vector<SPoint3> &xyz,
                        const double tolerance) // the mesh edge
 {
   if(edge->geomType() == GEntity::Line) return 0.0;
   std::vector<SPoint3> dpts;
   std::vector<double> ts;
-  std::vector<MVertex *> hov;
+  std::vector<MNode *> hov;
   for(std::size_t i = 2; i < vs.size(); i++) hov.push_back(vs[i]);
   MLineN l(vs[0], vs[1], hov);
   l.discretize(tolerance, dpts, ts);
@@ -225,7 +225,7 @@ double parametricLine::hausdorffDistance(const parametricLine &l, SPoint3 &p1,
 }
 
 // DISCRETE FRECHET DISTANCE
-double computeBndDistF(GEdge *edge,
+double computeBndDistF(GCurve *edge,
                        std::vector<double> &params, // the model edge
                        const nodalBasis &basis, const std::vector<SPoint3> &xyz,
                        const double tolerance) // the mesh edge
@@ -238,7 +238,7 @@ double computeBndDistF(GEdge *edge,
 }
 
 // GMSH's DISTANCE
-double computeBndDistGb(GEdge *edge,
+double computeBndDistGb(GCurve *edge,
                         std::vector<double> &params, // the model edge
                         const nodalBasis &basis,
                         const std::vector<SPoint3> &xyz,
@@ -273,7 +273,7 @@ double computeBndDistGb(GEdge *edge,
   return D;
 }
 
-double computeBndDistG_(GEdge *edge, std::vector<double> &p, // the model edge
+double computeBndDistG_(GCurve *edge, std::vector<double> &p, // the model edge
                         const nodalBasis &basis,
                         const std::vector<SPoint3> &xyz,
                         const std::size_t NN) // the mesh edge
@@ -327,7 +327,7 @@ double computeBndDistG_(GEdge *edge, std::vector<double> &p, // the model edge
   return D;
 }
 
-double computeBndDistG(GEdge *edge, std::vector<double> &p, // the model edge
+double computeBndDistG(GCurve *edge, std::vector<double> &p, // the model edge
                        const nodalBasis &basis, const std::vector<SPoint3> &xyz,
                        double tolerance) // the mesh edge
 {
@@ -380,7 +380,7 @@ double trapeze(SPoint3 &p1, SPoint3 &p2)
 }
 
 double computeDeviationOfTangents(
-  GEdge *edge,
+  GCurve *edge,
   std::vector<double> &p, // parameters of mesh vertices on the model edge
   const nodalBasis &basis,
   const std::vector<SPoint3> &xyz) // the mesh edge
@@ -406,7 +406,7 @@ double computeDeviationOfTangents(
 
     SVector3 t_mesh_edge = l2.derivative(0.5 * (1 + u));
     // SVector3 c2  = l2.curvature(0.5*(1+u));
-    // GPoint p0 = edge->point(p[o[i]]);
+    // GVertex p0 = edge->point(p[o[i]]);
     // SPoint3 p1 = l2 (0.5*(1+u));
     xp.normalize();
     t_mesh_edge.normalize();
@@ -422,7 +422,7 @@ double computeDeviationOfTangents(
 }
 
 double computeBndDistAccurateArea(
-  GEdge *edge,
+  GCurve *edge,
   std::vector<double> &p, // parameters of mesh vertices on the model edge
   const nodalBasis &basis, const std::vector<SPoint3> &xyz,
   double tolerance) // the mesh edge
@@ -464,9 +464,9 @@ double computeBndDistAccurateArea(
 }
 
 double computeBndDistAndGradient(
-  GEdge *edge,
+  GCurve *edge,
   std::vector<double> &param, // parameters of mesh vertices on the model edge
-  const std::vector<MVertex *> &vs, // vertices
+  const std::vector<MNode *> &vs, // vertices
   const nodalBasis &basis, // what is the FE basis of the edge
   std::vector<SPoint3>
     &xyz, // real coordinates of mesh vertices on the model edge
@@ -513,10 +513,10 @@ double computeBndDist(MElement *element, int distanceDefinition,
     int clId = elbasis.getClosureId(iEdge, 1);
     const std::vector<int> &closure = elbasis.closures[clId];
     std::vector<SPoint3> xyz;
-    GEdge *edge = nullptr;
-    std::vector<MVertex *> vertices(closure.size());
+    GCurve *edge = nullptr;
+    std::vector<MNode *> vertices(closure.size());
     for(size_t i = 0; i < closure.size(); ++i) {
-      MVertex *v = element->getVertex(closure[i]);
+      MNode *v = element->getVertex(closure[i]);
       vertices[i] = v;
       xyz.push_back(v->point());
       if((int)i >= 2 && v->onWhat() && v->onWhat()->dim() == 1) {

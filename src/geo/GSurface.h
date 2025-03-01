@@ -3,8 +3,8 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef GFACE_H
-#define GFACE_H
+#ifndef GSURFACE_H
+#define GSURFACE_H
 
 #include <list>
 #include <string>
@@ -13,7 +13,7 @@
 #include <utility>
 #include "GmshDefines.h"
 #include "GEntity.h"
-#include "GPoint.h"
+#include "GVertex.h"
 #include "GEdgeLoop.h"
 #include "SPoint2.h"
 #include "SVector3.h"
@@ -26,19 +26,19 @@ class MQuadrangle;
 class MPolygon;
 class ExtrudeParams;
 
-class GRegion;
+class GVolume;
 
 // A model face.
-class GFace : public GEntity {
+class GSurface : public GEntity {
 protected:
   // edge loops might replace what follows (list of all the edges of
   // the face + directions)
-  std::vector<GEdge *> l_edges;
+  std::vector<GCurve *> l_edges;
   std::vector<int> l_dirs;
-  GRegion *r1, *r2;
+  GVolume *r1, *r2;
   mean_plane meanPlane;
-  std::vector<GEdge *> embedded_edges;
-  std::set<GVertex *, GEntityPtrLessThan> embedded_vertices;
+  std::vector<GCurve *> embedded_edges;
+  std::set<GPoint *, GEntityPtrLessThan> embedded_vertices;
 
   BoundaryLayerColumns _columns;
 
@@ -46,20 +46,20 @@ public: // this will become protected or private
   std::vector<GEdgeLoop> edgeLoops;
 
   // periodic counterparts of edges
-  std::map<GEdge *, std::pair<GEdge *, int> > edgeCounterparts;
+  std::map<GCurve *, std::pair<GCurve *, int> > edgeCounterparts;
 
   // specify mesh master with transformation, deduce edgeCounterparts
-  void setMeshMaster(GFace *master, const std::vector<double> &);
+  void setMeshMaster(GSurface *master, const std::vector<double> &);
 
   // specify mesh master and edgeCounterparts, deduce transformation
-  void setMeshMaster(GFace *master, const std::map<int, int> &);
+  void setMeshMaster(GSurface *master, const std::map<int, int> &);
 
   // align elements with mesh master
   void alignElementsWithMaster();
 
 public:
-  GFace(GModel *model, int tag);
-  virtual ~GFace();
+  GSurface(GModel *model, int tag);
+  virtual ~GSurface();
 
   // delete mesh data
   virtual void deleteMesh();
@@ -68,24 +68,24 @@ public:
   void deleteGeometryVertexArrays();
 
   // add/delete regions that are bounded by the face
-  void addRegion(GRegion *r)
+  void addRegion(GVolume *r)
   {
     if(r == r1 || r == r2) return;
     r1 ? r2 = r : r1 = r;
   }
-  void delRegion(GRegion *r)
+  void delRegion(GVolume *r)
   {
     if(r1 == r) r1 = r2;
     r2 = nullptr;
   }
-  GRegion *getRegion(int const num) const { return num == 0 ? r1 : r2; }
+  GVolume *getRegion(int const num) const { return num == 0 ? r1 : r2; }
 
   // get number of regions
   std::size_t numRegions() const { return (r1 != nullptr) + (r2 != nullptr); }
 
-  std::list<GRegion *> regions() const
+  std::list<GVolume *> regions() const
   {
-    std::list<GRegion *> r;
+    std::list<GVolume *> r;
     for(std::size_t i = 0; i < numRegions(); i++) r.push_back(getRegion(i));
     return r;
   }
@@ -94,16 +94,16 @@ public:
   virtual bool isOrphan();
 
   // add embedded vertices/edges
-  void addEmbeddedVertex(GVertex *v) { embedded_vertices.insert(v); }
-  void addEmbeddedEdge(GEdge *e) { embedded_edges.push_back(e); }
+  void addEmbeddedVertex(GPoint *v) { embedded_vertices.insert(v); }
+  void addEmbeddedEdge(GCurve *e) { embedded_edges.push_back(e); }
 
   // edges that bound the face
-  int delEdge(GEdge *edge);
-  virtual std::vector<GEdge *> const &edges() const { return l_edges; }
+  int delEdge(GCurve *edge);
+  virtual std::vector<GCurve *> const &edges() const { return l_edges; }
   virtual std::vector<int> const &edgeOrientations() const { return l_dirs; }
-  void set(const std::vector<GEdge *> &f) { l_edges = f; }
+  void set(const std::vector<GCurve *> &f) { l_edges = f; }
   void setOrientations(const std::vector<int> &f) { l_dirs = f; }
-  void setEdge(GEdge *const f, int const orientation)
+  void setEdge(GCurve *const f, int const orientation)
   {
     l_edges.push_back(f);
     l_dirs.push_back(orientation);
@@ -124,20 +124,20 @@ public:
   bool normalToPlanarMesh(SVector3 &normal, bool orient = true) const;
 
   // direct access to embedded entities
-  std::vector<GEdge *> &embeddedEdges() { return embedded_edges; }
-  std::set<GVertex *, GEntityPtrLessThan> &embeddedVertices()
+  std::vector<GCurve *> &embeddedEdges() { return embedded_edges; }
+  std::set<GPoint *, GEntityPtrLessThan> &embeddedVertices()
   {
     return embedded_vertices;
   }
 
   // get embedded entities; if force is not set, don't return them if the face
   // is part of a compound
-  std::vector<GVertex *> getEmbeddedVertices(bool force = false) const;
-  std::vector<GEdge *> getEmbeddedEdges(bool force = false) const;
-  std::vector<MVertex *> getEmbeddedMeshVertices(bool force = false) const;
+  std::vector<GPoint *> getEmbeddedVertices(bool force = false) const;
+  std::vector<GCurve *> getEmbeddedEdges(bool force = false) const;
+  std::vector<MNode *> getEmbeddedMeshVertices(bool force = false) const;
 
   // vertices that bound the face
-  virtual std::vector<GVertex *> vertices() const;
+  virtual std::vector<GPoint *> vertices() const;
 
   // dimension of the face (2)
   virtual int dim() const { return 2; }
@@ -166,8 +166,8 @@ public:
   virtual bool checkTopology() const { return true; }
 
   // return the point on the face corresponding to the given parameter
-  virtual GPoint point(double par1, double par2) const = 0;
-  virtual GPoint point(const SPoint2 &pt) const
+  virtual GVertex point(double par1, double par2) const = 0;
+  virtual GVertex point(const SPoint2 &pt) const
   {
     return point(pt.x(), pt.y());
   }
@@ -193,7 +193,7 @@ public:
   virtual bool containsParam(const SPoint2 &pt);
 
   // return the point on the face closest to the given point
-  virtual GPoint closestPoint(const SPoint3 &queryPoint,
+  virtual GVertex closestPoint(const SPoint3 &queryPoint,
                               const double initialGuess[2]) const;
 
   // return the normal to the face at the given parameter location
@@ -245,7 +245,7 @@ public:
   bool storeSTLAsMesh();
 
   // recompute the mean plane of the surface from a list of points
-  void computeMeanPlane(const std::vector<MVertex *> &points);
+  void computeMeanPlane(const std::vector<MNode *> &points);
   void computeMeanPlane(const std::vector<SPoint3> &points);
 
   // recompute the mean plane of the surface from its bounding vertices
@@ -311,7 +311,7 @@ public:
     // is this surface meshed using a transfinite interpolation
     char method;
     // corners of the transfinite interpolation
-    std::vector<GVertex *> corners;
+    std::vector<GPoint *> corners;
     // all diagonals of the triangulation are left (-1), right (1) or
     // alternated starting at right (2) or left (-2)
     int transfiniteArrangement;
@@ -371,10 +371,10 @@ public:
 
   // a array for accessing the transfinite vertices using a pair of
   // indices
-  std::vector<std::vector<MVertex *> > transfinite_vertices;
+  std::vector<std::vector<MNode *> > transfinite_vertices;
 
   // FIXME: testing for constrained packing of parallelogram algo
-  std::set<MVertex *> constr_vertices;
+  std::set<MNode *> constr_vertices;
 
   // relocate mesh vertices using parametric coordinates
   void relocateMeshVertices();
@@ -385,7 +385,7 @@ public:
 
   // when a compound of surfaces is created, we keep track of the compound
   // surface
-  GFace *compoundSurface;
+  GSurface *compoundSurface;
 
   void addTriangle(MTriangle *t) { triangles.push_back(t); }
   void addQuadrangle(MQuadrangle *q) { quadrangles.push_back(q); }

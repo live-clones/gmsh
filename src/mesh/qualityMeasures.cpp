@@ -6,7 +6,7 @@
 #include "robustPredicates.h"
 #include "qualityMeasures.h"
 #include "BDS.h"
-#include "MVertex.h"
+#include "MNode.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "MTetrahedron.h"
@@ -152,8 +152,8 @@ double qmTriangle::gamma(MTriangle *t)
   return gamma(t->getVertex(0), t->getVertex(1), t->getVertex(2));
 }
 
-double qmTriangle::gamma(const MVertex *v1, const MVertex *v2,
-                         const MVertex *v3)
+double qmTriangle::gamma(const MNode *v1, const MNode *v2,
+                         const MNode *v3)
 {
   return gamma(v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z(), v3->x(),
                v3->y(), v3->z());
@@ -190,7 +190,7 @@ double qmTriangle::gamma(const double &xa, const double &ya, const double &za,
 
 double qmTriangle::eta(MTriangle *el)
 {
-  MVertex *_v[3] = {el->getVertex(0), el->getVertex(1), el->getVertex(2)};
+  MNode *_v[3] = {el->getVertex(0), el->getVertex(1), el->getVertex(2)};
 
   double a1 = 180 * angle3Vertices(_v[0], _v[1], _v[2]) / M_PI;
   double a2 = 180 * angle3Vertices(_v[1], _v[2], _v[0]) / M_PI;
@@ -275,7 +275,7 @@ void qmTriangle::NCJRange(const MTriangle *el, double &valMin, double &valMax)
   const JacobianBasis *jac = el->getJacobianFuncSpace();
   fullMatrix<double> primNodesXYZ(3, 3);
   for(int i = 0; i < jac->getNumPrimMapNodes(); i++) {
-    const MVertex *v = el->getVertex(i);
+    const MNode *v = el->getVertex(i);
     primNodesXYZ(i, 0) = v->x();
     primNodesXYZ(i, 1) = v->y();
     primNodesXYZ(i, 2) = v->z();
@@ -397,7 +397,7 @@ double qmQuadrangle::eta(MQuadrangle *el)
 {
   double AR = 1; // pow(el->minEdge()/el->maxEdge(),.25);
 
-  MVertex *_v[4] = {el->getVertex(0), el->getVertex(1), el->getVertex(2),
+  MNode *_v[4] = {el->getVertex(0), el->getVertex(1), el->getVertex(2),
                     el->getVertex(3)};
 
   SVector3 v01(_v[1]->x() - _v[0]->x(), _v[1]->y() - _v[0]->y(),
@@ -500,7 +500,7 @@ void qmQuadrangle::NCJRange(const MQuadrangle *el, double &valMin,
   const JacobianBasis *jac = el->getJacobianFuncSpace();
   fullMatrix<double> primNodesXYZ(4, 3);
   for(int i = 0; i < jac->getNumPrimMapNodes(); i++) {
-    const MVertex *v = el->getVertex(i);
+    const MNode *v = el->getVertex(i);
     primNodesXYZ(i, 0) = v->x();
     primNodesXYZ(i, 1) = v->y();
     primNodesXYZ(i, 2) = v->z();
@@ -623,8 +623,8 @@ double qmTetrahedron::qm(MTetrahedron *t, const Measures &cr, double *volume)
             cr, volume);
 }
 
-double qmTetrahedron::qm(const MVertex *v1, const MVertex *v2,
-                         const MVertex *v3, const MVertex *v4,
+double qmTetrahedron::qm(const MNode *v1, const MNode *v2,
+                         const MNode *v3, const MNode *v4,
                          const Measures &cr, double *volume)
 {
   return qm(v1->x(), v1->y(), v1->z(), v2->x(), v2->y(), v2->z(), v3->x(),
@@ -752,8 +752,8 @@ double qmTetrahedron::cond(const double &x1, const double &y1, const double &z1,
 }
 
 // TODO: Replace this
-static double prismNCJ(const MVertex *a, const MVertex *b, const MVertex *c,
-                       const MVertex *d)
+static double prismNCJ(const MNode *a, const MNode *b, const MNode *c,
+                       const MNode *d)
 {
   static const double fact = 2. / sqrt(3.);
 
@@ -774,9 +774,9 @@ static double prismNCJ(const MVertex *a, const MVertex *b, const MVertex *c,
 
 double qmPrism::minNCJ(const MPrism *el)
 {
-  const MVertex *a = el->getVertex(0), *b = el->getVertex(1),
+  const MNode *a = el->getVertex(0), *b = el->getVertex(1),
                 *c = el->getVertex(2);
-  const MVertex *d = el->getVertex(3), *e = el->getVertex(4),
+  const MNode *d = el->getVertex(3), *e = el->getVertex(4),
                 *f = el->getVertex(5);
   const double j[6] = {prismNCJ(a, b, c, d), prismNCJ(b, a, c, e),
                        prismNCJ(c, a, b, f), prismNCJ(d, a, e, f),
@@ -814,15 +814,15 @@ double qmHexahedron::angles(MHexahedron *el)
   double angleMin = M_PI;
   double zeta = 0.0;
   for(int i = 0; i < el->getNumFaces(); i++) {
-    std::vector<MVertex *> vv;
+    std::vector<MNode *> vv;
     vv.push_back(el->getFace(i).getVertex(0));
     vv.push_back(el->getFace(i).getVertex(1));
     vv.push_back(el->getFace(i).getVertex(2));
     vv.push_back(el->getFace(i).getVertex(3));
-    // MVertex *v0 = new MVertex(0, 0, 0); vv.push_back(v0);
-    // MVertex *v1 = new MVertex(1., 0, 0);vv.push_back(v1);
-    // MVertex *v2 = new MVertex(2., 1., 0);vv.push_back(v2);
-    // MVertex *v3 = new MVertex(1, 1., 0);vv.push_back(v3);
+    // MNode *v0 = new MNode(0, 0, 0); vv.push_back(v0);
+    // MNode *v1 = new MNode(1., 0, 0);vv.push_back(v1);
+    // MNode *v2 = new MNode(2., 1., 0);vv.push_back(v2);
+    // MNode *v3 = new MNode(1, 1., 0);vv.push_back(v3);
     for(int j = 0; j < 4; j++) {
       SVector3 a(vv[(j + 2) % 4]->x() - vv[(j + 1) % 4]->x(),
                  vv[(j + 2) % 4]->y() - vv[(j + 1) % 4]->y(),

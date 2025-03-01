@@ -10,10 +10,10 @@
 #include <set>
 #include "STensor3.h"
 
-class GFace;
-class MVertex;
+class GSurface;
+class MNode;
 
-void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
+void packingOfParallelograms(GSurface *gf, std::vector<MNode *> &packed,
                              std::vector<SMetric3> &metrics);
 
 #endif

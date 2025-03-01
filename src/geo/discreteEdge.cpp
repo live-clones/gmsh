@@ -17,8 +17,8 @@
 #include "Context.h"
 #endif
 
-discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
-  : GEdge(model, num, _v0, _v1)
+discreteEdge::discreteEdge(GModel *model, int num, GPoint *_v0, GPoint *_v1)
+  : GCurve(model, num, _v0, _v1)
 {
   bool ok;
   Curve *c = CreateCurve(num, MSH_SEGM_DISCRETE, 0, nullptr, nullptr, -1, -1,
@@ -27,7 +27,7 @@ discreteEdge::discreteEdge(GModel *model, int num, GVertex *_v0, GVertex *_v1)
   CreateReversedCurve(c);
 }
 
-discreteEdge::discreteEdge(GModel *model, int num) : GEdge(model, num)
+discreteEdge::discreteEdge(GModel *model, int num) : GCurve(model, num)
 {
   bool ok;
   Curve *c = CreateCurve(num, MSH_SEGM_DISCRETE, 0, nullptr, nullptr, -1, -1,
@@ -36,7 +36,7 @@ discreteEdge::discreteEdge(GModel *model, int num) : GEdge(model, num)
   CreateReversedCurve(c);
 }
 
-discreteEdge::discreteEdge(GModel *model) : GEdge(model, 0)
+discreteEdge::discreteEdge(GModel *model) : GCurve(model, 0)
 {
   // used for temporary discrete edges, that should not lead to the creation of
   // the corresponding entity in GEO internals
@@ -56,19 +56,19 @@ bool discreteEdge::_getLocalParameter(const double &t, int &iLine,
   return false;
 }
 
-GPoint discreteEdge::point(double par) const
+GVertex discreteEdge::point(double par) const
 {
   double tLoc;
   int iEdge;
 
-  if(!_getLocalParameter(par, iEdge, tLoc)) return GPoint();
+  if(!_getLocalParameter(par, iEdge, tLoc)) return GVertex();
 
   SPoint3 vB = _discretization[iEdge];
   SPoint3 vE = _discretization[iEdge + 1];
 
   // linear Lagrange mesh
   SPoint3 v = vB + (vE - vB) * tLoc;
-  return GPoint(v.x(), v.y(), v.z(), this, par);
+  return GVertex(v.x(), v.y(), v.z(), this, par);
 }
 
 SVector3 discreteEdge::firstDer(double par) const
@@ -90,12 +90,12 @@ SVector3 discreteEdge::firstDer(double par) const
   return der;
 }
 
-SPoint2 discreteEdge::reparamOnFace(const GFace *face, double epar,
+SPoint2 discreteEdge::reparamOnFace(const GSurface *face, double epar,
                                     int dir) const
 {
-  GPoint p = point(epar);
+  GVertex p = point(epar);
   double guess[2];
-  GPoint ps = face->closestPoint(SPoint3(p.x(), p.y(), p.z()), guess);
+  GVertex ps = face->closestPoint(SPoint3(p.x(), p.y(), p.z()), guess);
   return SPoint2(ps.u(), ps.v());
 }
 
@@ -157,7 +157,7 @@ int discreteEdge::createGeometry()
 
   bool sorted = true;
 
-  std::vector<MVertex *> vertices;
+  std::vector<MNode *> vertices;
   vertices.push_back(lines[0]->getVertex(0));
   for(std::size_t i = 0; i < lines.size(); i++) {
     if(lines[i]->getVertex(0) == vertices.back()) {
@@ -175,7 +175,7 @@ int discreteEdge::createGeometry()
     for(std::size_t i = 0; i < lines.size(); i++) {
       allEdges.push_back(MEdge(lines[i]->getVertex(0), lines[i]->getVertex(1)));
     }
-    std::vector<std::vector<MVertex *> > vs;
+    std::vector<std::vector<MNode *> > vs;
     SortEdgeConsecutive(allEdges, vs);
     if(vs.size() == 1) { vertices = vs[0]; }
     else {
@@ -184,8 +184,8 @@ int discreteEdge::createGeometry()
     }
   }
 
-  GVertex *g0 = dynamic_cast<GVertex *>(vertices.front()->onWhat());
-  GVertex *g1 = dynamic_cast<GVertex *>(vertices.back()->onWhat());
+  GPoint *g0 = dynamic_cast<GPoint *>(vertices.front()->onWhat());
+  GPoint *g1 = dynamic_cast<GPoint *>(vertices.back()->onWhat());
 
   if(g0) { setBeginVertex(g0); }
   else if(g1 && g1->xyz().distance(vertices.front()->point()) < 1e-14) {

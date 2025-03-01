@@ -21,8 +21,8 @@ void MQuadrangle::getEdgeRep(bool curved, int num, double *x, double *y,
                              double *z, SVector3 *n)
 {
   // don't use MElement::_getEdgeRep: it's slow due to the creation of MFace
-  MVertex *v0 = _v[edges_quad(num, 0)];
-  MVertex *v1 = _v[edges_quad(num, 1)];
+  MNode *v0 = _v[edges_quad(num, 0)];
+  MNode *v1 = _v[edges_quad(num, 1)];
   x[0] = v0->x();
   y[0] = v0->y();
   z[0] = v0->z();
@@ -31,7 +31,7 @@ void MQuadrangle::getEdgeRep(bool curved, int num, double *x, double *y,
   z[1] = v1->z();
   if(CTX::instance()->mesh.lightLines) {
     static const int vv[4] = {2, 3, 0, 1};
-    MVertex *v2 = _v[vv[num]];
+    MNode *v2 = _v[vv[num]];
     SVector3 t1(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
     SVector3 t2(v2->x() - x[0], v2->y() - y[0], v2->z() - z[0]);
     SVector3 normal = crossprod(t1, t2);
@@ -83,7 +83,7 @@ int MQuadrangle::numCommonNodesInDualGraph(const MElement *const other) const
   }
 }
 
-double MQuadrangle::getAngleAtVertex(MVertex *v)
+double MQuadrangle::getAngleAtVertex(MNode *v)
 {
   if(v == _v[0])
     return angle3Vertices(_v[3], _v[0], _v[1]);
@@ -454,7 +454,7 @@ double MQuadrangle::getInnerRadius()
 
 void MQuadrangleN::reverse()
 {
-  MVertex *tmp;
+  MNode *tmp;
   tmp = _v[1];
   _v[1] = _v[3];
   _v[3] = tmp;
@@ -477,12 +477,12 @@ void MQuadrangleN::reverse()
 
 void MQuadrangle::reorient(int rot, bool swap)
 {
-  MVertex *tmp[4];
+  MNode *tmp[4];
   if(swap)
     for(int i = 0; i < 4; i++) tmp[i] = _v[(4 - i + rot) % 4];
   else
     for(int i = 0; i < 4; i++) tmp[i] = _v[(4 + i - rot) % 4];
-  std::memcpy(_v, tmp, 4 * sizeof(MVertex *));
+  std::memcpy(_v, tmp, 4 * sizeof(MNode *));
 }
 
 void MQuadrangle8::reorient(int rot, bool swap)
@@ -490,12 +490,12 @@ void MQuadrangle8::reorient(int rot, bool swap)
   if(rot == 0 && !swap) return;
 
   MQuadrangle::reorient(rot, swap);
-  MVertex *tmp[4];
+  MNode *tmp[4];
   if(swap)
     for(int i = 0; i < 4; i++) tmp[i] = _vs[(7 - i + rot) % 4];
   else
     for(int i = 0; i < 4; i++) tmp[i] = _vs[(4 + i - rot) % 4];
-  std::memcpy(_vs, tmp, 4 * sizeof(MVertex *));
+  std::memcpy(_vs, tmp, 4 * sizeof(MNode *));
 }
 
 void MQuadrangle9::reorient(int rot, bool swap)
@@ -503,12 +503,12 @@ void MQuadrangle9::reorient(int rot, bool swap)
   if(rot == 0 && !swap) return;
 
   MQuadrangle::reorient(rot, swap);
-  MVertex *tmp[4];
+  MNode *tmp[4];
   if(swap)
     for(int i = 0; i < 4; i++) tmp[i] = _vs[(7 - i + rot) % 4]; // edge swapped
   else
     for(int i = 0; i < 4; i++) tmp[i] = _vs[(4 + i - rot) % 4];
-  std::memcpy(_vs, tmp, 4 * sizeof(MVertex *));
+  std::memcpy(_vs, tmp, 4 * sizeof(MNode *));
 }
 
 std::map<TupleReorientation, IndicesReoriented>
@@ -571,7 +571,7 @@ void MQuadrangleN::reorient(int rot, bool swap)
   IndicesReoriented &indices = it->second;
 
   // copy vertices
-  std::vector<MVertex *> oldv(4 + _vs.size());
+  std::vector<MNode *> oldv(4 + _vs.size());
   std::copy(_v, _v + 4, oldv.begin());
   std::copy(_vs.begin(), _vs.end(), oldv.begin() + 4);
 
@@ -583,7 +583,7 @@ void MQuadrangleN::reorient(int rot, bool swap)
 MFaceN MQuadrangle::getHighOrderFace(int num, int sign, int rot)
 {
   const bool swap = sign == -1;
-  std::vector<MVertex *> vertices(getNumVertices());
+  std::vector<MNode *> vertices(getNumVertices());
 
   if(swap)
     for(int i = 0; i < 4; i++) vertices[i] = _v[(4 - i + rot) % 4];
@@ -596,7 +596,7 @@ MFaceN MQuadrangle::getHighOrderFace(int num, int sign, int rot)
 MFaceN MQuadrangle8::getHighOrderFace(int num, int sign, int rot)
 {
   const bool swap = sign == -1;
-  std::vector<MVertex *> vertices(getNumVertices());
+  std::vector<MNode *> vertices(getNumVertices());
 
   if(swap) {
     for(int i = 0; i < 4; i++) {
@@ -616,7 +616,7 @@ MFaceN MQuadrangle8::getHighOrderFace(int num, int sign, int rot)
 MFaceN MQuadrangle9::getHighOrderFace(int num, int sign, int rot)
 {
   const bool swap = sign == -1;
-  std::vector<MVertex *> vertices(getNumVertices());
+  std::vector<MNode *> vertices(getNumVertices());
 
   if(swap) {
     for(int i = 0; i < 4; i++) {
@@ -648,7 +648,7 @@ MFaceN MQuadrangleN::getHighOrderFace(int num, int sign, int rot)
 
   IndicesReoriented &indices = it->second;
 
-  std::vector<MVertex *> vertices(getNumVertices());
+  std::vector<MNode *> vertices(getNumVertices());
   for(std::size_t i = 0; i < getNumVertices(); ++i) {
     vertices[i] = getVertex(indices[i]);
   }

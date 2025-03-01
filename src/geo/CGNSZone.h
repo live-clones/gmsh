@@ -18,7 +18,7 @@
 
 #if defined(HAVE_LIBCGNS)
 
-class MVertex;
+class MNode;
 class MElement;
 
 class CGNSZone {
@@ -74,17 +74,17 @@ public:
   {
     return slaveNode_[iPer];
   }
-  std::vector<MVertex *> &masterVert(int iPer) { return masterVert_[iPer]; }
-  std::vector<MVertex *> &slaveVert(int iPer) { return slaveVert_[iPer]; }
+  std::vector<MNode *> &masterVert(int iPer) { return masterVert_[iPer]; }
+  std::vector<MNode *> &slaveVert(int iPer) { return slaveVert_[iPer]; }
 
   int readBoundaryCondition(int iZoneBC,
                             const std::vector<CGNSZone *> &allZones,
                             std::vector<std::string> &allGeomName);
 
   int readVertices(int dim, double scale, std::vector<CGNSZone *> &allZones,
-                   std::vector<MVertex *> &zoneVert);
+                   std::vector<MNode *> &zoneVert);
 
-  virtual int readElements(std::vector<MVertex *> &allVert,
+  virtual int readElements(std::vector<MNode *> &allVert,
                            std::map<int, std::vector<MElement *> > *allElt,
                            std::vector<MElement *> &zoneElt,
                            std::vector<std::string> &allGeomName) = 0;
@@ -93,14 +93,14 @@ public:
                                  std::vector<CGNSZone *> &allZones);
 
   int readMesh(int dim, double scale, std::vector<CGNSZone *> &allZones,
-               std::vector<MVertex *> &allVert,
+               std::vector<MNode *> &allVert,
                std::map<int, std::vector<MElement *> > *allElt,
-               std::vector<MVertex *> &zoneVert,
+               std::vector<MNode *> &zoneVert,
                std::vector<MElement *> &zoneElt,
                std::vector<std::string> &allGeomName);
 
   void setPeriodicVertices(const std::vector<CGNSZone *> &allZones,
-                           const std::vector<MVertex *> &allVert);
+                           const std::vector<MNode *> &allVert);
 
 protected:
   // basic zone information
@@ -124,7 +124,7 @@ protected:
   std::vector<int> masterZone_;
   std::vector<std::vector<double> > perTransfo_;
   std::vector<std::vector<cgsize_t> > masterNode_, slaveNode_;
-  std::vector<std::vector<MVertex *> > masterVert_, slaveVert_;
+  std::vector<std::vector<MNode *> > masterVert_, slaveVert_;
 
   int fileIndex() const { return fileIndex_; }
   int baseIndex() const { return baseIndex_; }

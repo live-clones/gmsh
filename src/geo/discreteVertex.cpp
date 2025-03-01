@@ -12,13 +12,13 @@
 #include "Geo.h"
 
 discreteVertex::discreteVertex(GModel *m, int num, double x, double y, double z)
-  : GVertex(m, num)
+  : GPoint(m, num)
 {
   _v = CreateVertex(num, x, y, z, 0, 0);
   Tree_Add(m->getGEOInternals()->Points, &_v);
 }
 
-discreteVertex::discreteVertex(GModel *m) : GVertex(m, 0), _v(nullptr)
+discreteVertex::discreteVertex(GModel *m) : GPoint(m, 0), _v(nullptr)
 {
   // used for temporary discrete vertices, that should not lead to the creation
   // of the corresponding entity in GEO internals
@@ -26,9 +26,9 @@ discreteVertex::discreteVertex(GModel *m) : GVertex(m, 0), _v(nullptr)
 
 discreteVertex::~discreteVertex() {}
 
-GPoint discreteVertex::point() const { return GPoint(x(), y(), z(), this); }
+GVertex discreteVertex::point() const { return GVertex(x(), y(), z(), this); }
 
-void discreteVertex::setPosition(GPoint &p)
+void discreteVertex::setPosition(GVertex &p)
 {
   if(_v) {
     _v->Pos.X = p.x();

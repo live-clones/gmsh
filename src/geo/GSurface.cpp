@@ -7,8 +7,8 @@
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
-#include "GFace.h"
-#include "GEdge.h"
+#include "GSurface.h"
+#include "GCurve.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
 #include "MElementCut.h"
@@ -41,25 +41,25 @@
 #include "qmtCrossField.h"
 #endif
 
-GFace::GFace(GModel *model, int tag)
+GSurface::GSurface(GModel *model, int tag)
   : GEntity(model, tag), r1(nullptr), r2(nullptr), va_geom_triangles(nullptr),
     compoundSurface(nullptr)
 {
-  meshStatistics.status = GFace::PENDING;
+  meshStatistics.status = GSurface::PENDING;
   meshStatistics.refineAllEdges = false;
-  GFace::resetMeshAttributes();
+  GSurface::resetMeshAttributes();
 }
 
-GFace::~GFace()
+GSurface::~GSurface()
 {
   for(auto ge : l_edges) ge->delFace(this);
 
   if(va_geom_triangles) delete va_geom_triangles;
 
-  GFace::deleteMesh();
+  GSurface::deleteMesh();
 }
 
-int GFace::getMeshingAlgo() const
+int GSurface::getMeshingAlgo() const
 {
   if(meshAttributes.algorithm)
     return meshAttributes.algorithm;
@@ -67,7 +67,7 @@ int GFace::getMeshingAlgo() const
     return CTX::instance()->mesh.algo2d;
 }
 
-int GFace::getMeshSizeFromBoundary() const
+int GSurface::getMeshSizeFromBoundary() const
 {
   if(meshAttributes.meshSizeFromBoundary >= 0)
     return meshAttributes.meshSizeFromBoundary;
@@ -75,14 +75,14 @@ int GFace::getMeshSizeFromBoundary() const
     return CTX::instance()->mesh.lcExtendFromBoundary;
 }
 
-bool GFace::isOrphan()
+bool GSurface::isOrphan()
 {
   if(model()->getNumRegions())
     return regions().empty();
   return false;
 }
 
-int GFace::delEdge(GEdge *edge)
+int GSurface::delEdge(GCurve *edge)
 {
   const auto found = std::find(l_edges.begin(), l_edges.end(), edge);
 
@@ -102,11 +102,11 @@ int GFace::delEdge(GEdge *edge)
   return orientation;
 }
 
-void GFace::setBoundEdges(const std::vector<int> &tagEdges)
+void GSurface::setBoundEdges(const std::vector<int> &tagEdges)
 {
-  std::vector<GEdge *> e;
+  std::vector<GCurve *> e;
   for(std::size_t i = 0; i < tagEdges.size(); i++) {
-    GEdge *ge = model()->getEdgeByTag(tagEdges[i]);
+    GCurve *ge = model()->getEdgeByTag(tagEdges[i]);
     if(ge) {
       e.push_back(ge);
       ge->addFace(this);
@@ -120,7 +120,7 @@ void GFace::setBoundEdges(const std::vector<int> &tagEdges)
   el.getSigns(l_dirs);
 }
 
-void GFace::setBoundEdges(const std::vector<int> &tagEdges,
+void GSurface::setBoundEdges(const std::vector<int> &tagEdges,
                           const std::vector<int> &signEdges)
 {
   if(signEdges.size() != tagEdges.size()) {
@@ -128,7 +128,7 @@ void GFace::setBoundEdges(const std::vector<int> &tagEdges,
     setBoundEdges(tagEdges);
   }
   for(std::vector<int>::size_type i = 0; i < tagEdges.size(); i++) {
-    GEdge *ge = model()->getEdgeByTag(tagEdges[i]);
+    GCurve *ge = model()->getEdgeByTag(tagEdges[i]);
     if(ge) {
       if(std::find(l_edges.begin(), l_edges.end(), ge) == l_edges.end()) {
         l_edges.push_back(ge);
@@ -142,7 +142,7 @@ void GFace::setBoundEdges(const std::vector<int> &tagEdges,
   }
 }
 
-void GFace::deleteMesh()
+void GSurface::deleteMesh()
 {
   for(std::size_t i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
   mesh_vertices.clear();
@@ -154,19 +154,19 @@ void GFace::deleteMesh()
   model()->destroyMeshCaches();
 }
 
-void GFace::deleteGeometryVertexArrays()
+void GSurface::deleteGeometryVertexArrays()
 {
   if(!va_geom_triangles) return;
   delete va_geom_triangles;
   va_geom_triangles = nullptr;
 }
 
-std::size_t GFace::getNumMeshElements() const
+std::size_t GSurface::getNumMeshElements() const
 {
   return triangles.size() + quadrangles.size() + polygons.size();
 }
 
-std::size_t GFace::getNumMeshElementsByType(const int familyType) const
+std::size_t GSurface::getNumMeshElementsByType(const int familyType) const
 {
   if(familyType == TYPE_TRI)
     return triangles.size();
@@ -178,7 +178,7 @@ std::size_t GFace::getNumMeshElementsByType(const int familyType) const
   return 0;
 }
 
-std::size_t GFace::getNumMeshParentElements()
+std::size_t GSurface::getNumMeshParentElements()
 {
   std::size_t n = 0;
   for(std::size_t i = 0; i < polygons.size(); i++)
@@ -186,14 +186,14 @@ std::size_t GFace::getNumMeshParentElements()
   return n;
 }
 
-void GFace::getNumMeshElements(unsigned *const c) const
+void GSurface::getNumMeshElements(unsigned *const c) const
 {
   c[0] += triangles.size();
   c[1] += quadrangles.size();
   c[2] += polygons.size();
 }
 
-MElement *const *GFace::getStartElementType(int type) const
+MElement *const *GSurface::getStartElementType(int type) const
 {
   switch(type) {
   case 0:
@@ -209,7 +209,7 @@ MElement *const *GFace::getStartElementType(int type) const
   return nullptr;
 }
 
-MElement *GFace::getMeshElement(std::size_t index) const
+MElement *GSurface::getMeshElement(std::size_t index) const
 {
   if(index < triangles.size())
     return triangles[index];
@@ -220,7 +220,7 @@ MElement *GFace::getMeshElement(std::size_t index) const
   return nullptr;
 }
 
-MElement *GFace::getMeshElementByType(const int familyType,
+MElement *GSurface::getMeshElementByType(const int familyType,
                                       const std::size_t index) const
 {
   if(familyType == TYPE_TRI)
@@ -233,7 +233,7 @@ MElement *GFace::getMeshElementByType(const int familyType,
   return nullptr;
 }
 
-void GFace::resetMeshAttributes()
+void GSurface::resetMeshAttributes()
 {
   meshAttributes.recombine = 0;
   meshAttributes.recombineAngle = 45.;
@@ -249,7 +249,7 @@ void GFace::resetMeshAttributes()
   meshAttributes.transfinite3 = false;
 }
 
-SBoundingBox3d GFace::bounds(bool fast)
+SBoundingBox3d GSurface::bounds(bool fast)
 {
   SBoundingBox3d res;
   if(geomType() != DiscreteSurface && geomType() != BoundaryLayerSurface &&
@@ -266,21 +266,21 @@ SBoundingBox3d GFace::bounds(bool fast)
   return res;
 }
 
-SOrientedBoundingBox GFace::getOBB()
+SOrientedBoundingBox GSurface::getOBB()
 {
   if(!_obb) {
     std::vector<SPoint3> vertices;
     if(getNumMeshVertices() > 0) {
       int N = getNumMeshVertices();
       for(int i = 0; i < N; i++) {
-        MVertex *mv = getMeshVertex(i);
+        MNode *mv = getMeshVertex(i);
         vertices.push_back(mv->point());
       }
-      std::vector<GEdge *> const &eds = edges();
+      std::vector<GCurve *> const &eds = edges();
       for(auto ed = eds.begin(); ed != eds.end(); ed++) {
         int N2 = (*ed)->getNumMeshVertices();
         for(int i = 0; i < N2; i++) {
-          MVertex *mv = (*ed)->getMeshVertex(i);
+          MNode *mv = (*ed)->getMeshVertex(i);
           vertices.push_back(mv->point());
         }
         // Don't forget to add the first and last vertices...
@@ -303,14 +303,14 @@ SOrientedBoundingBox GFace::getOBB()
     else {
       // Fallback, if we can't make a STL triangulation of the surface, use its
       // edges..
-      std::vector<GEdge *> const &b_edges = edges();
+      std::vector<GCurve *> const &b_edges = edges();
       int N = 10;
       for(auto b_edge = b_edges.begin(); b_edge != b_edges.end(); b_edge++) {
         Range<double> tr = (*b_edge)->parBounds(0);
         for(int j = 0; j < N; j++) {
           double t =
             tr.low() + (double)j / (double)(N - 1) * (tr.high() - tr.low());
-          GPoint p = (*b_edge)->point(t);
+          GVertex p = (*b_edge)->point(t);
           SPoint3 pt(p.x(), p.y(), p.z());
           vertices.push_back(pt);
         }
@@ -321,24 +321,24 @@ SOrientedBoundingBox GFace::getOBB()
   return SOrientedBoundingBox(_obb);
 }
 
-std::vector<GVertex *> GFace::getEmbeddedVertices(bool force) const
+std::vector<GPoint *> GSurface::getEmbeddedVertices(bool force) const
 {
-  if(!force && compound.size()) return std::vector<GVertex *>();
-  return std::vector<GVertex *>(embedded_vertices.begin(),
+  if(!force && compound.size()) return std::vector<GPoint *>();
+  return std::vector<GPoint *>(embedded_vertices.begin(),
                                 embedded_vertices.end());
 }
 
-std::vector<GEdge *> GFace::getEmbeddedEdges(bool force) const
+std::vector<GCurve *> GSurface::getEmbeddedEdges(bool force) const
 {
-  if(!force && compound.size()) return std::vector<GEdge *>();
+  if(!force && compound.size()) return std::vector<GCurve *>();
   return embedded_edges;
 }
 
-std::vector<MVertex *> GFace::getEmbeddedMeshVertices(bool force) const
+std::vector<MNode *> GSurface::getEmbeddedMeshVertices(bool force) const
 {
-  if(!force && compound.size()) return std::vector<MVertex *>();
+  if(!force && compound.size()) return std::vector<MNode *>();
 
-  std::set<MVertex *> tmp;
+  std::set<MNode *> tmp;
   for(auto it = embedded_edges.begin(); it != embedded_edges.end(); it++) {
     tmp.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
     if((*it)->getBeginVertex())
@@ -352,23 +352,23 @@ std::vector<MVertex *> GFace::getEmbeddedMeshVertices(bool force) const
       it++) {
     tmp.insert((*it)->mesh_vertices.begin(), (*it)->mesh_vertices.end());
   }
-  return std::vector<MVertex *>(tmp.begin(), tmp.end());
+  return std::vector<MNode *>(tmp.begin(), tmp.end());
 }
 
-std::vector<GVertex *> GFace::vertices() const
+std::vector<GPoint *> GSurface::vertices() const
 {
-  std::set<GVertex *, GEntityPtrLessThan> v;
+  std::set<GPoint *, GEntityPtrLessThan> v;
   for(auto ge : l_edges) {
-    GVertex *const v1 = ge->getBeginVertex();
+    GPoint *const v1 = ge->getBeginVertex();
     if(v1) v.insert(v1);
 
-    GVertex *const v2 = ge->getEndVertex();
+    GPoint *const v2 = ge->getEndVertex();
     if(v2) v.insert(v2);
   }
-  return std::vector<GVertex *>(v.begin(), v.end());
+  return std::vector<GPoint *>(v.begin(), v.end());
 }
 
-void GFace::setVisibility(char val, bool recursive)
+void GSurface::setVisibility(char val, bool recursive)
 {
   GEntity::setVisibility(val);
   if(recursive) {
@@ -378,7 +378,7 @@ void GFace::setVisibility(char val, bool recursive)
   }
 }
 
-void GFace::setColor(unsigned int val, bool recursive)
+void GSurface::setColor(unsigned int val, bool recursive)
 {
   deleteGeometryVertexArrays();
   GEntity::setColor(val);
@@ -389,7 +389,7 @@ void GFace::setColor(unsigned int val, bool recursive)
   }
 }
 
-std::string GFace::getAdditionalInfoString(bool multline)
+std::string GSurface::getAdditionalInfoString(bool multline)
 {
   std::ostringstream sstream;
   if(l_edges.size() > 20) {
@@ -470,11 +470,11 @@ std::string GFace::getAdditionalInfoString(bool multline)
   return str;
 }
 
-void GFace::writeGEO(FILE *fp)
+void GSurface::writeGEO(FILE *fp)
 {
   if(geomType() == DiscreteSurface || geomType() == BoundaryLayerSurface) return;
 
-  std::vector<GEdge *> const &edg = edges();
+  std::vector<GCurve *> const &edg = edges();
   std::vector<int> const &dir = edgeOrientations();
   if(edg.size() && dir.size() == edg.size()) {
     std::vector<int> num, ori;
@@ -525,7 +525,7 @@ void GFace::writeGEO(FILE *fp)
   if(meshAttributes.reverseMesh) fprintf(fp, "Reverse Surface {%d};\n", tag());
 }
 
-void GFace::writePY(FILE *fp)
+void GSurface::writePY(FILE *fp)
 {
   // This is by no means complete - merely a placeholder for a future
   // implementation
@@ -536,7 +536,7 @@ void GFace::writePY(FILE *fp)
 
   std::size_t numcl = 0;
   for(std::size_t i = 0; i < edgeLoops.size(); i++) {
-    std::vector<GEdge *> edges;
+    std::vector<GCurve *> edges;
     std::vector<int> signs;
     edgeLoops[i].getEdges(edges);
     edgeLoops[i].getSigns(signs);
@@ -565,7 +565,7 @@ void GFace::writePY(FILE *fp)
   }
 }
 
-void GFace::computeMeanPlane()
+void GSurface::computeMeanPlane()
 {
   std::vector<SPoint3> pts;
 
@@ -573,19 +573,19 @@ void GFace::computeMeanPlane()
     // Special case for planar CAD surfaces: we first try to compute the
     // parametrization in a way that is more robust with respect to
     // perturbations of the boundary. This is crucial for sensitivity analyses
-    // and GFace::relocateMeshVertices(): after perturbation of the boundary, we
+    // and GSurface::relocateMeshVertices(): after perturbation of the boundary, we
     // want a parametrization of the surface that is "close" to the original
     // one. If this fails, we fallback to the classical (SVD-based) algorithm.
-    std::vector<GEdge *> const &edg = edges();
+    std::vector<GCurve *> const &edg = edges();
     for(auto e : edg) {
       if(!e->haveParametrization()) {
         pts.clear();
         break;
       }
       Range<double> b = e->parBounds(0);
-      GPoint p1 = e->point(b.low() + 0.333 * (b.high() - b.low()));
+      GVertex p1 = e->point(b.low() + 0.333 * (b.high() - b.low()));
       pts.push_back(SPoint3(p1.x(), p1.y(), p1.z()));
-      GPoint p2 = e->point(b.low() + 0.666 * (b.high() - b.low()));
+      GVertex p2 = e->point(b.low() + 0.666 * (b.high() - b.low()));
       pts.push_back(SPoint3(p2.x(), p2.y(), p2.z()));
     }
     bool ok = false;
@@ -630,9 +630,9 @@ void GFace::computeMeanPlane()
     }
   }
 
-  std::vector<GVertex *> const &verts = vertices();
+  std::vector<GPoint *> const &verts = vertices();
   for(auto itv = verts.begin(); itv != verts.end(); itv++) {
-    const GVertex *v = *itv;
+    const GPoint *v = *itv;
     pts.push_back(SPoint3(v->x(), v->y(), v->z()));
   }
 
@@ -645,7 +645,7 @@ void GFace::computeMeanPlane()
   if(colinear) {
     Msg::Debug("Adding curve points (%d) to compute mean plane of surface %d",
                pts.size(), tag());
-    std::vector<GEdge *> const &edg = edges();
+    std::vector<GCurve *> const &edg = edges();
     for(auto e : edg) {
       if(e->mesh_vertices.size() > 1) {
         for(std::size_t i = 0; i < e->mesh_vertices.size(); i++)
@@ -653,15 +653,15 @@ void GFace::computeMeanPlane()
       }
       else if(!e->haveParametrization()) {
         if(e->getBeginVertex()) {
-          GPoint p1 = e->getBeginVertex()->point();
+          GVertex p1 = e->getBeginVertex()->point();
           pts.push_back(SPoint3(p1.x(), p1.y(), p1.z()));
         }
       }
       else {
         Range<double> b = e->parBounds(0);
-        GPoint p1 = e->point(b.low() + 0.333 * (b.high() - b.low()));
+        GVertex p1 = e->point(b.low() + 0.333 * (b.high() - b.low()));
         pts.push_back(SPoint3(p1.x(), p1.y(), p1.z()));
-        GPoint p2 = e->point(b.low() + 0.666 * (b.high() - b.low()));
+        GVertex p2 = e->point(b.low() + 0.666 * (b.high() - b.low()));
         pts.push_back(SPoint3(p2.x(), p2.y(), p2.z()));
       }
     }
@@ -670,7 +670,7 @@ void GFace::computeMeanPlane()
   computeMeanPlane(pts);
 }
 
-void GFace::computeMeanPlane(const std::vector<MVertex *> &points)
+void GSurface::computeMeanPlane(const std::vector<MNode *> &points)
 {
   std::vector<SPoint3> pts;
   for(std::size_t i = 0; i < points.size(); i++)
@@ -678,7 +678,7 @@ void GFace::computeMeanPlane(const std::vector<MVertex *> &points)
   computeMeanPlane(pts);
 }
 
-void GFace::computeMeanPlane(const std::vector<SPoint3> &points)
+void GSurface::computeMeanPlane(const std::vector<SPoint3> &points)
 {
   if(points.empty()) return;
 
@@ -736,9 +736,9 @@ void GFace::computeMeanPlane(const std::vector<SPoint3> &points)
     double res2[3], c[3], sinc, angplan;
     double eps = 1.e-3;
 
-    GPoint v1 = point(0.5, 0.5);
-    GPoint v2 = point(0.5 + eps, 0.5);
-    GPoint v3 = point(0.5, 0.5 + eps);
+    GVertex v1 = point(0.5, 0.5);
+    GVertex v2 = point(0.5 + eps, 0.5);
+    GVertex v3 = point(0.5, 0.5 + eps);
     t1[0] = v2.x() - v1.x();
     t1[1] = v2.y() - v1.y();
     t1[2] = v2.z() - v1.z();
@@ -797,9 +797,9 @@ end:
   if(geomType() == Plane) {
     SBoundingBox3d bb = bounds();
     double lc = norm(SVector3(bb.max(), bb.min()));
-    std::vector<GVertex *> const &verts = vertices();
+    std::vector<GPoint *> const &verts = vertices();
     for(auto itv = verts.begin(); itv != verts.end(); itv++) {
-      const GVertex *v = *itv;
+      const GPoint *v = *itv;
       double const d = meanPlane.a * v->x() + meanPlane.b * v->y() +
                        meanPlane.c * v->z() - meanPlane.d;
       if(std::abs(d) > lc * 1.e-3) {
@@ -813,7 +813,7 @@ end:
   }
 }
 
-void GFace::getMeanPlaneData(double VX[3], double VY[3], double &x, double &y,
+void GSurface::getMeanPlaneData(double VX[3], double VY[3], double &x, double &y,
                              double &z) const
 {
   VX[0] = meanPlane.plan[0][0];
@@ -827,13 +827,13 @@ void GFace::getMeanPlaneData(double VX[3], double VY[3], double &x, double &y,
   z = meanPlane.z;
 }
 
-void GFace::getMeanPlaneData(double plan[3][3]) const
+void GSurface::getMeanPlaneData(double plan[3][3]) const
 {
   for(int i = 0; i < 3; i++)
     for(int j = 0; j < 3; j++) plan[i][j] = meanPlane.plan[i][j];
 }
 
-void GFace::computeMeshSizeFieldAccuracy(double &avg, double &max_e,
+void GSurface::computeMeshSizeFieldAccuracy(double &avg, double &max_e,
                                          double &min_e, int &nE, int &GS)
 {
 #if defined(HAVE_MESH)
@@ -852,10 +852,10 @@ void GFace::computeMeshSizeFieldAccuracy(double &avg, double &max_e,
   double sqr2 = sqrt(2.);
   for(auto it = es.begin(); it != es.end(); ++it) {
     double u1, v1, u2, v2;
-    MVertex *vert1 = it->getVertex(0);
+    MNode *vert1 = it->getVertex(0);
     vert1->getParameter(0, u1);
     vert1->getParameter(1, v1);
-    MVertex *vert2 = it->getVertex(1);
+    MNode *vert2 = it->getVertex(1);
     vert2->getParameter(0, u2);
     vert2->getParameter(1, v2);
     double l1 = BGM_MeshSize(this, u1, v1, vert1->x(), vert1->y(), vert1->z());
@@ -870,7 +870,7 @@ void GFace::computeMeshSizeFieldAccuracy(double &avg, double &max_e,
 #endif
 }
 
-double GFace::curvatureDiv(const SPoint2 &param) const
+double GSurface::curvatureDiv(const SPoint2 &param) const
 {
   if(geomType() == Plane || geomType() == BoundaryLayerSurface) return 0;
 
@@ -923,7 +923,7 @@ double GFace::curvatureDiv(const SPoint2 &param) const
   return (fabs(ddu) + fabs(ddv)) / detJ;
 }
 
-double GFace::curvatureMax(const SPoint2 &param) const
+double GSurface::curvatureMax(const SPoint2 &param) const
 {
   if(geomType() == Plane || geomType() == BoundaryLayerSurface) return 0.;
 
@@ -933,7 +933,7 @@ double GFace::curvatureMax(const SPoint2 &param) const
   return fabs(eigVal[1]);
 }
 
-double GFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
+double GSurface::curvatures(const SPoint2 &param, SVector3 &dirMax,
                          SVector3 &dirMin, double &curvMax,
                          double &curvMin) const
 {
@@ -967,7 +967,7 @@ double GFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
   return curvMax;
 }
 
-double GFace::getMetricEigenvalue(const SPoint2 &)
+double GSurface::getMetricEigenvalue(const SPoint2 &)
 {
   Msg::Error("Metric eigenvalue is not implemented for this type of surface");
   return 0.;
@@ -975,7 +975,7 @@ double GFace::getMetricEigenvalue(const SPoint2 &)
 
 // eigen values are absolute values and sorted from min to max of absolute
 // values eigen vectors are the corresponding COLUMNS of eigVec
-void GFace::getMetricEigenVectors(const SPoint2 &param, double eigVal[2],
+void GSurface::getMetricEigenVectors(const SPoint2 &param, double eigVal[2],
                                   double eigVec[4]) const
 {
   // first derivatives
@@ -1041,7 +1041,7 @@ void GFace::getMetricEigenVectors(const SPoint2 &param, double eigVal[2],
   for(int i = 0; i < 4; i++) eigVec[i] = 0.;
 }
 
-void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
+void GSurface::XYZtoUV(double X, double Y, double Z, double &U, double &V,
                     double relax, bool onSurface, bool convTestXYZ) const
 {
   if(geomType() == BoundaryLayerSurface) return;
@@ -1081,7 +1081,7 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
       err = 1.0;
       iter = 1;
 
-      GPoint P = point(U, V);
+      GVertex P = point(U, V);
       err2 = std::sqrt(std::pow(X - P.x(), 2) + std::pow(Y - P.y(), 2) +
                        std::pow(Z - P.z(), 2));
       if(err2 < 1.e-8 * CTX::instance()->lc) return;
@@ -1147,7 +1147,7 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
   }
 }
 
-SPoint2 GFace::parFromPoint(const SPoint3 &p, bool onSurface,
+SPoint2 GSurface::parFromPoint(const SPoint3 &p, bool onSurface,
                             bool convTestXYZ) const
 {
   if(geomType() == BoundaryLayerSurface) return SPoint2();
@@ -1161,7 +1161,7 @@ SPoint2 GFace::parFromPoint(const SPoint3 &p, bool onSurface,
 
 class data_wrapper {
 private:
-  const GFace *gf;
+  const GSurface *gf;
   SPoint3 point;
 
 public:
@@ -1171,8 +1171,8 @@ public:
     point = SPoint3();
   }
   ~data_wrapper() {}
-  const GFace *get_face() { return gf; }
-  void set_face(const GFace *face) { gf = face; }
+  const GSurface *get_face() { return gf; }
+  void set_face(const GSurface *face) { gf = face; }
   SPoint3 get_point() { return point; }
   void set_point(const SPoint3 &_point) { point = SPoint3(_point); }
 };
@@ -1183,10 +1183,10 @@ void bfgs_callback(const alglib::real_1d_array &x, double &func,
 {
   auto *w = static_cast<data_wrapper *>(ptr);
   SPoint3 p = w->get_point();
-  const GFace *gf = w->get_face();
+  const GSurface *gf = w->get_face();
 
   // Value of the objective
-  GPoint pnt = gf->point(x[0], x[1]);
+  GVertex pnt = gf->point(x[0], x[1]);
   func = 0.5 * (p.x() - pnt.x()) * (p.x() - pnt.x()) +
          (p.y() - pnt.y()) * (p.y() - pnt.y()) +
          (p.z() - pnt.z()) * (p.z() - pnt.z());
@@ -1205,16 +1205,16 @@ void bfgs_callback(const alglib::real_1d_array &x, double &func,
 }
 #endif
 
-GPoint GFace::closestPoint(const SPoint3 &queryPoint,
+GVertex GSurface::closestPoint(const SPoint3 &queryPoint,
                            const double initialGuess[2]) const
 {
-  if(geomType() == BoundaryLayerSurface) return GPoint();
+  if(geomType() == BoundaryLayerSurface) return GVertex();
 
 #if defined(HAVE_ALGLIB)
   // Test initial guess
   double min_u = initialGuess[0];
   double min_v = initialGuess[1];
-  GPoint pnt = point(min_u, min_v);
+  GVertex pnt = point(min_u, min_v);
   SPoint3 spnt(pnt.x(), pnt.y(), pnt.z());
   double min_dist = queryPoint.distance(spnt);
 
@@ -1227,7 +1227,7 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint,
   const double du = ru / nGuesses, dv = rv / nGuesses;
   for(double u = uu.low(); u <= uu.high() + epsU; u += du) {
     for(double v = vv.low(); v <= vv.high() + epsV; v += dv) {
-      GPoint pnt = point(u, v);
+      GVertex pnt = point(u, v);
       SPoint3 spnt(pnt.x(), pnt.y(), pnt.z());
       double dist = queryPoint.distance(spnt);
       if(dist < min_dist) {
@@ -1264,7 +1264,7 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint,
     // Get results
     alglib::minlbfgsreport rep;
     minlbfgsresults(state, x, rep);
-    GPoint pntF = point(x[0], x[1]);
+    GVertex pntF = point(x[0], x[1]);
     return pntF;
   } catch(...) {
     Msg::Warning("Closest point failed, computing from parametric coordinate");
@@ -1279,7 +1279,7 @@ GPoint GFace::closestPoint(const SPoint3 &queryPoint,
 #endif
 }
 
-bool GFace::containsParam(const SPoint2 &pt)
+bool GSurface::containsParam(const SPoint2 &pt)
 {
   if(geomType() == BoundaryLayerSurface) return false;
 
@@ -1292,7 +1292,7 @@ bool GFace::containsParam(const SPoint2 &pt)
     return false;
 }
 
-SVector3 GFace::normal(const SPoint2 &param) const
+SVector3 GSurface::normal(const SPoint2 &param) const
 {
   if(geomType() == BoundaryLayerSurface) return SVector3();
 
@@ -1302,7 +1302,7 @@ SVector3 GFace::normal(const SPoint2 &param) const
   return n;
 }
 
-bool GFace::normalToPlanarMesh(SVector3 &normal, bool orient) const
+bool GSurface::normalToPlanarMesh(SVector3 &normal, bool orient) const
 {
   normal = SVector3(.0, .0, .0);
   if (getNumMeshElements() == 0) return false;
@@ -1312,7 +1312,7 @@ bool GFace::normalToPlanarMesh(SVector3 &normal, bool orient) const
   bool foundNormal = false;
   for (size_t i = 0; i < getNumMeshElements(); ++i) {
     MElement *el = getMeshElement(i);
-    MVertex *v[3] = {el->getVertex(0), el->getVertex(1), el->getVertex(2)};
+    MNode *v[3] = {el->getVertex(0), el->getVertex(1), el->getVertex(2)};
     normal3points(v[0]->x(), v[0]->y(), v[0]->z(), v[1]->x(), v[1]->y(),
                   v[1]->z(), v[2]->x(), v[2]->y(), v[2]->z(), n);
     if (norm3(n) > .5) {
@@ -1323,17 +1323,17 @@ bool GFace::normalToPlanarMesh(SVector3 &normal, bool orient) const
 
   if (!foundNormal) {
     Msg::Warning("Could not define a normal for function "
-                 "'normalToPlanarMesh' on GFace %d", tag());
+                 "'normalToPlanarMesh' on GSurface %d", tag());
     return false;
   }
 
-  // Check that all MVertex are in the same plane.
+  // Check that all MNode are in the same plane.
   // It is sufficient to check for each pair of consecutive vertices in an
   // arbitrary sequence of all surface vertices that the vector linking the
   // pair is perpendicular to the normal vector.
   for (std::size_t i = 0; i < getNumMeshElements(); ++i) {
     MElement *el = getMeshElement(i);
-    MVertex *v[2] = {el->getVertex(0), nullptr};
+    MNode *v[2] = {el->getVertex(0), nullptr};
 
     for(std::size_t j = 1; j < el->getNumVertices(); ++j) {
       v[j % 2] = el->getVertex(j);
@@ -1356,7 +1356,7 @@ bool GFace::normalToPlanarMesh(SVector3 &normal, bool orient) const
   if (l_edges.empty()) return true;
 
   // 1) Determine the set of exterior edges (NB: it can be a single edge)
-  GVertex *vBegin, *vNext;
+  GPoint *vBegin, *vNext;
 
   if (l_dirs[0] == 1)
     vBegin = l_edges[0]->getBeginVertex();
@@ -1438,7 +1438,7 @@ bool GFace::normalToPlanarMesh(SVector3 &normal, bool orient) const
   return true;
 }
 
-bool GFace::buildRepresentationCross(bool force)
+bool GSurface::buildRepresentationCross(bool force)
 {
   if(cross[0].size()) {
     if(force) {
@@ -1484,7 +1484,7 @@ bool GFace::buildRepresentationCross(bool force)
         else
           uv.setPosition(u2, vbounds.low() + tol + vd * t);
       }
-      GPoint p = point(uv);
+      GVertex p = point(uv);
       SPoint3 pt(p.x(), p.y(), p.z());
       bool inside =
         (geomType() == Plane) ? containsPoint(pt) : containsParam(uv);
@@ -1552,7 +1552,7 @@ bool GFace::buildRepresentationCross(bool force)
   return true;
 }
 
-bool GFace::buildSTLTriangulation(bool force)
+bool GSurface::buildSTLTriangulation(bool force)
 {
   if(stl_triangles.size() && !force) return true;
 
@@ -1562,10 +1562,10 @@ bool GFace::buildSTLTriangulation(bool force)
 
   if(triangles.size()) {
     // if a mesh exists, import it as the STL representation
-    std::map<MVertex *, int, MVertexPtrLessThan> nodes;
+    std::map<MNode *, int, MVertexPtrLessThan> nodes;
     for(std::size_t i = 0; i < triangles.size(); i++) {
       for(int j = 0; j < 3; j++) {
-        MVertex *v = triangles[i]->getVertex(j);
+        MNode *v = triangles[i]->getVertex(j);
         if(!nodes.count(v)) {
           stl_vertices_xyz.push_back(SPoint3(v->x(), v->y(), v->z()));
           nodes[v] = stl_vertices_xyz.size() - 1;
@@ -1591,7 +1591,7 @@ bool GFace::buildSTLTriangulation(bool force)
         double u = umin + (double)i / (double)(nu - 1) * (umax - umin);
         double v = vmin + (double)j / (double)(nv - 1) * (vmax - vmin);
         stl_vertices_uv.push_back(SPoint2(u, v));
-        GPoint gp = point(u, v);
+        GVertex gp = point(u, v);
         stl_vertices_xyz.push_back(SPoint3(gp.x(), gp.y(), gp.z()));
       }
     }
@@ -1611,7 +1611,7 @@ bool GFace::buildSTLTriangulation(bool force)
   return false;
 }
 
-bool GFace::fillVertexArray(bool force)
+bool GSurface::fillVertexArray(bool force)
 {
   if(va_geom_triangles) {
     if(force)
@@ -1654,9 +1654,9 @@ bool GFace::fillVertexArray(bool force)
       SPoint2 &p1(stl_vertices_uv[stl_triangles[i]]);
       SPoint2 &p2(stl_vertices_uv[stl_triangles[i + 1]]);
       SPoint2 &p3(stl_vertices_uv[stl_triangles[i + 2]]);
-      GPoint gp1 = point(p1);
-      GPoint gp2 = point(p2);
-      GPoint gp3 = point(p3);
+      GVertex gp1 = point(p1);
+      GVertex gp2 = point(p2);
+      GVertex gp3 = point(p3);
       double x[3] = {gp1.x(), gp2.x(), gp3.x()};
       double y[3] = {gp1.y(), gp2.y(), gp3.y()};
       double z[3] = {gp1.z(), gp2.z(), gp3.z()};
@@ -1676,7 +1676,7 @@ bool GFace::fillVertexArray(bool force)
   return true;
 }
 
-bool GFace::storeSTLAsMesh()
+bool GSurface::storeSTLAsMesh()
 {
   // as the STL might be non-conforming, we make no effort to have a conformal
   // mesh - nodes will not be classified on boundaries, and not shared with
@@ -1684,13 +1684,13 @@ bool GFace::storeSTLAsMesh()
   if(stl_vertices_xyz.size()) {
     for(std::size_t i = 0; i < stl_vertices_xyz.size(); i++) {
       SPoint3 &p(stl_vertices_xyz[i]);
-      mesh_vertices.push_back(new MVertex(p.x(), p.y(), p.z(), this));
+      mesh_vertices.push_back(new MNode(p.x(), p.y(), p.z(), this));
     }
   }
   else if(stl_vertices_uv.size()) {
     for(std::size_t i = 0; i < stl_vertices_uv.size(); i++) {
       SPoint2 &p(stl_vertices_uv[i]);
-      GPoint gp = point(p);
+      GVertex gp = point(p);
       mesh_vertices.push_back(new MFaceVertex(gp.x(), gp.y(), gp.z(),
                                               this, p.x(), p.y()));
     }
@@ -1706,10 +1706,10 @@ bool GFace::storeSTLAsMesh()
   return true;
 }
 
-int GFace::genusGeom() const
+int GSurface::genusGeom() const
 {
   int nSeams = 0;
-  std::set<GEdge *> single_seams;
+  std::set<GCurve *> single_seams;
   for(auto it = l_edges.begin(); it != l_edges.end(); ++it) {
     if((*it)->isSeam(this)) {
       nSeams++;
@@ -1723,7 +1723,7 @@ int GFace::genusGeom() const
   return nSeams - single_seams.size();
 }
 
-bool GFace::fillPointCloud(double maxDist, std::vector<SPoint3> *points,
+bool GSurface::fillPointCloud(double maxDist, std::vector<SPoint3> *points,
                            std::vector<SPoint2> *uvpoints,
                            std::vector<SVector3> *normals)
 {
@@ -1751,16 +1751,16 @@ bool GFace::fillPointCloud(double maxDist, std::vector<SPoint3> *points,
         SPoint2 &p0(stl_vertices_uv[stl_triangles[i]]);
         SPoint2 &p1(stl_vertices_uv[stl_triangles[i + 1]]);
         SPoint2 &p2(stl_vertices_uv[stl_triangles[i + 2]]);
-        GPoint gp0 = point(p0);
-        GPoint gp1 = point(p1);
-        GPoint gp2 = point(p2);
+        GVertex gp0 = point(p0);
+        GVertex gp1 = point(p1);
+        GVertex gp2 = point(p2);
         double maxEdge = std::max(
           gp0.distance(gp1), std::max(gp1.distance(gp2), gp2.distance(gp0)));
         int N = std::max((int)(maxEdge / maxDist), 1);
         for(double u = 0.; u < 1.; u += 1. / N) {
           for(double v = 0.; v < 1 - u; v += 1. / N) {
             SPoint2 p = p0 * (1. - u - v) + p1 * u + p2 * v;
-            GPoint gp(point(p));
+            GVertex gp(point(p));
             points->push_back(SPoint3(gp.x(), gp.y(), gp.z()));
             if(uvpoints) uvpoints->push_back(p);
             if(normals) normals->push_back(normal(p));
@@ -1780,7 +1780,7 @@ bool GFace::fillPointCloud(double maxDist, std::vector<SPoint3> *points,
         double v = (double)j / (N - 1);
         double t1 = b1.low() + u * (b1.high() - b1.low());
         double t2 = b2.low() + v * (b2.high() - b2.low());
-        GPoint gp = point(t1, t2);
+        GVertex gp = point(t1, t2);
         points->push_back(SPoint3(gp.x(), gp.y(), gp.z()));
         if(uvpoints) uvpoints->push_back(SPoint2(t1, t2));
         if(normals) normals->push_back(normal(SPoint2(t1, t2)));
@@ -1797,16 +1797,16 @@ bool GFace::fillPointCloud(double maxDist, std::vector<SPoint3> *points,
 int buildBackgroundField(
   GModel *gm, const std::vector<MTriangle *> &global_triangles,
   const std::vector<std::array<double, 9> > &global_triangle_directions,
-  const std::unordered_map<MVertex *, double> &global_size_map,
+  const std::unordered_map<MNode *, double> &global_size_map,
   const std::vector<std::array<double, 5> > &global_singularity_list,
   const std::string &viewName);
 int fillSizemapFromScalarBackgroundField(
   GModel *gm, const std::vector<MTriangle *> &triangles,
-  std::unordered_map<MVertex *, double> &sizeMap);
+  std::unordered_map<MNode *, double> &sizeMap);
 
 #endif
 
-static int meshCompoundMakeQuads(GFace *gf)
+static int meshCompoundMakeQuads(GSurface *gf)
 {
   if(gf->meshAttributes.algorithm != ALGO_2D_PACK_PRLGRMS &&
      gf->meshAttributes.algorithm != ALGO_2D_QUAD_QUASI_STRUCT)
@@ -1818,7 +1818,7 @@ static int meshCompoundMakeQuads(GFace *gf)
   return 0;
 }
 
-static int meshCompoundComputeCrossFieldWithHeatEquation(GFace *gf)
+static int meshCompoundComputeCrossFieldWithHeatEquation(GSurface *gf)
 {
   if(gf->meshAttributes.algorithm != ALGO_2D_PACK_PRLGRMS &&
      gf->meshAttributes.algorithm != ALGO_2D_QUAD_QUASI_STRUCT)
@@ -1828,7 +1828,7 @@ static int meshCompoundComputeCrossFieldWithHeatEquation(GFace *gf)
 
   std::vector<std::array<double, 3> > triEdgeTheta;
   std::vector<MLine *> lines;
-  std::vector<GEdge *> edges = gf->edges();
+  std::vector<GCurve *> edges = gf->edges();
   for(auto ge : edges)
     lines.insert(lines.end(), ge->lines.begin(), ge->lines.end());
 
@@ -1849,7 +1849,7 @@ static int meshCompoundComputeCrossFieldWithHeatEquation(GFace *gf)
       gf->tag());
   }
 
-  std::unordered_map<MVertex *, double> sizeMap;
+  std::unordered_map<MNode *, double> sizeMap;
 
   int sts =
     fillSizemapFromScalarBackgroundField(gf->model(), gf->triangles, sizeMap);
@@ -1882,7 +1882,7 @@ static int meshCompoundComputeCrossFieldWithHeatEquation(GFace *gf)
 #endif
 }
 
-static void meshCompound(GFace *gf, bool verbose)
+static void meshCompound(GSurface *gf, bool verbose)
 {
   discreteFace *df = dynamic_cast<discreteFace*>
     (gf->model()->getFaceByTag(gf->tag() + 100000));
@@ -1908,13 +1908,13 @@ static void meshCompound(GFace *gf, bool verbose)
     df->meshAttributes.algorithm = gf->meshAttributes.algorithm;
   }
 
-  std::vector<GFace *> triangles_tag;
+  std::vector<GSurface *> triangles_tag;
 
-  std::set<GEdge *, GEntityPtrLessThan> bnd, emb1;
-  std::set<GVertex *, GEntityPtrLessThan> emb0;
+  std::set<GCurve *, GEntityPtrLessThan> bnd, emb1;
+  std::set<GPoint *, GEntityPtrLessThan> emb0;
   std::set<int> phys;
   for(std::size_t i = 0; i < gf->compound.size(); i++) {
-    auto *c = (GFace *)gf->compound[i];
+    auto *c = (GSurface *)gf->compound[i];
     df->triangles.insert(df->triangles.end(), c->triangles.begin(),
                          c->triangles.end());
     df->quadrangles.insert(df->quadrangles.end(), c->quadrangles.begin(),
@@ -1923,7 +1923,7 @@ static void meshCompound(GFace *gf, bool verbose)
                              c->mesh_vertices.end());
     for(std::size_t j = 0; j < c->triangles.size(); j++)
       triangles_tag.push_back(c);
-    std::vector<GEdge *> edges = c->edges();
+    std::vector<GCurve *> edges = c->edges();
     for(std::size_t j = 0; j < edges.size(); j++) {
       if(bnd.find(edges[j]) == bnd.end())
         bnd.insert(edges[j]);
@@ -1931,9 +1931,9 @@ static void meshCompound(GFace *gf, bool verbose)
         bnd.erase(edges[j]);
     }
     // force retrieval of embedded entities
-    std::vector<GVertex *> embv = c->getEmbeddedVertices(true);
+    std::vector<GPoint *> embv = c->getEmbeddedVertices(true);
     emb0.insert(embv.begin(), embv.end());
-    std::vector<GEdge *> embe = c->getEmbeddedEdges(true);
+    std::vector<GCurve *> embe = c->getEmbeddedEdges(true);
     emb1.insert(embe.begin(), embe.end());
 
     if(magic) {
@@ -1948,15 +1948,15 @@ static void meshCompound(GFace *gf, bool verbose)
     }
   }
 
-  std::set<GEdge *, GEntityPtrLessThan> bndc;
+  std::set<GCurve *, GEntityPtrLessThan> bndc;
   for(auto it = bnd.begin(); it != bnd.end(); it++) {
-    GEdge *e = *it;
+    GCurve *e = *it;
     if(e->compoundCurve)
       bndc.insert(e->compoundCurve);
     else
       bndc.insert(e);
   }
-  std::vector<GEdge *> ed(bndc.begin(), bndc.end());
+  std::vector<GCurve *> ed(bndc.begin(), bndc.end());
   df->set(ed);
 
   for(auto it = emb1.begin(); it != emb1.end(); it++) df->addEmbeddedEdge(*it);
@@ -2021,7 +2021,7 @@ static void meshCompound(GFace *gf, bool verbose)
     bool found = false;
     for(int i = 0; i < 3; i++) {
       if(t->getVertex(i)->onWhat()->dim() == 2) {
-        ((GFace *)t->getVertex(i)->onWhat())->triangles.push_back(t);
+        ((GSurface *)t->getVertex(i)->onWhat())->triangles.push_back(t);
         found = true;
         break;
       }
@@ -2036,7 +2036,7 @@ static void meshCompound(GFace *gf, bool verbose)
     bool found = false;
     for(int i = 0; i < 4; i++) {
       if(q->getVertex(i)->onWhat()->dim() == 2) {
-        ((GFace *)q->getVertex(i)->onWhat())->quadrangles.push_back(q);
+        ((GSurface *)q->getVertex(i)->onWhat())->quadrangles.push_back(q);
         found = true;
         break;
       }
@@ -2052,11 +2052,11 @@ static void meshCompound(GFace *gf, bool verbose)
 }
 #endif
 
-void GFace::mesh(bool verbose)
+void GSurface::mesh(bool verbose)
 {
   if(CTX::instance()->debugSurface > 0 &&
      tag() != CTX::instance()->debugSurface) {
-    meshStatistics.status = GFace::DONE;
+    meshStatistics.status = GSurface::DONE;
     return;
   }
 
@@ -2075,13 +2075,13 @@ void GFace::mesh(bool verbose)
     if(compound[0] == this) { // I'm the one that makes the compound job
       bool ok = true;
       for(std::size_t i = 0; i < compound.size(); i++) {
-        auto *gf = (GFace *)compound[i];
-        ok &= (gf->meshStatistics.status == GFace::DONE);
+        auto *gf = (GSurface *)compound[i];
+        ok &= (gf->meshStatistics.status == GSurface::DONE);
       }
-      if(!ok) { meshStatistics.status = GFace::PENDING; }
+      if(!ok) { meshStatistics.status = GSurface::PENDING; }
       else {
         meshCompound(this, verbose);
-        meshStatistics.status = GFace::DONE;
+        meshStatistics.status = GSurface::DONE;
         return;
       }
     }
@@ -2089,7 +2089,7 @@ void GFace::mesh(bool verbose)
 #endif
 }
 
-void GFace::moveToValidRange(SPoint2 &pt) const
+void GSurface::moveToValidRange(SPoint2 &pt) const
 {
   for(int i = 0; i < 2; i++) {
     if(periodic(i)) {
@@ -2103,13 +2103,13 @@ void GFace::moveToValidRange(SPoint2 &pt) const
   }
 }
 
-void GFace::relocateMeshVertices()
+void GSurface::relocateMeshVertices()
 {
   for(std::size_t i = 0; i < mesh_vertices.size(); i++) {
-    MVertex *v = mesh_vertices[i];
+    MNode *v = mesh_vertices[i];
     double u0 = 0., u1 = 0.;
     if(v->getParameter(0, u0) && v->getParameter(1, u1)) {
-      GPoint p = point(u0, u1);
+      GVertex p = point(u0, u1);
       v->x() = p.x();
       v->y() = p.y();
       v->z() = p.z();
@@ -2117,16 +2117,16 @@ void GFace::relocateMeshVertices()
   }
 }
 
-void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
+void GSurface::setMeshMaster(GSurface *master, const std::vector<double> &tfo)
 {
   Msg::Info("Setting mesh master using transformation");
 
   // points and curves
-  std::set<GVertex *> l_vertices;
-  std::multimap<std::pair<GVertex *, GVertex *>, GEdge *> l_vtxToEdge;
+  std::set<GPoint *> l_vertices;
+  std::multimap<std::pair<GPoint *, GPoint *>, GCurve *> l_vtxToEdge;
   for(auto eIter = l_edges.begin(); eIter != l_edges.end(); ++eIter) {
-    GVertex *v0 = (*eIter)->getBeginVertex();
-    GVertex *v1 = (*eIter)->getEndVertex();
+    GPoint *v0 = (*eIter)->getBeginVertex();
+    GPoint *v1 = (*eIter)->getEndVertex();
     if(v0 && v1) {
       l_vertices.insert(v0);
       l_vertices.insert(v1);
@@ -2135,8 +2135,8 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
   }
   for(auto eIter = embedded_edges.begin(); eIter != embedded_edges.end();
       ++eIter) {
-    GVertex *v0 = (*eIter)->getBeginVertex();
-    GVertex *v1 = (*eIter)->getEndVertex();
+    GPoint *v0 = (*eIter)->getBeginVertex();
+    GPoint *v1 = (*eIter)->getEndVertex();
     if(v0 && v1) {
       l_vertices.insert(v0);
       l_vertices.insert(v1);
@@ -2146,30 +2146,30 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
   l_vertices.insert(embedded_vertices.begin(), embedded_vertices.end());
 
   // master points and curves
-  std::vector<GEdge *> const &m_edges = master->edges();
-  std::set<GVertex *> m_vertices;
-  std::multimap<std::pair<GVertex *, GVertex *>, GEdge *> m_vtxToEdge;
+  std::vector<GCurve *> const &m_edges = master->edges();
+  std::set<GPoint *> m_vertices;
+  std::multimap<std::pair<GPoint *, GPoint *>, GCurve *> m_vtxToEdge;
   for(auto eIter = m_edges.begin(); eIter != m_edges.end(); ++eIter) {
-    GVertex *v0 = (*eIter)->getBeginVertex();
-    GVertex *v1 = (*eIter)->getEndVertex();
+    GPoint *v0 = (*eIter)->getBeginVertex();
+    GPoint *v1 = (*eIter)->getEndVertex();
     if(v0 && v1) {
       m_vertices.insert(v0);
       m_vertices.insert(v1);
       m_vtxToEdge.insert(std::make_pair(std::make_pair(v0, v1), *eIter));
     }
   }
-  std::vector<GEdge *> const &m_embedded_edges = master->embeddedEdges();
+  std::vector<GCurve *> const &m_embedded_edges = master->embeddedEdges();
   for(auto eIter = m_embedded_edges.begin(); eIter != m_embedded_edges.end();
       eIter++) {
-    GVertex *v0 = (*eIter)->getBeginVertex();
-    GVertex *v1 = (*eIter)->getEndVertex();
+    GPoint *v0 = (*eIter)->getBeginVertex();
+    GPoint *v1 = (*eIter)->getEndVertex();
     if(v0 && v1) {
       m_vertices.insert(v0);
       m_vertices.insert(v1);
       m_vtxToEdge.insert(std::make_pair(std::make_pair(v0, v1), *eIter));
     }
   }
-  std::set<GVertex *, GEntityPtrLessThan> m_embedded_vertices =
+  std::set<GPoint *, GEntityPtrLessThan> m_embedded_vertices =
     master->embeddedVertices();
   m_vertices.insert(m_embedded_vertices.begin(), m_embedded_vertices.end());
 
@@ -2190,14 +2190,14 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
   }
 
   // compute corresponding vertices
-  std::map<GVertex *, GVertex *> gVertexCounterparts;
+  std::map<GPoint *, GPoint *> gVertexCounterparts;
   for(auto mvIter = m_vertices.begin(); mvIter != m_vertices.end(); ++mvIter) {
-    GVertex *m_vertex = *mvIter;
+    GPoint *m_vertex = *mvIter;
 
     SPoint3 xyzTfo((*mvIter)->x(), (*mvIter)->y(), (*mvIter)->z());
     xyzTfo.transform(tfo);
 
-    GVertex *l_vertex = nullptr;
+    GPoint *l_vertex = nullptr;
 
     double dist_min = 1.e22;
     for(auto lvIter = l_vertices.begin(); lvIter != l_vertices.end();
@@ -2229,20 +2229,20 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
   }
 
   // construct edge correspondence and update the edge masters
-  std::map<GEdge *, std::pair<GEdge *, int> > gEdgeCounterparts;
+  std::map<GCurve *, std::pair<GCurve *, int> > gEdgeCounterparts;
 
   for(auto lv2eIter = l_vtxToEdge.begin(); lv2eIter != l_vtxToEdge.end();
       lv2eIter++) {
-    std::pair<GVertex *, GVertex *> lPair = lv2eIter->first;
-    GEdge *localEdge = lv2eIter->second;
+    std::pair<GPoint *, GPoint *> lPair = lv2eIter->first;
+    GCurve *localEdge = lv2eIter->second;
 
-    std::pair<GVertex *, GVertex *> forward(gVertexCounterparts[lPair.first],
+    std::pair<GPoint *, GPoint *> forward(gVertexCounterparts[lPair.first],
                                             gVertexCounterparts[lPair.second]);
     int numf = m_vtxToEdge.count(forward);
-    std::pair<GVertex *, GVertex *> backward(forward.second, forward.first);
+    std::pair<GPoint *, GPoint *> backward(forward.second, forward.first);
     int numb = m_vtxToEdge.count(backward);
     int sign = 0;
-    GEdge *masterEdge = nullptr;
+    GCurve *masterEdge = nullptr;
 
     // unique matches
     if(!masterEdge && numf == 1 &&
@@ -2263,13 +2263,13 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
     SBoundingBox3d localbb = localEdge->bounds(true);
     double tol = localbb.diag() * 1e-3;
     Range<double> localr = localEdge->parBounds(0);
-    GPoint localp = localEdge->point(0.5 * (localr.low() + localr.high()));
+    GVertex localp = localEdge->point(0.5 * (localr.low() + localr.high()));
     if(!masterEdge && numf) {
       auto ret = m_vtxToEdge.equal_range(forward);
       for(auto it = ret.first; it != ret.second; it++) {
-        GEdge *ge = it->second;
+        GCurve *ge = it->second;
         Range<double> masterr = ge->parBounds(0);
-        GPoint masterp = ge->point(0.5 * (masterr.low() + masterr.high()));
+        GVertex masterp = ge->point(0.5 * (masterr.low() + masterr.high()));
         if(localp.succeeded() && masterp.succeeded()) {
           SPoint3 p1(localp.x(), localp.y(), localp.z());
           SPoint3 p2(masterp.x(), masterp.y(), masterp.z());
@@ -2293,9 +2293,9 @@ void GFace::setMeshMaster(GFace *master, const std::vector<double> &tfo)
     if(!masterEdge && numb) {
       auto ret = m_vtxToEdge.equal_range(backward);
       for(auto it = ret.first; it != ret.second; it++) {
-        GEdge *ge = it->second;
+        GCurve *ge = it->second;
         Range<double> masterr = ge->parBounds(0);
-        GPoint masterp = ge->point(0.5 * (masterr.low() + masterr.high()));
+        GVertex masterp = ge->point(0.5 * (masterr.low() + masterr.high()));
         if(localp.succeeded() && masterp.succeeded()) {
           SPoint3 p1(localp.x(), localp.y(), localp.z());
           SPoint3 p2(masterp.x(), masterp.y(), masterp.z());
@@ -2407,13 +2407,13 @@ struct myLine {
   }
 };
 
-void GFace::setMeshMaster(GFace *master, const std::map<int, int> &edgeCopies)
+void GSurface::setMeshMaster(GSurface *master, const std::map<int, int> &edgeCopies)
 {
-  std::map<GVertex *, GVertex *> vs2vt;
+  std::map<GPoint *, GPoint *> vs2vt;
 
   for(auto it = l_edges.begin(); it != l_edges.end(); ++it) {
     // slave edge
-    GEdge *le = *it;
+    GCurve *le = *it;
 
     int sign = 1;
     auto adnksd = edgeCopies.find(le->tag());
@@ -2433,7 +2433,7 @@ void GFace::setMeshMaster(GFace *master, const std::map<int, int> &edgeCopies)
     }
 
     // master edge
-    GEdge *me = master->model()->getEdgeByTag(abs(source_e));
+    GCurve *me = master->model()->getEdgeByTag(abs(source_e));
 
     if(le->getBeginVertex() && le->getEndVertex() && me->getBeginVertex() &&
        me->getEndVertex()) {
@@ -2455,8 +2455,8 @@ void GFace::setMeshMaster(GFace *master, const std::map<int, int> &edgeCopies)
 
   int count = 0;
   for(auto it = vs2vt.begin(); it != vs2vt.end(); ++it) {
-    GVertex *vs = it->first;
-    GVertex *vt = it->second;
+    GPoint *vs = it->first;
+    GPoint *vt = it->second;
     if(count == 0)
       DX = SVector3(vt->x() - vs->x(), vt->y() - vs->y(), vt->z() - vs->z());
     else {
@@ -2490,8 +2490,8 @@ void GFace::setMeshMaster(GFace *master, const std::map<int, int> &edgeCopies)
     rotation = true;
     std::vector<SPoint3> mps, mpt;
     for(auto it = vs2vt.begin(); it != vs2vt.end(); ++it) {
-      GVertex *vs = it->first;
-      GVertex *vt = it->second;
+      GPoint *vs = it->first;
+      GPoint *vt = it->second;
       mps.push_back(SPoint3(vs->x(), vs->y(), vs->z()));
       mpt.push_back(SPoint3(vt->x(), vt->y(), vt->z()));
     }
@@ -2510,8 +2510,8 @@ void GFace::setMeshMaster(GFace *master, const std::map<int, int> &edgeCopies)
     // let us compute the angle of rotation
     count = 0;
     for(auto it = vs2vt.begin(); it != vs2vt.end(); ++it) {
-      GVertex *vs = it->first;
-      GVertex *vt = it->second;
+      GPoint *vs = it->first;
+      GPoint *vt = it->second;
       // project both points on the axis: that should be the same point !
       SPoint3 ps = SPoint3(vs->x(), vs->y(), vs->z());
       SPoint3 pt = SPoint3(vt->x(), vt->y(), vt->z());
@@ -2579,7 +2579,7 @@ void GFace::setMeshMaster(GFace *master, const std::map<int, int> &edgeCopies)
   setMeshMaster(master, tfo);
 }
 
-void GFace::addElement(MElement *e)
+void GSurface::addElement(MElement *e)
 {
   switch(e->getType()) {
   case TYPE_TRI: addTriangle(reinterpret_cast<MTriangle *>(e)); break;
@@ -2590,7 +2590,7 @@ void GFace::addElement(MElement *e)
   }
 }
 
-void GFace::removeElement(MElement *e, bool del)
+void GSurface::removeElement(MElement *e, bool del)
 {
   switch(e->getType()) {
   case TYPE_TRI: {
@@ -2622,7 +2622,7 @@ void GFace::removeElement(MElement *e, bool del)
   }
 }
 
-void GFace::removeElements(bool del)
+void GSurface::removeElements(bool del)
 {
   if(del) {
     for(auto e : triangles) delete e;
@@ -2634,7 +2634,7 @@ void GFace::removeElements(bool del)
   polygons.clear();
 }
 
-bool GFace::reorder(const int elementType,
+bool GSurface::reorder(const int elementType,
                     const std::vector<std::size_t> &ordering)
 {
   if(triangles.size() != 0) {
@@ -2691,7 +2691,7 @@ bool GFace::reorder(const int elementType,
   return false;
 }
 
-void GFace::alignElementsWithMaster()
+void GSurface::alignElementsWithMaster()
 {
   GEntity *master = getMeshMaster();
 
@@ -2700,7 +2700,7 @@ void GFace::alignElementsWithMaster()
 
     for(std::size_t i = 0; i < master->getNumMeshElements(); i++) {
       MElement *face = master->getMeshElement(i);
-      std::vector<MVertex *> vtcs;
+      std::vector<MNode *> vtcs;
       vtcs.reserve(face->getNumVertices());
       for(std::size_t j = 0; j < face->getNumVertices(); j++) {
         vtcs.push_back(face->getVertex(j));
@@ -2710,9 +2710,9 @@ void GFace::alignElementsWithMaster()
 
     for(std::size_t i = 0; i < getNumMeshElements(); i++) {
       MElement *face = getMeshElement(i);
-      std::vector<MVertex *> vtcs;
+      std::vector<MNode *> vtcs;
       for(std::size_t j = 0; j < face->getNumVertices(); j++) {
-        MVertex *tv = face->getVertex(j);
+        MNode *tv = face->getVertex(j);
         auto cIter = correspondingVertices.find(tv);
         if(cIter != correspondingVertices.end()) vtcs.push_back(cIter->second);
       }
@@ -2745,12 +2745,12 @@ void GFace::alignElementsWithMaster()
   }
 }
 
-bool GFace::isFullyDiscrete()
+bool GSurface::isFullyDiscrete()
 {
   if(geomType() != GEntity::DiscreteSurface) return false;
   auto *df = dynamic_cast<discreteFace *>(this);
   if(df && df->haveParametrization()) return false;
-  std::vector<GEdge *> e = edges();
+  std::vector<GCurve *> e = edges();
   for(std::size_t i = 0; i < e.size(); i++) {
     if(e[i]->geomType() != GEntity::DiscreteCurve) return false;
     auto *de = dynamic_cast<discreteEdge *>(e[i]);

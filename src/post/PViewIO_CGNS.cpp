@@ -86,7 +86,7 @@ namespace {
   }
 
   bool
-  readFieldData(const std::vector<std::vector<MVertex *> > &vertPerZone,
+  readFieldData(const std::vector<std::vector<MNode *> > &vertPerZone,
                 const std::vector<std::vector<MElement *> > &eltPerZone,
                 const std::string &fileName, int fileIndex, int baseIndex,
                 const std::map<SolFieldName, PViewDataGModel::DataType> &fields)
@@ -134,7 +134,7 @@ namespace {
 
 } // namespace
 
-bool PView::readCGNS(const std::vector<std::vector<MVertex *> > &vertPerZone,
+bool PView::readCGNS(const std::vector<std::vector<MNode *> > &vertPerZone,
                      const std::vector<std::vector<MElement *> > &eltPerZone,
                      const std::string &fileName)
 {
@@ -176,7 +176,7 @@ bool PView::readCGNS(const std::vector<std::vector<MVertex *> > &vertPerZone,
 
 #else
 
-bool PView::readCGNS(const std::vector<std::vector<MVertex *> > &vertPerZone,
+bool PView::readCGNS(const std::vector<std::vector<MNode *> > &vertPerZone,
                      const std::vector<std::vector<MElement *> > &eltPerZone,
                      const std::string &fileName)
 {

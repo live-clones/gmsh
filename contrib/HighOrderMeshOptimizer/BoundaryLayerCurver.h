@@ -37,7 +37,7 @@
 
 class MElement;
 class GEntity;
-class MVertex;
+class MNode;
 struct IntPt;
 
 typedef std::pair<MElement *, std::vector<MElement *> > PairMElemVecMElem;
@@ -47,7 +47,7 @@ namespace BoundaryLayerCurver {
   bool computeCommonEdge(MElement *el1, MElement *el2, MEdge &e);
 
   void repositionInnerVertices(const std::vector<MFaceN> &stackFaces,
-                               const GFace *gface);
+                               const GSurface *gface);
 
   MElement *createPrimaryElement(MElement *el);
 
@@ -68,24 +68,24 @@ namespace BoundaryLayerCurver {
     // that contain the edge is needed. It is computed from the CAD if 'gface'
     // and 'gedge' are provided. Otherwise, 'normal' is taken into account.
     // At least 'gface' & 'gedge' or 'normal' have to be provided.
-    void curveEdge(const MEdgeN *baseEdge, MEdgeN *edge, const GFace *gface,
-                   const GEdge *gedge, const SVector3 &normal);
+    void curveEdge(const MEdgeN *baseEdge, MEdgeN *edge, const GSurface *gface,
+                   const GCurve *gedge, const SVector3 &normal);
 
     void recoverQualityElements(std::vector<MEdgeN> &stackEdges,
                                 std::vector<MFaceN> &stackFaces,
                                 std::vector<MElement *> &stackElements,
-                                int iFirst, int iLast, const GFace *gface);
+                                int iFirst, int iLast, const GSurface *gface);
 
     class _Frame {
       SVector3 _normalToTheMesh;
-      const GFace *_gface;
-      const GEdge *_gedge;
+      const GSurface *_gface;
+      const GCurve *_gedge;
       const MEdgeN *_edgeOnBoundary;
       double _paramVerticesOnGFace[40];
       double _paramVerticesOnGEdge[20];
 
     public:
-      _Frame(const MEdgeN *edge, const GFace *gface, const GEdge *gedge,
+      _Frame(const MEdgeN *edge, const GSurface *gface, const GCurve *gedge,
              const SVector3 &normal);
 
       void computeFrame(double paramEdge, SVector3 &t, SVector3 &n, SVector3 &w,
@@ -97,13 +97,13 @@ namespace BoundaryLayerCurver {
 
   namespace InteriorEdgeCurver {
     void curveEdges(std::vector<MEdgeN> &stack, int iFirst, int iLast,
-                    const GFace *gface);
+                    const GSurface *gface);
 
     void curveEdgesAndPreserveQuality(std::vector<MEdgeN> &stackEdges,
                                       std::vector<MFaceN> &stackFaces,
                                       std::vector<MElement *> &stackElements,
                                       int iFirst, int iLast,
-                                      const GFace *gface);
+                                      const GSurface *gface);
   } // namespace InteriorEdgeCurver
 
   struct Parameters3DCurve {
@@ -201,13 +201,13 @@ namespace BoundaryLayerCurver {
 
 // BL in planar surface (always prefer this one if possible)
 void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
-                          const GEdge *edge = nullptr);
+                          const GCurve *edge = nullptr);
 
 // BL on CAD surface
-void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, const GFace *,
-                          const GEdge *);
+void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, const GSurface *,
+                          const GCurve *);
 
 // 3D BL
-void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, const GFace *);
+void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, const GSurface *);
 
 #endif

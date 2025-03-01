@@ -149,7 +149,7 @@ int GModel::writeINP(const std::string &name, bool saveAll,
          (saveGroupsOfNodes < 0 &&
           ((-saveGroupsOfNodes / (int)std::pow(10, dim)) % 10) == 1)) {
         for(auto it = groups[dim].begin(); it != groups[dim].end(); it++) {
-          std::set<MVertex *, MVertexPtrLessThan> nodes;
+          std::set<MNode *, MVertexPtrLessThan> nodes;
           std::vector<GEntity *> &ent = it->second;
           for(std::size_t i = 0; i < ent.size(); i++) {
             for(std::size_t j = 0; j < ent[i]->getNumMeshElements(); j++) {
@@ -180,7 +180,7 @@ int GModel::writeINP(const std::string &name, bool saveAll,
         std::vector<GEntity *> ent;
         getEntities(ent, dim);
         for(std::size_t i = 0; i < ent.size(); i++) {
-          std::set<MVertex *, MVertexPtrLessThan> nodes;
+          std::set<MNode *, MVertexPtrLessThan> nodes;
           for(std::size_t j = 0; j < ent[i]->getNumMeshElements(); j++) {
             MElement *e = ent[i]->getMeshElement(j);
             for(std::size_t k = 0; k < e->getNumVertices(); k++)

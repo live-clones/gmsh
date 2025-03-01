@@ -11,8 +11,8 @@
 #include <numeric>
 #include "BackgroundMesh3D.h"
 #include "MElement.h"
-#include "GFace.h"
-#include "GRegion.h"
+#include "GSurface.h"
+#include "GVolume.h"
 #include "BackgroundMeshManager.h"
 #include "BackgroundMesh2D.h"
 #include "MElementOctree.h"
@@ -47,7 +47,7 @@ template <class T> int signof(T const value)
 //    const double threshold;
 //};
 
-backgroundMesh3D::backgroundMesh3D(GRegion *_gr)
+backgroundMesh3D::backgroundMesh3D(GVolume *_gr)
   : BGMBase(3, _gr), debug(false), verbose(false)
 {
   computeSizeField();
@@ -60,18 +60,18 @@ void backgroundMesh3D::computeSizeField()
   std::cout << "backgroundMesh3D::computeSizeField() " << std::endl;
 
   // fills dirichlet BC
-  GRegion *region = dynamic_cast<GRegion *>(gf);
+  GVolume *region = dynamic_cast<GVolume *>(gf);
   if(!region) {
     Msg::Error("Entity is not a region in background mesh");
     return;
   }
-  std::vector<GFace *> faces = region->faces();
-  MVertex *v;
+  std::vector<GSurface *> faces = region->faces();
+  MNode *v;
   MElement *e;
 
-  for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
-      it++) { // for all GFace
-    GFace *face = *it;
+  for(std::vector<GSurface *>::iterator it = faces.begin(); it != faces.end();
+      it++) { // for all GSurface
+    GSurface *face = *it;
     frameFieldBackgroundMesh2D *bgm2d =
       dynamic_cast<frameFieldBackgroundMesh2D *>(BGMManager::get(face));
     if(!bgm2d) {
@@ -105,7 +105,7 @@ void backgroundMesh3D::propagateValues(DoubleStorageType &dirichlet,
                                        bool in_parametric_plane)
 {
   // same as Size_field::solve()
-  GRegion *gr = dynamic_cast<GRegion *>(gf);
+  GVolume *gr = dynamic_cast<GVolume *>(gf);
   if(!gr) {
     Msg::Error("Entity is not a region in background mesh");
     return;
@@ -126,8 +126,8 @@ void backgroundMesh3D::propagateValues(DoubleStorageType &dirichlet,
   int count2;
   double val;
   double volume;
-  std::set<MVertex *> interior;
-  std::set<MVertex *>::iterator it;
+  std::set<MNode *> interior;
+  std::set<MNode *>::iterator it;
   DoubleStorageType::iterator it2;
 
   dofManager<double> assembler(lsys);
@@ -176,37 +176,37 @@ void backgroundMesh3D::propagateValues(DoubleStorageType &dirichlet,
 
   for(it = interior.begin(); it != interior.end(); it++) {
     assembler.getDofValue(*it, 0, 1, val);
-    dirichlet.insert(std::pair<MVertex *, double>(*it, val));
+    dirichlet.insert(std::pair<MNode *, double>(*it, val));
   }
 
   delete lsys;
 #endif
 }
 
-GPoint backgroundMesh3D::get_GPoint_from_MVertex(const MVertex *v) const
+GVertex backgroundMesh3D::get_GPoint_from_MVertex(const MNode *v) const
 {
-  return GPoint(v->x(), v->y(), v->z(), dynamic_cast<GRegion *>(gf));
+  return GVertex(v->x(), v->y(), v->z(), dynamic_cast<GVolume *>(gf));
 }
 
-MVertex *backgroundMesh3D::get_nearest_neighbor(const MVertex *v)
+MNode *backgroundMesh3D::get_nearest_neighbor(const MNode *v)
 {
   double distance;
   return get_nearest_neighbor(v->x(), v->y(), v->z(), distance);
 }
 
-MVertex *backgroundMesh3D::get_nearest_neighbor(const double *xyz)
+MNode *backgroundMesh3D::get_nearest_neighbor(const double *xyz)
 {
   double distance;
   return get_nearest_neighbor(xyz, distance);
 }
 
-MVertex *backgroundMesh3D::get_nearest_neighbor(double x, double y, double z)
+MNode *backgroundMesh3D::get_nearest_neighbor(double x, double y, double z)
 {
   double distance;
   return get_nearest_neighbor(x, y, z, distance);
 }
 
-MVertex *backgroundMesh3D::get_nearest_neighbor(double x, double y, double z,
+MNode *backgroundMesh3D::get_nearest_neighbor(double x, double y, double z,
                                                 double &distance)
 {
   double xyz[3] = {x, y, z};
@@ -216,7 +216,7 @@ MVertex *backgroundMesh3D::get_nearest_neighbor(double x, double y, double z,
 MElementOctree *backgroundMesh3D::getOctree()
 {
   if(!octree) {
-    GRegion *gr = dynamic_cast<GRegion *>(gf);
+    GVolume *gr = dynamic_cast<GVolume *>(gf);
     if(!gr) {
       Msg::Error("Entity is not a region in background mesh");
       return 0;
@@ -228,7 +228,7 @@ MElementOctree *backgroundMesh3D::getOctree()
   return octree;
 }
 
-MVertex *backgroundMesh3D::get_nearest_neighbor(const double *xyz,
+MNode *backgroundMesh3D::get_nearest_neighbor(const double *xyz,
                                                 double &distance)
 {
   // using the octree instead of ANN, faster.
@@ -236,11 +236,11 @@ MVertex *backgroundMesh3D::get_nearest_neighbor(const double *xyz,
 
   if(!elem) return NULL;
 
-  std::vector<MVertex *> candidates(elem->getNumVertices());
+  std::vector<MNode *> candidates(elem->getNumVertices());
   std::vector<double> distances(elem->getNumVertices());
   SPoint3 p(xyz[0], xyz[1], xyz[2]);
   for(std::size_t i = 0; i < elem->getNumVertices(); i++) {
-    MVertex *const v = elem->getVertex(i);
+    MNode *const v = elem->getVertex(i);
     candidates[i] = v;
     distances[i] = p.distance(v->point());
   }
@@ -248,13 +248,13 @@ MVertex *backgroundMesh3D::get_nearest_neighbor(const double *xyz,
     std::max_element(distances.begin(), distances.end());
   return candidates[std::distance(distances.begin(), itmax)];
 
-  //  map<double,MVertex*> distances;
+  //  map<double,MNode*> distances;
   //  SPoint3 p(xyz[0],xyz[1],xyz[2]);
   //  for (int i=0;i<elem->getNumVertices();i++){
-  //    MVertex *v = elem->getVertex(i);
+  //    MNode *v = elem->getVertex(i);
   //    distances.insert(make_pair(p.distance(v->point()),v));
   //  }
-  //  map<double,MVertex*>::iterator it = distances.begin();
+  //  map<double,MNode*>::iterator it = distances.begin();
   //  distance = it->first;
   //  return it->second;
 }
@@ -262,7 +262,7 @@ MVertex *backgroundMesh3D::get_nearest_neighbor(const double *xyz,
 std::vector<montripletbis> frameFieldBackgroundMesh3D::permutation =
   std::vector<montripletbis>();
 
-frameFieldBackgroundMesh3D::frameFieldBackgroundMesh3D(GRegion *_gr)
+frameFieldBackgroundMesh3D::frameFieldBackgroundMesh3D(GVolume *_gr)
   : backgroundMesh3D(_gr)
 {
   //  readValue("param.dat","SMOOTHCF",smooth_the_crossfield);
@@ -312,8 +312,8 @@ void frameFieldBackgroundMesh3D::initiate_ANN_research()
   int maxPts = listOfBndVertices.size();
   dataPtsBnd = annAllocPts(maxPts, 3);
   int i = 0;
-  MVertex *v;
-  for(std::set<MVertex *>::iterator it = listOfBndVertices.begin();
+  MNode *v;
+  for(std::set<MNode *>::iterator it = listOfBndVertices.begin();
       it != listOfBndVertices.end(); it++) {
     v = *it;
     for(int k = 0; k < 3; ++k) dataPtsBnd[i][k] = (v->point())[k];
@@ -331,8 +331,8 @@ void frameFieldBackgroundMesh3D::computeSmoothnessOnlyFromBoundaries()
 
   smoothness_threshold = 0.;
 
-  std::set<MVertex const *> neighbors;
-  std::multimap<double, MVertex const *> themap;
+  std::set<MNode const *> neighbors;
+  std::multimap<double, MNode const *> themap;
   SVector3 mean_axis(0.);
   double mean_angle = 0.;
   std::vector<double> vectorial_smoothness(3);
@@ -341,14 +341,14 @@ void frameFieldBackgroundMesh3D::computeSmoothnessOnlyFromBoundaries()
       it_vertex != vert2elem.end(); it_vertex++) { // for all vertices
     themap.clear();
     neighbors.clear();
-    MVertex const *current = it_vertex->first;
+    MNode const *current = it_vertex->first;
     std::pair<graphtype::const_iterator, graphtype::iterator> range =
       graph.equal_range(current);
     graphtype::const_iterator itgraph = range.first;
     for(; itgraph != range.second; itgraph++) { // for all neighbors
       neighbors.insert(itgraph->second.second);
     }
-    for(std::set<MVertex const *>::iterator it = neighbors.begin();
+    for(std::set<MNode const *>::iterator it = neighbors.begin();
         it != neighbors.end(); it++) {
       themap.insert(std::make_pair(1., *it));
     }
@@ -382,13 +382,13 @@ void frameFieldBackgroundMesh3D::computeCrossField()
   if(debug) exportCrossField("cf_initial.pos");
 
   // initiation
-  std::multimap<double, MVertex const *> rank, rank_temp;
-  std::map<MVertex const *const, bool> vertex_is_still;
-  std::map<MVertex const *const, double> vertex_movement;
+  std::multimap<double, MNode const *> rank, rank_temp;
+  std::map<MNode const *const, bool> vertex_is_still;
+  std::map<MNode const *const, double> vertex_movement;
 
   for(vert2elemtype::iterator it_vertex = vert2elem.begin();
       it_vertex != vert2elem.end(); it_vertex++) {
-    MVertex const *const current = it_vertex->first;
+    MNode const *const current = it_vertex->first;
 
     vertex_is_still[current] = current->onWhat()->dim() <= 2;
 
@@ -396,7 +396,7 @@ void frameFieldBackgroundMesh3D::computeCrossField()
   }
 
   // OLD - NEW COMPARISON
-  std::map<MVertex const *, double> vertex_to_rank;
+  std::map<MNode const *, double> vertex_to_rank;
   for(vert2elemtype::iterator it_vertex = vert2elem.begin();
       it_vertex != vert2elem.end(); it_vertex++) { // for all vertices
     // vertex_to_rank[it_vertex->first] = 0.;
@@ -426,10 +426,10 @@ void frameFieldBackgroundMesh3D::computeCrossField()
     while(rank.size()) { // for all vertices, i.e. all cavities
       //    for (vert2elemtype::iterator
       // it_vertex=vert2elem.begin();it_vertex!=vert2elem.end();it_vertex++)//
-      // for all vertices, i.e. all cavities MVertex *current =
+      // for all vertices, i.e. all cavities MNode *current =
       // it_vertex->first;
 
-      MVertex const *const current = rank.begin()->second;
+      MNode const *const current = rank.begin()->second;
       rank.erase((rank.begin()));
 
       // smooth 3D vertices only
@@ -474,7 +474,7 @@ void frameFieldBackgroundMesh3D::computeCrossField()
       }
 
       // OLD - NEW COMPARISON
-      std::multimap<double, MVertex const *> neighbors_to_trust;
+      std::multimap<double, MNode const *> neighbors_to_trust;
       itgraph = range.first;
       for(; itgraph != range.second; itgraph++) { // for all neighbors
         neighbors_to_trust.insert(std::make_pair(
@@ -503,7 +503,7 @@ void frameFieldBackgroundMesh3D::computeCrossField()
 
       // iterations, convergence of the local cavity...
       for(; Nlocaliter < 20; Nlocaliter++) {
-        std::multimap<double, MVertex const *>::iterator it_neighbors_to_trust =
+        std::multimap<double, MNode const *>::iterator it_neighbors_to_trust =
           neighbors_to_trust.begin();
         crossFieldSmoothness[current] =
           compare_to_neighbors(current->point(), ref, it_neighbors_to_trust,
@@ -579,7 +579,7 @@ void frameFieldBackgroundMesh3D::computeCrossField()
   // also computes smoothness for boundary points
   for(vert2elemtype::iterator it_vertex = vert2elem.begin();
       it_vertex != vert2elem.end(); it_vertex++) {
-    MVertex const *const current = it_vertex->first;
+    MNode const *const current = it_vertex->first;
     if(current->onWhat()->dim() <= 2) {
       TensorStorageType::iterator itcurrent = crossField.find(current);
       STensor3 &ref = itcurrent->second;
@@ -587,7 +587,7 @@ void frameFieldBackgroundMesh3D::computeCrossField()
         graph.equal_range(current);
       graphtype::iterator itgraph = range.first;
 
-      std::multimap<double, MVertex const *> neighbors_to_trust;
+      std::multimap<double, MNode const *> neighbors_to_trust;
       itgraph = range.first;
       for(; itgraph != range.second; itgraph++) { // for all neighbors
         neighbors_to_trust.insert(std::make_pair(0., itgraph->second.second));
@@ -621,20 +621,20 @@ void frameFieldBackgroundMesh3D::computeCrossField()
 void frameFieldBackgroundMesh3D::initiate_crossfield()
 {
   crossField.clear();
-  MVertex *v;
+  MNode *v;
 
   // first, for boundaries :
-  GRegion *gr = dynamic_cast<GRegion *>(gf);
+  GVolume *gr = dynamic_cast<GVolume *>(gf);
   if(!gr) {
     Msg::Error("Entity is not a region in background mesh");
     return;
   }
-  std::vector<GFace *> faces = gr->faces();
+  std::vector<GSurface *> faces = gr->faces();
   // here, not using the gm2D since we are interested by the new 2D vertices,
   // not the old (now erased) ones... alternative would be to reset the 2DBGM...
-  for(std::vector<GFace *>::iterator it = faces.begin(); it != faces.end();
-      it++) { // for all GFace
-    GFace *face = *it;
+  for(std::vector<GSurface *>::iterator it = faces.begin(); it != faces.end();
+      it++) { // for all GSurface
+    GSurface *face = *it;
     frameFieldBackgroundMesh2D *bgm2d =
       dynamic_cast<frameFieldBackgroundMesh2D *>(BGMManager::get(face));
     if(!bgm2d) {
@@ -675,22 +675,22 @@ void frameFieldBackgroundMesh3D::initiate_crossfield()
       // if already done: continue
       TensorStorageType::iterator itfind = crossField.find(v);
       if(itfind != crossField.end()) continue;
-      MVertex *closer_on_bnd = get_nearest_neighbor_on_boundary(v);
+      MNode *closer_on_bnd = get_nearest_neighbor_on_boundary(v);
       crossField[v] =
         crossField[closer_on_bnd]; // prend l'info Bnd (ANN) la plus proche...
     }
   }
 }
 
-MVertex *
-frameFieldBackgroundMesh3D::get_nearest_neighbor_on_boundary(MVertex *v)
+MNode *
+frameFieldBackgroundMesh3D::get_nearest_neighbor_on_boundary(MNode *v)
 {
   double distance;
   return get_nearest_neighbor_on_boundary(v, distance);
 }
 
-MVertex *
-frameFieldBackgroundMesh3D::get_nearest_neighbor_on_boundary(MVertex *v,
+MNode *
+frameFieldBackgroundMesh3D::get_nearest_neighbor_on_boundary(MNode *v,
                                                              double &distance)
 {
 #ifdef HAVE_ANN
@@ -705,7 +705,7 @@ frameFieldBackgroundMesh3D::get_nearest_neighbor_on_boundary(MVertex *v,
   delete[] dists;
   annDeallocPt(q);
 
-  std::set<MVertex *>::iterator it = listOfBndVertices.begin();
+  std::set<MNode *>::iterator it = listOfBndVertices.begin();
   std::advance(it, i);
   return (*it);
 #else
@@ -725,12 +725,12 @@ double frameFieldBackgroundMesh3D::get_approximate_smoothness(double x,
   return crossFieldSmoothness[get_nearest_neighbor(x, y, z)];
 }
 
-double frameFieldBackgroundMesh3D::get_approximate_smoothness(MVertex *v)
+double frameFieldBackgroundMesh3D::get_approximate_smoothness(MNode *v)
 {
   return get_approximate_smoothness(v->x(), v->y(), v->z());
 }
 
-double frameFieldBackgroundMesh3D::get_smoothness(MVertex *v)
+double frameFieldBackgroundMesh3D::get_smoothness(MNode *v)
 {
   return get_nodal_value(v, crossFieldSmoothness);
 };
@@ -743,11 +743,11 @@ void frameFieldBackgroundMesh3D::eval_approximate_crossfield(double x, double y,
 };
 
 void frameFieldBackgroundMesh3D::eval_approximate_crossfield(
-  const MVertex *vert, STensor3 &cf)
+  const MNode *vert, STensor3 &cf)
 {
   // check if vertex is ours...
   TensorStorageType::const_iterator itfind =
-    crossField.find(const_cast<MVertex *>(vert));
+    crossField.find(const_cast<MNode *>(vert));
   if(itfind != crossField.end())
     cf = itfind->second;
   else // if not, find closest
@@ -763,7 +763,7 @@ void frameFieldBackgroundMesh3D::get_vectorial_smoothness(double x, double y,
   for(int i = 0; i < 3; i++) cf(i) = res[i];
 }
 
-void frameFieldBackgroundMesh3D::get_vectorial_smoothness(const MVertex *vert,
+void frameFieldBackgroundMesh3D::get_vectorial_smoothness(const MNode *vert,
                                                           SVector3 &cf)
 {
   std::vector<double> res =
@@ -779,20 +779,20 @@ double frameFieldBackgroundMesh3D::get_vectorial_smoothness(const int idir,
 }
 
 double frameFieldBackgroundMesh3D::get_vectorial_smoothness(const int idir,
-                                                            const MVertex *vert)
+                                                            const MNode *vert)
 {
   return get_nodal_value(vert, crossFieldVectorialSmoothness)[idir];
 }
 
 void frameFieldBackgroundMesh3D::build_vertex_to_element_table()
 {
-  GRegion *gr = dynamic_cast<GRegion *>(gf);
+  GVolume *gr = dynamic_cast<GVolume *>(gf);
   if(!gr) {
     Msg::Error("Entity is not a region in background mesh");
     return;
   }
   MElement *e;
-  MVertex *v;
+  MNode *v;
 
   //    std::cout << "build_vertex_to_element_table nbelem=" <<
   //    gr->getNumMeshElements() << std::endl;
@@ -819,7 +819,7 @@ void frameFieldBackgroundMesh3D::build_vertex_to_element_table()
 
 const MElement *backgroundMesh3D::getElement(unsigned int i) const
 {
-  GRegion *gr = dynamic_cast<GRegion *>(gf);
+  GVolume *gr = dynamic_cast<GVolume *>(gf);
   if(!gr) {
     Msg::Error("Entity is not a region in background mesh");
     return 0;
@@ -829,7 +829,7 @@ const MElement *backgroundMesh3D::getElement(unsigned int i) const
 
 unsigned int backgroundMesh3D::getNumMeshElements() const
 {
-  GRegion *gr = dynamic_cast<GRegion *>(gf);
+  GVolume *gr = dynamic_cast<GVolume *>(gf);
   if(!gr) {
     Msg::Error("Entity is not a region in background mesh");
     return 0;
@@ -841,14 +841,14 @@ unsigned int backgroundMesh3D::getNumMeshElements() const
 // indirect neighbors, depending on the "max_recursion_level".
 void frameFieldBackgroundMesh3D::build_neighbors(const int &max_recursion_level)
 {
-  std::set<MVertex const *> visited, start;
+  std::set<MNode const *> visited, start;
   std::set<MElement const *> visited_elements;
-  std::multimap<int, MVertex const *> proximity;
+  std::multimap<int, MNode const *> proximity;
   // int counter=0;
 
   for(vert2elemtype::iterator it_vertex = vert2elem.begin();
       it_vertex != vert2elem.end(); it_vertex++) { // for all vertices
-    MVertex const *const current_vertex = it_vertex->first;
+    MNode const *const current_vertex = it_vertex->first;
     visited.clear();
     visited_elements.clear();
     visited.insert(current_vertex);
@@ -859,7 +859,7 @@ void frameFieldBackgroundMesh3D::build_neighbors(const int &max_recursion_level)
     get_recursive_neighbors(start, visited, visited_elements, proximity,
                             max_recursion_level);
 
-    for(std::multimap<int, MVertex const *>::iterator it1 = proximity.begin();
+    for(std::multimap<int, MNode const *>::iterator it1 = proximity.begin();
         it1 != proximity.end(); it1++) {
       graph.insert(std::make_pair(current_vertex,
                                   std::make_pair(it1->first, it1->second)));
@@ -870,15 +870,15 @@ void frameFieldBackgroundMesh3D::build_neighbors(const int &max_recursion_level)
     //      current_vertex->getNum() << "  connected to " <<
     //      it_vertex->second.size() << " elements, coord: (" <<
     //      current_vertex->x() << "," << current_vertex->y() << "," <<
-    //      current_vertex->z() << ")" << std::endl; set<MVertex*> allvertex;
-    //      for (multimap<int,MVertex*>::iterator it1 =
+    //      current_vertex->z() << ")" << std::endl; set<MNode*> allvertex;
+    //      for (multimap<int,MNode*>::iterator it1 =
     //      proximity.begin();it1!=proximity.end();it1++){
     //        if (verbose) {
     //          for (int i=0;i<it1->first;i++) std::cout << "  ";
     //          std::cout << it1->first << "  :  " << it1->second->getNum() <<
     //          std::endl;
     //        }
-    //        set<MVertex*>::iterator itfind = allvertex.find(it1->second);
+    //        set<MNode*>::iterator itfind = allvertex.find(it1->second);
     //        if (itfind!=allvertex.end()){
     //          cerr << " ERROR : vertex duplicate !!!" << std::endl;
     //          throw;
@@ -890,18 +890,18 @@ void frameFieldBackgroundMesh3D::build_neighbors(const int &max_recursion_level)
 }
 
 void frameFieldBackgroundMesh3D::get_recursive_neighbors(
-  std::set<MVertex const *> &start, std::set<MVertex const *> &visited,
+  std::set<MNode const *> &start, std::set<MNode const *> &visited,
   std::set<MElement const *> &visited_elements,
-  std::multimap<int, MVertex const *> &proximity, int max_level, int level)
+  std::multimap<int, MNode const *> &proximity, int max_level, int level)
 {
   level++;
   if(level > max_level) return;
 
-  std::set<MVertex const *> new_vertices;
+  std::set<MNode const *> new_vertices;
 
-  for(std::set<MVertex const *>::iterator it_start = start.begin();
+  for(std::set<MNode const *>::iterator it_start = start.begin();
       it_start != start.end(); it_start++) { // for all initial vertices
-    MVertex const *current = *it_start;
+    MNode const *current = *it_start;
     //      std::cout << "get_recursive_neighbors : on vertex " <<
     //      current->getNum()
     //      << " (" << current << ")" << std::endl;
@@ -919,7 +919,7 @@ void frameFieldBackgroundMesh3D::get_recursive_neighbors(
       }
       //        std::cout << current_elem->getNum() << std::endl;
       for(std::size_t i = 0; i < current_elem->getNumVertices(); i++) {
-        MVertex *ver = current_elem->getVertex(i);
+        MNode *ver = current_elem->getVertex(i);
 
         if(visited.find(ver) != visited.end()) continue;
 
@@ -937,13 +937,13 @@ void frameFieldBackgroundMesh3D::get_recursive_neighbors(
 
 double frameFieldBackgroundMesh3D::compare_to_neighbors(
   const SPoint3 &current, STensor3 &ref,
-  std::multimap<double, MVertex const *>::iterator itbegin,
-  std::multimap<double, MVertex const *>::iterator itend, SVector3 &mean_axis,
+  std::multimap<double, MNode const *>::iterator itbegin,
+  std::multimap<double, MNode const *>::iterator itend, SVector3 &mean_axis,
   double &mean_angle, std::vector<double> &vectorial_smoothness)
 {
   for(int i = 0; i < 3; i++) mean_axis(i) = 0.;
 
-  std::multimap<double, MVertex const *>::iterator it = itbegin;
+  std::multimap<double, MNode const *>::iterator it = itbegin;
   SVector3 rotation_axis;
   double minimum_angle;
 
@@ -960,7 +960,7 @@ double frameFieldBackgroundMesh3D::compare_to_neighbors(
 
   for(; it != itend; it++) { // for all trusted neighbors
     // neighbor = it->second.second;
-    MVertex const *neighbor = it->second;
+    MNode const *neighbor = it->second;
     // ponderations_vec.push_back(1.);
     ponderations_vec.push_back(
       (std::abs(it->first) >= smoothness_threshold) ? 1. : 1.e-3);
@@ -1269,14 +1269,14 @@ void frameFieldBackgroundMesh3D::exportVectorialSmoothness(
 
   fprintf(f, "View \"Background Mesh\"{\n");
 
-  std::set<const MVertex *> done;
+  std::set<const MNode *> done;
 
   for(unsigned int ie = 0; ie < getNumMeshElements();
       ie++) { // for all elements
     const MElement *e = getElement(ie);
     for(std::size_t iv = 0; iv < e->getNumVertices(); iv++) {
-      const MVertex *v = e->getVertex(iv);
-      std::set<const MVertex *>::iterator itfind = done.find(v);
+      const MNode *v = e->getVertex(iv);
+      std::set<const MNode *>::iterator itfind = done.find(v);
       if(itfind != done.end()) continue;
       done.insert(v);
       STensor3 cf;

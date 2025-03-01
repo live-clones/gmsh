@@ -11,7 +11,7 @@ double approximationError(simpleFunction<double> &f, MElement *element)
   std::vector<double> VALS(element->getNumVertices());
 
   for(std::size_t i = 0; i < element->getNumVertices(); i++) {
-    MVertex *v = element->getVertex(i);
+    MNode *v = element->getVertex(i);
     VALS[i] = f(v->x(), v->y(), v->z());
   }
 

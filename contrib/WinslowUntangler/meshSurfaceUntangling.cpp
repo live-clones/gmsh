@@ -16,11 +16,11 @@
 #include "OS.h"
 #include "SPoint3.h"
 #include "SVector3.h"
-#include "MVertex.h"
+#include "MNode.h"
 #include "MElement.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
-#include "GFace.h"
+#include "GSurface.h"
 #include "Numeric.h"
 
 #if defined(HAVE_QUADMESHINGTOOLS)
@@ -73,7 +73,7 @@ bool buildTrianglesAndTargetsFromElements(
   std::vector<std::array<uint32_t, 4> > &elements,
   std::vector<std::array<uint32_t, 3> > &triangles,
   std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes,
-  GFace *gf){
+  GSurface *gf){
   std::vector<std::array<uint32_t, 6> > eb;
   eb.reserve(elements.size());
   for (auto e : elements){
@@ -88,7 +88,7 @@ bool buildTrianglesAndTargetsFromElements(
   std::vector<std::array<double, 2> > &points,
   std::vector<std::array<uint32_t, 6> > &elements,
   std::vector<std::array<uint32_t, 3> > &triangles,
-  std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes, GFace *gf)
+  std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes, GSurface *gf)
 {
   const uint32_t NO_U32 = (uint32_t)-1;
 
@@ -244,17 +244,17 @@ bool buildTrianglesAndTargetsFromElements(
   return true;
 }
 
-bool buildVerticesAndElements(GFace *gf, vector<MVertex *> &vertices,
+bool buildVerticesAndElements(GSurface *gf, vector<MNode *> &vertices,
                               vector<std::array<uint32_t, 6> > &elements)
 {
-  std::unordered_map<MVertex *, uint32_t> old2new;
+  std::unordered_map<MNode *, uint32_t> old2new;
   vector<uint32_t> fvert;
   for(size_t e = 0; e < gf->getNumMeshElements(); ++e) {
     MElement *elt = gf->getMeshElement(e);
     size_t n = elt->getNumVertices();
     fvert.resize(n);
     for(size_t lv = 0; lv < n; ++lv) {
-      MVertex *v = elt->getVertex(lv);
+      MNode *v = elt->getVertex(lv);
       auto it = old2new.find(v);
       if(it == old2new.end()) {
         old2new[v] = vertices.size();
@@ -280,7 +280,7 @@ bool buildVerticesAndElements(GFace *gf, vector<MVertex *> &vertices,
 }
 
 bool buildPlanarTriProblem(
-  GFace *gf, vector<MVertex *> &vertices, vector<vec2> &points,
+  GSurface *gf, vector<MNode *> &vertices, vector<vec2> &points,
   std::vector<std::array<uint32_t, 6> > &elements,
   vector<bool> &locked, std::vector<std::array<uint32_t, 3> > &triangles,
   std::vector<std::array<std::array<double, 2>, 3> > &triIdealShapes)
@@ -399,14 +399,14 @@ void myUpdateIdealShapes (const std::vector<std::array<double, 2> > &points,
 // ENDTEST ---------------------------------------------------------
 
 
-static void getVertices (std::vector<MElement*> &es,std::vector<MVertex*>&vall, std::vector<MVertex*>&vbound)
+static void getVertices (std::vector<MElement*> &es,std::vector<MNode*>&vall, std::vector<MNode*>&vbound)
 {
   vall.clear();
   vbound.clear();
   std::set<MEdge,MEdgeLessThan> edges;
   for (auto e : es){
     for (size_t i=0 ; i<e->getNumVertices() ; i++){
-      MVertex *v = e->getVertex (i);
+      MNode *v = e->getVertex (i);
       if (std::find(vall.begin(), vall.end(), v) == vall.end())
 	vall.push_back(v);
     }
@@ -418,20 +418,20 @@ static void getVertices (std::vector<MElement*> &es,std::vector<MVertex*>&vall, 
   }
   for (auto ed : edges){
     for (size_t i=0 ; i<2 ; i++){
-      MVertex *v = ed.getVertex (i);
+      MNode *v = ed.getVertex (i);
       if (std::find(vbound.begin(), vbound.end(), v) == vbound.end())
 	vbound.push_back(v);
     }
   }
 }
 
-static bool untangleGFaceMeanPlane(GFace *gf,
+static bool untangleGFaceMeanPlane(GSurface *gf,
 				   std::vector<MElement*> &els,
 				   mean_plane &mp, int iter){
 
   const bool localDebug = false;
 
-  std::vector<MVertex*> vall, vbound;
+  std::vector<MNode*> vall, vbound;
   getVertices (els,vall,vbound);
   
   vector<vec2> points;
@@ -465,7 +465,7 @@ static bool untangleGFaceMeanPlane(GFace *gf,
   
   for (auto e : els){
     
-    MVertex *v[4]{e->getVertex(0),
+    MNode *v[4]{e->getVertex(0),
 	e->getVertex(1),
 	e->getVertex(2),
 	e->getNumVertices() == 4 ? e->getVertex(3) : nullptr};
@@ -540,14 +540,14 @@ static bool untangleGFaceMeanPlane(GFace *gf,
     if(!locked[i]) {
       SVector3 P = X0 + t1*points[i][0]+t2*points[i][1];
       double initialGuess[2] = {0,0};
-      GPoint gp = gf->closestPoint(SPoint3(P.x(),P.y(),P.z()),initialGuess);
+      GVertex gp = gf->closestPoint(SPoint3(P.x(),P.y(),P.z()),initialGuess);
       v->setXYZ(gp.x(),gp.y(),gp.z());
       v->setParameter(gp.u(),gp.v());
     }
   } 
 }
 
-static mean_plane computeMeanPlaneSimple (std::vector<MVertex*> &vs){
+static mean_plane computeMeanPlaneSimple (std::vector<MNode*> &vs){
   std::vector<SPoint3> pp;
   for  (auto v : vs) pp.push_back(v->point());
   mean_plane mp;
@@ -555,7 +555,7 @@ static mean_plane computeMeanPlaneSimple (std::vector<MVertex*> &vs){
   return mp;
 }
 
-static bool tooFarFromPlane (std::vector<MVertex*> &vs,
+static bool tooFarFromPlane (std::vector<MNode*> &vs,
 			     mean_plane &mp, double threshold)
 {
   double fact = sqrt(mp.a*mp.a+mp.b*mp.b+mp.c*mp.c);
@@ -566,7 +566,7 @@ static bool tooFarFromPlane (std::vector<MVertex*> &vs,
   return false;  
 }
 
-bool untangleGFaceRANSAC(GFace *gf, double threshold){
+bool untangleGFaceRANSAC(GSurface *gf, double threshold){
 
   ///if (gf->triangles.empty()) return true;
 
@@ -574,7 +574,7 @@ bool untangleGFaceRANSAC(GFace *gf, double threshold){
   double L = gf->bounds().diag();
   Msg::Info("Winslow Untangler applied to %s face %d size %g",gf->getTypeString().c_str(),gf->tag(),L);
 
-  std::map<MVertex*,std::vector<MElement*> > v2e;
+  std::map<MNode*,std::vector<MElement*> > v2e;
   for (size_t i = 0; i< gf->getNumMeshElements(); i++){
     MElement *e = gf->getMeshElement(i);
     for (size_t j = 0; j< e->getNumVertices(); j++)
@@ -582,10 +582,10 @@ bool untangleGFaceRANSAC(GFace *gf, double threshold){
   }
 
   int iter = 0;
-  std::vector<MVertex*> vall, vbound;
-  std::set<MVertex*> touched;
+  std::vector<MNode*> vall, vbound;
+  std::set<MNode*> touched;
   for (auto xxx : v2e){
-    MVertex *v = gf->mesh_vertices[iter%gf->mesh_vertices.size()];
+    MNode *v = gf->mesh_vertices[iter%gf->mesh_vertices.size()];
     iter++;
     if (touched.find(v) != touched.end())continue;
     if (touched.size() >= v2e.size())break;
@@ -618,11 +618,11 @@ bool untangleGFaceRANSAC(GFace *gf, double threshold){
 }
   
 
-bool untangleGFaceMeshConstrained(GFace *gf, int iterMax, double timeMax)
+bool untangleGFaceMeshConstrained(GSurface *gf, int iterMax, double timeMax)
 {
 
   const uint32_t NO_U32 = (uint32_t)-1;
-  if(gf->geomType() != GFace::Plane)
+  if(gf->geomType() != GSurface::Plane)
     return untangleGFaceRANSAC(gf, 1.e-2);
 
   if(gf->getNumMeshElements() == 0) {
@@ -636,7 +636,7 @@ bool untangleGFaceMeshConstrained(GFace *gf, int iterMax, double timeMax)
   computeSICNquality(gf, sicnMinB, sicnAvgB);
 
   /* Build planar problem by projection on mean plane */
-  vector<MVertex *> vertices;
+  vector<MNode *> vertices;
   vector<vec2> points;
   vector<bool> locked;
   vector<std::array<uint32_t, 3> > triangles;
@@ -727,7 +727,7 @@ bool untangleGFaceMeshConstrained(GFace *gf, int iterMax, double timeMax)
   /* Project back on 3D plane, then CAD */
   for(size_t v = 0; v < points.size(); ++v)
     if(!locked[v]) {
-      GPoint gp = gf->point(points[v][0],points[v][1]);
+      GVertex gp = gf->point(points[v][0],points[v][1]);
       vertices[v]->setXYZ(gp.x(),gp.y(),gp.z());
     }
   
@@ -743,7 +743,7 @@ bool untangleGFaceMeshConstrained(GFace *gf, int iterMax, double timeMax)
 }
 
 #else
-bool untangleGFaceMeshConstrained(GFace *gf, int iterMax, double timeMax)
+bool untangleGFaceMeshConstrained(GSurface *gf, int iterMax, double timeMax)
 {
   Msg::Error(
     "Module QuadMeshingTools required for untangleGFaceMeshConstrained");

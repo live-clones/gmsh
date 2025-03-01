@@ -170,9 +170,9 @@ private:
                               double y, double z, double dx, double dy,
                               double dz, double ax, double ay, double az,
                               double angle);
-  void _copyExtrudedAttributes(TopoDS_Edge edge, GEdge *ge);
-  void _copyExtrudedAttributes(TopoDS_Face face, GFace *gf);
-  void _copyExtrudedAttributes(TopoDS_Solid solid, GRegion *gr);
+  void _copyExtrudedAttributes(TopoDS_Edge edge, GCurve *ge);
+  void _copyExtrudedAttributes(TopoDS_Face face, GSurface *gf);
+  void _copyExtrudedAttributes(TopoDS_Solid solid, GVolume *gr);
 
   // bounding box
   bool _getBoundingBox(const TopoDS_Shape &s, double &xmin, double &ymin,
@@ -439,10 +439,10 @@ public:
                      double &distance,
                      double &x1, double &y1, double &z1,
                      double &x2, double &y2, double &z2);
-  GVertex *getVertexForOCCShape(GModel *model, const TopoDS_Vertex &toFind);
-  GEdge *getEdgeForOCCShape(GModel *model, const TopoDS_Edge &toFind);
-  GFace *getFaceForOCCShape(GModel *model, const TopoDS_Face &toFind);
-  GRegion *getRegionForOCCShape(GModel *model, const TopoDS_Solid &toFind);
+  GPoint *getVertexForOCCShape(GModel *model, const TopoDS_Vertex &toFind);
+  GCurve *getEdgeForOCCShape(GModel *model, const TopoDS_Edge &toFind);
+  GSurface *getFaceForOCCShape(GModel *model, const TopoDS_Face &toFind);
+  GVolume *getRegionForOCCShape(GModel *model, const TopoDS_Solid &toFind);
 
   // STL utilities
   bool makeFaceSTL(const TopoDS_Face &s, std::vector<SPoint2> &vertices_uv,

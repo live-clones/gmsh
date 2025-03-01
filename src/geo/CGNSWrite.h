@@ -19,7 +19,7 @@
 
 class GModel;
 class GEntity;
-class MVertex;
+class MNode;
 
 // Type for global node index -> (partition, local node index) correspondence
 struct LocalData {
@@ -28,7 +28,7 @@ struct LocalData {
   cgsize_t index;
 };
 // typedef std::vector<LocalData> Global2LocalData;
-typedef std::map<MVertex *, std::vector<LocalData> > Vertex2LocalData;
+typedef std::map<MNode *, std::vector<LocalData> > Vertex2LocalData;
 
 void getEntitiesToSave(const std::vector<GEntity *> &allEntities, bool saveAll,
                        std::vector<GEntity *> &entities);

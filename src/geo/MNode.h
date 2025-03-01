@@ -3,8 +3,8 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef MVERTEX_H
-#define MVERTEX_H
+#ifndef MNODE_H
+#define MNODE_H
 
 #include <cmath>
 #include <stdio.h>
@@ -16,12 +16,12 @@
 #include "MVertexBoundaryLayerData.h"
 
 class GEntity;
-class GEdge;
-class GFace;
-class MVertex;
+class GCurve;
+class GSurface;
+class MNode;
 
 // A mesh vertex (a "node").
-class MVertex {
+class MNode {
 protected:
   // the id of the vertex: this number is unique and is guaranteed never to
   // change once a vertex has been created, unless the mesh is explicitly
@@ -43,9 +43,9 @@ protected:
   GEntity *_ge;
 
 public:
-  MVertex(double x, double y, double z, GEntity *ge = nullptr,
+  MNode(double x, double y, double z, GEntity *ge = nullptr,
           std::size_t num = 0);
-  virtual ~MVertex() {}
+  virtual ~MNode() {}
   void deleteLast();
 
   // get/set the visibility flag
@@ -102,7 +102,7 @@ public:
   virtual bool setParameter(int i, double par) { return false; }
 
   // measure distance to another vertex
-  double distance(MVertex *const v)
+  double distance(MNode *const v)
   {
     double dx = _x - v->x();
     double dy = _y - v->y();
@@ -134,7 +134,7 @@ public:
   void writeSU2(FILE *fp, int dim, double scalingFactor = 1.0);
 };
 
-class MEdgeVertex : public MVertex {
+class MEdgeVertex : public MNode {
 protected:
   double _u, _lc;
 
@@ -143,7 +143,7 @@ public:
 
   MEdgeVertex(double x, double y, double z, GEntity *ge, double u,
               std::size_t num = 0, double lc = -1.0)
-    : MVertex(x, y, z, ge, num), _u(u), _lc(lc), bl_data(nullptr)
+    : MNode(x, y, z, ge, num), _u(u), _lc(lc), bl_data(nullptr)
   {
   }
   virtual ~MEdgeVertex()
@@ -165,7 +165,7 @@ public:
   double getLc() const { return _lc; }
 };
 
-class MFaceVertex : public MVertex {
+class MFaceVertex : public MNode {
 protected:
   double _u, _v;
 
@@ -174,7 +174,7 @@ public:
 
   MFaceVertex(double x, double y, double z, GEntity *ge, double u, double v,
               std::size_t num = 0)
-    : MVertex(x, y, z, ge, num), _u(u), _v(v), bl_data(nullptr)
+    : MNode(x, y, z, ge, num), _u(u), _v(v), bl_data(nullptr)
   {
   }
   virtual ~MFaceVertex()
@@ -212,37 +212,37 @@ class MVertexPtrLessThanLexicographic {
 
 public:
   static double getTolerance();
-  bool operator()(const MVertex *v1, const MVertex *v2) const;
+  bool operator()(const MNode *v1, const MNode *v2) const;
 };
 
 struct MVertexPtrLessThan {
-  bool operator()(const MVertex *v1, const MVertex *v2) const
+  bool operator()(const MNode *v1, const MNode *v2) const
   {
     return v1->getNum() < v2->getNum();
   }
 };
 
 struct MVertexPtrEqual {
-  bool operator()(const MVertex *v1, const MVertex *v2) const
+  bool operator()(const MNode *v1, const MNode *v2) const
   {
     return v1->getNum() == v2->getNum();
   }
 };
 
 struct MVertexPtrHash {
-  size_t operator()(const MVertex *v) const { return v->getNum(); }
+  size_t operator()(const MNode *v) const { return v->getNum(); }
 };
 
-bool reparamMeshEdgeOnFace(MVertex *v1, MVertex *v2, GFace *gf, SPoint2 &param1,
+bool reparamMeshEdgeOnFace(MNode *v1, MNode *v2, GSurface *gf, SPoint2 &param1,
                            SPoint2 &param2);
-bool reparamMeshVertexOnFace(MVertex const *v, const GFace *gf, SPoint2 &param,
+bool reparamMeshVertexOnFace(MNode const *v, const GSurface *gf, SPoint2 &param,
                              bool onSurface = true, bool failOnSeam = true,
                              int dir = 1);
-bool reparamMeshVertexOnEdge(MVertex *v, const GEdge *ge, double &param);
+bool reparamMeshVertexOnEdge(MNode *v, const GCurve *ge, double &param);
 
-double angle3Vertices(const MVertex *p1, const MVertex *p2, const MVertex *p3);
+double angle3Vertices(const MNode *p1, const MNode *p2, const MNode *p3);
 
-inline double distance(MVertex *v1, MVertex *v2)
+inline double distance(MNode *v1, MNode *v2)
 {
   const double dx = v1->x() - v2->x();
   const double dy = v1->y() - v2->y();

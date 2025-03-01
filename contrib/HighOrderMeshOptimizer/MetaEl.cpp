@@ -27,7 +27,7 @@
 #include <iostream>
 #include <sstream>
 #include "GmshMessage.h"
-#include "GEdge.h"
+#include "GCurve.h"
 #include "MLine.h"
 #include "MQuadrangle.h"
 #include "MPrism.h"
@@ -193,8 +193,8 @@ const MetaEl::metaInfoType &MetaEl::getMetaInfo(int elType, int order)
 }
 
 void MetaEl::computeBaseNorm(const SVector3 &metaNorm,
-                             const std::vector<MVertex *> &baseVert,
-                             const std::vector<MVertex *> &topPrimVert,
+                             const std::vector<MNode *> &baseVert,
+                             const std::vector<MNode *> &topPrimVert,
                              std::vector<SVector3> &baseNorm)
 {
   const int nbFaceNodes = baseVert.size(), nbPrimFaceNodes = topPrimVert.size();
@@ -212,7 +212,7 @@ void MetaEl::computeBaseNorm(const SVector3 &metaNorm,
       thick[iV] += linThick[iSF] * _mInfo.baseLinShapeFuncVal(iV, iSF);
     double jac[3][2] = {0., 0., 0., 0., 0., 0.};
     for(int iSF = 0; iSF < nbFaceNodes; iSF++) {
-      MVertex *vert = baseVert[iSF];
+      MNode *vert = baseVert[iSF];
       const double xyz[3] = {vert->x(), vert->y(), vert->z()};
       for(int iXYZ = 0; iXYZ < 3; iXYZ++) {
         jac[iXYZ][0] += xyz[iXYZ] * _mInfo.baseGradShapeFuncVal(iV, 3 * iSF);
@@ -229,8 +229,8 @@ void MetaEl::computeBaseNorm(const SVector3 &metaNorm,
   }
 }
 
-MetaEl::MetaEl(int type, int order, const std::vector<MVertex *> &baseVert,
-               const std::vector<MVertex *> &topPrimVert)
+MetaEl::MetaEl(int type, int order, const std::vector<MNode *> &baseVert,
+               const std::vector<MNode *> &topPrimVert)
   : _mInfo(getMetaInfo(type, order)), _metaEl(nullptr), _metaEl0(nullptr)
 {
   // Get info on meta-element type
@@ -246,10 +246,10 @@ MetaEl::MetaEl(int type, int order, const std::vector<MVertex *> &baseVert,
   // top face)
   _metaVert.resize(nbVert);
   for(int iV = 0; iV < baseInd.size(); iV++) {
-    const MVertex *const &bVert = baseVert[iV];
+    const MNode *const &bVert = baseVert[iV];
     GEntity *geomEnt = bVert->onWhat();
     if(geomEnt->dim() == 0)
-      _metaVert[baseInd[iV]] = new MVertex(*bVert);
+      _metaVert[baseInd[iV]] = new MNode(*bVert);
     else if(geomEnt->dim() == 1) {
       double u;
       bVert->getParameter(0, u);
@@ -265,7 +265,7 @@ MetaEl::MetaEl(int type, int order, const std::vector<MVertex *> &baseVert,
     }
   }
   for(int iV = 0; iV < topPrimVert.size(); iV++)
-    _metaVert[topInd[iV]] = new MVertex(*topPrimVert[iV]);
+    _metaVert[topInd[iV]] = new MNode(*topPrimVert[iV]);
 
   // Create first-order meta-element and normals to base face
   int faceType;
@@ -303,7 +303,7 @@ MetaEl::MetaEl(int type, int order, const std::vector<MVertex *> &baseVert,
     SPoint3 p;
     const int ind = topInd[iV];
     _metaEl0->pnt(points(ind, 0), points(ind, 1), points(ind, 2), p);
-    _metaVert[ind] = new MVertex(p.x(), p.y(), p.z());
+    _metaVert[ind] = new MNode(p.x(), p.y(), p.z());
   }
 
   // Add vertices on edges (excluding base and top faces)
@@ -311,12 +311,12 @@ MetaEl::MetaEl(int type, int order, const std::vector<MVertex *> &baseVert,
     SPoint3 p;
     const int ind = edgeInd[iV];
     _metaEl0->pnt(points(ind, 0), points(ind, 1), points(ind, 2), p);
-    _metaVert[ind] = new MVertex(p.x(), p.y(), p.z());
+    _metaVert[ind] = new MNode(p.x(), p.y(), p.z());
   }
 
   // Add remaining face and interior points
   for(int iV = 0; iV < otherInd.size(); iV++)
-    _metaVert[otherInd[iV]] = new MVertex(0., 0., 0.);
+    _metaVert[otherInd[iV]] = new MNode(0., 0., 0.);
   placeOtherNodes();
 
   // Create high-order meta-element
@@ -415,7 +415,7 @@ bool MetaEl::straightToCurved(double *xyzS, double *xyzC) const
 
 std::string MetaEl::printPOS()
 {
-  std::vector<MVertex *> verts;
+  std::vector<MNode *> verts;
   _metaEl->getVertices(verts);
   std::string posStr = _metaEl0->getStringForPOS();
   int n =

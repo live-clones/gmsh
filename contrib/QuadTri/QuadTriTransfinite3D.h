@@ -21,12 +21,12 @@ cited appropriately. See the README.txt file for license information.
 // Function to get all the diagonals from external surfaces of a given
 // Transfinite region tr and place them in boundary_diags.
 int getTransfiniteBoundaryDiags(
-  GRegion *tr, std::set<std::pair<MVertex *, MVertex *> > *boundary_diags);
+  GVolume *tr, std::set<std::pair<MNode *, MNode *> > *boundary_diags);
 
 // Meshes either a prism or a hexahedral set of mesh vertices in a Transfinite
 // Region with an internal vertex that is created here in the function.
 void meshTransfElemWithInternalVertex(
-  GRegion *to, std::vector<MVertex *> v,
-  std::set<std::pair<MVertex *, MVertex *> > *boundary_diags);
+  GVolume *to, std::vector<MNode *> v,
+  std::set<std::pair<MNode *, MNode *> > *boundary_diags);
 
 #endif

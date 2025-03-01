@@ -13,7 +13,7 @@
 
 #include "GmshMessage.h"
 #include "ElementType.h"
-#include "MVertex.h"
+#include "MNode.h"
 #include "MEdge.h"
 #include "MFace.h"
 #include "FuncSpaceData.h"
@@ -44,12 +44,12 @@ protected:
   static double _isInsideTolerance;
 
 protected:
-  void _getEdgeRep(MVertex *v0, MVertex *v1, double *x, double *y, double *z,
+  void _getEdgeRep(MNode *v0, MNode *v1, double *x, double *y, double *z,
                    SVector3 *n, int faceIndex = -1);
-  void _getFaceRep(MVertex *v0, MVertex *v1, MVertex *v2, double *x, double *y,
+  void _getFaceRep(MNode *v0, MNode *v1, MNode *v2, double *x, double *y,
                    double *z, SVector3 *n);
 #if defined(HAVE_VISUDEV)
-  void _getFaceRepQuad(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
+  void _getFaceRepQuad(MNode *v0, MNode *v1, MNode *v2, MNode *v3,
                        double *x, double *y, double *z, SVector3 *n);
 #endif
 
@@ -98,54 +98,54 @@ public:
 
   // get & set the vertices
   virtual std::size_t getNumVertices() const = 0;
-  virtual const MVertex *getVertex(int num) const = 0;
-  virtual MVertex *getVertex(int num) = 0;
-  void getVertices(std::vector<MVertex *> &verts)
+  virtual const MNode *getVertex(int num) const = 0;
+  virtual MNode *getVertex(int num) = 0;
+  void getVertices(std::vector<MNode *> &verts)
   {
     const auto N = getNumVertices();
     verts.resize(N);
     for(std::size_t i = 0; i < N; i++) verts[i] = getVertex(i);
   }
-  virtual void setVertex(int num, MVertex *v)
+  virtual void setVertex(int num, MNode *v)
   {
     Msg::Error("Vertex set not supported for this element");
   }
 
-  // give an MVertex as input and get its local number
-  virtual void getVertexInfo(const MVertex *vertex, int &ithVertex) const
+  // give an MNode as input and get its local number
+  virtual void getVertexInfo(const MNode *vertex, int &ithVertex) const
   {
     Msg::Error("Vertex information not available for this element");
   }
 
   // get the vertex using the I-deas UNV ordering
-  virtual MVertex *getVertexUNV(int num) { return getVertex(num); }
+  virtual MNode *getVertexUNV(int num) { return getVertex(num); }
 
   // get the vertex using the VTK ordering
-  virtual MVertex *getVertexVTK(int num) { return getVertex(num); }
+  virtual MNode *getVertexVTK(int num) { return getVertex(num); }
 
   // get the vertex using the MATLAB ordering
-  virtual MVertex *getVertexMATLAB(int num) { return getVertex(num); }
+  virtual MNode *getVertexMATLAB(int num) { return getVertex(num); }
 
   // get the vertex using the Tochnog ordering
-  virtual MVertex *getVertexTOCHNOG(int num) { return getVertex(num); }
+  virtual MNode *getVertexTOCHNOG(int num) { return getVertex(num); }
 
   // get the vertex using the Nastran BDF ordering
-  virtual MVertex *getVertexBDF(int num) { return getVertex(num); }
+  virtual MNode *getVertexBDF(int num) { return getVertex(num); }
 
   // get the vertex using DIFF ordering
-  virtual MVertex *getVertexDIFF(int num) { return getVertex(num); }
+  virtual MNode *getVertexDIFF(int num) { return getVertex(num); }
 
   // get the vertex using INP ordering
-  virtual MVertex *getVertexINP(int num) { return getVertex(num); }
+  virtual MNode *getVertexINP(int num) { return getVertex(num); }
 
   // get the vertex using KEY ordering
-  virtual MVertex *getVertexKEY(int num) { return getVertex(num); }
+  virtual MNode *getVertexKEY(int num) { return getVertex(num); }
 
   // get the vertex using RAD ordering
-  virtual MVertex *getVertexRAD(int num) { return getVertex(num); }
+  virtual MNode *getVertexRAD(int num) { return getVertex(num); }
 
   // get the vertex using NEU ordering
-  virtual MVertex *getVertexNEU(int num) { return getVertex(num); }
+  virtual MNode *getVertexNEU(int num) { return getVertex(num); }
 
   // get the number of vertices associated with edges, faces and volumes (i.e.
   // internal vertices on edges, faces and volume; nonzero only for higher order
@@ -218,11 +218,11 @@ public:
                           SVector3 *n) = 0;
 
   // get all the vertices on a edge or a face
-  virtual void getEdgeVertices(const int num, std::vector<MVertex *> &v) const
+  virtual void getEdgeVertices(const int num, std::vector<MNode *> &v) const
   {
     v.resize(0);
   }
-  virtual void getFaceVertices(const int num, std::vector<MVertex *> &v) const
+  virtual void getFaceVertices(const int num, std::vector<MNode *> &v) const
   {
     v.resize(0);
   }
@@ -389,18 +389,18 @@ public:
   {
     return getNumPrimaryVertices();
   }
-  virtual const MVertex *getShapeFunctionNode(int i) const
+  virtual const MNode *getShapeFunctionNode(int i) const
   {
     return getVertex(i);
   }
-  virtual MVertex *getShapeFunctionNode(int i) { return getVertex(i); }
+  virtual MNode *getShapeFunctionNode(int i) { return getVertex(i); }
 
   // return the eigenvalues of the metric evaluated at point (u,v,w) in
   // parametric coordinates
   virtual double getEigenvaluesMetric(double u, double v, double w,
                                       double values[3]) const;
 
-  virtual double getAngleAtVertex(MVertex *v)
+  virtual double getAngleAtVertex(MNode *v)
   {
     Msg::Warning("Angle at element node not coded for this element type");
     return 0.;
@@ -510,7 +510,7 @@ public:
   virtual void getVerticesIdForMSH(std::vector<int> &verts);
 
   // copy element and parent if any, vertexMap contains the new vertices
-  virtual MElement *copy(std::map<std::size_t, MVertex *> &vertexMap,
+  virtual MElement *copy(std::map<std::size_t, MNode *> &vertexMap,
                          std::map<MElement *, MElement *> &newParents,
                          std::map<MElement *, MElement *> &newDomains);
 
@@ -522,7 +522,7 @@ public:
 
 class MElementFactory {
 public:
-  MElement *create(int type, std::vector<MVertex *> &v, std::size_t num = 0,
+  MElement *create(int type, std::vector<MNode *> &v, std::size_t num = 0,
                    int part = 0, bool owner = false, int parent = 0,
                    MElement *parent_ptr = nullptr, MElement *d1 = nullptr,
                    MElement *d2 = nullptr);
@@ -551,7 +551,7 @@ struct MElementPtrHash {
 struct MElementPtrLessThanVertices {
   bool operator()(MElement *e1, MElement *e2) const
   {
-    std::vector<MVertex *> v1, v2;
+    std::vector<MNode *> v1, v2;
     e1->getVertices(v1);
     e2->getVertices(v2);
     std::sort(v1.begin(), v1.end());

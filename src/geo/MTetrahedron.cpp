@@ -24,8 +24,8 @@ void MTetrahedron::getEdgeRep(bool curved, int num, double *x, double *y,
                               double *z, SVector3 *n)
 {
   // don't use MElement::_getEdgeRep: it's slow due to the creation of MFaces
-  MVertex *v0 = _v[edges_tetra(num, 0)];
-  MVertex *v1 = _v[edges_tetra(num, 1)];
+  MNode *v0 = _v[edges_tetra(num, 0)];
+  MNode *v1 = _v[edges_tetra(num, 1)];
   x[0] = v0->x();
   y[0] = v0->y();
   z[0] = v0->z();
@@ -34,7 +34,7 @@ void MTetrahedron::getEdgeRep(bool curved, int num, double *x, double *y,
   z[1] = v1->z();
   if(CTX::instance()->mesh.lightLines > 1) {
     static const int vv[6] = {2, 0, 1, 1, 0, 2};
-    MVertex *v2 = _v[vv[num]];
+    MNode *v2 = _v[vv[num]];
     SVector3 t1(x[1] - x[0], y[1] - y[0], z[1] - z[0]);
     SVector3 t2(v2->x() - x[0], v2->y() - y[0], v2->z() - z[0]);
     SVector3 normal = crossprod(t1, t2);
@@ -376,7 +376,7 @@ void MTetrahedronN::reverse()
   IndicesReversed &indices = it->second;
 
   // copy vertices
-  std::vector<MVertex *> oldv(4 + _vs.size());
+  std::vector<MNode *> oldv(4 + _vs.size());
   std::copy(_v, _v + 4, oldv.begin());
   std::copy(_vs.begin(), _vs.end(), oldv.begin() + 4);
 

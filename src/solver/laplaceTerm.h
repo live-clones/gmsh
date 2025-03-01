@@ -12,11 +12,11 @@
 class laplaceTerm : public helmholtzTerm<double> {
 protected:
   const int _iField;
-  std::map<MVertex *, SPoint3> *_coordView;
+  std::map<MNode *, SPoint3> *_coordView;
 
 public:
   laplaceTerm(GModel *gm, int iField, simpleFunction<double> *k,
-              std::map<MVertex *, SPoint3> *coord = nullptr)
+              std::map<MNode *, SPoint3> *coord = nullptr)
     : helmholtzTerm<double>(gm, iField, iField, k, nullptr), _iField(iField),
       _coordView(coord)
   {

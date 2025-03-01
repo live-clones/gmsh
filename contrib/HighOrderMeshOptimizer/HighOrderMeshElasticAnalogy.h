@@ -38,30 +38,30 @@
 #include "dofManager.h"
 #include "elasticityTerm.h"
 
-class MVertex;
+class MNode;
 class MElement;
-class GFace;
-class GRegion;
+class GSurface;
+class GVolume;
 
 class highOrderTools {
 private:
   GModel *_gm;
   const int _tag;
   // contains the position of vertices in a straight sided mesh
-  std::map<MVertex *, SVector3> _straightSidedLocation;
+  std::map<MNode *, SVector3> _straightSidedLocation;
   // contains the position of vertices in the best curvilinear mesh available
-  std::map<MVertex *, SVector3> _targetLocation;
+  std::map<MNode *, SVector3> _targetLocation;
   int _dim;
   void _clean()
   {
     _straightSidedLocation.clear();
     _targetLocation.clear();
   }
-  double _smoothMetric(std::vector<MElement *> &v, GFace *gf,
+  double _smoothMetric(std::vector<MElement *> &v, GSurface *gf,
                        dofManager<double> &myAssembler,
-                       std::set<MVertex *, MVertexPtrLessThan> &verticesToMove,
+                       std::set<MNode *, MVertexPtrLessThan> &verticesToMove,
                        elasticityTerm &El);
-  void _computeMetricInfo(GFace *gf, MElement *e, fullMatrix<double> &J,
+  void _computeMetricInfo(GSurface *gf, MElement *e, fullMatrix<double> &J,
                           fullMatrix<double> &JT, fullVector<double> &D);
   double _applyIncrementalDisplacement(double max_incr,
                                        std::vector<MElement *> &v, bool mixed,
@@ -77,11 +77,11 @@ public:
   void ensureMinimumDistorsion(MElement *e, double threshold);
   void ensureMinimumDistorsion(std::vector<MElement *> &all, double threshold);
   void ensureMinimumDistorsion(double threshold);
-  double applySmoothingTo(GFace *gf, double tres = 0.1, bool mixed = false);
-  void applySmoothingTo(std::vector<MElement *> &all, GFace *gf);
+  double applySmoothingTo(GSurface *gf, double tres = 0.1, bool mixed = false);
+  void applySmoothingTo(std::vector<MElement *> &all, GSurface *gf);
   double applySmoothingTo(std::vector<MElement *> &all, double threshold,
                           bool mixed);
-  inline SVector3 getSSL(MVertex *v) const
+  inline SVector3 getSSL(MNode *v) const
   {
     auto it = _straightSidedLocation.find(v);
     if(it != _straightSidedLocation.end())
@@ -89,7 +89,7 @@ public:
     else
       return SVector3(v->x(), v->y(), v->z());
   }
-  inline SVector3 getTL(MVertex *v) const
+  inline SVector3 getTL(MNode *v) const
   {
     auto it = _targetLocation.find(v);
     if(it != _targetLocation.end())

@@ -14,7 +14,7 @@
 #include "GModel.h"
 #include "OS.h"
 #include "rtree.h"
-#include "MVertex.h"
+#include "MNode.h"
 #include "MElement.h"
 #include "MLine.h"
 #include "BackgroundMesh.h"
@@ -43,8 +43,8 @@
 int __OK, __KO;
 
 bool compute4neighbors(
-  GFace *gf, // the surface
-  MVertex *v_center, // the wertex for which we wnt to generate 4 neighbors
+  GSurface *gf, // the surface
+  MNode *v_center, // the wertex for which we wnt to generate 4 neighbors
   SPoint2 &midpoint,
   SPoint2 newP[8], // look into other directions
   SMetric3 &metricField,// the mesh metric
@@ -73,7 +73,7 @@ bool compute4neighbors(
     if (L > 1.e10){
       double DU = ((double)rand()/RAND_MAX)*1.e-3*iter;
       double DV = ((double)rand()/RAND_MAX)*1.e-3*iter;
-      GPoint pp = gf->point(DU+midpoint.x(),DV+midpoint.y());
+      GVertex pp = gf->point(DU+midpoint.x(),DV+midpoint.y());
       X = pp.x();
       Y = pp.y();
       Z = pp.z();
@@ -183,7 +183,7 @@ bool compute4neighbors(
   surfaceFunctorGFace ss(gf);
   for(int i = 0; i < 4; i++) {
     newP[i] = SPoint2(newPoint[i][0], newPoint[i][1]);
-    GPoint pp = gf->point(newP[i]);
+    GVertex pp = gf->point(newP[i]);
     SPoint3 px (pp.x(),pp.y(),pp.z());
     SVector3 test = px - ppx;
     double L2 = test.norm();
@@ -193,7 +193,7 @@ bool compute4neighbors(
       // if (0 && gf->geomType() == GEntity::DiscreteSurface){
       // 	discreteFace *df = dynamic_cast<discreteFace *>(gf);
       // 	double uv[2] = {newPoint[i][0], newPoint[i][1]};
-      // 	GPoint qq = df->intersectionWithCircle(dirs[i], n, SVector3(v_center->x(), v_center->y(), v_center->z()),
+      // 	GVertex qq = df->intersectionWithCircle(dirs[i], n, SVector3(v_center->x(), v_center->y(), v_center->z()),
       // 							 LS[i],uv);
       // 	if (qq.succeeded()){
       // 	  newPoint[i][0]=qq.u();
@@ -242,11 +242,11 @@ bool compute4neighbors(
 
 // at crossfield singularities, directions are undefined
 // we draw a circle around
-// static void createSingularPatches (GFace *gf, std::map<MVertex *, int> &s, Field *f, std::vector<MVertex*> &toInsert){
+// static void createSingularPatches (GSurface *gf, std::map<MNode *, int> &s, Field *f, std::vector<MNode*> &toInsert){
 
 //   FILE *_f = fopen("patches.pos","w");
 //   fprintf(_f,"View \"\"{\n");
-//   for (std::map<MVertex *, int>::iterator it = s.begin();it != s.end() ; ++it){
+//   for (std::map<MNode *, int>::iterator it = s.begin();it != s.end() ; ++it){
 //     SPoint2 midpoint;
 //     SPoint2 newP[8];
 //     SMetric3 metricField;
@@ -268,7 +268,7 @@ bool compute4neighbors(
 
 //     int loop [8] = {0,4,1,7,2,6,3,5};
 //     SVector3 t0[8],t1[8];
-//     GPoint p0[8];
+//     GVertex p0[8];
 //     std::vector<double> dots;
 //     std::vector<SPoint3> pts;
 //     for (int i=0;i<8;i++){
@@ -294,8 +294,8 @@ bool compute4neighbors(
 //       if (dot(t0i,t0n) < 0)t0n = t0n * (-1.0);
 //       if (dot(t1i,t1n) < 0)t1n = t1n * (-1.0);
 
-//       GPoint pi = p0[i];
-//       GPoint pn = p0[(i+1)%8];
+//       GVertex pi = p0[i];
+//       GVertex pn = p0[(i+1)%8];
 //       fprintf(_f,"SP(%g,%g,%g){%d};\n",
 // 	      pi.x(),pi.y(),pi.z(),i);
 //       for (int j=0;j<nSamples;j++){
@@ -327,7 +327,7 @@ bool compute4neighbors(
 //       double V2 = dots[(i+2)%pts.size()];
 //       if (V1 > V0 && V1 > V2){
 // 	double uvt[2] = {0,0};
-// 	GPoint pp = gf->closestPoint(pts[i] ,uvt);
+// 	GVertex pp = gf->closestPoint(pts[i] ,uvt);
 // 	MFaceVertex *vv = new MFaceVertex (pp.x(),pp.y(),pp.z(),gf,pp.u(),pp.v());
 // 	toInsert.push_back(vv);
 // 	nbMax++;
@@ -356,16 +356,16 @@ static bool outBounds(SPoint2 p, double minu, double maxu, double minv, double m
   return false;
 }
 
-static bool close2sing(std::vector<MVertex*> &s, GFace *gf, SPoint2 p, Field *f){
+static bool close2sing(std::vector<MNode*> &s, GSurface *gf, SPoint2 p, Field *f){
 
   if (s.empty())return false;
-  GPoint gp = gf->point(p);
+  GVertex gp = gf->point(p);
   SVector3 t1;
   (*f)(gp.x(), gp.y(), gp.z(), t1, gf);
   double L = t1.norm();
 
   for (size_t i=0;i<s.size();i++){
-    MVertex *v = s[i];
+    MNode *v = s[i];
     double d = sqrt ((v->x()-gp.x())*(v->x()-gp.x())+
 		     (v->y()-gp.y())*(v->y()-gp.y())+
 		     (v->z()-gp.z())*(v->z()-gp.z()));
@@ -375,11 +375,11 @@ static bool close2sing(std::vector<MVertex*> &s, GFace *gf, SPoint2 p, Field *f)
 }
 
 
-static void findPhysicalGroupsForSingularities(GFace *gf,
-                                               std::map<MVertex *, int> &temp)
+static void findPhysicalGroupsForSingularities(GSurface *gf,
+                                               std::map<MNode *, int> &temp)
 {
 
-  std::set<GVertex *, GEntityPtrLessThan> emb = gf->embeddedVertices();
+  std::set<GPoint *, GEntityPtrLessThan> emb = gf->embeddedVertices();
   if (emb.empty())return;
 
   std::map<int, std::vector<GEntity *> > groups[4];
@@ -389,7 +389,7 @@ static void findPhysicalGroupsForSingularities(GFace *gf,
     std::string name = gf->model()->getPhysicalName(0, it->first);
     if(name == "SINGULARITY_OF_INDEX_THREE") {
       for(size_t j = 0; j < it->second.size(); j++) {
-	if (emb.find((GVertex*)it->second[j]) != emb.end()){
+	if (emb.find((GPoint*)it->second[j]) != emb.end()){
 	  if(!it->second[j]->mesh_vertices.empty())
 	    temp[it->second[j]->mesh_vertices[0]] = 3;
 	}
@@ -397,7 +397,7 @@ static void findPhysicalGroupsForSingularities(GFace *gf,
     }
     else if(name == "SINGULARITY_OF_INDEX_FIVE") {
       for(size_t j = 0; j < it->second.size(); j++) {
-	if (emb.find((GVertex*)it->second[j]) != emb.end()){
+	if (emb.find((GPoint*)it->second[j]) != emb.end()){
 	  if(!it->second[j]->mesh_vertices.empty())
 	    temp[it->second[j]->mesh_vertices[0]] = 5;
 	}
@@ -405,7 +405,7 @@ static void findPhysicalGroupsForSingularities(GFace *gf,
     }
     else if(name == "SINGULARITY_OF_INDEX_SIX") {
       for(size_t j = 0; j < it->second.size(); j++) {
-	if (emb.find((GVertex*)it->second[j]) != emb.end()){
+	if (emb.find((GPoint*)it->second[j]) != emb.end()){
 	  if(!it->second[j]->mesh_vertices.empty())
 	    temp[it->second[j]->mesh_vertices[0]] = 6;
 	}
@@ -415,7 +415,7 @@ static void findPhysicalGroupsForSingularities(GFace *gf,
 }
 
 
-void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
+void packingOfParallelograms(GSurface *gf, std::vector<MNode *> &packed,
                              std::vector<SMetric3> &metrics)
 {
 
@@ -458,11 +458,11 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
   const bool goNonLinear = true;
 
   // get all the boundary vertices
-  std::set<MVertex *, MVertexPtrLessThan> bnd_vertices;
+  std::set<MNode *, MVertexPtrLessThan> bnd_vertices;
   for(unsigned int i = 0; i < gf->getNumMeshElements(); i++) {
     MElement *element = gf->getMeshElement(i);
     for(std::size_t j = 0; j < element->getNumVertices(); j++) {
-      MVertex *vertex = element->getVertex(j);
+      MNode *vertex = element->getVertex(j);
       if(vertex->onWhat()->dim() < 2) bnd_vertices.insert(vertex);
     }
   }
@@ -477,12 +477,12 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
   RTree<surfacePointWithExclusionRegion *, double, 2, double> rtree;
   SMetric3 metricField(1.0);
   SPoint2 newp[8];
-  std::set<MVertex *, MVertexPtrLessThan>::iterator it = bnd_vertices.begin();
+  std::set<MNode *, MVertexPtrLessThan>::iterator it = bnd_vertices.begin();
 
   double maxu = -1.e22,minu = 1.e22;
   double maxv = -1.e22,minv = 1.e22;
 
-  std::vector<MVertex*> singularities;
+  std::vector<MNode*> singularities;
   for(; it != bnd_vertices.end(); ++it) {
 
     int NP = 0;
@@ -551,7 +551,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 	 !outBounds(parent->_p[i],minu,maxu,minv,maxv)
 	 && (gf->getNativeType() == GEntity::GmshModel || gf->containsParam(parent->_p[i])))
 	{
-	  GPoint gp = gf->point(parent->_p[i]);
+	  GVertex gp = gf->point(parent->_p[i]);
 	  MFaceVertex *v =
 	    new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
 	  SPoint2 midpoint;
@@ -567,7 +567,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
       else{
 	//	printf("%d %d\n", inExclusionZone(parent->_v, parent->_p[i], rtree), outBounds(parent->_p[i],minu,maxu,minv,maxv));
 	if(Msg::GetVerbosity() == 99) {
-	  GPoint gp = gf->point(parent->_p[i]);
+	  GVertex gp = gf->point(parent->_p[i]);
 	  MFaceVertex *v =
 	    new MFaceVertex(gp.x(), gp.y(), gp.z(), gf, gp.u(), gp.v());
 	  SPoint2 midpoint;
@@ -626,7 +626,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 			  dirs[i], n, SVector3(v_center->x(), v_center->y(), v_center->z()),
 			  L);
     if(intersectCurveSurface(cf, ss, uvt, size_1 * 1.e-2)) { //
-      GPoint pp = gf->point(SPoint2(uvt[0], uvt[1]));
+      GVertex pp = gf->point(SPoint2(uvt[0], uvt[1]));
       double D =
 	sqrt((pp.x() - v_center->x()) * (pp.x() - v_center->x()) +
 	     (pp.y() - v_center->y()) * (pp.y() - v_center->y()) +
@@ -645,7 +645,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 		      v_center->z() + dirs[i].z() * L);
 
 
-	GPoint pp = gf->closestPoint(test,uvt);
+	GVertex pp = gf->closestPoint(test,uvt);
 	if (pp.succeeded()){
 	  newPoint[i][0] = pp.u();
 	  newPoint[i][1] = pp.v();
@@ -659,7 +659,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 		    v_center->z() + dirs[i].z() * L);
 
 
-      GPoint pp = gf->closestPoint(test,uvt);
+      GVertex pp = gf->closestPoint(test,uvt);
       if (pp.succeeded()){
 	newPoint[i][0] = pp.u();
 	newPoint[i][1] = pp.v();

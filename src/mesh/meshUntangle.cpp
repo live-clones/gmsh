@@ -2,14 +2,14 @@
 #include "GmshMessage.h"
 #include "meshUntangle.h"
 #include "GModel.h"
-#include "GRegion.h"
+#include "GVolume.h"
 #include "MTetrahedron.h"
-#include "MVertex.h"
+#include "MNode.h"
 
 #ifdef HAVE_UNTANGLE
 int untangle3dTet(std::vector<double>& verts,
 		  std::vector<int>& tets, int itermax);
-void untangleMesh(GRegion *gr){
+void untangleMesh(GVolume *gr){
   for (auto t : gr->tetrahedra){
     t->getVertex(0)->setIndex(-1);
     t->getVertex(1)->setIndex(-1);
@@ -19,7 +19,7 @@ void untangleMesh(GRegion *gr){
   int current = 0;
   std::vector<double> verts;
   std::vector<int> tets;
-  std::vector<MVertex*> vs;
+  std::vector<MNode*> vs;
   for (auto t : gr->tetrahedra){
     for (int i=0;i<4;i++){
       if (t->getVertex(i)->getIndex() == -1){
@@ -48,7 +48,7 @@ void untangleMesh(GRegion *gr){
   
 }
 #else
-void untangleMesh(GRegion *gr){
+void untangleMesh(GVolume *gr){
   Msg::Error("Gmsh must be compiled with the UNTANGLE lib to be able to untangle a tet mesh");
 }
 #endif

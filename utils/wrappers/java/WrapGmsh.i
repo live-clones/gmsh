@@ -5,12 +5,12 @@
 #include "GmshGlobal.h"
 #include "GModel.h"
 #include "Geo.h"
-#include "GVertex.h"
+#include "GPoint.h"
 #include "gmshVertex.h"
 #include "GEntity.h"
-#include "GEdge.h"
-#include "GFace.h"
-#include "GRegion.h"
+#include "GCurve.h"
+#include "GSurface.h"
+#include "GVolume.h"
 #include "scriptStringInterface.h"
 #include "GEntity.h"
 #include "setWrapperGmsh.h"
@@ -39,12 +39,12 @@ enum meshGenerationStatus {PENDING, DONE, FAILED};
 %include "GEntity.h"
 %include "GModel.h"
 %include "Geo.h"
-%include "GVertex.h"
+%include "GPoint.h"
 %include "gmshVertex.h"
-%include "GEdge.h"
-%include "GFace.h"
-%include "GRegion.h"
-%include "MVertex.h"
+%include "GCurve.h"
+%include "GSurface.h"
+%include "GVolume.h"
+%include "MNode.h"
 %include "GEntity.h"
 %include "ListUtils.h"
 extern int GmshInitialize(int argc, char **argv);
@@ -53,14 +53,14 @@ extern int GmshFinalize();
 //use the Vector object defined in Java language to wrap the std vector.
 %include "std_vector.i"
 namespace std {
-   %template(EdgeVector) std::vector<GEdge *>;
-   %template(EdgeVectorOfVector) std::vector<std::vector<GEdge *> >;
-   %template(FaceVector) std::vector<GFace *>;
-   %template(FaceVectorOfVector) std::vector<std::vector<GFace *> >;
-   %template(GVertexVector) std::vector<GVertex *>;
-   %template(RegionVector) std::vector<GRegion *>;
+   %template(EdgeVector) std::vector<GCurve *>;
+   %template(EdgeVectorOfVector) std::vector<std::vector<GCurve *> >;
+   %template(FaceVector) std::vector<GSurface *>;
+   %template(FaceVectorOfVector) std::vector<std::vector<GSurface *> >;
+   %template(GVertexVector) std::vector<GPoint *>;
+   %template(RegionVector) std::vector<GVolume *>;
    %template(GEntityVector) std::vector<GEntity*>;
-   %template(MVertexVector) std::vector<MVertex*>;
+   %template(MVertexVector) std::vector<MNode*>;
    %template(MPointVector) std::vector<MPoint*>;
    %template(MLineVector) std::vector<MLine*>;
    %template(MTriangleVector) std::vector<MTriangle*>;
@@ -72,54 +72,54 @@ namespace std {
 //wrap Set from std
 %include "setWrapperGmsh.h"
 
-%template (GVertexSetWrapper) SetWrapperGmsh<GVertex*, GEntityPtrLessThan>;
-%template (GVertexSetIterator) SetIteratorGmsh<GVertex*, GEntityPtrLessThan>;
+%template (GVertexSetWrapper) SetWrapperGmsh<GPoint*, GEntityPtrLessThan>;
+%template (GVertexSetIterator) SetIteratorGmsh<GPoint*, GEntityPtrLessThan>;
 
-%template (GEdgeSetWrapper) SetWrapperGmsh<GEdge*, GEntityPtrLessThan>;
-%template (GEdgeSetIterator) SetIteratorGmsh<GEdge*, GEntityPtrLessThan>;
+%template (GEdgeSetWrapper) SetWrapperGmsh<GCurve*, GEntityPtrLessThan>;
+%template (GEdgeSetIterator) SetIteratorGmsh<GCurve*, GEntityPtrLessThan>;
 
-%template (GFaceSetWrapper) SetWrapperGmsh<GFace*, GEntityPtrLessThan>;
-%template (GFaceSetIterator) SetIteratorGmsh<GFace*, GEntityPtrLessThan>;
+%template (GFaceSetWrapper) SetWrapperGmsh<GSurface*, GEntityPtrLessThan>;
+%template (GFaceSetIterator) SetIteratorGmsh<GSurface*, GEntityPtrLessThan>;
 
-%template (GRegionSetWrapper) SetWrapperGmsh<GRegion*, GEntityPtrLessThan>;
-%template (GRegionSetIterator) SetIteratorGmsh<GRegion*, GEntityPtrLessThan>;
+%template (GRegionSetWrapper) SetWrapperGmsh<GVolume*, GEntityPtrLessThan>;
+%template (GRegionSetIterator) SetIteratorGmsh<GVolume*, GEntityPtrLessThan>;
 
 
 //wrap List from std
 %include "listWrapperGmsh.h"
 
-%template (GVertexListWrapper) ListWrapperGmsh<GVertex*>;
-%template (GVertexListIterator) ListIteratorGmsh<GVertex*>;
+%template (GVertexListWrapper) ListWrapperGmsh<GPoint*>;
+%template (GVertexListIterator) ListIteratorGmsh<GPoint*>;
 
-%template (GEdgeListWrapper) ListWrapperGmsh<GEdge*>;
-%template (GEdgeListIterator) ListIteratorGmsh<GEdge*>;
+%template (GEdgeListWrapper) ListWrapperGmsh<GCurve*>;
+%template (GEdgeListIterator) ListIteratorGmsh<GCurve*>;
 
-%template (GFaceListWrapper) ListWrapperGmsh<GFace*>;
-%template (GFaceListIterator) ListIteratorGmsh<GFace*>;
+%template (GFaceListWrapper) ListWrapperGmsh<GSurface*>;
+%template (GFaceListIterator) ListIteratorGmsh<GSurface*>;
 
-%template (GRegionListWrapper) ListWrapperGmsh<GRegion*>;
-%template (GRegionListIterator) ListIteratorGmsh<GRegion*>;
+%template (GRegionListWrapper) ListWrapperGmsh<GVolume*>;
+%template (GRegionListIterator) ListIteratorGmsh<GVolume*>;
 
 %extend GModel {
 
-  std::vector<GRegion*> bindingsGetRegions()
+  std::vector<GVolume*> bindingsGetRegions()
   {
-    return std::vector<GRegion*> ($self->firstRegion(), $self->lastRegion());
+    return std::vector<GVolume*> ($self->firstRegion(), $self->lastRegion());
   }
 
-  std::vector<GFace*> bindingsGetFaces()
+  std::vector<GSurface*> bindingsGetFaces()
   {
-    return std::vector<GFace*> ($self->firstFace(), $self->lastFace());
+    return std::vector<GSurface*> ($self->firstFace(), $self->lastFace());
   }
 
-  std::vector<GEdge*> bindingsGetEdges()
+  std::vector<GCurve*> bindingsGetEdges()
   {
-    return std::vector<GEdge*> ($self->firstEdge(), $self->lastEdge());
+    return std::vector<GCurve*> ($self->firstEdge(), $self->lastEdge());
   }
 
-  std::vector<GVertex*> bindingsGetVertices()
+  std::vector<GPoint*> bindingsGetVertices()
   {
-    return std::vector<GVertex*> ($self->firstVertex(), $self->lastVertex());
+    return std::vector<GPoint*> ($self->firstVertex(), $self->lastVertex());
   }
 
 }

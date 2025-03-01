@@ -44,10 +44,10 @@ StringXNumber *GMSH_TetrahedralizePlugin::getOption(int iopt)
 #if defined(HAVE_MESH)
 
 namespace {
-  class PointData : public MVertex {
+  class PointData : public MNode {
   public:
     std::vector<double> val;
-    PointData(double x, double y, double z, int numVal) : MVertex(x, y, z)
+    PointData(double x, double y, double z, int numVal) : MNode(x, y, z)
     {
       val.resize(numVal);
     }
@@ -68,7 +68,7 @@ PView *GMSH_TetrahedralizePlugin::execute(PView *v)
   }
 
   // create list of points with associated data
-  std::vector<MVertex *> points;
+  std::vector<MNode *> points;
   int numSteps = data1->getNumTimeSteps();
   for(int ent = 0; ent < data1->getNumEntities(0); ent++) {
     for(int ele = 0; ele < data1->getNumElements(0, ent); ele++) {

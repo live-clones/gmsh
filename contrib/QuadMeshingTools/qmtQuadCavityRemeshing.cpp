@@ -22,11 +22,11 @@
 #include "GmshMessage.h"
 #include "Context.h"
 #include "OS.h"
-#include "GVertex.h"
-#include "GEdge.h"
-#include "GFace.h"
+#include "GPoint.h"
+#include "GCurve.h"
+#include "GSurface.h"
 #include "GModel.h"
-#include "MVertex.h"
+#include "MNode.h"
 #include "MLine.h"
 #include "MElement.h"
 #include "MTriangle.h"
@@ -694,12 +694,12 @@ namespace QMT {
     return best;
   }
 
-  std::vector<MVertex *> createVertices(GFace *gf, MVertex *v1, MVertex *v2,
+  std::vector<MNode *> createVertices(GSurface *gf, MNode *v1, MNode *v2,
                                         int n,
-                                        std::vector<MVertex *> &newVertices)
+                                        std::vector<MNode *> &newVertices)
   {
     bool haveParam = gf->haveParametrization();
-    std::vector<MVertex *> r;
+    std::vector<MNode *> r;
     r.push_back(v1);
     double uv1[2] = {0., 0.};
     double uv2[2] = {0., 0.};
@@ -717,7 +717,7 @@ namespace QMT {
         uv[0] = (1. - xi) * uv1[0] + xi * uv2[0];
         uv[1] = (1. - xi) * uv1[1] + xi * uv2[1];
       }
-      MVertex *vNew = new MFaceVertex(p.x(), p.y(), p.z(), gf, uv[0], uv[1]);
+      MNode *vNew = new MFaceVertex(p.x(), p.y(), p.z(), gf, uv[0], uv[1]);
       newVertices.push_back(vNew);
       r.push_back(vNew);
     }
@@ -725,23 +725,23 @@ namespace QMT {
     return r;
   }
 
-  std::vector<MVertex *> reverseVector(const std::vector<MVertex *> &v)
+  std::vector<MNode *> reverseVector(const std::vector<MNode *> &v)
   {
-    std::vector<MVertex *> r;
+    std::vector<MNode *> r;
     for(size_t i = 0; i < v.size(); i++) r.push_back(v[v.size() - 1 - i]);
     return r;
   }
 
-  void createQuadPatch(GFace *gf, const std::vector<MVertex *> &s1,
-                       const std::vector<MVertex *> &s2,
-                       const std::vector<MVertex *> &s3,
-                       const std::vector<MVertex *> &s4,
+  void createQuadPatch(GSurface *gf, const std::vector<MNode *> &s1,
+                       const std::vector<MNode *> &s2,
+                       const std::vector<MNode *> &s3,
+                       const std::vector<MNode *> &s4,
                        std::vector<MElement *> &newQuads,
-                       std::vector<MVertex *> &newVertices)
+                       std::vector<MNode *> &newVertices)
   {
-    std::vector<MVertex *> s3r = reverseVector(s3);
-    std::vector<MVertex *> s4r = reverseVector(s4);
-    std::vector<std::vector<MVertex *> > grid(s1.size());
+    std::vector<MNode *> s3r = reverseVector(s3);
+    std::vector<MNode *> s4r = reverseVector(s4);
+    std::vector<std::vector<MNode *> > grid(s1.size());
     for(size_t i = 0; i < grid.size(); ++i) grid[i].resize(s2.size(), NULL);
     grid.front() = s4r;
     grid.back() = s2;
@@ -772,7 +772,7 @@ namespace QMT {
                         u * (1. - v) * c10 + (1. - u) * v * c01);
           double uv[2] = {0., 0.};
           // TODO: interpolate uv if param available
-          MVertex *vNew =
+          MNode *vNew =
             new MFaceVertex(p.x(), p.y(), p.z(), gf, uv[0], uv[1]);
           newVertices.push_back(vNew);
           grid[i][j] = vNew;
@@ -790,12 +790,12 @@ namespace QMT {
   }
 
   bool addQuadsAccordingToPattern(
-    const QuadMeshPattern &P, const std::vector<int> &quantization, GFace *gf,
-    const std::vector<std::vector<MVertex *> >
+    const QuadMeshPattern &P, const std::vector<int> &quantization, GSurface *gf,
+    const std::vector<std::vector<MNode *> >
       &sides, /* vertices on the boundary, not changed */
-    std::vector<MVertex *> &newVertices, /* new vertices inside the cavity */
+    std::vector<MNode *> &newVertices, /* new vertices inside the cavity */
     std::vector<MElement *> &newElements, /* new quads inside the cavity */
-    MVertex *oldCenter = NULL /* initial guess for new positions */
+    MNode *oldCenter = NULL /* initial guess for new positions */
   )
   {
     constexpr bool DBG_VIZU = false;
@@ -805,9 +805,9 @@ namespace QMT {
       return false;
     }
 
-    unordered_map<id2, std::vector<MVertex *>, id2hash> vpair2vertices;
-    std::vector<MVertex *> v2mv(P.n, NULL);
-    std::vector<MVertex *> vert;
+    unordered_map<id2, std::vector<MNode *>, id2hash> vpair2vertices;
+    std::vector<MNode *> v2mv(P.n, NULL);
+    std::vector<MNode *> vert;
 
     /* Associate exising vertices to pattern sides */
     SVector3 center(0., 0., 0.);
@@ -867,8 +867,8 @@ namespace QMT {
           oldCenter->getParameter(0, uvc[0]);
           oldCenter->getParameter(1, uvc[1]);
         }
-        GPoint pp =
-          GPoint(center.x(), center.y(), center.z(), gf, uvc[0], uvc[1]);
+        GVertex pp =
+          GVertex(center.x(), center.y(), center.z(), gf, uvc[0], uvc[1]);
 
         bool moveTowardBdr = true;
         if(moveTowardBdr) {
@@ -890,10 +890,10 @@ namespace QMT {
         }
 
         double uv[2] = {0., 0.};
-        MVertex *sing =
+        MNode *sing =
           new MFaceVertex(pp.x(), pp.y(), pp.z(), gf, pp.u(), pp.v());
         if(gf->haveParametrization()) {
-          GPoint proj = gf->closestPoint(sing->point(), uv);
+          GVertex proj = gf->closestPoint(sing->point(), uv);
           if(proj.succeeded()) {
             sing->x() = proj.x();
             sing->y() = proj.y();
@@ -913,10 +913,10 @@ namespace QMT {
       if(P.e2f[e].size() == 2) {
         id v1 = P.edges[e][0];
         id v2 = P.edges[e][1];
-        MVertex *mv1 = v2mv[v1];
-        MVertex *mv2 = v2mv[v2];
+        MNode *mv1 = v2mv[v1];
+        MNode *mv2 = v2mv[v2];
         if(mv1 == NULL || mv2 == NULL) {
-          Msg::Error("MVertex* not found ?");
+          Msg::Error("MNode* not found ?");
           return false;
         }
         int n_e = quantization[P.eChordId[e]];
@@ -933,7 +933,7 @@ namespace QMT {
 
     /* Create vertices inside the quad patches */
     for(size_t f = 0; f < P.quads.size(); ++f) {
-      std::vector<std::vector<MVertex *> > quadCurves(4);
+      std::vector<std::vector<MNode *> > quadCurves(4);
       for(size_t le = 0; le < 4; ++le) {
         id v0 = P.qvertices[f][le];
         id v1 = P.qvertices[f][(le + 1) % 4];
@@ -941,7 +941,7 @@ namespace QMT {
         auto it = vpair2vertices.find(vpair);
         if(it == vpair2vertices.end()) {
           Msg::Error(
-            "MVertex* vector not found for vertex pair (edge in pattern)");
+            "MNode* vector not found for vertex pair (edge in pattern)");
           return false;
         }
         quadCurves[le] = it->second;
@@ -956,10 +956,10 @@ namespace QMT {
     return true;
   }
 
-  void clearStuff(std::vector<MVertex *> &newVertices,
+  void clearStuff(std::vector<MNode *> &newVertices,
                   std::vector<MElement *> &newElements)
   {
-    for(MVertex *&v : newVertices)
+    for(MNode *&v : newVertices)
       if(v != NULL) {
         delete v;
         v = NULL;
@@ -1025,8 +1025,8 @@ namespace QMT {
 
   struct RemeshableCavity {
     std::vector<MElement *> elements;
-    std::vector<std::vector<MVertex *> > sides;
-    std::vector<MVertex *> intVertices;
+    std::vector<std::vector<MNode *> > sides;
+    std::vector<MNode *> intVertices;
     double irregularityMeasure = 0;
     uint32_t nIrregular = 0; // # irregular vertices outside allowed ones
     std::pair<size_t, int> patternNoAndRot = {(size_t)-1, 0};
@@ -1058,11 +1058,11 @@ namespace QMT {
 
   struct CavityFarmer { /* the guy who grows cavities */
   public:
-    GFace *gf = nullptr;
+    GSurface *gf = nullptr;
 
-    /* contiguous representation of the GFace quad mesh  */
-    std::vector<MVertex *> vertices;
-    unordered_map<MVertex *, uint32_t> vertexLocal;
+    /* contiguous representation of the GSurface quad mesh  */
+    std::vector<MNode *> vertices;
+    unordered_map<MNode *, uint32_t> vertexLocal;
     std::vector<MQuadrangle *> quadrangles;
     unordered_map<MQuadrangle *, uint32_t> quadLocal;
     std::vector<std::array<uint32_t, 4> > quads;
@@ -1083,7 +1083,7 @@ namespace QMT {
     vector<uint32_t> _vertex2pos;
 
   public:
-    CavityFarmer(GFace *gf_) : gf(gf_){};
+    CavityFarmer(GSurface *gf_) : gf(gf_){};
 
     void clear()
     {
@@ -1137,9 +1137,9 @@ namespace QMT {
       GeoLog::flush();
     }
 
-    bool updateFarmer(GFace *gf)
+    bool updateFarmer(GSurface *gf)
     {
-      /* assume coherent orientation of quads in GFace */
+      /* assume coherent orientation of quads in GSurface */
       clear();
       std::vector<uint32_t> valence;
       vertices.reserve(2 * gf->mesh_vertices.size());
@@ -1151,7 +1151,7 @@ namespace QMT {
         quadLocal[q] = f;
         array<uint32_t, 4> quad;
         for(size_t lv = 0; lv < 4; ++lv) {
-          MVertex *v = q->getVertex(lv);
+          MNode *v = q->getVertex(lv);
           auto it = vertexLocal.find(v);
           if(it != vertexLocal.end()) {
             uint32_t nv = it->second;
@@ -1221,16 +1221,16 @@ namespace QMT {
       }
 
       /* Embedded edges in faces */
-      std::vector<GEdge *> embEdges;
-      for(GEdge *ge : gf->embeddedEdges()) embEdges.push_back(ge);
-      for(GEdge *ge : gf->edges())
+      std::vector<GCurve *> embEdges;
+      for(GCurve *ge : gf->embeddedEdges()) embEdges.push_back(ge);
+      for(GCurve *ge : gf->edges())
         if(ge->isSeam(gf)) embEdges.push_back(ge);
 
       unordered_set<id2, id2hash> embLines;
-      for(GEdge *ge : embEdges) {
+      for(GCurve *ge : embEdges) {
         for(MLine *line : ge->lines) {
-          MVertex *v1 = line->getVertex(0);
-          MVertex *v2 = line->getVertex(1);
+          MNode *v1 = line->getVertex(0);
+          MNode *v2 = line->getVertex(1);
           auto it1 = vertexLocal.find(v1);
           auto it2 = vertexLocal.find(v2);
           if(it1 == vertexLocal.end() || it2 == vertexLocal.end()) {
@@ -1284,7 +1284,7 @@ namespace QMT {
     }
 
     /* slow, do not call often */
-    bool vertexAdjacentQuads(MVertex *vp, std::vector<MQuadrangle *> &adjQuads)
+    bool vertexAdjacentQuads(MNode *vp, std::vector<MQuadrangle *> &adjQuads)
     {
       auto it = vertexLocal.find(vp);
       if(it == vertexLocal.end()) { return false; }
@@ -1352,9 +1352,9 @@ namespace QMT {
         uint32_t valOut = n - valIn;
         if(valOut > 0) { cav.verticesBdr.insert(v); }
         else if(valOut == 0 && valIn > 0) {
-          MVertex *pv = vertices[v];
-          GFace *pgf = pv->onWhat()->cast2Face();
-          if(pgf != nullptr) { /* vertex inside GFace */
+          MNode *pv = vertices[v];
+          GSurface *pgf = pv->onWhat()->cast2Face();
+          if(pgf != nullptr) { /* vertex inside GSurface */
             auto it = cav.verticesInt.find(v);
             if(it == cav.verticesInt.end()) { /* New interior */
               if(checkForbidden && vertexForbidden[v]) { return false; }
@@ -1367,7 +1367,7 @@ namespace QMT {
               if(itb != cav.verticesBdr.end()) { cav.verticesBdr.erase(itb); }
             }
           }
-          else { /* vertex on GFace boundary */
+          else { /* vertex on GSurface boundary */
             cav.verticesBdr.insert(v);
           }
         }
@@ -1420,16 +1420,16 @@ namespace QMT {
         uint32_t valIn = cav.vertexValenceInside[v];
         uint32_t valOut = n - valIn;
         if(valOut == 1) {
-          MVertex *vp = vertices[v];
-          GFace *gf = vp->onWhat()->cast2Face();
+          MNode *vp = vertices[v];
+          GSurface *gf = vp->onWhat()->cast2Face();
           if(gf != nullptr) {
             /* Concave cavity corner, inside the surface mesh */
             return false;
           }
         }
         else if(valOut >= 3) {
-          MVertex *vp = vertices[v];
-          GVertex *gv = vp->onWhat()->cast2Vertex();
+          MNode *vp = vertices[v];
+          GPoint *gv = vp->onWhat()->cast2Vertex();
           if(gv != nullptr) {
             /* CAD corner, valence is superior or equal to three, should not be
              * absorbed in cavity */
@@ -1457,12 +1457,12 @@ namespace QMT {
           uint32_t valOut = n - valIn;
 
           /* Add exterior quad if cavity bdr vertex out-valence is one
-           * and cavity bdr vertex is inside the GFace */
+           * and cavity bdr vertex is inside the GSurface */
           if(valOut == 1) {
             uint32_t qOut = NO_U32;
             vertexValence(v, valIn, valOut, &qOut);
             assert(qOut != NO_U32);
-            GFace *pgf = vertices[v]->onWhat()->cast2Face();
+            GSurface *pgf = vertices[v]->onWhat()->cast2Face();
             if(pgf == nullptr) continue;
             quadsAtConcavities.push_back(qOut);
           }
@@ -1660,8 +1660,8 @@ namespace QMT {
             break;
           }
           /* Check if touching a CAD corner */
-          MVertex *pv = vertices[v];
-          GVertex *gv = dynamic_cast<GVertex *>(pv->onWhat());
+          MNode *pv = vertices[v];
+          GPoint *gv = dynamic_cast<GPoint *>(pv->onWhat());
           if(gv != nullptr) { /* side touching CAD corner */
             candidate = false;
             break;
@@ -1758,8 +1758,8 @@ namespace QMT {
                     GrowthPolicy policy,
                     const std::vector<size_t> &patternsToCheck,
                     const unordered_map<size_t, size_t> &patternSizeLimits,
-                    const unordered_set<MVertex *> &allowedIrregularVertices,
-                    const unordered_set<MVertex *> &forbiddenIrregularVertices,
+                    const unordered_set<MNode *> &allowedIrregularVertices,
+                    const unordered_set<MNode *> &forbiddenIrregularVertices,
                     RemeshableCavity &rcav)
     {
       /* clear current cavity */
@@ -1772,7 +1772,7 @@ namespace QMT {
       /* constrain the growth */
       vertexForbidden.clear();
       vertexForbidden.resize(vertices.size(), false);
-      for(MVertex *v : forbiddenIrregularVertices) {
+      for(MNode *v : forbiddenIrregularVertices) {
         if(allowedIrregularVertices.find(v) != allowedIrregularVertices.end()) {
           continue;
         }
@@ -1990,7 +1990,7 @@ namespace QMT {
       neighbors.clear();
       std::vector<uint32_t> bdr;
       for(auto &side : rcav.sides)
-        for(MVertex *v : side) {
+        for(MNode *v : side) {
           auto it = vertexLocal.find(v);
           if(it != vertexLocal.end()) { bdr.push_back(it->second); }
         }
@@ -2021,7 +2021,7 @@ namespace QMT {
     size_t nIrregBdr = 0;
     for(uint32_t i = 0; i < farmer.vertices.size(); ++i) {
       uint32_t val = farmer.v2q_first[i + 1] - farmer.v2q_first[i];
-      MVertex *v = farmer.vertices[i];
+      MNode *v = farmer.vertices[i];
       if(v->onWhat()->cast2Face() != nullptr && val != 4) { nIrregInt += 1; }
       else if(v->onWhat()->cast2Edge() != nullptr && val != 2) {
         nIrregBdr += 1;
@@ -2157,7 +2157,7 @@ namespace QMT {
     return false;
   }
 
-  bool remeshCavity(GFace *gf, RemeshableCavity &cav, QuadqsGFaceContext &ctx,
+  bool remeshCavity(GSurface *gf, RemeshableCavity &cav, QuadqsGFaceContext &ctx,
                     const std::vector<MElement *> &cavityNeighborsForSmoothing)
   {
     /* Collect current patch components */
@@ -2211,14 +2211,14 @@ namespace QMT {
       /* To smooth the interface between remeshed cavity and rest of the mesh,
        * we collect the boundary (interior to the mesh) and its adjacent quads
        */
-      vector<MVertex *> toSmooth;
+      vector<MNode *> toSmooth;
       vector<MElement *> neighbors = cavityNeighborsForSmoothing;
       {
         /* Cavity boundary vertices, inside the surface, not changed by
          * diff.execute() */
         toSmooth.reserve(diff.after.bdrVertices.front().size());
-        for(MVertex *v : diff.after.bdrVertices.front()) {
-          GFace *gf = dynamic_cast<GFace *>(v->onWhat());
+        for(MNode *v : diff.after.bdrVertices.front()) {
+          GSurface *gf = dynamic_cast<GSurface *>(v->onWhat());
           if(gf != nullptr) toSmooth.push_back(v);
         }
 
@@ -2226,7 +2226,7 @@ namespace QMT {
          * execute() */
         for(MElement *e : diff.after.elements)
           for(size_t lv = 0; lv < 4; ++lv) {
-            MVertex *v = e->getVertex(lv);
+            MNode *v = e->getVertex(lv);
             auto it = std::find(toSmooth.begin(), toSmooth.end(), v);
             if(it != toSmooth.end()) {
               neighbors.push_back(e);
@@ -2236,7 +2236,7 @@ namespace QMT {
         sort_unique(neighbors);
       }
 
-      /* Modify the GFace mesh ! (and empty the diff content) */
+      /* Modify the GSurface mesh ! (and empty the diff content) */
       bool oke = diff.execute(verifyTopology);
       if(!oke) {
         Msg::Error("remesh cavity: diff execute() failed, should not happen");
@@ -2295,19 +2295,19 @@ namespace QMT {
   }
 
   void assignSingularitiesToIrregularVertices(
-    GFace *gf, const CavityFarmer &farmer,
+    GSurface *gf, const CavityFarmer &farmer,
     const std::vector<std::pair<SPoint3, int> > &singularities,
-    std::vector<MVertex *> &irregularVertices)
+    std::vector<MNode *> &irregularVertices)
   {
     irregularVertices.clear();
 
     /* Extract irregular vertices in face */
-    vector<MVertex *> nodeVal3;
-    vector<MVertex *> nodeVal5;
+    vector<MNode *> nodeVal3;
+    vector<MNode *> nodeVal5;
 
     for(uint32_t i = 0; i < farmer.vertices.size(); ++i) {
       uint32_t val = farmer.v2q_first[i + 1] - farmer.v2q_first[i];
-      MVertex *v = farmer.vertices[i];
+      MNode *v = farmer.vertices[i];
       if(v->onWhat() != gf) continue;
       if(val != 4) {
         if(val == 3) { nodeVal3.push_back(v); }
@@ -2320,7 +2320,7 @@ namespace QMT {
     /* Assign singular vertices */
     for(size_t i = 0; i < singularities.size(); ++i) {
       int index = singularities[i].second;
-      vector<MVertex *> *verticesp;
+      vector<MNode *> *verticesp;
       if(index == 1) { verticesp = &nodeVal3; }
       else if(index == -1) {
         verticesp = &nodeVal5;
@@ -2332,9 +2332,9 @@ namespace QMT {
         continue;
       }
       SPoint3 p = singularities[i].first;
-      vector<MVertex *> &vertices = *verticesp;
+      vector<MNode *> &vertices = *verticesp;
       double dmin = DBL_MAX;
-      MVertex *best = nullptr;
+      MNode *best = nullptr;
       for(size_t j = 0; j < vertices.size(); ++j) {
         SVector3 p2 = vertices[j]->point();
         double dist = vertices[j]->point().distance(p);
@@ -2435,7 +2435,7 @@ namespace QMT {
   };
 
   bool remeshQuadrilateralCavities(
-    GFace *gf, const std::vector<std::pair<SPoint3, int> > &singularities,
+    GSurface *gf, const std::vector<std::pair<SPoint3, int> > &singularities,
     const std::vector<size_t> &patternsToCheck,
     const unordered_map<size_t, size_t> &patternSizeLimits,
     CavityRegulator &regulator, QuadqsGFaceContext &ctx)
@@ -2445,10 +2445,10 @@ namespace QMT {
     Msg::Debug("-- remeshing quadrilateral cavities (%i quads, %i patterns to "
                "check) ...",
                gf->quadrangles.size(), patternsToCheck.size());
-    unordered_set<MVertex *> allowedIrregularVertices;
-    unordered_set<MVertex *> forbiddenIrregularVertices;
-    std::vector<MVertex *> singularVertices; /* to be preserved */
-    std::vector<MVertex *> seamExtremities;
+    unordered_set<MNode *> allowedIrregularVertices;
+    unordered_set<MNode *> forbiddenIrregularVertices;
+    std::vector<MNode *> singularVertices; /* to be preserved */
+    std::vector<MNode *> seamExtremities;
     std::vector<SPoint3>
       repulsion; /* to distribute the cavities, add repulsion after remeshing */
 
@@ -2456,13 +2456,13 @@ namespace QMT {
 
     /* for PASS_FROM_CORNERS
      * The queue contains the CAD corners which are not concave */
-    std::deque<GVertex *> gcorners;
-    for(GVertex *gv : gf->vertices()) { gcorners.push_back(gv); }
+    std::deque<GPoint *> gcorners;
+    for(GPoint *gv : gf->vertices()) { gcorners.push_back(gv); }
 
     /* for PASS_ALONG_GEDGES
      * The queue contains the curves which are not loop */
-    std::queue<GEdge *> gedges;
-    for(GEdge *ge : gf->edges()) {
+    std::queue<GCurve *> gedges;
+    for(GCurve *ge : gf->edges()) {
       if(ge->faces().size() == 1 && ge->isSeam(ge->faces()[0])) {
         for(auto &gv : ge->vertices()) {
           auto it = std::find(gcorners.begin(), gcorners.end(), gv);
@@ -2482,8 +2482,8 @@ namespace QMT {
      * The priority queue contains the irregular vertices not associated
      * to cross field singularity and a priority based on repulsion.
      * Higher values appear first when doing Q.top() */
-    std::priority_queue<std::pair<double, MVertex *>,
-                        std::vector<std::pair<double, MVertex *> > >
+    std::priority_queue<std::pair<double, MNode *>,
+                        std::vector<std::pair<double, MNode *> > >
       Qirreg;
 
     CavityFarmer farmer(gf);
@@ -2512,9 +2512,9 @@ namespace QMT {
           assignSingularitiesToIrregularVertices(gf, farmer, singularities,
                                                  singularVertices);
           forbiddenIrregularVertices.clear();
-          for(MVertex *v : singularVertices)
+          for(MNode *v : singularVertices)
             forbiddenIrregularVertices.insert(v);
-          for(MVertex *v : seamExtremities)
+          for(MNode *v : seamExtremities)
             forbiddenIrregularVertices.insert(v);
 
           if(pass == PASS_FROM_IRREGULAR) {
@@ -2524,7 +2524,7 @@ namespace QMT {
             }
             for(uint32_t i = 0; i < farmer.vertices.size(); ++i) {
               uint32_t val = farmer.v2q_first[i + 1] - farmer.v2q_first[i];
-              MVertex *v = farmer.vertices[i];
+              MNode *v = farmer.vertices[i];
               if(v->onWhat() != gf) continue;
               if(val == 4) continue;
               if(forbiddenIrregularVertices.find(v) !=
@@ -2549,15 +2549,15 @@ namespace QMT {
         std::vector<MQuadrangle *> quadsInit;
         size_t nTryMax = 3;
         GrowthPolicy policy;
-        MVertex *vIrreg = nullptr; /* only used with PASS_FROM_IRREGULAR */
+        MNode *vIrreg = nullptr; /* only used with PASS_FROM_IRREGULAR */
         if(pass == PASS_FROM_CORNERS) {
           if(gcorners.empty()) continue;
           policy = GROW_MAXIMAL;
           nTryMax = 1;
           allowedIrregularVertices.clear();
-          GVertex *gv = gcorners.front();
+          GPoint *gv = gcorners.front();
           gcorners.pop_front();
-          for(MVertex *v : gv->mesh_vertices) {
+          for(MNode *v : gv->mesh_vertices) {
             std::vector<MQuadrangle *> adjQuads;
             bool oka = farmer.vertexAdjacentQuads(v, adjQuads);
             if(oka) { append(quadsInit, adjQuads); }
@@ -2571,10 +2571,10 @@ namespace QMT {
           policy = GROW_MAXIMAL;
           nTryMax = 1;
           allowedIrregularVertices.clear();
-          /* Get adjacent to a GEdge not yet processed */
-          GEdge *ge = gedges.front();
+          /* Get adjacent to a GCurve not yet processed */
+          GCurve *ge = gedges.front();
           gedges.pop();
-          for(MVertex *v : ge->mesh_vertices) {
+          for(MNode *v : ge->mesh_vertices) {
             std::vector<MQuadrangle *> adjQuads;
             bool oka = farmer.vertexAdjacentQuads(v, adjQuads);
             if(oka) { append(quadsInit, adjQuads); }
@@ -2621,7 +2621,7 @@ namespace QMT {
 
         bool okr = remeshCavity(gf, cav, ctx, neighbors);
         if(okr) {
-          /* GFace mesh has changed, need to update adjacency info (v2q is no
+          /* GSurface mesh has changed, need to update adjacency info (v2q is no
            * longer usable) */
           updateRequired = true;
           inProgress = true;
@@ -2644,7 +2644,7 @@ namespace QMT {
   }
 
   bool remeshSingularityCavities(
-    GFace *gf, const std::vector<std::pair<SPoint3, int> > &singularities,
+    GSurface *gf, const std::vector<std::pair<SPoint3, int> > &singularities,
     const std::vector<size_t> &patternsToCheck,
     const unordered_map<size_t, size_t> &patternSizeLimits,
     CavityRegulator &regulator, QuadqsGFaceContext &ctx)
@@ -2654,9 +2654,9 @@ namespace QMT {
     Msg::Debug("-- remeshing singularity cavities (face %i, %i quads, %i "
                "patterns to check) ...",
                gf->tag(), gf->quadrangles.size(), patternsToCheck.size());
-    unordered_set<MVertex *> allowedIrregularVertices;
-    unordered_set<MVertex *> forbiddenIrregularVertices;
-    std::vector<MVertex *> singularVertices; /* to preserve */
+    unordered_set<MNode *> allowedIrregularVertices;
+    unordered_set<MNode *> forbiddenIrregularVertices;
+    std::vector<MNode *> singularVertices; /* to preserve */
     std::vector<SPoint3>
       repulsion; /* to distribute the cavities, add repulsion after remeshing */
 
@@ -2665,8 +2665,8 @@ namespace QMT {
     /* The priority queue contains the irregular vertices associated to
      * cross field singularity and a priority based on repulsion.
      * Higher values appear first when doing Q.top() */
-    std::priority_queue<std::pair<double, MVertex *>,
-                        std::vector<std::pair<double, MVertex *> > >
+    std::priority_queue<std::pair<double, MNode *>,
+                        std::vector<std::pair<double, MNode *> > >
       Q;
 
     CavityFarmer farmer(gf);
@@ -2688,13 +2688,13 @@ namespace QMT {
         assignSingularitiesToIrregularVertices(gf, farmer, singularities,
                                                singularVertices);
         forbiddenIrregularVertices.clear();
-        for(MVertex *v : singularVertices) forbiddenIrregularVertices.insert(v);
+        for(MNode *v : singularVertices) forbiddenIrregularVertices.insert(v);
 
         /* Update the queue */
         while(!Q.empty()) { /* empty the queue */
           Q.pop();
         }
-        for(MVertex *v : singularVertices) {
+        for(MNode *v : singularVertices) {
           SPoint3 pt = v->point();
           double prio = 0.;
           for(const SPoint3 &r : repulsion) { prio += pt.distance(r); }
@@ -2712,7 +2712,7 @@ namespace QMT {
       if(Q.empty()) continue;
       GrowthPolicy policy = GROW_MINIMAL;
       if(singularities.size() == 1) policy = GROW_MAXIMAL;
-      MVertex *vSing = Q.top().second;
+      MNode *vSing = Q.top().second;
       Q.pop();
       std::vector<MQuadrangle *> quadsInit;
       bool oka = farmer.vertexAdjacentQuads(vSing, quadsInit);
@@ -2751,7 +2751,7 @@ namespace QMT {
       bool okr = remeshCavity(gf, cav, ctx, neighbors);
 
       if(okr) {
-        /* GFace mesh has changed, need to update adjacency info (v2q is no
+        /* GSurface mesh has changed, need to update adjacency info (v2q is no
          * longer usable) */
         updateRequired = true;
         inProgress = true;
@@ -2842,10 +2842,10 @@ bool patchIsRemeshableWithQuadPattern(
 }
 
 int remeshPatchWithQuadPattern(
-  GFace *gf, const std::pair<size_t, int> &patternNoAndRot,
-  const std::vector<std::vector<MVertex *> > &sides,
+  GSurface *gf, const std::pair<size_t, int> &patternNoAndRot,
+  const std::vector<std::vector<MNode *> > &sides,
   const std::vector<MElement *> &elements,
-  const std::vector<MVertex *> &intVertices,
+  const std::vector<MNode *> &intVertices,
   const QualityConstraints &qualityConstraints, bool invertNormalsForQuality,
   SurfaceProjector *sp, GFaceMeshDiff &diff)
 {
@@ -2866,7 +2866,7 @@ int remeshPatchWithQuadPattern(
   }
 
   /* Apply the rotation */
-  std::vector<std::vector<MVertex *> > sidesr = sides;
+  std::vector<std::vector<MNode *> > sidesr = sides;
   if(rot > 0) {
     std::rotate(sidesr.begin(), sidesr.begin() + (size_t)rot, sidesr.end());
   }
@@ -2890,10 +2890,10 @@ int remeshPatchWithQuadPattern(
     return -1;
   }
 
-  /* Add the new vertices and quads in the GFace */
-  MVertex *oldCenter = centerOfElements(elements);
+  /* Add the new vertices and quads in the GSurface */
+  MNode *oldCenter = centerOfElements(elements);
 
-  /* Generate new interior MVertex and MElement instances */
+  /* Generate new interior MNode and MElement instances */
   diff.gf = gf;
   diff.after.gf = gf;
   bool oka = addQuadsAccordingToPattern(
@@ -2907,8 +2907,8 @@ int remeshPatchWithQuadPattern(
   /* Ensure coherent orientation between the new mesh and the boundary.
    * The reference orientation (a,b) is from the sides before applying
    * rotation. */
-  MVertex *a = sides[0][0];
-  MVertex *b = sides[0][1];
+  MNode *a = sides[0][0];
+  MNode *b = sides[0][1];
   bool oko =
     orientElementsAccordingToBoundarySegment(a, b, diff.after.elements);
   if(!oko) {
@@ -2923,7 +2923,7 @@ int remeshPatchWithQuadPattern(
   /* - build a continuous bdr loop from the sides */
   diff.before.bdrVertices = {{sides.front().front()}};
   for(auto &side : sides)
-    for(MVertex *v : side) {
+    for(MNode *v : side) {
       if(v != diff.before.bdrVertices.front().back()) {
         diff.before.bdrVertices.front().push_back(v);
       }
@@ -2986,7 +2986,7 @@ int remeshPatchWithQuadPattern(
 }
 
 int improveQuadMeshTopologyWithCavityRemeshing(
-  GFace *gf, const std::vector<std::pair<SPoint3, int> > &singularities,
+  GSurface *gf, const std::vector<std::pair<SPoint3, int> > &singularities,
   bool invertNormalsForQuality)
 {
   Msg::Info("- Face %i: optimize quad mesh topology (%i elements, %i cross "
@@ -3114,7 +3114,7 @@ int improveQuadMeshTopologyWithCavityRemeshing(
   return 0;
 }
 
-int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
+int meshFaceWithGlobalPattern(GSurface *gf, bool invertNormalsForQuality,
                               double minimumQualityRequired)
 {
   GFaceInfo info;
@@ -3132,23 +3132,23 @@ int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
   double t0 = Cpu();
 
   /* Build the ordered sides */
-  const vector<GEdge *> &edges = gf->edges();
-  unordered_map<GVertex *, vector<GEdge *> > v2e;
-  for(GEdge *ge : edges) {
+  const vector<GCurve *> &edges = gf->edges();
+  unordered_map<GPoint *, vector<GCurve *> > v2e;
+  for(GCurve *ge : edges) {
     if(ge->periodic(0)) continue;
-    for(GVertex *gv : ge->vertices()) v2e[gv].push_back(ge);
+    for(GPoint *gv : ge->vertices()) v2e[gv].push_back(ge);
   }
   for(auto &kv : v2e) { sort_unique(kv.second); }
-  std::set<GVertex *> corners = info.bdrValVertices[1];
+  std::set<GPoint *> corners = info.bdrValVertices[1];
   bool disk = (corners.size() == 0 && info.bdrValVertices[2].size() > 0);
 
   /* Sort CAD edges in sides */
-  vector<vector<GEdge *> > sides;
+  vector<vector<GCurve *> > sides;
   vector<vector<bool> > sidesInv;
-  for(GEdge *e0 : edges)
+  for(GCurve *e0 : edges)
     if(!e0->periodic(0)) {
-      GVertex *v1 = e0->vertices()[0];
-      GVertex *v2 = e0->vertices()[1];
+      GPoint *v1 = e0->vertices()[0];
+      GPoint *v2 = e0->vertices()[1];
       bool v1IsCorner = (corners.find(v1) != corners.end());
       if(!disk && !v1IsCorner) continue;
       if(disk) {
@@ -3157,8 +3157,8 @@ int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
       }
 
       size_t infLoop = 0;
-      GVertex *v = v1;
-      GEdge *e = e0;
+      GPoint *v = v1;
+      GCurve *e = e0;
       bool inv = false;
       do {
         infLoop += 1;
@@ -3181,12 +3181,12 @@ int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
         sides.back().push_back(e);
         sidesInv.back().push_back(inv);
 
-        GVertex *v_next = NULL;
+        GPoint *v_next = NULL;
         if(v2 != v) { v_next = v2; }
         else {
           v_next = v1;
         }
-        GEdge *e_next = NULL;
+        GCurve *e_next = NULL;
         if(v2e[v_next].size() == 2) {
           e_next = (v2e[v_next][0] != e) ? v2e[v_next][0] : v2e[v_next][1];
         }
@@ -3216,23 +3216,23 @@ int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
   }
 
   /* Collect mesh vertices */
-  vector<vector<MVertex *> > sideVertices(sides.size());
+  vector<vector<MNode *> > sideVertices(sides.size());
   for(size_t i = 0; i < sides.size(); ++i) {
     for(size_t j = 0; j < sides[i].size(); ++j) {
-      GEdge *ge = sides[i][j];
+      GCurve *ge = sides[i][j];
       bool inv = sidesInv[i][j];
-      GVertex *v1 = ge->vertices()[0];
-      GVertex *v2 = ge->vertices()[1];
+      GPoint *v1 = ge->vertices()[0];
+      GPoint *v2 = ge->vertices()[1];
 
       /* Vertices from v1 to v2 */
-      vector<MVertex *> ge_vert;
+      vector<MNode *> ge_vert;
       {
         std::vector<MEdge> medges(ge->lines.size());
         for(size_t k = 0; k < ge->lines.size(); ++k) {
           medges[k] =
             MEdge(ge->lines[k]->getVertex(0), ge->lines[k]->getVertex(1));
         }
-        std::vector<std::vector<MVertex *> > gevs;
+        std::vector<std::vector<MNode *> > gevs;
         bool oks = SortEdgeConsecutive(medges, gevs);
         if(!oks || gevs.size() != 1) return -1;
         if(gevs[0].front() == v1->mesh_vertices[0] &&
@@ -3296,7 +3296,7 @@ int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
   oldElements.reserve(gf->quadrangles.size() + gf->triangles.size());
   for(MElement *f : gf->triangles) oldElements.push_back(f);
   for(MElement *f : gf->quadrangles) oldElements.push_back(f);
-  std::vector<MVertex *> oldVertices = gf->mesh_vertices;
+  std::vector<MNode *> oldVertices = gf->mesh_vertices;
 
   /* SurfaceProjector, useful for smoothing */
   SurfaceProjector *sp = new SurfaceProjector();
@@ -3372,7 +3372,7 @@ int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
               "%.3f, time: %.3fs",
               gf->tag(), neb, nea, nvb, nva, sicnMin, sicnMinAfter, sicnAvg,
               sicnAvgAfter, Cpu() - t0);
-    gf->meshStatistics.status = GFace::DONE;
+    gf->meshStatistics.status = GSurface::DONE;
   }
 
   if(sp) delete sp;

@@ -14,7 +14,7 @@
 #include <map>
 #include <sstream>
 #include <vector>
-#include "MVertex.h"
+#include "MNode.h"
 #include "MPoint.h"
 #include "MLine.h"
 #include "MTriangle.h"
@@ -364,7 +364,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
     Msg::Error("No nodes in MED mesh");
     return 0;
   }
-  std::vector<MVertex *> verts(numNodes);
+  std::vector<MNode *> verts(numNodes);
   std::vector<med_float> coord(spaceDim * numNodes);
 #if(MED_MAJOR_NUM >= 3)
   if(MEDmeshNodeCoordinateRd(fid, meshName, MED_NO_DT, MED_NO_IT,
@@ -390,7 +390,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
     nodeTags.clear();
 
   for(int i = 0; i < numNodes; i++)
-    verts[i] = new MVertex(coord[spaceDim * i],
+    verts[i] = new MNode(coord[spaceDim * i],
                            (spaceDim > 1) ? coord[spaceDim * i + 1] : 0.,
                            (spaceDim > 2) ? coord[spaceDim * i + 2] : 0.,
                            nullptr, nodeTags.empty() ? 0 : nodeTags[i]);
@@ -453,7 +453,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
     std::map<int, std::vector<MElement *> > elements;
     MElementFactory factory;
     for(int j = 0; j < numEle; j++) {
-      std::vector<MVertex *> v(numNodPerEle);
+      std::vector<MNode *> v(numNodPerEle);
       bool ok = true;
       for(int k = 0; k < numNodPerEle; k++) {
         int idx = conn[numNodPerEle * j + med2mshNodeIndex(type, k)] - 1;
@@ -558,7 +558,7 @@ int GModel::readMED(const std::string &name, int meshIndex)
       // classify the node on the geometrical point if the node is not already
       // classified on another entity. This is expensive, and should be disabled
       // for large groups of nodes.
-      std::vector<GVertex *> newPoints;
+      std::vector<GPoint *> newPoints;
       for(int j = 0; j < numNodes; j++) {
         if(nodeFamily[j] == familyNum) {
           discreteVertex *gv =
@@ -765,7 +765,7 @@ int GModel::writeMED(const std::string &name, bool saveAll,
     std::vector<med_int> tags;
     for(std::size_t i = 0; i < entities.size(); i++) {
       for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
-        MVertex *v = entities[i]->mesh_vertices[j];
+        MNode *v = entities[i]->mesh_vertices[j];
         if(v->getIndex() >= 0) {
           coord.push_back(v->x() * scalingFactor);
           coord.push_back(v->y() * scalingFactor);

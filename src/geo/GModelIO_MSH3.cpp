@@ -49,7 +49,7 @@ static void readMSHEntities(FILE *fp, GModel *gm)
   if(fscanf(fp, "%d %d %d %d", &nv, &ne, &nf, &nr) != 4) return;
   for(int i = 0; i < nv; i++) {
     if(fscanf(fp, "%d", &tag) != 1) return;
-    GVertex *gv = gm->getVertexByTag(tag);
+    GPoint *gv = gm->getVertexByTag(tag);
     if(!gv) {
       gv = new discreteVertex(gm, tag);
       gm->add(gv);
@@ -59,17 +59,17 @@ static void readMSHEntities(FILE *fp, GModel *gm)
   for(int i = 0; i < ne; i++) {
     int n;
     if(fscanf(fp, "%d %d", &tag, &n) != 2) return;
-    GEdge *ge = gm->getEdgeByTag(tag);
+    GCurve *ge = gm->getEdgeByTag(tag);
     if(!ge) {
-      GVertex *v1 = nullptr, *v2 = nullptr;
+      GPoint *v1 = nullptr, *v2 = nullptr;
       for(int j = 0; j < n; j++) {
         int tagv;
         if(fscanf(fp, "%d", &tagv) != 1) {
           delete ge;
           return;
         }
-        GVertex *v = gm->getVertexByTag(tagv);
-        if(!v) Msg::Error("Unknown GVertex %d", tagv);
+        GPoint *v = gm->getVertexByTag(tagv);
+        if(!v) Msg::Error("Unknown GPoint %d", tagv);
         if(j == 0) v1 = v;
         if(j == 1) v2 = v;
       }
@@ -81,7 +81,7 @@ static void readMSHEntities(FILE *fp, GModel *gm)
   for(int i = 0; i < nf; i++) {
     int n;
     if(fscanf(fp, "%d %d", &tag, &n) != 2) return;
-    GFace *gf = gm->getFaceByTag(tag);
+    GSurface *gf = gm->getFaceByTag(tag);
     if(!gf) {
       discreteFace *df = new discreteFace(gm, tag);
       std::vector<int> edges, signs;
@@ -104,7 +104,7 @@ static void readMSHEntities(FILE *fp, GModel *gm)
   for(int i = 0; i < nr; i++) {
     int n;
     if(fscanf(fp, "%d %d", &tag, &n) != 2) return;
-    GRegion *gr = gm->getRegionByTag(tag);
+    GVolume *gr = gm->getRegionByTag(tag);
     if(!gr) {
       discreteRegion *dr = new discreteRegion(gm, tag);
       std::vector<int> faces, signs;
@@ -176,8 +176,8 @@ void readMSHPeriodicNodes(FILE *fp, GModel *gm) // also used in MSH2
     for(int j = 0; j < numv; j++) {
       int v1, v2;
       if(fscanf(fp, "%d %d", &v1, &v2) != 2) continue;
-      MVertex *mv1 = gm->getMeshVertexByTag(v1);
-      MVertex *mv2 = gm->getMeshVertexByTag(v2);
+      MNode *mv1 = gm->getMeshVertexByTag(v1);
+      MNode *mv2 = gm->getMeshVertexByTag(v2);
       if(completePer) s->correspondingVertices[mv1] = mv2;
     }
     if(!completePer) {
@@ -299,7 +299,7 @@ int GModel::_readMSH3(const std::string &name)
       for(int i = 0; i < numVertices; i++) {
         int num, entity, dim;
         double xyz[3];
-        MVertex *vertex = nullptr;
+        MNode *vertex = nullptr;
         if(!binary) {
           if(fscanf(fp, "%d %lf %lf %lf %d", &num, &xyz[0], &xyz[1], &xyz[2],
                     &entity) != 5) {
@@ -325,7 +325,7 @@ int GModel::_readMSH3(const std::string &name)
           if(swap) SwapBytes((char *)&entity, sizeof(int), 1);
         }
         if(!entity) {
-          vertex = new MVertex(xyz[0], xyz[1], xyz[2], nullptr, num);
+          vertex = new MNode(xyz[0], xyz[1], xyz[2], nullptr, num);
         }
         else {
           if(!binary) {
@@ -343,13 +343,13 @@ int GModel::_readMSH3(const std::string &name)
           }
           switch(dim) {
           case 0: {
-            GVertex *gv = getVertexByTag(entity);
+            GPoint *gv = getVertexByTag(entity);
             // FIXME -- cannot call this: it destroys _vertexMapCache
             // if(gv) gv->deleteMesh();
-            vertex = new MVertex(xyz[0], xyz[1], xyz[2], gv, num);
+            vertex = new MNode(xyz[0], xyz[1], xyz[2], gv, num);
           } break;
           case 1: {
-            GEdge *ge = getEdgeByTag(entity);
+            GCurve *ge = getEdgeByTag(entity);
             double u;
             if(!binary) {
               if(fscanf(fp, "%lf", &u) != 1) {
@@ -367,7 +367,7 @@ int GModel::_readMSH3(const std::string &name)
             vertex = new MEdgeVertex(xyz[0], xyz[1], xyz[2], ge, u, num);
           } break;
           case 2: {
-            GFace *gf = getFaceByTag(entity);
+            GSurface *gf = getFaceByTag(entity);
             double uv[2];
             if(!binary) {
               if(fscanf(fp, "%lf %lf", &uv[0], &uv[1]) != 2) {
@@ -386,7 +386,7 @@ int GModel::_readMSH3(const std::string &name)
               new MFaceVertex(xyz[0], xyz[1], xyz[2], gf, uv[0], uv[1], num);
           } break;
           case 3: {
-            GRegion *gr = getRegionByTag(entity);
+            GVolume *gr = getRegionByTag(entity);
             double uvw[3];
             if(!binary) {
               if(fscanf(fp, "%lf %lf %lf", &uvw[0], &uvw[1], &uvw[2]) != 3) {
@@ -401,7 +401,7 @@ int GModel::_readMSH3(const std::string &name)
               }
               if(swap) SwapBytes((char *)uvw, sizeof(double), 3);
             }
-            vertex = new MVertex(xyz[0], xyz[1], xyz[2], gr, num);
+            vertex = new MNode(xyz[0], xyz[1], xyz[2], gr, num);
           } break;
           default:
             Msg::Error("Wrong entity dimension for node %d", num);
@@ -603,7 +603,7 @@ void writeMSHEntities(FILE *fp, GModel *gm) // also used in MSH2
     fprintf(fp, "\n");
   }
   for(auto it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
-    std::list<GVertex *> vertices;
+    std::list<GPoint *> vertices;
     if((*it)->getBeginVertex()) vertices.push_back((*it)->getBeginVertex());
     if((*it)->getEndVertex()) vertices.push_back((*it)->getEndVertex());
     fprintf(fp, "%d %d ", (*it)->tag(), (int)vertices.size());
@@ -614,7 +614,7 @@ void writeMSHEntities(FILE *fp, GModel *gm) // also used in MSH2
     fprintf(fp, "\n");
   }
   for(auto it = gm->firstFace(); it != gm->lastFace(); ++it) {
-    std::vector<GEdge *> const &edges = (*it)->edges();
+    std::vector<GCurve *> const &edges = (*it)->edges();
     std::vector<int> const &ori = (*it)->edgeOrientations();
     fprintf(fp, "%d %d ", (*it)->tag(), (int)edges.size());
     std::vector<int> tags;
@@ -632,7 +632,7 @@ void writeMSHEntities(FILE *fp, GModel *gm) // also used in MSH2
     fprintf(fp, "\n");
   }
   for(auto it = gm->firstRegion(); it != gm->lastRegion(); ++it) {
-    std::vector<GFace *> faces = (*it)->faces();
+    std::vector<GSurface *> faces = (*it)->faces();
     std::vector<int> ori = (*it)->faceOrientations();
     fprintf(fp, "%d %d ", (*it)->tag(), (int)faces.size());
     std::vector<int> tags, signs;
@@ -722,7 +722,7 @@ void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity *> &entities,
         fprintf(fp, "\n");
       }
 
-      std::map<MVertex *, MVertex *, MVertexPtrLessThan> corrVert;
+      std::map<MNode *, MNode *, MVertexPtrLessThan> corrVert;
       corrVert.insert(g_slave->correspondingVertices.begin(),
                       g_slave->correspondingVertices.end());
       if(CTX::instance()->mesh.hoSavePeriodic)
@@ -731,8 +731,8 @@ void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity *> &entities,
 
       fprintf(fp, "%d\n", (int)corrVert.size());
       for(auto it = corrVert.begin(); it != corrVert.end(); it++) {
-        MVertex *v1 = it->first;
-        MVertex *v2 = it->second;
+        MNode *v1 = it->first;
+        MNode *v2 = it->second;
         if(renumber)
           fprintf(fp, "%ld %ld\n", v1->getIndex(), v2->getIndex());
         else
