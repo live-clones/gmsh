@@ -6899,6 +6899,15 @@ GMSH_API void gmsh::model::occ::addPipe(const vectorpair &dimTags,
                                                 trihedron);
 }
 
+GMSH_API void gmsh::model::occ::addLoft(const int wireTag, 
+                                        const int inwire1, 
+                                        const int inwire2, int &tag)
+{
+  if(!_checkInit()) return;
+  _createOcc();
+  GModel::current()->getOCCInternals()->addLoft(wireTag, inwire1, inwire2, tag);
+}
+
 GMSH_API void gmsh::model::occ::fillet(const std::vector<int> &volumeTags,
                                        const std::vector<int> &curveTags,
                                        const std::vector<double> &radii,
