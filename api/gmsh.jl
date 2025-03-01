@@ -4493,25 +4493,27 @@ end
 const compute_cross_field = computeCrossField
 
 """
-    gmsh.model.mesh.triangulate(coord)
+    gmsh.model.mesh.triangulate(coord, edges)
 
 Triangulate the points given in the `coord` vector as pairs of u, v coordinates,
-and return the node tags (with numbering starting at 1) of the resulting
-triangles in `tri`.
+with constrained edges given in the `edges` vector as pair of point indexes
+(with numbering starting at 1) , and return the node tags (with numbering
+starting at 1) of the resulting triangles in `tri`.
 
 Return `tri`.
 
 Types:
  - `coord`: vector of doubles
+ - `edges`: vector of sizes
  - `tri`: vector of sizes
 """
-function triangulate(coord)
+function triangulate(coord, edges)
     api_tri_ = Ref{Ptr{Csize_t}}()
     api_tri_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshTriangulate, gmsh.lib), Cvoid,
-          (Ptr{Cdouble}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
-          convert(Vector{Cdouble}, coord), length(coord), api_tri_, api_tri_n_, ierr)
+          (Ptr{Cdouble}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          convert(Vector{Cdouble}, coord), length(coord), convert(Vector{Csize_t}, edges), length(edges), api_tri_, api_tri_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     tri = unsafe_wrap(Array, api_tri_[], api_tri_n_[], own = true)
     return tri
