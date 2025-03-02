@@ -687,9 +687,6 @@ public:
       return MAX_LC;
     }
     double d = (*field)(x, y, z, ge);
-
-    //    printf("distance %g\n",d);
-    
     if(_stopAtDistMax && d >= _dMax) return MAX_LC;
     double r = (d - _dMin) / (_dMax - _dMin);
     r = std::max(std::min(r, 1.), 0.);
@@ -2544,7 +2541,6 @@ public:
       for(auto it = _pointTags.begin(); it != _pointTags.end(); ++it) {
         GVertex *gv = GModel::current()->getVertexByTag(*it);
         if(gv) {
-	  //	  printf("distance field with point %lu\n",gv->tag());
           _pc.pts.push_back(SPoint3(gv->x(), gv->y(), gv->z()));
           _infos.push_back(AttractorInfo(*it, 0, 0, 0));
         }
