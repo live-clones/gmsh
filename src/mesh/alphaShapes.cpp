@@ -178,22 +178,22 @@ void print4debug(PolyMesh* pm, const int debugTag)
       //           Ry, Ry, Ry);
       // }
     }
-    // for(auto it : pm->hedges) {
-    //   PolyMesh::HalfEdge *he = it;
-    //   if(he->opposite && he->f && he->v->data != -1 && he->opposite->v->data != -1) {
-    //     // fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", he->v->position.x(),
-    //     //         he->v->position.y(), he->v->position.z(), he->next->v->position.x(),
-    //     //         he->next->v->position.y(), he->next->v->position.z(), he->data, he->data);
-    //     fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", he->v->position.x(),
-    //             he->v->position.y(), he->v->position.z(), he->next->v->position.x(),
-    //             he->next->v->position.y(), he->opposite->v->position.z(), he->data, he->data);
-    //   }
-    //   // if (he->f) {
-    //   // }
-    // }
-    // for (auto v : pm->vertices){
-    //   fprintf(f, "SP(%g,%g,%g){%d};\n", v->position.x(), v->position.y(), v->position.z(), v->data);
-    // }
+    for(auto it : pm->hedges) {
+      PolyMesh::HalfEdge *he = it;
+      if(he->opposite && he->f && he->v->data != -1 && he->opposite->v->data != -1) {
+        // fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", he->v->position.x(),
+        //         he->v->position.y(), he->v->position.z(), he->next->v->position.x(),
+        //         he->next->v->position.y(), he->next->v->position.z(), he->data, he->data);
+        fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", he->v->position.x(),
+                he->v->position.y(), he->v->position.z(), he->next->v->position.x(),
+                he->next->v->position.y(), he->opposite->v->position.z(), he->data, he->data);
+      }
+      // if (he->f) {
+      // }
+    }
+    for (auto v : pm->vertices){
+      fprintf(f, "SP(%g,%g,%g){%d};\n", v->position.x(), v->position.y(), v->position.z(), v->data);
+    }
 
     fprintf(f, "};\n");
     fclose(f);
@@ -3235,6 +3235,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
       // print4debug(pm, ii++);
       // printf("split an edge! \n");
       gr->addMeshVertex(vm);
+      // printf("added a vertex at : %f %f %f\n", midPoint[0], midPoint[1], midPoint[2]);
       vm->setEntity(gr);
       gm->addMVertexToVertexCache(vm);
       vertexTagMap[vm->getNum()] = pm->vertices[pm->vertices.size()-1];
@@ -3248,7 +3249,6 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
     }
   }
   // printf("hereS 4\n");
-
   // Add faces to surfaceTag
   for (auto tri : df->triangles){
     delete tri;
@@ -3321,6 +3321,8 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
   HXTMesh* m;
   hxtMeshCreate(&m);
 
+  printf("created tet mesh \n");
+
   Field* field = GModel::current()->getFields()->get(sizeFieldTag);
   std::unordered_map<uint32_t, double> sizeAtNodes;
   
@@ -3340,6 +3342,7 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
       m->triangles.node[3 * i + j] = v2c[df->triangles[i]->getVertex(j)];
     }
     m->triangles.color[i] = df->tag();
+    // printf("added triangle %lu, %lu, %lu ; gmsh : %d, %d, %d\n", m->triangles.node[3*i+0], m->triangles.node[3*i+1], m->triangles.node[3*i+2], df->triangles[i]->getVertex(0)->getNum(), df->triangles[i]->getVertex(1)->getNum(), df->triangles[i]->getVertex(2)->getNum());
   }
   
   m->vertices.num = m->vertices.size = v2c.size();
@@ -3362,14 +3365,16 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
     .optimize=0
   };
 
+  // for (size_t i=0; i<m->vertices.num; i++){
+  //   printf("vertex %lu : %f, %f, %f \n", i, m->vertices.coord[4*i+0], m->vertices.coord[4*i+1], m->vertices.coord[4*i+2]);
+  // }
   uint32_t n_vertices_old = m->vertices.num;
   hxtTetMesh(m, &options);
+
   if (m->vertices.num > n_vertices_old){
     Msg::Warning("Number of vertices increased from %d to %d (Steiner point added in volume refinement) - Skipping refinement\n", n_vertices_old, m->vertices.num);
   }
   else {
-
-    // hxtMeshWriteGmsh(m, "tetMesh_noRefine.msh");
 
     // 1. insert already existing nodes
     HXTBbox bbox;
@@ -3678,7 +3683,7 @@ void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, co
     }
   }
   for (auto v : _deleted){
-    printf("deleting vertex %lu (%f, %f, %f)\n", v->getNum(), v->x(), v->y(), v->z());
+    // printf("deleting vertex %lu (%f, %f, %f)\n", v->getNum(), v->x(), v->y(), v->z());
     gr->removeMeshVertex(v);
     // delete v;
   }
