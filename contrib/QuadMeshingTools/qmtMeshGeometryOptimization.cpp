@@ -1116,7 +1116,7 @@ int patchOptimizeGeometryGlobal(GFaceMeshPatch &patch, GeomOptimStats &stats)
       MVertex *v = patch.bdrVertices[loop][i];
       auto it = old2new.find(v);
       if(it == old2new.end()) {
-        Msg::Error("optimize geometry global: bdr vertex not found in old2new");
+        Msg::Warning("optimize geometry global: bdr vertex not found in old2new");
         return -1;
       }
       size_t idx = it->second;
@@ -1152,7 +1152,7 @@ int patchOptimizeGeometryGlobal(GFaceMeshPatch &patch, GeomOptimStats &stats)
     GPoint p = gf->point(uv);
     if(p.succeeded()) { v->setXYZ(p.x(), p.y(), p.z()); }
     else {
-      Msg::Error("optimize geometry global: CAD evaluation failed on face %i "
+      Msg::Warning("optimize geometry global: CAD evaluation failed on face %i "
                  "at uv=(%f,%f)",
                  gf->tag(), uv[0], uv[1]);
     }
@@ -1893,11 +1893,11 @@ bool optimizeGeometryQuadMesh(GFace *gf, SurfaceProjector *sp, double timeMax,
     //         should enable it only if param has no large distortion ?
     // oku = optu.smoothWithWinslowUntangler(method, iter, backupRestore,
     // projectOnCad);
-    if(!oku) { /* try mean plane ... */
-      method = GeometryOptimizer::PlanarMethod::MeanPlane;
-      oku = optu.smoothWithWinslowUntangler(method, iter, backupRestore,
-                                            projectOnCad);
-    }
+    //    if(!oku) { /* try mean plane ... */
+    //      method = GeometryOptimizer::PlanarMethod::MeanPlane;
+    //      oku = optu.smoothWithWinslowUntangler(method, iter, backupRestore,
+    //                                            projectOnCad);
+    //    }
   }
 
   double minSICN = DBL_MAX;
@@ -2422,10 +2422,9 @@ bool GeometryOptimizer::smoothWithWinslowUntangler(PlanarMethod planar,
   /* Triangles from quads */
   std::vector<std::array<vec2, 3> > triIdealShapes;
   std::vector<std::array<uint32_t, 3> > triangles;
-  bool preserveQuadAnisotropy = false;
 #if defined(HAVE_WINSLOWUNTANGLER)
   buildTrianglesAndTargetsFromElements(points_2D, quads, triangles,
-                                       triIdealShapes, preserveQuadAnisotropy);
+                                       triIdealShapes);
 #else
   Msg::Error("smoothWithWinslowUntangler requires WinslowUntangler");
 #endif

@@ -45,16 +45,24 @@ getModelEdge(GModel *gm, std::vector<GFace *> &gfs,
              std::vector<std::pair<GEdge *, std::vector<GFace *> > > &newEdges,
              size_t &MAX1)
 {
+
   if(gfs.size() == 2 && gfs[0] == gfs[1]) return nullptr;
+
   for(size_t i = 0; i < newEdges.size(); i++) {
     if(gfs.size() == newEdges[i].second.size()) {
       bool found = true;
-      for(size_t j = 0; j < newEdges[i].second.size(); j++)
+      for(size_t j = 0; j < newEdges[i].second.size(); j++) {
         if(std::find(gfs.begin(), gfs.end(), newEdges[i].second[j]) ==
            gfs.end()) {
           found = false;
           break;
-        }
+	}
+	if(std::find(newEdges[i].second.begin(), newEdges[i].second.end(), gfs[j]) ==
+	   newEdges[i].second.end()) {
+	  found = false;
+	  break;
+	}
+      }
       if(found) return newEdges[i].first;
     }
   }
@@ -239,8 +247,9 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
       auto itl = lines.find(&ml);
       if(itl != lines.end()) {
         std::vector<GFace *> faces;
-        for(size_t i = 0; i < it->second.size(); ++i)
+        for(size_t i = 0; i < it->second.size(); ++i) {
           faces.push_back(reverse[it->second[i]]);
+	}
         GEdge *ge = getModelEdge(gm, faces, newEdges, MAX1);
         if(ge) ge->lines.push_back(*itl);
       }
@@ -248,14 +257,40 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
   }
   Msg::Info("Found %d model curves", newEdges.size());
 
-  // check if new curves should not be split;
+  // check if an edge is embedded in a face
+  std::set<MVertex*> forceSplit;
+  std::map<GEdge*, GFace*> embedded;
+  for(auto ite = newEdges.begin(); ite != newEdges.end(); ++ite) {
+    GEdge *ge = ite->first;
+    for (size_t i = 0;i<ite->second.size();++i) {
+      for (size_t j = i+1;j<ite->second.size();++j) {
+	if (ite->second[i] == ite->second[j]){
+	  embedded.insert({ge,ite->second[i]});
+	  std::vector<MEdge> allEdges;
+	  for(std::size_t i = 0; i < ite->first->lines.size(); i++)
+	    allEdges.push_back(MEdge(ite->first->lines[i]->getVertex(0),
+				     ite->first->lines[i]->getVertex(1)));
+	  std::vector<std::vector<MVertex *> > vs_;
+	  SortEdgeConsecutive(allEdges, vs_);
+	  forceSplit.insert(vs_[0][0]);
+	  forceSplit.insert(vs_[0][vs_[0].size() - 1]);
+	}
+      }
+    }
+  }
+
+  // check if new curves should not be split
 
   std::map<discreteFace *, std::vector<int>, GEntityPtrLessThan>
     newFaceTopology;
   std::map<MVertex *, GVertex *> modelVertices;
 
+  std::map<int,int> embedded_new;
   for(auto ite = newEdges.begin(); ite != newEdges.end(); ++ite) {
     std::vector<MEdge> allEdges;
+
+    GFace *emb = embedded.find(ite->first) != embedded.end() ?
+      embedded[ite->first] : nullptr;
 
     for(std::size_t i = 0; i < ite->first->lines.size(); i++) {
       allEdges.push_back(MEdge(ite->first->lines[i]->getVertex(0),
@@ -275,7 +310,8 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
           MVertex *v0 = vs_[i][j == 0 ? (vs_[i].size() - 2) : (j - 1)];
           MVertex *v1 = vs_[i][j];
           MVertex *v2 = vs_[i][j + 1];
-          if(breakForLargeAngle(v0, v1, v2, curveAngleThreshold)) {
+          if(forceSplit.find(v1) != forceSplit.end() ||
+             breakForLargeAngle(v0, v1, v2, curveAngleThreshold)) {
             std::vector<MVertex *> temp;
             for(size_t k = j; k < vs_[i].size() + j; k++) {
               temp.push_back(vs_[i][k % vs_[i].size()]);
@@ -292,7 +328,8 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
         MVertex *v0 = vs_[i][j - 1];
         MVertex *v1 = vs_[i][j];
         MVertex *v2 = vs_[i][j + 1];
-        if(breakForLargeAngle(v0, v1, v2, curveAngleThreshold))
+        if(forceSplit.find(v1) != forceSplit.end() ||
+           breakForLargeAngle(v0, v1, v2, curveAngleThreshold))
           cuts_.push_back(j);
       }
       cuts_.push_back(vs_[i].size() - 1);
@@ -336,9 +373,10 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
         gm->add(newGv);
         modelVertices[vE] = newGv;
       }
-
       GEdge *newGe = new discreteEdge(gm, (MAX1++) + 1, modelVertices[vB],
                                       modelVertices[vE]);
+
+      if(emb) embedded_new.insert({newGe->tag(),emb->tag()});
 
       for(size_t j = 1; j < vs[i].size(); j++) {
         MVertex *v1 = vs[i][j - 1];
@@ -364,7 +402,15 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
 
   for(auto itFT = newFaceTopology.begin(); itFT != newFaceTopology.end();
       ++itFT) {
-    itFT->first->setBoundEdges(itFT->second);
+
+    std::vector<int> bndEdges, embEdges;
+    for (auto e : itFT->second){
+      if (embedded_new.find(e) != embedded_new.end() &&
+	  embedded_new[e] == itFT->first->tag()) embEdges.push_back(e);
+      else bndEdges.push_back(e);
+    }
+    itFT->first->setBoundEdges(bndEdges);
+    for (auto e : embEdges)itFT->first->addEmbeddedEdge(gm->getEdgeByTag(e));
   }
 
   for(auto ite = newEdges.begin(); ite != newEdges.end(); ++ite) {

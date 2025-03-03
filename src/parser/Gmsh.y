@@ -4492,6 +4492,10 @@ TransfiniteType :
         $$[0] = 6.;
       else if(!strcmp($2, "Beta_HWall"))
         $$[0] = 7.;
+      else if(!strcmp($2, "Beta_Symmetrical"))
+        $$[0] = 8.;
+      else if(!strcmp($2, "Beta_Symmetrical_HWall"))
+        $$[0] = 9.;
       else{
         yymsg(0, "Unknown transfinite mesh type");
         $$[0] = 1.;
@@ -6144,7 +6148,7 @@ FExpr_Multi :
       FILE *File;
       $$ = List_Create(100, 100, sizeof(double));
       std::string tmp = FixRelativePath(gmsh_yyname, $3);
-      if(!(File = Fopen(tmp.c_str(), "rb"))){
+      if(!(File = Fopen(tmp.c_str(), "r"))){
         yymsg(0, "Could not open file '%s'", $3);
       }
       else{
@@ -6158,9 +6162,9 @@ FExpr_Multi :
             break;
           }
           else{
-            char dummy[1024];
-            if(fscanf(File, "%s", dummy))
-              yymsg(0, "Ignoring '%s' in file '%s'", dummy, $3);
+            char dummy[65];
+            if(fscanf(File, "%64s", dummy) == 1)
+              yymsg(1, "Ignoring '%s' in file '%s'", dummy, $3);
           }
         }
 	fclose(File);

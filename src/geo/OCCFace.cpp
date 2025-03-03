@@ -67,7 +67,14 @@ void OCCFace::_setup()
     // periodic surfaces the location of degenerate edges linking 2 sides of the
     // parametric space is crucial) - so always make sure to reorder the edges
     ShapeFix_Wire sfw(wire, _s, CTX::instance()->geom.tolerance);
-    sfw.FixReorder();
+    if(sfw.FixReorder())
+      Msg::Debug("Fixed order of curves in surface %d", tag());
+#if 0
+    // it is also crucial that the pcurves (in the parametric plane of the
+    // surface) are correct - we could enable this to try to fix incorrect ones
+    if(sfw.FixEdgeCurves())
+      Msg::Debug("Fixed curves in surface %d", tag());
+#endif
     wire = sfw.Wire();
 
     Msg::Debug("OCC surface %d - new wire", tag());
@@ -249,13 +256,13 @@ SVector3 OCCFace::normal(const SPoint2 &param) const
   return n;
 }
 
-Pair<SVector3, SVector3> OCCFace::firstDer(const SPoint2 &param) const
+std::pair<SVector3, SVector3> OCCFace::firstDer(const SPoint2 &param) const
 {
   gp_Pnt pnt;
   gp_Vec du, dv;
   _occface->D1(param.x(), param.y(), pnt, du, dv);
-  return Pair<SVector3, SVector3>(SVector3(du.X(), du.Y(), du.Z()),
-                                  SVector3(dv.X(), dv.Y(), dv.Z()));
+  return std::make_pair(SVector3(du.X(), du.Y(), du.Z()),
+                        SVector3(dv.X(), dv.Y(), dv.Z()));
 }
 
 void OCCFace::secondDer(const SPoint2 &param, SVector3 &dudu, SVector3 &dvdv,

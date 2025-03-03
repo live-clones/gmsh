@@ -25,8 +25,8 @@ const nodalBasis *BasisFactory::getNodalBasis(int tag)
   // If the Basis has already been built, return it.
   auto it = fs.find(tag);
   if(it != fs.end()) { return it->second; }
-  // Get the parent type to see which kind of basis
-  // we want to create
+
+  // Get the parent type to see which kind of basis we want to create
   nodalBasis *F = nullptr;
   if(tag == MSH_TRI_MINI)
     F = new miniBasisTri();
@@ -68,8 +68,14 @@ const JacobianBasis *BasisFactory::getJacobianBasis(int tag, FuncSpaceData fsd)
   if(it != js.end()) return it->second;
 
   JacobianBasis *J = new JacobianBasis(tag, data);
-  js.insert(std::make_pair(pairData, J));
-  return J;
+
+  std::pair<std::map<std::pair<int, FuncSpaceData>, JacobianBasis *>::const_iterator, bool> inserted;
+#pragma omp critical(getJacobianBasis)
+  {
+    inserted = js.insert(std::make_pair(pairData, J));
+    if(!inserted.second) delete J;
+  }
+  return inserted.first->second;
 }
 
 const JacobianBasis *BasisFactory::getJacobianBasis(int tag, int order)
@@ -100,8 +106,14 @@ const CondNumBasis *BasisFactory::getCondNumBasis(int tag, int cnOrder)
   if(it != cs.end()) return it->second;
 
   CondNumBasis *M = new CondNumBasis(tag, cnOrder);
-  cs.insert(std::make_pair(pairData, M));
-  return M;
+
+  std::pair<std::map<std::pair<int, int>, CondNumBasis *>::const_iterator, bool> inserted;
+#pragma omp critical(getCondNumBasis)
+  {
+    inserted = cs.insert(std::make_pair(pairData, M));
+    if(!inserted.second) delete M;
+  }
+  return inserted.first->second;
 }
 
 const GradientBasis *BasisFactory::getGradientBasis(int tag, FuncSpaceData fsd)
@@ -113,8 +125,14 @@ const GradientBasis *BasisFactory::getGradientBasis(int tag, FuncSpaceData fsd)
   if(it != gs.end()) return it->second;
 
   GradientBasis *G = new GradientBasis(tag, data);
-  gs.insert(std::make_pair(pairData, G));
-  return G;
+
+  std::pair<std::map<std::pair<int, FuncSpaceData>, GradientBasis *>::const_iterator, bool> inserted;
+#pragma omp critical(getGradientBasis)
+  {
+    inserted = gs.insert(std::make_pair(pairData, G));
+    if(!inserted.second) delete G;
+  }
+  return inserted.first->second;
 }
 
 const GradientBasis *BasisFactory::getGradientBasis(int tag, int order)
@@ -136,8 +154,14 @@ const bezierBasis *BasisFactory::getBezierBasis(FuncSpaceData fsd)
   if(it != bs.end()) return it->second;
 
   bezierBasis *B = new bezierBasis(data);
-  bs.insert(std::make_pair(data, B));
-  return B;
+
+  std::pair<std::map<FuncSpaceData, bezierBasis *>::const_iterator, bool> inserted;
+#pragma omp critical(getBezierBasis)
+  {
+    inserted = bs.insert(std::make_pair(data, B));
+    if(!inserted.second) delete B;
+  }
+  return inserted.first->second;
 }
 
 const bezierBasis *BasisFactory::getBezierBasis(int parentType, int order)
