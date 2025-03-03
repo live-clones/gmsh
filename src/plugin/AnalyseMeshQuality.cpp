@@ -8,16 +8,15 @@
 #if defined(HAVE_MESH)
 
 #include "AnalyseMeshQuality.h"
-#include "qualityMeasuresJacobian.h"
 #include "OS.h"
 #include "Context.h"
 #include "PView.h"
 #include "GModel.h"
 #include "MElement.h"
-#include "bezierBasis.h"
 #include "polynomialBasis.h"
+#include "bezierBasis.h"
+#include "qualityMeasuresJacobian.h"
 #include <sstream>
-#include <fstream>
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
 #endif
@@ -288,10 +287,13 @@ void GMSH_AnalyseMeshQualityPlugin::_computeMinMaxJandValidity(int dim)
       if(entity->geomType() == GEntity::DiscreteSurface) {
         SBoundingBox3d bb = entity->bounds();
         if(!bb.empty() && bb.max().z() - bb.min().z() == .0) {
+      {
+        SVector3 n;
+        if(((GFace *)entity)->normalToPlanarMesh(n)) {
           normals = new fullMatrix<double>(1, 3);
-          normals->set(0, 0, 0);
-          normals->set(0, 1, 0);
-          normals->set(0, 2, 1);
+          normals->set(0, 0, n(0));
+          normals->set(0, 1, n(1));
+          normals->set(0, 2, n(2));
         }
       }
       break;

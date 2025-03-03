@@ -59,6 +59,7 @@ bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
     }
   }
   N = count;
+  //  printf("point %22.5E %22.5E out %22.5E %22.5E in parametric domain (bnd size %lu) : %d %d\n",p.x(),p.y(),out.x(), out.y(), bnd.size(),count, count%2);
   if(count % 2 == 0) return false;
   return true;
 }
@@ -270,9 +271,10 @@ public:
     // only do it if a full recombination has to (and can) be done
     if(!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine)
       return;
-    if(CTX::instance()->mesh.algoRecombine < 2 &&
-       CTX::instance()->mesh.algoRecombine != 4)
+    if(CTX::instance()->mesh.algoRecombine < 2 ||
+       CTX::instance()->mesh.algoRecombine == 4)
       return;
+
     if(gf->compound.size()) return;
     if(periodic) {
       Msg::Error("Full-quad recombination not ready yet for periodic surfaces");
@@ -1269,7 +1271,7 @@ static bool improved_translate(GFace *gf, MVertex *vertex, SVector3 &v1,
   SVector3 s1, s2;
   SVector3 normal;
   SVector3 basis_u, basis_v;
-  Pair<SVector3, SVector3> derivatives;
+  std::pair<SVector3, SVector3> derivatives;
 
   reparamMeshVertexOnFace(vertex, gf, point);
   x = point.x();
@@ -1278,8 +1280,8 @@ static bool improved_translate(GFace *gf, MVertex *vertex, SVector3 &v1,
   angle = backgroundMesh::current()->getAngle(x, y, 0.0);
   derivatives = gf->firstDer(point);
 
-  s1 = derivatives.first();
-  s2 = derivatives.second();
+  s1 = derivatives.first;
+  s2 = derivatives.second;
   normal = crossprod(s1, s2);
 
   basis_u = s1;
@@ -1712,7 +1714,8 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
       Msg::Info(":-( There are %d intersections in the 1D mesh (curves%s)",
                 edgesNotRecovered.size(), sstream.str().c_str());
       if(repairSelfIntersecting1dMesh)
-        Msg::Info("8-| Splitting those edges and trying again");
+        Msg::Info("8-| Splitting those edges and trying again - level %d",
+                  RECUR_ITER);
     }
     if(debug) {
       char name[245];
@@ -1737,11 +1740,13 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
 
     // delete the mesh
     delete m;
-    if(RECUR_ITER < 10) {
+    if(RECUR_ITER < CTX::instance()->mesh.maxRetries) {
       return meshGenerator(gf, RECUR_ITER + 1, repairSelfIntersecting1dMesh,
                            onlyInitialMesh, debug, replacementEdges);
     }
-    return false;
+    else {
+      return false;
+    }
   }
 
   if(RECUR_ITER > 0)
@@ -2573,8 +2578,10 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
         BDS_Point *p0 = facile[(*ite)->lines[i]->getVertex(0)];
         BDS_Point *p1 = facile[(*ite)->lines[i]->getVertex(1)];
-        edgesEmbedded.push_back(p0->iD);
-        edgesEmbedded.push_back(p1->iD);
+        if(p0 && p1) {
+          edgesEmbedded.push_back(p0->iD);
+          edgesEmbedded.push_back(p1->iD);
+        }
       }
       ++ite;
     }
@@ -2781,7 +2788,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       outputScalarField(m->triangles, name, 1, gf);
     }
     delete m;
-    if(RECUR_ITER < 10) {
+    if(RECUR_ITER < CTX::instance()->mesh.maxRetries) {
       return meshGeneratorPeriodic(gf, RECUR_ITER + 1,
                                    repairSelfIntersecting1dMesh, debug);
     }

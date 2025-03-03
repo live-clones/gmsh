@@ -168,6 +168,7 @@ namespace tetgenBR {
           all.insert(v2);
         }
         if(_sqr) {
+	  //printf("face %d %lu quadrangles\n", gf->tag(), gf->quadrangles.size());
           for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
             MVertex *v0 = gf->quadrangles[i]->getVertex(0);
             MVertex *v1 = gf->quadrangles[i]->getVertex(1);

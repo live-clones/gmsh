@@ -35,7 +35,7 @@ def path(dirname, inp):
     dirname = os.path.dirname(dirname + os.sep)
   if not inp:
     return dirname
-  if inp[0] == '/' or inp[0] == '\\' or (len(inp) > 2 and inp[1] == '\:'):
+  if inp[0] == '/' or inp[0] == '\\' or (len(inp) > 2 and inp[1] == ':'):
     return inp # do nothing, inp is an absolute path
   if inp[0] == '.' :
     inp = inp[2:] # cut off heading './' or '.\'
@@ -58,7 +58,7 @@ class _parameter() :
     ],
     'number' : _membersbase + [
       ('values', ('list', 'float'), [0.]),
-      ('min', 'float', -sys.float_info.max), ('max', 'float', sys.float_info.max),
+      ('min', 'float', -1e200), ('max', 'float', 1e200),
       ('step', 'float', 0.), ('index', 'int', -1), ('choices', ('list', 'float'), []),
       ('labels', ('dict', 'float', 'string'), {})
     ]

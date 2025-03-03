@@ -214,7 +214,7 @@ void GModel::destroy(bool keepName)
 void GModel::destroyMeshCaches()
 {
   // this is called in GEntity::deleteMesh()
-#pragma omp critical
+#pragma omp critical(destroyMeshCaches)
   {
     _vertexVectorCache.clear();
     std::vector<MVertex *>().swap(_vertexVectorCache);
@@ -2105,7 +2105,7 @@ void GModel::addMVertexToVertexCache(MVertex* v)
     rebuildMeshVertexCache();
   }
   if (_vertexVectorCache.size() > 0) {
-#pragma omp critical
+#pragma omp critical(addMVertexToVertexCache)
     if (v->getNum() >= _vertexVectorCache.size()) {
       _vertexVectorCache.resize(v->getNum()+1, nullptr);
     }

@@ -304,8 +304,8 @@ void backgroundMesh::propagateCrossFieldByDistance(GFace *_gf)
         SPoint2 p1, p2;
         reparamMeshEdgeOnFace(v[0], v[1], _gf, p1, p2);
         /* a correct way of computing angles  */
-        Pair<SVector3, SVector3> der = _gf->firstDer((p1 + p2) * .5);
-        SVector3 t1 = der.first();
+        std::pair<SVector3, SVector3> der = _gf->firstDer((p1 + p2) * .5);
+        SVector3 t1 = der.first;
         SVector3 t2(v[1]->x() - v[0]->x(), v[1]->y() - v[0]->y(),
                     v[1]->z() - v[0]->z());
         t1.normalize();
@@ -459,9 +459,9 @@ void backgroundMesh::propagateCrossField(GFace *_gf,
         v[1] = (*it)->lines[i]->getVertex(1);
         SPoint2 p1, p2;
         reparamMeshEdgeOnFace(v[0], v[1], _gf, p1, p2);
-        Pair<SVector3, SVector3> der = _gf->firstDer((p1 + p2) * .5);
-        SVector3 t1 = der.first();
-        SVector3 t2 = der.second();
+        std::pair<SVector3, SVector3> der = _gf->firstDer((p1 + p2) * .5);
+        SVector3 t1 = der.first;
+        SVector3 t2 = der.second;
         SVector3 n = crossprod(t1, t2);
         n.normalize();
         SVector3 d1(v[1]->x() - v[0]->x(), v[1]->y() - v[0]->y(),
@@ -578,7 +578,7 @@ double backgroundMesh::operator()(double u, double v, double w) const
 #if defined(HAVE_ANN)
     if(uv_kdtree->nPoints() < 2) return -1000.;
     double pt[3] = {u, v, 0.0};
-#pragma omp critical // just to avoid crash (still incorrect) - should use nanoflann
+#pragma omp critical(backgroundMeshANN) // just to avoid crash (still incorrect) - should use nanoflann
     uv_kdtree->annkSearch(pt, 2, index, dist);
     SPoint3 p1(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
     SPoint3 p2(nodes[index[1]][0], nodes[index[1]][1], nodes[index[1]][2]);
@@ -609,7 +609,7 @@ double backgroundMesh::getAngle(double u, double v, double w) const
     double angle = 0.;
     if(angle_kdtree->nPoints() >= NBANN) {
       double pt[3] = {u, v, 0.0};
-#pragma omp critical // just to avoid crash (still incorrect) - should use nanoflann
+#pragma omp critical(getAngleANN1) // just to avoid crash (still incorrect) - should use nanoflann
       angle_kdtree->annkSearch(pt, NBANN, index, dist);
       double SINE = 0.0, COSINE = 0.0;
       for(int i = 0; i < NBANN; i++) {
@@ -640,7 +640,7 @@ double backgroundMesh::getAngle(double u, double v, double w) const
 #if defined(HAVE_ANN)
     if(uv_kdtree->nPoints() < 2) return -1000.0;
     double pt[3] = {u, v, 0.0};
-#pragma omp critical // just to avoid crash (still incorrect) - should use nanoflann
+#pragma omp critical(getAngleANN2) // just to avoid crash (still incorrect) - should use nanoflann
     uv_kdtree->annkSearch(pt, 2, index, dist);
     SPoint3 p1(nodes[index[0]][0], nodes[index[0]][1], nodes[index[0]][2]);
     SPoint3 p2(nodes[index[1]][0], nodes[index[1]][1], nodes[index[1]][2]);

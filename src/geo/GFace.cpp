@@ -475,7 +475,7 @@ void GFace::writeGEO(FILE *fp)
   if(geomType() == DiscreteSurface || geomType() == BoundaryLayerSurface) return;
 
   std::vector<GEdge *> const &edg = edges();
-  std::vector<int> const &dir = orientations();
+  std::vector<int> const &dir = edgeOrientations();
   if(edg.size() && dir.size() == edg.size()) {
     std::vector<int> num, ori;
     for(auto it = edg.begin(); it != edg.end(); it++)
@@ -880,10 +880,10 @@ double GFace::curvatureDiv(const SPoint2 &param) const
 
   const double eps = 1.e-5;
 
-  Pair<SVector3, SVector3> der = firstDer(param);
+  std::pair<SVector3, SVector3> der = firstDer(param);
 
-  SVector3 du = der.first();
-  SVector3 dv = der.second();
+  SVector3 du = der.first;
+  SVector3 dv = der.second;
   SVector3 nml = crossprod(du, dv);
 
   double detJ = norm(nml);
@@ -937,19 +937,19 @@ double GFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
                          SVector3 &dirMin, double &curvMax,
                          double &curvMin) const
 {
-  Pair<SVector3, SVector3> D1 = firstDer(param);
+  std::pair<SVector3, SVector3> D1 = firstDer(param);
 
   if(geomType() == Plane || geomType() == BoundaryLayerSurface) {
-    dirMax = D1.first();
-    dirMin = D1.second();
+    dirMax = D1.first;
+    dirMin = D1.second;
     curvMax = 0.;
     curvMin = 0.;
     return 0.;
   }
 
   if(geomType() == Sphere) {
-    dirMax = D1.first();
-    dirMin = D1.second();
+    dirMax = D1.first;
+    dirMin = D1.second;
     curvMax = curvatureDiv(param);
     curvMin = curvMax;
     return curvMax;
@@ -961,8 +961,8 @@ double GFace::curvatures(const SPoint2 &param, SVector3 &dirMax,
   // curvatures and main directions
   curvMax = fabs(eigVal[1]);
   curvMin = fabs(eigVal[0]);
-  dirMax = eigVec[1] * D1.first() + eigVec[3] * D1.second();
-  dirMin = eigVec[0] * D1.first() + eigVec[2] * D1.second();
+  dirMax = eigVec[1] * D1.first + eigVec[3] * D1.second;
+  dirMin = eigVec[0] * D1.first + eigVec[2] * D1.second;
 
   return curvMax;
 }
@@ -979,9 +979,9 @@ void GFace::getMetricEigenVectors(const SPoint2 &param, double eigVal[2],
                                   double eigVec[4]) const
 {
   // first derivatives
-  Pair<SVector3, SVector3> D1 = firstDer(param);
-  SVector3 du = D1.first();
-  SVector3 dv = D1.second();
+  std::pair<SVector3, SVector3> D1 = firstDer(param);
+  SVector3 du = D1.first;
+  SVector3 dv = D1.second;
   SVector3 nor = crossprod(du, dv);
   nor.normalize();
 
@@ -1088,13 +1088,13 @@ void GFace::XYZtoUV(double X, double Y, double Z, double &U, double &V,
 
       while(err > tol && iter < MaxIter) {
         P = point(U, V);
-        Pair<SVector3, SVector3> der = firstDer(SPoint2(U, V));
-        mat[0][0] = der.left().x();
-        mat[0][1] = der.left().y();
-        mat[0][2] = der.left().z();
-        mat[1][0] = der.right().x();
-        mat[1][1] = der.right().y();
-        mat[1][2] = der.right().z();
+        std::pair<SVector3, SVector3> der = firstDer(SPoint2(U, V));
+        mat[0][0] = der.first.x();
+        mat[0][1] = der.first.y();
+        mat[0][2] = der.first.z();
+        mat[1][0] = der.second.x();
+        mat[1][1] = der.second.y();
+        mat[1][2] = der.second.z();
         mat[2][0] = 0.;
         mat[2][1] = 0.;
         mat[2][2] = 0.;
@@ -1193,15 +1193,15 @@ void bfgs_callback(const alglib::real_1d_array &x, double &func,
   // printf("func : %f\n", func);
 
   // Value of the gradient
-  Pair<SVector3, SVector3> der = gf->firstDer(SPoint2(x[0], x[1]));
-  grad[0] = -(p.x() - pnt.x()) * der.left().x() -
-            (p.y() - pnt.y()) * der.left().y() -
-            (p.z() - pnt.z()) * der.left().z();
-  grad[1] = -(p.x() - pnt.x()) * der.right().x() -
-            (p.y() - pnt.y()) * der.right().y() -
-            (p.z() - pnt.z()) * der.right().z();
+  std::pair<SVector3, SVector3> der = gf->firstDer(SPoint2(x[0], x[1]));
+  grad[0] = -(p.x() - pnt.x()) * der.first.x() -
+            (p.y() - pnt.y()) * der.first.y() -
+            (p.z() - pnt.z()) * der.first.z();
+  grad[1] = -(p.x() - pnt.x()) * der.second.x() -
+            (p.y() - pnt.y()) * der.second.y() -
+            (p.z() - pnt.z()) * der.second.z();
   // printf("func %22.15E Gradients %22.15E %22.15E der %g %g %g\n", func,
-  //         grad[0], grad[1],der.left().x(),der.left().y(),der.left().z());
+  //         grad[0], grad[1],der.first.x(),der.first.y(),der.first.z());
 }
 #endif
 
@@ -1296,10 +1296,146 @@ SVector3 GFace::normal(const SPoint2 &param) const
 {
   if(geomType() == BoundaryLayerSurface) return SVector3();
 
-  Pair<SVector3, SVector3> der = firstDer(param);
-  SVector3 n = crossprod(der.first(), der.second());
+  std::pair<SVector3, SVector3> der = firstDer(param);
+  SVector3 n = crossprod(der.first, der.second);
   n.normalize();
   return n;
+}
+
+bool GFace::normalToPlanarMesh(SVector3 &normal, bool orient) const
+{
+  normal = SVector3(.0, .0, .0);
+  if (getNumMeshElements() == 0) return false;
+
+  // Get one arbitrary normal
+  double n[3];
+  bool foundNormal = false;
+  for (size_t i = 0; i < getNumMeshElements(); ++i) {
+    MElement *el = getMeshElement(i);
+    MVertex *v[3] = {el->getVertex(0), el->getVertex(1), el->getVertex(2)};
+    normal3points(v[0]->x(), v[0]->y(), v[0]->z(), v[1]->x(), v[1]->y(),
+                  v[1]->z(), v[2]->x(), v[2]->y(), v[2]->z(), n);
+    if (norm3(n) > .5) {
+      foundNormal = true;
+      break;
+    }
+  }
+
+  if (!foundNormal) {
+    Msg::Warning("Could not define a normal for function "
+                 "'normalToPlanarMesh' on GFace %d", tag());
+    return false;
+  }
+
+  // Check that all MVertex are in the same plane.
+  // It is sufficient to check for each pair of consecutive vertices in an
+  // arbitrary sequence of all surface vertices that the vector linking the
+  // pair is perpendicular to the normal vector.
+  for (std::size_t i = 0; i < getNumMeshElements(); ++i) {
+    MElement *el = getMeshElement(i);
+    MVertex *v[2] = {el->getVertex(0), nullptr};
+
+    for(std::size_t j = 1; j < el->getNumVertices(); ++j) {
+      v[j % 2] = el->getVertex(j);
+      double e[3] = {v[1]->x() - v[0]->x(), v[1]->y() - v[0]->y(),
+                     v[1]->z() - v[0]->z()};
+      norme(e);
+      if(std::abs(prosca(n, e)) >= 1e-12) return false;
+    }
+  }
+
+  normal = SVector3(n[0], n[1], n[2]);
+  if (!orient) return true;
+
+  // Now, if possible, check the orientation of the geometrical surface to make
+  // normal point in the same direction.
+  // The only way is to check if the rotation of the complete boundary is of an
+  // angle of +2pi or -2pi for the current sense of 'normal'. We must cover the
+  // whole boundary since we cannot determine which part of it is convex except
+  // if we already know the orientation...
+  if (l_edges.empty()) return true;
+
+  // 1) Determine the set of exterior edges (NB: it can be a single edge)
+  GVertex *vBegin, *vNext;
+
+  if (l_dirs[0] == 1)
+    vBegin = l_edges[0]->getBeginVertex();
+  else
+    vBegin = l_edges[0]->getEndVertex();
+
+  std::size_t numEdge = 1;
+  for (std::size_t i = 0; i < l_edges.size(); ++i) {
+    if (l_dirs[i] == 1)
+      vNext = l_edges[i]->getEndVertex();
+    else
+      vNext = l_edges[i]->getBeginVertex();
+    if (vNext ==  vBegin) {
+      numEdge = i+1;
+      break;
+    }
+  }
+
+  // 2) Get a set of points that represents the boundary.
+  //    We need at least 3 points in basic cases and an undetermined number in
+  //    general. Indeed, for any number of sampling points, we can always create
+  //    a boundary for which the sampling points are co-linear or even worse,
+  //    have sampling points that discretize so poorly the boundary that they
+  //    rotate inversely...
+  //    However, in practice, a minimum of 100 points should be sufficient.
+  const double minSamplingPoints = 100.;
+  const int numSampleInteriorEdge =
+    std::max(.0, std::ceil(minSamplingPoints/(double)numEdge - 1.));
+
+  std::vector<SPoint3> samplingPnts;
+  samplingPnts.reserve(numEdge + numEdge* numSampleInteriorEdge);
+  for (std::size_t i = 0; i < numEdge; ++i) {
+    auto *ge = l_edges[i];
+    Range<double> tr = ge->parBounds(0);
+    double low, high;
+    if (l_dirs[i] == 1) {
+      vBegin = ge->getBeginVertex();
+      low  = tr.low();
+      high  = tr.high();
+    }
+    else {
+      vBegin = ge->getEndVertex();
+      low  = tr.high();
+      high  = tr.low();
+    }
+    samplingPnts.emplace_back(vBegin->x(), vBegin->y(), vBegin->z());
+
+    for (int j = 0; j < numSampleInteriorEdge; ++j) {
+      double t = low + (j + 1.) / (numSampleInteriorEdge + 1.) * (high - low);
+      auto gp = ge->point(t);
+      samplingPnts.emplace_back(gp.x(), gp.y(), gp.z());
+    }
+  }
+
+  // 3) Compute the rotation angle and reverse normal if it is -2pi.
+  double p0[3], p1[3], p2[3];
+  samplingPnts[samplingPnts.size() - 2].position(p0);
+  samplingPnts[samplingPnts.size() - 1].position(p1);
+  normal.point().position(n);
+  //samplingPnts[1].position(p1);
+  double sumAngle = 0;
+  for (const auto &P : samplingPnts) {
+    P.position(p2);
+    double angle = angle_plan(p1, p2, p0, n);
+    sumAngle += (angle < 0 ? -1 : 1) * M_PI - angle;
+    p0[0] = p1[0]; p0[1] = p1[1]; p0[2] = p1[2];
+    p1[0] = p2[0]; p1[1] = p2[1]; p1[2] = p2[2];
+  }
+
+  const double eps = 1e-7;
+  const double absAngle = std::abs(sumAngle);
+  if(absAngle < 2 * M_PI - eps || absAngle > 2 * M_PI + eps) {
+    // FIXME: Remove because I think this cannot happen
+    Msg::Warning("Could not orient normal of surface %d (obtained angle %g)",
+                 tag(), angle);
+  }
+  else if (sumAngle < 0) normal *= -1;
+
+  return true;
 }
 
 bool GFace::buildRepresentationCross(bool force)

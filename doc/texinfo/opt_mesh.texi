@@ -36,6 +36,11 @@ Threshold angle (in degrees) between faces normals under which we allow an edge 
 Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
+@item Mesh.AvgQuality
+Average mesh quality (inverse conditioning number, ICN) after the generation of the current mesh (read-only)@*
+Default value: @code{0}@*
+Saved in: @code{General.OptionsFileName}
+
 @item Mesh.BdfFieldFormat
 Field format for Nastran BDF files (0: free, 1: small, 2: large)@*
 Default value: @code{1}@*
@@ -332,7 +337,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.MaxRetries
-Maximum number of times meshing is retried on curves and surfaces with a pending mesh@*
+Maximum number of times meshing is retried on curves and surfaces with a pending mesh; also controls maximum number of recursive subdivisions when self-intersecting 1D meshes are detected@*
 Default value: @code{10}@*
 Saved in: @code{General.OptionsFileName}
 
@@ -774,6 +779,11 @@ Saved in: @code{General.OptionsFileName}
 @item Mesh.ReparamMaxTriangles
 Maximum number of triangles in a single parametrization patch@*
 Default value: @code{250000}@*
+Saved in: @code{General.OptionsFileName}
+
+@item Mesh.Reproducible
+Try to produce reproducible meshes even when multi-threaded (experimental)@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.SaveAll

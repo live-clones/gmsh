@@ -1312,15 +1312,15 @@ for libpath_to_look in possible_libpaths:
 # if we couldn't find it, use ctype's find_library utility...
 if not libpath:
     if platform.system() == "Windows":
-        libpath = find_library("gmsh-4.11")
+        libpath = find_library("{7}-{3}.{4}")
         if not libpath:
-            libpath = find_library("gmsh")
+            libpath = find_library("{7}")
     else:
-        libpath = find_library("gmsh")
+        libpath = find_library("{7}")
 
 # ... and print a warning if everything failed
 if not libpath:
-    print("Warning: could not find Gmsh shared library " + libname +
+    print("Warning: could not find {2} shared library " + libname +
           " with ctypes.util.find_library() or in the following locations: " +
           str(possible_libpaths))
 
@@ -1342,7 +1342,7 @@ if try_numpy:
 
 prev_interrupt_handler = None
 
-# Utility functions, not part of the Gmsh Python API
+# Utility functions, not part of the {2} Python API
 
 def _ostring(s):
     sp = s.value.decode("utf-8")
@@ -1498,7 +1498,7 @@ def _ivectorvectordouble(os):
 def _iargcargv(o):
     return c_int(len(o)), (c_char_p * len(o))(*(s.encode() for s in o))
 
-# Gmsh Python API begins here
+# {2} Python API begins here
 """
 
 julia_header = """# {0}
@@ -1723,16 +1723,22 @@ fortran_footer = """
   end function ivectordouble_
 
   subroutine ivectorstring_(o, cstrs, cptrs)
-    character(len=*), intent(in) :: o(:)
+    character(len=*), intent(in), optional :: o(:)
     character(len=GMSH_API_MAX_STR_LEN, kind=c_char), target, allocatable, intent(out) :: cstrs(:)
     type(c_ptr), allocatable, intent(out) :: cptrs(:)
     integer :: i
-    allocate(cstrs(size(o)))    ! Return to keep references from cptrs
-    allocate(cptrs(size(o)))
-    do i = 1, size(o)
+
+    if (present(o)) then
+      allocate(cstrs(size(o)))  ! Return to keep references from cptrs
+      allocate(cptrs(size(o)))
+      do i = 1, size(o)
         cstrs(i) = istring_(o(i))
         cptrs(i) = c_loc(cstrs(i))
-    end do
+      end do
+    else
+      allocate(cstrs(0))
+      allocate(cptrs(0))
+    end if
   end subroutine ivectorstring_
 
   function ivectorpair_(o) result(v)

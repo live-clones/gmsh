@@ -141,7 +141,7 @@
 #include <ShapeUpgrade_UnifySameDomain.hxx>
 #endif
 
-#if OCC_VERSION_HEX >= 0x070500
+#if OCC_VERSION_HEX >= 0x070700
 #include <BRepAlgoAPI_Defeaturing.hxx>
 #include <Message_ProgressIndicator.hxx>
 #endif
@@ -2265,7 +2265,7 @@ bool OCC_Internals::addBSplineSurface(
   }
   bool periodicV = true;
   for(int i = 0; i < numPointsU; i++) {
-    if(pointTags[i * numPointsV] != pointTags[(i + 1) * numPointsV - 1]) {
+    if(pointTags[i] != pointTags[i + numPointsU * (numPointsV - 1)]) {
       periodicV = false;
       break;
     }
@@ -2972,7 +2972,12 @@ bool OCC_Internals::addThickSolid(int tag, int solidTag,
 #if OCC_VERSION_HEX > 0x070400
     BRepOffsetAPI_MakeThickSolid ts;
     ts.MakeThickSolidByJoin(shape, exclude, offset,
-                            CTX::instance()->geom.tolerance);
+                            CTX::instance()->geom.tolerance,
+                            BRepOffset_Skin,
+                            Standard_True, // Intersection
+                            Standard_False, // SelfInter (not available yet)
+                            GeomAbs_Arc, // Join
+                            Standard_False); // RemoveIntEdges
 #else
     BRepOffsetAPI_MakeThickSolid ts(shape, exclude, offset,
                                     CTX::instance()->geom.tolerance);
@@ -3525,7 +3530,7 @@ bool OCC_Internals::defeature(const std::vector<int> &volumeTags,
                               std::vector<std::pair<int, int>> &outDimTags,
                               bool removeVolume)
 {
-#if OCC_VERSION_HEX >= 0x070500
+#if OCC_VERSION_HEX >= 0x070700
   // build a single compound shape
   BRep_Builder b;
   TopoDS_Compound c;
@@ -3599,7 +3604,7 @@ bool OCC_Internals::defeature(const std::vector<int> &volumeTags,
 }
 
 bool OCC_Internals::fillet2D(int &tag, const int edgeTag1, const int edgeTag2,
-                             double radius)
+                             double radius, int pointTag, bool reverse)
 {
   if(tag >= 0 && _tagEdge.IsBound(tag)) {
     Msg::Error("OpenCASCADE curve with tag %d already exists", tag);
@@ -3653,8 +3658,21 @@ bool OCC_Internals::fillet2D(int &tag, const int edgeTag1, const int edgeTag2,
   gp_Dir normal = aElementarySurface->Axis().Direction();
   if(face.Orientation() == TopAbs_REVERSED) { normal = -normal; }
 
-  TopoDS_Vertex v1 = ShapeAnalysis_Edge().FirstVertex(ed1);
-  gp_Pnt point = BRep_Tool().Pnt(v1);
+  if(reverse) {normal = -normal; }
+
+  gp_Pnt point;
+  if (pointTag != -1) {
+    if (!_tagVertex.IsBound(pointTag)) {
+      Msg::Error("Unknown OpenCASCADE point with tag %d", pointTag);
+      return false;
+    }
+    TopoDS_Vertex v = TopoDS::Vertex(_tagVertex.Find(pointTag));
+    point = BRep_Tool::Pnt(v);
+  } else {
+    // Use the first vertex of the first edge as before
+    TopoDS_Vertex v1 = ShapeAnalysis_Edge().FirstVertex(ed1);
+    point = BRep_Tool::Pnt(v1);
+  }
 
   gp_Pln p(point, normal);
 
@@ -3740,7 +3758,7 @@ bool OCC_Internals::offsetCurve(const int curveLoopTag, double offset,
   return true;
 }
 
-#if OCC_VERSION_HEX >= 0x070500
+#if OCC_VERSION_HEX >= 0x070700
 
 class OCCBooleanProgress : public Message_ProgressIndicator {
 private:
@@ -3866,7 +3884,7 @@ bool OCC_Internals::booleanOperator(
       fuse.SetArguments(objectShapes);
       fuse.SetTools(toolShapes);
       _setBooleanOptions(fuse);
-#if OCC_VERSION_HEX >= 0x070500
+#if OCC_VERSION_HEX >= 0x070700
       OCCBooleanProgress progress("Union");
       fuse.Build(progress.Start());
 #else
@@ -3911,7 +3929,7 @@ bool OCC_Internals::booleanOperator(
       common.SetArguments(objectShapes);
       common.SetTools(toolShapes);
       _setBooleanOptions(common);
-#if OCC_VERSION_HEX >= 0x070500
+#if OCC_VERSION_HEX >= 0x070700
       OCCBooleanProgress progress("Intersection");
       common.Build(progress.Start());
 #else
@@ -3944,7 +3962,7 @@ bool OCC_Internals::booleanOperator(
       cut.SetArguments(objectShapes);
       cut.SetTools(toolShapes);
       _setBooleanOptions(cut);
-#if OCC_VERSION_HEX >= 0x070500
+#if OCC_VERSION_HEX >= 0x070700
       OCCBooleanProgress progress("Difference");
       cut.Build(progress.Start());
 #else
@@ -3981,7 +3999,7 @@ bool OCC_Internals::booleanOperator(
       toolShapes.Clear();
       fragments.SetArguments(objectShapes);
       _setBooleanOptions(fragments);
-#if OCC_VERSION_HEX >= 0x070500
+#if OCC_VERSION_HEX >= 0x070700
       OCCBooleanProgress progress("Fragments");
       fragments.Build(progress.Start());
 #else
@@ -4100,9 +4118,7 @@ bool OCC_Internals::booleanOperator(
     int tag = inDimTags[i].second;
     std::pair<int, int> dimTag(dim, tag);
     std::vector<std::pair<int, int>> dimTags;
-    if(mapDeleted[i]) { // deleted
-    }
-    else if(mapModified[i].Extent() == 0) { // not modified
+    if(mapModified[i].Extent() == 0) { // not modified
       if(_isBound(dim, tag)) dimTags.push_back(dimTag);
     }
     else {
@@ -4130,9 +4146,16 @@ bool OCC_Internals::booleanOperator(
   }
 
   outDimTags.clear();
-  for(auto v : outDimTagsMap)
-    for(auto e : v)
+  for(std::size_t i = 0; i < outDimTagsMap.size(); i++) {
+    // for cut, only return entities for object (not tool): this is what is
+    // expected for cut (I think...) and is consistent with what was done in
+    // Gmsh <= 4.13
+    if(op == OCC_Internals::Difference && i >= objectDimTags.size()) {
+      break;
+    }
+    for(auto e : outDimTagsMap[i])
       outDimTags.push_back(e);
+  }
   // keep the ordering but remove duplicates - maybe we should leave them?
   std::set<std::pair<int, int>> s;
   for(auto it = outDimTags.begin(); it != outDimTags.end(); ) {
@@ -4637,13 +4660,13 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
     TopoDS_Shape shape = shapeTool->GetShape(label);
     shape.Location(isRef ? loc : partLoc);
 
-#if 0
-    // this is necessary for endcaps.stp (cf. #693), but has a big performance
-    // hit on STEP files with lots of references -- leaving out until we
-    // understand why it's necessary: there should be a better way ;-)
-    if(isRef && !loc.IsIdentity() && loc != shapeTool->GetLocation(label))
-      shapeTool->SetShape(label, shape);
-#endif
+    if(CTX::instance()->geom.occImportLabels == 2) {
+      // FIXME: this is necessary for endcaps.stp (cf. #693), but has a big
+      // performance hit on STEP files with lots of references -- leaving out
+      // until we understand why it's necessary: there should be a better way!)
+      if(isRef && !loc.IsIdentity() && loc != shapeTool->GetLocation(label))
+        shapeTool->SetShape(label, shape);
+    }
 
     int dim =
       (shape.ShapeType() == TopAbs_VERTEX) ? 0 :
@@ -4765,6 +4788,11 @@ bool OCC_Internals::importShapes(const std::string &fileName,
                                  std::vector<std::pair<int, int>> &outDimTags,
                                  const std::string &format)
 {
+  if(StatFile(fileName)) {
+    Msg::Error("File '%s' does not exist", fileName.c_str());
+    return false;
+  }
+
   std::vector<std::string> split = SplitFileName(fileName);
 
   TopoDS_Shape result;

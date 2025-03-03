@@ -10,13 +10,13 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <utility>
 #include "GmshDefines.h"
 #include "GEntity.h"
 #include "GPoint.h"
 #include "GEdgeLoop.h"
 #include "SPoint2.h"
 #include "SVector3.h"
-#include "Pair.h"
 #include "Numeric.h"
 #include "boundaryLayersData.h"
 
@@ -97,12 +97,10 @@ public:
   void addEmbeddedVertex(GVertex *v) { embedded_vertices.insert(v); }
   void addEmbeddedEdge(GEdge *e) { embedded_edges.push_back(e); }
 
-  // edge orientations
-  virtual std::vector<int> const &orientations() const { return l_dirs; }
-
   // edges that bound the face
   int delEdge(GEdge *edge);
   virtual std::vector<GEdge *> const &edges() const { return l_edges; }
+  virtual std::vector<int> const &edgeOrientations() const { return l_dirs; }
   void set(const std::vector<GEdge *> &f) { l_edges = f; }
   void setOrientations(const std::vector<int> &f) { l_dirs = f; }
   void setEdge(GEdge *const f, int const orientation)
@@ -110,8 +108,6 @@ public:
     l_edges.push_back(f);
     l_dirs.push_back(orientation);
   }
-
-  virtual std::vector<int> const &edgeOrientations() const { return l_dirs; }
 
   bool containsEdge(int const iEdge) const
   {
@@ -123,6 +119,9 @@ public:
   void setBoundEdges(const std::vector<int> &tagEdges);
   void setBoundEdges(const std::vector<int> &tagEdges,
                      const std::vector<int> &signEdges);
+
+  // check if the surface mesh is planar in which case the normal is given
+  bool normalToPlanarMesh(SVector3 &normal, bool orient = true) const;
 
   // direct access to embedded entities
   std::vector<GEdge *> &embeddedEdges() { return embedded_edges; }
@@ -201,7 +200,7 @@ public:
   virtual SVector3 normal(const SPoint2 &param) const;
 
   // return the first derivate of the face at the parameter location
-  virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const = 0;
+  virtual std::pair<SVector3, SVector3> firstDer(const SPoint2 &param) const = 0;
 
   // compute the second derivates of the face at the parameter location
   virtual void secondDer(const SPoint2 &param, SVector3 &dudu, SVector3 &dvdv,

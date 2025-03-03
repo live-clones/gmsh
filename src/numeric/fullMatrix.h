@@ -583,7 +583,7 @@ public:
 #if defined(HAVE_EIGEN) || !defined(HAVE_BLAS)
   {
     const fullMatrix<scalar> &A = transposeA ? a.transpose() : a;
-    const fullMatrix<scalar> &B = transposeA ? b.transpose() : b;
+    const fullMatrix<scalar> &B = transposeB ? b.transpose() : b;
     fullMatrix<scalar> temp(A._r, B._c);
     A.mult(B, temp);
     temp.scale(alpha);

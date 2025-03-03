@@ -48,6 +48,11 @@ void F77NAME(zscal)(int *n, std::complex<double> *alpha,
                     std::complex<double> *x, int *incx);
 }
 
+template <> void fullVector<int>::setAll(const fullVector<int> &m)
+{
+  for(int i = 0; i < _r; ++i) _data[i] = m._data[i];
+}
+
 template <> void fullVector<double>::setAll(const fullVector<double> &m)
 {
   int stride = 1;
@@ -399,11 +404,15 @@ bool fullMatrix<double>::eig(fullVector<double> &DR, fullVector<double> &DI,
    work, &lwork, &info);
   delete[] work;
 
-  if(info > 0)
+  if(info > 0){
     Msg::Error("QR Algorithm failed to compute all the eigenvalues", info,
                info);
-  else if(info < 0)
+    return false;
+  }
+  else if(info < 0){
     Msg::Error("Wrong %d-th argument in eig", -info);
+    return false; 
+  }
   else if(sortRealPart)
     eigSort(N, DR._data, DI._data, VL._data, VR._data);
 

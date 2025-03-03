@@ -373,14 +373,14 @@ public:
     double ny[3] = {y1[0] - x0[0], y1[1] - x0[1], y1[2] - x0[2]};
     double nz[3] = {z1[0] - x0[0], z1[1] - x0[1], z1[2] - x0[2]};
     double pvect[3] = {xp - x0[0], yp - x0[1], zp - x0[2]};
-    double projX = scalProd(nx, pvect);
-    double tempX = scalProd(nx, nx);
+    double projX = prosca(nx, pvect);
+    double tempX = prosca(nx, nx);
     if(tempX) projX /= tempX;
-    double projY = scalProd(ny, pvect);
-    double tempY = scalProd(ny, ny);
+    double projY = prosca(ny, pvect);
+    double tempY = prosca(ny, ny);
     if(tempY) projY /= tempY;
-    double projZ = scalProd(nz, pvect);
-    double tempZ = scalProd(nz, nz);
+    double projZ = prosca(nz, pvect);
+    double tempZ = prosca(nz, nz);
     if(tempZ) projZ /= tempZ;
     if(projX < 0.0) projX = 0.0;
     if(projX > 1.0) projX = 1.0;
@@ -2602,6 +2602,7 @@ public:
   using Field::operator();
   virtual double operator()(double X, double Y, double Z, GEntity *ge = nullptr)
   {
+    update();
     if(!_kdtree) return MAX_LC;
     double pt[3] = {X, Y, Z};
     nanoflann::KNNResultSet<double> res(1);
