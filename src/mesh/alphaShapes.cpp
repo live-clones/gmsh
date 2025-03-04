@@ -620,7 +620,7 @@ void AlphaShape::registerAlphaShapeField(FieldManager* fm)
 }
 
 class AlphaShapeInOutField : public Field {
-  OctreeNode<3, 32, MTriangle*>* _octree = nullptr;
+  OctreeNode<3, 64, MTriangle*>* _octree = nullptr;
 
 
 public:
@@ -661,7 +661,7 @@ public:
   {
     if (updateNeeded == true){
       if (_octree != nullptr) delete _octree;
-      _octree = new OctreeNode<3, 32, MTriangle*>();
+      _octree = new OctreeNode<3, 64, MTriangle*>();
       
       GFace* df = GModel::current()->getFaceByTag(tag);
       
@@ -680,6 +680,7 @@ public:
           auto v = f->getVertex(i);
           bb.extends({v->x(), v->y(), v->z()});
         }
+
         _octree->add(f, bb);
       }
     }
@@ -2721,7 +2722,6 @@ void postProPoints(std::vector<SPoint3> points, std::vector<double> data, const 
 void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int sizeFieldTag, const int tagAlpha, const int tagAlphaBoundary, const bool removeDisconnectedNodes, const bool returnTri2TetMap, std::vector<size_t>& tri2Tet){
   // auto t1 = std::chrono::steady_clock::now(); 
   
-
   GModel* gm = GModel::current();
 
   GRegion* gr = gm->getRegionByTag(tag);
@@ -2864,11 +2864,14 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
     tri2Tet.resize(2*alphaFaces.size());
   }
   for (auto _df : gm->getFaces()){
-    for (auto tri : _df->triangles){
-      delete tri;
-    }
+    // for (auto tri : _df->triangles){
+    //   delete tri;
+    // }
     _df->removeElements(TYPE_TRI);
   }
+
+  printf("here \n");
+
   // df->removeElements(TYPE_TRI);
   for (size_t i=0; i<alphaFaces.size(); i++){
     size_t tetIndex = alphaFaces[i]/4;
@@ -3785,7 +3788,39 @@ void AlphaShape::_colourBoundaries(const int faceTag, const std::string & bounda
       pt_bbox.extends({tri->getVertex(i)->x()+tolerance, tri->getVertex(i)->y()+tolerance, tri->getVertex(i)->z()+tolerance});
       octree.search(pt_bbox, bnd_element_found_i);
       for (auto el : bnd_element_found_i){
-        entity_found[i].insert(bndElement2Entity[el]);
+        if (el->getDim() != 2) continue;
+        SVector3 x1(tri->getVertex(i)->point());
+        SVector3 pa(el->getVertex(0)->point());
+        SVector3 pb(el->getVertex(1)->point());
+        SVector3 pc(el->getVertex(2)->point());
+        auto v0 = pc-pa;
+        auto v1 = pb-pa;
+        auto normal = crossprod(v0, v1).unit();
+        auto v2 = x1-pa;
+        double d = dot(v2, normal);
+        auto nx = x1 - normal*d;
+        double dist = (nx-x1).norm();
+        if (dist < tolerance){
+          entity_found[i].insert(bndElement2Entity[el]);
+          // printf("Projected on triangle \n");
+        }
+        // double dot00 = dot(v0, v0);
+        // double dot01 = dot(v0, v1);
+        // double dot02 = dot(v0, v2);
+        // double dot11 = dot(v1, v1);
+        // double dot12 = dot(v1, v2);
+        // double invDenom = 1. / (dot00 * dot11 - dot01 * dot01);
+        // double u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+        // double v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+        // // printf("u %f, v %f \n", u, v);
+        // if (u >= 0 && v >= 0 && u + v <= 1){
+          // double dist = (nx-x1).norm();
+          // if (dist < tolerance){
+          //   entity_found[i].insert(bndElement2Entity[el]);
+          //   // printf("Projected on triangle \n");
+          // }
+        // }
+        // entity_found[i].insert(bndElement2Entity[el]);
       }
       // bnd_element_found.push_back(bnd_element_found_i);
     }
