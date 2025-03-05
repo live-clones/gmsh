@@ -124,7 +124,7 @@ nii2mesh bet.nii.gz -i 120 -r 1 -p 0 -s 100 s100.ply
 
 ![Influence of smoothing](s0s100.jpg)
 
-6. The reduction factor allows you to simplify the mesh, resulting in a much smaller file size and faster rendering on slow hardware. This stage uses [Sven Forstmann's](https://github.com/sp4cerat/Fast-Quadric-Mesh-Simplification) simplification method which is [adaptive](http://www.alecjacobson.com/weblog/?p=4444), using smaller triangles in regions of curvature and large triangles in flat regions. Choosing a value of `-r 0.15` will eliminate 85% of the triangles. Notice how similar the top row appears, while the bottom row illustrates a dramatic reduction in complexity.
+6. The reduction factor allows you to simplify the mesh, resulting in a much smaller file size and faster rendering on slow hardware. This stage uses [Sven Forstmann's](https://github.com/sp4cerat/Fast-Quadric-Mesh-Simplification) simplification method which is [adaptive](https://www.alecjacobson.com/weblog/4444.html), using smaller triangles in regions of curvature and large triangles in flat regions. Choosing a value of `-r 0.15` will eliminate 85% of the triangles. Notice how similar the top row appears, while the bottom row illustrates a dramatic reduction in complexity.
 
 ```
 nii2mesh bet.nii.gz -r 0.5 r50.ply
@@ -218,7 +218,7 @@ MeshFix bet.ply better.ply
  - This project includes a C port of [Sven Forstmann's C++ fast mesh simplification](https://github.com/sp4cerat/Fast-Quadric-Mesh-Simplification) using [quadric error metrics](http://www.cs.cmu.edu/~./garland/Papers/quadric2.pdf).
  - For post-smoothing, this project uses a [Laplacian smooth with Humphrey’s Classes to preserve volume](https://doi.org/10.1111/1467-8659.00334), also available as a [PDF](http://informatikbuero.com/downloads/Improved_Laplacian_Smoothing_of_Noisy_Surface_Meshes.pdf).
  - AFNI [IsoSurface](https://afni.nimh.nih.gov/pub/dist/doc/program_help/IsoSurface.html) can also convert voxelwise data to meshes.
- - [Alec Jacobson has a nice demonstration of adaptive mesh simplification versus decimation](http://www.alecjacobson.com/weblog/?p=4444).
+ - [Alec Jacobson has a nice demonstration of adaptive mesh simplification versus decimation](https://www.alecjacobson.com/weblog/4444.html).
  - [Alec Jacobson](https://github.com/alecjacobson/geometry-processing-smoothing) describes smoothing and provides example noisy meshes.
  - MRtrix3 includes [voxel2mesh](https://mrtrix.readthedocs.io/en/latest/reference/commands/voxel2mesh.html)
  - [iso2mesh](http://iso2mesh.sourceforge.net/cgi-bin/index.cgi) provides a set of Matlab/Octave methods for mesh generation and refinement ([with more details on GitHub](https://github.com/fangq/iso2mesh)).
