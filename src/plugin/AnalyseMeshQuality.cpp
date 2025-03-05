@@ -282,11 +282,6 @@ void GMSH_AnalyseMeshQualityPlugin::_computeMinMaxJandValidity(int dim)
     case 2:
       Msg::StatusBar(true, "Surface %d: checking the Jacobian of %d elements",
                      entity->tag(), num);
-      // check the classical case of 2D planar meshes in the z=0 plane to issue
-      // a warning if the mesh is oriented along -z
-      if(entity->geomType() == GEntity::DiscreteSurface) {
-        SBoundingBox3d bb = entity->bounds();
-        if(!bb.empty() && bb.max().z() - bb.min().z() == .0) {
       {
         SVector3 n;
         if(((GFace *)entity)->normalToPlanarMesh(n)) {
