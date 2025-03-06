@@ -5,6 +5,8 @@
 
 #ifndef ANALYSEMESHQUALITY_H
 #define ANALYSEMESHQUALITY_H
+#include "GmshConfig.h"
+#if defined(HAVE_MESH)
 
 #include "Plugin.h"
 #include <vector>
@@ -98,4 +100,5 @@ private:
 #endif
 };
 
+#endif
 #endif
