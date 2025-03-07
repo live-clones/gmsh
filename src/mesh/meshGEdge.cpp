@@ -1058,7 +1058,7 @@ int meshGEdgeTargetNumberOfPoints(GEdge *ge)
   return N;
 }
 
-int meshGEdgeInsertBoundaryLayer(GEdge *ge, double widthBegin, double widthEnd)
+int meshGEdgeInsertBoundaryLayer(GEdge *ge, double width)
 {
   Range<double> bounds = ge->parBounds(0);
   double t_begin = bounds.low();
@@ -1068,7 +1068,13 @@ int meshGEdgeInsertBoundaryLayer(GEdge *ge, double widthBegin, double widthEnd)
   double t_right = t_end;
   double dt = (t_end - t_begin)/100;
 
-  if (widthBegin > 0) {
+  MLine *l0 = ge->lines.front();
+  MLine *ln = ge->lines.back();
+
+  int diff = 0;
+  
+  if (l0->getLength() < 1.e-12) {
+    diff++;
     GPoint g_left = ge->point(t_left);
     SPoint3 p0 (g_left.x(),g_left.y(),g_left.z());;
     while (1) {
@@ -1095,7 +1101,8 @@ int meshGEdgeInsertBoundaryLayer(GEdge *ge, double widthBegin, double widthEnd)
     }  
   }
 
-  if (widthEnd > 0) {
+  if (ln->getLength() < 1.e-12) {
+    diff++;
     GPoint g_right = ge->point(t_right);
     SPoint3 p0 (g_right.x(),g_right.y(),g_right.z());;
     while (1) {
@@ -1122,11 +1129,11 @@ int meshGEdgeInsertBoundaryLayer(GEdge *ge, double widthBegin, double widthEnd)
     }  
   }
   
-  int N = ge->mesh_vertices.size();
+  int N = ge->mesh_vertices.size() - diff;
   std::vector<IntPoint> Points;
   double a = 0.;
   int filterMinimumN = 0;
-  meshGEdgeProcessing(ge, t_begin, t_end, N, Points, a, filterMinimumN);
+  meshGEdgeProcessing(ge, t_left, t_right, N, Points, a, filterMinimumN);
   return N;
 }
 

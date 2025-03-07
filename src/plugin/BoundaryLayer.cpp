@@ -50,44 +50,44 @@ StringXNumber *GMSH_BoundaryLayerPlugin::getOption(int iopt)
 
 
 bool bl2d(GModel *m,
-          std::vector<GEdge*> &input,
-          std::vector<GFace*> &faces)
+          std::vector<GEdge*> &onCurves,
+          std::vector<GFace*> &inSurfaces)
 {
-  // get all GVertex in input edges
-  // for each GVertex:
-  //   - if all adjacent edges to the vertex are in input, spawn 1 node
-  //        in each face in all the faces connected to the vertex
-  //   - if some edges are not in input, spawn 1 node on each connected
-  //     edge
-  // for each MVertex on input that is not on a GVErtex
-  //   - spawn 1 node in the face
+  // for each GVertex connected to the GEdges in onCurves:
+  //   - if all adjacent GEdges to the GVertex are in onCurves, spawn 1 MVertex
+  //     in each GFace connected to the GVertex that are in inSurfaces
+  //   - if some adjacent GEdges are not in onCurves, spawn 1 MVertex on each
+  //     connected GEdge
+  // for each MVertex classified the GEdges in onCurves:
+  //   - spawn 1 MVertex in the connected GFaces that are in inSurfaces
+
+  std::set<GEdge*> onCurvesSet;
+  onCurvesSet.insert(onCurves.begin(), onCurves.end());
+
+  std::set<GFace*> inSurfacesSet;
+  inSurfacesSet.insert(inSurfaces.begin(), inSurfaces.end());
 
   std::map<MVertex*, std::vector<MVertex*>> spawned;
-  std::set<GEdge*> ges;
-  ges.insert(input.begin(), input.end());
-  std::set<GFace*> gfs;
-  gfs.insert(faces.begin(), faces.end());
-  std::set<GVertex*> gvs;
-  for(auto ge : input) {
+
+  std::set<GVertex*> connectedPoints;
+  for(auto ge : onCurves) {
     auto vs = ge->vertices();
-    gvs.insert(vs.begin(), vs.end());
+    connectedPoints.insert(vs.begin(), vs.end());
   }
 
-  printf("input %lu %lu\n", ges.size(), gvs.size());
-
   // spawn nodes for model points
-  for(auto gv : gvs) {
+  for(auto gv : connectedPoints) {
     if(gv->mesh_vertices.empty()) {
       Msg::Error("No mesh node on model point %d - abort!", gv->tag());
       return false;
     }
 
-    std::vector<GEdge*> connectedEdges = gv->edges();
-    std::vector<GFace*> connectedFaces = gv->faces();
+    std::vector<GEdge*> connectedCurves = gv->edges();
+    std::vector<GFace*> connectedSurfaces = gv->faces();
     std::vector<GEdge*> toinsert;
     std::size_t found = 0;
-    for(auto ge : connectedEdges) {
-      if(ges.find(ge) != ges.end()) {
+    for(auto ge : connectedCurves) {
+      if(onCurvesSet.find(ge) != onCurvesSet.end()) {
         found++;
       }
       else {
@@ -97,10 +97,9 @@ bool bl2d(GModel *m,
     // All edges adjacent to this model edge are in the boundart layer
     // thus we only add one point on the face -- the strategy here is
     // to possibly add "fans" in a second stage as another "plugin" 
-    if(found == connectedEdges.size()) {
-      for(auto gf : connectedFaces) {
-        if(gfs.find(gf) != gfs.end()) {
-          printf("insert vertex %d in face %d\n", gv->tag(), gf->tag());
+    if(found == connectedCurves.size()) {
+      for(auto gf : connectedSurfaces) {
+        if(inSurfacesSet.find(gf) != inSurfacesSet.end()) {
           MVertex *v = gv->mesh_vertices[0];
           SPoint2 param;
           if(reparamMeshVertexOnFace(v, gf, param)) {
@@ -108,6 +107,8 @@ bool bl2d(GModel *m,
                                             param.x(), param.y()+0.1);
             gf->mesh_vertices.push_back(newv);
             spawned[v].push_back(newv);
+            printf("inserted node %lu from point %d in surface %d\n",
+                   newv->getNum(), gv->tag(), gf->tag());
           }
           else {
             Msg::Warning("Could not compute parametric coordinates of node on "
@@ -120,13 +121,16 @@ bool bl2d(GModel *m,
     // on the boundary layer -- this includes "slip" walls and embedded edges
     else {
       for(auto ge : toinsert) {
-        printf("insert vertex %d in edge %d\n", gv->tag(), ge->tag());
         MVertex *v = gv->mesh_vertices[0];
         double param;
         if(reparamMeshVertexOnEdge(v, ge, param)){
-          MVertex *newv = new MEdgeVertex(v->x(), v->y()+0.01, v->z(), ge, param-0.01);
+          MVertex *newv = new MEdgeVertex(v->x(), v->y(), v->z(), ge, param);
           ge->mesh_vertices.push_back(newv);
           spawned[v].push_back(newv);
+          printf("inserted node %lu from point %d in curve %d\n",
+                 newv->getNum(), gv->tag(), ge->tag());
+          MLine *newl = new MLine(v, newv);
+          ge->lines.push_back(newl);
         }
         else{
           Msg::Warning("Could not compute parametric coordinates of node on "
@@ -136,11 +140,11 @@ bool bl2d(GModel *m,
     }
   }
 
-  // spawn nodes for curves
-  for(auto ge : input) {
-    std::vector<GFace*> connectedFaces = ge->faces();
-    for(auto gf : connectedFaces) {
-      if(gfs.find(gf) == gfs.end()) continue;
+  // spawn nodes for model curves
+  for(auto ge : onCurves) {
+    std::vector<GFace*> connectedSurfaces = ge->faces();
+    for(auto gf : connectedSurfaces) {
+      if(inSurfacesSet.find(gf) == inSurfacesSet.end()) continue;
       for(auto v : ge->mesh_vertices) {
         SPoint2 param;
         if(reparamMeshVertexOnFace(v, gf, param)) {
@@ -153,35 +157,32 @@ bool bl2d(GModel *m,
     }
   }
 
+  std::set<GEntity*> modified;
+  for(auto vv : spawned)
+    for(auto v : vv.second)
+      modified.insert(v->onWhat());
+
   // connect old elements to new spawned vertices
-  for(auto gf : faces) {
-    for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
-      MElement *e = gf->getMeshElement(i);
+  for(auto ge : modified) {
+    for(std::size_t i = 0; i < ge->getNumMeshElements(); i++) {
+      MElement *e = ge->getMeshElement(i);
       for(std::size_t j = 0; j < e->getNumVertices(); j++) {
         auto sp = spawned[e->getVertex(j)];
         for(auto v : sp) {
-          if(v->onWhat() == gf) {
+          if(v->onWhat() == ge) {
             e->setVertex(j, v);
             break;
-          }
-          // find better solution
-          auto bnd = gf->edges();
-          for(auto ge : bnd) {
-            if(v->onWhat() == ge) {
-              e->setVertex(j, v);
-              break;
-            }
           }
         }
       }
     }
   }
 
-  // create zero-sized elements:
-  for(auto ge : input) {
-    std::vector<GFace*> connectedFaces = ge->faces();
-    for(auto gf : connectedFaces) {
-      if(gfs.find(gf) == gfs.end()) continue;
+  // create zero-sized elements in connected surfaces
+  for(auto ge : onCurves) {
+    std::vector<GFace*> connectedSurfaces = ge->faces();
+    for(auto gf : connectedSurfaces) {
+      if(inSurfacesSet.find(gf) == inSurfacesSet.end()) continue;
       for(std::size_t i = 0; i < ge->lines.size(); i++) {
         MLine *l = ge->lines[i];
         auto sp0 = spawned[l->getVertex(0)];
@@ -203,9 +204,7 @@ bool bl2d(GModel *m,
         }
       }
     }
-    // TODO create missing line elements
   }
-
 
   // TOOD: fans
 }

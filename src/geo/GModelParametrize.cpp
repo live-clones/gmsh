@@ -398,7 +398,6 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
         if(gf1) newFaceTopology[gf1].push_back(newGe->tag());
       }
     }
-    printf("\n");
   }
 
   for(auto itFT = newFaceTopology.begin(); itFT != newFaceTopology.end();
