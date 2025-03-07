@@ -110,6 +110,8 @@ bool bl2d(GModel *m,
           spawned[v].push_back(newv);
           printf("inserted node %lu from point %d in curve %d\n",
                  newv->getNum(), gv->tag(), ge->tag());
+          MLine *newl = new MLine(v, newv);
+          ge->lines.push_back(newl);
         }
         else{
           Msg::Warning("Could not compute parametric coordinates of node on "
@@ -157,7 +159,7 @@ bool bl2d(GModel *m,
     }
   }
 
-  // create zero-sized elements:
+  // create zero-sized elements in connected surfaces
   for(auto ge : onCurves) {
     std::vector<GFace*> connectedSurfaces = ge->faces();
     for(auto gf : connectedSurfaces) {
@@ -183,9 +185,7 @@ bool bl2d(GModel *m,
         }
       }
     }
-    // TODO create missing line elements
   }
-
 
   // TOOD: fans
 }
