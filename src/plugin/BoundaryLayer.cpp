@@ -35,6 +35,20 @@ StringXNumber *GMSH_BoundaryLayerPlugin::getOption(int iopt)
   return &BoundaryLayerOptions_Number[iopt];
 }
 
+/*  
+    nodes at start (s) and end (e) of GEdge ge
+    that does NOT belong tho the list of BL edges
+    but is connected to a BL edge (vertical)
+
+    Vertex a is inserted after s
+    Vertex b is (possibly) inserted before e
+
+    |
+    |
+    s--a---x(t(0))---x(t(1))--...--x(t(n-2))-----x(t(n-1))---e    
+*/
+
+
 bool bl2d(GModel *m,
           std::vector<GEdge*> &input,
           std::vector<GFace*> &faces)
@@ -80,6 +94,9 @@ bool bl2d(GModel *m,
         toinsert.push_back(ge);
       }
     }
+    // All edges adjacent to this model edge are in the boundart layer
+    // thus we only add one point on the face -- the strategy here is
+    // to possibly add "fans" in a second stage as another "plugin" 
     if(found == connectedEdges.size()) {
       for(auto gf : connectedFaces) {
         if(gfs.find(gf) != gfs.end()) {
@@ -87,8 +104,8 @@ bool bl2d(GModel *m,
           MVertex *v = gv->mesh_vertices[0];
           SPoint2 param;
           if(reparamMeshVertexOnFace(v, gf, param)) {
-            MVertex *newv = new MFaceVertex(v->x(), v->y(), v->z(), gf,
-                                            param.x(), param.y());
+            MVertex *newv = new MFaceVertex(v->x(), v->y()+0.01, v->z(), gf,
+                                            param.x(), param.y()+0.1);
             gf->mesh_vertices.push_back(newv);
             spawned[v].push_back(newv);
           }
@@ -99,13 +116,15 @@ bool bl2d(GModel *m,
         }
       }
     }
+    // insert a boundary layer node in every connected edge that is NOT
+    // on the boundary layer -- this includes "slip" walls and embedded edges
     else {
       for(auto ge : toinsert) {
         printf("insert vertex %d in edge %d\n", gv->tag(), ge->tag());
         MVertex *v = gv->mesh_vertices[0];
         double param;
         if(reparamMeshVertexOnEdge(v, ge, param)){
-          MVertex *newv = new MEdgeVertex(v->x(), v->y()+0.075, v->z(), ge, param);
+          MVertex *newv = new MEdgeVertex(v->x(), v->y()+0.01, v->z(), ge, param-0.01);
           ge->mesh_vertices.push_back(newv);
           spawned[v].push_back(newv);
         }
@@ -125,8 +144,8 @@ bool bl2d(GModel *m,
       for(auto v : ge->mesh_vertices) {
         SPoint2 param;
         if(reparamMeshVertexOnFace(v, gf, param)) {
-          MVertex *newv = new MFaceVertex(v->x(), v->y(), v->z(), gf,
-                                          param.x(), param.y());
+          MVertex *newv = new MFaceVertex(v->x(), v->y()+0.01, v->z(), gf,
+                                          param.x(), param.y()+0.01);
           gf->mesh_vertices.push_back(newv);
           spawned[v].push_back(newv);
         }
@@ -203,7 +222,7 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   GFace *gf = m->getFaceByTag(1);
 
   if(ge1 && ge2 && ge3 && ge4 && gf) {
-    std::vector<GEdge*> e = {ge1, ge2};
+    std::vector<GEdge*> e = {ge1};
     std::vector<GFace*> f = {gf};
     bl2d(m, e, f);
   }

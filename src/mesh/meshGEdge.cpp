@@ -1057,3 +1057,77 @@ int meshGEdgeTargetNumberOfPoints(GEdge *ge)
   meshGEdgeProcessing(ge, t_begin, t_end, N, Points, a, filterMinimumN);
   return N;
 }
+
+int meshGEdgeInsertBoundaryLayer(GEdge *ge, double widthBegin, double widthEnd)
+{
+  Range<double> bounds = ge->parBounds(0);
+  double t_begin = bounds.low();
+  double t_end = bounds.high();
+
+  double t_left  = t_begin;
+  double t_right = t_end;
+  double dt = (t_end - t_begin)/100;
+
+  if (widthBegin > 0) {
+    GPoint g_left = ge->point(t_left);
+    SPoint3 p0 (g_left.x(),g_left.y(),g_left.z());;
+    while (1) {
+      t_left += dt;
+      g_left = ge->point(t_left);
+      SPoint3 p1 (g_left.x(),g_left.y(),g_left.z());
+      if (distance(p1,p0) > widthBegin) break;
+    }
+    
+    double t0 = t_left-dt;
+    double t1 = t_left;
+    double eps = widthBegin*1.e-8;
+    while (1) {
+      double t_mid = (t0+t1)*.5;
+      g_left = ge->point(t_mid);
+      SPoint3 p1 (g_left.x(),g_left.y(),g_left.z());
+      d = distance (p1,p0);
+      if (fabs(d-widthBegin) < eps) {
+	t_left = t_mid;
+	break;
+      }
+      if (d > widthBegin) t0 = tmid;
+      else t1 = tmid;
+    }  
+  }
+
+  if (widthEnd > 0) {
+    GPoint g_right = ge->point(t_right);
+    SPoint3 p0 (g_right.x(),g_right.y(),g_right.z());;
+    while (1) {
+      t_right -= dt;
+      g_right = ge->point(t_right);
+      SPoint3 p1 (g_right.x(),g_right.y(),g_right.z());;
+      if (distance(p1,p0) > widthEnd) break;
+    }
+    
+    double t0 = t_right;
+    double t1 = t_right+dt;
+    double eps = widthEnd*1.e-8;
+    while (1) {
+      double t_mid = (t0+t1)*.5;
+      g_right = ge->point(t_mid);
+      SPoint3 p1 (g_right.x(),g_right.y(),g_right.z());
+      d = distance (p1,p0);
+      if (fabs(d-widthBegin) < eps) {
+	t_right = t_mid;
+	break;
+      }
+      if (d > widthBegin) t0 = tmid;
+      else t1 = tmid;
+    }  
+  }
+  
+  int N = ge->mesh_vertices.size();
+  std::vector<IntPoint> Points;
+  double a = 0.;
+  int filterMinimumN = 0;
+  meshGEdgeProcessing(ge, t_begin, t_end, N, Points, a, filterMinimumN);
+  return N;
+}
+
+

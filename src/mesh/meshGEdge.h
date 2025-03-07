@@ -32,4 +32,7 @@ int MeshExtrudedCurve(GEdge *ge);
 // options, counting the boundary vertices
 int meshGEdgeTargetNumberOfPoints(GEdge *);
 
+// add one point on ends of an edge at a given distance
+int meshGEdgeInsertBoundaryLayer(GEdge *ge, double widthBegin, double widthEnd);
+
 #endif
