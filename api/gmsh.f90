@@ -314,6 +314,8 @@ module gmsh
         gmshModelOccRevolve
     procedure, nopass :: addPipe => &
         gmshModelOccAddPipe
+    procedure, nopass :: addLoft => &
+        gmshModelOccAddLoft
     procedure, nopass :: fillet => &
         gmshModelOccFillet
     procedure, nopass :: chamfer => &
@@ -11479,12 +11481,45 @@ module gmsh
       api_outDimTags_n_)
   end subroutine gmshModelOccAddPipe
 
+  !> Add a loft in the OpenCASCADE CAD representation
+  subroutine gmshModelOccAddLoft(wireTag, &
+                                 inwire1, &
+                                 inwire2, &
+                                 tag, &
+                                 ierr)
+    interface
+    subroutine C_API(wireTag, &
+                     inwire1, &
+                     inwire2, &
+                     tag, &
+                     ierr_) &
+      bind(C, name="gmshModelOccAddLoft")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: wireTag
+      integer(c_int), value, intent(in) :: inwire1
+      integer(c_int), value, intent(in) :: inwire2
+      integer(c_int) :: tag
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: wireTag
+    integer, intent(in) :: inwire1
+    integer, intent(in) :: inwire2
+    integer(c_int) :: tag
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(wireTag=int(wireTag, c_int), &
+         inwire1=int(inwire1, c_int), &
+         inwire2=int(inwire2, c_int), &
+         tag=tag, &
+         ierr_=ierr)
+  end subroutine gmshModelOccAddLoft
+
   !> Fillet the volumes `volumeTags' on the curves `curveTags' with radii
   !! `radii'. The `radii' vector can either contain a single radius, as many
   !! radii as `curveTags', or twice as many as `curveTags' (in which case
   !! different radii are provided for the begin and end points of the curves).
-  !! Return the filleted entities in `outDimTags' as a vector of (dim, tag)
-  !! pairs. Remove the original volume if `removeVolume' is set.
+  !! Return the filleted entities in `outDimTags'. Remove the original volume if
+  !! `removeVolume' is set.
   subroutine gmshModelOccFillet(volumeTags, &
                                 curveTags, &
                                 radii, &
