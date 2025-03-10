@@ -5631,12 +5631,18 @@ gmsh::model::mesh::computeHomology(vectorpair &dimTags)
 }
 
 GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
+                                             const std::vector<std::size_t> &edges,
                                              std::vector<std::size_t> &tri)
+                                            
 {
   if(!_checkInit()) return;
   tri.clear();
   if(coord.size() % 2) {
     Msg::Error("Number of 2D coordinates should be even");
+    return;
+  }
+  if(edges.size() % 2) {
+    Msg::Error("Number of edges index should be even");
     return;
   }
 #if defined(HAVE_MESH)
@@ -5653,8 +5659,11 @@ GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
     v->setIndex(j);
     verts[j++] = v;
   }
+  std::vector<MEdge> edgesToRecover(edges.size() / 2);
+  for(std::size_t i = 0; i < edges.size(); i += 2)
+    edgesToRecover[i/2] = MEdge(verts[edges[i] - 1], verts[edges[i + 1] - 1]);
   std::vector<MTriangle *> tris;
-  delaunayMeshIn2D(verts, tris);
+  delaunayMeshIn2D(verts, tris, true, &edgesToRecover);
   if(tris.empty()) return;
   tri.resize(3 * tris.size());
   for(std::size_t i = 0; i < tris.size(); i++) {
