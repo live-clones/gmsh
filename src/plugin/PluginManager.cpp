@@ -21,6 +21,7 @@
 #include "CutBox.h"
 #include "Skin.h"
 #include "AnalyseMeshQuality.h"
+#include "AnalyseMeshQuality2.h"
 #include "Invisible.h"
 #include "CurvedBndDist.h"
 #include "MathEval.h"
@@ -269,6 +270,8 @@ void PluginManager::registerDefaultPlugins()
 #if defined(HAVE_MESH)
     allPlugins.insert(std::make_pair("AnalyseMeshQuality",
                                      GMSH_RegisterAnalyseMeshQualityPlugin()));
+    allPlugins.insert(std::make_pair("AnalyseMeshQuality2",
+                                     GMSH_RegisterAnalyseMeshQuality2Plugin()));
     allPlugins.insert(
       std::make_pair("VoroMetal", GMSH_RegisterVoroMetalPlugin()));
     allPlugins.insert(

@@ -25,6 +25,7 @@ set(SRC
   HomologyComputation.cpp HomologyPostProcessing.cpp
   Distance.cpp ExtractEdges.cpp NearestNeighbor.cpp
   AnalyseMeshQuality.cpp
+  AnalyseMeshQuality2.cpp
   CurvedBndDist.cpp
   FieldFromAmplitudePhase.cpp
   Bubbles.cpp NearToFarField.cpp
