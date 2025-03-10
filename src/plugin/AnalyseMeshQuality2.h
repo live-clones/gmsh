@@ -23,8 +23,9 @@ private:
 
 #if defined(HAVE_VISUDEV)
   // Pointwise data
-  int _numElementToScan;
-  bool _pwJac, _pwIGE, _pwICN;
+  bool _createPwView = 0;
+  int _elemNumForPwView = 0;
+  bool _pwJac = false, _pwIGE = false, _pwICN = false;
   std::map<int, std::vector<double> > _dataPViewJac;
   std::map<int, std::vector<double> > _dataPViewIGE;
   std::map<int, std::vector<double> > _dataPViewICN;
