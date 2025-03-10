@@ -2401,13 +2401,13 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize, const
   double coord_max[3] = {-1e10, -1e10, -1e10};
   double coord_min[3] = {1e10, 1e10, 1e10};
   for(size_t i = 0; i < nvert; i++) {
-    mesh->vertices.coord[4 * i + 0] = gr->mesh_vertices[i]->x();
-    mesh->vertices.coord[4 * i + 1] = gr->mesh_vertices[i]->y();
-    mesh->vertices.coord[4 * i + 2] = gr->mesh_vertices[i]->z();
-    mesh->vertices.coord[4 * i + 3] = 0.;
+    mesh->vertices.coord[4 * (i+8) + 0] = gr->mesh_vertices[i]->x();
+    mesh->vertices.coord[4 * (i+8) + 1] = gr->mesh_vertices[i]->y();
+    mesh->vertices.coord[4 * (i+8) + 2] = gr->mesh_vertices[i]->z();
+    mesh->vertices.coord[4 * (i+8) + 3] = 0.;
     for (int j=0; j<3; j++){
-      if (mesh->vertices.coord[4 * i + j] > coord_max[j]) coord_max[j] = mesh->vertices.coord[4 * i + j];
-      if (mesh->vertices.coord[4 * i + j] < coord_min[j]) coord_min[j] = mesh->vertices.coord[4 * i + j];
+      if (mesh->vertices.coord[4 * (i+8) + j] > coord_max[j]) coord_max[j] = mesh->vertices.coord[4 * (i+8) + j];
+      if (mesh->vertices.coord[4 * (i+8) + j] < coord_min[j]) coord_min[j] = mesh->vertices.coord[4 * (i+8) + j];
     }
   }
 
@@ -2418,7 +2418,8 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize, const
     coord_min[i] = 0.5*(c_max + c_min) - 100*abs(c_max - c_min);
   }
 
-  size_t i_vert = nvert;
+
+  size_t i_vert = 0;
   mesh->vertices.coord[4*i_vert+0] = coord_min[0];
   mesh->vertices.coord[4*i_vert+1] = coord_min[1];
   mesh->vertices.coord[4*i_vert+2] = coord_min[2];
@@ -2513,7 +2514,7 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize, const
     int32_t nod = mesh->tetrahedra.node[4*i+3];
     int ext = -1;
     for (int j=0; j<4; j++){
-      if (mesh->tetrahedra.node[4*i+j] >= nvert){
+      if (mesh->tetrahedra.node[4*i+j] < 8){
         ext = j;
         break;
       }
@@ -2558,7 +2559,7 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize, const
       if(myColor == tag) {
         uint32_t *n = &mesh->tetrahedra.node[4 * i];
         tets.push_back(
-          new MTetrahedron(gr->mesh_vertices[n[0]], gr->mesh_vertices[n[1]], gr->mesh_vertices[n[2]], gr->mesh_vertices[n[3]], i+1));
+          new MTetrahedron(gr->mesh_vertices[n[0]-8], gr->mesh_vertices[n[1]-8], gr->mesh_vertices[n[2]-8], gr->mesh_vertices[n[3]-8], i+1));
       }
     }
   }
@@ -2869,8 +2870,6 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
     // }
     _df->removeElements(TYPE_TRI);
   }
-
-  printf("here \n");
 
   // df->removeElements(TYPE_TRI);
   for (size_t i=0; i<alphaFaces.size(); i++){
@@ -3324,8 +3323,6 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
   HXTMesh* m;
   hxtMeshCreate(&m);
 
-  printf("created tet mesh \n");
-
   Field* field = GModel::current()->getFields()->get(sizeFieldTag);
   std::unordered_map<uint32_t, double> sizeAtNodes;
   
@@ -3647,7 +3644,7 @@ void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, co
   _createVolumeOctree3D(boundaryModel, volume_octree);
 
   // auto t5 = std::chrono::steady_clock::now(); 
-  printf("number of nodes in the mesh : %lu\n", gr->mesh_vertices.size());
+  // printf("number of nodes in the mesh : %lu\n", gr->mesh_vertices.size());
   
   std::unordered_set<MVertex*> _deleted;
   for (auto v : allVertices){
@@ -3707,7 +3704,8 @@ void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, co
   // printf("number of nodes in the mesh : %lu\n", gr->mesh_vertices.size());
 
 
-  Msg::Info("Filtered out %lu vertices from mesh\n", _deleted.size());
+  // printf("Filtered out %lu vertices from mesh\n", _deleted.size());
+  // Msg::Info("Filtered out %lu vertices from mesh\n", _deleted.size());
 }
 
 void _createBoundaryOctree3D(const std::string & boundaryModel, OctreeNode<3, 32, MElement*>& octree){
