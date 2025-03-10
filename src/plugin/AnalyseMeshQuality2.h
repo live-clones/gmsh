@@ -11,10 +11,76 @@
 #include "Plugin.h"
 #include <vector>
 class MElement;
+class data_elementMinMax2;
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterAnalyseMeshQuality2Plugin();
 }
+
+class GMSH_AnalyseMeshQuality2Plugin : public GMSH_PostPlugin {
+private:
+  GModel *_m;
+
+#if defined(HAVE_VISUDEV)
+  // Pointwise data
+  int _numElementToScan;
+  bool _pwJac, _pwIGE, _pwICN;
+  std::map<int, std::vector<double> > _dataPViewJac;
+  std::map<int, std::vector<double> > _dataPViewIGE;
+  std::map<int, std::vector<double> > _dataPViewICN;
+  int _type2tag[20] = {0};
+  int _viewOrder = 0;
+#endif
+
+  // for 1d, 2d, 3d
+  bool _computedJac[3]{}, _computedIGE[3]{}, _computedICN[3]{};
+  bool _pviewJac[3]{}, _pviewIGE[3]{}, _pviewICN[3]{};
+
+  std::vector<data_elementMinMax2> _data;
+
+public:
+  GMSH_AnalyseMeshQuality2Plugin()
+  {
+    _m = nullptr;
+    for(int i = 0; i < 3; ++i) {
+      _computedJac[i] = false;
+      _computedIGE[i] = false;
+      _computedICN[i] = false;
+      _pviewJac[i] = false;
+      _pviewIGE[i] = false;
+      _pviewICN[i] = false;
+    }
+  }
+  GMSH_PLUGIN_TYPE getType() const override { return GMSH_MESH_PLUGIN; }
+  std::string getName() const override { return "AnalyseMeshQuality2"; }
+  std::string getShortHelp() const override
+  {
+    return "Compute validity and quality of curved elements.";
+  }
+  std::string getHelp() const override;
+  std::string getAuthor() const override { return "Amaury Johnen"; }
+  int getNbOptions() const override;
+  StringXNumber *getOption(int) override;
+  PView *execute(PView *) override;
+
+private:
+  void _computeMinMaxJandValidity(int dim);
+  void _computeMinIGE(int dim);
+  void _computeMinICN(int dim);
+  int _hideWithThreshold(int askedDim, int whichMeasure, double threshold,
+                         bool greater);
+  void _printStatJacobian();
+  void _printStatIGE();
+  void _printStatICN();
+  void _clear(int askedDim);
+
+#if defined(HAVE_VISUDEV)
+  void _computePointwiseQuantities(MElement *,
+                                   const fullMatrix<double> *normals);
+  void _createPViewPointwise();
+  void _setInterpolationMatrices(PView *);
+#endif
+};
 
 class data_elementMinMax2 {
 private:
@@ -34,70 +100,6 @@ public:
   double maxJ() { return _maxJac; }
   double minS() { return _minIGE; }
   double minI() { return _minICN; }
-};
-
-class GMSH_AnalyseMeshQuality2Plugin : public GMSH_PostPlugin {
-private:
-  GModel *_m;
-
-#if defined(HAVE_VISUDEV)
-  // Pointwise data
-  int _numElementToScan;
-  bool _pwJac, _pwIGE, _pwICN;
-  std::map<int, std::vector<double> > _dataPViewJac;
-  std::map<int, std::vector<double> > _dataPViewIGE;
-  std::map<int, std::vector<double> > _dataPViewICN;
-  int _type2tag[20] = {0};
-  int _viewOrder = 0;
-#endif
-
-  // for 1d, 2d, 3d
-  bool _computedJac[3], _computedIGE[3], _computedICN[3];
-  bool _pviewJac[3], _pviewIGE[3], _pviewICN[3];
-
-  std::vector<data_elementMinMax2> _data;
-
-public:
-  GMSH_AnalyseMeshQuality2Plugin()
-  {
-    _m = nullptr;
-    for(int i = 0; i < 3; ++i) {
-      _computedJac[i] = false;
-      _computedIGE[i] = false;
-      _computedICN[i] = false;
-      _pviewJac[i] = false;
-      _pviewIGE[i] = false;
-      _pviewICN[i] = false;
-    }
-  }
-  std::string getName() const { return "AnalyseMeshQuality2"; }
-  std::string getShortHelp() const
-  {
-    return "Compute validity and quality of curved elements.";
-  }
-  std::string getHelp() const;
-  std::string getAuthor() const { return "Amaury Johnen"; }
-  int getNbOptions() const;
-  StringXNumber *getOption(int);
-  PView *execute(PView *);
-
-private:
-  void _computeMinMaxJandValidity(int dim);
-  void _computeMinIGE(int dim);
-  void _computeMinICN(int dim);
-  int _hideWithThreshold(int askedDim, int whichMeasure, double threshold,
-                         bool greater);
-  void _printStatJacobian();
-  void _printStatIGE();
-  void _printStatICN();
-  void _clear(int askedDim);
-
-#if defined(HAVE_VISUDEV)
-  void _computePointwiseQuantities(MElement *,
-                                   const fullMatrix<double> *normals);
-  void _createPViewPointwise();
-  void _setInterpolationMatrices(PView *);
-#endif
 };
 
 #endif
