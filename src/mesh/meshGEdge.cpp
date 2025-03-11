@@ -218,6 +218,7 @@ struct F_Lc {
       lc_here = BGM_MeshSize(ge->getEndVertex(), t, 0, p.x(), p.y(), p.z());
 
     lc_here = std::min(lc_here, BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z()));
+    //    printf("LC HERE %g %g\n",t,lc_here);
     SVector3 der = ge->firstDer(t);
     return norm(der) / lc_here;
   }
@@ -784,7 +785,9 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
                            CTX::instance()->lc);
   ge->setLength(length);
   Points.clear();
+  //  printf("length %12.5E\n",length);
 
+  
   if(length < CTX::instance()->mesh.toleranceEdgeLength) {
     ge->setTooSmall(true);
   }
@@ -1062,7 +1065,7 @@ static void assign (GEdge *ge, double t, MVertex *v){
   GPoint gp = ge->point(t);
   double p;
   v->getParameter(0,p);
-  printf("vertex %d  = %g -> %g\n",v->getNum(),p,t);
+  //  printf("FOUND --> vertex %d  = %g -> %g\n",v->getNum(),p,t);
   v->x() = gp.x();
   v->y() = gp.y();
   v->z() = gp.z();
@@ -1088,16 +1091,16 @@ int meshGEdgeInsertBoundaryLayer(GEdge *ge, double width)
   size_t start = 0;
   size_t end = ge->mesh_vertices.size() - 1;
   
-  printf("start %d %12.5E %12.5E \n",ge->tag(),l0->getLength(),ln->getLength());
+  printf("GEdge %d -- end line lengths %12.5E %12.5E \n",ge->tag(),l0->getLength(),ln->getLength());
 
   if (l0->getLength() < 1.e-12) {
 
     for (auto v : ge->mesh_vertices){
       double p;
       v->getParameter(0,p);
-      printf(" %12.5E ",p);
+      //      printf(" %12.5E ",p);
     }
-    printf("\n");
+    //    printf("\n");
     
     diff++;
     GPoint g_left = ge->point(t_left);
@@ -1112,7 +1115,7 @@ int meshGEdgeInsertBoundaryLayer(GEdge *ge, double width)
     double t0 = t_left-dt;
     double t1 = t_left;
 
-    printf("first guess %12.5E %12.5E %12.5E\n",t_left,t0,t1);
+    //    printf("--> first guess %12.5E %12.5E %12.5E\n",t_left,t0,t1);
 
     while (1) {
       double t_mid = (t0+t1)*.5;
@@ -1163,28 +1166,30 @@ int meshGEdgeInsertBoundaryLayer(GEdge *ge, double width)
 
   if (diff == 0)return 0;
   
-  int N = ge->mesh_vertices.size()-diff+2;
+  int N;
   std::vector<IntPoint> Points;
   double a = 0.;
   int filterMinimumN = 0;
 
-  printf("%12.5E %12.5E %12.5E %12.5E %d %d %d %d\n",l0->getLength(),ln->getLength(),t_left, t_right,start,end,ge->mesh_vertices.size(),N );
 
   int KK = meshGEdgeProcessing(ge, t_left, t_right, N, Points, a, filterMinimumN);
-  N = ge->mesh_vertices.size()-diff;
-  printf("KKN %d %d\n",KK,N);
+  N = ge->mesh_vertices.size()-diff+2;
+
+  //  printf("--> (%12.5E %12.5E) a = %12.5E\n",t_left, t_right,a );
+
   {
     int count = 1, NUMP = 1;
     const double b = a / static_cast<double>(N - 1);
     while(NUMP < N - 1) {
       auto P1 = Points[count - 1];
       auto P2 = Points[count];
+      //      printf("count %d %g -- (%12.5E %12.5E) (%12.5E %12.5E) \n",count,b,P1.p,P1.t,P2.p,P2.t);
       const double d = (double)NUMP * b;
       if((std::abs(P2.p) >= std::abs(d)) && (std::abs(P1.p) < std::abs(d))) {
         double const dt = P2.t - P1.t;
         double const dp = P2.p - P1.p;
         double const t = P1.t + dt / dp * (d - P1.p);
-	assign (ge, t, ge->mesh_vertices[++start]);
+	assign (ge, t, ge->mesh_vertices[start++]);
 	NUMP++;
       }
       else {

@@ -128,9 +128,17 @@ bool bl2d(GModel *m,
         double param;
         if(reparamMeshVertexOnEdge(v, ge, param)){
 	  bool end = ge->getEndVertex() == gv;
-          MVertex *newv = new MEdgeVertex(v->x(), v->y(), v->z(), ge, param);
-	  if (end) ge->mesh_vertices.push_back(newv);
-	  else ge->mesh_vertices.insert(ge->mesh_vertices.begin(),newv);
+	  MVertex *newv;
+	  if (end){
+	    MEdgeVertex *vend = static_cast<MEdgeVertex*> (ge->mesh_vertices.back());
+	    newv = new MEdgeVertex(v->x(), v->y(), v->z(), ge, param,vend->getLc());
+	    ge->mesh_vertices.push_back(newv);
+	  }
+	  else {
+	    MEdgeVertex *vbeg = static_cast<MEdgeVertex*> (ge->mesh_vertices.front());
+	    newv = new MEdgeVertex(v->x(), v->y(), v->z(), ge, param,vbeg->getLc());
+	    ge->mesh_vertices.insert(ge->mesh_vertices.begin(),newv);
+	  }
 	  
           spawned[v].push_back(newv);
           printf("inserted node %lu from point %d in curve %d -- %lu internal nodes\n",
@@ -262,7 +270,7 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   GEdge *ge4 = m->getEdgeByTag(4);
   GFace *gf = m->getFaceByTag(1);
 
-  double width = 1.e-1;
+  double width = 3.e-1;
   if(ge1 && ge2 && ge3 && ge4 && gf) {
     std::vector<GEdge*> e = {ge1,ge2,ge4};
     std::vector<GFace*> f = {gf};
