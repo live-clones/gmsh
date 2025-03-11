@@ -1058,6 +1058,17 @@ int meshGEdgeTargetNumberOfPoints(GEdge *ge)
   return N;
 }
 
+static void assign (GEdge *ge, double t, MVertex *v){
+  GPoint gp = ge->point(t);
+  double p;
+  v->getParameter(0,p);
+  printf("vertex %d  = %g -> %g\n",v->getNum(),p,t);
+  v->x() = gp.x();
+  v->y() = gp.y();
+  v->z() = gp.z();
+  v->setParameter(0,gp.u());
+}
+
 int meshGEdgeInsertBoundaryLayer(GEdge *ge, double width)
 {
   Range<double> bounds = ge->parBounds(0);
@@ -1071,9 +1082,23 @@ int meshGEdgeInsertBoundaryLayer(GEdge *ge, double width)
   MLine *l0 = ge->lines.front();
   MLine *ln = ge->lines.back();
 
+  double eps = width*1.e-8;
   int diff = 0;
+
+  size_t start = 0;
+  size_t end = ge->mesh_vertices.size() - 1;
   
+  printf("start %d %12.5E %12.5E \n",ge->tag(),l0->getLength(),ln->getLength());
+
   if (l0->getLength() < 1.e-12) {
+
+    for (auto v : ge->mesh_vertices){
+      double p;
+      v->getParameter(0,p);
+      printf(" %12.5E ",p);
+    }
+    printf("\n");
+    
     diff++;
     GPoint g_left = ge->point(t_left);
     SPoint3 p0 (g_left.x(),g_left.y(),g_left.z());;
@@ -1081,60 +1106,93 @@ int meshGEdgeInsertBoundaryLayer(GEdge *ge, double width)
       t_left += dt;
       g_left = ge->point(t_left);
       SPoint3 p1 (g_left.x(),g_left.y(),g_left.z());
-      if (distance(p1,p0) > widthBegin) break;
+      if (p1.distance(p0) > width) break;
     }
     
     double t0 = t_left-dt;
     double t1 = t_left;
-    double eps = widthBegin*1.e-8;
+
+    printf("first guess %12.5E %12.5E %12.5E\n",t_left,t0,t1);
+
     while (1) {
       double t_mid = (t0+t1)*.5;
       g_left = ge->point(t_mid);
       SPoint3 p1 (g_left.x(),g_left.y(),g_left.z());
-      d = distance (p1,p0);
-      if (fabs(d-widthBegin) < eps) {
+      double d = p1.distance(p0);
+      //      printf("%12.5E %12.5E %12.5E %12.5E %12.5E \n",t0,t1,t_mid,d,width);
+      if (fabs(d-width) < eps) {
 	t_left = t_mid;
 	break;
       }
-      if (d > widthBegin) t0 = tmid;
-      else t1 = tmid;
+      if (d > width) t1 = t_mid;
+      else t0 = t_mid;
     }  
+    assign (ge, t_left, ge->mesh_vertices[start]);
+    start++;
   }
 
+  
   if (ln->getLength() < 1.e-12) {
     diff++;
     GPoint g_right = ge->point(t_right);
-    SPoint3 p0 (g_right.x(),g_right.y(),g_right.z());;
+    SPoint3 p0 (g_right.x(),g_right.y(),g_right.z());
     while (1) {
       t_right -= dt;
       g_right = ge->point(t_right);
-      SPoint3 p1 (g_right.x(),g_right.y(),g_right.z());;
-      if (distance(p1,p0) > widthEnd) break;
+      SPoint3 p1 (g_right.x(),g_right.y(),g_right.z());
+      if (p1.distance(p0) > width) break;
     }
     
     double t0 = t_right;
     double t1 = t_right+dt;
-    double eps = widthEnd*1.e-8;
     while (1) {
       double t_mid = (t0+t1)*.5;
       g_right = ge->point(t_mid);
       SPoint3 p1 (g_right.x(),g_right.y(),g_right.z());
-      d = distance (p1,p0);
-      if (fabs(d-widthBegin) < eps) {
+      double d = p1.distance(p0);
+      if (fabs(d-width) < eps) {
 	t_right = t_mid;
 	break;
       }
-      if (d > widthBegin) t0 = tmid;
-      else t1 = tmid;
+      if (d > width) t0 = t_mid;
+      else t1 = t_mid;
     }  
+    assign (ge, t_right, ge->mesh_vertices[end]);
+    end--;
   }
+
+  if (diff == 0)return 0;
   
-  int N = ge->mesh_vertices.size() - diff;
+  int N = ge->mesh_vertices.size()-diff+2;
   std::vector<IntPoint> Points;
   double a = 0.;
   int filterMinimumN = 0;
-  meshGEdgeProcessing(ge, t_left, t_right, N, Points, a, filterMinimumN);
-  return N;
+
+  printf("%12.5E %12.5E %12.5E %12.5E %d %d %d %d\n",l0->getLength(),ln->getLength(),t_left, t_right,start,end,ge->mesh_vertices.size(),N );
+
+  int KK = meshGEdgeProcessing(ge, t_left, t_right, N, Points, a, filterMinimumN);
+  N = ge->mesh_vertices.size()-diff;
+  printf("KKN %d %d\n",KK,N);
+  {
+    int count = 1, NUMP = 1;
+    const double b = a / static_cast<double>(N - 1);
+    while(NUMP < N - 1) {
+      auto P1 = Points[count - 1];
+      auto P2 = Points[count];
+      const double d = (double)NUMP * b;
+      if((std::abs(P2.p) >= std::abs(d)) && (std::abs(P1.p) < std::abs(d))) {
+        double const dt = P2.t - P1.t;
+        double const dp = P2.p - P1.p;
+        double const t = P1.t + dt / dp * (d - P1.p);
+	assign (ge, t, ge->mesh_vertices[++start]);
+	NUMP++;
+      }
+      else {
+        count++;
+      }
+    }
+  }
+  return 0;
 }
 
 

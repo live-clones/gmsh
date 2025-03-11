@@ -8,6 +8,7 @@
 #include "MLine.h"
 #include "MTriangle.h"
 #include "MQuadrangle.h"
+#include "meshGEdge.h"
 #include "BoundaryLayer.h"
 
 StringXNumber BoundaryLayerOptions_Number[] = {
@@ -51,7 +52,8 @@ StringXNumber *GMSH_BoundaryLayerPlugin::getOption(int iopt)
 
 bool bl2d(GModel *m,
           std::vector<GEdge*> &onCurves,
-          std::vector<GFace*> &inSurfaces)
+          std::vector<GFace*> &inSurfaces,
+	  double width)
 {
   // for each GVertex connected to the GEdges in onCurves:
   //   - if all adjacent GEdges to the GVertex are in onCurves, spawn 1 MVertex
@@ -74,6 +76,7 @@ bool bl2d(GModel *m,
     auto vs = ge->vertices();
     connectedPoints.insert(vs.begin(), vs.end());
   }
+
 
   // spawn nodes for model points
   for(auto gv : connectedPoints) {
@@ -103,8 +106,8 @@ bool bl2d(GModel *m,
           MVertex *v = gv->mesh_vertices[0];
           SPoint2 param;
           if(reparamMeshVertexOnFace(v, gf, param)) {
-            MVertex *newv = new MFaceVertex(v->x(), v->y()+0.01, v->z(), gf,
-                                            param.x(), param.y()+0.1);
+            MVertex *newv = new MFaceVertex(v->x(), v->y(), v->z(), gf,
+                                            param.x(), param.y());
             gf->mesh_vertices.push_back(newv);
             spawned[v].push_back(newv);
             printf("inserted node %lu from point %d in surface %d\n",
@@ -124,13 +127,16 @@ bool bl2d(GModel *m,
         MVertex *v = gv->mesh_vertices[0];
         double param;
         if(reparamMeshVertexOnEdge(v, ge, param)){
+	  bool end = ge->getEndVertex() == gv;
           MVertex *newv = new MEdgeVertex(v->x(), v->y(), v->z(), ge, param);
-          ge->mesh_vertices.push_back(newv);
+	  if (end) ge->mesh_vertices.push_back(newv);
+	  else ge->mesh_vertices.insert(ge->mesh_vertices.begin(),newv);
+	  
           spawned[v].push_back(newv);
-          printf("inserted node %lu from point %d in curve %d\n",
-                 newv->getNum(), gv->tag(), ge->tag());
-          MLine *newl = new MLine(v, newv);
-          ge->lines.push_back(newl);
+          printf("inserted node %lu from point %d in curve %d -- %lu internal nodes\n",
+                 newv->getNum(), gv->tag(), ge->tag(),ge->mesh_vertices.size());
+	  if (end)ge->lines.push_back(new MLine(v, newv));
+	  else ge->lines.insert(ge->lines.begin(),new MLine(newv, v));
         }
         else{
           Msg::Warning("Could not compute parametric coordinates of node on "
@@ -157,26 +163,60 @@ bool bl2d(GModel *m,
     }
   }
 
+  
   std::set<GEntity*> modified;
   for(auto vv : spawned)
     for(auto v : vv.second)
       modified.insert(v->onWhat());
 
   // connect old elements to new spawned vertices
-  for(auto ge : modified) {
-    for(std::size_t i = 0; i < ge->getNumMeshElements(); i++) {
-      MElement *e = ge->getMeshElement(i);
+
+  //  for(auto ge : modified) {
+  //    for(std::size_t i = 0; i < ge->getNumMeshElements(); i++) {
+  //      MElement *e = ge->getMeshElement(i);
+  //      for(std::size_t j = 0; j < e->getNumVertices(); j++) {
+  //	auto sp = spawned[e->getVertex(j)];
+  //	for(auto v : sp) {
+  //	  if(v->onWhat() == ge) {
+  //	    e->setVertex(j, v);
+  //	    break;
+  //	  }
+  //	}
+  //      }
+  //    }
+  //  }
+
+  for (auto gf : inSurfaces) {
+    for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
+      MElement *e = gf->getMeshElement(i);
       for(std::size_t j = 0; j < e->getNumVertices(); j++) {
-        auto sp = spawned[e->getVertex(j)];
-        for(auto v : sp) {
-          if(v->onWhat() == ge) {
-            e->setVertex(j, v);
-            break;
-          }
-        }
+	auto sp = spawned[e->getVertex(j)];
+	for(auto v : sp) {
+	  if(v->onWhat() == gf || v->onWhat()->dim() == 1) {
+	      e->setVertex(j, v);
+	  }
+	}
       }
     }
   }
+	
+  /*  for(auto ge : modified) {
+    std::vector<GFace*> connectedSurfaces = ge->faces();
+    for(auto gf : connectedSurfaces) {
+      for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
+	MElement *e = gf->getMeshElement(i);
+	for(std::size_t j = 0; j < e->getNumVertices(); j++) {
+	  auto sp = spawned[e->getVertex(j)];
+	  for(auto v : sp) {
+	    if(v->onWhat() == ge) {
+	      e->setVertex(j, v);
+	      break;
+	    }
+	  }
+        }
+      }
+    }
+    }*/
 
   // create zero-sized elements in connected surfaces
   for(auto ge : onCurves) {
@@ -206,7 +246,9 @@ bool bl2d(GModel *m,
     }
   }
 
-  // TOOD: fans
+  for (GModel::eiter eit = m->firstEdge() ; eit != m->lastEdge() ; ++eit) meshGEdgeInsertBoundaryLayer(*eit, width);
+
+  // TODO: fans
 }
 
 PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
@@ -220,10 +262,11 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   GEdge *ge4 = m->getEdgeByTag(4);
   GFace *gf = m->getFaceByTag(1);
 
+  double width = 1.e-1;
   if(ge1 && ge2 && ge3 && ge4 && gf) {
-    std::vector<GEdge*> e = {ge1};
+    std::vector<GEdge*> e = {ge1,ge2,ge4};
     std::vector<GFace*> f = {gf};
-    bl2d(m, e, f);
+    bl2d(m, e, f, width);
   }
 
   return v;
