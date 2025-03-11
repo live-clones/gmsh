@@ -510,11 +510,8 @@ static bool readMSH4Overlaps(GModel *const model, FILE *fp, bool partition,
       return false;
     }
   }
-  Msg::Info("Reading overlaps: %lu points, %lu edges, %lu faces, %lu regions", numPoints,
+  Msg::Debug("Reading overlaps: %lu points, %lu edges, %lu faces, %lu regions", numPoints,
             numEdges, numFaces, numRegions);
-  for(size_t ipoint = 0; ipoint < numPoints; ++ipoint) {
-    // Todo: implement 0D
-  }
   // Read all edges.
   for(size_t iedge = 0; iedge < numEdges; ++iedge) {
     int tagParent, numOverlaps;
@@ -816,7 +813,7 @@ static bool readMSH4Overlaps(GModel *const model, FILE *fp, bool partition,
     // Add the manager to the model
     model->addOverlapRegionManager(tagParent, std::move(manager));
   }
-  Msg::Info("Number of managers created: %lu edges %lu faces %lu regions", model->getOverlapEdgeManagers().size(),
+  Msg::Debug("Number of managers created: %lu edges %lu faces %lu regions", model->getOverlapEdgeManagers().size(),
             model->getOverlapFaceManagers().size(), model->getOverlapRegionManagers().size());
   for(size_t ireg = 0; ireg < numRegions; ++ireg) {
     // Todo: implement 3D
@@ -836,7 +833,7 @@ static bool readMSH4OverlapBoundaries(GModel *const model, FILE *fp,
   else {
     if(fscanf(fp, "%d", &numBlocks) != 1) return false;
   }
-  Msg::Info("Reading %d overlap boundaries", numBlocks);
+  Msg::Debug("Reading %d overlap boundaries", numBlocks);
   // Now read numBlocks lines of 5 int, formatted as dim parent i j tag
   int buffer[4];
   for(int k = 0; k < numBlocks; ++k) {
@@ -1402,20 +1399,20 @@ readMSH4Edges(GModel *const model, FILE *fp, bool binary, double version)
   // First line indicates the number of edges, then one line per edge
   if(binary) {
     if(fread(&numTags, sizeof(std::size_t), 1, fp) != 1) {
-      Msg::Info("readMSH4Edges: Error reading number of edges (binary).");
+      Msg::Error("readMSH4Edges: Error reading number of edges (binary).");
       return {};
     }
   }
   else {
     if(fscanf(fp, "%lu", &numTags) != 1) {
-      Msg::Info("readMSH4Edges: Error reading number of edges (text).");
+      Msg::Error("readMSH4Edges: Error reading number of edges (text).");
       return {};
     }
   }
 
   if(numTags == 0) return {};
 
-  Msg::Info("readMSH4Edges with %lu elements", numTags);
+  Msg::Debug("readMSH4Edges with %lu elements", numTags);
 
   std::vector<std::array<std::size_t, 3>> output;
   output.reserve(numTags);
@@ -1449,21 +1446,21 @@ readMSH4Faces(GModel *const model, FILE *fp, bool binary, double version)
 
   if(binary) {
     if(fread(&numTags, sizeof(std::size_t), 1, fp) != 1) {
-      Msg::Info("readMSH4Faces: Error reading number of faces (binary).");
+      Msg::Error("readMSH4Faces: Error reading number of faces (binary).");
       return {};
     }
   }
   else {
     if(fscanf(fp, "%lu", &numTags) != 1) {
-      Msg::Info("readMSH4Faces: Error reading number of faces (binary).");
-
+      Msg::Error("readMSH4Faces: Error reading number of faces (binary).");
+      return {};
     }
   }
 
   if (numTags == 0)
     return {};
 
-  Msg::Info("readMSH4Faces with %lu elements", numTags);
+  Msg::Debug("ReadMSH4Faces with %lu elements", numTags);
 
   std::vector<std::pair<std::size_t, std::vector<std::size_t>>> output;
   output.reserve(numTags);
@@ -1908,7 +1905,6 @@ int GModel::_readMSH4(const std::string &name)
       partitioned = true;
     }
     else if(!strncmp(&str[1], "OverlapEntities", 15)) {
-      Msg::Info("Reading overlap entities");
       if(!readMSH4Overlaps(this, fp, true, binary, swap, version)) {
         Msg::Error("Could not read overlap entities");
         fclose(fp);
@@ -1916,7 +1912,6 @@ int GModel::_readMSH4(const std::string &name)
       }
     }
     else if(!strncmp(&str[1], "OverlapBoundaries", 17)) {
-      Msg::Info("Reading overlap boundaries");
       if(!readMSH4OverlapBoundaries(this, fp, true, binary, swap, version)) {
         Msg::Error("Could not read overlap boundaries");
         fclose(fp);
@@ -1997,7 +1992,7 @@ int GModel::_readMSH4(const std::string &name)
     else if(!strncmp(&str[1], "EdgeTags", 8)) {
       auto edgeTags = 
         readMSH4Edges(this, fp, binary, version);
-      Msg::Info("Read %lu edge tags from file", edgeTags.size());
+      Msg::Debug("Read %lu edge tags from file", edgeTags.size());
       for (auto& elem: edgeTags) {
         // EdgeTag, nodeTag1, nodeTag2 format
         MVertex* v1 = getMeshVertexByTag(elem[1]);
@@ -2008,12 +2003,12 @@ int GModel::_readMSH4(const std::string &name)
           this->_mapEdgeNum.insert({std::move(edge), elem[0]});
         }
       }
-      Msg::Info("Total number of edges is now %lu (from %lu read tags)", this->_mapEdgeNum.size(), edgeTags.size());
+      Msg::Debug("Total number of edges is now %lu (from %lu read tags)", this->_mapEdgeNum.size(), edgeTags.size());
     }
     else if(!strncmp(&str[1], "FaceTags", 8)) {
       auto faceTags = 
         readMSH4Faces(this, fp, binary, version);
-      Msg::Info("Read %lu face tags from file", faceTags.size());
+      Msg::Debug("Read %lu face tags from file", faceTags.size());
       for (auto& elem: faceTags) {
         // Always 3 or 4 nodes
         MVertex* v1 = getMeshVertexByTag(elem.second.at(0));
@@ -2029,7 +2024,7 @@ int GModel::_readMSH4(const std::string &name)
           this->_mapFaceNum.insert({std::move(face), elem.first});
         }
       }
-      Msg::Info("Total number of faces is now %lu", this->_mapFaceNum.size());
+      Msg::Debug("Total number of faces is now %lu", this->_mapFaceNum.size());
     }
     else if(!strncmp(&str[1], "Periodic", 8)) {
       if(!readMSH4PeriodicNodes(this, fp, binary, swap, version)) {
@@ -4832,8 +4827,6 @@ static optional<std::unordered_set<MEdge, MEdgeHash>> writeMSH4Edges(GModel *con
   if(binary) fprintf(fp, "\n");
 
   fprintf(fp, "$EndEdgeTags\n");
-
-  Msg::StatusBar(true, "Done writing %lu edges in %gs (Instead of %lu edges).", edgeTags.size(), TimeOfDay() - t1, model->getNumMEdges());
   return logEdges;
 }
 
@@ -4967,8 +4960,6 @@ static void writeMSH4Faces(GModel *const model, FILE *fp, bool partitioned,
 
   if(binary) fprintf(fp, "\n");
   fprintf(fp, "$EndFaceTags\n");
-  Msg::StatusBar(true, "Done writing %lu faces in %gs.", faceTagsToKeep.size(),
-                 TimeOfDay() - t1);
 }
 
 int GModel::_writeMSH4(const std::string &name, double version, bool binary,
@@ -5108,7 +5099,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
       Msg::Warning("Passed adjacency check");
     }
     else {
-      Msg::Warning("Skipping adjacency check");
+      Msg::Debug("Skipping adjacency check");
     }
   }
   else {
