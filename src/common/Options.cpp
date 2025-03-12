@@ -746,7 +746,7 @@ void PrintOptions(int num, int level, int diff, int help, const char *filename,
 #if defined(HAVE_POST)
     for(std::size_t i = 0; i < PView::list.size(); i++) {
       char tmp[256];
-      sprintf(tmp, "View[%lu].", i);
+      sprintf(tmp, "View[%zu].", i);
       PrintOptionCategory(level, diff, help, "View options (strings)", file,
                           vec);
       PrintStringOptions(i, level, diff, help, ViewOptions_String, tmp, file,

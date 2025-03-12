@@ -998,7 +998,7 @@ int CellComplex::saveComplex(const std::string &filename)
   for(int dim = 0; dim < 4; dim++){
     for(citer cit = firstCell(dim); cit != lastCell(dim); cit++){
       Cell* cell = *cit;
-      fprintf(fp, "%d %d %d %d %lu", cell->getNum(), cell->getType(),
+      fprintf(fp, "%d %d %d %d %zu", cell->getNum(), cell->getType(),
           1, cell->getDomain(), cell->getNumVertices());
       for(std::size_t i = 0; i < cell->getNumVertices(); i++){
     fprintf(fp, " %d", cell->getVertex(i));
