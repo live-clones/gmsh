@@ -1023,7 +1023,7 @@ static bool readMSH4PeriodicNodes(GModel *const model, FILE *fp, bool binary,
     }
     else {
       if(version >= 4.1) {
-        std::size_t numAffine;
+        std::size_t numAffine = 0;
         if(fscanf(fp, "%lu", &numAffine) != 1) { return false; }
         if(numAffine) {
           std::vector<double> tfo(numAffine);
