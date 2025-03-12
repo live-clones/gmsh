@@ -3,6 +3,7 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include <sstream>
 #include <set>
 #include "GModel.h"
 #include "MLine.h"
@@ -13,8 +14,17 @@
 #include "winslowUntangler.h"
 
 StringXNumber BoundaryLayerOptions_Number[] = {
-  {GMSH_FULLRC, "Test", nullptr, 1.}
+  {GMSH_FULLRC, "Width", nullptr, 1.e-2},
+  {GMSH_FULLRC, "Hwall", nullptr, 1.e-3},
+  {GMSH_FULLRC, "NbLayers", nullptr, 10}
 };
+
+StringXString BoundaryLayerOptions_String[] = {
+  {GMSH_FULLRC, "Volumes", nullptr, ""},
+  {GMSH_FULLRC, "Surfaces", nullptr, ""},
+  {GMSH_FULLRC, "Curves", nullptr, ""},
+};
+
 
 extern "C" {
   GMSH_Plugin *GMSH_RegisterBoundaryLayerPlugin() {
@@ -36,6 +46,17 @@ StringXNumber *GMSH_BoundaryLayerPlugin::getOption(int iopt)
 {
   return &BoundaryLayerOptions_Number[iopt];
 }
+
+int GMSH_BoundaryLayerPlugin::getNbOptionsStr() const
+{
+  return sizeof(BoundaryLayerOptions_String) / sizeof(StringXString);
+}
+
+StringXString *GMSH_BoundaryLayerPlugin::getOptionStr(int iopt)
+{
+  return &BoundaryLayerOptions_String[iopt];
+}
+
 
 /*  
     nodes at start (s) and end (e) of GEdge ge
@@ -339,8 +360,9 @@ bool bl2d(GModel *m,
 	      (uint32_t)e->getVertex(3)->getIndex()});
       }
     }
-    printf("%lu points %lu triangles \n", points.size(), locked.size());
+
     untangle_triangles_2D (points, locked, triangles, triIdealShapes[gf] );
+
     for (auto v : verts ) {
       int i = v->getIndex();
       if (!locked[i]){
@@ -356,23 +378,58 @@ bool bl2d(GModel *m,
   }
 }
 
+std::string GMSH_BoundaryLayerPlugin::parse(std::string str, std::list<int> &physical)
+{
+  // Remove spaces
+  str.erase(remove(str.begin(), str.end(), ' '), str.end());
+
+  // Replace commas by spaces
+  replace(str.begin(), str.end(), ',', ' ');
+
+  // Init string stream
+  std::stringstream stream;
+  stream << str;
+
+  // Parse stream for integers
+  int tag;
+  std::string tmp;
+  while(!stream.eof()) {
+    stream >> tmp; // Take next 'word'
+    if(sscanf(tmp.c_str(), "%d", &tag) > 0) physical.push_back(tag);
+  }
+
+  // Return modified string
+  return str;
+}
+
+
 PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
 {
-  int test = (int)BoundaryLayerOptions_Number[0].def;
-
   GModel *m = GModel::current();
-  GEdge *ge1 = m->getEdgeByTag(1);
-  GEdge *ge2 = m->getEdgeByTag(2);
-  GEdge *ge3 = m->getEdgeByTag(3);
-  GEdge *ge4 = m->getEdgeByTag(4);
-  GFace *gf = m->getFaceByTag(1);
 
-  double width = 2.e-2;
-  if(ge1 && ge2 && ge3 && ge4 && gf) {
-    std::vector<GEdge*> e = {ge1,ge2,ge4};
-    std::vector<GFace*> f = {gf};
-    bl2d(m, e, f, width);
+  std::string volume = BoundaryLayerOptions_String[0].def;
+  std::string surface = BoundaryLayerOptions_String[1].def;
+  std::string curve = BoundaryLayerOptions_String[2].def;
+
+  std::vector<std::list<int> > entities(3);
+  curve = parse(curve, entities[0]);
+  surface = parse(surface, entities[1]);
+  volume = parse(volume, entities[2]);
+  
+  std::vector<GEdge*> e;
+  for (auto c : entities[0]) {
+    GEdge *ge = m->getEdgeByTag(c);
+    if (ge) e.push_back(ge);
   }
+  std::vector<GFace*> f;
+  for (auto s : entities[1]) {
+    GFace *gf = m->getFaceByTag(s);
+    if (gf) f.push_back(gf);
+  }
+
+  double width = BoundaryLayerOptions_Number[0].def;
+  
+  bl2d(m, e, f, width);
 
   return v;
 }

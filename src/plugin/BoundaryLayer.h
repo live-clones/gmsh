@@ -6,6 +6,8 @@
 #ifndef BOUNDARY_LAYER_H
 #define BOUNDARY_LAYER_H
 
+#include <list>
+#include <string>
 #include "Plugin.h"
 
 extern "C" {
@@ -13,6 +15,7 @@ GMSH_Plugin *GMSH_RegisterBoundaryLayerPlugin();
 }
 
 class GMSH_BoundaryLayerPlugin : public GMSH_PostPlugin {
+  std::string parse(std::string str, std::list<int> &physical);
 public:
   GMSH_BoundaryLayerPlugin() {}
   std::string getName() const { return "BoundaryLayer"; }
@@ -20,6 +23,8 @@ public:
   std::string getHelp() const;
   int getNbOptions() const;
   StringXNumber *getOption(int iopt);
+  int getNbOptionsStr() const;
+  StringXString *getOptionStr(int iopt);
   PView *execute(PView *);
 };
 
