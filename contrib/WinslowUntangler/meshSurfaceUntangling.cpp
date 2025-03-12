@@ -138,6 +138,9 @@ bool buildTrianglesAndTargetsFromElements(
                                      vec2{0., 1.}};
       std::array<double, 2> p [4] = {points[elements[i][0]], points[elements[i][1]],
 				     points[elements[i][2]], points[elements[i][3]]};
+
+      //      printf("%d %d %d %d\n",elements[i][0],elements[i][1],elements[i][2],elements[i][3]);
+
       for(size_t k = 0; k < 4; ++k) {
         triangles.push_back({elements[i][quad_dcp[k][0]],
                              elements[i][quad_dcp[k][1]],
@@ -147,7 +150,7 @@ bool buildTrianglesAndTargetsFromElements(
 
 	double l = 1;//sqrt(fabs(area));
 
-	//printf("l = %g\n",l);
+	//	printf("area = %g\n",area);
 
         std::array<vec2, 3> target = {qtarget[quad_dcp[k][0]]*l,
                                       qtarget[quad_dcp[k][1]]*l,

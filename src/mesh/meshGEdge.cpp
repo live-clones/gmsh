@@ -218,6 +218,7 @@ struct F_Lc {
       lc_here = BGM_MeshSize(ge->getEndVertex(), t, 0, p.x(), p.y(), p.z());
 
     lc_here = std::min(lc_here, BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z()));
+    //    printf("LC HERE %g %g\n",t,lc_here);
     SVector3 der = ge->firstDer(t);
     return norm(der) / lc_here;
   }
@@ -784,7 +785,9 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
                            CTX::instance()->lc);
   ge->setLength(length);
   Points.clear();
+  //  printf("length %12.5E\n",length);
 
+  
   if(length < CTX::instance()->mesh.toleranceEdgeLength) {
     ge->setTooSmall(true);
   }
@@ -1057,3 +1060,144 @@ int meshGEdgeTargetNumberOfPoints(GEdge *ge)
   meshGEdgeProcessing(ge, t_begin, t_end, N, Points, a, filterMinimumN);
   return N;
 }
+
+static void assign (GEdge *ge, double t, MVertex *v){
+  GPoint gp = ge->point(t);
+  double p;
+  v->getParameter(0,p);
+  //  printf("FOUND --> vertex %d  = %g -> %g\n",v->getNum(),p,t);
+  v->x() = gp.x();
+  v->y() = gp.y();
+  v->z() = gp.z();
+  v->setParameter(0,gp.u());
+}
+
+int meshGEdgeInsertBoundaryLayer(GEdge *ge, double width)
+{
+  Range<double> bounds = ge->parBounds(0);
+  double t_begin = bounds.low();
+  double t_end = bounds.high();
+
+  double t_left  = t_begin;
+  double t_right = t_end;
+  double dt = (t_end - t_begin)/100;
+
+  MLine *l0 = ge->lines.front();
+  MLine *ln = ge->lines.back();
+
+  double eps = width*1.e-8;
+  int diff = 0;
+
+  size_t start = 0;
+  size_t end = ge->mesh_vertices.size() - 1;
+  
+  printf("GEdge %d -- end line lengths %12.5E %12.5E \n",ge->tag(),l0->getLength(),ln->getLength());
+
+  if (l0->getLength() < 1.e-12) {
+
+    for (auto v : ge->mesh_vertices){
+      double p;
+      v->getParameter(0,p);
+      //      printf(" %12.5E ",p);
+    }
+    //    printf("\n");
+    
+    diff++;
+    GPoint g_left = ge->point(t_left);
+    SPoint3 p0 (g_left.x(),g_left.y(),g_left.z());;
+    while (1) {
+      t_left += dt;
+      g_left = ge->point(t_left);
+      SPoint3 p1 (g_left.x(),g_left.y(),g_left.z());
+      if (p1.distance(p0) > width) break;
+    }
+    
+    double t0 = t_left-dt;
+    double t1 = t_left;
+
+    //    printf("--> first guess %12.5E %12.5E %12.5E\n",t_left,t0,t1);
+
+    while (1) {
+      double t_mid = (t0+t1)*.5;
+      g_left = ge->point(t_mid);
+      SPoint3 p1 (g_left.x(),g_left.y(),g_left.z());
+      double d = p1.distance(p0);
+      //      printf("%12.5E %12.5E %12.5E %12.5E %12.5E \n",t0,t1,t_mid,d,width);
+      if (fabs(d-width) < eps) {
+	t_left = t_mid;
+	break;
+      }
+      if (d > width) t1 = t_mid;
+      else t0 = t_mid;
+    }  
+    assign (ge, t_left, ge->mesh_vertices[start]);
+    start++;
+  }
+
+  
+  if (ln->getLength() < 1.e-12) {
+    diff++;
+    GPoint g_right = ge->point(t_right);
+    SPoint3 p0 (g_right.x(),g_right.y(),g_right.z());
+    while (1) {
+      t_right -= dt;
+      g_right = ge->point(t_right);
+      SPoint3 p1 (g_right.x(),g_right.y(),g_right.z());
+      if (p1.distance(p0) > width) break;
+    }
+    
+    double t0 = t_right;
+    double t1 = t_right+dt;
+    while (1) {
+      double t_mid = (t0+t1)*.5;
+      g_right = ge->point(t_mid);
+      SPoint3 p1 (g_right.x(),g_right.y(),g_right.z());
+      double d = p1.distance(p0);
+      if (fabs(d-width) < eps) {
+	t_right = t_mid;
+	break;
+      }
+      if (d > width) t0 = t_mid;
+      else t1 = t_mid;
+    }  
+    assign (ge, t_right, ge->mesh_vertices[end]);
+    end--;
+  }
+
+  if (diff == 0)return 0;
+  
+  int N;
+  std::vector<IntPoint> Points;
+  double a = 0.;
+  int filterMinimumN = 0;
+
+
+  int KK = meshGEdgeProcessing(ge, t_left, t_right, N, Points, a, filterMinimumN);
+  N = ge->mesh_vertices.size()-diff+2;
+
+  //  printf("--> (%12.5E %12.5E) a = %12.5E\n",t_left, t_right,a );
+
+  {
+    int count = 1, NUMP = 1;
+    const double b = a / static_cast<double>(N - 1);
+    while(NUMP < N - 1) {
+      auto P1 = Points[count - 1];
+      auto P2 = Points[count];
+      //      printf("count %d %g -- (%12.5E %12.5E) (%12.5E %12.5E) \n",count,b,P1.p,P1.t,P2.p,P2.t);
+      const double d = (double)NUMP * b;
+      if((std::abs(P2.p) >= std::abs(d)) && (std::abs(P1.p) < std::abs(d))) {
+        double const dt = P2.t - P1.t;
+        double const dp = P2.p - P1.p;
+        double const t = P1.t + dt / dp * (d - P1.p);
+	assign (ge, t, ge->mesh_vertices[start++]);
+	NUMP++;
+      }
+      else {
+        count++;
+      }
+    }
+  }
+  return 0;
+}
+
+
