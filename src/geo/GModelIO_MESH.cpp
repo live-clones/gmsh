@@ -409,10 +409,19 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
   }
 
   if(numEdges) {
-    if(CTX::instance()->mesh.order == 2) // FIXME (check getPolynomialOrder())
+    int order = (*firstEdge())->lines[0]->getPolynomialOrder();
+    if(order == 4)
+      fprintf(fp, " EdgesP4\n");
+    else if(order == 3)
+      fprintf(fp, " EdgesP3\n");
+    else if(order == 2)
       fprintf(fp, " EdgesP2\n");
-    else
+    else  if(order == 1)
       fprintf(fp, " Edges\n");
+    else {
+      Msg::Info("Order %d unknown for edges", order);
+      fprintf(fp, " Edges\n");
+    }
     fprintf(fp, " %d\n", numEdges);
     for(auto it = firstEdge(); it != lastEdge(); ++it) {
       int numPhys = (*it)->physicals.size();
@@ -424,10 +433,19 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
     }
   }
   if(numTriangles) {
-    if(CTX::instance()->mesh.order == 2) // FIXME (check getPolynomialOrder())
+    int order = (*firstFace())->triangles[0]->getPolynomialOrder();
+    if(order == 4)
+      fprintf(fp, " TrianglesP4\n");
+    else if(order == 3)
+      fprintf(fp, " TrianglesP3\n");
+    else if(order == 2)
       fprintf(fp, " TrianglesP2\n");
-    else
+    else if(order == 1)
       fprintf(fp, " Triangles\n");
+    else {
+      Msg::Info("Order %d unknown for triangles", order);
+      fprintf(fp, " Triangles\n");
+    }
     fprintf(fp, " %d\n", numTriangles);
     for(auto it = firstFace(); it != lastFace(); ++it) {
       int numPhys = (*it)->physicals.size();
@@ -451,10 +469,19 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
     }
   }
   if(numTetrahedra) {
-    if(CTX::instance()->mesh.order == 2)
-      fprintf(fp, " TetrahedraP2\n"); // FIXME (check getPolynomialOrder())
-    else
+    int order = (*firstRegion())->tetrahedra[0]->getPolynomialOrder();
+    if(order == 4)
+      fprintf(fp, " TetrahedraP4\n");
+    else if(order == 3)
+      fprintf(fp, " TetrahedraP3\n");
+    else if(order == 2)
+      fprintf(fp, " TetrahedraP2\n");
+    else  if(order == 1)
       fprintf(fp, " Tetrahedra\n");
+    else{
+      Msg::Info("Order %d unknown for tetrahedra", order);
+      fprintf(fp, " Tetrahedra\n");
+    }
     fprintf(fp, " %d\n", numTetrahedra);
     for(auto it = firstRegion(); it != lastRegion(); ++it) {
       int numPhys = (*it)->physicals.size();
