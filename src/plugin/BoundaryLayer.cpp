@@ -23,6 +23,7 @@ StringXString BoundaryLayerOptions_String[] = {
   {GMSH_FULLRC, "Volumes", nullptr, ""},
   {GMSH_FULLRC, "Surfaces", nullptr, ""},
   {GMSH_FULLRC, "Curves", nullptr, ""},
+  {GMSH_FULLRC, "Vertices", nullptr, ""},
 };
 
 
@@ -79,8 +80,70 @@ static double triangle_area_2d(std::array<double, 2> a, std::array<double, 2> b,
 }
 
 
+static bool fanitzie (std::vector<GFace*> &gfs, std::vector<GVertex*> &gvs,
+		      std::vector<MTriangle*> &ecole_des_fans) {
+  for (auto gv : gvs){
+    MVertex *v = gv->mesh_vertices[0];
+    MVertex *toDelete = nullptr;
+
+    for (auto gf : gfs){
+      int count = 0;
+      for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
+	for (size_t j=0;j<4;j++){
+	  MEdge ed = gf->quadrangles[i]->getEdge(j);
+	  if (ed.getVertex(0) == v && ed.getVertex(1)->onWhat() == gf){	    
+	    toDelete = ed.getVertex(1);
+	    count ++;
+	  }
+	  else if (ed.getVertex(1) == v && ed.getVertex(0)->onWhat() == gf){	    
+	    toDelete = ed.getVertex(0);
+	    count ++;
+	  }
+	}
+      }
+      if (count != 2){
+	Msg::Warning ("Impossible to make a fan at GVertex %d (count = %d)",gv->tag(),count);
+	continue;
+      }
+
+      for(std::size_t i = 0; i < gf->triangles.size(); i++) {
+	for (std::size_t j = 0 ; j < 3 ; j++){
+	  if (gf->triangles[i]->getVertex(j) == toDelete){
+	    gf->triangles[i]->setVertex(j, v);
+	    ecole_des_fans.push_back(gf->triangles[i]);
+	  }
+	}
+      }
+
+      std::vector<MQuadrangle*> temp;
+      for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
+	bool found = false;
+	for (std::size_t j = 0 ; j < 4 ; j++){
+	  if (gf->quadrangles[i]->getVertex(j) == toDelete){
+	    found = true;
+	    auto newT = new MTriangle(gf->quadrangles[i]->getVertex((j+1)%4),
+				      gf->quadrangles[i]->getVertex((j+2)%4),
+				      gf->quadrangles[i]->getVertex((j+3)%4));
+	    ecole_des_fans.push_back(newT);
+	    gf->triangles.push_back(newT);
+	  }
+	}
+	if (found) delete gf->quadrangles[i];
+	else temp.push_back(gf->quadrangles[i]);
+      }
+      gf->quadrangles = temp;
+      
+      auto toErase=std::find(gf->mesh_vertices.begin(), gf->mesh_vertices.end(), toDelete);
+      if (toErase!=gf->mesh_vertices.end())
+	gf->mesh_vertices.erase(toErase);
+
+      
+    }    
+  }
+}
 
 bool bl2d(GModel *m,
+          std::vector<GVertex*> &onVertices,
           std::vector<GEdge*> &onCurves,
           std::vector<GFace*> &inSurfaces,
 	  double width)
@@ -206,24 +269,6 @@ bool bl2d(GModel *m,
     for(auto v : vv.second)
       modified.insert(v->onWhat());
 
-  // connect old elements to new spawned vertices
-
-  //  for(auto ge : modified) {
-  //    for(std::size_t i = 0; i < ge->getNumMeshElements(); i++) {
-  //      MElement *e = ge->getMeshElement(i);
-  //      for(std::size_t j = 0; j < e->getNumVertices(); j++) {
-  //	auto sp = spawned[e->getVertex(j)];
-  //	for(auto v : sp) {
-  //	  if(v->onWhat() == ge) {
-  //	    e->setVertex(j, v);
-  //	    break;
-  //	  }
-  //	}
-  //      }
-  //    }
-  //  }
-
-  
   for (auto gf : inSurfaces) {
     for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
       MElement *e = gf->getMeshElement(i);
@@ -238,24 +283,6 @@ bool bl2d(GModel *m,
     }
   }
 	
-  /*  for(auto ge : modified) {
-    std::vector<GFace*> connectedSurfaces = ge->faces();
-    for(auto gf : connectedSurfaces) {
-      for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
-	MElement *e = gf->getMeshElement(i);
-	for(std::size_t j = 0; j < e->getNumVertices(); j++) {
-	  auto sp = spawned[e->getVertex(j)];
-	  for(auto v : sp) {
-	    if(v->onWhat() == ge) {
-	      e->setVertex(j, v);
-	      break;
-	    }
-	  }
-        }
-      }
-    }
-    }*/
-
   // create zero-sized elements in connected surfaces
   for(auto ge : onCurves) {
     std::vector<GFace*> connectedSurfaces = ge->faces();
@@ -280,18 +307,24 @@ bool bl2d(GModel *m,
                        l->getVertex(1)->getNum());
         }
         else {
-	  // orientation matters !!!
-	  MVertex *V0,*V1;
-	  for (auto V : sp0)if (V->onWhat() == gf){V0 = V ; break;}
-	  for (auto V : sp1)if (V->onWhat() == gf){V1 = V ; break;}
-	  std::set <MEdge, MEdgeLessThan>::iterator it = edges_of_elements.find(MEdge(V1, V0));
-	  if (it == edges_of_elements.end())Msg::Error ("Edge Not Found in Boundary Layer");
-	  if (it->getVertex(0) == V0)
-	    gf->quadrangles.push_back(new MQuadrangle(l->getVertex(0), l->getVertex(1),
-						      V1, V0));
-	  else
-	    gf->quadrangles.push_back(new MQuadrangle(l->getVertex(1), l->getVertex(0),
-						      V0,V1));
+	  std::vector<MVertex *> V0,V1;
+	  for (auto V : sp0)if (V->onWhat() == gf || V->onWhat()->dim() == 1){V0.push_back(V) ;}
+	  for (auto V : sp1)if (V->onWhat() == gf || V->onWhat()->dim() == 1){V1.push_back(V) ;}
+	  // There can be several vertices for the same face -- in case of embedded
+	  // edges. Assume that points are spawned on one side and then on the other
+	  // in the same order.
+	  if (V0.size() != V1.size())Msg::Error ("Error Boundary Layer %lu %lu", V0.size(),V1.size());
+	  for (size_t j=0;j<V0.size();j++){
+	    std::set <MEdge, MEdgeLessThan>::iterator it = edges_of_elements.find(MEdge(V1[j], V0[j]));
+	    if (it == edges_of_elements.end())Msg::Error ("Edge Not Found in Boundary Layer");
+	    // orientation matters !!!
+	    if (it->getVertex(0) == V0[j])
+	      gf->quadrangles.push_back(new MQuadrangle(l->getVertex(0), l->getVertex(1),
+							V1[j], V0[j]));
+	    else
+	      gf->quadrangles.push_back(new MQuadrangle(l->getVertex(1), l->getVertex(0),
+							V0[j],V1[j]));
+	  }
 	  // FIXME !!!
 	  //          for(std::size_t j = 1; j < sp0.size(); j++)
 	  //            gf->triangles.push_back(new MTriangle(l->getVertex(0),
@@ -304,6 +337,9 @@ bool bl2d(GModel *m,
     }
   }
 
+  std::vector<MTriangle*> ecole_des_fans;
+  fanitzie (inSurfaces, onVertices, ecole_des_fans); 
+  
   std::map<GFace*, std::vector<std::array<std::array<double, 2>, 3> > > triIdealShapes;    
 
   std::vector<double> areas;
@@ -319,7 +355,16 @@ bool bl2d(GModel *m,
 	vs.push_back({param.x(),param.y()});
       }
       if (e->getNumVertices() == 3){
-	double a = triangle_area_2d (vs[0],vs[1],vs[2]);
+
+	if (std::find(ecole_des_fans.begin(), ecole_des_fans.end(), e) !=
+	    ecole_des_fans.end()){
+	  /// could be better !
+	  double fact = width/sqrt(3.0)/2;
+	  vs[0] = {fact, 0.};
+	  vs[1] = {fact*cos(2. * M_PI / 3.), fact*sin(2 * M_PI / 3.)};
+	  vs[2] = {fact*cos(4. * M_PI / 3.), fact*sin(4 * M_PI / 3.)};	  
+	}
+	double a = triangle_area_2d (vs[0],vs[1],vs[2]);	
 	areas.push_back(a);
 	if (a > 0) sh.push_back({vs[0],vs[1],vs[2]});
 	else sh.push_back({vs[0],vs[2],vs[1]});
@@ -346,7 +391,7 @@ bool bl2d(GModel *m,
     }
     triIdealShapes[gf] = sh;
   }
-  
+
   
   for (GModel::eiter eit = m->firstEdge() ; eit != m->lastEdge() ; ++eit) meshGEdgeInsertBoundaryLayer(*eit, width);
 
@@ -398,7 +443,7 @@ bool bl2d(GModel *m,
       }
     }
 
-    untangle_triangles_2D (points, locked, triangles, triIdealShapes[gf] );
+    untangle_triangles_2D (points, locked, triangles, triIdealShapes[gf],1. );
 
     for (auto v : verts ) {
       int i = v->getIndex();
@@ -447,26 +492,33 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   std::string volume = BoundaryLayerOptions_String[0].def;
   std::string surface = BoundaryLayerOptions_String[1].def;
   std::string curve = BoundaryLayerOptions_String[2].def;
+  std::string vertex = BoundaryLayerOptions_String[3].def;
 
-  std::vector<std::list<int> > entities(3);
-  curve = parse(curve, entities[0]);
-  surface = parse(surface, entities[1]);
-  volume = parse(volume, entities[2]);
+  std::vector<std::list<int> > entities(4);
+  vertex = parse(vertex, entities[0]);
+  curve = parse(curve, entities[1]);
+  surface = parse(surface, entities[2]);
+  volume = parse(volume, entities[3]);
   
+  std::vector<GVertex*> vv;
+  for (auto v : entities[0]) {
+    GVertex *gv = m->getVertexByTag(v);
+    if (gv) vv.push_back(gv);
+  }
   std::vector<GEdge*> e;
-  for (auto c : entities[0]) {
+  for (auto c : entities[1]) {
     GEdge *ge = m->getEdgeByTag(c);
     if (ge) e.push_back(ge);
   }
   std::vector<GFace*> f;
-  for (auto s : entities[1]) {
+  for (auto s : entities[2]) {
     GFace *gf = m->getFaceByTag(s);
     if (gf) f.push_back(gf);
   }
 
   double width = BoundaryLayerOptions_Number[0].def;
   
-  bl2d(m, e, f, width);
+  bl2d(m, vv, e, f, width);
 
   return v;
 }
