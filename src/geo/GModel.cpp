@@ -1744,8 +1744,8 @@ void GModel::renumberMeshVertices(const std::map<std::size_t, std::size_t> &mapp
             remap[v] = it->second;
           else {
             if(info) {
-              Msg::Info("Mapping does not contain a node tag (%lu) - "
-                        "incrementing after last provided tag (%lu)",
+              Msg::Info("Mapping does not contain a node tag (%zu) - "
+                        "incrementing after last provided tag (%zu)",
                         v->getNum(), maxmap);
               info = false;
             }
@@ -1872,8 +1872,8 @@ void GModel::renumberMeshElements(const std::map<std::size_t, std::size_t> &mapp
             remap[e] = it->second;
           else {
             if(info) {
-              Msg::Info("Mapping does not contain an element tag (%lu) - "
-                        "incrementing after last provided tag (%lu)",
+              Msg::Info("Mapping does not contain an element tag (%zu) - "
+                        "incrementing after last provided tag (%zu)",
                         e->getNum(), maxmap);
               info = false;
             }
@@ -2211,7 +2211,7 @@ std::size_t GModel::removeInvisibleElements()
     (*it)->deleteVertexArrays();
   }
   destroyMeshCaches();
-  Msg::Info("Removed %lu elements", n);
+  Msg::Info("Removed %zu elements", n);
   return n;
 }
 
@@ -2259,7 +2259,7 @@ std::size_t GModel::reverseInvisibleElements()
     if(all) (*it)->setVisibility(1);
   }
   destroyMeshCaches();
-  Msg::Info("Reversed %lu elements", n);
+  Msg::Info("Reversed %zu elements", n);
   return n;
 }
 
@@ -2755,7 +2755,7 @@ void GModel::checkMeshCoherence(double tolerance)
         fprintf(fp, "View \"duplicate vertices\"{\n");
         for(auto it = duplicates.begin(); it != duplicates.end(); it++) {
           MVertex *v = *it;
-          fprintf(fp, "SP(%.16g,%.16g,%.16g){%lu};\n", v->x(), v->y(), v->z(),
+          fprintf(fp, "SP(%.16g,%.16g,%.16g){%zu};\n", v->x(), v->y(), v->z(),
                   v->getNum());
         }
         fprintf(fp, "};\n");
