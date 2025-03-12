@@ -10,6 +10,7 @@
 #include "MQuadrangle.h"
 #include "meshGEdge.h"
 #include "BoundaryLayer.h"
+#include "winslowUntangler.h"
 
 StringXNumber BoundaryLayerOptions_Number[] = {
   {GMSH_FULLRC, "Test", nullptr, 1.}
@@ -50,6 +51,9 @@ StringXNumber *GMSH_BoundaryLayerPlugin::getOption(int iopt)
 */
 
 
+
+
+
 bool bl2d(GModel *m,
           std::vector<GEdge*> &onCurves,
           std::vector<GFace*> &inSurfaces,
@@ -75,8 +79,7 @@ bool bl2d(GModel *m,
   for(auto ge : onCurves) {
     auto vs = ge->vertices();
     connectedPoints.insert(vs.begin(), vs.end());
-  }
-
+  }  
 
   // spawn nodes for model points
   for(auto gv : connectedPoints) {
@@ -162,8 +165,8 @@ bool bl2d(GModel *m,
       for(auto v : ge->mesh_vertices) {
         SPoint2 param;
         if(reparamMeshVertexOnFace(v, gf, param)) {
-          MVertex *newv = new MFaceVertex(v->x(), v->y()+0.01, v->z(), gf,
-                                          param.x(), param.y()+0.01);
+          MVertex *newv = new MFaceVertex(v->x(), v->y(), v->z(), gf,
+                                          param.x(), param.y());
           gf->mesh_vertices.push_back(newv);
           spawned[v].push_back(newv);
         }
@@ -194,6 +197,7 @@ bool bl2d(GModel *m,
   //    }
   //  }
 
+  
   for (auto gf : inSurfaces) {
     for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
       MElement *e = gf->getMeshElement(i);
@@ -254,9 +258,102 @@ bool bl2d(GModel *m,
     }
   }
 
+  std::map<GFace*, std::vector<std::array<std::array<double, 2>, 3> > > triIdealShapes;    
+  
+  for (auto gf : inSurfaces) {
+    std::vector<std::array<std::array<double, 2>, 3> > sh;
+    for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
+      MElement *e = gf->getMeshElement(i);
+      std::vector<std::array<double, 2> > vs;
+      for (size_t j=0;j<e->getNumVertices();j++){
+	SPoint2 param;
+	reparamMeshVertexOnFace(e->getVertex(j),gf,param);
+	vs.push_back({param.x(),param.y()});
+      }
+      if (e->getNumVertices() == 3)
+	sh.push_back({vs[0],vs[1],vs[2]});
+      else {
+	/*
+          (0,width)  (dx,width)
+	  +-------------+
+	  |             |  
+	  +-------------+
+          (0,0)     (dx,0) 
+	 */
+	double dx = sqrt ((vs[0][0] - vs[1][0])*(vs[0][0] - vs[1][0])+
+			  (vs[0][1] - vs[1][1])*(vs[0][1] - vs[1][1]));
+	std::array<double, 2> p0 ={0,0};
+	std::array<double, 2> p1 = {dx,0};
+	std::array<double, 2> p2 ={dx,width};
+	std::array<double, 2> p3 ={0,width};
+	sh.push_back({p0,p1,p2});
+	sh.push_back({p2,p3,p0});
+	sh.push_back({p0,p1,p3});
+	sh.push_back({p1,p2,p3});
+      }
+    }
+    triIdealShapes[gf] = sh;
+  }
+  
+  
   for (GModel::eiter eit = m->firstEdge() ; eit != m->lastEdge() ; ++eit) meshGEdgeInsertBoundaryLayer(*eit, width);
 
-  // TODO: fans
+ 
+  for (auto gf : inSurfaces) {
+    std::vector<std::array<double, 2> > points;
+    std::vector<std::array<uint32_t, 3> > triangles;
+    std::vector<bool> locked;
+    std::set<MVertex*> verts;
+    for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
+      MElement *e = gf->getMeshElement(i);
+      for (size_t j=0;j<e->getNumVertices();j++)
+	verts.insert(e->getVertex(j));
+    }
+    int index = 0;
+    for (auto v : verts ) {
+      v->setIndex(index++);
+      locked.push_back(v->onWhat()->dim() == 2 ? false : true);
+      SPoint2 param;
+      reparamMeshVertexOnFace(v,gf,param);
+      points.push_back({param.x(),param.y()});
+    }
+    for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
+      MElement *e = gf->getMeshElement(i);
+      if (e->getNumVertices() == 3){
+	triangles.push_back({(uint32_t)e->getVertex(0)->getIndex(),
+	      (uint32_t)e->getVertex(1)->getIndex(),
+	      (uint32_t)e->getVertex(2)->getIndex()});
+      }
+      else {
+	triangles.push_back({(uint32_t)e->getVertex(0)->getIndex(),
+	      (uint32_t)e->getVertex(1)->getIndex(),
+	      (uint32_t)e->getVertex(2)->getIndex()});
+	triangles.push_back({(uint32_t)e->getVertex(2)->getIndex(),
+	      (uint32_t)e->getVertex(3)->getIndex(),
+	      (uint32_t)e->getVertex(0)->getIndex()});
+	triangles.push_back({(uint32_t)e->getVertex(0)->getIndex(),
+	      (uint32_t)e->getVertex(1)->getIndex(),
+	      (uint32_t)e->getVertex(3)->getIndex()});
+	triangles.push_back({(uint32_t)e->getVertex(1)->getIndex(),
+	      (uint32_t)e->getVertex(2)->getIndex(),
+	      (uint32_t)e->getVertex(3)->getIndex()});
+      }
+    }
+    printf("%lu points %lu triangles \n", points.size(), locked.size());
+    untangle_triangles_2D (points, locked, triangles, triIdealShapes[gf] );
+    for (auto v : verts ) {
+      int i = v->getIndex();
+      if (!locked[i]){
+	GPoint gp = gf->point (points[i][0],points[i][1]);
+	v->x() = gp.x();
+	v->y() = gp.y();
+	v->z() = gp.z();
+	v->setParameter(0,gp.u());
+	v->setParameter(1,gp.v());
+      }
+    }
+
+  }
 }
 
 PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
@@ -270,7 +367,7 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   GEdge *ge4 = m->getEdgeByTag(4);
   GFace *gf = m->getFaceByTag(1);
 
-  double width = 3.e-1;
+  double width = 2.e-2;
   if(ge1 && ge2 && ge3 && ge4 && gf) {
     std::vector<GEdge*> e = {ge1,ge2,ge4};
     std::vector<GFace*> f = {gf};

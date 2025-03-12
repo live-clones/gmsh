@@ -5,6 +5,6 @@ gmsh.model.occ.synchronize()
 gmsh.model.mesh.generate(2)
 gmsh.plugin.run('BoundaryLayer')
 
-gmsh.model.mesh.optimize('UntangleTris')
+#gmsh.model.mesh.optimize('UntangleTris')
 
 gmsh.fltk.run()
