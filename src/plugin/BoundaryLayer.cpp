@@ -72,6 +72,11 @@ StringXString *GMSH_BoundaryLayerPlugin::getOptionStr(int iopt)
 */
 
 
+static double triangle_area_2d(std::array<double, 2> a, std::array<double, 2> b, std::array<double, 2> c)
+{
+  return .5 * ((b[1] - a[1]) * (b[0] + a[0]) + (c[1] - b[1]) * (c[0] + b[0]) +
+               (a[1] - c[1]) * (a[0] + c[0]));
+}
 
 
 
@@ -255,6 +260,15 @@ bool bl2d(GModel *m,
   for(auto ge : onCurves) {
     std::vector<GFace*> connectedSurfaces = ge->faces();
     for(auto gf : connectedSurfaces) {
+
+      std::set <MEdge, MEdgeLessThan> edges_of_elements;
+      for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
+	MElement *e = gf->getMeshElement(i);
+	for (size_t j=0;j<e->getNumEdges();j++)
+	  edges_of_elements.insert(e->getEdge(j));
+      }
+
+
       if(inSurfacesSet.find(gf) == inSurfacesSet.end()) continue;
       for(std::size_t i = 0; i < ge->lines.size(); i++) {
         MLine *l = ge->lines[i];
@@ -266,20 +280,33 @@ bool bl2d(GModel *m,
                        l->getVertex(1)->getNum());
         }
         else {
-          gf->quadrangles.push_back(new MQuadrangle(l->getVertex(0), l->getVertex(1),
-                                                    sp1.front(), sp0.front()));
-          for(std::size_t j = 1; j < sp0.size(); j++)
-            gf->triangles.push_back(new MTriangle(l->getVertex(0),
-                                                  sp0[j - 1], sp0[j]));
-          for(std::size_t j = 1; j < sp1.size(); j++)
-            gf->triangles.push_back(new MTriangle(l->getVertex(1),
-                                                  sp1[j - 1], sp1[j]));
-        }
+	  // orientation matters !!!
+	  MVertex *V0,*V1;
+	  for (auto V : sp0)if (V->onWhat() == gf){V0 = V ; break;}
+	  for (auto V : sp1)if (V->onWhat() == gf){V1 = V ; break;}
+	  std::set <MEdge, MEdgeLessThan>::iterator it = edges_of_elements.find(MEdge(V1, V0));
+	  if (it == edges_of_elements.end())Msg::Error ("Edge Not Found in Boundary Layer");
+	  if (it->getVertex(0) == V0)
+	    gf->quadrangles.push_back(new MQuadrangle(l->getVertex(0), l->getVertex(1),
+						      V1, V0));
+	  else
+	    gf->quadrangles.push_back(new MQuadrangle(l->getVertex(1), l->getVertex(0),
+						      V0,V1));
+	  // FIXME !!!
+	  //          for(std::size_t j = 1; j < sp0.size(); j++)
+	  //            gf->triangles.push_back(new MTriangle(l->getVertex(0),
+	  //                                                  sp0[j - 1], sp0[j]));
+	  //          for(std::size_t j = 1; j < sp1.size(); j++)
+	  //            gf->triangles.push_back(new MTriangle(l->getVertex(1),
+	  //                                                  sp1[j - 1], sp1[j]));
+	}
       }
     }
   }
 
   std::map<GFace*, std::vector<std::array<std::array<double, 2>, 3> > > triIdealShapes;    
+
+  std::vector<double> areas;
   
   for (auto gf : inSurfaces) {
     std::vector<std::array<std::array<double, 2>, 3> > sh;
@@ -291,8 +318,12 @@ bool bl2d(GModel *m,
 	reparamMeshVertexOnFace(e->getVertex(j),gf,param);
 	vs.push_back({param.x(),param.y()});
       }
-      if (e->getNumVertices() == 3)
-	sh.push_back({vs[0],vs[1],vs[2]});
+      if (e->getNumVertices() == 3){
+	double a = triangle_area_2d (vs[0],vs[1],vs[2]);
+	areas.push_back(a);
+	if (a > 0) sh.push_back({vs[0],vs[1],vs[2]});
+	else sh.push_back({vs[0],vs[2],vs[1]});
+      }
       else {
 	/*
           (0,width)  (dx,width)
@@ -319,7 +350,7 @@ bool bl2d(GModel *m,
   
   for (GModel::eiter eit = m->firstEdge() ; eit != m->lastEdge() ; ++eit) meshGEdgeInsertBoundaryLayer(*eit, width);
 
- 
+  int tricount = 0;
   for (auto gf : inSurfaces) {
     std::vector<std::array<double, 2> > points;
     std::vector<std::array<uint32_t, 3> > triangles;
@@ -341,9 +372,15 @@ bool bl2d(GModel *m,
     for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
       MElement *e = gf->getMeshElement(i);
       if (e->getNumVertices() == 3){
-	triangles.push_back({(uint32_t)e->getVertex(0)->getIndex(),
-	      (uint32_t)e->getVertex(1)->getIndex(),
-	      (uint32_t)e->getVertex(2)->getIndex()});
+	if (areas[tricount] > 0)
+	  triangles.push_back({(uint32_t)e->getVertex(0)->getIndex(),
+		(uint32_t)e->getVertex(1)->getIndex(),
+		(uint32_t)e->getVertex(2)->getIndex()});
+	else 
+	  triangles.push_back({(uint32_t)e->getVertex(0)->getIndex(),
+		(uint32_t)e->getVertex(2)->getIndex(),
+		(uint32_t)e->getVertex(1)->getIndex()});
+	tricount++;
       }
       else {
 	triangles.push_back({(uint32_t)e->getVertex(0)->getIndex(),
