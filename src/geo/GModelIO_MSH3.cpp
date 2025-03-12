@@ -595,7 +595,7 @@ static void writeMSHPhysicals(FILE *fp, GEntity *ge)
 void writeMSHEntities(FILE *fp, GModel *gm) // also used in MSH2
 {
   fprintf(fp, "$Entities\n");
-  fprintf(fp, "%lu %lu %lu %lu\n", gm->getNumVertices(), gm->getNumEdges(),
+  fprintf(fp, "%zu %zu %zu %zu\n", gm->getNumVertices(), gm->getNumEdges(),
           gm->getNumFaces(), gm->getNumRegions());
   for(auto it = gm->firstVertex(); it != gm->lastVertex(); ++it) {
     fprintf(fp, "%d ", (*it)->tag());
@@ -736,7 +736,7 @@ void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity *> &entities,
         if(renumber)
           fprintf(fp, "%ld %ld\n", v1->getIndex(), v2->getIndex());
         else
-          fprintf(fp, "%lu %lu\n", v1->getNum(), v2->getNum());
+          fprintf(fp, "%zu %zu\n", v1->getNum(), v2->getNum());
       }
     }
   }

@@ -10398,7 +10398,7 @@ yyreduce:
       if(!changed){
         std::vector<GEntity*> removed;
         GModel::current()->remove(dimTags, removed);
-        Msg::Debug("Destroying %lu entities in model", removed.size());
+        Msg::Debug("Destroying %zu entities in model", removed.size());
         for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
       }
       List_Delete((yyvsp[(3) - (4)].l));
@@ -10426,7 +10426,7 @@ yyreduce:
       if(!changed){
         std::vector<GEntity*> removed;
         GModel::current()->remove(dimTags, removed, true);
-        Msg::Debug("Destroying %lu entities in model", removed.size());
+        Msg::Debug("Destroying %zu entities in model", removed.size());
         for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
       }
       List_Delete((yyvsp[(4) - (5)].l));

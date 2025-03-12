@@ -213,7 +213,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
         // error
       }
       else if(v[0] == v[1] || v[0] == v[2] || v[1] == v[2]) {
-        Msg::Debug("Skipping degenerated triangle %lu %lu %lu", v[0]->getNum(),
+        Msg::Debug("Skipping degenerated triangle %zu %zu %zu", v[0]->getNum(),
                    v[1]->getNum(), v[2]->getNum());
         nbDegen++;
       }

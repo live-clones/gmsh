@@ -121,9 +121,9 @@ int GModel::writeKEY(const std::string &name, int saveAll,
                       physicalName(this, dim, it->first).c_str(), ++setid);
             }
             if(!(n % 8))
-              fprintf(fp, "\n%lu", e->getNum());
+              fprintf(fp, "\n%zu", e->getNum());
             else
-              fprintf(fp, ", %lu", e->getNum());
+              fprintf(fp, ", %zu", e->getNum());
             n++;
           }
         }

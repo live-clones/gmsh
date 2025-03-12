@@ -216,7 +216,7 @@ bool compute4neighbors(
 	if (DIFF_L2 <= DIFF_L && DIFF_ANG2 <= DIFF_ANG){
 	}
 	else{
-	  Msg::Debug("Difficult to find a point %lu L %g vs %g (ps %12.5E) ",i,L,L2,DIFF_ANG2);
+	  Msg::Debug("Difficult to find a point %zu L %g vs %g (ps %12.5E) ",i,L,L2,DIFF_ANG2);
 	}
       }
       else{
@@ -333,10 +333,10 @@ bool compute4neighbors(
 // 	nbMax++;
 //       }
 //     }
-//     if (nbMax == it-> second)printf("singularity %lu has a good set of %d sampling points\n",it->first->getNum(),nbMax);
+//     if (nbMax == it-> second)printf("singularity %zu has a good set of %d sampling points\n",it->first->getNum(),nbMax);
 //     else {
 //       toInsert.resize(toInsert.size() - nbMax);
-//       printf("singularity %lu has a bad set of %d vs %d sampling points\n",it->first->getNum(),nbMax,it->second);
+//       printf("singularity %zu has a bad set of %d vs %d sampling points\n",it->first->getNum(),nbMax,it->second);
 //     }
 //   }
 

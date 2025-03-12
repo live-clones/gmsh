@@ -59,7 +59,7 @@ bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
     }
   }
   N = count;
-  //  printf("point %22.5E %22.5E out %22.5E %22.5E in parametric domain (bnd size %lu) : %d %d\n",p.x(),p.y(),out.x(), out.y(), bnd.size(),count, count%2);
+  //  printf("point %22.5E %22.5E out %22.5E %22.5E in parametric domain (bnd size %zu) : %d %d\n",p.x(),p.y(),out.x(), out.y(), bnd.size(),count, count%2);
   if(count % 2 == 0) return false;
   return true;
 }
@@ -488,7 +488,7 @@ static void copyMesh(GFace *source, GFace *target)
     }
     else {
       Msg::Error("Could not find periodic counterpart of triangle nodes "
-                 "%lu %lu %lu",
+                 "%zu %zu %zu",
                  source->triangles[i]->getVertex(0)->getNum(),
                  source->triangles[i]->getVertex(1)->getNum(),
                  source->triangles[i]->getVertex(2)->getNum());
@@ -505,7 +505,7 @@ static void copyMesh(GFace *source, GFace *target)
     }
     else {
       Msg::Error("Could not find periodic counterpart of quadrangle nodes "
-                 "%lu %lu %lu %lu",
+                 "%zu %zu %zu %zu",
                  source->quadrangles[i]->getVertex(0)->getNum(),
                  source->quadrangles[i]->getVertex(1)->getNum(),
                  source->quadrangles[i]->getVertex(2)->getNum(),
@@ -1468,7 +1468,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
                "nodes are considered once)",
                boundary.size());
     for(auto it = boundary.begin(); it != boundary.end(); it++) {
-      Msg::Debug("Remaining node %lu", (*it)->getNum());
+      Msg::Debug("Remaining node %zu", (*it)->getNum());
     }
     gf->meshStatistics.status = GFace::FAILED;
     return false;

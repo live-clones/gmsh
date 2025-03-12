@@ -160,7 +160,7 @@ public:
         data2[m.second] = (*_data)[m.first];
       }
       else {
-        Msg::Warning("Wrong source index %lu in step data renumbering", m.first);
+        Msg::Warning("Wrong source index %zu in step data renumbering", m.first);
         return;
       }
       if(m.first < _mult.size())

@@ -591,8 +591,8 @@ bool computeParametrization(const std::vector<MTriangle *> &triangles,
     return false;
   }
 
-  Msg::Debug("Parametrisation of surface with %lu triangles, %lu edges and "
-             "%lu holes",
+  Msg::Debug("Parametrisation of surface with %zu triangles, %zu edges and "
+             "%zu holes",
              triangles.size(), edges.size(), vs.size() - 1);
 
   // find longest loop and use it as the "exterior" loop

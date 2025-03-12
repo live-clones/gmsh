@@ -324,10 +324,10 @@ static int enhanceQuality(PolyMesh::HalfEdge *he, void *)
   int d3 = degree(v3);
 
   if ((d0 > 7 || d1 > 7) && (d2 < 7 && d3 < 7))return 1;
-    
+
   double qBefore = std::min(faceQuality(v0,v1,v2), faceQuality(v1,v0,v3));
   double qAfter  = std::min(faceQuality(v2,v3,v0), faceQuality(v3,v2,v1));
-  
+
   return qAfter > qBefore ? 1 : 0;
 }
 
@@ -611,7 +611,7 @@ void GFaceDelaunayRefinement(size_t faceTag)
               if(std::find(_f.begin(), _f.end(), h->f) == _f.end())
                 _f.push_back(h->f);
 
-            // printf("step %d %lu touched : ", I, _f.size());
+            // printf("step %d %zu touched : ", I, _f.size());
             for(auto pf : _f) {
               q = faceQuality(pf->he, gf);
               // printf("%12.5E ", q);
@@ -714,7 +714,7 @@ static void getNodeCopies(GFace *gf,
         else
           direction = 1;
       }
-      // printf("model edge %lu %lu vertices\n", e->tag(), e_vertices.size());
+      // printf("model edge %zu %zu vertices\n", e->tag(), e_vertices.size());
       for(auto v : e_vertices) {
         SPoint2 param;
         if(direction != -1) {
@@ -836,7 +836,7 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover,
           auto c0 = copies.find(l->getVertex(0)->getNum());
           auto c1 = copies.find(l->getVertex(1)->getNum());
           if(c0 == copies.end() || c1 == copies.end())
-            Msg::Error("unable to find %lu %lu %d %d",
+            Msg::Error("unable to find %zu %zu %d %d",
                        l->getVertex(0)->getNum(), l->getVertex(1)->getNum(),
                        c0 == copies.end(), c1 == copies.end());
           if(c0->second.nbCopies > c1->second.nbCopies) {
@@ -850,7 +850,7 @@ PolyMesh *GFaceInitialMesh(int faceTag, int recover,
               c0->second.u[j], c0->second.v[j])];
             int result = recover_edge(pm, v0, v1);
             if(result < 0) {
-              Msg::Warning("Impossible to recover edge %lu %lu (error tag %d)",
+              Msg::Warning("Impossible to recover edge %zu %zu (error tag %d)",
                            l->getVertex(0)->getNum(), l->getVertex(0)->getNum(),
                            result);
             }
@@ -924,10 +924,8 @@ int PolyMeshDelaunayize (int faceTag){
     if(!count) break;
   }
   PolyMesh2GFace(pm, faceTag);
-  
+
   delete pm;
   return 0;
 }
 // -----------------------------------
-
-

@@ -244,7 +244,7 @@ int GModel::writeCGNS(const std::string &name, bool saveAll,
   // interface entities
   Vertex2LocalData interfVert2Local;
   initInterfVertex2LocalData(entitiesPer, entitiesInterf, interfVert2Local);
-  Msg::Info("%lu periodic/interface nodes", interfVert2Local.size());
+  Msg::Info("%zu periodic/interface nodes", interfVert2Local.size());
 
   // write partitions and periodic/partition connectivities
   std::set<int> eleMshTypes;

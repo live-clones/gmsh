@@ -50,12 +50,12 @@ void printMesh() {
 
     printf("entity %i of dim %i\n", dimTags[ie*2+1], dimTags[ie*2+0]);
     for (size_t i = 0; i < nnelementTags; ++i) {
-      printf("  %lu elements of type %i : ", nelementTags[i], types[i]);
+      printf("  %zu elements of type %i : ", nelementTags[i], types[i]);
       size_t nnodesbyel = nvertexTags[i]/nelementTags[i];
       for (size_t j = 0; j < nelementTags[i] && j < 3; ++j) {
-        printf("%lu ( ", elementTags[i][j]);
+        printf("%zu ( ", elementTags[i][j]);
         for (size_t k = 0; k < nnodesbyel; ++k)
-          printf("%lu ", vertexTags[i][j*nnodesbyel+k]);
+          printf("%zu ", vertexTags[i][j*nnodesbyel+k]);
         printf(") ");
       }
       if (nelementTags[i] > 3)

@@ -702,7 +702,7 @@ GMSH_API void gmsh::model::removeEntities(const vectorpair &dimTags,
   if(!_checkInit()) return;
   std::vector<GEntity*> removed;
   GModel::current()->remove(dimTags, removed, recursive);
-  Msg::Debug("Destroying %lu entities in model", removed.size());
+  Msg::Debug("Destroying %zu entities in model", removed.size());
   for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
 }
 
@@ -3681,7 +3681,7 @@ GMSH_API void gmsh::model::mesh::addEdges(const std::vector<std::size_t> &edgeTa
     for(int j = 0; j < 2; j++) {
       v[j] = m->getMeshVertexByTag(edgeNodes[2 * i + j]);
       if(!v[j]) {
-        Msg::Error("Unknown mesh node %lu", edgeNodes[2 * i + j]);
+        Msg::Error("Unknown mesh node %zu", edgeNodes[2 * i + j]);
         return;
       }
     }
@@ -3709,7 +3709,7 @@ GMSH_API void gmsh::model::mesh::addFaces(const int faceType,
     for(int j = 0; j < faceType; j++) {
       v[j] = m->getMeshVertexByTag(faceNodes[faceType * i + j]);
       if(!v[j]) {
-        Msg::Error("Unknown mesh node %lu", faceNodes[faceType * i + j]);
+        Msg::Error("Unknown mesh node %zu", faceNodes[faceType * i + j]);
         return;
       }
     }
@@ -5293,7 +5293,7 @@ GMSH_API void gmsh::model::mesh::renumberNodes
 {
   if(!_checkInit()) return;
   if(oldTags.size() != newTags.size()) {
-    Msg::Error("Invalid number of tags for node renumbering: %lu != %lu",
+    Msg::Error("Invalid number of tags for node renumbering: %zu != %zu",
                oldTags.size(), newTags.size());
     return;
   }
@@ -5309,7 +5309,7 @@ GMSH_API void gmsh::model::mesh::renumberElements
 {
   if(!_checkInit()) return;
   if(oldTags.size() != newTags.size()) {
-    Msg::Error("Invalid number of tags for element renumbering: %lu != %lu",
+    Msg::Error("Invalid number of tags for element renumbering: %zu != %zu",
                oldTags.size(), newTags.size());
     return;
   }

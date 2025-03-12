@@ -1335,7 +1335,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
       }
       else if(!tangents.empty()) {
         Msg::Warning(
-          "Wrong number of tangent constraints for spline (%lu != %lu)",
+          "Wrong number of tangent constraints for spline (%zu != %zu)",
           tangents.size(), pointTags.size());
       }
       intp.Perform();
@@ -5482,7 +5482,7 @@ void OCC_Internals::synchronize(GModel *model)
   std::sort(toRemove.begin(), toRemove.end(), sortByInvDim);
   std::vector<GEntity *> removed;
   model->remove(toRemove, removed);
-  Msg::Debug("Destroying %lu entities in model", removed.size());
+  Msg::Debug("Destroying %zu entities in model", removed.size());
   for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
   _toRemove.clear();
 

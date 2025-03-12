@@ -384,7 +384,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
           }
           startIndex += maxe;
         }
-        Msg::Debug("MED has no tags -- assuming starting index %lu",
+        Msg::Debug("MED has no tags -- assuming starting index %zu",
                    startIndex);
       }
 

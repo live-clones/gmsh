@@ -539,10 +539,10 @@ int GeomMeshMatcher::forceTomatch(GModel *geom, GModel *mesh, const double TOL)
       }
       else {
         if(!v1)
-          Msg::Error("Could not find node %lu",
+          Msg::Error("Could not find node %zu",
                      (*it)->lines[i]->getVertex(0)->getNum());
         if(!v2)
-          Msg::Error("Could not find node %lu",
+          Msg::Error("Could not find node %zu",
                      (*it)->lines[i]->getVertex(1)->getNum());
       }
     }
