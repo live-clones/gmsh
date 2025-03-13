@@ -416,7 +416,7 @@ public:
   }
   virtual int getTypeForVTK() const
   {
-    return (_order == 2) ? 22 : MTriangle::getTypeForVTK();
+    return 69; // VTK_LAGRANGE_TRIANGLE
   }
   virtual void reverse();
   virtual void getNode(int num, double &u, double &v, double &w) const

@@ -123,6 +123,42 @@ int GModel::readMESH(const std::string &name)
           elements[0][cl].push_back(new MLine3(vertices));
         }
       }
+      else if(!strcmp(str, "EdgesP3")) {
+        if(!fgets(buffer, sizeof(buffer), fp)) break;
+        int nbe;
+        sscanf(buffer, "%d", &nbe);
+        Msg::Info("%d edges", nbe);
+        for(int i = 0; i < nbe; i++) {
+          if(!fgets(buffer, sizeof(buffer), fp)) break;
+          int n[4], cl;
+          sscanf(buffer, "%d %d %d %d %d", &n[0], &n[1], &n[2], &n[3], &cl);
+          for(int j = 0; j < 4; j++) n[j]--;
+          std::vector<MVertex *> vertices;
+          if(!getMeshVertices(4, n, vertexVector, vertices)) {
+            fclose(fp);
+            return 0;
+          }
+          elements[0][cl].push_back(new MLineN(vertices));
+        }
+      }
+      else if(!strcmp(str, "EdgesP4")) {
+        if(!fgets(buffer, sizeof(buffer), fp)) break;
+        int nbe;
+        sscanf(buffer, "%d", &nbe);
+        Msg::Info("%d edges", nbe);
+        for(int i = 0; i < nbe; i++) {
+          if(!fgets(buffer, sizeof(buffer), fp)) break;
+          int n[5], cl;
+          sscanf(buffer, "%d %d %d %d %d  %d", &n[0], &n[1], &n[2], &n[3], &n[4], &cl);
+          for(int j = 0; j < 5; j++) n[j]--;
+          std::vector<MVertex *> vertices;
+          if(!getMeshVertices(5, n, vertexVector, vertices)) {
+            fclose(fp);
+            return 0;
+          }
+          elements[0][cl].push_back(new MLineN(vertices));
+        }
+      }
       else if(!strcmp(str, "Triangles")) {
         if(!fgets(buffer, sizeof(buffer), fp)) break;
         int nbe;
@@ -158,6 +194,46 @@ int GModel::readMESH(const std::string &name)
             return 0;
           }
           elements[1][cl].push_back(new MTriangle6(vertices));
+        }
+      }
+      else if(!strcmp(str, "TrianglesP3")) {
+        if(!fgets(buffer, sizeof(buffer), fp)) break;
+        int nbe;
+        sscanf(buffer, "%d", &nbe);
+        Msg::Info("%d triangles", nbe);
+        for(int i = 0; i < nbe; i++) {
+          if(!fgets(buffer, sizeof(buffer), fp)) break;
+          int n[10], cl;
+          sscanf(buffer, "%d %d %d %d %d %d %d %d %d %d %d",
+              &n[0], &n[1], &n[2], &n[3], &n[4], &n[5], &n[6],
+              &n[7], &n[8], &n[9], &cl);
+          for(int j = 0; j < 10; j++) n[j]--;
+          std::vector<MVertex *> vertices;
+          if(!getMeshVertices(10, n, vertexVector, vertices)) {
+            fclose(fp);
+            return 0;
+          }
+          elements[1][cl].push_back(new MTriangleN(vertices, 3));
+        }
+      }
+      else if(!strcmp(str, "TrianglesP4")) {
+        if(!fgets(buffer, sizeof(buffer), fp)) break;
+        int nbe;
+        sscanf(buffer, "%d", &nbe);
+        Msg::Info("%d triangles", nbe);
+        for(int i = 0; i < nbe; i++) {
+          if(!fgets(buffer, sizeof(buffer), fp)) break;
+          int n[15], cl;
+          sscanf(buffer, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
+                 &n[0], &n[1], &n[2], &n[3], &n[4], &n[5], &n[6], &n[7], &n[8],
+                 &n[9], &n[10], &n[11], &n[12], &n[13], &n[14], &cl);
+          for(int j = 0; j < 15; j++) n[j]--;
+          std::vector<MVertex *> vertices;
+          if(!getMeshVertices(15, n, vertexVector, vertices)) {
+            fclose(fp);
+            return 0;
+          }
+          elements[1][cl].push_back(new MTriangleN(vertices, 4));
         }
       }
       else if(!strcmp(str, "Quadrilaterals")) {
@@ -205,7 +281,7 @@ int GModel::readMESH(const std::string &name)
           if(!fgets(buffer, sizeof(buffer), fp)) break;
           int n[10], cl;
           sscanf(buffer, "%d %d %d %d %d %d %d %d %d %d %d", &n[0], &n[1],
-                 &n[2], &n[3], &n[4], &n[5], &n[6], &n[7], &n[9], &n[8], &cl);
+                 &n[2], &n[3], &n[4], &n[5], &n[6], &n[7], &n[8], &n[9], &cl);
           for(int j = 0; j < 10; j++) n[j]--;
           std::vector<MVertex *> vertices;
           if(!getMeshVertices(10, n, vertexVector, vertices)) {
@@ -215,7 +291,50 @@ int GModel::readMESH(const std::string &name)
           elements[3][cl].push_back(new MTetrahedron10(vertices));
         }
       }
-      else if(!strcmp(str, "Hexahedra")) {
+    else if(!strcmp(str, "TetrahedraP3")) {
+      if(!fgets(buffer, sizeof(buffer), fp)) break;
+      int nbe;
+      sscanf(buffer, "%d", &nbe);
+      Msg::Info("%d tetrahedra", nbe);
+      for(int i = 0; i < nbe; i++) {
+        if(!fgets(buffer, sizeof(buffer), fp)) break;
+        int n[20], cl;
+        sscanf(buffer, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
+               &n[0], &n[1], &n[2], &n[3], &n[4], &n[5], &n[6], &n[7], &n[8], &n[9],
+               &n[10], &n[11], &n[12], &n[13], &n[14], &n[15], &n[16], &n[17],
+               &n[18], &n[19], &cl);
+        for(int j = 0; j < 20; j++) n[j]--;
+        std::vector<MVertex *> vertices;
+        if(!getMeshVertices(20, n, vertexVector, vertices)) {
+          fclose(fp);
+          return 0;
+        }
+        elements[3][cl].push_back(new MTetrahedronN(vertices, 3));
+      }
+    }
+    else if(!strcmp(str, "TetrahedraP4")) {
+      if(!fgets(buffer, sizeof(buffer), fp)) break;
+      int nbe;
+      sscanf(buffer, "%d", &nbe);
+      Msg::Info("%d tetrahedra", nbe);
+      for(int i = 0; i < nbe; i++) {
+        if(!fgets(buffer, sizeof(buffer), fp)) break;
+        int n[35], cl;
+        sscanf(buffer, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
+           &n[0],  &n[1], &n[2], &n[3], &n[4], &n[5], &n[6],  &n[7],  &n[8],  &n[9],
+          &n[10], &n[11], &n[12], &n[13], &n[14], &n[15], &n[16], &n[17], &n[18], &n[19],
+          &n[20], &n[21], &n[22], &n[23], &n[24], &n[25], &n[26], &n[27], &n[28], &n[29],
+          &n[30], &n[31], &n[32], &n[33], &n[34], &cl);
+        for(int j = 0; j < 35; j++) n[j]--;
+        std::vector<MVertex *> vertices;
+        if(!getMeshVertices(35, n, vertexVector, vertices)) {
+          fclose(fp);
+          return 0;
+        }
+        elements[3][cl].push_back(new MTetrahedronN(vertices, 4));
+      }
+    }
+    else if(!strcmp(str, "Hexahedra")) {
         if(!fgets(buffer, sizeof(buffer), fp)) break;
         int nbe;
         sscanf(buffer, "%d", &nbe);
@@ -290,10 +409,19 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
   }
 
   if(numEdges) {
-    if(CTX::instance()->mesh.order == 2) // FIXME (check getPolynomialOrder())
+    int order = (*firstEdge())->lines[0]->getPolynomialOrder();
+    if(order == 4)
+      fprintf(fp, " EdgesP4\n");
+    else if(order == 3)
+      fprintf(fp, " EdgesP3\n");
+    else if(order == 2)
       fprintf(fp, " EdgesP2\n");
-    else
+    else  if(order == 1)
       fprintf(fp, " Edges\n");
+    else {
+      Msg::Info("Order %d unknown for edges", order);
+      fprintf(fp, " Edges\n");
+    }
     fprintf(fp, " %d\n", numEdges);
     for(auto it = firstEdge(); it != lastEdge(); ++it) {
       int numPhys = (*it)->physicals.size();
@@ -305,10 +433,19 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
     }
   }
   if(numTriangles) {
-    if(CTX::instance()->mesh.order == 2) // FIXME (check getPolynomialOrder())
+    int order = (*firstFace())->triangles[0]->getPolynomialOrder();
+    if(order == 4)
+      fprintf(fp, " TrianglesP4\n");
+    else if(order == 3)
+      fprintf(fp, " TrianglesP3\n");
+    else if(order == 2)
       fprintf(fp, " TrianglesP2\n");
-    else
+    else if(order == 1)
       fprintf(fp, " Triangles\n");
+    else {
+      Msg::Info("Order %d unknown for triangles", order);
+      fprintf(fp, " Triangles\n");
+    }
     fprintf(fp, " %d\n", numTriangles);
     for(auto it = firstFace(); it != lastFace(); ++it) {
       int numPhys = (*it)->physicals.size();
@@ -332,10 +469,19 @@ int GModel::writeMESH(const std::string &name, int elementTagType, bool saveAll,
     }
   }
   if(numTetrahedra) {
-    if(CTX::instance()->mesh.order == 2)
-      fprintf(fp, " TetrahedraP2\n"); // FIXME (check getPolynomialOrder())
-    else
+    int order = (*firstRegion())->tetrahedra[0]->getPolynomialOrder();
+    if(order == 4)
+      fprintf(fp, " TetrahedraP4\n");
+    else if(order == 3)
+      fprintf(fp, " TetrahedraP3\n");
+    else if(order == 2)
+      fprintf(fp, " TetrahedraP2\n");
+    else  if(order == 1)
       fprintf(fp, " Tetrahedra\n");
+    else{
+      Msg::Info("Order %d unknown for tetrahedra", order);
+      fprintf(fp, " Tetrahedra\n");
+    }
     fprintf(fp, " %d\n", numTetrahedra);
     for(auto it = firstRegion(); it != lastRegion(); ++it) {
       int numPhys = (*it)->physicals.size();
