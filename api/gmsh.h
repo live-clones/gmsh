@@ -3014,14 +3014,22 @@ namespace gmsh { // Top-level functions
                             gmsh::vectorpair & outDimTags,
                             const std::string & trihedron = "");
 
+      // gmsh::model::occ::addLoft
+      //
+      // Add a loft in the OpenCASCADE CAD representation
+      GMSH_API void addLoft(const int wireTag,
+                            const int inwire1,
+                            const int inwire2,
+                            int & tag);
+
       // gmsh::model::occ::fillet
       //
       // Fillet the volumes `volumeTags' on the curves `curveTags' with radii
       // `radii'. The `radii' vector can either contain a single radius, as many
       // radii as `curveTags', or twice as many as `curveTags' (in which case
       // different radii are provided for the begin and end points of the curves).
-      // Return the filleted entities in `outDimTags' as a vector of (dim, tag)
-      // pairs. Remove the original volume if `removeVolume' is set.
+      // Return the filleted entities in `outDimTags'. Remove the original volume
+      // if `removeVolume' is set.
       GMSH_API void fillet(const std::vector<int> & volumeTags,
                            const std::vector<int> & curveTags,
                            const std::vector<double> & radii,
