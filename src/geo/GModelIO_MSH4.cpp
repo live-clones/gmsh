@@ -2719,7 +2719,7 @@ static void writeMSH4GhostCells(GModel *const model, FILE *fp,
 
   for(std::size_t i = 0; i < entities.size(); i++) {
     std::map<MElement *, int> ghostElements;
-    int partition;
+    int partition = -1;
 
     if(entities[i]->geomType() == GEntity::GhostCurve) {
       ghostElements = static_cast<ghostEdge *>(entities[i])->getGhostCells();
