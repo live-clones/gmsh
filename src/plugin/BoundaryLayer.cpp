@@ -16,7 +16,7 @@
 StringXNumber BoundaryLayerOptions_Number[] = {
   {GMSH_FULLRC, "Width", nullptr, 1.e-2},
   {GMSH_FULLRC, "Hwall", nullptr, 1.e-3},
-  {GMSH_FULLRC, "NbLayers", nullptr, 10}
+  {GMSH_FULLRC, "Ratio", nullptr, 1.2}
 };
 
 StringXString BoundaryLayerOptions_String[] = {
@@ -106,26 +106,41 @@ static bool fanitzie (std::vector<GFace*> &gfs, std::vector<GVertex*> &gvs,
 	continue;
       }
 
+      
+      std::vector<MTriangle*> corners, local_fans;
       for(std::size_t i = 0; i < gf->triangles.size(); i++) {
 	for (std::size_t j = 0 ; j < 3 ; j++){
 	  if (gf->triangles[i]->getVertex(j) == toDelete){
 	    gf->triangles[i]->setVertex(j, v);
 	    ecole_des_fans.push_back(gf->triangles[i]);
+	    local_fans.push_back(gf->triangles[i]);
 	  }
 	}
       }
-
+      
       std::vector<MQuadrangle*> temp;
       for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
 	bool found = false;
-	for (std::size_t j = 0 ; j < 4 ; j++){
+	bool found_v = false;
+
+	for (std::size_t j = 0 ; j < 4 ; j++)	  
+	  if (gf->quadrangles[i]->getVertex(j) == v)
+	    found_v = true;
+	
+	for (std::size_t j = 0 ; j < 4 ; j++){	  
 	  if (gf->quadrangles[i]->getVertex(j) == toDelete){
-	    found = true;
-	    auto newT = new MTriangle(gf->quadrangles[i]->getVertex((j+1)%4),
-				      gf->quadrangles[i]->getVertex((j+2)%4),
-				      gf->quadrangles[i]->getVertex((j+3)%4));
-	    ecole_des_fans.push_back(newT);
-	    gf->triangles.push_back(newT);
+	    if (found_v){
+	      found = true;
+	      auto newT = new MTriangle(gf->quadrangles[i]->getVertex((j+1)%4),
+					gf->quadrangles[i]->getVertex((j+2)%4),
+					gf->quadrangles[i]->getVertex((j+3)%4));
+	      ecole_des_fans.push_back(newT);
+	      corners.push_back(newT);
+	      gf->triangles.push_back(newT);
+	    }
+	    else {
+	      gf->quadrangles[i]->setVertex(j, v);
+	    }
 	  }
 	}
 	if (found) delete gf->quadrangles[i];
@@ -136,9 +151,31 @@ static bool fanitzie (std::vector<GFace*> &gfs, std::vector<GVertex*> &gvs,
       auto toErase=std::find(gf->mesh_vertices.begin(), gf->mesh_vertices.end(), toDelete);
       if (toErase!=gf->mesh_vertices.end())
 	gf->mesh_vertices.erase(toErase);
-
       
-    }    
+      if (corners.size() == 2){
+	for (auto t : corners){
+	  for (auto tt : local_fans){
+	    if (tt !=t){
+	      for (size_t j=0;j<3;j++){
+		MVertex *tj0 = t->getVertex(j);
+		MVertex *tj1 = t->getVertex((j+1)%3);
+		MVertex *tj2 = t->getVertex((j+2)%3);
+		for (size_t k=0;k<3;k++){
+		  MVertex *ttj0 = tt->getVertex(k);
+		  MVertex *ttj1 = tt->getVertex((k+1)%3);
+		  MVertex *ttj2 = tt->getVertex((k+2)%3);
+		  if (ttj0 == tj1 && ttj1 == tj0){
+		    gf->triangles.erase(std::find(gf->triangles.begin(), gf->triangles.end(), t));
+		    gf->triangles.erase(std::find(gf->triangles.begin(), gf->triangles.end(), tt));
+		    gf->quadrangles.push_back(new  MQuadrangle(tj0,ttj2,tj1,tj2));
+		  }
+		}
+	      }
+	    }
+	  }
+	}	
+      }    
+    }
   }
 }
 
@@ -359,7 +396,7 @@ bool bl2d(GModel *m,
 	if (std::find(ecole_des_fans.begin(), ecole_des_fans.end(), e) !=
 	    ecole_des_fans.end()){
 	  /// could be better !
-	  double fact = width/sqrt(3.0)/2;
+	  double fact = width/sqrt(3.0);
 	  vs[0] = {fact, 0.};
 	  vs[1] = {fact*cos(2. * M_PI / 3.), fact*sin(2 * M_PI / 3.)};
 	  vs[2] = {fact*cos(4. * M_PI / 3.), fact*sin(4 * M_PI / 3.)};	  
@@ -391,7 +428,6 @@ bool bl2d(GModel *m,
     }
     triIdealShapes[gf] = sh;
   }
-
   
   for (GModel::eiter eit = m->firstEdge() ; eit != m->lastEdge() ; ++eit) meshGEdgeInsertBoundaryLayer(*eit, width);
 
@@ -460,6 +496,70 @@ bool bl2d(GModel *m,
   }
 }
 
+static void expandBL (GFace *gf, std::map<MVertex*,SPoint2> &initialVertexPositions,
+		      std::map<MElement*, width> &layers,
+		      std::vector<GFace*> &inSurfaces) {
+  
+  std::vector<double> areas;
+  std::vector<std::array<std::array<double, 2>, 3> > sh;
+  for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
+    MElement *e = gf->getMeshElement(i);
+    std::vector<std::array<double, 2> > vs;
+    for (size_t j=0;j<e->getNumVertices();j++){
+      SPoint2 param;
+      auto it = initialVertexPositions.find(e->getVertex(j));
+      if (it == initialVertexPositions.end())
+	reparamMeshVertexOnFace(e->getVertex(j),gf,param);
+      else
+	param = it->second;
+      vs.push_back({param.x(),param.y()});
+    }
+    
+    auto it = layers.find(e);
+    
+    if (e->getNumVertices() == 3){
+      if (it != layers.end()){
+	double fact = it->second/sqrt(3.0);
+	vs[0] = {fact, 0.};
+	vs[1] = {fact*cos(2. * M_PI / 3.), fact*sin(2 * M_PI / 3.)};
+	vs[2] = {fact*cos(4. * M_PI / 3.), fact*sin(4 * M_PI / 3.)};	  
+      }
+      double a = triangle_area_2d (vs[0],vs[1],vs[2]);	
+      areas.push_back(a);
+      if (a > 0) sh.push_back({vs[0],vs[1],vs[2]});
+      else sh.push_back({vs[0],vs[2],vs[1]});
+    }
+    else {
+      if (it != layers.end()){
+	/*
+	  (0,width)  (dx,width)
+	  +-------------+
+	  |             |  
+	  +-------------+
+	  (0,0)     (dx,0) 
+	*/
+	double dx = sqrt ((vs[0][0] - vs[1][0])*(vs[0][0] - vs[1][0])+
+			  (vs[0][1] - vs[1][1])*(vs[0][1] - vs[1][1]));
+	std::array<double, 2> p0 ={0,0};
+	std::array<double, 2> p1 = {dx,0};
+	std::array<double, 2> p2 ={dx,width};
+	std::array<double, 2> p3 ={0,width};
+	sh.push_back({p0,p1,p2});
+	sh.push_back({p2,p3,p0});
+	sh.push_back({p0,p1,p3});
+	sh.push_back({p1,p2,p3});	  
+      }
+      else {
+	sh.push_back({vs[0],vs[1],vs[2]});
+	sh.push_back({vs[2],vs[3],vs[0]});
+	sh.push_back({vs[0],vs[1],vs[3]});
+	sh.push_back({vs[1],vs[2],vs[3]});	  
+      }
+    }
+  }
+}
+
+
 std::string GMSH_BoundaryLayerPlugin::parse(std::string str, std::list<int> &physical)
 {
   // Remove spaces
@@ -517,6 +617,8 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   }
 
   double width = BoundaryLayerOptions_Number[0].def;
+  double hwall = BoundaryLayerOptions_Number[1].def;
+  double ratio = BoundaryLayerOptions_Number[2].def;
   
   bl2d(m, vv, e, f, width);
 
