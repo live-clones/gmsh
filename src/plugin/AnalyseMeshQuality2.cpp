@@ -132,9 +132,16 @@ PView *GMSH_AnalyseMeshQuality2Plugin::execute(PView *v)
   bool freeData = static_cast<bool>(MeshQuality2Options_Number[13].def);
 
 #if defined(HAVE_VISUDEV)
+  // TODO come back later
   _pwJac = checkValidity / 2;
   _pwIGE = computeDisto / 2;
   _pwICN = computeAspect / 2;
+
+  // FIXME About createTimeView:
+  //  check if PView::_data::NbTimeStep if _data of type PViewDataList
+  //  check if PView::_options::vectorType == PViewOptions::Displacement (5),
+  //  or just consider that NbTimeStep is sufficient
+  //
 
   _createPwView = static_cast<bool>(MeshQuality2Options_Number[14].def);
   bool createTimeView = static_cast<bool>(MeshQuality2Options_Number[15].def);
@@ -144,6 +151,52 @@ PView *GMSH_AnalyseMeshQuality2Plugin::execute(PView *v)
   _dataPViewIGE.clear();
   _dataPViewICN.clear();
 #endif
+
+  // FIXME Store previous data (like only visible?) and check to finetune?
+  // • Affecting computation:
+  //  int checkValidity = static_cast<int>(MeshQuality2Options_Number[0].def);
+  //  int computeDisto = static_cast<int>(MeshQuality2Options_Number[1].def);
+  //  int computeAspect = static_cast<int>(MeshQuality2Options_Number[2].def);
+  //  int restrictionDim = static_cast<int>(MeshQuality2Options_Number[3].def);
+  //  bool onlyVisible = static_cast<bool>(MeshQuality2Options_Number[4].def);
+  //  bool recomputePolicy = static_cast<bool>(MeshQuality2Options_Number[5].def);
+  // • To store:
+  //  bool computedValidity[4], computedDisto[4], computedAspect[4]
+  //
+  //  Map : GFace->struct MyObject
+  //  Map : GRegion->struct MyObject
+  // struct MyObject = {
+  //   map<MElement,size_t> (if number of element different and recomputePolicy==0, then recompute)
+  //   //vector<int> listOfMElementTag (check it is the same if recomputePolicy==0)
+  //   vector<double> minJ, maxJ, minDisto, minAspect (empty if not computed)
+  //   vector<char> computedValues // three bit of information, in the case of onlyVisible parameter has been previously set to true
+  //   _execute(Validity, std::vector<double> &quality){std::vector<MElement> listElementToHandle;
+  //     as soon as new element is  in
+  // }
+
+  // computeValOrQual:
+  //  1. Loop on GEntity
+  //  2. struct MyObject->_execute(vector &values)
+  //  3. Inside execute :
+  //    4. If recomputePolicy > 0 : clear data
+  //    5. If recomputePolicy == 0 and GEntity->numElement != my_num : clear data
+  //    6. Loop on GEntity->element
+  //      7. if element not in map, then stop, clear data and call execute? or just reset nEl
+  //    8.
+  //    .
+  //    .
+  //    .
+
+  // Recompute policy : 1 => always recompute
+  // Recompute policy : -1 => add elements if new ones, rmv
+  // Recompute policy : 0 => clear data if not same number elements or elements not the same
+  //   as soon as new element is detected, clear data for Gentity and recompute
+
+  // If recompute > 0, then clear all data
+  // Check that GEntity of GEntity_to_MyObject still exists!!!!
+
+
+
 
 
   if(recompute) _clear(askedDim);
