@@ -30,19 +30,19 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "checkQualityAspect", nullptr, 0},
   {GMSH_FULLRC, "restrictToDimension", nullptr, -1},
   {GMSH_FULLRC, "restrictToVisibleElements", nullptr, 0},
+  {GMSH_FULLRC, "recomputePolicy", nullptr, 0},
   {GMSH_FULLRC, "createElementsView", nullptr, 0},
   {GMSH_FULLRC, "createPlotView", nullptr, 0},
-  {GMSH_FULLRC, "createTemporalView", nullptr, 0},
   {GMSH_FULLRC, "hideElements", nullptr, 0},
   {GMSH_FULLRC, "hideWorst", nullptr, 0},
   {GMSH_FULLRC, "hideCriterion", nullptr, 0},
   {GMSH_FULLRC, "hideThreshold", nullptr, .5},
-  {GMSH_FULLRC, "recomputePolicy", nullptr, 0},
   {GMSH_FULLRC, "printGuidance", nullptr, 1},
   {GMSH_FULLRC, "freeData-NothingElse", nullptr, 0}
 #if defined(HAVE_VISUDEV)
   ,
   {GMSH_FULLRC, "createPointwiseView", nullptr, 0},
+  {GMSH_FULLRC, "createTemporalView", nullptr, 0},
   {GMSH_FULLRC, "elementIDForPwView", nullptr, 0}
 #endif
 };
@@ -112,29 +112,32 @@ std::string GMSH_AnalyseMeshQuality2Plugin::getHelp() const
 
 PView *GMSH_AnalyseMeshQuality2Plugin::execute(PView *v)
 {
+  // Initialization
   _m = GModel::current();
   int checkValidity = static_cast<int>(MeshQuality2Options_Number[0].def);
   int computeDisto = static_cast<int>(MeshQuality2Options_Number[1].def);
   int computeAspect = static_cast<int>(MeshQuality2Options_Number[2].def);
   int restrictionDim = static_cast<int>(MeshQuality2Options_Number[3].def);
+  if(restrictionDim < 0 || restrictionDim > 4) restrictionDim = _m->getDim();
+
   bool onlyVisible = static_cast<bool>(MeshQuality2Options_Number[4].def);
-  bool createView3D = static_cast<bool>(MeshQuality2Options_Number[5].def);
-  bool createView2D = static_cast<bool>(MeshQuality2Options_Number[6].def);
-  bool createTimeView = static_cast<bool>(MeshQuality2Options_Number[7].def);
+  bool recomputePolicy = static_cast<bool>(MeshQuality2Options_Number[5].def);
+  bool createView3D = static_cast<bool>(MeshQuality2Options_Number[6].def);
+  bool createView2D = static_cast<bool>(MeshQuality2Options_Number[7].def);
   bool hideElements = static_cast<bool>(MeshQuality2Options_Number[8].def);
   bool hideWorst = static_cast<bool>(MeshQuality2Options_Number[9].def);
   bool hideCriterion = static_cast<bool>(MeshQuality2Options_Number[10].def);
   double hideThreshold = MeshQuality2Options_Number[11].def;
-  bool recomputePolicy = static_cast<bool>(MeshQuality2Options_Number[12].def);
-  bool printGuidance = static_cast<bool>(MeshQuality2Options_Number[13].def);
-  bool freeData = static_cast<bool>(MeshQuality2Options_Number[14].def);
+  bool verbose = static_cast<bool>(MeshQuality2Options_Number[12].def);
+  bool freeData = static_cast<bool>(MeshQuality2Options_Number[13].def);
 
 #if defined(HAVE_VISUDEV)
   _pwJac = checkValidity / 2;
   _pwIGE = computeDisto / 2;
   _pwICN = computeAspect / 2;
 
-  _createPwView = static_cast<bool>(MeshQuality2Options_Number[15].def);
+  _createPwView = static_cast<bool>(MeshQuality2Options_Number[14].def);
+  bool createTimeView = static_cast<bool>(MeshQuality2Options_Number[15].def);
   _elemNumForPwView = static_cast<int>(MeshQuality2Options_Number[16].def);
   _viewOrder = 0;
   _dataPViewJac.clear();
@@ -142,7 +145,6 @@ PView *GMSH_AnalyseMeshQuality2Plugin::execute(PView *v)
   _dataPViewICN.clear();
 #endif
 
-  if(askedDim < 0 || askedDim > 4) askedDim = _m->getDim();
 
   if(recompute) _clear(askedDim);
 
