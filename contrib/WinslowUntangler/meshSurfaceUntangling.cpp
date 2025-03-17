@@ -147,7 +147,6 @@ bool buildTrianglesAndTargetsFromElements(
 
 	double l = 1;//sqrt(fabs(area));
 
-
         std::array<vec2, 3> target = {qtarget[quad_dcp[k][0]]*l,
                                       qtarget[quad_dcp[k][1]]*l,
                                       qtarget[quad_dcp[k][2]]*l};
