@@ -1244,6 +1244,12 @@ std::string opt_general_options_filename(OPT_ARGS_STR)
   return CTX::instance()->optionsFileName;
 }
 
+std::string opt_general_log_filename(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) Msg::SetLogFileName(val);
+  return Msg::GetLogFileName();
+}
+
 std::string opt_general_recent_file0(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) CTX::instance()->recentFiles[0] = val;
