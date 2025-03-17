@@ -56,7 +56,9 @@
 
 #include "machdefs.h"
 #include "util.h"
-
+#ifdef _MSC_VER
+#include <io.h>
+#endif
 #ifndef SEEK_SET
 #ifdef L_SET
 #define SEEK_SET L_SET

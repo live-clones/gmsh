@@ -11,8 +11,7 @@ gmsh.plugin.setString('BoundaryLayer','Surfaces','1')
 gmsh.plugin.setString('BoundaryLayer','Curves','1,2,3,4')
 gmsh.plugin.setNumber('BoundaryLayer','Width',l/10)
 
-for i in range(20):
-    gmsh.plugin.run('BoundaryLayer')
+gmsh.plugin.run('BoundaryLayer')
 
 
 

@@ -1091,7 +1091,7 @@ int meshGEdgeInsertBoundaryLayer(GEdge *ge, double width)
   size_t start = 0;
   size_t end = ge->mesh_vertices.size() - 1;
   
-  printf("GEdge %d -- end line lengths %12.5E %12.5E \n",ge->tag(),l0->getLength(),ln->getLength());
+  //  printf("GEdge %d -- end line lengths %12.5E %12.5E \n",ge->tag(),l0->getLength(),ln->getLength());
 
   if (l0->getLength() < 1.e-12) {
 
@@ -1172,7 +1172,7 @@ int meshGEdgeInsertBoundaryLayer(GEdge *ge, double width)
   int filterMinimumN = 0;
 
 
-  int KK = meshGEdgeProcessing(ge, t_left, t_right, N, Points, a, filterMinimumN);
+  meshGEdgeProcessing(ge, t_left, t_right, N, Points, a, filterMinimumN);
   N = ge->mesh_vertices.size()-diff+2;
 
   //  printf("--> (%12.5E %12.5E) a = %12.5E\n",t_left, t_right,a );
