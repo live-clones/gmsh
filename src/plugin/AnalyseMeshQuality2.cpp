@@ -123,7 +123,17 @@ PView *GMSH_AnalyseMeshQuality2Plugin::execute(PView *v)
   int checkValidity = static_cast<int>(MeshQuality2Options_Number[0].def);
   int computeDisto = static_cast<int>(MeshQuality2Options_Number[1].def);
   int computeAspect = static_cast<int>(MeshQuality2Options_Number[2].def);
+  // int type is because of HAVE_VISUDEV
+
+  // NOTE dimensionPolicy: highest dimension available -> 0, only 2D -> 1,
+  //      2D and 3D : seperately -> 2, mixed -> 3
   int dimensionPolicy = static_cast<int>(MeshQuality2Options_Number[3].def);
+
+  // NOTE recomputePolicy:
+  //      - (re)compute nothing, use existent data -> -2
+  //      - do not recompute, just add new elements -> -1,
+  //      - recompute if mesh modification detected -> 0,
+  //      - always recompute -> 1
   int recomputePolicy = static_cast<int>(MeshQuality2Options_Number[4].def);
   bool onlyVisible = static_cast<bool>(MeshQuality2Options_Number[5].def);
 

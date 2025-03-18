@@ -32,8 +32,10 @@ private:
 
 #if defined(HAVE_VISUDEV)
   // Pointwise data
+  // FIXME to check after
   bool _createPwView = 0;
   int _elemNumForPwView = 0;
+  int _numElementToScan; // FIXME ajouté pour pouvoir compiler
   bool _pwJac = false, _pwIGE = false, _pwICN = false;
   std::map<int, std::vector<double> > _dataPViewJac;
   std::map<int, std::vector<double> > _dataPViewIGE;
@@ -66,6 +68,37 @@ public:
   std::string getAuthor() const override { return "Amaury Johnen"; }
   int getNbOptions() const override;
   StringXNumber *getOption(int) override;
+
+  // NOTE Workflow
+  //  0) - If freeData-NothingElse, clear all data.
+  //     - If freeData-NothingElse or no checkValidity/compute*, return.
+  //  1) Loop over all GEntities of considered dimension (dep. dimensionPolicy):
+  //     a) check that GEntity still exists (NB: GModel::list)
+  //     b) Clear data if needed (dep. recomputePolicy)
+  //     c) Count and set flags:
+  //        - Count the # of element that will be checked for each measure
+  //        - Set flags to say which element to compute
+  //        (dep. restrictToVisibleElements and restrictToCurvedElements)
+  //  2) Compute Validity if needed (dep. skipPreventiveValidityCheck) for 2D,
+  //     then 3D. Update flags. Gather values minJ, maxJ.
+  //  3) Compute Disto if needed, then Aspect if needed. For each: 2D, then 3D.
+  //     Update flags. Gather values of measures.
+  //  4) Process obtained quantities and print stats (dep.
+  //     $$$whichPercentileToCompute$$$)
+  //  5) If hideElements is on:
+  //     a) If hidingCriterion=1,2, compute the threshold in terms of quality
+  //     b) Loop over GEntities to hide.
+  //  6) Do createElementsView and/or createPlotView (dep. $$$percentilePlot$$$)
+  //     Setting one of them to true does not guarantee the creation of a new
+  //     PView. The plugin try to avoid the creation of identical PViews.
+  //     Here is what is taken account:
+  //     - If the PView is a Plot and forceNewPlotView=true, always (re)create
+  //     - If the PView do not exists (i.e. _views[n] == nullptr) or if it has
+  //       been deleted by the user (PView removed from PView::list), create.
+  //     - If the PView exists, _dataChangedSinceCreation[n] is checked. If
+  //       false, the PView is recreated, otherwise not.
+  //  FIXME What about changed visibility of elements?
+  //
   PView *execute(PView *) override;
 
 private:
@@ -93,13 +126,25 @@ private:
     //bool computedThisRun; // FIXME necessary?
     std::map<MElement*, size_t> _mapElemToIndex;
     std::vector<double> _minJ, _maxJ, _minDisto, _minAspect;
-    // 6 bits of char are used for the following information:
-    // - First 3 bits: to say if quantities has been computed
-    // - Next 3 bits: to say if the measure has been asked this run (depending
-    //                on the plugin parameters restrictToVisibleElements)
-    // FIXME or need only 1 bit to say if the element has been asked this run?
     int _numVisibleElem = 0;
     int _numToCompute[3] = {0, 0, 0};
+    // x bits of char are used for the following information:
+    // - First 3 bits: to say if quantities has already been computed
+    // FIXME The other 5 bits can be used for different alternatives:
+    //         a) element must be computed (1 bits)
+    //         b) measure must be computed (3 bits)
+    //         c) this element is concerned by this run (1 bits)
+    //         d) this measure is concerned by this run (3 bits)
+    //       (a) depends on onlyVisible but not first three bits
+    //       (b) depends on onlyVisible and first three bits but can be deduced
+    //           from first three bits and (a)
+    //       (c) and (d) the same but for knowing which element should be used
+    //                   for creatinghiding/Pview. However, (d) is less useful
+    //                   since normally, measure of a certain element should
+    //                   have been computed if the measure has been asked and
+    //                   if its flag.
+    //        (a) == (c)
+    //        I think should use whatever I can use among (a), (b), (c)
     std::vector<char> _flags;
 
     // NOTE this is for checking if pviews have already been created.
