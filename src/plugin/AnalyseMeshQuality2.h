@@ -13,8 +13,42 @@
 #include "Plugin.h"
 #include "GEntity.h" // FIXME necessary?
 #include "MElement.h" // FIXME necessary?
+
+
+
+// NOTE Workflow
+//  0) - If freeData-NothingElse, clear all data.
+//     - If freeData-NothingElse or no checkValidity/compute*, return.
+//  1) Loop over all GEntities of considered dimension (dep. dimensionPolicy):
+//     a) check that GEntity still exists (NB: GModel::list)
+//     b) Clear data if needed (dep. recomputePolicy)
+//     c) Count and set flags:
+//        - Count the # of element that will be checked for each measure
+//        - Set flags to say which element to compute
+//        (dep. restrictToVisibleElements and restrictToCurvedElements)
+//  2) Compute Validity if needed (dep. skipPreventiveValidityCheck) for 2D,
+//     then 3D. Update flags. Gather values minJ, maxJ.
+//  3) Compute Disto if needed, then Aspect if needed. For each: 2D, then 3D.
+//     Update flags. Gather values of measures.
+//  4) Process obtained quantities and print stats (dep.
+//     $$$whichPercentileToCompute$$$)
+//  5) If hideElements is on:
+//     a) If hidingCriterion=1,2, compute the threshold in terms of quality
+//     b) Loop over GEntities to hide.
+//  6) Do createElementsView and/or createPlotView (dep. $$$percentilePlot$$$)
+//     Setting one of them to true does not guarantee the creation of a new
+//     PView. The plugin try to avoid the creation of identical PViews.
+//     Here is what is taken account:
+//     - If the PView is a Plot and forceNewPlotView=true, always (re)create
+//     - If the PView do not exists (i.e. _views[n] == nullptr) or if it has
+//       been deleted by the user (PView removed from PView::list), create.
+//     - If the PView exists, _dataChangedSinceCreation[n] is checked. If
+//       false, the PView is recreated, otherwise not.
+//  FIXME What about changed visibility of elements?
+//
+
+
 class MElement;
-class data_elementMinMax2;
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterAnalyseMeshQuality2Plugin();
@@ -23,11 +57,17 @@ GMSH_Plugin *GMSH_RegisterAnalyseMeshQuality2Plugin();
 class GMSH_AnalyseMeshQuality2Plugin : public GMSH_PostPlugin {
 private:
   class dataEntities;
+  struct dataSingleDimension;
   GModel *_m;
+  // dataSingleDimension _data2D, _data3D;
+
+  // TODO to remove
   std::map<GFace*, dataEntities> _data2D;
   std::map<GFace*, dataEntities> _data3D;
-
-
+  // for 1d, 2d, 3d
+  bool _computedJac[3]{}, _computedIGE[3]{}, _computedICN[3]{};
+  bool _pviewJac[3]{}, _pviewIGE[3]{}, _pviewICN[3]{};
+  std::vector<dataEntities> _data;
 
 
 #if defined(HAVE_VISUDEV)
@@ -68,37 +108,6 @@ public:
   std::string getAuthor() const override { return "Amaury Johnen"; }
   int getNbOptions() const override;
   StringXNumber *getOption(int) override;
-
-  // NOTE Workflow
-  //  0) - If freeData-NothingElse, clear all data.
-  //     - If freeData-NothingElse or no checkValidity/compute*, return.
-  //  1) Loop over all GEntities of considered dimension (dep. dimensionPolicy):
-  //     a) check that GEntity still exists (NB: GModel::list)
-  //     b) Clear data if needed (dep. recomputePolicy)
-  //     c) Count and set flags:
-  //        - Count the # of element that will be checked for each measure
-  //        - Set flags to say which element to compute
-  //        (dep. restrictToVisibleElements and restrictToCurvedElements)
-  //  2) Compute Validity if needed (dep. skipPreventiveValidityCheck) for 2D,
-  //     then 3D. Update flags. Gather values minJ, maxJ.
-  //  3) Compute Disto if needed, then Aspect if needed. For each: 2D, then 3D.
-  //     Update flags. Gather values of measures.
-  //  4) Process obtained quantities and print stats (dep.
-  //     $$$whichPercentileToCompute$$$)
-  //  5) If hideElements is on:
-  //     a) If hidingCriterion=1,2, compute the threshold in terms of quality
-  //     b) Loop over GEntities to hide.
-  //  6) Do createElementsView and/or createPlotView (dep. $$$percentilePlot$$$)
-  //     Setting one of them to true does not guarantee the creation of a new
-  //     PView. The plugin try to avoid the creation of identical PViews.
-  //     Here is what is taken account:
-  //     - If the PView is a Plot and forceNewPlotView=true, always (re)create
-  //     - If the PView do not exists (i.e. _views[n] == nullptr) or if it has
-  //       been deleted by the user (PView removed from PView::list), create.
-  //     - If the PView exists, _dataChangedSinceCreation[n] is checked. If
-  //       false, the PView is recreated, otherwise not.
-  //  FIXME What about changed visibility of elements?
-  //
   PView *execute(PView *) override;
 
 private:
