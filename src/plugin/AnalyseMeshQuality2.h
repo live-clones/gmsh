@@ -8,8 +8,11 @@
 #include "GmshConfig.h"
 #if defined(HAVE_MESH)
 
-#include "Plugin.h"
+#include <map>
 #include <vector>
+#include "Plugin.h"
+#include "GEntity.h" // FIXME necessary?
+#include "MElement.h" // FIXME necessary?
 class MElement;
 class data_elementMinMax2;
 
@@ -19,7 +22,9 @@ GMSH_Plugin *GMSH_RegisterAnalyseMeshQuality2Plugin();
 
 class GMSH_AnalyseMeshQuality2Plugin : public GMSH_PostPlugin {
 private:
+  class dataGEntities;
   GModel *_m;
+
 
 #if defined(HAVE_VISUDEV)
   // Pointwise data
@@ -81,27 +86,50 @@ private:
   void _createPViewPointwise();
   void _setInterpolationMatrices(PView *);
 #endif
-};
 
-class data_elementMinMax2 {
 private:
-  MElement *_el;
-  double _minJac, _maxJac, _minIGE, _minICN;
+  class dataGEntities {
+  private:
+    GEntity *_ge;
+    //bool computedThisRun; // FIXME necessary?
+    std::map<MElement*, size_t> _mapElemToIndex;
+    std::vector<double> _minJ, _maxJ, _minDisto, _minAspect;
+    int _numVisibleElem;
+    // 6 bits of char are used for the following information:
+    // - First 3 bits: to say if quantities has been computed
+    // - Next 3 bits: to say if the measure has been asked this run (depending
+    //                on the plugin parameters restrictToVisibleElements)
+    // FIXME or need only 1 bit to say if the element has been asked this run?
+    std::vector<char> _computed;
 
-public:
-  data_elementMinMax2(MElement *e, double minJ = 2, double maxJ = 0,
-                     double minIGE = -1, double minICN = -1)
-    : _el(e), _minJac(minJ), _maxJac(maxJ), _minIGE(minIGE), _minICN(minICN)
-  {
-  }
-  void setMinS(double r) { _minIGE = r; }
-  void setMinI(double r) { _minICN = r; }
-  MElement *element() { return _el; }
-  double minJ() { return _minJac; }
-  double maxJ() { return _maxJac; }
-  double minS() { return _minIGE; }
-  double minI() { return _minICN; }
+  public:
+    explicit dataGEntities(GEntity *ge)
+      : _ge(ge), _numVisibleElem(0)
+    {
+    }
+    int getNumVisibleElement() const { return _numVisibleElem; }
+
+    // I separate the computation of each measure because computation can be
+    // really heavy and take a a lot of time. Computing the validity is much
+    // faster and can help the user to evaluate the time needed to compute the
+    // remaining qualities.
+    void computeValidity(bool onlyVisible, int recomputePolicy, bool verbose);
+    void computeDisto(bool onlyVisible, int recomputePolicy, bool verbose);
+    void computeAspect(bool onlyVisible, int recomputePolicy, bool verbose);
+    void getValidityValues(std::vector<double> &min, std::vector<double> &max);
+    void getDistoValues(std::vector<double> &disto) const;
+    void getAspectValues(std::vector<double> &aspect) const;
+    void getValues(std::vector<double> *minJ, std::vector<double> *maxJ,
+                   std::vector<double> *disto, std::vector<double> *aspect) const;
+
+    // FIXME should i create only one method? bool computeDisto, std::vector<.> *vecDisto)
+    //       or just std::vector<.> *vecDisto = nullptr)
+  };
 };
+
+
+
+
 
 #endif
 #endif

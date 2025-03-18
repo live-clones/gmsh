@@ -38,7 +38,8 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "hideCriterion", nullptr, 0},
   {GMSH_FULLRC, "hideThreshold", nullptr, .5},
   {GMSH_FULLRC, "printGuidance", nullptr, 1},
-  {GMSH_FULLRC, "freeData-NothingElse", nullptr, 0}
+  {GMSH_FULLRC, "freeData-NothingElse", nullptr, 0},
+  {GMSH_FULLRC, "skipPreventiveValidityCheck", nullptr, 0}
 #if defined(HAVE_VISUDEV)
   ,
   {GMSH_FULLRC, "createPointwiseView", nullptr, 0},
@@ -130,6 +131,7 @@ PView *GMSH_AnalyseMeshQuality2Plugin::execute(PView *v)
   double hideThreshold = MeshQuality2Options_Number[11].def;
   bool verbose = static_cast<bool>(MeshQuality2Options_Number[12].def);
   bool freeData = static_cast<bool>(MeshQuality2Options_Number[13].def);
+  bool lazyValidity = static_cast<bool>(MeshQuality2Options_Number[14].def);
 
 #if defined(HAVE_VISUDEV)
   // TODO come back later
@@ -143,9 +145,9 @@ PView *GMSH_AnalyseMeshQuality2Plugin::execute(PView *v)
   //  or just consider that NbTimeStep is sufficient
   //
 
-  _createPwView = static_cast<bool>(MeshQuality2Options_Number[14].def);
-  bool createTimeView = static_cast<bool>(MeshQuality2Options_Number[15].def);
-  _elemNumForPwView = static_cast<int>(MeshQuality2Options_Number[16].def);
+  _createPwView = static_cast<bool>(MeshQuality2Options_Number[15].def);
+  bool createTimeView = static_cast<bool>(MeshQuality2Options_Number[16].def);
+  _elemNumForPwView = static_cast<int>(MeshQuality2Options_Number[17].def);
   _viewOrder = 0;
   _dataPViewJac.clear();
   _dataPViewIGE.clear();
