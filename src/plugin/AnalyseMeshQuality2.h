@@ -22,8 +22,12 @@ GMSH_Plugin *GMSH_RegisterAnalyseMeshQuality2Plugin();
 
 class GMSH_AnalyseMeshQuality2Plugin : public GMSH_PostPlugin {
 private:
-  class dataGEntities;
+  class dataEntities;
   GModel *_m;
+  std::map<GFace*, dataEntities> _data2D;
+  std::map<GFace*, dataEntities> _data3D;
+
+
 
 
 #if defined(HAVE_VISUDEV)
@@ -38,11 +42,6 @@ private:
   int _viewOrder = 0;
 #endif
 
-  // for 1d, 2d, 3d
-  bool _computedJac[3]{}, _computedIGE[3]{}, _computedICN[3]{};
-  bool _pviewJac[3]{}, _pviewIGE[3]{}, _pviewICN[3]{};
-
-  std::vector<data_elementMinMax2> _data;
 
 public:
   GMSH_AnalyseMeshQuality2Plugin()
@@ -88,22 +87,30 @@ private:
 #endif
 
 private:
-  class dataGEntities {
+  class dataEntities {
   private:
     GEntity *_ge;
     //bool computedThisRun; // FIXME necessary?
     std::map<MElement*, size_t> _mapElemToIndex;
     std::vector<double> _minJ, _maxJ, _minDisto, _minAspect;
-    int _numVisibleElem;
     // 6 bits of char are used for the following information:
     // - First 3 bits: to say if quantities has been computed
     // - Next 3 bits: to say if the measure has been asked this run (depending
     //                on the plugin parameters restrictToVisibleElements)
     // FIXME or need only 1 bit to say if the element has been asked this run?
-    std::vector<char> _computed;
+    int _numVisibleElem = 0;
+    int _numToCompute[3] = {0, 0, 0};
+    std::vector<char> _flags;
+
+    // NOTE this is for checking if pviews have already been created.
+    //  This is to avoid recreating them in the case that the user
+    //  launch the plugin first with e.g. Disto, then decide to compute
+    //  also Aspect, we do not want to redraw pviews
+    // NOTE check that the pview still exist, shoould check PView::list
+    std::vector<PView*> _views;
 
   public:
-    explicit dataGEntities(GEntity *ge)
+    explicit dataEntities(GEntity *ge)
       : _ge(ge), _numVisibleElem(0)
     {
     }
@@ -124,6 +131,28 @@ private:
 
     // FIXME should i create only one method? bool computeDisto, std::vector<.> *vecDisto)
     //       or just std::vector<.> *vecDisto = nullptr)
+  };
+
+  struct dataSingleDimension {
+    int _dim = 0;
+    std::map<GFace*, dataEntities> _data;
+
+    // Latest created PView in function of:
+    // - type = 3D {0, 2, 4} or 2D {1, 3, 5} pview
+    // - measure = validity {0, 1}, disto {2, 3} or aspect {4, 5}
+    PView* _views[6];
+
+    // Store if data has changed. This is useful if the plugin is executed at
+    // least 3 times. Here is an example:
+    // 1) Set: checkQualityDisto=1, createElementsView=1
+    // 2) Run 1: Disto is computed and a PView is created
+    // 3) Set: recomputePolicy=1, createElementsView=0
+    // 4) Run 2: Disto is recomputed
+    // 5) Set: recomputePolicy=-1, createElementsView=1
+    // 6) Run 3: Disto is not recomputed, but a new PView is created
+    // Explanation: After run 2, _dataChangedSinceCreation corresponding to the
+    //    PView is set to true, thus at third run the new PView is created.
+    bool _dataChangedSinceCreation[6];
   };
 };
 

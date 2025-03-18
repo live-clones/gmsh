@@ -28,22 +28,26 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "checkValidity", nullptr, 0},
   {GMSH_FULLRC, "checkQualityDisto", nullptr, 0},
   {GMSH_FULLRC, "checkQualityAspect", nullptr, 0},
-  {GMSH_FULLRC, "restrictToDimension", nullptr, -1},
-  {GMSH_FULLRC, "restrictToVisibleElements", nullptr, 0},
+  {GMSH_FULLRC, "dimensionPolicy", nullptr, 0},
   {GMSH_FULLRC, "recomputePolicy", nullptr, 0},
+  {GMSH_FULLRC, "restrictToVisibleElements", nullptr, 0},
+  {GMSH_FULLRC, "restrictToCurvedElements", nullptr, 0},
+  {GMSH_FULLRC, "skipPreventiveValidityCheck", nullptr, 0},
+  {GMSH_FULLRC, "$$$whichPercentileToCompute$$$", nullptr, 10},
   {GMSH_FULLRC, "createElementsView", nullptr, 0},
   {GMSH_FULLRC, "createPlotView", nullptr, 0},
+  {GMSH_FULLRC, "$$$percentilePlot$$$", nullptr, 10},
+  {GMSH_FULLRC, "forceNewPlotView", nullptr, 0},
   {GMSH_FULLRC, "hideElements", nullptr, 0},
   {GMSH_FULLRC, "hideWorst", nullptr, 0},
-  {GMSH_FULLRC, "hideCriterion", nullptr, 0},
-  {GMSH_FULLRC, "hideThreshold", nullptr, .5},
+  {GMSH_FULLRC, "hidingCriterion", nullptr, 0},
+  {GMSH_FULLRC, "hidingThreshold", nullptr, .5},
   {GMSH_FULLRC, "printGuidance", nullptr, 1},
-  {GMSH_FULLRC, "freeData-NothingElse", nullptr, 0},
-  {GMSH_FULLRC, "skipPreventiveValidityCheck", nullptr, 0}
+  {GMSH_FULLRC, "freeData-NothingElse", nullptr, 0}
 #if defined(HAVE_VISUDEV)
   ,
-  {GMSH_FULLRC, "createPointwiseView", nullptr, 0},
   {GMSH_FULLRC, "createTemporalView", nullptr, 0},
+  {GMSH_FULLRC, "createPointwiseView", nullptr, 0},
   {GMSH_FULLRC, "elementIDForPwView", nullptr, 0}
 #endif
 };
@@ -114,24 +118,38 @@ std::string GMSH_AnalyseMeshQuality2Plugin::getHelp() const
 PView *GMSH_AnalyseMeshQuality2Plugin::execute(PView *v)
 {
   // Initialization
+
   _m = GModel::current();
   int checkValidity = static_cast<int>(MeshQuality2Options_Number[0].def);
   int computeDisto = static_cast<int>(MeshQuality2Options_Number[1].def);
   int computeAspect = static_cast<int>(MeshQuality2Options_Number[2].def);
-  int restrictionDim = static_cast<int>(MeshQuality2Options_Number[3].def);
-  if(restrictionDim < 0 || restrictionDim > 4) restrictionDim = _m->getDim();
+  int dimensionPolicy = static_cast<int>(MeshQuality2Options_Number[3].def);
+  int recomputePolicy = static_cast<int>(MeshQuality2Options_Number[4].def);
+  bool onlyVisible = static_cast<bool>(MeshQuality2Options_Number[5].def);
 
-  bool onlyVisible = static_cast<bool>(MeshQuality2Options_Number[4].def);
-  bool recomputePolicy = static_cast<bool>(MeshQuality2Options_Number[5].def);
-  bool createView3D = static_cast<bool>(MeshQuality2Options_Number[6].def);
-  bool createView2D = static_cast<bool>(MeshQuality2Options_Number[7].def);
-  bool hideElements = static_cast<bool>(MeshQuality2Options_Number[8].def);
-  bool hideWorst = static_cast<bool>(MeshQuality2Options_Number[9].def);
-  bool hideCriterion = static_cast<bool>(MeshQuality2Options_Number[10].def);
-  double hideThreshold = MeshQuality2Options_Number[11].def;
-  bool verbose = static_cast<bool>(MeshQuality2Options_Number[12].def);
-  bool freeData = static_cast<bool>(MeshQuality2Options_Number[13].def);
-  bool lazyValidity = static_cast<bool>(MeshQuality2Options_Number[14].def);
+  // FIXME 'restrictToCurvedElements' would be great, but how to implement?
+  bool onlyCurved = static_cast<bool>(MeshQuality2Options_Number[6].def);
+  bool lazyValidity = static_cast<bool>(MeshQuality2Options_Number[7].def);
+  double percentileStat = MeshQuality2Options_Number[8].def;
+  bool createView3D = static_cast<bool>(MeshQuality2Options_Number[9].def);
+  bool createView2D = static_cast<bool>(MeshQuality2Options_Number[10].def);
+  double percentilePlot = MeshQuality2Options_Number[11].def;
+  bool newPlot = static_cast<bool>(MeshQuality2Options_Number[12].def);
+  bool hideElements = static_cast<bool>(MeshQuality2Options_Number[13].def);
+  bool hideWorst = static_cast<bool>(MeshQuality2Options_Number[14].def);
+
+  // NOTE hideCriterion: hide in function of quality -> 0, %elm -> 1, #elm -> 2
+  int hideCriterion = static_cast<int>(MeshQuality2Options_Number[15].def);
+  double hideThreshold = MeshQuality2Options_Number[16].def;
+  bool verbose = static_cast<bool>(MeshQuality2Options_Number[17].def);
+  bool freeData = static_cast<bool>(MeshQuality2Options_Number[18].def);
+
+  //
+  if(dimensionPolicy < 0) dimensionPolicy = 0;
+  else if(dimensionPolicy > 3) dimensionPolicy = 3;
+  if(recomputePolicy < -2) recomputePolicy = -2;
+  else if(recomputePolicy > 1) dimensionPolicy = 1;
+  // FIXME Warnings if verbose
 
 #if defined(HAVE_VISUDEV)
   // TODO come back later
@@ -145,9 +163,9 @@ PView *GMSH_AnalyseMeshQuality2Plugin::execute(PView *v)
   //  or just consider that NbTimeStep is sufficient
   //
 
-  _createPwView = static_cast<bool>(MeshQuality2Options_Number[15].def);
-  bool createTimeView = static_cast<bool>(MeshQuality2Options_Number[16].def);
-  _elemNumForPwView = static_cast<int>(MeshQuality2Options_Number[17].def);
+  bool createTimeView = static_cast<bool>(MeshQuality2Options_Number[19].def);
+  _createPwView = static_cast<bool>(MeshQuality2Options_Number[20].def);
+  _elemNumForPwView = static_cast<int>(MeshQuality2Options_Number[21].def);
   _viewOrder = 0;
   _dataPViewJac.clear();
   _dataPViewIGE.clear();
