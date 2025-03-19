@@ -211,46 +211,43 @@ PView *Plug::execute(PView *v) {
   // Check which dimension to compute and get num of elements
   bool check2D, check3D;
   _decideDimensionToCheck(check2D, check3D);
+
+  ComputeParameters param = {!lazyValidity, (bool)computeDisto,
+    (bool)computeAspect, recomputePolicy, onlyVisible, onlyCurved};
   int numElementsToCompute[6]{};
-  if (check2D) _data2D->initialize(_m, numElementsToCompute);
-  if (check3D) _data3D->initialize(_m, &numElementsToCompute[3]);
+  if (check2D) _data2D->initialize(_m, param, numElementsToCompute);
+  if (check3D) _data3D->initialize(_m, param, &numElementsToCompute[3]);
 
   return v;
 }
 
 
-void Plug::DataSingleDimension::initialize(GModel *m, int countElementToCheck[3])
+void Plug::DataSingleDimension::initialize(GModel *m, ComputeParameters param,
+  int countElementToCheck[3])
 {
   if (_dim == 2) {
     std::set<GEntity*, GEntityPtrLessThan> entitySet(m->firstFace(), m->lastFace());
-    _initialize(entitySet.begin(), entitySet.end(), countElementToCheck);
+    _initialize(entitySet.begin(), entitySet.end(), param, countElementToCheck);
   }
   else if (_dim == 3) {
     std::set<GEntity*, GEntityPtrLessThan> entitySet(m->firstRegion(), m->lastRegion());
-    _initialize(entitySet.begin(), entitySet.end(), countElementToCheck);
+    _initialize(entitySet.begin(), entitySet.end(), param, countElementToCheck);
   }
 }
 
 void Plug::DataSingleDimension::_initialize(entiter first, entiter last,
-  int countElementToCompute[3])
+  ComputeParameters param, int countElementToCompute[3])
 {
+  // Add new GEntities to _data and update countElementToCompute
   std::set<GEntity *> existingInModel;
-
-  // Add new GEntities to _data and update those already present
   for (auto it = first; it != last; ++it) {
     GEntity *ge = *it;
     existingInModel.insert(ge);
-    if (_data.find(ge) == _data.end()) {
-      _data[ge] = dataEntities(ge);
-      int numElements = ge->getNumMeshElements();
-      countElementToCheck[0] += numElements;
-      countElementToCheck[1] += numElements;
-      countElementToCheck[2] += numElements;
-    }
-    else {
-      // f is already in _data, call countNewElement
-      _data[ge].countNewElement(ge);
-    }
+
+    // Add new GEntities to _data
+    if (_data.find(ge) == _data.end()) _data[ge] = DataEntities(ge);
+
+    _data[ge].countNewElement(param, countElementToCompute);
   }
 
   // Remove GEntities from _data that are no more existent in the model
@@ -258,6 +255,8 @@ void Plug::DataSingleDimension::_initialize(entiter first, entiter last,
     if (existingInModel.find(it->first) == existingInModel.end()) {
       // it->second.clear(); // FIXME check that i don't need this
       // FIXME should check if DataEntities had element
+      int numShownElement[3];
+      it->second.getNumShownElement(numShownElement);
       it = _data.erase(it);
     }
     else {
@@ -267,6 +266,11 @@ void Plug::DataSingleDimension::_initialize(entiter first, entiter last,
   for (int i =0; i < 3; ++i) {
     if(countElementToCompute[i]) _dataChangedSincePViewCreation[i] = true;
   }
+}
+
+void Plug::DataEntities::countNewElement(ComputeParameters param, int cnt[3])
+{
+  // TODO
 }
 
 void Plug::_decideDimensionToCheck(bool &check2D,

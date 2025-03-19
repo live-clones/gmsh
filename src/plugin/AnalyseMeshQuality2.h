@@ -21,7 +21,7 @@
 //  0) - If freeData-NothingElse, clear all data.
 //     - If freeData-NothingElse or no checkValidity/compute*, return.
 //  1) Loop over all GEntities of considered dimension (dep. dimensionPolicy):
-//     a) check that GEntity still exists (NB: GModel::list)
+//     a) check that GEntity still exists (NB: GModel::faces or regions)
 //     b) Clear data if needed (dep. recomputePolicy)
 //     c) Count and set flags:
 //        - Count the # of element that will be checked for each measure
@@ -132,6 +132,7 @@ private:
     std::vector<double> _minJ, _maxJ, _minDisto, _minAspect;
     int _numVisibleElem = 0;
     int _numToCompute[3]{};
+    int _numToDraw[3]{};
     // x bits of char are used for the following information:
     // - First 3 bits: to say if quantities has already been computed
     // FIXME The other 5 bits can be used for different alternatives:
@@ -154,6 +155,11 @@ private:
   public:
     explicit DataEntities(GEntity *ge): _ge(ge) {}
     int getNumVisibleElement() const { return _numVisibleElem; }
+    void getNumShownElement(int num[3]) const
+    {
+      for(int i = 0; i < 3; ++i) num[i] = _numToDraw[i];
+    }
+    void countNewElement(ComputeParameters param, int cnt[3]);
 
     // I separate the computation of each measure because computation can be
     // really heavy and take a a lot of time. Computing the validity is much
@@ -170,6 +176,15 @@ private:
 
     // FIXME should i create only one method? bool computeDisto, std::vector<.> *vecDisto)
     //       or just std::vector<.> *vecDisto = nullptr)
+  };
+
+  struct ComputeParameters {
+    bool lazyValidity;
+    bool computeDisto;
+    bool computeAspect;
+    int recomputePolicy;
+    bool onlyVisible;
+    bool onlyCurved;
   };
 
 public:
@@ -198,7 +213,7 @@ public:
   public:
     explicit DataSingleDimension(int dim) : _dim(dim) {}
     void clear() {_data.clear();}
-    void initialize(GModel*, int countElementToCheck[3]);
+    void initialize(GModel*, ComputeParameters param, int countElementToCheck[3]);
     // void computeDisto(bool onlyVisible, int recomputePolicy, bool verbose);
     // void computeAspect(bool onlyVisible, int recomputePolicy, bool verbose);
     // void getValidityValues(std::vector<double> &min, std::vector<double> &max);
@@ -209,8 +224,8 @@ public:
 
   private:
     using entiter = std::set<GEntity*, GEntityPtrLessThan>::iterator;
-    void _initialize(entiter first, entiter last,
-      int countElementToCheck[3]);
+    void _initialize(entiter first, entiter last, ComputeParameters param,
+      int countElementToCompute[3]);
   };
 };
 
