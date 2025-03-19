@@ -1711,6 +1711,7 @@ public:
   }
   void operator()(std::pair<std::string, FieldOption *> it)
   {
+    if(it.second->isDeprecated()) return;
     std::string v;
     it.second->getTextRepresentation(v);
     fprintf(geo, "Field[%i].%s = %s;\n", field->id, it.first.c_str(),
@@ -1726,6 +1727,7 @@ public:
   writeFieldGEO(FILE *fp) { geo = fp ? fp : stdout; }
   void operator()(std::pair<const int, Field *> it)
   {
+    if(it.second->isDeprecated()) return;
     fprintf(geo, "Field[%i] = %s;\n", it.first, it.second->getName());
     std::for_each(it.second->options.begin(), it.second->options.end(),
                   writeFieldOptionGEO(geo, it.second));
@@ -1829,47 +1831,61 @@ int GModel::writeGEO(const std::string &name, bool printLabels,
     return 0;
   }
 
-  std::map<double, std::string> meshSizeParameters;
-  int cpt = 0;
+  bool occ = true, geo = true;
   for(auto it = firstVertex(); it != lastVertex(); it++) {
-    double val = (*it)->prescribedMeshSizeAtVertex();
-    if(meshSizeParameters.find(val) == meshSizeParameters.end()) {
-      std::ostringstream paramName;
-      paramName << "cl__" << ++cpt;
-      fprintf(fp, "%s = %.16g;\n", paramName.str().c_str(), val);
-      meshSizeParameters.insert(std::make_pair(val, paramName.str()));
+    if((*it)->getNativeType() != GEntity::OpenCascadeModel) occ = false;
+    if((*it)->getNativeType() != GEntity::GmshModel) geo = false;
+  }
+
+  if(occ) {
+    if(writeOCCXAO(name + ".xao"))
+      fprintf(fp, "Merge \"%s\";\n", (name + ".xao").c_str());
+  }
+  else {
+    if(!geo)
+      Msg::Warning("Exporting entities from CAD kernel other than built-in "
+                   "in .geo format is for debugging purposes only: only a "
+                   "very limited subset is supported");
+
+    std::map<double, std::string> meshSizeParameters;
+    int cpt = 0;
+    for(auto it = firstVertex(); it != lastVertex(); it++) {
+      double val = (*it)->prescribedMeshSizeAtVertex();
+      if(meshSizeParameters.find(val) == meshSizeParameters.end()) {
+        std::ostringstream paramName;
+        paramName << "cl__" << ++cpt;
+        fprintf(fp, "%s = %.16g;\n", paramName.str().c_str(), val);
+        meshSizeParameters.insert(std::make_pair(val, paramName.str()));
+      }
     }
-  }
-
-  for(auto it = firstVertex(); it != lastVertex(); it++) {
-    double val = (*it)->prescribedMeshSizeAtVertex();
-    if(!onlyPhysicals || !skipVertex(*it))
-      (*it)->writeGEO(fp, meshSizeParameters[val]);
-  }
-  for(auto it = firstEdge(); it != lastEdge(); it++) {
-    if(!onlyPhysicals || !skipEdge(*it)) (*it)->writeGEO(fp);
-  }
-  for(auto it = firstFace(); it != lastFace(); it++) {
-    if(!onlyPhysicals || !skipFace(*it)) (*it)->writeGEO(fp);
-  }
-  for(auto it = firstRegion(); it != lastRegion(); it++) {
-    if(!onlyPhysicals || !skipRegion(*it)) (*it)->writeGEO(fp);
-  }
-
-  std::map<int, std::string> labels;
+    for(auto it = firstVertex(); it != lastVertex(); it++) {
+      double val = (*it)->prescribedMeshSizeAtVertex();
+      if(!onlyPhysicals || !skipVertex(*it))
+        (*it)->writeGEO(fp, meshSizeParameters[val]);
+    }
+    for(auto it = firstEdge(); it != lastEdge(); it++) {
+      if(!onlyPhysicals || !skipEdge(*it)) (*it)->writeGEO(fp);
+    }
+    for(auto it = firstFace(); it != lastFace(); it++) {
+      if(!onlyPhysicals || !skipFace(*it)) (*it)->writeGEO(fp);
+    }
+    for(auto it = firstRegion(); it != lastRegion(); it++) {
+      if(!onlyPhysicals || !skipRegion(*it)) (*it)->writeGEO(fp);
+    }
+    std::map<int, std::string> labels;
 #if defined(HAVE_PARSER)
-  // get "old-style" labels from parser
-  for(auto it = gmsh_yysymbols.begin(); it != gmsh_yysymbols.end(); ++it)
-    for(std::size_t i = 0; i < it->second.value.size(); i++)
-      labels[(int)it->second.value[i]] = it->first;
+    // get "old-style" labels from parser
+    for(auto it = gmsh_yysymbols.begin(); it != gmsh_yysymbols.end(); ++it)
+      for(std::size_t i = 0; i < it->second.value.size(); i++)
+        labels[(int)it->second.value[i]] = it->first;
 #endif
-
-  std::map<int, std::vector<GEntity *> > groups[4];
-  getPhysicalGroups(groups);
-  for(int i = 0; i < 4; i++)
-    std::for_each(
-      groups[i].begin(), groups[i].end(),
-      writePhysicalGroupGEO(fp, i, printLabels, labels, _physicalNames));
+    std::map<int, std::vector<GEntity *> > groups[4];
+    getPhysicalGroups(groups);
+    for(int i = 0; i < 4; i++)
+      std::for_each(groups[i].begin(), groups[i].end(),
+                    writePhysicalGroupGEO(fp, i, printLabels, labels,
+                                          _physicalNames));
+  }
 
 #if defined(HAVE_MESH)
   std::for_each(getFields()->begin(), getFields()->end(), writeFieldGEO(fp));
