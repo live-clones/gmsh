@@ -11,6 +11,7 @@
 #include <map>
 #include <vector>
 #include "Plugin.h"
+#include "GModel.h"
 #include "GEntity.h" // FIXME necessary?
 #include "MElement.h" // FIXME necessary?
 
@@ -55,9 +56,11 @@ GMSH_Plugin *GMSH_RegisterAnalyseMeshQuality2Plugin();
 }
 
 class GMSH_AnalyseMeshQuality2Plugin : public GMSH_PostPlugin {
+public:
+  class dataSingleDimension;
+
 private:
   class dataEntities;
-  class dataSingleDimension;
   GModel *_m;
   dataSingleDimension *_data2D, *_data3D;
   bool _verbose = false;
@@ -83,14 +86,8 @@ public:
   GMSH_AnalyseMeshQuality2Plugin()
   {
     _m = nullptr;
-    for(int i = 0; i < 3; ++i) {
-      _computedJac[i] = false;
-      _computedIGE[i] = false;
-      _computedICN[i] = false;
-      _pviewJac[i] = false;
-      _pviewIGE[i] = false;
-      _pviewICN[i] = false;
-    }
+    _data2D = new dataSingleDimension(2);
+    _data3D = new dataSingleDimension(3);
   }
   GMSH_PLUGIN_TYPE getType() const override { return GMSH_MESH_PLUGIN; }
   std::string getName() const override { return "AnalyseMeshQuality2"; }
@@ -186,6 +183,7 @@ private:
     //       or just std::vector<.> *vecDisto = nullptr)
   };
 
+public:
   class dataSingleDimension {
   private:
     const int _dim = 0;
@@ -211,6 +209,19 @@ private:
   public:
     explicit dataSingleDimension(int dim) : _dim(dim) {}
     void clear() {_data.clear();}
+    void initialize(GModel*, int countElementToCheck[3]);
+    // void computeDisto(bool onlyVisible, int recomputePolicy, bool verbose);
+    // void computeAspect(bool onlyVisible, int recomputePolicy, bool verbose);
+    // void getValidityValues(std::vector<double> &min, std::vector<double> &max);
+    // void getDistoValues(std::vector<double> &disto) const;
+    // void getAspectValues(std::vector<double> &aspect) const;
+    // void getValues(std::vector<double> *minJ, std::vector<double> *maxJ,
+    //                std::vector<double> *disto, std::vector<double> *aspect) const;
+
+  private:
+    using entiter = std::set<GEntity*, GEntityPtrLessThan>::iterator;
+    void _initialize(entiter first, entiter last,
+      int countElementToCheck[3]);
   };
 };
 

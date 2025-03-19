@@ -168,12 +168,6 @@ PView *GMSH_AnalyseMeshQuality2Plugin::execute(PView *v) {
   }
   _m = m;
 
-  if (!_data2D) {
-    // This is the first call to the plugin, create those object
-    _data2D = new dataSingleDimension(2);
-    _data3D = new dataSingleDimension(3);
-  }
-
 #if defined(HAVE_VISUDEV)
   // TODO come back later
   _pwJac = checkValidity / 2;
@@ -212,8 +206,91 @@ PView *GMSH_AnalyseMeshQuality2Plugin::execute(PView *v) {
     return v;
   }
 
+  // Check which dimension to compute and get num of elements
   bool check2D, check3D;
   _decideDimensionToCheck(check2D, check3D);
+  int numElementsToCompute[6]{};
+  if (check2D) _data2D->initialize(_m, numElementsToCompute);
+  if (check3D) _data3D->initialize(_m, &numElementsToCompute[3]);
+
+  return v;
+}
+
+using dataSingDim = GMSH_AnalyseMeshQuality2Plugin::dataSingleDimension;
+
+void dataSingDim::initialize(GModel *m, int countElementToCheck[3])
+{
+  if (_dim == 2) {
+    std::set<GEntity*, GEntityPtrLessThan> entitySet(m->firstFace(), m->lastFace());
+    _initialize(entitySet.begin(), entitySet.end(), countElementToCheck);
+  }
+  else if (_dim == 3) {
+    std::set<GEntity*, GEntityPtrLessThan> entitySet(m->firstRegion(), m->lastRegion());
+    _initialize(entitySet.begin(), entitySet.end(), countElementToCheck);
+  }
+  return;
+  if (_dim == 2) {
+    for (auto it = m->firstFace(); it != m->lastFace(); ++it) {
+      GFace *f = *it;
+
+    }
+  }
+  else {
+    for (auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
+      num3DElem += (*it)->getNumMeshElements();
+    }
+  }
+  std::map<GFace*, dataEntities> _data;
+
+  // Latest created PView in function of:
+  // - type = 3D {0, 2, 4} or 2D {1, 3, 5} pview
+  // - measure = validity {0, 1}, disto {2, 3} or aspect {4, 5}
+  PView* _views[6]{};
+
+  // Store if data has changed. This is useful if the plugin is executed at
+  // least 3 times. Here is an example:
+  // 1) Set: checkQualityDisto=1, createElementsView=1
+  // 2) Run 1: Disto is computed and a PView is created
+  // 3) Set: recomputePolicy=1, createElementsView=0
+  // 4) Run 2: Disto is recomputed
+  // 5) Set: recomputePolicy=-1, createElementsView=1
+  // 6) Run 3: Disto is not recomputed, but a new PView is created
+  // Explanation: After run 2, _dataChangedSinceCreation corresponding to the
+  //    PView is set to true, thus at third run the new PView is created.
+  bool _dataChangedSinceCreation[6]{};
+}
+
+void dataSingDim::_initialize(entiter first, entiter last, int countElementToCheck[3])
+{
+  std::set<GEntity *> existingInModel;
+
+  // Add to _data new GEntities and update those already present
+  for (auto it = first; it != last; ++it) {
+    GEntity *ge = *it;
+    existingInModel.insert(ge);
+    if (_data.find(ge) == _data.end()) {
+      _data[ge] = dataEntities(ge);
+      int numElements = ge->getNumMeshElements();
+      countElementToCheck[0] += numElements;
+      countElementToCheck[1] += numElements;
+      countElementToCheck[2] += numElements;
+    }
+    else {
+      // f is already in _data, call countNewElement
+      _data[ge].countNewElement(ge);
+    }
+  }
+
+  // Remove GEntities from _data that are no more existent in the model
+  for (auto it = _data.begin(); it != _data.end();) {
+    if (existingInModel.find(it->first) == existingInModel.end()) {
+      it->second.clear(); // Assuming dataEntities has a clear method
+      it = _data.erase(it);
+    }
+    else {
+      ++it;
+    }
+  }
 }
 
 void GMSH_AnalyseMeshQuality2Plugin::_decideDimensionToCheck(bool &check2D,
