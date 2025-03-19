@@ -102,7 +102,7 @@ public:
   std::string getName() const override { return "AnalyseMeshQuality2"; }
   std::string getShortHelp() const override
   {
-    return "Compute validity and quality of curved elements.";
+    return "Compute validity and quality of (curved) elements.";
   }
   std::string getHelp() const override;
   std::string getAuthor() const override { return "Amaury Johnen"; }
@@ -111,6 +111,18 @@ public:
   PView *execute(PView *) override;
 
 private:
+  void _info(const std::string &msg, const int verbosityPolicy = 0) const {
+    if (_verbose && verbosityPolicy >= 0 || !_verbose && verbosityPolicy <= 0)
+      Msg::Info("%s", msg.c_str());
+  }
+  void _warn(const std::string &msg, const int verbosityPolicy = 0) const {
+    if (_verbose && verbosityPolicy >= 0 || !_verbose && verbosityPolicy <= 0)
+      Msg::Warning("%s", msg.c_str());
+  }
+  void _error(const std::string &msg, const int verbosityPolicy = 0) const {
+    if (_verbose && verbosityPolicy >= 0 || !_verbose && verbosityPolicy <= 0)
+      Msg::Error("%s", msg.c_str());
+  }
 
 #if defined(HAVE_VISUDEV)
   void _computePointwiseQuantities(MElement *,
@@ -127,7 +139,7 @@ private:
     std::map<MElement*, size_t> _mapElemToIndex;
     std::vector<double> _minJ, _maxJ, _minDisto, _minAspect;
     int _numVisibleElem = 0;
-    int _numToCompute[3] = {0, 0, 0};
+    int _numToCompute[3]{};
     // x bits of char are used for the following information:
     // - First 3 bits: to say if quantities has already been computed
     // FIXME The other 5 bits can be used for different alternatives:
@@ -180,12 +192,12 @@ private:
 
   struct dataSingleDimension {
     int _dim = 0;
-    std::map<GFace*, dataEntities> _data;
+    std::map<GEntity*, dataEntities> _data;
 
     // Latest created PView in function of:
     // - type = 3D {0, 2, 4} or 2D {1, 3, 5} pview
     // - measure = validity {0, 1}, disto {2, 3} or aspect {4, 5}
-    PView* _views[6];
+    PView* _views[6]{};
 
     // Store if data has changed. This is useful if the plugin is executed at
     // least 3 times. Here is an example:
@@ -197,7 +209,7 @@ private:
     // 6) Run 3: Disto is not recomputed, but a new PView is created
     // Explanation: After run 2, _dataChangedSinceCreation corresponding to the
     //    PView is set to true, thus at third run the new PView is created.
-    bool _dataChangedSinceCreation[6];
+    bool _dataChangedSinceCreation[6]{};
   };
 };
 

@@ -115,11 +115,12 @@ std::string GMSH_AnalyseMeshQuality2Plugin::getHelp() const
          "or analyse elements of the highest dimension if equal to -1.";
 }
 
-PView *GMSH_AnalyseMeshQuality2Plugin::execute(PView *v)
-{
-  // Initialization
+PView *GMSH_AnalyseMeshQuality2Plugin::execute(PView *v) {
+  _info("Executing the plugin AnalyseMeshQuality...", 1);
+  _info("Parameter 'printGuidance' is set to 1. This makes the plugin"
+        "to be verbose and to provide various explanations", 1);
 
-  _m = GModel::current();
+  // Initialization
   int checkValidity = static_cast<int>(MeshQuality2Options_Number[0].def);
   int computeDisto = static_cast<int>(MeshQuality2Options_Number[1].def);
   int computeAspect = static_cast<int>(MeshQuality2Options_Number[2].def);
@@ -158,8 +159,14 @@ PView *GMSH_AnalyseMeshQuality2Plugin::execute(PView *v)
   if(dimensionPolicy < 0) dimensionPolicy = 0;
   else if(dimensionPolicy > 3) dimensionPolicy = 3;
   if(recomputePolicy < -2) recomputePolicy = -2;
-  else if(recomputePolicy > 1) dimensionPolicy = 1;
+  else if(recomputePolicy > 1) recomputePolicy = 1;
   // FIXME Warnings if verbose
+
+  GModel *m = GModel::current();
+  if (_verbose && m != _m && recomputePolicy == 0) {
+    _info("Detected a new Model, previous data will cleared", 1);
+  }
+  _m = m;
 
 #if defined(HAVE_VISUDEV)
   // TODO come back later
@@ -180,6 +187,25 @@ PView *GMSH_AnalyseMeshQuality2Plugin::execute(PView *v)
   _dataPViewIGE.clear();
   _dataPViewICN.clear();
 #endif
+
+  // Handle cases where no computation is requested
+  if (freeData) {
+    _info("Freeing data...", -1);
+    _info("Freeing data... (because 'freeData-NothingElse' is set to 1)", 1);
+    // FIXME: create method clear in dataSingleDimension
+    _data2D->clear();
+    _data3D->clear();
+    MeshQuality2Options_Number[18].def = 0;
+    _info("Done. 'freeData-NothingElse' has been set to 0");
+    _info("Nothing else to do, rerun the plugin to compute something", 1);
+    return v;
+  }
+  if (!checkValidity && !computeDisto && !computeAspect) {
+    _warn("Nothing to do because checkValidity, checkQualityDisto and "
+          "checkQualityAspect are all three set to 0");
+    return v;
+  }
+
 }
 
 #endif
