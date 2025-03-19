@@ -117,10 +117,12 @@ std::string Plug::getHelp() const
          "or analyse elements of the highest dimension if equal to -1.";
 }
 
-PView *Plug::execute(PView *v) {
+PView *Plug::execute(PView *v)
+{
   _info("Executing the plugin AnalyseMeshQuality...", 1);
   _info("Parameter 'printGuidance' is set to 1. This makes the plugin"
-        "to be verbose and to provide various explanations", 1);
+        "to be verbose and to provide various explanations",
+        1);
 
   // Initialization
   int checkValidity = static_cast<int>(MeshQuality2Options_Number[0].def);
@@ -158,14 +160,18 @@ PView *Plug::execute(PView *v) {
   bool freeData = static_cast<bool>(MeshQuality2Options_Number[18].def);
 
   //
-  if(_dimensionPolicy < 0) _dimensionPolicy = 0;
-  else if(_dimensionPolicy > 3) _dimensionPolicy = 3;
-  if(recomputePolicy < -2) recomputePolicy = -2;
-  else if(recomputePolicy > 1) recomputePolicy = 1;
+  if(_dimensionPolicy < 0)
+    _dimensionPolicy = 0;
+  else if(_dimensionPolicy > 3)
+    _dimensionPolicy = 3;
+  if(recomputePolicy < -2)
+    recomputePolicy = -2;
+  else if(recomputePolicy > 1)
+    recomputePolicy = 1;
   // FIXME Warnings if verbose
 
   GModel *m = GModel::current();
-  if (_verbose && m != _m && recomputePolicy == 0) {
+  if(_verbose && m != _m && recomputePolicy == 0) {
     _info("Detected a new Model, previous data will cleared", 1);
   }
   _m = m;
@@ -191,7 +197,7 @@ PView *Plug::execute(PView *v) {
 #endif
 
   // Handle cases where no computation is requested
-  if (freeData) {
+  if(freeData) {
     _info("Freeing data...", -1);
     _info("Freeing data... (because 'freeData-NothingElse' is set to 1)", 1);
     // FIXME: create method clear in dataSingleDimension
@@ -202,7 +208,7 @@ PView *Plug::execute(PView *v) {
     _info("Nothing else to do, rerun the plugin to compute something", 1);
     return v;
   }
-  if (!checkValidity && !computeDisto && !computeAspect) {
+  if(!checkValidity && !computeDisto && !computeAspect) {
     _warn("Nothing to do because checkValidity, checkQualityDisto and "
           "checkQualityAspect are all three set to 0");
     return v;
@@ -212,47 +218,50 @@ PView *Plug::execute(PView *v) {
   bool check2D, check3D;
   _decideDimensionToCheck(check2D, check3D);
 
-  ComputeParameters param = {!lazyValidity, (bool)computeDisto,
-    (bool)computeAspect, recomputePolicy, onlyVisible, onlyCurved};
+  ComputeParameters param = {!lazyValidity,       (bool)computeDisto,
+                             (bool)computeAspect, recomputePolicy,
+                             onlyVisible,         onlyCurved};
   int numElementsToCompute[6]{};
-  if (check2D) _data2D->initialize(_m, param, numElementsToCompute);
-  if (check3D) _data3D->initialize(_m, param, &numElementsToCompute[3]);
+  if(check2D) _data2D->initialize(_m, param, numElementsToCompute);
+  if(check3D) _data3D->initialize(_m, param, &numElementsToCompute[3]);
 
   return v;
 }
 
-
 void Plug::DataSingleDimension::initialize(GModel *m, ComputeParameters param,
-  int countElementToCheck[3])
+                                           int countElementToCheck[3])
 {
-  if (_dim == 2) {
-    std::set<GEntity*, GEntityPtrLessThan> entitySet(m->firstFace(), m->lastFace());
+  if(_dim == 2) {
+    std::set<GEntity *, GEntityPtrLessThan> entitySet(m->firstFace(),
+                                                      m->lastFace());
     _initialize(entitySet.begin(), entitySet.end(), param, countElementToCheck);
   }
-  else if (_dim == 3) {
-    std::set<GEntity*, GEntityPtrLessThan> entitySet(m->firstRegion(), m->lastRegion());
+  else if(_dim == 3) {
+    std::set<GEntity *, GEntityPtrLessThan> entitySet(m->firstRegion(),
+                                                      m->lastRegion());
     _initialize(entitySet.begin(), entitySet.end(), param, countElementToCheck);
   }
 }
 
 void Plug::DataSingleDimension::_initialize(entiter first, entiter last,
-  ComputeParameters param, int countElementToCompute[3])
+                                            ComputeParameters param,
+                                            int countElementToCompute[3])
 {
   // Add new GEntities to _data and update countElementToCompute
   std::set<GEntity *> existingInModel;
-  for (auto it = first; it != last; ++it) {
+  for(auto it = first; it != last; ++it) {
     GEntity *ge = *it;
     existingInModel.insert(ge);
 
     // Add new GEntities to _data
-    if (_data.find(ge) == _data.end()) _data[ge] = DataEntities(ge);
+    if(_data.find(ge) == _data.end()) _data[ge] = DataEntities(ge);
 
     _data[ge].countNewElement(param, countElementToCompute);
   }
 
   // Remove GEntities from _data that are no more existent in the model
-  for (auto it = _data.begin(); it != _data.end();) {
-    if (existingInModel.find(it->first) == existingInModel.end()) {
+  for(auto it = _data.begin(); it != _data.end();) {
+    if(existingInModel.find(it->first) == existingInModel.end()) {
       // it->second.clear(); // FIXME check that i don't need this
       // FIXME should check if DataEntities had element
       int numShownElement[3];
@@ -263,7 +272,7 @@ void Plug::DataSingleDimension::_initialize(entiter first, entiter last,
       ++it;
     }
   }
-  for (int i =0; i < 3; ++i) {
+  for(int i = 0; i < 3; ++i) {
     if(countElementToCompute[i]) _dataChangedSincePViewCreation[i] = true;
   }
 }
@@ -273,21 +282,22 @@ void Plug::DataEntities::countNewElement(ComputeParameters param, int cnt[3])
   // TODO
 }
 
-void Plug::_decideDimensionToCheck(bool &check2D,
-  bool &check3D) const
+void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
 {
   int num3DElem = 0;
 
   // Iterate through regions to count 3D mesh elements
-  for (auto it = _m->firstRegion(); it != _m->lastRegion(); ++it) {
+  for(auto it = _m->firstRegion(); it != _m->lastRegion(); ++it) {
     num3DElem += (*it)->getNumMeshElements();
   }
 
   // Apply policy logic
   check2D = true;
   check3D = true;
-  if (_dimensionPolicy == 0 && num3DElem > 0) check2D = false;
-  else if (_dimensionPolicy < 2) check3D = false;
+  if(_dimensionPolicy == 0 && num3DElem > 0)
+    check2D = false;
+  else if(_dimensionPolicy < 2)
+    check3D = false;
 }
 
 #endif

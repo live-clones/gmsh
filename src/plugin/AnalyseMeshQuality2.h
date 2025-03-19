@@ -15,8 +15,6 @@
 #include "GEntity.h" // FIXME necessary?
 #include "MElement.h" // FIXME necessary?
 
-
-
 // NOTE Workflow
 //  0) - If freeData-NothingElse, clear all data.
 //     - If freeData-NothingElse or no checkValidity/compute*, return.
@@ -48,7 +46,6 @@
 //  FIXME What about changed visibility of elements?
 //
 
-
 class MElement;
 
 extern "C" {
@@ -65,7 +62,6 @@ private:
   bool _verbose = false;
   int _dimensionPolicy = 0;
 
-
 #if defined(HAVE_VISUDEV)
   // Pointwise data
   // FIXME to check after
@@ -73,13 +69,12 @@ private:
   int _elemNumForPwView = 0;
   int _numElementToScan; // FIXME ajouté pour pouvoir compiler
   bool _pwJac = false, _pwIGE = false, _pwICN = false;
-  std::map<int, std::vector<double> > _dataPViewJac;
-  std::map<int, std::vector<double> > _dataPViewIGE;
-  std::map<int, std::vector<double> > _dataPViewICN;
+  std::map<int, std::vector<double>> _dataPViewJac;
+  std::map<int, std::vector<double>> _dataPViewIGE;
+  std::map<int, std::vector<double>> _dataPViewICN;
   int _type2tag[20] = {0};
   int _viewOrder = 0;
 #endif
-
 
 public:
   GMSH_AnalyseMeshQuality2Plugin()
@@ -103,16 +98,19 @@ public:
 private:
   void _decideDimensionToCheck(bool &check2D, bool &check3D) const;
 
-  void _info(const std::string &msg, const int verbosityPolicy = 0) const {
-    if (_verbose && verbosityPolicy >= 0 || !_verbose && verbosityPolicy <= 0)
+  void _info(const std::string &msg, const int verbosityPolicy = 0) const
+  {
+    if(_verbose && verbosityPolicy >= 0 || !_verbose && verbosityPolicy <= 0)
       Msg::Info("%s", msg.c_str());
   }
-  void _warn(const std::string &msg, const int verbosityPolicy = 0) const {
-    if (_verbose && verbosityPolicy >= 0 || !_verbose && verbosityPolicy <= 0)
+  void _warn(const std::string &msg, const int verbosityPolicy = 0) const
+  {
+    if(_verbose && verbosityPolicy >= 0 || !_verbose && verbosityPolicy <= 0)
       Msg::Warning("%s", msg.c_str());
   }
-  void _error(const std::string &msg, const int verbosityPolicy = 0) const {
-    if (_verbose && verbosityPolicy >= 0 || !_verbose && verbosityPolicy <= 0)
+  void _error(const std::string &msg, const int verbosityPolicy = 0) const
+  {
+    if(_verbose && verbosityPolicy >= 0 || !_verbose && verbosityPolicy <= 0)
       Msg::Error("%s", msg.c_str());
   }
 
@@ -127,8 +125,8 @@ private:
   class DataEntities {
   private:
     GEntity *_ge;
-    //bool computedThisRun; // FIXME necessary?
-    std::map<MElement*, size_t> _mapElemToIndex;
+    // bool computedThisRun; // FIXME necessary?
+    std::map<MElement *, size_t> _mapElemToIndex;
     std::vector<double> _minJ, _maxJ, _minDisto, _minAspect;
     int _numVisibleElem = 0;
     int _numToCompute[3]{};
@@ -153,7 +151,7 @@ private:
     std::vector<char> _flags;
 
   public:
-    explicit DataEntities(GEntity *ge): _ge(ge) {}
+    explicit DataEntities(GEntity *ge) : _ge(ge) {}
     int getNumVisibleElement() const { return _numVisibleElem; }
     void getNumShownElement(int num[3]) const
     {
@@ -172,10 +170,11 @@ private:
     void getDistoValues(std::vector<double> &disto) const;
     void getAspectValues(std::vector<double> &aspect) const;
     void getValues(std::vector<double> *minJ, std::vector<double> *maxJ,
-                   std::vector<double> *disto, std::vector<double> *aspect) const;
+                   std::vector<double> *disto,
+                   std::vector<double> *aspect) const;
 
-    // FIXME should i create only one method? bool computeDisto, std::vector<.> *vecDisto)
-    //       or just std::vector<.> *vecDisto = nullptr)
+    // FIXME should i create only one method? bool computeDisto, std::vector<.>
+    //       *vecDisto) or just std::vector<.> *vecDisto = nullptr)
   };
 
   struct ComputeParameters {
@@ -191,12 +190,12 @@ public:
   class DataSingleDimension {
   private:
     const int _dim;
-    std::map<GEntity*, DataEntities> _data;
+    std::map<GEntity *, DataEntities> _data;
 
     // Latest created PView in function of:
     // - type = 3D {0, 2, 4} or 2D {1, 3, 5} pview
     // - measure = validity {0, 1}, disto {2, 3} or aspect {4, 5}
-    PView* _views[6]{};
+    PView *_views[6]{};
 
     // Store if data has changed. This is useful if the plugin is executed at
     // least 3 times. Here is an example:
@@ -212,26 +211,24 @@ public:
 
   public:
     explicit DataSingleDimension(int dim) : _dim(dim) {}
-    void clear() {_data.clear();}
-    void initialize(GModel*, ComputeParameters param, int countElementToCheck[3]);
+    void clear() { _data.clear(); }
+    void initialize(GModel *, ComputeParameters param,
+                    int countElementToCheck[3]);
     // void computeDisto(bool onlyVisible, int recomputePolicy, bool verbose);
     // void computeAspect(bool onlyVisible, int recomputePolicy, bool verbose);
-    // void getValidityValues(std::vector<double> &min, std::vector<double> &max);
-    // void getDistoValues(std::vector<double> &disto) const;
-    // void getAspectValues(std::vector<double> &aspect) const;
-    // void getValues(std::vector<double> *minJ, std::vector<double> *maxJ,
-    //                std::vector<double> *disto, std::vector<double> *aspect) const;
+    // void getValidityValues(std::vector<double> &min, std::vector<double>
+    // &max); void getDistoValues(std::vector<double> &disto) const; void
+    // getAspectValues(std::vector<double> &aspect) const; void
+    // getValues(std::vector<double> *minJ, std::vector<double> *maxJ,
+    //                std::vector<double> *disto, std::vector<double> *aspect)
+    //                const;
 
   private:
-    using entiter = std::set<GEntity*, GEntityPtrLessThan>::iterator;
+    using entiter = std::set<GEntity *, GEntityPtrLessThan>::iterator;
     void _initialize(entiter first, entiter last, ComputeParameters param,
-      int countElementToCompute[3]);
+                     int countElementToCompute[3]);
   };
 };
-
-
-
-
 
 #endif
 #endif
