@@ -327,8 +327,8 @@ bool GModel::empty() const
 
 GRegion *GModel::getRegionByTag(int n) const
 {
-  GEntity tmp((GModel *)this, n);
-  auto it = regions.find((GRegion *)&tmp);
+  GRegion tmp((GModel *)this, n);
+  auto it = regions.find(&tmp);
   if(it != regions.end())
     return *it;
   else
@@ -337,8 +337,8 @@ GRegion *GModel::getRegionByTag(int n) const
 
 GFace *GModel::getFaceByTag(int n) const
 {
-  GEntity tmp((GModel *)this, n);
-  auto it = faces.find((GFace *)&tmp);
+  GFace tmp((GModel *)this, n);
+  auto it = faces.find(&tmp);
   if(it != faces.end())
     return *it;
   else
@@ -347,8 +347,8 @@ GFace *GModel::getFaceByTag(int n) const
 
 GEdge *GModel::getEdgeByTag(int n) const
 {
-  GEntity tmp((GModel *)this, n);
-  auto it = edges.find((GEdge *)&tmp);
+  GEdge tmp((GModel *)this, n);
+  auto it = edges.find(&tmp);
   if(it != edges.end())
     return *it;
   else
@@ -357,8 +357,8 @@ GEdge *GModel::getEdgeByTag(int n) const
 
 GVertex *GModel::getVertexByTag(int n) const
 {
-  GEntity tmp((GModel *)this, n);
-  auto it = vertices.find((GVertex *)&tmp);
+  GVertex tmp((GModel *)this, n);
+  auto it = vertices.find(&tmp);
   if(it != vertices.end())
     return *it;
   else
