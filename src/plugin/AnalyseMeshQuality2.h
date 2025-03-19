@@ -60,6 +60,8 @@ private:
   struct dataSingleDimension;
   GModel *_m;
   // dataSingleDimension _data2D, _data3D;
+  bool _verbose = false;
+  int _dimensionPolicy = 0;
 
   // TODO to remove
   std::map<GFace*, dataEntities> _data2D;
@@ -111,6 +113,8 @@ public:
   PView *execute(PView *) override;
 
 private:
+  void _decideDimensionToCheck(bool &check2D, bool &check3D) const;
+
   void _info(const std::string &msg, const int verbosityPolicy = 0) const {
     if (_verbose && verbosityPolicy >= 0 || !_verbose && verbosityPolicy <= 0)
       Msg::Info("%s", msg.c_str());

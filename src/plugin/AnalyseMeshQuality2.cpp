@@ -128,7 +128,7 @@ PView *GMSH_AnalyseMeshQuality2Plugin::execute(PView *v) {
 
   // NOTE dimensionPolicy: highest dimension available -> 0, only 2D -> 1,
   //      2D and 3D : seperately -> 2, mixed -> 3
-  int dimensionPolicy = static_cast<int>(MeshQuality2Options_Number[3].def);
+  int _dimensionPolicy = static_cast<int>(MeshQuality2Options_Number[3].def);
 
   // NOTE recomputePolicy:
   //      - (re)compute nothing, use existent data -> -2
@@ -152,12 +152,12 @@ PView *GMSH_AnalyseMeshQuality2Plugin::execute(PView *v) {
   // NOTE hideCriterion: hide in function of quality -> 0, %elm -> 1, #elm -> 2
   int hideCriterion = static_cast<int>(MeshQuality2Options_Number[15].def);
   double hideThreshold = MeshQuality2Options_Number[16].def;
-  bool verbose = static_cast<bool>(MeshQuality2Options_Number[17].def);
+  bool _verbose = static_cast<bool>(MeshQuality2Options_Number[17].def);
   bool freeData = static_cast<bool>(MeshQuality2Options_Number[18].def);
 
   //
-  if(dimensionPolicy < 0) dimensionPolicy = 0;
-  else if(dimensionPolicy > 3) dimensionPolicy = 3;
+  if(_dimensionPolicy < 0) _dimensionPolicy = 0;
+  else if(_dimensionPolicy > 3) _dimensionPolicy = 3;
   if(recomputePolicy < -2) recomputePolicy = -2;
   else if(recomputePolicy > 1) recomputePolicy = 1;
   // FIXME Warnings if verbose
@@ -206,6 +206,25 @@ PView *GMSH_AnalyseMeshQuality2Plugin::execute(PView *v) {
     return v;
   }
 
+  bool check2D, check3D;
+  _decideDimensionToCheck(check2D, check3D);
+}
+
+void GMSH_AnalyseMeshQuality2Plugin::_decideDimensionToCheck(bool &check2D,
+  bool &check3D) const
+{
+  int num3DElem = 0;
+
+  // Iterate through regions to count 3D mesh elements
+  for (auto it = _m->firstRegion(); it != _m->lastRegion(); ++it) {
+    num3DElem += (*it)->getNumMeshElements();
+  }
+
+  // Apply policy logic
+  check2D = true;
+  check3D = true;
+  if (_dimensionPolicy == 0 && num3DElem > 0) check2D = false;
+  else if (_dimensionPolicy < 2) check3D = false;
 }
 
 #endif
