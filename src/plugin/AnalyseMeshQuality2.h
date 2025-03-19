@@ -111,15 +111,6 @@ public:
   PView *execute(PView *) override;
 
 private:
-  void _computeMinMaxJandValidity(int dim);
-  void _computeMinIGE(int dim);
-  void _computeMinICN(int dim);
-  int _hideWithThreshold(int askedDim, int whichMeasure, double threshold,
-                         bool greater);
-  void _printStatJacobian();
-  void _printStatIGE();
-  void _printStatICN();
-  void _clear(int askedDim);
 
 #if defined(HAVE_VISUDEV)
   void _computePointwiseQuantities(MElement *,
