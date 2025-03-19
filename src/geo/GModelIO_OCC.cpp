@@ -4316,7 +4316,7 @@ bool OCC_Internals::_transform(
 
   TopoDS_Shape result;
   if(tfo) {
-    tfo->Perform(c, Standard_False);
+    tfo->Perform(c, Standard_True);
     if(!tfo->IsDone()) {
       Msg::Error("Could not apply transformation");
       return false;
@@ -4324,7 +4324,7 @@ bool OCC_Internals::_transform(
     result = tfo->Shape();
   }
   else if(gtfo) {
-    gtfo->Perform(c, Standard_False);
+    gtfo->Perform(c, Standard_True);
     if(!gtfo->IsDone()) {
       Msg::Error("Could not apply transformation");
       return false;
