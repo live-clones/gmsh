@@ -57,19 +57,11 @@ GMSH_Plugin *GMSH_RegisterAnalyseMeshQuality2Plugin();
 class GMSH_AnalyseMeshQuality2Plugin : public GMSH_PostPlugin {
 private:
   class dataEntities;
-  struct dataSingleDimension;
+  class dataSingleDimension;
   GModel *_m;
-  // dataSingleDimension _data2D, _data3D;
+  dataSingleDimension *_data2D, *_data3D;
   bool _verbose = false;
   int _dimensionPolicy = 0;
-
-  // TODO to remove
-  std::map<GFace*, dataEntities> _data2D;
-  std::map<GFace*, dataEntities> _data3D;
-  // for 1d, 2d, 3d
-  bool _computedJac[3]{}, _computedIGE[3]{}, _computedICN[3]{};
-  bool _pviewJac[3]{}, _pviewIGE[3]{}, _pviewICN[3]{};
-  std::vector<dataEntities> _data;
 
 
 #if defined(HAVE_VISUDEV)
@@ -194,8 +186,9 @@ private:
     //       or just std::vector<.> *vecDisto = nullptr)
   };
 
-  struct dataSingleDimension {
-    int _dim = 0;
+  class dataSingleDimension {
+  private:
+    const int _dim = 0;
     std::map<GEntity*, dataEntities> _data;
 
     // Latest created PView in function of:
@@ -214,6 +207,10 @@ private:
     // Explanation: After run 2, _dataChangedSinceCreation corresponding to the
     //    PView is set to true, thus at third run the new PView is created.
     bool _dataChangedSinceCreation[6]{};
+
+  public:
+    explicit dataSingleDimension(int dim) : _dim(dim) {}
+    void clear() {_data.clear();}
   };
 };
 

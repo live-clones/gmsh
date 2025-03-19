@@ -168,6 +168,12 @@ PView *GMSH_AnalyseMeshQuality2Plugin::execute(PView *v) {
   }
   _m = m;
 
+  if (!_data2D) {
+    // This is the first call to the plugin, create those object
+    _data2D = new dataSingleDimension(2);
+    _data3D = new dataSingleDimension(3);
+  }
+
 #if defined(HAVE_VISUDEV)
   // TODO come back later
   _pwJac = checkValidity / 2;
