@@ -238,8 +238,8 @@ struct doubleXstring{
 %type <l> MultiStringExprVar SurfaceConstraints
 %type <l> RecursiveListOfStringExprVar Str_BracedRecursiveListOfStringExprVar
 %type <l> BracedOrNotRecursiveListOfStringExprVar BracedRecursiveListOfStringExprVar
-%type <l> FExpr_Multi ListOfDouble ListOfDoubleOrAll RecursiveListOfDouble
-%type <l> RecursiveListOfListOfDouble Enumeration
+%type <l> FExpr_Multi ListOfDouble ListOfDoubleWithBraces ListOfDoubleOrAll
+%type <l> RecursiveListOfDouble RecursiveListOfListOfDouble Enumeration
 %type <l> ListOfColor RecursiveListOfColor
 %type <l> ListOfShapes Transform Extrude MultipleShape Boolean
 %type <l> TransfiniteCorners PeriodicTransform
@@ -1194,7 +1194,7 @@ Affectation :
       Free($6);
       Free($8);
     }
-  | tField '[' FExpr ']' '.' tSTRING_Reserved  tAFFECT '{' RecursiveListOfDouble '}' tEND
+  | tField '[' FExpr ']' '.' tSTRING_Reserved  tAFFECT ListOfDoubleWithBraces tEND
     {
 #if defined(HAVE_MESH)
       Field *field = GModel::current()->getFields()->get((int)$3);
@@ -1204,9 +1204,9 @@ Affectation :
 	  if(option->getType() == FIELD_OPTION_LIST) {
 	    std::list<int> vl = option->list();
 	    vl.clear();
-	    for(int i = 0; i < List_Nbr($9); i++){
+	    for(int i = 0; i < List_Nbr($8); i++){
 	      double id;
-	      List_Read($9, i, &id);
+	      List_Read($8, i, &id);
 	      vl.push_back((int)id);
 	    }
 	    option->list(vl);
@@ -1214,9 +1214,9 @@ Affectation :
 	  else {
 	    std::list<double> vl = option->listdouble();
 	    vl.clear();
-	    for(int i = 0; i < List_Nbr($9); i++){
+	    for(int i = 0; i < List_Nbr($8); i++){
 	      double id;
-	      List_Read($9, i, &id);
+	      List_Read($8, i, &id);
 	      vl.push_back(id);
 	    }
 	    option->listdouble(vl);
@@ -1230,7 +1230,7 @@ Affectation :
 	yymsg(0, "No field with id %i", (int)$3);
 #endif
       Free($6);
-      List_Delete($9);
+      List_Delete($8);
     }
   | tField '[' FExpr ']' '.' tSTRING_Reserved tEND
     {
@@ -5814,7 +5814,6 @@ ListOfDouble :
     }
   | '{' '}'
     {
-      // creates an empty list
       $$ = List_Create(2, 1, sizeof(double));
     }
   | '{' RecursiveListOfDouble '}'
@@ -5835,6 +5834,25 @@ ListOfDouble :
       for(int i = 0; i < List_Nbr($$); i++){
 	double *pd = (double*)List_Pointer($$, i);
 	(*pd) *= $1;
+      }
+    }
+;
+
+ListOfDoubleWithBraces :
+  '{' '}'
+    {
+      $$ = List_Create(2, 1, sizeof(double));
+    }
+  | '{' RecursiveListOfDouble '}'
+    {
+      $$ = $2;
+    }
+  | '-' '{' RecursiveListOfDouble '}'
+    {
+      $$ = $3;
+      for(int i = 0; i < List_Nbr($$); i++){
+	double *pd = (double*)List_Pointer($$, i);
+	(*pd) = - (*pd);
       }
     }
 ;
