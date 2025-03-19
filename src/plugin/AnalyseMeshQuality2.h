@@ -152,13 +152,6 @@ private:
     //        I think should use whatever I can use among (a), (b), (c)
     std::vector<char> _flags;
 
-    // NOTE this is for checking if pviews have already been created.
-    //  This is to avoid recreating them in the case that the user
-    //  launch the plugin first with e.g. Disto, then decide to compute
-    //  also Aspect, we do not want to redraw pviews
-    // NOTE check that the pview still exist, shoould check PView::list
-    std::vector<PView*> _views;
-
   public:
     explicit dataEntities(GEntity *ge)
       : _ge(ge), _numVisibleElem(0)
@@ -186,8 +179,8 @@ private:
 public:
   class dataSingleDimension {
   private:
-    const int _dim = 0;
     std::map<GEntity*, dataEntities> _data;
+    const int _dim;
 
     // Latest created PView in function of:
     // - type = 3D {0, 2, 4} or 2D {1, 3, 5} pview

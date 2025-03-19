@@ -52,6 +52,8 @@ StringXNumber MeshQuality2Options_Number[] = {
 #endif
 };
 
+using Plug = GMSH_AnalyseMeshQuality2Plugin;
+
 extern "C" {
 GMSH_Plugin *GMSH_RegisterAnalyseMeshQuality2Plugin()
 {
@@ -59,17 +61,17 @@ GMSH_Plugin *GMSH_RegisterAnalyseMeshQuality2Plugin()
 }
 }
 
-int GMSH_AnalyseMeshQuality2Plugin::getNbOptions() const
+int Plug::getNbOptions() const
 {
   return sizeof(MeshQuality2Options_Number) / sizeof(StringXNumber);
 }
 
-StringXNumber *GMSH_AnalyseMeshQuality2Plugin::getOption(int iopt)
+StringXNumber *Plug::getOption(int iopt)
 {
   return &MeshQuality2Options_Number[iopt];
 }
 
-std::string GMSH_AnalyseMeshQuality2Plugin::getHelp() const
+std::string Plug::getHelp() const
 {
   return "Plugin(AnalyseMeshQuality2) analyses the quality of the elements "
          "of a given dimension in the current model. Depending on the input "
@@ -115,7 +117,7 @@ std::string GMSH_AnalyseMeshQuality2Plugin::getHelp() const
          "or analyse elements of the highest dimension if equal to -1.";
 }
 
-PView *GMSH_AnalyseMeshQuality2Plugin::execute(PView *v) {
+PView *Plug::execute(PView *v) {
   _info("Executing the plugin AnalyseMeshQuality...", 1);
   _info("Parameter 'printGuidance' is set to 1. This makes the plugin"
         "to be verbose and to provide various explanations", 1);
@@ -228,43 +230,15 @@ void dataSingDim::initialize(GModel *m, int countElementToCheck[3])
     std::set<GEntity*, GEntityPtrLessThan> entitySet(m->firstRegion(), m->lastRegion());
     _initialize(entitySet.begin(), entitySet.end(), countElementToCheck);
   }
-  return;
-  if (_dim == 2) {
-    for (auto it = m->firstFace(); it != m->lastFace(); ++it) {
-      GFace *f = *it;
 
-    }
-  }
-  else {
-    for (auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
-      num3DElem += (*it)->getNumMeshElements();
-    }
-  }
-  std::map<GFace*, dataEntities> _data;
 
-  // Latest created PView in function of:
-  // - type = 3D {0, 2, 4} or 2D {1, 3, 5} pview
-  // - measure = validity {0, 1}, disto {2, 3} or aspect {4, 5}
-  PView* _views[6]{};
-
-  // Store if data has changed. This is useful if the plugin is executed at
-  // least 3 times. Here is an example:
-  // 1) Set: checkQualityDisto=1, createElementsView=1
-  // 2) Run 1: Disto is computed and a PView is created
-  // 3) Set: recomputePolicy=1, createElementsView=0
-  // 4) Run 2: Disto is recomputed
-  // 5) Set: recomputePolicy=-1, createElementsView=1
-  // 6) Run 3: Disto is not recomputed, but a new PView is created
-  // Explanation: After run 2, _dataChangedSinceCreation corresponding to the
-  //    PView is set to true, thus at third run the new PView is created.
-  bool _dataChangedSinceCreation[6]{};
 }
 
 void dataSingDim::_initialize(entiter first, entiter last, int countElementToCheck[3])
 {
   std::set<GEntity *> existingInModel;
 
-  // Add to _data new GEntities and update those already present
+  // Add new GEntities to _data and update those already present
   for (auto it = first; it != last; ++it) {
     GEntity *ge = *it;
     existingInModel.insert(ge);
@@ -284,16 +258,20 @@ void dataSingDim::_initialize(entiter first, entiter last, int countElementToChe
   // Remove GEntities from _data that are no more existent in the model
   for (auto it = _data.begin(); it != _data.end();) {
     if (existingInModel.find(it->first) == existingInModel.end()) {
-      it->second.clear(); // Assuming dataEntities has a clear method
+      // it->second.clear(); // FIXME check that i don't need this
+      // FIXME should check if DataEntities had element
       it = _data.erase(it);
     }
     else {
       ++it;
     }
   }
+  for (int i =0; i < 3; ++i) {
+    if(countElementToCompute[i]) _dataChangedSincePViewCreation[i] = true;
+  }
 }
 
-void GMSH_AnalyseMeshQuality2Plugin::_decideDimensionToCheck(bool &check2D,
+void Plug::_decideDimensionToCheck(bool &check2D,
   bool &check3D) const
 {
   int num3DElem = 0;
