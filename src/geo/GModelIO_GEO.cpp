@@ -1837,15 +1837,22 @@ int GModel::writeGEO(const std::string &name, bool printLabels,
     if((*it)->getNativeType() != GEntity::GmshModel) geo = false;
   }
 
+  // if we only have OpenCASCADE data, serialize it to .xao instead of doing an
+  // incomplete .geo export (this is a typical source of confusion for new
+  // users); to force unrolled debug .geo output with OCC geometries, simply add
+  // a dummy built-in point
   if(occ) {
-    if(writeOCCXAO(name + ".xao"))
+    if(writeOCCXAO(name + ".xao")) {
       fprintf(fp, "Merge \"%s\";\n", (name + ".xao").c_str());
+    }
+    else
+      Msg::Error("Could not write '%s'", (name + ".xao").c_str());
   }
   else {
     if(!geo)
-      Msg::Warning("Exporting entities from CAD kernel other than built-in "
-                   "in .geo format is for debugging purposes only: only a "
-                   "very limited subset is supported");
+      Msg::Warning("Exporting non 'built-in' CAD kernel entities in .geo "
+                   "format is for debugging only - most entities are not "
+                   "supported");
 
     std::map<double, std::string> meshSizeParameters;
     int cpt = 0;
