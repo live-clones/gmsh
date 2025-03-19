@@ -4888,9 +4888,9 @@ void _writeXAO(TopoDS_Shape &shape, GModel *model, const std::string &fileName)
     return;
   }
 
-  // TODO: In addition to saving physical group tags (see below), we could
-  // further extend the XAO output by dumping OCCAttributes (extrusion
-  // constraints, mesh sizes...).
+  // TODO: In addition to saving physical group tags and mesh sizes at points
+  // (see below), we could further extend the XAO output by dumping
+  // OCCAttributes (extrusion constraints, ...).
 
   // We could also save the entity tag; for reading back this info we would then
   // either need to change/write a custom importShapes/synchronize() where tags
@@ -4959,9 +4959,17 @@ void _writeXAO(TopoDS_Shape &shape, GModel *model, const std::string &fileName)
     for(auto p : topo[dim]) {
       std::string name =
         model->getElementaryName(p.second->dim(), p.second->tag());
-      file << "        <" << label << " index=\"" << index << "\" "
-           << "name=\"" << name << "\" "
-           << "reference=\"" << p.first << "\"/>" << std::endl;
+      file << "        <" << label << " index=\"" << index
+           << "\" name=\"" << name << "\" reference=\"" << p.first << "\"";
+#if 1
+      // Gmsh XAO extension: also save the prescribed mesh size at the vertex
+      if(dim == 0) {
+        double lc = static_cast<GVertex *>(p.second)->prescribedMeshSizeAtVertex();
+        if(lc != MAX_LC)
+          file << " meshsize=\"" << lc << "\"";
+      }
+#endif
+      file << "/>" << std::endl;
       for(auto &g : p.second->physicals) {
         groups[dim][std::abs(g)].push_back(index);
       }
@@ -6607,6 +6615,12 @@ int GModel::readOCCXAO(const std::string &fn)
           const char *name = nullptr;
           if(vertex->QueryAttribute("name", &name) == XML_SUCCESS)
             if(strlen(name)) setElementaryName(0, gv->tag(), name);
+          // Gmsh XAO extension: Gmsh saves the mesh size at vertices when
+          // creating XAO files
+          double lc;
+          if(vertex->QueryDoubleAttribute("meshsize", &lc) == XML_SUCCESS) {
+            gv->setPrescribedMeshSizeAtVertex(lc);
+          }
         }
         else {
           Msg::Error("Could not find model point for XAO reference %d", ref);
