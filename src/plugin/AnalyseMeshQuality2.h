@@ -56,13 +56,12 @@ GMSH_Plugin *GMSH_RegisterAnalyseMeshQuality2Plugin();
 }
 
 class GMSH_AnalyseMeshQuality2Plugin : public GMSH_PostPlugin {
-public:
-  class dataSingleDimension;
-
 private:
-  class dataEntities;
+  class DataSingleDimension;
+  class DataEntities;
+  struct ComputeParameters;
   GModel *_m;
-  dataSingleDimension *_data2D, *_data3D;
+  DataSingleDimension *_data2D, *_data3D;
   bool _verbose = false;
   int _dimensionPolicy = 0;
 
@@ -86,8 +85,8 @@ public:
   GMSH_AnalyseMeshQuality2Plugin()
   {
     _m = nullptr;
-    _data2D = new dataSingleDimension(2);
-    _data3D = new dataSingleDimension(3);
+    _data2D = new DataSingleDimension(2);
+    _data3D = new DataSingleDimension(3);
   }
   GMSH_PLUGIN_TYPE getType() const override { return GMSH_MESH_PLUGIN; }
   std::string getName() const override { return "AnalyseMeshQuality2"; }
@@ -125,7 +124,7 @@ private:
 #endif
 
 private:
-  class dataEntities {
+  class DataEntities {
   private:
     GEntity *_ge;
     //bool computedThisRun; // FIXME necessary?
@@ -153,10 +152,7 @@ private:
     std::vector<char> _flags;
 
   public:
-    explicit dataEntities(GEntity *ge)
-      : _ge(ge), _numVisibleElem(0)
-    {
-    }
+    explicit DataEntities(GEntity *ge): _ge(ge) {}
     int getNumVisibleElement() const { return _numVisibleElem; }
 
     // I separate the computation of each measure because computation can be
@@ -177,10 +173,10 @@ private:
   };
 
 public:
-  class dataSingleDimension {
+  class DataSingleDimension {
   private:
-    std::map<GEntity*, dataEntities> _data;
     const int _dim;
+    std::map<GEntity*, DataEntities> _data;
 
     // Latest created PView in function of:
     // - type = 3D {0, 2, 4} or 2D {1, 3, 5} pview
@@ -197,10 +193,10 @@ public:
     // 6) Run 3: Disto is not recomputed, but a new PView is created
     // Explanation: After run 2, _dataChangedSinceCreation corresponding to the
     //    PView is set to true, thus at third run the new PView is created.
-    bool _dataChangedSinceCreation[6]{};
+    bool _dataChangedSincePViewCreation[6]{};
 
   public:
-    explicit dataSingleDimension(int dim) : _dim(dim) {}
+    explicit DataSingleDimension(int dim) : _dim(dim) {}
     void clear() {_data.clear();}
     void initialize(GModel*, int countElementToCheck[3]);
     // void computeDisto(bool onlyVisible, int recomputePolicy, bool verbose);

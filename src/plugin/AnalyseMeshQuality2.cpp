@@ -218,9 +218,8 @@ PView *Plug::execute(PView *v) {
   return v;
 }
 
-using dataSingDim = GMSH_AnalyseMeshQuality2Plugin::dataSingleDimension;
 
-void dataSingDim::initialize(GModel *m, int countElementToCheck[3])
+void Plug::DataSingleDimension::initialize(GModel *m, int countElementToCheck[3])
 {
   if (_dim == 2) {
     std::set<GEntity*, GEntityPtrLessThan> entitySet(m->firstFace(), m->lastFace());
@@ -230,11 +229,10 @@ void dataSingDim::initialize(GModel *m, int countElementToCheck[3])
     std::set<GEntity*, GEntityPtrLessThan> entitySet(m->firstRegion(), m->lastRegion());
     _initialize(entitySet.begin(), entitySet.end(), countElementToCheck);
   }
-
-
 }
 
-void dataSingDim::_initialize(entiter first, entiter last, int countElementToCheck[3])
+void Plug::DataSingleDimension::_initialize(entiter first, entiter last,
+  int countElementToCompute[3])
 {
   std::set<GEntity *> existingInModel;
 
