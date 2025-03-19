@@ -37,7 +37,7 @@
 #ifndef GMM_OPT_H__
 #define GMM_OPT_H__
 
-#include <gmm_dense_lu.h>
+#include "gmm_dense_lu.h"
 
 namespace gmm {
 
@@ -83,14 +83,14 @@ namespace gmm {
           det = *p;
           if (doassert) GMM_ASSERT1(det!=T(0), "non invertible matrix");
           if (det == T(0)) break;
-          *p = T(1) / det;
+          *p = T(1) / det; 
         } break;
         case 2 : {
           det = (*p) * (*(p+3)) - (*(p+1)) * (*(p+2));
           if (doassert) GMM_ASSERT1(det!=T(0), "non invertible matrix");
           if (det == T(0)) break;
           std::swap(*p, *(p+3));
-          *p++ /= det; *p++ /= -det; *p++ /= -det; *p++ /= det;
+          *p++ /= det; *p++ /= -det; *p++ /= -det; *p++ /= det; 
         } break;
         default : {
           if (N == 3) { // not stable for nearly singular matrices
@@ -126,7 +126,7 @@ namespace gmm {
     return det;
   }
 
-
+  
 }
 
 #endif //  GMM_OPT_H__

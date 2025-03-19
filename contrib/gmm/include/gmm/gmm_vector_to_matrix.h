@@ -101,7 +101,9 @@ namespace gmm {
 
     bool operator ==(const iterator &i) const { return (isend == i.isend); }
     bool operator !=(const iterator &i) const { return !(i == *this); }
-    bool operator < (const iterator &i) const { return (*this - i < 0); }
+    bool operator < (const iterator &i) const { return (*this - i <  0); }
+    bool operator > (const iterator &i) const { return (*this - i >  0); }
+    bool operator >=(const iterator &i) const { return (*this - i >= 0); }
 
     gen_row_vector_iterator(void) {}
     gen_row_vector_iterator(const gen_row_vector_iterator<MPT> &itm)
@@ -225,7 +227,9 @@ namespace gmm {
 
     bool operator ==(const iterator &i) const { return (isend == i.isend); }
     bool operator !=(const iterator &i) const { return !(i == *this); }
-    bool operator < (const iterator &i) const { return (*this - i < 0); }
+    bool operator < (const iterator &i) const { return (*this - i <  0); }
+    bool operator > (const iterator &i) const { return (*this - i >  0); }
+    bool operator >=(const iterator &i) const { return (*this - i >= 0); }
 
     gen_col_vector_iterator(void) {}
     gen_col_vector_iterator(const gen_col_vector_iterator<MPT> &itm)

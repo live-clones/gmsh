@@ -35,7 +35,7 @@
    @date December 8, 2005.
    @brief Interface with MUMPS (LU direct solver for sparse matrices).
 */
-#if defined(GMM_USES_MUMPS) || defined(HAVE_DMUMPS_C_H)
+#if defined(GMM_USES_MUMPS)
 
 #ifndef GMM_MUMPS_INTERFACE_H
 #define GMM_MUMPS_INTERFACE_H
@@ -76,13 +76,13 @@ namespace gmm {
     std::vector<int> jcn;
     std::vector<T> a;
     bool sym;
-    
+
     template <typename L> void store(const L& l, size_type i) {
        typename linalg_traits<L>::const_iterator it = vect_const_begin(l),
          ite = vect_const_end(l);
        for (; it != ite; ++it) {
          int ir = (int)i + 1, jc = (int)it.index() + 1;
-         if (*it != T(0) && (!sym || ir >= jc)) 
+         if (*it != T(0) && (!sym || ir >= jc))
          { irn.push_back(ir); jcn.push_back(jc); a.push_back(*it); }
        }
     }
@@ -146,24 +146,28 @@ namespace gmm {
         case -2:
           GMM_ASSERT1(false, "Solve with MUMPS failed: NZ = " << id.INFO(2)
                       << " is out of range");
+          break;
         case -6 : case -10 :
           GMM_WARNING1("Solve with MUMPS failed: matrix is singular");
           return false;
         case -9:
           GMM_ASSERT1(false, "Solve with MUMPS failed: error "
                       << id.INFO(1) << ", increase ICNTL(14)");
+          break;
         case -13 :
           GMM_ASSERT1(false, "Solve with MUMPS failed: not enough memory");
+          break;
         default :
           GMM_ASSERT1(false, "Solve with MUMPS failed with error "
                       << id.INFO(1));
+          break;
       }
     }
     return true;
   }
 
 
-  /** MUMPS solve interface  
+  /** MUMPS solve interface
    *  Works only with sparse or skyline matrices
    */
   template <typename MAT, typename VECTX, typename VECTB>
@@ -174,11 +178,11 @@ namespace gmm {
     typedef typename linalg_traits<MAT>::value_type T;
     typedef typename mumps_interf<T>::value_type MUMPS_T;
     GMM_ASSERT2(gmm::mat_nrows(A) == gmm::mat_ncols(A), "Non-square matrix");
-  
+
     std::vector<T> rhs(gmm::vect_size(B)); gmm::copy(B, rhs);
 
     ij_sparse_matrix<T> AA(A, sym);
-  
+
     const int JOB_INIT = -1;
     const int JOB_END = -2;
     const int USE_COMM_WORLD = -987654;
@@ -189,13 +193,13 @@ namespace gmm {
 #ifdef GMM_USES_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
-    
+
     id.job = JOB_INIT;
     id.par = 1;
     id.sym = sym ? 2 : 0;
     id.comm_fortran = USE_COMM_WORLD;
     mumps_interf<T>::mumps_c(id);
-    
+
     if (rank == 0 || distributed) {
       id.n = int(gmm::mat_nrows(A));
       if (distributed) {
@@ -222,7 +226,7 @@ namespace gmm {
       id.ICNTL(5) = 0;  // assembled input matrix (default)
 
     id.ICNTL(14) += 80; /* small boost to the workspace size as we have encountered some problem
-                           who did not fit in the default settings of mumps.. 
+                           who did not fit in the default settings of mumps..
                            by default, ICNTL(14) = 15 or 20
                         */
     //cout << "ICNTL(14): " << id.ICNTL(14) << "\n";
@@ -251,7 +255,7 @@ namespace gmm {
 
 
 
-  /** MUMPS solve interface for distributed matrices 
+  /** MUMPS solve interface for distributed matrices
    *  Works only with sparse or skyline matrices
    */
   template <typename MAT, typename VECTX, typename VECTB>
@@ -268,7 +272,7 @@ namespace gmm {
   inline T real_or_complex(T &a) { return a; }
 
 
-  /** Evaluate matrix determinant with MUMPS  
+  /** Evaluate matrix determinant with MUMPS
    *  Works only with sparse or skyline matrices
    */
   template <typename MAT, typename T = typename linalg_traits<MAT>::value_type>
@@ -278,9 +282,9 @@ namespace gmm {
     typedef typename mumps_interf<T>::value_type MUMPS_T;
     typedef typename number_traits<T>::magnitude_type R;
     GMM_ASSERT2(gmm::mat_nrows(A) == gmm::mat_ncols(A), "Non-square matrix");
-  
+
     ij_sparse_matrix<T> AA(A, sym);
-  
+
     const int JOB_INIT = -1;
     const int JOB_END = -2;
     const int USE_COMM_WORLD = -987654;
@@ -291,13 +295,13 @@ namespace gmm {
 #ifdef GMM_USES_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
-    
+
     id.job = JOB_INIT;
     id.par = 1;
     id.sym = sym ? 2 : 0;
     id.comm_fortran = USE_COMM_WORLD;
     mumps_interf<T>::mumps_c(id);
-    
+
     if (rank == 0 || distributed) {
       id.n = int(gmm::mat_nrows(A));
       if (distributed) {
@@ -321,7 +325,7 @@ namespace gmm {
     if (distributed)
       id.ICNTL(5) = 0;  // assembled input matrix (default)
 
-//    id.ICNTL(14) += 80; // small boost to the workspace size 
+//    id.ICNTL(14) += 80; // small boost to the workspace size
 
     if (distributed)
       id.ICNTL(18) = 3; // strategy for distributed input matrix
@@ -349,7 +353,7 @@ namespace gmm {
 
 }
 
-  
+
 #endif // GMM_MUMPS_INTERFACE_H
 
 #endif // GMM_USES_MUMPS

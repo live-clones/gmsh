@@ -1367,6 +1367,10 @@ namespace gmm {
     { return !(i == *this); }
     bool operator < (const iterator &i) const
     { return it < i.it; }
+    bool operator > (const iterator &i) const
+    { return it > i.it; }
+    bool operator >=(const iterator &i) const
+    { return it >= i.it; }
     size_type index() const { return shift; }
 
     slvector_iterator() {}
@@ -1418,6 +1422,10 @@ namespace gmm {
     { return !(i == *this); }
     bool operator < (const iterator &i) const
     { return it < i.it; }
+    bool operator > (const iterator &i) const
+    { return it > i.it; }
+    bool operator >=(const iterator &i) const
+    { return it >= i.it; }
     size_type index() const { return shift; }
 
     slvector_const_iterator() {}

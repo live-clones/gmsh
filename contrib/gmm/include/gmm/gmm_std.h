@@ -60,17 +60,17 @@
 # define SECURE_SPRINTF2(S, l, st, p1, p2) sprintf_s(S, l, st, p1, p2)
 # define SECURE_SPRINTF4(S, l, st, p1, p2, p3, p4) sprintf_s(S, l, st, p1, p2, p3, p4)
 # define SECURE_STRDUP(s) _strdup(s)
-# ifndef _SCL_SECURE_NO_DEPRECATE
-#   error Add the option /D_SCL_SECURE_NO_DEPRECATE to the compilation command
+# ifndef _CRT_SECURE_NO_DEPRECATE
+#  error Add _CRT_SECURE_NO_DEPRECATE to your compilation options, Microsoft is overstrict (e.g. bans fopen) without offering portable alternatives
 # endif
 #else
 # define SECURE_NONCHAR_SSCANF sscanf
 # define SECURE_NONCHAR_FSCANF fscanf
 # define SECURE_STRNCPY(a, la, b, lb) strncpy(a, b, lb)
 # define SECURE_FOPEN(F, filename, mode) ((*(F)) = fopen(filename, mode))
-# define SECURE_SPRINTF1(S, l, st, p1) sprintf(S, st, p1)
-# define SECURE_SPRINTF2(S, l, st, p1, p2) sprintf(S, st, p1, p2)
-# define SECURE_SPRINTF4(S, l, st, p1, p2, p3, p4) sprintf(S, st, p1, p2, p3, p4)
+# define SECURE_SPRINTF1(S, l, st, p1) snprintf(S, l, st, p1)
+# define SECURE_SPRINTF2(S, l, st, p1, p2) snprintf(S, l, st, p1, p2)
+# define SECURE_SPRINTF4(S, l, st, p1, p2, p3, p4) snprintf(S, l, st, p1, p2, p3, p4)
 # define SECURE_STRDUP(s) strdup(s)
 #endif
 
@@ -124,7 +124,7 @@ inline void GMM_NOPERATION_(int) { }
 #include <array>
 #include <locale.h>
 
-//#include <gmm/gmm_arch_config.h>
+#include <gmm/gmm_arch_config.h>
 
 namespace std {
 #if defined(__GNUC__) && (__cplusplus <= 201103L)
@@ -313,6 +313,12 @@ typedef fixed_size_integer_generator<8>::uint_base_type uint64_type;
 # define ALWAYS_INLINE
 #endif
 
+#if defined(_MSC_VER) || defined(__INTEL_COMPILER)
+# define NOINLINE __declspec(noinline)
+#elif defined(__GNUC__) && !defined(__ICC)
+# define NOINLINE __attribute__((noinline))
+#endif
+
 }
 
   /* ******************************************************************** */
@@ -328,7 +334,7 @@ typedef fixed_size_integer_generator<8>::uint_base_type uint64_type;
 #     define APIDECL
 #  endif
 #   if defined(IMPORTED_FROM_SHARED_LIB)
-#	  error INTENTIONAL COMPILCATION ERROR, DLL IMPORT AND EXPORT ARE INCOMPITABLE
+#	  error INTENTIONAL COMPILATION ERROR, DLL IMPORT AND EXPORT ARE INCOMPATIBLE
 #   endif
 #endif
 
@@ -339,7 +345,7 @@ typedef fixed_size_integer_generator<8>::uint_base_type uint64_type;
 #     define APIDECL
 #  endif
 #   if defined(EXPORTED_TO_SHARED_LIB)
-#	  error INTENTIONAL COMPILCATION ERROR, DLL IMPORT AND EXPORT ARE INCOMPITABLE
+#	  error INTENTIONAL COMPILATION ERROR, DLL IMPORT AND EXPORT ARE INCOMPATIBLE
 #   endif
 #endif
 

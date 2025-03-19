@@ -140,7 +140,7 @@ namespace gmm
     typedef typename linalg_traits<V>::value_type value_type;
 
     row_matrix(size_type r, size_type c) : li(r, V(c)), nc(c) {}
-    row_matrix(void) : nc(0) {}
+    row_matrix() : nc(0) {}
     reference operator ()(size_type l, size_type c)
     { return li[l][c]; }
     value_type operator ()(size_type l, size_type c) const
@@ -149,13 +149,13 @@ namespace gmm
     void clear_mat();
     void resize(size_type m, size_type n);
 
-    typename std::vector<V>::iterator begin(void)
+    typename std::vector<V>::iterator begin()
     { return li.begin(); }
-    typename std::vector<V>::iterator end(void)
+    typename std::vector<V>::iterator end()
     { return li.end(); }
-    typename std::vector<V>::const_iterator begin(void) const
+    typename std::vector<V>::const_iterator begin() const
     { return li.begin(); }
-    typename std::vector<V>::const_iterator end(void) const
+    typename std::vector<V>::const_iterator end() const
     { return li.end(); }
 
 
@@ -164,14 +164,15 @@ namespace gmm
     V& operator[](size_type i) { return li[i]; }
     const V& operator[](size_type i) const { return li[i]; }
 
-    inline size_type nrows(void) const { return li.size(); }
-    inline size_type ncols(void) const { return nc;        }
+    inline size_type nrows() const { return li.size(); }
+    inline size_type ncols() const { return nc;        }
 
     void swap(row_matrix<V> &m) { std::swap(li, m.li); std::swap(nc, m.nc); }
     void swap_row(size_type i, size_type j) { std::swap(li[i], li[j]); }
   };
 
-  template<typename V> void row_matrix<V>::resize(size_type m, size_type n) {
+  template<typename V>
+  void row_matrix<V>::resize(size_type m, size_type n) {
     size_type nr = std::min(nrows(), m);
     li.resize(m);
     for (size_type i=nr; i < m; ++i) gmm::resize(li[i], n);
@@ -182,10 +183,12 @@ namespace gmm
   }
 
 
-  template<typename V> void row_matrix<V>::clear_mat()
+  template<typename V>
+  void row_matrix<V>::clear_mat()
   { for (size_type i=0; i < nrows(); ++i) clear(li[i]); }
 
-  template <typename V> struct linalg_traits<row_matrix<V> > {
+  template <typename V>
+  struct linalg_traits<row_matrix<V> > {
     typedef row_matrix<V> this_type;
     typedef this_type origin_type;
     typedef linalg_false is_reference;
@@ -248,7 +251,7 @@ namespace gmm
     typedef typename linalg_traits<V>::value_type value_type;
 
     col_matrix(size_type r, size_type c) : li(c, V(r)), nr(r) { }
-    col_matrix(void) : nr(0) {}
+    col_matrix() : nr(0) {}
     reference operator ()(size_type l, size_type c)
     { return li[c][l]; }
     value_type operator ()(size_type l, size_type c) const
@@ -262,17 +265,17 @@ namespace gmm
     V& operator[](size_type i) { return li[i]; }
     const V& operator[](size_type i) const { return li[i]; }
 
-    typename std::vector<V>::iterator begin(void)
+    typename std::vector<V>::iterator begin()
     { return li.begin(); }
-    typename std::vector<V>::iterator end(void)
+    typename std::vector<V>::iterator end()
     { return li.end(); }
-    typename std::vector<V>::const_iterator begin(void) const
+    typename std::vector<V>::const_iterator begin() const
     { return li.begin(); }
-    typename std::vector<V>::const_iterator end(void) const
+    typename std::vector<V>::const_iterator end() const
     { return li.end(); }
 
-    inline size_type ncols(void) const { return li.size(); }
-    inline size_type nrows(void) const { return nr; }
+    inline size_type ncols() const { return li.size(); }
+    inline size_type nrows() const { return nr; }
 
     void swap(col_matrix<V> &m) { std::swap(li, m.li); std::swap(nr, m.nr); }
     void swap_col(size_type i, size_type j) { std::swap(li[i], li[j]); }
@@ -365,34 +368,36 @@ namespace gmm
       return *(this->begin() + c*nbl+l);
     }
 
-    std::vector<T> &as_vector(void) { return *this; }
-    const std::vector<T> &as_vector(void) const { return *this; }
+    std::vector<T> &as_vector() { return *this; }
+    const std::vector<T> &as_vector() const { return *this; }
 
     void resize(size_type, size_type);
     void base_resize(size_type, size_type);
     void reshape(size_type, size_type);
 
     void fill(T a, T b = T(0));
-    inline size_type nrows(void) const { return nbl; }
-    inline size_type ncols(void) const { return nbc; }
+    inline size_type nrows() const { return nbl; }
+    inline size_type ncols() const { return nbc; }
     void swap(dense_matrix<T> &m)
     { std::vector<T>::swap(m); std::swap(nbc, m.nbc); std::swap(nbl, m.nbl); }
 
     dense_matrix(size_type l, size_type c)
       : std::vector<T>(c*l), nbc(c), nbl(l)  {}
-    dense_matrix(void) { nbl = nbc = 0; }
+    dense_matrix() { nbl = nbc = 0; }
   };
 
-  template<typename T> void dense_matrix<T>::reshape(size_type m,size_type n) {
+  template<typename T>
+  void dense_matrix<T>::reshape(size_type m,size_type n) {
     GMM_ASSERT2(n*m == nbl*nbc, "dimensions mismatch");
     nbl = m; nbc = n;
   }
 
-  template<typename T> void dense_matrix<T>::base_resize(size_type m,
-                                                         size_type n)
+  template<typename T>
+  void dense_matrix<T>::base_resize(size_type m, size_type n)
   { std::vector<T>::resize(n*m); nbl = m; nbc = n; }
 
-  template<typename T> void dense_matrix<T>::resize(size_type m, size_type n) {
+  template<typename T>
+  void dense_matrix<T>::resize(size_type m, size_type n) {
     if (n*m > nbc*nbl) std::vector<T>::resize(n*m);
     if (m < nbl) {
       for (size_type i = 1; i < std::min(nbc, n); ++i)
@@ -412,13 +417,15 @@ namespace gmm
     nbl = m; nbc = n;
   }
 
-  template<typename T> void dense_matrix<T>::fill(T a, T b) {
+  template<typename T>
+  void dense_matrix<T>::fill(T a, T b) {
     std::fill(this->begin(), this->end(), b);
     size_type n = std::min(nbl, nbc);
     if (a != b) for (size_type i = 0; i < n; ++i) (*this)(i,i) = a;
   }
 
-  template <typename T> struct linalg_traits<dense_matrix<T> > {
+  template <typename T>
+  struct linalg_traits<dense_matrix<T> > {
     typedef dense_matrix<T> this_type;
     typedef this_type origin_type;
     typedef linalg_false is_reference;
@@ -523,11 +530,11 @@ namespace gmm
 
     void init_with_identity(size_type n);
 
-    csc_matrix(void) :  nc(0), nr(0) {}
+    csc_matrix() :  nc(0), nr(0) {}
     csc_matrix(size_type nnr, size_type nnc);
 
-    size_type nrows(void) const { return nr; }
-    size_type ncols(void) const { return nc; }
+    size_type nrows() const { return nr; }
+    size_type ncols() const { return nc; }
     void swap(csc_matrix<T, IND_TYPE, shift> &m) {
       std::swap(pr, m.pr);
       std::swap(ir, m.ir); std::swap(jc, m.jc);
@@ -670,11 +677,11 @@ namespace gmm
     template <typename Matrix> void init_with(const Matrix &A);
     void init_with_identity(size_type n);
 
-    csr_matrix(void) : nc(0), nr(0) {}
+    csr_matrix() : nc(0), nr(0) {}
     csr_matrix(size_type nnr, size_type nnc);
 
-    size_type nrows(void) const { return nr; }
-    size_type ncols(void) const { return nc; }
+    size_type nrows() const { return nr; }
+    size_type ncols() const { return nc; }
     void swap(csr_matrix<T, IND_TYPE, shift> &m) {
       std::swap(pr, m.pr);
       std::swap(ir,m.ir); std::swap(jc, m.jc);
@@ -801,17 +808,17 @@ namespace gmm
     typedef typename linalg_traits<MAT>::value_type value_type;
     typedef typename linalg_traits<MAT>::reference reference;
 
-    size_type nrows(void) const { return introw[nrowblocks_-1].max; }
-    size_type ncols(void) const { return intcol[ncolblocks_-1].max; }
-    size_type nrowblocks(void) const { return nrowblocks_; }
-    size_type ncolblocks(void) const { return ncolblocks_; }
+    size_type nrows() const { return introw[nrowblocks_-1].max; }
+    size_type ncols() const { return intcol[ncolblocks_-1].max; }
+    size_type nrowblocks() const { return nrowblocks_; }
+    size_type ncolblocks() const { return ncolblocks_; }
     const sub_interval &subrowinterval(size_type i) const { return introw[i]; }
     const sub_interval &subcolinterval(size_type i) const { return intcol[i]; }
     const MAT &block(size_type i, size_type j) const
     { return blocks[j*ncolblocks_+i]; }
     MAT &block(size_type i, size_type j)
     { return blocks[j*ncolblocks_+i]; }
-    void do_clear(void);
+    void do_clear();
     // to be done : read and write access to a component
     value_type operator() (size_type i, size_type j) const {
       size_type k, l;
@@ -833,7 +840,7 @@ namespace gmm
     template <typename CONT> void resize(const CONT &c1, const CONT &c2);
     template <typename CONT> block_matrix(const CONT &c1, const CONT &c2)
     { resize(c1, c2); }
-    block_matrix(void) {}
+    block_matrix() {}
 
   };
 
@@ -867,7 +874,8 @@ namespace gmm
     { GMM_ASSERT1(false, "Sorry, to be done"); }
   };
 
-  template <typename MAT> void block_matrix<MAT>::do_clear(void) {
+  template <typename MAT>
+  void block_matrix<MAT>::do_clear() {
     for (size_type j = 0; j < ncolblocks_; ++j)
       for (size_type i = 0; i < nrowblocks_; ++i)
         clear(block(i,j));
@@ -973,8 +981,8 @@ namespace gmm {
     mpi_distributed_matrix(size_type n, size_type m) : M(n, m) {}
     mpi_distributed_matrix() {}
 
-    const MAT &local_matrix(void) const { return M; }
-    MAT &local_matrix(void) { return M; }
+    const MAT &local_matrix() const { return M; }
+    MAT &local_matrix() { return M; }
   };
 
   template <typename MAT> inline MAT &eff_matrix(MAT &m) { return m; }
