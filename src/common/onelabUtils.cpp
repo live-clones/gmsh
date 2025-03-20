@@ -716,6 +716,7 @@ namespace onelabUtils {
 
   void saveDb(const std::string &fileName)
   {
+    if(fileName == ".db") return;
     FILE *fp = Fopen(fileName.c_str(), "wb");
     if(fp) {
       Msg::StatusBar(true, "Saving database '%s'...", fileName.c_str());
@@ -726,7 +727,7 @@ namespace onelabUtils {
     else
       Msg::Error("Could not save database '%s'", fileName.c_str());
 
-#if 0
+#if 1
     fp = Fopen((fileName + ".json").c_str(), "wb");
     if(fp){
       std::string json;
