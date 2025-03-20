@@ -132,13 +132,20 @@ PView *Plug::execute(PView *v)
 
   // NOTE dimensionPolicy: highest dimension available -> 0, only 2D -> 1,
   //      2D and 3D : seperately -> 2, mixed -> 3
-  int _dimensionPolicy = static_cast<int>(MeshQuality2Options_Number[3].def);
+  _dimensionPolicy = static_cast<int>(MeshQuality2Options_Number[3].def);
 
   // NOTE recomputePolicy:
-  //      - (re)compute nothing, use existent data -> -2
-  //      - do not recompute, just add new elements -> -1,
-  //      - recompute if mesh modification detected -> 0,
-  //      - always recompute -> 1
+  //      - delete nothing, compute nothing, output prevsly computed data -> -2
+  //      The other options provide an identical output, but differ how
+  //      existent data are treated. What asked element means depends on the
+  //      two parameters restrict[...]
+  //      - delete nothing, compute newly asked elements -> -1
+  //      - delete GEntities that are not existent in current GModel,
+  //        delete data in GEntities that have detected mesh modifications,
+  //        (re)compute data for asked elements and newly asked elements -> 0
+  //      - delete GEntities that are not existent in current GModel,
+  //        delete data in all GEntities,
+  //        compute asked elements -> 1
   int recomputePolicy = static_cast<int>(MeshQuality2Options_Number[4].def);
   bool onlyVisible = static_cast<bool>(MeshQuality2Options_Number[5].def);
 
@@ -156,7 +163,7 @@ PView *Plug::execute(PView *v)
   // NOTE hideCriterion: hide in function of quality -> 0, %elm -> 1, #elm -> 2
   int hideCriterion = static_cast<int>(MeshQuality2Options_Number[15].def);
   double hideThreshold = MeshQuality2Options_Number[16].def;
-  bool _verbose = static_cast<bool>(MeshQuality2Options_Number[17].def);
+  _verbose = static_cast<bool>(MeshQuality2Options_Number[17].def);
   bool freeData = static_cast<bool>(MeshQuality2Options_Number[18].def);
 
   //

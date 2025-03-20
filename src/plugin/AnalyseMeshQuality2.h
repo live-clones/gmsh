@@ -134,21 +134,13 @@ private:
     // x bits of char are used for the following information:
     // - First 3 bits: to say if quantities has already been computed
     // FIXME The other 5 bits can be used for different alternatives:
-    //         a) element must be computed (1 bits)
-    //         b) measure must be computed (3 bits)
-    //         c) this element is concerned by this run (1 bits)
-    //         d) this measure is concerned by this run (3 bits)
-    //       (a) depends on onlyVisible but not first three bits
-    //       (b) depends on onlyVisible and first three bits but can be deduced
-    //           from first three bits and (a)
-    //       (c) and (d) the same but for knowing which element should be used
-    //                   for creatinghiding/Pview. However, (d) is less useful
-    //                   since normally, measure of a certain element should
-    //                   have been computed if the measure has been asked and
-    //                   if its flag.
-    //        (a) == (c)
-    //        I think should use whatever I can use among (a), (b), (c)
-    std::vector<char> _flags;
+    //       4) element is not in GEntity
+    //       5) element is visible
+    //       6) P1 has been computed
+    //       7) element is P1
+    //       8) element is requested
+    //       (8) depends on (5), (7) and corresponding parameters 'restrict..'
+    std::vector<unsigned char> _flags;
 
   public:
     explicit DataEntities(GEntity *ge) : _ge(ge) {}
