@@ -388,6 +388,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
           case 6: order = 2; break;
           case 10: order = 3; break;
           case 15: order = 4; break;
+          default: order = 1; break;
           }
           elements[2][iSurface].push_back(new MTriangleN(cells[i], order));
           break;
@@ -397,6 +398,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
           case 10: order = 2; break;
           case 20: order = 3; break;
           case 35: order = 4; break;
+          default: order = 1; break;
           }
           elements[4][iVolume].push_back(new MTetrahedronN(cells[i], order));
           break;
