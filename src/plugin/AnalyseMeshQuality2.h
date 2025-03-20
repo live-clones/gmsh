@@ -197,15 +197,15 @@ public:
     // 4) Run 2: Disto is recomputed
     // 5) Set: recomputePolicy=-1, createElementsView=1
     // 6) Run 3: Disto is not recomputed, but a new PView is created
-    // Explanation: After run 2, _dataChangedSinceCreation corresponding to the
+    // Explanation: After run 2, _changedSincePViewCreation corresponding to the
     //    PView is set to true, thus at third run the new PView is created.
-    bool _dataChangedSincePViewCreation[6]{};
+    bool _changedSincePViewCreation[6]{};
 
   public:
     explicit DataSingleDimension(int dim) : _dim(dim) {}
     void clear() { _data.clear(); }
-    void initialize(GModel *, ComputeParameters param,
-                    int countElementToCheck[3]);
+    void initialize(GModel *, ComputeParameters param, int cntElToCompute[3],
+                    int cntElToShow[3]);
     // void computeDisto(bool onlyVisible, int recomputePolicy, bool verbose);
     // void computeAspect(bool onlyVisible, int recomputePolicy, bool verbose);
     // void getValidityValues(std::vector<double> &min, std::vector<double>
@@ -216,9 +216,9 @@ public:
     //                const;
 
   private:
-    using entiter = std::set<GEntity *, GEntityPtrLessThan>::iterator;
-    void _initialize(entiter first, entiter last, ComputeParameters param,
-                     int countElementToCompute[3]);
+    using EntIter = std::set<GEntity *, GEntityPtrLessThan>::iterator;
+    void _initialize(EntIter first, EntIter last, ComputeParameters param,
+                     int cntElToCompute[3], int cntElToShow[3]);
   };
 };
 

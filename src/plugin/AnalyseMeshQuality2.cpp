@@ -228,31 +228,36 @@ PView *Plug::execute(PView *v)
   ComputeParameters param = {!lazyValidity,       (bool)computeDisto,
                              (bool)computeAspect, recomputePolicy,
                              onlyVisible,         onlyCurved};
-  int numElementsToCompute[6]{};
-  if(check2D) _data2D->initialize(_m, param, numElementsToCompute);
-  if(check3D) _data3D->initialize(_m, param, &numElementsToCompute[3]);
+  int nElToCompute[6]{};
+  int nElToShow[6]{};
+  if(check2D) _data2D->initialize(_m, param, nElToCompute, nElToShow);
+  if(check3D) _data3D->initialize(_m, param, &nElToCompute[3], &nElToShow[3]);
 
   return v;
 }
 
 void Plug::DataSingleDimension::initialize(GModel *m, ComputeParameters param,
-                                           int countElementToCheck[3])
+                                           int cntElToCompute[3],
+                                           int cntElToShow[3])
 {
   if(_dim == 2) {
     std::set<GEntity *, GEntityPtrLessThan> entitySet(m->firstFace(),
                                                       m->lastFace());
-    _initialize(entitySet.begin(), entitySet.end(), param, countElementToCheck);
+    _initialize(entitySet.begin(), entitySet.end(), param,
+                cntElToCompute, cntElToShow);
   }
   else if(_dim == 3) {
     std::set<GEntity *, GEntityPtrLessThan> entitySet(m->firstRegion(),
                                                       m->lastRegion());
-    _initialize(entitySet.begin(), entitySet.end(), param, countElementToCheck);
+    _initialize(entitySet.begin(), entitySet.end(), param,
+                cntElToCompute, cntElToShow);
   }
 }
 
-void Plug::DataSingleDimension::_initialize(entiter first, entiter last,
+void Plug::DataSingleDimension::_initialize(EntIter first, EntIter last,
                                             ComputeParameters param,
-                                            int countElementToCompute[3])
+                                            int cntElToCompute[3],
+                                            int cntElToShow[3])
 {
   // Add new GEntities to _data and update countElementToCompute
   std::set<GEntity *> existingInModel;
@@ -263,7 +268,7 @@ void Plug::DataSingleDimension::_initialize(entiter first, entiter last,
     // Add new GEntities to _data
     if(_data.find(ge) == _data.end()) _data[ge] = DataEntities(ge);
 
-    _data[ge].countNewElement(param, countElementToCompute);
+    _data[ge].countNewElement(param, cntElToCompute);
   }
 
   // Remove GEntities from _data that are no more existent in the model
@@ -280,7 +285,7 @@ void Plug::DataSingleDimension::_initialize(entiter first, entiter last,
     }
   }
   for(int i = 0; i < 3; ++i) {
-    if(countElementToCompute[i]) _dataChangedSincePViewCreation[i] = true;
+    if(countElementToCompute[i]) _changedSincePViewCreation[i] = true;
   }
 }
 
