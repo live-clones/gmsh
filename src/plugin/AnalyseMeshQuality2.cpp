@@ -261,48 +261,11 @@ void Plug::DataSingleDimension::_initialize(EntIter first, EntIter last,
 {
   if(param.recomputePolicy >= -1) {
     _updateGEntities(first, last, param.recomputePolicy);
-    for(auto &it : _data) {
-      it.second.initialize(param);
-    }
   }
   
   for(auto & it : _data) {
-    it.second.initialize(param, cntElToCompute, cntElToShow);
-  }
-
-
-  // if(param.recomputePolicy == -2) return;
-
-  // Add new GEntities to _data and update countElementToCompute
-  std::set<GEntity *> existingInModel;
-  for(auto it = first; it != last; ++it) {
-    GEntity *ge = *it;
-    existingInModel.insert(ge);
-
-    // Add new GEntities to _data
-    if(_data.find(ge) == _data.end()) _data[ge] = DataEntities(ge);
-
-    _data[ge].countNewElement(param, cntElToCompute);
-  }
-
-  // Remove GEntities from _data that are not existent in the current model
-  if(param.recomputePolicy == -2) return; // FIXME check that i don't need this
-  for(auto it = _data.begin(); it != _data.end();) {
-    if(existingInModel.find(it->first) == existingInModel.end()) {
-      // it->second.clear(); // FIXME check that i don't need this
-      // FIXME should check if DataEntities had element
-      int numShownElement[3];
-      it->second.getNumShownElement(numShownElement);
-      it = _data.erase(it);
-    }
-    else {
-      ++it;
-    }
-  }
-
-  // Update count
-  for(int i = 0; i < 3; ++i) {
-    if(countElementToCompute[i]) _changedSincePViewCreation[i] = true;
+    it.second.initialize(param);
+    it.second.count(param, cntElToCompute, cntElToShow);
   }
 }
 
