@@ -2,6 +2,9 @@
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+//
+// Contributor(s):
+//   Florian Blachère
 
 #include "GModel.h"
 #include "OS.h"
@@ -137,7 +140,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   }
 
   char buffer[256], buffer2[256];
-  std::map<int, std::map<int, std::string> > physicals[4];
+  std::map<int, std::map<int, std::string>> physicals[4];
 
   if(!fgets(buffer, sizeof(buffer), fp)) {
     fclose(fp);
@@ -247,10 +250,10 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   int iSurface = getMaxElementaryNumber(2) + 1;
   int iVolume = getMaxElementaryNumber(3) + 1;
 
-  std::map<int, std::vector<MElement *> > elements[8];
+  std::map<int, std::vector<MElement *>> elements[8];
 
   if(haveCells) {
-    std::vector<std::vector<MVertex *> > cells(numElements);
+    std::vector<std::vector<MVertex *>> cells(numElements);
     for(std::size_t i = 0; i < cells.size(); i++) {
       int numVerts, n[100];
       if(binary) {
@@ -310,6 +313,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
             return 0;
           }
         }
+        int numVerts = cells[i].size(), order;
         switch(type) {
         case 1: elements[0][iPoint++].push_back(new MPoint(cells[i])); break;
         // first order elements
@@ -372,6 +376,31 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
             cells[i][5], cells[i][6], cells[i][9], cells[i][7], cells[i][12],
             cells[i][14], cells[i][13], cells[i][8], cells[i][10], cells[i][11],
             cells[i][15], cells[i][17], cells[i][16]));
+          break;
+        // high-order elements
+        // https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html
+        case 68: // VTK_LAGRANGE_CURVE
+          elements[1][iCurve].push_back(new MLineN(cells[i]));
+          break;
+        case 69: // VTK_LAGRANGE_TRIANGLE
+          switch(numVerts) {
+          case 3: order = 1; break;
+          case 6: order = 2; break;
+          case 10: order = 3; break;
+          case 15: order = 4; break;
+          default: order = 1; break;
+          }
+          elements[2][iSurface].push_back(new MTriangleN(cells[i], order));
+          break;
+        case 71: // VTK_LAGRANGE_TETRAHEDRON
+          switch(numVerts) {
+          case 4: order = 1; break;
+          case 10: order = 2; break;
+          case 20: order = 3; break;
+          case 35: order = 4; break;
+          default: order = 1; break;
+          }
+          elements[4][iVolume].push_back(new MTetrahedronN(cells[i], order));
           break;
         default: Msg::Error("Unknown type of cell %d", type); break;
         }
