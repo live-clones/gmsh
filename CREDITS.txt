@@ -66,7 +66,7 @@ Christophe Bourcier, Mattéo Couplet, Giuseppe Musacchio, Romin Tomasetti, Lin Q
 Chen, Tim Furlan, Matthias Lang, Tim Gabriel, Julien Chapelat, Boris Martin,
 Thomas Pirottin, Kazuyoshi Furutaka, Mariusz Wozniak, Christophe Friebel,
 Thierry Thomas, Joonas Haapsaari, Jani V"alimaa, Erik Schaubelt, Louis Denis,
-Francis Franklin.
+Francis Franklin, Florian Blachère.
 
 Special thanks to Bill Spitzak, Michael Sweet, Matthias Melcher, Greg Ercolano
 and others for the Fast Light Tool Kit on which Gmsh's GUI is based. See

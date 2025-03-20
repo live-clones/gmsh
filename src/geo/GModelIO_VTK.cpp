@@ -2,6 +2,9 @@
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+//
+// Contributor(s):
+//   Florian Blachère
 
 #include "GModel.h"
 #include "OS.h"
@@ -137,7 +140,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   }
 
   char buffer[256], buffer2[256];
-  std::map<int, std::map<int, std::string> > physicals[4];
+  std::map<int, std::map<int, std::string>> physicals[4];
 
   if(!fgets(buffer, sizeof(buffer), fp)) {
     fclose(fp);
@@ -247,10 +250,10 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   int iSurface = getMaxElementaryNumber(2) + 1;
   int iVolume = getMaxElementaryNumber(3) + 1;
 
-  std::map<int, std::vector<MElement *> > elements[8];
+  std::map<int, std::vector<MElement *>> elements[8];
 
   if(haveCells) {
-    std::vector<std::vector<MVertex *> > cells(numElements);
+    std::vector<std::vector<MVertex *>> cells(numElements);
     for(std::size_t i = 0; i < cells.size(); i++) {
       int numVerts, n[100];
       if(binary) {
@@ -380,36 +383,20 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
           elements[1][iCurve].push_back(new MLineN(cells[i]));
           break;
         case 69: // VTK_LAGRANGE_TRIANGLE
-          switch (numVerts) {
-            case 3:
-            order = 1;
-            break;
-            case 6:
-            order = 2;
-            break;
-            case 10:
-            order = 3;
-            break;
-            case 15:
-            order = 4;
-            break;
+          switch(numVerts) {
+          case 3: order = 1; break;
+          case 6: order = 2; break;
+          case 10: order = 3; break;
+          case 15: order = 4; break;
           }
           elements[2][iSurface].push_back(new MTriangleN(cells[i], order));
           break;
         case 71: // VTK_LAGRANGE_TETRAHEDRON
-          switch (numVerts) {
-            case 4:
-            order = 1;
-            break;
-            case 10:
-            order = 2;
-            break;
-            case 20:
-            order = 3;
-            break;
-            case 35:
-            order = 4;
-            break;
+          switch(numVerts) {
+          case 4: order = 1; break;
+          case 10: order = 2; break;
+          case 20: order = 3; break;
+          case 35: order = 4; break;
           }
           elements[4][iVolume].push_back(new MTetrahedronN(cells[i], order));
           break;

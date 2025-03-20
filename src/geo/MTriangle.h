@@ -295,7 +295,7 @@ public:
 };
 
 typedef std::vector<int> IndicesReoriented;
-typedef std::pair<int, std::pair<int, int> > TupleReorientation;
+typedef std::pair<int, std::pair<int, int>> TupleReorientation;
 
 /*
  * MTriangleN  FIXME: check the plot
