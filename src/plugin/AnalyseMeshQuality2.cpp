@@ -228,8 +228,8 @@ PView *Plug::execute(PView *v)
   ComputeParameters param = {!lazyValidity,       (bool)computeDisto,
                              (bool)computeAspect, recomputePolicy,
                              onlyVisible,         onlyCurved};
-  int nElToCompute[6]{};
-  int nElToShow[6]{};
+  std::size_t nElToCompute[6]{};
+  std::size_t nElToShow[6]{};
   if(check2D) _data2D->initialize(_m, param, nElToCompute, nElToShow);
   if(check3D) _data3D->initialize(_m, param, &nElToCompute[3], &nElToShow[3]);
 
@@ -237,8 +237,8 @@ PView *Plug::execute(PView *v)
 }
 
 void Plug::DataSingleDimension::initialize(GModel *m, ComputeParameters param,
-                                           int cntElToCompute[3],
-                                           int cntElToShow[3])
+                                           std::size_t cntElToCompute[3],
+                                           std::size_t cntElToShow[3])
 {
   if(_dim == 2) {
     std::set<GEntity *, GEntityPtrLessThan> entitySet(m->firstFace(),
@@ -256,8 +256,8 @@ void Plug::DataSingleDimension::initialize(GModel *m, ComputeParameters param,
 
 void Plug::DataSingleDimension::_initialize(EntIter first, EntIter last,
                                             ComputeParameters param,
-                                            int cntElToCompute[3],
-                                            int cntElToShow[3])
+                                            std::size_t cntElToCompute[3],
+                                            std::size_t cntElToShow[3])
 {
   if(param.recomputePolicy >= -1) {
     _updateGEntities(first, last, param.recomputePolicy);
@@ -285,7 +285,7 @@ void Plug::DataSingleDimension::_updateGEntities(EntIter first, EntIter last,
     for(auto it = _data.begin(); it != _data.end(); ++it) {
       if(existingInModel.find(it->first) == existingInModel.end()) {
         // it->second.clear(); // FIXME check that i don't need this
-        int numShownElement[3];
+        std::size_t numShownElement[3];
         it->second.getNumShownElement(numShownElement);
         for(int i = 0; i < 3; ++i) {
           if(numShownElement[i] > 0) _changedSincePViewCreation[i] = true;
@@ -424,7 +424,7 @@ void Plug::DataEntities::add(MElement *el)
 
 void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
 {
-  int num3DElem = 0;
+  std::size_t num3DElem = 0;
 
   // Iterate through regions to count 3D mesh elements
   for(auto it = _m->firstRegion(); it != _m->lastRegion(); ++it) {

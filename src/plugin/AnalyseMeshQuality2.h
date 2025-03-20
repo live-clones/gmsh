@@ -52,8 +52,6 @@ extern "C" {
 GMSH_Plugin *GMSH_RegisterAnalyseMeshQuality2Plugin();
 }
 
-// FIXME Change int into std::size_t for number of elements
-
 class GMSH_AnalyseMeshQuality2Plugin : public GMSH_PostPlugin {
 private:
   class DataSingleDimension;
@@ -130,9 +128,9 @@ private:
     // bool computedThisRun; // FIXME necessary?
     std::map<MElement *, size_t> _mapElemToIndex;
     std::vector<double> _minJ, _maxJ, _minDisto, _minAspect;
-    int _numVisibleElem = 0;
-    int _numToCompute[3]{};
-    int _numToDraw[3]{};
+    std::size_t _numVisibleElem = 0;
+    std::size_t _numToCompute[3]{};
+    std::size_t _numToDraw[3]{};
     // x bits of char are used for the following information:
     // - First 3 bits: to say if quantities has already been computed
     // FIXME The other 5 bits can be used for different alternatives:
@@ -146,15 +144,15 @@ private:
 
   public:
     explicit DataEntities(GEntity *ge) : _ge(ge) {}
-    int getNumVisibleElement() const { return _numVisibleElem; }
-    void getNumShownElement(int num[3]) const
+    std::size_t getNumVisibleElement() const { return _numVisibleElem; }
+    void getNumShownElement(std::size_t num[3]) const
     {
       for(int i = 0; i < 3; ++i) num[i] = _numToDraw[i];
     }
-    void countNewElement(ComputeParameters, int cnt[3]) const;
+    void countNewElement(ComputeParameters, std::size_t cnt[3]) const;
     void initialize(ComputeParameters);
-    void count(ComputeParameters, int cntElToCompute[3],
-                    int cntElToShow[3]);
+    void count(ComputeParameters, std::size_t cntElToCompute[3],
+               std::size_t cntElToShow[3]);
     void reset(std::size_t);
     void add(MElement *);
     void add(std::vector<MElement *> &elements)
@@ -215,8 +213,9 @@ public:
   public:
     explicit DataSingleDimension(int dim) : _dim(dim) {}
     void clear() { _data.clear(); }
-    void initialize(GModel *, ComputeParameters param, int cntElToCompute[3],
-                    int cntElToShow[3]);
+    void initialize(GModel *, ComputeParameters param,
+                    std::size_t cntElToCompute[3],
+                    std::size_t cntElToShow[3]);
     // void computeDisto(bool onlyVisible, int recomputePolicy, bool verbose);
     // void computeAspect(bool onlyVisible, int recomputePolicy, bool verbose);
     // void getValidityValues(std::vector<double> &min, std::vector<double>
@@ -229,7 +228,8 @@ public:
   private:
     using EntIter = std::set<GEntity *, GEntityPtrLessThan>::iterator;
     void _initialize(EntIter first, EntIter last, ComputeParameters param,
-                     int cntElToCompute[3], int cntElToShow[3]);
+                     std::size_t cntElToCompute[3],
+                     std::size_t cntElToShow[3]);
     void _updateGEntities(EntIter first, EntIter last, int recomputePolicy);
   };
 };
