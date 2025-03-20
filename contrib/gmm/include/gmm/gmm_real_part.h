@@ -32,7 +32,7 @@
 /**@file gmm_real_part.h
    @author  Yves Renard <Yves.Renard@insa-lyon.fr>
    @date September 18, 2003.
-   @brief extract the real/imaginary part of vectors/matrices 
+   @brief extract the real/imaginary part of vectors/matrices
 */
 #ifndef GMM_REAL_PART_H
 #define GMM_REAL_PART_H
@@ -46,24 +46,24 @@ namespace gmm {
   struct linalg_real_part {};
   struct linalg_imag_part {};
   template <typename R, typename PART> struct which_part {};
-  
-  template <typename C> typename number_traits<C>::magnitude_type 
+
+  template <typename C> typename number_traits<C>::magnitude_type
   real_or_imag_part(C x, linalg_real_part) { return gmm::real(x); }
-  template <typename C> typename number_traits<C>::magnitude_type 
+  template <typename C> typename number_traits<C>::magnitude_type
   real_or_imag_part(C x, linalg_imag_part) { return gmm::imag(x); }
   template <typename T, typename C, typename OP> C
   complex_from(T x, C y, OP op, linalg_real_part) { return std::complex<T>(op(std::real(y), x), std::imag(y)); }
   template <typename T, typename C, typename OP> C
   complex_from(T x, C y, OP op,linalg_imag_part) { return std::complex<T>(std::real(y), op(std::imag(y), x)); }
-  
+
   template<typename T> struct project2nd {
     T operator()(T , T b) const { return b; }
   };
-  
+
   template<typename T, typename R, typename PART> class ref_elt_vector<T, which_part<R, PART> > {
 
     R r;
-    
+
     public :
 
     operator T() const { return real_or_imag_part(std::complex<T>(r), PART()); }
@@ -100,28 +100,28 @@ namespace gmm {
       return gmm::imag(x);
     }
   };
-  
-  template<typename U, typename R, typename PART> 
+
+  template<typename U, typename R, typename PART>
   struct ref_or_value_type<ref_elt_vector<U, which_part<R, PART> > > {
-    template<typename T , typename W> 
+    template<typename T , typename W>
     static const T &r(const T &x, linalg_real_part, W)
     { return x; }
-    template<typename T, typename W> 
+    template<typename T, typename W>
     static const T &r(const T &x, linalg_imag_part, W) {
-      return x; 
+      return x;
     }
-    template<typename T , typename W> 
+    template<typename T , typename W>
     static T &r(T &x, linalg_real_part, W)
     { return x; }
-    template<typename T, typename W> 
+    template<typename T, typename W>
     static T &r(T &x, linalg_imag_part, W) {
-      return x; 
+      return x;
     }
   };
 
-  
+
   /* ********************************************************************* */
-  /*	Reference to the real part of (complex) vectors            	   */
+  /*    Reference to the real part of (complex) vectors                    */
   /* ********************************************************************* */
 
   template <typename IT, typename MIT, typename PART>
@@ -135,7 +135,7 @@ namespace gmm {
     iterator_category;
 
     IT it;
-    
+
     part_vector_iterator(void) {}
     explicit part_vector_iterator(const IT &i) : it(i) {}
     part_vector_iterator(const part_vector_iterator<MIT, MIT, PART> &i)
@@ -146,7 +146,7 @@ namespace gmm {
     size_type index(void) const { return it.index(); }
     part_vector_iterator operator ++(int)
     { part_vector_iterator tmp = *this; ++it; return tmp; }
-    part_vector_iterator operator --(int) 
+    part_vector_iterator operator --(int)
     { part_vector_iterator tmp = *this; --it; return tmp; }
     part_vector_iterator &operator ++() { ++it; return *this; }
     part_vector_iterator &operator --() { --it; return *this; }
@@ -160,16 +160,20 @@ namespace gmm {
       { part_vector_iterator itb = *this; return (itb -= i); }
     difference_type operator -(const part_vector_iterator &i) const
       { return difference_type(it - i.it); }
-    
+
     reference operator  *() const { return reference(*it); }
     reference operator [](size_type ii) const { return reference(it[ii]); }
-    
+
     bool operator ==(const part_vector_iterator &i) const
       { return (i.it == it); }
     bool operator !=(const part_vector_iterator &i) const
       { return (i.it != it); }
     bool operator < (const part_vector_iterator &i) const
       { return (it < i.it); }
+    bool operator > (const part_vector_iterator &i) const
+      { return (it > i.it); }
+    bool operator >=(const part_vector_iterator &i) const
+      { return (it >= i.it); }
   };
 
 
@@ -188,54 +192,54 @@ namespace gmm {
     size_type size_;
 
     size_type size(void) const { return size_; }
-   
-    reference operator[](size_type i) const { 
+
+    reference operator[](size_type i) const {
       return reference(ref_or_value_type<reference>::r(
-	     linalg_traits<V>::access(origin, begin_, end_, i),
-	     PART(), value_type()));
+             linalg_traits<V>::access(origin, begin_, end_, i),
+             PART(), value_type()));
     }
 
     part_vector(V &v)
       : begin_(vect_begin(v)),  end_(vect_end(v)),
-	origin(linalg_origin(v)), size_(gmm::vect_size(v)) {}
-    part_vector(const V &v) 
+        origin(linalg_origin(v)), size_(gmm::vect_size(v)) {}
+    part_vector(const V &v)
       : begin_(vect_begin(const_cast<V &>(v))),
-       end_(vect_end(const_cast<V &>(v))),
-	origin(linalg_origin(const_cast<V &>(v))), size_(gmm::vect_size(v)) {}
+        end_(vect_end(const_cast<V &>(v))),
+        origin(linalg_origin(const_cast<V &>(v))), size_(gmm::vect_size(v)) {}
     part_vector() {}
     part_vector(const part_vector<CPT, PART> &cr)
-      : begin_(cr.begin_),end_(cr.end_),origin(cr.origin), size_(cr.size_) {} 
+      : begin_(cr.begin_),end_(cr.end_),origin(cr.origin), size_(cr.size_) {}
   };
 
   template <typename IT, typename MIT, typename ORG, typename PT,
-	    typename PART> inline
+            typename PART> inline
   void set_to_begin(part_vector_iterator<IT, MIT, PART> &it,
-		    ORG o, part_vector<PT, PART> *, linalg_modifiable) {
+                    ORG o, part_vector<PT, PART> *, linalg_modifiable) {
     typedef part_vector<PT, PART> VECT;
     typedef typename linalg_traits<VECT>::V_reference ref_t;
     set_to_begin(it.it, o, typename linalg_traits<VECT>::pV(), ref_t());
   }
   template <typename IT, typename MIT, typename ORG, typename PT,
-	    typename PART> inline
+            typename PART> inline
   void set_to_begin(part_vector_iterator<IT, MIT, PART> &it,
-		    ORG o, const part_vector<PT, PART> *, linalg_modifiable) {
+                    ORG o, const part_vector<PT, PART> *, linalg_modifiable) {
     typedef part_vector<PT, PART> VECT;
     typedef typename linalg_traits<VECT>::V_reference ref_t;
     set_to_begin(it.it, o, typename linalg_traits<VECT>::pV(), ref_t());
   }
   template <typename IT, typename MIT, typename ORG, typename PT,
-	    typename PART> inline
+            typename PART> inline
   void set_to_end(part_vector_iterator<IT, MIT, PART> &it,
-		    ORG o, part_vector<PT, PART> *, linalg_modifiable) {
+                  ORG o, part_vector<PT, PART> *, linalg_modifiable) {
     typedef part_vector<PT, PART> VECT;
     typedef typename linalg_traits<VECT>::V_reference ref_t;
     set_to_end(it.it, o, typename linalg_traits<VECT>::pV(), ref_t());
   }
   template <typename IT, typename MIT, typename ORG,
-	    typename PT, typename PART> inline
+            typename PT, typename PART> inline
   void set_to_end(part_vector_iterator<IT, MIT, PART> &it,
-		  ORG o, const part_vector<PT, PART> *,
-		  linalg_modifiable) {
+                  ORG o, const part_vector<PT, PART> *,
+                  linalg_modifiable) {
     typedef part_vector<PT, PART> VECT;
     typedef typename linalg_traits<VECT>::V_reference ref_t;
     set_to_end(it.it, o, typename linalg_traits<VECT>::pV(), ref_t());
@@ -247,12 +251,12 @@ namespace gmm {
 
 
   /* ********************************************************************* */
-  /*	Reference to the real or imaginary part of (complex) matrices      */
+  /*    Reference to the real or imaginary part of (complex) matrices      */
   /* ********************************************************************* */
 
 
   template <typename PT, typename PART> struct  part_row_ref {
-    
+
     typedef part_row_ref<PT, PART> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
     typedef M * CPT;
@@ -270,24 +274,24 @@ namespace gmm {
 
     part_row_ref(ref_M m)
       : begin_(mat_row_begin(m)), end_(mat_row_end(m)),
-	origin(linalg_origin(m)), nr(mat_nrows(m)), nc(mat_ncols(m)) {}
+        origin(linalg_origin(m)), nr(mat_nrows(m)), nc(mat_ncols(m)) {}
 
     part_row_ref(const part_row_ref<CPT, PART> &cr) :
       begin_(cr.begin_),end_(cr.end_), origin(cr.origin),nr(cr.nr),nc(cr.nc) {}
 
     reference operator()(size_type i, size_type j) const {
       return reference(ref_or_value_type<reference>::r(
-					 linalg_traits<M>::access(begin_+i, j),
-					 PART(), value_type()));
+                       linalg_traits<M>::access(begin_+i, j),
+                       PART(), value_type()));
     }
   };
-  
+
   template<typename PT, typename PART> std::ostream &operator <<
     (std::ostream &o, const part_row_ref<PT, PART>& m)
   { gmm::write(o,m); return o; }
 
   template <typename PT, typename PART> struct  part_col_ref {
-    
+
     typedef part_col_ref<PT, PART> this_type;
     typedef typename std::iterator_traits<PT>::value_type M;
     typedef M * CPT;
@@ -305,25 +309,25 @@ namespace gmm {
 
     part_col_ref(ref_M m)
       : begin_(mat_col_begin(m)), end_(mat_col_end(m)),
-	origin(linalg_origin(m)), nr(mat_nrows(m)), nc(mat_ncols(m)) {}
+        origin(linalg_origin(m)), nr(mat_nrows(m)), nc(mat_ncols(m)) {}
 
     part_col_ref(const part_col_ref<CPT, PART> &cr) :
       begin_(cr.begin_),end_(cr.end_), origin(cr.origin),nr(cr.nr),nc(cr.nc) {}
 
     reference operator()(size_type i, size_type j) const {
       return reference(ref_or_value_type<reference>::r(
-					 linalg_traits<M>::access(begin_+j, i),
-					 PART(), value_type()));
+                       linalg_traits<M>::access(begin_+j, i),
+                       PART(), value_type()));
     }
   };
-   
 
-  
+
+
   template<typename PT, typename PART> std::ostream &operator <<
     (std::ostream &o, const part_col_ref<PT, PART>& m)
   { gmm::write(o,m); return o; }
 
-  
+
 
 
 
@@ -336,13 +340,13 @@ template <typename TYPE, typename PART, typename PT>
   struct part_return_<row_major, PART, PT> {
     typedef typename std::iterator_traits<PT>::value_type L;
     typedef typename select_return<part_row_ref<const L *, PART>,
-		     part_row_ref< L *, PART>, PT>::return_type return_type;
+                     part_row_ref< L *, PART>, PT>::return_type return_type;
   };
   template <typename PT, typename PART>
   struct part_return_<col_major, PART, PT> {
     typedef typename std::iterator_traits<PT>::value_type L;
     typedef typename select_return<part_col_ref<const L *, PART>,
-		     part_col_ref<L *, PART>, PT>::return_type return_type;
+                     part_col_ref<L *, PART>, PT>::return_type return_type;
   };
 
   template <typename PT, typename PART, typename LT> struct part_return__{
@@ -370,27 +374,27 @@ template <typename TYPE, typename PART, typename PT>
       typename linalg_traits<L>::linalg_type>::return_type return_type;
   };
 
-  template <typename L> inline 
+  template <typename L> inline
   typename part_return<const L *, linalg_real_part>::return_type
   real_part(const L &l) {
     return typename part_return<const L *, linalg_real_part>::return_type
       (linalg_cast(const_cast<L &>(l)));
   }
 
-  template <typename L> inline 
+  template <typename L> inline
   typename part_return<L *, linalg_real_part>::return_type
   real_part(L &l) {
     return typename part_return<L *, linalg_real_part>::return_type(linalg_cast(l));
   }
 
-  template <typename L> inline 
+  template <typename L> inline
   typename part_return<const L *, linalg_imag_part>::return_type
   imag_part(const L &l) {
     return typename part_return<const L *, linalg_imag_part>::return_type
       (linalg_cast(const_cast<L &>(l)));
   }
 
-  template <typename L> inline 
+  template <typename L> inline
   typename part_return<L *, linalg_imag_part>::return_type
   imag_part(L &l) {
     return typename part_return<L *, linalg_imag_part>::return_type(linalg_cast(l));
@@ -407,78 +411,79 @@ template <typename TYPE, typename PART, typename PT>
     typedef typename linalg_traits<V>::is_reference V_reference;
     typedef typename linalg_traits<V>::origin_type origin_type;
     typedef typename select_ref<const origin_type *, origin_type *,
-			        PT>::ref_type porigin_type;
+                                PT>::ref_type porigin_type;
     typedef typename which_reference<PT>::is_reference is_reference;
     typedef abstract_vector linalg_type;
     typedef typename linalg_traits<V>::value_type vtype;
     typedef typename number_traits<vtype>::magnitude_type value_type;
     typedef typename select_ref<value_type, ref_elt_vector<value_type,
-		     which_part<typename linalg_traits<V>::reference,
-				PART> >, PT>::ref_type reference;
+                     which_part<typename linalg_traits<V>::reference,
+                                PART> >, PT>::ref_type reference;
     typedef typename select_ref<typename linalg_traits<V>::const_iterator,
-	    typename linalg_traits<V>::iterator, PT>::ref_type pre_iterator;
-    typedef typename select_ref<abstract_null_type, 
-	    part_vector_iterator<pre_iterator, pre_iterator, PART>,
-	    PT>::ref_type iterator;
+            typename linalg_traits<V>::iterator, PT>::ref_type pre_iterator;
+    typedef typename select_ref<abstract_null_type,
+            part_vector_iterator<pre_iterator, pre_iterator, PART>,
+            PT>::ref_type iterator;
     typedef part_vector_iterator<typename linalg_traits<V>::const_iterator,
-				 pre_iterator, PART> const_iterator;
+                                 pre_iterator, PART> const_iterator;
     typedef typename linalg_traits<V>::storage_type storage_type;
     static size_type size(const this_type &v) { return v.size(); }
     static iterator begin(this_type &v) {
       iterator it; it.it = v.begin_;
       if (!is_const_reference(is_reference()) && is_sparse(storage_type()))
-	set_to_begin(it, v.origin, pthis_type(), is_reference());
+        set_to_begin(it, v.origin, pthis_type(), is_reference());
       return it;
     }
     static const_iterator begin(const this_type &v) {
       const_iterator it(v.begin_);
       if (!is_const_reference(is_reference()) && is_sparse(storage_type()))
-	{ set_to_begin(it, v.origin, pthis_type(), is_reference()); }
+        { set_to_begin(it, v.origin, pthis_type(), is_reference()); }
       return it;
     }
     static iterator end(this_type &v) {
       iterator it(v.end_);
       if (!is_const_reference(is_reference()) && is_sparse(storage_type()))
-	set_to_end(it, v.origin, pthis_type(), is_reference());
+        set_to_end(it, v.origin, pthis_type(), is_reference());
       return it;
     }
     static const_iterator end(const this_type &v) {
       const_iterator it(v.end_);
       if (!is_const_reference(is_reference()) && is_sparse(storage_type()))
-	set_to_end(it, v.origin, pthis_type(), is_reference());
+        set_to_end(it, v.origin, pthis_type(), is_reference());
       return it;
     }
     static origin_type* origin(this_type &v) { return v.origin; }
     static const origin_type* origin(const this_type &v) { return v.origin; }
 
     static void clear(origin_type* o, const iterator &begin_,
-		      const iterator &end_, abstract_sparse) {
+                      const iterator &end_, abstract_sparse) {
       std::deque<size_type> ind;
       iterator it = begin_;
       for (; it != end_; ++it) ind.push_front(it.index());
       for (; !(ind.empty()); ind.pop_back())
-	access(o, begin_, end_, ind.back()) = value_type(0);
+        access(o, begin_, end_, ind.back()) = value_type(0);
     }
     static void clear(origin_type* o, const iterator &begin_,
-		      const iterator &end_, abstract_skyline) {
+                      const iterator &end_, abstract_skyline) {
       clear(o, begin_, end_, abstract_sparse());
     }
     static void clear(origin_type* o, const iterator &begin_,
-		      const iterator &end_, abstract_dense) {
-      for (iterator it = begin_; it != end_; ++it) *it = value_type(0);
+                      const iterator &end_, abstract_dense) {
+      for (iterator it = begin_; it != end_; ++it)
+        *it = value_type(0);
     }
 
    static void clear(origin_type* o, const iterator &begin_,
-		      const iterator &end_) 
+                     const iterator &end_)
     { clear(o, begin_, end_, storage_type()); }
     static void do_clear(this_type &v) { clear(v.origin, begin(v), end(v)); }
     static value_type access(const origin_type *o, const const_iterator &it,
-			     const const_iterator &ite, size_type i) { 
+                             const const_iterator &ite, size_type i) {
       return  real_or_imag_part(linalg_traits<V>::access(o, it.it, ite.it,i),
-				PART());
+                                PART());
     }
     static reference access(origin_type *o, const iterator &it,
-			    const iterator &ite, size_type i)
+                            const iterator &ite, size_type i)
     { return reference(linalg_traits<V>::access(o, it.it, ite.it,i)); }
   };
 
@@ -488,7 +493,7 @@ template <typename TYPE, typename PART, typename PT>
     typedef typename std::iterator_traits<PT>::value_type M;
     typedef typename linalg_traits<M>::origin_type origin_type;
     typedef typename select_ref<const origin_type *, origin_type *,
-			        PT>::ref_type porigin_type;
+                                PT>::ref_type porigin_type;
     typedef typename which_reference<PT>::is_reference is_reference;
     typedef abstract_matrix linalg_type;
     typedef typename linalg_traits<M>::value_type vtype;
@@ -504,14 +509,14 @@ template <typename TYPE, typename PART, typename PT>
     typedef part_vector<const pre_const_sub_row_type *, PART>
             const_sub_row_type;
     typedef typename select_ref<abstract_null_type,
-	    part_vector<pre_sub_row_type *, PART>, PT>::ref_type sub_row_type;
+            part_vector<pre_sub_row_type *, PART>, PT>::ref_type sub_row_type;
     typedef typename linalg_traits<M>::const_row_iterator const_row_iterator;
     typedef typename select_ref<abstract_null_type, typename
             linalg_traits<M>::row_iterator, PT>::ref_type row_iterator;
     typedef typename select_ref<
             typename linalg_traits<const_sub_row_type>::reference,
-	    typename linalg_traits<sub_row_type>::reference,
-				PT>::ref_type reference;
+            typename linalg_traits<sub_row_type>::reference,
+                                PT>::ref_type reference;
     typedef row_major sub_orientation;
     typedef typename linalg_traits<M>::index_sorted index_sorted;
     static size_type ncols(const this_type &v) { return v.nc; }
@@ -532,8 +537,8 @@ template <typename TYPE, typename PART, typename PT>
     { return real_or_imag_part(linalg_traits<M>::access(itrow, i), PART()); }
     static reference access(const row_iterator &itrow, size_type i) {
       return reference(ref_or_value_type<reference>::r(
-					 linalg_traits<M>::access(itrow, i),
-					 PART(), value_type()));
+                       linalg_traits<M>::access(itrow, i),
+                       PART(), value_type()));
     }
   };
 
@@ -543,7 +548,7 @@ template <typename TYPE, typename PART, typename PT>
     typedef typename std::iterator_traits<PT>::value_type M;
     typedef typename linalg_traits<M>::origin_type origin_type;
     typedef typename select_ref<const origin_type *, origin_type *,
-			        PT>::ref_type porigin_type;
+                                PT>::ref_type porigin_type;
     typedef typename which_reference<PT>::is_reference is_reference;
     typedef abstract_matrix linalg_type;
     typedef typename linalg_traits<M>::value_type vtype;
@@ -559,14 +564,14 @@ template <typename TYPE, typename PART, typename PT>
     typedef part_vector<const pre_const_sub_col_type *, PART>
             const_sub_col_type;
     typedef typename select_ref<abstract_null_type,
-	    part_vector<pre_sub_col_type *, PART>, PT>::ref_type sub_col_type;
+            part_vector<pre_sub_col_type *, PART>, PT>::ref_type sub_col_type;
     typedef typename linalg_traits<M>::const_col_iterator const_col_iterator;
     typedef typename select_ref<abstract_null_type, typename
             linalg_traits<M>::col_iterator, PT>::ref_type col_iterator;
     typedef typename select_ref<
             typename linalg_traits<const_sub_col_type>::reference,
-	    typename linalg_traits<sub_col_type>::reference,
-				PT>::ref_type reference;
+            typename linalg_traits<sub_col_type>::reference,
+                                PT>::ref_type reference;
     typedef col_major sub_orientation;
     typedef typename linalg_traits<M>::index_sorted index_sorted;
     static size_type nrows(const this_type &v) { return v.nr; }
@@ -587,19 +592,19 @@ template <typename TYPE, typename PART, typename PT>
     { return real_or_imag_part(linalg_traits<M>::access(itcol, i), PART()); }
     static reference access(const col_iterator &itcol, size_type i) {
       return reference(ref_or_value_type<reference>::r(
-					 linalg_traits<M>::access(itcol, i),
-					 PART(), value_type()));
+                       linalg_traits<M>::access(itcol, i),
+                       PART(), value_type()));
     }
   };
 
-  template <typename PT, typename PART> 
-  void linalg_traits<part_col_ref<PT, PART> >::do_clear(this_type &v) { 
+  template <typename PT, typename PART>
+  void linalg_traits<part_col_ref<PT, PART> >::do_clear(this_type &v) {
     col_iterator it = mat_col_begin(v), ite = mat_col_end(v);
     for (; it != ite; ++it) clear(col(it));
   }
-  
-  template <typename PT, typename PART> 
-  void linalg_traits<part_row_ref<PT, PART> >::do_clear(this_type &v) { 
+
+  template <typename PT, typename PART>
+  void linalg_traits<part_row_ref<PT, PART> >::do_clear(this_type &v) {
     row_iterator it = mat_row_begin(v), ite = mat_row_end(v);
     for (; it != ite; ++it) clear(row(it));
   }

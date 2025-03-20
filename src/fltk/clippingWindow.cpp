@@ -291,7 +291,7 @@ void clippingWindow::resetBrowser()
   browser->add("Geometry");
   browser->add("Mesh");
   for(std::size_t i = 0; i < PView::list.size(); i++) {
-    sprintf(str, "View [%lu]", i);
+    sprintf(str, "View [%zu]", i);
     browser->add(str);
   }
 

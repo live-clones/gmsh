@@ -1100,8 +1100,8 @@ if(HAVE_SOLVER)
       message(STATUS "Using system version of GMM")
       list(APPEND EXTERNAL_INCLUDES ${GMM_INC})
       set_config_option(HAVE_GMM "Gmm")
-    elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/gmm)
-      include_directories(contrib/gmm)
+    elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/gmm/include/gmm)
+      include_directories(contrib/gmm/include)
       set_config_option(HAVE_GMM "Gmm[contrib]")
     endif()
   endif()
@@ -1888,7 +1888,8 @@ if(UNIX)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR
-   CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+   ((CMAKE_CXX_COMPILER_ID MATCHES "Clang") AND NOT
+   (CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")))
   execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion
                   OUTPUT_VARIABLE CXX_COMPILER_VERSION
                   OUTPUT_STRIP_TRAILING_WHITESPACE)

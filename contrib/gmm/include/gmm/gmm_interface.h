@@ -475,6 +475,10 @@ namespace gmm {
     bool operator !=(const iterator &ii) const { return !(ii == *this); }
     bool operator < (const iterator &ii) const
     { return (*this - ii) < difference_type(0); }
+    bool operator > (const iterator &ii) const
+    { return (*this - ii) > difference_type(0); }
+    bool operator >=(const iterator &ii) const
+    { return (*this - ii) >= difference_type(0); }
 
     dense_compressed_iterator(void) {}
     dense_compressed_iterator(const dense_compressed_iterator<MIT,MIT,MPT> &ii)
@@ -613,7 +617,9 @@ namespace gmm {
 
     bool operator ==(const iterator &i) const { return (jc == i.jc); }
     bool operator !=(const iterator &i) const { return !(i == *this); }
-    bool operator < (const iterator &i) const { return (jc < i.jc); }
+    bool operator < (const iterator &i) const { return (jc <  i.jc); }
+    bool operator > (const iterator &i) const { return (jc >  i.jc); }
+    bool operator >=(const iterator &i) const { return (jc >= i.jc); }
 
     sparse_compressed_iterator(void) {}
     sparse_compressed_iterator(PT1 p1, PT2 p2, PT3 p3, size_type nn,

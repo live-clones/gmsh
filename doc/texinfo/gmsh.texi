@@ -2518,6 +2518,9 @@ Sine of @var{expression}.
 @item Sinh ( @var{expression} )
 Hyperbolic sine of @var{expression}.
 
+@item Step ( @var{expression} )
+Returns 0 if @var{expression} is negative, 1 if not.
+
 @item Tan ( @var{expression} )
 Tangent of @var{expression}.
 

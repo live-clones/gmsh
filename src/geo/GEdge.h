@@ -119,7 +119,7 @@ public:
   virtual bool isOrphan();
 
   // get the point for the given parameter location
-  virtual GPoint point(double p) const = 0;
+  virtual GPoint point(double p) const { return GPoint(); }
 
   // true if the edge contains the given parameter
   virtual bool containsParam(double pt) const;
@@ -132,7 +132,7 @@ public:
   }
 
   // get first derivative of edge at the given parameter
-  virtual SVector3 firstDer(double par) const = 0;
+  virtual SVector3 firstDer(double par) const { return SVector3(); }
 
   // get second derivative of edge at the given parameter (default
   // implentation using central differences)
@@ -219,7 +219,7 @@ public:
   virtual bool periodic(int dim) const { return _v0 == _v1; }
 
   // get bounds of parametric coordinate
-  virtual Range<double> parBounds(int i) const = 0;
+  virtual Range<double> parBounds(int i) const { return Range<double>(); }
   virtual Range<double> parBoundsOnFace(GFace *face = nullptr) const
   {
     return parBounds(0);

@@ -129,7 +129,7 @@ int GModel::writeINP(const std::string &name, bool saveAll,
             for(std::size_t j = 0; j < ent[i]->getNumMeshElements(); j++) {
               MElement *e = ent[i]->getMeshElement(j);
               if(n && !(n % 10)) fprintf(fp, "\n");
-              fprintf(fp, "%lu, ", e->getNum());
+              fprintf(fp, "%zu, ", e->getNum());
               n++;
             }
           }

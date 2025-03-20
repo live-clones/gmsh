@@ -166,8 +166,9 @@ namespace gmm {
     R mu = vect_norm2(V), abs_v0 = gmm::abs(V[0]);
     if (mu != R(0))
       gmm::scale(V, (abs_v0 == R(0)) ? T(R(1) / mu)
-                 : (safe_divide(T(abs_v0), V[0]) / (abs_v0 + mu)));
-    if (gmm::real(V[vect_size(V)-1]) * R(0) != R(0)) gmm::clear(V);
+                                     : (safe_divide(T(abs_v0), V[0]) / (abs_v0 + mu)));
+    if (gmm::real(V[vect_size(V)-1]) * R(0) != R(0))
+      gmm::clear(V);
     V[0] = T(1);
   }
 
@@ -180,8 +181,9 @@ namespace gmm {
     R mu = vect_norm2(V), abs_v0 = gmm::abs(V[m-1]);
     if (mu != R(0))
       gmm::scale(V, (abs_v0 == R(0)) ? T(R(1) / mu)
-                 : ((abs_v0 / V[m-1]) / (abs_v0 + mu)));
-    if (gmm::real(V[0]) * R(0) != R(0)) gmm::clear(V);
+                                     : ((abs_v0 / V[m-1]) / (abs_v0 + mu)));
+    if (gmm::real(V[0]) * R(0) != R(0))
+      gmm::clear(V);
     V[m-1] = T(1);
   }
 
@@ -245,7 +247,7 @@ namespace gmm {
 
   template <typename MAT1, typename MAT2>
   void Householder_tridiagonalization(const MAT1 &AA, const MAT2 &QQ,
-                                      bool compute_q) {
+                                      bool compute_Q) {
     MAT1 &A = const_cast<MAT1 &>(AA); MAT2 &Q = const_cast<MAT2 &>(QQ);
     typedef typename linalg_traits<MAT1>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
@@ -267,8 +269,8 @@ namespace gmm {
       gmm::add(p, gmm::scaled(v, -vect_hp(v, p) / norm), w);
       rank_two_update(sub_matrix(A, SUBI), v, w);
       // it should be possible to compute only the upper or lower part
-
-      if (compute_q) col_house_update(sub_matrix(Q, SUBK, SUBI), v, ww);
+      if (compute_Q)
+        col_house_update(sub_matrix(Q, SUBK, SUBI), v, ww);
     }
   }
 

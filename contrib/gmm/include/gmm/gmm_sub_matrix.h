@@ -115,7 +115,9 @@ namespace gmm {
 
     bool operator ==(const iterator &i) const { return (ii == i.ii); }
     bool operator !=(const iterator &i) const { return !(i == *this); }
-    bool operator < (const iterator &i) const { return (ii < i.ii); }
+    bool operator < (const iterator &i) const { return (ii <  i.ii); }
+    bool operator > (const iterator &i) const { return (ii >  i.ii); }
+    bool operator >=(const iterator &i) const { return (ii >= i.ii); }
 
     gen_sub_row_matrix_iterator(void) {}
     gen_sub_row_matrix_iterator(const 
@@ -263,7 +265,9 @@ namespace gmm {
 
     bool operator ==(const iterator &i) const { return (ii == i.ii); }
     bool operator !=(const iterator &i) const { return !(i == *this); }
-    bool operator < (const iterator &i) const { return (ii < i.ii); }
+    bool operator < (const iterator &i) const { return (ii <  i.ii); }
+    bool operator > (const iterator &i) const { return (ii >  i.ii); }
+    bool operator >=(const iterator &i) const { return (ii >= i.ii); }
 
     gen_sub_col_matrix_iterator(void) {}
     gen_sub_col_matrix_iterator(const 

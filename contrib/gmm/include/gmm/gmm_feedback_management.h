@@ -29,9 +29,9 @@
 
 ===========================================================================*/
 
-/** @file gmm_feedback_management.h
+/** @file gmm_feedback_management.h 
     @date July 03, 2017.
-    @brief Support for run time management of trace, warning and assert
+    @brief Support for run time management of trace, warning and assert 
            feedback.
 */
 
@@ -135,8 +135,8 @@ public:
 // Depending on action either gets, sets or replaces feedback handler. Setting handler to null resets
 // it to gmm::default_feedback_handler.
 inline base_feedback_handler* feedback_manager::manage(enum Action action, base_feedback_handler *pHandler) {
-  static std::unique_ptr<base_feedback_handler> pHandler_ =
-    std::unique_ptr<base_feedback_handler>(new default_feedback_handler);
+  static std::unique_ptr<base_feedback_handler>
+    pHandler_ = std::make_unique<default_feedback_handler>();
   base_feedback_handler *rethandler = nullptr;
   switch(action) {
     case SET:

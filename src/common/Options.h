@@ -46,6 +46,7 @@ std::string opt_general_tmp_filename(OPT_ARGS_STR);
 std::string opt_general_error_filename(OPT_ARGS_STR);
 std::string opt_general_session_filename(OPT_ARGS_STR);
 std::string opt_general_options_filename(OPT_ARGS_STR);
+std::string opt_general_log_filename(OPT_ARGS_STR);
 std::string opt_general_number_format(OPT_ARGS_STR);
 std::string opt_general_recent_file0(OPT_ARGS_STR);
 std::string opt_general_recent_file1(OPT_ARGS_STR);
