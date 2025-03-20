@@ -52,6 +52,8 @@ extern "C" {
 GMSH_Plugin *GMSH_RegisterAnalyseMeshQuality2Plugin();
 }
 
+// FIXME Change int into std::size_t for number of elements
+
 class GMSH_AnalyseMeshQuality2Plugin : public GMSH_PostPlugin {
 private:
   class DataSingleDimension;
@@ -149,7 +151,16 @@ private:
     {
       for(int i = 0; i < 3; ++i) num[i] = _numToDraw[i];
     }
-    void countNewElement(ComputeParameters param, int cnt[3]);
+    void countNewElement(ComputeParameters, int cnt[3]) const;
+    void initialize(ComputeParameters);
+    void count(ComputeParameters, int cntElToCompute[3],
+                    int cntElToShow[3]);
+    void reset(std::size_t);
+    void add(MElement *);
+    void add(std::vector<MElement *> &elements)
+    {
+      for(auto &e : elements) add(e);
+    }
 
     // I separate the computation of each measure because computation can be
     // really heavy and take a a lot of time. Computing the validity is much
@@ -219,6 +230,7 @@ public:
     using EntIter = std::set<GEntity *, GEntityPtrLessThan>::iterator;
     void _initialize(EntIter first, EntIter last, ComputeParameters param,
                      int cntElToCompute[3], int cntElToShow[3]);
+    void _updateGEntities(EntIter first, EntIter last, int recomputePolicy);
   };
 };
 

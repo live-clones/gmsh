@@ -259,6 +259,20 @@ void Plug::DataSingleDimension::_initialize(EntIter first, EntIter last,
                                             int cntElToCompute[3],
                                             int cntElToShow[3])
 {
+  if(param.recomputePolicy >= -1) {
+    _updateGEntities(first, last, param.recomputePolicy);
+    for(auto &it : _data) {
+      it.second.initialize(param);
+    }
+  }
+  
+  for(auto & it : _data) {
+    it.second.initialize(param, cntElToCompute, cntElToShow);
+  }
+
+
+  // if(param.recomputePolicy == -2) return;
+
   // Add new GEntities to _data and update countElementToCompute
   std::set<GEntity *> existingInModel;
   for(auto it = first; it != last; ++it) {
@@ -271,7 +285,8 @@ void Plug::DataSingleDimension::_initialize(EntIter first, EntIter last,
     _data[ge].countNewElement(param, cntElToCompute);
   }
 
-  // Remove GEntities from _data that are no more existent in the model
+  // Remove GEntities from _data that are not existent in the current model
+  if(param.recomputePolicy == -2) return; // FIXME check that i don't need this
   for(auto it = _data.begin(); it != _data.end();) {
     if(existingInModel.find(it->first) == existingInModel.end()) {
       // it->second.clear(); // FIXME check that i don't need this
@@ -284,14 +299,164 @@ void Plug::DataSingleDimension::_initialize(EntIter first, EntIter last,
       ++it;
     }
   }
+
+  // Update count
   for(int i = 0; i < 3; ++i) {
     if(countElementToCompute[i]) _changedSincePViewCreation[i] = true;
   }
 }
 
-void Plug::DataEntities::countNewElement(ComputeParameters param, int cnt[3])
+void Plug::DataSingleDimension::_updateGEntities(EntIter first, EntIter last,
+                                                 int recomputePolicy)
 {
-  // TODO
+  // Get GEntities present in the current model, add new ones in _data
+  std::set<GEntity *, GEntityPtrLessThan> existingInModel;
+  for(auto it = first; it != last; ++it) {
+    GEntity *ge = *it;
+    existingInModel.insert(ge);
+    if(_data.find(ge) == _data.end()) _data[ge] = DataEntities(ge);
+  }
+
+  if(recomputePolicy >= 0) {
+    // Remove GEntities from _data that are not existent in the current model
+    for(auto it = _data.begin(); it != _data.end(); ++it) {
+      if(existingInModel.find(it->first) == existingInModel.end()) {
+        // it->second.clear(); // FIXME check that i don't need this
+        int numShownElement[3];
+        it->second.getNumShownElement(numShownElement);
+        for(int i = 0; i < 3; ++i) {
+          if(numShownElement[i] > 0) _changedSincePViewCreation[i] = true;
+        }
+        it = _data.erase(it);
+      }
+      else {
+        ++it;
+      }
+    }
+  }
+}
+
+
+inline bool isBitSet(unsigned char value, int mask) {
+  return value & mask;
+}
+inline bool isBitUnset(unsigned char value, int mask) {
+  return !(value & mask);
+}
+inline void setBit(unsigned char &value, int mask) {
+  value |= mask;
+}
+inline void unsetBit(unsigned char &value, int mask) {
+  value &= ~mask;
+}
+constexpr int F_JAC = 1 << 0;
+constexpr int F_DISTO = 1 << 1;
+constexpr int F_ASPECT = 1 << 2;
+constexpr int F_EXIST = 1 << 3;
+constexpr int F_VISBL = 1 << 4;
+constexpr int F_P1COMP = 1 << 5;
+constexpr int F_NOTP1 = 1 << 6;
+constexpr int F_REQU = 1 << 7;
+
+
+void Plug::DataEntities::initialize(ComputeParameters param)
+{
+  // Step 0: Get all elements present in GEntity
+  std::size_t num = _ge->getNumMeshElements();
+  std::vector<MElement *> elements;
+  elements.reserve(num);
+  for(auto i = 0; i < num; ++i) {
+    elements.push_back(_ge->getMeshElement(i));
+  }
+
+  // Step 1: Check if must reset and update flag exist in GEntity
+  int policy = param.recomputePolicy;
+  if(policy == 0 && num != _mapElemToIndex.size() || policy == 1) {
+    reset(num);
+    add(elements);
+  }
+  else if(policy == 0) {
+    for(auto i = 0; i < num; ++i) {
+      MElement *el = elements[i];
+      if(_mapElemToIndex.find(el) == _mapElemToIndex.end()) {
+        reset(num);
+        add(elements);
+        break;
+      }
+    }
+  }
+  else {
+    for(unsigned char &_flag : _flags) {
+      unsetBit(_flag, F_EXIST);
+    }
+    for(auto el : elements) {
+      auto it = _mapElemToIndex.find(el);
+      if(it != _mapElemToIndex.end()) {
+        setBit(_flags[it->second], F_EXIST);
+      }
+      else {
+        add(el);
+      }
+    }
+  }
+
+  // Step 3: Update flag isCurved if necessary
+  if(param.onlyCurved) {
+    for(auto it = _mapElemToIndex.begin(); it != _mapElemToIndex.end(); ++it) {
+      MElement *el = it->first;
+      std::size_t index = it->second;
+
+      if((_flags[index] & 1 << 4) && !(_flags[index] & 1 << 6)) {
+        bool isCurved = true; // TODO el->isCurved();
+        // Assuming MElement has a method isCurved() to check if element is curved
+        setBit(_flags[index], F_P1COMP);
+        if(isCurved)
+          setBit(_flags[index], F_NOTP1);
+      }
+    }
+  }
+
+  // Step 4: Update flag isRequested
+  for(unsigned char &_flag : _flags) {
+    unsetBit(_flag, F_REQU);
+  }
+  int requested = 0;
+  if(param.onlyVisible)
+    requested |= F_VISBL;
+  if(param.onlyCurved)
+    requested |= F_NOTP1;
+  for(auto flag : _flags) {
+    if((flag & requested) == requested)
+      setBit(flag, F_REQU);
+  }
+}
+
+void Plug::DataEntities::reset(std::size_t num)
+{
+  _mapElemToIndex.clear();
+  _minJ.clear();
+  _maxJ.clear();
+  _minDisto.clear();
+  _minAspect.clear();
+  _flags.clear();
+  _minJ.reserve(num);
+  _maxJ.reserve(num);
+  _minDisto.reserve(num);
+  _minAspect.reserve(num);
+  _flags.reserve(num);
+}
+
+void Plug::DataEntities::add(MElement *el)
+{
+  std::size_t index = _minJ.size();
+  _mapElemToIndex[el] = index;
+  _minJ.push_back(std::numeric_limits<double>::max());
+  _maxJ.push_back(std::numeric_limits<double>::min());
+  _minDisto.push_back(std::numeric_limits<double>::max());
+  _minAspect.push_back(std::numeric_limits<double>::max());
+  unsigned char flag = F_EXIST;
+  if (el->getVisibility()) setBit(flag, F_VISBL);
+  _flags.push_back(flag);
 }
 
 void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
