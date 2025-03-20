@@ -1,6 +1,7 @@
 4.14.0 (Work-in-progress): improve return value of boolean operations; improved
-hybrid meshes with pyramids; improved ONELAB parameter GUI; upgraded official
-binary builds with OCC 7.8.
+hybrid meshes with pyramids; improved ONELAB parameter GUI; improved XAO export
+with mesh sizes; improved unrolled GEO export to handle OCC geometries; new
+Step() built-in parser function; upgraded official binary builds with OCC 7.8.
 
 * Incompatible API changes: new optional arguments to occ/fillet2D
 
