@@ -2904,9 +2904,9 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
     tri2Tet.resize(2*alphaFaces.size());
   }
   for (auto _df : gm->getFaces()){
-    // for (auto tri : _df->triangles){
-    //   delete tri;
-    // }
+    for (auto tri : _df->triangles){
+      delete tri;
+    }
     _df->removeElements(TYPE_TRI);
   }
 
