@@ -696,30 +696,70 @@ public:
     }
     if(!_octree) return MAX_LC;
     SVector3 pt(X, Y, Z);
-    SVector3 pt_inf(_octree->bbox_.max[0], Y, Z);
+    SVector3 pt_inf_Z(X, Y, _octree->bbox_.min[2]);
+    SVector3 pt_inf_X(_octree->bbox_.max[0], Y, Z);
+    
     bool in = false;
-    int counter = 0; 
-    BBox<3> bbox_search; 
-    bbox_search.extends({pt[0], pt[1], pt[2]});
-    bbox_search.extends({pt_inf[0], pt_inf[1], pt_inf[2]});
-    std::vector<MTriangle*> res;
-    _octree->search(bbox_search, res);
-    std::sort(res.begin(), res.end());
-    res.erase(std::unique(res.begin(), res.end()), res.end());
-    #pragma omp parallel for
-    for (auto tri : res){
+    int counter_Z = 0; 
+    BBox<3> bbox_search_Z;
+    bbox_search_Z.extends({pt[0], pt[1], pt[2]});
+    bbox_search_Z.extends({pt_inf_Z[0], pt_inf_Z[1], pt_inf_Z[2]});
+
+    int counter_X = 0; 
+    BBox<3> bbox_search_X;
+    bbox_search_X.extends({pt[0], pt[1], pt[2]});
+    bbox_search_X.extends({pt_inf_X[0], pt_inf_X[1], pt_inf_X[2]});
+
+    std::vector<MTriangle*> res_Z;
+    _octree->search(bbox_search_Z, res_Z);
+    std::sort(res_Z.begin(), res_Z.end());
+    res_Z.erase(std::unique(res_Z.begin(), res_Z.end()), res_Z.end());
+    std::vector<MTriangle*> res_X;
+    _octree->search(bbox_search_X, res_X);
+    std::sort(res_X.begin(), res_X.end());
+    res_X.erase(std::unique(res_X.begin(), res_X.end()), res_X.end());
+    // #pragma omp parallel for
+    // for (auto tri : res_X){
+    //   SVector3 pa(tri->getVertex(0)->x(), tri->getVertex(0)->y(),tri->getVertex(0)->z());
+    //   SVector3 pb(tri->getVertex(1)->x(), tri->getVertex(1)->y(),tri->getVertex(1)->z());
+    //   SVector3 pc(tri->getVertex(2)->x(), tri->getVertex(2)->y(),tri->getVertex(2)->z());
+    //   auto orient1 = robustPredicates::orient3d(pa.data(), pb.data(), pc.data(), pt.data());
+    //   auto orient2 = robustPredicates::orient3d(pa.data(), pb.data(), pc.data(), pt_inf_X.data());
+    //   if (orient1*orient2 >= 0)
+    //     continue;
+    //   double t = orient1/(orient1-orient2);
+    //   SVector3 p_intersect = pt + t*(pt_inf_X-pt);
+    //   auto v0 = pc-pa;
+    //   auto v1 = pb-pa;
+    //   auto normal = crossprod(v0, v1).unit();
+    //   auto v2 = p_intersect-pa;
+    //   double dot00 = dot(v0, v0);
+    //   double dot01 = dot(v0, v1);
+    //   double dot02 = dot(v0, v2);
+    //   double dot11 = dot(v1, v1);
+    //   double dot12 = dot(v1, v2);
+    //   double invDenom = 1. / (dot00 * dot11 - dot01 * dot01);
+    //   double u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+    //   double v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+    //   // printf("u %f, v %f \n", u, v);
+    //   if (u >= 0 && v >= 0 && u + v <= 1){
+    //     counter_X++;
+    //   }
+    // }
+    // #pragma omp parallel for
+    for (auto tri : res_Z){
       SVector3 pa(tri->getVertex(0)->x(), tri->getVertex(0)->y(),tri->getVertex(0)->z());
       SVector3 pb(tri->getVertex(1)->x(), tri->getVertex(1)->y(),tri->getVertex(1)->z());
       SVector3 pc(tri->getVertex(2)->x(), tri->getVertex(2)->y(),tri->getVertex(2)->z());
       auto orient1 = robustPredicates::orient3d(pa.data(), pb.data(), pc.data(), pt.data());
-      auto orient2 = robustPredicates::orient3d(pa.data(), pb.data(), pc.data(), pt_inf.data());
+      auto orient2 = robustPredicates::orient3d(pa.data(), pb.data(), pc.data(), pt_inf_Z.data());
       if (orient1*orient2 >= 0)
         continue;
       double t = orient1/(orient1-orient2);
-      SVector3 p_intersect = pt + t*(pt_inf-pt);
+      SVector3 p_intersect = pt + t*(pt_inf_Z-pt);
       auto v0 = pc-pa;
       auto v1 = pb-pa;
-      auto normal = crossprod(v0, v1).unit();
+      // auto normal = crossprod(v0, v1).unit();
       auto v2 = p_intersect-pa;
       double dot00 = dot(v0, v0);
       double dot01 = dot(v0, v1);
@@ -731,10 +771,10 @@ public:
       double v = (dot00 * dot12 - dot01 * dot02) * invDenom;
       // printf("u %f, v %f \n", u, v);
       if (u >= 0 && v >= 0 && u + v <= 1){
-        counter++;
+        counter_Z++;
       }
     }
-    in = (counter % 2 == 1);
+    in = (counter_X % 2 == 1 || counter_Z % 2 == 1);
     return in ? size_in : size_out;
   }
 };
@@ -1163,6 +1203,7 @@ double distPointSegment(SVector3 p, SVector3 a, SVector3 b) {
 
 bool bndIsStraight(GEntity* e){
   size_t n_elem = e->getNumMeshElements();
+  if (n_elem == 0) return false;
   for (size_t i_el = 0; i_el<n_elem-1; i_el++){
     MElement *elem0 = e->getMeshElement(i_el);
     MElement *elem1 = e->getMeshElement(i_el+1);
@@ -2188,12 +2229,12 @@ void AlphaShape::alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int 
         he->data = *intersection.begin();
       }
       else {
-        bndMap[*intersection.begin()].push_back(he->v->data);
-        bndMap[*intersection.begin()].push_back(he->next->v->data); 
-        he->data = *intersection.begin(); 
-        // bndMap[bndTag].push_back(he->v->data);
-        // bndMap[bndTag].push_back(he->next->v->data); 
-        // he->data = bndTag; 
+        // bndMap[*intersection.begin()].push_back(he->v->data);
+        // bndMap[*intersection.begin()].push_back(he->next->v->data); 
+        // he->data = *intersection.begin(); 
+        bndMap[bndTag].push_back(he->v->data);
+        bndMap[bndTag].push_back(he->next->v->data); 
+        he->data = bndTag; 
       }
     }
   }
@@ -2209,12 +2250,10 @@ void AlphaShape::alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int 
     nodeTags.push_back(size_t(v->data));
   }
   gmsh::model::mesh::addNodes(2, tag, nodeTags, coords);
-  // printf("nodes added to gsmh \n");
   std::vector<size_t> edTags;
   for (auto bnd : bndMap){
     gmsh::model::mesh::addElementsByType(bnd.first, 1, edTags, bnd.second);
   }
-  // printf("boundary edges added to gsmh \n");
 
   std::vector<size_t> triangles, triangleTag;
   for (auto f : pm->faces){
@@ -3945,7 +3984,7 @@ void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std
         }
         else if (tri->getType() == TYPE_LIN){
           // printf("teesting line \n");
-          if (!onLine) minDist = 1e10; 
+          // if (!onLine) minDist = 1e10; 
           // if (onPoint) continue;
           // project on a line
           SVector3 pa(tri->getVertex(0)->point());
