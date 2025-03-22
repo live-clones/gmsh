@@ -299,6 +299,10 @@ public:
                std::vector<std::pair<int, int> > &outDimTags,
                const std::string &trihedron = "");
 
+  bool addLoft(const int wireTag, const int inwire1, 
+        const int inwire2, int &tag
+    );
+
   // fillet
   bool fillet(const std::vector<int> &volumeTags,
               const std::vector<int> &curveTags,
@@ -702,6 +706,12 @@ public:
                const std::string &trihedron = "")
   {
     return _error("add pipe");
+  }
+  bool addLoft(const int wireTag, const std::pair<int,int> inDimTag1,
+            const std::pair<int,int> inDimTag2, 
+            std::pair<int,int> outDimTag)
+  {
+    return _error("add loft");
   }
   bool fillet(const std::vector<int> &volumeTags,
               const std::vector<int> &curveTags,
