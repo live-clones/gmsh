@@ -185,6 +185,10 @@ private:
 
     // FIXME should i create only one method? bool computeDisto, std::vector<.>
     //       *vecDisto) or just std::vector<.> *vecDisto = nullptr)
+
+  private:
+    void _count(unsigned char mask, std::size_t &cntElToCompute,
+                std::size_t &cntElToShow);
   };
 
   struct ComputeParameters {

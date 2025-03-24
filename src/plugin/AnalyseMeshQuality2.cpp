@@ -428,7 +428,26 @@ void Plug::DataEntities::count(
   ComputeParameters param, std::size_t cntElToCompute[3],
   std::size_t cntElToShow[3])
 {
-  return;//TODO implement
+  if (param.computeValidity)
+    _count(F_REQU | F_NOTJAC, cntElToCompute[0], cntElToShow[0]);
+  if (param.computeDisto)
+    _count(F_REQU | F_NOTDISTO, cntElToCompute[1], cntElToShow[1]);
+  if (param.computeAspect)
+    _count(F_REQU | F_NOTASPECT, cntElToCompute[2], cntElToShow[2]);
+}
+
+void Plug::DataEntities::_count(unsigned char mask, std::size_t &cntElToCompute,
+                               std::size_t &cntElToShow)
+{
+  for(const auto &flag : _flags) {
+    if(areBitsSet(flag, mask)) {
+      ++cntElToCompute;
+      ++cntElToShow;
+    }
+    else if(isBitSet(flag, F_REQU)) {
+      ++cntElToShow;
+    }
+  }
 }
 
 void Plug::DataEntities::reset(std::size_t num)
