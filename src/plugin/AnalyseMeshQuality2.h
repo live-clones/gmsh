@@ -100,9 +100,12 @@ public:
 private:
   void _decideDimensionToCheck(bool &check2D, bool &check3D) const;
 
-  void _printMessage(int verbosityPolicy,
-                     void (*func)(const char *, ...), const char *format, va_list)
-                     const;
+  bool _printOK(int verb) const
+  {
+    return (_verbose && verb >= 0) || (!_verbose && verb <= 0);
+  }
+  void _printMessage(void (*func)(const char *, ...), const char *format,
+                     va_list) const;
   void _info(int verbosityPolicy, const char *format, ...) const;
   void _warn(int verbosityPolicy, const char *format, ...) const;
   void _error(int verbosityPolicy, const char *format, ...) const;

@@ -477,45 +477,38 @@ void Plug::DataEntities::add(MElement *el)
   _flags.push_back(flag);
 }
 
-
-
-void Plug::_printMessage(int verbosityPolicy,
-                   void (*func)(const char *, ...), const char *format, va_list args)
-                   const
+void Plug::_printMessage(void (*func)(const char *, ...), const char *format,
+                         va_list args) const
 {
-  if ((_verbose && verbosityPolicy >= 0) ||
-       (!_verbose && verbosityPolicy <= 0)) {
-    //va_list args;
-    //va_start(args, format);
-
-    char str[5000];
-    vsnprintf(str, sizeof(str), format, args);
-    func("%s", str);
-    //va_end(args);
-  }
+  char str[5000];
+  vsnprintf(str, sizeof(str), format, args);
+  func("%s", str);
 }
 
-void Plug::_info(int verbosityPolicy, const char *format, ...) const
+void Plug::_info(int verb, const char *format, ...) const
 {
+  if(!_printOK(verb)) return;
   va_list args;
   va_start(args, format);
-  _printMessage(verbosityPolicy, Msg::Info, format, args);
+  _printMessage(Msg::Info, format, args);
   va_end(args);
 }
 
-void Plug::_warn(int verbosityPolicy, const char *format, ...) const
+void Plug::_warn(int verb, const char *format, ...) const
 {
+  if(!_printOK(verb)) return;
   va_list args;
   va_start(args, format);
-  _printMessage(verbosityPolicy, Msg::Warning, format, args);
+  _printMessage(Msg::Warning, format, args);
   va_end(args);
 }
 
-void Plug::_error(int verbosityPolicy, const char *format, ...) const
+void Plug::_error(int verb, const char *format, ...) const
 {
+  if(!_printOK(verb)) return;
   va_list args;
   va_start(args, format);
-  _printMessage(verbosityPolicy, Msg::Error, format, args);
+  _printMessage(Msg::Error, format, args);
   va_end(args);
 }
 
