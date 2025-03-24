@@ -132,8 +132,10 @@ PView *Plug::execute(PView *v)
   // NOTE recomputePolicy:
   //      - delete nothing, compute nothing, output prevsly computed data -> -2
   //      The other options provide an identical output, but differ how
-  //      existent data are treated. What asked element means depends on the
-  //      two parameters restrict[...]
+  //      existent data are treated.
+  //      NB: In what follows, the "asked elements" are the elements for which
+  //      visibility is compatible with 'restrictToVisibleElements' parameter
+  //      and similarly for 'restrictToCurvedElements'.
   //      - delete nothing, compute newly asked elements -> -1
   //      - delete GEntities that are not existent in current GModel,
   //        delete data in GEntities that have detected mesh modifications,
@@ -313,30 +315,41 @@ inline bool areBitsSet(unsigned char value, int mask)
 {
   return (value & mask) == mask;
 }
-inline bool isBitSet(unsigned char value, int mask) {
-  return value & mask;
+
+inline bool isBitSet(unsigned char value, int maskOneBit)
+{
+  return value & maskOneBit;
 }
-inline bool isBitUnset(unsigned char value, int mask) {
-  return !(value & mask);
+
+inline bool isBitUnset(unsigned char value, int maskOneBit)
+{
+  return !(value & maskOneBit);
 }
-inline void setBit(unsigned char &value, int mask) {
-  value |= mask;
+
+inline void setBit(unsigned char &value, int maskOneBit)
+{
+  value |= maskOneBit;
 }
-inline void unsetBit(unsigned char &value, int mask) {
-  value &= ~mask;
+
+inline void unsetBit(unsigned char &value, int maskOneBit)
+{
+  value &= ~maskOneBit;
 }
-constexpr int F_JAC = 1 << 0;
-constexpr int F_DISTO = 1 << 1;
-constexpr int F_ASPECT = 1 << 2;
+
+constexpr int F_NOTJAC = 1 << 0;
+constexpr int F_NOTDISTO = 1 << 1;
+constexpr int F_NOTASPECT = 1 << 2;
 constexpr int F_EXIST = 1 << 3;
 constexpr int F_VISBL = 1 << 4;
-constexpr int F_P1COMP = 1 << 5;
-constexpr int F_NOTP1 = 1 << 6;
+constexpr int F_CURVNOTCOMP = 1 << 5;
+constexpr int F_CURVED = 1 << 6;
 constexpr int F_REQU = 1 << 7;
 
 
 void Plug::DataEntities::initialize(ComputeParameters param)
 {
+  if(param.recomputePolicy == -2) return;
+
   // Step 0: Get all elements present in GEntity
   std::size_t num = _ge->getNumMeshElements();
   std::vector<MElement *> elements;
@@ -380,15 +393,18 @@ void Plug::DataEntities::initialize(ComputeParameters param)
 
   // Step 3: Update flag isCurved if necessary
   if(param.onlyCurved) {
-    for(auto it = _mapElemToIndex.begin(); it != _mapElemToIndex.end(); ++it) {
-      std::size_t index = it->second;
+    const int mask = F_EXIST | F_CURVNOTCOMP;
+    for(const auto &it : _mapElemToIndex) {
+      const std::size_t index = it.second;
 
-      if((_flags[index] & 1 << 4) && !(_flags[index] & 1 << 6)) {
+      if(areBitsSet(_flags[index], mask)) {
         bool isCurved = true;
         // TODO implement: bool isCurved = el->isCurved();
-        setBit(_flags[index], F_P1COMP);
+        unsetBit(_flags[index], F_CURVNOTCOMP);
         if(isCurved)
-          setBit(_flags[index], F_NOTP1);
+          setBit(_flags[index], F_CURVED);
+        else
+          unsetBit(_flags[index], F_CURVED);
       }
     }
   }
@@ -400,7 +416,7 @@ void Plug::DataEntities::initialize(ComputeParameters param)
 
   int maskRequested = F_EXIST;
   if(param.onlyVisible) maskRequested |= F_VISBL;
-  if(param.onlyCurved) maskRequested |= F_NOTP1;
+  if(param.onlyCurved) maskRequested |= F_CURVED;
 
   for(auto &flag : _flags) {
     if(areBitsSet(flag, maskRequested))
@@ -438,7 +454,8 @@ void Plug::DataEntities::add(MElement *el)
   _maxJ.push_back(std::numeric_limits<double>::min());
   _minDisto.push_back(std::numeric_limits<double>::max());
   _minAspect.push_back(std::numeric_limits<double>::max());
-  unsigned char flag = F_EXIST;
+  unsigned char flag = F_NOTJAC | F_NOTDISTO | F_NOTASPECT | F_EXIST
+                       | F_CURVNOTCOMP;
   if (el->getVisibility()) setBit(flag, F_VISBL);
   _flags.push_back(flag);
 }
