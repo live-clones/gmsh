@@ -98,20 +98,28 @@ public:
 private:
   void _decideDimensionToCheck(bool &check2D, bool &check3D) const;
 
+private:
+  void _printMessage(const std::string &msg, const int verbosityPolicy,
+                     void (*func)(const char *, ...)) const
+  {
+    if ((_verbose && verbosityPolicy >= 0) ||
+        (!_verbose && verbosityPolicy <= 0))
+      func("%s", msg.c_str());
+  }
+
   void _info(const std::string &msg, const int verbosityPolicy = 0) const
   {
-    if(_verbose && verbosityPolicy >= 0 || !_verbose && verbosityPolicy <= 0)
-      Msg::Info("%s", msg.c_str());
+    _printMessage(msg, verbosityPolicy, Msg::Info);
   }
+
   void _warn(const std::string &msg, const int verbosityPolicy = 0) const
   {
-    if(_verbose && verbosityPolicy >= 0 || !_verbose && verbosityPolicy <= 0)
-      Msg::Warning("%s", msg.c_str());
+    _printMessage(msg, verbosityPolicy, Msg::Warning);
   }
+
   void _error(const std::string &msg, const int verbosityPolicy = 0) const
   {
-    if(_verbose && verbosityPolicy >= 0 || !_verbose && verbosityPolicy <= 0)
-      Msg::Error("%s", msg.c_str());
+    _printMessage(msg, verbosityPolicy, Msg::Error);
   }
 
 #if defined(HAVE_VISUDEV)
@@ -187,7 +195,7 @@ private:
     bool onlyCurved;
   };
 
-public:
+private:
   class DataSingleDimension {
   private:
     const int _dim;
