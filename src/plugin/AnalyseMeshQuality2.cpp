@@ -16,7 +16,6 @@
 #include "polynomialBasis.h"
 #include "bezierBasis.h"
 #include "qualityMeasuresJacobian.h"
-#include <sstream>
 #if defined(HAVE_OPENGL)
 #include "drawContext.h"
 #endif
@@ -163,10 +162,9 @@ PView *Plug::execute(PView *v)
   _verbose = static_cast<bool>(MeshQuality2Options_Number[17].def);
   bool freeData = static_cast<bool>(MeshQuality2Options_Number[18].def);
 
-  _info("Executing the plugin AnalyseMeshQuality...", 1);
-  _info("Parameter 'printGuidance' is set to 1. This makes the plugin"
-        "to be verbose and to provide various explanations",
-        1);
+  _info(1, "Executing the plugin AnalyseMeshQuality...");
+  _info(1, "Parameter 'printGuidance' is set to 1. This makes the plugin"
+        "to be verbose and to provide various explanations");
 
   //
   if(_dimensionPolicy < 0)
@@ -181,7 +179,7 @@ PView *Plug::execute(PView *v)
 
   GModel *m = GModel::current();
   if(recomputePolicy == 0 && _m && _m != m) {
-    _info("Detected a new Model, previous data will cleared", 1);
+    _info(1, "Detected a new Model, previous data will cleared");
   }
   _m = m;
 
@@ -207,18 +205,18 @@ PView *Plug::execute(PView *v)
 
   // Handle cases where no computation is requested
   if(freeData) {
-    _info("Freeing data...", -1);
-    _info("Freeing data... (because 'freeData-NothingElse' is set to 1)", 1);
+    _info(-1, "Freeing data...");
+    _info(1, "Freeing data... (because 'freeData-NothingElse' is set to 1)");
     // FIXME: create method clear in dataSingleDimension
     _data2D->clear();
     _data3D->clear();
     MeshQuality2Options_Number[18].def = 0;
-    _info("Done. 'freeData-NothingElse' has been set to 0");
-    _info("Nothing else to do, rerun the plugin to compute something", 1);
+    _info(0, "Done. 'freeData-NothingElse' has been set to 0");
+    _info(1, "Nothing else to do, rerun the plugin to compute something");
     return v;
   }
   if(!checkValidity && !computeDisto && !computeAspect) {
-    _warn("Nothing to do because checkValidity, checkQualityDisto and "
+    _warn(0, "Nothing to do because checkValidity, checkQualityDisto and "
           "checkQualityAspect are all three set to 0");
     return v;
   }
@@ -477,6 +475,48 @@ void Plug::DataEntities::add(MElement *el)
                        | F_CURVNOTCOMP;
   if (el->getVisibility()) setBit(flag, F_VISBL);
   _flags.push_back(flag);
+}
+
+
+
+void Plug::_printMessage(int verbosityPolicy,
+                   void (*func)(const char *, ...), const char *format, va_list args)
+                   const
+{
+  if ((_verbose && verbosityPolicy >= 0) ||
+       (!_verbose && verbosityPolicy <= 0)) {
+    //va_list args;
+    //va_start(args, format);
+
+    char str[5000];
+    vsnprintf(str, sizeof(str), format, args);
+    func("%s", str);
+    //va_end(args);
+  }
+}
+
+void Plug::_info(int verbosityPolicy, const char *format, ...) const
+{
+  va_list args;
+  va_start(args, format);
+  _printMessage(verbosityPolicy, Msg::Info, format, args);
+  va_end(args);
+}
+
+void Plug::_warn(int verbosityPolicy, const char *format, ...) const
+{
+  va_list args;
+  va_start(args, format);
+  _printMessage(verbosityPolicy, Msg::Warning, format, args);
+  va_end(args);
+}
+
+void Plug::_error(int verbosityPolicy, const char *format, ...) const
+{
+  va_list args;
+  va_start(args, format);
+  _printMessage(verbosityPolicy, Msg::Error, format, args);
+  va_end(args);
 }
 
 #endif

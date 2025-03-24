@@ -10,6 +10,7 @@
 
 #include <map>
 #include <vector>
+#include <cstdarg>
 #include "Plugin.h"
 #include "GModel.h"
 #include "GmshMessage.h"
@@ -99,29 +100,13 @@ public:
 private:
   void _decideDimensionToCheck(bool &check2D, bool &check3D) const;
 
-private:
-  void _printMessage(const std::string &msg, const int verbosityPolicy,
-                     void (*func)(const char *, ...)) const
-  {
-    if ((_verbose && verbosityPolicy >= 0) ||
-        (!_verbose && verbosityPolicy <= 0))
-      func("%s", msg.c_str());
-  }
-
-  void _info(const std::string &msg, const int verbosityPolicy = 0) const
-  {
-    _printMessage(msg, verbosityPolicy, Msg::Info);
-  }
-
-  void _warn(const std::string &msg, const int verbosityPolicy = 0) const
-  {
-    _printMessage(msg, verbosityPolicy, Msg::Warning);
-  }
-
-  void _error(const std::string &msg, const int verbosityPolicy = 0) const
-  {
-    _printMessage(msg, verbosityPolicy, Msg::Error);
-  }
+  void _printMessage(int verbosityPolicy,
+                     void (*func)(const char *, ...), const char *format, va_list)
+                     const;
+  void _info(int verbosityPolicy, const char *format, ...) const;
+  void _warn(int verbosityPolicy, const char *format, ...) const;
+  void _error(int verbosityPolicy, const char *format, ...) const;
+  void _printElementToCompute(std::size_t nElToCompute[6]) const;
 
 #if defined(HAVE_VISUDEV)
   void _computePointwiseQuantities(MElement *,
