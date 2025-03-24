@@ -108,6 +108,8 @@ static bool breakForLargeAngle(MVertex *vprev, MVertex *vmid, MVertex *vpos,
 
 #endif
 
+//extern void discoverQuadrics(GModel *gm);
+
 void classifyFaces(GModel *gm, double curveAngleThreshold)
 {
 #if defined(HAVE_MESH)
@@ -132,6 +134,9 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
     gm->setOrderN(1, 0, 0, 0);
   }
 
+  // First Detect quadrics and subdivide the faces
+  //  discoverQuadrics(gm);
+    
   // create a structure from mesh edges to geometrical curves, and remove curves
   // from the model
   std::set<MLine *, MLinePtrLessThan> lines;
@@ -441,9 +446,12 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
 #endif
 }
 
+
 void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
                    bool forParametrization, double curveAngleThreshold)
 {
+  //  bool _detectQuadrics = true;
+    
 #if defined(HAVE_MESH)
   size_t MAX1 = gm->getMaxElementaryNumber(1);
 
@@ -478,6 +486,9 @@ void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
     }
   }
 
+  //  std::vector<std::array<int,2> > q_detected;
+  //  if (_detectQuadrics)detectQuadrics (adj,q_detected);
+  
   computeDiscreteCurvatures(gm);
   if(forParametrization)
     computeEdgeCut(gm, edge->lines, CTX::instance()->mesh.reparamMaxTriangles);
