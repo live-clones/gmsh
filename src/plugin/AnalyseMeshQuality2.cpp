@@ -225,9 +225,11 @@ PView *Plug::execute(PView *v)
   bool check2D, check3D;
   _decideDimensionToCheck(check2D, check3D);
 
-  ComputeParameters param = {!lazyValidity,       (bool)computeDisto,
-                             (bool)computeAspect, recomputePolicy,
-                             onlyVisible,         onlyCurved};
+  bool computeValidity = checkValidity ||
+                         (!lazyValidity && (computeDisto || computeAspect));
+  ComputeParameters param = {computeValidity, static_cast<bool>(computeDisto),
+                             static_cast<bool>(computeAspect), recomputePolicy,
+                             onlyVisible, onlyCurved};
   std::size_t nElToCompute[6]{};
   std::size_t nElToShow[6]{};
   if(check2D) _data2D->initialize(_m, param, nElToCompute, nElToShow);
@@ -307,6 +309,10 @@ void Plug::DataSingleDimension::_updateGEntities(
 }
 
 
+inline bool areBitsSet(unsigned char value, int mask)
+{
+  return (value & mask) == mask;
+}
 inline bool isBitSet(unsigned char value, int mask) {
   return value & mask;
 }
@@ -391,13 +397,13 @@ void Plug::DataEntities::initialize(ComputeParameters param)
   for(unsigned char &flag : _flags) {
     unsetBit(flag, F_REQU);
   }
-  int maskRequested = 0;
-  if(param.onlyVisible)
-    maskRequested |= F_VISBL;
-  if(param.onlyCurved)
-    maskRequested |= F_NOTP1;
+
+  int maskRequested = F_EXIST;
+  if(param.onlyVisible) maskRequested |= F_VISBL;
+  if(param.onlyCurved) maskRequested |= F_NOTP1;
+
   for(auto &flag : _flags) {
-    if((flag & maskRequested) == maskRequested)
+    if(areBitsSet(flag, maskRequested))
       setBit(flag, F_REQU);
   }
 }

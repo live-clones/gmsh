@@ -188,7 +188,7 @@ private:
   };
 
   struct ComputeParameters {
-    bool lazyValidity;
+    bool computeValidity;
     bool computeDisto;
     bool computeAspect;
     int recomputePolicy;
