@@ -26,7 +26,7 @@
 
 StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "checkValidity", nullptr, 0},
-  {GMSH_FULLRC, "checkQualityDisto", nullptr, 0},
+  {GMSH_FULLRC, "checkQualityDisto", nullptr, 1},
   {GMSH_FULLRC, "checkQualityAspect", nullptr, 0},
   {GMSH_FULLRC, "dimensionPolicy", nullptr, 0},
   {GMSH_FULLRC, "recomputePolicy", nullptr, 0},
@@ -119,11 +119,6 @@ std::string Plug::getHelp() const
 
 PView *Plug::execute(PView *v)
 {
-  _info("Executing the plugin AnalyseMeshQuality...", 1);
-  _info("Parameter 'printGuidance' is set to 1. This makes the plugin"
-        "to be verbose and to provide various explanations",
-        1);
-
   // Initialization
   int checkValidity = static_cast<int>(MeshQuality2Options_Number[0].def);
   int computeDisto = static_cast<int>(MeshQuality2Options_Number[1].def);
@@ -166,6 +161,11 @@ PView *Plug::execute(PView *v)
   _verbose = static_cast<bool>(MeshQuality2Options_Number[17].def);
   bool freeData = static_cast<bool>(MeshQuality2Options_Number[18].def);
 
+  _info("Executing the plugin AnalyseMeshQuality...", 1);
+  _info("Parameter 'printGuidance' is set to 1. This makes the plugin"
+        "to be verbose and to provide various explanations",
+        1);
+
   //
   if(_dimensionPolicy < 0)
     _dimensionPolicy = 0;
@@ -178,7 +178,7 @@ PView *Plug::execute(PView *v)
   // FIXME Warnings if verbose
 
   GModel *m = GModel::current();
-  if(_verbose && m != _m && recomputePolicy == 0) {
+  if(recomputePolicy == 0 && _m && _m != m) {
     _info("Detected a new Model, previous data will cleared", 1);
   }
   _m = m;
@@ -282,12 +282,12 @@ void Plug::DataSingleDimension::_updateGEntities(
   std::set<GEntity *, GEntityPtrLessThan> existingInModel;
   for(auto ge: entities) {
     existingInModel.insert(ge);
-    if(_data.find(ge) == _data.end()) _data[ge] = DataEntities(ge);
+    if(_data.find(ge) == _data.end()) _data.emplace(ge, DataEntities(ge));
   }
 
   if(recomputePolicy >= 0) {
     // Remove GEntities from _data that are not existent in the current model
-    for(auto it = _data.begin(); it != _data.end(); ++it) {
+    for(auto it = _data.begin(); it != _data.end();) {
       if(existingInModel.find(it->first) == existingInModel.end()) {
         // it->second.clear(); // FIXME check that i don't need this
         std::size_t numShownElement[3];
@@ -395,10 +395,17 @@ void Plug::DataEntities::initialize(ComputeParameters param)
     maskRequested |= F_VISBL;
   if(param.onlyCurved)
     maskRequested |= F_NOTP1;
-  for(auto flag : _flags) {
+  for(auto &flag : _flags) {
     if((flag & maskRequested) == maskRequested)
       setBit(flag, F_REQU);
   }
+}
+
+void GMSH_AnalyseMeshQuality2Plugin::DataEntities::count(
+  ComputeParameters param, std::size_t cntElToCompute[3],
+  std::size_t cntElToShow[3])
+{
+  return;//TODO implement
 }
 
 void Plug::DataEntities::reset(std::size_t num)
