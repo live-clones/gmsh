@@ -12,6 +12,7 @@
 #include <vector>
 #include "Plugin.h"
 #include "GModel.h"
+#include "GmshMessage.h"
 #include "GEntity.h" // FIXME necessary?
 #include "MElement.h" // FIXME necessary?
 
@@ -157,7 +158,7 @@ private:
     {
       for(int i = 0; i < 3; ++i) num[i] = _numToDraw[i];
     }
-    void countNewElement(ComputeParameters, std::size_t cnt[3]) const;
+    //void countNewElement(ComputeParameters, std::size_t cnt[3]) const;
     void initialize(ComputeParameters);
     void count(ComputeParameters, std::size_t cntElToCompute[3],
                std::size_t cntElToShow[3]);

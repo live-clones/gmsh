@@ -233,6 +233,8 @@ PView *Plug::execute(PView *v)
   if(check2D) _data2D->initialize(_m, param, nElToCompute, nElToShow);
   if(check3D) _data3D->initialize(_m, param, &nElToCompute[3], &nElToShow[3]);
 
+  // TODO warning if no element to check (the case T8, maybe another gmodel?)
+
   return v;
 }
 
@@ -339,7 +341,7 @@ void Plug::DataEntities::initialize(ComputeParameters param)
 
   // Step 1: Check if must reset data, and update flag "exist in GEntity"
   int policy = param.recomputePolicy;
-  if(policy == 1 || policy == 0 && num != _mapElemToIndex.size()) {
+  if(policy == 1 || (policy == 0 && num != _mapElemToIndex.size())) {
     reset(num);
     add(elements);
   }
@@ -373,7 +375,6 @@ void Plug::DataEntities::initialize(ComputeParameters param)
   // Step 3: Update flag isCurved if necessary
   if(param.onlyCurved) {
     for(auto it = _mapElemToIndex.begin(); it != _mapElemToIndex.end(); ++it) {
-      MElement *el = it->first;
       std::size_t index = it->second;
 
       if((_flags[index] & 1 << 4) && !(_flags[index] & 1 << 6)) {
@@ -387,8 +388,8 @@ void Plug::DataEntities::initialize(ComputeParameters param)
   }
 
   // Step 4: Update flag isRequested
-  for(unsigned char &_flag : _flags) {
-    unsetBit(_flag, F_REQU);
+  for(unsigned char &flag : _flags) {
+    unsetBit(flag, F_REQU);
   }
   int maskRequested = 0;
   if(param.onlyVisible)
