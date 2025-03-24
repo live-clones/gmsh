@@ -226,11 +226,7 @@ public:
     //                const;
 
   private:
-    using EntIter = std::set<GEntity *, GEntityPtrLessThan>::iterator;
-    void _initialize(EntIter first, EntIter last, ComputeParameters param,
-                     std::size_t cntElToCompute[3],
-                     std::size_t cntElToShow[3]);
-    void _updateGEntities(EntIter first, EntIter last, int recomputePolicy);
+    void _updateGEntities(std::vector<GEntity *> &, int recomputePolicy);
   };
 };
 

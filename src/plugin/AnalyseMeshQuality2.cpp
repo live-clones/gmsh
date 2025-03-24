@@ -240,42 +240,29 @@ void Plug::DataSingleDimension::initialize(GModel *m, ComputeParameters param,
                                            std::size_t cntElToCompute[3],
                                            std::size_t cntElToShow[3])
 {
-  if(_dim == 2) {
-    std::set<GEntity *, GEntityPtrLessThan> entitySet(m->firstFace(),
-                                                      m->lastFace());
-    _initialize(entitySet.begin(), entitySet.end(), param,
-                cntElToCompute, cntElToShow);
-  }
-  else if(_dim == 3) {
-    std::set<GEntity *, GEntityPtrLessThan> entitySet(m->firstRegion(),
-                                                      m->lastRegion());
-    _initialize(entitySet.begin(), entitySet.end(), param,
-                cntElToCompute, cntElToShow);
-  }
-}
-
-void Plug::DataSingleDimension::_initialize(EntIter first, EntIter last,
-                                            ComputeParameters param,
-                                            std::size_t cntElToCompute[3],
-                                            std::size_t cntElToShow[3])
-{
+  // Update list GEntities (thus _data) if needed
   if(param.recomputePolicy >= -1) {
-    _updateGEntities(first, last, param.recomputePolicy);
+    std::vector<GEntity *> entities;
+    if(_dim == 2)
+      entities.insert(entities.end(), m->firstFace(), m->lastFace());
+    else if(_dim == 3)
+      entities.insert(entities.end(), m->firstRegion(), m->lastRegion());
+    _updateGEntities(entities, param.recomputePolicy);
   }
-  
+
+  // Initialize DataEntities and count
   for(auto & it : _data) {
     it.second.initialize(param);
     it.second.count(param, cntElToCompute, cntElToShow);
   }
 }
 
-void Plug::DataSingleDimension::_updateGEntities(EntIter first, EntIter last,
-                                                 int recomputePolicy)
+void Plug::DataSingleDimension::_updateGEntities(
+  std::vector<GEntity *> &entities, int recomputePolicy)
 {
   // Get GEntities present in the current model, add new ones in _data
   std::set<GEntity *, GEntityPtrLessThan> existingInModel;
-  for(auto it = first; it != last; ++it) {
-    GEntity *ge = *it;
+  for(auto ge: entities) {
     existingInModel.insert(ge);
     if(_data.find(ge) == _data.end()) _data[ge] = DataEntities(ge);
   }
