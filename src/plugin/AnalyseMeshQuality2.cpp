@@ -275,7 +275,7 @@ void Plug::DataSingleDimension::initialize(GModel *m, ComputeParameters param,
   }
 
   // Initialize DataEntities and count
-  for(auto & it : _data) {
+  for(auto &it : _data) {
     it.second.initialize(param);
     it.second.count(param, cntElToCompute, cntElToShow);
   }
@@ -286,7 +286,7 @@ void Plug::DataSingleDimension::_updateGEntities(
 {
   // Get GEntities present in the current model, add new ones in _data
   std::set<GEntity *, GEntityPtrLessThan> existingInModel;
-  for(auto ge: entities) {
+  for(const auto &ge: entities) {
     existingInModel.insert(ge);
     if(_data.find(ge) == _data.end()) _data.emplace(ge, DataEntities(ge));
   }
@@ -377,10 +377,10 @@ void Plug::DataEntities::initialize(ComputeParameters param)
   else {
     // Here, policy <= -1, and we want to keep data for elements that are gone
     // but we have to set the flag "exists in GEntity" accordingly
-    for(unsigned char &_flag : _flags) {
-      unsetBit(_flag, F_EXIST);
+    for(auto &flag : _flags) {
+      unsetBit(flag, F_EXIST);
     }
-    for(auto el : elements) {
+    for(const auto &el : elements) {
       auto it = _mapElemToIndex.find(el);
       if(it != _mapElemToIndex.end()) {
         setBit(_flags[it->second], F_EXIST);
@@ -410,7 +410,7 @@ void Plug::DataEntities::initialize(ComputeParameters param)
   }
 
   // Step 4: Update flag isRequested
-  for(unsigned char &flag : _flags) {
+  for(auto &flag : _flags) {
     unsetBit(flag, F_REQU);
   }
 
@@ -424,7 +424,7 @@ void Plug::DataEntities::initialize(ComputeParameters param)
   }
 }
 
-void GMSH_AnalyseMeshQuality2Plugin::DataEntities::count(
+void Plug::DataEntities::count(
   ComputeParameters param, std::size_t cntElToCompute[3],
   std::size_t cntElToShow[3])
 {
