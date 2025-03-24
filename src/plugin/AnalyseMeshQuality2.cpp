@@ -236,6 +236,24 @@ PView *Plug::execute(PView *v)
   return v;
 }
 
+void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
+{
+  std::size_t num3DElem = 0;
+
+  // Iterate through regions to count 3D mesh elements
+  for(auto it = _m->firstRegion(); it != _m->lastRegion(); ++it) {
+    num3DElem += (*it)->getNumMeshElements();
+  }
+
+  // Apply policy logic
+  check2D = true;
+  check3D = true;
+  if(_dimensionPolicy == 0 && num3DElem > 0)
+    check2D = false;
+  else if(_dimensionPolicy < 2)
+    check3D = false;
+}
+
 void Plug::DataSingleDimension::initialize(GModel *m, ComputeParameters param,
                                            std::size_t cntElToCompute[3],
                                            std::size_t cntElToShow[3])
@@ -319,16 +337,16 @@ void Plug::DataEntities::initialize(ComputeParameters param)
     elements.push_back(_ge->getMeshElement(i));
   }
 
-  // Step 1: Check if must reset and update flag exist in GEntity
+  // Step 1: Check if must reset data, and update flag "exist in GEntity"
   int policy = param.recomputePolicy;
-  if(policy == 0 && num != _mapElemToIndex.size() || policy == 1) {
+  if(policy == 1 || policy == 0 && num != _mapElemToIndex.size()) {
     reset(num);
     add(elements);
   }
   else if(policy == 0) {
+    // Reset if elements are different
     for(auto i = 0; i < num; ++i) {
-      MElement *el = elements[i];
-      if(_mapElemToIndex.find(el) == _mapElemToIndex.end()) {
+      if(_mapElemToIndex.find(elements[i]) == _mapElemToIndex.end()) {
         reset(num);
         add(elements);
         break;
@@ -336,6 +354,8 @@ void Plug::DataEntities::initialize(ComputeParameters param)
     }
   }
   else {
+    // Here, policy <= -1, and we want to keep data for elements that are gone
+    // but we have to set the flag "exists in GEntity" accordingly
     for(unsigned char &_flag : _flags) {
       unsetBit(_flag, F_EXIST);
     }
@@ -357,8 +377,8 @@ void Plug::DataEntities::initialize(ComputeParameters param)
       std::size_t index = it->second;
 
       if((_flags[index] & 1 << 4) && !(_flags[index] & 1 << 6)) {
-        bool isCurved = true; // TODO el->isCurved();
-        // Assuming MElement has a method isCurved() to check if element is curved
+        bool isCurved = true;
+        // TODO implement: bool isCurved = el->isCurved();
         setBit(_flags[index], F_P1COMP);
         if(isCurved)
           setBit(_flags[index], F_NOTP1);
@@ -370,13 +390,13 @@ void Plug::DataEntities::initialize(ComputeParameters param)
   for(unsigned char &_flag : _flags) {
     unsetBit(_flag, F_REQU);
   }
-  int requested = 0;
+  int maskRequested = 0;
   if(param.onlyVisible)
-    requested |= F_VISBL;
+    maskRequested |= F_VISBL;
   if(param.onlyCurved)
-    requested |= F_NOTP1;
+    maskRequested |= F_NOTP1;
   for(auto flag : _flags) {
-    if((flag & requested) == requested)
+    if((flag & maskRequested) == maskRequested)
       setBit(flag, F_REQU);
   }
 }
@@ -407,24 +427,6 @@ void Plug::DataEntities::add(MElement *el)
   unsigned char flag = F_EXIST;
   if (el->getVisibility()) setBit(flag, F_VISBL);
   _flags.push_back(flag);
-}
-
-void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
-{
-  std::size_t num3DElem = 0;
-
-  // Iterate through regions to count 3D mesh elements
-  for(auto it = _m->firstRegion(); it != _m->lastRegion(); ++it) {
-    num3DElem += (*it)->getNumMeshElements();
-  }
-
-  // Apply policy logic
-  check2D = true;
-  check3D = true;
-  if(_dimensionPolicy == 0 && num3DElem > 0)
-    check2D = false;
-  else if(_dimensionPolicy < 2)
-    check3D = false;
 }
 
 #endif
