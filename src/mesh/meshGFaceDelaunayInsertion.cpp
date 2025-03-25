@@ -896,7 +896,7 @@ static MTri3 *search4Triangle(MTri3 *t, double pt[2], bidimMeshData &data,
       if(intersection_segments_2(p1, p2, q1, q2)) break;
     }
     if(i >= 3) {
-      printf("impossible\n");
+      Msg::Error("Impossible case in triangle search");
       break;
     }
     t = t->getNeigh(i);
@@ -1319,19 +1319,23 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
 
 
   // insert points
-  //int ITERATION = 0;
+#if 0
+  int ITERATION = 0;
+#endif
   while(1) {
-    //++ITERATION;
-    // if(ITERATION % 1 == 0 && Msg::GetVerbosity() == 99){
-    //   char name[245];
-    //   sprintf(name,"delFrontal_GFace_%d_Layer_%d.pos",gf->tag(),ITERATION);
-    //   _printTris (name, AllTris.begin(), AllTris.end(), &DATA);
-    //   sprintf(name,"delFrontal_GFace_%d_Layer_Real%d.pos",gf->tag(),ITERATION);
-    //   _printTris (name, AllTris.begin(), AllTris.end(),NULL);
-    //   sprintf(name,"delFrontal_GFace_%d_Layer_%d_Active.pos",gf->tag(),ITERATION);
-    //   _printTris (name, ActiveTris.begin(), ActiveTris.end(), &DATA);
-    // }
-
+#if 0
+    ++ITERATION;
+    char name[245];
+    if (ITERATION % 10 == 0){
+      sprintf(name,"delFrontal_GFace_%d_Layer_%d.pos",gf->tag(),ITERATION);
+      _printTris (name, AllTris.begin(), AllTris.end(), &DATA);
+      sprintf(name,"delFrontal_GFace_%d_Layer_Real%d.pos",gf->tag(),ITERATION);
+      _printTris (name, AllTris.begin(), AllTris.end(),NULL);
+      sprintf(name,"delFrontal_GFace_%d_Layer_%d_Active.pos",gf->tag(),ITERATION);
+      _printTris (name, ActiveTris.begin(), ActiveTris.end(), &DATA);
+    }
+#endif
+    
     //    printf("%d active tris \n",ActiveTris.size());
     if(!ActiveTris.size()) break;
     MTri3 *worst = (*ActiveTris.begin());
@@ -1635,7 +1639,7 @@ void bowyerWatsonParallelograms(
     return;
   }
 
-  
+
 #if defined(HAVE_DOMHEX)
   if(old_algo_hexa()) {
     Msg::Debug("bowyerWatsonParallelograms: call packingOfParallelograms()");

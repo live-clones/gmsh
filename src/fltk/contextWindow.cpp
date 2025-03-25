@@ -1601,11 +1601,19 @@ meshContextWindow::meshContextWindow(int deltaFontSize)
       input[1]->value("10");
       input[2] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "Parameter");
       input[2]->value("1");
+      input[3] = new Fl_Input(2 * WB, 2 * WB + 3 * BH, IW, BH, "HWall");
+      input[2]->value("2");
+
       for(int i = 1; i < 3; i++) { input[i]->align(FL_ALIGN_RIGHT); }
       static Fl_Menu_Item menu_trsf_mesh[] = {
         {"Progression", 0, nullptr, nullptr},
         {"Bump", 0, nullptr, nullptr},
         {"Beta", 0, nullptr, nullptr},
+        {"Progression_HWall", 0, nullptr, nullptr},
+        {"Bump_HWall", 0, nullptr, nullptr},
+        {"Beta_HWall", 0, nullptr, nullptr},
+	//        {"Beta_Symmetrical", 0, nullptr, nullptr},
+	//        {"Beta_Symmetrical_HWall", 0, nullptr, nullptr},
         {nullptr}};
       choice[0] = new Fl_Choice(2 * WB, 2 * WB + 2 * BH, IW, BH, "Type");
       choice[0]->menu(menu_trsf_mesh);

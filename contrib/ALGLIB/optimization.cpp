@@ -3065,7 +3065,7 @@ void minlbfgsoptimize(minlbfgsstate &state,
         throw ap_error("ALGLIB: error in 'minlbfgsoptimize()' (grad is NULL)");
     alglib_impl::ae_state_init(&_alglib_env_state);
     try
-    {
+    {      
         while( alglib_impl::minlbfgsiteration(state.c_ptr(), &_alglib_env_state) )
         {
             if( state.needfg )
@@ -11023,6 +11023,7 @@ lbl_30:
     {
         v = v+ae_sqr(state->g.ptr.p_double[i]*state->s.ptr.p_double[i], _state);
     }
+    //    printf("iter %d f %22.15E grad = %12.5E\n",state->repiterationscount,state->f,sqrt(v));
     if( ae_fp_less_eq(ae_sqrt(v, _state),state->epsg) )
     {
         

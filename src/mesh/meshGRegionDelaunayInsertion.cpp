@@ -1382,7 +1382,10 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
 
   // main loop in Delaunay inserstion starts here
 
+  printf("maxiter = %d\n",maxIter);
+  
   while(1) {
+    if(maxIter < 0) break; // if maxIter < 0 --> only the initial mesh
     if(maxIter > 0 && ITER >= maxIter) break;
     if(allTets.empty()) {
       Msg::Warning("No tetrahedra in region %d", gr->tag());

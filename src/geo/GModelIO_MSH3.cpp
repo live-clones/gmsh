@@ -26,6 +26,10 @@
 #include "discreteFace.h"
 #include "discreteRegion.h"
 
+#if defined(HAVE_POST)
+#include "PView.h"
+#endif
+
 static int readMSHPhysicals(FILE *fp, GEntity *ge)
 {
   int nump;
@@ -197,7 +201,7 @@ int GModel::_readMSH3(const std::string &name)
 
   char str[256] = "";
   double version = 0.;
-  bool binary = false, swap = false, postpro = false;
+  bool binary = false, swap = false;
   int minVertex = 0;
   std::map<int, std::vector<MElement *> > elements[11];
   std::size_t oldNumPartitions = getNumPartitions();
@@ -523,13 +527,30 @@ int GModel::_readMSH3(const std::string &name)
       readMSHPeriodicNodes(fp, this);
     }
 
+#if defined(HAVE_POST)
     // Post-processing sections
+    else if(!strncmp(&str[1], "InterpolationScheme", 19)) {
+      if(!PView::readMSHInterpolationScheme(fp)) {
+        fclose(fp);
+        return 0;
+      }
+    }
     else if(!strncmp(&str[1], "NodeData", 8) ||
             !strncmp(&str[1], "ElementData", 11) ||
             !strncmp(&str[1], "ElementNodeData", 15)) {
-      postpro = true;
-      break;
+      // store the elements in their associated elementary entity. If the entity
+      // does not exist, create a new (discrete) one. Clear the elements so that
+      // we don't store them twice below.
+      for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++) {
+        _storeElementsInEntities(elements[i]);
+        elements[i].clear();
+      }
+      if(!PView::readMSHViewData(name, fp, binary, swap, &str[1])) {
+        fclose(fp);
+        return 0;
+      }
     }
+#endif
 
     do {
       if(!fgets(str, sizeof(str), fp) || feof(fp)) break;
@@ -560,7 +581,7 @@ int GModel::_readMSH3(const std::string &name)
      getNumPartitions() > oldNumPartitions)
     convertOldPartitioningToNewOne();
 
-  return postpro ? 2 : 1;
+  return 1;
 }
 
 static void writeMSHPhysicals(FILE *fp, GEntity *ge)

@@ -234,6 +234,111 @@ void BuildSwapPattern7(SwapPattern *sc)
   sc->trianguls = trgul;
 }
 
+bool edgeSwapCustom(std::vector<MTet4 *> &newTets, MTet4 *tet, int iLocalEdge, void *data,
+		    double (*qualityFct) (MVertex *v1, MVertex *v2, std::vector<MVertex*> &cavity, void *data) )
+{
+  std::vector<MTet4 *> cavity;
+  std::vector<MTet4 *> outside;
+  std::vector<MVertex *> ring;
+  MVertex *v1, *v2;
+  bool closed = buildEdgeCavity(tet, iLocalEdge, &v1, &v2, cavity, outside, ring);
+  if(!closed) return false;
+
+  double volumeRef = 0.0;
+  std::vector<MVertex*> _c;
+  for(std::size_t i = 0; i < cavity.size(); i++) {
+    volumeRef+=fabs(cavity[i]->tet()->getVolume());
+    for(std::size_t j = 0; j < 4; j++) {
+      _c.push_back(cavity[i]->tet()->getVertex(j));
+    }
+  }
+
+  double current_quality = qualityFct (v1,v2,_c, data);
+
+  SwapPattern sp;
+  switch(ring.size()) {
+  case 3: BuildSwapPattern3(&sp); break;
+  case 4: BuildSwapPattern4(&sp); break;
+  case 5: BuildSwapPattern5(&sp); break;
+  case 6: BuildSwapPattern6(&sp); break;
+  case 7: BuildSwapPattern7(&sp); break;
+  default: return false;
+  }
+
+  int iBest = -1;
+  double qualityBest = 0.0;
+  for(int i = 0; i < sp.nbr_trianguls; i++) {
+    _c.clear();
+    double volumeNew = 0.0;
+    double qualityNew = 1.0;
+    for(int j = 0; j < sp.nbr_triangles_2; j++) {
+      int iT = sp.trianguls[i][j];
+      int p1 = sp.triangles[iT][0];
+      int p2 = sp.triangles[iT][1];
+      int p3 = sp.triangles[iT][2];
+      _c.push_back(ring[p1]);
+      _c.push_back(ring[p2]);
+      _c.push_back(ring[p3]);
+      _c.push_back(v1);
+      _c.push_back(ring[p1]);
+      _c.push_back(ring[p3]);
+      _c.push_back(ring[p2]);
+      _c.push_back(v2);
+      double vol1,vol2;
+      double tetQuality1 =
+	qmTetrahedron::qm(ring[p1], ring[p2], ring[p3], v1, qmTetrahedron::QMTET_GAMMA, &vol1);
+      double tetQuality2 =
+	qmTetrahedron::qm(ring[p1], ring[p2], ring[p3], v2, qmTetrahedron::QMTET_GAMMA, &vol2);
+      volumeNew += fabs(vol1)+fabs(vol2);
+      qualityNew = std::min(qualityNew,std::min(tetQuality1,tetQuality2));
+    }
+
+    
+    if (fabs(volumeNew- volumeRef) < 1.e-6*fabs(volumeNew+volumeRef)){
+      double quality_i = qualityFct (v1,v2,_c, data);
+      //      printf("qualityNew = %g current_quality = %g quality_i = %g\n",qualityNew,current_quality,quality_i);
+      if (qualityNew > 4.e-12){
+	if (quality_i > current_quality || (quality_i == current_quality && qualityBest < qualityNew)){
+	  iBest = i;
+	  current_quality = quality_i;
+	  qualityBest = qualityNew;
+	}
+      }
+    }
+  }
+
+  //  printf("best %d qual %g\n",iBest,current_quality);
+  
+  if (iBest == -1)return false;
+  
+  for(int j = 0; j < sp.nbr_triangles_2; j++) {
+    int iT = sp.trianguls[iBest][j];
+    int p1 = sp.triangles[iT][0];
+    int p2 = sp.triangles[iT][1];
+    int p3 = sp.triangles[iT][2];
+    MVertex *pv1 = ring[p1];
+    MVertex *pv2 = ring[p2];
+    MVertex *pv3 = ring[p3];
+    MTetrahedron *tr1 = new MTetrahedron(pv1, pv2, pv3, v1);
+    MTetrahedron *tr2 = new MTetrahedron(pv3, pv2, pv1, v2);
+    MTet4 *t41 = new MTet4(tr1, 1.0);
+    MTet4 *t42 = new MTet4(tr2, 1.0);
+    t41->setOnWhat(cavity[0]->onWhat());
+    t42->setOnWhat(cavity[0]->onWhat());
+    outside.push_back(t41);
+    outside.push_back(t42);
+    newTets.push_back(t41);
+    newTets.push_back(t42);
+  }
+
+  for(std::size_t i = 0; i < cavity.size(); i++) cavity[i]->setDeleted(true);
+
+  connectTets(outside, nullptr);
+
+  return true;
+}
+
+
 bool edgeSwap(std::vector<MTet4 *> &newTets, MTet4 *tet, int iLocalEdge,
               const qmTetrahedron::Measures &cr,
               const std::set<MFace, MFaceLessThan> &embeddedFaces)

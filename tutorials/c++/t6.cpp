@@ -74,21 +74,20 @@ int main(int argc, char **argv)
   // can be omitted in the `setTransfiniteSurface()' call:
   gmsh::model::geo::addPoint(0.2, 0.2, 0, 1.0, 7);
   gmsh::model::geo::addPoint(0.2, 0.1, 0, 1.0, 8);
-  gmsh::model::geo::addPoint(0, 0.3, 0, 1.0, 9);
-  gmsh::model::geo::addPoint(0.25, 0.2, 0, 1.0, 10);
-  gmsh::model::geo::addPoint(0.3, 0.1, 0, 1.0, 11);
-  gmsh::model::geo::addLine(8, 11, 10);
-  gmsh::model::geo::addLine(11, 10, 11);
-  gmsh::model::geo::addLine(10, 7, 12);
+  gmsh::model::geo::addPoint(0.25, 0.2, 0, 1.0, 9);
+  gmsh::model::geo::addPoint(0.3, 0.1, 0, 1.0, 10);
+  gmsh::model::geo::addLine(8, 10, 10);
+  gmsh::model::geo::addLine(10, 9, 11);
+  gmsh::model::geo::addLine(9, 7, 12);
   gmsh::model::geo::addLine(7, 8, 13);
-  gmsh::model::geo::addCurveLoop({13, 10, 11, 12}, 14);
+  gmsh::model::geo::addCurveLoop({10, 11, 12, 13}, 14);
   gmsh::model::geo::addPlaneSurface({14}, 15);
   for(int i = 10; i <= 13; i++)
     gmsh::model::geo::mesh::setTransfiniteCurve(i, 10);
   gmsh::model::geo::mesh::setTransfiniteSurface(15);
 
   // The way triangles are generated can be controlled by specifying "Left",
-  // "Right" or "Alternate" in `setTransfiniteSurface()' command. Try e.g.
+  // "Right" or "Alternate" in `setTransfiniteSurface()'. Try e.g.
   //
   // gmsh::model::geo::mesh::setTransfiniteSurface(15, "Alternate");
 

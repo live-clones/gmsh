@@ -15,7 +15,7 @@
 // scripting language (.geo files), or through the C++, C, Python, Julia and
 // Fortran application programming interface (API).
 //
-// This file redefines the Gmsh C++ API in terms of the C API (v4.13.0).
+// This file redefines the Gmsh C++ API in terms of the C API (v4.14.0).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
@@ -1239,6 +1239,21 @@ namespace gmsh { // Top-level functions
         gmshFree(api_dimTags_);
       }
 
+      // gmsh::model::mesh::captureFront
+      //
+      // Capture a front by swapping edges.
+      inline void captureFront(const std::vector<int> & nodeTags,
+                               const std::vector<int> & nodePhases)
+      {
+        int ierr = 0;
+        int *api_nodeTags_; size_t api_nodeTags_n_; vector2ptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_);
+        int *api_nodePhases_; size_t api_nodePhases_n_; vector2ptr(nodePhases, &api_nodePhases_, &api_nodePhases_n_);
+        gmshModelMeshCaptureFront(api_nodeTags_, api_nodeTags_n_, api_nodePhases_, api_nodePhases_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_nodeTags_);
+        gmshFree(api_nodePhases_);
+      }
+
       // gmsh::model::mesh::recombine
       //
       // Recombine the mesh of the current model.
@@ -1261,7 +1276,8 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::setOrder
       //
-      // Set the order of the elements in the mesh of the current model to `order'.
+      // Change the order of the elements in the mesh of the current model to
+      // `order'.
       inline void setOrder(const int order)
       {
         int ierr = 0;
@@ -3335,13 +3351,16 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::get_front_nodes_position
       //
       // Antoine put a comment here.
-      inline void get_front_nodes_position(std::vector<double> & api_position)
+      inline void get_front_nodes_position(std::vector<double> & api_position,
+                                           std::vector<int> & front_nodes)
       {
         int ierr = 0;
         double *api_api_position_; size_t api_api_position_n_;
-        gmshModelMeshGet_front_nodes_position(&api_api_position_, &api_api_position_n_, &ierr);
+        int *api_front_nodes_; size_t api_front_nodes_n_;
+        gmshModelMeshGet_front_nodes_position(&api_api_position_, &api_api_position_n_, &api_front_nodes_, &api_front_nodes_n_, &ierr);
         if(ierr) throwLastError();
         api_position.assign(api_api_position_, api_api_position_ + api_api_position_n_); gmshFree(api_api_position_);
+        front_nodes.assign(api_front_nodes_, api_front_nodes_ + api_front_nodes_n_); gmshFree(api_front_nodes_);
       }
 
       // gmsh::model::mesh::get_nodes_position
@@ -3366,13 +3385,44 @@ namespace gmsh { // Top-level functions
         if(ierr) throwLastError();
       }
 
-      // gmsh::model::mesh::relaying_and_relax
+      // gmsh::model::mesh::relaying_relay
       //
       // Antoine put a comment here.
+<<<<<<< HEAD
       inline void relaying_and_relax(const double relax)
       {
         int ierr = 0;
         gmshModelMeshRelaying_and_relax(relax, &ierr);
+=======
+      inline void relaying_relay()
+      {
+        int ierr = 0;
+        gmshModelMeshRelaying_relay(&ierr);
+        if(ierr) throwLastError();
+      }
+
+      // gmsh::model::mesh::restore_initial_mesh
+      //
+      // Antoine put a comment here.
+      inline void restore_initial_mesh()
+      {
+        int ierr = 0;
+        gmshModelMeshRestore_initial_mesh(&ierr);
+        if(ierr) throwLastError();
+      }
+
+      // gmsh::model::mesh::relaying_relax
+      //
+      // Antoine put a comment here.
+      inline void relaying_relax(const double myLambda,
+                                 const int nIterOut,
+                                 const int nIterIn,
+                                 const double distMax,
+                                 const double RATIO)
+      {
+        int ierr = 0;
+        gmshModelMeshRelaying_relax(myLambda, nIterOut, nIterIn, distMax, RATIO, &ierr);
+>>>>>>> a4e0d2e81d6666320be6370a6b77cee083dc55fa
         if(ierr) throwLastError();
       }
 
@@ -3926,10 +3976,11 @@ namespace gmsh { // Top-level functions
       // Add a `geometry' in the built-in CAD representation. `geometry' can
       // currently be one of "Sphere" or "PolarSphere" (where `numbers' should
       // contain the x, y, z coordinates of the center, followed by the radius), or
-      // "Parametric" (where `strings' should contains three expression evaluating
-      // to the x, y and z coordinates. If `tag' is positive, set the tag of the
-      // geometry explicitly; otherwise a new tag is selected automatically. Return
-      // the tag of the geometry.
+      // "ParametricSurface" (where `strings' should contains three expression
+      // evaluating to the x, y and z coordinates in terms of parametric
+      // coordinates u and v). If `tag' is positive, set the tag of the geometry
+      // explicitly; otherwise a new tag is selected automatically. Return the tag
+      // of the geometry.
       inline int addGeometry(const std::string & geometry,
                              const std::vector<double> & numbers = std::vector<double>(),
                              const std::vector<std::string> & strings = std::vector<std::string>(),
@@ -4251,8 +4302,8 @@ namespace gmsh { // Top-level functions
       //
       // Split the curve of tag `tag' in the built-in CAD representation, on the
       // specified control points `pointTags'. This feature is only available for
-      // lines, splines and b-splines. Return the tag(s) `curveTags' of the newly
-      // created curve(s).
+      // splines and b-splines. Return the tag(s) `curveTags' of the newly created
+      // curve(s).
       inline void splitCurve(const int tag,
                              const std::vector<int> & pointTags,
                              std::vector<int> & curveTags)
@@ -4827,7 +4878,7 @@ namespace gmsh { // Top-level functions
       inline int addSurfaceFilling(const int wireTag,
                                    const int tag = -1,
                                    const std::vector<int> & pointTags = std::vector<int>(),
-                                   const int degree = 3,
+                                   const int degree = 2,
                                    const int numPointsOnCurves = 15,
                                    const int numIter = 2,
                                    const bool anisotropic = false,
@@ -5366,6 +5417,100 @@ namespace gmsh { // Top-level functions
         gmshFree(api_surfaceTags_);
         gmshFree(api_distances_);
         outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
+      }
+
+      // gmsh::model::occ::defeature
+      //
+      // Defeature the volumes `volumeTags' by removing the surfaces `surfaceTags'.
+      // Return the defeatured entities in `outDimTags'. Remove the original volume
+      // if `removeVolume' is set.
+      inline void defeature(const std::vector<int> & volumeTags,
+                            const std::vector<int> & surfaceTags,
+                            gmsh::vectorpair & outDimTags,
+                            const bool removeVolume = true)
+      {
+        int ierr = 0;
+        int *api_volumeTags_; size_t api_volumeTags_n_; vector2ptr(volumeTags, &api_volumeTags_, &api_volumeTags_n_);
+        int *api_surfaceTags_; size_t api_surfaceTags_n_; vector2ptr(surfaceTags, &api_surfaceTags_, &api_surfaceTags_n_);
+        int *api_outDimTags_; size_t api_outDimTags_n_;
+        gmshModelOccDefeature(api_volumeTags_, api_volumeTags_n_, api_surfaceTags_, api_surfaceTags_n_, &api_outDimTags_, &api_outDimTags_n_, (int)removeVolume, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_volumeTags_);
+        gmshFree(api_surfaceTags_);
+        outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
+      }
+
+      // gmsh::model::occ::fillet2D
+      //
+      // Create a fillet edge between edges `edgeTag1' and `edgeTag2' with radius
+      // `radius'. The modifed edges keep their tag. If `tag' is positive, set the
+      // tag explicitly; otherwise a new tag is selected automatically.
+      inline int fillet2D(const int edgeTag1,
+                          const int edgeTag2,
+                          const double radius,
+                          const int tag = -1)
+      {
+        int ierr = 0;
+        int result_api_ = gmshModelOccFillet2D(edgeTag1, edgeTag2, radius, tag, &ierr);
+        if(ierr) throwLastError();
+        return result_api_;
+      }
+
+      // gmsh::model::occ::chamfer2D
+      //
+      // Create a chamfer edge between edges `edgeTag1' and `edgeTag2' with
+      // distance1 `distance1' and distance2 `distance2'. The modifed edges keep
+      // their tag. If `tag' is positive, set the tag explicitly; otherwise a new
+      // tag is selected automatically.
+      inline int chamfer2D(const int edgeTag1,
+                           const int edgeTag2,
+                           const double distance1,
+                           const double distance2,
+                           const int tag = -1)
+      {
+        int ierr = 0;
+        int result_api_ = gmshModelOccChamfer2D(edgeTag1, edgeTag2, distance1, distance2, tag, &ierr);
+        if(ierr) throwLastError();
+        return result_api_;
+      }
+
+      // gmsh::model::occ::offsetCurve
+      //
+      // Create an offset curve based on the curve loop `curveLoopTag' with offset
+      // `offset'. Return the offset curves in `outDimTags' as a vector of (dim,
+      // tag) pairs.
+      inline void offsetCurve(const int curveLoopTag,
+                              const double offset,
+                              gmsh::vectorpair & outDimTags)
+      {
+        int ierr = 0;
+        int *api_outDimTags_; size_t api_outDimTags_n_;
+        gmshModelOccOffsetCurve(curveLoopTag, offset, &api_outDimTags_, &api_outDimTags_n_, &ierr);
+        if(ierr) throwLastError();
+        outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
+      }
+
+      // gmsh::model::occ::getDistance
+      //
+      // Find the minimal distance between shape with `dim1' and `tag1' and shape
+      // with `dim2' and `tag2' and the according coordinates. Return the distance
+      // in `distance' and the coordinate of the points as `x1', `y1', `z1' and
+      // `x2', `y2', `z2'.
+      inline void getDistance(const int dim1,
+                              const int tag1,
+                              const int dim2,
+                              const int tag2,
+                              double & distance,
+                              double & x1,
+                              double & y1,
+                              double & z1,
+                              double & x2,
+                              double & y2,
+                              double & z2)
+      {
+        int ierr = 0;
+        gmshModelOccGetDistance(dim1, tag1, dim2, tag2, &distance, &x1, &y1, &z1, &x2, &y2, &z2, &ierr);
+        if(ierr) throwLastError();
       }
 
       // gmsh::model::occ::fuse

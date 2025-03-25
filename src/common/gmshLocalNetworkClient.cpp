@@ -280,15 +280,15 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
       p.fromChar(message);
       if(!tryToSetGmshNumberOption(p)) {
         if(type == GmshSocket::GMSH_PARAMETER_WITHOUT_CHOICES) {
-          // append value to any choices already on the server
+          // append values to any choices already on the server
           std::vector<onelab::number> par;
           get(par, name);
           std::vector<double> c;
           if(par.size()) c = par[0].getChoices();
-          c.push_back(p.getValue());
+          c.insert(c.end(), p.getValues().begin(), p.getValues().end());
           p.setChoices(c);
         }
-        if(type == GmshSocket::GMSH_PARAMETER_UPDATE) {
+        else if(type == GmshSocket::GMSH_PARAMETER_UPDATE) {
           std::vector<onelab::number> par;
           get(par, name);
           if(par.size()) {
@@ -317,7 +317,7 @@ bool gmshLocalNetworkClient::receiveMessage(gmshLocalNetworkClient *master)
           get(par, name);
           std::vector<std::string> c;
           if(par.size()) c = par[0].getChoices();
-          c.push_back(p.getValue());
+          c.insert(c.end(), p.getValues().begin(), p.getValues().end());
           p.setChoices(c);
         }
         else if(type == GmshSocket::GMSH_PARAMETER_UPDATE) {

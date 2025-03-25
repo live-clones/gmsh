@@ -1391,6 +1391,35 @@ static void deleteUnusedVertices(GFace *gf)
                            allverts.end());
 }
 
+/*static void extractIsolatedEdges (GFace *gf, std::vector<GEdge *> &edges,
+				  std::vector<GEdge *> &emb_edges){
+
+  std::vector<GEdge *> new_edges, new_emb_edges;
+  std::map<GVertex*, int> v2e;
+  std::map<GVertex*, GEdge*> isolated;
+  for (auto e : edges) {
+    std::map<GVertex*, int>::iterator it0 = v2e.find(e->getBeginVertex());
+    std::map<GVertex*, int>::iterator it1 = v2e.find(e->getEndVertex());
+    if (it0 != v2e.end())it0->second++;
+    else v2e[e->getBeginVertex()] = 1;
+    if (it1 != v2e.end())it1->second++;
+    else v2e[e->getEndVertex()] = 1;
+    isolated[e->getBeginVertex()] = e;
+    isolated[e->getEndVertex()] = e;
+  }
+  for (auto x : v2e){
+    if (x.second == 1){
+      GEdge *ge = isolated[x.first];
+      new_emb_edges.push_back(ge);
+    }
+    else{
+      
+    }
+  }
+  
+}
+*/
+
 // Builds An initial triangular mesh that respects the boundaries of
 // the domain, including embedded points and surfaces
 static bool meshGenerator(GFace *gf, int RECUR_ITER,
@@ -1456,22 +1485,30 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
     ++ite;
   }
 
-  if(fdeb) {
-    fprintf(fdeb, "};\n");
-    fclose(fdeb);
-  }
 
   if(boundary.size()) {
-    Msg::Error("The 1D mesh seems not to be forming a closed loop (%d boundary "
+    if(fdeb) {
+      for(auto it = boundary.begin(); it != boundary.end(); it++) {
+	fprintf(fdeb, "SP(%g,%g,%g){1,1};\n", (*it)->x(), (*it)->y(), (*it)->z());
+	//	Msg::Debug("Remaining node %lu", (*it)->getNum());
+      }
+      fprintf(fdeb, "};\n");
+      fclose(fdeb);
+    }
+    Msg::Warning("The 1D mesh seems not to be forming a closed loop (%d boundary "
                "nodes are considered once)",
                boundary.size());
-    for(auto it = boundary.begin(); it != boundary.end(); it++) {
-      Msg::Debug("Remaining node %lu", (*it)->getNum());
+    //    gf->meshStatistics.status = GFace::FAILED;
+    //    return false;
+  }
+  else {
+    if(fdeb) {
+      fprintf(fdeb, "};\n");
+      fclose(fdeb);
     }
-    gf->meshStatistics.status = GFace::FAILED;
-    return false;
   }
 
+  
   std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
   ite = emb_edges.begin();
   while(ite != emb_edges.end()) {
@@ -1712,7 +1749,8 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
       Msg::Info(":-( There are %d intersections in the 1D mesh (curves%s)",
                 edgesNotRecovered.size(), sstream.str().c_str());
       if(repairSelfIntersecting1dMesh)
-        Msg::Info("8-| Splitting those edges and trying again");
+        Msg::Info("8-| Splitting those edges and trying again - level %d",
+                  RECUR_ITER);
     }
     if(debug) {
       char name[245];
@@ -1737,11 +1775,13 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
 
     // delete the mesh
     delete m;
-    if(RECUR_ITER < 10) {
+    if(RECUR_ITER < CTX::instance()->mesh.maxRetries) {
       return meshGenerator(gf, RECUR_ITER + 1, repairSelfIntersecting1dMesh,
                            onlyInitialMesh, debug, replacementEdges);
     }
-    return false;
+    else {
+      return false;
+    }
   }
 
   if(RECUR_ITER > 0)
@@ -2781,7 +2821,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       outputScalarField(m->triangles, name, 1, gf);
     }
     delete m;
-    if(RECUR_ITER < 10) {
+    if(RECUR_ITER < CTX::instance()->mesh.maxRetries) {
       return meshGeneratorPeriodic(gf, RECUR_ITER + 1,
                                    repairSelfIntersecting1dMesh, debug);
     }

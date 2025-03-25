@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <stdio.h>
+#include <ctype.h>
 #include <string>
 #include <algorithm>
 #include <sstream>
@@ -18,6 +19,18 @@
 #include "Context.h"
 
 static bool invalidChar(char c) { return !(c >= 32 && c <= 126); }
+
+static char *fgets0(char *buffer, int size, FILE *fp)
+{
+  // same as fgets but ignores empty lines
+  while(1) {
+    char *ret = fgets(buffer, size, fp);
+    if(!ret) return nullptr;
+    for(std::size_t i = 0; i < strlen(ret); i++) {
+      if(!isspace(ret[i])) return ret;
+    }
+  }
+}
 
 int GModel::readSTL(const std::string &name, double tolerance)
 {
@@ -34,7 +47,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
 
   // "solid", or binary data header
   char buffer[256];
-  if(!fgets(buffer, sizeof(buffer), fp)) {
+  if(!fgets0(buffer, sizeof(buffer), fp)) {
     fclose(fp);
     return 0;
   }
@@ -52,10 +65,10 @@ int GModel::readSTL(const std::string &name, double tolerance)
     points.resize(1);
     while(!feof(fp)) {
       // "facet normal x y z" or "endsolid"
-      if(!fgets(buffer, sizeof(buffer), fp)) break;
+      if(!fgets0(buffer, sizeof(buffer), fp)) break;
       if(!strncmp(buffer, "endsolid", 8) || !strncmp(buffer, "ENDSOLID", 8)) {
         // "solid"
-        if(!fgets(buffer, sizeof(buffer), fp)) break;
+        if(!fgets0(buffer, sizeof(buffer), fp)) break;
         if(!strncmp(buffer, "solid", 5) || !strncmp(buffer, "SOLID", 5)) {
           if(strlen(buffer) > 6)
             names.push_back(&buffer[6]);
@@ -63,14 +76,14 @@ int GModel::readSTL(const std::string &name, double tolerance)
             names.push_back("");
           points.resize(points.size() + 1);
           // "facet normal x y z"
-          if(!fgets(buffer, sizeof(buffer), fp)) break;
+          if(!fgets0(buffer, sizeof(buffer), fp)) break;
         }
       }
       // "outer loop"
-      if(!fgets(buffer, sizeof(buffer), fp)) break;
+      if(!fgets0(buffer, sizeof(buffer), fp)) break;
       // "vertex x y z"
       for(int i = 0; i < 3; i++) {
-        if(!fgets(buffer, sizeof(buffer), fp)) break;
+        if(!fgets0(buffer, sizeof(buffer), fp)) break;
         char s1[256];
         double x, y, z;
         if(sscanf(buffer, "%s %lf %lf %lf", s1, &x, &y, &z) != 4) break;
@@ -80,9 +93,9 @@ int GModel::readSTL(const std::string &name, double tolerance)
         bbox += p;
       }
       // "endloop"
-      if(!fgets(buffer, sizeof(buffer), fp)) break;
+      if(!fgets0(buffer, sizeof(buffer), fp)) break;
       // "endfacet"
-      if(!fgets(buffer, sizeof(buffer), fp)) break;
+      if(!fgets0(buffer, sizeof(buffer), fp)) break;
     }
   }
 

@@ -270,13 +270,16 @@ mesh.add('unpartition', doc, None)
 doc = '''Optimize the mesh of the current model using `method' (empty for default tetrahedral mesh optimizer, "Netgen" for Netgen optimizer, "HighOrder" for direct high-order mesh optimizer, "HighOrderElastic" for high-order elastic smoother, "HighOrderFastCurving" for fast curving algorithm, "Laplace2D" for Laplace smoothing, "Relocate2D" and "Relocate3D" for node relocation, "QuadQuasiStructured" for quad mesh optimization, "UntangleMeshGeometry" for untangling). If `force' is set apply the optimization also to discrete entities. If `dimTags' (given as a vector of (dim, tag) pairs) is given, only apply the optimizer to the given entities.'''
 mesh.add('optimize', doc, None, istring('method', '""'), ibool('force', 'false', 'False'), iint('niter', '1'), ivectorpair('dimTags', 'gmsh::vectorpair()', '[]', '[]'))
 
+doc = '''Capture a front by swapping edges.'''
+mesh.add('captureFront', doc, None, ivectorint('nodeTags'), ivectorint('nodePhases'))
+
 doc = '''Recombine the mesh of the current model.'''
 mesh.add('recombine', doc, None)
 
 doc = '''Refine the mesh of the current model by uniformly splitting the elements.'''
 mesh.add('refine', doc, None)
 
-doc = '''Set the order of the elements in the mesh of the current model to `order'.'''
+doc = '''Change the order of the elements in the mesh of the current model to `order'.'''
 mesh.add('setOrder', doc, None, iint('order'))
 
 doc = '''Get the last entities `dimTags' (as a vector of (dim, tag) pairs) where a meshing error occurred. Currently only populated by the new 3D meshing algorithms.'''
@@ -603,7 +606,7 @@ doc = '''Antoine put a comment here.'''
 mesh.add('get_DF', doc, None, ovectordouble('api_d_pos'),ovectorint('api_d_tags'), ovectorsize('api_d_ids'), ovectordouble('api_t_pos'), ovectorint('api_t_tags'), ovectorsize('api_t_ids'), ovectorsize('DF_to_meshNodes'), ovectordouble('DF_to_mesh_parametric'), ovectorsize('meshNodes_to_DF'), ovectordouble('mesh_to_DF_parametric'))
 
 doc = '''Antoine put a comment here.'''
-mesh.add('get_front_nodes_position', doc, None, ovectordouble('api_position') )
+mesh.add('get_front_nodes_position', doc, None, ovectordouble('api_position'), ovectorint('front_nodes') )
 
 doc = '''Antoine put a comment here.'''
 mesh.add('get_nodes_position', doc, None, ovectordouble('api_position') )
@@ -619,6 +622,13 @@ mesh.add('relaying_relax', doc, None, idouble('lambda_coeff'), iint('nIterOut'),
 
 doc = '''Antoine put a comment here.'''
 mesh.add('set_boundary_from_mesh', doc, None, ovectordouble('bnd_pos') )
+# mesh.add('relaying_relay', doc, None )
+
+doc = '''Antoine put a comment here.'''
+mesh.add('restore_initial_mesh', doc, None )
+
+doc = '''Antoine put a comment here.'''
+mesh.add('relaying_relax', doc, None,  idouble('myLambda'),  iint('nIterOut'),  iint('nIterIn') ,  idouble('distMax'),  idouble('RATIO'))
 
 doc = '''Antoine put a comment here.'''
 mesh.add('redist_front', doc, None, idouble('lc') )
@@ -731,7 +741,7 @@ geo.add('addSurfaceLoop', doc, oint, ivectorint('surfaceTags'), iint('tag', '-1'
 doc = '''Add a volume (a region) in the built-in CAD representation, defined by one or more shells `shellTags'. The first surface loop defines the exterior boundary; additional surface loop define holes. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the volume.'''
 geo.add('addVolume', doc, oint, ivectorint('shellTags'), iint('tag', '-1'))
 
-doc = '''Add a `geometry' in the built-in CAD representation. `geometry' can currently be one of "Sphere" or "PolarSphere" (where `numbers' should contain the x, y, z coordinates of the center, followed by the radius), or "Parametric" (where `strings' should contains three expression evaluating to the x, y and z coordinates. If `tag' is positive, set the tag of the geometry explicitly; otherwise a new tag is selected automatically. Return the tag of the geometry.'''
+doc = '''Add a `geometry' in the built-in CAD representation. `geometry' can currently be one of "Sphere" or "PolarSphere" (where `numbers' should contain the x, y, z coordinates of the center, followed by the radius), or "ParametricSurface" (where `strings' should contains three expression evaluating to the x, y and z coordinates in terms of parametric coordinates u and v). If `tag' is positive, set the tag of the geometry explicitly; otherwise a new tag is selected automatically. Return the tag of the geometry.'''
 geo.add('addGeometry', doc, oint, istring('geometry'), ivectordouble('numbers', 'std::vector<double>()', '[]', '[]'), ivectorstring('strings', 'std::vector<std::string>()', '[]', '[]'), iint('tag', '-1'))
 
 doc = '''Add a point in the built-in CAD representation, at coordinates (`x', `y', `z') on the geometry `geometryTag'. If `meshSize' is > 0, add a meshing constraint at that point. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the point. For surface geometries, only the `x' and `y' coordinates are used.'''
@@ -772,7 +782,7 @@ geo.add('remove', doc, None, ivectorpair('dimTags'), ibool('recursive', 'false',
 doc = '''Remove all duplicate entities in the built-in CAD representation (different entities at the same geometrical location).'''
 geo.add('removeAllDuplicates', doc, None)
 
-doc = '''Split the curve of tag `tag' in the built-in CAD representation, on the specified control points `pointTags'. This feature is only available for lines, splines and b-splines. Return the tag(s) `curveTags' of the newly created curve(s).'''
+doc = '''Split the curve of tag `tag' in the built-in CAD representation, on the specified control points `pointTags'. This feature is only available for splines and b-splines. Return the tag(s) `curveTags' of the newly created curve(s).'''
 geo.add('splitCurve', doc, None, iint('tag'), ivectorint('pointTags'), ovectorint('curveTags'))
 
 doc = '''Get the maximum tag of entities of dimension `dim' in the built-in CAD representation.'''
@@ -868,7 +878,7 @@ doc = '''Add a plane surface in the OpenCASCADE CAD representation, defined by o
 occ.add('addPlaneSurface', doc, oint, ivectorint('wireTags'), iint('tag', '-1'))
 
 doc = '''Add a surface in the OpenCASCADE CAD representation, filling the curve loop `wireTag'. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface. If `pointTags' are provided, force the surface to pass through the given points. The other optional arguments are `degree' (the degree of the energy criterion to minimize for computing the deformation of the surface), `numPointsOnCurves' (the average number of points for discretisation of the bounding curves), `numIter' (the maximum number of iterations of the optimization process), `anisotropic' (improve performance when the ratio of the length along the two parametric coordinates of the surface is high), `tol2d' (tolerance to the constraints in the parametric plane of the surface), `tol3d' (the maximum distance allowed between the support surface and the constraints), `tolAng' (the maximum angle allowed between the normal of the surface and the constraints), `tolCurv' (the maximum difference of curvature allowed between the surface and the constraint), `maxDegree' (the highest degree which the polynomial defining the filling surface can have) and, `maxSegments' (the largest number of segments which the filling surface can have).'''
-occ.add('addSurfaceFilling', doc, oint, iint('wireTag'), iint('tag', '-1'), ivectorint('pointTags', 'std::vector<int>()', '[]', '[]'), iint('degree', '3'), iint('numPointsOnCurves', '15'), iint('numIter', '2'), ibool('anisotropic', 'false', 'False'), idouble('tol2d', '0.00001'), idouble('tol3d', '0.0001'), idouble('tolAng', '0.01'), idouble('tolCurv', '0.1'), iint('maxDegree', '8'), iint('maxSegments', '9'))
+occ.add('addSurfaceFilling', doc, oint, iint('wireTag'), iint('tag', '-1'), ivectorint('pointTags', 'std::vector<int>()', '[]', '[]'), iint('degree', '2'), iint('numPointsOnCurves', '15'), iint('numIter', '2'), ibool('anisotropic', 'false', 'False'), idouble('tol2d', '0.00001'), idouble('tol3d', '0.0001'), idouble('tolAng', '0.01'), idouble('tolCurv', '0.1'), iint('maxDegree', '8'), iint('maxSegments', '9'))
 
 doc = '''Add a BSpline surface in the OpenCASCADE CAD representation, filling the curve loop `wireTag'. The curve loop should be made of 2, 3 or 4 curves. The optional `type' argument specifies the type of filling: "Stretch" creates the flattest patch, "Curved" (the default) creates the most rounded patch, and "Coons" creates a rounded patch with less depth than "Curved". If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. Return the tag of the surface.'''
 occ.add('addBSplineFilling', doc, oint, iint('wireTag'), iint('tag', '-1'), istring('type', '""'))
@@ -929,6 +939,21 @@ occ.add('fillet', doc, None, ivectorint('volumeTags'), ivectorint('curveTags'), 
 
 doc = '''Chamfer the volumes `volumeTags' on the curves `curveTags' with distances `distances' measured on surfaces `surfaceTags'. The `distances' vector can either contain a single distance, as many distances as `curveTags' and `surfaceTags', or twice as many as `curveTags' and `surfaceTags' (in which case the first in each pair is measured on the corresponding surface in `surfaceTags', the other on the other adjacent surface). Return the chamfered entities in `outDimTags'. Remove the original volume if `removeVolume' is set.'''
 occ.add('chamfer', doc, None, ivectorint('volumeTags'), ivectorint('curveTags'), ivectorint('surfaceTags'), ivectordouble('distances'), ovectorpair('outDimTags'), ibool('removeVolume', 'true', 'True'))
+
+doc = '''Defeature the volumes `volumeTags' by removing the surfaces `surfaceTags'. Return the defeatured entities in `outDimTags'. Remove the original volume if `removeVolume' is set.'''
+occ.add('defeature', doc, None, ivectorint('volumeTags'), ivectorint('surfaceTags'), ovectorpair('outDimTags'), ibool('removeVolume', 'true', 'True'))
+
+doc = '''Create a fillet edge between edges `edgeTag1' and `edgeTag2' with radius `radius'. The modifed edges keep their tag. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically.'''
+occ.add('fillet2D', doc, oint, iint('edgeTag1'), iint('edgeTag2'), idouble('radius'), iint('tag', '-1'))
+
+doc = '''Create a chamfer edge between edges `edgeTag1' and `edgeTag2' with distance1 `distance1' and distance2 `distance2'. The modifed edges keep their tag. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically.'''
+occ.add('chamfer2D', doc, oint, iint('edgeTag1'), iint('edgeTag2'), idouble('distance1'), idouble('distance2'), iint('tag', '-1'))
+
+doc = '''Create an offset curve based on the curve loop `curveLoopTag' with offset `offset'. Return the offset curves in `outDimTags' as a vector of (dim, tag) pairs.'''
+occ.add('offsetCurve', doc, None, iint('curveLoopTag'), idouble('offset'), ovectorpair('outDimTags'))
+
+doc = '''Find the minimal distance between shape with `dim1' and `tag1' and shape with `dim2' and `tag2' and the according coordinates. Return the distance in `distance' and the coordinate of the points as `x1', `y1', `z1' and `x2', `y2', `z2'. '''
+occ.add('getDistance', doc, None, iint('dim1'), iint('tag1'), iint('dim2'), iint('tag2'), odouble('distance'), odouble('x1'), odouble('y1'), odouble('z1'), odouble('x2'), odouble('y2'), odouble('z2'))
 
 doc = '''Compute the boolean union (the fusion) of the entities `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the OpenCASCADE CAD representation. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
 occ.add('fuse', doc, None, ivectorpair('objectDimTags'), ivectorpair('toolDimTags'), ovectorpair('outDimTags'), ovectorvectorpair('outDimTagsMap'), iint('tag', '-1'), ibool('removeObject', 'true', 'True'), ibool('removeTool', 'true', 'True'))

@@ -1001,6 +1001,19 @@ GMSH_API void gmshModelMeshOptimize(const char * method, const int force, const 
   }
 }
 
+GMSH_API void gmshModelMeshCaptureFront(const int * nodeTags, const size_t nodeTags_n, const int * nodePhases, const size_t nodePhases_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_nodeTags_(nodeTags, nodeTags + nodeTags_n);
+    std::vector<int> api_nodePhases_(nodePhases, nodePhases + nodePhases_n);
+    gmsh::model::mesh::captureFront(api_nodeTags_, api_nodePhases_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshRecombine(int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -2534,13 +2547,15 @@ GMSH_API void gmshModelMeshGet_DF(double ** api_d_pos, size_t * api_d_pos_n, int
   }
 }
 
-GMSH_API void gmshModelMeshGet_front_nodes_position(double ** api_position, size_t * api_position_n, int * ierr)
+GMSH_API void gmshModelMeshGet_front_nodes_position(double ** api_position, size_t * api_position_n, int ** front_nodes, size_t * front_nodes_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_api_position_;
-    gmsh::model::mesh::get_front_nodes_position(api_api_position_);
+    std::vector<int> api_front_nodes_;
+    gmsh::model::mesh::get_front_nodes_position(api_api_position_, api_front_nodes_);
     vector2ptr(api_api_position_, api_position, api_position_n);
+    vector2ptr(api_front_nodes_, front_nodes, front_nodes_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2571,28 +2586,45 @@ GMSH_API void gmshModelMeshReset_discrete_front(int * ierr)
   }
 }
 
+<<<<<<< HEAD
 GMSH_API void gmshModelMeshRelaying_and_relax(const double relax, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     gmsh::model::mesh::relaying_and_relax(relax);
+=======
+GMSH_API void gmshModelMeshRelaying_relay(int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::relaying_relay();
+>>>>>>> a4e0d2e81d6666320be6370a6b77cee083dc55fa
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
 
+<<<<<<< HEAD
 GMSH_API void gmshModelMeshRelaying_relax(const double lambda_coeff, const int nIterOut, const int nIterIn, const double distMax, const double RATIO, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     gmsh::model::mesh::relaying_relax(lambda_coeff, nIterOut, nIterIn, distMax, RATIO);
+=======
+GMSH_API void gmshModelMeshRestore_initial_mesh(int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::restore_initial_mesh();
+>>>>>>> a4e0d2e81d6666320be6370a6b77cee083dc55fa
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
 
+<<<<<<< HEAD
 GMSH_API void gmshModelMeshSet_boundary_from_mesh(double ** bnd_pos, size_t * bnd_pos_n, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -2600,6 +2632,13 @@ GMSH_API void gmshModelMeshSet_boundary_from_mesh(double ** bnd_pos, size_t * bn
     std::vector<double> api_bnd_pos_;
     gmsh::model::mesh::set_boundary_from_mesh(api_bnd_pos_);
     vector2ptr(api_bnd_pos_, bnd_pos, bnd_pos_n);
+=======
+GMSH_API void gmshModelMeshRelaying_relax(const double myLambda, const int nIterOut, const int nIterIn, const double distMax, const double RATIO, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::relaying_relax(myLambda, nIterOut, nIterIn, distMax, RATIO);
+>>>>>>> a4e0d2e81d6666320be6370a6b77cee083dc55fa
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -3964,6 +4003,71 @@ GMSH_API void gmshModelOccChamfer(const int * volumeTags, const size_t volumeTag
     gmsh::vectorpair api_outDimTags_;
     gmsh::model::occ::chamfer(api_volumeTags_, api_curveTags_, api_surfaceTags_, api_distances_, api_outDimTags_, removeVolume);
     vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelOccDefeature(const int * volumeTags, const size_t volumeTags_n, const int * surfaceTags, const size_t surfaceTags_n, int ** outDimTags, size_t * outDimTags_n, const int removeVolume, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_volumeTags_(volumeTags, volumeTags + volumeTags_n);
+    std::vector<int> api_surfaceTags_(surfaceTags, surfaceTags + surfaceTags_n);
+    gmsh::vectorpair api_outDimTags_;
+    gmsh::model::occ::defeature(api_volumeTags_, api_surfaceTags_, api_outDimTags_, removeVolume);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API int gmshModelOccFillet2D(const int edgeTag1, const int edgeTag2, const double radius, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::occ::fillet2D(edgeTag1, edgeTag2, radius, tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API int gmshModelOccChamfer2D(const int edgeTag1, const int edgeTag2, const double distance1, const double distance2, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::occ::chamfer2D(edgeTag1, edgeTag2, distance1, distance2, tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API void gmshModelOccOffsetCurve(const int curveLoopTag, const double offset, int ** outDimTags, size_t * outDimTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_outDimTags_;
+    gmsh::model::occ::offsetCurve(curveLoopTag, offset, api_outDimTags_);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelOccGetDistance(const int dim1, const int tag1, const int dim2, const int tag2, double * distance, double * x1, double * y1, double * z1, double * x2, double * y2, double * z2, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::occ::getDistance(dim1, tag1, dim2, tag2, *distance, *x1, *y1, *z1, *x2, *y2, *z2);
   }
   catch(...){
     if(ierr) *ierr = 1;

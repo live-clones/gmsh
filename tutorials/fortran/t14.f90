@@ -18,7 +18,7 @@ use gmsh
 implicit none
 type(gmsh_t) :: gmsh
 integer(c_int) :: ret, domain_tag, domain_physical_tag, terminals_physical_tag, &
-                  boundary_physical_tag, complement_physical_tag
+                  boundary_physical_tag, complement_physical_tag, i
 integer(c_int), allocatable :: e(:,:), terminal_tags(:), boundary_dimtags(:,:), &
                                boundary_tags(:), complement_tags(:)
 real(c_double), parameter :: lc = .1
@@ -82,8 +82,7 @@ domain_physical_tag = 1001
 ret = gmsh%model%addPhysicalGroup(dim=3, tags=[domain_tag], tag=domain_physical_tag, name="Whole domain")
 
 ! Four "terminals" of the model
-! terminal_tags = [e[3][1], e[5][1], e[7][1], e[9][1]]
-terminal_tags = [e(2,4), e(2,6), e(2,7), e(2,9)]
+terminal_tags = [e(2,4), e(2,6), e(2,8), e(2,10)]
 terminals_physical_tag = 2001
 ret = gmsh%model%addPhysicalGroup(dim=2, &
                                   tags=terminal_tags, &
@@ -96,7 +95,7 @@ call gmsh%model%getBoundary(dimTags=reshape([3, domain_tag], [2, 1]), &
                             outDimTags=boundary_dimtags)
 
 boundary_tags = boundary_dimtags(2,:)
-complement_tags = pack(boundary_dimtags(2,:), boundary_dimtags(2,:) == terminal_tags)
+complement_tags = pack(boundary_tags, .not.[(any(terminal_tags == boundary_tags(i)), i=1, size(boundary_tags))])
 
 ! Whole domain surface
 boundary_physical_tag = 2002

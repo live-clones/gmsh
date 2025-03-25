@@ -1,6 +1,6 @@
 /*!
 \file  timers.c
-\brief Various timing functions 
+\brief Various timing functions
 
 \date   Started 4/12/2007
 \author George
@@ -18,7 +18,7 @@
 **************************************************************************/
 double gk_WClockSeconds(void)
 {
-#ifdef __GNUC__
+#if 0 //def __GNUC__
   struct timeval ctime;
 
   gettimeofday(&ctime, NULL);
@@ -49,4 +49,3 @@ double gk_CPUSeconds(void)
   #endif
 #endif
 }
-

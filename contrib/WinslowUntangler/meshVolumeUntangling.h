@@ -55,6 +55,7 @@ bool untangleGRegionMeshConstrained(GRegion *gr, int iterMax = 10,
  * @return True if successful
  */
 bool buildTetrahedraFromElements(
+    std::vector<std::array<double, 3> > &points,
     const std::vector<std::vector<uint32_t> > &elements,
     const std::vector<std::vector<std::array<double,3> > > &elementTargetShapes,
     std::vector<std::array<uint32_t, 4> > &tets,

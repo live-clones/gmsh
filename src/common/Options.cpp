@@ -4760,12 +4760,6 @@ double opt_geometry_occ_make_solids(OPT_ARGS_NUM)
   return CTX::instance()->geom.occMakeSolids;
 }
 
-double opt_geometry_occ_union_unify(OPT_ARGS_NUM)
-{
-  if(action & GMSH_SET) CTX::instance()->geom.occUnionUnify = (int)val;
-  return CTX::instance()->geom.occUnionUnify;
-}
-
 double opt_geometry_occ_thrusections_degree(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->geom.occThruSectionsDegree = (int)val;
@@ -4778,11 +4772,39 @@ double opt_geometry_occ_parallel(OPT_ARGS_NUM)
   return CTX::instance()->geom.occParallel;
 }
 
+double opt_geometry_occ_boolean_check_inverted(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occBooleanCheckInverted = (int)val;
+  return CTX::instance()->geom.occBooleanCheckInverted;
+}
+
+double opt_geometry_occ_boolean_glue(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occBooleanGlue = (int)val;
+  return CTX::instance()->geom.occBooleanGlue;
+}
+
+double opt_geometry_occ_boolean_non_destructive(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occBooleanNonDestructive = (int)val;
+  return CTX::instance()->geom.occBooleanNonDestructive;
+}
+
 double opt_geometry_occ_boolean_preserve_numbering(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)
     CTX::instance()->geom.occBooleanPreserveNumbering = (int)val;
   return CTX::instance()->geom.occBooleanPreserveNumbering;
+}
+
+double opt_geometry_occ_boolean_simplify(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->geom.occBooleanSimplify = (int)val;
+  return CTX::instance()->geom.occBooleanSimplify;
 }
 
 double opt_geometry_occ_scaling(OPT_ARGS_NUM)
@@ -6148,6 +6170,14 @@ double opt_mesh_flexible_transfinite(OPT_ARGS_NUM)
   return CTX::instance()->mesh.flexibleTransfinite;
 }
 
+double opt_mesh_quasi_transfinite(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) {
+    CTX::instance()->mesh.quasiTransfinite = (int)val;
+  }
+  return CTX::instance()->mesh.quasiTransfinite;
+}
+
 double opt_mesh_algo_subdivide(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
@@ -6665,9 +6695,18 @@ double opt_mesh_nb_trihedra(OPT_ARGS_NUM)
 
 double opt_mesh_cpu_time(OPT_ARGS_NUM)
 {
-  double s[50];
-  GetStatistics(s);
-  return s[14] + s[15] + s[16];
+  return CTX::instance()->mesh.timer[0] + CTX::instance()->mesh.timer[1] +
+    CTX::instance()->mesh.timer[2];
+}
+
+double opt_mesh_min_quality(OPT_ARGS_NUM)
+{
+  return CTX::instance()->mesh.minQuality;
+}
+
+double opt_mesh_avg_quality(OPT_ARGS_NUM)
+{
+  return CTX::instance()->mesh.avgQuality;
 }
 
 double opt_mesh_partition_num(OPT_ARGS_NUM)

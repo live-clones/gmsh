@@ -34,7 +34,7 @@ elementTypes = gmsh.model.mesh.getElementTypes()
 
 for t in elementTypes:
     # Retrieve properties for the given element type
-    elementName, dim, order, numNodes, numPrimNodes, localNodeCoord =\
+    elementName, dim, order, numNodes, localNodeCoord, numPrimNodes =\
     gmsh.model.mesh.getElementProperties(t)
     print("\n** " + elementName + " **\n")
 

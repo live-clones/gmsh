@@ -30,6 +30,7 @@
 #include "ExtrudeParams.h"
 #include "OS.h"
 #include "Context.h"
+#include "meshVolumeUntangling.h"
 
 void splitQuadRecovery::add(const MFace &f, MVertex *v, GFace *gf)
 {
@@ -47,13 +48,15 @@ void splitQuadRecovery::add(const MFace &f, MVertex *v, GFace *gf)
 int splitQuadRecovery::buildPyramids(GModel *gm)
 {
   if(_quad.empty()) return 0;
-
+  //  return 0;
   Msg::Info("Generating pyramids for hybrid mesh...");
   int npyram = 0;
   for(auto it = gm->firstRegion(); it != gm->lastRegion(); it++) {
     GRegion *gr = *it;
     if(gr->meshAttributes.method == MESH_TRANSFINITE) continue;
-    if(gr->isFullyDiscrete()) continue;
+    if(gr->isFullyDiscrete()) {
+      continue;
+    }
     ExtrudeParams *ep = gr->meshAttributes.extrude;
     if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == EXTRUDED_ENTITY) continue;
 
@@ -180,6 +183,8 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
 
   if(!success) return;
 
+  //  printf("CTX::instance()->mesh.algo3d = %d\n",CTX::instance()->mesh.algo3d);
+  
   // now do insertion of points
   if(CTX::instance()->mesh.algo3d == ALGO_3D_MMG3D) {
     for(std::size_t i = 0; i < regions.size(); i++) {
@@ -194,7 +199,8 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
     if(sqr.buildPyramids(gr->model())) {
       Msg::Info("Optimizing pyramids for hybrid mesh...");
       gr->model()->setAllVolumesPositive();
-      RelocateVerticesOfPyramids(regions, 3);
+      untangleGRegionMeshConstrained(gr);
+	//      RelocateVerticesOfPyramids(regions, 3);
       // RelocateVertices(regions, 3);
       Msg::Info("Done optimizing pyramids for hybrid mesh");
     }

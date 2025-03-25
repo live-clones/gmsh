@@ -31,7 +31,7 @@ struct contextMeshOptions {
   int recombineNodeRepositioning;
   double recombineMinimumQuality;
   int recombine3DAll, recombine3DLevel, recombine3DConformity;
-  int flexibleTransfinite, transfiniteTri, maxRetries;
+  int flexibleTransfinite, quasiTransfinite, transfiniteTri, maxRetries;
   int order, secondOrderLinear, secondOrderIncomplete;
   int meshOnlyVisible, meshOnlyEmpty;
   int minCircleNodes, minCurveNodes, minLineNodes;
@@ -88,6 +88,10 @@ struct contextMeshOptions {
   double nodeSize, lineWidth;
   int dual, voronoi, drawSkinOnly, colorCarousel, labelSampling;
   int smoothNormals, clip;
+  // records cpu times for 1D, 2D and 3D mesh generation
+  double timer[3];
+  // records minimal and average mesh quality after 2D and 3D mesh generation
+  double minQuality, avgQuality;
 };
 
 struct contextGeometryOptions {
@@ -100,9 +104,11 @@ struct contextGeometryOptions {
   double tolerance, toleranceBoolean, snap[3], transform[3][3], offset[3];
   int occAutoFix, occAutoEmbed, occFastUnbind;
   int occFixDegenerated, occFixSmallEdges, occFixSmallFaces;
-  int occSewFaces, occMakeSolids, occParallel, occBooleanPreserveNumbering;
+  int occSewFaces, occMakeSolids, occParallel;
   int occBoundsUseSTL, occDisableSTL, occImportLabels, occExportOnlyVisible;
-  int occUnionUnify, occThruSectionsDegree, occUseGenericClosestPoint;
+  int occBooleanCheckInverted, occBooleanGlue, occBooleanNonDestructive;
+  int occBooleanPreserveNumbering, occBooleanSimplify;
+  int occThruSectionsDegree, occUseGenericClosestPoint;
   int occBrepFormatVersion;
   double occScaling;
   std::string occTargetUnit;
@@ -305,8 +311,6 @@ public:
   // vector display type and options (for normals, etc.)
   int vectorType;
   double arrowRelHeadRadius, arrowRelStemRadius, arrowRelStemLength;
-  // records cpu times for 1-D, 2-D and 3-D mesh generation
-  double meshTimer[3];
   // dynamic variable tracking if the bbox is currently imposed
   int forcedBBox;
   // enable selection/hover/picking using the mouse
