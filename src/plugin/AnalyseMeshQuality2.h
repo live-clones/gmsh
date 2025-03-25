@@ -112,6 +112,8 @@ private:
   void _error(int verbosityPolicy, const char *format, ...) const;
   void _devPrintCount(const Counts &) const;
   std::size_t _printElementToCompute(const Counts &cnt2D, const Counts &cnt3D) const;
+  std::size_t _guidanceNothingToCompute(ComputeParameters param, Counts counts,
+                                        bool check2D, bool check3D) const;
 
 #if defined(HAVE_VISUDEV)
   void _computePointwiseQuantities(MElement *,
@@ -238,7 +240,7 @@ private:
     std::size_t curvedEl = 0;
     std::size_t existingEl = 0;
     std::size_t visibleEl = 0;
-    Counts operator+(Counts &);
+    Counts operator+(const Counts &) const;
   };
 };
 

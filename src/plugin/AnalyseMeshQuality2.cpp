@@ -162,8 +162,9 @@ PView *Plug::execute(PView *v)
   _verbose = static_cast<bool>(MeshQuality2Options_Number[17].def);
   bool freeData = static_cast<bool>(MeshQuality2Options_Number[18].def);
 
-  _info(1, "Executing the plugin AnalyseMeshQuality...");
-  _info(1, "Parameter 'printGuidance' is set to 1. This makes the plugin "
+  _info(0, "----------------------------------------");
+  _info(0, "Executing the plugin AnalyseMeshQuality...");
+  _info(1, "Parameter 'printGuidance' is ON. This makes the plugin "
         "to be verbose and to provide various explanations");
 
   //
@@ -206,22 +207,22 @@ PView *Plug::execute(PView *v)
   // Handle cases where no computation is requested
   if(freeData) {
     _info(-1, "Freeing data...");
-    _info(1, "Freeing data... (because 'freeData-NothingElse' is set to 1)");
+    _info(1, "Freeing data... (because parameter 'freeData-NothingElse' is ON)");
     // FIXME: create method clear in dataSingleDimension
     _data2D->clear();
     _data3D->clear();
     MeshQuality2Options_Number[18].def = 0;
-    _info(0, "Done. 'freeData-NothingElse' has been set to 0");
+    _info(0, "Done. Parameter 'freeData-NothingElse' has been set to OFF");
     _info(1, "Nothing else to do, rerun the plugin to compute something");
     return v;
   }
   if(!checkValidity && !computeDisto && !computeAspect) {
-    _warn(0, "Nothing to do because checkValidity, checkQualityDisto and "
-          "checkQualityAspect are all three set to 0");
+    _warn(0, "Nothing to do because 'checkValidity', 'checkQualityDisto' and "
+          "'checkQualityAspect' are all three OFF");
     return v;
   }
 
-  // Check which dimension to compute and get num of elements
+  // Check which dimension to compute/show, initialize data and counts elements
   bool check2D, check3D;
   _decideDimensionToCheck(check2D, check3D);
 
@@ -234,13 +235,16 @@ PView *Plug::execute(PView *v)
   if(check2D) _data2D->initialize(_m, param, counts2D);
   if(check3D) _data3D->initialize(_m, param, counts3D);
 
+  // TMP Dev
   _devPrintCount(counts2D);
   _devPrintCount(counts3D);
-  Counts totalCounts = counts2D + counts3D;
 
-  if(!_printElementToCompute(counts2D, counts3D)) {
-    _tellUserWhyNothingToDo(param, counts2D, counts3D);
-    return v;
+  // Check that there is something to do
+  std::size_t totalToCompute = _printElementToCompute(counts2D, counts3D);
+  if(!totalToCompute) {
+    std::size_t totalToShow = _guidanceNothingToCompute(param,
+      counts2D + counts3D, check2D, check3D);
+    if(!totalToShow) return v;
   }
 
   // TODO compute measures
@@ -482,21 +486,21 @@ void Plug::DataEntities::_count(unsigned char mask, std::size_t &elToCompute,
 
 void Plug::_devPrintCount(const Counts &counts) const
 {
-  _info(1, "Elements to compute:");
+  _info(1, "DEV Elements to compute:");
   for (int i = 0; i < 3; ++i) {
-    _info(1, " - Measure %d: %zu", i + 1, counts.elToCompute[i]);
+    _info(1, "DEV  - Measure %d: %zu", i + 1, counts.elToCompute[i]);
   }
 
-  _info(1, "Elements to show:");
+  _info(1, "DEV Elements to show:");
   for (int i = 0; i < 3; ++i) {
-    _info(1, " - Measure %d: %zu", i + 1, counts.elToShow[i]);
+    _info(1, "DEV  - Measure %d: %zu", i + 1, counts.elToShow[i]);
   }
 
-  _info(1, "Total elements: %zu", counts.totalEl);
-  _info(1, "Curved elements computed: %zu", counts.elCurvedComputed);
-  _info(1, "Curved elements: %zu", counts.curvedEl);
-  _info(1, "Existing elements: %zu", counts.existingEl);
-  _info(1, "Visible elements: %zu", counts.visibleEl);
+  _info(1, "DEV Total elements: %zu", counts.totalEl);
+  _info(1, "DEV Curved elements computed: %zu", counts.elCurvedComputed);
+  _info(1, "DEV Curved elements: %zu", counts.curvedEl);
+  _info(1, "DEV Existing elements: %zu", counts.existingEl);
+  _info(1, "DEV Visible elements: %zu", counts.visibleEl);
 }
 
 void Plug::DataEntities::reset(std::size_t num)
@@ -583,6 +587,95 @@ std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
           cnt3D.elToCompute[1], cnt3D.elToCompute[2]);
 
   return sum2D + sum3D;
+}
+
+std::size_t Plug::_guidanceNothingToCompute(ComputeParameters param,
+                                            Counts counts,
+                                            bool check2D, bool check3D) const
+{
+  _info(1, "No element to compute");
+
+  std::size_t sumToShow = 0;
+  for (std::size_t x : counts.elToCompute) sumToShow += x;
+
+  if (!sumToShow) {
+    _warn(-1, "Nothing to compute, nothing to show.");
+    _warn(1, "Nothing to show neither.");
+
+    if (counts.totalEl) {
+      if (param.onlyVisible && counts.visibleEl == 0) {
+        _warn(1, "Parameter 'restrictToVisibleElements' is ON but no visible elements found.");
+      }
+      else if (param.onlyCurved && counts.curvedEl == 0) {
+        _warn(1, "Parameter 'restrictToCurvedElements' is ON but no curved elements found.");
+      }
+      else {
+        _error(1, "Unexpected state: should not be here.");
+      }
+    }
+    else { // Case where no elements found
+      if (_dimensionPolicy == 0) {
+        if (check2D) {
+          if (_m->getNumFaces())
+            _warn(1, "No mesh has been found (in current model)");
+          else
+            _warn(1, "No geometry has been found (in current model)");
+        }
+        else if(check3D) {
+          _error(1, "Unexpected state: should not be here with check3D==true");
+          // ...because if _dimensionPolicy == 0, then check3D==true only if there are elements
+          // _info(1, "Considered 3D as dimensionPolicy is 0 but no 3D mesh in current model.");
+          // _info(1, "Maybe set dimensionPolicy to 1 to force 2D.");
+        }
+        else {
+          _error(1, "Unexpected state: should not be here with check3D==false");
+          // ...because if _dimensionPolicy == 0, then check3D==true only if there are elements
+          // _info(1, "Considered 3D as dimensionPolicy is 0 but no 3D mesh in current model.");
+          // _info(1, "Maybe set dimensionPolicy to 1 to force 2D.");
+        }
+      }
+      else if (_dimensionPolicy == 1) {
+        if (_m->getNumRegions()) {
+          _warn(0, "Planned to check 2D mesh as parameter 'dimensionPolicy' "
+                   "is ON, but no 2D mesh found.");
+          _warn(0, " 3D geometry found, maybe 'dimensionPolicy' "
+                   "should be set to 0");
+        }
+        else {
+          if (_m->getNumFaces())
+            _warn(1, "No mesh has been found (in current model)");
+          else
+            _warn(1, "No geometry has been found (in current model)");
+        }
+      }
+      else if (_dimensionPolicy == 2 || _dimensionPolicy == 3) {
+        if (_m->getNumFaces() + _m->getNumRegions())
+          _warn(1, "No mesh has been found (in current model)");
+        else
+          _warn(1, "No geometry has been found (in current model)");
+      }
+    }
+  }
+  return sumToShow;
+}
+
+Plug::Counts Plug::Counts::operator+(const Counts &other) const {
+  Counts result;
+
+  // Summing up elToCompute arrays element-wise
+  for (int i = 0; i < 3; ++i) {
+    result.elToCompute[i] = this->elToCompute[i] + other.elToCompute[i];
+    result.elToShow[i] = this->elToShow[i] + other.elToShow[i];
+  }
+
+  // Summing up individual scalar fields
+  result.totalEl = this->totalEl + other.totalEl;
+  result.elCurvedComputed = this->elCurvedComputed + other.elCurvedComputed;
+  result.curvedEl = this->curvedEl + other.curvedEl;
+  result.existingEl = this->existingEl + other.existingEl;
+  result.visibleEl = this->visibleEl + other.visibleEl;
+
+  return result; // Return the newly created Counts as the result
 }
 
 
