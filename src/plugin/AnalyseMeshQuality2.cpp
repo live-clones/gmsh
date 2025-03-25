@@ -163,7 +163,7 @@ PView *Plug::execute(PView *v)
   bool freeData = static_cast<bool>(MeshQuality2Options_Number[18].def);
 
   _info(1, "Executing the plugin AnalyseMeshQuality...");
-  _info(1, "Parameter 'printGuidance' is set to 1. This makes the plugin"
+  _info(1, "Parameter 'printGuidance' is set to 1. This makes the plugin "
         "to be verbose and to provide various explanations");
 
   //
@@ -237,6 +237,19 @@ PView *Plug::execute(PView *v)
   _devPrintCount(counts2D);
   _devPrintCount(counts3D);
   Counts totalCounts = counts2D + counts3D;
+
+  if(!_printElementToCompute(counts2D, counts3D)) {
+    _tellUserWhyNothingToDo(param, counts2D, counts3D);
+    return v;
+  }
+
+  // TODO compute measures
+  // If validity not asked : tell that compute it any way because it can speedup
+  // say that only if verb 1
+
+
+  // TODO compute show
+
 
   // TODO warning if no element to check (the case T8, maybe another gmodel?)
 
@@ -549,5 +562,29 @@ void Plug::_error(int verb, const char *format, ...) const
   _printMessage(Msg::Error, format, args);
   va_end(args);
 }
+
+std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
+                                         const Counts &cnt3D) const
+{
+  std::size_t sum2D = 0, sum3D = 0;
+  for (std::size_t x : cnt2D.elToCompute) sum2D += x;
+  for (std::size_t x : cnt3D.elToCompute) sum3D += x;
+
+  if(sum2D + sum3D == 0) return 0;
+
+  // Print the table header using `_info`
+  _info(0, "Number of quantities to compute:");
+  _info(0, "%-10s%-10s%-10s%-10s", "", "Validity", "Disto", "Aspect");
+  if(sum2D)
+    _info(0, "%-10s%-10d%-10d%-10d", "2D", cnt2D.elToCompute[0],
+          cnt2D.elToCompute[1], cnt2D.elToCompute[2]);
+  if(sum3D)
+    _info(0, "%-10s%-10d%-10d%-10d", "3D", cnt3D.elToCompute[0],
+          cnt3D.elToCompute[1], cnt3D.elToCompute[2]);
+
+  return sum2D + sum3D;
+}
+
+
 
 #endif
