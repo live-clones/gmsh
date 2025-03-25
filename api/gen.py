@@ -624,8 +624,8 @@ doc = '''Antoine put a comment here.'''
 mesh.add('set_boundary_from_mesh', doc, None, ovectordouble('bnd_pos') )
 # mesh.add('relaying_relay', doc, None )
 
-doc = '''Antoine put a comment here.'''
-mesh.add('restore_initial_mesh', doc, None )
+# doc = '''Antoine put a comment here.'''
+# mesh.add('restore_initial_mesh', doc, None )
 
 # doc = '''Antoine put a comment here.'''
 # mesh.add('relaying_relax', doc, None,  idouble('myLambda'),  iint('nIterOut'),  iint('nIterIn') ,  idouble('distMax'),  idouble('RATIO'))
