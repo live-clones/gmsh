@@ -234,6 +234,8 @@ PView *Plug::execute(PView *v)
   if(check2D) _data2D->initialize(_m, param, counts2D);
   if(check3D) _data3D->initialize(_m, param, counts3D);
 
+  _devPrintCount(counts2D);
+  _devPrintCount(counts3D);
   Counts totalCounts = counts2D + counts3D;
 
   // TODO warning if no element to check (the case T8, maybe another gmodel?)
@@ -463,6 +465,25 @@ void Plug::DataEntities::_count(unsigned char mask, std::size_t &elToCompute,
       ++elToShow;
     }
   }
+}
+
+void Plug::_devPrintCount(const Counts &counts) const
+{
+  _info(1, "Elements to compute:");
+  for (int i = 0; i < 3; ++i) {
+    _info(1, " - Measure %d: %zu", i + 1, counts.elToCompute[i]);
+  }
+
+  _info(1, "Elements to show:");
+  for (int i = 0; i < 3; ++i) {
+    _info(1, " - Measure %d: %zu", i + 1, counts.elToShow[i]);
+  }
+
+  _info(1, "Total elements: %zu", counts.totalEl);
+  _info(1, "Curved elements computed: %zu", counts.elCurvedComputed);
+  _info(1, "Curved elements: %zu", counts.curvedEl);
+  _info(1, "Existing elements: %zu", counts.existingEl);
+  _info(1, "Visible elements: %zu", counts.visibleEl);
 }
 
 void Plug::DataEntities::reset(std::size_t num)

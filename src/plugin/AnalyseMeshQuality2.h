@@ -110,6 +110,7 @@ private:
   void _info(int verbosityPolicy, const char *format, ...) const;
   void _warn(int verbosityPolicy, const char *format, ...) const;
   void _error(int verbosityPolicy, const char *format, ...) const;
+  void _devPrintCount(const Counts &) const;
   std::size_t _printElementToCompute(const Counts &cnt2D, const Counts &cnt3D) const;
 
 #if defined(HAVE_VISUDEV)
