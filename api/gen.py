@@ -605,8 +605,8 @@ mesh.add('add_free_form', doc, None, iint('tag'), ivectordouble('poly'), ivector
 doc = '''Antoine put a comment here.'''
 mesh.add('get_DF', doc, None, ovectordouble('api_d_pos'),ovectorint('api_d_tags'), ovectorsize('api_d_ids'), ovectordouble('api_t_pos'), ovectorint('api_t_tags'), ovectorsize('api_t_ids'), ovectorsize('DF_to_meshNodes'), ovectordouble('DF_to_mesh_parametric'), ovectorsize('meshNodes_to_DF'), ovectordouble('mesh_to_DF_parametric'))
 
-doc = '''Antoine put a comment here.'''
-mesh.add('get_front_nodes_position', doc, None, ovectordouble('api_position'), ovectorint('front_nodes') )
+# doc = '''Antoine put a comment here.'''
+# mesh.add('get_front_nodes_position', doc, None, ovectordouble('api_position'), ovectorint('front_nodes') )
 
 doc = '''Antoine put a comment here.'''
 mesh.add('get_nodes_position', doc, None, ovectordouble('api_position') )
@@ -627,8 +627,8 @@ mesh.add('set_boundary_from_mesh', doc, None, ovectordouble('bnd_pos') )
 doc = '''Antoine put a comment here.'''
 mesh.add('restore_initial_mesh', doc, None )
 
-doc = '''Antoine put a comment here.'''
-mesh.add('relaying_relax', doc, None,  idouble('myLambda'),  iint('nIterOut'),  iint('nIterIn') ,  idouble('distMax'),  idouble('RATIO'))
+# doc = '''Antoine put a comment here.'''
+# mesh.add('relaying_relax', doc, None,  idouble('myLambda'),  iint('nIterOut'),  iint('nIterIn') ,  idouble('distMax'),  idouble('RATIO'))
 
 doc = '''Antoine put a comment here.'''
 mesh.add('redist_front', doc, None, idouble('lc') )

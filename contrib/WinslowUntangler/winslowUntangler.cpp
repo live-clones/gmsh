@@ -45,8 +45,6 @@ size_t perTriangleP2 = 19;
 
 using namespace ArrayGeometry;
 
-size_t perTriangleP2 = 19;
-
 namespace WinslowUntangler {
 
   template <size_t D>

@@ -4712,32 +4712,6 @@ end
 const get__df = get_DF
 
 """
-    gmsh.model.mesh.get_front_nodes_position()
-
-Antoine put a comment here.
-
-Return `api_position`, `front_nodes`.
-
-Types:
- - `api_position`: vector of doubles
- - `front_nodes`: vector of integers
-"""
-function get_front_nodes_position()
-    api_api_position_ = Ref{Ptr{Cdouble}}()
-    api_api_position_n_ = Ref{Csize_t}()
-    api_front_nodes_ = Ref{Ptr{Cint}}()
-    api_front_nodes_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGet_front_nodes_position, gmsh.lib), Cvoid,
-          (Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          api_api_position_, api_api_position_n_, api_front_nodes_, api_front_nodes_n_, ierr)
-    ierr[] != 0 && error(gmsh.logger.getLastError())
-    api_position = unsafe_wrap(Array, api_api_position_[], api_api_position_n_[], own = true)
-    front_nodes = unsafe_wrap(Array, api_front_nodes_[], api_front_nodes_n_[], own = true)
-    return api_position, front_nodes
-end
-
-"""
     gmsh.model.mesh.get_nodes_position()
 
 Antoine put a comment here.
@@ -4774,36 +4748,23 @@ function reset_discrete_front()
 end
 
 """
-<<<<<<< HEAD
     gmsh.model.mesh.relaying_and_relax(relax)
-=======
-    gmsh.model.mesh.relaying_relay()
->>>>>>> a4e0d2e81d6666320be6370a6b77cee083dc55fa
 
 Antoine put a comment here.
 
 Types:
  - `relax`: double
 """
-<<<<<<< HEAD
 function relaying_and_relax(relax)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshRelaying_and_relax, gmsh.lib), Cvoid,
           (Cdouble, Ptr{Cint}),
           relax, ierr)
-=======
-function relaying_relay()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshRelaying_relay, gmsh.lib), Cvoid,
-          (Ptr{Cint},),
-          ierr)
->>>>>>> a4e0d2e81d6666320be6370a6b77cee083dc55fa
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
 
 """
-<<<<<<< HEAD
     gmsh.model.mesh.relaying_relax(lambda_coeff, nIterOut, nIterIn, distMax, RATIO)
 
 Antoine put a comment here.
@@ -4820,23 +4781,11 @@ function relaying_relax(lambda_coeff, nIterOut, nIterIn, distMax, RATIO)
     ccall((:gmshModelMeshRelaying_relax, gmsh.lib), Cvoid,
           (Cdouble, Cint, Cint, Cdouble, Cdouble, Ptr{Cint}),
           lambda_coeff, nIterOut, nIterIn, distMax, RATIO, ierr)
-=======
-    gmsh.model.mesh.restore_initial_mesh()
-
-Antoine put a comment here.
-"""
-function restore_initial_mesh()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshRestore_initial_mesh, gmsh.lib), Cvoid,
-          (Ptr{Cint},),
-          ierr)
->>>>>>> a4e0d2e81d6666320be6370a6b77cee083dc55fa
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
 
 """
-<<<<<<< HEAD
     gmsh.model.mesh.set_boundary_from_mesh()
 
 Antoine put a comment here.
@@ -4856,26 +4805,20 @@ function set_boundary_from_mesh()
     ierr[] != 0 && error(gmsh.logger.getLastError())
     bnd_pos = unsafe_wrap(Array, api_bnd_pos_[], api_bnd_pos_n_[], own = true)
     return bnd_pos
-=======
-    gmsh.model.mesh.relaying_relax(myLambda, nIterOut, nIterIn, distMax, RATIO)
+end
+
+"""
+    gmsh.model.mesh.restore_initial_mesh()
 
 Antoine put a comment here.
-
-Types:
- - `myLambda`: double
- - `nIterOut`: integer
- - `nIterIn`: integer
- - `distMax`: double
- - `RATIO`: double
 """
-function relaying_relax(myLambda, nIterOut, nIterIn, distMax, RATIO)
+function restore_initial_mesh()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshRelaying_relax, gmsh.lib), Cvoid,
-          (Cdouble, Cint, Cint, Cdouble, Cdouble, Ptr{Cint}),
-          myLambda, nIterOut, nIterIn, distMax, RATIO, ierr)
+    ccall((:gmshModelMeshRestore_initial_mesh, gmsh.lib), Cvoid,
+          (Ptr{Cint},),
+          ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
->>>>>>> a4e0d2e81d6666320be6370a6b77cee083dc55fa
 end
 
 """

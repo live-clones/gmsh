@@ -1691,11 +1691,6 @@ GMSH_API void gmshModelMeshGet_DF(double ** api_d_pos, size_t * api_d_pos_n,
                                   int * ierr);
 
 /* Antoine put a comment here. */
-GMSH_API void gmshModelMeshGet_front_nodes_position(double ** api_position, size_t * api_position_n,
-                                                    int ** front_nodes, size_t * front_nodes_n,
-                                                    int * ierr);
-
-/* Antoine put a comment here. */
 GMSH_API void gmshModelMeshGet_nodes_position(double ** api_position, size_t * api_position_n,
                                               int * ierr);
 
@@ -1703,33 +1698,23 @@ GMSH_API void gmshModelMeshGet_nodes_position(double ** api_position, size_t * a
 GMSH_API void gmshModelMeshReset_discrete_front(int * ierr);
 
 /* Antoine put a comment here. */
-<<<<<<< HEAD
 GMSH_API void gmshModelMeshRelaying_and_relax(const double relax,
                                               int * ierr);
 
 /* Antoine put a comment here. */
 GMSH_API void gmshModelMeshRelaying_relax(const double lambda_coeff,
-=======
-GMSH_API void gmshModelMeshRelaying_relay(int * ierr);
-
-/* Antoine put a comment here. */
-GMSH_API void gmshModelMeshRestore_initial_mesh(int * ierr);
-
-/* Antoine put a comment here. */
-GMSH_API void gmshModelMeshRelaying_relax(const double myLambda,
->>>>>>> a4e0d2e81d6666320be6370a6b77cee083dc55fa
                                           const int nIterOut,
                                           const int nIterIn,
                                           const double distMax,
                                           const double RATIO,
                                           int * ierr);
-<<<<<<< HEAD
 
 /* Antoine put a comment here. */
 GMSH_API void gmshModelMeshSet_boundary_from_mesh(double ** bnd_pos, size_t * bnd_pos_n,
                                                   int * ierr);
-=======
->>>>>>> a4e0d2e81d6666320be6370a6b77cee083dc55fa
+
+/* Antoine put a comment here. */
+GMSH_API void gmshModelMeshRestore_initial_mesh(int * ierr);
 
 /* Antoine put a comment here. */
 GMSH_API void gmshModelMeshRedist_front(const double lc,

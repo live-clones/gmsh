@@ -3348,21 +3348,6 @@ namespace gmsh { // Top-level functions
         mesh_to_DF_parametric.assign(api_mesh_to_DF_parametric_, api_mesh_to_DF_parametric_ + api_mesh_to_DF_parametric_n_); gmshFree(api_mesh_to_DF_parametric_);
       }
 
-      // gmsh::model::mesh::get_front_nodes_position
-      //
-      // Antoine put a comment here.
-      inline void get_front_nodes_position(std::vector<double> & api_position,
-                                           std::vector<int> & front_nodes)
-      {
-        int ierr = 0;
-        double *api_api_position_; size_t api_api_position_n_;
-        int *api_front_nodes_; size_t api_front_nodes_n_;
-        gmshModelMeshGet_front_nodes_position(&api_api_position_, &api_api_position_n_, &api_front_nodes_, &api_front_nodes_n_, &ierr);
-        if(ierr) throwLastError();
-        api_position.assign(api_api_position_, api_api_position_ + api_api_position_n_); gmshFree(api_api_position_);
-        front_nodes.assign(api_front_nodes_, api_front_nodes_ + api_front_nodes_n_); gmshFree(api_front_nodes_);
-      }
-
       // gmsh::model::mesh::get_nodes_position
       //
       // Antoine put a comment here.
@@ -3385,44 +3370,13 @@ namespace gmsh { // Top-level functions
         if(ierr) throwLastError();
       }
 
-      // gmsh::model::mesh::relaying_relay
+      // gmsh::model::mesh::relaying_and_relax
       //
       // Antoine put a comment here.
-<<<<<<< HEAD
       inline void relaying_and_relax(const double relax)
       {
         int ierr = 0;
         gmshModelMeshRelaying_and_relax(relax, &ierr);
-=======
-      inline void relaying_relay()
-      {
-        int ierr = 0;
-        gmshModelMeshRelaying_relay(&ierr);
-        if(ierr) throwLastError();
-      }
-
-      // gmsh::model::mesh::restore_initial_mesh
-      //
-      // Antoine put a comment here.
-      inline void restore_initial_mesh()
-      {
-        int ierr = 0;
-        gmshModelMeshRestore_initial_mesh(&ierr);
-        if(ierr) throwLastError();
-      }
-
-      // gmsh::model::mesh::relaying_relax
-      //
-      // Antoine put a comment here.
-      inline void relaying_relax(const double myLambda,
-                                 const int nIterOut,
-                                 const int nIterIn,
-                                 const double distMax,
-                                 const double RATIO)
-      {
-        int ierr = 0;
-        gmshModelMeshRelaying_relax(myLambda, nIterOut, nIterIn, distMax, RATIO, &ierr);
->>>>>>> a4e0d2e81d6666320be6370a6b77cee083dc55fa
         if(ierr) throwLastError();
       }
 
@@ -3450,6 +3404,16 @@ namespace gmsh { // Top-level functions
         gmshModelMeshSet_boundary_from_mesh(&api_bnd_pos_, &api_bnd_pos_n_, &ierr);
         if(ierr) throwLastError();
         bnd_pos.assign(api_bnd_pos_, api_bnd_pos_ + api_bnd_pos_n_); gmshFree(api_bnd_pos_);
+      }
+
+      // gmsh::model::mesh::restore_initial_mesh
+      //
+      // Antoine put a comment here.
+      inline void restore_initial_mesh()
+      {
+        int ierr = 0;
+        gmshModelMeshRestore_initial_mesh(&ierr);
+        if(ierr) throwLastError();
       }
 
       // gmsh::model::mesh::redist_front

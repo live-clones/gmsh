@@ -1911,12 +1911,6 @@ namespace gmsh { // Top-level functions
                            std::vector<std::size_t> & meshNodes_to_DF,
                            std::vector<double> & mesh_to_DF_parametric);
 
-      // gmsh::model::mesh::get_front_nodes_position
-      //
-      // Antoine put a comment here.
-      GMSH_API void get_front_nodes_position(std::vector<double> & api_position,
-                                             std::vector<int> & front_nodes);
-
       // gmsh::model::mesh::get_nodes_position
       //
       // Antoine put a comment here.
@@ -1927,40 +1921,29 @@ namespace gmsh { // Top-level functions
       // Antoine put a comment here.
       GMSH_API void reset_discrete_front();
 
-      // gmsh::model::mesh::relaying_relay
+      // gmsh::model::mesh::relaying_and_relax
       //
       // Antoine put a comment here.
-<<<<<<< HEAD
       GMSH_API void relaying_and_relax(const double relax);
-=======
-      GMSH_API void relaying_relay();
-
-      // gmsh::model::mesh::restore_initial_mesh
-      //
-      // Antoine put a comment here.
-      GMSH_API void restore_initial_mesh();
->>>>>>> a4e0d2e81d6666320be6370a6b77cee083dc55fa
 
       // gmsh::model::mesh::relaying_relax
       //
       // Antoine put a comment here.
-<<<<<<< HEAD
       GMSH_API void relaying_relax(const double lambda_coeff,
-=======
-      GMSH_API void relaying_relax(const double myLambda,
->>>>>>> a4e0d2e81d6666320be6370a6b77cee083dc55fa
                                    const int nIterOut,
                                    const int nIterIn,
                                    const double distMax,
                                    const double RATIO);
-<<<<<<< HEAD
 
       // gmsh::model::mesh::set_boundary_from_mesh
       //
       // Antoine put a comment here.
       GMSH_API void set_boundary_from_mesh(std::vector<double> & bnd_pos);
-=======
->>>>>>> a4e0d2e81d6666320be6370a6b77cee083dc55fa
+
+      // gmsh::model::mesh::restore_initial_mesh
+      //
+      // Antoine put a comment here.
+      GMSH_API void restore_initial_mesh();
 
       // gmsh::model::mesh::redist_front
       //

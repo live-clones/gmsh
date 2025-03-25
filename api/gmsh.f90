@@ -746,8 +746,6 @@ module gmsh
         gmshModelMeshAdd_free_form
     procedure, nopass :: get_DF => &
         gmshModelMeshGet_DF
-    procedure, nopass :: get_front_nodes_position => &
-        gmshModelMeshGet_front_nodes_position
     procedure, nopass :: get_nodes_position => &
         gmshModelMeshGet_nodes_position
     procedure, nopass :: reset_discrete_front => &
@@ -758,6 +756,8 @@ module gmsh
         gmshModelMeshRelaying_relax
     procedure, nopass :: set_boundary_from_mesh => &
         gmshModelMeshSet_boundary_from_mesh
+    procedure, nopass :: restore_initial_mesh => &
+        gmshModelMeshRestore_initial_mesh
     procedure, nopass :: redist_front => &
         gmshModelMeshRedist_front
     procedure, nopass :: set_bnd_front => &
@@ -7850,43 +7850,6 @@ module gmsh
   end subroutine gmshModelMeshGet_DF
 
   !> Antoine put a comment here.
-  subroutine gmshModelMeshGet_front_nodes_position(api_position, &
-                                                   front_nodes, &
-                                                   ierr)
-    interface
-    subroutine C_API(api_api_position_, &
-                     api_api_position_n_, &
-                     api_front_nodes_, &
-                     api_front_nodes_n_, &
-                     ierr_) &
-      bind(C, name="gmshModelMeshGet_front_nodes_position")
-      use, intrinsic :: iso_c_binding
-      type(c_ptr), intent(out) :: api_api_position_
-      integer(c_size_t) :: api_api_position_n_
-      type(c_ptr), intent(out) :: api_front_nodes_
-      integer(c_size_t), intent(out) :: api_front_nodes_n_
-      integer(c_int), intent(out), optional :: ierr_
-    end subroutine C_API
-    end interface
-    real(c_double), dimension(:), allocatable, intent(out) :: api_position
-    integer(c_int), dimension(:), allocatable, intent(out) :: front_nodes
-    integer(c_int), intent(out), optional :: ierr
-    type(c_ptr) :: api_api_position_
-    integer(c_size_t) :: api_api_position_n_
-    type(c_ptr) :: api_front_nodes_
-    integer(c_size_t) :: api_front_nodes_n_
-    call C_API(api_api_position_=api_api_position_, &
-         api_api_position_n_=api_api_position_n_, &
-         api_front_nodes_=api_front_nodes_, &
-         api_front_nodes_n_=api_front_nodes_n_, &
-         ierr_=ierr)
-    api_position = ovectordouble_(api_api_position_, &
-      api_api_position_n_)
-    front_nodes = ovectorint_(api_front_nodes_, &
-      api_front_nodes_n_)
-  end subroutine gmshModelMeshGet_front_nodes_position
-
-  !> Antoine put a comment here.
   subroutine gmshModelMeshGet_nodes_position(api_position, &
                                              ierr)
     interface
@@ -7925,9 +7888,11 @@ module gmsh
   end subroutine gmshModelMeshReset_discrete_front
 
   !> Antoine put a comment here.
-  subroutine gmshModelMeshRelaying_and_relax(ierr)
+  subroutine gmshModelMeshRelaying_and_relax(relax, &
+                                             ierr)
     interface
-    subroutine C_API(ierr_) &
+    subroutine C_API(relax, &
+                     ierr_) &
       bind(C, name="gmshModelMeshRelaying_and_relax")
       use, intrinsic :: iso_c_binding
       real(c_double), value, intent(in) :: relax
@@ -7938,58 +7903,7 @@ module gmsh
     integer(c_int), intent(out), optional :: ierr
     call C_API(relax=real(relax, c_double), &
          ierr_=ierr)
-  end subroutine gmshModelMeshRelaying_relay
-
-  !> Antoine put a comment here.
-  subroutine gmshModelMeshRestore_initial_mesh(ierr)
-    interface
-    subroutine C_API(ierr_) &
-      bind(C, name="gmshModelMeshRestore_initial_mesh")
-      use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out), optional :: ierr_
-    end subroutine C_API
-    end interface
-    integer(c_int), intent(out), optional :: ierr
-    call C_API(ierr_=ierr)
-  end subroutine gmshModelMeshRestore_initial_mesh
-
-  !> Antoine put a comment here.
-  subroutine gmshModelMeshRelaying_relax(myLambda, &
-                                         nIterOut, &
-                                         nIterIn, &
-                                         distMax, &
-                                         RATIO, &
-                                         ierr)
-    interface
-    subroutine C_API(myLambda, &
-                     nIterOut, &
-                     nIterIn, &
-                     distMax, &
-                     RATIO, &
-                     ierr_) &
-      bind(C, name="gmshModelMeshRelaying_relax")
-      use, intrinsic :: iso_c_binding
-      real(c_double), value, intent(in) :: myLambda
-      integer(c_int), value, intent(in) :: nIterOut
-      integer(c_int), value, intent(in) :: nIterIn
-      real(c_double), value, intent(in) :: distMax
-      real(c_double), value, intent(in) :: RATIO
-      integer(c_int), intent(out), optional :: ierr_
-    end subroutine C_API
-    end interface
-    real(c_double), intent(in) :: myLambda
-    integer, intent(in) :: nIterOut
-    integer, intent(in) :: nIterIn
-    real(c_double), intent(in) :: distMax
-    real(c_double), intent(in) :: RATIO
-    integer(c_int), intent(out), optional :: ierr
-    call C_API(myLambda=real(myLambda, c_double), &
-         nIterOut=int(nIterOut, c_int), &
-         nIterIn=int(nIterIn, c_int), &
-         distMax=real(distMax, c_double), &
-         RATIO=real(RATIO, c_double), &
-         ierr_=ierr)
-  end subroutine gmshModelMeshRelaying_relax
+  end subroutine gmshModelMeshRelaying_and_relax
 
   !> Antoine put a comment here.
   subroutine gmshModelMeshRelaying_relax(lambda_coeff, &
@@ -8053,6 +7967,19 @@ module gmsh
     bnd_pos = ovectordouble_(api_bnd_pos_, &
       api_bnd_pos_n_)
   end subroutine gmshModelMeshSet_boundary_from_mesh
+
+  !> Antoine put a comment here.
+  subroutine gmshModelMeshRestore_initial_mesh(ierr)
+    interface
+    subroutine C_API(ierr_) &
+      bind(C, name="gmshModelMeshRestore_initial_mesh")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(ierr_=ierr)
+  end subroutine gmshModelMeshRestore_initial_mesh
 
   !> Antoine put a comment here.
   subroutine gmshModelMeshRedist_front(lc, &

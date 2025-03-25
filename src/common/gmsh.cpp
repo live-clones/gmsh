@@ -73,11 +73,8 @@
 #include "qualityMeasuresJacobian.h"
 #include "meshRenumber.h"
 #include "meshRelaying.h"
-<<<<<<< HEAD
 #include "meshTriangulation.h"
-=======
 #include "meshCaptureFront.h"
->>>>>>> a4e0d2e81d6666320be6370a6b77cee083dc55fa
 #endif
 
 #if defined(HAVE_POST)
@@ -5783,10 +5780,10 @@ GMSH_API void gmsh::model::mesh::get_DF(std::vector<double> &api_d_pos, std::vec
   return; 
 }
  
-GMSH_API void gmsh::model::mesh::get_front_nodes_position(std::vector<double> &api_position, std::vector<int> &fn){
-  meshRelaying::instance()->getFrontNodesPosition(api_position, fn);
-  return;
-}
+// GMSH_API void gmsh::model::mesh::get_front_nodes_position(std::vector<double> &api_position, std::vector<int> &fn){
+//   meshRelaying::instance()->getFrontNodesPosition(api_position, fn);
+//   return;
+// }
 
 GMSH_API void gmsh::model::mesh::get_nodes_position(std::vector<double> &api_position){
   meshRelaying::instance()->getNodesPosition(api_position);

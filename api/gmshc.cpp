@@ -2547,21 +2547,6 @@ GMSH_API void gmshModelMeshGet_DF(double ** api_d_pos, size_t * api_d_pos_n, int
   }
 }
 
-GMSH_API void gmshModelMeshGet_front_nodes_position(double ** api_position, size_t * api_position_n, int ** front_nodes, size_t * front_nodes_n, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    std::vector<double> api_api_position_;
-    std::vector<int> api_front_nodes_;
-    gmsh::model::mesh::get_front_nodes_position(api_api_position_, api_front_nodes_);
-    vector2ptr(api_api_position_, api_position, api_position_n);
-    vector2ptr(api_front_nodes_, front_nodes, front_nodes_n);
-  }
-  catch(...){
-    if(ierr) *ierr = 1;
-  }
-}
-
 GMSH_API void gmshModelMeshGet_nodes_position(double ** api_position, size_t * api_position_n, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -2586,45 +2571,28 @@ GMSH_API void gmshModelMeshReset_discrete_front(int * ierr)
   }
 }
 
-<<<<<<< HEAD
 GMSH_API void gmshModelMeshRelaying_and_relax(const double relax, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     gmsh::model::mesh::relaying_and_relax(relax);
-=======
-GMSH_API void gmshModelMeshRelaying_relay(int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    gmsh::model::mesh::relaying_relay();
->>>>>>> a4e0d2e81d6666320be6370a6b77cee083dc55fa
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
 
-<<<<<<< HEAD
 GMSH_API void gmshModelMeshRelaying_relax(const double lambda_coeff, const int nIterOut, const int nIterIn, const double distMax, const double RATIO, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     gmsh::model::mesh::relaying_relax(lambda_coeff, nIterOut, nIterIn, distMax, RATIO);
-=======
-GMSH_API void gmshModelMeshRestore_initial_mesh(int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    gmsh::model::mesh::restore_initial_mesh();
->>>>>>> a4e0d2e81d6666320be6370a6b77cee083dc55fa
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
 
-<<<<<<< HEAD
 GMSH_API void gmshModelMeshSet_boundary_from_mesh(double ** bnd_pos, size_t * bnd_pos_n, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -2632,13 +2600,17 @@ GMSH_API void gmshModelMeshSet_boundary_from_mesh(double ** bnd_pos, size_t * bn
     std::vector<double> api_bnd_pos_;
     gmsh::model::mesh::set_boundary_from_mesh(api_bnd_pos_);
     vector2ptr(api_bnd_pos_, bnd_pos, bnd_pos_n);
-=======
-GMSH_API void gmshModelMeshRelaying_relax(const double myLambda, const int nIterOut, const int nIterIn, const double distMax, const double RATIO, int * ierr)
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshRestore_initial_mesh(int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::relaying_relax(myLambda, nIterOut, nIterIn, distMax, RATIO);
->>>>>>> a4e0d2e81d6666320be6370a6b77cee083dc55fa
+    gmsh::model::mesh::restore_initial_mesh();
   }
   catch(...){
     if(ierr) *ierr = 1;

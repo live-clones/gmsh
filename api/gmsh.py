@@ -5333,32 +5333,6 @@ class model:
         get__df = get_DF
 
         @staticmethod
-        def get_front_nodes_position():
-            """
-            gmsh.model.mesh.get_front_nodes_position()
-
-            Antoine put a comment here.
-
-            Return `api_position', `front_nodes'.
-
-            Types:
-            - `api_position': vector of doubles
-            - `front_nodes': vector of integers
-            """
-            api_api_position_, api_api_position_n_ = POINTER(c_double)(), c_size_t()
-            api_front_nodes_, api_front_nodes_n_ = POINTER(c_int)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshGet_front_nodes_position(
-                byref(api_api_position_), byref(api_api_position_n_),
-                byref(api_front_nodes_), byref(api_front_nodes_n_),
-                byref(ierr))
-            if ierr.value != 0:
-                raise Exception(logger.getLastError())
-            return (
-                _ovectordouble(api_api_position_, api_api_position_n_.value),
-                _ovectorint(api_front_nodes_, api_front_nodes_n_.value))
-
-        @staticmethod
         def get_nodes_position():
             """
             gmsh.model.mesh.get_nodes_position()
@@ -5393,15 +5367,9 @@ class model:
                 raise Exception(logger.getLastError())
 
         @staticmethod
-<<<<<<< HEAD
         def relaying_and_relax(relax):
             """
             gmsh.model.mesh.relaying_and_relax(relax)
-=======
-        def relaying_relay():
-            """
-            gmsh.model.mesh.relaying_relay()
->>>>>>> a4e0d2e81d6666320be6370a6b77cee083dc55fa
 
             Antoine put a comment here.
 
@@ -5409,50 +5377,8 @@ class model:
             - `relax': double
             """
             ierr = c_int()
-<<<<<<< HEAD
             lib.gmshModelMeshRelaying_and_relax(
                 c_double(relax),
-=======
-            lib.gmshModelMeshRelaying_relay(
-                byref(ierr))
-            if ierr.value != 0:
-                raise Exception(logger.getLastError())
-
-        @staticmethod
-        def restore_initial_mesh():
-            """
-            gmsh.model.mesh.restore_initial_mesh()
-
-            Antoine put a comment here.
-            """
-            ierr = c_int()
-            lib.gmshModelMeshRestore_initial_mesh(
-                byref(ierr))
-            if ierr.value != 0:
-                raise Exception(logger.getLastError())
-
-        @staticmethod
-        def relaying_relax(myLambda, nIterOut, nIterIn, distMax, RATIO):
-            """
-            gmsh.model.mesh.relaying_relax(myLambda, nIterOut, nIterIn, distMax, RATIO)
-
-            Antoine put a comment here.
-
-            Types:
-            - `myLambda': double
-            - `nIterOut': integer
-            - `nIterIn': integer
-            - `distMax': double
-            - `RATIO': double
-            """
-            ierr = c_int()
-            lib.gmshModelMeshRelaying_relax(
-                c_double(myLambda),
-                c_int(nIterOut),
-                c_int(nIterIn),
-                c_double(distMax),
-                c_double(RATIO),
->>>>>>> a4e0d2e81d6666320be6370a6b77cee083dc55fa
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
@@ -5502,6 +5428,19 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectordouble(api_bnd_pos_, api_bnd_pos_n_.value)
+
+        @staticmethod
+        def restore_initial_mesh():
+            """
+            gmsh.model.mesh.restore_initial_mesh()
+
+            Antoine put a comment here.
+            """
+            ierr = c_int()
+            lib.gmshModelMeshRestore_initial_mesh(
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
 
         @staticmethod
         def redist_front(lc):
