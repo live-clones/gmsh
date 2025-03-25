@@ -1631,8 +1631,10 @@ GMSH_API void gmshModelMeshComputeCrossField(int ** viewTags, size_t * viewTags_
 
 /* Triangulate the points given in the `coord' vector as pairs of u, v
  * coordinates, and return the node tags (with numbering starting at 1) of the
- * resulting triangles in `tri'. */
+ * resulting triangles in `tri'. If specified, `edges' contains constrained
+ * edges in the mesh, given as pairs of nodes. */
 GMSH_API void gmshModelMeshTriangulate(const double * coord, const size_t coord_n,
+                                       const size_t * edges, const size_t edges_n,
                                        size_t ** tri, size_t * tri_n,
                                        int * ierr);
 
@@ -1644,27 +1646,43 @@ GMSH_API void gmshModelMeshTetrahedralize(const double * coord, const size_t coo
                                           int * ierr);
 
 /* Antoine put a comment here. */
-GMSH_API void gmshModelMeshConcentration_from_DF(int ** api_concentration, size_t * api_concentration_n,
-                                                 double ** api_curvature, size_t * api_curvature_n,
+GMSH_API void gmshModelMeshConcentration_from_DF(const int * concentration_list, const size_t concentration_list_n,
+                                                 const double * tension_table, const size_t tension_table_n,
+                                                 int ** concentration, size_t * concentration_n,
+                                                 double ** curvature, size_t * curvature_n,
                                                  int * ierr);
 
 /* Antoine put a comment here. */
 GMSH_API void gmshModelMeshAdvance_DF_in_time(const double dt,
                                               const double * velocity, const size_t velocity_n,
-                                              const int front,
+                                              const double epsilon,
+                                              const int triple_slip,
                                               int * ierr);
+
+/* Antoine put a comment here. */
+GMSH_API void gmshModelMeshInit_DF(const double * api_pos, const size_t api_pos_n,
+                                   const int * api_concentration, const size_t api_concentration_n,
+                                   int * ierr);
 
 /* Antoine put a comment here. */
 GMSH_API void gmshModelMeshAdd_free_form(const int tag,
                                          const double * poly, const size_t poly_n,
                                          const size_t * _corners, const size_t _corners_n,
-                                         const int sense,
+                                         const int loop,
                                          int * ierr);
 
 /* Antoine put a comment here. */
-GMSH_API void gmshModelMeshGet_DF_position(double ** api_position, size_t * api_position_n,
-                                           int ** api_tags, size_t * api_tags_n,
-                                           int * ierr);
+GMSH_API void gmshModelMeshGet_DF(double ** api_d_pos, size_t * api_d_pos_n,
+                                  int ** api_d_tags, size_t * api_d_tags_n,
+                                  size_t ** api_d_ids, size_t * api_d_ids_n,
+                                  double ** api_t_pos, size_t * api_t_pos_n,
+                                  int ** api_t_tags, size_t * api_t_tags_n,
+                                  size_t ** api_t_ids, size_t * api_t_ids_n,
+                                  size_t ** DF_to_meshNodes, size_t * DF_to_meshNodes_n,
+                                  double ** DF_to_mesh_parametric, size_t * DF_to_mesh_parametric_n,
+                                  size_t ** meshNodes_to_DF, size_t * meshNodes_to_DF_n,
+                                  double ** mesh_to_DF_parametric, size_t * mesh_to_DF_parametric_n,
+                                  int * ierr);
 
 /* Antoine put a comment here. */
 GMSH_API void gmshModelMeshGet_front_nodes_position(double ** api_position, size_t * api_position_n,
@@ -1678,7 +1696,20 @@ GMSH_API void gmshModelMeshGet_nodes_position(double ** api_position, size_t * a
 GMSH_API void gmshModelMeshReset_discrete_front(int * ierr);
 
 /* Antoine put a comment here. */
-GMSH_API void gmshModelMeshRelaying_and_relax(int * ierr);
+GMSH_API void gmshModelMeshRelaying_and_relax(const double relax,
+                                              int * ierr);
+
+/* Antoine put a comment here. */
+GMSH_API void gmshModelMeshRelaying_relax(const double lambda_coeff,
+                                          const int nIterOut,
+                                          const int nIterIn,
+                                          const double distMax,
+                                          const double RATIO,
+                                          int * ierr);
+
+/* Antoine put a comment here. */
+GMSH_API void gmshModelMeshSet_boundary_from_mesh(double ** bnd_pos, size_t * bnd_pos_n,
+                                                  int * ierr);
 
 /* Antoine put a comment here. */
 GMSH_API void gmshModelMeshRedist_front(const double lc,
@@ -1690,6 +1721,19 @@ GMSH_API void gmshModelMeshSet_bnd_front(int * ierr);
 /* Antoine put a comment here. */
 GMSH_API void gmshModelMeshSet_levelsets(const double * const * levelsets, const size_t * levelsets_n, const size_t levelsets_nn,
                                          int * ierr);
+
+/* Antoine put a comment here. */
+GMSH_API void gmshModelMeshWrite_DF(const char * filename_DF,
+                                    int * ierr);
+
+/* Antoine put a comment here. */
+GMSH_API void gmshModelMeshRead_DF(const char * filename_DF,
+                                   const int pos_flag,
+                                   int * ierr);
+
+/* Antoine put a comment here. */
+GMSH_API void gmshModelMeshRemove_small_features(const double l,
+                                                 int * ierr);
 
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
  * the tag explicitly; otherwise a new tag is assigned automatically. Return

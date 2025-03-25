@@ -5090,25 +5090,29 @@ class model:
         compute_cross_field = computeCrossField
 
         @staticmethod
-        def triangulate(coord):
+        def triangulate(coord, edges):
             """
-            gmsh.model.mesh.triangulate(coord)
+            gmsh.model.mesh.triangulate(coord, edges)
 
             Triangulate the points given in the `coord' vector as pairs of u, v
             coordinates, and return the node tags (with numbering starting at 1) of the
-            resulting triangles in `tri'.
+            resulting triangles in `tri'. If specified, `edges' contains constrained
+            edges in the mesh, given as pairs of nodes.
 
             Return `tri'.
 
             Types:
             - `coord': vector of doubles
+            - `edges': vector of sizes
             - `tri': vector of sizes
             """
             api_coord_, api_coord_n_ = _ivectordouble(coord)
+            api_edges_, api_edges_n_ = _ivectorsize(edges)
             api_tri_, api_tri_n_ = POINTER(c_size_t)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshTriangulate(
                 api_coord_, api_coord_n_,
+                api_edges_, api_edges_n_,
                 byref(api_tri_), byref(api_tri_n_),
                 byref(ierr))
             if ierr.value != 0:
@@ -5142,59 +5146,89 @@ class model:
             return _ovectorsize(api_tetra_, api_tetra_n_.value)
 
         @staticmethod
-        def concentration_from_DF():
+        def concentration_from_DF(concentration_list, tension_table):
             """
-            gmsh.model.mesh.concentration_from_DF()
+            gmsh.model.mesh.concentration_from_DF(concentration_list, tension_table)
 
             Antoine put a comment here.
 
-            Return `api_concentration', `api_curvature'.
+            Return `concentration', `curvature'.
 
             Types:
-            - `api_concentration': vector of integers
-            - `api_curvature': vector of doubles
+            - `concentration_list': vector of integers
+            - `tension_table': vector of doubles
+            - `concentration': vector of integers
+            - `curvature': vector of doubles
             """
-            api_api_concentration_, api_api_concentration_n_ = POINTER(c_int)(), c_size_t()
-            api_api_curvature_, api_api_curvature_n_ = POINTER(c_double)(), c_size_t()
+            api_concentration_list_, api_concentration_list_n_ = _ivectorint(concentration_list)
+            api_tension_table_, api_tension_table_n_ = _ivectordouble(tension_table)
+            api_concentration_, api_concentration_n_ = POINTER(c_int)(), c_size_t()
+            api_curvature_, api_curvature_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshConcentration_from_DF(
-                byref(api_api_concentration_), byref(api_api_concentration_n_),
-                byref(api_api_curvature_), byref(api_api_curvature_n_),
+                api_concentration_list_, api_concentration_list_n_,
+                api_tension_table_, api_tension_table_n_,
+                byref(api_concentration_), byref(api_concentration_n_),
+                byref(api_curvature_), byref(api_curvature_n_),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return (
-                _ovectorint(api_api_concentration_, api_api_concentration_n_.value),
-                _ovectordouble(api_api_curvature_, api_api_curvature_n_.value))
+                _ovectorint(api_concentration_, api_concentration_n_.value),
+                _ovectordouble(api_curvature_, api_curvature_n_.value))
         concentration_from__df = concentration_from_DF
 
         @staticmethod
-        def advance_DF_in_time(dt, velocity, front=False):
+        def advance_DF_in_time(dt, velocity, epsilon=0., triple_slip=True):
             """
-            gmsh.model.mesh.advance_DF_in_time(dt, velocity, front=False)
+            gmsh.model.mesh.advance_DF_in_time(dt, velocity, epsilon=0., triple_slip=True)
 
             Antoine put a comment here.
 
             Types:
             - `dt': double
             - `velocity': vector of doubles
-            - `front': boolean
+            - `epsilon': double
+            - `triple_slip': boolean
             """
             api_velocity_, api_velocity_n_ = _ivectordouble(velocity)
             ierr = c_int()
             lib.gmshModelMeshAdvance_DF_in_time(
                 c_double(dt),
                 api_velocity_, api_velocity_n_,
-                c_int(bool(front)),
+                c_double(epsilon),
+                c_int(bool(triple_slip)),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
         advance__df_in_time = advance_DF_in_time
 
         @staticmethod
-        def add_free_form(tag, poly, _corners, sense=1):
+        def init_DF(api_pos, api_concentration):
             """
-            gmsh.model.mesh.add_free_form(tag, poly, _corners, sense=1)
+            gmsh.model.mesh.init_DF(api_pos, api_concentration)
+
+            Antoine put a comment here.
+
+            Types:
+            - `api_pos': vector of doubles
+            - `api_concentration': vector of integers
+            """
+            api_api_pos_, api_api_pos_n_ = _ivectordouble(api_pos)
+            api_api_concentration_, api_api_concentration_n_ = _ivectorint(api_concentration)
+            ierr = c_int()
+            lib.gmshModelMeshInit_DF(
+                api_api_pos_, api_api_pos_n_,
+                api_api_concentration_, api_api_concentration_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        init__df = init_DF
+
+        @staticmethod
+        def add_free_form(tag, poly, _corners, loop=True):
+            """
+            gmsh.model.mesh.add_free_form(tag, poly, _corners, loop=True)
 
             Antoine put a comment here.
 
@@ -5202,7 +5236,7 @@ class model:
             - `tag': integer
             - `poly': vector of doubles
             - `_corners': vector of sizes
-            - `sense': integer
+            - `loop': boolean
             """
             api_poly_, api_poly_n_ = _ivectordouble(poly)
             api__corners_, api__corners_n_ = _ivectorsize(_corners)
@@ -5211,37 +5245,69 @@ class model:
                 c_int(tag),
                 api_poly_, api_poly_n_,
                 api__corners_, api__corners_n_,
-                c_int(sense),
+                c_int(bool(loop)),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
 
         @staticmethod
-        def get_DF_position():
+        def get_DF():
             """
-            gmsh.model.mesh.get_DF_position()
+            gmsh.model.mesh.get_DF()
 
             Antoine put a comment here.
 
-            Return `api_position', `api_tags'.
+            Return `api_d_pos', `api_d_tags', `api_d_ids', `api_t_pos', `api_t_tags', `api_t_ids', `DF_to_meshNodes', `DF_to_mesh_parametric', `meshNodes_to_DF', `mesh_to_DF_parametric'.
 
             Types:
-            - `api_position': vector of doubles
-            - `api_tags': vector of integers
+            - `api_d_pos': vector of doubles
+            - `api_d_tags': vector of integers
+            - `api_d_ids': vector of sizes
+            - `api_t_pos': vector of doubles
+            - `api_t_tags': vector of integers
+            - `api_t_ids': vector of sizes
+            - `DF_to_meshNodes': vector of sizes
+            - `DF_to_mesh_parametric': vector of doubles
+            - `meshNodes_to_DF': vector of sizes
+            - `mesh_to_DF_parametric': vector of doubles
             """
-            api_api_position_, api_api_position_n_ = POINTER(c_double)(), c_size_t()
-            api_api_tags_, api_api_tags_n_ = POINTER(c_int)(), c_size_t()
+            api_api_d_pos_, api_api_d_pos_n_ = POINTER(c_double)(), c_size_t()
+            api_api_d_tags_, api_api_d_tags_n_ = POINTER(c_int)(), c_size_t()
+            api_api_d_ids_, api_api_d_ids_n_ = POINTER(c_size_t)(), c_size_t()
+            api_api_t_pos_, api_api_t_pos_n_ = POINTER(c_double)(), c_size_t()
+            api_api_t_tags_, api_api_t_tags_n_ = POINTER(c_int)(), c_size_t()
+            api_api_t_ids_, api_api_t_ids_n_ = POINTER(c_size_t)(), c_size_t()
+            api_DF_to_meshNodes_, api_DF_to_meshNodes_n_ = POINTER(c_size_t)(), c_size_t()
+            api_DF_to_mesh_parametric_, api_DF_to_mesh_parametric_n_ = POINTER(c_double)(), c_size_t()
+            api_meshNodes_to_DF_, api_meshNodes_to_DF_n_ = POINTER(c_size_t)(), c_size_t()
+            api_mesh_to_DF_parametric_, api_mesh_to_DF_parametric_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelMeshGet_DF_position(
-                byref(api_api_position_), byref(api_api_position_n_),
-                byref(api_api_tags_), byref(api_api_tags_n_),
+            lib.gmshModelMeshGet_DF(
+                byref(api_api_d_pos_), byref(api_api_d_pos_n_),
+                byref(api_api_d_tags_), byref(api_api_d_tags_n_),
+                byref(api_api_d_ids_), byref(api_api_d_ids_n_),
+                byref(api_api_t_pos_), byref(api_api_t_pos_n_),
+                byref(api_api_t_tags_), byref(api_api_t_tags_n_),
+                byref(api_api_t_ids_), byref(api_api_t_ids_n_),
+                byref(api_DF_to_meshNodes_), byref(api_DF_to_meshNodes_n_),
+                byref(api_DF_to_mesh_parametric_), byref(api_DF_to_mesh_parametric_n_),
+                byref(api_meshNodes_to_DF_), byref(api_meshNodes_to_DF_n_),
+                byref(api_mesh_to_DF_parametric_), byref(api_mesh_to_DF_parametric_n_),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return (
-                _ovectordouble(api_api_position_, api_api_position_n_.value),
-                _ovectorint(api_api_tags_, api_api_tags_n_.value))
-        get__df_position = get_DF_position
+                _ovectordouble(api_api_d_pos_, api_api_d_pos_n_.value),
+                _ovectorint(api_api_d_tags_, api_api_d_tags_n_.value),
+                _ovectorsize(api_api_d_ids_, api_api_d_ids_n_.value),
+                _ovectordouble(api_api_t_pos_, api_api_t_pos_n_.value),
+                _ovectorint(api_api_t_tags_, api_api_t_tags_n_.value),
+                _ovectorsize(api_api_t_ids_, api_api_t_ids_n_.value),
+                _ovectorsize(api_DF_to_meshNodes_, api_DF_to_meshNodes_n_.value),
+                _ovectordouble(api_DF_to_mesh_parametric_, api_DF_to_mesh_parametric_n_.value),
+                _ovectorsize(api_meshNodes_to_DF_, api_meshNodes_to_DF_n_.value),
+                _ovectordouble(api_mesh_to_DF_parametric_, api_mesh_to_DF_parametric_n_.value))
+        get__df = get_DF
 
         @staticmethod
         def get_front_nodes_position():
@@ -5299,17 +5365,67 @@ class model:
                 raise Exception(logger.getLastError())
 
         @staticmethod
-        def relaying_and_relax():
+        def relaying_and_relax(relax):
             """
-            gmsh.model.mesh.relaying_and_relax()
+            gmsh.model.mesh.relaying_and_relax(relax)
 
             Antoine put a comment here.
+
+            Types:
+            - `relax': double
             """
             ierr = c_int()
             lib.gmshModelMeshRelaying_and_relax(
+                c_double(relax),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+
+        @staticmethod
+        def relaying_relax(lambda_coeff, nIterOut, nIterIn, distMax, RATIO):
+            """
+            gmsh.model.mesh.relaying_relax(lambda_coeff, nIterOut, nIterIn, distMax, RATIO)
+
+            Antoine put a comment here.
+
+            Types:
+            - `lambda_coeff': double
+            - `nIterOut': integer
+            - `nIterIn': integer
+            - `distMax': double
+            - `RATIO': double
+            """
+            ierr = c_int()
+            lib.gmshModelMeshRelaying_relax(
+                c_double(lambda_coeff),
+                c_int(nIterOut),
+                c_int(nIterIn),
+                c_double(distMax),
+                c_double(RATIO),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+
+        @staticmethod
+        def set_boundary_from_mesh():
+            """
+            gmsh.model.mesh.set_boundary_from_mesh()
+
+            Antoine put a comment here.
+
+            Return `bnd_pos'.
+
+            Types:
+            - `bnd_pos': vector of doubles
+            """
+            api_bnd_pos_, api_bnd_pos_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshSet_boundary_from_mesh(
+                byref(api_bnd_pos_), byref(api_bnd_pos_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectordouble(api_bnd_pos_, api_bnd_pos_n_.value)
 
         @staticmethod
         def redist_front(lc):
@@ -5355,6 +5471,61 @@ class model:
             ierr = c_int()
             lib.gmshModelMeshSet_levelsets(
                 api_levelsets_, api_levelsets_n_, api_levelsets_nn_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+
+        @staticmethod
+        def write_DF(filename_DF):
+            """
+            gmsh.model.mesh.write_DF(filename_DF)
+
+            Antoine put a comment here.
+
+            Types:
+            - `filename_DF': string
+            """
+            ierr = c_int()
+            lib.gmshModelMeshWrite_DF(
+                c_char_p(filename_DF.encode()),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        write__df = write_DF
+
+        @staticmethod
+        def read_DF(filename_DF, pos_flag=True):
+            """
+            gmsh.model.mesh.read_DF(filename_DF, pos_flag=True)
+
+            Antoine put a comment here.
+
+            Types:
+            - `filename_DF': string
+            - `pos_flag': boolean
+            """
+            ierr = c_int()
+            lib.gmshModelMeshRead_DF(
+                c_char_p(filename_DF.encode()),
+                c_int(bool(pos_flag)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        read__df = read_DF
+
+        @staticmethod
+        def remove_small_features(l):
+            """
+            gmsh.model.mesh.remove_small_features(l)
+
+            Antoine put a comment here.
+
+            Types:
+            - `l': double
+            """
+            ierr = c_int()
+            lib.gmshModelMeshRemove_small_features(
+                c_double(l),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())

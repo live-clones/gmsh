@@ -2425,7 +2425,7 @@ bool GeometryOptimizer::smoothWithWinslowUntangler(PlanarMethod planar,
   bool preserveQuadAnisotropy = false;
 #if defined(HAVE_WINSLOWUNTANGLER)
   buildTrianglesAndTargetsFromElements(points_2D, quads, triangles,
-                                       triIdealShapes, preserveQuadAnisotropy);
+                                       triIdealShapes);
 #else
   Msg::Error("smoothWithWinslowUntangler requires WinslowUntangler");
 #endif

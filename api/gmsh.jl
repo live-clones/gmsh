@@ -4493,25 +4493,27 @@ end
 const compute_cross_field = computeCrossField
 
 """
-    gmsh.model.mesh.triangulate(coord)
+    gmsh.model.mesh.triangulate(coord, edges)
 
 Triangulate the points given in the `coord` vector as pairs of u, v coordinates,
 and return the node tags (with numbering starting at 1) of the resulting
-triangles in `tri`.
+triangles in `tri`. If specified, `edges` contains constrained edges in the
+mesh, given as pairs of nodes.
 
 Return `tri`.
 
 Types:
  - `coord`: vector of doubles
+ - `edges`: vector of sizes
  - `tri`: vector of sizes
 """
-function triangulate(coord)
+function triangulate(coord, edges)
     api_tri_ = Ref{Ptr{Csize_t}}()
     api_tri_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshTriangulate, gmsh.lib), Cvoid,
-          (Ptr{Cdouble}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
-          convert(Vector{Cdouble}, coord), length(coord), api_tri_, api_tri_n_, ierr)
+          (Ptr{Cdouble}, Csize_t, Ptr{Csize_t}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          convert(Vector{Cdouble}, coord), length(coord), convert(Vector{Csize_t}, edges), length(edges), api_tri_, api_tri_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     tri = unsafe_wrap(Array, api_tri_[], api_tri_n_[], own = true)
     return tri
@@ -4543,54 +4545,76 @@ function tetrahedralize(coord)
 end
 
 """
-    gmsh.model.mesh.concentration_from_DF()
+    gmsh.model.mesh.concentration_from_DF(concentration_list, tension_table)
 
 Antoine put a comment here.
 
-Return `api_concentration`, `api_curvature`.
+Return `concentration`, `curvature`.
 
 Types:
- - `api_concentration`: vector of integers
- - `api_curvature`: vector of doubles
+ - `concentration_list`: vector of integers
+ - `tension_table`: vector of doubles
+ - `concentration`: vector of integers
+ - `curvature`: vector of doubles
 """
-function concentration_from_DF()
-    api_api_concentration_ = Ref{Ptr{Cint}}()
-    api_api_concentration_n_ = Ref{Csize_t}()
-    api_api_curvature_ = Ref{Ptr{Cdouble}}()
-    api_api_curvature_n_ = Ref{Csize_t}()
+function concentration_from_DF(concentration_list, tension_table)
+    api_concentration_ = Ref{Ptr{Cint}}()
+    api_concentration_n_ = Ref{Csize_t}()
+    api_curvature_ = Ref{Ptr{Cdouble}}()
+    api_curvature_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshConcentration_from_DF, gmsh.lib), Cvoid,
-          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          api_api_concentration_, api_api_concentration_n_, api_api_curvature_, api_api_curvature_n_, ierr)
+          (Ptr{Cint}, Csize_t, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          convert(Vector{Cint}, concentration_list), length(concentration_list), convert(Vector{Cdouble}, tension_table), length(tension_table), api_concentration_, api_concentration_n_, api_curvature_, api_curvature_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    api_concentration = unsafe_wrap(Array, api_api_concentration_[], api_api_concentration_n_[], own = true)
-    api_curvature = unsafe_wrap(Array, api_api_curvature_[], api_api_curvature_n_[], own = true)
-    return api_concentration, api_curvature
+    concentration = unsafe_wrap(Array, api_concentration_[], api_concentration_n_[], own = true)
+    curvature = unsafe_wrap(Array, api_curvature_[], api_curvature_n_[], own = true)
+    return concentration, curvature
 end
 const concentration_from__df = concentration_from_DF
 
 """
-    gmsh.model.mesh.advance_DF_in_time(dt, velocity, front = false)
+    gmsh.model.mesh.advance_DF_in_time(dt, velocity, epsilon = 0., triple_slip = true)
 
 Antoine put a comment here.
 
 Types:
  - `dt`: double
  - `velocity`: vector of doubles
- - `front`: boolean
+ - `epsilon`: double
+ - `triple_slip`: boolean
 """
-function advance_DF_in_time(dt, velocity, front = false)
+function advance_DF_in_time(dt, velocity, epsilon = 0., triple_slip = true)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshAdvance_DF_in_time, gmsh.lib), Cvoid,
-          (Cdouble, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
-          dt, convert(Vector{Cdouble}, velocity), length(velocity), front, ierr)
+          (Cdouble, Ptr{Cdouble}, Csize_t, Cdouble, Cint, Ptr{Cint}),
+          dt, convert(Vector{Cdouble}, velocity), length(velocity), epsilon, triple_slip, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
 const advance__df_in_time = advance_DF_in_time
 
 """
-    gmsh.model.mesh.add_free_form(tag, poly, _corners, sense = 1)
+    gmsh.model.mesh.init_DF(api_pos, api_concentration)
+
+Antoine put a comment here.
+
+Types:
+ - `api_pos`: vector of doubles
+ - `api_concentration`: vector of integers
+"""
+function init_DF(api_pos, api_concentration)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshInit_DF, gmsh.lib), Cvoid,
+          (Ptr{Cdouble}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          convert(Vector{Cdouble}, api_pos), length(api_pos), convert(Vector{Cint}, api_concentration), length(api_concentration), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const init__df = init_DF
+
+"""
+    gmsh.model.mesh.add_free_form(tag, poly, _corners, loop = true)
 
 Antoine put a comment here.
 
@@ -4598,43 +4622,75 @@ Types:
  - `tag`: integer
  - `poly`: vector of doubles
  - `_corners`: vector of sizes
- - `sense`: integer
+ - `loop`: boolean
 """
-function add_free_form(tag, poly, _corners, sense = 1)
+function add_free_form(tag, poly, _corners, loop = true)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshAdd_free_form, gmsh.lib), Cvoid,
           (Cint, Ptr{Cdouble}, Csize_t, Ptr{Csize_t}, Csize_t, Cint, Ptr{Cint}),
-          tag, convert(Vector{Cdouble}, poly), length(poly), convert(Vector{Csize_t}, _corners), length(_corners), sense, ierr)
+          tag, convert(Vector{Cdouble}, poly), length(poly), convert(Vector{Csize_t}, _corners), length(_corners), loop, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end
 
 """
-    gmsh.model.mesh.get_DF_position()
+    gmsh.model.mesh.get_DF()
 
 Antoine put a comment here.
 
-Return `api_position`, `api_tags`.
+Return `api_d_pos`, `api_d_tags`, `api_d_ids`, `api_t_pos`, `api_t_tags`, `api_t_ids`, `DF_to_meshNodes`, `DF_to_mesh_parametric`, `meshNodes_to_DF`, `mesh_to_DF_parametric`.
 
 Types:
- - `api_position`: vector of doubles
- - `api_tags`: vector of integers
+ - `api_d_pos`: vector of doubles
+ - `api_d_tags`: vector of integers
+ - `api_d_ids`: vector of sizes
+ - `api_t_pos`: vector of doubles
+ - `api_t_tags`: vector of integers
+ - `api_t_ids`: vector of sizes
+ - `DF_to_meshNodes`: vector of sizes
+ - `DF_to_mesh_parametric`: vector of doubles
+ - `meshNodes_to_DF`: vector of sizes
+ - `mesh_to_DF_parametric`: vector of doubles
 """
-function get_DF_position()
-    api_api_position_ = Ref{Ptr{Cdouble}}()
-    api_api_position_n_ = Ref{Csize_t}()
-    api_api_tags_ = Ref{Ptr{Cint}}()
-    api_api_tags_n_ = Ref{Csize_t}()
+function get_DF()
+    api_api_d_pos_ = Ref{Ptr{Cdouble}}()
+    api_api_d_pos_n_ = Ref{Csize_t}()
+    api_api_d_tags_ = Ref{Ptr{Cint}}()
+    api_api_d_tags_n_ = Ref{Csize_t}()
+    api_api_d_ids_ = Ref{Ptr{Csize_t}}()
+    api_api_d_ids_n_ = Ref{Csize_t}()
+    api_api_t_pos_ = Ref{Ptr{Cdouble}}()
+    api_api_t_pos_n_ = Ref{Csize_t}()
+    api_api_t_tags_ = Ref{Ptr{Cint}}()
+    api_api_t_tags_n_ = Ref{Csize_t}()
+    api_api_t_ids_ = Ref{Ptr{Csize_t}}()
+    api_api_t_ids_n_ = Ref{Csize_t}()
+    api_DF_to_meshNodes_ = Ref{Ptr{Csize_t}}()
+    api_DF_to_meshNodes_n_ = Ref{Csize_t}()
+    api_DF_to_mesh_parametric_ = Ref{Ptr{Cdouble}}()
+    api_DF_to_mesh_parametric_n_ = Ref{Csize_t}()
+    api_meshNodes_to_DF_ = Ref{Ptr{Csize_t}}()
+    api_meshNodes_to_DF_n_ = Ref{Csize_t}()
+    api_mesh_to_DF_parametric_ = Ref{Ptr{Cdouble}}()
+    api_mesh_to_DF_parametric_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelMeshGet_DF_position, gmsh.lib), Cvoid,
-          (Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
-          api_api_position_, api_api_position_n_, api_api_tags_, api_api_tags_n_, ierr)
+    ccall((:gmshModelMeshGet_DF, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_api_d_pos_, api_api_d_pos_n_, api_api_d_tags_, api_api_d_tags_n_, api_api_d_ids_, api_api_d_ids_n_, api_api_t_pos_, api_api_t_pos_n_, api_api_t_tags_, api_api_t_tags_n_, api_api_t_ids_, api_api_t_ids_n_, api_DF_to_meshNodes_, api_DF_to_meshNodes_n_, api_DF_to_mesh_parametric_, api_DF_to_mesh_parametric_n_, api_meshNodes_to_DF_, api_meshNodes_to_DF_n_, api_mesh_to_DF_parametric_, api_mesh_to_DF_parametric_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    api_position = unsafe_wrap(Array, api_api_position_[], api_api_position_n_[], own = true)
-    api_tags = unsafe_wrap(Array, api_api_tags_[], api_api_tags_n_[], own = true)
-    return api_position, api_tags
+    api_d_pos = unsafe_wrap(Array, api_api_d_pos_[], api_api_d_pos_n_[], own = true)
+    api_d_tags = unsafe_wrap(Array, api_api_d_tags_[], api_api_d_tags_n_[], own = true)
+    api_d_ids = unsafe_wrap(Array, api_api_d_ids_[], api_api_d_ids_n_[], own = true)
+    api_t_pos = unsafe_wrap(Array, api_api_t_pos_[], api_api_t_pos_n_[], own = true)
+    api_t_tags = unsafe_wrap(Array, api_api_t_tags_[], api_api_t_tags_n_[], own = true)
+    api_t_ids = unsafe_wrap(Array, api_api_t_ids_[], api_api_t_ids_n_[], own = true)
+    DF_to_meshNodes = unsafe_wrap(Array, api_DF_to_meshNodes_[], api_DF_to_meshNodes_n_[], own = true)
+    DF_to_mesh_parametric = unsafe_wrap(Array, api_DF_to_mesh_parametric_[], api_DF_to_mesh_parametric_n_[], own = true)
+    meshNodes_to_DF = unsafe_wrap(Array, api_meshNodes_to_DF_[], api_meshNodes_to_DF_n_[], own = true)
+    mesh_to_DF_parametric = unsafe_wrap(Array, api_mesh_to_DF_parametric_[], api_mesh_to_DF_parametric_n_[], own = true)
+    return api_d_pos, api_d_tags, api_d_ids, api_t_pos, api_t_tags, api_t_ids, DF_to_meshNodes, DF_to_mesh_parametric, meshNodes_to_DF, mesh_to_DF_parametric
 end
-const get__df_position = get_DF_position
+const get__df = get_DF
 
 """
     gmsh.model.mesh.get_front_nodes_position()
@@ -4695,17 +4751,63 @@ function reset_discrete_front()
 end
 
 """
-    gmsh.model.mesh.relaying_and_relax()
+    gmsh.model.mesh.relaying_and_relax(relax)
 
 Antoine put a comment here.
+
+Types:
+ - `relax`: double
 """
-function relaying_and_relax()
+function relaying_and_relax(relax)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshRelaying_and_relax, gmsh.lib), Cvoid,
-          (Ptr{Cint},),
-          ierr)
+          (Cdouble, Ptr{Cint}),
+          relax, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
+end
+
+"""
+    gmsh.model.mesh.relaying_relax(lambda_coeff, nIterOut, nIterIn, distMax, RATIO)
+
+Antoine put a comment here.
+
+Types:
+ - `lambda_coeff`: double
+ - `nIterOut`: integer
+ - `nIterIn`: integer
+ - `distMax`: double
+ - `RATIO`: double
+"""
+function relaying_relax(lambda_coeff, nIterOut, nIterIn, distMax, RATIO)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshRelaying_relax, gmsh.lib), Cvoid,
+          (Cdouble, Cint, Cint, Cdouble, Cdouble, Ptr{Cint}),
+          lambda_coeff, nIterOut, nIterIn, distMax, RATIO, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.set_boundary_from_mesh()
+
+Antoine put a comment here.
+
+Return `bnd_pos`.
+
+Types:
+ - `bnd_pos`: vector of doubles
+"""
+function set_boundary_from_mesh()
+    api_bnd_pos_ = Ref{Ptr{Cdouble}}()
+    api_bnd_pos_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSet_boundary_from_mesh, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_bnd_pos_, api_bnd_pos_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    bnd_pos = unsafe_wrap(Array, api_bnd_pos_[], api_bnd_pos_n_[], own = true)
+    return bnd_pos
 end
 
 """
@@ -4753,6 +4855,60 @@ function set_levelsets(levelsets)
     ccall((:gmshModelMeshSet_levelsets, gmsh.lib), Cvoid,
           (Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
           convert(Vector{Vector{Cdouble}},levelsets), api_levelsets_n_, length(levelsets), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.write_DF(filename_DF)
+
+Antoine put a comment here.
+
+Types:
+ - `filename_DF`: string
+"""
+function write_DF(filename_DF)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshWrite_DF, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Cint}),
+          filename_DF, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const write__df = write_DF
+
+"""
+    gmsh.model.mesh.read_DF(filename_DF, pos_flag = true)
+
+Antoine put a comment here.
+
+Types:
+ - `filename_DF`: string
+ - `pos_flag`: boolean
+"""
+function read_DF(filename_DF, pos_flag = true)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshRead_DF, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Cint, Ptr{Cint}),
+          filename_DF, pos_flag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const read__df = read_DF
+
+"""
+    gmsh.model.mesh.remove_small_features(l)
+
+Antoine put a comment here.
+
+Types:
+ - `l`: double
+"""
+function remove_small_features(l)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshRemove_small_features, gmsh.lib), Cvoid,
+          (Cdouble, Ptr{Cint}),
+          l, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end

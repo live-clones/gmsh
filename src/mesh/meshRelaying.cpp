@@ -1,13 +1,12 @@
-#include <algorithm>
 #include "meshRelaying.h"
+
 #include "GModel.h"
+#include "MLine.h"
 #include "MTetrahedron.h"
 #include "MTriangle.h"
-#include "MLine.h"
 #include "MVertex.h"
-#include "robustPredicates.h"
 #include "qualityMeasures.h"
-//#include "libol1.h"
+#include "queue"
 
 #if defined(HAVE_WINSLOWUNTANGLER)
 #include "meshSurfaceUntangling.h"
@@ -18,2533 +17,61 @@
 discreteFront *discreteFront::_instance = nullptr;
 meshRelaying *meshRelaying::_instance = nullptr;
 
-double discreteFront::massMarkers (int color){
-  double mass = 0.0;
-  for (size_t i=0 ; i< lines.size() ; i+=2){
-    if (colors[i/2] == color){
-      SVector3 A(pos[3*lines[i]],pos[3*lines[i]+1],0);
-      SVector3 B(pos[3*lines[i+1]],pos[3*lines[i+1]+1],0);
-      SVector3 AB = B-A;
-      SVector3 Z (0,0,1);
-      SVector3 n = crossprod(AB,Z);
-      SVector3 mid = (B+A)*0.5;
-      mass += 0.5* (mid.x()*n.x()+mid.y()*n.y());      
-    }
-  }
-  return mass;
+using vec2 = std::array<double, 2>;
+inline vec2 operator-(const vec2 &a, const vec2 &b)
+{
+  return {{a[0] - b[0], a[1] - b[1]}};
+}
+inline vec2 operator+(const vec2 &a, const vec2 &b)
+{
+  return {{a[0] + b[0], a[1] + b[1]}};
+}
+inline vec2 operator*(const double &a, const vec2 &b)
+{
+  return {{a * b[0], a * b[1]}};
+}
+inline vec2 operator*(const vec2 &a, const double &b)
+{
+  return {{a[0] * b, a[1] * b}};
 }
 
-double meshRelaying::massElements (int color){
-
-  double mass = 0.0;
-  // if (tets.empty()){
-  //   for (size_t i=0;i<tris.size();i+=3){
-  //     SVector3 COG((pos[3*tris[i]]+pos[3*tris[i+1]]+pos[3*tris[i+2]])/3.0,
-	// 	   (pos[3*tris[i]+1]+pos[3*tris[i+1]+1]+pos[3*tris[i+2]+1])/3.0,
-	// 	   0);
-  //     if (discreteFront::instance()->whatIsTheColorOf2d(COG) == color){
-	// double aa[2] = {pos[3*tris[i]],pos[3*tris[i]+1]}; 
-	// double bb[2] = {pos[3*tris[i+1]],pos[3*tris[i+1]+1]}; 
-	// double cc[2] = {pos[3*tris[i+2]],pos[3*tris[i+2]+1]};
-	// double area = robustPredicates::orient2d(aa,bb,cc);
-	// mass += area;
-  //     }
-  //   }
-  // }
-  return mass;
+inline double triangle_area_2d(vec2 a, vec2 b, vec2 c)
+{
+  return .5 * ((b[1] - a[1]) * (b[0] + a[0]) + (c[1] - b[1]) * (c[0] + b[0]) +
+               (a[1] - c[1]) * (a[0] + c[0]));
 }
 
-double meshRelaying::qualityElement (size_t elem){
+// meshRelaying functions
 
-  if (!tets.empty()){
-    size_t n0 = tets[4*elem+0];
-    size_t n1 = tets[4*elem+1];
-    size_t n2 = tets[4*elem+2];
-    size_t n3 = tets[4*elem+3];
-    //    printf("%lu %lu %lu %lu -- %lu\n",n0,n1,n2,n3, pos.size());
-    double aa[3] = {pos[3*n0],pos[3*n0+1],pos[3*n0+2]}; 
-    //    printf("%g %g %g \n",aa[0],aa[1],aa[2]);
-    double bb[3] = {pos[3*n1],pos[3*n1+1],pos[3*n1+2]}; 
-    //    printf("%g %g %g \n",bb[0],bb[1],bb[2]);
-    double cc[3] = {pos[3*n2],pos[3*n2+1],pos[3*n2+2]}; 
-    //    printf("%g %g %g \n",cc[0],cc[1],cc[2]);
-    double dd[3] = {pos[3*n3],pos[3*n3+1],pos[3*n3+2]}; 
-    //    printf("%g %g %g \n",dd[0],dd[1],dd[2]);
-    double volume;
-    return qmTetrahedron::gamma(aa[0],aa[1],aa[2],
-				bb[0],bb[1],bb[2],
-				cc[0],cc[1],cc[2],
-				dd[0],dd[1],dd[2],&volume);
-  }
-  return 0.0;
-}
+meshRelaying::meshRelaying(GModel *gm)
+{
+  if(!gm) gm = GModel::current();
 
+  _RATIO = 1.0;
+  _distMax = 1.0;
 
-int discreteFront::whatIsTheColorOf2d (const SVector3 &P, std::vector<std::vector<size_t>> loops, std::vector<int> loops_tags){
-  // compute winding number -- fast
-  std::set<int> cs;
-  std::vector<int> cols;
-  double pp[2] = {P.x(),P.y()};
-  for (size_t i=0 ; i<loops.size(); ++i){
-    int c = loops_tags[i];
-    if(c<0)continue;
-    
-    int wn = 0;
-    size_t n = loops[i].size();
-    for (size_t j=0 ; j<n ; ++j){
-      double aa[2] = {pos[3*loops[i][j]],pos[3*loops[i][j]+1]};
-      double bb[2] = {pos[3*loops[i][(j+1)%n]],pos[3*loops[i][(j+1)%n]+1]};
-      double area = robustPredicates::orient2d(aa,bb,pp); 
-      if(aa[1]<= P.y()){
-        if (bb[1] > P.y() && area < 0)wn++;
-      }
-      else if(bb[1]<= P.y()){
-        if (area > 0)wn--;
-      }
-    }
-    if (wn != 0)cols.push_back(c);
-    
-  }
-  if (cols.empty())return -1;
-  if (cols.size() == 1)return cols[0];
-  if (cols.size() > 1){
-    return 1;
-  }
-  return cols[0];
-}
-
-void discreteFront::cornersInTriangle2d (const SVector3 &p0, const SVector3 &p1, const SVector3 &p2,
-					 std::vector<SVector3> &c, std::vector<int> &col){
-  SPoint2 a0(p0.x(),p0.y());
-  SPoint2 a1(p1.x(),p1.y());
-  SPoint2 a2(p2.x(),p2.y());
-  for (auto i : corners){
-    if(colors[i]<0) continue;
-    SPoint2 p(pos[3*i],pos[3*i+1]);
-    SVector3 p3(pos[3*i],pos[3*i+1],0);
-    double d = std::min(std::min((p0-p3).norm(),(p1-p3).norm()),(p2-p3).norm());
-    if (d < 1.e-12)continue ; // FIXME
-    double a01p = robustPredicates::orient2d(a0,a1,p);
-    double a12p = robustPredicates::orient2d(a1,a2,p);
-    double a20p = robustPredicates::orient2d(a2,a0,p);
-
-    if (a01p*a12p >=0 && a01p*a20p >=0 && a20p*a12p >=0){
-      for (size_t j =0; j< lines.size() ; j+=2 ){
-        if (lines[j] == i){
-          col.push_back(j);
-          break;
-        }
-      }
-      c.push_back(SVector3(pos[3*i],pos[3*i+1],0));      
-    }
-  }
-}
-
-void discreteFront::tripleInTriangle2d (const SVector3 &p0, const SVector3 &p1, const SVector3 &p2,
-					 std::vector<size_t> &interface_id, std::vector<size_t> &m1, std::vector<size_t> &m2, std::vector<SVector3> &p_out){
-  SPoint2 a0(p0.x(),p0.y());
-  SPoint2 a1(p1.x(),p1.y());
-  SPoint2 a2(p2.x(),p2.y());
-  for (size_t ii=0; ii< triple_points.size(); ++ii){
-    triple_p i = triple_points[ii];
-    SPoint2 p(i.pos[0],i.pos[1]);
-    SVector3 p3(i.pos[0],i.pos[1],0);
-    double d = std::min(std::min((p0-p3).norm(),(p1-p3).norm()),(p2-p3).norm());
-    if (d < 1.e-12)continue ; // FIXME
-    double a01p = robustPredicates::orient2d(a0,a1,p);
-    double a12p = robustPredicates::orient2d(a1,a2,p);
-    double a20p = robustPredicates::orient2d(a2,a0,p);
-
-    if (a01p*a12p >=0 && a01p*a20p >=0 && a20p*a12p >=0){
-      interface_id.push_back(i.id_interface);
-      m1.push_back(interfaces[i.id_interface].markers[i.id_marker]);
-      m2.push_back(interfaces[i.id_interface].markers[i.id_marker]);
-      p_out.push_back(SVector3(i.pos[0],i.pos[1],0));
-    }
-  }
-}
-
-void discreteFront::intersectLine2d (const SVector3 &p0, const SVector3 &p1,
-				     std::vector<double> &d,
-				     std::vector<int> &c){
-  SPoint2 a1(p0.x(),p0.y());
-  SPoint2 a2(p1.x(),p1.y());
-
-  double xmin = std::min(p0.x(),p1.x());
-  double xmax = std::max(p0.x(),p1.x());
-  double ymin = std::min(p0.y(),p1.y());
-  double ymax = std::max(p0.y(),p1.y());
-
-  
-  if (xmin < bbox.min().x())return;
-  if (xmax > bbox.max().x())return;
-  if (ymin < bbox.min().y())return;
-  if (ymax > bbox.max().y())return;
-  
-  std::vector<std::pair<size_t, std::pair<int,int>>> _ind;
-  int IMIN,IMAX,JMIN,JMAX;
-  getCoordinates(xmin,ymin,IMIN,JMIN);
-  getCoordinates(xmax,ymax,IMAX,JMAX);
-  for (int I=IMIN; I<=IMAX;I++){
-    for (int J=JMIN; J<=JMAX;J++){
-      int index = I+NX*J;
-      _ind.insert(_ind.begin(),sss_inter[index].begin(),sss_inter[index].end());
-    }
-  }
-  std::sort(_ind.begin(), _ind.end());
-  auto last = std::unique (_ind.begin(), _ind.end());
-  _ind.erase(last,_ind.end());
-
-  for (size_t I=0 ; I< _ind.size() ; I++){
-    std::pair<size_t, std::pair<int,int>> line = _ind[I];
-    int m = line.second.first;
-    int mp1 = line.second.second;
-    double a3[2]= {pos[3*m],pos[3*m+1]};
-    double a4[2]= {pos[3*mp1],pos[3*mp1+1]};
-    
-    double xminb = std::min(a3[0],a4[0]);
-    double xmaxb = std::max(a3[0],a4[0]);
-    double yminb = std::min(a3[1],a4[1]);
-    double ymaxb = std::max(a3[1],a4[1]);
-    if  (ymaxb < ymin)continue;
-    if  (xmaxb < xmin)continue;
-    if  (xminb > xmax)continue;    
-    if  (yminb > ymax)continue;
-    
-    double a143 = robustPredicates::orient2d(a1,a4,a3);
-    double a243 = robustPredicates::orient2d(a2,a4,a3);    
-
-    if (a143*a243 > 0) continue;
-    double a123 = robustPredicates::orient2d(a1,a2,a3);
-    double a124 = robustPredicates::orient2d(a1,a2,a4);
-
-    if (a123*a124 > 0) continue;
-    d.push_back(a143/(a143-a243));
-    c.push_back(m);
-    c.push_back(mp1);
-  }
-}
-
-void discreteFront::getCoordinates(double x, double y, int &IX, int &IY){
-  IX = (NX-1)*(x-bbox.min().x())/(bbox.max().x()-bbox.min().x());
-  IY = (NY-1)*(y-bbox.min().y())/(bbox.max().y()-bbox.min().y());    
-}
-
-void discreteFront::buildSpatialSearchStructure () {    
-  if(empty())return;
-  for (size_t i=0;i<pos.size();i+=3)
-    bbox += SPoint3(pos[i],pos[i+1],pos[i+2]);    
-  NX = 300;
-  NY = 300;
-  sss.clear();
-  sss.resize(NX*NY);
-  for (size_t i = 0; i< lines.size() ; i+=2){
-    int IX,IY,JX,JY;
-    getCoordinates(pos[3*lines[i]],pos[3*lines[i]+1], IX, IY);
-    getCoordinates(pos[3*lines[i+1]],pos[3*lines[i+1]+1], JX, JY);
-    for (size_t I=std::min(IX,JX);I<=std::max(IX,JX);I++){
-      for (size_t J=std::min(IY,JY);J<=std::max(IY,JY);J++){
-	sss[I+J*NX].push_back(i);
-      }
-    }
-  }
-  return;
-}
-
-
-void discreteFront::buildSpatialSearchStructureInterface() {    
-  if(empty())return;
-  for (size_t i=0;i<pos.size();i+=3)
-    bbox += SPoint3(pos[i],pos[i+1],pos[i+2]);    
-  NX = 300;
-  NY = 300;
-  sss_inter.clear();
-  sss_inter.resize(NX*NY);
-  for(size_t i=0; i<interfaces.size(); ++i){
-    for(size_t j=0; j<interfaces[i].markers.size(); ++j){
-      size_t n_m = interfaces[i].markers.size();
-      int IX,IY,JX,JY;
-      getCoordinates(pos[3*interfaces[i].markers[j]],pos[3*interfaces[i].markers[j]+1], IX, IY);
-      getCoordinates(pos[3*interfaces[i].markers[(j+1)%n_m]],pos[3*interfaces[i].markers[(j+1)%n_m]+1], JX, JY);
-      for (size_t I=std::min(IX,JX);I<=std::max(IX,JX);I++){
-        for (size_t J=std::min(IY,JY);J<=std::max(IY,JY);J++){
-          sss_inter[I+J*NX].push_back(std::make_pair(i,std::make_pair(interfaces[i].markers[j],interfaces[i].markers[(j+1)%n_m])));
-        }
-      }
-    }
-  }
-  return;
-}
-
-void discreteFront::intersectInterfaces(std::vector<std::pair<size_t, size_t>> *interactions){
-  std::vector<interface> new_interfaces = interfaces;
-  std::vector<size_t> intersection_struct;
-  std::vector<double> intersection_param;
-  for(size_t i=0; i<interfaces.size(); ++i){
-    for(size_t j=0; j<interfaces[i].markers.size(); ++j){
-      size_t n_m = interfaces[i].markers.size();
-      size_t m = interfaces[i].markers[j];
-      size_t mp1 = interfaces[i].markers[(j+1)%n_m];
-      double a1[2] = {pos[3*m],pos[3*m+1]};
-      double a2[2] = {pos[3*mp1],pos[3*mp1+1]};
-
-      int IMIN,IMAX,JMIN,JMAX;
-      getCoordinates(std::min(a1[0],a2[0]),std::min(a1[1],a2[1]),IMIN,JMIN);
-      getCoordinates(std::max(a1[0],a2[0]),std::max(a1[1],a2[1]),IMAX,JMAX);
-      std::set<std::pair<size_t, std::pair<int,int>>> touched;
-      for(size_t I=IMIN; I<=IMAX;I++){
-        for(size_t J=JMIN; J<=JMAX;J++){
-          size_t index = I+NX*J;
-          for(auto s : sss_inter[index]){
-            size_t id_interface = s.first;
-            int id_marker = s.second.first;
-            int id_markerp1 = s.second.second;
-
-            if(touched.find(s) != touched.end())continue;
-            touched.insert(s);
-            if(i>id_interface) continue;                      // only compute once intersections and allow interface auto-intersecion 
-            if(i == id_interface && (m == id_marker || mp1 == id_marker)) continue; // don't compute intersection with himself
-            if(i == id_interface){
-              size_t it = std::find(interfaces[i].markers.begin(), interfaces[i].markers.end(), id_marker) - interfaces[i].markers.begin();
-              if(it>j){
-                printf("skipped intersection interface in %d, %d markers : markers %d - %d with %d -%d  \n", i, id_interface, m, mp1, id_marker, id_markerp1);
-                continue;
-              }
-            }
-
-            double a3[2] = {pos[3*id_marker],pos[3*id_marker+1]};
-            double a4[2] = {pos[3*id_markerp1],pos[3*id_markerp1+1]};
-            double inter[2] = {0,0};
-            double param[1] = {0};
-            int b_inter = computeIntersection(a1, a2, a3, a4, inter, param);
-            if(b_inter){
-              printf("intersection interface in %f, %f markers : markers %d - %d with %d -%d  \n", inter[0], inter[1], m, mp1, id_marker, id_markerp1);
-              printf("sss size = %d, i,j / n = %d,%d / %d\n", sss_inter[index].size(), i,j, interfaces[i].markers.size());
-              interactions->push_back(std::make_pair(id_interface, i));
-              size_t n_pos = pos.size()/3;
-              pos.push_back(inter[0]);
-              pos.push_back(inter[1]);
-              pos.push_back(0.0);
-
-              int idx = std::find(new_interfaces[id_interface].markers.begin(), new_interfaces[id_interface].markers.end(), id_marker)-new_interfaces[id_interface].markers.begin();
-              size_t to_add = 0;
-              for(size_t k=0; k< intersection_param.size(); ++k){
-                printf("inter m = %d, %d\n", intersection_struct[3*k+1], intersection_struct[3*k+2]);
-                printf("id m = %d\n", id_marker);
-                printf("param = %f, %f\n", intersection_param[k], param[0]);
-                if(intersection_struct[3*k+1] == id_marker && intersection_param[k]<param[0]){
-                  to_add += 1;
-                }
-                if(intersection_struct[3*k+2] == id_marker && intersection_param[k]<param[0]){
-                  to_add += 1;
-                }
-              }
-              printf("add marker %d at %d\n", n_pos, idx+1+to_add);
-              printf("to_add = %d\n", to_add);
-              new_interfaces[id_interface].markers.insert(new_interfaces[id_interface].markers.begin()+idx+1+to_add, n_pos);
-
-              int idx_j = std::find(new_interfaces[i].markers.begin(), new_interfaces[i].markers.end(), m)-new_interfaces[i].markers.begin();
-              size_t to_add_j = 0;
-              for(size_t k=0; k< intersection_param.size(); ++k){
-                printf("inter m = %d, %d\n", intersection_struct[3*k+1], intersection_struct[3*k+2]);
-                printf("id m = %d\n", m);
-                printf("param = %f, %f\n", intersection_param[k], param[0]);
-                if(intersection_struct[3*k+1] == m && intersection_param[k]<param[0]){
-                  to_add_j += 1;
-                }
-                if(intersection_struct[3*k+2] == m && intersection_param[k]<param[0]){
-                  to_add_j += 1;
-                }
-              }
-              printf("add marker %d at %d\n", n_pos, idx_j+1+to_add_j);
-              printf("to_add_j = %d\n", to_add_j);
-              new_interfaces[i].markers.insert(new_interfaces[i].markers.begin()+idx_j+1+to_add_j, n_pos);
-
-              intersection_struct.push_back(n_pos);
-              intersection_struct.push_back(id_marker);
-              intersection_struct.push_back(m);
-              intersection_param.push_back(param[0]);
-            }
-          }
-        }
-      }
-    }
-  }
-  interfaces = new_interfaces;
-  //update triple points
-  for(size_t i=0; i<triple_points.size(); ++i){
-    size_t ii = triple_points[i].id_interface;
-    size_t marker = triple_points[i].marker;
-    for(size_t j=0; j<interfaces[ii].markers.size(); ++j){
-      if(interfaces[ii].markers[j] == marker){
-        triple_points[i].id_marker = j;
-        break;
-      }
-    }
-
-    size_t i_on_i = triple_points[i].id_on_interface;
-    for(size_t j=0; j<interfaces[i_on_i].markers.size(); ++j){
-      if(interfaces[i_on_i].markers[j] == marker){
-        triple_points[i].id_on_marker = j;
-        break;
-      }
-    }
-  }
-}
-
-void discreteFront::bool_op_priority(){
-  std::vector<std::pair<size_t,size_t>> list_inter;
-  std::vector<size_t> to_remove;
-  for(size_t i=0; i<triple_points.size(); ++i){
-    std::pair<size_t,size_t> p = std::make_pair(triple_points[i].id_on_interface, triple_points[i].id_interface);
-    if(std::find(list_inter.begin(), list_inter.end(), p) == list_inter.end()){
-      list_inter.push_back(p);
-    }
-  }
-  
-}
-
-// loop1 and loop2 need to be in counterclockwise order with the intersection marker, inter is the ids of the two intersection
-// return merged, the list of the markers 
-void discreteFront::mergeLoop(std::vector<size_t> loop1, std::vector<size_t> loop2, std::vector<size_t> inter, std::vector<size_t> *merged){
-  size_t n1 = loop1.size();
-  size_t n2 = loop2.size();
-
-  std::vector<size_t> it_inters;
-  for(size_t i=0; i<inter.size(); ++i){
-    it_inters.push_back(std::find(loop1.begin(), loop1.end(), inter[i]) - loop1.begin());
-  }
-
-  size_t it_inter11 = std::find(loop1.begin(), loop1.end(), inter[0]) - loop1.begin();
-  size_t it_inter12 = std::find(loop1.begin(), loop1.end(), inter[1]) - loop1.begin();
-
-  size_t it_inter21 = std::find(loop2.begin(), loop2.end(), inter[0]) - loop2.begin();
-  size_t it_inter22 = std::find(loop2.begin(), loop2.end(), inter[1]) - loop2.begin();
-
-  //first point outside
-  size_t it1 = 0;
-  double P[2];
-  while(true){
-    if(it1>=loop1.size()){
-      exit(1);
-    }
-
-    if(it1==it_inter11 || it1==it_inter12){
-      it1++;
-      continue;
-    }
-
-    P[0] = pos[3*loop1[it1]];
-    P[1] = pos[3*loop1[it1]+1];
-
-    if(!insideList(loop2, P)){
-      break;
-    } else{
-      it1++;
-    } 
-  }
-
-  
-
-  merged->push_back(loop1[it1]);
-  while((it1+1)%n1 != it_inter11 && (it1+1)%n1 != it_inter12){
-    merged->push_back(loop1[(it1+1)%n1]);
-    it1++;
-  }
-
-  // first intersection
-  size_t it2;
-  if((it1+1)%n1 == it_inter11){
-    it2 = it_inter21;
-  } else {
-    it2 = it_inter22;
-  }
-
-  merged->push_back(loop2[it2]);
-  while((it2+1)%n2 != it_inter21 && (it2+1)%n2 != it_inter22){
-    merged->push_back(loop2[(it2+1)%n2]);
-    it2++;
-  }
-
-  // second intersection
-  if((it2+1)%n2 == it_inter21){
-    it1 = it_inter11;
-  } else {
-    it1 = it_inter12;
-  }
-
-  // close loop 
-  merged->push_back(loop1[it1]);
-  while(loop1[(it1+1)%n1]!=(*merged)[0]){
-    merged->push_back(loop1[(it1+1)%n1]);
-    it1++;
-  }
-
-  return;
-}
-
-// loop1 and loop2 need to be in counterclockwise order with the intersection marker, inter is the ids of the two intersection
-// return loop1 \ loop2, the list of the markers for side by side loops
-void discreteFront::loop1Minusloop2(std::vector<size_t> loop1, std::vector<size_t> loop2, std::vector<size_t> inter, std::vector<size_t> *minus){
-  size_t n1 = loop1.size();
-  size_t n2 = loop2.size();
-
-  size_t it_inter11 = std::find(loop1.begin(), loop1.end(), inter[0]) - loop1.begin();
-  size_t it_inter12 = std::find(loop1.begin(), loop1.end(), inter[1]) - loop1.begin();
-
-  size_t it_inter21 = std::find(loop2.begin(), loop2.end(), inter[0]) - loop2.begin();
-  size_t it_inter22 = std::find(loop2.begin(), loop2.end(), inter[1]) - loop2.begin();
-
-  //first point outside
-  size_t it1 = 0;
-  double P[2];
-  while(true){
-    if(it1>=loop1.size()){
-      exit(1);
-    }
-
-    if(it1==it_inter11 || it1==it_inter12){
-      it1++;
-      continue;
-    }
-
-    P[0] = pos[3*loop1[it1]];
-    P[1] = pos[3*loop1[it1]+1];
-
-    if(!insideList(loop2, P) && loop1[it1]!=inter[0] &&  loop1[it1]!=inter[1]){
-      break;
-    } else{
-      it1++;
-    } 
-  }
-
-  
-
-  minus->push_back(loop1[it1]);
-  while((it1+1)%n1 != it_inter11 && (it1+1)%n1 != it_inter12){
-    minus->push_back(loop1[(it1+1)%n1]);
-    it1++;
-  }
-
-  // first intersection
-  size_t it2;
-  if((it1+1)%n1 == it_inter11){
-    it2 = it_inter21;
-  } else {
-    it2 = it_inter22;
-  }
-
-  minus->push_back(loop2[it2]);
-  while((it2-1+n2)%n2 != it_inter21 && (it2-1+n2)%n2 != it_inter22){
-    minus->push_back(loop2[(it2-1+n2)%n2]);
-    it2--;
-  }
-
-  // second intersection
-  if((it2-1+n2)%n2 == it_inter21){
-    it1 = it_inter11;
-  } else {
-    it1 = it_inter12;
-  }
-
-  // close loop 
-  minus->push_back(loop1[it1]);
-  while(loop1[(it1+1)%n1]!=(*minus)[0]){
-    minus->push_back(loop1[(it1+1)%n1]);
-    it1++;
-  }
-  return;
-}
-
-void discreteFront::loop1Minusloop2_inside(std::vector<size_t> loop1, std::vector<size_t> loop2, std::vector<size_t> inter, std::vector<size_t> *minus){
-  size_t n1 = loop1.size();
-  size_t n2 = loop2.size();
-
-  printf("inter size = %d\n", inter.size());
-  for(size_t i=0; i<inter.size(); ++i){
-    printf("inter[%d] = %d\n", i, inter[i]);
-  }
-
-  size_t it_inter11 = std::find(loop1.begin(), loop1.end(), inter[0]) - loop1.begin();
-  size_t it_inter12 = std::find(loop1.begin(), loop1.end(), inter[1]) - loop1.begin();
-
-  size_t it_inter21 = std::find(loop2.begin(), loop2.end(), inter[0]) - loop2.begin();
-  size_t it_inter22 = std::find(loop2.begin(), loop2.end(), inter[1]) - loop2.begin();
-
-  //first point outside
-  size_t it1 = 0;
-  double P[2];
-  while(true){
-    if(it1>=loop2.size()){
-      exit(1);
-    }
-
-    if(it1==it_inter21 || it1==it_inter22){
-      it1++;
-      continue;
-    }
-
-    P[0] = pos[3*loop2[it1]];
-    P[1] = pos[3*loop2[it1]+1];
-
-    if(insideList(loop1, P) && loop2[it1]!=inter[0] &&  loop2[it1]!=inter[1]){
-      break;
-    } else{
-      it1++;
-    } 
-  }
-
-  
-
-  minus->push_back(loop2[it1]);
-  while((it1+1)%n1 != it_inter21 && (it1+1)%n1 != it_inter22){
-    minus->push_back(loop2[(it1+1)%n2]);
-    it1++;
-  }
-
-  // first intersection
-  size_t it2;
-  if((it1+1)%n2 == it_inter21){
-    it2 = it_inter11;
-  } else {
-    it2 = it_inter12;
-  }
-
-  minus->push_back(loop1[it2]);
-  while((it2+1)%n1 != it_inter11 && (it2+1)%n1 != it_inter12){
-    minus->push_back(loop1[(it2+1)%n1]);
-    it2++;
-  }
-
-  // second intersection
-  if((it2+1)%n1 == it_inter11){
-    it1 = it_inter21;
-  } else {
-    it1 = it_inter22;
-  }
-
-  // close loop 
-  minus->push_back(loop2[it1]);
-  while(loop2[(it1+1)%n2]!=(*minus)[0]){
-    minus->push_back(loop2[(it1+1)%n2]);
-    it1++;
-  }
-
-  printf("minus = \n");
-  for(size_t i=0; i<minus->size(); ++i){
-    printf("%d, ", (*minus)[i]);
-  }
-  printf("\n");
-  return;
-}
-
-void discreteFront::autoIntersect(std::vector<size_t> loop, std::vector<size_t> inter, std::vector<size_t> *outside, std::vector<size_t> *inside){
-  std::vector<size_t> temp1, temp2;
-  size_t n = loop.size();
-  int *flag = (int*) calloc(n, sizeof(int)); 
-
-  std::vector<size_t>::iterator iter1 = std::find(loop.begin(), loop.end(), inter[0]);
-  std::vector<size_t>::iterator iter2 = std::find(iter1+1, loop.end(), inter[0]);
-  size_t it_inter11 = iter1 - loop.begin();
-  size_t it_inter12 = iter2 - loop.begin();
-
-  iter1 = std::find(loop.begin(), loop.end(), inter[1]);
-  iter2 = std::find(iter1+1, loop.end(), inter[1]);
-  size_t it_inter21 = iter1 - loop.begin();
-  size_t it_inter22 = iter2 - loop.begin();
-
-  //first point exterior 
-  size_t it;
-  double y_max= -1e100;
-
-  for(size_t i=0; i<loop.size(); ++i){
-    if(pos[3*loop[i]+1]>y_max){
-      it = i;
-      y_max = pos[3*loop[i]+1];
-    }
-  }
-
-  //exterior loop
-  temp1.push_back(loop[it]);
-  flag[it] = 1;
-  while((it+1)%n!=it_inter11 && (it+1)%n!=it_inter12 && (it+1)%n!=it_inter21 && (it+1)%n!=it_inter22){
-    temp1.push_back(loop[(it+1)%n]);
-    flag[(it+1)%n] = 1;
-    ++it;
-  }
-  temp1.push_back(loop[(it+1)%n]);
-  if((it+1)%n == it_inter11){
-    it = it_inter12;
-  } else if((it+1)%n == it_inter12){
-    it = it_inter11;
-  } if((it+1)%n == it_inter21){
-    it = it_inter22;
-  } else if((it+1)%n == it_inter22){
-    it = it_inter21;
-  }
-  
-  temp1.push_back(loop[it]);
-  flag[it] = 1;
-  while(loop[(it+1)%n]!=temp1[0]){
-    temp1.push_back(loop[(it+1)%n]);
-    flag[(it+1)%n] = 1;
-    ++it;
-  }
-
-  //first point interior
-  size_t start_it;
-  if(flag[it_inter11]==1 || flag[it_inter12]==1){
-    it = it_inter21;
-    start_it = it_inter21;
-  } else {
-    it = it_inter11;
-    start_it = it_inter11;
-  }
-  // interior loop
-  temp2.push_back(loop[it]);
-  while(loop[(it+1)%n] != inter[0] && loop[(it+1)%n] != inter[1]){
-    temp2.push_back(loop[(it+1)%n]);
-    it++;
-  }
-
-  if(loop[(it+1)%n] != loop[start_it]){
-    temp2.clear();
-    if(start_it == it_inter21){
-      it = it_inter22;
-    } else {
-      it = it_inter12;
-    }
-
-    temp2.push_back(loop[it]);
-    while(loop[(it+1)%n] != inter[0] && loop[(it+1)%n] != inter[1]){
-      temp2.push_back(loop[(it+1)%n]);
-      it++;
-    }
-  }
-
-  for(size_t i=0; i<temp1.size(); ++i){
-    outside->push_back(temp1[i]);
-  }
-  for(size_t i=0; i<temp2.size(); ++i){
-    inside->push_back(temp2[i]);
-  }
-}
-
-void discreteFront::autoIntersectNew(std::vector<size_t> loop, std::vector<size_t> inter, std::vector<std::vector<size_t>> *new_loops, std::vector<int> *new_loops_tags){
-  size_t n = loop.size();
-  std::vector<std::vector<size_t>> out_loops;
-  std::vector<int> out_loops_tags;
-
-  int *flag = (int*) calloc(n, sizeof(int));
-  for (size_t i=0; i<inter.size(); ++i){
-    std::vector<size_t>::iterator it = std::find(loop.begin(), loop.end(), inter[i]);
-    std::vector<size_t>::iterator itp1 = std::find(it+1, loop.end(), inter[i]);
-    flag[it-loop.begin()] = itp1-loop.begin()+1;
-    flag[itp1-loop.begin()] = it-loop.begin()+1;
-  }
-  
-  while(std::find(flag, flag+n, 0) != flag+n){
-    size_t current_id = std::find(flag, flag+n, 0) - flag;
-    std::vector<size_t> temp;
-    temp.push_back(loop[current_id]);
-    flag[current_id] = -1;
-    size_t start = loop[current_id];
-    size_t next = -1;
-    while(start != next){
-      
-      if(flag[current_id+1]>0){ //intersection case
-        next = loop[(current_id+1)%n];
-        current_id = flag[current_id+1]-1;
-        // temp.push_back(next);
-        next = loop[(current_id)%n];
-      } else {                  //normal case 
-        flag[(current_id+1)%n] = -1;
-        next = loop[(current_id+1)%n];
-        current_id = (current_id+1)%n;
-      }
-      // printf("current_id = %d\n", current_id);
-      temp.push_back(next);
-
-    }
-    
-    std::vector<double> temp_pos;
-    for(size_t i=0; i<temp.size(); ++i){
-      temp_pos.push_back(pos[3*temp[i]]);
-      temp_pos.push_back(pos[3*temp[i]+1]);
-      temp_pos.push_back(pos[3*temp[i]+2]);
-    }
-    
-    if(loopOrientation(temp_pos) < 0){
-      out_loops_tags.push_back(1);
-    } else {
-      std::reverse(temp.begin(), temp.end());
-      out_loops_tags.push_back(-1);
-    }
-    out_loops.push_back(temp);
-  }
-
-  // compute local tree
-  T_node* tree = newT_node(out_loops.size(), -1);
-  for(size_t i=0; i<out_loops.size(); ++i){
-    T_node *leaf = newT_node(i, out_loops_tags[i]);
-    tree->leafs.push_back(leaf);
-  }
-
-  std::vector<T_node*> todo;
-  std::vector<T_node*> new_todo;
-  todo.push_back(tree);
-  while(todo.size()>0){
-    for(size_t td=0; td<todo.size(); td++){
-      T_node *level = todo[td];
-      for(size_t i=0; i<level->leafs.size(); ++i){
-        for(size_t j=0; j<level->leafs.size(); ++j){
-          if(j==i) continue;
-          //nodes from loop j
-          std::vector<size_t> loopj = out_loops[level->leafs[j]->id];
-          // one node from loop i
-          size_t nodei = out_loops[level->leafs[i]->id][0];
-          size_t id_ = 0;
-          while(std::find(inter.begin(), inter.end(), nodei) != inter.end()){ //find node that is not an intersection
-            id_++;
-            nodei = out_loops[level->leafs[i]->id][id_];
-          }
-
-          if(insideList(loopj, &pos[3*nodei])){ //check if leafs i is in leafs j
-            printf("leaf %d is in leaf %d\n", level->leafs[i]->id, level->leafs[j]->id);
-            level->leafs[j]->leafs.push_back(level->leafs[i]);
-            level->leafs.erase(level->leafs.begin()+i);
-            i--;
-            new_todo.push_back(level->leafs[j]);
-            break;
-          }
-        }
-      }
-    }
-    todo = new_todo;
-    new_todo.clear();
-  }
-
-  int *flag_loop = (int*) calloc(out_loops.size(), sizeof(int));
-
-  // go through the tree
-  // start with the first leaf
-  std::vector<T_node*> state;
-  state.push_back(tree);
-  while(state.back()->leafs.size()>0){
-    state.push_back(state.back()->leafs[0]);
-  }
-  //go through leafs
-  while(state.size()>0){
-    T_node *current = state.back();
-    if(state.size()>1){
-      if(current->tag != state[state.size()-2]->tag){
-        current->data = 1;
-        flag_loop[current->id] = 1;
-      }else{
-        current->data = -1;
-        flag_loop[current->id] = -1;
-      }
-    }
-    
-    if(current->leafs.size()>0){
-      int id_ = -1;
-      for(int i=0; i<current->leafs.size(); ++i){
-        if(current->leafs[i]->data == 0){
-          id_ = i;
-        }
-      }
-      if(id_ == -1){
-        state.pop_back();
-        continue;
-      }
-      state.push_back(current->leafs[id_]);
-      while(state.back()->leafs.size()>0){
-        state.push_back(state.back()->leafs[0]);
-      }
-    } else {
-      state.pop_back();
-    }
-  }
-
-  //print tree
-  printf("tree: %d leafs \n", tree->leafs.size());
-  for(size_t i=0; i<tree->leafs.size(); ++i){
-    printf("leaf %d, data = %d, tag = %d\n", i, tree->leafs[i]->data, tree->leafs[i]->tag);
-    for(size_t j=0; j<tree->leafs[i]->leafs.size(); ++j){
-      printf("  leaf %d, data = %d, tag = %d\n", tree->leafs[i]->leafs[j]->id, tree->leafs[i]->leafs[j]->data, tree->leafs[i]->leafs[j]->tag);
-    }
-  }
-
-  printf("out_loops size = %d\n", out_loops.size());
-  for(size_t i=0; i<out_loops.size(); ++i){
-    printf("loop %d, tag = %d\n", i, out_loops_tags[i]);
-    for(size_t j=0; j<out_loops[i].size(); ++j){
-      printf("%d, ", out_loops[i][j]);
-    }
-    printf("\n");
-  }
-
-  for(size_t i=0; i<out_loops.size(); ++i){
-    if(flag_loop[i] == 1){
-      new_loops->push_back(out_loops[i]);
-      new_loops_tags->push_back(out_loops_tags[i]);
-    }
-  }
-
-  
-}
-
-void discreteFront::interactionsOrder(std::vector<std::pair<size_t,size_t>> interactions, std::vector<std::pair<size_t,size_t>> *ordered){
-  std::vector<size_t> order;
-  int *flag = (int*) calloc(interactions.size(), sizeof(int));
-
-  printf("interactions size = %d\n", interactions.size());
-  for(size_t i=0; i<interactions.size(); ++i){
-    printf("%d - %d\n", interactions[i].first, interactions[i].second);
-  }
-
-  //sort interactions vector
-  auto it = std::unique(interactions.begin(), interactions.end(), [](const auto a, const auto b) {
-    if((a.first == b.first && a.second == b.second) || (a.first == b.second && a.second == b.first)){
-      return 1;
-    } else {
-      return 0;
-    }
-  });
-  interactions.erase(it, interactions.end());
-
-  for(size_t i=0; i<interactions.size(); ++i){
-    if(interactions[i].first == interactions[i].second){
-      order.push_back(i);
-      flag[i] = 1;
-    }
-  }
-
-  std::vector<T_node*> todo;
-  std::vector<T_node*> new_todo;
-  size_t level = 0;
-  size_t *levels = (size_t*) calloc(interfaces.size(), sizeof(size_t));
-  todo.push_back(Tree);
-  levels[Tree->id] = level;
-  while(todo.size()>0){
-    level++;
-    for(size_t i=0; i<todo.size(); ++i){
-      T_node *current = todo[i];
-      for(size_t j=0; j<current->leafs.size(); ++j){
-        new_todo.push_back(current->leafs[j]);
-        levels[current->leafs[j]->id] = level;
-      }
-    }
-    todo = new_todo;
-    new_todo.clear();
-  }
-
-  int *interaction_level = (int*) calloc(interactions.size(), sizeof(int));
-  for(size_t i=0; i<interactions.size(); ++i){
-    if(flag[i] == 1) continue;
-    size_t level1 = levels[interactions[i].first];
-    size_t level2 = levels[interactions[i].second];
-    if(level1>level2){
-      size_t temp = interactions[i].first;
-      interactions[i].first = interactions[i].second;
-      interactions[i].second = temp;
-    }
-    interaction_level[i] = (level1+level2)/2;
-  }
-
-  std::vector<std::pair<size_t, size_t>> index;
-  for( size_t i=0; i<interactions.size(); ++i){
-    if(flag[i] == 0){
-      index.push_back(std::make_pair(i, interaction_level[i]));
-    }
-  }
-
-  std::sort(std::begin(index), std::end(index), [](const auto a, const auto b)
-  { 
-    return a.second < b.second; 
-  });
-
-  for(size_t i=0; i<index.size(); ++i){
-    order.push_back(index[i].first);
-  }
-  
-  for(size_t i=0; i<order.size(); ++i){
-    ordered->push_back(interactions[order[i]]);
-  }
-}
-
-void discreteFront::manageIntersection(std::vector<std::pair<size_t,size_t>> ordered, std::vector<std::vector<size_t>> loops, std::vector<int> loops_tags, std::vector<int> loops_sense, std::vector<size_t> inter_markers, std::vector<std::vector<size_t>> *new_loops, std::vector<int> *new_loops_tags, std::vector<int> *new_loops_sense){
-  std::vector<int> flag_inter;
-  for(size_t i=0; i<inter_markers.size(); ++i){
-    flag_inter.push_back(0);
-  }
-  
-  std::reverse(ordered.begin(), ordered.end());
-  std::vector<int> to_keep;
-  for(size_t i=0; i<loops.size(); ++i){
-    to_keep.push_back(1);
-  }
-
-  printf("loops before intersection management\n");
-  for(size_t i=0; i<loops.size(); ++i){
-    printf("loop %d, tag = %d\n", i, loops_tags[i]);
-    for(size_t j=0; j<loops[i].size(); ++j){
-      printf("%d, ", loops[i][j]);
-    }
-    printf("\n");
-  }
-
-  printf("ordered size = %d\n", ordered.size());
-  for(size_t i=0; i<ordered.size(); ++i){
-    printf("%d - %d\n", ordered[i].first, ordered[i].second);
-    printf(" with sense : %d - %d\n", loops_sense[ordered[i].first], loops_sense[ordered[i].second]);
-  }
-
-  while(ordered.size()>0){
-    std::pair<size_t, size_t> interaction = ordered.back();
-    ordered.pop_back();
-    if(interaction.first == interaction.second){      //auto-intersection
-      printf("auto-intersection : %d\n", interaction.first);
-      int tag1 = loops_tags[interaction.first];
-      std::vector<std::vector<size_t>> auto_loops;
-      std::vector<int> auto_loops_tags;
-      std::vector<size_t> loop = loops[interaction.first];
-      std::vector<size_t> temp = loop;
-      std::sort(temp.begin(), temp.end());
-      auto it = adjacent_find(temp.begin(), temp.end());
-      std::vector<size_t> inter;
-      while(it != temp.end()){
-        inter.push_back(*it);
-        it = adjacent_find(it+1, temp.end());
-      }
-
-      printf("inter size = %d\n", inter.size());
-      for(size_t i=0; i<inter.size(); ++i){
-        printf("%d, ", inter[i]);
-      }
-      printf("\n");
-      printf("loop size = %d\n", loop.size());
-      for(size_t i=0; i<loop.size(); ++i){
-        printf("%d, ", loop[i]);
-      }
-      printf("\n");
-      autoIntersectNew(loop, inter, &auto_loops, &auto_loops_tags);
-      // add auto_loops in loops
-      int tag_pos, tag_neg;
-      if(tag1 == 1){
-        tag_pos = 1;
-        tag_neg = 0;
-      } else {
-        tag_pos = 0;
-        tag_neg = 1;
-      }
-      size_t start_id = loops.size();
-      size_t n_auto_loops = auto_loops.size();
-
-      for(size_t i=0; i<auto_loops.size(); ++i){
-        loops.push_back(auto_loops[i]);
-        if(auto_loops_tags[i] == 1){
-          loops_tags.push_back(tag_pos);
-        } else {
-          loops_tags.push_back(tag_neg);
-        }
-        to_keep.push_back(1);
-      }
-      to_keep[interaction.first] = 0;
-      //update ordered
-      for(size_t i=0; i<ordered.size(); ++i){
-        if(ordered[i].first == interaction.first){
-          for(size_t j=0; j<n_auto_loops; ++j){
-            std::vector<size_t> temp1 = auto_loops[j];
-            std::sort(temp1.begin(), temp1.end());
-            std::vector<size_t> temp2 = loops[ordered[i].first];
-            std::sort(temp2.begin(), temp2.end());
-            if(std::set_intersection(temp1.begin(), temp1.end(), temp2.begin(), temp2.end(), temp1.begin()) != temp1.begin()){
-              ordered.push_back(std::make_pair(start_id+j, ordered[i].second));
-            }
-          }
-        }
-        if(ordered[i].second == interaction.first){
-          for(size_t j=0; j<n_auto_loops; ++j){
-            std::vector<size_t> temp1 = auto_loops[j];
-            std::sort(temp1.begin(), temp1.end());
-            std::vector<size_t> temp2 = loops[ordered[i].first];
-            std::sort(temp2.begin(), temp2.end());
-            if(std::set_intersection(temp1.begin(), temp1.end(), temp2.begin(), temp2.end(), temp1.begin()) != temp1.begin()){
-              ordered.push_back(std::make_pair(ordered[i].first, start_id+j));
-            }
-          }
-        }
-      }
-
-    } else{
-      int tag1 = loops_tags[interaction.first];
-      int tag2 = loops_tags[interaction.second];
-      std::vector<size_t> loop1 = loops[interaction.first];
-      std::vector<size_t> loop2 = loops[interaction.second];
-
-      // find intersections in loop1 and loop2
-      std::vector<size_t> inter1(10);
-      std::vector<size_t> inter2(10);
-      auto temp1 = loop1;
-      auto temp2 = loop2;
-      std::sort(temp1.begin(), temp1.end());
-      std::sort(temp2.begin(), temp2.end());
-      auto it1 = std::set_intersection(temp1.begin(), temp1.end(), inter_markers.begin(), inter_markers.end(), inter1.begin());
-      inter1.resize(it1-inter1.begin());
-      auto it2 = std::set_intersection(temp2.begin(), temp2.end(), inter_markers.begin(), inter_markers.end(), inter2.begin());
-      inter2.resize(it2-inter2.begin());
-
-      std::vector<size_t> inter;
-      std::sort(inter1.begin(), inter1.end());
-      std::sort(inter2.begin(), inter2.end());
-      std::set_intersection(inter1.begin(), inter1.end(), inter2.begin(), inter2.end(), std::back_inserter(inter));
-      for(size_t i=0; i<inter.size(); ++i){
-        for(size_t j=0; j<inter_markers.size(); ++j){
-          if(inter[i]==inter_markers[j]){
-            if(flag_inter[j]==1){
-              inter.erase(inter.begin()+i);
-              i--;
-            }
-          }
-        }
-      }
-
-      printf("flag \n");
-      for(size_t i=0; i<flag_inter.size(); ++i){
-        printf("%d, ", flag_inter[i]);
-      }
-      printf("\n");
-
-      printf("inter size = %d\n", inter.size());
-      for(size_t i=0; i<inter.size(); ++i){
-        printf("%d, ", inter[i]);
-      }
-
-      if(tag1 == tag2){               //same tag = merge
-        ordered.push_back(interaction);
-        choose2Inter(loop1, loop2, &inter, true);
-        
-        // if(inter.size()==0) continue;
-        for(size_t i=0; i<inter_markers.size(); ++i){
-          if(inter_markers[i] == inter[0] || inter_markers[i] == inter[1]){
-            flag_inter[i] = 1;
-          }
-        }
-        
-        std::vector<size_t> merged;
-        mergeLoop(loop1, loop2, inter, &merged);
-        
-        //add merge in loops
-        size_t id_merged = loops.size();
-        loops.push_back(merged);
-        loops_tags.push_back(tag1);
-        loops_sense.push_back(1);
-        //update loops to keep
-        to_keep.push_back(1);
-        to_keep[interaction.first] = 0;
-        to_keep[interaction.second] = 0;
-        //update ordered
-        for(size_t i=0; i<ordered.size(); ++i){
-          if(ordered[i].first == interaction.first || ordered[i].first == interaction.second ){
-            ordered[i].first = id_merged;
-          }
-          if(ordered[i].second == interaction.first || ordered[i].second == interaction.second ){
-            ordered[i].second = id_merged;
-          }
-        }
-        printf("updated ordered\n");
-        for(size_t i=0; i<ordered.size(); ++i){
-          printf("%d - %d\n", ordered[i].first, ordered[i].second);
-        }
-
-      } else {                            //different tag = minus
-        printf("minus \n");
-        
-        std::vector<size_t> minus;
-        choose2Inter(loop1, loop2, &inter, false);
-        if(inter.size()==0) continue;
-        ordered.push_back(interaction);
-        printf("inter size = %d ; inter = %d, %d \n", inter.size(), inter[0], inter[1]);
-        for(size_t i=0; i<inter.size(); ++i){
-          int founded = 0;
-          for(size_t j=0; j<inter_markers.size(); ++j){
-            if(inter_markers[j] == inter[i]){
-              flag_inter[j] = 1;
-              founded = 1;
-              break;
-            }
-          }
-          if(founded==0){
-            inter_markers.push_back(inter[i]);
-            flag_inter.push_back(1);
-          }
-        }
-        
-        printf("flag inter : \n");
-        for(size_t i=0; i<flag_inter.size(); ++i){
-          printf("%d, ", flag_inter[i]);
-        }
-        printf("\n");
-        printf("inter markers = \n");
-        for(size_t i=0; i<inter_markers.size(); ++i){
-          printf("%d, ", inter_markers[i]);
-        }
-        printf("\n");
-
-        if(loops_sense[interaction.first] == 1){
-          printf("loop1Minusloop2\n");
-          loop1Minusloop2(loop1, loop2, inter, &minus);
-          //update loops to keep
-          to_keep.push_back(1);
-          to_keep[interaction.first] = 0;
-          to_keep[interaction.second] = 0;
-          loops_tags.push_back(tag1);
-        } else {
-          printf("loop1Minusloop2_inside\n");
-          loop1Minusloop2_inside(loop1, loop2, inter, &minus);
-          //update loops to keep
-          to_keep.push_back(1);
-          to_keep[interaction.first] = 1;
-          to_keep[interaction.second] = 0;
-          loops_tags.push_back(tag2);
-        }
-        //add minus in loops
-        size_t id_minus = loops.size();
-        loops.push_back(minus);
-        
-        loops_sense.push_back(1);
-        
-        //update ordered
-        for(size_t i=0; i<ordered.size(); ++i){
-          if(ordered[i].first == interaction.second ){
-            ordered[i].first = id_minus;
-          }
-          if(ordered[i].second == interaction.second ){
-            ordered[i].second = id_minus;
-          }
-        }
-      }
-    }
-  }
-
-  for(size_t i=0; i<to_keep.size(); ++i){
-    if(to_keep[i] == 1){
-      new_loops->push_back(loops[i]);
-      new_loops_tags->push_back(loops_tags[i]);
-      new_loops_sense->push_back(loops_sense[i]);
-    }
-  }
-
-  printf("loops after intersection management\n");
-  for(size_t i=0; i<new_loops->size(); ++i){
-    printf("loop %d, tag = %d\n", i, (*new_loops_tags)[i]);
-    for(size_t j=0; j<(*new_loops)[i].size(); ++j){
-      printf("%d, ", (*new_loops)[i][j]);
-    }
-    printf("\n");
-  }
-}
-
-void discreteFront::choose2Inter(std::vector<size_t> loop1, std::vector<size_t> loop2, std::vector<size_t> *inter, bool start_outside){
-  printf("\n \n \n in choose two inter : start_outside = %d \n \n \n", start_outside);
-  if(inter->size() == 0){
-    return;
-  }
-
-  printf("inter size = %d\n", inter->size());
-  for(size_t i=0; i<inter->size(); ++i){
-    printf("%d, ", (*inter)[i]);
-  }
-  printf("\n");
-
-  std::vector<size_t> temp;
-  for(size_t i=0; i<inter->size(); ++i){
-    int is_triple = 0;
-    for(size_t j=0; j<triple_points.size(); ++j){
-      if((*inter)[i] == triple_points[j].marker){
-        is_triple = 1;
-      }
-    }
-    if(is_triple == 0){
-      temp.push_back((*inter)[i]);
-      break;
-    }
-  }
-
-  if(temp.size() == 0){
-    inter->clear();
-    return;
-  } 
-  printf("temp = %d\n", temp[0]);
-
-  size_t n1 = loop1.size();
-  size_t n2 = loop2.size();
-
-  size_t start_id = std::find(loop2.begin(), loop2.end(), temp[0]) - loop2.begin();
-  size_t next_id = (start_id+1)%n2;
-
-  size_t next = loop2[next_id];
-  
-  double P[2];
-  P[0] = pos[3*next];
-  P[1] = pos[3*next+1];
-  int sense = 0;
-  if(insideList(loop1, P) && start_outside==true){
-    sense = 1;
-  } else if(!insideList(loop1, P) && start_outside==false){
-    sense = 1;
-  } else{
-    sense = -1;
-  }
-
-  printf("sense = %d\n", sense);
-
-  // loop through
-  size_t it1 = (start_id+sense+n2)%n2;
-  size_t start = loop2[it1];
-  printf("start = %d \n", start);
-  printf("next = %d \n", next);
-  while(true){
-    if(std::find(inter->begin(), inter->end(), loop2[it1]) != inter->end()){
-      temp.push_back(loop2[it1]);
-      if(temp.size() == 2){
-        break;
-      }
-      it1 = (it1+sense+n2)%n2;
-    } else {
-      for(size_t i=0; i<triple_points.size(); ++i){
-        if(loop2[it1] == triple_points[i].marker){
-          temp.push_back(loop2[it1]);
-          if(temp.size() == 2){
-            break;
-          }
-        }
-      }
-      if(temp.size() == 2){
-        break;
-      }
-      it1 = (it1+sense+n2)%n2;
-      if(loop2[it1] == start){
-        inter->clear();
-        for(size_t i=0; i<temp.size(); ++i){
-          inter->push_back(temp[i]);
-        }
-        return;
-      }
-      
-    } 
-  }
-
-  inter->clear();
-  inter->push_back(temp[0]);
-  inter->push_back(temp[1]);
-  return;
-}
-  
-
-void discreteFront::loops2Interfaces(std::vector<std::vector<size_t>> loops, std::vector<int> loops_tags, std::vector<int> loops_sense, std::vector<interface> *new_interfaces){
-  // define a taged vector to detect which markers are found in multiple loops
-  size_t n_markers = pos.size()/3;
-  std::vector<std::vector<std::pair<size_t, size_t>>> taged;
-  taged.resize(n_markers);
-  for(size_t i=0; i<loops.size(); ++i){
-    for(size_t j=0; j<loops[i].size(); ++j){
-      taged[loops[i][j]].push_back(std::make_pair(i,j));
-    }
-  }
-  std::vector<std::pair<size_t,size_t>> triple_pair;
-  std::vector<triple_p> new_triple_points;
-  for(size_t i=0; i<loops.size(); ++i){
-    size_t ni = loops[i].size();
-    std::vector<size_t> markers;
-    
-    std::vector<triple_p> triple;
-    std::vector<size_t> tp_list;
-    printf("loop i = %d, tag = %d, sense = %d \n", i, loops_tags[i], loops_sense[i]);
-    for(size_t j=0; j<loops[i].size(); ++j){      // go through the loop
-      markers.push_back(loops[i][j]);             // add markers in case no triple points
-      printf(" %d, ", loops[i][j]);
-      if(taged[loops[i][j]].size()>1){            //detect triple points
-        std::vector<std::pair<size_t, size_t>> taged_ij = taged[loops[i][j]];
-        std::pair<size_t, size_t> pair_i; 
-        std::vector<std::pair<size_t, size_t>> pair_j;
-
-        int min_index = 100;
-        size_t k_min = 100;
-        
-        for(size_t k=0; k<taged_ij.size(); ++k){                // find taged for i -> pair_i
-          if(taged_ij[k].first == i){
-            pair_i = taged_ij[k];
-          } else {
-            int ind = std::find(priority.begin(), priority.end(), loops_tags[taged_ij[k].first]) - priority.begin();
-            pair_j.push_back(taged_ij[k]);                      // other in pair_j
-            if(ind < min_index){                                // find highest priority other than for i -> pair_j[k_min]
-              min_index = ind;
-              k_min = pair_j.size()-1;
-            }
-          }
-        }
-        
-        // no triple point if i is the highest in priority
-        int index = std::find(priority.begin(), priority.end(), loops_tags[i]) - priority.begin();
-        if(index<min_index) continue;
-
-        // no triple point if i is going in the same direction as an other interface
-        size_t neigh_i[2] = {loops[pair_i.first][(pair_i.second-1+ni)%ni], loops[pair_i.first][(pair_i.second+1+ni)%ni]};
-        bool same_direction = 0;
-        for(size_t k=0; k<pair_j.size(); ++k){
-          size_t neigh_k[2] = {loops[pair_j[k].first][(pair_j[k].second-1+ni)%ni], loops[pair_j[k].first][(pair_j[k].second+1+ni)%ni]};
-          if((neigh_k[0]==neigh_i[0] && neigh_k[1]==neigh_i[1]) || (neigh_k[0]==neigh_i[1] && neigh_k[1]==neigh_i[0])){
-            same_direction = 1;
-          }
-        }
-        if(same_direction) continue;
-
-        // determine sense of triple point with the highest priority loop
-        size_t neigh_min[2] = {loops[pair_j[k_min].first][(pair_j[k_min].second-1+ni)%ni], loops[pair_j[k_min].first][(pair_j[k_min].second+1+ni)%ni]}; 
-        if(neigh_i[0]==neigh_min[0] || neigh_i[1]==neigh_min[1]){
-          triple_p temp = triple_p(loops[i][j], i, j, loops_tags[i], &pos[3*loops[i][j]]);
-          temp.id_on_interface = pair_j[k_min].first;
-          temp.id_on_marker = pair_j[k_min].second;
-          temp.sense = 1;
-          triple.push_back(temp);
-          tp_list.push_back(j);
-          triple_pair.push_back(std::make_pair(i, loops[i][j]));
-        } else if(neigh_i[1] == neigh_min[0] || neigh_i[0] == neigh_min[1]){
-          triple_p temp = triple_p(loops[i][j], i, j, loops_tags[i], &pos[3*loops[i][j]]);
-          temp.id_on_interface = pair_j[k_min].first;
-          temp.id_on_marker = pair_j[k_min].second;
-          temp.sense = -1;
-          triple.push_back(temp);
-          tp_list.push_back(j);
-          triple_pair.push_back(std::make_pair(i, loops[i][j]));
-        } 
-        
-      }
-    }
-
-    printf( "in interface : triple size = %d\n \n", triple.size());
-    
-    if(triple.size()==0){     // no triple point = easy interface
-      interface tmp_interface = interface(i, loops_tags[i], markers);
-      tmp_interface.sense = loops_sense[i];
-      new_interfaces->push_back(tmp_interface);
-    } else{
-      markers.clear();
-      interface tmp_interface = interface(i, loops_tags[i], markers);  
-      tmp_interface.sense = loops_sense[i];
-
-      //starting triple point
-      triple_p current;
-      for(size_t j=0; j<triple.size(); ++j){
-        current = triple[j];
-        size_t nj = loops[current.id_on_interface].size();
-        if(loops[i][(current.id_marker+1)%ni] != loops[current.id_on_interface][(current.id_on_marker+current.sense+nj)%nj]){
-          break;
-        }
-      }
-      
-      size_t iter = 0;
-      size_t id_triple = triple_points.size();
-      tmp_interface.triple.push_back(id_triple);
-      triple_points.push_back(current);
-      while(tmp_interface.triple.size()!=triple.size()){
-
-        if(tmp_interface.triple.size()%2 == 1){                     // only add markers for between odd and even number of triple point
-          markers.push_back(loops[i][(current.id_marker+iter)%ni]);
-        }
-
-        iter++;
-        if(std::find(tp_list.begin(), tp_list.end(), (current.id_marker+iter)%ni)!=tp_list.end()){ // next triple point
-          for(size_t k=0; k<triple.size(); ++k){
-            if((current.id_marker+iter)%ni == triple[k].id_marker){
-              size_t id_triple = triple_points.size();
-              tmp_interface.triple.push_back(id_triple);
-              triple_points.push_back(triple[k]);
-              markers.push_back(loops[i][(current.id_marker+iter)%ni]);
-              iter = 0;
-              break;
-            }
-          }  
-        }
-      }
-
-      tmp_interface.markers = markers;
-      new_interfaces->push_back(tmp_interface);
-    }
-    for(size_t j=0; j<triple.size(); ++j){
-      new_triple_points.push_back(triple[j]);
-    }
-  }
-
-  for(size_t i=0; i<new_triple_points.size(); ++i){
-    size_t marker = new_triple_points[i].marker;
-    size_t ii = new_triple_points[i].id_interface;
-    for(size_t j=0; j<(*new_interfaces)[ii].markers.size(); ++j){
-      if(marker == (*new_interfaces)[ii].markers[j]){
-        new_triple_points[i].id_marker = j;
-        break;
-      }
-    }
-
-    size_t i_on_i = new_triple_points[i].id_on_interface;
-    for(size_t j=0; j<(*new_interfaces)[i_on_i].markers.size(); ++j){
-      if(marker == (*new_interfaces)[i_on_i].markers[j]){
-        new_triple_points[i].id_on_marker = j;
-        break;
-      }
-    }
-  }
-
-  triple_points = new_triple_points;
-
-  // for(size_t i=0; i<new_interfaces->size(); ++i){
-  //   for(size_t j=0; j<(*new_interfaces)[i].markers.size(); ++j){
-  //     for(size_t k=0; k<triple_pair.size(); ++k){
-  //       if((*new_interfaces)[i].markers[j] == triple_pair[k].second && i != triple_pair[k].first){
-  //         (*new_interfaces)[i].markers.erase((*new_interfaces)[i].markers.begin()+j);
-  //       }
-  //     }
-  //   }
-  // }
-
-}
-
-void discreteFront::interfaces2Loops(std::vector<std::vector<size_t>> *new_loops, std::vector<int> *new_loops_tags, std::vector<int> *new_loops_sense){
-  printf("triple points = \n");
-  for(size_t i=0; i<triple_points.size(); ++i){
-    printf(" marker = %d, sense = %d \n", triple_points[i].marker, triple_points[i].sense); 
-  }
-  for(size_t i=0; i<interfaces.size(); ++i){
-    printf("markers of interface %d = ", i);
-    for(size_t j=0; j<interfaces[i].markers.size(); ++j){
-      printf("%d, ", interfaces[i].markers[j]);
-    }
-    printf("\n");
-    std::vector<size_t> temp_loop;
-    if(interfaces[i].triple.size()==0){ // if no triple point -> easy: loop = markers
-      temp_loop = interfaces[i].markers;
-    } else {
-      std::vector<size_t> ms = interfaces[i].markers;
-      std::vector<size_t> tp_list;
-      for(size_t j=0; j<interfaces[i].triple.size(); ++j){         // stock all triple point in tp_list
-        tp_list.push_back(triple_points[interfaces[i].triple[j]].marker);
-      }
-
-      printf("tp list : ");
-      for(size_t j=0; j<tp_list.size(); ++j){
-        printf("%d, ", tp_list[j]);
-      }
-      printf("\n");
-
-      size_t start_i = 0;  
-      while(true){
-        if(std::find(tp_list.begin(), tp_list.end(), ms[start_i])==tp_list.end()){
-          break;
-        }
-        start_i++;
-      }
-      
-      size_t n_m = ms.size();    
-      for(size_t j=0; j<ms.size(); ++j){                            // loop on the markers
-        size_t marker = ms[(start_i+j)%n_m];
-        temp_loop.push_back(marker);
-        auto it = std::find(tp_list.begin(), tp_list.end(), marker);
-        printf("%d, ", marker);
-        if(it!=tp_list.end()){                                      // if a marker is a triple node
-          size_t idx = it-tp_list.begin();
-          printf("\n idx in interfaces2loops = %d \n", idx);
-          printf("size triple of interface %d = %d \n", i, interfaces[i].triple.size());
-          triple_p tp = triple_points[interfaces[i].triple[idx]];
-          size_t iter = 1;
-          std::vector<size_t> on_ms = interfaces[tp.id_on_interface].markers;    // take the markers of interface on which the triple point is
-          size_t on_n = on_ms.size();
-          while(true){                                              
-            size_t current = on_ms[(tp.id_on_marker+iter*tp.sense+on_n)%on_n];     // go through the reference markers in the sense given by the tp
-            printf("current = %d \n", current);
-            auto it = std::find(tp_list.begin(), tp_list.end(), current);
-            if(it!=tp_list.end()){       
-              printf("found\n");   
-              temp_loop.push_back(current);                                    // until finding an other tp
-              ++j;
-              break;
-            }else{
-              temp_loop.push_back(current);
-              iter++;
-            }
-          }
-        }
-        
-      }
-    }
-    new_loops->push_back(temp_loop);
-    new_loops_tags->push_back(interfaces[i].tag);
-    new_loops_sense->push_back(interfaces[i].sense);
-  }
-  printf("new loops : \n");
-  for(size_t j=0; j<new_loops->size(); ++j){
-    printf("loop %d, tag = %d, sense = %d \n", j, (*new_loops_tags)[j], (*new_loops_sense)[j]);
-    for(size_t k=0; k<(*new_loops)[j].size(); ++k){
-      printf("%d, ", (*new_loops)[j][k]);
-    }
-    printf("\n");
-  }
-}
-
-void discreteFront::createTree(){
-  // find initial t_node
-  size_t initial_interface = -1;
-  for(size_t i=0; i<interfaces.size(); ++i){
-    int inside = 0;
-    for(size_t j=0; j<interfaces.size(); ++j){
-      int inside_ij = insideList(interfaces[j].markers, &pos[3*interfaces[i].markers[0]]);
-      if(inside_ij == 1){
-        inside = 1;
-      }
-    }
-    if(inside==0){
-      initial_interface = i;
-    }
-  }
-
-  T_node *init = newT_node(initial_interface, interfaces[initial_interface].tag);
-  for(size_t i=0; i<interfaces.size(); ++i){
-    if(i==initial_interface) continue;
-    T_node *node_i = newT_node(i, interfaces[i].tag);
-    init->leafs.push_back(node_i);
-  }
-  
-  std::vector<T_node*> todo;
-  std::vector<T_node*> new_todo;
-  todo.push_back(init);
-  while(todo.size()>0){
-    for(size_t td=0; td<todo.size(); td++){
-      T_node *level = todo[td];
-      for(size_t i=0; i<level->leafs.size(); ++i){
-        for(size_t j=0; j<level->leafs.size(); ++j){
-          if(j==i) continue;
-          if(insideList(interfaces[level->leafs[j]->id].markers, &pos[3*interfaces[level->leafs[i]->id].markers[0]])){
-
-            level->leafs[j]->leafs.push_back(level->leafs[i]);
-            level->leafs.erase(level->leafs.begin()+i);
-            i--;
-            new_todo.push_back(level->leafs[j]);
-            break;
-          }
-        }
-      }
-    }
-    todo = new_todo;
-    new_todo.clear();
-  }
-
-  Tree = init;
-}
-
-void discreteFront::renumberLoops(std::vector<std::vector<size_t>> loops, std::vector<std::vector<size_t>> *new_loops, std::vector<double> *new_pos){
-  size_t iter = 0;
-  size_t max = 0; 
-  for(size_t i=0; i<loops.size(); ++i){
-    std::vector<size_t> v = loops[i];
-    size_t max_i = *std::max_element(loops[i].begin(),loops[i].end());
-    if(max_i>max){
-      max = max_i;
-    }
-  }
-  std::vector<int> map(max, -1);
-  std::vector<double> new_p;
-  for(size_t i=0; i<loops.size(); ++i){
-    std::vector<size_t> new_loop;
-    for(size_t j=0; j<loops.size(); ++j){
-      if(map[loops[i][j]]==-1){
-        new_loop.push_back(iter);
-        map[loops[i][j]] = iter;
-
-        new_p.push_back(pos[3*loops[i][j]]); 
-        new_p.push_back(pos[3*loops[i][j]]);
-        new_p.push_back(0.0);
-
-        iter++;
-      } else {
-        new_loop.push_back(map[loops[i][j]]);
-      }
-    }
-    new_loops->push_back(new_loop);
-  }
-  *new_pos = new_p;
-}
-
-void discreteFront::renumberInterfaces(){
-  size_t max = 0; 
-  for(size_t i=0; i<interfaces.size(); ++i){
-    interface ii = interfaces[i];
-    size_t max_i = *std::max_element(ii.markers.begin(),ii.markers.end());
-    if(max_i>max){
-      max = max_i;
-    }
-  }
-  std::vector<int> map(max+1, -1);
-  std::vector<double> new_p;
-
-  size_t iter = 0;
-  for(size_t i=0; i<interfaces.size(); ++i){
-    interface ii = interfaces[i];
-    std::vector<size_t> new_markers;
-    for(size_t j=0; j<ii.markers.size(); ++j){
-      size_t m = ii.markers[j];
-      if(map[m]==-1){
-        new_markers.push_back(iter);
-        map[m] = iter;
-
-        new_p.push_back(pos[3*m]); 
-        new_p.push_back(pos[3*m+1]);
-        new_p.push_back(0.0);
-
-        iter++;
-      } else {
-        new_markers.push_back(map[m]);
-      }
-    }
-    interfaces[i].markers = new_markers;
-  }
-  pos = new_p;
-
-  for(size_t i=0; i<fn.size(); ++i){
-    if(map[fn[i].m1]>=0 && map[fn[i].m2]>=0){
-      fn[i].m1 = map[fn[i].m1];
-      fn[i].m2 = map[fn[i].m2];
-    }
-  }
-
-  for(size_t i=0; i<triple_points.size(); ++i){
-    if(map[triple_points[i].marker]>=0){
-      triple_points[i].marker = map[triple_points[i].marker];
-    }
-    size_t ii = triple_points[i].id_interface;
-    for(size_t j=0; j<interfaces[ii].markers.size(); ++j){
-      if(interfaces[ii].markers[j] == triple_points[i].marker){
-        triple_points[i].id_marker = j;
-      }
-    }
-    size_t ioni = triple_points[i].id_on_interface;
-    for(size_t j=0; j<interfaces[ioni].markers.size(); ++j){
-      if(interfaces[ioni].markers[j] == triple_points[i].marker){
-        triple_points[i].id_on_marker = j;
-      }
-    }
-  }
-
-  //printf interface
-  for(size_t i=0; i<interfaces.size(); ++i){
-    printf("interface %d, tag = %d, sense = %d, markers = ", i, interfaces[i].tag, interfaces[i].sense);
-    for(size_t j=0; j<interfaces[i].markers.size(); ++j){
-      printf("%d, ", interfaces[i].markers[j]);
-    }
-    printf("\n");
-    printf("triple = ");
-    for(size_t j=0; j<interfaces[i].triple.size(); ++j){
-      printf("%d, ", triple_points[interfaces[i].triple[j]].marker);
-    }
-  }
-  printf("\n");
-
-}
-
-
-
-int discreteFront::insideList(std::vector<size_t> loop, double P[2]){
-  int wn = 0;
-  size_t n = loop.size();
-  for (size_t i=0 ; i<loop.size() ; ++i){
-    double aa[2] = {pos[3*loop[i]],pos[3*loop[i]+1]};
-    double bb[2] = {pos[3*loop[(i+1)%n]],pos[3*loop[(i+1)%n]+1]};
-    double area = robustPredicates::orient2d(aa,bb,P); 
-    if(aa[1]<= P[1]){
-      if (bb[1] > P[1] && area < 0)wn++;
-    }
-    else if(bb[1]<= P[1]){
-      if (area > 0)wn--;
-    }
-  }
-  if (wn != 0){
-    return 1;
-  }
-  return 0;
-}
-
-int computeIntersection(double a1[2], double a2[2], double a3[2], double a4[2], double *inter, double *param){
-  double a143 = robustPredicates::orient2d(a1,a4,a3);
-  double a243 = robustPredicates::orient2d(a2,a4,a3);  
-  double eps = 1e-10;
-  if((a143>eps && a243<-eps) || (a143<-eps && a243>eps)){
-    double a123 = robustPredicates::orient2d(a1,a2,a3);
-    double a124 = robustPredicates::orient2d(a1,a2,a4);
-    if((a123>eps && a124<-eps) || (a123<-eps && a124>eps)){
-      double t = fabs(a143)/(fabs(a143)+fabs(a243));
-      inter[0] = a1[0] + t*(a2[0]-a1[0]);
-      inter[1] = a1[1] + t*(a2[1]-a1[1]);
-      param[0] = t;
-      return 1;
-    }
-  } 
-
-  return 0; 
-  
-}
-
-double loopOrientation(std::vector<double> pos){
-  double tot = 0;
-  int n = pos.size()/3;
-  for(int i=0; i<n; ++i){
-    double a[2] = {pos[3*i], pos[3*i+1]};
-    double b[2] = {pos[3*((i+1)%n)], pos[3*((i+1)%n)+1]};
-    tot += (b[0]-a[0])*(b[1]+a[1]);
-  }
-  return tot;
-}
-
-
-
-
-void discreteFront::moveFromV (double dt, const std::vector<SVector3> &v, bool bnd){
-  size_t n_ = v.size();
-  // buildSpatialSearchStructure ();
-
-  size_t n = v.size();
-  std::vector<double> target(pos);
-  std::vector<bool> found(n, false);
-
-  //move markers except triple points
-  printf("before loop\n");
-  size_t iter=0;
-  std::vector<size_t> map_triple;
-  map_triple.resize(triple_points.size());
-  for (size_t i=0;i<interfaces.size();++i){
-    for(size_t j=0; j<interfaces[i].markers.size(); ++j){
-      size_t m_ij = interfaces[i].markers[j];
-      bool is_triple = false;
-      for(size_t j=0; j<triple_points.size(); ++j){
-        size_t m = interfaces[triple_points[j].id_interface].markers[triple_points[j].id_marker];
-        if(m_ij == m){
-          is_triple = true;
-          map_triple[j] = iter;
-          break;
-        }
-      }
-      if(is_triple){ 
-        iter++;
-        continue;
-      }
-      target[3*m_ij] += v[iter].x()*dt;
-      target[3*m_ij+1] += v[iter].y()*dt;
-      target[3*m_ij+2] = 0;
-      iter++;
-    }
-    
-  }
-  printf("after loop\n");
-  // move triple points
-  for(size_t i=0; i<triple_points.size(); ++i){
-    size_t m = interfaces[triple_points[i].id_interface].markers[triple_points[i].id_marker];
-    printf("triple point %d, %d, %d\n", triple_points[i].id_interface, triple_points[i].id_marker, m);
-    size_t id_on_interface = triple_points[i].id_on_interface;
-    size_t n_on_interface = interfaces[id_on_interface].markers.size();
-    size_t neigh1 = interfaces[id_on_interface].markers[(triple_points[i].id_on_marker+1)%n_on_interface];
-    size_t neigh2 = interfaces[id_on_interface].markers[(triple_points[i].id_on_marker-1+n_on_interface)%n_on_interface];
-
-    // find direction of the movement
-    SVector3 mn1 = SVector3(pos[3*neigh1]-pos[3*m], pos[3*neigh1+1]-pos[3*m+1], 0);
-    SVector3 mn2 = SVector3(pos[3*neigh2]-pos[3*m], pos[3*neigh2+1]-pos[3*m+1], 0);
-    double dot1 = dot(mn1, v[map_triple[i]]);
-    double dot2 = dot(mn2, v[map_triple[i]]);
-
-    if(dot1>dot2){ // project v on neigh1
-      target[3*m] += dot1*mn1.x()*dt;
-      target[3*m+1] += dot1*mn1.y()*dt;
-      target[3*m+2] = 0;
-    } else { // go to neigh2
-      target[3*m] += dot2*mn2.x()*dt;
-      target[3*m+1] += dot2*mn2.y()*dt;
-      target[3*m+2] = 0;
-    }
-  }
-  printf("after triple points\n");
-  printf("target size = %d\n", target.size());
-  printf("n = %d\n", n);
-  for(size_t i=0; i<pos.size()/3; ++i){
-    pos[3*i] = target[3*i];
-    pos[3*i+1] = target[3*i+1];
-    pos[3*i+2] = 0;
-  }
-  
-  printf("ended\n");
-
-
-  // int iter = 0;
-  // if(bnd) {
-  //   while(1){
-  //     iter++;
-  //     for(size_t i=0; i<n; ++i){
-  //       if(found[i]) continue;
-  //       if(colors[i]<0){
-  //         found[i] = true;
-  //         continue;
-  //       }
-  //       // compute all intersection with bnd
-  //       double a1[2] = {pos[3*i], pos[3*i+1]};
-  //       double a2[2] = {target[3*i], target[3*i+1]}; 
-  //       int IMIN,IMAX,JMIN,JMAX;
-  //       getCoordinates(std::min(a1[0],a2[0]),std::min(a1[1],a2[1]),IMIN,JMIN);
-  //       getCoordinates(std::max(a1[0],a2[0]),std::max(a1[1],a2[1]),IMAX,JMAX);
-  //       std::set<size_t> touched;
-  //       std::vector<std::pair<double, size_t>> intersection;  // vector of [s, j]. s = parametric coord of the movement, index in lines (and sss)
-  //       for (size_t I=IMIN; I<=IMAX;I++){
-  //         for (size_t J=JMIN; J<=JMAX;J++){
-  //           size_t index = I+NX*J;
-  //           for (auto j : sss [index]){
-  //             if(colors[j/2]>0) continue;                     // bnd has a -1 color
-  //             if (touched.find(j) != touched.end())continue;
-  //             touched.insert(j);
-  //             double a3[2] = {pos[3*lines[j]],pos[3*lines[j]+1]};
-  //             double a4[2] = {pos[3*lines[j+1]],pos[3*lines[j+1]+1]};
-  //             double a143 = robustPredicates::orient2d(a1,a4,a3);
-  //             double a243 = robustPredicates::orient2d(a2,a4,a3);    
-  //             double a123 = robustPredicates::orient2d(a1,a2,a3);
-  //             double a124 = robustPredicates::orient2d(a1,a2,a4);
-  //             if (a143*a243 < 0 && a123*a124 < 0){
-  //               double t = fabs(a143)/(fabs(a143)+fabs(a243));
-  //               intersection.push_back(std::make_pair(t, j));
-  //             } else if(fabs(a143)<1e-12){ //previous position on the bnd
-  //               if(a1[0] == a3[0] && a1[1] == a3[1]){
-  //                 double a14[2] = {a4[0]-a1[0], a4[1]-a1[1]};
-  //                 double a12[2] = {a2[0]-a1[0], a2[1]-a1[1]};
-  //                 if((a14[0]*a12[0]+a14[1]*a12[1])>-1e-12){
-  //                   intersection.push_back(std::make_pair(0, j));
-  //                 }
-  //               } else if(a1[0] == a4[0] && a1[1] == a4[1]){
-  //                 double a13[2] = {a3[0]-a1[0], a3[1]-a1[1]};
-  //                 double a12[2] = {a2[0]-a1[0], a2[1]-a1[1]};
-  //                 if((a13[0]*a12[0]+a13[1]*a12[1])>-1e-12){
-  //                   intersection.push_back(std::make_pair(0, j));
-  //                 }
-  //               } else {
-  //                 intersection.push_back(std::make_pair(0, j));
-  //               }
-  //             }
-
-  //           }
-  //         }
-  //       }
-        
-  //       // choose closest intersection or target if none
-  //       if(intersection.empty()){
-  //         pos[3*i] = target[3*i];
-  //         pos[3*i+1] = target[3*i+1];
-  //         found[i] = true;
-  //       } else {
-  //         double t_min = 2;
-  //         size_t id_min;
-  //         for(size_t k=0; k<intersection.size(); ++k){
-  //           if(intersection[k].first<t_min){
-  //             t_min = intersection[k].first;
-  //             id_min = intersection[k].second;
-  //           }
-  //         }
-  //         // continue movement along the edge
-  //         pos[3*i] = a1[0]+(a2[0]-a1[0])*t_min;
-  //         pos[3*i+1] = a1[1]+(a2[1]-a1[1])*t_min;
-
-  //         double a3[2] = {pos[3*lines[id_min]],pos[3*lines[id_min]+1]};
-  //         double a4[2] = {pos[3*lines[id_min+1]],pos[3*lines[id_min+1]+1]};
-          
-  //         double proj_p[2], proj_t[2];
-  //         projectPonLine(a3, a4, &pos[3*i], proj_p);
-  //         projectPonLine(a3, a4, &target[3*i], proj_t);
-
-  //         double pnewt[2] = {proj_t[0]-proj_p[0], proj_t[1]-proj_p[1]};
-  //         double dotProduct = pnewt[0]*(a4[0]-a3[0]) + pnewt[1]*(a4[1]-a3[1]);
-
-  //         double pa3_norm2 = (pos[3*i]-a3[0])*(pos[3*i]-a3[0]) + (pos[3*i+1]-a3[1])*(pos[3*i+1]-a3[1]);
-  //         double pa4_norm2 = (pos[3*i]-a4[0])*(pos[3*i]-a4[0]) + (pos[3*i+1]-a4[1])*(pos[3*i+1]-a4[1]); 
-  //         double pnewt_norm2 = pnewt[0]*pnewt[0]+pnewt[1]*pnewt[1];
-          
-  //         if(dotProduct>0){
-  //           if(pnewt_norm2 > pa4_norm2){
-  //             target[3*i] = pos[3*i]+pnewt[0];
-  //             target[3*i+1] = pos[3*i+1]+pnewt[1];
-  //             pos[3*i] = a4[0];
-  //             pos[3*i+1] = a4[1];
-  //           } else{
-  //             pos[3*i] = pos[3*i]+pnewt[0];
-  //             pos[3*i+1] = pos[3*i+1]+pnewt[1];
-  //             found[i] = true;
-  //           }
-  //         } else {
-  //           if(pnewt_norm2 > pa3_norm2){
-  //             target[3*i] = pos[3*i]+pnewt[0];
-  //             target[3*i+1] = pos[3*i+1]+pnewt[1];
-  //             pos[3*i] = a3[0];
-  //             pos[3*i+1] = a3[1];
-  //           } else{
-  //             pos[3*i] = pos[3*i]+pnewt[0];
-  //             pos[3*i+1] = pos[3*i+1]+pnewt[1];
-  //             found[i] = true;
-  //           }
-  //         }
-          
-          
-  //       }
-        
-  //     }
-  //     if (std::find(begin(found), end(found), false) == end(found)) {
-  //       break; // All false
-  //     }
-  //   }
-  // }
-
-  // FILE *f = fopen ("after_v.pos","w");
-  // fprintf(f,"View \"Front Geometry\"{\n");
-  // printGeometry(f);
-  // fprintf(f,"};\n");
-  // fclose(f);
-
-}
-
-void projectPonLine(double A[2], double B[2], double P[2], double *proj){
-  double dx = B[0]-A[0];
-  double dy = B[1]-A[1];
-  double mat[2][2] = {{dx*dx, dx*dy},{dx*dy, dy*dy}};
-  double norm = dx*dx+dy*dy;
-  (proj)[0] = (mat[0][0]*P[0] + mat[0][1]*P[1])/norm;
-  (proj)[1] = (mat[1][0]*P[0] + mat[1][1]*P[1])/norm;
-  (proj)[0] += (1-mat[0][0]/norm)*A[0] - mat[0][1]*A[1]/norm;
-  (proj)[1] += (-mat[1][0]/norm)*A[0] +(1 - mat[1][1]/norm)*A[1];
-}
-
-// SVector3 discreteFront::closestPoints2d (const SVector3 &P){
-//   double dmin = 1.e22;
-//   SVector3 res;
-//   for (size_t i=0 ; i< lines.size() ; i+=2){
-//     SVector3 A (pos[3*lines[i]],pos[3*lines[i]+1],pos[3*lines[i]+2]);
-//     SVector3 B (pos[3*lines[i+1]],pos[3*lines[i+1]+1],pos[3*lines[i+1]+2]);
-//     if (dim() == 2){
-//       SVector3 AB = B - A;
-//       double lAB = AB.norm();
-//       AB.normalize();
-//       SVector3 AP = P - A;
-//       double L = dot(AP,AB);
-//       SVector3 H;
-//       if (L < 0)H = A;
-//       else if (L > lAB)H = B;
-//       else H = A + AB * L;
-//       SVector3 HP = P - H;
-//       double d = HP.norm();
-//       if (d < dmin){
-//         dmin = d;
-//         res = H;
-//       }
-//     }
-//   }
-//   return res;
-// }
-
-void discreteFront::getDFPosition(std::vector<double> &position, std::vector<int> &tags){
-  // position = pos;
-  // tags = colors;
-  for(size_t i=0; i<interfaces.size();++i){
-    for(size_t j=0; j<interfaces[i].markers.size(); ++j){
-      position.push_back(pos[3*interfaces[i].markers[j]]);
-      position.push_back(pos[3*interfaces[i].markers[j]+1]);
-      position.push_back(pos[3*interfaces[i].markers[j]+2]);
-      tags.push_back(interfaces[i].tag);
-    }
-  }
-  return;
-}
-
-void discreteFront::redistFrontNew(double lc){
-  double fc_min=0.5; 
-  double fc_max=1.5;
-  double small_dist = fc_min*lc;
-  double large_dist = fc_max*lc;
-
-  for(size_t i=0; i<interfaces.size(); ++i){
-    std::vector<size_t> markers = interfaces[i].markers;
-    std::vector<size_t> new_markers;
-    size_t n = markers.size();
-    size_t previous = markers[0];
-    new_markers.push_back(markers[0]);
-    for(size_t j=1; j<markers.size(); ++j){
-      size_t current = markers[j];
-      double dist = sqrt(pow(pos[3*current]-pos[3*previous],2)+pow(pos[3*current+1]-pos[3*previous+1],2));
-      if(dist<small_dist){
-        printf("small dist\n");
-        if(j==n-1){
-          new_markers.push_back(current);
-        }
-      } else if(dist>large_dist){
-        printf("large dist\n");
-
-        int n_new = (int) (dist/lc - (fc_max-1.01));
-        printf(" \n n_new = %d\n", n_new);
-        size_t new_marker;
-        printf("pos previous : %d = %f, %f\n", previous, pos[3*previous], pos[3*previous+1]);
-        for(size_t k=0; k<n_new; ++k){
-          double s = (k+1.0)/(n_new+1.0);
-          new_marker = pos.size()/3;
-          pos.push_back((1-s)*pos[3*previous]+s*pos[3*current]);
-          pos.push_back((1-s)*pos[3*previous+1]+s*pos[3*current+1]);
-          pos.push_back(0.0);
-          new_markers.push_back(new_marker);
-          printf("new marker %d : %f, %f\n", new_marker, pos[3*new_marker], pos[3*new_marker+1]);
-        }
-        printf("pos current %d = %f, %f\n", current, pos[3*current], pos[3*current+1]);
-        new_markers.push_back(current);
-        previous = current;
-      } else {
-        // printf("good dist\n");
-        new_markers.push_back(current);
-        previous = current;
-      }
-    }
-    interfaces[i].markers = new_markers;
-  }
-}
-
-void discreteFront::redistFront(double lc){
-  double fc_min=0.5; 
-  double fc_max=1.5;
-  double small_dist = fc_min*lc;
-  double large_dist = fc_max*lc;
-  std::vector<std::vector<size_t> > _lls;
-  std::vector<size_t> _ll;
-
-  std::vector<size_t> l;
-  std::vector<int> c;
-  std::vector<double> p;
-
-  for (size_t i=0;i<lines.size();i+=2){
-    _ll.push_back(lines[i]);
-    _ll.push_back(lines[i+1]);
-    if (lines[(i+2)%lines.size()] != lines[i+1]){
-      _lls.push_back(_ll);
-      _ll.clear();
-    }
-  }
-  if(!_ll.empty()){
-    _lls.push_back(_ll);
-  }
-  
-  size_t iter = 0;
-  for(size_t i=0; i<_lls.size(); ++i){
-    int n = _lls[i].size();
-    // first marker
-    size_t first = iter;
-    l.push_back(iter);
-    for(int k=0; k<3; ++k){
-      p.push_back(pos[3*_lls[i][0]+k]);
-    }
-    
-    // loop through markers
-    for(size_t j=1; j<n; j+=2){
-      double dist;
-      if(colors[_lls[i][j]]<0){
-        dist = lc;
-      } else {
-        dist = sqrt(pow(pos[3*_lls[i][j]] - p.end()[-3], 2) + pow(pos[3*_lls[i][j]+1] - p.end()[-2], 2)); 
-      }
-      if(dist<small_dist){          // markers too close -> take the middle position
-        if(j==n-1){
-          c.push_back(colors[_lls[i][j]]);
-          l.push_back(first);
-        } else {
-          double temp;
-          for(int k=0; k<3; k++){
-            temp = (pos[3*_lls[i][j]+k] + p.end()[-3+k])/2.0;
-            p.end()[-3+k] = temp;
-          }
-        }
-      } else if(dist>large_dist){   // markers too far -> add markers
-        int n_new = (int) (dist/lc - (fc_max-1.01));
-        double temp[3];
-        for(int k=0; k<3; k++){
-          temp[k] = p.end()[-3+k];
-        }
-        for(int k=0; k<n_new; ++k){
-          double s = (k+1.0)/(n_new+1.0);
-          iter++;
-          l.push_back(iter);
-          l.push_back(iter);
-          c.push_back(colors[_lls[i][j]]);
-          for(int k=0; k<3; k++){
-            p.push_back((1-s)*temp[k]+s*pos[3*_lls[i][j]+k]);
-          }
-        }
-
-        c.push_back(colors[_lls[i][j]]);
-        if(j!=n-1){
-          iter++;
-          l.push_back(iter);
-          l.push_back(iter);
-          for(int k=0; k<3; ++k){
-            p.push_back(pos[3*_lls[i][j]+k]);
-          }
-        } else {
-          l.push_back(first);
-        }
-        
-      }else{                        // good distance
-        c.push_back(colors[_lls[i][j]]);
-        if(j!=n-1){
-          iter++;
-          l.push_back(iter);
-          l.push_back(iter);
-          for(int k=0; k<3; ++k){
-            p.push_back(pos[3*_lls[i][j]+k]);
-          }
-        } else {
-          l.push_back(first);
-        }
-      }
-    }
-    iter++;
-  }
-
-  pos.clear(); colors.clear(); lines.clear();
-  for(int i=0; i<p.size(); ++i){
-    pos.push_back(p[i]);
-  }
-  for(int i=0; i<c.size(); ++i){
-    colors.push_back(c[i]);
-  }
-  for(int i=0; i<l.size(); ++i){
-    lines.push_back(l[i]);
-  }
-}
-
-
-std::vector<std::pair<size_t,size_t> > discreteFront :: getFrontEdges() {
-  std::sort(fn.begin(), fn.end());
-  std::vector<std::pair<size_t,size_t> > pp;
-  std::vector<size_t>  curr;
-  if (fn.size() == 0) return pp;
-  int current_color = interfaces[fn[0].interface].tag;
-  for (size_t i=0;i<fn.size();i++){
-    const frontNode &n = fn[i];
-    int color = interfaces[fn[i].interface].tag;
-    if (current_color != color){
-      for (size_t j=0;j<curr.size();j++){
-        size_t A = curr[j];
-        size_t B = curr[(j+1)%curr.size()];
-        std::pair<size_t,size_t> pa = std::make_pair(std::min(A,B), std::max(A,B));
-        pp.push_back(pa);
-      }
-      curr.clear();
-      current_color = color;
-    }
-    curr.push_back(n.meshNode);
-  }
-
-  for (size_t j=0;j<curr.size();j++){
-    size_t A = curr[j];
-    size_t B = curr[(j+1)%curr.size()];
-    std::pair<size_t,size_t> pa = std::make_pair(std::min(A,B), std::max(A,B));
-    pp.push_back(pa);
-  }
-  std::sort(pp.begin(),pp.end());
-  return pp;
-}
-
-// void discreteFront::moveFromFront(double dt, const std::vector<SVector3> &v){
-  
-//   std::vector<SVector3> v_marker(pos.size()/3, SVector3(0.0));
-//   std::sort(fn.begin(), fn.end());
-//   std::vector<double> mesh_pos;
-//   meshRelaying::instance()->getNodesPosition(mesh_pos);
-
-//   std::vector<std::vector<size_t> > _lls;
-//   std::vector<size_t> _ll;
-
-//   for (size_t i=0;i<lines.size();i+=2){
-//     if(colors[i/2]<0) continue;
-//     _ll.push_back(lines[i]);
-//     _ll.push_back(lines[i+1]);
-//     if (lines[(i+2)%lines.size()] != lines[i+1]){
-//       _lls.push_back(_ll);
-//       _ll.clear();
-//     }
-//   }
-
-//   std::vector<std::vector<std::pair<size_t,int>>> fls;
-//   std::vector<std::pair<size_t,int>> fl;
-
-//   for(size_t i=0; i<_lls.size();++i){
-//     //    size_t start = _lls[i][0];
-//     for(size_t j=0; j<_lls[i].size(); j+=2){
-//       fl.push_back(std::make_pair(_lls[i][j],-1));
-//       for(size_t k=0; k<fn.size(); ++k){
-//         if( _lls[i][j] == lines[fn[k].line] ){
-//           fl.push_back(std::make_pair(fn[k].meshNode,k));
-//         }
-//       }
-//     }
-//     fls.push_back(fl);
-//     fl.clear();
-//   }
-
-  
-
-//   for(int i=0; i<fls.size(); ++i){
-//     int current=0;
-//     while(fls[i][current].second<0 && current<fls[i].size()) ++current;
-//     int start = current;
-//     int next = current;
-//     std::vector<std::pair<size_t, double>> in_between_markers;
-//     while (next<fls[i].size()-1){
-//       next++;
-//       if(fls[i][next].second >= 0){
-//         printf(" front node : %d, v = %f,%f \n", fls[i][next].second, v[fls[i][next].second].x(), v[fls[i][next].second].y());
-//         // compute velocity for markers between current and next front node
-//         double total_dist;
-//         if(!in_between_markers.empty()){
-//           total_dist = in_between_markers.back().second + sqrt(pow(pos[3*in_between_markers.back().first]-pos[3*fls[i][next].second],2) + pow(mesh_pos[3*in_between_markers.back().first+1]-pos[3*fls[i][next].second +1],2));
-//         }
-  
-//         for(size_t k=0; k<in_between_markers.size(); ++k){
-//           double s = in_between_markers[k].second/total_dist;
-//           SVector3 v1 = v[fls[i][current].second];
-//           SVector3 v2 = v[fls[i][next].second]; 
-//           v_marker[in_between_markers[k].first] = s*v2 + (1-s)*v1;
-
-//         }
-//         current = next;
-//         in_between_markers.clear();
-//       }else{
-//         double dist;
-//         if(in_between_markers.empty()){
-//           dist = sqrt(pow(mesh_pos[3*current]-pos[3*fls[i][next].second],2) + pow(mesh_pos[3*current+1]-pos[3*fls[i][next].second +1],2));
-//           in_between_markers.push_back(std::make_pair(fls[i][next].first, dist));
-//         }else{
-//           dist = sqrt(pow(pos[3*in_between_markers.back().first]-pos[3*fls[i][next].second],2) + pow(mesh_pos[3*in_between_markers.back().first+1]-pos[3*fls[i][next].second +1],2));
-//           in_between_markers.push_back(std::make_pair(fls[i][next].first, in_between_markers.back().second + dist));
-//         }
-//       }
-//     }
-
-//     int reset = 0;
-//     while(fls[i][reset].second<0 && current<fls[i].size()){
-//       double dist;
-//       if(in_between_markers.empty()){
-//         dist = sqrt(pow(mesh_pos[3*current]-pos[3*fls[i][reset].second],2) + pow(mesh_pos[3*current+1]-pos[3*fls[i][reset].second +1],2));
-//         in_between_markers.push_back(std::make_pair(fls[i][reset].first, dist));
-//       }else{
-//         dist = sqrt(pow(pos[3*in_between_markers.back().first]-pos[3*fls[i][reset].second],2) + pow(mesh_pos[3*in_between_markers.back().first+1]-pos[3*fls[i][reset].second +1],2));
-//         in_between_markers.push_back(std::make_pair(fls[i][reset].first, in_between_markers.back().second + dist));
-//       }
-//       ++reset;
-//     }
-//     double total_dist;
-//     if(!in_between_markers.empty()){
-//       total_dist = in_between_markers.back().second + sqrt(pow(pos[3*in_between_markers.back().first]-pos[3*fls[i][start].second],2) + pow(mesh_pos[3*in_between_markers.back().first+1]-pos[3*fls[i][start].second +1],2));
-//     }
-//     for(size_t k=0; k<in_between_markers.size(); ++k){
-//       double s = in_between_markers[k].second/total_dist;
-//       printf("end marker = %lu s = %f \n", in_between_markers[k].first, s);
-//       SVector3 v1 = v[fls[i][current].second];
-//       SVector3 v2 = v[fls[i][start].second];
-//       v_marker[in_between_markers[k].first] = s*v2 + (1-s)*v1;
-
-//     }
-    
-    
-//   }
-
-//   for(size_t i=0; i<fls.size(); ++i){
-//     for(size_t j=0; j<fls[i].size(); ++j){
-//       if(fls[i][j].second<0){
-//         printf("marker : %lu, v = %f,%f \n", fls[i][j].first, v_marker[fls[i][j].first].x(), v_marker[fls[i][j].first].y());
-//       } else {
-//         printf("front node: %d, v = %f,%f \n", fls[i][j].second, v[fls[i][j].second].x(), v[fls[i][j].second].y());
-//       }
-//     }
-    
-//   }
-  
-//   moveFromV(dt, v_marker, true);
-// }
-
-// NEED FIX
-void discreteFront::adjustBnd(const std::vector<std::pair<size_t,size_t>> &bnd1d){
-
-  if (empty())return;
-  
-  std::vector<double> position;
-  meshRelaying::instance()->getNodesPosition(position);
-  std::vector<double> old_pos;
-  for(size_t i=0; i<pos.size();++i){
-    old_pos.push_back(pos[i]);
-  }
-
-  size_t current = bnd1d[0].second;
-  size_t first = bnd1d[0].first;
-  size_t id_current = 0;
-  size_t i = 0;
-  pos[3*i] = position[3*first];
-  pos[3*i+1] = position[3*first+1];
-  pos[3*i+2] = position[3*first+2];
-  ++i;
-
-  while(current!= first){
-    pos[3*i] = position[3*current];
-    pos[3*i+1] = position[3*current+1];
-    pos[3*i+2] = position[3*current+2];
-    ++i;
-    
-    for(size_t j=0; j<bnd1d.size(); ++j){
-      if(bnd1d[j].first == current && j!=id_current){
-        current = bnd1d[j].second;
-        id_current = j;
-        break;
-      } else if(bnd1d[j].second == current && j!=id_current){
-        current = bnd1d[j].first;
-        id_current = j;
-        break;
-      }
-    }
-  }
-
-  std::vector<int> moved(pos.size()/3, 0);
-  for(size_t i=0; i<pos.size()/3; ++i){
-    if (old_pos[3*i]!=pos[3*i] || old_pos[3*i+1]!=pos[3*i+1]){
-      moved[i] = 1;
-    }
-  }
-
-  for(size_t i=0; i<lines.size(); i+=2){
-    if(!moved[lines[i]] && !moved[lines[i+1]]) continue;
-    // compute if markers went through
-    for(size_t j=0; j<lines.size(); j+=2){
-      if(colors[lines[j]]<0) continue;
-      
-      double b1[2] = {pos[3*lines[i]], pos[3*lines[i]+1]};
-      double b2[2] = {pos[3*lines[i+1]], pos[3*lines[i+1]+1]};
-      double a1[2]  = {old_pos[3*lines[i]], old_pos[3*lines[i]+1]};
-      double a2[2]  = {old_pos[3*lines[i+1]], old_pos[3*lines[i+1]+1]};
-      double p[2] = {pos[3*lines[j]], pos[3*lines[j]+1]};
-
-      double a12p  = robustPredicates::orient2d(a1,a2,p);
-      double b12p = robustPredicates::orient2d(b1,b2,p);
-      if(a12p*b12p<=1e-12){
-	//        double a1b1p = robustPredicates::orient2d(a1,b1,p);
-	//        double a2b2p = robustPredicates::orient2d(a2,b2,p);
-        double lengthSquared = (b2[0]-b1[0])*(b2[0]-b1[0]) + (b2[1]-b1[1])*(b2[1]-b1[1]);
-        // Avoid division by zero
-        if (lengthSquared == 0.0) {
-            pos[3*lines[j]] = b1[0];
-            pos[3*lines[j]+1] = b1[1];
-        } else {
-          double t = ((p[0]-b1[0])*(b2[0]-b1[0]) + (p[1]-b1[1])*(b2[1]-b1[1])) / lengthSquared;
-          // t = std::max(0.0, std::min(1.0, t));
-          if(t>=0.0 && t<=1.0){
-            pos[3*lines[j]] = b1[0]+t*(b2[0]-b1[0]);
-            pos[3*lines[j]+1] = b1[1]+t*(b2[1]-b1[1]);
-          }
-        }
-      }
-    }
-  }
-}
-
-void discreteFront::printInterfaces(FILE *f){
-  fprintf(f,"View \"Interface\"{\n");
-  for(size_t i=0; i<interfaces.size(); ++i){
-    for(size_t j=0; j<interfaces[i].markers.size()-1; ++j){
-      fprintf(f,"SL(%12.5E,%12.5E,0,%12.5E,%12.5E,0){%d,%d};\n",
-	    pos[3*interfaces[i].markers[j]],pos[3*interfaces[i].markers[j]+1],
-	    pos[3*interfaces[i].markers[j+1]],pos[3*interfaces[i].markers[j+1]+1],interfaces[i].tag, interfaces[i].tag);
-      fprintf(f, "T3(%12.5E, %12.5E, 0.01, 0){'%d'};\n", pos[3*interfaces[i].markers[j]],pos[3*interfaces[i].markers[j]+1], interfaces[i].markers[j]);
-    }
-
-    // if(interfaces[i].start!=nullptr){
-    //   fprintf(f,"SL(%12.5E,%12.5E,0,%12.5E,%12.5E,0){%d,%d};\n",
-	  //   interfaces[i].start->pos[0], interfaces[i].start->pos[1],
-	  //   pos[3*interfaces[i].markers[0]],pos[3*interfaces[i].markers[0]+1],interfaces[i].tag, interfaces[i].tag);
-    // }
-
-    // if(interfaces[i].end!=nullptr){
-    //   fprintf(f,"SL(%12.5E,%12.5E,0,%12.5E,%12.5E,0){%d,%d};\n",
-	  //   interfaces[i].end->pos[0], interfaces[i].end->pos[1],
-	  //   pos[3*interfaces[i].markers.back()],pos[3*interfaces[i].markers.back()+1],interfaces[i].tag, interfaces[i].tag);
-    // }
-
-    if(interfaces[i].triple.size()==0){
-      fprintf(f,"SL(%12.5E,%12.5E,0,%12.5E,%12.5E,0){%d,%d};\n",
-	    pos[3*interfaces[i].markers[0]],pos[3*interfaces[i].markers[0]+1],
-	    pos[3*interfaces[i].markers.back()],pos[3*interfaces[i].markers.back()+1],interfaces[i].tag, interfaces[i].tag);
-      fprintf(f, "T3(%12.5E, %12.5E, 0.01, 0){'%d'};\n", pos[3*interfaces[i].markers.back()],pos[3*interfaces[i].markers.back()+1], interfaces[i].markers.back());
-    }else{
-      size_t j = interfaces[i].markers.size()-1;
-      fprintf(f, "T3(%12.5E, %12.5E, 0.01, 0){'%d'};\n", pos[3*interfaces[i].markers[j]],pos[3*interfaces[i].markers[j]+1], interfaces[i].markers[j]);
-    }
-  }
-
-  for(size_t i=0; i<triple_points.size();++i){
-    fprintf(f, "SP(%12.5E, %12.5E, 0){%d};\n", triple_points[i].pos[0], triple_points[i].pos[1], triple_points[i].tag);
-    // fprintf(f, "T3(%12.5E, %12.5E, 0.01, 0){'%d'};\n", triple_points[i].pos[0],triple_points[i].pos[1], triple_points[i].id_marker);
-  }
-  fprintf(f,"};\n");
-}
-
-size_t discreteFront::findMarker(size_t marker){
-  for(size_t i=0; i<interfaces.size(); ++i){
-    for(size_t j=0; j<interfaces[i].markers.size(); ++j){
-      if(interfaces[i].markers[j] == marker){
-        return i;
-      }
-    }
-  }
-
-}
-
-size_t discreteFront::max_marker(){
-  size_t max_marker = 0;
-  for(size_t i=0; i<interfaces.size(); ++i){
-    for(size_t j=0; j<interfaces[i].markers.size(); ++j){
-      if(interfaces[i].markers[j] > max_marker){
-        max_marker = interfaces[i].markers[j];
-      }
-    }
-  }
-  return max_marker;
-}
-
-meshRelaying::meshRelaying(GModel *gm){
-  
-  if (!gm)gm=GModel::current();
-
-  std::set <MVertex*, MVertexPtrLessThan> vs; 
+  std::set<MVertex *, MVertexPtrLessThan> vs;
 
   // Get all vertices.
-  for (auto eit = gm->firstEdge() ; eit != gm->lastEdge() ; ++eit){
-    for (auto e : (*eit)->lines){
-      for (size_t i=0;i<2;i++)vs.insert(e->getVertex(i));
+  for(auto eit = gm->firstEdge(); eit != gm->lastEdge(); ++eit) {
+    for(auto e : (*eit)->lines) {
+      for(size_t i = 0; i < 2; i++) vs.insert(e->getVertex(i));
     }
   }
-  for (auto fit = gm->firstFace() ; fit != gm->lastFace() ; ++fit){
-    for (auto t : (*fit)->triangles){
-      for (size_t i=0;i<3;i++)vs.insert(t->getVertex(i));
+  for(auto fit = gm->firstFace(); fit != gm->lastFace(); ++fit) {
+    for(auto t : (*fit)->triangles) {
+      for(size_t i = 0; i < 3; i++) vs.insert(t->getVertex(i));
     }
   }
-  for (auto git = gm->firstRegion() ; git != gm->lastRegion() ; ++git){
-    for (auto t : (*git)->tetrahedra){
-      for (size_t i=0;i<4;i++)vs.insert(t->getVertex(i));
-    }    
+  for(auto git = gm->firstRegion(); git != gm->lastRegion(); ++git) {
+    for(auto t : (*git)->tetrahedra) {
+      for(size_t i = 0; i < 4; i++) vs.insert(t->getVertex(i));
+    }
   }
 
   // Store positions
   size_t counter = 0;
-  for (auto v : vs){
+  for(auto v : vs) {
     v->setIndex(counter++);
     pos.push_back(v->x());
     pos.push_back(v->y());
@@ -2556,57 +83,57 @@ meshRelaying::meshRelaying(GModel *gm){
   v2tet.resize(counter);
   v2tri.resize(counter);
   v2edg.resize(counter);
-  
+
   size_t tetCount = 0;
-  for (auto git = gm->firstRegion() ; git != gm->lastRegion() ; ++git){
-    for (auto t : (*git)->tetrahedra){
-      for (size_t i=0;i<6;i++){
-	MEdge e = t->getEdge(i);
-	v2v[e.getVertex(0)->getIndex()].push_back(e.getVertex(1)->getIndex());
-	v2v[e.getVertex(1)->getIndex()].push_back(e.getVertex(0)->getIndex());
+  for(auto git = gm->firstRegion(); git != gm->lastRegion(); ++git) {
+    for(auto t : (*git)->tetrahedra) {
+      for(size_t i = 0; i < 6; i++) {
+        MEdge e = t->getEdge(i);
+        v2v[e.getVertex(0)->getIndex()].push_back(e.getVertex(1)->getIndex());
+        v2v[e.getVertex(1)->getIndex()].push_back(e.getVertex(0)->getIndex());
       }
-      for (size_t i=0;i<4;i++){
-	tets.push_back(t->getVertex(i)->getIndex());
-	v2tet[t->getVertex(i)->getIndex()].push_back(tetCount);
+      for(size_t i = 0; i < 4; i++) {
+        tets.push_back(t->getVertex(i)->getIndex());
+        v2tet[t->getVertex(i)->getIndex()].push_back(tetCount);
       }
       tetCount++;
-    }    
+    }
   }
-  
+
   size_t triCount = 0;
-  for (auto fit = gm->firstFace() ; fit != gm->lastFace() ; ++fit){
-    for (auto t : (*fit)->triangles){
-      for (size_t i=0;i<3;i++){
-	MEdge e = t->getEdge(i);
-	v2v[e.getVertex(0)->getIndex()].push_back(e.getVertex(1)->getIndex());
-	v2v[e.getVertex(1)->getIndex()].push_back(e.getVertex(0)->getIndex());
-	if (tetCount){
-	  std::pair<size_t,size_t> p =
-	    std::make_pair(std::min(e.getVertex(0)->getIndex(),e.getVertex(1)->getIndex()),
-			   std::max(e.getVertex(0)->getIndex(),e.getVertex(1)->getIndex()));
-	  bnd2d.push_back(p);
-	}	
+  for(auto fit = gm->firstFace(); fit != gm->lastFace(); ++fit) {
+    for(auto t : (*fit)->triangles) {
+      for(size_t i = 0; i < 3; i++) {
+        MEdge e = t->getEdge(i);
+        v2v[e.getVertex(0)->getIndex()].push_back(e.getVertex(1)->getIndex());
+        v2v[e.getVertex(1)->getIndex()].push_back(e.getVertex(0)->getIndex());
+        if(tetCount) {
+          std::pair<size_t, size_t> p = std::make_pair(
+            std::min(e.getVertex(0)->getIndex(), e.getVertex(1)->getIndex()),
+            std::max(e.getVertex(0)->getIndex(), e.getVertex(1)->getIndex()));
+          bnd2d.push_back(p);
+        }
       }
-      for (size_t i=0;i<3;i++){
-	tris.push_back(t->getVertex(i)->getIndex());
-	v2tri[t->getVertex(i)->getIndex()].push_back(triCount);
+      for(size_t i = 0; i < 3; i++) {
+        tris.push_back(t->getVertex(i)->getIndex());
+        v2tri[t->getVertex(i)->getIndex()].push_back(triCount);
       }
       triCount++;
     }
   }
 
   size_t edgCount = 0;
-  for (auto eit = gm->firstEdge() ; eit != gm->lastEdge() ; ++eit){
-    for (auto e : (*eit)->lines){
-      if (triCount){
-	std::pair<size_t,size_t> p =
-	  std::make_pair(std::min(e->getVertex(0)->getIndex(),e->getVertex(1)->getIndex()),
-			 std::max(e->getVertex(0)->getIndex(),e->getVertex(1)->getIndex()));
-	bnd1d.push_back(p);
-      }	
-      for (size_t i=0;i<2;i++){
-	edgs.push_back(e->getVertex(i)->getIndex());
-	v2edg[e->getVertex(i)->getIndex()].push_back(edgCount);
+  for(auto eit = gm->firstEdge(); eit != gm->lastEdge(); ++eit) {
+    for(auto e : (*eit)->lines) {
+      if(triCount) {
+        std::pair<size_t, size_t> p = std::make_pair(
+          std::min(e->getVertex(0)->getIndex(), e->getVertex(1)->getIndex()),
+          std::max(e->getVertex(0)->getIndex(), e->getVertex(1)->getIndex()));
+        bnd1d.push_back(p);
+      }
+      for(size_t i = 0; i < 2; i++) {
+        edgs.push_back(e->getVertex(i)->getIndex());
+        v2edg[e->getVertex(i)->getIndex()].push_back(edgCount);
       }
       edgCount++;
     }
@@ -2614,723 +141,5200 @@ meshRelaying::meshRelaying(GModel *gm){
 
   {
     std::sort(bnd2d.begin(), bnd2d.end());
-    auto last = std::unique (bnd2d.begin(), bnd2d.end());
-    bnd2d.erase(last,bnd2d.end());
+    auto last = std::unique(bnd2d.begin(), bnd2d.end());
+    bnd2d.erase(last, bnd2d.end());
   }
   {
     std::sort(bnd1d.begin(), bnd1d.end());
-    auto last = std::unique (bnd1d.begin(), bnd1d.end());
-    bnd1d.erase(last,bnd1d.end());
+    auto last = std::unique(bnd1d.begin(), bnd1d.end());
+    bnd1d.erase(last, bnd1d.end());
   }
   {
     size_t count = 0;
-    for (auto v : v2v){
+    for(auto v : v2v) {
       std::sort(v.begin(), v.end());
-      auto last = std::unique (v.begin(), v.end());
-      v.erase(last,v.end());
+      auto last = std::unique(v.begin(), v.end());
+      v.erase(last, v.end());
       v2v[count++] = v;
     }
   }
   initial_pos = pos;
-  
 }
 
-void meshRelaying::doRelaying (double t){
-  auto f_levelset = [this] (size_t i, size_t j) -> std::vector<std::pair<double,std::pair<size_t,size_t> > > {
-    std::vector<std::pair<double,std::pair<size_t, size_t>>> ds;
-    for (size_t k = 0; k < levelsets.size() ; k++){    
+// interface relaying functions
+
+void meshRelaying::doRelaying(double relax)
+{
+  auto f_levelset = [this](size_t i, size_t j)
+    -> std::vector<std::pair<double, std::pair<size_t, size_t>>> {
+    std::vector<std::pair<double, std::pair<size_t, size_t>>> ds;
+    for(size_t k = 0; k < levelsets.size(); k++) {
       double l0 = levelsets[k][i];
       double l1 = levelsets[k][j];
-      if (l0 * l1 < 0){
-        double t = l0/(l0-l1);
-        std::pair<double,std::pair<size_t, size_t>> d = std::make_pair(t,std::make_pair(k,k));
+      if(l0 * l1 < 0) {
+        double t = l0 / (l0 - l1);
+        std::pair<double, std::pair<size_t, size_t>> d =
+          std::make_pair(t, std::make_pair(k, k));
         ds.push_back(d);
       }
     }
-    std::sort(ds.begin(),ds.end());
-    return ds;    
-  };
-
-  auto f_discrete = [this] (size_t i, size_t j) -> std::vector< std::pair<double,std::pair<size_t,size_t>>> {
-    SVector3 p0(pos [3*i],pos [3*i+1],pos [3*i+2]);
-    SVector3 p1(pos [3*j],pos [3*j+1],pos [3*j+2]);   
-    
-    std::vector<double> d;
-    std::vector<int> c;
-    discreteFront::instance()->intersectLine2d (p0, p1,d,c);
-    std::vector<std::pair<double, std::pair<size_t, size_t>>> ds;
-    for (size_t i=0;i<d.size();i++){
-      std::pair<double, std::pair<size_t,size_t>> p = std::make_pair(d[i],std::make_pair(c[2*i],c[2*i+1]));
-      ds.push_back(p);
-    }
-    std::sort(ds.begin(),ds.end());
+    std::sort(ds.begin(), ds.end());
     return ds;
   };
-  if (discreteFront::instance()->empty())
+
+  auto f_discrete = [this](size_t i, size_t j)
+    -> std::vector<std::pair<double, std::pair<size_t, size_t>>> {
+    SVector3 p0(pos[3 * i], pos[3 * i + 1], pos[3 * i + 2]);
+    SVector3 p1(pos[3 * j], pos[3 * j + 1], pos[3 * j + 2]);
+
+    std::vector<double> d;
+    std::vector<int> c;
+    discreteFront::instance()->intersectLine2d(p0, p1, d, c);
+
+    std::vector<std::pair<double, std::pair<size_t, size_t>>> ds;
+    for(size_t i = 0; i < d.size(); i++) {
+      std::pair<double, std::pair<size_t, size_t>> p =
+        std::make_pair(d[i], std::make_pair(c[2 * i], c[2 * i + 1]));
+      ds.push_back(p);
+    }
+    std::sort(ds.begin(), ds.end());
+    return ds;
+  };
+
+  // if no discreteFront is available, use levelset
+  if(discreteFront::instance()->empty())
     doRelaying(f_levelset);
-  else{
-    pos = initial_pos;
+  else {
+    // pos = initial_pos;
+    // relax position
+    for(size_t i = 0; i < pos.size() / 3; i++) {
+      pos[3 * i] = (1 - relax) * pos[3 * i] + relax * initial_pos[3 * i];
+      pos[3 * i + 1] =
+        (1 - relax) * pos[3 * i + 1] + relax * initial_pos[3 * i + 1];
+      pos[3 * i + 2] = 0.0;
+    }
     doRelaying(f_discrete);
   }
-}
 
+  if(pm_mesh == nullptr){
+    pm_mesh = new PolyMesh();
+    std::vector<size_t> tris_p1;
+    for(size_t i=0; i<tris.size(); i++) {
+      tris_p1.push_back(tris[i]+1);
+    }
+    std::vector<double> pos_2d;
+    for(size_t i=0; i<pos.size(); i+=3) {
+      pos_2d.push_back(pos[i]);
+      pos_2d.push_back(pos[i+1]);
+    }
+    triangulation2PolyMesh(tris_p1, pos_2d, &pm_mesh);
+    
+    //sort vertices
+    std::sort(pm_mesh->vertices.begin(), pm_mesh->vertices.end(), [](PolyMesh::Vertex *a, PolyMesh::Vertex *b) {
+      return a->data < b->data;
+    });
+  }
 
-double meshRelaying::smallest_measure (const size_t n, 
-				    const SVector3 &t){
-  
-  double volume = 1.e22;
-  if (tets.size()){
-    for (auto tri : v2tet[n]) {
-      size_t n0 = tets[4*tri];
-      size_t n1 = tets[4*tri+1];
-      size_t n2 = tets[4*tri+2];
-      size_t n3 = tets[4*tri+3];
-      double x0 = n0 == n ? t.x() : pos [3*n0];
-      double y0 = n0 == n ? t.y() : pos [3*n0+1];
-      double z0 = n0 == n ? t.z() : pos [3*n0+2];
-      double x1 = n1 == n ? t.x() : pos [3*n1];
-      double y1 = n1 == n ? t.y() : pos [3*n1+1];
-      double z1 = n1 == n ? t.z() : pos [3*n1+2];
-      double x2 = n2 == n ? t.x() : pos [3*n2];
-      double y2 = n2 == n ? t.y() : pos [3*n2+1];
-      double z2 = n2 == n ? t.z() : pos [3*n2+2];
-      double x3 = n3 == n ? t.x() : pos [3*n3];
-      double y3 = n3 == n ? t.y() : pos [3*n3+1];
-      double z3 = n3 == n ? t.z() : pos [3*n3+2];
-      double p0[3]={x0,y0,z0};
-      double p1[3]={x1,y1,z1};
-      double p2[3]={x2,y2,z2};
-      double p3[3]={x3,y3,z3};
-      double v = robustPredicates::orient3d(p0,p1,p2,p3);
-      volume = std::min(v,volume);
+  for(size_t i=0; i<pm_mesh->vertices.size(); i++) {
+    int v = pm_mesh->vertices[i]->data-1;
+    SVector3 p(pos[3*v], pos[3*v+1], pos[3*v+2]);
+    pm_mesh->vertices[i]->position = p;
+  }
+
+  // print mesh
+  FILE *f = fopen("after_relay.msh", "w");
+  discreteFront::instance()->printInterfaces(f);
+  fprintf(f, "View \" Mesh \" {\n");
+  for(size_t i = 0; i < tris.size(); i += 3) {
+    for(size_t j = 0; j < 3; ++j) {
+      fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", pos[3 * tris[i + j]],
+              pos[3 * tris[i + j] + 1], pos[3 * tris[i + j] + 2],
+              pos[3 * tris[i + (j + 1) % 3]],
+              pos[3 * tris[i + (j + 1) % 3] + 1],
+              pos[3 * tris[i + (j + 1) % 3] + 2], 10, 10);
     }
   }
-  else if (tris.size()){
-    for (auto tri : v2tri[n]) {
-      size_t n0 = tris[3*tri];
-      size_t n1 = tris[3*tri+1];
-      size_t n2 = tris[3*tri+2];
-      double x0 = n0 == n ? t.x() : pos [3*n0];
-      double y0 = n0 == n ? t.y() : pos [3*n0+1];
-      double x1 = n1 == n ? t.x() : pos [3*n1];
-      double y1 = n1 == n ? t.y() : pos [3*n1+1];
-      double x2 = n2 == n ? t.x() : pos [3*n2];
-      double y2 = n2 == n ? t.y() : pos [3*n2+1];
-      double p0[2]={x0,y0};
-      double p1[2]={x1,y1};
-      double p2[2]={x2,y2};
-      double v = robustPredicates::orient2d(p0,p1,p2);
-      volume = std::min(v,volume);
-    }
+  fprintf(f, "};\n");
+
+  fprintf(f, "View \" Front nodes \" {\n");
+  for(size_t i = 0; i < front_nodes.size(); i++) {
+    fprintf(f, "SP(%g,%g,%g){%d};\n", pos[3 * front_nodes[i]],
+            pos[3 * front_nodes[i] + 1], pos[3 * front_nodes[i] + 2], 10);
   }
-  return volume;
+  fprintf(f, "};\n");
+
+  fclose(f);
+
+
 }
 
-void meshRelaying::doRelaying (const std::function<std::vector<std::pair<double, std::pair<size_t,size_t>>>(size_t, size_t)> &f){
-  
+void meshRelaying::doRelaying(
+  const std::function<std::vector<std::pair<double, std::pair<size_t, size_t>>>(
+    size_t, size_t)> &f)
+{
   front_nodes.clear();
   discreteFront::instance()->clearFrontNodes();
-  discreteFront::instance()->buildSpatialSearchStructureInterface ();
+  discreteFront::instance()->buildSpatialSearchStructure();
 
-  int MAXIT = (discreteFront::instance()->empty()) ? 2 : 3;
-  int ITTT = 1;
+  std::vector<int> bnd_markers;
+  discreteFront::instance()->getBndMarkers(&bnd_markers);
+  std::vector<interface> interfaces = discreteFront::instance()->getInterfaces();
 
-  printf("doRelaying\n");
-  
-  while(1) {
-    auto front_edges = discreteFront::instance()->getFrontEdges();
-    printf("after getFrontEdges\n");
-    if (ITTT++ == MAXIT)break;
-    if (tets.empty()){      
-      // for (size_t i=0;i<tris.size();i+=3){
-      //   std::vector<SVector3> c;
-      //   std::vector<int> col;
-      //   discreteFront::instance()->cornersInTriangle2d (SVector3(pos[3*tris[i]],pos[3*tris[i]+1],pos[3*tris[i]+2]),
-			// 				SVector3(pos[3*tris[i+1]],pos[3*tris[i+1]+1],pos[3*tris[i+1]+2]),
-			// 				SVector3(pos[3*tris[i+2]],pos[3*tris[i+2]+1],pos[3*tris[i+2]+2]),
-			// 				c,col);
-      //   if (!c.empty()){
-      //     for (int j=0;j<3;j++){
-            
-      //       // do not move a bnd node on a corner 
-      //       // JF do not remove this
-      //       int dimEdge = tets.size() ? 3:2;
-      //       int dimi = dimVertex[tris[i+j]];
-      //       if(dimi<dimEdge){
-      //         continue;
-      //       } 
+  int MAXIT = 5;
+  int ITTT = 0;
 
-      //       double qMin = smallest_measure (tris[i+j],c[0]);
-      //       if (qMin > 0){
-      //         pos[3*tris[i+j]]   = c[0].x();
-      //         pos[3*tris[i+j]+1] = c[0].y();
-      //         front_nodes.push_back(tris[i+j]);
-      //         discreteFront::instance()->addFrontNode (tris[i+j],col[0],c[0]);
-      //         corners.push_back(tris[i+j]);
-      //         break;
-      //       }
-      //     }
-      //   }
-      // }
+  std::vector<size_t> marker_corner_done;
+  corners.clear();
+  while(true) {
+    printf("ITTT = %d\n", ITTT);
+    // auto front_edges = discreteFront::instance()->getFrontEdges();
 
-      for (size_t i=0;i<tris.size();i+=3){
+    if(ITTT++ == MAXIT) break;
+
+    if(tets.empty() && ITTT == 1) {
+      for(size_t i = 0; i < tris.size(); i += 3) {
+        // printf(" i = %lu / %lu -> %lu %lu %lu ; pos size %lu \n", i, tris.size(), tris[i],
+        //        tris[i + 1], tris[i + 2], pos.size());
+        
+        std::vector<SVector3> cornerPos;
+        std::vector<std::pair<size_t, size_t>> corner;
+        discreteFront::instance()->cornersInTriangle2d(
+          SVector3(pos[3 * tris[i]], pos[3 * tris[i] + 1],
+                   pos[3 * tris[i] + 2]),
+          SVector3(pos[3 * tris[i + 1]], pos[3 * tris[i + 1] + 1],
+                   pos[3 * tris[i + 1] + 2]),
+          SVector3(pos[3 * tris[i + 2]], pos[3 * tris[i + 2] + 1],
+                   pos[3 * tris[i + 2] + 2]),
+          cornerPos, corner);
+        if(!corner.empty()) {
+          printf("corner.size() = %lu\n", corner.size());
+          if(std::find(marker_corner_done.begin(), marker_corner_done.end(),
+                       corner[0].second) != marker_corner_done.end()) {
+            continue;
+          }
+          for(int j = 0; j < 3; j++) {
+            int dimEdge = tets.size() ? 3 : 2;
+            int dimi = dimVertex[tris[i + j]];
+            if(dimi < dimEdge) continue;
+            size_t m_ = tris[i+j];
+            double qMin = smallest_measure(m_, cornerPos[0]);
+            if(qMin > 0) {
+              pos[3 * m_] = cornerPos[0].x();
+              pos[3 * m_ + 1] = cornerPos[0].y();
+              pos[3 * m_ + 2] = 0.0;
+
+              front_nodes.push_back(m_);
+              discreteFront::instance()->addFrontNode(
+                m_, corner[0].first, corner[0].second,
+                corner[0].second, cornerPos[0], interfaces[corner[0].first].markers);
+              corners.push_back(m_);
+              marker_corner_done.push_back(corner[0].second);
+              break;
+            }
+          }
+        }
+      }
+
+     
+      for(size_t i = 0; i < tris.size(); i += 3) {
         std::vector<size_t> interface_id;
-        std::vector<size_t> m1;
-        std::vector<size_t> m2;
+        std::vector<size_t> m;
         std::vector<SVector3> p_triple;
+        discreteFront::instance()->tripleInTriangle2d(
+          SVector3(pos[3 * tris[i]], pos[3 * tris[i] + 1],
+                   pos[3 * tris[i] + 2]),
+          SVector3(pos[3 * tris[i + 1]], pos[3 * tris[i + 1] + 1],
+                   pos[3 * tris[i + 1] + 2]),
+          SVector3(pos[3 * tris[i + 2]], pos[3 * tris[i + 2] + 1],
+                   pos[3 * tris[i + 2] + 2]),
+          m, p_triple);
+        if(!p_triple.empty()) {
+          for(int j = 0; j < 3; j++) {
+            int dimi = dimVertex[tris[i + j]];
+            if(dimi < 1) continue;
 
-        discreteFront::instance()->tripleInTriangle2d (SVector3(pos[3*tris[i]],pos[3*tris[i]+1],pos[3*tris[i]+2]),
-							SVector3(pos[3*tris[i+1]],pos[3*tris[i+1]+1],pos[3*tris[i+1]+2]),
-							SVector3(pos[3*tris[i+2]],pos[3*tris[i+2]+1],pos[3*tris[i+2]+2]),
-							interface_id, m1, m2, p_triple);
-        if (!p_triple.empty()){
-          for (int j=0;j<3;j++){
-            
-            // int dimEdge = tets.size() ? 3:2;
-            // int dimi = dimVertex[tris[i+j]];
-            // if(dimi<dimEdge){
-            //   printf("continued\n");
-            //   continue;
-            // } 
-
-            double qMin = smallest_measure (tris[i+j],p_triple[0]);
-            if (qMin > 0){
-              pos[3*tris[i+j]]   = p_triple[0].x();
-              pos[3*tris[i+j]+1] = p_triple[0].y();
-              front_nodes.push_back(tris[i+j]);
-              discreteFront::instance()->addFrontNode (tris[i+j],interface_id[0],m1[0],m2[0],p_triple[0]);
-              corners.push_back(tris[i+j]);
+            double qMin = smallest_measure(tris[i + j], p_triple[0]);
+            if(qMin > 0) {
+              pos[3 * tris[i + j]] = p_triple[0].x();
+              pos[3 * tris[i + j] + 1] = p_triple[0].y();
+              front_nodes.push_back(tris[i + j]);
+              // frontNode f(tris[i + j], 0, m[0], m[0], 0);
+              // discreteFront::instance()->addFrontNode(tris[i + j], 0, m[0],
+              //                                         m[0], p_triple[0]);
               break;
             }
           }
         }
       }
     }
-    // printf("before sort \n");
 
-    std::sort(front_nodes.begin(),front_nodes.end());
-    std::sort(corners.begin(),corners.end());
-    std::set<std::pair<size_t,size_t> > cuts;
+    std::sort(front_nodes.begin(), front_nodes.end());
+    std::sort(corners.begin(), corners.end());
+    std::set<std::pair<size_t, size_t>> cuts;
     std::vector<edgeCut> moves;
 
-    printf("%lu\n",v2v.size());
-    
-    for (size_t i = 0; i< v2v.size() ; i++){
-      for (auto j : v2v[i]){
-        if (i < j){
-          std::pair<size_t,size_t> pa = std::make_pair(i,j);
-          if (std::find(front_edges.begin(), front_edges.end(), pa) != front_edges.end())continue;
+    printf("moves = %lu\n", moves.size());
 
-	        std::vector<std::pair<double,std::pair<size_t, size_t>>> ds = f (i,j);
-          if (ds.empty())continue;
-          std::pair<size_t,size_t> p = std::make_pair(std::min(i,j),std::max(i,j));
+    for(size_t i = 0; i < v2v.size(); i++) {
+      for(auto j : v2v[i]) {
+        if(i < j) {
+          std::pair<size_t, size_t> pa = std::make_pair(i, j);
+          // if(std::find(front_edges.begin(), front_edges.end(), pa) !=
+          //    front_edges.end()) {
+          //   printf("edge %lu - %lu is in front_edges\n", i, j);
+          //   continue;
+          // }
+
+          std::vector<std::pair<double, std::pair<size_t, size_t>>> ds =
+            f(i, j);
+          if(ds.empty()) continue;
+
+          std::pair<size_t, size_t> p =
+            std::make_pair(std::min(i, j), std::max(i, j));
           cuts.insert(p);
-	  
-          size_t indexi = 0; 
+
+          size_t indexi = 0;
           size_t indexj = ds.size() - 1;
 
           const double di = ds[indexi].first;
           const double dj = ds[indexj].first;
-          const size_t    m1i = ds[indexi].second.first;
-          const size_t    m2i = ds[indexi].second.second;
-          const size_t    m1j = ds[indexj].second.first;
-          const size_t    m2j = ds[indexj].second.second;
-          int dimEdge = tets.size() ? 3:2;
-          if (std::binary_search(bnd2d.begin(), bnd2d.end(), p))dimEdge = std::min(dimEdge,2);
-          if (std::binary_search(bnd1d.begin(), bnd1d.end(), p))dimEdge = std::min(dimEdge,1);
+          const size_t m1i = ds[indexi].second.first;
+          const size_t m2i = ds[indexi].second.second;
+          const size_t m1j = ds[indexj].second.first;
+          const size_t m2j = ds[indexj].second.second;
+          int dimEdge = tets.size() ? 3 : 2;
+          if(std::binary_search(bnd2d.begin(), bnd2d.end(), p))
+            dimEdge = std::min(dimEdge, 2);
+
+          if(std::binary_search(bnd1d.begin(), bnd1d.end(), p))
+            dimEdge = std::min(dimEdge, 1);
+
           int dimi = dimVertex[i];
           int dimj = dimVertex[j];
-          SVector3 pi (pos[3*i],pos[3*i+1],pos[3*i+2]); 
-          SVector3 pj (pos[3*j],pos[3*j+1],pos[3*j+2]); 
-          SVector3 pOpti  = pi + (pj-pi)*di;
-          SVector3 pOptj  = pi + (pj-pi)*dj;
-          SVector3 DI = pi-pOpti;
-          SVector3 DJ = pj-pOptj;
-          size_t interface_i = discreteFront::instance()->findMarker(m1i);
-          size_t interface_j = discreteFront::instance()->findMarker(m1j);
+          SVector3 pi(pos[3 * i], pos[3 * i + 1], pos[3 * i + 2]);
+          SVector3 pj(pos[3 * j], pos[3 * j + 1], pos[3 * j + 2]);
+          SVector3 pOpti = pi + (pj - pi) * di;
+          SVector3 pOptj = pi + (pj - pi) * dj;
+          SVector3 DI = pi - pOpti;
+          SVector3 DJ = pj - pOptj;
+
+          int interface_i_ = discreteFront::instance()->findMarker(m1i);
+          int interface_j_ = discreteFront::instance()->findMarker(m1j);
+          if(interface_i_==-1 || interface_j_==-1) continue;
+
+          size_t interface_i = static_cast<size_t>(interface_i_);
+          size_t interface_j = static_cast<size_t>(interface_j_);
+          
           edgeCut mi(i, j, pOpti, DI.norm(), interface_i, m1i, m2i);
           edgeCut mj(j, i, pOptj, DJ.norm(), interface_j, m1j, m2j);
 
-          // Not perfect ... but workable
-          if (!std::binary_search(front_nodes.begin(),front_nodes.end(),i))
-            if(di>0.0000001 && di<0.999999 && dimi >= dimEdge) moves.push_back(mi);
-          if (!std::binary_search(front_nodes.begin(),front_nodes.end(),j))
-            if(dj>0.0000001 && dj<0.999999 && dimj >= dimEdge) moves.push_back(mj);
-        }
-      }
-    }
-    
-    if (moves.empty())break;
-    std::sort(moves.begin(), moves.end());
-
-    printf("%lu moves\n",moves.size());
-    
-    for (auto c : moves){
-      size_t i = c.a;
-      size_t j = c.b;
-      std::pair<size_t,size_t> p = std::make_pair(std::min(i,j), std::max(i,j));
-      if (cuts.find(p) == cuts.end())continue;
-      
-      SVector3 pOpt = c.p;
-      //      double qMin = smallest_measure (i,pOpt);      
-      //      if (qMin < 0) continue;
-      
-      for (auto k : v2v[i]){
-        p = std::make_pair(std::min(i,k), std::max(i,k));
-        cuts.erase(p);
-      }
-
-      if (levelsets.size()){
-	      levelsets[c.m1][i] = 0.0;
-      }
-      
-      front_nodes.push_back(i);
-      discreteFront::instance()->addFrontNode(i,c.interface,c.m1,c.m2,pOpt);
-      pos[3*i] = pOpt.x();
-      pos[3*i+1] = pOpt.y();
-      pos[3*i+2] = pOpt.z();
-    }    
-    printf("coucou %lu fn\n",front_nodes.size());
-    std::sort(front_nodes.begin(),front_nodes.end());
-  }
-
-  
-  if (!discreteFront::instance()->empty()){
-    auto front_edges = discreteFront::instance()->getFrontEdges();
-    auto missing_edges = front_edges;
-    missing_edges.clear();
-    for (auto fe : front_edges){
-      bool found = false;
-      for (auto j : v2v[fe.first]){
-	      if (j== fe.second)found = true; 
-      }
-      if (!found){
-	      missing_edges.push_back(fe);
-      }
-    }
-    /*    if (!missing_edges.empty()){
-      char name[245];
-      printf("%lu missing font edges on the mesh :",missing_edges.size());
-      sprintf(name,"missing%d.pos",ITERR);
-      FILE *fi = fopen(name,"w");
-      fprintf(fi,"View \"\"{\n");
-      for (auto fe : missing_edges){
-        size_t i = fe.first;
-        size_t j = fe.second;
-        printf("(%lu,%lu)",i,j);
-        fprintf(fi,"SL(%g,%g,0,%g,%g,0){%lu,%lu};\n",pos[3*i],pos[3*i+1],pos[3*j],pos[3*j+1],i,j);
-      }
-      printf("\n");
-      fprintf(fi,"};\n");
-      fclose(fi);
-    }
-    */
-  }
-}
-
-void meshRelaying::curvature(std::vector<int> concentration, std::vector<double> *curvature){
-  curvature->resize(v2v.size());
-  for(size_t i=0; i<v2v.size(); ++i){
-    std::vector<std::pair<size_t, int>> front_node_i;
-    for(size_t j=0; j<v2v[i].size(); ++j){
-
-      std::vector<std::pair<size_t,int>> edgeij2tri;
-      for(size_t k=0; k<v2tri[i].size(); ++k){
-        for(int d=0; d<3; ++d){
-          if(tris[3*v2tri[i][k]+d] == v2v[i][j]){
-            if(tris[3*v2tri[i][k]+((d+1)%3)] == i){
-              edgeij2tri.push_back(std::make_pair(v2tri[i][k], 1));
-            } else {
-              edgeij2tri.push_back(std::make_pair(v2tri[i][k], -1));
+          if(!std::binary_search(front_nodes.begin(), front_nodes.end(), i)) {
+            if(di > 0.0000001 && di < 0.999999 && dimi >= dimEdge) {
+              if(bnd_markers[m1i]==0 || bnd_markers[m2i]==0) {
+                moves.push_back(mi);
+              }
             }
-            
+          }
+
+          if(!std::binary_search(front_nodes.begin(), front_nodes.end(), j)) {
+            if(dj > 0.0000001 && dj < 0.999999 && dimj >= dimEdge) {
+              if(bnd_markers[m1j]==0 || bnd_markers[m2j]==0) {
+                moves.push_back(mj);
+              }
+            }
           }
         }
       }
-      
-      if(edgeij2tri.size()!=2){
-        (*curvature)[i] = 0.0;
-        continue;
+    }
+
+    if(moves.empty()) break;
+
+    std::sort(moves.begin(), moves.end());
+    for(auto c : moves) {
+      size_t i = c.a;
+      size_t j = c.b;
+      std::pair<size_t, size_t> p =
+        std::make_pair(std::min(i, j), std::max(i, j));
+      if(cuts.find(p) == cuts.end()) continue;
+
+      SVector3 pOpt = c.p;
+      double qMin = smallest_measure(i, pOpt);
+      if(qMin <= 0) continue;
+
+      for(auto k : v2v[i]) {
+        p = std::make_pair(std::min(i, k), std::max(i, k));
+        cuts.erase(p);
       }
-      if(concentration[edgeij2tri[0].first]!=concentration[edgeij2tri[1].first]){
-        int sign = 0;
-        if(concentration[edgeij2tri[0].first]==1){
-          sign = edgeij2tri[0].second;
-        } else {
-          sign = edgeij2tri[1].second;
-        }
-        front_node_i.push_back(std::make_pair(v2v[i][j], sign));
+
+      if(levelsets.size()) { levelsets[c.m1][i] = 0.0; }
+
+      front_nodes.push_back(i);
+      double posP[2] = {pOpt.x(), pOpt.y()};
+
+      discreteFront::instance()->addFrontNode(i, c.interface, c.m1, c.m2, pOpt,interfaces[c.interface].markers);
+      pos[3 * i] = pOpt.x();
+      pos[3 * i + 1] = pOpt.y();
+      pos[3 * i + 2] = pOpt.z();
+    }
+    std::sort(front_nodes.begin(), front_nodes.end());
+  }
+}
+
+double meshRelaying::smallest_measure(const size_t n, const SVector3 &t)
+{
+  double volume = 1.e22;
+  if(tets.size()) {
+    for(auto tri : v2tet[n]) {
+      size_t n0 = tets[4 * tri];
+      size_t n1 = tets[4 * tri + 1];
+      size_t n2 = tets[4 * tri + 2];
+      size_t n3 = tets[4 * tri + 3];
+      double x0 = n0 == n ? t.x() : pos[3 * n0];
+      double y0 = n0 == n ? t.y() : pos[3 * n0 + 1];
+      double z0 = n0 == n ? t.z() : pos[3 * n0 + 2];
+      double x1 = n1 == n ? t.x() : pos[3 * n1];
+      double y1 = n1 == n ? t.y() : pos[3 * n1 + 1];
+      double z1 = n1 == n ? t.z() : pos[3 * n1 + 2];
+      double x2 = n2 == n ? t.x() : pos[3 * n2];
+      double y2 = n2 == n ? t.y() : pos[3 * n2 + 1];
+      double z2 = n2 == n ? t.z() : pos[3 * n2 + 2];
+      double x3 = n3 == n ? t.x() : pos[3 * n3];
+      double y3 = n3 == n ? t.y() : pos[3 * n3 + 1];
+      double z3 = n3 == n ? t.z() : pos[3 * n3 + 2];
+      double p0[3] = {x0, y0, z0};
+      double p1[3] = {x1, y1, z1};
+      double p2[3] = {x2, y2, z2};
+      double p3[3] = {x3, y3, z3};
+      double v = robustPredicates::orient3d(p0, p1, p2, p3);
+      volume = std::min(v, volume);
+    }
+  }
+  else if(tris.size()) {
+    for(auto tri : v2tri[n]) {
+      size_t n0 = tris[3 * tri];
+      size_t n1 = tris[3 * tri + 1];
+      size_t n2 = tris[3 * tri + 2];
+      double x0 = n0 == n ? t.x() : pos[3 * n0];
+      double y0 = n0 == n ? t.y() : pos[3 * n0 + 1];
+      double x1 = n1 == n ? t.x() : pos[3 * n1];
+      double y1 = n1 == n ? t.y() : pos[3 * n1 + 1];
+      double x2 = n2 == n ? t.x() : pos[3 * n2];
+      double y2 = n2 == n ? t.y() : pos[3 * n2 + 1];
+      double p0[2] = {x0, y0};
+      double p1[2] = {x1, y1};
+      double p2[2] = {x2, y2};
+      double v = robustPredicates::orient2d(p0, p1, p2);
+      volume = std::min(v, volume);
+    }
+  }
+  return volume;
+}
+
+void meshRelaying::curvatureFromMarkers(std::vector<int> concentration_list,
+                                        std::vector<double> tension_table,
+                                        std::vector<int> concentration,
+                                        std::vector<double> *curvature)
+{
+  curvature->resize(tris.size(), 0.0);
+  std::vector<double> markers_curvature;
+  printf("markers_curvature\n");
+  discreteFront::instance()->markersCurvature(concentration_list, tension_table,
+                                              &markers_curvature);
+  // printf("after markers_curvature\n");
+  // for(size_t i= 0; i< markers_curvature.size(); i++) {
+  //   printf("markers_curvature[%lu] = %g\n", i, markers_curvature[i]);
+  // }
+
+  std::vector<double> marker_pos = discreteFront::instance()->getPos();
+
+  std::vector<double> node_curvature(v2v.size(), 0.0);
+  std::vector<int> map;
+  map.resize(v2v.size(), -1);
+  std::vector<frontNode> fns = discreteFront::instance()->getFn();
+  for(size_t i = 0; i < fns.size(); i++) map[fns[i].meshNode] = i;
+
+  for(size_t i = 0; i < map.size(); ++i) {
+    if(map[i] == -1) continue;
+    frontNode fn = fns[map[i]];
+    size_t v = fn.meshNode;
+    size_t m1 = fn.m1;
+    size_t m2 = fn.m2;
+    if(m1 == m2) { node_curvature[v] = markers_curvature[m1]; }
+    else {
+      double c1 = markers_curvature[m1];
+      double c2 = markers_curvature[m2];
+      double d1 = sqrt((marker_pos[3 * m1] - pos[3 * v]) *
+                  (marker_pos[3 * m1] - pos[3 * v]) +
+                  (marker_pos[3 * m1 + 1] - pos[3 * v + 1]) *
+                  (marker_pos[3 * m1 + 1] - pos[3 * v + 1]));
+
+      double d2 = sqrt((marker_pos[3 * m2] - pos[3 * v]) *
+                  (marker_pos[3 * m2] - pos[3 * v]) +
+                  (marker_pos[3 * m2 + 1] - pos[3 * v + 1]) *
+                  (marker_pos[3 * m2 + 1] - pos[3 * v + 1]));
+      
+      double t = d1 / (d1 + d2);
+      node_curvature[v] = t * c2 + (1.0 - t) * c1;
+    }
+  }
+
+  printf("after node_curvature\n");
+
+  std::vector<int> node_dominant_color(v2v.size(), 11);
+  for(size_t i = 0; i < tris.size(); ++i) {
+    for(size_t j = 0; j < 3; ++j) {
+      if(node_dominant_color[tris[i + j]] > concentration[i / 3]) {
+        node_dominant_color[tris[i + j]] = concentration[i / 3];
       }
     }
+  }
+  printf("after node_dominant_color\n");
+  for(size_t i = 0; i < tris.size(); i += 3) {
+    for(size_t j = 0; j < 3; j++) {
+      if(node_dominant_color[tris[i + j]] == concentration[i / 3]) {
+        (*curvature)[i + j] = node_curvature[tris[i + j]];
+      }
+    }
+  }
+  printf("after curvature\n");
+}
+
+void meshRelaying::curvatureFromConcentration(std::vector<double>*curvature){
+  curvature->resize(tris.size(), 0.0);
+  std::vector<double> nodes_curvature(v2v.size(), 0.0);
+  std::vector<int> node_dominant_color(v2v.size(), 0);
+  for(size_t i = 0; i < pm_mesh->vertices.size(); i++) {
+    size_t id = pm_mesh->vertices[i]->data;
+    PolyMesh::Vertex *v = pm_mesh->vertices[i];
+    PolyMesh::HalfEdge *he = v->he;
+    PolyMesh::HalfEdge *bndhe = nullptr;
+    std::vector<int> colors;
+    do{
+      colors.push_back(he->f->data);
+      if(he->opposite == nullptr) {
+        bndhe = he;
+        break;
+      }
+      he = he->opposite->next;
+    }while(he != v->he);
+    if(bndhe != nullptr) continue; // skip triple points for now
+
     
-    if(front_node_i.size()!=2){
-      (*curvature)[i] = 0.0;
+    std::sort(colors.begin(), colors.end());
+    auto last = std::unique(colors.begin(), colors.end());
+    colors.erase(last, colors.end());
+    
+    if(colors.size() == 0){
       continue;
     } 
-   
-    size_t triplet[3];
-    if(front_node_i[0].second == 1){
-      triplet[0] = front_node_i[0].first;
-      triplet[1] = i;
-      triplet[2] = front_node_i[1].first;
-    } else {
-      triplet[0] = front_node_i[1].first;
-      triplet[1] = i;
-      triplet[2] = front_node_i[0].first;
-    }
-    (*curvature)[i] = kappa(&pos[3*triplet[0]], &pos[3*triplet[1]], &pos[3*triplet[2]]);
+
+    int dominant_color = colors[0];
+    node_dominant_color[id-1] = dominant_color;
+
+    if(colors.size()==1) continue;
     
+    he = v->he;
+    double pos0[3] = {0, 0, 0};
+    double pos1[3] = {v->position[0], v->position[1], 0};
+    double pos2[3] = {0, 0, 0};
+    do{
+      if(he->f->data != he->opposite->f->data) {
+        if(he->f->data == dominant_color) {
+          pos2[0] = he->opposite->v->position[0];
+          pos2[1] = he->opposite->v->position[1];
+          pos2[2] = 0;
+        } else {
+          pos0[0] = he->opposite->v->position[0];
+          pos0[1] = he->opposite->v->position[1];
+          pos0[2] = 0;
+        }
+      }
+      he = he->opposite->next;
+    }while(he!=v->he);
+
+    // compute curvature circle
+    double a = pos1[0] - pos0[0];
+    double b = pos1[1] - pos0[1];
+    double c = pos2[0] - pos0[0];
+    double d = pos2[1] - pos0[1];
+    double e = a * (pos0[0] + pos1[0]) + b * (pos0[1] + pos1[1]);
+    double f = c * (pos0[0] + pos2[0]) + d * (pos0[1] + pos2[1]);
+    double g = 2.0 * (a * (pos2[1] - pos1[1]) - b * (pos2[0] - pos1[0]));
+    if(g > 1e-10) {
+      double x = (d * e - b * f) / g;
+      double y = (a * f - c * e) / g;
+      double r = sqrt((x - pos0[0]) * (x - pos0[0]) + (y - pos0[1]) * (y - pos0[1]));
+      nodes_curvature[id-1] = 1.0 / r;
+
+      printf("node %lu, pos = %f %f, curvature = %f\n", id, v->position[0], v->position[1], nodes_curvature[id-1]);
+    } else {
+      nodes_curvature[id-1] = 0.0;
+    }
+
   }
+
+  for(size_t i = 0; i < tris.size()/3; ++i) {
+    for(size_t j = 0; j < 3; j++) {
+      if(node_dominant_color[tris[3*i + j]] == tris_concentration[i]) {
+        (*curvature)[3*i + j] = nodes_curvature[tris[3*i + j]];
+      }
+    }
+  }
+
 }
 
-double kappa(double x1[2], double x2[2], double x3[2]){
-  double dy1 = x1[1]-x2[1];
-  double dy2 = x2[1]-x3[1];
-  double dy3 = x3[1]-x1[1];
+void meshRelaying::concentration(std::vector<int> *concentration)
+{
 
-  double n1 = x1[0]*x1[0] + x1[1]*x1[1];
-  double n2 = x2[0]*x2[0] + x2[1]*x2[1];
-  double n3 = x3[0]*x3[0] + x3[1]*x3[1];
+  if(pm_mesh == nullptr) {
+    pm_mesh = new PolyMesh();
+    std::vector<size_t> tris_p1;
+    for(size_t i=0; i<tris.size(); i++) {
+      tris_p1.push_back(tris[i]+1);
+    }
+    std::vector<double> pos_2d;
+    for(size_t i=0; i<pos.size(); i+=3) {
+      pos_2d.push_back(pos[i]);
+      pos_2d.push_back(pos[i+1]);
+    }
+    triangulation2PolyMesh(tris_p1, pos_2d, &pm_mesh);
+    
+    //sort vertices
+    std::sort(pm_mesh->vertices.begin(), pm_mesh->vertices.end(), [](PolyMesh::Vertex *a, PolyMesh::Vertex *b) {
+      return a->data < b->data;
+    });
 
-  double area = 0.5*(x1[0]*dy2 + x2[0]*dy3 + x3[0]*dy1);
-  if (area == 0.0){
-      return 0.0;
+    pm_mesh->print4debug(43);
   } else {
-    double Ux = (1/(4*area))*(n1*dy2 + n2*dy3 + n3*dy1);
-    double Uy = (1/(4*area))*(n1*(x3[0]-x2[0]) + n2*(x1[0]-x3[0]) + n3*(x2[0]-x1[0]));
-
-    double radius = sqrt((Ux-x2[0])*(Ux-x2[0]) + (Uy-x2[1])*(Uy-x2[1]));
-    double sign = 0.0;
-    if(robustPredicates::orient2d(x1,x2,x3)>0){
-      sign = 1.0;
-    } else {
-      sign = -1.0;
-    }
-    return -sign*(1.0/radius);
-  }
-  return 0;
-}
-
-T_node *newT_node(size_t id, int tag){
-    T_node *temp = new T_node;
-    temp->id = id;
-    temp->tag = tag;
-    temp->leafs = {};
-    return temp;
-}
-
-void meshRelaying::untangle(){
-#if defined(HAVE_WINSLOWUNTANGLER)
-  std::vector<bool> _locked;
-  if (tets.size()){
-    std::vector<std::vector<uint32_t> > _elements;
-    std::vector<std::array<double,3> > _points;
-    for (size_t i=0;i<tets.size()/4;i++)_elements.push_back({
-	static_cast<unsigned int>(tets[4*i]),
-	  static_cast<unsigned int>(tets[4*i+1]),
-	  static_cast<unsigned int>(tets[4*i+2]),
-	  static_cast<unsigned int>(tets[4*i+3])});
-    for (size_t i=0;i<pos.size()/3;i++)_points.push_back({pos[3*i],pos[3*i+1],pos[3*i+2]});  
-    for (size_t i=0;i<pos.size()/3;i++)_locked.push_back(dimVertex[i] == 3 ? false : true);
-    for (size_t i=0;i<front_nodes.size();i++)_locked[front_nodes[i]]=true;  
-    std::vector<std::array<uint32_t, 4> > _tets;
-    std::vector<std::array<std::array<double,3>, 4> > _tetIdealShapes;
-    std::vector<std::vector<std::array<double,3> > > _elementTargetShapes;
-    {
-      //      double minQual = 1.0;
-      double avgQual = 0.0;
-      for (size_t i=0;i<tets.size()/4;i++){
-	//	minQual = std::min(qualityElement(i),minQual);
-	avgQual += qualityElement(i);
-      }
-      avgQual /= (tets.size()/4);
-      Msg::Info ("Avg Quality Before Untangling %12.5E",avgQual);
-    }
-    buildTetrahedraFromElements(_elements,_elementTargetShapes, _tets,_tetIdealShapes);
-    untangle_tetrahedra(_points, _locked, _tets, _tetIdealShapes);
-    for (size_t i=0;i<_points.size();i++){
-      pos[3*i] = _points[i][0];
-      pos[3*i+1] = _points[i][1];
-      pos[3*i+2] = _points[i][2];
-    }
-    {
-      //      double minQual = 1.0;
-      double avgQual = 0.0;
-      for (size_t i=0;i<tets.size()/4;i++){
-	//	minQual = std::min(qualityElement(i),minQual);
-	avgQual += qualityElement(i);
-      }
-      avgQual /= (tets.size()/4);
-      //      Msg::Info ("Min Quality Before Untangling %12.5E",avgQual);
-      //      for (size_t i=0;i<tets.size()/4;i++)minQual = std::min(qualityElement(i),minQual);
-      Msg::Info ("Avg Quality After Untangling %12.5E",avgQual);
+    // update position
+    for(size_t i=0; i<pm_mesh->vertices.size(); ++i){
+      pm_mesh->vertices[i]->position = SVector3(pos[3 * (pm_mesh->vertices[i]->data-1)],
+                                                pos[3 * (pm_mesh->vertices[i]->data-1) + 1],
+                                                pos[3 * (pm_mesh->vertices[i]->data-1) + 2]);
     }
   }
-  else{  
-    std::vector<std::array<uint32_t,4> >  _elements;
-    std::vector<std::array<double,2> > _points;
-    for (size_t i=0;i<tris.size()/3;i++)_elements.push_back({static_cast<unsigned int>(tris[3*i]),
-	  static_cast<unsigned int>(tris[3*i+1]),static_cast<unsigned int>(tris[3*i+2]),uint32_t(-1)});
-    for (size_t i=0;i<pos.size()/3;i++)_points.push_back({pos[3*i],pos[3*i+1]});  
-    for (size_t i=0;i<pos.size()/3;i++)_locked.push_back(dimVertex[i] == 2 ? false : true);
-    for (size_t i=0;i<front_nodes.size();i++)_locked[front_nodes[i]]=true;  
-    std::vector<std::array<uint32_t, 3> > _triangles;
-    std::vector<std::array<std::array<double,2>, 3> > _triIdealShapes;    
-    buildTrianglesAndTargetsFromElements(_points,_elements,_triangles,_triIdealShapes);
-    untangle_triangles_2D(_points, _locked, _triangles, _triIdealShapes);
-    for (size_t i=0;i<_points.size();i++){
-      pos[3*i] = _points[i][0];
-      pos[3*i+1] = _points[i][1];
+
+  printf("in concentration\n");
+
+  concentration->resize(tris.size() / 3, 0);
+  tris_concentration.resize(tris.size() / 3, 0);
+  PolyMesh **pm = discreteFront::instance()->getPm();
+  (*pm)->print4debug(42);
+  for(size_t i = 0; i < tris.size() / 3; i++) {
+    double center[3] = {0.0, 0.0, 0.0};
+    for(int j = 0; j < 3; j++) {
+      center[0] += pos[3 * tris[3 * i + j]] / 3.0;
+      center[1] += pos[3 * tris[3 * i + j] + 1] / 3.0;
+      center[2] += pos[3 * tris[3 * i + j] + 2] / 3.0;
+    }
+    PolyMesh::Face *f = (*pm)->walk_from(center, (*pm)->faces[10]);
+    if(f) {
+      (*concentration)[i] = f->data;
+      tris_concentration[i] = f->data;
     }
   }
-#else
-  Msg::Error ("Gmsh Must Be Compiled With WinslowUntangler to be able to use meshRelaying::untangle()");  
-#endif
+  // print mesh
+  FILE *f = fopen("concentration.msh", "w");
+  discreteFront::instance()->printInterfaces(f);
+  fprintf(f, "View \" Mesh \" {\n");
+  for(size_t i = 0; i < tris.size(); i += 3) {
+    for(size_t j = 0; j < 3; ++j) {
+      fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", pos[3 * tris[i + j]],
+              pos[3 * tris[i + j] + 1], pos[3 * tris[i + j] + 2],
+              pos[3 * tris[i + (j + 1) % 3]],
+              pos[3 * tris[i + (j + 1) % 3] + 1],
+              pos[3 * tris[i + (j + 1) % 3] + 2], 10, 10);
+    }
+  }
+  fprintf(f, "};\n");
+
+  fprintf(f, "View \" Front nodes \" {\n");
+  for(size_t i = 0; i < front_nodes.size(); i++) {
+    fprintf(f, "SP(%g,%g,%g){%d};\n", pos[3 * front_nodes[i]],
+            pos[3 * front_nodes[i] + 1], pos[3 * front_nodes[i] + 2], 10);
+  }
+  fprintf(f, "};\n");
+
+  fprintf(f, "View \" Concentration \" {\n");
+  for(size_t i = 0; i < tris.size(); i += 3) {
+    fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n", pos[3 * tris[i]],
+            pos[3 * tris[i] + 1], pos[3 * tris[i] + 2], pos[3 * tris[i + 1]],
+            pos[3 * tris[i + 1] + 1], pos[3 * tris[i + 1] + 2],
+            pos[3 * tris[i + 2]], pos[3 * tris[i + 2] + 1],
+            pos[3 * tris[i + 2] + 2], (*concentration)[i / 3],
+            (*concentration)[i / 3], (*concentration)[i / 3]);
+  }
+  fprintf(f, "};\n");
+
+  fclose(f);
+
+  for(size_t i=0; i<pm_mesh->faces.size(); i++) {
+    pm_mesh->faces[i]->data = tris_concentration[i];
+  }
 }
 
-void meshRelaying::setBndFront(){
-  std::vector<size_t> l;
-  std::vector<double> p;
-  std::vector<int> c; 
-
-  size_t iter = 0;
-  l.push_back(iter);
-  iter++;
-  c.push_back(-1);
-  p.push_back(pos[3*bnd1d[0].first]);
-  p.push_back(pos[3*bnd1d[0].first+1]);
-  p.push_back(pos[3*bnd1d[0].first+2]);
-  size_t current = bnd1d[0].second;
-  size_t first = bnd1d[0].first;
-  size_t id_current = 0;
-  
-  while(current!= first){
-    l.push_back(iter);
-    l.push_back(iter);
-    iter++;
-    c.push_back(-1);
-    p.push_back(pos[3*current]);
-    p.push_back(pos[3*current+1]);
-    p.push_back(pos[3*current+2]);
+void meshRelaying::concentration_bfs(std::vector<int> *concentration){
+  concentration->resize(tris.size() / 3, 0);
+  tris_concentration.resize(tris.size() / 3, 0);
+  if(pm_mesh == nullptr) {
+    pm_mesh = new PolyMesh();
+    std::vector<size_t> tris_p1;
+    for(size_t i=0; i<tris.size(); i++) {
+      tris_p1.push_back(tris[i]+1);
+    }
+    std::vector<double> pos_2d;
+    for(size_t i=0; i<pos.size(); i+=3) {
+      pos_2d.push_back(pos[i]);
+      pos_2d.push_back(pos[i+1]);
+    }
+    triangulation2PolyMesh(tris_p1, pos_2d, &pm_mesh);
     
-    for(size_t j=0; j<bnd1d.size(); ++j){
-      if(bnd1d[j].first == current && j!=id_current){
-        current = bnd1d[j].second;
-        id_current = j;
-        break;
-      } else if(bnd1d[j].second == current && j!=id_current){
-        current = bnd1d[j].first;
-        id_current = j;
-        break;
-      }
+    //sort vertices
+    std::sort(pm_mesh->vertices.begin(), pm_mesh->vertices.end(), [](PolyMesh::Vertex *a, PolyMesh::Vertex *b) {
+      return a->data < b->data;
+    });
+
+    pm_mesh->print4debug(10000);
+  } else {
+    // update position
+    for(size_t i=0; i<pm_mesh->vertices.size(); ++i){
+      pm_mesh->vertices[i]->position = SVector3(pos[3 * (pm_mesh->vertices[i]->data-1)],
+                                                pos[3 * (pm_mesh->vertices[i]->data-1) + 1],
+                                                pos[3 * (pm_mesh->vertices[i]->data-1) + 2]);
     }
   }
-  l.push_back(l[0]);
 
-  // discreteFront::instance()->addLines(p,l,c);
-  discreteFront::instance()->addInterface(p, -1, -1); 
-}
+  PolyMesh **pm = discreteFront::instance()->getPm();
 
-void discreteFront::clear(){
-  colors.clear();
-  corners.clear();
-  lines.clear();
-  pos.clear();
-}
+  int debug = 0;
 
-void meshRelaying::concentration(std::vector<int> *concentration){
-  std::vector<std::vector<size_t>> loops;
-  std::vector<int> loops_tags;
-  std::vector<int> loops_senses;
-  discreteFront::instance()->interfaces2Loops(&loops, &loops_tags, &loops_senses);
-  // printf("in concentration\n");
-  // for(size_t i=0; i<loops_tags.size(); ++i){
-  //   printf("%d\n", loops_tags[i]);
+  // print mesh
+  FILE *f_ = fopen("before_concentration.msh", "w");
+  discreteFront::instance()->printInterfaces(f_);
+  fprintf(f_, "View \" Mesh \" {\n");
+  for(size_t i = 0; i < tris.size(); i += 3) {
+    for(size_t j = 0; j < 3; ++j) {
+      fprintf(f_, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", pos[3 * tris[i + j]],
+              pos[3 * tris[i + j] + 1], pos[3 * tris[i + j] + 2],
+              pos[3 * tris[i + (j + 1) % 3]],
+              pos[3 * tris[i + (j + 1) % 3] + 1],
+              pos[3 * tris[i + (j + 1) % 3] + 2], 10, 10);
+    }
+  }
+  fprintf(f_, "};\n");
+
+  fprintf(f_, "View \" Nodes \" {\n");
+  for(size_t i=0; i<pm_mesh->vertices.size(); ++i){
+    fprintf(f_, "T3(%12.5E, %12.5E, 0.01, 0){'%d'};\n",
+              pm_mesh->vertices[i]->position.x(),
+            pm_mesh->vertices[i]->position.y(),
+            pm_mesh->vertices[i]->data);}
+  fprintf(f_, "};\n");
+
+  fclose(f_);
+
+
+
+  // generate front edges 
+  std::vector<frontNode> fns = discreteFront::instance()->getFn();
+  std::vector<std::vector<frontNode>> fn_interfaces;
+  for(size_t i = 0; i < fns.size(); i++) {
+    size_t interface = fns[i].interface;
+    if(fn_interfaces.size() <= interface) {
+      fn_interfaces.resize(interface + 1);
+    }
+    fn_interfaces[interface].push_back(fns[i]);
+  }
+
+
+  std::vector<std::pair<size_t, size_t>> front_edges;
+  for(size_t i=0; i<fn_interfaces.size(); i++) {
+    std::sort(fn_interfaces[i].begin(), fn_interfaces[i].end());
+    for(size_t j=0; j<fn_interfaces[i].size(); j++) {
+      size_t n = fn_interfaces[i].size();
+      size_t n1 = fn_interfaces[i][j].meshNode;
+      size_t n2 = fn_interfaces[i][(j+1)%n].meshNode;
+      front_edges.push_back(std::make_pair(std::min(n1,n2), std::max(n1,n2)));
+      printf("front_edges = %lu - %lu interface %lu with t = %f - %f\n", n1, n2, i, fn_interfaces[i][j].t, fn_interfaces[i][(j+1)%n].t);
+    }
+  }
+
+  // printf("after front_edges\n");
+  // for(size_t i=0; i<front_edges.size(); i++) {
+  //   printf("front_edges[%lu] = %lu - %lu\n", i, front_edges[i].first, front_edges[i].second);
   // }
-  for (size_t i=0;i<tris.size();i+=3){
-    SVector3 COG((pos[3*tris[i]]+pos[3*tris[i+1]]+pos[3*tris[i+2]])/3.0,
-		 (pos[3*tris[i]+1]+pos[3*tris[i+1]+1]+pos[3*tris[i+2]+1])/3.0,
-		 0);
-    int color = 1;
-    // if(i==9323*3){
-    //   printf("9323\n");
-    //   printf("%f %f %f\n", COG.x(), COG.y(), COG.z());
-    // }
-    if (!discreteFront::instance()->empty()){
-      color = discreteFront::instance()->whatIsTheColorOf2d(COG, loops, loops_tags);
-      if(color<0) color = 0;
-    }
-    // if(i==9323*3){
-    //   printf("color %d\n", color);
-    //   printf("n loops = %d \n", loops.size());
 
-    //   std::set<int> cs;
-    //   std::vector<int> cols;
-    //   double pp[2] = {COG.x(),COG.y()};
-    //   for (size_t i=0 ; i<loops.size(); ++i){
-    //     int c = loops_tags[i];
-    //     printf(" c = %d, loop %d \n", c, i);
-    //     if(c<0)continue;
-    //     if (cs.find(c) == cs.end()){
-    //       cs.insert(c);
-    //       int wn = 0;
-    //       size_t n = loops[i].size();
-    //       for (size_t j=0 ; j<n ; ++j){
-    //         double aa[2] = {pos[3*loops[i][j]],pos[3*loops[i][j]+1]};
-    //         double bb[2] = {pos[3*loops[i][(j+1)%n]],pos[3*loops[i][(j+1)%n]+1]};
-    //         double area = robustPredicates::orient2d(aa,bb,pp); 
-    //         if(aa[1]<= COG.y()){
-    //           if (bb[1] > COG.y() && area < 0)wn++;
-    //         }
-    //         else if(bb[1]<= COG.y()){
-    //           if (area > 0)wn--;
-    //         }
-    //       }
-    //       printf("loop %d \n", i);
-    //       printf("wn = %d \n", wn);
-    //       if (wn != 0)cols.push_back(c);
-    //     }
-    //   }
-    //   printf("cols %lu\n", cols.size());
-    //   for(size_t i=0; i<cols.size(); ++i){
-    //     printf("%d ", cols[i]);
-    //   }
-    // }
-    (*concentration).push_back(color);
+  for(size_t i=0; i<pm_mesh->hedges.size(); i++) {
+    pm_mesh->hedges[i]->data = 0;
   }
-}
+
+  for(size_t i=0; i<front_edges.size(); i++) {
+    PolyMesh::HalfEdge *front_he = pm_mesh->getEdge(pm_mesh->vertices[front_edges[i].first], pm_mesh->vertices[front_edges[i].second]);
+    if(front_he == nullptr) {
+      printf("front_he is nullptr : %lu - %lu \n", front_edges[i].first, front_edges[i].second);
+      printf("data = %d - %d \n", pm_mesh->vertices[front_edges[i].first]->data, pm_mesh->vertices[front_edges[i].second]->data);
+      continue;
+    }
+    front_he->data = 5;
+
+    if(front_he->opposite != nullptr) {
+      front_he->opposite->data = 5;
+    }
+    printf("front_he is nullptr : %lu - %lu \n", front_edges[i].first, front_edges[i].second);
+    printf("data = %d - %d \n", pm_mesh->vertices[front_edges[i].first]->data, pm_mesh->vertices[front_edges[i].second]->data);
+  }
 
 
-void discreteFront::addFreeForm (int tag, const std::vector<SVector3> &poly, const std::vector<size_t> &_corners, const int sense){
-  std::vector<double> p;
-  std::vector<size_t> l;
-  std::vector<int> c;
-  for (size_t k=0;k<poly.size();k++){
-    SVector3 p0 = poly[k];
-    c.push_back(tag);
-    l.push_back(k);
-    l.push_back((k+1)%poly.size());
-    p.push_back(p0.x());
-    p.push_back(p0.y());
-    p.push_back(0.);
-  }  
-  // discreteFront::instance()->addLines(p,l,c,_corners);
-  discreteFront::instance()->addInterface(p, tag, sense); 
-}
+  for(size_t i=0; i<pm_mesh->faces.size(); i++) {
+    pm_mesh->faces[i]->data = -10;
+  }
 
-void discreteFront :: printMesh (FILE *f) {
-  if(fn.empty()) return;
-  std::sort(fn.begin(), fn.end());
-  std::vector<SVector3> pp;
-  int current_color = interfaces[fn[0].interface].tag;
-  for (size_t i=0;i<fn.size();i++){
-    const frontNode &n = fn[i];
-    size_t m1 = n.m1;
-    size_t m2 = n.m2;
-    int color = interfaces[n.interface].tag;
-    SVector3 p0 (pos[3*m1],pos[3*m1+1],pos[3*m1+2]);
-    SVector3 p1 (pos[3*m2],pos[3*m2+1],pos[3*m2+2]);
-    SVector3 p = p0+(p1-p0)*n.t;
-    fprintf(f,"SP(%g,%g,%g){%d};\n",p.x(),p.y(),p.z(),current_color);
-    if (current_color != color){
-      for (size_t j=0;j<pp.size();j++){
-        fprintf(f,"SL(%g,%g,%g,%g,%g,%g){%d,%d};\n",
-          pp[j].x(),pp[j].y(),pp[j].z(),
-          pp[(j+1)%pp.size()].x(),pp[(j+1)%pp.size()].y(),pp[(j+1)%pp.size()].z(),
-          current_color,current_color);	
+  printf("after color \n");
+
+  std::queue<PolyMesh::Face*> q;
+  while(true){
+    int id = -1;
+    for(size_t i=0; i<pm_mesh->faces.size(); i++) {
+      if(pm_mesh->faces[i]->data == -10) {
+        id = i;
+        break;
       }
-      pp.clear();
-      current_color = color;
     }
-    pp.push_back(p);
+    if(id == -1) break;
+    
+    
+    // find starting triangle
+    while(true){
+      if(id == -1 || id>= pm_mesh->faces.size()) break;
+      // test if good starting point
+      if(pm_mesh->faces[id]->data != -10) {
+        id++;
+        continue;
+      }
+      int start_concentration = full_concentration_triangle(id);
+      printf("start_concentration = %d\n", start_concentration);
+      if(start_concentration != -10) {
+        q.push(pm_mesh->faces[id]);
+        pm_mesh->faces[id]->data = start_concentration;
+        printf("start triangle %d with concentration %d\n", id, start_concentration);
+        break;
+      }
+      id++;
+    }
+    if(id == -1 || id>= pm_mesh->faces.size()) break;
+
+    //color triangles bfs
+    while(!q.empty()){
+      PolyMesh::Face *f = q.front();
+      q.pop();
+      PolyMesh::HalfEdge *he = f->he;
+      for(size_t i=0; i<3; i++) {
+        // printf("edge = %lu - %lu\n", he->v->data, he->next->v->data);
+        if(he->opposite == nullptr) {
+          // printf("opposite is nullptr\n");
+          he = he->next;
+          continue;
+        }
+        if(he->data == 5){
+          // printf("data is 5\n");
+          he = he->next;
+          continue;
+        }
+        
+        PolyMesh::Face *f2 = he->opposite->f;
+        if(f2->data == -10) {
+          // printf("color triangle with %d\n", f->data);
+          f2->data = f->data;
+
+          q.push(f2);
+        }
+        he = he->next;
+      }
+      
+    }
+    debug++;
+    pm_mesh->print4debug(debug);
   }
-  for (size_t i=0;i<pp.size();i++){
-    fprintf(f,"SL(%g,%g,%g,%g,%g,%g){%d,%d};\n",
-	    pp[i].x(),pp[i].y(),pp[i].z(),
-	    pp[(i+1)%pp.size()].x(),pp[(i+1)%pp.size()].y(),pp[(i+1)%pp.size()].z(),
-	    current_color,current_color);	
-  }  
+
+  printf("face size = %lu\n", pm_mesh->faces.size());
+  pm_mesh->print4debug(65);
+  // finish coloring triangles if remaining for robustness
+  for(size_t i=0; i<pm_mesh->faces.size(); i++) {
+    // printf("concentration %lu -> %d\n", i, pm_mesh->faces[i]->data);
+    if(pm_mesh->faces[i]->data == -10) {
+      int concentration = full_concentration_triangle(i);
+      if(concentration != -10) {
+        pm_mesh->faces[i]->data = concentration;
+      }else{
+        double center[3] = {0,0,0};
+        for(size_t j=0; j<3; j++) {
+          center[0] += pm_mesh->faces[i]->he->v->position.x();
+          center[1] += pm_mesh->faces[i]->he->v->position.y();
+          center[2] += pm_mesh->faces[i]->he->v->position.z();
+          pm_mesh->faces[i]->he = pm_mesh->faces[i]->he->next;
+        }
+        center[0] /= 3.0;
+        center[1] /= 3.0;
+        center[2] /= 3.0;
+
+        int concentration_center = (*pm)->walk_from(center, (*pm)->faces[10])->data;
+        pm_mesh->faces[i]->data = concentration_center;
+      }
+    }
+
+    (*concentration)[i] = pm_mesh->faces[i]->data;
+    tris_concentration[i] = pm_mesh->faces[i]->data;
+  }
+
+  // print mesh
+  FILE *f = fopen("concentration.msh", "w");
+  discreteFront::instance()->printInterfaces(f);
+  fprintf(f, "View \" Mesh \" {\n");
+  for(size_t i = 0; i < tris.size(); i += 3) {
+    for(size_t j = 0; j < 3; ++j) {
+      fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", pos[3 * tris[i + j]],
+              pos[3 * tris[i + j] + 1], pos[3 * tris[i + j] + 2],
+              pos[3 * tris[i + (j + 1) % 3]],
+              pos[3 * tris[i + (j + 1) % 3] + 1],
+              pos[3 * tris[i + (j + 1) % 3] + 2], 10, 10);
+    }
+  }
+  fprintf(f, "};\n");
+
+  fprintf(f, "View \" Nodes \" {\n");
+  for(size_t i=0; i<pm_mesh->vertices.size(); ++i){
+    fprintf(f, "T3(%12.5E, %12.5E, 0.01, 0){'%d'};\n",
+              pm_mesh->vertices[i]->position.x(),
+            pm_mesh->vertices[i]->position.y(),
+            pm_mesh->vertices[i]->data);}
+  fprintf(f, "};\n");
+
+  fprintf(f, "View \" Front nodes \" {\n");
+  for(size_t i = 0; i < fns.size(); i++) {
+    fprintf(f, "SP(%g,%g,%g){%d};\n", pos[3 * fns[i].meshNode],
+            pos[3 * fns[i].meshNode + 1], pos[3 * fns[i].meshNode + 2], 10);
+  }
+  fprintf(f, "};\n");
+
+  fprintf(f, "View \" Concentration \" {\n");
+  for(size_t i = 0; i < tris.size(); i += 3) {
+    fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n", pos[3 * tris[i]],
+            pos[3 * tris[i] + 1], pos[3 * tris[i] + 2], pos[3 * tris[i + 1]],
+            pos[3 * tris[i + 1] + 1], pos[3 * tris[i + 1] + 2],
+            pos[3 * tris[i + 2]], pos[3 * tris[i + 2] + 1],
+            pos[3 * tris[i + 2] + 2], (*concentration)[i / 3],
+            (*concentration)[i / 3], (*concentration)[i / 3]);
+  }
+  fprintf(f, "};\n");
+
+  fclose(f);
+
 }
 
-void discreteFront::printGeometry(FILE *f){
-  for (size_t i=0 ; i< lines.size() ; i+=2){
-    fprintf(f,"SL(%12.5E,%12.5E,0,%12.5E,%12.5E,0){%d,%d};\n",
-	    pos[3*lines[i]],pos[3*lines[i]+1],
-	    pos[3*lines[i+1]],pos[3*lines[i+1]+1],-colors[i/2],-colors[i/2]);
-  }
+int meshRelaying::full_concentration_triangle(int id){
+  if(id<0) return -10;
+  SVector3 pos = pm_mesh->faces[id]->he->v->position;
+  double x1[3] = {pos.x(), pos.y(), pos.z()};
+  pos = pm_mesh->faces[id]->he->next->v->position;
+  double x2[3] = {pos.x(), pos.y(), pos.z()};
+  pos = pm_mesh->faces[id]->he->next->next->v->position;
+  double x3[3] = {pos.x(), pos.y(), pos.z()};
+  double center[3] = {(x1[0]+x2[0]+x3[0])/3.0, (x1[1]+x2[1]+x3[1])/3.0, (x1[2]+x2[2]+x3[2])/3.0};
+  PolyMesh **pm = discreteFront::instance()->getPm();
 
-  for(size_t i=0; i<lines.size(); i+=2){
-    fprintf(f, "T3(%12.5E, %12.5E, 0.01, 0){'%lu'};\n", pos[3*lines[i]],pos[3*lines[i]+1], lines[i]);
-    fprintf(f, "T3(%12.5E, %12.5E, 0.01, 0){'%lu'};\n", pos[3*lines[i+1]],pos[3*lines[i+1]+1], lines[i+1]);
+  int concentration_center = (*pm)->walk_from(center, (*pm)->faces[10])->data;
+  int concentration1 = (*pm)->walk_from(x1, (*pm)->faces[10])->data;
+  int concentration2 = (*pm)->walk_from(x2, (*pm)->faces[10])->data;
+  int concentration3 = (*pm)->walk_from(x3, (*pm)->faces[10])->data;
+
+  if(concentration1 == concentration_center && concentration2 == concentration_center && concentration3 == concentration_center) {
+    return concentration_center;
   }
+  return -10;
 }
 
-void meshRelaying::print4debug(const char *fn){
-  FILE *f = fopen (fn,"w");
-  if (discreteFront::instance()->empty()){
-    for (size_t k=0;k<levelsets.size();k++){
-      fprintf(f,"View \"Levelset %lu\"{\n",k);
-      for (size_t i=0;i<tris.size();i+=3){
-	      fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
-        pos[3*tris[i]],pos[3*tris[i]+1],pos[3*tris[i]+2],
-        pos[3*tris[i+1]],pos[3*tris[i+1]+1],pos[3*tris[i+1]+2],
-        pos[3*tris[i+2]],pos[3*tris[i+2]+1],pos[3*tris[i+2]+2],
-        levelsets[k][tris[i]],
-        levelsets[k][tris[i+1]],
-        levelsets[k][tris[i+2]]);    
+void meshRelaying::print4debug(const char *fn)
+{
+  FILE *f = fopen(fn, "w");
+  if(discreteFront::instance()->empty()) {
+    for(size_t k = 0; k < levelsets.size(); k++) {
+      fprintf(f, "View \" Levelset %lu \" {\n", k);
+      for(size_t i = 0; i < tris.size(); i += 3) {
+        fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g};\n",
+                pos[3 * tris[i]], pos[3 * tris[i] + 1], pos[3 * tris[i] + 2],
+                pos[3 * tris[i + 1]], pos[3 * tris[i + 1] + 1],
+                pos[3 * tris[i + 1] + 2], pos[3 * tris[i + 2]],
+                pos[3 * tris[i + 2] + 1], pos[3 * tris[i + 2] + 2],
+                levelsets[k][tris[i]], levelsets[k][tris[i + 1]],
+                levelsets[k][tris[i + 2]]);
       }
-      for (size_t i=0;i<tets.size();i+=4){
-	      fprintf(f,"SS(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
-        pos[3*tets[i]],pos[3*tets[i]+1],pos[3*tets[i]+2],
-        pos[3*tets[i+1]],pos[3*tets[i+1]+1],pos[3*tets[i+1]+2],
-        pos[3*tets[i+2]],pos[3*tets[i+2]+1],pos[3*tets[i+2]+2],
-        pos[3*tets[i+3]],pos[3*tets[i+3]+1],pos[3*tets[i+3]+2],
-        levelsets[k][tets[i]],
-        levelsets[k][tets[i+1]],
-        levelsets[k][tets[i+2]],
-        levelsets[k][tets[i+3]]);       
-      }    
-      fprintf(f,"};\n");
+      for(size_t i = 0; i < tets.size(); i += 4) {
+        fprintf(f, "SS(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g){%g,%g,%g,%g};\n",
+                pos[3 * tets[i]], pos[3 * tets[i] + 1], pos[3 * tets[i] + 2],
+                pos[3 * tets[i + 1]], pos[3 * tets[i + 1] + 1],
+                pos[3 * tets[i + 1] + 2], pos[3 * tets[i + 2]],
+                pos[3 * tets[i + 2] + 1], pos[3 * tets[i + 2] + 2],
+                pos[3 * tets[i + 3]], pos[3 * tets[i + 3] + 1],
+                pos[3 * tets[i + 3] + 2], levelsets[k][tets[i]],
+                levelsets[k][tets[i + 1]], levelsets[k][tets[i + 2]],
+                levelsets[k][tets[i + 3]]);
+      }
+      fprintf(f, "};\n");
     }
   }
-  else{
-    fprintf(f,"View \"Front Mesh\"{\n");
-    discreteFront::instance()->printMesh(f);
-    fprintf(f,"};\n");
-    fprintf(f,"View \"Mesh\"{\n");  
-    printf("after print mesh \n");
-    std::vector<std::vector<size_t>> loops;
-    std::vector<int> loops_tags;
-    std::vector<int> loops_senses;
-    discreteFront::instance()->interfaces2Loops(&loops, &loops_tags, &loops_senses);
-    printf("after interface 2 loops \n");
-    for (size_t i=0;i<tris.size();i+=3){
-      SVector3 COG((pos[3*tris[i]]+pos[3*tris[i+1]]+pos[3*tris[i+2]])/3.0,
-		   (pos[3*tris[i]+1]+pos[3*tris[i+1]+1]+pos[3*tris[i+2]+1])/3.0,
-		 (pos[3*tris[i]+2]+pos[3*tris[i+1]+2]+pos[3*tris[i+2]+2])/3.0);
-      int color = 1;
-      if (!discreteFront::instance()->empty()){
-	      color = discreteFront::instance()->whatIsTheColorOf2d(COG, loops, loops_tags);
-      }
-      fprintf(f,"ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n",
-	      pos[3*tris[i]],pos[3*tris[i]+1],pos[3*tris[i]+2],
-	      pos[3*tris[i+1]],pos[3*tris[i+1]+1],pos[3*tris[i+1]+2],
-	      pos[3*tris[i+2]],pos[3*tris[i+2]+1],pos[3*tris[i+2]+2],color,color,color);
-    }
-    printf("after color \n");
-    for (size_t i=0;i<tris.size();i+=3){
-      fprintf(f, "SL(%g,%g,0.005,%g,%g,0.005){%d,%d};\n", pos[3*tris[i]],pos[3*tris[i]+1], pos[3*tris[i+1]],pos[3*tris[i+1]+1], 5,5);
-      fprintf(f, "SL(%g,%g,0.005,%g,%g,0.005){%d,%d};\n", pos[3*tris[i+1]],pos[3*tris[i+1]+1], pos[3*tris[i+2]],pos[3*tris[i+2]+1], 5,5);
-      fprintf(f, "SL(%g,%g,0.005,%g,%g,0.005){%d,%d};\n", pos[3*tris[i]],pos[3*tris[i]+1], pos[3*tris[i+2]],pos[3*tris[i+2]+1], 5,5);
-    }
-    for (size_t i=0;i<front_nodes.size();i++){
-      fprintf(f,"SP(%g,%g,%g){3};\n",pos[3*front_nodes[i]],
-	      pos[3*front_nodes[i]+1],pos[3*front_nodes[i]+2]);
-    }
-    fprintf(f,"};\n");
-    printf("before geometry \n");
+  else {
     discreteFront::instance()->printInterfaces(f);
   }
   fclose(f);
 }
+
+double meshRelaying::myDensity2D(size_t iTriangle, double distMax, double RATIO,
+                                 std::vector<double> &distances)
+{
+  // assume levelsets represent the distance to the front
+
+  double DMIN = 1;
+  double DMAX = RATIO;
+
+  size_t i0 = tris[3 * iTriangle];
+  size_t i1 = tris[3 * iTriangle + 1];
+  size_t i2 = tris[3 * iTriangle + 2];
+  double lsmin = 1.e22;
+  if(discreteFront::instance()->empty()) {
+    for(size_t k = 0; k < levelsets.size(); k++) {
+      double ls0 = levelsets[k][i0];
+      double ls1 = levelsets[k][i1];
+      double ls2 = levelsets[k][i2];
+      double lsk = fabs(ls0 + ls1 + ls2) / 3.0;
+      if(lsk < lsmin) lsmin = lsk;
+    }
+  }
+  else {
+    lsmin = 0.0;
+    for(int k = 0; k < 3; k++) {
+      size_t ii = tris[3 * iTriangle + k];
+      //      double x = pos[3*ii];
+      //      double y = pos[3*ii+1];
+      //      SVector3 P (x,y,0);
+      //      SVector3 C  = discreteFront::instance()->closestPoints2d(P);
+      lsmin += distances[ii] / 3.0;
+      //      printf("%12.5E %12.5E\n",distances[ii],(P-C).norm());
+      //      lsmin = std::min((P-C).norm(),lsmin);
+    }
+  }
+  double size =
+    (lsmin < distMax) ? DMIN + (DMAX - DMIN) * lsmin / distMax : DMAX;
+  return 1. / (size * size);
+}
+
+void meshRelaying::untangle(double lambda, int nIterOut, int nIterIn,
+                            double distMax, double RATIO)
+{
+  // update the triangular shapes for enabling
+  auto sizeField =
+    [this](const std::vector<std::array<double, 2>> &points,
+           const std::vector<std::array<uint32_t, 3>> &triangles,
+           std::vector<double> &s, // size and grad sizes at nodes
+           std::vector<std::array<double, 3>> &grads) {
+      double DMIN = 1;
+      double DMAX = _RATIO;
+      double distMax = _distMax;
+      std::vector<int> bnd_markers;
+      discreteFront::instance()->getBndMarkers(&bnd_markers);
+      std::vector<bool> flag_bnd_markers(bnd_markers.size(), false);
+      for(size_t i = 0; i < bnd_markers.size(); i++) {
+        if(bnd_markers[i] == 1) flag_bnd_markers[i] = true;
+      }
+
+
+      s.resize(points.size());
+      grads.resize(points.size());
+      for(size_t i = 0; i < points.size(); i++) {
+        SVector3 P(points[i][0], points[i][1], points[i][2]);
+        SVector3 C = discreteFront::instance()->closestPoints2d(P, flag_bnd_markers);
+        // has to be done for levelsets
+        SVector3 CP = P - C;
+        double d = CP.norm();
+        CP.normalize();
+        double size = (d < distMax) ? DMIN + (DMAX - DMIN) * d / distMax : DMAX;
+        s[i] = size;
+        //      if (d < distMax)printf("size = %12.5E\n",size);
+        //      else printf("MAX --> size = %12.5E\n",size);
+        SVector3 gradSize = (d < distMax) ? ((DMAX - DMIN) * d / distMax) * CP :
+                                            SVector3(0, 0, 0);
+        grads[i] = {gradSize.x(), gradSize.y(), gradSize.z()};
+      }
+
+      double SUM = 0.0;
+
+      for(size_t i = 0; i < triangles.size(); i++) {
+        vec2 v0 = points[triangles[i][0]];
+        vec2 v1 = points[triangles[i][1]];
+        vec2 v2 = points[triangles[i][2]];
+        double s0 = s[triangles[i][0]];
+        double s1 = s[triangles[i][1]];
+        double s2 = s[triangles[i][2]];
+        double area = triangle_area_2d(v0, v1, v2);
+        SUM += 3.0 * area / (s0 * s0 + s1 * s1 + s2 * s2);
+      }
+      double C = sqrt(SUM / triangles.size());
+      for(size_t i = 0; i < points.size(); i++) {
+        s[i] *= C;
+        grads[i][0] *= C;
+        grads[i][1] *= C;
+        grads[i][2] *= C;
+      }
+    };
+
+  auto updateIdealTriangularShapes =
+    [this](const std::vector<std::array<double, 2>> &points,
+           const std::vector<std::array<uint32_t, 3>> &triangles,
+           std::vector<std::array<std::array<double, 2>, 3>> &triIdealShapes) {
+      triIdealShapes.clear();
+      std::array<vec2, 3> equi = {
+        vec2{1., 0.}, vec2{cos(2. * M_PI / 3.), sin(2 * M_PI / 3.)},
+        vec2{cos(4. * M_PI / 3.), sin(4 * M_PI / 3.)}};
+      //    normalizeTargetArea(equi);
+      //    double areaEqui = triangle_area_2d(equi[0], equi[1], equi[2]);
+      double totArea = 0.0;
+      double totOneOverWeight = 0.0;
+      std::vector<double> distances;
+      std::vector<int> bnd_markers;
+      discreteFront::instance()->getBndMarkers(&bnd_markers);
+      std::vector<bool> flag_bnd_markers(bnd_markers.size(), false);
+      for(size_t i = 0; i < bnd_markers.size(); i++) {
+        if(bnd_markers[i] == 1) flag_bnd_markers[i] = true;
+      }
+      std::vector<size_t> triple_markers;
+
+      if(!discreteFront::instance()->empty()) {
+        for(size_t i = 0; i < pos.size(); i += 3) {
+          double x = pos[i];
+          double y = pos[i + 1];
+          SVector3 P(x, y, 0);
+          SVector3 C =
+            discreteFront::instance()->closestPoints2d(P, flag_bnd_markers);
+          distances.push_back((P - C).norm());
+        }
+      }
+
+      for(size_t i = 0; i < triangles.size(); i++) {
+        vec2 v0 = points[triangles[i][0]];
+        vec2 v1 = points[triangles[i][1]];
+        vec2 v2 = points[triangles[i][2]];
+        double density = myDensity2D(i, _distMax, _RATIO, distances);
+        double area = triangle_area_2d(v0, v1, v2);
+        totArea += area;
+        totOneOverWeight += 1. / density;
+      }
+      double C = totArea / totOneOverWeight;
+      double newArea = 0;
+      //    printf("coucou C = %12.5E d %lu\n",C, triangles.size());
+      for(size_t i = 0; i < triangles.size(); i++) {
+        //      vec2 v0 = points[triangles[i][0]];
+        //      vec2 v1 = points[triangles[i][1]];
+        //      vec2 v2 = points[triangles[i][2]];
+        double density = myDensity2D(i, _distMax, _RATIO, distances);
+        double fact = sqrt(C / density);
+        vec2 p0 = equi[0] * fact;
+        vec2 p1 = equi[1] * fact;
+        vec2 p2 = equi[2] * fact;
+        std::array<vec2, 3> perfect = {p0, p1, p2};
+        double area = triangle_area_2d(p0, p1, p2);
+        //      printf("area[%lu] = %12.5E density %12.5E\n",i,area,density);
+        newArea += area;
+        triIdealShapes.push_back(perfect);
+      }
+    };
+
+  _distMax = distMax;
+  _RATIO = RATIO;
+
+#if defined(HAVE_WINSLOWUNTANGLER)
+  std::vector<bool> _locked;
+  // if(tets.size()) {
+  //   std::vector<std::vector<uint32_t>> _elements;
+  //   std::vector<std::array<double, 3>> _points;
+  //   for(size_t i = 0; i < tets.size() / 4; i++)
+  //     _elements.push_back({static_cast<unsigned int>(tets[4 * i]),
+  //                          static_cast<unsigned int>(tets[4 * i + 1]),
+  //                          static_cast<unsigned int>(tets[4 * i + 2]),
+  //                          static_cast<unsigned int>(tets[4 * i + 3])});
+  //   for(size_t i = 0; i < pos.size() / 3; i++)
+  //     _points.push_back({pos[3 * i], pos[3 * i + 1], pos[3 * i + 2]});
+  //   for(size_t i = 0; i < pos.size() / 3; i++)
+  //     _locked.push_back(dimVertex[i] == 3 ? false : true);
+  //   for(size_t i = 0; i < front_nodes.size(); i++)
+  //     _locked[front_nodes[i]] = true;
+  //   std::vector<std::array<uint32_t, 4>> _tets;
+  //   std::vector<std::array<std::array<double, 3>, 4>> _tetIdealShapes;
+  //   std::vector<std::vector<std::array<double, 3>>> _elementTargetShapes;
+  //   {
+  //     //      double minQual = 1.0;
+  //     double avgQual = 0.0;
+  //     for(size_t i = 0; i < tets.size() / 4; i++) {
+  //       //	minQual = std::min(qualityElement(i),minQual);
+  //       avgQual += qualityElement(i);
+  //     }
+  //     avgQual /= (tets.size() / 4);
+  //     Msg::Info("Avg Quality Before Untangling %12.5E", avgQual);
+  //   }
+  //   buildTetrahedraFromElements(_elements, _elementTargetShapes, _tets,
+  //                               _tetIdealShapes);
+  //   untangle_tetrahedra(_points, _locked, _tets, _tetIdealShapes);
+  //   for(size_t i = 0; i < _points.size(); i++) {
+  //     pos[3 * i] = _points[i][0];
+  //     pos[3 * i + 1] = _points[i][1];
+  //     pos[3 * i + 2] = _points[i][2];
+  //   }
+  //   {
+  //     //      double minQual = 1.0;
+  //     double avgQual = 0.0;
+  //     for(size_t i = 0; i < tets.size() / 4; i++) {
+  //       //	minQual = std::min(qualityElement(i),minQual);
+  //       avgQual += qualityElement(i);
+  //     }
+  //     avgQual /= (tets.size() / 4);
+  //     //      Msg::Info ("Min Quality Before Untangling %12.5E",avgQual);
+  //     //      for (size_t i=0;i<tets.size()/4;i++)minQual =
+  //     //      std::min(qualityElement(i),minQual);
+  //     Msg::Info("Avg Quality After Untangling %12.5E", avgQual);
+  //   }
+  // }
+  if(tris.size()) {
+    std::vector<std::array<uint32_t, 4>> _elements;
+    std::vector<std::array<double, 2>> _points;
+    for(size_t i = 0; i < tris.size() / 3; i++)
+      _elements.push_back({static_cast<unsigned int>(tris[3 * i]),
+                           static_cast<unsigned int>(tris[3 * i + 1]),
+                           static_cast<unsigned int>(tris[3 * i + 2]),
+                           uint32_t(-1)});
+    for(size_t i = 0; i < pos.size() / 3; i++)
+      _points.push_back({pos[3 * i], pos[3 * i + 1]});
+    for(size_t i = 0; i < pos.size() / 3; i++)
+      _locked.push_back(dimVertex[i] == 2 ? false : true);
+    for(size_t i = 0; i < front_nodes.size(); i++)
+      _locked[front_nodes[i]] = true;
+    std::vector<std::array<uint32_t, 3>> _triangles;
+    std::vector<std::array<std::array<double, 2>, 3>> _triIdealShapes;
+    buildTrianglesAndTargetsFromElements(_points, _elements, _triangles,
+                                         _triIdealShapes);
+    untangle_triangles_2D(_points, _locked, _triangles, _triIdealShapes, lambda,
+                          nIterIn, nIterOut, 10, 100000, sizeField,
+                          updateIdealTriangularShapes);
+    for(size_t i = 0; i < _points.size(); i++) {
+      pos[3 * i] = _points[i][0];
+      pos[3 * i + 1] = _points[i][1];
+    }
+  }
+#else
+  Msg::Error("Gmsh Must Be Compiled With WinslowUntangler to be able to use "
+             "meshRelaying::untangle()");
+#endif
+
+  if(pm_mesh == nullptr){
+    pm_mesh = new PolyMesh();
+    std::vector<size_t> tris_p1;
+    for(size_t i=0; i<tris.size(); i++) {
+      tris_p1.push_back(tris[i]+1);
+    }
+    std::vector<double> pos_2d;
+    for(size_t i=0; i<pos.size(); i+=3) {
+      pos_2d.push_back(pos[i]);
+      pos_2d.push_back(pos[i+1]);
+    }
+    triangulation2PolyMesh(tris_p1, pos_2d, &pm_mesh);
+    
+    //sort vertices
+    std::sort(pm_mesh->vertices.begin(), pm_mesh->vertices.end(), [](PolyMesh::Vertex *a, PolyMesh::Vertex *b) {
+      return a->data < b->data;
+    });
+  }
+
+  for(size_t i=0; i<pm_mesh->vertices.size(); i++) {
+    int v = pm_mesh->vertices[i]->data-1;
+    SVector3 p(pos[3*v], pos[3*v+1], pos[3*v+2]);
+    pm_mesh->vertices[i]->position = p;
+  }
+}
+
+void meshRelaying::getPm(PolyMesh **pm)
+{
+  std::vector<double> pos_2d;
+
+  for(size_t i = 0; i < pos.size(); i += 3) {
+    pos_2d.push_back(pos[i]);
+    pos_2d.push_back(pos[i + 1]);
+  }
+  std::vector<size_t> tris_1;
+  for(size_t i = 0; i < tris.size(); i += 3) {
+    tris_1.push_back(tris[i] + 1);
+    tris_1.push_back(tris[i + 1] + 1);
+    tris_1.push_back(tris[i + 2] + 1);
+  }
+
+  triangulation2PolyMesh(tris_1, pos_2d, pm);
+  for(size_t i = 0; i < (*pm)->faces.size(); i++) {
+    PolyMesh::Face *f = (*pm)->faces[i];
+    f->data = tris_concentration[i];
+  }
+}
+
+void meshRelaying::setNodesPosition(std::vector<double> mesh_pos){
+  if (mesh_pos.size() != pos.size()){
+    Msg::Error("The size of the input mesh_pos is not the same as the size of the current mesh");
+  }
+  pos = mesh_pos;
+}
+
+
+void meshRelaying::construct_DF_to_mesh_relation(std::vector<size_t> &DF_to_meshNodes, std::vector<double> &DF_to_mesh_parametric){
+  printf("construct_DF_to_mesh_relation\n");
+  size_t max_m = discreteFront::instance()->getMaxMarker();
+  std::vector<interface> interfaces = discreteFront::instance()->getInterfaces();
+  std::vector<double> DF_pos = discreteFront::instance()->getPos();
+
+  DF_to_meshNodes.resize(2*(max_m+1));
+  DF_to_mesh_parametric.resize(max_m+1);
   
+  std::vector<bool> visited(max_m+1, false);
+
+  if(pm_mesh == nullptr){
+    pm_mesh = new PolyMesh();
+    std::vector<size_t> tris_p1;
+    for(size_t i=0; i<tris.size(); i++) {
+      tris_p1.push_back(tris[i]+1);
+    }
+    std::vector<double> pos_2d;
+    for(size_t i=0; i<pos.size(); i+=3) {
+      pos_2d.push_back(pos[i]);
+      pos_2d.push_back(pos[i+1]);
+    }
+    triangulation2PolyMesh(tris_p1, pos_2d, &pm_mesh);
+    
+    //sort vertices
+    std::sort(pm_mesh->vertices.begin(), pm_mesh->vertices.end(), [](PolyMesh::Vertex *a, PolyMesh::Vertex *b) {
+      return a->data < b->data;
+    });
+
+  }
+
+  PolyMesh::Face *middle_face = pm_mesh->faces[pm_mesh->faces.size()/2];
+
+  std::vector<int> bnd_markers;
+  discreteFront::instance()->getBndMarkers(&bnd_markers);
+
+  for(size_t i=0; i<interfaces.size(); i++){
+    size_t n = interfaces[i].markers.size();
+    for(size_t j=0; j<n; ++j){
+      size_t marker = interfaces[i].markers[j];
+      if(bnd_markers[marker] == 1) continue;
+      if(visited[marker] == true) continue;
+      visited[marker] = true;
+      double marker_pos[3] = {DF_pos[3*marker], DF_pos[3*marker+1], DF_pos[3*marker+2]};
+      PolyMesh::Face *f = pm_mesh->walk_from(marker_pos, middle_face);
+      if(f == nullptr){
+        Msg::Error("The marker %lu is not in the mesh", marker);
+      }
+
+      int v = point_on_triangle_vertex(f, marker_pos);
+      if(v>-1){
+        PolyMesh::HalfEdge *he = f->he;
+        for(size_t k=0; k<v; k++){
+          he = he->next;
+        }
+        DF_to_meshNodes[2*marker] = he->v->data-1;
+        DF_to_meshNodes[2*marker+1] = he->v->data-1;
+        DF_to_mesh_parametric[marker] = 0.0;
+        continue;
+      }
+
+      PolyMesh::Face *f_current = f;
+      size_t next = interfaces[i].markers[(j+1)%n];
+      size_t current = marker;
+      size_t iter = 1;
+      double dist_forward = 0.0;
+      size_t meshNode_forward = 0;
+
+      while(true){
+        double next_pos[3] = {DF_pos[3*next], DF_pos[3*next+1], DF_pos[3*next+2]};
+        double current_pos[3] = {DF_pos[3*current], DF_pos[3*current+1], DF_pos[3*current+2]};
+
+        PolyMesh::Face *f_next = pm_mesh->walk_from(next_pos, f_current);
+        if(f_next == nullptr){
+          Msg::Error("The marker %lu is not in the mesh", next);
+        }
+
+        int v_next = point_on_triangle_vertex(f_next, next_pos);
+        if(v_next>-1){
+          PolyMesh::HalfEdge *he = f_next->he;
+          for(size_t k=0; k<v_next; k++){
+            he = he->next;
+          }
+          meshNode_forward = he->v->data-1;
+          dist_forward += sqrt((he->v->position.x()-current_pos[0])*(he->v->position.x()-current_pos[0]) + (he->v->position.y()-current_pos[1])*(he->v->position.y()-current_pos[1]));
+          break;
+        }
+
+        
+        if(f_next != f_current){
+          bool found_vertex = false;
+          PolyMesh::HalfEdge *he = f_current->he;
+          for(size_t k=0; k<3; k++){
+            size_t vertex = he->v->data;
+            double vertex_pos[3] = {he->v->position.x(), he->v->position.y(), he->v->position.z()};
+
+            double orient = robustPredicates::orient2d(next_pos, current_pos, vertex_pos);
+            if(orient < 1e-10 && orient > -1e-10){
+              double normal_pos[2] = {vertex_pos[0] + (next_pos[1]-current_pos[1]), vertex_pos[1] + (current_pos[0]-next_pos[0])};
+
+              double orient1 = robustPredicates::orient2d(next_pos, vertex_pos, normal_pos);
+              double orient2 = robustPredicates::orient2d(current_pos, vertex_pos, normal_pos);
+              if((orient1<0 && orient2 > 0) || (orient1>0 && orient2 < 0)){
+                meshNode_forward = vertex-1;
+                dist_forward += sqrt((vertex_pos[0]-current_pos[0])*(vertex_pos[0]-current_pos[0]) + (vertex_pos[1]-current_pos[1])*(vertex_pos[1]-current_pos[1]));
+                found_vertex = true;
+                break;
+              }
+            }
+            he = he->next;
+          }
+          if(found_vertex) break;
+        }
+        iter++;
+        current = next;
+        f_current = f_next;
+        next = interfaces[i].markers[(j+iter)%n];
+
+        double new_next_pos[3] = {DF_pos[3*next], DF_pos[3*next+1], DF_pos[3*next+2]};
+        dist_forward += sqrt((new_next_pos[0]-next_pos[0])*(new_next_pos[0]-next_pos[0]) + (new_next_pos[1]-next_pos[1])*(new_next_pos[1]-next_pos[1]));
+        
+        if(iter > 20){
+          exit(1);
+        }
+      }
+
+      size_t prev = interfaces[i].markers[(j+n-1)%n];
+      current = marker;
+      iter = 1;
+      double dist_backward = 0.0;
+      size_t meshNode_backward = 0;
+      f_current = f;
+      while(true){
+        double prev_pos[3] = {DF_pos[3*prev], DF_pos[3*prev+1], DF_pos[3*prev+2]};
+        double current_pos[3] = {DF_pos[3*current], DF_pos[3*current+1], DF_pos[3*current+2]};
+        PolyMesh::Face *f_prev = pm_mesh->walk_from(prev_pos, f_current);
+        if(f_prev == nullptr){
+          Msg::Error("The marker %lu is not in the mesh", next);
+        }
+
+        int v_prev = point_on_triangle_vertex(f_prev, prev_pos);
+        if(v_prev>-1){
+          PolyMesh::HalfEdge *he = f_prev->he;
+          for(size_t k=0; k<v_prev; k++){
+            he = he->next;
+          }
+          meshNode_backward = he->v->data-1;
+          dist_backward += sqrt((he->v->position.x()-current_pos[0])*(he->v->position.x()-current_pos[0]) + (he->v->position.y()-current_pos[1])*(he->v->position.y()-current_pos[1]));
+          break;
+        }
+        
+        if(f_prev!= f_current){
+          bool found_vertex = false;
+          PolyMesh::HalfEdge *he = f_current->he;
+          for(size_t k=0; k<3; k++){
+            size_t vertex = he->v->data;
+            double vertex_pos[2] = {he->v->position.x(), he->v->position.y()};
+
+            double orient = robustPredicates::orient2d(prev_pos, current_pos, vertex_pos);
+            if(orient < 1e-10 && orient > -1e-10){
+              double normal_pos[2] = {vertex_pos[0] + (prev_pos[1]-current_pos[1]), vertex_pos[1] + (current_pos[0]-prev_pos[0])};
+              
+              double orient1 = robustPredicates::orient2d(prev_pos, vertex_pos, normal_pos);
+              double orient2 = robustPredicates::orient2d(current_pos, vertex_pos, normal_pos);
+              if((orient1<0 && orient2 > 0) || (orient1>0 && orient2 < 0)){
+                meshNode_backward = vertex-1;
+                dist_backward += sqrt((vertex_pos[0]-current_pos[0])*(vertex_pos[0]-current_pos[0]) + (vertex_pos[1]-current_pos[1])*(vertex_pos[1]-current_pos[1]));
+                found_vertex = true;
+                break;
+              }
+            }
+            he = he->next;
+          }
+          if(found_vertex) break;
+        }
+        
+        iter++;
+        current = prev;
+        f_current = f_prev;
+        prev = interfaces[i].markers[(j+n-iter)%n];
+        
+        double new_prev_pos[3] = {DF_pos[3*prev], DF_pos[3*prev+1], DF_pos[3*prev+2]};
+        dist_backward += sqrt((new_prev_pos[0]-prev_pos[0])*(new_prev_pos[0]-prev_pos[0]) + (new_prev_pos[1]-prev_pos[1])*(new_prev_pos[1]-prev_pos[1]));
+      }
+
+      double t;
+      if(dist_forward+dist_backward<1e-13){
+        t = 0.5;
+      }else{
+        t = dist_backward/(dist_forward+dist_backward);
+      }
+      
+      DF_to_meshNodes[2*marker] = meshNode_backward;
+      DF_to_meshNodes[2*marker+1] = meshNode_forward;
+      DF_to_mesh_parametric[marker] = t;
+    }
+  }
+    
+}
+
+void meshRelaying::construct_mesh_to_DF_relation(std::vector<size_t> &meshNodes_to_DF, std::vector<double> &mesh_to_DF_parametric){
+  printf("construct_DF_to_mesh_relation\n");
+  size_t max_m = discreteFront::instance()->getMaxMarker();
+  std::vector<interface> interfaces = discreteFront::instance()->getInterfaces();
+  std::vector<double> DF_pos = discreteFront::instance()->getPos();
+
+  if(pm_mesh == nullptr){
+    pm_mesh = new PolyMesh();
+    std::vector<size_t> tris_p1;
+    for(size_t i=0; i<tris.size(); i++) {
+      tris_p1.push_back(tris[i]+1);
+    }
+    std::vector<double> pos_2d;
+    for(size_t i=0; i<pos.size(); i+=3) {
+      pos_2d.push_back(pos[i]);
+      pos_2d.push_back(pos[i+1]);
+    }
+    triangulation2PolyMesh(tris_p1, pos_2d, &pm_mesh);
+    
+    //sort vertices
+    std::sort(pm_mesh->vertices.begin(), pm_mesh->vertices.end(), [](PolyMesh::Vertex *a, PolyMesh::Vertex *b) {
+      return a->data < b->data;
+    });
+
+  }
+
+  meshNodes_to_DF.resize(2*(pm_mesh->vertices.size()));
+  mesh_to_DF_parametric.resize(pm_mesh->vertices.size());
+
+  PolyMesh::Face *middle_face = pm_mesh->faces[pm_mesh->faces.size()/2];
+
+  std::vector<int> bnd_markers;
+  discreteFront::instance()->getBndMarkers(&bnd_markers);
+  
+  for(size_t i=0; i<interfaces.size(); ++i){
+    size_t n = interfaces[i].markers.size();
+    for(size_t j=0; j<n; ++j){
+      size_t m1 = interfaces[i].markers[j];
+      if(bnd_markers[m1] == 1) continue;
+      size_t m2 = interfaces[i].markers[(j+1)%n];
+
+      double pos1[2] = {DF_pos[3*m1], DF_pos[3*m1+1]};
+      double pos2[2] = {DF_pos[3*m2], DF_pos[3*m2+1]};
+      double dist_1_2 = sqrt((pos1[0]-pos2[0])*(pos1[0]-pos2[0]) + (pos1[1]-pos2[1])*(pos1[1]-pos2[1]));
+
+      PolyMesh::Face *start_f = pm_mesh->walk_from(pos1, middle_face);
+      PolyMesh::Face *end_f = pm_mesh->walk_from(pos2, start_f);
+
+      if(start_f == nullptr || end_f == nullptr){
+        Msg::Error("The marker %lu or %lu is not in the mesh", m1, m2);
+      }
+
+      if(start_f == end_f){
+        PolyMesh::HalfEdge *he = start_f->he;
+        for(size_t k=0; k<3; k++){
+          size_t vertex = he->v->data-1;
+          double vertex_pos[2] = {he->v->position.x(), he->v->position.y()};
+          double dist_v_1 = sqrt((vertex_pos[0]-pos1[0])*(vertex_pos[0]-pos1[0]) + (vertex_pos[1]-pos1[1])*(vertex_pos[1]-pos1[1]));
+          double dist_v_2 = sqrt((vertex_pos[0]-pos2[0])*(vertex_pos[0]-pos2[0]) + (vertex_pos[1]-pos2[1])*(vertex_pos[1]-pos2[1]));
+
+          if(dist_v_1<1e-10){
+            meshNodes_to_DF[2*vertex] = m1;
+            meshNodes_to_DF[2*vertex+1] = m1;
+            mesh_to_DF_parametric[vertex] = 0.0;
+            break;
+          }
+
+          if(dist_v_2<1e-10){
+            meshNodes_to_DF[2*vertex] = m2;
+            meshNodes_to_DF[2*vertex+1] = m2;
+            mesh_to_DF_parametric[vertex] = 0.0;
+            break;
+          }
+
+          he = he->next;
+        }
+
+        continue;
+      }
+
+      PolyMesh::Face *current_f = start_f;
+      int current_v = -1;
+      size_t iter = 0;
+
+      while(true){
+        if(iter > 20){
+          exit(1);
+        }
+        iter++;
+
+        std::pair<size_t, size_t> intersect = intersect_face(current_f, pos1, pos2);
+
+        if(intersect.first == intersect.second){
+          if(intersect.first != current_v){
+            meshNodes_to_DF[2*intersect.first] = m1;
+            meshNodes_to_DF[2*intersect.first+1] = m2;
+            double pos_node[2] = {pm_mesh->vertices[intersect.first]->position.x(), pm_mesh->vertices[intersect.first]->position.y()};
+            double dist_1node = sqrt((pos1[0]-pos_node[0])*(pos1[0]-pos_node[0]) + (pos1[1]-pos_node[1])*(pos1[1]-pos_node[1]));
+
+            mesh_to_DF_parametric[intersect.first] = dist_1node/dist_1_2;
+          }
+        }else{
+          printf("intersect %lu %lu\n", intersect.first, intersect.second);
+        }
+
+        PolyMesh::HalfEdge *he = current_f->he;
+        do{
+          he = he->next;
+        }while(he->v->data-1 != intersect.first);
+        current_v = intersect.first;
+        current_f = he->opposite->f;
+        if(current_f == end_f){
+          break;
+        }
+      }
+
+    }
+  }
+}
+
+std::pair<size_t, size_t> intersect_face(PolyMesh::Face *f, double *pos1, double *pos2){
+  PolyMesh::HalfEdge *he = f->he;
+  
+  size_t n1 = he->v->data-1;
+  size_t n2 = he->next->v->data-1;
+  size_t n3 = he->next->next->v->data-1;
+
+  size_t ns[3] = {n1, n2, n3};
+
+  double pos_n1[2] = {he->v->position.x(), he->v->position.y()};
+  double pos_n2[2] = {he->next->v->position.x(), he->next->v->position.y()};
+  double pos_n3[2] = {he->next->next->v->position.x(), he->next->next->v->position.y()};
+
+  double dist12 = sqrt((pos1[0]-pos2[0])*(pos1[0]-pos2[0]) + (pos1[1]-pos2[1])*(pos1[1]-pos2[1]));
+
+  double distn11 = sqrt((pos1[0]-pos_n1[0])*(pos1[0]-pos_n1[0]) + (pos1[1]-pos_n1[1])*(pos1[1]-pos_n1[1]));
+  double distn21 = sqrt((pos1[0]-pos_n2[0])*(pos1[0]-pos_n2[0]) + (pos1[1]-pos_n2[1])*(pos1[1]-pos_n2[1]));
+  double distn12 = sqrt((pos2[0]-pos_n1[0])*(pos2[0]-pos_n1[0]) + (pos2[1]-pos_n1[1])*(pos2[1]-pos_n1[1]));
+  double distn22 = sqrt((pos2[0]-pos_n2[0])*(pos2[0]-pos_n2[0]) + (pos2[1]-pos_n2[1])*(pos2[1]-pos_n2[1]));
+  double distn31 = sqrt((pos1[0]-pos_n3[0])*(pos1[0]-pos_n3[0]) + (pos1[1]-pos_n3[1])*(pos1[1]-pos_n3[1]));
+  double distn32 = sqrt((pos2[0]-pos_n3[0])*(pos2[0]-pos_n3[0]) + (pos2[1]-pos_n3[1])*(pos2[1]-pos_n3[1]));
+
+  bool vertex_inter[3] = {false, false, false};
+  double vertex_dist[3] = {distn12, distn22, distn32};
+
+  if(distn11 + distn12 - dist12 < 1e-10){
+    vertex_inter[0] = true;
+  }
+  if(distn21 + distn22 - dist12 < 1e-10){
+    vertex_inter[1] = true;
+  }
+  if(distn31 + distn32 - dist12 < 1e-10){
+    vertex_inter[2] = true;
+  }
+
+  double inter_pos[2];
+  bool edge_inter[3] = {false, false, false};
+  double edge_dist[3];
+  double param;
+
+  int inter = computeIntersection(pos1, pos2, pos_n1, pos_n2, inter_pos, &param);
+  if(inter == 1){
+    edge_inter[0] = true;
+    edge_dist[0] = sqrt((inter_pos[0]-pos2[0])*(inter_pos[0]-pos2[0]) + (inter_pos[1]-pos2[1])*(inter_pos[1]-pos2[1]));
+  }
+
+  inter = computeIntersection(pos1, pos2, pos_n2, pos_n3, inter_pos, &param);
+  if(inter == 1){
+    edge_inter[1] = true;
+    edge_dist[1] = sqrt((inter_pos[0]-pos2[0])*(inter_pos[0]-pos2[0]) + (inter_pos[1]-pos2[1])*(inter_pos[1]-pos2[1]));
+  }
+
+  inter = computeIntersection(pos1, pos2, pos_n3, pos_n1, inter_pos, &param);
+  if(inter == 1){
+    edge_inter[2] = true;
+    edge_dist[2] = sqrt((inter_pos[0]-pos2[0])*(inter_pos[0]-pos2[0]) + (inter_pos[1]-pos2[1])*(inter_pos[1]-pos2[1]));
+  }
+
+  double min_dist = 1e10;
+  std::pair<size_t, size_t> min_pair = {0, 0};
+
+  for(size_t i=0; i<3; i++){
+    if(vertex_inter[i]){
+      if(vertex_dist[i] < min_dist){
+        min_dist = vertex_dist[i];
+        min_pair = {ns[i], ns[i]};
+      }
+    }
+    if(edge_inter[i]){
+      if(edge_dist[i] < min_dist){
+        min_dist = edge_dist[i];
+        min_pair = {ns[i], ns[(i+1)%3]};
+      }
+    }
+  }
+
+  return min_pair;
+
+}
+
+
+
+int point_on_triangle_vertex(PolyMesh::Face *f, double *pos){
+  PolyMesh::HalfEdge *he = f->he;
+  for(size_t i=0; i<3; i++){
+    double vertex_pos[3] = {he->v->position.x(), he->v->position.y(), 0};
+    double dist = sqrt((vertex_pos[0]-pos[0])*(vertex_pos[0]-pos[0]) + (vertex_pos[1]-pos[1])*(vertex_pos[1]-pos[1]));
+    if(dist < 1e-8){
+      return i;
+    }
+    he = he->next;
+  }
+  return -1;
+}
+
+int point_on_triangle_edge(PolyMesh::Face *f, double *pos){
+  PolyMesh::HalfEdge *he = f->he;
+  for(size_t i=0; i<3; ++i){
+    double vertex_pos[2] = {he->v->position.x(), he->v->position.y()};
+    double next_vertex_pos[2] = {he->next->v->position.x(), he->next->v->position.y()};
+    double area = robustPredicates::orient2d(vertex_pos, next_vertex_pos, pos);
+
+    he = he->next;
+  }
+}
+
+// discreteFront functions
+
+std::vector<std::pair<size_t, size_t>> discreteFront::getFrontEdges()
+{
+  std::sort(fn.begin(), fn.end());
+  std::vector<std::pair<size_t, size_t>> pp;
+  std::vector<size_t> curr;
+  if(fn.size() == 0) return pp;
+  int current_color = interfaces[fn[0].interface].tag;
+  for(size_t i = 0; i < fn.size(); i++) {
+    const frontNode &n = fn[i];
+    int color = interfaces[fn[i].interface].tag;
+    if(current_color != color) {
+      for(size_t j = 0; j < curr.size(); j++) {
+        size_t A = curr[j];
+        size_t B = curr[(j + 1) % curr.size()];
+        std::pair<size_t, size_t> pa =
+          std::make_pair(std::min(A, B), std::max(A, B));
+        pp.push_back(pa);
+      }
+      curr.clear();
+      current_color = color;
+    }
+    curr.push_back(n.meshNode);
+  }
+
+  for(size_t j = 0; j < curr.size(); j++) {
+    size_t A = curr[j];
+    size_t B = curr[(j + 1) % curr.size()];
+    std::pair<size_t, size_t> pa =
+      std::make_pair(std::min(A, B), std::max(A, B));
+    pp.push_back(pa);
+  }
+  std::sort(pp.begin(), pp.end());
+  return pp;
+}
+
+void discreteFront::intersectLine2d(const SVector3 &p0, const SVector3 &p1,
+                                    std::vector<double> &d, std::vector<int> &c)
+{
+  SPoint2 a1(p0.x(), p0.y());
+  SPoint2 a2(p1.x(), p1.y());
+
+  double xmin = std::min(p0.x(), p1.x());
+  double xmax = std::max(p0.x(), p1.x());
+  double ymin = std::min(p0.y(), p1.y());
+  double ymax = std::max(p0.y(), p1.y());
+
+  if(xmin < bbox.min().x()) return;
+  if(xmax > bbox.max().x()) return;
+  if(ymin < bbox.min().y()) return;
+  if(ymax > bbox.max().y()) return;
+
+  std::vector<std::pair<size_t, size_t>> _ind;
+  int IMIN, IMAX, JMIN, JMAX;
+  getCoordinates(xmin, ymin, IMIN, JMIN);
+  getCoordinates(xmax, ymax, IMAX, JMAX);
+  for(int I = IMIN; I <= IMAX; I++) {
+    for(int J = JMIN; J <= JMAX; J++) {
+      int index = I + NX * J;
+      for(size_t k = 0; k < sss[index].size(); k++) {
+        _ind.push_back(sss[index][k].second);
+      }
+    }
+  }
+
+  std::sort(_ind.begin(), _ind.end());
+  auto last = std::unique(_ind.begin(), _ind.end());
+  _ind.erase(last, _ind.end());
+  for(size_t I = 0; I < _ind.size(); I++) {
+    std::pair<size_t, size_t> line = _ind[I];
+    int m = line.first;
+    int mp1 = line.second;
+    double a3[2] = {pos[3 * m], pos[3 * m + 1]};
+    double a4[2] = {pos[3 * mp1], pos[3 * mp1 + 1]};
+
+    double xminb = std::min(a3[0], a4[0]);
+    double xmaxb = std::max(a3[0], a4[0]);
+    double yminb = std::min(a3[1], a4[1]);
+    double ymaxb = std::max(a3[1], a4[1]);
+    if(ymaxb < ymin) continue;
+    if(xmaxb < xmin) continue;
+    if(xminb > xmax) continue;
+    if(yminb > ymax) continue;
+
+    double a143 = robustPredicates::orient2d(a1, a4, a3);
+    double a243 = robustPredicates::orient2d(a2, a4, a3);
+    if(a143 * a243 > 0) continue;
+
+    double a123 = robustPredicates::orient2d(a1, a2, a3);
+    double a124 = robustPredicates::orient2d(a1, a2, a4);
+    if(a123 * a124 > 0) continue;
+
+    d.push_back(a143 / (a143 - a243));
+    c.push_back(m);
+    c.push_back(mp1);
+  }
+}
+
+void discreteFront::getCoordinates(double x, double y, int &IX, int &IY)
+{
+  IX = (NX - 1) * (x - bbox.min().x()) / (bbox.max().x() - bbox.min().x());
+  IY = (NY - 1) * (y - bbox.min().y()) / (bbox.max().y() - bbox.min().y());
+}
+
+int discreteFront::findMarker(size_t marker)
+{
+  for(size_t i = 0; i < interfaces.size(); ++i) {
+    for(size_t j = 0; j < interfaces[i].markers.size(); ++j) {
+      if(interfaces[i].markers[j] == marker) { return i; }
+    }
+  }
+  return -1;
+}
+
+void discreteFront::cornersInTriangle2d(
+  const SVector3 &p0, const SVector3 &p1, const SVector3 &p2,
+  std::vector<SVector3> &cornerPos,
+  std::vector<std::pair<size_t, size_t>> &corner)
+{
+  SPoint2 a0(p0.x(), p0.y());
+  SPoint2 a1(p1.x(), p1.y());
+  SPoint2 a2(p2.x(), p2.y());
+  for(auto i : corners) {
+    SPoint2 p(pos[3 * i], pos[3 * i + 1]);
+    SVector3 p3(pos[3 * i], pos[3 * i + 1], 0);
+    double d =
+      std::min(std::min((p0 - p3).norm(), (p1 - p3).norm()), (p2 - p3).norm());
+    if(d < 1.e-12) continue; // FIXME
+    double a01p = robustPredicates::orient2d(a0, a1, p);
+    double a12p = robustPredicates::orient2d(a1, a2, p);
+    double a20p = robustPredicates::orient2d(a2, a0, p);
+
+    if(a01p * a12p > 0 && a01p * a20p > 0 && a20p * a12p > 0) {
+      printf("corner %lu in triangle\n", i);
+      int id_interface_ = findMarker(i);
+      if(id_interface_ == -1) {
+        continue;
+      }
+      size_t id_interface = id_interface_;
+      printf("id interface %lu\n", id_interface);
+      cornerPos.push_back(SVector3(pos[3 * i], pos[3 * i + 1], 0));
+      corner.push_back(std::make_pair(id_interface, i));
+    }
+  }
+}
+
+void discreteFront::tripleInTriangle2d(const SVector3 &p0, const SVector3 &p1,
+                                       const SVector3 &p2,
+                                       std::vector<size_t> &m,
+                                       std::vector<SVector3> &p_out)
+{
+  SPoint2 a0(p0.x(), p0.y());
+  SPoint2 a1(p1.x(), p1.y());
+  SPoint2 a2(p2.x(), p2.y());
+  for(size_t ii = 0; ii < triple_points.size(); ++ii) {
+    size_t i = triple_points[ii];
+    SPoint2 p(pos[3 * i], pos[3 * i + 1]);
+    SVector3 p3(pos[3 * i], pos[3 * i + 1], 0);
+    double d =
+      std::min(std::min((p0 - p3).norm(), (p1 - p3).norm()), (p2 - p3).norm());
+    if(d < 1.e-12) continue; // FIXME
+
+    double a01p = robustPredicates::orient2d(a0, a1, p);
+    double a12p = robustPredicates::orient2d(a1, a2, p);
+    double a20p = robustPredicates::orient2d(a2, a0, p);
+    if(a01p * a12p >= 0 && a01p * a20p >= 0 && a20p * a12p >= 0) {
+      m.push_back(triple_points[ii]);
+      p_out.push_back(SVector3(pos[3 * i], pos[3 * i + 1], 0));
+    }
+  }
+}
+
+void discreteFront::getBndMarkers(std::vector<int> *bnd_markers)
+{
+  bnd_markers->clear();
+  size_t m_max = getMaxMarker();
+  bnd_markers->resize(m_max + 1, 0);
+  for(size_t i = 0; i < interfaces.size(); ++i) {
+    for(size_t j = 0; j < interfaces[i].markers.size(); ++j) {
+      size_t m = interfaces[i].markers[j];
+      int colors[3] = {0, 0, 0};
+      PolyMesh::Vertex *v;
+      int triple = vertexType(findVertex(m, v), colors);
+      if(triple == 1) {
+        if(colors[0] == -10 || colors[1] == -10 || colors[2] == -10) {
+          (*bnd_markers)[m] = 1;
+        }
+        else {
+          (*bnd_markers)[m] = 0;
+        }
+      }
+      else {
+        if(colors[0] == -10 || colors[1] == -10) { (*bnd_markers)[m] = 1; }
+        else {
+          (*bnd_markers)[m] = 0;
+        }
+      }
+    }
+  }
+}
+
+void discreteFront::getSolidMarkers(std::vector<int> *solid_markers)
+{
+  solid_markers->clear();
+  size_t m_max = getMaxMarker();
+  solid_markers->resize(m_max + 1, 0);
+  for(size_t i = 0; i < interfaces.size(); ++i) {
+    for(size_t j = 0; j < interfaces[i].markers.size(); ++j) {
+      size_t m = interfaces[i].markers[j];
+      int colors[3] = {0, 0, 0};
+      PolyMesh::Vertex *v;
+      int triple = vertexType(findVertex(m, v), colors);
+      if(triple == 1) {
+        if(colors[0] < 0 || colors[1] < 0 || colors[2] < 0) {
+          (*solid_markers)[m] = 1;
+        }
+        else {
+          (*solid_markers)[m] = 0;
+        }
+      }
+      else {
+        if(colors[0] < 0 || colors[1] < 0) { (*solid_markers)[m] = 1; }
+        else {
+          (*solid_markers)[m] = 0;
+        }
+      }
+    }
+  }
+}
+
+void discreteFront::markersCurvature(std::vector<int> concentration_list,
+                                     std::vector<double> tension_table,
+                                     std::vector<double> *curvature)
+{
+  size_t m_max = getMaxMarker();
+  curvature->resize(m_max + 1, 0.0);
+
+  pm->print4debug(27);
+  FILE *f = fopen("markersCurvature.pos", "w");
+  printInterfaces(f);
+  fclose(f);
+
+  for(size_t i = 0; i < interfaces.size(); ++i) {
+    for(size_t j = 0; j < interfaces[i].markers.size(); ++j) {
+      size_t m = interfaces[i].markers[j];
+      size_t n = interfaces[i].markers.size();
+      int colors[3] = {0, 0, 0};
+      PolyMesh::Vertex *v;
+      int id_v = findVertex(m, v);
+      if(id_v == -1) {
+        printf("marker %lu not found\n", m);
+        exit(1);
+      }else{
+        v = pm->vertices[id_v];
+      }
+      int triple = vertexType(id_v, colors);
+
+      if(triple != 1) {
+        if(colors[0] < 0 || colors[1] < 0) { // marker between solid and fluid
+          (*curvature)[m] = 0.0;
+        }
+        else { // marker between two fluids
+          // printf("marker %lu\n", m);
+          int dominant = colors[0];
+          std::vector<PolyMesh::Vertex *> dom_neigh;
+          // printf("just before : %d \n", dominant);
+          // printf("v->data %d\n", v->data);
+          findNDoubleNeighbours(v, &dom_neigh, 1, dominant, true);
+          // printf("dom_neigh.size() %lu\n", dom_neigh.size());
+          size_t m_p1 = dom_neigh[2]->data - 1;
+          size_t m_m1 = dom_neigh[0]->data - 1;
+          double pos_m[3] = {pos[3 * m], pos[3 * m + 1], pos[3 * m + 2]};
+          double pos_p1[3] = {pos[3 * m_p1], pos[3 * m_p1 + 1],
+                              pos[3 * m_p1 + 2]};
+          double pos_m1[3] = {pos[3 * m_m1], pos[3 * m_m1 + 1],
+                              pos[3 * m_m1 + 2]};
+
+          int fluid1 = colors[0];
+          int fluid2 = colors[1];
+          size_t id_fluid1 = std::find(concentration_list.begin(),
+                                       concentration_list.end(), fluid1) -
+                             concentration_list.begin();
+          size_t id_fluid2 = std::find(concentration_list.begin(),
+                                       concentration_list.end(), fluid2) -
+                             concentration_list.begin();
+          size_t n_concentration = concentration_list.size();
+          // printf("id_fluid1 %lu id_fluid2 %lu\n", id_fluid1, id_fluid2);
+          // double gamma_12 =
+          //   tension_table[n_concentration * id_fluid1 + id_fluid2];
+          (*curvature)[m] = kappa(pos_m1, pos_m, pos_p1);
+        }
+      }
+      else {
+        (*curvature)[m] = 0.0;
+        // int dominant = colors[0];
+        // int fluid1 = colors[1];
+        // int fluid2 = colors[2];
+        // size_t id_dom = std::find(concentration_list.begin(),
+        //                           concentration_list.end(), dominant) -
+        //                 concentration_list.begin();
+        // size_t id_fluid1 = std::find(concentration_list.begin(),
+        //                              concentration_list.end(), fluid1) -
+        //                    concentration_list.begin();
+        // size_t id_fluid2 = std::find(concentration_list.begin(),
+        //                              concentration_list.end(), fluid2) -
+        //                    concentration_list.begin();
+        // size_t n_concentration = concentration_list.size();
+
+        // double gamma_12 =
+        //   tension_table[n_concentration * id_fluid1 + id_fluid2];
+        // double gamma_dom1 = tension_table[n_concentration * id_dom + id_fluid1];
+        // double gamma_dom2 = tension_table[n_concentration * id_dom + id_fluid2];
+
+        // std::vector<PolyMesh::Vertex *> dom_neigh;
+        // findNDoubleNeighbours(v, &dom_neigh, 1, dominant);
+        // std::vector<PolyMesh::Vertex *> fluid1_neigh;
+        // findNDoubleNeighbours(v, &fluid1_neigh, 1, fluid1);
+        // size_t m_fluid;
+        // size_t m_dom;
+        // if(fluid1_neigh[0]->data == dom_neigh[0]->data) {
+        //   m_fluid = fluid1_neigh[1]->data - 1;
+        //   m_dom = dom_neigh[0]->data - 1;
+        // }
+        // else if(fluid1_neigh[0]->data == dom_neigh[1]->data) {
+        //   m_fluid = fluid1_neigh[1]->data - 1;
+        //   m_dom = dom_neigh[1]->data - 1;
+        // }
+        // else if(fluid1_neigh[1]->data == dom_neigh[0]->data) {
+        //   m_fluid = fluid1_neigh[0]->data - 1;
+        //   m_dom = dom_neigh[0]->data - 1;
+        // }
+        // else if(fluid1_neigh[1]->data == dom_neigh[1]->data) {
+        //   m_fluid = fluid1_neigh[0]->data - 1;
+        //   m_dom = dom_neigh[1]->data - 1;
+        // }
+
+        // double theta = acos((gamma_dom2 - gamma_dom1) / gamma_12);
+        // double edge[2] = {pos[3 * m_dom] - pos[3 * m],
+        //                   pos[3 * m_dom + 1] - pos[3 * m + 1]};
+        // double edge_norm = sqrt(edge[0] * edge[0] + edge[1] * edge[1]);
+        // edge[0] /= edge_norm;
+        // edge[1] /= edge_norm;
+
+        // double rotated_edge[2] = {cos(theta) * edge[0] - sin(theta) * edge[1],
+        //                           sin(theta) * edge[0] + cos(theta) * edge[1]};
+        // double dist = sqrt((pos[3 * m_fluid] - pos[3 * m]) *
+        //                      (pos[3 * m_fluid] - pos[3 * m]) +
+        //                    (pos[3 * m_fluid + 1] - pos[3 * m + 1]) *
+        //                      (pos[3 * m_fluid + 1] - pos[3 * m + 1]));
+
+        // double ghost[3] = {pos[3 * m] - dist * rotated_edge[0],
+        //                    pos[3 * m + 1] - dist * rotated_edge[1], 0};
+        // double pos_m[3] = {pos[3 * m], pos[3 * m + 1], pos[3 * m + 2]};
+        // double pos_m_fluid[3] = {pos[3 * m_fluid], pos[3 * m_fluid + 1],
+        //                          pos[3 * m_fluid + 2]};
+        // (*curvature)[m] = gamma_12 * kappa(ghost, pos_m, pos_m_fluid);
+      }
+    }
+  }
+}
+
+size_t discreteFront::getMaxMarker()
+{
+  size_t max_marker = 0;
+  for(size_t i = 0; i < interfaces.size(); ++i) {
+    for(size_t j = 0; j < interfaces[i].markers.size(); ++j) {
+      if(interfaces[i].markers[j] > max_marker) {
+        max_marker = interfaces[i].markers[j];
+      }
+    }
+  }
+  return max_marker;
+}
+
+void discreteFront::getDF(std::vector<double> *doubleMarkers,
+                          std::vector<int> *doubleTags,
+                          std::vector<size_t> *doubleIds,
+                          std::vector<double> *tripleMarkers,
+                          std::vector<int> *tripleTags,
+                          std::vector<size_t> *tripleIds,
+                          std::vector<size_t> *DF_to_meshNodes, 
+                          std::vector<double> *DF_to_mesh_parametric,
+                          std::vector<size_t> *meshNodes_to_DF, 
+                          std::vector<double> *mesh_to_DF_parametric)
+{
+  doubleMarkers->clear();
+  doubleTags->clear();
+  tripleMarkers->clear();
+  tripleTags->clear();
+
+  for(size_t i = 0; i < pm->vertices.size(); ++i) {
+    int colors[3] = {0, 0, 0};
+    int vIsTriple = vertexType(i, colors);
+    if(vIsTriple == 1) {
+      tripleMarkers->push_back(pm->vertices[i]->position.x());
+      tripleMarkers->push_back(pm->vertices[i]->position.y());
+      tripleTags->push_back(colors[0]);
+      tripleTags->push_back(colors[1]);
+      tripleTags->push_back(colors[2]);
+      tripleIds->push_back(pm->vertices[i]->data - 1);
+    }
+    else if(vIsTriple == 0) {
+      doubleMarkers->push_back(pm->vertices[i]->position.x());
+      doubleMarkers->push_back(pm->vertices[i]->position.y());
+      doubleTags->push_back(colors[0]);
+      doubleTags->push_back(colors[1]);
+      doubleIds->push_back(pm->vertices[i]->data - 1);
+    }
+  }
+
+  meshRelaying::instance()->construct_DF_to_mesh_relation(*DF_to_meshNodes, *DF_to_mesh_parametric);
+  meshRelaying::instance()->construct_mesh_to_DF_relation(*meshNodes_to_DF, *mesh_to_DF_parametric);
+
+  return;
+}
+
+int discreteFront::vertexType(size_t i, int *colors)
+{
+  // printf("in vertexType i = %lu / %lu \n", i, pm->vertices.size());
+  PolyMesh::Vertex *v = pm->vertices[i];
+  PolyMesh::HalfEdge *he = v->he;
+  PolyMesh::HalfEdge *bnd_he = nullptr;
+  std::vector<int> f_colors;
+  // printf("before do while\n");
+  do {
+    if(he->opposite == nullptr) {
+      bnd_he = he;
+      break;
+    }
+    f_colors.push_back(he->f->data);
+    he = he->opposite->next;
+  } while(he != v->he);
+  // printf("after do while\n");
+  if(bnd_he != nullptr) {
+    // printf("bnd_he != nullptr\n");
+    f_colors.clear();
+    he = bnd_he;
+    do {
+      f_colors.push_back(he->f->data);
+      he = he->next->next->opposite;
+    } while(he != nullptr);
+  }
+
+  // printf("f_colors.size() = %lu\n", f_colors.size());
+  // for(size_t i = 0; i < f_colors.size(); i++) {
+  //   printf("f_colors[%lu] = %d\n", i, f_colors[i]);
+  // }
+
+  std::sort(f_colors.begin(), f_colors.end());
+  auto it = std::unique(f_colors.begin(), f_colors.end());
+  f_colors.resize(std::distance(f_colors.begin(), it));
+  // printf("f_colors.size() = %lu\n", f_colors.size());
+
+  if(f_colors.size() == 3) {
+    colors[0] = f_colors[0];
+    colors[1] = f_colors[1];
+    colors[2] = f_colors[2];
+    return 1;
+  }
+  else if(bnd_he == nullptr) {
+    colors[0] = f_colors[0];
+    colors[1] = f_colors[1];
+    return 0;
+  }
+  else {
+    // printf("fcolors size = %lu\n", f_colors.size());
+    if(f_colors.size() == 1) {
+      colors[0] = f_colors[0];
+      colors[1] = -10; // fix me
+      colors[2] = -10; // fix me
+      return 0;
+    }
+    else {
+      // printf("fcolors size = %lu\n", f_colors.size());
+      colors[0] = f_colors[0];
+      colors[1] = f_colors[1];
+      colors[2] = -10; // fix me
+      return 1;
+    }
+  }
+}
+
+void discreteFront::moveFromV(double dt, const std::vector<SVector3> &v, const bool triple_slip)
+{
+  FILE *f = fopen("before_moveFromV.txt", "w");
+  printInterfaces(f);
+  fclose(f);
+  // detect triple points and store them
+  std::vector<PolyMesh::Vertex *> triple_v;
+  std::vector<size_t> triples_id;
+  PolyMesh::Vertex *dummy;
+  for(size_t i = 0; i < v.size(); ++i) {
+    int id = findVertex(i, dummy);
+    if(id == -1) continue;
+    int colors[3] = {0, 0, 0};
+    if(vertexType(id, colors) == 1) {
+      triple_v.push_back(pm->vertices[id]);
+      triples_id.push_back(id);
+    }
+  }
+
+  printf("triple_v.size() = %lu\n", triple_v.size());
+
+  std::vector<SVector3> remaining_vel(triple_v.size(), SVector3(0, 0, 0));
+  std::vector<int> dom_colors(triple_v.size(), 0);
+  std::vector<std::vector<size_t>> triple_neighs;
+  if(triple_slip){
+    // move triple points with their two double neighbour and compute remaining
+    // velocity
+    triple_neighs.resize(triple_v.size());
+    for(size_t i = 0; i < triple_v.size(); ++i) {
+      PolyMesh::Vertex *vertex = triple_v[i];
+      size_t id = triples_id[i];
+      size_t m = vertex->data - 1;
+      printf("triple %lu id = %lu, m = %lu \n", i, id, m);
+      int colors[3] = {0, 0, 0};
+      vertexType(id, colors);
+      printf("colors = %d %d %d\n", colors[0], colors[1], colors[2]);
+      size_t priority_level = 100;
+      for(size_t c = 0; c < 3; ++c) {
+        size_t level = std::find(priority.begin(), priority.end(), colors[c]) -
+                      priority.begin();
+        if(level < priority_level) priority_level = level;
+      }
+      printf("priority_level = %lu\n", priority_level);
+      int dominant_color = priority[priority_level];
+      printf("dominant_color = %d\n", dominant_color);
+      if(colors[0] == -10 || colors[1] == -10 || colors[2] == -10) {
+        dominant_color = -10;
+      }
+      dom_colors[i] = dominant_color;
+
+      // find the neighbours with the pm
+      std::vector<size_t> neighbours;
+      std::vector<PolyMesh::Vertex *> v_neighs;
+      findNDoubleNeighbours(vertex, &v_neighs, 1, dominant_color);
+      PolyMesh::Vertex *n1 = v_neighs[0];
+      PolyMesh::Vertex *n2 = v_neighs[2];
+      printf("i'm here \n");
+      if(n1->data == -1 || n2->data == -1) {
+        printf("n1 == nullptr || n2 == nullptr\n");
+        exit(1);
+      }
+
+      // move triple point with two neighbours
+      size_t m_n1 = n1->data - 1;
+      size_t m_n2 = n2->data - 1;
+      double n1_pos[2] = {pos[3 * m_n1], pos[3 * m_n1 + 1]};
+      double n2_pos[2] = {pos[3 * m_n2], pos[3 * m_n2 + 1]};
+      double dist_n1 =
+        sqrt((n1_pos[0] - pos[3 * m]) * (n1_pos[0] - pos[3 * m]) +
+            (n1_pos[1] - pos[3 * m + 1]) * (n1_pos[1] - pos[3 * m + 1]));
+      double dist_n2 =
+        sqrt((n2_pos[0] - pos[3 * m]) * (n2_pos[0] - pos[3 * m]) +
+            (n2_pos[1] - pos[3 * m + 1]) * (n2_pos[1] - pos[3 * m + 1]));
+      double n1_weight = dist_n2 / (dist_n1 + dist_n2);
+      double n2_weight = dist_n1 / (dist_n1 + dist_n2);
+
+      double v_x = (n1_weight * v[m_n1].x() + n2_weight * v[m_n2].x());
+      double v_y = (n1_weight * v[m_n1].y() + n2_weight * v[m_n2].y());
+      pos[3 * m] += dt * v_x;
+      pos[3 * m + 1] += dt * v_y;
+      pos[3 * m + 2] = 0;
+
+      remaining_vel[i] = SVector3(v[m].x() - v_x, v[m].y() - v_y, 0);
+
+      // stock a certain number of 4 neighbours from both side
+      triple_neighs[i].resize(9);
+      findNDoubleNeighbours(vertex, &v_neighs, 4, dominant_color);
+      for(size_t j = 0; j < 9; ++j) {
+        triple_neighs[i][j] = v_neighs[j]->data - 1;
+      }
+    }
+  } else {
+    for(size_t i = 0; i < triple_v.size(); ++i) {
+      PolyMesh::Vertex *vertex = triple_v[i];
+      size_t id = triples_id[i];
+      size_t m = vertex->data - 1;
+      remaining_vel[i] = SVector3(v[m].x(), v[m].y(), 0);
+    }
+  }
+
+  printf("before move double points\n");
+
+  // move double points
+  for(size_t i = 0; i < v.size(); ++i) {
+    int id = findVertex(i, dummy);
+    if(id == -1) continue;
+    int colors[3] = {0, 0, 0};
+    if(vertexType(id, colors) == 0) {
+      pos[3 * i] += dt * v[i].x();
+      pos[3 * i + 1] += dt * v[i].y();
+      pos[3 * i + 2] += 0;
+    }
+  }
+
+  FILE *f2 = fopen("after_movedouble.txt", "w");
+  printInterfaces(f2);
+  fclose(f2);
+
+  printf("after move double points\n");
+
+  triple_points.clear();
+  on_edge_triples.clear();
+
+  if(triple_slip){
+    // finalize move of triple points
+    for(size_t i = 0; i < triple_v.size(); ++i) {
+      int dominant_color = dom_colors[i];
+      size_t m = triple_v[i]->data - 1;
+      // chose direction
+      int direction = 0;
+      double n1_pos[2] = {pos[3 * triple_neighs[i][3]],
+                          pos[3 * triple_neighs[i][3] + 1]};
+      double n2_pos[2] = {pos[3 * triple_neighs[i][5]],
+                          pos[3 * triple_neighs[i][5] + 1]};
+      double m_pos[2] = {pos[3 * m], pos[3 * m + 1]};
+      double edge1[2] = {n1_pos[0] - m_pos[0], n1_pos[1] - m_pos[1]};
+      double edge2[2] = {n2_pos[0] - m_pos[0], n2_pos[1] - m_pos[1]};
+
+      double dot1 =
+        edge1[0] * remaining_vel[i].x() + edge1[1] * remaining_vel[i].y();
+      double dot2 =
+        edge2[0] * remaining_vel[i].x() + edge2[1] * remaining_vel[i].y();
+
+      double dist_todo;
+      if(dot1 > dot2) {
+        printf("move node %lu in the direction of %lu\n", m, triple_neighs[i][3]);
+        direction = -1;
+        dist_todo =
+          dt * (dot1 / (sqrt(edge1[0] * edge1[0] + edge1[1] * edge1[1])));
+      }
+      else {
+        printf("move node %lu in the direction of %lu\n", m, triple_neighs[i][5]);
+        direction = 1;
+        dist_todo =
+          dt * (dot2 / (sqrt(edge2[0] * edge2[0] + edge2[1] * edge2[1])));
+      }
+
+      dist_todo = std::max(0.0, dist_todo);
+      double dist_done = 0;
+
+      // move in that direction
+      size_t current = 4;
+      while(dist_done < dist_todo) {
+        size_t current_m = triple_neighs[i][current];
+        size_t next_m = triple_neighs[i][current + direction];
+        double dist = sqrt((pos[3 * next_m] - pos[3 * current_m]) *
+                            (pos[3 * next_m] - pos[3 * current_m]) +
+                          (pos[3 * next_m + 1] - pos[3 * current_m + 1]) *
+                            (pos[3 * next_m + 1] - pos[3 * current_m + 1]));
+
+        if(dist_done + dist < dist_todo) {
+          switchMarkers(dominant_color, m, next_m, direction);
+          dist_done += dist;
+          current += direction;
+          if(current < 0 || current > 8) {
+            printf("displacement was more than 4 neighbours, that's a lot -> "
+                  "simu crashed? or dense neighbourhood?\n");
+            exit(1);
+          }
+        }
+        else {
+          double ratio = (dist_todo - dist_done) / dist;
+          pos[3 * m] =
+            pos[3 * current_m] + ratio * (pos[3 * next_m] - pos[3 * current_m]);
+          pos[3 * m + 1] = pos[3 * current_m + 1] +
+                          ratio * (pos[3 * next_m + 1] - pos[3 * current_m + 1]);
+          pos[3 * current_m + 2] = 0;
+          std::pair<size_t, std::pair<size_t, size_t>> p_m;
+          if (current == 4){
+            current_m = triple_neighs[i][current-direction];
+          }
+          if(current_m < next_m) { 
+            p_m = std::make_pair(current_m, std::make_pair(m, next_m)); 
+          } else {
+            p_m = std::make_pair(next_m, std::make_pair(m, current_m));
+          }
+
+          on_edge_triples.push_back(p_m);
+          triple_points.push_back(m);
+          break;
+        }
+      }
+    }
+  } else {
+    for(size_t i = 0; i < triple_v.size(); ++i) {
+      size_t m = triple_v[i]->data - 1;
+      pos[3 * m] += dt * remaining_vel[i].x();
+      pos[3 * m + 1] += dt * remaining_vel[i].y();
+      pos[3 * m + 2] = 0;
+      triple_points.push_back(m);
+    }
+  }
+
+  // printf("triple points moved\n");
+
+  // printf("interfaces after move : %lu \n", interfaces.size());
+  // for(size_t i = 0; i < interfaces.size(); ++i) {
+  //   printf("interface %lu\n", i);
+  //   for(size_t j = 0; j < interfaces[i].markers.size(); ++j) {
+  //     printf("%lu, ", interfaces[i].markers[j]);
+  //   }
+  //   printf("\n");
+  // }
+
+  return;
+}
+
+// void discreteFront::findDoubleNeighbours(PolyMesh::Vertex *vertex,
+//                                          std::vector<PolyMesh::Vertex *> *ns,
+//                                          int dominant_color)
+// {
+//   printf("in findDoubleNeighbours\n");
+//   printf("look for neighbours of %d\n", vertex->data - 1);
+//   PolyMesh::HalfEdge *he = vertex->he;
+//   PolyMesh::HalfEdge *bnd_he = nullptr;
+//   std::vector<PolyMesh::Vertex *> neighs;
+//   do {
+//     if(he->opposite == nullptr && dominant_color == -10) {
+//       neighs.push_back(he->next->v);
+//       bnd_he = he;
+//       break;
+//     }
+//     else if(he->opposite == nullptr && dominant_color != -10) {
+//       printf(
+//         "error in findDoubleNeighbours :opposite == null && dominant != 10
+//         \n");
+//       exit(1);
+//     }
+//     else if(he->f->data == dominant_color &&
+//             he->opposite->f->data != dominant_color) {
+//       neighs.push_back(he->next->v);
+//     }
+//     else if(he->f->data != dominant_color &&
+//             he->opposite->f->data == dominant_color) {
+//       neighs.push_back(he->next->v);
+//     }
+
+//     he = he->opposite->next;
+//   } while(he != vertex->he);
+
+//   if(bnd_he != nullptr) {
+//     he = bnd_he;
+//     do {
+//       if(he->next->next->opposite == nullptr && dominant_color == -10) {
+//         neighs.push_back(he->next->next->v);
+//         break;
+//       }
+//       he = he->next->next->opposite;
+//     } while(he != nullptr);
+//   }
+
+//   if(neighs.size() != 2) {
+//     printf("error in findDoubleNeighbours :neighs.size() != 2\n");
+//     exit(1);
+//   }
+//   printf("found neighs %lu %lu\n", neighs[0]->data - 1, neighs[1]->data - 1);
+//   for(size_t i = 0; i < neighs.size(); ++i) {
+//     int colors[3] = {0, 0, 0};
+//     if(vertexType(findVertex(neighs[i]->data - 1, nullptr), colors) == 1) {
+//       printf("is triple \n");
+//       std::vector<PolyMesh::Vertex *> new_ns;
+//       findDoubleNeighbours(neighs[i], &new_ns, dominant_color);
+//       if(new_ns[0]->data == vertex->data) { ns->push_back(new_ns[1]); }
+//       else {
+//         ns->push_back(new_ns[0]);
+//       }
+//     }
+//     else {
+//       printf("not triple\n");
+//       printf("neighs[%lu]->data = %d\n", i, neighs[i]->data);
+//       ns->push_back(neighs[i]);
+//     }
+//   }
+//   if(ns->size() != 2 || ns->at(0) == nullptr || ns->at(1) == nullptr) {
+//     printf("error in findDoubleNeighbours :n1 == nullptr || n2 ==
+//     nullptr\n"); printf("ns->size() = %lu\n", ns->size());
+//     printf("ns->at(0)-> data = %d \n", ns->at(0)->data);
+//     printf("ns->at(1)-> data = %d \n", ns->at(1)->data);
+//   }
+//   else {
+//     printf(" out of double : %d %d\n", ns->at(0)->data - 1,
+//      ns->at(1)->data - 1);
+//   }
+//   return;
+// }
+
+void discreteFront::findNDoubleNeighbours(PolyMesh::Vertex *vertex,
+                                          std::vector<PolyMesh::Vertex *> *ns,
+                                          size_t n, int dominant_color, bool with_triple)
+{
+  // printf("in findNDoubleNeighbours\n");
+  // if (with_triple){
+  //   printf("with triple\n");
+  // } else {
+  //   printf("without triple\n");
+  // }
+  PolyMesh::HalfEdge *he_pos = nullptr;
+  PolyMesh::HalfEdge *he_neg = nullptr;
+
+  // find first half edges
+  PolyMesh::HalfEdge *he = vertex->he;
+  PolyMesh::HalfEdge *bnd_he = nullptr;
+
+  do {
+    if(he->opposite == nullptr){
+      bnd_he = he;
+      break;
+    }
+    if(he->f->data == dominant_color && he->opposite->f->data != dominant_color) {
+      he_pos = he;
+    }
+    else if(he->f->data != dominant_color && he->opposite->f->data == dominant_color) {
+      he_neg = he->opposite;
+    }
+    he = he->opposite->next;
+  } while(he != vertex->he);
+
+  if(bnd_he!=nullptr){
+    he = bnd_he;
+    if(dominant_color==-10){
+      he_pos = he;
+    } else if (he->f->data == dominant_color){
+      he_pos = he;
+    } 
+
+    do {
+      if(he->next->next->opposite == nullptr) {
+        he_neg = he->next->next;
+        break;
+      }
+
+      he = he->next->next->opposite;
+
+      if(he->f->data == dominant_color && he->opposite->f->data != dominant_color) {
+        he_pos = he;
+      }
+      else if(he->f->data != dominant_color && he->opposite->f->data == dominant_color) {
+        he_neg = he;
+      }
+        
+      
+    } while(he != nullptr);
+  }
+
+  if(he_pos == nullptr || he_neg == nullptr) {
+    printf("error in findNDoubleNeighbours :he_pos == nullptr || he_neg == "
+           "nullptr\n");
+    exit(1);
+  }
+
+  // go in the direction of the first he and stock neighbours
+  ns->clear();
+  ns->resize(2 * n + 1);
+  ns->at(n) = vertex;
+  he = he_pos;
+  for(size_t i = 0; i < n; ++i) {
+    PolyMesh::HalfEdge *old_he = he;
+    int colors[3] = {0, 0, 0};
+    int triple_ =
+      vertexType(findVertex(he->next->v->data - 1, nullptr), colors);
+    if(triple_ == 1 && with_triple==false) { i--; }
+    else {
+      ns->at(n + i + 1) = he->next->v;
+    }
+
+    do {
+      if(he->next->opposite == nullptr) {
+        he = he->next;
+        break;
+      }
+      else if(he->next->f->data == dominant_color &&
+              he->next->opposite->f->data != dominant_color) {
+        he = he->next;
+        break;
+      }
+      he = he->next->opposite;
+    } while(he != old_he);
+  }
+
+  // go in the direction of the second he and stock neighbours
+  he = he_neg;
+  for(size_t i = 0; i < n; ++i) {
+    PolyMesh::HalfEdge *old_he = he;
+    int colors[3] = {0, 0, 0};
+    int triple_ = vertexType(findVertex(he->v->data - 1, nullptr), colors);
+    if(triple_ == 1 && with_triple==false) { i--; }
+    else {
+      ns->at(n - i - 1) = he->v;
+    }
+    do {
+      if(he->next->next->opposite == nullptr) {
+        he = he->next->next;
+        break;
+      }
+      else if(he->next->next->f->data == dominant_color &&
+              he->next->next->opposite->f->data != dominant_color) {
+        he = he->next->next;
+        break;
+      }
+      he = he->next->next->opposite;
+    } while(he != old_he);
+  }
+
+  // printf("found neighbours of %d : \n", vertex->data - 1);
+  // for(size_t i = 0; i < ns->size(); ++i) {
+  //   if(ns->at(i) == nullptr) { printf("nullptr\n"); }
+  //   else {
+  //     printf("%d, ", ns->at(i)->data - 1);
+  //   }
+  // }
+
+  return;
+}
+
+void discreteFront::switchMarkers(int dominant, size_t m, size_t next,
+                                  int direction)
+{
+  printf("switchMarkers : %lu, %lu\n", m, next);
+  printf("dominant = %d\n", dominant);
+  // check for all interface
+  for(size_t i = 0; i < interfaces.size(); ++i) {
+    size_t n = interfaces[i].markers.size();
+    auto it =
+      std::find(interfaces[i].markers.begin(), interfaces[i].markers.end(), m);
+    if(it == interfaces[i].markers.end()) continue;
+    size_t id_m = it - interfaces[i].markers.begin();
+    auto it_next = std::find(interfaces[i].markers.begin(),
+                             interfaces[i].markers.end(), next);
+    if(interfaces[i].tag == dominant) { // dominant interface -> switch
+      printf("dominant interface\n");
+      size_t id_next = it_next - interfaces[i].markers.begin();
+      interfaces[i].markers[id_m] = next;
+      interfaces[i].markers[id_next] = m;
+    } else { // normal interface -> add or delete
+      if(it_next == interfaces[i].markers.end()) { // add to markers
+        printf("add to markers\n");
+        size_t next_m_interface = interfaces[i].markers[(id_m + 1) % n];
+        printf("next_m_interface = %lu\n", next_m_interface);
+        PolyMesh::Vertex *v;
+        int id_pm = findVertex(next_m_interface, v);
+        printf("id_pm = %d\n", id_pm);
+        int colors[3] = {0, 0, 0};
+        vertexType(id_pm, colors);
+        printf("colors = %d %d %d\n", colors[0], colors[1], colors[2]);
+        if(colors[0] == dominant) {
+          interfaces[i].markers.insert(it+1, next);
+        }
+        else {
+          interfaces[i].markers.insert(it, next);
+        }
+        printf("added\n");
+      }
+      else { // delete from markers
+        printf("delete from markers\n");
+        interfaces[i].markers.erase(it_next);
+      }
+    }
+  }
+}
+
+size_t discreteFront::nextDouble(size_t interface, size_t id_m, int direction)
+{
+  if(direction < 0)
+    direction = -1;
+  else
+    direction = 1;
+
+  size_t m = interfaces[interface].markers[id_m];
+  PolyMesh::Vertex *v;
+  int id_pm = findVertex(m, v);
+  size_t n = interfaces[interface].markers.size();
+  size_t m_next = interfaces[interface].markers[(id_m + direction + n) % n];
+  size_t iter = 2;
+  int colors[3] = {0, 0, 0};
+  while(vertexType(id_pm, colors) == 1) {
+    m_next = interfaces[interface].markers[(id_m + iter * direction + n) % n];
+    iter++;
+  }
+  return m_next;
+}
+
+int discreteFront::findVertex(size_t i, PolyMesh::Vertex *v)
+{
+  for(size_t j = 0; j < pm->vertices.size(); ++j) {
+    if(pm->vertices[j]->data == i + 1) {
+      v = pm->vertices[j];
+      return j;
+    }
+  }
+  return -1;
+}
+
+void discreteFront::buildSpatialSearchStructure()
+{
+  if(empty()) return;
+  for(size_t i = 0; i < pos.size(); i += 3) {
+    bbox += SPoint3(pos[i], pos[i + 1], pos[i + 2]);
+  }
+
+  sss.clear();
+  sss.resize(NX * NY);
+  for(size_t i = 0; i < interfaces.size(); ++i) {
+    for(size_t j = 0; j < interfaces[i].markers.size(); ++j) {
+      size_t n_m = interfaces[i].markers.size();
+      size_t m = interfaces[i].markers[j];
+      size_t mp1 = interfaces[i].markers[(j + 1) % n_m];
+
+      int IX, IY, JX, JY;
+      getCoordinates(pos[3 * m], pos[3 * m + 1], IX, IY);
+      getCoordinates(pos[3 * mp1], pos[3 * mp1 + 1], JX, JY);
+      for(size_t I = std::min(IX, JX); I <= std::max(IX, JX); I++) {
+        for(size_t J = std::min(IY, JY); J <= std::max(IY, JY); J++) {
+          sss[I + J * NX].push_back(std::make_pair(i, std::make_pair(m, mp1)));
+        }
+      }
+    }
+  }
+  // for(size_t j = 0; j < boundary->markers.size(); ++j) {
+  //   size_t n_m = boundary->markers.size();
+  //   size_t m = boundary->markers[j];
+  //   size_t mp1 = boundary->markers[(j + 1) % n_m];
+
+  //   int IX, IY, JX, JY;
+  //   getCoordinates(pos[3 * m], pos[3 * m + 1], IX, IY);
+  //   getCoordinates(pos[3 * mp1], pos[3 * mp1 + 1], JX, JY);
+  //   for(size_t I = std::min(IX, JX); I <= std::max(IX, JX); I++) {
+  //     for(size_t J = std::min(IY, JY); J <= std::max(IY, JY); J++) {
+  //       sss[I + J * NX].push_back(std::make_pair(-1, std::make_pair(m,
+  //       mp1)));
+  //     }
+  //   }
+  // }
+
+  return;
+}
+
+void discreteFront::buildSpatialSearchStructureInit()
+{
+  if(empty()) return;
+  for(size_t i = 0; i < pos.size(); i += 3) {
+    bbox += SPoint3(pos[i], pos[i + 1], pos[i + 2]);
+  }
+
+  sss.clear();
+  sss.resize(NX * NY);
+  for(size_t i = 0; i < interfaces.size(); ++i) {
+    for(size_t j = 0; j < interfaces[i].markers.size(); ++j) {
+      size_t n_m = interfaces[i].markers.size();
+      if(interfaces[i].loop == false && j == n_m - 1) continue;
+      size_t m = interfaces[i].markers[j];
+      size_t mp1 = interfaces[i].markers[(j + 1) % n_m];
+
+      int IX, IY, JX, JY;
+      getCoordinates(pos[3 * m], pos[3 * m + 1], IX, IY);
+      getCoordinates(pos[3 * mp1], pos[3 * mp1 + 1], JX, JY);
+      for(size_t I = std::min(IX, JX); I <= std::max(IX, JX); I++) {
+        for(size_t J = std::min(IY, JY); J <= std::max(IY, JY); J++) {
+          sss[I + J * NX].push_back(std::make_pair(i, std::make_pair(m, mp1)));
+        }
+      }
+    }
+  }
+  for(size_t j = 0; j < boundary->markers.size(); ++j) {
+    size_t n_m = boundary->markers.size();
+    size_t m = boundary->markers[j];
+    size_t mp1 = boundary->markers[(j + 1) % n_m];
+
+    int IX, IY, JX, JY;
+    getCoordinates(pos[3 * m], pos[3 * m + 1], IX, IY);
+    getCoordinates(pos[3 * mp1], pos[3 * mp1 + 1], JX, JY);
+    for(size_t I = std::min(IX, JX); I <= std::max(IX, JX); I++) {
+      for(size_t J = std::min(IY, JY); J <= std::max(IY, JY); J++) {
+        sss[I + J * NX].push_back(std::make_pair(-1, std::make_pair(m, mp1)));
+      }
+    }
+  }
+
+  return;
+}
+
+void discreteFront::removeFromSpatialSearchStructure(
+  std::pair<int, std::pair<size_t, size_t>> edge)
+{
+  size_t m = edge.second.first;
+  size_t mp1 = edge.second.second;
+  double a1[2] = {pos[3 * m], pos[3 * m + 1]};
+  double a2[2] = {pos[3 * mp1], pos[3 * mp1 + 1]};
+  int IMIN, IMAX, JMIN, JMAX;
+  getCoordinates(std::min(a1[0], a2[0]), std::min(a1[1], a2[1]), IMIN, JMIN);
+  getCoordinates(std::max(a1[0], a2[0]), std::max(a1[1], a2[1]), IMAX, JMAX);
+  for(size_t I = IMIN; I <= IMAX; I++) {
+    for(size_t J = JMIN; J <= JMAX; J++) {
+      size_t index = I + NX * J;
+      auto it = std::find(sss[index].begin(), sss[index].end(), edge);
+      if(it != sss[index].end()) sss[index].erase(it);
+    }
+  }
+}
+
+void discreteFront::addToSpatialSearchStructure(
+  std::pair<int, std::pair<size_t, size_t>> edge)
+{
+  int i = edge.first;
+  size_t m = edge.second.first;
+  size_t mp1 = edge.second.second;
+  double a1[2] = {pos[3 * m], pos[3 * m + 1]};
+  double a2[2] = {pos[3 * mp1], pos[3 * mp1 + 1]};
+  int IMIN, IMAX, JMIN, JMAX;
+  getCoordinates(std::min(a1[0], a2[0]), std::min(a1[1], a2[1]), IMIN, JMIN);
+  getCoordinates(std::max(a1[0], a2[0]), std::max(a1[1], a2[1]), IMAX, JMAX);
+  for(size_t I = IMIN; I <= IMAX; I++) {
+    for(size_t J = JMIN; J <= JMAX; J++) {
+      sss[I + J * NX].push_back(std::make_pair(i, std::make_pair(m, mp1)));
+    }
+  }
+}
+
+void discreteFront::intersectInterfaces(bool bnd)
+{
+  FILE *f = fopen("before_intersect.txt", "w");
+  printInterfaces(f);
+  fclose(f);
+  std::vector<std::pair<int, std::pair<size_t, size_t>>> todo;
+  for(size_t i = 0; i < interfaces.size(); ++i) {
+    for(size_t j = 0; j < interfaces[i].markers.size(); ++j) {
+      size_t n_m = interfaces[i].markers.size();
+      if(interfaces[i].loop == false && j == n_m - 1) continue;
+      size_t m = interfaces[i].markers[j];
+      size_t mp1 = interfaces[i].markers[(j + 1) % n_m];
+      todo.push_back(std::make_pair(i, std::make_pair(m, mp1)));
+    }
+  }
+  if(bnd) {
+    for(size_t j = 0; j < boundary->markers.size(); ++j) {
+      size_t n_m = boundary->markers.size();
+      size_t m = boundary->markers[j];
+      size_t mp1 = boundary->markers[(j + 1) % n_m];
+      todo.push_back(std::make_pair(-1, std::make_pair(m, mp1)));
+    }
+  }
+
+  size_t debug_counter = 0;
+
+  while(todo.size() > 0) {
+    std::pair<int, std::pair<size_t, size_t>> edge = todo.back();
+    todo.pop_back();
+
+    int i = edge.first;
+    size_t m = edge.second.first;
+    size_t mp1 = edge.second.second;
+    interface interface_i = i == -1 ? *boundary : interfaces[i];
+
+    double a1[2] = {pos[3 * m], pos[3 * m + 1]};
+    double a2[2] = {pos[3 * mp1], pos[3 * mp1 + 1]};
+
+    int IMIN, IMAX, JMIN, JMAX;
+    getCoordinates(std::min(a1[0], a2[0]), std::min(a1[1], a2[1]), IMIN, JMIN);
+    getCoordinates(std::max(a1[0], a2[0]), std::max(a1[1], a2[1]), IMAX, JMAX);
+    std::set<std::pair<size_t, std::pair<int, int>>> touched;
+    bool found = false;
+    for(size_t I = IMIN; I <= IMAX; I++) {
+      for(size_t J = JMIN; J <= JMAX; J++) {
+        size_t index = I + NX * J;
+
+        for(auto s : sss[index]) {
+          int s_i = s.first;
+          size_t s_m = s.second.first;
+          size_t s_mp1 = s.second.second;
+
+          if(touched.find(s) != touched.end()) continue;
+          touched.insert(s);
+          if(i > s_i)
+            continue; // only compute once intersections and allow interface
+                      // auto-intersecion
+          if(s_m == m || s_m == mp1 || s_mp1 == m || s_mp1 == mp1)
+            continue; // don't compute intersection with himself
+
+          if(i == s_i) { // compute auto-intersection only once
+            size_t it_s = std::find(interface_i.markers.begin(),
+                                    interface_i.markers.end(), s_m) -
+                          interface_i.markers.begin();
+            size_t it = std::find(interface_i.markers.begin(),
+                                  interface_i.markers.end(), m) -
+                        interface_i.markers.begin();
+            if(it_s > it) continue;
+          }
+
+          double a3[2] = {pos[3 * s_m], pos[3 * s_m + 1]};
+          double a4[2] = {pos[3 * s_mp1], pos[3 * s_mp1 + 1]};
+          double inter[2] = {0, 0};
+          double param[1] = {0};
+          int b_inter = computeIntersection(a1, a2, a3, a4, inter, param);
+          if(b_inter) {
+            debug_counter++;
+            if(debug_counter > 10) {
+              printf("debug_counter = %lu\n", debug_counter);
+              // exit(1);
+            }
+            printf("intersection %f %f \n", inter[0], inter[1]);
+            printf("markers %lu %lu %lu %lu \n", m, mp1, s_m, s_mp1);
+
+            // add new marker
+            size_t new_m = pos.size() / 3;
+            pos.push_back(inter[0]);
+            pos.push_back(inter[1]);
+            pos.push_back(0);
+
+            if(interface_i.tag != interfaces[s_i].tag) {
+              printf("different tags\n");
+              if(interface_i.tag < interfaces[s_i].tag){
+                std::pair<size_t, std::pair<size_t, size_t>> p_m;
+                p_m = std::make_pair(m, std::make_pair(new_m, mp1));
+                on_edge_triples.push_back(p_m);
+                printf("pushed %lu %lu %lu\n", m, new_m, mp1);
+              } else {
+                std::pair<size_t, std::pair<size_t, size_t>> p_m;
+                p_m = std::make_pair(s_m, std::make_pair(new_m, s_mp1));
+                on_edge_triples.push_back(p_m);
+                printf("pushed %lu %lu %lu\n", s_m, new_m, s_mp1);
+              }
+            }
+
+            // add and remove edge for m and mp1
+            for(size_t c = 0; c < 2; ++c) {
+              size_t m_ = c == 0 ? m : s_m;
+              size_t mp1_ = c == 0 ? mp1 : s_mp1;
+              for(int in = 0; in < interfaces.size(); in++) {
+                // find all occurence of m and mp1 in the interface
+                std::vector<size_t> occ_m;
+                auto it_m = std::find(interfaces[in].markers.begin(),
+                                      interfaces[in].markers.end(), m_);
+                while(it_m != interfaces[in].markers.end()) {
+                  occ_m.push_back(it_m - interfaces[in].markers.begin());
+                  it_m = std::find(it_m + 1, interfaces[in].markers.end(), m_);
+                }
+
+                std::vector<size_t> occ_mp1;
+                auto it_mp1 = std::find(interfaces[in].markers.begin(),
+                                        interfaces[in].markers.end(), mp1_);
+                while(it_mp1 != interfaces[in].markers.end()) {
+                  occ_mp1.push_back(it_mp1 - interfaces[in].markers.begin());
+                  it_mp1 =
+                    std::find(it_mp1 + 1, interfaces[in].markers.end(), mp1_);
+                }
+
+                for(size_t k1 = 0; k1 < occ_m.size(); ++k1) {
+                  for(size_t k2 = 0; k2 < occ_mp1.size(); ++k2) {
+                    size_t m1, m2;
+                    size_t id1 = occ_m[k1];
+                    size_t id2 = occ_mp1[k2];
+                    size_t n = interfaces[in].markers.size();
+
+                    if(id2 == (id1 + 1) % n) {
+                      m1 = m_;
+                      m2 = mp1_;
+                      printf(" found in interface %d : %lu %lu \n", in, m1, m2);
+                    }
+                    else if(id1 == (id2 + 1) % n) {
+                      m1 = mp1_;
+                      m2 = m_;
+                      id1 = id2;
+                      printf(" found in interface %d : %lu %lu \n", in, m1, m2);
+                    }
+                    else {
+                      printf("not found in interface %d for %lu, %lu \n", in,
+                             m_, mp1_);
+                      printf("id1 = %lu, id2 = %lu \n", id1, id2);
+                      continue;
+                    }
+
+                    // add new marker in the interfaces
+                    interfaces[in].markers.insert(
+                      interfaces[in].markers.begin() + id1 + 1, new_m);
+
+                    // remove edges in the todo list
+                    auto it =
+                      std::find(todo.begin(), todo.end(),
+                                std::make_pair(in, std::make_pair(m1, m2)));
+                    if(it != todo.end()) todo.erase(it);
+
+                    // add new edges in the todo list
+                    todo.push_back(
+                      std::make_pair(in, std::make_pair(m1, new_m)));
+                    todo.push_back(
+                      std::make_pair(in, std::make_pair(new_m, m2)));
+
+                    // remove old edges spatial search
+                    removeFromSpatialSearchStructure(
+                      std::make_pair(in, std::make_pair(m1, m2)));
+
+                    // add new edges spatial search
+                    addToSpatialSearchStructure(
+                      std::make_pair(in, std::make_pair(m1, new_m)));
+                    addToSpatialSearchStructure(
+                      std::make_pair(in, std::make_pair(new_m, m2)));
+                    
+                  }
+                }
+              }
+              if(bnd == true) {
+                printf("boundary \n");
+                // find all occurence of m and mp1 in the interface
+                std::vector<size_t> occ_m;
+                auto it_m = std::find(boundary->markers.begin(),
+                                      boundary->markers.end(), m_);
+                while(it_m != boundary->markers.end()) {
+                  occ_m.push_back(it_m - boundary->markers.begin());
+                  it_m = std::find(it_m + 1, boundary->markers.end(), m_);
+                }
+
+                std::vector<size_t> occ_mp1;
+                auto it_mp1 = std::find(boundary->markers.begin(),
+                                        boundary->markers.end(), mp1_);
+                while(it_mp1 != boundary->markers.end()) {
+                  occ_mp1.push_back(it_mp1 - boundary->markers.begin());
+                  it_mp1 = std::find(it_mp1 + 1, boundary->markers.end(), mp1_);
+                }
+
+                for(size_t k1 = 0; k1 < occ_m.size(); ++k1) {
+                  for(size_t k2 = 0; k2 < occ_mp1.size(); ++k2) {
+                    size_t m1, m2;
+                    size_t id1 = occ_m[k1];
+                    size_t id2 = occ_mp1[k2];
+                    size_t n = boundary->markers.size();
+                    printf("id1 = %lu, id2 = %lu \n", id1, id2);
+
+                    if(id2 == (id1 + 1) % n) {
+                      m1 = m_;
+                      m2 = mp1_;
+                      printf(" found in bnd : %lu %lu \n", m1, m2);
+                    }
+                    else if(id1 == (id2 + 1) % n) {
+                      m1 = mp1_;
+                      m2 = m_;
+                      id1 = id2;
+                      printf(" found in bnd : %lu %lu \n", m1, m2);
+                    }
+                    else {
+                      printf("not found in bnd for %lu, %lu \n", m_, mp1_);
+                      printf("id1 = %lu, id2 = %lu \n", id1, id2);
+                      continue;
+                    }
+
+                    // add new marker in the interfaces
+                    boundary->markers.insert(
+                      boundary->markers.begin() + id1 + 1, new_m);
+
+                    // // remove edges in the todo list
+                    auto it =
+                      std::find(todo.begin(), todo.end(),
+                                std::make_pair(-1, std::make_pair(m1, m2)));
+                    if(it != todo.end()) todo.erase(it);
+
+                    // add new edges in the todo list
+                    todo.push_back(
+                      std::make_pair(-1, std::make_pair(m1, new_m)));
+                    todo.push_back(
+                      std::make_pair(-1, std::make_pair(new_m, m2)));
+
+                    // remove old edges spatial search
+                    removeFromSpatialSearchStructure(
+                      std::make_pair(-1, std::make_pair(m1, m2)));
+
+                    // add new edges spatial search
+                    addToSpatialSearchStructure(
+                      std::make_pair(-1, std::make_pair(m1, new_m)));
+                    addToSpatialSearchStructure(
+                      std::make_pair(-1, std::make_pair(new_m, m2)));
+                  }
+                }
+              }
+            }
+            // printf("interfaces after adding marker %lu \n", new_m);
+            // for(size_t in = 0; in < interfaces.size(); in++) {
+            //   printf("interface %lu \n", in);
+            //   for(size_t j = 0; j < interfaces[in].markers.size(); ++j) {
+            //     printf("%lu ", interfaces[in].markers[j]);
+            //   }
+            //   printf("\n");
+            // }
+            char filename[100];
+            sprintf(filename, "intersect_%lu.txt", debug_counter);
+            FILE *f2 = fopen(filename, "w");
+            printInterfaces(f2);
+            fclose(f2);
+
+            found = true;
+            break;
+          }
+        }
+        if(found) break;
+      }
+      if(found) break;
+    }
+  }
+  // printf("interfaces \n");
+  // for(size_t i = 0; i < interfaces.size(); ++i) {
+  //   printf("interface %lu \n", i);
+  //   for(size_t j = 0; j < interfaces[i].markers.size(); ++j) {
+  //     printf("%lu ", interfaces[i].markers[j]);
+  //   }
+  //   printf("\n");
+  // }
+
+  printf("\n");
+  FILE *f3 = fopen("after_intersect.pos", "w");
+  printInterfaces(f3);
+  fclose(f3);
+}
+
+void discreteFront::addFreeForm(int tag, const std::vector<SVector3> &poly,
+                                const std::vector<size_t> &_corners, bool loop)
+{
+  std::vector<double> p;
+  for(size_t k = 0; k < poly.size(); k++) {
+    SVector3 p0 = poly[k];
+    p.push_back(p0.x());
+    p.push_back(p0.y());
+    p.push_back(0.);
+  }
+  discreteFront::instance()->addInterface(p, tag, _corners, loop);
+}
+
+void discreteFront::triangulateInterfaces()
+{
+  printf("inside new triangulate \n");
+  FILE *f = fopen("before_triangulate.txt", "w");
+  printInterfaces(f);
+  fclose(f);
+
+  printf("interfaces\n");
+  for(size_t i=0; i<interfaces.size(); ++i){
+    printf("interface %lu \n", i);
+    for(size_t j=0; j<interfaces[i].markers.size(); ++j){
+      printf("%lu ", interfaces[i].markers[j]);
+    }
+  }
+
+  size_t max_marker = getMaxMarker();
+  std::vector<bool> visited(max_marker + 1, false);
+  std::vector<int> pos2m(max_marker + 1, -1);
+  std::vector<int> m2pos(max_marker + 1, -1);
+
+  std::vector<double> pos2d;
+  std::vector<size_t> rec;
+
+  std::vector<bool> bool_edge_triple = std::vector<bool>(max_marker + 1, false);
+  std::vector<bool> bool_triple = std::vector<bool>(max_marker + 1, false);
+  for(size_t i = 0; i < triple_points.size(); ++i) {
+    bool_triple[triple_points[i]] = true;
+  }
+  for(size_t i = 0; i < on_edge_triples.size(); ++i) {
+    bool_edge_triple[on_edge_triples[i].first] = true;
+    bool_edge_triple[on_edge_triples[i].second.second] = true;
+  }
+
+  printf("after bool_edge_triple \n");
+  printf("on edge triple = %lu \n", on_edge_triples.size());
+  for(size_t i = 0; i < on_edge_triples.size(); ++i) {
+    printf("on edge triple %lu %lu %lu \n", on_edge_triples[i].first,
+           on_edge_triples[i].second.first, on_edge_triples[i].second.second);
+  }
+
+  for(size_t i = 0; i < interfaces.size(); ++i) {
+    size_t n_m = interfaces[i].markers.size();
+    for(size_t j = 0; j < n_m; ++j) {
+      visited[interfaces[i].markers[j]] = true;
+      if(interfaces[i].markers[j] == interfaces[i].markers[(j + 1) % n_m])
+        continue;
+
+      if(bool_triple[interfaces[i].markers[j]] &&
+         bool_triple[interfaces[i].markers[(j + 1) % n_m]])
+        continue;
+      if(bool_edge_triple[interfaces[i].markers[j]] &&
+         bool_triple[interfaces[i].markers[(j + 1) % n_m]])
+        continue;
+      if(bool_edge_triple[interfaces[i].markers[(j + 1) % n_m]] &&
+         bool_triple[interfaces[i].markers[j]])
+        continue;
+
+      rec.push_back(interfaces[i].markers[j]);
+      rec.push_back(interfaces[i].markers[(j + 1) % n_m]);
+    }
+  }
+  printf("after rec \n");
+
+  for(size_t i = 0; i < max_marker + 1; ++i) {
+    if(visited[i]) {
+      pos2m[pos2d.size() / 2] = i;
+      m2pos[i] = pos2d.size() / 2;
+      pos2d.push_back(pos[3 * i]);
+      pos2d.push_back(pos[3 * i + 1]);
+    }
+  }
+
+  // check if there is triple nodes on the same edge and correct rec if needed
+  std::vector<bool> done = std::vector<bool>(on_edge_triples.size(), false);
+  std::vector<std::vector<size_t>> edges_with_triples;
+  printf("on edge triples = %lu \n", on_edge_triples.size());
+  for(size_t o=0; o<on_edge_triples.size(); ++o) {
+    printf("on edge triple %lu %lu %lu \n", on_edge_triples[o].first,
+           on_edge_triples[o].second.first, on_edge_triples[o].second.second);
+  }
+  printf("triple points = %lu \n", triple_points.size());
+  for(size_t i=0; i< triple_points.size(); ++i) {
+    printf("triple points %lu \n", triple_points[i]);
+  }
+  if(on_edge_triples.size() > 0) {
+    for(size_t i = 0; i < on_edge_triples.size(); ++i) {
+      printf("on edge triple i=%lu \n", i);
+      if(done[i]) continue;
+      done[i] = true;
+      size_t m1 = on_edge_triples[i].first;
+      size_t m2 = on_edge_triples[i].second.second;
+      size_t triple_ = on_edge_triples[i].second.first;
+      std::vector<size_t> temp = {m1, triple_, m2};
+      size_t n_edges_ = edges_with_triples.size();
+      edges_with_triples.push_back(temp);
+      if (i == on_edge_triples.size() - 1) {
+        break;
+      }
+      for(size_t j = i + 1; j < on_edge_triples.size(); ++j) {
+        printf("on edge triple j= %lu \n", j);
+        if(done[j]) continue;
+        size_t m3 = on_edge_triples[j].first;
+        size_t m4 = on_edge_triples[j].second.second;
+        if(m1 == m3 && m2 == m4) {
+          printf("found triple on the same edge \n");
+          printf("edge i = %lu, edge j = %lu \n", i, j);
+          printf("edges with triples [i] size =  %lu \n", edges_with_triples[n_edges_].size());
+          printf("try to insert %lu \n", on_edge_triples[j].second.first);
+          printf("edges with triples [%lu] before insert \n", i);
+          for(size_t k = 0; k < edges_with_triples[n_edges_].size(); ++k) {
+            printf(" %lu ", edges_with_triples[n_edges_][k]);
+          }
+          done[j] = true;
+          edges_with_triples[n_edges_].insert(std::prev(edges_with_triples[n_edges_].end(),1),
+                                       on_edge_triples[j].second.first);
+
+          printf("edges with triples [%lu] after insert \n", n_edges_);
+          for(size_t k = 0; k < edges_with_triples[n_edges_].size(); ++k) {
+            printf(" %lu ", edges_with_triples[n_edges_][k]);
+          }
+        }
+      }
+    }
+
+    printf("edges with triples : %lu \n", edges_with_triples.size());
+    for(size_t i = 0; i < edges_with_triples.size(); ++i) {
+      printf("edges with triples %lu \n", i);
+      for(size_t j = 0; j < edges_with_triples[i].size(); ++j) {
+        printf(" %lu ", edges_with_triples[i][j]);
+      }
+      printf("\n");
+    }
+
+    for(size_t i = 0; i < edges_with_triples.size(); ++i) {
+      size_t m1 = edges_with_triples[i][0];
+      size_t m2 = edges_with_triples[i][edges_with_triples[i].size() - 1];
+      size_t n_m = edges_with_triples[i].size();
+      std::vector<std::pair<double, size_t>> parametric_t;
+      for(size_t j = 1; j < n_m - 1; ++j) {
+        size_t m = edges_with_triples[i][j];
+        double dm1_2 = (pos[3 * m1] - pos[3 * m]) * (pos[3 * m1] - pos[3 * m]) +
+                       (pos[3 * m1 + 1] - pos[3 * m + 1]) *
+                         (pos[3 * m1 + 1] - pos[3 * m + 1]);
+        double dm2_2 = (pos[3 * m2] - pos[3 * m]) * (pos[3 * m2] - pos[3 * m]) +
+                       (pos[3 * m2 + 1] - pos[3 * m + 1]) *
+                         (pos[3 * m2 + 1] - pos[3 * m + 1]);
+        double dm1 = sqrt(dm1_2);
+        double dm2 = sqrt(dm2_2);
+        double t = dm1 / (dm1 + dm2);
+        parametric_t.push_back(std::make_pair(t, j));
+      }
+
+      std::sort(parametric_t.begin(), parametric_t.end(),
+                [](std::pair<double, size_t> a, std::pair<double, size_t> b) {
+                  return a.first < b.first;
+                });
+
+      // rec.push_back(m1);
+      // printf("m1 = %lu \n", m1);
+      // for(size_t j = 0; j < parametric_t.size(); ++j) {
+      //   size_t m_t = edges_with_triples[i][parametric_t[j].second];
+      //   rec.push_back(m_t);
+      //   rec.push_back(m_t);
+      //   printf("m_t = %lu \n", m_t);
+      // }
+      // rec.push_back(m2);
+      printf("m2 = %lu \n", m2);
+    }
+  }
+
+  printf("rec to add \n");
+
+  std::vector<size_t> rec_mapped;
+  for(size_t i = 0; i < rec.size(); ++i) {
+    rec_mapped.push_back(m2pos[rec[i]]);
+  }
+
+  // printf(" mapping : \n");
+  // for(size_t i = 0; i < pos2m.size(); ++i) {
+  //   printf("pos : %lu -> m : %lu \n", i, pos2m[i]);
+  // }
+
+  // printf("rec \n");
+  // for(size_t i = 0; i < rec_mapped.size(); i+=2) {
+  //   // if(rec_mapped[i] != 986 && rec_mapped[i + 1] != 986) continue;
+  //   printf("mapped : %lu, %lu \n", rec_mapped[i], rec_mapped[i + 1]);
+  //   printf("rec marker : %lu, %lu \n", rec[i], rec[i + 1]);
+  // }
+
+
+
+  size_t n_m = pos2d.size() / 2;
+  SBoundingBox3d bbTri = bbox;
+  bbTri *= 1.3;
+  pos2d.push_back(bbTri.min().x());
+  pos2d.push_back(bbTri.min().y());
+  pos2d.push_back(bbTri.max().x());
+  pos2d.push_back(bbTri.min().y());
+  pos2d.push_back(bbTri.max().x());
+  pos2d.push_back(bbTri.max().y());
+  pos2d.push_back(bbTri.min().x());
+  pos2d.push_back(bbTri.max().y());
+
+  // printf("pos 2D = \n");
+  // for(size_t i=0; i<pos2d.size(); i+=2){
+  //   printf("%f %f \n", pos2d[i], pos2d[i+1]);
+  // }
+
+  std::vector<size_t> tri;
+  meshTriangulate2d(pos2d, tri, &rec_mapped);
+  for(size_t i = 0; i < tri.size(); i += 3) {
+    if(tri[i] > n_m || tri[i + 1] > n_m || tri[i + 2] > n_m) {
+      tri.erase(tri.begin() + i, tri.begin() + i + 3);
+      i -= 3;
+      continue;
+    }
+    double rotation = robustPredicates::orient2d(&pos2d[2 * (tri[i] - 1)],
+                                                 &pos2d[2 * (tri[i + 1] - 1)],
+                                                 &pos2d[2 * (tri[i + 2] - 1)]);
+    if(rotation < 0) {
+      size_t tmp = tri[i];
+      tri[i] = tri[i + 1];
+      tri[i + 1] = tmp;
+    }
+  }
+
+  pm->reset();
+  triangulation2PolyMesh(tri, pos2d, &pm);
+
+  std::sort(pm->vertices.begin(), pm->vertices.end(),
+            [](PolyMesh::Vertex *v1, PolyMesh::Vertex *v2) {
+              return v1->data < v2->data;
+            });
+  for(size_t i = 0; i < pm->vertices.size(); ++i) {
+    pm->vertices[i]->data = pos2m[i] + 1;
+  }
+  pm->print4debug(1);
+}
+
+void discreteFront::colorTriangles(bool bnd)
+{
+  if(Tree == nullptr) { createTree(); }
+  printTree(Tree, 0);
+
+  for(size_t i = 0; i < pm->faces.size(); ++i) {
+    PolyMesh::Face *face = pm->faces[i];
+    face->data = -10;
+
+    double center[2] = {0, 0};
+    center[0] = (face->he->v->position.x() + face->he->next->v->position.x() +
+                 face->he->next->next->v->position.x()) /
+                3.0;
+    center[1] = (face->he->v->position.y() + face->he->next->v->position.y() +
+                 face->he->next->next->v->position.y()) /
+                3.0;
+    // printf("center %f %f \n", center[0], center[1]);
+    if(bnd){
+      if(insideList(boundary->markers, center) == -1) {
+        pm->faces[i]->data = -10;
+        printf("i'm here : outside bnd \n");
+        continue;
+      }
+    }
+    
+
+    TreeNode *current = Tree;
+    std::vector<TreeNode *> stack;
+    while(true) {
+      stack.clear();
+      for(size_t l = 0; l < current->leafs.size(); ++l) {
+        std::vector<size_t> markers = interfaces[current->leafs[l]->id].markers;
+        if(insideList(markers, center) == 1) {
+          stack.push_back(current->leafs[l]);
+        }
+      }
+
+      // printf("stack size %lu \n", stack.size());
+
+      if(stack.size() == 0) { break; }
+      else if(stack.size() == 1) {
+        current = stack[0];
+      }
+      else {
+        printf("multiple interfaces %lu: %d, %d, ... \n", stack.size(),
+               stack[0]->tag, stack[1]->tag);
+        size_t priority_level = 100;
+        size_t id_interface_prior;
+        for(size_t l = 0; l < stack.size(); ++l) {
+          size_t priority_l =
+            std::find(priority.begin(), priority.end(), stack[l]->tag) -
+            priority.begin();
+          if(priority_l < priority_level) {
+            priority_level = priority_l;
+            id_interface_prior = l;
+          }
+        }
+        if(priority_level == 100) {
+          printf("error priority \n");
+          exit(0);
+        }
+        else {
+          printf("priority level %lu \n", priority_level);
+          printf("id_interface_prior %lu \n", id_interface_prior);
+          current = stack[id_interface_prior];
+        }
+      }
+    }
+
+    pm->faces[i]->data = current->tag;
+  }
+
+  pm->print4debug(2);
+
+  // keep only the triangles that are inside the domain
+  std::vector<size_t> tri;
+  std::vector<int> tri_tag;
+  for(size_t i = 0; i < pm->faces.size(); ++i) {
+    if(pm->faces[i]->data != -10) {
+      tri.push_back(pm->faces[i]->he->v->data);
+      tri.push_back(pm->faces[i]->he->next->v->data);
+      tri.push_back(pm->faces[i]->he->next->next->v->data);
+      tri_tag.push_back(pm->faces[i]->data);
+    }
+  }
+  std::vector<double> pos2d;
+  for(size_t i = 0; i < pos.size(); i += 3) {
+    pos2d.push_back(pos[i]);
+    pos2d.push_back(pos[i + 1]);
+  }
+  pm->reset();
+  triangulation2PolyMesh(tri, pos2d, &pm);
+  pm->print4debug(3);
+  for(size_t i = 0; i < pm->faces.size(); ++i) {
+    pm->faces[i]->data = tri_tag[i];
+  }
+  pm->print4debug(4);
+
+  for(size_t i = 0; i < pm->hedges.size(); ++i) {
+    PolyMesh::HalfEdge *he = pm->hedges[i];
+    PolyMesh::Vertex *v1 = he->v;
+    PolyMesh::Vertex *v2 = he->next->v;
+
+    double dist = (v1->position - v2->position).norm();
+    if(dist > 1e-6) continue;
+    if(he->opposite == nullptr) continue;
+    if(he->f->data != he->opposite->f->data) continue;
+    int edge_type = he->f->data;
+    if(edge_type < 0) continue;
+
+    PolyMesh::Vertex *v;
+    int id1 = findVertex(v1->data - 1, v);
+    int id2 = findVertex(v2->data - 1, v);
+    int colors1[3] = {0, 0, 0};
+    int colors2[3] = {0, 0, 0};
+    int triple1 = vertexType(id1, colors1);
+    int triple2 = vertexType(id2, colors2);
+    if(triple1 == 1 || triple2 == 1) continue;
+
+    int dom_color = -1;
+    if(colors1[0] < 0 && colors2[0] < 0) continue;
+    if(colors1[0] < 0) { dom_color = colors2[0]; }
+    else if(colors2[0] < 0) {
+      dom_color = colors1[0];
+    }
+    else {
+      dom_color = std::min(colors1[0], colors2[0]);
+    }
+
+    // color neighbours triangles of v1 and v2 with dom_color
+    for(size_t j = 0; j < 2; ++j) {
+      PolyMesh::Vertex *v = j == 0 ? v1 : v2;
+      PolyMesh::HalfEdge *current = v->he;
+      PolyMesh::HalfEdge *bnd = nullptr;
+      do {
+        if(current->opposite == nullptr) {
+          bnd = current;
+          break;
+        }
+        if(current->f->data == edge_type) { current->f->data = dom_color; }
+        current = current->opposite->next;
+      } while(current != v1->he);
+      if(bnd != nullptr) {
+        current = bnd;
+        do {
+          if(current->f->data == edge_type) { current->f->data = dom_color; }
+          current = current->next;
+        } while(current != bnd);
+      }
+    }
+  }
+  pm->print4debug(5);
+}
+
+void discreteFront::computeNewInterfaces()
+{
+  // printf("compute new interfaces \n");
+  // printf("interfaces size %lu \n", interfaces.size());
+  // for(size_t i = 0; i < interfaces.size(); ++i) {
+  //   printf("interface %lu \n", i);
+  //   for(size_t j = 0; j < interfaces[i].markers.size(); ++j) {
+  //     printf("%lu, ", interfaces[i].markers[j]);
+  //   }
+  //   printf("\n");
+  // }
+
+  std::vector<std::vector<size_t>> new_loops;
+  std::vector<interface> new_interfaces;
+  std::vector<int> interface_tag;
+
+  std::vector<bool> visited_hedge(pm->hedges.size(), false);
+  for(size_t i = 0; i < pm->hedges.size(); ++i) { pm->hedges[i]->data = i; }
+
+  for(size_t i = 0; i < pm->hedges.size(); ++i) {
+    PolyMesh::HalfEdge *he = pm->hedges[i];
+    if(visited_hedge[he->data]) continue;
+    if(he->opposite != nullptr) {
+      if(he->opposite->f->data == he->f->data) continue;
+    }
+
+    std::vector<PolyMesh::HalfEdge *> loop_he;
+    std::vector<size_t> loop_v;
+    rotate_pm(he, &loop_he, &loop_v);
+    for(auto h : loop_he) { visited_hedge[h->data] = true; }
+
+    // check if loop is counter clockwise
+    std::vector<double> loop_pos;
+    for(size_t j = 0; j < loop_v.size(); ++j) {
+      loop_v[j] = loop_v[j] - 1;
+      loop_pos.push_back(pos[3 * loop_v[j]]);
+      loop_pos.push_back(pos[3 * loop_v[j] + 1]);
+    }
+    printf("loop tag %d \n", he->f->data);
+
+    int clock = clockwise(loop_pos);
+    if(clock == -1) {
+      printf("counter clockwise loop : %d \n", loop_v.size());
+      new_loops.push_back(loop_v);
+      interface_tag.push_back(he->f->data);
+    }
+    else {
+      // printf("clockwise loop : %d \n", loop_v.size());
+      // for(size_t j = 0; j < loop_v.size(); ++j) { printf("%lu, ", loop_v[j]); }
+      // printf("\n");
+
+      // printf("loop pos \n");
+      // for(size_t j = 0; j < loop_pos.size(); ++j) {
+      //   printf("%f, ", loop_pos[j]);
+      // }
+      // printf("\n");
+    }
+  }
+
+  for(size_t i = 0; i < new_loops.size(); ++i) {
+    for(size_t j = 0; j < new_loops[i].size(); ++j) {
+      new_loops[i][j] = new_loops[i][j];
+    }
+    new_interfaces.push_back(
+      interface(i, interface_tag[i], new_loops[i], true));
+  }
+  // printf("new interfaces size %lu \n", new_interfaces.size());
+  // for(size_t i = 0; i < new_interfaces.size(); ++i) {
+  //   printf("interface %lu \n", i);
+  //   for(size_t j = 0; j < new_interfaces[i].markers.size(); ++j) {
+  //     printf("%lu, ", new_interfaces[i].markers[j]);
+  //   }
+  //   printf("\n");
+  // }
+
+  interfaces = new_interfaces;
+
+  triple_points.clear();
+  size_t max_m = getMaxMarker();
+  std::vector<bool> visited(max_m + 1, false);
+  for(size_t i = 0; i < interfaces.size(); ++i) {
+    for(size_t j = 0; j < interfaces[i].markers.size(); ++j) {
+      size_t m = interfaces[i].markers[j];
+      if(visited[m]) continue;
+      visited[m] = true;
+      PolyMesh::Vertex *dummy;
+      int id = findVertex(m, dummy);
+      int colors[3] = {0, 0, 0};
+      if(vertexType(id, colors) == 1) { triple_points.push_back(m); }
+    }
+  }
+
+  printf("triple points \n");
+  for(size_t i = 0; i < triple_points.size(); ++i) {
+    printf("%lu, ", triple_points[i]);
+  }
+
+  pm->print4debug(3);
+  FILE *f = fopen("new_interfaces.pos", "w");
+  printInterfaces(f);
+  fclose(f);
+}
+
+void discreteFront::rotate_pm(PolyMesh::HalfEdge *start,
+                              std::vector<PolyMesh::HalfEdge *> *loop_he,
+                              std::vector<size_t> *loop_v)
+{
+  int color = start->f->data;
+  PolyMesh::HalfEdge *current = start;
+  while(true) {
+    loop_he->push_back(current);
+    loop_v->push_back(current->v->data);
+
+    while(true) {
+      if(current->next->opposite == nullptr) {
+        current = current->next;
+        break;
+      }
+      else if(current->next->opposite->f->data != color) {
+        current = current->next;
+        break;
+      }
+      else {
+        current = current->next->opposite;
+      }
+    }
+
+    if(current == start) break;
+  }
+}
+
+void discreteFront::rotate_pm_vertex(
+  PolyMesh::HalfEdge *start, std::vector<PolyMesh::HalfEdge *> *loop_he,
+  std::vector<PolyMesh::Vertex *> *loop_vertex)
+{
+  int color = start->f->data;
+  PolyMesh::HalfEdge *current = start;
+  printf("color = %d \n", color);
+  while(true) {
+    loop_he->push_back(current);
+    loop_vertex->push_back(current->v);
+
+    while(true) {
+      if(current->next->opposite == nullptr) {
+        current = current->next;
+        break;
+      }
+      else if(current->next->opposite->f->data != color) {
+        current = current->next;
+        break;
+      }
+      else {
+        current = current->next->opposite;
+      }
+    }
+
+    if(current == start) break;
+  }
+}
+
+void discreteFront::createTree()
+{
+  // find initial t_node
+  // size_t initial_interface = -1;
+  // for(size_t i = 0; i < interfaces.size(); ++i) {
+  //   int inside = 0;
+  //   for(size_t j = 0; j < interfaces.size(); ++j) {
+  //     if(i == j) continue;
+  //     size_t iter = 0;
+  //     while(insideList(interfaces[j].markers,
+  //                      &pos[3 * interfaces[i].markers[iter]]) == 0) {
+  //       iter++;
+  //       if(iter == interfaces[i].markers.size()) {
+  //         iter--;
+  //         break;
+  //       }
+  //     }
+
+  //     int inside_ij = insideList(interfaces[j].markers,
+  //                                &pos[3 * interfaces[i].markers[iter]]);
+  //     if(inside_ij == 1) { inside = 1; }
+  //   }
+  //   if(inside == 0) { initial_interface = i; }
+  // }
+
+  TreeNode *init = newTreeNode(-1, boundary->tag);
+  for(size_t i = 0; i < interfaces.size(); ++i) {
+    TreeNode *node_i = newTreeNode(i, interfaces[i].tag);
+    init->leafs.push_back(node_i);
+  }
+
+  std::vector<TreeNode *> todo;
+  std::vector<TreeNode *> new_todo;
+  todo.push_back(init);
+  while(todo.size() > 0) {
+    for(size_t td = 0; td < todo.size(); td++) {
+      TreeNode *level = todo[td];
+      for(size_t i = 0; i < level->leafs.size(); ++i) {
+        for(size_t j = 0; j < level->leafs.size(); ++j) {
+          if(j == i) continue;
+          size_t iter = 0;
+          int inside = 0;
+          while(inside == 0) {
+            inside = insideList(
+              interfaces[level->leafs[j]->id].markers,
+              &pos[3 * interfaces[level->leafs[i]->id].markers[iter]]);
+            iter++;
+            if(iter == interfaces[level->leafs[i]->id].markers.size()) {
+              break;
+            }
+          }
+          if(inside == 1) {
+            level->leafs[j]->leafs.push_back(level->leafs[i]);
+            level->leafs.erase(level->leafs.begin() + i);
+            i--;
+            new_todo.push_back(level->leafs[j]);
+            break;
+          }
+        }
+      }
+    }
+    todo = new_todo;
+    new_todo.clear();
+  }
+  Tree = init;
+  printTree(Tree, 0);
+}
+
+void discreteFront::printTree(TreeNode *node, int depth)
+{
+  if(!node) return;
+
+  // Print the current node with indentation based on depth
+  for(int i = 0; i < depth; ++i)
+    printf(" "); // Indentation for visual hierarchy
+  printf("id: %d, tag: %d\n", node->id, node->tag);
+
+  // Recursively print each child node
+  for(TreeNode *child : node->leafs) { printTree(child, depth + 1); }
+}
+
+int discreteFront::insideList(std::vector<size_t> loop, double P[2])
+{
+  int wn = 0;
+  size_t n = loop.size();
+  for(size_t i = 0; i < loop.size(); ++i) {
+    double aa[2] = {pos[3 * loop[i]], pos[3 * loop[i] + 1]};
+    double bb[2] = {pos[3 * loop[(i + 1) % n]], pos[3 * loop[(i + 1) % n] + 1]};
+    if(aa[0] == P[0] && aa[1] == P[1]) return 0;
+    if(bb[0] == P[0] && bb[1] == P[1]) return 0;
+    double area = robustPredicates::orient2d(aa, bb, P);
+    if(aa[1] <= P[1]) {
+      if(bb[1] > P[1] && area < 0) wn++;
+    }
+    else if(bb[1] <= P[1]) {
+      if(area > 0) wn--;
+    }
+  }
+  if(wn < 0) { return 1; }
+  return -1;
+}
+
+void discreteFront::printInterfaces(FILE *f)
+{
+  fprintf(f, "View \"Interface \" {\n");
+  for(size_t i = 0; i < interfaces.size(); ++i) {
+    size_t n_m = interfaces[i].markers.size();
+    for(size_t j = 0; j < interfaces[i].markers.size(); ++j) {
+      fprintf(f, "SL(%12.5E,%12.5E,0,%12.5E,%12.5E,0){%d,%d};\n",
+              pos[3 * interfaces[i].markers[j]],
+              pos[3 * interfaces[i].markers[j] + 1],
+              pos[3 * interfaces[i].markers[(j + 1) % n_m]],
+              pos[3 * interfaces[i].markers[(j + 1) % n_m] + 1],
+              interfaces[i].tag, interfaces[i].tag);
+      fprintf(f, "T3(%12.5E, %12.5E, 0.01, 0){'%d'};\n",
+              pos[3 * interfaces[i].markers[j]],
+              pos[3 * interfaces[i].markers[j] + 1], interfaces[i].markers[j]);
+    }
+  }
+
+  size_t n_m = boundary->markers.size();
+  for(size_t j = 0; j < boundary->markers.size(); ++j) {
+    fprintf(f, "SL(%12.5E,%12.5E,0,%12.5E,%12.5E,0){%d,%d};\n",
+            pos[3 * boundary->markers[j]], pos[3 * boundary->markers[j] + 1],
+            pos[3 * boundary->markers[(j + 1) % n_m]],
+            pos[3 * boundary->markers[(j + 1) % n_m] + 1], boundary->tag,
+            boundary->tag);
+    fprintf(f, "T3(%12.5E, %12.5E, 0.01, 0){'%d'};\n",
+            pos[3 * boundary->markers[j]], pos[3 * boundary->markers[j] + 1],
+            boundary->markers[j]);
+  }
+  fprintf(f, "};\n");
+}
+
+void discreteFront::setBoundaryFromMesh(std::vector<double> *bnd_pos)
+{
+  // get the boundary from the mesh
+  std::vector<std::pair<size_t, size_t>> bnd;
+  meshRelaying::instance()->getBnd1d(&bnd);
+
+  std::vector<size_t> loop;
+  size_t start = bnd[0].first;
+  size_t prev = start;
+  size_t current = bnd[0].second;
+  loop.push_back(start);
+  loop.push_back(current);
+  while(true) {
+    auto it =
+      std::find_if(bnd.begin(), bnd.end(), [&](std::pair<size_t, size_t> p) {
+        if(p.first == current && p.second != prev) { return true; }
+        else if(p.second == current && p.first != prev) {
+          return true;
+        }
+        return false;
+      });
+    if(it == bnd.end()) { break; }
+
+    if(it->first == current) {
+      prev = current;
+      current = it->second;
+    }
+    else {
+      prev = current;
+      current = it->first;
+    }
+    if(current == start) { break; }
+    loop.push_back(current);
+  }
+
+  std::vector<double> nodes_positions;
+  meshRelaying::instance()->getNodesPosition(nodes_positions);
+  std::vector<double> pos2d;
+  std::vector<size_t> markers_bnd;
+  for(size_t i = 0; i < loop.size(); ++i) {
+    pos.push_back(nodes_positions[3 * loop[i]]);
+    pos.push_back(nodes_positions[3 * loop[i] + 1]);
+    pos.push_back(0);
+    bnd_pos->push_back(nodes_positions[3 * loop[i]]);
+    bnd_pos->push_back(nodes_positions[3 * loop[i] + 1]);
+    bnd_pos->push_back(0);
+    markers_bnd.push_back(pos.size() / 3 - 1);
+
+    pos2d.push_back(nodes_positions[3 * loop[i]]);
+    pos2d.push_back(nodes_positions[3 * loop[i] + 1]);
+  }
+
+  int clock = clockwise(pos2d);
+  if(clock == 1) { std::reverse(markers_bnd.begin(), markers_bnd.end()); }
+
+  boundary->markers = markers_bnd;
+}
+
+void discreteFront::redistFront(double lc)
+{
+  // printf("redistFront, interfaces before : %lu \n", interfaces.size());
+  // for(size_t i = 0; i < interfaces.size(); ++i) {
+  //   printf("interface %lu \n", i);
+  //   for(size_t j = 0; j < interfaces[i].markers.size(); ++j) {
+  //     printf("%lu, ", interfaces[i].markers[j]);
+  //   }
+  //   printf("\n");
+  // }
+
+  FILE *f2 = fopen("before_redist.pos", "w");
+  printInterfaces(f2);
+  fclose(f2);
+  std::vector<std::pair<size_t, size_t>> to_split;
+  std::vector<std::vector<double>> to_add;
+  std::vector<std::pair<size_t, size_t>> to_remove;
+
+  std::vector<int> bnd_markers;
+  getBndMarkers(&bnd_markers);
+
+  std::vector<int> solid_markers;
+  getSolidMarkers(&solid_markers);
+
+  for(size_t i = 0; i < interfaces.size(); ++i) {
+    size_t n_m = interfaces[i].markers.size();
+    for(size_t j = 0; j < n_m; ++j) {
+      size_t m1 = std::min(interfaces[i].markers[j],
+                           interfaces[i].markers[(j + 1) % n_m]);
+      size_t m2 = std::max(interfaces[i].markers[j],
+                           interfaces[i].markers[(j + 1) % n_m]);
+
+      if(bnd_markers[m1]==1 && bnd_markers[m2]==1) continue;
+      if(solid_markers[m1]==1 && solid_markers[m2]==1) continue;
+
+      double x1[2] = {pos[3 * m1], pos[3 * m1 + 1]};
+      double x2[2] = {pos[3 * m2], pos[3 * m2 + 1]};
+      double d = sqrt((x1[0] - x2[0]) * (x1[0] - x2[0]) +
+                      (x1[1] - x2[1]) * (x1[1] - x2[1]));
+      if(d > 1.5 * lc) { to_split.push_back(std::make_pair(m1, m2)); }
+      else if(d < 0.1 * lc) {
+        to_remove.push_back(std::make_pair(m1, m2));
+      }
+    }
+  }
+  std::sort(to_split.begin(), to_split.end());
+  to_split.erase(std::unique(to_split.begin(), to_split.end()), to_split.end());
+  std::sort(to_remove.begin(), to_remove.end());
+  to_remove.erase(std::unique(to_remove.begin(), to_remove.end()),
+                  to_remove.end());
+
+  printf("to split size %lu \n", to_split.size());
+  printf("to remove size %lu \n", to_remove.size());
+
+  // add edges
+  for(size_t i = 0; i < to_split.size(); ++i) {
+    size_t id_new = pos.size() / 3;
+    std::pair<size_t, size_t> s = to_split[i];
+    size_t m1 = s.first;
+    size_t m2 = s.second;
+
+    double x1[2] = {pos[3 * m1], pos[3 * m1 + 1]};
+    double x2[2] = {pos[3 * m2], pos[3 * m2 + 1]};
+    double d = sqrt((x1[0] - x2[0]) * (x1[0] - x2[0]) +
+                    (x1[1] - x2[1]) * (x1[1] - x2[1]));
+    int n_to_add = int((d - 0.5 * lc) / lc);
+
+    printf("split %lu %lu with %lu points \n", m1, m2, n_to_add);
+    for(size_t j = 0; j < n_to_add; ++j) {
+      pos.push_back(x1[0] + (j + 1) * (x2[0] - x1[0]) / (n_to_add + 1));
+      pos.push_back(x1[1] + (j + 1) * (x2[1] - x1[1]) / (n_to_add + 1));
+      pos.push_back(0);
+      printf("add node %lu (vs pos/3 = %lu ) at (%f,%f) \n", id_new + j,
+             (pos.size() / 3) - 1, pos[3 * (id_new + j)],
+             pos[3 * (id_new + j) + 1]);
+    }
+    printf("m1 pos = (%f, %f) ; m2 pos = (%f, %f)  -> mean = (%f, %f) \n",
+           pos[3 * m1], pos[3 * m1 + 1], pos[3 * m2], pos[3 * m2 + 1],
+           0.5 * (pos[3 * m1] + pos[3 * m2]),
+           0.5 * (pos[3 * m1 + 1] + pos[3 * m2 + 1]));
+    for(size_t i = 0; i < interfaces.size(); ++i) {
+      auto it1 = std::find(interfaces[i].markers.begin(),
+                           interfaces[i].markers.end(), m1);
+      auto it2 = std::find(interfaces[i].markers.begin(),
+                           interfaces[i].markers.end(), m2);
+      if(it1 == interfaces[i].markers.end() ||
+         it2 == interfaces[i].markers.end())
+        continue;
+
+      size_t id1 = it1 - interfaces[i].markers.begin();
+      size_t id2 = it2 - interfaces[i].markers.begin();
+      size_t n = interfaces[i].markers.size();
+
+      bool end1 = false;
+      bool end2 = false;
+      if(id1 == n - 1) { end1 = true; }
+      if(id2 == n - 1) { end2 = true; }
+
+      if((id1 + 1) % n == id2) {
+        printf("it1\n");
+        for(size_t j = 0; j < n_to_add; ++j) {
+          if(end1) {
+            printf("inserted %lu at the end \n", id_new + j);
+            interfaces[i].markers.push_back(id_new + j);
+          }
+          else {
+            printf("inserted %lu at place id = %lu \n", id_new + j,
+                   (id1 + 1 + j));
+            interfaces[i].markers.insert(it1 + 1 + j, id_new + j);
+          }
+        }
+      }
+      else if((id2 + 1) % n == id1) {
+        printf("it2\n");
+        for(size_t j = 0; j < n_to_add; ++j) {
+          if(end2) {
+            printf("inserted %lu at the end \n", id_new + j);
+            interfaces[i].markers.push_back(id_new + j);
+          }
+          else {
+            printf("inserted %lu at place id = %lu \n",
+                   id_new + (n_to_add - 1 - j),
+                   (id2 + 1 + j) );
+            interfaces[i].markers.insert(it2 + 1 + j,
+                                         id_new + (n_to_add - 1 - j));
+          }
+        }
+      }
+    }
+  }
+  printf("done splitting \n");
+  FILE *f = fopen("after_split.pos", "w");
+  printInterfaces(f);
+  fclose(f);
+
+  size_t max_m = getMaxMarker();
+  std::vector<int> is_corner(max_m+1, 0);
+  for(size_t c=0; c<corners.size(); c++) {
+    // printf("corner %lu / %lu\n", corners[c], max_m);
+
+    is_corner[corners[c]] = 1;
+  }
+
+  // remove edges
+  for(size_t i_r = 0; i_r < to_remove.size(); ++i_r) {
+    std::pair<size_t, size_t> r = to_remove[i_r];
+    size_t m1 = r.first;
+    size_t m2 = r.second;
+    // printf("remove %lu %lu \n", m1, m2);
+    double mean_pos[2] = {0.5 * (pos[3 * m1] + pos[3 * m2]),
+                          0.5 * (pos[3 * m1 + 1] + pos[3 * m2 + 1])};
+
+    if(is_corner[m1] == 1 || is_corner[m2] == 1) {
+      // printf("corner point \n");
+      continue;
+    }
+    int colors[3] = {0, 0, 0};
+    PolyMesh::Vertex *v;
+    int triple1 = vertexType(findVertex(m1, v), colors);
+    int triple2 = vertexType(findVertex(m2, v), colors);
+
+    if(triple1 == 1 || triple2 == 1) {
+      printf("triple points \n");
+      continue;
+    }
+
+    for(size_t i = 0; i < interfaces.size(); ++i) {
+      auto it1 = std::find(interfaces[i].markers.begin(),
+                           interfaces[i].markers.end(), m1);
+      auto it2 = std::find(interfaces[i].markers.begin(),
+                           interfaces[i].markers.end(), m2);
+      if(it1 == interfaces[i].markers.end() ||
+         it2 == interfaces[i].markers.end())
+        continue;
+
+      size_t id1 = it1 - interfaces[i].markers.begin();
+      size_t id2 = it2 - interfaces[i].markers.begin();
+      size_t n = interfaces[i].markers.size();
+
+      if(n < 4) continue;
+
+      if((id1 + 1) % n != id2 && (id2 + 1) % n != id1) continue;
+
+      if(triple1 != 1 && triple2 != 1) {
+        printf(" marker %lu set at mean position (%f, %f) \n", m2, mean_pos[0],
+               mean_pos[1]);
+        pos[3 * m2] = mean_pos[0];
+        pos[3 * m2 + 1] = mean_pos[1];
+      }
+
+      if(triple1 == 1) {
+        printf("triple1 \n");
+        int only_type2 = checkIfOnlyType(i, m2);
+        if(only_type2 != 1) {
+          printf("not onlytype2 -> deleted marker : %lu \n",
+                 interfaces[i].markers[it2 - interfaces[i].markers.begin()]);
+          interfaces[i].markers.erase(it2);
+        }
+      }
+      else if(triple2 == 1) {
+        printf("triple2 \n");
+        int only_type1 = checkIfOnlyType(i, m1);
+        if(only_type1 != 1) {
+          printf("not onlytype1 -> deleted marker : %lu \n",
+                 interfaces[i].markers[it1 - interfaces[i].markers.begin()]);
+          interfaces[i].markers.erase(it1);
+        }
+      }
+      else {
+        printf("deleted marker : %lu \n",
+               interfaces[i].markers[it1 - interfaces[i].markers.begin()]);
+        int only_type1 = checkIfOnlyType(i, m1);
+        if(only_type1 == 1) {
+          int only_type2 = checkIfOnlyType(i, m2);
+          if(only_type2 == 1) {
+            printf("both are only type -> weird if their not triple... \n");
+            continue;
+          }
+          else {
+            interfaces[i].markers.erase(it2);
+          }
+        }
+        else {
+          interfaces[i].markers.erase(it1);
+        }
+      }
+    }
+  }
+
+  FILE *f3 = fopen("after_redist.pos", "w");
+  printInterfaces(f3);
+  fclose(f3);
+
+  triangulateInterfaces();
+  colorTriangles();
+
+  // printf("new interfaces after redist : %lu \n", interfaces.size());
+  // for(size_t i = 0; i < interfaces.size(); ++i) {
+  //   printf("interface %lu \n", i);
+  //   for(size_t j = 0; j < interfaces[i].markers.size(); ++j) {
+  //     printf("%lu, ", interfaces[i].markers[j]);
+  //   }
+  //   printf("\n");
+  // }
+}
+
+int discreteFront::checkIfOnlyType(size_t id_interface, size_t marker)
+{
+  int colors_ref[3] = {0, 0, 0};
+  PolyMesh::Vertex *v;
+  int id_marker = findVertex(marker, v);
+  if (id_marker == -1) {
+    printf(" it's a new marker \n");
+    return 0;
+  }
+  int triple_ref = vertexType(id_marker, colors_ref);
+
+  for(size_t j = 0; j < interfaces[id_interface].markers.size(); ++j) {
+    if(interfaces[id_interface].markers[j] == marker) continue;
+    int colors[3] = {0, 0, 0};
+    int id = findVertex(interfaces[id_interface].markers[j], v);
+    if(id == -1) {
+      printf(" it's a new marker in the interface \n");
+      continue;
+    }
+    int triple = vertexType(id, colors);
+    if(triple != triple_ref) { continue; }
+    else {
+      if(triple == 1) {
+        if(colors[0] == colors_ref[0] && colors[1] == colors_ref[1] &&
+           colors[2] == colors_ref[2]) {
+          return 0;
+        }
+      }
+      else {
+        if(colors[0] == colors_ref[0] && colors[1] == colors_ref[1]) {
+          return 0;
+        }
+      }
+    }
+  }
+  return 1;
+}
+
+void discreteFront::initFront(std::vector<double> points,
+                              std::vector<int> concentration)
+{
+  if(boundary->markers.size() == 0) {
+    std::vector<double> bnd_pos;
+    setBoundaryFromMesh(&bnd_pos);
+  }
+
+  buildSpatialSearchStructureInit();
+  intersectInterfaces(true);
+  size_t max_marker = getMaxMarker();
+  std::vector<bool> visited(max_marker + 1, false);
+  std::vector<int> pos2m(max_marker + 1, -1);
+  std::vector<int> m2pos(max_marker + 1, -1);
+
+  std::vector<double> pos2d;
+  std::vector<size_t> rec;
+  for(size_t i = 0; i < boundary->markers.size(); ++i) {
+    visited[boundary->markers[i]] = true;
+    rec.push_back(boundary->markers[i]);
+    rec.push_back(boundary->markers[(i + 1) % boundary->markers.size()]);
+  }
+
+  for(size_t i = 0; i < interfaces.size(); ++i) {
+    size_t n_m = interfaces[i].markers.size();
+    // printf("interface %lu, loop = %d : ", i, interfaces[i].loop);
+    for(size_t j = 0; j < n_m; ++j) {
+      visited[interfaces[i].markers[j]] = true;
+      // printf("%lu,", interfaces[i].markers[j]);
+      if(interfaces[i].loop == false && j == n_m - 1) continue;
+      rec.push_back(interfaces[i].markers[j]);
+      rec.push_back(interfaces[i].markers[(j + 1) % n_m]);
+    }
+  }
+
+  for(size_t i=0; i<rec.size(); i+=2) {
+    printf("rec %lu %lu \n", rec[i], rec[i+1]);
+  }
+
+  for(size_t i = 0; i < max_marker + 1; ++i) {
+    if(visited[i]) {
+      pos2m[pos2d.size() / 2] = i;
+      m2pos[i] = pos2d.size() / 2;
+      pos2d.push_back(pos[3 * i]);
+      pos2d.push_back(pos[3 * i + 1]);
+      bbox += SPoint3(pos[3 * i], pos[3 * i + 1], 0);
+    }
+  }
+
+  std::vector<size_t> rec_mapped;
+  for(size_t i = 0; i < rec.size(); ++i) {
+    rec_mapped.push_back(m2pos[rec[i]]);
+  }
+
+  size_t n_m = pos2d.size() / 2;
+  SBoundingBox3d bbTri = bbox;
+  bbTri *= 1.3;
+  pos2d.push_back(bbTri.min().x());
+  pos2d.push_back(bbTri.min().y());
+  pos2d.push_back(bbTri.max().x());
+  pos2d.push_back(bbTri.min().y());
+  pos2d.push_back(bbTri.max().x());
+  pos2d.push_back(bbTri.max().y());
+  pos2d.push_back(bbTri.min().x());
+  pos2d.push_back(bbTri.max().y());
+
+  // printf("pos2d size %lu \n", pos2d.size());
+  // for(size_t i = 0; i < pos2d.size(); i += 2) {
+  //   printf("%f, %f \n", pos2d[i], pos2d[i + 1]);
+  // }
+
+  // printf("rec_mapped size %lu \n", rec_mapped.size());
+  // for(size_t i = 0; i < rec_mapped.size(); i += 2) {
+  //   printf("%lu, %lu \n", rec_mapped[i], rec_mapped[i + 1]);
+  // }
+
+  std::vector<size_t> tri;
+  meshTriangulate2d(pos2d, tri, &rec_mapped);
+  for(size_t i = 0; i < tri.size(); i += 3) {
+    // if(tri[i] > n_m || tri[i + 1] > n_m || tri[i + 2] > n_m) {
+    //   tri.erase(tri.begin() + i, tri.begin() + i + 3);
+    //   i -= 3;
+    //   continue;
+    // }
+    double rotation = robustPredicates::orient2d(&pos2d[2 * (tri[i] - 1)],
+                                                 &pos2d[2 * (tri[i + 1] - 1)],
+                                                 &pos2d[2 * (tri[i + 2] - 1)]);
+    if(rotation < 0) {
+      size_t tmp = tri[i];
+      tri[i] = tri[i + 1];
+      tri[i + 1] = tmp;
+    }
+  }
+
+  
+  pm->reset();
+  triangulation2PolyMesh(tri, pos2d, &pm);
+  pm->print4debug(31);
+
+  std::sort(pm->vertices.begin(), pm->vertices.end(),
+            [](PolyMesh::Vertex *v1, PolyMesh::Vertex *v2) {
+              return v1->data < v2->data;
+            });
+  printf("after sort \n");
+  // color the edges
+  for(size_t i = 0; i < rec_mapped.size() / 2; ++i) {
+    size_t m1 = rec_mapped[2 * i];
+    size_t m2 = rec_mapped[2 * i + 1];
+    printf("color mapped edge %lu %lu \n", m1, m2);
+    printf("color edge %lu %lu \n", rec[2 * i], rec[2 * i + 1]);
+    printf("m1 = %lu / %lu vertices \n", m1, pm->vertices.size());
+    PolyMesh::Vertex *v = pm->vertices[m1];
+    printf("v->data %lu \n", v->data);
+    PolyMesh::HalfEdge *he = v->he;
+    PolyMesh::HalfEdge *bnd_he = nullptr;
+    do {
+      printf("he->next->v->data %lu \n", he->next->v->data);
+      printf("he->v->data = %lu \n", he->v->data);
+      if(he->next->v->data - 1 == m2) {
+        he->data = 5;
+        break;
+      }
+      else if(he->opposite == nullptr) {
+        bnd_he = he;
+        break;
+      }
+      he = he->opposite->next;
+    } while(he != v->he);
+    if(bnd_he != nullptr) {
+      he = bnd_he;
+      do {
+        if(he->next->next->v->data - 1 == m2) { he->next->next->data = 5; }
+        else if(he->next->next->opposite == nullptr) {
+          break;
+        }
+        he = he->next->next->opposite;
+      } while(he != bnd_he);
+    }
+  }
+
+  printf("after coloring edges \n");
+
+  // color the faces with the concentration
+  for(size_t i = 0; i < pm->faces.size(); ++i) { pm->faces[i]->data = -10; }
+  printf("after coloring faces \n");
+  for(size_t i = 0; i < points.size() / 3; ++i) {
+    printf("point %lu \n", i);
+    double pos[3] = {points[3 * i], points[3 * i + 1], 0};
+    PolyMesh::Face *f = pm->faces[0];
+    PolyMesh::Face *f_point = pm->walk_from(pos, f);
+    std::vector<PolyMesh::Face *> todo;
+    std::vector<PolyMesh::Face *> new_todo;
+    todo.push_back(f_point);
+    while(todo.size() > 0) {
+      for(size_t td = 0; td < todo.size(); ++td) {
+        PolyMesh::Face *current = todo[td];
+        current->data = concentration[i];
+        PolyMesh::HalfEdge *he = current->he;
+        do {
+          if(he->opposite == nullptr) {
+            he = he->next;
+            continue;
+          }
+          if(he->data == 5 || he->opposite->data == 5) {
+            he = he->next;
+            continue;
+          }
+          if(he->opposite->f->data == -10) {
+            new_todo.push_back(he->opposite->f);
+          }
+          he = he->next;
+        } while(he != current->he);
+      }
+      todo = new_todo;
+      new_todo.clear();
+    }
+    pm->print4debug(32);
+  }
+
+  
+
+  // keep only the triangles that are inside the domain
+  tri.clear();
+  std::vector<int> tri_tag;
+  for(size_t i = 0; i < pm->faces.size(); ++i) {
+    if(pm->faces[i]->data != -10) {
+      tri.push_back(pm->faces[i]->he->v->data);
+      tri.push_back(pm->faces[i]->he->next->v->data);
+      tri.push_back(pm->faces[i]->he->next->next->v->data);
+      tri_tag.push_back(pm->faces[i]->data);
+    }
+  }
+
+  pm->reset();
+  triangulation2PolyMesh(tri, pos2d, &pm);
+  pm->print4debug(3);
+  for(size_t i = 0; i < pm->faces.size(); ++i) {
+    pm->faces[i]->data = tri_tag[i];
+  }
+
+  for(size_t i = 0; i < pm->vertices.size(); ++i) {
+    pm->vertices[i]->data = pos2m[pm->vertices[i]->data - 1] + 1;
+  }
+
+  computeNewInterfaces();
+  triangulateInterfaces();
+  colorTriangles();
+  pm->print4debug(33);
+
+  // correct corners that dissapeared
+  for(size_t i=0; i<corners.size(); i++) {
+    int id_interface = findMarker(corners[i]);
+    if(id_interface == -1) {
+      printf("corner %lu dissapeared \n", corners[i]);
+      corners.erase(corners.begin() + i);
+      i--; 
+    }
+  }
+
+}
+
+SVector3 discreteFront::closestPoints2d(const SVector3 &P,
+                                        const std::vector<bool> &bnd_markers)
+{
+  double dmin = 1.e22;
+  SVector3 res;
+  for(size_t i = 0; i < interfaces.size(); ++i) {
+    // if(interfaces[i].tag < 0) continue;
+    size_t n_m = interfaces[i].markers.size();
+    for(size_t j = 0; j < n_m; ++j) {
+      size_t m1 = interfaces[i].markers[j];
+      size_t m2 = interfaces[i].markers[(j + 1) % n_m];
+      if(bnd_markers[m1] && bnd_markers[m2]) {
+        if(std::find(triple_points.begin(), triple_points.end(), m1) ==
+             triple_points.end() &&
+           std::find(triple_points.begin(), triple_points.end(), m2) ==
+             triple_points.end())
+          continue;
+      }
+      SVector3 A(pos[3 * m1], pos[3 * m1 + 1], 0);
+      SVector3 B(pos[3 * m2], pos[3 * m2 + 1], 0);
+      SVector3 AB = B - A;
+      double lAB = AB.norm();
+      AB.normalize();
+      SVector3 AP = P - A;
+      double L = dot(AP, AB);
+      SVector3 H;
+      if(L < 0)
+        H = A;
+      else if(L > lAB)
+        H = B;
+      else
+        H = A + AB * L;
+      SVector3 HP = P - H;
+      double d = HP.norm();
+      if(d < dmin) {
+        dmin = d;
+        res = H;
+      }
+    }
+  }
+
+  return res;
+}
+
+void discreteFront::resetInterfacesMesh()
+{
+  PolyMesh *pm_mesh = new PolyMesh();
+  meshRelaying::instance()->getPm(&pm_mesh);
+  printf("resetInterfaceMesh \n");
+  pm_mesh->print4debug(16);
+
+  std::vector<std::vector<size_t>> new_loops;
+  std::vector<interface> new_interfaces;
+  std::vector<int> interface_tag;
+
+  pos.clear();
+
+  std::vector<bool> visited_hedge(pm_mesh->hedges.size(), false);
+  std::vector<int> meshNode2m(pm_mesh->vertices.size(), -1);
+  for(size_t i = 0; i < pm_mesh->hedges.size(); ++i) {
+    pm_mesh->hedges[i]->data = i;
+  }
+
+  for(size_t i = 0; i < pm_mesh->hedges.size(); ++i) {
+    PolyMesh::HalfEdge *he = pm_mesh->hedges[i];
+    if(visited_hedge[he->data]) continue;
+    if(he->opposite != nullptr) {
+      if(he->opposite->f->data == he->f->data) continue;
+    }
+
+    std::vector<PolyMesh::HalfEdge *> loop_he;
+    std::vector<PolyMesh::Vertex *> loop_v;
+    std::vector<size_t> loop_m;
+    rotate_pm_vertex(he, &loop_he, &loop_v);
+    for(auto h : loop_he) { visited_hedge[h->data] = true; }
+
+    // check if loop is counter clockwise
+    std::vector<double> loop_pos;
+    for(size_t j = 0; j < loop_v.size(); ++j) {
+      loop_pos.push_back(loop_v[j]->position.x());
+      loop_pos.push_back(loop_v[j]->position.y());
+      if(meshNode2m[loop_v[j]->data - 1] == -1) {
+        meshNode2m[loop_v[j]->data - 1] = pos.size() / 3;
+        loop_m.push_back(pos.size() / 3);
+        pos.push_back(loop_v[j]->position.x());
+        pos.push_back(loop_v[j]->position.y());
+        pos.push_back(0);
+      }
+      else {
+        loop_m.push_back(meshNode2m[loop_v[j]->data - 1]);
+      }
+    }
+
+    int clock = clockwise(loop_pos);
+    if(clock == -1) {
+      printf("counter clockwise loop : %d \n", loop_v.size());
+      new_loops.push_back(loop_m);
+      interface_tag.push_back(he->f->data);
+    }
+    else {
+      // printf("clockwise loop : %d \n", loop_v.size());
+      // for(size_t j = 0; j < loop_v.size(); ++j) { printf("%lu, ", loop_v[j]); }
+      // printf("\n");
+
+      // printf("loop pos \n");
+      // for(size_t j = 0; j < loop_pos.size(); ++j) {
+      //   printf("%f, ", loop_pos[j]);
+      // }
+      // printf("\n");
+    }
+  }
+
+  for(size_t i = 0; i < new_loops.size(); ++i) {
+    new_interfaces.push_back(
+      interface(i, interface_tag[i], new_loops[i], true));
+  }
+  // printf("new interfaces size %lu \n", new_interfaces.size());
+  // for(size_t i = 0; i < new_interfaces.size(); ++i) {
+  //   printf("interface %lu \n", i);
+  //   for(size_t j = 0; j < new_interfaces[i].markers.size(); ++j) {
+  //     printf("%lu, ", new_interfaces[i].markers[j]);
+  //   }
+  //   printf("\n");
+  // }
+
+  interfaces = new_interfaces;
+
+  // update boundary
+  boundary->markers.clear();
+  std::vector<std::pair<size_t, size_t>> bnd;
+  meshRelaying::instance()->getBnd1d(&bnd);
+  std::vector<size_t> loop;
+  size_t start = bnd[0].first;
+  size_t prev = start;
+  size_t current = bnd[0].second;
+  loop.push_back(start);
+  loop.push_back(current);
+  while(true) {
+    auto it =
+      std::find_if(bnd.begin(), bnd.end(), [&](std::pair<size_t, size_t> p) {
+        if(p.first == current && p.second != prev) { return true; }
+        else if(p.second == current && p.first != prev) {
+          return true;
+        }
+        return false;
+      });
+    if(it == bnd.end()) { break; }
+
+    if(it->first == current) {
+      prev = current;
+      current = it->second;
+    }
+    else {
+      prev = current;
+      current = it->first;
+    }
+    if(current == start) { break; }
+    loop.push_back(current);
+  }
+  for(size_t i = 0; i < loop.size(); ++i) {
+    boundary->markers.push_back(meshNode2m[loop[i]]);
+  }
+  triangulateInterfaces();
+
+  colorTriangles();
+  triple_points.clear();
+  for(size_t i = 0; i < interfaces.size(); ++i) {
+    for(size_t j = 0; j < interfaces[i].markers.size(); ++j) {
+      size_t m = interfaces[i].markers[j];
+      PolyMesh::Vertex *dummy;
+      int id = findVertex(m, dummy);
+      int colors[3] = {0, 0, 0};
+      if(vertexType(id, colors) == 1) { triple_points.push_back(m); }
+    }
+  }
+}
+
+void discreteFront::write_DF(const std::string DF_filename){
+  FILE *f_ = std::fopen("before_write_DF.pos", "w");
+  printInterfaces(f_);
+  fclose(f_);
+  FILE *f = std::fopen(DF_filename.c_str(), "w");
+  if(f == nullptr) {
+    Msg::Error("Could not open file %s", DF_filename.c_str());
+  } 
+
+  fprintf(f, "%lu interfaces \n", interfaces.size());
+  for(size_t i = 0; i < interfaces.size(); ++i) {
+    fprintf(f, "interface %lu \n", i);
+    fprintf(f, "tag %d \n", interfaces[i].tag);
+    fprintf(f, "loop %d \n", interfaces[i].loop);
+    fprintf(f, "markers %lu \n", interfaces[i].markers.size());
+    for(size_t j = 0; j < interfaces[i].markers.size(); ++j) {
+      fprintf(f, "%lu \n", interfaces[i].markers[j]);
+    }
+  }
+  fprintf(f, "marker positions %lu \n", pos.size() / 3);
+  for(size_t i = 0; i < pos.size() / 3; ++i) {
+    fprintf(f, "%f, %f, %f \n", pos[3 * i], pos[3 * i + 1], 0.0);
+  }
+  std::vector<double> mesh_pos;
+  meshRelaying::instance()->getNodesPosition(mesh_pos);
+  fprintf(f, "mesh positions %lu \n", mesh_pos.size() / 3);
+  for(size_t i = 0; i < mesh_pos.size() / 3; ++i) {
+    fprintf(f, "%f, %f, %f \n", mesh_pos[3 * i], mesh_pos[3 * i + 1], 0.0);
+  }
+  fclose(f);
+}
+
+void discreteFront::read_DF(const std::string DF_filename, const bool pos_flag){
+  FILE *f = std::fopen(DF_filename.c_str(), "r");
+  if(f == nullptr) {
+    Msg::Error("Could not open file %s", DF_filename.c_str());
+  } 
+  printf("read_DF \n");
+  size_t n_interfaces_file;
+  fscanf(f, "%lu interfaces \n", &n_interfaces_file);
+
+  // clear
+  interfaces.clear();
+  pos.clear();
+  corners.clear();
+  boundary->markers.clear();
+  fn.clear();
+  triple_points.clear();
+  on_edge_triples.clear(); 
+  Tree = nullptr;
+
+  meshRelaying::instance()->reset_DF();
+
+  for(size_t i = 0; i < n_interfaces_file; ++i) {
+    size_t id;
+    int tag;
+    int loop;
+    size_t n_markers;
+    fscanf(f, "interface %lu \n", &id);
+    fscanf(f, "tag %d \n", &tag);
+    fscanf(f, "loop %d \n", &loop);
+    fscanf(f, "markers %lu \n", &n_markers);
+    std::vector<size_t> markers;
+    for(size_t j = 0; j < n_markers; ++j) {
+      size_t m;
+      fscanf(f, "%lu \n", &m);
+      markers.push_back(m);
+    }
+    bool loop_ = loop;
+    printf("read interface %lu with tag %d and %lu markers \n", id, tag, n_markers);
+    interfaces.push_back(interface(id, tag, markers, loop_));
+  }
+  printf("interfaces and markers done\n");
+
+  size_t n_markers_tot;
+  fscanf(f, "marker positions %lu \n", &n_markers_tot);
+  pos.clear();
+  for(size_t i = 0; i < n_markers_tot; ++i) {
+    double x, y, z;
+    fscanf(f, "%lf, %lf, %lf \n", &x, &y, &z);
+    pos.push_back(x);
+    pos.push_back(y);
+    pos.push_back(z);
+  }
+  printf("pos done \n");
+
+  if(pos_flag){
+    size_t n_mesh_pos;
+    fscanf(f, "mesh positions %lu \n", &n_mesh_pos);
+    std::vector<double> mesh_pos;
+    for(size_t i = 0; i < n_mesh_pos; ++i) {
+      double x, y, z;
+      fscanf(f, "%lf, %lf, %lf \n", &x, &y, &z);
+      mesh_pos.push_back(x);
+      mesh_pos.push_back(y);
+      mesh_pos.push_back(z);
+    }
+    meshRelaying::instance()->setNodesPosition(mesh_pos);
+  }
+  fclose(f);
+  printf("done reading DF \n");
+
+  for(size_t i = 0; i < pos.size(); i += 3) {
+    bbox += SPoint3(pos[i], pos[i + 1], pos[i + 2]);
+  }  
+  
+
+  triangulateInterfaces();
+  colorTriangles(false);
+  computeNewInterfaces();
+  printf("done triangulating - coloring - new interfacing \n");
+
+  //define boundary
+  printf("boundary \n");
+  //find first bnd edge
+  PolyMesh::HalfEdge *start_he;
+  for(size_t i = 0; i < pm->hedges.size(); ++i) {
+    if(pm->hedges[i]->opposite == nullptr) {
+      int colors[3] = {0, 0, 0};
+      PolyMesh::Vertex *v;
+      int id = findVertex(pm->hedges[i]->v->data-1, v);
+      int is_triple = vertexType(id, colors);
+      if(is_triple == 0){
+        start_he = pm->hedges[i];
+        break;
+      }
+    }
+  }
+  PolyMesh::HalfEdge *he = start_he;
+  do{
+    if(he->next->opposite == nullptr){
+      PolyMesh::Vertex *v;
+      int id = findVertex(he->next->v->data-1, v);
+      int colors[3] = {0, 0, 0};
+      int is_triple = vertexType(id, colors);
+      if(is_triple == 0){
+        boundary->markers.push_back(he->next->v->data-1);
+      }
+      he = he->next;
+      continue;
+    }
+    
+    he = he->next->opposite;
+  }while (he != start_he); 
+  
+  printf("boundary done \n");
+  for(size_t i=0; i<boundary->markers.size(); i++){
+    printf("%lu, ", boundary->markers[i]);
+  }
+  printf("\n");
+  
+
+  FILE *f_ = std::fopen("after_read_DF.pos", "w");
+  printInterfaces(f_);
+  fclose(f_);
+}
+
+void discreteFront::remove_features(double l){
+  createTree();
+  printf("in remove_features \n");
+  pm->print4debug(20);
+
+  FILE *f = fopen("before_remove_features.pos", "w");
+  printInterfaces(f);
+  fclose(f);
+  // get the different phases
+  std::vector<int> phases;
+  for(size_t i = 0; i < interfaces.size(); ++i) {
+    phases.push_back(interfaces[i].tag);
+  }
+  std::sort(phases.begin(), phases.end());
+  auto new_end = std::unique(phases.begin(), phases.end());
+  phases.erase(new_end, phases.end());
+  size_t n_phases = phases.size();
+
+  std::vector<int> solid_markers;
+  getSolidMarkers(&solid_markers);
+
+  // move the markers in perpendicular direction
+  std::vector<double> new_pos = pos;
+  size_t max_m = getMaxMarker();
+  std::vector<bool> flag_prev(max_m+1, false);
+  std::vector<bool> flag_intersected(max_m+1, false);
+
+  size_t iter = 0;
+  for(size_t i_p=0; i_p<n_phases; ++i_p){
+    // if(iter>1) break;
+    std::vector<double> old_pos = pos;
+    for(size_t s=0; s<2; ++s){
+      int sign = 0;
+      if (s==0){
+        sign = 1;
+      }else{
+        sign = -1;
+      }
+
+      std::vector<bool> moved(max_m+1, false);
+
+      for(size_t i = 0; i < interfaces.size(); ++i) {
+        if(interfaces[i].tag != phases[i_p]) continue;
+        if(interfaces[i].tag<0) continue;
+        size_t n_m = interfaces[i].markers.size();
+        for(size_t j = 0; j < n_m; ++j) {
+          if(solid_markers[interfaces[i].markers[j]]==1) continue;
+          if(flag_intersected[interfaces[i].markers[j]]) continue;
+          size_t m1 = interfaces[i].markers[(j+n_m-1)%n_m];
+          size_t m2 = interfaces[i].markers[j];
+          size_t m3 = interfaces[i].markers[(j+1)%n_m];
+
+          flag_prev[m2] = true;
+          moved[m2] = true;
+
+          double x1[2] = {pos[3*m1], pos[3*m1+1]};
+          double x2[2] = {pos[3*m2], pos[3*m2+1]};
+          double x3[2] = {pos[3*m3], pos[3*m3+1]};
+
+          double edge21[2] = {x2[0]-x1[0], x2[1]-x1[1]};
+          double edge32[2] = {x3[0]-x2[0], x3[1]-x2[1]}; 
+          double norm21 = sqrt(edge21[0]*edge21[0] + edge21[1]*edge21[1]);
+          double norm32 = sqrt(edge32[0]*edge32[0] + edge32[1]*edge32[1]);
+
+          edge21[0] /= norm21;
+          edge21[1] /= norm21;
+          edge32[0] /= norm32;
+          edge32[1] /= norm32;
+
+          double n21[2] = {edge21[1], -edge21[0]};
+          double n32[2] = {edge32[1], -edge32[0]};
+
+          new_pos[3*m2] += sign*l*0.5*(n21[0] + n32[0]);
+          new_pos[3*m2+1] += sign*l*0.5*(n21[1] + n32[1]);
+        }
+      }
+
+      iter++;
+
+      // print the interfaces
+      std::string filename = "remove_features_" + std::to_string(iter) + "_0.pos";
+      FILE *f0 = fopen(filename.c_str(), "w");
+      printInterfaces(f0);
+      fclose(f0);
+
+      // update the positions
+      pos = new_pos;
+
+      // update the polymesh
+      for(size_t i=0; i<pm->vertices.size(); ++i){
+        size_t id = pm->vertices[i]->data - 1;
+        pm->vertices[i]->position = SVector3(pos[3*id], pos[3*id+1], 0);
+      }
+
+      pm->print4debug(21);
+
+      filename = "remove_features_" + std::to_string(iter) + "_1.pos";
+      FILE *f1 = fopen(filename.c_str(), "w");
+      printInterfaces(f1);
+      fclose(f1);
+
+      // intersect the interfaces
+      buildSpatialSearchStructure();
+      intersectInterfaces(false);
+
+      pm->print4debug(22);
+
+      filename = "remove_features_" + std::to_string(iter) + "_2.pos";
+      FILE *f2 = fopen(filename.c_str(), "w");
+      printInterfaces(f2);
+      fclose(f2);
+
+      printf("triangulate interface \n");
+      triangulateInterfaces();
+      printf("color triangles \n");
+      colorTriangles();
+      computeNewInterfaces();
+
+      filename = "remove_features_" + std::to_string(iter) + "_3.pos";
+      FILE *f3 = fopen(filename.c_str(), "w");
+      printInterfaces(f3);
+      fclose(f3);
+
+      
+
+      
+      max_m = getMaxMarker();
+      flag_prev.resize(max_m+1, false);
+      flag_intersected.resize(max_m+1, false);
+      moved.resize(max_m+1, true);
+      solid_markers.resize(max_m+1, 0);
+
+
+
+      new_pos = pos;
+
+
+
+      std::vector<size_t> new_markers;
+      
+      for(size_t i = 0; i < interfaces.size(); ++i) {
+        // if(interfaces[i].tag != phases[i_p]) continue;
+        size_t n_m = interfaces[i].markers.size();
+        for(size_t j = 0; j < n_m; ++j) {
+          if(solid_markers[interfaces[i].markers[j]]==1) continue;
+          if(!moved[interfaces[i].markers[j]]) continue;
+          size_t m1 = interfaces[i].markers[(j+n_m-1)%n_m];
+          size_t m2 = interfaces[i].markers[j];
+          size_t m3 = interfaces[i].markers[(j+1)%n_m];
+
+          if(flag_prev[m2]){
+            new_pos[3*m2] = old_pos[3*m2];
+            new_pos[3*m2+1] = old_pos[3*m2+1];
+            continue;
+          } else {
+            new_markers.push_back(m2);
+            flag_intersected[m2] = true;
+            flag_intersected[m1] = true;
+            flag_intersected[m3] = true;
+            new_pos[3*m2] = pos[3*m2];
+            new_pos[3*m2+1] = pos[3*m2+1];
+            continue;
+          }
+
+          // double x1[2] = {pos[3*m1], pos[3*m1+1]};
+          // double x2[2] = {pos[3*m2], pos[3*m2+1]};
+          // double x3[2] = {pos[3*m3], pos[3*m3+1]};
+
+          // double edge21[2] = {x2[0]-x1[0], x2[1]-x1[1]};
+          // double edge32[2] = {x3[0]-x2[0], x3[1]-x2[1]}; 
+          // double norm21 = sqrt(edge21[0]*edge21[0] + edge21[1]*edge21[1]);
+          // double norm32 = sqrt(edge32[0]*edge32[0] + edge32[1]*edge32[1]);
+
+          // edge21[0] /= norm21;
+          // edge21[1] /= norm21;
+          // edge32[0] /= norm32;
+          // edge32[1] /= norm32;
+
+          // double n21[2] = {edge21[1], -edge21[0]};
+          // double n32[2] = {edge32[1], -edge32[0]};
+
+          // new_pos[3*m2] -= sign*l*0.5*(n21[0] + n32[0]);
+          // new_pos[3*m2+1] -= sign*l*0.5*(n21[1] + n32[1]);
+        }
+      }
+
+      // remove new markers from the interfaces
+      // for(size_t k=0; k<interfaces.size(); ++k){
+      //   for(size_t l=0; l<new_markers.size(); ++l){
+      //     size_t new_m = new_markers[l];
+      //     auto it = std::find(interfaces[k].markers.begin(), interfaces[k].markers.end(), new_m);
+
+      //     if(it != interfaces[k].markers.end()){
+      //       interfaces[k].markers.erase(it);
+      //     }
+      //   }
+      // }
+
+      printf("new markers size %lu \n", new_markers.size());
+      for(size_t k=0; k<new_markers.size(); ++k){
+        printf("%lu, ", new_markers[k]);
+      }
+      printf("\n");
+
+      pos = new_pos;
+
+      // update the polymesh
+      for(size_t i=0; i<pm->vertices.size(); ++i){
+        size_t id = pm->vertices[i]->data - 1;
+        pm->vertices[i]->position = SVector3(pos[3*id], pos[3*id+1], 0);
+      }
+
+      filename = "remove_features_" + std::to_string(iter) + "_4.pos";
+      FILE *f4 = fopen(filename.c_str(), "w");
+      printInterfaces(f4);
+      fclose(f4);
+
+      createTree();
+      
+
+      // pos = old_pos;
+
+      // // update the polymesh
+      // for(size_t i=0; i<pm->vertices.size(); ++i){
+      //   size_t id = pm->vertices[i]->data - 1;
+      //   pm->vertices[i]->position = SVector3(pos[3*id], pos[3*id+1], 0);
+      // }
+
+      pm->print4debug(29);
+    }
+  }
+
+  renumber_DF();
+
+  printf(" boundary markers = \n");
+  for(size_t i = 0; i < boundary->markers.size(); ++i){
+    printf("%lu, ", boundary->markers[i]);
+  }
+  printf("\n");
+
+  return;
+}
+
+void discreteFront::renumber_DF(){
+  FILE *f = fopen("before_renumber_DF.pos", "w");
+  printInterfaces(f);
+  fclose(f);
+  size_t max_m = getMaxMarker();
+  printf("max_m = %lu \n", max_m);
+  std::vector<int> mapping(max_m+1, -1);
+
+  std::vector<double> new_pos;
+  std::vector<interface> new_interfaces = interfaces;
+  std::vector<size_t> new_triple_points;
+  std::vector<std::pair<size_t, std::pair<size_t, size_t>>> new_on_edge_triples;
+
+  std::vector<int> bnd_markers;
+  getBndMarkers(&bnd_markers);
+  printf("bnd_markers size %lu \n", bnd_markers.size());
+  for(size_t i = 0; i < bnd_markers.size(); ++i){
+    printf("%d, ", bnd_markers[i]);
+  }
+  printf("\n");
+
+  std::vector<int> original_bnd_markers(max_m+1, 0);
+  for(size_t i = 0; i < boundary->markers.size(); ++i){
+    original_bnd_markers[boundary->markers[i]] = 1;
+  }
+  printf("original_bnd_markers size %lu \n", original_bnd_markers.size());
+  for(size_t i = 0; i < original_bnd_markers.size(); ++i){
+    printf("%d, ", original_bnd_markers[i]);
+  }
+  printf("\n");
+
+  std::vector<int> is_triple(max_m+1, 0);
+  for(size_t i = 0; i < triple_points.size(); ++i){
+    is_triple[triple_points[i]] = 1;
+  }
+
+  printf("is_triple size %lu \n", is_triple.size());
+  for(size_t i = 0; i < is_triple.size(); ++i){
+    printf("%d, ", is_triple[i]);
+  }
+  printf("\n");
+
+  for(size_t i = 0; i < interfaces.size(); ++i){
+    std::vector<size_t> new_markers(interfaces[i].markers.size(), 0);
+    size_t it_ = 0;
+    for(size_t j = 0; j < interfaces[i].markers.size(); ++j){
+      size_t m = interfaces[i].markers[j];
+      if(bnd_markers[m] && original_bnd_markers[m]==0 && is_triple[m]==0){ // recover original bnd except for current triple points
+        printf("marker %lu is on the boundary \n", m);
+        printf("bnd = %d, orignal_bnd = %d, is_triple = %d \n", bnd_markers[m], original_bnd_markers[m], is_triple[m]);
+        continue;
+      }
+
+      if(mapping[m] == -1){
+        mapping[m] = new_pos.size()/3;
+        new_pos.push_back(pos[3*m]);
+        new_pos.push_back(pos[3*m+1]);
+        new_pos.push_back(pos[3*m+2]);
+      }
+      new_markers[it_] = mapping[m];
+      it_++;
+    }
+    new_markers.resize(it_);
+    new_interfaces[i].markers = new_markers;
+  }
+
+  for(size_t i = 0; i < triple_points.size(); ++i){
+    new_triple_points.push_back(mapping[triple_points[i]]);
+  }
+
+  for(size_t i = 0; i < boundary->markers.size(); ++i){
+    boundary->markers[i] = mapping[boundary->markers[i]];
+  }
+
+  for(size_t i=0; i<corners.size(); ++i){
+    corners[i] = mapping[corners[i]];
+  }
+  
+
+  pos = new_pos;
+  interfaces = new_interfaces;
+  triple_points = new_triple_points;
+
+  // printf("new interfaces size %lu \n", interfaces.size());
+  // for(size_t i = 0; i < interfaces.size(); ++i){
+  //   printf("interface %lu \n", i);
+  //   for(size_t j = 0; j < interfaces[i].markers.size(); ++j){
+  //     printf("%lu, ", interfaces[i].markers[j]);
+  //   }
+  //   printf("\n");
+  // }
+
+  FILE *f3 = fopen("inside_renumber_DF.pos", "w");
+  printInterfaces(f3);
+  fclose(f3);
+
+  // update the polymesh
+  triangulateInterfaces();
+  colorTriangles();
+
+  printf("on_edge_triples before renumber size %lu \n", on_edge_triples.size());
+  for(size_t i = 0; i < on_edge_triples.size(); ++i){
+    printf("%lu, %lu, %lu \n", on_edge_triples[i].first, on_edge_triples[i].second.first, on_edge_triples[i].second.second);
+  }
+  on_edge_triples.clear();
+
+  // compute new on edge triple with pm
+  for(size_t i =0; i<triple_points.size(); ++i){
+    size_t m = triple_points[i];
+    PolyMesh::Vertex *v;
+    int id = findVertex(m, v);
+    int colors[3] = {0, 0, 0};
+    vertexType(id, colors);
+    //find double neighs
+    std::vector<PolyMesh::Vertex*> neighs;
+    findNDoubleNeighbours(pm->vertices[id], &neighs, 1, colors[0]);
+    if(neighs[0]->data < neighs[1]->data){
+      on_edge_triples.push_back(std::make_pair(neighs[0]->data-1, std::make_pair(m, neighs[1]->data-1)));
+    } else {
+      on_edge_triples.push_back(std::make_pair(neighs[1]->data-1, std::make_pair(m, neighs[0]->data-1)));
+    }
+  }
+
+  printf("on_edge_triples after renumber size %lu \n", on_edge_triples.size());
+  for(size_t i = 0; i < on_edge_triples.size(); ++i){
+    printf("%lu, %lu, %lu \n", on_edge_triples[i].first, on_edge_triples[i].second.first, on_edge_triples[i].second.second);
+  }
+
+  FILE *f2 = fopen("after_renumber_DF.pos", "w");
+  printInterfaces(f2);
+  fclose(f2);
+
+}
+  
+
+int clockwise(std::vector<double> loop)
+{
+  double area = 0;
+  size_t n = loop.size() / 2;
+  for(size_t j = 0; j < n; ++j) {
+    double aa[2] = {loop[2 * j], loop[2 * j + 1]};
+    double bb[2] = {loop[2 * ((j + 1) % n)], loop[2 * ((j + 1) % n) + 1]};
+    area += (bb[0] - aa[0]) * (bb[1] + aa[1]);
+  }
+  if(area > 0) { return 1; }
+  else {
+    return -1;
+  }
+}
+
+// int w_number(double P[2], std::vector<double> loop)
+// {
+//   // compute winding number -- slow
+//   double angTot = 0.0;
+//   size_t n = loop.size() / 2;
+//   for(size_t i = 0; i < n; ++i) {
+//     double A[2] = {loop[2 * i], loop[2 * i + 1]};
+//     double B[2] = {loop[2 * ((i + 1) % n)], loop[2 * ((i + 1) % n) + 1]};
+//     double PA[2] = {A[0] - P[0], A[1] - P[1]};
+//     double PB[2] = {B[0] - P[0], B[1] - P[1]};
+//     double cross = PB[0] * PA[1] - PB[1] * PA[0];
+//     double dot = PA[0] * PB[0] + PA[1] * PB[1];
+//     double a = atan2(cross, dot);
+//     angTot += a;
+//   }
+
+//   if(angTot > M_PI * 1.99)
+//     return 1;
+//   else if(angTot < -M_PI * 1.99)
+//     return -1;
+//   else
+//     return 0;
+// }
+
+int w_number(double P[2], std::vector<double> loop)
+{
+  // compute winding number -- fast
+
+  int wn = 0;
+  size_t n = loop.size() / 2;
+  for(size_t j = 0; j < n; ++j) {
+    double aa[2] = {loop[2 * j], loop[2 * j + 1]};
+    double bb[2] = {loop[2 * ((j + 1) % n)], loop[2 * ((j + 1) % n) + 1]};
+    double area = robustPredicates::orient2d(aa, bb, P);
+    if(area == 0) return 2;
+    if(aa[1] <= P[1]) {
+      if(bb[1] > P[1] && area < 0) wn++;
+    }
+    else if(bb[1] <= P[1]) {
+      if(area > 0) wn--;
+    }
+  }
+  if(wn > 0) { return -1; }
+  else if(wn < 0) {
+    return 1;
+  }
+  else {
+    return 0;
+  }
+}
+
+double kappa(double x1[2], double x2[2], double x3[2])
+{
+  double dy1 = x1[1] - x2[1];
+  double dy2 = x2[1] - x3[1];
+  double dy3 = x3[1] - x1[1];
+
+  double n1 = x1[0] * x1[0] + x1[1] * x1[1];
+  double n2 = x2[0] * x2[0] + x2[1] * x2[1];
+  double n3 = x3[0] * x3[0] + x3[1] * x3[1];
+
+  double area = 0.5 * (x1[0] * dy2 + x2[0] * dy3 + x3[0] * dy1);
+  if(area == 0.0) { return 0.0; }
+  else {
+    double Ux = (1 / (4 * area)) * (n1 * dy2 + n2 * dy3 + n3 * dy1);
+    double Uy =
+      (1 / (4 * area)) *
+      (n1 * (x3[0] - x2[0]) + n2 * (x1[0] - x3[0]) + n3 * (x2[0] - x1[0]));
+
+    double radius =
+      sqrt((Ux - x2[0]) * (Ux - x2[0]) + (Uy - x2[1]) * (Uy - x2[1]));
+    double sign = 0.0;
+    if(robustPredicates::orient2d(x1, x2, x3) > 0) { sign = 1.0; }
+    else {
+      sign = -1.0;
+    }
+    return -sign * (1.0 / radius);
+  }
+  return 0;
+}
+
+int computeIntersection(double a1[2], double a2[2], double a3[2], double a4[2],
+                        double *inter, double *param)
+{
+  double a143 = robustPredicates::orient2d(a1, a4, a3);
+  double a243 = robustPredicates::orient2d(a2, a4, a3);
+  double eps = 1e-15;
+  if((a143 > eps && a243 < -eps) || (a143 < -eps && a243 > eps)) {
+    double a123 = robustPredicates::orient2d(a1, a2, a3);
+    double a124 = robustPredicates::orient2d(a1, a2, a4);
+    if((a123 > eps && a124 < -eps) || (a123 < -eps && a124 > eps)) {
+      double t = fabs(a143) / (fabs(a143) + fabs(a243));
+      inter[0] = a1[0] + t * (a2[0] - a1[0]);
+      inter[1] = a1[1] + t * (a2[1] - a1[1]);
+      param[0] = t;
+      return 1;
+    }
+  }
+  return 0;
+}
+
+TreeNode *newTreeNode(int id, int tag)
+{
+  TreeNode *temp = new TreeNode;
+  temp->id = id;
+  temp->tag = tag;
+  temp->leafs = {};
+  return temp;
+}
+
+double loopOrientation(std::vector<double> pos)
+{
+  double tot = 0;
+  int n = pos.size() / 3;
+  for(int i = 0; i < n; ++i) {
+    double a[2] = {pos[3 * i], pos[3 * i + 1]};
+    double b[2] = {pos[3 * ((i + 1) % n)], pos[3 * ((i + 1) % n) + 1]};
+    tot += (b[0] - a[0]) * (b[1] + a[1]);
+  }
+  return tot;
+}

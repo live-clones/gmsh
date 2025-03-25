@@ -11,6 +11,8 @@
 #include <stack>
 #include <stdio.h>
 #include "SVector3.h"
+#include <unordered_map>
+#include "robustPredicates.h"
 
 class PolyMesh {
 public:
@@ -54,6 +56,49 @@ public:
     Face(HalfEdge *e) : he(e), data(-1) {}
     HalfEdge *he; // one half edge of the face
     int data;
+
+    Face *walk(double *pos)
+    {
+      Vertex *v0 = he->v;
+      Vertex *v1 = he->next->v;
+      Vertex *v2 = he->next->next->v;
+      double center[2] = {0};
+      center[0] = (v0->position[0] + v1->position[0] + v2->position[0]) / 3.0;
+      center[1] = (v0->position[1] + v1->position[1] + v2->position[1]) / 3.0;
+
+      double s0 = robustPredicates::orient2d(v0->position, v1->position, pos);
+      double s1 = robustPredicates::orient2d(v1->position, v2->position, pos);
+      double s2 = robustPredicates::orient2d(v2->position, v0->position, pos);
+
+      double t0, t1;
+      if(s0 >= 0 && s1 >= 0 && s2 >= 0) { return this; }
+      if(s0 < 0) {
+        t0 = robustPredicates::orient2d(center, pos, v0->position);
+        t1 = robustPredicates::orient2d(center, pos, v1->position);
+
+        if((t0 <= 0 && t1 >= 0) || (t0 >= 0 && t1 <= 0)) {
+          return he->opposite->f;
+        }
+      }
+      if(s1 < 0) {
+        t0 = robustPredicates::orient2d(center, pos, v1->position);
+        t1 = robustPredicates::orient2d(center, pos, v2->position);
+
+        if((t0 <= 0 && t1 >= 0) || (t0 >= 0 && t1 <= 0)) {
+          return he->next->opposite->f;
+        }
+      }
+      if(s2 < 0) {
+        t0 = robustPredicates::orient2d(center, pos, v2->position);
+        t1 = robustPredicates::orient2d(center, pos, v0->position);
+
+        if((t0 <= 0 && t1 >= 0) || (t0 >= 0 && t1 <= 0)) {
+          return he->next->next->opposite->f;
+        }
+      }
+
+      return nullptr;
+    }
   };
 
   std::vector<Vertex *> vertices;
@@ -67,7 +112,7 @@ public:
     for(auto it : hedges) delete it;
     for(auto it : faces) delete it;
   }
-  
+
   ~PolyMesh() { reset(); }
 
   void print4debug(const int debugTag)
@@ -87,11 +132,9 @@ public:
     }
     for(auto it : hedges) {
       HalfEdge *he = it;
-      if(he->data >= 0) {
-        fprintf(f, "SL(%g,%g,0,%g,%g,0){%d,%d};\n", he->v->position.x(),
-                he->v->position.y(), he->opposite->v->position.x(),
-                he->opposite->v->position.y(), he->data, he->data);
-      }
+      fprintf(f, "SL(%g,%g,0,%g,%g,0){%d,%d};\n", he->v->position.x(),
+              he->v->position.y(), he->next->next->v->position.x(),
+              he->next->next->v->position.y(), 3, 3);
     }
 
     fprintf(f, "};\n");
@@ -493,6 +536,31 @@ public:
     }
     return 0;
   }
+
+  Face *walk_from(double *pos, Face *starting_f)
+  {
+    Face *current = starting_f;
+    Face *next = nullptr;
+    size_t count = 0;
+    while(true) {
+      count++;
+      if(count > 1000) {
+        printf(" current -> %d %d %d\n", current->he->v->data,
+               current->he->next->v->data, current->he->next->next->v->data);
+      }
+      if(count > 2000){
+        printf("too many iterations\n");
+        exit(1);
+      }
+      next = current->walk(pos);
+      if(current == next) { return current; }
+      else {
+        current = next;
+      }
+    }
+
+    return nullptr;
+  }
 };
 
 struct HalfEdgePtrLessThan {
@@ -522,7 +590,7 @@ struct HalfEdgePtrEqual {
 };
 
 // compute the degree of a given vertex v
-inline int degree(const PolyMesh::Vertex *v) 
+inline int degree(const PolyMesh::Vertex *v)
 {
   PolyMesh::HalfEdge *he = v->he;
   size_t count = 0;
@@ -535,5 +603,71 @@ inline int degree(const PolyMesh::Vertex *v)
   return count;
 }
 
+struct pair_hsh {
+  template <class T1, class T2>
+  std::size_t operator()(const std::pair<T1, T2> &pair) const
+  {
+    return std::hash<T1>()(pair.first) ^ std::hash<T2>()(pair.second);
+  }
+};
+
+inline int triangulation2PolyMesh(std::vector<std::size_t> tri,
+                                  std::vector<double> coord, PolyMesh **pm)
+{
+  *pm = new PolyMesh;
+  std::unordered_map<size_t, size_t> nodeLabels;
+  std::unordered_map<std::pair<size_t, size_t>, PolyMesh::HalfEdge *, pair_hsh>
+    opposites;
+
+  int nNod = 3;
+  int dim = 3;
+  size_t n_elements = (size_t)(tri.size() / 3);
+  PolyMesh::Vertex *v[3] = {nullptr, nullptr, nullptr}; // nNod size !
+  for(size_t i = 0; i < n_elements; i++) {
+    for(int j = 0; j < nNod; j++) {
+      size_t nodeTag = tri[nNod * i + j];
+      auto it = nodeLabels.find(nodeTag);
+      if(it == nodeLabels.end()) {
+        v[j] = new PolyMesh::Vertex(coord[2 * (nodeTag - 1)],
+                                    coord[2 * (nodeTag - 1) + 1], 0, nodeTag);
+        nodeLabels[nodeTag] = (*pm)->vertices.size();
+        (*pm)->vertices.push_back(v[j]);
+      }
+      else
+        v[j] = (*pm)->vertices[it->second];
+    }
+
+    PolyMesh::HalfEdge *he[4];
+    for(int j = 0; j < nNod; j++) {
+      he[j] = new PolyMesh::HalfEdge(v[j]);
+      (*pm)->hedges.push_back(he[j]);
+      v[j]->he = he[j];
+    }
+
+    PolyMesh::Face *ff = new PolyMesh::Face(he[0]);
+    (*pm)->faces.push_back(ff);
+
+    for(int j = 0; j < nNod; j++) {
+      he[j]->next = he[(j + 1) % nNod];
+      he[j]->prev = he[(j - 1 + nNod) % nNod];
+      he[j]->f = ff;
+    }
+  }
+
+  HalfEdgePtrLessThan compare;
+  std::sort((*pm)->hedges.begin(), (*pm)->hedges.end(), compare);
+
+  HalfEdgePtrEqual equal;
+  for(size_t i = 0; i < (*pm)->hedges.size() - 1; i++) {
+    PolyMesh::HalfEdge *h0 = (*pm)->hedges[i];
+    PolyMesh::HalfEdge *h1 = (*pm)->hedges[i + 1];
+    if(equal(h0, h1)) {
+      h0->opposite = h1;
+      h1->opposite = h0;
+      i++;
+    }
+  }
+  return 0;
+}
 
 #endif

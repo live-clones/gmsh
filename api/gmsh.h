@@ -1846,8 +1846,10 @@ namespace gmsh { // Top-level functions
       //
       // Triangulate the points given in the `coord' vector as pairs of u, v
       // coordinates, and return the node tags (with numbering starting at 1) of
-      // the resulting triangles in `tri'.
+      // the resulting triangles in `tri'. If specified, `edges' contains
+      // constrained edges in the mesh, given as pairs of nodes.
       GMSH_API void triangulate(const std::vector<double> & coord,
+                                const std::vector<std::size_t> & edges,
                                 std::vector<std::size_t> & tri);
 
       // gmsh::model::mesh::tetrahedralize
@@ -1861,15 +1863,24 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::concentration_from_DF
       //
       // Antoine put a comment here.
-      GMSH_API void concentration_from_DF(std::vector<int> & api_concentration,
-                                          std::vector<double> & api_curvature);
+      GMSH_API void concentration_from_DF(const std::vector<int> & concentration_list,
+                                          const std::vector<double> & tension_table,
+                                          std::vector<int> & concentration,
+                                          std::vector<double> & curvature);
 
       // gmsh::model::mesh::advance_DF_in_time
       //
       // Antoine put a comment here.
       GMSH_API void advance_DF_in_time(const double dt,
                                        const std::vector<double> & velocity,
-                                       const bool front = false);
+                                       const double epsilon = 0.,
+                                       const bool triple_slip = true);
+
+      // gmsh::model::mesh::init_DF
+      //
+      // Antoine put a comment here.
+      GMSH_API void init_DF(const std::vector<double> & api_pos,
+                            const std::vector<int> & api_concentration);
 
       // gmsh::model::mesh::add_free_form
       //
@@ -1877,13 +1888,21 @@ namespace gmsh { // Top-level functions
       GMSH_API void add_free_form(const int tag,
                                   const std::vector<double> & poly,
                                   const std::vector<std::size_t> & _corners,
-                                  const int sense = 1);
+                                  const bool loop = true);
 
-      // gmsh::model::mesh::get_DF_position
+      // gmsh::model::mesh::get_DF
       //
       // Antoine put a comment here.
-      GMSH_API void get_DF_position(std::vector<double> & api_position,
-                                    std::vector<int> & api_tags);
+      GMSH_API void get_DF(std::vector<double> & api_d_pos,
+                           std::vector<int> & api_d_tags,
+                           std::vector<std::size_t> & api_d_ids,
+                           std::vector<double> & api_t_pos,
+                           std::vector<int> & api_t_tags,
+                           std::vector<std::size_t> & api_t_ids,
+                           std::vector<std::size_t> & DF_to_meshNodes,
+                           std::vector<double> & DF_to_mesh_parametric,
+                           std::vector<std::size_t> & meshNodes_to_DF,
+                           std::vector<double> & mesh_to_DF_parametric);
 
       // gmsh::model::mesh::get_front_nodes_position
       //
@@ -1903,7 +1922,21 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::relaying_and_relax
       //
       // Antoine put a comment here.
-      GMSH_API void relaying_and_relax();
+      GMSH_API void relaying_and_relax(const double relax);
+
+      // gmsh::model::mesh::relaying_relax
+      //
+      // Antoine put a comment here.
+      GMSH_API void relaying_relax(const double lambda_coeff,
+                                   const int nIterOut,
+                                   const int nIterIn,
+                                   const double distMax,
+                                   const double RATIO);
+
+      // gmsh::model::mesh::set_boundary_from_mesh
+      //
+      // Antoine put a comment here.
+      GMSH_API void set_boundary_from_mesh(std::vector<double> & bnd_pos);
 
       // gmsh::model::mesh::redist_front
       //
@@ -1919,6 +1952,22 @@ namespace gmsh { // Top-level functions
       //
       // Antoine put a comment here.
       GMSH_API void set_levelsets(const std::vector<std::vector<double> > & levelsets);
+
+      // gmsh::model::mesh::write_DF
+      //
+      // Antoine put a comment here.
+      GMSH_API void write_DF(const std::string & filename_DF);
+
+      // gmsh::model::mesh::read_DF
+      //
+      // Antoine put a comment here.
+      GMSH_API void read_DF(const std::string & filename_DF,
+                            const bool pos_flag = true);
+
+      // gmsh::model::mesh::remove_small_features
+      //
+      // Antoine put a comment here.
+      GMSH_API void remove_small_features(const double l);
 
       namespace field { // Mesh size field functions
 

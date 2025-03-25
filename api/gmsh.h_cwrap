@@ -3191,16 +3191,20 @@ namespace gmsh { // Top-level functions
       //
       // Triangulate the points given in the `coord' vector as pairs of u, v
       // coordinates, and return the node tags (with numbering starting at 1) of
-      // the resulting triangles in `tri'.
+      // the resulting triangles in `tri'. If specified, `edges' contains
+      // constrained edges in the mesh, given as pairs of nodes.
       inline void triangulate(const std::vector<double> & coord,
+                              const std::vector<std::size_t> & edges,
                               std::vector<std::size_t> & tri)
       {
         int ierr = 0;
         double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
+        size_t *api_edges_; size_t api_edges_n_; vector2ptr(edges, &api_edges_, &api_edges_n_);
         size_t *api_tri_; size_t api_tri_n_;
-        gmshModelMeshTriangulate(api_coord_, api_coord_n_, &api_tri_, &api_tri_n_, &ierr);
+        gmshModelMeshTriangulate(api_coord_, api_coord_n_, api_edges_, api_edges_n_, &api_tri_, &api_tri_n_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_coord_);
+        gmshFree(api_edges_);
         tri.assign(api_tri_, api_tri_ + api_tri_n_); gmshFree(api_tri_);
       }
 
@@ -3224,16 +3228,22 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::concentration_from_DF
       //
       // Antoine put a comment here.
-      inline void concentration_from_DF(std::vector<int> & api_concentration,
-                                        std::vector<double> & api_curvature)
+      inline void concentration_from_DF(const std::vector<int> & concentration_list,
+                                        const std::vector<double> & tension_table,
+                                        std::vector<int> & concentration,
+                                        std::vector<double> & curvature)
       {
         int ierr = 0;
-        int *api_api_concentration_; size_t api_api_concentration_n_;
-        double *api_api_curvature_; size_t api_api_curvature_n_;
-        gmshModelMeshConcentration_from_DF(&api_api_concentration_, &api_api_concentration_n_, &api_api_curvature_, &api_api_curvature_n_, &ierr);
+        int *api_concentration_list_; size_t api_concentration_list_n_; vector2ptr(concentration_list, &api_concentration_list_, &api_concentration_list_n_);
+        double *api_tension_table_; size_t api_tension_table_n_; vector2ptr(tension_table, &api_tension_table_, &api_tension_table_n_);
+        int *api_concentration_; size_t api_concentration_n_;
+        double *api_curvature_; size_t api_curvature_n_;
+        gmshModelMeshConcentration_from_DF(api_concentration_list_, api_concentration_list_n_, api_tension_table_, api_tension_table_n_, &api_concentration_, &api_concentration_n_, &api_curvature_, &api_curvature_n_, &ierr);
         if(ierr) throwLastError();
-        api_concentration.assign(api_api_concentration_, api_api_concentration_ + api_api_concentration_n_); gmshFree(api_api_concentration_);
-        api_curvature.assign(api_api_curvature_, api_api_curvature_ + api_api_curvature_n_); gmshFree(api_api_curvature_);
+        gmshFree(api_concentration_list_);
+        gmshFree(api_tension_table_);
+        concentration.assign(api_concentration_, api_concentration_ + api_concentration_n_); gmshFree(api_concentration_);
+        curvature.assign(api_curvature_, api_curvature_ + api_curvature_n_); gmshFree(api_curvature_);
       }
 
       // gmsh::model::mesh::advance_DF_in_time
@@ -3241,13 +3251,29 @@ namespace gmsh { // Top-level functions
       // Antoine put a comment here.
       inline void advance_DF_in_time(const double dt,
                                      const std::vector<double> & velocity,
-                                     const bool front = false)
+                                     const double epsilon = 0.,
+                                     const bool triple_slip = true)
       {
         int ierr = 0;
         double *api_velocity_; size_t api_velocity_n_; vector2ptr(velocity, &api_velocity_, &api_velocity_n_);
-        gmshModelMeshAdvance_DF_in_time(dt, api_velocity_, api_velocity_n_, (int)front, &ierr);
+        gmshModelMeshAdvance_DF_in_time(dt, api_velocity_, api_velocity_n_, epsilon, (int)triple_slip, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_velocity_);
+      }
+
+      // gmsh::model::mesh::init_DF
+      //
+      // Antoine put a comment here.
+      inline void init_DF(const std::vector<double> & api_pos,
+                          const std::vector<int> & api_concentration)
+      {
+        int ierr = 0;
+        double *api_api_pos_; size_t api_api_pos_n_; vector2ptr(api_pos, &api_api_pos_, &api_api_pos_n_);
+        int *api_api_concentration_; size_t api_api_concentration_n_; vector2ptr(api_concentration, &api_api_concentration_, &api_api_concentration_n_);
+        gmshModelMeshInit_DF(api_api_pos_, api_api_pos_n_, api_api_concentration_, api_api_concentration_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_api_pos_);
+        gmshFree(api_api_concentration_);
       }
 
       // gmsh::model::mesh::add_free_form
@@ -3256,30 +3282,54 @@ namespace gmsh { // Top-level functions
       inline void add_free_form(const int tag,
                                 const std::vector<double> & poly,
                                 const std::vector<std::size_t> & _corners,
-                                const int sense = 1)
+                                const bool loop = true)
       {
         int ierr = 0;
         double *api_poly_; size_t api_poly_n_; vector2ptr(poly, &api_poly_, &api_poly_n_);
         size_t *api__corners_; size_t api__corners_n_; vector2ptr(_corners, &api__corners_, &api__corners_n_);
-        gmshModelMeshAdd_free_form(tag, api_poly_, api_poly_n_, api__corners_, api__corners_n_, sense, &ierr);
+        gmshModelMeshAdd_free_form(tag, api_poly_, api_poly_n_, api__corners_, api__corners_n_, (int)loop, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_poly_);
         gmshFree(api__corners_);
       }
 
-      // gmsh::model::mesh::get_DF_position
+      // gmsh::model::mesh::get_DF
       //
       // Antoine put a comment here.
-      inline void get_DF_position(std::vector<double> & api_position,
-                                  std::vector<int> & api_tags)
+      inline void get_DF(std::vector<double> & api_d_pos,
+                         std::vector<int> & api_d_tags,
+                         std::vector<std::size_t> & api_d_ids,
+                         std::vector<double> & api_t_pos,
+                         std::vector<int> & api_t_tags,
+                         std::vector<std::size_t> & api_t_ids,
+                         std::vector<std::size_t> & DF_to_meshNodes,
+                         std::vector<double> & DF_to_mesh_parametric,
+                         std::vector<std::size_t> & meshNodes_to_DF,
+                         std::vector<double> & mesh_to_DF_parametric)
       {
         int ierr = 0;
-        double *api_api_position_; size_t api_api_position_n_;
-        int *api_api_tags_; size_t api_api_tags_n_;
-        gmshModelMeshGet_DF_position(&api_api_position_, &api_api_position_n_, &api_api_tags_, &api_api_tags_n_, &ierr);
+        double *api_api_d_pos_; size_t api_api_d_pos_n_;
+        int *api_api_d_tags_; size_t api_api_d_tags_n_;
+        size_t *api_api_d_ids_; size_t api_api_d_ids_n_;
+        double *api_api_t_pos_; size_t api_api_t_pos_n_;
+        int *api_api_t_tags_; size_t api_api_t_tags_n_;
+        size_t *api_api_t_ids_; size_t api_api_t_ids_n_;
+        size_t *api_DF_to_meshNodes_; size_t api_DF_to_meshNodes_n_;
+        double *api_DF_to_mesh_parametric_; size_t api_DF_to_mesh_parametric_n_;
+        size_t *api_meshNodes_to_DF_; size_t api_meshNodes_to_DF_n_;
+        double *api_mesh_to_DF_parametric_; size_t api_mesh_to_DF_parametric_n_;
+        gmshModelMeshGet_DF(&api_api_d_pos_, &api_api_d_pos_n_, &api_api_d_tags_, &api_api_d_tags_n_, &api_api_d_ids_, &api_api_d_ids_n_, &api_api_t_pos_, &api_api_t_pos_n_, &api_api_t_tags_, &api_api_t_tags_n_, &api_api_t_ids_, &api_api_t_ids_n_, &api_DF_to_meshNodes_, &api_DF_to_meshNodes_n_, &api_DF_to_mesh_parametric_, &api_DF_to_mesh_parametric_n_, &api_meshNodes_to_DF_, &api_meshNodes_to_DF_n_, &api_mesh_to_DF_parametric_, &api_mesh_to_DF_parametric_n_, &ierr);
         if(ierr) throwLastError();
-        api_position.assign(api_api_position_, api_api_position_ + api_api_position_n_); gmshFree(api_api_position_);
-        api_tags.assign(api_api_tags_, api_api_tags_ + api_api_tags_n_); gmshFree(api_api_tags_);
+        api_d_pos.assign(api_api_d_pos_, api_api_d_pos_ + api_api_d_pos_n_); gmshFree(api_api_d_pos_);
+        api_d_tags.assign(api_api_d_tags_, api_api_d_tags_ + api_api_d_tags_n_); gmshFree(api_api_d_tags_);
+        api_d_ids.assign(api_api_d_ids_, api_api_d_ids_ + api_api_d_ids_n_); gmshFree(api_api_d_ids_);
+        api_t_pos.assign(api_api_t_pos_, api_api_t_pos_ + api_api_t_pos_n_); gmshFree(api_api_t_pos_);
+        api_t_tags.assign(api_api_t_tags_, api_api_t_tags_ + api_api_t_tags_n_); gmshFree(api_api_t_tags_);
+        api_t_ids.assign(api_api_t_ids_, api_api_t_ids_ + api_api_t_ids_n_); gmshFree(api_api_t_ids_);
+        DF_to_meshNodes.assign(api_DF_to_meshNodes_, api_DF_to_meshNodes_ + api_DF_to_meshNodes_n_); gmshFree(api_DF_to_meshNodes_);
+        DF_to_mesh_parametric.assign(api_DF_to_mesh_parametric_, api_DF_to_mesh_parametric_ + api_DF_to_mesh_parametric_n_); gmshFree(api_DF_to_mesh_parametric_);
+        meshNodes_to_DF.assign(api_meshNodes_to_DF_, api_meshNodes_to_DF_ + api_meshNodes_to_DF_n_); gmshFree(api_meshNodes_to_DF_);
+        mesh_to_DF_parametric.assign(api_mesh_to_DF_parametric_, api_mesh_to_DF_parametric_ + api_mesh_to_DF_parametric_n_); gmshFree(api_mesh_to_DF_parametric_);
       }
 
       // gmsh::model::mesh::get_front_nodes_position
@@ -3319,11 +3369,37 @@ namespace gmsh { // Top-level functions
       // gmsh::model::mesh::relaying_and_relax
       //
       // Antoine put a comment here.
-      inline void relaying_and_relax()
+      inline void relaying_and_relax(const double relax)
       {
         int ierr = 0;
-        gmshModelMeshRelaying_and_relax(&ierr);
+        gmshModelMeshRelaying_and_relax(relax, &ierr);
         if(ierr) throwLastError();
+      }
+
+      // gmsh::model::mesh::relaying_relax
+      //
+      // Antoine put a comment here.
+      inline void relaying_relax(const double lambda_coeff,
+                                 const int nIterOut,
+                                 const int nIterIn,
+                                 const double distMax,
+                                 const double RATIO)
+      {
+        int ierr = 0;
+        gmshModelMeshRelaying_relax(lambda_coeff, nIterOut, nIterIn, distMax, RATIO, &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // gmsh::model::mesh::set_boundary_from_mesh
+      //
+      // Antoine put a comment here.
+      inline void set_boundary_from_mesh(std::vector<double> & bnd_pos)
+      {
+        int ierr = 0;
+        double *api_bnd_pos_; size_t api_bnd_pos_n_;
+        gmshModelMeshSet_boundary_from_mesh(&api_bnd_pos_, &api_bnd_pos_n_, &ierr);
+        if(ierr) throwLastError();
+        bnd_pos.assign(api_bnd_pos_, api_bnd_pos_ + api_bnd_pos_n_); gmshFree(api_bnd_pos_);
       }
 
       // gmsh::model::mesh::redist_front
@@ -3356,6 +3432,37 @@ namespace gmsh { // Top-level functions
         gmshModelMeshSet_levelsets(api_levelsets_, api_levelsets_n_, api_levelsets_nn_, &ierr);
         if(ierr) throwLastError();
         for(size_t i = 0; i < api_levelsets_nn_; ++i){ gmshFree(api_levelsets_[i]); } gmshFree(api_levelsets_); gmshFree(api_levelsets_n_);
+      }
+
+      // gmsh::model::mesh::write_DF
+      //
+      // Antoine put a comment here.
+      inline void write_DF(const std::string & filename_DF)
+      {
+        int ierr = 0;
+        gmshModelMeshWrite_DF(filename_DF.c_str(), &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // gmsh::model::mesh::read_DF
+      //
+      // Antoine put a comment here.
+      inline void read_DF(const std::string & filename_DF,
+                          const bool pos_flag = true)
+      {
+        int ierr = 0;
+        gmshModelMeshRead_DF(filename_DF.c_str(), (int)pos_flag, &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // gmsh::model::mesh::remove_small_features
+      //
+      // Antoine put a comment here.
+      inline void remove_small_features(const double l)
+      {
+        int ierr = 0;
+        gmshModelMeshRemove_small_features(l, &ierr);
+        if(ierr) throwLastError();
       }
 
       namespace field { // Mesh size field functions

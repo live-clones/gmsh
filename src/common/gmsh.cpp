@@ -73,6 +73,7 @@
 #include "qualityMeasuresJacobian.h"
 #include "meshRenumber.h"
 #include "meshRelaying.h"
+#include "meshTriangulation.h"
 #endif
 
 #if defined(HAVE_POST)
@@ -5630,7 +5631,47 @@ gmsh::model::mesh::computeHomology(vectorpair &dimTags)
   GModel::current()->computeHomology(dimTags);
 }
 
+// GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
+//                                              std::vector<std::size_t> &tri)
+// {
+//   if(!_checkInit()) return;
+//   tri.clear();
+//   if(coord.size() % 2) {
+//     Msg::Error("Number of 2D coordinates should be even");
+//     return;
+//   }
+// #if defined(HAVE_MESH)
+//   SBoundingBox3d bbox;
+//   for(std::size_t i = 0; i < coord.size(); i += 2)
+//     bbox += SPoint3(coord[i], coord[i + 1], 0.);
+//   double lc = 10. * norm(SVector3(bbox.max(), bbox.min()));
+//   std::vector<MVertex *> verts(coord.size() / 2);
+//   std::size_t j = 0;
+//   for(std::size_t i = 0; i < coord.size(); i += 2) {
+//     double XX = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
+//     double YY = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
+//     MVertex *v = new MVertex(coord[i] + XX, coord[i + 1] + YY, 0.);
+//     v->setIndex(j);
+//     verts[j++] = v;
+//   }
+//   std::vector<MTriangle *> tris;
+//   delaunayMeshIn2D(verts, tris);
+//   if(tris.empty()) return;
+//   tri.resize(3 * tris.size());
+//   for(std::size_t i = 0; i < tris.size(); i++) {
+//     MTriangle *t = tris[i];
+//     for(std::size_t j = 0; j < 3; j++)
+//       tri[3 * i + j] = t->getVertex(j)->getIndex() + 1; // start at 1
+//   }
+//   for(std::size_t i = 0; i < verts.size(); i++) delete verts[i];
+//   for(std::size_t i = 0; i < tris.size(); i++) delete tris[i];
+// #else
+//   Msg::Error("Triangulate requires the mesh module");
+// #endif
+// }
+
 GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
+                                             const std::vector<std::size_t> & edges,
                                              std::vector<std::size_t> &tri)
 {
   if(!_checkInit()) return;
@@ -5640,34 +5681,12 @@ GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
     return;
   }
 #if defined(HAVE_MESH)
-  SBoundingBox3d bbox;
-  for(std::size_t i = 0; i < coord.size(); i += 2)
-    bbox += SPoint3(coord[i], coord[i + 1], 0.);
-  double lc = 10. * norm(SVector3(bbox.max(), bbox.min()));
-  std::vector<MVertex *> verts(coord.size() / 2);
-  std::size_t j = 0;
-  for(std::size_t i = 0; i < coord.size(); i += 2) {
-    double XX = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
-    double YY = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
-    MVertex *v = new MVertex(coord[i] + XX, coord[i + 1] + YY, 0.);
-    v->setIndex(j);
-    verts[j++] = v;
-  }
-  std::vector<MTriangle *> tris;
-  delaunayMeshIn2D(verts, tris);
-  if(tris.empty()) return;
-  tri.resize(3 * tris.size());
-  for(std::size_t i = 0; i < tris.size(); i++) {
-    MTriangle *t = tris[i];
-    for(std::size_t j = 0; j < 3; j++)
-      tri[3 * i + j] = t->getVertex(j)->getIndex() + 1; // start at 1
-  }
-  for(std::size_t i = 0; i < verts.size(); i++) delete verts[i];
-  for(std::size_t i = 0; i < tris.size(); i++) delete tris[i];
+  meshTriangulate2d(coord,tri, &edges);
 #else
   Msg::Error("Triangulate requires the mesh module");
 #endif
 }
+
 
 GMSH_API void
 gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
@@ -5706,43 +5725,53 @@ gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
 #endif
 }
 
-GMSH_API void gmsh::model::mesh::concentration_from_DF(std::vector<int> &concentration, std::vector<double> &curvature){
+GMSH_API void gmsh::model::mesh::concentration_from_DF(const std::vector<int> &concentration_list, const std::vector<double> &tension_table ,std::vector<int> &concentration, std::vector<double> &curvature){
+  printf("before concentration\n");
   meshRelaying::instance()->concentration(&concentration);
-  meshRelaying::instance()->curvature(concentration, &curvature);
+  printf("after concentration\n");
+  meshRelaying::instance()->curvatureFromMarkers(concentration_list, tension_table, concentration, &curvature);
+  // meshRelaying::instance()->curvatureFromConcentration(&curvature);
+  printf("after curvature\n");
   return;
 }
 
-GMSH_API void gmsh::model::mesh::advance_DF_in_time(const double dt, const std::vector<double> &v, const bool front){
+GMSH_API void gmsh::model::mesh::advance_DF_in_time(const double dt, const std::vector<double> &v, const double epsilon, const bool triple_slip){
   std::vector<SVector3> api_v;
   for(size_t i=0; i<v.size(); i+=3){
     api_v.push_back(SVector3(&v[i]));
   }
-  meshRelaying::instance()->advanceInTime(dt, api_v, front);
-  FILE *fp = fopen("after_interfaces.pos", "w");
-  discreteFront::instance()->printInterfaces(fp);
-  fclose(fp);
+  discreteFront::instance()->advanceInTime(dt, api_v, triple_slip);
+  meshRelaying::instance()->print4debug("advance_DF_in_time.pos");
   return;
 }
 
-GMSH_API void gmsh::model::mesh::add_free_form(const int tag, const std::vector<double> &poly, const std::vector<size_t> &_corners, const int sense){
+GMSH_API void gmsh::model::mesh::init_DF(const std::vector<double> &api_pos, const std::vector<int> &api_concentration){
+  discreteFront::instance()->initFront(api_pos, api_concentration);
+  return;
+}
+
+GMSH_API void gmsh::model::mesh::add_free_form(const int tag, const std::vector<double> &poly, const std::vector<size_t> &_corners, const bool loop){
   std::vector<SVector3> api_poly;
   for(size_t i=0; i<poly.size(); i+=3){
     api_poly.push_back(SVector3(poly[i], poly[i+1], poly[i+2]));
   }
-  discreteFront::instance()->addFreeForm(tag, api_poly, _corners, sense);
-  // discreteFront::instance()->printInterfaces("after_free_form.pos");
+  discreteFront::instance()->addFreeForm(tag, api_poly, _corners, loop);
+  meshRelaying::instance()->print4debug("add_free_form.pos");
   return;
 } 
 
-GMSH_API void gmsh::model::mesh::get_DF_position(std::vector<double> &api_position, std::vector<int> &api_tags){
-  discreteFront::instance()->renumberInterfaces();
-  discreteFront::instance()->getDFPosition(api_position, api_tags);
-  meshRelaying::instance()->print4debug("after_renumber.pos");
+GMSH_API void gmsh::model::mesh::set_boundary_from_mesh(std::vector<double> &bnd_pos){
+  discreteFront::instance()->setBoundaryFromMesh(&bnd_pos);
   return;
 }
 
+GMSH_API void gmsh::model::mesh::get_DF(std::vector<double> &api_d_pos, std::vector<int> &api_d_tags, std::vector<size_t> &api_d_ids, std::vector<double> &api_t_pos, std::vector<int> &api_t_tags, std::vector<size_t> &api_t_ids, std::vector<size_t> &api_DF_to_meshNodes, std::vector<double> &api_DF_to_mesh_parametric, std::vector<size_t> &api_meshNodes_to_DF, std::vector<double> &api_mesh_to_DF_parametric){
+  discreteFront::instance()->getDF(&api_d_pos, &api_d_tags, &api_d_ids, &api_t_pos, &api_t_tags, &api_t_ids, &api_DF_to_meshNodes, &api_DF_to_mesh_parametric, &api_meshNodes_to_DF, &api_mesh_to_DF_parametric);
+  return; 
+}
+
 GMSH_API void gmsh::model::mesh::get_front_nodes_position(std::vector<double> &api_position){
-  meshRelaying::instance()->getFrontNodesPosition(api_position);
+  
   return;
 }
 
@@ -5752,32 +5781,48 @@ GMSH_API void gmsh::model::mesh::get_nodes_position(std::vector<double> &api_pos
 }
 
 GMSH_API void gmsh::model::mesh::reset_discrete_front(){
-  discreteFront::instance()->clear();
   return;
 }
 
-GMSH_API void gmsh::model::mesh::relaying_and_relax(){
-  meshRelaying::instance()->doRelaying(0);      // time not used for df -> 0
-  printf("Relaying done\n");
-  // meshRelaying::instance()->untangle();         // untangle
-  // meshRelaying::instance()->adjustBnd();
-  printf("after adjust bnd\n");
-  meshRelaying::instance()->print4debug("out_gmsh.pos");
-  // discreteFront::instance()->printInterfaces("interfaces.pos");
-  discreteFront::instance()->createTree();
+GMSH_API void gmsh::model::mesh::relaying_relax(const double lambda, const int nIterOut, const int nIterIn, const double distMax, const double RATIO){
+  meshRelaying::instance()->untangle(lambda, nIterOut, nIterIn, distMax, RATIO);        
+  return;
+}
+
+GMSH_API void gmsh::model::mesh::relaying_and_relax(const double relax){
+  meshRelaying::instance()->doRelaying(relax);
+  return;
 }
 
 GMSH_API void gmsh::model::mesh::redist_front(const double lc){
-  meshRelaying::instance()->redistFront(lc);
+  if (lc < 0){
+    discreteFront::instance()->resetInterfacesMesh();
+  } else {
+    discreteFront::instance()->redistFront(lc);
+  }
 }
 
 GMSH_API void gmsh::model::mesh::set_bnd_front(){
-  meshRelaying::instance()->setBndFront();
+  // meshRelaying::instance()->setBndFront();
 }
 
 GMSH_API void gmsh::model::mesh::set_levelsets(const std::vector<std::vector< double > > &ls){
   meshRelaying::instance()->setLevelsets(ls);
 }
+
+GMSH_API void gmsh::model::mesh::write_DF(const std::string &df_filename){
+  discreteFront::instance()->write_DF(df_filename);
+}
+
+GMSH_API void gmsh::model::mesh::read_DF(const std::string &df_filename, const bool pos_flag){
+  discreteFront::instance()->read_DF(df_filename, pos_flag);
+}
+
+GMSH_API void gmsh::model::mesh::remove_small_features(const double l){
+  discreteFront::instance()->remove_features(l);
+}
+
+
 
 // gmsh::model::mesh::field
 
