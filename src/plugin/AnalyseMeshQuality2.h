@@ -59,6 +59,7 @@ private:
   class DataSingleDimension;
   class DataEntities;
   struct ComputeParameters;
+  struct Counts;
   GModel *_m;
   DataSingleDimension *_data2D, *_data3D;
   bool _verbose = false;
@@ -100,7 +101,7 @@ public:
 private:
   void _decideDimensionToCheck(bool &check2D, bool &check3D) const;
 
-  bool _printOK(int verb) const
+  bool _okToPrint(int verb) const
   {
     return (_verbose && verb >= 0) || (!_verbose && verb <= 0);
   }
@@ -109,7 +110,7 @@ private:
   void _info(int verbosityPolicy, const char *format, ...) const;
   void _warn(int verbosityPolicy, const char *format, ...) const;
   void _error(int verbosityPolicy, const char *format, ...) const;
-  void _printElementToCompute(std::size_t nElToCompute[6]) const;
+  std::size_t _printElementToCompute(const Counts &cnt2D, const Counts &cnt3D) const;
 
 #if defined(HAVE_VISUDEV)
   void _computePointwiseQuantities(MElement *,
@@ -117,6 +118,46 @@ private:
   void _createPViewPointwise();
   void _setInterpolationMatrices(PView *);
 #endif
+
+private:
+  class DataSingleDimension {
+  private:
+    const int _dim;
+    std::map<GEntity *, DataEntities> _data;
+
+    // Latest created PView in function of:
+    // - type = 3D {0, 2, 4} or 2D {1, 3, 5} pview
+    // - measure = validity {0, 1}, disto {2, 3} or aspect {4, 5}
+    PView *_views[6]{};
+
+    // Store if data has changed. This is useful if the plugin is executed at
+    // least 3 times. Here is an example:
+    // 1) Set: checkQualityDisto=1, createElementsView=1
+    // 2) Run 1: Disto is computed and a PView is created
+    // 3) Set: recomputePolicy=1, createElementsView=0
+    // 4) Run 2: Disto is recomputed
+    // 5) Set: recomputePolicy=-1, createElementsView=1
+    // 6) Run 3: Disto is not recomputed, but a new PView is created
+    // Explanation: After run 2, _changedSincePViewCreation corresponding to the
+    //    PView is set to true, thus at third run the new PView is created.
+    bool _changedSincePViewCreation[6]{};
+
+  public:
+    explicit DataSingleDimension(int dim) : _dim(dim) {}
+    void clear() { _data.clear(); }
+    void initialize(GModel *, ComputeParameters, Counts &);
+    // void computeDisto(bool onlyVisible, int recomputePolicy, bool verbose);
+    // void computeAspect(bool onlyVisible, int recomputePolicy, bool verbose);
+    // void getValidityValues(std::vector<double> &min, std::vector<double>
+    // &max); void getDistoValues(std::vector<double> &disto) const; void
+    // getAspectValues(std::vector<double> &aspect) const; void
+    // getValues(std::vector<double> *minJ, std::vector<double> *maxJ,
+    //                std::vector<double> *disto, std::vector<double> *aspect)
+    //                const;
+
+  private:
+    void _updateGEntities(std::vector<GEntity *> &, int recomputePolicy);
+  };
 
 private:
   class DataEntities {
@@ -148,8 +189,7 @@ private:
     }
     //void countNewElement(ComputeParameters, std::size_t cnt[3]) const;
     void initialize(ComputeParameters);
-    void count(ComputeParameters, std::size_t cntElToCompute[3],
-               std::size_t cntElToShow[3]);
+    void count(ComputeParameters, Counts &);
     void reset(std::size_t);
     void add(MElement *);
     void add(std::vector<MElement *> &elements)
@@ -175,8 +215,9 @@ private:
     //       *vecDisto) or just std::vector<.> *vecDisto = nullptr)
 
   private:
-    void _count(unsigned char mask, std::size_t &cntElToCompute,
-                std::size_t &cntElToShow);
+    void _count(unsigned char mask, std::size_t &toCompute,
+                std::size_t &toShow);
+    void _countCurved(std::size_t &known, std::size_t &curved);
   };
 
   struct ComputeParameters {
@@ -188,46 +229,15 @@ private:
     bool onlyCurved;
   };
 
-private:
-  class DataSingleDimension {
-  private:
-    const int _dim;
-    std::map<GEntity *, DataEntities> _data;
-
-    // Latest created PView in function of:
-    // - type = 3D {0, 2, 4} or 2D {1, 3, 5} pview
-    // - measure = validity {0, 1}, disto {2, 3} or aspect {4, 5}
-    PView *_views[6]{};
-
-    // Store if data has changed. This is useful if the plugin is executed at
-    // least 3 times. Here is an example:
-    // 1) Set: checkQualityDisto=1, createElementsView=1
-    // 2) Run 1: Disto is computed and a PView is created
-    // 3) Set: recomputePolicy=1, createElementsView=0
-    // 4) Run 2: Disto is recomputed
-    // 5) Set: recomputePolicy=-1, createElementsView=1
-    // 6) Run 3: Disto is not recomputed, but a new PView is created
-    // Explanation: After run 2, _changedSincePViewCreation corresponding to the
-    //    PView is set to true, thus at third run the new PView is created.
-    bool _changedSincePViewCreation[6]{};
-
-  public:
-    explicit DataSingleDimension(int dim) : _dim(dim) {}
-    void clear() { _data.clear(); }
-    void initialize(GModel *, ComputeParameters param,
-                    std::size_t cntElToCompute[3],
-                    std::size_t cntElToShow[3]);
-    // void computeDisto(bool onlyVisible, int recomputePolicy, bool verbose);
-    // void computeAspect(bool onlyVisible, int recomputePolicy, bool verbose);
-    // void getValidityValues(std::vector<double> &min, std::vector<double>
-    // &max); void getDistoValues(std::vector<double> &disto) const; void
-    // getAspectValues(std::vector<double> &aspect) const; void
-    // getValues(std::vector<double> *minJ, std::vector<double> *maxJ,
-    //                std::vector<double> *disto, std::vector<double> *aspect)
-    //                const;
-
-  private:
-    void _updateGEntities(std::vector<GEntity *> &, int recomputePolicy);
+  struct Counts {
+    std::size_t elToCompute[3]{}; // for three measures
+    std::size_t elToShow[3]{};
+    std::size_t totalEl = 0;
+    std::size_t elCurvedComputed = 0;
+    std::size_t curvedEl = 0;
+    std::size_t existingEl = 0;
+    std::size_t visibleEl = 0;
+    Counts operator+(Counts &);
   };
 };
 

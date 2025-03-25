@@ -230,10 +230,11 @@ PView *Plug::execute(PView *v)
   ComputeParameters param = {computeValidity, static_cast<bool>(computeDisto),
                              static_cast<bool>(computeAspect), recomputePolicy,
                              onlyVisible, onlyCurved};
-  std::size_t nElToCompute[6]{};
-  std::size_t nElToShow[6]{};
-  if(check2D) _data2D->initialize(_m, param, nElToCompute, nElToShow);
-  if(check3D) _data3D->initialize(_m, param, &nElToCompute[3], &nElToShow[3]);
+  Counts counts2D, counts3D;
+  if(check2D) _data2D->initialize(_m, param, counts2D);
+  if(check3D) _data3D->initialize(_m, param, counts3D);
+
+  Counts totalCounts = counts2D + counts3D;
 
   // TODO warning if no element to check (the case T8, maybe another gmodel?)
 
@@ -259,8 +260,7 @@ void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
 }
 
 void Plug::DataSingleDimension::initialize(GModel *m, ComputeParameters param,
-                                           std::size_t cntElToCompute[3],
-                                           std::size_t cntElToShow[3])
+                                           Counts &counts)
 {
   // Update list GEntities (thus _data) if needed
   if(param.recomputePolicy >= -1) {
@@ -275,7 +275,7 @@ void Plug::DataSingleDimension::initialize(GModel *m, ComputeParameters param,
   // Initialize DataEntities and count
   for(auto &it : _data) {
     it.second.initialize(param);
-    it.second.count(param, cntElToCompute, cntElToShow);
+    it.second.count(param, counts);
   }
 }
 
@@ -422,28 +422,45 @@ void Plug::DataEntities::initialize(ComputeParameters param)
   }
 }
 
-void Plug::DataEntities::count(
-  ComputeParameters param, std::size_t cntElToCompute[3],
-  std::size_t cntElToShow[3])
+void Plug::DataEntities::count(ComputeParameters param, Counts &counts)
 {
   if (param.computeValidity)
-    _count(F_REQU | F_NOTJAC, cntElToCompute[0], cntElToShow[0]);
+    _count(F_REQU | F_NOTJAC, counts.elToCompute[0], counts.elToShow[0]);
   if (param.computeDisto)
-    _count(F_REQU | F_NOTDISTO, cntElToCompute[1], cntElToShow[1]);
+    _count(F_REQU | F_NOTDISTO, counts.elToCompute[1], counts.elToShow[1]);
   if (param.computeAspect)
-    _count(F_REQU | F_NOTASPECT, cntElToCompute[2], cntElToShow[2]);
+    _count(F_REQU | F_NOTASPECT, counts.elToCompute[2], counts.elToShow[2]);
+
+  _countCurved(counts.elCurvedComputed, counts.curvedEl);
+
+  counts.totalEl += _mapElemToIndex.size();
+  for(const auto &flag : _flags) {
+    if(isBitUnset(flag, F_CURVNOTCOMP)) ++counts.elCurvedComputed;
+    if(isBitSet(flag, F_EXIST)) ++counts.existingEl;
+    if(isBitSet(flag, F_VISBL)) ++counts.visibleEl;
+  }
 }
 
-void Plug::DataEntities::_count(unsigned char mask, std::size_t &cntElToCompute,
-                               std::size_t &cntElToShow)
+void Plug::DataEntities::_countCurved(std::size_t &known, std::size_t &curved)
+{
+  for(const auto &flag : _flags) {
+    if(isBitUnset(flag, F_CURVNOTCOMP)) {
+      ++known;
+      if(isBitUnset(flag, F_CURVED)) ++curved;
+    }
+  }
+}
+
+void Plug::DataEntities::_count(unsigned char mask, std::size_t &elToCompute,
+                                std::size_t &elToShow)
 {
   for(const auto &flag : _flags) {
     if(areBitsSet(flag, mask)) {
-      ++cntElToCompute;
-      ++cntElToShow;
+      ++elToCompute;
+      ++elToShow;
     }
     else if(isBitSet(flag, F_REQU)) {
-      ++cntElToShow;
+      ++elToShow;
     }
   }
 }
@@ -487,7 +504,7 @@ void Plug::_printMessage(void (*func)(const char *, ...), const char *format,
 
 void Plug::_info(int verb, const char *format, ...) const
 {
-  if(!_printOK(verb)) return;
+  if(!_okToPrint(verb)) return;
   va_list args;
   va_start(args, format);
   _printMessage(Msg::Info, format, args);
@@ -496,7 +513,7 @@ void Plug::_info(int verb, const char *format, ...) const
 
 void Plug::_warn(int verb, const char *format, ...) const
 {
-  if(!_printOK(verb)) return;
+  if(!_okToPrint(verb)) return;
   va_list args;
   va_start(args, format);
   _printMessage(Msg::Warning, format, args);
@@ -505,7 +522,7 @@ void Plug::_warn(int verb, const char *format, ...) const
 
 void Plug::_error(int verb, const char *format, ...) const
 {
-  if(!_printOK(verb)) return;
+  if(!_okToPrint(verb)) return;
   va_list args;
   va_start(args, format);
   _printMessage(Msg::Error, format, args);
