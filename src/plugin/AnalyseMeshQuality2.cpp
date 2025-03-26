@@ -53,6 +53,9 @@ StringXNumber MeshQuality2Options_Number[] = {
 
 using Plug = GMSH_AnalyseMeshQuality2Plugin;
 
+// ======== Plugin: Base class =================================================
+// =============================================================================
+
 extern "C" {
 GMSH_Plugin *GMSH_RegisterAnalyseMeshQuality2Plugin()
 {
@@ -260,6 +263,9 @@ PView *Plug::execute(PView *v)
   return v;
 }
 
+// ======== Plugin: Execution ==================================================
+// =============================================================================
+
 void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
 {
   std::size_t num3DElem = 0;
@@ -277,6 +283,9 @@ void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
   else if(_dimensionPolicy < 2)
     check3D = false;
 }
+
+// ======== DataSingleDimension ================================================
+// =============================================================================
 
 void Plug::DataSingleDimension::initialize(GModel *m, ComputeParameters param,
                                            Counts &counts)
@@ -327,6 +336,17 @@ void Plug::DataSingleDimension::_updateGEntities(
   }
 }
 
+// ======== DataEntities =======================================================
+// =============================================================================
+
+constexpr int F_NOTJAC = 1 << 0;
+constexpr int F_NOTDISTO = 1 << 1;
+constexpr int F_NOTASPECT = 1 << 2;
+constexpr int F_EXIST = 1 << 3;
+constexpr int F_VISBL = 1 << 4;
+constexpr int F_CURVNOTCOMP = 1 << 5;
+constexpr int F_CURVED = 1 << 6;
+constexpr int F_REQU = 1 << 7;
 
 inline bool areBitsSet(unsigned char value, int mask)
 {
@@ -352,16 +372,6 @@ inline void unsetBit(unsigned char &value, int maskOneBit)
 {
   value &= ~maskOneBit;
 }
-
-constexpr int F_NOTJAC = 1 << 0;
-constexpr int F_NOTDISTO = 1 << 1;
-constexpr int F_NOTASPECT = 1 << 2;
-constexpr int F_EXIST = 1 << 3;
-constexpr int F_VISBL = 1 << 4;
-constexpr int F_CURVNOTCOMP = 1 << 5;
-constexpr int F_CURVED = 1 << 6;
-constexpr int F_REQU = 1 << 7;
-
 
 void Plug::DataEntities::initialize(ComputeParameters param)
 {
@@ -494,25 +504,6 @@ void Plug::DataEntities::_count(unsigned char mask, std::size_t &elToCompute,
   }
 }
 
-void Plug::_devPrintCount(const Counts &counts) const
-{
-  _info(1, "DEV Elements to compute:");
-  for (int i = 0; i < 3; ++i) {
-    _info(1, "DEV  - Measure %d: %zu", i + 1, counts.elToCompute[i]);
-  }
-
-  _info(1, "DEV Elements to show:");
-  for (int i = 0; i < 3; ++i) {
-    _info(1, "DEV  - Measure %d: %zu", i + 1, counts.elToShow[i]);
-  }
-
-  _info(1, "DEV Total elements: %zu", counts.totalEl);
-  _info(1, "DEV Curved elements computed: %zu", counts.elCurvedComputed);
-  _info(1, "DEV Curved elements: %zu", counts.curvedEl);
-  _info(1, "DEV Existing elements: %zu", counts.existingEl);
-  _info(1, "DEV Visible elements: %zu", counts.visibleEl);
-}
-
 void Plug::DataEntities::reset(std::size_t num)
 {
   _mapElemToIndex.clear();
@@ -541,6 +532,9 @@ void Plug::DataEntities::add(MElement *el)
   if (el->getVisibility()) setBit(flag, F_VISBL);
   _flags.push_back(flag);
 }
+
+// ======== Plugin: User Messages ==============================================
+// =============================================================================
 
 void Plug::_printMessage(void (*func)(const char *, ...), const char *format,
                          va_list args) const
@@ -668,6 +662,28 @@ std::size_t Plug::_guidanceNothingToCompute(ComputeParameters param,
   }
   return sumToShow;
 }
+
+void Plug::_devPrintCount(const Counts &counts) const
+{
+  _info(1, "DEV Elements to compute:");
+  for (int i = 0; i < 3; ++i) {
+    _info(1, "DEV  - Measure %d: %zu", i + 1, counts.elToCompute[i]);
+  }
+
+  _info(1, "DEV Elements to show:");
+  for (int i = 0; i < 3; ++i) {
+    _info(1, "DEV  - Measure %d: %zu", i + 1, counts.elToShow[i]);
+  }
+
+  _info(1, "DEV Total elements: %zu", counts.totalEl);
+  _info(1, "DEV Curved elements computed: %zu", counts.elCurvedComputed);
+  _info(1, "DEV Curved elements: %zu", counts.curvedEl);
+  _info(1, "DEV Existing elements: %zu", counts.existingEl);
+  _info(1, "DEV Visible elements: %zu", counts.visibleEl);
+}
+
+// ======== struct Counts ======================================================
+// =============================================================================
 
 Plug::Counts Plug::Counts::operator+(const Counts &other) const {
   Counts result;
