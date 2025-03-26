@@ -128,8 +128,8 @@ PView *Plug::execute(PView *v)
   Parameters::Compute &pc = _param.compute;
   _info(0, "----------------------------------------");
   _info(0, "Executing the plugin AnalyseMeshQuality...");
-  _info(1, "Parameter 'printGuidance' is ON. This makes the plugin "
-        "to be verbose and to provide various explanations");
+  _info(1, "Parameter 'printGuidance' is ON. ");
+  _info(1, "-> This makes the plugin to be verbose and to provide various explanations");
 
   // Handle cases where no computation is requested
   if(_param.freeData) {
@@ -178,13 +178,13 @@ PView *Plug::execute(PView *v)
   else {
     if(!_param.checkValidity && countsTotal.elToCompute[0] > 0) {
       _info(1, "Validity will be computed even if not asked");
-      _info(1, "> Reason is that validity is quite cheap in comparison to quality and can significantly ");
-      _info(1, "> speed up quality computation. This behaviour can be disabled by setting ON parameter ");
-      _info(1, "> 'skipPreventiveValidityCheck', which is a good idea if the elements are known to be valid.");
+      _info(1, "-> Reason is that validity is quite cheap in comparison to quality and can significantly ");
+      _info(1, "-> boost speed. This behaviour can be disabled by setting ON parameter ");
+      _info(1, "-> 'skipPreventiveValidityCheck', which is a good idea if the elements are known to be valid.");
     }
     else if(pc.lazyValidity) {
       _warn(1, "Parameter 'skipPreventiveValidityCheck' is ON, validity will not be computed");
-      _warn(1, "> This may significantly slow down quality computation in the presence of invalid elements");
+      _warn(1, "-> This may significantly slow down quality computation in the presence of invalid elements");
     }
     _computeMissingData(countsTotal, check2D, check3D);
   }
@@ -586,10 +586,10 @@ void Plug::DataEntity::_count(unsigned char mask, std::size_t &elToCompute,
 void Plug::DataEntity::computeValidity(MsgProgressStatus &progress_status)
 {
   if(_ge->dim() == 2)
-    _info(1, "Surface %d: Computing validity of %d elements",
+    _info(1, "-> Surface %d: Computing validity of %d elements",
           _ge->tag(), _numToCompute[0]);
   else
-    _info(1, "Volume %d: Computing validity of %d elements",
+    _info(1, "-> Volume %d: Computing validity of %d elements",
           _ge->tag(), _numToCompute[0]);
 
   for(const auto &it : _mapElemToIndex) {
@@ -607,10 +607,10 @@ void Plug::DataEntity::computeValidity(MsgProgressStatus &progress_status)
 void Plug::DataEntity::computeDisto(MsgProgressStatus &progress_status, bool considerAsValid)
 {
   if(_ge->dim() == 2)
-    _info(1, "Surface %d: Computing Distortion quality of %d elements",
+    _info(1, "-> Surface %d: Computing Distortion quality of %d elements",
           _ge->tag(), _numToCompute[1]);
   else
-    _info(1, "Volume %d: Computing Distortion quality of %d elements",
+    _info(1, "-> Volume %d: Computing Distortion quality of %d elements",
           _ge->tag(), _numToCompute[1]);
 
   for(const auto &it : _mapElemToIndex) {
@@ -632,10 +632,10 @@ void Plug::DataEntity::computeDisto(MsgProgressStatus &progress_status, bool con
 void Plug::DataEntity::computeAspect(MsgProgressStatus &progress_status, bool considerAsValid)
 {
   if(_ge->dim() == 2)
-    _info(1, "Surface %d: Computing Aspect quality of %d elements",
+    _info(1, "-> Surface %d: Computing Aspect quality of %d elements",
           _ge->tag(), _numToCompute[2]);
   else
-    _info(1, "Volume %d: Computing Aspect quality of %d elements",
+    _info(1, "-> Volume %d: Computing Aspect quality of %d elements",
           _ge->tag(), _numToCompute[2]);
 
   for(const auto &it : _mapElemToIndex) {
@@ -759,12 +759,12 @@ std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
   if(sum2D + sum3D == 0) return 0;
 
   _info(0, "Number of quantities to compute:");
-  _info(0, "%5s%10s%10s%10s", "", "Validity", "Disto", "Aspect");
+  _info(0, "-> %5s%10s%10s%10s", "", "Validity", "Disto", "Aspect");
   if(sum2D)
-    _info(0, "%5s%10d%10d%10d", "2D:", cnt2D.elToCompute[0],
+    _info(0, "-> %5s%10d%10d%10d", "2D:", cnt2D.elToCompute[0],
           cnt2D.elToCompute[1], cnt2D.elToCompute[2]);
   if(sum3D)
-    _info(0, "%5s%10d%10d%10d", "3D:", cnt3D.elToCompute[0],
+    _info(0, "-> %5s%10d%10d%10d", "3D:", cnt3D.elToCompute[0],
           cnt3D.elToCompute[1], cnt3D.elToCompute[2]);
 
   return sum2D + sum3D;
