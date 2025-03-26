@@ -100,6 +100,7 @@ public:
 
 private:
   void _decideDimensionToCheck(bool &check2D, bool &check3D) const;
+  void _computeMissingData(ComputeParameters param, bool check2D, bool check3D) const;
 
   bool _okToPrint(int verb) const
   {
@@ -149,6 +150,10 @@ private:
     explicit DataSingleDimension(int dim) : _dim(dim) {}
     void clear() { _data.clear(); }
     void initialize(GModel *, ComputeParameters, Counts &);
+    void getDataEntities(std::vector<DataEntities*> &set)
+    {
+      for(auto &d : _data) set.push_back(&d.second);
+    }
     // void computeDisto(bool onlyVisible, int recomputePolicy, bool verbose);
     // void computeAspect(bool onlyVisible, int recomputePolicy, bool verbose);
     // void getValidityValues(std::vector<double> &min, std::vector<double>
@@ -199,6 +204,8 @@ private:
     {
       for(auto &e : elements) add(e);
     }
+    GEntity *getEntity() const { return _ge; }
+    std::size_t getNumToCompute(int i) const { return _numToCompute[i]; }
 
     // I separate the computation of each measure because computation can be
     // really heavy and take a a lot of time. Computing the validity is much

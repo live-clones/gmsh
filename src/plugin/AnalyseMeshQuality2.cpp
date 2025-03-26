@@ -244,13 +244,24 @@ PView *Plug::execute(PView *v)
 
   // Check that there is something to do
   std::size_t totalToCompute = _printElementToCompute(counts2D, counts3D);
+  Counts countsTotal = counts2D + counts3D;
   if(!totalToCompute) {
-    std::size_t totalToShow = _guidanceNothingToCompute(param,
-      counts2D + counts3D, check2D, check3D);
+    std::size_t totalToShow = _guidanceNothingToCompute(param, countsTotal,
+      check2D, check3D);
     if(!totalToShow) return v;
   }
+  else {
+    _info(0, "Starting computation of asked measures");
+    if(!checkValidity && countsTotal.elToCompute[0] > 0) {
+      _info(1, "Validity will be computed even if not asked");
+      _info(1, "> Reason is that validity is quite cheap in comparison to quality and can significantly ");
+      _info(1, "> speed up quality computation. This behaviour can be disabled by setting ON parameter ");
+      _info(1, "> 'skipPreventiveValidityCheck', which is a good idea if the elements are known to be valid.");
+    }
+    _computeMissingData(param, check2D, check3D);
+  }
 
-  // TODO compute measures
+
   // If validity not asked : tell that compute it any way because it can speedup
   // say that only if verb 1
 
@@ -265,6 +276,36 @@ PView *Plug::execute(PView *v)
 
 // ======== Plugin: Execution ==================================================
 // =============================================================================
+
+void Plug::_computeMissingData(ComputeParameters param, bool check2D, bool check3D) const
+{
+  std::vector<DataEntities*> allDataEntities;
+  if(check2D)
+    _data2D->getDataEntities(allDataEntities);
+  if(check3D)
+    _data3D->getDataEntities(allDataEntities);
+
+  Msg::StatusBar(true, "Computing Validity...");
+  for(auto data: allDataEntities) {
+    Msg::StatusBar(true, "Surface %d: Computing validity of %d elements",
+                     data->getEntity()->tag(), data->getNumToCompute(0));
+    data->computeValidity();
+  }
+
+  Msg::StatusBar(true, "Computing quality Disto...");
+  for(auto data: allDataEntities) {
+    Msg::StatusBar(true, "Surface %d: Computing Disto of %d elements",
+                     data->getEntity()->tag(), data->getNumToCompute(1));
+    data->computeDisto();
+  }
+
+  Msg::StatusBar(true, "Computing quality Aspect...");
+  for(auto data: allDataEntities) {
+    Msg::StatusBar(true, "Surface %d: Computing Aspect of %d elements",
+                     data->getEntity()->tag(), data->getNumToCompute(2));
+    data->computeAspect();
+  }
+}
 
 void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
 {
