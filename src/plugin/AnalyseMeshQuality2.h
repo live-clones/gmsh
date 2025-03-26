@@ -61,6 +61,7 @@ private:
   class DataEntity;
   struct ComputeParameters;
   struct Counts;
+  struct Measures;
   GModel *_m;
   DataSingleDimension *_data2D, *_data3D;
   bool _verbose = false;
@@ -160,6 +161,7 @@ private:
     {
       for(auto &d : _dataEntities) set.push_back(&d.second);
     }
+    void gatherValues(const Counts &, Measures &);
     // void computeDisto(bool onlyVisible, int recomputePolicy, bool verbose);
     // void computeAspect(bool onlyVisible, int recomputePolicy, bool verbose);
     // void getValidityValues(std::vector<double> &min, std::vector<double>
@@ -212,6 +214,7 @@ private:
     }
     GEntity *getEntity() const { return _ge; }
     std::size_t getNumToCompute(int i) const { return _numToCompute[i]; }
+    void addValues(Measures &);
 
     // I separate the computation of each measure because computation can be
     // really heavy and take a a lot of time. Computing the validity is much
@@ -254,6 +257,21 @@ private:
     std::size_t existingEl = 0;
     std::size_t visibleEl = 0;
     Counts operator+(const Counts &) const;
+  };
+
+  struct Measures {
+    bool validity;
+    bool disto;
+    bool aspect;
+    std::vector<double> minJ;
+    std::vector<double> maxJ;
+    std::vector<double> minDisto;
+    std::vector<double> minAspect;
+    Measures(bool needValidity, bool needDisto, bool needAspect) {
+      validity = needValidity;
+      disto = needDisto;
+      aspect = needAspect;
+    }
   };
 };
 

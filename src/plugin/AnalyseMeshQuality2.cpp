@@ -243,7 +243,7 @@ PView *Plug::execute(PView *v)
   _devPrintCount(counts2D);
   _devPrintCount(counts3D);
 
-  // Check that there is something to do
+  // Computation
   std::size_t totalToCompute = _printElementToCompute(counts2D, counts3D);
   Counts countsTotal = counts2D + counts3D;
   if(!totalToCompute) {
@@ -265,6 +265,13 @@ PView *Plug::execute(PView *v)
     _computeMissingData(countsTotal, check2D, check3D, lazyValidity);
   }
 
+  // Gather data
+  Measures measures2D(checkValidity, computeDisto, computeAspect);
+  Measures measures3D(checkValidity, computeDisto, computeAspect);
+  if(check2D) _data2D->gatherValues(counts2D, measures2D);
+  if(check3D) _data3D->gatherValues(counts3D, measures3D);
+
+  int a = 1;
 
   // If validity not asked : tell that compute it any way because it can speedup
   // say that only if verb 1
@@ -384,6 +391,17 @@ void Plug::DataSingleDimension::_updateGEntities(
         ++it;
       }
     }
+  }
+}
+
+void Plug::DataSingleDimension::gatherValues(const Counts &counts, Measures &measures)
+{
+  measures.minJ.reserve(counts.elToShow[0]);
+  measures.maxJ.reserve(counts.elToShow[0]);
+  measures.minDisto.reserve(counts.elToShow[1]);
+  measures.minAspect.reserve(counts.elToShow[2]);
+  for(auto &it : _dataEntities) {
+    it.second.addValues(measures);
   }
 }
 
@@ -653,6 +671,24 @@ void Plug::DataEntity::add(MElement *el)
                        | F_CURVNOTCOMP;
   if (el->getVisibility()) setBit(flag, F_VISBL);
   _flags.push_back(flag);
+}
+
+void Plug::DataEntity::addValues(Measures &measures)
+{
+  for(auto &it : _mapElemToIndex) {
+    std::size_t idx = it.second;
+    if(isBitSet(_flags[idx], F_REQU))
+    {
+      if(isBitUnset(_flags[idx], F_NOTJAC)) {
+        measures.minJ.push_back(_minJ[idx]);
+        measures.maxJ.push_back(_maxJ[idx]);
+      }
+      if(isBitUnset(_flags[idx], F_NOTDISTO))
+        measures.minDisto.push_back(_minDisto[idx]);
+      if(isBitUnset(_flags[idx], F_NOTASPECT))
+        measures.minAspect.push_back(_minAspect[idx]);
+    }
+  }
 }
 
 // ======== Plugin: User Messages ==============================================
