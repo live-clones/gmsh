@@ -52,6 +52,7 @@ StringXNumber MeshQuality2Options_Number[] = {
 };
 
 using Plug = GMSH_AnalyseMeshQuality2Plugin;
+Plug *Plug::_plug = nullptr;
 
 // ======== Plugin: Base class =================================================
 // =============================================================================
@@ -59,7 +60,7 @@ using Plug = GMSH_AnalyseMeshQuality2Plugin;
 extern "C" {
 GMSH_Plugin *GMSH_RegisterAnalyseMeshQuality2Plugin()
 {
-  return new GMSH_AnalyseMeshQuality2Plugin();
+  return Plug::newPluginInstance();
 }
 }
 
@@ -251,7 +252,6 @@ PView *Plug::execute(PView *v)
     if(!totalToShow) return v;
   }
   else {
-    _info(0, "Starting computation of asked measures");
     if(!checkValidity && countsTotal.elToCompute[0] > 0) {
       _info(1, "Validity will be computed even if not asked");
       _info(1, "> Reason is that validity is quite cheap in comparison to quality and can significantly ");
@@ -578,14 +578,14 @@ void Plug::DataEntities::add(MElement *el)
 // =============================================================================
 
 void Plug::_printMessage(void (*func)(const char *, ...), const char *format,
-                         va_list args) const
+                         va_list args)
 {
   char str[5000];
   vsnprintf(str, sizeof(str), format, args);
   func("%s", str);
 }
 
-void Plug::_info(int verb, const char *format, ...) const
+void Plug::_info(int verb, const char *format, ...)
 {
   if(!_okToPrint(verb)) return;
   va_list args;
@@ -594,7 +594,7 @@ void Plug::_info(int verb, const char *format, ...) const
   va_end(args);
 }
 
-void Plug::_warn(int verb, const char *format, ...) const
+void Plug::_warn(int verb, const char *format, ...)
 {
   if(!_okToPrint(verb)) return;
   va_list args;
@@ -603,7 +603,7 @@ void Plug::_warn(int verb, const char *format, ...) const
   va_end(args);
 }
 
-void Plug::_error(int verb, const char *format, ...) const
+void Plug::_error(int verb, const char *format, ...)
 {
   if(!_okToPrint(verb)) return;
   va_list args;
@@ -623,12 +623,12 @@ std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
 
   // Print the table header using `_info`
   _info(0, "Number of quantities to compute:");
-  _info(0, "%-10s%-10s%-10s%-10s", "", "Validity", "Disto", "Aspect");
+  _info(0, "%5s%10s%10s%10s", "", "Validity", "Disto", "Aspect");
   if(sum2D)
-    _info(0, "%-10s%-10d%-10d%-10d", "2D:", cnt2D.elToCompute[0],
+    _info(0, "%5s%10d%10d%10d", "2D:", cnt2D.elToCompute[0],
           cnt2D.elToCompute[1], cnt2D.elToCompute[2]);
   if(sum3D)
-    _info(0, "%-10s%-10d%-10d%-10d", "3D:", cnt3D.elToCompute[0],
+    _info(0, "%5s%10d%10d%10d", "3D:", cnt3D.elToCompute[0],
           cnt3D.elToCompute[1], cnt3D.elToCompute[2]);
 
   return sum2D + sum3D;

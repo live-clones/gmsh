@@ -56,6 +56,7 @@ GMSH_Plugin *GMSH_RegisterAnalyseMeshQuality2Plugin();
 
 class GMSH_AnalyseMeshQuality2Plugin : public GMSH_PostPlugin {
 private:
+  static GMSH_AnalyseMeshQuality2Plugin *_plug;
   class DataSingleDimension;
   class DataEntities;
   struct ComputeParameters;
@@ -97,20 +98,25 @@ public:
   int getNbOptions() const override;
   StringXNumber *getOption(int) override;
   PView *execute(PView *) override;
+  static GMSH_AnalyseMeshQuality2Plugin *newPluginInstance()
+  {
+    _plug = new GMSH_AnalyseMeshQuality2Plugin();
+    return _plug;
+  }
 
 private:
   void _decideDimensionToCheck(bool &check2D, bool &check3D) const;
   void _computeMissingData(ComputeParameters param, bool check2D, bool check3D) const;
 
-  bool _okToPrint(int verb) const
+  static bool _okToPrint(int verb)
   {
-    return (_verbose && verb >= 0) || (!_verbose && verb <= 0);
+    return (_plug->_verbose && verb >= 0) || (!_plug->_verbose && verb <= 0);
   }
-  void _printMessage(void (*func)(const char *, ...), const char *format,
-                     va_list) const;
-  void _info(int verbosityPolicy, const char *format, ...) const;
-  void _warn(int verbosityPolicy, const char *format, ...) const;
-  void _error(int verbosityPolicy, const char *format, ...) const;
+  static void _printMessage(void (*func)(const char *, ...), const char *format,
+                            va_list);
+  static void _info(int verbosityPolicy, const char *format, ...);
+  static void _warn(int verbosityPolicy, const char *format, ...);
+  static void _error(int verbosityPolicy, const char *format, ...);
   void _devPrintCount(const Counts &) const;
   std::size_t _printElementToCompute(const Counts &cnt2D, const Counts &cnt3D) const;
   std::size_t _guidanceNothingToCompute(ComputeParameters param, Counts counts,
