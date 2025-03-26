@@ -259,7 +259,11 @@ PView *Plug::execute(PView *v)
       _info(1, "> speed up quality computation. This behaviour can be disabled by setting ON parameter ");
       _info(1, "> 'skipPreventiveValidityCheck', which is a good idea if the elements are known to be valid.");
     }
-    _computeMissingData(countsTotal, check2D, check3D);
+    else if(lazyValidity) {
+      _warn(1, "Parameter 'skipPreventiveValidityCheck' is ON, validity will not be computed");
+      _warn(1, "> This may significantly slow down quality computation in the presence of invalid elements");
+    }
+    _computeMissingData(countsTotal, check2D, check3D, lazyValidity);
   }
 
 
@@ -278,7 +282,7 @@ PView *Plug::execute(PView *v)
 // ======== Plugin: Execution ==================================================
 // =============================================================================
 
-void Plug::_computeMissingData(Counts counts, bool check2D, bool check3D) const
+void Plug::_computeMissingData(Counts counts, bool check2D, bool check3D, bool lazyValidity) const
 {
   std::vector<DataEntities*> allDataEntities;
   if(check2D)
@@ -294,19 +298,21 @@ void Plug::_computeMissingData(Counts counts, bool check2D, bool check3D) const
     }
   }
 
-  // Msg::StatusBar(true, "Computing quality Disto...");
-  // for(auto data: allDataEntities) {
-  //   Msg::StatusBar(true, "Surface %d: Computing Disto of %d elements",
-  //                    data->getEntity()->tag(), data->getNumToCompute(1));
-  //   data->computeDisto();
-  // }
-  //
-  // Msg::StatusBar(true, "Computing quality Aspect...");
-  // for(auto data: allDataEntities) {
-  //   Msg::StatusBar(true, "Surface %d: Computing Aspect of %d elements",
-  //                    data->getEntity()->tag(), data->getNumToCompute(2));
-  //   data->computeAspect();
-  // }
+  if(counts.elToCompute[1] > 0) {
+    Msg::StatusBar(true, "Computing Distortion quality...");
+    MsgProgressStatus progress_status(counts.elToCompute[1]);
+    for(auto data: allDataEntities) {
+      data->computeDisto(progress_status, lazyValidity);
+    }
+  }
+
+  if(counts.elToCompute[2] > 0) {
+    Msg::StatusBar(true, "Computing Aspect quality...");
+    MsgProgressStatus progress_status(counts.elToCompute[2]);
+    for(auto data: allDataEntities) {
+      data->computeAspect(progress_status, lazyValidity);
+    }
+  }
 
   Msg::StatusBar(true, "Done computing quantities");
 }
@@ -560,11 +566,61 @@ void Plug::DataEntities::computeValidity(MsgProgressStatus &progress_status)
 
   for(const auto &it : _mapElemToIndex) {
     const std::size_t idx = it.second;
-    if(isBitSet(_flags[idx], F_NOTJAC)) {
+    if(areBitsSet(_flags[idx], F_REQU | F_NOTJAC)) {
       MElement *el = it.first;
       // TODO: give unique normal if planar surface
       JacQual::minMaxJacobianDeterminant(el, _minJ[idx], _maxJ[idx]);//, normals);
       unsetBit(_flags[idx], F_NOTJAC);
+      progress_status.next();
+    }
+  }
+}
+
+void Plug::DataEntities::computeDisto(MsgProgressStatus &progress_status, bool considerAsValid)
+{
+  if(_ge->dim() == 2)
+    _info(1, "Surface %d: Computing Distortion quality of %d elements",
+          _ge->tag(), _numToCompute[1]);
+  else
+    _info(1, "Volume %d: Computing Distortion quality of %d elements",
+          _ge->tag(), _numToCompute[1]);
+
+  for(const auto &it : _mapElemToIndex) {
+    const std::size_t idx = it.second;
+    if(areBitsSet(_flags[idx], F_REQU | F_NOTDISTO)) {
+      MElement *el = it.first;
+      if(!considerAsValid  && _minJ[idx] <= 0 && _maxJ[idx] >= 0) {
+        _minDisto[idx] = 0;
+      }
+      else {
+        _minDisto[idx] = JacQual::minICNMeasure(el, true);
+      }
+      unsetBit(_flags[idx], F_NOTDISTO);
+      progress_status.next();
+    }
+  }
+}
+
+void Plug::DataEntities::computeAspect(MsgProgressStatus &progress_status, bool considerAsValid)
+{
+  if(_ge->dim() == 2)
+    _info(1, "Surface %d: Computing Aspect quality of %d elements",
+          _ge->tag(), _numToCompute[2]);
+  else
+    _info(1, "Volume %d: Computing Aspect quality of %d elements",
+          _ge->tag(), _numToCompute[2]);
+
+  for(const auto &it : _mapElemToIndex) {
+    const std::size_t idx = it.second;
+    if(areBitsSet(_flags[idx], F_REQU | F_NOTASPECT)) {
+      MElement *el = it.first;
+      if(!considerAsValid  && _minJ[idx] <= 0 && _maxJ[idx] >= 0) {
+        _minAspect[idx] = 0;
+      }
+      else {
+        _minAspect[idx] = JacQual::minIGEMeasure(el, true);
+      }
+      unsetBit(_flags[idx], F_NOTASPECT);
       progress_status.next();
     }
   }

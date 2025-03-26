@@ -106,7 +106,7 @@ public:
 
 private:
   void _decideDimensionToCheck(bool &check2D, bool &check3D) const;
-  void _computeMissingData(Counts param, bool check2D, bool check3D) const;
+  void _computeMissingData(Counts param, bool check2D, bool check3D, bool lazyValidity) const;
 
   static bool _okToPrint(int verb)
   {
@@ -218,8 +218,8 @@ private:
     // faster and can help the user to evaluate the time needed to compute the
     // remaining qualities.
     void computeValidity(MsgProgressStatus &);
-    void computeDisto(bool onlyVisible, int recomputePolicy, bool verbose);
-    void computeAspect(bool onlyVisible, int recomputePolicy, bool verbose);
+    void computeDisto(MsgProgressStatus &, bool considerAsValid);
+    void computeAspect(MsgProgressStatus &, bool considerAsValid);
     void getValidityValues(std::vector<double> &min, std::vector<double> &max);
     void getDistoValues(std::vector<double> &disto) const;
     void getAspectValues(std::vector<double> &aspect) const;
