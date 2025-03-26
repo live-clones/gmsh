@@ -84,6 +84,8 @@ private:
     double percentileStat;
     bool freeData;
     bool checkValidity;
+    bool check2D;
+    bool check3D;
   } _param;
 
   static GMSH_AnalyseMeshQuality2Plugin *_plug;
@@ -138,6 +140,8 @@ private:
   void _fetchParameters();
   void _decideDimensionToCheck(bool &check2D, bool &check3D) const;
   void _computeMissingData(Counts param, bool check2D, bool check3D) const;
+  void _printStats(Measures &m2, Measures &m3) const;
+  void _printStats(Measures &, const char* str_dim) const;
 
   static bool _okToPrint(int verb)
   {

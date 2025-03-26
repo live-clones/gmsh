@@ -7,6 +7,7 @@
 
 #if defined(HAVE_MESH)
 
+#include <numeric>
 #include "AnalyseMeshQuality2.h"
 #include "OS.h"
 #include "Context.h"
@@ -26,7 +27,7 @@
 StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "checkValidity", nullptr, 0},
   {GMSH_FULLRC, "checkQualityDisto", nullptr, 1},
-  {GMSH_FULLRC, "checkQualityAspect", nullptr, 0},
+  {GMSH_FULLRC, "checkQualityAspect", nullptr, 1},
   {GMSH_FULLRC, "dimensionPolicy", nullptr, 0},
   {GMSH_FULLRC, "recomputePolicy", nullptr, 0},
   {GMSH_FULLRC, "restrictToVisibleElements", nullptr, 0},
@@ -195,6 +196,10 @@ PView *Plug::execute(PView *v)
   if(check2D) _data2D->gatherValues(counts2D, measures2D);
   if(check3D) _data3D->gatherValues(counts3D, measures3D);
 
+  _param.check2D = check2D;
+  _param.check3D = check3D;
+  _printStats(measures2D, measures3D);
+
   int a = 1;
 
   // If validity not asked : tell that compute it any way because it can speedup
@@ -327,6 +332,68 @@ void Plug::_computeMissingData(Counts counts, bool check2D, bool check3D) const
   }
 
   Msg::StatusBar(true, "Done computing quantities");
+}
+
+void Plug::_printStats(Measures &m2, Measures &m3) const
+{
+  std::vector<double> percentiles;
+  unpackPercentile(_param.percentileStat, percentiles);
+
+  if(_dimensionPolicy == 3) {
+    Measures combined(m2.validity, m2.disto, m2.aspect);
+    combined.minJ = m2.minJ;
+    combined.minJ.insert(combined.minJ.end(), m3.minJ.begin(), m3.minJ.end());
+    combined.maxJ = m2.maxJ;
+    combined.maxJ.insert(combined.maxJ.end(), m3.maxJ.begin(), m3.maxJ.end());
+    combined.minDisto = m2.minDisto;
+    combined.minDisto.insert(combined.minDisto.end(), m3.minDisto.begin(), m3.minDisto.end());
+    combined.minAspect = m2.minAspect;
+    combined.minAspect.insert(combined.minAspect.end(), m3.minAspect.begin(), m3.minAspect.end());
+
+    _printStats(combined, "2 and 3 combined");
+    return;
+  }
+
+  if(_param.check2D) _printStats(m2, "2");
+  if(_param.check3D) _printStats(m3, "3");
+}
+
+void Plug::_printStats(Measures &measure, const char* str_dim) const
+{
+  _info(0, "Statistics for dimension %s:", str_dim);
+  _info(0, "-> %-7s%7s%7s%7s", "", "Min", "Avg", "Max");
+  if(measure.disto && measure.minDisto.size()) {
+    std::vector<double> &q = measure.minDisto;
+    double min = *std::min_element(q.begin(), q.end());
+    double max = *std::max_element(q.begin(), q.end());
+    double avg = std::accumulate(q.begin(), q.end(), 0.0) / q.size();
+
+    _info(0, "-> %-7s%7.3f%7.3f%7.3f", "Disto:", min, avg, max);
+  }
+  if(measure.aspect && measure.minAspect.size()) {
+    std::vector<double> &q = measure.minAspect;
+    double min = *std::min_element(q.begin(), q.end());
+    double max = *std::max_element(q.begin(), q.end());
+    double avg = std::accumulate(q.begin(), q.end(), 0.0) / q.size();
+
+    _info(0, "-> %-7s%7.3f%7.3f%7.3f", "Aspect:", min, avg, max);
+  }
+  if(measure.validity && measure.minJ.size()) {
+    std::vector<double> ratio(measure.minJ.size());
+    for(std::size_t i = 0; i < measure.minJ.size(); ++i) {
+      if (measure.maxJ[i] > 0)
+        ratio[i] = measure.minJ[i] / measure.maxJ[i];
+      else
+        ratio[i] = measure.maxJ[i] / measure.minJ[i];
+    }
+    int numInvalid = std::count_if(ratio.begin(), ratio.end(), [](double value) {
+        return value < 0;
+    });
+    if(numInvalid)
+      _warn(0, "-> Found %d invalid elements", numInvalid);
+    else
+      _info(0, "-> All elements are valid :-)", numInvalid);
+  }
 }
 
 void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
