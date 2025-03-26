@@ -213,7 +213,6 @@ PView *Plug::execute(PView *v)
   if(freeData) {
     _info(-1, "Freeing data...");
     _info(1, "Freeing data... (because parameter 'freeData-NothingElse' is ON)");
-    // FIXME: create method clear in dataSingleDimension
     _data2D->clear();
     _data3D->clear();
     MeshQuality2Options_Number[18].def = 0;
@@ -284,7 +283,7 @@ PView *Plug::execute(PView *v)
 
 void Plug::_computeMissingData(Counts counts, bool check2D, bool check3D, bool lazyValidity) const
 {
-  std::vector<DataEntities*> allDataEntities;
+  std::vector<DataEntity*> allDataEntities;
   if(check2D)
     _data2D->getDataEntities(allDataEntities);
   if(check3D)
@@ -341,7 +340,7 @@ void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
 void Plug::DataSingleDimension::initialize(GModel *m, ComputeParameters param,
                                            Counts &counts)
 {
-  // Update list GEntities (thus _data) if needed
+  // Update list GEntities (thus _dataEntities) if needed
   if(param.recomputePolicy >= -1) {
     std::vector<GEntity *> entities;
     if(_dim == 2)
@@ -351,8 +350,8 @@ void Plug::DataSingleDimension::initialize(GModel *m, ComputeParameters param,
     _updateGEntities(entities, param.recomputePolicy);
   }
 
-  // Initialize DataEntities and count
-  for(auto &it : _data) {
+  // Initialize all DataEntity and count elements
+  for(auto &it : _dataEntities) {
     it.second.initialize(param);
     it.second.count(param, counts);
   }
@@ -361,16 +360,17 @@ void Plug::DataSingleDimension::initialize(GModel *m, ComputeParameters param,
 void Plug::DataSingleDimension::_updateGEntities(
   std::vector<GEntity *> &entities, int recomputePolicy)
 {
-  // Get GEntities present in the current model, add new ones in _data
+  // Get GEntities present in the current model, add new ones in _dataEntities
   std::set<GEntity *, GEntityPtrLessThan> existingInModel;
   for(const auto &ge: entities) {
     existingInModel.insert(ge);
-    if(_data.find(ge) == _data.end()) _data.emplace(ge, DataEntities(ge));
+    if(_dataEntities.find(ge) == _dataEntities.end())
+      _dataEntities.emplace(ge, DataEntity(ge));
   }
 
   if(recomputePolicy >= 0) {
-    // Remove GEntities from _data that are not existent in the current model
-    for(auto it = _data.begin(); it != _data.end();) {
+    // Remove GEntities from _dataEntities that are not existent in the current model
+    for(auto it = _dataEntities.begin(); it != _dataEntities.end();) {
       if(existingInModel.find(it->first) == existingInModel.end()) {
         // it->second.clear(); // FIXME check that i don't need this
         std::size_t numShownElement[3];
@@ -378,7 +378,7 @@ void Plug::DataSingleDimension::_updateGEntities(
         for(int i = 0; i < 3; ++i) {
           if(numShownElement[i] > 0) _changedSincePViewCreation[i] = true;
         }
-        it = _data.erase(it);
+        it = _dataEntities.erase(it);
       }
       else {
         ++it;
@@ -387,7 +387,7 @@ void Plug::DataSingleDimension::_updateGEntities(
   }
 }
 
-// ======== DataEntities =======================================================
+// ======== DataEntity =========================================================
 // =============================================================================
 
 constexpr int F_NOTJAC = 1 << 0;
@@ -424,7 +424,7 @@ inline void unsetBit(unsigned char &value, int maskOneBit)
   value &= ~maskOneBit;
 }
 
-void Plug::DataEntities::initialize(ComputeParameters param)
+void Plug::DataEntity::initialize(ComputeParameters param)
 {
   if(param.recomputePolicy == -2) return;
 
@@ -502,7 +502,7 @@ void Plug::DataEntities::initialize(ComputeParameters param)
   }
 }
 
-void Plug::DataEntities::count(ComputeParameters param, Counts &counts)
+void Plug::DataEntity::count(ComputeParameters param, Counts &counts)
 {
   // Count num to compute and num to show
   for(int i = 0; i < 3; ++i) {
@@ -531,7 +531,7 @@ void Plug::DataEntities::count(ComputeParameters param, Counts &counts)
   _countCurved(counts.elCurvedComputed, counts.curvedEl);
 }
 
-void Plug::DataEntities::_countCurved(std::size_t &known, std::size_t &curved)
+void Plug::DataEntity::_countCurved(std::size_t &known, std::size_t &curved)
 {
   for(const auto &flag : _flags) {
     if(isBitUnset(flag, F_CURVNOTCOMP)) {
@@ -541,7 +541,7 @@ void Plug::DataEntities::_countCurved(std::size_t &known, std::size_t &curved)
   }
 }
 
-void Plug::DataEntities::_count(unsigned char mask, std::size_t &elToCompute,
+void Plug::DataEntity::_count(unsigned char mask, std::size_t &elToCompute,
                                 std::size_t &elToShow)
 {
   for(const auto &flag : _flags) {
@@ -555,7 +555,7 @@ void Plug::DataEntities::_count(unsigned char mask, std::size_t &elToCompute,
   }
 }
 
-void Plug::DataEntities::computeValidity(MsgProgressStatus &progress_status)
+void Plug::DataEntity::computeValidity(MsgProgressStatus &progress_status)
 {
   if(_ge->dim() == 2)
     _info(1, "Surface %d: Computing validity of %d elements",
@@ -576,7 +576,7 @@ void Plug::DataEntities::computeValidity(MsgProgressStatus &progress_status)
   }
 }
 
-void Plug::DataEntities::computeDisto(MsgProgressStatus &progress_status, bool considerAsValid)
+void Plug::DataEntity::computeDisto(MsgProgressStatus &progress_status, bool considerAsValid)
 {
   if(_ge->dim() == 2)
     _info(1, "Surface %d: Computing Distortion quality of %d elements",
@@ -601,7 +601,7 @@ void Plug::DataEntities::computeDisto(MsgProgressStatus &progress_status, bool c
   }
 }
 
-void Plug::DataEntities::computeAspect(MsgProgressStatus &progress_status, bool considerAsValid)
+void Plug::DataEntity::computeAspect(MsgProgressStatus &progress_status, bool considerAsValid)
 {
   if(_ge->dim() == 2)
     _info(1, "Surface %d: Computing Aspect quality of %d elements",
@@ -626,7 +626,7 @@ void Plug::DataEntities::computeAspect(MsgProgressStatus &progress_status, bool 
   }
 }
 
-void Plug::DataEntities::reset(std::size_t num)
+void Plug::DataEntity::reset(std::size_t num)
 {
   _mapElemToIndex.clear();
   _minJ.clear();
@@ -641,7 +641,7 @@ void Plug::DataEntities::reset(std::size_t num)
   _flags.reserve(num);
 }
 
-void Plug::DataEntities::add(MElement *el)
+void Plug::DataEntity::add(MElement *el)
 {
   std::size_t index = _minJ.size();
   _mapElemToIndex[el] = index;

@@ -58,7 +58,7 @@ class GMSH_AnalyseMeshQuality2Plugin : public GMSH_PostPlugin {
 private:
   static GMSH_AnalyseMeshQuality2Plugin *_plug;
   class DataSingleDimension;
-  class DataEntities;
+  class DataEntity;
   struct ComputeParameters;
   struct Counts;
   GModel *_m;
@@ -133,7 +133,7 @@ private:
   class DataSingleDimension {
   private:
     const int _dim;
-    std::map<GEntity *, DataEntities> _data;
+    std::map<GEntity *, DataEntity> _dataEntities;
 
     // Latest created PView in function of:
     // - type = 3D {0, 2, 4} or 2D {1, 3, 5} pview
@@ -154,11 +154,11 @@ private:
 
   public:
     explicit DataSingleDimension(int dim) : _dim(dim) {}
-    void clear() { _data.clear(); }
+    void clear() { _dataEntities.clear(); }
     void initialize(GModel *, ComputeParameters, Counts &);
-    void getDataEntities(std::vector<DataEntities*> &set)
+    void getDataEntities(std::vector<DataEntity*> &set)
     {
-      for(auto &d : _data) set.push_back(&d.second);
+      for(auto &d : _dataEntities) set.push_back(&d.second);
     }
     // void computeDisto(bool onlyVisible, int recomputePolicy, bool verbose);
     // void computeAspect(bool onlyVisible, int recomputePolicy, bool verbose);
@@ -174,7 +174,7 @@ private:
   };
 
 private:
-  class DataEntities {
+  class DataEntity {
   private:
     GEntity *_ge;
     // bool computedThisRun; // FIXME necessary?
@@ -195,7 +195,7 @@ private:
     std::vector<unsigned char> _flags;
 
   public:
-    explicit DataEntities(GEntity *ge) : _ge(ge) {}
+    explicit DataEntity(GEntity *ge) : _ge(ge) {}
     std::size_t getNumVisibleElement() const { return _numVisibleElem; }
     void getNumShownElement(std::size_t num[3]) const
     {
