@@ -124,12 +124,102 @@ std::string Plug::getHelp() const
 
 PView *Plug::execute(PView *v)
 {
-  // Initialization
-  int checkValidity = static_cast<int>(MeshQuality2Options_Number[0].def);
-  int computeDisto = static_cast<int>(MeshQuality2Options_Number[1].def);
-  int computeAspect = static_cast<int>(MeshQuality2Options_Number[2].def);
-  // int type is because of HAVE_VISUDEV
+  _fetchParameters();
+  Parameters::Compute &pc = _param.compute;
+  _info(0, "----------------------------------------");
+  _info(0, "Executing the plugin AnalyseMeshQuality...");
+  _info(1, "Parameter 'printGuidance' is ON. This makes the plugin "
+        "to be verbose and to provide various explanations");
 
+  // Handle cases where no computation is requested
+  if(_param.freeData) {
+    _info(-1, "Freeing data...");
+    _info(1, "Freeing data... (because parameter 'freeData-NothingElse' is ON)");
+    _data2D->clear();
+    _data3D->clear();
+    MeshQuality2Options_Number[18].def = 0;
+    _info(0, "Done. Parameter 'freeData-NothingElse' has been set to OFF");
+    _info(1, "Nothing else to do, rerun the plugin to compute something");
+    return v;
+  }
+  if(!pc.validity && !pc.disto && !pc.aspect) {
+    _warn(0, "Nothing to do because 'checkValidity', 'checkQualityDisto' and "
+          "'checkQualityAspect' are all three OFF");
+    return v;
+  }
+
+  GModel *m = GModel::current();
+  if(pc.policy == 0 && _m && _m != m) {
+    _info(1, "Detected a new Model, previous data will be cleared");
+    // FIXME may not be the case (can we create a new model with exact same geometry and mesh?)
+  }
+  _m = m;
+
+  // Check which dimension to compute/show, initialize data and counts elements
+  bool check2D, check3D;
+  _decideDimensionToCheck(check2D, check3D);
+
+  Counts counts2D, counts3D;
+  if(check2D) _data2D->initialize(_m, _param.compute, counts2D);
+  if(check3D) _data3D->initialize(_m, _param.compute, counts3D);
+
+  // TMP Dev
+  _devPrintCount(counts2D);
+  _devPrintCount(counts3D);
+
+  // Computation
+  std::size_t totalToCompute = _printElementToCompute(counts2D, counts3D);
+  Counts countsTotal = counts2D + counts3D;
+  if(!totalToCompute) {
+    std::size_t totalToShow = _guidanceNothingToCompute(countsTotal,
+      check2D, check3D);
+    if(!totalToShow) return v;
+  }
+  else {
+    if(!_param.checkValidity && countsTotal.elToCompute[0] > 0) {
+      _info(1, "Validity will be computed even if not asked");
+      _info(1, "> Reason is that validity is quite cheap in comparison to quality and can significantly ");
+      _info(1, "> speed up quality computation. This behaviour can be disabled by setting ON parameter ");
+      _info(1, "> 'skipPreventiveValidityCheck', which is a good idea if the elements are known to be valid.");
+    }
+    else if(pc.lazyValidity) {
+      _warn(1, "Parameter 'skipPreventiveValidityCheck' is ON, validity will not be computed");
+      _warn(1, "> This may significantly slow down quality computation in the presence of invalid elements");
+    }
+    _computeMissingData(countsTotal, check2D, check3D);
+  }
+
+  // Gather data
+  Measures measures2D(pc.validity, pc.disto, pc.aspect);
+  Measures measures3D(pc.validity, pc.disto, pc.aspect);
+  if(check2D) _data2D->gatherValues(counts2D, measures2D);
+  if(check3D) _data3D->gatherValues(counts3D, measures3D);
+
+  int a = 1;
+
+  // If validity not asked : tell that compute it any way because it can speedup
+  // say that only if verb 1
+
+
+  // TODO compute show
+
+
+  // TODO warning if no element to check (the case T8, maybe another gmodel?)
+
+  return v;
+}
+
+// ======== Plugin: Execution ==================================================
+// =============================================================================
+
+void Plug::_fetchParameters()
+{
+  Parameters::Compute &pc = _param.compute;
+  Parameters::Post &pp = _param.pview;
+  Parameters::Hidding &ph = _param.hide;
+  int checkValidity = static_cast<int>(MeshQuality2Options_Number[0].def);
+  int checkDisto = static_cast<int>(MeshQuality2Options_Number[1].def);
+  int checkAspect = static_cast<int>(MeshQuality2Options_Number[2].def);
   // NOTE dimensionPolicy: highest dimension available -> 0, only 2D -> 1,
   //      2D and 3D : seperately -> 2, mixed -> 3
   _dimensionPolicy = static_cast<int>(MeshQuality2Options_Number[3].def);
@@ -148,40 +238,39 @@ PView *Plug::execute(PView *v)
   //      - delete GEntities that are not existent in current GModel,
   //        delete data in all GEntities,
   //        compute asked elements -> 1
-  int recomputePolicy = static_cast<int>(MeshQuality2Options_Number[4].def);
-  bool onlyVisible = static_cast<bool>(MeshQuality2Options_Number[5].def);
-
-  // FIXME 'restrictToCurvedElements' would be great, but how to implement?
-  bool onlyCurved = static_cast<bool>(MeshQuality2Options_Number[6].def);
+  pc.policy = static_cast<int>(MeshQuality2Options_Number[4].def);
+  pc.onlyVisible = static_cast<bool>(MeshQuality2Options_Number[5].def);
+  pc.onlyCurved = static_cast<bool>(MeshQuality2Options_Number[6].def);
   bool lazyValidity = static_cast<bool>(MeshQuality2Options_Number[7].def);
-  double percentileStat = MeshQuality2Options_Number[8].def;
-  bool createView3D = static_cast<bool>(MeshQuality2Options_Number[9].def);
-  bool createView2D = static_cast<bool>(MeshQuality2Options_Number[10].def);
-  double percentilePlot = MeshQuality2Options_Number[11].def;
-  bool newPlot = static_cast<bool>(MeshQuality2Options_Number[12].def);
-  bool hideElements = static_cast<bool>(MeshQuality2Options_Number[13].def);
-  bool hideWorst = static_cast<bool>(MeshQuality2Options_Number[14].def);
+  pc.disto = static_cast<bool>(checkDisto);
+  pc.aspect = static_cast<bool>(checkAspect);
+  pc.validity = checkValidity || (!lazyValidity && (pc.disto || pc.aspect));
+  _param.checkValidity = static_cast<bool>(checkValidity);
 
+  _param.percentileStat = MeshQuality2Options_Number[8].def;
+  pp.create3D = static_cast<bool>(MeshQuality2Options_Number[9].def);
+  pp.create2D = static_cast<bool>(MeshQuality2Options_Number[10].def);
+  pp.percentile = MeshQuality2Options_Number[11].def;
+  pp.forceNew = static_cast<bool>(MeshQuality2Options_Number[12].def);
+  ph.yes = static_cast<bool>(MeshQuality2Options_Number[13].def);
+  ph.worst = static_cast<bool>(MeshQuality2Options_Number[14].def);
   // NOTE hideCriterion: hide in function of quality -> 0, %elm -> 1, #elm -> 2
-  int hideCriterion = static_cast<int>(MeshQuality2Options_Number[15].def);
-  double hideThreshold = MeshQuality2Options_Number[16].def;
+  ph.criterion = static_cast<int>(MeshQuality2Options_Number[15].def);
+  ph.threshold = MeshQuality2Options_Number[16].def;
   _verbose = static_cast<bool>(MeshQuality2Options_Number[17].def);
-  bool freeData = static_cast<bool>(MeshQuality2Options_Number[18].def);
-
-  _info(0, "----------------------------------------");
-  _info(0, "Executing the plugin AnalyseMeshQuality...");
-  _info(1, "Parameter 'printGuidance' is ON. This makes the plugin "
-        "to be verbose and to provide various explanations");
+  _param.freeData = static_cast<bool>(MeshQuality2Options_Number[18].def);
 
   //
   if(_dimensionPolicy < 0)
     _dimensionPolicy = 0;
   else if(_dimensionPolicy > 3)
     _dimensionPolicy = 3;
-  if(recomputePolicy < -2)
-    recomputePolicy = -2;
-  else if(recomputePolicy > 1)
-    recomputePolicy = 1;
+
+  if(pc.policy < -2)
+    pc.policy = -2;
+  else if(pc.policy > 1)
+    pc.policy = 1;
+
   // FIXME Warnings if verbose
 
 #if defined(HAVE_VISUDEV)
@@ -203,94 +292,9 @@ PView *Plug::execute(PView *v)
   _dataPViewIGE.clear();
   _dataPViewICN.clear();
 #endif
-
-  // Handle cases where no computation is requested
-  if(freeData) {
-    _info(-1, "Freeing data...");
-    _info(1, "Freeing data... (because parameter 'freeData-NothingElse' is ON)");
-    _data2D->clear();
-    _data3D->clear();
-    MeshQuality2Options_Number[18].def = 0;
-    _info(0, "Done. Parameter 'freeData-NothingElse' has been set to OFF");
-    _info(1, "Nothing else to do, rerun the plugin to compute something");
-    return v;
-  }
-  if(!checkValidity && !computeDisto && !computeAspect) {
-    _warn(0, "Nothing to do because 'checkValidity', 'checkQualityDisto' and "
-          "'checkQualityAspect' are all three OFF");
-    return v;
-  }
-
-  GModel *m = GModel::current();
-  if(recomputePolicy == 0 && _m && _m != m) {
-    _info(1, "Detected a new Model, previous data will be cleared");
-    // FIXME may not be the case (can we create a new model with exact same geometry and mesh?)
-  }
-  _m = m;
-
-  // Check which dimension to compute/show, initialize data and counts elements
-  bool check2D, check3D;
-  _decideDimensionToCheck(check2D, check3D);
-
-  bool computeValidity = checkValidity ||
-                         (!lazyValidity && (computeDisto || computeAspect));
-  ComputeParameters param = {computeValidity, static_cast<bool>(computeDisto),
-                             static_cast<bool>(computeAspect), recomputePolicy,
-                             onlyVisible, onlyCurved};
-  Counts counts2D, counts3D;
-  if(check2D) _data2D->initialize(_m, param, counts2D);
-  if(check3D) _data3D->initialize(_m, param, counts3D);
-
-  // TMP Dev
-  _devPrintCount(counts2D);
-  _devPrintCount(counts3D);
-
-  // Computation
-  std::size_t totalToCompute = _printElementToCompute(counts2D, counts3D);
-  Counts countsTotal = counts2D + counts3D;
-  if(!totalToCompute) {
-    std::size_t totalToShow = _guidanceNothingToCompute(param, countsTotal,
-      check2D, check3D);
-    if(!totalToShow) return v;
-  }
-  else {
-    if(!checkValidity && countsTotal.elToCompute[0] > 0) {
-      _info(1, "Validity will be computed even if not asked");
-      _info(1, "> Reason is that validity is quite cheap in comparison to quality and can significantly ");
-      _info(1, "> speed up quality computation. This behaviour can be disabled by setting ON parameter ");
-      _info(1, "> 'skipPreventiveValidityCheck', which is a good idea if the elements are known to be valid.");
-    }
-    else if(lazyValidity) {
-      _warn(1, "Parameter 'skipPreventiveValidityCheck' is ON, validity will not be computed");
-      _warn(1, "> This may significantly slow down quality computation in the presence of invalid elements");
-    }
-    _computeMissingData(countsTotal, check2D, check3D, lazyValidity);
-  }
-
-  // Gather data
-  Measures measures2D(checkValidity, computeDisto, computeAspect);
-  Measures measures3D(checkValidity, computeDisto, computeAspect);
-  if(check2D) _data2D->gatherValues(counts2D, measures2D);
-  if(check3D) _data3D->gatherValues(counts3D, measures3D);
-
-  int a = 1;
-
-  // If validity not asked : tell that compute it any way because it can speedup
-  // say that only if verb 1
-
-
-  // TODO compute show
-
-
-  // TODO warning if no element to check (the case T8, maybe another gmodel?)
-
-  return v;
 }
 
-// ======== Plugin: Execution ==================================================
-// =============================================================================
-
-void Plug::_computeMissingData(Counts counts, bool check2D, bool check3D, bool lazyValidity) const
+void Plug::_computeMissingData(Counts counts, bool check2D, bool check3D) const
 {
   std::vector<DataEntity*> allDataEntities;
   if(check2D)
@@ -310,7 +314,7 @@ void Plug::_computeMissingData(Counts counts, bool check2D, bool check3D, bool l
     Msg::StatusBar(true, "Computing Distortion quality...");
     MsgProgressStatus progress_status(counts.elToCompute[1]);
     for(auto data: allDataEntities) {
-      data->computeDisto(progress_status, lazyValidity);
+      data->computeDisto(progress_status, _param.compute.lazyValidity);
     }
   }
 
@@ -318,7 +322,7 @@ void Plug::_computeMissingData(Counts counts, bool check2D, bool check3D, bool l
     Msg::StatusBar(true, "Computing Aspect quality...");
     MsgProgressStatus progress_status(counts.elToCompute[2]);
     for(auto data: allDataEntities) {
-      data->computeAspect(progress_status, lazyValidity);
+      data->computeAspect(progress_status, _param.compute.lazyValidity);
     }
   }
 
@@ -346,17 +350,18 @@ void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
 // ======== DataSingleDimension ================================================
 // =============================================================================
 
-void Plug::DataSingleDimension::initialize(GModel *m, ComputeParameters param,
+void Plug::DataSingleDimension::initialize(GModel const *m,
+                                           const Parameters::Compute &param,
                                            Counts &counts)
 {
   // Update list GEntities (thus _dataEntities) if needed
-  if(param.recomputePolicy >= -1) {
+  if(param.policy >= -1) {
     std::vector<GEntity *> entities;
     if(_dim == 2)
       entities.insert(entities.end(), m->firstFace(), m->lastFace());
     else if(_dim == 3)
       entities.insert(entities.end(), m->firstRegion(), m->lastRegion());
-    _updateGEntities(entities, param.recomputePolicy);
+    _updateGEntities(entities, param.policy);
   }
 
   // Initialize all DataEntity and count elements
@@ -444,11 +449,11 @@ inline void unsetBit(unsigned char &value, int maskOneBit)
   value &= ~maskOneBit;
 }
 
-void Plug::DataEntity::initialize(ComputeParameters param)
+void Plug::DataEntity::initialize(const Parameters::Compute &param)
 {
   // FIXME: if -2, still have to update F_REQU
   //  and count show if F_REQU and not F_NOT..
-  if(param.recomputePolicy == -2) return;
+  if(param.policy == -2) return;
 
   // Step 0: Get all elements present in GEntity
   std::size_t num = _ge->getNumMeshElements();
@@ -459,7 +464,7 @@ void Plug::DataEntity::initialize(ComputeParameters param)
   }
 
   // Step 1: Check if must reset data, and update flag "exist in GEntity"
-  int policy = param.recomputePolicy;
+  int policy = param.policy;
   if(policy == 1 || (policy == 0 && num != _mapElemToIndex.size())) {
     reset(num);
     add(elements);
@@ -524,7 +529,7 @@ void Plug::DataEntity::initialize(ComputeParameters param)
   }
 }
 
-void Plug::DataEntity::count(ComputeParameters param, Counts &counts)
+void Plug::DataEntity::count(const Parameters::Compute &param, Counts &counts)
 {
   // Reset
   for(int i = 0; i < 3; ++i) {
@@ -533,11 +538,11 @@ void Plug::DataEntity::count(ComputeParameters param, Counts &counts)
   }
 
   // Count number of elements to compute and to show
-  if (param.computeValidity)
+  if (param.validity)
     _count(F_REQU | F_NOTJAC, _numToCompute[0], _numToShow[0]);
-  if (param.computeDisto)
+  if (param.disto)
     _count(F_REQU | F_NOTDISTO, _numToCompute[1], _numToShow[1]);
-  if (param.computeAspect)
+  if (param.aspect)
     _count(F_REQU | F_NOTASPECT, _numToCompute[2], _numToShow[2]);
 
   for(int i = 0; i < 3; ++i) {
@@ -765,8 +770,7 @@ std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
   return sum2D + sum3D;
 }
 
-std::size_t Plug::_guidanceNothingToCompute(ComputeParameters param,
-                                            Counts counts,
+std::size_t Plug::_guidanceNothingToCompute(Counts counts,
                                             bool check2D, bool check3D) const
 {
   _info(1, "No element to compute");
@@ -779,10 +783,10 @@ std::size_t Plug::_guidanceNothingToCompute(ComputeParameters param,
     _warn(1, "Nothing to show neither.");
 
     if (counts.totalEl) {
-      if (param.onlyVisible && counts.visibleEl == 0) {
+      if (_param.compute.onlyVisible && counts.visibleEl == 0) {
         _warn(1, "Parameter 'restrictToVisibleElements' is ON but no visible elements found.");
       }
-      else if (param.onlyCurved && counts.curvedEl == 0) {
+      else if (_param.compute.onlyCurved && counts.curvedEl == 0) {
         _warn(1, "Parameter 'restrictToCurvedElements' is ON but no curved elements found.");
       }
       else {

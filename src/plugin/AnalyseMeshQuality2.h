@@ -56,10 +56,39 @@ GMSH_Plugin *GMSH_RegisterAnalyseMeshQuality2Plugin();
 
 class GMSH_AnalyseMeshQuality2Plugin : public GMSH_PostPlugin {
 private:
+  struct Parameters {
+    struct Compute {
+      bool validity;
+      bool disto;
+      bool aspect;
+      bool onlyVisible;
+      bool onlyCurved;
+      bool lazyValidity;
+      int policy;
+    } compute;
+
+    struct Post {
+      bool create2D;
+      bool create3D;
+      bool forceNew;
+      double percentile;
+    } pview;
+
+    struct Hidding {
+      bool yes;
+      bool worst;
+      int criterion;
+      double threshold;
+    } hide;
+
+    double percentileStat;
+    bool freeData;
+    bool checkValidity;
+  } _param;
+
   static GMSH_AnalyseMeshQuality2Plugin *_plug;
   class DataSingleDimension;
   class DataEntity;
-  struct ComputeParameters;
   struct Counts;
   struct Measures;
   GModel *_m;
@@ -106,8 +135,9 @@ public:
   }
 
 private:
+  void _fetchParameters();
   void _decideDimensionToCheck(bool &check2D, bool &check3D) const;
-  void _computeMissingData(Counts param, bool check2D, bool check3D, bool lazyValidity) const;
+  void _computeMissingData(Counts param, bool check2D, bool check3D) const;
 
   static bool _okToPrint(int verb)
   {
@@ -121,7 +151,7 @@ private:
   // static void _status(int verbosityPolicy, const char *format, ...); // FIXME implement this?
   void _devPrintCount(const Counts &) const;
   std::size_t _printElementToCompute(const Counts &cnt2D, const Counts &cnt3D) const;
-  std::size_t _guidanceNothingToCompute(ComputeParameters param, Counts counts,
+  std::size_t _guidanceNothingToCompute(Counts counts,
                                         bool check2D, bool check3D) const;
 
 #if defined(HAVE_VISUDEV)
@@ -157,7 +187,7 @@ private:
   public:
     explicit DataSingleDimension(int dim) : _dim(dim) {}
     void clear() { _dataEntities.clear(); }
-    void initialize(GModel *, ComputeParameters, Counts &);
+    void initialize(GModel const *, const Parameters::Compute &, Counts &);
     void getDataEntities(std::vector<DataEntity*> &set)
     {
       for(auto &d : _dataEntities) set.push_back(&d.second);
@@ -190,8 +220,8 @@ private:
       for(int i = 0; i < 3; ++i) num[i] = _numToShow[i];
     }
     //void countNewElement(ComputeParameters, std::size_t cnt[3]) const;
-    void initialize(ComputeParameters);
-    void count(ComputeParameters, Counts &);
+    void initialize(const Parameters::Compute &);
+    void count(const Parameters::Compute &, Counts &);
     void reset(std::size_t);
     void add(MElement *);
     void add(std::vector<MElement *> &elements)
@@ -217,15 +247,6 @@ private:
     void _count(unsigned char mask, std::size_t &toCompute,
                 std::size_t &toShow);
     void _countCurved(std::size_t &known, std::size_t &curved);
-  };
-
-  struct ComputeParameters {
-    bool computeValidity;
-    bool computeDisto;
-    bool computeAspect;
-    int recomputePolicy;
-    bool onlyVisible;
-    bool onlyCurved;
   };
 
   struct Counts {
