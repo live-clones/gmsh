@@ -1948,8 +1948,7 @@ namespace gmsh { // Top-level functions
       // tolerance `tolerance'.
       GMSH_API void filterCloseNodes(const int tag,
                                      const int sizeFieldTag,
-                                     const double tolerance,
-                                     const std::string & boundaryModel);
+                                     const double tolerance);
 
       // gmsh::model::mesh::colourBoundaryFaces
       //

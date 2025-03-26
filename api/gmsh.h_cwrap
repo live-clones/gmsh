@@ -3366,11 +3366,10 @@ namespace gmsh { // Top-level functions
       // tolerance `tolerance'.
       inline void filterCloseNodes(const int tag,
                                    const int sizeFieldTag,
-                                   const double tolerance,
-                                   const std::string & boundaryModel)
+                                   const double tolerance)
       {
         int ierr = 0;
-        gmshModelMeshFilterCloseNodes(tag, sizeFieldTag, tolerance, boundaryModel.c_str(), &ierr);
+        gmshModelMeshFilterCloseNodes(tag, sizeFieldTag, tolerance, &ierr);
         if(ierr) throwLastError();
       }
 

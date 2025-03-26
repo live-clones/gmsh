@@ -598,12 +598,50 @@ public:
   }
   void update()
   {
-    if (updateNeeded == true)
-      Msg::Error("Set must be called explicitly with AlphaShapeDistance field");
+    // if (updateNeeded == true)
+    //   Msg::Error("Set must be called explicitly with AlphaShapeDistance field");
+     // Update the distance field
+    std::vector<SPoint3> points;
+    auto gm = GModel::current();
+    for (auto it : *GModel::current()->getFields()){
+      auto field = it.second;
+      if (field->getName() == std::string("AlphaShapeDistance")){
+        AlphaShapeDistanceField * asdf = dynamic_cast<AlphaShapeDistanceField*>(field);
+        std::vector<SPoint3> points;
+        
+        auto gf = gm->getFaceByTag(asdf->tag);
+        if (gf == nullptr){
+          Msg::Error("Incorrect tag %d in AlphaShapeDistance size field (face does not exist)", asdf->tag);
+        }
+        for (auto tri : gf->triangles){
+          SVector3 p0 = tri->getVertex(0)->point();
+          SVector3 p1 = tri->getVertex(1)->point();
+          SVector3 p2 = tri->getVertex(2)->point();
+          auto d0 = p2 - p0;
+          auto d1 = p2 - p1;
+          auto d_norm = std::max(norm(d0), norm(d1));
+          int n = asdf->sampling_length == 0 ? 2 : std::max(2, int(d_norm/asdf->sampling_length));
+          for (int i=0; i<n+1; i++){
+            auto p_start = p0 + double(i)/double(n) * d0;
+            auto p_end = p1 + double(i)/double(n)*d1;
+            auto hor_shift = p_end - p_start;
+            for (int j=0; j<n+1-i; j++){
+              auto pInter = p_start + double(j)/double(n+1-i) * hor_shift;
+              points.push_back(pInter.point());
+            }
+          } 
+        }
+        asdf->set(points);
+      }
+    }
+    updateNeeded = false;
   }
   using Field::operator();
   virtual double operator()(double X, double Y, double Z, GEntity *ge = nullptr)
   {
+    if (updateNeeded){
+      update();
+    }
     if(!_kdtree) return MAX_LC;
     double pt[3] = {X, Y, Z};
     nanoflann::KNNResultSet<double> res(1);
@@ -660,6 +698,7 @@ public:
   void update()
   {
     if (updateNeeded == true){
+      printf("Updating size field %d \n", tag);
       if (_octree != nullptr) delete _octree;
       _octree = new OctreeNode<3, 64, MTriangle*>();
       
@@ -753,8 +792,9 @@ public:
       SVector3 pc(tri->getVertex(2)->x(), tri->getVertex(2)->y(),tri->getVertex(2)->z());
       auto orient1 = robustPredicates::orient3d(pa.data(), pb.data(), pc.data(), pt.data());
       auto orient2 = robustPredicates::orient3d(pa.data(), pb.data(), pc.data(), pt_inf_Z.data());
-      if (orient1*orient2 >= 0)
+      if (orient1*orient2 >= 0){
         continue;
+      }
       double t = orient1/(orient1-orient2);
       SVector3 p_intersect = pt + t*(pt_inf_Z-pt);
       auto v0 = pc-pa;
@@ -1798,6 +1838,7 @@ void AlphaShape::_delaunayRefinement(PolyMesh* pm, const int tag, const int bndT
   }
   // Compute the size field at the nodes if it was not done in the alpha shape (because hMean was used)
   std::unordered_map<int, double> sizeAtNodes(pm->vertices.size());
+  #pragma omp parallel for
   for (size_t i=0; i<pm->vertices.size(); i++){
     PolyMesh::Vertex* v = pm->vertices[i];
     sizeAtNodes[v->data] = field->operator()(v->position.x(), v->position.y(), 0);
@@ -3492,7 +3533,7 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
       // if (m->vertices.coord[4*i+3] == HXT_COLOR_OUT) continue;
 
       //  HERE : CHECK WHETHER THE NODE TO BE ADDED IS INSIDE THE GEOMETRICAL DOMAIN
-
+      
       MVertex* v = new MVertex(m->vertices.coord[4*i+0], m->vertices.coord[4*i+1], m->vertices.coord[4*i+2]);
 
       gr->addMeshVertex(v);
@@ -3595,46 +3636,46 @@ void _createVolumeOctree3D(const std::string & boundaryModel, OctreeNode<3, 64, 
     gm_alphaShape->setAsCurrent();
 }
 
-void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, const double tolerance, const std::string & boundaryModel){
+void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, const double tolerance){
   auto gm = GModel::current();
   auto gr = GModel::current()->getRegionByTag(fullTag);
   
   // auto t1 = std::chrono::steady_clock::now(); 
   
 
-  // Update the distance field
-  std::vector<SPoint3> points;
-  for (auto it : *GModel::current()->getFields()){
-    auto field = it.second;
-    if (field->getName() == std::string("AlphaShapeDistance")){
-      AlphaShapeDistanceField * asdf = dynamic_cast<AlphaShapeDistanceField*>(field);
-      std::vector<SPoint3> points;
+  // // Update the distance field
+  // std::vector<SPoint3> points;
+  // for (auto it : *GModel::current()->getFields()){
+  //   auto field = it.second;
+  //   if (field->getName() == std::string("AlphaShapeDistance")){
+  //     AlphaShapeDistanceField * asdf = dynamic_cast<AlphaShapeDistanceField*>(field);
+  //     std::vector<SPoint3> points;
       
-      auto gf = gm->getFaceByTag(asdf->tag);
-      if (gf == nullptr){
-        Msg::Error("Incorrect tag %d in AlphaShapeDistance size field (face does not exist)", asdf->tag);
-      }
-      for (auto tri : gf->triangles){
-        SVector3 p0 = tri->getVertex(0)->point();
-        SVector3 p1 = tri->getVertex(1)->point();
-        SVector3 p2 = tri->getVertex(2)->point();
-        auto d0 = p2 - p0;
-        auto d1 = p2 - p1;
-        auto d_norm = std::max(norm(d0), norm(d1));
-        int n = asdf->sampling_length == 0 ? 2 : std::max(2, int(d_norm/asdf->sampling_length));
-        for (int i=0; i<n+1; i++){
-          auto p_start = p0 + double(i)/double(n) * d0;
-          auto p_end = p1 + double(i)/double(n)*d1;
-          auto hor_shift = p_end - p_start;
-          for (int j=0; j<n+1-i; j++){
-            auto pInter = p_start + double(j)/double(n+1-i) * hor_shift;
-            points.push_back(pInter.point());
-          }
-        } 
-      }
-      asdf->set(points);
-    }
-  }
+  //     auto gf = gm->getFaceByTag(asdf->tag);
+  //     if (gf == nullptr){
+  //       Msg::Error("Incorrect tag %d in AlphaShapeDistance size field (face does not exist)", asdf->tag);
+  //     }
+  //     for (auto tri : gf->triangles){
+  //       SVector3 p0 = tri->getVertex(0)->point();
+  //       SVector3 p1 = tri->getVertex(1)->point();
+  //       SVector3 p2 = tri->getVertex(2)->point();
+  //       auto d0 = p2 - p0;
+  //       auto d1 = p2 - p1;
+  //       auto d_norm = std::max(norm(d0), norm(d1));
+  //       int n = asdf->sampling_length == 0 ? 2 : std::max(2, int(d_norm/asdf->sampling_length));
+  //       for (int i=0; i<n+1; i++){
+  //         auto p_start = p0 + double(i)/double(n) * d0;
+  //         auto p_end = p1 + double(i)/double(n)*d1;
+  //         auto hor_shift = p_end - p_start;
+  //         for (int j=0; j<n+1-i; j++){
+  //           auto pInter = p_start + double(j)/double(n+1-i) * hor_shift;
+  //           points.push_back(pInter.point());
+  //         }
+  //       } 
+  //     }
+  //     asdf->set(points);
+  //   }
+  // }
   
   // auto t2 = std::chrono::steady_clock::now(); 
   
@@ -3679,8 +3720,8 @@ void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, co
   }
 
   // auto t4 = std::chrono::steady_clock::now(); 
-  OctreeNode<3, 64, MElement*> volume_octree;
-  _createVolumeOctree3D(boundaryModel, volume_octree);
+  // OctreeNode<3, 64, MElement*> volume_octree;
+  // _createVolumeOctree3D(boundaryModel, volume_octree);
 
   // auto t5 = std::chrono::steady_clock::now(); 
   // printf("number of nodes in the mesh : %lu\n", gr->mesh_vertices.size());
@@ -3689,21 +3730,26 @@ void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, co
   for (auto v : allVertices){
     
     // CHECK THAT THE NODE IS INDEED INSIDE THE GEOMETRICAL DOMAIN
-    BBox<3> bbox_pnt;
-    bbox_pnt.extends({v->x(), v->y(), v->z()});
-    std::vector<MElement*> volume_elements;
-    volume_octree.search(bbox_pnt, volume_elements);
-    if (volume_elements.size() == 0){
-      Msg::Warning("Node %d (%f, %f, %f) is outside the volume", v->getNum(), v->x(), v->y(), v->z());
-      _deleted.insert(v);
-      continue;
-      // gr->removeMeshVertex(v);
-      // continue;
-    }
+    // BBox<3> bbox_pnt;
+    // bbox_pnt.extends({v->x(), v->y(), v->z()});
+    // std::vector<MElement*> volume_elements;
+    // volume_octree.search(bbox_pnt, volume_elements);
+    // if (volume_elements.size() == 0){
+    //   Msg::Warning("Node %d (%f, %f, %f) is outside the volume", v->getNum(), v->x(), v->y(), v->z());
+    //   _deleted.insert(v);
+    //   continue;
+    //   // gr->removeMeshVertex(v);
+    //   // continue;
+    // }
 
     // if (vertices2D.find(v) != vertices2D.end()) continue;
     BBox<3> search_bbox; 
     double h = tolerance*sizeAtNodes[v];
+    // if (h==0) {
+    //   _deleted.insert(v);
+    //   continue;
+    // }
+
     search_bbox.extends({v->x()+h, v->y()+h, v->z()+h});
     search_bbox.extends({v->x()-h, v->y()-h, v->z()-h});
     std::vector<MVertex*> closeVertices;
@@ -4465,7 +4511,7 @@ void AlphaShape::_computeAlphaShape3D(const std::vector<int> & alphaShapeTags, c
       .verbosity = 2,
       .reproducible = 0
     };
-    #pragma omp parallel for
+    // #pragma omp parallel for
     for (uint64_t i=0; i<mesh->tetrahedra.num; i++) {
       if(mesh->tetrahedra.color[i]!=alphaShapeOptions.colorIn) {
         setProcessedFlag(mesh, i);

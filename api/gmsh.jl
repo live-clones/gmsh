@@ -4728,7 +4728,7 @@ end
 const volume_mesh_refinement = volumeMeshRefinement
 
 """
-    gmsh.model.mesh.filterCloseNodes(tag, sizeFieldTag, tolerance, boundaryModel)
+    gmsh.model.mesh.filterCloseNodes(tag, sizeFieldTag, tolerance)
 
 Filter out points in the region with tag `tag` that are too close to each other
 based on the size field with tag `sizeFieldTag` and a given tolerance
@@ -4738,13 +4738,12 @@ Types:
  - `tag`: integer
  - `sizeFieldTag`: integer
  - `tolerance`: double
- - `boundaryModel`: string
 """
-function filterCloseNodes(tag, sizeFieldTag, tolerance, boundaryModel)
+function filterCloseNodes(tag, sizeFieldTag, tolerance)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshFilterCloseNodes, gmsh.lib), Cvoid,
-          (Cint, Cint, Cdouble, Ptr{Cchar}, Ptr{Cint}),
-          tag, sizeFieldTag, tolerance, boundaryModel, ierr)
+          (Cint, Cint, Cdouble, Ptr{Cint}),
+          tag, sizeFieldTag, tolerance, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end

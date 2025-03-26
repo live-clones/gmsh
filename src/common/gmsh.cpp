@@ -5849,9 +5849,9 @@ gmsh::model::mesh::volumeMeshRefinement(const int fullTag, const int surfaceTag,
 }
 
 GMSH_API void
-gmsh::model::mesh::filterCloseNodes(const int tag, const int sizeFieldTag, const double tolerance, const std::string & boundaryModel){
+gmsh::model::mesh::filterCloseNodes(const int tag, const int sizeFieldTag, const double tolerance){
 #if defined(HAVE_MESH) && defined(HAVE_HXT)
-  AlphaShape::_filterCloseNodes(tag, sizeFieldTag, tolerance, boundaryModel);
+  AlphaShape::_filterCloseNodes(tag, sizeFieldTag, tolerance);
 #else
   Msg::Error("volumeMeshRefinement requires the mesh and hxt modules");
 #endif

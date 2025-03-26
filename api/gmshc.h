@@ -1726,7 +1726,6 @@ GMSH_API void gmshModelMeshVolumeMeshRefinement(const int fullTag,
 GMSH_API void gmshModelMeshFilterCloseNodes(const int tag,
                                             const int sizeFieldTag,
                                             const double tolerance,
-                                            const char * boundaryModel,
                                             int * ierr);
 
 /* Color the faces of tag `tag' based on the entities in the boundary model

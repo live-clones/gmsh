@@ -2527,11 +2527,11 @@ GMSH_API void gmshModelMeshVolumeMeshRefinement(const int fullTag, const int sur
   }
 }
 
-GMSH_API void gmshModelMeshFilterCloseNodes(const int tag, const int sizeFieldTag, const double tolerance, const char * boundaryModel, int * ierr)
+GMSH_API void gmshModelMeshFilterCloseNodes(const int tag, const int sizeFieldTag, const double tolerance, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::filterCloseNodes(tag, sizeFieldTag, tolerance, boundaryModel);
+    gmsh::model::mesh::filterCloseNodes(tag, sizeFieldTag, tolerance);
   }
   catch(...){
     if(ierr) *ierr = 1;

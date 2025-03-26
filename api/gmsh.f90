@@ -7876,32 +7876,27 @@ module gmsh
   subroutine gmshModelMeshFilterCloseNodes(tag, &
                                            sizeFieldTag, &
                                            tolerance, &
-                                           boundaryModel, &
                                            ierr)
     interface
     subroutine C_API(tag, &
                      sizeFieldTag, &
                      tolerance, &
-                     boundaryModel, &
                      ierr_) &
       bind(C, name="gmshModelMeshFilterCloseNodes")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: tag
       integer(c_int), value, intent(in) :: sizeFieldTag
       real(c_double), value, intent(in) :: tolerance
-      character(len=1, kind=c_char), dimension(*), intent(in) :: boundaryModel
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer, intent(in) :: tag
     integer, intent(in) :: sizeFieldTag
     real(c_double), intent(in) :: tolerance
-    character(len=*), intent(in) :: boundaryModel
     integer(c_int), intent(out), optional :: ierr
     call C_API(tag=int(tag, c_int), &
          sizeFieldTag=int(sizeFieldTag, c_int), &
          tolerance=real(tolerance, c_double), &
-         boundaryModel=istring_(boundaryModel), &
          ierr_=ierr)
   end subroutine gmshModelMeshFilterCloseNodes
 
