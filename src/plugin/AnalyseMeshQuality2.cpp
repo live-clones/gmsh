@@ -33,6 +33,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "restrictToCurvedElements", nullptr, 0},
   {GMSH_FULLRC, "skipPreventiveValidityCheck", nullptr, 0},
   {GMSH_FULLRC, "$$$whichPercentileToCompute$$$", nullptr, 10},
+  // {GMSH_FULLRC, "printStatsOnJacobianDet", nullptr, 0}, // TODO add this with _warn(1, "The following stats are given but do not ")
   {GMSH_FULLRC, "createElementsView", nullptr, 0},
   {GMSH_FULLRC, "createPlotView", nullptr, 0},
   {GMSH_FULLRC, "$$$percentilePlot$$$", nullptr, 10},
@@ -183,12 +184,6 @@ PView *Plug::execute(PView *v)
     recomputePolicy = 1;
   // FIXME Warnings if verbose
 
-  GModel *m = GModel::current();
-  if(recomputePolicy == 0 && _m && _m != m) {
-    _info(1, "Detected a new Model, previous data will cleared");
-  }
-  _m = m;
-
 #if defined(HAVE_VISUDEV)
   // TODO come back later
   _pwJac = checkValidity / 2;
@@ -225,6 +220,13 @@ PView *Plug::execute(PView *v)
           "'checkQualityAspect' are all three OFF");
     return v;
   }
+
+  GModel *m = GModel::current();
+  if(recomputePolicy == 0 && _m && _m != m) {
+    _info(1, "Detected a new Model, previous data will be cleared");
+    // FIXME may not be the case (can we create a new model with exact same geometry and mesh?)
+  }
+  _m = m;
 
   // Check which dimension to compute/show, initialize data and counts elements
   bool check2D, check3D;
@@ -444,6 +446,8 @@ inline void unsetBit(unsigned char &value, int maskOneBit)
 
 void Plug::DataEntity::initialize(ComputeParameters param)
 {
+  // FIXME: if -2, still have to update F_REQU
+  //  and count show if F_REQU and not F_NOT..
   if(param.recomputePolicy == -2) return;
 
   // Step 0: Get all elements present in GEntity
@@ -729,6 +733,16 @@ void Plug::_error(int verb, const char *format, ...)
   _printMessage(Msg::Error, format, args);
   va_end(args);
 }
+
+// FIXME Implement this?
+// void Plug::_status(int verb, const char *format, ...)
+// {
+//   if(!_okToPrint(verb)) return;
+//   va_list args;
+//   va_start(args, format);
+//   _printMessage(Msg::Error, format, args);
+//   va_end(args);
+// }
 
 std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
                                          const Counts &cnt3D) const

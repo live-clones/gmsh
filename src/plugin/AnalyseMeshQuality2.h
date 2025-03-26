@@ -118,6 +118,7 @@ private:
   static void _info(int verbosityPolicy, const char *format, ...);
   static void _warn(int verbosityPolicy, const char *format, ...);
   static void _error(int verbosityPolicy, const char *format, ...);
+  // static void _status(int verbosityPolicy, const char *format, ...); // FIXME implement this?
   void _devPrintCount(const Counts &) const;
   std::size_t _printElementToCompute(const Counts &cnt2D, const Counts &cnt3D) const;
   std::size_t _guidanceNothingToCompute(ComputeParameters param, Counts counts,
@@ -208,12 +209,6 @@ private:
     void computeValidity(MsgProgressStatus &);
     void computeDisto(MsgProgressStatus &, bool considerAsValid);
     void computeAspect(MsgProgressStatus &, bool considerAsValid);
-    void getValidityValues(std::vector<double> &min, std::vector<double> &max);
-    void getDistoValues(std::vector<double> &disto) const;
-    void getAspectValues(std::vector<double> &aspect) const;
-    void getValues(std::vector<double> *minJ, std::vector<double> *maxJ,
-                   std::vector<double> *disto,
-                   std::vector<double> *aspect) const;
 
     // FIXME should i create only one method? bool computeDisto, std::vector<.>
     //       *vecDisto) or just std::vector<.> *vecDisto = nullptr)
