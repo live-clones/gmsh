@@ -162,14 +162,6 @@ private:
       for(auto &d : _dataEntities) set.push_back(&d.second);
     }
     void gatherValues(const Counts &, Measures &);
-    // void computeDisto(bool onlyVisible, int recomputePolicy, bool verbose);
-    // void computeAspect(bool onlyVisible, int recomputePolicy, bool verbose);
-    // void getValidityValues(std::vector<double> &min, std::vector<double>
-    // &max); void getDistoValues(std::vector<double> &disto) const; void
-    // getAspectValues(std::vector<double> &aspect) const; void
-    // getValues(std::vector<double> *minJ, std::vector<double> *maxJ,
-    //                std::vector<double> *disto, std::vector<double> *aspect)
-    //                const;
 
   private:
     void _updateGEntities(std::vector<GEntity *> &, int recomputePolicy);
@@ -182,23 +174,16 @@ private:
     // bool computedThisRun; // FIXME necessary?
     std::map<MElement *, size_t> _mapElemToIndex;
     std::vector<double> _minJ, _maxJ, _minDisto, _minAspect;
-    std::size_t _numVisibleElem = 0;
     std::size_t _numToCompute[3]{};
     std::size_t _numToShow[3]{};
-    // x bits of char are used for the following information:
-    // - First 3 bits: to say if quantities has already been computed
-    // FIXME The other 5 bits can be used for different alternatives:
-    //       4) element is not in GEntity
-    //       5) element is visible
-    //       6) P1 has been computed
-    //       7) element is P1
-    //       8) element is requested
-    //       (8) depends on (5), (7) and corresponding parameters 'restrict..'
+    // 8 bits of char are used for the following information:
+    // - to say if quantities has already been computed
+    // - to say if element is 'in GEntity', visible, known to be straight
+    //   or curved, curved, requested
     std::vector<unsigned char> _flags;
 
   public:
     explicit DataEntity(GEntity *ge) : _ge(ge) {}
-    std::size_t getNumVisibleElement() const { return _numVisibleElem; }
     void getNumShownElement(std::size_t num[3]) const
     {
       for(int i = 0; i < 3; ++i) num[i] = _numToShow[i];

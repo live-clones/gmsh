@@ -522,12 +522,13 @@ void Plug::DataEntity::initialize(ComputeParameters param)
 
 void Plug::DataEntity::count(ComputeParameters param, Counts &counts)
 {
-  // Count num to compute and num to show
+  // Reset
   for(int i = 0; i < 3; ++i) {
     _numToCompute[i] = 0;
     _numToShow[i] = 0;
   }
 
+  // Count number of elements to compute and to show
   if (param.computeValidity)
     _count(F_REQU | F_NOTJAC, _numToCompute[0], _numToShow[0]);
   if (param.computeDisto)
@@ -738,7 +739,6 @@ std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
 
   if(sum2D + sum3D == 0) return 0;
 
-  // Print the table header using `_info`
   _info(0, "Number of quantities to compute:");
   _info(0, "%5s%10s%10s%10s", "", "Validity", "Disto", "Aspect");
   if(sum2D)
@@ -786,14 +786,10 @@ std::size_t Plug::_guidanceNothingToCompute(ComputeParameters param,
         else if(check3D) {
           _error(1, "Unexpected state: should not be here with check3D==true");
           // ...because if _dimensionPolicy == 0, then check3D==true only if there are elements
-          // _info(1, "Considered 3D as dimensionPolicy is 0 but no 3D mesh in current model.");
-          // _info(1, "Maybe set dimensionPolicy to 1 to force 2D.");
         }
         else {
           _error(1, "Unexpected state: should not be here with check3D==false");
-          // ...because if _dimensionPolicy == 0, then check3D==true only if there are elements
-          // _info(1, "Considered 3D as dimensionPolicy is 0 but no 3D mesh in current model.");
-          // _info(1, "Maybe set dimensionPolicy to 1 to force 2D.");
+          // ...because at least check2D or check3D should be true
         }
       }
       else if (_dimensionPolicy == 1) {
@@ -843,23 +839,22 @@ void Plug::_devPrintCount(const Counts &counts) const
 // ======== struct Counts ======================================================
 // =============================================================================
 
-Plug::Counts Plug::Counts::operator+(const Counts &other) const {
+Plug::Counts Plug::Counts::operator+(const Counts &other) const
+{
   Counts result;
 
-  // Summing up elToCompute arrays element-wise
   for (int i = 0; i < 3; ++i) {
     result.elToCompute[i] = this->elToCompute[i] + other.elToCompute[i];
     result.elToShow[i] = this->elToShow[i] + other.elToShow[i];
   }
 
-  // Summing up individual scalar fields
   result.totalEl = this->totalEl + other.totalEl;
   result.elCurvedComputed = this->elCurvedComputed + other.elCurvedComputed;
   result.curvedEl = this->curvedEl + other.curvedEl;
   result.existingEl = this->existingEl + other.existingEl;
   result.visibleEl = this->visibleEl + other.visibleEl;
 
-  return result; // Return the newly created Counts as the result
+  return result;
 }
 
 
