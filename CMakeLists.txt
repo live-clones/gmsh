@@ -315,8 +315,10 @@ if(MSVC)
     if(ENABLE_MSVC_STATIC_RUNTIME AND ${VAR} MATCHES "/MD")
       string(REGEX REPLACE "/MD" "/MT" ${VAR} "${${VAR}}")
     endif()
-    if(NOT ${VAR} MATCHES "/MP") # enable parallel compilation
-      set(${VAR} "${${VAR}} /MP")
+    if (NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+      if(NOT ${VAR} MATCHES "/MP") # enable parallel compilation
+        set(${VAR} "${${VAR}} /MP")
+      endif()
     endif()
   endforeach()
   if(ENABLE_PRIVATE_API)
