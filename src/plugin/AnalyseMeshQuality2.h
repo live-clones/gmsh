@@ -106,7 +106,7 @@ public:
 
 private:
   void _decideDimensionToCheck(bool &check2D, bool &check3D) const;
-  void _computeMissingData(ComputeParameters param, bool check2D, bool check3D) const;
+  void _computeMissingData(Counts param, bool check2D, bool check3D) const;
 
   static bool _okToPrint(int verb)
   {
@@ -217,7 +217,7 @@ private:
     // really heavy and take a a lot of time. Computing the validity is much
     // faster and can help the user to evaluate the time needed to compute the
     // remaining qualities.
-    void computeValidity(bool onlyVisible, int recomputePolicy, bool verbose);
+    void computeValidity(MsgProgressStatus &);
     void computeDisto(bool onlyVisible, int recomputePolicy, bool verbose);
     void computeAspect(bool onlyVisible, int recomputePolicy, bool verbose);
     void getValidityValues(std::vector<double> &min, std::vector<double> &max);

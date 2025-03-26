@@ -52,6 +52,7 @@ StringXNumber MeshQuality2Options_Number[] = {
 };
 
 using Plug = GMSH_AnalyseMeshQuality2Plugin;
+namespace JacQual = jacobianBasedQuality;
 Plug *Plug::_plug = nullptr;
 
 // ======== Plugin: Base class =================================================
@@ -258,7 +259,7 @@ PView *Plug::execute(PView *v)
       _info(1, "> speed up quality computation. This behaviour can be disabled by setting ON parameter ");
       _info(1, "> 'skipPreventiveValidityCheck', which is a good idea if the elements are known to be valid.");
     }
-    _computeMissingData(param, check2D, check3D);
+    _computeMissingData(countsTotal, check2D, check3D);
   }
 
 
@@ -277,7 +278,7 @@ PView *Plug::execute(PView *v)
 // ======== Plugin: Execution ==================================================
 // =============================================================================
 
-void Plug::_computeMissingData(ComputeParameters param, bool check2D, bool check3D) const
+void Plug::_computeMissingData(Counts counts, bool check2D, bool check3D) const
 {
   std::vector<DataEntities*> allDataEntities;
   if(check2D)
@@ -285,26 +286,29 @@ void Plug::_computeMissingData(ComputeParameters param, bool check2D, bool check
   if(check3D)
     _data3D->getDataEntities(allDataEntities);
 
-  Msg::StatusBar(true, "Computing Validity...");
-  for(auto data: allDataEntities) {
-    Msg::StatusBar(true, "Surface %d: Computing validity of %d elements",
-                     data->getEntity()->tag(), data->getNumToCompute(0));
-    data->computeValidity();
+  if(counts.elToCompute[0] > 0) {
+    Msg::StatusBar(true, "Computing Validity...");
+    MsgProgressStatus progress_status(counts.elToCompute[0]);
+    for(auto data: allDataEntities) {
+      data->computeValidity(progress_status);
+    }
   }
 
-  Msg::StatusBar(true, "Computing quality Disto...");
-  for(auto data: allDataEntities) {
-    Msg::StatusBar(true, "Surface %d: Computing Disto of %d elements",
-                     data->getEntity()->tag(), data->getNumToCompute(1));
-    data->computeDisto();
-  }
+  // Msg::StatusBar(true, "Computing quality Disto...");
+  // for(auto data: allDataEntities) {
+  //   Msg::StatusBar(true, "Surface %d: Computing Disto of %d elements",
+  //                    data->getEntity()->tag(), data->getNumToCompute(1));
+  //   data->computeDisto();
+  // }
+  //
+  // Msg::StatusBar(true, "Computing quality Aspect...");
+  // for(auto data: allDataEntities) {
+  //   Msg::StatusBar(true, "Surface %d: Computing Aspect of %d elements",
+  //                    data->getEntity()->tag(), data->getNumToCompute(2));
+  //   data->computeAspect();
+  // }
 
-  Msg::StatusBar(true, "Computing quality Aspect...");
-  for(auto data: allDataEntities) {
-    Msg::StatusBar(true, "Surface %d: Computing Aspect of %d elements",
-                     data->getEntity()->tag(), data->getNumToCompute(2));
-    data->computeAspect();
-  }
+  Msg::StatusBar(true, "Done computing quantities");
 }
 
 void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
@@ -541,6 +545,27 @@ void Plug::DataEntities::_count(unsigned char mask, std::size_t &elToCompute,
     }
     else if(isBitSet(flag, F_REQU)) {
       ++elToShow;
+    }
+  }
+}
+
+void Plug::DataEntities::computeValidity(MsgProgressStatus &progress_status)
+{
+  if(_ge->dim() == 2)
+    _info(1, "Surface %d: Computing validity of %d elements",
+          _ge->tag(), _numToCompute[0]);
+  else
+    _info(1, "Volume %d: Computing validity of %d elements",
+          _ge->tag(), _numToCompute[0]);
+
+  for(const auto &it : _mapElemToIndex) {
+    const std::size_t idx = it.second;
+    if(isBitSet(_flags[idx], F_NOTJAC)) {
+      MElement *el = it.first;
+      // TODO: give unique normal if planar surface
+      JacQual::minMaxJacobianDeterminant(el, _minJ[idx], _maxJ[idx]);//, normals);
+      unsetBit(_flags[idx], F_NOTJAC);
+      progress_status.next();
     }
   }
 }
