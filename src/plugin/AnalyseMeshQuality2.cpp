@@ -443,21 +443,31 @@ void Plug::DataEntities::initialize(ComputeParameters param)
 
 void Plug::DataEntities::count(ComputeParameters param, Counts &counts)
 {
+  // Count num to compute and num to show
+  for(int i = 0; i < 3; ++i) {
+    _numToCompute[i] = 0;
+    _numToShow[i] = 0;
+  }
+
   if (param.computeValidity)
-    _count(F_REQU | F_NOTJAC, counts.elToCompute[0], counts.elToShow[0]);
+    _count(F_REQU | F_NOTJAC, _numToCompute[0], _numToShow[0]);
   if (param.computeDisto)
-    _count(F_REQU | F_NOTDISTO, counts.elToCompute[1], counts.elToShow[1]);
+    _count(F_REQU | F_NOTDISTO, _numToCompute[1], _numToShow[1]);
   if (param.computeAspect)
-    _count(F_REQU | F_NOTASPECT, counts.elToCompute[2], counts.elToShow[2]);
+    _count(F_REQU | F_NOTASPECT, _numToCompute[2], _numToShow[2]);
 
-  _countCurved(counts.elCurvedComputed, counts.curvedEl);
+  for(int i = 0; i < 3; ++i) {
+    counts.elToCompute[i] += _numToCompute[i];
+    counts.elToShow[i] += _numToShow[i];
+  }
 
+  // Count total number, still existing, visible and curved
   counts.totalEl += _mapElemToIndex.size();
   for(const auto &flag : _flags) {
-    if(isBitUnset(flag, F_CURVNOTCOMP)) ++counts.elCurvedComputed;
     if(isBitSet(flag, F_EXIST)) ++counts.existingEl;
     if(isBitSet(flag, F_VISBL)) ++counts.visibleEl;
   }
+  _countCurved(counts.elCurvedComputed, counts.curvedEl);
 }
 
 void Plug::DataEntities::_countCurved(std::size_t &known, std::size_t &curved)
@@ -465,7 +475,7 @@ void Plug::DataEntities::_countCurved(std::size_t &known, std::size_t &curved)
   for(const auto &flag : _flags) {
     if(isBitUnset(flag, F_CURVNOTCOMP)) {
       ++known;
-      if(isBitUnset(flag, F_CURVED)) ++curved;
+      if(isBitSet(flag, F_CURVED)) ++curved;
     }
   }
 }
@@ -580,10 +590,10 @@ std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
   _info(0, "Number of quantities to compute:");
   _info(0, "%-10s%-10s%-10s%-10s", "", "Validity", "Disto", "Aspect");
   if(sum2D)
-    _info(0, "%-10s%-10d%-10d%-10d", "2D", cnt2D.elToCompute[0],
+    _info(0, "%-10s%-10d%-10d%-10d", "2D:", cnt2D.elToCompute[0],
           cnt2D.elToCompute[1], cnt2D.elToCompute[2]);
   if(sum3D)
-    _info(0, "%-10s%-10d%-10d%-10d", "3D", cnt3D.elToCompute[0],
+    _info(0, "%-10s%-10d%-10d%-10d", "3D:", cnt3D.elToCompute[0],
           cnt3D.elToCompute[1], cnt3D.elToCompute[2]);
 
   return sum2D + sum3D;

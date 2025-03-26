@@ -171,7 +171,7 @@ private:
     std::vector<double> _minJ, _maxJ, _minDisto, _minAspect;
     std::size_t _numVisibleElem = 0;
     std::size_t _numToCompute[3]{};
-    std::size_t _numToDraw[3]{};
+    std::size_t _numToShow[3]{};
     // x bits of char are used for the following information:
     // - First 3 bits: to say if quantities has already been computed
     // FIXME The other 5 bits can be used for different alternatives:
@@ -188,7 +188,7 @@ private:
     std::size_t getNumVisibleElement() const { return _numVisibleElem; }
     void getNumShownElement(std::size_t num[3]) const
     {
-      for(int i = 0; i < 3; ++i) num[i] = _numToDraw[i];
+      for(int i = 0; i < 3; ++i) num[i] = _numToShow[i];
     }
     //void countNewElement(ComputeParameters, std::size_t cnt[3]) const;
     void initialize(ComputeParameters);
