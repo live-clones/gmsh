@@ -459,15 +459,16 @@ void Plug::StatGenerator::_printStats(const Measures &measure, const char* str_d
   }
 
   // Disto
-  std::vector<double> &percentiles = _statCutoffs;
-  std::vector<std::vector<double>> coeff;
-
   if(measure.disto && measure.minDisto.size())
     _printStatsOneMeasure(measure.minDisto, "Disto");
 
+  // Aspect
   if(measure.aspect && measure.minAspect.size())
     _printStatsOneMeasure(measure.minAspect, "Aspect");
 
+  if(!!printJac && !measure.validity) return;
+
+  // Jacobian
   std::vector<double> ratio(measure.minJ.size());
   for(std::size_t i = 0; i < measure.minJ.size(); ++i) {
     if (measure.maxJ[i] > 0)
@@ -478,82 +479,19 @@ void Plug::StatGenerator::_printStats(const Measures &measure, const char* str_d
   int numInvalid = std::count_if(ratio.begin(), ratio.end(), [](double value) {
       return value <= 0;
   });
-
-  if(measure.validity && measure.minJ.size()) {
+  if(printJac && measure.minJ.size()) {
     _printStatsOneMeasure(ratio, "minJ/maxJ");
     _printStatsOneMeasure(measure.minJ, "minJ", true);
     _printStatsOneMeasure(measure.maxJ, "maxJ", true);
   }
 
+  if(!measure.validity) return;
+
+  // Validity
   if(numInvalid)
     _warn(0, "-> Found %d invalid elements", numInvalid);
   else
     _info(0, "-> All elements are valid :-)", numInvalid);
-
-  // std::vector<double> percentiles;
-  // unpackPercentile(_param.percentileStat, percentiles);
-  // const int columnWidth = 9; // Fixed width for each column
-  //
-  // std::vector<std::vector<double>> coeff;
-  //
-  //
-  // if(measure.disto && measure.minDisto.size()) {
-  //   std::vector<double> &q = measure.minDisto;
-  //   double min = *std::min_element(q.begin(), q.end());
-  //   double max = *std::max_element(q.begin(), q.end());
-  //   computeCoeffPercentile(percentiles, measure.minDisto.size(), coeff);
-  //
-  //   std::vector<double> avg(percentiles.size());
-  //   std::sort(q.begin(), q.end());
-  //   for(int i = 0; i < percentiles.size(); ++i) {
-  //     avg[i] = std::inner_product(++q.begin(), --q.end(), coeff[i].begin(), 0.0);
-  //   }
-  //
-  //   double mean = std::accumulate(q.begin(), q.end(), 0.0) / q.size();
-  //
-  //   {
-  //     std::ostringstream valStream;
-  //     valStream << std::setprecision(3);
-  //     valStream << std::setw(columnWidth) << std::right << min;
-  //     for(auto i = 0; i < percentiles.size(); ++i)
-  //       valStream << std::setw(columnWidth) << std::right << avg[i];
-  //     // for(auto i = 0; i < percentiles.size(); ++i) {
-  //     //   int percent = static_cast<int>(100 * ( (avg[i]-min)/(max-min)));
-  //     //   // valStream << std::setw(columnWidth) << std::right << avg[i];
-  //     //   valStream << std::setw(columnWidth-1) << std::right << percent << "%";
-  //     // }
-  //     valStream << std::setw(columnWidth) << std::right << max;
-  //     _info(0, "%s", valStream.str().c_str());
-  //   }
-  //
-  //
-  //   _info(0, "-> %-7s%7.3f%7.3f%7.3f", "Disto:", min, mean, max);
-  //
-  // }
-  // if(measure.aspect && measure.minAspect.size()) {
-  //   std::vector<double> &q = measure.minAspect;
-  //   double min = *std::min_element(q.begin(), q.end());
-  //   double max = *std::max_element(q.begin(), q.end());
-  //   double avg = std::accumulate(q.begin(), q.end(), 0.0) / q.size();
-  //
-  //   _info(0, "-> %-7s%7.3f%7.3f%7.3f", "Aspect:", min, avg, max);
-  // }
-  // if(measure.validity && measure.minJ.size()) {
-  //   std::vector<double> ratio(measure.minJ.size());
-  //   for(std::size_t i = 0; i < measure.minJ.size(); ++i) {
-  //     if (measure.maxJ[i] > 0)
-  //       ratio[i] = measure.minJ[i] / measure.maxJ[i];
-  //     else
-  //       ratio[i] = measure.maxJ[i] / measure.minJ[i];
-  //   }
-  //   int numInvalid = std::count_if(ratio.begin(), ratio.end(), [](double value) {
-  //       return value < 0;
-  //   });
-  //   if(numInvalid)
-  //     _warn(0, "-> Found %d invalid elements", numInvalid);
-  //   else
-  //     _info(0, "-> All elements are valid :-)", numInvalid);
-  // }
 }
 
 void Plug::StatGenerator::_printStatsOneMeasure(const std::vector<double> &measure, const char* str, bool useG)
@@ -573,26 +511,17 @@ void Plug::StatGenerator::_printStatsOneMeasure(const std::vector<double> &measu
     avg[i] = std::inner_product(++q.begin(), --q.end(), coeff[i].begin(), 0.0);
   }
 
-  // double mean = std::accumulate(q.begin(), q.end(), 0.0) / q.size();
-
-  {
-    std::ostringstream valStream;
-    valStream << "-> ";
-    valStream << std::setw(_colWidth-1) << std::right << str << ":";
-    valStream << std::setprecision(3);
-    if(useG)
-      valStream << std::defaultfloat; // can also be std::scientific
-    valStream << std::setw(_colWidth) << std::right << min;
-    for(auto i = 0; i < numCutoff; ++i)
-      valStream << std::setw(_colWidth) << std::right << avg[i];
-    // for(auto i = 0; i < percentiles.size(); ++i) {
-    //   int percent = static_cast<int>(100 * ( (avg[i]-min)/(max-min)));
-    //   // valStream << std::setw(columnWidth) << std::right << avg[i];
-    //   valStream << std::setw(columnWidth-1) << std::right << percent << "%";
-    // }
-    valStream << std::setw(_colWidth) << std::right << max;
-    _info(0, "%s", valStream.str().c_str());
-  }
+  std::ostringstream valStream;
+  valStream << "-> ";
+  valStream << std::setw(_colWidth-1) << std::right << str << ":";
+  valStream << std::setprecision(3);
+  if(useG)
+    valStream << std::defaultfloat; // can also be std::scientific
+  valStream << std::setw(_colWidth) << std::right << min;
+  for(auto i = 0; i < numCutoff; ++i)
+    valStream << std::setw(_colWidth) << std::right << avg[i];
+  valStream << std::setw(_colWidth) << std::right << max;
+  _info(0, "%s", valStream.str().c_str());
 }
 
 void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const

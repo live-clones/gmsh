@@ -224,7 +224,6 @@ private:
     void _updateGEntities(std::vector<GEntity *> &, int recomputePolicy);
   };
 
-private:
   class DataEntity {
   private:
     GEntity *_ge;
