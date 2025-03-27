@@ -4279,27 +4279,46 @@ static void fillElementsToSaveForOverlaps(
   }
 }
 
-static optional<std::unordered_set<MElement*>> writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
-                              int partitionToSave, bool binary, bool saveAll,
-                              double version, const std::optional<EntityPackage>& entitiesToSave)
-{
+struct EntitiesToSaveAndElementsSubsets {
   std::set<GRegion *, GEntityPtrLessThan> regions;
   std::set<GFace *, GEntityPtrLessThan> faces;
   std::set<GEdge *, GEntityPtrLessThan> edges;
   std::set<GVertex *, GEntityPtrLessThan> vertices;
-  getEntitiesToSave(model, partitioned, partitionToSave, saveAll, regions,
-                    faces, edges, vertices);
+  std::unordered_map<GEntity*, std::unordered_set<MElement*>> elementsToSaveByEntity;
 
-  // More entities to be sure
-  if (entitiesToSave) {
-    for (auto entity : entitiesToSave->vertices) vertices.insert(entity);
-    for (auto entity : entitiesToSave->edges) edges.insert(entity);
-    for (auto entity : entitiesToSave->faces) faces.insert(entity);
-    for (auto entity : entitiesToSave->regions) regions.insert(entity);
+  EntitiesToSaveAndElementsSubsets(GModel* const model, bool partitioned, int partitionToSave, int saveAll, const std::optional<EntityPackage>& entitiesToSave) {
+    getEntitiesToSave(model, partitioned, partitionToSave, saveAll, regions, faces, edges, vertices);
+    // More entities to be sure
+    if(entitiesToSave) {
+      for(auto entity : entitiesToSave->vertices) vertices.insert(entity);
+      for(auto entity : entitiesToSave->edges) edges.insert(entity);
+      for(auto entity : entitiesToSave->faces) faces.insert(entity);
+      for(auto entity : entitiesToSave->regions) regions.insert(entity);
+    }
+    /*
+  We do not anymore export the overlap entities, but the entities they cover
+  instead. Then we filter to only save relevant elements on each overlapped
+  entity.
+  */
+
+    fillElementsToSaveForOverlaps<3>(model, partitionToSave,
+                                     elementsToSaveByEntity, regions);
+    fillElementsToSaveForOverlaps<2>(model, partitionToSave,
+                                     elementsToSaveByEntity, faces);
   }
+};
 
-  std::unordered_map<GEntity*, std::unordered_set<MElement*>> elementsToSaveByEntity; // Save all elements if not entry
-  
+static optional<std::unordered_set<MElement*>> writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
+                              int partitionToSave, bool binary, bool saveAll,
+                              double version, const std::optional<EntityPackage>& entitiesToSave)
+{
+
+  auto entitiesToSaveAndElementsSubsets = EntitiesToSaveAndElementsSubsets(model, partitioned, partitionToSave, saveAll, entitiesToSave);
+  const auto& regions = entitiesToSaveAndElementsSubsets.regions;
+  const auto& faces = entitiesToSaveAndElementsSubsets.faces;
+  const auto& edges = entitiesToSaveAndElementsSubsets.edges;
+  const auto& vertices = entitiesToSaveAndElementsSubsets.vertices;
+  const auto& elementsToSaveByEntity = entitiesToSaveAndElementsSubsets.elementsToSaveByEntity;
 
   constexpr bool exportElements = true;
   optional<std::unordered_set<MElement*>> allElements;
@@ -4307,13 +4326,7 @@ static optional<std::unordered_set<MElement*>> writeMSH4Elements(GModel *const m
     allElements = std::unordered_set<MElement*>();
   }
 
-  /*
-  We do not anymore export the overlap entities, but the entities they cover instead.
-  Then we filter to only save relevant elements on each overlapped entity.
-  */
-
-  fillElementsToSaveForOverlaps<3>(model, partitionToSave, elementsToSaveByEntity, regions);
-  fillElementsToSaveForOverlaps<2>(model, partitionToSave, elementsToSaveByEntity, faces);
+  
 
   std::map<std::pair<int, int>, std::vector<MElement *> > elementsByType[4];
   std::size_t numElements = 0;
