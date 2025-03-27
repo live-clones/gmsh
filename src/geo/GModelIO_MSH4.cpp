@@ -4259,7 +4259,7 @@ static void fillElementsToSaveForOverlaps(
   const std::set<typename OverlapTypes<dim>::Entity *, GEntityPtrLessThan>
     &entities)
 {
-  for(const auto &[parentRegionTag, manager] :
+  for(const auto &[_, manager] :
       OverlapTypes<dim>::getManagers(model)) {
     const auto &map = manager->getOverlapsByPartition();
     auto it = map.find(partitionToSave);
