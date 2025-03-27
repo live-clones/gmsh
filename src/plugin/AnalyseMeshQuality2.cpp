@@ -8,6 +8,7 @@
 #if defined(HAVE_MESH)
 
 #include <numeric>
+#include <sstream>
 #include "AnalyseMeshQuality2.h"
 #include "OS.h"
 #include "Context.h"
@@ -33,7 +34,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "restrictToVisibleElements", nullptr, 0},
   {GMSH_FULLRC, "restrictToCurvedElements", nullptr, 0},
   {GMSH_FULLRC, "skipPreventiveValidityCheck", nullptr, 0},
-  {GMSH_FULLRC, "$$$whichPercentileToCompute$$$", nullptr, 10},
+  {GMSH_FULLRC, "$$$whichPercentileToCompute$$$", nullptr, 9990501001.1001},
   // {GMSH_FULLRC, "printStatsOnJacobianDet", nullptr, 0}, // TODO add this with _warn(1, "The following stats are given but do not ")
   {GMSH_FULLRC, "createElementsView", nullptr, 0},
   {GMSH_FULLRC, "createPlotView", nullptr, 0},
@@ -217,6 +218,51 @@ PView *Plug::execute(PView *v)
 // ======== Plugin: Execution ==================================================
 // =============================================================================
 
+/**
+ * @brief Splits a double into two-digit chunks from its integer and fractional
+ *        parts.
+ * @param input The double value to decompose.
+ * @param percentiles Vector to store the resulting chunks.
+ */
+
+void unpackPercentile(double input, std::vector<double> &percentiles)
+{
+  percentiles.clear();
+  long long integerPart = static_cast<long long>(input);
+  double fractionalPart = input - integerPart;
+
+  while (integerPart > 0) {
+    double twoDigitChunk = static_cast<double>(integerPart % 100);
+    if(twoDigitChunk) percentiles.push_back(integerPart % 100);
+    integerPart /= 100;
+  }
+
+  while (fractionalPart > 0.0) {
+    fractionalPart *= 100;
+    int twoDigitChunk = static_cast<int>(std::round(fractionalPart));
+    if(twoDigitChunk) percentiles.push_back(twoDigitChunk / 100.0);
+    fractionalPart -= twoDigitChunk;
+    if (fractionalPart < 1e-10) break;
+  }
+  // FIXME here even if no print (2D when 3D mesh)
+  std::sort(percentiles.begin(), percentiles.end());
+}
+
+void computeCoeffPercentile(std::vector<double> &percentiles, size_t sz,
+  std::vector<std::vector<double>> &coeff)
+{
+  coeff.clear();
+  for(auto p: percentiles) {
+    coeff.push_back(std::vector<double>(sz-1));
+    double exp = std::log(2)/std::log(100/p);
+    for(auto i = 1; i < sz-1; ++i) {
+      coeff.back()[i] = std::pow(static_cast<double>(i)/(sz-2), exp);
+      coeff.back()[i-1] = coeff.back()[i] - coeff.back()[i-1];
+    }
+    coeff.back().resize(sz-2);
+  }
+}
+
 void Plug::_fetchParameters()
 {
   Parameters::Compute &pc = _param.compute;
@@ -360,15 +406,54 @@ void Plug::_printStats(Measures &m2, Measures &m3) const
 
 void Plug::_printStats(Measures &measure, const char* str_dim) const
 {
+  _info(0, "dev check values %d %d %d %d", measure.disto, measure.aspect, measure.minDisto.size(), measure.minAspect.size());
+  std::vector<double> percentiles;
+  unpackPercentile(_param.percentileStat, percentiles);
+  const int columnWidth = 9; // Fixed width for each column
+
+  std::vector<std::vector<double>> coeff;
+
   _info(0, "Statistics for dimension %s:", str_dim);
-  _info(0, "-> %-7s%7s%7s%7s", "", "Min", "Avg", "Max");
+  if(measure.disto || measure.aspect) {
+    _info(0, "-> %-7s%7s%7s%7s", "", "Min", "Avg", "Max");
+
+    std::ostringstream columnNamesStream;
+    columnNamesStream << std::setw(columnWidth) << std::right << "Min";
+    for (double p : percentiles) {
+      std::ostringstream formattedP;
+      formattedP << std::setprecision(2) << p;
+      columnNamesStream << std::setw(columnWidth) << std::right << "Wavg" + formattedP.str();
+    }
+    columnNamesStream << std::setw(columnWidth) << std::right << "Max";
+    _info(0, "%s", columnNamesStream.str().c_str());
+  }
   if(measure.disto && measure.minDisto.size()) {
     std::vector<double> &q = measure.minDisto;
     double min = *std::min_element(q.begin(), q.end());
     double max = *std::max_element(q.begin(), q.end());
-    double avg = std::accumulate(q.begin(), q.end(), 0.0) / q.size();
+    computeCoeffPercentile(percentiles, measure.minDisto.size(), coeff);
 
-    _info(0, "-> %-7s%7.3f%7.3f%7.3f", "Disto:", min, avg, max);
+    std::vector<double> avg(percentiles.size());
+    std::sort(q.begin(), q.end());
+    for(int i = 0; i < percentiles.size(); ++i) {
+      avg[i] = std::inner_product(++q.begin(), --q.end(), coeff[i].begin(), 0.0);
+    }
+
+    double mean = std::accumulate(q.begin(), q.end(), 0.0) / q.size();
+
+    {
+      std::ostringstream valStream;
+      valStream << std::setprecision(3);
+      valStream << std::setw(columnWidth) << std::right << min;
+      for(auto i = 0; i < percentiles.size(); ++i)
+        valStream << std::setw(columnWidth) << std::right << avg[i];
+      valStream << std::setw(columnWidth) << std::right << max;
+      _info(0, "%s", valStream.str().c_str());
+    }
+
+
+    _info(0, "-> %-7s%7.3f%7.3f%7.3f", "Disto:", min, mean, max);
+
   }
   if(measure.aspect && measure.minAspect.size()) {
     std::vector<double> &q = measure.minAspect;
