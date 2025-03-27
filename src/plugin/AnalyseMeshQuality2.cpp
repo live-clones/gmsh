@@ -56,7 +56,7 @@ StringXNumber MeshQuality2Options_Number[] = {
 
 using Plug = GMSH_AnalyseMeshQuality2Plugin;
 namespace JacQual = jacobianBasedQuality;
-Plug *Plug::_plug = nullptr;
+bool Plug::_verbose = false;
 
 // ======== Plugin: Base class =================================================
 // =============================================================================
@@ -309,10 +309,11 @@ void Plug::_fetchParameters()
   // NOTE hideCriterion: hide in function of quality -> 0, %elm -> 1, #elm -> 2
   ph.criterion = static_cast<int>(MeshQuality2Options_Number[15].def);
   ph.threshold = MeshQuality2Options_Number[16].def;
-  _verbose = static_cast<bool>(MeshQuality2Options_Number[17].def);
+  _myVerbose = static_cast<bool>(MeshQuality2Options_Number[17].def);
   _param.freeData = static_cast<bool>(MeshQuality2Options_Number[18].def);
 
   _statGen->setPercentileStats(_param.percentileStat);
+  _verbose = _myVerbose;
 
   //
   if(_dimensionPolicy < 0)

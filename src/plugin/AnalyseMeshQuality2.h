@@ -56,7 +56,7 @@ GMSH_Plugin *GMSH_RegisterAnalyseMeshQuality2Plugin();
 
 class GMSH_AnalyseMeshQuality2Plugin : public GMSH_PostPlugin {
 private:
-  static GMSH_AnalyseMeshQuality2Plugin *_plug;
+  static bool _verbose;
 
 private:
   class DataSingleDimension;
@@ -105,7 +105,7 @@ private:
   DataSingleDimension *_data2D, *_data3D;
   StatGenerator *_statGen;
   Parameters _param;
-  bool _verbose = false;
+  bool _myVerbose = false;
   int _dimensionPolicy = 0;
 
 #if defined(HAVE_VISUDEV)
@@ -125,14 +125,6 @@ private:
 public:
   GMSH_AnalyseMeshQuality2Plugin()
   {
-    if(_plug) {
-      Msg::Warning("A new instance of the plugin 'AnalyseMeshQuality' has been "
-                   "requested, but an instance already exists. ");
-      Msg::Warning("Having multiple instances is not supported, deleting "
-                   "previous one...");
-      delete _plug;
-    }
-    _plug = this;
     _m = nullptr;
     _data2D = new DataSingleDimension(2);
     _data3D = new DataSingleDimension(3);
@@ -143,7 +135,6 @@ public:
     delete _data2D;
     delete _data3D;
     delete _statGen;
-    _plug = nullptr;
   }
   GMSH_PLUGIN_TYPE getType() const override { return GMSH_MESH_PLUGIN; }
   std::string getName() const override { return "AnalyseMeshQuality2"; }
@@ -167,7 +158,7 @@ private:
   // Those are static to be able to call them from class members
   static bool _okToPrint(int verb)
   {
-    return (_plug->_verbose && verb >= 0) || (!_plug->_verbose && verb <= 0);
+    return (_verbose && verb >= 0) || (!_verbose && verb <= 0);
   }
   static void _printMessage(void (*func)(const char *, ...), const char *format,
                             va_list);
