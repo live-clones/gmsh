@@ -2826,7 +2826,9 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
   std::vector<size_t> neighbors;
   std::vector<size_t> tetNodes(4*n_tets);
   // auto t2 = std::chrono::steady_clock::now(); 
+  printf("here a \n");
   field->operator()(0,0,0, NULL); // this does the update of the size field
+  printf("here b \n");
   #pragma omp parallel for
   for (size_t i=0; i<gr->getNumMeshElementsByType(TYPE_TET); i++){
     MTetrahedron* tet = gr->tetrahedra[i];
@@ -2845,6 +2847,9 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
   std::vector<MTetrahedron*> alphaTets;
   double hTet, R;
   SPoint3 cc;
+
+  printf("here p \n");
+
   for (size_t i=0; i<n_tets; i++){
     auto tet = gr->tetrahedra[i];
     R = _tetCircumCenter(tet);
@@ -3817,6 +3822,7 @@ void _createBoundaryOctree3D(const std::string & boundaryModel, OctreeNode<3, 32
     }
     bbox*=1.1;
     octree.set_bbox(bbox);
+    int i_debug = 0;
     // OctreeNode<2, 32, alphaShapeBndEdge*> octree(bbox);
     for (auto el : allElements){
       BBox<3> el_bbox;
@@ -4161,6 +4167,9 @@ void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std
           double orient1 = robustPredicates::orient3d(pa.data(), pb.data(), pc.data(), x0);
           double orient2 = robustPredicates::orient3d(pa.data(), pb.data(), pc.data(), x1);
           // printf("node %zu - orient test : %d \n", v->getNum(), orient1*orient2 > 0);
+          if (orient1*orient2 >= 0){
+            continue;
+          }
           double t=0;
           if (abs(orient1-orient2) > 1e-10) 
             t = orient1/(orient1-orient2);

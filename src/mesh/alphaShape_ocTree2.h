@@ -54,22 +54,40 @@ template<int dim, int binsize, typename Object>
 class OctreeNode {
 
   struct Leaf {
-    Object objects[binsize];
-    BBox<dim> bboxes[binsize];
-    int n;
-    Leaf(): n(0) {};
+    std::vector<std::pair<Object, BBox<dim>>> contents;
+    // std::vector<BBox<dim>> bboxes;
+    // Object objects[binsize];
+    // BBox<dim> bboxes[binsize];
+    // int n;
+    Leaf() {contents.reserve(binsize);};
     void search(const BBox<dim> bbox, std::vector<Object> &result) {
-      for (int i = 0; i < n; ++i) {
-        if (bboxes[i].intersects(bbox)) {
-          result.push_back(objects[i]);
-          auto it = std::lower_bound(result.begin(), result.end(), objects[i]);
-          if (it == result.end() || *it != objects[i]) {
-            result.insert(it, objects[i]);
+      for (auto &it : contents) {
+        auto obj = it.first;
+        auto bbox = it.second;
+        if (bbox.intersects(bbox)) {
+          result.push_back(obj);
+          auto it = std::lower_bound(result.begin(), result.end(), obj);
+          if (it == result.end() || *it != obj) {
+            result.insert(it, obj);
           }
         }
       }
+      // for (int i = 0; i < n; ++i) {
+      //   if (bboxes[i].intersects(bbox)) {
+      //     result.push_back(objects[i]);
+      //     auto it = std::lower_bound(result.begin(), result.end(), objects[i]);
+      //     if (it == result.end() || *it != objects[i]) {
+      //       result.insert(it, objects[i]);
+      //     }
+      //   }
+      // }
+    }
+
+    size_t n() const {
+      return contents.size();
     }
   };
+
 
   Leaf *leaf_;
   OctreeNode *children_;
@@ -100,14 +118,24 @@ class OctreeNode {
     }
   }
 
-  void add(Object obj, const BBox<dim> &bbox) {
+  void add(Object obj, const BBox<dim> &bbox, int recursion = 0) {
+    static int max_recursion = 0;
+    if (recursion > max_recursion) {
+      max_recursion = recursion;
+      printf("max_recursion %d\n", max_recursion);
+    }
+    // if (recursion==50){
+    //   printf("recursion %d\n", recursion);
+    //   exit(1);
+    // }
     if (!bbox.intersects(bbox_)) {
       return;
     }
     if (leaf_) {
-      if (leaf_->n < binsize) {
-        leaf_->objects[leaf_->n] = obj;
-        leaf_->bboxes[leaf_->n++] = bbox;
+      if (leaf_->n() < binsize || recursion == 20) {
+        leaf_->contents.push_back({obj, bbox});
+        // leaf_->objects[leaf_->n] = obj;
+        // leaf_->bboxes[leaf_->n++] = bbox;
         return;
       }
       else { // split
@@ -123,8 +151,8 @@ class OctreeNode {
             bboxc.max[j] = (i & 1<<j) ? bbox_.max[j] : mid[j];
           }
           children_[i].set_bbox(bboxc);
-          for (int j = 0; j < leaf_->n; j++) {
-            children_[i].add(leaf_->objects[j], leaf_->bboxes[j]);
+          for (int j = 0; j < leaf_->n(); j++) {
+            children_[i].add(leaf_->contents[j].first, leaf_->contents[j].second, recursion+1);
           }
         }
         delete leaf_;
@@ -132,7 +160,7 @@ class OctreeNode {
       }
     }
     for (int i = 0; i < 1<<dim; i++) {
-      children_[i].add(obj, bbox);
+      children_[i].add(obj, bbox, recursion+1);
     }
   }
 };
