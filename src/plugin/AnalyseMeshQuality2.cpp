@@ -34,7 +34,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "restrictToVisibleElements", nullptr, 0},
   {GMSH_FULLRC, "restrictToCurvedElements", nullptr, 0},
   {GMSH_FULLRC, "skipPreventiveValidityCheck", nullptr, 0},
-  {GMSH_FULLRC, "$$$whichPercentileToCompute$$$", nullptr, 9990501001.1001},
+  {GMSH_FULLRC, "$$$whichPercentileToCompute$$$", nullptr, 10},
   // {GMSH_FULLRC, "printStatsOnJacobianDet", nullptr, 0}, // TODO add this with _warn(1, "The following stats are given but do not ")
   {GMSH_FULLRC, "createElementsView", nullptr, 0},
   {GMSH_FULLRC, "createPlotView", nullptr, 0},
@@ -253,7 +253,7 @@ void computeCoeffPercentile(std::vector<double> &percentiles, size_t sz,
 {
   coeff.clear();
   for(auto p: percentiles) {
-    coeff.push_back(std::vector<double>(sz-1));
+    coeff.push_back(std::vector<double>(sz-1)); // FIXME for all elements, size=sz+1
     double exp = std::log(2)/std::log(100/p);
     for(auto i = 1; i < sz-1; ++i) {
       coeff.back()[i] = std::pow(static_cast<double>(i)/(sz-2), exp);
@@ -406,6 +406,37 @@ void Plug::_printStats(Measures &m2, Measures &m3) const
 
 void Plug::_printStats(Measures &measure, const char* str_dim) const
 {
+  // NOTE:
+  //  1. Create a class for percentile? The idea is to have a black box for
+  //     computing the Paverage. The coeff are stored for reuse. Say for
+  //     10 different number of elements
+  //  2. I will print the exact Paverage (on all elements) not some %. Because
+  //     % depends on the min so it is hard to compare meshes with %. I was
+  //     disturbed that the worst element count for so much but the whole point
+  //     is that worst elements counts much more than the best.
+  //  3. Add printStatJac with warning
+  //  4. Potential name for the measure: WM10 (Worst-10% Weighted Mean)
+  //  5. Potential name for the parameters: statsWeightedMeanCutoffPack, plotWeightedMeanCutoffPack
+  //  6. Structure:
+  //     • verbose => info("Here is what is important to know about the stats: )
+  //       - Validity is for that
+  //       - Disto = measures this
+  //       - Aspect = measures that
+  //       - Jmin = gives that information
+  //       - Jmin/Jmax = gives that information
+  //       - Worst-x% Weighted Mean: means that. Pure mean = WM50
+  //     • separated by dimension
+  //       - stats for dim x
+  //       - headers
+  //       - Disto
+  //       - Aspect
+  //       - Jmin
+  //       - Jmin/Jmax
+  //       - All valid/x invalid
+  //     • verbose+Jac => warn Jacobian is not a quality
+  //  6. Verbose => Add at the end of execute info(Done, you can disable verbose)
+  //     OR => verbose off by default and end by saying that verbose can be set on
+
   _info(0, "dev check values %d %d %d %d", measure.disto, measure.aspect, measure.minDisto.size(), measure.minAspect.size());
   std::vector<double> percentiles;
   unpackPercentile(_param.percentileStat, percentiles);
@@ -447,6 +478,11 @@ void Plug::_printStats(Measures &measure, const char* str_dim) const
       valStream << std::setw(columnWidth) << std::right << min;
       for(auto i = 0; i < percentiles.size(); ++i)
         valStream << std::setw(columnWidth) << std::right << avg[i];
+      // for(auto i = 0; i < percentiles.size(); ++i) {
+      //   int percent = static_cast<int>(100 * ( (avg[i]-min)/(max-min)));
+      //   // valStream << std::setw(columnWidth) << std::right << avg[i];
+      //   valStream << std::setw(columnWidth-1) << std::right << percent << "%";
+      // }
       valStream << std::setw(columnWidth) << std::right << max;
       _info(0, "%s", valStream.str().c_str());
     }
