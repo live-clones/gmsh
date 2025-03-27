@@ -58,7 +58,7 @@ using Plug = GMSH_AnalyseMeshQuality2Plugin;
 namespace JacQual = jacobianBasedQuality;
 bool Plug::_verbose = false;
 
-// ======== Plugin: Base class =================================================
+// ======== Plugin: Base class methods =========================================
 // =============================================================================
 
 extern "C" {
@@ -215,54 +215,8 @@ PView *Plug::execute(PView *v)
   return v;
 }
 
-// ======== Plugin: Execution ==================================================
+// ======== Plugin: private methods ============================================
 // =============================================================================
-
-/**
- * @brief Splits a double into two-digit chunks from its integer and fractional
- *        parts.
- * @param input The double value to decompose.
- * @param percentiles Vector to store the resulting chunks.
- */
-
-void Plug::StatGenerator::_unpackPercentile(double input,
-  std::vector<double> &percentiles) const
-{
-  percentiles.clear();
-  long long integerPart = static_cast<long long>(input);
-  double fractionalPart = input - integerPart;
-
-  while (integerPart > 0) {
-    double twoDigitChunk = static_cast<double>(integerPart % 100);
-    if(twoDigitChunk) percentiles.push_back(integerPart % 100);
-    integerPart /= 100;
-  }
-
-  while (fractionalPart > 0.0) {
-    fractionalPart *= 100;
-    int twoDigitChunk = static_cast<int>(std::round(fractionalPart));
-    if(twoDigitChunk) percentiles.push_back(twoDigitChunk / 100.0);
-    fractionalPart -= twoDigitChunk;
-    if (fractionalPart < 1e-10) break;
-  }
-  // FIXME here even if no print (2D when 3D mesh)
-  std::sort(percentiles.begin(), percentiles.end());
-}
-
-void computeCoeffPercentile(std::vector<double> &percentiles, size_t sz,
-  std::vector<std::vector<double>> &coeff)
-{
-  coeff.clear();
-  for(auto p: percentiles) {
-    coeff.push_back(std::vector<double>(sz-1)); // FIXME for all elements, size=sz+1
-    double exp = std::log(2)/std::log(100/p);
-    for(auto i = 1; i < sz-1; ++i) {
-      coeff.back()[i] = std::pow(static_cast<double>(i)/(sz-2), exp);
-      coeff.back()[i-1] = coeff.back()[i] - coeff.back()[i-1];
-    }
-    coeff.back().resize(sz-2);
-  }
-}
 
 void Plug::_fetchParameters()
 {
@@ -385,6 +339,27 @@ void Plug::_computeMissingData(Counts counts, bool check2D, bool check3D) const
   Msg::StatusBar(true, "Done computing quantities");
 }
 
+void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
+{
+  std::size_t num3DElem = 0;
+
+  // Iterate through regions to count 3D mesh elements
+  for(auto it = _m->firstRegion(); it != _m->lastRegion(); ++it) {
+    num3DElem += (*it)->getNumMeshElements();
+  }
+
+  // Apply policy logic
+  check2D = true;
+  check3D = true;
+  if(_dimensionPolicy == 0 && num3DElem > 0)
+    check2D = false;
+  else if(_dimensionPolicy < 2)
+    check3D = false;
+}
+
+// ======== StatGenerator ======================================================
+// =============================================================================
+
 void Plug::StatGenerator::printStats(const Parameters &param,
                                      const Measures &m2,
                                      const Measures &m3)
@@ -406,6 +381,35 @@ void Plug::StatGenerator::printStats(const Parameters &param,
 
   if(param.check2D) _printStats(m2, "2", param.printJac);
   if(param.check3D) _printStats(m3, "3", param.printJac);
+}
+
+/**
+ * @brief Splits a double into two-digit chunks from its integer and fractional
+ *        parts.
+ * @param input The double value to decompose.
+ * @param percentiles Vector to store the resulting chunks.
+ */
+void Plug::StatGenerator::_unpackPercentile(double input,
+  std::vector<double> &percentiles) const
+{
+  percentiles.clear();
+  long long integerPart = static_cast<long long>(input);
+  double fractionalPart = input - integerPart;
+
+  while (integerPart > 0) {
+    double twoDigitChunk = static_cast<double>(integerPart % 100);
+    if(twoDigitChunk) percentiles.push_back(integerPart % 100);
+    integerPart /= 100;
+  }
+
+  while (fractionalPart > 0.0) {
+    fractionalPart *= 100;
+    int twoDigitChunk = static_cast<int>(std::round(fractionalPart));
+    if(twoDigitChunk) percentiles.push_back(twoDigitChunk / 100.0);
+    fractionalPart -= twoDigitChunk;
+    if (fractionalPart < 1e-10) break;
+  }
+  std::sort(percentiles.begin(), percentiles.end());
 }
 
 void Plug::StatGenerator::_printStats(const Measures &measure, const char* str_dim, bool printJac)
@@ -571,24 +575,6 @@ void Plug::StatGenerator::_computeCoeffPercentile(double percentile, size_t sz,
     coeff[i-1] = coeff[i] - coeff[i-1];
   }
   coeff.resize(sz);
-}
-
-void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
-{
-  std::size_t num3DElem = 0;
-
-  // Iterate through regions to count 3D mesh elements
-  for(auto it = _m->firstRegion(); it != _m->lastRegion(); ++it) {
-    num3DElem += (*it)->getNumMeshElements();
-  }
-
-  // Apply policy logic
-  check2D = true;
-  check3D = true;
-  if(_dimensionPolicy == 0 && num3DElem > 0)
-    check2D = false;
-  else if(_dimensionPolicy < 2)
-    check3D = false;
 }
 
 // ======== DataSingleDimension ================================================
