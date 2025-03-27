@@ -103,6 +103,7 @@ private:
 private:
   GModel *_m;
   DataSingleDimension *_data2D, *_data3D;
+  StatGenerator *_statGen;
   Parameters _param;
   bool _verbose = false;
   int _dimensionPolicy = 0;
@@ -135,11 +136,13 @@ public:
     _m = nullptr;
     _data2D = new DataSingleDimension(2);
     _data3D = new DataSingleDimension(3);
+    _statGen = new StatGenerator();
   }
   virtual ~GMSH_AnalyseMeshQuality2Plugin()
   {
     delete _data2D;
     delete _data3D;
+    delete _statGen;
     _plug = nullptr;
   }
   GMSH_PLUGIN_TYPE getType() const override { return GMSH_MESH_PLUGIN; }
@@ -270,6 +273,37 @@ private:
     void _count(unsigned char mask, std::size_t &toCompute,
                 std::size_t &toShow);
     void _countCurved(std::size_t &known, std::size_t &curved);
+  };
+
+  class StatGenerator {
+  private:
+    static const int _N = 10; // max number of stored coefficients
+    static const int _colWidth = 10;
+    int _idxCall = 0;
+    std::vector<int> _idxLastCall;
+    std::vector<std::vector<double>> _coeff;
+    std::map<std::pair<double, size_t>, size_t> _percentiles;
+    std::vector<double> _statCutoffs;
+    std::vector<double> _plotCutoffs;
+
+  public:
+    StatGenerator() {}
+
+    void setPercentileStats(double pack)
+    {
+      _unpackPercentile(pack, _statCutoffs);
+    }
+    void setPercentilePlots(double pack)
+    {
+      _unpackPercentile(pack, _plotCutoffs);
+    }
+    void printStats(const Parameters &, const Measures &m2, const Measures &m3);
+    void getCoefficients(double cutoff, size_t num, std::vector<double> &);
+
+  private:
+    void _unpackPercentile(double input, std::vector<double> &percentiles) const;
+    void _printStats(const Measures &measure, const char* str_dim, bool printJac);
+    void _printStatsOneMeasure(const std::vector<double> &measure, const char* str, bool useG = false);
   };
 
   struct Counts {
