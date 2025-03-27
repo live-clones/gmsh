@@ -35,7 +35,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "restrictToCurvedElements", nullptr, 0},
   {GMSH_FULLRC, "skipPreventiveValidityCheck", nullptr, 0},
   {GMSH_FULLRC, "statsWeightedMeanCutoffPack", nullptr, 110.1},
-  {GMSH_FULLRC, "printStatsOnJacobianDeterminant", nullptr, 0},
+  {GMSH_FULLRC, "printStatsOnJacobianDeterminant", nullptr, 1},
   {GMSH_FULLRC, "createElementsView", nullptr, 0},
   {GMSH_FULLRC, "createPlotView", nullptr, 0},
   {GMSH_FULLRC, "plotWeightedMeanCutoffPack", nullptr, 10},
@@ -165,9 +165,9 @@ PView *Plug::execute(PView *v)
   if(check2D) _data2D->initialize(_m, _param.compute, counts2D);
   if(check3D) _data3D->initialize(_m, _param.compute, counts3D);
 
-  // TMP Dev
-  _devPrintCount(counts2D);
-  _devPrintCount(counts3D);
+  // // TMP Dev
+  // _devPrintCount(counts2D);
+  // _devPrintCount(counts3D);
 
   // Computation
   std::size_t totalToCompute = _printElementToCompute(counts2D, counts3D);
@@ -366,6 +366,39 @@ void Plug::StatGenerator::printStats(const Parameters &param,
                                      const Measures &m2,
                                      const Measures &m3)
 {
+  _info(1, "Printing statistics, here is what is important to know about "
+           "them:");
+  _info(1, "-> - *Validity* give information about the strict positivity "
+           "of the Jacobian determinant.");
+  _info(1, "->   A mesh containing invalid elements will usually lead to "
+           "incorrect Finite Element solutions.");
+  _info(1, "-> - *Disto* quality (previously ICN) is related to the condition "
+           "number of the stiffness matrix.");
+  _info(1, "->   Low-Disto elements can introduce roundoff errors, or "
+           "significantly reduce the convergence");
+  _info(1, "->   speed of iterative methods. ");
+  _info(1, "-> - *Aspect* quality (previously IGE) is related to the gradient "
+           "of the FE solution");
+  _info(1, "->   Low-IGE elements influence negatively the error on the "
+           "gradient.");
+  if(param.printJac) {
+    _info(1, "-> - Computing the Jacobian determinant (J) is required to "
+             "assess elements validity.");
+    _info(1, "->   As it is readily available, three optional statistics can be calculated: ");
+    _info(1, "->   1. the minimal value, minJ, and");
+    _info(1, "->   2. the maximal value, maxJ, and");
+    _info(1, "->   3. the ration minJ/maxJ.");
+    _info(1, "->   Note that neither of these metrics provides any information "
+             "about any kind of quality.");
+  }
+  _info(1, "-> - *Worst-K%% Weighted Mean* (WmK) corresponds to a weighted mean "
+           "where the worst K%% of values are assigned the same ");
+  _info(1, "->   weight as the other values. This approach is preferable to "
+           "the standard mean because it emphasizes the worst ");
+  _info(1, "->   elements which are critical as they can negatively impact the "
+           "Finite Element solution.");
+  _info(1, "->   Note that the standard mean corresponds to Wm50.");
+
   if(param.dimPolicy == 3) {
     Measures combined(m2.validity, m2.disto, m2.aspect);
     combined.minJ = m2.minJ;
