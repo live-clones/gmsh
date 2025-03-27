@@ -34,7 +34,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "restrictToVisibleElements", nullptr, 0},
   {GMSH_FULLRC, "restrictToCurvedElements", nullptr, 0},
   {GMSH_FULLRC, "skipPreventiveValidityCheck", nullptr, 0},
-  {GMSH_FULLRC, "$$$whichPercentileToCompute$$$", nullptr, 110},
+  {GMSH_FULLRC, "$$$whichPercentileToCompute$$$", nullptr, 110.1},
   // {GMSH_FULLRC, "printStatsOnJacobianDet", nullptr, 0}, // TODO add this with _warn(1, "The following stats are given but do not ")
   {GMSH_FULLRC, "createElementsView", nullptr, 0},
   {GMSH_FULLRC, "createPlotView", nullptr, 0},
@@ -275,6 +275,7 @@ void Plug::_fetchParameters()
   // NOTE dimensionPolicy: highest dimension available -> 0, only 2D -> 1,
   //      2D and 3D : seperately -> 2, mixed -> 3
   _dimensionPolicy = static_cast<int>(MeshQuality2Options_Number[3].def);
+  _param.dimPolicy = _dimensionPolicy;
 
   // NOTE recomputePolicy:
   //      - delete nothing, compute nothing, output prevsly computed data -> -2
@@ -441,21 +442,21 @@ void Plug::StatGenerator::_printStats(const Measures &measure, const char* str_d
   //     OR => verbose off by default and end by saying that verbose can be set on
 
   // FIXME: dev
-  _info(0, "dev check values %d %d %d %d", measure.disto, measure.aspect, measure.minDisto.size(), measure.minAspect.size());
+  // _info(0, "dev check values %d %d %d %d", measure.disto, measure.aspect, measure.minDisto.size(), measure.minAspect.size());
   _info(0, "Statistics for dimension %s:", str_dim);
 
   // Header
   if(measure.disto || measure.aspect || printJac) {
     std::ostringstream columnNamesStream;
     columnNamesStream << "-> ";
-    columnNamesStream << std::setw(_colWidth-1) << std::right << "";
-    columnNamesStream << std::setw(_colWidth) << std::right << "Min";
+    columnNamesStream << std::setw(_colWidth-1) << "";
+    columnNamesStream << std::setw(_colWidth) << "Min";
     for (double c : _statCutoffs) {
       std::ostringstream formattedP;
       formattedP << std::setprecision(2) << c;
-      columnNamesStream << std::setw(_colWidth) << std::right << "Wm" + formattedP.str();
+      columnNamesStream << std::setw(_colWidth) << "Wm" + formattedP.str();
     }
-    columnNamesStream << std::setw(_colWidth) << std::right << "Max";
+    columnNamesStream << std::setw(_colWidth) << "Max";
     _info(0, "%s", columnNamesStream.str().c_str());
   }
 
@@ -499,30 +500,77 @@ void Plug::StatGenerator::_printStatsOneMeasure(const std::vector<double> &measu
 {
   size_t numElem = measure.size();
   size_t numCutoff = _statCutoffs.size();
-  std::vector<std::vector<double>> coeff;
   std::vector<double> q = measure;
   double min = *std::min_element(q.begin(), q.end());
   double max = *std::max_element(q.begin(), q.end());
-  // FIXME implement internal coeff
-  computeCoeffPercentile(_statCutoffs, numElem, coeff);
 
   std::vector<double> avg(numCutoff);
   std::sort(q.begin(), q.end());
   for(int i = 0; i < numCutoff; ++i) {
-    avg[i] = std::inner_product(++q.begin(), --q.end(), coeff[i].begin(), 0.0);
+    const std::vector<double> &coeff = _getCoefficients(_statCutoffs[i], numElem);
+    avg[i] = std::inner_product(q.begin(), q.end(), coeff.begin(), 0.0);
   }
 
   std::ostringstream valStream;
   valStream << "-> ";
-  valStream << std::setw(_colWidth-1) << std::right << str << ":";
+  valStream << std::setw(_colWidth-2) << str << ":";
   valStream << std::setprecision(3);
-  if(useG)
-    valStream << std::defaultfloat; // can also be std::scientific
-  valStream << std::setw(_colWidth) << std::right << min;
+  if(useG) valStream << std::defaultfloat; // can also be std::scientific
+  valStream << std::setw(_colWidth) << min;
   for(auto i = 0; i < numCutoff; ++i)
-    valStream << std::setw(_colWidth) << std::right << avg[i];
-  valStream << std::setw(_colWidth) << std::right << max;
+    valStream << std::setw(_colWidth) << avg[i];
+  valStream << std::setw(_colWidth) << max;
   _info(0, "%s", valStream.str().c_str());
+}
+
+const std::vector<double> &Plug::StatGenerator::_getCoefficients(double cutoff, size_t num)
+{
+  ++_idxCall;
+  auto pairKey = std::make_pair(cutoff, num);
+  auto it = _percentiles.find(pairKey);
+
+  if (it != _percentiles.end()) {
+    _idxLastCall[it->second] = _idxCall;
+    return _coeff[it->second];
+  }
+
+  size_t idx = 0;
+  if (_coeff.size() >= _N) {
+    int minVal = _idxLastCall[0];
+    for (size_t i = 1; i < _idxLastCall.size(); ++i) {
+      if (_idxLastCall[i] < minVal) {
+        idx = i;
+        minVal = _idxLastCall[i];
+      }
+    }
+    _coeff[idx].clear();
+    _idxLastCall[idx] = _idxCall;
+    _percentiles.erase(std::find_if(_percentiles.begin(), _percentiles.end(),
+          [&](const auto& p) { return p.second == idx; }));
+    _percentiles[pairKey] = idx;
+  }
+  else {
+    idx = _coeff.size();
+    _coeff.emplace_back();
+    _idxLastCall.push_back(_idxCall);
+    _percentiles.emplace(pairKey, idx);
+  }
+
+  _computeCoeffPercentile(cutoff, num, _coeff[idx]);
+  return _coeff[idx];
+}
+
+void Plug::StatGenerator::_computeCoeffPercentile(double percentile, size_t sz,
+  std::vector<double> &coeff)
+{
+  coeff.resize(sz+1);
+  double exp = std::log(2)/std::log(100/percentile);
+  coeff[0] = 0;
+  for(auto i = 1; i < sz+1; ++i) {
+    coeff[i] = std::pow(static_cast<double>(i)/(sz), exp);
+    coeff[i-1] = coeff[i] - coeff[i-1];
+  }
+  coeff.resize(sz);
 }
 
 void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const

@@ -267,17 +267,22 @@ private:
 
   class StatGenerator {
   private:
-    static const int _N = 10; // max number of stored coefficients
     static const int _colWidth = 10;
+    static const int _N = 10; // max number of stored coefficients
     int _idxCall = 0;
     std::vector<int> _idxLastCall;
     std::vector<std::vector<double>> _coeff;
     std::map<std::pair<double, size_t>, size_t> _percentiles;
+
     std::vector<double> _statCutoffs;
     std::vector<double> _plotCutoffs;
 
   public:
-    StatGenerator() {}
+    StatGenerator()
+    {
+      _idxLastCall.reserve(_N);
+      _coeff.reserve(_N);
+    }
 
     void setPercentileStats(double pack)
     {
@@ -288,12 +293,13 @@ private:
       _unpackPercentile(pack, _plotCutoffs);
     }
     void printStats(const Parameters &, const Measures &m2, const Measures &m3);
-    void getCoefficients(double cutoff, size_t num, std::vector<double> &);
 
   private:
     void _unpackPercentile(double input, std::vector<double> &percentiles) const;
     void _printStats(const Measures &measure, const char* str_dim, bool printJac);
     void _printStatsOneMeasure(const std::vector<double> &measure, const char* str, bool useG = false);
+    const std::vector<double> &_getCoefficients(double cutoff, size_t num);
+    void _computeCoeffPercentile(double percentile, size_t sz, std::vector<double> &);
   };
 
   struct Counts {
