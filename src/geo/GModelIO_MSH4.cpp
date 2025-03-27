@@ -4299,6 +4299,25 @@ static optional<std::unordered_set<MElement*>> writeMSH4Elements(GModel *const m
   }
 
   std::unordered_map<GEntity*, std::unordered_set<MElement*>> elementsToSaveByEntity; // Save all elements if not entry
+  
+
+  constexpr bool exportElements = true;
+  optional<std::unordered_set<MElement*>> allElements;
+  if (exportElements) {
+    allElements = std::unordered_set<MElement*>();
+  }
+
+  /*
+  We do not anymore export the overlap entities, but the entities they cover instead.
+  Then we filter to only save relevant elements on each overlapped entity.
+  */
+
+  fillElementsToSaveForOverlaps<3>(model, partitionToSave, elementsToSaveByEntity, regions);
+  fillElementsToSaveForOverlaps<2>(model, partitionToSave, elementsToSaveByEntity, faces);
+
+  std::map<std::pair<int, int>, std::vector<MElement *> > elementsByType[4];
+  std::size_t numElements = 0;
+
   auto isParititionedOnMe= [partitionToSave, partitioned] (GEntity* ent) -> bool {
     if (!partitioned || partitionToSave == 0) return true;
     if (ent->geomType() == GEntity::PartitionPoint) {
@@ -4319,23 +4338,6 @@ static optional<std::unordered_set<MElement*>> writeMSH4Elements(GModel *const m
     }
     else throw std::runtime_error("Unknown entity type");
   };
-
-  constexpr bool exportElements = true;
-  optional<std::unordered_set<MElement*>> allElements;
-  if (exportElements) {
-    allElements = std::unordered_set<MElement*>();
-  }
-
-  /*
-  We do not anymore export the overlap entities, but the entities they cover instead.
-  Then we filter to only save relevant elements on each overlapped entity.
-  */
-
-  fillElementsToSaveForOverlaps<3>(model, partitionToSave, elementsToSaveByEntity, regions);
-  fillElementsToSaveForOverlaps<2>(model, partitionToSave, elementsToSaveByEntity, faces);
-
-  std::map<std::pair<int, int>, std::vector<MElement *> > elementsByType[4];
-  std::size_t numElements = 0;
 
   for(auto it = vertices.begin(); it != vertices.end(); ++it) {
     GVertex *vertex = *it;
