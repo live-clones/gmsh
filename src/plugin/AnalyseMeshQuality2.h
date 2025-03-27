@@ -81,7 +81,7 @@ private:
       bool create2D = false;
       bool create3D = false;
       bool forceNew = false;
-      double percentile = 10;
+      double plotCutoffPack = 10;
     } pview;
 
     struct Hidding {
@@ -91,7 +91,7 @@ private:
       double threshold = 10;
     } hide;
 
-    double percentileStat = 10;
+    double statCutoffPack = 10;
     double dimPolicy = 0;
     bool freeData = false;
     bool checkValidity = false;
@@ -272,7 +272,7 @@ private:
     int _idxCall = 0;
     std::vector<int> _idxLastCall;
     std::vector<std::vector<double>> _coeff;
-    std::map<std::pair<double, size_t>, size_t> _percentiles;
+    std::map<std::pair<double, size_t>, size_t> _cutoffvsNumValues;
 
     std::vector<double> _statCutoffs;
     std::vector<double> _plotCutoffs;
@@ -284,22 +284,22 @@ private:
       _coeff.reserve(_N);
     }
 
-    void setPercentileStats(double pack)
+    void setCutoffStats(double pack)
     {
-      _unpackPercentile(pack, _statCutoffs);
+      _unpackCutoff(pack, _statCutoffs);
     }
-    void setPercentilePlots(double pack)
+    void setCutoffPlots(double pack)
     {
-      _unpackPercentile(pack, _plotCutoffs);
+      _unpackCutoff(pack, _plotCutoffs);
     }
     void printStats(const Parameters &, const Measures &m2, const Measures &m3);
 
   private:
-    void _unpackPercentile(double input, std::vector<double> &percentiles) const;
+    void _unpackCutoff(double input, std::vector<double> &cutoffs) const;
     void _printStats(const Measures &measure, const char* str_dim, bool printJac);
     void _printStatsOneMeasure(const std::vector<double> &measure, const char* str, bool useG = false);
     const std::vector<double> &_getCoefficients(double cutoff, size_t num);
-    void _computeCoeffPercentile(double percentile, size_t sz, std::vector<double> &);
+    void _computeCoefficients(double cutoff, size_t sz, std::vector<double> &);
   };
 
   struct Counts {

@@ -34,11 +34,11 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "restrictToVisibleElements", nullptr, 0},
   {GMSH_FULLRC, "restrictToCurvedElements", nullptr, 0},
   {GMSH_FULLRC, "skipPreventiveValidityCheck", nullptr, 0},
-  {GMSH_FULLRC, "$$$whichPercentileToCompute$$$", nullptr, 110.1},
-  // {GMSH_FULLRC, "printStatsOnJacobianDet", nullptr, 0}, // TODO add this with _warn(1, "The following stats are given but do not ")
+  {GMSH_FULLRC, "statsWeightedMeanCutoffPack", nullptr, 110.1},
+  {GMSH_FULLRC, "printStatsOnJacobianDeterminant", nullptr, 0},
   {GMSH_FULLRC, "createElementsView", nullptr, 0},
   {GMSH_FULLRC, "createPlotView", nullptr, 0},
-  {GMSH_FULLRC, "$$$percentilePlot$$$", nullptr, 10},
+  {GMSH_FULLRC, "plotWeightedMeanCutoffPack", nullptr, 10},
   {GMSH_FULLRC, "forceNewPlotView", nullptr, 0},
   {GMSH_FULLRC, "hideElements", nullptr, 0},
   {GMSH_FULLRC, "hideWorst", nullptr, 0},
@@ -192,8 +192,8 @@ PView *Plug::execute(PView *v)
   }
 
   // Gather data
-  Measures measures2D(pc.validity, pc.disto, pc.aspect);
-  Measures measures3D(pc.validity, pc.disto, pc.aspect);
+  Measures measures2D(_param.checkValidity, pc.disto, pc.aspect);
+  Measures measures3D(_param.checkValidity, pc.disto, pc.aspect);
   if(check2D) _data2D->gatherValues(counts2D, measures2D);
   if(check3D) _data3D->gatherValues(counts3D, measures3D);
 
@@ -254,20 +254,22 @@ void Plug::_fetchParameters()
   pc.validity = checkValidity || (!lazyValidity && (pc.disto || pc.aspect));
   _param.checkValidity = static_cast<bool>(checkValidity);
 
-  _param.percentileStat = MeshQuality2Options_Number[8].def;
-  pp.create3D = static_cast<bool>(MeshQuality2Options_Number[9].def);
-  pp.create2D = static_cast<bool>(MeshQuality2Options_Number[10].def);
-  pp.percentile = MeshQuality2Options_Number[11].def;
-  pp.forceNew = static_cast<bool>(MeshQuality2Options_Number[12].def);
-  ph.yes = static_cast<bool>(MeshQuality2Options_Number[13].def);
-  ph.worst = static_cast<bool>(MeshQuality2Options_Number[14].def);
+  _param.statCutoffPack = MeshQuality2Options_Number[8].def;
+  _param.printJac = static_cast<bool>(MeshQuality2Options_Number[9].def);
+  pp.create3D = static_cast<bool>(MeshQuality2Options_Number[10].def);
+  pp.create2D = static_cast<bool>(MeshQuality2Options_Number[11].def);
+  pp.plotCutoffPack = MeshQuality2Options_Number[12].def;
+  pp.forceNew = static_cast<bool>(MeshQuality2Options_Number[13].def);
+  ph.yes = static_cast<bool>(MeshQuality2Options_Number[14].def);
+  ph.worst = static_cast<bool>(MeshQuality2Options_Number[154].def);
   // NOTE hideCriterion: hide in function of quality -> 0, %elm -> 1, #elm -> 2
-  ph.criterion = static_cast<int>(MeshQuality2Options_Number[15].def);
-  ph.threshold = MeshQuality2Options_Number[16].def;
-  _myVerbose = static_cast<bool>(MeshQuality2Options_Number[17].def);
-  _param.freeData = static_cast<bool>(MeshQuality2Options_Number[18].def);
+  ph.criterion = static_cast<int>(MeshQuality2Options_Number[16].def);
+  ph.threshold = MeshQuality2Options_Number[17].def;
+  _myVerbose = static_cast<bool>(MeshQuality2Options_Number[18].def);
+  _param.freeData = static_cast<bool>(MeshQuality2Options_Number[19].def);
 
-  _statGen->setPercentileStats(_param.percentileStat);
+  _statGen->setCutoffStats(_param.statCutoffPack);
+  _statGen->setCutoffPlots(_param.statCutoffPack);
   _verbose = _myVerbose;
 
   //
@@ -294,9 +296,9 @@ void Plug::_fetchParameters()
   //  check if PView::_options::vectorType == PViewOptions::Displacement (5),
   //  or just consider that NbTimeStep is sufficient
 
-  bool createTimeView = static_cast<bool>(MeshQuality2Options_Number[19].def);
-  _createPwView = static_cast<bool>(MeshQuality2Options_Number[20].def);
-  _elemNumForPwView = static_cast<int>(MeshQuality2Options_Number[21].def);
+  bool createTimeView = static_cast<bool>(MeshQuality2Options_Number[20].def);
+  _createPwView = static_cast<bool>(MeshQuality2Options_Number[21].def);
+  _elemNumForPwView = static_cast<int>(MeshQuality2Options_Number[22].def);
   _viewOrder = 0;
   _dataPViewJac.clear();
   _dataPViewIGE.clear();
@@ -387,29 +389,29 @@ void Plug::StatGenerator::printStats(const Parameters &param,
  * @brief Splits a double into two-digit chunks from its integer and fractional
  *        parts.
  * @param input The double value to decompose.
- * @param percentiles Vector to store the resulting chunks.
+ * @param cutoffs Vector to store the resulting chunks.
  */
-void Plug::StatGenerator::_unpackPercentile(double input,
-  std::vector<double> &percentiles) const
+void Plug::StatGenerator::_unpackCutoff(double input,
+  std::vector<double> &cutoffs) const
 {
-  percentiles.clear();
+  cutoffs.clear();
   long long integerPart = static_cast<long long>(input);
   double fractionalPart = input - integerPart;
 
   while (integerPart > 0) {
     double twoDigitChunk = static_cast<double>(integerPart % 100);
-    if(twoDigitChunk) percentiles.push_back(integerPart % 100);
+    if(twoDigitChunk) cutoffs.push_back(integerPart % 100);
     integerPart /= 100;
   }
 
   while (fractionalPart > 0.0) {
     fractionalPart *= 100;
     int twoDigitChunk = static_cast<int>(std::round(fractionalPart));
-    if(twoDigitChunk) percentiles.push_back(twoDigitChunk / 100.0);
+    if(twoDigitChunk) cutoffs.push_back(twoDigitChunk / 100.0);
     fractionalPart -= twoDigitChunk;
     if (fractionalPart < 1e-10) break;
   }
-  std::sort(percentiles.begin(), percentiles.end());
+  std::sort(cutoffs.begin(), cutoffs.end());
 }
 
 void Plug::StatGenerator::_printStats(const Measures &measure, const char* str_dim, bool printJac)
@@ -453,7 +455,7 @@ void Plug::StatGenerator::_printStats(const Measures &measure, const char* str_d
   if(measure.disto || measure.aspect || printJac) {
     std::ostringstream columnNamesStream;
     columnNamesStream << "-> ";
-    columnNamesStream << std::setw(_colWidth-1) << "";
+    columnNamesStream << std::setw(_colWidth) << "";
     columnNamesStream << std::setw(_colWidth) << "Min";
     for (double c : _statCutoffs) {
       std::ostringstream formattedP;
@@ -517,7 +519,7 @@ void Plug::StatGenerator::_printStatsOneMeasure(const std::vector<double> &measu
 
   std::ostringstream valStream;
   valStream << "-> ";
-  valStream << std::setw(_colWidth-2) << str << ":";
+  valStream << std::setw(_colWidth-1) << str << ":";
   valStream << std::setprecision(3);
   if(useG) valStream << std::defaultfloat; // can also be std::scientific
   valStream << std::setw(_colWidth) << min;
@@ -531,9 +533,9 @@ const std::vector<double> &Plug::StatGenerator::_getCoefficients(double cutoff, 
 {
   ++_idxCall;
   auto pairKey = std::make_pair(cutoff, num);
-  auto it = _percentiles.find(pairKey);
+  auto it = _cutoffvsNumValues.find(pairKey);
 
-  if (it != _percentiles.end()) {
+  if (it != _cutoffvsNumValues.end()) {
     _idxLastCall[it->second] = _idxCall;
     return _coeff[it->second];
   }
@@ -549,26 +551,26 @@ const std::vector<double> &Plug::StatGenerator::_getCoefficients(double cutoff, 
     }
     _coeff[idx].clear();
     _idxLastCall[idx] = _idxCall;
-    _percentiles.erase(std::find_if(_percentiles.begin(), _percentiles.end(),
+    _cutoffvsNumValues.erase(std::find_if(_cutoffvsNumValues.begin(), _cutoffvsNumValues.end(),
           [&](const auto& p) { return p.second == idx; }));
-    _percentiles[pairKey] = idx;
+    _cutoffvsNumValues[pairKey] = idx;
   }
   else {
     idx = _coeff.size();
     _coeff.emplace_back();
     _idxLastCall.push_back(_idxCall);
-    _percentiles.emplace(pairKey, idx);
+    _cutoffvsNumValues.emplace(pairKey, idx);
   }
 
-  _computeCoeffPercentile(cutoff, num, _coeff[idx]);
+  _computeCoefficients(cutoff, num, _coeff[idx]);
   return _coeff[idx];
 }
 
-void Plug::StatGenerator::_computeCoeffPercentile(double percentile, size_t sz,
+void Plug::StatGenerator::_computeCoefficients(double cutoff, size_t sz,
   std::vector<double> &coeff)
 {
   coeff.resize(sz+1);
-  double exp = std::log(2)/std::log(100/percentile);
+  double exp = std::log(2)/std::log(100/cutoff);
   coeff[0] = 0;
   for(auto i = 1; i < sz+1; ++i) {
     coeff[i] = std::pow(static_cast<double>(i)/(sz), exp);
