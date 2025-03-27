@@ -56,45 +56,54 @@ GMSH_Plugin *GMSH_RegisterAnalyseMeshQuality2Plugin();
 
 class GMSH_AnalyseMeshQuality2Plugin : public GMSH_PostPlugin {
 private:
+  static GMSH_AnalyseMeshQuality2Plugin *_plug;
+
+private:
+  class DataSingleDimension;
+  class DataEntity;
+  class StatGenerator;
+  struct Counts;
+  struct Measures;
+
+private:
   struct Parameters {
     struct Compute {
-      bool validity;
-      bool disto;
-      bool aspect;
-      bool onlyVisible;
-      bool onlyCurved;
-      bool lazyValidity;
-      int policy;
+      bool validity = false;
+      bool disto = false;
+      bool aspect = false;
+      bool onlyVisible = false;
+      bool onlyCurved = false;
+      bool lazyValidity = false;
+      int policy = 0;
     } compute;
 
     struct Post {
-      bool create2D;
-      bool create3D;
-      bool forceNew;
-      double percentile;
+      bool create2D = false;
+      bool create3D = false;
+      bool forceNew = false;
+      double percentile = 10;
     } pview;
 
     struct Hidding {
-      bool yes;
-      bool worst;
-      int criterion;
-      double threshold;
+      bool yes = false;
+      bool worst = false;
+      int criterion = 2;
+      double threshold = 10;
     } hide;
 
-    double percentileStat;
-    bool freeData;
-    bool checkValidity;
-    bool check2D;
-    bool check3D;
-  } _param;
+    double percentileStat = 10;
+    double dimPolicy = 0;
+    bool freeData = false;
+    bool checkValidity = false;
+    bool check2D = false;
+    bool check3D = false;
+    bool printJac = false;
+  };
 
-  static GMSH_AnalyseMeshQuality2Plugin *_plug;
-  class DataSingleDimension;
-  class DataEntity;
-  struct Counts;
-  struct Measures;
+private:
   GModel *_m;
   DataSingleDimension *_data2D, *_data3D;
+  Parameters _param;
   bool _verbose = false;
   int _dimensionPolicy = 0;
 
@@ -115,9 +124,23 @@ private:
 public:
   GMSH_AnalyseMeshQuality2Plugin()
   {
+    if(_plug) {
+      Msg::Warning("A new instance of the plugin 'AnalyseMeshQuality' has been "
+                   "requested, but an instance already exists. ");
+      Msg::Warning("Having multiple instances is not supported, deleting "
+                   "previous one...");
+      delete _plug;
+    }
+    _plug = this;
     _m = nullptr;
     _data2D = new DataSingleDimension(2);
     _data3D = new DataSingleDimension(3);
+  }
+  virtual ~GMSH_AnalyseMeshQuality2Plugin()
+  {
+    delete _data2D;
+    delete _data3D;
+    _plug = nullptr;
   }
   GMSH_PLUGIN_TYPE getType() const override { return GMSH_MESH_PLUGIN; }
   std::string getName() const override { return "AnalyseMeshQuality2"; }
@@ -130,11 +153,6 @@ public:
   int getNbOptions() const override;
   StringXNumber *getOption(int) override;
   PView *execute(PView *) override;
-  static GMSH_AnalyseMeshQuality2Plugin *newPluginInstance()
-  {
-    _plug = new GMSH_AnalyseMeshQuality2Plugin();
-    return _plug;
-  }
 
 private:
   void _fetchParameters();
@@ -143,6 +161,7 @@ private:
   void _printStats(Measures &m2, Measures &m3) const;
   void _printStats(Measures &, const char* str_dim) const;
 
+  // Those are static to be able to call them from class members
   static bool _okToPrint(int verb)
   {
     return (_plug->_verbose && verb >= 0) || (!_plug->_verbose && verb <= 0);

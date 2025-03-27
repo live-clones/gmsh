@@ -64,7 +64,7 @@ Plug *Plug::_plug = nullptr;
 extern "C" {
 GMSH_Plugin *GMSH_RegisterAnalyseMeshQuality2Plugin()
 {
-  return Plug::newPluginInstance();
+  return new GMSH_AnalyseMeshQuality2Plugin();
 }
 }
 
