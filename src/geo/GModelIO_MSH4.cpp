@@ -58,6 +58,7 @@ template <>
 struct OverlapTypes<3> {
   using Entity = GRegion;
   using PartitionEntity = partitionRegion;
+  using PartitionBoundaryEntity = partitionFace;
   using OverlapEntity = overlapRegion;
   using OverlapManager = overlapRegionManager;
   static const std::map<int, std::unique_ptr<overlapRegionManager>> &getManagers(const GModel* model) {
@@ -70,6 +71,7 @@ template <>
 struct OverlapTypes<2> {
   using Entity = GFace;
   using PartitionEntity = partitionFace;
+  using PartitionBoundaryEntity = partitionEdge;
   using OverlapEntity = overlapFace;
   using OverlapManager = overlapFaceManager;
   static const std::map<int, std::unique_ptr<overlapFaceManager>> &getManagers(const GModel* model) {
