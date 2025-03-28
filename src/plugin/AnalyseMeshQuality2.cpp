@@ -27,6 +27,39 @@
 
 StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "checkValidity", nullptr, 1},
+  // FIXME remove that option? We compute validity anyway, is it useful
+  //  to make pview/plot about the jacobian? maybe not and maybe we can still
+  //  allow the user to have one with param printStatsOnJacobianDeterminant
+  //  which could be renamed includeJacobianDeterminantQuantities and put at the
+  //  end
+
+  // NOTE Maybe it is useful to have PView of minJ for detecting small
+  //  elements as they can be problematic for FE calculation
+
+  // NOTE Proposition
+  //  1. Remove checkValidity
+  //  2. Add parameter hidingMeasurePolicy
+  //     - -1 = just hide valid elements if any invalid (without taking into
+  //            account other parameters), otherwise skip hiding
+  //     -  0 = If there are invalid elements, hide valid ones (or the contrary
+  //            if hideWorst is ON) of , otherwise do 1
+  //     -  1 = hide in function of quality metric of higher parameter,
+  //            if one is higher, otherwise do 2
+  //     -  2 = hide in function of both quality metrics, an element is not
+  //            hidden if any of quality metric meet the criterion
+  //     -  3 = the same as 2, but an element is not hidden if both quality
+  //            metric meet the criterion.
+  //     In any case, if no element meet the criterion to stay visible, there is
+  //     no hiding.
+  //  3. Clarify what I use: Disto and aspect are quality metrics.
+  //                         Computing them is evaluating.
+  //                         The resulting data are values or results.
+  //  4. Rename Disto->Distortion, Measures->Results
+  //  5. Consider (and make sure) that the number of values in results are
+  //     identical for each metric. This is for simplification.
+  //  6. Add vector of pointers to MElement into Measures(Results) to be able to
+  //     change visibility and create PViews without returning into DataGentities
+  //  7. Store sorted vectors into Measures(Results)?
   {GMSH_FULLRC, "checkQualityDisto", nullptr, 1},
   {GMSH_FULLRC, "checkQualityAspect", nullptr, 1},
   {GMSH_FULLRC, "dimensionPolicy", nullptr, 0},
@@ -201,16 +234,8 @@ PView *Plug::execute(PView *v)
   _param.check3D = check3D;
   _statGen->printStats(_param, measures2D, measures3D);
 
-  int a = 1;
-
-  // If validity not asked : tell that compute it any way because it can speedup
-  // say that only if verb 1
-
 
   // TODO compute show
-
-
-  // TODO warning if no element to check (the case T8, maybe another gmodel?)
 
   return v;
 }
