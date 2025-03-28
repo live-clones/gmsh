@@ -3956,6 +3956,7 @@ getEntitiesToSave(GModel *const model, bool partitioned,
                   std::set<GVertex *, GEntityPtrLessThan> &vertices)
 {
   if(partitioned) {
+    // Note: this also include overlap boundaries, naturally
     for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
       if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
         continue;
