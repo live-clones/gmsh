@@ -257,8 +257,11 @@ public:
     ExtrudeParams *extrude;
     // reverse mesh orientation
     bool reverseMesh;
+    bool fixedMeshIF;
   } meshAttributes;
 
+  bool getFixedMeshIF(){return meshAttributes.fixedMeshIF;}
+  void setFixedMeshIF(bool fixed){meshAttributes.fixedMeshIF=fixed;}
   virtual double getMeshSize() const { return meshAttributes.meshSize; }
   virtual double getMeshSizeFactor() const
   {
