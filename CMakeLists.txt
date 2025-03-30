@@ -3,7 +3,7 @@
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 
 # if CMAKE_BUILD_TYPE is specified use it; otherwise set the default
 # build type to "RelWithDebInfo" ("-O2 -g" with gcc) prior to calling
@@ -178,13 +178,7 @@ set(ONELAB_PY contrib/onelab/python/onelab.py)
 set(GMSH_PY api/gmsh.py)
 set(GMSH_JL api/gmsh.jl)
 
-if(${CMAKE_MAJOR_VERSION} GREATER 2)
-  string(TIMESTAMP DATE "%Y%m%d")
-else()
-  execute_process(COMMAND date "+%Y%m%d" OUTPUT_VARIABLE DATE
-                  OUTPUT_STRIP_TRAILING_WHITESPACE)
-endif()
-
+string(TIMESTAMP DATE "%Y%m%d")
 if(NOT DATE)
   set(DATE "unknown")
 endif()
