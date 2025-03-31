@@ -4311,6 +4311,159 @@ struct EntitiesToSaveAndElementsSubsets {
   }
 };
 
+static std::array<std::map<std::pair<int, int>, std::vector<MElement *>>, 4>
+getElementsToSaveByType(GModel *const model, FILE *fp, bool partitioned,
+                        int partitionToSave, bool binary, bool saveAll,
+                        double version,
+                        const std::optional<EntityPackage> &entitiesToSave)
+{
+  std::array<std::map<std::pair<int, int>, std::vector<MElement *>>, 4>
+    elementsByType;
+
+    auto entitiesToSaveAndElementsSubsets = EntitiesToSaveAndElementsSubsets(model, partitioned, partitionToSave, saveAll, entitiesToSave);
+  const auto& regions = entitiesToSaveAndElementsSubsets.regions;
+  const auto& faces = entitiesToSaveAndElementsSubsets.faces;
+  const auto& edges = entitiesToSaveAndElementsSubsets.edges;
+  const auto& vertices = entitiesToSaveAndElementsSubsets.vertices;
+  const auto& elementsToSaveByEntity = entitiesToSaveAndElementsSubsets.elementsToSaveByEntity;
+
+  constexpr bool exportElements = true;
+  optional<std::unordered_set<MElement*>> allElements;
+  if (exportElements) {
+    allElements = std::unordered_set<MElement*>();
+  }
+
+  
+
+  std::size_t numElements = 0;
+
+  auto isParititionedOnMe= [partitionToSave, partitioned] (GEntity* ent) -> bool {
+    if (!partitioned || partitionToSave == 0) return true;
+    if (ent->geomType() == GEntity::PartitionPoint) {
+      auto parts = static_cast<partitionVertex*>(ent)->getPartitions();
+      return std::find(parts.begin(), parts.end(), partitionToSave) != parts.end();
+    }
+    if (ent->geomType() == GEntity::PartitionCurve) {
+      auto parts = static_cast<partitionEdge*>(ent)->getPartitions();
+      return std::find(parts.begin(), parts.end(), partitionToSave) != parts.end();
+    }
+    if (ent->geomType() == GEntity::PartitionSurface) {
+      auto parts = static_cast<partitionFace*>(ent)->getPartitions();
+      return std::find(parts.begin(), parts.end(), partitionToSave) != parts.end();
+    }
+    if (ent->geomType() == GEntity::PartitionVolume) {
+      auto parts = static_cast<partitionRegion*>(ent)->getPartitions();
+      return std::find(parts.begin(), parts.end(), partitionToSave) != parts.end();
+    }
+    else throw std::runtime_error("Unknown entity type");
+  };
+
+  for(auto it = vertices.begin(); it != vertices.end(); ++it) {
+    GVertex *vertex = *it;
+    if(!saveAll && vertex->physicals.size() == 0) continue;
+    int entityTag = vertex->tag();
+
+    numElements += vertex->points.size();
+    for(std::size_t i = 0; i < vertex->points.size(); i++) {
+      std::pair<int, int> p(entityTag, vertex->points[i]->getTypeForMSH());
+      elementsByType[0][p].push_back(vertex->points[i]);
+    }
+  }
+
+  for(auto it = edges.begin(); it != edges.end(); ++it) {
+    GEdge *edge = *it;
+    if(!saveAll && edge->physicals.size() == 0 &&
+       edge->geomType() != GEntity::GhostCurve)
+      continue;
+
+    int entityTag = edge->tag();
+
+    numElements += edge->lines.size();
+    for(std::size_t i = 0; i < edge->lines.size(); i++) {
+      std::pair<int, int> p(entityTag, edge->lines[i]->getTypeForMSH());
+      elementsByType[1][p].push_back(edge->lines[i]);
+    }
+  }
+
+  for(auto it = faces.begin(); it != faces.end(); ++it) {
+    GFace *face = *it;
+    if(!saveAll && face->physicals.size() == 0 &&
+       face->geomType() != GEntity::GhostSurface)
+      continue;
+
+    int entityTag = face->tag();
+    auto restricted = elementsToSaveByEntity.find(face);
+    if(restricted != elementsToSaveByEntity.end()) {
+      numElements += restricted->second.size();
+      for(auto element : restricted->second) {
+        std::pair<int, int> p(entityTag, element->getTypeForMSH());
+        elementsByType[2][p].push_back(element);
+      }
+    }
+    else if(isParititionedOnMe(face)) {
+      numElements += face->triangles.size();
+      for(std::size_t i = 0; i < face->triangles.size(); i++) {
+        std::pair<int, int> p(entityTag, face->triangles[i]->getTypeForMSH());
+        elementsByType[2][p].push_back(face->triangles[i]);
+      }
+      numElements += face->quadrangles.size();
+      for(std::size_t i = 0; i < face->quadrangles.size(); i++) {
+        std::pair<int, int> p(face->tag(),
+                              face->quadrangles[i]->getTypeForMSH());
+        elementsByType[2][p].push_back(face->quadrangles[i]);
+      }
+    }
+  }
+
+  for(auto it = regions.begin(); it != regions.end(); ++it) {
+    GRegion* region = *it;
+    if(!saveAll && region->physicals.size() == 0 &&
+       region->geomType() != GEntity::GhostVolume)
+      continue;
+
+    int entityTag = region->tag();
+    auto restricted = elementsToSaveByEntity.find(region);
+
+    if(restricted != elementsToSaveByEntity.end()) {
+      numElements += restricted->second.size();
+      for(auto element : restricted->second) {
+        std::pair<int, int> p(entityTag, element->getTypeForMSH());
+        elementsByType[3][p].push_back(element);
+      }
+    }
+    else if(isParititionedOnMe(region)) {
+      numElements += region->tetrahedra.size();
+      for(std::size_t i = 0; i < region->tetrahedra.size(); i++) {
+        auto tetra = region->tetrahedra[i];
+        std::pair<int, int> p(entityTag, tetra->getTypeForMSH());
+        elementsByType[3][p].push_back(tetra);
+      }
+      numElements += region->hexahedra.size();
+      for(std::size_t i = 0; i < region->hexahedra.size(); i++) {
+        std::pair<int, int> p(entityTag, region->hexahedra[i]->getTypeForMSH());
+        elementsByType[3][p].push_back(region->hexahedra[i]);
+      }
+      numElements += region->prisms.size();
+      for(std::size_t i = 0; i < region->prisms.size(); i++) {
+        std::pair<int, int> p(entityTag, region->prisms[i]->getTypeForMSH());
+        elementsByType[3][p].push_back(region->prisms[i]);
+      }
+      numElements += region->pyramids.size();
+      for(std::size_t i = 0; i < region->pyramids.size(); i++) {
+        std::pair<int, int> p(entityTag, region->pyramids[i]->getTypeForMSH());
+        elementsByType[3][p].push_back(region->pyramids[i]);
+      }
+      numElements += region->trihedra.size();
+      for(std::size_t i = 0; i < region->trihedra.size(); i++) {
+        std::pair<int, int> p(entityTag, region->trihedra[i]->getTypeForMSH());
+        elementsByType[3][p].push_back(region->trihedra[i]);
+      }
+    }
+  }
+
+  
+}
+
 static optional<std::unordered_set<MElement*>> writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
                               int partitionToSave, bool binary, bool saveAll,
                               double version, const std::optional<EntityPackage>& entitiesToSave)
