@@ -4108,24 +4108,22 @@ static optional<std::unordered_set<MVertex*>> writeMSH4Nodes(GModel *const model
     }
   }
 
-  size_t numNodes = 0;
-  auto getEntitySavedVertexCount = [&](GEntity* entity) {
-    auto it = additionalVertices.find(entity);
-    if (it == additionalVertices.end()) return entity->getNumMeshVertices();
-    return it->second.size();
+  auto getNumNodes = [&additionalVertices](const auto &container) -> size_t {
+    size_t numNodes = 0;
+    for(auto entity : container) {
+      auto it = additionalVertices.find(entity);
+      if(it == additionalVertices.end()) {
+        numNodes += entity->getNumMeshVertices();
+      }
+      else {
+        numNodes += it->second.size();
+      }
+    }
+    return numNodes;
   };
-  for (auto vertex: vertices) {
-    numNodes += getEntitySavedVertexCount(vertex);
-  }
-  for (auto edge: edges) {
-    numNodes += getEntitySavedVertexCount(edge);
-  }
-  for (auto face: faces) {
-    numNodes += getEntitySavedVertexCount(face);
-  }
-  for (auto region: regions) {
-    numNodes += getEntitySavedVertexCount(region);
-  }
+  
+  size_t numNodes = getNumNodes(vertices) + getNumNodes(edges) +
+                    getNumNodes(faces) + getNumNodes(regions);
 
   if(!numNodes) return std::nullopt;
 
@@ -4192,37 +4190,8 @@ static optional<std::unordered_set<MVertex*>> writeMSH4Nodes(GModel *const model
       }
     }
   }
-
-  // Include additional entities for min-max
-  /*for (auto [entity, vertices] : additionalVertices) {
-    for (auto vertex : vertices) {
-      minTag = std::min(minTag, vertex->getNum());
-      maxTag = std::max(maxTag, vertex->getNum());
-    }
-  }
-  for (auto [entity, vertices] : additionalEdges) {
-    for (auto vertex : vertices) {
-      minTag = std::min(minTag, vertex->getNum());
-      maxTag = std::max(maxTag, vertex->getNum());
-    }
-  }
-  for (auto [entity, vertices] : additionalFaces) {
-    for (auto vertex : vertices) {
-      minTag = std::min(minTag, vertex->getNum());
-      maxTag = std::max(maxTag, vertex->getNum());
-    }
-  }
-  for (auto [entity, vertices] : additionalRegions) {
-    for (auto vertex : vertices) {
-      minTag = std::min(minTag, vertex->getNum());
-      maxTag = std::max(maxTag, vertex->getNum());
-    }
-  }*/
-
   size_t totalNumEntities = vertices.size() + edges.size() + faces.size() +
-                            regions.size();/* + additionalVertices.size() +
-                            additionalEdges.size() + additionalFaces.size() +
-                            additionalRegions.size();*/
+                            regions.size();
 
   if(binary) {
     fwrite(&totalNumEntities, sizeof(std::size_t), 1, fp);
