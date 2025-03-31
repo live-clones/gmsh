@@ -4483,6 +4483,7 @@ getElementsToSaveByType(GModel *const model, FILE *fp, bool partitioned,
     }
   }
 
+  return elementsByType;
   
 }
 
