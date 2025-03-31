@@ -4432,7 +4432,6 @@ static optional<std::unordered_set<MElement*>> writeMSH4Elements(GModel *const m
       numElements += elements.size();
     }
   }
-  Msg::Info("Recomputed element count is %lu", numElements);
   if(!numElements) return std::nullopt;
 
   fprintf(fp, "$Elements\n");
