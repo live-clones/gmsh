@@ -4130,66 +4130,28 @@ static optional<std::unordered_set<MVertex*>> writeMSH4Nodes(GModel *const model
   fprintf(fp, "$Nodes\n");
 
   std::size_t minTag = std::numeric_limits<std::size_t>::max(), maxTag = 0;
-  for(GVertex* vertex : vertices) {
-    auto it = verticesPerEntity.find(vertex);
-    if (it == verticesPerEntity.end()) {
-      for (size_t k = 0; k < vertex->getNumMeshVertices(); ++k) {
-        minTag = std::min(minTag, vertex->getMeshVertex(k)->getNum());
-        maxTag = std::max(maxTag, vertex->getMeshVertex(k)->getNum());
+  auto updateMinMaxTag = [&minTag, &maxTag, &verticesPerEntity](const auto &entityContainer) {
+    for(auto entity : entityContainer) {
+      auto it = verticesPerEntity.find(entity);
+      if(it == verticesPerEntity.end()) {
+        for(size_t k = 0; k < entity->getNumMeshVertices(); ++k) {
+          minTag = std::min(minTag, entity->getMeshVertex(k)->getNum());
+          maxTag = std::max(maxTag, entity->getMeshVertex(k)->getNum());
+        }
+      }
+      else {
+        for(auto vertex : it->second) {
+          minTag = std::min(minTag, vertex->getNum());
+          maxTag = std::max(maxTag, vertex->getNum());
+        }
       }
     }
-    else {
-      for (auto vertex : it->second) {
-        minTag = std::min(minTag, vertex->getNum());
-        maxTag = std::max(maxTag, vertex->getNum());
-      }
-    }
-  }
-  for (GEdge* edge : edges) {
-    auto it = verticesPerEntity.find(edge);
-    if (it == verticesPerEntity.end()) {
-      for (size_t k = 0; k < edge->getNumMeshVertices(); ++k) {
-        minTag = std::min(minTag, edge->getMeshVertex(k)->getNum());
-        maxTag = std::max(maxTag, edge->getMeshVertex(k)->getNum());
-      }
-    }
-    else {
-      for (auto vertex : it->second) {
-        minTag = std::min(minTag, vertex->getNum());
-        maxTag = std::max(maxTag, vertex->getNum());
-      }
-    }
-  }
-  for (GFace* face : faces) {
-    auto it = verticesPerEntity.find(face);
-    if (it == verticesPerEntity.end()) {
-      for (size_t k = 0; k < face->getNumMeshVertices(); ++k) {
-        minTag = std::min(minTag, face->getMeshVertex(k)->getNum());
-        maxTag = std::max(maxTag, face->getMeshVertex(k)->getNum());
-      }
-    }
-    else {
-      for (auto vertex : it->second) {
-        minTag = std::min(minTag, vertex->getNum());
-        maxTag = std::max(maxTag, vertex->getNum());
-      }
-    }
-  }
-  for (GRegion* region : regions) {
-    auto it = verticesPerEntity.find(region);
-    if (it == verticesPerEntity.end()) {
-      for (size_t k = 0; k < region->getNumMeshVertices(); ++k) {
-        minTag = std::min(minTag, region->getMeshVertex(k)->getNum());
-        maxTag = std::max(maxTag, region->getMeshVertex(k)->getNum());
-      }
-    }
-    else {
-      for (auto vertex : it->second) {
-        minTag = std::min(minTag, vertex->getNum());
-        maxTag = std::max(maxTag, vertex->getNum());
-      }
-    }
-  }
+  };
+
+  updateMinMaxTag(vertices);
+  updateMinMaxTag(edges);
+  updateMinMaxTag(faces);
+  updateMinMaxTag(regions);
   size_t totalNumEntities = vertices.size() + edges.size() + faces.size() +
                             regions.size();
 
