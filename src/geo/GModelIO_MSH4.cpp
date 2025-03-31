@@ -4081,7 +4081,7 @@ static optional<std::unordered_set<MVertex*>> writeMSH4Nodes(GModel *const model
   std::set<GEdge *, GEntityPtrLessThan> edges;
   std::set<GVertex *, GEntityPtrLessThan> vertices;
 
-  std::unordered_map<GEntity*, std::unordered_set<MVertex*>> additionalVertices;
+  std::unordered_map<GEntity*, std::unordered_set<MVertex*>> verticesPerEntity;
 
   auto elemToSave =
     getElementsToSaveByType(model, fp, partitioned, partitionToSave, binary,
@@ -4092,7 +4092,7 @@ static optional<std::unordered_set<MVertex*>> writeMSH4Nodes(GModel *const model
         for(size_t k = 0; k < elem->getNumVertices(); ++k) {
           MVertex *vertex = elem->getVertex(k);
           GEntity *entity = vertex->onWhat();
-          additionalVertices[entity].insert(vertex);
+          verticesPerEntity[entity].insert(vertex);
           switch(entity->dim()) {
             {
             case 0: vertices.insert(static_cast<GVertex *>(entity)); break;
@@ -4108,11 +4108,11 @@ static optional<std::unordered_set<MVertex*>> writeMSH4Nodes(GModel *const model
     }
   }
 
-  auto getNumNodes = [&additionalVertices](const auto &container) -> size_t {
+  auto getNumNodes = [&verticesPerEntity](const auto &container) -> size_t {
     size_t numNodes = 0;
     for(auto entity : container) {
-      auto it = additionalVertices.find(entity);
-      if(it == additionalVertices.end()) {
+      auto it = verticesPerEntity.find(entity);
+      if(it == verticesPerEntity.end()) {
         numNodes += entity->getNumMeshVertices();
       }
       else {
@@ -4131,8 +4131,8 @@ static optional<std::unordered_set<MVertex*>> writeMSH4Nodes(GModel *const model
 
   std::size_t minTag = std::numeric_limits<std::size_t>::max(), maxTag = 0;
   for(GVertex* vertex : vertices) {
-    auto it = additionalVertices.find(vertex);
-    if (it == additionalVertices.end()) {
+    auto it = verticesPerEntity.find(vertex);
+    if (it == verticesPerEntity.end()) {
       for (size_t k = 0; k < vertex->getNumMeshVertices(); ++k) {
         minTag = std::min(minTag, vertex->getMeshVertex(k)->getNum());
         maxTag = std::max(maxTag, vertex->getMeshVertex(k)->getNum());
@@ -4146,8 +4146,8 @@ static optional<std::unordered_set<MVertex*>> writeMSH4Nodes(GModel *const model
     }
   }
   for (GEdge* edge : edges) {
-    auto it = additionalVertices.find(edge);
-    if (it == additionalVertices.end()) {
+    auto it = verticesPerEntity.find(edge);
+    if (it == verticesPerEntity.end()) {
       for (size_t k = 0; k < edge->getNumMeshVertices(); ++k) {
         minTag = std::min(minTag, edge->getMeshVertex(k)->getNum());
         maxTag = std::max(maxTag, edge->getMeshVertex(k)->getNum());
@@ -4161,8 +4161,8 @@ static optional<std::unordered_set<MVertex*>> writeMSH4Nodes(GModel *const model
     }
   }
   for (GFace* face : faces) {
-    auto it = additionalVertices.find(face);
-    if (it == additionalVertices.end()) {
+    auto it = verticesPerEntity.find(face);
+    if (it == verticesPerEntity.end()) {
       for (size_t k = 0; k < face->getNumMeshVertices(); ++k) {
         minTag = std::min(minTag, face->getMeshVertex(k)->getNum());
         maxTag = std::max(maxTag, face->getMeshVertex(k)->getNum());
@@ -4176,8 +4176,8 @@ static optional<std::unordered_set<MVertex*>> writeMSH4Nodes(GModel *const model
     }
   }
   for (GRegion* region : regions) {
-    auto it = additionalVertices.find(region);
-    if (it == additionalVertices.end()) {
+    auto it = verticesPerEntity.find(region);
+    if (it == verticesPerEntity.end()) {
       for (size_t k = 0; k < region->getNumMeshVertices(); ++k) {
         minTag = std::min(minTag, region->getMeshVertex(k)->getNum());
         maxTag = std::max(maxTag, region->getMeshVertex(k)->getNum());
@@ -4213,9 +4213,9 @@ static optional<std::unordered_set<MVertex*>> writeMSH4Nodes(GModel *const model
   }
 
   std::optional<std::unordered_set<MVertex*>> allNodes;
-  auto setOrNullopt = [&additionalVertices](GEntity* entity) -> std::optional<std::unordered_set<MVertex*>> {
-    auto it = additionalVertices.find(entity);
-    if (it == additionalVertices.end()) return std::nullopt;
+  auto setOrNullopt = [&verticesPerEntity](GEntity* entity) -> std::optional<std::unordered_set<MVertex*>> {
+    auto it = verticesPerEntity.find(entity);
+    if (it == verticesPerEntity.end()) return std::nullopt;
     return it->second;
   };
 
