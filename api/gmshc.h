@@ -1631,9 +1631,11 @@ GMSH_API void gmshModelMeshComputeCrossField(int ** viewTags, size_t * viewTags_
                                              int * ierr);
 
 /* Triangulate the points given in the `coord' vector as pairs of u, v
- * coordinates, and return the node tags (with numbering starting at 1) of the
- * resulting triangles in `tri'. */
+ * coordinates, with constrained edges given in the `edges' vector as pair of
+ * point indexes (with numbering starting at 1) , and return the node tags
+ * (with numbering starting at 1) of the resulting triangles in `tri'. */
 GMSH_API void gmshModelMeshTriangulate(const double * coord, const size_t coord_n,
+                                       const size_t * edges, const size_t edges_n,
                                        size_t ** tri, size_t * tri_n,
                                        int * ierr);
 

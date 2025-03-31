@@ -579,8 +579,8 @@ mesh.add('computeHomology', doc, None, ovectorpair('dimTags'))
 doc = '''Compute a cross field for the current mesh. The function creates 3 views: the H function, the Theta function and cross directions. Return the tags of the views.'''
 mesh.add('computeCrossField', doc, None, ovectorint('viewTags'))
 
-doc = '''Triangulate the points given in the `coord' vector as pairs of u, v coordinates, and return the node tags (with numbering starting at 1) of the resulting triangles in `tri'.'''
-mesh.add('triangulate', doc, None, ivectordouble('coord'), ovectorsize('tri'))
+doc = '''Triangulate the points given in the `coord' vector as pairs of u, v coordinates, with constrained edges given in the `edges' vector as pair of point indexes (with numbering starting at 1) , and return the node tags (with numbering starting at 1) of the resulting triangles in `tri'.'''
+mesh.add('triangulate', doc, None, ivectordouble('coord'), ivectorsize('edges'), ovectorsize('tri'))
 
 doc = '''Tetrahedralize the points given in the `coord' vector as x, y, z coordinates, concatenated, and return the node tags (with numbering starting at 1) of the resulting tetrahedra in `tetra'.'''
 mesh.add('tetrahedralize', doc, None, ivectordouble('coord'), ovectorsize('tetra'))
