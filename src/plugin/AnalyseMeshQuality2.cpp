@@ -330,31 +330,32 @@ PView *Plug::execute(PView *v)
   _fetchParameters();
   Parameters::Compute &pc = _param.compute;
   _info(0, "----------------------------------------");
-  _info(0, "Executing the plugin AnalyseMeshQuality...");
-  _info(1, "Parameter 'printGuidance' is ON. ");
-  _info(1, "-> This makes the plugin to be verbose and to provide various explanations");
+  _info(0, "=> Executing the plugin AnalyseMeshQuality...");
+  _info(1, "=> Parameter 'printGuidance' is ON. ");
+  _info(1, "   This makes the plugin to be verbose and to provide various explanations");
 
   // Handle cases where no computation is requested
   if(_param.freeData) {
-    _info(-1, "Freeing data...");
-    _info(1, "Freeing data... (because parameter 'freeData-NothingElse' is ON)");
+    _info(-1, "=> Freeing data...");
+    _info(1, "=> Freeing data... (because parameter 'freeData-NothingElse' is ON)");
     _data2D->clear();
     _data3D->clear();
     MeshQuality2Options_Number[18].def = 0;
-    _info(0, "Done. Parameter 'freeData-NothingElse' has been set to OFF");
-    _info(1, "Nothing else to do, rerun the plugin to compute something");
+    _info(0, "   Done. Parameter 'freeData-NothingElse' has been set to OFF");
+    _info(1, "   Nothing else to do, rerun the plugin to compute something");
     return v;
   }
   if(!pc.validity && !pc.disto && !pc.aspect) {
-    _warn(0, "Nothing to do because 'checkValidity', 'checkQualityDisto' and "
+    _warn(0, "=> Nothing to do because 'checkValidity', 'checkQualityDisto' and "
           "'checkQualityAspect' are all three OFF");
     return v;
   }
 
   GModel *m = GModel::current();
   if(pc.policy == 0 && _m && _m != m) {
-    _info(1, "Detected a new Model, previous data will be cleared");
+    _info(1, "=> Detected a new Model, previous data will be cleared");
     // FIXME may not be the case (can we create a new model with exact same geometry and mesh?)
+    // FIXME depend on clearancePolicy
   }
   _m = m;
 
@@ -380,14 +381,14 @@ PView *Plug::execute(PView *v)
   }
   else {
     if(!_param.checkValidity && countsTotal.elToCompute[0] > 0) {
-      _info(1, "Validity will be computed even if not asked");
-      _info(1, "-> Reason is that validity is quite cheap in comparison to quality and can significantly ");
-      _info(1, "-> boost speed. This behaviour can be disabled by setting ON parameter ");
-      _info(1, "-> 'skipPreventiveValidityCheck', which is a good idea if the elements are known to be valid.");
+      _info(1, "=> Validity will be computed even if not asked");
+      _info(1, "   Reason is that validity is quite cheap in comparison to quality and can significantly ");
+      _info(1, "   boost speed. This behaviour can be disabled by setting ON parameter ");
+      _info(1, "   'skipPreventiveValidityCheck', which is a good idea if the elements are known to be valid.");
     }
     else if(pc.lazyValidity) {
-      _warn(1, "Parameter 'skipPreventiveValidityCheck' is ON, validity will not be computed");
-      _warn(1, "-> This may significantly slow down quality computation in the presence of invalid elements");
+      _warn(1, "=> Parameter 'skipPreventiveValidityCheck' is ON, validity will not be computed");
+      _warn(1, "   This may significantly slow down quality computation in the presence of invalid elements");
     }
     _computeMissingData(countsTotal, check2D, check3D);
   }
@@ -513,7 +514,7 @@ void Plug::_computeMissingData(Counts counts, bool check2D, bool check3D) const
     _data3D->getDataEntities(allDataEntities);
 
   if(counts.elToCompute[0] > 0) {
-    Msg::StatusBar(true, "Computing Validity...");
+    Msg::StatusBar(true, "   Computing Validity...");
     MsgProgressStatus progress_status(counts.elToCompute[0]);
     for(auto data: allDataEntities) {
       data->computeValidity(progress_status);
@@ -521,7 +522,7 @@ void Plug::_computeMissingData(Counts counts, bool check2D, bool check3D) const
   }
 
   if(counts.elToCompute[1] > 0) {
-    Msg::StatusBar(true, "Computing Distortion quality...");
+    Msg::StatusBar(true, "   Computing Distortion quality...");
     MsgProgressStatus progress_status(counts.elToCompute[1]);
     for(auto data: allDataEntities) {
       data->computeDisto(progress_status, _param.compute.lazyValidity);
@@ -529,14 +530,14 @@ void Plug::_computeMissingData(Counts counts, bool check2D, bool check3D) const
   }
 
   if(counts.elToCompute[2] > 0) {
-    Msg::StatusBar(true, "Computing Aspect quality...");
+    Msg::StatusBar(true, "   Computing Aspect quality...");
     MsgProgressStatus progress_status(counts.elToCompute[2]);
     for(auto data: allDataEntities) {
       data->computeAspect(progress_status, _param.compute.lazyValidity);
     }
   }
 
-  Msg::StatusBar(true, "Done computing quantities");
+  Msg::StatusBar(true, "   Done computing quantities");
 }
 
 void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
@@ -564,38 +565,38 @@ void Plug::StatGenerator::printStats(const Parameters &param,
                                      const Measures &m2,
                                      const Measures &m3)
 {
-  _info(1, "Printing statistics, here is what is important to know about "
+  _info(1, "=> Printing statistics, here is what is important to know about "
            "them:");
-  _info(1, "-> - *Validity* give information about the strict positivity "
+  _info(1, "   - *Validity* give information about the strict positivity "
            "of the Jacobian determinant.");
-  _info(1, "->   A mesh containing invalid elements will usually lead to "
+  _info(1, "     A mesh containing invalid elements will usually lead to "
            "incorrect Finite Element solutions.");
-  _info(1, "-> - *Disto* quality (previously ICN) is related to the condition "
+  _info(1, "   - *Disto* quality (previously ICN) is related to the condition "
            "number of the stiffness matrix.");
-  _info(1, "->   Low-Disto elements can introduce roundoff errors, or "
+  _info(1, "     Low-Disto elements can introduce roundoff errors, or "
            "significantly reduce the convergence");
-  _info(1, "->   speed of iterative methods. ");
-  _info(1, "-> - *Aspect* quality (previously IGE) is related to the gradient "
+  _info(1, "     speed of iterative methods. ");
+  _info(1, "   - *Aspect* quality (previously IGE) is related to the gradient "
            "of the FE solution");
-  _info(1, "->   Low-IGE elements influence negatively the error on the "
+  _info(1, "     Low-IGE elements influence negatively the error on the "
            "gradient.");
   if(param.printJac) {
-    _info(1, "-> - Computing the Jacobian determinant (J) is required to "
+    _info(1, "   - Computing the Jacobian determinant (J) is required to "
              "assess elements validity.");
-    _info(1, "->   As it is readily available, three optional statistics can be calculated: ");
-    _info(1, "->   1. the minimal value, minJ, and");
-    _info(1, "->   2. the maximal value, maxJ, and");
-    _info(1, "->   3. the ration minJ/maxJ.");
-    _info(1, "->   Note that neither of these metrics provides any information "
+    _info(1, "     As it is readily available, three optional statistics can be calculated: ");
+    _info(1, "     1. the minimal value, minJ, and");
+    _info(1, "     2. the maximal value, maxJ, and");
+    _info(1, "     3. the ration minJ/maxJ.");
+    _info(1, "     Note that neither of these metrics provides any information "
              "about any kind of quality.");
   }
-  _info(1, "-> - *Worst-K%% Weighted Mean* (WmK) corresponds to a weighted mean "
+  _info(1, "   - *Worst-K%% Weighted Mean* (WmK) corresponds to a weighted mean "
            "where the worst K%% of values are assigned the same ");
-  _info(1, "->   weight as the other values. This approach is preferable to "
+  _info(1, "     weight as the other values. This approach is preferable to "
            "the standard mean because it emphasizes the worst ");
-  _info(1, "->   elements which are critical as they can negatively impact the "
+  _info(1, "     elements which are critical as they can negatively impact the "
            "Finite Element solution.");
-  _info(1, "->   Note that the standard mean corresponds to Wm50.");
+  _info(1, "     Note that the standard mean corresponds to Wm50.");
 
   if(param.dimPolicy == 3) {
     Measures combined(m2.validity, m2.disto, m2.aspect);
@@ -680,12 +681,12 @@ void Plug::StatGenerator::_printStats(const Measures &measure, const char* str_d
 
   // FIXME: dev
   // _info(0, "dev check values %d %d %d %d", measure.disto, measure.aspect, measure.minDisto.size(), measure.minAspect.size());
-  _info(0, "Statistics for dimension %s:", str_dim);
+  _info(0, "=> Statistics for dimension %s:", str_dim);
 
   // Header
   if(measure.disto || measure.aspect || printJac) {
     std::ostringstream columnNamesStream;
-    columnNamesStream << "-> ";
+    columnNamesStream << "    ";
     columnNamesStream << std::setw(_colWidth) << "";
     columnNamesStream << std::setw(_colWidth) << "Min";
     for (double c : _statCutoffs) {
@@ -728,9 +729,9 @@ void Plug::StatGenerator::_printStats(const Measures &measure, const char* str_d
 
   // Validity
   if(numInvalid)
-    _warn(0, "-> Found %d invalid elements", numInvalid);
+    _warn(0, "   Found %d invalid elements", numInvalid);
   else
-    _info(0, "-> All elements are valid :-)", numInvalid);
+    _info(0, "   All elements are valid :-)", numInvalid);
 }
 
 void Plug::StatGenerator::_printStatsOneMeasure(const std::vector<double> &measure, const char* str, bool useG)
@@ -749,8 +750,8 @@ void Plug::StatGenerator::_printStatsOneMeasure(const std::vector<double> &measu
   }
 
   std::ostringstream valStream;
-  valStream << "-> ";
-  valStream << std::setw(_colWidth-1) << str << ":";
+  valStream << "   ";
+  valStream << std::setw(_colWidth) << str << ":";
   valStream << std::setprecision(3);
   if(useG) valStream << std::defaultfloat; // can also be std::scientific
   valStream << std::setw(_colWidth) << min;
@@ -1049,10 +1050,10 @@ void Plug::DataEntity::_count(unsigned char mask, std::size_t &elToCompute,
 void Plug::DataEntity::computeValidity(MsgProgressStatus &progress_status)
 {
   if(_ge->dim() == 2)
-    _info(1, "-> Surface %d: Computing validity of %d elements",
+    _info(1, "   Surface %d: Computing validity of %d elements",
           _ge->tag(), _numToCompute[0]);
   else
-    _info(1, "-> Volume %d: Computing validity of %d elements",
+    _info(1, "   Volume %d: Computing validity of %d elements",
           _ge->tag(), _numToCompute[0]);
 
   for(const auto &it : _mapElemToIndex) {
@@ -1070,10 +1071,10 @@ void Plug::DataEntity::computeValidity(MsgProgressStatus &progress_status)
 void Plug::DataEntity::computeDisto(MsgProgressStatus &progress_status, bool considerAsValid)
 {
   if(_ge->dim() == 2)
-    _info(1, "-> Surface %d: Computing Distortion quality of %d elements",
+    _info(1, "   Surface %d: Computing Distortion quality of %d elements",
           _ge->tag(), _numToCompute[1]);
   else
-    _info(1, "-> Volume %d: Computing Distortion quality of %d elements",
+    _info(1, "   Volume %d: Computing Distortion quality of %d elements",
           _ge->tag(), _numToCompute[1]);
 
   for(const auto &it : _mapElemToIndex) {
@@ -1096,10 +1097,10 @@ void Plug::DataEntity::computeAspect(MsgProgressStatus &progress_status, bool co
 {
   // FIXME inverse "->". Use it for "headers" not for "paragraph"
   if(_ge->dim() == 2)
-    _info(1, "-> Surface %d: Computing Aspect quality of %d elements",
+    _info(1, "   Surface %d: Computing Aspect quality of %d elements",
           _ge->tag(), _numToCompute[2]);
   else
-    _info(1, "-> Volume %d: Computing Aspect quality of %d elements",
+    _info(1, "   Volume %d: Computing Aspect quality of %d elements",
           _ge->tag(), _numToCompute[2]);
 
   for(const auto &it : _mapElemToIndex) {
@@ -1222,13 +1223,13 @@ std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
 
   if(sum2D + sum3D == 0) return 0;
 
-  _info(0, "Number of quantities to compute:");
-  _info(0, "-> %5s%10s%10s%10s", "", "Validity", "Disto", "Aspect");
+  _info(0, "=> Number of quantities to compute:");
+  _info(0, "   %5s%10s%10s%10s", "", "Validity", "Disto", "Aspect");
   if(sum2D)
-    _info(0, "-> %5s%10d%10d%10d", "2D:", cnt2D.elToCompute[0],
+    _info(0, "   %5s%10d%10d%10d", "2D:", cnt2D.elToCompute[0],
           cnt2D.elToCompute[1], cnt2D.elToCompute[2]);
   if(sum3D)
-    _info(0, "-> %5s%10d%10d%10d", "3D:", cnt3D.elToCompute[0],
+    _info(0, "   %5s%10d%10d%10d", "3D:", cnt3D.elToCompute[0],
           cnt3D.elToCompute[1], cnt3D.elToCompute[2]);
 
   return sum2D + sum3D;
@@ -1237,62 +1238,62 @@ std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
 std::size_t Plug::_guidanceNothingToCompute(Counts counts,
                                             bool check2D, bool check3D) const
 {
-  _info(1, "No element to compute");
+  _info(1, "=> No element to compute");
 
   std::size_t sumToShow = 0;
   for (std::size_t x : counts.elToShow) sumToShow += x;
 
   if (!sumToShow) {
-    _warn(-1, "Nothing to compute, nothing to show.");
-    _warn(1, "Nothing to show neither.");
+    _warn(-1, "   Nothing to compute, nothing to show.");
+    _warn(1, "   Nothing to show neither.");
 
     if (counts.totalEl) {
       if (_param.compute.onlyVisible && counts.visibleEl == 0) {
-        _warn(1, "Parameter 'restrictToVisibleElements' is ON but no visible elements found.");
+        _warn(1, "   Parameter 'restrictToVisibleElements' is ON but no visible elements found.");
       }
       else if (_param.compute.onlyCurved && counts.curvedEl == 0) {
-        _warn(1, "Parameter 'restrictToCurvedElements' is ON but no curved elements found.");
+        _warn(1, "   Parameter 'restrictToCurvedElements' is ON but no curved elements found.");
       }
       else {
-        _error(1, "Unexpected state: should not be here.");
+        _error(1, "   Unexpected state: should not be here.");
       }
     }
     else { // Case where no elements found
       if (_dimensionPolicy == 0) {
         if (check2D) {
           if (_m->getNumFaces())
-            _warn(1, "No mesh has been found (in current model)");
+            _warn(1, "   No mesh has been found (in current model)");
           else
-            _warn(1, "No geometry has been found (in current model)");
+            _warn(1, "   No geometry has been found (in current model)");
         }
         else if(check3D) {
-          _error(1, "Unexpected state: should not be here with check3D==true");
+          _error(1, "   Unexpected state: should not be here with check3D==true");
           // ...because if _dimensionPolicy == 0, then check3D==true only if there are elements
         }
         else {
-          _error(1, "Unexpected state: should not be here with check3D==false");
+          _error(1, "   Unexpected state: should not be here with check3D==false");
           // ...because at least check2D or check3D should be true
         }
       }
       else if (_dimensionPolicy == 1) {
         if (_m->getNumRegions()) {
-          _warn(0, "Planned to check 2D mesh as parameter 'dimensionPolicy' "
+          _warn(0, "   Planned to check 2D mesh as parameter 'dimensionPolicy' "
                    "is ON, but no 2D mesh found.");
-          _warn(0, " 3D geometry found, maybe 'dimensionPolicy' "
+          _warn(0, "   3D geometry found, maybe 'dimensionPolicy' "
                    "should be set to 0");
         }
         else {
           if (_m->getNumFaces())
-            _warn(1, "No mesh has been found (in current model)");
+            _warn(1, "   No mesh has been found (in current model)");
           else
-            _warn(1, "No geometry has been found (in current model)");
+            _warn(1, "   No geometry has been found (in current model)");
         }
       }
       else if (_dimensionPolicy == 2 || _dimensionPolicy == 3) {
         if (_m->getNumFaces() + _m->getNumRegions())
-          _warn(1, "No mesh has been found (in current model)");
+          _warn(1, "   No mesh has been found (in current model)");
         else
-          _warn(1, "No geometry has been found (in current model)");
+          _warn(1, "   No geometry has been found (in current model)");
       }
     }
   }
