@@ -1240,7 +1240,7 @@ std::size_t Plug::_guidanceNothingToCompute(Counts counts,
   _info(1, "No element to compute");
 
   std::size_t sumToShow = 0;
-  for (std::size_t x : counts.elToCompute) sumToShow += x;
+  for (std::size_t x : counts.elToShow) sumToShow += x;
 
   if (!sumToShow) {
     _warn(-1, "Nothing to compute, nothing to show.");
