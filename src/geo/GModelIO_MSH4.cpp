@@ -3420,7 +3420,7 @@ writeMSH4OverlapBoundaries(GModel *const model, FILE *fp, int partitionToSave,
 static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
                                  int saveParametric, double scalingFactor,
                                  double version, optional<std::unordered_set<MVertex*>>& log,
-                                 const std::optional<std::vector<MVertex*>>& optionalRestrictedVertices = std::nullopt)
+                                 const std::optional<std::unordered_set<MVertex*>>& optionalRestrictedVertices = std::nullopt)
 {
   int parametric = saveParametric;
   if(ge->dim() != 1 && ge->dim() != 2)
@@ -3449,7 +3449,7 @@ static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
   }
 
   std::vector<MVertex *> nodesToSave(numVerts);
-  if(optionalRestrictedVertices) { nodesToSave = *optionalRestrictedVertices; }
+  if(optionalRestrictedVertices) { nodesToSave = std::vector<MVertex*>(optionalRestrictedVertices->begin(), optionalRestrictedVertices->end()); }
   else {
     for(std::size_t i = 0; i < numVerts; i++) {
       nodesToSave[i] = ge->getMeshVertex(i);
