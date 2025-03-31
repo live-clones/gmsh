@@ -46,7 +46,7 @@ GMSH_Plugin *GMSH_RegisterAnalyseMeshQualityPlugin()
 }
 }
 
-int GMSH_AnalyseMeshQualityPlugin::getNbOptions() const
+int GMSH_AnalyseMeshQualityPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(CurvedMeshOptions_Number) / sizeof(StringXNumber);
 }

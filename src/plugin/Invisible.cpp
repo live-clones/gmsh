@@ -34,7 +34,7 @@ std::string GMSH_InvisiblePlugin::getHelp() const
          "inverting the elements.";
 }
 
-int GMSH_InvisiblePlugin::getNbOptions() const
+int GMSH_InvisiblePlugin::getNbOptions(bool legacy) const
 {
   return sizeof(InvisibleOptions_Number) / sizeof(StringXNumber);
 }

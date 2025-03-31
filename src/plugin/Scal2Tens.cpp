@@ -38,7 +38,7 @@ std::string GMSH_Scal2TensPlugin::getHelp() const
          "of a view is -1, the value of the corresponding component is 0.";
 }
 
-int GMSH_Scal2TensPlugin::getNbOptions() const
+int GMSH_Scal2TensPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(Scal2TensOptions_Number) / sizeof(StringXNumber);
 }

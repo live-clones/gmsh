@@ -21,7 +21,7 @@ public:
     return "Modify components in a view using mathematical expressions";
   }
   std::string getHelp() const;
-  int getNbOptions() const;
+  int getNbOptions(bool legacy = false) const;
   StringXNumber *getOption(int iopt);
   int getNbOptionsStr() const;
   StringXString *getOptionStr(int iopt);

@@ -55,7 +55,7 @@ std::string GMSH_NearToFarFieldPlugin::getHelp() const
          "Plugin(NearToFarField) creates one new view.";
 }
 
-int GMSH_NearToFarFieldPlugin::getNbOptions() const
+int GMSH_NearToFarFieldPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(NearToFarFieldOptions_Number) / sizeof(StringXNumber);
 }

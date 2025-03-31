@@ -69,7 +69,7 @@ std::string GMSH_HomologyPostProcessingPlugin::getHelp() const
          "resulting chains.\n";
 }
 
-int GMSH_HomologyPostProcessingPlugin::getNbOptions() const
+int GMSH_HomologyPostProcessingPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(HomologyPostProcessingOptions_Number) / sizeof(StringXNumber);
 }

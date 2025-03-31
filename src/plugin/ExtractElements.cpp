@@ -33,7 +33,7 @@ std::string GMSH_ExtractElementsPlugin::getHelp() const
          "Plugin(ExtractElements) creates one new list-based view.";
 }
 
-int GMSH_ExtractElementsPlugin::getNbOptions() const
+int GMSH_ExtractElementsPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(ExtractElementsOptions_Number) / sizeof(StringXNumber);
 }

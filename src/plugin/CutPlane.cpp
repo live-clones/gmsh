@@ -116,7 +116,7 @@ std::string GMSH_CutPlanePlugin::getHelp() const
          "Plugin(CutPlane) creates one new list-based view.";
 }
 
-int GMSH_CutPlanePlugin::getNbOptions() const
+int GMSH_CutPlanePlugin::getNbOptions(bool legacy) const
 {
   return sizeof(CutPlaneOptions_Number) / sizeof(StringXNumber);
 }

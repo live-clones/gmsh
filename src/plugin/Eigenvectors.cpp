@@ -32,7 +32,7 @@ std::string GMSH_EigenvectorsPlugin::getHelp() const
          "Plugin(Eigenvectors) creates three new list-based vector view.";
 }
 
-int GMSH_EigenvectorsPlugin::getNbOptions() const
+int GMSH_EigenvectorsPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(EigenvectorsOptions_Number) / sizeof(StringXNumber);
 }

@@ -30,7 +30,7 @@ std::string GMSH_ExtractEdgesPlugin::getHelp() const
          "Plugin(ExtractEdges) creates one new view.";
 }
 
-int GMSH_ExtractEdgesPlugin::getNbOptions() const
+int GMSH_ExtractEdgesPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(ExtractEdgesOptions_Number) / sizeof(StringXNumber);
 }

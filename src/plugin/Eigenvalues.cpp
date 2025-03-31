@@ -25,7 +25,7 @@ std::string GMSH_EigenvaluesPlugin::getHelp() const
          "Plugin(Eigenvalues) creates three new list-based scalar views.";
 }
 
-int GMSH_EigenvaluesPlugin::getNbOptions() const
+int GMSH_EigenvaluesPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(EigenvaluesOptions_Number) / sizeof(StringXNumber);
 }

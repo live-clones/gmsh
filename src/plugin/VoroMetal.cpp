@@ -36,7 +36,7 @@ std::string GMSH_VoroMetalPlugin::getHelp() const
          "diagrams.\n\n";
 }
 
-int GMSH_VoroMetalPlugin::getNbOptions() const
+int GMSH_VoroMetalPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(VoroMetalOptions_Number) / sizeof(StringXNumber);
 }

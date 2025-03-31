@@ -21,7 +21,7 @@ public:
     return "Extract sharp edges from triangular mesh";
   }
   std::string getHelp() const;
-  int getNbOptions() const;
+  int getNbOptions(bool legacy = false) const;
   StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };

@@ -26,7 +26,7 @@ public:
     return "Cut with the plane A*X + B*Y + C*Z + D = 0";
   }
   std::string getHelp() const;
-  int getNbOptions() const;
+  int getNbOptions(bool legacy = false) const;
   StringXNumber *getOption(int iopt);
   PView *execute(PView *);
   virtual bool geometricalFilter(fullMatrix<double> *) const;

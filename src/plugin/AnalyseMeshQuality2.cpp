@@ -179,6 +179,8 @@ StringXNumber MeshQuality2Options_Number[] = {
 #endif
 };
 
+const int MeshQuality2Options_LegacyOptionsNumber = 8;
+
 std::pair<int, std::string> MeshQuality2Options_Headers[] = {
   {0, "Section 1"},
   {5, "Section 2"},
@@ -275,9 +277,10 @@ GMSH_Plugin *GMSH_RegisterAnalyseMeshQuality2Plugin()
 }
 }
 
-int Plug::getNbOptions() const
+int Plug::getNbOptions(bool legacy) const
 {
-  return sizeof(MeshQuality2Options_Number) / sizeof(StringXNumber);
+  return sizeof(MeshQuality2Options_Number) / sizeof(StringXNumber) -
+    (legacy ? 0 : MeshQuality2Options_LegacyOptionsNumber);
 }
 
 StringXNumber *Plug::getOption(int iopt)

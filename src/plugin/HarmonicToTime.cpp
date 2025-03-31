@@ -37,7 +37,7 @@ std::string GMSH_HarmonicToTimePlugin::getHelp() const
          "Plugin(HarmonicToTime) creates one new list-based view.";
 }
 
-int GMSH_HarmonicToTimePlugin::getNbOptions() const
+int GMSH_HarmonicToTimePlugin::getNbOptions(bool legacy) const
 {
   return sizeof(HarmonicToTimeOptions_Number) / sizeof(StringXNumber);
 }

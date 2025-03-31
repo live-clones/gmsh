@@ -170,7 +170,7 @@ std::string GMSH_ParticlesPlugin::getHelp() const
          "multi-step vector points.";
 }
 
-int GMSH_ParticlesPlugin::getNbOptions() const
+int GMSH_ParticlesPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(ParticlesOptions_Number) / sizeof(StringXNumber);
 }

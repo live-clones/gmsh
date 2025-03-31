@@ -35,7 +35,7 @@ std::string GMSH_NewViewPlugin::getHelp() const
          "to a specific physical group with a positive `PhysicalGroup'.";
 }
 
-int GMSH_NewViewPlugin::getNbOptions() const
+int GMSH_NewViewPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(NewViewOptions_Number) / sizeof(StringXNumber);
 }

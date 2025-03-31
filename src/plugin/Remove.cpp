@@ -32,7 +32,7 @@ std::string GMSH_RemovePlugin::getHelp() const
          "view.\n\nPlugin(Remove) is executed in-place.";
 }
 
-int GMSH_RemovePlugin::getNbOptions() const
+int GMSH_RemovePlugin::getNbOptions(bool legacy) const
 {
   return sizeof(RemoveOptions_Number) / sizeof(StringXNumber);
 }

@@ -28,7 +28,7 @@ std::string GMSH_ModulusPhasePlugin::getHelp() const
          "Plugin(ModulusPhase) is executed in-place.";
 }
 
-int GMSH_ModulusPhasePlugin::getNbOptions() const
+int GMSH_ModulusPhasePlugin::getNbOptions(bool legacy) const
 {
   return sizeof(ModulusPhaseOptions_Number) / sizeof(StringXNumber);
 }

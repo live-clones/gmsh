@@ -26,7 +26,7 @@ std::string GMSH_Scal2VecPlugin::getHelp() const
          "component of the vector field is 0.";
 }
 
-int GMSH_Scal2VecPlugin::getNbOptions() const
+int GMSH_Scal2VecPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(Scal2VecOptions_Number) / sizeof(StringXNumber);
 }

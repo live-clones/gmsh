@@ -18,7 +18,7 @@ public:
   std::string getName() const { return "Triangulate"; }
   std::string getShortHelp() const { return "Mesh 2D point cloud"; }
   std::string getHelp() const;
-  int getNbOptions() const;
+  int getNbOptions(bool legacy = false) const;
   StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };

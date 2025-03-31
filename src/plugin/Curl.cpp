@@ -21,7 +21,7 @@ std::string GMSH_CurlPlugin::getHelp() const
          "Plugin(Curl) creates one new list-based view.";
 }
 
-int GMSH_CurlPlugin::getNbOptions() const
+int GMSH_CurlPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(CurlOptions_Number) / sizeof(StringXNumber);
 }

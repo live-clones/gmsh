@@ -68,7 +68,7 @@ std::string GMSH_MathEvalPlugin::getHelp() const
          "Plugin(MathEval) creates one new list-based view.";
 }
 
-int GMSH_MathEvalPlugin::getNbOptions() const
+int GMSH_MathEvalPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(MathEvalOptions_Number) / sizeof(StringXNumber);
 }

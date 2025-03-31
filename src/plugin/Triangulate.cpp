@@ -38,7 +38,7 @@ std::string GMSH_TriangulatePlugin::getHelp() const
          "Plugin(Triangulate) creates one new list-based view.";
 }
 
-int GMSH_TriangulatePlugin::getNbOptions() const
+int GMSH_TriangulatePlugin::getNbOptions(bool legacy) const
 {
   return sizeof(TriangulateOptions_Number) / sizeof(StringXNumber);
 }

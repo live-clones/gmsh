@@ -35,7 +35,7 @@ std::string GMSH_IntegratePlugin::getHelp() const
          "Plugin(Integrate) creates one new list-based view.";
 }
 
-int GMSH_IntegratePlugin::getNbOptions() const
+int GMSH_IntegratePlugin::getNbOptions(bool legacy) const
 {
   return sizeof(IntegrateOptions_Number) / sizeof(StringXNumber);
 }

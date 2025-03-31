@@ -186,7 +186,7 @@ std::string GMSH_CutGridPlugin::getHelp() const
          "Plugin(CutGrid) creates one new list-based view.";
 }
 
-int GMSH_CutGridPlugin::getNbOptions() const
+int GMSH_CutGridPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(CutGridOptions_Number) / sizeof(StringXNumber);
 }

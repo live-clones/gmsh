@@ -30,7 +30,7 @@ public:
     return "Cut with a regular box defined by 4 points";
   }
   std::string getHelp() const;
-  int getNbOptions() const;
+  int getNbOptions(bool legacy = false) const;
   StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 

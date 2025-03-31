@@ -33,7 +33,7 @@ std::string GMSH_WarpPlugin::getHelp() const
          "Plugin(Warp) is executed in-place.";
 }
 
-int GMSH_WarpPlugin::getNbOptions() const
+int GMSH_WarpPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(WarpOptions_Number) / sizeof(StringXNumber);
 }

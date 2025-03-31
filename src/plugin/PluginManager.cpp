@@ -157,7 +157,7 @@ void PluginManager::setPluginOption(const std::string &pluginName,
   GMSH_Plugin *plugin = find(pluginName);
   if(!plugin) throw std::runtime_error("Unknown plugin name");
 
-  for(int i = 0; i < plugin->getNbOptions(); i++) {
+  for(int i = 0; i < plugin->getNbOptions(true); i++) {
     StringXNumber *sxn = plugin->getOption(i);
     if(option == std::string(sxn->str)) {
       sxn->def = value;

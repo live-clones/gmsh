@@ -25,7 +25,7 @@ std::string GMSH_DivergencePlugin::getHelp() const
          "Plugin(Divergence) creates one new list-based view.";
 }
 
-int GMSH_DivergencePlugin::getNbOptions() const
+int GMSH_DivergencePlugin::getNbOptions(bool legacy) const
 {
   return sizeof(DivergenceOptions_Number) / sizeof(StringXNumber);
 }

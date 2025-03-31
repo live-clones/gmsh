@@ -24,7 +24,7 @@ std::string GMSH_MakeSimplexPlugin::getHelp() const
          "Plugin(MakeSimplex) is executed in-place.";
 }
 
-int GMSH_MakeSimplexPlugin::getNbOptions() const
+int GMSH_MakeSimplexPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(MakeSimplexOptions_Number) / sizeof(StringXNumber);
 }

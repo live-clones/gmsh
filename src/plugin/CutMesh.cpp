@@ -28,7 +28,7 @@ std::string GMSH_CutMeshPlugin::getHelp() const
          "Plugin(CutMesh) creates one new GModel.";
 }
 
-int GMSH_CutMeshPlugin::getNbOptions() const
+int GMSH_CutMeshPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(CutMeshOptions_Number) / sizeof(StringXNumber);
 }

@@ -56,7 +56,7 @@ std::string GMSH_DistancePlugin::getHelp() const
          "Plugin(Distance) creates one new list-based view.";
 }
 
-int GMSH_DistancePlugin::getNbOptions() const
+int GMSH_DistancePlugin::getNbOptions(bool legacy) const
 {
   return sizeof(DistanceOptions_Number) / sizeof(StringXNumber);
 }

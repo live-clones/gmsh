@@ -33,7 +33,7 @@ std::string GMSH_DiscretizationErrorPlugin::getHelp() const
          "the geometry.";
 }
 
-int GMSH_DiscretizationErrorPlugin::getNbOptions() const
+int GMSH_DiscretizationErrorPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(DiscretizationErrorOptions_Number) / sizeof(StringXNumber);
 }

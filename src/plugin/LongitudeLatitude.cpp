@@ -25,7 +25,7 @@ std::string GMSH_LongituteLatitudePlugin::getHelp() const
          "Plugin(LongituteLatitude) is executed in place.";
 }
 
-int GMSH_LongituteLatitudePlugin::getNbOptions() const
+int GMSH_LongituteLatitudePlugin::getNbOptions(bool legacy) const
 {
   return sizeof(LongituteLatitudeOptions_Number) / sizeof(StringXNumber);
 }

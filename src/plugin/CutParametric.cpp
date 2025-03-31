@@ -242,7 +242,7 @@ std::string GMSH_CutParametricPlugin::getHelp() const
          "Plugin(CutParametric) creates one new list-based view.";
 }
 
-int GMSH_CutParametricPlugin::getNbOptions() const
+int GMSH_CutParametricPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(CutParametricOptions_Number) / sizeof(StringXNumber);
 }

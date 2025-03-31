@@ -94,7 +94,7 @@ std::string GMSH_IsosurfacePlugin::getHelp() const
          "are time steps in `View'.";
 }
 
-int GMSH_IsosurfacePlugin::getNbOptions() const
+int GMSH_IsosurfacePlugin::getNbOptions(bool legacy) const
 {
   return sizeof(IsosurfaceOptions_Number) / sizeof(StringXNumber);
 }

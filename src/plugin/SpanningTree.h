@@ -51,7 +51,7 @@ public:
   std::string getHelp() const;
   std::string getAuthor() const;
 
-  int getNbOptions() const;
+  int getNbOptions(bool legacy = false) const;
   StringXNumber *getOption(int iopt);
 
   int getNbOptionsStr() const;

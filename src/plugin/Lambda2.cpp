@@ -34,7 +34,7 @@ std::string GMSH_Lambda2Plugin::getHelp() const
          "Plugin(Lambda2) creates one new list-based view.";
 }
 
-int GMSH_Lambda2Plugin::getNbOptions() const
+int GMSH_Lambda2Plugin::getNbOptions(bool legacy) const
 {
   return sizeof(Lambda2Options_Number) / sizeof(StringXNumber);
 }

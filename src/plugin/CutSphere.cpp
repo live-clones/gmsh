@@ -116,7 +116,7 @@ std::string GMSH_CutSpherePlugin::getHelp() const
          "Plugin(CutSphere) creates one new list-based view.";
 }
 
-int GMSH_CutSpherePlugin::getNbOptions() const
+int GMSH_CutSpherePlugin::getNbOptions(bool legacy) const
 {
   return sizeof(CutSphereOptions_Number) / sizeof(StringXNumber);
 }

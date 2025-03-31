@@ -68,7 +68,7 @@ std::string GMSH_ModifyComponentsPlugin::getHelp() const
          "Plugin(ModifyComponents) is executed in-place.";
 }
 
-int GMSH_ModifyComponentsPlugin::getNbOptions() const
+int GMSH_ModifyComponentsPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(ModifyComponentsOptions_Number) / sizeof(StringXNumber);
 }

@@ -66,7 +66,7 @@ string GMSH_SpanningTreePlugin::getHelp() const
 
 string GMSH_SpanningTreePlugin::getAuthor() const { return "N. Marsic"; }
 
-int GMSH_SpanningTreePlugin::getNbOptions() const
+int GMSH_SpanningTreePlugin::getNbOptions(bool legacy) const
 {
   return sizeof(SpanningTreeOptions_Number) / sizeof(StringXNumber);
 }

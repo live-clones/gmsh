@@ -29,7 +29,7 @@ std::string GMSH_MeshVolumePlugin::getHelp() const
          "Plugin(MeshVolume) creates one new list-based view.";
 }
 
-int GMSH_MeshVolumePlugin::getNbOptions() const
+int GMSH_MeshVolumePlugin::getNbOptions(bool legacy) const
 {
   return sizeof(MeshVolumeOptions_Number) / sizeof(StringXNumber);
 }

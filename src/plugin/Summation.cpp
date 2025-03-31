@@ -38,7 +38,7 @@ std::string GMSH_SummationPlugin::getHelp() const
          "the same mesh and that meshes do not move between time steps!";
 }
 
-int GMSH_SummationPlugin::getNbOptions() const
+int GMSH_SummationPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(SummationOptions_Number) / sizeof(StringXNumber);
 }

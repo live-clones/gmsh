@@ -38,7 +38,7 @@ std::string GMSH_FieldFromAmplitudePhasePlugin::getHelp() const
          "Plugin(FieldFromAmplitudePhase) generates one new view.";
 }
 
-int GMSH_FieldFromAmplitudePhasePlugin::getNbOptions() const
+int GMSH_FieldFromAmplitudePhasePlugin::getNbOptions(bool legacy) const
 {
   return sizeof(FieldFromAmplitudePhaseOptions_Number) / sizeof(StringXNumber);
 }

@@ -31,7 +31,7 @@ std::string GMSH_MeshSizeFieldViewPlugin::getHelp() const
          "`View'.";
 }
 
-int GMSH_MeshSizeFieldViewPlugin::getNbOptions() const
+int GMSH_MeshSizeFieldViewPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(MeshSizeFieldViewOptions_Number) / sizeof(StringXNumber);
 }

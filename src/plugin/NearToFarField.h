@@ -27,7 +27,7 @@ public:
   }
   std::string getHelp() const;
   virtual std::string getAuthor() const { return "R. Sabariego, C. Geuzaine"; }
-  int getNbOptions() const;
+  int getNbOptions(bool legacy = false) const;
   StringXNumber *getOption(int iopt);
   int getNbOptionsStr() const;
   StringXString *getOptionStr(int iopt);

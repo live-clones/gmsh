@@ -191,7 +191,7 @@ std::string GMSH_AnnotatePlugin::getHelp() const
          "datasets or creates a new list-based view for other datasets.";
 }
 
-int GMSH_AnnotatePlugin::getNbOptions() const
+int GMSH_AnnotatePlugin::getNbOptions(bool legacy) const
 {
   return sizeof(AnnotateOptions_Number) / sizeof(StringXNumber);
 }

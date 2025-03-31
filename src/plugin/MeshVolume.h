@@ -19,7 +19,7 @@ public:
   std::string getShortHelp() const { return "Volume of a mesh"; }
   std::string getHelp() const;
   std::string getAuthor() const { return "N. Marsic"; }
-  int getNbOptions() const;
+  int getNbOptions(bool legacy = false) const;
   StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };

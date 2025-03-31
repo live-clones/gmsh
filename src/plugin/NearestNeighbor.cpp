@@ -29,7 +29,7 @@ std::string GMSH_NearestNeighborPlugin::getHelp() const
          "Plugin(NearestNeighbor) is executed in-place.";
 }
 
-int GMSH_NearestNeighborPlugin::getNbOptions() const
+int GMSH_NearestNeighborPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(NearestNeighborOptions_Number) / sizeof(StringXNumber);
 }

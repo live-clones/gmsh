@@ -21,7 +21,7 @@ std::string GMSH_GradientPlugin::getHelp() const
          "Plugin(Gradient) creates one new list-based view.";
 }
 
-int GMSH_GradientPlugin::getNbOptions() const
+int GMSH_GradientPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(GradientOptions_Number) / sizeof(StringXNumber);
 }

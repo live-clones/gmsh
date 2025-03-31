@@ -33,7 +33,7 @@ std::string GMSH_SkinPlugin::getHelp() const
          "entities.";
 }
 
-int GMSH_SkinPlugin::getNbOptions() const
+int GMSH_SkinPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(SkinOptions_Number) / sizeof(StringXNumber);
 }

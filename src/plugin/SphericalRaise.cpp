@@ -37,7 +37,7 @@ std::string GMSH_SphericalRaisePlugin::getHelp() const
          "Plugin(SphericalRaise) is executed in-place.";
 }
 
-int GMSH_SphericalRaisePlugin::getNbOptions() const
+int GMSH_SphericalRaisePlugin::getNbOptions(bool legacy) const
 {
   return sizeof(SphericalRaiseOptions_Number) / sizeof(StringXNumber);
 }

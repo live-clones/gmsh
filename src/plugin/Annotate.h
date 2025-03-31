@@ -25,7 +25,7 @@ public:
   std::string getName() const { return "Annotate"; }
   std::string getShortHelp() const { return "Add a text annotation"; }
   std::string getHelp() const;
-  int getNbOptions() const;
+  int getNbOptions(bool legacy = false) const;
   StringXNumber *getOption(int iopt);
   int getNbOptionsStr() const;
   StringXString *getOptionStr(int iopt);

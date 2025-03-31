@@ -304,7 +304,7 @@ std::string GMSH_CutBoxPlugin::getHelp() const
          "Plugin(CutBox) creates one new list-based view.";
 }
 
-int GMSH_CutBoxPlugin::getNbOptions() const
+int GMSH_CutBoxPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(CutBoxOptions_Number) / sizeof(StringXNumber);
 }

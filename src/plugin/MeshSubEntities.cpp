@@ -40,7 +40,7 @@ std::string GMSH_MeshSubEntitiesPlugin::getHelp() const
          "belonging to `OutputPhysicalGroup'.";
 }
 
-int GMSH_MeshSubEntitiesPlugin::getNbOptions() const
+int GMSH_MeshSubEntitiesPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(MeshSubEntitiesOptions_Number) / sizeof(StringXNumber);
 }

@@ -59,7 +59,7 @@ std::string GMSH_CrackPlugin::getHelp() const
          "crack is reversed.";
 }
 
-int GMSH_CrackPlugin::getNbOptions() const
+int GMSH_CrackPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(CrackOptions_Number) / sizeof(StringXNumber);
 }

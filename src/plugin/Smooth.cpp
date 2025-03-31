@@ -19,7 +19,7 @@ std::string GMSH_SmoothPlugin::getHelp() const
          "Plugin(Smooth) is executed in-place.";
 }
 
-int GMSH_SmoothPlugin::getNbOptions() const
+int GMSH_SmoothPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(SmoothOptions_Number) / sizeof(StringXNumber);
 }

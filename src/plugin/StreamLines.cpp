@@ -171,7 +171,7 @@ std::string GMSH_StreamLinesPlugin::getHelp() const
          "< 0, or single-step scalar lines if `OtherView' >= 0.";
 }
 
-int GMSH_StreamLinesPlugin::getNbOptions() const
+int GMSH_StreamLinesPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(StreamLinesOptions_Number) / sizeof(StringXNumber);
 }

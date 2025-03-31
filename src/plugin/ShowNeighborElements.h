@@ -31,7 +31,7 @@ public:
   }
   std::string getHelp() const;
   std::string getAuthor() const { return "Amaury Johnen"; }
-  int getNbOptions() const;
+  int getNbOptions(bool legacy = false) const;
   StringXNumber *getOption(int);
   PView *execute(PView *);
 

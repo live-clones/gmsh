@@ -144,7 +144,7 @@ public:
   }
   std::string getHelp() const override;
   std::string getAuthor() const override { return "Amaury Johnen"; }
-  int getNbOptions() const override;
+  int getNbOptions(bool legacy = false) const override;
   StringXNumber *getOption(int) override;
   std::string getOptionsSectionHeader(int) const override;
   PView *execute(PView *) override;

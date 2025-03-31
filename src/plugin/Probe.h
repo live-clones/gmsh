@@ -22,7 +22,7 @@ public:
   std::string getName() const { return "Probe"; }
   std::string getShortHelp() const { return "Get value at point (X, Y, Z)"; }
   std::string getHelp() const;
-  int getNbOptions() const;
+  int getNbOptions(bool legacy = false) const;
   StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 

@@ -21,7 +21,7 @@ public:
     return "Compute field from amplitude and phase";
   }
   std::string getHelp() const;
-  int getNbOptions() const;
+  int getNbOptions(bool legacy = false) const;
   StringXNumber *getOption(int iopt);
   int getNbOptionsStr() const;
   StringXString *getOptionStr(int iopt);

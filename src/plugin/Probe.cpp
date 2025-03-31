@@ -105,7 +105,7 @@ std::string GMSH_ProbePlugin::getHelp() const
          "Plugin(Probe) creates one new view.";
 }
 
-int GMSH_ProbePlugin::getNbOptions() const
+int GMSH_ProbePlugin::getNbOptions(bool legacy) const
 {
   return sizeof(ProbeOptions_Number) / sizeof(StringXNumber);
 }

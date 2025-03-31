@@ -29,7 +29,7 @@ public:
     return "Cut with a regular grid defined by 3 points";
   }
   std::string getHelp() const;
-  int getNbOptions() const;
+  int getNbOptions(bool legacy = false) const;
   StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 

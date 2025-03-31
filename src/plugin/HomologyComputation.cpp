@@ -57,7 +57,7 @@ std::string GMSH_HomologyComputationPlugin::getHelp() const
          "mesh.";
 }
 
-int GMSH_HomologyComputationPlugin::getNbOptions() const
+int GMSH_HomologyComputationPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(HomologyComputationOptions_Number) / sizeof(StringXNumber);
 }

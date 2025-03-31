@@ -20,7 +20,7 @@ GMSH_Plugin *GMSH_RegisterGaussPointsPlugin()
 }
 }
 
-int GMSH_GaussPointsPlugin::getNbOptions() const
+int GMSH_GaussPointsPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(GaussPointsOptions_Number) / sizeof(StringXNumber);
 }

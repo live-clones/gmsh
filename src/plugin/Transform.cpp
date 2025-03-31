@@ -42,7 +42,7 @@ std::string GMSH_TransformPlugin::getHelp() const
          "Plugin(Transform) is executed in-place.";
 }
 
-int GMSH_TransformPlugin::getNbOptions() const
+int GMSH_TransformPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(TransformOptions_Number) / sizeof(StringXNumber);
 }

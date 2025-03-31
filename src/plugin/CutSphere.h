@@ -25,7 +25,7 @@ public:
     return "Cut with a sphere centered at (Xc, Yc, Zc)";
   }
   std::string getHelp() const;
-  int getNbOptions() const;
+  int getNbOptions(bool legacy = false) const;
   StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 

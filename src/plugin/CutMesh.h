@@ -19,7 +19,7 @@ public:
   std::string getShortHelp() const { return "Cut mesh along a levelset"; }
   std::string getHelp() const;
   std::string getAuthor() const { return "G. Bricteux"; }
-  int getNbOptions() const;
+  int getNbOptions(bool legacy = false) const;
   StringXNumber *getOption(int iopt);
   int run();
 };

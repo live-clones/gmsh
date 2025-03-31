@@ -31,7 +31,7 @@ std::string GMSH_TetrahedralizePlugin::getHelp() const
          "Plugin(Tetrahedralize) creates one new list-based view.";
 }
 
-int GMSH_TetrahedralizePlugin::getNbOptions() const
+int GMSH_TetrahedralizePlugin::getNbOptions(bool legacy) const
 {
   return sizeof(TetrahedralizeOptions_Number) / sizeof(StringXNumber);
 }

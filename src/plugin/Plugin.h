@@ -58,7 +58,7 @@ public:
   virtual void catchErrorMessage(char *errorMessage) const;
 
   // gmsh-style numeric options
-  virtual int getNbOptions() const { return 0; }
+  virtual int getNbOptions(bool legacy = false) const { return 0; }
   virtual StringXNumber *getOption(int iopt) { return nullptr; };
 
   // gmsh-style string options

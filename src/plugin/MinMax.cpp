@@ -26,7 +26,7 @@ std::string GMSH_MinMaxPlugin::getHelp() const
          "Plugin(MinMax) creates two new list-based views.";
 }
 
-int GMSH_MinMaxPlugin::getNbOptions() const
+int GMSH_MinMaxPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(MinMaxOptions_Number) / sizeof(StringXNumber);
 }

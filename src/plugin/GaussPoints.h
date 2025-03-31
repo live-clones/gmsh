@@ -18,7 +18,7 @@ public:
   std::string getName() const { return "GaussPoints"; }
   std::string getShortHelp() const { return "Gauss points"; }
   std::string getHelp() const;
-  int getNbOptions() const;
+  int getNbOptions(bool legacy = false) const;
   StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };

@@ -30,7 +30,7 @@ GMSH_Plugin *GMSH_RegisterShowNeighborElementsPlugin()
 }
 }
 
-int GMSH_ShowNeighborElementsPlugin::getNbOptions() const
+int GMSH_ShowNeighborElementsPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(ShowNeighborElementsOptions_Number) / sizeof(StringXNumber);
 }

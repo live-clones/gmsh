@@ -53,7 +53,7 @@ std::string GMSH_BoundaryAnglesPlugin::getHelp() const
          "- Dir (Default = ''): Output directory (possibly nested)";
 }
 
-int GMSH_BoundaryAnglesPlugin::getNbOptions() const
+int GMSH_BoundaryAnglesPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(BoundaryAnglesOptions_Number) / sizeof(StringXNumber);
 }

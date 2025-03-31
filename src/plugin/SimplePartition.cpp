@@ -50,7 +50,7 @@ std::string GMSH_SimplePartitionPlugin::getHelp() const
          "`t' will thus lead to equidistant slices along the X-axis.)";
 }
 
-int GMSH_SimplePartitionPlugin::getNbOptions() const
+int GMSH_SimplePartitionPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(SimplePartitionOptions_Number) / sizeof(StringXNumber);
 }

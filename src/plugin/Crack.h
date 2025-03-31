@@ -18,7 +18,7 @@ public:
   std::string getName() const { return "Crack"; }
   std::string getShortHelp() const { return "Crack generator"; }
   std::string getHelp() const;
-  int getNbOptions() const;
+  int getNbOptions(bool legacy = false) const;
   StringXNumber *getOption(int iopt);
   PView *execute(PView *);
 };

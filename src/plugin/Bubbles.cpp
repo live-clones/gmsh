@@ -32,7 +32,7 @@ std::string GMSH_BubblesPlugin::getHelp() const
          "Plugin(Bubbles) creates one `.geo' file.";
 }
 
-int GMSH_BubblesPlugin::getNbOptions() const
+int GMSH_BubblesPlugin::getNbOptions(bool legacy) const
 {
   return sizeof(BubblesOptions_Number) / sizeof(StringXNumber);
 }
