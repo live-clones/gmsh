@@ -65,6 +65,9 @@ public:
   virtual int getNbOptionsStr() const { return 0; }
   virtual StringXString *getOptionStr(int iopt) { return nullptr; }
 
+  // headers of options sections
+  virtual std::string getOptionsSectionHeader(int iopt) const { return ""; }
+
   // serialize plugin options into a string
   std::string serialize();
 

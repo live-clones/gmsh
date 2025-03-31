@@ -146,6 +146,7 @@ public:
   std::string getAuthor() const override { return "Amaury Johnen"; }
   int getNbOptions() const override;
   StringXNumber *getOption(int) override;
+  std::string getOptionsSectionHeader(int) const override;
   PView *execute(PView *) override;
 
 private:

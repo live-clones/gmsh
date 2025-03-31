@@ -179,6 +179,12 @@ StringXNumber MeshQuality2Options_Number[] = {
 #endif
 };
 
+std::pair<int, std::string> MeshQuality2Options_Headers[] = {
+  {0, "Section 1"},
+  {5, "Section 2"},
+  {10, "Section 3"},
+  };
+
 // What to do:
 // - computeMetrics = 1
 // - createViews = 0
@@ -277,6 +283,14 @@ int Plug::getNbOptions() const
 StringXNumber *Plug::getOption(int iopt)
 {
   return &MeshQuality2Options_Number[iopt];
+}
+
+std::string Plug::getOptionsSectionHeader(int iopt) const
+{
+  for(auto &header : MeshQuality2Options_Headers) {
+    if(header.first == iopt) return header.second;
+  }
+  return "";
 }
 
 std::string Plug::getHelp() const

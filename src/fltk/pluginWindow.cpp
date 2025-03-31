@@ -254,11 +254,23 @@ void pluginWindow::_createDialogBox(GMSH_Plugin *p, int x, int y, int width,
         k++;
       }
       for(int i = 0; i < n; i++) {
+        std::string header = p->getOptionsSectionHeader(i);
+        if(!header.empty()) {
+          Fl_Box *b = new Fl_Box(x + WB, y + top + (k + 1) * BH + WB + 4, 2*IW, 27);
+          b->box(FL_NO_BOX);
+          header += ":";
+          b->copy_label(header.c_str());
+          b->align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
+          k++;
+        }
+
         StringXNumber *sxn = p->getOption(i);
         p->dialogBox->value[i] = new Fl_Value_Input(
           x + WB, y + top + (k + 1) * BH + WB, IW, BH, sxn->str);
         p->dialogBox->value[i]->align(FL_ALIGN_RIGHT);
         p->dialogBox->value[i]->value(sxn->def);
+        if(sxn->help)
+          p->dialogBox->value[i]->tooltip(sxn->help);
         k++;
       }
 
