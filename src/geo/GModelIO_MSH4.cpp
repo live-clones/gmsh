@@ -4458,8 +4458,8 @@ static optional<std::unordered_set<MElement*>> writeMSH4Elements(GModel *const m
                               double version, const std::optional<EntityPackage>& entitiesToSave,
                               const std::array<std::map<std::pair<int, int>, std::vector<MElement*>>, 4> &elementsByType)
 {
-
- 
+  std::unordered_set<MElement *> allElements;
+  constexpr bool exportElements = true;
 
   std::size_t numElements = 0;
   for (int i = 0; i < 4; ++i) {
@@ -4516,11 +4516,11 @@ static optional<std::unordered_set<MElement*>> writeMSH4Elements(GModel *const m
       }
 
       std::size_t N = it->second.size();
-      /*if (exportElements) {
+      if (exportElements) {
         for (auto element : it->second) {
-          allElements->insert(element);
+          allElements.insert(element);
         }
-      }*/
+      }
 
       if(binary) {
         const int numVertPerElm = MElement::getInfoMSH(elmType);
@@ -4554,7 +4554,7 @@ static optional<std::unordered_set<MElement*>> writeMSH4Elements(GModel *const m
 
   fprintf(fp, "$EndElements\n");
 
-  return std::nullopt;
+  return allElements;
 }
 
 static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
