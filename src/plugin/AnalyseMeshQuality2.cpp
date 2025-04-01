@@ -24,114 +24,116 @@
 #if defined(HAVE_VISUDEV)
 #include "BasisFactory.h"
 #endif
-
 // NOTE What does the plugin
-//  0.Free data and stop if freeData-NothingElse = ON
-//  1.Compute validity/quality if recomputePolicy != -2
-//   • Validity if skipPreventiveValidityCheck = OFF
-//   • Disto if checkDistortionQuality > 0
-//   • Aspect if checkAspectQuality > 0
-//   • Among GEntity in GModel::current()
+//  0.Free data and stop IF freeData-nothingElse = ON
+//  1.Compute validity/quality IF skipComputationMetrics = OFF
+//   • Clear old data IF preserveOldMeshData = OFF
+//   • Limit to GEntity in GModel::current()
 //   • In function of dimensionPolicy:
-//     - If <= 0 Considering GEntity of dimension 3 if any 3D mesh otherwise
-//              dimension 2
-//     - If = 1 Considering GEntity of dimension 2
-//     - If >= 2 Considering GEntity of dimension 2 and 3
-//   • Before, in function of recomputePolicy:
-//     - If = 0 Delete data of none existing GEntity in current GModel and
-//              delete data of GEntity if list of element changed
-//     - If = 1 Delete all data
-//   • Considering only visible elements if restrictToVisibleElements = ON
-//   • Considering only curved elements if restrictToCurvedElements = ON
+//     - IF = -1 Limit to dimension 2 meshes
+//     - IF = 0 Limit to dimension 3 meshes if there is any 3D mesh otherwise
+//              limit to dimension 2 meshes
+//     - IF >= 1 do not limit (both dimension 2 and 3 meshes)
+//   • Limit to visible elements IF restrictToVisibleElements = ON
+//   • Limit to curved elements IF restrictToCurvedElements = ON
+//   • Check if previous data can be reused IF smartRecomputation = ON
+//   • Compute Validity IF skipValidity = OFF
+//   • Compute Distortion IF enableDistortionQuality > 0
+//   • Compute Aspect IF enableAspectQuality > 0
+//   • Regularize Jacobian if skipValidity = OFF AND regularizeDeterminant = ON
 //  2.Print statistics
-//   • Validity if skipPreventiveValidityCheck = OFF
-//   • Disto if checkDistortionQuality > 0
-//   • Aspect if checkAspectQuality > 0
-//   • Jacobian if printStatsOnJacobianDeterminant > 0
 //   • In function of dimensionPolicy:
-//     - If <= 2 For dimension 2 and/or 3
-//     - If >= 3 For dimension 2 and 3 combined
-//   • Adding Worst Weighted Means in function of statsWeightedMeanCutoffPack
-//  3.Create PViewElementData if createElementsView = ON
+//     - IF = -1 Limit to dimension 2 data
+//     - IF = 0 Limit to dimension 3 data if there is any 3D mesh otherwise
+//              limit to dimension 2 data
+//     - IF = 1 do not limit (dimension 2 and 3 data separately)
+//     - IF = 2 combine dimension 2 and 3 data
+//   • In columns: min, max and Worst Weighted Means of UNPACK(wmCutoffsForStats)
+//   • Validity IF skipValidity = OFF
+//   • Distortion IF enableDistortionQuality > 0
+//   • Aspect IF enableAspectQuality > 0
+//   • minJ IF skipValidity = OFF AND enableMinJacDetAsAMetric > 0
+//   • minJ/maxJ IF skipValidity = OFF AND enableMinJacDetAsAMetric > 0
+//  3.Create PViewElementData IF createElementsView = ON
 //   • In function of dimensionPolicy:
-//     - If <= 1 For dimension 2 or 3
-//     - If >= 2 For dimension 2 and 3 (not possible combined)
-//   • In function of metrics checkDistortionQuality (D), checkAspectQuality (A)
-//     and printStatsOnJacobianDeterminant (to be renamed) (J):
-//     - Request C if C = max(A, D, J), for C = {A, D, J}
-//     - If A requested For minAspect
-//     - If D requested For minDisto
-//     - If J requested For minJ/maxJ
-//     TO BE PRECISED: I was thinking more about minJ but in the old plugin, it
-//                     was minJ/maxJ. I don't think that minJ/maxJ is really
-//                     useful, the risk is that it gives the user the false
-//                     idea to be in presence of a quality. I think that minJ
-//                     may be useful for checking where are the smallest
-//                     elements. Instead of printStatsOnJacobianDeterminant, it
-//                     may be useful to have enableRatioJacDet and
-//                     enableMinJacDet, or similar naming.
-//   • For each metrics, skip creation if PView already exists and if data has
-//     not changed
-//  4.Create PView2D if createPlotView = ON
-//   • In function of dimensionPolicy:
-//     - If = 0, 1, 2 For dimension 2 and/or 3
-//     - If >= 3 For dimension 2 and 3 combined
-//   • For metrics as for PViewElementData.
-//   • For Worst Weighted Means in function of plotWeightedMeanCutoffPack
-//   • For each metrics, skip creation if PView already exists and if data has
-//     not changed, except if forceNewPlotView = ON
-//  5.Hide elements if hideElements > 1
-//   • In function of dimensionPolicy:
-//     - If = 0, 1, 2 For dimension 2 and/or 3
-//     - If = 3 For dimension 2 and 3 combined
-//   • In function of hidingPolicy:
-//     - If <= -1 Hide valid elements if any invalid, otherwise skip hiding
-//     - If = 0 Hide valid elements if any invalid, otherwise do as if = 1
-//     - If = 1 Hide considering the highest metric or minJ if the highest is
-//              unique (see 3.), otherwise do as if = 2
-//     - If = 2 Hide considering multiple highest metrics (except not minJ)
-//              hiding an element if any of the metrics meet the criterion
-//     - If >= 3 Hide considering multiple highest metrics (except not minJ)
-//              hiding an element if all the metrics meet the criterion
-//     NB: skipPreventiveValidityCheck will only affect in terms of the
-//     possibility of having invalid elements.
-//   • In function of hidingCriterion:
-//     - If <= 0 Hide element if measure is greater/smaller than hidingThreshold
-//     - If = 1 Hide the x% best/worst elements, where x is hidingThreshold
-//     - If >= 2 Hide the x best/worst elements, where x is hidingThreshold
-//   • Hide worst element instead of best if hideWorst = ON
-//   • Unhide others if unhideOtherElements = ON
+//     - IF = -1 Limit to dimension 2 data
+//     - IF = 0 Limit to dimension 3 data if there is any 3D mesh otherwise
+//              limit to dimension 2 data
+//     - IF >= 1 do not limit (dimension 2 and 3 data) (combined not possible)
+//   • Let M = max(enableDistortionQuality, enableAspectQuality, enableRatioJacDetAsAMetric, enableMinJacDetAsAMetric)
+//   • Validity IF skipValidity = -M
+//   • Distortion IF enableDistortionQuality = M
+//   • Aspect IF enableAspectQuality = M
+//   • minJ IF skipValidity = OFF AND enableMinJacDetAsAMetric = M
+//   • minJ/maxJ IF skipValidity = OFF AND enableMinJacDetAsAMetric = M
+//   • But: skip creation if PView already exists and unchanged data
+//  4.Create PView2D IF createPlotView = ON
+//   • In function of dimensionPolicy, as for (2.Print statistics)
+//   • For metrics as for (3.Create PViewElementData IF createElementsView = ON).
+//   • For Worst Weighted Means in function of UNPACK(wmCutoffsForPlots)
+//   • But: skip creation if PView already exists and unchanged data
+//  5.Hide elements IF hideElements >= 1
+//   • In function of dimensionPolicy, as for (2.Print statistics)
+//   • In function of hidingPolicy in the case hideWorst = OFF:
+//     - IF = -1 Limit to valid elements if there are any invalid elements,
+//               OTHERWISE skip hiding
+//     - IF = 0 as (IF = 1) if no invalid elements OTHERWISE as (IF = -1)
+//     - IF = 1 Limit to elements that do not meet criterion for the metric==M
+//              if there is only one metric that is equal to M
+//              OTHERWISE as (IF = 2)
+//     - IF = 2 Limit to that do not meet all criterion for metrics==M
+//     - IF = 3 Limit to that do not meet any criterion for metrics==M
+//   • In function of hidingCriterion in the case hideWorst = OFF:
+//     - IF = 0 Use metricValue <= x as criterion
+//     - IF = 1 Use x worst elements as criterion
+//     - IF = 2 Use (100*x)% worst elements as criterion
+//     where x = hidingThreshold
+//   • Hide worst element instead of best IF hideWorst = ON
+//   • Unhide others IF unhideOtherElements = ON
 //   • In function of hideElements:
-//     - If = 1 Skip hiding if no element would stay visible
-//     - If >= 2 Hide if no element would stay visible
-//  While printing guidance if printGuidance = ON
+//     - IF = 1 Skip hiding if all elements are to be hidden
+//     - IF >= 2 Hide even if all elements are to be hidden
 
 StringXNumber MeshQuality2Options_Number[] = {
-  {GMSH_FULLRC, "checkValidity", nullptr, 1},
-  // FIXME remove that option? We compute validity anyway, is it useful
-  //  to make pview/plot about the jacobian? maybe not and maybe we can still
-  //  allow the user to have one with param printStatsOnJacobianDeterminant
-  //  which could be renamed enableJacobianDeterminantQuantities and put at the
-  //  end
-
-  // NOTE Maybe it is useful to have PView of minJ for detecting small
-  //  elements as they can be problematic for FE calculation
-
+  // What to do:
+  {GMSH_FULLRC, "skipComputationMetrics", nullptr, 0, "OFF, ON=usePreviousData"},
+  {GMSH_FULLRC, "createElementsView", nullptr, 0, "0, 1"},
+  {GMSH_FULLRC, "createPlotView", nullptr, 0, "0, 1"},
+  {GMSH_FULLRC, "hideElements", nullptr, 0, "OFF, 1=skipHidingIfAllWouldBeHidden, 2=forceHiding"},
+  {GMSH_FULLRC, "guidanceLevel", nullptr, 0, "-1=minimalOutput, 0=verbose, 1=verboseAndExplanations"},
+  // Metrics to include:
+  {GMSH_FULLRC, "enableDistortionQuality", nullptr, 1, "OFF, 1+=includeDistortionQuality"},
+  {GMSH_FULLRC, "enableAspectQuality", nullptr, 1, "OFF, 1+=includeAspectQuality"},
+  // Elements Selection:
+  {GMSH_FULLRC, "dimensionPolicy", nullptr, 0, "-1=force2D, 0=prioritize3D, 1=2D+3D, 2=combine2D+3D"},
+  {GMSH_FULLRC, "restrictToVisibleElements", nullptr, 0, "OFF, ON=analyzeOnlyVisibleElements"},
+  {GMSH_FULLRC, "restrictToCurvedElements", nullptr, 0, "OFF, ON=analyzeOnlyNonStraightElements"},
+  // Hiding options:
+  {GMSH_FULLRC, "hidingPolicy", nullptr, 0, "-1=validity|skip, 0=validity|1, 1=oneQual|2, 2=qualOR, 3=qualAND"},
+  {GMSH_FULLRC, "hidingCriterion", nullptr, 0, "0=qualValue, 1=numElem, 2=proportionElem"},
+  {GMSH_FULLRC, "hidingThreshold", nullptr, .1, "DOUBLE"},
+  {GMSH_FULLRC, "hideWorst", nullptr, 0, "OFF=hideBest, ON"},
+  {GMSH_FULLRC, "unhideOtherElements", nullptr, 0, "OFF=justHide, ON=alsoUnhide"},
+  // Advanced computation options:
+  {GMSH_FULLRC, "smartRecomputation", nullptr, 0, "OFF=alwaysRecompute, ON=doNotRecomputeIfElementTagsUnchanged"},
+  {GMSH_FULLRC, "dataManagementPolicy", nullptr, 0, "-1=skipExecutionJustFreeData, 0=freeOldData, 1=accumulateData"},
+  {GMSH_FULLRC, "skipValidity", nullptr, 0, "OFF, ON=skipPreventiveValidityCheck"},
+  // Advanced analysis options:
+  {GMSH_FULLRC, "enableRatioJacDetAsAMetric", nullptr, 1, "OFF, 1+"},
+  {GMSH_FULLRC, "enableMinJacDetAsAMetric", nullptr, 1, "OFF, 1+"},
+  {GMSH_FULLRC, "regularizeDeterminant", nullptr, 1, "OFF, ON=inverseOrientationIfAbsMaxSmaller"},
+  {GMSH_FULLRC, "wmCutoffsForStats", nullptr, 1025, "CUTOFFS (for stats weighted mean, see Help)"},
+  {GMSH_FULLRC, "wmCutoffsForPlots", nullptr, 10, "CUTOFFS (for plots weighted mean, see Help)"},
+  // Legacy options:
+  {GMSH_FULLRC, "JacobianDeterminant", nullptr, -987654321, "[legacy] OFF, ON"},
+  {GMSH_FULLRC, "IGEMeasure", nullptr, -987654321, "[legacy] OFF, ON"},
+  {GMSH_FULLRC, "ICNMeasure", nullptr, -987654321, "[legacy] OFF, ON"},
+  {GMSH_FULLRC, "HidingThreshold", nullptr, -987654321, "[legacy] DOUBLE"},
+  {GMSH_FULLRC, "ThresholdGreater", nullptr, -987654321, "[legacy] OFF, ON"},
+  {GMSH_FULLRC, "CreateView", nullptr, -987654321, "[legacy] OFF, ON"},
+  {GMSH_FULLRC, "Recompute", nullptr, -987654321, "[legacy] OFF, ON"},
+  {GMSH_FULLRC, "DimensionOfElements", nullptr, -987654321, "[legacy] -1, 2, 3, 4"}
   // NOTE Proposition
-  //  1. Remove checkValidity
-  //  2. Add parameter hidingMeasurePolicy
-  //     - -1 = just hide valid elements if any invalid (without taking into
-  //            account other parameters), otherwise skip hiding
-  //     -  0 = If there are invalid elements, hide valid ones (or the contrary
-  //            if hideWorst is ON) of , otherwise do 1
-  //     -  1 = hide in function of quality metric of higher parameter,
-  //            if one is higher, otherwise do 2
-  //     -  2 = hide in function of both quality metrics, an element is not
-  //            hidden if any of quality metric meet the criterion
-  //     -  3 = the same as 2, but an element is not hidden if both quality
-  //            metric meet the criterion.
-  //     In any case, if no element meet the criterion to stay visible, there is
-  //     no hiding.
   //  3. Clarify what I use: Disto and aspect are quality metrics.
   //                         Computing them is evaluating.
   //                         The resulting data are values or results (or measures?).
@@ -141,36 +143,6 @@ StringXNumber MeshQuality2Options_Number[] = {
   //  6. Add vector of pointers to MElement into Measures(Results) to be able to
   //     change visibility and create PViews without returning into DataGentities
   //  7. Store sorted vectors into Measures(Results)?
-  {GMSH_FULLRC, "checkQualityDisto", nullptr, 1},
-  {GMSH_FULLRC, "checkQualityAspect", nullptr, 1},
-  {GMSH_FULLRC, "dimensionPolicy", nullptr, 0},
-  {GMSH_FULLRC, "recomputePolicy", nullptr, 0},
-  // FIXME Add parameter for splitting recompute?
-  //  Param1 : clearDataPolicy = {-1 =no, 0 =tryDetectModifiedMesh*, 1 =recomputeAllData} *more in Help
-  //  Param2(firstOfAll): computeMetrics = {OFF =usePreviousData, ON =compute}
-  {GMSH_FULLRC, "restrictToVisibleElements", nullptr, 0},
-  {GMSH_FULLRC, "restrictToCurvedElements", nullptr, 0},
-  {GMSH_FULLRC, "skipPreventiveValidityCheck", nullptr, 0},
-  {GMSH_FULLRC, "statsWeightedMeanCutoffPack", nullptr, 110.1},
-  // TODO rename enableJacobianDeterminantData? or ..Stats
-  //  or maybe should have 2 advanced options enableRatioJacDet, enableMinJacDet
-  {GMSH_FULLRC, "printStatsOnJacobianDeterminant", nullptr, 1},
-  {GMSH_FULLRC, "createElementsView", nullptr, 0},
-  {GMSH_FULLRC, "createPlotView", nullptr, 0},
-  // TODO rename because plot.. makes me think it plots, maybe ..ForPlots
-  {GMSH_FULLRC, "plotWeightedMeanCutoffPack", nullptr, 10},
-  // FIXME why forceNewPlotView? I think for different WWM. Maybe I can get rid of it
-  {GMSH_FULLRC, "forceNewPlotView", nullptr, 0},
-  {GMSH_FULLRC, "hideElements", nullptr, 0},
-  // TODO add hidingPolicy
-  {GMSH_FULLRC, "hideWorst", nullptr, 0},
-  {GMSH_FULLRC, "hidingCriterion", nullptr, 0},
-  {GMSH_FULLRC, "hidingThreshold", nullptr, .5},
-  // TODO add unhideOtherElements? And change order hideElements → hidingPolicy →
-  //  hidingCriterion → hidingThreshold → hideWorst → unhideOtherElements
-  //  (other options alsoUnhide, enableUnhiding, includeUnhiding)
-  {GMSH_FULLRC, "printGuidance", nullptr, 1},
-  {GMSH_FULLRC, "freeData-NothingElse", nullptr, 0}
 #if defined(HAVE_VISUDEV)
   ,
   {GMSH_FULLRC, "createTemporalView", nullptr, 0},
@@ -182,31 +154,30 @@ StringXNumber MeshQuality2Options_Number[] = {
 const int MeshQuality2Options_LegacyOptionsNumber = 8;
 
 std::pair<int, std::string> MeshQuality2Options_Headers[] = {
-  {0, "Section 1"},
-  {5, "Section 2"},
-  {10, "Section 3"},
+  {0, "What to do"},
+  {5, "Metrics to include"},
+  {7, "Elements Selection"},
+  {10, "Hiding options"},
+  {15, "Advanced computation options"},
+  {18, "Advanced analysis options"},
+  {23, "Legacy options"},
   };
 
 // What to do:
-// - computeMetrics = 1
-// - createViews = 0
+// - skipComputationMetrics = 0
+// - createElementsView = 0
+// - createPlotView = 0
 // - hideElements = 0
 // - printGuidance = 0
 
 // Metrics configuration:
 // - enableDistortionQuality = 1
 // - enableAspectQuality = 1
-// - dataClearancePolicy = 0 // OR: dataReusePolicy
 
 // Element Selection:
 // - dimensionPolicy = 0
 // - restrictToVisibleElements = 0
 // - restrictToCurvedElements = 0
-
-// View options:
-// - enableElementsView = 0
-// - enablePlotView = 0
-// - forceNewPlotView = 0
 
 // Hiding options:
 // - hidingPolicy = 0
@@ -215,13 +186,18 @@ std::pair<int, std::string> MeshQuality2Options_Headers[] = {
 // - hideWorst = 0
 // - unhideOtherElements = 0
 
-// Advanced options:
-// - weightedMeanCutoffPackForStats = 10
-// - weightedMeanCutoffPackForPlots = 10
-// - enableRatioJacDetAsAMetric = 0
-// - enableMinJacDetAsAMetric = 0
+// Advanced computation options:
+// - smartRecomputation = 0
+// - preserveOldMeshData = 0
 // - skipValidity = 0
 // - freeData-NothingElse = 0
+
+// Advanced analysis options
+// - enableRatioJacDetAsAMetric = 0
+// - enableMinJacDetAsAMetric = 0
+// - regularizeDeterminant = 0
+// - wmCutoffsForStats = 10
+// - wmCutoffsForPlots = 10
 
 // Legacy (do not modify, will be removed in the future):
 // - JacobianDeterminant
@@ -477,8 +453,7 @@ void Plug::_fetchParameters()
   pp.plotCutoffPack = MeshQuality2Options_Number[12].def;
   pp.forceNew = static_cast<bool>(MeshQuality2Options_Number[13].def);
   ph.yes = static_cast<bool>(MeshQuality2Options_Number[14].def);
-  ph.worst = static_cast<bool>(MeshQuality2Options_Number[154].def);
-  // NOTE hideCriterion: hide in function of quality -> 0, %elm -> 1, #elm -> 2
+  ph.worst = static_cast<bool>(MeshQuality2Options_Number[15].def);
   ph.criterion = static_cast<int>(MeshQuality2Options_Number[16].def);
   ph.threshold = MeshQuality2Options_Number[17].def;
   _myVerbose = static_cast<bool>(MeshQuality2Options_Number[18].def);
@@ -1240,7 +1215,7 @@ std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
 
   if(sum2D + sum3D == 0) return 0;
 
-  _info(0, "=> Number of quantities to compute:");
+  _info(0, "=> Number of evaluations to perform:");
   _info(0, "   %5s%10s%10s%10s", "", "Validity", "Disto", "Aspect");
   if(sum2D)
     _info(0, "   %5s%10d%10d%10d", "2D:", cnt2D.elToCompute[0],
