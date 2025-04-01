@@ -4074,7 +4074,8 @@ static std::array<std::map<std::pair<int, int>, std::vector<MElement*>>, 4> getE
 static optional<std::unordered_set<MVertex*>> writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
                            int partitionToSave, bool binary, int saveParametric,
                            double scalingFactor, bool saveAll, double version,
-                           const std::optional<EntityPackage>& entitiesToSave)
+                           const std::optional<EntityPackage>& entitiesToSave,
+                           const std::array<std::map<std::pair<int, int>, std::vector<MElement*>>, 4> &elemToSave)
 {
   std::set<GRegion *, GEntityPtrLessThan> regions;
   std::set<GFace *, GEntityPtrLessThan> faces;
@@ -4083,9 +4084,7 @@ static optional<std::unordered_set<MVertex*>> writeMSH4Nodes(GModel *const model
 
   std::unordered_map<GEntity*, std::unordered_set<MVertex*>> verticesPerEntity;
 
-  auto elemToSave =
-    getElementsToSaveByType(model, fp, partitioned, partitionToSave, binary,
-                            saveAll, version, entitiesToSave);
+  
   for(int dim = 0; dim <= 3; ++dim) {
     for(const auto &[entityType, elems] : elemToSave[dim]) {
       for(MElement *elem : elems) {
@@ -4456,12 +4455,12 @@ getElementsToSaveByType(GModel *const model, FILE *fp, bool partitioned,
 
 static optional<std::unordered_set<MElement*>> writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
                               int partitionToSave, bool binary, bool saveAll,
-                              double version, const std::optional<EntityPackage>& entitiesToSave)
+                              double version, const std::optional<EntityPackage>& entitiesToSave,
+                              const std::array<std::map<std::pair<int, int>, std::vector<MElement*>>, 4> &elementsByType)
 {
 
  
 
-  auto elementsByType = getElementsToSaveByType(model, fp, partitioned, partitionToSave, binary, saveAll, version, entitiesToSave);
   std::size_t numElements = 0;
   for (int i = 0; i < 4; ++i) {
     for (const auto& [_, elements] : elementsByType[i]) {
@@ -5075,15 +5074,19 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
     partitionedEntitiesToSave = writeMSH4PartitionedEntities(this, fp, binary, scalingFactor, version,
                       entityBounds, partitionToSave);
 
+  // Compute elements to save. It will be needed for nods, elements and edge/face tags
+  auto elemToSave =
+    getElementsToSaveByType(this, fp, partitioned, partitionToSave, binary,
+                            saveAll, version, partitionedEntitiesToSave);
   // nodes
   auto savedNodes = writeMSH4Nodes(this, fp, partitioned, partitionToSave, binary,
-                 saveParametric ? 1 : 0, scalingFactor, saveAll, version, partitionedEntitiesToSave);
+                 saveParametric ? 1 : 0, scalingFactor, saveAll, version, partitionedEntitiesToSave, elemToSave);
 
   /* We must export the nodes then the elements, but we want to use exported elements to find the nodes */
 
   // elements
   auto savedElems = writeMSH4Elements(this, fp, partitioned, partitionToSave, binary, saveAll,
-                    version, partitionedEntitiesToSave);
+                    version, partitionedEntitiesToSave, elemToSave);
 
   constexpr bool checkConsistency = false;
   if (checkConsistency && savedNodes && savedElems) {
