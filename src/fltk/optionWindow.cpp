@@ -2189,6 +2189,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Physical tag(s)", 0, nullptr, nullptr},
         {"Elementary name", 0, nullptr, nullptr},
         {"Physical name(s)", 0, nullptr, nullptr},
+        {"Coordinates", 0, nullptr, nullptr},
         {nullptr}};
       geo.choice[4] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Label type");
@@ -3901,7 +3902,7 @@ void optionWindow::resetBrowser()
   browser->add("Post-pro");
   for(std::size_t i = 0; i < PView::list.size(); i++) {
     char str[128];
-    sprintf(str, "View [%lu]", i);
+    sprintf(str, "View [%zu]", i);
     browser->add(str);
   }
   int num = (select <= browser->size()) ? select : browser->size();
@@ -3916,7 +3917,7 @@ void optionWindow::resetExternalViewList()
   view.choice[10]->add("Self");
   view.choice[11]->add("Self");
   for(std::size_t i = 0; i < PView::list.size(); i++) {
-    sprintf(str, "View [%lu]", i);
+    sprintf(str, "View [%zu]", i);
     view.choice[10]->add(str, 0, nullptr);
     view.choice[11]->add(str, 0, nullptr);
   }

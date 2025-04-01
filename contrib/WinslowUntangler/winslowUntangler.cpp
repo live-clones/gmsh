@@ -439,7 +439,7 @@ namespace WinslowUntangler {
 
     if (w.dim == 2 && w.isP2){
       size_t dT = (perTriangleP2 - 4)/3;
-      //      printf("%lu %lu\n",(w.triangles.size()-nElements)/dT,nElements);
+      //      printf("%zu %zu\n",(w.triangles.size()-nElements)/dT,nElements);
       double signs[5] = {1,1,-1,-1,-1};
 #pragma omp parallel for schedule(dynamic) num_threads(1) private (a_i,b_i) shared (energy)
       for(size_t tg = 0; tg < (w.triangles.size()-nElements)/dT; tg++) {
@@ -550,9 +550,9 @@ namespace WinslowUntangler {
       }
     }
 
-    change = true;
-    //    for (auto i : permut)printf("%lu ",i);    
-    printf(" --- > FOUND A PN MESH with %d subtriangles\n",NN);
+    data.isP2 = true;
+    //    for (auto i : permut)printf("%zu ",i);
+    printf(" --- > FOUND A P2 MESH\n");
   }
   
   bool prepareData2D(
@@ -638,7 +638,28 @@ namespace WinslowUntangler {
       const double det = update_jacobian_matrix(t, data, x0);
     }
     data.eps =
-      std::sqrt(1.e-22 + 0.04 * std::pow(std::min(data.J_det_min, 0.), 2));
+      std::sqrt(1.e-12 + 0.04 * std::pow(std::min(data.J_det_min, 0.), 2));
+
+    // Compute initial energy
+    size_t max_t = data.isP2 ? 4*(data.triangles.size()/perTriangleP2) : data.triangles.size();
+    for(size_t t = 0; t < max_t; t++) {
+      //      printf("%zu %g\n",t,data.J_det[t]);
+      const double det = data.J_det[t];
+      const double chi = coef_chi(det, data.eps);
+      const double chip = coef_chip(det, data.eps);
+      const double f_eps =
+        (data.J_mat_2D[t].transpose() * data.J_mat_2D[t]).trace() / chi;
+      const double g_eps = (det * det + 1.) / chi;
+      const double Ec = f_eps + data.lambda * g_eps;
+      data.energy += Ec;
+    }
+    // P2 extension
+
+    size_t dT = (perTriangleP2 - 4)/3;
+    double signs[5] = {1,1,-1,-1,-1};
+    for(size_t t = max_t; t < data.triangles.size(); t+=dT) {
+      double det = 0;
+      for (size_t l=0;l<dT;l++)det += signs[l] * data.J_det[t+l];
 
     alglib::real_1d_array grad;
     grad.setcontent(2 * points.size(), points.front().data());    
@@ -894,7 +915,7 @@ namespace WinslowUntangler {
 
         // Setup of the LBFGS solver
         alglib::ae_int_t N = dim * NV;
-        alglib::ae_int_t corr = 15; // Num of corrections in the scheme in [3,7]
+        alglib::ae_int_t corr = N < 15 ? N : 15; // Num of corrections in the scheme in [3,7]
         alglib::minlbfgsstate state;
         alglib::minlbfgsreport rep;
 	minlbfgscreate(N, corr, x, state);
@@ -917,11 +938,17 @@ namespace WinslowUntangler {
 	}
         if(rep.terminationtype != 4 && rep.terminationtype != 5) { nFail += 1; }
         lbfgsIter = rep.iterationscount;
+<<<<<<< HEAD
 	if ( rep.terminationtype != 5 && data.eps <= 1.e-6){
 	  printf(" --> LBFGS TERMINATED WITH SUCCESS %lu %lu -- detmin = %12.5E\n",rep.iterationscount, rep.terminationtype,data.J_det_min);
 	  break;
 	}
 	printf(" --> LBFGS TERMINATED -- %lu %lu\n",rep.iterationscount, rep.terminationtype);
+=======
+        Msg::Debug(" detmin = %22.15E eps= %22.15E %zu iter term %zu",
+                  data.J_det_min, data.eps, rep.iterationscount,
+                  rep.terminationtype);
+>>>>>>> master
       } catch(alglib::ap_error e) {
         Msg::Warning("Winslow untangler, iter %i: Alglib exception thrown in "
                      "LBFGS step, error: %s",
@@ -988,7 +1015,7 @@ namespace WinslowUntangler {
 	x[i]+=1.e-8;
 	double EN2 = compute_energy_and_gradient(data, x, GRAD2);
 	x[i]-=1.e-8;
-	printf("%lu GRAD %12.5E DIFF %12.5E\n",i,GRAD[i],1.e8*(EN2-EN));
+	printf("%zu GRAD %12.5E DIFF %12.5E\n",i,GRAD[i],1.e8*(EN2-EN));
       }
     }
 #endif

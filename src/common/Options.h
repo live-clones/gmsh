@@ -641,6 +641,7 @@ double opt_mesh_tolerance_reference_element(OPT_ARGS_NUM);
 double opt_mesh_renumber(OPT_ARGS_NUM);
 double opt_mesh_unv_strict_format(OPT_ARGS_NUM);
 double opt_mesh_reparam_max_triangles(OPT_ARGS_NUM);
+double opt_mesh_reproducible(OPT_ARGS_NUM);
 double opt_mesh_ignore_parametrization(OPT_ARGS_NUM);
 double opt_mesh_quadqs_sizemap_method(OPT_ARGS_NUM);
 double opt_mesh_quadqs_topo_optim_methods(OPT_ARGS_NUM);

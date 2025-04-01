@@ -570,7 +570,7 @@ bool GEO_Internals::addCurveLoops(const std::vector<int> &curveTags,
 
   for(std::size_t i = 0; i < vs.size(); i++) {
     if(vs[i].size() < 2 || vs[i][0] != vs[i][vs[i].size() - 1]) {
-      Msg::Warning("Skipping invalid loop with %lu points", vs[i].size());
+      Msg::Warning("Skipping invalid loop with %zu points", vs[i].size());
       continue;
     }
     else {
@@ -1434,7 +1434,7 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
 
   std::vector<GEntity*> removed;
   model->remove(toRemove, removed);
-  Msg::Debug("Destroying %lu model entities during first pass", removed.size());
+  Msg::Debug("Destroying %zu model entities during first pass", removed.size());
   for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
 
   if(Tree_Nbr(Points)) {
@@ -1537,7 +1537,7 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
   // entities
   removed.clear();
   model->remove(toRemove, removed);
-  Msg::Debug("Destroying %lu model entities during second pass", removed.size());
+  Msg::Debug("Destroying %zu model entities during second pass", removed.size());
   for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
 
   // delete all physical groups before sync only if there is no mesh (if there

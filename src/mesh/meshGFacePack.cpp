@@ -849,7 +849,7 @@ int computePointsUsingScaledCrossFieldPlanarP2(
           fprintf(f, "SL(%22.15E,%22.15E,0,%22.15E,%22.15E,0){%g,%g};\n",
                   pp.x(), pp.y(), p.x(), p.y(), dist, dist);
           _points.push_back(pp);
-          fprintf(f, "SP(%22.15E,%22.15E,0){%lu};\n", pp.x(), pp.y(),
+          fprintf(f, "SP(%22.15E,%22.15E,0){%zu};\n", pp.x(), pp.y(),
                   _points.size());
         }
         else {
@@ -859,7 +859,7 @@ int computePointsUsingScaledCrossFieldPlanarP2(
       }
       //    if (_points.size() > 1900)break;
       if(_points.size() % 100 == 0)
-        printf("q size %lu p size %lu\n", _q.size(), _points.size());
+        printf("q size %zu p size %zu\n", _q.size(), _points.size());
     }
   }
   fprintf(f, "};\n");

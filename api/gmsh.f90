@@ -12277,17 +12277,24 @@ module gmsh
 
   !> Create a fillet edge between edges `edgeTag1' and `edgeTag2' with radius
   !! `radius'. The modifed edges keep their tag. If `tag' is positive, set the
-  !! tag explicitly; otherwise a new tag is selected automatically.
+  !! tag explicitly; otherwise a new tag is selected automatically. If
+  !! `pointTag' is positive, set the point on the edge at which the fillet is
+  !! created. If `reverse' is set, the normal of the plane through the two
+  !! planes is reversed before the fillet is created.
   function gmshModelOccFillet2D(edgeTag1, &
                                 edgeTag2, &
                                 radius, &
                                 tag, &
+                                pointTag, &
+                                reverse, &
                                 ierr)
     interface
     function C_API(edgeTag1, &
                    edgeTag2, &
                    radius, &
                    tag, &
+                   pointTag, &
+                   reverse, &
                    ierr_) &
       bind(C, name="gmshModelOccFillet2D")
       use, intrinsic :: iso_c_binding
@@ -12296,6 +12303,8 @@ module gmsh
       integer(c_int), value, intent(in) :: edgeTag2
       real(c_double), value, intent(in) :: radius
       integer(c_int), value, intent(in) :: tag
+      integer(c_int), value, intent(in) :: pointTag
+      integer(c_int), value, intent(in) :: reverse
       integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
@@ -12304,11 +12313,15 @@ module gmsh
     integer, intent(in) :: edgeTag2
     real(c_double), intent(in) :: radius
     integer, intent(in), optional :: tag
+    integer, intent(in), optional :: pointTag
+    logical, intent(in), optional :: reverse
     integer(c_int), intent(out), optional :: ierr
     gmshModelOccFillet2D = C_API(edgeTag1=int(edgeTag1, c_int), &
                            edgeTag2=int(edgeTag2, c_int), &
                            radius=real(radius, c_double), &
                            tag=optval_c_int(-1, tag), &
+                           pointTag=optval_c_int(-1, pointTag), &
+                           reverse=optval_c_bool(.false., reverse), &
                            ierr_=ierr)
   end function gmshModelOccFillet2D
 
@@ -16180,16 +16193,22 @@ module gmsh
   end function ivectordouble_
 
   subroutine ivectorstring_(o, cstrs, cptrs)
-    character(len=*), intent(in) :: o(:)
+    character(len=*), intent(in), optional :: o(:)
     character(len=GMSH_API_MAX_STR_LEN, kind=c_char), target, allocatable, intent(out) :: cstrs(:)
     type(c_ptr), allocatable, intent(out) :: cptrs(:)
     integer :: i
-    allocate(cstrs(size(o)))    ! Return to keep references from cptrs
-    allocate(cptrs(size(o)))
-    do i = 1, size(o)
+
+    if (present(o)) then
+      allocate(cstrs(size(o)))  ! Return to keep references from cptrs
+      allocate(cptrs(size(o)))
+      do i = 1, size(o)
         cstrs(i) = istring_(o(i))
         cptrs(i) = c_loc(cstrs(i))
-    end do
+      end do
+    else
+      allocate(cstrs(0))
+      allocate(cptrs(0))
+    end if
   end subroutine ivectorstring_
 
   function ivectorpair_(o) result(v)

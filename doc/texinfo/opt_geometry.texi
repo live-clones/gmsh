@@ -267,7 +267,7 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCImportLabels
-Import labels and colors when importing STEP models with the OpenCASCADE kernel@*
+Import labels and colors when importing STEP models with the OpenCASCADE kernel (0: no, 1: yes, 2: use slow workaround for bad shape locations)@*
 Default value: @code{1}@*
 Saved in: @code{General.OptionsFileName}
 

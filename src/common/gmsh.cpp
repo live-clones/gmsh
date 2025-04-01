@@ -446,7 +446,7 @@ GMSH_API void gmsh::model::getEntitiesForPhysicalName(const std::string &name,
   GModel::current()->getEntitiesForPhysicalName(name, entities);
   if(entities.size() != 0) {
     for(auto ge : entities) {
-      dimTags.push_back(std::pair<int, int >(ge->dim(), ge->tag()));
+      dimTags.push_back(std::make_pair(ge->dim(), ge->tag()));
     }
   }
   else {
@@ -705,7 +705,7 @@ GMSH_API void gmsh::model::removeEntities(const vectorpair &dimTags,
   if(!_checkInit()) return;
   std::vector<GEntity*> removed;
   GModel::current()->remove(dimTags, removed, recursive);
-  Msg::Debug("Destroying %lu entities in model", removed.size());
+  Msg::Debug("Destroying %zu entities in model", removed.size());
   for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
 }
 
@@ -850,13 +850,13 @@ gmsh::model::getDerivative(const int dim, const int tag,
     GFace *gf = static_cast<GFace *>(entity);
     for(std::size_t i = 0; i < parametricCoord.size(); i += 2) {
       SPoint2 param(parametricCoord[i], parametricCoord[i + 1]);
-      Pair<SVector3, SVector3> d = gf->firstDer(param);
-      deriv.push_back(d.left().x());
-      deriv.push_back(d.left().y());
-      deriv.push_back(d.left().z());
-      deriv.push_back(d.right().x());
-      deriv.push_back(d.right().y());
-      deriv.push_back(d.right().z());
+      std::pair<SVector3, SVector3> d = gf->firstDer(param);
+      deriv.push_back(d.first.x());
+      deriv.push_back(d.first.y());
+      deriv.push_back(d.first.z());
+      deriv.push_back(d.second.x());
+      deriv.push_back(d.second.y());
+      deriv.push_back(d.second.z());
     }
   }
 }
@@ -3692,7 +3692,7 @@ GMSH_API void gmsh::model::mesh::addEdges(const std::vector<std::size_t> &edgeTa
     for(int j = 0; j < 2; j++) {
       v[j] = m->getMeshVertexByTag(edgeNodes[2 * i + j]);
       if(!v[j]) {
-        Msg::Error("Unknown mesh node %lu", edgeNodes[2 * i + j]);
+        Msg::Error("Unknown mesh node %zu", edgeNodes[2 * i + j]);
         return;
       }
     }
@@ -3720,7 +3720,7 @@ GMSH_API void gmsh::model::mesh::addFaces(const int faceType,
     for(int j = 0; j < faceType; j++) {
       v[j] = m->getMeshVertexByTag(faceNodes[faceType * i + j]);
       if(!v[j]) {
-        Msg::Error("Unknown mesh node %lu", faceNodes[faceType * i + j]);
+        Msg::Error("Unknown mesh node %zu", faceNodes[faceType * i + j]);
         return;
       }
     }
@@ -5304,7 +5304,7 @@ GMSH_API void gmsh::model::mesh::renumberNodes
 {
   if(!_checkInit()) return;
   if(oldTags.size() != newTags.size()) {
-    Msg::Error("Invalid number of tags for node renumbering: %lu != %lu",
+    Msg::Error("Invalid number of tags for node renumbering: %zu != %zu",
                oldTags.size(), newTags.size());
     return;
   }
@@ -5320,7 +5320,7 @@ GMSH_API void gmsh::model::mesh::renumberElements
 {
   if(!_checkInit()) return;
   if(oldTags.size() != newTags.size()) {
-    Msg::Error("Invalid number of tags for element renumbering: %lu != %lu",
+    Msg::Error("Invalid number of tags for element renumbering: %zu != %zu",
                oldTags.size(), newTags.size());
     return;
   }
@@ -7068,12 +7068,12 @@ GMSH_API void gmsh::model::occ::defeature(const std::vector<int> &volumeTags,
 
 GMSH_API int gmsh::model::occ::fillet2D(const int edgeTag1,
                                         const int edgeTag2,
-                                        const double radius, const int tag)
+                                        const double radius, const int tag, const int pointTag, const bool reverse)
 {
   if(!_checkInit()) return -1;
   _createOcc();
   int outTag = tag;
-  GModel::current()->getOCCInternals()->fillet2D(outTag, edgeTag1, edgeTag2, radius);
+  GModel::current()->getOCCInternals()->fillet2D(outTag, edgeTag1, edgeTag2, radius, pointTag, reverse);
   return outTag;
 }
 

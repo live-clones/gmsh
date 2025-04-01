@@ -937,7 +937,8 @@ StringXNumber GeometryOptions_Number[] = {
 
   { F|O, "LabelType" , opt_geometry_label_type , 0. ,
     "Type of entity label (0: description, 1: elementary entity tag, "
-    "2: physical group tag, 3: elementary name, 4: physical name)" },
+    "2: physical group tag, 3: elementary name, 4: physical name, "
+    "5: coordinates)" },
   { F|O, "Light" , opt_geometry_light , 1. ,
     "Enable lighting for the geometry" },
   { F|O, "LightTwoSide" , opt_geometry_light_two_side , 1. ,
@@ -1004,7 +1005,8 @@ StringXNumber GeometryOptions_Number[] = {
     "Only consider visible shapes when exporting STEP or BREP models with the "
     "OpenCASCADE kernel" },
   { F|O, "OCCImportLabels" , opt_geometry_occ_import_labels , 1. ,
-    "Import labels and colors when importing STEP models with the OpenCASCADE kernel" },
+    "Import labels and colors when importing STEP models with the OpenCASCADE "
+    "kernel (0: no, 1: yes, 2: use slow workaround for bad shape locations)" },
   { F|O, "OCCMakeSolids" , opt_geometry_occ_make_solids , 0. ,
     "Fix shells and make solids when importing STEP, IGES and BRep models with the "
     "OpenCASCADE kernel" },
@@ -1562,6 +1564,8 @@ StringXNumber MeshOptions_Number[] = {
     "Renumber nodes and elements in a continuous sequence after mesh generation" },
   { F|O, "ReparamMaxTriangles" , opt_mesh_reparam_max_triangles , 250000 ,
     "Maximum number of triangles in a single parametrization patch" },
+  { F|O, "Reproducible" , opt_mesh_reproducible , 0 ,
+    "Try to produce reproducible meshes even when multi-threaded (experimental)" },
 
   { F,   "SaveAll" , opt_mesh_save_all , 0. ,
     "Save all elements, even if they don't belong to physical groups (for some "

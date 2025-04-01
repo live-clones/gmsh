@@ -1888,7 +1888,8 @@ if(UNIX)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR
-   CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+   ((CMAKE_CXX_COMPILER_ID MATCHES "Clang") AND NOT
+   (CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")))
   execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion
                   OUTPUT_VARIABLE CXX_COMPILER_VERSION
                   OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -2229,16 +2230,15 @@ macro(filter_tests IN OUT)
     unset(BAD2)
     unset(BAD3)
     # OpenCASCADE
-    if(NOT HAVE_OCC AND NOT BAD1 AND NOT BAD2 AND NOT BAD3)
+    if(NOT HAVE_OCC)
       file(STRINGS ${FILE} BAD1 REGEX "^SetFactory.*OpenCASCADE.*")
-      file(STRINGS ${FILE} BAD2 REGEX ".*occ\\.synchronize.*")
-      file(STRINGS ${FILE} BAD3 REGEX ".*occ::synchronize.*")
+      file(STRINGS ${FILE} BAD2 REGEX ".*occ.*synchronize.*")
+      file(STRINGS ${FILE} BAD3 REGEX ".*[mM]erge.*brep.*")
     endif()
     # Metis
     if(NOT HAVE_METIS AND NOT BAD1 AND NOT BAD2 AND NOT BAD3)
       file(STRINGS ${FILE} BAD1 REGEX ".*PartitionMesh.*")
-      file(STRINGS ${FILE} BAD2 REGEX ".*mesh\\.partition.*")
-      file(STRINGS ${FILE} BAD3 REGEX ".*mesh::partition.*")
+      file(STRINGS ${FILE} BAD2 REGEX ".*mesh.*partition.*")
     endif()
     if(BAD1 OR BAD2 OR BAD3)
       message("Skipping test " ${FILE})

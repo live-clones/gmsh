@@ -2819,11 +2819,16 @@ GMSH_API void gmshModelOccDefeature(const int * volumeTags, const size_t volumeT
 
 /* Create a fillet edge between edges `edgeTag1' and `edgeTag2' with radius
  * `radius'. The modifed edges keep their tag. If `tag' is positive, set the
- * tag explicitly; otherwise a new tag is selected automatically. */
+ * tag explicitly; otherwise a new tag is selected automatically. If
+ * `pointTag' is positive, set the point on the edge at which the fillet is
+ * created. If `reverse' is set, the normal of the plane through the two
+ * planes is reversed before the fillet is created. */
 GMSH_API int gmshModelOccFillet2D(const int edgeTag1,
                                   const int edgeTag2,
                                   const double radius,
                                   const int tag,
+                                  const int pointTag,
+                                  const int reverse,
                                   int * ierr);
 
 /* Create a chamfer edge between edges `edgeTag1' and `edgeTag2' with

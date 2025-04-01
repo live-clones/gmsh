@@ -334,7 +334,7 @@ int fillSizemapFromScalarBackgroundField(
       MVertex *v = t->getVertex(lv);
       auto it = sizeMap.find(v);
       if(it == sizeMap.end()) {
-        double value = (*field)(v->point().x(), v->point().y(), v->point().z());
+        double value = (*field)(v->x(), v->y(), v->z());
         if(std::isnan(value) || value == -DBL_MAX || value == DBL_MAX) continue;
         sizeMap[v] = value;
       }
@@ -465,7 +465,8 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   }
 
   bool midpointSubdivisionAfter = true;
-  if(!CTX::instance()->mesh.recombineAll ||
+  if(CTX::instance()->mesh.algoRecombine == 1 ||
+     CTX::instance()->mesh.algoRecombine == 2 ||
      CTX::instance()->mesh.algoRecombine == 4) {
     midpointSubdivisionAfter = false;
   }
@@ -2254,7 +2255,7 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
 
   if(DBG_EXPORT) { gm->writeMSH("qqs_subdiv.msh", 4.1); }
 
-  optimizeGeometryQuadqs(gm);
+  //  optimizeGeometryQuadqs(gm);
 
   if(true || Msg::GetVerbosity() >= 99) {
     std::unordered_map<std::string, double> stats;

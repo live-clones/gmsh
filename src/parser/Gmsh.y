@@ -3156,7 +3156,7 @@ Delete :
       if(!changed){
         std::vector<GEntity*> removed;
         GModel::current()->remove(dimTags, removed);
-        Msg::Debug("Destroying %lu entities in model", removed.size());
+        Msg::Debug("Destroying %zu entities in model", removed.size());
         for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
       }
       List_Delete($3);
@@ -3181,7 +3181,7 @@ Delete :
       if(!changed){
         std::vector<GEntity*> removed;
         GModel::current()->remove(dimTags, removed, true);
-        Msg::Debug("Destroying %lu entities in model", removed.size());
+        Msg::Debug("Destroying %zu entities in model", removed.size());
         for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
       }
       List_Delete($4);
@@ -6148,7 +6148,7 @@ FExpr_Multi :
       FILE *File;
       $$ = List_Create(100, 100, sizeof(double));
       std::string tmp = FixRelativePath(gmsh_yyname, $3);
-      if(!(File = Fopen(tmp.c_str(), "rb"))){
+      if(!(File = Fopen(tmp.c_str(), "r"))){
         yymsg(0, "Could not open file '%s'", $3);
       }
       else{
@@ -6162,9 +6162,9 @@ FExpr_Multi :
             break;
           }
           else{
-            char dummy[1024];
-            if(fscanf(File, "%s", dummy))
-              yymsg(0, "Ignoring '%s' in file '%s'", dummy, $3);
+            char dummy[65];
+            if(fscanf(File, "%64s", dummy) == 1)
+              yymsg(1, "Ignoring '%s' in file '%s'", dummy, $3);
           }
         }
 	fclose(File);

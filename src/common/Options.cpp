@@ -746,7 +746,7 @@ void PrintOptions(int num, int level, int diff, int help, const char *filename,
 #if defined(HAVE_POST)
     for(std::size_t i = 0; i < PView::list.size(); i++) {
       char tmp[256];
-      sprintf(tmp, "View[%lu].", i);
+      sprintf(tmp, "View[%zu].", i);
       PrintOptionCategory(level, diff, help, "View options (strings)", file,
                           vec);
       PrintStringOptions(i, level, diff, help, ViewOptions_String, tmp, file,
@@ -4528,7 +4528,7 @@ double opt_geometry_label_type(OPT_ARGS_NUM)
   if(action & GMSH_SET) {
     CTX::instance()->geom.labelType = (int)val;
     if(CTX::instance()->geom.labelType < 0 ||
-       CTX::instance()->geom.labelType > 4)
+       CTX::instance()->geom.labelType > 5)
       CTX::instance()->geom.labelType = 0;
   }
 #if defined(HAVE_FLTK)
@@ -6835,6 +6835,12 @@ double opt_mesh_reparam_max_triangles(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->mesh.reparamMaxTriangles = (int)val;
   return CTX::instance()->mesh.reparamMaxTriangles;
+}
+
+double opt_mesh_reproducible(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.reproducible = (int)val;
+  return CTX::instance()->mesh.reproducible;
 }
 
 double opt_mesh_ignore_parametrization(OPT_ARGS_NUM)
