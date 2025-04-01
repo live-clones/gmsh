@@ -21,5 +21,8 @@ void GFaceDelaunayRefinement(int faceTag);
 int GFace2PolyMesh(int faceTag, PolyMesh **pm);
 int PolyMesh2GFace(PolyMesh *pm, int faceTag);
 int PolyMeshDelaunayize (int faceTag);
+int meshTriangulate2d(const std::vector<double> &coord,
+                      std::vector<std::size_t> &tri,
+                      const std::vector<size_t> *rec);
 
 #endif

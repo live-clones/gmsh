@@ -582,26 +582,31 @@ mesh.add('computeHomology', doc, None, ovectorpair('dimTags'))
 doc = '''Compute a cross field for the current mesh. The function creates 3 views: the H function, the Theta function and cross directions. Return the tags of the views.'''
 mesh.add('computeCrossField', doc, None, ovectorint('viewTags'))
 
-doc = '''Triangulate the points given in the `coord' vector as pairs of u, v coordinates, and return the node tags (with numbering starting at 1) of the resulting triangles in `tri'.'''
-mesh.add('triangulate', doc, None, ivectordouble('coord'), ovectorsize('tri'))
+# doc = '''Triangulate the points given in the `coord' vector as pairs of u, v coordinates, and return the node tags (with numbering starting at 1) of the resulting triangles in `tri'.'''
+# mesh.add('triangulate', doc, None, ivectordouble('coord'), ovectorsize('tri'))
+doc = '''Triangulate the points given in the `coord' vector as pairs of u, v coordinates, and return the node tags (with numbering starting at 1) of the resulting triangles in `tri'. If specified, `edges' contains constrained edges in the mesh, given as pairs of nodes.'''
+mesh.add('triangulate', doc, None, ivectordouble('coord'), ivectorsize('edges'), ovectorsize('tri'))
 
 doc = '''Tetrahedralize the points given in the `coord' vector as x, y, z coordinates, concatenated, and return the node tags (with numbering starting at 1) of the resulting tetrahedra in `tetra'.'''
 mesh.add('tetrahedralize', doc, None, ivectordouble('coord'), ovectorsize('tetra'))
 
 doc = '''Antoine put a comment here.'''
-mesh.add('concentration_from_DF', doc, None, ovectorint('api_concentration'), ovectordouble('api_curvature'))
+mesh.add('concentration_from_DF', doc, None, ivectorint('concentration_list'), ivectordouble('tension_table'), ovectorint('concentration'), ovectordouble('curvature'))
 
 doc = '''Antoine put a comment here.'''
-mesh.add('advance_DF_in_time', doc, None, idouble('dt'), ivectordouble('velocity'), ibool('front', 'false', 'False'))
+mesh.add('advance_DF_in_time', doc, None, idouble('dt'), ivectordouble('velocity'), idouble('epsilon', '0.'), ibool('triple_slip', 'true', 'True'))
 
 doc = '''Antoine put a comment here.'''
-mesh.add('add_free_form', doc, None, iint('tag'), ivectordouble('poly'), ivectorsize('_corners'))
+mesh.add('init_DF', doc, None, ivectordouble('api_pos'), ivectorint('api_concentration')) 
 
 doc = '''Antoine put a comment here.'''
-mesh.add('get_DF_position', doc, None, ovectordouble('api_position'),ovectorint('api_tags') )
+mesh.add('add_free_form', doc, None, iint('tag'), ivectordouble('poly'), ivectorsize('_corners'), ibool('loop', 'true', 'True'))
 
 doc = '''Antoine put a comment here.'''
-mesh.add('get_front_nodes_position', doc, None, ovectordouble('api_position'), ovectorint('front_nodes') )
+mesh.add('get_DF', doc, None, ovectordouble('api_d_pos'),ovectorint('api_d_tags'), ovectorsize('api_d_ids'), ovectordouble('api_t_pos'), ovectorint('api_t_tags'), ovectorsize('api_t_ids'), ovectorsize('DF_to_meshNodes'), ovectordouble('DF_to_mesh_parametric'), ovectorsize('meshNodes_to_DF'), ovectordouble('mesh_to_DF_parametric'))
+
+# doc = '''Antoine put a comment here.'''
+# mesh.add('get_front_nodes_position', doc, None, ovectordouble('api_position'), ovectorint('front_nodes') )
 
 doc = '''Antoine put a comment here.'''
 mesh.add('get_nodes_position', doc, None, ovectordouble('api_position') )
@@ -610,13 +615,20 @@ doc = '''Antoine put a comment here.'''
 mesh.add('reset_discrete_front', doc, None )
 
 doc = '''Antoine put a comment here.'''
-mesh.add('relaying_relay', doc, None )
+mesh.add('relaying_and_relax', doc, None, idouble('relax') )
 
 doc = '''Antoine put a comment here.'''
-mesh.add('restore_initial_mesh', doc, None )
+mesh.add('relaying_relax', doc, None, idouble('lambda_coeff'), iint('nIterOut'), iint('nIterIn'), idouble('distMax'), idouble('RATIO') )
 
 doc = '''Antoine put a comment here.'''
-mesh.add('relaying_relax', doc, None,  idouble('myLambda'),  iint('nIterOut'),  iint('nIterIn') ,  idouble('distMax'),  idouble('RATIO'))
+mesh.add('set_boundary_from_mesh', doc, None, ovectordouble('bnd_pos') )
+# mesh.add('relaying_relay', doc, None )
+
+# doc = '''Antoine put a comment here.'''
+# mesh.add('restore_initial_mesh', doc, None )
+
+# doc = '''Antoine put a comment here.'''
+# mesh.add('relaying_relax', doc, None,  idouble('myLambda'),  iint('nIterOut'),  iint('nIterIn') ,  idouble('distMax'),  idouble('RATIO'))
 
 doc = '''Antoine put a comment here.'''
 mesh.add('redist_front', doc, None, idouble('lc') )
@@ -626,6 +638,15 @@ mesh.add('set_bnd_front', doc, None )
 
 doc = '''Antoine put a comment here.'''
 mesh.add('set_levelsets', doc, None, ivectorvectordouble('levelsets') )
+
+doc = '''Antoine put a comment here.'''
+mesh.add('write_DF', doc, None, istring('filename_DF') )
+
+doc = '''Antoine put a comment here.'''
+mesh.add('read_DF', doc, None, istring('filename_DF'), ibool('pos_flag', 'true', 'True') ) 
+
+doc = '''Antoine put a comment here.'''
+mesh.add('remove_small_features', doc, None, idouble('l')) 
 
 
 ################################################################################

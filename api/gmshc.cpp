@@ -2432,13 +2432,14 @@ GMSH_API void gmshModelMeshComputeCrossField(int ** viewTags, size_t * viewTags_
   }
 }
 
-GMSH_API void gmshModelMeshTriangulate(const double * coord, const size_t coord_n, size_t ** tri, size_t * tri_n, int * ierr)
+GMSH_API void gmshModelMeshTriangulate(const double * coord, const size_t coord_n, const size_t * edges, const size_t edges_n, size_t ** tri, size_t * tri_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_coord_(coord, coord + coord_n);
+    std::vector<std::size_t> api_edges_(edges, edges + edges_n);
     std::vector<std::size_t> api_tri_;
-    gmsh::model::mesh::triangulate(api_coord_, api_tri_);
+    gmsh::model::mesh::triangulate(api_coord_, api_edges_, api_tri_);
     vector2ptr(api_tri_, tri, tri_n);
   }
   catch(...){
@@ -2460,70 +2461,86 @@ GMSH_API void gmshModelMeshTetrahedralize(const double * coord, const size_t coo
   }
 }
 
-GMSH_API void gmshModelMeshConcentration_from_DF(int ** api_concentration, size_t * api_concentration_n, double ** api_curvature, size_t * api_curvature_n, int * ierr)
+GMSH_API void gmshModelMeshConcentration_from_DF(const int * concentration_list, const size_t concentration_list_n, const double * tension_table, const size_t tension_table_n, int ** concentration, size_t * concentration_n, double ** curvature, size_t * curvature_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<int> api_api_concentration_;
-    std::vector<double> api_api_curvature_;
-    gmsh::model::mesh::concentration_from_DF(api_api_concentration_, api_api_curvature_);
-    vector2ptr(api_api_concentration_, api_concentration, api_concentration_n);
-    vector2ptr(api_api_curvature_, api_curvature, api_curvature_n);
+    std::vector<int> api_concentration_list_(concentration_list, concentration_list + concentration_list_n);
+    std::vector<double> api_tension_table_(tension_table, tension_table + tension_table_n);
+    std::vector<int> api_concentration_;
+    std::vector<double> api_curvature_;
+    gmsh::model::mesh::concentration_from_DF(api_concentration_list_, api_tension_table_, api_concentration_, api_curvature_);
+    vector2ptr(api_concentration_, concentration, concentration_n);
+    vector2ptr(api_curvature_, curvature, curvature_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
 
-GMSH_API void gmshModelMeshAdvance_DF_in_time(const double dt, const double * velocity, const size_t velocity_n, const int front, int * ierr)
+GMSH_API void gmshModelMeshAdvance_DF_in_time(const double dt, const double * velocity, const size_t velocity_n, const double epsilon, const int triple_slip, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_velocity_(velocity, velocity + velocity_n);
-    gmsh::model::mesh::advance_DF_in_time(dt, api_velocity_, front);
+    gmsh::model::mesh::advance_DF_in_time(dt, api_velocity_, epsilon, triple_slip);
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
 
-GMSH_API void gmshModelMeshAdd_free_form(const int tag, const double * poly, const size_t poly_n, const size_t * _corners, const size_t _corners_n, int * ierr)
+GMSH_API void gmshModelMeshInit_DF(const double * api_pos, const size_t api_pos_n, const int * api_concentration, const size_t api_concentration_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_api_pos_(api_pos, api_pos + api_pos_n);
+    std::vector<int> api_api_concentration_(api_concentration, api_concentration + api_concentration_n);
+    gmsh::model::mesh::init_DF(api_api_pos_, api_api_concentration_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshAdd_free_form(const int tag, const double * poly, const size_t poly_n, const size_t * _corners, const size_t _corners_n, const int loop, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<double> api_poly_(poly, poly + poly_n);
     std::vector<std::size_t> api__corners_(_corners, _corners + _corners_n);
-    gmsh::model::mesh::add_free_form(tag, api_poly_, api__corners_);
+    gmsh::model::mesh::add_free_form(tag, api_poly_, api__corners_, loop);
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
 
-GMSH_API void gmshModelMeshGet_DF_position(double ** api_position, size_t * api_position_n, int ** api_tags, size_t * api_tags_n, int * ierr)
+GMSH_API void gmshModelMeshGet_DF(double ** api_d_pos, size_t * api_d_pos_n, int ** api_d_tags, size_t * api_d_tags_n, size_t ** api_d_ids, size_t * api_d_ids_n, double ** api_t_pos, size_t * api_t_pos_n, int ** api_t_tags, size_t * api_t_tags_n, size_t ** api_t_ids, size_t * api_t_ids_n, size_t ** DF_to_meshNodes, size_t * DF_to_meshNodes_n, double ** DF_to_mesh_parametric, size_t * DF_to_mesh_parametric_n, size_t ** meshNodes_to_DF, size_t * meshNodes_to_DF_n, double ** mesh_to_DF_parametric, size_t * mesh_to_DF_parametric_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<double> api_api_position_;
-    std::vector<int> api_api_tags_;
-    gmsh::model::mesh::get_DF_position(api_api_position_, api_api_tags_);
-    vector2ptr(api_api_position_, api_position, api_position_n);
-    vector2ptr(api_api_tags_, api_tags, api_tags_n);
-  }
-  catch(...){
-    if(ierr) *ierr = 1;
-  }
-}
-
-GMSH_API void gmshModelMeshGet_front_nodes_position(double ** api_position, size_t * api_position_n, int ** front_nodes, size_t * front_nodes_n, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    std::vector<double> api_api_position_;
-    std::vector<int> api_front_nodes_;
-    gmsh::model::mesh::get_front_nodes_position(api_api_position_, api_front_nodes_);
-    vector2ptr(api_api_position_, api_position, api_position_n);
-    vector2ptr(api_front_nodes_, front_nodes, front_nodes_n);
+    std::vector<double> api_api_d_pos_;
+    std::vector<int> api_api_d_tags_;
+    std::vector<std::size_t> api_api_d_ids_;
+    std::vector<double> api_api_t_pos_;
+    std::vector<int> api_api_t_tags_;
+    std::vector<std::size_t> api_api_t_ids_;
+    std::vector<std::size_t> api_DF_to_meshNodes_;
+    std::vector<double> api_DF_to_mesh_parametric_;
+    std::vector<std::size_t> api_meshNodes_to_DF_;
+    std::vector<double> api_mesh_to_DF_parametric_;
+    gmsh::model::mesh::get_DF(api_api_d_pos_, api_api_d_tags_, api_api_d_ids_, api_api_t_pos_, api_api_t_tags_, api_api_t_ids_, api_DF_to_meshNodes_, api_DF_to_mesh_parametric_, api_meshNodes_to_DF_, api_mesh_to_DF_parametric_);
+    vector2ptr(api_api_d_pos_, api_d_pos, api_d_pos_n);
+    vector2ptr(api_api_d_tags_, api_d_tags, api_d_tags_n);
+    vector2ptr(api_api_d_ids_, api_d_ids, api_d_ids_n);
+    vector2ptr(api_api_t_pos_, api_t_pos, api_t_pos_n);
+    vector2ptr(api_api_t_tags_, api_t_tags, api_t_tags_n);
+    vector2ptr(api_api_t_ids_, api_t_ids, api_t_ids_n);
+    vector2ptr(api_DF_to_meshNodes_, DF_to_meshNodes, DF_to_meshNodes_n);
+    vector2ptr(api_DF_to_mesh_parametric_, DF_to_mesh_parametric, DF_to_mesh_parametric_n);
+    vector2ptr(api_meshNodes_to_DF_, meshNodes_to_DF, meshNodes_to_DF_n);
+    vector2ptr(api_mesh_to_DF_parametric_, mesh_to_DF_parametric, mesh_to_DF_parametric_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2554,11 +2571,35 @@ GMSH_API void gmshModelMeshReset_discrete_front(int * ierr)
   }
 }
 
-GMSH_API void gmshModelMeshRelaying_relay(int * ierr)
+GMSH_API void gmshModelMeshRelaying_and_relax(const double relax, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::relaying_relay();
+    gmsh::model::mesh::relaying_and_relax(relax);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshRelaying_relax(const double lambda_coeff, const int nIterOut, const int nIterIn, const double distMax, const double RATIO, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::relaying_relax(lambda_coeff, nIterOut, nIterIn, distMax, RATIO);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshSet_boundary_from_mesh(double ** bnd_pos, size_t * bnd_pos_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_bnd_pos_;
+    gmsh::model::mesh::set_boundary_from_mesh(api_bnd_pos_);
+    vector2ptr(api_bnd_pos_, bnd_pos, bnd_pos_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2570,17 +2611,6 @@ GMSH_API void gmshModelMeshRestore_initial_mesh(int * ierr)
   if(ierr) *ierr = 0;
   try {
     gmsh::model::mesh::restore_initial_mesh();
-  }
-  catch(...){
-    if(ierr) *ierr = 1;
-  }
-}
-
-GMSH_API void gmshModelMeshRelaying_relax(const double myLambda, const int nIterOut, const int nIterIn, const double distMax, const double RATIO, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    gmsh::model::mesh::relaying_relax(myLambda, nIterOut, nIterIn, distMax, RATIO);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2617,6 +2647,39 @@ GMSH_API void gmshModelMeshSet_levelsets(const double * const * levelsets, const
     for(size_t i = 0; i < levelsets_nn; ++i)
       api_levelsets_[i] = std::vector<double>(levelsets[i], levelsets[i] + levelsets_n[i]);
     gmsh::model::mesh::set_levelsets(api_levelsets_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshWrite_DF(const char * filename_DF, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::write_DF(filename_DF);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshRead_DF(const char * filename_DF, const int pos_flag, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::read_DF(filename_DF, pos_flag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshRemove_small_features(const double l, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::remove_small_features(l);
   }
   catch(...){
     if(ierr) *ierr = 1;

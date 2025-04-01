@@ -97,7 +97,6 @@ double bez2lag [10][10] =
     1.11111111e-01, 2.22222222e-01}};
 
 
-
 // create a triangle with a unit area ...
 bool normalizeTargetArea(std::array<vec2, 3> &target)
 {
@@ -154,11 +153,16 @@ bool buildTrianglesAndTargetsFromElements(
   int NUMT  = perTriangleP2;
   int NUMT2 = (NUMT-4)/3;
 
-  const int p2_cp_19[19][3] = {{0, 3, 5}, {1, 4, 3}, {2, 5, 4}, {0, 1, 2},
+  const int p2_cp_13[13][4] = {{0, 3, 5}, {1, 4, 3}, {2, 5, 4}, {4,5,3},
+			       {0, 1, 5}, {0, 1, 4}, {0, 1, 3},
+			       {1, 2, 3}, {1, 2, 5}, {1, 2, 4},
+			       {2, 0, 4}, {2, 0, 3}, {2, 0, 5}};
+  
+  const int p2_cp_19[19][4] = {{0, 3, 5}, {1, 4, 3}, {2, 5, 4}, {0, 1, 2},
 			       {0, 1, 5}, {0, 1, 4}, {0, 1, 3}, {0, 3, 5}, {3, 1, 4},
 			       {1, 2, 3}, {1, 2, 5}, {1, 2, 4}, {3, 1, 4}, {5, 4, 2},
 			       {2, 0, 4}, {2, 0, 3}, {2, 0, 5}, {5, 4, 2}, {0, 3, 5}};
-
+  
   triIdealShapes.clear();
   triangles.clear();
 
@@ -182,6 +186,7 @@ bool buildTrianglesAndTargetsFromElements(
         std::array<vec2, 3> target = {qtarget[quad_dcp[k][0]],
                                       qtarget[quad_dcp[k][1]],
                                       qtarget[quad_dcp[k][2]]};
+	// 2DO --> control sizes 
         normalizeTargetArea(target);
         triIdealShapes.push_back(target);
       }

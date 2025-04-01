@@ -740,28 +740,36 @@ module gmsh
         gmshModelMeshConcentration_from_DF
     procedure, nopass :: advance_DF_in_time => &
         gmshModelMeshAdvance_DF_in_time
+    procedure, nopass :: init_DF => &
+        gmshModelMeshInit_DF
     procedure, nopass :: add_free_form => &
         gmshModelMeshAdd_free_form
-    procedure, nopass :: get_DF_position => &
-        gmshModelMeshGet_DF_position
-    procedure, nopass :: get_front_nodes_position => &
-        gmshModelMeshGet_front_nodes_position
+    procedure, nopass :: get_DF => &
+        gmshModelMeshGet_DF
     procedure, nopass :: get_nodes_position => &
         gmshModelMeshGet_nodes_position
     procedure, nopass :: reset_discrete_front => &
         gmshModelMeshReset_discrete_front
-    procedure, nopass :: relaying_relay => &
-        gmshModelMeshRelaying_relay
-    procedure, nopass :: restore_initial_mesh => &
-        gmshModelMeshRestore_initial_mesh
+    procedure, nopass :: relaying_and_relax => &
+        gmshModelMeshRelaying_and_relax
     procedure, nopass :: relaying_relax => &
         gmshModelMeshRelaying_relax
+    procedure, nopass :: set_boundary_from_mesh => &
+        gmshModelMeshSet_boundary_from_mesh
+    procedure, nopass :: restore_initial_mesh => &
+        gmshModelMeshRestore_initial_mesh
     procedure, nopass :: redist_front => &
         gmshModelMeshRedist_front
     procedure, nopass :: set_bnd_front => &
         gmshModelMeshSet_bnd_front
     procedure, nopass :: set_levelsets => &
         gmshModelMeshSet_levelsets
+    procedure, nopass :: write_DF => &
+        gmshModelMeshWrite_DF
+    procedure, nopass :: read_DF => &
+        gmshModelMeshRead_DF
+    procedure, nopass :: remove_small_features => &
+        gmshModelMeshRemove_small_features
   end type gmsh_model_mesh_t
 
   type, public :: gmsh_model_t
@@ -7474,13 +7482,17 @@ module gmsh
 
   !> Triangulate the points given in the `coord' vector as pairs of u, v
   !! coordinates, and return the node tags (with numbering starting at 1) of the
-  !! resulting triangles in `tri'.
+  !! resulting triangles in `tri'. If specified, `edges' contains constrained
+  !! edges in the mesh, given as pairs of nodes.
   subroutine gmshModelMeshTriangulate(coord, &
+                                      edges, &
                                       tri, &
                                       ierr)
     interface
     subroutine C_API(api_coord_, &
                      api_coord_n_, &
+                     api_edges_, &
+                     api_edges_n_, &
                      api_tri_, &
                      api_tri_n_, &
                      ierr_) &
@@ -7488,18 +7500,23 @@ module gmsh
       use, intrinsic :: iso_c_binding
       real(c_double), dimension(*) :: api_coord_
       integer(c_size_t), value, intent(in) :: api_coord_n_
+      integer(c_size_t), dimension(*) :: api_edges_
+      integer(c_size_t), value, intent(in) :: api_edges_n_
       type(c_ptr), intent(out) :: api_tri_
       integer(c_size_t), intent(out) :: api_tri_n_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     real(c_double), dimension(:), intent(in) :: coord
+    integer(c_size_t), dimension(:), intent(in) :: edges
     integer(c_size_t), dimension(:), allocatable, intent(out) :: tri
     integer(c_int), intent(out), optional :: ierr
     type(c_ptr) :: api_tri_
     integer(c_size_t) :: api_tri_n_
     call C_API(api_coord_=coord, &
          api_coord_n_=size_gmsh_double(coord), &
+         api_edges_=edges, &
+         api_edges_n_=size_gmsh_size(edges), &
          api_tri_=api_tri_, &
          api_tri_n_=api_tri_n_, &
          ierr_=ierr)
@@ -7543,77 +7560,128 @@ module gmsh
   end subroutine gmshModelMeshTetrahedralize
 
   !> Antoine put a comment here.
-  subroutine gmshModelMeshConcentration_from_DF(api_concentration, &
-                                                api_curvature, &
+  subroutine gmshModelMeshConcentration_from_DF(concentration_list, &
+                                                tension_table, &
+                                                concentration, &
+                                                curvature, &
                                                 ierr)
     interface
-    subroutine C_API(api_api_concentration_, &
-                     api_api_concentration_n_, &
-                     api_api_curvature_, &
-                     api_api_curvature_n_, &
+    subroutine C_API(api_concentration_list_, &
+                     api_concentration_list_n_, &
+                     api_tension_table_, &
+                     api_tension_table_n_, &
+                     api_concentration_, &
+                     api_concentration_n_, &
+                     api_curvature_, &
+                     api_curvature_n_, &
                      ierr_) &
       bind(C, name="gmshModelMeshConcentration_from_DF")
       use, intrinsic :: iso_c_binding
-      type(c_ptr), intent(out) :: api_api_concentration_
-      integer(c_size_t), intent(out) :: api_api_concentration_n_
-      type(c_ptr), intent(out) :: api_api_curvature_
-      integer(c_size_t) :: api_api_curvature_n_
+      integer(c_int), dimension(*) :: api_concentration_list_
+      integer(c_size_t), value, intent(in) :: api_concentration_list_n_
+      real(c_double), dimension(*) :: api_tension_table_
+      integer(c_size_t), value, intent(in) :: api_tension_table_n_
+      type(c_ptr), intent(out) :: api_concentration_
+      integer(c_size_t), intent(out) :: api_concentration_n_
+      type(c_ptr), intent(out) :: api_curvature_
+      integer(c_size_t) :: api_curvature_n_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    integer(c_int), dimension(:), allocatable, intent(out) :: api_concentration
-    real(c_double), dimension(:), allocatable, intent(out) :: api_curvature
+    integer(c_int), dimension(:), intent(in) :: concentration_list
+    real(c_double), dimension(:), intent(in) :: tension_table
+    integer(c_int), dimension(:), allocatable, intent(out) :: concentration
+    real(c_double), dimension(:), allocatable, intent(out) :: curvature
     integer(c_int), intent(out), optional :: ierr
-    type(c_ptr) :: api_api_concentration_
-    integer(c_size_t) :: api_api_concentration_n_
-    type(c_ptr) :: api_api_curvature_
-    integer(c_size_t) :: api_api_curvature_n_
-    call C_API(api_api_concentration_=api_api_concentration_, &
-         api_api_concentration_n_=api_api_concentration_n_, &
-         api_api_curvature_=api_api_curvature_, &
-         api_api_curvature_n_=api_api_curvature_n_, &
+    type(c_ptr) :: api_concentration_
+    integer(c_size_t) :: api_concentration_n_
+    type(c_ptr) :: api_curvature_
+    integer(c_size_t) :: api_curvature_n_
+    call C_API(api_concentration_list_=concentration_list, &
+         api_concentration_list_n_=size_gmsh_int(concentration_list), &
+         api_tension_table_=tension_table, &
+         api_tension_table_n_=size_gmsh_double(tension_table), &
+         api_concentration_=api_concentration_, &
+         api_concentration_n_=api_concentration_n_, &
+         api_curvature_=api_curvature_, &
+         api_curvature_n_=api_curvature_n_, &
          ierr_=ierr)
-    api_concentration = ovectorint_(api_api_concentration_, &
-      api_api_concentration_n_)
-    api_curvature = ovectordouble_(api_api_curvature_, &
-      api_api_curvature_n_)
+    concentration = ovectorint_(api_concentration_, &
+      api_concentration_n_)
+    curvature = ovectordouble_(api_curvature_, &
+      api_curvature_n_)
   end subroutine gmshModelMeshConcentration_from_DF
 
   !> Antoine put a comment here.
   subroutine gmshModelMeshAdvance_DF_in_time(dt, &
                                              velocity, &
-                                             front, &
+                                             epsilon, &
+                                             triple_slip, &
                                              ierr)
     interface
     subroutine C_API(dt, &
                      api_velocity_, &
                      api_velocity_n_, &
-                     front, &
+                     epsilon, &
+                     triple_slip, &
                      ierr_) &
       bind(C, name="gmshModelMeshAdvance_DF_in_time")
       use, intrinsic :: iso_c_binding
       real(c_double), value, intent(in) :: dt
       real(c_double), dimension(*) :: api_velocity_
       integer(c_size_t), value, intent(in) :: api_velocity_n_
-      integer(c_int), value, intent(in) :: front
+      real(c_double), value, intent(in) :: epsilon
+      integer(c_int), value, intent(in) :: triple_slip
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     real(c_double), intent(in) :: dt
     real(c_double), dimension(:), intent(in) :: velocity
-    logical, intent(in), optional :: front
+    real(c_double), intent(in), optional :: epsilon
+    logical, intent(in), optional :: triple_slip
     integer(c_int), intent(out), optional :: ierr
     call C_API(dt=real(dt, c_double), &
          api_velocity_=velocity, &
          api_velocity_n_=size_gmsh_double(velocity), &
-         front=optval_c_bool(.false., front), &
+         epsilon=optval_c_double(0., epsilon), &
+         triple_slip=optval_c_bool(.true., triple_slip), &
          ierr_=ierr)
   end subroutine gmshModelMeshAdvance_DF_in_time
+
+  !> Antoine put a comment here.
+  subroutine gmshModelMeshInit_DF(api_pos, &
+                                  api_concentration, &
+                                  ierr)
+    interface
+    subroutine C_API(api_api_pos_, &
+                     api_api_pos_n_, &
+                     api_api_concentration_, &
+                     api_api_concentration_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshInit_DF")
+      use, intrinsic :: iso_c_binding
+      real(c_double), dimension(*) :: api_api_pos_
+      integer(c_size_t), value, intent(in) :: api_api_pos_n_
+      integer(c_int), dimension(*) :: api_api_concentration_
+      integer(c_size_t), value, intent(in) :: api_api_concentration_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    real(c_double), dimension(:), intent(in) :: api_pos
+    integer(c_int), dimension(:), intent(in) :: api_concentration
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(api_api_pos_=api_pos, &
+         api_api_pos_n_=size_gmsh_double(api_pos), &
+         api_api_concentration_=api_concentration, &
+         api_api_concentration_n_=size_gmsh_int(api_concentration), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshInit_DF
 
   !> Antoine put a comment here.
   subroutine gmshModelMeshAdd_free_form(tag, &
                                         poly, &
                                         _corners, &
+                                        loop, &
                                         ierr)
     interface
     subroutine C_API(tag, &
@@ -7621,6 +7689,7 @@ module gmsh
                      api_poly_n_, &
                      api__corners_, &
                      api__corners_n_, &
+                     loop, &
                      ierr_) &
       bind(C, name="gmshModelMeshAdd_free_form")
       use, intrinsic :: iso_c_binding
@@ -7629,94 +7698,156 @@ module gmsh
       integer(c_size_t), value, intent(in) :: api_poly_n_
       integer(c_size_t), dimension(*) :: api__corners_
       integer(c_size_t), value, intent(in) :: api__corners_n_
+      integer(c_int), value, intent(in) :: loop
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer, intent(in) :: tag
     real(c_double), dimension(:), intent(in) :: poly
     integer(c_size_t), dimension(:), intent(in) :: _corners
+    logical, intent(in), optional :: loop
     integer(c_int), intent(out), optional :: ierr
     call C_API(tag=int(tag, c_int), &
          api_poly_=poly, &
          api_poly_n_=size_gmsh_double(poly), &
          api__corners_=_corners, &
          api__corners_n_=size_gmsh_size(_corners), &
+         loop=optval_c_bool(.true., loop), &
          ierr_=ierr)
   end subroutine gmshModelMeshAdd_free_form
 
   !> Antoine put a comment here.
-  subroutine gmshModelMeshGet_DF_position(api_position, &
-                                          api_tags, &
-                                          ierr)
+  subroutine gmshModelMeshGet_DF(api_d_pos, &
+                                 api_d_tags, &
+                                 api_d_ids, &
+                                 api_t_pos, &
+                                 api_t_tags, &
+                                 api_t_ids, &
+                                 DF_to_meshNodes, &
+                                 DF_to_mesh_parametric, &
+                                 meshNodes_to_DF, &
+                                 mesh_to_DF_parametric, &
+                                 ierr)
     interface
-    subroutine C_API(api_api_position_, &
-                     api_api_position_n_, &
-                     api_api_tags_, &
-                     api_api_tags_n_, &
+    subroutine C_API(api_api_d_pos_, &
+                     api_api_d_pos_n_, &
+                     api_api_d_tags_, &
+                     api_api_d_tags_n_, &
+                     api_api_d_ids_, &
+                     api_api_d_ids_n_, &
+                     api_api_t_pos_, &
+                     api_api_t_pos_n_, &
+                     api_api_t_tags_, &
+                     api_api_t_tags_n_, &
+                     api_api_t_ids_, &
+                     api_api_t_ids_n_, &
+                     api_DF_to_meshNodes_, &
+                     api_DF_to_meshNodes_n_, &
+                     api_DF_to_mesh_parametric_, &
+                     api_DF_to_mesh_parametric_n_, &
+                     api_meshNodes_to_DF_, &
+                     api_meshNodes_to_DF_n_, &
+                     api_mesh_to_DF_parametric_, &
+                     api_mesh_to_DF_parametric_n_, &
                      ierr_) &
-      bind(C, name="gmshModelMeshGet_DF_position")
+      bind(C, name="gmshModelMeshGet_DF")
       use, intrinsic :: iso_c_binding
-      type(c_ptr), intent(out) :: api_api_position_
-      integer(c_size_t) :: api_api_position_n_
-      type(c_ptr), intent(out) :: api_api_tags_
-      integer(c_size_t), intent(out) :: api_api_tags_n_
+      type(c_ptr), intent(out) :: api_api_d_pos_
+      integer(c_size_t) :: api_api_d_pos_n_
+      type(c_ptr), intent(out) :: api_api_d_tags_
+      integer(c_size_t), intent(out) :: api_api_d_tags_n_
+      type(c_ptr), intent(out) :: api_api_d_ids_
+      integer(c_size_t), intent(out) :: api_api_d_ids_n_
+      type(c_ptr), intent(out) :: api_api_t_pos_
+      integer(c_size_t) :: api_api_t_pos_n_
+      type(c_ptr), intent(out) :: api_api_t_tags_
+      integer(c_size_t), intent(out) :: api_api_t_tags_n_
+      type(c_ptr), intent(out) :: api_api_t_ids_
+      integer(c_size_t), intent(out) :: api_api_t_ids_n_
+      type(c_ptr), intent(out) :: api_DF_to_meshNodes_
+      integer(c_size_t), intent(out) :: api_DF_to_meshNodes_n_
+      type(c_ptr), intent(out) :: api_DF_to_mesh_parametric_
+      integer(c_size_t) :: api_DF_to_mesh_parametric_n_
+      type(c_ptr), intent(out) :: api_meshNodes_to_DF_
+      integer(c_size_t), intent(out) :: api_meshNodes_to_DF_n_
+      type(c_ptr), intent(out) :: api_mesh_to_DF_parametric_
+      integer(c_size_t) :: api_mesh_to_DF_parametric_n_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    real(c_double), dimension(:), allocatable, intent(out) :: api_position
-    integer(c_int), dimension(:), allocatable, intent(out) :: api_tags
+    real(c_double), dimension(:), allocatable, intent(out) :: api_d_pos
+    integer(c_int), dimension(:), allocatable, intent(out) :: api_d_tags
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: api_d_ids
+    real(c_double), dimension(:), allocatable, intent(out) :: api_t_pos
+    integer(c_int), dimension(:), allocatable, intent(out) :: api_t_tags
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: api_t_ids
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: DF_to_meshNodes
+    real(c_double), dimension(:), allocatable, intent(out) :: DF_to_mesh_parametric
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: meshNodes_to_DF
+    real(c_double), dimension(:), allocatable, intent(out) :: mesh_to_DF_parametric
     integer(c_int), intent(out), optional :: ierr
-    type(c_ptr) :: api_api_position_
-    integer(c_size_t) :: api_api_position_n_
-    type(c_ptr) :: api_api_tags_
-    integer(c_size_t) :: api_api_tags_n_
-    call C_API(api_api_position_=api_api_position_, &
-         api_api_position_n_=api_api_position_n_, &
-         api_api_tags_=api_api_tags_, &
-         api_api_tags_n_=api_api_tags_n_, &
+    type(c_ptr) :: api_api_d_pos_
+    integer(c_size_t) :: api_api_d_pos_n_
+    type(c_ptr) :: api_api_d_tags_
+    integer(c_size_t) :: api_api_d_tags_n_
+    type(c_ptr) :: api_api_d_ids_
+    integer(c_size_t) :: api_api_d_ids_n_
+    type(c_ptr) :: api_api_t_pos_
+    integer(c_size_t) :: api_api_t_pos_n_
+    type(c_ptr) :: api_api_t_tags_
+    integer(c_size_t) :: api_api_t_tags_n_
+    type(c_ptr) :: api_api_t_ids_
+    integer(c_size_t) :: api_api_t_ids_n_
+    type(c_ptr) :: api_DF_to_meshNodes_
+    integer(c_size_t) :: api_DF_to_meshNodes_n_
+    type(c_ptr) :: api_DF_to_mesh_parametric_
+    integer(c_size_t) :: api_DF_to_mesh_parametric_n_
+    type(c_ptr) :: api_meshNodes_to_DF_
+    integer(c_size_t) :: api_meshNodes_to_DF_n_
+    type(c_ptr) :: api_mesh_to_DF_parametric_
+    integer(c_size_t) :: api_mesh_to_DF_parametric_n_
+    call C_API(api_api_d_pos_=api_api_d_pos_, &
+         api_api_d_pos_n_=api_api_d_pos_n_, &
+         api_api_d_tags_=api_api_d_tags_, &
+         api_api_d_tags_n_=api_api_d_tags_n_, &
+         api_api_d_ids_=api_api_d_ids_, &
+         api_api_d_ids_n_=api_api_d_ids_n_, &
+         api_api_t_pos_=api_api_t_pos_, &
+         api_api_t_pos_n_=api_api_t_pos_n_, &
+         api_api_t_tags_=api_api_t_tags_, &
+         api_api_t_tags_n_=api_api_t_tags_n_, &
+         api_api_t_ids_=api_api_t_ids_, &
+         api_api_t_ids_n_=api_api_t_ids_n_, &
+         api_DF_to_meshNodes_=api_DF_to_meshNodes_, &
+         api_DF_to_meshNodes_n_=api_DF_to_meshNodes_n_, &
+         api_DF_to_mesh_parametric_=api_DF_to_mesh_parametric_, &
+         api_DF_to_mesh_parametric_n_=api_DF_to_mesh_parametric_n_, &
+         api_meshNodes_to_DF_=api_meshNodes_to_DF_, &
+         api_meshNodes_to_DF_n_=api_meshNodes_to_DF_n_, &
+         api_mesh_to_DF_parametric_=api_mesh_to_DF_parametric_, &
+         api_mesh_to_DF_parametric_n_=api_mesh_to_DF_parametric_n_, &
          ierr_=ierr)
-    api_position = ovectordouble_(api_api_position_, &
-      api_api_position_n_)
-    api_tags = ovectorint_(api_api_tags_, &
-      api_api_tags_n_)
-  end subroutine gmshModelMeshGet_DF_position
-
-  !> Antoine put a comment here.
-  subroutine gmshModelMeshGet_front_nodes_position(api_position, &
-                                                   front_nodes, &
-                                                   ierr)
-    interface
-    subroutine C_API(api_api_position_, &
-                     api_api_position_n_, &
-                     api_front_nodes_, &
-                     api_front_nodes_n_, &
-                     ierr_) &
-      bind(C, name="gmshModelMeshGet_front_nodes_position")
-      use, intrinsic :: iso_c_binding
-      type(c_ptr), intent(out) :: api_api_position_
-      integer(c_size_t) :: api_api_position_n_
-      type(c_ptr), intent(out) :: api_front_nodes_
-      integer(c_size_t), intent(out) :: api_front_nodes_n_
-      integer(c_int), intent(out), optional :: ierr_
-    end subroutine C_API
-    end interface
-    real(c_double), dimension(:), allocatable, intent(out) :: api_position
-    integer(c_int), dimension(:), allocatable, intent(out) :: front_nodes
-    integer(c_int), intent(out), optional :: ierr
-    type(c_ptr) :: api_api_position_
-    integer(c_size_t) :: api_api_position_n_
-    type(c_ptr) :: api_front_nodes_
-    integer(c_size_t) :: api_front_nodes_n_
-    call C_API(api_api_position_=api_api_position_, &
-         api_api_position_n_=api_api_position_n_, &
-         api_front_nodes_=api_front_nodes_, &
-         api_front_nodes_n_=api_front_nodes_n_, &
-         ierr_=ierr)
-    api_position = ovectordouble_(api_api_position_, &
-      api_api_position_n_)
-    front_nodes = ovectorint_(api_front_nodes_, &
-      api_front_nodes_n_)
-  end subroutine gmshModelMeshGet_front_nodes_position
+    api_d_pos = ovectordouble_(api_api_d_pos_, &
+      api_api_d_pos_n_)
+    api_d_tags = ovectorint_(api_api_d_tags_, &
+      api_api_d_tags_n_)
+    api_d_ids = ovectorsize_(api_api_d_ids_, &
+      api_api_d_ids_n_)
+    api_t_pos = ovectordouble_(api_api_t_pos_, &
+      api_api_t_pos_n_)
+    api_t_tags = ovectorint_(api_api_t_tags_, &
+      api_api_t_tags_n_)
+    api_t_ids = ovectorsize_(api_api_t_ids_, &
+      api_api_t_ids_n_)
+    DF_to_meshNodes = ovectorsize_(api_DF_to_meshNodes_, &
+      api_DF_to_meshNodes_n_)
+    DF_to_mesh_parametric = ovectordouble_(api_DF_to_mesh_parametric_, &
+      api_DF_to_mesh_parametric_n_)
+    meshNodes_to_DF = ovectorsize_(api_meshNodes_to_DF_, &
+      api_meshNodes_to_DF_n_)
+    mesh_to_DF_parametric = ovectordouble_(api_mesh_to_DF_parametric_, &
+      api_mesh_to_DF_parametric_n_)
+  end subroutine gmshModelMeshGet_DF
 
   !> Antoine put a comment here.
   subroutine gmshModelMeshGet_nodes_position(api_position, &
@@ -7757,17 +7888,85 @@ module gmsh
   end subroutine gmshModelMeshReset_discrete_front
 
   !> Antoine put a comment here.
-  subroutine gmshModelMeshRelaying_relay(ierr)
+  subroutine gmshModelMeshRelaying_and_relax(relax, &
+                                             ierr)
     interface
-    subroutine C_API(ierr_) &
-      bind(C, name="gmshModelMeshRelaying_relay")
+    subroutine C_API(relax, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshRelaying_and_relax")
       use, intrinsic :: iso_c_binding
+      real(c_double), value, intent(in) :: relax
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
+    real(c_double), intent(in) :: relax
     integer(c_int), intent(out), optional :: ierr
-    call C_API(ierr_=ierr)
-  end subroutine gmshModelMeshRelaying_relay
+    call C_API(relax=real(relax, c_double), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshRelaying_and_relax
+
+  !> Antoine put a comment here.
+  subroutine gmshModelMeshRelaying_relax(lambda_coeff, &
+                                         nIterOut, &
+                                         nIterIn, &
+                                         distMax, &
+                                         RATIO, &
+                                         ierr)
+    interface
+    subroutine C_API(lambda_coeff, &
+                     nIterOut, &
+                     nIterIn, &
+                     distMax, &
+                     RATIO, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshRelaying_relax")
+      use, intrinsic :: iso_c_binding
+      real(c_double), value, intent(in) :: lambda_coeff
+      integer(c_int), value, intent(in) :: nIterOut
+      integer(c_int), value, intent(in) :: nIterIn
+      real(c_double), value, intent(in) :: distMax
+      real(c_double), value, intent(in) :: RATIO
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    real(c_double), intent(in) :: lambda_coeff
+    integer, intent(in) :: nIterOut
+    integer, intent(in) :: nIterIn
+    real(c_double), intent(in) :: distMax
+    real(c_double), intent(in) :: RATIO
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(lambda_coeff=real(lambda_coeff, c_double), &
+         nIterOut=int(nIterOut, c_int), &
+         nIterIn=int(nIterIn, c_int), &
+         distMax=real(distMax, c_double), &
+         RATIO=real(RATIO, c_double), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshRelaying_relax
+
+  !> Antoine put a comment here.
+  subroutine gmshModelMeshSet_boundary_from_mesh(bnd_pos, &
+                                                 ierr)
+    interface
+    subroutine C_API(api_bnd_pos_, &
+                     api_bnd_pos_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshSet_boundary_from_mesh")
+      use, intrinsic :: iso_c_binding
+      type(c_ptr), intent(out) :: api_bnd_pos_
+      integer(c_size_t) :: api_bnd_pos_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    real(c_double), dimension(:), allocatable, intent(out) :: bnd_pos
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_bnd_pos_
+    integer(c_size_t) :: api_bnd_pos_n_
+    call C_API(api_bnd_pos_=api_bnd_pos_, &
+         api_bnd_pos_n_=api_bnd_pos_n_, &
+         ierr_=ierr)
+    bnd_pos = ovectordouble_(api_bnd_pos_, &
+      api_bnd_pos_n_)
+  end subroutine gmshModelMeshSet_boundary_from_mesh
 
   !> Antoine put a comment here.
   subroutine gmshModelMeshRestore_initial_mesh(ierr)
@@ -7781,44 +7980,6 @@ module gmsh
     integer(c_int), intent(out), optional :: ierr
     call C_API(ierr_=ierr)
   end subroutine gmshModelMeshRestore_initial_mesh
-
-  !> Antoine put a comment here.
-  subroutine gmshModelMeshRelaying_relax(myLambda, &
-                                         nIterOut, &
-                                         nIterIn, &
-                                         distMax, &
-                                         RATIO, &
-                                         ierr)
-    interface
-    subroutine C_API(myLambda, &
-                     nIterOut, &
-                     nIterIn, &
-                     distMax, &
-                     RATIO, &
-                     ierr_) &
-      bind(C, name="gmshModelMeshRelaying_relax")
-      use, intrinsic :: iso_c_binding
-      real(c_double), value, intent(in) :: myLambda
-      integer(c_int), value, intent(in) :: nIterOut
-      integer(c_int), value, intent(in) :: nIterIn
-      real(c_double), value, intent(in) :: distMax
-      real(c_double), value, intent(in) :: RATIO
-      integer(c_int), intent(out), optional :: ierr_
-    end subroutine C_API
-    end interface
-    real(c_double), intent(in) :: myLambda
-    integer, intent(in) :: nIterOut
-    integer, intent(in) :: nIterIn
-    real(c_double), intent(in) :: distMax
-    real(c_double), intent(in) :: RATIO
-    integer(c_int), intent(out), optional :: ierr
-    call C_API(myLambda=real(myLambda, c_double), &
-         nIterOut=int(nIterOut, c_int), &
-         nIterIn=int(nIterIn, c_int), &
-         distMax=real(distMax, c_double), &
-         RATIO=real(RATIO, c_double), &
-         ierr_=ierr)
-  end subroutine gmshModelMeshRelaying_relax
 
   !> Antoine put a comment here.
   subroutine gmshModelMeshRedist_front(lc, &
@@ -7884,6 +8045,65 @@ module gmsh
          api_levelsets_nn_=api_levelsets_nn_, &
          ierr_=ierr)
   end subroutine gmshModelMeshSet_levelsets
+
+  !> Antoine put a comment here.
+  subroutine gmshModelMeshWrite_DF(filename_DF, &
+                                   ierr)
+    interface
+    subroutine C_API(filename_DF, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshWrite_DF")
+      use, intrinsic :: iso_c_binding
+      character(len=1, kind=c_char), dimension(*), intent(in) :: filename_DF
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    character(len=*), intent(in) :: filename_DF
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(filename_DF=istring_(filename_DF), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshWrite_DF
+
+  !> Antoine put a comment here.
+  subroutine gmshModelMeshRead_DF(filename_DF, &
+                                  pos_flag, &
+                                  ierr)
+    interface
+    subroutine C_API(filename_DF, &
+                     pos_flag, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshRead_DF")
+      use, intrinsic :: iso_c_binding
+      character(len=1, kind=c_char), dimension(*), intent(in) :: filename_DF
+      integer(c_int), value, intent(in) :: pos_flag
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    character(len=*), intent(in) :: filename_DF
+    logical, intent(in), optional :: pos_flag
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(filename_DF=istring_(filename_DF), &
+         pos_flag=optval_c_bool(.true., pos_flag), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshRead_DF
+
+  !> Antoine put a comment here.
+  subroutine gmshModelMeshRemove_small_features(l, &
+                                                ierr)
+    interface
+    subroutine C_API(l, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshRemove_small_features")
+      use, intrinsic :: iso_c_binding
+      real(c_double), value, intent(in) :: l
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    real(c_double), intent(in) :: l
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(l=real(l, c_double), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshRemove_small_features
 
   !> Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
   !! the tag explicitly; otherwise a new tag is assigned automatically. Return

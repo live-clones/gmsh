@@ -443,6 +443,8 @@ static PolyMesh::Face *Walk(PolyMesh::Face *f, double x, double y)
   return nullptr;
 }
 
+
+
 // recover an edge that goes from v_start --> v_end
 // ----------------------------------- assume it's internal !!!
 
@@ -453,12 +455,12 @@ static int intersect(PolyMesh::Vertex *v0, PolyMesh::Vertex *v1,
     robustPredicates::orient2d(v0->position, v1->position, b0->position);
   double s1 =
     robustPredicates::orient2d(v0->position, v1->position, b1->position);
-  if(s0 * s1 >= 0) return 0;
+  if((s0 >= 0 && s1 >= 0) || (s0 <= 0 && s1 <= 0)) return 0;
   double t0 =
     robustPredicates::orient2d(b0->position, b1->position, v0->position);
   double t1 =
     robustPredicates::orient2d(b0->position, b1->position, v1->position);
-  if(t0 * t1 >= 0) return 0;
+  if((t0 >= 0 && t1 >= 0) || (t0 <= 0 && t1 <= 0)) return 0;
   return 1;
 }
 
@@ -521,10 +523,10 @@ static int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
       }
     }
   }
-
+  
   int nbIntersection = _list.size();
   // printf("%d intersections\n", nbIntersection);
-  // int K = 100;
+  int K = 100;
   while(!_list.empty()) {
     he = *_list.begin();
     _list.erase(_list.begin());
@@ -542,6 +544,7 @@ static int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
     else
       _list.push_back(he);
   }
+  
   return nbIntersection;
 }
 
@@ -931,3 +934,161 @@ int PolyMeshDelaunayize (int faceTag){
 // -----------------------------------
 
 
+int meshTriangulate2d(const std::vector<double> &coord,
+                      std::vector<std::size_t> &tri,
+                      const std::vector<size_t> *rec)
+{
+  PolyMesh *pm = new PolyMesh;
+  SBoundingBox3d bb;
+  for(size_t i = 0; i < coord.size(); i += 2) {
+    bb += SPoint3(coord[i], coord[i + 1], 0);
+  }
+  bb *= 1.3;
+  pm->initialize_rectangle(bb.min().x(), bb.max().x(), bb.min().y(),
+                           bb.max().y());
+
+  PolyMesh::Face *f = pm->faces[0];
+  for(size_t i = 0; i < coord.size(); i += 2) {
+    double x = coord[i];
+    double y = coord[i + 1];
+    // find face in which lies x,y
+    f = Walk(f, x, y);
+    // split f and then swap edges to recover delaunayness
+    pm->split_triangle(-1, x, y, 0, f, delaunayEdgeCriterionPlaneIsotropic,
+                       nullptr);
+    pm->vertices[pm->vertices.size() - 1]->data = i / 2 + 1;
+  }
+  int iter = 0;
+  while(1) {
+    int nbs = 0;
+    for(auto he : pm->hedges) {
+      if(he->opposite && (he->v->data == -1 || he->opposite->v->data == -1)) {
+        if(intersect(he->v, he->next->v, he->next->next->v,
+                     he->opposite->next->next->v)) {
+          pm->swap_edge(he);
+          nbs++;
+        }
+      }
+    }
+    if(nbs == 0) break;
+    if(iter++ > 30) break;
+  }
+  if(rec) {
+    std::vector<bool> done(rec->size() / 2, false);
+    while(std::find(done.begin(), done.end(), false) != done.end()) {
+      for(size_t i = 0; i < rec->size(); i += 2) {
+        // printf("recovering edge %lu %lu\n", (*rec)[i], (*rec)[i + 1]);
+        // printf(" at %lu %lu\n", pm->vertices[4 + (*rec)[i]]->data,
+        //       pm->vertices[4 + (*rec)[i + 1]]->data);
+        // printf("pos %f, %f and %f, %f \n", pm->vertices[4 + (*rec)[i]]->position.x(),
+        //         pm->vertices[4 + (*rec)[i]]->position.y(),
+        //         pm->vertices[4 + (*rec)[i + 1]]->position.x(),
+        //         pm->vertices[4 + (*rec)[i + 1]]->position.y());
+        if(recover_edge(pm, pm->vertices[4 + (*rec)[i]],
+                        pm->vertices[4 + (*rec)[i + 1]]))
+          Msg::Debug("impossible to recover an edge");
+        else {
+          PolyMesh::HalfEdge *he_ = pm->getEdge(pm->vertices[4 + (*rec)[i]],
+                                                pm->vertices[4 + (*rec)[i + 1]]);
+          he_->data = -10;
+          he_ = pm->getEdge(pm->vertices[4 + (*rec)[i + 1]],
+                            pm->vertices[4 + (*rec)[i]]);
+          he_->data = -10;
+        }
+      }
+      pm->print4debug(0);
+      //check if all rec edges still in the mesh
+      for(size_t i = 0; i < rec->size(); i += 2) {
+        // printf("checking if  %lu %lu is still there\n", (*rec)[i], (*rec)[i + 1]);
+        // printf(" at %lu %lu\n", pm->vertices[4 + (*rec)[i]]->data,
+        //       pm->vertices[4 + (*rec)[i + 1]]->data);
+        // printf("pos %f, %f and %f, %f \n", pm->vertices[4 + (*rec)[i]]->position.x(),
+                // pm->vertices[4 + (*rec)[i]]->position.y(),
+                // pm->vertices[4 + (*rec)[i + 1]]->position.x(),
+                // pm->vertices[4 + (*rec)[i + 1]]->position.y());
+        PolyMesh::HalfEdge *he_ = pm->getEdge(pm->vertices[4 + (*rec)[i]],
+                                              pm->vertices[4 + (*rec)[i + 1]]);
+        
+        PolyMesh::HalfEdge *he2 = pm->getEdge(pm->vertices[4 + (*rec)[i + 1]],
+                          pm->vertices[4 + (*rec)[i]]);
+        if(he_==nullptr && he2==nullptr){ 
+          printf(" \n \n edge %lu %lu not found \n \n ", (*rec)[i], (*rec)[i + 1]);
+          done[i/2] = true; //false; FIXME
+          // exit(1);
+        }else{
+          done[i/2] = true;
+        }
+      }
+    }
+  }
+
+  std::stack<PolyMesh::Face *> _f;
+  for(auto t : pm->faces) {
+    int i0 = t->he->v->data;
+    int i1 = t->he->next->v->data;
+    int i2 = t->he->next->next->v->data;
+    if(i0 < 0 || i1 < 0 || i2 < 0) {
+      _f.push(t);
+      t->data = -10;
+      break;
+    }
+  }
+
+  while(!_f.empty()) {
+    PolyMesh::Face *f = _f.top();
+    _f.pop();
+    if(f->he->opposite && f->he->opposite->data == -1 &&
+       f->he->opposite->f->data == -1) {
+      _f.push(f->he->opposite->f);
+      f->he->opposite->f->data = -10;
+    }
+    if(f->he->next->opposite && f->he->next->opposite->data == -1 &&
+       f->he->next->opposite->f->data == -1) {
+      _f.push(f->he->next->opposite->f);
+      f->he->next->opposite->f->data = -10;
+    }
+    if(f->he->next->next->opposite && f->he->next->next->opposite->data == -1 &&
+       f->he->next->next->opposite->f->data == -1) {
+      _f.push(f->he->next->next->opposite->f);
+      f->he->next->next->opposite->f->data = -10;
+    }
+  }
+
+  for(auto t : pm->faces) {
+    int i0 = t->he->v->data;
+    int i1 = t->he->next->v->data;
+    int i2 = t->he->next->next->v->data;
+    if(i0 > 0 && i1 > 0 && i2 > 0 && (t->data == -10 || t->data == -1)) { // (t->data == -1){
+      tri.push_back(i0);
+      tri.push_back(i1);
+      tri.push_back(i2);
+    }
+  }
+
+  
+
+  if(rec) {
+    for(size_t i = 0; i < rec->size(); i += 2) {
+      // printf("checking if  %lu %lu is still there\n", (*rec)[i], (*rec)[i + 1]);
+      // printf(" at %lu %lu\n", pm->vertices[4 + (*rec)[i]]->data,
+      //        pm->vertices[4 + (*rec)[i + 1]]->data);
+      // printf("pos %f, %f and %f, %f \n", pm->vertices[4 + (*rec)[i]]->position.x(),
+      //         pm->vertices[4 + (*rec)[i]]->position.y(),
+      //         pm->vertices[4 + (*rec)[i + 1]]->position.x(),
+      //         pm->vertices[4 + (*rec)[i + 1]]->position.y());
+      PolyMesh::HalfEdge *he_ = pm->getEdge(pm->vertices[4 + (*rec)[i]],
+                                            pm->vertices[4 + (*rec)[i + 1]]);
+      
+      PolyMesh::HalfEdge *he2 = pm->getEdge(pm->vertices[4 + (*rec)[i + 1]],
+                        pm->vertices[4 + (*rec)[i]]);
+      if(he_==nullptr && he2==nullptr){ 
+        printf(" \n \n edge %lu %lu not found \n \n ", (*rec)[i], (*rec)[i + 1]);
+        // exit(1);
+      }
+    }
+  }
+
+  delete pm;
+
+  return 0;
+}

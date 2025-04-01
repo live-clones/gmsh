@@ -894,7 +894,7 @@ namespace WinslowUntangler {
 
         // Setup of the LBFGS solver
         alglib::ae_int_t N = dim * NV;
-        alglib::ae_int_t corr = 3; // Num of corrections in the scheme in [3,7]
+        alglib::ae_int_t corr = 15; // Num of corrections in the scheme in [3,7]
         alglib::minlbfgsstate state;
         alglib::minlbfgsreport rep;
 	minlbfgscreate(N, corr, x, state);
