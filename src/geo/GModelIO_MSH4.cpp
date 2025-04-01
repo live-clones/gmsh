@@ -4261,6 +4261,33 @@ struct EntitiesToSaveAndElementsSubsets {
                                      elementsToSaveByEntity, regions);
     fillElementsToSaveForOverlaps<2>(model, partitionToSave,
                                      elementsToSaveByEntity, faces);
+
+    for (auto edge: edges) {
+      partitionEdge* pe = dynamic_cast<partitionEdge*>(edge);
+      if (!pe) continue;
+      auto parts = pe->getPartitions();
+      if (std::find(parts.begin(), parts.end(), partitionToSave) == parts.end()) {
+        elementsToSaveByEntity.insert({edge, std::unordered_set<MElement*>()});
+      }
+    }
+    for (auto face: faces) {
+      partitionFace* pf = dynamic_cast<partitionFace*>(face);
+      if (!pf) continue;
+      auto parts = pf->getPartitions();
+      if (std::find(parts.begin(), parts.end(), partitionToSave) == parts.end()) {
+        elementsToSaveByEntity.insert({face, std::unordered_set<MElement*>()});
+      }
+    }
+    for (auto region: regions) {
+      partitionRegion* pr = dynamic_cast<partitionRegion*>(region);
+      if (!pr) continue;
+      auto parts = pr->getPartitions();
+      if (std::find(parts.begin(), parts.end(), partitionToSave) == parts.end()) {
+        elementsToSaveByEntity.insert({region, std::unordered_set<MElement*>()});
+      }
+    }
+
+
   }
 };
 
@@ -4330,11 +4357,20 @@ getElementsToSaveByType(GModel *const model, FILE *fp, bool partitioned,
       continue;
 
     int entityTag = edge->tag();
-
-    numElements += edge->lines.size();
-    for(std::size_t i = 0; i < edge->lines.size(); i++) {
-      std::pair<int, int> p(entityTag, edge->lines[i]->getTypeForMSH());
-      elementsByType[1][p].push_back(edge->lines[i]);
+    auto restricted = elementsToSaveByEntity.find(edge);
+    if (restricted != elementsToSaveByEntity.end()) {
+      numElements += restricted->second.size();
+      for(auto element : restricted->second) {
+        std::pair<int, int> p(entityTag, element->getTypeForMSH());
+        elementsByType[1][p].push_back(element);
+      }
+    }
+    else if(isParititionedOnMe(edge)) {
+      numElements += edge->lines.size();
+      for(std::size_t i = 0; i < edge->lines.size(); i++) {
+        std::pair<int, int> p(entityTag, edge->lines[i]->getTypeForMSH());
+        elementsByType[1][p].push_back(edge->lines[i]);
+      }
     }
   }
 
