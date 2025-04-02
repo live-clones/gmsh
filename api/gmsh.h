@@ -1940,11 +1940,6 @@ namespace gmsh { // Top-level functions
       // Antoine put a comment here.
       GMSH_API void set_boundary_from_mesh(std::vector<double> & bnd_pos);
 
-      // gmsh::model::mesh::restore_initial_mesh
-      //
-      // Antoine put a comment here.
-      GMSH_API void restore_initial_mesh();
-
       // gmsh::model::mesh::redist_front
       //
       // Antoine put a comment here.

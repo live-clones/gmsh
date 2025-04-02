@@ -756,8 +756,6 @@ module gmsh
         gmshModelMeshRelaying_relax
     procedure, nopass :: set_boundary_from_mesh => &
         gmshModelMeshSet_boundary_from_mesh
-    procedure, nopass :: restore_initial_mesh => &
-        gmshModelMeshRestore_initial_mesh
     procedure, nopass :: redist_front => &
         gmshModelMeshRedist_front
     procedure, nopass :: set_bnd_front => &
@@ -7967,19 +7965,6 @@ module gmsh
     bnd_pos = ovectordouble_(api_bnd_pos_, &
       api_bnd_pos_n_)
   end subroutine gmshModelMeshSet_boundary_from_mesh
-
-  !> Antoine put a comment here.
-  subroutine gmshModelMeshRestore_initial_mesh(ierr)
-    interface
-    subroutine C_API(ierr_) &
-      bind(C, name="gmshModelMeshRestore_initial_mesh")
-      use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out), optional :: ierr_
-    end subroutine C_API
-    end interface
-    integer(c_int), intent(out), optional :: ierr
-    call C_API(ierr_=ierr)
-  end subroutine gmshModelMeshRestore_initial_mesh
 
   !> Antoine put a comment here.
   subroutine gmshModelMeshRedist_front(lc, &

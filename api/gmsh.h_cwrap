@@ -3406,16 +3406,6 @@ namespace gmsh { // Top-level functions
         bnd_pos.assign(api_bnd_pos_, api_bnd_pos_ + api_bnd_pos_n_); gmshFree(api_bnd_pos_);
       }
 
-      // gmsh::model::mesh::restore_initial_mesh
-      //
-      // Antoine put a comment here.
-      inline void restore_initial_mesh()
-      {
-        int ierr = 0;
-        gmshModelMeshRestore_initial_mesh(&ierr);
-        if(ierr) throwLastError();
-      }
-
       // gmsh::model::mesh::redist_front
       //
       // Antoine put a comment here.

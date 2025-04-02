@@ -2606,17 +2606,6 @@ GMSH_API void gmshModelMeshSet_boundary_from_mesh(double ** bnd_pos, size_t * bn
   }
 }
 
-GMSH_API void gmshModelMeshRestore_initial_mesh(int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    gmsh::model::mesh::restore_initial_mesh();
-  }
-  catch(...){
-    if(ierr) *ierr = 1;
-  }
-}
-
 GMSH_API void gmshModelMeshRedist_front(const double lc, int * ierr)
 {
   if(ierr) *ierr = 0;

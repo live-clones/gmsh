@@ -4808,20 +4808,6 @@ function set_boundary_from_mesh()
 end
 
 """
-    gmsh.model.mesh.restore_initial_mesh()
-
-Antoine put a comment here.
-"""
-function restore_initial_mesh()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshRestore_initial_mesh, gmsh.lib), Cvoid,
-          (Ptr{Cint},),
-          ierr)
-    ierr[] != 0 && error(gmsh.logger.getLastError())
-    return nothing
-end
-
-"""
     gmsh.model.mesh.redist_front(lc)
 
 Antoine put a comment here.

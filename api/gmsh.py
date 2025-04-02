@@ -5430,19 +5430,6 @@ class model:
             return _ovectordouble(api_bnd_pos_, api_bnd_pos_n_.value)
 
         @staticmethod
-        def restore_initial_mesh():
-            """
-            gmsh.model.mesh.restore_initial_mesh()
-
-            Antoine put a comment here.
-            """
-            ierr = c_int()
-            lib.gmshModelMeshRestore_initial_mesh(
-                byref(ierr))
-            if ierr.value != 0:
-                raise Exception(logger.getLastError())
-
-        @staticmethod
         def redist_front(lc):
             """
             gmsh.model.mesh.redist_front(lc)

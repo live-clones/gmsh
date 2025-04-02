@@ -1714,9 +1714,6 @@ GMSH_API void gmshModelMeshSet_boundary_from_mesh(double ** bnd_pos, size_t * bn
                                                   int * ierr);
 
 /* Antoine put a comment here. */
-GMSH_API void gmshModelMeshRestore_initial_mesh(int * ierr);
-
-/* Antoine put a comment here. */
 GMSH_API void gmshModelMeshRedist_front(const double lc,
                                         int * ierr);
 
