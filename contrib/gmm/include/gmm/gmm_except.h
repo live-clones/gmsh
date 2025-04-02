@@ -63,7 +63,7 @@ namespace gmm {
     int errorLevel_;
   };
 
-#ifdef GETFEM_HAVE_PRETTY_FUNCTION
+#ifdef GMM_HAVE_PRETTY_FUNCTION
 #  define GMM_PRETTY_FUNCTION __PRETTY_FUNCTION__
 #elif _MSC_VER
 #  define GMM_PRETTY_FUNCTION __FUNCTION__
@@ -394,7 +394,7 @@ inline void GMM_THROW() {}
   //     exit(1);
   //   }
 
-#if defined(__GNUC__) && (__GNUC__ > 3)
+#if defined(__GNUC__) && (__GNUC__ > 3) && !defined(__clang__)
 # define GMM_SET_EXCEPTION_DEBUG                                \
   std::set_terminate(__gnu_cxx::__verbose_terminate_handler);
 #else

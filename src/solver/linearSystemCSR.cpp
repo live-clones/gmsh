@@ -437,7 +437,7 @@ void linearSystemCSR<std::complex<double> >::getMatrix(INDEX_TYPE *&jptr,
 #if defined(HAVE_GMM)
 
 #undef BB // can be defined by FlGui.h, and clashes with gmm arg name
-#include "gmm.h"
+#include <gmm/gmm.h>
 
 template <> int linearSystemCSRGmm<double>::systemSolve()
 {

@@ -45,14 +45,14 @@
 namespace gmm {
 
   /* ******************************************************************** */
-  /*		                                         		  */
-  /*		Generic algorithms                           		  */
-  /*		                                         		  */
+  /*                                                                      */
+  /*            Generic algorithms                                        */
+  /*                                                                      */
   /* ******************************************************************** */
 
 
   /* ******************************************************************** */
-  /*		Miscellaneous                           		  */
+  /*            Miscellaneous                                             */
   /* ******************************************************************** */
 
   /** clear (fill with zeros) a vector or matrix. */
@@ -65,7 +65,8 @@ namespace gmm {
   { linalg_traits<L>::do_clear(linalg_const_cast(l)); }
 
   ///@endcond
-  /** count the number of non-zero entries of a vector or matrix. */  template <typename L> inline size_type nnz(const L& l)
+  /** count the number of non-zero entries of a vector or matrix. */
+  template <typename L> inline size_type nnz(const L& l)
   { return nnz(l, typename linalg_traits<L>::linalg_type()); }
 
   ///@cond DOXY_SHOW_ALL_FUNCTIONS
@@ -78,7 +79,7 @@ namespace gmm {
 
   template <typename L> inline size_type nnz(const L& l, abstract_matrix) {
     return nnz(l,  typename principal_orientation_type<typename
-	       linalg_traits<L>::sub_orientation>::potype());
+               linalg_traits<L>::sub_orientation>::potype());
   }
 
   template <typename L> inline size_type nnz(const L& l, row_major) {
@@ -113,16 +114,16 @@ namespace gmm {
 
   template <typename L> inline // to be optimized for dense vectors ...
   void fill(L& l,  typename gmm::linalg_traits<L>::value_type x,
-		   abstract_vector) {
+            abstract_vector) {
     for (size_type i = 0; i < vect_size(l); ++i) l[i] = x;
   }
 
   template <typename L> inline // to be optimized for dense matrices ...
   void fill(L& l, typename gmm::linalg_traits<L>::value_type x,
-		   abstract_matrix) {
+            abstract_matrix) {
     for (size_type i = 0; i < mat_nrows(l); ++i)
       for (size_type j = 0; j < mat_ncols(l); ++j)
-	l(i,j) = x;
+        l(i,j) = x;
   }
 
   /** fill a vector or matrix with random value (uniform [-1,1]). */
@@ -132,7 +133,7 @@ namespace gmm {
   ///@cond DOXY_SHOW_ALL_FUNCTIONS
   template <typename L> inline void fill_random(const L& l) {
     fill_random(linalg_const_cast(l),
-		typename linalg_traits<L>::linalg_type());
+                typename linalg_traits<L>::linalg_type());
   }
 
   template <typename L> inline void fill_random(L& l, abstract_vector) {
@@ -143,7 +144,7 @@ namespace gmm {
   template <typename L> inline void fill_random(L& l, abstract_matrix) {
     for (size_type i = 0; i < mat_nrows(l); ++i)
       for (size_type j = 0; j < mat_ncols(l); ++j)
-	l(i,j) = gmm::random(typename linalg_traits<L>::value_type());
+        l(i,j) = gmm::random(typename linalg_traits<L>::value_type());
   }
 
   ///@endcond
@@ -157,19 +158,19 @@ namespace gmm {
 
   template <typename L> inline void fill_random(const L& l, double cfill) {
     fill_random(linalg_const_cast(l), cfill,
-		typename linalg_traits<L>::linalg_type());
+                typename linalg_traits<L>::linalg_type());
   }
 
   template <typename L> inline
   void fill_random(L& l, double cfill, abstract_vector) {
     typedef typename linalg_traits<L>::value_type T;
     size_type ntot = std::min(vect_size(l),
-			      size_type(double(vect_size(l))*cfill) + 1);
+                              size_type(double(vect_size(l))*cfill) + 1);
     for (size_type nb = 0; nb < ntot;) {
       size_type i = gmm::irandom(vect_size(l));
       if (l[i] == T(0)) {
-	l[i] = gmm::random(typename linalg_traits<L>::value_type());
-	++nb;
+        l[i] = gmm::random(typename linalg_traits<L>::value_type());
+        ++nb;
       }
     }
   }
@@ -177,7 +178,7 @@ namespace gmm {
   template <typename L> inline
   void fill_random(L& l, double cfill, abstract_matrix) {
     fill_random(l, cfill, typename principal_orientation_type<typename
-		linalg_traits<L>::sub_orientation>::potype());
+                linalg_traits<L>::sub_orientation>::potype());
   }
 
   template <typename L> inline
@@ -253,7 +254,7 @@ namespace gmm {
 
 
   /* ******************************************************************** */
-  /*		Scalar product                             		  */
+  /*            Scalar product                                            */
   /* ******************************************************************** */
 
   ///@endcond
@@ -264,8 +265,8 @@ namespace gmm {
     GMM_ASSERT2(vect_size(v1) == vect_size(v2), "dimensions mismatch, "
                 << vect_size(v1) << " !=" << vect_size(v2));
     return vect_sp(v1, v2,
-		   typename linalg_traits<V1>::storage_type(),
-		   typename linalg_traits<V2>::storage_type());
+                   typename linalg_traits<V1>::storage_type(),
+                   typename linalg_traits<V2>::storage_type());
   }
 
   /** scalar product between two vectors, using a matrix.
@@ -277,7 +278,7 @@ namespace gmm {
   typename strongest_value_type3<V1,V2,MATSP>::value_type
     vect_sp(const MATSP &ps, const V1 &v1, const V2 &v2) {
     return vect_sp_with_mat(ps, v1, v2,
-			    typename linalg_traits<MATSP>::sub_orientation());
+                            typename linalg_traits<MATSP>::sub_orientation());
   }
   ///@cond DOXY_SHOW_ALL_FUNCTIONS
 
@@ -285,16 +286,15 @@ namespace gmm {
     typename strongest_value_type3<V1,V2,MATSP>::value_type
     vect_sp_with_mat(const MATSP &ps, const V1 &v1, const V2 &v2, row_major) {
     return vect_sp_with_matr(ps, v1, v2,
-			     typename linalg_traits<V2>::storage_type());
+                             typename linalg_traits<V2>::storage_type());
   }
 
   template <typename MATSP, typename V1, typename V2> inline
     typename strongest_value_type3<V1,V2,MATSP>::value_type
     vect_sp_with_matr(const MATSP &ps, const V1 &v1, const V2 &v2,
-		      abstract_sparse) {
+                      abstract_sparse) {
     GMM_ASSERT2(vect_size(v1) == mat_ncols(ps) &&
                 vect_size(v2) == mat_nrows(ps), "dimensions mismatch");
-    mat_nrows(ps);
     typename linalg_traits<V2>::const_iterator
       it = vect_const_begin(v2), ite = vect_const_end(v2);
     typename strongest_value_type3<V1,V2,MATSP>::value_type res(0);
@@ -306,13 +306,13 @@ namespace gmm {
   template <typename MATSP, typename V1, typename V2> inline
     typename strongest_value_type3<V1,V2,MATSP>::value_type
     vect_sp_with_matr(const MATSP &ps, const V1 &v1, const V2 &v2,
-		      abstract_skyline)
+                      abstract_skyline)
   { return vect_sp_with_matr(ps, v1, v2, abstract_sparse()); }
 
   template <typename MATSP, typename V1, typename V2> inline
     typename strongest_value_type3<V1,V2,MATSP>::value_type
     vect_sp_with_matr(const MATSP &ps, const V1 &v1, const V2 &v2,
-		      abstract_dense) {
+                      abstract_dense) {
     GMM_ASSERT2(vect_size(v1) == mat_ncols(ps) &&
                 vect_size(v2) == mat_nrows(ps), "dimensions mismatch");
     typename linalg_traits<V2>::const_iterator
@@ -332,13 +332,13 @@ namespace gmm {
   typename strongest_value_type3<V1,V2,MATSP>::value_type
   vect_sp_with_mat(const MATSP &ps, const V1 &v1, const V2 &v2,col_major){
     return vect_sp_with_matc(ps, v1, v2,
-			     typename linalg_traits<V1>::storage_type());
+                             typename linalg_traits<V1>::storage_type());
   }
 
   template <typename MATSP, typename V1, typename V2> inline
     typename strongest_value_type3<V1,V2,MATSP>::value_type
     vect_sp_with_matc(const MATSP &ps, const V1 &v1, const V2 &v2,
-		      abstract_sparse) {
+                      abstract_sparse) {
     GMM_ASSERT2(vect_size(v1) == mat_ncols(ps) &&
                 vect_size(v2) == mat_nrows(ps), "dimensions mismatch");
     typename linalg_traits<V1>::const_iterator
@@ -352,13 +352,13 @@ namespace gmm {
   template <typename MATSP, typename V1, typename V2> inline
     typename strongest_value_type3<V1,V2,MATSP>::value_type
     vect_sp_with_matc(const MATSP &ps, const V1 &v1, const V2 &v2,
-		      abstract_skyline)
+                      abstract_skyline)
   { return vect_sp_with_matc(ps, v1, v2, abstract_sparse()); }
 
   template <typename MATSP, typename V1, typename V2> inline
     typename strongest_value_type3<V1,V2,MATSP>::value_type
     vect_sp_with_matc(const MATSP &ps, const V1 &v1, const V2 &v2,
-		      abstract_dense) {
+                      abstract_dense) {
     GMM_ASSERT2(vect_size(v1) == mat_ncols(ps) &&
                 vect_size(v2) == mat_nrows(ps), "dimensions mismatch");
     typename linalg_traits<V1>::const_iterator
@@ -377,7 +377,7 @@ namespace gmm {
   template <typename MATSP, typename V1, typename V2> inline
   typename strongest_value_type3<V1,V2,MATSP>::value_type
   vect_sp_with_mat(const MATSP &ps, const V1 &v1, const V2 &v2,
-		   abstract_null_type) {
+                   abstract_null_type) {
     typename temporary_vector<V1>::vector_type w(mat_nrows(ps));
     GMM_WARNING2("Warning, a temporary is used in scalar product\n");
     mult(ps, v1, w);
@@ -386,7 +386,7 @@ namespace gmm {
 
   template <typename IT1, typename IT2> inline
   typename strongest_numeric_type<typename std::iterator_traits<IT1>::value_type,
-				  typename std::iterator_traits<IT2>::value_type>::T
+                                  typename std::iterator_traits<IT2>::value_type>::T
   vect_sp_dense_(IT1 it, IT1 ite, IT2 it2) {
     typename strongest_numeric_type<typename std::iterator_traits<IT1>::value_type,
       typename std::iterator_traits<IT2>::value_type>::T res(0);
@@ -396,10 +396,10 @@ namespace gmm {
 
   template <typename IT1, typename V> inline
     typename strongest_numeric_type<typename std::iterator_traits<IT1>::value_type,
-				    typename linalg_traits<V>::value_type>::T
+                                    typename linalg_traits<V>::value_type>::T
     vect_sp_sparse_(IT1 it, IT1 ite, const V &v) {
       typename strongest_numeric_type<typename std::iterator_traits<IT1>::value_type,
-	typename linalg_traits<V>::value_type>::T res(0);
+                                      typename linalg_traits<V>::value_type>::T res(0);
     for (; it != ite; ++it) res += (*it) * v[it.index()];
     return res;
   }
@@ -408,7 +408,7 @@ namespace gmm {
   typename strongest_value_type<V1,V2>::value_type
     vect_sp(const V1 &v1, const V2 &v2, abstract_dense, abstract_dense) {
     return vect_sp_dense_(vect_const_begin(v1), vect_const_end(v1),
-			  vect_const_begin(v2));
+                          vect_const_begin(v2));
   }
 
   template <typename V1, typename V2> inline
@@ -481,7 +481,7 @@ namespace gmm {
 
     while (it1 != ite1 && it2 != ite2) {
       if (it1.index() == it2.index())
-	{ res += (*it1) * *it2; ++it1; ++it2; }
+        { res += (*it1) * *it2; ++it1; ++it2; }
       else if (it1.index() < it2.index()) ++it1; else ++it2;
     }
     return res;
@@ -497,12 +497,12 @@ namespace gmm {
     typename strongest_value_type<V1,V2>::value_type
     vect_sp(const V1 &v1, const V2 &v2,abstract_sparse,abstract_sparse) {
     return vect_sp_sparse_sparse(v1, v2,
-	    typename linalg_and<typename linalg_traits<V1>::index_sorted,
-	    typename linalg_traits<V2>::index_sorted>::bool_type());
+            typename linalg_and<typename linalg_traits<V1>::index_sorted,
+            typename linalg_traits<V2>::index_sorted>::bool_type());
   }
 
   /* ******************************************************************** */
-  /*		Hermitian product                             		  */
+  /*            Hermitian product                                         */
   /* ******************************************************************** */
   ///@endcond
   /** Hermitian product. */
@@ -519,7 +519,7 @@ namespace gmm {
   }
 
   /* ******************************************************************** */
-  /*		Trace of a matrix                             		  */
+  /*            Trace of a matrix                                         */
   /* ******************************************************************** */
 
   /** Trace of a matrix */
@@ -534,7 +534,7 @@ namespace gmm {
   }
 
   /* ******************************************************************** */
-  /*		Euclidean norm                             		  */
+  /*            Euclidean norm                                            */
   /* ******************************************************************** */
 
   /** squared Euclidean norm of a vector. */
@@ -571,18 +571,18 @@ namespace gmm {
     R res(0);
     while (it1 != ite1 && it2 != ite2) {
       size_type i1 = index_of_it(it1, k1,
-				 typename linalg_traits<V1>::storage_type());
+                                 typename linalg_traits<V1>::storage_type());
       size_type i2 = index_of_it(it2, k2,
-				 typename linalg_traits<V2>::storage_type());
+                                 typename linalg_traits<V2>::storage_type());
 
       if (i1 == i2) {
-	res += gmm::abs_sqr(*it2 - *it1); ++it1; ++k1; ++it2; ++k2;
+        res += gmm::abs_sqr(*it2 - *it1); ++it1; ++k1; ++it2; ++k2;
       }
       else if (i1 < i2) {
-	res += gmm::abs_sqr(*it1); ++it1; ++k1;
+        res += gmm::abs_sqr(*it1); ++it1; ++k1;
       }
       else  {
-	res += gmm::abs_sqr(*it2); ++it2; ++k2;
+        res += gmm::abs_sqr(*it2); ++it2; ++k2;
       }
     }
     while (it1 != ite1) { res += gmm::abs_sqr(*it1); ++it1; }
@@ -625,8 +625,8 @@ namespace gmm {
    ::magnitude_type
    mat_euclidean_norm_sqr(const M &m) {
     return mat_euclidean_norm_sqr(m,
-		     typename principal_orientation_type<typename
-		     linalg_traits<M>::sub_orientation>::potype());
+                     typename principal_orientation_type<typename
+                     linalg_traits<M>::sub_orientation>::potype());
   }
 
   /** Euclidean norm of a matrix. */
@@ -637,7 +637,7 @@ namespace gmm {
   { return gmm::sqrt(mat_euclidean_norm_sqr(m)); }
 
   /* ******************************************************************** */
-  /*		vector norm1                                    	  */
+  /*            vector norm1                                              */
   /* ******************************************************************** */
   /** 1-norm of a vector */
   template <typename V>
@@ -646,7 +646,7 @@ namespace gmm {
   vect_norm1(const V &v) {
     auto it = vect_const_begin(v), ite = vect_const_end(v);
     typename number_traits<typename linalg_traits<V>::value_type>
-	::magnitude_type res(0);
+                          ::magnitude_type res(0);
     for (; it != ite; ++it) res += gmm::abs(*it);
     return res;
   }
@@ -664,18 +664,18 @@ namespace gmm {
     R res(0);
     while (it1 != ite1 && it2 != ite2) {
       size_type i1 = index_of_it(it1, k1,
-				 typename linalg_traits<V1>::storage_type());
+                                 typename linalg_traits<V1>::storage_type());
       size_type i2 = index_of_it(it2, k2,
-				 typename linalg_traits<V2>::storage_type());
+                                 typename linalg_traits<V2>::storage_type());
 
       if (i1 == i2) {
-	res += gmm::abs(*it2 - *it1); ++it1; ++k1; ++it2; ++k2;
+        res += gmm::abs(*it2 - *it1); ++it1; ++k1; ++it2; ++k2;
       }
       else if (i1 < i2) {
-	res += gmm::abs(*it1); ++it1; ++k1;
+        res += gmm::abs(*it1); ++it1; ++k1;
       }
       else  {
-	res += gmm::abs(*it2); ++it2; ++k2;
+        res += gmm::abs(*it2); ++it2; ++k2;
       }
     }
     while (it1 != ite1) { res += gmm::abs(*it1); ++it1; }
@@ -684,7 +684,7 @@ namespace gmm {
   }
 
   /* ******************************************************************** */
-  /*		vector Infinity norm                              	  */
+  /*            vector Infinity norm                                      */
   /* ******************************************************************** */
   /** Infinity norm of a vector. */
   template <typename V>
@@ -711,18 +711,18 @@ namespace gmm {
     R res(0);
     while (it1 != ite1 && it2 != ite2) {
       size_type i1 = index_of_it(it1, k1,
-				 typename linalg_traits<V1>::storage_type());
+                                 typename linalg_traits<V1>::storage_type());
       size_type i2 = index_of_it(it2, k2,
-				 typename linalg_traits<V2>::storage_type());
+                                 typename linalg_traits<V2>::storage_type());
 
       if (i1 == i2) {
-	res = std::max(res, gmm::abs(*it2 - *it1)); ++it1; ++k1; ++it2; ++k2;
+        res = std::max(res, gmm::abs(*it2 - *it1)); ++it1; ++k1; ++it2; ++k2;
       }
       else if (i1 < i2) {
-	res = std::max(res, gmm::abs(*it1)); ++it1; ++k1;
+        res = std::max(res, gmm::abs(*it1)); ++it1; ++k1;
       }
       else  {
-	res = std::max(res, gmm::abs(*it2)); ++it2; ++k2;
+        res = std::max(res, gmm::abs(*it2)); ++it2; ++k2;
       }
     }
     while (it1 != ite1) { res = std::max(res, gmm::abs(*it1)); ++it1; }
@@ -731,7 +731,7 @@ namespace gmm {
   }
 
   /* ******************************************************************** */
-  /*		matrix norm1                                    	  */
+  /*            matrix norm1                                              */
   /* ******************************************************************** */
   ///@cond DOXY_SHOW_ALL_FUNCTIONS
   template <typename M>
@@ -758,7 +758,7 @@ namespace gmm {
       typename linalg_traits<M>::const_sub_row_type row = mat_const_row(m, i);
       auto it = vect_const_begin(row), ite = vect_const_end(row);
       for (size_type k = 0; it != ite; ++it, ++k)
-	aux[index_of_it(it, k, store_type())] += gmm::abs(*it);
+        aux[index_of_it(it, k, store_type())] += gmm::abs(*it);
     }
     return vect_norminf(aux);
   }
@@ -785,7 +785,7 @@ namespace gmm {
 
 
   /* ******************************************************************** */
-  /*		matrix Infinity norm                              	  */
+  /*            matrix Infinity norm                                      */
   /* ******************************************************************** */
   ///@cond DOXY_SHOW_ALL_FUNCTIONS
   template <typename M>
@@ -812,7 +812,7 @@ namespace gmm {
       typename linalg_traits<M>::const_sub_col_type col = mat_const_col(m, i);
       auto it = vect_const_begin(col), ite = vect_const_end(col);
       for (size_type k = 0; it != ite; ++it, ++k)
-	aux[index_of_it(it, k, store_type())] += gmm::abs(*it);
+        aux[index_of_it(it, k, store_type())] += gmm::abs(*it);
     }
     return vect_norminf(aux);
   }
@@ -838,7 +838,7 @@ namespace gmm {
   }
 
   /* ******************************************************************** */
-  /*		Max norm for matrices                              	  */
+  /*            Max norm for matrices                                     */
   /* ******************************************************************** */
   ///@cond DOXY_SHOW_ALL_FUNCTIONS
   template <typename M>
@@ -868,13 +868,13 @@ namespace gmm {
    typename number_traits<typename linalg_traits<M>::value_type>
    ::magnitude_type
    mat_maxnorm(const M &m) {
-    return mat_maxnorm(m,
-		     typename principal_orientation_type<typename
-		     linalg_traits<M>::sub_orientation>::potype());
+    return mat_maxnorm
+      (m, typename principal_orientation_type
+                   <typename linalg_traits<M>::sub_orientation>::potype());
   }
 
   /* ******************************************************************** */
-  /*		Clean                                    		  */
+  /*            Clean                                                     */
   /* ******************************************************************** */
   /** Clean a vector or matrix (replace near-zero entries with zeroes).   */
 
@@ -909,9 +909,9 @@ namespace gmm {
     auto it = vect_begin(l), ite = vect_end(l);
     for (; it != ite; ++it){
       if (gmm::abs((*it).real()) < T(threshold))
-	*it = std::complex<T>(T(0), (*it).imag());
+        *it = std::complex<T>(T(0), (*it).imag());
       if (gmm::abs((*it).imag()) < T(threshold))
-	*it = std::complex<T>((*it).real(), T(0));
+        *it = std::complex<T>((*it).real(), T(0));
     }
   }
 
@@ -935,9 +935,9 @@ namespace gmm {
   }
 
   template <typename L> inline void clean(L &l, double threshold,
-					  abstract_vector) {
+                                          abstract_vector) {
     gmm::clean(l, threshold, typename linalg_traits<L>::storage_type(),
-	       typename linalg_traits<L>::value_type());
+               typename linalg_traits<L>::value_type());
   }
 
   template <typename L> inline void clean(const L &l, double threshold);
@@ -953,10 +953,10 @@ namespace gmm {
   }
 
   template <typename L> inline void clean(L &l, double threshold,
-					  abstract_matrix) {
+                                          abstract_matrix) {
     gmm::clean(l, threshold,
-	       typename principal_orientation_type<typename
-	       linalg_traits<L>::sub_orientation>::potype());
+               typename principal_orientation_type<typename
+               linalg_traits<L>::sub_orientation>::potype());
   }
 
   template <typename L> inline void clean(L &l, double threshold)
@@ -966,7 +966,7 @@ namespace gmm {
   { gmm::clean(linalg_const_cast(l), threshold); }
 
   /* ******************************************************************** */
-  /*		Copy                                    		  */
+  /*            Copy                                                      */
   /* ******************************************************************** */
   ///@endcond
   /** Copy vectors or matrices.
@@ -977,10 +977,10 @@ namespace gmm {
   void copy(const L1& l1, L2& l2) {
     if ((const void *)(&l1) != (const void *)(&l2)) {
       if (same_origin(l1,l2))
-	GMM_WARNING2("Warning : a conflict is possible in copy\n");
+        GMM_WARNING2("Warning : a conflict is possible in copy\n");
 
       copy(l1, l2, typename linalg_traits<L1>::linalg_type(),
-	   typename linalg_traits<L2>::linalg_type());
+           typename linalg_traits<L2>::linalg_type());
     }
   }
   ///@cond DOXY_SHOW_ALL_FUNCTIONS
@@ -993,7 +993,7 @@ namespace gmm {
     GMM_ASSERT2(vect_size(l1) == vect_size(l2), "dimensions mismatch, "
                 << vect_size(l1) << " !=" << vect_size(l2));
     copy_vect(l1, l2, typename linalg_traits<L1>::storage_type(),
-	      typename linalg_traits<L2>::storage_type());
+              typename linalg_traits<L2>::storage_type());
   }
 
   template <typename L1, typename L2> inline
@@ -1002,7 +1002,7 @@ namespace gmm {
     if (!m || !n) return;
     GMM_ASSERT2(n==mat_ncols(l2) && m==mat_nrows(l2), "dimensions mismatch");
     copy_mat(l1, l2, typename linalg_traits<L1>::sub_orientation(),
-	     typename linalg_traits<L2>::sub_orientation());
+             typename linalg_traits<L2>::sub_orientation());
   }
 
   template <typename V1, typename V2, typename C1, typename C2> inline
@@ -1159,25 +1159,33 @@ namespace gmm {
     if (ite1 - it1 > 0) {
       clear(l2);
       auto it2 = vect_begin(l2), ite2 = vect_end(l2);
-      while (*(ite1-1) == typename linalg_traits<L1>::value_type(0)) ite1--;
+      while (*(ite1-1) == typename linalg_traits<L1>::value_type(0))
+        ite1--;
 
       if (it2 == ite2) {
-	l2[it1.index()] = *it1; ++it1;
-	l2[ite1.index()-1] = *(ite1-1); --ite1;
-	if (it1 < ite1)
-	  { it2 = vect_begin(l2); ++it2; std::copy(it1, ite1, it2); }
-      }
-      else {
-	ptrdiff_t m = it1.index() - it2.index();
-	if (m >= 0 && ite1.index() <= ite2.index())
-	  std::copy(it1, ite1, it2 + m);
-	else {
-	  if (m < 0) l2[it1.index()] = *it1;
-	  if (ite1.index() > ite2.index()) l2[ite1.index()-1] = *(ite1-1);
-	  it2 = vect_begin(l2); ite2 = vect_end(l2);
-	  m = it1.index() - it2.index();
-	  std::copy(it1, ite1, it2 + m);
-	}
+        l2[it1.index()] = *it1;
+        ++it1;
+        l2[ite1.index()-1] = *(ite1-1);
+        --ite1;
+        if (it1 < ite1) {
+          it2 = vect_begin(l2);
+          ++it2;
+          std::copy(it1, ite1, it2);
+        }
+      } else {
+        ptrdiff_t m = it1.index() - it2.index();
+        if (m >= 0 && ite1.index() <= ite2.index())
+          std::copy(it1, ite1, it2 + m);
+        else {
+          if (m < 0)
+            l2[it1.index()] = *it1;
+          if (ite1.index() > ite2.index())
+            l2[ite1.index()-1] = *(ite1-1);
+          it2 = vect_begin(l2);
+          ite2 = vect_end(l2);
+          m = it1.index() - it2.index();
+          std::copy(it1, ite1, it2 + m);
+        }
       }
     }
   }
@@ -1221,7 +1229,7 @@ namespace gmm {
       // cout << "*it = " << *it << endl;
       // cout << "it.index() = " << it.index() << endl;
       if (*it != (typename linalg_traits<L1>::value_type)(0))
-	l2[it.index()] = *it;
+        l2[it.index()] = *it;
     }
   }
 
@@ -1231,7 +1239,7 @@ namespace gmm {
     auto  it  = vect_const_begin(l1), ite = vect_const_end(l1);
     for (size_type i = 0; it != ite; ++it, ++i)
       if (*it != (typename linalg_traits<L1>::value_type)(0))
-	l2[i] = *it;
+        l2[i] = *it;
   }
 
   template <typename L1, typename L2> // to be optimised ...
@@ -1240,7 +1248,7 @@ namespace gmm {
     auto  it  = vect_const_begin(l1), ite = vect_const_end(l1);
     for (size_type i = 0; it != ite; ++it, ++i)
       if (*it != (typename linalg_traits<L1>::value_type)(0))
-	l2[i] = *it;
+        l2[i] = *it;
   }
 
 
@@ -1250,7 +1258,7 @@ namespace gmm {
     auto  it  = vect_const_begin(l1), ite = vect_const_end(l1);
     for (; it != ite; ++it)
       if (*it != (typename linalg_traits<L1>::value_type)(0))
-	l2[it.index()] = *it;
+        l2[it.index()] = *it;
   }
 
   /* ******************************************************************** */
@@ -1265,8 +1273,8 @@ namespace gmm {
       @param l2 contains on output, l2+l1.
   */
   template <typename L1, typename L2> inline
-    void add(const L1& l1, L2& l2) {
-      add_spec(l1, l2, typename linalg_traits<L2>::linalg_type());
+  void add(const L1& l1, L2& l2) {
+    add_spec(l1, l2, typename linalg_traits<L2>::linalg_type());
   }
   ///@cond
 
@@ -1278,17 +1286,17 @@ namespace gmm {
     GMM_ASSERT2(vect_size(l1) == vect_size(l2), "dimensions mismatch, "
                 << vect_size(l1) << " !=" << vect_size(l2));
     add(l1, l2, typename linalg_traits<L1>::storage_type(),
-	typename linalg_traits<L2>::storage_type());
+        typename linalg_traits<L2>::storage_type());
   }
 
   template <typename L1, typename L2> inline
     void add_spec(const L1& l1, L2& l2, abstract_matrix) {
     GMM_ASSERT2(mat_nrows(l1)==mat_nrows(l2) && mat_ncols(l1)==mat_ncols(l2),
                 "dimensions mismatch l1 is " << mat_nrows(l1) << "x"
-		<< mat_ncols(l1) << " and l2 is " << mat_nrows(l2)
-		<< "x" << mat_ncols(l2));
+                << mat_ncols(l1) << " and l2 is " << mat_nrows(l2)
+                << "x" << mat_ncols(l2));
     add(l1, l2, typename linalg_traits<L1>::sub_orientation(),
-	typename linalg_traits<L2>::sub_orientation());
+        typename linalg_traits<L2>::sub_orientation());
   }
 
   template <typename L1, typename L2>
@@ -1447,8 +1455,8 @@ namespace gmm {
       add(l1, l3);
     else
       add(l1, l2, l3, typename linalg_traits<L1>::storage_type(),
-	  typename linalg_traits<L2>::storage_type(),
-	  typename linalg_traits<L3>::storage_type());
+          typename linalg_traits<L2>::storage_type(),
+          typename linalg_traits<L3>::storage_type());
   }
 
   template <typename IT1, typename IT2, typename IT3>
@@ -1466,7 +1474,7 @@ namespace gmm {
 
   template <typename IT1, typename IT2, typename IT3>
   void add_to_full_(IT1 it1, IT1 ite1, IT2 it2, IT2 ite2,
-		    IT3 it3, IT3 ite3) {
+                    IT3 it3, IT3 ite3) {
     typedef typename std::iterator_traits<IT3>::value_type T;
     IT3 it = it3;
     for (; it != ite3; ++it) *it = T(0);
@@ -1476,36 +1484,36 @@ namespace gmm {
 
   template <typename L1, typename L2, typename L3> inline
   void add(const L1& l1, const L2& l2, L3& l3,
-	   abstract_dense, abstract_dense, abstract_dense) {
+           abstract_dense, abstract_dense, abstract_dense) {
     add_full_(vect_const_begin(l1), vect_const_begin(l2),
-	      vect_begin(l3), vect_end(l3));
+              vect_begin(l3), vect_end(l3));
   }
 
   // generic function for add(v1, v2, v3).
   // Need to be specialized to optimize particular additions.
   template <typename L1, typename L2, typename L3,
-	    typename ST1, typename ST2, typename ST3>
+            typename ST1, typename ST2, typename ST3>
   inline void add(const L1& l1, const L2& l2, L3& l3, ST1, ST2, ST3)
   { copy(l2, l3); add(l1, l3, ST1(), ST3()); }
 
   template <typename L1, typename L2, typename L3> inline
   void add(const L1& l1, const L2& l2, L3& l3,
-	   abstract_sparse, abstract_dense, abstract_dense) {
+           abstract_sparse, abstract_dense, abstract_dense) {
     add_almost_full_(vect_const_begin(l1), vect_const_end(l1),
-		     vect_const_begin(l2), vect_begin(l3), vect_end(l3));
+                     vect_const_begin(l2), vect_begin(l3), vect_end(l3));
   }
 
   template <typename L1, typename L2, typename L3> inline
   void add(const L1& l1, const L2& l2, L3& l3,
-	   abstract_dense, abstract_sparse, abstract_dense)
+           abstract_dense, abstract_sparse, abstract_dense)
   { add(l2, l1, l3, abstract_sparse(), abstract_dense(), abstract_dense()); }
 
   template <typename L1, typename L2, typename L3> inline
   void add(const L1& l1, const L2& l2, L3& l3,
-	   abstract_sparse, abstract_sparse, abstract_dense) {
+           abstract_sparse, abstract_sparse, abstract_dense) {
     add_to_full_(vect_const_begin(l1), vect_const_end(l1),
-		 vect_const_begin(l2), vect_const_end(l2),
-		 vect_begin(l3), vect_end(l3));
+                 vect_const_begin(l2), vect_const_end(l2),
+                 vect_begin(l3), vect_end(l3));
   }
 
 
@@ -1517,11 +1525,11 @@ namespace gmm {
     while (it1 != ite1 && it2 != ite2) {
       ptrdiff_t d = it1.index() - it2.index();
       if (d < 0)
-	{ l3[it1.index()] += *it1; ++it1; }
+        { l3[it1.index()] += *it1; ++it1; }
       else if (d > 0)
-	{ l3[it2.index()] += *it2; ++it2; }
+        { l3[it2.index()] += *it2; ++it2; }
       else
-	{ l3[it1.index()] = *it1 + *it2; ++it1; ++it2; }
+        { l3[it1.index()] = *it1 + *it2; ++it1; ++it2; }
     }
     for (; it1 != ite1; ++it1) l3[it1.index()] += *it1;
     for (; it2 != ite2; ++it2) l3[it2.index()] += *it2;
@@ -1529,14 +1537,15 @@ namespace gmm {
 
   template <typename L1, typename L2, typename L3>
   void add_spspsp(const L1& l1, const L2& l2, L3& l3, linalg_false)
-  { copy(l2, l3); add(l2, l3); }
+  { copy(l1, l3); add(l2, l3); }
 
   template <typename L1, typename L2, typename L3>
   void add(const L1& l1, const L2& l2, L3& l3,
-	   abstract_sparse, abstract_sparse, abstract_sparse) {
-    add_spspsp(l1, l2, l3, typename linalg_and<typename
-	       linalg_traits<L1>::index_sorted,
-	       typename linalg_traits<L2>::index_sorted>::bool_type());
+           abstract_sparse, abstract_sparse, abstract_sparse) {
+    add_spspsp(l1, l2, l3,
+      typename linalg_and<typename linalg_traits<L1>::index_sorted,
+                          typename linalg_traits<L2>::index_sorted>
+                         ::bool_type());
   }
 
   template <typename L1, typename L2>
@@ -1558,13 +1567,14 @@ namespace gmm {
       while (ie1 && *(ite1-1) == T(0)) { ite1--; --ie1; }
 
       if (it2 == ite2 || i1 < it2.index()) {
-	l2[i1] = *it1; ++i1; ++it1;
-	if (it1 == ite1) return;
-	it2 = vect_begin(l2); ite2 = vect_end(l2);
+        l2[i1] = *it1; ++i1; ++it1;
+        if (it1 == ite1) return;
+        it2 = vect_begin(l2);
+        ite2 = vect_end(l2);
       }
       if (ie1 > ite2.index()) {
-	--ite1; l2[ie1 - 1] = *ite1;
-	it2 = vect_begin(l2);
+        --ite1; l2[ie1 - 1] = *ite1;
+        it2 = vect_begin(l2);
       }
       it2 += i1 - it2.index();
       for (; it1 != ite1; ++it1, ++it2) { *it2 += *it1; }
@@ -1607,7 +1617,7 @@ namespace gmm {
     auto it1 = vect_const_begin(l1), ite1 = vect_const_end(l1);
     for (; it1 != ite1; ++it1)
       if (*it1 != typename linalg_traits<L1>::value_type(0))
-	l2[it1.index()] += *it1;
+        l2[it1.index()] += *it1;
   }
 
   template <typename L1, typename L2>
@@ -1622,12 +1632,12 @@ namespace gmm {
       auto it2 = vect_begin(l2), ite2 = vect_end(l2);
       while (*(ite1-1) == T1(0)) ite1--;
       if (it2 == ite2 || it1.index() < it2.index()) {
-	l2[it1.index()] = T2(0);
-	it2 = vect_begin(l2); ite2 = vect_end(l2);
+        l2[it1.index()] = T2(0);
+        it2 = vect_begin(l2); ite2 = vect_end(l2);
       }
       if (ite1.index() > ite2.index()) {
-	l2[ite1.index() - 1] = T2(0);
-	it2 = vect_begin(l2);
+        l2[ite1.index() - 1] = T2(0);
+        it2 = vect_begin(l2);
       }
       it2 += it1.index() - it2.index();
       for (; it1 != ite1; ++it1, ++it2) *it2 += *it1;
@@ -1642,7 +1652,7 @@ namespace gmm {
   }
 
   /* ******************************************************************** */
-  /*		Matrix-vector mult                                    	  */
+  /*            Matrix-vector mult                                        */
   /* ******************************************************************** */
   ///@endcond
   /** matrix-vector or matrix-matrix product.
@@ -1667,12 +1677,12 @@ namespace gmm {
     GMM_ASSERT2(n==vect_size(l2) && m==vect_size(l3), "dimensions mismatch");
     if (!same_origin(l2, l3))
       mult_spec(l1, l2, l3, typename principal_orientation_type<typename
-		linalg_traits<L1>::sub_orientation>::potype());
+                linalg_traits<L1>::sub_orientation>::potype());
     else {
       GMM_WARNING2("Warning, A temporary is used for mult\n");
       typename temporary_vector<L3>::vector_type temp(vect_size(l3));
       mult_spec(l1, l2, temp, typename principal_orientation_type<typename
-		linalg_traits<L1>::sub_orientation>::potype());
+                linalg_traits<L1>::sub_orientation>::potype());
       copy(temp, l3);
     }
   }
@@ -1705,8 +1715,8 @@ namespace gmm {
     auto itr = mat_row_const_begin(l1);
     for (; it != ite; ++it, ++itr)
       *it = vect_sp(linalg_traits<L1>::row(itr), l2,
-		    typename linalg_traits<L1>::storage_type(),
-		    typename linalg_traits<L2>::storage_type());
+                    typename linalg_traits<L1>::storage_type(),
+                    typename linalg_traits<L2>::storage_type());
   }
 
   template <typename L1, typename L2, typename L3>
@@ -1760,14 +1770,14 @@ namespace gmm {
     GMM_ASSERT2(n==vect_size(l2) && m==vect_size(l4), "dimensions mismatch");
     if (!same_origin(l2, l4)) {
       mult_add_spec(l1, l2, l4, typename principal_orientation_type<typename
-		    linalg_traits<L1>::sub_orientation>::potype());
+                    linalg_traits<L1>::sub_orientation>::potype());
     }
     else {
       GMM_WARNING2("Warning, A temporary is used for mult\n");
       typename temporary_vector<L2>::vector_type temp(vect_size(l2));
       copy(l2, temp);
       mult_add_spec(l1,temp, l4, typename principal_orientation_type<typename
-		linalg_traits<L1>::sub_orientation>::potype());
+                linalg_traits<L1>::sub_orientation>::potype());
     }
   }
 
@@ -1784,14 +1794,14 @@ namespace gmm {
     GMM_ASSERT2(n==vect_size(l2) && m==vect_size(l3), "dimensions mismatch");
     if (!same_origin(l2, l3)) {
       mult_add_spec(l1, l2, l3, typename principal_orientation_type<typename
-		    linalg_traits<L1>::sub_orientation>::potype());
+                    linalg_traits<L1>::sub_orientation>::potype());
     }
     else {
       GMM_WARNING2("Warning, A temporary is used for mult\n");
       typename temporary_vector<L3>::vector_type temp(vect_size(l2));
       copy(l2, temp);
       mult_add_spec(l1,temp, l3, typename principal_orientation_type<typename
-		linalg_traits<L1>::sub_orientation>::potype());
+                linalg_traits<L1>::sub_orientation>::potype());
     }
   }
   ///@cond DOXY_SHOW_ALL_FUNCTIONS
@@ -1840,7 +1850,7 @@ namespace gmm {
     auto it = vect_const_begin(l2), ite = vect_const_end(l2);
     for (; it != ite; ++it)
       if (*it != typename linalg_traits<L2>::value_type(0))
-	add(scaled(mat_const_col(l1, it.index()), *it), l3);
+        add(scaled(mat_const_col(l1, it.index()), *it), l3);
   }
 
   template <typename L1, typename L2, typename L3>
@@ -1848,7 +1858,7 @@ namespace gmm {
     auto it = vect_const_begin(l2), ite = vect_const_end(l2);
     for (; it != ite; ++it)
       if (*it != typename linalg_traits<L2>::value_type(0))
-	add(scaled(mat_const_col(l1, it.index()), *it), l3);
+        add(scaled(mat_const_col(l1, it.index()), *it), l3);
   }
 
   template <typename L1, typename L2, typename L3> inline
@@ -1869,7 +1879,7 @@ namespace gmm {
 
 
   /* ******************************************************************** */
-  /*		Matrix-matrix mult                                    	  */
+  /*            Matrix-matrix mult                                        */
   /* ******************************************************************** */
 
 
@@ -1953,22 +1963,22 @@ namespace gmm {
     size_type n = mat_ncols(l1);
     if (n == 0) { gmm::clear(l3); return; }
     GMM_ASSERT2(n == mat_nrows(l2) && mat_nrows(l1) == mat_nrows(l3) &&
-                mat_ncols(l2) == mat_ncols(l3),	"dimensions mismatch");
+                mat_ncols(l2) == mat_ncols(l3), "dimensions mismatch");
 
     if (same_origin(l2, l3) || same_origin(l1, l3)) {
       GMM_WARNING2("A temporary is used for mult");
       temp_mat_type temp(mat_nrows(l3), mat_ncols(l3));
       mult_spec(l1, l2, temp, typename mult_t<
-		typename linalg_traits<L1>::sub_orientation,
-		typename linalg_traits<L2>::sub_orientation,
-		typename linalg_traits<temp_mat_type>::sub_orientation>::t());
+                typename linalg_traits<L1>::sub_orientation,
+                typename linalg_traits<L2>::sub_orientation,
+                typename linalg_traits<temp_mat_type>::sub_orientation>::t());
       copy(temp, l3);
     }
     else
       mult_spec(l1, l2, l3, typename mult_t<
-		typename linalg_traits<L1>::sub_orientation,
-		typename linalg_traits<L2>::sub_orientation,
-		typename linalg_traits<L3>::sub_orientation>::t());
+                typename linalg_traits<L1>::sub_orientation,
+                typename linalg_traits<L2>::sub_orientation,
+                typename linalg_traits<L3>::sub_orientation>::t());
   }
 
   // Completely generic but inefficient
@@ -1979,9 +1989,10 @@ namespace gmm {
     GMM_WARNING2("Inefficient generic matrix-matrix mult is used");
     for (size_type i = 0; i < mat_nrows(l3) ; ++i)
       for (size_type j = 0; j < mat_ncols(l3) ; ++j) {
-	T a(0);
-	for (size_type k = 0; k < mat_nrows(l2) ; ++k) a += l1(i, k)*l2(k, j);
-	l3(i, j) = a;
+        T a(0);
+        for (size_type k = 0; k < mat_nrows(l2) ; ++k)
+          a += l1(i, k)*l2(k, j);
+        l3(i, j) = a;
       }
   }
 
@@ -2007,20 +2018,20 @@ namespace gmm {
   void mult_spec(const L1& l1, const L2& l2, L3& l3, rcmult) {
     if (is_sparse(l1) && is_sparse(l2)) {
       GMM_WARNING3("Inefficient row matrix - col matrix mult for "
-		  "sparse matrices, using temporary");
-      mult_row_col_with_temp(l1, l2, l3,
-			     typename principal_orientation_type<typename
-			     linalg_traits<L3>::sub_orientation>::potype());
+                   "sparse matrices, using temporary");
+      mult_row_col_with_temp
+        (l1, l2, l3, typename principal_orientation_type
+                     <typename linalg_traits<L3>::sub_orientation>::potype());
     }
     else {
       auto it2b = linalg_traits<L2>::col_begin(l2), it2 = it2b,
-	ite = linalg_traits<L2>::col_end(l2);
+        ite = linalg_traits<L2>::col_end(l2);
       size_type i,j, k = mat_nrows(l1);
 
       for (i = 0; i < k; ++i) {
-	typename linalg_traits<L1>::const_sub_row_type r1=mat_const_row(l1, i);
-	for (it2 = it2b, j = 0; it2 != ite; ++it2, ++j)
-	  l3(i,j) = vect_sp(r1, linalg_traits<L2>::col(it2));
+        typename linalg_traits<L1>::const_sub_row_type r1=mat_const_row(l1, i);
+        for (it2 = it2b, j = 0; it2 != ite; ++it2, ++j)
+          l3(i,j) = vect_sp(r1, linalg_traits<L2>::col(it2));
       }
     }
   }
@@ -2039,7 +2050,7 @@ namespace gmm {
     size_type nn = mat_nrows(l3), mm = mat_nrows(l2);
     for (size_type i = 0; i < nn; ++i) {
       for (size_type j = 0; j < mm; ++j) {
-	add(scaled(mat_const_row(l2, j), l1(i, j)), mat_row(l3, i));
+        add(scaled(mat_const_row(l2, j), l1(i, j)), mat_row(l3, i));
       }
     }
   }
@@ -2053,7 +2064,7 @@ namespace gmm {
       typename linalg_traits<L1>::const_sub_row_type rl1=mat_const_row(l1, i);
       auto it = vect_const_begin(rl1), ite = vect_const_end(rl1);
       for (; it != ite; ++it)
-	add(scaled(mat_const_row(l2, it.index()), *it), mat_row(l3, i));
+        add(scaled(mat_const_row(l2, it.index()), *it), mat_row(l3, i));
     }
   }
 
@@ -2065,29 +2076,29 @@ namespace gmm {
 
   template <typename L1, typename L2, typename L3> inline
   void mult_spec(const L1& l1, const L2& l2, L3& l3, c_mult) {
-    mult_spec(l1, l2,l3,c_mult(),typename linalg_traits<L2>::storage_type(),
-	      typename linalg_traits<L2>::sub_orientation());
+    mult_spec(l1, l2, l3, c_mult(), typename linalg_traits<L2>::storage_type(),
+              typename linalg_traits<L2>::sub_orientation());
   }
 
 
   template <typename L1, typename L2, typename L3, typename ORIEN>
   void mult_spec(const L1& l1, const L2& l2, L3& l3, c_mult,
-		 abstract_dense, ORIEN) {
+                 abstract_dense, ORIEN) {
     typedef typename linalg_traits<L2>::value_type T;
     size_type nn = mat_ncols(l3), mm = mat_ncols(l1);
 
     for (size_type i = 0; i < nn; ++i) {
       clear(mat_col(l3, i));
       for (size_type j = 0; j < mm; ++j) {
-	T b = l2(j, i);
-	if (b != T(0)) add(scaled(mat_const_col(l1, j), b), mat_col(l3, i));
+        T b = l2(j, i);
+        if (b != T(0)) add(scaled(mat_const_col(l1, j), b), mat_col(l3, i));
       }
     }
   }
 
   template <typename L1, typename L2, typename L3, typename ORIEN>
   void mult_spec(const L1& l1, const L2& l2, L3& l3, c_mult,
-		 abstract_sparse, ORIEN) {
+                 abstract_sparse, ORIEN) {
     // optimizable
     clear(l3);
     size_type nn = mat_ncols(l3);
@@ -2095,27 +2106,27 @@ namespace gmm {
       typename linalg_traits<L2>::const_sub_col_type rc2 = mat_const_col(l2, i);
       auto it = vect_const_begin(rc2), ite = vect_const_end(rc2);
       for (; it != ite; ++it)
-	add(scaled(mat_const_col(l1, it.index()), *it), mat_col(l3, i));
+        add(scaled(mat_const_col(l1, it.index()), *it), mat_col(l3, i));
     }
   }
 
   template <typename L1, typename L2, typename L3>
   void mult_spec(const L1& l1, const L2& l2, L3& l3, c_mult,
-		 abstract_sparse, row_major) {
+                 abstract_sparse, row_major) {
      typedef typename linalg_traits<L2>::value_type T;
      GMM_WARNING3("Inefficient matrix-matrix mult for sparse matrices");
      clear(l3);
      size_type mm = mat_nrows(l2), nn = mat_ncols(l3);
      for (size_type i = 0; i < nn; ++i)
        for (size_type j = 0; j < mm; ++j) {
-	 T a = l2(i,j);
-	 if (a != T(0)) add(scaled(mat_const_col(l1, j), a), mat_col(l3, i));
+         T a = l2(i,j);
+         if (a != T(0)) add(scaled(mat_const_col(l1, j), a), mat_col(l3, i));
        }
    }
 
   template <typename L1, typename L2, typename L3, typename ORIEN> inline
   void mult_spec(const L1& l1, const L2& l2, L3& l3, c_mult,
-		 abstract_skyline, ORIEN)
+                 abstract_skyline, ORIEN)
   { mult_spec(l1, l2, l3, c_mult(), abstract_sparse(), ORIEN()); }
 
 
@@ -2146,7 +2157,7 @@ namespace gmm {
       typename linalg_traits<L1>::const_sub_col_type rc1 = mat_const_col(l1, i);
       auto it = vect_const_begin(rc1), ite = vect_const_end(rc1);
       for (; it != ite; ++it)
-	add(scaled(mat_const_row(l2, i), *it), mat_row(l3, it.index()));
+        add(scaled(mat_const_row(l2, i), *it), mat_row(l3, it.index()));
     }
   }
 
@@ -2156,7 +2167,7 @@ namespace gmm {
 
 
   /* ******************************************************************** */
-  /*		Symmetry test.                                     	  */
+  /*             Symmetry test.                                           */
   /* ******************************************************************** */
 
   ///@endcond
@@ -2165,8 +2176,9 @@ namespace gmm {
       @param tol a threshold.
   */
   template <typename MAT> inline
-  bool is_symmetric(const MAT &A, magnitude_of_linalg(MAT) tol
-		    = magnitude_of_linalg(MAT)(-1)) {
+  bool is_symmetric(const MAT &A,
+                    magnitude_of_linalg(MAT) tol = magnitude_of_linalg(MAT)(-1))
+  {
     typedef magnitude_of_linalg(MAT) R;
     if (tol < R(0)) tol = default_tol(R()) * mat_maxnorm(A);
     if (mat_nrows(A) != mat_ncols(A)) return false;
@@ -2176,48 +2188,48 @@ namespace gmm {
 
   template <typename MAT>
   bool is_symmetric(const MAT &A, magnitude_of_linalg(MAT) tol,
-		    abstract_dense) {
+                    abstract_dense) {
     size_type m = mat_nrows(A);
     for (size_type i = 1; i < m; ++i)
       for (size_type j = 0; j < i; ++j)
-	if (gmm::abs(A(i, j)-A(j, i)) > tol) return false;
+        if (gmm::abs(A(i, j)-A(j, i)) > tol) return false;
     return true;
   }
 
   template <typename MAT>
   bool is_symmetric(const MAT &A, magnitude_of_linalg(MAT) tol,
-		    abstract_sparse) {
+                    abstract_sparse) {
     return is_symmetric(A, tol, typename principal_orientation_type<typename
-			linalg_traits<MAT>::sub_orientation>::potype());
+                        linalg_traits<MAT>::sub_orientation>::potype());
   }
 
   template <typename MAT>
   bool is_symmetric(const MAT &A, magnitude_of_linalg(MAT) tol,
-		    row_major) {
+                    row_major) {
     for (size_type i = 0; i < mat_nrows(A); ++i) {
       typename linalg_traits<MAT>::const_sub_row_type row = mat_const_row(A, i);
       auto it = vect_const_begin(row), ite = vect_const_end(row);
       for (; it != ite; ++it)
-	if (gmm::abs(*it - A(it.index(), i)) > tol) return false;
+        if (gmm::abs(*it - A(it.index(), i)) > tol) return false;
     }
     return true;
   }
 
   template <typename MAT>
   bool is_symmetric(const MAT &A, magnitude_of_linalg(MAT) tol,
-		    col_major) {
+                    col_major) {
     for (size_type i = 0; i < mat_ncols(A); ++i) {
       typename linalg_traits<MAT>::const_sub_col_type col = mat_const_col(A, i);
       auto it = vect_const_begin(col), ite = vect_const_end(col);
       for (; it != ite; ++it)
-	if (gmm::abs(*it - A(i, it.index())) > tol) return false;
+        if (gmm::abs(*it - A(i, it.index())) > tol) return false;
     }
     return true;
   }
 
   template <typename MAT>
   bool is_symmetric(const MAT &A, magnitude_of_linalg(MAT) tol,
-		    abstract_skyline)
+                    abstract_skyline)
   { return is_symmetric(A, tol, abstract_sparse()); }
 
   ///@endcond
@@ -2226,8 +2238,9 @@ namespace gmm {
       @param tol a threshold.
   */
   template <typename MAT> inline
-  bool is_hermitian(const MAT &A, magnitude_of_linalg(MAT) tol
-		    = magnitude_of_linalg(MAT)(-1)) {
+  bool is_hermitian(const MAT &A,
+                    magnitude_of_linalg(MAT) tol = magnitude_of_linalg(MAT)(-1))
+  {
     typedef magnitude_of_linalg(MAT) R;
     if (tol < R(0)) tol = default_tol(R()) * mat_maxnorm(A);
     if (mat_nrows(A) != mat_ncols(A)) return false;
@@ -2237,48 +2250,48 @@ namespace gmm {
 
   template <typename MAT>
   bool is_hermitian(const MAT &A, magnitude_of_linalg(MAT) tol,
-		    abstract_dense) {
+                    abstract_dense) {
     size_type m = mat_nrows(A);
     for (size_type i = 1; i < m; ++i)
       for (size_type j = 0; j < i; ++j)
-	if (gmm::abs(A(i, j)-gmm::conj(A(j, i))) > tol) return false;
+        if (gmm::abs(A(i, j)-gmm::conj(A(j, i))) > tol) return false;
     return true;
   }
 
   template <typename MAT>
   bool is_hermitian(const MAT &A, magnitude_of_linalg(MAT) tol,
-		    abstract_sparse) {
+                    abstract_sparse) {
     return is_hermitian(A, tol, typename principal_orientation_type<typename
-			linalg_traits<MAT>::sub_orientation>::potype());
+                        linalg_traits<MAT>::sub_orientation>::potype());
   }
 
   template <typename MAT>
   bool is_hermitian(const MAT &A, magnitude_of_linalg(MAT) tol,
-		    row_major) {
+                    row_major) {
     for (size_type i = 0; i < mat_nrows(A); ++i) {
       typename linalg_traits<MAT>::const_sub_row_type row = mat_const_row(A, i);
       auto it = vect_const_begin(row), ite = vect_const_end(row);
       for (; it != ite; ++it)
-	if (gmm::abs(gmm::conj(*it) - A(it.index(), i)) > tol) return false;
+        if (gmm::abs(gmm::conj(*it) - A(it.index(), i)) > tol) return false;
     }
     return true;
   }
 
   template <typename MAT>
   bool is_hermitian(const MAT &A, magnitude_of_linalg(MAT) tol,
-		    col_major) {
+                    col_major) {
     for (size_type i = 0; i < mat_ncols(A); ++i) {
       typename linalg_traits<MAT>::const_sub_col_type col = mat_const_col(A, i);
       auto it = vect_const_begin(col), ite = vect_const_end(col);
       for (; it != ite; ++it)
-	if (gmm::abs(gmm::conj(*it) - A(i, it.index())) > tol) return false;
+        if (gmm::abs(gmm::conj(*it) - A(i, it.index())) > tol) return false;
     }
     return true;
   }
 
   template <typename MAT>
   bool is_hermitian(const MAT &A, magnitude_of_linalg(MAT) tol,
-		    abstract_skyline)
+                    abstract_skyline)
   { return is_hermitian(A, tol, abstract_sparse()); }
   ///@endcond
 }

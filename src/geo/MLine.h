@@ -269,6 +269,8 @@ public:
       return 0;
     }
   }
+  virtual int getTypeForVTK() const { return 68; } // VTK_LAGRANGE_CURVE
+
   virtual void reverse()
   {
     MVertex *tmp = _v[0];

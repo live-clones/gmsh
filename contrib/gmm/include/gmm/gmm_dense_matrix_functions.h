@@ -259,7 +259,7 @@ namespace gmm {
     #if defined(GMM_USES_LAPACK)
     schur(A, S, Q); // A = Q * S * Q^T
     #else
-    GMM_ASSERT1(false, "Please recompile with lapack and blas librairies "
+    GMM_ASSERT1(false, "Please recompile with lapack and blas libraries "
                 "to use logm matrix function.");
     #endif
 

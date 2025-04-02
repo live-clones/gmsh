@@ -90,7 +90,8 @@ public:
   static int GetMaxThreads();
   static int GetThreadNum();
   static void SetVerbosity(int val);
-  static void SetLogFile(const std::string &name);
+  static void SetLogFileName(const std::string &name);
+  static std::string GetLogFileName();
   static int GetVerbosity();
   static std::string GetLaunchDate();
   static std::string GetCommandLineFull();

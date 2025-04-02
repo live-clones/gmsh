@@ -73,47 +73,11 @@
 
 namespace gmm {
 
-  /* ********************************************************************** */
-  /* IPVT structure.                                                        */
-  /* ********************************************************************** */
-  // For compatibility with lapack version with 64 or 32 bit integer.
-  // Should be replaced by std::vector<size_type> if 32 bit integer version
-  // of lapack is not used anymore (and lapack_ipvt_int set to size_type)
-
-  // Do not use iterators of this interface container
-  class lapack_ipvt : public std::vector<size_type> {
-    bool is_int64;
-    size_type &operator[](size_type i)
-    { return std::vector<size_type>::operator[](i); }
-    size_type operator[] (size_type i) const
-    { return std::vector<size_type>::operator[](i); }
-    void begin(void) const {}
-    void begin(void) {}
-    void end(void) const {}
-    void end(void) {}
-    
-  public:
-    void set_to_int32() { is_int64 = false; }
-    const size_type *pfirst() const
-    { return &(*(std::vector<size_type>::begin())); }
-    size_type *pfirst() { return &(*(std::vector<size_type>::begin())); }
-    
-    lapack_ipvt(size_type n) :  std::vector<size_type>(n), is_int64(true) {}
-    
-    size_type get(size_type i) const {
-      const size_type *p = pfirst();
-      return is_int64 ? p[i] : size_type(((const int *)(p))[i]);
-    }
-    void set(size_type i, size_type val) {
-      size_type *p = pfirst();
-      if (is_int64) p[i] = val; else ((int *)(p))[i] = int(val);
-    }
-  };
-}
-
-#include "gmm_opt.h"
-
-namespace gmm {
+#if defined(GMM_USES_BLAS) || defined(GMM_USES_LAPACK)
+  typedef std::vector<BLAS_INT> lapack_ipvt;
+#else
+  typedef std::vector<size_type> lapack_ipvt;
+#endif
 
   /** LU Factorization of a general (dense) matrix (real or complex).
   
@@ -125,33 +89,36 @@ namespace gmm {
   The pivot indices in ipvt are indexed starting from 1
   so that this is compatible with LAPACK (Fortran).
   */
-  template <typename DenseMatrix>
-  size_type lu_factor(DenseMatrix& A, lapack_ipvt& ipvt) {
+  template <typename DenseMatrix, typename Pvector>
+  size_type lu_factor(DenseMatrix& A, Pvector& ipvt) {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
+    typedef typename linalg_traits<Pvector>::value_type INT;
     typedef typename number_traits<T>::magnitude_type R;
     size_type info(0), i, j, jp, M(mat_nrows(A)), N(mat_ncols(A));
+    if (M == 0 || N == 0)
+      return info;
     size_type NN = std::min(M, N);
     std::vector<T> c(M), r(N);
-    
+
     GMM_ASSERT2(ipvt.size()+1 >= NN, "IPVT too small");
-    for (i = 0; i+1 < NN; ++i) ipvt.set(i, i);
-      
+    for (i = 0; i+1 < NN; ++i) ipvt[i] = INT(i);
+
     if (M || N) {
       for (j = 0; j+1 < NN; ++j) {
-	R max = gmm::abs(A(j,j)); jp = j;
-	for (i = j+1; i < M; ++i)		   /* find pivot.          */
-	  if (gmm::abs(A(i,j)) > max) { jp = i; max = gmm::abs(A(i,j)); }
-	ipvt.set(j, jp + 1);
-	
-	if (max == R(0)) { info = j + 1; break; }
+        R max = gmm::abs(A(j,j)); jp = j;
+        for (i = j+1; i < M; ++i)                   /* find pivot.          */
+          if (gmm::abs(A(i,j)) > max) { jp = i; max = gmm::abs(A(i,j)); }
+        ipvt[j] = INT(jp + 1);
+
+        if (max == R(0)) { info = j + 1; break; }
         if (jp != j) for (i = 0; i < N; ++i) std::swap(A(jp, i), A(j, i));
-	
+
         for (i = j+1; i < M; ++i) { A(i, j) /= A(j,j); c[i-j-1] = -A(i, j); }
         for (i = j+1; i < N; ++i) r[i-j-1] = A(j, i);  // avoid the copy ?
-	rank_one_update(sub_matrix(A, sub_interval(j+1, M-j-1),
-				 sub_interval(j+1, N-j-1)), c, conjugated(r));
+        rank_one_update(sub_matrix(A, sub_interval(j+1, M-j-1),
+                                 sub_interval(j+1, N-j-1)), c, conjugated(r));
       }
-      ipvt.set(NN-1, NN);
+      ipvt[NN-1] = INT(NN);
     }
     return info;
   }
@@ -159,14 +126,14 @@ namespace gmm {
   /** LU Solve : Solve equation Ax=b, given an LU factored matrix.*/
   //  Thanks to Valient Gough for this routine!
   template <typename DenseMatrix, typename VectorB, typename VectorX,
-	    typename Pvector>
+            typename Pvector>
   void lu_solve(const DenseMatrix &LU, const Pvector& pvector, 
-		VectorX &x, const VectorB &b) {
+                VectorX &x, const VectorB &b) {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
     copy(b, x);
     for(size_type i = 0; i < pvector.size(); ++i) {
-      size_type perm = pvector.get(i)-1;   // permutations stored in 1's offset
-      if(i != perm) { T aux = x[i]; x[i] = x[perm]; x[perm] = aux; }
+      size_type perm = size_type(pvector[i]-1);   // permutations stored in 1's offset
+      if (i != perm) { T aux = x[i]; x[i] = x[perm]; x[perm] = aux; }
     }
     /* solve  Ax = b  ->  LUx = b  ->  Ux = L^-1 b.                        */
     lower_tri_solve(LU, x, true);
@@ -176,8 +143,11 @@ namespace gmm {
   template <typename DenseMatrix, typename VectorB, typename VectorX>
   void lu_solve(const DenseMatrix &A, VectorX &x, const VectorB &b) {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
-    dense_matrix<T> B(mat_nrows(A), mat_ncols(A));
-    lapack_ipvt ipvt(mat_nrows(A));
+    const size_type M(mat_nrows(A)), N(mat_ncols(A));
+    if (M == 0 || N == 0)
+      return;
+    dense_matrix<T> B(M, N);
+    lapack_ipvt ipvt(M);
     gmm::copy(A, B);
     size_type info = lu_factor(B, ipvt);
     GMM_ASSERT1(!info, "Singular system, pivot = " << info);
@@ -185,16 +155,20 @@ namespace gmm {
   }
   
   template <typename DenseMatrix, typename VectorB, typename VectorX,
-	    typename Pvector>
+            typename Pvector>
   void lu_solve_transposed(const DenseMatrix &LU, const Pvector& pvector, 
-			   VectorX &x, const VectorB &b) {
+                           VectorX &x, const VectorB &b) {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
     copy(b, x);
     lower_tri_solve(transposed(LU), x, false);
     upper_tri_solve(transposed(LU), x, true);
-    for(size_type i = pvector.size(); i > 0; --i) {
-      size_type perm = pvector.get(i-1)-1; // permutations stored in 1's offset
-      if(i-1 != perm) { T aux = x[i-1]; x[i-1] = x[perm]; x[perm] = aux; }
+    for (size_type i = pvector.size(); i > 0; --i) {
+      size_type perm = size_type(pvector[i-1]-1); // permutations stored in 1's offset
+      if (i-1 != perm) {
+        T aux = x[i-1];
+        x[i-1] = x[perm];
+        x[perm] = aux;
+      }
     }
   }
 
@@ -202,7 +176,7 @@ namespace gmm {
   ///@cond DOXY_SHOW_ALL_FUNCTIONS
   template <typename DenseMatrixLU, typename DenseMatrix, typename Pvector>
   void lu_inverse(const DenseMatrixLU& LU, const Pvector& pvector,
-		  DenseMatrix& AInv, col_major) {
+                  DenseMatrix& AInv, col_major) {
     typedef typename linalg_traits<DenseMatrixLU>::value_type T;
     std::vector<T> tmp(pvector.size(), T(0));
     std::vector<T> result(pvector.size());
@@ -216,7 +190,7 @@ namespace gmm {
 
   template <typename DenseMatrixLU, typename DenseMatrix, typename Pvector>
   void lu_inverse(const DenseMatrixLU& LU, const Pvector& pvector,
-		  DenseMatrix& AInv, row_major) {
+                  DenseMatrix& AInv, row_major) {
     typedef typename linalg_traits<DenseMatrixLU>::value_type T;
     std::vector<T> tmp(pvector.size(), T(0));
     std::vector<T> result(pvector.size());
@@ -236,10 +210,10 @@ namespace gmm {
   /** Given an LU factored matrix, build the inverse of the matrix. */
   template <typename DenseMatrixLU, typename DenseMatrix, typename Pvector>
   void lu_inverse(const DenseMatrixLU& LU, const Pvector& pvector,
-		  const DenseMatrix& AInv_) {
+                  const DenseMatrix& AInv_) {
     DenseMatrix& AInv = const_cast<DenseMatrix&>(AInv_);
     lu_inverse(LU, pvector, AInv, typename principal_orientation_type<typename
-	       linalg_traits<DenseMatrix>::sub_orientation>::potype());
+               linalg_traits<DenseMatrix>::sub_orientation>::potype());
   }
 
   /** Given a dense matrix, build the inverse of the matrix, and
@@ -249,8 +223,11 @@ namespace gmm {
   lu_inverse(const DenseMatrix& A_, bool doassert = true) {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
     DenseMatrix& A = const_cast<DenseMatrix&>(A_);
-    dense_matrix<T> B(mat_nrows(A), mat_ncols(A));
-    lapack_ipvt ipvt(mat_nrows(A));
+    const size_type M(mat_nrows(A)), N(mat_ncols(A));
+    if (M == 0 || N == 0)
+      return T(1);
+    dense_matrix<T> B(M, N);
+    lapack_ipvt ipvt(M);
     gmm::copy(A, B);
     size_type info = lu_factor(B, ipvt);
     if (doassert) GMM_ASSERT1(!info, "Non invertible matrix, pivot = "<<info);
@@ -263,11 +240,13 @@ namespace gmm {
   typename linalg_traits<DenseMatrixLU>::value_type
   lu_det(const DenseMatrixLU& LU, const Pvector &pvector) {
     typedef typename linalg_traits<DenseMatrixLU>::value_type T;
+    typedef typename linalg_traits<Pvector>::value_type INT;
     T det(1);
-    for (size_type j = 0; j < std::min(mat_nrows(LU), mat_ncols(LU)); ++j)
+    const size_type J=std::min(mat_nrows(LU), mat_ncols(LU));
+    for (size_type j = 0; j < J; ++j)
       det *= LU(j,j);
-    for(size_type i = 0; i < pvector.size(); ++i)
-      if (i != size_type(pvector.get(i)-1)) { det = -det; }
+    for(INT i = 0; i < INT(pvector.size()); ++i)
+      if (i != pvector[i]-1) { det = -det; }
     return det;
   }
 
@@ -275,14 +254,19 @@ namespace gmm {
   typename linalg_traits<DenseMatrix>::value_type
   lu_det(const DenseMatrix& A) {
     typedef typename linalg_traits<DenseMatrix>::value_type T;
-    dense_matrix<T> B(mat_nrows(A), mat_ncols(A));
-    lapack_ipvt ipvt(mat_nrows(A));
+    const size_type M(mat_nrows(A)), N(mat_ncols(A));
+    if (M == 0 || N == 0)
+      return T(1);
+    dense_matrix<T> B(M, N);
+    lapack_ipvt ipvt(M);
     gmm::copy(A, B);
     lu_factor(B, ipvt);
     return lu_det(B, ipvt);
   }
 
 }
+
+#include "gmm_opt.h"
 
 #endif
 

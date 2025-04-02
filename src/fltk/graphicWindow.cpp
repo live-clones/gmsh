@@ -803,8 +803,10 @@ void geometry_reload_cb(Fl_Widget *w, void *data)
   if(onelabUtils::haveSolverToRun()) {
     onelab_cb(nullptr, (void *)"check_always");
   }
-  else
+  else {
+    onelab_cb(nullptr, (void *)"reload");
     OpenProject(GModel::current()->getFileName());
+  }
   drawContext::global()->draw();
 }
 

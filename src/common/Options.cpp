@@ -746,7 +746,7 @@ void PrintOptions(int num, int level, int diff, int help, const char *filename,
 #if defined(HAVE_POST)
     for(std::size_t i = 0; i < PView::list.size(); i++) {
       char tmp[256];
-      sprintf(tmp, "View[%lu].", i);
+      sprintf(tmp, "View[%zu].", i);
       PrintOptionCategory(level, diff, help, "View options (strings)", file,
                           vec);
       PrintStringOptions(i, level, diff, help, ViewOptions_String, tmp, file,
@@ -1242,6 +1242,12 @@ std::string opt_general_options_filename(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) CTX::instance()->optionsFileName = val;
   return CTX::instance()->optionsFileName;
+}
+
+std::string opt_general_log_filename(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) Msg::SetLogFileName(val);
+  return Msg::GetLogFileName();
 }
 
 std::string opt_general_recent_file0(OPT_ARGS_STR)

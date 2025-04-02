@@ -87,7 +87,11 @@ namespace gmm {
     inline bool operator !=(const scaled_const_iterator &i) const
       { return (i.it != it); }
     inline bool operator < (const scaled_const_iterator &i) const
-      { return (it < i.it); }
+      { return (it <  i.it); }
+    inline bool operator > (const scaled_const_iterator &i) const
+      { return (it >  i.it); }
+    inline bool operator >=(const scaled_const_iterator &i) const
+      { return (it >= i.it); }
   };
 
   template <typename V, typename S> struct scaled_vector_const_ref {
@@ -146,7 +150,9 @@ namespace gmm {
 
     inline bool operator ==(const iterator &i) const { return (it == i.it); }
     inline bool operator !=(const iterator &i) const { return !(i == *this); }
-    inline bool operator < (const iterator &i) const { return (it < i.it); }
+    inline bool operator < (const iterator &i) const { return (it <  i.it); }
+    inline bool operator >=(const iterator &i) const { return (it >= i.it); }
+    inline bool operator > (const iterator &i) const { return (it >  i.it); }
 
     scaled_row_const_iterator(void) {}
     scaled_row_const_iterator(const ITER &i, S rr)
@@ -207,7 +213,9 @@ namespace gmm {
 
     bool operator ==(const iterator &i) const { return (it == i.it); }
     bool operator !=(const iterator &i) const { return !(i == *this); }
-    bool operator < (const iterator &i) const { return (it < i.it); }
+    bool operator < (const iterator &i) const { return (it <  i.it); }
+    bool operator > (const iterator &i) const { return (it >  i.it); }
+    bool operator >=(const iterator &i) const { return (it >= i.it); }
 
     scaled_col_const_iterator(void) {}
     scaled_col_const_iterator(const ITER &i, S rr)

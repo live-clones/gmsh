@@ -327,8 +327,8 @@ bool GModel::empty() const
 
 GRegion *GModel::getRegionByTag(int n) const
 {
-  GEntity tmp((GModel *)this, n);
-  auto it = regions.find((GRegion *)&tmp);
+  GRegion tmp((GModel *)this, n);
+  auto it = regions.find(&tmp);
   if(it != regions.end())
     return *it;
   else
@@ -337,8 +337,8 @@ GRegion *GModel::getRegionByTag(int n) const
 
 GFace *GModel::getFaceByTag(int n) const
 {
-  GEntity tmp((GModel *)this, n);
-  auto it = faces.find((GFace *)&tmp);
+  GFace tmp((GModel *)this, n);
+  auto it = faces.find(&tmp);
   if(it != faces.end())
     return *it;
   else
@@ -347,8 +347,8 @@ GFace *GModel::getFaceByTag(int n) const
 
 GEdge *GModel::getEdgeByTag(int n) const
 {
-  GEntity tmp((GModel *)this, n);
-  auto it = edges.find((GEdge *)&tmp);
+  GEdge tmp((GModel *)this, n);
+  auto it = edges.find(&tmp);
   if(it != edges.end())
     return *it;
   else
@@ -357,8 +357,8 @@ GEdge *GModel::getEdgeByTag(int n) const
 
 GVertex *GModel::getVertexByTag(int n) const
 {
-  GEntity tmp((GModel *)this, n);
-  auto it = vertices.find((GVertex *)&tmp);
+  GVertex tmp((GModel *)this, n);
+  auto it = vertices.find(&tmp);
   if(it != vertices.end())
     return *it;
   else
@@ -1744,8 +1744,8 @@ void GModel::renumberMeshVertices(const std::map<std::size_t, std::size_t> &mapp
             remap[v] = it->second;
           else {
             if(info) {
-              Msg::Info("Mapping does not contain a node tag (%lu) - "
-                        "incrementing after last provided tag (%lu)",
+              Msg::Info("Mapping does not contain a node tag (%zu) - "
+                        "incrementing after last provided tag (%zu)",
                         v->getNum(), maxmap);
               info = false;
             }
@@ -1872,8 +1872,8 @@ void GModel::renumberMeshElements(const std::map<std::size_t, std::size_t> &mapp
             remap[e] = it->second;
           else {
             if(info) {
-              Msg::Info("Mapping does not contain an element tag (%lu) - "
-                        "incrementing after last provided tag (%lu)",
+              Msg::Info("Mapping does not contain an element tag (%zu) - "
+                        "incrementing after last provided tag (%zu)",
                         e->getNum(), maxmap);
               info = false;
             }
@@ -2211,7 +2211,7 @@ std::size_t GModel::removeInvisibleElements()
     (*it)->deleteVertexArrays();
   }
   destroyMeshCaches();
-  Msg::Info("Removed %lu elements", n);
+  Msg::Info("Removed %zu elements", n);
   return n;
 }
 
@@ -2259,7 +2259,7 @@ std::size_t GModel::reverseInvisibleElements()
     if(all) (*it)->setVisibility(1);
   }
   destroyMeshCaches();
-  Msg::Info("Reversed %lu elements", n);
+  Msg::Info("Reversed %zu elements", n);
   return n;
 }
 
@@ -2755,7 +2755,7 @@ void GModel::checkMeshCoherence(double tolerance)
         fprintf(fp, "View \"duplicate vertices\"{\n");
         for(auto it = duplicates.begin(); it != duplicates.end(); it++) {
           MVertex *v = *it;
-          fprintf(fp, "SP(%.16g,%.16g,%.16g){%lu};\n", v->x(), v->y(), v->z(),
+          fprintf(fp, "SP(%.16g,%.16g,%.16g){%zu};\n", v->x(), v->y(), v->z(),
                   v->getNum());
         }
         fprintf(fp, "};\n");

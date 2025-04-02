@@ -86,6 +86,10 @@ namespace gmm {
       { return (i.it != it); }
     bool operator < (const conjugated_const_iterator &i) const
       { return (it < i.it); }
+    bool operator > (const conjugated_const_iterator &i) const
+      { return (it > i.it); }
+    bool operator >= (const conjugated_const_iterator &i) const
+      { return (it >= i.it); }
   };
 
   template <typename V> struct conjugated_vector_const_ref {
@@ -170,6 +174,8 @@ namespace gmm {
     bool operator ==(const iterator &i) const { return (it == i.it); }
     bool operator !=(const iterator &i) const { return !(i == *this); }
     bool operator < (const iterator &i) const { return (it < i.it); }
+    bool operator > (const iterator &i) const { return (it > i.it); }
+    bool operator >=(const iterator &i) const { return (it >= i.it); }
 
     conjugated_row_const_iterator(void) {}
     conjugated_row_const_iterator(const ITER &i) : it(i) { }
@@ -227,7 +233,9 @@ namespace gmm {
 
     bool operator ==(const iterator &i) const { return (it == i.it); }
     bool operator !=(const iterator &i) const { return !(i == *this); }
-    bool operator < (const iterator &i) const { return (it < i.it); }
+    bool operator < (const iterator &i) const { return (it <  i.it); }
+    bool operator > (const iterator &i) const { return (it >  i.it); }
+    bool operator >=(const iterator &i) const { return (it >= i.it); }
 
     conjugated_col_const_iterator(void) {}
     conjugated_col_const_iterator(const ITER &i) : it(i) { }

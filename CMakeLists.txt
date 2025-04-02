@@ -3,7 +3,7 @@
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 
 # if CMAKE_BUILD_TYPE is specified use it; otherwise set the default
 # build type to "RelWithDebInfo" ("-O2 -g" with gcc) prior to calling
@@ -178,13 +178,7 @@ set(ONELAB_PY contrib/onelab/python/onelab.py)
 set(GMSH_PY api/gmsh.py)
 set(GMSH_JL api/gmsh.jl)
 
-if(${CMAKE_MAJOR_VERSION} GREATER 2)
-  string(TIMESTAMP DATE "%Y%m%d")
-else()
-  execute_process(COMMAND date "+%Y%m%d" OUTPUT_VARIABLE DATE
-                  OUTPUT_STRIP_TRAILING_WHITESPACE)
-endif()
-
+string(TIMESTAMP DATE "%Y%m%d")
 if(NOT DATE)
   set(DATE "unknown")
 endif()
@@ -315,8 +309,10 @@ if(MSVC)
     if(ENABLE_MSVC_STATIC_RUNTIME AND ${VAR} MATCHES "/MD")
       string(REGEX REPLACE "/MD" "/MT" ${VAR} "${${VAR}}")
     endif()
-    if(NOT ${VAR} MATCHES "/MP") # enable parallel compilation
-      set(${VAR} "${${VAR}} /MP")
+    if (NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+      if(NOT ${VAR} MATCHES "/MP") # enable parallel compilation
+        set(${VAR} "${${VAR}} /MP")
+      endif()
     endif()
   endforeach()
   if(ENABLE_PRIVATE_API)
@@ -1100,8 +1096,8 @@ if(HAVE_SOLVER)
       message(STATUS "Using system version of GMM")
       list(APPEND EXTERNAL_INCLUDES ${GMM_INC})
       set_config_option(HAVE_GMM "Gmm")
-    elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/gmm)
-      include_directories(contrib/gmm)
+    elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/gmm/include/gmm)
+      include_directories(contrib/gmm/include)
       set_config_option(HAVE_GMM "Gmm[contrib]")
     endif()
   endif()
@@ -1888,7 +1884,8 @@ if(UNIX)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR
-   CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+   ((CMAKE_CXX_COMPILER_ID MATCHES "Clang") AND NOT
+   (CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")))
   execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion
                   OUTPUT_VARIABLE CXX_COMPILER_VERSION
                   OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -2229,16 +2226,15 @@ macro(filter_tests IN OUT)
     unset(BAD2)
     unset(BAD3)
     # OpenCASCADE
-    if(NOT HAVE_OCC AND NOT BAD1 AND NOT BAD2 AND NOT BAD3)
+    if(NOT HAVE_OCC)
       file(STRINGS ${FILE} BAD1 REGEX "^SetFactory.*OpenCASCADE.*")
-      file(STRINGS ${FILE} BAD2 REGEX ".*occ\\.synchronize.*")
-      file(STRINGS ${FILE} BAD3 REGEX ".*occ::synchronize.*")
+      file(STRINGS ${FILE} BAD2 REGEX ".*occ.*synchronize.*")
+      file(STRINGS ${FILE} BAD3 REGEX ".*[mM]erge.*brep.*")
     endif()
     # Metis
     if(NOT HAVE_METIS AND NOT BAD1 AND NOT BAD2 AND NOT BAD3)
       file(STRINGS ${FILE} BAD1 REGEX ".*PartitionMesh.*")
-      file(STRINGS ${FILE} BAD2 REGEX ".*mesh\\.partition.*")
-      file(STRINGS ${FILE} BAD3 REGEX ".*mesh::partition.*")
+      file(STRINGS ${FILE} BAD2 REGEX ".*mesh.*partition.*")
     endif()
     if(BAD1 OR BAD2 OR BAD3)
       message("Skipping test " ${FILE})

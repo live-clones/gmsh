@@ -48,14 +48,17 @@ namespace gmm {
   template <typename MAT1>
   void qr_factor(const MAT1 &A_) {
     MAT1 &A = const_cast<MAT1 &>(A_);
-    typedef typename linalg_traits<MAT1>::value_type value_type;
+    typedef typename linalg_traits<MAT1>::value_type T;
 
-    size_type m = mat_nrows(A), n = mat_ncols(A);
+    const size_type m = mat_nrows(A), n = mat_ncols(A);
     GMM_ASSERT2(m >= n, "dimensions mismatch");
 
-    std::vector<value_type> W(m), V(m);
-
-    for (size_type j = 0; j < n; ++j) {
+    std::vector<T> W(m), V(m);
+    // skip the last reflection for *real* square matrices (m-1 limit)
+    // lapack does the same in dlarfg.f but not in zlarfg.f
+    const size_type jmax = (m==n && !is_complex(T())) ? m-1
+                                                      : n;
+    for (size_type j = 0; j < jmax; ++j) {
       sub_interval SUBI(j, m-j), SUBJ(j, n-j);
       V.resize(m-j); W.resize(n-j);
 
@@ -75,16 +78,21 @@ namespace gmm {
   void apply_house_right(const MAT1 &QR, const MAT2 &A_) {
     MAT2 &A = const_cast<MAT2 &>(A_);
     typedef typename linalg_traits<MAT1>::value_type T;
-    size_type m = mat_nrows(QR), n = mat_ncols(QR);
+    const size_type m = mat_nrows(QR), n = mat_ncols(QR);
     GMM_ASSERT2(m == mat_ncols(A), "dimensions mismatch");
     if (m == 0) return;
     std::vector<T> V(m), W(mat_nrows(A));
     V[0] = T(1);
-    for (size_type j = 0; j < n; ++j) {
+    // assume that the last reflection was skipped for *real* square matrices
+    const size_type jmax = (m==n && !is_complex(T())) ? m-1
+                                                      : n;
+    for (size_type j = 0; j < jmax; ++j) {
       V.resize(m-j);
-      for (size_type i = j+1; i < m; ++i) V[i-j] = QR(i, j);
+      for (size_type i = j+1; i < m; ++i)
+        V[i-j] = QR(i, j);
       col_house_update(sub_matrix(A, sub_interval(0, mat_nrows(A)),
-                                  sub_interval(j, m-j)), V, W);
+                                     sub_interval(j, m-j)),
+                       V, W);
     }
   }
 
@@ -95,16 +103,20 @@ namespace gmm {
   void apply_house_left(const MAT1 &QR, const MAT2 &A_) {
     MAT2 &A = const_cast<MAT2 &>(A_);
     typedef typename linalg_traits<MAT1>::value_type T;
-    size_type m = mat_nrows(QR), n = mat_ncols(QR);
+    const size_type m = mat_nrows(QR), n = mat_ncols(QR);
     GMM_ASSERT2(m == mat_nrows(A), "dimensions mismatch");
     if (m == 0) return;
     std::vector<T> V(m), W(mat_ncols(A));
     V[0] = T(1);
-    for (size_type j = 0; j < n; ++j) {
+    // assume that the last reflection was skipped for *real* square matrices
+    const size_type jmax = (m==n && !is_complex(T())) ? m-1
+                                                      : n;
+    for (size_type j = 0; j < jmax; ++j) {
       V.resize(m-j);
       for (size_type i = j+1; i < m; ++i) V[i-j] = QR(i, j);
       row_house_update(sub_matrix(A, sub_interval(j, m-j),
-                                  sub_interval(0, mat_ncols(A))), V, W);
+                                     sub_interval(0, mat_ncols(A))),
+                       V, W);
     }
   }
 
@@ -112,16 +124,19 @@ namespace gmm {
   template <typename MAT1, typename MAT2, typename MAT3>
     void qr_factor(const MAT1 &A, const MAT2 &QQ, const MAT3 &RR) {
     MAT2 &Q = const_cast<MAT2 &>(QQ); MAT3 &R = const_cast<MAT3 &>(RR);
-    typedef typename linalg_traits<MAT1>::value_type value_type;
+    typedef typename linalg_traits<MAT1>::value_type T;
 
-    size_type m = mat_nrows(A), n = mat_ncols(A);
+    const size_type m = mat_nrows(A), n = mat_ncols(A);
     GMM_ASSERT2(m >= n, "dimensions mismatch");
     gmm::copy(A, Q);
 
-    std::vector<value_type> W(m);
-    dense_matrix<value_type> VV(m, n);
-
-    for (size_type j = 0; j < n; ++j) {
+    std::vector<T> W(m);
+    dense_matrix<T> VV(m, n);
+    // skip the last reflection for *real* square matrices (m-1 limit)
+    // lapack does the same in dlarfg.f but not in zlarfg.f
+    const size_type jmax = (m==n && !is_complex(T())) ? m-1
+                                                      : n;
+    for (size_type j = 0; j < jmax; ++j) {
       sub_interval SUBI(j, m-j), SUBJ(j, n-j);
 
       for (size_type i = j; i < m; ++i) VV(i,j) = Q(i, j);
@@ -133,8 +148,10 @@ namespace gmm {
 
     gmm::copy(sub_matrix(Q, sub_interval(0, n), sub_interval(0, n)), R);
     gmm::copy(identity_matrix(), Q);
-
-    for (size_type j = n-1; j != size_type(-1); --j) {
+    // assume that the last reflection was skipped for *real* square matrices
+    const size_type jstart = (m==n && !is_complex(T())) ? m-2
+                                                        : n-1;
+    for (size_type j = jstart; j != size_type(-1); --j) {
       sub_interval SUBI(j, m-j), SUBJ(j, n-j);
       row_house_update(sub_matrix(Q, SUBI, SUBJ),
                        sub_vector(mat_col(VV,j), SUBI), sub_vector(W, SUBJ));
@@ -295,7 +312,7 @@ namespace gmm {
 
   template <typename MAT, typename Ttol> inline
   void symmetric_qr_stop_criterion(const MAT &AA, size_type &p, size_type &q,
-                                Ttol tol) {
+                                   Ttol tol) {
     typedef typename linalg_traits<MAT>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
     R rmin = default_min(R()) * R(2);
@@ -547,22 +564,24 @@ namespace gmm {
   // if A has complex eigenvalues. Complexity about 10n^3, 25n^3 if
   // eigenvectors are computed
   template <typename MAT1, typename VECT, typename MAT2>
-    void implicit_qr_algorithm(const MAT1 &A, const VECT &eigval_,
-                               const MAT2 &Q_,
-                               tol_type_for_qr tol = default_tol_for_qr,
-                               bool compvect = true) {
+  void implicit_qr_algorithm(const MAT1 &A, const VECT &eigval_,
+                             const MAT2 &Q_,
+                             tol_type_for_qr tol = default_tol_for_qr,
+                             bool compvect = true) {
     VECT &eigval = const_cast<VECT &>(eigval_);
     MAT2 &Q = const_cast<MAT2 &>(Q_);
-    typedef typename linalg_traits<MAT1>::value_type value_type;
+    typedef typename linalg_traits<MAT1>::value_type T;
+    typedef typename number_traits<T>::magnitude_type R;
 
-    size_type n(mat_nrows(A)), q(0), q_old, p(0), ite(0), its(0);
-    dense_matrix<value_type> H(n,n);
-    sub_interval SUBK(0,0);
-
+    size_type n(mat_nrows(A)), q(0), p(0);
+    dense_matrix<T> H(n,n);
     gmm::copy(A, H);
+
     Hessenberg_reduction(H, Q, compvect);
     qr_stop_criterion(H, p, q, tol);
 
+    size_type ite(0), its(0);
+    sub_interval SUBK(0,0);
     while (q < n) {
       sub_interval SUBI(p, n-p-q), SUBJ(0, mat_ncols(Q));
       if (compvect) SUBK = SUBI;
@@ -571,8 +590,8 @@ namespace gmm {
       Wilkinson_double_shift_qr_step(sub_matrix(H, SUBI),
                                      sub_matrix(Q, SUBJ, SUBK),
                                      tol, (its == 10 || its == 20), compvect);
-      q_old = q;
-      qr_stop_criterion(H, p, q, tol*2);
+      size_type q_old(q);
+      qr_stop_criterion(H, p, q, tol*R(2));
       if (q != q_old) its = 0;
       ++its; ++ite;
       GMM_ASSERT1(ite < n*100, "QR algorithm failed");
@@ -580,7 +599,6 @@ namespace gmm {
     if (compvect) block2x2_reduction(H, Q, tol);
     extract_eig(H, eigval, tol);
   }
-
 
   template <typename MAT1, typename VECT>
     void implicit_qr_algorithm(const MAT1 &a, VECT &eigval,
@@ -594,8 +612,8 @@ namespace gmm {
   /* ********************************************************************* */
 
   template <typename MAT1, typename MAT2>
-    void symmetric_Wilkinson_qr_step(const MAT1& MM, const MAT2 &ZZ,
-                                     bool compute_z) {
+  void symmetric_Wilkinson_qr_step(const MAT1& MM, const MAT2 &ZZ,
+                                   bool compute_z) {
     MAT1& M = const_cast<MAT1&>(MM); MAT2& Z = const_cast<MAT2&>(ZZ);
     typedef typename linalg_traits<MAT1>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
@@ -631,7 +649,6 @@ namespace gmm {
       if (compute_z) col_rot(Z, c, s, k-1, k);
       if (k < n-1) { x = M(k, k-1); z = M(k+1, k-1); }
     }
-
   }
 
   template <typename VECT1, typename VECT2, typename MAT>
@@ -699,25 +716,23 @@ namespace gmm {
   // complexity about 4n^3/3, 9n^3 if eigenvectors are computed
   template <typename MAT1, typename VECT, typename MAT2>
   void symmetric_qr_algorithm_old(const MAT1 &A, const VECT &eigval_,
-                              const MAT2 &eigvect_,
-                              tol_type_for_qr tol = default_tol_for_qr,
-                              bool compvect = true) {
+                                  const MAT2 &eigvect_,
+                                  tol_type_for_qr tol = default_tol_for_qr,
+                                  bool compvect = true) {
     VECT &eigval = const_cast<VECT &>(eigval_);
     MAT2 &eigvect = const_cast<MAT2 &>(eigvect_);
     typedef typename linalg_traits<MAT1>::value_type T;
     typedef typename number_traits<T>::magnitude_type R;
 
-    if (compvect) gmm::copy(identity_matrix(), eigvect);
-    size_type n = mat_nrows(A), q = 0, p, ite = 0;
+    size_type n(mat_nrows(A)), q(0), p(0), ite(0);
     dense_matrix<T> Tri(n, n);
     gmm::copy(A, Tri);
 
+    if (compvect) gmm::copy(identity_matrix(), eigvect);
     Householder_tridiagonalization(Tri, eigvect, compvect);
-
     symmetric_qr_stop_criterion(Tri, p, q, tol);
 
     while (q < n) {
-
       sub_interval SUBI(p, n-p-q), SUBJ(0, mat_ncols(eigvect)), SUBK(p, n-p-q);
       if (!compvect) SUBK = sub_interval(0,0);
       symmetric_Wilkinson_qr_step(sub_matrix(Tri, SUBI),
