@@ -302,6 +302,7 @@ void pluginWindow::_createDialogBox(GMSH_Plugin *p, int x, int y, int width,
       g->end();
     }
     o->end();
+    p->dialogBox->group->resizable(o);
   }
 
   p->dialogBox->group->end();
