@@ -94,6 +94,10 @@
 //     - IF = 1 Skip hiding if all elements are to be hidden
 //     - IF >= 2 Hide even if all elements are to be hidden
 
+namespace {
+  constexpr double UNTOUCHED = -987654321;
+}
+
 StringXNumber MeshQuality2Options_Number[] = {
   // What to do:
   {GMSH_FULLRC, "skipComputationMetrics", nullptr, 0, "OFF, ON=usePreviousData"},
@@ -125,14 +129,14 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "wmCutoffsForStats", nullptr, 1025, "CUTOFFS (for stats weighted mean, see Help)"},
   {GMSH_FULLRC, "wmCutoffsForPlots", nullptr, 10, "CUTOFFS (for plots weighted mean, see Help)"},
   // Legacy options:
-  {GMSH_FULLRC, "JacobianDeterminant", nullptr, -987654321, "[legacy] OFF, ON"},
-  {GMSH_FULLRC, "IGEMeasure", nullptr, -987654321, "[legacy] OFF, ON"},
-  {GMSH_FULLRC, "ICNMeasure", nullptr, -987654321, "[legacy] OFF, ON"},
-  {GMSH_FULLRC, "HidingThreshold", nullptr, -987654321, "[legacy] DOUBLE"},
-  {GMSH_FULLRC, "ThresholdGreater", nullptr, -987654321, "[legacy] OFF, ON"},
-  {GMSH_FULLRC, "CreateView", nullptr, -987654321, "[legacy] OFF, ON"},
-  {GMSH_FULLRC, "Recompute", nullptr, -987654321, "[legacy] OFF, ON"},
-  {GMSH_FULLRC, "DimensionOfElements", nullptr, -987654321, "[legacy] -1, 2, 3, 4"}
+  {GMSH_FULLRC, "JacobianDeterminant", nullptr, UNTOUCHED, "[legacy] OFF, ON"},
+  {GMSH_FULLRC, "IGEMeasure", nullptr, UNTOUCHED, "[legacy] OFF, ON"},
+  {GMSH_FULLRC, "ICNMeasure", nullptr, UNTOUCHED, "[legacy] OFF, ON"},
+  {GMSH_FULLRC, "HidingThreshold", nullptr, UNTOUCHED, "[legacy] DOUBLE"},
+  {GMSH_FULLRC, "ThresholdGreater", nullptr, UNTOUCHED, "[legacy] OFF, ON"},
+  {GMSH_FULLRC, "CreateView", nullptr, UNTOUCHED, "[legacy] OFF, ON"},
+  {GMSH_FULLRC, "Recompute", nullptr, UNTOUCHED, "[legacy] OFF, ON"},
+  {GMSH_FULLRC, "DimensionOfElements", nullptr, UNTOUCHED, "[legacy] -1, 2, 3, 4"}
   // NOTE Proposition
   //  3. Clarify what I use: Disto and aspect are quality metrics.
   //                         Computing them is evaluating.
@@ -213,7 +217,7 @@ std::pair<int, std::string> MeshQuality2Options_Headers[] = {
 //  They take a default value (e.g. -987654321) that is easily detectable
 //  If a parameter is not at default value, then the plugin print an error
 //  message, explain how to convert options, explian the changes and then
-//  run the plugin with default and following change:
+//  run the plugin with following change:
 //  freeData-NothingElse = 0
 //  computeMetrics = 1
 //  createViews = CreateView
@@ -241,7 +245,7 @@ std::pair<int, std::string> MeshQuality2Options_Headers[] = {
 
 using Plug = GMSH_AnalyseMeshQuality2Plugin;
 namespace JacQual = jacobianBasedQuality;
-bool Plug::_verbose = false;
+int Plug::_verbose = 0;
 
 // ======== Plugin: Base class methods =========================================
 // =============================================================================
@@ -276,7 +280,7 @@ std::string Plug::getHelp() const
 {
   return "Plugin(AnalyseMeshQuality2) analyses the quality of the elements "
          "of a given dimension in the current model. Depending on the input "
-         "parameters it computes the minimum of the Jacobian determinant (J), "
+         "options it computes the minimum of the Jacobian determinant (J), "
          "the IGE quality measure (Inverse Gradient Error) and/or the ICN "
          "quality measure (Condition Number). Statistics are printed and, "
          "if requested, a model-based post-processing view is created for each "
@@ -293,7 +297,7 @@ std::string Plug::getHelp() const
          "shape quality measures on curvilinear finite elements\" for "
          "details.)\n"
          "\n"
-         "Parameters:\n"
+         "Options:\n"
          "\n"
          "- `JacobianDeterminant': compute J?\n"
          "\n"
@@ -320,24 +324,27 @@ std::string Plug::getHelp() const
 
 PView *Plug::execute(PView *v)
 {
-  _fetchParameters();
-  Parameters::Compute &pc = _param.compute;
   _info(0, "----------------------------------------");
   _info(0, "=> Executing the plugin AnalyseMeshQuality...");
-  _info(1, "=> Parameter 'printGuidance' is ON. ");
+
+  _fetchParameters();
+
+  _info(1, "=> Option 'printGuidance' is ON. ");
   _info(1, "   This makes the plugin to be verbose and to provide various explanations");
 
   // Handle cases where no computation is requested
   if(_param.freeData) {
     _info(-1, "=> Freeing data...");
-    _info(1, "=> Freeing data... (because parameter 'freeData-NothingElse' is ON)");
+    _info(1, "=> Freeing data... (because option 'freeData-NothingElse' is ON)");
     _data2D->clear();
     _data3D->clear();
     MeshQuality2Options_Number[18].def = 0;
-    _info(0, "   Done. Parameter 'freeData-NothingElse' has been set to OFF");
+    _info(0, "   Done. Option 'freeData-NothingElse' has been set to OFF");
     _info(1, "   Nothing else to do, rerun the plugin to compute something");
     return v;
   }
+
+  Parameters::Computation &pc = _param.compute;
   if(!pc.validity && !pc.disto && !pc.aspect) {
     _warn(0, "=> Nothing to do because 'checkValidity', 'checkQualityDisto' and "
           "'checkQualityAspect' are all three OFF");
@@ -376,11 +383,11 @@ PView *Plug::execute(PView *v)
     if(!_param.checkValidity && countsTotal.elToCompute[0] > 0) {
       _info(1, "=> Validity will be computed even if not asked");
       _info(1, "   Reason is that validity is quite cheap in comparison to quality and can significantly ");
-      _info(1, "   boost speed. This behaviour can be disabled by setting ON parameter ");
+      _info(1, "   boost speed. This behaviour can be disabled by setting ON option ");
       _info(1, "   'skipPreventiveValidityCheck', which is a good idea if the elements are known to be valid.");
     }
     else if(pc.lazyValidity) {
-      _warn(1, "=> Parameter 'skipPreventiveValidityCheck' is ON, validity will not be computed");
+      _warn(1, "=> Option 'skipPreventiveValidityCheck' is ON, validity will not be computed");
       _warn(1, "   This may significantly slow down quality computation in the presence of invalid elements");
     }
     _computeMissingData(countsTotal, check2D, check3D);
@@ -407,7 +414,7 @@ PView *Plug::execute(PView *v)
 
 void Plug::_fetchParameters()
 {
-  Parameters::Compute &pc = _param.compute;
+  Parameters::Computation &pc = _param.compute;
   Parameters::Post &pp = _param.pview;
   Parameters::Hidding &ph = _param.hide;
   int checkValidity = static_cast<int>(MeshQuality2Options_Number[0].def);
@@ -807,7 +814,7 @@ void Plug::StatGenerator::_computeCoefficients(double cutoff, size_t sz,
 // =============================================================================
 
 void Plug::DataSingleDimension::initialize(GModel const *m,
-                                           const Parameters::Compute &param,
+                                           const Parameters::Computation &param,
                                            Counts &counts)
 {
   // Update list GEntities (thus _dataEntities) if needed
@@ -905,7 +912,7 @@ inline void unsetBit(unsigned char &value, int maskOneBit)
   value &= ~maskOneBit;
 }
 
-void Plug::DataEntity::initialize(const Parameters::Compute &param)
+void Plug::DataEntity::initialize(const Parameters::Computation &param)
 {
   // FIXME: if -2, still have to update F_REQU
   //  and count show if F_REQU and not F_NOT..
@@ -985,7 +992,7 @@ void Plug::DataEntity::initialize(const Parameters::Compute &param)
   }
 }
 
-void Plug::DataEntity::count(const Parameters::Compute &param, Counts &counts)
+void Plug::DataEntity::count(const Parameters::Computation &param, Counts &counts)
 {
   // Reset
   for(int i = 0; i < 3; ++i) {
@@ -1241,10 +1248,10 @@ std::size_t Plug::_guidanceNothingToCompute(Counts counts,
 
     if (counts.totalEl) {
       if (_param.compute.onlyVisible && counts.visibleEl == 0) {
-        _warn(1, "   Parameter 'restrictToVisibleElements' is ON but no visible elements found.");
+        _warn(1, "   Option 'restrictToVisibleElements' is ON but no visible elements found.");
       }
       else if (_param.compute.onlyCurved && counts.curvedEl == 0) {
-        _warn(1, "   Parameter 'restrictToCurvedElements' is ON but no curved elements found.");
+        _warn(1, "   Option 'restrictToCurvedElements' is ON but no curved elements found.");
       }
       else {
         _error(1, "   Unexpected state: should not be here.");
@@ -1269,7 +1276,7 @@ std::size_t Plug::_guidanceNothingToCompute(Counts counts,
       }
       else if (_dimensionPolicy == 1) {
         if (_m->getNumRegions()) {
-          _warn(0, "   Planned to check 2D mesh as parameter 'dimensionPolicy' "
+          _warn(0, "   Planned to check 2D mesh as option 'dimensionPolicy' "
                    "is ON, but no 2D mesh found.");
           _warn(0, "   3D geometry found, maybe 'dimensionPolicy' "
                    "should be set to 0");

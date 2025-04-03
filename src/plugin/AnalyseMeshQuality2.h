@@ -56,7 +56,7 @@ GMSH_Plugin *GMSH_RegisterAnalyseMeshQuality2Plugin();
 
 class GMSH_AnalyseMeshQuality2Plugin : public GMSH_PostPlugin {
 private:
-  static bool _verbose;
+  static int _verbose;
 
 private:
   class DataSingleDimension;
@@ -67,7 +67,7 @@ private:
 
 private:
   struct Parameters {
-    struct Compute {
+    struct Computation {
       bool validity = false;
       bool disto = false;
       bool aspect = false;
@@ -205,7 +205,7 @@ private:
   public:
     explicit DataSingleDimension(int dim) : _dim(dim) {}
     void clear() { _dataEntities.clear(); }
-    void initialize(GModel const *, const Parameters::Compute &, Counts &);
+    void initialize(GModel const *, const Parameters::Computation &, Counts &);
     void getDataEntities(std::vector<DataEntity*> &set)
     {
       for(auto &d : _dataEntities) set.push_back(&d.second);
@@ -237,8 +237,8 @@ private:
       for(int i = 0; i < 3; ++i) num[i] = _numToShow[i];
     }
     //void countNewElement(ComputeParameters, std::size_t cnt[3]) const;
-    void initialize(const Parameters::Compute &);
-    void count(const Parameters::Compute &, Counts &);
+    void initialize(const Parameters::Computation &);
+    void count(const Parameters::Computation &, Counts &);
     void reset(std::size_t);
     void add(MElement *);
     void add(std::vector<MElement *> &elements)
