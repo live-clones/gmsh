@@ -67,37 +67,48 @@ private:
 
 private:
   struct Parameters {
+    double dimPolicy = 0;
+    bool freeData = false;
+
     struct Computation {
+      bool skip = false;
       bool validity = false;
       bool disto = false;
       bool aspect = false;
       bool onlyVisible = false;
       bool onlyCurved = false;
-      bool lazyValidity = false;
+      bool smartRecompute = false;
+      int dataManagementPolicy = 0;
       int policy = 0;
     } compute;
 
     struct Post {
       bool create2D = false;
       bool create3D = false;
-      bool forceNew = false;
       double plotCutoffPack = 10;
+      double statCutoffPack = 10;
     } pview;
 
     struct Hidding {
-      bool yes = false;
-      bool worst = false;
+      bool todo = false;
+      int policy = 0;
       int criterion = 2;
       double threshold = 10;
+      bool worst = false;
+      bool unhideToo = false;
     } hide;
 
-    double statCutoffPack = 10;
-    double dimPolicy = 0;
-    bool freeData = false;
-    bool checkValidity = false;
+    struct MetricsToShow {
+      int validity = 0;
+      int disto = 0;
+      int aspect = 0;
+      int minJac = 0;
+      int ratioJac = 0;
+      bool regularizeJac = 0;
+    } show;
+
     bool check2D = false;
     bool check3D = false;
-    bool printJac = false;
   };
 
 private:
@@ -151,6 +162,8 @@ public:
 
 private:
   void _fetchParameters();
+  void _fetchLegacyParameters();
+  void _decideWhichMetricPostpro();
   void _decideDimensionToCheck(bool &check2D, bool &check3D) const;
   void _computeMissingData(Counts param, bool check2D, bool check3D) const;
   void _printStats(Measures &m2, Measures &m3) const;

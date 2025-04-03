@@ -417,71 +417,136 @@ void Plug::_fetchParameters()
   Parameters::Computation &pc = _param.compute;
   Parameters::Post &pp = _param.pview;
   Parameters::Hidding &ph = _param.hide;
-  int checkValidity = static_cast<int>(MeshQuality2Options_Number[0].def);
-  int checkDisto = static_cast<int>(MeshQuality2Options_Number[1].def);
-  int checkAspect = static_cast<int>(MeshQuality2Options_Number[2].def);
-  // NOTE dimensionPolicy: highest dimension available -> 0, only 2D -> 1,
-  //      2D and 3D : seperately -> 2, mixed -> 3
-  _dimensionPolicy = static_cast<int>(MeshQuality2Options_Number[3].def);
-  _param.dimPolicy = _dimensionPolicy;
+  Parameters::MetricsToShow &ps = _param.show;
 
-  // NOTE recomputePolicy:
-  //      - delete nothing, compute nothing, output prevsly computed data -> -2
-  //        which is useful for adding creation of pview (to check: hiding!)
-  //      The other options provide an identical output, but differ how
-  //      existent data are treated.
-  //      NB: In what follows, the "asked elements" are the elements for which
-  //      visibility is compatible with 'restrictToVisibleElements' parameter
-  //      and similarly for 'restrictToCurvedElements'.
-  //      - delete nothing, compute newly asked elements -> -1
-  //      - delete GEntities that are not existent in current GModel,
-  //        delete data in GEntities that have detected mesh modifications,
-  //        (re)compute data for asked elements and newly asked elements -> 0
-  //      - delete GEntities that are not existent in current GModel,
-  //        delete data in all GEntities,
-  //        compute asked elements -> 1
-  // FIXME -1 is useful if it is possible to call the plugin with different
-  //  geometries then call it again with previous one. The case I am thinking
-  //  about is if the user can switch the current GModel and come back to the
-  //  previous one, and in the GUI. Check that this is true.
-  pc.policy = static_cast<int>(MeshQuality2Options_Number[4].def);
-  pc.onlyVisible = static_cast<bool>(MeshQuality2Options_Number[5].def);
-  pc.onlyCurved = static_cast<bool>(MeshQuality2Options_Number[6].def);
-  bool lazyValidity = static_cast<bool>(MeshQuality2Options_Number[7].def);
-  pc.disto = static_cast<bool>(checkDisto);
-  pc.aspect = static_cast<bool>(checkAspect);
-  pc.validity = checkValidity || (!lazyValidity && (pc.disto || pc.aspect));
-  _param.checkValidity = static_cast<bool>(checkValidity);
+  double skipValidity, disto, aspect, minJ, ratioJ;
 
-  _param.statCutoffPack = MeshQuality2Options_Number[8].def;
-  _param.printJac = static_cast<bool>(MeshQuality2Options_Number[9].def);
-  pp.create3D = static_cast<bool>(MeshQuality2Options_Number[10].def);
-  pp.create2D = static_cast<bool>(MeshQuality2Options_Number[11].def);
-  pp.plotCutoffPack = MeshQuality2Options_Number[12].def;
-  pp.forceNew = static_cast<bool>(MeshQuality2Options_Number[13].def);
-  ph.yes = static_cast<bool>(MeshQuality2Options_Number[14].def);
-  ph.worst = static_cast<bool>(MeshQuality2Options_Number[15].def);
-  ph.criterion = static_cast<int>(MeshQuality2Options_Number[16].def);
-  ph.threshold = MeshQuality2Options_Number[17].def;
-  _myVerbose = static_cast<bool>(MeshQuality2Options_Number[18].def);
-  _param.freeData = static_cast<bool>(MeshQuality2Options_Number[19].def);
+  // What to do:
+  pc.skip = static_cast<bool>(MeshQuality2Options_Number[0].def);
+  pp.create3D = static_cast<bool>(MeshQuality2Options_Number[1].def);
+  pp.create2D = static_cast<bool>(MeshQuality2Options_Number[2].def);
+  ph.todo = static_cast<bool>(MeshQuality2Options_Number[3].def);
+  _verbose = static_cast<int>(MeshQuality2Options_Number[4].def);
 
-  _statGen->setCutoffStats(_param.statCutoffPack);
-  _statGen->setCutoffPlots(_param.statCutoffPack);
-  _verbose = _myVerbose;
+  // Metrics to include:
+  disto = MeshQuality2Options_Number[5].def;
+  aspect = MeshQuality2Options_Number[6].def;
 
+  // Elements Selection:
+  _param.dimPolicy = static_cast<int>(MeshQuality2Options_Number[7].def);
+  pc.onlyVisible = static_cast<bool>(MeshQuality2Options_Number[8].def);
+  pc.onlyCurved = static_cast<bool>(MeshQuality2Options_Number[9].def);
+
+  // Hiding options:
+  ph.policy = static_cast<int>(MeshQuality2Options_Number[10].def);
+  ph.criterion = static_cast<int>(MeshQuality2Options_Number[11].def);
+  ph.threshold = MeshQuality2Options_Number[12].def;
+  ph.worst = static_cast<bool>(MeshQuality2Options_Number[13].def);
+  ph.unhideToo = static_cast<bool>(MeshQuality2Options_Number[14].def);
+
+  // Advanced computation options:
+  pc.smartRecompute = static_cast<bool>(MeshQuality2Options_Number[15].def);
+  pc.dataManagementPolicy = static_cast<int>(MeshQuality2Options_Number[16].def);
+  skipValidity = MeshQuality2Options_Number[17].def;
+
+  // Advanced analysis options:
+  ratioJ = MeshQuality2Options_Number[18].def;
+  minJ = MeshQuality2Options_Number[19].def;
+  ps.regularizeJac = static_cast<bool>(MeshQuality2Options_Number[20].def);
+  pp.statCutoffPack = MeshQuality2Options_Number[21].def;
+  pp.plotCutoffPack = MeshQuality2Options_Number[22].def;
+
+  // metrics to compute
+  pc.validity = !static_cast<bool>(skipValidity);
+  pc.disto = static_cast<bool>(disto);
+  pc.aspect = static_cast<bool>(aspect);
+
+  // metrics to show
+  ps.validity = skipValidity > 0 ? 0 : -static_cast<int>(skipValidity);
+  ps.disto = static_cast<int>(disto);
+  ps.aspect = static_cast<int>(aspect);
+  ps.minJac = static_cast<int>(minJ);
+  ps.ratioJac = static_cast<int>(ratioJ);
+
+  _param.freeData = pc.dataManagementPolicy == -1;
+  _fetchLegacyParameters();
+
+
+  // // Legacy options:
+  // // 23{GMSH_FULLRC, "JacobianDeterminant", nullptr, -987654321, "[legacy] OFF, ON"},
+  // // 24{GMSH_FULLRC, "IGEMeasure", nullptr, -987654321, "[legacy] OFF, ON"},
+  // // 25{GMSH_FULLRC, "ICNMeasure", nullptr, -987654321, "[legacy] OFF, ON"},
+  // // 26{GMSH_FULLRC, "HidingThreshold", nullptr, -987654321, "[legacy] DOUBLE"},
+  // // 27{GMSH_FULLRC, "ThresholdGreater", nullptr, -987654321, "[legacy] OFF, ON"},
+  // // 28{GMSH_FULLRC, "CreateView", nullptr, -987654321, "[legacy] OFF, ON"},
+  // // 29{GMSH_FULLRC, "Recompute", nullptr, -987654321, "[legacy] OFF, ON"},
+  // // 30{GMSH_FULLRC, "DimensionOfElements", nullptr, -987654321, "[legacy] -1, 2, 3, 4"}
   //
-  if(_dimensionPolicy < 0)
-    _dimensionPolicy = 0;
-  else if(_dimensionPolicy > 3)
-    _dimensionPolicy = 3;
-
-  if(pc.policy < -2)
-    pc.policy = -2;
-  else if(pc.policy > 1)
-    pc.policy = 1;
-
-  // FIXME Warnings if verbose
+  // int checkValidity = static_cast<int>(MeshQuality2Options_Number[0].def);
+  // int checkDisto = static_cast<int>(MeshQuality2Options_Number[1].def);
+  // int checkAspect = static_cast<int>(MeshQuality2Options_Number[2].def);
+  // // NOTE dimensionPolicy: highest dimension available -> 0, only 2D -> 1,
+  // //      2D and 3D : seperately -> 2, mixed -> 3
+  // _dimensionPolicy = static_cast<int>(MeshQuality2Options_Number[3].def);
+  // _param.dimPolicy = _dimensionPolicy;
+  //
+  // // NOTE recomputePolicy:
+  // //      - delete nothing, compute nothing, output prevsly computed data -> -2
+  // //        which is useful for adding creation of pview (to check: hiding!)
+  // //      The other options provide an identical output, but differ how
+  // //      existent data are treated.
+  // //      NB: In what follows, the "asked elements" are the elements for which
+  // //      visibility is compatible with 'restrictToVisibleElements' parameter
+  // //      and similarly for 'restrictToCurvedElements'.
+  // //      - delete nothing, compute newly asked elements -> -1
+  // //      - delete GEntities that are not existent in current GModel,
+  // //        delete data in GEntities that have detected mesh modifications,
+  // //        (re)compute data for asked elements and newly asked elements -> 0
+  // //      - delete GEntities that are not existent in current GModel,
+  // //        delete data in all GEntities,
+  // //        compute asked elements -> 1
+  // // FIXME -1 is useful if it is possible to call the plugin with different
+  // //  geometries then call it again with previous one. The case I am thinking
+  // //  about is if the user can switch the current GModel and come back to the
+  // //  previous one, and in the GUI. Check that this is true.
+  // pc.policy = static_cast<int>(MeshQuality2Options_Number[4].def);
+  // pc.onlyVisible = static_cast<bool>(MeshQuality2Options_Number[5].def);
+  // pc.onlyCurved = static_cast<bool>(MeshQuality2Options_Number[6].def);
+  // bool lazyValidity = static_cast<bool>(MeshQuality2Options_Number[7].def);
+  // pc.disto = static_cast<bool>(checkDisto);
+  // pc.aspect = static_cast<bool>(checkAspect);
+  // pc.validity = checkValidity || (!lazyValidity && (pc.disto || pc.aspect));
+  // _param.checkValidity = static_cast<bool>(checkValidity);
+  //
+  // _param.statCutoffPack = MeshQuality2Options_Number[8].def;
+  // _param.printJac = static_cast<bool>(MeshQuality2Options_Number[9].def);
+  // pp.create3D = static_cast<bool>(MeshQuality2Options_Number[10].def);
+  // pp.create2D = static_cast<bool>(MeshQuality2Options_Number[11].def);
+  // pp.plotCutoffPack = MeshQuality2Options_Number[12].def;
+  // pp.forceNew = static_cast<bool>(MeshQuality2Options_Number[13].def);
+  // ph.todo = static_cast<bool>(MeshQuality2Options_Number[14].def);
+  // ph.worst = static_cast<bool>(MeshQuality2Options_Number[15].def);
+  // ph.criterion = static_cast<int>(MeshQuality2Options_Number[16].def);
+  // ph.threshold = MeshQuality2Options_Number[17].def;
+  // _myVerbose = static_cast<bool>(MeshQuality2Options_Number[18].def);
+  // _param.freeData = static_cast<bool>(MeshQuality2Options_Number[19].def);
+  //
+  // _statGen->setCutoffStats(_param.statCutoffPack);
+  // _statGen->setCutoffPlots(_param.statCutoffPack);
+  // _verbose = _myVerbose;
+  //
+  // //
+  // if(_dimensionPolicy < 0)
+  //   _dimensionPolicy = 0;
+  // else if(_dimensionPolicy > 3)
+  //   _dimensionPolicy = 3;
+  //
+  // if(pc.policy < -2)
+  //   pc.policy = -2;
+  // else if(pc.policy > 1)
+  //   pc.policy = 1;
+  //
+  // // FIXME Warnings if verbose
 
 #if defined(HAVE_VISUDEV)
   // TODO come back later
@@ -503,6 +568,142 @@ void Plug::_fetchParameters()
   _dataPViewICN.clear();
 #endif
 }
+
+// void Plug::_decideWhichMetricPostPro()
+// {
+//   Parameters::Computation &pc = _param.compute;
+//   Parameters::Post &pp = _param.pview;
+//   Parameters::Hidding &ph = _param.hide;
+//
+//   pp.validity = false;
+//   pp.disto = false;
+//   pp.aspect = false;
+//   pp.addMinJac = false;
+//   pp.addRatioJac = false;
+// }
+
+void Plug::_fetchLegacyParameters()
+{
+  bool touched = false;
+  for(int i = 23; i <= 30; i++) {
+    if(MeshQuality2Options_Number[i].def != UNTOUCHED) {
+      touched = true;
+      break;
+    }
+  }
+  if(!touched) return;
+
+  _verbose = 1;
+
+  _error(0, "=> Deprecated options detected. The plugin will execute using the "
+            "legacy configuration and ignore new options.");
+  _warn(0, "   Please update the deprecated options to their modern "
+           "counterparts.");
+  _info(0, "=> Use the following changes to map the options and achieve "
+           "equivalent results:");
+  _info(0, "    1. Set 'skipComputationMetrics' to 1 if '_Recompute' is 0");
+  _info(0, "    2. Set 'createElementsView' to '_CreateView'");
+  _info(0, "    3. Set 'enableDistortionQuality' to 1 if '_ICNMeasure' is not 0");
+  _info(0, "    4. Set 'enableAspectQuality'' to 1 if '_IGEMeasure' is not 0");
+  _info(0, "    5. Set 'dimensionPolicy' to -1 if '_DimensionOfElements' is 2");
+  _info(0, "       otherwise set 'dimensionPolicy' to 1 if '_DimensionOfElements' is 4");
+  _info(0, "    6. Set 'hidingThreshold' to '_HidingThreshold'");
+  _info(0, "    7. Set 'hideWorst' to 1 if '_ThresholdGreater' is 0");
+  _info(0, "    8. Set 'skipValidity' to 1 if '_JacobianDeterminant' is 0");
+  _info(0, "    9. Set 'enableRatioJacDetAsAMetric' to 1");
+  _info(0, "   10. Set 'enableMinJacDetAsAMetric' to 1");
+  _info(0, "   11. Set 'wmCutoffsForStats' to 50");
+  _info(0, "   12. If '_HidingThreshold' is smaller than 99:");
+  _info(0, "       -  Set 'hideElements' to 1");
+  _info(0, "       -  Set 'hidingPolicy' to 1");
+  _info(0, "       -  Set 'enableDistortionQuality' to 2 if 'enableDistortionQuality' is 1");
+  _info(0, "          otherwise set 'enableAspectQuality' to 2 if 'enableAspectQuality' is 1");
+  _info(0, "          otherwise set 'enableRatioJacDetAsAMetric' to 2");
+  _info(0, "=> Note: To disable this behavior, avoid modifying the deprecated options.");
+
+
+  Parameters::Computation &pc = _param.compute;
+  Parameters::Post &pp = _param.pview;
+  Parameters::Hidding &ph = _param.hide;
+  Parameters::MetricsToShow &ps = _param.show;
+
+  pc.onlyVisible = false;
+  pc.onlyCurved = false;
+  pp.statCutoffPack = 50;
+  pp.create2D = false;
+  ps.ratioJac = 1;
+  ps.minJac = 1;
+  ps.regularizeJac = false;
+  _param.freeData = false;
+
+  double val = MeshQuality2Options_Number[23].def;
+  if (val != UNTOUCHED) // JacDet
+    ps.validity = pc.validity = static_cast<bool>(val);
+  else
+    ps.validity = pc.validity = false;
+
+  val = MeshQuality2Options_Number[24].def;
+  if (val != UNTOUCHED) // IGEMeasure
+    ps.aspect = pc.aspect = static_cast<bool>(val);
+  else
+    ps.aspect = pc.aspect = false;
+
+  val = MeshQuality2Options_Number[25].def;
+  if (val != UNTOUCHED) // ICNMeasure
+    ps.disto = pc.disto = static_cast<bool>(val);
+  else
+    ps.disto = pc.disto = false;
+
+  val = MeshQuality2Options_Number[26].def;
+  if (val != UNTOUCHED) { // HidingThreshold
+    ph.threshold = val;
+    ph.todo = ph.threshold < 99;
+    ph.policy = 1;
+    ph.criterion = 0;
+    ph.unhideToo = false;
+    if(ps.disto)
+      ps.disto = 2;
+    else if(ps.aspect)
+      ps.aspect = 2;
+    else if(ps.validity)
+      ps.ratioJac = 2;
+  }
+  else {
+    ph.threshold = false;
+  }
+
+  val = MeshQuality2Options_Number[27].def;
+  if (val != UNTOUCHED) // ThresholdGreater
+    ph.worst = !static_cast<bool>(MeshQuality2Options_Number[27].def);
+  else
+    ph.worst = false;
+
+  val = MeshQuality2Options_Number[28].def;
+  if (val != UNTOUCHED) // CreateView
+    pp.create3D = static_cast<bool>(val);
+  else
+    pp.create3D = false;
+
+  val = MeshQuality2Options_Number[29].def;
+  if (val != UNTOUCHED) { // Recompute
+    pc.skip = !static_cast<bool>(val);
+    pc.smartRecompute = false;
+    pc.dataManagementPolicy = 0;
+  }
+  else {
+    pc.skip = true;
+  }
+
+  val = MeshQuality2Options_Number[30].def;
+  if (val != UNTOUCHED) { // DimensionOfElements
+    int dimPol = static_cast<int>(val);
+    _param.dimPolicy = dimPol == 2 ? -1 : dimPol == 4 ? 1 : 0;
+  }
+  else {
+    _param.dimPolicy = 0;
+  }
+}
+
 
 void Plug::_computeMissingData(Counts counts, bool check2D, bool check3D) const
 {
