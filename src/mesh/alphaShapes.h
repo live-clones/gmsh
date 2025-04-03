@@ -65,6 +65,8 @@ void _tetrahedralizePoints(const int tag, const bool optimize, const double qual
 
 void _alphaShape3D(const int tag, const double alpha, const int sizeFieldTag, const int tagAlpha, const int tagAlphaBoundary, const bool removeDisconnectedNodes, const bool returnTri2TetMap, std::vector<std::size_t>& tri2Tet);
 
+void _alphaShape3DFromArray(const int tag, const std::vector<size_t> & elementTags, const std::vector<double> & alpha, const int tagAlpha, const int tagAlphaBoundary, const bool removeDisconnectedNodes, const bool returnTri2TetMap, std::vector<size_t>& tri2Tet);
+
 void _surfaceEdgeSplitting(const int fullTag, const int surfaceTag, const int sizeFieldTag, const bool tetrahealize, const bool buildElementOctree, const std::vector<size_t> tri2TetMap);
 
 void _volumeMeshRefinement(const int fullTag, const int surfaceTag, const int volumeTag, const int sizeFieldTag, const bool returnNodalCurvature, std::vector<double>& nodalCurvature);

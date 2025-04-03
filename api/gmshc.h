@@ -1699,6 +1699,19 @@ GMSH_API void gmshModelMeshAlphaShape3D(const int tag,
                                         const int returnTri2TetMap,
                                         int * ierr);
 
+/* Compute alpha shape of the mesh in entity of tag `tag' using an array of
+ * values alpha. The values correspond to the element tags stored in
+ * elementTags. */
+GMSH_API void gmshModelMeshAlphaShape3DFromArray(const int tag,
+                                                 const size_t * elementTags, const size_t elementTags_n,
+                                                 const double * alpha, const size_t alpha_n,
+                                                 const int tagAlpha,
+                                                 const int tagAlphaBoundary,
+                                                 size_t ** tri2TetMap, size_t * tri2TetMap_n,
+                                                 const int removeDisconnectedNodes,
+                                                 const int returnTri2TetMap,
+                                                 int * ierr);
+
 /* Mesh refinement/derefinement through edge splitting of (surface) entity of
  * tag `tag */
 GMSH_API void gmshModelMeshSurfaceEdgeSplitting(const int fullTag,

@@ -2799,6 +2799,205 @@ void postProPoints(std::vector<SPoint3> points, std::vector<double> data, const 
 }
 
 // Compute alpha shape of tetrahedra in discrete entity dim, tag
+void AlphaShape::_alphaShape3DFromArray(const int tag, const std::vector<size_t> & elementTags, const std::vector<double> & alpha, const int tagAlpha, const int tagAlphaBoundary, const bool removeDisconnectedNodes, const bool returnTri2TetMap, std::vector<size_t>& tri2Tet){
+  // auto t1 = std::chrono::steady_clock::now(); 
+  
+  GModel* gm = GModel::current();
+
+  GRegion* gr = gm->getRegionByTag(tag);
+  if (gr == nullptr) {
+    Msg::Error("Entity of dimension 3 and tag %d not found\n", tag);
+    return;
+  }
+  // create size field on nodes
+
+
+  // std::unordered_map<MTetrahedron*, double> sizeAtTetBarycenter;
+  std::unordered_map<size_t, double> sizeAtTetBarycenter;
+
+  if (gr->getNumMeshElementsByType(TYPE_TET) == 0) {
+    Msg::Error("No tetrahedra in entity with tag %d\n", tag);
+    return;
+  }
+  size_t n_tets = gr->getNumMeshElementsByType(TYPE_TET);
+
+  // Create list of neighbors, using node indices (!)
+  std::vector<size_t> neighbors;
+  std::vector<size_t> tetNodes(4*n_tets);
+  for (size_t i=0; i<gr->getNumMeshElementsByType(TYPE_TET); i++){
+    MTetrahedron* tet = gr->tetrahedra[i];
+    for (size_t j=0; j<4; j++){
+      tetNodes[4*i+j] = tet->getVertex(j)->getNum();
+    }
+  }
+  // auto t2 = std::chrono::steady_clock::now(); 
+
+  if (elementTags.size() != alpha.size()){
+    Msg::Error("size of elementTags and alpha do not match");
+    return;
+  }
+  std::unordered_map<size_t, double> tetSizeField;
+  for (size_t i=0; i<elementTags.size(); i++){
+    tetSizeField[elementTags[i]] = alpha[i];
+  }
+
+  // auto t3 = std::chrono::steady_clock::now(); 
+  computeTetNeighbors_(tetNodes, neighbors);
+  std::unordered_set<MVertex*> verticesInConnected;
+  // Compute the alpha shape
+  std::vector<bool> _touched(n_tets, false);
+  std::vector<size_t> alphaFaces;
+  std::vector<MTetrahedron*> alphaTets;
+  double alphaTet, R;
+  SPoint3 cc;
+
+  printf("here p \n");
+
+  printf("n_tets = %zu \n", n_tets);
+
+  for (size_t i=0; i<n_tets; i++){
+    auto tet = gr->tetrahedra[i];
+    auto tetTag = tet->getNum();
+    auto it = tetSizeField.find(tetTag);
+    if (it == tetSizeField.end()){
+      Msg::Error("tet %zu not found in size field", tetTag);
+      return;
+    }
+    R = _tetCircumCenter(tet);
+    alphaTet = it->second;
+    if (R < alphaTet && !_touched[i]){
+      std::stack<size_t> _s;
+      _s.push(i);
+      _touched[i] = true;
+      // we create a new tetrahedron
+      auto tet_alpha = new MTetrahedron(tet->getVertex(0), tet->getVertex(1), tet->getVertex(2), tet->getVertex(3), tet->getNum());
+      for (size_t jn=0; jn<4; jn++) {verticesInConnected.insert(tet_alpha->getVertex(jn));}
+      alphaTets.push_back(tet_alpha);
+      while(!_s.empty()){
+        auto i_t = _s.top();
+        _s.pop();
+        for (size_t j=0; j<4; j++){
+          if (neighbors[4*i_t+j] == 4*n_tets){
+            alphaFaces.push_back(4*i_t+j);
+          }
+          else if (!_touched[size_t(neighbors[4*i_t+j]/4)]){
+            size_t i_t_neigh = neighbors[4*i_t+j]/4;
+            auto tet_neigh = gr->tetrahedra[i_t_neigh];
+            R = _tetCircumCenter(tet_neigh);
+            auto it = tetSizeField.find(tet_neigh->getNum());
+            if (it == tetSizeField.end()){
+              Msg::Error("tet %zu not found in size field", tet_neigh->getNum());
+              return;
+            }
+            alphaTet = it->second;
+            if (R < alphaTet){
+              auto tet_alpha = new MTetrahedron(tet_neigh->getVertex(0), tet_neigh->getVertex(1), tet_neigh->getVertex(2), tet_neigh->getVertex(3), tet_neigh->getNum());
+              for (size_t jn=0; jn<4; jn++) {verticesInConnected.insert(tet_alpha->getVertex(jn));}
+              alphaTets.push_back(tet_alpha);
+              _s.push(i_t_neigh);
+              _touched[i_t_neigh] = true;
+            }
+            else {
+              alphaFaces.push_back(4*i_t+j);
+            }
+          }
+        }
+      }
+    }
+  } 
+
+  GRegion *dr = GModel::current()->getRegionByTag(tagAlpha);
+  if(!dr) {
+    Msg::Error("Entity of dimension 3 with tag %d does not exist", tagAlpha);
+    return;
+  }
+
+  printf("in alpha shape : \n");
+  printf("%lu alpha faces \n", alphaFaces.size());
+  printf("%lu alpha tets \n", alphaTets.size());
+
+  for (auto tet : dr->tetrahedra){
+    delete tet;
+  }
+  dr->tetrahedra.clear();
+  for (size_t i=0; i<alphaTets.size(); i++){
+    dr->tetrahedra.push_back(alphaTets[i]);
+  }
+
+  if (removeDisconnectedNodes){
+    size_t n_removed = 0;
+    // std::unordered_set<MVertex*> verticesInConnected;
+    // size_t n_tets_in_connected = dr->getNumMeshElementsByType(TYPE_TET);
+    // for (size_t i=0; i<n_tets_in_connected; i++){
+    //   auto tet = dr->tetrahedra[i];
+    //   for (size_t j=0; j<4; j++){
+    //     verticesInConnected.insert(tet->getVertex(j));
+    //   }
+    // }
+    // for (auto _gr : gm->getRegions()){
+    for(MVertex *v : gr->mesh_vertices) {
+      if (verticesInConnected.find(v) == verticesInConnected.end()){
+        gr->removeMeshVertex(v);
+        // printf("removing node %zu \n", v->getNum());
+        // gm->gm->addMVertexToVertexCache(vm);
+        // gm->MVertex
+        // delete v;
+        // v->setEntity(NULL);
+        n_removed++;
+      }
+    }
+    // }
+    Msg::Info("Removed %zu disconnected node(s) in alpha shape\n", n_removed);
+  }
+  
+  // for (auto tet : dr->tetrahedra){
+  //   for (size_t i=0; i<4; i++){
+  //     auto v = tet->getVertex(i);
+  //     v->setEntity(dr);
+  //   }
+  // }
+
+  GFace *df = GModel::current()->getFaceByTag(tagAlphaBoundary);
+  if(!df) {
+    Msg::Error("Entity of dimension 2 with tag %d does not exist", tagAlphaBoundary);
+    return;
+  }
+
+  if (returnTri2TetMap){
+    tri2Tet.resize(2*alphaFaces.size());
+  }
+  for (auto _df : gm->getFaces()){
+    for (auto tri : _df->triangles){
+      delete tri;
+    }
+    _df->removeElements(TYPE_TRI);
+  }
+
+  // df->removeElements(TYPE_TRI);
+  for (size_t i=0; i<alphaFaces.size(); i++){
+    size_t tetIndex = alphaFaces[i]/4;
+    size_t faceIndex = alphaFaces[i]%4;
+    auto tet = gr->tetrahedra[tetIndex];
+    auto f_i = tet->getFace(faceIndex);
+    MVertex* v0 = f_i.getVertex(0);
+    MVertex* v1 = f_i.getVertex(1);
+    MVertex* v2 = f_i.getVertex(2);
+    MTriangle* tri = new MTriangle(v0, v1, v2, i+1);
+    df->triangles.push_back(tri);
+    if (returnTri2TetMap){
+      tri2Tet[2*i+0] = tri->getNum();
+      tri2Tet[2*i+1] = tet->getNum();
+    }
+  }
+  // auto t4 = std::chrono::steady_clock::now(); 
+  // auto dur0 = std::chrono::duration_cast<std::chrono::microseconds>(t2-t1);
+  // auto dur1 = std::chrono::duration_cast<std::chrono::microseconds>(t3-t2);
+  // auto dur2 = std::chrono::duration_cast<std::chrono::microseconds>(t4-t3);
+  // auto durTotal = std::chrono::duration_cast<std::chrono::microseconds>(t4-t1);
+  // printf("initial      time : %f percent \n", 100*double(dur0.count())/double(durTotal.count()) );
+  // printf("size field   time : %f percent \n", 100*double(dur1.count())/double(durTotal.count()) );
+  // printf("rest of as   time : %f percent \n", 100*double(dur2.count())/double(durTotal.count()) );
+}
 void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int sizeFieldTag, const int tagAlpha, const int tagAlphaBoundary, const bool removeDisconnectedNodes, const bool returnTri2TetMap, std::vector<size_t>& tri2Tet){
   // auto t1 = std::chrono::steady_clock::now(); 
   
@@ -3951,7 +4150,6 @@ void AlphaShape::_colourBoundaries(const int faceTag, const std::string & bounda
   //     printf("Triangle %d %d %d \n", tri->getVertex(0)->getNum(), tri->getVertex(1)->getNum(), tri->getVertex(2)->getNum());
   //   }
   // }
-
 
   // for (auto tri : triangles_temp) delete tri;
 }

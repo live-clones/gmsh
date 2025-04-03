@@ -4675,6 +4675,37 @@ end
 const alpha_shape3_d = alphaShape3D
 
 """
+    gmsh.model.mesh.alphaShape3DFromArray(tag, elementTags, alpha, tagAlpha, tagAlphaBoundary, removeDisconnectedNodes = false, returnTri2TetMap = false)
+
+Compute alpha shape of the mesh in entity of tag `tag` using an array of values
+alpha. The values correspond to the element tags stored in elementTags.
+
+Return `tri2TetMap`.
+
+Types:
+ - `tag`: integer
+ - `elementTags`: vector of sizes
+ - `alpha`: vector of doubles
+ - `tagAlpha`: integer
+ - `tagAlphaBoundary`: integer
+ - `tri2TetMap`: vector of sizes
+ - `removeDisconnectedNodes`: boolean
+ - `returnTri2TetMap`: boolean
+"""
+function alphaShape3DFromArray(tag, elementTags, alpha, tagAlpha, tagAlphaBoundary, removeDisconnectedNodes = false, returnTri2TetMap = false)
+    api_tri2TetMap_ = Ref{Ptr{Csize_t}}()
+    api_tri2TetMap_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshAlphaShape3DFromArray, gmsh.lib), Cvoid,
+          (Cint, Ptr{Csize_t}, Csize_t, Ptr{Cdouble}, Csize_t, Cint, Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Cint, Ptr{Cint}),
+          tag, convert(Vector{Csize_t}, elementTags), length(elementTags), convert(Vector{Cdouble}, alpha), length(alpha), tagAlpha, tagAlphaBoundary, api_tri2TetMap_, api_tri2TetMap_n_, removeDisconnectedNodes, returnTri2TetMap, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tri2TetMap = unsafe_wrap(Array, api_tri2TetMap_[], api_tri2TetMap_n_[], own = true)
+    return tri2TetMap
+end
+const alpha_shape3_dfrom_array = alphaShape3DFromArray
+
+"""
     gmsh.model.mesh.surfaceEdgeSplitting(fullTag, surfaceTag, sizeFieldTag, tri2TetMap, tetrahedralize = false, buildElementOctree = false)
 
 Mesh refinement/derefinement through edge splitting of (surface) entity of tag

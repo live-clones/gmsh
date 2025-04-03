@@ -1918,6 +1918,20 @@ namespace gmsh { // Top-level functions
                                  const bool removeDisconnectedNodes = false,
                                  const bool returnTri2TetMap = false);
 
+      // gmsh::model::mesh::alphaShape3DFromArray
+      //
+      // Compute alpha shape of the mesh in entity of tag `tag' using an array of
+      // values alpha. The values correspond to the element tags stored in
+      // elementTags.
+      GMSH_API void alphaShape3DFromArray(const int tag,
+                                          const std::vector<std::size_t> & elementTags,
+                                          const std::vector<double> & alpha,
+                                          const int tagAlpha,
+                                          const int tagAlphaBoundary,
+                                          std::vector<std::size_t> & tri2TetMap,
+                                          const bool removeDisconnectedNodes = false,
+                                          const bool returnTri2TetMap = false);
+
       // gmsh::model::mesh::surfaceEdgeSplitting
       //
       // Mesh refinement/derefinement through edge splitting of (surface) entity of

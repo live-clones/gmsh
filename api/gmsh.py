@@ -5309,6 +5309,46 @@ class model:
         alpha_shape3_d = alphaShape3D
 
         @staticmethod
+        def alphaShape3DFromArray(tag, elementTags, alpha, tagAlpha, tagAlphaBoundary, removeDisconnectedNodes=False, returnTri2TetMap=False):
+            """
+            gmsh.model.mesh.alphaShape3DFromArray(tag, elementTags, alpha, tagAlpha, tagAlphaBoundary, removeDisconnectedNodes=False, returnTri2TetMap=False)
+
+            Compute alpha shape of the mesh in entity of tag `tag' using an array of
+            values alpha. The values correspond to the element tags stored in
+            elementTags.
+
+            Return `tri2TetMap'.
+
+            Types:
+            - `tag': integer
+            - `elementTags': vector of sizes
+            - `alpha': vector of doubles
+            - `tagAlpha': integer
+            - `tagAlphaBoundary': integer
+            - `tri2TetMap': vector of sizes
+            - `removeDisconnectedNodes': boolean
+            - `returnTri2TetMap': boolean
+            """
+            api_elementTags_, api_elementTags_n_ = _ivectorsize(elementTags)
+            api_alpha_, api_alpha_n_ = _ivectordouble(alpha)
+            api_tri2TetMap_, api_tri2TetMap_n_ = POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshAlphaShape3DFromArray(
+                c_int(tag),
+                api_elementTags_, api_elementTags_n_,
+                api_alpha_, api_alpha_n_,
+                c_int(tagAlpha),
+                c_int(tagAlphaBoundary),
+                byref(api_tri2TetMap_), byref(api_tri2TetMap_n_),
+                c_int(bool(removeDisconnectedNodes)),
+                c_int(bool(returnTri2TetMap)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorsize(api_tri2TetMap_, api_tri2TetMap_n_.value)
+        alpha_shape3_dfrom_array = alphaShape3DFromArray
+
+        @staticmethod
         def surfaceEdgeSplitting(fullTag, surfaceTag, sizeFieldTag, tri2TetMap, tetrahedralize=False, buildElementOctree=False):
             """
             gmsh.model.mesh.surfaceEdgeSplitting(fullTag, surfaceTag, sizeFieldTag, tri2TetMap, tetrahedralize=False, buildElementOctree=False)

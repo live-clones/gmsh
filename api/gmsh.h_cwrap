@@ -3322,6 +3322,31 @@ namespace gmsh { // Top-level functions
         tri2TetMap.assign(api_tri2TetMap_, api_tri2TetMap_ + api_tri2TetMap_n_); gmshFree(api_tri2TetMap_);
       }
 
+      // gmsh::model::mesh::alphaShape3DFromArray
+      //
+      // Compute alpha shape of the mesh in entity of tag `tag' using an array of
+      // values alpha. The values correspond to the element tags stored in
+      // elementTags.
+      inline void alphaShape3DFromArray(const int tag,
+                                        const std::vector<std::size_t> & elementTags,
+                                        const std::vector<double> & alpha,
+                                        const int tagAlpha,
+                                        const int tagAlphaBoundary,
+                                        std::vector<std::size_t> & tri2TetMap,
+                                        const bool removeDisconnectedNodes = false,
+                                        const bool returnTri2TetMap = false)
+      {
+        int ierr = 0;
+        size_t *api_elementTags_; size_t api_elementTags_n_; vector2ptr(elementTags, &api_elementTags_, &api_elementTags_n_);
+        double *api_alpha_; size_t api_alpha_n_; vector2ptr(alpha, &api_alpha_, &api_alpha_n_);
+        size_t *api_tri2TetMap_; size_t api_tri2TetMap_n_;
+        gmshModelMeshAlphaShape3DFromArray(tag, api_elementTags_, api_elementTags_n_, api_alpha_, api_alpha_n_, tagAlpha, tagAlphaBoundary, &api_tri2TetMap_, &api_tri2TetMap_n_, (int)removeDisconnectedNodes, (int)returnTri2TetMap, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_elementTags_);
+        gmshFree(api_alpha_);
+        tri2TetMap.assign(api_tri2TetMap_, api_tri2TetMap_ + api_tri2TetMap_n_); gmshFree(api_tri2TetMap_);
+      }
+
       // gmsh::model::mesh::surfaceEdgeSplitting
       //
       // Mesh refinement/derefinement through edge splitting of (surface) entity of

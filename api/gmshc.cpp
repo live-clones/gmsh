@@ -2502,6 +2502,21 @@ GMSH_API void gmshModelMeshAlphaShape3D(const int tag, const double alpha, const
   }
 }
 
+GMSH_API void gmshModelMeshAlphaShape3DFromArray(const int tag, const size_t * elementTags, const size_t elementTags_n, const double * alpha, const size_t alpha_n, const int tagAlpha, const int tagAlphaBoundary, size_t ** tri2TetMap, size_t * tri2TetMap_n, const int removeDisconnectedNodes, const int returnTri2TetMap, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_elementTags_(elementTags, elementTags + elementTags_n);
+    std::vector<double> api_alpha_(alpha, alpha + alpha_n);
+    std::vector<std::size_t> api_tri2TetMap_;
+    gmsh::model::mesh::alphaShape3DFromArray(tag, api_elementTags_, api_alpha_, tagAlpha, tagAlphaBoundary, api_tri2TetMap_, removeDisconnectedNodes, returnTri2TetMap);
+    vector2ptr(api_tri2TetMap_, tri2TetMap, tri2TetMap_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelMeshSurfaceEdgeSplitting(const int fullTag, const int surfaceTag, const int sizeFieldTag, const size_t * tri2TetMap, const size_t tri2TetMap_n, const int tetrahedralize, const int buildElementOctree, int * ierr)
 {
   if(ierr) *ierr = 0;

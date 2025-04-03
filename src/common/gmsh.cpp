@@ -5830,6 +5830,29 @@ gmsh::model::mesh::alphaShape3D(const int tag, const double alpha, const int siz
 #endif
 }
 
+
+// GMSH_API void alphaShape3DFromArray(const int tag,
+//   const std::vector<std::size_t> & elementTags,
+//   const std::vector<double> & alpha,
+//   const int tagAlpha,
+//   const int tagAlphaBoundary,
+//   std::vector<std::size_t> & tri2TetMap,
+//   const bool removeDisconnectedNodes = false,
+//   const bool returnTri2TetMap = false);
+
+
+
+GMSH_API void
+gmsh::model::mesh::alphaShape3DFromArray(const int tag, const std::vector<size_t>& elementTags, const std::vector<double>& alpha, const int tagAlpha, const int tagAlphaBoundary, std::vector<size_t>& tri2TetMap, const bool removeDisconnectedNodes, const bool returnTri2TetMap){
+#if defined(HAVE_MESH) && defined(HAVE_HXT)
+  AlphaShape::_alphaShape3DFromArray(tag, elementTags, alpha, tagAlpha, tagAlphaBoundary, removeDisconnectedNodes, returnTri2TetMap, tri2TetMap);
+#else
+  Msg::Error("alphaShape3DFromArray requires the mesh and hxt modules");
+#endif
+}
+
+
+
 GMSH_API void
 gmsh::model::mesh::surfaceEdgeSplitting(const int fullTag, const int surfaceTag, const int sizeFieldTag, const std::vector<std::size_t>& tri2TetMap, const bool tetrahedralize, const bool buildElementOctree){
 #if defined(HAVE_MESH) && defined(HAVE_HXT)

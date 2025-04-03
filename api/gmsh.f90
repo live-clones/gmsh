@@ -730,6 +730,8 @@ module gmsh
         gmshModelMeshTetrahedralizePoints
     procedure, nopass :: alphaShape3D => &
         gmshModelMeshAlphaShape3D
+    procedure, nopass :: alphaShape3DFromArray => &
+        gmshModelMeshAlphaShape3DFromArray
     procedure, nopass :: surfaceEdgeSplitting => &
         gmshModelMeshSurfaceEdgeSplitting
     procedure, nopass :: volumeMeshRefinement => &
@@ -7770,6 +7772,74 @@ module gmsh
     tri2TetMap = ovectorsize_(api_tri2TetMap_, &
       api_tri2TetMap_n_)
   end subroutine gmshModelMeshAlphaShape3D
+
+  !> Compute alpha shape of the mesh in entity of tag `tag' using an array of
+  !! values alpha. The values correspond to the element tags stored in
+  !! elementTags.
+  subroutine gmshModelMeshAlphaShape3DFromArray(tag, &
+                                                elementTags, &
+                                                alpha, &
+                                                tagAlpha, &
+                                                tagAlphaBoundary, &
+                                                tri2TetMap, &
+                                                removeDisconnectedNodes, &
+                                                returnTri2TetMap, &
+                                                ierr)
+    interface
+    subroutine C_API(tag, &
+                     api_elementTags_, &
+                     api_elementTags_n_, &
+                     api_alpha_, &
+                     api_alpha_n_, &
+                     tagAlpha, &
+                     tagAlphaBoundary, &
+                     api_tri2TetMap_, &
+                     api_tri2TetMap_n_, &
+                     removeDisconnectedNodes, &
+                     returnTri2TetMap, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshAlphaShape3DFromArray")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      integer(c_size_t), dimension(*) :: api_elementTags_
+      integer(c_size_t), value, intent(in) :: api_elementTags_n_
+      real(c_double), dimension(*) :: api_alpha_
+      integer(c_size_t), value, intent(in) :: api_alpha_n_
+      integer(c_int), value, intent(in) :: tagAlpha
+      integer(c_int), value, intent(in) :: tagAlphaBoundary
+      type(c_ptr), intent(out) :: api_tri2TetMap_
+      integer(c_size_t), intent(out) :: api_tri2TetMap_n_
+      integer(c_int), value, intent(in) :: removeDisconnectedNodes
+      integer(c_int), value, intent(in) :: returnTri2TetMap
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    integer(c_size_t), dimension(:), intent(in) :: elementTags
+    real(c_double), dimension(:), intent(in) :: alpha
+    integer, intent(in) :: tagAlpha
+    integer, intent(in) :: tagAlphaBoundary
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: tri2TetMap
+    logical, intent(in), optional :: removeDisconnectedNodes
+    logical, intent(in), optional :: returnTri2TetMap
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_tri2TetMap_
+    integer(c_size_t) :: api_tri2TetMap_n_
+    call C_API(tag=int(tag, c_int), &
+         api_elementTags_=elementTags, &
+         api_elementTags_n_=size_gmsh_size(elementTags), &
+         api_alpha_=alpha, &
+         api_alpha_n_=size_gmsh_double(alpha), &
+         tagAlpha=int(tagAlpha, c_int), &
+         tagAlphaBoundary=int(tagAlphaBoundary, c_int), &
+         api_tri2TetMap_=api_tri2TetMap_, &
+         api_tri2TetMap_n_=api_tri2TetMap_n_, &
+         removeDisconnectedNodes=optval_c_bool(.false., removeDisconnectedNodes), &
+         returnTri2TetMap=optval_c_bool(.false., returnTri2TetMap), &
+         ierr_=ierr)
+    tri2TetMap = ovectorsize_(api_tri2TetMap_, &
+      api_tri2TetMap_n_)
+  end subroutine gmshModelMeshAlphaShape3DFromArray
 
   !> Mesh refinement/derefinement through edge splitting of (surface) entity of
   !! tag `tag
