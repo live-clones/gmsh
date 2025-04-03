@@ -658,7 +658,7 @@ void AlphaShape::registerAlphaShapeField(FieldManager* fm)
 }
 
 class AlphaShapeInOutField : public Field {
-  OctreeNode<3, 64, MTriangle*>* _octree = nullptr;
+  OctreeNode<3, 128, MTriangle*>* _octree = nullptr;
 
 
 public:
@@ -700,7 +700,7 @@ public:
     if (updateNeeded == true){
       printf("Updating size field %d \n", tag);
       if (_octree != nullptr) delete _octree;
-      _octree = new OctreeNode<3, 64, MTriangle*>();
+      _octree = new OctreeNode<3, 128, MTriangle*>();
       
       GFace* df = GModel::current()->getFaceByTag(tag);
       
@@ -719,7 +719,6 @@ public:
           auto v = f->getVertex(i);
           bb.extends({v->x(), v->y(), v->z()});
         }
-
         _octree->add(f, bb);
       }
     }
@@ -2826,9 +2825,7 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
   std::vector<size_t> neighbors;
   std::vector<size_t> tetNodes(4*n_tets);
   // auto t2 = std::chrono::steady_clock::now(); 
-  printf("here a \n");
   field->operator()(0,0,0, NULL); // this does the update of the size field
-  printf("here b \n");
   #pragma omp parallel for
   for (size_t i=0; i<gr->getNumMeshElementsByType(TYPE_TET); i++){
     MTetrahedron* tet = gr->tetrahedra[i];
@@ -2874,9 +2871,9 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
             auto tet_neigh = gr->tetrahedra[i_t_neigh];
             R = _tetCircumCenter(tet_neigh);
             hTet = sizeAtTetBarycenter[i_t_neigh];
-            if (hTet == MAX_LC){
-              hTet = 1e-12;
-            }
+            // if (hTet == MAX_LC){
+              //   hTet = 1e-12;
+              // }
             if (R/hTet < alpha){
               auto tet_alpha = new MTetrahedron(tet_neigh->getVertex(0), tet_neigh->getVertex(1), tet_neigh->getVertex(2), tet_neigh->getVertex(3), tet_neigh->getNum());
               for (size_t jn=0; jn<4; jn++) {verticesInConnected.insert(tet_alpha->getVertex(jn));}
@@ -3798,7 +3795,7 @@ void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, co
   // Msg::Info("Filtered out %lu vertices from mesh\n", _deleted.size());
 }
 
-void _createBoundaryOctree3D(const std::string & boundaryModel, OctreeNode<3, 32, MElement*>& octree){
+void _createBoundaryOctree3D(const std::string & boundaryModel, OctreeNode<3, 128, MElement*>& octree){
     GModel* gm_alphaShape = GModel::current();
     GModel* gm_boundary = GModel::findByName(boundaryModel);
     if (gm_boundary == nullptr) {
@@ -3852,8 +3849,10 @@ void AlphaShape::_colourBoundaries(const int faceTag, const std::string & bounda
   //   MTriangle* tri_temp = new MTriangle(tri->getVertex(0), tri->getVertex(1), tri->getVertex(2), tri->getNum());
   // }
 
-  OctreeNode<3, 32, MElement*> octree;
+  OctreeNode<3, 128, MElement*> octree;
+  printf("creating octree \n");
   _createBoundaryOctree3D(boundaryModel, octree);
+  printf("creatted octree \n");
   
   std::unordered_map<size_t, std::vector<MTriangle*>> bndMap;
   
@@ -3965,7 +3964,7 @@ void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std
     return;
   }
 
-  OctreeNode<3, 32, MElement*> bnd_octree;
+  OctreeNode<3, 128, MElement*> bnd_octree;
   _createBoundaryOctree3D(boundaryModel, bnd_octree);
 
   // 1. keep boundary nodes on the boundary
