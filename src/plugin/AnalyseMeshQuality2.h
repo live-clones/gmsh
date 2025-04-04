@@ -78,7 +78,7 @@ private:
       bool onlyVisible = false;
       bool onlyCurved = false;
       bool smartRecompute = false;
-      int dataManagePolicy = 0;
+      bool freeOldData = false;
     } compute;
 
     struct Post {
@@ -225,7 +225,7 @@ private:
     void gatherValues(const Counts &, Measures &);
 
   private:
-    void _updateGEntities(std::vector<GEntity *> &, int recomputePolicy);
+    void _updateGEntities(std::set<GEntity *, GEntityPtrLessThan> &, bool free);
   };
 
   class DataEntity {
@@ -244,10 +244,7 @@ private:
 
   public:
     explicit DataEntity(GEntity *ge) : _ge(ge) {}
-    void getNumShownElement(std::size_t num[3]) const
-    {
-      for(int i = 0; i < 3; ++i) num[i] = _numToShow[i];
-    }
+    size_t getNumShownElement() const { return _numToShow; }
     //void countNewElement(ComputeParameters, std::size_t cnt[3]) const;
     void initialize(const Parameters::Computation &);
     void count(const Parameters::Computation &, Counts &);
@@ -315,11 +312,10 @@ private:
 
   struct Counts {
     std::size_t elToCompute[3]{}; // for three metrics
-    std::size_t elToShow;
+    std::size_t elToShow = 0;
     std::size_t totalEl = 0;
     std::size_t elCurvedComputed = 0;
     std::size_t curvedEl = 0;
-    std::size_t existingEl = 0;
     std::size_t visibleEl = 0;
     Counts operator+(const Counts &) const;
   };

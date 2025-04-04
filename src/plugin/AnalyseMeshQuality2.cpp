@@ -325,7 +325,7 @@ std::string Plug::getHelp() const
 PView *Plug::execute(PView *v)
 {
   _info(0, "----------------------------------------");
-  _info(0, "=> Executing the plugin AnalyseMeshQuality...");
+  _info(0, "Executing the plugin AnalyseMeshQuality...");
 
   _fetchParameters();
 
@@ -338,7 +338,7 @@ PView *Plug::execute(PView *v)
     _info(1, "=> Freeing data... (because option 'dataManagePolicy' is -1)");
     _data2D->clear();
     _data3D->clear();
-    MeshQuality2Options_Number[16].def = 0;
+    MeshQuality2Options_Number[15].def = 0;
     _info(0, "   Done. Option 'dataManagePolicy' has been set to 0");
     _info(1, "   Nothing else to do, rerun the plugin to compute something");
     return v;
@@ -352,7 +352,7 @@ PView *Plug::execute(PView *v)
   }
 
   GModel *m = GModel::current();
-  if(pc.dataManagePolicy == 0 && _m && _m != m) {
+  if(pc.freeOldData && _m && _m != m) {
     _info(1, "=> Detected a new Model, previous data will be cleared");
     // FIXME may not be the case (can we create a new model with exact same geometry and mesh?)
     // FIXME Do I really need this?
@@ -426,7 +426,7 @@ void Plug::_fetchParameters()
   Parameters::Hidding &ph = _param.hide;
   Parameters::MetricsToShow &ps = _param.show;
 
-  double skipValidity, disto, aspect, minJ, ratioJ;
+  double skipValidity, disto, aspect, minJ, ratioJ, dataManagePolicy;
 
   // What to do:
   pc.skip = static_cast<bool>(MeshQuality2Options_Number[0].def);
@@ -452,7 +452,7 @@ void Plug::_fetchParameters()
   ph.unhideToo = static_cast<bool>(MeshQuality2Options_Number[14].def);
 
   // Advanced computation options:
-  pc.dataManagePolicy = static_cast<int>(MeshQuality2Options_Number[15].def);
+  dataManagePolicy = static_cast<int>(MeshQuality2Options_Number[15].def);
   pc.smartRecompute = static_cast<bool>(MeshQuality2Options_Number[16].def);
   skipValidity = MeshQuality2Options_Number[17].def;
 
@@ -463,19 +463,27 @@ void Plug::_fetchParameters()
   pp.statCutoffPack = MeshQuality2Options_Number[21].def;
   pp.plotCutoffPack = MeshQuality2Options_Number[22].def;
 
-  // metrics to compute
+  // -> statsGenerator
+  _statGen->setCutoffStats(pp.statCutoffPack);
+  _statGen->setCutoffPlots(pp.plotCutoffPack);
+
+  // -> dataManagePolicy
+  _param.freeData = dataManagePolicy == -1;
+  pc.freeOldData = dataManagePolicy <= 0;
+
+  // -> metrics to compute
   pc.validity = !static_cast<bool>(skipValidity);
   pc.disto = static_cast<bool>(disto);
   pc.aspect = static_cast<bool>(aspect);
 
-  // metrics to show
-  ps.validity = skipValidity > 0 ? 0 : -static_cast<int>(skipValidity);
+  // -> metrics to show
+  ps.validity = skipValidity > 0 ? 0 : std::max(1, -static_cast<int>(skipValidity));
   ps.disto = static_cast<int>(disto);
   ps.aspect = static_cast<int>(aspect);
   ps.minJac = static_cast<int>(minJ);
   ps.ratioJac = static_cast<int>(ratioJ);
 
-  _param.freeData = pc.dataManagePolicy == -1;
+  // Legacy options (must be last):
   _fetchLegacyParameters();
 
 
@@ -697,7 +705,7 @@ void Plug::_fetchLegacyParameters()
   if (val != UNTOUCHED) { // Recompute
     pc.skip = !static_cast<bool>(val);
     pc.smartRecompute = false;
-    pc.dataManagePolicy = 0;
+    pc.freeOldData = true;
   }
   else {
     pc.skip = true;
@@ -723,7 +731,7 @@ void Plug::_computeMissingData(Counts counts, bool check2D, bool check3D) const
     _data3D->getDataEntities(allDataEntities);
 
   if(counts.elToCompute[0] > 0) {
-    Msg::StatusBar(true, "   Computing Validity...");
+    Msg::StatusBar(true, "=> Computing Validity...");
     MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[0]));
     for(auto data: allDataEntities) {
       data->computeValidity(progress_status);
@@ -731,7 +739,7 @@ void Plug::_computeMissingData(Counts counts, bool check2D, bool check3D) const
   }
 
   if(counts.elToCompute[1] > 0) {
-    Msg::StatusBar(true, "   Computing Distortion quality...");
+    Msg::StatusBar(true, "=> Computing Distortion quality...");
     MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[1]));
     for(auto data: allDataEntities) {
       data->computeDisto(progress_status, !_param.compute.validity);
@@ -739,14 +747,14 @@ void Plug::_computeMissingData(Counts counts, bool check2D, bool check3D) const
   }
 
   if(counts.elToCompute[2] > 0) {
-    Msg::StatusBar(true, "   Computing Aspect quality...");
+    Msg::StatusBar(true, "=> Computing Aspect quality...");
     MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[2]));
     for(auto data: allDataEntities) {
       data->computeAspect(progress_status, !_param.compute.validity);
     }
   }
 
-  Msg::StatusBar(true, "   Done computing data");
+  Msg::StatusBar(true, "=> Done computing data");
 }
 
 void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
@@ -763,7 +771,7 @@ void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
   check3D = true;
   if(_dimensionPolicy == 0 && num3DElem > 0)
     check2D = false;
-  else if(_dimensionPolicy < 2)
+  else if(_dimensionPolicy <= 0)
     check3D = false;
 }
 
@@ -929,7 +937,7 @@ void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, con
   if(numInvalid)
     _warn(0, "   Found %ld invalid elements", numInvalid);
   else
-    _info(0, "   All elements are valid :-)", numInvalid);
+    Msg::StatusBar(true, "   All elements are valid :-)");
 }
 
 void Plug::StatGenerator::_printStatsOneMeasure(const std::vector<double> &measure, const char* str, bool useG)
@@ -1017,14 +1025,12 @@ void Plug::DataSingleDimension::initialize(GModel const *m,
                                            Counts &counts)
 {
   // Update list GEntities (thus _dataEntities) if needed
-  if(param.policy >= -1) {
-    std::vector<GEntity *> entities;
-    if(_dim == 2)
-      entities.insert(entities.end(), m->firstFace(), m->lastFace());
-    else if(_dim == 3)
-      entities.insert(entities.end(), m->firstRegion(), m->lastRegion());
-    _updateGEntities(entities, param.policy);
-  }
+  std::set<GEntity *, GEntityPtrLessThan> entities;
+  if(_dim == 2)
+    entities.insert(m->firstFace(), m->lastFace());
+  else if(_dim == 3)
+    entities.insert(m->firstRegion(), m->lastRegion());
+  _updateGEntities(entities, param.freeOldData);
 
   // Initialize all DataEntity and count elements
   for(auto &it : _dataEntities) {
@@ -1034,25 +1040,21 @@ void Plug::DataSingleDimension::initialize(GModel const *m,
 }
 
 void Plug::DataSingleDimension::_updateGEntities(
-  std::vector<GEntity *> &entities, int recomputePolicy)
+  std::set<GEntity *, GEntityPtrLessThan> &entities, bool freeNonExistent)
 {
   // Get GEntities present in the current model, add new ones in _dataEntities
-  std::set<GEntity *, GEntityPtrLessThan> existingInModel;
   for(const auto &ge: entities) {
-    existingInModel.insert(ge);
     if(_dataEntities.find(ge) == _dataEntities.end())
       _dataEntities.emplace(ge, DataEntity(ge));
   }
 
-  if(recomputePolicy >= 0) {
+  if(freeNonExistent) {
     // Remove GEntities from _dataEntities that are not existent in the current model
     for(auto it = _dataEntities.begin(); it != _dataEntities.end();) {
-      if(existingInModel.find(it->first) == existingInModel.end()) {
+      if(entities.find(it->first) == entities.end()) {
         // it->second.clear(); // FIXME check that i don't need this
-        std::size_t numShownElement[3];
-        it->second.getNumShownElement(numShownElement);
-        for(int i = 0; i < 3; ++i) {
-          if(numShownElement[i] > 0) _changedSincePViewCreation[i] = true;
+        if(it->second.getNumShownElement()) {
+          for(int i = 0; i < 3; ++i) _changedSincePViewCreation[i] = true;
         }
         it = _dataEntities.erase(it);
       }
@@ -1082,7 +1084,7 @@ void Plug::DataSingleDimension::gatherValues(const Counts &counts, Measures &mea
 constexpr int F_NOTJAC = 1 << 0;
 constexpr int F_NOTDISTO = 1 << 1;
 constexpr int F_NOTASPECT = 1 << 2;
-constexpr int F_EXIST = 1 << 3;
+//constexpr int F_EXIST = 1 << 3;
 constexpr int F_VISBL = 1 << 4;
 constexpr int F_CURVNOTCOMP = 1 << 5;
 constexpr int F_CURVED = 1 << 6;
@@ -1115,11 +1117,7 @@ inline void unsetBit(unsigned char &value, int maskOneBit)
 
 void Plug::DataEntity::initialize(const Parameters::Computation &param)
 {
-  // FIXME: if -2, still have to update F_REQU
-  //  and count show if F_REQU and not F_NOT..
-  if(param.policy == -2) return;
-
-  // Step 0: Get all elements present in GEntity
+  // Step 1: Get all elements present in GEntity
   std::size_t num = _ge->getNumMeshElements();
   std::vector<MElement *> elements;
   elements.reserve(num);
@@ -1127,48 +1125,43 @@ void Plug::DataEntity::initialize(const Parameters::Computation &param)
     elements.push_back(_ge->getMeshElement(i));
   }
 
-  // Step 1: Check if must reset data, and update flag "exist in GEntity"
-  int policy = param.policy;
-  if(policy == 1 || (policy == 0 && num != _mapElemToIndex.size())) {
+  // Step 2: Reset data if needed
+  bool resetData = !param.smartRecompute;
+  if(param.smartRecompute) {
+    if(num != _mapElemToIndex.size()) {
+      resetData = true;
+    }
+    else {
+      for(auto i = 0; i < num; ++i) {
+        if(_mapElemToIndex.find(elements[i]) == _mapElemToIndex.end()) {
+          resetData = true;
+          break;
+        }
+      }
+    }
+  }
+  if(resetData) {
     reset(num);
     add(elements);
   }
-  else if(policy == 0) {
-    // Reset if elements are different
-    for(auto i = 0; i < num; ++i) {
-      if(_mapElemToIndex.find(elements[i]) == _mapElemToIndex.end()) {
-        reset(num);
-        add(elements);
-        break;
-      }
-    }
-  }
-  else {
-    // Here, policy <= -1, and we want to keep data for elements that are gone
-    // but we have to set the flag "exists in GEntity" accordingly
-    for(auto &flag : _flags) {
-      unsetBit(flag, F_EXIST);
-    }
-    for(const auto &el : elements) {
-      auto it = _mapElemToIndex.find(el);
-      if(it != _mapElemToIndex.end()) {
-        setBit(_flags[it->second], F_EXIST);
-      }
-      else {
-        add(el);
-      }
+
+  // Step 3: Update flag isVisible if necessary
+  if(param.onlyVisible) {
+    for(const auto &it : _mapElemToIndex) {
+      if(it.first->getVisibility())
+        setBit(_flags[it.second], F_VISBL);
+      else
+        unsetBit(_flags[it.second], F_VISBL);
     }
   }
 
-  // Step 3: Update flag isCurved if necessary
+  // Step 4: Update flag isCurved if necessary
   if(param.onlyCurved) {
-    const int mask = F_EXIST | F_CURVNOTCOMP;
     for(const auto &it : _mapElemToIndex) {
       const std::size_t index = it.second;
-
-      if(areBitsSet(_flags[index], mask)) {
+      if(isBitSet(_flags[index], F_CURVNOTCOMP)) {
         bool isCurved = true;
-        // TODO implement: bool isCurved = el->isCurved();
+        // TODO implement: bool isCurved = it.first->isCurved();
         unsetBit(_flags[index], F_CURVNOTCOMP);
         if(isCurved)
           setBit(_flags[index], F_CURVED);
@@ -1179,14 +1172,13 @@ void Plug::DataEntity::initialize(const Parameters::Computation &param)
   }
 
   // Step 4: Update flag isRequested
-  for(auto &flag : _flags) {
-    unsetBit(flag, F_REQU);
-  }
-
-  int maskRequested = F_EXIST;
+  int maskRequested = 0;
   if(param.onlyVisible) maskRequested |= F_VISBL;
   if(param.onlyCurved) maskRequested |= F_CURVED;
 
+  for(auto &flag : _flags) {
+    unsetBit(flag, F_REQU);
+  }
   for(auto &flag : _flags) {
     if(areBitsSet(flag, maskRequested))
       setBit(flag, F_REQU);
@@ -1218,7 +1210,6 @@ void Plug::DataEntity::count(const Parameters::Computation &param, Counts &count
   // Count total number, still existing, visible and curved
   counts.totalEl += _mapElemToIndex.size();
   for(const auto &flag : _flags) {
-    if(isBitSet(flag, F_EXIST)) ++counts.existingEl;
     if(isBitSet(flag, F_VISBL)) ++counts.visibleEl;
   }
   _countCurved(counts.elCurvedComputed, counts.curvedEl);
@@ -1331,14 +1322,12 @@ void Plug::DataEntity::reset(std::size_t num)
 
 void Plug::DataEntity::add(MElement *el)
 {
-  std::size_t index = _minJ.size();
-  _mapElemToIndex[el] = index;
+  _mapElemToIndex[el] = _minJ.size();
   _minJ.push_back(std::numeric_limits<double>::max());
   _maxJ.push_back(std::numeric_limits<double>::min());
   _minDisto.push_back(std::numeric_limits<double>::max());
   _minAspect.push_back(std::numeric_limits<double>::max());
-  unsigned char flag = F_NOTJAC | F_NOTDISTO | F_NOTASPECT | F_EXIST
-                       | F_CURVNOTCOMP;
+  unsigned char flag = F_NOTJAC | F_NOTDISTO | F_NOTASPECT | F_CURVNOTCOMP;
   if (el->getVisibility()) setBit(flag, F_VISBL);
   _flags.push_back(flag);
 }
@@ -1436,8 +1425,8 @@ void Plug::_guidanceNothingToCompute(Counts counts,
   _info(1, "=> No element to compute");
 
   if (!counts.elToShow) {
-    _warn(-1, "   Nothing to compute, nothing to show.");
-    _warn(1, "   Nothing to show neither.");
+    _info(-1, "   Nothing to compute, nothing to show.");
+    _info(1, "   Nothing to show neither.");
 
     if (counts.totalEl) {
       if (_param.compute.onlyVisible && counts.visibleEl == 0) {
@@ -1467,10 +1456,10 @@ void Plug::_guidanceNothingToCompute(Counts counts,
           // ...because at least check2D or check3D should be true
         }
       }
-      else if (_dimensionPolicy == 1) {
+      else if (_dimensionPolicy == -1) {
         if (_m->getNumRegions()) {
           _warn(0, "   Planned to check 2D mesh as option 'dimensionPolicy' "
-                   "is ON, but no 2D mesh found.");
+                   "is -1, but no 2D mesh found.");
           _warn(0, "   3D geometry found, maybe 'dimensionPolicy' "
                    "should be set to 0");
         }
@@ -1481,11 +1470,14 @@ void Plug::_guidanceNothingToCompute(Counts counts,
             _warn(1, "   No geometry has been found (in current model)");
         }
       }
-      else if (_dimensionPolicy == 2 || _dimensionPolicy == 3) {
+      else if (_dimensionPolicy >= 1) {
         if (_m->getNumFaces() + _m->getNumRegions())
           _warn(1, "   No mesh has been found (in current model)");
         else
           _warn(1, "   No geometry has been found (in current model)");
+      }
+      else {
+        _error(1, "   Unexpected state: should not be here");
       }
     }
   }
@@ -1502,7 +1494,6 @@ void Plug::_devPrintCount(const Counts &counts) const
   _info(1, "DEV Total elements: %zu", counts.totalEl);
   _info(1, "DEV Curved elements computed: %zu", counts.elCurvedComputed);
   _info(1, "DEV Curved elements: %zu", counts.curvedEl);
-  _info(1, "DEV Existing elements: %zu", counts.existingEl);
   _info(1, "DEV Visible elements: %zu", counts.visibleEl);
 }
 
@@ -1522,7 +1513,6 @@ Plug::Counts Plug::Counts::operator+(const Counts &other) const
   result.totalEl = totalEl + other.totalEl;
   result.elCurvedComputed = elCurvedComputed + other.elCurvedComputed;
   result.curvedEl = curvedEl + other.curvedEl;
-  result.existingEl = existingEl + other.existingEl;
   result.visibleEl = visibleEl + other.visibleEl;
 
   return result;
