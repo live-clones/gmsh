@@ -208,6 +208,13 @@ static void plugin_run_cb(Fl_Widget *w, void *data)
     p->run();
   }
 
+  // Update GUI values, in case they have changed
+  for(int i = 0; i < n; i++) {
+    StringXNumber *sxn = p->getOption(i);
+    p->dialogBox->value[i]->value(sxn->def);
+  }
+
+  // Finalize
   FlGui::instance()->updateViews(true, true);
   GMSH_Plugin::draw = nullptr;
   drawContext::global()->draw();
