@@ -25,22 +25,22 @@
 #include "BasisFactory.h"
 #endif
 // NOTE What does the plugin
-//  0.Free data and stop IF freeData-nothingElse = ON
+//  0.Free data and stop IF dataManagementPolicy = -1
 //  1.Compute validity/quality IF skipComputationMetrics = OFF
-//   • Clear old data IF preserveOldMeshData = OFF
 //   • Limit to GEntity in GModel::current()
 //   • In function of dimensionPolicy:
 //     - IF = -1 Limit to dimension 2 meshes
 //     - IF = 0 Limit to dimension 3 meshes if there is any 3D mesh otherwise
 //              limit to dimension 2 meshes
 //     - IF >= 1 do not limit (both dimension 2 and 3 meshes)
+//   • Clear old entities IF dataManagementPolicy = 0
+//   • Check if previous data can be reused IF smartRecomputation = ON
 //   • Limit to visible elements IF restrictToVisibleElements = ON
 //   • Limit to curved elements IF restrictToCurvedElements = ON
-//   • Check if previous data can be reused IF smartRecomputation = ON
-//   • Compute Validity IF skipValidity = OFF
+//   • Compute Validity IF skipValidity = <= 0
 //   • Compute Distortion IF enableDistortionQuality > 0
 //   • Compute Aspect IF enableAspectQuality > 0
-//   • Regularize Jacobian if skipValidity = OFF AND regularizeDeterminant = ON
+//   • Regularize Jacobian if skipValidity = OFF AND regularizeDeterminant = ON (NOTIMPLEMENTED)
 //  2.Print statistics
 //   • In function of dimensionPolicy:
 //     - IF = -1 Limit to dimension 2 data
@@ -49,44 +49,45 @@
 //     - IF = 1 do not limit (dimension 2 and 3 data separately)
 //     - IF = 2 combine dimension 2 and 3 data
 //   • In columns: min, max and Worst Weighted Means of UNPACK(wmCutoffsForStats)
-//   • Validity IF skipValidity = OFF
 //   • Distortion IF enableDistortionQuality > 0
 //   • Aspect IF enableAspectQuality > 0
-//   • minJ IF skipValidity = OFF AND enableMinJacDetAsAMetric > 0
-//   • minJ/maxJ IF skipValidity = OFF AND enableMinJacDetAsAMetric > 0
+//   • IF skipValidity <= 0:
+//     - minJ/maxJ IF enableRatioJacDetAsAMetric > 0
+//     - minJ IF enableMinJacDetAsAMetric > 0
+//     - validity
 //  3.Create PViewElementData IF createElementsView = ON
 //   • In function of dimensionPolicy:
 //     - IF = -1 Limit to dimension 2 data
 //     - IF = 0 Limit to dimension 3 data if there is any 3D mesh otherwise
 //              limit to dimension 2 data
 //     - IF >= 1 do not limit (dimension 2 and 3 data) (combined not possible)
-//   • Let M = max(enableDistortionQuality, enableAspectQuality, enableRatioJacDetAsAMetric, enableMinJacDetAsAMetric)
+//   • Let M = max(-skipValidity, enableDistortionQuality, enableAspectQuality, enableRatioJacDetAsAMetric, enableMinJacDetAsAMetric)
 //   • Validity IF skipValidity = -M
 //   • Distortion IF enableDistortionQuality = M
 //   • Aspect IF enableAspectQuality = M
-//   • minJ IF skipValidity = OFF AND enableMinJacDetAsAMetric = M
-//   • minJ/maxJ IF skipValidity = OFF AND enableMinJacDetAsAMetric = M
+//   • minJ IF skipValidity <= 0 AND enableMinJacDetAsAMetric = M
+//   • minJ/maxJ IF skipValidity <= 0 AND enableMinJacDetAsAMetric = M
 //   • But: skip creation if PView already exists and unchanged data
 //  4.Create PView2D IF createPlotView = ON
-//   • In function of dimensionPolicy, as for (2.Print statistics)
-//   • For metrics as for (3.Create PViewElementData IF createElementsView = ON).
+//   • In function of dimensionPolicy, as for (point 2.)
+//   • For metrics as for (point 3.).
 //   • For Worst Weighted Means in function of UNPACK(wmCutoffsForPlots)
 //   • But: skip creation if PView already exists and unchanged data
 //  5.Hide elements IF hideElements >= 1
-//   • In function of dimensionPolicy, as for (2.Print statistics)
-//   • In function of hidingPolicy in the case hideWorst = OFF:
+//   • In function of dimensionPolicy, as for (point 2.)
+//   • In function of hidingPolicy [in the case hideWorst = OFF]:
 //     - IF = -1 Limit to valid elements if there are any invalid elements,
 //               OTHERWISE skip hiding
-//     - IF = 0 as (IF = 1) if no invalid elements OTHERWISE as (IF = -1)
-//     - IF = 1 Limit to elements that do not meet criterion for the metric==M
-//              if there is only one metric that is equal to M
-//              OTHERWISE as (IF = 2)
-//     - IF = 2 Limit to that do not meet all criterion for metrics==M
-//     - IF = 3 Limit to that do not meet any criterion for metrics==M
-//   • In function of hidingCriterion in the case hideWorst = OFF:
-//     - IF = 0 Use metricValue <= x as criterion
-//     - IF = 1 Use x worst elements as criterion
-//     - IF = 2 Use (100*x)% worst elements as criterion
+//     - IF = 0 As "IF = 1" if no invalid elements OTHERWISE as "IF = -1"
+//     - IF = 1 As "IF = 2" if there are multiple metric equal to M
+//              OTHERWISE limit to elements that do not meet criterion
+//                        for the metric==M
+//     - IF = 2 Limit to elements that do not meet criterion for all metrics==M
+//     - IF = 3 Limit to elements that do not meet criterion for any metrics==M
+//   • In function of hidingCriterion [in the case hideWorst = OFF]:
+//     - IF = 0 Use "metricValue <= x" as criterion
+//     - IF = 1 Use "x worst elements" as criterion
+//     - IF = 2 Use "x% worst elements" as criterion
 //     where x = hidingThreshold
 //   • Hide worst element instead of best IF hideWorst = ON
 //   • Unhide others IF unhideOtherElements = ON
