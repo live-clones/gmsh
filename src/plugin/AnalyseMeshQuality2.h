@@ -78,8 +78,7 @@ private:
       bool onlyVisible = false;
       bool onlyCurved = false;
       bool smartRecompute = false;
-      int dataManagementPolicy = 0;
-      int policy = 0;
+      int dataManagePolicy = 0;
     } compute;
 
     struct Post {
@@ -166,8 +165,8 @@ private:
   void _decideWhichMetricPostpro();
   void _decideDimensionToCheck(bool &check2D, bool &check3D) const;
   void _computeMissingData(Counts param, bool check2D, bool check3D) const;
-  void _printStats(Measures &m2, Measures &m3) const;
-  void _printStats(Measures &, const char* str_dim) const;
+  // void _printStats(Measures &m2, Measures &m3) const;
+  // void _printStats(Measures &, const char* str_dim) const;
 
   // Those are static to be able to call them from class members
   static bool _okToPrint(int verb)
@@ -182,7 +181,7 @@ private:
   // static void _status(int verbosityPolicy, const char *format, ...); // FIXME implement this?
   void _devPrintCount(const Counts &) const;
   std::size_t _printElementToCompute(const Counts &cnt2D, const Counts &cnt3D) const;
-  std::size_t _guidanceNothingToCompute(Counts counts,
+  void _guidanceNothingToCompute(Counts counts,
                                         bool check2D, bool check3D) const;
 
 #if defined(HAVE_VISUDEV)
@@ -205,7 +204,7 @@ private:
 
     // Store if data has changed. This is useful if the plugin is executed at
     // least 3 times. Here is an example:
-    // 1) Set: checkQualityDisto=1, createElementsView=1
+    // 1) Set: enableDistortionQuality=1, createElementsView=1
     // 2) Run 1: Disto is computed and a PView is created
     // 3) Set: recomputePolicy=1, createElementsView=0
     // 4) Run 2: Disto is recomputed
@@ -236,7 +235,7 @@ private:
     std::map<MElement *, size_t> _mapElemToIndex;
     std::vector<double> _minJ, _maxJ, _minDisto, _minAspect;
     std::size_t _numToCompute[3]{};
-    std::size_t _numToShow[3]{};
+    std::size_t _numToShow;
     // 8 bits of char are used for the following information:
     // - to say if quantities has already been computed
     // - to say if element is 'in GEntity', visible, known to be straight
@@ -274,8 +273,7 @@ private:
     //       *vecDisto) or just std::vector<.> *vecDisto = nullptr)
 
   private:
-    void _count(unsigned char mask, std::size_t &toCompute,
-                std::size_t &toShow);
+    void _count(unsigned char mask, std::size_t &cnt);
     void _countCurved(std::size_t &known, std::size_t &curved);
   };
 
@@ -297,7 +295,6 @@ private:
       _idxLastCall.reserve(_N);
       _coeff.reserve(_N);
     }
-
     void setCutoffStats(double pack)
     {
       _unpackCutoff(pack, _statCutoffs);
@@ -306,19 +303,19 @@ private:
     {
       _unpackCutoff(pack, _plotCutoffs);
     }
-    void printStats(const Parameters &, const Measures &m2, const Measures &m3);
+    void printStats(const Parameters &, const std::vector<Measures> &measures);
 
   private:
     void _unpackCutoff(double input, std::vector<double> &cutoffs) const;
-    void _printStats(const Measures &measure, const char* str_dim, bool printJac);
+    void _printStats(const Parameters::MetricsToShow &param, const Measures &measure);
     void _printStatsOneMeasure(const std::vector<double> &measure, const char* str, bool useG = false);
     const std::vector<double> &_getCoefficients(double cutoff, size_t num);
     void _computeCoefficients(double cutoff, size_t sz, std::vector<double> &);
   };
 
   struct Counts {
-    std::size_t elToCompute[3]{}; // for three measures
-    std::size_t elToShow[3]{};
+    std::size_t elToCompute[3]{}; // for three metrics
+    std::size_t elToShow;
     std::size_t totalEl = 0;
     std::size_t elCurvedComputed = 0;
     std::size_t curvedEl = 0;
@@ -328,18 +325,13 @@ private:
   };
 
   struct Measures {
-    bool validity;
-    bool disto;
-    bool aspect;
+    const char* name;
     std::vector<double> minJ;
     std::vector<double> maxJ;
     std::vector<double> minDisto;
     std::vector<double> minAspect;
-    Measures(bool needValidity, bool needDisto, bool needAspect) {
-      validity = needValidity;
-      disto = needDisto;
-      aspect = needAspect;
-    }
+    std::vector<MElement *> elements;
+    static Measures combine(const Measures &, const Measures &);
   };
 };
 

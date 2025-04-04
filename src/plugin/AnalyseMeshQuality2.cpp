@@ -119,12 +119,12 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "hideWorst", nullptr, 0, "OFF=hideBest, ON"},
   {GMSH_FULLRC, "unhideOtherElements", nullptr, 0, "OFF=justHide, ON=alsoUnhide"},
   // Advanced computation options:
-  {GMSH_FULLRC, "smartRecomputation", nullptr, 0, "OFF=alwaysRecompute, ON=doNotRecomputeIfElementTagsUnchanged"},
-  {GMSH_FULLRC, "dataManagementPolicy", nullptr, 0, "-1=skipExecutionJustFreeData, 0=freeOldData, 1=accumulateData"},
+  {GMSH_FULLRC, "dataManagementPolicy", nullptr, 0, "-1=skipExecutionJustFreeData, 0=freeOldDataIfAbsent, 1=keepAllData"},
+  {GMSH_FULLRC, "smartRecomputation", nullptr, 0, "OFF=alwaysRecompute, ON=avoidRecomputeIfTagsUnchanged"},
   {GMSH_FULLRC, "skipValidity", nullptr, 0, "OFF, ON=skipPreventiveValidityCheck"},
   // Advanced analysis options:
-  {GMSH_FULLRC, "enableRatioJacDetAsAMetric", nullptr, 1, "OFF, 1+"},
-  {GMSH_FULLRC, "enableMinJacDetAsAMetric", nullptr, 1, "OFF, 1+"},
+  {GMSH_FULLRC, "enableRatioJacDetAsAMetric", nullptr, 1, "OFF, 1+ (require skipValidity=OFF)"},
+  {GMSH_FULLRC, "enableMinJacDetAsAMetric", nullptr, 1, "OFF, 1+ (require skipValidity=OFF)"},
   {GMSH_FULLRC, "regularizeDeterminant", nullptr, 1, "OFF, ON=inverseOrientationIfAbsMaxSmaller"},
   {GMSH_FULLRC, "wmCutoffsForStats", nullptr, 1025, "CUTOFFS (for stats weighted mean, see Help)"},
   {GMSH_FULLRC, "wmCutoffsForPlots", nullptr, 10, "CUTOFFS (for plots weighted mean, see Help)"},
@@ -225,7 +225,7 @@ std::pair<int, std::string> MeshQuality2Options_Headers[] = {
 //  printGuidance = printGuidance==-1 ? 0 : 1
 //  enableAspectQuality = IGEMeasure
 //  enableDistortionQuality = ICNMeasure
-//  dataClearancePolicy = Recompute ? 2 : 0
+//  dataManagePolicy = Recompute ? 2 : 0
 //  dimensionPolicy = Recompute==2 ? -1 :
 //                    Recompute==4 ? 1 : 0
 //  restrictToVisibleElements = 0
@@ -329,33 +329,33 @@ PView *Plug::execute(PView *v)
 
   _fetchParameters();
 
-  _info(1, "=> Option 'printGuidance' is ON. ");
-  _info(1, "   This makes the plugin to be verbose and to provide various explanations");
+  _info(1, "=> Option 'guidanceLevel' is 1. ");
+  _info(1, "   This makes the plugin to provide various explanations");
 
   // Handle cases where no computation is requested
   if(_param.freeData) {
     _info(-1, "=> Freeing data...");
-    _info(1, "=> Freeing data... (because option 'freeData-NothingElse' is ON)");
+    _info(1, "=> Freeing data... (because option 'dataManagePolicy' is -1)");
     _data2D->clear();
     _data3D->clear();
-    MeshQuality2Options_Number[18].def = 0;
-    _info(0, "   Done. Option 'freeData-NothingElse' has been set to OFF");
+    MeshQuality2Options_Number[16].def = 0;
+    _info(0, "   Done. Option 'dataManagePolicy' has been set to 0");
     _info(1, "   Nothing else to do, rerun the plugin to compute something");
     return v;
   }
 
   Parameters::Computation &pc = _param.compute;
   if(!pc.validity && !pc.disto && !pc.aspect) {
-    _warn(0, "=> Nothing to do because 'checkValidity', 'checkQualityDisto' and "
-          "'checkQualityAspect' are all three OFF");
+    _warn(0, "=> Nothing to execute because 'enableDistortionQuality' and "
+          "'enableAspectQuality' are both OFF and 'skipValidity' is ON ");
     return v;
   }
 
   GModel *m = GModel::current();
-  if(pc.policy == 0 && _m && _m != m) {
+  if(pc.dataManagePolicy == 0 && _m && _m != m) {
     _info(1, "=> Detected a new Model, previous data will be cleared");
     // FIXME may not be the case (can we create a new model with exact same geometry and mesh?)
-    // FIXME depend on clearancePolicy
+    // FIXME Do I really need this?
   }
   _m = m;
 
@@ -371,37 +371,44 @@ PView *Plug::execute(PView *v)
   // _devPrintCount(counts2D);
   // _devPrintCount(counts3D);
 
-  // Computation
+  // Count and compute if needed, otherwise check there is something to output
   std::size_t totalToCompute = _printElementToCompute(counts2D, counts3D);
   Counts countsTotal = counts2D + counts3D;
   if(!totalToCompute) {
-    std::size_t totalToShow = _guidanceNothingToCompute(countsTotal,
-      check2D, check3D);
-    if(!totalToShow) return v;
+    _guidanceNothingToCompute(countsTotal, check2D, check3D);
+    if(!countsTotal.elToShow) return v;
   }
   else {
-    if(!_param.checkValidity && countsTotal.elToCompute[0] > 0) {
-      _info(1, "=> Validity will be computed even if not asked");
-      _info(1, "   Reason is that validity is quite cheap in comparison to quality and can significantly ");
-      _info(1, "   boost speed. This behaviour can be disabled by setting ON option ");
-      _info(1, "   'skipPreventiveValidityCheck', which is a good idea if the elements are known to be valid.");
-    }
-    else if(pc.lazyValidity) {
-      _warn(1, "=> Option 'skipPreventiveValidityCheck' is ON, validity will not be computed");
+    if(!pc.validity) {
+      _warn(1, "=> Option 'skipValidity' is ON, validity will not be computed. This may significantly");
       _warn(1, "   This may significantly slow down quality computation in the presence of invalid elements");
     }
     _computeMissingData(countsTotal, check2D, check3D);
   }
 
   // Gather data
-  Measures measures2D(_param.checkValidity, pc.disto, pc.aspect);
-  Measures measures3D(_param.checkValidity, pc.disto, pc.aspect);
-  if(check2D) _data2D->gatherValues(counts2D, measures2D);
-  if(check3D) _data3D->gatherValues(counts3D, measures3D);
+  std::vector<Measures> measures;
+  if(check2D) {
+    measures.emplace_back();
+    _data2D->gatherValues(counts2D, measures.back());
+    measures.back().name = "dimension 2";
+  }
+  if(check3D) {
+    measures.emplace_back();
+    _data3D->gatherValues(counts3D, measures.back());
+    measures.back().name = "dimension 3";
+  }
+
+  // Combine if necessary
+  if(_dimensionPolicy == 2) {
+    measures[0] = Measures::combine(measures[0], measures[1]);
+    measures.erase(measures.begin() + 1);
+    measures.back().name = "dimension 2 and 3 combined";
+  }
 
   _param.check2D = check2D;
   _param.check3D = check3D;
-  _statGen->printStats(_param, measures2D, measures3D);
+  _statGen->printStats(_param, measures);
 
 
   // TODO compute show
@@ -433,7 +440,7 @@ void Plug::_fetchParameters()
   aspect = MeshQuality2Options_Number[6].def;
 
   // Elements Selection:
-  _param.dimPolicy = static_cast<int>(MeshQuality2Options_Number[7].def);
+  _dimensionPolicy = static_cast<int>(MeshQuality2Options_Number[7].def);
   pc.onlyVisible = static_cast<bool>(MeshQuality2Options_Number[8].def);
   pc.onlyCurved = static_cast<bool>(MeshQuality2Options_Number[9].def);
 
@@ -445,8 +452,8 @@ void Plug::_fetchParameters()
   ph.unhideToo = static_cast<bool>(MeshQuality2Options_Number[14].def);
 
   // Advanced computation options:
-  pc.smartRecompute = static_cast<bool>(MeshQuality2Options_Number[15].def);
-  pc.dataManagementPolicy = static_cast<int>(MeshQuality2Options_Number[16].def);
+  pc.dataManagePolicy = static_cast<int>(MeshQuality2Options_Number[15].def);
+  pc.smartRecompute = static_cast<bool>(MeshQuality2Options_Number[16].def);
   skipValidity = MeshQuality2Options_Number[17].def;
 
   // Advanced analysis options:
@@ -468,7 +475,7 @@ void Plug::_fetchParameters()
   ps.minJac = static_cast<int>(minJ);
   ps.ratioJac = static_cast<int>(ratioJ);
 
-  _param.freeData = pc.dataManagementPolicy == -1;
+  _param.freeData = pc.dataManagePolicy == -1;
   _fetchLegacyParameters();
 
 
@@ -636,25 +643,27 @@ void Plug::_fetchLegacyParameters()
   ps.regularizeJac = false;
   _param.freeData = false;
 
-  double val = MeshQuality2Options_Number[23].def;
+  int k = getNbOptions();
+
+  double val = MeshQuality2Options_Number[k++].def;
   if (val != UNTOUCHED) // JacDet
     ps.validity = pc.validity = static_cast<bool>(val);
   else
     ps.validity = pc.validity = false;
 
-  val = MeshQuality2Options_Number[24].def;
+  val = MeshQuality2Options_Number[k++].def;
   if (val != UNTOUCHED) // IGEMeasure
     ps.aspect = pc.aspect = static_cast<bool>(val);
   else
     ps.aspect = pc.aspect = false;
 
-  val = MeshQuality2Options_Number[25].def;
+  val = MeshQuality2Options_Number[k++].def;
   if (val != UNTOUCHED) // ICNMeasure
     ps.disto = pc.disto = static_cast<bool>(val);
   else
     ps.disto = pc.disto = false;
 
-  val = MeshQuality2Options_Number[26].def;
+  val = MeshQuality2Options_Number[k++].def;
   if (val != UNTOUCHED) { // HidingThreshold
     ph.threshold = val;
     ph.todo = ph.threshold < 99;
@@ -672,29 +681,29 @@ void Plug::_fetchLegacyParameters()
     ph.threshold = false;
   }
 
-  val = MeshQuality2Options_Number[27].def;
+  val = MeshQuality2Options_Number[k++].def;
   if (val != UNTOUCHED) // ThresholdGreater
-    ph.worst = !static_cast<bool>(MeshQuality2Options_Number[27].def);
+    ph.worst = !static_cast<bool>(val);
   else
     ph.worst = false;
 
-  val = MeshQuality2Options_Number[28].def;
+  val = MeshQuality2Options_Number[k++].def;
   if (val != UNTOUCHED) // CreateView
     pp.create3D = static_cast<bool>(val);
   else
     pp.create3D = false;
 
-  val = MeshQuality2Options_Number[29].def;
+  val = MeshQuality2Options_Number[k++].def;
   if (val != UNTOUCHED) { // Recompute
     pc.skip = !static_cast<bool>(val);
     pc.smartRecompute = false;
-    pc.dataManagementPolicy = 0;
+    pc.dataManagePolicy = 0;
   }
   else {
     pc.skip = true;
   }
 
-  val = MeshQuality2Options_Number[30].def;
+  val = MeshQuality2Options_Number[k++].def;
   if (val != UNTOUCHED) { // DimensionOfElements
     int dimPol = static_cast<int>(val);
     _param.dimPolicy = dimPol == 2 ? -1 : dimPol == 4 ? 1 : 0;
@@ -715,7 +724,7 @@ void Plug::_computeMissingData(Counts counts, bool check2D, bool check3D) const
 
   if(counts.elToCompute[0] > 0) {
     Msg::StatusBar(true, "   Computing Validity...");
-    MsgProgressStatus progress_status(counts.elToCompute[0]);
+    MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[0]));
     for(auto data: allDataEntities) {
       data->computeValidity(progress_status);
     }
@@ -723,21 +732,21 @@ void Plug::_computeMissingData(Counts counts, bool check2D, bool check3D) const
 
   if(counts.elToCompute[1] > 0) {
     Msg::StatusBar(true, "   Computing Distortion quality...");
-    MsgProgressStatus progress_status(counts.elToCompute[1]);
+    MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[1]));
     for(auto data: allDataEntities) {
-      data->computeDisto(progress_status, _param.compute.lazyValidity);
+      data->computeDisto(progress_status, !_param.compute.validity);
     }
   }
 
   if(counts.elToCompute[2] > 0) {
     Msg::StatusBar(true, "   Computing Aspect quality...");
-    MsgProgressStatus progress_status(counts.elToCompute[2]);
+    MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[2]));
     for(auto data: allDataEntities) {
-      data->computeAspect(progress_status, _param.compute.lazyValidity);
+      data->computeAspect(progress_status, !_param.compute.validity);
     }
   }
 
-  Msg::StatusBar(true, "   Done computing quantities");
+  Msg::StatusBar(true, "   Done computing data");
 }
 
 void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
@@ -762,8 +771,7 @@ void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
 // =============================================================================
 
 void Plug::StatGenerator::printStats(const Parameters &param,
-                                     const Measures &m2,
-                                     const Measures &m3)
+                                     const std::vector<Measures> &measures)
 {
   _info(1, "=> Printing statistics, here is what is important to know about "
            "them:");
@@ -780,7 +788,7 @@ void Plug::StatGenerator::printStats(const Parameters &param,
            "of the FE solution");
   _info(1, "     Low-IGE elements influence negatively the error on the "
            "gradient.");
-  if(param.printJac) {
+  if(param.show.ratioJac || param.show.minJac) {
     _info(1, "   - Computing the Jacobian determinant (J) is required to "
              "assess elements validity.");
     _info(1, "     As it is readily available, three optional statistics can be calculated: ");
@@ -798,23 +806,9 @@ void Plug::StatGenerator::printStats(const Parameters &param,
            "Finite Element solution.");
   _info(1, "     Note that the standard mean corresponds to Wm50.");
 
-  if(param.dimPolicy == 3) {
-    Measures combined(m2.validity, m2.disto, m2.aspect);
-    combined.minJ = m2.minJ;
-    combined.minJ.insert(combined.minJ.end(), m3.minJ.begin(), m3.minJ.end());
-    combined.maxJ = m2.maxJ;
-    combined.maxJ.insert(combined.maxJ.end(), m3.maxJ.begin(), m3.maxJ.end());
-    combined.minDisto = m2.minDisto;
-    combined.minDisto.insert(combined.minDisto.end(), m3.minDisto.begin(), m3.minDisto.end());
-    combined.minAspect = m2.minAspect;
-    combined.minAspect.insert(combined.minAspect.end(), m3.minAspect.begin(), m3.minAspect.end());
-
-    _printStats(combined, "2 and 3 combined", param.printJac);
-    return;
+  for(auto &measure: measures) {
+    _printStats(param.show, measure);
   }
-
-  if(param.check2D) _printStats(m2, "2", param.printJac);
-  if(param.check3D) _printStats(m3, "3", param.printJac);
 }
 
 /**
@@ -846,7 +840,7 @@ void Plug::StatGenerator::_unpackCutoff(double input,
   std::sort(cutoffs.begin(), cutoffs.end());
 }
 
-void Plug::StatGenerator::_printStats(const Measures &measure, const char* str_dim, bool printJac)
+void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, const Measures &measure)
 {
   // NOTE:
   //  1. Create a class for percentile? The idea is to have a black box for
@@ -881,10 +875,10 @@ void Plug::StatGenerator::_printStats(const Measures &measure, const char* str_d
 
   // FIXME: dev
   // _info(0, "dev check values %d %d %d %d", measure.disto, measure.aspect, measure.minDisto.size(), measure.minAspect.size());
-  _info(0, "=> Statistics for dimension %s:", str_dim);
+  _info(0, "=> Statistics for dimension %s:", measure.name);
 
   // Header
-  if(measure.disto || measure.aspect || printJac) {
+  if(show.aspect || show.disto || show.ratioJac || show.minJac) {
     std::ostringstream columnNamesStream;
     columnNamesStream << "    ";
     columnNamesStream << std::setw(_colWidth) << "";
@@ -899,16 +893,18 @@ void Plug::StatGenerator::_printStats(const Measures &measure, const char* str_d
   }
 
   // Disto
-  if(measure.disto && measure.minDisto.size())
+  if(show.disto && !measure.minDisto.empty())
     _printStatsOneMeasure(measure.minDisto, "Disto");
 
   // Aspect
-  if(measure.aspect && measure.minAspect.size())
+  if(show.aspect && !measure.minAspect.empty())
     _printStatsOneMeasure(measure.minAspect, "Aspect");
 
-  if(!!printJac && !measure.validity) return;
+  // Stop if that's all
+  if((!show.ratioJac && !show.minJac && !show.validity) || measure.minJ.empty())
+    return;
 
-  // Jacobian
+  // Compute ratio and number of invalid
   std::vector<double> ratio(measure.minJ.size());
   for(std::size_t i = 0; i < measure.minJ.size(); ++i) {
     if (measure.maxJ[i] > 0)
@@ -916,20 +912,22 @@ void Plug::StatGenerator::_printStats(const Measures &measure, const char* str_d
     else
       ratio[i] = measure.maxJ[i] / measure.minJ[i];
   }
-  int numInvalid = std::count_if(ratio.begin(), ratio.end(), [](double value) {
+  long numInvalid = std::count_if(ratio.begin(), ratio.end(), [](double value) {
       return value <= 0;
   });
-  if(printJac && measure.minJ.size()) {
-    _printStatsOneMeasure(ratio, "minJ/maxJ");
-    _printStatsOneMeasure(measure.minJ, "minJ", true);
-    _printStatsOneMeasure(measure.maxJ, "maxJ", true);
-  }
 
-  if(!measure.validity) return;
+  // Jacobian values
+  if(show.ratioJac)
+    _printStatsOneMeasure(ratio, "minJ/maxJ");
+  if(show.minJac)
+    _printStatsOneMeasure(measure.minJ, "minJ", true);
+  // if(show.maxJac)
+  //   _printStatsOneMeasure(measure.maxJ, "maxJ", true);
 
   // Validity
+  if(!show.validity) return;
   if(numInvalid)
-    _warn(0, "   Found %d invalid elements", numInvalid);
+    _warn(0, "   Found %ld invalid elements", numInvalid);
   else
     _info(0, "   All elements are valid :-)", numInvalid);
 }
@@ -1067,10 +1065,12 @@ void Plug::DataSingleDimension::_updateGEntities(
 
 void Plug::DataSingleDimension::gatherValues(const Counts &counts, Measures &measures)
 {
-  measures.minJ.reserve(counts.elToShow[0]);
-  measures.maxJ.reserve(counts.elToShow[0]);
-  measures.minDisto.reserve(counts.elToShow[1]);
-  measures.minAspect.reserve(counts.elToShow[2]);
+  size_t sz = counts.elToShow;
+  measures.minJ.reserve(sz);
+  measures.maxJ.reserve(sz);
+  measures.minDisto.reserve(sz);
+  measures.minAspect.reserve(sz);
+  measures.elements.reserve(sz);
   for(auto &it : _dataEntities) {
     it.second.addValues(measures);
   }
@@ -1195,24 +1195,25 @@ void Plug::DataEntity::initialize(const Parameters::Computation &param)
 
 void Plug::DataEntity::count(const Parameters::Computation &param, Counts &counts)
 {
-  // Reset
-  for(int i = 0; i < 3; ++i) {
+  // Reset intern data
+  _numToShow = 0;
+  for(int i = 0; i < 3; ++i)
     _numToCompute[i] = 0;
-    _numToShow[i] = 0;
-  }
 
   // Count number of elements to compute and to show
   if (param.validity)
-    _count(F_REQU | F_NOTJAC, _numToCompute[0], _numToShow[0]);
+    _count(F_REQU | F_NOTJAC, _numToCompute[0]);
   if (param.disto)
-    _count(F_REQU | F_NOTDISTO, _numToCompute[1], _numToShow[1]);
+    _count(F_REQU | F_NOTDISTO, _numToCompute[1]);
   if (param.aspect)
-    _count(F_REQU | F_NOTASPECT, _numToCompute[2], _numToShow[2]);
-
+    _count(F_REQU | F_NOTASPECT, _numToCompute[2]);
   for(int i = 0; i < 3; ++i) {
     counts.elToCompute[i] += _numToCompute[i];
-    counts.elToShow[i] += _numToShow[i];
   }
+
+  // Count number of elements to show
+  _count(F_REQU, _numToShow);
+  counts.elToShow += _numToShow;
 
   // Count total number, still existing, visible and curved
   counts.totalEl += _mapElemToIndex.size();
@@ -1233,17 +1234,11 @@ void Plug::DataEntity::_countCurved(std::size_t &known, std::size_t &curved)
   }
 }
 
-void Plug::DataEntity::_count(unsigned char mask, std::size_t &elToCompute,
-                                std::size_t &elToShow)
+void Plug::DataEntity::_count(unsigned char mask, std::size_t &cnt)
 {
   for(const auto &flag : _flags) {
-    if(areBitsSet(flag, mask)) {
-      ++elToCompute;
-      ++elToShow;
-    }
-    else if(isBitSet(flag, F_REQU)) {
-      ++elToShow;
-    }
+    if(areBitsSet(flag, mask))
+      ++cnt;
   }
 }
 
@@ -1435,15 +1430,12 @@ std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
   return sum2D + sum3D;
 }
 
-std::size_t Plug::_guidanceNothingToCompute(Counts counts,
+void Plug::_guidanceNothingToCompute(Counts counts,
                                             bool check2D, bool check3D) const
 {
   _info(1, "=> No element to compute");
 
-  std::size_t sumToShow = 0;
-  for (std::size_t x : counts.elToShow) sumToShow += x;
-
-  if (!sumToShow) {
+  if (!counts.elToShow) {
     _warn(-1, "   Nothing to compute, nothing to show.");
     _warn(1, "   Nothing to show neither.");
 
@@ -1497,7 +1489,6 @@ std::size_t Plug::_guidanceNothingToCompute(Counts counts,
       }
     }
   }
-  return sumToShow;
 }
 
 void Plug::_devPrintCount(const Counts &counts) const
@@ -1507,11 +1498,7 @@ void Plug::_devPrintCount(const Counts &counts) const
     _info(1, "DEV  - Measure %d: %zu", i + 1, counts.elToCompute[i]);
   }
 
-  _info(1, "DEV Elements to show:");
-  for (int i = 0; i < 3; ++i) {
-    _info(1, "DEV  - Measure %d: %zu", i + 1, counts.elToShow[i]);
-  }
-
+  _info(1, "DEV Elements to show: %zu", counts.elToShow);
   _info(1, "DEV Total elements: %zu", counts.totalEl);
   _info(1, "DEV Curved elements computed: %zu", counts.elCurvedComputed);
   _info(1, "DEV Curved elements: %zu", counts.curvedEl);
@@ -1526,17 +1513,41 @@ Plug::Counts Plug::Counts::operator+(const Counts &other) const
 {
   Counts result;
 
-  for (int i = 0; i < 3; ++i) {
-    result.elToCompute[i] = this->elToCompute[i] + other.elToCompute[i];
-    result.elToShow[i] = this->elToShow[i] + other.elToShow[i];
+  constexpr int metricsCount = 3;
+  for (int i = 0; i < metricsCount; ++i) {
+    result.elToCompute[i] = elToCompute[i] + other.elToCompute[i];
   }
 
-  result.totalEl = this->totalEl + other.totalEl;
-  result.elCurvedComputed = this->elCurvedComputed + other.elCurvedComputed;
-  result.curvedEl = this->curvedEl + other.curvedEl;
-  result.existingEl = this->existingEl + other.existingEl;
-  result.visibleEl = this->visibleEl + other.visibleEl;
+  result.elToShow = elToShow + other.elToShow;
+  result.totalEl = totalEl + other.totalEl;
+  result.elCurvedComputed = elCurvedComputed + other.elCurvedComputed;
+  result.curvedEl = curvedEl + other.curvedEl;
+  result.existingEl = existingEl + other.existingEl;
+  result.visibleEl = visibleEl + other.visibleEl;
 
+  return result;
+}
+
+// ======== struct Measures ====================================================
+// =============================================================================
+
+template <typename T>
+static void combineVectors(std::vector<T> &result, const std::vector<T> &v1, const std::vector<T> &v2)
+{
+  result.clear();
+  result.reserve(v1.size() + v2.size());
+  result.insert(result.end(), v1.begin(), v1.end());
+  result.insert(result.end(), v2.begin(), v2.end());
+}
+
+Plug::Measures Plug::Measures::combine(const Measures &m1, const Measures &m2)
+{
+  Measures result;
+  combineVectors(result.minJ, m1.minJ, m2.minJ);
+  combineVectors(result.maxJ, m1.maxJ, m2.maxJ);
+  combineVectors(result.minDisto, m1.minDisto, m2.minDisto);
+  combineVectors(result.minAspect, m1.minAspect, m2.minAspect);
+  combineVectors(result.elements, m1.elements, m2.elements);
   return result;
 }
 
