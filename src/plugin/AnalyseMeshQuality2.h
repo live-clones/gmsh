@@ -17,37 +17,6 @@
 #include "GEntity.h" // FIXME necessary?
 #include "MElement.h" // FIXME necessary?
 
-// NOTE Workflow
-//  0) - If freeData-NothingElse, clear all data.
-//     - If freeData-NothingElse or no checkValidity/compute*, return.
-//  1) Loop over all GEntities of considered dimension (dep. dimensionPolicy):
-//     a) check that GEntity still exists (NB: GModel::faces or regions)
-//     b) Clear data if needed (dep. recomputePolicy)
-//     c) Count and set flags:
-//        - Count the # of element that will be checked for each measure
-//        - Set flags to say which element to compute
-//        (dep. restrictToVisibleElements and restrictToCurvedElements)
-//  2) Compute Validity if needed (dep. skipPreventiveValidityCheck) for 2D,
-//     then 3D. Update flags. Gather values minJ, maxJ.
-//  3) Compute Disto if needed, then Aspect if needed. For each: 2D, then 3D.
-//     Update flags. Gather values of measures.
-//  4) Process obtained quantities and print stats (dep.
-//     $$$whichPercentileToCompute$$$)
-//  5) If hideElements is on:
-//     a) If hidingCriterion=1,2, compute the threshold in terms of quality
-//     b) Loop over GEntities to hide.
-//  6) Do createElementsView and/or createPlotView (dep. $$$percentilePlot$$$)
-//     Setting one of them to true does not guarantee the creation of a new
-//     PView. The plugin try to avoid the creation of identical PViews.
-//     Here is what is taken account:
-//     - If the PView is a Plot and forceNewPlotView=true, always (re)create
-//     - If the PView do not exists (i.e. _views[n] == nullptr) or if it has
-//       been deleted by the user (PView removed from PView::list), create.
-//     - If the PView exists, _dataChangedSinceCreation[n] is checked. If
-//       false, the PView is recreated, otherwise not.
-//  FIXME What about changed visibility of elements?
-//
-
 class MElement;
 
 extern "C" {
@@ -231,15 +200,14 @@ private:
   class DataEntity {
   private:
     GEntity *_ge;
-    // bool computedThisRun; // FIXME necessary?
     std::map<MElement *, size_t> _mapElemToIndex;
     std::vector<double> _minJ, _maxJ, _minDisto, _minAspect;
     std::size_t _numToCompute[3]{};
     std::size_t _numToShow;
     // 8 bits of char are used for the following information:
     // - to say if quantities has already been computed
-    // - to say if element is 'in GEntity', visible, known to be straight
-    //   or curved, curved, requested
+    // - to say if element is visible, known to be straightOrCurved, curved,
+    //   requested (see .cpp)
     std::vector<unsigned char> _flags;
 
   public:

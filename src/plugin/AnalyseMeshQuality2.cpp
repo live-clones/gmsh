@@ -137,16 +137,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "CreateView", nullptr, UNTOUCHED, "[legacy] OFF, ON"},
   {GMSH_FULLRC, "Recompute", nullptr, UNTOUCHED, "[legacy] OFF, ON"},
   {GMSH_FULLRC, "DimensionOfElements", nullptr, UNTOUCHED, "[legacy] -1, 2, 3, 4"}
-  // NOTE Proposition
-  //  3. Clarify what I use: Disto and aspect are quality metrics.
-  //                         Computing them is evaluating.
-  //                         The resulting data are values or results (or measures?).
-  //  4. Rename Disto->Distortion, Measures->Results
-  //  5. Consider (and make sure) that the number of values in results are
-  //     identical for each metric. This is for simplification.
-  //  6. Add vector of pointers to MElement into Measures(Results) to be able to
-  //     change visibility and create PViews without returning into DataGentities
-  //  7. Store sorted vectors into Measures(Results)?
+
 #if defined(HAVE_VISUDEV)
   ,
   {GMSH_FULLRC, "createTemporalView", nullptr, 0},
@@ -165,96 +156,20 @@ std::pair<int, std::string> MeshQuality2Options_Headers[] = {
   {15, "Advanced computation options"},
   {18, "Advanced analysis options"},
   {23, "Legacy options"},
-  };
+};
 
-// What to do:
-// - skipComputationMetrics = 0
-// - createElementsView = 0
-// - createPlotView = 0
-// - hideElements = 0
-// - printGuidance = 0
-
-// Metrics configuration:
-// - enableDistortionQuality = 1
-// - enableAspectQuality = 1
-
-// Element Selection:
-// - dimensionPolicy = 0
-// - restrictToVisibleElements = 0
-// - restrictToCurvedElements = 0
-
-// Hiding options:
-// - hidingPolicy = 0
-// - hidingCriterion = 0
-// - hidingThreshold = .5
-// - hideWorst = 0
-// - unhideOtherElements = 0
-
-// Advanced computation options:
-// - smartRecomputation = 0
-// - preserveOldMeshData = 0
-// - skipValidity = 0
-// - freeData-NothingElse = 0
-
-// Advanced analysis options
-// - enableRatioJacDetAsAMetric = 0
-// - enableMinJacDetAsAMetric = 0
-// - regularizeDeterminant = 0
-// - wmCutoffsForStats = 10
-// - wmCutoffsForPlots = 10
-
-// Legacy (do not modify, will be removed in the future):
-// - JacobianDeterminant
-// - IGEMeasure
-// - ICNMeasure
-// - HidingThreshold
-// - ThresholdGreater
-// - CreateView
-// - Recompute
-// - DimensionOfElements
-
-// NOTE About legacy parameters:
-//  They take a default value (e.g. -987654321) that is easily detectable
-//  If a parameter is not at default value, then the plugin print an error
-//  message, explain how to convert options, explian the changes and then
-//  run the plugin with following change:
-//  freeData-NothingElse = 0
-//  computeMetrics = 1
-//  createViews = CreateView
-//  hideElements = HidingThreshold < 99
-//  printGuidance = printGuidance==-1 ? 0 : 1
-//  enableAspectQuality = IGEMeasure
-//  enableDistortionQuality = ICNMeasure
-//  dataManagePolicy = Recompute ? 2 : 0
-//  dimensionPolicy = Recompute==2 ? -1 :
-//                    Recompute==4 ? 1 : 0
-//  restrictToVisibleElements = 0
-//  restrictToCurvedElements = 0
-//  enableElementsView = 1
-//  enablePlotView = 0
-//  hidingPolicy = 1
-//  hidingCriterion = 1
-//  hidingThreshold = HidingThreshold
-//  hideWorst = !ThresholdGreater
-//  unhideOtherElements = 0
-//  weightedMeanCutoffPackForStats = 50
-//  enableRatioJacDetAsAMetric = 1
-//  enableMinJacDetAsAMetric = 1
-//  skipValidity = !JacobianDeterminant
-//
-
-using Plug = GMSH_AnalyseMeshQuality2Plugin;
 namespace JacQual = jacobianBasedQuality;
+using Plug = GMSH_AnalyseMeshQuality2Plugin;
 int Plug::_verbose = 0;
 
 // ======== Plugin: Base class methods =========================================
 // =============================================================================
 
 extern "C" {
-GMSH_Plugin *GMSH_RegisterAnalyseMeshQuality2Plugin()
-{
-  return new GMSH_AnalyseMeshQuality2Plugin();
-}
+  GMSH_Plugin *GMSH_RegisterAnalyseMeshQuality2Plugin()
+  {
+    return new GMSH_AnalyseMeshQuality2Plugin();
+  }
 }
 
 int Plug::getNbOptions(bool legacy) const
@@ -324,6 +239,8 @@ std::string Plug::getHelp() const
 
 PView *Plug::execute(PView *v)
 {
+  // FIXME propose a StatusBar for each run
+  // FIXME in which case, Executing the plugin AnalyseMeshQuality should be a statusbar
   _info(0, "----------------------------------------");
   _info(0, "Executing the plugin AnalyseMeshQuality...");
 
@@ -486,71 +403,7 @@ void Plug::_fetchParameters()
   // Legacy options (must be last):
   _fetchLegacyParameters();
 
-
-  // // Legacy options:
-  // // 23{GMSH_FULLRC, "JacobianDeterminant", nullptr, -987654321, "[legacy] OFF, ON"},
-  // // 24{GMSH_FULLRC, "IGEMeasure", nullptr, -987654321, "[legacy] OFF, ON"},
-  // // 25{GMSH_FULLRC, "ICNMeasure", nullptr, -987654321, "[legacy] OFF, ON"},
-  // // 26{GMSH_FULLRC, "HidingThreshold", nullptr, -987654321, "[legacy] DOUBLE"},
-  // // 27{GMSH_FULLRC, "ThresholdGreater", nullptr, -987654321, "[legacy] OFF, ON"},
-  // // 28{GMSH_FULLRC, "CreateView", nullptr, -987654321, "[legacy] OFF, ON"},
-  // // 29{GMSH_FULLRC, "Recompute", nullptr, -987654321, "[legacy] OFF, ON"},
-  // // 30{GMSH_FULLRC, "DimensionOfElements", nullptr, -987654321, "[legacy] -1, 2, 3, 4"}
-  //
-  // int checkValidity = static_cast<int>(MeshQuality2Options_Number[0].def);
-  // int checkDisto = static_cast<int>(MeshQuality2Options_Number[1].def);
-  // int checkAspect = static_cast<int>(MeshQuality2Options_Number[2].def);
-  // // NOTE dimensionPolicy: highest dimension available -> 0, only 2D -> 1,
-  // //      2D and 3D : seperately -> 2, mixed -> 3
-  // _dimensionPolicy = static_cast<int>(MeshQuality2Options_Number[3].def);
-  // _param.dimPolicy = _dimensionPolicy;
-  //
-  // // NOTE recomputePolicy:
-  // //      - delete nothing, compute nothing, output prevsly computed data -> -2
-  // //        which is useful for adding creation of pview (to check: hiding!)
-  // //      The other options provide an identical output, but differ how
-  // //      existent data are treated.
-  // //      NB: In what follows, the "asked elements" are the elements for which
-  // //      visibility is compatible with 'restrictToVisibleElements' parameter
-  // //      and similarly for 'restrictToCurvedElements'.
-  // //      - delete nothing, compute newly asked elements -> -1
-  // //      - delete GEntities that are not existent in current GModel,
-  // //        delete data in GEntities that have detected mesh modifications,
-  // //        (re)compute data for asked elements and newly asked elements -> 0
-  // //      - delete GEntities that are not existent in current GModel,
-  // //        delete data in all GEntities,
-  // //        compute asked elements -> 1
-  // // FIXME -1 is useful if it is possible to call the plugin with different
-  // //  geometries then call it again with previous one. The case I am thinking
-  // //  about is if the user can switch the current GModel and come back to the
-  // //  previous one, and in the GUI. Check that this is true.
-  // pc.policy = static_cast<int>(MeshQuality2Options_Number[4].def);
-  // pc.onlyVisible = static_cast<bool>(MeshQuality2Options_Number[5].def);
-  // pc.onlyCurved = static_cast<bool>(MeshQuality2Options_Number[6].def);
-  // bool lazyValidity = static_cast<bool>(MeshQuality2Options_Number[7].def);
-  // pc.disto = static_cast<bool>(checkDisto);
-  // pc.aspect = static_cast<bool>(checkAspect);
-  // pc.validity = checkValidity || (!lazyValidity && (pc.disto || pc.aspect));
-  // _param.checkValidity = static_cast<bool>(checkValidity);
-  //
-  // _param.statCutoffPack = MeshQuality2Options_Number[8].def;
-  // _param.printJac = static_cast<bool>(MeshQuality2Options_Number[9].def);
-  // pp.create3D = static_cast<bool>(MeshQuality2Options_Number[10].def);
-  // pp.create2D = static_cast<bool>(MeshQuality2Options_Number[11].def);
-  // pp.plotCutoffPack = MeshQuality2Options_Number[12].def;
-  // pp.forceNew = static_cast<bool>(MeshQuality2Options_Number[13].def);
-  // ph.todo = static_cast<bool>(MeshQuality2Options_Number[14].def);
-  // ph.worst = static_cast<bool>(MeshQuality2Options_Number[15].def);
-  // ph.criterion = static_cast<int>(MeshQuality2Options_Number[16].def);
-  // ph.threshold = MeshQuality2Options_Number[17].def;
-  // _myVerbose = static_cast<bool>(MeshQuality2Options_Number[18].def);
-  // _param.freeData = static_cast<bool>(MeshQuality2Options_Number[19].def);
-  //
-  // _statGen->setCutoffStats(_param.statCutoffPack);
-  // _statGen->setCutoffPlots(_param.statCutoffPack);
-  // _verbose = _myVerbose;
-  //
-  // //
+  // TODO:
   // if(_dimensionPolicy < 0)
   //   _dimensionPolicy = 0;
   // else if(_dimensionPolicy > 3)
@@ -583,19 +436,6 @@ void Plug::_fetchParameters()
   _dataPViewICN.clear();
 #endif
 }
-
-// void Plug::_decideWhichMetricPostPro()
-// {
-//   Parameters::Computation &pc = _param.compute;
-//   Parameters::Post &pp = _param.pview;
-//   Parameters::Hidding &ph = _param.hide;
-//
-//   pp.validity = false;
-//   pp.disto = false;
-//   pp.aspect = false;
-//   pp.addMinJac = false;
-//   pp.addRatioJac = false;
-// }
 
 void Plug::_fetchLegacyParameters()
 {
@@ -720,7 +560,6 @@ void Plug::_fetchLegacyParameters()
     _param.dimPolicy = 0;
   }
 }
-
 
 void Plug::_computeMissingData(Counts counts, bool check2D, bool check3D) const
 {
@@ -851,38 +690,11 @@ void Plug::StatGenerator::_unpackCutoff(double input,
 void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, const Measures &measure)
 {
   // NOTE:
-  //  1. Create a class for percentile? The idea is to have a black box for
-  //     computing the Paverage. The coeff are stored for reuse. Say for
-  //     10 different number of elements
-  //  2. I will print the exact Paverage (on all elements) not some %. Because
-  //     % depends on the min so it is hard to compare meshes with %. I was
-  //     disturbed that the worst element count for so much but the whole point
-  //     is that worst elements counts much more than the best.
   //  3. Add printStatJac with warning
-  //  4. Potential name for the measure: WM10 (Worst-10% Weighted Mean)
-  //  5. Potential name for the parameters: statsWeightedMeanCutoffPack, plotWeightedMeanCutoffPack
-  //  6. Structure:
-  //     • verbose => info("Here is what is important to know about the stats: )
-  //       - Validity is for that
-  //       - Disto = measures this
-  //       - Aspect = measures that
-  //       - Jmin = gives that information
-  //       - Jmin/Jmax = gives that information
-  //       - Worst-x% Weighted Mean: means that. Pure mean = WM50
-  //     • separated by dimension
-  //       - stats for dim x
-  //       - headers
-  //       - Disto
-  //       - Aspect
-  //       - Jmin
-  //       - Jmin/Jmax
-  //       - All valid/x invalid
   //     • verbose+Jac => warn Jacobian is not a quality
   //  6. Verbose => Add at the end of execute info(Done, you can disable verbose)
   //     OR => verbose off by default and end by saying that verbose can be set on
 
-  // FIXME: dev
-  // _info(0, "dev check values %d %d %d %d", measure.disto, measure.aspect, measure.minDisto.size(), measure.minAspect.size());
   _info(0, "=> Statistics for dimension %s:", measure.name);
 
   // Header
@@ -1540,7 +1352,5 @@ Plug::Measures Plug::Measures::combine(const Measures &m1, const Measures &m2)
   combineVectors(result.elements, m1.elements, m2.elements);
   return result;
 }
-
-
 
 #endif
