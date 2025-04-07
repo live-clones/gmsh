@@ -144,72 +144,8 @@ private:
   }
   static void _printMessage(void (*func)(const char *, ...), const char *format,
   va_list);
-  // void _printMessage(void (*func)(const char *, ...), const char *prefix, const char *format, va_list args)
-  // {
-  //   char str[5000];
-  //   vsnprintf(str, sizeof(str), format, args);
-  //
-  //   // Define the maximum allowable length for a single line (total message line length)
-  //   const size_t maxChunkSize = 1024;
-  //
-  //   size_t prefixLen = strlen(prefix);       // Length of the initial prefix
-  //   const char *subsequentPrefix = "    ";   // Prefix for subsequent lines
-  //   size_t subsequentPrefixLen = strlen(subsequentPrefix);
-  //
-  //   size_t len = strlen(str); // Length of the formatted message
-  //   size_t offset = 0;
-  //   bool isFirstLine = true;
-  //
-  //   while (offset < len) {
-  //     size_t availableSize = maxChunkSize - (isFirstLine ? prefixLen : subsequentPrefixLen);
-  //     size_t end = offset + availableSize;
-  //
-  //     // Calculate the split position, trying to split at a space
-  //     if (end < len) {
-  //       while (end > offset && str[end] != ' ') {
-  //         --end;
-  //       }
-  //       if (end == offset) { // No space found, force split at maxChunkSize
-  //         end = offset + availableSize;
-  //       }
-  //     } else {
-  //       end = len; // Last part of the message
-  //     }
-  //
-  //     // Prepare the chunk
-  //     char chunk[maxChunkSize + 1]; // +1 for null-terminator
-  //     if (isFirstLine) {
-  //       strncpy(chunk, prefix, prefixLen); // Add the first-line prefix
-  //       strncpy(chunk + prefixLen, str + offset, end - offset);
-  //       chunk[prefixLen + end - offset] = '\0'; // Null-terminate the chunk
-  //       isFirstLine = false;
-  //     } else {
-  //       strncpy(chunk, subsequentPrefix, subsequentPrefixLen); // Add the subsequent-line prefix
-  //       strncpy(chunk + subsequentPrefixLen, str + offset, end - offset);
-  //       chunk[subsequentPrefixLen + end - offset] = '\0'; // Null-terminate the chunk
-  //     }
-  //
-  //     // Call the logging function
-  //     func("%s", chunk);
-  //
-  //     // Move the offset to process the next chunk
-  //     offset = end + 1; // Skip the space character after the split
-  //   }
-  // }
-  static void _printMessage(void (*func)(const char *, ...), const char *prefix, const char *format, va_list args);
-
 
   static void _info(int verbosityPolicy, const char *format, ...);
-  static void _info(const char *prefix, int verb, const char *format, ...)
-  {
-    if (!_okToPrint(verb)) return;
-
-    va_list args;
-    va_start(args, format);
-    _printMessage(Msg::Info, prefix, format, args);
-    va_end(args);
-  }
-
   static void _warn(int verbosityPolicy, const char *format, ...);
   static void _error(int verbosityPolicy, const char *format, ...);
   // static void _status(int verbosityPolicy, const char *format, ...); // FIXME implement this?

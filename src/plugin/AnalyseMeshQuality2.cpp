@@ -102,13 +102,13 @@ namespace {
 StringXNumber MeshQuality2Options_Number[] = {
   // What to do:
   {GMSH_FULLRC, "skipComputationMetrics", nullptr, 0, "OFF, ON=usePreviousData"},
-  {GMSH_FULLRC, "createElementsView", nullptr, 0, "0, 1"},
-  {GMSH_FULLRC, "createPlotView", nullptr, 0, "0, 1"},
+  {GMSH_FULLRC, "createElementsView", nullptr, 0, "OFF, ON"},
+  {GMSH_FULLRC, "createPlotView", nullptr, 1, "OFF, ON"},
   {GMSH_FULLRC, "hideElements", nullptr, 0, "OFF, 1=skipHidingIfAllWouldBeHidden, 2=forceHiding"},
-  {GMSH_FULLRC, "guidanceLevel", nullptr, 0, "-1=minimalOutput, 0=verbose, 1=verboseAndExplanations"},
+  {GMSH_FULLRC, "guidanceLevel", nullptr, 1, "-1=minimalOutput, 0=verbose, 1=verboseAndExplanations"},
   // Metrics to include:
   {GMSH_FULLRC, "enableDistortionQuality", nullptr, 1, "OFF, 1+=includeDistortionQuality"},
-  {GMSH_FULLRC, "enableAspectQuality", nullptr, 1, "OFF, 1+=includeAspectQuality"},
+  {GMSH_FULLRC, "enableAspectQuality", nullptr, 0, "OFF, 1+=includeAspectQuality"},
   // Elements Selection:
   {GMSH_FULLRC, "dimensionPolicy", nullptr, 0, "-1=force2D, 0=prioritize3D, 1=2D+3D, 2=combine2D+3D"},
   {GMSH_FULLRC, "restrictToVisibleElements", nullptr, 0, "OFF, ON=analyzeOnlyVisibleElements"},
@@ -242,13 +242,13 @@ PView *Plug::execute(PView *v)
 {
   // FIXME propose a StatusBar for each run
   // FIXME in which case, Executing the plugin AnalyseMeshQuality should be a statusbar
-  _info(0, "----------------------------------------");
+  _info(0, "---------------------------------------------");
   _info(0, "Executing the plugin AnalyseMeshQuality...");
 
   _fetchParameters();
 
-  _info(1, "=> Option 'guidanceLevel' is 1. This makes the plugin to provide "
-           "various explanations");
+  _info(1, "=> <|>Option 'guidanceLevel' is 1. This makes the plugin to "
+           "provide various explanations");
 
   // Handle cases where no computation is requested
   if(_param.freeData) {
@@ -264,8 +264,8 @@ PView *Plug::execute(PView *v)
 
   Parameters::Computation &pc = _param.compute;
   if(!pc.validity && !pc.disto && !pc.aspect) {
-    _warn(0, "=> Nothing to execute because 'enableDistortionQuality' and "
-          "'enableAspectQuality' are both OFF and 'skipValidity' is ON ");
+    _warn(0, "=> <|>Nothing to execute because 'enableDistortionQuality' and "
+             "'enableAspectQuality' are both OFF and 'skipValidity' is ON ");
     return v;
   }
 
@@ -298,9 +298,9 @@ PView *Plug::execute(PView *v)
   }
   else {
     if(!pc.validity) {
-      _warn(1, "=> Option 'skipValidity' is ON, validity will not be computed. "
-               "This may significantly slow down quality computation in the "
-               "presence of invalid elements");
+      _warn(1, "=> <|>Option 'skipValidity' is ON, validity will not be "
+               "computed. This may significantly slow down quality computation "
+               "in the presence of invalid elements");
     }
     _computeMissingData(countsTotal, check2D, check3D);
   }
@@ -452,31 +452,35 @@ void Plug::_fetchLegacyParameters()
 
   _verbose = 1;
 
-  _error(0, "=> Deprecated options detected. The plugin will execute using the "
-            "legacy configuration and ignore new options.");
-  _warn(0, "   Please update the deprecated options to their modern "
+  _error(0, "=> <|>Deprecated options detected. The plugin will execute using "
+            "the legacy configuration and ignore new options.");
+  _warn(0, "   <|>Please update the deprecated options to their modern "
            "counterparts.");
-  _info(0, "=> Use the following changes to map the options and achieve "
-           "equivalent results:");
-  _info(0, "    1. Set 'skipComputationMetrics' to 1 if '_Recompute' is 0");
-  _info(0, "    2. Set 'createElementsView' to '_CreateView'");
-  _info(0, "    3. Set 'enableDistortionQuality' to 1 if '_ICNMeasure' is not 0");
-  _info(0, "    4. Set 'enableAspectQuality'' to 1 if '_IGEMeasure' is not 0");
-  _info(0, "    5. Set 'dimensionPolicy' to -1 if '_DimensionOfElements' is 2");
-  _info(0, "       otherwise set 'dimensionPolicy' to 1 if '_DimensionOfElements' is 4");
-  _info(0, "    6. Set 'hidingThreshold' to '_HidingThreshold'");
-  _info(0, "    7. Set 'hideWorst' to 1 if '_ThresholdGreater' is 0");
-  _info(0, "    8. Set 'skipValidity' to 1 if '_JacobianDeterminant' is 0");
-  _info(0, "    9. Set 'enableRatioJacDetAsAMetric' to 1");
-  _info(0, "   10. Set 'enableMinJacDetAsAMetric' to 1");
-  _info(0, "   11. Set 'wmCutoffsForStats' to 50");
-  _info(0, "   12. If '_HidingThreshold' is smaller than 99:");
-  _info(0, "       -  Set 'hideElements' to 1");
-  _info(0, "       -  Set 'hidingPolicy' to 1");
-  _info(0, "       -  Set 'enableDistortionQuality' to 2 if 'enableDistortionQuality' is 1");
-  _info(0, "          otherwise set 'enableAspectQuality' to 2 if 'enableAspectQuality' is 1");
-  _info(0, "          otherwise set 'enableRatioJacDetAsAMetric' to 2");
-  _info(0, "=> Note: To disable this behavior, avoid modifying the deprecated options.");
+  _info(0, "=> <|>Use the following changes to map the options and achieve "
+           "equivalent results:\n"
+           " 1. Set 'skipComputationMetrics' to 1 IF '_Recompute' is 0\n"
+           " 2. Set 'createElementsView' to '_CreateView'\n"
+           " 3. Set 'enableDistortionQuality' to 1 IF '_ICNMeasure' is not 0\n"
+           " 4. Set 'enableAspectQuality'' to 1 IF '_IGEMeasure' is not 0\n"
+           " 5. Set 'dimensionPolicy' to -1 IF '_DimensionOfElements' is 2\n"
+           "    OTHERWISE set 'dimensionPolicy' to 1 IF '_DimensionOfElements' "
+           "is 4\n"
+           " 6. Set 'hidingThreshold' to '_HidingThreshold'\n"
+           " 7. Set 'hideWorst' to 1 IF '_ThresholdGreater' is 0\n"
+           " 8. Set 'skipValidity' to 1 if '_JacobianDeterminant' is 0\n"
+           " 9. Set 'enableRatioJacDetAsAMetric' to 1\n"
+           "10. Set 'enableMinJacDetAsAMetric' to 1\n"
+           "11. Set 'wmCutoffsForStats' to 50\n"
+           "12. IF '_HidingThreshold' is smaller than 99:\n"
+           "    -  Set 'hideElements' to 1\n"
+           "    -  Set 'hidingPolicy' to 1\n"
+           "    -  Set 'enableDistortionQuality' to 2 IF "
+           "'enableDistortionQuality' is 1\n"
+           "       OTHERWISE set 'enableAspectQuality' to 2 IF "
+           "'enableAspectQuality' is 1\n"
+           "       OTHERWISE set 'enableRatioJacDetAsAMetric' to 2");
+  _info(0, "=> Note: To disable this behavior, avoid modifying the "
+           "deprecated options.");
 
 
   Parameters::Computation &pc = _param.compute;
@@ -624,48 +628,42 @@ void Plug::StatGenerator::printStats(const Parameters &param,
 {
   _info(1, "=> Printing statistics, here is what is important to know about "
   "them:");
-  _info("   *V", 1, "alidity*  gives information about the strict positivity "
-                    "of the Jacobian determinant. A mesh containing invalid "
-                    "elements will usually lead to incorrect Finite Element "
-                    "solutions.");
-  _info("   *D", 1, "istortion quality*  (previously ICN) is related to the "
-                    "condition number of the stiffness matrix. Low-Distortion "
-                    "elements can introduce roundoff errors, or significantly "
-                    "reduce the convergence speed of iterative methods.");
-  _info("   *A", 1, "spect quality*  (previously IGE) is related to the "
-                    "gradient of the FE solution. Low-IGE elements influence "
-                    "negatively the error on the gradient.");
-  _info(1, "   - *Validity* give information about the strict positivity "
-           "of the Jacobian determinant.");
-  _info(1, "     A mesh containing invalid elements will usually lead to "
-  "incorrect Finite Element solutions.");
-  _info(1, "   - *Disto* quality (previously ICN) is related to the condition "
-           "number of the stiffness matrix.");
-  _info(1, "     Low-Disto elements can introduce roundoff errors, or "
-           "significantly reduce the convergence");
-  _info(1, "     speed of iterative methods. ");
-  _info(1, "   - *Aspect* quality (previously IGE) is related to the gradient "
-           "of the FE solution");
-  _info(1, "     Low-IGE elements influence negatively the error on the "
-           "gradient.");
-  if(param.show.ratioJac || param.show.minJac) {
-    _info(1, "   - Computing the Jacobian determinant (J) is required to "
-             "assess elements validity.");
-    _info(1, "     As it is readily available, three optional statistics can be calculated: ");
-    _info(1, "     1. the minimal value, minJ, and");
-    _info(1, "     2. the maximal value, maxJ, and");
-    _info(1, "     3. the ration minJ/maxJ.");
-    _info(1, "     Note that neither of these metrics provides any information "
-             "about any kind of quality.");
-  }
-  _info("   - ", 1, "*Worst-K%% Weighted Mean* (WmK) corresponds to a weighted "
-                    "mean where the worst K%% of values are assigned the same "
-                    "weight as the other values. This approach is preferable "
-                    "to the standard mean because it emphasizes the worst "
-                    "elements which are critical as they can negatively impact "
-                    "the Finite Element solution.\nNote that the standard mean "
-                    "corresponds to Wm50.");
-
+  if(param.show.validity)
+  _info(1, "   *V<|>alidity*  provides information about the strict positivity "
+           "of the Jacobian determinant. A mesh containing invalid elements "
+           "will usually result in incorrect Finite Element solutions. Each "
+           "element is classified as either valid or invalid.");
+  if(param.show.disto)
+  _info(1, "   *D<|>istortion quality*  (previously ICN) is related to the "
+           "condition number of the stiffness matrix. Low-Distortion elements "
+           "may cause numerical roundoff errors or significantly reduce the "
+           "convergence speed of iterative methods. Values "
+           "range from 0 to 1.");
+  if(param.show.aspect)
+  _info(1, "   *A<|>spect quality*  in [0, 1] (previously IGE) is related to "
+           "the gradient of the FE solution. Elements with poor aspect quality "
+           "negatively affect errors in the gradient of the solution. Values "
+           "range from 0 to 1.");
+  if(param.show.minJac)
+    _info(1, "   *m<|>inJ*  is the minimum of the Jacobian determinant computed "
+             "in the reference space and can be used to check the element size. "
+             "This metric is particularly relevant for iterative methods, "
+             "where the time step may depend on the size of the smallest "
+             "element. Values range from -∞ to +∞.");
+  if(param.show.ratioJac)
+    _info(1, "   *R<|>atio minJ/maxJ*  is the ratio between the minimum and "
+             "maximum values of the Jacobian determinant. It is faster to "
+             "compute than than the distortion and aspect quality metrics and can "
+           "be used to evaluate how much elements are deformed. However, "
+           "note that it is not a true quality metric. Values range from "
+           "-∞ to 1.");
+  if(param.pview.statCutoffPack)
+    _info(1, "   *W<|>orst-10%% Weighted Mean*  (Wm10) corresponds to a weighted "
+             "mean where the worst 10%% of the values are assigned the same weight "
+             "as the remaining values. This approach is preferable to the standard "
+             "mean because it emphasizes the worst elements, which are critical "
+             "as they can negatively impact the Finite Element solution.\n"
+             "Note that the standard mean corresponds to Wm50.");
   for(auto &measure: measures) {
     _printStats(param.show, measure);
   }
@@ -708,7 +706,7 @@ void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, con
   //  6. Verbose => Add at the end of execute info(Done, you can disable verbose)
   //     OR => verbose off by default and end by saying that verbose can be set on
 
-  _info(0, "=> Statistics for dimension %s:", measure.name);
+  _info(0, "=> Statistics for %s:", measure.name);
 
   // Header
   if(show.aspect || show.disto || show.ratioJac || show.minJac) {
@@ -1178,128 +1176,86 @@ void Plug::DataEntity::addValues(Measures &measures)
 // ======== Plugin: User Messages ==============================================
 // =============================================================================
 
-void Plug::_printMessage(void (*func)(const char *, ...), const char *format,
-                         va_list args)
+void Plug::_printMessage(void (*func)(const char *, ...), const char *format, va_list args)
 {
   char str[5000];
   vsnprintf(str, sizeof(str), format, args);
-  // func("%s", str);
-  const size_t maxChunkSize = 100; // For example, limit to 1024 characters
-  const char* prefix = "   ";       // Prefix for subsequent chunks
-  size_t prefixLen = strlen(prefix);
 
-  size_t len = strlen(str);
+  // Define the maximum allowable length for a single line
+  const size_t maxChunkSize = 80;
+
+  // Look for "<|>" in the first 30 characters
+  const char *delimiter = "<|>";
+  const size_t delimiterLen = strlen(delimiter);
+  char prefix[31] = ""; // Temporary space for the prefix (max 30 characters + null-terminator)
+
+  char *delimiterPos = strstr(str, delimiter);
+  if (delimiterPos != nullptr && delimiterPos < str + 30) {
+    // Extract the prefix from the start of the string up to the delimiter
+    size_t prefixLen = delimiterPos - str;
+    strncpy(prefix, str, prefixLen);
+    prefix[prefixLen] = '\0'; // Null-terminate the prefix
+
+    // Remove the prefix and delimiter from `str`, leaving only the format message
+    memmove(str, delimiterPos + delimiterLen, strlen(delimiterPos + delimiterLen) + 1); // +1 to copy the null terminator
+  }
+
+  size_t prefixLen = strlen(prefix);       // Measure the length of the prefix
+  std::string subsequentPrefix(prefixLen, ' '); // Create a string with spaces for subsequent lines
+  const char *subsequentPrefixCStr = subsequentPrefix.c_str();
+
+  size_t len = strlen(str); // Length of the formatted message
   size_t offset = 0;
+  bool isFirstLine = true;
 
-  bool isFirstChunk = true;
   while (offset < len) {
-    size_t chunkSize = maxChunkSize;
+    size_t availableSize = maxChunkSize - prefixLen;
+    size_t end = offset;
 
-    // If this is not the first chunk, leave space for the prefix
-    if (!isFirstChunk && maxChunkSize > prefixLen) {
-      chunkSize -= prefixLen;
+    // Find where to split based on available size, spaces, or newlines
+    while (end < len && end - offset < availableSize) {
+      if (str[end] == '\n') {
+        break; // Split at newline
+      }
+      ++end;
     }
 
-    // Find the last space within the chunk size
-    size_t end = offset + chunkSize;
-    if (end < len) {
-      while (end > offset && str[end] != ' ') {
-        --end;
+    // If no newline is found and we're splitting by size, backtrack to the last space
+    if (end < len && str[end] != '\n') {
+      size_t tempEnd = end;
+      while (tempEnd > offset && str[tempEnd] != ' ' && str[tempEnd] != '\n') {
+        --tempEnd;
       }
-      if (end == offset) { // No space, force split at maxChunkSize
-        end = offset + chunkSize;
+      if (tempEnd > offset) {
+        end = tempEnd; // Split at the last space or newline
       }
-    } else {
-      end = len; // Last portion of the message
     }
 
-    // Prepare the chunk
+    // Determine the chunk size and handle prefix
+    size_t chunkSize = end - offset;
     char chunk[maxChunkSize + 1]; // +1 for null-terminator
-    if (isFirstChunk) {
-      strncpy(chunk, str + offset, end - offset);
-      chunk[end - offset] = '\0'; // Null-terminate the chunk
+    if (isFirstLine) {
+      strncpy(chunk, prefix, prefixLen); // Add the first-line prefix
+      strncpy(chunk + prefixLen, str + offset, chunkSize);
+      chunk[prefixLen + chunkSize] = '\0'; // Null-terminate the chunk
     } else {
-      strncpy(chunk, prefix, prefixLen); // Add the prefix
-      strncpy(chunk + prefixLen, str + offset, end - offset);
-      chunk[prefixLen + end - offset] = '\0'; // Null-terminate the chunk
+      strncpy(chunk, subsequentPrefixCStr, prefixLen); // Add the subsequent-line prefix
+      strncpy(chunk + prefixLen, str + offset, chunkSize);
+      chunk[prefixLen + chunkSize] = '\0'; // Null-terminate the chunk
     }
 
     // Call the logging function
     func("%s", chunk);
 
     // Move the offset to process the next chunk
-    offset = end + 1; // Skip the space at the end
-    isFirstChunk = false;
+    offset = end;
+    if (offset < len && (str[offset] == '\n' || str[offset] == ' ')) {
+      ++offset; // Skip the newline character
+    }
+
+    isFirstLine = false;
   }
 }
-
-  void Plug::_printMessage(void (*func)(const char *, ...), const char *prefix, const char *format, va_list args)
-  {
-    char str[5000];
-    vsnprintf(str, sizeof(str), format, args);
-
-    // Define the maximum allowable length for a single line (including the prefix)
-    const size_t maxChunkSize = 80;
-
-    size_t prefixLen = strlen(prefix);       // Length of the first-line prefix
-    std::string subsequentPrefix(prefixLen, ' ');
-
-    // For comparison, you can access it as a C-style string if needed
-    const char *subsequentPrefixCStr = subsequentPrefix.c_str();
-
-
-    size_t len = strlen(str); // Length of the formatted message
-    size_t offset = 0;
-    bool isFirstLine = true;
-
-    while (offset < len) {
-      size_t availableSize = maxChunkSize - prefixLen;
-      size_t end = offset;
-
-      // Find where to split based on available size, spaces, or newlines
-      while (end < len && end - offset < availableSize) {
-        if (str[end] == '\n') {
-          break; // Split at newline
-        }
-        ++end;
-      }
-
-      // If no newline is found and we're splitting by size, backtrack to the last space
-      if (end < len && str[end] != '\n') {
-        size_t tempEnd = end;
-        while (tempEnd > offset && str[tempEnd] != ' ' && str[tempEnd] != '\n') {
-          --tempEnd;
-        }
-        if (tempEnd > offset) {
-          end = tempEnd; // Split at the last space or newline
-        }
-      }
-
-      // Determine the chunk size and handle prefix
-      size_t chunkSize = end - offset;
-      char chunk[maxChunkSize + 1]; // +1 for null-terminator
-      if (isFirstLine) {
-        strncpy(chunk, prefix, prefixLen); // Add the first-line prefix
-        strncpy(chunk + prefixLen, str + offset, chunkSize);
-        chunk[prefixLen + chunkSize] = '\0'; // Null-terminate the chunk
-      } else {
-        strncpy(chunk, subsequentPrefixCStr, prefixLen); // Add the subsequent-line prefix
-        strncpy(chunk + prefixLen, str + offset, chunkSize);
-        chunk[prefixLen + chunkSize] = '\0'; // Null-terminate the chunk
-      }
-
-      // Call the logging function
-      func("%s", chunk);
-
-      // Move the offset to process the next chunk
-      offset = end;
-      if (offset < len && (str[offset] == '\n' || str[offset] == ' ')) {
-        ++offset; // Skip the newline character
-      }
-
-      isFirstLine = false;
-    }
-  }
 
 void Plug::_info(int verb, const char *format, ...)
 {
@@ -1347,7 +1303,7 @@ std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
 
   if(sum2D + sum3D == 0) return 0;
 
-  _info(0, "=> Number of evaluations to perform:");
+  _info(0, "=> <|>Number of evaluations to perform:\n");
   _info(0, "   %5s%10s%10s%10s", "", "Validity", "Disto", "Aspect");
   if(sum2D)
     _info(0, "   %5s%10d%10d%10d", "2D:", cnt2D.elToCompute[0],
