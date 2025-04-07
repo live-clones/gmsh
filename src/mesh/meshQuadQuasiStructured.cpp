@@ -3056,9 +3056,10 @@ int quadMeshingOfSimpleFacesWithPatterns(GModel *gm,
     if(CTX::instance()->debugSurface > 0 &&
        gf->tag() != CTX::instance()->debugSurface)
       continue;
-    if(gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
+    if(gf->quadrangles.size() == 0) continue;
     if(gf->embeddedEdges().size() > 0 || gf->embeddedVertices().size() > 0)
       continue;
+    //    if (gf->tag() == 696)printf("coucou %d\n",696);
 
     bool invertNormals = meshOrientationIsOppositeOfCadOrientation(gf);
     meshFaceWithGlobalPattern(gf, invertNormals, minimumQualityRequired);

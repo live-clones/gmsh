@@ -99,6 +99,11 @@ SPoint2 discreteEdge::reparamOnFace(const GFace *face, double epar,
   return SPoint2(ps.u(), ps.v());
 }
 
+int  discreteEdge::minimumMeshSegments() const {
+  return CTX::instance()->mesh.minCurveNodes ;
+}
+
+
 double discreteEdge::curvature(double par) const
 {
   double tLoc;

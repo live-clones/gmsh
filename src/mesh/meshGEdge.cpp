@@ -846,6 +846,7 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
      CTX::instance()->mesh.algoRecombine != 0) {
     std::vector<GFace *> const &faces = ge->faces();
     if(CTX::instance()->mesh.recombineAll) {
+      //      if(N == 2) N = 1;
       if(N % 2 == 0) N++;
       if(CTX::instance()->mesh.algoRecombine == 2 ||
          CTX::instance()->mesh.algoRecombine == 4)

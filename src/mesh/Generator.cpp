@@ -638,7 +638,7 @@ static void Mesh2D(GModel *m)
       }
     }
     transferSeamGEdgesVerticesToGFace(m);
-    quadMeshingOfSimpleFacesWithPatterns(m);
+    quadMeshingOfSimpleFacesWithPatterns(m,-1000.0);
     optimizeTopologyWithDiskQuadrangulationRemeshing(m);
     optimizeTopologyWithCavityRemeshing(m);
     OptimizeMesh(m, "UntangleTris");

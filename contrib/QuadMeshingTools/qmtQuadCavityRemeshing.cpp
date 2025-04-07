@@ -3289,6 +3289,8 @@ int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
   double irreg;
   bool meshable = patchIsRemeshableWithQuadPattern(
     patternsToCheck, Ncorners, sideSizes, patternNoAndRot, irreg);
+
+
   if(!meshable) return -1;
 
   /* Build the mesh, smooth and check the geometry quality */
@@ -3315,6 +3317,7 @@ int meshFaceWithGlobalPattern(GFace *gf, bool invertNormalsForQuality,
   int st = remeshPatchWithQuadPattern(gf, patternNoAndRot, sideVertices,
                                       oldElements, oldVertices, qConstraints,
                                       invertNormalsForQuality, sp, diff);
+
   if(st != 0) {
     if(DBG_VERBOSE) {
       Msg::Debug(

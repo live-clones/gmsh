@@ -29,7 +29,7 @@ public:
   int createGeometry();
   virtual void mesh(bool verbose);
   int minimumDrawSegments() const { return 2 * _pars.size(); }
-  virtual int minimumMeshSegments() const { return periodic(0) ? 3 : 2; }
+  virtual int minimumMeshSegments() const;
   virtual SPoint2 reparamOnFace(const GFace *face, double epar, int dir) const;
   bool writeParametrization(FILE *fp, bool binary);
   bool readParametrization(FILE *fp, bool binary);
