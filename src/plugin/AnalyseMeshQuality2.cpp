@@ -247,8 +247,8 @@ PView *Plug::execute(PView *v)
 
   _fetchParameters();
 
-  _info(1, "=> Option 'guidanceLevel' is 1. ");
-  _info(1, "   This makes the plugin to provide various explanations");
+  _info(1, "=> Option 'guidanceLevel' is 1. This makes the plugin to provide "
+           "various explanations");
 
   // Handle cases where no computation is requested
   if(_param.freeData) {
@@ -298,8 +298,9 @@ PView *Plug::execute(PView *v)
   }
   else {
     if(!pc.validity) {
-      _warn(1, "=> Option 'skipValidity' is ON, validity will not be computed. This may significantly");
-      _warn(1, "   This may significantly slow down quality computation in the presence of invalid elements");
+      _warn(1, "=> Option 'skipValidity' is ON, validity will not be computed. "
+               "This may significantly slow down quality computation in the "
+               "presence of invalid elements");
     }
     _computeMissingData(countsTotal, check2D, check3D);
   }
@@ -622,11 +623,22 @@ void Plug::StatGenerator::printStats(const Parameters &param,
                                      const std::vector<Measures> &measures)
 {
   _info(1, "=> Printing statistics, here is what is important to know about "
-           "them:");
+  "them:");
+  _info("   *V", 1, "alidity*  gives information about the strict positivity "
+                    "of the Jacobian determinant. A mesh containing invalid "
+                    "elements will usually lead to incorrect Finite Element "
+                    "solutions.");
+  _info("   *D", 1, "istortion quality*  (previously ICN) is related to the "
+                    "condition number of the stiffness matrix. Low-Distortion "
+                    "elements can introduce roundoff errors, or significantly "
+                    "reduce the convergence speed of iterative methods.");
+  _info("   *A", 1, "spect quality*  (previously IGE) is related to the "
+                    "gradient of the FE solution. Low-IGE elements influence "
+                    "negatively the error on the gradient.");
   _info(1, "   - *Validity* give information about the strict positivity "
            "of the Jacobian determinant.");
   _info(1, "     A mesh containing invalid elements will usually lead to "
-           "incorrect Finite Element solutions.");
+  "incorrect Finite Element solutions.");
   _info(1, "   - *Disto* quality (previously ICN) is related to the condition "
            "number of the stiffness matrix.");
   _info(1, "     Low-Disto elements can introduce roundoff errors, or "
@@ -646,13 +658,13 @@ void Plug::StatGenerator::printStats(const Parameters &param,
     _info(1, "     Note that neither of these metrics provides any information "
              "about any kind of quality.");
   }
-  _info(1, "   - *Worst-K%% Weighted Mean* (WmK) corresponds to a weighted mean "
-           "where the worst K%% of values are assigned the same ");
-  _info(1, "     weight as the other values. This approach is preferable to "
-           "the standard mean because it emphasizes the worst ");
-  _info(1, "     elements which are critical as they can negatively impact the "
-           "Finite Element solution.");
-  _info(1, "     Note that the standard mean corresponds to Wm50.");
+  _info("   - ", 1, "*Worst-K%% Weighted Mean* (WmK) corresponds to a weighted "
+                    "mean where the worst K%% of values are assigned the same "
+                    "weight as the other values. This approach is preferable "
+                    "to the standard mean because it emphasizes the worst "
+                    "elements which are critical as they can negatively impact "
+                    "the Finite Element solution.\nNote that the standard mean "
+                    "corresponds to Wm50.");
 
   for(auto &measure: measures) {
     _printStats(param.show, measure);
@@ -1171,8 +1183,123 @@ void Plug::_printMessage(void (*func)(const char *, ...), const char *format,
 {
   char str[5000];
   vsnprintf(str, sizeof(str), format, args);
-  func("%s", str);
+  // func("%s", str);
+  const size_t maxChunkSize = 100; // For example, limit to 1024 characters
+  const char* prefix = "   ";       // Prefix for subsequent chunks
+  size_t prefixLen = strlen(prefix);
+
+  size_t len = strlen(str);
+  size_t offset = 0;
+
+  bool isFirstChunk = true;
+  while (offset < len) {
+    size_t chunkSize = maxChunkSize;
+
+    // If this is not the first chunk, leave space for the prefix
+    if (!isFirstChunk && maxChunkSize > prefixLen) {
+      chunkSize -= prefixLen;
+    }
+
+    // Find the last space within the chunk size
+    size_t end = offset + chunkSize;
+    if (end < len) {
+      while (end > offset && str[end] != ' ') {
+        --end;
+      }
+      if (end == offset) { // No space, force split at maxChunkSize
+        end = offset + chunkSize;
+      }
+    } else {
+      end = len; // Last portion of the message
+    }
+
+    // Prepare the chunk
+    char chunk[maxChunkSize + 1]; // +1 for null-terminator
+    if (isFirstChunk) {
+      strncpy(chunk, str + offset, end - offset);
+      chunk[end - offset] = '\0'; // Null-terminate the chunk
+    } else {
+      strncpy(chunk, prefix, prefixLen); // Add the prefix
+      strncpy(chunk + prefixLen, str + offset, end - offset);
+      chunk[prefixLen + end - offset] = '\0'; // Null-terminate the chunk
+    }
+
+    // Call the logging function
+    func("%s", chunk);
+
+    // Move the offset to process the next chunk
+    offset = end + 1; // Skip the space at the end
+    isFirstChunk = false;
+  }
 }
+
+  void Plug::_printMessage(void (*func)(const char *, ...), const char *prefix, const char *format, va_list args)
+  {
+    char str[5000];
+    vsnprintf(str, sizeof(str), format, args);
+
+    // Define the maximum allowable length for a single line (including the prefix)
+    const size_t maxChunkSize = 80;
+
+    size_t prefixLen = strlen(prefix);       // Length of the first-line prefix
+    std::string subsequentPrefix(prefixLen, ' ');
+
+    // For comparison, you can access it as a C-style string if needed
+    const char *subsequentPrefixCStr = subsequentPrefix.c_str();
+
+
+    size_t len = strlen(str); // Length of the formatted message
+    size_t offset = 0;
+    bool isFirstLine = true;
+
+    while (offset < len) {
+      size_t availableSize = maxChunkSize - prefixLen;
+      size_t end = offset;
+
+      // Find where to split based on available size, spaces, or newlines
+      while (end < len && end - offset < availableSize) {
+        if (str[end] == '\n') {
+          break; // Split at newline
+        }
+        ++end;
+      }
+
+      // If no newline is found and we're splitting by size, backtrack to the last space
+      if (end < len && str[end] != '\n') {
+        size_t tempEnd = end;
+        while (tempEnd > offset && str[tempEnd] != ' ' && str[tempEnd] != '\n') {
+          --tempEnd;
+        }
+        if (tempEnd > offset) {
+          end = tempEnd; // Split at the last space or newline
+        }
+      }
+
+      // Determine the chunk size and handle prefix
+      size_t chunkSize = end - offset;
+      char chunk[maxChunkSize + 1]; // +1 for null-terminator
+      if (isFirstLine) {
+        strncpy(chunk, prefix, prefixLen); // Add the first-line prefix
+        strncpy(chunk + prefixLen, str + offset, chunkSize);
+        chunk[prefixLen + chunkSize] = '\0'; // Null-terminate the chunk
+      } else {
+        strncpy(chunk, subsequentPrefixCStr, prefixLen); // Add the subsequent-line prefix
+        strncpy(chunk + prefixLen, str + offset, chunkSize);
+        chunk[prefixLen + chunkSize] = '\0'; // Null-terminate the chunk
+      }
+
+      // Call the logging function
+      func("%s", chunk);
+
+      // Move the offset to process the next chunk
+      offset = end;
+      if (offset < len && (str[offset] == '\n' || str[offset] == ' ')) {
+        ++offset; // Skip the newline character
+      }
+
+      isFirstLine = false;
+    }
+  }
 
 void Plug::_info(int verb, const char *format, ...)
 {
