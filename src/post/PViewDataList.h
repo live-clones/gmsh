@@ -158,7 +158,6 @@ private:
   std::vector<double> _values;
   bool _worstAtMin = true;
   double _cutoff = 0.;
-  double _width = 0.;
   double _height = 0.;
   double _precision = 0.;
 
@@ -175,7 +174,7 @@ public:
       std::sort(_values.begin(), _values.end(), std::less<>());
     finalize();
   }
-  void update(double cutoff, double width, double height, double prec);
+  void update(double cutoff, double height, double prec);
 };
 
 

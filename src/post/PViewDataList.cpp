@@ -1412,8 +1412,7 @@ std::vector<double> *PViewDataList::incrementList(int numComp, int type,
 }
 
 
-void PViewDataWorstWeighted::update(double cutoff, double width,
-  double height, double precision)
+void PViewDataWorstWeighted::update(double cutoff, double height, double precision)
 {
   if(cutoff == 0.0) {
     Msg::Error("Cannot update Worst Weighted adaptive dataset with cutoff = 0.0");
@@ -1424,24 +1423,24 @@ void PViewDataWorstWeighted::update(double cutoff, double width,
     return;
   }
 
-  constexpr double range_lazy[2] = {.5, 2};
-  if(_width > width * range_lazy[0] && _height > height * range_lazy[0] &&
-     _width < width * range_lazy[1] && _height < width * range_lazy[1] &&
+  // Check if data should be recomputed
+  constexpr double range_lazy[2] = {.2, 2};
+  if(_height > height * range_lazy[0] && _height < height * range_lazy[1] &&
      _cutoff == cutoff && _precision == precision)
     return;
-  _width = width;
   _height = height;
   _cutoff = cutoff;
   _precision = precision;
 
-  size_t Nyd = static_cast<size_t>(std::ceil(height/precision)) + 1;
-  double sz = static_cast<double>(_values.size());
+  // Initialize
   precision = precision / height;
-
-  // SP.push_back();
-  double exp = std::log(2.)/std::log(100./cutoff);
+  const double exp = std::log(2.)/std::log(100./cutoff);
+  const double sz = static_cast<double>(_values.size());
+  const size_t N = static_cast<size_t>(std::ceil(height/precision)) + 1;
   SP.clear();
-  SP.reserve(4 * Nyd * 2);
+  SP.reserve(4 * N * 2);
+
+  // Compute data
   double y = _values[0];
   SP.push_back(0.);
   SP.push_back(0.);
@@ -1470,5 +1469,6 @@ void PViewDataWorstWeighted::update(double cutoff, double width,
   SP.push_back(0.);
   SP.push_back(_values.back());
   ++NbSP;
+
   finalize();
 }
