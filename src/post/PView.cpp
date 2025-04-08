@@ -12,6 +12,7 @@
 #include "VertexArray.h"
 #include "SmoothData.h"
 #include "adaptiveData.h"
+#include "drawContext.h"
 #include "GmshMessage.h"
 
 int PView::_globalTag = 1;
@@ -110,6 +111,33 @@ PView::PView(const std::string &xname, const std::string &yname,
   _options->lineWidth = 2.;
   _options->pointSize = 4.;
   _options->axesLabel[0] = xname;
+}
+
+PView::PView(const std::string &yname, double wwm, bool isMinValueWorst,
+             std::vector<double> &x, std::vector<double> &y)
+{
+  _init();
+  _isWorstWeightedGraph = true;
+  _data = new PViewDataWorstWeighted(wwm, isMinValueWorst);
+  dynamic_cast<PViewDataWorstWeighted*>(_data)->setValues(y);
+  // _data->setXY(x, y);
+  _data->setName(yname);
+  _data->setFileName(yname + ".pos");
+  _options = new PViewOptions(*PViewOptions::reference());
+  _options->type = PViewOptions::Plot2D;
+  _options->axes = 3;
+  _options->lineWidth = 3.;
+  _options->pointSize = 4.;
+  _options->axesLabel[0] = "% Elements";
+  _options->axesTics[0] = 10;
+  // _options->axesFormat[0] = "%.2g";
+  _options->rangeType = PViewOptions::Custom;
+  _options->customMin = 0;
+  _options->customMax = 1;
+  _options->intervalsType = PViewOptions::Continuous;
+  // _options->intervalsType = PViewOptions::Discrete;
+  _options->format = "%.2f";
+  _options->worstWeightCutoff = wwm;
 }
 
 void PView::addStep(std::vector<double> &y)
@@ -395,4 +423,17 @@ double PView::getMemoryInMb()
   if(va_ellipses) mem += va_ellipses->getMemoryInMb();
   mem += getData()->getMemoryInMb();
   return mem;
+}
+
+void PView::updateWorstWeightedData(drawContext *ctx, double width,
+  double height, bool inModelCoordinates)
+{
+  if(!_isWorstWeightedGraph || height < 0) return;
+  char tmp[2];
+  snprintf(tmp, sizeof(tmp), "%d", 0);
+  double w = drawContext::global()->getStringWidth(tmp);
+  if(inModelCoordinates) w *= ctx->pixel_equiv_x / ctx->s[0];
+  double precision = .02 * w;
+  PViewDataWorstWeighted *data = dynamic_cast<PViewDataWorstWeighted*>(_data);
+  data->update(_options->worstWeightCutoff, height, precision);
 }

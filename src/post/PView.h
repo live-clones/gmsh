@@ -19,6 +19,7 @@ class VertexArray;
 class smooth_normals;
 class GModel;
 class GMSH_PostPlugin;
+class drawContext;
 namespace onelab {
   class localNetworkClient;
 }
@@ -43,6 +44,8 @@ private:
   PViewData *_data;
   // initialize private stuff
   void _init(int tag = -1);
+  // worst
+  bool _isWorstWeightedGraph = false;
 
 public:
   // create a new view with list-based data
@@ -53,6 +56,9 @@ public:
   PView(PView *ref, bool copyOptions = true, int tag = -1);
   // construct a new list-based view from a simple 2D point dataset
   PView(const std::string &xname, const std::string &yname,
+  std::vector<double> &x, std::vector<double> &y);
+  // construct a new list-based view from a simple 2D point dataset
+  PView(const std::string &yname, double wwm, bool isMinValueWorst,
         std::vector<double> &x, std::vector<double> &y);
   // construct a new list-based view from a simple 3D point dataset
   PView(const std::string &name, std::vector<double> &x, std::vector<double> &y,
@@ -106,6 +112,13 @@ public:
 
   // get (approx.) memory used by the view, in Mb
   double getMemoryInMb();
+
+  // get/set if this is a worst weighted graph
+  bool isWorstWeightedGraph() { return _isWorstWeightedGraph; }
+  void setIsWorstWeightedGraph(bool val) { _isWorstWeightedGraph = val; }
+
+  void updateWorstWeightedData(drawContext *ctx, double width, double height, bool inModelCoordinates);
+
 
 #ifndef SWIG
   // the static list of all loaded views
