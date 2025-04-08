@@ -114,7 +114,7 @@ PView::PView(const std::string &xname, const std::string &yname,
 }
 
 PView::PView(const std::string &yname, double cutoff, bool isMinValueWorst,
-             std::vector<double> &y)
+             const std::vector<double> &y)
 {
   _init();
   _isWorstWeightedGraph = true;

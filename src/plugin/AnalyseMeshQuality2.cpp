@@ -690,48 +690,11 @@ void Plug::StatGenerator::_createPlots(const Parameters::MetricsToShow &show, co
     _createPlotOneMeasure(measure.minAspect, "Aspect");
 }
 
-std::vector<double> _computeY(std::vector<double> &q, double cutoff)
+void Plug::StatGenerator::_createPlotOneMeasure(const std::vector<double> &measure, const char* str)
 {
-  size_t sz = q.size();
-  std::vector<double> y(sz);
-  double exp = std::log(2)/std::log(100/cutoff);
-  for(std::size_t i = 0; i < sz; ++i) {
-    y[i] = std::pow(static_cast<double>(i)/static_cast<double>(sz-1), exp);
-  }
-  return y;
-}
-
-void _computeXY(std::vector<double> &q, double cutoff, std::vector<double> &x, std::vector<double> &y)
-{
-  // JE prefere cette version en continuous
-  size_t sz = 2*q.size();
-  x.clear();
-  y.clear();
-  x.resize(sz);
-  y.resize(sz);
-  double exp = std::log(2)/std::log(100/cutoff);
-  x[0] = 0;
-  y[0] = q[0];
-  double x_saved = 0;
-  for(std::size_t i = 0; i < q.size(); ++i) {
-    x[2*i] = x_saved;
-    x_saved = std::pow(static_cast<double>(i+1)/static_cast<double>(q.size()), exp);
-    x[2*i+1] = x_saved;
-    y[2*i] = y[2*i+1] = q[i];
-  }
-}
-
-void Plug::StatGenerator::_createPlotOneMeasure(const std::vector<double> &measure, const char* str, bool useG)
-{
-  size_t numCutoff = _plotCutoffs.size();
-  std::vector<double> q = measure;
-  std::sort(q.begin(), q.end());
-  for(int i = 0; i < numCutoff; ++i) {
-    std::vector<double> x = _computeY(q, _plotCutoffs[i]);
-    //new PView(str, _plotCutoffs[i], x, q);
-    std::vector<double> y;
-    _computeXY(q, _plotCutoffs[i], x, y);
-    new PView(str, _plotCutoffs[i], true, q);
+  size_t numPlots = _plotCutoffs.size();
+  for(int i = 0; i < numPlots; ++i) {
+    new PView(str, _plotCutoffs[i], true, measure);
   }
 }
 

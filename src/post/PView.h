@@ -56,7 +56,7 @@ public:
   PView(PView *ref, bool copyOptions = true, int tag = -1);
   // construct a new Worst Weighted view from a dataset of values
   PView(const std::string &yname, double worstWeightCutoff,
-    bool isMinValueWorst, std::vector<double> &y);
+    bool isMinValueWorst, const std::vector<double> &y);
   // construct a new list-based view from a simple 2D point dataset
   PView(const std::string &xname, const std::string &yname,
   std::vector<double> &x, std::vector<double> &y);

@@ -279,7 +279,7 @@ private:
     const std::vector<double> &_getCoefficients(double cutoff, size_t num);
     void _computeCoefficients(double cutoff, size_t sz, std::vector<double> &);
     void _createPlots(const Parameters::MetricsToShow &param, const Measures &measure);
-    void _createPlotOneMeasure(const std::vector<double> &measure, const char* str, bool useG = false);
+    void _createPlotOneMeasure(const std::vector<double> &measure, const char* str);
   };
 
   struct Counts {
