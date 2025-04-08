@@ -54,12 +54,12 @@ public:
   PView(PViewData *data, int tag = -1);
   // construct a new view, alias of the view "ref"
   PView(PView *ref, bool copyOptions = true, int tag = -1);
+  // construct a new Worst Weighted view from a dataset of values
+  PView(const std::string &yname, double worstWeightCutoff,
+    bool isMinValueWorst, std::vector<double> &y);
   // construct a new list-based view from a simple 2D point dataset
   PView(const std::string &xname, const std::string &yname,
   std::vector<double> &x, std::vector<double> &y);
-  // construct a new list-based view from a simple 2D point dataset
-  PView(const std::string &yname, double wwm, bool isMinValueWorst,
-        std::vector<double> &x, std::vector<double> &y);
   // construct a new list-based view from a simple 3D point dataset
   PView(const std::string &name, std::vector<double> &x, std::vector<double> &y,
         std::vector<double> &z, std::vector<double> &v);
@@ -114,10 +114,10 @@ public:
   double getMemoryInMb();
 
   // get/set if this is a worst weighted graph
-  bool isWorstWeightedGraph() { return _isWorstWeightedGraph; }
-  void setIsWorstWeightedGraph(bool val) { _isWorstWeightedGraph = val; }
+  bool isWorstWeightedView() { return _isWorstWeightedGraph; }
+  void setIsWorstWeightedView(bool val) { _isWorstWeightedGraph = val; }
 
-  void updateWorstWeightedData(drawContext *ctx, double width, double height, bool inModelCoordinates);
+  void updateWorstWeightedData(drawContext *ctx, double height, bool inModelCoordinates);
 
 
 #ifndef SWIG

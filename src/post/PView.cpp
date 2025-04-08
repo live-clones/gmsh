@@ -113,31 +113,27 @@ PView::PView(const std::string &xname, const std::string &yname,
   _options->axesLabel[0] = xname;
 }
 
-PView::PView(const std::string &yname, double wwm, bool isMinValueWorst,
-             std::vector<double> &x, std::vector<double> &y)
+PView::PView(const std::string &yname, double cutoff, bool isMinValueWorst,
+             std::vector<double> &y)
 {
   _init();
   _isWorstWeightedGraph = true;
-  _data = new PViewDataWorstWeighted(wwm, isMinValueWorst);
-  dynamic_cast<PViewDataWorstWeighted*>(_data)->setValues(y);
-  // _data->setXY(x, y);
+  PViewDataWorstWeighted *data = new PViewDataWorstWeighted(cutoff, isMinValueWorst);
+  data->setValues(y);
+  _data = data;
   _data->setName(yname);
   _data->setFileName(yname + ".pos");
   _options = new PViewOptions(*PViewOptions::reference());
   _options->type = PViewOptions::Plot2D;
   _options->axes = 3;
   _options->lineWidth = 3.;
-  _options->pointSize = 4.;
   _options->axesLabel[0] = "% Elements";
   _options->axesTics[0] = 10;
-  // _options->axesFormat[0] = "%.2g";
   _options->rangeType = PViewOptions::Custom;
   _options->customMin = 0;
   _options->customMax = 1;
-  _options->intervalsType = PViewOptions::Continuous;
-  // _options->intervalsType = PViewOptions::Discrete;
-  _options->format = "%.2f";
-  _options->worstWeightCutoff = wwm;
+  _options->format = "%.2g";
+  _options->worstWeightCutoff = cutoff;
 }
 
 void PView::addStep(std::vector<double> &y)
@@ -425,8 +421,8 @@ double PView::getMemoryInMb()
   return mem;
 }
 
-void PView::updateWorstWeightedData(drawContext *ctx, double width,
-  double height, bool inModelCoordinates)
+void PView::updateWorstWeightedData(drawContext *ctx, double height,
+  bool inModelCoordinates)
 {
   if(!_isWorstWeightedGraph || height < 0) return;
   char tmp[2];
