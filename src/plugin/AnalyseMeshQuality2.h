@@ -270,6 +270,7 @@ private:
       _unpackCutoff(pack, _plotCutoffs);
     }
     void printStats(const Parameters &, const std::vector<Measures> &measures);
+    void createPlots(const Parameters &, const std::vector<Measures> &measures);
 
   private:
     void _unpackCutoff(double input, std::vector<double> &cutoffs) const;
@@ -277,6 +278,8 @@ private:
     void _printStatsOneMeasure(const std::vector<double> &measure, const char* str, bool useG = false);
     const std::vector<double> &_getCoefficients(double cutoff, size_t num);
     void _computeCoefficients(double cutoff, size_t sz, std::vector<double> &);
+    void _createPlots(const Parameters::MetricsToShow &param, const Measures &measure);
+    void _createPlotOneMeasure(const std::vector<double> &measure, const char* str, bool useG = false);
   };
 
   struct Counts {

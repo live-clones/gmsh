@@ -9,6 +9,7 @@
 
 #include <numeric>
 #include <sstream>
+#include <iomanip>
 #include "AnalyseMeshQuality2.h"
 #include "OS.h"
 #include "Context.h"
@@ -328,6 +329,7 @@ PView *Plug::execute(PView *v)
   _param.check2D = check2D;
   _param.check3D = check3D;
   _statGen->printStats(_param, measures);
+  _statGen->createPlots(_param, measures);
 
 
   // TODO compute show
@@ -666,6 +668,70 @@ void Plug::StatGenerator::printStats(const Parameters &param,
              "Note that the standard mean corresponds to Wm50.");
   for(auto &measure: measures) {
     _printStats(param.show, measure);
+  }
+}
+
+void Plug::StatGenerator::createPlots(const Parameters &param,
+                                      const std::vector<Measures> &measures)
+{
+  for(const auto &measure: measures) {
+    _createPlots(param.show, measure);
+  }
+}
+
+void Plug::StatGenerator::_createPlots(const Parameters::MetricsToShow &show, const Measures &measure)
+{
+  // Disto
+  if(show.disto && !measure.minDisto.empty())
+    _createPlotOneMeasure(measure.minDisto, "Disto");
+
+  // Aspect
+  if(show.aspect && !measure.minAspect.empty())
+    _createPlotOneMeasure(measure.minAspect, "Aspect");
+}
+
+std::vector<double> _computeY(std::vector<double> &q, double cutoff)
+{
+  size_t sz = q.size();
+  std::vector<double> y(sz);
+  double exp = std::log(2)/std::log(100/cutoff);
+  for(std::size_t i = 0; i < sz; ++i) {
+    y[i] = std::pow(static_cast<double>(i)/static_cast<double>(sz-1), exp);
+  }
+  return y;
+}
+
+void _computeXY(std::vector<double> &q, double cutoff, std::vector<double> &x, std::vector<double> &y)
+{
+  // JE prefere cette version en continuous
+  size_t sz = 2*q.size();
+  x.clear();
+  y.clear();
+  x.resize(sz);
+  y.resize(sz);
+  double exp = std::log(2)/std::log(100/cutoff);
+  x[0] = 0;
+  y[0] = q[0];
+  double x_saved = 0;
+  for(std::size_t i = 0; i < q.size(); ++i) {
+    x[2*i] = x_saved;
+    x_saved = std::pow(static_cast<double>(i+1)/static_cast<double>(q.size()), exp);
+    x[2*i+1] = x_saved;
+    y[2*i] = y[2*i+1] = q[i];
+  }
+}
+
+void Plug::StatGenerator::_createPlotOneMeasure(const std::vector<double> &measure, const char* str, bool useG)
+{
+  size_t numCutoff = _plotCutoffs.size();
+  std::vector<double> q = measure;
+  std::sort(q.begin(), q.end());
+  for(int i = 0; i < numCutoff; ++i) {
+    std::vector<double> x = _computeY(q, _plotCutoffs[i]);
+    //new PView(str, _plotCutoffs[i], x, q);
+    std::vector<double> y;
+    _computeXY(q, _plotCutoffs[i], x, y);
+    new PView(str, _plotCutoffs[i], true, q);
   }
 }
 
