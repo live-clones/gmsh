@@ -329,6 +329,46 @@ PView *Plug::execute(PView *v)
   _param.check2D = check2D;
   _param.check3D = check3D;
   _statGen->printStats(_param, measures);
+
+  // NOTE
+  //  - call _createPlots(measures); then _statGen (but maybe not necessary
+  //    since just need cutoff values)
+  //  - In Plugin : Store pointer to PView with data creation
+  //    (dimension, metric, typeView, cutoff), where dimension = {2, 3, both}
+  //    OR (dim2, dim3, metric, typeView, cutoff)
+  //  - If at least one measure changed in a dimension, then delete all pointer to
+  //    corresponding Views.
+  //  - To check that something changed, it is not sufficient that we compute
+  //    something. For example, we can have all computed, half element visible
+  //    and creation PView, then the other half is visible and the plugin is
+  //    run again.
+  //  - Something changed if at least one entity changed
+  //  - An entity changed if it was deleted and it contained requested elements,
+  //    or if it was added and it contain requested, or if the number  of
+  //    requested changed)
+  //  - Creation of new PView if it is requested or if old one is gone.
+
+  // struct Key {
+  //   bool dim2;
+  //   bool dim3;
+  //   enum Metric { VALIDITY, DISTO, ASPECT, MINJAC, RATIOJAC } metric;
+  //   enum TypeView { PLOT, ELEMENTS } typeView;
+  //   double cutoff;
+  //
+  //   // Equality operator for unordered_map or map
+  //   bool operator==(const Key &other) const {
+  //     return std::tie(dim2, dim3, metric, typeView, cutoff) ==
+  //            std::tie(other.dim2, other.dim3, other.metric, other.typeView, other.cutoff);
+  //   }
+  //
+  //   // Less-than operator for std::map
+  //   bool operator<(const Key &other) const {
+  //     return std::tie(dim2, dim3, metric, typeView, cutoff) <
+  //            std::tie(other.dim2, other.dim3, other.metric, other.typeView, other.cutoff);
+  //   }
+  // };
+
+
   _statGen->createPlots(_param, measures);
 
 
