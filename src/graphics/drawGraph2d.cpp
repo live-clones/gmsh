@@ -203,6 +203,171 @@ static bool getGraphData(PView *p, std::vector<double> &x, double &xmin,
   return true;
 }
 
+void drawXTicsAndGridWorstMeanGraph(drawContext *ctx, PView *p,
+  double xleft, double ytop, double width, double ybot, double font_h,
+                          double tic, int overlay, bool inModelCoordinates)
+{
+  PViewOptions *opt = p->getOptions();
+  struct Xtic {
+    double x = 0;
+    double w = 0;
+    bool d = false;
+    std::string s = "";
+    Xtic(double xx, double exp, double width, std::string ss, bool dd = false) :
+    x(xx), w(width * std::pow(xx, exp)), d(dd), s(std::move(ss)) {};
+    Xtic() :
+    x(0), w(0), d(false), s("") {};
+  } xtic;
+
+  constexpr int nSet = 3;
+  constexpr double setTics[nSet][9] = {
+    {10, 20, 30, 40, 50, 60, 70, 80, 90},
+    {10, 40, 70},
+    {10}
+  };
+  constexpr int nTics[nSet] = {9, 3, 1};
+
+  char tmp[256];
+  sprintf(tmp, "%d", 0);
+  double ww = drawContext::global()->getStringWidth(tmp);
+  if(inModelCoordinates) ww *= ctx->pixel_equiv_x / ctx->s[0];
+  double limitGrid = 1.0*ww;
+
+  double exp = std::log(2)/std::log(100/opt->worstWeightCutoff);
+  std::vector<Xtic> xtics;
+  xtics.push_back(Xtic(1, exp, width, std::string("100")));
+
+  double subWidth = width;
+  double factor = 1.;
+  int nb = opt->axesTics[0] - 2;
+  while (nb > 0 && subWidth >= limitGrid) {
+    int idxSet = 0;
+    while(idxSet<nSet) {
+      if(nb < nTics[idxSet]) {
+        ++idxSet;
+        continue;
+      }
+      double xRight = factor * setTics[idxSet][nTics[idxSet]-1];
+      double w = width * std::pow(xRight/100., exp);
+      if(subWidth - w >= limitGrid) break;
+      ++idxSet;
+    }
+    if(idxSet == nSet) break;
+
+    for(int i = nTics[idxSet]-1; i > 0; --i) {
+      double x = factor * setTics[idxSet][i];
+      xtics.push_back(Xtic(x/100., exp, width, std::string(std::to_string(x))));
+    }
+    double x = factor * setTics[idxSet][0];
+    xtics.push_back(Xtic(x/100., exp, width, std::string(std::to_string(x)), true));
+    nb -= nTics[idxSet];
+    subWidth = xtics.back().w;
+    factor /= 10.;
+  }
+  xtics.push_back(Xtic(0, exp, width, std::string("0")));
+
+  int k = 0;
+  for(int i = 0; i < xtics.size(); i++) {
+    double dw = xtics[i].w;
+    if(opt->axes > 2) {
+      gl2psLineWidth((float)(10. * CTX::instance()->print.epsLineWidthFactor));
+      glEnable(GL_LINE_STIPPLE);
+      if(xtics[i].d) {
+        glColor3f(.70f, .70f, .70f);
+        // glLineStipple(3, 0x1111);
+        // glLineStipple(1, 0xF0F0);
+        glLineStipple(4, 0xFFFF);
+      }
+      else
+        glLineStipple(1, 0x1111);
+      // glLineStipple(1+k++%6, 0x1111);
+      gl2psEnable(GL2PS_LINE_STIPPLE);
+      // gl2psLineWidth((float)(1. * CTX::instance()->print.epsLineWidthFactor));
+      glBegin(GL_LINES);
+      glVertex2d(xleft + dw, ytop);
+      glVertex2d(xleft + dw, ybot);// + 1.4*tic);
+      glEnd();
+      glDisable(GL_LINE_STIPPLE);
+      gl2psDisable(GL2PS_LINE_STIPPLE);
+      gl2psLineWidth((float)(CTX::instance()->lineWidth *
+                             CTX::instance()->print.epsLineWidthFactor));
+      glColor3f(.0f, .0f, .0f);
+    }
+
+    glBegin(GL_LINES);
+    glVertex2d(xleft + dw, ybot);
+    glVertex2d(xleft + dw, ybot + tic);
+    if(opt->axes > 1) {
+      glVertex2d(xleft + dw, ytop);
+      glVertex2d(xleft + dw, ytop - tic);
+    }
+    glEnd();
+  }
+  glBegin(GL_LINES);
+  glVertex2d(xleft + width/2, ybot - 1*tic);
+  glVertex2d(xleft + width/2, ybot);
+  glEnd();
+
+  if(opt->showScale) {
+    // sprintf(tmp, opt->axesFormat[0].c_str(), 1e-3);
+    // ww = drawContext::global()->getStringWidth(tmp);
+    // if(inModelCoordinates) ww *= ctx->pixel_equiv_x / ctx->s[0];
+    snprintf(tmp, sizeof(tmp), opt->axesFormat[0].c_str(), opt->worstWeightCutoff);
+    ctx->drawStringCenter(tmp, xleft + width/2,
+                            ybot - font_h - tic - overlay * (font_h + tic),
+                            0.);
+    double dwCutOff = drawContext::global()->getStringWidth(tmp) / 2;
+    if(inModelCoordinates) dwCutOff *= ctx->pixel_equiv_x / ctx->s[0];
+    dwCutOff += ww/2;
+
+
+    double lastW = 2*width;
+    for(int i = 0; i < xtics.size(); ++i) {
+      double wLabel = xtics[i].w;
+
+      sprintf(tmp, opt->axesFormat[0].c_str(), xtics[i].x*100);
+      double dw = drawContext::global()->getStringWidth(tmp) / 2.;
+      if(inModelCoordinates) dw *= ctx->pixel_equiv_x / ctx->s[0];
+      dw += ww/2;
+
+      // FIXME check in function of real width + securityFact
+      if(wLabel + dw > lastW || (wLabel + dw > width/2 - dwCutOff && wLabel - dw < width/2 + dwCutOff)) continue;
+      lastW = wLabel - dw;
+      // snprintf(tmp, sizeof(tmp), opt->axesFormat[0].c_str(), xtics[i].x*100);
+      ctx->drawStringCenter(tmp, xleft + wLabel,
+                              ybot - font_h - tic - overlay * (font_h + tic),
+                              0.);
+    }
+  }
+
+  // glBegin(GL_LINES);
+  // glVertex2d(xleft + width/2, ybot);
+  // glVertex2d(xleft + width/2, ybot + 2.5*tic);glEnd();
+  //
+  // sprintf(tmp, opt->axesFormat[0].c_str(), 1e-3);
+  // ww = drawContext::global()->getStringWidth(tmp);
+  // if(inModelCoordinates) ww *= ctx->pixel_equiv_x / ctx->s[0];
+  //
+  // if(opt->showScale) {
+  //   double lastW = 2*width;
+  //   for(int i = 0; i < xtics.size(); ++i) {
+  //     double dw = xtics[i].w;
+  //     // FIXME check in function of real width + securityFact
+  //     if(dw + ww > lastW || (dw > width/2 - ww && dw < width/2 + ww)) continue;
+  //     lastW = dw;
+  //     snprintf(tmp, sizeof(tmp), "%.3g", xtics[i].x*100);
+  //     ctx->drawStringCenter(tmp, xleft + dw,
+  //                             ybot - font_h - tic - overlay * (font_h + tic),
+  //                             0.);
+  //   }
+  //   snprintf(tmp, sizeof(tmp), "%.2g", opt->worstWeightCutoff);
+  //   ctx->drawStringCenter(tmp, xleft + width/2,
+  //                           ybot - font_h - tic - overlay * (font_h + tic),
+  //                           0.);
+  // }
+}
+
+
 static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
                           double width, double height, double xmin, double xmax,
                           double tic, int overlay, bool inModelCoordinates)
@@ -359,39 +524,50 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     double dx = width / (double)(nb - 1);
     double ybot = ytop - height;
 
-    for(int i = 0; i < nb; i++) {
-      glBegin(GL_LINES);
-      glVertex2d(xleft + i * dx, ybot);
-      glVertex2d(xleft + i * dx, ybot + tic);
-      if(opt->axes > 1) {
-        glVertex2d(xleft + i * dx, ytop);
-        glVertex2d(xleft + i * dx, ytop - tic);
+    if(opt->worstWeightCutoff && opt->worstWeightCutoff != 50) {
+      drawXTicsAndGridWorstMeanGraph(ctx, p,
+  xleft, ytop, width, ybot, font_h,
+                          tic, overlay, inModelCoordinates);
+    }
+    else {
+      if(opt->worstWeightCutoff) {
+        xmin = 0;
+        xmax = 100;
       }
-      glEnd();
-      if(opt->axes > 2 && i != 0 && i != nb - 1) {
-        glEnable(GL_LINE_STIPPLE);
-        glLineStipple(1, 0x1111);
-        gl2psEnable(GL2PS_LINE_STIPPLE);
-        gl2psLineWidth((float)(1. * CTX::instance()->print.epsLineWidthFactor));
+      for(int i = 0; i < nb; i++) {
         glBegin(GL_LINES);
-        glVertex2d(xleft + i * dx, ytop);
         glVertex2d(xleft + i * dx, ybot);
+        glVertex2d(xleft + i * dx, ybot + tic);
+        if(opt->axes > 1) {
+          glVertex2d(xleft + i * dx, ytop);
+          glVertex2d(xleft + i * dx, ytop - tic);
+        }
         glEnd();
-        glDisable(GL_LINE_STIPPLE);
-        gl2psDisable(GL2PS_LINE_STIPPLE);
-        gl2psLineWidth((float)(CTX::instance()->lineWidth *
-                               CTX::instance()->print.epsLineWidthFactor));
-      }
-      if(opt->showScale) {
-        char tmp[256];
-        if(nb == 1)
-          sprintf(tmp, opt->axesFormat[0].c_str(), xmin);
-        else
-          sprintf(tmp, opt->axesFormat[0].c_str(),
-                  xmin + i * (xmax - xmin) / (double)(nb - 1));
-        ctx->drawStringCenter(tmp, xleft + i * dx,
-                              ybot - font_h - tic - overlay * (font_h + tic),
-                              0.);
+        if(opt->axes > 2 && i != 0 && i != nb - 1) {
+          glEnable(GL_LINE_STIPPLE);
+          glLineStipple(1, 0x1111);
+          gl2psEnable(GL2PS_LINE_STIPPLE);
+          gl2psLineWidth((float)(1. * CTX::instance()->print.epsLineWidthFactor));
+          glBegin(GL_LINES);
+          glVertex2d(xleft + i * dx, ytop);
+          glVertex2d(xleft + i * dx, ybot);
+          glEnd();
+          glDisable(GL_LINE_STIPPLE);
+          gl2psDisable(GL2PS_LINE_STIPPLE);
+          gl2psLineWidth((float)(CTX::instance()->lineWidth *
+                                 CTX::instance()->print.epsLineWidthFactor));
+        }
+        if(opt->showScale) {
+          char tmp[256];
+          if(nb == 1)
+            sprintf(tmp, opt->axesFormat[0].c_str(), xmin);
+          else
+            sprintf(tmp, opt->axesFormat[0].c_str(),
+                    xmin + i * (xmax - xmin) / (double)(nb - 1));
+          ctx->drawStringCenter(tmp, xleft + i * dx,
+                                ybot - font_h - tic - overlay * (font_h + tic),
+                                0.);
+        }
       }
     }
   }
@@ -530,10 +706,23 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft,
   }
 }
 
+#include "MVertex.h"
+
 static void drawGraph(drawContext *ctx, PView *p, double xleft, double ytop,
                       double width, double height, double tic, int overlay = 0,
                       bool inModelCoordinates = false)
 {
+  // check if the graph is a Worst Weighted Graph
+  p->updateWorstWeightedData(ctx, height, inModelCoordinates);
+
+  // if(p->isWorstWeightedView()) {
+  //
+  // }
+  // PViewData *data = p->getData(true);
+  // if (auto derived = dynamic_cast<PViewDataListWorstWeighted*>(data)) {
+  //   // `data` is a PViewDataListWorstWeighted
+  //   std::cout << "data is a PViewDataListWorstWeighted object" << std::endl;
+  // }
   std::vector<double> x;
   std::vector<std::vector<double> > y;
   double xmin, xmax, ymin, ymax;
