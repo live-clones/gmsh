@@ -152,4 +152,31 @@ public:
                   bool finalize);
 };
 
+
+class PViewDataWorstWeighted : public PViewDataList {
+private:
+  std::vector<double> _values;
+  bool _worstAtMin = true;
+  double _cutoff = 0.;
+  double _width = 0.;
+  double _height = 0.;
+  double _precision = 0.;
+
+public:
+  PViewDataWorstWeighted(double wwCutoff, bool isMinValueWorst = true) :
+  _worstAtMin(isMinValueWorst), _cutoff(wwCutoff) {}
+
+  void setValues(const std::vector<double> &val)
+  {
+    _values = val;
+    if(_worstAtMin)
+      std::sort(_values.begin(), _values.end());
+    else
+      std::sort(_values.begin(), _values.end(), std::less<>());
+    finalize();
+  }
+  void update(double cutoff, double width, double height, double prec);
+};
+
+
 #endif

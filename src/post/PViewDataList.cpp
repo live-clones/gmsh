@@ -1410,3 +1410,65 @@ std::vector<double> *PViewDataList::incrementList(int numComp, int type,
   }
   return nullptr;
 }
+
+
+void PViewDataWorstWeighted::update(double cutoff, double width,
+  double height, double precision)
+{
+  if(cutoff == 0.0) {
+    Msg::Error("Cannot update Worst Weighted adaptive dataset with cutoff = 0.0");
+    return;
+  }
+  if(_values.empty()) {
+    Msg::Error("Cannot update Worst Weighted adaptive dataset with no values");
+    return;
+  }
+
+  constexpr double range_lazy[2] = {.5, 2};
+  if(_width > width * range_lazy[0] && _height > height * range_lazy[0] &&
+     _width < width * range_lazy[1] && _height < width * range_lazy[1] &&
+     _cutoff == cutoff && _precision == precision)
+    return;
+  _width = width;
+  _height = height;
+  _cutoff = cutoff;
+  _precision = precision;
+
+  size_t Nyd = static_cast<size_t>(std::ceil(height/precision)) + 1;
+  double sz = static_cast<double>(_values.size());
+  precision = precision / height;
+
+  // SP.push_back();
+  double exp = std::log(2.)/std::log(100./cutoff);
+  SP.clear();
+  SP.reserve(4 * Nyd * 2);
+  double y = _values[0];
+  SP.push_back(0.);
+  SP.push_back(0.);
+  SP.push_back(0.);
+  SP.push_back(y);
+  NbSP = 1;
+  for(size_t i = 1; i < _values.size(); ++i) {
+    if(_values[i] - SP.back() <= precision)
+      continue;
+
+    double x = std::pow(static_cast<double>(i-1) / sz, exp);
+    double newy = _values[i-1];
+    SP.push_back(x);
+    SP.push_back(0.);
+    SP.push_back(0.);
+    SP.push_back(y);
+    SP.push_back(x);
+    SP.push_back(0.);
+    SP.push_back(0.);
+    SP.push_back(newy);
+    y = newy;
+    NbSP += 2;
+  }
+  SP.push_back(1.);
+  SP.push_back(0.);
+  SP.push_back(0.);
+  SP.push_back(_values.back());
+  ++NbSP;
+  finalize();
+}
