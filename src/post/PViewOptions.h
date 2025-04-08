@@ -38,6 +38,7 @@ public:
   enum RangeType { Default = 1, Custom = 2, PerTimeStep = 3 };
   enum ScaleType { Linear = 1, Logarithmic = 2, DoubleLogarithmic = 3 };
 
+  double worstWeightCutoff;
   int type, autoPosition;
   double position[2], size[2];
   std::string format;

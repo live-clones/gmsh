@@ -2064,6 +2064,8 @@ StringXNumber ViewOptions_Number[] = {
 
   { F|O, "Width" , opt_view_size0 , 300. ,
     "Width (in pixels) of the scale or 2D plot" },
+  { F|O, "WorstWeigthCutoff" , opt_view_cutoff , 0. ,
+    "Cutoff for Worst Weighted Graph" },
 
   { 0, nullptr , nullptr , 0. , nullptr }
 } ;

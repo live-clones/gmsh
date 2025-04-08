@@ -9350,6 +9350,25 @@ double opt_view_closed(OPT_ARGS_NUM)
 #endif
 }
 
+double opt_view_cutoff(OPT_ARGS_NUM)
+{
+#if defined(HAVE_POST)
+  GET_VIEWo(0.);
+  if(action & GMSH_SET) {
+    opt->worstWeightCutoff = (int)val;
+    if(view) view->setChanged(true);
+  }
+  // #if defined(HAVE_FLTK)
+  //   if(_gui_action_valid(action, num)) {
+  //     FlGui::instance()->options->view.value[3]->value(opt->axesTics[0]);
+  //   }
+  // #endif
+  return opt->worstWeightCutoff;
+#else
+  return 0.;
+#endif
+}
+
 double opt_print_file_format(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) CTX::instance()->print.fileFormat = (int)val;
