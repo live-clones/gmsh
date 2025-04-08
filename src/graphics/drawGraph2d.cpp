@@ -208,84 +208,97 @@ void drawXTicsAndGridWorstMeanGraph(drawContext *ctx, PView *p,
                           double tic, int overlay, bool inModelCoordinates)
 {
   PViewOptions *opt = p->getOptions();
+
   struct Xtic {
     double x = 0;
-    double w = 0;
-    bool d = false;
-    std::string s = "";
-    Xtic(double xx, double exp, double width, std::string ss, bool dd = false) :
-    x(xx), w(width * std::pow(xx, exp)), d(dd), s(std::move(ss)) {};
-    Xtic() :
-    x(0), w(0), d(false), s("") {};
-  } xtic;
+    double pos = 0;
+    bool filled = false;
+    Xtic(double xx, double exp, double width, bool f = false) :
+    x(xx), pos(width * std::pow(xx, exp)), filled(f) {};
+  };
 
+  // Possible tic between two consecutive powers of 10
   constexpr int nSet = 3;
+  constexpr int nTics[nSet] = {9, 3, 1};
   constexpr double setTics[nSet][9] = {
     {10, 20, 30, 40, 50, 60, 70, 80, 90},
     {10, 40, 70},
     {10}
   };
-  constexpr int nTics[nSet] = {9, 3, 1};
 
+  // Set the minimal distance between two tics based on the width of the
+  // character '0'
   char tmp[256];
   sprintf(tmp, "%d", 0);
-  double ww = drawContext::global()->getStringWidth(tmp);
-  if(inModelCoordinates) ww *= ctx->pixel_equiv_x / ctx->s[0];
-  double limitGrid = 1.0*ww;
+  double w0 = drawContext::global()->getStringWidth(tmp);
+  if(inModelCoordinates) w0 *= ctx->pixel_equiv_x / ctx->s[0];
+  double limitGrid = 1.0*w0;
 
   double exp = std::log(2)/std::log(100/opt->worstWeightCutoff);
-  std::vector<Xtic> xtics;
-  xtics.push_back(Xtic(1, exp, width, std::string("100")));
 
-  double subWidth = width;
+  // Put a tic at 1 (i.e. 100 %)
+  std::vector<Xtic> xtics;
+  xtics.emplace_back(1, exp, width);
+
+  double posCurr = width;
   double factor = 1.;
   int nb = opt->axesTics[0] - 2;
-  while (nb > 0 && subWidth >= limitGrid) {
+
+  // Loop over intervals between pairs of powers of 10
+  while (nb > 0 && posCurr >= limitGrid) {
     int idxSet = 0;
-    while(idxSet<nSet) {
+
+    // For each interval, choose the biggest tic set that fit
+    while(idxSet < nSet) {
       if(nb < nTics[idxSet]) {
         ++idxSet;
         continue;
       }
       double xRight = factor * setTics[idxSet][nTics[idxSet]-1];
-      double w = width * std::pow(xRight/100., exp);
-      if(subWidth - w >= limitGrid) break;
+      double posRight = width * std::pow(xRight/100., exp);
+      if(posCurr - posRight >= limitGrid) break;
       ++idxSet;
     }
+
+    // If no fit, then stop
     if(idxSet == nSet) break;
 
+    // Populate xtics with the chosen set
     for(int i = nTics[idxSet]-1; i > 0; --i) {
       double x = factor * setTics[idxSet][i];
-      xtics.push_back(Xtic(x/100., exp, width, std::string(std::to_string(x))));
+      xtics.emplace_back(x/100., exp, width);
     }
     double x = factor * setTics[idxSet][0];
-    xtics.push_back(Xtic(x/100., exp, width, std::string(std::to_string(x)), true));
+    xtics.emplace_back(x/100., exp, width, true);
+
+    // Update for next interval
     nb -= nTics[idxSet];
-    subWidth = xtics.back().w;
+    posCurr = xtics.back().pos;
     factor /= 10.;
   }
-  xtics.push_back(Xtic(0, exp, width, std::string("0")));
 
-  int k = 0;
-  for(int i = 0; i < xtics.size(); i++) {
-    double dw = xtics[i].w;
+  // Add last tic (0%)
+  xtics.emplace_back(Xtic(0, exp, width));
+
+  // Loop for displaying tics and grid
+  for(auto & xtic : xtics) {
+    double pos = xtic.pos;
+
+    // Display grid first so that tics of power of 10 are visible
     if(opt->axes > 2) {
-      gl2psLineWidth((float)(10. * CTX::instance()->print.epsLineWidthFactor));
       glEnable(GL_LINE_STIPPLE);
-      if(xtics[i].d) {
+      if(xtic.filled) {
         glColor3f(.70f, .70f, .70f);
-        // glLineStipple(3, 0x1111);
-        // glLineStipple(1, 0xF0F0);
         glLineStipple(4, 0xFFFF);
       }
-      else
+      else {
         glLineStipple(1, 0x1111);
-      // glLineStipple(1+k++%6, 0x1111);
+      }
       gl2psEnable(GL2PS_LINE_STIPPLE);
-      // gl2psLineWidth((float)(1. * CTX::instance()->print.epsLineWidthFactor));
+      gl2psLineWidth((float)(1. * CTX::instance()->print.epsLineWidthFactor));
       glBegin(GL_LINES);
-      glVertex2d(xleft + dw, ytop);
-      glVertex2d(xleft + dw, ybot);// + 1.4*tic);
+      glVertex2d(xleft + pos, ytop);
+      glVertex2d(xleft + pos, ybot);
       glEnd();
       glDisable(GL_LINE_STIPPLE);
       gl2psDisable(GL2PS_LINE_STIPPLE);
@@ -294,77 +307,54 @@ void drawXTicsAndGridWorstMeanGraph(drawContext *ctx, PView *p,
       glColor3f(.0f, .0f, .0f);
     }
 
+    // Then display tics
     glBegin(GL_LINES);
-    glVertex2d(xleft + dw, ybot);
-    glVertex2d(xleft + dw, ybot + tic);
+    glVertex2d(xleft + pos, ybot);
+    glVertex2d(xleft + pos, ybot + tic);
     if(opt->axes > 1) {
-      glVertex2d(xleft + dw, ytop);
-      glVertex2d(xleft + dw, ytop - tic);
+      glVertex2d(xleft + pos, ytop);
+      glVertex2d(xleft + pos, ytop - tic);
     }
     glEnd();
   }
-  glBegin(GL_LINES);
-  glVertex2d(xleft + width/2, ybot - 1*tic);
-  glVertex2d(xleft + width/2, ybot);
-  glEnd();
 
   if(opt->showScale) {
-    // sprintf(tmp, opt->axesFormat[0].c_str(), 1e-3);
-    // ww = drawContext::global()->getStringWidth(tmp);
-    // if(inModelCoordinates) ww *= ctx->pixel_equiv_x / ctx->s[0];
+    double security = w0/2;
+
+    // Add special tic and label for cutoff value
+    glBegin(GL_LINES);
+    glVertex2d(xleft + width/2, ybot - 1*tic);
+    glVertex2d(xleft + width/2, ybot);
+    glEnd();
     snprintf(tmp, sizeof(tmp), opt->axesFormat[0].c_str(), opt->worstWeightCutoff);
     ctx->drawStringCenter(tmp, xleft + width/2,
                             ybot - font_h - tic - overlay * (font_h + tic),
                             0.);
-    double dwCutOff = drawContext::global()->getStringWidth(tmp) / 2;
-    if(inModelCoordinates) dwCutOff *= ctx->pixel_equiv_x / ctx->s[0];
-    dwCutOff += ww/2;
 
+    double halfCutOff = drawContext::global()->getStringWidth(tmp) / 2.;
+    if(inModelCoordinates) halfCutOff *= ctx->pixel_equiv_x / ctx->s[0];
+    halfCutOff += security;
+    double limitCutoffLeft = width/2 - halfCutOff;
+    double limitCutoffRight = width/2 + halfCutOff;
 
-    double lastW = 2*width;
-    for(int i = 0; i < xtics.size(); ++i) {
-      double wLabel = xtics[i].w;
+    double lastLimit = 2*width;
+    for(auto & xtic : xtics) {
+      double posLabel = xtic.pos;
 
-      sprintf(tmp, opt->axesFormat[0].c_str(), xtics[i].x*100);
-      double dw = drawContext::global()->getStringWidth(tmp) / 2.;
-      if(inModelCoordinates) dw *= ctx->pixel_equiv_x / ctx->s[0];
-      dw += ww/2;
+      snprintf(tmp, sizeof(tmp), opt->axesFormat[0].c_str(), xtic.x*100);
+      double halfLabel = drawContext::global()->getStringWidth(tmp) / 2.;
+      if(inModelCoordinates) halfLabel *= ctx->pixel_equiv_x / ctx->s[0];
+      halfLabel += security;
 
-      // FIXME check in function of real width + securityFact
-      if(wLabel + dw > lastW || (wLabel + dw > width/2 - dwCutOff && wLabel - dw < width/2 + dwCutOff)) continue;
-      lastW = wLabel - dw;
-      // snprintf(tmp, sizeof(tmp), opt->axesFormat[0].c_str(), xtics[i].x*100);
-      ctx->drawStringCenter(tmp, xleft + wLabel,
-                              ybot - font_h - tic - overlay * (font_h + tic),
+      double labelLeft = posLabel - halfLabel;
+      double labelRight = posLabel + halfLabel;
+      if(labelRight > lastLimit || (labelRight > limitCutoffLeft && labelLeft < limitCutoffRight)) continue;
+      lastLimit = labelLeft;
+      ctx->drawStringCenter(tmp, xleft + posLabel,
+        ybot - font_h - tic - overlay * (font_h + tic),
                               0.);
     }
   }
-
-  // glBegin(GL_LINES);
-  // glVertex2d(xleft + width/2, ybot);
-  // glVertex2d(xleft + width/2, ybot + 2.5*tic);glEnd();
-  //
-  // sprintf(tmp, opt->axesFormat[0].c_str(), 1e-3);
-  // ww = drawContext::global()->getStringWidth(tmp);
-  // if(inModelCoordinates) ww *= ctx->pixel_equiv_x / ctx->s[0];
-  //
-  // if(opt->showScale) {
-  //   double lastW = 2*width;
-  //   for(int i = 0; i < xtics.size(); ++i) {
-  //     double dw = xtics[i].w;
-  //     // FIXME check in function of real width + securityFact
-  //     if(dw + ww > lastW || (dw > width/2 - ww && dw < width/2 + ww)) continue;
-  //     lastW = dw;
-  //     snprintf(tmp, sizeof(tmp), "%.3g", xtics[i].x*100);
-  //     ctx->drawStringCenter(tmp, xleft + dw,
-  //                             ybot - font_h - tic - overlay * (font_h + tic),
-  //                             0.);
-  //   }
-  //   snprintf(tmp, sizeof(tmp), "%.2g", opt->worstWeightCutoff);
-  //   ctx->drawStringCenter(tmp, xleft + width/2,
-  //                           ybot - font_h - tic - overlay * (font_h + tic),
-  //                           0.);
-  // }
 }
 
 
@@ -525,8 +515,7 @@ static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
     double ybot = ytop - height;
 
     if(opt->worstWeightCutoff && opt->worstWeightCutoff != 50) {
-      drawXTicsAndGridWorstMeanGraph(ctx, p,
-  xleft, ytop, width, ybot, font_h,
+      drawXTicsAndGridWorstMeanGraph(ctx, p, xleft, ytop, width, ybot, font_h,
                           tic, overlay, inModelCoordinates);
     }
     else {
@@ -706,23 +695,13 @@ static void drawGraphCurves(drawContext *ctx, PView *p, double xleft,
   }
 }
 
-#include "MVertex.h"
-
 static void drawGraph(drawContext *ctx, PView *p, double xleft, double ytop,
                       double width, double height, double tic, int overlay = 0,
                       bool inModelCoordinates = false)
 {
-  // check if the graph is a Worst Weighted Graph
+  // Update data in case of a Worst Weighted Graph
   p->updateWorstWeightedData(ctx, height, inModelCoordinates);
 
-  // if(p->isWorstWeightedView()) {
-  //
-  // }
-  // PViewData *data = p->getData(true);
-  // if (auto derived = dynamic_cast<PViewDataListWorstWeighted*>(data)) {
-  //   // `data` is a PViewDataListWorstWeighted
-  //   std::cout << "data is a PViewDataListWorstWeighted object" << std::endl;
-  // }
   std::vector<double> x;
   std::vector<std::vector<double> > y;
   double xmin, xmax, ymin, ymax;
