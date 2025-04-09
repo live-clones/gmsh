@@ -2158,7 +2158,7 @@ void AlphaShape::getNewNodesOnOldMesh(PolyMesh *pm, ElementOctree &octree_prev, 
   }
 }
 
-void AlphaShape::alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, const std::string & boundaryModel, OctreeNode<2, 32, alphaShapeBndEdge*> &octree, const double boundary_tol){
+void AlphaShape::alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, const std::string & boundaryModel, OctreeNode<2, 32, alphaShapeBndEdge*> &octree, const double boundary_tol, const int delaunayTag){
   // std::vector<std::pair<int, int>> dimTag;
   // dimTag.push_back(std::make_pair(2, tag));
 
@@ -2296,13 +2296,26 @@ void AlphaShape::alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int 
   }
 
   std::vector<size_t> triangles, triangleTag;
+  std::vector<size_t> delaunayTriangles, delaunayTriTag;
+  size_t triTag = 1;
   for (auto f : pm->faces){
-    if (f->he == nullptr || f->data != tag) continue;
+    if (f->he == nullptr) continue;
     int triangle[3] = {f->he->v->data, f->he->next->v->data, f->he->next->next->v->data};
     if (triangle[0] == -1 || triangle[1] == -1 || triangle[2] == -1) continue;
-    for (auto n : triangle) triangles.push_back(size_t(n));
+    if (f->data == tag){
+      for (auto n : triangle) triangles.push_back(size_t(n));
+      triangleTag.push_back(triTag);
+    }
+    if (delaunayTag > 0){
+      for (auto n : triangle) delaunayTriangles.push_back(size_t(n));
+      delaunayTriTag.push_back(triTag);
+    }
+    triTag++;
   }
   gmsh::model::mesh::addElementsByType(tag, 2, triangleTag, triangles);
+  if (delaunayTag > 0){
+    gmsh::model::mesh::addElementsByType(delaunayTag, 2, delaunayTriTag, delaunayTriangles);
+  }
   // printf("triangles added to gsmh \n");
   delete pm;
   gm_alphaShape->setAsCurrent();

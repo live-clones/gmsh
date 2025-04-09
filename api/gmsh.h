@@ -1891,7 +1891,8 @@ namespace gmsh { // Top-level functions
                                       std::vector<double> & newNodeParametricCoord,
                                       const bool usePreviousMesh = false,
                                       const double boundaryTolerance = 1e-6,
-                                      const bool refine = true);
+                                      const bool refine = true,
+                                      const int delaunayTag = -1);
 
       // gmsh::model::mesh::decimateTriangulation
       //

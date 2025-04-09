@@ -40,7 +40,7 @@ void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::stri
 
 void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const int sizeFieldTag, std::vector<PolyMesh::Vertex*> & controlNodes);
 
-void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, const std::string & boundaryModel, BoundaryOctree &bnd_octree, const double boundary_tol);
+void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, const std::string & boundaryModel, BoundaryOctree &bnd_octree, const double boundary_tol, const int delaunayTag);
 
 void registerAlphaShapeField(FieldManager* fm);
 

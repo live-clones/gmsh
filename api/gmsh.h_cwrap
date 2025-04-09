@@ -3267,13 +3267,14 @@ namespace gmsh { // Top-level functions
                                     std::vector<double> & newNodeParametricCoord,
                                     const bool usePreviousMesh = false,
                                     const double boundaryTolerance = 1e-6,
-                                    const bool refine = true)
+                                    const bool refine = true,
+                                    const int delaunayTag = -1)
       {
         int ierr = 0;
         size_t *api_newNodeTags_; size_t api_newNodeTags_n_;
         size_t *api_newNodeElementTags_; size_t api_newNodeElementTags_n_;
         double *api_newNodeParametricCoord_; size_t api_newNodeParametricCoord_n_;
-        gmshModelMeshComputeAlphaShape(dim, tag, bndTag, boundaryModel.c_str(), alpha, alphaShapeSizeField, refineSizeField, &api_newNodeTags_, &api_newNodeTags_n_, &api_newNodeElementTags_, &api_newNodeElementTags_n_, &api_newNodeParametricCoord_, &api_newNodeParametricCoord_n_, (int)usePreviousMesh, boundaryTolerance, (int)refine, &ierr);
+        gmshModelMeshComputeAlphaShape(dim, tag, bndTag, boundaryModel.c_str(), alpha, alphaShapeSizeField, refineSizeField, &api_newNodeTags_, &api_newNodeTags_n_, &api_newNodeElementTags_, &api_newNodeElementTags_n_, &api_newNodeParametricCoord_, &api_newNodeParametricCoord_n_, (int)usePreviousMesh, boundaryTolerance, (int)refine, delaunayTag, &ierr);
         if(ierr) throwLastError();
         newNodeTags.assign(api_newNodeTags_, api_newNodeTags_ + api_newNodeTags_n_); gmshFree(api_newNodeTags_);
         newNodeElementTags.assign(api_newNodeElementTags_, api_newNodeElementTags_ + api_newNodeElementTags_n_); gmshFree(api_newNodeElementTags_);

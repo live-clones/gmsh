@@ -5180,9 +5180,9 @@ class model:
         advect_mesh_nodes = advectMeshNodes
 
         @staticmethod
-        def computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh=False, boundaryTolerance=1e-6, refine=True):
+        def computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh=False, boundaryTolerance=1e-6, refine=True, delaunayTag=-1):
             """
-            gmsh.model.mesh.computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh=False, boundaryTolerance=1e-6, refine=True)
+            gmsh.model.mesh.computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh=False, boundaryTolerance=1e-6, refine=True, delaunayTag=-1)
 
             Compute the alpha shape - improved function
 
@@ -5202,6 +5202,7 @@ class model:
             - `usePreviousMesh': boolean
             - `boundaryTolerance': double
             - `refine': boolean
+            - `delaunayTag': integer
             """
             api_newNodeTags_, api_newNodeTags_n_ = POINTER(c_size_t)(), c_size_t()
             api_newNodeElementTags_, api_newNodeElementTags_n_ = POINTER(c_size_t)(), c_size_t()
@@ -5221,6 +5222,7 @@ class model:
                 c_int(bool(usePreviousMesh)),
                 c_double(boundaryTolerance),
                 c_int(bool(refine)),
+                c_int(delaunayTag),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())

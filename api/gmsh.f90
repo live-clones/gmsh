@@ -7577,6 +7577,7 @@ module gmsh
                                             usePreviousMesh, &
                                             boundaryTolerance, &
                                             refine, &
+                                            delaunayTag, &
                                             ierr)
     interface
     subroutine C_API(dim, &
@@ -7595,6 +7596,7 @@ module gmsh
                      usePreviousMesh, &
                      boundaryTolerance, &
                      refine, &
+                     delaunayTag, &
                      ierr_) &
       bind(C, name="gmshModelMeshComputeAlphaShape")
       use, intrinsic :: iso_c_binding
@@ -7614,6 +7616,7 @@ module gmsh
       integer(c_int), value, intent(in) :: usePreviousMesh
       real(c_double), value, intent(in) :: boundaryTolerance
       integer(c_int), value, intent(in) :: refine
+      integer(c_int), value, intent(in) :: delaunayTag
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
@@ -7630,6 +7633,7 @@ module gmsh
     logical, intent(in), optional :: usePreviousMesh
     real(c_double), intent(in), optional :: boundaryTolerance
     logical, intent(in), optional :: refine
+    integer, intent(in), optional :: delaunayTag
     integer(c_int), intent(out), optional :: ierr
     type(c_ptr) :: api_newNodeTags_
     integer(c_size_t) :: api_newNodeTags_n_
@@ -7653,6 +7657,7 @@ module gmsh
          usePreviousMesh=optval_c_bool(.false., usePreviousMesh), &
          boundaryTolerance=optval_c_double(1e-6, boundaryTolerance), &
          refine=optval_c_bool(.true., refine), &
+         delaunayTag=optval_c_int(-1, delaunayTag), &
          ierr_=ierr)
     newNodeTags = ovectorsize_(api_newNodeTags_, &
       api_newNodeTags_n_)

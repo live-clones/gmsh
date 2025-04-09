@@ -5717,7 +5717,8 @@ gmsh::model::mesh::computeAlphaShape(const int dim,
                                       std::vector<double> &newNodeParametricCoords,
                                       const bool usePreviousMesh,
                                       const double boundaryTolerance,
-                                      const bool refine)
+                                      const bool refine, 
+                                      const int delaunayTag)
 {
 #if defined(HAVE_MESH) && defined(HAVE_HXT)
   if (dim == 2){
@@ -5767,7 +5768,7 @@ gmsh::model::mesh::computeAlphaShape(const int dim,
     }
 
     // back to gmsh
-    AlphaShape::alphaShapePolyMesh2Gmsh(pm, tag, bndTag, boundaryModel, bnd_octree, boundaryTolerance);
+    AlphaShape::alphaShapePolyMesh2Gmsh(pm, tag, bndTag, boundaryModel, bnd_octree, boundaryTolerance, delaunayTag);
     toc = std::chrono::high_resolution_clock::now();
     // std::cout << "To Gmsh      : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
 
