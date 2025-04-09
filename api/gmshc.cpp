@@ -2450,14 +2450,14 @@ GMSH_API void gmshModelMeshAdvectMeshNodes(const int dim, const int tag, const i
   }
 }
 
-GMSH_API void gmshModelMeshComputeAlphaShape(const int dim, const int tag, const int bndTag, const char * boundaryModel, const double alpha, const int alphaShapeSizeField, const int refineSizeField, size_t ** newNodeTags, size_t * newNodeTags_n, size_t ** newNodeElementTags, size_t * newNodeElementTags_n, double ** newNodeParametricCoord, size_t * newNodeParametricCoord_n, const int usePreviousMesh, const double boundaryTolerance, const int refine, const int delaunayTag, int * ierr)
+GMSH_API void gmshModelMeshComputeAlphaShape(const int dim, const int tag, const int bndTag, const char * boundaryModel, const double alpha, const int alphaShapeSizeField, const int refineSizeField, size_t ** newNodeTags, size_t * newNodeTags_n, size_t ** newNodeElementTags, size_t * newNodeElementTags_n, double ** newNodeParametricCoord, size_t * newNodeParametricCoord_n, const int usePreviousMesh, const double boundaryTolerance, const int refine, const int delaunayTag, const int deleteDisconnectedNodes, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<std::size_t> api_newNodeTags_;
     std::vector<std::size_t> api_newNodeElementTags_;
     std::vector<double> api_newNodeParametricCoord_;
-    gmsh::model::mesh::computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, api_newNodeTags_, api_newNodeElementTags_, api_newNodeParametricCoord_, usePreviousMesh, boundaryTolerance, refine, delaunayTag);
+    gmsh::model::mesh::computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, api_newNodeTags_, api_newNodeElementTags_, api_newNodeParametricCoord_, usePreviousMesh, boundaryTolerance, refine, delaunayTag, deleteDisconnectedNodes);
     vector2ptr(api_newNodeTags_, newNodeTags, newNodeTags_n);
     vector2ptr(api_newNodeElementTags_, newNodeElementTags, newNodeElementTags_n);
     vector2ptr(api_newNodeParametricCoord_, newNodeParametricCoord, newNodeParametricCoord_n);

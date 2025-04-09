@@ -5718,7 +5718,8 @@ gmsh::model::mesh::computeAlphaShape(const int dim,
                                       const bool usePreviousMesh,
                                       const double boundaryTolerance,
                                       const bool refine, 
-                                      const int delaunayTag)
+                                      const int delaunayTag,
+                                      const bool deleteDisconnectedNodes)
 {
 #if defined(HAVE_MESH) && defined(HAVE_HXT)
   if (dim == 2){
@@ -5761,7 +5762,8 @@ gmsh::model::mesh::computeAlphaShape(const int dim,
       // std::cout << "Refine       : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
     }
 
-    AlphaShape::filterNodes(pm, tag);
+    if (deleteDisconnectedNodes)
+      AlphaShape::filterNodes(pm, tag);
 
     if (canComputeParams){
       AlphaShape::getNewNodesOnOldMesh(pm, octree_prev, newNodeTags, newNodeElementTags, newNodeParametricCoords);

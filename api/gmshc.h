@@ -1676,6 +1676,7 @@ GMSH_API void gmshModelMeshComputeAlphaShape(const int dim,
                                              const double boundaryTolerance,
                                              const int refine,
                                              const int delaunayTag,
+                                             const int deleteDisconnectedNodes,
                                              int * ierr);
 
 /* Decimate a triangulation */

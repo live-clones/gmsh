@@ -4061,10 +4061,11 @@ void AlphaShape::_colourBoundaries(const int faceTag, const std::string & bounda
   //   MTriangle* tri_temp = new MTriangle(tri->getVertex(0), tri->getVertex(1), tri->getVertex(2), tri->getNum());
   // }
 
+
+  auto t0 = std::chrono::steady_clock::now();
   OctreeNode<3, 128, MElement*> octree;
-  printf("creating octree \n");
   _createBoundaryOctree3D(boundaryModel, octree);
-  printf("creatted octree \n");
+  auto t1 = std::chrono::steady_clock::now();
   
   std::unordered_map<size_t, std::vector<MTriangle*>> bndMap;
   
@@ -4078,6 +4079,7 @@ void AlphaShape::_colourBoundaries(const int faceTag, const std::string & bounda
       bndElement2Entity[e->getMeshElement(i_el)] = e->tag();
     }
   }
+  auto t2 = std::chrono::steady_clock::now();
   
   for (auto tri : gf->triangles){
     std::vector<std::unordered_set<size_t>> entity_found(3);
@@ -4116,22 +4118,23 @@ void AlphaShape::_colourBoundaries(const int faceTag, const std::string & bounda
         // if (u >= 0 && v >= 0 && u + v <= 1){
           // double dist = (nx-x1).norm();
           // if (dist < tolerance){
-          //   entity_found[i].insert(bndElement2Entity[el]);
-          //   // printf("Projected on triangle \n");
-          // }
-        // }
-        // entity_found[i].insert(bndElement2Entity[el]);
+            //   entity_found[i].insert(bndElement2Entity[el]);
+            //   // printf("Projected on triangle \n");
+            // }
+            // }
+            // entity_found[i].insert(bndElement2Entity[el]);
       }
-      // bnd_element_found.push_back(bnd_element_found_i);
+          // bnd_element_found.push_back(bnd_element_found_i);
     }
-
+        
+        
     std::vector<size_t> common_entities;
     for (auto ent : entity_found[0]){
       if (entity_found[1].find(ent) != entity_found[1].end() && entity_found[2].find(ent) != entity_found[2].end()){
         common_entities.push_back(ent);
       }
     }
-
+        
     if (common_entities.size() >= 1){
       bndMap[common_entities[0]].push_back(tri);
     }
@@ -4139,6 +4142,15 @@ void AlphaShape::_colourBoundaries(const int faceTag, const std::string & bounda
       bndMap[faceTag].push_back(tri);
     }
   }
+      
+  auto t3 = std::chrono::steady_clock::now();
+  auto dur1 = std::chrono::duration_cast<std::chrono::microseconds>(t1-t0);
+  auto dur2 = std::chrono::duration_cast<std::chrono::microseconds>(t2-t1);
+  auto dur3 = std::chrono::duration_cast<std::chrono::microseconds>(t3-t2);
+  auto durTotal = std::chrono::duration_cast<std::chrono::microseconds>(t3-t0);
+  printf("octree creation : %f percent \n", 100*double(dur1.count())/double(durTotal.count()) );
+  printf("element2entity  : %f percent \n", 100*double(dur2.count())/double(durTotal.count()) );
+  printf("search oct      : %f percent \n", 100*double(dur3.count())/double(durTotal.count()) );
 
   // colour boundary triangles
   for (auto it : bndMap){

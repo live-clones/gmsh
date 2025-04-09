@@ -1892,7 +1892,8 @@ namespace gmsh { // Top-level functions
                                       const bool usePreviousMesh = false,
                                       const double boundaryTolerance = 1e-6,
                                       const bool refine = true,
-                                      const int delaunayTag = -1);
+                                      const int delaunayTag = -1,
+                                      const bool deleteDisconnectedNodes = true);
 
       // gmsh::model::mesh::decimateTriangulation
       //
