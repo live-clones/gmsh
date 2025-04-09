@@ -113,7 +113,8 @@ public:
     _data3D = new DataSingleDimension(3);
     _statGen = new StatGenerator();
   }
-  virtual ~GMSH_AnalyseMeshQuality2Plugin()
+
+  ~GMSH_AnalyseMeshQuality2Plugin() override
   {
     delete _data2D;
     delete _data3D;
@@ -207,11 +208,11 @@ private:
 
   class DataEntity {
   private:
-    GEntity *_ge;
+    GEntity *_ge = nullptr;
     std::map<MElement *, size_t> _mapElemToIndex;
     std::vector<double> _minJ, _maxJ, _minDisto, _minAspect;
     std::size_t _numToCompute[3]{};
-    std::size_t _numToShow;
+    std::size_t _numToShow = 0;
     // 8 bits of char are used for the following information:
     // - to say if quantities has already been computed
     // - to say if element is visible, known to be straightOrCurved, curved,
@@ -226,7 +227,7 @@ private:
     void count(const Parameters::Computation &, Counts &);
     void reset(std::size_t);
     void add(MElement *);
-    void add(std::vector<MElement *> &elements)
+    void add(const std::vector<MElement *> &elements)
     {
       for(auto &e : elements) add(e);
     }
@@ -252,8 +253,8 @@ private:
 
   class StatGenerator {
   private:
-    static const int _colWidth = 10;
-    static const int _N = 10; // max number of stored coefficients
+    static constexpr int _colWidth = 10;
+    static constexpr int _N = 10; // max number of stored coefficients
     int _idxCall = 0;
     std::vector<int> _idxLastCall;
     std::vector<std::vector<double>> _coeff;

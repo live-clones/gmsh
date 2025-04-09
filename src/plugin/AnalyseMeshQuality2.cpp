@@ -149,7 +149,7 @@ StringXNumber MeshQuality2Options_Number[] = {
 #endif
 };
 
-const int MeshQuality2Options_LegacyOptionsNumber = 8;
+constexpr int MeshQuality2Options_LegacyOptionsNumber = 8;
 
 std::pair<int, std::string> MeshQuality2Options_Headers[] = {
   {0, "What to do"},
