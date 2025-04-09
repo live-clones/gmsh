@@ -33,6 +33,7 @@ private:
   class StatGenerator;
   struct Counts;
   struct Measures;
+  struct Key;
 
 private:
   struct Parameters {
@@ -72,12 +73,14 @@ private:
       int aspect = 0;
       int minJac = 0;
       int ratioJac = 0;
+      int M = 0;
       bool regularizeJac = 0;
     } show;
 
     bool check2D = false;
     bool check3D = false;
   };
+  enum Metric { VALIDITY, DISTO, ASPECT, MINJAC, RATIOJAC } metric;
 
 private:
   GModel *_m;
@@ -86,6 +89,7 @@ private:
   Parameters _param;
   bool _myVerbose = false;
   int _dimensionPolicy = 0;
+  std::map<Key, PView *> _pviews;
 
 #if defined(HAVE_VISUDEV)
   // Pointwise data
@@ -134,6 +138,9 @@ private:
   void _decideWhichMetricPostpro();
   void _decideDimensionToCheck(bool &check2D, bool &check3D) const;
   void _computeMissingData(Counts param, bool check2D, bool check3D) const;
+  void _completeJacobianValues(std::vector<Measures> &measures) const;
+  void _createPlots(const std::vector<Measures> &measures);
+  void _createPlotOneMeasure(const Measures &, Metric);
   // void _printStats(Measures &m2, Measures &m3) const;
   // void _printStats(Measures &, const char* str_dim) const;
 
@@ -269,6 +276,7 @@ private:
     {
       _unpackCutoff(pack, _plotCutoffs);
     }
+    std::vector<double> getCutoffPlots() const { return _plotCutoffs; }
     void printStats(const Parameters &, const std::vector<Measures> &measures);
     void createPlots(const Parameters &, const std::vector<Measures> &measures);
 
@@ -293,14 +301,42 @@ private:
   };
 
   struct Measures {
+    bool dim2Elem;
+    bool dim3Elem;
     const char* name;
     std::vector<double> minJ;
     std::vector<double> maxJ;
+    std::vector<double> ratioJ;
+    std::vector<double> validity;
     std::vector<double> minDisto;
     std::vector<double> minAspect;
     std::vector<MElement *> elements;
-    static Measures combine(const Measures &, const Measures &);
+    static Measures combine(const Measures &, const Measures &, const char *name);
   };
+
+  struct Key {
+    bool dim2Elem;
+    bool dim3Elem;
+    Metric metric;
+    enum TypeView { PLOT, ELEMENTS } typeView;
+    double cutoff;
+
+    Key(bool d2, bool d3, Metric m, TypeView t, double c)
+      : dim2Elem(d2), dim3Elem(d3), metric(m), typeView(t), cutoff(c) {}
+
+    // Equality operator for unordered_map or map
+    bool operator==(const Key &other) const {
+      return std::tie(dim2Elem, dim3Elem, metric, typeView, cutoff) ==
+             std::tie(other.dim2Elem, other.dim3Elem, other.metric, other.typeView, other.cutoff);
+    }
+
+    // Less-than operator for std::map
+    bool operator<(const Key &other) const {
+      return std::tie(dim2Elem, dim3Elem, metric, typeView, cutoff) <
+             std::tie(other.dim2Elem, other.dim3Elem, other.metric, other.typeView, other.cutoff);
+    }
+  };
+
 };
 
 #endif

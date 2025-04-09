@@ -10,6 +10,7 @@
 #include <numeric>
 #include <sstream>
 #include <iomanip>
+#include <string>
 #include "AnalyseMeshQuality2.h"
 #include "OS.h"
 #include "Context.h"
@@ -319,11 +320,12 @@ PView *Plug::execute(PView *v)
     measures.back().name = "dimension 3";
   }
 
+  _completeJacobianValues(measures);
+
   // Combine if necessary
   if(_dimensionPolicy == 2) {
-    measures[0] = Measures::combine(measures[0], measures[1]);
+    measures[0] = Measures::combine(measures[0], measures[1], "dimension 2 and 3 combined");
     measures.erase(measures.begin() + 1);
-    measures.back().name = "dimension 2 and 3 combined";
   }
 
   _param.check2D = check2D;
@@ -368,8 +370,9 @@ PView *Plug::execute(PView *v)
   //   }
   // };
 
+  _createPlots(measures);
 
-  _statGen->createPlots(_param, measures);
+  // _statGen->createPlots(_param, measures);
 
 
   // TODO compute show
@@ -443,6 +446,14 @@ void Plug::_fetchParameters()
   ps.aspect = static_cast<int>(aspect);
   ps.minJac = static_cast<int>(minJ);
   ps.ratioJac = static_cast<int>(ratioJ);
+  ps.M = std::max({
+    ps.validity,
+    ps.disto,
+    ps.aspect,
+    ps.minJac,
+    ps.ratioJac
+  });
+
 
   // Legacy options (must be last):
   _fetchLegacyParameters();
@@ -642,6 +653,97 @@ void Plug::_computeMissingData(Counts counts, bool check2D, bool check3D) const
   }
 
   Msg::StatusBar(true, "=> Done computing data");
+}
+
+bool _isValid(double minJ, double maxJ)
+{
+  if (minJ == 0.0 || maxJ == 0.0) return false;
+  return std::signbit(minJ) == std::signbit(maxJ);
+}
+
+void Plug::_completeJacobianValues(std::vector<Measures> &measures) const
+{
+  for(auto &m: measures) {
+    if(_param.show.regularizeJac) {
+      for(std::size_t i = 0; i < m.minJ.size(); i++) {
+        if(std::abs(m.minJ[i]) > std::abs(m.maxJ[i])) {
+          double tmp = m.minJ[i];
+          m.minJ[i] = m.maxJ[i];
+          m.maxJ[i] = tmp;
+        }
+      }
+    }
+    if(_param.show.validity) {
+      m.validity.resize(m.minJ.size());
+      for(std::size_t i = 0; i < m.minJ.size(); i++)
+        m.validity[i] = _isValid(m.minJ[i], m.maxJ[i]);
+    }
+    if(_param.show.ratioJac) {
+      m.ratioJ.resize(m.minJ.size());
+      for(std::size_t i = 0; i < m.minJ.size(); i++)
+        m.ratioJ[i] = m.minJ[i] / m.maxJ[i];
+    }
+  }
+}
+
+void Plug::_createPlots(const std::vector<Measures> &measures)
+{
+  Parameters::MetricsToShow &ps = _param.show;
+  for(const auto &m: measures) {
+    if(ps.disto == ps.M && !m.minDisto.empty())
+      _createPlotOneMeasure(m, DISTO);
+
+    if(ps.aspect == ps.M && !m.minAspect.empty())
+      _createPlotOneMeasure(m, ASPECT);
+
+    if(ps.validity == ps.M && !m.validity.empty())
+      _createPlotOneMeasure(m, VALIDITY);
+
+    if(ps.ratioJac == ps.M && !m.ratioJ.empty())
+      _createPlotOneMeasure(m, RATIOJAC);
+
+    if(ps.minJac == ps.M && !m.minJ.empty())
+      _createPlotOneMeasure(m, MINJAC);
+  }
+}
+
+void Plug::_createPlotOneMeasure(const Measures &m, Metric metric)
+{
+  std::string s;
+  const std::vector<double> *values = nullptr;
+
+  switch(metric) {
+  case DISTO:
+    s = "Distortion quality";
+    values = &m.minDisto;
+    break;
+  case ASPECT:
+    s = "Aspect quality";
+    values = &m.minAspect;
+    break;
+  case VALIDITY:
+    s = "Validity";
+    values = &m.validity;
+    break;
+  case RATIOJAC:
+    s = "Ratio of minJ/maxJ";
+    values = &m.ratioJ;
+    break;
+  case MINJAC:
+    s = "Minimum Jacobian determinant";
+    values = &m.minJ;
+    break;
+  default:
+    s = "Unknown metric";
+  }
+
+  for(double cutoff: _statGen->getCutoffPlots()) {
+    Key key(m.dim2Elem, m.dim3Elem, metric, Key::TypeView::PLOT, cutoff);
+    if(_pviews.find(key) == _pviews.end()) {
+      PView *p = new PView(s, cutoff, true, *values);
+      _pviews[key] = p;
+    }
+  }
 }
 
 void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
@@ -1495,14 +1597,19 @@ static void combineVectors(std::vector<T> &result, const std::vector<T> &v1, con
   result.insert(result.end(), v2.begin(), v2.end());
 }
 
-Plug::Measures Plug::Measures::combine(const Measures &m1, const Measures &m2)
+Plug::Measures Plug::Measures::combine(const Measures &m1, const Measures &m2, const char *name)
 {
   Measures result;
   combineVectors(result.minJ, m1.minJ, m2.minJ);
   combineVectors(result.maxJ, m1.maxJ, m2.maxJ);
+  combineVectors(result.ratioJ, m1.ratioJ, m2.ratioJ);
+  combineVectors(result.validity, m1.validity, m2.validity);
   combineVectors(result.minDisto, m1.minDisto, m2.minDisto);
   combineVectors(result.minAspect, m1.minAspect, m2.minAspect);
   combineVectors(result.elements, m1.elements, m2.elements);
+  result.dim2Elem = m1.dim2Elem || m2.dim2Elem;
+  result.dim3Elem = m1.dim3Elem || m2.dim3Elem;
+  result.name = name;
   return result;
 }
 
