@@ -287,6 +287,8 @@ PView *Plug::execute(PView *v)
   if(check2D) _data2D->initialize(_m, _param.compute, counts2D);
   if(check3D) _data3D->initialize(_m, _param.compute, counts3D);
 
+  _purgeViews();
+
   // // TMP Dev
   // _devPrintCount(counts2D);
   // _devPrintCount(counts3D);
@@ -617,6 +619,36 @@ void Plug::_fetchLegacyParameters()
   }
   else {
     _param.dimPolicy = 0;
+  }
+}
+
+void Plug::_purgeViews()
+{
+  // Remove deleted PViews
+  std::set<PView *> existingViews(PView::list.begin(), PView::list.end());
+  for (auto it = _pviews.begin(); it != _pviews.end(); ) {
+    if (existingViews.find(it->second) == existingViews.end())
+      it = _pviews.erase(it);
+    else
+      ++it;
+  }
+
+  // Remove PViews to forget
+  if(_data2D->getRequestedHasChanged()) {
+    for (auto it = _pviews.begin(); it != _pviews.end(); ) {
+      if(it->first.dim2Elem)
+        it = _pviews.erase(it);
+      else
+        ++it;
+    }
+  }
+  if(_data3D->getRequestedHasChanged()) {
+    for (auto it = _pviews.begin(); it != _pviews.end(); ) {
+      if(it->first.dim3Elem)
+        it = _pviews.erase(it);
+      else
+        ++it;
+    }
   }
 }
 
@@ -1018,6 +1050,8 @@ void Plug::DataSingleDimension::initialize(GModel const *m,
                                            const Parameters::Computation &param,
                                            Counts &counts)
 {
+  _requestedListHasChanged = false;
+
   // Update list GEntities (thus _dataEntities) if needed
   std::set<GEntity *, GEntityPtrLessThan> entities;
   if(_dim == 2)
@@ -1028,7 +1062,9 @@ void Plug::DataSingleDimension::initialize(GModel const *m,
 
   // Initialize all DataEntity and count elements
   for(auto &it : _dataEntities) {
-    it.second.initialize(param);
+    int numRequestedChanged = it.second.initialize(param);
+    if(numRequestedChanged)
+      _requestedListHasChanged = true;
     it.second.count(param, counts);
   }
 }
@@ -1047,9 +1083,8 @@ void Plug::DataSingleDimension::_updateGEntities(
     for(auto it = _dataEntities.begin(); it != _dataEntities.end();) {
       if(entities.find(it->first) == entities.end()) {
         // it->second.clear(); // FIXME check that i don't need this
-        if(it->second.getNumShownElement()) {
-          for(int i = 0; i < 3; ++i) _changedSincePViewCreation[i] = true;
-        }
+        if(it->second.getNumRequested())
+          _requestedListHasChanged = true;
         it = _dataEntities.erase(it);
       }
       else {
@@ -1062,6 +1097,10 @@ void Plug::DataSingleDimension::_updateGEntities(
 void Plug::DataSingleDimension::gatherValues(const Counts &counts, Measures &measures)
 {
   size_t sz = counts.elToShow;
+  if(_dim == 2)
+    measures.dim2Elem = true;
+  else
+    measures.dim3Elem = true;
   measures.minJ.reserve(sz);
   measures.maxJ.reserve(sz);
   measures.minDisto.reserve(sz);
@@ -1109,8 +1148,10 @@ inline void unsetBit(unsigned char &value, int maskOneBit)
   value &= ~maskOneBit;
 }
 
-void Plug::DataEntity::initialize(const Parameters::Computation &param)
+size_t Plug::DataEntity::initialize(const Parameters::Computation &param)
 {
+  size_t cntRequestedChanged = 0;
+
   // Step 1: Get all elements present in GEntity
   std::size_t num = _ge->getNumMeshElements();
   std::vector<MElement *> elements;
@@ -1135,6 +1176,7 @@ void Plug::DataEntity::initialize(const Parameters::Computation &param)
     }
   }
   if(resetData) {
+    cntRequestedChanged += _numRequested;
     reset(num);
     add(elements);
   }
@@ -1171,18 +1213,26 @@ void Plug::DataEntity::initialize(const Parameters::Computation &param)
   if(param.onlyCurved) maskRequested |= F_CURVED;
 
   for(auto &flag : _flags) {
-    unsetBit(flag, F_REQU);
+    if(areBitsSet(flag, maskRequested)) {
+      if(isBitUnset(flag, F_REQU)) {
+        ++cntRequestedChanged;
+        setBit(flag, F_REQU);
+      }
+    }
+    else {
+      if(isBitSet(flag, F_REQU)) {
+        ++cntRequestedChanged;
+        unsetBit(flag, F_REQU);
+      }
+    }
   }
-  for(auto &flag : _flags) {
-    if(areBitsSet(flag, maskRequested))
-      setBit(flag, F_REQU);
-  }
+  return cntRequestedChanged;
 }
 
 void Plug::DataEntity::count(const Parameters::Computation &param, Counts &counts)
 {
   // Reset intern data
-  _numToShow = 0;
+  _numRequested = 0;
   for(int i = 0; i < 3; ++i)
     _numToCompute[i] = 0;
 
@@ -1198,8 +1248,8 @@ void Plug::DataEntity::count(const Parameters::Computation &param, Counts &count
   }
 
   // Count number of elements to show
-  _count(F_REQU, _numToShow);
-  counts.elToShow += _numToShow;
+  _count(F_REQU, _numRequested);
+  counts.elToShow += _numRequested;
 
   // Count total number, still existing, visible and curved
   counts.totalEl += _mapElemToIndex.size();

@@ -136,7 +136,7 @@ public:
 private:
   void _fetchParameters();
   void _fetchLegacyParameters();
-  void _decideWhichMetricPostpro();
+  void _purgeViews();
   void _decideDimensionToCheck(bool &check2D, bool &check3D) const;
   void _computeMissingData(Counts param, bool check2D, bool check3D) const;
   void _completeJacobianValues(std::vector<Measures> &measures) const;
@@ -174,23 +174,7 @@ private:
   private:
     const int _dim;
     std::map<GEntity *, DataEntity> _dataEntities;
-
-    // Latest created PView in function of:
-    // - type = 3D {0, 2, 4} or 2D {1, 3, 5} pview
-    // - measure = validity {0, 1}, disto {2, 3} or aspect {4, 5}
-    PView *_views[6]{};
-
-    // Store if data has changed. This is useful if the plugin is executed at
-    // least 3 times. Here is an example:
-    // 1) Set: enableDistortionQuality=1, createElementsView=1
-    // 2) Run 1: Disto is computed and a PView is created
-    // 3) Set: recomputePolicy=1, createElementsView=0
-    // 4) Run 2: Disto is recomputed
-    // 5) Set: recomputePolicy=-1, createElementsView=1
-    // 6) Run 3: Disto is not recomputed, but a new PView is created
-    // Explanation: After run 2, _changedSincePViewCreation corresponding to the
-    //    PView is set to true, thus at third run the new PView is created.
-    bool _changedSincePViewCreation[6]{};
+    bool _requestedListHasChanged = false;
 
   public:
     explicit DataSingleDimension(int dim) : _dim(dim) {}
@@ -200,6 +184,7 @@ private:
     {
       for(auto &d : _dataEntities) set.push_back(&d.second);
     }
+    bool getRequestedHasChanged() { return _requestedListHasChanged; }
     void gatherValues(const Counts &, Measures &);
 
   private:
@@ -212,7 +197,7 @@ private:
     std::map<MElement *, size_t> _mapElemToIndex;
     std::vector<double> _minJ, _maxJ, _minDisto, _minAspect;
     std::size_t _numToCompute[3]{};
-    std::size_t _numToShow = 0;
+    std::size_t _numRequested = 0;
     // 8 bits of char are used for the following information:
     // - to say if quantities has already been computed
     // - to say if element is visible, known to be straightOrCurved, curved,
@@ -221,9 +206,9 @@ private:
 
   public:
     explicit DataEntity(GEntity *ge) : _ge(ge) {}
-    size_t getNumShownElement() const { return _numToShow; }
+    size_t getNumRequested() const { return _numRequested; }
     //void countNewElement(ComputeParameters, std::size_t cnt[3]) const;
-    void initialize(const Parameters::Computation &);
+    size_t initialize(const Parameters::Computation &);
     void count(const Parameters::Computation &, Counts &);
     void reset(std::size_t);
     void add(MElement *);
