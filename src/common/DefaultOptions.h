@@ -1630,8 +1630,11 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "StlOneSolidPerSurface" , opt_mesh_stl_one_solid_per_surface, 0. ,
     "Create one solid per surface when exporting STL files? (0: single solid, "
     "1: one solid per face, 2: one solid per physical surface)" },
-  { F|O, "StlRemoveDuplicateTriangles" , opt_mesh_stl_remove_duplicate_triangles, 0. ,
-    "Remove duplicate triangles when importing STL files?" },
+  { F|O, "StlRemoveBadTriangles" , opt_mesh_stl_remove_bad_triangles, 0. ,
+    "Remove bad triangles when importing STL files (1: remove duplicates; 2: remove "
+    "duplicate and zero-area triangles)" },
+  { F|O|D, "StlRemoveDuplicateTriangles" , opt_mesh_stl_remove_bad_triangles, 0. ,
+    "[Deprecated]" },
   { F|O, "SubdivisionAlgorithm" , opt_mesh_algo_subdivide , 0 ,
     "Mesh subdivision algorithm (0: none, 1: all quadrangles, 2: all hexahedra, "
     "3: barycentric)" },

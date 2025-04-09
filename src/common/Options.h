@@ -546,7 +546,7 @@ double opt_mesh_binary(OPT_ARGS_NUM);
 double opt_mesh_smooth_cross_field(OPT_ARGS_NUM);
 double opt_mesh_cross_field_closest_point(OPT_ARGS_NUM);
 double opt_mesh_bdf_field_format(OPT_ARGS_NUM);
-double opt_mesh_stl_remove_duplicate_triangles(OPT_ARGS_NUM);
+double opt_mesh_stl_remove_bad_triangles(OPT_ARGS_NUM);
 double opt_mesh_stl_one_solid_per_surface(OPT_ARGS_NUM);
 double opt_mesh_stl_linear_deflection(OPT_ARGS_NUM);
 double opt_mesh_stl_linear_deflection_relative(OPT_ARGS_NUM);

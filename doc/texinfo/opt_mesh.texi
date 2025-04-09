@@ -881,8 +881,8 @@ Create one solid per surface when exporting STL files? (0: single solid, 1: one 
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
-@item Mesh.StlRemoveDuplicateTriangles
-Remove duplicate triangles when importing STL files?@*
+@item Mesh.StlRemoveBadTriangles
+Remove bad triangles when importing STL files (1: remove duplicates; 2: remove duplicate and zero-area triangles)@*
 Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 

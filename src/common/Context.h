@@ -61,7 +61,7 @@ struct contextMeshOptions {
   int saveAll, saveTri, saveGroupsOfNodes, saveGroupsOfElements;
   int readGroupsOfElements;
   int binary, bdfFieldFormat;
-  int unvStrictFormat, stlRemoveDuplicateTriangles, stlOneSolidPerSurface;
+  int unvStrictFormat, stlRemoveBadTriangles, stlOneSolidPerSurface;
   double stlLinearDeflection, stlAngularDeflection;
   bool stlLinearDeflectionRelative;
   int saveParametric, saveTopology, saveWithoutOrphans, zoneDefinition;
