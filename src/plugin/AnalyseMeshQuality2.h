@@ -136,14 +136,12 @@ public:
 private:
   void _fetchParameters();
   void _fetchLegacyParameters();
-  void _purgeViews();
+  void _purgeViews(bool purge2D, bool purge3D);
   void _decideDimensionToCheck(bool &check2D, bool &check3D) const;
-  void _computeMissingData(Counts param, bool check2D, bool check3D) const;
+  void _computeRequestedData(Counts param, bool check2D, bool check3D) const;
   void _completeJacobianValues(std::vector<Measures> &measures) const;
   void _createPlots(const std::vector<Measures> &measures);
   void _createPlotOneMeasure(const Measures &, Metric);
-  // void _printStats(Measures &m2, Measures &m3) const;
-  // void _printStats(Measures &, const char* str_dim) const;
 
   // Those are static to be able to call them from class members
   static bool _okToPrint(int verb)
@@ -157,7 +155,8 @@ private:
   static void _warn(int verbosityPolicy, const char *format, ...);
   static void _error(int verbosityPolicy, const char *format, ...);
   // static void _status(int verbosityPolicy, const char *format, ...); // FIXME implement this?
-  void _devPrintCount(const Counts &) const;
+
+  // User guidance
   std::size_t _printElementToCompute(const Counts &cnt2D, const Counts &cnt3D) const;
   void _guidanceNothingToCompute(Counts counts,
                                         bool check2D, bool check3D) const;
@@ -207,7 +206,6 @@ private:
   public:
     explicit DataEntity(GEntity *ge) : _ge(ge) {}
     size_t getNumRequested() const { return _numRequested; }
-    //void countNewElement(ComputeParameters, std::size_t cnt[3]) const;
     size_t initialize(const Parameters::Computation &);
     void count(const Parameters::Computation &, Counts &);
     void reset(std::size_t);
@@ -264,7 +262,6 @@ private:
     }
     std::vector<double> getCutoffPlots() const { return _plotCutoffs; }
     void printStats(const Parameters &, const std::vector<Measures> &measures);
-    void createPlots(const Parameters &, const std::vector<Measures> &measures);
 
   private:
     void _unpackCutoff(double input, std::vector<double> &cutoffs) const;
@@ -272,8 +269,6 @@ private:
     void _printStatsOneMeasure(const std::vector<double> &measure, const char* str, bool useG = false);
     const std::vector<double> &_getCoefficients(double cutoff, size_t num);
     void _computeCoefficients(double cutoff, size_t sz, std::vector<double> &);
-    void _createPlots(const Parameters::MetricsToShow &param, const Measures &measure);
-    void _createPlotOneMeasure(const std::vector<double> &measure, const char* str);
   };
 
   struct Counts {

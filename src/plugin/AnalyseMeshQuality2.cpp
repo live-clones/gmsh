@@ -107,7 +107,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "createElementsView", nullptr, 0, "OFF, ON"},
   {GMSH_FULLRC, "createPlotView", nullptr, 1, "OFF, ON"},
   {GMSH_FULLRC, "hideElements", nullptr, 0, "OFF, 1=skipHidingIfAllWouldBeHidden, 2=forceHiding"},
-  {GMSH_FULLRC, "guidanceLevel", nullptr, 1, "-1=minimalOutput, 0=verbose, 1=verboseAndExplanations"},
+  {GMSH_FULLRC, "guidanceLevel", nullptr, 0, "-1=minimalOutput, 0=verbose, 1=verboseAndExplanations"},
   // Metrics to include:
   {GMSH_FULLRC, "enableDistortionQuality", nullptr, 1, "OFF, 1+=includeDistortionQuality"},
   {GMSH_FULLRC, "enableAspectQuality", nullptr, 0, "OFF, 1+=includeAspectQuality"},
@@ -123,13 +123,13 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "unhideOtherElements", nullptr, 0, "OFF=justHide, ON=alsoUnhide"},
   // Advanced computation options:
   {GMSH_FULLRC, "dataManagementPolicy", nullptr, 0, "-1=skipExecutionJustFreeData, 0=freeOldDataIfAbsent, 1=keepAllData"},
-  {GMSH_FULLRC, "smartRecomputation", nullptr, 0, "OFF=alwaysRecompute, ON=avoidRecomputeIfTagsUnchanged"},
-  {GMSH_FULLRC, "skipValidity", nullptr, 0, "OFF, ON=skipPreventiveValidityCheck"},
+  {GMSH_FULLRC, "smartRecomputation", nullptr, 1, "OFF=alwaysRecompute, ON=avoidRecomputeIfTagsUnchanged"},
+  {GMSH_FULLRC, "skipValidity", nullptr, 0, "0-=includeValidity, ON=skipPreventiveValidityCheck"},
   // Advanced analysis options:
-  {GMSH_FULLRC, "enableRatioJacDetAsAMetric", nullptr, 1, "OFF, 1+ (require skipValidity=OFF)"},
-  {GMSH_FULLRC, "enableMinJacDetAsAMetric", nullptr, 1, "OFF, 1+ (require skipValidity=OFF)"},
+  {GMSH_FULLRC, "enableRatioJacDetAsAMetric", nullptr, 1, "OFF, 1+ (require skipValidity=0-)"},
+  {GMSH_FULLRC, "enableMinJacDetAsAMetric", nullptr, 1, "OFF, 1+ (require skipValidity=0-)"},
   {GMSH_FULLRC, "regularizeDeterminant", nullptr, 1, "OFF, ON=inverseOrientationIfAbsMaxSmaller"},
-  {GMSH_FULLRC, "wmCutoffsForStats", nullptr, 1025, "CUTOFFS (for stats weighted mean, see Help)"},
+  {GMSH_FULLRC, "wmCutoffsForStats", nullptr, 10, "CUTOFFS (for stats weighted mean, see Help)"},
   {GMSH_FULLRC, "wmCutoffsForPlots", nullptr, 10, "CUTOFFS (for plots weighted mean, see Help)"},
   // Legacy options:
   {GMSH_FULLRC, "JacobianDeterminant", nullptr, UNTOUCHED, "[legacy] OFF, ON"},
@@ -287,11 +287,8 @@ PView *Plug::execute(PView *v)
   if(check2D) _data2D->initialize(_m, _param.compute, counts2D);
   if(check3D) _data3D->initialize(_m, _param.compute, counts3D);
 
-  _purgeViews();
-
-  // // TMP Dev
-  // _devPrintCount(counts2D);
-  // _devPrintCount(counts3D);
+  // Purge views just after initialization of _data2D and _data3D
+  _purgeViews(check2D, check3D);
 
   // Count and compute if needed, otherwise check there is something to output
   std::size_t totalToCompute = _printElementToCompute(counts2D, counts3D);
@@ -306,7 +303,7 @@ PView *Plug::execute(PView *v)
                "computed. This may significantly slow down quality computation "
                "in the presence of invalid elements");
     }
-    _computeMissingData(countsTotal, check2D, check3D);
+    _computeRequestedData(countsTotal, check2D, check3D);
   }
 
   // Gather data
@@ -323,7 +320,6 @@ PView *Plug::execute(PView *v)
     measures.back().name = "dimension 3";
     measures.back().shortName = "3D";
   }
-
   _completeJacobianValues(measures);
 
   // Combine if necessary
@@ -336,50 +332,9 @@ PView *Plug::execute(PView *v)
   _param.check3D = check3D;
   _statGen->printStats(_param, measures);
 
-  // NOTE
-  //  - call _createPlots(measures); then _statGen (but maybe not necessary
-  //    since just need cutoff values)
-  //  - In Plugin : Store pointer to PView with data creation
-  //    (dimension, metric, typeView, cutoff), where dimension = {2, 3, both}
-  //    OR (dim2, dim3, metric, typeView, cutoff)
-  //  - If at least one measure changed in a dimension, then delete all pointer to
-  //    corresponding Views.
-  //  - To check that something changed, it is not sufficient that we compute
-  //    something. For example, we can have all computed, half element visible
-  //    and creation PView, then the other half is visible and the plugin is
-  //    run again.
-  //  - Something changed if at least one entity changed
-  //  - An entity changed if it was deleted and it contained requested elements,
-  //    or if it was added and it contain requested, or if the number  of
-  //    requested changed)
-  //  - Creation of new PView if it is requested or if old one is gone.
-
-  // struct Key {
-  //   bool dim2;
-  //   bool dim3;
-  //   enum Metric { VALIDITY, DISTO, ASPECT, MINJAC, RATIOJAC } metric;
-  //   enum TypeView { PLOT, ELEMENTS } typeView;
-  //   double cutoff;
-  //
-  //   // Equality operator for unordered_map or map
-  //   bool operator==(const Key &other) const {
-  //     return std::tie(dim2, dim3, metric, typeView, cutoff) ==
-  //            std::tie(other.dim2, other.dim3, other.metric, other.typeView, other.cutoff);
-  //   }
-  //
-  //   // Less-than operator for std::map
-  //   bool operator<(const Key &other) const {
-  //     return std::tie(dim2, dim3, metric, typeView, cutoff) <
-  //            std::tie(other.dim2, other.dim3, other.metric, other.typeView, other.cutoff);
-  //   }
-  // };
-
   _createPlots(measures);
-
-  // _statGen->createPlots(_param, measures);
-
-
-  // TODO compute show
+  // TODO elementViews
+  // TODO hidding
 
   return v;
 }
@@ -624,7 +579,7 @@ void Plug::_fetchLegacyParameters()
   }
 }
 
-void Plug::_purgeViews()
+void Plug::_purgeViews(bool purge2D, bool purge3D)
 {
   // Remove deleted PViews
   std::set<PView *> existingViews(PView::list.begin(), PView::list.end());
@@ -636,7 +591,7 @@ void Plug::_purgeViews()
   }
 
   // Remove PViews to forget
-  if(_data2D->getRequestedHasChanged()) {
+  if(purge2D && _data2D->getRequestedHasChanged()) {
     for (auto it = _pviews.begin(); it != _pviews.end(); ) {
       if(it->first.dim2Elem)
         it = _pviews.erase(it);
@@ -644,7 +599,7 @@ void Plug::_purgeViews()
         ++it;
     }
   }
-  if(_data3D->getRequestedHasChanged()) {
+  if(purge3D && _data3D->getRequestedHasChanged()) {
     for (auto it = _pviews.begin(); it != _pviews.end(); ) {
       if(it->first.dim3Elem)
         it = _pviews.erase(it);
@@ -654,7 +609,7 @@ void Plug::_purgeViews()
   }
 }
 
-void Plug::_computeMissingData(Counts counts, bool check2D, bool check3D) const
+void Plug::_computeRequestedData(Counts counts, bool check2D, bool check3D) const
 {
   std::vector<DataEntity*> allDataEntities;
   if(check2D)
@@ -851,33 +806,6 @@ void Plug::StatGenerator::printStats(const Parameters &param,
              "Note that the standard mean corresponds to Wm50.");
   for(auto &measure: measures) {
     _printStats(param.show, measure);
-  }
-}
-
-void Plug::StatGenerator::createPlots(const Parameters &param,
-                                      const std::vector<Measures> &measures)
-{
-  for(const auto &measure: measures) {
-    _createPlots(param.show, measure);
-  }
-}
-
-void Plug::StatGenerator::_createPlots(const Parameters::MetricsToShow &show, const Measures &measure)
-{
-  // Disto
-  if(show.disto && !measure.minDisto.empty())
-    _createPlotOneMeasure(measure.minDisto, "Disto");
-
-  // Aspect
-  if(show.aspect && !measure.minAspect.empty())
-    _createPlotOneMeasure(measure.minAspect, "Aspect");
-}
-
-void Plug::StatGenerator::_createPlotOneMeasure(const std::vector<double> &measure, const char* str)
-{
-  size_t numPlots = _plotCutoffs.size();
-  for(int i = 0; i < numPlots; ++i) {
-    new PView(str, _plotCutoffs[i], true, measure);
   }
 }
 
@@ -1608,20 +1536,6 @@ void Plug::_guidanceNothingToCompute(Counts counts,
       }
     }
   }
-}
-
-void Plug::_devPrintCount(const Counts &counts) const
-{
-  _info(1, "DEV Elements to compute:");
-  for (int i = 0; i < 3; ++i) {
-    _info(1, "DEV  - Measure %d: %zu", i + 1, counts.elToCompute[i]);
-  }
-
-  _info(1, "DEV Elements to show: %zu", counts.elToShow);
-  _info(1, "DEV Total elements: %zu", counts.totalEl);
-  _info(1, "DEV Curved elements computed: %zu", counts.elCurvedComputed);
-  _info(1, "DEV Curved elements: %zu", counts.curvedEl);
-  _info(1, "DEV Visible elements: %zu", counts.visibleEl);
 }
 
 // ======== struct Counts ======================================================
