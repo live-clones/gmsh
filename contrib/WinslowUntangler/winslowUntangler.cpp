@@ -772,14 +772,14 @@ namespace WinslowUntangler {
   {
     if(dim != 2 && dim != 3) return false;
     if(dim == 2 && (points2D.size() == 0 || triangles.size() == 0)) {
-      Msg::Error(
-        "Winslow untangler 2D: wrong input sizes: %li vertices, %li triangles",
+      Msg::Warning(
+        "Wrong input sizes (%li vertices, %li triangles) in 2D Winslow untangler",
         points2D.size(), triangles.size());
       return false;
     }
     if(dim == 3 && (points3D.size() == 0 || tetrahedra.size() == 0)) {
-      Msg::Error(
-        "Winslow untangler 3D: wrong input sizes: %li vertices, %li tetrahedra",
+      Msg::Warning(
+        "Wrong input sizes (%li vertices, %li tetrahedra) in 3D Windlow untangler",
         points2D.size(), triangles.size());
       return false;
     }
