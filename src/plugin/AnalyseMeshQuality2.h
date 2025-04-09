@@ -290,6 +290,7 @@ private:
     bool dim2Elem;
     bool dim3Elem;
     const char* name;
+    const char* shortName;
     std::vector<double> minJ;
     std::vector<double> maxJ;
     std::vector<double> ratioJ;
@@ -297,7 +298,7 @@ private:
     std::vector<double> minDisto;
     std::vector<double> minAspect;
     std::vector<MElement *> elements;
-    static Measures combine(const Measures &, const Measures &, const char *name);
+    static Measures combine(const Measures &, const Measures &, const char *name, const char *shortName);
   };
 
   struct Key {

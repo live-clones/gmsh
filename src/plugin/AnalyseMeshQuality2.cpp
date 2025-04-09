@@ -315,18 +315,20 @@ PView *Plug::execute(PView *v)
     measures.emplace_back();
     _data2D->gatherValues(counts2D, measures.back());
     measures.back().name = "dimension 2";
+    measures.back().shortName = "2D";
   }
   if(check3D) {
     measures.emplace_back();
     _data3D->gatherValues(counts3D, measures.back());
     measures.back().name = "dimension 3";
+    measures.back().shortName = "3D";
   }
 
   _completeJacobianValues(measures);
 
   // Combine if necessary
   if(_dimensionPolicy == 2) {
-    measures[0] = Measures::combine(measures[0], measures[1], "dimension 2 and 3 combined");
+    measures[0] = Measures::combine(measures[0], measures[1], "dimension 2 and 3 combined", "2D+3D");
     measures.erase(measures.begin() + 1);
   }
 
@@ -746,11 +748,11 @@ void Plug::_createPlotOneMeasure(const Measures &m, Metric metric)
 
   switch(metric) {
   case DISTO:
-    s = "Distortion quality";
+    s = "Distortion";
     values = &m.minDisto;
     break;
   case ASPECT:
-    s = "Aspect quality";
+    s = "Aspect";
     values = &m.minAspect;
     break;
   case VALIDITY:
@@ -758,21 +760,28 @@ void Plug::_createPlotOneMeasure(const Measures &m, Metric metric)
     values = &m.validity;
     break;
   case RATIOJAC:
-    s = "Ratio of minJ/maxJ";
+    s = "minJ/maxJ";
     values = &m.ratioJ;
     break;
   case MINJAC:
-    s = "Minimum Jacobian determinant";
+    s = "minJ";
     values = &m.minJ;
     break;
   default:
-    s = "Unknown metric";
+    Msg::Error("Unknown metric");
+    return;
   }
+
+  s += " ";
+  s += m.shortName;
+
+  constexpr double minMaxQuality[2] = {0, 1};
+  const double *minMax = (values == &m.ratioJ || values == &m.minJ) ? nullptr : minMaxQuality;
 
   for(double cutoff: _statGen->getCutoffPlots()) {
     Key key(m.dim2Elem, m.dim3Elem, metric, Key::TypeView::PLOT, cutoff);
     if(_pviews.find(key) == _pviews.end()) {
-      PView *p = new PView(s, cutoff, true, *values);
+      PView *p = new PView(s, cutoff, true, *values, minMax);
       _pviews[key] = p;
     }
   }
@@ -971,8 +980,9 @@ void Plug::StatGenerator::_printStatsOneMeasure(const std::vector<double> &measu
   size_t numElem = measure.size();
   size_t numCutoff = _statCutoffs.size();
   std::vector<double> q = measure;
-  double min = *std::min_element(q.begin(), q.end());
-  double max = *std::max_element(q.begin(), q.end());
+  auto minMax = std::minmax_element(q.begin(), q.end());
+  double min = *minMax.first;
+  double max = *minMax.second;
 
   std::vector<double> avg(numCutoff);
   std::sort(q.begin(), q.end());
@@ -1647,7 +1657,7 @@ static void combineVectors(std::vector<T> &result, const std::vector<T> &v1, con
   result.insert(result.end(), v2.begin(), v2.end());
 }
 
-Plug::Measures Plug::Measures::combine(const Measures &m1, const Measures &m2, const char *name)
+Plug::Measures Plug::Measures::combine(const Measures &m1, const Measures &m2, const char *name, const char *shortName)
 {
   Measures result;
   combineVectors(result.minJ, m1.minJ, m2.minJ);
@@ -1660,6 +1670,7 @@ Plug::Measures Plug::Measures::combine(const Measures &m1, const Measures &m2, c
   result.dim2Elem = m1.dim2Elem || m2.dim2Elem;
   result.dim3Elem = m1.dim3Elem || m2.dim3Elem;
   result.name = name;
+  result.shortName = shortName;
   return result;
 }
 
