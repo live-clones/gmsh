@@ -114,7 +114,7 @@ PView::PView(const std::string &xname, const std::string &yname,
 }
 
 PView::PView(const std::string &yname, double cutoff, bool isMinValueWorst,
-             const std::vector<double> &y)
+             const std::vector<double> &y, const double *customMinMax)
 {
   _init();
   _isWorstWeightedGraph = true;
@@ -129,9 +129,11 @@ PView::PView(const std::string &yname, double cutoff, bool isMinValueWorst,
   _options->lineWidth = 3.;
   _options->axesLabel[0] = "% Elements";
   _options->axesTics[0] = 10;
-  _options->rangeType = PViewOptions::Custom;
-  _options->customMin = 0;
-  _options->customMax = 1;
+  if(customMinMax) {
+    _options->rangeType = PViewOptions::Custom;
+    _options->customMin = customMinMax[0];
+    _options->customMax = customMinMax[1];
+  }
   _options->format = "%.2g";
   _options->worstWeightCutoff = cutoff;
 }
@@ -430,6 +432,14 @@ void PView::updateWorstWeightedData(drawContext *ctx, double height,
   double w = drawContext::global()->getStringWidth(tmp);
   if(inModelCoordinates) w *= ctx->pixel_equiv_x / ctx->s[0];
   double precision = .02 * w;
+
   PViewDataWorstWeighted *data = dynamic_cast<PViewDataWorstWeighted*>(_data);
+  if(_options->rangeType == PViewOptions::Custom) {
+    precision *= _options->customMax - _options->customMin;
+  }
+  else {
+    precision *= data->getMax() - data->getMin();
+  }
+
   data->update(_options->worstWeightCutoff, height, precision);
 }

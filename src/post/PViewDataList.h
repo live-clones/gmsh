@@ -156,7 +156,11 @@ public:
 class PViewDataWorstWeighted : public PViewDataList {
 private:
   std::vector<double> _values;
+  double _min = 0.;
+  double _max = 0.;
   bool _worstAtMin = true;
+
+  // Store last parameter for data creation in SP
   double _cutoff = 0.;
   double _height = 0.;
   double _precision = 0.;
@@ -172,8 +176,17 @@ public:
       std::sort(_values.begin(), _values.end());
     else
       std::sort(_values.begin(), _values.end(), std::less<>());
+
+    if(!_values.empty()) {
+      auto minMax = std::minmax_element(_values.begin(), _values.end());
+      _min = *minMax.first;
+      _max = *minMax.second;
+    }
+
     finalize();
   }
+  double getMinValues() { return _min; }
+  double getMaxValues() { return _max; }
   void update(double cutoff, double height, double prec);
 };
 
