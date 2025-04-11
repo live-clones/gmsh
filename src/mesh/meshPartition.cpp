@@ -528,6 +528,10 @@ static int makeGraph(GModel *model, Graph &graph, int selectDim)
   idx_t eindIndex = 0;
   idx_t numVertex = 0;
 
+  if(graph.nn() == 0) {
+    Msg::Warning("No mesh nodes were found");
+    return 1;
+  }
   if(graph.ne() == 0) {
     Msg::Warning("No mesh elements were found");
     return 1;
