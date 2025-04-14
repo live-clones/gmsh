@@ -164,6 +164,9 @@ std::pair<int, std::string> MeshQuality2Options_Headers[] = {
 namespace JacQual = jacobianBasedQuality;
 using Plug = GMSH_AnalyseMeshQuality2Plugin;
 int Plug::_verbose = 0;
+const std::array<std::string, 5> Plug::_metricNames = {
+  "Disto", "Aspect", "Validity", "MinJ/maxJ", "MinJac"
+};
 
 // ======== Plugin: Base class methods =========================================
 // =============================================================================
@@ -677,18 +680,18 @@ void Plug::_createPlots(const std::vector<Measures> &measures)
   if(!_param.pview.createPlot) return;
   Parameters::MetricsToShow &ps = _param.show;
   for(const auto &m: measures) {
-    for(int i = VALIDITY; i <= RATIOJAC; i++) {
-      if(ps.which[i] == ps.M)  _createPlotOneMeasure(m, static_cast<Metric>(i));
+    for(int i = VALIDITY; i <= MINJAC; i++) {
+      if(ps.which[i] == ps.M)  _createPlotsOneMetric(m, static_cast<Metric>(i));
     }
   }
 }
 
-void Plug::_createPlotOneMeasure(const Measures &m, Metric metric)
+void Plug::_createPlotsOneMetric(const Measures &m, Metric metric)
 {
-  const std::vector<double> values = m.getValues(metric);
+  const std::vector<double> &values = m.getValues(metric);
   if(values.empty()) return;
 
-  std::string s = metricNames[metric];
+  std::string s = _metricNames[metric];
   s += " ";
   s += m.dimStrShort;
   s += " (p)";
@@ -710,19 +713,19 @@ void Plug::_createElementViews(const std::vector<Measures> &measures)
   if(!_param.pview.createElemView) return;
   Parameters::MetricsToShow &ps = _param.show;
   for(const auto &m: measures) {
-    for(int i = VALIDITY; i <= RATIOJAC; i++) {
+    for(int i = VALIDITY; i <= MINJAC; i++) {
       if(ps.which[i] == ps.M)
-        _createElementViewsOneMeasure(m, static_cast<Metric>(i));
+        _createElementViewsOneMetric(m, static_cast<Metric>(i));
     }
   }
 }
 
-void Plug::_createElementViewsOneMeasure(const Measures &m, Metric metric)
+void Plug::_createElementViewsOneMetric(const Measures &m, Metric metric)
 {
-  const std::vector<double> values = m.getValues(metric);
+  const std::vector<double> &values = m.getValues(metric);
   if(values.empty()) return;
 
-  std::string s = metricNames[metric];
+  std::string s = _metricNames[metric];
   s += " ";
   s += m.dimStrShort;
   s += " (e)";
@@ -860,55 +863,42 @@ void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, con
     _info(0, "%s", columnNamesStream.str().c_str());
   }
 
-  // Disto
-  if(show.which[DISTO] && !measure.minDisto.empty())
-    _printStatsOneMeasure(measure.minDisto, "Disto");
-
-  // Aspect
-  if(show.which[ASPECT] && !measure.minAspect.empty())
-    _printStatsOneMeasure(measure.minAspect, "Aspect");
-
-  // Stop if that's all
-  if((!show.which[RATIOJAC] && !show.which[MINJAC] && !show.which[VALIDITY]) || measure.minJ.empty())
-    return;
-
-  // Jacobian values
-  if(show.which[RATIOJAC] && !measure.ratioJ.empty())
-    _printStatsOneMeasure(measure.ratioJ, "minJ/maxJ");
-  if(show.which[MINJAC] && !measure.minJ.empty())
-    _printStatsOneMeasure(measure.minJ, "minJ", true);
-  // if(show.maxJac)
-  //   _printStatsOneMeasure(measure.maxJ, "maxJ", true);
+  for(int i = DISTO; i <= MINJAC; i++) {
+    if(show.which[i])
+      _printStatsOneMetric(measure, static_cast<Metric>(i));
+  }
 
   // Validity
-  if(!show.which[VALIDITY] && !measure.validity.empty()) return;
+  if(!show.which[VALIDITY]) return;
   if(measure.validity.empty())
     Msg::StatusBar(true, "   All elements are valid :-)");
   else
     _warn(0, "   Found %zu invalid elements", measure.validity.size());
 }
 
-void Plug::StatGenerator::_printStatsOneMeasure(const std::vector<double> &measure, const char* str, bool useG)
+void Plug::StatGenerator::_printStatsOneMetric(const Measures &measure, Metric metric)
 {
-  size_t numElem = measure.size();
+  std::vector<double> values = measure.getValues(metric);
+  if(values.empty()) return;
+
+  size_t numElem = values.size();
   size_t numCutoff = _statCutoffs.size();
-  std::vector<double> q = measure;
-  auto minMax = std::minmax_element(q.begin(), q.end());
+  auto minMax = std::minmax_element(values.begin(), values.end());
   double min = *minMax.first;
   double max = *minMax.second;
 
   std::vector<double> avg(numCutoff);
-  std::sort(q.begin(), q.end());
+  std::sort(values.begin(), values.end());
   for(int i = 0; i < numCutoff; ++i) {
     const std::vector<double> &coeff = _getCoefficients(_statCutoffs[i], numElem);
-    avg[i] = std::inner_product(q.begin(), q.end(), coeff.begin(), 0.0);
+    avg[i] = std::inner_product(values.begin(), values.end(), coeff.begin(), 0.0);
   }
 
   std::ostringstream valStream;
   valStream << "   ";
-  valStream << std::setw(_colWidth) << str << ":";
+  valStream << std::setw(_colWidth) << _metricNames[metric] << ":";
   valStream << std::setprecision(3);
-  if(useG) valStream << std::defaultfloat; // can also be std::scientific
+  if(metric == MINJAC) valStream << std::defaultfloat; // could be std::scientific
   valStream << std::setw(_colWidth) << min;
   for(auto i = 0; i < numCutoff; ++i)
     valStream << std::setw(_colWidth) << avg[i];
@@ -1572,6 +1562,24 @@ Plug::Measures Plug::Measures::combine(const Measures &m1, const Measures &m2, c
   result.dimStr = name;
   result.dimStrShort = shortName;
   return result;
+}
+
+const std::vector<double> &Plug::Measures::getValues(Metric m) const {
+  switch(m) {
+  case VALIDITY:
+    return validity;
+  case DISTO:
+    return minDisto;
+  case ASPECT:
+    return minAspect;
+  case MINJAC:
+    return minJ;
+  case RATIOJAC:
+    return ratioJ;
+  default:
+    _error(0, "Invalid metric");
+  }
+  return maxJ; // to avoid compiler warning
 }
 
 #endif

@@ -76,10 +76,8 @@ private:
     bool check2D = false;
     bool check3D = false;
   };
-  enum Metric { VALIDITY, DISTO, ASPECT, MINJAC, RATIOJAC } metric;
-  const std::array<std::string, 5> metricNames = {
-    "Disto", "Aspect", "Validity", "MinJ/maxJ", "MinJac"
-  };
+  enum Metric { VALIDITY, DISTO, ASPECT, RATIOJAC, MINJAC } metric;
+  static const std::array<std::string, 5> _metricNames;
 
 
 private:
@@ -142,9 +140,9 @@ private:
   void _computeRequestedData(Counts param, bool check2D, bool check3D) const;
   void _completeJacobianValues(std::vector<Measures> &) const;
   void _createPlots(const std::vector<Measures> &);
-  void _createPlotOneMeasure(const Measures &, Metric);
+  void _createPlotsOneMetric(const Measures &, Metric);
   void _createElementViews(const std::vector<Measures> &);
-  void _createElementViewsOneMeasure(const Measures &, Metric);
+  void _createElementViewsOneMetric(const Measures &, Metric);
 
   // Those are static to be able to call them from class members
   static bool _okToPrint(int verb)
@@ -269,7 +267,7 @@ private:
   private:
     void _unpackCutoff(double input, std::vector<double> &cutoffs) const;
     void _printStats(const Parameters::MetricsToShow &param, const Measures &measure);
-    void _printStatsOneMeasure(const std::vector<double> &measure, const char* str, bool useG = false);
+    void _printStatsOneMetric(const Measures &measure, Metric metric);
     const std::vector<double> &_getCoefficients(double cutoff, size_t num);
     void _computeCoefficients(double cutoff, size_t sz, std::vector<double> &);
   };
@@ -297,24 +295,7 @@ private:
     std::vector<double> minAspect;
     std::vector<MElement *> elements;
     static Measures combine(const Measures &, const Measures &, const char *name, const char *shortName);
-    const std::vector<double> &getValues(Metric m) const
-    {
-      switch(m) {
-      case VALIDITY:
-        return validity;
-      case DISTO:
-        return minDisto;
-      case ASPECT:
-        return minAspect;
-      case MINJAC:
-        return minJ;
-      case RATIOJAC:
-        return ratioJ;
-      default:
-        _error(0, "Invalid metric");
-      }
-      return maxJ; // to avoid compiler warning
-    }
+    const std::vector<double> &getValues(Metric m) const;
   };
 
   struct Key {
