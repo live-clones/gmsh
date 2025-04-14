@@ -143,9 +143,9 @@ private:
   void _createPlotsOneMetric(const Measures &, Metric);
   void _createElementViews(const std::vector<Measures> &);
   void _createElementViewsOneMetric(const Measures &, Metric);
-  void _performHidding(const std::vector<Measures> &);
+  bool _performHidding(const std::vector<Measures> &);
   void _findElementsToHide(const Measures &, Metric, std::set<MElement *> &) const;
-  void _hideElements(const Measures &measure, std::vector<MElement *> &elemToHide);
+  bool _hideElements(const Measures &measure, std::vector<MElement *> &elemToHide);
 
   // Those are static to be able to call them from class members
   static bool _okToPrint(int verb)

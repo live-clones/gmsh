@@ -336,8 +336,12 @@ PView *Plug::execute(PView *v)
 
   _createPlots(measures);
   _createElementViews(measures);
-  _performHidding(measures);
-  // TODO hidding
+  if(_performHidding(measures)) {
+    CTX::instance()->mesh.changed = ENT_ALL;
+#if defined(HAVE_OPENGL)
+    drawContext::global()->draw();
+#endif
+  }
 
   return v;
 }
@@ -741,11 +745,13 @@ void Plug::_createElementViewsOneMetric(const Measures &m, Metric metric)
   }
 }
 
-void Plug::_performHidding(const std::vector<Measures> &measures)
+bool Plug::_performHidding(const std::vector<Measures> &measures)
 {
   Parameters::Hidding &hide = _param.hide;
   Parameters::MetricsToShow &show = _param.show;
-  if(!hide.todo) return;
+  if(!hide.todo) return false;
+
+  bool hasHidden = false;
 
   for(auto &measure: measures) {
     std::vector<MElement *> toHide;
@@ -758,10 +764,10 @@ void Plug::_performHidding(const std::vector<Measures> &measures)
           toHide.push_back(measure.elements[i]);
       }
       if(!toHide.empty()) {
-        _hideElements(measure, toHide);
-        return;
+        hasHidden |= _hideElements(measure, toHide);
+        continue;
       }
-      if(hide.policy == -1) return;
+      if(hide.policy == -1) continue;
     }
 
     // Hide in function of quality-like metrics
@@ -791,8 +797,9 @@ void Plug::_performHidding(const std::vector<Measures> &measures)
         toHide = std::move(result);
       }
     }
-    _hideElements(measure, toHide);
+    hasHidden |= _hideElements(measure, toHide);
   }
+  return hasHidden;
 }
 
 void Plug::_findElementsToHide(const Measures &measure,
@@ -829,16 +836,17 @@ void Plug::_findElementsToHide(const Measures &measure,
   }
 }
 
-void Plug::_hideElements(const Measures &measure, std::vector<MElement *> &elemToHide)
+bool Plug::_hideElements(const Measures &measure,
+                         std::vector<MElement *> &elemToHide)
 {
   if(_param.hide.todo < 2 && elemToHide.size() == measure.elements.size()) {
     _info(1, "Skipping hiding because all elements would be hidden");
-    return;
+    return false;
   }
 
   if(!_param.hide.unhideToo) {
     for(auto el : elemToHide) el->setVisibility(false);
-    return;
+    return true;
   }
 
   std::sort(elemToHide.begin(), elemToHide.end()); // for binary_search
@@ -848,7 +856,7 @@ void Plug::_hideElements(const Measures &measure, std::vector<MElement *> &elemT
     else
       el->setVisibility(true);
   }
-
+  return true;
 }
 
 void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
