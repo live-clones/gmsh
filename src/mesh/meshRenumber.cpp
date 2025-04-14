@@ -87,7 +87,7 @@ static int RCM(std::vector<std::size_t> &sorted,
 
 #pragma omp single
     {
-      newIndices.resize(row[sorted.size()], 0);
+      newIndices.resize(row[sorted.size()] + 1, 0);
     }
 #pragma omp for
     for(auto i = 0ULL; i < sorted.size(); ++i) {
