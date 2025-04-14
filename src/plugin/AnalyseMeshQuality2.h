@@ -52,8 +52,8 @@ private:
     } compute;
 
     struct Post {
-      bool create2D = false;
-      bool create3D = false;
+      bool createPlot = false;
+      bool createElemView = false;
       double plotCutoffPack = 10;
       double statCutoffPack = 10;
     } pview;
@@ -68,13 +68,9 @@ private:
     } hide;
 
     struct MetricsToShow {
-      int validity = 0;
-      int disto = 0;
-      int aspect = 0;
-      int minJac = 0;
-      int ratioJac = 0;
+      int which[5] = {0};
       int M = 0;
-      bool regularizeJac = 0;
+      bool regularizeJac = false;
     } show;
 
     bool check2D = false;
@@ -140,12 +136,12 @@ private:
   void _purgeViews(bool purge2D, bool purge3D);
   void _decideDimensionToCheck(bool &check2D, bool &check3D) const;
   void _computeRequestedData(Counts param, bool check2D, bool check3D) const;
-  void _completeJacobianValues(std::vector<Measures> &measures) const;
-  void _createPlots(const std::vector<Measures> &measures);
+  void _completeJacobianValues(std::vector<Measures> &) const;
+  void _createPlots(const std::vector<Measures> &);
   void _createPlotOneMeasure(const Measures &, Metric);
-  void _createElementViews(const std::vector<Measures> &measures);
+  void _createElementViews(const std::vector<Measures> &);
   void _createElementViewsOneMeasure(const Measures &, Metric);
-  void _extractMeasureData(const Measures &m, Metric metric, std::string &s,
+  void _extractMeasureData(const Measures &, Metric, std::string &,
                      const std::vector<double> *&values);
 
   // Those are static to be able to call them from class members

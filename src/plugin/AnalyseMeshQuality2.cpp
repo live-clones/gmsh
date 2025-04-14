@@ -352,8 +352,8 @@ void Plug::_fetchParameters()
 
   // What to do:
   pc.skip = static_cast<bool>(MeshQuality2Options_Number[0].def);
-  pp.create3D = static_cast<bool>(MeshQuality2Options_Number[1].def);
-  pp.create2D = static_cast<bool>(MeshQuality2Options_Number[2].def);
+  pp.createElemView = static_cast<bool>(MeshQuality2Options_Number[1].def);
+  pp.createPlot = static_cast<bool>(MeshQuality2Options_Number[2].def);
   ph.todo = static_cast<bool>(MeshQuality2Options_Number[3].def);
   _verbose = static_cast<int>(MeshQuality2Options_Number[4].def);
 
@@ -400,18 +400,13 @@ void Plug::_fetchParameters()
   pc.aspect = static_cast<bool>(aspect);
 
   // -> metrics to show
-  ps.validity = skipValidity > 0 ? 0 : -static_cast<int>(skipValidity);
-  ps.disto = static_cast<int>(disto);
-  ps.aspect = static_cast<int>(aspect);
-  ps.minJac = static_cast<int>(minJ);
-  ps.ratioJac = static_cast<int>(ratioJ);
-  ps.M = std::max({
-    ps.validity,
-    ps.disto,
-    ps.aspect,
-    ps.minJac,
-    ps.ratioJac
-  });
+  ps.which[VALIDITY] = skipValidity > 0 ? 0 : -static_cast<int>(skipValidity);
+  ps.which[DISTO] = static_cast<int>(disto);
+  ps.which[ASPECT] = static_cast<int>(aspect);
+  ps.which[MINJAC] = static_cast<int>(minJ);
+  ps.which[RATIOJAC] = static_cast<int>(ratioJ);
+  ps.M = *std::max_element(std::begin(ps.which), std::end(ps.which));
+
 
 
   // Legacy options (must be last):
@@ -503,9 +498,9 @@ void Plug::_fetchLegacyParameters()
   pc.onlyVisible = false;
   pc.onlyCurved = false;
   pp.statCutoffPack = 50;
-  pp.create2D = false;
-  ps.ratioJac = 1;
-  ps.minJac = 1;
+  pp.createPlot = false;
+  ps.which[RATIOJAC] = 1;
+  ps.which[MINJAC] = 1;
   ps.regularizeJac = false;
   _param.freeData = false;
 
@@ -513,21 +508,21 @@ void Plug::_fetchLegacyParameters()
 
   double val = MeshQuality2Options_Number[k++].def;
   if (val != UNTOUCHED) // JacDet
-    ps.validity = pc.validity = static_cast<bool>(val);
+    ps.which[VALIDITY] = pc.validity = static_cast<bool>(val);
   else
-    ps.validity = pc.validity = false;
+    ps.which[VALIDITY] = pc.validity = false;
 
   val = MeshQuality2Options_Number[k++].def;
   if (val != UNTOUCHED) // IGEMeasure
-    ps.aspect = pc.aspect = static_cast<bool>(val);
+    ps.which[ASPECT] = pc.aspect = static_cast<bool>(val);
   else
-    ps.aspect = pc.aspect = false;
+    ps.which[ASPECT] = pc.aspect = false;
 
   val = MeshQuality2Options_Number[k++].def;
   if (val != UNTOUCHED) // ICNMeasure
-    ps.disto = pc.disto = static_cast<bool>(val);
+    ps.which[DISTO] = pc.disto = static_cast<bool>(val);
   else
-    ps.disto = pc.disto = false;
+    ps.which[DISTO] = pc.disto = false;
 
   val = MeshQuality2Options_Number[k++].def;
   if (val != UNTOUCHED) { // HidingThreshold
@@ -536,12 +531,12 @@ void Plug::_fetchLegacyParameters()
     ph.policy = 1;
     ph.criterion = 0;
     ph.unhideToo = false;
-    if(ps.disto)
-      ps.disto = 2;
-    else if(ps.aspect)
-      ps.aspect = 2;
-    else if(ps.validity)
-      ps.ratioJac = 2;
+    if(ps.which[DISTO])
+      ps.which[DISTO] = 2;
+    else if(ps.which[ASPECT])
+      ps.which[ASPECT] = 2;
+    else if(ps.which[VALIDITY])
+      ps.which[RATIOJAC] = 2;
   }
   else {
     ph.threshold = false;
@@ -555,9 +550,9 @@ void Plug::_fetchLegacyParameters()
 
   val = MeshQuality2Options_Number[k++].def;
   if (val != UNTOUCHED) // CreateView
-    pp.create3D = static_cast<bool>(val);
+    pp.createElemView = static_cast<bool>(val);
   else
-    pp.create3D = false;
+    pp.createElemView = false;
 
   val = MeshQuality2Options_Number[k++].def;
   if (val != UNTOUCHED) { // Recompute
@@ -663,12 +658,12 @@ void Plug::_completeJacobianValues(std::vector<Measures> &measures) const
         }
       }
     }
-    if(_param.show.validity) {
+    if(_param.show.which[VALIDITY]) {
       m.validity.resize(m.minJ.size());
       for(std::size_t i = 0; i < m.minJ.size(); i++)
         m.validity[i] = isValid(m.minJ[i], m.maxJ[i]);
     }
-    if(_param.show.ratioJac) {
+    if(_param.show.which[RATIOJAC]) {
       m.ratioJ.resize(m.minJ.size());
       for(std::size_t i = 0; i < m.minJ.size(); i++)
         m.ratioJ[i] = m.minJ[i] / m.maxJ[i];
@@ -680,19 +675,19 @@ void Plug::_createPlots(const std::vector<Measures> &measures)
 {
   Parameters::MetricsToShow &ps = _param.show;
   for(const auto &m: measures) {
-    if(ps.disto == ps.M && !m.minDisto.empty())
+    if(ps.which[DISTO] == ps.M && !m.minDisto.empty())
       _createPlotOneMeasure(m, DISTO);
 
-    if(ps.aspect == ps.M && !m.minAspect.empty())
+    if(ps.which[ASPECT] == ps.M && !m.minAspect.empty())
       _createPlotOneMeasure(m, ASPECT);
 
-    if(ps.validity == ps.M && !m.validity.empty())
+    if(ps.which[VALIDITY] == ps.M && !m.validity.empty())
       _createPlotOneMeasure(m, VALIDITY);
 
-    if(ps.ratioJac == ps.M && !m.ratioJ.empty())
+    if(ps.which[RATIOJAC] == ps.M && !m.ratioJ.empty())
       _createPlotOneMeasure(m, RATIOJAC);
 
-    if(ps.minJac == ps.M && !m.minJ.empty())
+    if(ps.which[MINJAC] == ps.M && !m.minJ.empty())
       _createPlotOneMeasure(m, MINJAC);
   }
 }
@@ -724,19 +719,19 @@ void Plug::_createElementViews(const std::vector<Measures> &measures)
 {
   Parameters::MetricsToShow &ps = _param.show;
   for(const auto &m: measures) {
-    if(ps.disto == ps.M && !m.minDisto.empty())
+    if(ps.which[DISTO] == ps.M && !m.minDisto.empty())
       _createElementViewsOneMeasure(m, DISTO);
 
-    if(ps.aspect == ps.M && !m.minAspect.empty())
+    if(ps.which[ASPECT] == ps.M && !m.minAspect.empty())
       _createElementViewsOneMeasure(m, ASPECT);
 
-    if(ps.validity == ps.M && !m.validity.empty())
+    if(ps.which[VALIDITY] == ps.M && !m.validity.empty())
       _createElementViewsOneMeasure(m, VALIDITY);
 
-    if(ps.ratioJac == ps.M && !m.ratioJ.empty())
+    if(ps.which[RATIOJAC] == ps.M && !m.ratioJ.empty())
       _createElementViewsOneMeasure(m, RATIOJAC);
 
-    if(ps.minJac == ps.M && !m.minJ.empty())
+    if(ps.which[MINJAC] == ps.M && !m.minJ.empty())
       _createElementViewsOneMeasure(m, MINJAC);
   }
 }
@@ -819,29 +814,29 @@ void Plug::StatGenerator::printStats(const Parameters &param,
 {
   _info(1, "=> Printing statistics, here is what is important to know about "
   "them:");
-  if(param.show.validity)
+  if(param.show.which[VALIDITY])
   _info(1, "   *V<|>alidity*  provides information about the strict positivity "
            "of the Jacobian determinant. A mesh containing invalid elements "
            "will usually result in incorrect Finite Element solutions. Each "
            "element is classified as either valid or invalid.");
-  if(param.show.disto)
+  if(param.show.which[DISTO])
   _info(1, "   *D<|>istortion quality*  (previously ICN) is related to the "
            "condition number of the stiffness matrix. Low-Distortion elements "
            "may cause numerical roundoff errors or significantly reduce the "
            "convergence speed of iterative methods. Values "
            "range from 0 to 1.");
-  if(param.show.aspect)
+  if(param.show.which[ASPECT])
   _info(1, "   *A<|>spect quality*  in [0, 1] (previously IGE) is related to "
            "the gradient of the FE solution. Elements with poor aspect quality "
            "negatively affect errors in the gradient of the solution. Values "
            "range from 0 to 1.");
-  if(param.show.minJac)
+  if(param.show.which[MINJAC])
     _info(1, "   *m<|>inJ*  is the minimum of the Jacobian determinant computed "
              "in the reference space and can be used to check the element size. "
              "This metric is particularly relevant for iterative methods, "
              "where the time step may depend on the size of the smallest "
              "element. Values range from -∞ to +∞.");
-  if(param.show.ratioJac)
+  if(param.show.which[RATIOJAC])
     _info(1, "   *R<|>atio minJ/maxJ*  is the ratio between the minimum and "
              "maximum values of the Jacobian determinant. It is faster to "
              "compute than than the distortion and aspect quality metrics and can "
@@ -900,7 +895,7 @@ void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, con
   _info(0, "=> Statistics for %s:", measure.name);
 
   // Header
-  if(show.aspect || show.disto || show.ratioJac || show.minJac) {
+  if(show.which[ASPECT] || show.which[DISTO] || show.which[RATIOJAC] || show.which[MINJAC]) {
     std::ostringstream columnNamesStream;
     columnNamesStream << "    ";
     columnNamesStream << std::setw(_colWidth) << "";
@@ -915,27 +910,27 @@ void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, con
   }
 
   // Disto
-  if(show.disto && !measure.minDisto.empty())
+  if(show.which[DISTO] && !measure.minDisto.empty())
     _printStatsOneMeasure(measure.minDisto, "Disto");
 
   // Aspect
-  if(show.aspect && !measure.minAspect.empty())
+  if(show.which[ASPECT] && !measure.minAspect.empty())
     _printStatsOneMeasure(measure.minAspect, "Aspect");
 
   // Stop if that's all
-  if((!show.ratioJac && !show.minJac && !show.validity) || measure.minJ.empty())
+  if((!show.which[RATIOJAC] && !show.which[MINJAC] && !show.which[VALIDITY]) || measure.minJ.empty())
     return;
 
   // Jacobian values
-  if(show.ratioJac)
+  if(show.which[RATIOJAC] && !measure.ratioJ.empty())
     _printStatsOneMeasure(measure.ratioJ, "minJ/maxJ");
-  if(show.minJac)
+  if(show.which[MINJAC] && !measure.minJ.empty())
     _printStatsOneMeasure(measure.minJ, "minJ", true);
   // if(show.maxJac)
   //   _printStatsOneMeasure(measure.maxJ, "maxJ", true);
 
   // Validity
-  if(!show.validity) return;
+  if(!show.which[VALIDITY] && !measure.validity.empty()) return;
   if(measure.validity.empty())
     Msg::StatusBar(true, "   All elements are valid :-)");
   else
