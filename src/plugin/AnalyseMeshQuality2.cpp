@@ -82,11 +82,8 @@
 //     - IF = -1 Limit to valid elements if there are any invalid elements,
 //               OTHERWISE skip hiding
 //     - IF = 0 As "IF = 1" if no invalid elements OTHERWISE as "IF = -1"
-//     - IF = 1 As "IF = 2" if there are multiple metric equal to M
-//              OTHERWISE limit to elements that do not meet criterion
-//                        for the metric==M
+//     - IF = 1 Limit to elements that do not meet criterion for any metrics==M
 //     - IF = 2 Limit to elements that do not meet criterion for all metrics==M
-//     - IF = 3 Limit to elements that do not meet criterion for any metrics==M
 //   • In function of hidingCriterion [in the case hideWorst = OFF]:
 //     - IF = 0 Use "metricValue <= x" as criterion
 //     - IF = 1 Use "x worst elements" as criterion
@@ -117,18 +114,20 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "restrictToVisibleElements", nullptr, 0, "OFF, ON=analyzeOnlyVisibleElements"},
   {GMSH_FULLRC, "restrictToCurvedElements", nullptr, 0, "OFF, ON=analyzeOnlyNonStraightElements"},
   // Hiding options:
-  {GMSH_FULLRC, "hidingPolicy", nullptr, 0, "-1=validity|skip, 0=validity|1, 1=oneQual|2, 2=qualOR, 3=qualAND"},
+  {GMSH_FULLRC, "hidingPolicy", nullptr, 0, "-1=validity|skip, 0=validity|1, 1=qualOR, 2=qualAND"},
   {GMSH_FULLRC, "hidingCriterion", nullptr, 1, "0=qualValue, 1=numElem, 2=proportionElem"},
   {GMSH_FULLRC, "hidingThreshold", nullptr, 25, "DOUBLE"},
   {GMSH_FULLRC, "hideWorst", nullptr, 0, "OFF=hideBest, ON"},
+  // FIXME I think i should have 'skipUnhidding' = 0
+  //  because it can be counter intuitive unhideOtherElements = 0
   {GMSH_FULLRC, "unhideOtherElements", nullptr, 0, "OFF=justHide, ON=alsoUnhide"},
   // Advanced computation options:
   {GMSH_FULLRC, "dataManagementPolicy", nullptr, 0, "-1=skipExecutionJustFreeData, 0=freeOldDataIfAbsent, 1=keepAllData"},
   {GMSH_FULLRC, "smartRecomputation", nullptr, 1, "OFF=alwaysRecompute, ON=avoidRecomputeIfTagsUnchanged"},
   {GMSH_FULLRC, "skipValidity", nullptr, 0, "0-=includeValidity, ON=skipPreventiveValidityCheck"},
   // Advanced analysis options:
-  {GMSH_FULLRC, "enableRatioJacDetAsAMetric", nullptr, 1, "OFF, 1+ (require skipValidity=0-)"},
-  {GMSH_FULLRC, "enableMinJacDetAsAMetric", nullptr, 1, "OFF, 1+ (require skipValidity=0-)"},
+  {GMSH_FULLRC, "enableRatioJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=0-)"},
+  {GMSH_FULLRC, "enableMinJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=0-)"},
   {GMSH_FULLRC, "regularizeDeterminant", nullptr, 1, "OFF, ON=inverseOrientationIfAbsMaxSmaller"},
   {GMSH_FULLRC, "wmCutoffsForStats", nullptr, 10, "CUTOFFS (for stats weighted mean, see Help)"},
   {GMSH_FULLRC, "wmCutoffsForPlots", nullptr, 10, "CUTOFFS (for plots weighted mean, see Help)"},
@@ -165,7 +164,7 @@ namespace JacQual = jacobianBasedQuality;
 using Plug = GMSH_AnalyseMeshQuality2Plugin;
 int Plug::_verbose = 0;
 const std::array<std::string, 5> Plug::_metricNames = {
-  "Disto", "Aspect", "Validity", "MinJ/maxJ", "MinJac"
+  "Validity", "Disto", "Aspect", "MinJ/maxJ", "MinJac"
 };
 
 // ======== Plugin: Base class methods =========================================
@@ -337,6 +336,7 @@ PView *Plug::execute(PView *v)
 
   _createPlots(measures);
   _createElementViews(measures);
+  _performHidding(measures);
   // TODO hidding
 
   return v;
@@ -358,7 +358,7 @@ void Plug::_fetchParameters()
   pc.skip = static_cast<bool>(MeshQuality2Options_Number[0].def);
   pp.createElemView = static_cast<bool>(MeshQuality2Options_Number[1].def);
   pp.createPlot = static_cast<bool>(MeshQuality2Options_Number[2].def);
-  ph.todo = static_cast<bool>(MeshQuality2Options_Number[3].def);
+  ph.todo = static_cast<int>(MeshQuality2Options_Number[3].def);
   _verbose = static_cast<int>(MeshQuality2Options_Number[4].def);
 
   // Metrics to include:
@@ -741,6 +741,115 @@ void Plug::_createElementViewsOneMetric(const Measures &m, Metric metric)
   }
 }
 
+void Plug::_performHidding(const std::vector<Measures> &measures)
+{
+  Parameters::Hidding &hide = _param.hide;
+  Parameters::MetricsToShow &show = _param.show;
+  if(!hide.todo) return;
+
+  for(auto &measure: measures) {
+    std::vector<MElement *> toHide;
+
+    // Hide in function of validity, if requested
+    if(hide.policy <= 0) {
+      for(size_t i = 0; i < measure.validity.size(); i++) {
+        bool val = static_cast<bool>(measure.validity[i]);
+        if(hide.worst ? !val : val)
+          toHide.push_back(measure.elements[i]);
+      }
+      if(!toHide.empty()) {
+        _hideElements(measure, toHide);
+        return;
+      }
+      if(hide.policy == -1) return;
+    }
+
+    // Hide in function of quality-like metrics
+    bool first = true;
+    for (int i = DISTO; i <= MINJAC; ++i) {
+      if(show.which[i] == show.M) {
+        std::set<MElement *> tmp;
+        _findElementsToHide(measure, static_cast<Metric>(i), tmp);
+        if(first) {
+          toHide.insert(toHide.end(), tmp.begin(), tmp.end());
+          first = false;
+          continue;
+        }
+        std::vector<MElement *> result;
+        if(hide.policy <= 1) {
+          // Keep element unhidden if any requested metric fall into the criterion
+          result.resize(std::min(toHide.size(), tmp.size()));
+          auto it = std::set_intersection(toHide.begin(), toHide.end(), tmp.begin(), tmp.end(), result.begin());
+          result.resize(it - result.begin());
+        }
+        else {
+          // Keep element unhidden only if all requested metric fall into the criterion
+          result.resize(toHide.size() + tmp.size());
+          auto it = std::set_union(toHide.begin(), toHide.end(), tmp.begin(), tmp.end(), result.begin());
+          result.resize(it - result.begin());
+        }
+        toHide = std::move(result);
+      }
+    }
+    _hideElements(measure, toHide);
+  }
+}
+
+void Plug::_findElementsToHide(const Measures &measure,
+  Metric metric, std::set<MElement *> &elements) const
+{
+  std::vector<double> values = measure.getValues(metric);
+
+  // FIXME What to do if all values are identical (typically, ratioJac=1)?
+  //  it is not a measure, so maybe don't care?
+
+  double limitVal;
+  size_t tmpN = static_cast<size_t>(_param.hide.threshold);
+  switch(_param.hide.criterion) {
+  case 0:
+  limitVal = _param.hide.threshold;
+    break;
+  case 2:
+    tmpN = static_cast<size_t>(_param.hide.threshold / 100.0 * static_cast<double>(values.size() - 1));
+  case 1:
+    std::nth_element(values.begin(), values.begin() + static_cast<long>(tmpN), values.end());
+    limitVal = values[tmpN];
+    break;
+  default:
+    _error(0, "Invalid hiding criterion");
+    return;
+  }
+
+  const std::vector<double> &val = measure.getValues(metric);
+
+  for(int i = 0; i < val.size(); i++) {
+    if(_param.hide.worst ? val[i] <= limitVal : val[i] >= limitVal) {
+      elements.insert(measure.elements[i]);
+    }
+  }
+}
+
+void Plug::_hideElements(const Measures &measure, std::vector<MElement *> &elemToHide)
+{
+  if(_param.hide.todo < 2 && elemToHide.size() == measure.elements.size()) {
+    _info(1, "Skipping hiding because all elements would be hidden");
+    return;
+  }
+
+  if(!_param.hide.unhideToo) {
+    for(auto el : elemToHide) el->setVisibility(false);
+    return;
+  }
+
+  std::sort(elemToHide.begin(), elemToHide.end()); // for binary_search
+  for(auto el : measure.elements) {
+    if (std::binary_search(elemToHide.begin(), elemToHide.end(), el))
+      el->setVisibility(false);
+    else
+      el->setVisibility(true);
+  }
+
+}
 
 void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
 {
@@ -849,7 +958,7 @@ void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, con
   _info(0, "=> Statistics for %s:", measure.dimStr);
 
   // Header
-  if(show.which[ASPECT] || show.which[DISTO] || show.which[RATIOJAC] || show.which[MINJAC]) {
+  if(show.which[DISTO] || show.which[ASPECT] || show.which[RATIOJAC] || show.which[MINJAC]) {
     std::ostringstream columnNamesStream;
     columnNamesStream << "    ";
     columnNamesStream << std::setw(_colWidth) << "";
