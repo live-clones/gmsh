@@ -24,7 +24,7 @@
 #include "drawContext.h"
 #endif
 #if defined(HAVE_VISUDEV)
-#include "BasisFactory.h"
+// #include "BasisFactory.h"
 #endif
 // NOTE What does the plugin
 //  0.Free data and stop IF dataManagementPolicy = -1
@@ -142,10 +142,9 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "DimensionOfElements", nullptr, UNTOUCHED, "[legacy] -1, 2, 3, 4"}
 
 #if defined(HAVE_VISUDEV)
-  ,
-  {GMSH_FULLRC, "createTemporalView", nullptr, 0},
-  {GMSH_FULLRC, "createPointwiseView", nullptr, 0},
-  {GMSH_FULLRC, "elementIDForPwView", nullptr, 0}
+  // {GMSH_FULLRC, "createTemporalView", nullptr, 0},
+  // {GMSH_FULLRC, "createPointwiseView", nullptr, 0},
+  // {GMSH_FULLRC, "elementIDForPwView", nullptr, 0}
 #endif
 };
 
@@ -431,23 +430,23 @@ void Plug::_fetchParameters()
   // // FIXME Warnings if verbose
 
 #if defined(HAVE_VISUDEV)
-  // TODO come back later
-  _pwJac = checkValidity / 2;
-  _pwIGE = computeDisto / 2;
-  _pwICN = computeAspect / 2;
-
-  // NOTE About createTimeView:
-  //  check if PView::_data::NbTimeStep if _data of type PViewDataList
-  //  check if PView::_options::vectorType == PViewOptions::Displacement (5),
-  //  or just consider that NbTimeStep is sufficient
-
-  bool createTimeView = static_cast<bool>(MeshQuality2Options_Number[20].def);
-  _createPwView = static_cast<bool>(MeshQuality2Options_Number[21].def);
-  _elemNumForPwView = static_cast<int>(MeshQuality2Options_Number[22].def);
-  _viewOrder = 0;
-  _dataPViewJac.clear();
-  _dataPViewIGE.clear();
-  _dataPViewICN.clear();
+  // // TODO come back later
+  // _pwJac = checkValidity / 2;
+  // _pwIGE = computeDisto / 2;
+  // _pwICN = computeAspect / 2;
+  //
+  // // NOTE About createTimeView:
+  // //  check if PView::_data::NbTimeStep if _data of type PViewDataList
+  // //  check if PView::_options::vectorType == PViewOptions::Displacement (5),
+  // //  or just consider that NbTimeStep is sufficient
+  //
+  // bool createTimeView = static_cast<bool>(MeshQuality2Options_Number[20].def);
+  // _createPwView = static_cast<bool>(MeshQuality2Options_Number[21].def);
+  // _elemNumForPwView = static_cast<int>(MeshQuality2Options_Number[22].def);
+  // _viewOrder = 0;
+  // _dataPViewJac.clear();
+  // _dataPViewIGE.clear();
+  // _dataPViewICN.clear();
 #endif
 }
 
@@ -644,8 +643,9 @@ void Plug::_computeRequestedData(Counts counts, bool check2D, bool check3D) cons
   Msg::StatusBar(true, "=> Done computing data");
 }
 
-bool _isValid(double minJ, double maxJ)
+bool isValid(double minJ, double maxJ)
 {
+  // FIXME move to jacobianBasedQuality?
   if (minJ == 0.0 || maxJ == 0.0) return false;
   return std::signbit(minJ) == std::signbit(maxJ);
 }
@@ -665,7 +665,7 @@ void Plug::_completeJacobianValues(std::vector<Measures> &measures) const
     if(_param.show.validity) {
       m.validity.resize(m.minJ.size());
       for(std::size_t i = 0; i < m.minJ.size(); i++)
-        m.validity[i] = _isValid(m.minJ[i], m.maxJ[i]);
+        m.validity[i] = isValid(m.minJ[i], m.maxJ[i]);
     }
     if(_param.show.ratioJac) {
       m.ratioJ.resize(m.minJ.size());
@@ -875,21 +875,9 @@ void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, con
   if((!show.ratioJac && !show.minJac && !show.validity) || measure.minJ.empty())
     return;
 
-  // Compute ratio and number of invalid
-  std::vector<double> ratio(measure.minJ.size());
-  for(std::size_t i = 0; i < measure.minJ.size(); ++i) {
-    if (measure.maxJ[i] > 0)
-      ratio[i] = measure.minJ[i] / measure.maxJ[i];
-    else
-      ratio[i] = measure.maxJ[i] / measure.minJ[i];
-  }
-  long numInvalid = std::count_if(ratio.begin(), ratio.end(), [](double value) {
-      return value <= 0;
-  });
-
   // Jacobian values
   if(show.ratioJac)
-    _printStatsOneMeasure(ratio, "minJ/maxJ");
+    _printStatsOneMeasure(measure.ratioJ, "minJ/maxJ");
   if(show.minJac)
     _printStatsOneMeasure(measure.minJ, "minJ", true);
   // if(show.maxJac)
@@ -897,10 +885,10 @@ void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, con
 
   // Validity
   if(!show.validity) return;
-  if(numInvalid)
-    _warn(0, "   Found %ld invalid elements", numInvalid);
-  else
+  if(measure.validity.empty())
     Msg::StatusBar(true, "   All elements are valid :-)");
+  else
+    _warn(0, "   Found %zu invalid elements", measure.validity.size());
 }
 
 void Plug::StatGenerator::_printStatsOneMeasure(const std::vector<double> &measure, const char* str, bool useG)

@@ -94,15 +94,15 @@ private:
 #if defined(HAVE_VISUDEV)
   // Pointwise data
   // FIXME to check after
-  bool _createPwView = 0;
-  int _elemNumForPwView = 0;
-  int _numElementToScan; // FIXME ajouté pour pouvoir compiler
-  bool _pwJac = false, _pwIGE = false, _pwICN = false;
-  std::map<int, std::vector<double>> _dataPViewJac;
-  std::map<int, std::vector<double>> _dataPViewIGE;
-  std::map<int, std::vector<double>> _dataPViewICN;
-  int _type2tag[20] = {0};
-  int _viewOrder = 0;
+  // bool _createPwView = 0;
+  // int _elemNumForPwView = 0;
+  // int _numElementToScan; // FIXME ajouté pour pouvoir compiler
+  // bool _pwJac = false, _pwIGE = false, _pwICN = false;
+  // std::map<int, std::vector<double>> _dataPViewJac;
+  // std::map<int, std::vector<double>> _dataPViewIGE;
+  // std::map<int, std::vector<double>> _dataPViewICN;
+  // int _type2tag[20] = {0};
+  // int _viewOrder = 0;
 #endif
 
 public:
@@ -162,10 +162,10 @@ private:
                                         bool check2D, bool check3D) const;
 
 #if defined(HAVE_VISUDEV)
-  void _computePointwiseQuantities(MElement *,
-                                   const fullMatrix<double> *normals);
-  void _createPViewPointwise();
-  void _setInterpolationMatrices(PView *);
+  // void _computePointwiseQuantities(MElement *,
+  //                                  const fullMatrix<double> *normals);
+  // void _createPViewPointwise();
+  // void _setInterpolationMatrices(PView *);
 #endif
 
 private:
