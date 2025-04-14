@@ -993,6 +993,8 @@ bool OCC_Internals::addCircleArc(int &tag, int startTag, int middleTag,
     bool Sense = false;
     if(!center) {
       Standard_Real AlphaC = ElCLib::Parameter(Circ, aP2);
+      Msg::Debug("Circle through point: Alpha1=%g, Alpha2=%g, AlphaC=%g",
+                 Alpha1, Alpha2, AlphaC);
       if(AlphaC > Alpha1 && AlphaC < Alpha2) Sense = true;
     }
     Handle(Geom_TrimmedCurve) arc =
