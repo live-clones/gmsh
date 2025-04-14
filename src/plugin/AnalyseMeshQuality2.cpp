@@ -106,7 +106,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "skipComputationMetrics", nullptr, 0, "OFF, ON=usePreviousData"},
   {GMSH_FULLRC, "createElementsView", nullptr, 0, "OFF, ON"},
   {GMSH_FULLRC, "createPlotView", nullptr, 1, "OFF, ON"},
-  {GMSH_FULLRC, "hideElements", nullptr, 0, "OFF, 1=skipHidingIfAllWouldBeHidden, 2=forceHiding"},
+  {GMSH_FULLRC, "hideElements", nullptr, 1, "OFF, 1=skipHidingIfAllWouldBeHidden, 2=forceHiding"},
   {GMSH_FULLRC, "guidanceLevel", nullptr, 0, "-1=minimalOutput, 0=verbose, 1=verboseAndExplanations"},
   // Metrics to include:
   {GMSH_FULLRC, "enableDistortionQuality", nullptr, 1, "OFF, 1+=includeDistortionQuality"},
@@ -117,8 +117,8 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "restrictToCurvedElements", nullptr, 0, "OFF, ON=analyzeOnlyNonStraightElements"},
   // Hiding options:
   {GMSH_FULLRC, "hidingPolicy", nullptr, 0, "-1=validity|skip, 0=validity|1, 1=oneQual|2, 2=qualOR, 3=qualAND"},
-  {GMSH_FULLRC, "hidingCriterion", nullptr, 0, "0=qualValue, 1=numElem, 2=proportionElem"},
-  {GMSH_FULLRC, "hidingThreshold", nullptr, .1, "DOUBLE"},
+  {GMSH_FULLRC, "hidingCriterion", nullptr, 1, "0=qualValue, 1=numElem, 2=proportionElem"},
+  {GMSH_FULLRC, "hidingThreshold", nullptr, 25, "DOUBLE"},
   {GMSH_FULLRC, "hideWorst", nullptr, 0, "OFF=hideBest, ON"},
   {GMSH_FULLRC, "unhideOtherElements", nullptr, 0, "OFF=justHide, ON=alsoUnhide"},
   // Advanced computation options:
@@ -332,7 +332,7 @@ PView *Plug::execute(PView *v)
   _statGen->printStats(_param, measures);
 
   _createPlots(measures);
-  // TODO elementViews
+  _createElementViews(measures);
   // TODO hidding
 
   return v;
@@ -700,35 +700,12 @@ void Plug::_createPlotOneMeasure(const Measures &m, Metric metric)
 {
   std::string s;
   const std::vector<double> *values = nullptr;
-
-  switch(metric) {
-  case DISTO:
-    s = "Distortion";
-    values = &m.minDisto;
-    break;
-  case ASPECT:
-    s = "Aspect";
-    values = &m.minAspect;
-    break;
-  case VALIDITY:
-    s = "Validity";
-    values = &m.validity;
-    break;
-  case RATIOJAC:
-    s = "minJ/maxJ";
-    values = &m.ratioJ;
-    break;
-  case MINJAC:
-    s = "minJ";
-    values = &m.minJ;
-    break;
-  default:
-    Msg::Error("Unknown metric");
-    return;
-  }
+  _extractMeasureData(m, metric, s, values);
+  if(values == nullptr) return;
 
   s += " ";
   s += m.shortName;
+  s += " (p)";
 
   constexpr double minMaxQuality[2] = {0, 1};
   const double *minMax = (values == &m.ratioJ || values == &m.minJ) ? nullptr : minMaxQuality;
@@ -739,6 +716,79 @@ void Plug::_createPlotOneMeasure(const Measures &m, Metric metric)
       PView *p = new PView(s, cutoff, true, *values, minMax);
       _pviews[key] = p;
     }
+  }
+}
+
+void Plug::_createElementViews(const std::vector<Measures> &measures)
+{
+  Parameters::MetricsToShow &ps = _param.show;
+  for(const auto &m: measures) {
+    if(ps.disto == ps.M && !m.minDisto.empty())
+      _createElementViewsOneMeasure(m, DISTO);
+
+    if(ps.aspect == ps.M && !m.minAspect.empty())
+      _createElementViewsOneMeasure(m, ASPECT);
+
+    if(ps.validity == ps.M && !m.validity.empty())
+      _createElementViewsOneMeasure(m, VALIDITY);
+
+    if(ps.ratioJac == ps.M && !m.ratioJ.empty())
+      _createElementViewsOneMeasure(m, RATIOJAC);
+
+    if(ps.minJac == ps.M && !m.minJ.empty())
+      _createElementViewsOneMeasure(m, MINJAC);
+  }
+}
+
+void Plug::_createElementViewsOneMeasure(const Measures &m, Metric metric)
+{
+  std::string s;
+  const std::vector<double> *values = nullptr;
+  _extractMeasureData(m, metric, s, values);
+  if(values == nullptr) return;
+
+  s += " ";
+  s += m.shortName;
+  s += " (e)";
+
+  Key key(m.dim2Elem, m.dim3Elem, metric, Key::TypeView::ELEMENTS, 0);
+  if(_pviews.find(key) == _pviews.end()) {
+    std::map<int, std::vector<double> > dataPV;
+    for(auto i = 0; i < values->size(); i++) {
+      dataPV[m.elements[i]->getNum()].push_back(values->at(i));
+    }
+    PView *p = new PView(s, "ElementData", _m, dataPV);
+    _pviews[key] = p;
+  }
+}
+
+void Plug::_extractMeasureData(const Measures &m, Metric metric, std::string &s,
+  const std::vector<double> *&values)
+{
+  switch(metric) {
+  case DISTO:
+    s = "Disto";
+    values = &m.minDisto;
+    return;
+  case ASPECT:
+    s = "Aspect";
+    values = &m.minAspect;
+    return;
+  case VALIDITY:
+    s = "Validity";
+    values = &m.validity;
+    return;
+  case RATIOJAC:
+    s = "MinJ/maxJ";
+    values = &m.ratioJ;
+    return;
+  case MINJAC:
+    s = "MinJac";
+    values = &m.minJ;
+    return;
+  default:
+    Msg::Error("Unknown metric");
+    values = nullptr;
   }
 }
 
@@ -1305,6 +1355,7 @@ void Plug::DataEntity::add(MElement *el)
 void Plug::DataEntity::addValues(Measures &measures)
 {
   for(auto &it : _mapElemToIndex) {
+    measures.elements.push_back(it.first);
     std::size_t idx = it.second;
     if(isBitSet(_flags[idx], F_REQU))
     {

@@ -142,6 +142,10 @@ private:
   void _completeJacobianValues(std::vector<Measures> &measures) const;
   void _createPlots(const std::vector<Measures> &measures);
   void _createPlotOneMeasure(const Measures &, Metric);
+  void _createElementViews(const std::vector<Measures> &measures);
+  void _createElementViewsOneMeasure(const Measures &, Metric);
+  void _extractMeasureData(const Measures &m, Metric metric, std::string &s,
+                     const std::vector<double> *&values);
 
   // Those are static to be able to call them from class members
   static bool _okToPrint(int verb)
