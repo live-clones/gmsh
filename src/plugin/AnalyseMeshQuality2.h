@@ -77,6 +77,10 @@ private:
     bool check3D = false;
   };
   enum Metric { VALIDITY, DISTO, ASPECT, MINJAC, RATIOJAC } metric;
+  const std::array<std::string, 5> metricNames = {
+    "Disto", "Aspect", "Validity", "MinJ/maxJ", "MinJac"
+  };
+
 
 private:
   GModel *_m;
@@ -141,8 +145,6 @@ private:
   void _createPlotOneMeasure(const Measures &, Metric);
   void _createElementViews(const std::vector<Measures> &);
   void _createElementViewsOneMeasure(const Measures &, Metric);
-  void _extractMeasureData(const Measures &, Metric, std::string &,
-                     const std::vector<double> *&values);
 
   // Those are static to be able to call them from class members
   static bool _okToPrint(int verb)
@@ -285,8 +287,8 @@ private:
   struct Measures {
     bool dim2Elem;
     bool dim3Elem;
-    const char* name;
-    const char* shortName;
+    const char* dimStr;
+    const char* dimStrShort;
     std::vector<double> minJ;
     std::vector<double> maxJ;
     std::vector<double> ratioJ;
@@ -295,6 +297,24 @@ private:
     std::vector<double> minAspect;
     std::vector<MElement *> elements;
     static Measures combine(const Measures &, const Measures &, const char *name, const char *shortName);
+    const std::vector<double> &getValues(Metric m) const
+    {
+      switch(m) {
+      case VALIDITY:
+        return validity;
+      case DISTO:
+        return minDisto;
+      case ASPECT:
+        return minAspect;
+      case MINJAC:
+        return minJ;
+      case RATIOJAC:
+        return ratioJ;
+      default:
+        _error(0, "Invalid metric");
+      }
+      return maxJ; // to avoid compiler warning
+    }
   };
 
   struct Key {

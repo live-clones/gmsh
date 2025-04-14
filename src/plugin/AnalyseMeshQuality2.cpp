@@ -8,6 +8,7 @@
 #if defined(HAVE_MESH)
 
 #include <numeric>
+#include <array>
 #include <sstream>
 #include <iomanip>
 #include <string>
@@ -310,14 +311,14 @@ PView *Plug::execute(PView *v)
   if(check2D) {
     measures.emplace_back();
     _data2D->gatherValues(counts2D, measures.back());
-    measures.back().name = "dimension 2";
-    measures.back().shortName = "2D";
+    measures.back().dimStr = "dimension 2";
+    measures.back().dimStrShort = "2D";
   }
   if(check3D) {
     measures.emplace_back();
     _data3D->gatherValues(counts3D, measures.back());
-    measures.back().name = "dimension 3";
-    measures.back().shortName = "3D";
+    measures.back().dimStr = "dimension 3";
+    measures.back().dimStrShort = "3D";
   }
   _completeJacobianValues(measures);
 
@@ -676,41 +677,29 @@ void Plug::_createPlots(const std::vector<Measures> &measures)
   if(!_param.pview.createPlot) return;
   Parameters::MetricsToShow &ps = _param.show;
   for(const auto &m: measures) {
-    if(ps.which[DISTO] == ps.M && !m.minDisto.empty())
-      _createPlotOneMeasure(m, DISTO);
-
-    if(ps.which[ASPECT] == ps.M && !m.minAspect.empty())
-      _createPlotOneMeasure(m, ASPECT);
-
-    if(ps.which[VALIDITY] == ps.M && !m.validity.empty())
-      _createPlotOneMeasure(m, VALIDITY);
-
-    if(ps.which[RATIOJAC] == ps.M && !m.ratioJ.empty())
-      _createPlotOneMeasure(m, RATIOJAC);
-
-    if(ps.which[MINJAC] == ps.M && !m.minJ.empty())
-      _createPlotOneMeasure(m, MINJAC);
+    for(int i = VALIDITY; i <= RATIOJAC; i++) {
+      if(ps.which[i] == ps.M)  _createPlotOneMeasure(m, static_cast<Metric>(i));
+    }
   }
 }
 
 void Plug::_createPlotOneMeasure(const Measures &m, Metric metric)
 {
-  std::string s;
-  const std::vector<double> *values = nullptr;
-  _extractMeasureData(m, metric, s, values);
-  if(values == nullptr) return;
+  const std::vector<double> values = m.getValues(metric);
+  if(values.empty()) return;
 
+  std::string s = metricNames[metric];
   s += " ";
-  s += m.shortName;
+  s += m.dimStrShort;
   s += " (p)";
 
   constexpr double minMaxQuality[2] = {0, 1};
-  const double *minMax = (values == &m.ratioJ || values == &m.minJ) ? nullptr : minMaxQuality;
+  const double *minMax = (metric == RATIOJAC || metric == MINJAC) ? nullptr : minMaxQuality;
 
   for(double cutoff: _statGen->getCutoffPlots()) {
     Key key(m.dim2Elem, m.dim3Elem, metric, Key::TypeView::PLOT, cutoff);
     if(_pviews.find(key) == _pviews.end()) {
-      PView *p = new PView(s, cutoff, true, *values, minMax);
+      PView *p = new PView(s, cutoff, true, values, minMax);
       _pviews[key] = p;
     }
   }
@@ -721,74 +710,34 @@ void Plug::_createElementViews(const std::vector<Measures> &measures)
   if(!_param.pview.createElemView) return;
   Parameters::MetricsToShow &ps = _param.show;
   for(const auto &m: measures) {
-    if(ps.which[DISTO] == ps.M && !m.minDisto.empty())
-      _createElementViewsOneMeasure(m, DISTO);
-
-    if(ps.which[ASPECT] == ps.M && !m.minAspect.empty())
-      _createElementViewsOneMeasure(m, ASPECT);
-
-    if(ps.which[VALIDITY] == ps.M && !m.validity.empty())
-      _createElementViewsOneMeasure(m, VALIDITY);
-
-    if(ps.which[RATIOJAC] == ps.M && !m.ratioJ.empty())
-      _createElementViewsOneMeasure(m, RATIOJAC);
-
-    if(ps.which[MINJAC] == ps.M && !m.minJ.empty())
-      _createElementViewsOneMeasure(m, MINJAC);
+    for(int i = VALIDITY; i <= RATIOJAC; i++) {
+      if(ps.which[i] == ps.M)
+        _createElementViewsOneMeasure(m, static_cast<Metric>(i));
+    }
   }
 }
 
 void Plug::_createElementViewsOneMeasure(const Measures &m, Metric metric)
 {
-  std::string s;
-  const std::vector<double> *values = nullptr;
-  _extractMeasureData(m, metric, s, values);
-  if(values == nullptr) return;
+  const std::vector<double> values = m.getValues(metric);
+  if(values.empty()) return;
 
+  std::string s = metricNames[metric];
   s += " ";
-  s += m.shortName;
+  s += m.dimStrShort;
   s += " (e)";
 
   Key key(m.dim2Elem, m.dim3Elem, metric, Key::TypeView::ELEMENTS, 0);
   if(_pviews.find(key) == _pviews.end()) {
     std::map<int, std::vector<double> > dataPV;
-    for(auto i = 0; i < values->size(); i++) {
-      dataPV[m.elements[i]->getNum()].push_back(values->at(i));
+    for(auto i = 0; i < values.size(); i++) {
+      dataPV[m.elements[i]->getNum()].push_back(values[i]);
     }
     PView *p = new PView(s, "ElementData", _m, dataPV);
     _pviews[key] = p;
   }
 }
 
-void Plug::_extractMeasureData(const Measures &m, Metric metric, std::string &s,
-  const std::vector<double> *&values)
-{
-  switch(metric) {
-  case DISTO:
-    s = "Disto";
-    values = &m.minDisto;
-    return;
-  case ASPECT:
-    s = "Aspect";
-    values = &m.minAspect;
-    return;
-  case VALIDITY:
-    s = "Validity";
-    values = &m.validity;
-    return;
-  case RATIOJAC:
-    s = "MinJ/maxJ";
-    values = &m.ratioJ;
-    return;
-  case MINJAC:
-    s = "MinJac";
-    values = &m.minJ;
-    return;
-  default:
-    Msg::Error("Unknown metric");
-    values = nullptr;
-  }
-}
 
 void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
 {
@@ -894,7 +843,7 @@ void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, con
   //  6. Verbose => Add at the end of execute info(Done, you can disable verbose)
   //     OR => verbose off by default and end by saying that verbose can be set on
 
-  _info(0, "=> Statistics for %s:", measure.name);
+  _info(0, "=> Statistics for %s:", measure.dimStr);
 
   // Header
   if(show.which[ASPECT] || show.which[DISTO] || show.which[RATIOJAC] || show.which[MINJAC]) {
@@ -1620,8 +1569,8 @@ Plug::Measures Plug::Measures::combine(const Measures &m1, const Measures &m2, c
   combineVectors(result.elements, m1.elements, m2.elements);
   result.dim2Elem = m1.dim2Elem || m2.dim2Elem;
   result.dim3Elem = m1.dim3Elem || m2.dim3Elem;
-  result.name = name;
-  result.shortName = shortName;
+  result.dimStr = name;
+  result.dimStrShort = shortName;
   return result;
 }
 
