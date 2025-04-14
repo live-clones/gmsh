@@ -673,6 +673,7 @@ void Plug::_completeJacobianValues(std::vector<Measures> &measures) const
 
 void Plug::_createPlots(const std::vector<Measures> &measures)
 {
+  if(!_param.pview.createPlot) return;
   Parameters::MetricsToShow &ps = _param.show;
   for(const auto &m: measures) {
     if(ps.which[DISTO] == ps.M && !m.minDisto.empty())
@@ -717,6 +718,7 @@ void Plug::_createPlotOneMeasure(const Measures &m, Metric metric)
 
 void Plug::_createElementViews(const std::vector<Measures> &measures)
 {
+  if(!_param.pview.createElemView) return;
   Parameters::MetricsToShow &ps = _param.show;
   for(const auto &m: measures) {
     if(ps.which[DISTO] == ps.M && !m.minDisto.empty())
@@ -830,12 +832,6 @@ void Plug::StatGenerator::printStats(const Parameters &param,
            "the gradient of the FE solution. Elements with poor aspect quality "
            "negatively affect errors in the gradient of the solution. Values "
            "range from 0 to 1.");
-  if(param.show.which[MINJAC])
-    _info(1, "   *m<|>inJ*  is the minimum of the Jacobian determinant computed "
-             "in the reference space and can be used to check the element size. "
-             "This metric is particularly relevant for iterative methods, "
-             "where the time step may depend on the size of the smallest "
-             "element. Values range from -∞ to +∞.");
   if(param.show.which[RATIOJAC])
     _info(1, "   *R<|>atio minJ/maxJ*  is the ratio between the minimum and "
              "maximum values of the Jacobian determinant. It is faster to "
@@ -843,6 +839,12 @@ void Plug::StatGenerator::printStats(const Parameters &param,
            "be used to evaluate how much elements are deformed. However, "
            "note that it is not a true quality metric. Values range from "
            "-∞ to 1.");
+  if(param.show.which[MINJAC])
+    _info(1, "   *m<|>inJ*  is the minimum of the Jacobian determinant computed "
+             "in the reference space and can be used to check the element size. "
+             "This metric is particularly relevant for iterative methods, "
+             "where the time step may depend on the size of the smallest "
+             "element. Values range from -∞ to +∞.");
   if(param.pview.statCutoffPack)
     _info(1, "   *W<|>orst-10%% Weighted Mean*  (Wm10) corresponds to a weighted "
              "mean where the worst 10%% of the values are assigned the same weight "
