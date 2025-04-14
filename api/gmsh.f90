@@ -746,6 +746,8 @@ module gmsh
         gmshModelMeshAdd_free_form
     procedure, nopass :: get_DF => &
         gmshModelMeshGet_DF
+    procedure, nopass :: get_front_nodes_position => &
+        gmshModelMeshGet_front_nodes_position
     procedure, nopass :: get_nodes_position => &
         gmshModelMeshGet_nodes_position
     procedure, nopass :: reset_discrete_front => &
@@ -7846,6 +7848,43 @@ module gmsh
     mesh_to_DF_parametric = ovectordouble_(api_mesh_to_DF_parametric_, &
       api_mesh_to_DF_parametric_n_)
   end subroutine gmshModelMeshGet_DF
+
+  !> Antoine put a comment here.
+  subroutine gmshModelMeshGet_front_nodes_position(api_position, &
+                                                   front_nodes, &
+                                                   ierr)
+    interface
+    subroutine C_API(api_api_position_, &
+                     api_api_position_n_, &
+                     api_front_nodes_, &
+                     api_front_nodes_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshGet_front_nodes_position")
+      use, intrinsic :: iso_c_binding
+      type(c_ptr), intent(out) :: api_api_position_
+      integer(c_size_t) :: api_api_position_n_
+      type(c_ptr), intent(out) :: api_front_nodes_
+      integer(c_size_t), intent(out) :: api_front_nodes_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    real(c_double), dimension(:), allocatable, intent(out) :: api_position
+    integer(c_int), dimension(:), allocatable, intent(out) :: front_nodes
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_api_position_
+    integer(c_size_t) :: api_api_position_n_
+    type(c_ptr) :: api_front_nodes_
+    integer(c_size_t) :: api_front_nodes_n_
+    call C_API(api_api_position_=api_api_position_, &
+         api_api_position_n_=api_api_position_n_, &
+         api_front_nodes_=api_front_nodes_, &
+         api_front_nodes_n_=api_front_nodes_n_, &
+         ierr_=ierr)
+    api_position = ovectordouble_(api_api_position_, &
+      api_api_position_n_)
+    front_nodes = ovectorint_(api_front_nodes_, &
+      api_front_nodes_n_)
+  end subroutine gmshModelMeshGet_front_nodes_position
 
   !> Antoine put a comment here.
   subroutine gmshModelMeshGet_nodes_position(api_position, &

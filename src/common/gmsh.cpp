@@ -5780,10 +5780,10 @@ GMSH_API void gmsh::model::mesh::get_DF(std::vector<double> &api_d_pos, std::vec
   return; 
 }
  
-// GMSH_API void gmsh::model::mesh::get_front_nodes_position(std::vector<double> &api_position, std::vector<int> &fn){
-//   meshRelaying::instance()->getFrontNodesPosition(api_position, fn);
-//   return;
-// }
+GMSH_API void gmsh::model::mesh::get_front_nodes_position(std::vector<double> &api_position, std::vector<int> &fn){
+  meshRelaying::instance()->getFrontNodesPosition(api_position, fn);
+  return;
+}
 
 GMSH_API void gmsh::model::mesh::get_nodes_position(std::vector<double> &api_position){
   meshRelaying::instance()->getNodesPosition(api_position);

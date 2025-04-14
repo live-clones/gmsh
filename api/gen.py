@@ -605,8 +605,8 @@ mesh.add('add_free_form', doc, None, iint('tag'), ivectordouble('poly'), ivector
 doc = '''Antoine put a comment here.'''
 mesh.add('get_DF', doc, None, ovectordouble('api_d_pos'),ovectorint('api_d_tags'), ovectorsize('api_d_ids'), ovectordouble('api_t_pos'), ovectorint('api_t_tags'), ovectorsize('api_t_ids'), ovectorsize('DF_to_meshNodes'), ovectordouble('DF_to_mesh_parametric'), ovectorsize('meshNodes_to_DF'), ovectordouble('mesh_to_DF_parametric'))
 
-# doc = '''Antoine put a comment here.'''
-# mesh.add('get_front_nodes_position', doc, None, ovectordouble('api_position'), ovectorint('front_nodes') )
+doc = '''Antoine put a comment here.'''
+mesh.add('get_front_nodes_position', doc, None, ovectordouble('api_position'), ovectorint('front_nodes') )
 
 doc = '''Antoine put a comment here.'''
 mesh.add('get_nodes_position', doc, None, ovectordouble('api_position') )

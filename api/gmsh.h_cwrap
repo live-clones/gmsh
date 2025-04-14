@@ -3348,6 +3348,21 @@ namespace gmsh { // Top-level functions
         mesh_to_DF_parametric.assign(api_mesh_to_DF_parametric_, api_mesh_to_DF_parametric_ + api_mesh_to_DF_parametric_n_); gmshFree(api_mesh_to_DF_parametric_);
       }
 
+      // gmsh::model::mesh::get_front_nodes_position
+      //
+      // Antoine put a comment here.
+      inline void get_front_nodes_position(std::vector<double> & api_position,
+                                           std::vector<int> & front_nodes)
+      {
+        int ierr = 0;
+        double *api_api_position_; size_t api_api_position_n_;
+        int *api_front_nodes_; size_t api_front_nodes_n_;
+        gmshModelMeshGet_front_nodes_position(&api_api_position_, &api_api_position_n_, &api_front_nodes_, &api_front_nodes_n_, &ierr);
+        if(ierr) throwLastError();
+        api_position.assign(api_api_position_, api_api_position_ + api_api_position_n_); gmshFree(api_api_position_);
+        front_nodes.assign(api_front_nodes_, api_front_nodes_ + api_front_nodes_n_); gmshFree(api_front_nodes_);
+      }
+
       // gmsh::model::mesh::get_nodes_position
       //
       // Antoine put a comment here.
