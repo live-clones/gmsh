@@ -257,8 +257,8 @@ PView *Plug::execute(PView *v)
     _info(1, "=> Freeing data... (because option 'dataManagePolicy' is -1)");
     _data2D->clear();
     _data3D->clear();
-    MeshQuality2Options_Number[15].def = 0;
-    _info(0, "   Done. Option 'dataManagePolicy' has been set to 0");
+    MeshQuality2Options_Number[15].def = !_previousFreeOldData;
+    _info(0, "   Done. Option 'dataManagePolicy' has been reset");
     _info(1, "   Nothing else to do, rerun the plugin to compute something");
     return v;
   }
@@ -390,6 +390,7 @@ void Plug::_fetchParameters()
   _statGen->setCutoffPlots(pp.plotCutoffPack);
 
   // -> dataManagePolicy
+  _previousFreeOldData = pc.freeOldData;
   _param.freeData = dataManagePolicy == -1;
   pc.freeOldData = dataManagePolicy <= 0;
 
@@ -399,7 +400,7 @@ void Plug::_fetchParameters()
   pc.aspect = static_cast<bool>(aspect);
 
   // -> metrics to show
-  ps.validity = skipValidity > 0 ? 0 : std::max(1, -static_cast<int>(skipValidity));
+  ps.validity = skipValidity > 0 ? 0 : -static_cast<int>(skipValidity);
   ps.disto = static_cast<int>(disto);
   ps.aspect = static_cast<int>(aspect);
   ps.minJac = static_cast<int>(minJ);

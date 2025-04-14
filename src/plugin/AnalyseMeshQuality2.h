@@ -89,6 +89,7 @@ private:
   Parameters _param;
   bool _myVerbose = false;
   int _dimensionPolicy = 0;
+  int _previousFreeOldData = 0;
   std::map<Key, PView *> _pviews;
 
 #if defined(HAVE_VISUDEV)
