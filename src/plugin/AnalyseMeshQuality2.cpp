@@ -113,12 +113,21 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "dimensionPolicy", nullptr, 0, "-1=force2D, 0=prioritize3D, 1=2D+3D, 2=combine2D+3D"},
   {GMSH_FULLRC, "restrictToVisibleElements", nullptr, 0, "OFF, ON=analyzeOnlyVisibleElements"},
   {GMSH_FULLRC, "restrictToCurvedElements", nullptr, 0, "OFF, ON=analyzeOnlyNonStraightElements"},
+  // Suggestion:
+  //    adjustVisibility/setVisibilityElements = OFF, 1=skipIfAllWouldBeHidden, 2=acceptAllHidden
+  //  Visibility options:
+  //    visibilityPolicy = -1=validity|skip, 0=validity|1, 1=qualOR, 2=qualAND
+  //    visibilityCriterion = 0=proportionVisibleElem, 1=numVisibleElem, 2=metricValue
+  //    visibilityThreshold = DOUBLE (which meaning depends on visibilityCriterion)
+  //    hideWorst = OFF=makeWorstVisible, ON=makeBestVisible
+  //    doNoSetVisible = OFF=performHidingAndUnhiding, ON=justPerformHiding
   // Hiding options:
   {GMSH_FULLRC, "hidingPolicy", nullptr, 0, "-1=validity|skip, 0=validity|1, 1=qualOR, 2=qualAND"},
-  {GMSH_FULLRC, "hidingCriterion", nullptr, 1, "0=qualValue, 1=numElem, 2=proportionElem"},
-  {GMSH_FULLRC, "hidingThreshold", nullptr, 25, "DOUBLE"},
+  // FIXME 2=proportionElemToKeep as default? Or at least 1?
+  {GMSH_FULLRC, "hidingCriterion", nullptr, 1, "0=metricValue, 1=numElemToKeep, 2=proportionElemToKeep"},
+  {GMSH_FULLRC, "hidingThreshold", nullptr, 25, "DOUBLE (which meaning depends on visibilityCriterion)"},
   {GMSH_FULLRC, "hideWorst", nullptr, 0, "OFF=hideBest, ON"},
-  // FIXME I think i should have 'skipUnhidding' = 0
+  // FIXME I think i should have 'skipUnhiding' = 0 OR 'noUnhiding' = 0 OR 'skipMakingVisible' = 0
   //  because it can be counter intuitive unhideOtherElements = 0
   {GMSH_FULLRC, "unhideOtherElements", nullptr, 0, "OFF=justHide, ON=alsoUnhide"},
   // Advanced computation options:
@@ -131,6 +140,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "regularizeDeterminant", nullptr, 1, "OFF, ON=inverseOrientationIfAbsMaxSmaller"},
   {GMSH_FULLRC, "wmCutoffsForStats", nullptr, 10, "CUTOFFS (for stats weighted mean, see Help)"},
   {GMSH_FULLRC, "wmCutoffsForPlots", nullptr, 10, "CUTOFFS (for plots weighted mean, see Help)"},
+  // FIXME add skipPrintStat?
   // Legacy options:
   {GMSH_FULLRC, "JacobianDeterminant", nullptr, UNTOUCHED, "[legacy] OFF, ON"},
   {GMSH_FULLRC, "IGEMeasure", nullptr, UNTOUCHED, "[legacy] OFF, ON"},
@@ -336,7 +346,7 @@ PView *Plug::execute(PView *v)
 
   _createPlots(measures);
   _createElementViews(measures);
-  if(_performHidding(measures)) {
+  if(_performHiding(measures)) {
     CTX::instance()->mesh.changed = ENT_ALL;
 #if defined(HAVE_OPENGL)
     drawContext::global()->draw();
@@ -353,7 +363,7 @@ void Plug::_fetchParameters()
 {
   Parameters::Computation &pc = _param.compute;
   Parameters::Post &pp = _param.pview;
-  Parameters::Hidding &ph = _param.hide;
+  Parameters::Hiding &ph = _param.hide;
   Parameters::MetricsToShow &ps = _param.show;
 
   double skipValidity, disto, aspect, minJ, ratioJ, dataManagePolicy;
@@ -420,7 +430,7 @@ void Plug::_fetchParameters()
   // Legacy options (must be last):
   _fetchLegacyParameters();
 
-  // TODO:
+  // TODO: use p = std::clamp(p, 0, 3);
   // if(_dimensionPolicy < 0)
   //   _dimensionPolicy = 0;
   // else if(_dimensionPolicy > 3)
@@ -500,7 +510,7 @@ void Plug::_fetchLegacyParameters()
 
   Parameters::Computation &pc = _param.compute;
   Parameters::Post &pp = _param.pview;
-  Parameters::Hidding &ph = _param.hide;
+  Parameters::Hiding &ph = _param.hide;
   Parameters::MetricsToShow &ps = _param.show;
 
   pc.onlyVisible = false;
@@ -737,7 +747,7 @@ void Plug::_createElementViewsOneMetric(const Measures &m, Metric metric)
   Key key(m.dim2Elem, m.dim3Elem, metric, Key::TypeView::ELEMENTS, 0);
   if(_pviews.find(key) == _pviews.end()) {
     std::map<int, std::vector<double> > dataPV;
-    for(auto i = 0; i < values.size(); i++) {
+    for(size_t i = 0; i < values.size(); i++) {
       dataPV[m.elements[i]->getNum()].push_back(values[i]);
     }
     PView *p = new PView(s, "ElementData", _m, dataPV);
@@ -745,9 +755,9 @@ void Plug::_createElementViewsOneMetric(const Measures &m, Metric metric)
   }
 }
 
-bool Plug::_performHidding(const std::vector<Measures> &measures)
+bool Plug::_performHiding(const std::vector<Measures> &measures)
 {
-  Parameters::Hidding &hide = _param.hide;
+  Parameters::Hiding &hide = _param.hide;
   Parameters::MetricsToShow &show = _param.show;
   if(!hide.todo) return false;
 
@@ -802,6 +812,12 @@ bool Plug::_performHidding(const std::vector<Measures> &measures)
   return hasHidden;
 }
 
+template <typename T>
+T clamp(T val, T lower, T upper)
+{
+  return std::min(upper, std::max(val, lower));
+}
+
 void Plug::_findElementsToHide(const Measures &measure,
   Metric metric, std::set<MElement *> &elements) const
 {
@@ -811,17 +827,23 @@ void Plug::_findElementsToHide(const Measures &measure,
   //  it is not a measure, so maybe don't care?
 
   double limitVal;
-  size_t tmpN = static_cast<size_t>(_param.hide.threshold);
+  size_t numOfElements = static_cast<size_t>(_param.hide.threshold);
   switch(_param.hide.criterion) {
   case 0:
   limitVal = _param.hide.threshold;
     break;
-  case 2:
-    tmpN = static_cast<size_t>(_param.hide.threshold / 100.0 * static_cast<double>(values.size() - 1));
+
+  case 2: {
+    double tmp = clamp(_param.hide.threshold, 0., 100.) / 100.;
+    tmp *= static_cast<double>(values.size() - 1);
+    numOfElements = static_cast<size_t>(tmp);
+  }
   case 1:
-    std::nth_element(values.begin(), values.begin() + static_cast<long>(tmpN), values.end());
-    limitVal = values[tmpN];
+    numOfElements = clamp(numOfElements, size_t{0}, values.size() - 1);
+    std::nth_element(values.begin(), values.begin() + static_cast<long>(numOfElements), values.end());
+    limitVal = values[numOfElements];
     break;
+
   default:
     _error(0, "Invalid hiding criterion");
     return;
@@ -840,7 +862,8 @@ bool Plug::_hideElements(const Measures &measure,
                          std::vector<MElement *> &elemToHide)
 {
   if(_param.hide.todo < 2 && elemToHide.size() == measure.elements.size()) {
-    _info(1, "Skipping hiding because all elements would be hidden");
+    _info(0, "Skipping hiding because all elements would be hidden.");
+    _info(1, "To force hiding, set 'hideElements' to 2");
     return false;
   }
 

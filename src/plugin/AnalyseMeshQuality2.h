@@ -58,7 +58,7 @@ private:
       double statCutoffPack = 10;
     } pview;
 
-    struct Hidding {
+    struct Hiding {
       int todo = 0;
       int policy = 0;
       int criterion = 2;
@@ -143,7 +143,7 @@ private:
   void _createPlotsOneMetric(const Measures &, Metric);
   void _createElementViews(const std::vector<Measures> &);
   void _createElementViewsOneMetric(const Measures &, Metric);
-  bool _performHidding(const std::vector<Measures> &);
+  bool _performHiding(const std::vector<Measures> &);
   void _findElementsToHide(const Measures &, Metric, std::set<MElement *> &) const;
   bool _hideElements(const Measures &measure, std::vector<MElement *> &elemToHide);
 
