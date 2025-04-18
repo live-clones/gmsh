@@ -797,8 +797,12 @@ module gmsh
         gmshModelAddDiscreteEntity
     procedure, nopass :: removeEntities => &
         gmshModelRemoveEntities
+    procedure, nopass :: getEntityType => &
+        gmshModelGetEntityType
     procedure, nopass :: getType => &
         gmshModelGetType
+    procedure, nopass :: getEntityProperties => &
+        gmshModelGetEntityProperties
     procedure, nopass :: getParent => &
         gmshModelGetParent
     procedure, nopass :: getNumberOfPartitions => &
@@ -2093,6 +2097,37 @@ module gmsh
   end subroutine gmshModelRemoveEntities
 
   !> Get the type of the entity of dimension `dim' and tag `tag'.
+  subroutine gmshModelGetEntityType(dim, &
+                                    tag, &
+                                    entityType, &
+                                    ierr)
+    interface
+    subroutine C_API(dim, &
+                     tag, &
+                     api_entityType_, &
+                     ierr_) &
+      bind(C, name="gmshModelGetEntityType")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), value, intent(in) :: tag
+      type(c_ptr), intent(out) :: api_entityType_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    character(len=:), allocatable, intent(out) :: entityType
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_entityType_
+    call C_API(dim=int(dim, c_int), &
+         tag=int(tag, c_int), &
+         api_entityType_=api_entityType_, &
+         ierr_=ierr)
+    entityType = ostring_(api_entityType_)
+  end subroutine gmshModelGetEntityType
+
+  !> Get the type of the entity of dimension `dim' and tag `tag'. (This is a
+  !! deprecated synonym for `getType'.)
   subroutine gmshModelGetType(dim, &
                               tag, &
                               entityType, &
@@ -2121,6 +2156,53 @@ module gmsh
          ierr_=ierr)
     entityType = ostring_(api_entityType_)
   end subroutine gmshModelGetType
+
+  !> Get the properties of the entity of dimension `dim' and tag `tag'.
+  subroutine gmshModelGetEntityProperties(dim, &
+                                          tag, &
+                                          integers, &
+                                          reals, &
+                                          ierr)
+    interface
+    subroutine C_API(dim, &
+                     tag, &
+                     api_integers_, &
+                     api_integers_n_, &
+                     api_reals_, &
+                     api_reals_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelGetEntityProperties")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), value, intent(in) :: tag
+      type(c_ptr), intent(out) :: api_integers_
+      integer(c_size_t), intent(out) :: api_integers_n_
+      type(c_ptr), intent(out) :: api_reals_
+      integer(c_size_t) :: api_reals_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    integer(c_int), dimension(:), allocatable, intent(out) :: integers
+    real(c_double), dimension(:), allocatable, intent(out) :: reals
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_integers_
+    integer(c_size_t) :: api_integers_n_
+    type(c_ptr) :: api_reals_
+    integer(c_size_t) :: api_reals_n_
+    call C_API(dim=int(dim, c_int), &
+         tag=int(tag, c_int), &
+         api_integers_=api_integers_, &
+         api_integers_n_=api_integers_n_, &
+         api_reals_=api_reals_, &
+         api_reals_n_=api_reals_n_, &
+         ierr_=ierr)
+    integers = ovectorint_(api_integers_, &
+      api_integers_n_)
+    reals = ovectordouble_(api_reals_, &
+      api_reals_n_)
+  end subroutine gmshModelGetEntityProperties
 
   !> In a partitioned model, get the parent of the entity of dimension `dim' and
   !! tag `tag', i.e. from which the entity is a part of, if any. `parentDim' and
@@ -9049,8 +9131,8 @@ module gmsh
 
   !> Mirror the entities `dimTags' (given as a vector of (dim, tag) pairs) in
   !! the built-in CAD representation, with respect to the plane of equation `a'
-  !! * x + `b' * y + `c' * z + `d' = 0. (This is a synonym for `mirror', which
-  !! will be deprecated in a future release.)
+  !! * x + `b' * y + `c' * z + `d' = 0. (This is a deprecated synonym for
+  !! `mirror'.)
   subroutine gmshModelGeoSymmetrize(dimTags, &
                                     a, &
                                     b, &

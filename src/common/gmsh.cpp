@@ -712,8 +712,8 @@ GMSH_API void gmsh::model::removeEntityName(const std::string &name)
   GModel::current()->removeElementaryName(name);
 }
 
-GMSH_API void gmsh::model::getType(const int dim, const int tag,
-                                   std::string &entityType)
+GMSH_API void gmsh::model::getEntityType(const int dim, const int tag,
+                                         std::string &entityType)
 {
   if(!_checkInit()) return;
   GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
@@ -722,6 +722,28 @@ GMSH_API void gmsh::model::getType(const int dim, const int tag,
     return;
   }
   entityType = ge->getTypeString();
+}
+
+// will be deprecated
+GMSH_API void gmsh::model::getType(const int dim, const int tag,
+                                   std::string &entityType)
+{
+  gmsh::model::getEntityType(dim, tag, entityType);
+}
+
+GMSH_API void gmsh::model::getEntityProperties(const int dim, const int tag,
+                                               std::vector<int> &integers,
+                                               std::vector<double> &reals)
+{
+  if(!_checkInit()) return;
+  integers.clear();
+  reals.clear();
+  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+  if(!ge) {
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+    return;
+  }
+  ge->geomProperties(integers, reals);
 }
 
 GMSH_API void gmsh::model::getParent(const int dim, const int tag,
@@ -7089,6 +7111,7 @@ GMSH_API void gmsh::model::occ::mirror(const vectorpair &dimTags,
   GModel::current()->getOCCInternals()->symmetry(dimTags, a, b, c, d);
 }
 
+// will be deprecated
 GMSH_API void gmsh::model::occ::symmetrize(const vectorpair &dimTags,
                                            const double a, const double b,
                                            const double c, const double d)

@@ -1291,11 +1291,38 @@ class model:
     remove_entities = removeEntities
 
     @staticmethod
+    def getEntityType(dim, tag):
+        """
+        gmsh.model.getEntityType(dim, tag)
+
+        Get the type of the entity of dimension `dim' and tag `tag'.
+
+        Return `entityType'.
+
+        Types:
+        - `dim': integer
+        - `tag': integer
+        - `entityType': string
+        """
+        api_entityType_ = c_char_p()
+        ierr = c_int()
+        lib.gmshModelGetEntityType(
+            c_int(dim),
+            c_int(tag),
+            byref(api_entityType_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return _ostring(api_entityType_)
+    get_entity_type = getEntityType
+
+    @staticmethod
     def getType(dim, tag):
         """
         gmsh.model.getType(dim, tag)
 
-        Get the type of the entity of dimension `dim' and tag `tag'.
+        Get the type of the entity of dimension `dim' and tag `tag'. (This is a
+        deprecated synonym for `getType'.)
 
         Return `entityType'.
 
@@ -1315,6 +1342,37 @@ class model:
             raise Exception(logger.getLastError())
         return _ostring(api_entityType_)
     get_type = getType
+
+    @staticmethod
+    def getEntityProperties(dim, tag):
+        """
+        gmsh.model.getEntityProperties(dim, tag)
+
+        Get the properties of the entity of dimension `dim' and tag `tag'.
+
+        Return `integers', `reals'.
+
+        Types:
+        - `dim': integer
+        - `tag': integer
+        - `integers': vector of integers
+        - `reals': vector of doubles
+        """
+        api_integers_, api_integers_n_ = POINTER(c_int)(), c_size_t()
+        api_reals_, api_reals_n_ = POINTER(c_double)(), c_size_t()
+        ierr = c_int()
+        lib.gmshModelGetEntityProperties(
+            c_int(dim),
+            c_int(tag),
+            byref(api_integers_), byref(api_integers_n_),
+            byref(api_reals_), byref(api_reals_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return (
+            _ovectorint(api_integers_, api_integers_n_.value),
+            _ovectordouble(api_reals_, api_reals_n_.value))
+    get_entity_properties = getEntityProperties
 
     @staticmethod
     def getParent(dim, tag):
@@ -6309,8 +6367,8 @@ class model:
 
             Mirror the entities `dimTags' (given as a vector of (dim, tag) pairs) in
             the built-in CAD representation, with respect to the plane of equation `a'
-            * x + `b' * y + `c' * z + `d' = 0. (This is a synonym for `mirror', which
-            will be deprecated in a future release.)
+            * x + `b' * y + `c' * z + `d' = 0. (This is a deprecated synonym for
+            `mirror'.)
 
             Types:
             - `dimTags': vector of pairs of integers

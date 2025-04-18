@@ -180,7 +180,12 @@ doc = '''Remove the entities `dimTags' (given as a vector of (dim, tag) pairs) o
 model.add('removeEntities', doc, None, ivectorpair('dimTags'), ibool('recursive', 'false', 'False'))
 
 doc = '''Get the type of the entity of dimension `dim' and tag `tag'.'''
+model.add('getEntityType', doc, None, iint('dim'), iint('tag'), ostring('entityType'))
+doc += ''' (This is a deprecated synonym for `getType'.)'''
 model.add('getType', doc, None, iint('dim'), iint('tag'), ostring('entityType'))
+
+doc = '''Get the properties of the entity of dimension `dim' and tag `tag'.'''
+model.add('getEntityProperties', doc, None, iint('dim'), iint('tag'), ovectorint('integers'), ovectordouble('reals'))
 
 doc = '''In a partitioned model, get the parent of the entity of dimension `dim' and tag `tag', i.e. from which the entity is a part of, if any. `parentDim' and `parentTag' are set to -1 if the entity has no parent.'''
 model.add('getParent', doc, None, iint('dim'), iint('tag'), oint('parentDim'), oint('parentTag'))
@@ -706,7 +711,7 @@ geo.add('dilate', doc, None, ivectorpair('dimTags'), idouble('x'), idouble('y'),
 
 doc = '''Mirror the entities `dimTags' (given as a vector of (dim, tag) pairs) in the built-in CAD representation, with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.'''
 geo.add('mirror', doc, None, ivectorpair('dimTags'), idouble('a'), idouble('b'), idouble('c'), idouble('d'))
-doc += ''' (This is a synonym for `mirror', which will be deprecated in a future release.)'''
+doc += ''' (This is a deprecated synonym for `mirror'.)'''
 geo.add('symmetrize', doc, None, ivectorpair('dimTags'), idouble('a'), idouble('b'), idouble('c'), idouble('d'))
 
 doc = '''Copy the entities `dimTags' (given as a vector of (dim, tag) pairs) in the built-in CAD representation; the new entities are returned in `outDimTags'.'''

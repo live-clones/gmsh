@@ -344,10 +344,24 @@ GMSH_API void gmshModelRemoveEntities(const int * dimTags, const size_t dimTags_
                                       int * ierr);
 
 /* Get the type of the entity of dimension `dim' and tag `tag'. */
+GMSH_API void gmshModelGetEntityType(const int dim,
+                                     const int tag,
+                                     char ** entityType,
+                                     int * ierr);
+
+/* Get the type of the entity of dimension `dim' and tag `tag'. (This is a
+ * deprecated synonym for `getType'.) */
 GMSH_API void gmshModelGetType(const int dim,
                                const int tag,
                                char ** entityType,
                                int * ierr);
+
+/* Get the properties of the entity of dimension `dim' and tag `tag'. */
+GMSH_API void gmshModelGetEntityProperties(const int dim,
+                                           const int tag,
+                                           int ** integers, size_t * integers_n,
+                                           double ** reals, size_t * reals_n,
+                                           int * ierr);
 
 /* In a partitioned model, get the parent of the entity of dimension `dim' and
  * tag `tag', i.e. from which the entity is a part of, if any. `parentDim' and
@@ -2029,8 +2043,8 @@ GMSH_API void gmshModelGeoMirror(const int * dimTags, const size_t dimTags_n,
 
 /* Mirror the entities `dimTags' (given as a vector of (dim, tag) pairs) in
  * the built-in CAD representation, with respect to the plane of equation `a'
- * * x + `b' * y + `c' * z + `d' = 0. (This is a synonym for `mirror', which
- * will be deprecated in a future release.) */
+ * * x + `b' * y + `c' * z + `d' = 0. (This is a deprecated synonym for
+ * `mirror'.) */
 GMSH_API void gmshModelGeoSymmetrize(const int * dimTags, const size_t dimTags_n,
                                      const double a,
                                      const double b,

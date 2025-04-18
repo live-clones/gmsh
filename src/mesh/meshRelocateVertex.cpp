@@ -516,6 +516,7 @@ int _untanglePyramids(GRegion *region, bool topological, bool geometrical)
 		     {0, .5, 1. / (2. * std::sqrt(2.))},
 		     {0, -.5, 1. / (2. * std::sqrt(2.))}};
 
+  //avgEdgeSize *= 0.2;
   std::array<std::array<double, 3>, 4> equi;
 
   for(size_t lv = 0; lv < 4; ++lv) {

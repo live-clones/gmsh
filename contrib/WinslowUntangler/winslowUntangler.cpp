@@ -867,7 +867,7 @@ namespace WinslowUntangler {
 
         if(rep.terminationtype != 4 && rep.terminationtype != 5) { nFail += 1; }
         lbfgsIter = rep.iterationscount;
-        Msg::Debug(" detmin = %22.15E eps= %22.15E %zu iter term %zu",
+        Msg::Info(" detmin = %22.15E eps= %22.15E %zu iter term %zu",
                   data.J_det_min, data.eps, rep.iterationscount,
                   rep.terminationtype);
       } catch(alglib::ap_error e) {

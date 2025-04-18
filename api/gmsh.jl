@@ -1016,9 +1016,34 @@ end
 const remove_entities = removeEntities
 
 """
-    gmsh.model.getType(dim, tag)
+    gmsh.model.getEntityType(dim, tag)
 
 Get the type of the entity of dimension `dim` and tag `tag`.
+
+Return `entityType`.
+
+Types:
+ - `dim`: integer
+ - `tag`: integer
+ - `entityType`: string
+"""
+function getEntityType(dim, tag)
+    api_entityType_ = Ref{Ptr{Cchar}}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetEntityType, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Ptr{Cchar}}, Ptr{Cint}),
+          dim, tag, api_entityType_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    entityType = unsafe_string(api_entityType_[])
+    return entityType
+end
+const get_entity_type = getEntityType
+
+"""
+    gmsh.model.getType(dim, tag)
+
+Get the type of the entity of dimension `dim` and tag `tag`. (This is a
+deprecated synonym for `getType`.)
 
 Return `entityType`.
 
@@ -1038,6 +1063,35 @@ function getType(dim, tag)
     return entityType
 end
 const get_type = getType
+
+"""
+    gmsh.model.getEntityProperties(dim, tag)
+
+Get the properties of the entity of dimension `dim` and tag `tag`.
+
+Return `integers`, `reals`.
+
+Types:
+ - `dim`: integer
+ - `tag`: integer
+ - `integers`: vector of integers
+ - `reals`: vector of doubles
+"""
+function getEntityProperties(dim, tag)
+    api_integers_ = Ref{Ptr{Cint}}()
+    api_integers_n_ = Ref{Csize_t}()
+    api_reals_ = Ref{Ptr{Cdouble}}()
+    api_reals_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetEntityProperties, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, api_integers_, api_integers_n_, api_reals_, api_reals_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    integers = unsafe_wrap(Array, api_integers_[], api_integers_n_[], own = true)
+    reals = unsafe_wrap(Array, api_reals_[], api_reals_n_[], own = true)
+    return integers, reals
+end
+const get_entity_properties = getEntityProperties
 
 """
     gmsh.model.getParent(dim, tag)
@@ -5570,8 +5624,7 @@ end
 
 Mirror the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
 built-in CAD representation, with respect to the plane of equation `a` * x + `b`
-* y + `c` * z + `d` = 0. (This is a synonym for `mirror`, which will be
-deprecated in a future release.)
+* y + `c` * z + `d` = 0. (This is a deprecated synonym for `mirror`.)
 
 Types:
  - `dimTags`: vector of pairs of integers
