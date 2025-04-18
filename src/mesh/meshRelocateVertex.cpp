@@ -16,6 +16,7 @@
 #include "Context.h"
 #include "meshGFaceOptimize.h"
 #include "qualityMeasures.h"
+#include "Context.h"
 
 #if defined(HAVE_WINSLOWUNTANGLER)
 #include "winslowUntangler.h"
@@ -497,7 +498,7 @@ int _untanglePyramids(GRegion *region, bool topological, bool geometrical)
   std::vector<std::array<uint32_t, 4>> tets;
 
   double avgEdgeSize = 0.0;
-  
+
   for(auto t : _tets) {
     for(size_t k=0;k<4;k++)
       for(size_t l=k+1;l<4;l++)
@@ -523,7 +524,7 @@ int _untanglePyramids(GRegion *region, bool topological, bool geometrical)
     equi[2][lv] = ee[lv][2] * (avgEdgeSize);
   }
 
-  
+
   for(size_t i = 0; i < region->pyramids.size(); i++) {
     MFace mf = region->pyramids[i]->getFace(0);
     auto mf2 = _fcs.find(mf);
@@ -557,7 +558,7 @@ int _untanglePyramids(GRegion *region, bool topological, bool geometrical)
 	  (uint32_t)v2->getIndex(), (uint32_t)v1->getIndex()});
     tets.push_back({(uint32_t)v2->getIndex(), (uint32_t)v4->getIndex(),
 	  (uint32_t)v0->getIndex(), (uint32_t)v3->getIndex()});
-    
+
     tets.push_back({(uint32_t)v1->getIndex(), (uint32_t)v4->getIndex(),
 	  (uint32_t)v3->getIndex(), (uint32_t)v2->getIndex()});
     tets.push_back({(uint32_t)v3->getIndex(), (uint32_t)v4->getIndex(),
@@ -584,9 +585,13 @@ int _untanglePyramids(GRegion *region, bool topological, bool geometrical)
 void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
 {
 #if defined(HAVE_WINSLOWUNTANGLER)
-  Msg::Info("Using new pyramid optimization");
-  _untanglePyramids(region, true, true);
-#else
+  if(CTX::instance()->mesh.optimizePyramids == 1) {
+    Msg::Info("Using new pyramid optimization");
+    _untanglePyramids(region, true, true);
+    return;
+  }
+#endif
+
   if(!niter) return;
 
   Msg::Info("Using old pyramid optimization");
@@ -649,7 +654,6 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
       ++it;
     }
   }
-#endif
 }
 
 void RelocateVerticesOfPyramids(std::vector<GRegion *> &regions, int niter,

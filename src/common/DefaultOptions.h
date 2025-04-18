@@ -123,11 +123,11 @@ StringXString GeneralOptions_String[] = {
 
   { F|O, "TextEditor" , opt_general_editor ,
 #if defined(WIN32)
-    "notepad.exe '%s'" ,
+    "notepad.exe %s" ,
 #elif defined(__APPLE__)
-    "open -t '%s'" ,
+    "open -t %s" ,
 #else
-    "gedit '%s'" ,
+    "gedit %s" ,
 #endif
     "System command to launch a text editor" },
   { F|S, "TmpFileName" , opt_general_tmp_filename ,
@@ -1438,6 +1438,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "OptimizeNetgen" , opt_mesh_optimize_netgen , 0 ,
     "Optimize the mesh using Netgen to improve the quality of tetrahedral "
     "elements" },
+  { F|O, "OptimizePyramids" , opt_mesh_optimize_pyramids , 1 ,
+    "Optimize pyramids in hybrid 3D meshes (0: smoother; 1: untangler)" },
 
   { F|O, "PartitionHexWeight" , opt_mesh_partition_hex_weight , -1 ,
     "Weight of hexahedral element for METIS load balancing (-1: automatic)" },
