@@ -1395,8 +1395,9 @@ int GModel::adaptMesh(std::vector<int> technique,
       opt_mesh_lc_from_points(0, GMSH_SET, 0.0); // do not mesh lines with lc
 
       std::for_each(firstRegion(), lastRegion(), deMeshGRegion());
-      std::for_each(firstFace(), lastFace(), deMeshGFace());
-      std::for_each(firstEdge(), lastEdge(), deMeshGEdge());
+      for(auto it = firstFace(); it != lastFace(); ++it) if(!(*it)->getFixedMeshIF()) deMeshGFace(*it);
+      for(auto it = firstEdge(); it != lastEdge(); ++it) if(!(*it)->getFixedMeshIF()) deMeshGEdge(*it);
+
 
       GenerateMesh(this, getDim());
       nbElems = getNumMeshElements();
