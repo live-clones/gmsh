@@ -369,18 +369,57 @@ void OCCFace::geomProperties(std::vector<int> &integers, std::vector<double> &re
     reals.push_back(D);
   }
   else if(_occface->DynamicType() == STANDARD_TYPE(Geom_ToroidalSurface)) {
-    //gp_Torus torus = surface.Torus();
+    gp_Torus torus = surface.Torus();
+    const auto &ax = torus.Axis();
+    const auto pt = ax.Location();
+    //let us get the direction/axis
+    const auto dir = ax.Direction();
+    //now we fill the vector in the following order:
+    reals.push_back(torus.MajorRadius());
+    reals.push_back(torus.MinorRadius());
+    reals.push_back(pt.X());
+    reals.push_back(pt.Y());
+    reals.push_back(pt.Z());
+    reals.push_back(dir.X());
+    reals.push_back(dir.Y());
+    reals.push_back(dir.Z());
     // TODO
   }
   else if(_occface->DynamicType() == STANDARD_TYPE(Geom_BezierSurface)) {
     // TODO
   }
   else if(_occface->DynamicType() == STANDARD_TYPE(Geom_CylindricalSurface)) {
-    //gp_Cylinder cylinder = surface.Cylinder();
-    // TODO
+    gp_Cylinder cylinder = surface.Cylinder();
+    const auto &ax = cylinder.Axis();
+    //let us get the origin or center of cylinder
+    const auto pt = ax.Location();
+    //let us get the direction/axis
+    const auto dir = ax.Direction();
+    //now we fill the vector in the following order:
+    reals.push_back(cylinder.Radius());
+    reals.push_back(pt.X());
+    reals.push_back(pt.Y());
+    reals.push_back(pt.Z());
+    reals.push_back(dir.X());
+    reals.push_back(dir.Y());
+    reals.push_back(dir.Z());
   }
   else if(_occface->DynamicType() == STANDARD_TYPE(Geom_ConicalSurface)) {
-    //gp_Cone cone = surface.Cone();
+    gp_Cone cone = surface.Cone();
+    const auto &ax = cone.Axis();
+    //let us get the origin or center of cylinder
+    const auto pt = ax.Location();
+    //let us get the direction/axis
+    const auto dir = ax.Direction();
+    //now we fill the vector in the following order:
+    reals.push_back(cone.RefRadius());
+    reals.push_back(cone.SemiAngle());
+    reals.push_back(pt.X());
+    reals.push_back(pt.Y());
+    reals.push_back(pt.Z());
+    reals.push_back(dir.X());
+    reals.push_back(dir.Y());
+    reals.push_back(dir.Z());
     // TODO
   }
   else if(_occface->DynamicType() == STANDARD_TYPE(Geom_SurfaceOfRevolution)) {
