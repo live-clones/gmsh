@@ -40,6 +40,10 @@
 #include <TopoDS.hxx>
 #include <gp_Pln.hxx>
 #include <gp_Sphere.hxx>
+#include <gp_Torus.hxx>
+#include <gp_Cylinder.hxx>
+#include <gp_Cone.hxx>
+
 
 OCCFace::OCCFace(GModel *m, TopoDS_Face s, int num)
   : GFace(m, num), _s(s), _sf(s, Standard_True), _radius(-1)
