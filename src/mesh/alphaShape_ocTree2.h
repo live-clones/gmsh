@@ -9,18 +9,18 @@
 #include "gmsh.h"
 
 template<int dim>
-using Coord = std::array<double, dim>;
+using _Coord = std::array<double, dim>;
 
 template<int dim>
 struct BBox {
-  Coord<dim> min, max;
+  _Coord<dim> min, max;
   BBox() {
     for (int i = 0; i < dim; i++) {
       min[i] = std::numeric_limits<double>::max();
       max[i] = std::numeric_limits<double>::lowest();
     }
   }
-  void extends(const Coord<dim> point) {
+  void extends(const _Coord<dim> point) {
     for (int i = 0; i < dim; i++) {
       min[i] = std::min(min[i], point[i]);
       max[i] = std::max(max[i], point[i]);
@@ -125,7 +125,7 @@ class OctreeNode {
         return;
       }
       else { // split
-        Coord<dim> mid;
+        _Coord<dim> mid;
         for (int i = 0; i < dim; i++) {
           mid[i] = (bbox_.min[i] + bbox_.max[i]) / 2;
         }

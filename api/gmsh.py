@@ -5465,6 +5465,47 @@ class model:
                 raise Exception(logger.getLastError())
         colour_boundary_faces = colourBoundaryFaces
 
+        @staticmethod
+        def matchTrianglesToEntities(tag, boundaryModel, tolerance):
+            """
+            gmsh.model.mesh.matchTrianglesToEntities(tag, boundaryModel, tolerance)
+
+            Match the triangles of the mesh in entity of tag `tag' to the entities in
+            the boundary model `boundaryModel'. The matching is done using an octree
+            that match the triangles to the entities, if they are within a given
+            tolerance `tolerance'. The output is a vector of entity tags and a vector
+            of triangle tags.
+
+            Return `outEntities', `outTriangles', `outTriangleNodeTags'.
+
+            Types:
+            - `tag': integer
+            - `boundaryModel': string
+            - `tolerance': double
+            - `outEntities': vector of integers
+            - `outTriangles': vector of vectors of sizes
+            - `outTriangleNodeTags': vector of vectors of sizes
+            """
+            api_outEntities_, api_outEntities_n_ = POINTER(c_int)(), c_size_t()
+            api_outTriangles_, api_outTriangles_n_, api_outTriangles_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
+            api_outTriangleNodeTags_, api_outTriangleNodeTags_n_, api_outTriangleNodeTags_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshMatchTrianglesToEntities(
+                c_int(tag),
+                c_char_p(boundaryModel.encode()),
+                c_double(tolerance),
+                byref(api_outEntities_), byref(api_outEntities_n_),
+                byref(api_outTriangles_), byref(api_outTriangles_n_), byref(api_outTriangles_nn_),
+                byref(api_outTriangleNodeTags_), byref(api_outTriangleNodeTags_n_), byref(api_outTriangleNodeTags_nn_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return (
+                _ovectorint(api_outEntities_, api_outEntities_n_.value),
+                _ovectorvectorsize(api_outTriangles_, api_outTriangles_n_, api_outTriangles_nn_),
+                _ovectorvectorsize(api_outTriangleNodeTags_, api_outTriangleNodeTags_n_, api_outTriangleNodeTags_nn_))
+        match_triangles_to_entities = matchTrianglesToEntities
+
 
         class field:
             """

@@ -612,6 +612,9 @@ mesh.add('filterCloseNodes', doc, None, iint('tag'), iint('sizeFieldTag'), idoub
 doc = '''Color the faces of tag `tag' based on the entities in the boundary model `boundarModel'. Colouring is done using an octree that colour the faces using the colours of the boundary entities, if they are within a given tolerance `tolerance'.'''
 mesh.add('colourBoundaryFaces', doc, None, iint('tag'), istring('boundaryModel'), idouble('tolerance'))
 
+doc = '''Match the triangles of the mesh in entity of tag `tag' to the entities in the boundary model `boundaryModel'. The matching is done using an octree that match the triangles to the entities, if they are within a given tolerance `tolerance'. The output is a vector of entity tags and a vector of triangle tags.'''
+mesh.add('matchTrianglesToEntities', doc, None, iint('tag'), istring('boundaryModel'), idouble('tolerance'), ovectorint('outEntities'), ovectorvectorsize('outTriangles'), ovectorvectorsize("outTriangleNodeTags"))
+
 ################################################################################
 
 field = mesh.add_module('field', 'mesh size field functions')

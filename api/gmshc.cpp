@@ -2564,6 +2564,23 @@ GMSH_API void gmshModelMeshColourBoundaryFaces(const int tag, const char * bound
   }
 }
 
+GMSH_API void gmshModelMeshMatchTrianglesToEntities(const int tag, const char * boundaryModel, const double tolerance, int ** outEntities, size_t * outEntities_n, size_t *** outTriangles, size_t ** outTriangles_n, size_t *outTriangles_nn, size_t *** outTriangleNodeTags, size_t ** outTriangleNodeTags_n, size_t *outTriangleNodeTags_nn, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_outEntities_;
+    std::vector<std::vector<std::size_t> > api_outTriangles_;
+    std::vector<std::vector<std::size_t> > api_outTriangleNodeTags_;
+    gmsh::model::mesh::matchTrianglesToEntities(tag, boundaryModel, tolerance, api_outEntities_, api_outTriangles_, api_outTriangleNodeTags_);
+    vector2ptr(api_outEntities_, outEntities, outEntities_n);
+    vectorvector2ptrptr(api_outTriangles_, outTriangles, outTriangles_n, outTriangles_nn);
+    vectorvector2ptrptr(api_outTriangleNodeTags_, outTriangleNodeTags, outTriangleNodeTags_n, outTriangleNodeTags_nn);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API int gmshModelMeshFieldAdd(const char * fieldType, const int tag, int * ierr)
 {
   int result_api_ = 0;

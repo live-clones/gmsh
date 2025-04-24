@@ -1752,6 +1752,19 @@ GMSH_API void gmshModelMeshColourBoundaryFaces(const int tag,
                                                const double tolerance,
                                                int * ierr);
 
+/* Match the triangles of the mesh in entity of tag `tag' to the entities in
+ * the boundary model `boundaryModel'. The matching is done using an octree
+ * that match the triangles to the entities, if they are within a given
+ * tolerance `tolerance'. The output is a vector of entity tags and a vector
+ * of triangle tags. */
+GMSH_API void gmshModelMeshMatchTrianglesToEntities(const int tag,
+                                                    const char * boundaryModel,
+                                                    const double tolerance,
+                                                    int ** outEntities, size_t * outEntities_n,
+                                                    size_t *** outTriangles, size_t ** outTriangles_n, size_t *outTriangles_nn,
+                                                    size_t *** outTriangleNodeTags, size_t ** outTriangleNodeTags_n, size_t *outTriangleNodeTags_nn,
+                                                    int * ierr);
+
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
  * the tag explicitly; otherwise a new tag is assigned automatically. Return
  * the field tag. Available field types are listed in the "Gmsh mesh size

@@ -4806,6 +4806,49 @@ end
 const colour_boundary_faces = colourBoundaryFaces
 
 """
+    gmsh.model.mesh.matchTrianglesToEntities(tag, boundaryModel, tolerance)
+
+Match the triangles of the mesh in entity of tag `tag` to the entities in the
+boundary model `boundaryModel`. The matching is done using an octree that match
+the triangles to the entities, if they are within a given tolerance `tolerance`.
+The output is a vector of entity tags and a vector of triangle tags.
+
+Return `outEntities`, `outTriangles`, `outTriangleNodeTags`.
+
+Types:
+ - `tag`: integer
+ - `boundaryModel`: string
+ - `tolerance`: double
+ - `outEntities`: vector of integers
+ - `outTriangles`: vector of vectors of sizes
+ - `outTriangleNodeTags`: vector of vectors of sizes
+"""
+function matchTrianglesToEntities(tag, boundaryModel, tolerance)
+    api_outEntities_ = Ref{Ptr{Cint}}()
+    api_outEntities_n_ = Ref{Csize_t}()
+    api_outTriangles_ = Ref{Ptr{Ptr{Csize_t}}}()
+    api_outTriangles_n_ = Ref{Ptr{Csize_t}}()
+    api_outTriangles_nn_ = Ref{Csize_t}()
+    api_outTriangleNodeTags_ = Ref{Ptr{Ptr{Csize_t}}}()
+    api_outTriangleNodeTags_n_ = Ref{Ptr{Csize_t}}()
+    api_outTriangleNodeTags_nn_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshMatchTrianglesToEntities, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cchar}, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          tag, boundaryModel, tolerance, api_outEntities_, api_outEntities_n_, api_outTriangles_, api_outTriangles_n_, api_outTriangles_nn_, api_outTriangleNodeTags_, api_outTriangleNodeTags_n_, api_outTriangleNodeTags_nn_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    outEntities = unsafe_wrap(Array, api_outEntities_[], api_outEntities_n_[], own = true)
+    tmp_api_outTriangles_ = unsafe_wrap(Array, api_outTriangles_[], api_outTriangles_nn_[], own = true)
+    tmp_api_outTriangles_n_ = unsafe_wrap(Array, api_outTriangles_n_[], api_outTriangles_nn_[], own = true)
+    outTriangles = [ unsafe_wrap(Array, tmp_api_outTriangles_[i], tmp_api_outTriangles_n_[i], own = true) for i in 1:api_outTriangles_nn_[] ]
+    tmp_api_outTriangleNodeTags_ = unsafe_wrap(Array, api_outTriangleNodeTags_[], api_outTriangleNodeTags_nn_[], own = true)
+    tmp_api_outTriangleNodeTags_n_ = unsafe_wrap(Array, api_outTriangleNodeTags_n_[], api_outTriangleNodeTags_nn_[], own = true)
+    outTriangleNodeTags = [ unsafe_wrap(Array, tmp_api_outTriangleNodeTags_[i], tmp_api_outTriangleNodeTags_n_[i], own = true) for i in 1:api_outTriangleNodeTags_nn_[] ]
+    return outEntities, outTriangles, outTriangleNodeTags
+end
+const match_triangles_to_entities = matchTrianglesToEntities
+
+"""
     module gmsh.model.mesh.field
 
 Mesh size field functions
