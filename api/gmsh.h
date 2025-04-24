@@ -1976,6 +1976,20 @@ namespace gmsh { // Top-level functions
                                         const std::string & boundaryModel,
                                         const double tolerance);
 
+      // gmsh::model::mesh::matchTrianglesToEntities
+      //
+      // Match the triangles of the mesh in entity of tag `tag' to the entities in
+      // the boundary model `boundaryModel'. The matching is done using an octree
+      // that match the triangles to the entities, if they are within a given
+      // tolerance `tolerance'. The output is a vector of entity tags and a vector
+      // of triangle tags.
+      GMSH_API void matchTrianglesToEntities(const int tag,
+                                             const std::string & boundaryModel,
+                                             const double tolerance,
+                                             std::vector<int> & outEntities,
+                                             std::vector<std::vector<std::size_t> > & outTriangles,
+                                             std::vector<std::vector<std::size_t> > & outTriangleNodeTags);
+
       namespace field { // Mesh size field functions
 
         // gmsh::model::mesh::field::add

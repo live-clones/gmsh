@@ -5753,6 +5753,7 @@ gmsh::model::mesh::computeAlphaShape(const int dim,
     // std::cout << "Alpha Shape  : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
     // edge recover
     AlphaShape::_edgeRecover(pm, tag, bndTag, boundaryModel, controlNodes, bnd_octree, boundaryTolerance);
+    
     toc = std::chrono::high_resolution_clock::now();
     // std::cout << "Edge recover : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
     // mesh adapt
@@ -5869,6 +5870,7 @@ GMSH_API void
 gmsh::model::mesh::volumeMeshRefinement(const int fullTag, const int surfaceTag, const int volumeTag, const int sizeFieldTag, const bool returnNodalCurvature, std::vector<double>& nodalCurvature){
 #if defined(HAVE_MESH) && defined(HAVE_HXT)
   AlphaShape::_volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag, returnNodalCurvature, nodalCurvature);
+  // AlphaShape::_volumeMeshRefinementMeshFromAlphaShapeElements(fullTag, surfaceTag, volumeTag, sizeFieldTag, returnNodalCurvature, nodalCurvature);
 #else
   Msg::Error("volumeMeshRefinement requires the mesh and hxt modules");
 #endif
@@ -5886,11 +5888,23 @@ gmsh::model::mesh::filterCloseNodes(const int tag, const int sizeFieldTag, const
 GMSH_API void
 gmsh::model::mesh::colourBoundaryFaces(const int tag, const std::string & boundaryModel, const double tolerance){
 #if defined(HAVE_MESH) && defined(HAVE_HXT)
-  AlphaShape::_colourBoundaries(tag, boundaryModel, tolerance);
+  AlphaShape::_colourBoundariesWithGmshOctree(tag, boundaryModel, tolerance);
+  // AlphaShape::_colourBoundaries(tag, boundaryModel, tolerance);
 #else
   Msg::Error("volumeMeshRefinement requires the mesh and hxt modules");
 #endif
 }
+
+GMSH_API void
+gmsh::model::mesh::matchTrianglesToEntities(const int faceTag, const std::string & boundaryModel, const double tolerance, std::vector<int>& outEntities, std::vector<std::vector<size_t>>& outTriangles, std::vector<std::vector<size_t>>& outTriangleNodeTags){
+#if defined(HAVE_MESH) && defined(HAVE_HXT)
+  AlphaShape::_matchTrianglesToEntities(faceTag, boundaryModel, tolerance, outEntities, outTriangles, outTriangleNodeTags);
+#else
+  Msg::Error("volumeMeshRefinement requires the mesh and hxt modules");
+#endif
+}
+
+
 
 // gmsh::model::mesh::field
 

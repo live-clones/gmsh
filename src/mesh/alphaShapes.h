@@ -69,11 +69,16 @@ void _alphaShape3DFromArray(const int tag, const std::vector<size_t> & elementTa
 
 void _surfaceEdgeSplitting(const int fullTag, const int surfaceTag, const int sizeFieldTag, const bool tetrahealize, const bool buildElementOctree, const std::vector<size_t> tri2TetMap);
 
+void _volumeMeshRefinementMeshFromAlphaShapeElements(const int fullTag, const int surfaceTag, const int volumeTag, const int sizeFieldTag, const bool returnNodalCurvature, std::vector<double>& nodalCurvature);
 void _volumeMeshRefinement(const int fullTag, const int surfaceTag, const int volumeTag, const int sizeFieldTag, const bool returnNodalCurvature, std::vector<double>& nodalCurvature);
 
 void _filterCloseNodes(const int fullTag, const int sizeFieldTag, const double tolerance);
 
 void _colourBoundaries(const int faceTag, const std::string & boundaryModel, const double tolerance);
+
+void _colourBoundariesWithGmshOctree(const int faceTag, const std::string & boundaryModel, const double tolerance);
+
+void _matchTrianglesToEntities(const int faceTag, const std::string & boundaryModel, const double tolerance, std::vector<int>& outEntities, std::vector<std::vector<size_t>>& outTriangles, std::vector<std::vector<size_t>>& outTriangleNodeTags);
 
 void _moveNodes3D(const int tag, const int freeSurfaceTag, const std::vector<size_t> & nodeTags, const std::vector<double> & nodesDx, double boundary_tol, const std::string & boundaryModel);
 

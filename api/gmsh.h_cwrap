@@ -3415,6 +3415,31 @@ namespace gmsh { // Top-level functions
         if(ierr) throwLastError();
       }
 
+      // gmsh::model::mesh::matchTrianglesToEntities
+      //
+      // Match the triangles of the mesh in entity of tag `tag' to the entities in
+      // the boundary model `boundaryModel'. The matching is done using an octree
+      // that match the triangles to the entities, if they are within a given
+      // tolerance `tolerance'. The output is a vector of entity tags and a vector
+      // of triangle tags.
+      inline void matchTrianglesToEntities(const int tag,
+                                           const std::string & boundaryModel,
+                                           const double tolerance,
+                                           std::vector<int> & outEntities,
+                                           std::vector<std::vector<std::size_t> > & outTriangles,
+                                           std::vector<std::vector<std::size_t> > & outTriangleNodeTags)
+      {
+        int ierr = 0;
+        int *api_outEntities_; size_t api_outEntities_n_;
+        size_t **api_outTriangles_; size_t *api_outTriangles_n_, api_outTriangles_nn_;
+        size_t **api_outTriangleNodeTags_; size_t *api_outTriangleNodeTags_n_, api_outTriangleNodeTags_nn_;
+        gmshModelMeshMatchTrianglesToEntities(tag, boundaryModel.c_str(), tolerance, &api_outEntities_, &api_outEntities_n_, &api_outTriangles_, &api_outTriangles_n_, &api_outTriangles_nn_, &api_outTriangleNodeTags_, &api_outTriangleNodeTags_n_, &api_outTriangleNodeTags_nn_, &ierr);
+        if(ierr) throwLastError();
+        outEntities.assign(api_outEntities_, api_outEntities_ + api_outEntities_n_); gmshFree(api_outEntities_);
+        outTriangles.resize(api_outTriangles_nn_); for(size_t i = 0; i < api_outTriangles_nn_; ++i){ outTriangles[i].assign(api_outTriangles_[i], api_outTriangles_[i] + api_outTriangles_n_[i]); gmshFree(api_outTriangles_[i]); } gmshFree(api_outTriangles_); gmshFree(api_outTriangles_n_);
+        outTriangleNodeTags.resize(api_outTriangleNodeTags_nn_); for(size_t i = 0; i < api_outTriangleNodeTags_nn_; ++i){ outTriangleNodeTags[i].assign(api_outTriangleNodeTags_[i], api_outTriangleNodeTags_[i] + api_outTriangleNodeTags_n_[i]); gmshFree(api_outTriangleNodeTags_[i]); } gmshFree(api_outTriangleNodeTags_); gmshFree(api_outTriangleNodeTags_n_);
+      }
+
       namespace field { // Mesh size field functions
 
         // gmsh::model::mesh::field::add

@@ -740,6 +740,8 @@ module gmsh
         gmshModelMeshFilterCloseNodes
     procedure, nopass :: colourBoundaryFaces => &
         gmshModelMeshColourBoundaryFaces
+    procedure, nopass :: matchTrianglesToEntities => &
+        gmshModelMeshMatchTrianglesToEntities
   end type gmsh_model_mesh_t
 
   type, public :: gmsh_model_t
@@ -8010,6 +8012,90 @@ module gmsh
          tolerance=real(tolerance, c_double), &
          ierr_=ierr)
   end subroutine gmshModelMeshColourBoundaryFaces
+
+  !> Match the triangles of the mesh in entity of tag `tag' to the entities in
+  !! the boundary model `boundaryModel'. The matching is done using an octree
+  !! that match the triangles to the entities, if they are within a given
+  !! tolerance `tolerance'. The output is a vector of entity tags and a vector
+  !! of triangle tags.
+  subroutine gmshModelMeshMatchTrianglesToEntities(tag, &
+                                                   boundaryModel, &
+                                                   tolerance, &
+                                                   outEntities, &
+                                                   outTriangles, &
+                                                   outTriangles_n, &
+                                                   outTriangleNodeTags, &
+                                                   outTriangleNodeTags_n, &
+                                                   ierr)
+    interface
+    subroutine C_API(tag, &
+                     boundaryModel, &
+                     tolerance, &
+                     api_outEntities_, &
+                     api_outEntities_n_, &
+                     api_outTriangles_, &
+                     api_outTriangles_n_, &
+                     api_outTriangles_nn_, &
+                     api_outTriangleNodeTags_, &
+                     api_outTriangleNodeTags_n_, &
+                     api_outTriangleNodeTags_nn_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshMatchTrianglesToEntities")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      character(len=1, kind=c_char), dimension(*), intent(in) :: boundaryModel
+      real(c_double), value, intent(in) :: tolerance
+      type(c_ptr), intent(out) :: api_outEntities_
+      integer(c_size_t), intent(out) :: api_outEntities_n_
+      type(c_ptr), intent(out) :: api_outTriangles_
+      type(c_ptr), intent(out) :: api_outTriangles_n_
+      integer(c_size_t), intent(out) :: api_outTriangles_nn_
+      type(c_ptr), intent(out) :: api_outTriangleNodeTags_
+      type(c_ptr), intent(out) :: api_outTriangleNodeTags_n_
+      integer(c_size_t), intent(out) :: api_outTriangleNodeTags_nn_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    character(len=*), intent(in) :: boundaryModel
+    real(c_double), intent(in) :: tolerance
+    integer(c_int), dimension(:), allocatable, intent(out) :: outEntities
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: outTriangles
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: outTriangles_n
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: outTriangleNodeTags
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: outTriangleNodeTags_n
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_outEntities_
+    integer(c_size_t) :: api_outEntities_n_
+    type(c_ptr) :: api_outTriangles_, api_outTriangles_n_
+    integer(c_size_t) :: api_outTriangles_nn_
+    type(c_ptr) :: api_outTriangleNodeTags_, api_outTriangleNodeTags_n_
+    integer(c_size_t) :: api_outTriangleNodeTags_nn_
+    call C_API(tag=int(tag, c_int), &
+         boundaryModel=istring_(boundaryModel), &
+         tolerance=real(tolerance, c_double), &
+         api_outEntities_=api_outEntities_, &
+         api_outEntities_n_=api_outEntities_n_, &
+         api_outTriangles_=api_outTriangles_, &
+         api_outTriangles_n_=api_outTriangles_n_, &
+         api_outTriangles_nn_=api_outTriangles_nn_, &
+         api_outTriangleNodeTags_=api_outTriangleNodeTags_, &
+         api_outTriangleNodeTags_n_=api_outTriangleNodeTags_n_, &
+         api_outTriangleNodeTags_nn_=api_outTriangleNodeTags_nn_, &
+         ierr_=ierr)
+    outEntities = ovectorint_(api_outEntities_, &
+      api_outEntities_n_)
+    call ovectorvectorsize_(api_outTriangles_, &
+      api_outTriangles_n_, &
+      api_outTriangles_nn_, &
+      outTriangles, &
+      outTriangles_n)
+    call ovectorvectorsize_(api_outTriangleNodeTags_, &
+      api_outTriangleNodeTags_n_, &
+      api_outTriangleNodeTags_nn_, &
+      outTriangleNodeTags, &
+      outTriangleNodeTags_n)
+  end subroutine gmshModelMeshMatchTrianglesToEntities
 
   !> Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
   !! the tag explicitly; otherwise a new tag is assigned automatically. Return
