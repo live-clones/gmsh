@@ -44,7 +44,6 @@
 #include <gp_Cylinder.hxx>
 #include <gp_Cone.hxx>
 
-
 OCCFace::OCCFace(GModel *m, TopoDS_Face s, int num)
   : GFace(m, num), _s(s), _sf(s, Standard_True), _radius(-1)
 {
@@ -110,8 +109,9 @@ void OCCFace::_setup()
 
     if(!el.check()) {
       // should not happen, since ShapeFix_Wire has been called before
-      Msg::Warning("Recomputing incorrect OpenCASCADE wire in surface %d", tag());
-      std::vector<GEdge*> edges;
+      Msg::Warning("Recomputing incorrect OpenCASCADE wire in surface %d",
+                   tag());
+      std::vector<GEdge *> edges;
       el.getEdges(edges);
       el.recompute(edges);
     }
@@ -199,7 +199,7 @@ void OCCFace::_setup()
   for(std::size_t i = 0; i < embedded_edges.size(); i++) {
     GEdge *e = embedded_edges[i];
     // should not addFace(), as the edge is not on the boundary
-    //e->addFace(this);
+    // e->addFace(this);
     OCCEdge *occe = dynamic_cast<OCCEdge *>(e);
     if(occe && !e->is3D()) occe->setTrimmed(this);
   }
@@ -359,7 +359,8 @@ GEntity::GeomType OCCFace::geomType() const
   return Unknown;
 }
 
-void OCCFace::geomProperties(std::vector<int> &integers, std::vector<double> &reals) const
+void OCCFace::geomProperties(std::vector<int> &integers,
+                             std::vector<double> &reals) const
 {
   BRepAdaptor_Surface surface(_s);
 
@@ -376,18 +377,15 @@ void OCCFace::geomProperties(std::vector<int> &integers, std::vector<double> &re
     gp_Torus torus = surface.Torus();
     const auto &ax = torus.Axis();
     const auto pt = ax.Location();
-    //let us get the direction/axis
     const auto dir = ax.Direction();
-    //now we fill the vector in the following order:
-    reals.push_back(torus.MajorRadius());
-    reals.push_back(torus.MinorRadius());
     reals.push_back(pt.X());
     reals.push_back(pt.Y());
     reals.push_back(pt.Z());
     reals.push_back(dir.X());
     reals.push_back(dir.Y());
     reals.push_back(dir.Z());
-    // TODO
+    reals.push_back(torus.MajorRadius());
+    reals.push_back(torus.MinorRadius());
   }
   else if(_occface->DynamicType() == STANDARD_TYPE(Geom_BezierSurface)) {
     // TODO
@@ -395,36 +393,29 @@ void OCCFace::geomProperties(std::vector<int> &integers, std::vector<double> &re
   else if(_occface->DynamicType() == STANDARD_TYPE(Geom_CylindricalSurface)) {
     gp_Cylinder cylinder = surface.Cylinder();
     const auto &ax = cylinder.Axis();
-    //let us get the origin or center of cylinder
     const auto pt = ax.Location();
-    //let us get the direction/axis
     const auto dir = ax.Direction();
-    //now we fill the vector in the following order:
-    reals.push_back(cylinder.Radius());
     reals.push_back(pt.X());
     reals.push_back(pt.Y());
     reals.push_back(pt.Z());
     reals.push_back(dir.X());
     reals.push_back(dir.Y());
     reals.push_back(dir.Z());
+    reals.push_back(cylinder.Radius());
   }
   else if(_occface->DynamicType() == STANDARD_TYPE(Geom_ConicalSurface)) {
     gp_Cone cone = surface.Cone();
     const auto &ax = cone.Axis();
-    //let us get the origin or center of cylinder
     const auto pt = ax.Location();
-    //let us get the direction/axis
     const auto dir = ax.Direction();
-    //now we fill the vector in the following order:
-    reals.push_back(cone.RefRadius());
-    reals.push_back(cone.SemiAngle());
     reals.push_back(pt.X());
     reals.push_back(pt.Y());
     reals.push_back(pt.Z());
     reals.push_back(dir.X());
     reals.push_back(dir.Y());
     reals.push_back(dir.Z());
-    // TODO
+    reals.push_back(cone.RefRadius());
+    reals.push_back(cone.SemiAngle());
   }
   else if(_occface->DynamicType() == STANDARD_TYPE(Geom_SurfaceOfRevolution)) {
     // TODO
