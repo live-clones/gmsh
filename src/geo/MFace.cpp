@@ -192,6 +192,7 @@ void MFace::getOrientationFlagForFace(std::vector<int> &faceOrientationFlag)
     }
   }
 }
+
 double MFace::approximateArea() const
 {
   SPoint3 p0 = _v[0]->point(), p1 = _v[1]->point(), p2 = _v[2]->point();

@@ -990,10 +990,14 @@ bool OCC_Internals::addCircleArc(int &tag, int startTag, int middleTag,
     Handle(Geom_Circle) C = new Geom_Circle(Circ);
     Standard_Real Alpha1 = ElCLib::Parameter(Circ, aP1);
     Standard_Real Alpha2 = ElCLib::Parameter(Circ, aP3);
-    bool Sense = false;
+    bool Sense = false; // trigonometric to match built-in kernel arcs
     if(!center) {
       Standard_Real AlphaC = ElCLib::Parameter(Circ, aP2);
-      if(AlphaC > Alpha1 && AlphaC < Alpha2) Sense = true;
+      Sense = (Alpha1 < AlphaC && AlphaC < Alpha2) ||
+        (AlphaC < Alpha2 && Alpha2 < Alpha1) ||
+        (Alpha2 < Alpha1 && Alpha1 < AlphaC);
+      Msg::Debug("Circle through point sense %d: Alpha1=%g, Alpha2=%g, AlphaC=%g",
+                 Sense ? 1 : 0, Alpha1, Alpha2, AlphaC);
     }
     Handle(Geom_TrimmedCurve) arc =
       new Geom_TrimmedCurve(C, Alpha1, Alpha2, Sense);

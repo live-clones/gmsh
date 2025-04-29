@@ -407,12 +407,28 @@ namespace gmsh { // Top-level functions
     GMSH_API void removeEntities(const gmsh::vectorpair & dimTags,
                                  const bool recursive = false);
 
-    // gmsh::model::getType
+    // gmsh::model::getEntityType
     //
     // Get the type of the entity of dimension `dim' and tag `tag'.
+    GMSH_API void getEntityType(const int dim,
+                                const int tag,
+                                std::string & entityType);
+
+    // gmsh::model::getType
+    //
+    // Get the type of the entity of dimension `dim' and tag `tag'. (This is a
+    // deprecated synonym for `getType'.)
     GMSH_API void getType(const int dim,
                           const int tag,
                           std::string & entityType);
+
+    // gmsh::model::getEntityProperties
+    //
+    // Get the properties of the entity of dimension `dim' and tag `tag'.
+    GMSH_API void getEntityProperties(const int dim,
+                                      const int tag,
+                                      std::vector<int> & integers,
+                                      std::vector<double> & reals);
 
     // gmsh::model::getParent
     //
@@ -2295,8 +2311,8 @@ namespace gmsh { // Top-level functions
       //
       // Mirror the entities `dimTags' (given as a vector of (dim, tag) pairs) in
       // the built-in CAD representation, with respect to the plane of equation `a'
-      // * x + `b' * y + `c' * z + `d' = 0. (This is a synonym for `mirror', which
-      // will be deprecated in a future release.)
+      // * x + `b' * y + `c' * z + `d' = 0. (This is a deprecated synonym for
+      // `mirror'.)
       GMSH_API void symmetrize(const gmsh::vectorpair & dimTags,
                                const double a,
                                const double b,

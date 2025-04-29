@@ -2296,7 +2296,7 @@ std::size_t GModel::indexMeshVertices(bool all, int singlePartition,
 
   // renumber all the mesh nodes tagged with 0
   std::size_t numVertices = 0;
-  long int index = 0;
+  long int index = CTX::instance()->mesh.firstNodeTag - 1;
   for(std::size_t i = 0; i < entities.size(); i++) {
     for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
       MVertex *v = entities[i]->mesh_vertices[j];

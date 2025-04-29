@@ -178,7 +178,6 @@ void OCCFace::_setup()
   _projector.Init(_occface, umin, umax, vmin, vmax);
 
   if(OCCFace::geomType() == GEntity::Sphere) {
-    BRepAdaptor_Surface surface(_s);
     gp_Sphere sphere = surface.Sphere();
     _radius = sphere.Radius();
     gp_Pnt loc = sphere.Location();
@@ -354,6 +353,50 @@ GEntity::GeomType OCCFace::geomType() const
   else if(_occface->DynamicType() == STANDARD_TYPE(Geom_BSplineSurface))
     return BSplineSurface;
   return Unknown;
+}
+
+void OCCFace::geomProperties(std::vector<int> &integers, std::vector<double> &reals) const
+{
+  BRepAdaptor_Surface surface(_s);
+
+  if(_occface->DynamicType() == STANDARD_TYPE(Geom_Plane)) {
+    gp_Pln plane = surface.Plane();
+    double A, B, C, D;
+    plane.Coefficients(A, B, C, D);
+    reals.push_back(A);
+    reals.push_back(B);
+    reals.push_back(C);
+    reals.push_back(D);
+  }
+  else if(_occface->DynamicType() == STANDARD_TYPE(Geom_ToroidalSurface)) {
+    //gp_Torus torus = surface.Torus();
+    // TODO
+  }
+  else if(_occface->DynamicType() == STANDARD_TYPE(Geom_BezierSurface)) {
+    // TODO
+  }
+  else if(_occface->DynamicType() == STANDARD_TYPE(Geom_CylindricalSurface)) {
+    //gp_Cylinder cylinder = surface.Cylinder();
+    // TODO
+  }
+  else if(_occface->DynamicType() == STANDARD_TYPE(Geom_ConicalSurface)) {
+    //gp_Cone cone = surface.Cone();
+    // TODO
+  }
+  else if(_occface->DynamicType() == STANDARD_TYPE(Geom_SurfaceOfRevolution)) {
+    // TODO
+  }
+  else if(_occface->DynamicType() == STANDARD_TYPE(Geom_SphericalSurface)) {
+    gp_Sphere sphere = surface.Sphere();
+    gp_Pnt loc = sphere.Location();
+    reals.push_back(loc.X());
+    reals.push_back(loc.Y());
+    reals.push_back(loc.Z());
+    reals.push_back(sphere.Radius());
+  }
+  else if(_occface->DynamicType() == STANDARD_TYPE(Geom_BSplineSurface)) {
+    // TODO
+  }
 }
 
 double OCCFace::curvatureMax(const SPoint2 &param) const

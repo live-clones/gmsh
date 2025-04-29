@@ -5024,6 +5024,12 @@ double opt_mesh_optimize_netgen(OPT_ARGS_NUM)
   return CTX::instance()->mesh.optimizeNetgen;
 }
 
+double opt_mesh_optimize_pyramids(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.optimizePyramids = (int)val;
+  return CTX::instance()->mesh.optimizePyramids;
+}
+
 double opt_mesh_refine_steps(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
@@ -5980,12 +5986,12 @@ double opt_mesh_bdf_field_format(OPT_ARGS_NUM)
   return CTX::instance()->mesh.bdfFieldFormat;
 }
 
-double opt_mesh_stl_remove_duplicate_triangles(OPT_ARGS_NUM)
+double opt_mesh_stl_remove_bad_triangles(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    CTX::instance()->mesh.stlRemoveDuplicateTriangles = (int)val;
+    CTX::instance()->mesh.stlRemoveBadTriangles = (int)val;
   }
-  return CTX::instance()->mesh.stlRemoveDuplicateTriangles;
+  return CTX::instance()->mesh.stlRemoveBadTriangles;
 }
 
 double opt_mesh_stl_one_solid_per_surface(OPT_ARGS_NUM)

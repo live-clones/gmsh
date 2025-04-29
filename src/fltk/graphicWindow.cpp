@@ -780,7 +780,8 @@ void help_about_cb(Fl_Widget *w, void *data)
 static void geometry_edit_cb(Fl_Widget *w, void *data)
 {
   std::string prog = FixWindowsPath(CTX::instance()->editor);
-  std::string file = FixWindowsPath(GModel::current()->getFileName());
+  // allow white space in file name
+  std::string file = "\"" + FixWindowsPath(GModel::current()->getFileName()) + "\"";
   SystemCall(ReplaceSubString("%s", file, prog));
 }
 

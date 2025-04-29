@@ -612,6 +612,19 @@ GMSH_API void gmshModelRemoveEntities(const int * dimTags, const size_t dimTags_
   }
 }
 
+GMSH_API void gmshModelGetEntityType(const int dim, const int tag, char ** entityType, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::string api_entityType_;
+    gmsh::model::getEntityType(dim, tag, api_entityType_);
+    *entityType = strdup(api_entityType_.c_str());
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelGetType(const int dim, const int tag, char ** entityType, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -619,6 +632,21 @@ GMSH_API void gmshModelGetType(const int dim, const int tag, char ** entityType,
     std::string api_entityType_;
     gmsh::model::getType(dim, tag, api_entityType_);
     *entityType = strdup(api_entityType_.c_str());
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelGetEntityProperties(const int dim, const int tag, int ** integers, size_t * integers_n, double ** reals, size_t * reals_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_integers_;
+    std::vector<double> api_reals_;
+    gmsh::model::getEntityProperties(dim, tag, api_integers_, api_reals_);
+    vector2ptr(api_integers_, integers, integers_n);
+    vector2ptr(api_reals_, reals, reals_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
