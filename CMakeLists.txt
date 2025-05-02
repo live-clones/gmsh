@@ -2009,14 +2009,16 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
           OPTIONAL)
   TARGET_INCLUDE_DIRECTORIES(shared PUBLIC $<INSTALL_INTERFACE:include>)
 endif()
-install(EXPORT gmshTargets NAMESPACE gmsh:: DESTINATION share/gmsh)
-include(CMakePackageConfigHelpers)
-configure_package_config_file(
-    ${CMAKE_CURRENT_SOURCE_DIR}/utils/misc/gmsh-config.cmake.in
-    "${CMAKE_CURRENT_BINARY_DIR}/gmshConfig.cmake"
-    INSTALL_DESTINATION "share/gmsh" NO_SET_AND_CHECK_MACRO
-    NO_CHECK_REQUIRED_COMPONENTS_MACRO)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/gmshConfig.cmake DESTINATION "share/gmsh")
+if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
+  install(EXPORT gmshTargets NAMESPACE gmsh:: DESTINATION share/gmsh)
+  include(CMakePackageConfigHelpers)
+  configure_package_config_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/utils/misc/gmsh-config.cmake.in
+      "${CMAKE_CURRENT_BINARY_DIR}/gmshConfig.cmake"
+      INSTALL_DESTINATION "share/gmsh" NO_SET_AND_CHECK_MACRO
+      NO_CHECK_REQUIRED_COMPONENTS_MACRO)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/gmshConfig.cmake DESTINATION "share/gmsh")
+endif()
 
 if(ENABLE_ONELAB AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab)
   install(FILES ${ONELAB_PY} DESTINATION ${GMSH_BIN})
