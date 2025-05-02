@@ -184,7 +184,7 @@ model.add('getEntityType', doc, None, iint('dim'), iint('tag'), ostring('entityT
 doc += ''' (This is a deprecated synonym for `getType'.)'''
 model.add('getType', doc, None, iint('dim'), iint('tag'), ostring('entityType'))
 
-doc = '''Get the properties of the entity of dimension `dim' and tag `tag'.'''
+doc = '''Get the properties of the entity of dimension `dim' and tag `tag'. The `reals' vector contains the 4 coefficients of the cartesian equation for a plane surface; the center coordinates, axis direction, major radius and minor radius for a torus; the center coordinates, axis direction and radius for a cylinder; the center coordinates, axis direction, radius and semi-angle for surfaces of revolution; the center coordinates and the radius for a sphere.'''
 model.add('getEntityProperties', doc, None, iint('dim'), iint('tag'), ovectorint('integers'), ovectordouble('reals'))
 
 doc = '''In a partitioned model, get the parent of the entity of dimension `dim' and tag `tag', i.e. from which the entity is a part of, if any. `parentDim' and `parentTag' are set to -1 if the entity has no parent.'''
