@@ -102,7 +102,7 @@ void gmshFace::resetNativePtr(Surface *s)
   _parBounds[1] = Range<double>(0., 1.);
   if(_s->Typ == MSH_SURF_PLAN) {
     SBoundingBox3d bb;
-    for(auto ge: l_edges) {
+    for(auto ge : l_edges) {
       if(ge->geomType() != DiscreteCurve &&
          ge->geomType() != BoundaryLayerCurve) {
         Range<double> t_bounds = ge->parBounds(0);
@@ -121,7 +121,6 @@ void gmshFace::resetNativePtr(Surface *s)
       _parBounds[1] = Range<double>(bb.min().y(), bb.max().y());
     }
   }
-
 }
 
 double gmshFace::getMetricEigenvalue(const SPoint2 &pt)
@@ -334,6 +333,22 @@ GEntity::GeomType gmshFace::geomType() const
   case MSH_SURF_DISCRETE: return DiscreteSurface;
   case MSH_SURF_BND_LAYER: return BoundaryLayerSurface;
   default: return Unknown;
+  }
+}
+
+void gmshFace::geomProperties(std::vector<int> &integers,
+                              std::vector<double> &reals) const
+{
+  switch(_s->Typ) {
+  case MSH_SURF_PLAN:
+    reals.push_back(meanPlane.a);
+    reals.push_back(meanPlane.b);
+    reals.push_back(meanPlane.c);
+    reals.push_back(meanPlane.d);
+    break;
+  default:
+    // TODO
+    break;
   }
 }
 
