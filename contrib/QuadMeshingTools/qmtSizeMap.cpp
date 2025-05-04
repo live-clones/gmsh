@@ -224,7 +224,7 @@ int sizeMapOneWaySmoothing(const std::vector<MTriangle *> &triangles,
   if(triangles.size() == 0) return -1;
   if(gradientMax <= 0.) return -1;
 
-  std::unordered_map<MVertex *, std::vector<MVertex *> > v2v;
+  VertexToVertexMap v2v;
   buildVertexToVertexMap(triangles, v2v);
 
   std::priority_queue<std::pair<double, MVertex *>,
