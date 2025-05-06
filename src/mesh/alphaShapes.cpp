@@ -740,7 +740,7 @@ public:
     }
     if(!_octree) return MAX_LC;
     SVector3 pt(X, Y, Z);
-    SVector3 pt_inf_Z(X, Y, _octree->bbox_.min[2]);
+    SVector3 pt_inf_Z(X, Y, 2.*_octree->bbox_.min[2]);
     SVector3 pt_inf_X(_octree->bbox_.max[0], Y, Z);
     
     bool in = false;
@@ -756,12 +756,12 @@ public:
 
     std::vector<MTriangle*> res_Z;
     _octree->search(bbox_search_Z, res_Z);
-    std::sort(res_Z.begin(), res_Z.end());
-    res_Z.erase(std::unique(res_Z.begin(), res_Z.end()), res_Z.end());
-    std::vector<MTriangle*> res_X;
-    _octree->search(bbox_search_X, res_X);
-    std::sort(res_X.begin(), res_X.end());
-    res_X.erase(std::unique(res_X.begin(), res_X.end()), res_X.end());
+    // std::sort(res_Z.begin(), res_Z.end());
+    // res_Z.erase(std::unique(res_Z.begin(), res_Z.end()), res_Z.end());
+    // std::vector<MTriangle*> res_X;
+    // _octree->search(bbox_search_X, res_X);
+    // std::sort(res_X.begin(), res_X.end());
+    // res_X.erase(std::unique(res_X.begin(), res_X.end()), res_X.end());
     // #pragma omp parallel for
     // for (auto tri : res_X){
     //   SVector3 pa(tri->getVertex(0)->x(), tri->getVertex(0)->y(),tri->getVertex(0)->z());
@@ -800,6 +800,7 @@ public:
       if (orient1*orient2 >= 0){
         continue;
       }
+
       double t = orient1/(orient1-orient2);
       SVector3 p_intersect = pt + t*(pt_inf_Z-pt);
       auto v0 = pc-pa;
@@ -814,7 +815,7 @@ public:
       double invDenom = 1. / (dot00 * dot11 - dot01 * dot01);
       double u = (dot11 * dot02 - dot01 * dot12) * invDenom;
       double v = (dot00 * dot12 - dot01 * dot02) * invDenom;
-      // printf("u %f, v %f \n", u, v);
+
       if (u >= 0 && v >= 0 && u + v <= 1){
         counter_Z++;
       }
@@ -3082,7 +3083,7 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
   std::vector<size_t> tetNodes(4*n_tets);
   // auto t2 = std::chrono::steady_clock::now(); 
   field->operator()(0,0,0, NULL); // this does the update of the size field
-  #pragma omp parallel for
+  // #pragma omp parallel for
   for (size_t i=0; i<gr->getNumMeshElementsByType(TYPE_TET); i++){
     MTetrahedron* tet = gr->tetrahedra[i];
     for (size_t j=0; j<4; j++){
@@ -3100,8 +3101,6 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
   std::vector<MTetrahedron*> alphaTets;
   double hTet, R;
   SPoint3 cc;
-
-  printf("here p \n");
 
   for (size_t i=0; i<n_tets; i++){
     auto tet = gr->tetrahedra[i];
