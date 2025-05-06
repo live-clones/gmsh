@@ -4069,7 +4069,6 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
     nodalSizes.max = nodalSizeMax;
     delOptions.nodalSizes = &nodalSizes;
     delOptions.nodalSizes->enabled = 1; // activate the filtering...
-    hxtMeshWriteGmsh(m, "tetMeshBefore.msh");
     hxtRefineTetrahedra(m, &delOptions);
     
     hxtNodalSizesDestroy(&nodalSizes);
