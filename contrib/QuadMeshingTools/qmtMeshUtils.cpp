@@ -87,10 +87,9 @@ bool haveNiceParametrization(GFace *gf)
 
 bool buildVertexToVertexMap(
   const std::vector<MTriangle *> &triangles,
-  std::unordered_map<MVertex *, std::vector<MVertex *> > &v2v)
+  VertexToVertexMap& v2v)
 {
   v2v.clear();
-  v2v.rehash(3 * triangles.size());
 
   size_t N = 3;
   for(MTriangle *f : triangles) {
@@ -101,17 +100,16 @@ bool buildVertexToVertexMap(
       v2v[v2].push_back(v1);
     }
   }
-  for(auto &kv : v2v) { sort_unique(kv.second); }
+  for(auto &kv : v2v) { sort_unique(kv.second, MVertexPtrLessThan()); }
 
   return true;
 }
 
 bool buildVertexToVertexMap(
   const std::vector<MElement *> &elements,
-  std::unordered_map<MVertex *, std::vector<MVertex *> > &v2v)
+  VertexToVertexMap& v2v)
 {
   v2v.clear();
-  v2v.rehash(4 * elements.size());
   for(size_t i = 0; i < elements.size(); ++i) {
     size_t N = elements[i]->getNumVertices();
     for(size_t le = 0; le < N; ++le) {
@@ -121,7 +119,7 @@ bool buildVertexToVertexMap(
       v2v[v2].push_back(v1);
     }
   }
-  for(auto &kv : v2v) { sort_unique(kv.second); }
+  for(auto &kv : v2v) { sort_unique(kv.second, MVertexPtrLessThan()); }
   return true;
 }
 

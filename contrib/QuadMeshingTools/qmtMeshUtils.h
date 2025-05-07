@@ -7,12 +7,14 @@
 
 #pragma once
 
+#include "MVertex.h"
+#include "SPoint2.h"
+#include "SPoint3.h"
+
 #include <set>
 #include <vector>
 #include <string>
 #include <unordered_map>
-#include "SPoint2.h"
-#include "SPoint3.h"
 
 
 class GModel;
@@ -22,9 +24,10 @@ class GFace;
 class GEdge;
 class MTriangle;
 class MQuadrangle;
-class MVertex;
 class MElement;
 class SurfaceProjector;
+
+using VertexToVertexMap = std::map<MVertex*,std::vector<MVertex*>, MVertexPtrLessThan>;
 
 std::vector<GFace*> model_faces(const GModel* gm);
 std::vector<GEdge*> face_edges(const GFace* gf);
@@ -34,11 +37,11 @@ bool haveNiceParametrization(GFace* gf);
 
 bool buildVertexToVertexMap(
     const std::vector<MTriangle*>& triangles,
-    std::unordered_map<MVertex*,std::vector<MVertex*> >& v2v);
+    VertexToVertexMap& v2v);
 
 bool buildVertexToVertexMap(
     const std::vector<MElement*>& elements,
-    std::unordered_map<MVertex*,std::vector<MVertex*> >& v2v);
+    VertexToVertexMap& v2v);
 
 
 struct GFaceMeshPatch {

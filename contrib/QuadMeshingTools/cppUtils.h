@@ -73,6 +73,12 @@ namespace CppUtils {
       vec.erase( std::unique( vec.begin(), vec.end() ), vec.end() );
   }
 
+  template<class T, class Compare>
+  void sort_unique(std::vector<T>& vec, Compare comp) {
+      std::sort( vec.begin(), vec.end(), comp );
+      vec.erase( std::unique( vec.begin(), vec.end() ), vec.end() );
+  }
+
   template<class T1, class T2>
   T2 sort_unique_with_perm(
         const std::vector<T1>& in,
