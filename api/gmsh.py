@@ -64,7 +64,9 @@ possible_libpaths = [os.path.join(moduledir, libname),
                      os.path.join(parentdir2, libname),
                      os.path.join(parentdir2, "lib", libname),
                      os.path.join(parentdir2, "Lib", libname),
-                     os.path.join(parentdir2, "bin", libname)
+                     os.path.join(parentdir2, "bin", libname),
+                     # for Windows conda-forge
+                     os.path.join(parentdir2, "Library", "bin", "gmsh.dll")
                      ]
 
 for libpath_to_look in possible_libpaths:
