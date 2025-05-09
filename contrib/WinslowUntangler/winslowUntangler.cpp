@@ -808,7 +808,7 @@ namespace WinslowUntangler {
     }
     else if(dim == 3) {
       auto tetIdealShapesS = tetIdealShapes;
-      scaleToUnit(points3D, tetIdealShapesS, bbmin3D, bbmax3D);
+      //      scaleToUnit(points3D, tetIdealShapesS, bbmin3D, bbmax3D);
       bool okp =
         prepareData3D(points3D, locked, tetrahedra, tetIdealShapesS, data);
       if(!okp) return false;
@@ -918,7 +918,7 @@ namespace WinslowUntangler {
     /* Scale the mesh to initial size */
     if(dim == 2) { /*scaleToInitial(points2D, bbmin2D, bbmax2D);*/ }
     else if(dim == 3) {
-      scaleToInitial(points3D, bbmin3D, bbmax3D);
+      //      scaleToInitial(points3D, bbmin3D, bbmax3D);
     }
 
     if(restore) {

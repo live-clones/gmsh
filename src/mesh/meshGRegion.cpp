@@ -194,11 +194,11 @@ void MeshDelaunayVolume(std::vector<GRegion *> &regions)
                            true, &sqr);
 
     if(sqr.buildPyramids(gr->model())) {
-      Msg::Info("Optimizing pyramids for hybrid mesh...");
+      //      Msg::Info("Optimizing pyramids for hybrid mesh...");
       gr->model()->setAllVolumesPositive();
       RelocateVerticesOfPyramids(regions, 3);
       // RelocateVertices(regions, 3);
-      Msg::Info("Done optimizing pyramids for hybrid mesh");
+      //      Msg::Info("Done optimizing pyramids for hybrid mesh");
     }
 
     // test:

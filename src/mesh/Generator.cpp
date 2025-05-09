@@ -882,6 +882,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
     for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
       optimizeMeshGRegion opt;
       opt(*it, force);
+      // RelocateVerticesOfPyramids(*it, 10, 1.e-6);      
     }
     m->setAllVolumesPositive();
   }
