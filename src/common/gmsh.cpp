@@ -5888,8 +5888,8 @@ gmsh::model::mesh::filterCloseNodes(const int tag, const int sizeFieldTag, const
 GMSH_API void
 gmsh::model::mesh::colourBoundaryFaces(const int tag, const std::string & boundaryModel, const double tolerance){
 #if defined(HAVE_MESH) && defined(HAVE_HXT)
-  AlphaShape::_colourBoundariesWithGmshOctree(tag, boundaryModel, tolerance);
-  // AlphaShape::_colourBoundaries(tag, boundaryModel, tolerance);
+  // AlphaShape::_colourBoundariesWithGmshOctree(tag, boundaryModel, tolerance);
+  AlphaShape::_colourBoundaries(tag, boundaryModel, tolerance);
 #else
   Msg::Error("volumeMeshRefinement requires the mesh and hxt modules");
 #endif
