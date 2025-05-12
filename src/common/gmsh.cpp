@@ -392,7 +392,8 @@ GMSH_API void gmsh::model::getEntityName(const int dim, const int tag,
   name = GModel::current()->getElementaryName(dim, tag);
 }
 
-GMSH_API void gmsh::model::getPhysicalGroups(vectorpair &dimTags, const int dim)
+GMSH_API void gmsh::model::getPhysicalGroups(vectorpair &dimTags,
+                                             const int dim)
 {
   if(!_checkInit()) return;
   dimTags.clear();
@@ -400,8 +401,31 @@ GMSH_API void gmsh::model::getPhysicalGroups(vectorpair &dimTags, const int dim)
   GModel::current()->getPhysicalGroups(groups);
   for(int d = 0; d < 4; d++) {
     if(dim < 0 || d == dim) {
-      for(auto it = groups[d].begin(); it != groups[d].end(); it++)
-        dimTags.push_back(std::make_pair(d, it->first));
+      for(auto g : groups[d]) {
+        dimTags.push_back(std::make_pair(d, g.first));
+      }
+    }
+  }
+}
+
+GMSH_API void gmsh::model::getPhysicalGroupsEntities(vectorpair &dimTags,
+                                                     std::vector<vectorpair> &entities,
+                                                     const int dim)
+{
+  if(!_checkInit()) return;
+  dimTags.clear();
+  entities.clear();
+  std::map<int, std::vector<GEntity *>> groups[4];
+  GModel::current()->getPhysicalGroups(groups);
+  for(int d = 0; d < 4; d++) {
+    if(dim < 0 || d == dim) {
+      for(auto g : groups[d]) {
+        dimTags.push_back(std::make_pair(d, g.first));
+        entities.push_back(std::vector<std::pair<int, int>>());
+        for(auto ge : g.second) {
+          entities.back().push_back(std::make_pair(d, ge->tag()));
+        }
+      }
     }
   }
 }
