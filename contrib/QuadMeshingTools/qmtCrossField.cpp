@@ -1570,12 +1570,11 @@ int convertToPerTriangleCrossFieldDirections(
   return 0;
 }
 
-inline double angle2PI(const SVector3 &u, const SVector3 &v, const SVector3 &n)
+inline double angleMPiPi(const SVector3 &u, const SVector3 &v, const SVector3 &n)
 {
   const double dp = dot(u, v);
   const double tp = dot(n, crossprod(u, v));
   double angle = atan2(tp, dp);
-  if(angle < 0) angle += 2. * M_PI;
   return angle;
 }
 
@@ -1592,7 +1591,7 @@ int detectCrossFieldSingularities(
   }
 
   /* Get interior vertices and adjacent triangles */
-  unordered_map<MVertex *, vector<MTriangle *> > v2t;
+  std::map<MVertex *, vector<MTriangle *>, MVertexPtrLessThan> v2t;
 
   /* put edge angles here, maybe a bit slow ... */
   unordered_map<MEdge, double, MEdgeHash, MEdgeEqual> edgeTheta;
@@ -1610,6 +1609,11 @@ int detectCrossFieldSingularities(
       if(gf == nullptr) continue;
       v2t[v1].push_back(t);
     }
+  }
+  for(auto &kv : v2t) {
+    sort_unique(kv.second, [](MTriangle *a, MTriangle *b) {
+      return a->getNum() < b->getNum();
+    });
   }
 
   /* Compute index at each vertex (looking on the one rings) */
@@ -1690,8 +1694,7 @@ int detectCrossFieldSingularities(
       SVector3 vertical(0., 0., 1.);
       const SVector3 r1 = rep_vectors[j];
       const SVector3 r2 = rep_vectors[(j + 1) % rep_vectors.size()];
-      double diff_angle = angle2PI(r1, r2, vertical);
-      if(diff_angle > M_PI) diff_angle -= 2. * M_PI;
+      double diff_angle = angleMPiPi(r1, r2, vertical);
       sum_diff += diff_angle;
     }
     if(std::abs(sum_diff - 2 * M_PI) < 0.05 * M_PI) { vertexIndex[v] = -1; }
@@ -1715,15 +1718,15 @@ int detectCrossFieldSingularities(
     MVertex *v1 = t->getVertex(0);
     MVertex *v2 = t->getVertex(1);
     MVertex *v3 = t->getVertex(2);
-    for(double index : {-1., 1.}) {
+    for(int index : {-1, 1}) {
       if(vertexIndex[v1] == index && vertexIndex[v2] == index &&
          vertexIndex[v3] == index) {
         SPoint3 p = (v1->point() + v2->point() + v3->point()) * double(1. / 3.);
         singularities.push_back({p, index});
         /* remove from list of available singularities */
-        vertexIndex[v1] = 0.;
-        vertexIndex[v2] = 0.;
-        vertexIndex[v3] = 0.;
+        vertexIndex[v1] = 0;
+        vertexIndex[v2] = 0;
+        vertexIndex[v3] = 0;
       }
     }
   }
@@ -1732,13 +1735,13 @@ int detectCrossFieldSingularities(
     for(size_t le = 0; le < 3; ++le) {
       MVertex *v1 = t->getVertex(le);
       MVertex *v2 = t->getVertex((le + 1) % 3);
-      for(double index : {-1., 1.}) {
+      for(int index : {-1, 1}) {
         if(vertexIndex[v1] == index && vertexIndex[v2] == index) {
           SPoint3 p = (v1->point() + v2->point()) * 0.5;
           singularities.push_back({p, index});
           /* remove from list of available singularities */
-          vertexIndex[v1] = 0.;
-          vertexIndex[v2] = 0.;
+          vertexIndex[v1] = 0;
+          vertexIndex[v2] = 0;
         }
       }
     }
