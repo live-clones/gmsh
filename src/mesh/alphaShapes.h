@@ -80,7 +80,7 @@ void _colourBoundariesWithGmshOctree(const int faceTag, const std::string & boun
 
 void _matchTrianglesToEntities(const int faceTag, const std::string & boundaryModel, const double tolerance, std::vector<int>& outEntities, std::vector<std::vector<size_t>>& outTriangles, std::vector<std::vector<size_t>>& outTriangleNodeTags);
 
-void _moveNodes3D(const int tag, const int freeSurfaceTag, const std::vector<size_t> & nodeTags, const std::vector<double> & nodesDx, double boundary_tol, const std::string & boundaryModel);
+void _moveNodes3D(const int tag, const int freeSurfaceTag, const std::vector<size_t> & nodeTags, const std::vector<double> & nodesDx, double boundary_tol, const std::string & boundaryModel, const bool intersectOrProjectOnBoundary);
 
 
 };

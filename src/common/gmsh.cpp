@@ -5687,7 +5687,8 @@ gmsh::model::mesh::advectMeshNodes(const int dim,
                                    const std::string & boundaryModel,
                                    const std::vector<size_t> &nodeTags,
                                    const std::vector<double> &nodesDx, 
-                                   const double boundaryTolerance)
+                                   const double boundaryTolerance, 
+                                   const bool intersectOrProjectOnBoundary)
 {
 #if defined(HAVE_MESH) && defined(HAVE_HXT)
   if (dim == 2){
@@ -5697,7 +5698,7 @@ gmsh::model::mesh::advectMeshNodes(const int dim,
     AlphaShape::_moveNodes(tag, bndTag, nodeTags, nodesDx, bnd_octree, boundaryTolerance);
   }
   else if (dim == 3){
-    AlphaShape::_moveNodes3D(tag, bndTag, nodeTags, nodesDx, boundaryTolerance, boundaryModel);
+    AlphaShape::_moveNodes3D(tag, bndTag, nodeTags, nodesDx, boundaryTolerance, boundaryModel, intersectOrProjectOnBoundary);
   }
   else 
     Msg::Error("Wrong dimension in advectMeshNodes; 2 or 3");

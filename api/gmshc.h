@@ -1659,6 +1659,7 @@ GMSH_API void gmshModelMeshAdvectMeshNodes(const int dim,
                                            const size_t * nodeTags, const size_t nodeTags_n,
                                            const double * dxNodes, const size_t dxNodes_n,
                                            const double boundaryTolerance,
+                                           const int intersectOrProjectOnBoundary,
                                            int * ierr);
 
 /* Compute the alpha shape - improved function */

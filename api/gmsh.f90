@@ -7519,6 +7519,7 @@ module gmsh
                                           nodeTags, &
                                           dxNodes, &
                                           boundaryTolerance, &
+                                          intersectOrProjectOnBoundary, &
                                           ierr)
     interface
     subroutine C_API(dim, &
@@ -7530,6 +7531,7 @@ module gmsh
                      api_dxNodes_, &
                      api_dxNodes_n_, &
                      boundaryTolerance, &
+                     intersectOrProjectOnBoundary, &
                      ierr_) &
       bind(C, name="gmshModelMeshAdvectMeshNodes")
       use, intrinsic :: iso_c_binding
@@ -7542,6 +7544,7 @@ module gmsh
       real(c_double), dimension(*) :: api_dxNodes_
       integer(c_size_t), value, intent(in) :: api_dxNodes_n_
       real(c_double), value, intent(in) :: boundaryTolerance
+      integer(c_int), value, intent(in) :: intersectOrProjectOnBoundary
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
@@ -7552,6 +7555,7 @@ module gmsh
     integer(c_size_t), dimension(:), intent(in) :: nodeTags
     real(c_double), dimension(:), intent(in) :: dxNodes
     real(c_double), intent(in), optional :: boundaryTolerance
+    logical, intent(in), optional :: intersectOrProjectOnBoundary
     integer(c_int), intent(out), optional :: ierr
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
@@ -7562,6 +7566,7 @@ module gmsh
          api_dxNodes_=dxNodes, &
          api_dxNodes_n_=size_gmsh_double(dxNodes), &
          boundaryTolerance=optval_c_double(1e-6, boundaryTolerance), &
+         intersectOrProjectOnBoundary=optval_c_bool(.false., intersectOrProjectOnBoundary), &
          ierr_=ierr)
   end subroutine gmshModelMeshAdvectMeshNodes
 

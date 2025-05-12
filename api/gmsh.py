@@ -5148,9 +5148,9 @@ class model:
         compute_alpha_shape3_d = computeAlphaShape3D
 
         @staticmethod
-        def advectMeshNodes(dim, tag, bndTag, boundaryModel, nodeTags, dxNodes, boundaryTolerance=1e-6):
+        def advectMeshNodes(dim, tag, bndTag, boundaryModel, nodeTags, dxNodes, boundaryTolerance=1e-6, intersectOrProjectOnBoundary=False):
             """
-            gmsh.model.mesh.advectMeshNodes(dim, tag, bndTag, boundaryModel, nodeTags, dxNodes, boundaryTolerance=1e-6)
+            gmsh.model.mesh.advectMeshNodes(dim, tag, bndTag, boundaryModel, nodeTags, dxNodes, boundaryTolerance=1e-6, intersectOrProjectOnBoundary=False)
 
             Advect nodes of a mesh with displacement vector dxNodes
 
@@ -5162,6 +5162,7 @@ class model:
             - `nodeTags': vector of sizes
             - `dxNodes': vector of doubles
             - `boundaryTolerance': double
+            - `intersectOrProjectOnBoundary': boolean
             """
             api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
             api_dxNodes_, api_dxNodes_n_ = _ivectordouble(dxNodes)
@@ -5174,6 +5175,7 @@ class model:
                 api_nodeTags_, api_nodeTags_n_,
                 api_dxNodes_, api_dxNodes_n_,
                 c_double(boundaryTolerance),
+                c_int(bool(intersectOrProjectOnBoundary)),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())

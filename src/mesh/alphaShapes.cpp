@@ -4603,7 +4603,7 @@ void AlphaShape::_colourBoundaries(const int faceTag, const std::string & bounda
   //   gm_boundary->_elementOctree = new MElementOctree(gm_boundary);
   // }
   auto t1 = std::chrono::steady_clock::now();
-  
+  double search_size = tolerance*2.;
   std::unordered_map<size_t, std::vector<MTriangle*>> bndMap;
   
   std::unordered_map<MElement*, size_t> bndElement2Entity;
@@ -4623,8 +4623,8 @@ void AlphaShape::_colourBoundaries(const int faceTag, const std::string & bounda
     for (size_t i=0; i<3; i++){
       BBox<3> pt_bbox;
       std::vector<MElement*> bnd_element_found_i;
-      pt_bbox.extends({tri->getVertex(i)->x()-tolerance, tri->getVertex(i)->y()-tolerance, tri->getVertex(i)->z()-tolerance});
-      pt_bbox.extends({tri->getVertex(i)->x()+tolerance, tri->getVertex(i)->y()+tolerance, tri->getVertex(i)->z()+tolerance});
+      pt_bbox.extends({tri->getVertex(i)->x()-search_size, tri->getVertex(i)->y()-search_size, tri->getVertex(i)->z()-search_size});
+      pt_bbox.extends({tri->getVertex(i)->x()+search_size, tri->getVertex(i)->y()+search_size, tri->getVertex(i)->z()+search_size});
       octree.search(pt_bbox, bnd_element_found_i);
       for (auto el : bnd_element_found_i){
         if (el->getDim() != 2) continue;
@@ -4716,7 +4716,7 @@ void AlphaShape::_colourBoundaries(const int faceTag, const std::string & bounda
   // for (auto tri : triangles_temp) delete tri;
 }
 
-void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std::vector<size_t> & nodeTags, const std::vector<double> & nodesDx, double boundary_tol, const std::string & boundaryModel){
+void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std::vector<size_t> & nodeTags, const std::vector<double> & nodesDx, double boundary_tol, const std::string & boundaryModel, const bool intersectOrProjectOnBoundary){
   GModel* gm_alphaShape = GModel::current();
   GModel* gm_boundary = GModel::findByName(boundaryModel);
   if (gm_boundary == nullptr) {
@@ -4774,12 +4774,13 @@ void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std
       std::vector<MElement *> triangles_on_boundary;
 
       bnd_octree.search(bbox, triangles_on_boundary);
-      std::sort(triangles_on_boundary.begin(), triangles_on_boundary.end());
-      triangles_on_boundary.erase(std::unique(triangles_on_boundary.begin(), triangles_on_boundary.end()), triangles_on_boundary.end());
+      // std::sort(triangles_on_boundary.begin(), triangles_on_boundary.end());
+      // triangles_on_boundary.erase(std::unique(triangles_on_boundary.begin(), triangles_on_boundary.end()), triangles_on_boundary.end());
       double minDist = 1e10;
       // double norm;
       // printf("node %zu - num bnd tris : %lu \n", v->getNum(), triangles_on_boundary.size());
       for (auto tri : triangles_on_boundary) {
+
         if (tri->getType() == TYPE_PNT){
           if (!onPoint) minDist = 1e10;
           auto pt = tri->getVertex(0)->point();
@@ -4880,8 +4881,8 @@ void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std
       bbox.extends({x0[0], x0[1], x0[2]});
       bbox.extends({x1[0], x1[1], x1[2]});
       bnd_octree.search(bbox, triangles_on_boundary);
-      std::sort(triangles_on_boundary.begin(), triangles_on_boundary.end());
-      triangles_on_boundary.erase(std::unique(triangles_on_boundary.begin(), triangles_on_boundary.end()), triangles_on_boundary.end());
+      // std::sort(triangles_on_boundary.begin(), triangles_on_boundary.end());
+      // triangles_on_boundary.erase(std::unique(triangles_on_boundary.begin(), triangles_on_boundary.end()), triangles_on_boundary.end());
       // printf("node %zu - num bnd tris : %lu \n", v->getNum(), triangles_on_boundary.size());
       for (auto tri : triangles_on_boundary) {
         double minDist = 1e10;
@@ -4926,17 +4927,29 @@ void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std
           double orient1 = robustPredicates::orient3d(pa.data(), pb.data(), pc.data(), x0);
           double orient2 = robustPredicates::orient3d(pa.data(), pb.data(), pc.data(), x1);
           // printf("node %zu - orient test : %d \n", v->getNum(), orient1*orient2 > 0);
-          if (orient1*orient2 >= 0){
-            continue;
-          }
-          double t=0;
-          if (abs(orient1-orient2) > 1e-10) 
-            t = orient1/(orient1-orient2);
-          t *= 0.9999999; // This ensures that the node stays inside the domain
-          SVector3 nx = x0 + t*(x1-x0);
+          SVector3 nx;
+          // int intersectOrProject = 1; // 0 : intersect, 1 : project
           auto v0 = pc-pa;
           auto v1 = pb-pa;
-          auto v2 = nx-pa;
+          SVector3 v2;
+          if (intersectOrProjectOnBoundary == 0){ // Intersect
+            if (orient1*orient2 >= 0){
+              continue;
+            }
+            double t=0;
+            if (abs(orient1-orient2) > 1e-10) 
+            t = orient1/(orient1-orient2);
+            t *= (1.-1e-10); // This ensures that the node stays inside the domain
+            SVector3 nx = x0 + t*(x1-x0);
+            v2 = nx-pa;
+          }
+          else if (intersectOrProjectOnBoundary == 1){ // Project
+            auto normal = crossprod(v0, v1).unit();
+            v2 = x1-pa;
+            double d = dot(v2, normal);
+            nx = x1 - normal*d;
+          }
+          
           double dot00 = dot(v0, v0);
           double dot01 = dot(v0, v1);
           double dot02 = dot(v0, v2);
@@ -4945,7 +4958,8 @@ void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std
           double invDenom = 1 / (dot00 * dot11 - dot01 * dot01);
           double u = (dot11 * dot02 - dot01 * dot12) * invDenom;
           double v = (dot00 * dot12 - dot01 * dot02) * invDenom;
-          // printf("u = %f, v = %f, u+v = %f\n", u, v, u+v);
+
+          // printf("orient passed \n");
           if (u >= 0 && v >= 0 && u + v <= 1){
             double dist = (nx-x0).norm();
             if (dist < minDist){

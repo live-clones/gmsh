@@ -1874,7 +1874,8 @@ namespace gmsh { // Top-level functions
                                     const std::string & boundaryModel,
                                     const std::vector<std::size_t> & nodeTags,
                                     const std::vector<double> & dxNodes,
-                                    const double boundaryTolerance = 1e-6);
+                                    const double boundaryTolerance = 1e-6,
+                                    const bool intersectOrProjectOnBoundary = false);
 
       // gmsh::model::mesh::computeAlphaShape
       //

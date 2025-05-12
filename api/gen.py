@@ -583,7 +583,7 @@ doc = '''Compute the alpha shape of the set of points on the discrete entity def
 mesh.add('computeAlphaShape3D', doc, None, iint('dim'), ivectorint('alphaShapeTags'), idouble('alpha'), idouble('hMean'), isizefun('sizeFieldCallback'), iint('triangulate'), iint('refine'))
 
 doc = '''Advect nodes of a mesh with displacement vector dxNodes'''
-mesh.add('advectMeshNodes', doc, None, iint('dim'), iint('tag'), iint('bndTag'), istring('boundaryModel'), ivectorsize('nodeTags'),ivectordouble('dxNodes'), idouble('boundaryTolerance', '1e-6'))
+mesh.add('advectMeshNodes', doc, None, iint('dim'), iint('tag'), iint('bndTag'), istring('boundaryModel'), ivectorsize('nodeTags'),ivectordouble('dxNodes'), idouble('boundaryTolerance', '1e-6'), ibool('intersectOrProjectOnBoundary', 'false', 'False'))
 
 doc = '''Compute the alpha shape - improved function'''
 mesh.add('computeAlphaShape', doc, None, iint('dim'), iint('tag'), iint('bndTag'), istring('boundaryModel'), idouble('alpha'), iint('alphaShapeSizeField'), iint('refineSizeField'), ovectorsize('newNodeTags'), ovectorsize('newNodeElementTags'), ovectordouble('newNodeParametricCoord'), ibool('usePreviousMesh', 'false', 'False'), idouble('boundaryTolerance', '1e-6'), ibool('refine', 'true', 'True'), iint('delaunayTag', '-1'), ibool('deleteDisconnectedNodes', 'true', 'True'))
