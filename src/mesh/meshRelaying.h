@@ -229,7 +229,7 @@ public:
              std::vector<size_t> *doubleIds, std::vector<double> *tripleMarkers,
              std::vector<int> *tripleTags, std::vector<size_t> *tripleIds,
              std::vector<size_t> *DF_to_meshNodes, std::vector<double> *DF_to_mesh_parametric,
-             std::vector<size_t> *meshNodes_to_DF, std::vector<double> *mesh_to_DF_parametric);
+             std::vector<size_t> *meshNodes_to_DF, std::vector<double> *mesh_to_DF_parametric, const bool mesh_relation);
   int vertexType(size_t i, int *colors);
   size_t getMaxMarker();
   void rotate_pm(PolyMesh::HalfEdge *start,

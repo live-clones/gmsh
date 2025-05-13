@@ -5738,8 +5738,9 @@ gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
 GMSH_API void gmsh::model::mesh::concentration_from_DF(const std::vector<int> &concentration_list, const std::vector<double> &tension_table ,std::vector<int> &concentration, std::vector<double> &curvature){
   printf("before concentration\n");
   meshRelaying::instance()->concentration(&concentration);
+  // meshRelaying::instance()->concentration_bfs(&concentration);
   printf("after concentration\n");
-  meshRelaying::instance()->curvatureFromMarkers(concentration_list, tension_table, concentration, &curvature);
+  // meshRelaying::instance()->curvatureFromMarkers(concentration_list, tension_table, concentration, &curvature);
   // meshRelaying::instance()->curvatureFromConcentration(&curvature);
   printf("after curvature\n");
   return;
@@ -5775,8 +5776,8 @@ GMSH_API void gmsh::model::mesh::set_boundary_from_mesh(std::vector<double> &bnd
   return;
 }
 
-GMSH_API void gmsh::model::mesh::get_DF(std::vector<double> &api_d_pos, std::vector<int> &api_d_tags, std::vector<size_t> &api_d_ids, std::vector<double> &api_t_pos, std::vector<int> &api_t_tags, std::vector<size_t> &api_t_ids, std::vector<size_t> &api_DF_to_meshNodes, std::vector<double> &api_DF_to_mesh_parametric, std::vector<size_t> &api_meshNodes_to_DF, std::vector<double> &api_mesh_to_DF_parametric){
-  discreteFront::instance()->getDF(&api_d_pos, &api_d_tags, &api_d_ids, &api_t_pos, &api_t_tags, &api_t_ids, &api_DF_to_meshNodes, &api_DF_to_mesh_parametric, &api_meshNodes_to_DF, &api_mesh_to_DF_parametric);
+GMSH_API void gmsh::model::mesh::get_DF(std::vector<double> &api_d_pos, std::vector<int> &api_d_tags, std::vector<size_t> &api_d_ids, std::vector<double> &api_t_pos, std::vector<int> &api_t_tags, std::vector<size_t> &api_t_ids, std::vector<size_t> &api_DF_to_meshNodes, std::vector<double> &api_DF_to_mesh_parametric, std::vector<size_t> &api_meshNodes_to_DF, std::vector<double> &api_mesh_to_DF_parametric, const bool mesh_relation){
+  discreteFront::instance()->getDF(&api_d_pos, &api_d_tags, &api_d_ids, &api_t_pos, &api_t_tags, &api_t_ids, &api_DF_to_meshNodes, &api_DF_to_mesh_parametric, &api_meshNodes_to_DF, &api_mesh_to_DF_parametric, mesh_relation);
   return; 
 }
  

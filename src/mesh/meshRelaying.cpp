@@ -1640,33 +1640,38 @@ void meshRelaying::construct_mesh_to_DF_relation(std::vector<size_t> &meshNodes_
         Msg::Error("The marker %lu or %lu is not in the mesh", m1, m2);
       }
 
-      if(start_f == end_f){
-        PolyMesh::HalfEdge *he = start_f->he;
-        for(size_t k=0; k<3; k++){
-          size_t vertex = he->v->data-1;
-          double vertex_pos[2] = {he->v->position.x(), he->v->position.y()};
-          double dist_v_1 = sqrt((vertex_pos[0]-pos1[0])*(vertex_pos[0]-pos1[0]) + (vertex_pos[1]-pos1[1])*(vertex_pos[1]-pos1[1]));
-          double dist_v_2 = sqrt((vertex_pos[0]-pos2[0])*(vertex_pos[0]-pos2[0]) + (vertex_pos[1]-pos2[1])*(vertex_pos[1]-pos2[1]));
+      int found_triple = 0;
+      PolyMesh::HalfEdge *he = start_f->he;
+      for(size_t k=0; k<3; k++){
+        size_t vertex = he->v->data-1;
+        double vertex_pos[2] = {he->v->position.x(), he->v->position.y()};
+        double dist_v_1 = sqrt((vertex_pos[0]-pos1[0])*(vertex_pos[0]-pos1[0]) + (vertex_pos[1]-pos1[1])*(vertex_pos[1]-pos1[1]));
+        double dist_v_2 = sqrt((vertex_pos[0]-pos2[0])*(vertex_pos[0]-pos2[0]) + (vertex_pos[1]-pos2[1])*(vertex_pos[1]-pos2[1]));
 
-          if(dist_v_1<1e-10){
-            meshNodes_to_DF[2*vertex] = m1;
-            meshNodes_to_DF[2*vertex+1] = m1;
-            mesh_to_DF_parametric[vertex] = 0.0;
-            break;
-          }
-
-          if(dist_v_2<1e-10){
-            meshNodes_to_DF[2*vertex] = m2;
-            meshNodes_to_DF[2*vertex+1] = m2;
-            mesh_to_DF_parametric[vertex] = 0.0;
-            break;
-          }
-
-          he = he->next;
+        if(dist_v_1<1e-10){
+          meshNodes_to_DF[2*vertex] = m1;
+          meshNodes_to_DF[2*vertex+1] = m1;
+          mesh_to_DF_parametric[vertex] = 0.0;
+          found_triple = 1;
+          break;
         }
 
+        if(dist_v_2<1e-10){
+          meshNodes_to_DF[2*vertex] = m2;
+          meshNodes_to_DF[2*vertex+1] = m2;
+          mesh_to_DF_parametric[vertex] = 0.0;
+          found_triple = 1;
+          break;
+        }
+
+        he = he->next;
+      }
+
+      if(start_f == end_f){
         continue;
       }
+
+        
 
       PolyMesh::Face *current_f = start_f;
       int current_v = -1;
@@ -1689,8 +1694,6 @@ void meshRelaying::construct_mesh_to_DF_relation(std::vector<size_t> &meshNodes_
 
             mesh_to_DF_parametric[intersect.first] = dist_1node/dist_1_2;
           }
-        }else{
-          printf("intersect %lu %lu\n", intersect.first, intersect.second);
         }
 
         PolyMesh::HalfEdge *he = current_f->he;
@@ -2198,7 +2201,8 @@ void discreteFront::getDF(std::vector<double> *doubleMarkers,
                           std::vector<size_t> *DF_to_meshNodes, 
                           std::vector<double> *DF_to_mesh_parametric,
                           std::vector<size_t> *meshNodes_to_DF, 
-                          std::vector<double> *mesh_to_DF_parametric)
+                          std::vector<double> *mesh_to_DF_parametric, 
+                          const bool mesh_relation)
 {
   doubleMarkers->clear();
   doubleTags->clear();
@@ -2225,9 +2229,11 @@ void discreteFront::getDF(std::vector<double> *doubleMarkers,
     }
   }
 
-  meshRelaying::instance()->construct_DF_to_mesh_relation(*DF_to_meshNodes, *DF_to_mesh_parametric);
-  meshRelaying::instance()->construct_mesh_to_DF_relation(*meshNodes_to_DF, *mesh_to_DF_parametric);
-
+  if(mesh_relation){
+    meshRelaying::instance()->construct_DF_to_mesh_relation(*DF_to_meshNodes, *DF_to_mesh_parametric);
+    meshRelaying::instance()->construct_mesh_to_DF_relation(*meshNodes_to_DF, *mesh_to_DF_parametric);
+  }
+  
   return;
 }
 
@@ -4410,6 +4416,11 @@ void discreteFront::initFront(std::vector<double> points,
   }
 
   printf("after coloring edges \n");
+  //find center_face
+  double center[2] = {bbTri.center().x(), bbTri.center().y()};
+  PolyMesh::Face *f = pm->faces[0];
+  PolyMesh::Face *f_center = pm->walk_from(center, f);
+
 
   // color the faces with the concentration
   for(size_t i = 0; i < pm->faces.size(); ++i) { pm->faces[i]->data = -10; }
@@ -4417,8 +4428,7 @@ void discreteFront::initFront(std::vector<double> points,
   for(size_t i = 0; i < points.size() / 3; ++i) {
     printf("point %lu \n", i);
     double pos[3] = {points[3 * i], points[3 * i + 1], 0};
-    PolyMesh::Face *f = pm->faces[0];
-    PolyMesh::Face *f_point = pm->walk_from(pos, f);
+    PolyMesh::Face *f_point = pm->walk_from(pos, f_center);
     std::vector<PolyMesh::Face *> todo;
     std::vector<PolyMesh::Face *> new_todo;
     todo.push_back(f_point);
@@ -4444,6 +4454,7 @@ void discreteFront::initFront(std::vector<double> points,
       }
       todo = new_todo;
       new_todo.clear();
+      // pm->print4debug(41);
     }
     pm->print4debug(32);
   }
@@ -4690,6 +4701,10 @@ void discreteFront::write_DF(const std::string DF_filename){
   for(size_t i = 0; i < pos.size() / 3; ++i) {
     fprintf(f, "%f, %f, %f \n", pos[3 * i], pos[3 * i + 1], 0.0);
   }
+  fprintf(f, "corners %lu \n", corners.size());
+  for(size_t i = 0; i < corners.size(); ++i) {
+    fprintf(f, "%lu \n", corners[i]);
+  }
   std::vector<double> mesh_pos;
   meshRelaying::instance()->getNodesPosition(mesh_pos);
   fprintf(f, "mesh positions %lu \n", mesh_pos.size() / 3);
@@ -4752,6 +4767,15 @@ void discreteFront::read_DF(const std::string DF_filename, const bool pos_flag){
     pos.push_back(z);
   }
   printf("pos done \n");
+
+  size_t n_corners;
+  fscanf(f, "corners %lu \n", &n_corners);
+  for(size_t i = 0; i < n_corners; ++i) {
+    size_t c;
+    fscanf(f, "%lu \n", &c);
+    corners.push_back(c);
+  }
+  printf("corners done \n");
 
   if(pos_flag){
     size_t n_mesh_pos;
