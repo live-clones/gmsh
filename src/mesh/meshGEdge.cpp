@@ -574,7 +574,7 @@ static void printFandPrimitive(int tag, std::vector<IntPoint> &Points)
 // new algo for recombining + splitting
 static int increaseN(int N)
 {
-  if(((N + 1) / 2 - 1) % 2 != 0) return N + 2;
+  //  if(((N + 1) / 2 - 1) % 2 != 0) return N + 2;
   return N;
 }
 

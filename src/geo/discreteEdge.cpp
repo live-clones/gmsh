@@ -220,8 +220,9 @@ void discreteEdge::mesh(bool verbose)
 {
 #if defined(HAVE_MESH)
   if(_discretization.empty()) return;
-  meshGEdge mesher;
-  mesher(this);
+  GEdge::mesh(verbose);
+  //  meshGEdge mesher;
+  //  mesher(this);
 #endif
 }
 

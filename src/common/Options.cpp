@@ -6299,7 +6299,7 @@ double opt_mesh_min_curve_nodes(OPT_ARGS_NUM)
     if(!(action & GMSH_SET_DEFAULT) &&
        (int)val != CTX::instance()->mesh.minCurveNodes)
       Msg::SetOnelabChanged(2);
-    CTX::instance()->mesh.minCurveNodes = std::max((int)val, 2);
+    CTX::instance()->mesh.minCurveNodes = std::max((int)val, 1);
   }
   return CTX::instance()->mesh.minCurveNodes;
 }

@@ -1426,6 +1426,8 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   std::set<MVertex *, MVertexPtrLessThan> all_vertices, boundary;
   auto ite = edges.begin();
   while(ite != edges.end()) {
+    if (gf->tag() == 100124)
+      printf("%d / %d\n",gf->tag(),(*ite)->tag());
     if((*ite)->isSeam(gf)) {
       if(fdeb != nullptr) fclose(fdeb);
       return false;
@@ -1434,6 +1436,8 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
       for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
         MVertex *v1 = (*ite)->lines[i]->getVertex(0);
         MVertex *v2 = (*ite)->lines[i]->getVertex(1);
+	if (gf->tag() == 100124)
+	  printf("%d %d\n",v1->getNum(),v2->getNum());
 
         if(fdeb) {
           fprintf(fdeb, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", v1->x(), v1->y(),

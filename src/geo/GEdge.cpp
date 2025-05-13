@@ -876,6 +876,7 @@ static bool recreateConsecutiveElements(GEdge *ge)
 
 static void meshCompound(GEdge *ge)
 {
+  
   discreteEdge *de = dynamic_cast<discreteEdge*>
     (ge->model()->getEdgeByTag(ge->tag() + 100000));
   if(de) {
@@ -921,7 +922,7 @@ void GEdge::mesh(bool verbose)
 #if defined(HAVE_MESH)
   if(compound.size())
     meshAttributes.meshSizeFactor = CTX::instance()->mesh.compoundLcFactor;
-
+  
   meshGEdge mesher;
   mesher(this);
 

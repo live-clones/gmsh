@@ -1613,10 +1613,11 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
         continue;
       }
       if(ent) {
+	Msg::Info("Found %s %d in compound", name, tag);
         ents.push_back(ent);
       }
       else {
-        Msg::Warning("Skipping unknown %d %d in compound", name, tag);
+        Msg::Warning("Skipping unknown %s %d in compound", name, tag);
       }
     }
     for(std::size_t i = 0; i < ents.size(); i++) { ents[i]->compound = ents; }
