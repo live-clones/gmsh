@@ -3,7 +3,7 @@ hybrid meshes with pyramids; improved ONELAB parameter GUI; improved XAO export
 with mesh sizes; improved unrolled GEO export to handle OCC geometries; new
 Step() built-in parser function; upgraded official binary builds with OCC 7.8.
 
-* New API functions: model/getEntityProperties
+* New API functions: model/getEntityProperties, model/getPhysicalGroupsEntities
 
 * Incompatible API changes: new optional arguments to occ/fillet2D; renamed
   model/getType as model/getEntityType

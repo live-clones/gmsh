@@ -1653,17 +1653,21 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi.in
 if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   if (GMSH_RELEASE)
     set(GMSH_PYTHON_VERSION ${GMSH_SHORT_VERSION})
-    file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh.rst GMSH_LONG_DESCRIPTION)
+    file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh.rst
+         GMSH_LONG_DESCRIPTION)
   else()
     if ("${GMSH_EXTRA_VERSION}" MATCHES "-nox")
       set(GMSH_PYTHON_VERSION "${GMSH_SHORT_VERSION}.dev1+nox")
-      file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh-nox-dev.rst GMSH_LONG_DESCRIPTION)
+      file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh-nox-dev.rst
+           GMSH_LONG_DESCRIPTION)
     else ()
       set(GMSH_PYTHON_VERSION "${GMSH_SHORT_VERSION}.dev1")
-      file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh-dev.rst GMSH_LONG_DESCRIPTION)
+      file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh-dev.rst
+           GMSH_LONG_DESCRIPTION)
     endif()
   endif()
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/METADATA.in ${CMAKE_CURRENT_BINARY_DIR}/METADATA)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/METADATA.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/METADATA)
 endif()
 
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/version.txt ${GMSH_SHORT_VERSION})
@@ -1992,12 +1996,28 @@ endif()
 
 # mark targets as optional so we can install them separately if needed
 # (e.g. "make lib" or "make shared" followed by "make install/fast")
-install(TARGETS gmsh DESTINATION ${GMSH_BIN} OPTIONAL)
+install(TARGETS gmsh RUNTIME DESTINATION ${GMSH_BIN} OPTIONAL)
 if(ENABLE_BUILD_LIB)
-  install(TARGETS lib DESTINATION ${GMSH_LIB} OPTIONAL)
+  install(TARGETS lib EXPORT gmshTargets LIBRARY DESTINATION ${GMSH_LIB}
+          ARCHIVE DESTINATION ${GMSH_LIB} OPTIONAL)
+  TARGET_INCLUDE_DIRECTORIES(lib PUBLIC $<INSTALL_INTERFACE:include>)
 endif()
 if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   install(TARGETS shared DESTINATION ${GMSH_LIB} OPTIONAL)
+  install(TARGETS shared EXPORT gmshTargets RUNTIME DESTINATION ${GMSH_LIB}
+          LIBRARY DESTINATION ${GMSH_LIB} ARCHIVE DESTINATION ${GMSH_LIB}
+          OPTIONAL)
+  TARGET_INCLUDE_DIRECTORIES(shared PUBLIC $<INSTALL_INTERFACE:include>)
+endif()
+if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
+  install(EXPORT gmshTargets NAMESPACE gmsh:: DESTINATION share/gmsh)
+  include(CMakePackageConfigHelpers)
+  configure_package_config_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/utils/misc/gmsh-config.cmake.in
+      "${CMAKE_CURRENT_BINARY_DIR}/gmshConfig.cmake"
+      INSTALL_DESTINATION "share/gmsh" NO_SET_AND_CHECK_MACRO
+      NO_CHECK_REQUIRED_COMPONENTS_MACRO)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/gmshConfig.cmake DESTINATION "share/gmsh")
 endif()
 
 if(ENABLE_ONELAB AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab)

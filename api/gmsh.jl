@@ -581,9 +581,9 @@ const remove_entity_name = removeEntityName
 """
     gmsh.model.getPhysicalGroups(dim = -1)
 
-Get all the physical groups in the current model. If `dim` is >= 0, return only
-the entities of the specified dimension (e.g. physical points if `dim` == 0).
-The entities are returned as a vector of (dim, tag) pairs.
+Get the physical groups in the current model. The physical groups are returned
+as a vector of (dim, tag) pairs. If `dim` is >= 0, return only the groups of the
+specified dimension (e.g. physical points if `dim` == 0).
 
 Return `dimTags`.
 
@@ -604,6 +604,47 @@ function getPhysicalGroups(dim = -1)
     return dimTags
 end
 const get_physical_groups = getPhysicalGroups
+
+"""
+    gmsh.model.getPhysicalGroupsEntities(dim = -1)
+
+Get the physical groups in the current model as well as the model entities that
+make them up. The physical groups are returned as the vector of (dim, tag) pairs
+`dimTags`. The model entities making up the corresponding physical groups are
+returned in `entities`. If `dim` is >= 0, return only the groups of the
+specified dimension (e.g. physical points if `dim` == 0).
+
+Return `dimTags`, `entities`.
+
+Types:
+ - `dimTags`: vector of pairs of integers
+ - `entities`: vector of vectors of pairs of integers
+ - `dim`: integer
+"""
+function getPhysicalGroupsEntities(dim = -1)
+    api_dimTags_ = Ref{Ptr{Cint}}()
+    api_dimTags_n_ = Ref{Csize_t}()
+    api_entities_ = Ref{Ptr{Ptr{Cint}}}()
+    api_entities_n_ = Ref{Ptr{Csize_t}}()
+    api_entities_nn_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetPhysicalGroupsEntities, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, api_entities_, api_entities_n_, api_entities_nn_, dim, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tmp_api_dimTags_ = unsafe_wrap(Array, api_dimTags_[], api_dimTags_n_[], own = true)
+    dimTags = [ (tmp_api_dimTags_[i], tmp_api_dimTags_[i+1]) for i in 1:2:length(tmp_api_dimTags_) ]
+    tmp_api_entities_ = unsafe_wrap(Array, api_entities_[], api_entities_nn_[], own = true)
+    tmp_api_entities_n_ = unsafe_wrap(Array, api_entities_n_[], api_entities_nn_[], own = true)
+    entities = Vector{Tuple{Cint,Cint}}[]
+    resize!(entities, api_entities_nn_[])
+    for i in 1:api_entities_nn_[]
+        tmp = unsafe_wrap(Array, tmp_api_entities_[i], tmp_api_entities_n_[i], own = true)
+        entities[i] = [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)]
+    end
+    return dimTags, entities
+end
+const get_physical_groups_entities = getPhysicalGroupsEntities
 
 """
     gmsh.model.getEntitiesForPhysicalGroup(dim, tag)
@@ -1067,7 +1108,12 @@ const get_type = getType
 """
     gmsh.model.getEntityProperties(dim, tag)
 
-Get the properties of the entity of dimension `dim` and tag `tag`.
+Get the properties of the entity of dimension `dim` and tag `tag`. The `reals`
+vector contains the 4 coefficients of the cartesian equation for a plane
+surface; the center coordinates, axis direction, major radius and minor radius
+for a torus; the center coordinates, axis direction and radius for a cylinder;
+the center coordinates, axis direction, radius and semi-angle for surfaces of
+revolution; the center coordinates and the radius for a sphere.
 
 Return `integers`, `reals`.
 
@@ -7338,8 +7384,9 @@ const get_distance = getDistance
 
 Compute the boolean union (the fusion) of the entities `objectDimTags` and
 `toolDimTags` (vectors of (dim, tag) pairs) in the OpenCASCADE CAD
-representation. Return the resulting entities in `outDimTags`. If `tag` is
-positive, try to set the tag explicitly (only valid if the boolean operation
+representation. Return the resulting entities in `outDimTags`, and the
+correspondance between input and resulting entities in `outDimTagsMap`. If `tag`
+is positive, try to set the tag explicitly (only valid if the boolean operation
 results in a single entity). Remove the object if `removeObject` is set. Remove
 the tool if `removeTool` is set.
 
@@ -7387,7 +7434,8 @@ end
 
 Compute the boolean intersection (the common parts) of the entities
 `objectDimTags` and `toolDimTags` (vectors of (dim, tag) pairs) in the
-OpenCASCADE CAD representation. Return the resulting entities in `outDimTags`.
+OpenCASCADE CAD representation. Return the resulting entities in `outDimTags`,
+and the correspondance between input and resulting entities in `outDimTagsMap`.
 If `tag` is positive, try to set the tag explicitly (only valid if the boolean
 operation results in a single entity). Remove the object if `removeObject` is
 set. Remove the tool if `removeTool` is set.
@@ -7436,8 +7484,9 @@ end
 
 Compute the boolean difference between the entities `objectDimTags` and
 `toolDimTags` (given as vectors of (dim, tag) pairs) in the OpenCASCADE CAD
-representation. Return the resulting entities in `outDimTags`. If `tag` is
-positive, try to set the tag explicitly (only valid if the boolean operation
+representation. Return the resulting entities in `outDimTags`, and the
+correspondance between input and resulting entities in `outDimTagsMap`. If `tag`
+is positive, try to set the tag explicitly (only valid if the boolean operation
 results in a single entity). Remove the object if `removeObject` is set. Remove
 the tool if `removeTool` is set.
 
@@ -7488,7 +7537,8 @@ the entities `objectDimTags` and `toolDimTags` (given as vectors of (dim, tag)
 pairs) in the OpenCASCADE CAD representation, making all interfaces conformal.
 When applied to entities of different dimensions, the lower dimensional entities
 will be automatically embedded in the higher dimensional entities if they are
-not on their boundary. Return the resulting entities in `outDimTags`. If `tag`
+not on their boundary. Return the resulting entities in `outDimTags`, and the
+correspondance between input and resulting entities in `outDimTagsMap`. If `tag`
 is positive, try to set the tag explicitly (only valid if the boolean operation
 results in a single entity). Remove the object if `removeObject` is set. Remove
 the tool if `removeTool` is set.

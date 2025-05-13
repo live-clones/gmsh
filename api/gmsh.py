@@ -64,7 +64,9 @@ possible_libpaths = [os.path.join(moduledir, libname),
                      os.path.join(parentdir2, libname),
                      os.path.join(parentdir2, "lib", libname),
                      os.path.join(parentdir2, "Lib", libname),
-                     os.path.join(parentdir2, "bin", libname)
+                     os.path.join(parentdir2, "bin", libname),
+                     # for Windows conda-forge
+                     os.path.join(parentdir2, "Library", "bin", "gmsh.dll")
                      ]
 
 for libpath_to_look in possible_libpaths:
@@ -820,9 +822,9 @@ class model:
         """
         gmsh.model.getPhysicalGroups(dim=-1)
 
-        Get all the physical groups in the current model. If `dim' is >= 0, return
-        only the entities of the specified dimension (e.g. physical points if `dim'
-        == 0). The entities are returned as a vector of (dim, tag) pairs.
+        Get the physical groups in the current model. The physical groups are
+        returned as a vector of (dim, tag) pairs. If `dim' is >= 0, return only the
+        groups of the specified dimension (e.g. physical points if `dim' == 0).
 
         Return `dimTags'.
 
@@ -840,6 +842,39 @@ class model:
             raise Exception(logger.getLastError())
         return _ovectorpair(api_dimTags_, api_dimTags_n_.value)
     get_physical_groups = getPhysicalGroups
+
+    @staticmethod
+    def getPhysicalGroupsEntities(dim=-1):
+        """
+        gmsh.model.getPhysicalGroupsEntities(dim=-1)
+
+        Get the physical groups in the current model as well as the model entities
+        that make them up. The physical groups are returned as the vector of (dim,
+        tag) pairs `dimTags'. The model entities making up the corresponding
+        physical groups are returned in `entities'. If `dim' is >= 0, return only
+        the groups of the specified dimension (e.g. physical points if `dim' == 0).
+
+        Return `dimTags', `entities'.
+
+        Types:
+        - `dimTags': vector of pairs of integers
+        - `entities': vector of vectors of pairs of integers
+        - `dim': integer
+        """
+        api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
+        api_entities_, api_entities_n_, api_entities_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
+        ierr = c_int()
+        lib.gmshModelGetPhysicalGroupsEntities(
+            byref(api_dimTags_), byref(api_dimTags_n_),
+            byref(api_entities_), byref(api_entities_n_), byref(api_entities_nn_),
+            c_int(dim),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return (
+            _ovectorpair(api_dimTags_, api_dimTags_n_.value),
+            _ovectorvectorpair(api_entities_, api_entities_n_, api_entities_nn_))
+    get_physical_groups_entities = getPhysicalGroupsEntities
 
     @staticmethod
     def getEntitiesForPhysicalGroup(dim, tag):
@@ -1348,7 +1383,13 @@ class model:
         """
         gmsh.model.getEntityProperties(dim, tag)
 
-        Get the properties of the entity of dimension `dim' and tag `tag'.
+        Get the properties of the entity of dimension `dim' and tag `tag'. The
+        `reals' vector contains the 4 coefficients of the cartesian equation for a
+        plane surface; the center coordinates, axis direction, major radius and
+        minor radius for a torus; the center coordinates, axis direction and radius
+        for a cylinder; the center coordinates, axis direction, radius and semi-
+        angle for surfaces of revolution; the center coordinates and the radius for
+        a sphere.
 
         Return `integers', `reals'.
 
@@ -8382,8 +8423,9 @@ class model:
 
             Compute the boolean union (the fusion) of the entities `objectDimTags' and
             `toolDimTags' (vectors of (dim, tag) pairs) in the OpenCASCADE CAD
-            representation. Return the resulting entities in `outDimTags'. If `tag' is
-            positive, try to set the tag explicitly (only valid if the boolean
+            representation. Return the resulting entities in `outDimTags', and the
+            correspondance between input and resulting entities in `outDimTagsMap'. If
+            `tag' is positive, try to set the tag explicitly (only valid if the boolean
             operation results in a single entity). Remove the object if `removeObject'
             is set. Remove the tool if `removeTool' is set.
 
@@ -8426,9 +8468,11 @@ class model:
             Compute the boolean intersection (the common parts) of the entities
             `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the
             OpenCASCADE CAD representation. Return the resulting entities in
-            `outDimTags'. If `tag' is positive, try to set the tag explicitly (only
-            valid if the boolean operation results in a single entity). Remove the
-            object if `removeObject' is set. Remove the tool if `removeTool' is set.
+            `outDimTags', and the correspondance between input and resulting entities
+            in `outDimTagsMap'. If `tag' is positive, try to set the tag explicitly
+            (only valid if the boolean operation results in a single entity). Remove
+            the object if `removeObject' is set. Remove the tool if `removeTool' is
+            set.
 
             Return `outDimTags', `outDimTagsMap'.
 
@@ -8468,8 +8512,9 @@ class model:
 
             Compute the boolean difference between the entities `objectDimTags' and
             `toolDimTags' (given as vectors of (dim, tag) pairs) in the OpenCASCADE CAD
-            representation. Return the resulting entities in `outDimTags'. If `tag' is
-            positive, try to set the tag explicitly (only valid if the boolean
+            representation. Return the resulting entities in `outDimTags', and the
+            correspondance between input and resulting entities in `outDimTagsMap'. If
+            `tag' is positive, try to set the tag explicitly (only valid if the boolean
             operation results in a single entity). Remove the object if `removeObject'
             is set. Remove the tool if `removeTool' is set.
 
@@ -8515,8 +8560,9 @@ class model:
             all interfaces conformal. When applied to entities of different dimensions,
             the lower dimensional entities will be automatically embedded in the higher
             dimensional entities if they are not on their boundary. Return the
-            resulting entities in `outDimTags'. If `tag' is positive, try to set the
-            tag explicitly (only valid if the boolean operation results in a single
+            resulting entities in `outDimTags', and the correspondance between input
+            and resulting entities in `outDimTagsMap'. If `tag' is positive, try to set
+            the tag explicitly (only valid if the boolean operation results in a single
             entity). Remove the object if `removeObject' is set. Remove the tool if
             `removeTool' is set.
 

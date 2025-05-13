@@ -334,6 +334,9 @@ static void CheckEmptyMesh(GModel *m, int dim)
     if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) {
       continue;
     }
+    else if(ge->isFullyDiscrete()) {
+      continue;
+    }
     else if(dim == 1) {
       if(ge->geomType() == GEntity::BoundaryLayerCurve || ge->degenerate(0))
         continue;

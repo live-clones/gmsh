@@ -254,11 +254,22 @@ namespace gmsh { // Top-level functions
 
     // gmsh::model::getPhysicalGroups
     //
-    // Get all the physical groups in the current model. If `dim' is >= 0, return
-    // only the entities of the specified dimension (e.g. physical points if `dim'
-    // == 0). The entities are returned as a vector of (dim, tag) pairs.
+    // Get the physical groups in the current model. The physical groups are
+    // returned as a vector of (dim, tag) pairs. If `dim' is >= 0, return only the
+    // groups of the specified dimension (e.g. physical points if `dim' == 0).
     GMSH_API void getPhysicalGroups(gmsh::vectorpair & dimTags,
                                     const int dim = -1);
+
+    // gmsh::model::getPhysicalGroupsEntities
+    //
+    // Get the physical groups in the current model as well as the model entities
+    // that make them up. The physical groups are returned as the vector of (dim,
+    // tag) pairs `dimTags'. The model entities making up the corresponding
+    // physical groups are returned in `entities'. If `dim' is >= 0, return only
+    // the groups of the specified dimension (e.g. physical points if `dim' == 0).
+    GMSH_API void getPhysicalGroupsEntities(gmsh::vectorpair & dimTags,
+                                            std::vector<gmsh::vectorpair> & entities,
+                                            const int dim = -1);
 
     // gmsh::model::getEntitiesForPhysicalGroup
     //
@@ -424,7 +435,13 @@ namespace gmsh { // Top-level functions
 
     // gmsh::model::getEntityProperties
     //
-    // Get the properties of the entity of dimension `dim' and tag `tag'.
+    // Get the properties of the entity of dimension `dim' and tag `tag'. The
+    // `reals' vector contains the 4 coefficients of the cartesian equation for a
+    // plane surface; the center coordinates, axis direction, major radius and
+    // minor radius for a torus; the center coordinates, axis direction and radius
+    // for a cylinder; the center coordinates, axis direction, radius and semi-
+    // angle for surfaces of revolution; the center coordinates and the radius for
+    // a sphere.
     GMSH_API void getEntityProperties(const int dim,
                                       const int tag,
                                       std::vector<int> & integers,
@@ -3129,10 +3146,11 @@ namespace gmsh { // Top-level functions
       //
       // Compute the boolean union (the fusion) of the entities `objectDimTags' and
       // `toolDimTags' (vectors of (dim, tag) pairs) in the OpenCASCADE CAD
-      // representation. Return the resulting entities in `outDimTags'. If `tag' is
-      // positive, try to set the tag explicitly (only valid if the boolean
-      // operation results in a single entity). Remove the object if `removeObject'
-      // is set. Remove the tool if `removeTool' is set.
+      // representation. Return the resulting entities in `outDimTags', and the
+      // correspondance between input and resulting entities in `outDimTagsMap'. If
+      // `tag' is positive, try to set the tag explicitly (only valid if the
+      // boolean operation results in a single entity). Remove the object if
+      // `removeObject' is set. Remove the tool if `removeTool' is set.
       GMSH_API void fuse(const gmsh::vectorpair & objectDimTags,
                          const gmsh::vectorpair & toolDimTags,
                          gmsh::vectorpair & outDimTags,
@@ -3146,9 +3164,11 @@ namespace gmsh { // Top-level functions
       // Compute the boolean intersection (the common parts) of the entities
       // `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the
       // OpenCASCADE CAD representation. Return the resulting entities in
-      // `outDimTags'. If `tag' is positive, try to set the tag explicitly (only
-      // valid if the boolean operation results in a single entity). Remove the
-      // object if `removeObject' is set. Remove the tool if `removeTool' is set.
+      // `outDimTags', and the correspondance between input and resulting entities
+      // in `outDimTagsMap'. If `tag' is positive, try to set the tag explicitly
+      // (only valid if the boolean operation results in a single entity). Remove
+      // the object if `removeObject' is set. Remove the tool if `removeTool' is
+      // set.
       GMSH_API void intersect(const gmsh::vectorpair & objectDimTags,
                               const gmsh::vectorpair & toolDimTags,
                               gmsh::vectorpair & outDimTags,
@@ -3161,7 +3181,8 @@ namespace gmsh { // Top-level functions
       //
       // Compute the boolean difference between the entities `objectDimTags' and
       // `toolDimTags' (given as vectors of (dim, tag) pairs) in the OpenCASCADE
-      // CAD representation. Return the resulting entities in `outDimTags'. If
+      // CAD representation. Return the resulting entities in `outDimTags', and the
+      // correspondance between input and resulting entities in `outDimTagsMap'. If
       // `tag' is positive, try to set the tag explicitly (only valid if the
       // boolean operation results in a single entity). Remove the object if
       // `removeObject' is set. Remove the tool if `removeTool' is set.
@@ -3181,10 +3202,11 @@ namespace gmsh { // Top-level functions
       // all interfaces conformal. When applied to entities of different
       // dimensions, the lower dimensional entities will be automatically embedded
       // in the higher dimensional entities if they are not on their boundary.
-      // Return the resulting entities in `outDimTags'. If `tag' is positive, try
-      // to set the tag explicitly (only valid if the boolean operation results in
-      // a single entity). Remove the object if `removeObject' is set. Remove the
-      // tool if `removeTool' is set.
+      // Return the resulting entities in `outDimTags', and the correspondance
+      // between input and resulting entities in `outDimTagsMap'. If `tag' is
+      // positive, try to set the tag explicitly (only valid if the boolean
+      // operation results in a single entity). Remove the object if `removeObject'
+      // is set. Remove the tool if `removeTool' is set.
       GMSH_API void fragment(const gmsh::vectorpair & objectDimTags,
                              const gmsh::vectorpair & toolDimTags,
                              gmsh::vectorpair & outDimTags,
