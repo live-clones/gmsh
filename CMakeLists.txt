@@ -1771,7 +1771,7 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
      SOVERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION})
   if(WIN32)
     set_target_properties(shared PROPERTIES PREFIX "" IMPORT_PREFIX ""
-      IMPORT_SUFFIX ".lib" COMPILE_FLAGS "-DGMSH_DLL -DGMSH_DLL_EXPORT")
+      IMPORT_SUFFIX ".dll.lib" COMPILE_FLAGS "-DGMSH_DLL -DGMSH_DLL_EXPORT")
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     if(NOT ENABLE_PRIVATE_API)
       # hide all symbols by default (if not exporting the private API); symbols to
