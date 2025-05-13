@@ -746,6 +746,8 @@ module gmsh
         gmshModelMeshAdd_free_form
     procedure, nopass :: get_DF => &
         gmshModelMeshGet_DF
+    procedure, nopass :: get_front_nodes_position => &
+        gmshModelMeshGet_front_nodes_position
     procedure, nopass :: get_nodes_position => &
         gmshModelMeshGet_nodes_position
     procedure, nopass :: reset_discrete_front => &
@@ -756,8 +758,6 @@ module gmsh
         gmshModelMeshRelaying_relax
     procedure, nopass :: set_boundary_from_mesh => &
         gmshModelMeshSet_boundary_from_mesh
-    procedure, nopass :: restore_initial_mesh => &
-        gmshModelMeshRestore_initial_mesh
     procedure, nopass :: redist_front => &
         gmshModelMeshRedist_front
     procedure, nopass :: set_bnd_front => &
@@ -7850,6 +7850,43 @@ module gmsh
   end subroutine gmshModelMeshGet_DF
 
   !> Antoine put a comment here.
+  subroutine gmshModelMeshGet_front_nodes_position(api_position, &
+                                                   front_nodes, &
+                                                   ierr)
+    interface
+    subroutine C_API(api_api_position_, &
+                     api_api_position_n_, &
+                     api_front_nodes_, &
+                     api_front_nodes_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshGet_front_nodes_position")
+      use, intrinsic :: iso_c_binding
+      type(c_ptr), intent(out) :: api_api_position_
+      integer(c_size_t) :: api_api_position_n_
+      type(c_ptr), intent(out) :: api_front_nodes_
+      integer(c_size_t), intent(out) :: api_front_nodes_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    real(c_double), dimension(:), allocatable, intent(out) :: api_position
+    integer(c_int), dimension(:), allocatable, intent(out) :: front_nodes
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_api_position_
+    integer(c_size_t) :: api_api_position_n_
+    type(c_ptr) :: api_front_nodes_
+    integer(c_size_t) :: api_front_nodes_n_
+    call C_API(api_api_position_=api_api_position_, &
+         api_api_position_n_=api_api_position_n_, &
+         api_front_nodes_=api_front_nodes_, &
+         api_front_nodes_n_=api_front_nodes_n_, &
+         ierr_=ierr)
+    api_position = ovectordouble_(api_api_position_, &
+      api_api_position_n_)
+    front_nodes = ovectorint_(api_front_nodes_, &
+      api_front_nodes_n_)
+  end subroutine gmshModelMeshGet_front_nodes_position
+
+  !> Antoine put a comment here.
   subroutine gmshModelMeshGet_nodes_position(api_position, &
                                              ierr)
     interface
@@ -7967,19 +8004,6 @@ module gmsh
     bnd_pos = ovectordouble_(api_bnd_pos_, &
       api_bnd_pos_n_)
   end subroutine gmshModelMeshSet_boundary_from_mesh
-
-  !> Antoine put a comment here.
-  subroutine gmshModelMeshRestore_initial_mesh(ierr)
-    interface
-    subroutine C_API(ierr_) &
-      bind(C, name="gmshModelMeshRestore_initial_mesh")
-      use, intrinsic :: iso_c_binding
-      integer(c_int), intent(out), optional :: ierr_
-    end subroutine C_API
-    end interface
-    integer(c_int), intent(out), optional :: ierr
-    call C_API(ierr_=ierr)
-  end subroutine gmshModelMeshRestore_initial_mesh
 
   !> Antoine put a comment here.
   subroutine gmshModelMeshRedist_front(lc, &
@@ -12277,17 +12301,24 @@ module gmsh
 
   !> Create a fillet edge between edges `edgeTag1' and `edgeTag2' with radius
   !! `radius'. The modifed edges keep their tag. If `tag' is positive, set the
-  !! tag explicitly; otherwise a new tag is selected automatically.
+  !! tag explicitly; otherwise a new tag is selected automatically. If
+  !! `pointTag' is positive, set the point on the edge at which the fillet is
+  !! created. If `reverse' is set, the normal of the plane through the two
+  !! planes is reversed before the fillet is created.
   function gmshModelOccFillet2D(edgeTag1, &
                                 edgeTag2, &
                                 radius, &
                                 tag, &
+                                pointTag, &
+                                reverse, &
                                 ierr)
     interface
     function C_API(edgeTag1, &
                    edgeTag2, &
                    radius, &
                    tag, &
+                   pointTag, &
+                   reverse, &
                    ierr_) &
       bind(C, name="gmshModelOccFillet2D")
       use, intrinsic :: iso_c_binding
@@ -12296,6 +12327,8 @@ module gmsh
       integer(c_int), value, intent(in) :: edgeTag2
       real(c_double), value, intent(in) :: radius
       integer(c_int), value, intent(in) :: tag
+      integer(c_int), value, intent(in) :: pointTag
+      integer(c_int), value, intent(in) :: reverse
       integer(c_int), intent(out), optional :: ierr_
     end function C_API
     end interface
@@ -12304,11 +12337,15 @@ module gmsh
     integer, intent(in) :: edgeTag2
     real(c_double), intent(in) :: radius
     integer, intent(in), optional :: tag
+    integer, intent(in), optional :: pointTag
+    logical, intent(in), optional :: reverse
     integer(c_int), intent(out), optional :: ierr
     gmshModelOccFillet2D = C_API(edgeTag1=int(edgeTag1, c_int), &
                            edgeTag2=int(edgeTag2, c_int), &
                            radius=real(radius, c_double), &
                            tag=optval_c_int(-1, tag), &
+                           pointTag=optval_c_int(-1, pointTag), &
+                           reverse=optval_c_bool(.false., reverse), &
                            ierr_=ierr)
   end function gmshModelOccFillet2D
 
@@ -16180,16 +16217,22 @@ module gmsh
   end function ivectordouble_
 
   subroutine ivectorstring_(o, cstrs, cptrs)
-    character(len=*), intent(in) :: o(:)
+    character(len=*), intent(in), optional :: o(:)
     character(len=GMSH_API_MAX_STR_LEN, kind=c_char), target, allocatable, intent(out) :: cstrs(:)
     type(c_ptr), allocatable, intent(out) :: cptrs(:)
     integer :: i
-    allocate(cstrs(size(o)))    ! Return to keep references from cptrs
-    allocate(cptrs(size(o)))
-    do i = 1, size(o)
+
+    if (present(o)) then
+      allocate(cstrs(size(o)))  ! Return to keep references from cptrs
+      allocate(cptrs(size(o)))
+      do i = 1, size(o)
         cstrs(i) = istring_(o(i))
         cptrs(i) = c_loc(cstrs(i))
-    end do
+      end do
+    else
+      allocate(cstrs(0))
+      allocate(cptrs(0))
+    end if
   end subroutine ivectorstring_
 
   function ivectorpair_(o) result(v)

@@ -1911,6 +1911,12 @@ namespace gmsh { // Top-level functions
                            std::vector<std::size_t> & meshNodes_to_DF,
                            std::vector<double> & mesh_to_DF_parametric);
 
+      // gmsh::model::mesh::get_front_nodes_position
+      //
+      // Antoine put a comment here.
+      GMSH_API void get_front_nodes_position(std::vector<double> & api_position,
+                                             std::vector<int> & front_nodes);
+
       // gmsh::model::mesh::get_nodes_position
       //
       // Antoine put a comment here.
@@ -1939,11 +1945,6 @@ namespace gmsh { // Top-level functions
       //
       // Antoine put a comment here.
       GMSH_API void set_boundary_from_mesh(std::vector<double> & bnd_pos);
-
-      // gmsh::model::mesh::restore_initial_mesh
-      //
-      // Antoine put a comment here.
-      GMSH_API void restore_initial_mesh();
 
       // gmsh::model::mesh::redist_front
       //
@@ -3176,11 +3177,16 @@ namespace gmsh { // Top-level functions
       //
       // Create a fillet edge between edges `edgeTag1' and `edgeTag2' with radius
       // `radius'. The modifed edges keep their tag. If `tag' is positive, set the
-      // tag explicitly; otherwise a new tag is selected automatically.
+      // tag explicitly; otherwise a new tag is selected automatically. If
+      // `pointTag' is positive, set the point on the edge at which the fillet is
+      // created. If `reverse' is set, the normal of the plane through the two
+      // planes is reversed before the fillet is created.
       GMSH_API int fillet2D(const int edgeTag1,
                             const int edgeTag2,
                             const double radius,
-                            const int tag = -1);
+                            const int tag = -1,
+                            const int pointTag = -1,
+                            const bool reverse = false);
 
       // gmsh::model::occ::chamfer2D
       //

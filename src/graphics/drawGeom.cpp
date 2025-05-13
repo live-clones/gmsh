@@ -20,19 +20,28 @@ static void drawEntityLabel(drawContext *ctx, GEntity *e, double x, double y,
   double yy = y + offset / ctx->s[1];
   double zz = z + offset / ctx->s[2];
 
-  if(CTX::instance()->geom.labelType == 0) {
-    std::vector<std::string> info =
-      SplitString(e->getInfoString(false, true), '\n');
-    for(int line = 0; line < (int)info.size(); line++)
-      ctx->drawString(info[line].c_str(), xx, yy, zz, line);
-    return;
-  }
-
   char str[1024];
-  if(CTX::instance()->geom.labelType == 1) {
-    sprintf(str, "%d", e->tag());
-  }
-  else if(CTX::instance()->geom.labelType == 2) {
+  switch(CTX::instance()->geom.labelType) {
+  case 5:
+    {
+      sprintf(str, "(%g,%g,%g)", x, y, z);
+    }
+    break;
+  case 4:
+    {
+      strcpy(str, "");
+      std::string name = "";
+      for(std::size_t i = 0; i < e->physicals.size(); i++) {
+        if(name.size()) strcat(str, ", ");
+        name = e->model()->getPhysicalName(e->dim(), std::abs(e->physicals[i]));
+        if(name.size()) strcat(str, name.c_str());
+      }
+    }
+    break;
+  case 3:
+    strcpy(str, e->model()->getElementaryName(e->dim(), e->tag()).c_str());
+    break;
+  case 2:
     strcpy(str, "");
     for(std::size_t i = 0; i < e->physicals.size(); i++) {
       char tmp[32];
@@ -40,18 +49,19 @@ static void drawEntityLabel(drawContext *ctx, GEntity *e, double x, double y,
       sprintf(tmp, "%d", e->physicals[i]);
       strcat(str, tmp);
     }
-  }
-  else if(CTX::instance()->geom.labelType == 3) {
-    strcpy(str, e->model()->getElementaryName(e->dim(), e->tag()).c_str());
-  }
-  else {
-    strcpy(str, "");
-    std::string name = "";
-    for(std::size_t i = 0; i < e->physicals.size(); i++) {
-      if(name.size()) strcat(str, ", ");
-      name = e->model()->getPhysicalName(e->dim(), std::abs(e->physicals[i]));
-      if(name.size()) strcat(str, name.c_str());
+    break;
+  case 1:
+    sprintf(str, "%d", e->tag());
+    break;
+  case 0:
+  default:
+    {
+      std::vector<std::string> info =
+        SplitString(e->getInfoString(false, true), '\n');
+      for(int line = 0; line < (int)info.size(); line++)
+        ctx->drawString(info[line].c_str(), xx, yy, zz, line);
     }
+    return;
   }
 
   ctx->drawString(str, xx, yy, zz);

@@ -4712,6 +4712,32 @@ end
 const get__df = get_DF
 
 """
+    gmsh.model.mesh.get_front_nodes_position()
+
+Antoine put a comment here.
+
+Return `api_position`, `front_nodes`.
+
+Types:
+ - `api_position`: vector of doubles
+ - `front_nodes`: vector of integers
+"""
+function get_front_nodes_position()
+    api_api_position_ = Ref{Ptr{Cdouble}}()
+    api_api_position_n_ = Ref{Csize_t}()
+    api_front_nodes_ = Ref{Ptr{Cint}}()
+    api_front_nodes_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGet_front_nodes_position, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_api_position_, api_api_position_n_, api_front_nodes_, api_front_nodes_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    api_position = unsafe_wrap(Array, api_api_position_[], api_api_position_n_[], own = true)
+    front_nodes = unsafe_wrap(Array, api_front_nodes_[], api_front_nodes_n_[], own = true)
+    return api_position, front_nodes
+end
+
+"""
     gmsh.model.mesh.get_nodes_position()
 
 Antoine put a comment here.
@@ -4805,20 +4831,6 @@ function set_boundary_from_mesh()
     ierr[] != 0 && error(gmsh.logger.getLastError())
     bnd_pos = unsafe_wrap(Array, api_bnd_pos_[], api_bnd_pos_n_[], own = true)
     return bnd_pos
-end
-
-"""
-    gmsh.model.mesh.restore_initial_mesh()
-
-Antoine put a comment here.
-"""
-function restore_initial_mesh()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshRestore_initial_mesh, gmsh.lib), Cvoid,
-          (Ptr{Cint},),
-          ierr)
-    ierr[] != 0 && error(gmsh.logger.getLastError())
-    return nothing
 end
 
 """
@@ -7538,11 +7550,14 @@ function defeature(volumeTags, surfaceTags, removeVolume = true)
 end
 
 """
-    gmsh.model.occ.fillet2D(edgeTag1, edgeTag2, radius, tag = -1)
+    gmsh.model.occ.fillet2D(edgeTag1, edgeTag2, radius, tag = -1, pointTag = -1, reverse = false)
 
 Create a fillet edge between edges `edgeTag1` and `edgeTag2` with radius
 `radius`. The modifed edges keep their tag. If `tag` is positive, set the tag
-explicitly; otherwise a new tag is selected automatically.
+explicitly; otherwise a new tag is selected automatically. If `pointTag` is
+positive, set the point on the edge at which the fillet is created. If `reverse`
+is set, the normal of the plane through the two planes is reversed before the
+fillet is created.
 
 Return an integer.
 
@@ -7551,12 +7566,14 @@ Types:
  - `edgeTag2`: integer
  - `radius`: double
  - `tag`: integer
+ - `pointTag`: integer
+ - `reverse`: boolean
 """
-function fillet2D(edgeTag1, edgeTag2, radius, tag = -1)
+function fillet2D(edgeTag1, edgeTag2, radius, tag = -1, pointTag = -1, reverse = false)
     ierr = Ref{Cint}()
     api_result_ = ccall((:gmshModelOccFillet2D, gmsh.lib), Cint,
-          (Cint, Cint, Cdouble, Cint, Ptr{Cint}),
-          edgeTag1, edgeTag2, radius, tag, ierr)
+          (Cint, Cint, Cdouble, Cint, Cint, Cint, Ptr{Cint}),
+          edgeTag1, edgeTag2, radius, tag, pointTag, reverse, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return api_result_
 end

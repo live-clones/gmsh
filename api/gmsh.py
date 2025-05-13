@@ -72,7 +72,7 @@ for libpath_to_look in possible_libpaths:
 # if we couldn't find it, use ctype's find_library utility...
 if not libpath:
     if platform.system() == "Windows":
-        libpath = find_library("gmsh-4.11")
+        libpath = find_library("gmsh-4.14")
         if not libpath:
             libpath = find_library("gmsh")
     else:
@@ -5333,6 +5333,32 @@ class model:
         get__df = get_DF
 
         @staticmethod
+        def get_front_nodes_position():
+            """
+            gmsh.model.mesh.get_front_nodes_position()
+
+            Antoine put a comment here.
+
+            Return `api_position', `front_nodes'.
+
+            Types:
+            - `api_position': vector of doubles
+            - `front_nodes': vector of integers
+            """
+            api_api_position_, api_api_position_n_ = POINTER(c_double)(), c_size_t()
+            api_front_nodes_, api_front_nodes_n_ = POINTER(c_int)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGet_front_nodes_position(
+                byref(api_api_position_), byref(api_api_position_n_),
+                byref(api_front_nodes_), byref(api_front_nodes_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return (
+                _ovectordouble(api_api_position_, api_api_position_n_.value),
+                _ovectorint(api_front_nodes_, api_front_nodes_n_.value))
+
+        @staticmethod
         def get_nodes_position():
             """
             gmsh.model.mesh.get_nodes_position()
@@ -5428,19 +5454,6 @@ class model:
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return _ovectordouble(api_bnd_pos_, api_bnd_pos_n_.value)
-
-        @staticmethod
-        def restore_initial_mesh():
-            """
-            gmsh.model.mesh.restore_initial_mesh()
-
-            Antoine put a comment here.
-            """
-            ierr = c_int()
-            lib.gmshModelMeshRestore_initial_mesh(
-                byref(ierr))
-            if ierr.value != 0:
-                raise Exception(logger.getLastError())
 
         @staticmethod
         def redist_front(lc):
@@ -8564,13 +8577,16 @@ class model:
             return _ovectorpair(api_outDimTags_, api_outDimTags_n_.value)
 
         @staticmethod
-        def fillet2D(edgeTag1, edgeTag2, radius, tag=-1):
+        def fillet2D(edgeTag1, edgeTag2, radius, tag=-1, pointTag=-1, reverse=False):
             """
-            gmsh.model.occ.fillet2D(edgeTag1, edgeTag2, radius, tag=-1)
+            gmsh.model.occ.fillet2D(edgeTag1, edgeTag2, radius, tag=-1, pointTag=-1, reverse=False)
 
             Create a fillet edge between edges `edgeTag1' and `edgeTag2' with radius
             `radius'. The modifed edges keep their tag. If `tag' is positive, set the
-            tag explicitly; otherwise a new tag is selected automatically.
+            tag explicitly; otherwise a new tag is selected automatically. If
+            `pointTag' is positive, set the point on the edge at which the fillet is
+            created. If `reverse' is set, the normal of the plane through the two
+            planes is reversed before the fillet is created.
 
             Return an integer.
 
@@ -8579,6 +8595,8 @@ class model:
             - `edgeTag2': integer
             - `radius': double
             - `tag': integer
+            - `pointTag': integer
+            - `reverse': boolean
             """
             ierr = c_int()
             api_result_ = lib.gmshModelOccFillet2D(
@@ -8586,6 +8604,8 @@ class model:
                 c_int(edgeTag2),
                 c_double(radius),
                 c_int(tag),
+                c_int(pointTag),
+                c_int(bool(reverse)),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())

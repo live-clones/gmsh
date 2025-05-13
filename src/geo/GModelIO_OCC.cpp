@@ -1335,7 +1335,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
       }
       else if(!tangents.empty()) {
         Msg::Warning(
-          "Wrong number of tangent constraints for spline (%lu != %lu)",
+          "Wrong number of tangent constraints for spline (%zu != %zu)",
           tangents.size(), pointTags.size());
       }
       intp.Perform();
@@ -2265,7 +2265,7 @@ bool OCC_Internals::addBSplineSurface(
   }
   bool periodicV = true;
   for(int i = 0; i < numPointsU; i++) {
-    if(pointTags[i * numPointsV] != pointTags[(i + 1) * numPointsV - 1]) {
+    if(pointTags[i] != pointTags[i + numPointsU * (numPointsV - 1)]) {
       periodicV = false;
       break;
     }
@@ -3604,7 +3604,7 @@ bool OCC_Internals::defeature(const std::vector<int> &volumeTags,
 }
 
 bool OCC_Internals::fillet2D(int &tag, const int edgeTag1, const int edgeTag2,
-                             double radius)
+                             double radius, int pointTag, bool reverse)
 {
   if(tag >= 0 && _tagEdge.IsBound(tag)) {
     Msg::Error("OpenCASCADE curve with tag %d already exists", tag);
@@ -3658,8 +3658,21 @@ bool OCC_Internals::fillet2D(int &tag, const int edgeTag1, const int edgeTag2,
   gp_Dir normal = aElementarySurface->Axis().Direction();
   if(face.Orientation() == TopAbs_REVERSED) { normal = -normal; }
 
-  TopoDS_Vertex v1 = ShapeAnalysis_Edge().FirstVertex(ed1);
-  gp_Pnt point = BRep_Tool().Pnt(v1);
+  if(reverse) {normal = -normal; }
+
+  gp_Pnt point;
+  if (pointTag != -1) {
+    if (!_tagVertex.IsBound(pointTag)) {
+      Msg::Error("Unknown OpenCASCADE point with tag %d", pointTag);
+      return false;
+    }
+    TopoDS_Vertex v = TopoDS::Vertex(_tagVertex.Find(pointTag));
+    point = BRep_Tool::Pnt(v);
+  } else {
+    // Use the first vertex of the first edge as before
+    TopoDS_Vertex v1 = ShapeAnalysis_Edge().FirstVertex(ed1);
+    point = BRep_Tool::Pnt(v1);
+  }
 
   gp_Pln p(point, normal);
 
@@ -4133,9 +4146,16 @@ bool OCC_Internals::booleanOperator(
   }
 
   outDimTags.clear();
-  for(auto v : outDimTagsMap)
-    for(auto e : v)
+  for(std::size_t i = 0; i < outDimTagsMap.size(); i++) {
+    // for cut, only return entities for object (not tool): this is what is
+    // expected for cut (I think...) and is consistent with what was done in
+    // Gmsh <= 4.13
+    if(op == OCC_Internals::Difference && i >= objectDimTags.size()) {
+      break;
+    }
+    for(auto e : outDimTagsMap[i])
       outDimTags.push_back(e);
+  }
   // keep the ordering but remove duplicates - maybe we should leave them?
   std::set<std::pair<int, int>> s;
   for(auto it = outDimTags.begin(); it != outDimTags.end(); ) {
@@ -4640,13 +4660,13 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
     TopoDS_Shape shape = shapeTool->GetShape(label);
     shape.Location(isRef ? loc : partLoc);
 
-#if 0
-    // this is necessary for endcaps.stp (cf. #693), but has a big performance
-    // hit on STEP files with lots of references -- leaving out until we
-    // understand why it's necessary: there should be a better way ;-)
-    if(isRef && !loc.IsIdentity() && loc != shapeTool->GetLocation(label))
-      shapeTool->SetShape(label, shape);
-#endif
+    if(CTX::instance()->geom.occImportLabels == 2) {
+      // FIXME: this is necessary for endcaps.stp (cf. #693), but has a big
+      // performance hit on STEP files with lots of references -- leaving out
+      // until we understand why it's necessary: there should be a better way!)
+      if(isRef && !loc.IsIdentity() && loc != shapeTool->GetLocation(label))
+        shapeTool->SetShape(label, shape);
+    }
 
     int dim =
       (shape.ShapeType() == TopAbs_VERTEX) ? 0 :
@@ -5462,7 +5482,7 @@ void OCC_Internals::synchronize(GModel *model)
   std::sort(toRemove.begin(), toRemove.end(), sortByInvDim);
   std::vector<GEntity *> removed;
   model->remove(toRemove, removed);
-  Msg::Debug("Destroying %lu entities in model", removed.size());
+  Msg::Debug("Destroying %zu entities in model", removed.size());
   for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
   _toRemove.clear();
 

@@ -302,8 +302,6 @@ void GetStatistics(double stat[50], double quality[3][101], bool visibleOnly)
 static void GetQualityFast(GModel *m, int dim, double &qmin, double &qavg)
 {
   int nthreads = CTX::instance()->numThreads;
-  if(CTX::instance()->mesh.maxNumThreads1D > 0)
-    nthreads = CTX::instance()->mesh.maxNumThreads1D;
   if(!nthreads) nthreads = Msg::GetMaxThreads();
 
   std::size_t N = 0;
@@ -633,6 +631,24 @@ static void Mesh2D(GModel *m)
     OptimizeMesh(m, "QuadQuasiStructured");
   }
 
+  if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS) {
+    for(GFace *gf : m->getFaces()) {
+      if(gf->meshStatistics.status == GFace::DONE) {
+        gf->meshStatistics.status = GFace::PENDING;
+      }
+    }
+    transferSeamGEdgesVerticesToGFace(m);
+    quadMeshingOfSimpleFacesWithPatterns(m);
+    optimizeTopologyWithDiskQuadrangulationRemeshing(m);
+    optimizeTopologyWithCavityRemeshing(m);
+    OptimizeMesh(m, "UntangleTris");
+    for(GFace *gf : m->getFaces()) {
+      if(gf->meshStatistics.status == GFace::PENDING) {
+        gf->meshStatistics.status = GFace::DONE;
+      }
+    }
+  }
+
   CheckEmptyMesh(m, 2);
   double t2 = Cpu(), w2 = TimeOfDay();
   CTX::instance()->mesh.timer[1] = w2 - w1;
@@ -900,7 +916,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
     int nIterWinslow = 10;
     double timeMax = 100.;
     for(GFace *gf : m->getFaces()) {
-      //      if(gf->geomType() == GFace::Plane) {
+      //      if(gf->geomType() == GFace::Plane || gf->geomType() == GFace::DiscreteSurface) {
         untangleGFaceMeshConstrained(gf, nIterWinslow, timeMax);
 	//      }
 	//      else {
@@ -1023,7 +1039,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
     }
     transferSeamGEdgesVerticesToGFace(m);
     quadMeshingOfSimpleFacesWithPatterns(m);
-    optimizeTopologyWithDiskQuadrangulationRemeshing(m);
+    //    optimizeTopologyWithDiskQuadrangulationRemeshing(m);
     optimizeTopologyWithCavityRemeshing(m);
     for(GFace *gf : m->getFaces()) {
       if(gf->meshStatistics.status == GFace::PENDING) {

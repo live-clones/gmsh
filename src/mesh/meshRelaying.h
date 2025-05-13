@@ -347,6 +347,17 @@ public:
 
   void getNodesPosition(std::vector<double> &position) { position = pos; }
 
+  void getFrontNodesPosition(std::vector<double> &api_position, std::vector<int> &fn) {
+    fn.clear();
+    api_position.clear();
+    for (size_t i=0;i< front_nodes.size() ; i++){      
+      fn.push_back((int) front_nodes[i]);
+      api_position.push_back(pos[3*front_nodes[i]+0]);
+      api_position.push_back(pos[3*front_nodes[i]+1]);
+      api_position.push_back(pos[3*front_nodes[i]+2]);
+    }
+  }
+  
   void doRelaying(
     const std::function<
       std::vector<std::pair<double, std::pair<size_t, size_t>>>(size_t, size_t)>

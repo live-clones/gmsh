@@ -4413,7 +4413,7 @@ void PostOp::statistics(GRegion *gr)
   printf("  percentage of prisms : %.2f\n", vol6 * 100.0 / vol);
   printf("  percentage of pyramids : %.2f\n", vol5 * 100.0 / vol);
   printf("  percentage of tetrahedra : %.2f\n", vol4 * 100.0 / vol);
-  printf("Total number of elements : %lu\n", gr->getNumMeshElements());
+  printf("Total number of elements : %zu\n", gr->getNumMeshElements());
   printf("Total volume : %f\n", vol);
   printf("Misc : %d %d %d\n", estimate1, estimate2, iterations);
 }

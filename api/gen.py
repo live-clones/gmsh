@@ -605,8 +605,8 @@ mesh.add('add_free_form', doc, None, iint('tag'), ivectordouble('poly'), ivector
 doc = '''Antoine put a comment here.'''
 mesh.add('get_DF', doc, None, ovectordouble('api_d_pos'),ovectorint('api_d_tags'), ovectorsize('api_d_ids'), ovectordouble('api_t_pos'), ovectorint('api_t_tags'), ovectorsize('api_t_ids'), ovectorsize('DF_to_meshNodes'), ovectordouble('DF_to_mesh_parametric'), ovectorsize('meshNodes_to_DF'), ovectordouble('mesh_to_DF_parametric'), ibool('mesh_relation', 'true', 'True'))
 
-# doc = '''Antoine put a comment here.'''
-# mesh.add('get_front_nodes_position', doc, None, ovectordouble('api_position'), ovectorint('front_nodes') )
+doc = '''Antoine put a comment here.'''
+mesh.add('get_front_nodes_position', doc, None, ovectordouble('api_position'), ovectorint('front_nodes') )
 
 doc = '''Antoine put a comment here.'''
 mesh.add('get_nodes_position', doc, None, ovectordouble('api_position') )
@@ -943,8 +943,8 @@ occ.add('chamfer', doc, None, ivectorint('volumeTags'), ivectorint('curveTags'),
 doc = '''Defeature the volumes `volumeTags' by removing the surfaces `surfaceTags'. Return the defeatured entities in `outDimTags'. Remove the original volume if `removeVolume' is set.'''
 occ.add('defeature', doc, None, ivectorint('volumeTags'), ivectorint('surfaceTags'), ovectorpair('outDimTags'), ibool('removeVolume', 'true', 'True'))
 
-doc = '''Create a fillet edge between edges `edgeTag1' and `edgeTag2' with radius `radius'. The modifed edges keep their tag. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically.'''
-occ.add('fillet2D', doc, oint, iint('edgeTag1'), iint('edgeTag2'), idouble('radius'), iint('tag', '-1'))
+doc = '''Create a fillet edge between edges `edgeTag1' and `edgeTag2' with radius `radius'. The modifed edges keep their tag. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically. If `pointTag' is positive, set the point on the edge at which the fillet is created. If `reverse' is set, the normal of the plane through the two planes is reversed before the fillet is created.'''
+occ.add('fillet2D', doc, oint, iint('edgeTag1'), iint('edgeTag2'), idouble('radius'), iint('tag', '-1'), iint('pointTag', '-1'), ibool('reverse', 'false', 'False'))
 
 doc = '''Create a chamfer edge between edges `edgeTag1' and `edgeTag2' with distance1 `distance1' and distance2 `distance2'. The modifed edges keep their tag. If `tag' is positive, set the tag explicitly; otherwise a new tag is selected automatically.'''
 occ.add('chamfer2D', doc, oint, iint('edgeTag1'), iint('edgeTag2'), idouble('distance1'), idouble('distance2'), iint('tag', '-1'))

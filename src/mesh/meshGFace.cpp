@@ -59,6 +59,7 @@ bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
     }
   }
   N = count;
+  //  printf("point %22.5E %22.5E out %22.5E %22.5E in parametric domain (bnd size %zu) : %d %d\n",p.x(),p.y(),out.x(), out.y(), bnd.size(),count, count%2);
   if(count % 2 == 0) return false;
   return true;
 }
@@ -270,9 +271,10 @@ public:
     // only do it if a full recombination has to (and can) be done
     if(!CTX::instance()->mesh.recombineAll && !gf->meshAttributes.recombine)
       return;
-    if(CTX::instance()->mesh.algoRecombine < 2 &&
-       CTX::instance()->mesh.algoRecombine != 4)
+    if(CTX::instance()->mesh.algoRecombine < 2 ||
+       CTX::instance()->mesh.algoRecombine == 4)
       return;
+
     if(gf->compound.size()) return;
     if(periodic) {
       Msg::Error("Full-quad recombination not ready yet for periodic surfaces");
@@ -486,7 +488,7 @@ static void copyMesh(GFace *source, GFace *target)
     }
     else {
       Msg::Error("Could not find periodic counterpart of triangle nodes "
-                 "%lu %lu %lu",
+                 "%zu %zu %zu",
                  source->triangles[i]->getVertex(0)->getNum(),
                  source->triangles[i]->getVertex(1)->getNum(),
                  source->triangles[i]->getVertex(2)->getNum());
@@ -503,7 +505,7 @@ static void copyMesh(GFace *source, GFace *target)
     }
     else {
       Msg::Error("Could not find periodic counterpart of quadrangle nodes "
-                 "%lu %lu %lu %lu",
+                 "%zu %zu %zu %zu",
                  source->quadrangles[i]->getVertex(0)->getNum(),
                  source->quadrangles[i]->getVertex(1)->getNum(),
                  source->quadrangles[i]->getVertex(2)->getNum(),
@@ -1269,7 +1271,7 @@ static bool improved_translate(GFace *gf, MVertex *vertex, SVector3 &v1,
   SVector3 s1, s2;
   SVector3 normal;
   SVector3 basis_u, basis_v;
-  Pair<SVector3, SVector3> derivatives;
+  std::pair<SVector3, SVector3> derivatives;
 
   reparamMeshVertexOnFace(vertex, gf, point);
   x = point.x();
@@ -1278,8 +1280,8 @@ static bool improved_translate(GFace *gf, MVertex *vertex, SVector3 &v1,
   angle = backgroundMesh::current()->getAngle(x, y, 0.0);
   derivatives = gf->firstDer(point);
 
-  s1 = derivatives.first();
-  s2 = derivatives.second();
+  s1 = derivatives.first;
+  s2 = derivatives.second;
   normal = crossprod(s1, s2);
 
   basis_u = s1;
@@ -1498,13 +1500,8 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
     Msg::Warning("The 1D mesh seems not to be forming a closed loop (%d boundary "
                "nodes are considered once)",
                boundary.size());
-    //    gf->meshStatistics.status = GFace::FAILED;
-    //    return false;
-  }
-  else {
-    if(fdeb) {
-      fprintf(fdeb, "};\n");
-      fclose(fdeb);
+    for(auto it = boundary.begin(); it != boundary.end(); it++) {
+      Msg::Debug("Remaining node %zu", (*it)->getNum());
     }
   }
 
@@ -2613,8 +2610,10 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
       for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
         BDS_Point *p0 = facile[(*ite)->lines[i]->getVertex(0)];
         BDS_Point *p1 = facile[(*ite)->lines[i]->getVertex(1)];
-        edgesEmbedded.push_back(p0->iD);
-        edgesEmbedded.push_back(p1->iD);
+        if(p0 && p1) {
+          edgesEmbedded.push_back(p0->iD);
+          edgesEmbedded.push_back(p1->iD);
+        }
       }
       ++ite;
     }

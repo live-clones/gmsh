@@ -172,6 +172,7 @@ void meshRelaying::doRelaying(double relax)
       double l0 = levelsets[k][i];
       double l1 = levelsets[k][j];
       if(l0 * l1 < 0) {
+	//	printf("%lu %lu %g %g\n",i,j,l0,l1);
         double t = l0 / (l0 - l1);
         std::pair<double, std::pair<size_t, size_t>> d =
           std::make_pair(t, std::make_pair(k, k));
@@ -202,8 +203,10 @@ void meshRelaying::doRelaying(double relax)
   };
 
   // if no discreteFront is available, use levelset
-  if(discreteFront::instance()->empty())
+  if(discreteFront::instance()->empty()){
+    printf("coucou\n");
     doRelaying(f_levelset);
+  }
   else {
     // pos = initial_pos;
     // relax position
@@ -286,7 +289,7 @@ void meshRelaying::doRelaying(
   std::vector<size_t> marker_corner_done;
   corners.clear();
   while(true) {
-    printf("ITTT = %d\n", ITTT);
+    //    printf("ITTT = %d\n", ITTT);
     // auto front_edges = discreteFront::instance()->getFrontEdges();
 
     if(ITTT++ == MAXIT) break;
@@ -373,8 +376,6 @@ void meshRelaying::doRelaying(
     std::set<std::pair<size_t, size_t>> cuts;
     std::vector<edgeCut> moves;
 
-    printf("moves = %lu\n", moves.size());
-
     for(size_t i = 0; i < v2v.size(); i++) {
       for(auto j : v2v[i]) {
         if(i < j) {
@@ -387,6 +388,7 @@ void meshRelaying::doRelaying(
 
           std::vector<std::pair<double, std::pair<size_t, size_t>>> ds =
             f(i, j);
+	  //	  if (ds.size())printf("%lu\n",ds.size());
           if(ds.empty()) continue;
 
           std::pair<size_t, size_t> p =
@@ -420,7 +422,8 @@ void meshRelaying::doRelaying(
 
           int interface_i_ = discreteFront::instance()->findMarker(m1i);
           int interface_j_ = discreteFront::instance()->findMarker(m1j);
-          if(interface_i_==-1 || interface_j_==-1) continue;
+	  if (!discreteFront::instance()->empty())
+	    if(interface_i_==-1 || interface_j_==-1) continue;
 
           size_t interface_i = static_cast<size_t>(interface_i_);
           size_t interface_j = static_cast<size_t>(interface_j_);
@@ -430,7 +433,7 @@ void meshRelaying::doRelaying(
 
           if(!std::binary_search(front_nodes.begin(), front_nodes.end(), i)) {
             if(di > 0.0000001 && di < 0.999999 && dimi >= dimEdge) {
-              if(bnd_markers[m1i]==0 || bnd_markers[m2i]==0) {
+              if(discreteFront::instance()->empty() || bnd_markers[m1i]==0 || bnd_markers[m2i]==0) {
                 moves.push_back(mi);
               }
             }
@@ -438,7 +441,7 @@ void meshRelaying::doRelaying(
 
           if(!std::binary_search(front_nodes.begin(), front_nodes.end(), j)) {
             if(dj > 0.0000001 && dj < 0.999999 && dimj >= dimEdge) {
-              if(bnd_markers[m1j]==0 || bnd_markers[m2j]==0) {
+              if(discreteFront::instance()->empty() || bnd_markers[m1j]==0 || bnd_markers[m2j]==0) {
                 moves.push_back(mj);
               }
             }
@@ -446,6 +449,8 @@ void meshRelaying::doRelaying(
         }
       }
     }
+
+    //    printf("moves = %lu\n", moves.size());
 
     if(moves.empty()) break;
 
@@ -471,7 +476,8 @@ void meshRelaying::doRelaying(
       front_nodes.push_back(i);
       double posP[2] = {pOpt.x(), pOpt.y()};
 
-      discreteFront::instance()->addFrontNode(i, c.interface, c.m1, c.m2, pOpt,interfaces[c.interface].markers);
+      if (!discreteFront::instance()->empty())
+	discreteFront::instance()->addFrontNode(i, c.interface, c.m1, c.m2, pOpt,interfaces[c.interface].markers);
       pos[3 * i] = pOpt.x();
       pos[3 * i + 1] = pOpt.y();
       pos[3 * i + 2] = pOpt.z();

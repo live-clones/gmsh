@@ -3348,6 +3348,21 @@ namespace gmsh { // Top-level functions
         mesh_to_DF_parametric.assign(api_mesh_to_DF_parametric_, api_mesh_to_DF_parametric_ + api_mesh_to_DF_parametric_n_); gmshFree(api_mesh_to_DF_parametric_);
       }
 
+      // gmsh::model::mesh::get_front_nodes_position
+      //
+      // Antoine put a comment here.
+      inline void get_front_nodes_position(std::vector<double> & api_position,
+                                           std::vector<int> & front_nodes)
+      {
+        int ierr = 0;
+        double *api_api_position_; size_t api_api_position_n_;
+        int *api_front_nodes_; size_t api_front_nodes_n_;
+        gmshModelMeshGet_front_nodes_position(&api_api_position_, &api_api_position_n_, &api_front_nodes_, &api_front_nodes_n_, &ierr);
+        if(ierr) throwLastError();
+        api_position.assign(api_api_position_, api_api_position_ + api_api_position_n_); gmshFree(api_api_position_);
+        front_nodes.assign(api_front_nodes_, api_front_nodes_ + api_front_nodes_n_); gmshFree(api_front_nodes_);
+      }
+
       // gmsh::model::mesh::get_nodes_position
       //
       // Antoine put a comment here.
@@ -3404,16 +3419,6 @@ namespace gmsh { // Top-level functions
         gmshModelMeshSet_boundary_from_mesh(&api_bnd_pos_, &api_bnd_pos_n_, &ierr);
         if(ierr) throwLastError();
         bnd_pos.assign(api_bnd_pos_, api_bnd_pos_ + api_bnd_pos_n_); gmshFree(api_bnd_pos_);
-      }
-
-      // gmsh::model::mesh::restore_initial_mesh
-      //
-      // Antoine put a comment here.
-      inline void restore_initial_mesh()
-      {
-        int ierr = 0;
-        gmshModelMeshRestore_initial_mesh(&ierr);
-        if(ierr) throwLastError();
       }
 
       // gmsh::model::mesh::redist_front
@@ -5408,14 +5413,19 @@ namespace gmsh { // Top-level functions
       //
       // Create a fillet edge between edges `edgeTag1' and `edgeTag2' with radius
       // `radius'. The modifed edges keep their tag. If `tag' is positive, set the
-      // tag explicitly; otherwise a new tag is selected automatically.
+      // tag explicitly; otherwise a new tag is selected automatically. If
+      // `pointTag' is positive, set the point on the edge at which the fillet is
+      // created. If `reverse' is set, the normal of the plane through the two
+      // planes is reversed before the fillet is created.
       inline int fillet2D(const int edgeTag1,
                           const int edgeTag2,
                           const double radius,
-                          const int tag = -1)
+                          const int tag = -1,
+                          const int pointTag = -1,
+                          const bool reverse = false)
       {
         int ierr = 0;
-        int result_api_ = gmshModelOccFillet2D(edgeTag1, edgeTag2, radius, tag, &ierr);
+        int result_api_ = gmshModelOccFillet2D(edgeTag1, edgeTag2, radius, tag, pointTag, (int)reverse, &ierr);
         if(ierr) throwLastError();
         return result_api_;
       }
