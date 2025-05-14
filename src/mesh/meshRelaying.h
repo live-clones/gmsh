@@ -128,19 +128,10 @@ public:
   void advanceInTime(double dt, std::vector<SVector3> &v, const bool triple_slip)
   {
     createTree();
-    printf("move from v \n");
     moveFromV(dt, v, triple_slip);
-    printf("before print interfaces \n");
-    FILE *f = fopen("interfaces_after_move.txt", "w");
-    printInterfaces(f);
-    fclose(f);
-    printf("build spatial search structure \n");
     buildSpatialSearchStructure();
-    printf("intersect interfaces \n");
     intersectInterfaces(false);
-    printf("triangulate interface \n");
     triangulateInterfaces();
-    printf("color triangles \n");
     colorTriangles();
     computeNewInterfaces();
   }

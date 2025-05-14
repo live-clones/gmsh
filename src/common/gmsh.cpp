@@ -5736,13 +5736,10 @@ gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
 }
 
 GMSH_API void gmsh::model::mesh::concentration_from_DF(const std::vector<int> &concentration_list, const std::vector<double> &tension_table ,std::vector<int> &concentration, std::vector<double> &curvature){
-  printf("before concentration\n");
   meshRelaying::instance()->concentration(&concentration);
   // meshRelaying::instance()->concentration_bfs(&concentration);
-  printf("after concentration\n");
   // meshRelaying::instance()->curvatureFromMarkers(concentration_list, tension_table, concentration, &curvature);
   // meshRelaying::instance()->curvatureFromConcentration(&curvature);
-  printf("after curvature\n");
   return;
 }
 
@@ -5752,7 +5749,6 @@ GMSH_API void gmsh::model::mesh::advance_DF_in_time(const double dt, const std::
     api_v.push_back(SVector3(&v[i]));
   }
   discreteFront::instance()->advanceInTime(dt, api_v, triple_slip);
-  meshRelaying::instance()->print4debug("advance_DF_in_time.pos");
   return;
 }
 
@@ -5767,7 +5763,6 @@ GMSH_API void gmsh::model::mesh::add_free_form(const int tag, const std::vector<
     api_poly.push_back(SVector3(poly[i], poly[i+1], poly[i+2]));
   }
   discreteFront::instance()->addFreeForm(tag, api_poly, _corners, loop);
-  meshRelaying::instance()->print4debug("add_free_form.pos");
   return;
 } 
 
