@@ -388,6 +388,8 @@ public:
 
   void construct_DF_to_mesh_relation(std::vector<size_t> &DF_to_meshNodes, std::vector<double> &DF_to_mesh_parametric);
   void construct_mesh_to_DF_relation(std::vector<size_t> &meshNodes_to_DF, std::vector<double> &mesh_to_DF_parametric);
+  void print_DF(const std::string df_filename);
+  void setMeshPos(const std::vector<double> &mesh_pos);
 };
 
 #endif

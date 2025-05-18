@@ -5828,6 +5828,15 @@ GMSH_API void gmsh::model::mesh::remove_small_features(const double l){
   discreteFront::instance()->remove_features(l);
 }
 
+GMSH_API void gmsh::model::mesh::print_DF(const std::string &df_filename){
+  meshRelaying::instance()->print_DF(df_filename);
+}
+
+GMSH_API void gmsh::model::mesh::set_mesh_pos(const std::vector<double> &api_pos){
+  meshRelaying::instance()->setMeshPos(api_pos);
+  return;
+}
+
 
 
 // gmsh::model::mesh::field

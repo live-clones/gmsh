@@ -1520,6 +1520,8 @@ void meshRelaying::construct_mesh_to_DF_relation(std::vector<size_t> &meshNodes_
   }
 }
 
+
+
 std::pair<size_t, size_t> intersect_face(PolyMesh::Face *f, double *pos1, double *pos2){
   PolyMesh::HalfEdge *he = f->he;
   
@@ -1624,6 +1626,54 @@ int point_on_triangle_edge(PolyMesh::Face *f, double *pos){
 
     he = he->next;
   }
+}
+
+void meshRelaying::print_DF(const std::string DF_filename){
+  FILE *f = std::fopen(DF_filename.c_str(), "w");
+  if(f == nullptr) {
+    Msg::Error("Could not open file %s", DF_filename.c_str());
+  } 
+
+  discreteFront::instance()->printInterfaces(f);
+  fprintf(f, "View \" Mesh \" {\n");
+  for(size_t i = 0; i < tris.size(); i += 3) {
+    for(size_t j = 0; j < 3; ++j) {
+      fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", pos[3 * tris[i + j]],
+              pos[3 * tris[i + j] + 1], pos[3 * tris[i + j] + 2],
+              pos[3 * tris[i + (j + 1) % 3]],
+              pos[3 * tris[i + (j + 1) % 3] + 1],
+              pos[3 * tris[i + (j + 1) % 3] + 2], 10, 10);
+    }
+  }
+  fprintf(f, "};\n");
+
+  fprintf(f, "View \" Concentration \" {\n");
+  for(size_t i = 0; i < tris.size(); i += 3) {
+    fprintf(f, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g){%d,%d,%d};\n", pos[3 * tris[i]],
+            pos[3 * tris[i] + 1], pos[3 * tris[i] + 2], pos[3 * tris[i + 1]],
+            pos[3 * tris[i + 1] + 1], pos[3 * tris[i + 1] + 2],
+            pos[3 * tris[i + 2]], pos[3 * tris[i + 2] + 1],
+            pos[3 * tris[i + 2] + 2], (tris_concentration)[i / 3],
+            (tris_concentration)[i / 3], (tris_concentration)[i / 3]);
+  }
+  fprintf(f, "};\n");
+  fclose(f);
+}
+
+void meshRelaying::setMeshPos(const std::vector<double> &mesh_pos)
+{
+  if(mesh_pos.size() != pos.size()) {
+    Msg::Error("The size of the input mesh_pos is not the same as the size of the size of the current mesh");
+  }
+  pos = mesh_pos;
+  if(pm_mesh != nullptr) {
+    for(size_t i = 0; i < pm_mesh->vertices.size(); i++) {
+      int v = pm_mesh->vertices[i]->data - 1;
+      SVector3 p(pos[3 * v], pos[3 * v + 1], pos[3 * v + 2]);
+      pm_mesh->vertices[i]->position = p;
+    }
+  }
+
 }
 
 // discreteFront functions
@@ -2090,9 +2140,6 @@ int discreteFront::vertexType(size_t i, int *colors)
 
 void discreteFront::moveFromV(double dt, const std::vector<SVector3> &v, const bool triple_slip)
 {
-  FILE *f = fopen("before_moveFromV.txt", "w");
-  printInterfaces(f);
-  fclose(f);
   // detect triple points and store them
   std::vector<PolyMesh::Vertex *> triple_v;
   std::vector<size_t> triples_id;
@@ -2193,10 +2240,6 @@ void discreteFront::moveFromV(double dt, const std::vector<SVector3> &v, const b
       pos[3 * i + 2] += 0;
     }
   }
-
-  FILE *f2 = fopen("after_movedouble.txt", "w");
-  printInterfaces(f2);
-  fclose(f2);
 
   triple_points.clear();
   on_edge_triples.clear();
@@ -2681,9 +2724,6 @@ void discreteFront::addToSpatialSearchStructure(
 
 void discreteFront::intersectInterfaces(bool bnd)
 {
-  FILE *f = fopen("before_intersect.txt", "w");
-  printInterfaces(f);
-  fclose(f);
   std::vector<std::pair<int, std::pair<size_t, size_t>>> todo;
   for(size_t i = 0; i < interfaces.size(); ++i) {
     for(size_t j = 0; j < interfaces[i].markers.size(); ++j) {
@@ -4111,9 +4151,6 @@ void discreteFront::resetInterfacesMesh()
 }
 
 void discreteFront::write_DF(const std::string DF_filename){
-  FILE *f_ = std::fopen("before_write_DF.pos", "w");
-  printInterfaces(f_);
-  fclose(f_);
   FILE *f = std::fopen(DF_filename.c_str(), "w");
   if(f == nullptr) {
     Msg::Error("Could not open file %s", DF_filename.c_str());

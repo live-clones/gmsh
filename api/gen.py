@@ -646,7 +646,13 @@ doc = '''Antoine put a comment here.'''
 mesh.add('read_DF', doc, None, istring('filename_DF'), ibool('pos_flag', 'true', 'True') ) 
 
 doc = '''Antoine put a comment here.'''
-mesh.add('remove_small_features', doc, None, idouble('l')) 
+mesh.add('remove_small_features', doc, None, idouble('l'))
+
+doc = '''Antoine put a comment here.'''
+mesh.add('print_DF', doc, None, istring('filename_DF')) 
+
+doc = '''Antoine put a comment here.'''
+mesh.add('set_mesh_pos', doc, None, ivectordouble('mesh_pos') )
 
 
 ################################################################################
