@@ -12,8 +12,10 @@
 #include "VertexArray.h"
 #include "SmoothData.h"
 #include "adaptiveData.h"
-#include "drawContext.h"
 #include "GmshMessage.h"
+#if defined(HAVE_FLTK)
+#include "drawContext.h"
+#endif
 
 int PView::_globalTag = 1;
 std::vector<PView *> PView::list;
@@ -426,6 +428,7 @@ double PView::getMemoryInMb()
 void PView::updateWorstWeightedData(drawContext *ctx, double height,
   bool inModelCoordinates)
 {
+#if defined(HAVE_FLTK)
   if(!_isWorstWeightedGraph || height < 0) return;
   char tmp[2];
   snprintf(tmp, sizeof(tmp), "%d", 0);
@@ -442,4 +445,5 @@ void PView::updateWorstWeightedData(drawContext *ctx, double height,
   }
 
   data->update(_options->worstWeightCutoff, height, precision);
+#endif
 }
