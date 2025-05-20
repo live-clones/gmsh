@@ -82,8 +82,11 @@
 //     - IF = -1 Limit to valid elements if there are any invalid elements,
 //               OTHERWISE skip hiding
 //     - IF = 0 As "IF = 1" if no invalid elements OTHERWISE as "IF = -1"
-//     - IF = 1 Limit to elements that do not meet criterion for any metrics==M
+//     - IF = 1 As "IF = 2" if there are multiple metric equal to M
+//              OTHERWISE limit to elements that do not meet criterion
+//                        for the metric==M
 //     - IF = 2 Limit to elements that do not meet criterion for all metrics==M
+//     - IF = 3 Limit to elements that do not meet criterion for any metrics==M
 //   • In function of hidingCriterion [in the case hideWorst = OFF]:
 //     - IF = 0 Use "metricValue <= x" as criterion
 //     - IF = 1 Use "x worst elements" as criterion
@@ -125,13 +128,13 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "hidingPolicy", nullptr, 0, "-1=validity|skip, 0=validity|1, 1=qualOR, 2=qualAND"},
   // FIXME 2=proportionElemToKeep as default? Or at least 1?
   {GMSH_FULLRC, "hidingCriterion", nullptr, 1, "0=metricValue, 1=numElemToKeep, 2=proportionElemToKeep"},
-  {GMSH_FULLRC, "hidingThreshold", nullptr, 25, "DOUBLE (which meaning depends on visibilityCriterion)"},
+  {GMSH_FULLRC, "hidingThreshold", nullptr, 25, "DOUBLE (which meaning depends on hidingCriterion)"},
   {GMSH_FULLRC, "hideWorst", nullptr, 0, "OFF=hideBest, ON"},
   // FIXME I think i should have 'skipUnhiding' = 0 OR 'noUnhiding' = 0 OR 'skipMakingVisible' = 0
   //  because it can be counter intuitive unhideOtherElements = 0
   {GMSH_FULLRC, "unhideOtherElements", nullptr, 0, "OFF=justHide, ON=alsoUnhide"},
   // Advanced computation options:
-  {GMSH_FULLRC, "dataManagementPolicy", nullptr, 0, "-1=skipExecutionJustFreeData, 0=freeOldDataIfAbsent, 1=keepAllData"},
+  {GMSH_FULLRC, "dataManagementPolicy", nullptr, 0, "-1=skipExecutionJustFreeData, 0=freeOldDataIfMeshAbsent, 1=keepAllData"},
   {GMSH_FULLRC, "smartRecomputation", nullptr, 1, "OFF=alwaysRecompute, ON=avoidRecomputeIfTagsUnchanged"},
   {GMSH_FULLRC, "skipValidity", nullptr, 0, "0-=includeValidity, ON=skipPreventiveValidityCheck"},
   // Advanced analysis options:
