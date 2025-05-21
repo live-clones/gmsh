@@ -279,7 +279,7 @@ namespace BoundaryLayerCurver {
       }
       if(!_gedge || t.norm() == 0) {
         if (_newIdea) {
-          Msg::Error("TO BE IMPLEMENTED");
+//          Msg::Error("TO BE IMPLEMENTED");
           t = tangentBSpline(_edgeOnBoundary, paramEdge);
           // TODO: Here, I have to change to compute smooth tangent
         }
@@ -506,16 +506,16 @@ namespace BoundaryLayerCurver {
 
       // ratios h_i / p_i
       std::vector<SPoint3> points(nbPoints);
-      points[0] = baseEdge->pnt(-1);
-      points[nbPoints-1] = baseEdge->pnt(1);
-      for(size_t i = 0; i < nbPoints-2; ++i) {
+//      points[0] = baseEdge->pnt(-1);
+//      points[nbPoints-1] = baseEdge->pnt(1);
+      for(size_t i = 0; i < nbPoints; ++i) {
         double u = refTarget[i];
-        points[i+1] = baseEdge->pnt(u);
+        points[i] = baseEdge->pnt(u);
       }
       std::vector<double> ratios(nbPoints-1);
       for(size_t i = 0; i < nbPoints-1; ++i) {
-        double numerator = norm(points[i+1]-points[i]);
-        ratios[i] = numerator / (refTarget[i+1] - refTarget[i]);
+        double numerator = refTarget[i+1] - refTarget[i];
+        ratios[i] = numerator / norm(points[i+1]-points[i]);
       }
 
       // use now 'points' for shifted ones, extremities are fixed
@@ -534,19 +534,26 @@ namespace BoundaryLayerCurver {
       int k = 0;
       double maxChanged = 1;
 
-      while(k < 10 && maxChanged > 1e-4) {
+      while(k < 20 && maxChanged > 1e-4) {
+        ++k;
         // Compute shifted points
         for(size_t i = 1; i < nbPoints-1; ++i) {
           double u = refForExtrusion[i];
           frame.computeFrame(u, t, n, w);
           points[i] = baseEdge->pnt(u) + thickness * n;
         }
+//
+//std::cout << "xy{" << k << "} = [" << std::endl;
+//for(size_t i = 0; i < nbPoints; ++i) {
+//  std::cout << points[i].x() << " " << points[i].y() << std::endl;
+//}
+//std::cout << "];" << std::endl;
 
         // Compute corresponding Kappa_i
         double accumulator = 0;
         kappai[0] = 0;
         for(size_t i = 0; i < nbPoints-1; ++i) {
-          taui[i] = norm(points[i+1]-points[i]);
+          taui[i] = norm(points[i+1]-points[i]) * ratios[i];
           kappai[i+1] = kappai[i] + taui[i];
           accumulator += taui[i];
         }
@@ -558,23 +565,47 @@ namespace BoundaryLayerCurver {
         // Interpolate
         for(size_t i = 1; i < nbPoints-1; ++i) {
           if(kappai[i] < refTarget[i]) {
-            double f = (refTarget[i]-kappai[i]) / (refTarget[i]-refTarget[i-1]);
-            refNew[i] = f * refForExtrusion[i-1] + (1-f) * refForExtrusion[i];
-          }
-          else {
-            double f = (kappai[i]-refTarget[i]) / (refTarget[i+1]-refTarget[i]);
+            double f = (refTarget[i]-kappai[i]) / (refTarget[i+1]-refTarget[i]);
             refNew[i] = (1-f) * refForExtrusion[i] + f * refForExtrusion[i+1];
           }
+          else {
+            double f = (kappai[i]-refTarget[i]) / (refTarget[i]-refTarget[i-1]);
+            refNew[i] = (1-f) * refForExtrusion[i] + f * refForExtrusion[i-1];
+          }
+          refNew[i] = .5 * refNew[i] + .5 * refForExtrusion[i];
         }
+
+//
+//std::cout << "uv{" << k << "} = [" << std::endl;
+//for(size_t i = 0; i < nbPoints; ++i) {
+//  std::cout << refForExtrusion[i] << " " << kappai[i] << std::endl;
+//}
+//std::cout << "];" << std::endl;
 
         // Update
         maxChanged = 0;
-        for(size_t i = 1; i < nbPoints+1; ++i) {
+        for(size_t i = 1; i < nbPoints-1; ++i) {
           double diff = std::abs(refNew[i]-refForExtrusion[i]);
           maxChanged = std::max(maxChanged, diff);
           refForExtrusion[i] = refNew[i];
+          //std::cout << refForExtrusion[i] << " ";
         }
       }
+//      std::cout << k << std::endl;
+
+//int N = 101;
+//std::cout << "X = [" << std::endl;
+//for(int i = 0; i < N; ++i) {
+//  double u = -1 + 2 * (double)i/(N-1);
+//  SPoint3 P = baseEdge->pnt(u);
+//  std::cout << P.x() << " " << P.y() << " ";
+//  frame.computeFrame(u, t, n, w);
+//  P = P + thickness * n;
+//  std::cout << P.x() << " " << P.y() << std::endl;
+//}
+//std::cout << "];" << std::endl;
+
+
     }
 
     void _idealPositionEdge(const MEdgeN *baseEdge, const _Frame &frame,
@@ -592,12 +623,17 @@ namespace BoundaryLayerCurver {
       std::vector<double> refPnts(nbPoints+2);
       _refPntsForALPShiftedCurve(baseEdge, frame, coeffs, refTarget, refPnts);
 
+//      for(size_t i = 0; i < nbPoints+2; ++i) {
+//        std::cout << refTarget[i] << " " << refPnts[i] << std:: endl;
+////        refPnts[i] = refTarget[i];
+//      }
+//      std::cout << std::endl;
 
       // TODO : Interpolation angulaire si ouverture, linéaire si fermeture
 
 
       for(int i = 0; i < nbPoints; ++i) {
-        double u = points[i].pt[0];
+        double u = refPnts[i+1];
         SPoint3 p = baseEdge->pnt(u);
         SVector3 t, n, w;
         frame.computeFrame(u, t, n, w);
@@ -965,7 +1001,7 @@ namespace BoundaryLayerCurver {
           //std::cout << diff << " (" << xyz(i, 0) << "," << xyz(i, 1) << "," << xyz(i, 2) << ")-(" << new_xyz(i, 0) << "," << new_xyz(i, 1) << "," << new_xyz(i, 2) << ")  ";
         }
         //std::cout << "(max=" << max_diff << ")" << std::endl;
-        std::cout << coeff << ": " << thisMaxDiff << "/" << max_diff << std::endl;
+//        std::cout << coeff << ": " << thisMaxDiff << "/" << max_diff << std::endl;
         coeff = coeff / thisMaxDiff * max_diff * .95;
         if (++k == 40) break;
         diff = thisMaxDiff;
@@ -976,9 +1012,9 @@ namespace BoundaryLayerCurver {
         double dy = xyz(i, 1) - new_xyz(i, 1);
         double dz = xyz(i, 2) - new_xyz(i, 2);
         double diff = std::sqrt(dx*dx + dy*dy + dz*dz);
-        std::cout << diff << " (" << xyz(i, 0) << "," << xyz(i, 1) << "," << xyz(i, 2) << ")-(" << new_xyz(i, 0) << "," << new_xyz(i, 1) << "," << new_xyz(i, 2) << ")  ";
+//        std::cout << diff << " (" << xyz(i, 0) << "," << xyz(i, 1) << "," << xyz(i, 2) << ")-(" << new_xyz(i, 0) << "," << new_xyz(i, 1) << "," << new_xyz(i, 2) << ")  ";
       }
-      std::cout << "(max=" << max_diff << ")" << std::endl;
+//      std::cout << "(max=" << max_diff << ")" << std::endl;
 
       v0->x() = new_xyz(0, 0);
       v0->y() = new_xyz(0, 1);
@@ -1050,7 +1086,7 @@ namespace BoundaryLayerCurver {
         minThickness = std::min(minThickness, vec.norm());
       }
 
-      _reduceCurving_newIdea(edge, minThickness*.5, gface);
+      _reduceCurving_newIdea(edge, minThickness*.1, gface);
 
       if(gface) projectVerticesIntoGFace(edge, gface, false);
 
@@ -1978,7 +2014,7 @@ namespace BoundaryLayerCurver {
   }
 
   bool curve2Dcolumn_newIdea(PairMElemVecMElem &column, const GFace *gface,
-                     const GEdge *gedge, const SVector3 &normal)
+                             const GEdge *gedge, const SVector3 &normal)
   {
     // This approach consists in:
     // 1. Curving the edges of the column sequentially. For each, the data
@@ -1998,8 +2034,8 @@ namespace BoundaryLayerCurver {
     computeStackHOEdgesFaces(column, stackEdges, stackFaces);
 
     // Curve topEdge of first element and last edge
-    int iFirst = 1, iLast = (int)stackEdges.size() - 1;
-    MEdgeN *baseEdge = &stackEdges[0];
+    // int iFirst = 1, iLast = (int)stackEdges.size() - 1;
+    // MEdgeN *baseEdge = &stackEdges[0];
     for(auto i = 1; i < stackEdges.size(); ++i) {
       EdgeCurver2D::curveEdge_newIdea(&stackEdges[i-1], &stackEdges[i], gface, normal);
       // FIXME: Should we check the quality of first element? In which case, if
@@ -2151,18 +2187,18 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
     //    if (bndEl2column[i].first->getNum() != 316) continue; // t161
     //    if (bndEl2column[i].first->getNum() != 1156) continue; // trimesh
     //std::cout << bndEl2column[i].first->getNum() << std::endl;
-//    if (   bndEl2column[i].first->getNum() != 1156
-//       && bndEl2column[i].first->getNum() != 1079
-//       && bndEl2column[i].first->getNum() != 1102
-//       && bndEl2column[i].first->getNum() != 1119) continue;
+    //    if (   bndEl2column[i].first->getNum() != 1156
+    //       && bndEl2column[i].first->getNum() != 1079
+    //       && bndEl2column[i].first->getNum() != 1102
+    //       && bndEl2column[i].first->getNum() != 1119) continue;
     //    if (   bndEl2column[i].first->getNum() != 1156) continue;
-//        if (   bndEl2column[i].first->getNum() != 1157) continue;
+    //        if (   bndEl2column[i].first->getNum() != 1157) continue;
     //    std::cout << std::endl;
     //    std::cout << "column " << bndEl2column[i].first->getNum() <<
     //    std::endl; if (bndEl2column[i].first->getNum() != 1079) continue; //
     //    Good if (bndEl2column[i].first->getNum() != 1078) continue; // Next to
     //    good if (bndEl2column[i].first->getNum() != 1099) continue; // Long on
-    //    corner if (bndEl2column[i].first->getNum() != 1102) continue; // Bad
+    //        if (bndEl2column[i].first->getNum() != 1102) continue; // corner
     //    HO if (bndEl2column[i].first->getNum() != 1136) continue; // Bad
     //    linear if (bndEl2column[i].first->getNum() != 1149) continue; //
     //    shorter if (bndEl2column[i].first->getNum() != 1150) continue; //
