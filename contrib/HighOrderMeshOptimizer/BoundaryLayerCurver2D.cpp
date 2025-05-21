@@ -608,6 +608,7 @@ namespace BoundaryLayerCurver {
 
     }
 
+    // FIXME rename sampleIdealCurve?
     void _idealPositionEdge(const MEdgeN *baseEdge, const _Frame &frame,
                             double coeffs[2][3], int nbPoints,
                             const IntPt *points, fullMatrix<double> &xyz)
@@ -2050,6 +2051,54 @@ namespace BoundaryLayerCurver {
     return true;
   }
 
+  bool change_normals(PairMElemVecMElem &column, const GFace *gface,
+                             const GEdge *gedge, const SVector3 &normal)
+  {
+
+    if(column.second.size() < 2) return true;
+
+    // Compute stack high order edges and faces
+    std::vector<MEdgeN> stackEdges;
+    std::vector<MFaceN> stackFaces;
+    computeStackHOEdgesFaces(column, stackEdges, stackFaces);
+
+    //
+    MVertex *v0 = stackEdges[0].getVertex(0);
+    MVertex *v = stackEdges[1].getVertex(0);
+    //double thick = norm3(v->point() - v0->point());
+    double x = v->x() - v0->x();// = v->x() + (rand() % 1001 - 500) / 500. * thick / 2;
+    double y = v->y() - v0->y();// = v->y() + (rand() % 1001 - 500) / 500. * thick / 2;
+    double angle = atan2(y, x);
+    std::vector<double> lengths(stackEdges.size()-1);
+    for(auto i = 0; i < lengths.size(); ++i) {
+      MVertex *v0 = stackEdges[i].getVertex(0);
+      MVertex *v = stackEdges[i+1].getVertex(0);
+      // double x = v->x();
+      // double y = v->y();
+      lengths[i] = norm3(v->point() - v0->point());
+    }
+    for(auto i = 1; i < stackEdges.size(); ++i) {
+      double this_angle = angle + (rand() % 1001 - 500) / 500. * M_PI / 3;
+      double this_length = lengths[i-1] * ((rand() % 1001) / 1000. * 1.5 + .5);
+      MVertex *v0 = stackEdges[i-1].getVertex(0);
+      MVertex *v = stackEdges[i].getVertex(0);
+      v->x() = v0->x() + this_length * std::cos(this_angle);
+      v->y() = v0->y() + this_length * std::sin(this_angle);
+      std::vector<MVertex *> vert = stackFaces[i-1].getVertices();
+      vert[19]->x() = 1./6 * v0->x() + 5./6 * v->x();
+      vert[19]->y() = 1./6 * v0->y() + 5./6 * v->y();
+      vert[20]->x() = 2./6 * v0->x() + 4./6 * v->x();
+      vert[20]->y() = 2./6 * v0->y() + 4./6 * v->y();
+      vert[21]->x() = 3./6 * v0->x() + 3./6 * v->x();
+      vert[21]->y() = 3./6 * v0->y() + 3./6 * v->y();
+      vert[22]->x() = 4./6 * v0->x() + 2./6 * v->x();
+      vert[22]->y() = 4./6 * v0->y() + 2./6 * v->y();
+      vert[23]->x() = 5./6 * v0->x() + 1./6 * v->x();
+      vert[23]->y() = 5./6 * v0->y() + 1./6 * v->y();
+    }
+    return true;
+  }
+
   void computeThicknessQuality(std::vector<MVertex *> &bottomVertices,
                                std::vector<MVertex *> &topVertices,
                                std::vector<double> &thickness, SVector3 &w)
@@ -2181,6 +2230,10 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
   //      bndEl2column[i].second[j]->setVisibility(1);
   //    }
   //  }
+
+//  for(int i = 0; i < bndEl2column.size(); ++i) {
+//    BoundaryLayerCurver::change_normals(bndEl2column[i], nullptr, gedge, normal);
+//  }
 
   for(int i = 0; i < bndEl2column.size(); ++i) {
     //    if (bndEl2column[i].first->getNum() != 205) continue; // t161
