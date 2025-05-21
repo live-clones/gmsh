@@ -38,12 +38,13 @@ GRegion::~GRegion()
 
 void GRegion::deleteMesh()
 {
+  if(getNumMeshVertices() || getNumMeshElements())
+    model()->destroyMeshCaches();
   for(std::size_t i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
   mesh_vertices.clear();
   transfinite_vertices.clear();
   removeElements(true);
   deleteVertexArrays();
-  model()->destroyMeshCaches();
 }
 
 std::size_t GRegion::getNumMeshElements() const

@@ -1176,7 +1176,7 @@ static bool GetOtherOption(const std::vector<std::string> &argv,
   }
   else if(argv[i] == "-log") {
     i++;
-    if(i < argv.size()) { Msg::SetLogFile(argv[i++]); }
+    if(i < argv.size()) { Msg::SetLogFileName(argv[i++]); }
     else {
       Msg::Error("Missing filename");
       if(exitOnError) Msg::Exit(1);

@@ -36,10 +36,10 @@ public:
   virtual void resetMeshAttributes();
 
   // get/set the coordinates of the vertex
-  virtual GPoint point() const = 0;
-  virtual double x() const = 0;
-  virtual double y() const = 0;
-  virtual double z() const = 0;
+  virtual GPoint point() const { return GPoint(); }
+  virtual double x() const { return 0.; }
+  virtual double y() const { return 0.; }
+  virtual double z() const { return 0.; }
   virtual SPoint3 xyz() const { return SPoint3(x(), y(), z()); }
   virtual void setPosition(GPoint &p);
 

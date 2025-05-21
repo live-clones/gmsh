@@ -1175,7 +1175,7 @@ int GModel::_writePartitionedMSH2(const std::string &baseName, bool binary,
                                   double scalingFactor)
 {
   int numElements;
-  int startNum = 0;
+  int startNum = CTX::instance()->mesh.firstElementTag - 1;
   for(std::size_t partition = 1; partition <= getNumPartitions(); partition++) {
     std::ostringstream sstream;
     sstream << baseName << "_" << partition << ".msh";

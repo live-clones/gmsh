@@ -30,6 +30,8 @@ public:
   virtual void secondDer(const SPoint2 &, SVector3 &, SVector3 &,
                          SVector3 &) const;
   virtual GEntity::GeomType geomType() const;
+  virtual void geomProperties(std::vector<int> &integers,
+                              std::vector<double> &reals) const;
   virtual bool haveParametrization();
   virtual ModelType getNativeType() const { return GmshModel; }
   virtual void *getNativePtr() const { return _s; }

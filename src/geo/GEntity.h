@@ -243,6 +243,10 @@ public:
   // underlying geometric representation of this entity
   virtual GeomType geomType() const { return Unknown; }
 
+  // properties of the underlying geometric representation of this entity
+  virtual void geomProperties(std::vector<int> &integers,
+                              std::vector<double> &reals) const { }
+
   // true if parametric space is continuous in the "dim" direction
   virtual bool continuous(int dim) const { return true; }
 

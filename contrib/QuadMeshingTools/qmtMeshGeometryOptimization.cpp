@@ -686,7 +686,7 @@ namespace QMT {
     if(gf->periodic(0)) Ts[0] = gf->period(0);
     if(gf->periodic(1)) Ts[1] = gf->period(1);
 
-    std::unordered_map<MVertex *, std::vector<MVertex *> > v2v;
+    VertexToVertexMap v2v;
     buildVertexToVertexMap(patch.elements, v2v);
     MVertex *v0 = patch.intVertices[0];
 

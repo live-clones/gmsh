@@ -557,6 +557,9 @@ int GModel::_readMSH3(const std::string &name)
     } while(str[0] != '$');
   }
 
+  std::map<std::size_t, MVertex *> vertexMap(_vertexMapCache);
+  std::vector<MVertex *> vertexVector(_vertexVectorCache);
+
   // store the elements in their associated elementary entity. If the
   // entity does not exist, create a new (discrete) one.
   for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
@@ -566,10 +569,10 @@ int GModel::_readMSH3(const std::string &name)
   _associateEntityWithMeshVertices();
 
   // store the vertices in their associated geometrical entity
-  if(_vertexVectorCache.size())
-    _storeVerticesInEntities(_vertexVectorCache);
+  if(vertexVector.size())
+    _storeVerticesInEntities(vertexVector);
   else
-    _storeVerticesInEntities(_vertexMapCache);
+    _storeVerticesInEntities(vertexMap);
 
   for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
     _storeParentsInSubElements(elements[i]);
