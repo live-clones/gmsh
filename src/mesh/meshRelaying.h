@@ -276,6 +276,8 @@ public:
   void renumber_DF();
   std::vector<interface> getInterfaces() { return interfaces; }
   std::vector<double> getPos() { return pos; }
+
+  void get_potential_markers(double position[2], std::vector<std::pair<int, std::pair<size_t, size_t>>> &potential_markers);
 };
 
 class meshRelaying {
@@ -388,6 +390,7 @@ public:
 
   void construct_DF_to_mesh_relation(std::vector<size_t> &DF_to_meshNodes, std::vector<double> &DF_to_mesh_parametric);
   void construct_mesh_to_DF_relation(std::vector<size_t> &meshNodes_to_DF, std::vector<double> &mesh_to_DF_parametric);
+  void new_construct_mesh_to_DF_relation(std::vector<size_t> &meshNodes_to_DF, std::vector<double> &mesh_to_DF_parametric);
   void print_DF(const std::string df_filename);
   void setMeshPos(const std::vector<double> &mesh_pos);
 };

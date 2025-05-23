@@ -1438,6 +1438,8 @@ void meshRelaying::construct_mesh_to_DF_relation(std::vector<size_t> &meshNodes_
       if(bnd_markers[m1] == 1) continue;
       size_t m2 = interfaces[i].markers[(j+1)%n];
 
+      printf("m1 = %lu, m2 = %lu\n", m1, m2);
+
       double pos1[2] = {DF_pos[3*m1], DF_pos[3*m1+1]};
       double pos2[2] = {DF_pos[3*m2], DF_pos[3*m2+1]};
       double dist_1_2 = sqrt((pos1[0]-pos2[0])*(pos1[0]-pos2[0]) + (pos1[1]-pos2[1])*(pos1[1]-pos2[1]));
@@ -1457,7 +1459,7 @@ void meshRelaying::construct_mesh_to_DF_relation(std::vector<size_t> &meshNodes_
         double dist_v_1 = sqrt((vertex_pos[0]-pos1[0])*(vertex_pos[0]-pos1[0]) + (vertex_pos[1]-pos1[1])*(vertex_pos[1]-pos1[1]));
         double dist_v_2 = sqrt((vertex_pos[0]-pos2[0])*(vertex_pos[0]-pos2[0]) + (vertex_pos[1]-pos2[1])*(vertex_pos[1]-pos2[1]));
 
-        if(dist_v_1<1e-10){
+        if(dist_v_1<1e-12){
           meshNodes_to_DF[2*vertex] = m1;
           meshNodes_to_DF[2*vertex+1] = m1;
           mesh_to_DF_parametric[vertex] = 0.0;
@@ -1465,7 +1467,7 @@ void meshRelaying::construct_mesh_to_DF_relation(std::vector<size_t> &meshNodes_
           break;
         }
 
-        if(dist_v_2<1e-10){
+        if(dist_v_2<1e-12){
           meshNodes_to_DF[2*vertex] = m2;
           meshNodes_to_DF[2*vertex+1] = m2;
           mesh_to_DF_parametric[vertex] = 0.0;
@@ -1506,8 +1508,14 @@ void meshRelaying::construct_mesh_to_DF_relation(std::vector<size_t> &meshNodes_
         }
 
         PolyMesh::HalfEdge *he = current_f->he;
+        size_t iter_2 = 0;
         do{
+          if(iter_2 > 20){
+            exit(1);
+          }
+          iter_2++;
           he = he->next;
+          printf("he->v->data-1 = %lu, intersect.first = %lu\n", he->v->data-1, intersect.first);
         }while(he->v->data-1 != intersect.first);
         current_v = intersect.first;
         current_f = he->opposite->f;
@@ -1518,6 +1526,75 @@ void meshRelaying::construct_mesh_to_DF_relation(std::vector<size_t> &meshNodes_
 
     }
   }
+}
+
+void meshRelaying::new_construct_mesh_to_DF_relation(std::vector<size_t> &meshNodes_to_DF, std::vector<double> &mesh_to_DF_parametric){
+  if(pm_mesh == nullptr){
+    pm_mesh = new PolyMesh();
+    std::vector<size_t> tris_p1;
+    for(size_t i=0; i<tris.size(); i++) {
+      tris_p1.push_back(tris[i]+1);
+    }
+    std::vector<double> pos_2d;
+    for(size_t i=0; i<pos.size(); i+=3) {
+      pos_2d.push_back(pos[i]);
+      pos_2d.push_back(pos[i+1]);
+    }
+    triangulation2PolyMesh(tris_p1, pos_2d, &pm_mesh);
+    
+    //sort vertices
+    std::sort(pm_mesh->vertices.begin(), pm_mesh->vertices.end(), [](PolyMesh::Vertex *a, PolyMesh::Vertex *b) {
+      return a->data < b->data;
+    });
+
+  }
+
+  meshNodes_to_DF.resize(2*(pm_mesh->vertices.size()));
+  mesh_to_DF_parametric.resize(pm_mesh->vertices.size());
+  std::vector<double> DF_pos = discreteFront::instance()->getPos();
+  double tol = 1e-12;
+  for(size_t i=0; i<pm_mesh->vertices.size(); i++){
+    int mesh_node = pm_mesh->vertices[i]->data-1;
+    double pos_m[2] = {pm_mesh->vertices[i]->position.x(), pm_mesh->vertices[i]->position.y()};
+    std::vector<std::pair<int, std::pair<size_t, size_t>>> potential_markers;
+    discreteFront::instance()->get_potential_markers(pos_m, potential_markers);
+  
+    for (size_t j=0; j<potential_markers.size(); j++){
+      size_t m1 = potential_markers[j].second.first;
+      size_t m2 = potential_markers[j].second.second;
+      double pos1[2] = {DF_pos[3*m1], DF_pos[3*m1+1]};
+      double pos2[2] = {DF_pos[3*m2], DF_pos[3*m2+1]};
+      double cross = robustPredicates::orient2d(pos1, pos2, pos_m);
+      if(cross < tol){
+        double dist_1 = sqrt((pos_m[0]-pos1[0])*(pos_m[0]-pos1[0]) + (pos_m[1]-pos1[1])*(pos_m[1]-pos1[1]));
+        double dist_2 = sqrt((pos_m[0]-pos2[0])*(pos_m[0]-pos2[0]) + (pos_m[1]-pos2[1])*(pos_m[1]-pos2[1]));
+        double dist_1_2 = sqrt((pos1[0]-pos2[0])*(pos1[0]-pos2[0]) + (pos1[1]-pos2[1])*(pos1[1]-pos2[1]));
+
+        if(dist_1+dist_2<dist_1_2+tol){
+          meshNodes_to_DF[2*i] = m1;
+          meshNodes_to_DF[2*i+1] = m2;
+          mesh_to_DF_parametric[i] = dist_1/(dist_1+dist_2);
+          break;
+        }
+      }
+    }
+  }
+}
+
+void discreteFront::get_potential_markers(double position[2], std::vector<std::pair<int, std::pair<size_t, size_t>>> &potential_markers){
+  potential_markers.clear();
+  int I_c, J_c;
+  getCoordinates(position[0], position[1], I_c, J_c);
+  for(int I = I_c - 1; I <= I_c + 1; I++) {
+    for(int J = J_c - 1; J <= J_c + 1; J++) {
+      if(I < 0 || I >= NX || J < 0 || J >= NY) continue;
+      int index = I + NX * J;
+      for(size_t k = 0; k < sss[index].size(); k++) {
+        potential_markers.push_back(sss[index][k]);
+      }
+    }
+  }
+    
 }
 
 
@@ -2077,8 +2154,11 @@ void discreteFront::getDF(std::vector<double> *doubleMarkers,
   }
 
   if(mesh_relation){
+    printf("before df to mesh relation\n");
     meshRelaying::instance()->construct_DF_to_mesh_relation(*DF_to_meshNodes, *DF_to_mesh_parametric);
-    meshRelaying::instance()->construct_mesh_to_DF_relation(*meshNodes_to_DF, *mesh_to_DF_parametric);
+    printf("after df to mesh relation\n");
+    meshRelaying::instance()->new_construct_mesh_to_DF_relation(*meshNodes_to_DF, *mesh_to_DF_parametric);
+    printf("after mesh to df relation\n");
   }
   
   return;
