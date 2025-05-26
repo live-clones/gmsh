@@ -21,6 +21,24 @@
 #include <string>
 
 namespace {
+  inline void addFaceToGFace(GFace *gf, const std::vector<MVertex *> &verts)
+  {
+    if(verts.size() == 3) {
+      gf->addTriangle(new MTriangle(verts[0], verts[1], verts[2]));
+    }
+    else if(verts.size() == 4) {
+      gf->addQuadrangle(
+        new MQuadrangle(verts[0], verts[1], verts[2], verts[3]));
+    }
+    else if(verts.size() > 4) {
+      // Triangulate as a fan for convex polygons
+      std::vector<MTriangle *> tris;
+      for(size_t k = 1; k < verts.size() - 1; ++k) {
+        tris.push_back(new MTriangle(verts[0], verts[k], verts[k + 1]));
+      }
+      gf->addPolygon(new MPolygon(tris));
+    }
+  }
   template <typename T> void writeFace(std::ofstream &ofs, const T *elem)
   {
     ofs << "f";
@@ -67,38 +85,18 @@ int GModel::readOBJ(const std::string &name)
     size_t index_offset = 0;
     for(size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++) {
       int fv = shape.mesh.num_face_vertices[f];
-      if(fv == 3) {
-        std::array<int, 3> v;
-        for(size_t k = 0; k < v.size(); k++)
-          v[k] = shape.mesh.indices[index_offset + k].vertex_index;
-        gf->addTriangle(
-          new MTriangle(vertices[v[0]], vertices[v[1]], vertices[v[2]]));
-      }
-      else if(fv == 4) {
-        std::array<int, 4> v;
-        for(size_t k = 0; k < v.size(); ++k)
-          v[k] = shape.mesh.indices[index_offset + k].vertex_index;
-        gf->addQuadrangle(new MQuadrangle(vertices[v[0]], vertices[v[1]],
-                                          vertices[v[2]], vertices[v[3]]));
-      }
-      else if(fv > 4) {
-        std::vector<MVertex *> polyVerts;
-        polyVerts.reserve(fv);
-        for(int k = 0; k < fv; k++) {
-          int idx = shape.mesh.indices[index_offset + k].vertex_index;
-          polyVerts.push_back(vertices[idx]);
-        }
-        // Triangulate as a fan for convex polygons
-        std::vector<MTriangle *> tris;
-        for(int k = 1; k < fv - 1; ++k) {
-          tris.push_back(
-            new MTriangle(polyVerts[0], polyVerts[k], polyVerts[k + 1]));
-        }
-        gf->addPolygon(new MPolygon(tris));
-      }
-      else {
+      if(fv < 3) {
         Msg::Warning("Ignoring face with %d vertices", fv);
+        index_offset += fv;
+        continue;
       }
+      std::vector<MVertex *> faceVerts;
+      faceVerts.reserve(fv);
+      for(int k = 0; k < fv; k++) {
+        int idx = shape.mesh.indices[index_offset + k].vertex_index;
+        faceVerts.push_back(vertices[idx]);
+      }
+      addFaceToGFace(gf, faceVerts);
       index_offset += fv;
     }
   }
