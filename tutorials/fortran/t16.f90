@@ -103,7 +103,7 @@ end do
 
 ! The tag of the cube will change though, so we need to access it
 ! programmatically:
-ret = gmsh%model%addPhysicalGroup(3, [ov(2, size(ov, 1))], 10)
+ret = gmsh%model%addPhysicalGroup(3, [ov(2, 0)], 10)
 deallocate(ov, ovv, ovv_n)
 
 ! Creating entities using constructive solid geometry is very powerful, but can

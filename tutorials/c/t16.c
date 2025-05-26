@@ -98,7 +98,7 @@ int main(int argc, char **argv)
 
   // The tag of the cube will change though, so we need to access it
   // programmatically:
-  const int g[] = {ov[ov_n - 1]};
+  const int g[] = {ov[0]};
   gmshModelAddPhysicalGroup(3, g, sizeof(g) / sizeof(g[0]), 10, "", &ierr);
 
   gmshFree(ov);

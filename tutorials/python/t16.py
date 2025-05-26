@@ -80,7 +80,7 @@ for i in range(1, 6):
 
 # The tag of the cube will change though, so we need to access it
 # programmatically:
-gmsh.model.addPhysicalGroup(3, [ov[-1][1]], 10)
+gmsh.model.addPhysicalGroup(3, [ov[0][1]], 10)
 
 # Creating entities using constructive solid geometry is very powerful, but can
 # lead to practical issues for e.g. setting mesh sizes at points, or identifying

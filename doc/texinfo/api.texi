@@ -1263,7 +1263,7 @@ Clear the mesh, i.e. delete all the nodes and elements, for the entities @code{d
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L771,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L661,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L2327,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L1995,Julia}
 @item Examples:
-Python (@url{@value{GITLAB-PREFIX}/examples/api/copy_mesh.py#L53,copy_mesh.py}, @url{@value{GITLAB-PREFIX}/examples/api/flatten.py#L35,flatten.py}, @url{@value{GITLAB-PREFIX}/examples/api/remesh_partial_move.py#L19,remesh_partial_move.py}, @url{@value{GITLAB-PREFIX}/examples/api/remove_elements.py#L13,remove_elements.py})
+Python (@url{@value{GITLAB-PREFIX}/examples/api/copy_mesh.py#L53,copy_mesh.py}, @url{@value{GITLAB-PREFIX}/examples/api/flatten.py#L35,flatten.py}, @url{@value{GITLAB-PREFIX}/examples/api/remesh_partial_move.py#L20,remesh_partial_move.py}, @url{@value{GITLAB-PREFIX}/examples/api/remove_elements.py#L13,remove_elements.py})
 @end table
 
 @item gmsh/model/mesh/removeElements

@@ -52,13 +52,14 @@ GEdge::~GEdge()
 
 void GEdge::deleteMesh()
 {
+  if(getNumMeshVertices() || getNumMeshElements())
+    model()->destroyMeshCaches();
   for(std::size_t i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
   mesh_vertices.clear();
   removeElements(true);
   correspondingVertices.clear();
   correspondingHighOrderVertices.clear();
   deleteVertexArrays();
-  model()->destroyMeshCaches();
 }
 
 void GEdge::setMeshMaster(GEdge *ge, int ori)

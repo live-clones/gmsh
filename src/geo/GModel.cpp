@@ -2011,6 +2011,7 @@ void GModel::rebuildMeshVertexCache(bool onlyIfNecessary)
 {
   if(!onlyIfNecessary ||
      (_vertexVectorCache.empty() && _vertexMapCache.empty())) {
+    Msg::Debug("Rebuilding mesh node cache");
     _vertexVectorCache.clear();
     _vertexMapCache.clear();
     bool dense = false;
@@ -2087,7 +2088,6 @@ MVertex *GModel::getMeshVertexByTag(std::size_t n)
 #pragma omp barrier
 #pragma omp single
     {
-      Msg::Debug("Rebuilding mesh node cache");
       rebuildMeshVertexCache();
     }
   }
@@ -2101,7 +2101,6 @@ MVertex *GModel::getMeshVertexByTag(std::size_t n)
 void GModel::addMVertexToVertexCache(MVertex* v)
 {
   if(_vertexVectorCache.empty() && _vertexMapCache.empty()) {
-    Msg::Debug("Rebuilding mesh node cache");
     rebuildMeshVertexCache();
   }
   if (_vertexVectorCache.size() > 0) {
@@ -2141,7 +2140,6 @@ MElement *GModel::getMeshElementByTag(std::size_t n, int &entityTag)
 #pragma omp barrier
 #pragma omp single
     {
-      Msg::Debug("Rebuilding mesh element cache");
       rebuildMeshElementCache();
     }
   }
