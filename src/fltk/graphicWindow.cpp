@@ -140,6 +140,7 @@ static const char *input_formats =
   "Mesh - Nastran Bulk Data File\t*.{bdf,nas}\n"
   "Mesh - GAMBIT Neutral File\t*.neu\n"
   "Mesh - Object File Format\t*.off\n"
+  "Mesh - Wavefront File Format\t*.obj\n"
   "Mesh - Plot3D Structured Mesh\t*.p3d\n"
   "Mesh - STL Surface\t*.stl\n"
   "Mesh - VTK\t*.vtk\n"
