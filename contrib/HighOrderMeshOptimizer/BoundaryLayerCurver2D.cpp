@@ -1120,8 +1120,8 @@ namespace BoundaryLayerCurver {
 
       // 2) Construct Tangent linear system
       const double amplification = 1.; // Hack
-      fullMatrix<double> A_tg(2*polyo - 1, polyo + 1);
-      fullMatrix<double> b_tg(2*polyo - 1, 3);
+      fullMatrix<double> A_tg1(polyo, polyo + 1);
+      fullMatrix<double> b_tg1(polyo, 3);
       for(int i = 0; i < polyo; ++i) {
         int I = i;
         double u = .5 * (refNodes_seq(i, 0) + refNodes_seq(i+1, 0));
@@ -1129,12 +1129,15 @@ namespace BoundaryLayerCurver {
         // double sf[100];
         double grads[100][3];
         nb->df(u, 0, 0, grads);
-        for(int j = 0; j < nbDof; ++j) { A_tg(I, j) = grads[j][0]; }
+        for(int j = 0; j < nbDof; ++j) { A_tg1(I, j) = grads[j][0]; }
         // for(int j = 0; j < 3; ++j) { b_tg(I, j) = xyz(i+1, j) - xyz(i, j); }
-        for(int j = 0; j < 3; ++j) { b_tg(I, j) = bspl_tg(i*2, j); }
+        for(int j = 0; j < 3; ++j) { b_tg1(I, j) = bspl_tg(i*2, j); }
       }
+
+      fullMatrix<double> A_tg2(polyo - 1, polyo + 1);
+      fullMatrix<double> b_tg2(polyo - 1, 3);
       for(int i = 1; i < polyo; ++i) {
-        int I = polyo + i - 1;
+        int I = i - 1;
         double u = refNodes_seq(i, 0);
         std::cout << "_u = " << u << std::endl;
         // double sf[100];
@@ -1142,15 +1145,19 @@ namespace BoundaryLayerCurver {
         // for(int j = 0; j < nbDof; ++j) { A_tg(I, j) = sf[j]; }
         double grads[100][3];
         nb->df(u, 0, 0, grads);
-        for(int j = 0; j < nbDof; ++j) { A_tg(I, j) = grads[j][0]; }
+        for(int j = 0; j < nbDof; ++j) { A_tg2(I, j) = grads[j][0]; }
         // for(int j = 0; j < 3; ++j) {
         //   b_tg(I, j) = .5 * (xyz(i+1, j) - xyz(i-1, j));
         // }
-        for(int j = 0; j < 3; ++j) { b_tg(I, j) = bspl_tg(i*2-1, j); }
+        for(int j = 0; j < 3; ++j) { b_tg2(I, j) = bspl_tg(i*2-1, j); }
       }
-      b_tg.scale(amplification);
-      // A_tg.print(std::string("A_tg:"),std::string(""));
-      // b_tg.print(std::string("b_tg:"),std::string(""));
+
+      b_tg1.scale(amplification);
+      b_tg2.scale(amplification);
+      // A_tg1.print(std::string("A_tg1:"),std::string(""));
+      // b_tg1.print(std::string("b_tg1:"),std::string(""));
+      // A_tg2.print(std::string("A_tg2:"),std::string(""));
+      // b_tg2.print(std::string("b_tg2:"),std::string(""));
 
       // 3) Construct Extremity tangent linear system
       fullMatrix<double> A_ext(2, polyo + 1);
@@ -1188,7 +1195,7 @@ namespace BoundaryLayerCurver {
       // A_ext.print(std::string("A_ext:"),std::string(""));
       // b_ext.print(std::string("b_ext:"),std::string(""));
 
-      // 4) Construct Extremity tangent linear system
+      // 4) Construct Linear tangent linear system
       fullMatrix<double> A_lin(polyo, polyo + 1);
       fullMatrix<double> b_lin(polyo, 3);
       MVertex *v0 = edge->getVertex(0);
@@ -1197,30 +1204,46 @@ namespace BoundaryLayerCurver {
       // t *= 2. / polyo;
       t *= .5;
       for(int i = 0; i < polyo; ++i) {
-        for(int j = 0; j < polyo+1; ++j) { A_lin(i, j) = A_tg(i, j); }
+        for(int j = 0; j < polyo+1; ++j) { A_lin(i, j) = A_tg1(i, j); }
         for(int j = 0; j < 3; ++j) { b_lin(i, j) = t(j); }
       }
       // A_lin.print(std::string("A_lin:"),std::string(""));
       // b_lin.print(std::string("b_lin:"),std::string(""));
       // bspl_tg_length.print(std::string("bspl_tg_length:"),std::string(""));
-      bspl_tg.print(std::string("bspl_tg:"),std::string(""));
+      // bspl_tg.print(std::string("bspl_tg:"),std::string(""));
 
       // Choose
       int sz_lin = A_lin.size1();
       int sz_ext = A_ext.size1();
       int sz_pos = A_pos.size1();
-      int sz_tg = A_tg.size1();
+      int sz_tg1 = A_tg1.size1();
+      int sz_tg2 = A_tg2.size1();
 
-      A_lin.scale(.001);
-      b_lin.scale(.001);
-      A_pos.scale(.1);
-      b_pos.scale(.1);
-      A_ext.scale(1);
-      b_ext.scale(1);
-      A_tg.scale(10);
-      b_tg.scale(10);
+      double coeff;
+      coeff = .001;
+      A_lin.scale(coeff);
+      b_lin.scale(coeff);
 
-      int SZ = sz_lin + sz_pos + sz_ext + sz_tg;
+      coeff = .1;
+      A_pos.scale(coeff);
+      b_pos.scale(coeff);
+
+      coeff = .1;
+      A_ext.scale(coeff);
+      b_ext.scale(coeff);
+
+      // Between those two, none is stable alone, but they seems stable together.
+      // This observation may be dependent on the way edges are curved, in
+      // particular the preservation of arc-length nature of edges (see ALP)
+      coeff = 1000;
+      A_tg1.scale(coeff);
+      b_tg1.scale(coeff);
+
+      coeff = 1000;
+      A_tg2.scale(coeff);
+      b_tg2.scale(coeff);
+
+      int SZ = sz_lin + sz_pos + sz_ext + sz_tg1 + sz_tg2;
       fullMatrix<double> A(SZ, polyo + 1);
       fullMatrix<double> b(SZ, 3);
       int desti0 = 0;
@@ -1231,35 +1254,14 @@ namespace BoundaryLayerCurver {
       A.copy(A_pos, 0, sz_pos, 0, polyo+1, desti0, 0); desti0 += sz_pos;
       // A.print(std::string("A:"),std::string(""));
       A.copy(A_ext, 0, sz_ext, 0, polyo+1, desti0, 0); desti0 += sz_ext;
-      A.copy(A_tg, 0, sz_tg, 0, polyo+1, desti0, 0); desti0 += sz_tg;
+      A.copy(A_tg1, 0, sz_tg1, 0, polyo+1, desti0, 0); desti0 += sz_tg1;
+      A.copy(A_tg2, 0, sz_tg2, 0, polyo+1, desti0, 0); desti0 += sz_tg2;
       desti0 = 0;
       b.copy(b_lin, 0, sz_lin, 0, 3, desti0, 0); desti0 += sz_lin;
       b.copy(b_pos, 0, sz_pos, 0, 3, desti0, 0); desti0 += sz_pos;
       b.copy(b_ext, 0, sz_ext, 0, 3, desti0, 0); desti0 += sz_ext;
-      b.copy(b_tg, 0, sz_tg, 0, 3, desti0, 0); desti0 += sz_tg;
-
-      // fullMatrix<double> _tmpA(SZ - (polyo - 1), polyo + 1);
-      // fullMatrix<double> _tmpb(SZ - (polyo - 1), 3);
-      // _tmpA.copy(A, 0, SZ - (polyo - 1), 0, polyo+1, 0, 0);
-      // _tmpb.copy(b, 0, SZ - (polyo - 1), 0, 3, 0, 0);
-      // A = fullMatrix<double>(_tmpA);
-      // b = fullMatrix<double>(_tmpb);
-
-      // fullMatrix<double> _tmpA(SZ - polyo, polyo + 1);
-      // fullMatrix<double> _tmpb(SZ - polyo, 3);
-      // _tmpA.copy(A, 0, SZ - (2*polyo - 1), 0, polyo+1, 0, 0);
-      // _tmpb.copy(b, 0, SZ - (2*polyo - 1), 0, 3, 0, 0);
-      // _tmpA.copy(A, SZ - (polyo - 1), polyo - 1, 0, polyo+1, SZ - (2*polyo - 1), 0);
-      // _tmpb.copy(b, SZ - (polyo - 1), polyo - 1, 0, 3, SZ - (2*polyo - 1), 0);
-      // A.print(std::string("A:"),std::string(""));
-      // b.print(std::string("b:"),std::string(""));
-      // _tmpA.print(std::string("_tmpA:"),std::string(""));
-      // _tmpb.print(std::string("_tmpb:"),std::string(""));
-      // A = fullMatrix<double>(_tmpA);
-      // b = fullMatrix<double>(_tmpb);
-
-      // A.print(std::string("A:"),std::string(""));
-      // b.print(std::string("b:"),std::string(""));
+      b.copy(b_tg1, 0, sz_tg1, 0, 3, desti0, 0); desti0 += sz_tg1;
+      b.copy(b_tg2, 0, sz_tg2, 0, 3, desti0, 0); desti0 += sz_tg2;
 
       //
       fullMatrix<double> A_fixed_boundary = A;
@@ -1389,7 +1391,7 @@ namespace BoundaryLayerCurver {
       //  5) Param kappa : imposition perpendicularité aux extrémités
 
       // TODO
-      //  0. Séparer les tangentes BSpline dans la matrice
+      //  0x Séparer les tangentes BSpline dans la matrice
       //  1. Calculer h_i
       //  2. Déterminer relation entre gamma (degré linéarité voulu) et
       //     Sum (b_i-x_i)^2 / L^2
