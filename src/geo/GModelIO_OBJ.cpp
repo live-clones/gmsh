@@ -14,7 +14,6 @@
 #define TINYOBJLOADER_USE_DOUBLE
 #include <tiny_obj_loader.h>
 
-#include <array>
 #include <fstream>
 #include <iomanip>
 #include <vector>
