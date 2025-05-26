@@ -42,7 +42,7 @@ namespace {
   template <typename T> void writeFace(std::ofstream &ofs, const T *elem)
   {
     ofs << "f";
-    for(std::size_t i = 0; i < elem->getNumVertices(); ++i) {
+    for(size_t i = 0; i < elem->getNumVertices(); ++i) {
       ofs << " " << elem->getVertex(i)->getIndex();
     }
     ofs << "\n";
