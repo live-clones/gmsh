@@ -17,6 +17,7 @@
 #include <fstream>
 #include <iomanip>
 #include <vector>
+#include <sstream>
 #include <string>
 
 namespace {
@@ -46,6 +47,14 @@ namespace {
     }
     ofs << "\n";
   }
+  template <typename Severity>
+  void logTinyObjReader(Severity logFunc, const std::string &message)
+  {
+    std::istringstream stream(message);
+    std::string line;
+    while(std::getline(stream, line))
+      logFunc("tinyobjreader: %s", line.c_str());
+  }
 } // namespace
 
 int GModel::readOBJ(const std::string &name)
@@ -55,12 +64,12 @@ int GModel::readOBJ(const std::string &name)
   config.triangulate = false;
 
   if(!reader.ParseFromFile(name, config)) {
-    Msg::Error("Failed to read OBJ: %s", reader.Error().c_str());
+    logTinyObjReader(Msg::Error, reader.Error());
     return 0;
   }
 
   if(!reader.Warning().empty()) {
-    Msg::Warning("TinyObjReader: %s", reader.Warning().c_str());
+    logTinyObjReader(Msg::Warning, reader.Warning());
   }
 
   const auto &attrib = reader.GetAttrib();
