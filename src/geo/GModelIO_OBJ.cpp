@@ -16,9 +16,9 @@
 
 #include <fstream>
 #include <iomanip>
-#include <vector>
 #include <sstream>
 #include <string>
+#include <vector>
 
 namespace {
   inline void addFaceToGFace(GFace *gf, const std::vector<MVertex *> &verts)
