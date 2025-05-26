@@ -1379,6 +1379,25 @@ namespace BoundaryLayerCurver {
       }
 
       // _reduceCurving_newIdea(edge, minThickness*.1, gface);
+      // NOTE
+      //  1) Calculer les h_i. -> H = h_N, z_i = h_i / H
+      //  2) Param z_lin : Si h_i / H < z_lin, pas de réduction de courbure
+      //  3) Param gamma_out : gamma(z) = 0 si z <= z_lin,
+      //                                = f*(z-z_lin) si z >= z_lin
+      //                                  f tq gamma(z_out) = gamma_out
+      //  4) Param tau : tq max_displ = tau * (h_i+1 - h_i)
+      //  5) Param kappa : imposition perpendicularité aux extrémités
+
+      // TODO
+      //  0. Séparer les tangentes BSpline dans la matrice
+      //  1. Calculer h_i
+      //  2. Déterminer relation entre gamma (degré linéarité voulu) et
+      //     Sum (b_i-x_i)^2 / L^2
+      //  3. Déterminer relation entre gamma voulu et coefficient dans la matrice
+      //     (recalculer relation pour deux F_a = (x-x_a)^2 et F_b. On veut
+      //      x_opt = (1 - w) * x_a + w * x_b, alors quelle fonctionnel minimiser ?
+      //      F = c_a * F_a + c_b * F_b
+      //  4. Mettre tout ensemble pour obtenir le résultat final
       _reduceCurving_newIdea2(edge, minThickness*.1, gface, 1, 1, baseEdge, next);
 
       if(gface) projectVerticesIntoGFace(edge, gface, false);
