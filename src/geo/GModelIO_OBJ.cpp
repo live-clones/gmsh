@@ -15,8 +15,21 @@
 #include <tiny_obj_loader.h>
 
 #include <array>
+#include <fstream>
+#include <iomanip>
 #include <vector>
 #include <string>
+
+namespace {
+  template <typename T> void writeFace(std::ofstream &ofs, const T *elem)
+  {
+    ofs << "f";
+    for(std::size_t i = 0; i < elem->getNumVertices(); ++i) {
+      ofs << " " << elem->getVertex(i)->getIndex();
+    }
+    ofs << "\n";
+  }
+} // namespace
 
 int GModel::readOBJ(const std::string &name)
 {
@@ -91,5 +104,42 @@ int GModel::readOBJ(const std::string &name)
   }
   _associateEntityWithMeshVertices();
   _storeVerticesInEntities(vertices);
+  return 1;
+}
+
+int GModel::writeOBJ(const std::string &name, bool saveAll,
+                     double scalingFactor)
+{
+  std::ofstream ofs(name);
+  if(!ofs) {
+    Msg::Error("Unable to open file '%s' for writing", name.c_str());
+    return 0;
+  }
+
+  if(noPhysicalGroups()) saveAll = true;
+  indexMeshVertices(saveAll);
+
+  // Write vertices
+  std::vector<GEntity *> entities;
+  getEntities(entities);
+  ofs << std::setprecision(16);
+  ofs << "# Gmsh OBJ export\n";
+
+  for(const auto &ent : entities) {
+    for(const auto &v : ent->mesh_vertices) {
+      SPoint3 p = v->point();
+      ofs << "v " << scalingFactor * p.x() << " " << scalingFactor * p.y()
+          << " " << scalingFactor * p.z() << "\n";
+    }
+  }
+
+  for(const auto &face : faces) {
+    if(!saveAll && face->physicals.empty()) continue;
+    for(const auto &t : face->triangles) writeFace(ofs, t);
+    for(const auto &q : face->quadrangles) writeFace(ofs, q);
+    for(const auto &p : face->polygons) writeFace(ofs, p);
+  }
+
+  ofs.close();
   return 1;
 }

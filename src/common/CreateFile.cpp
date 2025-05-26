@@ -413,6 +413,11 @@ void CreateOutputFile(const std::string &fileName, int format,
       (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
     break;
 
+  case FORMAT_OBJ:
+    GModel::current()->writeOBJ
+      (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
+    break;
+
   case FORMAT_MAIL:
     GModel::current()->writeMAIL
       (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
