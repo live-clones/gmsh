@@ -1333,7 +1333,7 @@ namespace BoundaryLayerCurver {
     }
 
     void curveEdge_newIdea(const MEdgeN *baseEdge, MEdgeN *edge, const GFace *gface,
-                           const SVector3 &normal, MEdgeN *next)
+                           const SVector3 &normal, MEdgeN *next, double current_h)
     {
       _Frame frame(baseEdge, gface, normal);
 
@@ -1392,7 +1392,7 @@ namespace BoundaryLayerCurver {
 
       // TODO
       //  0x Séparer les tangentes BSpline dans la matrice
-      //  1. Calculer h_i
+      //  1x Calculer h_i
       //  2. Déterminer relation entre gamma (degré linéarité voulu) et
       //     Sum (b_i-x_i)^2 / L^2
       //  3. Déterminer relation entre gamma voulu et coefficient dans la matrice
@@ -2347,6 +2347,15 @@ namespace BoundaryLayerCurver {
     std::vector<MFaceN> stackFaces;
     computeStackHOEdgesFaces(column, stackEdges, stackFaces);
 
+    // Compute total thickness
+    // FIXME: this is some basic code, need generalization for extrusion normal
+    //        changing direction (+ in the following loop)
+    MEdgeN *baseEdge = &stackEdges[0];
+    SVector3 v = stackEdges.back().pnt(-1) - baseEdge->pnt(-1);
+    double thickness_left = v.norm();
+    v = stackEdges.back().pnt(1) - baseEdge->pnt(1);
+    double thickness_right = v.norm();
+
     // Curve topEdge of first element and last edge
     // int iFirst = 1, iLast = (int)stackEdges.size() - 1;
     // MEdgeN *baseEdge = &stackEdges[0];
@@ -2355,7 +2364,12 @@ namespace BoundaryLayerCurver {
       if(i+1 < stackEdges.size()) {
        next = &stackEdges[i+1];
       }
-      EdgeCurver2D::curveEdge_newIdea(&stackEdges[i-1], &stackEdges[i], gface, normal, next);
+      v = stackEdges[i].pnt(1) - baseEdge->pnt(1);
+      double ratio_left = v.norm() / thickness_left;
+      v = next->pnt(1) - baseEdge->pnt(1);
+      double ratio_right = v.norm() / thickness_right;
+      double ratio = std::min(ratio_left, ratio_right);
+      EdgeCurver2D::curveEdge_newIdea(&stackEdges[i-1], &stackEdges[i], gface, normal, next, ratio);
       // FIXME: Should we check the quality of first element? In which case, if
       //  the quality is not good, what do we do? I don't know for now
     }
