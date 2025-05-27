@@ -1236,6 +1236,61 @@ namespace BoundaryLayerCurver {
       b.copy(tmp, 0, sz_tg2, 0, 3, desti0, 0); desti0 += sz_tg2;
     }
 
+    void _construct_system(double kappa, double f_0, double f_s, double f_l,
+      const fullMatrix<double> &A_lin, const fullMatrix<double> &b_lin,
+      const fullMatrix<double> &A_pos, const fullMatrix<double> &b_pos,
+      const fullMatrix<double> &A_ext, const fullMatrix<double> &b_ext,
+      const fullMatrix<double> &A_tg1, const fullMatrix<double> &b_tg1,
+      const fullMatrix<double> &A_tg2, const fullMatrix<double> &b_tg2,
+      fullMatrix<double> &A, fullMatrix<double> &b)
+    {
+      // Choose
+      int sz_lin = A_lin.size1();
+      int sz_ext = A_ext.size1();
+      int sz_pos = A_pos.size1();
+      int sz_tg1 = A_tg1.size1();
+      int sz_tg2 = A_tg2.size1();
+
+      double coeff_lin = f_l;
+      double coeff_pos = f_0;
+      double coeff_ext = f_s * kappa;
+      // Between those two, none is stable alone, but they seems stable together.
+      // This observation may be dependent on the way edges are curved, in
+      // particular the preservation of arc-length nature of edges (see ALP)
+      double coeff_tg1 = f_s;
+      double coeff_tg2 = f_s;
+
+      int SZ = sz_lin + sz_pos + sz_ext + sz_tg1 + sz_tg2;
+      int polyo = A_lin.size2() - 1;
+      A = fullMatrix<double>(SZ, polyo+1);
+      b = fullMatrix<double>(SZ, 3);
+
+      int desti0 = 0;
+      fullMatrix<double> tmp;
+      tmp = A_lin; tmp.scale(coeff_lin);
+      A.copy(tmp, 0, sz_lin, 0, polyo+1, desti0, 0); desti0 += sz_lin;
+      tmp = A_pos; tmp.scale(coeff_pos);
+      A.copy(tmp, 0, sz_pos, 0, polyo+1, desti0, 0); desti0 += sz_pos;
+      tmp = A_ext; tmp.scale(coeff_ext);
+      A.copy(tmp, 0, sz_ext, 0, polyo+1, desti0, 0); desti0 += sz_ext;
+      tmp = A_tg1; tmp.scale(coeff_tg1);
+      A.copy(tmp, 0, sz_tg1, 0, polyo+1, desti0, 0); desti0 += sz_tg1;
+      tmp = A_tg2; tmp.scale(coeff_tg2);
+      A.copy(tmp, 0, sz_tg2, 0, polyo+1, desti0, 0); desti0 += sz_tg2;
+
+      desti0 = 0;
+      tmp = b_lin; tmp.scale(coeff_lin);
+      b.copy(tmp, 0, sz_lin, 0, 3, desti0, 0); desti0 += sz_lin;
+      tmp = b_pos; tmp.scale(coeff_pos);
+      b.copy(tmp, 0, sz_pos, 0, 3, desti0, 0); desti0 += sz_pos;
+      tmp = b_ext; tmp.scale(coeff_ext);
+      b.copy(tmp, 0, sz_ext, 0, 3, desti0, 0); desti0 += sz_ext;
+      tmp = b_tg1; tmp.scale(coeff_tg1);
+      b.copy(tmp, 0, sz_tg1, 0, 3, desti0, 0); desti0 += sz_tg1;
+      tmp = b_tg2; tmp.scale(coeff_tg2);
+      b.copy(tmp, 0, sz_tg2, 0, 3, desti0, 0); desti0 += sz_tg2;
+    }
+
     void solve_system(const fullMatrix<double> &A, const fullMatrix<double> &b,
                       const fullMatrix<double> &xyz_gmsh,
                       fullMatrix<double> &new_xyz_HO)
@@ -1295,7 +1350,7 @@ namespace BoundaryLayerCurver {
       // xyz_seq.print(std::string("xyz_seq:"),std::string(""));
     }
 
-    void _find_best_reduction(double max_displ, double gamma, double kappa,
+    void _find_best_reduction(double max_displ_ub, double gamma, double kappa,
       const fullMatrix<double> &xyz_gmsh, const fullMatrix<double> &xyz_seq,
       const fullMatrix<double> &A_lin, const fullMatrix<double> &b_lin,
       const fullMatrix<double> &A_pos, const fullMatrix<double> &b_pos,
@@ -1305,11 +1360,12 @@ namespace BoundaryLayerCurver {
       fullMatrix<double> &new_xyz)
     {
       fullMatrix<double> A, b;
-      _construct_test_system(A_lin, b_lin, A_pos, b_pos, A_ext, b_ext,
-        A_tg1, b_tg1, A_tg2, b_tg2, A, b);
 
-      solve_system(A, b, xyz_gmsh, new_xyz);
-      return;
+      // _construct_test_system(A_lin, b_lin, A_pos, b_pos, A_ext, b_ext,
+      //   A_tg1, b_tg1, A_tg2, b_tg2, A, b);
+      //
+      // solve_system(A, b, xyz_gmsh, new_xyz);
+      // return;
 
       // NOTE
       //  1. Choose alpha = .5 and gamma_target = .5
@@ -1318,10 +1374,112 @@ namespace BoundaryLayerCurver {
       //  4. Compute max_displacement
       //  5. Update alpha
       //  6. Loop
+      double alpha = 1.;
+      double max_displ = 0;
 
+      double prev_alpha = 0;
+      double prev_max_displ = 0;
+      double prev_slope = 0;
+
+      double target = 0.95 * max_displ_ub;
+
+      int k = 0;
+      while (true) {
+        double f_0 = 1 - alpha;
+        double f_s = alpha * (1 - gamma * alpha);
+        double f_l = gamma * alpha * alpha;
+
+        // Construct the system
+        _construct_system(kappa, f_0, f_s, f_l, A_lin, b_lin, A_pos, b_pos,
+                               A_ext, b_ext, A_tg1, b_tg1, A_tg2, b_tg2, A, b);
+
+        // Solve the system
+        solve_system(A, b, xyz_gmsh, new_xyz);
+
+        // Update max_displ
+        int polyo = A_lin.size2() - 1;
+        prev_max_displ = max_displ;
+        max_displ = 0;
+
+        for (int i = 0; i < polyo - 2; ++i) {
+          double vx = xyz_gmsh(i+2, 0) - new_xyz(i, 0);
+          double vy = xyz_gmsh(i+2, 1) - new_xyz(i, 1);
+          double vz = xyz_gmsh(i+2, 2) - new_xyz(i, 2);
+          double displ = sqrt(vx*vx + vy*vy + vz*vz);
+          if (displ > max_displ) {
+            max_displ = displ;
+          }
+        }
+
+        // Update alpha using the previous and current maximum displacement
+        // if (prev_max_displ > 0) {
+        //   alpha *= target / max_displ * prev_max_displ / max_displ;
+        // } else {
+        //   alpha *= target / max_displ;
+        // }
+        double slope = (max_displ - prev_max_displ) / (alpha - prev_alpha);
+        slope = (slope + prev_slope) / 2;
+        double next_alpha = alpha + (target - max_displ) / slope;
+        // double next_alpha = prev_alpha + (alpha - prev_alpha) / (max_displ - prev_max_displ) * (target - prev_max_displ);
+        if(next_alpha < 0) {
+          next_alpha = .5 * std::min(alpha, prev_alpha);
+        }
+        else if(next_alpha > 1) {
+          next_alpha = .5 + .5 * std::max(alpha, prev_alpha);
+        }
+        prev_slope = slope;
+        prev_alpha = alpha;
+        alpha = next_alpha;
+        std::cout << "(" << max_displ_ub << ", " << max_displ << ", " << alpha << ")" << std::endl;
+
+        // // Clamp alpha between 0 and 1
+        // if (alpha > 1.0) alpha = 1.0;
+        // if (alpha < 0.0) alpha = 0.0;
+
+        ++k;
+
+        // Stopping condition: exit if max_displ < 0.9 * max_displ_ub when alpha = 1
+        if (alpha >= 1. || (0.9 * max_displ_ub < max_displ && max_displ < max_displ_ub)) {
+          break;
+        }
+
+        // Additional break condition if the system becomes unstable
+        if (k > 1000) { // Limit the number of iterations to prevent infinite loop
+          std::cerr << "Iteration limit reached. Exiting loop to avoid infinite iterations." << std::endl;
+          break;
+        }
+      }
+
+      std::cout << "k = " << k << " alpha = " << alpha << std::endl;
+
+
+      // double max_displ = 0;
+      // int k = 0;
+      // while (1.2 * max_displ_ub < max_displ || max_displ < 0.7 * max_displ_ub) {
+      //   double f_0 = 1 - alpha;
+      //   double f_s = alpha * (1 - gamma * alpha);
+      //   double f_l = gamma * alpha * alpha;
+      //   _construct_system(kappa, f_0, f_s, f_l, A_lin, b_lin, A_pos, b_pos,
+      //                          A_ext, b_ext, A_tg1, b_tg1, A_tg2, b_tg2, A, b);
+      //   solve_system(A, b, xyz_gmsh, new_xyz);
+      //
+      //   int polyo = A_lin.size2() - 1;
+      //   max_displ = 0;
+      //   for(int i = 0; i < polyo - 2; ++i) {
+      //     double vx = xyz_gmsh(i+2, 0) - new_xyz(i, 0);
+      //     double vy = xyz_gmsh(i+2, 1) - new_xyz(i, 1);
+      //     double vz = xyz_gmsh(i+2, 2) - new_xyz(i, 2);
+      //     double displ = sqrt(vx*vx + vy*vy + vz*vz);
+      //     if (displ > max_displ) { max_displ = displ; }
+      //   }
+      //   alpha = alpha / max_displ * (.95 * max_displ_ub);
+      //   ++k;
+      //   std::cout << "(" << max_displ_ub << ", " << max_displ << ", " << alpha << ")" << std::endl;
+      // }
+      // std::cout << "k = " << k << " alpha = " << alpha << std::endl;
     }
 
-    void _reduceCurving_newIdea2(MEdgeN *edge, double max_displ, const GFace *gface,
+    void _reduceCurving_newIdea2(MEdgeN *edge, double max_displ_ub, const GFace *gface,
       double gamma, double kappa, const MEdgeN *previous, const MEdgeN *next)
     {
       int polyo = edge->getPolynomialOrder();
@@ -1373,7 +1531,7 @@ namespace BoundaryLayerCurver {
         A_ext, b_ext, A_tg1, b_tg1, A_tg2, b_tg2);
 
       fullMatrix<double> new_xyz(polyo - 1, 3);
-      _find_best_reduction(max_displ, gamma, kappa, xyz_gmsh, xyz_seq,
+      _find_best_reduction(max_displ_ub, gamma, kappa, xyz_gmsh, xyz_seq,
         A_lin, b_lin, A_pos, b_pos, A_ext, b_ext, A_tg1, b_tg1, A_tg2, b_tg2,
         new_xyz);
 
@@ -1448,12 +1606,21 @@ namespace BoundaryLayerCurver {
       //  1x Calculer h_i
       //  2. Déterminer relation entre gamma (degré linéarité voulu) et
       //     Sum (b_i-x_i)^2 / L^2
+      //     => • L = (L_lin + L_disc) / 2
+      //        • Z = sum |x_i-z_i| / (N-1) (car Simpson)
+      //        • R = (1 - 2*Z/L) ** 4
+      //        • R >= gamma
       //  3. Déterminer relation entre gamma voulu et coefficient dans la matrice
       //     (recalculer relation pour deux F_a = (x-x_a)^2 et F_b. On veut
       //      x_opt = (1 - w) * x_a + w * x_b, alors quelle fonctionnel minimiser ?
       //      F = c_a * F_a + c_b * F_b
+      //      => c_a = (1-w) et c_b = w => barycentric weight
       //  4. Mettre tout ensemble pour obtenir le résultat final
-      _reduceCurving_newIdea2(edge, minThickness*.1, gface, 1, 1, baseEdge, next);
+
+      double gamma = current_h < .5 ? 0 : 2 * current_h - .5;
+      double kappa = 1;
+      double tau = .1;
+      _reduceCurving_newIdea2(edge, minThickness*tau, gface, gamma, kappa, baseEdge, next);
 
       if(gface) projectVerticesIntoGFace(edge, gface, false);
 
@@ -2418,10 +2585,11 @@ namespace BoundaryLayerCurver {
        next = &stackEdges[i+1];
       }
       v = stackEdges[i].pnt(1) - baseEdge->pnt(1);
-      double ratio_left = v.norm() / thickness_left;
-      v = next->pnt(1) - baseEdge->pnt(1);
-      double ratio_right = v.norm() / thickness_right;
-      double ratio = std::min(ratio_left, ratio_right);
+      double ratio = v.norm() / thickness_left;
+      if(i+1 < stackEdges.size()) {
+        v = next->pnt(1) - baseEdge->pnt(1);
+        ratio = std::min(ratio, v.norm() / thickness_right);
+      }
       EdgeCurver2D::curveEdge_newIdea(&stackEdges[i-1], &stackEdges[i], gface, normal, next, ratio);
       // FIXME: Should we check the quality of first element? In which case, if
       //  the quality is not good, what do we do? I don't know for now
