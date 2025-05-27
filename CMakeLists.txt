@@ -100,7 +100,7 @@ opt(SOLVER "Enable built-in finite element solvers (required for reparametrizati
 opt(SYSTEM_CONTRIB "Use system versions of contrib libraries, when possible" OFF)
 opt(TCMALLOC "Enable libtcmalloc (fast malloc that does not release memory)" OFF)
 opt(TESTS "Enable tests" ${DEFAULT})
-opt(TINYOBJLOADER "Enable TibyObjLoader for reading Wavefront files)" ${DEFAULT})
+opt(TINYOBJLOADER "Enable TibyObjLoader for reading Wavefront files)" ON)
 opt(TINYXML2 "Enable TinyXML2 parser (used by XAO reader)" ${DEFAULT})
 opt(TOUCHBAR "Enable Apple Touch bar" ${DEFAULT})
 opt(UNTANGLE "Enable 2D and 3D UNTANGLER" ${DEFAULT})
