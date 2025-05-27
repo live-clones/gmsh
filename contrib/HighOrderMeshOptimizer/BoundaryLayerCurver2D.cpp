@@ -1164,19 +1164,36 @@ namespace BoundaryLayerCurver {
       // b_ext.print(std::string("b_ext:"),std::string(""));
 
       // 4) Construct Linear tangent linear system
-      A_lin = fullMatrix<double>(polyo, polyo + 1);
-      b_lin = fullMatrix<double>(polyo, 3);
+      fullMatrix<double> A_lin_tg(polyo, polyo + 1);
+      fullMatrix<double> b_lin_tg(polyo, 3);
       double vx = xyz_gmsh(1, 0) - xyz_gmsh(0, 0);
       double vy = xyz_gmsh(1, 1) - xyz_gmsh(0, 1);
       double vz = xyz_gmsh(1, 2) - xyz_gmsh(0, 2);
       SVector3 t(vx, vy, vz);
-      // SVector3 t = v1->point() - v0->point();
-      // t *= 2. / polyo;
       t *= .5;
       for(int i = 0; i < polyo; ++i) {
-        for(int j = 0; j < polyo+1; ++j) { A_lin(i, j) = A_tg1(i, j); }
-        for(int j = 0; j < 3; ++j) { b_lin(i, j) = t(j); }
+        for(int j = 0; j < polyo+1; ++j) { A_lin_tg(i, j) = A_tg1(i, j); }
+        for(int j = 0; j < 3; ++j) { b_lin_tg(i, j) = t(j); }
       }
+
+      fullMatrix<double> A_lin_pos = A_pos;
+      fullMatrix<double> b_lin_pos(polyo - 1, 3);
+      // SPoint3 x_0(xyz_gmsh(0, 0), xyz_gmsh(0, 1), xyz_gmsh(0, 2));
+      t *= 2;
+      for(int i = 0; i < polyo - 1; ++i) {
+        for(int j = 0; j < 3; ++j) { b_lin_pos(i, j) = xyz_gmsh(0, j) + (i+1.) / polyo * t(j); }
+      }
+
+      // A_lin = A_lin_tg;
+      // b_lin = b_lin_tg;
+      A_lin = A_lin_pos;
+      b_lin = b_lin_pos;
+      // A_lin = fullMatrix<double>(2 * polyo - 1, polyo + 1);
+      // b_lin = fullMatrix<double>(2 * polyo - 1, 3);
+      // A_lin.copy(A_lin_tg, 0, polyo, 0, polyo + 1, 0, 0);
+      // b_lin.copy(b_lin_tg, 0, polyo, 0,         3, 0, 0);
+      // A_lin.copy(A_lin_pos, 0, polyo - 1, 0, polyo + 1, polyo, 0);
+      // b_lin.copy(b_lin_pos, 0, polyo - 1, 0,         3, polyo, 0);
       // A_lin.print(std::string("A_lin:"),std::string(""));
       // b_lin.print(std::string("b_lin:"),std::string(""));
       // bspl_tg_length.print(std::string("bspl_tg_length:"),std::string(""));
@@ -1255,7 +1272,7 @@ namespace BoundaryLayerCurver {
 
       double coeff_lin = f_l;
       double coeff_pos = f_0;
-      double coeff_ext = f_s * kappa;
+      double coeff_ext = kappa * f_s;
       // Between those two, none is stable alone, but they seems stable together.
       // This observation may be dependent on the way edges are curved, in
       // particular the preservation of arc-length nature of edges (see ALP)
