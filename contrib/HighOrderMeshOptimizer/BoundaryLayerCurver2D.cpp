@@ -1310,12 +1310,46 @@ namespace BoundaryLayerCurver {
       b.copy(tmp, 0, sz_tg2, 0, 3, desti0, 0); desti0 += sz_tg2;
     }
 
+    void _construct_system_lin(double coeff,
+      const fullMatrix<double> &A_lin, const fullMatrix<double> &b_lin,
+      const fullMatrix<double> &A_pos, const fullMatrix<double> &b_pos,
+      fullMatrix<double> &A, fullMatrix<double> &b)
+    {
+      int sz_lin = A_lin.size1();
+      int sz_pos = A_pos.size1();
+
+      double coeff_lin = coeff;
+      double coeff_pos = 1-coeff;
+
+      int SZ = sz_lin + sz_pos;
+      int polyo = A_lin.size2() - 1;
+      A = fullMatrix<double>(SZ, polyo+1);
+      b = fullMatrix<double>(SZ, 3);
+
+      int desti0 = 0;
+      fullMatrix<double> tmp;
+      tmp = A_lin; tmp.scale(coeff_lin);
+      A.copy(tmp, 0, sz_lin, 0, polyo+1, desti0, 0); desti0 += sz_lin;
+      tmp = A_pos; tmp.scale(coeff_pos);
+      A.copy(tmp, 0, sz_pos, 0, polyo+1, desti0, 0); desti0 += sz_pos;
+
+      desti0 = 0;
+      tmp = b_lin; tmp.scale(coeff_lin);
+      b.copy(tmp, 0, sz_lin, 0, 3, desti0, 0); desti0 += sz_lin;
+      tmp = b_pos; tmp.scale(coeff_pos);
+      b.copy(tmp, 0, sz_pos, 0, 3, desti0, 0); desti0 += sz_pos;
+    }
+
     void solve_system(const fullMatrix<double> &A, const fullMatrix<double> &b,
                       const fullMatrix<double> &xyz_gmsh,
-                      fullMatrix<double> &new_xyz_HO)
+                      fullMatrix<double> &new_xyz_HO, bool verbose = false)
     {
       fullMatrix<double> A_fixed_boundary = A;
       const fullMatrix<double> &b_fixed_boundary = b;
+      if (verbose) {
+        A_fixed_boundary.print(std::string("A_fixed_boundary"), std::string(""));
+        b_fixed_boundary.print(std::string("b_fixed_boundary"), std::string(""));
+      }
 
       // Fix extremities
       fullVector<double> proxA, proxb;
@@ -1325,14 +1359,32 @@ namespace BoundaryLayerCurver {
         proxb.setAsProxy(b_fixed_boundary, j);
         proxb.axpy(proxA, -xyz_gmsh(0, j));
       }
+      if (verbose) {
+        A_fixed_boundary.print(std::string("A_fixed_boundary"), std::string(""));
+        b_fixed_boundary.print(std::string("b_fixed_boundary"), std::string(""));
+      }
 
       proxA.setAsProxy(A_fixed_boundary, 1);
       for(int j = 0; j < 3; ++j) {
         proxb.setAsProxy(b_fixed_boundary, j);
         proxb.axpy(proxA, -xyz_gmsh(1, j));
       }
+      if (verbose) {
+        A_fixed_boundary.print(std::string("A_fixed_boundary"), std::string(""));
+        b_fixed_boundary.print(std::string("b_fixed_boundary"), std::string(""));
+      }
 
-      A_fixed_boundary = fullMatrix<double>(A_fixed_boundary, 2, A_fixed_boundary.size2() - 2);
+      fullMatrix<double> tmpA(A_fixed_boundary, 2, A_fixed_boundary.size2() - 2);
+      fullMatrix<double> tmpA2 = tmpA;
+      if (verbose) {
+        tmpA.print(std::string("tmpA"), std::string(""));
+        tmpA2.print(std::string("tmpA2"), std::string(""));
+      }
+      A_fixed_boundary = tmpA2;
+      if (verbose) {
+        A_fixed_boundary.print(std::string("A_fixed_boundary"), std::string(""));
+        b_fixed_boundary.print(std::string("b_fixed_boundary"), std::string(""));
+      }
 
       // TRANSPOSE
 
@@ -1477,7 +1529,7 @@ namespace BoundaryLayerCurver {
           // Take the root that satisfies the direction of progression
           double root1 = (-lin_coef + sqrt(discriminant)) / (2 * q_coef);
           double root2 = (-lin_coef - sqrt(discriminant)) / (2 * q_coef);
-          std::cout << "root1: " << root1 << ", root2: " << root2 << std::endl;
+          // std::cout << "root1: " << root1 << ", root2: " << root2 << std::endl;
           next_x_i = root1;
           if(next_x_i <= 0) next_x_i = .5 * std::min(x_i, prev_x);
           else if(next_x_i >= 1) next_x_i = .5 + .5 * std::max(x_i, prev_x);
@@ -1488,9 +1540,9 @@ namespace BoundaryLayerCurver {
         }
 
         // Print iteration information
-        std::cout << "Iteration " << k << ": "
-                  << "x_i = " << x_i << ", y_i = " << y_i << ", y_i/target = " << y_i / target
-                  << ", a_i = " << a_i << ", s_i = " << s_i << ", q_i = " << q_i << std::endl;
+        // std::cout << "Iteration " << k << ": "
+        //           << "x_i = " << x_i << ", y_i = " << y_i << ", y_i/target = " << y_i / target
+        //           << ", a_i = " << a_i << ", s_i = " << s_i << ", q_i = " << q_i << std::endl;
 
         // Stopping condition
         if (std::abs(y_i - target) < tol) {
@@ -1504,7 +1556,7 @@ namespace BoundaryLayerCurver {
         }
       }
 
-      std::cout << "k = " << k << " alpha = " << std::get<0>(iteration_data[k]) << std::endl;
+      // std::cout << "k = " << k << " alpha = " << std::get<0>(iteration_data[k]) << std::endl;
     }
 
     void _reduceCurving_newIdea2(MEdgeN *edge, double max_displ_ub, const GFace *gface,
@@ -1569,6 +1621,137 @@ namespace BoundaryLayerCurver {
         v->y() = new_xyz(i - 2, 1);
         v->z() = new_xyz(i - 2, 2);
       }
+    }
+
+    double compute_R(fullMatrix<double> &xyz_seq, const fullMatrix<double> &xyz_HO)
+    {
+      int polyo = xyz_seq.size1() - 1;
+      xyz_seq.copy(xyz_HO, 0, polyo-1, 0, 3, 1, 0);
+
+      double vx, vy, vz;
+
+      // Compute L_discrete
+      double L_disc = 0;
+      for(int i = 0; i < polyo; ++i) {
+        vx = xyz_seq(i+1, 0) - xyz_seq(i, 0);
+        vy = xyz_seq(i+1, 1) - xyz_seq(i, 1);
+        vz = xyz_seq(i+1, 2) - xyz_seq(i, 2);
+        L_disc += std::sqrt(vx*vx + vy*vy + vz*vz);
+      }
+
+      // Compute L_linear
+      vx = xyz_seq(polyo, 0) - xyz_seq(0, 0);
+      vy = xyz_seq(polyo, 1) - xyz_seq(0, 1);
+      vz = xyz_seq(polyo, 2) - xyz_seq(0, 2);
+      double L_lin = std::sqrt(vx*vx + vy*vy + vz*vz);
+
+      // Compute Z
+      double Z = 0;
+      for(int i = 1; i < polyo; ++i) {
+        double f = static_cast<double>(i) / polyo;
+        double x_lin = xyz_seq(0, 0) + f * vx;
+        double y_lin = xyz_seq(0, 1) + f * vy;
+        double z_lin = xyz_seq(0, 2) + f * vz;
+        double dx = x_lin - xyz_seq(i, 0);
+        double dy = y_lin - xyz_seq(i, 1);
+        double dz = z_lin - xyz_seq(i, 2);
+        Z += std::sqrt(dx*dx + dy*dy + dz*dz);
+      }
+      Z /= polyo; // not polyo+1 because simpson integration
+
+      // Compute R
+      double L = .5 * (L_disc + L_lin);
+      double R = 1 - 2 * Z / L;
+      R *= R; // R^2
+      return R * R; // R^4
+    }
+
+    double match_gamma(double gamma, MEdgeN *edge, const GFace *gface, const SVector3 &normal)
+    {
+      int polyo = edge->getPolynomialOrder();
+
+      if(gamma >= 1.) {
+        fullMatrix<double> xyz(2, 3);
+        for(int i = 0; i < 2; ++i) {
+          xyz(i, 0) = edge->getVertex(i)->x();
+          xyz(i, 1) = edge->getVertex(i)->y();
+          xyz(i, 2) = edge->getVertex(i)->z();
+        }
+        for(int i = 2; i < polyo+1; ++i) {
+          double f = (i - 1.) / polyo;
+          edge->getVertex(i)->x() = (1-f) * xyz(0, 0) + f * xyz(1, 0);
+          edge->getVertex(i)->y() = (1-f) * xyz(0, 1) + f * xyz(1, 1);
+          edge->getVertex(i)->z() = (1-f) * xyz(0, 2) + f * xyz(1, 2);
+        }
+        return 1.;
+      }
+
+      // FIXME COPIED from _reduceCurving_newIdea2
+      fullMatrix<double> xyz_gmsh(polyo + 1, 3);
+      for (int i = 0; i < polyo + 1; ++i) {
+        MVertex *v = edge->getVertex(i);
+        xyz_gmsh(i, 0) = v->x();
+        xyz_gmsh(i, 1) = v->y();
+        xyz_gmsh(i, 2) = v->z();
+      }
+
+      fullMatrix<double> xyz_seq(polyo + 1, 3);
+      xyz_seq(0, 0) = xyz_gmsh(0, 0);
+      xyz_seq(0, 1) = xyz_gmsh(0, 1);
+      xyz_seq(0, 2) = xyz_gmsh(0, 2);
+      for(int i = 1; i < polyo; ++i) {
+        xyz_seq(i, 0) = xyz_gmsh(i+1, 0);
+        xyz_seq(i, 1) = xyz_gmsh(i+1, 1);
+        xyz_seq(i, 2) = xyz_gmsh(i+1, 2);
+      }
+      xyz_seq(polyo, 0) = xyz_gmsh(1, 0);
+      xyz_seq(polyo, 1) = xyz_gmsh(1, 1);
+      xyz_seq(polyo, 2) = xyz_gmsh(1, 2);
+
+
+      SVector3 dirs[2];
+
+      fullMatrix<double> A_lin, b_lin, A_pos, b_pos, A_ext, b_ext,
+      A_tg1, b_tg1, A_tg2, b_tg2;
+      _construct_matrices(xyz_gmsh, xyz_seq, dirs, A_lin, b_lin, A_pos, b_pos,
+        A_ext, b_ext, A_tg1, b_tg1, A_tg2, b_tg2);
+
+      // solve R
+      // (coeff - 1) / (R - 1) + 1
+      fullMatrix<double> new_xyz_HO(polyo-1, 3);
+      for(int i = 0; i < polyo-1; ++i) {
+        new_xyz_HO(i, 0) = edge->getVertex(i+2)->x();
+        new_xyz_HO(i, 1) = edge->getVertex(i+2)->y();
+        new_xyz_HO(i, 2) = edge->getVertex(i+2)->z();
+      }
+
+      double R = compute_R(xyz_seq, new_xyz_HO);
+      double coeff = 0;
+      double target = .95 * gamma;
+      double tol = .05 * gamma;
+
+      while(R + tol < target) {
+        coeff = 1 + (coeff-1) / (R-1) * (target-1) ;
+        // Solve R
+        // Update
+
+        fullMatrix<double> A, b;
+        _construct_system_lin(coeff, A_lin, b_lin, A_pos, b_pos, A, b);
+        // A.print(std::string("A"), std::string(""));
+        // b.print(std::string("b"), std::string(""));
+        solve_system(A, b, xyz_gmsh, new_xyz_HO, false);
+        // xyz_gmsh.print(std::string("xyz_gmsh"), std::string(""));
+        // new_xyz_HO.print(std::string("new_xyz_HO"), std::string(""));
+        R = compute_R(xyz_seq, new_xyz_HO);
+      }
+
+      for(int i = 2; i < polyo+1; ++i) {
+        edge->getVertex(i)->x() = new_xyz_HO(i-2, 0);
+        edge->getVertex(i)->y() = new_xyz_HO(i-2, 1);
+        edge->getVertex(i)->z() = new_xyz_HO(i-2, 2);
+      }
+      std::cout << "(" << R << ", " << coeff << ", " << tol << ")" << std::endl;
+      return coeff;
     }
 
     void curveEdge_newIdea(const MEdgeN *baseEdge, MEdgeN *edge, const GFace *gface,
@@ -2624,6 +2807,20 @@ namespace BoundaryLayerCurver {
     }
     // TODO: Here we need to check the validity/quality of the two last elements
     //  (last of BL and exterior one) and reduce the curvature if necessary.
+
+    double gamma = .5;
+    if(gamma) {
+      double coeff = EdgeCurver2D::match_gamma(gamma, &stackEdges.back(), gface, normal);
+      for(int i = 1; i < (int)stackEdges.size() - 1; ++i) {
+
+      }
+    }
+    // Reduce curving based on
+
+      //     => • L = (L_lin + L_disc) / 2
+      //        • Z = sum |x_i-z_i| / (N-1) (car Simpson)
+      //        • R = (1 - 2*Z/L) ** 4
+      //        • R >= gamma
 
     repositionInnerVertices(stackFaces, gface);
 
