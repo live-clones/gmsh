@@ -848,6 +848,11 @@ public:
   int writeOFF(const std::string &name, bool saveAll = false,
                double scalingFactor = 1.0);
 
+  // Wavefront OBJ format
+  int readOBJ(const std::string &name);
+  int writeOBJ(const std::string &name, bool saveAll = false,
+               double scalingFactor = 1.0);
+
   // Nastran Bulk Data File format
   int readBDF(const std::string &name);
   int writeBDF(const std::string &name, int format = 0, int elementTagType = 1,
