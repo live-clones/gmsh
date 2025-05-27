@@ -1392,6 +1392,37 @@ static void deleteUnusedVertices(GFace *gf)
   gf->mesh_vertices.insert(gf->mesh_vertices.end(), allverts.begin(),
                            allverts.end());
 }
+/*
+static void separateLoopsToIsolatedEdges (std::vector<GEdge*> &edges, std::vector<GEdge*> &emb ) {
+  std::map<GVertex*, std::vector<GEdge*> >conn;
+  for (auto e : edges) {
+    auto v = e->getBeginVertex();
+    conn[v]. push_back(e);
+    v = e->getEndVertex();
+    conn[v]. push_back(e);    
+  }
+  std::set<GEdge*> embedded_excess;
+  for (auto c : conn) {
+    auto current_v   = c.first;
+    auto eds = c.second;
+    // if only one edge in the adjacency of a vertex, then
+    // it is embedded. So we walk until we find a vertex with
+    // a number of neighbors that is not 2
+    if (eds.size() == 1){
+      auto current = eds[0];
+      while(1) {
+	embedded_excess.insert(current);
+	current_v = current->getBeginVertex() != current_v ?
+	  current->getBeginVertex() : current->getEndVertex();
+	eds = conn[current_v];
+	if (eds.size() != 2) break;
+	current = eds[0] == current ? eds[1] : eds[0];
+      }
+    }
+  }
+  printf("%lu edges that should be embedded\n",embedded_excess.size());
+}
+*/
 
 // Builds An initial triangular mesh that respects the boundaries of
 // the domain, including embedded points and surfaces
@@ -1414,6 +1445,8 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   std::vector<GEdge *> edges =
     replacementEdges ? *replacementEdges : gf->edges();
 
+  //  separateLoopsToIsolatedEdges (edges, edges );
+  
   FILE *fdeb = nullptr;
   if(debug && RECUR_ITER == 0) {
     char name[245];
@@ -2345,6 +2378,13 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   }
   if(CTX::instance()->debugSurface > 0) debug = true;
 
+
+  //  std::vector<GEdge *> edges = gf->edges();
+  //  std::vector<GEdge *> emb_edges = gf->embeddedEdges();
+  //  printf("AAAAAAAAAAAAAAAARRRRRRRRRRRRRRRRRRRRRRRRRRRRRBG %lu %lu\n",edges.size(),emb_edges.size());
+  //  separateLoopsToIsolatedEdges (edges, edges );
+
+  
   // TEST !!!
   // PolyMesh * pm = GFaceInitialMesh(gf->tag(), 1);
 
