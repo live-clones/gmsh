@@ -24,6 +24,8 @@
 //
 // Contributors: Amaury Johnen
 
+#include <vector>
+#include <tuple>
 #include "BoundaryLayerCurver.h"
 #include "MQuadrangle.h"
 #include "MTriangle.h"
@@ -1350,6 +1352,44 @@ namespace BoundaryLayerCurver {
       // xyz_seq.print(std::string("xyz_seq:"),std::string(""));
     }
 
+    double _one_iteration(double alpha, double gamma, double kappa,
+      const fullMatrix<double> &xyz_gmsh,
+      const fullMatrix<double> &A_lin, const fullMatrix<double> &b_lin,
+      const fullMatrix<double> &A_pos, const fullMatrix<double> &b_pos,
+      const fullMatrix<double> &A_ext, const fullMatrix<double> &b_ext,
+      const fullMatrix<double> &A_tg1, const fullMatrix<double> &b_tg1,
+      const fullMatrix<double> &A_tg2, const fullMatrix<double> &b_tg2,
+      fullMatrix<double> &A, fullMatrix<double> &b,
+      fullMatrix<double> &new_xyz)
+    {
+      double f_0 = 1 - alpha;
+      double f_s = alpha * (1 - gamma * alpha);
+      double f_l = gamma * alpha * alpha;
+
+      // Construct the system
+      _construct_system(kappa, f_0, f_s, f_l, A_lin, b_lin, A_pos, b_pos,
+                             A_ext, b_ext, A_tg1, b_tg1, A_tg2, b_tg2, A, b);
+
+      // Solve the system
+      solve_system(A, b, xyz_gmsh, new_xyz);
+
+      // Update max_displ
+      int polyo = A_lin.size2() - 1;
+      // prev_max_displ = max_displ;
+      double max_displ = 0;
+
+      for (int i = 0; i < polyo - 2; ++i) {
+        double vx = xyz_gmsh(i+2, 0) - new_xyz(i, 0);
+        double vy = xyz_gmsh(i+2, 1) - new_xyz(i, 1);
+        double vz = xyz_gmsh(i+2, 2) - new_xyz(i, 2);
+        double displ = sqrt(vx*vx + vy*vy + vz*vz);
+        if (displ > max_displ) {
+          max_displ = displ;
+        }
+      }
+      return max_displ;
+    }
+
     void _find_best_reduction(double max_displ_ub, double gamma, double kappa,
       const fullMatrix<double> &xyz_gmsh, const fullMatrix<double> &xyz_seq,
       const fullMatrix<double> &A_lin, const fullMatrix<double> &b_lin,
@@ -1374,109 +1414,80 @@ namespace BoundaryLayerCurver {
       //  4. Compute max_displacement
       //  5. Update alpha
       //  6. Loop
+
+      // Define data storage for iterations
+      std::vector<std::tuple<double, double, double, double, double>> iteration_data; // Stores (x_i, y_i, a_i, s_i, q_i)
+
+      // Initial values for i = 0 and i = 1
+      iteration_data.emplace_back(0, 0, std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN(), std::numeric_limits<double>::quiet_NaN());
       double alpha = 1.;
-      double max_displ = 0;
+      double max_displ = _one_iteration(alpha, gamma, kappa, xyz_gmsh, A_lin, b_lin, A_pos, b_pos, A_ext, b_ext, A_tg1, b_tg1, A_tg2, b_tg2, A, b, new_xyz);
+      iteration_data.emplace_back(alpha, max_displ, alpha/2, max_displ, std::numeric_limits<double>::quiet_NaN());
 
-      double prev_alpha = 0;
-      double prev_max_displ = 0;
-      double prev_slope = 0;
+      if(max_displ < .9 * max_displ_ub) return;
 
-      double target = 0.95 * max_displ_ub;
+      double target = 0.95 * max_displ_ub; // Y = target
+      double tol = 0.05 * max_displ_ub;
+      double next_x_i = alpha / max_displ * target;
 
-      int k = 0;
+      int k = 1; // Start after initialization
       while (true) {
-        double f_0 = 1 - alpha;
-        double f_s = alpha * (1 - gamma * alpha);
-        double f_l = gamma * alpha * alpha;
+        ++k; // Increment iteration counter
 
-        // Construct the system
-        _construct_system(kappa, f_0, f_s, f_l, A_lin, b_lin, A_pos, b_pos,
-                               A_ext, b_ext, A_tg1, b_tg1, A_tg2, b_tg2, A, b);
+        // Previous iteration data
+        double prev_x = std::get<0>(iteration_data[k - 1]);
+        double prev_y = std::get<1>(iteration_data[k - 1]);
+        double prev_a = std::get<2>(iteration_data[k - 1]);
+        double prev_s = std::get<3>(iteration_data[k - 1]);
+        // double prev_q = std::get<4>(iteration_data[k - 1]);
 
-        // Solve the system
-        solve_system(A, b, xyz_gmsh, new_xyz);
+        double x_i = next_x_i;
+        double y_i = _one_iteration(x_i, gamma, kappa, xyz_gmsh, A_lin, b_lin, A_pos, b_pos, A_ext, b_ext, A_tg1, b_tg1, A_tg2, b_tg2, A, b, new_xyz);
+        double a_i = (x_i + prev_x) / 2;                             // Midpoint of current and previous alpha
+        double s_i = (y_i - prev_y) / (x_i - prev_x);          // Slope between current and previous values
+        double q_i = (s_i - prev_s) / (a_i - prev_a);    // Slope change rate, with special handling for i=2
+        // if(k > 2) q_i = (q_i + prev_q) / 2;
+        iteration_data.emplace_back(x_i, y_i, a_i, s_i, q_i);
 
-        // Update max_displ
-        int polyo = A_lin.size2() - 1;
-        prev_max_displ = max_displ;
-        max_displ = 0;
+        // Quadratic coefficients
+        double q_coef = q_i / 2;
+        double lin_coef = s_i - q_i * a_i;
+        double const_coef = prev_y - target - s_i * x_i - q_i * x_i * (x_i / 2 - a_i);
 
-        for (int i = 0; i < polyo - 2; ++i) {
-          double vx = xyz_gmsh(i+2, 0) - new_xyz(i, 0);
-          double vy = xyz_gmsh(i+2, 1) - new_xyz(i, 1);
-          double vz = xyz_gmsh(i+2, 2) - new_xyz(i, 2);
-          double displ = sqrt(vx*vx + vy*vy + vz*vz);
-          if (displ > max_displ) {
-            max_displ = displ;
-          }
+        // Solve the quadratic equation q_coef * X^2 + lin_coef * X + const_coef = 0
+        double discriminant = lin_coef * lin_coef - 4 * q_coef * const_coef;
+        if (discriminant >= 0) {
+          // Take the root that satisfies the direction of progression
+          double root1 = (-lin_coef + sqrt(discriminant)) / (2 * q_coef);
+          double root2 = (-lin_coef - sqrt(discriminant)) / (2 * q_coef);
+          std::cout << "root1: " << root1 << ", root2: " << root2 << std::endl;
+          next_x_i = root1;
+          if(next_x_i <= 0) next_x_i = .5 * std::min(x_i, prev_x);
+          else if(next_x_i >= 1) next_x_i = .5 + .5 * std::max(x_i, prev_x);
+        }
+        else {
+          // In case the discriminant is negative (unlikely), fallback to halving alpha
+          next_x_i = 0.5 * (x_i + prev_x);
         }
 
-        // Update alpha using the previous and current maximum displacement
-        // if (prev_max_displ > 0) {
-        //   alpha *= target / max_displ * prev_max_displ / max_displ;
-        // } else {
-        //   alpha *= target / max_displ;
-        // }
-        double slope = (max_displ - prev_max_displ) / (alpha - prev_alpha);
-        slope = (slope + prev_slope) / 2;
-        double next_alpha = alpha + (target - max_displ) / slope;
-        // double next_alpha = prev_alpha + (alpha - prev_alpha) / (max_displ - prev_max_displ) * (target - prev_max_displ);
-        if(next_alpha < 0) {
-          next_alpha = .5 * std::min(alpha, prev_alpha);
-        }
-        else if(next_alpha > 1) {
-          next_alpha = .5 + .5 * std::max(alpha, prev_alpha);
-        }
-        prev_slope = slope;
-        prev_alpha = alpha;
-        alpha = next_alpha;
-        std::cout << "(" << max_displ_ub << ", " << max_displ << ", " << alpha << ")" << std::endl;
+        // Print iteration information
+        std::cout << "Iteration " << k << ": "
+                  << "x_i = " << x_i << ", y_i = " << y_i << ", y_i/target = " << y_i / target
+                  << ", a_i = " << a_i << ", s_i = " << s_i << ", q_i = " << q_i << std::endl;
 
-        // // Clamp alpha between 0 and 1
-        // if (alpha > 1.0) alpha = 1.0;
-        // if (alpha < 0.0) alpha = 0.0;
-
-        ++k;
-
-        // Stopping condition: exit if max_displ < 0.9 * max_displ_ub when alpha = 1
-        if (alpha >= 1. || (0.9 * max_displ_ub < max_displ && max_displ < max_displ_ub)) {
+        // Stopping condition
+        if (std::abs(y_i - target) < tol) {
           break;
         }
 
-        // Additional break condition if the system becomes unstable
-        if (k > 1000) { // Limit the number of iterations to prevent infinite loop
+        // Safety break to prevent infinite loops
+        if (k > 1000) {
           std::cerr << "Iteration limit reached. Exiting loop to avoid infinite iterations." << std::endl;
           break;
         }
       }
 
-      std::cout << "k = " << k << " alpha = " << alpha << std::endl;
-
-
-      // double max_displ = 0;
-      // int k = 0;
-      // while (1.2 * max_displ_ub < max_displ || max_displ < 0.7 * max_displ_ub) {
-      //   double f_0 = 1 - alpha;
-      //   double f_s = alpha * (1 - gamma * alpha);
-      //   double f_l = gamma * alpha * alpha;
-      //   _construct_system(kappa, f_0, f_s, f_l, A_lin, b_lin, A_pos, b_pos,
-      //                          A_ext, b_ext, A_tg1, b_tg1, A_tg2, b_tg2, A, b);
-      //   solve_system(A, b, xyz_gmsh, new_xyz);
-      //
-      //   int polyo = A_lin.size2() - 1;
-      //   max_displ = 0;
-      //   for(int i = 0; i < polyo - 2; ++i) {
-      //     double vx = xyz_gmsh(i+2, 0) - new_xyz(i, 0);
-      //     double vy = xyz_gmsh(i+2, 1) - new_xyz(i, 1);
-      //     double vz = xyz_gmsh(i+2, 2) - new_xyz(i, 2);
-      //     double displ = sqrt(vx*vx + vy*vy + vz*vz);
-      //     if (displ > max_displ) { max_displ = displ; }
-      //   }
-      //   alpha = alpha / max_displ * (.95 * max_displ_ub);
-      //   ++k;
-      //   std::cout << "(" << max_displ_ub << ", " << max_displ << ", " << alpha << ")" << std::endl;
-      // }
-      // std::cout << "k = " << k << " alpha = " << alpha << std::endl;
+      std::cout << "k = " << k << " alpha = " << std::get<0>(iteration_data[k]) << std::endl;
     }
 
     void _reduceCurving_newIdea2(MEdgeN *edge, double max_displ_ub, const GFace *gface,
