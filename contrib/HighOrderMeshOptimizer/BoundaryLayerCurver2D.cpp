@@ -1182,11 +1182,11 @@ namespace BoundaryLayerCurver {
     }
 
     void _construct_test_system(
-      fullMatrix<double> &A_lin, fullMatrix<double> &b_lin,
-      fullMatrix<double> &A_pos, fullMatrix<double> &b_pos,
-      fullMatrix<double> &A_ext, fullMatrix<double> &b_ext,
-      fullMatrix<double> &A_tg1, fullMatrix<double> &b_tg1,
-      fullMatrix<double> &A_tg2, fullMatrix<double> &b_tg2,
+      const fullMatrix<double> &A_lin, const fullMatrix<double> &b_lin,
+      const fullMatrix<double> &A_pos, const fullMatrix<double> &b_pos,
+      const fullMatrix<double> &A_ext, const fullMatrix<double> &b_ext,
+      const fullMatrix<double> &A_tg1, const fullMatrix<double> &b_tg1,
+      const fullMatrix<double> &A_tg2, const fullMatrix<double> &b_tg2,
       fullMatrix<double> &A, fullMatrix<double> &b)
     {
       // Choose
@@ -1196,50 +1196,44 @@ namespace BoundaryLayerCurver {
       int sz_tg1 = A_tg1.size1();
       int sz_tg2 = A_tg2.size1();
 
-      double coeff;
-      coeff = .001;
-      A_lin.scale(coeff);
-      b_lin.scale(coeff);
-
-      coeff = .1;
-      A_pos.scale(coeff);
-      b_pos.scale(coeff);
-
-      coeff = .1;
-      A_ext.scale(coeff);
-      b_ext.scale(coeff);
-
+      double coeff_lin = .0000001;
+      double coeff_pos = .00000001;
+      double coeff_ext = .00000001;
       // Between those two, none is stable alone, but they seems stable together.
       // This observation may be dependent on the way edges are curved, in
       // particular the preservation of arc-length nature of edges (see ALP)
-      coeff = 1000;
-      A_tg1.scale(coeff);
-      b_tg1.scale(coeff);
-
-      coeff = 1000;
-      A_tg2.scale(coeff);
-      b_tg2.scale(coeff);
+      double coeff_tg1 = 1000;
+      double coeff_tg2 = 1000;
 
       int SZ = sz_lin + sz_pos + sz_ext + sz_tg1 + sz_tg2;
       int polyo = A_lin.size2() - 1;
       A = fullMatrix<double>(SZ, polyo+1);
       b = fullMatrix<double>(SZ, 3);
+
       int desti0 = 0;
-      // A.print(std::string("A:"),std::string(""));
-      // A_lin.print(std::string("A:"),std::string(""));
-      A.copy(A_lin, 0, sz_lin, 0, polyo+1, desti0, 0); desti0 += sz_lin;
-      // A.print(std::string("A:"),std::string(""));
-      A.copy(A_pos, 0, sz_pos, 0, polyo+1, desti0, 0); desti0 += sz_pos;
-      // A.print(std::string("A:"),std::string(""));
-      A.copy(A_ext, 0, sz_ext, 0, polyo+1, desti0, 0); desti0 += sz_ext;
-      A.copy(A_tg1, 0, sz_tg1, 0, polyo+1, desti0, 0); desti0 += sz_tg1;
-      A.copy(A_tg2, 0, sz_tg2, 0, polyo+1, desti0, 0); desti0 += sz_tg2;
+      fullMatrix<double> tmp;
+      tmp = A_lin; tmp.scale(coeff_lin);
+      A.copy(tmp, 0, sz_lin, 0, polyo+1, desti0, 0); desti0 += sz_lin;
+      tmp = A_pos; tmp.scale(coeff_pos);
+      A.copy(tmp, 0, sz_pos, 0, polyo+1, desti0, 0); desti0 += sz_pos;
+      tmp = A_ext; tmp.scale(coeff_ext);
+      A.copy(tmp, 0, sz_ext, 0, polyo+1, desti0, 0); desti0 += sz_ext;
+      tmp = A_tg1; tmp.scale(coeff_tg1);
+      A.copy(tmp, 0, sz_tg1, 0, polyo+1, desti0, 0); desti0 += sz_tg1;
+      tmp = A_tg2; tmp.scale(coeff_tg2);
+      A.copy(tmp, 0, sz_tg2, 0, polyo+1, desti0, 0); desti0 += sz_tg2;
+
       desti0 = 0;
-      b.copy(b_lin, 0, sz_lin, 0, 3, desti0, 0); desti0 += sz_lin;
-      b.copy(b_pos, 0, sz_pos, 0, 3, desti0, 0); desti0 += sz_pos;
-      b.copy(b_ext, 0, sz_ext, 0, 3, desti0, 0); desti0 += sz_ext;
-      b.copy(b_tg1, 0, sz_tg1, 0, 3, desti0, 0); desti0 += sz_tg1;
-      b.copy(b_tg2, 0, sz_tg2, 0, 3, desti0, 0); desti0 += sz_tg2;
+      tmp = b_lin; tmp.scale(coeff_lin);
+      b.copy(tmp, 0, sz_lin, 0, 3, desti0, 0); desti0 += sz_lin;
+      tmp = b_pos; tmp.scale(coeff_pos);
+      b.copy(tmp, 0, sz_pos, 0, 3, desti0, 0); desti0 += sz_pos;
+      tmp = b_ext; tmp.scale(coeff_ext);
+      b.copy(tmp, 0, sz_ext, 0, 3, desti0, 0); desti0 += sz_ext;
+      tmp = b_tg1; tmp.scale(coeff_tg1);
+      b.copy(tmp, 0, sz_tg1, 0, 3, desti0, 0); desti0 += sz_tg1;
+      tmp = b_tg2; tmp.scale(coeff_tg2);
+      b.copy(tmp, 0, sz_tg2, 0, 3, desti0, 0); desti0 += sz_tg2;
     }
 
     void solve_system(const fullMatrix<double> &A, const fullMatrix<double> &b,
@@ -1301,6 +1295,32 @@ namespace BoundaryLayerCurver {
       // xyz_seq.print(std::string("xyz_seq:"),std::string(""));
     }
 
+    void _find_best_reduction(double max_displ, double gamma, double kappa,
+      const fullMatrix<double> &xyz_gmsh, const fullMatrix<double> &xyz_seq,
+      const fullMatrix<double> &A_lin, const fullMatrix<double> &b_lin,
+      const fullMatrix<double> &A_pos, const fullMatrix<double> &b_pos,
+      const fullMatrix<double> &A_ext, const fullMatrix<double> &b_ext,
+      const fullMatrix<double> &A_tg1, const fullMatrix<double> &b_tg1,
+      const fullMatrix<double> &A_tg2, const fullMatrix<double> &b_tg2,
+      fullMatrix<double> &new_xyz)
+    {
+      fullMatrix<double> A, b;
+      _construct_test_system(A_lin, b_lin, A_pos, b_pos, A_ext, b_ext,
+        A_tg1, b_tg1, A_tg2, b_tg2, A, b);
+
+      solve_system(A, b, xyz_gmsh, new_xyz);
+      return;
+
+      // NOTE
+      //  1. Choose alpha = .5 and gamma_target = .5
+      //  2. Assemble matrix
+      //  3. Solve
+      //  4. Compute max_displacement
+      //  5. Update alpha
+      //  6. Loop
+
+    }
+
     void _reduceCurving_newIdea2(MEdgeN *edge, double max_displ, const GFace *gface,
       double gamma, double kappa, const MEdgeN *previous, const MEdgeN *next)
     {
@@ -1352,11 +1372,10 @@ namespace BoundaryLayerCurver {
       _construct_matrices(xyz_gmsh, xyz_seq, dirs, A_lin, b_lin, A_pos, b_pos,
         A_ext, b_ext, A_tg1, b_tg1, A_tg2, b_tg2);
 
-      fullMatrix<double> A, b;
-      _construct_test_system(A_lin, b_lin, A_pos, b_pos, A_ext, b_ext, A_tg1, b_tg1, A_tg2, b_tg2, A, b);
-
       fullMatrix<double> new_xyz(polyo - 1, 3);
-      solve_system(A, b, xyz_gmsh, new_xyz);
+      _find_best_reduction(max_displ, gamma, kappa, xyz_gmsh, xyz_seq,
+        A_lin, b_lin, A_pos, b_pos, A_ext, b_ext, A_tg1, b_tg1, A_tg2, b_tg2,
+        new_xyz);
 
       for (int i = 2; i < polyo + 1; ++i) {
         MVertex *v = edge->getVertex(i);
