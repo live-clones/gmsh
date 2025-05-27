@@ -1039,31 +1039,16 @@ namespace BoundaryLayerCurver {
       if(gface) projectVerticesIntoGFace(edge, gface, false);
     }
 
-    void _reduceCurving_newIdea2(MEdgeN *edge, double max_displ, const GFace *gface,
-      double gamma, double kappa, const MEdgeN *previous, const MEdgeN *next)
+    void _construct_matrices(const fullMatrix<double> &xyz_gmsh,
+      const fullMatrix<double> &xyz_seq,
+      const SVector3 dir_extremities[2],
+      fullMatrix<double> &A_lin, fullMatrix<double> &b_lin,
+      fullMatrix<double> &A_pos, fullMatrix<double> &b_pos,
+      fullMatrix<double> &A_ext, fullMatrix<double> &b_ext,
+      fullMatrix<double> &A_tg1, fullMatrix<double> &b_tg1,
+      fullMatrix<double> &A_tg2, fullMatrix<double> &b_tg2)
     {
-      int polyo = edge->getPolynomialOrder();
-
-      fullMatrix<double> xyz_gmsh(polyo + 1, 3);
-      for (int i = 0; i < polyo + 1; ++i) {
-        MVertex *v = edge->getVertex(i);
-        xyz_gmsh(i, 0) = v->x();
-        xyz_gmsh(i, 1) = v->y();
-        xyz_gmsh(i, 2) = v->z();
-      }
-
-      fullMatrix<double> xyz_seq(polyo + 1, 3);
-      xyz_seq(0, 0) = xyz_gmsh(0, 0);
-      xyz_seq(0, 1) = xyz_gmsh(0, 1);
-      xyz_seq(0, 2) = xyz_gmsh(0, 2);
-      for(int i = 1; i < polyo; ++i) {
-        xyz_seq(i, 0) = xyz_gmsh(i+1, 0);
-        xyz_seq(i, 1) = xyz_gmsh(i+1, 1);
-        xyz_seq(i, 2) = xyz_gmsh(i+1, 2);
-      }
-      xyz_seq(polyo, 0) = xyz_gmsh(1, 0);
-      xyz_seq(polyo, 1) = xyz_gmsh(1, 1);
-      xyz_seq(polyo, 2) = xyz_gmsh(1, 2);
+      int polyo = xyz_gmsh.size1() - 1;
 
       fullMatrix<double> bspl_tg(2*polyo - 1, 3);
       for(int i = 0; i < 2*polyo - 1; ++i) {
@@ -1087,8 +1072,6 @@ namespace BoundaryLayerCurver {
         bspl_tg_length(i) = v.norm();
       }
 
-      double coeff_smooth = .5;
-      double displ = 2 * max_displ;
       const int tagLine = ElementType::getType(TYPE_LIN, polyo);
       const nodalBasis *nb = BasisFactory::getNodalBasis(tagLine);
       const fullMatrix<double> &refNodes_gmsh = nb->getReferenceNodes();
@@ -1108,8 +1091,8 @@ namespace BoundaryLayerCurver {
       refNodes_seq(polyo, 2) = refNodes_gmsh(1, 2);
 
       // 1) Construct Position linear system
-      fullMatrix<double> A_pos(polyo - 1, polyo + 1);
-      fullMatrix<double> b_pos(polyo - 1, 3);
+      A_pos = fullMatrix<double>(polyo - 1, polyo + 1);
+      b_pos = fullMatrix<double>(polyo - 1, 3);
       for(int i = 2; i < polyo + 1; ++i) {
         int I = i - 2;
         A_pos(I, i) = 1;
@@ -1120,12 +1103,12 @@ namespace BoundaryLayerCurver {
 
       // 2) Construct Tangent linear system
       const double amplification = 1.; // Hack
-      fullMatrix<double> A_tg1(polyo, polyo + 1);
-      fullMatrix<double> b_tg1(polyo, 3);
+      A_tg1 = fullMatrix<double>(polyo, polyo + 1);
+      b_tg1 = fullMatrix<double>(polyo, 3);
       for(int i = 0; i < polyo; ++i) {
         int I = i;
         double u = .5 * (refNodes_seq(i, 0) + refNodes_seq(i+1, 0));
-        std::cout << "u = " << u << std::endl;
+        // std::cout << "u = " << u << std::endl;
         // double sf[100];
         double grads[100][3];
         nb->df(u, 0, 0, grads);
@@ -1134,12 +1117,12 @@ namespace BoundaryLayerCurver {
         for(int j = 0; j < 3; ++j) { b_tg1(I, j) = bspl_tg(i*2, j); }
       }
 
-      fullMatrix<double> A_tg2(polyo - 1, polyo + 1);
-      fullMatrix<double> b_tg2(polyo - 1, 3);
+      A_tg2 = fullMatrix<double>(polyo - 1, polyo + 1);
+      b_tg2 = fullMatrix<double>(polyo - 1, 3);
       for(int i = 1; i < polyo; ++i) {
         int I = i - 1;
         double u = refNodes_seq(i, 0);
-        std::cout << "_u = " << u << std::endl;
+        // std::cout << "_u = " << u << std::endl;
         // double sf[100];
         // nb->f(u, 0, 0, sf);
         // for(int j = 0; j < nbDof; ++j) { A_tg(I, j) = sf[j]; }
@@ -1160,47 +1143,32 @@ namespace BoundaryLayerCurver {
       // b_tg2.print(std::string("b_tg2:"),std::string(""));
 
       // 3) Construct Extremity tangent linear system
-      fullMatrix<double> A_ext(2, polyo + 1);
-      fullMatrix<double> b_ext(2, 3);
+      A_ext = fullMatrix<double>(2, polyo + 1);
+      b_ext = fullMatrix<double>(2, 3);
 
       double desired_lengths[2] = {2*bspl_tg_length(0) - bspl_tg_length(1),
         2*bspl_tg_length(2*polyo-2) - bspl_tg_length(2*polyo-3)};
       // bspl_tg_length.print(std::string("bspl_tg_length:"),std::string(""));
 
       for(int i = 0; i < 2; ++i) {
-        MVertex *v0 = previous->getVertex(i);
-        MVertex *v1 = edge->getVertex(i);
-        SVector3 n = v1->point() - v0->point();
-        n.normalize();
-        if(next) {
-          MVertex *v2 = next->getVertex(i);
-          SVector3 n2 = v2->point() - v1->point();
-          n2.normalize();
-          n = n + n2;
-          n.normalize();
-        }
-        // Projection
-        SVector3 t = edge->tangent(-1);
-        SVector3 dir = t - dot(t, n) * n;
-        dir.normalize();
-        // A_ext(i, 0) = dir(0);
-
         // double sf[100];
         double grads[100][3];
         nb->df(i ? 1 : -1, 0, 0, grads);
         for(int j = 0; j < nbDof; ++j) { A_ext(i, j) = grads[j][0]; } // TODO check
-        for(int j = 0; j < 3; ++j) { b_ext(i, j) = desired_lengths[i] * dir(j); }
+        for(int j = 0; j < 3; ++j) { b_ext(i, j) = desired_lengths[i] * dir_extremities[i](j); }
       }
       b_ext.scale(amplification);
       // A_ext.print(std::string("A_ext:"),std::string(""));
       // b_ext.print(std::string("b_ext:"),std::string(""));
 
       // 4) Construct Linear tangent linear system
-      fullMatrix<double> A_lin(polyo, polyo + 1);
-      fullMatrix<double> b_lin(polyo, 3);
-      MVertex *v0 = edge->getVertex(0);
-      MVertex *v1 = edge->getVertex(1);
-      SVector3 t = v1->point() - v0->point();
+      A_lin = fullMatrix<double>(polyo, polyo + 1);
+      b_lin = fullMatrix<double>(polyo, 3);
+      double vx = xyz_gmsh(1, 0) - xyz_gmsh(0, 0);
+      double vy = xyz_gmsh(1, 1) - xyz_gmsh(0, 1);
+      double vz = xyz_gmsh(1, 2) - xyz_gmsh(0, 2);
+      SVector3 t(vx, vy, vz);
+      // SVector3 t = v1->point() - v0->point();
       // t *= 2. / polyo;
       t *= .5;
       for(int i = 0; i < polyo; ++i) {
@@ -1211,7 +1179,16 @@ namespace BoundaryLayerCurver {
       // b_lin.print(std::string("b_lin:"),std::string(""));
       // bspl_tg_length.print(std::string("bspl_tg_length:"),std::string(""));
       // bspl_tg.print(std::string("bspl_tg:"),std::string(""));
+    }
 
+    void _construct_test_system(
+      fullMatrix<double> &A_lin, fullMatrix<double> &b_lin,
+      fullMatrix<double> &A_pos, fullMatrix<double> &b_pos,
+      fullMatrix<double> &A_ext, fullMatrix<double> &b_ext,
+      fullMatrix<double> &A_tg1, fullMatrix<double> &b_tg1,
+      fullMatrix<double> &A_tg2, fullMatrix<double> &b_tg2,
+      fullMatrix<double> &A, fullMatrix<double> &b)
+    {
       // Choose
       int sz_lin = A_lin.size1();
       int sz_ext = A_ext.size1();
@@ -1244,8 +1221,9 @@ namespace BoundaryLayerCurver {
       b_tg2.scale(coeff);
 
       int SZ = sz_lin + sz_pos + sz_ext + sz_tg1 + sz_tg2;
-      fullMatrix<double> A(SZ, polyo + 1);
-      fullMatrix<double> b(SZ, 3);
+      int polyo = A_lin.size2() - 1;
+      A = fullMatrix<double>(SZ, polyo+1);
+      b = fullMatrix<double>(SZ, 3);
       int desti0 = 0;
       // A.print(std::string("A:"),std::string(""));
       // A_lin.print(std::string("A:"),std::string(""));
@@ -1262,10 +1240,14 @@ namespace BoundaryLayerCurver {
       b.copy(b_ext, 0, sz_ext, 0, 3, desti0, 0); desti0 += sz_ext;
       b.copy(b_tg1, 0, sz_tg1, 0, 3, desti0, 0); desti0 += sz_tg1;
       b.copy(b_tg2, 0, sz_tg2, 0, 3, desti0, 0); desti0 += sz_tg2;
+    }
 
-      //
+    void solve_system(const fullMatrix<double> &A, const fullMatrix<double> &b,
+                      const fullMatrix<double> &xyz_gmsh,
+                      fullMatrix<double> &new_xyz_HO)
+    {
       fullMatrix<double> A_fixed_boundary = A;
-      fullMatrix<double> b_fixed_boundary = b;
+      const fullMatrix<double> &b_fixed_boundary = b;
 
       // Fix extremities
       fullVector<double> proxA, proxb;
@@ -1282,9 +1264,7 @@ namespace BoundaryLayerCurver {
         proxb.axpy(proxA, -xyz_gmsh(1, j));
       }
 
-      A = fullMatrix<double>(A_fixed_boundary, 2, A_fixed_boundary.size2() - 2);
-      fullMatrix<double> tmpA = A;
-      A_fixed_boundary = tmpA;
+      A_fixed_boundary = fullMatrix<double>(A_fixed_boundary, 2, A_fixed_boundary.size2() - 2);
 
       // TRANSPOSE
 
@@ -1304,25 +1284,79 @@ namespace BoundaryLayerCurver {
       // b_sq.print(std::string("b_sq:"),std::string(""));
 
 
-      fullMatrix<double> new_xyz(polyo - 1, 3);
-      for(int i = 0; i < 3; ++i) new_xyz(i, i) = 1;
-
       fullVector<double> y, c;
-      // new_xyz.print(std::string("new_xyz:"),std::string(""));
+      // new_xyz_HO.print(std::string("new_xyz_HO:"),std::string(""));
       for(int j = 0; j < 3; ++j) {
-        y.setAsProxy(new_xyz, j);
+        y.setAsProxy(new_xyz_HO, j);
         c.setAsProxy(b_sq, j);
         A_sq.luSolve(c, y);
         // A_sq.print(std::string("A_sq:"),std::string(""));
         // c.print(std::string("c:"),std::string(""));
         // y.print(std::string("y:"),std::string(""));
-        // new_xyz.print(std::string("new_xyz:"),std::string(""));
+        // new_xyz_HO.print(std::string("new_xyz_HO:"),std::string(""));
       }
 
-      // new_xyz.print(std::string("new_xyz:"),std::string(""));
+      // new_xyz_HO.print(std::string("new_xyz_HO:"),std::string(""));
       // xyz_gmsh.print(std::string("xyz_gmsh:"),std::string(""));
       // xyz_seq.print(std::string("xyz_seq:"),std::string(""));
+    }
 
+    void _reduceCurving_newIdea2(MEdgeN *edge, double max_displ, const GFace *gface,
+      double gamma, double kappa, const MEdgeN *previous, const MEdgeN *next)
+    {
+      int polyo = edge->getPolynomialOrder();
+
+      fullMatrix<double> xyz_gmsh(polyo + 1, 3);
+      for (int i = 0; i < polyo + 1; ++i) {
+        MVertex *v = edge->getVertex(i);
+        xyz_gmsh(i, 0) = v->x();
+        xyz_gmsh(i, 1) = v->y();
+        xyz_gmsh(i, 2) = v->z();
+      }
+
+      fullMatrix<double> xyz_seq(polyo + 1, 3);
+      xyz_seq(0, 0) = xyz_gmsh(0, 0);
+      xyz_seq(0, 1) = xyz_gmsh(0, 1);
+      xyz_seq(0, 2) = xyz_gmsh(0, 2);
+      for(int i = 1; i < polyo; ++i) {
+        xyz_seq(i, 0) = xyz_gmsh(i+1, 0);
+        xyz_seq(i, 1) = xyz_gmsh(i+1, 1);
+        xyz_seq(i, 2) = xyz_gmsh(i+1, 2);
+      }
+      xyz_seq(polyo, 0) = xyz_gmsh(1, 0);
+      xyz_seq(polyo, 1) = xyz_gmsh(1, 1);
+      xyz_seq(polyo, 2) = xyz_gmsh(1, 2);
+
+      SVector3 dirs[2];
+      for(int i = 0; i < 2; ++i) {
+        MVertex *v0 = previous->getVertex(i);
+        MVertex *v1 = edge->getVertex(i);
+        SVector3 n = v1->point() - v0->point();
+        n.normalize();
+        if(next) {
+          MVertex *v2 = next->getVertex(i);
+          SVector3 n2 = v2->point() - v1->point();
+          n2.normalize();
+          n = n + n2;
+          n.normalize();
+        }
+        // Projection
+        SVector3 t = edge->tangent(-1);
+        dirs[i] = t - dot(t, n) * n;
+        dirs[i].normalize();
+        // A_ext(i, 0) = dir(0);
+      }
+
+      fullMatrix<double> A_lin, b_lin, A_pos, b_pos, A_ext, b_ext,
+      A_tg1, b_tg1, A_tg2, b_tg2;
+      _construct_matrices(xyz_gmsh, xyz_seq, dirs, A_lin, b_lin, A_pos, b_pos,
+        A_ext, b_ext, A_tg1, b_tg1, A_tg2, b_tg2);
+
+      fullMatrix<double> A, b;
+      _construct_test_system(A_lin, b_lin, A_pos, b_pos, A_ext, b_ext, A_tg1, b_tg1, A_tg2, b_tg2, A, b);
+
+      fullMatrix<double> new_xyz(polyo - 1, 3);
+      solve_system(A, b, xyz_gmsh, new_xyz);
 
       for (int i = 2; i < polyo + 1; ++i) {
         MVertex *v = edge->getVertex(i);
