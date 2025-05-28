@@ -13,8 +13,6 @@ gmsh.plugin.setNumber('BoundaryLayer','Width',l/10)
 
 gmsh.plugin.run('BoundaryLayer')
 
-
-
 #gmsh.model.mesh.optimize('UntangleTris')
 
 gmsh.fltk.run()
