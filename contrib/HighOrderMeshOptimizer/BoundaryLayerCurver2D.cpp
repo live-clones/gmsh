@@ -1559,12 +1559,11 @@ namespace BoundaryLayerCurver {
       // std::cout << "k = " << k << " alpha = " << std::get<0>(iteration_data[k]) << std::endl;
     }
 
-    void _reduceCurving_newIdea2(MEdgeN *edge, double max_displ_ub, const GFace *gface,
-      double gamma, double kappa, const MEdgeN *previous, const MEdgeN *next)
+    void compute_xyz_gmsh_seq(const MEdgeN *edge, fullMatrix<double> &xyz_gmsh,
+      fullMatrix<double> &xyz_seq)
     {
       int polyo = edge->getPolynomialOrder();
-
-      fullMatrix<double> xyz_gmsh(polyo + 1, 3);
+      xyz_gmsh = fullMatrix<double>(polyo + 1, 3);
       for (int i = 0; i < polyo + 1; ++i) {
         MVertex *v = edge->getVertex(i);
         xyz_gmsh(i, 0) = v->x();
@@ -1572,7 +1571,7 @@ namespace BoundaryLayerCurver {
         xyz_gmsh(i, 2) = v->z();
       }
 
-      fullMatrix<double> xyz_seq(polyo + 1, 3);
+      xyz_seq = fullMatrix<double>(polyo + 1, 3);
       xyz_seq(0, 0) = xyz_gmsh(0, 0);
       xyz_seq(0, 1) = xyz_gmsh(0, 1);
       xyz_seq(0, 2) = xyz_gmsh(0, 2);
@@ -1584,6 +1583,15 @@ namespace BoundaryLayerCurver {
       xyz_seq(polyo, 0) = xyz_gmsh(1, 0);
       xyz_seq(polyo, 1) = xyz_gmsh(1, 1);
       xyz_seq(polyo, 2) = xyz_gmsh(1, 2);
+    }
+
+    void _reduceCurving_newIdea2(MEdgeN *edge, double max_displ_ub, const GFace *gface,
+      double gamma, double kappa, const MEdgeN *previous, const MEdgeN *next)
+    {
+      fullMatrix<double> xyz_gmsh, xyz_seq;
+      compute_xyz_gmsh_seq(edge, xyz_gmsh, xyz_seq);
+
+      int polyo = edge->getPolynomialOrder();
 
       SVector3 dirs[2];
       for(int i = 0; i < 2; ++i) {
@@ -1686,31 +1694,10 @@ namespace BoundaryLayerCurver {
         return 1.;
       }
 
-      // FIXME COPIED from _reduceCurving_newIdea2
-      fullMatrix<double> xyz_gmsh(polyo + 1, 3);
-      for (int i = 0; i < polyo + 1; ++i) {
-        MVertex *v = edge->getVertex(i);
-        xyz_gmsh(i, 0) = v->x();
-        xyz_gmsh(i, 1) = v->y();
-        xyz_gmsh(i, 2) = v->z();
-      }
-
-      fullMatrix<double> xyz_seq(polyo + 1, 3);
-      xyz_seq(0, 0) = xyz_gmsh(0, 0);
-      xyz_seq(0, 1) = xyz_gmsh(0, 1);
-      xyz_seq(0, 2) = xyz_gmsh(0, 2);
-      for(int i = 1; i < polyo; ++i) {
-        xyz_seq(i, 0) = xyz_gmsh(i+1, 0);
-        xyz_seq(i, 1) = xyz_gmsh(i+1, 1);
-        xyz_seq(i, 2) = xyz_gmsh(i+1, 2);
-      }
-      xyz_seq(polyo, 0) = xyz_gmsh(1, 0);
-      xyz_seq(polyo, 1) = xyz_gmsh(1, 1);
-      xyz_seq(polyo, 2) = xyz_gmsh(1, 2);
-
+      fullMatrix<double> xyz_gmsh, xyz_seq;
+      compute_xyz_gmsh_seq(edge, xyz_gmsh, xyz_seq);
 
       SVector3 dirs[2];
-
       fullMatrix<double> A_lin, b_lin, A_pos, b_pos, A_ext, b_ext,
       A_tg1, b_tg1, A_tg2, b_tg2;
       _construct_matrices(xyz_gmsh, xyz_seq, dirs, A_lin, b_lin, A_pos, b_pos,
