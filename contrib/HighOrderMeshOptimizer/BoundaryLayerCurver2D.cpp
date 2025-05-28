@@ -1848,6 +1848,7 @@ namespace BoundaryLayerCurver {
       double gamma = current_h < .5 ? 0 : 2 * current_h - .5;
       double kappa = 1;
       double tau = .1;
+      gamma = 0;
       _reduceCurving_newIdea2(edge, minThickness*tau, gface, gamma, kappa, baseEdge, next);
 
       if(gface) projectVerticesIntoGFace(edge, gface, false);
@@ -1987,6 +1988,69 @@ namespace BoundaryLayerCurver {
         qual = jacobianBasedQuality::minIGEMeasure(lastElement);
       }
       if(iter == maxIter) _reduceCurving(lastEdge, 1, gface);
+    }
+
+    double match_gamma_simpler(double gamma, MEdgeN *edge, const GFace *gface, const SVector3 &normal)
+    {
+      int polyo = edge->getPolynomialOrder();
+
+      if(gamma >= 1.) {
+        fullMatrix<double> xyz(2, 3);
+        for(int i = 0; i < 2; ++i) {
+          xyz(i, 0) = edge->getVertex(i)->x();
+          xyz(i, 1) = edge->getVertex(i)->y();
+          xyz(i, 2) = edge->getVertex(i)->z();
+        }
+        for(int i = 2; i < polyo+1; ++i) {
+          double f = (i - 1.) / polyo;
+          edge->getVertex(i)->x() = (1-f) * xyz(0, 0) + f * xyz(1, 0);
+          edge->getVertex(i)->y() = (1-f) * xyz(0, 1) + f * xyz(1, 1);
+          edge->getVertex(i)->z() = (1-f) * xyz(0, 2) + f * xyz(1, 2);
+        }
+        return 1.;
+      }
+
+      fullMatrix<double> xyz_gmsh, xyz_seq;
+      compute_xyz_gmsh_seq(edge, xyz_gmsh, xyz_seq);
+
+      // _reduceCurving(edge, .25, gface);
+
+      fullMatrix<double> xyz_HO(polyo-1, 3), xyz_lin(polyo-1, 3);
+      for(int i = 0; i < polyo-1; ++i) {
+        xyz_HO(i, 0) = edge->getVertex(i+2)->x();
+        xyz_HO(i, 1) = edge->getVertex(i+2)->y();
+        xyz_HO(i, 2) = edge->getVertex(i+2)->z();
+        double f = (i + 1.) / polyo;
+        xyz_lin(i, 0) = (1-f) * edge->getVertex(0)->x() + f * edge->getVertex(1)->x();
+        xyz_lin(i, 1) = (1-f) * edge->getVertex(0)->y() + f * edge->getVertex(1)->y();
+        xyz_lin(i, 2) = (1-f) * edge->getVertex(0)->z() + f * edge->getVertex(1)->z();
+      }
+
+      double R = compute_R(xyz_seq, xyz_HO);
+      double coeff = 0;
+      double target = .95 * gamma;
+      double tol = .05 * gamma;
+      fullMatrix<double> new_xyz_HO = xyz_HO;
+
+      while(R + tol < target) {
+        coeff = 1 + (coeff-1) / (R-1) * (target-1) ;
+
+        new_xyz_HO = xyz_HO;
+        new_xyz_HO.scale(1-coeff);
+        new_xyz_HO.axpy(xyz_lin, coeff);
+
+        // xyz_gmsh.print(std::string("xyz_gmsh"), std::string(""));
+        // new_xyz_HO.print(std::string("new_xyz_HO"), std::string(""));
+        R = compute_R(xyz_seq, new_xyz_HO);
+      }
+
+      for(int i = 2; i < polyo+1; ++i) {
+        edge->getVertex(i)->x() = new_xyz_HO(i-2, 0);
+        edge->getVertex(i)->y() = new_xyz_HO(i-2, 1);
+        edge->getVertex(i)->z() = new_xyz_HO(i-2, 2);
+      }
+      std::cout << "(" << R << ", " << coeff << ", " << tol << ")" << std::endl;
+      return coeff;
     }
   } // namespace EdgeCurver2D
 
@@ -2829,11 +2893,11 @@ namespace BoundaryLayerCurver {
     //  (last of BL and exterior one) and reduce the curvature if necessary.
 
     double gamma = 1;
-    double start = .25;
+    double start = .5;
     int start_index = -1;
     int N = (int)stackEdges.size();
     if(gamma) {
-      double coeff = EdgeCurver2D::match_gamma(gamma, &stackEdges.back(), gface, normal);
+      double coeff = EdgeCurver2D::match_gamma_simpler(gamma, &stackEdges.back(), gface, normal);
       std::cout << "coeff = " << coeff << std::endl;
       for(int i = 1; i < N - 1; ++i) {
         double c = 0;
@@ -2843,7 +2907,8 @@ namespace BoundaryLayerCurver {
           c = coeff / (N-1 - start_index) * (i - start_index);
           std::cout << "c[" << i << "] = " << c << std::endl;
         }
-        EdgeCurver2D::linearize(c, &stackEdges[i], gface, normal);
+        // EdgeCurver2D::linearize(c, &stackEdges[i], gface, normal);
+        EdgeCurver2D::_reduceCurving(&stackEdges[i], c, gface);
       }
     }
     // Reduce curving based on
