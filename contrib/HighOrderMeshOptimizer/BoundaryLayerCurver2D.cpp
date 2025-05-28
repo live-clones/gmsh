@@ -1846,9 +1846,11 @@ namespace BoundaryLayerCurver {
       //  4. Mettre tout ensemble pour obtenir le résultat final
 
       double gamma = current_h < .5 ? 0 : 2 * current_h - .5;
-      double kappa = 1;
-      double tau = .1;
+      gamma = current_h;
+      // gamma = 1;
       gamma = 0;
+      double kappa = .1;
+      double tau = .66;
       _reduceCurving_newIdea2(edge, minThickness*tau, gface, gamma, kappa, baseEdge, next);
 
       if(gface) projectVerticesIntoGFace(edge, gface, false);
@@ -2892,7 +2894,7 @@ namespace BoundaryLayerCurver {
     // TODO: Here we need to check the validity/quality of the two last elements
     //  (last of BL and exterior one) and reduce the curvature if necessary.
 
-    double gamma = 1;
+    double gamma = 0;
     double start = .5;
     int start_index = -1;
     int N = (int)stackEdges.size();
@@ -2968,6 +2970,176 @@ namespace BoundaryLayerCurver {
       vert[22]->y() = 4./6 * v0->y() + 2./6 * v->y();
       vert[23]->x() = 5./6 * v0->x() + 1./6 * v->x();
       vert[23]->y() = 5./6 * v0->y() + 1./6 * v->y();
+    }
+    return true;
+  }
+
+  SVector3 computeBisector(const SVector3 &u0, const SVector3 &u1, const SVector3 &v) {
+    // Normalize the input vectors
+    SVector3 n0 = u0.unit();
+    SVector3 n1 = u1.unit();
+
+    // Compute the unnormalized bisector
+    SVector3 bisector = n0 + n1;
+
+    // FIXME if bisector == 0
+
+    // Ensure the bisector is in the same direction as 'v'
+    if(dot(bisector, v) < 0.0) {
+      bisector *= -1;
+    }
+
+    // bisector.normalize();
+    // bisector *= v.norm();
+
+    return bisector.unit();
+  }
+
+
+  bool reorient_normals(VecPairMElemVecMElem &columns, const GFace *gface,
+                             const GEdge *gedge, const SVector3 &normal)
+  {
+    for(auto &column : columns) {
+      for(auto &column_other : columns) {
+        if(&column == &column_other) continue;
+        MElement *el0 = column.second[0];
+        MElement *el1 = column_other.second[0];
+        MEdge e;
+        if(!computeCommonEdge(el0, el1, e)) continue;
+
+        MElement *b0 = column.first;
+        MElement *b1 = column_other.first;
+        const MEdgeN e0 = b0->getHighOrderEdge(b0->getEdge(0));
+        const MEdgeN e1 = b1->getHighOrderEdge(b1->getEdge(0));
+        MVertex *v_common = nullptr;
+        for(int i = 0; i < 2; ++i) {
+          if(e0.getVertex(i) == e1.getVertex(0) || e0.getVertex(i) == e1.getVertex(1)) {
+            v_common = e0.getVertex(i);
+            break;
+          }
+        }
+        if(!v_common) {
+          std::cerr << "Error: no common vertex between columns" << std::endl;
+        }
+
+
+        SVector3 u0, u1, v;
+        for(int i = 0; i < 2; ++i) {
+          if(e.getVertex(i) != v_common) {
+            v = e.getVertex(i)->point() - v_common->point();
+          }
+        }
+
+        int polyo = e0.getPolynomialOrder();
+        if(e0.getVertex(0) == v_common) {
+          u0 = e0.getVertex(2)->point() - v_common->point();
+        }
+        else {
+          u0 = e0.getVertex(polyo)->point() - v_common->point();
+        }
+        if(e1.getVertex(0) == v_common) {
+          u1 = e1.getVertex(2)->point() - v_common->point();
+        }
+        else {
+          u1 = e1.getVertex(polyo)->point() - v_common->point();
+        }
+
+        SVector3 bisector = computeBisector(u0, u1, v);
+
+        SPoint3 p0 = v_common->point(), p1;
+        MVertex *v0 = v_common;
+
+        int stop = std::min(column.second.size(), column_other.second.size())-1;
+        for(int i = 0; i < stop; ++i) {
+          el0 = column.second[i];
+          el1 = column_other.second[i];
+
+          // Compute the common edge again
+          if(!computeCommonEdge(el0, el1, e)) {
+            std::cout << "Error: common edge not found" << std::endl;
+          }
+
+          // Compute the "other" vertex in the current edge that is not v_common
+          MVertex *other_v = nullptr;
+          for(int j = 0; j < 2; ++j) {
+            if(e.getVertex(j) != v0) { // `e(j)` gives the vertices of the edge
+              other_v = e.getVertex(j);
+              break;
+            }
+          }
+          if(!other_v) {
+            std::cerr << "Error: no other vertex found" << std::endl;
+          }
+
+          p1 = other_v->point();
+          SVector3 v01 = p1 - p0;
+          double length = v01.norm();
+
+          // Compute the new position for `other_v`
+          SPoint3 new_position = v0->point() + bisector * length; // v0 + bisector vector
+
+          // Update the position of `other_v` to the new position
+          other_v->setXYZ(new_position.x(), new_position.y(), new_position.z());
+
+          // Advance v0 to the newly repositioned vertex
+          v0 = other_v;
+          p0 = p1;
+
+          // Interior nodes
+          MEdgeN e_ho = el0->getHighOrderEdge(e);
+          for(int j = 2; j < polyo; ++i) {
+            double f = static_cast<double>(j-1) / polyo;
+            double x = (1-f) * e_ho.getVertex(0)->x() + f * e_ho.getVertex(1)->x();
+            double y = (1-f) * e_ho.getVertex(0)->y() + f * e_ho.getVertex(1)->y();
+            double z = (1-f) * e_ho.getVertex(0)->z() + f * e_ho.getVertex(1)->z();
+            e_ho.getVertex(j)->setXYZ(x, y, z);
+          }
+        }
+      }
+    }
+  }
+
+  bool touch_boundary(PairMElemVecMElem &column, const GFace *gface,
+                             const GEdge *gedge, const SVector3 &normal)
+  {
+    if(column.second.size() < 2) return true;
+
+    // Compute stack high order edges and faces
+    std::vector<MEdgeN> stackEdges;
+    std::vector<MFaceN> stackFaces;
+    computeStackHOEdgesFaces(column, stackEdges, stackFaces);
+
+    MEdgeN &edge = stackEdges[0];
+    int polyo = edge.getPolynomialOrder();
+
+    // Compute L_discrete
+    double L_disc = 0;
+    double vx, vy, vz;
+
+    vx = edge.getVertex(2)->x() - edge.getVertex(0)->x();
+    vy = edge.getVertex(2)->y() - edge.getVertex(0)->y();
+    vz = edge.getVertex(2)->z() - edge.getVertex(0)->z();
+    L_disc = sqrt(vx * vx + vy * vy + vz * vz);
+
+    vx = edge.getVertex(1)->x() - edge.getVertex(polyo)->x();
+    vy = edge.getVertex(1)->y() - edge.getVertex(polyo)->y();
+    vz = edge.getVertex(1)->z() - edge.getVertex(polyo)->z();
+    L_disc += sqrt(vx * vx + vy * vy + vz * vz);
+
+    for(int i = 2; i < polyo; ++i) {
+      vx = edge.getVertex(i+1)->x() - edge.getVertex(i)->x();
+      vy = edge.getVertex(i+1)->y() - edge.getVertex(i)->y();
+      vz = edge.getVertex(i+1)->z() - edge.getVertex(i)->z();
+      L_disc += std::sqrt(vx*vx + vy*vy + vz*vz);
+    }
+
+    double pert = L_disc / polyo / 10;
+
+    for(int i = 2; i < polyo + 1; ++i) {
+      MVertex *v = edge.getVertex(i);
+      v->x() += pert * (rand() % 1001 - 500) / 500.;
+      v->y() += pert * (rand() % 1001 - 500) / 500.;
+      v->z() += pert * (rand() % 1001 - 500) / 500.;
     }
     return true;
   }
