@@ -1741,6 +1741,36 @@ namespace BoundaryLayerCurver {
       return coeff;
     }
 
+    void linearize(double coeff, MEdgeN *edge, const GFace *gface, const SVector3 &normal)
+    {
+      if(coeff < 1e-5) return;
+      int polyo = edge->getPolynomialOrder();
+
+      fullMatrix<double> xyz_gmsh, xyz_seq;
+      compute_xyz_gmsh_seq(edge, xyz_gmsh, xyz_seq);
+
+      SVector3 dirs[2];
+      fullMatrix<double> A_lin, b_lin, A_pos, b_pos, A_ext, b_ext,
+      A_tg1, b_tg1, A_tg2, b_tg2;
+      _construct_matrices(xyz_gmsh, xyz_seq, dirs, A_lin, b_lin, A_pos, b_pos,
+        A_ext, b_ext, A_tg1, b_tg1, A_tg2, b_tg2);
+
+      fullMatrix<double> A, b;
+      _construct_system_lin(coeff, A_lin, b_lin, A_pos, b_pos, A, b);
+      fullMatrix<double> new_xyz_HO(polyo-1, 3);
+      solve_system(A, b, xyz_gmsh, new_xyz_HO, false);
+
+      // xyz_gmsh.print("xyz_gmsh");
+      // xyz_seq.print("xyz_seq");
+      // new_xyz_HO.print("new_xyz_HO");
+
+      for(int i = 2; i < polyo+1; ++i) {
+        edge->getVertex(i)->x() = new_xyz_HO(i-2, 0);
+        edge->getVertex(i)->y() = new_xyz_HO(i-2, 1);
+        edge->getVertex(i)->z() = new_xyz_HO(i-2, 2);
+      }
+    }
+
     void curveEdge_newIdea(const MEdgeN *baseEdge, MEdgeN *edge, const GFace *gface,
                            const SVector3 &normal, MEdgeN *next, double current_h)
     {
@@ -2777,6 +2807,8 @@ namespace BoundaryLayerCurver {
     // Curve topEdge of first element and last edge
     // int iFirst = 1, iLast = (int)stackEdges.size() - 1;
     // MEdgeN *baseEdge = &stackEdges[0];
+    std::vector<double> ratios(stackEdges.size());
+    ratios[0] = 0.0;
     for(auto i = 1; i < stackEdges.size(); ++i) {
       MEdgeN *next = nullptr;
       if(i+1 < stackEdges.size()) {
@@ -2788,6 +2820,7 @@ namespace BoundaryLayerCurver {
         v = next->pnt(1) - baseEdge->pnt(1);
         ratio = std::min(ratio, v.norm() / thickness_right);
       }
+      ratios[i] = ratio;
       EdgeCurver2D::curveEdge_newIdea(&stackEdges[i-1], &stackEdges[i], gface, normal, next, ratio);
       // FIXME: Should we check the quality of first element? In which case, if
       //  the quality is not good, what do we do? I don't know for now
@@ -2795,11 +2828,22 @@ namespace BoundaryLayerCurver {
     // TODO: Here we need to check the validity/quality of the two last elements
     //  (last of BL and exterior one) and reduce the curvature if necessary.
 
-    double gamma = .5;
+    double gamma = 1;
+    double start = .25;
+    int start_index = -1;
+    int N = (int)stackEdges.size();
     if(gamma) {
       double coeff = EdgeCurver2D::match_gamma(gamma, &stackEdges.back(), gface, normal);
-      for(int i = 1; i < (int)stackEdges.size() - 1; ++i) {
-
+      std::cout << "coeff = " << coeff << std::endl;
+      for(int i = 1; i < N - 1; ++i) {
+        double c = 0;
+        if(ratios[i] > start) {
+          c = coeff / (1 - start) * (ratios[i] - start);
+          if(start_index == -1) start_index = i - 1;
+          c = coeff / (N-1 - start_index) * (i - start_index);
+          std::cout << "c[" << i << "] = " << c << std::endl;
+        }
+        EdgeCurver2D::linearize(c, &stackEdges[i], gface, normal);
       }
     }
     // Reduce curving based on
