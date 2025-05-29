@@ -191,7 +191,7 @@ namespace netgen
     int surfid;
 
     bool incorder{false};
-    unsigned int order:6{0};
+    unsigned int order:6;
   };
   
   ostream & operator<< (ostream & ost, const MarkedTri & mt)
