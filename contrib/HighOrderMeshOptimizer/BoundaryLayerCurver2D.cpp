@@ -603,7 +603,7 @@ namespace BoundaryLayerCurver {
             LegendrePolynomials::fc(order + 1, refNodesh(i, 0), val);
             for(int j = 0; j < nbDofh; ++j) { vandermonde(i, j) = val[j]; }
           }
-          delete val;
+          delete [] val;
 
           fullMatrix<double> tmp;
           vandermonde.invert(tmp);
@@ -620,7 +620,7 @@ namespace BoundaryLayerCurver {
             LegendrePolynomials::fc(order, refNodes(i, 0), val);
             for(int j = 0; j < nbDof; ++j) { Me(i, j) = val[j]; }
           }
-          delete val;
+          delete [] val;
         }
         //      Me.print("Me");
 
@@ -1005,7 +1005,7 @@ namespace BoundaryLayerCurver {
         }
       }
 
-      delete val;
+      delete [] val;
 
       fullMatrix<double> tmp(szSpace + 2, nGP + 2, false);
       invM1.mult(M2, tmp);
@@ -1063,7 +1063,7 @@ namespace BoundaryLayerCurver {
         }
       }
 
-      delete val;
+      delete [] val;
 
       fullMatrix<double> tmp(szSpace + nConstraint, nGP + nConstraint, false);
       invM1.mult(M2, tmp);
@@ -1121,7 +1121,7 @@ namespace BoundaryLayerCurver {
         }
       }
 
-      delete val;
+      delete [] val;
 
       fullMatrix<double> tmp(szSpace + nConstraint, nGP + nConstraint, false);
       invM1.mult(M2, tmp);
