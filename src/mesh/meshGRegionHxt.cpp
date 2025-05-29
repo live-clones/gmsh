@@ -24,8 +24,8 @@
 
 #if defined(HAVE_HXT)
 
-extern "C" {
 #include "hxt_omp.h"
+extern "C" {
 #include "hxt_tetMesh.h"
 #include "hxt_tetDelaunay.h"
 }
