@@ -232,8 +232,9 @@ namespace netgen
     /// surface id
     int surfid;
 
-    bool incorder;
+    bool incorder{false};
     unsigned int order:6;
+    MarkedQuad() { incorder = false; order = 0; }
   };
 
   ostream & operator<< (ostream & ost, const MarkedQuad & mt)
