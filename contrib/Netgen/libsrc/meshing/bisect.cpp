@@ -40,7 +40,7 @@ namespace netgen
     // face_j : face without node j,
     // mark_k : edge without node k
     
-    char faceedges[4];
+    unsigned char faceedges[4];
     // unsigned char faceedges[4];
     bool incorder;
     unsigned int order:6;

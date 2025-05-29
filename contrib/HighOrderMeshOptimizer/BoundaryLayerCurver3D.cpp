@@ -242,6 +242,7 @@ namespace BoundaryLayerCurver {
         }
         return _linearTriangle2[order];
       }
+      return new fullMatrix<double>();
     }
 
     const fullMatrix<double> *quadrangle(int order, bool linear)

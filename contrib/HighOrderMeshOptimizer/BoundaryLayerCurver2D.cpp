@@ -1132,6 +1132,7 @@ namespace BoundaryLayerCurver {
       Leg2Lag.mult(tmp2, data->invA);
       return data;
     }
+    return data;
   }
 
   LeastSquareData *getLeastSquareData(int typeElement, int order,
