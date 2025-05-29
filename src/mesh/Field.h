@@ -211,9 +211,11 @@ public:
   BoundaryLayerField();
   ~BoundaryLayerField() { removeAttractors(); }
   virtual double operator()(double x, double y, double z,
-                            GEntity *ge = nullptr);
+                            GEntity *ge = nullptr) override;
+  virtual void operator()(double x, double y, double z, SVector3 &metr,
+                          GEntity *ge = nullptr) override {}
   virtual void operator()(double x, double y, double z, SMetric3 &metr,
-                          GEntity *ge = nullptr);
+                          GEntity *ge = nullptr) override;
   bool isEdgeBL(int iE) const
   {
     return std::find(_curveTags.begin(), _curveTags.end(), iE) !=
