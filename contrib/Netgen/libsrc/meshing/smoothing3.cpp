@@ -317,6 +317,7 @@ namespace netgen
     virtual double PointFunctionValue (const Point<3> & pp) const;
     virtual double PointFunctionValueGrad (const Point<3> & pp, Vec<3> & grad) const;
     virtual double PointFunctionValueDeriv (const Point<3> & pp, const Vec<3> & dir, double & deriv) const;
+    virtual ~PointFunction() {}
 
     int MovePointToInner ();
   };

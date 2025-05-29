@@ -8,11 +8,11 @@
 #include "Numeric.h"
 
 StringXNumber WarpOptions_Number[] = {
-  {GMSH_FULLRC, "Factor", nullptr, 1.},
-  {GMSH_FULLRC, "TimeStep", nullptr, 0.},
-  {GMSH_FULLRC, "SmoothingAngle", nullptr, 180.},
-  {GMSH_FULLRC, "View", nullptr, -1.},
-  {GMSH_FULLRC, "OtherView", nullptr, -1.}};
+  {GMSH_FULLRC, "Factor", nullptr, 1., ""},
+  {GMSH_FULLRC, "TimeStep", nullptr, 0., ""},
+  {GMSH_FULLRC, "SmoothingAngle", nullptr, 180., ""},
+  {GMSH_FULLRC, "View", nullptr, -1., ""},
+  {GMSH_FULLRC, "OtherView", nullptr, -1., ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterWarpPlugin() { return new GMSH_WarpPlugin(); }

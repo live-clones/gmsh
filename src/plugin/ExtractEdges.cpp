@@ -12,8 +12,8 @@
 #endif
 
 StringXNumber ExtractEdgesOptions_Number[] = {
-  {GMSH_FULLRC, "Angle", nullptr, 40.},
-  {GMSH_FULLRC, "IncludeBoundary", nullptr, 1.},
+  {GMSH_FULLRC, "Angle", nullptr, 40., ""},
+  {GMSH_FULLRC, "IncludeBoundary", nullptr, 1., ""},
 };
 
 extern "C" {

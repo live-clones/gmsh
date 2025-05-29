@@ -24,18 +24,26 @@ namespace netgen
     int nb[4];
 
   public:
-    DelaunayTet () { ; }
+    DelaunayTet ()
+    {
+      for (int i = 0; i < 4; ++i)
+        nb[i] = 0;
+    }
 
     DelaunayTet (const DelaunayTet & el)
     {
-      for (int i = 0; i < 4; i++)
-        pnums[i] = el[i];
+      for (int i = 0; i < 4; i++) {
+        pnums[i] = el.pnums[i];
+        nb[i] = el.nb[i];
+      }
     }
 
     DelaunayTet (const Element & el)
     {
-      for (int i = 0; i < 4; i++)
+      for (int i = 0; i < 4; i++) {
         pnums[i] = el[i];
+        nb[i] = 0;
+      }
     }
 
     DelaunayTet& operator=(const DelaunayTet& other) {

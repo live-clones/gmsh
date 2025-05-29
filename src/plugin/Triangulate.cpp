@@ -18,7 +18,7 @@
 #endif
 
 StringXNumber TriangulateOptions_Number[] = {
-  {GMSH_FULLRC, "View", nullptr, -1.}
+  {GMSH_FULLRC, "View", nullptr, -1., ""}
 };
 
 extern "C" {

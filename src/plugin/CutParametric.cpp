@@ -15,22 +15,22 @@
 #endif
 
 StringXNumber CutParametricOptions_Number[] = {
-  {GMSH_FULLRC, "MinU", GMSH_CutParametricPlugin::callbackMinU, 0.},
-  {GMSH_FULLRC, "MaxU", GMSH_CutParametricPlugin::callbackMaxU, 2 * 3.1416},
-  {GMSH_FULLRC, "NumPointsU", GMSH_CutParametricPlugin::callbackNU, 180.},
-  {GMSH_FULLRC, "MinV", GMSH_CutParametricPlugin::callbackMinV, 0.},
-  {GMSH_FULLRC, "MaxV", GMSH_CutParametricPlugin::callbackMaxV, 2 * 3.1416},
-  {GMSH_FULLRC, "NumPointsV", GMSH_CutParametricPlugin::callbackNV, 180.},
-  {GMSH_FULLRC, "ConnectPoints", GMSH_CutParametricPlugin::callbackConnect, 0.},
-  {GMSH_FULLRC, "View", nullptr, -1.}};
+  {GMSH_FULLRC, "MinU", GMSH_CutParametricPlugin::callbackMinU, 0., ""},
+  {GMSH_FULLRC, "MaxU", GMSH_CutParametricPlugin::callbackMaxU, 2 * 3.1416, ""},
+  {GMSH_FULLRC, "NumPointsU", GMSH_CutParametricPlugin::callbackNU, 180., ""},
+  {GMSH_FULLRC, "MinV", GMSH_CutParametricPlugin::callbackMinV, 0., ""},
+  {GMSH_FULLRC, "MaxV", GMSH_CutParametricPlugin::callbackMaxV, 2 * 3.1416, ""},
+  {GMSH_FULLRC, "NumPointsV", GMSH_CutParametricPlugin::callbackNV, 180., ""},
+  {GMSH_FULLRC, "ConnectPoints", GMSH_CutParametricPlugin::callbackConnect, 0., ""},
+  {GMSH_FULLRC, "View", nullptr, -1., ""}};
 
 StringXString CutParametricOptions_String[] = {
   {GMSH_FULLRC, "X", GMSH_CutParametricPlugin::callbackX,
-   "2 * Cos(u) * Sin(v)"},
+   "2 * Cos(u) * Sin(v)", ""},
   {GMSH_FULLRC, "Y", GMSH_CutParametricPlugin::callbackY,
-   "4 * Sin(u) * Sin(v)"},
+   "4 * Sin(u) * Sin(v)", ""},
   {GMSH_FULLRC, "Z", GMSH_CutParametricPlugin::callbackZ,
-   "0.1 + 0.5 * Cos(v)"}};
+   "0.1 + 0.5 * Cos(v)", ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterCutParametricPlugin()

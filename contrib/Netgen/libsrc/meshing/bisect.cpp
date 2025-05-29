@@ -190,8 +190,8 @@ namespace netgen
     /// surface id
     int surfid;
 
-    bool incorder;
-    unsigned int order:6;
+    bool incorder{false};
+    unsigned int order:6{0};
   };
   
   ostream & operator<< (ostream & ost, const MarkedTri & mt)

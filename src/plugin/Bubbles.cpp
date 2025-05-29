@@ -12,11 +12,11 @@
 #include "OS.h"
 
 StringXNumber BubblesOptions_Number[] = {
-  {GMSH_FULLRC, "ShrinkFactor", nullptr, 0.},
+  {GMSH_FULLRC, "ShrinkFactor", nullptr, 0., ""},
 };
 
 StringXString BubblesOptions_String[] = {
-  {GMSH_FULLRC, "OutputFile", nullptr, "bubbles.geo"}};
+  {GMSH_FULLRC, "OutputFile", nullptr, "bubbles.geo", ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterBubblesPlugin() { return new GMSH_BubblesPlugin(); }

@@ -18,10 +18,10 @@
 #include "Context.h"
 
 StringXNumber MeshSubEntitiesOptions_Number[] = {
-  {GMSH_FULLRC, "InputDimension", nullptr, 1.},
-  {GMSH_FULLRC, "InputPhysicalGroup", nullptr, 1.},
-  {GMSH_FULLRC, "OuputDimension", nullptr, 0.},
-  {GMSH_FULLRC, "OuputPhysicalGroup", nullptr, 2000.},
+  {GMSH_FULLRC, "InputDimension", nullptr, 1., ""},
+  {GMSH_FULLRC, "InputPhysicalGroup", nullptr, 1., ""},
+  {GMSH_FULLRC, "OuputDimension", nullptr, 0., ""},
+  {GMSH_FULLRC, "OuputPhysicalGroup", nullptr, 2000., ""},
 };
 
 extern "C" {

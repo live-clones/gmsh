@@ -16,12 +16,12 @@
 #endif
 
 StringXNumber ShowNeighborElementsOptions_Number[] = {
-  {GMSH_FULLRC, "NumLayers", nullptr, 1},
-  {GMSH_FULLRC, "Element1", nullptr, 0},
-  {GMSH_FULLRC, "Element2", nullptr, 0},
-  {GMSH_FULLRC, "Element3", nullptr, 0},
-  {GMSH_FULLRC, "Element4", nullptr, 0},
-  {GMSH_FULLRC, "Element5", nullptr, 0}};
+  {GMSH_FULLRC, "NumLayers", nullptr, 1, ""},
+  {GMSH_FULLRC, "Element1", nullptr, 0, ""},
+  {GMSH_FULLRC, "Element2", nullptr, 0, ""},
+  {GMSH_FULLRC, "Element3", nullptr, 0, ""},
+  {GMSH_FULLRC, "Element4", nullptr, 0, ""},
+  {GMSH_FULLRC, "Element5", nullptr, 0, ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterShowNeighborElementsPlugin()

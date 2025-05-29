@@ -18,15 +18,15 @@
 #include <vector>
 
 StringXNumber BoundaryAnglesOptions_Number[] = {
-  {GMSH_FULLRC, "View", nullptr, -1.},
-  {GMSH_FULLRC, "Save", nullptr, 0.},
-  {GMSH_FULLRC, "Visible", nullptr, 0.},
-  {GMSH_FULLRC, "Remove", nullptr, 0.},
+  {GMSH_FULLRC, "View", nullptr, -1., ""},
+  {GMSH_FULLRC, "Save", nullptr, 0., ""},
+  {GMSH_FULLRC, "Visible", nullptr, 0., ""},
+  {GMSH_FULLRC, "Remove", nullptr, 0., ""},
 };
 
 StringXString BoundaryAnglesOptions_String[] = {
-  {GMSH_FULLRC, "Filename", nullptr, "Angles_Surface"},
-  {GMSH_FULLRC, "Dir", nullptr, ""},
+  {GMSH_FULLRC, "Filename", nullptr, "Angles_Surface", ""},
+  {GMSH_FULLRC, "Dir", nullptr, "", ""},
 };
 
 extern "C" {

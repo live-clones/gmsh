@@ -12,9 +12,9 @@
 #endif
 
 StringXNumber MeshSizeFieldViewOptions_Number[] = {
-  {GMSH_FULLRC, "MeshSizeField", nullptr, 0.},
-  {GMSH_FULLRC, "View", nullptr, -1.},
-  {GMSH_FULLRC, "Component", nullptr, 0.}};
+  {GMSH_FULLRC, "MeshSizeField", nullptr, 0., ""},
+  {GMSH_FULLRC, "View", nullptr, -1., ""},
+  {GMSH_FULLRC, "Component", nullptr, 0., ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterMeshSizeFieldViewPlugin()

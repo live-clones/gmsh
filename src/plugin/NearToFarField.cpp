@@ -12,23 +12,23 @@
 #include "OS.h"
 
 StringXNumber NearToFarFieldOptions_Number[] = {
-  {GMSH_FULLRC, "Wavenumber", nullptr, 1.},
-  {GMSH_FULLRC, "PhiStart", nullptr, 0.},
-  {GMSH_FULLRC, "PhiEnd", nullptr, 2. * M_PI},
-  {GMSH_FULLRC, "NumPointsPhi", nullptr, 60},
-  {GMSH_FULLRC, "ThetaStart", nullptr, 0.},
-  {GMSH_FULLRC, "ThetaEnd", nullptr, M_PI},
-  {GMSH_FULLRC, "NumPointsTheta", nullptr, 30},
-  {GMSH_FULLRC, "EView", nullptr, 0},
-  {GMSH_FULLRC, "HView", nullptr, 1},
-  {GMSH_FULLRC, "Normalize", nullptr, 1},
-  {GMSH_FULLRC, "dB", nullptr, 1},
-  {GMSH_FULLRC, "NegativeTime", nullptr, 0.},
-  {GMSH_FULLRC, "RFar", nullptr, 0},
+  {GMSH_FULLRC, "Wavenumber", nullptr, 1., ""},
+  {GMSH_FULLRC, "PhiStart", nullptr, 0., ""},
+  {GMSH_FULLRC, "PhiEnd", nullptr, 2. * M_PI, ""},
+  {GMSH_FULLRC, "NumPointsPhi", nullptr, 60, ""},
+  {GMSH_FULLRC, "ThetaStart", nullptr, 0., ""},
+  {GMSH_FULLRC, "ThetaEnd", nullptr, M_PI, ""},
+  {GMSH_FULLRC, "NumPointsTheta", nullptr, 30, ""},
+  {GMSH_FULLRC, "EView", nullptr, 0, ""},
+  {GMSH_FULLRC, "HView", nullptr, 1, ""},
+  {GMSH_FULLRC, "Normalize", nullptr, 1, ""},
+  {GMSH_FULLRC, "dB", nullptr, 1, ""},
+  {GMSH_FULLRC, "NegativeTime", nullptr, 0., ""},
+  {GMSH_FULLRC, "RFar", nullptr, 0, ""},
 };
 
 StringXString NearToFarFieldOptions_String[] = {
-  {GMSH_FULLRC, "MatlabOutputFile", nullptr, "farfield.m"},
+  {GMSH_FULLRC, "MatlabOutputFile", nullptr, "farfield.m", ""},
 };
 
 extern "C" {

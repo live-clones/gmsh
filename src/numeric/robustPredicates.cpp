@@ -121,6 +121,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #ifdef CPU86
 #include <float.h>
@@ -1349,6 +1350,7 @@ static REAL incircleadapt(const REAL* const __restrict__ pa,
   // Avoid compiler warnings. H. Si, 2012-02-16.
   axtbclen = aytbclen = bxtcalen = bytcalen = cxtablen = cytablen = 0;
 
+  memset(fin1, 0, sizeof(fin1));
   adx = (REAL) (pa[0] - pd[0]);
   bdx = (REAL) (pb[0] - pd[0]);
   cdx = (REAL) (pc[0] - pd[0]);
@@ -2271,7 +2273,7 @@ static REAL insphereadapt(const REAL* const __restrict__ pa,
   INEXACT REAL _i, _j;
   REAL _0;
 
-
+  memset(fin1, 0, sizeof(fin1));
   aex = (REAL) (pa[0] - pe[0]);
   bex = (REAL) (pb[0] - pe[0]);
   cex = (REAL) (pc[0] - pe[0]);

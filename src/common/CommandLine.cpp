@@ -423,7 +423,7 @@ void PrintBuildInfo()
 static bool GetGeometryOption(const std::vector<std::string> &argv,
                               std::size_t &i, bool exitOnError)
 {
-  if(i < 0 || i >= argv.size()) return false;
+  if(i >= argv.size()) return false;
 
   if(argv[i] == "-0") {
     CTX::instance()->batch = -1;
@@ -465,7 +465,7 @@ static bool GetGeometryOption(const std::vector<std::string> &argv,
 static bool GetMeshOption(const std::vector<std::string> &argv,
                           std::size_t &i, bool exitOnError)
 {
-  if(i < 0 || i >= argv.size()) return false;
+  if(i >= argv.size()) return false;
 
   if(argv[i] == "-check") {
     CTX::instance()->batch = -2;
@@ -1067,7 +1067,7 @@ static bool GetMeshOption(const std::vector<std::string> &argv,
 static bool GetPostProcessingOption(const std::vector<std::string> &argv,
                                     std::size_t &i, bool exitOnError)
 {
-  if(i < 0 || i >= argv.size()) return false;
+  if(i >= argv.size()) return false;
 
   if(argv[i] == "-noview") {
     opt_view_visible(0, GMSH_SET, 0);
@@ -1100,7 +1100,7 @@ static bool GetPostProcessingOption(const std::vector<std::string> &argv,
 static bool GetSolverOption(const std::vector<std::string> &argv,
                             std::size_t &i, bool exitOnError)
 {
-  if(i < 0 || i >= argv.size()) return false;
+  if(i >= argv.size()) return false;
 
   if(argv[i] == "-run") {
     // same as '-', but will run local Gmsh client (if no other clients are
@@ -1168,7 +1168,7 @@ static bool GetSolverOption(const std::vector<std::string> &argv,
 static bool GetOtherOption(const std::vector<std::string> &argv,
                            std::size_t &i, bool exitOnError)
 {
-  if(i < 0 || i >= argv.size()) return false;
+  if(i >= argv.size()) return false;
 
   if(argv[i] == "-" || argv[i] == "-parse_and_exit") {
     CTX::instance()->batch = -99;

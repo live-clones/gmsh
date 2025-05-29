@@ -60,7 +60,7 @@ static HXTStatus nodalSizesCallBack(double *pts, uint32_t *volume,
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t i = 0; i < numPts; i++) {
     if(exceptions) continue;
-    if(volume[i] < 0 || volume[i] >= allGR->size()) {
+    if(volume[i] >= allGR->size()) {
       Msg::Error("Invalid volume tag %d in mesh size calculation", volume[i]);
       continue;
     }
@@ -640,6 +640,7 @@ static HXTStatus _delaunayMeshIn3DHxt(std::vector<MVertex *> &verts,
     0, // insertionFirst
     0, // partitionability
     1, // perfectDelaunay
+    0, // allowOuterInsertion
     0, // verbosity
     0, // reproducible
     nthreads // delaunayThreads (0 = omp_get_max_threads)

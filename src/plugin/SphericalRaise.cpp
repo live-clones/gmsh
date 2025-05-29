@@ -7,10 +7,10 @@
 #include "Numeric.h"
 
 StringXNumber SphericalRaiseOptions_Number[] = {
-  {GMSH_FULLRC, "Xc", nullptr, 0.},     {GMSH_FULLRC, "Yc", nullptr, 0.},
-  {GMSH_FULLRC, "Zc", nullptr, 0.},     {GMSH_FULLRC, "Raise", nullptr, 1.},
-  {GMSH_FULLRC, "Offset", nullptr, 0.}, {GMSH_FULLRC, "TimeStep", nullptr, 0.},
-  {GMSH_FULLRC, "View", nullptr, -1.}};
+  {GMSH_FULLRC, "Xc", nullptr, 0., ""},     {GMSH_FULLRC, "Yc", nullptr, 0., ""},
+  {GMSH_FULLRC, "Zc", nullptr, 0., ""},     {GMSH_FULLRC, "Raise", nullptr, 1., ""},
+  {GMSH_FULLRC, "Offset", nullptr, 0., ""}, {GMSH_FULLRC, "TimeStep", nullptr, 0., ""},
+  {GMSH_FULLRC, "View", nullptr, -1., ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterSphericalRaisePlugin()

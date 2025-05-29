@@ -602,6 +602,8 @@ namespace netgen
     Element(const Element& other);
     ///
     Element & operator= (const Element & el2);
+    ///
+    virtual ~Element() {}
   
     ///
     void SetNP (int anp);
