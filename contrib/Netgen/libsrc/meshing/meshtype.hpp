@@ -119,6 +119,7 @@ namespace netgen
   public:
     PointIndex () { ; }
     PointIndex (int ai) : i(ai) { ; }
+    PointIndex(const PointIndex& other) : i(other.i) {}
     PointIndex & operator= (const PointIndex &ai) { i = ai.i; return *this; }
     PointIndex & operator= (int ai) { i = ai; return *this; }
     operator int () const { return i; }
@@ -152,6 +153,7 @@ namespace netgen
   public:
     ElementIndex () { ; }
     ElementIndex (int ai) : i(ai) { ; }
+    ElementIndex(const ElementIndex& other) : i(other.i) {}
     ElementIndex & operator= (const ElementIndex & ai) { i = ai.i; return *this; }
     ElementIndex & operator= (int ai) { i = ai; return *this; }
     operator int () const { return i; }
@@ -176,6 +178,7 @@ namespace netgen
   public:
     SurfaceElementIndex () { ; }
     SurfaceElementIndex (int ai) : i(ai) { ; }
+    SurfaceElementIndex(const SurfaceElementIndex& other) : i(other.i) {}
     SurfaceElementIndex & operator= (const SurfaceElementIndex & ai) 
     { i = ai.i; return *this; }
     SurfaceElementIndex & operator= (int ai) { i = ai; return *this; }
@@ -200,6 +203,7 @@ namespace netgen
   public:
     SegmentIndex () { ; }
     SegmentIndex (int ai) : i(ai) { ; }
+    SegmentIndex(const SegmentIndex& other) : i(other.i) {}
     SegmentIndex & operator= (const SegmentIndex & ai) 
     { i = ai.i; return *this; }
     SegmentIndex & operator= (int ai) { i = ai; return *this; }
@@ -595,6 +599,8 @@ namespace netgen
     ///
     Element (ELEMENT_TYPE type);
     ///
+    Element(const Element& other);
+    ///
     Element & operator= (const Element & el2);
   
     ///
@@ -932,6 +938,7 @@ namespace netgen
     DLL_HEADER FaceDescriptor(const Segment & seg);
     DLL_HEADER FaceDescriptor(const FaceDescriptor& other);
     DLL_HEADER ~FaceDescriptor()  { ; }
+    DLL_HEADER FaceDescriptor& operator=(const FaceDescriptor& other);
 
     DLL_HEADER int SegmentFits (const Segment & seg);
 

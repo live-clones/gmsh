@@ -29,13 +29,23 @@ namespace netgen
     DelaunayTet (const DelaunayTet & el)
     {
       for (int i = 0; i < 4; i++)
-	pnums[i] = el[i];
+        pnums[i] = el[i];
     }
 
     DelaunayTet (const Element & el)
     {
       for (int i = 0; i < 4; i++)
-	pnums[i] = el[i];
+        pnums[i] = el[i];
+    }
+
+    DelaunayTet& operator=(const DelaunayTet& other) {
+      if (this != &other) {
+        for (int i = 0; i < 4; ++i) {
+          pnums[i] = other.pnums[i];
+          nb[i] = other.nb[i];
+        }
+      }
+      return *this;
     }
     
     PointIndex & operator[] (int i) { return pnums[i]; }
