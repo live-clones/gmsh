@@ -793,7 +793,7 @@ namespace netgen
     int GetPartition () const { return 0; }
 #endif
 
-    int hp_elnr;
+    int hp_elnr{0};
   };
 
   ostream & operator<<(ostream  & s, const Element & el);
