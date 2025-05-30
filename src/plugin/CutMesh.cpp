@@ -7,9 +7,9 @@
 #include "GModel.h"
 #include "gmshLevelset.h"
 
-StringXNumber CutMeshOptions_Number[] = {{GMSH_FULLRC, "View", nullptr, -1.},
-                                         {GMSH_FULLRC, "Split", nullptr, 0.},
-                                         {GMSH_FULLRC, "SaveTri", nullptr, 0.}};
+StringXNumber CutMeshOptions_Number[] = {{GMSH_FULLRC, "View", nullptr, -1., ""},
+                                         {GMSH_FULLRC, "Split", nullptr, 0., ""},
+                                         {GMSH_FULLRC, "SaveTri", nullptr, 0., ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterCutMeshPlugin() { return new GMSH_CutMeshPlugin(); }

@@ -9,9 +9,9 @@
 #include "PView.h"
 
 StringXNumber GaussPointsOptions_Number[] = {
-  {GMSH_FULLRC, "Order", nullptr, 0},
-  {GMSH_FULLRC, "Dimension", nullptr, 2},
-  {GMSH_FULLRC, "PhysicalGroup", nullptr, 0}};
+  {GMSH_FULLRC, "Order", nullptr, 0, ""},
+  {GMSH_FULLRC, "Dimension", nullptr, 2, ""},
+  {GMSH_FULLRC, "PhysicalGroup", nullptr, 0, ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterGaussPointsPlugin()

@@ -1782,7 +1782,7 @@ StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "Smoothing" , opt_post_smooth , 0. ,
     "Apply (non-reversible) smoothing to post-processing view when merged" },
 
-  { 0, nullptr , nullptr , 0. }
+  { 0, nullptr , nullptr , 0., "" }
 } ;
 
 StringXNumber ViewOptions_Number[] = {
@@ -2201,7 +2201,7 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "Width" , opt_print_width , -1. ,
     "Width of printed image; use (possibly scaled) current width if < 0)" },
 
-  { 0, nullptr , nullptr , 0. }
+  { 0, nullptr , nullptr , 0., "" }
 } ;
 
 // COLORS

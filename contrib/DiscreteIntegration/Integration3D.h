@@ -47,6 +47,7 @@ class DI_Point
   DI_Point (double x, double y, double z, const double ls) : x_(x), y_(y), z_(z) {addLs(ls);}
   DI_Point (double x, double y, double z, const DI_Element *e,
             const std::vector<gLevelset *> &RPNi) : x_(x), y_(y), z_(z) {computeLs(e, RPNi);}
+  DI_Point(const DI_Point& other) : x_(other.x_), y_(other.y_), z_(other.z_), Ls(other.Ls) {}
   virtual ~DI_Point(){}
   virtual const nodalBasis* getFunctionSpace(int o) const
   { return BasisFactory::getNodalBasis(MSH_PNT); }

@@ -929,8 +929,11 @@ namespace netgen
                 infile >> nep;
                 el.SetNP(nep);
 
-                for (int j = 0; j < nep; j++)
-                  infile >> (int&)(el[j]);
+                for (int j = 0; j < nep; j++) {
+                  int temp;
+                  infile >> temp;
+                  el[j] = netgen::PointIndex(temp);
+                }
 
                 if (inverttets)
                   el.Invert();
@@ -1402,7 +1405,9 @@ namespace netgen
 
                 for (int j = 0; j < nep; j++)
                   {
-                    infile >> (int&)(el[j]);
+                    int temp;
+                    infile >> temp;
+                    el[j] = static_cast<netgen::PointIndex>(temp);
                     el[j] = el[j]+oldnp;
                   }
 

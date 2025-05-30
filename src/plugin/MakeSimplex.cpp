@@ -6,7 +6,7 @@
 #include "MakeSimplex.h"
 
 StringXNumber MakeSimplexOptions_Number[] = {
-  {GMSH_FULLRC, "View", nullptr, -1.}};
+  {GMSH_FULLRC, "View", nullptr, -1., ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterMakeSimplexPlugin()

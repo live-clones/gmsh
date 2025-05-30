@@ -205,15 +205,17 @@ public:
   double currentDistance, tgtAnisoRatio, beta;
   int iRecombine, iIntersect, betaLaw, nb_divisions;
   DistanceField *currentClosest;
-  virtual bool isotropic() const { return false; }
-  virtual const char *getName();
-  virtual std::string getDescription();
+  virtual bool isotropic() const override { return false; }
+  virtual const char *getName() override;
+  virtual std::string getDescription() override;
   BoundaryLayerField();
   ~BoundaryLayerField() { removeAttractors(); }
   virtual double operator()(double x, double y, double z,
-                            GEntity *ge = nullptr);
+                            GEntity *ge = nullptr) override;
+  virtual void operator()(double x, double y, double z, SVector3 &metr,
+                          GEntity *ge = nullptr) override {}
   virtual void operator()(double x, double y, double z, SMetric3 &metr,
-                          GEntity *ge = nullptr);
+                          GEntity *ge = nullptr) override;
   bool isEdgeBL(int iE) const
   {
     return std::find(_curveTags.begin(), _curveTags.end(), iE) !=

@@ -13,19 +13,19 @@
 #endif
 
 StringXNumber CutGridOptions_Number[] = {
-  {GMSH_FULLRC, "X0", GMSH_CutGridPlugin::callbackX0, 0.},
-  {GMSH_FULLRC, "Y0", GMSH_CutGridPlugin::callbackY0, 0.},
-  {GMSH_FULLRC, "Z0", GMSH_CutGridPlugin::callbackZ0, 0.},
-  {GMSH_FULLRC, "X1", GMSH_CutGridPlugin::callbackX1, 1.},
-  {GMSH_FULLRC, "Y1", GMSH_CutGridPlugin::callbackY1, 0.},
-  {GMSH_FULLRC, "Z1", GMSH_CutGridPlugin::callbackZ1, 0.},
-  {GMSH_FULLRC, "X2", GMSH_CutGridPlugin::callbackX2, 0.},
-  {GMSH_FULLRC, "Y2", GMSH_CutGridPlugin::callbackY2, 1.},
-  {GMSH_FULLRC, "Z2", GMSH_CutGridPlugin::callbackZ2, 0.},
-  {GMSH_FULLRC, "NumPointsU", GMSH_CutGridPlugin::callbackU, 20},
-  {GMSH_FULLRC, "NumPointsV", GMSH_CutGridPlugin::callbackV, 20},
-  {GMSH_FULLRC, "ConnectPoints", GMSH_CutGridPlugin::callbackConnect, 1},
-  {GMSH_FULLRC, "View", nullptr, -1.}};
+  {GMSH_FULLRC, "X0", GMSH_CutGridPlugin::callbackX0, 0., ""},
+  {GMSH_FULLRC, "Y0", GMSH_CutGridPlugin::callbackY0, 0., ""},
+  {GMSH_FULLRC, "Z0", GMSH_CutGridPlugin::callbackZ0, 0., ""},
+  {GMSH_FULLRC, "X1", GMSH_CutGridPlugin::callbackX1, 1., ""},
+  {GMSH_FULLRC, "Y1", GMSH_CutGridPlugin::callbackY1, 0., ""},
+  {GMSH_FULLRC, "Z1", GMSH_CutGridPlugin::callbackZ1, 0., ""},
+  {GMSH_FULLRC, "X2", GMSH_CutGridPlugin::callbackX2, 0., ""},
+  {GMSH_FULLRC, "Y2", GMSH_CutGridPlugin::callbackY2, 1., ""},
+  {GMSH_FULLRC, "Z2", GMSH_CutGridPlugin::callbackZ2, 0., ""},
+  {GMSH_FULLRC, "NumPointsU", GMSH_CutGridPlugin::callbackU, 20, ""},
+  {GMSH_FULLRC, "NumPointsV", GMSH_CutGridPlugin::callbackV, 20, ""},
+  {GMSH_FULLRC, "ConnectPoints", GMSH_CutGridPlugin::callbackConnect, 1, ""},
+  {GMSH_FULLRC, "View", nullptr, -1., ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterCutGridPlugin() { return new GMSH_CutGridPlugin(); }

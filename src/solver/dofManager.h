@@ -586,7 +586,7 @@ public:
       itConstraint = constraints.find(R);
       if(itConstraint != constraints.end()) {
         for(unsigned j = 0; j < (itConstraint->second).linear.size(); j++) {
-          dataMat tmp;
+          dataMat tmp{};
           dofTraits<T>::gemm(tmp, (itConstraint->second).linear[j].second,
                              value, 1, 0);
           assemble((itConstraint->second).linear[j].first, tmp);
