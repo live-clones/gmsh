@@ -568,8 +568,10 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
 
     std::vector<GFace *> faces = model_faces(gm);
     size_t ntris = 0;
+    std::set<GFace*> compnds;
     for(size_t f = 0; f < faces.size(); ++f) {
       GFace *gf = faces[f];
+      if (gf->compoundSurface)compnds.insert(gf->compoundSurface);
       auto it = bmesh.faceBackgroundMeshes.find(gf);
       if(it != bmesh.faceBackgroundMeshes.end()) {
         ntris += it->second.triangles.size();
@@ -582,13 +584,13 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
     for(size_t f = 0; f < faces.size(); ++f) {
       GFace *gf = faces[f];
-
+      
       if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility())
         continue;
       if(CTX::instance()->debugSurface > 0 &&
          gf->tag() != CTX::instance()->debugSurface)
         continue;
-
+      if (compnds.find(gf) != compnds.end()) continue;
       /* Compute a cross field on each face */
 
       /* Get mesh elements for solver */

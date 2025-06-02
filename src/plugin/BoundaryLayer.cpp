@@ -392,6 +392,7 @@ bool bl2d(GModel *m,
   std::vector<MElement*> ecole_des_fans;
   fanitzie (inSurfaces, onVertices, ecole_des_fans); 
   for (auto e : ecole_des_fans)layers[e] = width;
+  
   return true;  
 }
 
@@ -778,16 +779,29 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   //    h += wid;
   //    printf("h = %g y = %g\n",wid,h);
   //  }
+  printf("coucou1\n");
   
   bl2d(m, vv, e, f, ww, layers);
 
-  for (GModel::eiter eit = m->firstEdge() ; eit != m->lastEdge() ; ++eit) meshGEdgeInsertBoundaryLayer(*eit, ww);
+  printf("coucou1\n");
   
+
+  for (GModel::eiter eit = m->firstEdge() ; eit != m->lastEdge() ; ++eit) meshGEdgeInsertBoundaryLayer(*eit, ww);
+
+  printf("coucou1\n");
+  
+
   for (auto gf : f) 
     expandBL(gf, perfectShapes, layers, f);
 
-  splitounette ( f , layers , ws );
+  printf("coucou1\n");
+  
 
+  splitounette ( f , layers , ws );
+  printf("coucou1\n");
+  
+
+  
   //  for (auto gf : f) 
   //    expandBL(gf, perfectShapes, layers, f);
 
