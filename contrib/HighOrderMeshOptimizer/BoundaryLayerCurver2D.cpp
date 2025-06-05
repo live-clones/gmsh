@@ -1437,7 +1437,7 @@ namespace BoundaryLayerCurver {
       double f_l = gamma * alpha * alpha;
 
       // Construct the system
-      _construct_system(kappa, f_0, f_s, f_l, A_lin, b_lin, A_pos, b_pos,
+      _construct_system(kappa * (1 - gamma), f_0, f_s, f_l, A_lin, b_lin, A_pos, b_pos,
                              A_ext, b_ext, A_tg1, b_tg1, A_tg2, b_tg2, A, b);
 
       // Solve the system
@@ -1539,6 +1539,7 @@ namespace BoundaryLayerCurver {
           // In case the discriminant is negative (unlikely), fallback to halving alpha
           next_x_i = 0.5 * (x_i + prev_x);
         }
+        next_x_i = .5 * (next_x_i + x_i); //FIXME Hack
 
         // Print iteration information
         // std::cout << "Iteration " << k << ": "
@@ -1856,8 +1857,8 @@ namespace BoundaryLayerCurver {
       gamma = current_h;
       // gamma = 1;
       gamma = 0;
-      double kappa = .1;
-      double tau = .66;
+      double kappa = .5;
+      double tau = .33;
       _reduceCurving_newIdea2(edge, minThickness*tau, gface, gamma, kappa, baseEdge, next);
 
       if(gface) projectVerticesIntoGFace(edge, gface, false);
