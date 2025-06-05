@@ -3008,7 +3008,7 @@ namespace BoundaryLayerCurver {
     // TODO: Here we need to check the validity/quality of the two last elements
     //  (last of BL and exterior one) and reduce the curvature if necessary.
 
-    double gamma = 1;
+    double gamma = 0;
     double start = 0;
     int start_index = -1;
     int N = (int)stackEdges.size();
@@ -3073,7 +3073,7 @@ namespace BoundaryLayerCurver {
       lengths[i] = norm3(v->point() - v0->point());
     }
     for(auto i = 1; i < stackEdges.size(); ++i) {
-      double this_angle = angle + (rand() % 1001 - 500) / 500. * M_PI / 3;
+      double this_angle = angle + (rand() % 1001 - 500) / 500. * M_PI / 3.5;
       double this_length = lengths[i-1] * ((rand() % 1001) / 1000. * 1.5 + .5);
       MVertex *v0 = stackEdges[i-1].getVertex(0);
       MVertex *v = stackEdges[i].getVertex(0);
@@ -3456,9 +3456,9 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
   //   BoundaryLayerCurver::touch_boundary(bndEl2column[i], nullptr, gedge, normal);
   // }
 
-  // for(int i = 0; i < bndEl2column.size(); ++i) {
-  //   BoundaryLayerCurver::change_normals(bndEl2column[i], nullptr, gedge, normal);
-  // }
+  for(int i = 0; i < bndEl2column.size(); ++i) {
+    BoundaryLayerCurver::change_normals(bndEl2column[i], nullptr, gedge, normal);
+  }
 
   // BoundaryLayerCurver::reorient_normals(bndEl2column, nullptr, gedge, normal);
 
