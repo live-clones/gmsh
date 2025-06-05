@@ -1608,7 +1608,13 @@ namespace BoundaryLayerCurver {
           n.normalize();
         }
         // Projection
-        SVector3 t = edge->tangent(-1);
+        SVector3 t = edge->tangent(i ? 1 : -1);
+        if(i == 0) {
+          t = edge->getVertex(2)->point() - v1->point();
+        }
+        else {
+          t = v1->point() - edge->getVertex(polyo)->point();
+        }
         dirs[i] = t - dot(t, n) * n;
         dirs[i].normalize();
         // A_ext(i, 0) = dir(0);
