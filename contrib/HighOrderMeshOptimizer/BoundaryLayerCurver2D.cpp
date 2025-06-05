@@ -26,6 +26,7 @@
 
 #include <vector>
 #include <tuple>
+#include <unordered_set>
 #include "BoundaryLayerCurver.h"
 #include "MQuadrangle.h"
 #include "MTriangle.h"
@@ -3057,17 +3058,25 @@ namespace BoundaryLayerCurver {
         SPoint3 p0 = v_common->point(), p1;
         MVertex *v0 = v_common;
 
-        int stop = std::min(column.second.size(), column_other.second.size())-1;
-        for(int i = 0; i < stop; ++i) {
-          el0 = column.second[i];
-          el1 = column_other.second[i];
+        std::vector<MElement*> stack;
+        MEdge bottomEdge;
+        if(column.second.size() > column_other.second.size()) {
+          stack = column.second;
+          bottomEdge = b0->getEdge(0);
+        }
+        else {
+          stack = column_other.second;
+          bottomEdge = b1->getEdge(0);
+        }
 
-          // Compute the common edge again
-          if(!computeCommonEdge(el0, el1, e)) {
-            std::cout << "Error: common edge not found" << std::endl;
+        for(int i = 0; i < (int)stack.size()-1; ++i) {
+          MElement *el = stack[i];
+          MEdge e;
+          for(int j = 0; j < 4; ++j) {
+            e = el->getEdge(j);
+            if(e == bottomEdge) continue;
+            if(e.getVertex(0) == v0 || e.getVertex(1) == v0) break;
           }
-
-          // Compute the "other" vertex in the current edge that is not v_common
           MVertex *other_v = nullptr;
           for(int j = 0; j < 2; ++j) {
             if(e.getVertex(j) != v0) { // `e(j)` gives the vertices of the edge
@@ -3094,14 +3103,16 @@ namespace BoundaryLayerCurver {
           p0 = p1;
 
           // Interior nodes
-          MEdgeN e_ho = el0->getHighOrderEdge(e);
-          for(int j = 2; j < polyo; ++i) {
+          MEdgeN e_ho = el->getHighOrderEdge(e);
+          for(int j = 2; j < polyo+1; ++j) {
             double f = static_cast<double>(j-1) / polyo;
             double x = (1-f) * e_ho.getVertex(0)->x() + f * e_ho.getVertex(1)->x();
             double y = (1-f) * e_ho.getVertex(0)->y() + f * e_ho.getVertex(1)->y();
             double z = (1-f) * e_ho.getVertex(0)->z() + f * e_ho.getVertex(1)->z();
             e_ho.getVertex(j)->setXYZ(x, y, z);
           }
+
+          computeCommonEdge(stack[i+1], el, bottomEdge);
         }
       }
     }
@@ -3277,6 +3288,52 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
     return;
   }
 
+  if(normal.z() < .5) {
+    normal *= -1; // FIXME Hack for making work msh quad HO
+  }
+
+  if(bndEl2column.empty()) return;
+
+  std::unordered_set<MVertex*> vertices_to_keep;
+  for(auto gface = GModel::current()->firstFace(); gface != GModel::current()->lastFace(); ++gface) {
+    std::vector<MQuadrangle*> quadrangles = (*gface)->quadrangles;
+    for(auto quad : quadrangles) {
+      int num_vert = quad->getNumVertices();
+      for(int i = 0; i < num_vert; ++i) {
+        MVertex *v = quad->getVertex(i);
+        vertices_to_keep.insert(v);
+      }
+    }
+  }
+
+  for(auto gface = GModel::current()->firstFace(); gface != GModel::current()->lastFace(); ++gface) {
+    std::vector<MTriangle*> triangles = (*gface)->triangles;
+    for(auto triangle : triangles) {
+      int num_vert = triangle->getNumVertices();
+      int polyo = triangle->getPolynomialOrder();
+      for(int i = 3*polyo; i < num_vert; ++i) {
+        MVertex *v = triangle->getVertex(i);
+        v->setXYZ(-100, -100, 0);
+      }
+    }
+    (*gface)->triangles.clear(); // FIXME Hack for visu
+
+    std::vector<MVertex*> vertices = (*gface)->mesh_vertices;
+
+    std::vector<MVertex*> vertices_to_remove;
+    for (MVertex *v : vertices) {
+      if (vertices_to_keep.find(v) == vertices_to_keep.end()) {
+        vertices_to_remove.push_back(v);
+      }
+    }
+
+    std::cout << "Removing " << vertices_to_remove.size() << " vertices" << std::endl;
+
+    for(auto &v : vertices_to_remove) {
+      v->setXYZ(-100, -100, 0);
+    }
+  }
+
   //  for (int i = 0; i < bndEl2column.size(); ++i) {
   //    bndEl2column[i].first->setVisibility(1);
   //    for (std::size_t j = 0; j < bndEl2column[i].second.size(); ++j) {
@@ -3284,9 +3341,15 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
   //    }
   //  }
 
-//  for(int i = 0; i < bndEl2column.size(); ++i) {
-//    BoundaryLayerCurver::change_normals(bndEl2column[i], nullptr, gedge, normal);
-//  }
+  // for(int i = 0; i < bndEl2column.size(); ++i) {
+  //   BoundaryLayerCurver::touch_boundary(bndEl2column[i], nullptr, gedge, normal);
+  // }
+
+  // for(int i = 0; i < bndEl2column.size(); ++i) {
+  //   BoundaryLayerCurver::change_normals(bndEl2column[i], nullptr, gedge, normal);
+  // }
+
+  // BoundaryLayerCurver::reorient_normals(bndEl2column, nullptr, gedge, normal);
 
   for(int i = 0; i < bndEl2column.size(); ++i) {
     // if (bndEl2column[i].first->getNum() != 205) continue; // t161
@@ -3311,7 +3374,8 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
     // if (bndEl2column[i].first->getNum() != 1151) continue; // symetric of concave
     // if (bndEl2column[i].first->getNum() != 1156) continue; // Strange
     // if (bndEl2column[i].first->getNum() != 1157) continue; // next to Strange
-    //BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], nullptr, gedge, normal);
+    // if (bndEl2column[i].first->getNum() != 6994) continue; // HO -> trailingL2
+    // BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], nullptr, gedge, normal);
     //if (bndEl2column[i].first->getNum() != 12882) continue;
     BoundaryLayerCurver::curve2Dcolumn_newIdea(bndEl2column[i], nullptr, gedge, normal);
   }
