@@ -673,8 +673,9 @@ namespace BoundaryLayerCurver {
     }
 
     void _drawIdealPositionEdge(const MEdgeN *baseEdge, const _Frame &frame,
-                                double coeffs[2][3], GEdge *gedge)
+                                double coeffs[2][3], GEdge *gedge = nullptr)
     {
+      if(!gedge) gedge = *GModel::current()->firstEdge();
       int N = 100;
       MVertex *previous = nullptr;
 
@@ -1787,7 +1788,7 @@ namespace BoundaryLayerCurver {
       // Least square projection
       fullMatrix<double> xyz(sizeSystem + 2, 3);
       _idealPositionEdge(baseEdge, frame, coeffs, sizeSystem, gaussPnts, xyz);
-      //      _drawIdealPositionEdge(baseEdge, frame, coeffs, (GEdge*)gedge);
+      // _drawIdealPositionEdge(baseEdge, frame, coeffs);
       for(int i = 0; i < 2; ++i) {
         xyz(sizeSystem + i, 0) = edge->getVertex(i)->x();
         xyz(sizeSystem + i, 1) = edge->getVertex(i)->y();
