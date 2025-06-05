@@ -634,6 +634,8 @@ namespace BoundaryLayerCurver {
 
       // TODO : Interpolation angulaire si ouverture, linéaire si fermeture
 
+      double angle1 = atan2(coeffs[0][1], coeffs[0][0]);
+      double angle2 = atan2(coeffs[1][1], coeffs[1][0]);
 
       for(int i = 0; i < nbPoints; ++i) {
         double u = refPnts[i+1];
@@ -655,8 +657,6 @@ namespace BoundaryLayerCurver {
             interpolatedCoeffs[2] * w;
 
         // TODO: this is for a plane only, adapt the code for 3d!
-        double angle1 = atan2(coeffs[0][1], coeffs[0][0]);
-        double angle2 = atan2(coeffs[1][1], coeffs[1][0]);
         double angle = angle1 * (1 - u) / 2 + angle2 * (1 + u) / 2;
         double dist1 = norm3(coeffs[0]);
         double dist2 = norm3(coeffs[1]);
@@ -2258,11 +2258,11 @@ namespace BoundaryLayerCurver {
       _linearize(x1, x1linear);
       _linearize(xN, xNlinear);
       delta0 = x0;
-      delta0.add(x0linear, -1);
+      delta0.axpy(x0linear, -1);
       delta1 = x1;
-      delta1.add(x1linear, -1);
+      delta1.axpy(x1linear, -1);
       deltaN = xN;
-      deltaN.add(xNlinear, -1);
+      deltaN.axpy(xNlinear, -1);
     }
 
     void _computeTerms(const fullMatrix<double> &delta0,
@@ -2282,10 +2282,10 @@ namespace BoundaryLayerCurver {
       const int numVertices = delta0.size1();
 
       fullMatrix<double> delta10 = delta1;
-      delta10.add(delta0, -1);
+      delta10.axpy(delta0, -1);
       delta10.scale(1 / eta1);
       fullMatrix<double> deltaN0 = deltaN;
-      deltaN0.add(delta0, -1);
+      deltaN0.axpy(delta0, -1);
 
       term0.resize(numVertices, 3);
       term1d10.resize(numVertices, 3);
@@ -2307,7 +2307,7 @@ namespace BoundaryLayerCurver {
       fullMatrix<double> dum0(numVertices, 3);
       fullMatrix<double> dum1(numVertices, 3);
       diff.copy(deltaN0);
-      diff.add(delta10, -1);
+      diff.axpy(delta10, -1);
       tfiData->T0.mult(diff, dum0);
       tfiData->T1.mult(diff, dum1);
       tfiData->T0.mult(dum0, term20);
