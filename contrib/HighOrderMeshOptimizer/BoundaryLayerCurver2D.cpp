@@ -1888,6 +1888,38 @@ namespace BoundaryLayerCurver {
       if(gface) projectVerticesIntoGFace(edge, gface, false);
     }
 
+    void _reduceCurving2(MEdgeN *edge, double dx, const GFace *gface)
+    {
+      int order = edge->getPolynomialOrder();
+
+      MVertex *v0 = edge->getVertex(0);
+      MVertex *v1 = edge->getVertex(1);
+
+      double max_h = 0;
+      for(int i = 2; i < order + 1; ++i) {
+        double f = (double)(i - 1) / order;
+        MVertex *v = edge->getVertex(i);
+        double dh_x = v->x() - ((1 - f) * v0->x() + f * v1->x());
+        double dh_y = v->y() - ((1 - f) * v0->y() + f * v1->y());
+        double dh_z = v->z() - ((1 - f) * v0->z() + f * v1->z());
+        max_h = std::max(max_h, std::sqrt(dh_x*dh_x + dh_y*dh_y + dh_z*dh_z));
+      }
+
+      double factor = dx / max_h;
+
+      for(int i = 2; i < order + 1; ++i) {
+        double f = (double)(i - 1) / order;
+        MVertex *v = edge->getVertex(i);
+        v->x() =
+          (1 - factor) * v->x() + factor * ((1 - f) * v0->x() + f * v1->x());
+        v->y() =
+          (1 - factor) * v->y() + factor * ((1 - f) * v0->y() + f * v1->y());
+        v->z() =
+          (1 - factor) * v->z() + factor * ((1 - f) * v0->z() + f * v1->z());
+      }
+      if(gface) projectVerticesIntoGFace(edge, gface, false);
+    }
+
     void _reduceOrderCurve(MEdgeN *edge, int order, const GFace *gface)
     {
       const int orderCurve = edge->getPolynomialOrder();
@@ -2062,6 +2094,79 @@ namespace BoundaryLayerCurver {
       }
       std::cout << "(" << R << ", " << coeff << ", " << tol << ")" << std::endl;
       return coeff;
+    }
+
+    double match_gamma_simpler2(double gamma, MEdgeN *edge, const GFace *gface, const SVector3 &normal)
+    {
+      int polyo = edge->getPolynomialOrder();
+
+      if(gamma >= 1.) {
+        fullMatrix<double> xyz(2, 3);
+        for(int i = 0; i < 2; ++i) {
+          xyz(i, 0) = edge->getVertex(i)->x();
+          xyz(i, 1) = edge->getVertex(i)->y();
+          xyz(i, 2) = edge->getVertex(i)->z();
+        }
+        double max_displ = 0;
+        for(int i = 2; i < polyo+1; ++i) {
+          double f = (i - 1.) / polyo;
+          double dx = edge->getVertex(i)->x() - ((1-f) * xyz(0, 0) + f * xyz(1, 0));
+          double dy = edge->getVertex(i)->y() - ((1-f) * xyz(0, 1) + f * xyz(1, 1));
+          double dz = edge->getVertex(i)->z() - ((1-f) * xyz(0, 2) + f * xyz(1, 2));
+          max_displ = std::max(max_displ, sqrt(dx*dx + dy*dy + dz*dz));
+          edge->getVertex(i)->x() = (1-f) * xyz(0, 0) + f * xyz(1, 0);
+          edge->getVertex(i)->y() = (1-f) * xyz(0, 1) + f * xyz(1, 1);
+          edge->getVertex(i)->z() = (1-f) * xyz(0, 2) + f * xyz(1, 2);
+        }
+        return max_displ;
+      }
+
+      fullMatrix<double> xyz_gmsh, xyz_seq;
+      compute_xyz_gmsh_seq(edge, xyz_gmsh, xyz_seq);
+
+      // _reduceCurving(edge, .25, gface);
+
+      fullMatrix<double> xyz_HO(polyo-1, 3), xyz_lin(polyo-1, 3);
+      for(int i = 0; i < polyo-1; ++i) {
+        xyz_HO(i, 0) = edge->getVertex(i+2)->x();
+        xyz_HO(i, 1) = edge->getVertex(i+2)->y();
+        xyz_HO(i, 2) = edge->getVertex(i+2)->z();
+        double f = (i + 1.) / polyo;
+        xyz_lin(i, 0) = (1-f) * edge->getVertex(0)->x() + f * edge->getVertex(1)->x();
+        xyz_lin(i, 1) = (1-f) * edge->getVertex(0)->y() + f * edge->getVertex(1)->y();
+        xyz_lin(i, 2) = (1-f) * edge->getVertex(0)->z() + f * edge->getVertex(1)->z();
+      }
+
+      double R = compute_R(xyz_seq, xyz_HO);
+      double coeff = 0;
+      double target = .95 * gamma;
+      double tol = .05 * gamma;
+      fullMatrix<double> new_xyz_HO = xyz_HO;
+
+      while(R + tol < target) {
+        coeff = 1 + (coeff-1) / (R-1) * (target-1) ;
+
+        new_xyz_HO = xyz_HO;
+        new_xyz_HO.scale(1-coeff);
+        new_xyz_HO.axpy(xyz_lin, coeff);
+
+        // xyz_gmsh.print(std::string("xyz_gmsh"), std::string(""));
+        // new_xyz_HO.print(std::string("new_xyz_HO"), std::string(""));
+        R = compute_R(xyz_seq, new_xyz_HO);
+      }
+
+      double max_displ = 0;
+      for(int i = 2; i < polyo+1; ++i) {
+        double dx = edge->getVertex(i)->x() - new_xyz_HO(i-2, 0);
+        double dy = edge->getVertex(i)->y() - new_xyz_HO(i-2, 1);
+        double dz = edge->getVertex(i)->z() - new_xyz_HO(i-2, 2);
+        max_displ = std::max(max_displ, sqrt(dx*dx + dy*dy + dz*dz));
+        edge->getVertex(i)->x() = new_xyz_HO(i-2, 0);
+        edge->getVertex(i)->y() = new_xyz_HO(i-2, 1);
+        edge->getVertex(i)->z() = new_xyz_HO(i-2, 2);
+      }
+      std::cout << "(" << R << ", " << coeff << ", " << tol << ")" << std::endl;
+      return max_displ;
     }
   } // namespace EdgeCurver2D
 
@@ -2903,23 +3008,29 @@ namespace BoundaryLayerCurver {
     // TODO: Here we need to check the validity/quality of the two last elements
     //  (last of BL and exterior one) and reduce the curvature if necessary.
 
-    double gamma = 0;
-    double start = .5;
+    double gamma = 1;
+    double start = 0;
     int start_index = -1;
     int N = (int)stackEdges.size();
     if(gamma) {
-      double coeff = EdgeCurver2D::match_gamma_simpler(gamma, &stackEdges.back(), gface, normal);
+      double coeff = 0, max_displ = 0;
+      coeff = EdgeCurver2D::match_gamma_simpler(gamma, &stackEdges.back(), gface, normal);
+      // max_displ = EdgeCurver2D::match_gamma_simpler2(gamma, &stackEdges.back(), gface, normal);
       std::cout << "coeff = " << coeff << std::endl;
       for(int i = 1; i < N - 1; ++i) {
         double c = 0;
+        double dx = 0;
         if(ratios[i] > start) {
           c = coeff / (1 - start) * (ratios[i] - start);
-          if(start_index == -1) start_index = i - 1;
-          c = coeff / (N-1 - start_index) * (i - start_index);
+          dx = max_displ / (1 - start) * (ratios[i] - start);
+          // if(start_index == -1) start_index = i - 1;
+          // c = coeff / (N-1 - start_index) * (i - start_index);
+          // dx = max_displ / (N-1 - start_index) * (i - start_index);
           std::cout << "c[" << i << "] = " << c << std::endl;
         }
         // EdgeCurver2D::linearize(c, &stackEdges[i], gface, normal);
         EdgeCurver2D::_reduceCurving(&stackEdges[i], c, gface);
+        // EdgeCurver2D::_reduceCurving2(&stackEdges[i], dx, gface);
       }
     }
     // Reduce curving based on
