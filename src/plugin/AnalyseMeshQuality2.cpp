@@ -103,40 +103,29 @@ namespace {
 }
 
 StringXNumber MeshQuality2Options_Number[] = {
+  // Quality metrics to include:
+  {GMSH_FULLRC, "enableDistortionQuality", nullptr, 1, "OFF, (1+)=includeDistortionQuality"},
+  {GMSH_FULLRC, "enableAspectQuality", nullptr, 0, "OFF, (1+)=includeAspectQuality"},
   // What to do:
-  {GMSH_FULLRC, "skipComputationMetrics", nullptr, 0, "OFF, ON=usePreviousData"},
   {GMSH_FULLRC, "createElementsView", nullptr, 0, "OFF, ON"},
   {GMSH_FULLRC, "createPlotView", nullptr, 1, "OFF, ON"},
-  {GMSH_FULLRC, "hideElements", nullptr, 1, "OFF, 1=skipHidingIfAllWouldBeHidden, 2=forceHiding"},
-  {GMSH_FULLRC, "guidanceLevel", nullptr, 0, "-1=minimalOutput, 0=verbose, 1=verboseAndExplanations"},
-  // Metrics to include:
-  {GMSH_FULLRC, "enableDistortionQuality", nullptr, 1, "OFF, 1+=includeDistortionQuality"},
-  {GMSH_FULLRC, "enableAspectQuality", nullptr, 0, "OFF, 1+=includeAspectQuality"},
+  {GMSH_FULLRC, "adjustVisibilityElements", nullptr, 1, "OFF, 1=skipIfAllWouldBeHidden, 2=acceptAllHidden"},
+  {GMSH_FULLRC, "guidanceLevel", nullptr, 0, "(-1)=minimalOutput, 0=verbose, 1=verboseAndExplanations"},
   // Elements Selection:
-  {GMSH_FULLRC, "dimensionPolicy", nullptr, 0, "-1=force2D, 0=prioritize3D, 1=2D+3D, 2=combine2D+3D"},
+  {GMSH_FULLRC, "dimensionPolicy", nullptr, 0, "(-1)=force2D, 0=prioritize3D, 1=2D+3D, 2=combine2D+3D"},
   {GMSH_FULLRC, "restrictToVisibleElements", nullptr, 0, "OFF, ON=analyzeOnlyVisibleElements"},
   {GMSH_FULLRC, "restrictToCurvedElements", nullptr, 0, "OFF, ON=analyzeOnlyNonStraightElements"},
-  // Suggestion:
-  //    adjustVisibility/setVisibilityElements = OFF, 1=skipIfAllWouldBeHidden, 2=acceptAllHidden
-  //  Visibility options:
-  //    visibilityPolicy = -1=validity|skip, 0=validity|1, 1=qualOR, 2=qualAND
-  //    visibilityCriterion = 0=proportionVisibleElem, 1=numVisibleElem, 2=metricValue
-  //    visibilityThreshold = DOUBLE (which meaning depends on visibilityCriterion)
-  //    hideWorst = OFF=makeWorstVisible, ON=makeBestVisible
-  //    doNoSetVisible = OFF=performHidingAndUnhiding, ON=justPerformHiding
   // Hiding options:
-  {GMSH_FULLRC, "hidingPolicy", nullptr, 0, "-1=validity|skip, 0=validity|1, 1=qualOR, 2=qualAND"},
-  // FIXME 2=proportionElemToKeep as default? Or at least 1?
-  {GMSH_FULLRC, "hidingCriterion", nullptr, 1, "0=metricValue, 1=numElemToKeep, 2=proportionElemToKeep"},
-  {GMSH_FULLRC, "hidingThreshold", nullptr, 25, "DOUBLE (which meaning depends on hidingCriterion)"},
-  {GMSH_FULLRC, "hideWorst", nullptr, 0, "OFF=hideBest, ON"},
-  // FIXME I think i should have 'skipUnhiding' = 0 OR 'noUnhiding' = 0 OR 'skipMakingVisible' = 0
-  //  because it can be counter intuitive unhideOtherElements = 0
-  {GMSH_FULLRC, "unhideOtherElements", nullptr, 0, "OFF=justHide, ON=alsoUnhide"},
+  {GMSH_FULLRC, "visibilityPolicy", nullptr, 0, "(-1)=validity|skip, 0=validity|1, 1=qualOR, 2=qualAND"},
+  {GMSH_FULLRC, "visibilityCriterion", nullptr, 0, "0=proportionVisibleElem, 1=numVisibleElem, 2=metricValue"},
+  {GMSH_FULLRC, "visibilityThreshold", nullptr, 10, "DOUBLE (which meaning depends on visibilityCriterion)"},
+  {GMSH_FULLRC, "hideWorstElements", nullptr, 0, "OFF=hideBestElements, ON"},
+  {GMSH_FULLRC, "doNoSetVisible", nullptr, 0, "OFF=performHidingAndUnhiding, ON=justPerformHiding"},
   // Advanced computation options:
-  {GMSH_FULLRC, "dataManagementPolicy", nullptr, 0, "-1=skipExecutionJustFreeData, 0=freeOldDataIfMeshAbsent, 1=keepAllData"},
+  {GMSH_FULLRC, "usePreviousData", nullptr, 0, "OFF, ON=skipComputationMetrics"},
+  {GMSH_FULLRC, "dataManagementPolicy", nullptr, 0, "(-1)=skipExecutionJustFreeData, 0=freeOldDataIfMeshAbsent, 1=keepAllData"},
   {GMSH_FULLRC, "smartRecomputation", nullptr, 1, "OFF=alwaysRecompute, ON=avoidRecomputeIfTagsUnchanged"},
-  {GMSH_FULLRC, "skipValidity", nullptr, 0, "0-=includeValidity, ON=skipPreventiveValidityCheck"},
+  {GMSH_FULLRC, "skipValidity", nullptr, 0, "(0-)=includeValidity, ON=skipPreventiveValidityCheck"},
   // Advanced analysis options:
   {GMSH_FULLRC, "enableRatioJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=0-)"},
   {GMSH_FULLRC, "enableMinJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=0-)"},
@@ -164,11 +153,11 @@ StringXNumber MeshQuality2Options_Number[] = {
 constexpr int MeshQuality2Options_LegacyOptionsNumber = 8;
 
 std::pair<int, std::string> MeshQuality2Options_Headers[] = {
-  {0, "What to do"},
-  {5, "Metrics to include"},
-  {7, "Elements Selection"},
-  {10, "Hiding options"},
-  {15, "Advanced computation options"},
+  {0, "Quality metrics to include"},
+  {2, "What to do"},
+  {6, "Elements Selection"},
+  {9, "Elements hiding/visibility options"},
+  {14, "Advanced computation options"},
   {18, "Advanced analysis options"},
   {23, "Legacy options"},
 };
@@ -371,30 +360,30 @@ void Plug::_fetchParameters()
 
   double skipValidity, disto, aspect, minJ, ratioJ, dataManagePolicy;
 
-  // What to do:
-  pc.skip = static_cast<bool>(MeshQuality2Options_Number[0].def);
-  pp.createElemView = static_cast<bool>(MeshQuality2Options_Number[1].def);
-  pp.createPlot = static_cast<bool>(MeshQuality2Options_Number[2].def);
-  ph.todo = static_cast<int>(MeshQuality2Options_Number[3].def);
-  _verbose = static_cast<int>(MeshQuality2Options_Number[4].def);
-
   // Metrics to include:
-  disto = MeshQuality2Options_Number[5].def;
-  aspect = MeshQuality2Options_Number[6].def;
+  disto = MeshQuality2Options_Number[0].def;
+  aspect = MeshQuality2Options_Number[1].def;
+
+  // What to do:
+  pp.createElemView = static_cast<bool>(MeshQuality2Options_Number[2].def);
+  pp.createPlot = static_cast<bool>(MeshQuality2Options_Number[3].def);
+  ph.todo = static_cast<int>(MeshQuality2Options_Number[4].def);
+  _verbose = static_cast<int>(MeshQuality2Options_Number[5].def);
 
   // Elements Selection:
-  _dimensionPolicy = static_cast<int>(MeshQuality2Options_Number[7].def);
-  pc.onlyVisible = static_cast<bool>(MeshQuality2Options_Number[8].def);
-  pc.onlyCurved = static_cast<bool>(MeshQuality2Options_Number[9].def);
+  _dimensionPolicy = static_cast<int>(MeshQuality2Options_Number[6].def);
+  pc.onlyVisible = static_cast<bool>(MeshQuality2Options_Number[7].def);
+  pc.onlyCurved = static_cast<bool>(MeshQuality2Options_Number[8].def);
 
-  // Hiding options:
-  ph.policy = static_cast<int>(MeshQuality2Options_Number[10].def);
-  ph.criterion = static_cast<int>(MeshQuality2Options_Number[11].def);
-  ph.threshold = MeshQuality2Options_Number[12].def;
-  ph.worst = static_cast<bool>(MeshQuality2Options_Number[13].def);
-  ph.unhideToo = static_cast<bool>(MeshQuality2Options_Number[14].def);
+  // Visibility options:
+  ph.policy = static_cast<int>(MeshQuality2Options_Number[9].def);
+  ph.criterion = static_cast<int>(MeshQuality2Options_Number[10].def);
+  ph.threshold = MeshQuality2Options_Number[11].def;
+  ph.worst = static_cast<bool>(MeshQuality2Options_Number[12].def);
+  ph.unhideToo = static_cast<bool>(MeshQuality2Options_Number[13].def);
 
   // Advanced computation options:
+  pc.skip = static_cast<bool>(MeshQuality2Options_Number[14].def);
   dataManagePolicy = static_cast<int>(MeshQuality2Options_Number[15].def);
   pc.smartRecompute = static_cast<bool>(MeshQuality2Options_Number[16].def);
   skipValidity = MeshQuality2Options_Number[17].def;
@@ -550,7 +539,7 @@ void Plug::_fetchLegacyParameters()
     ph.threshold = val;
     ph.todo = ph.threshold < 99;
     ph.policy = 1;
-    ph.criterion = 0;
+    ph.criterion = 2;
     ph.unhideToo = false;
     if(ps.which[DISTO])
       ps.which[DISTO] = 2;
@@ -832,11 +821,11 @@ void Plug::_findElementsToHide(const Measures &measure,
   double limitVal;
   size_t numOfElements = static_cast<size_t>(_param.hide.threshold);
   switch(_param.hide.criterion) {
-  case 0:
+  case 2:
   limitVal = _param.hide.threshold;
     break;
 
-  case 2: {
+  case 0: {
     double tmp = clamp(_param.hide.threshold, 0., 100.) / 100.;
     tmp *= static_cast<double>(values.size() - 1);
     numOfElements = static_cast<size_t>(tmp);

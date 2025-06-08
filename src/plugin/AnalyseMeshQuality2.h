@@ -61,7 +61,7 @@ private:
     struct Hiding {
       int todo = 0;
       int policy = 0;
-      int criterion = 2;
+      int criterion = 0;
       double threshold = 10;
       bool worst = false;
       bool unhideToo = false;
@@ -76,7 +76,7 @@ private:
     bool check2D = false;
     bool check3D = false;
   };
-  enum Metric { VALIDITY, DISTO, ASPECT, RATIOJAC, MINJAC } metric;
+  enum Metric { VALIDITY, DISTO, ASPECT, RATIOJAC, MINJAC };
   static const std::array<std::string, 5> _metricNames;
 
 
@@ -85,7 +85,7 @@ private:
   DataSingleDimension *_data2D, *_data3D;
   StatGenerator *_statGen;
   Parameters _param;
-  bool _myVerbose = false;
+  // bool _myVerbose = false;
   int _dimensionPolicy = 0;
   int _previousFreeOldData = 0;
   std::map<Key, PView *> _pviews;
