@@ -382,7 +382,7 @@ void Plug::_fetchParameters()
   ph.criterion = static_cast<int>(MeshQuality2Options_Number[10].def);
   ph.threshold = MeshQuality2Options_Number[11].def;
   ph.worst = static_cast<bool>(MeshQuality2Options_Number[12].def);
-  ph.unhideToo = static_cast<bool>(MeshQuality2Options_Number[13].def);
+  ph.unhideToo = !static_cast<bool>(MeshQuality2Options_Number[13].def);
 
   // Advanced computation options:
   pc.skip = static_cast<bool>(MeshQuality2Options_Number[14].def);
@@ -413,7 +413,7 @@ void Plug::_fetchParameters()
   pc.aspect = static_cast<bool>(aspect);
 
   // -> metrics to show
-  ps.which[VALIDITY] = skipValidity > 0 ? 0 : -static_cast<int>(skipValidity);
+  ps.which[VALIDITY] = skipValidity == 0 ? -1 : skipValidity > 0 ? 0 : -static_cast<int>(skipValidity);
   ps.which[DISTO] = static_cast<int>(disto);
   ps.which[ASPECT] = static_cast<int>(aspect);
   ps.which[MINJAC] = static_cast<int>(minJ);
@@ -462,7 +462,7 @@ void Plug::_fetchParameters()
 void Plug::_fetchLegacyParameters()
 {
   bool touched = false;
-  for(int i = 23; i <= 30; i++) {
+  for(int i = getNbOptions(false); i < getNbOptions(true); i++) {
     if(MeshQuality2Options_Number[i].def != UNTOUCHED) {
       touched = true;
       break;
@@ -499,7 +499,7 @@ void Plug::_fetchLegacyParameters()
            "       OTHERWISE set 'enableAspectQuality' to 2 IF "
            "'enableAspectQuality' is 1\n"
            "       OTHERWISE set 'enableRatioJacDetAsAMetric' to 2");
-  _info(0, "=> Note: To disable this message, avoid modifying the "
+  _info(0, "   Note: To disable this message, avoid modifying the "
            "deprecated options.");
 
 
