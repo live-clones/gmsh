@@ -213,6 +213,7 @@ private:
 
   public:
     explicit DataEntity(GEntity *ge) : _ge(ge) {}
+    ~DataEntity() {}
     size_t getNumRequested() const { return _numRequested; }
     size_t initialize(const Parameters::Computation &);
     void count(const Parameters::Computation &, Counts &);
@@ -233,9 +234,6 @@ private:
     void computeValidity(MsgProgressStatus &);
     void computeDisto(MsgProgressStatus &, bool considerAsValid);
     void computeAspect(MsgProgressStatus &, bool considerAsValid);
-
-    // FIXME should i create only one method? bool computeDisto, std::vector<.>
-    //       *vecDisto) or just std::vector<.> *vecDisto = nullptr)
 
   private:
     void _count(unsigned char mask, std::size_t &cnt);

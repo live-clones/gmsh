@@ -344,6 +344,9 @@ PView *Plug::execute(PView *v)
 #endif
   }
 
+  _info(0, "Done executing Plugin AnalyseMeshQuality");
+  _info(1, "Set guidanceLevel to 0 or -1 to reduce verbosity");
+
   return v;
 }
 
@@ -422,7 +425,8 @@ void Plug::_fetchParameters()
   // Legacy options (must be last):
   _fetchLegacyParameters();
 
-  // TODO: use p = std::clamp(p, 0, 3);
+  // TODO: implement this and use p = std::clamp(p, 0, 3);
+  // FIXME Warnings if verbose
   // if(_dimensionPolicy < 0)
   //   _dimensionPolicy = 0;
   // else if(_dimensionPolicy > 3)
@@ -433,7 +437,6 @@ void Plug::_fetchParameters()
   // else if(pc.policy > 1)
   //   pc.policy = 1;
   //
-  // // FIXME Warnings if verbose
 
 #if defined(HAVE_VISUDEV)
   // // TODO come back later
@@ -823,9 +826,6 @@ void Plug::_findElementsToHide(const Measures &measure,
 {
   std::vector<double> values = measure.getValues(metric);
 
-  // FIXME What to do if all values are identical (typically, ratioJac=1)?
-  //  it is not a measure, so maybe don't care?
-
   double limitVal;
   size_t numVisibleElements = static_cast<size_t>(_param.hide.threshold);
   switch(_param.hide.criterion) {
@@ -947,10 +947,10 @@ void Plug::StatGenerator::printStats(const Parameters &param,
   if(param.show.which[RATIOJAC])
     _info(1, "   *R<|>atio minJ/maxJ*  is the ratio between the minimum and "
              "maximum values of the Jacobian determinant. It is faster to "
-             "compute than than the distortion and aspect quality metrics and can "
-           "be used to evaluate how much elements are deformed. However, "
-           "note that it is not a true quality metric. Values range from "
-           "-∞ to 1.");
+             "compute than the distortion and aspect quality metrics and can "
+             "be used to evaluate how much elements are deformed. However, "
+             "note that it is not a true quality metric. Values range from "
+             "-∞ to 1.");
   if(param.show.which[MINJAC])
     _info(1, "   *m<|>inJ*  is the minimum of the Jacobian determinant computed "
              "in the reference space and can be used to check the element size. "
@@ -1000,12 +1000,6 @@ void Plug::StatGenerator::_unpackCutoff(double input,
 
 void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, const Measures &measure)
 {
-  // NOTE:
-  //  3. Add printStatJac with warning
-  //     • verbose+Jac => warn Jacobian is not a quality
-  //  6. Verbose => Add at the end of execute info(Done, you can disable verbose)
-  //     OR => verbose off by default and end by saying that verbose can be set on
-
   _info(0, "=> Statistics for %s:", measure.dimStr);
 
   // Header
@@ -1157,7 +1151,6 @@ void Plug::DataSingleDimension::_updateGEntities(
     // Remove GEntities from _dataEntities that are not existent in the current model
     for(auto it = _dataEntities.begin(); it != _dataEntities.end();) {
       if(entities.find(it->first) == entities.end()) {
-        // it->second.clear(); // FIXME check that i don't need this
         if(it->second.getNumRequested())
           _requestedListHasChanged = true;
         it = _dataEntities.erase(it);
@@ -1400,7 +1393,6 @@ void Plug::DataEntity::computeDisto(MsgProgressStatus &progress_status, bool con
 
 void Plug::DataEntity::computeAspect(MsgProgressStatus &progress_status, bool considerAsValid)
 {
-  // FIXME inverse "->". Use it for "headers" not for "paragraph"
   if(_ge->dim() == 2)
     _info(1, "   Surface %d: Computing Aspect quality of %d elements",
           _ge->tag(), _numToCompute[2]);
