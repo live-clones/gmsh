@@ -1858,8 +1858,8 @@ namespace BoundaryLayerCurver {
       gamma = current_h;
       // gamma = 1;
       gamma = 0;
-      double kappa = .5;
-      double tau = .33;
+      double kappa = .1;
+      double tau = .1;
       _reduceCurving_newIdea2(edge, minThickness*tau, gface, gamma, kappa, baseEdge, next);
 
       if(gface) projectVerticesIntoGFace(edge, gface, false);
@@ -3051,6 +3051,7 @@ namespace BoundaryLayerCurver {
   {
 
     if(column.second.size() < 2) return true;
+    if(column.second.size() > 20) return true;
 
     // Compute stack high order edges and faces
     std::vector<MEdgeN> stackEdges;
@@ -3120,6 +3121,8 @@ namespace BoundaryLayerCurver {
                              const GEdge *gedge, const SVector3 &normal)
   {
     for(auto &column : columns) {
+      if(column.second.size() > 20) continue;
+      // std::cout << column.second.size() << std::endl;
       for(auto &column_other : columns) {
         if(&column == &column_other) continue;
         MElement *el0 = column.second[0];
@@ -3456,11 +3459,11 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
   //   BoundaryLayerCurver::touch_boundary(bndEl2column[i], nullptr, gedge, normal);
   // }
 
-  for(int i = 0; i < bndEl2column.size(); ++i) {
-    BoundaryLayerCurver::change_normals(bndEl2column[i], nullptr, gedge, normal);
-  }
+  // for(int i = 0; i < bndEl2column.size(); ++i) {
+  //   BoundaryLayerCurver::change_normals(bndEl2column[i], nullptr, gedge, normal);
+  // }
 
-  // BoundaryLayerCurver::reorient_normals(bndEl2column, nullptr, gedge, normal);
+  BoundaryLayerCurver::reorient_normals(bndEl2column, nullptr, gedge, normal);
 
   for(int i = 0; i < bndEl2column.size(); ++i) {
     // if (bndEl2column[i].first->getNum() != 205) continue; // t161

@@ -26,11 +26,11 @@
 
 StringXNumber CurvedMeshOptions_Number[] = {
   {GMSH_FULLRC, "JacobianDeterminant", nullptr, 0},
-  {GMSH_FULLRC, "IGEMeasure", nullptr, 0},
+  {GMSH_FULLRC, "IGEMeasure", nullptr, 1},
   {GMSH_FULLRC, "ICNMeasure", nullptr, 0},
   {GMSH_FULLRC, "HidingThreshold", nullptr, 99},
   {GMSH_FULLRC, "ThresholdGreater", nullptr, 1},
-  {GMSH_FULLRC, "CreateView", nullptr, 0},
+  {GMSH_FULLRC, "CreateView", nullptr, 1},
   {GMSH_FULLRC, "Recompute", nullptr, 0},
   {GMSH_FULLRC, "DimensionOfElements", nullptr, -1}
 #if defined(HAVE_VISUDEV)
