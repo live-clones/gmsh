@@ -146,7 +146,8 @@ private:
   void _createElementViewsOneMetric(const Measures &, Metric);
   bool _performHiding(const std::vector<Measures> &);
   void _findElementsToHide(const Measures &, Metric, std::set<MElement *> &) const;
-  bool _hideElements(const Measures &measure, std::vector<MElement *> &elemToHide);
+  bool _hideElements(const Measures &measure, std::vector<MElement *> &elemToHide,
+                     size_t &countHidden, size_t &countMadeVisible);
 
   // Those are static to be able to call them from class members
   static bool _okToPrint(int verb)

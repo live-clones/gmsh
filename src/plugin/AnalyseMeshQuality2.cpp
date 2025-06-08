@@ -649,7 +649,7 @@ void Plug::_computeRequestedData(Counts counts, bool check2D, bool check3D) cons
     }
   }
 
-  _status(0, "=> Done computing data");
+  _status(0, "Done computing data");
 }
 
 bool isValid(double minJ, double maxJ)
@@ -756,7 +756,7 @@ bool Plug::_performHiding(const std::vector<Measures> &measures)
   Parameters::MetricsToShow &show = _param.show;
   if(!hide.todo) return false;
 
-  bool hasHidden = false;
+  size_t countHidden = 0, countMadeVisible = 0;
 
   for(auto &measure: measures) {
     std::vector<MElement *> toHide;
@@ -768,11 +768,11 @@ bool Plug::_performHiding(const std::vector<Measures> &measures)
         if(hide.worst ? !val : val)
           toHide.push_back(measure.elements[i]);
       }
-      if(!toHide.empty()) {
-        hasHidden |= _hideElements(measure, toHide);
+
+      if(!toHide.empty() || hide.policy == -1) {
+        _hideElements(measure, toHide, countHidden, countMadeVisible);
         continue;
       }
-      if(hide.policy == -1) continue;
     }
 
     // Hide in function of quality-like metrics
@@ -802,9 +802,17 @@ bool Plug::_performHiding(const std::vector<Measures> &measures)
         toHide = std::move(result);
       }
     }
-    hasHidden |= _hideElements(measure, toHide);
+    _hideElements(measure, toHide, countHidden, countMadeVisible);
   }
-  return hasHidden;
+
+  if(countHidden && countMadeVisible)
+    _info(0, "=> %zu elements have been made visible, %zu have been hidden.", countMadeVisible, countHidden);
+  else if (countHidden)
+    _info(0, "=> %zu elements have been hidden.", countHidden);
+  else if (countMadeVisible)
+    _info(0, "=> %zu elements have been made visible.", countMadeVisible);
+
+  return static_cast<bool>(countHidden + countMadeVisible);
 }
 
 template <typename T>
@@ -814,7 +822,7 @@ T clamp(T val, T lower, T upper)
 }
 
 void Plug::_findElementsToHide(const Measures &measure,
-  Metric metric, std::set<MElement *> &elements) const
+  Metric metric, std::set<MElement *> &elementsToHide) const
 {
   std::vector<double> values = measure.getValues(metric);
 
@@ -822,7 +830,7 @@ void Plug::_findElementsToHide(const Measures &measure,
   //  it is not a measure, so maybe don't care?
 
   double limitVal;
-  size_t numOfElements = static_cast<size_t>(_param.hide.threshold);
+  size_t numVisibleElements = static_cast<size_t>(_param.hide.threshold);
   switch(_param.hide.criterion) {
   case 2:
   limitVal = _param.hide.threshold;
@@ -831,12 +839,12 @@ void Plug::_findElementsToHide(const Measures &measure,
   case 0: {
     double tmp = clamp(_param.hide.threshold, 0., 100.) / 100.;
     tmp *= static_cast<double>(values.size() - 1);
-    numOfElements = static_cast<size_t>(tmp);
+    numVisibleElements = static_cast<size_t>(tmp);
   }
   case 1:
-    numOfElements = clamp(numOfElements, size_t{0}, values.size() - 1);
-    std::nth_element(values.begin(), values.begin() + static_cast<long>(numOfElements), values.end());
-    limitVal = values[numOfElements];
+    numVisibleElements = clamp(numVisibleElements, size_t{0}, values.size() - 1);
+    std::nth_element(values.begin(), values.begin() + static_cast<long>(numVisibleElements), values.end());
+    limitVal = values[numVisibleElements];
     break;
 
   default:
@@ -845,16 +853,31 @@ void Plug::_findElementsToHide(const Measures &measure,
   }
 
   const std::vector<double> &val = measure.getValues(metric);
+  std::set<MElement *> onLimit;
 
   for(int i = 0; i < val.size(); i++) {
-    if(_param.hide.worst ? val[i] <= limitVal : val[i] >= limitVal) {
-      elements.insert(measure.elements[i]);
+    if(_param.hide.worst ? val[i] < limitVal : val[i] > limitVal) {
+      elementsToHide.insert(measure.elements[i]);
+    }
+    else if(val[i] == limitVal) {
+      onLimit.insert(measure.elements[i]);
+    }
+  }
+
+  // Add elements from onLimit to match numOfElements
+  size_t numHiddenRequired = measure.elements.size() - numVisibleElements;
+  if (_param.hide.criterion < 2 && elementsToHide.size() < numHiddenRequired) {
+    size_t remaining = std::min(numHiddenRequired - elementsToHide.size(), onLimit.size());
+    auto it = onLimit.begin();
+    for (size_t i = 0; i < remaining; i++, ++it) {
+      elementsToHide.insert(*it);
     }
   }
 }
 
 bool Plug::_hideElements(const Measures &measure,
-                         std::vector<MElement *> &elemToHide)
+                         std::vector<MElement *> &elemToHide,
+                         size_t &countHidden, size_t &countMadeVisible)
 {
   if(_param.hide.todo < 2 && elemToHide.size() == measure.elements.size()) {
     _info(0, "Skipping hiding because all elements would be hidden.");
@@ -864,6 +887,7 @@ bool Plug::_hideElements(const Measures &measure,
 
   if(!_param.hide.unhideToo) {
     for(auto el : elemToHide) el->setVisibility(false);
+    countHidden += elemToHide.size();
     return true;
   }
 
@@ -874,6 +898,8 @@ bool Plug::_hideElements(const Measures &measure,
     else
       el->setVisibility(true);
   }
+  countHidden += elemToHide.size();
+  countMadeVisible += measure.elements.size() - elemToHide.size();
   return true;
 }
 
