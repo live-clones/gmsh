@@ -152,13 +152,15 @@ private:
   {
     return (_verbose && verb >= 0) || (!_verbose && verb <= 0);
   }
-  static void _printMessage(void (*func)(const char *, ...), const char *format,
-  va_list);
+  static void _printMessage(void (*func1)(const char *, ...),
+                            void (*func2)(bool, const char *, ...),
+                            const char *format, va_list, bool logStatusBar = false);
 
   static void _info(int verbosityPolicy, const char *format, ...);
   static void _warn(int verbosityPolicy, const char *format, ...);
   static void _error(int verbosityPolicy, const char *format, ...);
-  // static void _status(int verbosityPolicy, const char *format, ...); // FIXME implement this?
+  static void _status(int verbosityPolicy, const char *format, ...);
+  static void _statusBar(int verbosityPolicy, const char *format, ...);
 
   // User guidance
   std::size_t _printElementToCompute(const Counts &cnt2D, const Counts &cnt3D) const;

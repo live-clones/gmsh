@@ -12,6 +12,7 @@
 #include <sstream>
 #include <iomanip>
 #include <string>
+#include <functional>
 #include "AnalyseMeshQuality2.h"
 #include "OS.h"
 #include "Context.h"
@@ -249,7 +250,7 @@ PView *Plug::execute(PView *v)
   // FIXME propose a StatusBar for each run
   // FIXME in which case, Executing the plugin AnalyseMeshQuality should be a statusbar
   _info(0, "---------------------------------------------");
-  _info(0, "Executing the plugin AnalyseMeshQuality...");
+  _status(0, "Executing the plugin AnalyseMeshQuality...");
 
   _fetchParameters();
 
@@ -623,7 +624,7 @@ void Plug::_computeRequestedData(Counts counts, bool check2D, bool check3D) cons
     _data3D->getDataEntities(allDataEntities);
 
   if(counts.elToCompute[0] > 0) {
-    Msg::StatusBar(true, "=> Computing Validity...");
+    _status(0, "=> Computing Validity...");
     MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[0]));
     for(auto data: allDataEntities) {
       data->computeValidity(progress_status);
@@ -631,7 +632,7 @@ void Plug::_computeRequestedData(Counts counts, bool check2D, bool check3D) cons
   }
 
   if(counts.elToCompute[1] > 0) {
-    Msg::StatusBar(true, "=> Computing Distortion quality...");
+    _status(0, "=> Computing Distortion quality...");
     MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[1]));
     for(auto data: allDataEntities) {
       data->computeDisto(progress_status, !_param.compute.validity);
@@ -639,14 +640,14 @@ void Plug::_computeRequestedData(Counts counts, bool check2D, bool check3D) cons
   }
 
   if(counts.elToCompute[2] > 0) {
-    Msg::StatusBar(true, "=> Computing Aspect quality...");
+    _status(0, "=> Computing Aspect quality...");
     MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[2]));
     for(auto data: allDataEntities) {
       data->computeAspect(progress_status, !_param.compute.validity);
     }
   }
 
-  Msg::StatusBar(true, "=> Done computing data");
+  _status(0, "=> Done computing data");
 }
 
 bool isValid(double minJ, double maxJ)
@@ -1003,9 +1004,11 @@ void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, con
   // Validity
   if(!show.which[VALIDITY]) return;
   if(measure.validity.empty())
-    Msg::StatusBar(true, "   All elements are valid :-)");
-  else
+    _status(0, "   All elements are valid :-)");
+  else {
+    _statusBar(0, "   Found %zu invalid elements", measure.validity.size());
     _warn(0, "   Found %zu invalid elements", measure.validity.size());
+  }
 }
 
 void Plug::StatGenerator::_printStatsOneMetric(const Measures &measure, Metric metric)
@@ -1443,7 +1446,9 @@ void Plug::DataEntity::addValues(Measures &measures)
 // ======== Plugin: User Messages ==============================================
 // =============================================================================
 
-void Plug::_printMessage(void (*func)(const char *, ...), const char *format, va_list args)
+void Plug::_printMessage(void (*func1)(const char *, ...),
+                         void (*func2)(bool, const char *, ...),
+                         const char *format, va_list args, bool logStatusBar)
 {
   char str[5000];
   vsnprintf(str, sizeof(str), format, args);
@@ -1511,8 +1516,12 @@ void Plug::_printMessage(void (*func)(const char *, ...), const char *format, va
       chunk[prefixLen + chunkSize] = '\0'; // Null-terminate the chunk
     }
 
-    // Call the logging function
-    func("%s", chunk);
+    // Call the function
+    if(func2)
+      func2(logStatusBar, "%s", chunk);
+    else if(func1)
+      func1("%s", chunk);
+
 
     // Move the offset to process the next chunk
     offset = end;
@@ -1529,7 +1538,7 @@ void Plug::_info(int verb, const char *format, ...)
   if(!_okToPrint(verb)) return;
   va_list args;
   va_start(args, format);
-  _printMessage(Msg::Info, format, args);
+  _printMessage(Msg::Info, nullptr, format, args);
   va_end(args);
 }
 
@@ -1538,7 +1547,7 @@ void Plug::_warn(int verb, const char *format, ...)
   if(!_okToPrint(verb)) return;
   va_list args;
   va_start(args, format);
-  _printMessage(Msg::Warning, format, args);
+  _printMessage(Msg::Warning, nullptr, format, args);
   va_end(args);
 }
 
@@ -1547,19 +1556,27 @@ void Plug::_error(int verb, const char *format, ...)
   if(!_okToPrint(verb)) return;
   va_list args;
   va_start(args, format);
-  _printMessage(Msg::Error, format, args);
+  _printMessage(Msg::Error, nullptr, format, args);
   va_end(args);
 }
 
-// FIXME Implement this?
-// void Plug::_status(int verb, const char *format, ...)
-// {
-//   if(!_okToPrint(verb)) return;
-//   va_list args;
-//   va_start(args, format);
-//   _printMessage(Msg::Error, format, args);
-//   va_end(args);
-// }
+void Plug::_status(int verb, const char *format, ...)
+{
+  if(!_okToPrint(verb)) return;
+  va_list args;
+  va_start(args, format);
+  _printMessage(nullptr, Msg::StatusBar, format, args, true);
+  va_end(args);
+}
+
+void Plug::_statusBar(int verb, const char *format, ...)
+{
+  if(!_okToPrint(verb)) return;
+  va_list args;
+  va_start(args, format);
+  _printMessage(Msg::StatusGl, nullptr, format, args, false);
+  va_end(args);
+}
 
 std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
                                          const Counts &cnt3D) const
