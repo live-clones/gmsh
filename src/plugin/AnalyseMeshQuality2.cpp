@@ -485,21 +485,21 @@ void Plug::_fetchLegacyParameters()
            " 5. Set 'dimensionPolicy' to -1 IF '_DimensionOfElements' is 2\n"
            "    OTHERWISE set 'dimensionPolicy' to 1 IF '_DimensionOfElements' "
            "is 4\n"
-           " 6. Set 'hidingThreshold' to '_HidingThreshold'\n"
-           " 7. Set 'hideWorst' to 1 IF '_ThresholdGreater' is 0\n"
+           " 6. Set 'visibilityThreshold' to '_HidingThreshold'\n"
+           " 7. Set 'hideWorstElements' to 1 IF '_ThresholdGreater' is 0\n"
            " 8. Set 'skipValidity' to 1 if '_JacobianDeterminant' is 0\n"
            " 9. Set 'enableRatioJacDetAsAMetric' to 1\n"
            "10. Set 'enableMinJacDetAsAMetric' to 1\n"
            "11. Set 'wmCutoffsForStats' to 50\n"
            "12. IF '_HidingThreshold' is smaller than 99:\n"
-           "    -  Set 'hideElements' to 1\n"
-           "    -  Set 'hidingPolicy' to 1\n"
+           "    -  Set 'adjustVisibilityElements' to 1\n"
+           "    -  Set 'visibilityPolicy' to 1\n"
            "    -  Set 'enableDistortionQuality' to 2 IF "
            "'enableDistortionQuality' is 1\n"
            "       OTHERWISE set 'enableAspectQuality' to 2 IF "
            "'enableAspectQuality' is 1\n"
            "       OTHERWISE set 'enableRatioJacDetAsAMetric' to 2");
-  _info(0, "=> Note: To disable this behavior, avoid modifying the "
+  _info(0, "=> Note: To disable this message, avoid modifying the "
            "deprecated options.");
 
 
@@ -858,7 +858,7 @@ bool Plug::_hideElements(const Measures &measure,
 {
   if(_param.hide.todo < 2 && elemToHide.size() == measure.elements.size()) {
     _info(0, "Skipping hiding because all elements would be hidden.");
-    _info(1, "To force hiding, set 'hideElements' to 2");
+    _info(1, "To force hiding, set 'adjustVisibilityElements' to 2");
     return false;
   }
 
