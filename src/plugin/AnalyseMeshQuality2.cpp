@@ -29,8 +29,8 @@
 // #include "BasisFactory.h"
 #endif
 // NOTE What does the plugin
-//  0.Free data and stop IF dataManagementPolicy = -1
-//  1.Compute validity/quality IF skipComputationMetrics = OFF
+//  0. Free data and stop IF dataManagementPolicy = -1
+//  1. Compute validity/quality IF usePreviousData = OFF
 //   • Limit to GEntity in GModel::current()
 //   • In function of dimensionPolicy:
 //     - IF = -1 Limit to dimension 2 meshes
@@ -41,11 +41,11 @@
 //   • Check if previous data can be reused IF smartRecomputation = ON
 //   • Limit to visible elements IF restrictToVisibleElements = ON
 //   • Limit to curved elements IF restrictToCurvedElements = ON
-//   • Compute Validity IF skipValidity = <= 0
+//   • Compute Validity IF skipValidity <= 0
 //   • Compute Distortion IF enableDistortionQuality > 0
 //   • Compute Aspect IF enableAspectQuality > 0
-//   • Regularize Jacobian if skipValidity = OFF AND regularizeDeterminant = ON (NOTIMPLEMENTED)
-//  2.Print statistics
+//   • Regularize Jacobian IF skipValidity <= 0 AND regularizeDeterminant = ON
+//  2. Print statistics
 //   • In function of dimensionPolicy:
 //     - IF = -1 Limit to dimension 2 data
 //     - IF = 0 Limit to dimension 3 data if there is any 3D mesh otherwise
@@ -59,7 +59,7 @@
 //     - minJ/maxJ IF enableRatioJacDetAsAMetric > 0
 //     - minJ IF enableMinJacDetAsAMetric > 0
 //     - validity
-//  3.Create PViewElementData IF createElementsView = ON
+//  3. Create PViewElementData IF createElementsView = ON
 //   • In function of dimensionPolicy:
 //     - IF = -1 Limit to dimension 2 data
 //     - IF = 0 Limit to dimension 3 data if there is any 3D mesh otherwise
@@ -72,32 +72,32 @@
 //   • minJ IF skipValidity <= 0 AND enableMinJacDetAsAMetric = M
 //   • minJ/maxJ IF skipValidity <= 0 AND enableMinJacDetAsAMetric = M
 //   • But: skip creation if PView already exists and unchanged data
-//  4.Create PView2D IF createPlotView = ON
+//  4. Create PView2D IF createPlotView = ON
 //   • In function of dimensionPolicy, as for (point 2.)
 //   • For metrics as for (point 3.).
 //   • For Worst Weighted Means in function of UNPACK(wmCutoffsForPlots)
 //   • But: skip creation if PView already exists and unchanged data
-//  5.Hide elements IF hideElements >= 1
+//  5. Change visibility of elements IF adjustVisibilityElements >= 1
 //   • In function of dimensionPolicy, as for (point 2.)
-//   • In function of hidingPolicy [in the case hideWorst = OFF]:
+//   • In function of visibilityPolicy [in the case hideWorstElements = OFF]:
 //     - IF = -1 Limit to valid elements if there are any invalid elements,
-//               OTHERWISE skip hiding
+//               OTHERWISE skip hiding/making visible
 //     - IF = 0 As "IF = 1" if no invalid elements OTHERWISE as "IF = -1"
 //     - IF = 1 As "IF = 2" if there are multiple metric equal to M
 //              OTHERWISE limit to elements that do not meet criterion
-//                        for the metric==M
-//     - IF = 2 Limit to elements that do not meet criterion for all metrics==M
-//     - IF = 3 Limit to elements that do not meet criterion for any metrics==M
-//   • In function of hidingCriterion [in the case hideWorst = OFF]:
+//                        for the metric == M
+//     - IF = 2 Limit to elements that do not meet criterion for all metrics == M
+//     - IF = 3 Limit to elements that do not meet criterion for any metrics == M
+//   • In function of visibilityCriterion [in the case hideWorstElements = OFF]:
 //     - IF = 0 Use "metricValue <= x" as criterion
 //     - IF = 1 Use "x worst elements" as criterion
 //     - IF = 2 Use "x% worst elements" as criterion
-//     where x = hidingThreshold
-//   • Hide worst element instead of best IF hideWorst = ON
-//   • Unhide others IF unhideOtherElements = ON
-//   • In function of hideElements:
-//     - IF = 1 Skip hiding if all elements are to be hidden
-//     - IF >= 2 Hide even if all elements are to be hidden
+//     where x = visibilityThreshold
+//   • Hide worst elements instead of best IF hideWorstElements = ON
+//   • Unhide others IF doNoSetVisible = OFF
+//   • In function of adjustVisibilityElements:
+//     - IF = 1 Skip adjustment if all elements are to be hidden
+//     - IF >= 2 Hide/Set visible even if all elements are to be hidden
 
 namespace {
   constexpr double UNTOUCHED = -987654321;
@@ -105,8 +105,8 @@ namespace {
 
 StringXNumber MeshQuality2Options_Number[] = {
   // Quality metrics to include:
-  {GMSH_FULLRC, "enableDistortionQuality", nullptr, 1, "OFF, (1+)=includeDistortionQuality"},
-  {GMSH_FULLRC, "enableAspectQuality", nullptr, 0, "OFF, (1+)=includeAspectQuality"},
+  {GMSH_FULLRC, "enableDistortionQuality", nullptr, 0, "OFF, (1+)=includeDistortionQuality"},
+  {GMSH_FULLRC, "enableAspectQuality", nullptr, 1, "OFF, (1+)=includeAspectQuality"},
   // What to do:
   {GMSH_FULLRC, "createElementsView", nullptr, 0, "OFF, ON"},
   {GMSH_FULLRC, "createPlotView", nullptr, 1, "OFF, ON"},
@@ -117,7 +117,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "restrictToVisibleElements", nullptr, 0, "OFF, ON=analyzeOnlyVisibleElements"},
   {GMSH_FULLRC, "restrictToCurvedElements", nullptr, 0, "OFF, ON=analyzeOnlyNonStraightElements"},
   // Hiding options:
-  {GMSH_FULLRC, "visibilityPolicy", nullptr, 0, "(-1)=validity|skip, 0=validity|1, 1=qualOR, 2=qualAND"},
+  {GMSH_FULLRC, "visibilityPolicy", nullptr, 1, "(-1)=validity|skip, 0=validity|1, 1=qualOR, 2=qualAND"},
   {GMSH_FULLRC, "visibilityCriterion", nullptr, 0, "0=proportionVisibleElem, 1=numVisibleElem, 2=metricValue"},
   {GMSH_FULLRC, "visibilityThreshold", nullptr, 10, "DOUBLE (which meaning depends on visibilityCriterion)"},
   {GMSH_FULLRC, "hideWorstElements", nullptr, 0, "OFF=hideBestElements, ON"},
@@ -134,7 +134,6 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "regularizeDeterminant", nullptr, 1, "OFF, ON=inverseOrientationIfAbsMaxSmaller"},
   {GMSH_FULLRC, "wmCutoffsForStats", nullptr, 10, "CUTOFFS (for stats weighted mean, see Help)"},
   {GMSH_FULLRC, "wmCutoffsForPlots", nullptr, 10, "CUTOFFS (for plots weighted mean, see Help)"},
-  // FIXME add skipPrintStat?
   // Legacy options:
   {GMSH_FULLRC, "JacobianDeterminant", nullptr, UNTOUCHED, "[legacy] OFF, ON"},
   {GMSH_FULLRC, "IGEMeasure", nullptr, UNTOUCHED, "[legacy] OFF, ON"},
@@ -248,8 +247,6 @@ std::string Plug::getHelp() const
 
 PView *Plug::execute(PView *v)
 {
-  // FIXME propose a StatusBar for each run
-  // FIXME in which case, Executing the plugin AnalyseMeshQuality should be a statusbar
   _info(0, "---------------------------------------------");
   _status(0, "Executing the plugin AnalyseMeshQuality...");
 
