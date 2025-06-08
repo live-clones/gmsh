@@ -128,6 +128,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "smartRecomputation", nullptr, 1, "OFF=alwaysRecompute, ON=avoidRecomputeIfTagsUnchanged"},
   {GMSH_FULLRC, "skipValidity", nullptr, 0, "(0-)=includeValidity, ON=skipPreventiveValidityCheck"},
   // Advanced analysis options:
+  {GMSH_FULLRC, "skipStatPrinting", nullptr, 0, "OFF, ON"},
   {GMSH_FULLRC, "enableRatioJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=0-)"},
   {GMSH_FULLRC, "enableMinJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=0-)"},
   {GMSH_FULLRC, "regularizeDeterminant", nullptr, 1, "OFF, ON=inverseOrientationIfAbsMaxSmaller"},
@@ -160,7 +161,7 @@ std::pair<int, std::string> MeshQuality2Options_Headers[] = {
   {9, "Elements hiding/visibility options"},
   {14, "Advanced computation options"},
   {18, "Advanced analysis options"},
-  {23, "Legacy options"},
+  {24, "Legacy options"},
 };
 
 namespace JacQual = jacobianBasedQuality;
@@ -390,11 +391,12 @@ void Plug::_fetchParameters()
   skipValidity = MeshQuality2Options_Number[17].def;
 
   // Advanced analysis options:
-  ratioJ = MeshQuality2Options_Number[18].def;
-  minJ = MeshQuality2Options_Number[19].def;
-  ps.regularizeJac = static_cast<bool>(MeshQuality2Options_Number[20].def);
-  pp.statCutoffPack = MeshQuality2Options_Number[21].def;
-  pp.plotCutoffPack = MeshQuality2Options_Number[22].def;
+  ps.skipStats = static_cast<bool>(MeshQuality2Options_Number[18].def);
+  ratioJ = MeshQuality2Options_Number[19].def;
+  minJ = MeshQuality2Options_Number[20].def;
+  ps.regularizeJac = static_cast<bool>(MeshQuality2Options_Number[21].def);
+  pp.statCutoffPack = MeshQuality2Options_Number[22].def;
+  pp.plotCutoffPack = MeshQuality2Options_Number[23].def;
 
   // -> statsGenerator
   _statGen->setCutoffStats(pp.statCutoffPack);
@@ -899,6 +901,8 @@ void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
 void Plug::StatGenerator::printStats(const Parameters &param,
                                      const std::vector<Measures> &measures)
 {
+  if(param.show.skipStats) return;
+
   _info(1, "=> Printing statistics, here is what is important to know about "
   "them:");
   if(param.show.which[VALIDITY])

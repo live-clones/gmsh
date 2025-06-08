@@ -71,6 +71,7 @@ private:
       int which[5] = {0};
       int M = 0;
       bool regularizeJac = false;
+      bool skipStats = false;
     } show;
 
     bool check2D = false;
