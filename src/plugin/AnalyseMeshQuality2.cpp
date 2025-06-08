@@ -28,6 +28,19 @@
 #if defined(HAVE_VISUDEV)
 // #include "BasisFactory.h"
 #endif
+
+// TODO:
+//  1. Implement isCurved
+//  2. Implement isPlanarMesh -> use normal for computing quantities
+//  3. Update Help
+//  4. Add verbose messages?
+//  5. Test...
+
+// NOTE:
+//  1. Say in help that the plugin can be used to compute jacobian, hide best
+//     elements, then compute quality (the gain is to compute quality of less
+//     elements)
+
 // NOTE What does the plugin
 //  0. Free data and stop IF dataManagementPolicy = -1
 //  1. Compute validity/quality IF usePreviousData = OFF
@@ -108,9 +121,9 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "enableDistortionQuality", nullptr, 0, "OFF, (1+)=includeDistortionQuality"},
   {GMSH_FULLRC, "enableAspectQuality", nullptr, 1, "OFF, (1+)=includeAspectQuality"},
   // What to do:
-  {GMSH_FULLRC, "createElementsView", nullptr, 0, "OFF, ON"},
+  {GMSH_FULLRC, "createElementsView", nullptr, 1, "OFF, ON"},
   {GMSH_FULLRC, "createPlotView", nullptr, 1, "OFF, ON"},
-  {GMSH_FULLRC, "adjustVisibilityElements", nullptr, 1, "OFF, 1=skipIfAllWouldBeHidden, 2=acceptAllHidden"},
+  {GMSH_FULLRC, "adjustVisibilityElements", nullptr, 0, "OFF, 1=skipIfAllWouldBeHidden, 2=acceptAllHidden"},
   {GMSH_FULLRC, "guidanceLevel", nullptr, 0, "(-1)=minimalOutput, 0=verbose, 1=verboseAndExplanations"},
   // Elements Selection:
   {GMSH_FULLRC, "dimensionPolicy", nullptr, 0, "(-1)=force2D, 0=prioritize3D, 1=2D+3D, 2=combine2D+3D"},
