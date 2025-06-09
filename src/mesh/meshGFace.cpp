@@ -3153,6 +3153,10 @@ static bool isMeshValid(GFace *gf)
     double v = TRIANGLE_VALIDITY(gf, gf->triangles[i]);
     if(v < 0) invalid++;
   }
+
+  //  if (gf->tag() == 44) printf("FACE 44 -- %d\n",invalid);
+    
+
   if(invalid == 0 || invalid == gf->triangles.size()) return true;
 
   return false;
@@ -3260,6 +3264,7 @@ void meshGFace::operator()(GFace *gf, bool print)
 
   // test validity for non-Gmsh models (currently we cannot reliably evaluate
   // the normal on the boundary of surfaces with the Gmsh kernel)
+
   if(CTX::instance()->mesh.algoSwitchOnFailure &&
      gf->getNativeType() != GEntity::GmshModel &&
      gf->geomType() != GEntity::Plane && algoDelaunay2D(gf) &&
