@@ -1040,8 +1040,11 @@ void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, con
   if(measure.validity.empty())
     _status(0, "   All elements are valid :-)");
   else {
-    _statusBar(0, "   Found %zu invalid elements", measure.validity.size());
-    _warn(0, "   Found %zu invalid elements", measure.validity.size());
+    // _statusBar(0, "   Found %zu invalid elements", measure.validity.size());
+    // FIXME This was printed in the GUI. I wanted in statusBar and not in
+    //  console but maybe it is not possible
+    // _warn(0, "   Found %zu invalid elements", measure.validity.size());
+    _status(0, "   Found %zu invalid elements", measure.validity.size());
   }
 }
 
