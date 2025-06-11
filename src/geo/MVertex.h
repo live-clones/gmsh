@@ -222,6 +222,13 @@ struct MVertexPtrLessThan {
   }
 };
 
+struct MVertexPtrLessThanIndex {
+  bool operator()(const MVertex *v1, const MVertex *v2) const
+  {
+    return v1->getIndex() < v2->getIndex();
+  }
+};
+
 struct MVertexPtrEqual {
   bool operator()(const MVertex *v1, const MVertex *v2) const
   {
