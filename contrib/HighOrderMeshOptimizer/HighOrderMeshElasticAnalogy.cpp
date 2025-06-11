@@ -98,7 +98,7 @@ void HighOrderMeshElasticAnalogy(GModel *m, bool onlyVisible)
 
 void highOrderTools::_moveToStraightSidedLocation(MElement *e) const
 {
-  for(int i = 0; i < e->getNumVertices(); i++) {
+  for(size_t i = 0; i < e->getNumVertices(); i++) {
     MVertex *v = e->getVertex(i);
     auto it = _straightSidedLocation.find(v);
     if(it != _straightSidedLocation.end()) {
@@ -114,7 +114,7 @@ void highOrderTools::ensureMinimumDistorsion(MElement *e, double threshold)
   double dist = e->distoShapeMeasure();
   if(dist > threshold) return;
   double a1 = 0., a2 = 1.0, x[1000][3], X[1000][3];
-  for(int i = 0; i < e->getNumVertices(); i++) {
+  for(size_t i = 0; i < e->getNumVertices(); i++) {
     MVertex *v = e->getVertex(i);
     x[i][0] = v->x();
     x[i][1] = v->y();
@@ -138,7 +138,7 @@ void highOrderTools::ensureMinimumDistorsion(MElement *e, double threshold)
   while(1) {
     double a = 0.5 * (a1 + a2);
     if(ITER > 10) a = 0.;
-    for(int i = 0; i < e->getNumVertices(); i++) {
+    for(size_t i = 0; i < e->getNumVertices(); i++) {
       MVertex *v = e->getVertex(i);
       v->x() = a * x[i][0] + (1. - a) * X[i][0];
       v->y() = a * x[i][1] + (1. - a) * X[i][1];
@@ -306,7 +306,7 @@ void highOrderTools::applySmoothingTo(std::vector<MElement *> &all, GFace *gf)
 
   // on the last layer, fix displacement to 0
   for(std::size_t i = 0; i < layer.size(); i++) {
-    for(int j = 0; j < layer[i]->getNumVertices(); j++) {
+    for(size_t j = 0; j < layer[i]->getNumVertices(); j++) {
       MVertex *vert = layer[i]->getVertex(j);
       myAssembler.fixVertex(vert, 0, _tag, 0);
       myAssembler.fixVertex(vert, 1, _tag, 0);
@@ -316,7 +316,7 @@ void highOrderTools::applySmoothingTo(std::vector<MElement *> &all, GFace *gf)
   // fix all vertices that cannot move
   for(std::size_t i = 0; i < v.size(); i++) {
     _moveToStraightSidedLocation(v[i]);
-    for(int j = 0; j < v[i]->getNumVertices(); j++) {
+    for(size_t j = 0; j < v[i]->getNumVertices(); j++) {
       MVertex *vert = v[i]->getVertex(j);
       if(vert->onWhat()->dim() < 2) {
         double du = 0, dv = 0;
@@ -328,7 +328,7 @@ void highOrderTools::applySmoothingTo(std::vector<MElement *> &all, GFace *gf)
 
   // number the other DOFs
   for(std::size_t i = 0; i < v.size(); i++) {
-    for(int j = 0; j < v[i]->getNumVertices(); j++) {
+    for(size_t j = 0; j < v[i]->getNumVertices(); j++) {
       MVertex *vert = v[i]->getVertex(j);
       myAssembler.numberVertex(vert, 0, _tag);
       myAssembler.numberVertex(vert, 1, _tag);
@@ -497,7 +497,7 @@ void highOrderTools::_computeStraightSidedPositions()
       MTriangle *t = (*it)->triangles[i];
       MFace face = t->getFace(0);
       const nodalBasis *fs = t->getFunctionSpace();
-      for(int j = 0; j < t->getNumVertices(); j++) {
+      for(size_t j = 0; j < t->getNumVertices(); j++) {
         if(t->getVertex(j)->onWhat() == *it) {
           const double t1 = fs->points(j, 0);
           const double t2 = fs->points(j, 1);
@@ -511,7 +511,7 @@ void highOrderTools::_computeStraightSidedPositions()
       MQuadrangle *q = (*it)->quadrangles[i];
       MFace face = q->getFace(0);
       const nodalBasis *fs = q->getFunctionSpace();
-      for(int j = 0; j < q->getNumVertices(); j++) {
+      for(size_t j = 0; j < q->getNumVertices(); j++) {
         if(q->getVertex(j)->onWhat() == *it) {
           const double t1 = fs->points(j, 0);
           const double t2 = fs->points(j, 1);
@@ -535,7 +535,7 @@ void highOrderTools::_computeStraightSidedPositions()
         (*it)->tetrahedra[i]->getVertex(0), (*it)->tetrahedra[i]->getVertex(1),
         (*it)->tetrahedra[i]->getVertex(2), (*it)->tetrahedra[i]->getVertex(3));
       const nodalBasis *fs = t->getFunctionSpace();
-      for(int j = 0; j < t->getNumVertices(); j++) {
+      for(size_t j = 0; j < t->getNumVertices(); j++) {
         if(t->getVertex(j)->onWhat() == *it) {
           double t1 = fs->points(j, 0);
           double t2 = fs->points(j, 1);
@@ -556,7 +556,7 @@ void highOrderTools::_computeStraightSidedPositions()
         (*it)->hexahedra[i]->getVertex(4), (*it)->hexahedra[i]->getVertex(5),
         (*it)->hexahedra[i]->getVertex(6), (*it)->hexahedra[i]->getVertex(7));
       const nodalBasis *fs = h->getFunctionSpace();
-      for(int j = 0; j < h->getNumVertices(); j++) {
+      for(size_t j = 0; j < h->getNumVertices(); j++) {
         if(h->getVertex(j)->onWhat() == *it) {
           double t1 = fs->points(j, 0);
           double t2 = fs->points(j, 1);
@@ -576,7 +576,7 @@ void highOrderTools::_computeStraightSidedPositions()
                  (*it)->prisms[i]->getVertex(4),
                  (*it)->prisms[i]->getVertex(5));
       const nodalBasis *fs = p->getFunctionSpace();
-      for(int j = 0; j < p->getNumVertices(); j++) {
+      for(size_t j = 0; j < p->getNumVertices(); j++) {
         if(p->getVertex(j)->onWhat() == *it) {
           double t1 = fs->points(j, 0);
           double t2 = fs->points(j, 1);
@@ -622,7 +622,7 @@ double highOrderTools::_applyIncrementalDisplacement(
 
   // fix all dof that correspond to vertices on the boundary the value is equal
   for(std::size_t i = 0; i < v.size(); i++) {
-    for(int j = 0; j < v[i]->getNumVertices(); j++) {
+    for(size_t j = 0; j < v[i]->getNumVertices(); j++) {
       MVertex *vert = v[i]->getVertex(j);
       _vertices.insert(vert);
     }
@@ -631,7 +631,7 @@ double highOrderTools::_applyIncrementalDisplacement(
   // Fix d tr(eps) = 0
   if(mixed) {
     for(std::size_t i = 0; i < disto.size(); i++) {
-      for(int j = 0; j < disto[i]->getNumVertices(); j++) {
+      for(size_t j = 0; j < disto[i]->getNumVertices(); j++) {
         MVertex *vert = disto[i]->getVertex(j);
         myAssembler.fixVertex(vert, 4, _tag, 0.0);
       }

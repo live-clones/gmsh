@@ -9,8 +9,8 @@
 #include "GmshDefines.h"
 
 StringXNumber EigenvectorsOptions_Number[] = {
-  {GMSH_FULLRC, "ScaleByEigenvalues", nullptr, 1.},
-  {GMSH_FULLRC, "View", nullptr, -1.}};
+  {GMSH_FULLRC, "ScaleByEigenvalues", nullptr, 1., ""},
+  {GMSH_FULLRC, "View", nullptr, -1., ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterEigenvectorsPlugin()

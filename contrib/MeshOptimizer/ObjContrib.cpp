@@ -28,8 +28,7 @@
 const double ObjContrib::BIGVAL = 1.e300;
 
 ObjContrib::ObjContrib(std::string mesName, std::string name)
-  : _parent(this), _min(BIGVAL), _max(-BIGVAL), _measureName(mesName),
-    _name(name)
+  : _parent(this), _measureName(mesName), _name(name), _min(BIGVAL), _max(-BIGVAL)
 {
 }
 

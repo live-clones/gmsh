@@ -1216,7 +1216,7 @@ static HXTStatus parallelDelaunay3D(HXTMesh* mesh,
   TetLocal* Locals;
   HXT_CHECK( hxtMalloc(&Locals, maxPartitions*sizeof(TetLocal)) );
 
-  uint64_t* startTetGlobal;
+  uint64_t* startTetGlobal = 0;
   if(options->reproducible)
     HXT_CHECK( hxtMalloc(&startTetGlobal, omp_get_max_threads()*maxPartitions*sizeof(uint64_t)) );
 

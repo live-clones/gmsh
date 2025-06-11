@@ -15,9 +15,9 @@
 #include "discreteFace.h"
 #include "discreteEdge.h"
 
-StringXNumber SkinOptions_Number[] = {{GMSH_FULLRC, "Visible", nullptr, 1.},
-                                      {GMSH_FULLRC, "FromMesh", nullptr, 0.},
-                                      {GMSH_FULLRC, "View", nullptr, -1.}};
+StringXNumber SkinOptions_Number[] = {{GMSH_FULLRC, "Visible", nullptr, 1., ""},
+                                      {GMSH_FULLRC, "FromMesh", nullptr, 0., ""},
+                                      {GMSH_FULLRC, "View", nullptr, -1., ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterSkinPlugin() { return new GMSH_SkinPlugin(); }

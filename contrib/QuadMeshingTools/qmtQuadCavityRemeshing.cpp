@@ -211,8 +211,6 @@ namespace QMT {
                         const vector<vector<id> > &e2f, id eStart,
                         std::vector<id> &chordEdges)
   {
-    chordEdges.size();
-
     vector<bool> visited(e2f.size(), false);
 
     /* Init */

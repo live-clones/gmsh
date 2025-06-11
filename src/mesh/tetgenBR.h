@@ -389,6 +389,7 @@ public:
     tetrahedron *tet;
     int ver; // Range from 0 to 11.
     triface() : tet(0), ver(0) {}
+    triface(const triface& other) : tet(other.tet), ver(other.ver) {}
     triface &operator=(const triface &t)
     {
       tet = t.tet;
@@ -402,6 +403,7 @@ public:
     shellface *sh;
     int shver; // Range from 0 to 5.
     face() : sh(0), shver(0) {}
+    face(const face& other) : sh(other.sh), shver(other.shver) {}
     face &operator=(const face &s)
     {
       sh = s.sh;

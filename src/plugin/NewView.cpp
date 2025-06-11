@@ -12,13 +12,13 @@
 #include "MElement.h"
 
 StringXNumber NewViewOptions_Number[] = {
-  {GMSH_FULLRC, "NumComp", nullptr, 1.},
-  {GMSH_FULLRC, "Value", nullptr, 0.},
-  {GMSH_FULLRC, "ViewTag", nullptr, -1.},
-  {GMSH_FULLRC, "PhysicalGroup", nullptr, -1.}};
+  {GMSH_FULLRC, "NumComp", nullptr, 1., ""},
+  {GMSH_FULLRC, "Value", nullptr, 0., ""},
+  {GMSH_FULLRC, "ViewTag", nullptr, -1., ""},
+  {GMSH_FULLRC, "PhysicalGroup", nullptr, -1., ""}};
 
 StringXString NewViewOptions_String[] = {
-  {GMSH_FULLRC, "Type", nullptr, "NodeData"}};
+  {GMSH_FULLRC, "Type", nullptr, "NodeData", ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterNewViewPlugin() { return new GMSH_NewViewPlugin(); }

@@ -348,7 +348,7 @@ void gLevelset::getRPN(std::vector<gLevelset *> &gLsRPN)
   }
 }
 
-gLevelset::gLevelset(const gLevelset &lv) { tag_ = lv.tag_; }
+gLevelset::gLevelset(const gLevelset &lv) : simpleFunction<double>(lv), tag_(lv.tag_) {}
 
 gLevelsetSphere::gLevelsetSphere(const double &x, const double &y,
                                  const double &z, const double &R, int tag)

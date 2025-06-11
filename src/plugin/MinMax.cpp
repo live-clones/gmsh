@@ -6,10 +6,10 @@
 #include "MinMax.h"
 #include "PViewOptions.h"
 
-StringXNumber MinMaxOptions_Number[] = {{GMSH_FULLRC, "View", nullptr, -1.},
-                                        {GMSH_FULLRC, "OverTime", nullptr, 0},
-                                        {GMSH_FULLRC, "Argument", nullptr, 0},
-                                        {GMSH_FULLRC, "Visible", nullptr, 1}};
+StringXNumber MinMaxOptions_Number[] = {{GMSH_FULLRC, "View", nullptr, -1., ""},
+                                        {GMSH_FULLRC, "OverTime", nullptr, 0, ""},
+                                        {GMSH_FULLRC, "Argument", nullptr, 0, ""},
+                                        {GMSH_FULLRC, "Visible", nullptr, 1, ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterMinMaxPlugin() { return new GMSH_MinMaxPlugin(); }

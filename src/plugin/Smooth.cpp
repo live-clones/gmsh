@@ -5,7 +5,7 @@
 
 #include "Smooth.h"
 
-StringXNumber SmoothOptions_Number[] = {{GMSH_FULLRC, "View", nullptr, -1.}};
+StringXNumber SmoothOptions_Number[] = {{GMSH_FULLRC, "View", nullptr, -1., ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterSmoothPlugin() { return new GMSH_SmoothPlugin(); }

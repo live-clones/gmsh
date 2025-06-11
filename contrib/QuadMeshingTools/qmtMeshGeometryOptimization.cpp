@@ -2201,7 +2201,7 @@ bool GeometryOptimizer::smoothWithKernel(
   double t0 = Cpu();
   double sum_dx0 = 0;
   std::vector<vec3> stencilIrreg(10);
-  for(size_t iter = 0; iter < iterMax; ++iter) {
+  for(int iter = 0; iter < iterMax; ++iter) {
     size_t nMoved = 0;
 
     double sum_dx = 0.;

@@ -11,13 +11,13 @@
 #include <algorithm>
 
 StringXNumber SummationOptions_Number[] = {
-  {GMSH_FULLRC, "View 0", nullptr, -1.}, {GMSH_FULLRC, "View 1", nullptr, -1.},
-  {GMSH_FULLRC, "View 2", nullptr, -1.}, {GMSH_FULLRC, "View 3", nullptr, -1.},
-  {GMSH_FULLRC, "View 4", nullptr, -1.}, {GMSH_FULLRC, "View 5", nullptr, -1.},
-  {GMSH_FULLRC, "View 6", nullptr, -1.}, {GMSH_FULLRC, "View 7", nullptr, -1.}};
+  {GMSH_FULLRC, "View 0", nullptr, -1., ""}, {GMSH_FULLRC, "View 1", nullptr, -1., ""},
+  {GMSH_FULLRC, "View 2", nullptr, -1., ""}, {GMSH_FULLRC, "View 3", nullptr, -1., ""},
+  {GMSH_FULLRC, "View 4", nullptr, -1., ""}, {GMSH_FULLRC, "View 5", nullptr, -1., ""},
+  {GMSH_FULLRC, "View 6", nullptr, -1., ""}, {GMSH_FULLRC, "View 7", nullptr, -1., ""}};
 
 StringXString SummationOptions_String[] = {
-  {GMSH_FULLRC, "Resuling View Name", nullptr, "default"}};
+  {GMSH_FULLRC, "Resuling View Name", nullptr, "default", ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterSummationPlugin()
