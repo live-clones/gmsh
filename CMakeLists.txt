@@ -100,6 +100,7 @@ opt(SOLVER "Enable built-in finite element solvers (required for reparametrizati
 opt(SYSTEM_CONTRIB "Use system versions of contrib libraries, when possible" OFF)
 opt(TCMALLOC "Enable libtcmalloc (fast malloc that does not release memory)" OFF)
 opt(TESTS "Enable tests" ${DEFAULT})
+opt(TINYOBJLOADER "Enable TibyObjLoader for reading Wavefront files)" ON)
 opt(TINYXML2 "Enable TinyXML2 parser (used by XAO reader)" ${DEFAULT})
 opt(TOUCHBAR "Enable Apple Touch bar" ${DEFAULT})
 opt(UNTANGLE "Enable 2D and 3D UNTANGLER" ${DEFAULT})
@@ -831,6 +832,12 @@ if(ENABLE_MATHEX)
     include_directories(contrib/MathEx)
     set_config_option(HAVE_MATHEX "MathEx[contrib]")
   endif()
+endif()
+
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/tinyobjloader AND
+   ENABLE_TINYOBJLOADER)
+    include_directories(contrib/tinyobjloader/include)
+    set_config_option(HAVE_TINYOBJLOADER "tinyobjloader")
 endif()
 
 if(ENABLE_TINYXML2)
