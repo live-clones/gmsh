@@ -1857,7 +1857,7 @@ namespace BoundaryLayerCurver {
       double gamma = current_h < .5 ? 0 : 2 * current_h - .5;
       gamma = current_h;
       // gamma = 1;
-      gamma = 0;
+      gamma = 0; // 0 = curved
       double kappa = .1;
       double tau = .1;
       _reduceCurving_newIdea2(edge, minThickness*tau, gface, gamma, kappa, baseEdge, next);
@@ -3396,6 +3396,26 @@ namespace BoundaryLayerCurver {
 void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
                           const GEdge *gedge)
 {
+  // TODO:
+  //  1. Check if easy to include to GUI. Include to GUI or make usable by script
+  //  2. Create class for parameters:
+  //     - skip ensuring good quality element touching the BLM
+  //     - how much reduce curving last layer
+  //     - how much last layer should be close to linearity
+  //       => reduce curving for meeting all three conditions
+  //     - % of thickness of high quality elements (if possible)
+  //     - how much to force continuity between elements
+  //  3. Implement quality check
+  //     - at forward stage
+  //     - at backward stage
+  //  4. Implement better reducing of curving inside BLM
+  //  5. Push to Git
+
+  // TODO:
+  //  • Implement triangles
+  //  • Implement suface BL
+  //  • Clean the code
+
   double length = normal.normalize();
   if(length == 0) {
     Msg::Error("normal must be non-zero for boundary layer curving");
@@ -3463,7 +3483,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
   //   BoundaryLayerCurver::change_normals(bndEl2column[i], nullptr, gedge, normal);
   // }
 
-  BoundaryLayerCurver::reorient_normals(bndEl2column, nullptr, gedge, normal);
+  // BoundaryLayerCurver::reorient_normals(bndEl2column, nullptr, gedge, normal);
 
   for(int i = 0; i < bndEl2column.size(); ++i) {
     // if (bndEl2column[i].first->getNum() != 205) continue; // t161
