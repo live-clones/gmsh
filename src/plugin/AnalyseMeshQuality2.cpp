@@ -30,7 +30,7 @@
 #endif
 
 // TODO:
-//  1. Implement isCurved
+//  x. Implement isCurved
 //  2. Implement isPlanarMesh -> use normal for computing quantities
 //  3. Implement minimal output (or change parameters)
 //     Type of message:
@@ -53,6 +53,14 @@
 //  1. Say in help that the plugin can be used to compute jacobian, hide best
 //     elements, then compute quality (the gain is to compute quality of less
 //     elements)
+
+// FIXME:
+//  1. Quand je mets restrictToCurvedElements=1, les element View ne montre pas
+//     les bons éléments (mais les bonnes valeurs on dirait)
+//  2. Je lance deux fois le plugin, avec création des deux PVIew pour Aspect
+//     (1ère restrictToCurvedElements=1, 2ème restrictToCurvedElements=0).
+//     Après la deuxième, le 1er plot n'affiche plus rien
+//  3. Number of invalid element printed is incorrect (all are said to be invalid)
 
 // NOTE What does the plugin
 //  0. Free data and stop IF dataManagementPolicy = -1
@@ -137,11 +145,11 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "createElementsView", nullptr, 1, "OFF, ON"},
   {GMSH_FULLRC, "createPlotView", nullptr, 1, "OFF, ON"},
   {GMSH_FULLRC, "adjustVisibilityElements", nullptr, 0, "OFF, 1=skipIfAllWouldBeHidden, 2=acceptAllHidden"},
-  {GMSH_FULLRC, "guidanceLevel", nullptr, 0, "(-1)=minimalOutput, 0=verbose, 1=verboseAndExplanations"},
+  {GMSH_FULLRC, "guidanceLevel", nullptr, 1, "(-1)=minimalOutput, 0=verbose, 1=verboseAndExplanations"},
   // Elements Selection:
   {GMSH_FULLRC, "dimensionPolicy", nullptr, 0, "(-1)=force2D, 0=prioritize3D, 1=2D+3D, 2=combine2D+3D"},
   {GMSH_FULLRC, "restrictToVisibleElements", nullptr, 0, "OFF, ON=analyzeOnlyVisibleElements"},
-  {GMSH_FULLRC, "restrictToCurvedElements", nullptr, 0, "OFF, ON=analyzeOnlyNonStraightElements"},
+  {GMSH_FULLRC, "restrictToCurvedElements", nullptr, 1, "OFF, ON=analyzeOnlyNonStraightElements"},
   // Hiding options:
   {GMSH_FULLRC, "visibilityPolicy", nullptr, 1, "(-1)=validity|skip, 0=validity|1, 1=qualOR, 2=qualAND"},
   {GMSH_FULLRC, "visibilityCriterion", nullptr, 0, "0=proportionVisibleElem, 1=numVisibleElem, 2=metricValue"},
@@ -151,7 +159,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   // Advanced computation options:
   {GMSH_FULLRC, "usePreviousData", nullptr, 0, "OFF, ON=skipComputationMetrics"},
   {GMSH_FULLRC, "dataManagementPolicy", nullptr, 0, "(-1)=skipExecutionJustFreeData, 0=freeOldDataIfMeshAbsent, 1=keepAllData"},
-  {GMSH_FULLRC, "smartRecomputation", nullptr, 1, "OFF=alwaysRecompute, ON=avoidRecomputeIfTagsUnchanged"},
+  {GMSH_FULLRC, "smartRecomputation", nullptr, 0, "OFF=alwaysRecompute, ON=avoidRecomputeIfTagsUnchanged"},
   {GMSH_FULLRC, "skipValidity", nullptr, 0, "(0-)=includeValidity, ON=skipPreventiveValidityCheck"},
   // Advanced analysis options:
   {GMSH_FULLRC, "skipStatPrinting", nullptr, 0, "OFF, ON"},
@@ -989,7 +997,7 @@ void Plug::StatGenerator::printStats(const Parameters &param,
              "mean where the worst 10%% of the values are assigned the same weight "
              "as the remaining values. This approach is preferable to the standard "
              "mean because it emphasizes the worst elements, which are critical "
-             "as they can negatively impact the Finite Element solution.\n"
+             "as they can negatively impact the Finite Element solution. "
              "Note that the standard mean corresponds to Wm50.");
   for(auto &measure: measures) {
     _printStats(param.show, measure);
@@ -1294,8 +1302,7 @@ size_t Plug::DataEntity::initialize(const Parameters::Computation &param)
     for(const auto &it : _mapElemToIndex) {
       const std::size_t index = it.second;
       if(isBitSet(_flags[index], F_CURVNOTCOMP)) {
-        bool isCurved = true;
-        // TODO implement: bool isCurved = it.first->isCurved();
+        bool isCurved = it.first->getIsCurved();
         unsetBit(_flags[index], F_CURVNOTCOMP);
         if(isCurved)
           setBit(_flags[index], F_CURVED);
@@ -1317,11 +1324,9 @@ size_t Plug::DataEntity::initialize(const Parameters::Computation &param)
         setBit(flag, F_REQU);
       }
     }
-    else {
-      if(isBitSet(flag, F_REQU)) {
-        ++cntRequestedChanged;
-        unsetBit(flag, F_REQU);
-      }
+    else if(isBitSet(flag, F_REQU)) {
+      ++cntRequestedChanged;
+      unsetBit(flag, F_REQU);
     }
   }
   return cntRequestedChanged;

@@ -227,6 +227,9 @@ public:
     v.resize(0);
   }
 
+  // return true if a HO vertex deviates from its position in the linear element
+  bool getIsCurved(double tol = 1e-7) const;
+
   // get and set parent and children for hierarchial grids
   virtual MElement *getParent() const { return nullptr; }
   virtual void setParent(MElement *p, bool owner = false) {}
@@ -412,7 +415,7 @@ public:
   virtual void pnt(double u, double v, double w, double *p) const;
   // To be compatible with functionSpace without changing form
   virtual void pnt(const std::vector<double> &sf, SPoint3 &p) const;
-  virtual void primaryPnt(double u, double v, double w, SPoint3 &p);
+  virtual void primaryPnt(double u, double v, double w, SPoint3 &p) const;
 
   // invert the parametrisation
   virtual void xyz2uvw(double xyz[3], double uvw[3]) const;

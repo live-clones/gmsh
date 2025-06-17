@@ -599,6 +599,44 @@ bool MElement::setVolumePositive()
   return true;
 }
 
+bool MElement::getIsCurved(double tol) const
+{
+  if(getPolynomialOrder() == 1) return false;
+
+  // Scale tolerance with characteristic length (max size bounding box)
+  int numVertices = getNumVertices();
+  double xmin = getVertex(0)->x(), xmax = xmin;
+  double ymin = getVertex(0)->y(), ymax = ymin;
+  double zmin = getVertex(0)->z(), zmax = zmin;
+  for(int i = 1; i < numVertices; i++) {
+    xmin = std::min(xmin, getVertex(i)->x());
+    xmax = std::max(xmax, getVertex(i)->x());
+    ymin = std::min(ymin, getVertex(i)->y());
+    ymax = std::max(ymax, getVertex(i)->y());
+    zmin = std::min(zmin, getVertex(i)->z());
+    zmax = std::max(zmax, getVertex(i)->z());
+  }
+  tol *= std::max(xmax - xmin, std::max(ymax - ymin, zmax - zmin));
+
+  // Check that vertex deviation from linearity remains small enough
+  for(int i = getNumPrimaryVertices(); i < numVertices; i++) {
+    const MVertex *vert = getVertex(i);
+    double u, v, w;
+    SPoint3 p;
+    getNode(i, u, v, w);
+    primaryPnt(u, v, w, p);
+
+    double dx = p.x() - vert->x();
+    double dy = p.y() - vert->y();
+    double dz = p.z() - vert->z();
+    double dist = dx * dx + dy * dy + dz * dz;
+    if(dist > tol*tol)
+      return true;
+  }
+
+  return false;
+}
+
 int MElement::getValidity()
 {
 #if defined(HAVE_MESH)
@@ -1113,7 +1151,7 @@ void MElement::pnt(const std::vector<double> &sf, SPoint3 &p) const
   p = SPoint3(x, y, z);
 }
 
-void MElement::primaryPnt(double u, double v, double w, SPoint3 &p)
+void MElement::primaryPnt(double u, double v, double w, SPoint3 &p) const
 {
   double x = 0., y = 0., z = 0.;
   double sf[1256];
