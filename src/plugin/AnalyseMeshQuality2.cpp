@@ -32,9 +32,22 @@
 // TODO:
 //  1. Implement isCurved
 //  2. Implement isPlanarMesh -> use normal for computing quantities
-//  3. Update Help
-//  4. Add verbose messages?
-//  5. Test...
+//  3. Implement minimal output (or change parameters)
+//     Type of message:
+//       |-1 | 0 | 1 | (guidanceLevel)
+//       -------------
+//       | x | x | x | ->  9 = mandatory
+//       |   |   | x | ->  1 = help
+//       |   | x | x | ->  0 = normal
+//       |   | x |   | -> -1 = alternative to help
+//       | x |   |   | -> -2 = minimal
+//  4. Update Help message GUI
+//  5. Add check + message after having fetched parameters
+//     - If guidance = 1: output what will be done
+//       if guidance = 0: output what will computed
+//     - If guidance = 1: warn when parameters out of bound
+//  6. Add more verbose messages?
+//  7. Test...
 
 // NOTE:
 //  1. Say in help that the plugin can be used to compute jacobian, hide best
@@ -315,6 +328,7 @@ PView *Plug::execute(PView *v)
   }
   else {
     if(!pc.validity) {
+      // TODO: this should be printed if not minimal asked
       _warn(1, "=> <|>Option 'skipValidity' is ON, validity will not be "
                "computed. This may significantly slow down quality computation "
                "in the presence of invalid elements");

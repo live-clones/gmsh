@@ -150,9 +150,9 @@ private:
                      size_t &countHidden, size_t &countMadeVisible);
 
   // Those are static to be able to call them from class members
-  static bool _okToPrint(int verb)
+  static bool _okToPrint(int asked)
   {
-    return (_verbose && verb >= 0) || (!_verbose && verb <= 0);
+    return (_verbose && asked >= 0) || (!_verbose && asked <= 0);
   }
   static void _printMessage(void (*func1)(const char *, ...),
                             void (*func2)(bool, const char *, ...),
