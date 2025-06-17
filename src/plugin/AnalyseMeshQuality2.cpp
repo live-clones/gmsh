@@ -54,14 +54,6 @@
 //     elements, then compute quality (the gain is to compute quality of less
 //     elements)
 
-// FIXME:
-//  1. Quand je mets restrictToCurvedElements=1, les element View ne montre pas
-//     les bons éléments (mais les bonnes valeurs on dirait)
-//  2. Je lance deux fois le plugin, avec création des deux PVIew pour Aspect
-//     (1ère restrictToCurvedElements=1, 2ème restrictToCurvedElements=0).
-//     Après la deuxième, le 1er plot n'affiche plus rien
-//  3. Number of invalid element printed is incorrect (all are said to be invalid)
-
 // NOTE What does the plugin
 //  0. Free data and stop IF dataManagementPolicy = -1
 //  1. Compute validity/quality IF usePreviousData = OFF
@@ -708,8 +700,12 @@ void Plug::_completeJacobianValues(std::vector<Measures> &measures) const
     }
     if(_param.show.which[VALIDITY]) {
       m.validity.resize(m.minJ.size());
-      for(std::size_t i = 0; i < m.minJ.size(); i++)
-        m.validity[i] = isValid(m.minJ[i], m.maxJ[i]);
+      for(std::size_t i = 0; i < m.minJ.size(); i++) {
+        bool valid = isValid(m.minJ[i], m.maxJ[i]);
+        m.validity[i] = valid;
+        if(!valid) ++m.numInvalidElements;
+      }
+
     }
     if(_param.show.which[RATIOJAC]) {
       m.ratioJ.resize(m.minJ.size());
@@ -975,7 +971,7 @@ void Plug::StatGenerator::printStats(const Parameters &param,
            "convergence speed of iterative methods. Values "
            "range from 0 to 1.");
   if(param.show.which[ASPECT])
-  _info(1, "   *A<|>spect quality*  in [0, 1] (previously IGE) is related to "
+  _info(1, "   *A<|>spect quality*  (previously IGE) is related to "
            "the gradient of the FE solution. Elements with poor aspect quality "
            "negatively affect errors in the gradient of the solution. Values "
            "range from 0 to 1.");
@@ -1059,14 +1055,10 @@ void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, con
 
   // Validity
   if(!show.which[VALIDITY]) return;
-  if(measure.validity.empty())
+  if(!measure.numInvalidElements)
     _status(0, "   All elements are valid :-)");
   else {
-    // _statusBar(0, "   Found %zu invalid elements", measure.validity.size());
-    // FIXME This was printed in the GUI. I wanted in statusBar and not in
-    //  console but maybe it is not possible
-    // _warn(0, "   Found %zu invalid elements", measure.validity.size());
-    _status(0, "   Found %zu invalid elements", measure.validity.size());
+    _warn(0, "   Found %zu invalid elements", measure.numInvalidElements);
   }
 }
 
@@ -1212,6 +1204,7 @@ void Plug::DataSingleDimension::gatherValues(const Counts &counts, Measures &mea
   measures.minDisto.reserve(sz);
   measures.minAspect.reserve(sz);
   measures.elements.reserve(sz);
+  measures.numInvalidElements = 0;
   for(auto &it : _dataEntities) {
     it.second.addValues(measures);
   }
@@ -1481,10 +1474,10 @@ void Plug::DataEntity::add(MElement *el)
 void Plug::DataEntity::addValues(Measures &measures)
 {
   for(auto &it : _mapElemToIndex) {
-    measures.elements.push_back(it.first);
     std::size_t idx = it.second;
     if(isBitSet(_flags[idx], F_REQU))
     {
+      measures.elements.push_back(it.first);
       if(isBitUnset(_flags[idx], F_NOTJAC)) {
         measures.minJ.push_back(_minJ[idx]);
         measures.maxJ.push_back(_maxJ[idx]);
@@ -1764,6 +1757,7 @@ Plug::Measures Plug::Measures::combine(const Measures &m1, const Measures &m2, c
   result.dim3Elem = m1.dim3Elem || m2.dim3Elem;
   result.dimStr = name;
   result.dimStrShort = shortName;
+  result.numInvalidElements = m1.numInvalidElements + m2.numInvalidElements;
   return result;
 }
 

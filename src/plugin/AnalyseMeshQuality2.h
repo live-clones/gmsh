@@ -299,6 +299,7 @@ private:
     std::vector<double> minDisto;
     std::vector<double> minAspect;
     std::vector<MElement *> elements;
+    size_t numInvalidElements;
     static Measures combine(const Measures &, const Measures &, const char *name, const char *shortName);
     const std::vector<double> &getValues(Metric m) const;
   };
