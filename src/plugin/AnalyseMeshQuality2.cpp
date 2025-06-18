@@ -32,7 +32,9 @@
 // TODO:
 //  x. Implement isCurved
 //  2. Implement isPlanarMesh -> use normal for computing quantities
-//  3. Implement minimal output (or change parameters)
+//     - test with ctest if some planarity can be deduced from type of surface
+//       (e.g. GEntity::Plane)
+//  x. Implement minimal output (or change parameters)
 //     Type of message:
 //       |-1 | 0 | 1 | (guidanceLevel)
 //       -------------
@@ -48,6 +50,9 @@
 //     - If guidance = 1: warn when parameters out of bound
 //  6. Add more verbose messages?
 //  7. Test...
+//  8. Make number of evaluation to perform human readable
+//     - either: 10.3k, 421M (3 significance digit)
+//     - or: 10,345, 421,145,134 (all digits)
 
 // NOTE:
 //  1. Say in help that the plugin can be used to compute jacobian, hide best
@@ -127,6 +132,7 @@
 
 namespace {
   constexpr double UNTOUCHED = -987654321;
+  constexpr double MP = 9;
 }
 
 StringXNumber MeshQuality2Options_Number[] = {
@@ -273,36 +279,38 @@ std::string Plug::getHelp() const
 
 PView *Plug::execute(PView *v)
 {
-  _info(0, "---------------------------------------------");
+  _verbose = static_cast<int>(MeshQuality2Options_Number[5].def);
+
+  _info(MP, "---------------------------------------------");
   _status(0, "Executing the plugin AnalyseMeshQuality...");
 
   _fetchParameters();
 
-  _info(1, "=> <|>Option 'guidanceLevel' is 1. This makes the plugin to "
+  _info(1, "-> <|>Option 'guidanceLevel' is 1. This makes the plugin to "
            "provide various explanations");
 
   // Handle cases where no computation is requested
   if(_param.freeData) {
-    _info(-1, "=> Freeing data...");
-    _info(1, "=> Freeing data... (because option 'dataManagePolicy' is -1)");
+    _info(-1, "-> Freeing data...");
+    _info(1, "-> Freeing data... (because option 'dataManagePolicy' is -1)");
     _data2D->clear();
     _data3D->clear();
     MeshQuality2Options_Number[15].def = !_previousFreeOldData;
-    _info(0, "   Done. Option 'dataManagePolicy' has been reset");
-    _info(1, "   Nothing else to do, rerun the plugin to compute something");
+    _info(MP, "   Done. Option 'dataManagePolicy' has been reset");
+    _info(1, "   Nothing else to do, re-run the plugin to compute something");
     return v;
   }
 
   Parameters::Computation &pc = _param.compute;
   if(!pc.validity && !pc.disto && !pc.aspect) {
-    _warn(0, "=> <|>Nothing to execute because 'enableDistortionQuality' and "
+    _warn(0, "-> <|>Nothing to execute because 'enableDistortionQuality' and "
              "'enableAspectQuality' are both OFF and 'skipValidity' is ON ");
     return v;
   }
 
   GModel *m = GModel::current();
   if(pc.freeOldData && _m && _m != m) {
-    _info(1, "=> Detected a new Model, previous data will be cleared");
+    _info(0, "-> Detected a new Model, previous data will be cleared");
     // FIXME may not be the case (can we create a new model with exact same geometry and mesh?)
     // FIXME Do I really need this?
   }
@@ -329,7 +337,7 @@ PView *Plug::execute(PView *v)
   else {
     if(!pc.validity) {
       // TODO: this should be printed if not minimal asked
-      _warn(1, "=> <|>Option 'skipValidity' is ON, validity will not be "
+      _warn(1, "-> <|>Option 'skipValidity' is ON, validity will not be "
                "computed. This may significantly slow down quality computation "
                "in the presence of invalid elements");
     }
@@ -372,7 +380,7 @@ PView *Plug::execute(PView *v)
   }
 
   _info(0, "Done executing Plugin AnalyseMeshQuality");
-  _info(1, "Set guidanceLevel to 0 or -1 to reduce verbosity");
+  _info(1, "(Set guidanceLevel to 0 or -1 to reduce verbosity)");
 
   return v;
 }
@@ -397,7 +405,6 @@ void Plug::_fetchParameters()
   pp.createElemView = static_cast<bool>(MeshQuality2Options_Number[2].def);
   pp.createPlot = static_cast<bool>(MeshQuality2Options_Number[3].def);
   ph.todo = static_cast<int>(MeshQuality2Options_Number[4].def);
-  _verbose = static_cast<int>(MeshQuality2Options_Number[5].def);
 
   // Elements Selection:
   _dimensionPolicy = static_cast<int>(MeshQuality2Options_Number[6].def);
@@ -499,11 +506,11 @@ void Plug::_fetchLegacyParameters()
 
   _verbose = 1;
 
-  _error(0, "=> <|>Deprecated options detected. The plugin will execute using "
-            "the legacy configuration and ignore new options.");
-  _warn(0, "   <|>Please update the deprecated options to their modern "
-           "counterparts.");
-  _info(0, "=> <|>Use the following changes to map the options and achieve "
+  _error(MP, "-> <|>Deprecated options detected. The plugin will execute using "
+             "the legacy configuration and ignore new options.");
+  _warn(MP, "   <|>Please update the deprecated options to their modern "
+            "counterparts.");
+  _info(0, "-> <|>Use the following changes to map the options and achieve "
            "equivalent results:\n"
            " 1. Set 'skipComputationMetrics' to 1 IF '_Recompute' is 0\n"
            " 2. Set 'createElementsView' to '_CreateView'\n"
@@ -527,7 +534,7 @@ void Plug::_fetchLegacyParameters()
            "'enableAspectQuality' is 1\n"
            "       OTHERWISE set 'enableRatioJacDetAsAMetric' to 2");
   _info(0, "   Note: To disable this message, avoid modifying the "
-           "deprecated options.");
+            "deprecated options.");
 
 
   Parameters::Computation &pc = _param.compute;
@@ -653,7 +660,7 @@ void Plug::_computeRequestedData(Counts counts, bool check2D, bool check3D) cons
     _data3D->getDataEntities(allDataEntities);
 
   if(counts.elToCompute[0] > 0) {
-    _status(0, "=> Computing Validity...");
+    _status(0, "-> Computing Validity...");
     MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[0]));
     for(auto data: allDataEntities) {
       data->computeValidity(progress_status);
@@ -661,7 +668,7 @@ void Plug::_computeRequestedData(Counts counts, bool check2D, bool check3D) cons
   }
 
   if(counts.elToCompute[1] > 0) {
-    _status(0, "=> Computing Distortion quality...");
+    _status(0, "-> Computing Distortion quality...");
     MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[1]));
     for(auto data: allDataEntities) {
       data->computeDisto(progress_status, !_param.compute.validity);
@@ -669,7 +676,7 @@ void Plug::_computeRequestedData(Counts counts, bool check2D, bool check3D) cons
   }
 
   if(counts.elToCompute[2] > 0) {
-    _status(0, "=> Computing Aspect quality...");
+    _status(0, "-> Computing Aspect quality...");
     MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[2]));
     for(auto data: allDataEntities) {
       data->computeAspect(progress_status, !_param.compute.validity);
@@ -837,11 +844,11 @@ bool Plug::_performHiding(const std::vector<Measures> &measures)
   }
 
   if(countHidden && countMadeVisible)
-    _info(0, "=> %zu elements have been made visible, %zu have been hidden.", countMadeVisible, countHidden);
+    _info(0, "-> %zu elements have been made visible, %zu have been hidden.", countMadeVisible, countHidden);
   else if (countHidden)
-    _info(0, "=> %zu elements have been hidden.", countHidden);
+    _info(0, "-> %zu elements have been hidden.", countHidden);
   else if (countMadeVisible)
-    _info(0, "=> %zu elements have been made visible.", countMadeVisible);
+    _info(0, "-> %zu elements have been made visible.", countMadeVisible);
 
   return static_cast<bool>(countHidden + countMadeVisible);
 }
@@ -957,7 +964,7 @@ void Plug::StatGenerator::printStats(const Parameters &param,
 {
   if(param.show.skipStats) return;
 
-  _info(1, "=> Printing statistics, here is what is important to know about "
+  _info(1, "-> Printing statistics, here is what is important to know about "
   "them:");
   if(param.show.which[VALIDITY])
   _info(1, "   *V<|>alidity*  provides information about the strict positivity "
@@ -1031,12 +1038,12 @@ void Plug::StatGenerator::_unpackCutoff(double input,
 
 void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, const Measures &measure)
 {
-  _info(0, "=> Statistics for %s:", measure.dimStr);
+  _info(MP, "-> Statistics for %s:", measure.dimStr);
 
   // Header
   if(show.which[DISTO] || show.which[ASPECT] || show.which[RATIOJAC] || show.which[MINJAC]) {
     std::ostringstream columnNamesStream;
-    columnNamesStream << "    ";
+    columnNamesStream << "   | ";
     columnNamesStream << std::setw(_colWidth) << "";
     columnNamesStream << std::setw(_colWidth) << "Min";
     for (double c : _statCutoffs) {
@@ -1045,7 +1052,7 @@ void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, con
       columnNamesStream << std::setw(_colWidth) << "Wm" + formattedP.str();
     }
     columnNamesStream << std::setw(_colWidth) << "Max";
-    _info(0, "%s", columnNamesStream.str().c_str());
+    _info(MP, "%s", columnNamesStream.str().c_str());
   }
 
   for(int i = DISTO; i <= MINJAC; i++) {
@@ -1056,9 +1063,9 @@ void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, con
   // Validity
   if(!show.which[VALIDITY]) return;
   if(!measure.numInvalidElements)
-    _status(0, "   All elements are valid :-)");
+    _status(MP, "   All elements are valid :-)");
   else {
-    _warn(0, "   Found %zu invalid elements", measure.numInvalidElements);
+    _warn(MP, "   Found %zu invalid elements", measure.numInvalidElements);
   }
 }
 
@@ -1081,15 +1088,16 @@ void Plug::StatGenerator::_printStatsOneMetric(const Measures &measure, Metric m
   }
 
   std::ostringstream valStream;
-  valStream << "   ";
+  valStream << "   |";
   valStream << std::setw(_colWidth) << _metricNames[metric] << ":";
   valStream << std::setprecision(3);
+  if(metric == ASPECT || metric == DISTO) valStream << std::fixed;
   if(metric == MINJAC) valStream << std::defaultfloat; // could be std::scientific
   valStream << std::setw(_colWidth) << min;
   for(auto i = 0; i < numCutoff; ++i)
     valStream << std::setw(_colWidth) << avg[i];
   valStream << std::setw(_colWidth) << max;
-  _info(0, "%s", valStream.str().c_str());
+  _info(MP, "%s", valStream.str().c_str());
 }
 
 const std::vector<double> &Plug::StatGenerator::_getCoefficients(double cutoff, size_t num)
@@ -1493,6 +1501,23 @@ void Plug::DataEntity::addValues(Measures &measures)
 // ======== Plugin: User Messages ==============================================
 // =============================================================================
 
+bool Plug::_okToPrint(int asked)
+{
+  //       | _verbose  |
+  // asked |-1 | 0 | 1 |
+  // -------------------
+  //   MP  | x | x | x | -> mandatory
+  //    1  |   |   | x | -> help
+  //    0  |   | x | x | -> normal
+  //   -1  |   | x |   | -> alternative to help
+  //   -2  | x |   |   | -> minimal
+
+  return (asked == MP) ||
+         (_verbose == 1 && asked >= 0) ||
+         (_verbose == 0 && (asked == 0 || asked == -1)) ||
+         (_verbose == -1 && asked == -2);
+}
+
 void Plug::_printMessage(void (*func1)(const char *, ...),
                          void (*func2)(bool, const char *, ...),
                          const char *format, va_list args, bool logStatusBar)
@@ -1634,36 +1659,37 @@ std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
 
   if(sum2D + sum3D == 0) return 0;
 
-  _info(0, "=> <|>Number of evaluations to perform:\n");
-  _info(0, "   %5s%10s%10s%10s", "", "Validity", "Disto", "Aspect");
+  // FIXME make human readable for big meshes
+  _info(0, "-> <|>Number of evaluations to perform:\n");
+  _info(0, "   | %5s%10s%10s%10s", "", "Validity", "Disto", "Aspect");
   if(sum2D)
-    _info(0, "   %5s%10d%10d%10d", "2D:", cnt2D.elToCompute[0],
+    _info(0, "   | %5s%10d%10d%10d", "2D:", cnt2D.elToCompute[0],
           cnt2D.elToCompute[1], cnt2D.elToCompute[2]);
   if(sum3D)
-    _info(0, "   %5s%10d%10d%10d", "3D:", cnt3D.elToCompute[0],
+    _info(0, "   | %5s%10d%10d%10d", "3D:", cnt3D.elToCompute[0],
           cnt3D.elToCompute[1], cnt3D.elToCompute[2]);
 
   return sum2D + sum3D;
 }
 
-void Plug::_guidanceNothingToCompute(Counts counts,
-                                            bool check2D, bool check3D) const
+void Plug::_guidanceNothingToCompute(Counts counts, bool check2D,
+                                     bool check3D) const
 {
-  _info(1, "=> No element to compute");
+  _info(1, "-> No element to compute");
 
   if (!counts.elToShow) {
-    _info(-1, "   Nothing to compute, nothing to show.");
-    _info(1, "   Nothing to show neither.");
+    _info(-1, "-> Nothing to compute, nothing to show");
+    _info(1, "   Nothing to show neither");
 
     if (counts.totalEl) {
       if (_param.compute.onlyVisible && counts.visibleEl == 0) {
-        _warn(1, "   Option 'restrictToVisibleElements' is ON but no visible elements found.");
+        _warn(1, "   Option 'restrictToVisibleElements' is ON but no visible elements found");
       }
       else if (_param.compute.onlyCurved && counts.curvedEl == 0) {
-        _warn(1, "   Option 'restrictToCurvedElements' is ON but no curved elements found.");
+        _warn(1, "   Option 'restrictToCurvedElements' is ON but no curved elements found");
       }
       else {
-        _error(1, "   Unexpected state: should not be here.");
+        _error(1, "   Unexpected state: should not be here");
       }
     }
     else { // Case where no elements found
@@ -1687,8 +1713,8 @@ void Plug::_guidanceNothingToCompute(Counts counts,
         if (_m->getNumRegions()) {
           _warn(0, "   Planned to check 2D mesh as option 'dimensionPolicy' "
                    "is -1, but no 2D mesh found.");
-          _warn(0, "   3D geometry found, maybe 'dimensionPolicy' "
-                   "should be set to 0");
+          _warn(0, "   3D geometry found, consider setting 'dimensionPolicy' "
+                   "to 0");
         }
         else {
           if (_m->getNumFaces())
