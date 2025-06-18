@@ -50,7 +50,7 @@
 //     - If guidance = 1: warn when parameters out of bound
 //  6. Add more verbose messages?
 //  7. Test...
-//  8. Make number of evaluation to perform human readable
+//  x. Make number of evaluation to perform human readable
 //     - either: 10.3k, 421M (3 significance digit)
 //     - or: 10,345, 421,145,134 (all digits)
 
@@ -1501,6 +1501,24 @@ void Plug::DataEntity::addValues(Measures &measures)
 // ======== Plugin: User Messages ==============================================
 // =============================================================================
 
+std::string formatNumber(size_t value) {
+  std::ostringstream formatted;
+  if (value < 10000) {
+    // Normal output if below 10,000
+    formatted << value;
+  }
+  else if (value < 1000000) {
+    formatted << std::setprecision(3) << (value / 1000.0) << "k";
+  }
+  else if (value < 1000000000) {
+    formatted << std::setprecision(3) << (value / 1000000.0) << "M";
+  }
+  else {
+    formatted << std::setprecision(3) << (value / 1000000000.0) << "B";
+  }
+  return formatted.str();
+}
+
 bool Plug::_okToPrint(int asked)
 {
   //       | _verbose  |
@@ -1659,15 +1677,19 @@ std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
 
   if(sum2D + sum3D == 0) return 0;
 
-  // FIXME make human readable for big meshes
   _info(0, "-> <|>Number of evaluations to perform:\n");
   _info(0, "   | %5s%10s%10s%10s", "", "Validity", "Disto", "Aspect");
   if(sum2D)
-    _info(0, "   | %5s%10d%10d%10d", "2D:", cnt2D.elToCompute[0],
-          cnt2D.elToCompute[1], cnt2D.elToCompute[2]);
+    _info(0, "   | %5s%10s%10s%10s", "2D:",
+              formatNumber(cnt2D.elToCompute[0]).c_str(),
+              formatNumber(cnt2D.elToCompute[1]).c_str(),
+              formatNumber(cnt2D.elToCompute[2]).c_str());
+
   if(sum3D)
-    _info(0, "   | %5s%10d%10d%10d", "3D:", cnt3D.elToCompute[0],
-          cnt3D.elToCompute[1], cnt3D.elToCompute[2]);
+    _info(0, "   | %5s%10s%10s%10s", "3D:",
+              formatNumber(cnt3D.elToCompute[0]).c_str(),
+              formatNumber(cnt3D.elToCompute[1]).c_str(),
+              formatNumber(cnt3D.elToCompute[2]).c_str());
 
   return sum2D + sum3D;
 }
