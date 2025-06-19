@@ -487,6 +487,8 @@ public:
                4 + _vs.size());
     return 0;
   }
+  virtual int getTypeForVTK() const { return 71; } // VTK_LAGRANGE_TETRAHEDRON
+
   virtual void reverse();
   virtual void getEdgeRep(bool curved, int num, double *x, double *y, double *z,
                           SVector3 *n);

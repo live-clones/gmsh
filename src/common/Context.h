@@ -16,7 +16,7 @@ class GamePad;
 
 struct contextMeshOptions {
   // mesh algorithms
-  int optimize, optimizeNetgen, refineSteps;
+  int optimize, optimizeNetgen, refineSteps, optimizePyramids;
   int smoothCrossField, crossFieldClosestPoint;
   double lcFactor, randFactor, randFactor3d, lcIntegrationPrecision;
   double optimizeThreshold, normals, tangents, explode, angleSmoothNormals;
@@ -61,7 +61,7 @@ struct contextMeshOptions {
   int saveAll, saveTri, saveGroupsOfNodes, saveGroupsOfElements;
   int readGroupsOfElements;
   int binary, bdfFieldFormat;
-  int unvStrictFormat, stlRemoveDuplicateTriangles, stlOneSolidPerSurface;
+  int unvStrictFormat, stlRemoveBadTriangles, stlOneSolidPerSurface;
   double stlLinearDeflection, stlAngularDeflection;
   bool stlLinearDeflectionRelative;
   int saveParametric, saveTopology, saveWithoutOrphans, zoneDefinition;

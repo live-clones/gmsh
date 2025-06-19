@@ -327,8 +327,8 @@ bool GModel::empty() const
 
 GRegion *GModel::getRegionByTag(int n) const
 {
-  GEntity tmp((GModel *)this, n);
-  auto it = regions.find((GRegion *)&tmp);
+  GRegion tmp((GModel *)this, n);
+  auto it = regions.find(&tmp);
   if(it != regions.end())
     return *it;
   else
@@ -337,8 +337,8 @@ GRegion *GModel::getRegionByTag(int n) const
 
 GFace *GModel::getFaceByTag(int n) const
 {
-  GEntity tmp((GModel *)this, n);
-  auto it = faces.find((GFace *)&tmp);
+  GFace tmp((GModel *)this, n);
+  auto it = faces.find(&tmp);
   if(it != faces.end())
     return *it;
   else
@@ -347,8 +347,8 @@ GFace *GModel::getFaceByTag(int n) const
 
 GEdge *GModel::getEdgeByTag(int n) const
 {
-  GEntity tmp((GModel *)this, n);
-  auto it = edges.find((GEdge *)&tmp);
+  GEdge tmp((GModel *)this, n);
+  auto it = edges.find(&tmp);
   if(it != edges.end())
     return *it;
   else
@@ -357,8 +357,8 @@ GEdge *GModel::getEdgeByTag(int n) const
 
 GVertex *GModel::getVertexByTag(int n) const
 {
-  GEntity tmp((GModel *)this, n);
-  auto it = vertices.find((GVertex *)&tmp);
+  GVertex tmp((GModel *)this, n);
+  auto it = vertices.find(&tmp);
   if(it != vertices.end())
     return *it;
   else
@@ -2011,6 +2011,7 @@ void GModel::rebuildMeshVertexCache(bool onlyIfNecessary)
 {
   if(!onlyIfNecessary ||
      (_vertexVectorCache.empty() && _vertexMapCache.empty())) {
+    Msg::Debug("Rebuilding mesh node cache");
     _vertexVectorCache.clear();
     _vertexMapCache.clear();
     bool dense = false;
@@ -2087,7 +2088,6 @@ MVertex *GModel::getMeshVertexByTag(std::size_t n)
 #pragma omp barrier
 #pragma omp single
     {
-      Msg::Debug("Rebuilding mesh node cache");
       rebuildMeshVertexCache();
     }
   }
@@ -2101,7 +2101,6 @@ MVertex *GModel::getMeshVertexByTag(std::size_t n)
 void GModel::addMVertexToVertexCache(MVertex* v)
 {
   if(_vertexVectorCache.empty() && _vertexMapCache.empty()) {
-    Msg::Debug("Rebuilding mesh node cache");
     rebuildMeshVertexCache();
   }
   if (_vertexVectorCache.size() > 0) {
@@ -2141,7 +2140,6 @@ MElement *GModel::getMeshElementByTag(std::size_t n, int &entityTag)
 #pragma omp barrier
 #pragma omp single
     {
-      Msg::Debug("Rebuilding mesh element cache");
       rebuildMeshElementCache();
     }
   }
@@ -2296,7 +2294,7 @@ std::size_t GModel::indexMeshVertices(bool all, int singlePartition,
 
   // renumber all the mesh nodes tagged with 0
   std::size_t numVertices = 0;
-  long int index = 0;
+  long int index = CTX::instance()->mesh.firstNodeTag - 1;
   for(std::size_t i = 0; i < entities.size(); i++) {
     for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
       MVertex *v = entities[i]->mesh_vertices[j];

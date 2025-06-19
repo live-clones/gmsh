@@ -765,6 +765,8 @@ module gmsh
         gmshModelRemoveEntityName
     procedure, nopass :: getPhysicalGroups => &
         gmshModelGetPhysicalGroups
+    procedure, nopass :: getPhysicalGroupsEntities => &
+        gmshModelGetPhysicalGroupsEntities
     procedure, nopass :: getEntitiesForPhysicalGroup => &
         gmshModelGetEntitiesForPhysicalGroup
     procedure, nopass :: getEntitiesForPhysicalName => &
@@ -797,8 +799,12 @@ module gmsh
         gmshModelAddDiscreteEntity
     procedure, nopass :: removeEntities => &
         gmshModelRemoveEntities
+    procedure, nopass :: getEntityType => &
+        gmshModelGetEntityType
     procedure, nopass :: getType => &
         gmshModelGetType
+    procedure, nopass :: getEntityProperties => &
+        gmshModelGetEntityProperties
     procedure, nopass :: getParent => &
         gmshModelGetParent
     procedure, nopass :: getNumberOfPartitions => &
@@ -1486,9 +1492,9 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelRemoveEntityName
 
-  !> Get all the physical groups in the current model. If `dim' is >= 0, return
-  !! only the entities of the specified dimension (e.g. physical points if `dim'
-  !! == 0). The entities are returned as a vector of (dim, tag) pairs.
+  !> Get the physical groups in the current model. The physical groups are
+  !! returned as a vector of (dim, tag) pairs. If `dim' is >= 0, return only the
+  !! groups of the specified dimension (e.g. physical points if `dim' == 0).
   subroutine gmshModelGetPhysicalGroups(dimTags, &
                                         dim, &
                                         ierr)
@@ -1517,6 +1523,60 @@ module gmsh
     dimTags = ovectorpair_(api_dimTags_, &
       api_dimTags_n_)
   end subroutine gmshModelGetPhysicalGroups
+
+  !> Get the physical groups in the current model as well as the model entities
+  !! that make them up. The physical groups are returned as the vector of (dim,
+  !! tag) pairs `dimTags'. The model entities making up the corresponding
+  !! physical groups are returned in `entities'. If `dim' is >= 0, return only
+  !! the groups of the specified dimension (e.g. physical points if `dim' == 0).
+  subroutine gmshModelGetPhysicalGroupsEntities(dimTags, &
+                                                entities, &
+                                                entities_n, &
+                                                dim, &
+                                                ierr)
+    interface
+    subroutine C_API(api_dimTags_, &
+                     api_dimTags_n_, &
+                     api_entities_, &
+                     api_entities_n_, &
+                     api_entities_nn_, &
+                     dim, &
+                     ierr_) &
+      bind(C, name="gmshModelGetPhysicalGroupsEntities")
+      use, intrinsic :: iso_c_binding
+      type(c_ptr), intent(out) :: api_dimTags_
+      integer(c_size_t), intent(out) :: api_dimTags_n_
+      type(c_ptr), intent(out) :: api_entities_
+      type(c_ptr), intent(out) :: api_entities_n_
+      integer(c_size_t) :: api_entities_nn_
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: dimTags
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: entities
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: entities_n
+    integer, intent(in), optional :: dim
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_dimTags_
+    integer(c_size_t) :: api_dimTags_n_
+    type(c_ptr) :: api_entities_, api_entities_n_
+    integer(c_size_t) :: api_entities_nn_
+    call C_API(api_dimTags_=api_dimTags_, &
+         api_dimTags_n_=api_dimTags_n_, &
+         api_entities_=api_entities_, &
+         api_entities_n_=api_entities_n_, &
+         api_entities_nn_=api_entities_nn_, &
+         dim=optval_c_int(-1, dim), &
+         ierr_=ierr)
+    dimTags = ovectorpair_(api_dimTags_, &
+      api_dimTags_n_)
+    call ovectorvectorpair_(api_entities_, &
+      api_entities_n_, &
+      api_entities_nn_, &
+      entities, &
+      entities_n)
+  end subroutine gmshModelGetPhysicalGroupsEntities
 
   !> Get the tags of the model entities making up the physical group of
   !! dimension `dim' and tag `tag'.
@@ -2093,6 +2153,37 @@ module gmsh
   end subroutine gmshModelRemoveEntities
 
   !> Get the type of the entity of dimension `dim' and tag `tag'.
+  subroutine gmshModelGetEntityType(dim, &
+                                    tag, &
+                                    entityType, &
+                                    ierr)
+    interface
+    subroutine C_API(dim, &
+                     tag, &
+                     api_entityType_, &
+                     ierr_) &
+      bind(C, name="gmshModelGetEntityType")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), value, intent(in) :: tag
+      type(c_ptr), intent(out) :: api_entityType_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    character(len=:), allocatable, intent(out) :: entityType
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_entityType_
+    call C_API(dim=int(dim, c_int), &
+         tag=int(tag, c_int), &
+         api_entityType_=api_entityType_, &
+         ierr_=ierr)
+    entityType = ostring_(api_entityType_)
+  end subroutine gmshModelGetEntityType
+
+  !> Get the type of the entity of dimension `dim' and tag `tag'. (This is a
+  !! deprecated synonym for `getType'.)
   subroutine gmshModelGetType(dim, &
                               tag, &
                               entityType, &
@@ -2121,6 +2212,59 @@ module gmsh
          ierr_=ierr)
     entityType = ostring_(api_entityType_)
   end subroutine gmshModelGetType
+
+  !> Get the properties of the entity of dimension `dim' and tag `tag'. The
+  !! `reals' vector contains the 4 coefficients of the cartesian equation for a
+  !! plane surface; the center coordinates, axis direction, major radius and
+  !! minor radius for a torus; the center coordinates, axis direction and radius
+  !! for a cylinder; the center coordinates, axis direction, radius and semi-
+  !! angle for surfaces of revolution; the center coordinates and the radius for
+  !! a sphere.
+  subroutine gmshModelGetEntityProperties(dim, &
+                                          tag, &
+                                          integers, &
+                                          reals, &
+                                          ierr)
+    interface
+    subroutine C_API(dim, &
+                     tag, &
+                     api_integers_, &
+                     api_integers_n_, &
+                     api_reals_, &
+                     api_reals_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelGetEntityProperties")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), value, intent(in) :: tag
+      type(c_ptr), intent(out) :: api_integers_
+      integer(c_size_t), intent(out) :: api_integers_n_
+      type(c_ptr), intent(out) :: api_reals_
+      integer(c_size_t) :: api_reals_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    integer(c_int), dimension(:), allocatable, intent(out) :: integers
+    real(c_double), dimension(:), allocatable, intent(out) :: reals
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_integers_
+    integer(c_size_t) :: api_integers_n_
+    type(c_ptr) :: api_reals_
+    integer(c_size_t) :: api_reals_n_
+    call C_API(dim=int(dim, c_int), &
+         tag=int(tag, c_int), &
+         api_integers_=api_integers_, &
+         api_integers_n_=api_integers_n_, &
+         api_reals_=api_reals_, &
+         api_reals_n_=api_reals_n_, &
+         ierr_=ierr)
+    integers = ovectorint_(api_integers_, &
+      api_integers_n_)
+    reals = ovectordouble_(api_reals_, &
+      api_reals_n_)
+  end subroutine gmshModelGetEntityProperties
 
   !> In a partitioned model, get the parent of the entity of dimension `dim' and
   !! tag `tag', i.e. from which the entity is a part of, if any. `parentDim' and
@@ -9049,8 +9193,8 @@ module gmsh
 
   !> Mirror the entities `dimTags' (given as a vector of (dim, tag) pairs) in
   !! the built-in CAD representation, with respect to the plane of equation `a'
-  !! * x + `b' * y + `c' * z + `d' = 0. (This is a synonym for `mirror', which
-  !! will be deprecated in a future release.)
+  !! * x + `b' * y + `c' * z + `d' = 0. (This is a deprecated synonym for
+  !! `mirror'.)
   subroutine gmshModelGeoSymmetrize(dimTags, &
                                     a, &
                                     b, &
@@ -11858,8 +12002,9 @@ module gmsh
 
   !> Compute the boolean union (the fusion) of the entities `objectDimTags' and
   !! `toolDimTags' (vectors of (dim, tag) pairs) in the OpenCASCADE CAD
-  !! representation. Return the resulting entities in `outDimTags'. If `tag' is
-  !! positive, try to set the tag explicitly (only valid if the boolean
+  !! representation. Return the resulting entities in `outDimTags', and the
+  !! correspondance between input and resulting entities in `outDimTagsMap'. If
+  !! `tag' is positive, try to set the tag explicitly (only valid if the boolean
   !! operation results in a single entity). Remove the object if `removeObject'
   !! is set. Remove the tool if `removeTool' is set.
   subroutine gmshModelOccFuse(objectDimTags, &
@@ -11940,9 +12085,11 @@ module gmsh
   !> Compute the boolean intersection (the common parts) of the entities
   !! `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the
   !! OpenCASCADE CAD representation. Return the resulting entities in
-  !! `outDimTags'. If `tag' is positive, try to set the tag explicitly (only
-  !! valid if the boolean operation results in a single entity). Remove the
-  !! object if `removeObject' is set. Remove the tool if `removeTool' is set.
+  !! `outDimTags', and the correspondance between input and resulting entities
+  !! in `outDimTagsMap'. If `tag' is positive, try to set the tag explicitly
+  !! (only valid if the boolean operation results in a single entity). Remove
+  !! the object if `removeObject' is set. Remove the tool if `removeTool' is
+  !! set.
   subroutine gmshModelOccIntersect(objectDimTags, &
                                    toolDimTags, &
                                    outDimTags, &
@@ -12020,8 +12167,9 @@ module gmsh
 
   !> Compute the boolean difference between the entities `objectDimTags' and
   !! `toolDimTags' (given as vectors of (dim, tag) pairs) in the OpenCASCADE CAD
-  !! representation. Return the resulting entities in `outDimTags'. If `tag' is
-  !! positive, try to set the tag explicitly (only valid if the boolean
+  !! representation. Return the resulting entities in `outDimTags', and the
+  !! correspondance between input and resulting entities in `outDimTagsMap'. If
+  !! `tag' is positive, try to set the tag explicitly (only valid if the boolean
   !! operation results in a single entity). Remove the object if `removeObject'
   !! is set. Remove the tool if `removeTool' is set.
   subroutine gmshModelOccCut(objectDimTags, &
@@ -12105,8 +12253,9 @@ module gmsh
   !! all interfaces conformal. When applied to entities of different dimensions,
   !! the lower dimensional entities will be automatically embedded in the higher
   !! dimensional entities if they are not on their boundary. Return the
-  !! resulting entities in `outDimTags'. If `tag' is positive, try to set the
-  !! tag explicitly (only valid if the boolean operation results in a single
+  !! resulting entities in `outDimTags', and the correspondance between input
+  !! and resulting entities in `outDimTagsMap'. If `tag' is positive, try to set
+  !! the tag explicitly (only valid if the boolean operation results in a single
   !! entity). Remove the object if `removeObject' is set. Remove the tool if
   !! `removeTool' is set.
   subroutine gmshModelOccFragment(objectDimTags, &

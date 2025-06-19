@@ -106,6 +106,11 @@ void onelab_cb(Fl_Widget *w, void *data)
   o.setAttribute("Persistent", "1");
   onelab::server::instance()->set(o);
 
+  if(action == "reload") {
+    // for outside code that will want to rebuild the geometry
+    return;
+  }
+
   if(action == "refresh") {
     onelabUtils::updateGraphs();
     FlGui::instance()->rebuildTree(true);

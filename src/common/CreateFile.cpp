@@ -327,13 +327,16 @@ void CreateOutputFile(const std::string &fileName, int format,
       GModel::current()->writePartitionedMSH
         (splitName[0], CTX::instance()->mesh.mshFileVersion,
          CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
-         CTX::instance()->mesh.saveParametric, CTX::instance()->mesh.scalingFactor);
+         CTX::instance()->mesh.saveParametric,
+         CTX::instance()->mesh.scalingFactor);
     }
     else{
       GModel::current()->writeMSH
-        (name, CTX::instance()->mesh.mshFileVersion, CTX::instance()->mesh.binary,
-         CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveParametric,
-         CTX::instance()->mesh.scalingFactor);
+        (name, CTX::instance()->mesh.mshFileVersion,
+         CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
+         CTX::instance()->mesh.saveParametric,
+         CTX::instance()->mesh.scalingFactor,
+         CTX::instance()->mesh.firstElementTag - 1);
     }
     if(GModel::current()->getNumPartitions() &&
        CTX::instance()->mesh.partitionSaveTopologyFile){

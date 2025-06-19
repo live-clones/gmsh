@@ -113,24 +113,10 @@ Physical Volume("The volume", 1) = {129,130};
 // geometries, it is also sometimes useful to generate the `flat' geometry, with
 // an explicit representation of all the elementary entities.
 //
-// With the built-in geometry kernel, this can be achieved with `File->Export' by
-// selecting the `Gmsh Unrolled GEO' format, or by adding
+// This can be achieved with `File->Export' by selecting the `Gmsh Unrolled GEO'
+// format, or by adding
 //
 //   Save "file.geo_unrolled";
 //
 // in the script. It can also be achieved with `gmsh t2.geo -0' on the command
 // line.
-//
-// With the OpenCASCADE geometry kernel, unrolling the geometry can be achieved
-// with `File->Export' by selecting the `OpenCASCADE BRep' format, or by adding
-//
-//   Save "file.brep";
-//
-// in the script. (OpenCASCADE geometries can also be exported to STEP.)
-
-// It is important to note that Gmsh never translates geometry data into a
-// common representation: all the operations on a geometrical entity are
-// performed natively with the associated geometry kernel. Consequently, one
-// cannot export a geometry constructed with the built-in kernel as an
-// OpenCASCADE BRep file; or export an OpenCASCADE model as an Unrolled GEO
-// file.

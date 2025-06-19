@@ -181,7 +181,7 @@ struct doubleXstring{
 %token <c> tSTRING tBIGSTR
 
 %token tEND tAFFECT tDOTS tSCOPE tPi tMPI_Rank tMPI_Size tEuclidian tCoordinates tTestLevel
-%token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand
+%token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand tStep
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tAbs tFloor tCeil tRound tMin tMax
 %token tFmod tModulo tHypot tList tLinSpace tLogSpace tListFromFile tCatenary
 %token tPrintf tError tWarning tStr tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
@@ -238,8 +238,8 @@ struct doubleXstring{
 %type <l> MultiStringExprVar SurfaceConstraints
 %type <l> RecursiveListOfStringExprVar Str_BracedRecursiveListOfStringExprVar
 %type <l> BracedOrNotRecursiveListOfStringExprVar BracedRecursiveListOfStringExprVar
-%type <l> FExpr_Multi ListOfDouble ListOfDoubleOrAll RecursiveListOfDouble
-%type <l> RecursiveListOfListOfDouble Enumeration
+%type <l> FExpr_Multi ListOfDouble ListOfDoubleWithBraces ListOfDoubleOrAll
+%type <l> RecursiveListOfDouble RecursiveListOfListOfDouble Enumeration
 %type <l> ListOfColor RecursiveListOfColor
 %type <l> ListOfShapes Transform Extrude MultipleShape Boolean
 %type <l> TransfiniteCorners PeriodicTransform
@@ -799,6 +799,7 @@ tSTRING_Reserved:
    tSTRING   { $$ = $1; }
  | tMin      { $$ = (char *)Malloc(4 * sizeof(char)); strcpy($$, "Min"); }
  | tMax      { $$ = (char *)Malloc(4 * sizeof(char)); strcpy($$, "Max"); }
+ | tStep     { $$ = (char *)Malloc(5 * sizeof(char)); strcpy($$, "Step"); }
  | tBox      { $$ = (char *)Malloc(4 * sizeof(char)); strcpy($$, "Box"); }
  | tCylinder { $$ = (char *)Malloc(9 * sizeof(char)); strcpy($$, "Cylinder"); }
 
@@ -1194,7 +1195,7 @@ Affectation :
       Free($6);
       Free($8);
     }
-  | tField '[' FExpr ']' '.' tSTRING_Reserved  tAFFECT '{' RecursiveListOfDouble '}' tEND
+  | tField '[' FExpr ']' '.' tSTRING_Reserved  tAFFECT ListOfDoubleWithBraces tEND
     {
 #if defined(HAVE_MESH)
       Field *field = GModel::current()->getFields()->get((int)$3);
@@ -1204,9 +1205,9 @@ Affectation :
 	  if(option->getType() == FIELD_OPTION_LIST) {
 	    std::list<int> vl = option->list();
 	    vl.clear();
-	    for(int i = 0; i < List_Nbr($9); i++){
+	    for(int i = 0; i < List_Nbr($8); i++){
 	      double id;
-	      List_Read($9, i, &id);
+	      List_Read($8, i, &id);
 	      vl.push_back((int)id);
 	    }
 	    option->list(vl);
@@ -1214,9 +1215,9 @@ Affectation :
 	  else {
 	    std::list<double> vl = option->listdouble();
 	    vl.clear();
-	    for(int i = 0; i < List_Nbr($9); i++){
+	    for(int i = 0; i < List_Nbr($8); i++){
 	      double id;
-	      List_Read($9, i, &id);
+	      List_Read($8, i, &id);
 	      vl.push_back(id);
 	    }
 	    option->listdouble(vl);
@@ -1230,7 +1231,7 @@ Affectation :
 	yymsg(0, "No field with id %i", (int)$3);
 #endif
       Free($6);
-      List_Delete($9);
+      List_Delete($8);
     }
   | tField '[' FExpr ']' '.' tSTRING_Reserved tEND
     {
@@ -1445,6 +1446,10 @@ FloatParameterOption :
   | tMax FExpr
     {
       floatOptions["Max"].push_back($2);
+    }
+  | tStep FExpr
+    {
+      floatOptions["Step"].push_back($2);
     }
   | tSTRING
     {
@@ -5377,6 +5382,7 @@ FExpr :
   | FExpr tGREATERGREATER FExpr    { $$ = ((int)$1 >> (int)$3); }
   | FExpr tLESSLESS FExpr          { $$ = ((int)$1 << (int)$3); }
   | FExpr '?' FExpr tDOTS FExpr    { $$ = $1 ? $3 : $5; }
+  | tStep   LP FExpr RP            { $$ = ($3 < 0) ? 0 : 1; }
   | tExp    LP FExpr RP            { $$ = exp($3);      }
   | tLog    LP FExpr RP            { $$ = log($3);      }
   | tLog10  LP FExpr RP            { $$ = log10($3);    }
@@ -5814,7 +5820,6 @@ ListOfDouble :
     }
   | '{' '}'
     {
-      // creates an empty list
       $$ = List_Create(2, 1, sizeof(double));
     }
   | '{' RecursiveListOfDouble '}'
@@ -5835,6 +5840,25 @@ ListOfDouble :
       for(int i = 0; i < List_Nbr($$); i++){
 	double *pd = (double*)List_Pointer($$, i);
 	(*pd) *= $1;
+      }
+    }
+;
+
+ListOfDoubleWithBraces :
+  '{' '}'
+    {
+      $$ = List_Create(2, 1, sizeof(double));
+    }
+  | '{' RecursiveListOfDouble '}'
+    {
+      $$ = $2;
+    }
+  | '-' '{' RecursiveListOfDouble '}'
+    {
+      $$ = $3;
+      for(int i = 0; i < List_Nbr($$); i++){
+	double *pd = (double*)List_Pointer($$, i);
+	(*pd) = - (*pd);
       }
     }
 ;

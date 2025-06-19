@@ -128,8 +128,11 @@ model.add('getEntityName', doc, None, iint('dim'), iint('tag'), ostring('name'))
 doc = '''Remove the entity name `name' from the current model.'''
 model.add('removeEntityName', doc, None, istring('name'))
 
-doc = '''Get all the physical groups in the current model. If `dim' is >= 0, return only the entities of the specified dimension (e.g. physical points if `dim' == 0). The entities are returned as a vector of (dim, tag) pairs.'''
+doc = '''Get the physical groups in the current model. The physical groups are returned as a vector of (dim, tag) pairs. If `dim' is >= 0, return only the groups of the specified dimension (e.g. physical points if `dim' == 0).'''
 model.add('getPhysicalGroups', doc, None, ovectorpair('dimTags'), iint('dim', '-1'))
+
+doc = '''Get the physical groups in the current model as well as the model entities that make them up. The physical groups are returned as the vector of (dim, tag) pairs `dimTags'. The model entities making up the corresponding physical groups are returned in `entities'. If `dim' is >= 0, return only the groups of the specified dimension (e.g. physical points if `dim' == 0).'''
+model.add('getPhysicalGroupsEntities', doc, None, ovectorpair('dimTags'), ovectorvectorpair('entities'), iint('dim', '-1'))
 
 doc = '''Get the tags of the model entities making up the physical group of dimension `dim' and tag `tag'.'''
 model.add('getEntitiesForPhysicalGroup', doc, None, iint('dim'), iint('tag'), ovectorint('tags'))
@@ -180,7 +183,12 @@ doc = '''Remove the entities `dimTags' (given as a vector of (dim, tag) pairs) o
 model.add('removeEntities', doc, None, ivectorpair('dimTags'), ibool('recursive', 'false', 'False'))
 
 doc = '''Get the type of the entity of dimension `dim' and tag `tag'.'''
+model.add('getEntityType', doc, None, iint('dim'), iint('tag'), ostring('entityType'))
+doc += ''' (This is a deprecated synonym for `getType'.)'''
 model.add('getType', doc, None, iint('dim'), iint('tag'), ostring('entityType'))
+
+doc = '''Get the properties of the entity of dimension `dim' and tag `tag'. The `reals' vector contains the 4 coefficients of the cartesian equation for a plane surface; the center coordinates, axis direction, major radius and minor radius for a torus; the center coordinates, axis direction and radius for a cylinder; the center coordinates, axis direction, radius and semi-angle for surfaces of revolution; the center coordinates and the radius for a sphere.'''
+model.add('getEntityProperties', doc, None, iint('dim'), iint('tag'), ovectorint('integers'), ovectordouble('reals'))
 
 doc = '''In a partitioned model, get the parent of the entity of dimension `dim' and tag `tag', i.e. from which the entity is a part of, if any. `parentDim' and `parentTag' are set to -1 if the entity has no parent.'''
 model.add('getParent', doc, None, iint('dim'), iint('tag'), oint('parentDim'), oint('parentTag'))
@@ -706,7 +714,7 @@ geo.add('dilate', doc, None, ivectorpair('dimTags'), idouble('x'), idouble('y'),
 
 doc = '''Mirror the entities `dimTags' (given as a vector of (dim, tag) pairs) in the built-in CAD representation, with respect to the plane of equation `a' * x + `b' * y + `c' * z + `d' = 0.'''
 geo.add('mirror', doc, None, ivectorpair('dimTags'), idouble('a'), idouble('b'), idouble('c'), idouble('d'))
-doc += ''' (This is a synonym for `mirror', which will be deprecated in a future release.)'''
+doc += ''' (This is a deprecated synonym for `mirror'.)'''
 geo.add('symmetrize', doc, None, ivectorpair('dimTags'), idouble('a'), idouble('b'), idouble('c'), idouble('d'))
 
 doc = '''Copy the entities `dimTags' (given as a vector of (dim, tag) pairs) in the built-in CAD representation; the new entities are returned in `outDimTags'.'''
@@ -891,16 +899,16 @@ occ.add('offsetCurve', doc, None, iint('curveLoopTag'), idouble('offset'), ovect
 doc = '''Find the minimal distance between shape with `dim1' and `tag1' and shape with `dim2' and `tag2' and the according coordinates. Return the distance in `distance' and the coordinate of the points as `x1', `y1', `z1' and `x2', `y2', `z2'. '''
 occ.add('getDistance', doc, None, iint('dim1'), iint('tag1'), iint('dim2'), iint('tag2'), odouble('distance'), odouble('x1'), odouble('y1'), odouble('z1'), odouble('x2'), odouble('y2'), odouble('z2'))
 
-doc = '''Compute the boolean union (the fusion) of the entities `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the OpenCASCADE CAD representation. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
+doc = '''Compute the boolean union (the fusion) of the entities `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the OpenCASCADE CAD representation. Return the resulting entities in `outDimTags', and the correspondance between input and resulting entities in `outDimTagsMap'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
 occ.add('fuse', doc, None, ivectorpair('objectDimTags'), ivectorpair('toolDimTags'), ovectorpair('outDimTags'), ovectorvectorpair('outDimTagsMap'), iint('tag', '-1'), ibool('removeObject', 'true', 'True'), ibool('removeTool', 'true', 'True'))
 
-doc = '''Compute the boolean intersection (the common parts) of the entities `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the OpenCASCADE CAD representation. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
+doc = '''Compute the boolean intersection (the common parts) of the entities `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the OpenCASCADE CAD representation. Return the resulting entities in `outDimTags', and the correspondance between input and resulting entities in `outDimTagsMap'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
 occ.add('intersect', doc, None, ivectorpair('objectDimTags'), ivectorpair('toolDimTags'), ovectorpair('outDimTags'), ovectorvectorpair('outDimTagsMap'), iint('tag', '-1'), ibool('removeObject', 'true', 'True'), ibool('removeTool', 'true', 'True'))
 
-doc = '''Compute the boolean difference between the entities `objectDimTags' and `toolDimTags' (given as vectors of (dim, tag) pairs) in the OpenCASCADE CAD representation. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
+doc = '''Compute the boolean difference between the entities `objectDimTags' and `toolDimTags' (given as vectors of (dim, tag) pairs) in the OpenCASCADE CAD representation. Return the resulting entities in `outDimTags', and the correspondance between input and resulting entities in `outDimTagsMap'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
 occ.add('cut', doc, None, ivectorpair('objectDimTags'), ivectorpair('toolDimTags'), ovectorpair('outDimTags'), ovectorvectorpair('outDimTagsMap'), iint('tag', '-1'), ibool('removeObject', 'true', 'True'), ibool('removeTool', 'true', 'True'))
 
-doc = '''Compute the boolean fragments (general fuse) resulting from the intersection of the entities `objectDimTags' and `toolDimTags' (given as vectors of (dim, tag) pairs) in the OpenCASCADE CAD representation, making all interfaces conformal. When applied to entities of different dimensions, the lower dimensional entities will be automatically embedded in the higher dimensional entities if they are not on their boundary. Return the resulting entities in `outDimTags'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
+doc = '''Compute the boolean fragments (general fuse) resulting from the intersection of the entities `objectDimTags' and `toolDimTags' (given as vectors of (dim, tag) pairs) in the OpenCASCADE CAD representation, making all interfaces conformal. When applied to entities of different dimensions, the lower dimensional entities will be automatically embedded in the higher dimensional entities if they are not on their boundary. Return the resulting entities in `outDimTags', and the correspondance between input and resulting entities in `outDimTagsMap'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
 occ.add('fragment', doc, None, ivectorpair('objectDimTags'), ivectorpair('toolDimTags'), ovectorpair('outDimTags'), ovectorvectorpair('outDimTagsMap'), iint('tag', '-1'), ibool('removeObject', 'true', 'True'), ibool('removeTool', 'true', 'True'))
 
 doc = '''Translate the entities `dimTags' (given as a vector of (dim, tag) pairs) in the OpenCASCADE CAD representation along (`dx', `dy', `dz').'''
