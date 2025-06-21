@@ -40,6 +40,9 @@
 #include <TopoDS.hxx>
 #include <gp_Pln.hxx>
 #include <gp_Sphere.hxx>
+#include <gp_Torus.hxx>
+#include <gp_Cylinder.hxx>
+#include <gp_Cone.hxx>
 
 OCCFace::OCCFace(GModel *m, TopoDS_Face s, int num)
   : GFace(m, num), _s(s), _sf(s, Standard_True), _radius(-1)
@@ -106,8 +109,9 @@ void OCCFace::_setup()
 
     if(!el.check()) {
       // should not happen, since ShapeFix_Wire has been called before
-      Msg::Warning("Recomputing incorrect OpenCASCADE wire in surface %d", tag());
-      std::vector<GEdge*> edges;
+      Msg::Warning("Recomputing incorrect OpenCASCADE wire in surface %d",
+                   tag());
+      std::vector<GEdge *> edges;
       el.getEdges(edges);
       el.recompute(edges);
     }
@@ -178,7 +182,6 @@ void OCCFace::_setup()
   _projector.Init(_occface, umin, umax, vmin, vmax);
 
   if(OCCFace::geomType() == GEntity::Sphere) {
-    BRepAdaptor_Surface surface(_s);
     gp_Sphere sphere = surface.Sphere();
     _radius = sphere.Radius();
     gp_Pnt loc = sphere.Location();
@@ -196,7 +199,7 @@ void OCCFace::_setup()
   for(std::size_t i = 0; i < embedded_edges.size(); i++) {
     GEdge *e = embedded_edges[i];
     // should not addFace(), as the edge is not on the boundary
-    //e->addFace(this);
+    // e->addFace(this);
     OCCEdge *occe = dynamic_cast<OCCEdge *>(e);
     if(occe && !e->is3D()) occe->setTrimmed(this);
   }
@@ -318,8 +321,9 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
   double uv[2], xyz[3];
   if(_project(qp.data(), uv, xyz))
     return GPoint(xyz[0], xyz[1], xyz[2], this, uv);
-  else
+  else {
     return GFace::closestPoint(qp, initialGuess);
+  }
 }
 
 SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface,
@@ -354,6 +358,80 @@ GEntity::GeomType OCCFace::geomType() const
   else if(_occface->DynamicType() == STANDARD_TYPE(Geom_BSplineSurface))
     return BSplineSurface;
   return Unknown;
+}
+
+void OCCFace::geomProperties(std::vector<int> &integers,
+                             std::vector<double> &reals) const
+{
+  BRepAdaptor_Surface surface(_s);
+
+  if(_occface->DynamicType() == STANDARD_TYPE(Geom_Plane)) {
+    gp_Pln plane = surface.Plane();
+    double A, B, C, D;
+    plane.Coefficients(A, B, C, D);
+    reals.push_back(A);
+    reals.push_back(B);
+    reals.push_back(C);
+    reals.push_back(D);
+  }
+  else if(_occface->DynamicType() == STANDARD_TYPE(Geom_ToroidalSurface)) {
+    gp_Torus torus = surface.Torus();
+    const auto &ax = torus.Axis();
+    const auto pt = ax.Location();
+    const auto dir = ax.Direction();
+    reals.push_back(pt.X());
+    reals.push_back(pt.Y());
+    reals.push_back(pt.Z());
+    reals.push_back(dir.X());
+    reals.push_back(dir.Y());
+    reals.push_back(dir.Z());
+    reals.push_back(torus.MajorRadius());
+    reals.push_back(torus.MinorRadius());
+  }
+  else if(_occface->DynamicType() == STANDARD_TYPE(Geom_BezierSurface)) {
+    // TODO
+  }
+  else if(_occface->DynamicType() == STANDARD_TYPE(Geom_CylindricalSurface)) {
+    gp_Cylinder cylinder = surface.Cylinder();
+    const auto &ax = cylinder.Axis();
+    const auto pt = ax.Location();
+    const auto dir = ax.Direction();
+    reals.push_back(pt.X());
+    reals.push_back(pt.Y());
+    reals.push_back(pt.Z());
+    reals.push_back(dir.X());
+    reals.push_back(dir.Y());
+    reals.push_back(dir.Z());
+    reals.push_back(cylinder.Radius());
+  }
+  else if(_occface->DynamicType() == STANDARD_TYPE(Geom_ConicalSurface)) {
+    gp_Cone cone = surface.Cone();
+    const auto &ax = cone.Axis();
+    const auto pt = ax.Location();
+    const auto dir = ax.Direction();
+    reals.push_back(pt.X());
+    reals.push_back(pt.Y());
+    reals.push_back(pt.Z());
+    reals.push_back(dir.X());
+    reals.push_back(dir.Y());
+    reals.push_back(dir.Z());
+    reals.push_back(cone.RefRadius());
+    reals.push_back(cone.SemiAngle());
+  }
+  else if(_occface->DynamicType() == STANDARD_TYPE(Geom_SurfaceOfRevolution)) {
+    // TODO
+  }
+  else if(_occface->DynamicType() == STANDARD_TYPE(Geom_SphericalSurface)) {
+    gp_Sphere sphere = surface.Sphere();
+    gp_Pnt loc = sphere.Location();
+    reals.push_back(loc.X());
+    reals.push_back(loc.Y());
+    reals.push_back(loc.Z());
+    reals.push_back(sphere.Radius());
+  }
+  else if(_occface->DynamicType() == STANDARD_TYPE(Geom_BSplineSurface)) {
+    // TODO
+  }
 }
 
 double OCCFace::curvatureMax(const SPoint2 &param) const

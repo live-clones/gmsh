@@ -352,7 +352,7 @@ static bool getEdgeVerticesOnGeo(GFace *gf, MVertex *v0, MVertex *v1,
     }
   }
   else {
-    Msg::Error("Cannot reparametrize mesh edge %lu-%lu on surface %d",
+    Msg::Error("Cannot reparametrize mesh edge %zu-%zu on surface %d",
                v0->getNum(), v1->getNum(), gf->tag());
     return false;
   }

@@ -19,11 +19,12 @@ GVertex::~GVertex() { GVertex::deleteMesh(); }
 
 void GVertex::deleteMesh()
 {
+  if(getNumMeshVertices() || getNumMeshElements())
+    model()->destroyMeshCaches();
   for(auto v : mesh_vertices) delete v;
   mesh_vertices.clear();
   removeElements(true);
   deleteVertexArrays();
-  model()->destroyMeshCaches();
 }
 
 void GVertex::resetMeshAttributes() { meshSize = MAX_LC; }

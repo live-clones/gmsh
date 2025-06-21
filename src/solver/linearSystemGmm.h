@@ -14,7 +14,7 @@
 #if defined(HAVE_GMM)
 
 #undef BB // can be defined by FlGui.h, and clashes with gmm arg name
-#include "gmm.h"
+#include <gmm/gmm.h>
 
 // Consider using linearSystemCSRGmm instead: assembly is much faster
 template <class scalar> class linearSystemGmm : public linearSystem<scalar> {

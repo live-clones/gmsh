@@ -334,6 +334,9 @@ static void CheckEmptyMesh(GModel *m, int dim)
     if(CTX::instance()->mesh.meshOnlyVisible && !ge->getVisibility()) {
       continue;
     }
+    else if(ge->isFullyDiscrete()) {
+      continue;
+    }
     else if(dim == 1) {
       if(ge->geomType() == GEntity::BoundaryLayerCurve || ge->degenerate(0))
         continue;
@@ -631,6 +634,24 @@ static void Mesh2D(GModel *m)
     OptimizeMesh(m, "QuadQuasiStructured");
   }
 
+  if(CTX::instance()->mesh.algo2d == ALGO_2D_PACK_PRLGRMS) {
+    for(GFace *gf : m->getFaces()) {
+      if(gf->meshStatistics.status == GFace::DONE) {
+        gf->meshStatistics.status = GFace::PENDING;
+      }
+    }
+    transferSeamGEdgesVerticesToGFace(m);
+    quadMeshingOfSimpleFacesWithPatterns(m);
+    optimizeTopologyWithDiskQuadrangulationRemeshing(m);
+    optimizeTopologyWithCavityRemeshing(m);
+    OptimizeMesh(m, "UntangleTris");
+    for(GFace *gf : m->getFaces()) {
+      if(gf->meshStatistics.status == GFace::PENDING) {
+        gf->meshStatistics.status = GFace::DONE;
+      }
+    }
+  }
+
   CheckEmptyMesh(m, 2);
   double t2 = Cpu(), w2 = TimeOfDay();
   CTX::instance()->mesh.timer[1] = w2 - w1;
@@ -898,13 +919,13 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
     int nIterWinslow = 10;
     double timeMax = 100.;
     for(GFace *gf : m->getFaces()) {
-      if(gf->geomType() == GFace::Plane) {
+      //      if(gf->geomType() == GFace::Plane || gf->geomType() == GFace::DiscreteSurface) {
         untangleGFaceMeshConstrained(gf, nIterWinslow, timeMax);
-      }
-      else {
-        Msg::Debug("- Surface %i: not planar, do not apply Winslow untangling",
-                   gf->tag());
-      }
+	//      }
+	//      else {
+	//        Msg::Debug("- Surface %i: not planar, do not apply Winslow untangling",
+	//                   gf->tag());
+	//      }
     }
 #endif
   }
@@ -1021,7 +1042,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
     }
     transferSeamGEdgesVerticesToGFace(m);
     quadMeshingOfSimpleFacesWithPatterns(m);
-    optimizeTopologyWithDiskQuadrangulationRemeshing(m);
+    //    optimizeTopologyWithDiskQuadrangulationRemeshing(m);
     optimizeTopologyWithCavityRemeshing(m);
     for(GFace *gf : m->getFaces()) {
       if(gf->meshStatistics.status == GFace::PENDING) {

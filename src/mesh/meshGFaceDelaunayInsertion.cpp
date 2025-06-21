@@ -1355,7 +1355,9 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
           insertAPoint(gf, AllTris.end(), newPoint, metric, DATA, AllTris,
                        &ActiveTris, worst, nullptr, testStarShapeness);
       }
-      else printf("no point found\n");
+      else {
+        Msg::Debug("no point found");
+      }
     }
   }
 
@@ -1655,7 +1657,7 @@ void bowyerWatsonParallelograms(
   Msg::Error("Packing of parallelograms algorithm requires DOMHEX");
 #endif
 
-  Msg::Info("%lu Nodes created --> now staring insertion", packed.size());
+  Msg::Info("%zu Nodes created --> now staring insertion", packed.size());
 
   if(!buildMeshGenerationDataStructures(gf, AllTris, DATA)) {
     Msg::Error("Invalid meshing data structure");

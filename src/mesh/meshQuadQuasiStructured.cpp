@@ -276,7 +276,7 @@ int fillSizemapFromTriangleSizes(const std::vector<MTriangle *> &triangles,
                                  std::unordered_map<MVertex *, double> &sizeMap)
 {
   const double tol = CTX::instance()->geom.tolerance;
-  std::unordered_map<MVertex *, std::vector<MVertex *> > v2v;
+  VertexToVertexMap v2v;
   buildVertexToVertexMap(triangles, v2v);
   for(auto &kv : v2v) {
     MVertex *v = kv.first;
@@ -334,7 +334,7 @@ int fillSizemapFromScalarBackgroundField(
       MVertex *v = t->getVertex(lv);
       auto it = sizeMap.find(v);
       if(it == sizeMap.end()) {
-        double value = (*field)(v->point().x(), v->point().y(), v->point().z());
+        double value = (*field)(v->x(), v->y(), v->z());
         if(std::isnan(value) || value == -DBL_MAX || value == DBL_MAX) continue;
         sizeMap[v] = value;
       }
@@ -442,6 +442,14 @@ bool getGFaceBackgroundMeshLinesAndTriangles(
     triangles.push_back(&(it->second.triangles[i]));
   }
 
+  sort_unique(lines, [](MLine *a, MLine *b) {
+    return a->getNum() < b->getNum();
+  });
+  sort_unique(triangles, [](MTriangle *a, MTriangle *b) {
+    return a->getNum() < b->getNum();
+  });
+
+
   return true;
 }
 
@@ -465,7 +473,8 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
   }
 
   bool midpointSubdivisionAfter = true;
-  if(!CTX::instance()->mesh.recombineAll ||
+  if(CTX::instance()->mesh.algoRecombine == 1 ||
+     CTX::instance()->mesh.algoRecombine == 2 ||
      CTX::instance()->mesh.algoRecombine == 4) {
     midpointSubdivisionAfter = false;
   }
@@ -2254,7 +2263,7 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
 
   if(DBG_EXPORT) { gm->writeMSH("qqs_subdiv.msh", 4.1); }
 
-  optimizeGeometryQuadqs(gm);
+  //  optimizeGeometryQuadqs(gm);
 
   if(true || Msg::GetVerbosity() >= 99) {
     std::unordered_map<std::string, double> stats;

@@ -3,7 +3,7 @@
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 
 # if CMAKE_BUILD_TYPE is specified use it; otherwise set the default
 # build type to "RelWithDebInfo" ("-O2 -g" with gcc) prior to calling
@@ -100,6 +100,7 @@ opt(SOLVER "Enable built-in finite element solvers (required for reparametrizati
 opt(SYSTEM_CONTRIB "Use system versions of contrib libraries, when possible" OFF)
 opt(TCMALLOC "Enable libtcmalloc (fast malloc that does not release memory)" OFF)
 opt(TESTS "Enable tests" ${DEFAULT})
+opt(TINYOBJLOADER "Enable TibyObjLoader for reading Wavefront files)" ON)
 opt(TINYXML2 "Enable TinyXML2 parser (used by XAO reader)" ${DEFAULT})
 opt(TOUCHBAR "Enable Apple Touch bar" ${DEFAULT})
 opt(UNTANGLE "Enable 2D and 3D UNTANGLER" ${DEFAULT})
@@ -178,13 +179,7 @@ set(ONELAB_PY contrib/onelab/python/onelab.py)
 set(GMSH_PY api/gmsh.py)
 set(GMSH_JL api/gmsh.jl)
 
-if(${CMAKE_MAJOR_VERSION} GREATER 2)
-  string(TIMESTAMP DATE "%Y%m%d")
-else()
-  execute_process(COMMAND date "+%Y%m%d" OUTPUT_VARIABLE DATE
-                  OUTPUT_STRIP_TRAILING_WHITESPACE)
-endif()
-
+string(TIMESTAMP DATE "%Y%m%d")
 if(NOT DATE)
   set(DATE "unknown")
 endif()
@@ -315,8 +310,10 @@ if(MSVC)
     if(ENABLE_MSVC_STATIC_RUNTIME AND ${VAR} MATCHES "/MD")
       string(REGEX REPLACE "/MD" "/MT" ${VAR} "${${VAR}}")
     endif()
-    if(NOT ${VAR} MATCHES "/MP") # enable parallel compilation
-      set(${VAR} "${${VAR}} /MP")
+    if (NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+      if(NOT ${VAR} MATCHES "/MP") # enable parallel compilation
+        set(${VAR} "${${VAR}} /MP")
+      endif()
     endif()
   endforeach()
   if(ENABLE_PRIVATE_API)
@@ -837,6 +834,12 @@ if(ENABLE_MATHEX)
   endif()
 endif()
 
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/tinyobjloader AND
+   ENABLE_TINYOBJLOADER)
+    include_directories(contrib/tinyobjloader/include)
+    set_config_option(HAVE_TINYOBJLOADER "tinyobjloader")
+endif()
+
 if(ENABLE_TINYXML2)
   find_library(TINYXML2_LIB tinyxml2 PATH_SUFFIXES lib)
   find_path(TINYXML2_INC "tinyxml2.h" PATH_SUFFIXES src include)
@@ -1100,8 +1103,8 @@ if(HAVE_SOLVER)
       message(STATUS "Using system version of GMM")
       list(APPEND EXTERNAL_INCLUDES ${GMM_INC})
       set_config_option(HAVE_GMM "Gmm")
-    elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/gmm)
-      include_directories(contrib/gmm)
+    elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/gmm/include/gmm)
+      include_directories(contrib/gmm/include)
       set_config_option(HAVE_GMM "Gmm[contrib]")
     endif()
   endif()
@@ -1419,6 +1422,9 @@ if(ENABLE_OCC)
     if(WIN32 AND NOT MSVC)
       add_definitions(-DOCC_CONVERT_SIGNALS)
     endif()
+    if(WIN32 AND MSVC)
+      add_definitions(-D "Standard_EXPORT=__declspec(dllimport)")
+    endif()
   endif()
 endif()
 
@@ -1654,17 +1660,21 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi.in
 if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   if (GMSH_RELEASE)
     set(GMSH_PYTHON_VERSION ${GMSH_SHORT_VERSION})
-    file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh.rst GMSH_LONG_DESCRIPTION)
+    file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh.rst
+         GMSH_LONG_DESCRIPTION)
   else()
     if ("${GMSH_EXTRA_VERSION}" MATCHES "-nox")
       set(GMSH_PYTHON_VERSION "${GMSH_SHORT_VERSION}.dev1+nox")
-      file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh-nox-dev.rst GMSH_LONG_DESCRIPTION)
+      file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh-nox-dev.rst
+           GMSH_LONG_DESCRIPTION)
     else ()
       set(GMSH_PYTHON_VERSION "${GMSH_SHORT_VERSION}.dev1")
-      file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh-dev.rst GMSH_LONG_DESCRIPTION)
+      file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh-dev.rst
+           GMSH_LONG_DESCRIPTION)
     endif()
   endif()
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/METADATA.in ${CMAKE_CURRENT_BINARY_DIR}/METADATA)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/METADATA.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/METADATA)
 endif()
 
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/version.txt ${GMSH_SHORT_VERSION})
@@ -1768,7 +1778,7 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
      SOVERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION})
   if(WIN32)
     set_target_properties(shared PROPERTIES PREFIX "" IMPORT_PREFIX ""
-      IMPORT_SUFFIX ".lib" COMPILE_FLAGS "-DGMSH_DLL -DGMSH_DLL_EXPORT")
+      IMPORT_SUFFIX ".dll.lib" COMPILE_FLAGS "-DGMSH_DLL -DGMSH_DLL_EXPORT")
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     if(NOT ENABLE_PRIVATE_API)
       # hide all symbols by default (if not exporting the private API); symbols to
@@ -1888,7 +1898,8 @@ if(UNIX)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR
-   CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+   ((CMAKE_CXX_COMPILER_ID MATCHES "Clang") AND NOT
+   (CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")))
   execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion
                   OUTPUT_VARIABLE CXX_COMPILER_VERSION
                   OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -1992,12 +2003,34 @@ endif()
 
 # mark targets as optional so we can install them separately if needed
 # (e.g. "make lib" or "make shared" followed by "make install/fast")
-install(TARGETS gmsh DESTINATION ${GMSH_BIN} OPTIONAL)
+install(TARGETS gmsh
+  RUNTIME DESTINATION ${GMSH_BIN}
+  OPTIONAL)
 if(ENABLE_BUILD_LIB)
-  install(TARGETS lib DESTINATION ${GMSH_LIB} OPTIONAL)
+  install(TARGETS lib EXPORT gmshTargets ARCHIVE DESTINATION
+        ${GMSH_LIB} OPTIONAL)
+  TARGET_INCLUDE_DIRECTORIES(lib PUBLIC $<INSTALL_INTERFACE:include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/api>)
 endif()
 if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
-  install(TARGETS shared DESTINATION ${GMSH_LIB} OPTIONAL)
+  install(TARGETS shared EXPORT gmshTargets
+    RUNTIME DESTINATION $GMSH_BIN}
+    ARCHIVE DESTINATION ${GMSH_LIB}
+    LIBRARY DESTINATION ${GMSH_LIB}
+    OPTIONAL)
+  TARGET_INCLUDE_DIRECTORIES(shared PUBLIC $<INSTALL_INTERFACE:include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/api>)
+endif()
+if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
+  install(EXPORT gmshTargets NAMESPACE gmsh:: DESTINATION share/gmsh)
+  include(CMakePackageConfigHelpers)
+  configure_package_config_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/utils/misc/gmsh-config.cmake.in
+      "${CMAKE_CURRENT_BINARY_DIR}/gmshConfig.cmake"
+      INSTALL_DESTINATION "share/gmsh" NO_SET_AND_CHECK_MACRO
+      NO_CHECK_REQUIRED_COMPONENTS_MACRO)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/gmshConfig.cmake DESTINATION "share/gmsh")
+  export(EXPORT gmshTargets FILE "${CMAKE_CURRENT_BINARY_DIR}/gmshTargets.cmake")
 endif()
 
 if(ENABLE_ONELAB AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab)
@@ -2229,16 +2262,15 @@ macro(filter_tests IN OUT)
     unset(BAD2)
     unset(BAD3)
     # OpenCASCADE
-    if(NOT HAVE_OCC AND NOT BAD1 AND NOT BAD2 AND NOT BAD3)
+    if(NOT HAVE_OCC)
       file(STRINGS ${FILE} BAD1 REGEX "^SetFactory.*OpenCASCADE.*")
-      file(STRINGS ${FILE} BAD2 REGEX ".*occ\\.synchronize.*")
-      file(STRINGS ${FILE} BAD3 REGEX ".*occ::synchronize.*")
+      file(STRINGS ${FILE} BAD2 REGEX ".*occ.*synchronize.*")
+      file(STRINGS ${FILE} BAD3 REGEX ".*[mM]erge.*brep.*")
     endif()
     # Metis
     if(NOT HAVE_METIS AND NOT BAD1 AND NOT BAD2 AND NOT BAD3)
       file(STRINGS ${FILE} BAD1 REGEX ".*PartitionMesh.*")
-      file(STRINGS ${FILE} BAD2 REGEX ".*mesh\\.partition.*")
-      file(STRINGS ${FILE} BAD3 REGEX ".*mesh::partition.*")
+      file(STRINGS ${FILE} BAD2 REGEX ".*mesh.*partition.*")
     endif()
     if(BAD1 OR BAD2 OR BAD3)
       message("Skipping test " ${FILE})

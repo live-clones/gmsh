@@ -528,6 +528,10 @@ static int makeGraph(GModel *model, Graph &graph, int selectDim)
   idx_t eindIndex = 0;
   idx_t numVertex = 0;
 
+  if(graph.nn() == 0) {
+    Msg::Warning("No mesh nodes were found");
+    return 1;
+  }
   if(graph.ne() == 0) {
     Msg::Warning("No mesh elements were found");
     return 1;
@@ -2246,7 +2250,7 @@ int PartitionFaceMinEdgeLength(GFace *gf, int np, double tol)
     }
     if (!allTheSame) break;
     ubvec -= (1. - ubvec) * .5;
-    Msg::Warning("Partitioning face %d with %lu triangles that all have the same"
+    Msg::Warning("Partitioning face %d with %zu triangles that all have the same"
                  " partition - changing tolerance to %g", gf->tag(),
                  gf->triangles.size(), ubvec);
     if(ubvec > CTX::instance()->lc) {
@@ -2315,7 +2319,7 @@ int PartitionMesh(GModel *model, int numPart)
       totCount += count[j];
     }
     if(totCount > 0) {
-      Msg::Info(" - Repartition of %d %s: %lu(min) %lu(max) %g(avg)", totCount,
+      Msg::Info(" - Repartition of %d %s: %zu(min) %zu(max) %g(avg)", totCount,
                 ElementType::nameOfParentType(i, totCount > 1).c_str(),
                 minCount, maxCount, totCount / (double)numPart);
     }

@@ -1294,14 +1294,19 @@ libpath = None
 possible_libpaths = [os.path.join(moduledir, libname),
                      os.path.join(moduledir, "lib", libname),
                      os.path.join(moduledir, "Lib", libname),
+                     os.path.join(moduledir, "bin", libname),
                      # first parent dir
                      os.path.join(parentdir1, libname),
                      os.path.join(parentdir1, "lib", libname),
                      os.path.join(parentdir1, "Lib", libname),
+                     os.path.join(parentdir1, "bin", libname),
                      # second parent dir
                      os.path.join(parentdir2, libname),
                      os.path.join(parentdir2, "lib", libname),
-                     os.path.join(parentdir2, "Lib", libname)
+                     os.path.join(parentdir2, "Lib", libname),
+                     os.path.join(parentdir2, "bin", libname),
+                     # for Windows conda-forge
+                     os.path.join(parentdir2, "Library", "bin", "gmsh.dll")
                      ]
 
 for libpath_to_look in possible_libpaths:
@@ -1723,16 +1728,22 @@ fortran_footer = """
   end function ivectordouble_
 
   subroutine ivectorstring_(o, cstrs, cptrs)
-    character(len=*), intent(in) :: o(:)
+    character(len=*), intent(in), optional :: o(:)
     character(len=GMSH_API_MAX_STR_LEN, kind=c_char), target, allocatable, intent(out) :: cstrs(:)
     type(c_ptr), allocatable, intent(out) :: cptrs(:)
     integer :: i
-    allocate(cstrs(size(o)))    ! Return to keep references from cptrs
-    allocate(cptrs(size(o)))
-    do i = 1, size(o)
+
+    if (present(o)) then
+      allocate(cstrs(size(o)))  ! Return to keep references from cptrs
+      allocate(cptrs(size(o)))
+      do i = 1, size(o)
         cstrs(i) = istring_(o(i))
         cptrs(i) = c_loc(cstrs(i))
-    end do
+      end do
+    else
+      allocate(cstrs(0))
+      allocate(cptrs(0))
+    end if
   end subroutine ivectorstring_
 
   function ivectorpair_(o) result(v)

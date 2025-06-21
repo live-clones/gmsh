@@ -989,10 +989,26 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
 
   std::vector<GEntity *> entities;
   getEntities(entities);
-  for(std::size_t i = 0; i < entities.size(); i++)
-    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
-      entities[i]->mesh_vertices[j]->writeMSH2(fp, binary, saveParametric,
-                                               scalingFactor);
+
+  if(!renumberVertices) {
+    // if we don't renumber vertices, still save them in ascending order
+    std::set<MVertex*, MVertexPtrLessThanIndex> v;
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
+        if(entities[i]->mesh_vertices[j]->getIndex() >= 0) {
+          v.insert(entities[i]->mesh_vertices[j]);
+        }
+      }
+    }
+    for(auto vp : v)
+      vp->writeMSH2(fp, binary, saveParametric, scalingFactor);
+  }
+  else {
+    for(std::size_t i = 0; i < entities.size(); i++)
+      for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
+        entities[i]->mesh_vertices[j]->writeMSH2(fp, binary, saveParametric,
+                                                 scalingFactor);
+  }
 
   if(binary) fprintf(fp, "\n");
 
@@ -1175,7 +1191,7 @@ int GModel::_writePartitionedMSH2(const std::string &baseName, bool binary,
                                   double scalingFactor)
 {
   int numElements;
-  int startNum = 0;
+  int startNum = CTX::instance()->mesh.firstElementTag - 1;
   for(std::size_t partition = 1; partition <= getNumPartitions(); partition++) {
     std::ostringstream sstream;
     sstream << baseName << "_" << partition << ".msh";

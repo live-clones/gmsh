@@ -206,12 +206,22 @@ GMSH_API void gmshModelGetEntityName(const int dim,
 GMSH_API void gmshModelRemoveEntityName(const char * name,
                                         int * ierr);
 
-/* Get all the physical groups in the current model. If `dim' is >= 0, return
- * only the entities of the specified dimension (e.g. physical points if `dim'
- * == 0). The entities are returned as a vector of (dim, tag) pairs. */
+/* Get the physical groups in the current model. The physical groups are
+ * returned as a vector of (dim, tag) pairs. If `dim' is >= 0, return only the
+ * groups of the specified dimension (e.g. physical points if `dim' == 0). */
 GMSH_API void gmshModelGetPhysicalGroups(int ** dimTags, size_t * dimTags_n,
                                          const int dim,
                                          int * ierr);
+
+/* Get the physical groups in the current model as well as the model entities
+ * that make them up. The physical groups are returned as the vector of (dim,
+ * tag) pairs `dimTags'. The model entities making up the corresponding
+ * physical groups are returned in `entities'. If `dim' is >= 0, return only
+ * the groups of the specified dimension (e.g. physical points if `dim' == 0). */
+GMSH_API void gmshModelGetPhysicalGroupsEntities(int ** dimTags, size_t * dimTags_n,
+                                                 int *** entities, size_t ** entities_n, size_t *entities_nn,
+                                                 const int dim,
+                                                 int * ierr);
 
 /* Get the tags of the model entities making up the physical group of
  * dimension `dim' and tag `tag'. */
@@ -344,10 +354,30 @@ GMSH_API void gmshModelRemoveEntities(const int * dimTags, const size_t dimTags_
                                       int * ierr);
 
 /* Get the type of the entity of dimension `dim' and tag `tag'. */
+GMSH_API void gmshModelGetEntityType(const int dim,
+                                     const int tag,
+                                     char ** entityType,
+                                     int * ierr);
+
+/* Get the type of the entity of dimension `dim' and tag `tag'. (This is a
+ * deprecated synonym for `getType'.) */
 GMSH_API void gmshModelGetType(const int dim,
                                const int tag,
                                char ** entityType,
                                int * ierr);
+
+/* Get the properties of the entity of dimension `dim' and tag `tag'. The
+ * `reals' vector contains the 4 coefficients of the cartesian equation for a
+ * plane surface; the center coordinates, axis direction, major radius and
+ * minor radius for a torus; the center coordinates, axis direction and radius
+ * for a cylinder; the center coordinates, axis direction, radius and semi-
+ * angle for surfaces of revolution; the center coordinates and the radius for
+ * a sphere. */
+GMSH_API void gmshModelGetEntityProperties(const int dim,
+                                           const int tag,
+                                           int ** integers, size_t * integers_n,
+                                           double ** reals, size_t * reals_n,
+                                           int * ierr);
 
 /* In a partitioned model, get the parent of the entity of dimension `dim' and
  * tag `tag', i.e. from which the entity is a part of, if any. `parentDim' and
@@ -481,7 +511,9 @@ GMSH_API int gmshModelIsInside(const int dim,
  * `closestCoord' are given as x, y, z coordinates, concatenated: [p1x, p1y,
  * p1z, p2x, ...]. `parametricCoord' returns the parametric coordinates t on
  * the curve (if `dim' == 1) or u and v coordinates concatenated on the
- * surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...]. */
+ * surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...]. The
+ * closest points can lie outside the (trimmed) entities: use `isInside()' to
+ * check. */
 GMSH_API void gmshModelGetClosestPoint(const int dim,
                                        const int tag,
                                        const double * coord, const size_t coord_n,
@@ -2031,8 +2063,8 @@ GMSH_API void gmshModelGeoMirror(const int * dimTags, const size_t dimTags_n,
 
 /* Mirror the entities `dimTags' (given as a vector of (dim, tag) pairs) in
  * the built-in CAD representation, with respect to the plane of equation `a'
- * * x + `b' * y + `c' * z + `d' = 0. (This is a synonym for `mirror', which
- * will be deprecated in a future release.) */
+ * * x + `b' * y + `c' * z + `d' = 0. (This is a deprecated synonym for
+ * `mirror'.) */
 GMSH_API void gmshModelGeoSymmetrize(const int * dimTags, const size_t dimTags_n,
                                      const double a,
                                      const double b,
@@ -2775,8 +2807,9 @@ GMSH_API void gmshModelOccGetDistance(const int dim1,
 
 /* Compute the boolean union (the fusion) of the entities `objectDimTags' and
  * `toolDimTags' (vectors of (dim, tag) pairs) in the OpenCASCADE CAD
- * representation. Return the resulting entities in `outDimTags'. If `tag' is
- * positive, try to set the tag explicitly (only valid if the boolean
+ * representation. Return the resulting entities in `outDimTags', and the
+ * correspondance between input and resulting entities in `outDimTagsMap'. If
+ * `tag' is positive, try to set the tag explicitly (only valid if the boolean
  * operation results in a single entity). Remove the object if `removeObject'
  * is set. Remove the tool if `removeTool' is set. */
 GMSH_API void gmshModelOccFuse(const int * objectDimTags, const size_t objectDimTags_n,
@@ -2791,9 +2824,11 @@ GMSH_API void gmshModelOccFuse(const int * objectDimTags, const size_t objectDim
 /* Compute the boolean intersection (the common parts) of the entities
  * `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the
  * OpenCASCADE CAD representation. Return the resulting entities in
- * `outDimTags'. If `tag' is positive, try to set the tag explicitly (only
- * valid if the boolean operation results in a single entity). Remove the
- * object if `removeObject' is set. Remove the tool if `removeTool' is set. */
+ * `outDimTags', and the correspondance between input and resulting entities
+ * in `outDimTagsMap'. If `tag' is positive, try to set the tag explicitly
+ * (only valid if the boolean operation results in a single entity). Remove
+ * the object if `removeObject' is set. Remove the tool if `removeTool' is
+ * set. */
 GMSH_API void gmshModelOccIntersect(const int * objectDimTags, const size_t objectDimTags_n,
                                     const int * toolDimTags, const size_t toolDimTags_n,
                                     int ** outDimTags, size_t * outDimTags_n,
@@ -2805,8 +2840,9 @@ GMSH_API void gmshModelOccIntersect(const int * objectDimTags, const size_t obje
 
 /* Compute the boolean difference between the entities `objectDimTags' and
  * `toolDimTags' (given as vectors of (dim, tag) pairs) in the OpenCASCADE CAD
- * representation. Return the resulting entities in `outDimTags'. If `tag' is
- * positive, try to set the tag explicitly (only valid if the boolean
+ * representation. Return the resulting entities in `outDimTags', and the
+ * correspondance between input and resulting entities in `outDimTagsMap'. If
+ * `tag' is positive, try to set the tag explicitly (only valid if the boolean
  * operation results in a single entity). Remove the object if `removeObject'
  * is set. Remove the tool if `removeTool' is set. */
 GMSH_API void gmshModelOccCut(const int * objectDimTags, const size_t objectDimTags_n,
@@ -2824,8 +2860,9 @@ GMSH_API void gmshModelOccCut(const int * objectDimTags, const size_t objectDimT
  * all interfaces conformal. When applied to entities of different dimensions,
  * the lower dimensional entities will be automatically embedded in the higher
  * dimensional entities if they are not on their boundary. Return the
- * resulting entities in `outDimTags'. If `tag' is positive, try to set the
- * tag explicitly (only valid if the boolean operation results in a single
+ * resulting entities in `outDimTags', and the correspondance between input
+ * and resulting entities in `outDimTagsMap'. If `tag' is positive, try to set
+ * the tag explicitly (only valid if the boolean operation results in a single
  * entity). Remove the object if `removeObject' is set. Remove the tool if
  * `removeTool' is set. */
 GMSH_API void gmshModelOccFragment(const int * objectDimTags, const size_t objectDimTags_n,

@@ -53,7 +53,7 @@ v() = BooleanFragments{ Volume{3}; Delete; }{ Volume{3 + 1 : 3 + 5}; Delete; };
 
 // The tag of the cube will change though, so we need to access it
 // programmatically:
-Physical Volume(10) = v(#v()-1);
+Physical Volume(10) = v(0);
 
 // Creating entities using constructive solid geometry is very powerful, but can
 // lead to practical issues for e.g. setting mesh sizes at points, or

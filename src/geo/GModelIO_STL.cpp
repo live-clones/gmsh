@@ -206,21 +206,30 @@ int GModel::readSTL(const std::string &name, double tolerance)
         v[k] = pos.find(x, y, z);
         if(!v[k])
           Msg::Error("Could not find node at position (%.16g, %.16g, %.16g) "
-                     "with tol=%.16g",
-                     x, y, z, eps);
+                     "with tol=%.16g", x, y, z, eps);
       }
       if(!v[0] || !v[1] || !v[2]) {
         // error
       }
       else if(v[0] == v[1] || v[0] == v[2] || v[1] == v[2]) {
-        Msg::Debug("Skipping degenerated triangle %lu %lu %lu", v[0]->getNum(),
+        Msg::Debug("Skipping degenerated triangle %zu %zu %zu", v[0]->getNum(),
                    v[1]->getNum(), v[2]->getNum());
         nbDegen++;
       }
-      else if(CTX::instance()->mesh.stlRemoveDuplicateTriangles) {
+      else if(CTX::instance()->mesh.stlRemoveBadTriangles) {
         MFace mf(v[0], v[1], v[2]);
         if(unique.find(mf) == unique.end()) {
-          faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+          if(CTX::instance()->mesh.stlRemoveBadTriangles > 1) {
+            double a = mf.approximateArea();
+            if(a < tolerance * tolerance) {
+              Msg::Warning("Skipping degenerated triangle with area %g", a);
+              nbDegen++;
+            }
+            else
+              faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+          }
+          else
+            faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
           unique.insert(mf);
         }
         else {

@@ -247,7 +247,7 @@ namespace WinslowUntangler {
     //	positions[i/2] = {X[i],X[i+1]};
     //      }
     //      w.sizeField(positions,w.triangles,sizes,grads);
-      //      printf("%lu sizes\n",sizes.size());
+      //      printf("%zu sizes\n",sizes.size());
     //    }
 
     for(size_t i = 0; i < grad.length(); ++i) grad[i] = 0.;
@@ -363,7 +363,7 @@ namespace WinslowUntangler {
 
     if (w.isP2 && 0){
       size_t dT = (perTriangleP2 - 4)/3;
-      //      printf("%lu %lu\n",(w.triangles.size()-nElements)/dT,nElements);
+      //      printf("%zu %zu\n",(w.triangles.size()-nElements)/dT,nElements);
       double signs[5] = {1,1,-1,-1,-1};
 #pragma omp parallel for schedule(dynamic) num_threads(1) private (a_i,b_i) shared (energy)
       for(size_t tg = 0; tg < (w.triangles.size()-nElements)/dT; tg++) {
@@ -471,7 +471,7 @@ namespace WinslowUntangler {
     }
 
     data.isP2 = true;
-    //    for (auto i : permut)printf("%lu ",i);
+    //    for (auto i : permut)printf("%zu ",i);
     printf(" --- > FOUND A P2 MESH\n");
   }
 
@@ -563,7 +563,7 @@ namespace WinslowUntangler {
     // Compute initial energy
     size_t max_t = data.isP2 ? 4*(data.triangles.size()/perTriangleP2) : data.triangles.size();
     for(size_t t = 0; t < max_t; t++) {
-      //      printf("%lu %g\n",t,data.J_det[t]);
+      //      printf("%zu %g\n",t,data.J_det[t]);
       const double det = data.J_det[t];
       const double chi = coef_chi(det, data.eps);
       const double chip = coef_chip(det, data.eps);
@@ -772,14 +772,14 @@ namespace WinslowUntangler {
   {
     if(dim != 2 && dim != 3) return false;
     if(dim == 2 && (points2D.size() == 0 || triangles.size() == 0)) {
-      Msg::Error(
-        "Winslow untangler 2D: wrong input sizes: %li vertices, %li triangles",
+      Msg::Warning(
+        "Wrong input sizes (%li vertices, %li triangles) in 2D Winslow untangler",
         points2D.size(), triangles.size());
       return false;
     }
     if(dim == 3 && (points3D.size() == 0 || tetrahedra.size() == 0)) {
-      Msg::Error(
-        "Winslow untangler 3D: wrong input sizes: %li vertices, %li tetrahedra",
+      Msg::Warning(
+        "Wrong input sizes (%li vertices, %li tetrahedra) in 3D Windlow untangler",
         points2D.size(), triangles.size());
       return false;
     }
@@ -840,7 +840,7 @@ namespace WinslowUntangler {
 
         // Setup of the LBFGS solver
         alglib::ae_int_t N = dim * NV;
-        alglib::ae_int_t corr = 15; // Num of corrections in the scheme in [3,7]
+        alglib::ae_int_t corr = N < 15 ? N : 15; // Num of corrections in the scheme in [3,7]
         alglib::minlbfgsstate state;
         alglib::minlbfgsreport rep;
 	minlbfgscreate(N, corr, x, state);
@@ -867,7 +867,7 @@ namespace WinslowUntangler {
 
         if(rep.terminationtype != 4 && rep.terminationtype != 5) { nFail += 1; }
         lbfgsIter = rep.iterationscount;
-        Msg::Info(" detmin = %22.15E eps= %22.15E %lu iter term %lu",
+        Msg::Info(" detmin = %22.15E eps= %22.15E %zu iter term %zu",
                   data.J_det_min, data.eps, rep.iterationscount,
                   rep.terminationtype);
       } catch(alglib::ap_error e) {
@@ -936,7 +936,7 @@ namespace WinslowUntangler {
 	x[i]+=1.e-8;
 	double EN2 = compute_energy_and_gradient(data, x, GRAD2);
 	x[i]-=1.e-8;
-	printf("%lu GRAD %12.5E DIFF %12.5E\n",i,GRAD[i],1.e8*(EN2-EN));
+	printf("%zu GRAD %12.5E DIFF %12.5E\n",i,GRAD[i],1.e8*(EN2-EN));
       }
     }
 #endif

@@ -172,7 +172,7 @@ gmsh.onelab.set(parameters)
 def runSolver():
     print("parameters =", gmsh.onelab.get())
     print("running the solver with the given parameters...")
-    diffus = gmsh.onelab.getNames("ONELAB Context/.*([0-9]+)/11Diffusivity")
+    diffus = gmsh.onelab.getNames("ONELAB Context/.*([0-9]+)/11Diff")
     for d in diffus:
         print(d, "=", gmsh.onelab.getNumber(d))
 

@@ -407,6 +407,9 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
   else if(ext == ".off" || ext == ".OFF") {
     status = GModel::current()->readOFF(fileName);
   }
+  else if(ext == ".obj" || ext == ".OBJ") {
+    status = GModel::current()->readOBJ(fileName);
+  }
   else if(ext == ".diff" || ext == ".DIFF") {
     status = GModel::current()->readDIFF(fileName);
   }

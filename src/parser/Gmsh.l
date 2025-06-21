@@ -307,6 +307,7 @@ Spline                  return tSpline;
 Split                   return tSplit;
 Sprintf                 return tSprintf;
 Sqrt                    return tSqrt;
+Step                    return tStep;
 Str                     return tStr;
 StrCat                  return tStrCat;
 StrChoice               return tStrChoice;
