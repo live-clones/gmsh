@@ -511,7 +511,9 @@ GMSH_API int gmshModelIsInside(const int dim,
  * `closestCoord' are given as x, y, z coordinates, concatenated: [p1x, p1y,
  * p1z, p2x, ...]. `parametricCoord' returns the parametric coordinates t on
  * the curve (if `dim' == 1) or u and v coordinates concatenated on the
- * surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...]. */
+ * surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...]. The
+ * closest points can lie outside the (trimmed) entities: use `isInside()' to
+ * check. */
 GMSH_API void gmshModelGetClosestPoint(const int dim,
                                        const int tag,
                                        const double * coord, const size_t coord_n,
