@@ -5194,62 +5194,6 @@ class model:
             return _ovectorint(api_viewTags_, api_viewTags_n_.value)
         compute_cross_field = computeCrossField
 
-        @staticmethod
-        def triangulate(coord, edges):
-            """
-            gmsh.model.mesh.triangulate(coord, edges)
-
-            Triangulate the points given in the `coord' vector as pairs of u, v
-            coordinates, with constrained edges given in the `edges' vector as pair of
-            point indexes (with numbering starting at 1) , and return the node tags
-            (with numbering starting at 1) of the resulting triangles in `tri'.
-
-            Return `tri'.
-
-            Types:
-            - `coord': vector of doubles
-            - `edges': vector of sizes
-            - `tri': vector of sizes
-            """
-            api_coord_, api_coord_n_ = _ivectordouble(coord)
-            api_edges_, api_edges_n_ = _ivectorsize(edges)
-            api_tri_, api_tri_n_ = POINTER(c_size_t)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshTriangulate(
-                api_coord_, api_coord_n_,
-                api_edges_, api_edges_n_,
-                byref(api_tri_), byref(api_tri_n_),
-                byref(ierr))
-            if ierr.value != 0:
-                raise Exception(logger.getLastError())
-            return _ovectorsize(api_tri_, api_tri_n_.value)
-
-        @staticmethod
-        def tetrahedralize(coord):
-            """
-            gmsh.model.mesh.tetrahedralize(coord)
-
-            Tetrahedralize the points given in the `coord' vector as x, y, z
-            coordinates, concatenated, and return the node tags (with numbering
-            starting at 1) of the resulting tetrahedra in `tetra'.
-
-            Return `tetra'.
-
-            Types:
-            - `coord': vector of doubles
-            - `tetra': vector of sizes
-            """
-            api_coord_, api_coord_n_ = _ivectordouble(coord)
-            api_tetra_, api_tetra_n_ = POINTER(c_size_t)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshTetrahedralize(
-                api_coord_, api_coord_n_,
-                byref(api_tetra_), byref(api_tetra_n_),
-                byref(ierr))
-            if ierr.value != 0:
-                raise Exception(logger.getLastError())
-            return _ovectorsize(api_tetra_, api_tetra_n_.value)
-
 
         class field:
             """
@@ -10145,6 +10089,70 @@ class view:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+
+
+class algorithm:
+    """
+    Raw algorithms
+    """
+
+    @staticmethod
+    def triangulate(coordinates, edges=[]):
+        """
+        gmsh.algorithm.triangulate(coordinates, edges=[])
+
+        Triangulate the points given in the `coordinates' vector as concatenated
+        pairs of u, v coordinates, with (optional) constrained edges given in the
+        `edges' vector as pair of indexes (with numbering starting at 1), and
+        return the triangles as concatenated triplets of point indexes (with
+        numbering starting at 1) in `triangles'.
+
+        Return `triangles'.
+
+        Types:
+        - `coordinates': vector of doubles
+        - `triangles': vector of sizes
+        - `edges': vector of sizes
+        """
+        api_coordinates_, api_coordinates_n_ = _ivectordouble(coordinates)
+        api_triangles_, api_triangles_n_ = POINTER(c_size_t)(), c_size_t()
+        api_edges_, api_edges_n_ = _ivectorsize(edges)
+        ierr = c_int()
+        lib.gmshAlgorithmTriangulate(
+            api_coordinates_, api_coordinates_n_,
+            byref(api_triangles_), byref(api_triangles_n_),
+            api_edges_, api_edges_n_,
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return _ovectorsize(api_triangles_, api_triangles_n_.value)
+
+    @staticmethod
+    def tetrahedralize(coordinates):
+        """
+        gmsh.algorithm.tetrahedralize(coordinates)
+
+        Tetrahedralize the points given in the `coordinates' vector as concatenated
+        triplets of x, y, z coordinates, and return the tetrahedra as concatenated
+        quadruplets of point indexes (with numbering starting at 1) in
+        `tetrahedra'.
+
+        Return `tetrahedra'.
+
+        Types:
+        - `coordinates': vector of doubles
+        - `tetrahedra': vector of sizes
+        """
+        api_coordinates_, api_coordinates_n_ = _ivectordouble(coordinates)
+        api_tetrahedra_, api_tetrahedra_n_ = POINTER(c_size_t)(), c_size_t()
+        ierr = c_int()
+        lib.gmshAlgorithmTetrahedralize(
+            api_coordinates_, api_coordinates_n_,
+            byref(api_tetrahedra_), byref(api_tetrahedra_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return _ovectorsize(api_tetrahedra_, api_tetrahedra_n_.value)
 
 
 class plugin:

@@ -5689,91 +5689,6 @@ GMSH_API void gmsh::model::mesh::computeHomology(vectorpair &dimTags)
   GModel::current()->computeHomology(dimTags);
 }
 
-GMSH_API void gmsh::model::mesh::triangulate(const std::vector<double> &coord,
-                                             const std::vector<std::size_t> &edges,
-                                             std::vector<std::size_t> &tri)
-                                            
-{
-  if(!_checkInit()) return;
-  tri.clear();
-  if(coord.size() % 2) {
-    Msg::Error("Number of 2D coordinates should be even");
-    return;
-  }
-  if(edges.size() % 2) {
-    Msg::Error("Number of edges index should be even");
-    return;
-  }
-#if defined(HAVE_MESH)
-  SBoundingBox3d bbox;
-  for(std::size_t i = 0; i < coord.size(); i += 2)
-    bbox += SPoint3(coord[i], coord[i + 1], 0.);
-  double lc = 10. * norm(SVector3(bbox.max(), bbox.min()));
-  std::vector<MVertex *> verts(coord.size() / 2);
-  std::size_t j = 0;
-  for(std::size_t i = 0; i < coord.size(); i += 2) {
-    double XX = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
-    double YY = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
-    MVertex *v = new MVertex(coord[i] + XX, coord[i + 1] + YY, 0.);
-    v->setIndex(j);
-    verts[j++] = v;
-  }
-  std::vector<MEdge> edgesToRecover(edges.size() / 2);
-  for(std::size_t i = 0; i < edges.size(); i += 2)
-    edgesToRecover[i/2] = MEdge(verts[edges[i] - 1], verts[edges[i + 1] - 1]);
-  std::vector<MTriangle *> tris;
-  delaunayMeshIn2D(verts, tris, true, &edgesToRecover);
-  if(tris.empty()) return;
-  tri.resize(3 * tris.size());
-  for(std::size_t i = 0; i < tris.size(); i++) {
-    MTriangle *t = tris[i];
-    for(std::size_t j = 0; j < 3; j++)
-      tri[3 * i + j] = t->getVertex(j)->getIndex() + 1; // start at 1
-  }
-  for(std::size_t i = 0; i < verts.size(); i++) delete verts[i];
-  for(std::size_t i = 0; i < tris.size(); i++) delete tris[i];
-#else
-  Msg::Error("Triangulate requires the mesh module");
-#endif
-}
-
-GMSH_API void
-gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
-                                  std::vector<std::size_t> &tetra)
-{
-  if(!_checkInit()) return;
-  tetra.clear();
-  if(coord.size() % 3) {
-    Msg::Error("Number of coordinates should be a multiple of 3");
-    return;
-  }
-#if defined(HAVE_MESH)
-  std::vector<MVertex *> verts(coord.size() / 3);
-  std::size_t j = 0;
-  for(std::size_t i = 0; i < coord.size(); i += 3) {
-    MVertex *v = new MVertex(coord[i], coord[i + 1], coord[i + 2]);
-    v->setIndex(j);
-    verts[j++] = v;
-  }
-  std::vector<MTetrahedron *> tets;
-  if(CTX::instance()->mesh.algo3d == ALGO_3D_HXT)
-    delaunayMeshIn3DHxt(verts, tets);
-  else
-    delaunayMeshIn3D(verts, tets, true);
-  if(tets.empty()) return;
-  tetra.resize(4 * tets.size());
-  for(std::size_t i = 0; i < tets.size(); i++) {
-    MTetrahedron *t = tets[i];
-    for(std::size_t j = 0; j < 4; j++)
-      tetra[4 * i + j] = t->getVertex(j)->getIndex() + 1; // start at 1
-  }
-  for(std::size_t i = 0; i < verts.size(); i++) delete verts[i];
-  for(std::size_t i = 0; i < tets.size(); i++) delete tets[i];
-#else
-  Msg::Error("Tetrahedralize requires the mesh module");
-#endif
-}
-
 // gmsh::model::mesh::field
 
 GMSH_API int gmsh::model::mesh::field::add(const std::string &fieldType,
@@ -8301,6 +8216,98 @@ GMSH_API void gmsh::view::option::copy(const int refTag, const int tag)
 #endif
 #else
   Msg::Error("Views require the post-processing module");
+#endif
+}
+
+GMSH_API void gmsh::algorithm::triangulate(const std::vector<double> &coord,
+                                           std::vector<std::size_t> &tri,
+                                           const std::vector<std::size_t> &edges)
+
+{
+  if(!_checkInit()) return;
+  tri.clear();
+  if(coord.size() % 2) {
+    Msg::Error("Number of 2D coordinates should be even");
+    return;
+  }
+  if(edges.size() % 2) {
+    Msg::Error("Number of edges index should be even");
+    return;
+  }
+#if defined(HAVE_MESH)
+  SBoundingBox3d bbox;
+  for(std::size_t i = 0; i < coord.size(); i += 2)
+    bbox += SPoint3(coord[i], coord[i + 1], 0.);
+  double lc = 10. * norm(SVector3(bbox.max(), bbox.min()));
+  std::vector<MVertex *> verts(coord.size() / 2);
+  std::size_t j = 0;
+  for(std::size_t i = 0; i < coord.size(); i += 2) {
+    double XX = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
+    double YY = 1.e-12 * lc * (double)rand() / (double)RAND_MAX;
+    MVertex *v = new MVertex(coord[i] + XX, coord[i + 1] + YY, 0.);
+    v->setIndex(j);
+    verts[j++] = v;
+  }
+
+  std::vector<MTriangle *> tris;
+  if(edges.empty()) {
+    delaunayMeshIn2D(verts, tris);
+  }
+  else {
+    std::vector<MEdge> edgesToRecover(edges.size() / 2);
+    for(std::size_t i = 0; i < edges.size(); i += 2)
+      edgesToRecover[i / 2] = MEdge(verts[edges[i] - 1], verts[edges[i + 1] - 1]);
+    delaunayMeshIn2D(verts, tris, true, &edgesToRecover);
+  }
+
+  if(tris.empty()) return;
+  tri.resize(3 * tris.size());
+  for(std::size_t i = 0; i < tris.size(); i++) {
+    MTriangle *t = tris[i];
+    for(std::size_t j = 0; j < 3; j++)
+      tri[3 * i + j] = t->getVertex(j)->getIndex() + 1; // start at 1
+  }
+  for(std::size_t i = 0; i < verts.size(); i++) delete verts[i];
+  for(std::size_t i = 0; i < tris.size(); i++) delete tris[i];
+#else
+  Msg::Error("Triangulate requires the mesh module");
+#endif
+}
+
+GMSH_API void
+gmsh::algorithm::tetrahedralize(const std::vector<double> &coord,
+                                std::vector<std::size_t> &tetra)
+{
+  if(!_checkInit()) return;
+  tetra.clear();
+  if(coord.size() % 3) {
+    Msg::Error("Number of coordinates should be a multiple of 3");
+    return;
+  }
+#if defined(HAVE_MESH)
+  std::vector<MVertex *> verts(coord.size() / 3);
+  std::size_t j = 0;
+  for(std::size_t i = 0; i < coord.size(); i += 3) {
+    MVertex *v = new MVertex(coord[i], coord[i + 1], coord[i + 2]);
+    v->setIndex(j);
+    verts[j++] = v;
+  }
+  std::vector<MTetrahedron *> tets;
+  if(CTX::instance()->mesh.algo3d == ALGO_3D_HXT)
+    delaunayMeshIn3DHxt(verts, tets);
+  else
+    delaunayMeshIn3D(verts, tets, true);
+  if(tets.empty()) return;
+  tetra.resize(4 * tets.size());
+  for(std::size_t i = 0; i < tets.size(); i++) {
+    MTetrahedron *t = tets[i];
+    for(std::size_t j = 0; j < 4; j++)
+      tetra[4 * i + j] = t->getVertex(j)->getIndex() + 1; // start at 1
+  }
+  for(std::size_t i = 0; i < verts.size(); i++) delete verts[i];
+  for(std::size_t i = 0; i < tets.size(); i++) delete tets[i];
+#else
+  Msg::Error("Tetrahedralize requires the mesh module");
 #endif
 }
 

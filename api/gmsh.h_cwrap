@@ -3247,44 +3247,6 @@ namespace gmsh { // Top-level functions
         viewTags.assign(api_viewTags_, api_viewTags_ + api_viewTags_n_); gmshFree(api_viewTags_);
       }
 
-      // gmsh::model::mesh::triangulate
-      //
-      // Triangulate the points given in the `coord' vector as pairs of u, v
-      // coordinates, with constrained edges given in the `edges' vector as pair of
-      // point indexes (with numbering starting at 1) , and return the node tags
-      // (with numbering starting at 1) of the resulting triangles in `tri'.
-      inline void triangulate(const std::vector<double> & coord,
-                              const std::vector<std::size_t> & edges,
-                              std::vector<std::size_t> & tri)
-      {
-        int ierr = 0;
-        double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
-        size_t *api_edges_; size_t api_edges_n_; vector2ptr(edges, &api_edges_, &api_edges_n_);
-        size_t *api_tri_; size_t api_tri_n_;
-        gmshModelMeshTriangulate(api_coord_, api_coord_n_, api_edges_, api_edges_n_, &api_tri_, &api_tri_n_, &ierr);
-        if(ierr) throwLastError();
-        gmshFree(api_coord_);
-        gmshFree(api_edges_);
-        tri.assign(api_tri_, api_tri_ + api_tri_n_); gmshFree(api_tri_);
-      }
-
-      // gmsh::model::mesh::tetrahedralize
-      //
-      // Tetrahedralize the points given in the `coord' vector as x, y, z
-      // coordinates, concatenated, and return the node tags (with numbering
-      // starting at 1) of the resulting tetrahedra in `tetra'.
-      inline void tetrahedralize(const std::vector<double> & coord,
-                                 std::vector<std::size_t> & tetra)
-      {
-        int ierr = 0;
-        double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
-        size_t *api_tetra_; size_t api_tetra_n_;
-        gmshModelMeshTetrahedralize(api_coord_, api_coord_n_, &api_tetra_, &api_tetra_n_, &ierr);
-        if(ierr) throwLastError();
-        gmshFree(api_coord_);
-        tetra.assign(api_tetra_, api_tetra_ + api_tetra_n_); gmshFree(api_tetra_);
-      }
-
       namespace field { // Mesh size field functions
 
         // gmsh::model::mesh::field::add
@@ -6344,6 +6306,49 @@ namespace gmsh { // Top-level functions
     } // namespace option
 
   } // namespace view
+
+  namespace algorithm { // Raw algorithms
+
+    // gmsh::algorithm::triangulate
+    //
+    // Triangulate the points given in the `coordinates' vector as concatenated
+    // pairs of u, v coordinates, with (optional) constrained edges given in the
+    // `edges' vector as pair of indexes (with numbering starting at 1), and return
+    // the triangles as concatenated triplets of point indexes (with numbering
+    // starting at 1) in `triangles'.
+    inline void triangulate(const std::vector<double> & coordinates,
+                            std::vector<std::size_t> & triangles,
+                            const std::vector<std::size_t> & edges = std::vector<std::size_t>())
+    {
+      int ierr = 0;
+      double *api_coordinates_; size_t api_coordinates_n_; vector2ptr(coordinates, &api_coordinates_, &api_coordinates_n_);
+      size_t *api_triangles_; size_t api_triangles_n_;
+      size_t *api_edges_; size_t api_edges_n_; vector2ptr(edges, &api_edges_, &api_edges_n_);
+      gmshAlgorithmTriangulate(api_coordinates_, api_coordinates_n_, &api_triangles_, &api_triangles_n_, api_edges_, api_edges_n_, &ierr);
+      if(ierr) throwLastError();
+      gmshFree(api_coordinates_);
+      triangles.assign(api_triangles_, api_triangles_ + api_triangles_n_); gmshFree(api_triangles_);
+      gmshFree(api_edges_);
+    }
+
+    // gmsh::algorithm::tetrahedralize
+    //
+    // Tetrahedralize the points given in the `coordinates' vector as concatenated
+    // triplets of x, y, z coordinates, and return the tetrahedra as concatenated
+    // quadruplets of point indexes (with numbering starting at 1) in `tetrahedra'.
+    inline void tetrahedralize(const std::vector<double> & coordinates,
+                               std::vector<std::size_t> & tetrahedra)
+    {
+      int ierr = 0;
+      double *api_coordinates_; size_t api_coordinates_n_; vector2ptr(coordinates, &api_coordinates_, &api_coordinates_n_);
+      size_t *api_tetrahedra_; size_t api_tetrahedra_n_;
+      gmshAlgorithmTetrahedralize(api_coordinates_, api_coordinates_n_, &api_tetrahedra_, &api_tetrahedra_n_, &ierr);
+      if(ierr) throwLastError();
+      gmshFree(api_coordinates_);
+      tetrahedra.assign(api_tetrahedra_, api_tetrahedra_ + api_tetrahedra_n_); gmshFree(api_tetrahedra_);
+    }
+
+  } // namespace algorithm
 
   namespace plugin { // Plugin functions
 
