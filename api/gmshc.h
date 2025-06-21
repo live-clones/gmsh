@@ -1662,20 +1662,6 @@ GMSH_API void gmshModelMeshComputeHomology(int ** dimTags, size_t * dimTags_n,
 GMSH_API void gmshModelMeshComputeCrossField(int ** viewTags, size_t * viewTags_n,
                                              int * ierr);
 
-/* Triangulate the points given in the `coord' vector as pairs of u, v
- * coordinates, and return the node tags (with numbering starting at 1) of the
- * resulting triangles in `tri'. */
-GMSH_API void gmshModelMeshTriangulate(const double * coord, const size_t coord_n,
-                                       size_t ** tri, size_t * tri_n,
-                                       int * ierr);
-
-/* Tetrahedralize the points given in the `coord' vector as x, y, z
- * coordinates, concatenated, and return the node tags (with numbering
- * starting at 1) of the resulting tetrahedra in `tetra'. */
-GMSH_API void gmshModelMeshTetrahedralize(const double * coord, const size_t coord_n,
-                                          size_t ** tetra, size_t * tetra_n,
-                                          int * ierr);
-
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
  * the tag explicitly; otherwise a new tag is assigned automatically. Return
  * the field tag. Available field types are listed in the "Gmsh mesh size
@@ -3374,6 +3360,24 @@ GMSH_API void gmshViewOptionGetColor(const int tag,
 GMSH_API void gmshViewOptionCopy(const int refTag,
                                  const int tag,
                                  int * ierr);
+
+/* Triangulate the points given in the `coordinates' vector as concatenated
+ * pairs of u, v coordinates, with (optional) constrained edges given in the
+ * `edges' vector as pair of indexes (with numbering starting at 1), and
+ * return the triangles as concatenated triplets of point indexes (with
+ * numbering starting at 1) in `triangles'. */
+GMSH_API void gmshAlgorithmTriangulate(const double * coordinates, const size_t coordinates_n,
+                                       size_t ** triangles, size_t * triangles_n,
+                                       const size_t * edges, const size_t edges_n,
+                                       int * ierr);
+
+/* Tetrahedralize the points given in the `coordinates' vector as concatenated
+ * triplets of x, y, z coordinates, and return the tetrahedra as concatenated
+ * quadruplets of point indexes (with numbering starting at 1) in
+ * `tetrahedra'. */
+GMSH_API void gmshAlgorithmTetrahedralize(const double * coordinates, const size_t coordinates_n,
+                                          size_t ** tetrahedra, size_t * tetrahedra_n,
+                                          int * ierr);
 
 /* Set the numerical option `option' to the value `value' for plugin `name'.
  * Plugins available in the official Gmsh release are listed in the "Gmsh

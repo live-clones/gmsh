@@ -4594,56 +4594,6 @@ end
 const compute_cross_field = computeCrossField
 
 """
-    gmsh.model.mesh.triangulate(coord)
-
-Triangulate the points given in the `coord` vector as pairs of u, v coordinates,
-and return the node tags (with numbering starting at 1) of the resulting
-triangles in `tri`.
-
-Return `tri`.
-
-Types:
- - `coord`: vector of doubles
- - `tri`: vector of sizes
-"""
-function triangulate(coord)
-    api_tri_ = Ref{Ptr{Csize_t}}()
-    api_tri_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshTriangulate, gmsh.lib), Cvoid,
-          (Ptr{Cdouble}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
-          convert(Vector{Cdouble}, coord), length(coord), api_tri_, api_tri_n_, ierr)
-    ierr[] != 0 && error(gmsh.logger.getLastError())
-    tri = unsafe_wrap(Array, api_tri_[], api_tri_n_[], own = true)
-    return tri
-end
-
-"""
-    gmsh.model.mesh.tetrahedralize(coord)
-
-Tetrahedralize the points given in the `coord` vector as x, y, z coordinates,
-concatenated, and return the node tags (with numbering starting at 1) of the
-resulting tetrahedra in `tetra`.
-
-Return `tetra`.
-
-Types:
- - `coord`: vector of doubles
- - `tetra`: vector of sizes
-"""
-function tetrahedralize(coord)
-    api_tetra_ = Ref{Ptr{Csize_t}}()
-    api_tetra_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshTetrahedralize, gmsh.lib), Cvoid,
-          (Ptr{Cdouble}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
-          convert(Vector{Cdouble}, coord), length(coord), api_tetra_, api_tetra_n_, ierr)
-    ierr[] != 0 && error(gmsh.logger.getLastError())
-    tetra = unsafe_wrap(Array, api_tetra_[], api_tetra_n_[], own = true)
-    return tetra
-end
-
-"""
     module gmsh.model.mesh.field
 
 Mesh size field functions
@@ -8981,6 +8931,70 @@ end
 end # end of module option
 
 end # end of module view
+
+"""
+    module gmsh.algorithm
+
+Raw algorithms
+"""
+module algorithm
+
+import ..gmsh
+
+"""
+    gmsh.algorithm.triangulate(coordinates, edges = Csize_t[])
+
+Triangulate the points given in the `coordinates` vector as concatenated pairs
+of u, v coordinates, with (optional) constrained edges given in the `edges`
+vector as pair of indexes (with numbering starting at 1), and return the
+triangles as concatenated triplets of point indexes (with numbering starting at
+1) in `triangles`.
+
+Return `triangles`.
+
+Types:
+ - `coordinates`: vector of doubles
+ - `triangles`: vector of sizes
+ - `edges`: vector of sizes
+"""
+function triangulate(coordinates, edges = Csize_t[])
+    api_triangles_ = Ref{Ptr{Csize_t}}()
+    api_triangles_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshAlgorithmTriangulate, gmsh.lib), Cvoid,
+          (Ptr{Cdouble}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
+          convert(Vector{Cdouble}, coordinates), length(coordinates), api_triangles_, api_triangles_n_, convert(Vector{Csize_t}, edges), length(edges), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    triangles = unsafe_wrap(Array, api_triangles_[], api_triangles_n_[], own = true)
+    return triangles
+end
+
+"""
+    gmsh.algorithm.tetrahedralize(coordinates)
+
+Tetrahedralize the points given in the `coordinates` vector as concatenated
+triplets of x, y, z coordinates, and return the tetrahedra as concatenated
+quadruplets of point indexes (with numbering starting at 1) in `tetrahedra`.
+
+Return `tetrahedra`.
+
+Types:
+ - `coordinates`: vector of doubles
+ - `tetrahedra`: vector of sizes
+"""
+function tetrahedralize(coordinates)
+    api_tetrahedra_ = Ref{Ptr{Csize_t}}()
+    api_tetrahedra_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshAlgorithmTetrahedralize, gmsh.lib), Cvoid,
+          (Ptr{Cdouble}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          convert(Vector{Cdouble}, coordinates), length(coordinates), api_tetrahedra_, api_tetrahedra_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tetrahedra = unsafe_wrap(Array, api_tetrahedra_[], api_tetrahedra_n_[], own = true)
+    return tetrahedra
+end
+
+end # end of module algorithm
 
 """
     module gmsh.plugin

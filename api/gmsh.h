@@ -1877,22 +1877,6 @@ namespace gmsh { // Top-level functions
       // of the views.
       GMSH_API void computeCrossField(std::vector<int> & viewTags);
 
-      // gmsh::model::mesh::triangulate
-      //
-      // Triangulate the points given in the `coord' vector as pairs of u, v
-      // coordinates, and return the node tags (with numbering starting at 1) of
-      // the resulting triangles in `tri'.
-      GMSH_API void triangulate(const std::vector<double> & coord,
-                                std::vector<std::size_t> & tri);
-
-      // gmsh::model::mesh::tetrahedralize
-      //
-      // Tetrahedralize the points given in the `coord' vector as x, y, z
-      // coordinates, concatenated, and return the node tags (with numbering
-      // starting at 1) of the resulting tetrahedra in `tetra'.
-      GMSH_API void tetrahedralize(const std::vector<double> & coord,
-                                   std::vector<std::size_t> & tetra);
-
       namespace field { // Mesh size field functions
 
         // gmsh::model::mesh::field::add
@@ -3787,6 +3771,29 @@ namespace gmsh { // Top-level functions
     } // namespace option
 
   } // namespace view
+
+  namespace algorithm { // Raw algorithms
+
+    // gmsh::algorithm::triangulate
+    //
+    // Triangulate the points given in the `coordinates' vector as concatenated
+    // pairs of u, v coordinates, with (optional) constrained edges given in the
+    // `edges' vector as pair of indexes (with numbering starting at 1), and return
+    // the triangles as concatenated triplets of point indexes (with numbering
+    // starting at 1) in `triangles'.
+    GMSH_API void triangulate(const std::vector<double> & coordinates,
+                              std::vector<std::size_t> & triangles,
+                              const std::vector<std::size_t> & edges = std::vector<std::size_t>());
+
+    // gmsh::algorithm::tetrahedralize
+    //
+    // Tetrahedralize the points given in the `coordinates' vector as concatenated
+    // triplets of x, y, z coordinates, and return the tetrahedra as concatenated
+    // quadruplets of point indexes (with numbering starting at 1) in `tetrahedra'.
+    GMSH_API void tetrahedralize(const std::vector<double> & coordinates,
+                                 std::vector<std::size_t> & tetrahedra);
+
+  } // namespace algorithm
 
   namespace plugin { // Plugin functions
 
