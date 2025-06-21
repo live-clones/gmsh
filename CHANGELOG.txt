@@ -7,7 +7,9 @@ builds with OCC 7.8.
 * New API functions: model/getEntityProperties, model/getPhysicalGroupsEntities
 
 * Incompatible API changes: new optional arguments to occ/fillet2D; renamed
-  model/getType as model/getEntityType
+  model/getType as model/getEntityType; renamed mesh/triangulate as
+  algorithm/triangulate and add new optional argument (edges); renamed
+  mesh/tetrahedralize as algorithm/tetrahedralize
 
 4.13.1 (May 24, 2024): fix regression introduced in 4.13.0 when reading binary
 .msh files with post-processing data; new read-only Mesh.MinQuality updated

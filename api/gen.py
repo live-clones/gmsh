@@ -587,12 +587,6 @@ mesh.add('computeHomology', doc, None, ovectorpair('dimTags'))
 doc = '''Compute a cross field for the current mesh. The function creates 3 views: the H function, the Theta function and cross directions. Return the tags of the views.'''
 mesh.add('computeCrossField', doc, None, ovectorint('viewTags'))
 
-doc = '''Triangulate the points given in the `coord' vector as pairs of u, v coordinates, and return the node tags (with numbering starting at 1) of the resulting triangles in `tri'.'''
-mesh.add('triangulate', doc, None, ivectordouble('coord'), ovectorsize('tri'))
-
-doc = '''Tetrahedralize the points given in the `coord' vector as x, y, z coordinates, concatenated, and return the node tags (with numbering starting at 1) of the resulting tetrahedra in `tetra'.'''
-mesh.add('tetrahedralize', doc, None, ivectordouble('coord'), ovectorsize('tetra'))
-
 ################################################################################
 
 field = mesh.add_module('field', 'mesh size field functions')
@@ -1071,6 +1065,16 @@ option.add('getColor', doc, None, iint('tag'), istring('name'), oint('r'), oint(
 
 doc = '''Copy the options from the view with tag `refTag' to the view with tag `tag'.'''
 option.add('copy', doc, None, iint('refTag'), iint('tag'))
+
+################################################################################
+
+algorithm = gmsh.add_module('algorithm', 'raw algorithms')
+
+doc = '''Triangulate the points given in the `coordinates' vector as concatenated pairs of u, v coordinates, with (optional) constrained edges given in the `edges' vector as pair of indexes (with numbering starting at 1), and return the triangles as concatenated triplets of point indexes (with numbering starting at 1) in `triangles'.'''
+algorithm.add('triangulate', doc, None, ivectordouble('coordinates'), ovectorsize('triangles'), ivectorsize('edges', 'std::vector<std::size_t>()','[]', '[]'))
+
+doc = '''Tetrahedralize the points given in the `coordinates' vector as concatenated triplets of x, y, z coordinates, and return the tetrahedra as concatenated quadruplets of point indexes (with numbering starting at 1) in `tetrahedra'.'''
+algorithm.add('tetrahedralize', doc, None, ivectordouble('coordinates'), ovectorsize('tetrahedra'))
 
 ################################################################################
 

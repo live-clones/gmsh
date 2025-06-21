@@ -2462,34 +2462,6 @@ GMSH_API void gmshModelMeshComputeCrossField(int ** viewTags, size_t * viewTags_
   }
 }
 
-GMSH_API void gmshModelMeshTriangulate(const double * coord, const size_t coord_n, size_t ** tri, size_t * tri_n, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    std::vector<double> api_coord_(coord, coord + coord_n);
-    std::vector<std::size_t> api_tri_;
-    gmsh::model::mesh::triangulate(api_coord_, api_tri_);
-    vector2ptr(api_tri_, tri, tri_n);
-  }
-  catch(...){
-    if(ierr) *ierr = 1;
-  }
-}
-
-GMSH_API void gmshModelMeshTetrahedralize(const double * coord, const size_t coord_n, size_t ** tetra, size_t * tetra_n, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    std::vector<double> api_coord_(coord, coord + coord_n);
-    std::vector<std::size_t> api_tetra_;
-    gmsh::model::mesh::tetrahedralize(api_coord_, api_tetra_);
-    vector2ptr(api_tetra_, tetra, tetra_n);
-  }
-  catch(...){
-    if(ierr) *ierr = 1;
-  }
-}
-
 GMSH_API int gmshModelMeshFieldAdd(const char * fieldType, const int tag, int * ierr)
 {
   int result_api_ = 0;
@@ -4610,6 +4582,35 @@ GMSH_API void gmshViewOptionCopy(const int refTag, const int tag, int * ierr)
   if(ierr) *ierr = 0;
   try {
     gmsh::view::option::copy(refTag, tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshAlgorithmTriangulate(const double * coordinates, const size_t coordinates_n, size_t ** triangles, size_t * triangles_n, const size_t * edges, const size_t edges_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_coordinates_(coordinates, coordinates + coordinates_n);
+    std::vector<std::size_t> api_triangles_;
+    std::vector<std::size_t> api_edges_(edges, edges + edges_n);
+    gmsh::algorithm::triangulate(api_coordinates_, api_triangles_, api_edges_);
+    vector2ptr(api_triangles_, triangles, triangles_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshAlgorithmTetrahedralize(const double * coordinates, const size_t coordinates_n, size_t ** tetrahedra, size_t * tetrahedra_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_coordinates_(coordinates, coordinates + coordinates_n);
+    std::vector<std::size_t> api_tetrahedra_;
+    gmsh::algorithm::tetrahedralize(api_coordinates_, api_tetrahedra_);
+    vector2ptr(api_tetrahedra_, tetrahedra, tetrahedra_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
