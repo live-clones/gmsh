@@ -2003,19 +2003,19 @@ endif()
 
 # mark targets as optional so we can install them separately if needed
 # (e.g. "make lib" or "make shared" followed by "make install/fast")
-install(TARGETS gmsh 
-  RUNTIME DESTINATION $<IF:$<CONFIG:Debug>,debug/${GMSH_BIN},${GMSH_BIN}>
+install(TARGETS gmsh
+  RUNTIME DESTINATION ${GMSH_BIN}
   OPTIONAL)
 if(ENABLE_BUILD_LIB)
-  install(TARGETS lib EXPORT gmshTargets ARCHIVE DESTINATION 
-        $<IF:$<CONFIG:Debug>,debug/${GMSH_LIB},${GMSH_LIB}> OPTIONAL)
+  install(TARGETS lib EXPORT gmshTargets ARCHIVE DESTINATION
+        ${GMSH_LIB} OPTIONAL)
   TARGET_INCLUDE_DIRECTORIES(lib PUBLIC $<INSTALL_INTERFACE:include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/api>)
 endif()
 if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
-  install(TARGETS shared EXPORT gmshTargets 
-    RUNTIME DESTINATION $<IF:$<CONFIG:Debug>,debug/${GMSH_BIN},${GMSH_BIN}>
-    ARCHIVE DESTINATION $<IF:$<CONFIG:Debug>,debug/${GMSH_LIB},${GMSH_LIB}>
+  install(TARGETS shared EXPORT gmshTargets
+    RUNTIME DESTINATION $GMSH_BIN}
+    ARCHIVE DESTINATION ${GMSH_LIB}
     LIBRARY DESTINATION ${GMSH_LIB}
     OPTIONAL)
   TARGET_INCLUDE_DIRECTORIES(shared PUBLIC $<INSTALL_INTERFACE:include>
