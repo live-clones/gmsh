@@ -180,6 +180,14 @@ module gmsh
         gmshPluginRun
   end type gmsh_plugin_t
 
+  type, public :: gmsh_algorithm_t
+    contains
+    procedure, nopass :: triangulate => &
+        gmshAlgorithmTriangulate
+    procedure, nopass :: tetrahedralize => &
+        gmshAlgorithmTetrahedralize
+  end type gmsh_algorithm_t
+
   type, public :: gmsh_view_option_t
     contains
     procedure, nopass :: setNumber => &
@@ -730,10 +738,6 @@ module gmsh
         gmshModelMeshComputeHomology
     procedure, nopass :: computeCrossField => &
         gmshModelMeshComputeCrossField
-    procedure, nopass :: triangulate => &
-        gmshModelMeshTriangulate
-    procedure, nopass :: tetrahedralize => &
-        gmshModelMeshTetrahedralize
   end type gmsh_model_mesh_t
 
   type, public :: gmsh_model_t
@@ -877,6 +881,7 @@ module gmsh
     type(gmsh_option_t) :: option
     type(gmsh_model_t) :: model
     type(gmsh_view_t) :: view
+    type(gmsh_algorithm_t) :: algorithm
     type(gmsh_plugin_t) :: plugin
     type(gmsh_graphics_t) :: graphics
     type(gmsh_fltk_t) :: fltk
@@ -2813,7 +2818,9 @@ module gmsh
   !! `closestCoord' are given as x, y, z coordinates, concatenated: [p1x, p1y,
   !! p1z, p2x, ...]. `parametricCoord' returns the parametric coordinates t on
   !! the curve (if `dim' == 1) or u and v coordinates concatenated on the
-  !! surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].
+  !! surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...]. The
+  !! closest points can lie outside the (trimmed) entities: use `isInside()' to
+  !! check.
   subroutine gmshModelGetClosestPoint(dim, &
                                       tag, &
                                       coord, &
@@ -7558,76 +7565,6 @@ module gmsh
     viewTags = ovectorint_(api_viewTags_, &
       api_viewTags_n_)
   end subroutine gmshModelMeshComputeCrossField
-
-  !> Triangulate the points given in the `coord' vector as pairs of u, v
-  !! coordinates, and return the node tags (with numbering starting at 1) of the
-  !! resulting triangles in `tri'.
-  subroutine gmshModelMeshTriangulate(coord, &
-                                      tri, &
-                                      ierr)
-    interface
-    subroutine C_API(api_coord_, &
-                     api_coord_n_, &
-                     api_tri_, &
-                     api_tri_n_, &
-                     ierr_) &
-      bind(C, name="gmshModelMeshTriangulate")
-      use, intrinsic :: iso_c_binding
-      real(c_double), dimension(*) :: api_coord_
-      integer(c_size_t), value, intent(in) :: api_coord_n_
-      type(c_ptr), intent(out) :: api_tri_
-      integer(c_size_t), intent(out) :: api_tri_n_
-      integer(c_int), intent(out), optional :: ierr_
-    end subroutine C_API
-    end interface
-    real(c_double), dimension(:), intent(in) :: coord
-    integer(c_size_t), dimension(:), allocatable, intent(out) :: tri
-    integer(c_int), intent(out), optional :: ierr
-    type(c_ptr) :: api_tri_
-    integer(c_size_t) :: api_tri_n_
-    call C_API(api_coord_=coord, &
-         api_coord_n_=size_gmsh_double(coord), &
-         api_tri_=api_tri_, &
-         api_tri_n_=api_tri_n_, &
-         ierr_=ierr)
-    tri = ovectorsize_(api_tri_, &
-      api_tri_n_)
-  end subroutine gmshModelMeshTriangulate
-
-  !> Tetrahedralize the points given in the `coord' vector as x, y, z
-  !! coordinates, concatenated, and return the node tags (with numbering
-  !! starting at 1) of the resulting tetrahedra in `tetra'.
-  subroutine gmshModelMeshTetrahedralize(coord, &
-                                         tetra, &
-                                         ierr)
-    interface
-    subroutine C_API(api_coord_, &
-                     api_coord_n_, &
-                     api_tetra_, &
-                     api_tetra_n_, &
-                     ierr_) &
-      bind(C, name="gmshModelMeshTetrahedralize")
-      use, intrinsic :: iso_c_binding
-      real(c_double), dimension(*) :: api_coord_
-      integer(c_size_t), value, intent(in) :: api_coord_n_
-      type(c_ptr), intent(out) :: api_tetra_
-      integer(c_size_t), intent(out) :: api_tetra_n_
-      integer(c_int), intent(out), optional :: ierr_
-    end subroutine C_API
-    end interface
-    real(c_double), dimension(:), intent(in) :: coord
-    integer(c_size_t), dimension(:), allocatable, intent(out) :: tetra
-    integer(c_int), intent(out), optional :: ierr
-    type(c_ptr) :: api_tetra_
-    integer(c_size_t) :: api_tetra_n_
-    call C_API(api_coord_=coord, &
-         api_coord_n_=size_gmsh_double(coord), &
-         api_tetra_=api_tetra_, &
-         api_tetra_n_=api_tetra_n_, &
-         ierr_=ierr)
-    tetra = ovectorsize_(api_tetra_, &
-      api_tetra_n_)
-  end subroutine gmshModelMeshTetrahedralize
 
   !> Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
   !! the tag explicitly; otherwise a new tag is assigned automatically. Return
@@ -14474,6 +14411,87 @@ module gmsh
          tag=int(tag, c_int), &
          ierr_=ierr)
   end subroutine gmshViewOptionCopy
+
+  !> Triangulate the points given in the `coordinates' vector as concatenated
+  !! pairs of u, v coordinates, with (optional) constrained edges given in the
+  !! `edges' vector as pair of indexes (with numbering starting at 1), and
+  !! return the triangles as concatenated triplets of point indexes (with
+  !! numbering starting at 1) in `triangles'.
+  subroutine gmshAlgorithmTriangulate(coordinates, &
+                                      triangles, &
+                                      edges, &
+                                      ierr)
+    interface
+    subroutine C_API(api_coordinates_, &
+                     api_coordinates_n_, &
+                     api_triangles_, &
+                     api_triangles_n_, &
+                     api_edges_, &
+                     api_edges_n_, &
+                     ierr_) &
+      bind(C, name="gmshAlgorithmTriangulate")
+      use, intrinsic :: iso_c_binding
+      real(c_double), dimension(*) :: api_coordinates_
+      integer(c_size_t), value, intent(in) :: api_coordinates_n_
+      type(c_ptr), intent(out) :: api_triangles_
+      integer(c_size_t), intent(out) :: api_triangles_n_
+      integer(c_size_t), dimension(*), optional :: api_edges_
+      integer(c_size_t), value, intent(in) :: api_edges_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    real(c_double), dimension(:), intent(in) :: coordinates
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: triangles
+    integer(c_size_t), dimension(:), intent(in), optional :: edges
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_triangles_
+    integer(c_size_t) :: api_triangles_n_
+    call C_API(api_coordinates_=coordinates, &
+         api_coordinates_n_=size_gmsh_double(coordinates), &
+         api_triangles_=api_triangles_, &
+         api_triangles_n_=api_triangles_n_, &
+         api_edges_=edges, &
+         api_edges_n_=size_gmsh_size(edges), &
+         ierr_=ierr)
+    triangles = ovectorsize_(api_triangles_, &
+      api_triangles_n_)
+  end subroutine gmshAlgorithmTriangulate
+
+  !> Tetrahedralize the points given in the `coordinates' vector as concatenated
+  !! triplets of x, y, z coordinates, and return the tetrahedra as concatenated
+  !! quadruplets of point indexes (with numbering starting at 1) in
+  !! `tetrahedra'.
+  subroutine gmshAlgorithmTetrahedralize(coordinates, &
+                                         tetrahedra, &
+                                         ierr)
+    interface
+    subroutine C_API(api_coordinates_, &
+                     api_coordinates_n_, &
+                     api_tetrahedra_, &
+                     api_tetrahedra_n_, &
+                     ierr_) &
+      bind(C, name="gmshAlgorithmTetrahedralize")
+      use, intrinsic :: iso_c_binding
+      real(c_double), dimension(*) :: api_coordinates_
+      integer(c_size_t), value, intent(in) :: api_coordinates_n_
+      type(c_ptr), intent(out) :: api_tetrahedra_
+      integer(c_size_t), intent(out) :: api_tetrahedra_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    real(c_double), dimension(:), intent(in) :: coordinates
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: tetrahedra
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_tetrahedra_
+    integer(c_size_t) :: api_tetrahedra_n_
+    call C_API(api_coordinates_=coordinates, &
+         api_coordinates_n_=size_gmsh_double(coordinates), &
+         api_tetrahedra_=api_tetrahedra_, &
+         api_tetrahedra_n_=api_tetrahedra_n_, &
+         ierr_=ierr)
+    tetrahedra = ovectorsize_(api_tetrahedra_, &
+      api_tetrahedra_n_)
+  end subroutine gmshAlgorithmTetrahedralize
 
   !> Set the numerical option `option' to the value `value' for plugin `name'.
   !! Plugins available in the official Gmsh release are listed in the "Gmsh

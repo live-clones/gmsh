@@ -321,8 +321,9 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
   double uv[2], xyz[3];
   if(_project(qp.data(), uv, xyz))
     return GPoint(xyz[0], xyz[1], xyz[2], this, uv);
-  else
+  else {
     return GFace::closestPoint(qp, initialGuess);
+  }
 }
 
 SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface,

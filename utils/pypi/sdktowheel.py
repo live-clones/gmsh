@@ -52,7 +52,7 @@ with tempfile.TemporaryDirectory() as wheel_dir:
     if os.path.isfile(os.path.join(sdk_dir, 'lib', f'gmsh-{libversion}.dll')):
         shutil.copy(os.path.join(sdk_dir, 'lib', f'gmsh-{libversion}.dll'),
                     os.path.join(data_dir, 'data', 'lib'))
-        shutil.copy(os.path.join(sdk_dir, 'lib', 'gmsh.lib'),
+        shutil.copy(os.path.join(sdk_dir, 'lib', 'gmsh.dll.lib'),
                     os.path.join(data_dir, 'data', 'lib'))
         shutil.copy(os.path.join(setup_dir, "gmsh.bat"),
                     os.path.join(data_dir, 'scripts'))
