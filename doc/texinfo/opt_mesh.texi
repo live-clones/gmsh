@@ -563,7 +563,7 @@ Saved in: @code{General.OptionsFileName}
 
 @item Mesh.OptimizePyramids
 Optimize pyramids in hybrid 3D meshes (0: smoother; 1: untangler)@*
-Default value: @code{1}@*
+Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Mesh.PartitionHexWeight
