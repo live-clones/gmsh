@@ -1222,8 +1222,8 @@ GMSH_API void gmsh::model::getClosestPoint(const int dim, const int tag,
       closestCoord.push_back(pp.x());
       closestCoord.push_back(pp.y());
       closestCoord.push_back(pp.z());
-      parametricCoord.push_back(uv[0]);
-      parametricCoord.push_back(uv[1]);
+      parametricCoord.push_back(pp.u());
+      parametricCoord.push_back(pp.v());
     }
   }
 }
