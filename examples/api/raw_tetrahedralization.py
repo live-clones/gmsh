@@ -13,7 +13,7 @@ gmsh.initialize()
 gmsh.option.setNumber('Mesh.Algorithm3D', 10) # new algo
 
 points = np.random.standard_normal(3 * N)
-tets = gmsh.model.mesh.tetrahedralize(points)
+tets = gmsh.algorithm.tetrahedralize(points)
 
 if visu:
     vol = gmsh.model.addDiscreteEntity(3)
