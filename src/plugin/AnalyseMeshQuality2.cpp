@@ -54,6 +54,31 @@
 //     - either: 10.3k, 421M (3 significance digit)
 //     - or: 10,345, 421,145,134 (all digits)
 
+// TODO 2.0:
+//  0. Add validity for MLine on GEdge or GFace
+//     - minJ/maxJ can be considered as a quality measure
+//     - if dimension policy=-2?
+//  1. More information:
+//     - % of invalid elements
+//     - if surface is detected as planar and then its normal
+//  2. Make distinction with inversed elements
+//  3. Think of plugin options for :
+//     - Validity of element embedded in its dimension
+//     - Inversion of element embedded in its dimension
+//        but regularizeDeterminant=ON => no inversion
+//     - Validity confidence quality of element on a geometry of higher dimension
+//     -> all on/off with skipValidity???
+//        or validityConfidence in Quality metrics to include ?
+//        (or validityConfidenceTolerance (0=OFF, >0=ON) ?)
+//        or skipOrientationFidelity after skipValidity ?
+//     -> validity/inversion in Found message
+//        validity confidence in table with min/max/mean
+//     -> validity, inversion, validity confidence all separate views?
+//  4. Intrinsic validity : smartreco777 for sharing element or 888 or 999
+//  5. Demo mode?
+//  6. Explain what is smartrecompute
+//  7.
+
 // NOTE:
 //  1. Say in help that the plugin can be used to compute jacobian, hide best
 //     elements, then compute quality (the gain is to compute quality of less
@@ -110,7 +135,7 @@
 //   • But: skip creation if PView already exists and unchanged data
 //  5. Change visibility of elements IF adjustVisibilityElements >= 1
 //   • In function of dimensionPolicy, as for (point 2.)
-//   • In function of visibilityPolicy [in the case hideWorstElements = OFF]:
+//   • In function of visibilityPolicy [here in the case hideWorstElements = OFF]:
 //     - IF = -1 Limit to valid elements if there are any invalid elements,
 //               OTHERWISE skip hiding/making visible
 //     - IF = 0 As "IF = 1" if no invalid elements OTHERWISE as "IF = -1"
@@ -157,7 +182,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   // Advanced computation options:
   {GMSH_FULLRC, "usePreviousData", nullptr, 0, "OFF, ON=skipComputationMetrics"},
   {GMSH_FULLRC, "dataManagementPolicy", nullptr, 0, "(-1)=skipExecutionJustFreeData, 0=freeOldDataIfMeshAbsent, 1=keepAllData"},
-  {GMSH_FULLRC, "smartRecomputation", nullptr, 0, "OFF=alwaysRecompute, ON=avoidRecomputeIfTagsUnchanged"},
+  {GMSH_FULLRC, "smartRecomputation", nullptr, 0, "OFF=alwaysRecompute, ON=avoidRecomputeIfUnchangedElementTags"},
   {GMSH_FULLRC, "skipValidity", nullptr, 0, "(0-)=includeValidity, ON=skipPreventiveValidityCheck"},
   // Advanced analysis options:
   {GMSH_FULLRC, "skipStatPrinting", nullptr, 0, "OFF, ON"},
@@ -358,7 +383,7 @@ PView *Plug::execute(PView *v)
     measures.back().dimStr = "dimension 3";
     measures.back().dimStrShort = "3D";
   }
-  _completeJacobianValues(measures);
+  _finalizeJacobianData(measures);
 
   // Combine if necessary
   if(_dimensionPolicy == 2) {
@@ -693,15 +718,15 @@ bool isValid(double minJ, double maxJ)
   return std::signbit(minJ) == std::signbit(maxJ);
 }
 
-void Plug::_completeJacobianValues(std::vector<Measures> &measures) const
+void Plug::_finalizeJacobianData(std::vector<Measures> &measures) const
 {
   for(auto &m: measures) {
     if(_param.show.regularizeJac) {
       for(std::size_t i = 0; i < m.minJ.size(); i++) {
         if(std::abs(m.minJ[i]) > std::abs(m.maxJ[i])) {
-          double tmp = m.minJ[i];
-          m.minJ[i] = m.maxJ[i];
-          m.maxJ[i] = tmp;
+          std::swap(m.minJ[i], m.maxJ[i]);
+          m.minJ[i] = -m.minJ[i];
+          m.maxJ[i] = -m.maxJ[i];
         }
       }
     }
@@ -712,7 +737,6 @@ void Plug::_completeJacobianValues(std::vector<Measures> &measures) const
         m.validity[i] = valid;
         if(!valid) ++m.numInvalidElements;
       }
-
     }
     if(_param.show.which[RATIOJAC]) {
       m.ratioJ.resize(m.minJ.size());
@@ -758,6 +782,7 @@ void Plug::_createPlotsOneMetric(const Measures &m, Metric metric)
 void Plug::_createElementViews(const std::vector<Measures> &measures)
 {
   if(!_param.pview.createElemView) return;
+
   Parameters::MetricsToShow &ps = _param.show;
   for(const auto &m: measures) {
     for(int i = VALIDITY; i <= MINJAC; i++) {

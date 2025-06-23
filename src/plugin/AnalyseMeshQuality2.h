@@ -139,7 +139,7 @@ private:
   void _purgeViews(bool purge2D, bool purge3D);
   void _decideDimensionToCheck(bool &check2D, bool &check3D) const;
   void _computeRequestedData(Counts param, bool check2D, bool check3D) const;
-  void _completeJacobianValues(std::vector<Measures> &) const;
+  void _finalizeJacobianData(std::vector<Measures> &) const;
   void _createPlots(const std::vector<Measures> &);
   void _createPlotsOneMetric(const Measures &, Metric);
   void _createElementViews(const std::vector<Measures> &);
