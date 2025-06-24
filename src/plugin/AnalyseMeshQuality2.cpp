@@ -467,7 +467,7 @@ void Plug::_fetchParameters()
   pc.freeOldData = dataManagePolicy <= 0;
 
   // -> metrics to compute
-  pc.validity = !static_cast<bool>(skipValidity);
+  pc.validity = skipValidity <= 0;
   pc.disto = static_cast<bool>(disto);
   pc.aspect = static_cast<bool>(aspect);
 
@@ -478,8 +478,10 @@ void Plug::_fetchParameters()
   ps.which[MINJAC] = static_cast<int>(minJ);
   ps.which[RATIOJAC] = static_cast<int>(ratioJ);
   ps.M = *std::max_element(std::begin(ps.which), std::end(ps.which));
-
-
+  if(ps.M == 0 && ps.which[VALIDITY] == -1) {
+    ps.which[VALIDITY] = 1;
+    ps.M = 1;
+  }
 
   // Legacy options (must be last):
   _fetchLegacyParameters();
