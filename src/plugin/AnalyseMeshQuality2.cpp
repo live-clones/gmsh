@@ -96,7 +96,7 @@
 //   • Limit to GEntity in GModel::current()
 //   • In function of dimensionPolicy:
 //     - IF = -1 Limit to dimension 2 meshes
-//     - IF = 0 Limit to dimension 3 meshes if there is any 3D mesh otherwise
+//     - IF = 0 Limit to dimension 3 meshes IF there is any 3D mesh OTHERWISE
 //              limit to dimension 2 meshes
 //     - IF >= 1 do not limit (both dimension 2 and 3 meshes)
 //   • Clear old entities IF dataManagementPolicy = 0
@@ -110,7 +110,7 @@
 //  2. Print statistics
 //   • In function of dimensionPolicy:
 //     - IF = -1 Limit to dimension 2 data
-//     - IF = 0 Limit to dimension 3 data if there is any 3D mesh otherwise
+//     - IF = 0 Limit to dimension 3 data IF there is any 3D mesh OTHERWISE
 //              limit to dimension 2 data
 //     - IF = 1 do not limit (dimension 2 and 3 data separately)
 //     - IF = 2 combine dimension 2 and 3 data
@@ -124,7 +124,7 @@
 //  3. Create PViewElementData IF createElementsView = ON
 //   • In function of dimensionPolicy:
 //     - IF = -1 Limit to dimension 2 data
-//     - IF = 0 Limit to dimension 3 data if there is any 3D mesh otherwise
+//     - IF = 0 Limit to dimension 3 data IF there is any 3D mesh OTHERWISE
 //              limit to dimension 2 data
 //     - IF >= 1 do not limit (dimension 2 and 3 data) (combined not possible)
 //   • Let M = max(-skipValidity, enableDistortionQuality, enableAspectQuality, enableRatioJacDetAsAMetric, enableMinJacDetAsAMetric)
@@ -133,19 +133,19 @@
 //   • Aspect IF enableAspectQuality = M
 //   • minJ IF skipValidity <= 0 AND enableMinJacDetAsAMetric = M
 //   • minJ/maxJ IF skipValidity <= 0 AND enableMinJacDetAsAMetric = M
-//   • But: skip creation if PView already exists and unchanged data
+//   • But: skip creation IF PView already exists and unchanged data
 //  4. Create PView2D IF createPlotView = ON
 //   • In function of dimensionPolicy, as for (point 2.)
 //   • For metrics as for (point 3.).
 //   • For Worst Weighted Means in function of UNPACK(wmCutoffsForPlots)
-//   • But: skip creation if PView already exists and unchanged data
+//   • But: skip creation IF PView already exists and unchanged data
 //  5. Change visibility of elements IF adjustVisibilityElements >= 1
 //   • In function of dimensionPolicy, as for (point 2.)
 //   • In function of visibilityPolicy [here in the case hideWorstElements = OFF]:
-//     - IF = -1 Limit to valid elements if there are any invalid elements,
+//     - IF = -1 Limit to valid elements IF there are any invalid elements,
 //               OTHERWISE skip hiding/making visible
-//     - IF = 0 As "IF = 1" if no invalid elements OTHERWISE as "IF = -1"
-//     - IF = 1 As "IF = 2" if there are multiple metric equal to M
+//     - IF = 0 As "IF = 1" IF no invalid elements OTHERWISE as "IF = -1"
+//     - IF = 1 As "IF = 2" IF there are multiple metric equal to M
 //              OTHERWISE limit to elements that do not meet criterion
 //                        for the metric == M
 //     - IF = 2 Limit to elements that do not meet criterion for all metrics == M
@@ -158,7 +158,7 @@
 //   • Hide worst elements instead of best IF hideWorstElements = ON
 //   • Unhide others IF doNoSetVisible = OFF
 //   • In function of adjustVisibilityElements:
-//     - IF = 1 Skip adjustment if all elements are to be hidden
+//     - IF = 1 Skip adjustment IF all elements are to be hidden
 //     - IF >= 2 Hide/Set visible even if all elements are to be hidden
 
 namespace {
@@ -764,6 +764,7 @@ void Plug::_finalizeJacobianData(std::vector<Measures> &measures) const
       }
     }
     if(_param.show.which[INVERSION]) {
+      // FIXME: what if curved geometry?
       m.inversion.resize(m.minJ.size());
       for(std::size_t i = 0; i < m.minJ.size(); i++) {
         bool inversed = m.maxJ[i] < 0;
