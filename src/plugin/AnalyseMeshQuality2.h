@@ -299,10 +299,12 @@ private:
     std::vector<double> maxJ;
     std::vector<double> ratioJ;
     std::vector<double> validity;
+    std::vector<double> inversion;
     std::vector<double> minDisto;
     std::vector<double> minAspect;
     std::vector<MElement *> elements;
     size_t numInvalidElements;
+    size_t numInversedElements;
     static Measures combine(const Measures &, const Measures &, const char *name, const char *shortName);
     const std::vector<double> &getValues(Metric m) const;
   };

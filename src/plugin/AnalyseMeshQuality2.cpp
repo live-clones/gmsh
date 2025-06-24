@@ -31,7 +31,7 @@
 
 // TODO:
 //  x. Implement isCurved
-//  2. Implement isPlanarMesh -> use normal for computing quantities
+//  x. Implement isPlanarMesh -> use normal for computing quantities
 //     - test with ctest if some planarity can be deduced from type of surface
 //       (e.g. GEntity::Plane)
 //  x. Implement minimal output (or change parameters)
@@ -58,7 +58,7 @@
 //  0. Add validity for MLine on GEdge or GFace
 //     - minJ/maxJ can be considered as a quality measure
 //     - if dimension policy=-2?
-//  1. More information:
+//  x. More information:
 //     - % of invalid elements
 //     - if surface is detected as planar and then its normal
 //  2. Make distinction with inversed elements
@@ -725,17 +725,21 @@ void Plug::_finalizeJacobianData(std::vector<Measures> &measures) const
       for(std::size_t i = 0; i < m.minJ.size(); i++) {
         if(std::abs(m.minJ[i]) > std::abs(m.maxJ[i])) {
           std::swap(m.minJ[i], m.maxJ[i]);
-          m.minJ[i] = -m.minJ[i];
-          m.maxJ[i] = -m.maxJ[i];
+          m.minJ[i] *= -1;
+          m.maxJ[i] *= -1;
         }
       }
     }
     if(_param.show.which[VALIDITY]) {
       m.validity.resize(m.minJ.size());
+      m.inversion.resize(m.minJ.size());
       for(std::size_t i = 0; i < m.minJ.size(); i++) {
         bool valid = isValid(m.minJ[i], m.maxJ[i]);
         m.validity[i] = valid;
         if(!valid) ++m.numInvalidElements;
+        bool inversed = m.maxJ[i] < 0;
+        m.inversion[i] = inversed;
+        if(inversed) ++m.numInversedElements;
       }
     }
     if(_param.show.which[RATIOJAC]) {
@@ -1093,11 +1097,22 @@ void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, con
 
   // Validity
   if(!show.which[VALIDITY]) return;
-  if(!measure.numInvalidElements)
+
+  double numElement = static_cast<double>(measure.elements.size());
+  double percentageInvalid = static_cast<double>(measure.numInvalidElements) / numElement * 100;
+  double percentageInversed = static_cast<double>(measure.numInversedElements) / numElement * 100;
+  if(!(measure.numInvalidElements + measure.numInversedElements))
     _status(MP, "   All elements are valid :-)");
-  else {
-    _warn(MP, "   Found %zu invalid elements", measure.numInvalidElements);
-  }
+  else if(!measure.numInversedElements)
+    _warn(MP, "   Found %zu invalid elements (~%.2g%%)",
+      measure.numInvalidElements, percentageInvalid);
+  else if(!measure.numInvalidElements)
+    _warn(MP, "   <|>All elements are valid but %zu elements are inversed (~%.2g%%)",
+      measure.numInversedElements, percentageInversed);
+  else
+    _warn(MP, "   <|>Found %zu invalid elements (~%.2g%%) and %zu inversed "
+              "elements (~%.2g%%)", measure.numInvalidElements,
+              percentageInvalid, measure.numInversedElements, percentageInversed);
 }
 
 void Plug::StatGenerator::_printStatsOneMetric(const Measures &measure, Metric metric)
@@ -1244,6 +1259,7 @@ void Plug::DataSingleDimension::gatherValues(const Counts &counts, Measures &mea
   measures.minAspect.reserve(sz);
   measures.elements.reserve(sz);
   measures.numInvalidElements = 0;
+  measures.numInversedElements = 0;
   for(auto &it : _dataEntities) {
     it.second.addValues(measures);
   }
@@ -1860,6 +1876,7 @@ Plug::Measures Plug::Measures::combine(const Measures &m1, const Measures &m2, c
   combineVectors(result.maxJ, m1.maxJ, m2.maxJ);
   combineVectors(result.ratioJ, m1.ratioJ, m2.ratioJ);
   combineVectors(result.validity, m1.validity, m2.validity);
+  combineVectors(result.inversion, m1.inversion, m2.inversion);
   combineVectors(result.minDisto, m1.minDisto, m2.minDisto);
   combineVectors(result.minAspect, m1.minAspect, m2.minAspect);
   combineVectors(result.elements, m1.elements, m2.elements);
@@ -1868,6 +1885,7 @@ Plug::Measures Plug::Measures::combine(const Measures &m1, const Measures &m2, c
   result.dimStr = name;
   result.dimStrShort = shortName;
   result.numInvalidElements = m1.numInvalidElements + m2.numInvalidElements;
+  result.numInversedElements = m1.numInversedElements + m2.numInvalidElements;
   return result;
 }
 
