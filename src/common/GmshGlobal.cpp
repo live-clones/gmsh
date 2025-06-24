@@ -277,7 +277,11 @@ static void GoodbyeMessage()
 
 int GmshBatch()
 {
+  Msg::SetVerbosity(0);
+  Msg::Error("GmshBatch"); //Hack
   StartupMessage();
+  GMSH_AnalyseMeshQuality2Plugin *plug2 = new GMSH_AnalyseMeshQuality2Plugin();
+  plug2->execute(new PView);
 
   OpenProject(GModel::current()->getFileName(), true); // warn if file missing
   bool open = false;

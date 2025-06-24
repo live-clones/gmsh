@@ -1299,6 +1299,18 @@ size_t Plug::DataEntity::initialize(const Parameters::Computation &param)
       _normals->set(0, 0, normal[0]);
       _normals->set(0, 1, normal[1]);
       _normals->set(0, 2, normal[2]);
+      if(_ge->geomType() == GEntity::Plane) {
+        std::cout << "_1_" << _ge->tag() << std::endl;
+      }
+      else {
+        std::cout << "T_" << _ge->geomType() << "_" << _ge->tag() << std::endl;
+      }
+    }
+    else if(_ge->geomType() == GEntity::Plane) {
+        std::cout << "_0_" << _ge->tag() << std::endl;
+    }
+    else {
+      std::cout << "F_" << _ge->geomType() << "_" << _ge->tag() << std::endl;
     }
   }
   if(_normals) {
