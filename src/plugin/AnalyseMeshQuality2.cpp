@@ -1295,6 +1295,17 @@ size_t Plug::DataEntity::initialize(const Parameters::Computation &param)
       _normals->set(0, 2, normal[2]);
     }
   }
+  if(_normals) {
+    _normalsToPrint = fullMatrix<double>(_normals->size1(), 3);
+    const double eps = 1e-3;
+    for(int i = 0; i < _normals->size1(); ++i){
+      for(int j = 0; j < 3; ++j) {
+        double val = _normals->get(i, j);
+        val = std::round(val / eps) * eps;
+        _normalsToPrint(i, j) = val == 0.0 ? 0.0 : val;
+      }
+    }
+  }
   // FIXME: implement if dim==1
 
   // Step 1: Get all elements present in GEntity
@@ -1422,15 +1433,9 @@ void Plug::DataEntity::computeValidity(MsgProgressStatus &progress_status)
 {
   if(_ge->dim() == 2) {
     if(_normals) {
-      double n[3];
-      double eps = 1e-3;
-      for(int i = 0; i < 3; ++i){
-        double val = _normals->get(0, i);
-        n[i] = std::round(val / eps) * eps;
-        n[i] = n[i] == 0.0 ? 0.0 : n[i];
-      }
       _info(1, "   Surface %d: <|>Computing validity of %d elements, normal (%.3g, %.3g, %.3g)",
-            _ge->tag(), _numToCompute[0], n[0], n[1], n[2]);
+            _ge->tag(), _numToCompute[0], _normalsToPrint(0, 0),
+            _normalsToPrint(1, 0), _normalsToPrint(2, 0));
     }
     else {
       _info(1, "   Surface %d: Computing validity of %d elements",

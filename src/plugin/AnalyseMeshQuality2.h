@@ -209,6 +209,7 @@ private:
     //   requested (see .cpp)
     std::vector<unsigned char> _flags;
     fullMatrix<double> *_normals = nullptr;
+    fullMatrix<double> _normalsToPrint;
 
   public:
     explicit DataEntity(GEntity *ge) : _ge(ge) {}

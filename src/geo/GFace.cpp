@@ -1351,7 +1351,7 @@ bool GFace::normalToPlanarMesh(SVector3 &normal, bool orient) const
     double e[3] = {v[1]->x() - v[0]->x(), v[1]->y() - v[0]->y(),
                    v[1]->z() - v[0]->z()};
     if(norme(e) == 0.) continue;
-    if(std::abs(prosca(n, e)) >= 1e-12) return false;
+    if(std::abs(prosca(n, e)) > 1e-7) return false;
   }
 
   normal = SVector3(n[0], n[1], n[2]);
