@@ -1315,14 +1315,14 @@ bool GFace::normalToPlanarMesh(SVector3 &normal, bool orient) const
     MVertex *v[3] = {el->getVertex(0), el->getVertex(1), el->getVertex(2)};
     normal3points(v[0]->x(), v[0]->y(), v[0]->z(), v[1]->x(), v[1]->y(),
                   v[1]->z(), v[2]->x(), v[2]->y(), v[2]->z(), n);
-    if (norm3(n) > .5) {
+    if (norm3(n) != 0.) {
       foundNormal = true;
       break;
     }
   }
 
   if (!foundNormal) {
-    Msg::Warning("Could not define a normal for function "
+    Msg::Warning("Could not define a normal in method "
                  "'normalToPlanarMesh' on GFace %d", tag());
     return false;
   }
@@ -1331,17 +1331,27 @@ bool GFace::normalToPlanarMesh(SVector3 &normal, bool orient) const
   // It is sufficient to check for each pair of consecutive vertices in an
   // arbitrary sequence of all surface vertices that the vector linking the
   // pair is perpendicular to the normal vector.
+
+  // 1. First, get the list of vertices to perform the minimal check.
+  // Alternatively, a function
+  //  std::vector<MVertex*> &GEntity::getAllTouchedMeshVertices() const
+  // could be implemented and would be much more efficient.
+  std::unordered_set<MVertex*> vertices;
   for (std::size_t i = 0; i < getNumMeshElements(); ++i) {
     MElement *el = getMeshElement(i);
-    MVertex *v[2] = {el->getVertex(0), nullptr};
+    for(std::size_t j = 1; j < el->getNumVertices(); ++j)
+      vertices.insert(el->getVertex(j));
+  }
 
-    for(std::size_t j = 1; j < el->getNumVertices(); ++j) {
-      v[j % 2] = el->getVertex(j);
-      double e[3] = {v[1]->x() - v[0]->x(), v[1]->y() - v[0]->y(),
-                     v[1]->z() - v[0]->z()};
-      norme(e);
-      if(std::abs(prosca(n, e)) >= 1e-12) return false;
-    }
+  // 2. Check that each consecutive pair of point is perpendicular to the normal
+  MVertex *v[2] = {*vertices.begin(), nullptr};
+  int i = 0;
+  for(auto vertex: vertices) {
+    v[++i % 2] = vertex;
+    double e[3] = {v[1]->x() - v[0]->x(), v[1]->y() - v[0]->y(),
+                   v[1]->z() - v[0]->z()};
+    if(norme(e) == 0.) continue;
+    if(std::abs(prosca(n, e)) >= 1e-12) return false;
   }
 
   normal = SVector3(n[0], n[1], n[2]);
@@ -1354,6 +1364,7 @@ bool GFace::normalToPlanarMesh(SVector3 &normal, bool orient) const
   // whole boundary since we cannot determine which part of it is convex except
   // if we already know the orientation...
   if (l_edges.empty()) return true;
+  // NOTE: If no GEdge, could compute the orientation of the majority of element
 
   // 1) Determine the set of exterior edges (NB: it can be a single edge)
   GVertex *vBegin, *vNext;
@@ -1369,7 +1380,7 @@ bool GFace::normalToPlanarMesh(SVector3 &normal, bool orient) const
       vNext = l_edges[i]->getEndVertex();
     else
       vNext = l_edges[i]->getBeginVertex();
-    if (vNext ==  vBegin) {
+    if (vNext == vBegin) {
       numEdge = i+1;
       break;
     }
@@ -1382,12 +1393,13 @@ bool GFace::normalToPlanarMesh(SVector3 &normal, bool orient) const
   //    have sampling points that discretize so poorly the boundary that they
   //    rotate inversely...
   //    However, in practice, a minimum of 100 points should be sufficient.
+  //    NOTE: May do better than: minSamplingPoints = 100
   const double minSamplingPoints = 100.;
   const int numSampleInteriorEdge =
     std::max(.0, std::ceil(minSamplingPoints/(double)numEdge - 1.));
 
   std::vector<SPoint3> samplingPnts;
-  samplingPnts.reserve(numEdge + numEdge* numSampleInteriorEdge);
+  samplingPnts.reserve(numEdge + numEdge * numSampleInteriorEdge);
   for (std::size_t i = 0; i < numEdge; ++i) {
     auto *ge = l_edges[i];
     Range<double> tr = ge->parBounds(0);

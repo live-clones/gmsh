@@ -163,16 +163,16 @@ namespace {
 StringXNumber MeshQuality2Options_Number[] = {
   // Quality metrics to include:
   {GMSH_FULLRC, "enableDistortionQuality", nullptr, 0, "OFF, (1+)=includeDistortionQuality"},
-  {GMSH_FULLRC, "enableAspectQuality", nullptr, 1, "OFF, (1+)=includeAspectQuality"},
+  {GMSH_FULLRC, "enableAspectQuality", nullptr, 0, "OFF, (1+)=includeAspectQuality"},
   // What to do:
-  {GMSH_FULLRC, "createElementsView", nullptr, 1, "OFF, ON"},
-  {GMSH_FULLRC, "createPlotView", nullptr, 1, "OFF, ON"},
+  {GMSH_FULLRC, "createElementsView", nullptr, 0, "OFF, ON"},
+  {GMSH_FULLRC, "createPlotView", nullptr, 0, "OFF, ON"},
   {GMSH_FULLRC, "adjustVisibilityElements", nullptr, 0, "OFF, 1=skipIfAllWouldBeHidden, 2=acceptAllHidden"},
   {GMSH_FULLRC, "guidanceLevel", nullptr, 1, "(-1)=minimalOutput, 0=verbose, 1=verboseAndExplanations"},
   // Elements Selection:
   {GMSH_FULLRC, "dimensionPolicy", nullptr, 0, "(-1)=force2D, 0=prioritize3D, 1=2D+3D, 2=combine2D+3D"},
   {GMSH_FULLRC, "restrictToVisibleElements", nullptr, 0, "OFF, ON=analyzeOnlyVisibleElements"},
-  {GMSH_FULLRC, "restrictToCurvedElements", nullptr, 1, "OFF, ON=analyzeOnlyNonStraightElements"},
+  {GMSH_FULLRC, "restrictToCurvedElements", nullptr, 0, "OFF, ON=analyzeOnlyNonStraightElements"},
   // Hiding options:
   {GMSH_FULLRC, "visibilityPolicy", nullptr, 1, "(-1)=validity|skip, 0=validity|1, 1=qualOR, 2=qualAND"},
   {GMSH_FULLRC, "visibilityCriterion", nullptr, 0, "0=proportionVisibleElem, 1=numVisibleElem, 2=metricValue"},
@@ -188,7 +188,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "skipStatPrinting", nullptr, 0, "OFF, ON"},
   {GMSH_FULLRC, "enableRatioJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=0-)"},
   {GMSH_FULLRC, "enableMinJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=0-)"},
-  {GMSH_FULLRC, "regularizeDeterminant", nullptr, 1, "OFF, ON=inverseOrientationIfAbsMaxSmaller"},
+  {GMSH_FULLRC, "regularizeDeterminant", nullptr, 0, "OFF, ON=inverseOrientationIfAbsMaxSmaller"},
   {GMSH_FULLRC, "wmCutoffsForStats", nullptr, 10, "CUTOFFS (for stats weighted mean, see Help)"},
   {GMSH_FULLRC, "wmCutoffsForPlots", nullptr, 10, "CUTOFFS (for plots weighted mean, see Help)"},
   // Legacy options:
@@ -1282,10 +1282,22 @@ inline void unsetBit(unsigned char &value, int maskOneBit)
 
 size_t Plug::DataEntity::initialize(const Parameters::Computation &param)
 {
+  std::size_t num = _ge->getNumMeshElements();
   size_t cntRequestedChanged = 0;
 
+  if(num && _ge->dim() == 2) {
+    GFace *gf = _ge->cast2Face();
+    SVector3 normal;
+    if(gf->normalToPlanarMesh(normal, true)) {
+      _normals = new fullMatrix<double>(1, 3);
+      _normals->set(0, 0, normal[0]);
+      _normals->set(0, 1, normal[1]);
+      _normals->set(0, 2, normal[2]);
+    }
+  }
+  // FIXME: implement if dim==1
+
   // Step 1: Get all elements present in GEntity
-  std::size_t num = _ge->getNumMeshElements();
   std::vector<MElement *> elements;
   elements.reserve(num);
   for(auto i = 0; i < num; ++i) {
@@ -1408,9 +1420,23 @@ void Plug::DataEntity::_count(unsigned char mask, std::size_t &cnt)
 
 void Plug::DataEntity::computeValidity(MsgProgressStatus &progress_status)
 {
-  if(_ge->dim() == 2)
-    _info(1, "   Surface %d: Computing validity of %d elements",
-          _ge->tag(), _numToCompute[0]);
+  if(_ge->dim() == 2) {
+    if(_normals) {
+      double n[3];
+      double eps = 1e-3;
+      for(int i = 0; i < 3; ++i){
+        double val = _normals->get(0, i);
+        n[i] = std::round(val / eps) * eps;
+        n[i] = n[i] == 0.0 ? 0.0 : n[i];
+      }
+      _info(1, "   Surface %d: <|>Computing validity of %d elements, normal (%.3g, %.3g, %.3g)",
+            _ge->tag(), _numToCompute[0], n[0], n[1], n[2]);
+    }
+    else {
+      _info(1, "   Surface %d: Computing validity of %d elements",
+            _ge->tag(), _numToCompute[0]);
+    }
+  }
   else
     _info(1, "   Volume %d: Computing validity of %d elements",
           _ge->tag(), _numToCompute[0]);
@@ -1420,7 +1446,7 @@ void Plug::DataEntity::computeValidity(MsgProgressStatus &progress_status)
     if(areBitsSet(_flags[idx], F_REQU | F_NOTJAC)) {
       MElement *el = it.first;
       // TODO: give unique normal if planar surface
-      JacQual::minMaxJacobianDeterminant(el, _minJ[idx], _maxJ[idx]);//, normals);
+      JacQual::minMaxJacobianDeterminant(el, _minJ[idx], _maxJ[idx], _normals);
       unsetBit(_flags[idx], F_NOTJAC);
       progress_status.next();
     }

@@ -16,6 +16,7 @@
 #include "GmshMessage.h"
 #include "GEntity.h" // FIXME necessary?
 #include "MElement.h" // FIXME necessary?
+#include "fullMatrix.h"
 
 class MElement;
 
@@ -207,10 +208,14 @@ private:
     // - to say if element is visible, known to be straightOrCurved, curved,
     //   requested (see .cpp)
     std::vector<unsigned char> _flags;
+    fullMatrix<double> *_normals = nullptr;
 
   public:
     explicit DataEntity(GEntity *ge) : _ge(ge) {}
-    ~DataEntity() {}
+    ~DataEntity()
+    {
+      delete _normals;
+    }
     size_t getNumRequested() const { return _numRequested; }
     size_t initialize(const Parameters::Computation &);
     void count(const Parameters::Computation &, Counts &);
