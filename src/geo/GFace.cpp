@@ -1345,9 +1345,9 @@ bool GFace::normalToPlanarMesh(SVector3 &normal, bool orient) const
 
   // 2. Check that each consecutive pair of point is perpendicular to the normal
   MVertex *v[2] = {*vertices.begin(), nullptr};
-  int i = 0;
+  int k = 0;
   for(auto vertex: vertices) {
-    v[++i % 2] = vertex;
+    v[++k % 2] = vertex;
     double e[3] = {v[1]->x() - v[0]->x(), v[1]->y() - v[0]->y(),
                    v[1]->z() - v[0]->z()};
     if(norme(e) == 0.) continue;
@@ -1385,6 +1385,9 @@ bool GFace::normalToPlanarMesh(SVector3 &normal, bool orient) const
       break;
     }
   }
+  for(size_t i = 0; i < numEdge; ++i) {
+    if(!l_edges[i]->haveParametrization()) return true;
+  }
 
   // 2) Get a set of points that represents the boundary.
   //    We need at least 3 points in basic cases and an undetermined number in
@@ -1395,29 +1398,29 @@ bool GFace::normalToPlanarMesh(SVector3 &normal, bool orient) const
   //    However, in practice, a minimum of 100 points should be sufficient.
   //    NOTE: May do better than: minSamplingPoints = 100
   const double minSamplingPoints = 100.;
-  const int numSampleInteriorEdge =
+  const int numSamplingInsideEdge =
     std::max(.0, std::ceil(minSamplingPoints/(double)numEdge - 1.));
 
   std::vector<SPoint3> samplingPnts;
-  samplingPnts.reserve(numEdge + numEdge * numSampleInteriorEdge);
+  samplingPnts.reserve(numEdge + numEdge * numSamplingInsideEdge);
   for (std::size_t i = 0; i < numEdge; ++i) {
     auto *ge = l_edges[i];
-    Range<double> tr = ge->parBounds(0);
+    Range<double> range = ge->parBounds(0);
     double low, high;
     if (l_dirs[i] == 1) {
       vBegin = ge->getBeginVertex();
-      low  = tr.low();
-      high  = tr.high();
+      low  = range.low();
+      high  = range.high();
     }
     else {
       vBegin = ge->getEndVertex();
-      low  = tr.high();
-      high  = tr.low();
+      low  = range.high();
+      high  = range.low();
     }
     samplingPnts.emplace_back(vBegin->x(), vBegin->y(), vBegin->z());
 
-    for (int j = 0; j < numSampleInteriorEdge; ++j) {
-      double t = low + (j + 1.) / (numSampleInteriorEdge + 1.) * (high - low);
+    for (int j = 0; j < numSamplingInsideEdge; ++j) {
+      double t = low + (j + 1.) / (numSamplingInsideEdge + 1.) * (high - low);
       auto gp = ge->point(t);
       samplingPnts.emplace_back(gp.x(), gp.y(), gp.z());
     }
@@ -1443,7 +1446,7 @@ bool GFace::normalToPlanarMesh(SVector3 &normal, bool orient) const
   if(absAngle < 2 * M_PI - eps || absAngle > 2 * M_PI + eps) {
     // FIXME: Remove because I think this cannot happen
     Msg::Warning("Could not orient normal of surface %d (obtained angle %g)",
-                 tag(), angle);
+                 tag(), sumAngle);
   }
   else if (sumAngle < 0) normal *= -1;
 
