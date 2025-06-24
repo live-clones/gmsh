@@ -61,7 +61,7 @@
 //  x. More information:
 //     - % of invalid elements
 //     - if surface is detected as planar and then its normal
-//  2. Make distinction with inversed elements
+//  x. Make distinction with inversed elements
 //  3. Think of plugin options for :
 //     - Validity of element embedded in its dimension
 //     - Inversion of element embedded in its dimension
@@ -74,10 +74,16 @@
 //     -> validity/inversion in Found message
 //        validity confidence in table with min/max/mean
 //     -> validity, inversion, validity confidence all separate views?
+//     => A. add enableOrientationFidelity option
+//        B. add INVERSION and ORIENTATION as measures that can be shown
+//        C. add tag to say if element has orientation, validity or nothing.
+//           or add tag to say if element on curved geometry, in which case
+//           'validity' is orientationFidelity
+//        D. compute orientation fidelity by sampling
 //  4. Intrinsic validity : smartreco777 for sharing element or 888 or 999
 //  5. Demo mode?
 //  6. Explain what is smartrecompute
-//  7.
+//  7. Change inversion for the opposite
 
 // NOTE:
 //  1. Say in help that the plugin can be used to compute jacobian, hide best
@@ -165,12 +171,12 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "enableDistortionQuality", nullptr, 0, "OFF, (1+)=includeDistortionQuality"},
   {GMSH_FULLRC, "enableAspectQuality", nullptr, 0, "OFF, (1+)=includeAspectQuality"},
   // What to do:
-  {GMSH_FULLRC, "createElementsView", nullptr, 0, "OFF, ON"},
-  {GMSH_FULLRC, "createPlotView", nullptr, 0, "OFF, ON"},
-  {GMSH_FULLRC, "adjustVisibilityElements", nullptr, 0, "OFF, 1=skipIfAllWouldBeHidden, 2=acceptAllHidden"},
+  {GMSH_FULLRC, "createElementsView", nullptr, 1, "OFF, ON"},
+  {GMSH_FULLRC, "createPlotView", nullptr, 1, "OFF, ON"},
+  {GMSH_FULLRC, "adjustVisibilityElements", nullptr, 0, "OFF, 1=skipIfAllWouldBeHidden, 2=acceptAllHidden"}, //TODO updtate for orientation
   {GMSH_FULLRC, "guidanceLevel", nullptr, 1, "(-1)=minimalOutput, 0=verbose, 1=verboseAndExplanations"},
   // Elements Selection:
-  {GMSH_FULLRC, "dimensionPolicy", nullptr, 0, "(-1)=force2D, 0=prioritize3D, 1=2D+3D, 2=combine2D+3D"},
+  {GMSH_FULLRC, "dimensionPolicy", nullptr, -1, "(-1)=force2D, 0=prioritize3D, 1=2D+3D, 2=combine2D+3D"},
   {GMSH_FULLRC, "restrictToVisibleElements", nullptr, 0, "OFF, ON=analyzeOnlyVisibleElements"},
   {GMSH_FULLRC, "restrictToCurvedElements", nullptr, 0, "OFF, ON=analyzeOnlyNonStraightElements"},
   // Hiding options:
@@ -188,7 +194,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "skipStatPrinting", nullptr, 0, "OFF, ON"},
   {GMSH_FULLRC, "enableRatioJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=0-)"},
   {GMSH_FULLRC, "enableMinJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=0-)"},
-  {GMSH_FULLRC, "regularizeDeterminant", nullptr, 0, "OFF, ON=inverseOrientationIfAbsMaxSmaller"},
+  {GMSH_FULLRC, "regularizeDeterminant", nullptr, 1, "OFF, ON=inverseOrientationIfAbsMaxSmaller"},
   {GMSH_FULLRC, "wmCutoffsForStats", nullptr, 10, "CUTOFFS (for stats weighted mean, see Help)"},
   {GMSH_FULLRC, "wmCutoffsForPlots", nullptr, 10, "CUTOFFS (for plots weighted mean, see Help)"},
   // Legacy options:
@@ -223,8 +229,8 @@ std::pair<int, std::string> MeshQuality2Options_Headers[] = {
 namespace JacQual = jacobianBasedQuality;
 using Plug = GMSH_AnalyseMeshQuality2Plugin;
 int Plug::_verbose = 0;
-const std::array<std::string, 5> Plug::_metricNames = {
-  "Validity", "Disto", "Aspect", "MinJ/maxJ", "MinJac"
+const std::array<std::string, 7> Plug::_metricNames = {
+  "Validity", "Inversion", "Orientation", "Disto", "Aspect", "MinJ/maxJ", "MinJac"
 };
 
 // ======== Plugin: Base class methods =========================================
@@ -327,9 +333,10 @@ PView *Plug::execute(PView *v)
   }
 
   Parameters::Computation &pc = _param.compute;
-  if(!pc.validity && !pc.disto && !pc.aspect) {
-    _warn(0, "-> <|>Nothing to execute because 'enableDistortionQuality' and "
-             "'enableAspectQuality' are both OFF and 'skipValidity' is ON ");
+  if(!pc.validity && !pc.disto && !pc.aspect && !pc.orientation) {
+    _warn(0, "-> <|>Nothing to execute because 'enableDistortionQuality', "
+             "'enableAspectQuality' and 'enableOrientationFidelity' are all "
+             "three OFF and 'skipValidity' is ON ");
     return v;
   }
 
@@ -420,11 +427,14 @@ void Plug::_fetchParameters()
   Parameters::Hiding &ph = _param.hide;
   Parameters::MetricsToShow &ps = _param.show;
 
-  double skipValidity, disto, aspect, minJ, ratioJ, dataManagePolicy;
+  double skipValidity, disto, aspect, orientation, minJ, ratioJ,
+   dataManagePolicy;
 
   // Metrics to include:
   disto = MeshQuality2Options_Number[0].def;
   aspect = MeshQuality2Options_Number[1].def;
+  orientation = 1; // FIXME
+  // orientation = MeshQuality2Options_Number[2].def;
 
   // What to do:
   pp.createElemView = static_cast<bool>(MeshQuality2Options_Number[2].def);
@@ -470,6 +480,7 @@ void Plug::_fetchParameters()
   pc.validity = skipValidity <= 0;
   pc.disto = static_cast<bool>(disto);
   pc.aspect = static_cast<bool>(aspect);
+  pc.orientation = static_cast<bool>(orientation);
 
   // -> metrics to show
   ps.which[VALIDITY] = skipValidity == 0 ? -1 : skipValidity > 0 ? 0 : -static_cast<int>(skipValidity);
@@ -477,6 +488,8 @@ void Plug::_fetchParameters()
   ps.which[ASPECT] = static_cast<int>(aspect);
   ps.which[MINJAC] = static_cast<int>(minJ);
   ps.which[RATIOJAC] = static_cast<int>(ratioJ);
+  ps.which[ORIENTATION] = static_cast<int>(orientation);
+  ps.which[INVERSION] = !ps.regularizeJac;
   ps.M = *std::max_element(std::begin(ps.which), std::end(ps.which));
   if(ps.M == 0 && ps.which[VALIDITY] == -1) {
     ps.which[VALIDITY] = 1;
@@ -573,6 +586,8 @@ void Plug::_fetchLegacyParameters()
   pc.onlyCurved = false;
   pp.statCutoffPack = 50;
   pp.createPlot = false;
+  ps.which[INVERSION] = 0;
+  ps.which[ORIENTATION] = 0;
   ps.which[RATIOJAC] = 1;
   ps.which[MINJAC] = 1;
   ps.regularizeJac = false;
@@ -710,6 +725,14 @@ void Plug::_computeRequestedData(Counts counts, bool check2D, bool check3D) cons
     }
   }
 
+  if(counts.elToCompute[3] > 0) {
+    _status(0, "-> Computing Orientation Fidelity...");
+    MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[3]));
+    for(auto data: allDataEntities) {
+      data->computeOrientation(progress_status);
+    }
+  }
+
   _status(0, "Done computing data");
 }
 
@@ -734,11 +757,15 @@ void Plug::_finalizeJacobianData(std::vector<Measures> &measures) const
     }
     if(_param.show.which[VALIDITY]) {
       m.validity.resize(m.minJ.size());
-      m.inversion.resize(m.minJ.size());
       for(std::size_t i = 0; i < m.minJ.size(); i++) {
         bool valid = isValid(m.minJ[i], m.maxJ[i]);
         m.validity[i] = valid;
         if(!valid) ++m.numInvalidElements;
+      }
+    }
+    if(_param.show.which[INVERSION]) {
+      m.inversion.resize(m.minJ.size());
+      for(std::size_t i = 0; i < m.minJ.size(); i++) {
         bool inversed = m.maxJ[i] < 0;
         m.inversion[i] = inversed;
         if(inversed) ++m.numInversedElements;
@@ -774,7 +801,9 @@ void Plug::_createPlotsOneMetric(const Measures &m, Metric metric)
   s += " (p)";
 
   constexpr double minMaxQuality[2] = {0, 1};
-  const double *minMax = (metric == RATIOJAC || metric == MINJAC) ? nullptr : minMaxQuality;
+  constexpr double minMaxQualityNeg[2] = {-1, 1};
+  const double *minMax = (metric == RATIOJAC || metric == MINJAC) ? nullptr :
+  (metric == ORIENTATION) ? minMaxQualityNeg : minMaxQuality;
 
   for(double cutoff: _statGen->getCutoffPlots()) {
     Key key(m.dim2Elem, m.dim3Elem, metric, Key::TypeView::PLOT, cutoff);
@@ -801,6 +830,7 @@ void Plug::_createElementViews(const std::vector<Measures> &measures)
 void Plug::_createElementViewsOneMetric(const Measures &m, Metric metric)
 {
   const std::vector<double> &values = m.getValues(metric);
+  const std::vector<MElement *> &elements = m.getElements(metric);
   if(values.empty()) return;
 
   std::string s = _metricNames[metric];
@@ -812,7 +842,7 @@ void Plug::_createElementViewsOneMetric(const Measures &m, Metric metric)
   if(_pviews.find(key) == _pviews.end()) {
     std::map<int, std::vector<double> > dataPV;
     for(size_t i = 0; i < values.size(); i++) {
-      dataPV[m.elements[i]->getNum()].push_back(values[i]);
+      dataPV[elements[i]->getNum()].push_back(values[i]);
     }
     PView *p = new PView(s, "ElementData", _m, dataPV);
     _pviews[key] = p;
@@ -919,19 +949,20 @@ void Plug::_findElementsToHide(const Measures &measure,
   }
 
   const std::vector<double> &val = measure.getValues(metric);
+  const std::vector<MElement *> &elements = measure.getElements(metric);
   std::set<MElement *> onLimit;
 
   for(int i = 0; i < val.size(); i++) {
     if(_param.hide.worst ? val[i] < limitVal : val[i] > limitVal) {
-      elementsToHide.insert(measure.elements[i]);
+      elementsToHide.insert(elements[i]);
     }
     else if(val[i] == limitVal) {
-      onLimit.insert(measure.elements[i]);
+      onLimit.insert(elements[i]);
     }
   }
 
   // Add elements from onLimit to match numOfElements
-  size_t numHiddenRequired = measure.elements.size() - numVisibleElements;
+  size_t numHiddenRequired = elements.size() - numVisibleElements;
   if (_param.hide.criterion < 2 && elementsToHide.size() < numHiddenRequired) {
     size_t remaining = std::min(numHiddenRequired - elementsToHide.size(), onLimit.size());
     auto it = onLimit.begin();
@@ -1004,10 +1035,17 @@ void Plug::StatGenerator::printStats(const Parameters &param,
   _info(1, "-> Printing statistics, here is what is important to know about "
   "them:");
   if(which[VALIDITY])
-  _info(1, "   *V<|>alidity*  provides information about the strict positivity "
-           "of the Jacobian determinant. A mesh containing invalid elements "
+  _info(1, "   *V<|>alidity*  provides information about the Jacobian "
+           "determinant being strictly different from zero. "
+           "A mesh containing invalid elements "
            "will usually result in incorrect Finite Element solutions. Each "
            "element is classified as either valid or invalid.");
+  if(which[INVERSION])
+    _info(1, "   *I<|>nversion*  provides information about the Jacobian "
+             "determinant being strictly negative. A mesh containing inverted "
+             "elements may result in incorrect Finite Element solutions "
+             "depending on the solver. Each valid element is classified as "
+             "either inverted or not inverted.");
   if(which[DISTO])
   _info(1, "   *D<|>istortion quality*  (previously ICN) is related to the "
            "condition number of the stiffness matrix. Low-Distortion elements "
@@ -1032,6 +1070,8 @@ void Plug::StatGenerator::printStats(const Parameters &param,
              "This metric is particularly relevant for iterative methods, "
              "where the time step may depend on the size of the smallest "
              "element. Values range from -∞ to +∞.");
+  if(which[ORIENTATION])
+    _info(1, "   *Orientation*  is TODO. Values range from -1 to 1.");
   if(param.pview.statCutoffPack && cntQuality)
     _info(1, "   *W<|>orst-10%% Weighted Mean*  (Wm10) corresponds to a weighted "
              "mean where the worst 10%% of the values are assigned the same weight "
@@ -1078,7 +1118,11 @@ void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, con
   _info(MP, "-> Statistics for %s:", measure.dimStr);
 
   // Header
-  if(show.which[DISTO] || show.which[ASPECT] || show.which[RATIOJAC] || show.which[MINJAC]) {
+  bool haveQualityToPrint = false;
+  for(int i = ORIENTATION; i <= MINJAC; ++i) {
+    if(show.which[i]) haveQualityToPrint = true;
+  }
+  if(haveQualityToPrint) {
     std::ostringstream columnNamesStream;
     columnNamesStream << "   | ";
     columnNamesStream << std::setw(_colWidth) << "";
@@ -1092,13 +1136,13 @@ void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, con
     _info(MP, "%s", columnNamesStream.str().c_str());
   }
 
-  for(int i = DISTO; i <= MINJAC; i++) {
+  for(int i = ORIENTATION; i <= MINJAC; i++) {
     if(show.which[i])
       _printStatsOneMetric(measure, static_cast<Metric>(i));
   }
 
   // Validity
-  if(!show.which[VALIDITY]) return;
+  if(!show.which[VALIDITY] && !show.which[INVERSION]) return;
 
   double numElement = static_cast<double>(measure.elements.size());
   double percentageInvalid = static_cast<double>(measure.numInvalidElements) / numElement * 100;
@@ -1251,6 +1295,7 @@ void Plug::DataSingleDimension::_updateGEntities(
 void Plug::DataSingleDimension::gatherValues(const Counts &counts, Measures &measures)
 {
   size_t sz = counts.elToShow;
+  size_t szOri = counts.orientationToShow;
   if(_dim == 2)
     measures.dim2Elem = true;
   else
@@ -1260,6 +1305,9 @@ void Plug::DataSingleDimension::gatherValues(const Counts &counts, Measures &mea
   measures.minDisto.reserve(sz);
   measures.minAspect.reserve(sz);
   measures.elements.reserve(sz);
+  measures.minO.reserve(szOri);
+  measures.maxO.reserve(szOri);
+  measures.elementsOri.reserve(szOri);
   measures.numInvalidElements = 0;
   measures.numInversedElements = 0;
   for(auto &it : _dataEntities) {
@@ -1273,7 +1321,7 @@ void Plug::DataSingleDimension::gatherValues(const Counts &counts, Measures &mea
 constexpr int F_NOTJAC = 1 << 0;
 constexpr int F_NOTDISTO = 1 << 1;
 constexpr int F_NOTASPECT = 1 << 2;
-//constexpr int F_EXIST = 1 << 3;
+constexpr int F_NOTORI = 1 << 3;
 constexpr int F_VISBL = 1 << 4;
 constexpr int F_CURVNOTCOMP = 1 << 5;
 constexpr int F_CURVED = 1 << 6;
@@ -1409,25 +1457,29 @@ void Plug::DataEntity::count(const Parameters::Computation &param, Counts &count
 {
   // Reset intern data
   _numRequested = 0;
-  for(int i = 0; i < 3; ++i)
+  for(int i = 0; i < 4; ++i)
     _numToCompute[i] = 0;
 
-  // Count number of elements to compute and to show
+  // Count number of elements to compute
   if (param.validity)
     _count(F_REQU | F_NOTJAC, _numToCompute[0]);
   if (param.disto)
     _count(F_REQU | F_NOTDISTO, _numToCompute[1]);
   if (param.aspect)
     _count(F_REQU | F_NOTASPECT, _numToCompute[2]);
-  for(int i = 0; i < 3; ++i) {
+  if (param.orientation && _ge->dim() < 3 && !_normals)
+    _count(F_REQU | F_NOTORI, _numToCompute[3]);
+  for(int i = 0; i < 4; ++i) {
     counts.elToCompute[i] += _numToCompute[i];
   }
 
   // Count number of elements to show
   _count(F_REQU, _numRequested);
   counts.elToShow += _numRequested;
+  if(param.orientation && _ge->dim() < 3 && !_normals)
+    counts.orientationToShow += _numRequested;
 
-  // Count total number, still existing, visible and curved
+  // Count total number, number of visible and curved elements
   counts.totalEl += _mapElemToIndex.size();
   for(const auto &flag : _flags) {
     if(isBitSet(flag, F_VISBL)) ++counts.visibleEl;
@@ -1532,16 +1584,53 @@ void Plug::DataEntity::computeAspect(MsgProgressStatus &progress_status, bool co
   }
 }
 
+void Plug::DataEntity::computeOrientation(MsgProgressStatus &progress_status)
+{
+  // TODO: Implement
+  // _minO[]
+  for(const auto &it : _mapElemToIndex) {
+  const std::size_t idx = it.second;
+  // MElement *el = it.first;
+    _minO[idx] = idx;
+    unsetBit(_flags[idx], F_NOTORI);
+  }
+  // if(_ge->dim() == 2)
+  //   _info(1, "   Surface %d: Computing Aspect quality of %d elements",
+  //         _ge->tag(), _numToCompute[2]);
+  // else
+  //   _info(1, "   Volume %d: Computing Aspect quality of %d elements",
+  //         _ge->tag(), _numToCompute[2]);
+  //
+  // for(const auto &it : _mapElemToIndex) {
+  //   const std::size_t idx = it.second;
+  //   if(areBitsSet(_flags[idx], F_REQU | F_NOTASPECT)) {
+  //     MElement *el = it.first;
+  //     if(!considerAsValid  && _minJ[idx] <= 0 && _maxJ[idx] >= 0) {
+  //       _minAspect[idx] = 0;
+  //     }
+  //     else {
+  //       _minAspect[idx] = JacQual::minIGEMeasure(el, true);
+  //     }
+  //     unsetBit(_flags[idx], F_NOTASPECT);
+  //     progress_status.next();
+  //   }
+  // }
+}
+
 void Plug::DataEntity::reset(std::size_t num)
 {
   _mapElemToIndex.clear();
   _minJ.clear();
   _maxJ.clear();
+  _minO.clear();
+  _maxO.clear();
   _minDisto.clear();
   _minAspect.clear();
   _flags.clear();
   _minJ.reserve(num);
   _maxJ.reserve(num);
+  _minO.reserve(num);
+  _maxO.reserve(num);
   _minDisto.reserve(num);
   _minAspect.reserve(num);
   _flags.reserve(num);
@@ -1552,9 +1641,11 @@ void Plug::DataEntity::add(MElement *el)
   _mapElemToIndex[el] = _minJ.size();
   _minJ.push_back(std::numeric_limits<double>::max());
   _maxJ.push_back(std::numeric_limits<double>::min());
+  _minO.push_back(std::numeric_limits<double>::max());
+  _maxO.push_back(std::numeric_limits<double>::min());
   _minDisto.push_back(std::numeric_limits<double>::max());
   _minAspect.push_back(std::numeric_limits<double>::max());
-  unsigned char flag = F_NOTJAC | F_NOTDISTO | F_NOTASPECT | F_CURVNOTCOMP;
+  unsigned char flag = F_NOTJAC | F_NOTDISTO | F_NOTASPECT | F_NOTORI | F_CURVNOTCOMP;
   if (el->getVisibility()) setBit(flag, F_VISBL);
   _flags.push_back(flag);
 }
@@ -1569,6 +1660,11 @@ void Plug::DataEntity::addValues(Measures &measures)
       if(isBitUnset(_flags[idx], F_NOTJAC)) {
         measures.minJ.push_back(_minJ[idx]);
         measures.maxJ.push_back(_maxJ[idx]);
+      }
+      if(isBitUnset(_flags[idx], F_NOTORI)) {
+        measures.minO.push_back(_minO[idx]);
+        measures.maxO.push_back(_maxO[idx]);
+        measures.elementsOri.push_back(it.first);
       }
       if(isBitUnset(_flags[idx], F_NOTDISTO))
         measures.minDisto.push_back(_minDisto[idx]);
@@ -1757,19 +1853,21 @@ std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
 
   if(sum2D + sum3D == 0) return 0;
 
-  _info(0, "-> <|>Number of evaluations to perform:\n");
-  _info(0, "   | %5s%10s%10s%10s", "", "Validity", "Disto", "Aspect");
+  _info(0, "-> Number of evaluations to perform:\n");
+  _info(0, "   | %5s%10s%10s%10s", "", "Validity", "Disto", "Aspect, Orientation");
   if(sum2D)
-    _info(0, "   | %5s%10s%10s%10s", "2D:",
+    _info(0, "   | %5s%10s%10s%10s%10s", "2D:",
               formatNumber(cnt2D.elToCompute[0]).c_str(),
               formatNumber(cnt2D.elToCompute[1]).c_str(),
-              formatNumber(cnt2D.elToCompute[2]).c_str());
+              formatNumber(cnt2D.elToCompute[2]).c_str(),
+              formatNumber(cnt2D.elToCompute[3]).c_str());
 
   if(sum3D)
-    _info(0, "   | %5s%10s%10s%10s", "3D:",
+    _info(0, "   | %5s%10s%10s%10s%10s", "3D:",
               formatNumber(cnt3D.elToCompute[0]).c_str(),
               formatNumber(cnt3D.elToCompute[1]).c_str(),
-              formatNumber(cnt3D.elToCompute[2]).c_str());
+              formatNumber(cnt3D.elToCompute[2]).c_str(),
+              formatNumber(cnt3D.elToCompute[3]).c_str());
 
   return sum2D + sum3D;
 }
@@ -1845,12 +1943,13 @@ Plug::Counts Plug::Counts::operator+(const Counts &other) const
 {
   Counts result;
 
-  constexpr int metricsCount = 3;
+  constexpr int metricsCount = 4;
   for (int i = 0; i < metricsCount; ++i) {
     result.elToCompute[i] = elToCompute[i] + other.elToCompute[i];
   }
 
   result.elToShow = elToShow + other.elToShow;
+  result.orientationToShow = orientationToShow + other.orientationToShow;
   result.totalEl = totalEl + other.totalEl;
   result.elCurvedComputed = elCurvedComputed + other.elCurvedComputed;
   result.curvedEl = curvedEl + other.curvedEl;
@@ -1882,6 +1981,9 @@ Plug::Measures Plug::Measures::combine(const Measures &m1, const Measures &m2, c
   combineVectors(result.minDisto, m1.minDisto, m2.minDisto);
   combineVectors(result.minAspect, m1.minAspect, m2.minAspect);
   combineVectors(result.elements, m1.elements, m2.elements);
+  combineVectors(result.minO, m1.minO, m2.minO);
+  combineVectors(result.maxO, m1.maxO, m2.maxO);
+  combineVectors(result.elementsOri, m1.elementsOri, m2.elementsOri);
   result.dim2Elem = m1.dim2Elem || m2.dim2Elem;
   result.dim3Elem = m1.dim3Elem || m2.dim3Elem;
   result.dimStr = name;
@@ -1891,10 +1993,15 @@ Plug::Measures Plug::Measures::combine(const Measures &m1, const Measures &m2, c
   return result;
 }
 
-const std::vector<double> &Plug::Measures::getValues(Metric m) const {
+const std::vector<double> &Plug::Measures::getValues(Metric m) const
+{
   switch(m) {
   case VALIDITY:
     return validity;
+  case INVERSION:
+    return inversion;
+  case ORIENTATION:
+    return minO;
   case DISTO:
     return minDisto;
   case ASPECT:
@@ -1907,6 +2014,14 @@ const std::vector<double> &Plug::Measures::getValues(Metric m) const {
     _error(0, "Invalid metric");
   }
   return maxJ; // to avoid compiler warning
+}
+
+const std::vector<MElement *> &Plug::Measures::getElements(Metric m) const
+{
+  if(m == ORIENTATION)
+    return elementsOri;
+  else
+    return elements;
 }
 
 #endif
