@@ -1308,13 +1308,16 @@ bool GFace::normalToPlanarMesh(SVector3 &normal, bool orient) const
   if (getNumMeshElements() == 0) return false;
 
   // Get one arbitrary normal
-  double n[3];
+  SVector3 n;
   bool foundNormal = false;
   for (size_t i = 0; i < getNumMeshElements(); ++i) {
     MElement *el = getMeshElement(i);
-    MVertex *v[3] = {el->getVertex(0), el->getVertex(1), el->getVertex(2)};
-    normal3points(v[0]->x(), v[0]->y(), v[0]->z(), v[1]->x(), v[1]->y(),
-                  v[1]->z(), v[2]->x(), v[2]->y(), v[2]->z(), n);
+    SPoint3 v0 = el->getVertex(0)->point(),
+            v1 = el->getVertex(1)->point(),
+            v2 = el->getVertex(2)->point();
+    SVector3 a = v1 - v0,
+             b = v2 - v0;
+    n = crossprod(a, b);
     if (norm3(n) != 0.) {
       foundNormal = true;
       break;
@@ -1344,59 +1347,83 @@ bool GFace::normalToPlanarMesh(SVector3 &normal, bool orient) const
   }
 
   // 2. Check that each consecutive pair of point is perpendicular to the normal
-  MVertex *v[2] = {*vertices.begin(), nullptr};
+  SPoint3 vert[2] = {(*vertices.begin())->point(), SPoint3()};
+  // MVertex *v[2] = {*vertices.begin(), nullptr};
   int k = 0;
   for(auto vertex: vertices) {
-    v[++k % 2] = vertex;
-    double e[3] = {v[1]->x() - v[0]->x(), v[1]->y() - v[0]->y(),
-                   v[1]->z() - v[0]->z()};
-    if(norme(e) == 0.) continue;
-    if(std::abs(prosca(n, e)) > 1e-7) return false;
+    vert[++k % 2] = vertex->point();
+    SVector3 a = vert[1] - vert[0];
+    if(norme(a) == 0.) continue;
+    if(std::abs(dot(a, n)) > 1e-7) return false;
   }
 
-  normal = SVector3(n[0], n[1], n[2]);
+  normal = n;
   if (!orient) return true;
 
   // Now, if possible, check the orientation of the geometrical surface to make
   // normal point in the same direction.
-  // The only way is to check if the rotation of the complete boundary is of an
+  // The best way is to check if the rotation of the complete boundary is of an
   // angle of +2pi or -2pi for the current sense of 'normal'. We must cover the
   // whole boundary since we cannot determine which part of it is convex except
   // if we already know the orientation...
-  if (l_edges.empty()) return true;
-  // NOTE: If no GEdge, could compute the orientation of the majority of element
+  // If it is not possible to determine the rotation of the boundary, then the
+  // sense is chosen as the orientation of the majority of elements
 
   // 1) Determine the set of exterior edges (NB: it can be a single edge)
+  bool useBoundary = true;
+  std::size_t numEdge = 0;
   GVertex *vBegin, *vNext;
-
-  if (l_dirs[0] == 1)
-    vBegin = l_edges[0]->getBeginVertex();
-  else
-    vBegin = l_edges[0]->getEndVertex();
-
-  std::size_t numEdge = 1;
-  for (std::size_t i = 0; i < l_edges.size(); ++i) {
-    if (l_dirs[i] == 1)
-      vNext = l_edges[i]->getEndVertex();
+  if (l_edges.empty()) {
+    useBoundary = false;
+  }
+  else {
+    if (l_dirs[0] == 1)
+      vBegin = l_edges[0]->getBeginVertex();
     else
-      vNext = l_edges[i]->getBeginVertex();
-    if (vNext == vBegin) {
-      numEdge = i+1;
-      break;
+      vBegin = l_edges[0]->getEndVertex();
+
+    numEdge = 1;
+    for (std::size_t i = 0; i < l_edges.size(); ++i) {
+      if (l_dirs[i] == 1)
+        vNext = l_edges[i]->getEndVertex();
+      else
+        vNext = l_edges[i]->getBeginVertex();
+      if (vNext == vBegin) {
+        numEdge = i+1;
+        break;
+      }
+    }
+    for(size_t i = 0; i < numEdge; ++i) {
+      if(!l_edges[i]->haveParametrization()) useBoundary = false;
     }
   }
-  for(size_t i = 0; i < numEdge; ++i) {
-    if(!l_edges[i]->haveParametrization()) return true;
+
+  // 2a) use orientation of majority of elements
+  if(!useBoundary) {
+    size_t cnt[2]{0};
+    for(size_t i = 0; i < getNumMeshElements(); ++i) {
+      MElement *el = getMeshElement(i);
+      SPoint3 v0 = el->getVertex(0)->point(),
+              v1 = el->getVertex(1)->point(),
+              v2 = el->getVertex(2)->point();
+      SVector3 a = v1 - v0,
+               b = v2 - v0;
+      n = crossprod(a, b);
+      if(dot(n, normal) > 0.) cnt[0]++;
+      else cnt[1]++;
+    }
+    if(cnt[1] > cnt[0]) normal *= -1.;
+    return true;
   }
 
-  // 2) Get a set of points that represents the boundary.
-  //    We need at least 3 points in basic cases and an undetermined number in
-  //    general. Indeed, for any number of sampling points, we can always create
-  //    a boundary for which the sampling points are co-linear or even worse,
-  //    have sampling points that discretize so poorly the boundary that they
-  //    rotate inversely...
-  //    However, in practice, a minimum of 100 points should be sufficient.
-  //    NOTE: May do better than: minSamplingPoints = 100
+  // 2b) Get a set of points that represents the boundary.
+  //     We need at least 3 points in basic cases and an undetermined number in
+  //     general. Indeed, for any number of sampling points, we can always
+  //     create a boundary for which the sampling points are co-linear or even
+  //     worse, have sampling points that discretize so poorly the boundary that
+  //     they rotate inversely...
+  //     However, in practice, a minimum of 100 points should be sufficient.
+  //     NOTE: May do better than: minSamplingPoints = 100
   const double minSamplingPoints = 100.;
   const int numSamplingInsideEdge =
     std::max(.0, std::ceil(minSamplingPoints/(double)numEdge - 1.));
