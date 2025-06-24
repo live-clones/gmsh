@@ -239,6 +239,7 @@ private:
     void computeDisto(MsgProgressStatus &, bool considerAsValid);
     void computeAspect(MsgProgressStatus &, bool considerAsValid);
     void computeOrientation(MsgProgressStatus &);
+    void computeOrientationFidelity(GFace *gf, MElement *el, double minmaxO[2]) const;
 
   private:
     void _count(unsigned char mask, std::size_t &cnt);

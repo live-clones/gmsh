@@ -230,7 +230,7 @@ namespace JacQual = jacobianBasedQuality;
 using Plug = GMSH_AnalyseMeshQuality2Plugin;
 int Plug::_verbose = 0;
 const std::array<std::string, 7> Plug::_metricNames = {
-  "Validity", "Inversion", "Orientation", "Disto", "Aspect", "MinJ/maxJ", "MinJac"
+  "Validity", "Inversion", "Fidelity", "Disto", "Aspect", "MinJ/maxJ", "MinJac"
 };
 
 // ======== Plugin: Base class methods =========================================
@@ -1527,7 +1527,6 @@ void Plug::DataEntity::computeValidity(MsgProgressStatus &progress_status)
     const std::size_t idx = it.second;
     if(areBitsSet(_flags[idx], F_REQU | F_NOTJAC)) {
       MElement *el = it.first;
-      // TODO: give unique normal if planar surface
       JacQual::minMaxJacobianDeterminant(el, _minJ[idx], _maxJ[idx], _normals);
       unsetBit(_flags[idx], F_NOTJAC);
       progress_status.next();
@@ -1552,6 +1551,7 @@ void Plug::DataEntity::computeDisto(MsgProgressStatus &progress_status, bool con
         _minDisto[idx] = 0;
       }
       else {
+      // TODO: give unique normal if planar surface
         _minDisto[idx] = JacQual::minICNMeasure(el, true);
       }
       unsetBit(_flags[idx], F_NOTDISTO);
@@ -1577,6 +1577,7 @@ void Plug::DataEntity::computeAspect(MsgProgressStatus &progress_status, bool co
         _minAspect[idx] = 0;
       }
       else {
+      // TODO: give unique normal if planar surface
         _minAspect[idx] = JacQual::minIGEMeasure(el, true);
       }
       unsetBit(_flags[idx], F_NOTASPECT);
@@ -1585,37 +1586,55 @@ void Plug::DataEntity::computeAspect(MsgProgressStatus &progress_status, bool co
   }
 }
 
+void Plug::DataEntity::computeOrientationFidelity(GFace *gf, MElement *el, double minmaxO[2]) const
+{
+  double minmaxAng[2] = {std::numeric_limits<double>::max(),
+    std::numeric_limits<double>::min()};
+  for(int i = 0; i < el->getNumPrimaryVertices(); ++i) {
+    MVertex *vert = el->getVertex(i);
+    MFaceN face = el->getHighOrderFace(0, 0, 0);
+    double uGF, vGF, uRef, vRef, dummy;
+    if(vert->getParameter(1, vGF)) {
+      vert->getParameter(0, uGF);
+      SPoint2 p(uGF, vGF);
+      SVector3 normalGFace = gf->normal(p);
+      el->getNode(i, uRef, vRef, dummy);
+      SVector3 normalElem = face.normal(uRef, vRef);
+      double ang = angle(normalElem, normalGFace);
+      minmaxAng[0] = std::min(minmaxAng[0], ang);
+      minmaxAng[1] = std::max(minmaxAng[1], ang);
+    }
+    else {
+      _error(MP, "Cannot compute orientation fidelity for vertex %d", vert->getNum());
+    }
+  }
+  minmaxO[0] = 1 - minmaxAng[1] / M_PI * 2;
+  minmaxO[1] = 1 - minmaxAng[0] / M_PI * 2;
+}
+
 void Plug::DataEntity::computeOrientation(MsgProgressStatus &progress_status)
 {
-  // TODO: Implement
-  // _minO[]
-  for(const auto &it : _mapElemToIndex) {
-  const std::size_t idx = it.second;
-  // MElement *el = it.first;
-    _minO[idx] = idx;
-    unsetBit(_flags[idx], F_NOTORI);
-  }
-  // if(_ge->dim() == 2)
-  //   _info(1, "   Surface %d: Computing Aspect quality of %d elements",
-  //         _ge->tag(), _numToCompute[2]);
+  // FIXME update for
+  if(_ge->dim() == 2)
+    _info(1, "   Surface %d: Computing Orientation Fidelity of %d elements",
+          _ge->tag(), _numToCompute[2]);
   // else
-  //   _info(1, "   Volume %d: Computing Aspect quality of %d elements",
+  //   _info(1, "   Volume %d: Computing Orientation Fidelity of %d elements",
   //         _ge->tag(), _numToCompute[2]);
-  //
-  // for(const auto &it : _mapElemToIndex) {
-  //   const std::size_t idx = it.second;
-  //   if(areBitsSet(_flags[idx], F_REQU | F_NOTASPECT)) {
-  //     MElement *el = it.first;
-  //     if(!considerAsValid  && _minJ[idx] <= 0 && _maxJ[idx] >= 0) {
-  //       _minAspect[idx] = 0;
-  //     }
-  //     else {
-  //       _minAspect[idx] = JacQual::minIGEMeasure(el, true);
-  //     }
-  //     unsetBit(_flags[idx], F_NOTASPECT);
-  //     progress_status.next();
-  //   }
-  // }
+
+  double minmaxO[2];
+  for(const auto &it : _mapElemToIndex) {
+    const std::size_t idx = it.second;
+    if(areBitsSet(_flags[idx], F_REQU | F_NOTORI)) {
+      MElement *el = it.first;
+      // FIXME: cast GFace can be cast GEdge
+      computeOrientationFidelity((GFace*)_ge, el, minmaxO);
+      _minO[idx] = minmaxO[0];
+      _maxO[idx] = minmaxO[1];
+      unsetBit(_flags[idx], F_NOTORI);
+      progress_status.next();
+    }
+  }
 }
 
 void Plug::DataEntity::reset(std::size_t num)
@@ -1855,7 +1874,7 @@ std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
   if(sum2D + sum3D == 0) return 0;
 
   _info(0, "-> Number of evaluations to perform:\n");
-  _info(0, "   | %5s%10s%10s%10s", "", "Validity", "Disto", "Aspect, Orientation");
+  _info(0, "   | %5s%10s%10s%10s%10s", "", "Validity", "Disto", "Aspect", "Fidelity");
   if(sum2D)
     _info(0, "   | %5s%10s%10s%10s%10s", "2D:",
               formatNumber(cnt2D.elToCompute[0]).c_str(),
