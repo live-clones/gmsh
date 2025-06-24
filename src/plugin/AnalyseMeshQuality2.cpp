@@ -989,38 +989,44 @@ void Plug::StatGenerator::printStats(const Parameters &param,
 {
   if(param.show.skipStats) return;
 
+  const int *which = param.show.which;
+  int cntQuality = 0;
+  for (int i = DISTO; i <= MINJAC; ++i) {
+    cntQuality += which[i];
+  }
+
   _info(1, "-> Printing statistics, here is what is important to know about "
   "them:");
-  if(param.show.which[VALIDITY])
+  if(which[VALIDITY])
   _info(1, "   *V<|>alidity*  provides information about the strict positivity "
            "of the Jacobian determinant. A mesh containing invalid elements "
            "will usually result in incorrect Finite Element solutions. Each "
            "element is classified as either valid or invalid.");
-  if(param.show.which[DISTO])
+  if(which[DISTO])
   _info(1, "   *D<|>istortion quality*  (previously ICN) is related to the "
            "condition number of the stiffness matrix. Low-Distortion elements "
            "may cause numerical roundoff errors or significantly reduce the "
            "convergence speed of iterative methods. Values "
            "range from 0 to 1.");
-  if(param.show.which[ASPECT])
+  if(which[ASPECT])
   _info(1, "   *A<|>spect quality*  (previously IGE) is related to "
            "the gradient of the FE solution. Elements with poor aspect quality "
            "negatively affect errors in the gradient of the solution. Values "
            "range from 0 to 1.");
-  if(param.show.which[RATIOJAC])
+  if(which[RATIOJAC])
     _info(1, "   *R<|>atio minJ/maxJ*  is the ratio between the minimum and "
              "maximum values of the Jacobian determinant. It is faster to "
              "compute than the distortion and aspect quality metrics and can "
              "be used to evaluate how much elements are deformed. However, "
              "note that it is not a true quality metric. Values range from "
              "-∞ to 1.");
-  if(param.show.which[MINJAC])
+  if(which[MINJAC])
     _info(1, "   *m<|>inJ*  is the minimum of the Jacobian determinant computed "
              "in the reference space and can be used to check the element size. "
              "This metric is particularly relevant for iterative methods, "
              "where the time step may depend on the size of the smallest "
              "element. Values range from -∞ to +∞.");
-  if(param.pview.statCutoffPack)
+  if(param.pview.statCutoffPack && cntQuality)
     _info(1, "   *W<|>orst-10%% Weighted Mean*  (Wm10) corresponds to a weighted "
              "mean where the worst 10%% of the values are assigned the same weight "
              "as the remaining values. This approach is preferable to the standard "
