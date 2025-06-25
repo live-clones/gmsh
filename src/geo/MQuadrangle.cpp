@@ -637,7 +637,7 @@ MFaceN MQuadrangle9::getHighOrderFace(int num, int sign, int rot)
 MFaceN MQuadrangleN::getHighOrderFace(int num, int sign, int rot)
 {
   const bool swap = sign == -1;
-  TupleReorientation mytuple(TYPE_QUA, std::make_pair(rot, swap));
+  TupleReorientation mytuple(getTypeForMSH(), std::make_pair(rot, swap));
   auto it = _tuple2indicesReoriented.find(mytuple);
   if(it == _tuple2indicesReoriented.end()) {
     IndicesReoriented indices;

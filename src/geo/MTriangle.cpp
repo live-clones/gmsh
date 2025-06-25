@@ -519,7 +519,7 @@ MFaceN MTriangleN::getHighOrderFace(int num, int sign, int rot)
 {
   const bool swap = sign == -1;
 
-  TupleReorientation mytuple(TYPE_TRI, std::make_pair(rot, swap));
+  TupleReorientation mytuple(getTypeForMSH(), std::make_pair(rot, swap));
   auto it = _tuple2indicesReoriented.find(mytuple);
   if(it == _tuple2indicesReoriented.end()) {
     IndicesReoriented indices;

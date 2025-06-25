@@ -316,7 +316,7 @@ SVector3 MFaceN::normal(double u, double v) const
 
   double dx[2] = {0, 0}, dy[2] = {0, 0}, dz[2] = {0, 0};
   for(int j = 0; j < fs->getNumShapeFunctions(); j++) {
-    for(int k = 0; k < 1; ++k) {
+    for(int k = 0; k < 2; ++k) {
       dx[k] += sf[j][k] * _v[j]->x();
       dy[k] += sf[j][k] * _v[j]->y();
       dz[k] += sf[j][k] * _v[j]->z();
