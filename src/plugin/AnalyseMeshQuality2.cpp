@@ -75,11 +75,11 @@
 //        GeoFit in table with min/max/mean
 //     -> validity, inversion, GeoFit all separate views?
 //     => A. add enableGeoFit option
-//        B. add INVERSION and GEOFIT as measures that can be shown
+//        x. add INVERSION and GEOFIT as measures that can be shown
 //        C. add tag to say if element has geofit, validity or nothing.
 //           or add tag to say if element on curved geometry, in which case
 //           'validity' is geofit
-//        D. compute geofit by sampling
+//        x. compute geofit by sampling
 //  4. Intrinsic validity : smartreco777 for sharing element or 888 or 999
 //  5. Demo mode?
 //  6. Explain what is smartrecompute
@@ -90,7 +90,8 @@
 //     Show all elements are valid only if elements have been check
 //     For now, let all 2D together.
 
-
+// FIXME: PView are based on elements. If I remesh with a different mesh size
+//  factor, data is still there but on wrong elements.
 
 // NOTE:
 //  1. Say in help that the plugin can be used to compute jacobian, hide best
@@ -399,13 +400,15 @@ PView *Plug::execute(PView *v)
     measures.back().dimStr = "dimension 3";
     measures.back().dimStrShort = "3D";
   }
-  _finalizeJacobianData(measures);
+  _finalizeMeasuresData(measures);
 
   // Combine if necessary
   if(_dimensionPolicy == 2) {
     measures[0] = Measures::combine(measures[0], measures[1], "dimension 2 and 3 combined", "2D+3D");
     measures.erase(measures.begin() + 1);
   }
+
+  //_updateWhatToShow(measures);
 
   _param.check2D = check2D;
   _param.check3D = check3D;
@@ -754,10 +757,12 @@ bool isValid(double minJ, double maxJ)
   return std::signbit(minJ) == std::signbit(maxJ);
 }
 
-void Plug::_finalizeJacobianData(std::vector<Measures> &measures) const
+void Plug::_finalizeMeasuresData(std::vector<Measures> &measures) const
 {
+  Parameters::MetricsToShow ps = _param.show;
+
   for(auto &m: measures) {
-    if(_param.show.regularizeJac) {
+    if(ps.regularizeJac) {
       for(std::size_t i = 0; i < m.minJ.size(); i++) {
         if(std::abs(m.minJ[i]) > std::abs(m.maxJ[i])) {
           std::swap(m.minJ[i], m.maxJ[i]);
@@ -766,29 +771,89 @@ void Plug::_finalizeJacobianData(std::vector<Measures> &measures) const
         }
       }
     }
-    if(_param.show.which[VALIDITY]) {
-      m.isValid.resize(m.minJ.size());
+
+    if(ps.which[VALIDITY] || ps.which[INVERSION]) {
+      size_t num = m.elements.size()-m.elementsGFit.size();
+      m.elementsStraightGeo.resize(num);
+      if(ps.which[VALIDITY]) m.isValid.resize(num);
+      if(ps.which[INVERSION]) m.isInverted.resize(num);
+
+      size_t k = -1;
       for(std::size_t i = 0; i < m.minJ.size(); i++) {
-        bool valid = isValid(m.minJ[i], m.maxJ[i]);
-        m.isValid[i] = valid;
-        if(!valid) ++m.numInvalidElements;
+        if(m.isOnCurvedGeo[i]) continue;
+        m.elementsStraightGeo[++k] = m.elements[i];
+
+        if(ps.which[VALIDITY]) {
+          bool valid = isValid(m.minJ[i], m.maxJ[i]);
+          m.isValid[k] = valid;
+          if(!valid) ++m.numInvalidElements;
+        }
+
+        if(ps.which[INVERSION]) {
+          bool inverted = m.maxJ[i] < 0;
+          m.isInverted[i] = inverted;
+          if(inverted) ++m.numInvertedElements;
+        }
       }
     }
-    if(_param.show.which[INVERSION]) {
-      // FIXME: what if curved geometry?
-      m.isInverted.resize(m.minJ.size());
-      for(std::size_t i = 0; i < m.minJ.size(); i++) {
-        bool inversed = m.maxJ[i] < 0;
-        m.isInverted[i] = inversed;
-        if(inversed) ++m.numInversedElements;
-      }
-    }
+
     if(_param.show.which[RATIOJAC]) {
       m.ratioJ.resize(m.minJ.size());
       for(std::size_t i = 0; i < m.minJ.size(); i++)
         m.ratioJ[i] = m.minJ[i] / m.maxJ[i];
     }
+
+    if(!_param.show.which[MINJAC])
+      m.minJ.clear();
+    m.maxJ.clear();
+
+    m.sizes[VALIDITY] = m.isValid.size();
+    m.sizes[INVERSION] = m.isInverted.size();
+    m.sizes[DISTO] = m.minDisto.size();
+    m.sizes[ASPECT] = m.minAspect.size();
+    m.sizes[GEOFIT] = m.minGFit.size();
+    m.sizes[RATIOJAC] = m.ratioJ.size();
+    m.sizes[INVERSION] = m.isInverted.size();
   }
+}
+
+void Plug::_updateWhatToShow(const std::vector<Measures> &m)
+{
+  bool allEmpty = true;
+  for(size_t i = 0; i < m.size(); ++i)
+    if(!m[i].isValid.empty()) {allEmpty = false; break;}
+  if(allEmpty) _param.show.which[VALIDITY] = 0;
+
+  allEmpty = true;
+  for(size_t i = 0; i < m.size(); ++i)
+    if(!m[i].isInverted.empty()) {allEmpty = false; break;}
+  if(allEmpty) _param.show.which[INVERSION] = 0;
+
+  allEmpty = true;
+  for(size_t i = 0; i < m.size(); ++i)
+    if(!m[i].minJ.empty()) {allEmpty = false; break;}
+  if(allEmpty) _param.show.which[MINJAC] = 0;
+
+  allEmpty = true;
+  for(size_t i = 0; i < m.size(); ++i)
+    if(!m[i].ratioJ.empty()) {allEmpty = false; break;}
+  if(allEmpty) _param.show.which[RATIOJAC] = 0;
+
+  allEmpty = true;
+  for(size_t i = 0; i < m.size(); ++i)
+    if(!m[i].minGFit.empty()) {allEmpty = false; break;}
+  if(allEmpty) _param.show.which[GEOFIT] = 0;
+
+  allEmpty = true;
+  for(size_t i = 0; i < m.size(); ++i)
+    if(!m[i].minDisto.empty()) {allEmpty = false; break;}
+  if(allEmpty) _param.show.which[DISTO] = 0;
+
+  allEmpty = true;
+  for(size_t i = 0; i < m.size(); ++i)
+    if(!m[i].minAspect.empty()) {allEmpty = false; break;}
+  if(allEmpty) _param.show.which[ASPECT] = 0;
+
 }
 
 void Plug::_createPlots(const std::vector<Measures> &measures)
@@ -1039,51 +1104,57 @@ void Plug::StatGenerator::printStats(const Parameters &param,
 {
   if(param.show.skipStats) return;
 
-  const int *which = param.show.which;
+  size_t totalNumberToShow[7]{};
+  for(auto m: measures) {
+    for(int i = 0; i < 7; i++)
+      totalNumberToShow[i] += m.sizes[i];
+  }
+
+  // const int *which = param.show.which;
   int cntQuality = 0;
   for (int i = DISTO; i <= MINJAC; ++i) {
-    cntQuality += which[i];
+    cntQuality += totalNumberToShow[i];
   }
 
   _info(1, "-> Printing statistics, here is what is important to know about "
   "them:");
-  if(which[VALIDITY])
+  if(totalNumberToShow[VALIDITY])
   _info(1, "   *V<|>alidity*  provides information about the Jacobian "
            "determinant being strictly different from zero. "
            "A mesh containing invalid elements "
            "will usually result in incorrect Finite Element solutions. Each "
            "element is classified as either valid or invalid.");
-  if(which[INVERSION])
+  if(totalNumberToShow[INVERSION])
     _info(1, "   *I<|>nversion*  provides information about the Jacobian "
              "determinant being strictly negative. A mesh containing inverted "
              "elements may result in incorrect Finite Element solutions "
              "depending on the solver. Each valid element is classified as "
              "either inverted or not inverted.");
-  if(which[DISTO])
+  if(totalNumberToShow[DISTO])
   _info(1, "   *D<|>istortion quality*  (previously ICN) is related to the "
            "condition number of the stiffness matrix. Low-Distortion elements "
            "may cause numerical roundoff errors or significantly reduce the "
            "convergence speed of iterative methods. Values "
            "range from 0 to 1.");
-  if(which[ASPECT])
+  if(totalNumberToShow[ASPECT])
   _info(1, "   *A<|>spect quality*  (previously IGE) is related to "
            "the gradient of the FE solution. Elements with poor aspect quality "
            "negatively affect errors in the gradient of the solution. Values "
            "range from 0 to 1.");
-  if(which[RATIOJAC])
+  if(totalNumberToShow[RATIOJAC])
     _info(1, "   *R<|>atio minJ/maxJ*  is the ratio between the minimum and "
              "maximum values of the Jacobian determinant. It is faster to "
              "compute than the distortion and aspect quality metrics and can "
              "be used to evaluate how much elements are deformed. However, "
              "note that it is not a true quality metric. Values range from "
              "-∞ to 1.");
-  if(which[MINJAC])
+  if(totalNumberToShow[MINJAC])
     _info(1, "   *m<|>inJ*  is the minimum of the Jacobian determinant computed "
              "in the reference space and can be used to check the element size. "
              "This metric is particularly relevant for iterative methods, "
              "where the time step may depend on the size of the smallest "
              "element. Values range from -∞ to +∞.");
-  if(which[GEOFIT])
+  if(totalNumberToShow[GEOFIT])
     _info(1, "   *GeoFit*  is TODO. Values range from -1 to 1.");
   if(param.pview.statCutoffPack && cntQuality)
     _info(1, "   *W<|>orst-10%% Weighted Mean*  (Wm10) corresponds to a weighted "
@@ -1133,7 +1204,7 @@ void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, con
   // Header
   bool haveQualityToPrint = false;
   for(int i = GEOFIT; i <= MINJAC; ++i) {
-    if(show.which[i]) haveQualityToPrint = true;
+    if(measure.sizes[i]) haveQualityToPrint = true;
   }
   if(haveQualityToPrint) {
     std::ostringstream columnNamesStream;
@@ -1150,28 +1221,28 @@ void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, con
   }
 
   for(int i = GEOFIT; i <= MINJAC; i++) {
-    if(show.which[i])
+    if(measure.sizes[i])
       _printStatsOneMetric(measure, static_cast<Metric>(i));
   }
 
   // Validity
-  if(!show.which[VALIDITY] && !show.which[INVERSION]) return;
+  if(!measure.sizes[VALIDITY] && !measure.sizes[INVERSION]) return;
 
   double numElement = static_cast<double>(measure.elements.size());
   double percentageInvalid = static_cast<double>(measure.numInvalidElements) / numElement * 100;
-  double percentageInversed = static_cast<double>(measure.numInversedElements) / numElement * 100;
-  if(!(measure.numInvalidElements + measure.numInversedElements))
+  double percentageInversed = static_cast<double>(measure.numInvertedElements) / numElement * 100;
+  if(!(measure.numInvalidElements + measure.numInvertedElements))
     _status(MP, "   All elements are valid :-)");
-  else if(!measure.numInversedElements)
+  else if(!measure.numInvertedElements)
     _warn(MP, "   Found %zu invalid elements (~%.2g%%)",
       measure.numInvalidElements, percentageInvalid);
   else if(!measure.numInvalidElements)
     _warn(MP, "   <|>All elements are valid but %zu elements are inversed (~%.2g%%)",
-      measure.numInversedElements, percentageInversed);
+      measure.numInvertedElements, percentageInversed);
   else
     _warn(MP, "   <|>Found %zu invalid elements (~%.2g%%) and %zu inversed "
               "elements (~%.2g%%)", measure.numInvalidElements,
-              percentageInvalid, measure.numInversedElements, percentageInversed);
+              percentageInvalid, measure.numInvertedElements, percentageInversed);
 }
 
 void Plug::StatGenerator::_printStatsOneMetric(const Measures &measure, Metric metric)
@@ -1318,11 +1389,12 @@ void Plug::DataSingleDimension::gatherValues(const Counts &counts, Measures &mea
   measures.minDisto.reserve(sz);
   measures.minAspect.reserve(sz);
   measures.elements.reserve(sz);
+  measures.isOnCurvedGeo.reserve(sz);
   measures.minGFit.reserve(szOri);
   measures.maxGFit.reserve(szOri);
-  measures.elementsOri.reserve(szOri);
+  measures.elementsGFit.reserve(szOri);
   measures.numInvalidElements = 0;
-  measures.numInversedElements = 0;
+  measures.numInvertedElements = 0;
   for(auto &it : _dataEntities) {
     it.second.addValues(measures);
   }
@@ -1367,8 +1439,8 @@ inline void unsetBit(unsigned char &value, int maskOneBit)
 
 size_t Plug::DataEntity::initialize(const Parameters::Computation &param)
 {
-  std::size_t num = _ge->getNumMeshElements();
   size_t cntRequestedChanged = 0;
+  std::size_t num = _ge->getNumMeshElements();
 
   if(num && _ge->dim() == 2) {
     GFace *gf = _ge->cast2Face();
@@ -1392,6 +1464,16 @@ size_t Plug::DataEntity::initialize(const Parameters::Computation &param)
     }
   }
   // FIXME: implement if dim==1
+
+  switch(_ge->dim()) {
+  case 3:
+    _isCurvedGeo = false;
+    break;
+  case 2:
+  case 1:
+  default:
+    _isCurvedGeo = !_normals;
+  }
 
   // Step 1: Get all elements present in GEntity
   std::vector<MElement *> elements;
@@ -1475,15 +1557,15 @@ void Plug::DataEntity::count(const Parameters::Computation &param, Counts &count
     _numToCompute[i] = 0;
 
   // Count number of elements to compute
-  if (_normals && param.jacobian)
+  if (!_isCurvedGeo && param.jacobian)
     _count(F_REQU | F_NOTJAC, _numToCompute[0]);
-  if (!_normals && param.jacobianOnCurvedGeo)
+  if (_isCurvedGeo && param.jacobianOnCurvedGeo)
     _count(F_REQU | F_NOTJAC, _numToCompute[1]);
   if (param.disto)
     _count(F_REQU | F_NOTDISTO, _numToCompute[2]);
   if (param.aspect)
     _count(F_REQU | F_NOTASPECT, _numToCompute[3]);
-  if (param.geofit && _ge->dim() < 3 && !_normals)
+  if (param.geofit && _isCurvedGeo)
     _count(F_REQU | F_NOTORI, _numToCompute[4]);
 
   for(int i = 0; i < metricsCount; ++i) {
@@ -1493,7 +1575,7 @@ void Plug::DataEntity::count(const Parameters::Computation &param, Counts &count
   // Count number of elements to show
   _count(F_REQU, _numRequested);
   counts.elToShow += _numRequested;
-  if(param.geofit && _ge->dim() < 3 && !_normals)
+  if(param.geofit && _isCurvedGeo)
     counts.geoFitToShow += _numRequested;
 
   // Count total number, number of visible and curved elements
@@ -1525,8 +1607,8 @@ void Plug::DataEntity::_count(unsigned char mask, std::size_t &cnt)
 void Plug::DataEntity::computeJacDet(MsgProgressStatus &progress_status,
                                      bool onPlanar, bool onCurved)
 {
-  if(_normals && !onPlanar) return;
-  if(!_normals && !onCurved) return;
+  if(!_isCurvedGeo && !onPlanar) return;
+  if(_isCurvedGeo && !onCurved) return;
 
   if(_ge->dim() == 2) {
     if(_normals) {
@@ -1661,6 +1743,7 @@ void Plug::DataEntity::computeGeoFit(GFace *gf, MElement *el, double minmaxO[2])
 
 void Plug::DataEntity::computeGeoFit(MsgProgressStatus &progress_status)
 {
+  if(_ge->dim() != 2) return;
   // FIXME update for
   if(_ge->dim() == 2)
     _info(1, "   Surface %d: Computing GeoFit quality of %d elements",
@@ -1724,6 +1807,7 @@ void Plug::DataEntity::addValues(Measures &measures)
     if(isBitSet(_flags[idx], F_REQU))
     {
       measures.elements.push_back(it.first);
+      measures.isOnCurvedGeo.push_back(_isCurvedGeo);
       if(isBitUnset(_flags[idx], F_NOTJAC)) {
         measures.minJ.push_back(_minJ[idx]);
         measures.maxJ.push_back(_maxJ[idx]);
@@ -1731,7 +1815,7 @@ void Plug::DataEntity::addValues(Measures &measures)
       if(isBitUnset(_flags[idx], F_NOTORI)) {
         measures.minGFit.push_back(_minGFit[idx]);
         measures.maxGFit.push_back(_maxGFit[idx]);
-        measures.elementsOri.push_back(it.first);
+        measures.elementsGFit.push_back(it.first);
       }
       if(isBitUnset(_flags[idx], F_NOTDISTO))
         measures.minDisto.push_back(_minDisto[idx]);
@@ -2045,18 +2129,23 @@ Plug::Measures Plug::Measures::combine(const Measures &m1, const Measures &m2, c
   combineVectors(result.ratioJ, m1.ratioJ, m2.ratioJ);
   combineVectors(result.isValid, m1.isValid, m2.isValid);
   combineVectors(result.isInverted, m1.isInverted, m2.isInverted);
+  combineVectors(result.isOnCurvedGeo, m1.isOnCurvedGeo, m2.isOnCurvedGeo);
   combineVectors(result.minDisto, m1.minDisto, m2.minDisto);
   combineVectors(result.minAspect, m1.minAspect, m2.minAspect);
-  combineVectors(result.elements, m1.elements, m2.elements);
   combineVectors(result.minGFit, m1.minGFit, m2.minGFit);
   combineVectors(result.maxGFit, m1.maxGFit, m2.maxGFit);
-  combineVectors(result.elementsOri, m1.elementsOri, m2.elementsOri);
+  combineVectors(result.elements, m1.elements, m2.elements);
+  combineVectors(result.elementsGFit, m1.elementsGFit, m2.elementsGFit);
+  combineVectors(result.elementsStraightGeo, m1.elementsStraightGeo, m2.elementsStraightGeo);
   result.dim2Elem = m1.dim2Elem || m2.dim2Elem;
   result.dim3Elem = m1.dim3Elem || m2.dim3Elem;
   result.dimStr = name;
   result.dimStrShort = shortName;
   result.numInvalidElements = m1.numInvalidElements + m2.numInvalidElements;
-  result.numInversedElements = m1.numInversedElements + m2.numInvalidElements;
+  result.numInvertedElements = m1.numInvertedElements + m2.numInvalidElements;
+  for(int i = 0; i < 7; ++i) {
+    result.sizes[i] = m1.sizes[i] + m2.sizes[i];
+  }
   return result;
 }
 
@@ -2086,9 +2175,10 @@ const std::vector<double> &Plug::Measures::getValues(Metric m) const
 const std::vector<MElement *> &Plug::Measures::getElements(Metric m) const
 {
   if(m == GEOFIT)
-    return elementsOri;
-  else
-    return elements;
+    return elementsGFit;
+  if(m == VALIDITY)
+    return elementsStraightGeo;
+  return elements;
 }
 
 #endif

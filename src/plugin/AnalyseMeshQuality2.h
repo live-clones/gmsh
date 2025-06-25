@@ -43,8 +43,10 @@ private:
 
     struct Computation {
       bool skip = false;
-      bool jacobian = false;
+      // // This distinction is because it is useful to know invalidity on planar
+      // // mesh for speeding up computation of quality, but not on curved surface
       bool jacobianOnCurvedGeo = false;
+      bool jacobian = false;
       bool disto = false;
       bool aspect = false;
       bool geofit = false;
@@ -142,7 +144,8 @@ private:
   void _purgeViews(bool purge2D, bool purge3D);
   void _decideDimensionToCheck(bool &check2D, bool &check3D) const;
   void _computeRequestedData(Counts param, bool check2D, bool check3D) const;
-  void _finalizeJacobianData(std::vector<Measures> &) const;
+  void _finalizeMeasuresData(std::vector<Measures> &) const;
+  void _updateWhatToShow(const std::vector<Measures> &);
   void _createPlots(const std::vector<Measures> &);
   void _createPlotsOneMetric(const Measures &, Metric);
   void _createElementViews(const std::vector<Measures> &);
@@ -201,6 +204,7 @@ private:
   class DataEntity {
   private:
     GEntity *_ge = nullptr;
+    bool _isCurvedGeo = false;
     std::map<MElement *, size_t> _mapElemToIndex;
     std::vector<double> _minJ, _maxJ, _minGFit, _maxGFit, _minDisto, _minAspect;
     std::size_t _numToCompute[5]{}; // jac, jacOnCurvedGeo, disto, aspect, geofit
@@ -300,19 +304,26 @@ private:
     bool dim3Elem;
     const char* dimStr;
     const char* dimStrShort;
+    // Data for all elements
     std::vector<double> minJ;
     std::vector<double> maxJ;
     std::vector<double> ratioJ;
-    std::vector<double> isValid;
-    std::vector<double> isInverted;
     std::vector<double> minDisto;
     std::vector<double> minAspect;
+    std::vector<bool> isOnCurvedGeo;
     std::vector<MElement *> elements;
+    // Data for elements on curved geometry
     std::vector<double> minGFit;
     std::vector<double> maxGFit;
-    std::vector<MElement *> elementsOri;
+    std::vector<MElement *> elementsGFit;
+    // Data for elements on straight geometry
+    std::vector<double> isValid;
+    std::vector<double> isInverted;
+    std::vector<MElement *> elementsStraightGeo;
     size_t numInvalidElements;
-    size_t numInversedElements;
+    size_t numInvertedElements;
+    std::size_t sizes[7]{};
+
     static Measures combine(const Measures &, const Measures &, const char *name, const char *shortName);
     const std::vector<double> &getValues(Metric m) const;
     const std::vector<MElement *> &getElements(Metric m) const;
