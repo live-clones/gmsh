@@ -83,7 +83,14 @@
 //  4. Intrinsic validity : smartreco777 for sharing element or 888 or 999
 //  5. Demo mode?
 //  6. Explain what is smartrecompute
-//  7. Change inversion for the opposite
+//  x. Change inversion for the opposite
+//  8. Change name orientation fidelity/validity confidence to conformity,
+//     or GeoFit, or Misfit,
+//  9. Check if surface is curved and count differently.
+//     Show all elements are valid only if elements have been check
+//     For now, let all 2D together.
+
+// FIXME move fix from last commit into new commit together with other fix.
 
 // NOTE:
 //  1. Say in help that the plugin can be used to compute jacobian, hide best
@@ -863,6 +870,7 @@ bool Plug::_performHiding(const std::vector<Measures> &measures)
 
     // Hide in function of validity, if requested
     if(hide.policy <= 0) {
+      // FIXME update
       for(size_t i = 0; i < measure.validity.size(); i++) {
         bool val = static_cast<bool>(measure.validity[i]);
         if(hide.worst ? !val : val)
@@ -1536,6 +1544,7 @@ void Plug::DataEntity::computeValidity(MsgProgressStatus &progress_status)
 
 void Plug::DataEntity::computeDisto(MsgProgressStatus &progress_status, bool considerAsValid)
 {
+  // FIXME update
   if(_ge->dim() == 2)
     _info(1, "   Surface %d: Computing Distortion quality of %d elements",
           _ge->tag(), _numToCompute[1]);
@@ -1562,6 +1571,7 @@ void Plug::DataEntity::computeDisto(MsgProgressStatus &progress_status, bool con
 
 void Plug::DataEntity::computeAspect(MsgProgressStatus &progress_status, bool considerAsValid)
 {
+  // FIXME update
   if(_ge->dim() == 2)
     _info(1, "   Surface %d: Computing Aspect quality of %d elements",
           _ge->tag(), _numToCompute[2]);
@@ -1589,7 +1599,7 @@ void Plug::DataEntity::computeAspect(MsgProgressStatus &progress_status, bool co
 void Plug::DataEntity::computeOrientationFidelity(GFace *gf, MElement *el, double minmaxO[2]) const
 {
   double minmaxAng[2] = {std::numeric_limits<double>::max(),
-    std::numeric_limits<double>::min()};
+                         std::numeric_limits<double>::min()};
   for(int i = 0; i < el->getNumPrimaryVertices(); ++i) {
     MVertex *vert = el->getVertex(i);
     MFaceN face = el->getHighOrderFace(0, 0, 0);
@@ -1604,9 +1614,34 @@ void Plug::DataEntity::computeOrientationFidelity(GFace *gf, MElement *el, doubl
       minmaxAng[0] = std::min(minmaxAng[0], ang);
       minmaxAng[1] = std::max(minmaxAng[1], ang);
     }
+    // else if(vert->getParameter(0, uGE)) {
+    //   GEdge *ge = dynamic_cast<GEdge *>(vert->onWhat());
+    //   GPoint p = ge->point(uGE);
+    //   gf->XYZtoUV(p.x(), p.y(), p.z(), uGF, uGE);
+    // }
     else {
       _error(MP, "Cannot compute orientation fidelity for vertex %d", vert->getNum());
     }
+
+    // for(int i = 0; i < el->getNumPrimaryVertices(); ++i) {
+    //   MVertex *vert = el->getVertex(i);
+    //   MFaceN face = el->getHighOrderFace(0, 0, 0);
+    //   double uGE, uGF, vGF, uRef, vRef, dummy;
+    //   if(vert->getParameter(1, vGF))
+    //     vert->getParameter(0, uGF);
+    //   else
+    //     gf->XYZtoUV(vert->x(), vert->y(), vert->z(), uGF, vGF, 1.0);
+    //   SPoint2 p(uGF, vGF);
+    //   SVector3 normalGFace = gf->normal(p);
+    //   el->getNode(i, uRef, vRef, dummy);
+    //   SVector3 normalElem = face.normal(uRef, vRef);
+    //   double ang = angle(normalElem, normalGFace);
+    //   minmaxAng[0] = std::min(minmaxAng[0], ang);
+    //   minmaxAng[1] = std::max(minmaxAng[1], ang);
+    //   // else {
+    //   //   _error(MP, "Cannot compute orientation fidelity for vertex %d", vert->getNum());
+    //   // }
+    // }
   }
   minmaxO[0] = 1 - minmaxAng[1] / M_PI * 2;
   minmaxO[1] = 1 - minmaxAng[0] / M_PI * 2;
