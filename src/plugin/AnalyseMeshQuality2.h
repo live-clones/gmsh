@@ -43,10 +43,10 @@ private:
 
     struct Computation {
       bool skip = false;
-      bool validity = false;
+      bool jacobian = false;
       bool disto = false;
       bool aspect = false;
-      bool orientation = false;
+      bool geofit = false;
       bool onlyVisible = false;
       bool onlyCurved = false;
       bool smartRecompute = false;
@@ -79,7 +79,7 @@ private:
     bool check2D = false;
     bool check3D = false;
   };
-  enum Metric { VALIDITY, INVERSION, ORIENTATION, DISTO, ASPECT, RATIOJAC, MINJAC };
+  enum Metric { VALIDITY, INVERSION, GEOFIT, DISTO, ASPECT, RATIOJAC, MINJAC };
   static const std::array<std::string, 7> _metricNames;
 
 
@@ -201,7 +201,7 @@ private:
   private:
     GEntity *_ge = nullptr;
     std::map<MElement *, size_t> _mapElemToIndex;
-    std::vector<double> _minJ, _maxJ, _minO, _maxO, _minDisto, _minAspect;
+    std::vector<double> _minJ, _maxJ, _minGFit, _maxGFit, _minDisto, _minAspect;
     std::size_t _numToCompute[4]{};
     std::size_t _numRequested = 0;
     // 8 bits of char are used for the following information:
@@ -238,8 +238,8 @@ private:
     void computeValidity(MsgProgressStatus &);
     void computeDisto(MsgProgressStatus &, bool considerAsValid);
     void computeAspect(MsgProgressStatus &, bool considerAsValid);
-    void computeOrientation(MsgProgressStatus &);
-    void computeOrientationFidelity(GFace *gf, MElement *el, double minmaxO[2]) const;
+    void computeGeoFit(MsgProgressStatus &);
+    void computeGeoFit(GFace *gf, MElement *el, double minmaxO[2]) const;
 
   private:
     void _count(unsigned char mask, std::size_t &cnt);
@@ -284,11 +284,11 @@ private:
   };
 
   struct Counts {
-    std::size_t elToCompute[4]{}; // four metrics
+    std::size_t elToCompute[4]{}; // for four metrics
     std::size_t elToShow = 0;
-    std::size_t orientationToShow = 0;
+    std::size_t geoFitToShow = 0;
     std::size_t totalEl = 0;
-    std::size_t elCurvedComputed = 0;
+    std::size_t elCurvedComputed = 0; // NOTE: unused
     std::size_t curvedEl = 0;
     std::size_t visibleEl = 0;
     Counts operator+(const Counts &) const;
@@ -302,13 +302,13 @@ private:
     std::vector<double> minJ;
     std::vector<double> maxJ;
     std::vector<double> ratioJ;
-    std::vector<double> validity;
-    std::vector<double> inversion;
+    std::vector<double> isValid;
+    std::vector<double> isInverted;
     std::vector<double> minDisto;
     std::vector<double> minAspect;
     std::vector<MElement *> elements;
-    std::vector<double> minO;
-    std::vector<double> maxO;
+    std::vector<double> minGFit;
+    std::vector<double> maxGFit;
     std::vector<MElement *> elementsOri;
     size_t numInvalidElements;
     size_t numInversedElements;

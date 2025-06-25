@@ -66,25 +66,25 @@
 //     - Validity of element embedded in its dimension
 //     - Inversion of element embedded in its dimension
 //        but regularizeDeterminant=ON => no inversion
-//     - Validity confidence quality of element on a geometry of higher dimension
+//     - GeoFit quality of element on a geometry of higher dimension
 //     -> all on/off with skipValidity???
-//        or validityConfidence in Quality metrics to include ?
-//        (or validityConfidenceTolerance (0=OFF, >0=ON) ?)
-//        or skipOrientationFidelity after skipValidity ?
+//        or GeoFit in Quality metrics to include ?
+//        (or GeoFitTolerance (0=OFF, >0=ON) ?)
+//        or skipGeoFit after skipValidity ?
 //     -> validity/inversion in Found message
-//        validity confidence in table with min/max/mean
-//     -> validity, inversion, validity confidence all separate views?
-//     => A. add enableOrientationFidelity option
-//        B. add INVERSION and ORIENTATION as measures that can be shown
-//        C. add tag to say if element has orientation, validity or nothing.
+//        GeoFit in table with min/max/mean
+//     -> validity, inversion, GeoFit all separate views?
+//     => A. add enableGeoFit option
+//        B. add INVERSION and GEOFIT as measures that can be shown
+//        C. add tag to say if element has geofit, validity or nothing.
 //           or add tag to say if element on curved geometry, in which case
-//           'validity' is orientationFidelity
-//        D. compute orientation fidelity by sampling
+//           'validity' is geofit
+//        D. compute geofit by sampling
 //  4. Intrinsic validity : smartreco777 for sharing element or 888 or 999
 //  5. Demo mode?
 //  6. Explain what is smartrecompute
 //  x. Change inversion for the opposite
-//  8. Change name orientation fidelity/validity confidence to conformity,
+//  x. Change name orientation fidelity/validity confidence to conformity,
 //     or GeoFit, or Misfit,
 //  9. Check if surface is curved and count differently.
 //     Show all elements are valid only if elements have been check
@@ -180,7 +180,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   // What to do:
   {GMSH_FULLRC, "createElementsView", nullptr, 1, "OFF, ON"},
   {GMSH_FULLRC, "createPlotView", nullptr, 1, "OFF, ON"},
-  {GMSH_FULLRC, "adjustVisibilityElements", nullptr, 0, "OFF, 1=skipIfAllWouldBeHidden, 2=acceptAllHidden"}, //TODO updtate for orientation
+  {GMSH_FULLRC, "adjustVisibilityElements", nullptr, 0, "OFF, 1=skipIfAllWouldBeHidden, 2=acceptAllHidden"}, //TODO updtate for geofit
   {GMSH_FULLRC, "guidanceLevel", nullptr, 1, "(-1)=minimalOutput, 0=verbose, 1=verboseAndExplanations"},
   // Elements Selection:
   {GMSH_FULLRC, "dimensionPolicy", nullptr, -1, "(-1)=force2D, 0=prioritize3D, 1=2D+3D, 2=combine2D+3D"},
@@ -237,7 +237,7 @@ namespace JacQual = jacobianBasedQuality;
 using Plug = GMSH_AnalyseMeshQuality2Plugin;
 int Plug::_verbose = 0;
 const std::array<std::string, 7> Plug::_metricNames = {
-  "Validity", "Inversion", "Fidelity", "Disto", "Aspect", "MinJ/maxJ", "MinJac"
+  "Validity", "Inversion", "GeoFit", "Disto", "Aspect", "MinJ/maxJ", "MinJac"
 };
 
 // ======== Plugin: Base class methods =========================================
@@ -340,9 +340,9 @@ PView *Plug::execute(PView *v)
   }
 
   Parameters::Computation &pc = _param.compute;
-  if(!pc.validity && !pc.disto && !pc.aspect && !pc.orientation) {
+  if(!pc.jacobian && !pc.disto && !pc.aspect && !pc.geofit) {
     _warn(0, "-> <|>Nothing to execute because 'enableDistortionQuality', "
-             "'enableAspectQuality' and 'enableOrientationFidelity' are all "
+             "'enableAspectQuality' and 'enableGeoFit' are all "
              "three OFF and 'skipValidity' is ON ");
     return v;
   }
@@ -374,7 +374,7 @@ PView *Plug::execute(PView *v)
     if(!countsTotal.elToShow) return v;
   }
   else {
-    if(!pc.validity) {
+    if(!pc.jacobian) {
       // TODO: this should be printed if not minimal asked
       _warn(1, "-> <|>Option 'skipValidity' is ON, validity will not be "
                "computed. This may significantly slow down quality computation "
@@ -434,14 +434,14 @@ void Plug::_fetchParameters()
   Parameters::Hiding &ph = _param.hide;
   Parameters::MetricsToShow &ps = _param.show;
 
-  double skipValidity, disto, aspect, orientation, minJ, ratioJ,
+  double skipValidity, disto, aspect, geofit, minJ, ratioJ,
    dataManagePolicy;
 
   // Metrics to include:
   disto = MeshQuality2Options_Number[0].def;
   aspect = MeshQuality2Options_Number[1].def;
-  orientation = 1; // FIXME
-  // orientation = MeshQuality2Options_Number[2].def;
+  geofit = 1; // FIXME
+  // geofit = MeshQuality2Options_Number[2].def;
 
   // What to do:
   pp.createElemView = static_cast<bool>(MeshQuality2Options_Number[2].def);
@@ -484,10 +484,10 @@ void Plug::_fetchParameters()
   pc.freeOldData = dataManagePolicy <= 0;
 
   // -> metrics to compute
-  pc.validity = skipValidity <= 0;
+  pc.jacobian = skipValidity <= 0;
   pc.disto = static_cast<bool>(disto);
   pc.aspect = static_cast<bool>(aspect);
-  pc.orientation = static_cast<bool>(orientation);
+  pc.geofit = static_cast<bool>(geofit);
 
   // -> metrics to show
   ps.which[VALIDITY] = skipValidity == 0 ? -1 : skipValidity > 0 ? 0 : -static_cast<int>(skipValidity);
@@ -495,7 +495,7 @@ void Plug::_fetchParameters()
   ps.which[ASPECT] = static_cast<int>(aspect);
   ps.which[MINJAC] = static_cast<int>(minJ);
   ps.which[RATIOJAC] = static_cast<int>(ratioJ);
-  ps.which[ORIENTATION] = static_cast<int>(orientation);
+  ps.which[GEOFIT] = static_cast<int>(geofit);
   ps.which[INVERSION] = !ps.regularizeJac;
   ps.M = *std::max_element(std::begin(ps.which), std::end(ps.which));
   if(ps.M == 0 && ps.which[VALIDITY] == -1) {
@@ -594,7 +594,7 @@ void Plug::_fetchLegacyParameters()
   pp.statCutoffPack = 50;
   pp.createPlot = false;
   ps.which[INVERSION] = 0;
-  ps.which[ORIENTATION] = 0;
+  ps.which[GEOFIT] = 0;
   ps.which[RATIOJAC] = 1;
   ps.which[MINJAC] = 1;
   ps.regularizeJac = false;
@@ -604,9 +604,9 @@ void Plug::_fetchLegacyParameters()
 
   double val = MeshQuality2Options_Number[k++].def;
   if (val != UNTOUCHED) // JacDet
-    ps.which[VALIDITY] = pc.validity = static_cast<bool>(val);
+    ps.which[VALIDITY] = pc.jacobian = static_cast<bool>(val);
   else
-    ps.which[VALIDITY] = pc.validity = false;
+    ps.which[VALIDITY] = pc.jacobian = false;
 
   val = MeshQuality2Options_Number[k++].def;
   if (val != UNTOUCHED) // IGEMeasure
@@ -720,7 +720,7 @@ void Plug::_computeRequestedData(Counts counts, bool check2D, bool check3D) cons
     _status(0, "-> Computing Distortion quality...");
     MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[1]));
     for(auto data: allDataEntities) {
-      data->computeDisto(progress_status, !_param.compute.validity);
+      data->computeDisto(progress_status, !_param.compute.jacobian);
     }
   }
 
@@ -728,15 +728,15 @@ void Plug::_computeRequestedData(Counts counts, bool check2D, bool check3D) cons
     _status(0, "-> Computing Aspect quality...");
     MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[2]));
     for(auto data: allDataEntities) {
-      data->computeAspect(progress_status, !_param.compute.validity);
+      data->computeAspect(progress_status, !_param.compute.jacobian);
     }
   }
 
   if(counts.elToCompute[3] > 0) {
-    _status(0, "-> Computing Orientation Fidelity...");
+    _status(0, "-> Computing GeoFit...");
     MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[3]));
     for(auto data: allDataEntities) {
-      data->computeOrientation(progress_status);
+      data->computeGeoFit(progress_status);
     }
   }
 
@@ -763,19 +763,19 @@ void Plug::_finalizeJacobianData(std::vector<Measures> &measures) const
       }
     }
     if(_param.show.which[VALIDITY]) {
-      m.validity.resize(m.minJ.size());
+      m.isValid.resize(m.minJ.size());
       for(std::size_t i = 0; i < m.minJ.size(); i++) {
         bool valid = isValid(m.minJ[i], m.maxJ[i]);
-        m.validity[i] = valid;
+        m.isValid[i] = valid;
         if(!valid) ++m.numInvalidElements;
       }
     }
     if(_param.show.which[INVERSION]) {
       // FIXME: what if curved geometry?
-      m.inversion.resize(m.minJ.size());
+      m.isInverted.resize(m.minJ.size());
       for(std::size_t i = 0; i < m.minJ.size(); i++) {
         bool inversed = m.maxJ[i] < 0;
-        m.inversion[i] = inversed;
+        m.isInverted[i] = inversed;
         if(inversed) ++m.numInversedElements;
       }
     }
@@ -811,7 +811,7 @@ void Plug::_createPlotsOneMetric(const Measures &m, Metric metric)
   constexpr double minMaxQuality[2] = {0, 1};
   constexpr double minMaxQualityNeg[2] = {-1, 1};
   const double *minMax = (metric == RATIOJAC || metric == MINJAC) ? nullptr :
-  (metric == ORIENTATION) ? minMaxQualityNeg : minMaxQuality;
+  (metric == GEOFIT) ? minMaxQualityNeg : minMaxQuality;
 
   for(double cutoff: _statGen->getCutoffPlots()) {
     Key key(m.dim2Elem, m.dim3Elem, metric, Key::TypeView::PLOT, cutoff);
@@ -871,8 +871,8 @@ bool Plug::_performHiding(const std::vector<Measures> &measures)
     // Hide in function of validity, if requested
     if(hide.policy <= 0) {
       // FIXME update
-      for(size_t i = 0; i < measure.validity.size(); i++) {
-        bool val = static_cast<bool>(measure.validity[i]);
+      for(size_t i = 0; i < measure.isValid.size(); i++) {
+        bool val = static_cast<bool>(measure.isValid[i]);
         if(hide.worst ? !val : val)
           toHide.push_back(measure.elements[i]);
       }
@@ -1079,8 +1079,8 @@ void Plug::StatGenerator::printStats(const Parameters &param,
              "This metric is particularly relevant for iterative methods, "
              "where the time step may depend on the size of the smallest "
              "element. Values range from -∞ to +∞.");
-  if(which[ORIENTATION])
-    _info(1, "   *Orientation*  is TODO. Values range from -1 to 1.");
+  if(which[GEOFIT])
+    _info(1, "   *GeoFit*  is TODO. Values range from -1 to 1.");
   if(param.pview.statCutoffPack && cntQuality)
     _info(1, "   *W<|>orst-10%% Weighted Mean*  (Wm10) corresponds to a weighted "
              "mean where the worst 10%% of the values are assigned the same weight "
@@ -1128,7 +1128,7 @@ void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, con
 
   // Header
   bool haveQualityToPrint = false;
-  for(int i = ORIENTATION; i <= MINJAC; ++i) {
+  for(int i = GEOFIT; i <= MINJAC; ++i) {
     if(show.which[i]) haveQualityToPrint = true;
   }
   if(haveQualityToPrint) {
@@ -1145,7 +1145,7 @@ void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, con
     _info(MP, "%s", columnNamesStream.str().c_str());
   }
 
-  for(int i = ORIENTATION; i <= MINJAC; i++) {
+  for(int i = GEOFIT; i <= MINJAC; i++) {
     if(show.which[i])
       _printStatsOneMetric(measure, static_cast<Metric>(i));
   }
@@ -1304,7 +1304,7 @@ void Plug::DataSingleDimension::_updateGEntities(
 void Plug::DataSingleDimension::gatherValues(const Counts &counts, Measures &measures)
 {
   size_t sz = counts.elToShow;
-  size_t szOri = counts.orientationToShow;
+  size_t szOri = counts.geoFitToShow;
   if(_dim == 2)
     measures.dim2Elem = true;
   else
@@ -1314,8 +1314,8 @@ void Plug::DataSingleDimension::gatherValues(const Counts &counts, Measures &mea
   measures.minDisto.reserve(sz);
   measures.minAspect.reserve(sz);
   measures.elements.reserve(sz);
-  measures.minO.reserve(szOri);
-  measures.maxO.reserve(szOri);
+  measures.minGFit.reserve(szOri);
+  measures.maxGFit.reserve(szOri);
   measures.elementsOri.reserve(szOri);
   measures.numInvalidElements = 0;
   measures.numInversedElements = 0;
@@ -1470,13 +1470,13 @@ void Plug::DataEntity::count(const Parameters::Computation &param, Counts &count
     _numToCompute[i] = 0;
 
   // Count number of elements to compute
-  if (param.validity)
+  if (param.jacobian)
     _count(F_REQU | F_NOTJAC, _numToCompute[0]);
   if (param.disto)
     _count(F_REQU | F_NOTDISTO, _numToCompute[1]);
   if (param.aspect)
     _count(F_REQU | F_NOTASPECT, _numToCompute[2]);
-  if (param.orientation && _ge->dim() < 3 && !_normals)
+  if (param.geofit && _ge->dim() < 3 && !_normals)
     _count(F_REQU | F_NOTORI, _numToCompute[3]);
   for(int i = 0; i < 4; ++i) {
     counts.elToCompute[i] += _numToCompute[i];
@@ -1485,8 +1485,8 @@ void Plug::DataEntity::count(const Parameters::Computation &param, Counts &count
   // Count number of elements to show
   _count(F_REQU, _numRequested);
   counts.elToShow += _numRequested;
-  if(param.orientation && _ge->dim() < 3 && !_normals)
-    counts.orientationToShow += _numRequested;
+  if(param.geofit && _ge->dim() < 3 && !_normals)
+    counts.geoFitToShow += _numRequested;
 
   // Count total number, number of visible and curved elements
   counts.totalEl += _mapElemToIndex.size();
@@ -1596,7 +1596,7 @@ void Plug::DataEntity::computeAspect(MsgProgressStatus &progress_status, bool co
   }
 }
 
-void Plug::DataEntity::computeOrientationFidelity(GFace *gf, MElement *el, double minmaxO[2]) const
+void Plug::DataEntity::computeGeoFit(GFace *gf, MElement *el, double minmaxO[2]) const
 {
   double minmaxAng[2] = {std::numeric_limits<double>::max(),
                          std::numeric_limits<double>::min()};
@@ -1620,7 +1620,7 @@ void Plug::DataEntity::computeOrientationFidelity(GFace *gf, MElement *el, doubl
     //   gf->XYZtoUV(p.x(), p.y(), p.z(), uGF, uGE);
     // }
     else {
-      _error(MP, "Cannot compute orientation fidelity for vertex %d", vert->getNum());
+      _error(MP, "Cannot compute GeoFit for vertex %d", vert->getNum());
     }
 
     // for(int i = 0; i < el->getNumPrimaryVertices(); ++i) {
@@ -1639,7 +1639,7 @@ void Plug::DataEntity::computeOrientationFidelity(GFace *gf, MElement *el, doubl
     //   minmaxAng[0] = std::min(minmaxAng[0], ang);
     //   minmaxAng[1] = std::max(minmaxAng[1], ang);
     //   // else {
-    //   //   _error(MP, "Cannot compute orientation fidelity for vertex %d", vert->getNum());
+    //   //   _error(MP, "Cannot compute GeoFit for vertex %d", vert->getNum());
     //   // }
     // }
   }
@@ -1647,14 +1647,14 @@ void Plug::DataEntity::computeOrientationFidelity(GFace *gf, MElement *el, doubl
   minmaxO[1] = 1 - minmaxAng[0] / M_PI * 2;
 }
 
-void Plug::DataEntity::computeOrientation(MsgProgressStatus &progress_status)
+void Plug::DataEntity::computeGeoFit(MsgProgressStatus &progress_status)
 {
   // FIXME update for
   if(_ge->dim() == 2)
-    _info(1, "   Surface %d: Computing Orientation Fidelity of %d elements",
+    _info(1, "   Surface %d: Computing GeoFit quality of %d elements",
           _ge->tag(), _numToCompute[2]);
   // else
-  //   _info(1, "   Volume %d: Computing Orientation Fidelity of %d elements",
+  //   _info(1, "   Volume %d: Computing GeoFit quality of %d elements",
   //         _ge->tag(), _numToCompute[2]);
 
   double minmaxO[2];
@@ -1663,9 +1663,9 @@ void Plug::DataEntity::computeOrientation(MsgProgressStatus &progress_status)
     if(areBitsSet(_flags[idx], F_REQU | F_NOTORI)) {
       MElement *el = it.first;
       // FIXME: cast GFace can be cast GEdge
-      computeOrientationFidelity((GFace*)_ge, el, minmaxO);
-      _minO[idx] = minmaxO[0];
-      _maxO[idx] = minmaxO[1];
+      computeGeoFit((GFace*)_ge, el, minmaxO);
+      _minGFit[idx] = minmaxO[0];
+      _maxGFit[idx] = minmaxO[1];
       unsetBit(_flags[idx], F_NOTORI);
       progress_status.next();
     }
@@ -1677,15 +1677,15 @@ void Plug::DataEntity::reset(std::size_t num)
   _mapElemToIndex.clear();
   _minJ.clear();
   _maxJ.clear();
-  _minO.clear();
-  _maxO.clear();
+  _minGFit.clear();
+  _maxGFit.clear();
   _minDisto.clear();
   _minAspect.clear();
   _flags.clear();
   _minJ.reserve(num);
   _maxJ.reserve(num);
-  _minO.reserve(num);
-  _maxO.reserve(num);
+  _minGFit.reserve(num);
+  _maxGFit.reserve(num);
   _minDisto.reserve(num);
   _minAspect.reserve(num);
   _flags.reserve(num);
@@ -1696,8 +1696,8 @@ void Plug::DataEntity::add(MElement *el)
   _mapElemToIndex[el] = _minJ.size();
   _minJ.push_back(std::numeric_limits<double>::max());
   _maxJ.push_back(std::numeric_limits<double>::min());
-  _minO.push_back(std::numeric_limits<double>::max());
-  _maxO.push_back(std::numeric_limits<double>::min());
+  _minGFit.push_back(std::numeric_limits<double>::max());
+  _maxGFit.push_back(std::numeric_limits<double>::min());
   _minDisto.push_back(std::numeric_limits<double>::max());
   _minAspect.push_back(std::numeric_limits<double>::max());
   unsigned char flag = F_NOTJAC | F_NOTDISTO | F_NOTASPECT | F_NOTORI | F_CURVNOTCOMP;
@@ -1717,8 +1717,8 @@ void Plug::DataEntity::addValues(Measures &measures)
         measures.maxJ.push_back(_maxJ[idx]);
       }
       if(isBitUnset(_flags[idx], F_NOTORI)) {
-        measures.minO.push_back(_minO[idx]);
-        measures.maxO.push_back(_maxO[idx]);
+        measures.minGFit.push_back(_minGFit[idx]);
+        measures.maxGFit.push_back(_maxGFit[idx]);
         measures.elementsOri.push_back(it.first);
       }
       if(isBitUnset(_flags[idx], F_NOTDISTO))
@@ -1909,16 +1909,16 @@ std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
   if(sum2D + sum3D == 0) return 0;
 
   _info(0, "-> Number of evaluations to perform:\n");
-  _info(0, "   | %5s%10s%10s%10s%10s", "", "Validity", "Disto", "Aspect", "Fidelity");
+  _info(0, "   | %5s%11s%11s%11s%11s", "", "Validity+", "Disto", "Aspect", "GeoFit");
   if(sum2D)
-    _info(0, "   | %5s%10s%10s%10s%10s", "2D:",
+    _info(0, "   | %5s%11s%11s%11s%11s", "2D:",
               formatNumber(cnt2D.elToCompute[0]).c_str(),
               formatNumber(cnt2D.elToCompute[1]).c_str(),
               formatNumber(cnt2D.elToCompute[2]).c_str(),
               formatNumber(cnt2D.elToCompute[3]).c_str());
 
   if(sum3D)
-    _info(0, "   | %5s%10s%10s%10s%10s", "3D:",
+    _info(0, "   | %5s%11s%11s%11s%11s", "3D:",
               formatNumber(cnt3D.elToCompute[0]).c_str(),
               formatNumber(cnt3D.elToCompute[1]).c_str(),
               formatNumber(cnt3D.elToCompute[2]).c_str(),
@@ -2004,7 +2004,7 @@ Plug::Counts Plug::Counts::operator+(const Counts &other) const
   }
 
   result.elToShow = elToShow + other.elToShow;
-  result.orientationToShow = orientationToShow + other.orientationToShow;
+  result.geoFitToShow = geoFitToShow + other.geoFitToShow;
   result.totalEl = totalEl + other.totalEl;
   result.elCurvedComputed = elCurvedComputed + other.elCurvedComputed;
   result.curvedEl = curvedEl + other.curvedEl;
@@ -2031,13 +2031,13 @@ Plug::Measures Plug::Measures::combine(const Measures &m1, const Measures &m2, c
   combineVectors(result.minJ, m1.minJ, m2.minJ);
   combineVectors(result.maxJ, m1.maxJ, m2.maxJ);
   combineVectors(result.ratioJ, m1.ratioJ, m2.ratioJ);
-  combineVectors(result.validity, m1.validity, m2.validity);
-  combineVectors(result.inversion, m1.inversion, m2.inversion);
+  combineVectors(result.isValid, m1.isValid, m2.isValid);
+  combineVectors(result.isInverted, m1.isInverted, m2.isInverted);
   combineVectors(result.minDisto, m1.minDisto, m2.minDisto);
   combineVectors(result.minAspect, m1.minAspect, m2.minAspect);
   combineVectors(result.elements, m1.elements, m2.elements);
-  combineVectors(result.minO, m1.minO, m2.minO);
-  combineVectors(result.maxO, m1.maxO, m2.maxO);
+  combineVectors(result.minGFit, m1.minGFit, m2.minGFit);
+  combineVectors(result.maxGFit, m1.maxGFit, m2.maxGFit);
   combineVectors(result.elementsOri, m1.elementsOri, m2.elementsOri);
   result.dim2Elem = m1.dim2Elem || m2.dim2Elem;
   result.dim3Elem = m1.dim3Elem || m2.dim3Elem;
@@ -2052,11 +2052,11 @@ const std::vector<double> &Plug::Measures::getValues(Metric m) const
 {
   switch(m) {
   case VALIDITY:
-    return validity;
+    return isValid;
   case INVERSION:
-    return inversion;
-  case ORIENTATION:
-    return minO;
+    return isInverted;
+  case GEOFIT:
+    return minGFit;
   case DISTO:
     return minDisto;
   case ASPECT:
@@ -2073,7 +2073,7 @@ const std::vector<double> &Plug::Measures::getValues(Metric m) const
 
 const std::vector<MElement *> &Plug::Measures::getElements(Metric m) const
 {
-  if(m == ORIENTATION)
+  if(m == GEOFIT)
     return elementsOri;
   else
     return elements;
