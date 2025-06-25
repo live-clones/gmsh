@@ -44,6 +44,7 @@ private:
     struct Computation {
       bool skip = false;
       bool jacobian = false;
+      bool jacobianOnCurvedGeo = false;
       bool disto = false;
       bool aspect = false;
       bool geofit = false;
@@ -202,7 +203,7 @@ private:
     GEntity *_ge = nullptr;
     std::map<MElement *, size_t> _mapElemToIndex;
     std::vector<double> _minJ, _maxJ, _minGFit, _maxGFit, _minDisto, _minAspect;
-    std::size_t _numToCompute[4]{};
+    std::size_t _numToCompute[5]{}; // jac, jacOnCurvedGeo, disto, aspect, geofit
     std::size_t _numRequested = 0;
     // 8 bits of char are used for the following information:
     // - to say if quantities has already been computed
@@ -228,14 +229,14 @@ private:
       for(auto &e : elements) add(e);
     }
     GEntity *getEntity() const { return _ge; }
-    std::size_t getNumToCompute(int i) const { return _numToCompute[i]; }
+    // std::size_t getNumToCompute(int i) const { return _numToCompute[i]; }
     void addValues(Measures &);
 
     // I separate the computation of each measure because computation can be
     // really heavy and take a a lot of time. Computing the validity is much
     // faster and can help the user to evaluate the time needed to compute the
     // remaining qualities.
-    void computeValidity(MsgProgressStatus &);
+    void computeJacDet(MsgProgressStatus &, bool onPlanar, bool onCurved);
     void computeDisto(MsgProgressStatus &, bool considerAsValid);
     void computeAspect(MsgProgressStatus &, bool considerAsValid);
     void computeGeoFit(MsgProgressStatus &);
@@ -284,7 +285,7 @@ private:
   };
 
   struct Counts {
-    std::size_t elToCompute[4]{}; // for four metrics
+    std::size_t elToCompute[5]{}; // jac, jacOnCurvedGeo, disto, aspect, geofit
     std::size_t elToShow = 0;
     std::size_t geoFitToShow = 0;
     std::size_t totalEl = 0;

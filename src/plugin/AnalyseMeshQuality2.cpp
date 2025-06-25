@@ -90,7 +90,7 @@
 //     Show all elements are valid only if elements have been check
 //     For now, let all 2D together.
 
-// FIXME move fix from last commit into new commit together with other fix.
+
 
 // NOTE:
 //  1. Say in help that the plugin can be used to compute jacobian, hide best
@@ -199,8 +199,8 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "skipValidity", nullptr, 0, "(0-)=includeValidity, ON=skipPreventiveValidityCheck"},
   // Advanced analysis options:
   {GMSH_FULLRC, "skipStatPrinting", nullptr, 0, "OFF, ON"},
-  {GMSH_FULLRC, "enableRatioJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=0-)"},
-  {GMSH_FULLRC, "enableMinJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=0-)"},
+  {GMSH_FULLRC, "enableRatioJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=(0-))"},
+  {GMSH_FULLRC, "enableMinJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=(0-)"},
   {GMSH_FULLRC, "regularizeDeterminant", nullptr, 1, "OFF, ON=inverseOrientationIfAbsMaxSmaller"},
   {GMSH_FULLRC, "wmCutoffsForStats", nullptr, 10, "CUTOFFS (for stats weighted mean, see Help)"},
   {GMSH_FULLRC, "wmCutoffsForPlots", nullptr, 10, "CUTOFFS (for plots weighted mean, see Help)"},
@@ -340,10 +340,13 @@ PView *Plug::execute(PView *v)
   }
 
   Parameters::Computation &pc = _param.compute;
-  if(!pc.jacobian && !pc.disto && !pc.aspect && !pc.geofit) {
-    _warn(0, "-> <|>Nothing to execute because 'enableDistortionQuality', "
-             "'enableAspectQuality' and 'enableGeoFit' are all "
-             "three OFF and 'skipValidity' is ON ");
+  if(!pc.jacobian && !pc.jacobianOnCurvedGeo && !pc.disto && !pc.aspect && !pc.geofit) {
+    _warn(0, "-> Nothing to execute. Please adjust the following options:\n"
+             "   - Turn ON at least one of the following metrics:\n"
+             "     * enableDistortionQuality\n"
+             "     * enableAspectQuality\n"
+             "     * enableGeoFit\n"
+             "   - OR turn OFF 'skipValidity'.");
     return v;
   }
 
@@ -374,8 +377,7 @@ PView *Plug::execute(PView *v)
     if(!countsTotal.elToShow) return v;
   }
   else {
-    if(!pc.jacobian) {
-      // TODO: this should be printed if not minimal asked
+    if(!pc.jacobian && (countsTotal.elToCompute[2] || countsTotal.elToCompute[3])) {
       _warn(1, "-> <|>Option 'skipValidity' is ON, validity will not be "
                "computed. This may significantly slow down quality computation "
                "in the presence of invalid elements");
@@ -485,6 +487,7 @@ void Plug::_fetchParameters()
 
   // -> metrics to compute
   pc.jacobian = skipValidity <= 0;
+  pc.jacobianOnCurvedGeo = ratioJ > 0 || minJ > 0;
   pc.disto = static_cast<bool>(disto);
   pc.aspect = static_cast<bool>(aspect);
   pc.geofit = static_cast<bool>(geofit);
@@ -589,6 +592,7 @@ void Plug::_fetchLegacyParameters()
   Parameters::Hiding &ph = _param.hide;
   Parameters::MetricsToShow &ps = _param.show;
 
+  pc.jacobianOnCurvedGeo = false;
   pc.onlyVisible = false;
   pc.onlyCurved = false;
   pp.statCutoffPack = 50;
@@ -708,33 +712,33 @@ void Plug::_computeRequestedData(Counts counts, bool check2D, bool check3D) cons
   if(check3D)
     _data3D->getDataEntities(allDataEntities);
 
-  if(counts.elToCompute[0] > 0) {
-    _status(0, "-> Computing Validity...");
-    MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[0]));
+  if(counts.elToCompute[0] > 0 || counts.elToCompute[1] > 0) {
+    _status(0, "-> Computing Validity+...");
+    MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[0] + counts.elToCompute[1]));
     for(auto data: allDataEntities) {
-      data->computeValidity(progress_status);
+      data->computeJacDet(progress_status, counts.elToCompute[0], counts.elToCompute[1]);
     }
   }
 
-  if(counts.elToCompute[1] > 0) {
+  if(counts.elToCompute[2] > 0) {
     _status(0, "-> Computing Distortion quality...");
-    MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[1]));
+    MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[2]));
     for(auto data: allDataEntities) {
       data->computeDisto(progress_status, !_param.compute.jacobian);
     }
   }
 
-  if(counts.elToCompute[2] > 0) {
+  if(counts.elToCompute[3] > 0) {
     _status(0, "-> Computing Aspect quality...");
-    MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[2]));
+    MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[3]));
     for(auto data: allDataEntities) {
       data->computeAspect(progress_status, !_param.compute.jacobian);
     }
   }
 
-  if(counts.elToCompute[3] > 0) {
+  if(counts.elToCompute[4] > 0) {
     _status(0, "-> Computing GeoFit...");
-    MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[3]));
+    MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[4]));
     for(auto data: allDataEntities) {
       data->computeGeoFit(progress_status);
     }
@@ -1466,19 +1470,23 @@ void Plug::DataEntity::count(const Parameters::Computation &param, Counts &count
 {
   // Reset intern data
   _numRequested = 0;
-  for(int i = 0; i < 4; ++i)
+  constexpr int metricsCount = 5;
+  for(int i = 0; i < metricsCount; ++i)
     _numToCompute[i] = 0;
 
   // Count number of elements to compute
-  if (param.jacobian)
+  if (_normals && param.jacobian)
     _count(F_REQU | F_NOTJAC, _numToCompute[0]);
+  if (!_normals && param.jacobianOnCurvedGeo)
+    _count(F_REQU | F_NOTJAC, _numToCompute[1]);
   if (param.disto)
-    _count(F_REQU | F_NOTDISTO, _numToCompute[1]);
+    _count(F_REQU | F_NOTDISTO, _numToCompute[2]);
   if (param.aspect)
-    _count(F_REQU | F_NOTASPECT, _numToCompute[2]);
+    _count(F_REQU | F_NOTASPECT, _numToCompute[3]);
   if (param.geofit && _ge->dim() < 3 && !_normals)
-    _count(F_REQU | F_NOTORI, _numToCompute[3]);
-  for(int i = 0; i < 4; ++i) {
+    _count(F_REQU | F_NOTORI, _numToCompute[4]);
+
+  for(int i = 0; i < metricsCount; ++i) {
     counts.elToCompute[i] += _numToCompute[i];
   }
 
@@ -1514,8 +1522,12 @@ void Plug::DataEntity::_count(unsigned char mask, std::size_t &cnt)
   }
 }
 
-void Plug::DataEntity::computeValidity(MsgProgressStatus &progress_status)
+void Plug::DataEntity::computeJacDet(MsgProgressStatus &progress_status,
+                                     bool onPlanar, bool onCurved)
 {
+  if(_normals && !onPlanar) return;
+  if(!_normals && !onCurved) return;
+
   if(_ge->dim() == 2) {
     if(_normals) {
       _info(1, "   Surface %d: <|>Computing validity of %d elements, normal (%.3g, %.3g, %.3g)",
@@ -1524,7 +1536,7 @@ void Plug::DataEntity::computeValidity(MsgProgressStatus &progress_status)
     }
     else {
       _info(1, "   Surface %d: Computing validity of %d elements",
-            _ge->tag(), _numToCompute[0]);
+            _ge->tag(), _numToCompute[1]);
     }
   }
   else
@@ -1547,10 +1559,10 @@ void Plug::DataEntity::computeDisto(MsgProgressStatus &progress_status, bool con
   // FIXME update
   if(_ge->dim() == 2)
     _info(1, "   Surface %d: Computing Distortion quality of %d elements",
-          _ge->tag(), _numToCompute[1]);
+          _ge->tag(), _numToCompute[2]);
   else
     _info(1, "   Volume %d: Computing Distortion quality of %d elements",
-          _ge->tag(), _numToCompute[1]);
+          _ge->tag(), _numToCompute[2]);
 
   for(const auto &it : _mapElemToIndex) {
     const std::size_t idx = it.second;
@@ -1574,10 +1586,10 @@ void Plug::DataEntity::computeAspect(MsgProgressStatus &progress_status, bool co
   // FIXME update
   if(_ge->dim() == 2)
     _info(1, "   Surface %d: Computing Aspect quality of %d elements",
-          _ge->tag(), _numToCompute[2]);
+          _ge->tag(), _numToCompute[3]);
   else
     _info(1, "   Volume %d: Computing Aspect quality of %d elements",
-          _ge->tag(), _numToCompute[2]);
+          _ge->tag(), _numToCompute[3]);
 
   for(const auto &it : _mapElemToIndex) {
     const std::size_t idx = it.second;
@@ -1652,7 +1664,7 @@ void Plug::DataEntity::computeGeoFit(MsgProgressStatus &progress_status)
   // FIXME update for
   if(_ge->dim() == 2)
     _info(1, "   Surface %d: Computing GeoFit quality of %d elements",
-          _ge->tag(), _numToCompute[2]);
+          _ge->tag(), _numToCompute[4]);
   // else
   //   _info(1, "   Volume %d: Computing GeoFit quality of %d elements",
   //         _ge->tag(), _numToCompute[2]);
@@ -1912,17 +1924,17 @@ std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
   _info(0, "   | %5s%11s%11s%11s%11s", "", "Validity+", "Disto", "Aspect", "GeoFit");
   if(sum2D)
     _info(0, "   | %5s%11s%11s%11s%11s", "2D:",
-              formatNumber(cnt2D.elToCompute[0]).c_str(),
-              formatNumber(cnt2D.elToCompute[1]).c_str(),
+              formatNumber(cnt2D.elToCompute[0]+cnt2D.elToCompute[1]).c_str(),
               formatNumber(cnt2D.elToCompute[2]).c_str(),
-              formatNumber(cnt2D.elToCompute[3]).c_str());
+              formatNumber(cnt2D.elToCompute[3]).c_str(),
+              formatNumber(cnt2D.elToCompute[4]).c_str());
 
   if(sum3D)
     _info(0, "   | %5s%11s%11s%11s%11s", "3D:",
-              formatNumber(cnt3D.elToCompute[0]).c_str(),
-              formatNumber(cnt3D.elToCompute[1]).c_str(),
+              formatNumber(cnt3D.elToCompute[0]+cnt3D.elToCompute[1]).c_str(),
               formatNumber(cnt3D.elToCompute[2]).c_str(),
-              formatNumber(cnt3D.elToCompute[3]).c_str());
+              formatNumber(cnt3D.elToCompute[3]).c_str(),
+              formatNumber(cnt3D.elToCompute[4]).c_str());
 
   return sum2D + sum3D;
 }
@@ -1998,7 +2010,7 @@ Plug::Counts Plug::Counts::operator+(const Counts &other) const
 {
   Counts result;
 
-  constexpr int metricsCount = 4;
+  constexpr int metricsCount = 5;
   for (int i = 0; i < metricsCount; ++i) {
     result.elToCompute[i] = elToCompute[i] + other.elToCompute[i];
   }
