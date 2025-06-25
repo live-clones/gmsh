@@ -30,73 +30,29 @@
 #endif
 
 // TODO:
-//  x. Implement isCurved
-//  x. Implement isPlanarMesh -> use normal for computing quantities
-//     - test with ctest if some planarity can be deduced from type of surface
-//       (e.g. GEntity::Plane)
-//  x. Implement minimal output (or change parameters)
-//     Type of message:
-//       |-1 | 0 | 1 | (guidanceLevel)
-//       -------------
-//       | x | x | x | ->  9 = mandatory
-//       |   |   | x | ->  1 = help
-//       |   | x | x | ->  0 = normal
-//       |   | x |   | -> -1 = alternative to help
-//       | x |   |   | -> -2 = minimal
-//  4. Update Help message GUI
-//  5. Add check + message after having fetched parameters
+//  1. add enableGeoFit option
+//  2. Update Help message GUI (Explain what is smartrecompute)
+//       Say in help that the plugin can be used to compute jacobian, hide best
+//       elements, then compute quality (the gain is to compute quality of less
+//       elements)
+//  3. Add check + message after having fetched parameters
 //     - If guidance = 1: output what will be done
 //       if guidance = 0: output what will computed
 //     - If guidance = 1: warn when parameters out of bound
-//  6. Add more verbose messages?
-//  7. Test...
-//  x. Make number of evaluation to perform human readable
-//     - either: 10.3k, 421M (3 significance digit)
-//     - or: 10,345, 421,145,134 (all digits)
+//  4. Test with ctest that everything works?
 
-// TODO 2.0:
-//  0. Add validity for MLine on GEdge or GFace
+// TODO Maybe:
+//  1. Add validity for MLine on GEdge or GFace
 //     - minJ/maxJ can be considered as a quality measure
 //     - if dimension policy=-2?
-//  x. More information:
-//     - % of invalid elements
-//     - if surface is detected as planar and then its normal
-//  x. Make distinction with inversed elements
-//  3. Think of plugin options for :
-//     - Validity of element embedded in its dimension
-//     - Inversion of element embedded in its dimension
-//        but regularizeDeterminant=ON => no inversion
-//     - GeoFit quality of element on a geometry of higher dimension
-//     -> all on/off with skipValidity???
-//        or GeoFit in Quality metrics to include ?
-//        (or GeoFitTolerance (0=OFF, >0=ON) ?)
-//        or skipGeoFit after skipValidity ?
-//     -> validity/inversion in Found message
-//        GeoFit in table with min/max/mean
-//     -> validity, inversion, GeoFit all separate views?
-//     => A. add enableGeoFit option
-//        x. add INVERSION and GEOFIT as measures that can be shown
-//        C. add tag to say if element has geofit, validity or nothing.
-//           or add tag to say if element on curved geometry, in which case
-//           'validity' is geofit
-//        x. compute geofit by sampling
-//  4. Intrinsic validity : smartreco777 for sharing element or 888 or 999
-//  5. Demo mode?
-//  6. Explain what is smartrecompute
-//  x. Change inversion for the opposite
-//  x. Change name orientation fidelity/validity confidence to conformity,
-//     or GeoFit, or Misfit,
-//  9. Check if surface is curved and count differently.
-//     Show all elements are valid only if elements have been check
+//  2. Add more verbose messages?
+//  3. Intrinsic validity : smartreco777 for sharing element or 888 or 999
+//  4. Check if surface is curved and count differently.
 //     For now, let all 2D together.
+//  5. Demo mode?
 
 // FIXME: PView are based on elements. If I remesh with a different mesh size
 //  factor, data is still there but on wrong elements.
-
-// NOTE:
-//  1. Say in help that the plugin can be used to compute jacobian, hide best
-//     elements, then compute quality (the gain is to compute quality of less
-//     elements)
 
 // NOTE What does the plugin
 //  0. Free data and stop IF dataManagementPolicy = -1
