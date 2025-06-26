@@ -479,7 +479,7 @@ PView *Plug::execute(PView *v)
   Counts countsTotal = counts2D + counts3D;
   if(!totalToCompute) {
     _guidanceNothingToCompute(countsTotal, check2D, check3D);
-    if(!countsTotal.elToShow) return v;
+    if(!countsTotal.requestedEl) return v;
   }
   else {
     if(!pc.jacobian && (countsTotal.elToCompute[2] || countsTotal.elToCompute[3])) {
@@ -1482,7 +1482,7 @@ void Plug::DataSingleDimension::_updateGEntities(
 
 void Plug::DataSingleDimension::gatherValues(const Counts &counts, Measures &measures)
 {
-  size_t sz = counts.elToShow;
+  size_t sz = counts.requestedEl;
   size_t szOri = counts.geoFitToShow;
   if(_dim == 2)
     measures.dim2Elem = true;
@@ -1645,7 +1645,7 @@ void Plug::DataEntity::count(const Parameters::Computation &param, Counts &count
 
   // Count number of elements to show
   _count(F_REQU, _numRequested);
-  counts.elToShow += _numRequested;
+  counts.requestedEl += _numRequested;
   if(param.geofit && _isCurvedGeo)
     counts.geoFitToShow += _numRequested;
 
@@ -2137,7 +2137,7 @@ void Plug::_guidanceNothingToCompute(Counts counts, bool check2D,
 {
   _info(1, "-> No element to compute");
 
-  if (!counts.elToShow) {
+  if (!counts.requestedEl) {
     _info(-1, "-> Nothing to compute, nothing to show");
     _info(1, "   Nothing to show neither");
 
@@ -2208,7 +2208,7 @@ Plug::Counts Plug::Counts::operator+(const Counts &other) const
     result.elToCompute[i] = elToCompute[i] + other.elToCompute[i];
   }
 
-  result.elToShow = elToShow + other.elToShow;
+  result.requestedEl = requestedEl + other.requestedEl;
   result.geoFitToShow = geoFitToShow + other.geoFitToShow;
   result.totalEl = totalEl + other.totalEl;
   result.elCurvedComputed = elCurvedComputed + other.elCurvedComputed;

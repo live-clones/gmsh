@@ -291,12 +291,12 @@ private:
 
   struct Counts {
     std::size_t elToCompute[5]{}; // jac, jacOnCurvedGeo, disto, aspect, geofit
-    std::size_t elToShow = 0;
-    std::size_t geoFitToShow = 0;
     std::size_t totalEl = 0;
-    std::size_t elCurvedComputed = 0; // NOTE: unused
-    std::size_t curvedEl = 0;
+    std::size_t requestedEl = 0;
     std::size_t visibleEl = 0;
+    std::size_t curvedEl = 0;
+    std::size_t geoFitToShow = 0;
+    std::size_t elCurvedComputed = 0; // NOTE: unused
     Counts operator+(const Counts &) const;
   };
 
