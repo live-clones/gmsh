@@ -468,8 +468,16 @@ PView *Plug::execute(PView *v)
   _decideDimensionToCheck(check2D, check3D);
 
   Counts counts2D, counts3D;
-  if(check2D) _data2D->initialize(_m, _param.compute, counts2D);
-  if(check3D) _data3D->initialize(_m, _param.compute, counts3D);
+  if(check2D) {
+    if(!pc.skip || !_data2D->getIsInitialized())
+      _data2D->initialize(_m, _param.compute);
+    _data2D->count(_param.compute, counts2D);
+  }
+  if(check3D) {
+    if(!pc.skip || !_data3D->getIsInitialized())
+      _data3D->initialize(_m, _param.compute);
+    _data3D->count(_param.compute, counts2D);
+  }
 
   // Purge views just after initialization of _data2D and _data3D
   _purgeViews(check2D, check3D);
@@ -1434,8 +1442,7 @@ void Plug::StatGenerator::_computeCoefficients(double cutoff, size_t sz,
 // =============================================================================
 
 void Plug::DataSingleDimension::initialize(GModel const *m,
-                                           const Parameters::Computation &param,
-                                           Counts &counts)
+                                           const Parameters::Computation &param)
 {
   _requestedListHasChanged = false;
 
@@ -1452,6 +1459,14 @@ void Plug::DataSingleDimension::initialize(GModel const *m,
     int numRequestedChanged = it.second.initialize(param);
     if(numRequestedChanged)
       _requestedListHasChanged = true;
+  }
+  _initialized = true;
+}
+
+void Plug::DataSingleDimension::count(const Parameters::Computation &param,
+                                      Counts &counts)
+{
+  for(auto &it : _dataEntities) {
     it.second.count(param, counts);
   }
 }
