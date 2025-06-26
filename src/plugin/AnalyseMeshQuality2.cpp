@@ -13,6 +13,7 @@
 #include <iomanip>
 #include <string>
 #include <functional>
+#include <cmath>
 #include "AnalyseMeshQuality2.h"
 #include "OS.h"
 #include "Context.h"
@@ -40,6 +41,7 @@
 //  5. Add a method to set default value (that can be commented for
 //     development purpose). But is it possible? It cannot be in the execution
 //     of plugin, but at compilation
+//  6. Check fixmes, todos, etc.
 
 // TODO Later:
 //  1. Add check + message after having fetched parameters
@@ -1114,13 +1116,15 @@ void Plug::_findElementsToHide(const Measures &measure,
 
   case 0: {
     double tmp = clamp(_param.hide.threshold, 0., 100.) / 100.;
-    tmp *= static_cast<double>(values.size() - 1);
-    numVisibleElements = static_cast<size_t>(tmp);
+    tmp *= static_cast<double>(values.size());
+    numVisibleElements = static_cast<size_t>(std::round(tmp));
   }
-  case 1:
-    numVisibleElements = clamp(numVisibleElements, size_t{0}, values.size() - 1);
-    std::nth_element(values.begin(), values.begin() + static_cast<long>(numVisibleElements), values.end());
-    limitVal = values[numVisibleElements];
+  case 1: {
+    numVisibleElements = clamp(numVisibleElements, size_t{0}, values.size());
+    size_t numElementOnLimit = clamp(numVisibleElements, size_t{0}, values.size()-1);
+    std::nth_element(values.begin(), values.begin() + static_cast<long>(numElementOnLimit), values.end());
+    limitVal = values[numElementOnLimit];
+  }
     break;
 
   default:
