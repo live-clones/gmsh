@@ -183,21 +183,18 @@ private:
   class DataSingleDimension {
   private:
     const int _dim;
-    bool _initialized = false;
     std::map<GEntity *, DataEntity> _dataEntities;
     bool _requestedListHasChanged = false;
 
   public:
     explicit DataSingleDimension(int dim) : _dim(dim) {}
     void clear() { _dataEntities.clear(); }
-    void initialize(GModel const *, const Parameters::Computation &);
-    void count(const Parameters::Computation &, Counts &);
+    void initialize(GModel const *, const Parameters::Computation &, Counts &);
     void getDataEntities(std::vector<DataEntity*> &set)
     {
       for(auto &d : _dataEntities) set.push_back(&d.second);
     }
     bool getRequestedHasChanged() { return _requestedListHasChanged; }
-    bool getIsInitialized() { return _initialized; }
     void gatherValues(const Counts &, Measures &);
 
   private:
