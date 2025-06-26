@@ -103,7 +103,7 @@
 //   • For metrics as for (point 3.).
 //   • For Worst Weighted Means in function of UNPACK(wmCutoffsForPlots)
 //   • But: skip creation IF PView already exists and unchanged data
-//  5. Change visibility of elements IF adjustVisibilityElements >= 1
+//  5. Change visibility of elements IF adjustElementsVisibility >= 1
 //   • In function of dimensionPolicy, as for (point 2.)
 //   • In function of visibilityPolicy [here in the case hideWorstElements = OFF]:
 //     - IF = -1 Limit to valid elements IF there are any invalid elements,
@@ -121,7 +121,7 @@
 //     where x = visibilityThreshold
 //   • Hide worst elements instead of best IF hideWorstElements = ON
 //   • Unhide others IF doNoSetVisible = OFF
-//   • In function of adjustVisibilityElements:
+//   • In function of adjustElementsVisibility:
 //     - IF = 1 Skip adjustment IF all elements are to be hidden
 //     - IF >= 2 Hide/Set visible even if all elements are to be hidden
 
@@ -137,7 +137,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   // What to do:
   {GMSH_FULLRC, "createElementsView", nullptr, 1, "OFF, ON"},
   {GMSH_FULLRC, "createPlotView", nullptr, 1, "OFF, ON"},
-  {GMSH_FULLRC, "adjustVisibilityElements", nullptr, 0, "OFF, 1=skipIfAllWouldBeHidden, 2=acceptAllHidden"}, //TODO updtate for geofit
+  {GMSH_FULLRC, "adjustElementsVisibility", nullptr, 0, "OFF, 1=skipIfAllWouldBeHidden, 2=acceptAllHidden"}, //TODO updtate for geofit
   {GMSH_FULLRC, "guidanceLevel", nullptr, 1, "(-1)=minimalOutput, 0=verbose, 1=verboseAndExplanations"},
   // Elements Selection:
   {GMSH_FULLRC, "dimensionPolicy", nullptr, -1, "(-1)=force2D, 0=prioritize3D, 1=2D+3D, 2=combine2D+3D"},
@@ -183,8 +183,8 @@ constexpr int MeshQuality2Options_LegacyOptionsNumber = 8;
 std::pair<int, std::string> MeshQuality2Options_Headers[] = {
   {0, "Quality metrics to include"},
   {2, "What to do"},
-  {6, "Elements Selection"},
-  {9, "Elements hiding/visibility options"},
+  {6, "Elements selection"},
+  {9, "Visibility adjustment options"},
   {14, "Advanced computation options"},
   {18, "Advanced analysis options"},
   {24, "Legacy options"},
@@ -228,48 +228,158 @@ std::string Plug::getOptionsSectionHeader(int iopt) const
 
 std::string Plug::getHelp() const
 {
-  return "Plugin(AnalyseMeshQuality2) analyses the quality of the elements "
-         "of a given dimension in the current model. Depending on the input "
-         "options it computes the minimum of the Jacobian determinant (J), "
-         "the IGE quality measure (Inverse Gradient Error) and/or the ICN "
-         "quality measure (Condition Number). Statistics are printed and, "
-         "if requested, a model-based post-processing view is created for each "
-         "quality measure. The plugin can optionally hide elements by "
-         "comparing the measure to a prescribed threshold.\n"
-         "\n"
-         "J is faster to compute but gives information only on element "
-         "validity while the other measures also give information on element "
-         "quality. The IGE measure is related to the error on the gradient of "
-         "the finite element solution. It is the scaled Jacobian for quads and "
-         "hexes and a new measure for triangles and tetrahedra. "
-         "The ICN measure is related to the condition number of the stiffness "
-         "matrix. (See the article \"Efficient computation of the minimum of "
-         "shape quality measures on curvilinear finite elements\" for "
-         "details.)\n"
-         "\n"
-         "Options:\n"
-         "\n"
-         "- `JacobianDeterminant': compute J?\n"
-         "\n"
-         "- `IGEMeasure': compute IGE?\n"
-         "\n"
-         "- `ICNMeasure': compute ICN?\n"
-         "\n"
-         "- `HidingThreshold': hide all elements for which min(mu) is "
-         "strictly greater than (if `ThresholdGreater' == 1) or less than "
-         "(if `ThresholdGreater' == 0) the threshold, where mu is ICN if "
-         "`ICNMeasure' == 1, IGE if `IGEMeasure' == 1 or min(J)/max(J) if "
-         "`JacobianDeterminant' == 1.\n"
-         "\n"
-         "- `CreateView': create a model-based view of min(J)/max(J), "
-         "min(IGE) and/or min(ICN)?\n"
-         "\n"
-         "- `Recompute': force recomputation (set to 1 if the mesh has "
-         "changed).\n"
-         "\n"
-         "- `DimensionOfElements': analyse elements of the given dimension if "
-         "equal to 1, 2 or 3; analyse 2D and 3D elements if equal to 4; "
-         "or analyse elements of the highest dimension if equal to -1.";
+  return
+    "INTRODUCTION\n"
+    "Plugin(AnalyseMeshQuality) evaluates the validity and quality of mesh "
+    "elements within the current model. The plugin allows users to compute "
+    "various quality metrics such as Distortion, Aspect Ratio, and GeoFit "
+    "(generating detailed statistics of them), create visualization views "
+    "(element-based or plot-based), and adjust element visibility based on "
+    "customizable criteria.\n"
+    "\n"
+    "GETTING STARTED\n"
+    "The options provided in the plugin have been chosen to be "
+    "intuitive and descriptive, making it easy for users to understand "
+    "their functionality. "
+    "Hovering over the input fields will display tooltips, which provide "
+    "accepted input values and a concise explanation of their "
+    "corresponding effect. "
+    "Options requiring additional clarification are detailed further in "
+    "subsequent sections.\n"
+    "Additionally:\n"
+    "• To get live, contextual explanations during execution, users can "
+    "set `guidanceLevel` to 1.\n"
+    "• A FAQ is available at the end of this help message.\n"
+    "\n"
+    "IMPORTANT NOTES\n"
+    "• The input option values are designed to have a default effect "
+    "when set to 0, this allows the user to quickly identify which options "
+    "have been modified. (For this reason, some options take negative values.)\n"
+    "• Advanced option `smartRecompute' can be very useful. TODO.\n"
+    "\n"
+    "DEFINITION\n"
+    "• `Visibility metrics': The plugin make the difference between requested "
+    "metrics that are computed and for which statistics are printed and a "
+    "subset of them, called Visibility metrics that are used to decide "
+    "visibility adjustment and visualization post-view. To determine the subset, "
+    " the plugin compute the maximum value among:\n"
+    "-- enableDistortionQuality\n"
+    "-- enableAspectQuality\n"
+    "-- enableGeoFitQuality\n"
+    "-- enableMinJacDetAsAMetric\n"
+    "-- enableRatioJacDetAsAMetric\n"
+    "The metrics matching this maximum value are in the set of Visibility metrics.\n"
+    "\n"
+    "VISIBILITY ADJUSTMENT\n"
+    "• The plugin is able to hide and unhide elements based on specific criteria. "
+    "Various options are available for fine-tuning the behavior of this feature.\n"
+    "• Default behaviour: In the presence of invalid elements, the plugin will "
+    "make them visible and hide the other. If all elements are valid, the plugin "
+    "will select the 10% worst element according to some quality metric and "
+    "make them visible while hiding the other.\n"
+    "• Available options:\n"
+    "-- `adjustElementsVisibility': Enables the operation of hiding and unhiding elements. "
+    "If set to 1, the plugin will abort if all analyzed elements meet the "
+    "criteria to be hidden. To force the hiding in this case, set it to 2.\n"
+    "-- `visibilityPolicy': Determines which metric(s) are used to decide which elements "
+    "are hidden or made visible. The available settings and their behaviors are:\n"
+    "&nbsp;&nbsp;`-1`: The plugin first checks if there are invalid elements. "
+    "If invalid elements exist, they are made visible while valid elements are hidden. "
+    "If no invalid elements are present, the plugin will abort.\n"
+    "&nbsp;&nbsp;`0`: Similar to `-1`, but in this case, the plugin does not abort when no invalid "
+    "elements are present. Instead, the behavior is the same as if the input value "
+    "were set to `1`.\n"
+    "&nbsp;&nbsp;`1`: The plugin checks each Visibility metric. If any elements meet the criterion "
+    "for being visible, they are made visible. Elements failing to meet the criterion "
+    "across all metrics are hidden.\n"
+    "&nbsp;&nbsp;`2`: The behavior is the opposite of `1`. Elements that fail to meet the visibility "
+    "criterion are made visible, while those that meet it are hidden.\n"
+    "-- `visibilityCriterion': Defines what the threshold is used as. Available "
+    "values are:\n"
+    "&nbsp;&nbsp;`0`: The threshold is the percentage of elements to make visible.\n"
+    "&nbsp;&nbsp;`1`: The threshold is the number of elements to make visible.\n"
+    "&nbsp;&nbsp;`2`: The threshold is the metric value.\n"
+    "-- `visibilityThreshold': Specifies the threshold value for visibility decisions. "
+    "This threshold determines the boundary for applying the `visibilityCriterion`.\n"
+    "-- `hideWorstElements': Allows to inverse the hiding operation. If set to "
+    "1, the best-rated elements are made visible and worst-rated elements are hidden.\n"
+    "-- `doNoSetVisible': Controls whether elements are made visible or only hidden. "
+    "If set to OFF, the plugin performs both hiding and unhiding. If set to ON, the plugin "
+    "only performs the hiding operation without making any elements visible.\n"
+    "\n"
+    "BASIC OPTIONS CLARIFICATIONS\n"
+    "-- `adjustElementsVisibility': Enables hiding and unhiding of "
+    "elements. If set to 1, the plugin will abort if all analyzed elements "
+    "meet the criteria to be hidden. To force the hiding in this case, "
+    "set it to 2.\n"
+    "-- `guidanceLevel': If -1: typically for scripting where only the "
+    "resulting statistics are desired. 0: print what the plugin is doing but "
+    "not in detail. 1: Print details of what the plugin is doing which may be "
+    "useful for debugging. The plugin also print some guidance for beginners users.\n"
+    "-- `visibilityPolicy': Determines which metric(s) is/are used "
+    "to decide which elements to hide or make visible. If set to -1, "
+    "the plugin will check if there are invalid elements. If it is the case, "
+    "then invalid elements are made visible and valid hidden. "
+    "If not, then the plugin will abort. If set to 0, the plugin does the same "
+    "but does not abort if there are no invalid elements. Instead, it will do "
+    "the same as if the input value was 1. If set to 1, the plugin will check "
+    "each Visibility metric. If any of them meet the criterion to be "
+    "visible, then it is made visible, and elements that does not meet "
+    "criterion for all Visibility metric are hidden. If set to 2, it is "
+    "the contrary.\n"
+    "\n"
+    "ADVANCED OPTIONS\n"
+    "  - Hiding and Visibility Options:\n"
+    "    * `visibilityPolicy` ((-1)=validity|skip, 0=validity|1, 1=qualOR, 2=qualAND):\n"
+    "        Chooses the policy to determine which elements are hidden.\n"
+    "    * `visibilityCriterion` (0=proportionVisibleElem, 1=numVisibleElem, 2=metricValue):\n"
+    "        Defines the criterion for visibility thresholding.\n"
+    "    * `visibilityThreshold` (DOUBLE):\n"
+    "        Specifies the threshold value for visibility decisions.\n"
+    "    * `hideWorstElements` (OFF=hideBestElements, ON):\n"
+    "        Determines whether to hide the worst or best-rated elements.\n"
+    "    * `doNoSetVisible` (OFF=performHidingAndUnhiding, ON=justPerformHiding):\n"
+    "        Controls whether hidden elements are made visible or only hidden.\n"
+    "\n"
+    "  - Advanced Computation Options:\n"
+    "    * `usePreviousData` (OFF, ON=skipComputationMetrics):\n"
+    "        Reuses prior computation results to save time.\n"
+    "    * `dataManagementPolicy` ((-1)=skipExecutionJustFreeData, \n"
+    "        0=freeOldDataIfMeshAbsent, 1=keepAllData):\n"
+    "        Manages lifecycle of computation data.\n"
+    "    * `smartRecomputation` (OFF=alwaysRecompute, \n"
+    "        ON=avoidRecomputeIfUnchangedElementTags):\n"
+    "        Skips redundant recomputation of metrics.\n"
+    "    * `skipValidity` ((0-)=includeValidity, ON=skipPreventiveValidityCheck):\n"
+    "        Disables initial validity checks if set.\n"
+    "\n"
+    "  - Advanced Analysis Options:\n"
+    "    * `skipStatPrinting` (OFF, ON):\n"
+    "        Omits printed statistics during analysis if enabled.\n"
+    "    * `enableRatioJacDetAsAMetric` (OFF, 1+):\n"
+    "        Activates analysis using the Jacobian determinant ratio (requires skipValidity=(0-)).\n"
+    "    * `enableMinJacDetAsAMetric` (OFF, 1+):\n"
+    "        Activates analysis using the minimum Jacobian determinant (requires skipValidity=(0-)).\n"
+    "    * `regularizeDeterminant` (OFF, ON=inverseOrientationIfAbsMaxSmaller):\n"
+    "        Performs determinant regularization in specific situations.\n"
+    "    * `wmCutoffsForStats` (CUTOFFS):\n"
+    "        Specifies cutoffs for computing weighted mean statistics.\n"
+    "    * `wmCutoffsForPlots` (CUTOFFS):\n"
+    "        Specifies cutoffs for computing weighted mean metrics in plots.\n"
+    "\n"
+    "FAQ\n"
+    "  Q1: How do I analyze distortion and aspect quality?\n"
+    "      A: Set `enableDistortionQuality` and/or `enableAspectQuality` to (1+).\n"
+    "  Q2: Can I restrict my analysis to visible or curved elements only?\n"
+    "      A: Yes, enable `restrictToVisibleElements` or `restrictToCurvedElements` as needed.\n"
+    "  Q3: How do I skip recomputation for unchanged meshes?\n"
+    "      A: Enable the `smartRecomputation` option.\n"
+    "  Q4: How do I hide elements below a specific quality threshold?\n"
+    "      A: Use `visibilityPolicy`, `visibilityThreshold`, and related options to customize hiding criteria.\n"
+    "  Q5: Why sometimes, the plugin do not recreate PViews?\n"
+    "      A: .\n"
+    "\n"
+    "Refer to the detailed user documentation for more examples and explanations.\n";
 }
 
 PView *Plug::execute(PView *v)
@@ -535,7 +645,7 @@ void Plug::_fetchLegacyParameters()
            "10. Set 'enableMinJacDetAsAMetric' to 1\n"
            "11. Set 'wmCutoffsForStats' to 50\n"
            "12. IF '_HidingThreshold' is smaller than 99:\n"
-           "    -  Set 'adjustVisibilityElements' to 1\n"
+           "    -  Set 'adjustElementsVisibility' to 1\n"
            "    -  Set 'visibilityPolicy' to 1\n"
            "    -  Set 'enableDistortionQuality' to 2 IF "
            "'enableDistortionQuality' is 1\n"
@@ -1012,7 +1122,7 @@ bool Plug::_hideElements(const Measures &measure,
 {
   if(_param.hide.todo < 2 && elemToHide.size() == measure.elements.size()) {
     _info(0, "Skipping hiding because all elements would be hidden.");
-    _info(1, "To force hiding, set 'adjustVisibilityElements' to 2");
+    _info(1, "To force hiding, set 'adjustElementsVisibility' to 2");
     return false;
   }
 
