@@ -38,10 +38,7 @@
 //       elements, then compute quality (the gain is to compute quality of less
 //       elements)
 //  4. Test with ctest that everything works?
-//  5. Add a method to set default value (that can be commented for
-//     development purpose). But is it possible? It cannot be in the execution
-//     of plugin, but at compilation
-//  6. Check fixmes, todos, etc.
+//  5. Check fixmes, todos, etc.
 
 // TODO Later:
 //  1. Add check + message after having fetched parameters
@@ -147,16 +144,16 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "enableDistortionQuality", nullptr, 0, "OFF, (1+)=includeDistortionQuality"},
   {GMSH_FULLRC, "enableAspectQuality", nullptr, 0, "OFF, (1+)=includeAspectQuality"},
   // What to do:
-  {GMSH_FULLRC, "createElementsView", nullptr, 1, "OFF, ON"},
-  {GMSH_FULLRC, "createPlotView", nullptr, 1, "OFF, ON"},
+  {GMSH_FULLRC, "createElementsView", nullptr, 0, "OFF, ON"},
+  {GMSH_FULLRC, "createPlotView", nullptr, 0, "OFF, ON"},
   {GMSH_FULLRC, "adjustElementsVisibility", nullptr, 0, "OFF, 1=skipIfAllWouldBeHidden, 2=acceptAllHidden"}, //TODO updtate for geofit
-  {GMSH_FULLRC, "guidanceLevel", nullptr, 1, "(-1)=minimalOutput, 0=verbose, 1=verboseAndExplanations"},
+  {GMSH_FULLRC, "guidanceLevel", nullptr, 0, "(-1)=minimalOutput, 0=verbose, 1=verboseAndExplanations"},
   // Elements Selection:
-  {GMSH_FULLRC, "dimensionPolicy", nullptr, -1, "(-1)=force2D, 0=prioritize3D, 1=2D+3D, 2=combine2D+3D"},
+  {GMSH_FULLRC, "dimensionPolicy", nullptr, 0, "(-1)=force2D, 0=prioritize3D, 1=2D+3D, 2=combine2D+3D"},
   {GMSH_FULLRC, "restrictToVisibleElements", nullptr, 0, "OFF, ON=analyzeOnlyVisibleElements"},
   {GMSH_FULLRC, "restrictToCurvedElements", nullptr, 0, "OFF, ON=analyzeOnlyNonStraightElements"},
   // Hiding options:
-  {GMSH_FULLRC, "visibilityPolicy", nullptr, 1, "(-1)=validity|skip, 0=validity|1, 1=qualOR, 2=qualAND"},
+  {GMSH_FULLRC, "visibilityPolicy", nullptr, 0, "(-1)=validity|skip, 0=validity|1, 1=qualOR, 2=qualAND"},
   {GMSH_FULLRC, "visibilityCriterion", nullptr, 0, "0=proportionVisibleElem, 1=numVisibleElem, 2=metricValue"},
   {GMSH_FULLRC, "visibilityThreshold", nullptr, 10, "DOUBLE (which meaning depends on visibilityCriterion)"},
   {GMSH_FULLRC, "hideWorstElements", nullptr, 0, "OFF=hideBestElements, ON"},
@@ -170,7 +167,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "skipStatPrinting", nullptr, 0, "OFF, ON"},
   {GMSH_FULLRC, "enableRatioJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=(0-))"},
   {GMSH_FULLRC, "enableMinJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=(0-)"},
-  {GMSH_FULLRC, "regularizeDeterminant", nullptr, 1, "OFF, ON=treatInvertedAsValid (NB: alter minJ and minJ/maxJ)"},
+  {GMSH_FULLRC, "regularizeDeterminant", nullptr, 0, "OFF, ON=treatInvertedAsValid (NB: alter minJ and minJ/maxJ)"},
   {GMSH_FULLRC, "wmCutoffsForStats", nullptr, 10, "CUTOFFS (for stats weighted mean, see Help)"},
   {GMSH_FULLRC, "wmCutoffsForPlots", nullptr, 10, "CUTOFFS (for plots weighted mean, see Help)"},
   // Legacy options:
@@ -325,7 +322,7 @@ std::string Plug::getHelp() const
     "across all metrics are hidden.\n"
     "-- `2': The behavior is the opposite of `1'. Elements that fail to meet the visibility "
     "criterion are made visible, while those that meet it are hidden.\n"
-    "• `visibilityCriterion': Defines what the threshold is used. Available "
+    "• `visibilityCriterion': Defines the purpose of the threshold. Available "
     "values are:\n"
     "-- `0': The threshold is the percentage of elements to make visible.\n"
     "-- `1': The threshold is the number of elements to make visible.\n"
@@ -381,46 +378,55 @@ std::string Plug::getHelp() const
     "This technique highlights critical data subsets impacting the finite "
     "element solution.\n"
     "\n"
-    "ADVANCED USE OF THE PLUGIN\n"
-    "The plugin can be used to easily compute the quality of a subset of mesh "
-    "elements by combining multiple runs. This is especially great in scripts."
+    "AN ADVANCED USE OF THE PLUGIN\n"
+    "The plugin can be used to compute the quality of a subset of mesh "
+    "elements easily, by combining multiple runs. This is especially "
+    "useful in scripts.\n"
     "A typical workflow may include the following steps:\n"
-    "1. First, run the plugin to compute a specific metric (e.g., `minJ' or `minJ/maxJ') "
-    "for all elements. Use the visibility adjustment options to make only a "
-    "subset of elements visible. For example: Set `adjustElementsVisibility' "
-    "to `1' and use `visibilityCriterion' "
-    "and `visibilityThreshold' to select specific elements. For instance, "
-    "making only the 20% smaller elements visible:\n"
+    "1. Initial run: Compute a specific metric (e.g., `minJ' or `minJ/maxJ') "
+    "for all elements and use the visibility adjustment options to make only a "
+    "subset of elements visible. For instance, to make only the 20% smallest "
+    "elements visible:\n"
     "-- `adjustElementsVisibility = 1'\n"
     "-- `visibilityPolicy = 1'\n"
     "-- `visibilityThreshold = 20'\n"
     "-- `enableMinJacDetAsAMetric = 1'\n"
-    "2. In the second run, compute the quality metrics for the visible elements. "
-    "This ensures focus on the subset of interest, avoiding computations on the "
-    "entire mesh. Set `adjustElementsVisibility' to `0' to avoid further hiding.\n"
+    "2. Second run: Compute quality metrics for the visible elements. "
+    "This focuses computations only on the subset of interest and avoids analyzing "
+    "the entire mesh. Set `adjustElementsVisibility` to `0` to prevent further changes "
+    "to visibility. In this example, Aspect quality and Distortion quality are computed, "
+    "but only Distortion quality is visualized:\n"
     "-- `enableDistortionQuality = 2'\n"
     "-- `enableAspectQuality = 1'\n"
     "-- `createElementsView = 1'\n"
     "-- `adjustElementsVisibility = 0'\n"
     "-- `restrictToVisibleElements = 1'\n"
-  //FIXME: says that compute validity but should not
-    "3. Optionally, in a final run, set back all elements to visible. "
+    "-- `smartRecomputation = 1'\n"
+    //"-- `enableMinJacDetAsAMetric = 0'\n"
+    "3. Optional final run: Use the plugin to make all elements visible again."
     "This can be achieved by setting:\n"
+    "-- `createElementsView = 0'\n"
     "-- `adjustElementsVisibility = 1'\n"
-    "-- `visibilityThreshold = 101'\n"
+    "-- `restrictToVisibleElements = 0'\n"
+    "-- `visibilityThreshold = 100'\n"
     "-- `usePreviousData = 1'\n"
     "-- `skipStatPrinting = 1'\n"
-  //FIXME: says that should compute but should not
-  //FIXME: do not set back all element visible
+    "-- `enableMinJacDetAsAMetric = 3'\n"
+    "NB: This last operation can also be performed using "
+    "built-in Gmsh functions.\n"
     "\n"
-    "This workflow allows users to filter and focus on subsets of the mesh for detailed quality analysis while maintaining flexibility to switch back to global computations when needed.\n"
-
     "FAQ\n"
     "• Q1: As the plugin has been rewritten, will my script that uses the "
     "old version fail to work?\n"
     "- A: No, although not available in the GUI, the old options have been "
     "kept as legacy options. However, it is recommended to update "
-    "the script, as these legacy options may be removed in a future release.\n";
+    "the script, as these legacy options may be removed in a future release.\n"
+    "• Q2: Why is there a `+' after Validity when the plugin says it computes that?\n"
+    "- A: The plugin actually does not compute validity exactly but instead "
+    "calculates the minimum and maximum of the Jacobian determinant. "
+    "From that, it derives four quantities: validity, element inversion, "
+    "and minJ and minJ/maxJ.\n";
+
 }
 
 PView *Plug::execute(PView *v)
