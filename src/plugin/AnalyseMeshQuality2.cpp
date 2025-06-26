@@ -921,45 +921,6 @@ void Plug::_finalizeMeasuresData(std::vector<Measures> &measures) const
   }
 }
 
-void Plug::_updateWhatToShow(const std::vector<Measures> &m)
-{
-  bool allEmpty = true;
-  for(size_t i = 0; i < m.size(); ++i)
-    if(!m[i].isValid.empty()) {allEmpty = false; break;}
-  if(allEmpty) _param.show.which[VALIDITY] = 0;
-
-  allEmpty = true;
-  for(size_t i = 0; i < m.size(); ++i)
-    if(!m[i].isInverted.empty()) {allEmpty = false; break;}
-  if(allEmpty) _param.show.which[INVERSION] = 0;
-
-  allEmpty = true;
-  for(size_t i = 0; i < m.size(); ++i)
-    if(!m[i].minJ.empty()) {allEmpty = false; break;}
-  if(allEmpty) _param.show.which[MINJAC] = 0;
-
-  allEmpty = true;
-  for(size_t i = 0; i < m.size(); ++i)
-    if(!m[i].ratioJ.empty()) {allEmpty = false; break;}
-  if(allEmpty) _param.show.which[RATIOJAC] = 0;
-
-  allEmpty = true;
-  for(size_t i = 0; i < m.size(); ++i)
-    if(!m[i].minGFit.empty()) {allEmpty = false; break;}
-  if(allEmpty) _param.show.which[GEOFIT] = 0;
-
-  allEmpty = true;
-  for(size_t i = 0; i < m.size(); ++i)
-    if(!m[i].minDisto.empty()) {allEmpty = false; break;}
-  if(allEmpty) _param.show.which[DISTO] = 0;
-
-  allEmpty = true;
-  for(size_t i = 0; i < m.size(); ++i)
-    if(!m[i].minAspect.empty()) {allEmpty = false; break;}
-  if(allEmpty) _param.show.which[ASPECT] = 0;
-
-}
-
 void Plug::_createPlots(const std::vector<Measures> &measures)
 {
   if(!_param.pview.createPlot) return;

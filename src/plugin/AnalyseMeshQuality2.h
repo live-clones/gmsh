@@ -145,7 +145,6 @@ private:
   void _decideDimensionToCheck(bool &check2D, bool &check3D) const;
   void _computeRequestedData(Counts param, bool check2D, bool check3D) const;
   void _finalizeMeasuresData(std::vector<Measures> &) const;
-  void _updateWhatToShow(const std::vector<Measures> &);
   void _createPlots(const std::vector<Measures> &);
   void _createPlotsOneMetric(const Measures &, Metric);
   void _createElementViews(const std::vector<Measures> &);
