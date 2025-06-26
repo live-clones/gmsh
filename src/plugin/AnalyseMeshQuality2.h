@@ -218,7 +218,7 @@ private:
     fullMatrix<double> _normalsToPrint;
 
   public:
-    explicit DataEntity(GEntity *ge) : _ge(ge) {}
+    explicit DataEntity(GEntity *ge) : _ge(ge) { _computeNormals(); }
     ~DataEntity()
     {
       delete _normals;
@@ -249,6 +249,7 @@ private:
   private:
     void _count(unsigned char mask, std::size_t &cnt);
     void _countCurved(std::size_t &known, std::size_t &curved);
+    void _computeNormals();
   };
 
   class StatGenerator {

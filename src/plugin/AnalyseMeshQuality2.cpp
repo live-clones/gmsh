@@ -1546,39 +1546,6 @@ size_t Plug::DataEntity::initialize(const Parameters::Computation &param)
   size_t cntRequestedChanged = 0;
   std::size_t num = _ge->getNumMeshElements();
 
-  if(num && _ge->dim() == 2) {
-    GFace *gf = _ge->cast2Face();
-    SVector3 normal;
-    if(gf->normalToPlanarMesh(normal, true)) {
-      _normals = new fullMatrix<double>(1, 3);
-      _normals->set(0, 0, normal[0]);
-      _normals->set(0, 1, normal[1]);
-      _normals->set(0, 2, normal[2]);
-    }
-  }
-  if(_normals) {
-    _normalsToPrint = fullMatrix<double>(_normals->size1(), 3);
-    const double eps = 1e-3;
-    for(int i = 0; i < _normals->size1(); ++i){
-      for(int j = 0; j < 3; ++j) {
-        double val = _normals->get(i, j);
-        val = std::round(val / eps) * eps;
-        _normalsToPrint(i, j) = val == 0.0 ? 0.0 : val;
-      }
-    }
-  }
-  // FIXME: implement if dim==1
-
-  switch(_ge->dim()) {
-  case 3:
-    _isCurvedGeo = false;
-    break;
-  case 2:
-  case 1:
-  default:
-    _isCurvedGeo = !_normals;
-  }
-
   // Step 1: Get all elements present in GEntity
   std::vector<MElement *> elements;
   elements.reserve(num);
@@ -1697,6 +1664,44 @@ void Plug::DataEntity::_countCurved(std::size_t &known, std::size_t &curved)
       ++known;
       if(isBitSet(flag, F_CURVED)) ++curved;
     }
+  }
+}
+
+void Plug::DataEntity::_computeNormals()
+{
+  std::size_t num = _ge->getNumMeshElements();
+
+  if(num && _ge->dim() == 2) {
+    GFace *gf = _ge->cast2Face();
+    SVector3 normal;
+    if(gf->normalToPlanarMesh(normal, true)) {
+      _normals = new fullMatrix<double>(1, 3);
+      _normals->set(0, 0, normal[0]);
+      _normals->set(0, 1, normal[1]);
+      _normals->set(0, 2, normal[2]);
+    }
+  }
+  if(_normals) {
+    _normalsToPrint = fullMatrix<double>(_normals->size1(), 3);
+    const double eps = 1e-3;
+    for(int i = 0; i < _normals->size1(); ++i){
+      for(int j = 0; j < 3; ++j) {
+        double val = _normals->get(i, j);
+        val = std::round(val / eps) * eps;
+        _normalsToPrint(i, j) = val == 0.0 ? 0.0 : val;
+      }
+    }
+  }
+  // FIXME: implement if dim==1
+
+  switch(_ge->dim()) {
+  case 3:
+    _isCurvedGeo = false;
+    break;
+  case 2:
+  case 1:
+  default:
+    _isCurvedGeo = !_normals;
   }
 }
 
