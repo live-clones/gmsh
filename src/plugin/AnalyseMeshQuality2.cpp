@@ -31,25 +31,34 @@
 
 // TODO:
 //  1. add enableGeoFit option
-//  2. Update Help message GUI (Explain what is smartrecompute)
+//  2. add restrictToTypeOfElement option
+//  3. Update Help message GUI (Explain what is smartrecompute)
 //       Say in help that the plugin can be used to compute jacobian, hide best
 //       elements, then compute quality (the gain is to compute quality of less
 //       elements)
-//  3. Add check + message after having fetched parameters
+//  4. Test with ctest that everything works?
+//  5. Add a method to set default value (that can be commented for
+//     development purpose). But is it possible? It cannot be in the execution
+//     of plugin, but at compilation
+
+// TODO Later:
+//  1. Add check + message after having fetched parameters
 //     - If guidance = 1: output what will be done
 //       if guidance = 0: output what will computed
 //     - If guidance = 1: warn when parameters out of bound
-//  4. Test with ctest that everything works?
-
-// TODO Maybe:
-//  1. Add validity for MLine on GEdge or GFace
+//  2. Add validity for MLine on GEdge
 //     - minJ/maxJ can be considered as a quality measure
 //     - if dimension policy=-2?
-//  2. Add more verbose messages?
-//  3. Intrinsic validity : smartreco777 for sharing element or 888 or 999
-//  4. Check if surface is curved and count differently.
+//     - also GeoFit
+//  3. Add more verbose messages?
+//  4. Make option name starting with upper case because it is the convention
+
+// TODO Maybe:
+//  1. Intrinsic validity : smartreco777 for sharing element or 888 or 999
+//  2. Check if surface is curved and count differently.
 //     For now, let all 2D together.
-//  5. Demo mode?
+//  3. Demo mode?
+//  4. Disable keep data? (dataManagementPolicy=1)
 
 // FIXME: PView are based on elements. If I remesh with a different mesh size
 //  factor, data is still there but on wrong elements.
