@@ -137,6 +137,7 @@
 namespace {
   constexpr double UNTOUCHED = -987654321;
   constexpr double MP = 9;
+  constexpr double NOTCOMPUTED = -987654321;
 }
 
 StringXNumber MeshQuality2Options_Number[] = {
@@ -866,9 +867,11 @@ void Plug::_finalizeMeasuresData(std::vector<Measures> &measures) const
   Parameters::MetricsToShow ps = _param.show;
 
   for(auto &m: measures) {
+    for(int i = 0; i < METRIC_COUNT; ++i) m.numToShow[i] = 0;
+
     if(ps.regularizeJac) {
       for(std::size_t i = 0; i < m.minJ.size(); i++) {
-        if(std::abs(m.minJ[i]) > std::abs(m.maxJ[i])) {
+        if(m.maxJ[i] != NOTCOMPUTED && std::abs(m.minJ[i]) > std::abs(m.maxJ[i])) {
           std::swap(m.minJ[i], m.maxJ[i]);
           m.minJ[i] *= -1;
           m.maxJ[i] *= -1;
@@ -885,17 +888,26 @@ void Plug::_finalizeMeasuresData(std::vector<Measures> &measures) const
       size_t k = -1;
       for(std::size_t i = 0; i < m.minJ.size(); i++) {
         if(m.isOnCurvedGeo[i]) continue;
+
         m.elementsStraightGeo[++k] = m.elements[i];
+
+        if(m.maxJ[i] == NOTCOMPUTED) {
+          if(ps.which[VALIDITY]) m.isValid[k] = NOTCOMPUTED;
+          if(ps.which[INVERSION]) m.isInverted[k] = NOTCOMPUTED;
+          continue;
+        }
 
         if(ps.which[VALIDITY]) {
           bool valid = isValid(m.minJ[i], m.maxJ[i]);
           m.isValid[k] = valid;
+          ++m.numToShow[VALIDITY];
           if(!valid) ++m.numInvalidElements;
         }
 
         if(ps.which[INVERSION]) {
           bool inverted = m.maxJ[i] < 0;
           m.isInverted[i] = inverted;
+          ++m.numToShow[INVERSION];
           if(inverted) ++m.numInvertedElements;
         }
       }
@@ -903,21 +915,43 @@ void Plug::_finalizeMeasuresData(std::vector<Measures> &measures) const
 
     if(_param.show.which[RATIOJAC]) {
       m.ratioJ.resize(m.minJ.size());
-      for(std::size_t i = 0; i < m.minJ.size(); i++)
-        m.ratioJ[i] = m.minJ[i] / m.maxJ[i];
+      for(std::size_t i = 0; i < m.minJ.size(); i++) {
+        if(m.maxJ[i] != NOTCOMPUTED) {
+          m.ratioJ[i] = m.minJ[i] / m.maxJ[i];
+          ++m.numToShow[RATIOJAC];
+        }
+        else
+          m.ratioJ[i] = NOTCOMPUTED;
+      }
     }
 
-    if(!_param.show.which[MINJAC])
+    if(_param.show.which[MINJAC]) {
+      for(size_t i = 0; i < m.minJ.size(); i++) {
+        if(m.minJ[i] != NOTCOMPUTED) ++m.numToShow[MINJAC];
+      }
+    }
+    else
       m.minJ.clear();
     m.maxJ.clear();
 
-    m.numToShow[VALIDITY] = m.isValid.size();
-    m.numToShow[INVERSION] = m.isInverted.size();
-    m.numToShow[DISTO] = m.minDisto.size();
-    m.numToShow[ASPECT] = m.minAspect.size();
-    m.numToShow[GEOFIT] = m.minGFit.size();
-    m.numToShow[RATIOJAC] = m.ratioJ.size();
-    m.numToShow[INVERSION] = m.isInverted.size();
+    if(_param.show.which[DISTO]) {
+      for(size_t i = 0; i < m.minDisto.size(); i++) {
+        if(m.minDisto[i] != NOTCOMPUTED) ++m.numToShow[DISTO];
+      }
+    }
+
+    if(_param.show.which[ASPECT]) {
+      for(size_t i = 0; i < m.minAspect.size(); i++) {
+        if(m.minAspect[i] != NOTCOMPUTED) ++m.numToShow[ASPECT];
+      }
+    }
+
+    if(_param.show.which[GEOFIT]) {
+      for(size_t i = 0; i < m.minGFit.size(); i++) {
+        if(m.minGFit[i] != NOTCOMPUTED) ++m.numToShow[GEOFIT];
+      }
+    }
+    m.maxGFit.clear();
   }
 }
 
@@ -934,7 +968,8 @@ void Plug::_createPlots(const std::vector<Measures> &measures)
 
 void Plug::_createPlotsOneMetric(const Measures &m, Metric metric)
 {
-  const std::vector<double> &values = m.getValues(metric);
+  std::vector<double> values;
+  m.getValues(metric, values);
   if(values.empty()) return;
 
   std::string s = _metricNames[metric];
@@ -971,8 +1006,9 @@ void Plug::_createElementViews(const std::vector<Measures> &measures)
 
 void Plug::_createElementViewsOneMetric(const Measures &m, Metric metric)
 {
-  const std::vector<double> &values = m.getValues(metric);
-  const std::vector<MElement *> &elements = m.getElements(metric);
+  std::vector<double> values;
+  std::vector<MElement *> elements;
+  m.getValues(metric, values, &elements);
   if(values.empty()) return;
 
   std::string s = _metricNames[metric];
@@ -1066,7 +1102,8 @@ T clamp(T val, T lower, T upper)
 void Plug::_findElementsToHide(const Measures &measure,
   Metric metric, std::set<MElement *> &elementsToHide) const
 {
-  std::vector<double> values = measure.getValues(metric);
+  std::vector<double> values;
+  measure.getValues(metric, values);
 
   double limitVal;
   size_t numVisibleElements = static_cast<size_t>(_param.hide.threshold);
@@ -1091,8 +1128,9 @@ void Plug::_findElementsToHide(const Measures &measure,
     return;
   }
 
-  const std::vector<double> &val = measure.getValues(metric);
-  const std::vector<MElement *> &elements = measure.getElements(metric);
+  std::vector<double> val;
+  std::vector<MElement *> elements;
+  measure.getValues(metric, val, &elements);
   std::set<MElement *> onLimit;
 
   for(int i = 0; i < val.size(); i++) {
@@ -1312,7 +1350,8 @@ void Plug::StatGenerator::_printStats(const Measures &measure)
 
 void Plug::StatGenerator::_printStatsOneMetric(const Measures &measure, Metric metric)
 {
-  std::vector<double> values = measure.getValues(metric);
+  std::vector<double> values;
+  measure.getValues(metric, values);
   if(values.empty()) return;
 
   size_t numElem = values.size();
@@ -1884,6 +1923,10 @@ void Plug::DataEntity::addValues(Measures &measures)
         measures.minJ.push_back(_minJ[idx]);
         measures.maxJ.push_back(_maxJ[idx]);
       }
+      else {
+        measures.minJ.push_back(NOTCOMPUTED);
+        measures.maxJ.push_back(NOTCOMPUTED);
+      }
       if(isBitUnset(_flags[idx], F_NOTORI)) {
         measures.minGFit.push_back(_minGFit[idx]);
         measures.maxGFit.push_back(_maxGFit[idx]);
@@ -1891,8 +1934,12 @@ void Plug::DataEntity::addValues(Measures &measures)
       }
       if(isBitUnset(_flags[idx], F_NOTDISTO))
         measures.minDisto.push_back(_minDisto[idx]);
+      else
+        measures.minDisto.push_back(NOTCOMPUTED);
       if(isBitUnset(_flags[idx], F_NOTASPECT))
         measures.minAspect.push_back(_minAspect[idx]);
+      else
+        measures.minAspect.push_back(NOTCOMPUTED);
     }
   }
 }
@@ -2221,7 +2268,35 @@ Plug::Measures Plug::Measures::combine(const Measures &m1, const Measures &m2, c
   return result;
 }
 
-const std::vector<double> &Plug::Measures::getValues(Metric m) const
+void Plug::Measures::getValues(Metric m, std::vector<double> &values, std::vector<MElement *> *elements) const
+{
+  const std::vector<double> &val = _getValues(m);
+  const std::vector<MElement *> &elem = _getElements(m);
+
+  if(numToShow[m] == val.size()) {
+    values = val;
+    if(elements) *elements = elem;
+    return;
+  }
+
+  // Filter the values
+  values.resize(numToShow[m]);
+  if(elements) elements->resize(numToShow[m]);
+
+  int k = 0;
+  for (size_t i = 0; i < val.size(); ++i) {
+    if (values[i] != NOTCOMPUTED) {
+      values[k] = val[i];
+      if (elements) (*elements)[k] = elem[i];
+      ++k;
+    }
+  }
+
+  if(k != numToShow[m])
+    _error(0, "Internal error: not all values have been computed");
+}
+
+const std::vector<double> &Plug::Measures::_getValues(Metric m) const
 {
   switch(m) {
   case VALIDITY:
@@ -2244,7 +2319,7 @@ const std::vector<double> &Plug::Measures::getValues(Metric m) const
   return maxJ; // to avoid compiler warning
 }
 
-const std::vector<MElement *> &Plug::Measures::getElements(Metric m) const
+const std::vector<MElement *> &Plug::Measures::_getElements(Metric m) const
 {
   if(m == GEOFIT)
     return elementsGFit;

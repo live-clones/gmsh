@@ -326,8 +326,9 @@ private:
     std::size_t numToShow[7]{};
 
     static Measures combine(const Measures &, const Measures &, const char *name, const char *shortName);
-    const std::vector<double> &getValues(Metric m) const;
-    const std::vector<MElement *> &getElements(Metric m) const;
+    const std::vector<double> &_getValues(Metric m) const;
+    const std::vector<MElement *> &_getElements(Metric m) const;
+    void getValues(Metric m, std::vector<double> &values, std::vector<MElement *> *filteredElements = nullptr) const;
   };
 
   struct Key {
