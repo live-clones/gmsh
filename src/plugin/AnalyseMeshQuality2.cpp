@@ -851,7 +851,7 @@ void Plug::_computeRequestedData(Counts counts, bool check2D, bool check3D) cons
     }
   }
 
-  _status(0, "Done computing data");
+  _status(0, "-> Done computing data");
 }
 
 bool isValid(double minJ, double maxJ)
@@ -1554,8 +1554,8 @@ size_t Plug::DataEntity::initialize(const Parameters::Computation &param)
   }
 
   // Step 2: Reset data if needed
-  bool resetData = !param.smartRecompute;
-  if(param.smartRecompute) {
+  bool resetData = !param.smartRecompute && !param.skip;
+  if(!param.skip && param.smartRecompute) {
     if(num != _mapElemToIndex.size()) {
       resetData = true;
     }
@@ -1628,16 +1628,18 @@ void Plug::DataEntity::count(const Parameters::Computation &param, Counts &count
     _numToCompute[i] = 0;
 
   // Count number of elements to compute
-  if (!_isCurvedGeo && param.jacobian)
-    _count(F_REQU | F_NOTJAC, _numToCompute[0]);
-  if (_isCurvedGeo && param.jacobianOnCurvedGeo)
-    _count(F_REQU | F_NOTJAC, _numToCompute[1]);
-  if (param.disto)
-    _count(F_REQU | F_NOTDISTO, _numToCompute[2]);
-  if (param.aspect)
-    _count(F_REQU | F_NOTASPECT, _numToCompute[3]);
-  if (param.geofit && _isCurvedGeo)
-    _count(F_REQU | F_NOTORI, _numToCompute[4]);
+  if(!param.skip) {
+    if (!_isCurvedGeo && param.jacobian)
+      _count(F_REQU | F_NOTJAC, _numToCompute[0]);
+    if (_isCurvedGeo && param.jacobianOnCurvedGeo)
+      _count(F_REQU | F_NOTJAC, _numToCompute[1]);
+    if (param.disto)
+      _count(F_REQU | F_NOTDISTO, _numToCompute[2]);
+    if (param.aspect)
+      _count(F_REQU | F_NOTASPECT, _numToCompute[3]);
+    if (param.geofit && _isCurvedGeo)
+      _count(F_REQU | F_NOTORI, _numToCompute[4]);
+  }
 
   for(int i = 0; i < metricsCount; ++i) {
     counts.elToCompute[i] += _numToCompute[i];
