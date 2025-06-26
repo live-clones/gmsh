@@ -82,8 +82,8 @@ private:
     bool check2D = false;
     bool check3D = false;
   };
-  enum Metric { VALIDITY, INVERSION, GEOFIT, DISTO, ASPECT, RATIOJAC, MINJAC };
-  static const std::array<std::string, 7> _metricNames;
+  enum Metric { VALIDITY, INVERSION, GEOFIT, DISTO, ASPECT, RATIOJAC, MINJAC, METRIC_COUNT};
+  static const std::array<std::string, METRIC_COUNT> _metricNames;
 
 
 private:
@@ -282,7 +282,7 @@ private:
 
   private:
     void _unpackCutoff(double input, std::vector<double> &cutoffs) const;
-    void _printStats(const Parameters::MetricsToShow &param, const Measures &measure);
+    void _printStats(const Measures &measure);
     void _printStatsOneMetric(const Measures &measure, Metric metric);
     const std::vector<double> &_getCoefficients(double cutoff, size_t num);
     void _computeCoefficients(double cutoff, size_t sz, std::vector<double> &);
@@ -323,7 +323,7 @@ private:
     std::vector<MElement *> elementsStraightGeo;
     size_t numInvalidElements;
     size_t numInvertedElements;
-    std::size_t sizes[7]{};
+    std::size_t numToShow[7]{};
 
     static Measures combine(const Measures &, const Measures &, const char *name, const char *shortName);
     const std::vector<double> &getValues(Metric m) const;

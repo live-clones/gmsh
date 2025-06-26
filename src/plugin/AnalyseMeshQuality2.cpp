@@ -911,13 +911,13 @@ void Plug::_finalizeMeasuresData(std::vector<Measures> &measures) const
       m.minJ.clear();
     m.maxJ.clear();
 
-    m.sizes[VALIDITY] = m.isValid.size();
-    m.sizes[INVERSION] = m.isInverted.size();
-    m.sizes[DISTO] = m.minDisto.size();
-    m.sizes[ASPECT] = m.minAspect.size();
-    m.sizes[GEOFIT] = m.minGFit.size();
-    m.sizes[RATIOJAC] = m.ratioJ.size();
-    m.sizes[INVERSION] = m.isInverted.size();
+    m.numToShow[VALIDITY] = m.isValid.size();
+    m.numToShow[INVERSION] = m.isInverted.size();
+    m.numToShow[DISTO] = m.minDisto.size();
+    m.numToShow[ASPECT] = m.minAspect.size();
+    m.numToShow[GEOFIT] = m.minGFit.size();
+    m.numToShow[RATIOJAC] = m.ratioJ.size();
+    m.numToShow[INVERSION] = m.isInverted.size();
   }
 }
 
@@ -1169,13 +1169,12 @@ void Plug::StatGenerator::printStats(const Parameters &param,
 {
   if(param.show.skipStats) return;
 
-  size_t totalNumberToShow[7]{};
+  size_t totalNumberToShow[METRIC_COUNT]{};
   for(auto m: measures) {
-    for(int i = 0; i < 7; i++)
-      totalNumberToShow[i] += m.sizes[i];
+    for(int i = 0; i < METRIC_COUNT; i++)
+      totalNumberToShow[i] += m.numToShow[i];
   }
 
-  // const int *which = param.show.which;
   int cntQuality = 0;
   for (int i = DISTO; i <= MINJAC; ++i) {
     cntQuality += totalNumberToShow[i];
@@ -1228,8 +1227,9 @@ void Plug::StatGenerator::printStats(const Parameters &param,
              "mean because it emphasizes the worst elements, which are critical "
              "as they can negatively impact the Finite Element solution. "
              "Note that the standard mean corresponds to Wm50.");
+
   for(auto &measure: measures) {
-    _printStats(param.show, measure);
+    _printStats(measure);
   }
 }
 
@@ -1262,14 +1262,14 @@ void Plug::StatGenerator::_unpackCutoff(double input,
   std::sort(cutoffs.begin(), cutoffs.end());
 }
 
-void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, const Measures &measure)
+void Plug::StatGenerator::_printStats(const Measures &measure)
 {
   _info(MP, "-> Statistics for %s:", measure.dimStr);
 
   // Header
   bool haveQualityToPrint = false;
   for(int i = GEOFIT; i <= MINJAC; ++i) {
-    if(measure.sizes[i]) haveQualityToPrint = true;
+    if(measure.numToShow[i]) haveQualityToPrint = true;
   }
   if(haveQualityToPrint) {
     std::ostringstream columnNamesStream;
@@ -1286,12 +1286,12 @@ void Plug::StatGenerator::_printStats(const Parameters::MetricsToShow &show, con
   }
 
   for(int i = GEOFIT; i <= MINJAC; i++) {
-    if(measure.sizes[i])
+    if(measure.numToShow[i])
       _printStatsOneMetric(measure, static_cast<Metric>(i));
   }
 
   // Validity
-  if(!measure.sizes[VALIDITY] && !measure.sizes[INVERSION]) return;
+  if(!measure.numToShow[VALIDITY] && !measure.numToShow[INVERSION]) return;
 
   double numElement = static_cast<double>(measure.elements.size());
   double percentageInvalid = static_cast<double>(measure.numInvalidElements) / numElement * 100;
@@ -2215,8 +2215,8 @@ Plug::Measures Plug::Measures::combine(const Measures &m1, const Measures &m2, c
   result.dimStrShort = shortName;
   result.numInvalidElements = m1.numInvalidElements + m2.numInvalidElements;
   result.numInvertedElements = m1.numInvertedElements + m2.numInvalidElements;
-  for(int i = 0; i < 7; ++i) {
-    result.sizes[i] = m1.sizes[i] + m2.sizes[i];
+  for(int i = 0; i < METRIC_COUNT; ++i) {
+    result.numToShow[i] = m1.numToShow[i] + m2.numToShow[i];
   }
   return result;
 }
