@@ -12,13 +12,13 @@
 #include "FieldFromAmplitudePhase.h"
 
 StringXNumber FieldFromAmplitudePhaseOptions_Number[] = {
-  {GMSH_FULLRC, "Wavenumber", nullptr, 5.},
-  {GMSH_FULLRC, "AmplitudeView", nullptr, 0.},
-  {GMSH_FULLRC, "PhaseView", nullptr, 1.},
+  {GMSH_FULLRC, "Wavenumber", nullptr, 5., ""},
+  {GMSH_FULLRC, "AmplitudeView", nullptr, 0., ""},
+  {GMSH_FULLRC, "PhaseView", nullptr, 1., ""},
 };
 
 StringXString FieldFromAmplitudePhaseOptions_String[] = {
-  {GMSH_FULLRC, "MeshFile", nullptr, "fine.msh"}};
+  {GMSH_FULLRC, "MeshFile", nullptr, "fine.msh", ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterFieldFromAmplitudePhasePlugin()

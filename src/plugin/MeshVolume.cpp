@@ -8,8 +8,8 @@
 #include "PViewOptions.h"
 
 StringXNumber MeshVolumeOptions_Number[] = {
-  {GMSH_FULLRC, "PhysicalGroup", nullptr, -1},
-  {GMSH_FULLRC, "Dimension", nullptr, 3}};
+  {GMSH_FULLRC, "PhysicalGroup", nullptr, -1, ""},
+  {GMSH_FULLRC, "Dimension", nullptr, 3, ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterMeshVolumePlugin()

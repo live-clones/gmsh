@@ -242,6 +242,7 @@ namespace BoundaryLayerCurver {
         }
         return _linearTriangle2[order];
       }
+      return new fullMatrix<double>();
     }
 
     const fullMatrix<double> *quadrangle(int order, bool linear)
@@ -459,7 +460,7 @@ namespace BoundaryLayerCurver {
     std::map<MEdge, int, MEdgeLessThan> edge2element;
     for(std::size_t i = 0; i < bndEl2column.size(); ++i) {
       MElement *el = bndEl2column[i].first;
-      for(std::size_t j = 0; j < el->getNumEdges(); ++j) {
+      for(int j = 0; j < el->getNumEdges(); ++j) {
         MEdge e = el->getEdge(j);
         auto it = edge2element.find(e);
         if(it != edge2element.end()) {
@@ -479,13 +480,13 @@ namespace BoundaryLayerCurver {
   {
     // NB: f1 == f2 will return true for "twisted" quad (having same vertices
     // but the quads are different)
-    int nVertices = f1.getNumVertices();
+    size_t nVertices = f1.getNumVertices();
     if(f2.getNumVertices() != nVertices) return false;
 
     MVertex *v = f1.getVertex(0);
 
     // Find the vertex in f2
-    int k = 0;
+    size_t k = 0;
     while(k < nVertices && f2.getVertex(k) != v) ++k;
     if(k == nVertices) return false;
 
@@ -500,7 +501,7 @@ namespace BoundaryLayerCurver {
       inc = -1;
     if(inc == 0) return false;
 
-    for(int i = 2; i < nVertices; ++i) {
+    for(size_t i = 2; i < nVertices; ++i) {
       if(f1.getVertex(i) != f2.getVertex((k + nVertices + inc * i) % nVertices))
         return false;
     }
@@ -524,7 +525,7 @@ namespace BoundaryLayerCurver {
 
   bool faceContainsVertex(const MFace &f, const MVertex *v)
   {
-    for(int i = 0; i < f.getNumVertices(); ++i) {
+    for(size_t i = 0; i < f.getNumVertices(); ++i) {
       if(f.getVertex(i) == v) return true;
     }
     return false;
@@ -536,7 +537,7 @@ namespace BoundaryLayerCurver {
     MVertex *v1 = e.getMaxVertex();
     bool v0In = false;
     bool v1In = false;
-    for(int i = 0; i < f.getNumVertices(); ++i) {
+    for(size_t i = 0; i < f.getNumVertices(); ++i) {
       if(f.getVertex(i) == v0) v0In = true;
       if(f.getVertex(i) == v1) v1In = true;
     }
@@ -670,7 +671,7 @@ namespace BoundaryLayerCurver {
 
     // Compute interface
     interface.clear();
-    for(int i = 0; i < stackElements.size() - 1; ++i) {
+    for(size_t i = 0; i < stackElements.size() - 1; ++i) {
       MVertex *v0 = interfacePrimaryVertices[2 * i + 0];
       MVertex *v1 = interfacePrimaryVertices[2 * i + 1];
       MVertex *v2 = interfacePrimaryVertices[2 * i + 3];
@@ -898,7 +899,7 @@ namespace BoundaryLayerCurver {
     fullMatrix<double> newxyz(orderCurve + 1, 3);
     data->invA.mult(xyz, newxyz);
 
-    for(int i = 2; i < topEdge.getNumVertices(); ++i) {
+    for(size_t i = 2; i < topEdge.getNumVertices(); ++i) {
       MVertex *v = topEdge.getVertex(i);
       v->x() = newxyz(i, 0);
       v->y() = newxyz(i, 1);
@@ -977,7 +978,7 @@ namespace BoundaryLayerCurver {
       case 1: factor = (v->y() - vbot->y()) / dY; break;
       case 2: factor = (v->z() - vbot->z()) / dZ; break;
       }
-      for(int j = 2; j < e.getNumVertices(); ++j) {
+      for(size_t j = 2; j < e.getNumVertices(); ++j) {
         MVertex *vbot = baseEdge.getVertex(j);
         MVertex *vtop = topEdge.getVertex(j);
         MVertex *v = e.getVertex(j);
@@ -1128,7 +1129,7 @@ namespace BoundaryLayerCurver {
     fullMatrix<double> newxyz(data->invA.size1(), 3);
     data->invA.mult(xyz, newxyz);
 
-    for(int i = nVerticesBoundary; i < topFace.getNumVertices(); ++i) {
+    for(size_t i = nVerticesBoundary; i < topFace.getNumVertices(); ++i) {
       MVertex *v = topFace.getVertex(i);
       v->x() = newxyz(i, 0);
       v->y() = newxyz(i, 1);
@@ -1167,7 +1168,7 @@ namespace BoundaryLayerCurver {
       case 1: factor = (v->y() - vbot->y()) / dY; break;
       case 2: factor = (v->z() - vbot->z()) / dZ; break;
       }
-      for(int j = f.getNumVerticesOnBoundary(); j < f.getNumVertices(); ++j) {
+      for(size_t j = f.getNumVerticesOnBoundary(); j < f.getNumVertices(); ++j) {
         MVertex *vbot = baseFace.getVertex(j);
         MVertex *vtop = topFace.getVertex(j);
         MVertex *v = f.getVertex(j);
@@ -1182,7 +1183,7 @@ namespace BoundaryLayerCurver {
                                const fullMatrix<double> &placement)
   {
     int start = el->getNumVertices() - el->getNumVolumeVertices();
-    for(int i = start; i < el->getNumVertices(); ++i) {
+    for(size_t i = start; i < el->getNumVertices(); ++i) {
       MVertex *v = el->getVertex(i);
       v->x() = 0;
       v->y() = 0;
@@ -1269,7 +1270,7 @@ void curve3DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
   BoundaryLayerCurver::curveColumns(bndEl2column, boundary);
 
   //  Msg::Info("size %d", bndEl2column.size());
-  for(int i = 0; i < bndEl2column.size(); ++i) {
+  for(size_t i = 0; i < bndEl2column.size(); ++i) {
     bndEl2column[i].first->setVisibility(1);
     //    Msg::Info("el %d, size %d", bndEl2column[i].first->getNum(),
     //    bndEl2column[i].second.size());

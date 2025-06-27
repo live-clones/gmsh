@@ -15,13 +15,13 @@
 using namespace std;
 
 StringXNumber SpanningTreeOptions_Number[] = {
-  {GMSH_FULLRC, "OutputPhysical", nullptr, -1},
+  {GMSH_FULLRC, "OutputPhysical", nullptr, -1, ""},
 };
 
 StringXString SpanningTreeOptions_String[] = {
-  {GMSH_FULLRC, "PhysicalVolumes", nullptr, ""},
-  {GMSH_FULLRC, "PhysicalSurfaces", nullptr, ""},
-  {GMSH_FULLRC, "PhysicalCurves", nullptr, ""},
+  {GMSH_FULLRC, "PhysicalVolumes", nullptr, "", ""},
+  {GMSH_FULLRC, "PhysicalSurfaces", nullptr, "", ""},
+  {GMSH_FULLRC, "PhysicalCurves", nullptr, "", ""},
 };
 
 extern "C" {

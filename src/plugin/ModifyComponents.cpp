@@ -11,22 +11,22 @@
 #include "mathEvaluator.h"
 
 StringXNumber ModifyComponentsOptions_Number[] = {
-  {GMSH_FULLRC, "TimeStep", nullptr, -1.},
-  {GMSH_FULLRC, "View", nullptr, -1.},
-  {GMSH_FULLRC, "OtherTimeStep", nullptr, -1.},
-  {GMSH_FULLRC, "OtherView", nullptr, -1.},
-  {GMSH_FULLRC, "ForceInterpolation", nullptr, 0.}};
+  {GMSH_FULLRC, "TimeStep", nullptr, -1., ""},
+  {GMSH_FULLRC, "View", nullptr, -1., ""},
+  {GMSH_FULLRC, "OtherTimeStep", nullptr, -1., ""},
+  {GMSH_FULLRC, "OtherView", nullptr, -1., ""},
+  {GMSH_FULLRC, "ForceInterpolation", nullptr, 0., ""}};
 
 StringXString ModifyComponentsOptions_String[] = {
-  {GMSH_FULLRC, "Expression0", nullptr, "v0 * Sin(x)"},
-  {GMSH_FULLRC, "Expression1", nullptr, ""},
-  {GMSH_FULLRC, "Expression2", nullptr, ""},
-  {GMSH_FULLRC, "Expression3", nullptr, ""},
-  {GMSH_FULLRC, "Expression4", nullptr, ""},
-  {GMSH_FULLRC, "Expression5", nullptr, ""},
-  {GMSH_FULLRC, "Expression6", nullptr, ""},
-  {GMSH_FULLRC, "Expression7", nullptr, ""},
-  {GMSH_FULLRC, "Expression8", nullptr, ""}};
+  {GMSH_FULLRC, "Expression0", nullptr, "v0 * Sin(x)", ""},
+  {GMSH_FULLRC, "Expression1", nullptr, "", ""},
+  {GMSH_FULLRC, "Expression2", nullptr, "", ""},
+  {GMSH_FULLRC, "Expression3", nullptr, "", ""},
+  {GMSH_FULLRC, "Expression4", nullptr, "", ""},
+  {GMSH_FULLRC, "Expression5", nullptr, "", ""},
+  {GMSH_FULLRC, "Expression6", nullptr, "", ""},
+  {GMSH_FULLRC, "Expression7", nullptr, "", ""},
+  {GMSH_FULLRC, "Expression8", nullptr, "", ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterModifyComponentsPlugin()

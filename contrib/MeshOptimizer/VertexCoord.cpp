@@ -166,7 +166,7 @@ namespace {
 } // namespace
 
 VertexCoordLocalLine::VertexCoordLocalLine(MVertex *v)
-  : dir(0.), x0(v->x()), y0(v->y()), z0(v->z())
+  : x0(v->x()), y0(v->y()), z0(v->z()), dir(0.)
 {
   GEntity *ge = v->onWhat();
   const unsigned nEl = ge->getNumMeshElements();

@@ -15,10 +15,10 @@
 int GMSH_ProbePlugin::iview = 0;
 
 StringXNumber ProbeOptions_Number[] = {
-  {GMSH_FULLRC, "X", GMSH_ProbePlugin::callbackX, 0.},
-  {GMSH_FULLRC, "Y", GMSH_ProbePlugin::callbackY, 0.},
-  {GMSH_FULLRC, "Z", GMSH_ProbePlugin::callbackZ, 0.},
-  {GMSH_FULLRC, "View", nullptr, -1.},
+  {GMSH_FULLRC, "X", GMSH_ProbePlugin::callbackX, 0., ""},
+  {GMSH_FULLRC, "Y", GMSH_ProbePlugin::callbackY, 0., ""},
+  {GMSH_FULLRC, "Z", GMSH_ProbePlugin::callbackZ, 0., ""},
+  {GMSH_FULLRC, "View", nullptr, -1., ""},
 };
 
 extern "C" {

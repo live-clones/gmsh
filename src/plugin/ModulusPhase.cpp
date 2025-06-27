@@ -6,9 +6,9 @@
 #include "ModulusPhase.h"
 
 StringXNumber ModulusPhaseOptions_Number[] = {
-  {GMSH_FULLRC, "RealPart", nullptr, 0.},
-  {GMSH_FULLRC, "ImaginaryPart", nullptr, 1.},
-  {GMSH_FULLRC, "View", nullptr, -1.}};
+  {GMSH_FULLRC, "RealPart", nullptr, 0., ""},
+  {GMSH_FULLRC, "ImaginaryPart", nullptr, 1., ""},
+  {GMSH_FULLRC, "View", nullptr, -1., ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterModulusPhasePlugin()

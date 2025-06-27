@@ -350,7 +350,7 @@ namespace netgen
 	graderr += (1/(h*h) - h*h/(ll3*ll3)) * gradll3;
       }
 
-    double errpow;
+    double errpow{0.0};
 
     double teterrpow = mp.opterrpow;
     if(teterrpow < 1) teterrpow = 1;

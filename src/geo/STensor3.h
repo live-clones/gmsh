@@ -61,6 +61,14 @@ public:
     for(int i = 0; i < 6; i++) _val[i] *= other;
     return *this;
   }
+  SMetric3& operator=(const SMetric3& other) {
+  if (this != &other) {
+    for (int i = 0; i < 6; ++i) {
+      _val[i] = other._val[i];
+    }
+  }
+  return *this;
+  }
   SMetric3 &operator*=(const SMetric3 &other);
   SMetric3 transform(fullMatrix<double> &V);
   void eig(fullMatrix<double> &V, fullVector<double> &S, bool s = false) const;
