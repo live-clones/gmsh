@@ -7,7 +7,7 @@
 #include "shapeFunctions.h"
 #include "GmshDefines.h"
 
-StringXNumber CurlOptions_Number[] = {{GMSH_FULLRC, "View", nullptr, -1.}};
+StringXNumber CurlOptions_Number[] = {{GMSH_FULLRC, "View", nullptr, -1., ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterCurlPlugin() { return new GMSH_CurlPlugin(); }

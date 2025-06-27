@@ -22,15 +22,15 @@
 #endif
 
 StringXNumber SimplePartitionOptions_Number[] = {
-  {GMSH_FULLRC, "NumSlicesX", nullptr, 4.},
-  {GMSH_FULLRC, "NumSlicesY", nullptr, 1.},
-  {GMSH_FULLRC, "NumSlicesZ", nullptr, 1.}
+  {GMSH_FULLRC, "NumSlicesX", nullptr, 4., ""},
+  {GMSH_FULLRC, "NumSlicesY", nullptr, 1., ""},
+  {GMSH_FULLRC, "NumSlicesZ", nullptr, 1., ""}
 };
 
 StringXString SimplePartitionOptions_String[] = {
-  {GMSH_FULLRC, "MappingX", nullptr, "t"},
-  {GMSH_FULLRC, "MappingY", nullptr, "t"},
-  {GMSH_FULLRC, "MappingZ", nullptr, "t"}
+  {GMSH_FULLRC, "MappingX", nullptr, "t", ""},
+  {GMSH_FULLRC, "MappingY", nullptr, "t", ""},
+  {GMSH_FULLRC, "MappingZ", nullptr, "t", ""}
 };
 
 extern "C" {

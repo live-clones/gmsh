@@ -7,7 +7,7 @@
 #include "shapeFunctions.h"
 #include "GmshDefines.h"
 
-StringXNumber GradientOptions_Number[] = {{GMSH_FULLRC, "View", nullptr, -1.}};
+StringXNumber GradientOptions_Number[] = {{GMSH_FULLRC, "View", nullptr, -1., ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterGradientPlugin() { return new GMSH_GradientPlugin(); }

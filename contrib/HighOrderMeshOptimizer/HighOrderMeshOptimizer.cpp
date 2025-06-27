@@ -82,7 +82,7 @@ void exportMeshToDassault(GModel *gm, const std::string &fn, int dim)
       for(size_t i = 0; i < tris.size(); i++) {
         MTriangle *t = tris[i];
         fprintf(f, "%d ", count++);
-        for(int j = 0; j < t->getNumVertices(); j++) {
+        for(size_t j = 0; j < t->getNumVertices(); j++) {
           fprintf(f, "%ld ", t->getVertex(j)->getIndex());
         }
         fprintf(f, "\n");
@@ -100,7 +100,7 @@ void exportMeshToDassault(GModel *gm, const std::string &fn, int dim)
       for(size_t i = 0; i < l.size(); i++) {
         MLine *t = l[i];
         fprintf(f, "%d ", count++);
-        for(int j = 0; j < t->getNumVertices(); j++) {
+        for(size_t j = 0; j < t->getNumVertices(); j++) {
           fprintf(f, "%ld ", t->getVertex(j)->getIndex());
         }
         fprintf(f, "%d \n", (*ite)->tag());

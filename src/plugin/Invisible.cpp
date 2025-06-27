@@ -7,15 +7,15 @@
 #include "Invisible.h"
 
 StringXNumber InvisibleOptions_Number[] = {
-  {GMSH_FULLRC, "DeleteElements", nullptr, 1.},
-  {GMSH_FULLRC, "ReverseElements", nullptr, 0.},
-  {GMSH_FULLRC, "XMin", nullptr, 0.},
-  {GMSH_FULLRC, "YMin", nullptr, 0.},
-  {GMSH_FULLRC, "ZMin", nullptr, 0.},
-  {GMSH_FULLRC, "XMax", nullptr, 0.},
-  {GMSH_FULLRC, "YMax", nullptr, 0.},
-  {GMSH_FULLRC, "ZMax", nullptr, 0.},
-  {GMSH_FULLRC, "Inside", nullptr, 0.}
+  {GMSH_FULLRC, "DeleteElements", nullptr, 1., ""},
+  {GMSH_FULLRC, "ReverseElements", nullptr, 0., ""},
+  {GMSH_FULLRC, "XMin", nullptr, 0., ""},
+  {GMSH_FULLRC, "YMin", nullptr, 0., ""},
+  {GMSH_FULLRC, "ZMin", nullptr, 0., ""},
+  {GMSH_FULLRC, "XMax", nullptr, 0., ""},
+  {GMSH_FULLRC, "YMax", nullptr, 0., ""},
+  {GMSH_FULLRC, "ZMax", nullptr, 0., ""},
+  {GMSH_FULLRC, "Inside", nullptr, 0., ""}
 };
 
 extern "C" {

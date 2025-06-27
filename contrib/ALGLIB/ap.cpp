@@ -2091,9 +2091,9 @@ static ae_int_t _ae_char2sixbits_tbl[] = {
     43, 44, 45, 46, 47, 48, 49, 50,
     51, 52, 53, 54, 55, 56, 57, 58,
     59, 60, 61, -1, -1, -1, -1, -1 };
-ae_int_t ae_char2sixbits(char c)
+ae_int_t ae_char2sixbits(unsigned char c)
 {
-    return (c>=0 && c<127) ? _ae_char2sixbits_tbl[c] : -1;
+    return (c<127) ? _ae_char2sixbits_tbl[c] : -1;
 }
 
 /************************************************************************

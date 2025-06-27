@@ -7,12 +7,12 @@
 #include "Numeric.h"
 
 StringXNumber ExtractElementsOptions_Number[] = {
-  {GMSH_FULLRC, "MinVal", nullptr, 0.},
-  {GMSH_FULLRC, "MaxVal", nullptr, 0.},
-  {GMSH_FULLRC, "TimeStep", nullptr, 0.},
-  {GMSH_FULLRC, "Visible", nullptr, 1.},
-  {GMSH_FULLRC, "Dimension", nullptr, -1.},
-  {GMSH_FULLRC, "View", nullptr, -1.}};
+  {GMSH_FULLRC, "MinVal", nullptr, 0., ""},
+  {GMSH_FULLRC, "MaxVal", nullptr, 0., ""},
+  {GMSH_FULLRC, "TimeStep", nullptr, 0., ""},
+  {GMSH_FULLRC, "Visible", nullptr, 1., ""},
+  {GMSH_FULLRC, "Dimension", nullptr, -1., ""},
+  {GMSH_FULLRC, "View", nullptr, -1., ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterExtractElementsPlugin()

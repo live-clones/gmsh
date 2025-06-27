@@ -14,7 +14,7 @@
 #include <MTriangle.h>
 
 StringXNumber DiscretizationErrorOptions_Number[] = {
-  {GMSH_FULLRC, "SuperSamplingNodes", nullptr, 10.}};
+  {GMSH_FULLRC, "SuperSamplingNodes", nullptr, 10., ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterDiscretizationErrorPlugin()

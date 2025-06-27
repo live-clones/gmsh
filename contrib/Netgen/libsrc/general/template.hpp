@@ -146,6 +146,13 @@ public:
 
   ///
 
+  INDEX_2& operator=(const INDEX_2& other) {
+    if (this != &other) {
+      i[0] = other.i[0];
+      i[1] = other.i[1];
+    }
+    return *this;
+  }
 
   INDEX_2 Sort ()
   {
@@ -204,6 +211,15 @@ public:
   ///
   INDEX_3 (const INDEX_3 & in2)
     { i[0] = in2.i[0]; i[1] = in2.i[1]; i[2] = in2.i[2]; }
+
+  INDEX_3& operator=(const INDEX_3& other) {
+    if (this != &other) {
+      i[0] = other.i[0];
+      i[1] = other.i[1];
+      i[2] = other.i[2];
+    }
+    return *this;
+  }
 
 
   static INDEX_3 Sort (INDEX_3 i3)
@@ -273,6 +289,17 @@ public:
   ///
   INDEX_4 (const INDEX_4 & in2)
     { i[0] = in2.i[0]; i[1] = in2.i[1]; i[2] = in2.i[2]; i[3] = in2.i[3]; }
+
+
+  INDEX_4& operator=(const INDEX_4& other) {
+    if (this != &other) {
+      i[0] = other.i[0];
+      i[1] = other.i[1];
+      i[2] = other.i[2];
+      i[3] = other.i[3];
+    }
+    return *this;
+  }
 
   ///
   void Sort ();

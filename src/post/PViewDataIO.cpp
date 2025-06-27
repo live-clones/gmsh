@@ -176,7 +176,7 @@ bool PViewData::writePOS(const std::string &fileName, bool binary, bool parsed,
           if(hasTimeStep(step)) {
             for(int nod = 0; nod < numNod; nod++) {
               for(int comp = 0; comp < numComp; comp++) {
-                double val;
+                double val = 0.0;
                 getValue(step, ent, ele, nod, comp, val);
                 if(first) {
                   fprintf(fp, "){%.16g", val);

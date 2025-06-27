@@ -656,6 +656,16 @@ namespace netgen
     ///
     const Box3d& operator+=(const Box3d& b);
 
+    Box3d& operator=(const Box3d& other) {
+      if (this != &other) {
+        for (int i = 0; i < 3; ++i) {
+          minx[i] = other.minx[i];
+          maxx[i] = other.maxx[i];
+        }
+      }
+      return *this;
+    }
+
     ///
     Point3d MaxCoords() const;
     ///

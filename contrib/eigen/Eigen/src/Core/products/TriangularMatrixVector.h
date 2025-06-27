@@ -125,6 +125,11 @@ EIGEN_DONT_INLINE void triangular_matrix_vector_product<Index,Mode,LhsScalar,Con
     typedef const_blas_data_mapper<LhsScalar,Index,RowMajor> LhsMapper;
     typedef const_blas_data_mapper<RhsScalar,Index,RowMajor> RhsMapper;
 
+    // Explicitly initialize res to zero before accumulation
+    for (Index i = 0; i < rows; ++i) {
+      res.coeffRef(i) = 0;
+    }
+
     for (Index pi=0; pi<diagSize; pi+=PanelWidth)
     {
       Index actualPanelWidth = (std::min)(PanelWidth, diagSize-pi);
