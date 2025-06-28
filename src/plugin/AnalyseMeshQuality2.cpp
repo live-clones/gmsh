@@ -44,7 +44,7 @@
 //     about the subject.
 //  x. Automatically set 'Custom' range mode for element view + move that out
 //     of plot constructor
-//  8. Number of hidden/made visible element in human readable format if
+//  x. Number of hidden/made visible element in human readable format if
 //     verbose < 1. Or if verbose = 2, then give exact number?
 //  x. Change name of regularizeDeterminant (treatFlippedAsValid?) and make
 //     it change also GeoFit
@@ -229,6 +229,24 @@ int Plug::_verbose = 0;
 const std::array<std::string, 7> Plug::_metricNames = {
   "Validity", "Unflip", "GeoFit", "Disto", "Aspect", "MinJ/maxJ", "MinJac"
 };
+
+std::string formatNumber(size_t value) {
+  std::ostringstream formatted;
+  if (value < 10000) {
+    // Normal output if below 10,000
+    formatted << value;
+  }
+  else if (value < 1000000) {
+    formatted << std::setprecision(3) << (value / 1000.0) << "k";
+  }
+  else if (value < 1000000000) {
+    formatted << std::setprecision(3) << (value / 1000000.0) << "M";
+  }
+  else {
+    formatted << std::setprecision(3) << (value / 1000000000.0) << "B";
+  }
+  return formatted.str();
+}
 
 // ======== Plugin: Base class methods =========================================
 // =============================================================================
@@ -1142,11 +1160,12 @@ bool Plug::_performHiding(const std::vector<Measures> &measures)
   }
 
   if(countHidden && countMadeVisible)
-    _info(0, "-> %zu elements have been made visible, %zu have been hidden.", countMadeVisible, countHidden);
+    _info(0, "-> %s elements have been made visible, %s have been hidden.",
+      formatNumber(countMadeVisible).c_str(), formatNumber(countHidden).c_str());
   else if (countHidden)
-    _info(0, "-> %zu elements have been hidden.", countHidden);
+    _info(0, "-> %s elements have been hidden.", formatNumber(countHidden).c_str());
   else if (countMadeVisible)
-    _info(0, "-> %zu elements have been made visible.", countMadeVisible);
+    _info(0, "-> %s elements have been made visible.", formatNumber(countMadeVisible).c_str());
 
   return static_cast<bool>(countHidden + countMadeVisible);
 }
@@ -2016,24 +2035,6 @@ void Plug::DataEntity::addValues(Measures &measures)
 
 // ======== Plugin: User Messages ==============================================
 // =============================================================================
-
-std::string formatNumber(size_t value) {
-  std::ostringstream formatted;
-  if (value < 10000) {
-    // Normal output if below 10,000
-    formatted << value;
-  }
-  else if (value < 1000000) {
-    formatted << std::setprecision(3) << (value / 1000.0) << "k";
-  }
-  else if (value < 1000000000) {
-    formatted << std::setprecision(3) << (value / 1000000.0) << "M";
-  }
-  else {
-    formatted << std::setprecision(3) << (value / 1000000000.0) << "B";
-  }
-  return formatted.str();
-}
 
 bool Plug::_okToPrint(int asked)
 {
