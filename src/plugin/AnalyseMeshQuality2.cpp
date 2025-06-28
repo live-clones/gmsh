@@ -2292,7 +2292,7 @@ void Plug::Measures::getValues(Metric m, std::vector<double> &values, std::vecto
 
   int k = 0;
   for (size_t i = 0; i < val.size(); ++i) {
-    if (values[i] != NOTCOMPUTED) {
+    if (val[i] != NOTCOMPUTED) {
       values[k] = val[i];
       if (elements) (*elements)[k] = elem[i];
       ++k;
