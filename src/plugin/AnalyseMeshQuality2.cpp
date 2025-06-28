@@ -18,6 +18,7 @@
 #include "OS.h"
 #include "Context.h"
 #include "PView.h"
+#include "PViewOptions.h"
 #include "GModel.h"
 #include "MElement.h"
 #include "polynomialBasis.h"
@@ -41,7 +42,7 @@
 //  5. Check fixmes, todos, etc.
 //  6. Add a quick presentation of metrics in Help message. Start by asking IA
 //     about the subject.
-//  7. Automatically set 'Custom' range mode for element view + move that out
+//  x. Automatically set 'Custom' range mode for element view + move that out
 //     of plot constructor
 //  8. Number of hidden/made visible element in human readable format if
 //     verbose < 1. Or if verbose = 2, then give exact number?
@@ -1018,16 +1019,19 @@ void Plug::_createPlotsOneMetric(const Measures &m, Metric metric)
   s += m.dimStrShort;
   s += " (p)";
 
-  constexpr double minMaxQuality[2] = {0, 1};
-  constexpr double minMaxQualityNeg[2] = {-1, 1};
-  const double *minMax = (metric == RATIOJAC || metric == MINJAC) ? nullptr :
-  (metric == GEOFIT) ? minMaxQualityNeg : minMaxQuality;
-
   for(double cutoff: _statGen->getCutoffPlots()) {
     Key key(m.dim2Elem, m.dim3Elem, metric, Key::TypeView::PLOT, cutoff);
     if(_pviews.find(key) == _pviews.end()) {
-      PView *p = new PView(s, cutoff, true, values, minMax);
+      PView *p = new PView(s, cutoff, true, values);
       _pviews[key] = p;
+      if(metric != RATIOJAC && metric != MINJAC) {
+        p->getOptions()->rangeType = PViewOptions::Custom;
+        p->getOptions()->customMin = 0;
+        p->getOptions()->customMax = 1;
+        if(metric == GEOFIT) {
+          p->getOptions()->customMin = -1;
+        }
+      }
     }
   }
 }
@@ -1065,6 +1069,14 @@ void Plug::_createElementViewsOneMetric(const Measures &m, Metric metric)
     }
     PView *p = new PView(s, "ElementData", _m, dataPV);
     _pviews[key] = p;
+    if(metric != RATIOJAC && metric != MINJAC) {
+      // Preset customMin and Max but let rangeType be Default
+      p->getOptions()->customMin = 0;
+      p->getOptions()->customMax = 1;
+      if(metric == GEOFIT) {
+        p->getOptions()->customMin = -1;
+      }
+    }
   }
 }
 

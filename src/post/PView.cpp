@@ -116,7 +116,7 @@ PView::PView(const std::string &xname, const std::string &yname,
 }
 
 PView::PView(const std::string &yname, double cutoff, bool isMinValueWorst,
-             const std::vector<double> &y, const double *customMinMax)
+             const std::vector<double> &y)
 {
   _init();
   _isWorstWeightedGraph = true;
@@ -131,11 +131,6 @@ PView::PView(const std::string &yname, double cutoff, bool isMinValueWorst,
   _options->lineWidth = 3.;
   _options->axesLabel[0] = "% Elements";
   _options->axesTics[0] = 10;
-  if(customMinMax) {
-    _options->rangeType = PViewOptions::Custom;
-    _options->customMin = customMinMax[0];
-    _options->customMax = customMinMax[1];
-  }
   _options->format = "%.2g";
   _options->worstWeightCutoff = cutoff;
 }
