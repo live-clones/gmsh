@@ -32,13 +32,29 @@
 
 // TODO:
 //  1. add enableGeoFit option
-//  2. add restrictToTypeOfElement option
+//  2. add restrictToElementType option + corresponding help message (or tooltip)
 //  x. Update Help message GUI (Explain what is smartrecompute)
 //       Say in help that the plugin can be used to compute jacobian, hide best
 //       elements, then compute quality (the gain is to compute quality of less
 //       elements)
 //  4. Test with ctest that everything works?
 //  5. Check fixmes, todos, etc.
+//  6. Add a quick presentation of metrics in Help message. Start by asking IA
+//     about the subject.
+//  7. Automatically set 'Custom' range mode for element view + move that out
+//     of plot constructor
+//  8. Number of hidden/made visible element in human readable format if
+//     verbose < 1. Or if verbose = 2, then give exact number?
+//  9. Change name of regularizeDeterminant (treatInvertedAsValid?) and make
+//     it change also GeoFit
+//  10. Merge master + Clang format
+//  11. Add warning when not all element have data (in print stat: say at rigth
+//      of table than have less element?).
+//      -> Say how many element correspond the stats. But percentage when less than 100%
+//  12. Add to FAQ what to do if bug, suggestion, question
+//  13. Add after validity, in presence of curved geometry entities:
+//      "Among curved surfaces/edges, there are x potentially invalid elements,
+//      and y inverted elements
 
 // TODO Later:
 //  1. Add check + message after having fetched parameters
@@ -64,6 +80,11 @@
 
 // NOTE What does the plugin
 //  0. Free data and stop IF dataManagementPolicy = -1
+//  TODO:
+//   Split step 1 into two steps:
+//    1a. Set requested element, determine requested metrics, Prominent metrics
+//    1b. Compute missing data
+//    3. Print stats for requested metrics
 //  1. Compute validity/quality IF usePreviousData = OFF
 //   • Limit to GEntity in GModel::current()
 //   • In function of dimensionPolicy:
@@ -143,6 +164,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   // Quality metrics to include:
   {GMSH_FULLRC, "enableDistortionQuality", nullptr, 0, "OFF, (1+)=includeDistortionQuality"},
   {GMSH_FULLRC, "enableAspectQuality", nullptr, 0, "OFF, (1+)=includeAspectQuality"},
+  // TODO: add enableGeoFit
   // What to do:
   {GMSH_FULLRC, "createElementsView", nullptr, 0, "OFF, ON"},
   {GMSH_FULLRC, "createPlotView", nullptr, 0, "OFF, ON"},
@@ -150,6 +172,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "guidanceLevel", nullptr, 0, "(-1)=minimalOutput, 0=verbose, 1=verboseAndExplanations"},
   // Elements Selection:
   {GMSH_FULLRC, "dimensionPolicy", nullptr, 0, "(-1)=force2D, 0=prioritize3D, 1=2D+3D, 2=combine2D+3D"},
+  // TODO: add restrictToElementType
   {GMSH_FULLRC, "restrictToVisibleElements", nullptr, 0, "OFF, ON=analyzeOnlyVisibleElements"},
   {GMSH_FULLRC, "restrictToCurvedElements", nullptr, 0, "OFF, ON=analyzeOnlyNonStraightElements"},
   // Hiding options:
@@ -1245,6 +1268,7 @@ void Plug::StatGenerator::printStats(const Parameters &param,
              "elements may result in incorrect Finite Element solutions "
              "depending on the solver. Each valid element is classified as "
              "either inverted or not inverted.");
+    // FIXME: Add info for curved geometries?
   if(totalNumberToShow[DISTO])
   _info(1, "   *D<|>istortion quality*  (previously ICN) is related to the "
            "condition number of the stiffness matrix. Low-Distortion elements "
