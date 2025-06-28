@@ -82,7 +82,7 @@ private:
     bool check2D = false;
     bool check3D = false;
   };
-  enum Metric { VALIDITY, INVERSION, GEOFIT, DISTO, ASPECT, RATIOJAC, MINJAC, METRIC_COUNT};
+  enum Metric { VALIDITY, UNFLIP, GEOFIT, DISTO, ASPECT, RATIOJAC, MINJAC, METRIC_COUNT};
   static const std::array<std::string, METRIC_COUNT> _metricNames;
 
 
@@ -319,10 +319,10 @@ private:
     std::vector<MElement *> elementsGFit;
     // Data for elements on straight geometry
     std::vector<double> isValid;
-    std::vector<double> isInverted;
+    std::vector<double> isNotFlipped;
     std::vector<MElement *> elementsStraightGeo;
     size_t numInvalidElements;
-    size_t numInvertedElements;
+    size_t numFlippedElements;
     std::size_t numToShow[7]{};
 
     static Measures combine(const Measures &, const Measures &, const char *name, const char *shortName);

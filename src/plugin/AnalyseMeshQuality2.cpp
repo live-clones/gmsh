@@ -46,7 +46,7 @@
 //     of plot constructor
 //  8. Number of hidden/made visible element in human readable format if
 //     verbose < 1. Or if verbose = 2, then give exact number?
-//  9. Change name of regularizeDeterminant (treatInvertedAsValid?) and make
+//  9. Change name of regularizeDeterminant (treatFlippedAsValid?) and make
 //     it change also GeoFit
 //  10. Merge master + Clang format
 //  11. Add warning when not all element have data (in print stat: say at rigth
@@ -55,7 +55,7 @@
 //  12. Add to FAQ what to do if bug, suggestion, question
 //  13. Add after validity, in presence of curved geometry entities:
 //      "Among curved surfaces/edges, there are x potentially invalid elements,
-//      and y inverted elements
+//      and y flipped elements
 
 // TODO Later:
 //  1. Add check + message after having fetched parameters
@@ -191,7 +191,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "skipStatPrinting", nullptr, 0, "OFF, ON"},
   {GMSH_FULLRC, "enableRatioJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=(0-))"},
   {GMSH_FULLRC, "enableMinJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=(0-)"},
-  {GMSH_FULLRC, "regularizeDeterminant", nullptr, 0, "OFF, ON=treatInvertedAsValid (NB: alter minJ and minJ/maxJ)"},
+  {GMSH_FULLRC, "regularizeDeterminant", nullptr, 0, "OFF, ON=treatFlippedAsValid (NB: alter minJ and minJ/maxJ)"},
   {GMSH_FULLRC, "wmCutoffsForStats", nullptr, 10, "CUTOFFS (for stats weighted mean, see Help)"},
   {GMSH_FULLRC, "wmCutoffsForPlots", nullptr, 10, "CUTOFFS (for plots weighted mean, see Help)"},
   // Legacy options:
@@ -227,7 +227,7 @@ namespace JacQual = jacobianBasedQuality;
 using Plug = GMSH_AnalyseMeshQuality2Plugin;
 int Plug::_verbose = 0;
 const std::array<std::string, 7> Plug::_metricNames = {
-  "Validity", "Inversion", "GeoFit", "Disto", "Aspect", "MinJ/maxJ", "MinJac"
+  "Validity", "Unflip", "GeoFit", "Disto", "Aspect", "MinJ/maxJ", "MinJac"
 };
 
 // ======== Plugin: Base class methods =========================================
@@ -350,12 +350,12 @@ std::string Plug::getHelp() const
     "in the presence of invalid elements. The user can set `skipValidity' to `1' to disable validity "
     "checks. To include validity as part of Prominent metrics, set its value "
     "to `-M', where `M' is the maximum value among all metrics.\n"
-    "• `regularizeDeterminant': Disables inverted element detection. "
+    "• `regularizeDeterminant': Disables flipped element detection. "
     "By default, the plugin detects " // FIXME move some of this info in the new section on metrics
-    "inverted elements, which are elements with a negative area or volume, "
-    "classifying elements into three categories: valid, invalid, and inverted. "
-    "Inverted elements may be treated as valid or invalid depending on the solver. "
-    "To treat inverted elements as valid, set this option to `1'. "
+    "flipped elements, which are elements with a negative area or volume, "
+    "classifying elements into three categories: valid, invalid, and flipped. "
+    "Flipped elements may be treated as valid or invalid depending on the solver. "
+    "To treat flipped elements as valid, set this option to `1'. "
     "This also affects the metrics `minJ' and `minJ/maxJ'. "
     "Internally, the plugin compares the absolute values of both `minJ' and `maxJ', "
     "and if the absolute value of `maxJ' is smaller, the following changes "
@@ -452,7 +452,7 @@ std::string Plug::getHelp() const
     "• Q2: Why is there a `+' after Validity when the plugin says it computes that?\n"
     "- A: The plugin actually does not compute validity exactly but instead "
     "calculates the minimum and maximum of the Jacobian determinant. "
-    "From that, it derives four quantities: validity, element inversion, "
+    "From that, it derives four quantities: validity, element flipping, "
     "and minJ and minJ/maxJ.\n"
     "• Q3: What should I do if I find a bug, have a question, or want to "
     "propose a suggestion for the plugin?\n"
@@ -649,7 +649,7 @@ void Plug::_fetchParameters()
   ps.which[MINJAC] = static_cast<int>(minJ);
   ps.which[RATIOJAC] = static_cast<int>(ratioJ);
   ps.which[GEOFIT] = static_cast<int>(geofit);
-  ps.which[INVERSION] = !ps.regularizeJac;
+  ps.which[UNFLIP] = !ps.regularizeJac;
   ps.M = *std::max_element(std::begin(ps.which), std::end(ps.which));
   if(ps.M == 0 && ps.which[VALIDITY] == -1) {
     ps.which[VALIDITY] = 1;
@@ -747,7 +747,7 @@ void Plug::_fetchLegacyParameters()
   pc.onlyCurved = false;
   pp.statCutoffPack = 50;
   pp.createPlot = false;
-  ps.which[INVERSION] = 0;
+  ps.which[UNFLIP] = 0;
   ps.which[GEOFIT] = 0;
   ps.which[RATIOJAC] = 1;
   ps.which[MINJAC] = 1;
@@ -921,11 +921,11 @@ void Plug::_finalizeMeasuresData(std::vector<Measures> &measures) const
       }
     }
 
-    if(ps.which[VALIDITY] || ps.which[INVERSION]) {
+    if(ps.which[VALIDITY] || ps.which[UNFLIP]) {
       size_t num = m.elements.size()-m.elementsGFit.size();
       m.elementsStraightGeo.resize(num);
       if(ps.which[VALIDITY]) m.isValid.resize(num);
-      if(ps.which[INVERSION]) m.isInverted.resize(num);
+      if(ps.which[UNFLIP]) m.isNotFlipped.resize(num);
 
       size_t k = -1;
       for(std::size_t i = 0; i < m.minJ.size(); i++) {
@@ -935,7 +935,7 @@ void Plug::_finalizeMeasuresData(std::vector<Measures> &measures) const
 
         if(m.maxJ[i] == NOTCOMPUTED) {
           if(ps.which[VALIDITY]) m.isValid[k] = NOTCOMPUTED;
-          if(ps.which[INVERSION]) m.isInverted[k] = NOTCOMPUTED;
+          if(ps.which[UNFLIP]) m.isNotFlipped[k] = NOTCOMPUTED;
           continue;
         }
 
@@ -946,11 +946,11 @@ void Plug::_finalizeMeasuresData(std::vector<Measures> &measures) const
           if(!valid) ++m.numInvalidElements;
         }
 
-        if(ps.which[INVERSION]) {
-          bool inverted = m.maxJ[i] < 0;
-          m.isInverted[i] = inverted;
-          ++m.numToShow[INVERSION];
-          if(inverted) ++m.numInvertedElements;
+        if(ps.which[UNFLIP]) {
+          bool flipped = m.maxJ[i] < 0;
+          m.isNotFlipped[i] = !flipped;
+          ++m.numToShow[UNFLIP];
+          if(flipped) ++m.numFlippedElements;
         }
       }
     }
@@ -1276,17 +1276,17 @@ void Plug::StatGenerator::printStats(const Parameters &param,
   _info(1, "-> Printing statistics, here is what is important to know about "
   "them:");
   if(totalNumberToShow[VALIDITY])
-  _info(1, "   *V<|>alidity*  provides information about the Jacobian "
-           "determinant being strictly different from zero. "
+  _info(1, "   *V<|>alidity*  provides information about whether the Jacobian "
+           "determinant is strictly different from zero. "
            "A mesh containing invalid elements "
            "will usually result in incorrect Finite Element solutions. Each "
            "element is classified as either valid or invalid.");
-  if(totalNumberToShow[INVERSION])
-    _info(1, "   *I<|>nversion*  provides information about the Jacobian "
-             "determinant being strictly negative. A mesh containing inverted "
-             "elements may result in incorrect Finite Element solutions "
+  if(totalNumberToShow[UNFLIP])
+    _info(1, "   *U<|>nflip*  provides information about whether the Jacobian "
+             "determinant is strictly positive. A mesh containing flipped (inverted) "
+             "elements may lead to incorrect Finite Element solutions "
              "depending on the solver. Each valid element is classified as "
-             "either inverted or not inverted.");
+             "either flipped or not flipped.");
   if(totalNumberToShow[MINJAC])
     _info(1, "   *m<|>inJ*  is the minimum of the Jacobian determinant computed "
              "in the reference space and can be used to check the element size. "
@@ -1316,12 +1316,12 @@ void Plug::StatGenerator::printStats(const Parameters &param,
              "element orientations align with the underlying geometry. On such configurations, validity is "
              "not defined, and GeoFit provides a natural alternative for assessing whether the mesh is "
              "appropriate as a boundary for the interior mesh. GeoFit can be considered as equivalent "
-             "to a normalized Jacobian determinant. GeoFit values range from -1 (completely inverted) to 1 (perfectly "
+             "to a normalized Jacobian determinant. GeoFit values range from -1 (completely flipped) to 1 (perfectly "
              "aligned). A negative value may indicate an inappropriate (invalid-like) element, while a positive "
              "but small value suggests a poor representation of the geometry (and possibly high oscillations "
              "in element geometry for high-order elements), indicating potential challenges during interior "
              "mesh generation. For boundary meshes, since element orientation does not influence the finite "
-             "element solution, you can set treatInvertedAsValid to 1 for disregarding inversion warnings.");
+             "element solution, you can set treatFlippedAsValid to 1 for disregarding flipping warnings.");
 
   if(param.pview.statCutoffPack && cntQuality)
     _info(1, "   *W<|>orst-10%% Weighted Mean*  (Wm10) corresponds to a weighted "
@@ -1394,23 +1394,23 @@ void Plug::StatGenerator::_printStats(const Measures &measure)
   }
 
   // Validity
-  if(!measure.numToShow[VALIDITY] && !measure.numToShow[INVERSION]) return;
+  if(!measure.numToShow[VALIDITY] && !measure.numToShow[UNFLIP]) return;
 
   double numElement = static_cast<double>(measure.elements.size());
   double percentageInvalid = static_cast<double>(measure.numInvalidElements) / numElement * 100;
-  double percentageInversed = static_cast<double>(measure.numInvertedElements) / numElement * 100;
-  if(!(measure.numInvalidElements + measure.numInvertedElements))
+  double percentageFlipped = static_cast<double>(measure.numFlippedElements) / numElement * 100;
+  if(!(measure.numInvalidElements + measure.numFlippedElements))
     _status(MP, "   All elements are valid :-)");
-  else if(!measure.numInvertedElements)
+  else if(!measure.numFlippedElements)
     _warn(MP, "   Found %zu invalid elements (~%.2g%%)",
       measure.numInvalidElements, percentageInvalid);
   else if(!measure.numInvalidElements)
-    _warn(MP, "   <|>All elements are valid but %zu elements are inversed (~%.2g%%)",
-      measure.numInvertedElements, percentageInversed);
+    _warn(MP, "   <|>All elements are valid but %zu elements are flipped (~%.2g%%)",
+      measure.numFlippedElements, percentageFlipped);
   else
-    _warn(MP, "   <|>Found %zu invalid elements (~%.2g%%) and %zu inversed "
+    _warn(MP, "   <|>Found %zu invalid elements (~%.2g%%) and %zu flipped "
               "elements (~%.2g%%)", measure.numInvalidElements,
-              percentageInvalid, measure.numInvertedElements, percentageInversed);
+              percentageInvalid, measure.numFlippedElements, percentageFlipped);
 }
 
 void Plug::StatGenerator::_printStatsOneMetric(const Measures &measure, Metric metric)
@@ -1560,7 +1560,7 @@ void Plug::DataSingleDimension::gatherValues(const Counts &counts, Measures &mea
   measures.maxGFit.reserve(szCurvGeo);
   measures.elementsGFit.reserve(szCurvGeo);
   measures.numInvalidElements = 0;
-  measures.numInvertedElements = 0;
+  measures.numFlippedElements = 0;
   for(auto &it : _dataEntities) {
     it.second.addValues(measures);
   }
@@ -2312,7 +2312,7 @@ Plug::Measures Plug::Measures::combine(const Measures &m1, const Measures &m2, c
   combineVectors(result.maxJ, m1.maxJ, m2.maxJ);
   combineVectors(result.ratioJ, m1.ratioJ, m2.ratioJ);
   combineVectors(result.isValid, m1.isValid, m2.isValid);
-  combineVectors(result.isInverted, m1.isInverted, m2.isInverted);
+  combineVectors(result.isNotFlipped, m1.isNotFlipped, m2.isNotFlipped);
   combineVectors(result.isOnCurvedGeo, m1.isOnCurvedGeo, m2.isOnCurvedGeo);
   combineVectors(result.minDisto, m1.minDisto, m2.minDisto);
   combineVectors(result.minAspect, m1.minAspect, m2.minAspect);
@@ -2326,7 +2326,7 @@ Plug::Measures Plug::Measures::combine(const Measures &m1, const Measures &m2, c
   result.dimStr = name;
   result.dimStrShort = shortName;
   result.numInvalidElements = m1.numInvalidElements + m2.numInvalidElements;
-  result.numInvertedElements = m1.numInvertedElements + m2.numInvalidElements;
+  result.numFlippedElements = m1.numFlippedElements + m2.numInvalidElements;
   for(int i = 0; i < METRIC_COUNT; ++i) {
     result.numToShow[i] = m1.numToShow[i] + m2.numToShow[i];
   }
@@ -2366,8 +2366,8 @@ const std::vector<double> &Plug::Measures::_getValues(Metric m) const
   switch(m) {
   case VALIDITY:
     return isValid;
-  case INVERSION:
-    return isInverted;
+  case UNFLIP:
+    return isNotFlipped;
   case GEOFIT:
     return minGFit;
   case DISTO:
