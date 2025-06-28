@@ -75,7 +75,7 @@ private:
     struct MetricsToShow {
       int which[7] = {0};
       int M = 0;
-      bool regularizeJac = false;
+      bool regularizeJacGFit = false;
       bool skipStats = false;
     } show;
 

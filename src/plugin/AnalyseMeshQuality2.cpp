@@ -46,13 +46,13 @@
 //     of plot constructor
 //  8. Number of hidden/made visible element in human readable format if
 //     verbose < 1. Or if verbose = 2, then give exact number?
-//  9. Change name of regularizeDeterminant (treatFlippedAsValid?) and make
+//  x. Change name of regularizeDeterminant (treatFlippedAsValid?) and make
 //     it change also GeoFit
 //  10. Merge master + Clang format
 //  11. Add warning when not all element have data (in print stat: say at rigth
 //      of table than have less element?).
 //      -> Say how many element correspond the stats. But percentage when less than 100%
-//  12. Add to FAQ what to do if bug, suggestion, question
+//   x. Add to FAQ what to do if bug, suggestion, question
 //  13. Add after validity, in presence of curved geometry entities:
 //      "Among curved surfaces/edges, there are x potentially invalid elements,
 //      and y flipped elements
@@ -100,7 +100,7 @@
 //   • Compute Validity IF skipValidity <= 0
 //   • Compute Distortion IF enableDistortionQuality > 0
 //   • Compute Aspect IF enableAspectQuality > 0
-//   • Regularize Jacobian IF skipValidity <= 0 AND regularizeDeterminant = ON
+//   • Regularize Jacobian IF skipValidity <= 0 AND treatFlippedAsValid = ON
 //  2. Print statistics
 //   • In function of dimensionPolicy:
 //     - IF = -1 Limit to dimension 2 data
@@ -191,7 +191,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "skipStatPrinting", nullptr, 0, "OFF, ON"},
   {GMSH_FULLRC, "enableRatioJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=(0-))"},
   {GMSH_FULLRC, "enableMinJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=(0-)"},
-  {GMSH_FULLRC, "regularizeDeterminant", nullptr, 0, "OFF, ON=treatFlippedAsValid (NB: alter minJ and minJ/maxJ)"},
+  {GMSH_FULLRC, "treatFlippedAsValid", nullptr, 0, "OFF, ON (NB: alter minJ, minJ/maxJ and GeoFit)"},
   {GMSH_FULLRC, "wmCutoffsForStats", nullptr, 10, "CUTOFFS (for stats weighted mean, see Help)"},
   {GMSH_FULLRC, "wmCutoffsForPlots", nullptr, 10, "CUTOFFS (for plots weighted mean, see Help)"},
   // Legacy options:
@@ -350,16 +350,16 @@ std::string Plug::getHelp() const
     "in the presence of invalid elements. The user can set `skipValidity' to `1' to disable validity "
     "checks. To include validity as part of Prominent metrics, set its value "
     "to `-M', where `M' is the maximum value among all metrics.\n"
-    "• `regularizeDeterminant': Disables flipped element detection. "
+    "• `treatFlippedAsValid': Disables flipped element detection. "
     "By default, the plugin detects " // FIXME move some of this info in the new section on metrics
     "flipped elements, which are elements with a negative area or volume, "
     "classifying elements into three categories: valid, invalid, and flipped. "
     "Flipped elements may be treated as valid or invalid depending on the solver. "
     "To treat flipped elements as valid, set this option to `1'. "
-    "This also affects the metrics `minJ' and `minJ/maxJ'. "
+    "This also affects the metrics `minJ', `minJ/maxJ' and `GeoFit'. "
     "Internally, the plugin compares the absolute values of both `minJ' and `maxJ', "
     "and if the absolute value of `maxJ' is smaller, the following changes "
-    "are made: `new_minJ = -maxJ' and `new_maxJ = -minJ'.\n" // NOTE and similarly for GeoFit
+    "are made: `new_minJ = -maxJ' and `new_maxJ = -minJ', and similarly for GeoFit.\n"
     "• `wmCutoffsForStats' and `wmCutoffsForPlots': Defines a list of cutoff values "
     "used for computing weighted mean-based statistics and generating plots."
     "The list of cutoff is specified as a sequence of two-digit values, "
@@ -622,7 +622,7 @@ void Plug::_fetchParameters()
   ps.skipStats = static_cast<bool>(MeshQuality2Options_Number[18].def);
   ratioJ = MeshQuality2Options_Number[19].def;
   minJ = MeshQuality2Options_Number[20].def;
-  ps.regularizeJac = static_cast<bool>(MeshQuality2Options_Number[21].def);
+  ps.regularizeJacGFit = static_cast<bool>(MeshQuality2Options_Number[21].def);
   pp.statCutoffPack = MeshQuality2Options_Number[22].def;
   pp.plotCutoffPack = MeshQuality2Options_Number[23].def;
 
@@ -649,7 +649,7 @@ void Plug::_fetchParameters()
   ps.which[MINJAC] = static_cast<int>(minJ);
   ps.which[RATIOJAC] = static_cast<int>(ratioJ);
   ps.which[GEOFIT] = static_cast<int>(geofit);
-  ps.which[UNFLIP] = !ps.regularizeJac;
+  ps.which[UNFLIP] = !ps.regularizeJacGFit;
   ps.M = *std::max_element(std::begin(ps.which), std::end(ps.which));
   if(ps.M == 0 && ps.which[VALIDITY] == -1) {
     ps.which[VALIDITY] = 1;
@@ -751,7 +751,7 @@ void Plug::_fetchLegacyParameters()
   ps.which[GEOFIT] = 0;
   ps.which[RATIOJAC] = 1;
   ps.which[MINJAC] = 1;
-  ps.regularizeJac = false;
+  ps.regularizeJacGFit = false;
   _param.freeData = false;
 
   int k = getNbOptions();
@@ -911,12 +911,17 @@ void Plug::_finalizeMeasuresData(std::vector<Measures> &measures) const
   for(auto &m: measures) {
     for(int i = 0; i < METRIC_COUNT; ++i) m.numToShow[i] = 0;
 
-    if(ps.regularizeJac) {
+    if(ps.regularizeJacGFit) {
       for(std::size_t i = 0; i < m.minJ.size(); i++) {
         if(m.maxJ[i] != NOTCOMPUTED && std::abs(m.minJ[i]) > std::abs(m.maxJ[i])) {
           std::swap(m.minJ[i], m.maxJ[i]);
           m.minJ[i] *= -1;
           m.maxJ[i] *= -1;
+        }
+        if(m.maxGFit[i] != NOTCOMPUTED && std::abs(m.minGFit[i]) > std::abs(m.maxGFit[i])) {
+          std::swap(m.minGFit[i], m.maxGFit[i]);
+          m.minGFit[i] *= -1;
+          m.maxGFit[i] *= -1;
         }
       }
     }
