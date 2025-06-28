@@ -21,7 +21,7 @@ int main(int argc, char **argv)
   }
 
   std::vector<std::size_t> tets;
-  gmsh::model::mesh::tetrahedralize(points, tets);
+  gmsh::algorithm::tetrahedralize(points, tets);
 
   std::set<std::string> args(argv, argv + argc);
   if(!args.count("-nopopup")) {
