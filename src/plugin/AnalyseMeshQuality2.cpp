@@ -477,8 +477,8 @@ PView *Plug::execute(PView *v)
   _decideDimensionToCheck(check2D, check3D);
 
   Counts counts2D, counts3D;
-  if(check2D) _data2D->initialize(_m, _param.compute, counts2D);
-  if(check3D) _data3D->initialize(_m, _param.compute, counts3D);
+  if(check2D) _data2D->syncWithModel(_m, _param.compute, counts2D);
+  if(check3D) _data3D->syncWithModel(_m, _param.compute, counts3D);
 
   // Purge views just after initialization of _data2D and _data3D
   _purgeViews(check2D, check3D);
@@ -488,7 +488,7 @@ PView *Plug::execute(PView *v)
   Counts countsTotal = counts2D + counts3D;
   if(!totalToCompute) {
     _guidanceNothingToCompute(countsTotal, check2D, check3D);
-    if(!countsTotal.requestedEl) return v;
+    if(!countsTotal.reqElem) return v;
   }
   else {
     if(!pc.jacobian && (countsTotal.elToCompute[2] || countsTotal.elToCompute[3])) {
@@ -1443,30 +1443,27 @@ void Plug::StatGenerator::_computeCoefficients(double cutoff, size_t sz,
 // ======== DataSingleDimension ================================================
 // =============================================================================
 
-void Plug::DataSingleDimension::initialize(GModel const *m,
-                                           const Parameters::Computation &param,
-                                           Counts &counts)
+void Plug::DataSingleDimension::syncWithModel(GModel const *m,
+                                              const Parameters::Computation &param,
+                                              Counts &counts)
 {
   _requestedListHasChanged = false;
 
   // Update list GEntities (thus _dataEntities) if needed
   std::set<GEntity *, GEntityPtrLessThan> entities;
-  if(_dim == 2)
-    entities.insert(m->firstFace(), m->lastFace());
-  else if(_dim == 3)
-    entities.insert(m->firstRegion(), m->lastRegion());
-  _updateGEntities(entities, param.freeOldData);
+  if(_dim == 2) entities.insert(m->firstFace(), m->lastFace());
+  else if(_dim == 3) entities.insert(m->firstRegion(), m->lastRegion());
+  _updateGEntitiesList(entities, param.freeOldData);
 
   // Initialize all DataEntity and count elements
   for(auto &it : _dataEntities) {
-    int numRequestedChanged = it.second.initialize(param);
-    if(numRequestedChanged)
-      _requestedListHasChanged = true;
+    int numRequestedChanged = it.second.updateElementsAndFlags(param);
+    if(numRequestedChanged) _requestedListHasChanged = true;
     it.second.count(param, counts);
   }
 }
 
-void Plug::DataSingleDimension::_updateGEntities(
+void Plug::DataSingleDimension::_updateGEntitiesList(
   std::set<GEntity *, GEntityPtrLessThan> &entities, bool freeNonExistent)
 {
   // Get GEntities present in the current model, add new ones in _dataEntities
@@ -1492,8 +1489,8 @@ void Plug::DataSingleDimension::_updateGEntities(
 
 void Plug::DataSingleDimension::gatherValues(const Counts &counts, Measures &measures)
 {
-  size_t sz = counts.requestedEl;
-  size_t szOri = counts.geoFitToShow;
+  size_t sz = counts.reqElem;
+  size_t szCurvGeo = counts.reqElemCurvGeo;
   if(_dim == 2)
     measures.dim2Elem = true;
   else
@@ -1504,9 +1501,9 @@ void Plug::DataSingleDimension::gatherValues(const Counts &counts, Measures &mea
   measures.minAspect.reserve(sz);
   measures.elements.reserve(sz);
   measures.isOnCurvedGeo.reserve(sz);
-  measures.minGFit.reserve(szOri);
-  measures.maxGFit.reserve(szOri);
-  measures.elementsGFit.reserve(szOri);
+  measures.minGFit.reserve(szCurvGeo);
+  measures.maxGFit.reserve(szCurvGeo);
+  measures.elementsGFit.reserve(szCurvGeo);
   measures.numInvalidElements = 0;
   measures.numInvertedElements = 0;
   for(auto &it : _dataEntities) {
@@ -1551,7 +1548,7 @@ inline void unsetBit(unsigned char &value, int maskOneBit)
   value &= ~maskOneBit;
 }
 
-size_t Plug::DataEntity::initialize(const Parameters::Computation &param)
+size_t Plug::DataEntity::updateElementsAndFlags(const Parameters::Computation &param)
 {
   size_t cntRequestedChanged = 0;
   std::size_t num = _ge->getNumMeshElements();
@@ -1609,7 +1606,7 @@ size_t Plug::DataEntity::initialize(const Parameters::Computation &param)
     }
   }
 
-  // Step 4: Update flag isRequested
+  // Step 4: Update flag 'isRequested'
   int maskRequested = 0;
   if(param.onlyVisible) maskRequested |= F_VISBL;
   if(param.onlyCurved) maskRequested |= F_CURVED;
@@ -1637,11 +1634,17 @@ void Plug::DataEntity::count(const Parameters::Computation &param, Counts &count
   for(int i = 0; i < metricsCount; ++i)
     _numToCompute[i] = 0;
 
+  // Count number of requested elements
+  _count(F_REQU, _numRequested);
+  counts.reqElem += _numRequested;
+  if(param.geofit && _isCurvedGeo)
+    counts.reqElemCurvGeo += _numRequested;
+
   // Count number of elements to compute
   if(!param.skip) {
-    if (!_isCurvedGeo && param.jacobian)
+    if (param.jacobian && !_isCurvedGeo)
       _count(F_REQU | F_NOTJAC, _numToCompute[0]);
-    if (_isCurvedGeo && param.jacobianOnCurvedGeo)
+    if (param.jacobianOnCurvedGeo && _isCurvedGeo)
       _count(F_REQU | F_NOTJAC, _numToCompute[1]);
     if (param.disto)
       _count(F_REQU | F_NOTDISTO, _numToCompute[2]);
@@ -1649,17 +1652,11 @@ void Plug::DataEntity::count(const Parameters::Computation &param, Counts &count
       _count(F_REQU | F_NOTASPECT, _numToCompute[3]);
     if (param.geofit && _isCurvedGeo)
       _count(F_REQU | F_NOTORI, _numToCompute[4]);
-  }
 
-  for(int i = 0; i < metricsCount; ++i) {
-    counts.elToCompute[i] += _numToCompute[i];
+    for(int i = 0; i < metricsCount; ++i) {
+      counts.elToCompute[i] += _numToCompute[i];
+    }
   }
-
-  // Count number of elements to show
-  _count(F_REQU, _numRequested);
-  counts.requestedEl += _numRequested;
-  if(param.geofit && _isCurvedGeo)
-    counts.geoFitToShow += _numRequested;
 
   // Count total number, number of visible and curved elements
   counts.totalEl += _mapElemToIndex.size();
@@ -2157,7 +2154,7 @@ void Plug::_guidanceNothingToCompute(Counts counts, bool check2D,
 {
   _info(1, "-> No element to compute");
 
-  if (!counts.requestedEl) {
+  if (!counts.reqElem) {
     _info(-1, "-> Nothing to compute, nothing to show");
     _info(1, "   Nothing to show neither");
 
@@ -2228,8 +2225,8 @@ Plug::Counts Plug::Counts::operator+(const Counts &other) const
     result.elToCompute[i] = elToCompute[i] + other.elToCompute[i];
   }
 
-  result.requestedEl = requestedEl + other.requestedEl;
-  result.geoFitToShow = geoFitToShow + other.geoFitToShow;
+  result.reqElem = reqElem + other.reqElem;
+  result.reqElemCurvGeo = reqElemCurvGeo + other.reqElemCurvGeo;
   result.totalEl = totalEl + other.totalEl;
   result.elCurvedComputed = elCurvedComputed + other.elCurvedComputed;
   result.curvedEl = curvedEl + other.curvedEl;

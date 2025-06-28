@@ -188,7 +188,7 @@ private:
   public:
     explicit DataSingleDimension(int dim) : _dim(dim) {}
     void clear() { _dataEntities.clear(); }
-    void initialize(GModel const *, const Parameters::Computation &, Counts &);
+    void syncWithModel(GModel const *, const Parameters::Computation &, Counts &);
     void getDataEntities(std::vector<DataEntity*> &set)
     {
       for(auto &d : _dataEntities) set.push_back(&d.second);
@@ -197,7 +197,7 @@ private:
     void gatherValues(const Counts &, Measures &);
 
   private:
-    void _updateGEntities(std::set<GEntity *, GEntityPtrLessThan> &, bool free);
+    void _updateGEntitiesList(std::set<GEntity *, GEntityPtrLessThan> &, bool free);
   };
 
   class DataEntity {
@@ -223,7 +223,7 @@ private:
       delete _normals;
     }
     size_t getNumRequested() const { return _numRequested; }
-    size_t initialize(const Parameters::Computation &);
+    size_t updateElementsAndFlags(const Parameters::Computation &);
     void count(const Parameters::Computation &, Counts &);
     void reset(std::size_t);
     void add(MElement *);
@@ -290,9 +290,9 @@ private:
 
   struct Counts {
     std::size_t elToCompute[5]{}; // jac, jacOnCurvedGeo, disto, aspect, geofit
-    std::size_t geoFitToShow = 0;
-    std::size_t requestedEl = 0;
-    // Those counts are useful for guidance when requestedEl == 0:
+    std::size_t reqElem = 0;
+    std::size_t reqElemCurvGeo = 0;
+    // Those counts are useful for guidance when reqElem == 0:
     std::size_t totalEl = 0;
     std::size_t visibleEl = 0;
     std::size_t curvedEl = 0;
