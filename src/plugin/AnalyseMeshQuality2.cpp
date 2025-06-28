@@ -286,9 +286,9 @@ std::string Plug::getHelp() const
     "analyzed elements, as it is located at x = 1 / nb.\n"
     "\n"
     "DEFINITION\n"
-    "• `Visibility metrics': The plugin distinguishes between requested "
+    "• `Prominent metrics': The plugin distinguishes between requested "
     "metrics, which are computed and displayed as statistics, and a "
-    "subset of these called `Visibility metrics'. The Visibility metrics "
+    "subset of these called `Prominent metrics'. The Prominent metrics "
     "are used to determine "
     "visibility adjustment and visualization views. To obtain the subset, "
     " the plugin compute the maximum value among:\n"
@@ -297,14 +297,14 @@ std::string Plug::getHelp() const
     "-- enableGeoFitQuality\n"
     "-- enableMinJacDetAsAMetric\n"
     "-- enableRatioJacDetAsAMetric\n"
-    "The metrics matching this maximum value are in the set of Visibility metrics.\n"
+    "The metrics matching this maximum value are in the set of Prominent metrics.\n"
     "\n"
     "VISIBILITY ADJUSTMENT\n"
     "• The plugin is able to hide and unhide elements based on specific criteria. "
     "Various options are available for fine-tuning the behavior of this feature.\n"
     "• Default behaviour: In the presence of invalid elements, the plugin will "
     "make them visible and hide the other. If all elements are valid, the plugin "
-    "will select the 10% worst element according to the Visibility metrics and "
+    "will select the 10% worst element according to the Prominent metrics and "
     "make them visible while hiding the others.\n"
     "Available options:\n"
     "• `adjustElementsVisibility': Enables the operation of hiding and unhiding elements. "
@@ -317,7 +317,7 @@ std::string Plug::getHelp() const
     "If no invalid elements are present, the plugin will abort.\n"
     "-- `0': Similar to `-1', but in this case, the plugin does not abort when no invalid "
     "elements are present. Instead, it behaves as if the input value were set to `1'.\n"
-    "-- `1': The plugin checks each Visibility metric. If any elements meet the criterion "
+    "-- `1': The plugin checks each Prominent metric. If any elements meet the criterion "
     "for being visible, they are made visible. Elements failing to meet the criterion "
     "across all metrics are hidden.\n"
     "-- `2': The behavior is the opposite of `1'. Elements that fail to meet the visibility "
@@ -341,13 +341,16 @@ std::string Plug::getHelp() const
     "-- `1': Prints detailed information about the plugin's operation, which may be "
     "useful for debugging. It also provides guidance for beginner users.\n"
     "• `dataManagementPolicy': Determines how data is managed by the plugin:\n"
-    "-- `-1': Frees data, typically useful in scripting contexts.\n"
+    "-- `-1': Frees data and stops the plugin immediately, preventing any further actions. "
+    "This is typically useful in scripting contexts.\n"
     "-- `0': Deletes data corresponding to geometry entities that are absent in the current model.\n"
     "-- `1': Keeps data corresponding to geometry entities that are absent in the current model. "
     "This is useful if the plugin may be run again with a previous model.\n"
-    "• `smartRecomputation': Prevents unnecessary recomputation when the plugin is run again. "
+    "• `smartRecomputation': Prevents unnecessary recomputation when the plugin is run again "
+    "and prevent recreating views . "
+  // FIXME prevent also to recreate views
     "If set to `0', the plugin will always recompute. If set to `1', for each geometrical entity, "
-    "the plugin will decide to recompute only if the element tags have changed. "
+    "the plugin will decide to recompute only if the list of elements has changed. "
     "This happens, for example, if the geometrical entity has been remeshed or "
     "if a topological operation has been performed. However, the plugin cannot "
     "detect if nodes have been moved, such as after an optimization. "
@@ -355,10 +358,10 @@ std::string Plug::getHelp() const
     "• `skipValidity': The plugin is designed to check the validity of elements before "
     "evaluating any quality metrics. This behavior ensures faster computation of quality metrics "
     "in the presence of invalid elements. The user can set `skipValidity' to `1' to disable validity "
-    "checks. To include validity as part of the set of quality metrics, set its value "
+    "checks. To include validity as part of Prominent metrics, set its value "
     "to `-M', where `M' is the maximum value among all metrics.\n"
     "• `regularizeDeterminant': Disables inverted element detection. "
-    "By default, the plugin detects "
+    "By default, the plugin detects " // FIXME move some of this info in the new section on metrics
     "inverted elements, which are elements with a negative area or volume, "
     "classifying elements into three categories: valid, invalid, and inverted. "
     "Inverted elements may be treated as valid or invalid depending on the solver. "
@@ -366,7 +369,7 @@ std::string Plug::getHelp() const
     "This also affects the metrics `minJ' and `minJ/maxJ'. "
     "Internally, the plugin compares the absolute values of both `minJ' and `maxJ', "
     "and if the absolute value of `maxJ' is smaller, the following changes "
-    "are made: `new_minJ = -maxJ' and `new_maxJ = -minJ'.\n"
+    "are made: `new_minJ = -maxJ' and `new_maxJ = -minJ'.\n" // NOTE and similarly for GeoFit
     "• `wmCutoffsForStats' and `wmCutoffsForPlots': Defines a list of cutoff values "
     "used for computing weighted mean-based statistics and generating plots."
     "The list of cutoff is specified as a sequence of two-digit values, "
@@ -375,8 +378,8 @@ std::string Plug::getHelp() const
     "The default value is 10. A `10%' cutoff corresponds to a "
     "weighted mean where the worst 10% "
     "of the values influence equally with the rest. "
-    "This technique highlights critical data subsets impacting the finite "
-    "element solution.\n"
+    "This technique highlights critical data subsets generally impacting "
+    "the finite element solution.\n"
     "\n"
     "AN ADVANCED USE OF THE PLUGIN\n"
     "The plugin can be used to compute the quality of a subset of mesh "
@@ -1561,24 +1564,26 @@ size_t Plug::DataEntity::updateElementsAndFlags(const Parameters::Computation &p
   }
 
   // Step 2: Reset data if needed
-  bool resetData = !param.smartRecompute && !param.skip;
-  if(!param.skip && param.smartRecompute) {
-    if(num != _mapElemToIndex.size()) {
-      resetData = true;
-    }
-    else {
-      for(auto i = 0; i < num; ++i) {
-        if(_mapElemToIndex.find(elements[i]) == _mapElemToIndex.end()) {
-          resetData = true;
-          break;
+  if(!param.skip) {
+    bool resetData = !param.smartRecompute;
+    if(param.smartRecompute) {
+      bool sizeMismatch = (num != _mapElemToIndex.size());
+      bool elementListMismatch = false;
+      if(!sizeMismatch) {
+        for(auto i = 0; i < num; ++i) {
+          if(_mapElemToIndex.find(elements[i]) == _mapElemToIndex.end()) {
+            elementListMismatch = true;
+            break;
+          }
         }
       }
+      resetData = sizeMismatch || elementListMismatch;
     }
-  }
-  if(resetData) {
-    cntRequestedChanged += _numRequested;
-    reset(num);
-    add(elements);
+    if(resetData) {
+      cntRequestedChanged += _numRequested;
+      reset(num);
+      add(elements);
+    }
   }
 
   // Step 3: Update flag isVisible if necessary
@@ -1832,7 +1837,8 @@ void Plug::DataEntity::computeGeoFit(GFace *gf, MElement *el, double minmaxO[2])
     //   gf->XYZtoUV(p.x(), p.y(), p.z(), uGF, uGE);
     // }
     else {
-      _error(MP, "Cannot compute GeoFit for vertex %d", vert->getNum());
+      _info(1, "   Cannot compute GeoFit for vertex %d (this "
+               "is normal as GeoFit is still experimental)", vert->getNum());
     }
 
     // for(int i = 0; i < el->getNumPrimaryVertices(); ++i) {
