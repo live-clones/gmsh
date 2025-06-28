@@ -292,7 +292,8 @@ void drawContext::drawScales()
     maxw = std::max(maxw, drawContext::global()->getStringWidth(label));
   }
 
-  const double tic = 10., bar_size = 16.;
+  const double tic = CTX::instance()->glFontSize; // used to be 10
+  const double bar_size = CTX::instance()->glFontSize; // used to be 16
   double width = 0., width_prev = 0., width_total = 0.;
 
   for(std::size_t i = 0; i < scales.size(); i++) {
@@ -332,7 +333,7 @@ void drawContext::drawScales()
     }
     else {
       double xsep = 20.;
-      double dy = 2. * drawContext::global()->getStringHeight();
+      double dy = 2. * CTX::instance()->glFontSize;
       if(scales.size() == 1) {
         double ysep = (viewport[3] - viewport[1]) / 6.;
         double w = bar_size, h = viewport[3] - viewport[1] - 2 * ysep - dy;
