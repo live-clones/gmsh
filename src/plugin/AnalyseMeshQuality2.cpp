@@ -157,7 +157,7 @@
 
 namespace {
   constexpr double UNTOUCHED = -987654321;
-  constexpr double MP = 9;
+  constexpr double MP = 9; // mandatory print
   constexpr double NOTCOMPUTED = -987654321;
 }
 
@@ -667,7 +667,7 @@ void Plug::_fetchParameters()
   ps.which[MINJAC] = static_cast<int>(minJ);
   ps.which[RATIOJAC] = static_cast<int>(ratioJ);
   ps.which[GEOFIT] = static_cast<int>(geofit);
-  ps.which[UNFLIP] = !ps.regularizeJacGFit;
+  ps.which[UNFLIP] = ps.which[VALIDITY] && !ps.regularizeJacGFit;
   ps.M = *std::max_element(std::begin(ps.which), std::end(ps.which));
   if(ps.M == 0 && ps.which[VALIDITY] == -1) {
     ps.which[VALIDITY] = 1;
@@ -1393,15 +1393,32 @@ void Plug::StatGenerator::_printStats(const Measures &measure)
 {
   _info(MP, "-> Statistics for %s:", measure.dimStr);
 
-  // Header
+  // 1. Print header table if necessary
+  size_t numReqElem = measure.elements.size();
   bool haveQualityToPrint = false;
+  bool showColumnPercentElem = false;
+
   for(int i = GEOFIT; i <= MINJAC; ++i) {
-    if(measure.numToShow[i]) haveQualityToPrint = true;
+    if(measure.numToShow[i]) {
+      haveQualityToPrint = true;
+      // Check if not all elements are analyzed for this metric
+      if (0 < measure.numToShow[i] && measure.numToShow[i] < numReqElem) {
+        showColumnPercentElem = true;
+      }
+    }
   }
+
+  if(showColumnPercentElem)
+    _warn(0, "   Not all the %s requested elements have metric computed",
+      formatNumber(numReqElem).c_str());
+
   if(haveQualityToPrint) {
     std::ostringstream columnNamesStream;
     columnNamesStream << "   | ";
     columnNamesStream << std::setw(_colWidth) << "";
+    if (showColumnPercentElem) {
+      columnNamesStream << std::setw(7) << "%Elem";
+    }
     columnNamesStream << std::setw(_colWidth) << "Min";
     for (double c : _statCutoffs) {
       std::ostringstream formattedP;
@@ -1412,12 +1429,13 @@ void Plug::StatGenerator::_printStats(const Measures &measure)
     _info(MP, "%s", columnNamesStream.str().c_str());
   }
 
+  // 2. Print values for requested quality metrics
   for(int i = GEOFIT; i <= MINJAC; i++) {
     if(measure.numToShow[i])
-      _printStatsOneMetric(measure, static_cast<Metric>(i));
+      _printStatsOneMetric(measure, static_cast<Metric>(i), showColumnPercentElem);
   }
 
-  // Validity
+  // 3. Print info about validity and flipping
   if(!measure.numToShow[VALIDITY] && !measure.numToShow[UNFLIP]) return;
 
   double numElement = static_cast<double>(measure.elements.size());
@@ -1428,6 +1446,10 @@ void Plug::StatGenerator::_printStats(const Measures &measure)
   else if(!measure.numFlippedElements)
     _warn(MP, "   Found %zu invalid elements (~%.2g%%)",
       measure.numInvalidElements, percentageInvalid);
+  //// It cannot happen since Unflip is currently not computed without validity
+  // else if(!measure.numToShow[VALIDITY])
+  //   _warn(MP, "   Found %zu flipped elements (~%.2g%%)",
+  //     measure.numFlippedElements, percentageFlipped);
   else if(!measure.numInvalidElements)
     _warn(MP, "   <|>All elements are valid but %zu elements are flipped (~%.2g%%)",
       measure.numFlippedElements, percentageFlipped);
@@ -1435,15 +1457,22 @@ void Plug::StatGenerator::_printStats(const Measures &measure)
     _warn(MP, "   <|>Found %zu invalid elements (~%.2g%%) and %zu flipped "
               "elements (~%.2g%%)", measure.numInvalidElements,
               percentageInvalid, measure.numFlippedElements, percentageFlipped);
+
+  if (measure.numToShow[VALIDITY] < numReqElem) {
+    double percentage = static_cast<double>(measure.numToShow[VALIDITY]) / numReqElem * 100;
+    _status(MP, "   Among the %.2g%% of the requested elements that were analyzed", percentage);
+  }
 }
 
-void Plug::StatGenerator::_printStatsOneMetric(const Measures &measure, Metric metric)
+void Plug::StatGenerator::_printStatsOneMetric(const Measures &measure, Metric metric, bool showPercentElem)
 {
   std::vector<double> values;
   measure.getValues(metric, values);
+
   if(values.empty()) return;
 
   size_t numElem = values.size();
+  size_t numTotalElem = measure.elements.size();
   size_t numCutoff = _statCutoffs.size();
   auto minMax = std::minmax_element(values.begin(), values.end());
   double min = *minMax.first;
@@ -1460,6 +1489,10 @@ void Plug::StatGenerator::_printStatsOneMetric(const Measures &measure, Metric m
   valStream << "   |";
   valStream << std::setw(_colWidth) << _metricNames[metric] << ":";
   valStream << std::setprecision(3);
+  if (showPercentElem) {
+    double percentElem = static_cast<double>(numElem) / static_cast<double>(numTotalElem) * 100.0;
+    valStream << std::setw(7) << percentElem;
+  }
   if(metric == ASPECT || metric == DISTO) valStream << std::fixed;
   if(metric == MINJAC) valStream << std::defaultfloat; // could be std::scientific
   valStream << std::setw(_colWidth) << min;

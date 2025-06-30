@@ -283,7 +283,7 @@ private:
   private:
     void _unpackCutoff(double input, std::vector<double> &cutoffs) const;
     void _printStats(const Measures &measure);
-    void _printStatsOneMetric(const Measures &measure, Metric metric);
+    void _printStatsOneMetric(const Measures &measure, Metric metric, bool showPercentElem);
     const std::vector<double> &_getCoefficients(double cutoff, size_t num);
     void _computeCoefficients(double cutoff, size_t sz, std::vector<double> &);
   };
