@@ -50,11 +50,14 @@
 //     x put dataManagementPolicy after smartRecomputation
 //     x reorder treatFlippedAsValid, enableMinJacDetAsAMetric,
 //               enableRatioJacDetAsAMetric, skipStatPrinting
-//  2. add restrictToElementType option + corresponding help message
+//  xx add restrictToElementType option + corresponding help message
 //     (and main element in tooltip)
 //  3. Add a quick presentation of metrics in Help message.
 //  4. guidanceLevel=2 => justPrintDetailedInfoOnMetrics (and set guidanceLevel=1)
-//  5. Add to FAQ why not a metric about distance to geometry
+//  5. Add to FAQ:
+//     - why not a metric about distance to geometry
+//     - diff between 3 options concerning data management
+//     - why OFF, ON in tooltips?
 //  6. Print different info at execution for GeoFit (and JacDet) in function of
 //     regularization or not
 //     -> If regu: then GeoFit >= a means valid, [-a, a] invalid
@@ -65,7 +68,6 @@
 //  8. Move info how to read plot at execution. Say in important notes that
 //     Help does not cover all information and it is adviced to set
 //     guidanceLevel=1 at the beginning to have contextual more complete info
-//  9. Add to FAQ diff between 3 options concerning data management
 
 
 
@@ -87,6 +89,7 @@
 //     - also GeoFit
 //  3. Add more verbose messages?
 //  4. Make option name starting with upper case because it is the convention
+//  5. Add after computation metrics (Wall %gs, CPU %gs) (like in first version)
 
 // TODO Maybe:
 //  1. Intrinsic validity : smartreco777 for sharing element or 888 or 999
@@ -209,7 +212,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "guidanceLevel", nullptr, 0, "(-1)=minimalOutput, 0=verbose, 1=verboseAndExplanations"},
   // Elements Selection:
   {GMSH_FULLRC, "dimensionPolicy", nullptr, 0, "(-2)=force2D, (-1)=force1D, 0=prioritize3D, 1=2D+3D, 2=combine2D+3D"},
-  {GMSH_FULLRC, "restrictToElementType", nullptr, 0, "OFF, 3=Tri, 4=Quad, 5=Tet, 6=Pyr, 7=Prism, 8=Hex"},
+  {GMSH_FULLRC, "restrictToElementType", nullptr, 0, "OFF, 1=Tri/Tet, 2=Quad/Hex, 3=Prism/Pyr"},
   {GMSH_FULLRC, "restrictToVisibleElements", nullptr, 0, "OFF, ON=analyzeOnlyVisibleElements"},
   {GMSH_FULLRC, "restrictToCurvedElements", nullptr, 0, "OFF, ON=analyzeOnlyNonStraightElements"},
   // Hiding options:
@@ -369,6 +372,55 @@ std::string Plug::getHelp() const
     "-- enableMinJacDetAsAMetric\n"
     "-- enableRatioJacDetAsAMetric\n"
     "The metrics matching this maximum value are in the set of Prominent metrics.\n"
+    "\n"
+    "METRICS\n"
+    "By default, the plugin computes validity and flipping for ND elements. "
+    "The metric associated with flipping is called Unflip, adhering to the same logic as "
+    "the other metrics: higher is better. "
+    "Validity and flipping are not as well-defined for CG elements as they are for ND elements. "
+    "For such elements, GeoFit (an experimental metric) provides a natural alternative. "
+    "The plugin can also compute two shape quality metrics that are well-defined "
+    "for 2D and 3D, ND and CG elements. "
+    "The first metric is called Disto (short for distortion), which measures how close "
+    "elements are to their ideal shape "
+    "(e.g., a square for a quadrangular element). The second metric, called Aspect, "
+    "primarily emphasizes that large angles are undesirable (e.g., rectangular "
+    "shapes remain excellent for the quadrangular element). "
+    "In addition, the plugin can derive two metrics from the Jacobian determinant: "
+    "its minimum value (minJ) and the ratio of minJ to maxJ. "
+    "These two metrics are obtained at no additional computational cost since the "
+    "Jacobian determinant is already calculated for validity and flipping. "
+    "The minJ metric helps determine the element size. "
+    "The minJ/maxJ ratio, while not a true quality metric, serves as an efficient "
+    "way to detect distorted elements. Be cautious, as there is no guarantee "
+    "that an element with a good minJ/maxJ ratio has a good shape. "
+    "For additional details about the metrics in use during execution, set guidanceLevel to ‘1’. "
+    "Alternatively, set guidanceLevel to ‘2’ to instruct the plugin to print detailed "
+    "information for all metrics and then stop.\n"
+  //
+  // // "Those two metrics are derived through the computation of the Jacobian determinant. "
+  //   "They are free to obtain because the Jacobian determinant is already "
+  //   "computed for validity and flipping. The minJ allow to determine the size "
+  //   "of element. "
+  //   // "and can be useful in two situations: the mesh is curved "
+  //   // "high-order mesh that is uniform in size, in which case minJ allows to detect "
+  //   // "element that diverge from the other, or the mesh is non-uniform but the size "
+  //   // "of the smallest elements is critical and. "
+  //   "Ratio minJ/maxJ, while not a "
+  //   "true quality metric, allow to fastly detect distorted elements. Be cautious as there is "
+  //   "no guarantee that an element with a good minJ/maxJ have a good shape. "
+  //   "For more details on metrics you are using during execution, set guidanceLevel to "
+  //   "`1', or set guidanceLevel to `2' to make the plugin printing those details "
+  //   "for all metrics and stop. "
+  //   // ""
+  //   // "The plugin evaluates several metrics to analyze the validity and quality of mesh elements. "
+  //   // "`Validity' and `Unflip' assess whether elements are valid (Jacobian determinant ≠ 0) or inverted "
+  //   // "(Jacobian determinant < 0), as such elements can significantly affect the Finite Element solution. "
+  //   // "`MinJ' and `Ratio minJ/maxJ' provide insights into element sizes and deformation, with the latter being "
+  //   // "a quick, albeit approximate, quality indicator. For numerical performance, `Distortion quality' (related "
+  //   // "to stiffness matrix conditioning) and `Aspect quality' (impacting solution gradients) range from 0 to 1, "
+  //   // "where higher values indicate better quality. For CG elements, `GeoFit' measures alignment with the "
+  //   // "geometry, ranging from -1 (flipped) to 1 (perfect alignment).\n"
     "\n"
     "PLOTS\n"
     "The plugin creates a new type of plot, designed to improve readability and "
@@ -538,7 +590,7 @@ std::string Plug::getHelp() const
 
 PView *Plug::execute(PView *v)
 {
-  _verbose = static_cast<int>(MeshQuality2Options_Number[5].def);
+  _verbose = static_cast<int>(MeshQuality2Options_Number[6].def);
 
   _info(MP, "---------------------------------------------");
   _status(0, "Executing the plugin AnalyseMeshQuality...");
@@ -660,7 +712,7 @@ bool Plug::_fetchParameters()
   Parameters::Hiding &ph = _param.hide;
   Parameters::MetricsToShow &ps = _param.show;
 
-  double skipValidity, disto, aspect, geofit, minJ, ratioJ,
+  double skipValidity, disto, aspect, geofit, minJ, ratioJ, elementType,
    dataManagePolicy;
 
   // Metrics to include:
@@ -672,6 +724,7 @@ bool Plug::_fetchParameters()
   pp.createElemView = static_cast<bool>(MeshQuality2Options_Number[3].def);
   pp.createPlot = static_cast<bool>(MeshQuality2Options_Number[4].def);
   ph.todo = static_cast<int>(MeshQuality2Options_Number[5].def);
+  // Change also 'Plug::_verbose = ..._Number[6].def' in execute method
 
   // Elements Selection:
   _dimensionPolicy = static_cast<int>(MeshQuality2Options_Number[7].def);
@@ -681,7 +734,7 @@ bool Plug::_fetchParameters()
               "'dimensionPolicy' to another value");
     return false;
   }
-  pc.onlyElementType = static_cast<int>(MeshQuality2Options_Number[8].def);
+  elementType = MeshQuality2Options_Number[8].def;
   pc.onlyVisible = static_cast<bool>(MeshQuality2Options_Number[9].def);
   pc.onlyCurved = static_cast<bool>(MeshQuality2Options_Number[10].def);
 
@@ -722,6 +775,27 @@ bool Plug::_fetchParameters()
   pc.disto = static_cast<bool>(disto);
   pc.aspect = static_cast<bool>(aspect);
   pc.geofit = static_cast<bool>(geofit);
+
+  // -> elementType
+  if(elementType > 0) {
+    pc.onlyGivenElemType = true;
+    int elemType = static_cast<int>(elementType);
+    switch(elemType) {
+    case 1:
+      pc.acceptedElemType[TYPE_TRI] = pc.acceptedElemType[TYPE_TET] = true;
+      break;
+    case 2:
+      pc.acceptedElemType[TYPE_QUA] = pc.acceptedElemType[TYPE_HEX] = true;
+      break;
+    case 3:
+      pc.acceptedElemType[TYPE_PYR] = pc.acceptedElemType[TYPE_PRI] = true;
+      break;
+    default:
+      _warn(MP, "   <|>Option 'elementType' is set to %d but this value does "
+                "not correspond to an accepted element type ", elemType);
+      pc.onlyGivenElemType = false;
+    }
+  }
 
   // -> metrics to show
   ps.which[VALIDITY] = skipValidity == 0 ? -1 : skipValidity > 0 ? 0 : -static_cast<int>(skipValidity);
@@ -826,6 +900,7 @@ void Plug::_fetchLegacyParameters()
   Parameters::MetricsToShow &ps = _param.show;
 
   pc.jacobianOnCurvedGeo = false;
+  pc.onlyGivenElemType = false;
   pc.onlyVisible = false;
   pc.onlyCurved = false;
   pp.statCutoffPack = 50;
@@ -1809,21 +1884,25 @@ size_t Plug::DataEntity::updateElementsAndFlags(const Parameters::Computation &p
     }
   }
 
-  // Step 4: Update flag 'isRequested'
+  // Step 5: Update flag 'isRequested'
   int maskRequested = 0;
   if(param.onlyVisible) maskRequested |= F_VISBL;
   if(param.onlyCurved) maskRequested |= F_CURVED;
 
-  for(auto &flag : _flags) {
-    if(areBitsSet(flag, maskRequested)) {
+  for(auto it: _mapElemToIndex) {
+    auto &flag = _flags[it.second];
+    bool typeMismatch = param.onlyGivenElemType && !param.acceptedElemType[it.first->getType()];
+    if(!typeMismatch && areBitsSet(flag, maskRequested)) {
       if(isBitUnset(flag, F_REQU)) {
         ++cntRequestedChanged;
         setBit(flag, F_REQU);
       }
     }
-    else if(isBitSet(flag, F_REQU)) {
-      ++cntRequestedChanged;
-      unsetBit(flag, F_REQU);
+    else {
+      if(isBitSet(flag, F_REQU)) {
+        ++cntRequestedChanged;
+        unsetBit(flag, F_REQU);
+      }
     }
   }
   return cntRequestedChanged;
@@ -1867,6 +1946,11 @@ void Plug::DataEntity::count(const Parameters::Computation &param, Counts &count
     if(isBitSet(flag, F_VISBL)) ++counts.visibleEl;
   }
   _countCurved(counts.elCurvedComputed, counts.curvedEl);
+
+  // Count number of element by type
+  for(int i = 0; i < TYPE_MAX_NUM; ++i) {
+    counts.elType[i] += _ge->getNumMeshElementsByType(i);
+  }
 }
 
 void Plug::DataEntity::_countCurved(std::size_t &known, std::size_t &curved)
@@ -2342,33 +2426,43 @@ void Plug::_guidanceNothingToCompute(Counts counts, bool check2D,
 
   if (!counts.reqElem) {
     _info(-1, "-> Nothing to compute, nothing to show");
-    _info(1, "   Nothing to show neither");
+    _info(0, "   Nothing to show neither");
 
     if (counts.totalEl) {
       if (_param.compute.onlyVisible && counts.visibleEl == 0) {
-        _warn(1, "   Option 'restrictToVisibleElements' is ON but no visible elements found");
+        _warn(0, "   Option 'restrictToVisibleElements' is ON but no visible elements found");
       }
       else if (_param.compute.onlyCurved && counts.curvedEl == 0) {
-        _warn(1, "   Option 'restrictToCurvedElements' is ON but no curved elements found");
+        _warn(0, "   Option 'restrictToCurvedElements' is ON but no curved elements found");
+      }
+      else if (_param.compute.onlyGivenElemType) {
+        size_t countType = 0;
+        for(int i = 0; i < TYPE_MAX_NUM; ++i) {
+          if(_param.compute.acceptedElemType[i])
+            countType += counts.elType[i];
+        }
+        if(!countType) {
+          _warn(0, "   Option 'restrictToElementType' is ON but no elements of requested type found");
+        }
       }
       else {
-        _error(1, "   Unexpected state: should not be here");
+        _error(0, "   Unexpected state: should not be here");
       }
     }
     else { // Case where no elements found
       if (_dimensionPolicy == 0) {
         if (check2D) {
           if (_m->getNumFaces())
-            _warn(1, "   No mesh has been found (in current model)");
+            _warn(0, "   No mesh has been found (in current model)");
           else
-            _warn(1, "   No geometry has been found (in current model)");
+            _warn(0, "   No geometry has been found (in current model)");
         }
         else if(check3D) {
-          _error(1, "   Unexpected state: should not be here with check3D==true");
+          _error(0, "   Unexpected state: should not be here with check3D==true");
           // ...because if _dimensionPolicy == 0, then check3D==true only if there are elements
         }
         else {
-          _error(1, "   Unexpected state: should not be here with check3D==false");
+          _error(0, "   Unexpected state: should not be here with check3D==false");
           // ...because at least check2D or check3D should be true
         }
       }
@@ -2381,19 +2475,19 @@ void Plug::_guidanceNothingToCompute(Counts counts, bool check2D,
         }
         else {
           if (_m->getNumFaces())
-            _warn(1, "   No mesh has been found (in current model)");
+            _warn(0, "   No mesh has been found (in current model)");
           else
-            _warn(1, "   No geometry has been found (in current model)");
+            _warn(0, "   No geometry has been found (in current model)");
         }
       }
       else if (_dimensionPolicy >= 1) {
         if (_m->getNumFaces() + _m->getNumRegions())
-          _warn(1, "   No mesh has been found (in current model)");
+          _warn(0, "   No mesh has been found (in current model)");
         else
-          _warn(1, "   No geometry has been found (in current model)");
+          _warn(0, "   No geometry has been found (in current model)");
       }
       else {
-        _error(1, "   Unexpected state: should not be here");
+        _error(0, "   Unexpected state: should not be here");
       }
     }
   }
@@ -2409,6 +2503,9 @@ Plug::Counts Plug::Counts::operator+(const Counts &other) const
   constexpr int metricsCount = 5;
   for (int i = 0; i < metricsCount; ++i) {
     result.elToCompute[i] = elToCompute[i] + other.elToCompute[i];
+  }
+  for (int i = 0; i < TYPE_MAX_NUM; ++i) {
+    result.elType[i] = elType[i] + other.elType[i];
   }
 
   result.reqElem = reqElem + other.reqElem;

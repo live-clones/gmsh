@@ -50,7 +50,8 @@ private:
       bool disto = false;
       bool aspect = false;
       bool geofit = false;
-      int onlyElementType = false;
+      bool onlyGivenElemType = false;
+      bool acceptedElemType[TYPE_MAX_NUM] = {false};
       bool onlyVisible = false;
       bool onlyCurved = false;
       bool smartRecompute = false;
@@ -299,6 +300,7 @@ private:
     std::size_t visibleEl = 0;
     std::size_t curvedEl = 0;
     std::size_t elCurvedComputed = 0; // NOTE: unused
+    std::size_t elType[TYPE_MAX_NUM]{};
     Counts operator+(const Counts &) const;
   };
 
