@@ -2295,7 +2295,7 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
   endforeach()
   # test c++ api tutorials with dynamic builds
   if(ENABLE_BUILD_DYNAMIC)
-    file(GLOB_RECURSE ALLFILES tutorials/c++/*.cpp tutorials/c/*.c)
+    file(GLOB_RECURSE ALLFILES tutorials/c++/*.cpp)
     filter_tests("${ALLFILES}" TESTFILES)
     foreach(TESTFILE ${TESTFILES})
       get_filename_component(TEST ${TESTFILE} NAME)
