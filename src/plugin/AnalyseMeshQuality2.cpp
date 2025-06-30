@@ -42,9 +42,9 @@
 //       script, it is already printed `Running Plugin(AnalyseMeshQuality)...'
 //     x add number of element for statistics: `-> Statistics for dimension 3 (HERE):'
 //       + warning not all elements have metric => _warn(1, ...);
-//     - Set plot color black
+//     x Set plot color black
 //     x Say geofit is experimental
-//     - Say number of view created
+//     x Say number of view created
 //     x Add definition requested element
 //     - add enableGeoFit option
 //     - put dataManagementPolicy after smartRecomputation
@@ -628,14 +628,15 @@ PView *Plug::execute(PView *v)
     measures.erase(measures.begin() + 1);
   }
 
-  //_updateWhatToShow(measures);
-
   _param.check2D = check2D;
   _param.check3D = check3D;
   _statGen->printStats(_param, measures);
 
+
   _createPlots(measures);
+
   _createElementViews(measures);
+
   if(_performHiding(measures)) {
     CTX::instance()->mesh.changed = ENT_ALL;
 #if defined(HAVE_OPENGL)
@@ -1093,19 +1094,26 @@ void Plug::_finalizeMeasuresData(std::vector<Measures> &measures) const
 void Plug::_createPlots(const std::vector<Measures> &measures)
 {
   if(!_param.pview.createPlot) return;
+
+  int numPlots = 0;
   Parameters::MetricsToShow &ps = _param.show;
   for(const auto &m: measures) {
     for(int i = VALIDITY; i <= MINJAC; i++) {
-      if(ps.which[i] == ps.M)  _createPlotsOneMetric(m, static_cast<Metric>(i));
+      if(ps.which[i] == ps.M) {
+        if(_createPlotsOneMetric(m, static_cast<Metric>(i)))
+          ++numPlots;
+      }
     }
   }
+
+  if(numPlots) _info(MP, "-> Created %d plots", numPlots);
 }
 
-void Plug::_createPlotsOneMetric(const Measures &m, Metric metric)
+bool Plug::_createPlotsOneMetric(const Measures &m, Metric metric)
 {
   std::vector<double> values;
   m.getValues(metric, values);
-  if(values.empty()) return;
+  if(values.empty()) return false;
 
   std::string s = _metricNames[metric];
   s += " ";
@@ -1117,6 +1125,8 @@ void Plug::_createPlotsOneMetric(const Measures &m, Metric metric)
     if(_pviews.find(key) == _pviews.end()) {
       PView *p = new PView(s, cutoff, true, values);
       _pviews[key] = p;
+      p->getOptions()->colorTable.ipar[COLORTABLE_NUMBER] = 0;
+      ColorTable_Recompute(&p->getOptions()->colorTable);
       if(metric != RATIOJAC && metric != MINJAC) {
         p->getOptions()->rangeType = PViewOptions::Custom;
         p->getOptions()->customMin = 0;
@@ -1125,29 +1135,36 @@ void Plug::_createPlotsOneMetric(const Measures &m, Metric metric)
           p->getOptions()->customMin = -1;
         }
       }
+      return true;
     }
   }
+  return false;
 }
 
 void Plug::_createElementViews(const std::vector<Measures> &measures)
 {
   if(!_param.pview.createElemView) return;
 
+  int numViews = 0;
   Parameters::MetricsToShow &ps = _param.show;
   for(const auto &m: measures) {
     for(int i = VALIDITY; i <= MINJAC; i++) {
-      if(ps.which[i] == ps.M)
-        _createElementViewsOneMetric(m, static_cast<Metric>(i));
+      if(ps.which[i] == ps.M) {
+        if (_createElementViewsOneMetric(m, static_cast<Metric>(i)))
+          ++numViews;
+      }
     }
   }
+
+  if(numViews) _info(MP, "-> Created %d elements views", numViews);
 }
 
-void Plug::_createElementViewsOneMetric(const Measures &m, Metric metric)
+bool Plug::_createElementViewsOneMetric(const Measures &m, Metric metric)
 {
   std::vector<double> values;
   std::vector<MElement *> elements;
   m.getValues(metric, values, &elements);
-  if(values.empty()) return;
+  if(values.empty()) return false;
 
   std::string s = _metricNames[metric];
   s += " ";
@@ -1169,8 +1186,10 @@ void Plug::_createElementViewsOneMetric(const Measures &m, Metric metric)
       if(metric == GEOFIT) {
         p->getOptions()->customMin = -1;
       }
+      return true;
     }
   }
+  return false;
 }
 
 bool Plug::_performHiding(const std::vector<Measures> &measures)

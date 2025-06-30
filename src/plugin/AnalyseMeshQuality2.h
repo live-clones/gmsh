@@ -147,9 +147,9 @@ private:
   void _computeRequestedData(Counts param, bool check2D, bool check3D) const;
   void _finalizeMeasuresData(std::vector<Measures> &) const;
   void _createPlots(const std::vector<Measures> &);
-  void _createPlotsOneMetric(const Measures &, Metric);
+  bool _createPlotsOneMetric(const Measures &, Metric);
   void _createElementViews(const std::vector<Measures> &);
-  void _createElementViewsOneMetric(const Measures &, Metric);
+  bool _createElementViewsOneMetric(const Measures &, Metric);
   bool _performHiding(const std::vector<Measures> &);
   void _findElementsToHide(const Measures &, Metric, std::set<MElement *> &) const;
   bool _hideElements(const Measures &measure, std::vector<MElement *> &elemToHide,
