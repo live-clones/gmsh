@@ -38,18 +38,18 @@
 //       -> create second option
 //       -> OR treatFlippedAsValid: -1=doNotRegularizeGeoFit, 0=regularizeGeoFit, 1=ON (alter minJ and minJ/maxJ)
 //       -> OR treatFlippedAsValid: -1=never, 0=forCurvedGeo (alter FeoFit), 1=always (also alter minJ and minJ/maxJ)
-//     - if guidanceLevel=-1 do not print Executing AnalyseMeshQuality as in
+//     x if guidanceLevel=-1 do not print Executing AnalyseMeshQuality as in
 //       script, it is already printed `Running Plugin(AnalyseMeshQuality)...'
-//     - add number of element for statistics: `-> Statistics for dimension 3 (HERE):'
+//     x add number of element for statistics: `-> Statistics for dimension 3 (HERE):'
 //       + warning not all elements have metric => _warn(1, ...);
+//     - Set plot color black
+//     x Say geofit is experimental
+//     - Say number of view created
+//     x Add definition requested element
 //     - add enableGeoFit option
 //     - put dataManagementPolicy after smartRecomputation
 //     - reorder treatFlippedAsValid, enableMinJacDetAsAMetric,
 //               enableRatioJacDetAsAMetric, skipStatPrinting
-//     - Set plot color black
-//     - Say geofit is experimental
-//     - Say number of view created
-//     - Add definition requested element
 //  2. add restrictToElementType option + corresponding help message
 //     (and main element in tooltip)
 //  3. Add a quick presentation of metrics in Help message.
@@ -201,7 +201,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   // Quality metrics to include:
   {GMSH_FULLRC, "enableDistortionQuality", nullptr, 0, "OFF, (1+)=includeDistortionQuality"},
   {GMSH_FULLRC, "enableAspectQuality", nullptr, 0, "OFF, (1+)=includeAspectQuality"},
-  // TODO: add enableGeoFit
+  // TODO: add enableGeoFit (experimental)
   // What to do:
   {GMSH_FULLRC, "createElementsView", nullptr, 0, "OFF, ON"},
   {GMSH_FULLRC, "createPlotView", nullptr, 0, "OFF, ON"},
@@ -347,6 +347,29 @@ std::string Plug::getHelp() const
     "the plugin multiple times but must be used cautiously. "
     "See the 'OPTIONS CLARIFICATIONS' section for details.\n"
     "\n"
+    "DEFINITIONS\n"
+    "• `Natural Dimension elements' (ND elements): Elements that are represented "
+    "in their natural spatial dimension, e.g., 2D elements on flat surfaces or 3D "
+    "elements in volumes.\n"
+    "• `Curved Geometry elements' (CG elements): Elements that are defined along curved "
+    "geometrical features, such as 1D elements on curved edges or 2D elements on curved surfaces.\n"
+    "• `Requested elements': The plugin will identify, among all available "
+    "elements, the ones that satisfy all the restrictions specified by the "
+    "options: `dimensionPolicy', `restrictToElementType', `restrictToVisibleElements' "
+    "and `restrictToCurvedElements'. These elements are called the requested elements.\n"
+    "• `Prominent metrics': The plugin distinguishes between requested "
+    "metrics, which are computed and displayed as statistics, and a "
+    "subset of these called `Prominent metrics'. The Prominent metrics "
+    "are used to determine "
+    "visibility adjustment and visualization views. To obtain the subset, "
+    " the plugin compute the maximum value among:\n"
+    "-- enableDistortionQuality\n"
+    "-- enableAspectQuality\n"
+    "-- enableGeoFitQuality\n"
+    "-- enableMinJacDetAsAMetric\n"
+    "-- enableRatioJacDetAsAMetric\n"
+    "The metrics matching this maximum value are in the set of Prominent metrics.\n"
+    "\n"
     "PLOTS\n"
     "The plugin creates a new type of plot, designed to improve readability and "
     "facilitate comparison. In these plots, the quality value is represented on "
@@ -362,20 +385,6 @@ std::string Plug::getHelp() const
     "and expected. The first jump corresponds to the transition from the worst "
     "value to the second worst value. It also indicates the number of "
     "analyzed elements, as it is located at x = 1 / nb.\n"
-    "\n"
-    "DEFINITION\n"
-    "• `Prominent metrics': The plugin distinguishes between requested "
-    "metrics, which are computed and displayed as statistics, and a "
-    "subset of these called `Prominent metrics'. The Prominent metrics "
-    "are used to determine "
-    "visibility adjustment and visualization views. To obtain the subset, "
-    " the plugin compute the maximum value among:\n"
-    "-- enableDistortionQuality\n"
-    "-- enableAspectQuality\n"
-    "-- enableGeoFitQuality\n"
-    "-- enableMinJacDetAsAMetric\n"
-    "-- enableRatioJacDetAsAMetric\n"
-    "The metrics matching this maximum value are in the set of Prominent metrics.\n"
     "\n"
     "OPTIONS CLARIFICATIONS\n"
     "For clarification about visibility options, see next section.\n"
@@ -424,7 +433,7 @@ std::string Plug::getHelp() const
     "This process implies that regularizing the Jacobian determinant also affects other "
     "metrics derived from it: `minJ' and `minJ/maxJ'.\n"
     "• `wmCutoffsForStats' and `wmCutoffsForPlots': Defines a list of cutoff values "
-    "used for computing weighted mean-based statistics and generating plots."
+    "used for computing weighted mean-based statistics and generating plots. "
     "The list of cutoff is specified as a sequence of two-digit values, "
     "e.g. 123456, which "
     "would result in extracted cutoffs: `12%', `34%' and `56%'. "
@@ -494,7 +503,7 @@ std::string Plug::getHelp() const
     "-- `restrictToVisibleElements = 1'\n"
     "-- `smartRecomputation = 1'\n"
     //"-- `enableMinJacDetAsAMetric = 0'\n"
-    "3. Optional final run: Use the plugin to make all elements visible again."
+    "3. Optional final run: Use the plugin to make all elements visible again. "
     "This can be achieved by setting:\n"
     "-- `createElementsView = 0'\n"
     "-- `adjustElementsVisibility = 1'\n"
@@ -524,6 +533,7 @@ std::string Plug::getHelp() const
     "  Be sure to provide sufficient details about the issue or suggestion to "
     "help with clarification. "
     "For additional inquiries, you may contact the plugin author at amaury.johnen@uclouvain.be.\n";
+  // TODO add question about abbreviation (ND, CG)?
 }
 
 PView *Plug::execute(PView *v)
@@ -995,7 +1005,7 @@ void Plug::_finalizeMeasuresData(std::vector<Measures> &measures) const
     }
 
     if(ps.regularizeGFit) {
-      for(std::size_t i = 0; i < m.minJ.size(); i++) {
+      for(std::size_t i = 0; i < m.minGFit.size(); i++) {
         if(m.maxGFit[i] != NOTCOMPUTED && std::abs(m.minGFit[i]) > std::abs(m.maxGFit[i])) {
           std::swap(m.minGFit[i], m.maxGFit[i]);
           m.minGFit[i] *= -1;
@@ -1396,7 +1406,7 @@ void Plug::StatGenerator::printStats(const Parameters &param,
            "negatively affect errors in the gradient of the solution. Values "
            "range from 0 to 1.");
   if(totalNumberToShow[GEOFIT])
-    _info(1, "   *G<|>eoFit* is defined on curved surfaces and curved edges of the geometry and measures how well "
+    _info(1, "   *G<|>eoFit (experimental)* is defined on curved surfaces and curved edges of the geometry and measures how well "
              "element orientations align with the underlying geometry. On such configurations, validity is "
              "not defined, and GeoFit provides a natural alternative for assessing whether the mesh is "
              "appropriate as a boundary for the interior mesh. GeoFit can be considered as equivalent "
@@ -1451,10 +1461,11 @@ void Plug::StatGenerator::_unpackCutoff(double input,
 
 void Plug::StatGenerator::_printStats(const Measures &measure)
 {
-  _info(MP, "-> Statistics for %s:", measure.dimStr);
+  size_t numReqElem = measure.elements.size();
+  _info(MP, "-> Statistics for %s (%s requested elements):", measure.dimStr,
+        formatNumber(numReqElem).c_str());
 
   // 1. Print header table if necessary
-  size_t numReqElem = measure.elements.size();
   bool haveQualityToPrint = false;
   bool showColumnPercentElem = false;
 
@@ -1469,8 +1480,7 @@ void Plug::StatGenerator::_printStats(const Measures &measure)
   }
 
   if(showColumnPercentElem)
-    _warn(0, "   Not all the %s requested elements have metric computed",
-      formatNumber(numReqElem).c_str());
+    _warn(1, "   Not all the requested elements have metric computed");
 
   if(haveQualityToPrint) {
     std::ostringstream columnNamesStream;
