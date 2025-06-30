@@ -46,9 +46,9 @@
 //     x Say geofit is experimental
 //     x Say number of view created
 //     x Add definition requested element
-//     - add enableGeoFit option
-//     - put dataManagementPolicy after smartRecomputation
-//     - reorder treatFlippedAsValid, enableMinJacDetAsAMetric,
+//     x add enableGeoFit option
+//     x put dataManagementPolicy after smartRecomputation
+//     x reorder treatFlippedAsValid, enableMinJacDetAsAMetric,
 //               enableRatioJacDetAsAMetric, skipStatPrinting
 //  2. add restrictToElementType option + corresponding help message
 //     (and main element in tooltip)
@@ -201,7 +201,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   // Quality metrics to include:
   {GMSH_FULLRC, "enableDistortionQuality", nullptr, 0, "OFF, (1+)=includeDistortionQuality"},
   {GMSH_FULLRC, "enableAspectQuality", nullptr, 0, "OFF, (1+)=includeAspectQuality"},
-  // TODO: add enableGeoFit (experimental)
+  {GMSH_FULLRC, "enableGeoFitQuality", nullptr, 0, "OFF, (1+)=includeGeofitQuality (experimental)"},
   // What to do:
   {GMSH_FULLRC, "createElementsView", nullptr, 0, "OFF, ON"},
   {GMSH_FULLRC, "createPlotView", nullptr, 0, "OFF, ON"},
@@ -209,7 +209,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "guidanceLevel", nullptr, 0, "(-1)=minimalOutput, 0=verbose, 1=verboseAndExplanations"},
   // Elements Selection:
   {GMSH_FULLRC, "dimensionPolicy", nullptr, 0, "(-2)=force2D, (-1)=force1D, 0=prioritize3D, 1=2D+3D, 2=combine2D+3D"},
-  // TODO: add restrictToElementType
+  {GMSH_FULLRC, "restrictToElementType", nullptr, 0, "OFF, 3=Tri, 4=Quad, 5=Tet, 6=Pyr, 7=Prism, 8=Hex"},
   {GMSH_FULLRC, "restrictToVisibleElements", nullptr, 0, "OFF, ON=analyzeOnlyVisibleElements"},
   {GMSH_FULLRC, "restrictToCurvedElements", nullptr, 0, "OFF, ON=analyzeOnlyNonStraightElements"},
   // Hiding options:
@@ -220,14 +220,14 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "doNoSetVisible", nullptr, 0, "OFF=performHidingAndUnhiding, ON=justPerformHiding"},
   // Advanced computation options:
   {GMSH_FULLRC, "usePreviousData", nullptr, 0, "OFF, ON=skipComputationMetrics"},
-  {GMSH_FULLRC, "dataManagementPolicy", nullptr, 0, "(-1)=skipExecutionJustFreeData, 0=freeOldDataIfMeshAbsent, 1=keepAllData"},
-  {GMSH_FULLRC, "smartRecomputation", nullptr, 0, "OFF=alwaysRecompute, ON=avoidRecomputeIfUnchangedElementTags"},
+  {GMSH_FULLRC, "smartRecomputation", nullptr, 0, "OFF=alwaysRecompute, ON=avoidRecomputeIfUnchangedElementTags"}, // changed order
+  {GMSH_FULLRC, "dataManagementPolicy", nullptr, 0, "(-1)=skipExecutionJustFreeData, 0=freeOldDataIfMeshAbsent, 1=keepAllData"}, // changed order
   {GMSH_FULLRC, "skipValidity", nullptr, 0, "(0-)=includeValidity, ON=skipPreventiveValidityCheck"},
   // Advanced analysis options:
-  {GMSH_FULLRC, "skipStatPrinting", nullptr, 0, "OFF, ON"},
-  {GMSH_FULLRC, "enableRatioJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=(0-))"},
-  {GMSH_FULLRC, "enableMinJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=(0-)"},
   {GMSH_FULLRC, "treatFlippedAsValid", nullptr, 0, "(-1)=never, 0=forCurvedGeo (alter FeoFit), 1=always (also alter minJ and minJ/maxJ)"},
+  {GMSH_FULLRC, "enableMinJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=(0-)"},
+  {GMSH_FULLRC, "enableRatioJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=(0-))"},
+  {GMSH_FULLRC, "skipStatPrinting", nullptr, 0, "OFF, ON"},
   {GMSH_FULLRC, "wmCutoffsForStats", nullptr, 10, "CUTOFFS (for stats weighted mean, see Help)"},
   {GMSH_FULLRC, "wmCutoffsForPlots", nullptr, 10, "CUTOFFS (for plots weighted mean, see Help)"},
   // Legacy options:
@@ -251,12 +251,12 @@ constexpr int MeshQuality2Options_LegacyOptionsNumber = 8;
 
 std::pair<int, std::string> MeshQuality2Options_Headers[] = {
   {0, "Quality metrics to include"},
-  {2, "What to do"},
-  {6, "Elements selection"},
-  {9, "Visibility adjustment options"},
-  {14, "Advanced computation options"},
-  {18, "Advanced analysis options"},
-  {24, "Legacy options"},
+  {3, "What to do"},
+  {7, "Elements selection"},
+  {11, "Visibility adjustment options"},
+  {16, "Advanced computation options"},
+  {20, "Advanced analysis options"},
+  {26, "Legacy options"},
 };
 
 namespace JacQual = jacobianBasedQuality;
@@ -666,46 +666,46 @@ bool Plug::_fetchParameters()
   // Metrics to include:
   disto = MeshQuality2Options_Number[0].def;
   aspect = MeshQuality2Options_Number[1].def;
-  geofit = 1; // FIXME
-  // geofit = MeshQuality2Options_Number[2].def;
+  geofit = MeshQuality2Options_Number[2].def;
 
   // What to do:
-  pp.createElemView = static_cast<bool>(MeshQuality2Options_Number[2].def);
-  pp.createPlot = static_cast<bool>(MeshQuality2Options_Number[3].def);
-  ph.todo = static_cast<int>(MeshQuality2Options_Number[4].def);
+  pp.createElemView = static_cast<bool>(MeshQuality2Options_Number[3].def);
+  pp.createPlot = static_cast<bool>(MeshQuality2Options_Number[4].def);
+  ph.todo = static_cast<int>(MeshQuality2Options_Number[5].def);
 
   // Elements Selection:
-  _dimensionPolicy = static_cast<int>(MeshQuality2Options_Number[6].def);
+  _dimensionPolicy = static_cast<int>(MeshQuality2Options_Number[7].def);
   if(_dimensionPolicy == -1) {
     _error(MP, "   <|>Option 'dimensionPolicy' is set to -1 (force1D) but "
               "1D metrics are not yet implemented. Aborting. Please set "
               "'dimensionPolicy' to another value");
     return false;
   }
-  pc.onlyVisible = static_cast<bool>(MeshQuality2Options_Number[7].def);
-  pc.onlyCurved = static_cast<bool>(MeshQuality2Options_Number[8].def);
+  pc.onlyElementType = static_cast<int>(MeshQuality2Options_Number[8].def);
+  pc.onlyVisible = static_cast<bool>(MeshQuality2Options_Number[9].def);
+  pc.onlyCurved = static_cast<bool>(MeshQuality2Options_Number[10].def);
 
   // Visibility options:
-  ph.policy = static_cast<int>(MeshQuality2Options_Number[9].def);
-  ph.criterion = static_cast<int>(MeshQuality2Options_Number[10].def);
-  ph.threshold = MeshQuality2Options_Number[11].def;
-  ph.worst = static_cast<bool>(MeshQuality2Options_Number[12].def);
-  ph.unhideToo = !static_cast<bool>(MeshQuality2Options_Number[13].def);
+  ph.policy = static_cast<int>(MeshQuality2Options_Number[11].def);
+  ph.criterion = static_cast<int>(MeshQuality2Options_Number[12].def);
+  ph.threshold = MeshQuality2Options_Number[13].def;
+  ph.worst = static_cast<bool>(MeshQuality2Options_Number[14].def);
+  ph.unhideToo = !static_cast<bool>(MeshQuality2Options_Number[15].def);
 
   // Advanced computation options:
-  pc.skip = static_cast<bool>(MeshQuality2Options_Number[14].def);
-  dataManagePolicy = static_cast<int>(MeshQuality2Options_Number[15].def);
-  pc.smartRecompute = static_cast<bool>(MeshQuality2Options_Number[16].def);
-  skipValidity = MeshQuality2Options_Number[17].def;
+  pc.skip = static_cast<bool>(MeshQuality2Options_Number[16].def);
+  pc.smartRecompute = static_cast<bool>(MeshQuality2Options_Number[17].def);
+  dataManagePolicy = static_cast<int>(MeshQuality2Options_Number[18].def);
+  skipValidity = MeshQuality2Options_Number[19].def;
 
   // Advanced analysis options:
-  ps.skipStats = static_cast<bool>(MeshQuality2Options_Number[18].def);
-  ratioJ = MeshQuality2Options_Number[19].def;
-  minJ = MeshQuality2Options_Number[20].def;
-  ps.regularizeJac = MeshQuality2Options_Number[21].def > 0;
-  ps.regularizeGFit = MeshQuality2Options_Number[21].def > -1;
-  pp.statCutoffPack = MeshQuality2Options_Number[22].def;
-  pp.plotCutoffPack = MeshQuality2Options_Number[23].def;
+  ps.regularizeJac = MeshQuality2Options_Number[20].def > 0;
+  ps.regularizeGFit = MeshQuality2Options_Number[20].def > -1;
+  minJ = MeshQuality2Options_Number[21].def;
+  ratioJ = MeshQuality2Options_Number[22].def;
+  ps.skipStats = static_cast<bool>(MeshQuality2Options_Number[23].def);
+  pp.statCutoffPack = MeshQuality2Options_Number[24].def;
+  pp.plotCutoffPack = MeshQuality2Options_Number[25].def;
 
   // -> statsGenerator
   _statGen->setCutoffStats(pp.statCutoffPack);

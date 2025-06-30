@@ -50,6 +50,7 @@ private:
       bool disto = false;
       bool aspect = false;
       bool geofit = false;
+      int onlyElementType = false;
       bool onlyVisible = false;
       bool onlyCurved = false;
       bool smartRecompute = false;
