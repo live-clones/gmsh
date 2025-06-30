@@ -50,10 +50,11 @@
 //     x put dataManagementPolicy after smartRecomputation
 //     x reorder treatFlippedAsValid, enableMinJacDetAsAMetric,
 //               enableRatioJacDetAsAMetric, skipStatPrinting
+//     - update metrics info
 //  xx add restrictToElementType option + corresponding help message
 //     (and main element in tooltip)
-//  3. Add a quick presentation of metrics in Help message.
-//  4. guidanceLevel=2 => justPrintDetailedInfoOnMetrics (and set guidanceLevel=1)
+//  xx Add a quick presentation of metrics in Help message.
+//  xx guidanceLevel=2 => justPrintDetailedInfoOnMetrics (and set guidanceLevel=1)
 //  5. Add to FAQ:
 //     - why not a metric about distance to geometry
 //     - diff between 3 options concerning data management
@@ -209,7 +210,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "createElementsView", nullptr, 0, "OFF, ON"},
   {GMSH_FULLRC, "createPlotView", nullptr, 0, "OFF, ON"},
   {GMSH_FULLRC, "adjustElementsVisibility", nullptr, 0, "OFF, 1=skipIfAllWouldBeHidden, 2=acceptAllHidden"}, //TODO updtate for geofit
-  {GMSH_FULLRC, "guidanceLevel", nullptr, 0, "(-1)=minimalOutput, 0=verbose, 1=verboseAndExplanations"},
+  {GMSH_FULLRC, "guidanceLevel", nullptr, 0, "(-1)=minimalOutput, 0=verbose, 1=verboseAndExplanations, 2=justPrintDetailsOnMetrics"},
   // Elements Selection:
   {GMSH_FULLRC, "dimensionPolicy", nullptr, 0, "(-2)=force2D, (-1)=force1D, 0=prioritize3D, 1=2D+3D, 2=combine2D+3D"},
   {GMSH_FULLRC, "restrictToElementType", nullptr, 0, "OFF, 1=Tri/Tet, 2=Quad/Hex, 3=Prism/Pyr"},
@@ -323,7 +324,7 @@ std::string Plug::getHelp() const
     "INTRODUCTION\n"
     "Plugin(AnalyseMeshQuality) evaluates the validity and quality of mesh "
     "elements within the current model. The plugin allows users to compute "
-    "various quality metrics such as Distortion, Aspect Ratio, and GeoFit, "
+    "various quality metrics such as Distortion, Aspect, and GeoFit, "
     "generating detailed statistics for each of them, create visualization views "
     "(element-based or plot-based), and adjust element visibility based on "
     "customizable criteria.\n"
@@ -390,9 +391,9 @@ std::string Plug::getHelp() const
     "its minimum value (minJ) and the ratio of minJ to maxJ. "
     "These two metrics are obtained at no additional computational cost since the "
     "Jacobian determinant is already calculated for validity and flipping. "
-    "The minJ metric helps determine the element size. "
-    "The minJ/maxJ ratio, while not a true quality metric, serves as an efficient "
-    "way to detect distorted elements. Be cautious, as there is no guarantee "
+    "The minJ metric helps determine the element size. " // FIXME ratio for HO elements
+    "The minJ/maxJ ratio, while not a true quality metric, can serve as an indicator "
+    "for detecting distorted elements. Be cautious, as there is no guarantee "
     "that an element with a good minJ/maxJ ratio has a good shape. "
     "For additional details about the metrics in use during execution, set guidanceLevel to ‘1’. "
     "Alternatively, set guidanceLevel to ‘2’ to instruct the plugin to print detailed "
@@ -595,6 +596,16 @@ PView *Plug::execute(PView *v)
   _info(MP, "---------------------------------------------");
   _status(0, "Executing the plugin AnalyseMeshQuality...");
 
+  if(_verbose == 2) {
+    size_t which[METRIC_COUNT];
+    std::fill(std::begin(which), std::end(which), 1);
+    _printDetailsMetrics(which, true);
+    MeshQuality2Options_Number[6].def = 1;
+    _info(MP, "Done. Option 'guidanceLevel' has been set to 1");
+    _info(MP, "Re-run the plugin to compute something");
+    return v;
+  }
+
   if(!_fetchParameters()) return v;
 
   _info(1, "-> <|>Option 'guidanceLevel' is 1. This makes the plugin to "
@@ -606,9 +617,9 @@ PView *Plug::execute(PView *v)
     _info(1, "-> Freeing data... (because option 'dataManagePolicy' is -1)");
     _data2D->clear();
     _data3D->clear();
-    MeshQuality2Options_Number[15].def = !_previousFreeOldData;
-    _info(MP, "   Done. Option 'dataManagePolicy' has been reset");
-    _info(1, "   Nothing else to do, re-run the plugin to compute something");
+    MeshQuality2Options_Number[18].def = !_previousFreeOldData;
+    _info(MP, "Done. Option 'dataManagePolicy' has been reset");
+    _info(1, "Nothing else to do, re-run the plugin to compute something");
     return v;
   }
 
@@ -725,6 +736,7 @@ bool Plug::_fetchParameters()
   pp.createPlot = static_cast<bool>(MeshQuality2Options_Number[4].def);
   ph.todo = static_cast<int>(MeshQuality2Options_Number[5].def);
   // Change also 'Plug::_verbose = ..._Number[6].def' in execute method
+  // and all other occurrences of MeshQuality2Options_Number
 
   // Elements Selection:
   _dimensionPolicy = static_cast<int>(MeshQuality2Options_Number[7].def);
@@ -1456,60 +1468,12 @@ void Plug::StatGenerator::printStats(const Parameters &param,
       totalNumberToShow[i] += m.numToShow[i];
   }
 
+  _printDetailsMetrics(totalNumberToShow);
+
   int cntQuality = 0;
   for (int i = DISTO; i <= MINJAC; ++i) {
     cntQuality += totalNumberToShow[i];
   }
-
-  _info(1, "-> Printing statistics, here is what is important to know about "
-  "them:");
-  if(totalNumberToShow[VALIDITY])
-  _info(1, "   *V<|>alidity*  provides information about whether the Jacobian "
-           "determinant is strictly different from zero. "
-           "A mesh containing invalid elements "
-           "will usually result in incorrect Finite Element solutions. Each "
-           "element is classified as either valid or invalid.");
-  if(totalNumberToShow[UNFLIP])
-    _info(1, "   *U<|>nflip*  provides information about whether the Jacobian "
-             "determinant is strictly positive. A mesh containing flipped (inverted) "
-             "elements may lead to incorrect Finite Element solutions "
-             "depending on the solver. Each valid element is classified as "
-             "either flipped or not flipped.");
-  if(totalNumberToShow[MINJAC])
-    _info(1, "   *m<|>inJ*  is the minimum of the Jacobian determinant computed "
-             "in the reference space and can be used to check the element size. "
-             "This metric is particularly relevant for iterative methods, "
-             "where the time step may depend on the size of the smallest "
-             "element. Values range from -∞ to +∞.");
-  if(totalNumberToShow[RATIOJAC])
-    _info(1, "   *R<|>atio minJ/maxJ*  is the ratio between the minimum and "
-             "maximum values of the Jacobian determinant. It is faster to "
-             "compute than the distortion and aspect quality metrics and can "
-             "be used to evaluate how much elements are deformed. However, "
-             "note that it is not a true quality metric. Values range from "
-             "-∞ to 1.");
-  if(totalNumberToShow[DISTO])
-  _info(1, "   *D<|>istortion quality*  (previously ICN) is related to the "
-           "condition number of the stiffness matrix. Low-Distortion elements "
-           "may cause numerical roundoff errors or significantly reduce the "
-           "convergence speed of iterative methods. Values "
-           "range from 0 to 1.");
-  if(totalNumberToShow[ASPECT])
-  _info(1, "   *A<|>spect quality*  (previously IGE) is related to "
-           "the gradient of the FE solution. Elements with poor aspect quality "
-           "negatively affect errors in the gradient of the solution. Values "
-           "range from 0 to 1.");
-  if(totalNumberToShow[GEOFIT])
-    _info(1, "   *G<|>eoFit (experimental)* is defined on curved surfaces and curved edges of the geometry and measures how well "
-             "element orientations align with the underlying geometry. On such configurations, validity is "
-             "not defined, and GeoFit provides a natural alternative for assessing whether the mesh is "
-             "appropriate as a boundary for the interior mesh. GeoFit can be considered as equivalent "
-             "to a normalized Jacobian determinant. GeoFit values range from -1 (completely flipped) to 1 (perfectly "
-             "aligned). A negative value may indicate an inappropriate (invalid-like) element, while a positive "
-             "but small value suggests a poor representation of the geometry (and possibly high oscillations "
-             "in element geometry for high-order elements), indicating potential challenges during interior "
-             "mesh generation. For boundary meshes, since element orientation does not influence the finite "
-             "element solution, you can set treatFlippedAsValid to 1 for disregarding flipping warnings.");
 
   if(param.pview.statCutoffPack && cntQuality)
     _info(1, "   *W<|>orst-10%% Weighted Mean*  (Wm10) corresponds to a weighted "
@@ -2245,7 +2209,7 @@ void Plug::DataEntity::addValues(Measures &measures)
 bool Plug::_okToPrint(int asked)
 {
   //       | _verbose  |
-  // asked |-1 | 0 | 1 |
+  // asked |-1 | 0 | 1+|
   // -------------------
   //   MP  | x | x | x | -> mandatory
   //    1  |   |   | x | -> help
@@ -2254,7 +2218,7 @@ bool Plug::_okToPrint(int asked)
   //   -2  | x |   |   | -> minimal
 
   return (asked == MP) ||
-         (_verbose == 1 && asked >= 0) ||
+         (_verbose >= 1 && asked >= 0) ||
          (_verbose == 0 && (asked == 0 || asked == -1)) ||
          (_verbose == -1 && asked == -2);
 }
@@ -2389,6 +2353,70 @@ void Plug::_statusBar(int verb, const char *format, ...)
   va_start(args, format);
   _printMessage(Msg::StatusGl, nullptr, format, args, false);
   va_end(args);
+}
+
+void Plug::_printDetailsMetrics(size_t which[METRIC_COUNT], bool verbose2)
+{
+  if(verbose2)
+    _info(1, "-> Here is all available metric described in details:");
+  else
+    _info(1, "-> Printing statistics, here is what is important to know about "
+    "them:");
+
+  if(which[VALIDITY])
+    // Add guarantee that the Jacobian determinant will be strictly different from
+    // zero at any gaussian point?
+    _info(1, "   *V<|>alidity*  provides information about whether the Jacobian "
+             "determinant is strictly different from zero. "
+             "A mesh containing invalid elements "
+             "will usually result in incorrect Finite Element solutions. Each "
+             "element is classified as either valid or invalid.");
+  if(which[UNFLIP])
+    _info(1, "   *U<|>nflip*  provides information about whether the Jacobian "
+             "determinant is strictly positive. A mesh containing flipped (inverted) "
+             "elements may lead to incorrect Finite Element solutions "
+             "depending on the solver. Each valid element is classified as "
+             "either flipped or not flipped.");
+  if(which[MINJAC])
+    _info(1, "   *m<|>inJ*  is the minimum of the Jacobian determinant computed "
+             "in the reference space and can be used to check the element size. "
+             "This metric is particularly relevant for iterative methods, "
+             "where the time step may depend on the size of the smallest "
+             "element. Values range from -∞ to +∞.");
+  if(which[RATIOJAC])
+    // FIXME update : useful for curved element (HO)
+    _info(1, "   *R<|>atio minJ/maxJ*  is the ratio between the minimum and "
+             "maximum values of the Jacobian determinant. It is faster to "
+             "compute than the distortion and aspect quality metrics and can "
+             "be used to evaluate how much elements are deformed. However, "
+             "note that it is not a true quality metric. Values range from "
+             "-∞ to 1.");
+  if(which[DISTO])
+    // FIXME update
+    _info(1, "   *D<|>istortion quality*  (previously ICN) is related to the "
+             "condition number of the stiffness matrix. Low-Distortion elements "
+             "may cause numerical roundoff errors or significantly reduce the "
+             "convergence speed of iterative methods. Values "
+             "range from 0 to 1.");
+  if(which[ASPECT])
+    // FIXME update
+    _info(1, "   *A<|>spect quality*  (previously IGE) is related to "
+             "the gradient of the FE solution. Elements with poor aspect quality "
+             "negatively affect errors in the gradient of the solution. Values "
+             "range from 0 to 1.");
+  if(which[GEOFIT])
+    _info(1, "   *G<|>eoFit (experimental)* is defined on curved surfaces and curved edges of the geometry and measures how well "
+             "element orientations align with the underlying geometry. On such configurations, validity is "
+             "not defined, and GeoFit provides a natural alternative for assessing whether the mesh is "
+             "appropriate as a boundary for the interior mesh. GeoFit can be considered as equivalent "
+             "to a normalized Jacobian determinant. GeoFit values range from -1 (completely flipped) to 1 (perfectly "
+             "aligned). A negative value may indicate an inappropriate (invalid-like) element, while a positive "
+             "but small value suggests a poor representation of the geometry (and possibly high oscillations "
+             "in element geometry for high-order elements), indicating potential challenges during interior "
+             "mesh generation. For boundary meshes, since element orientation does not influence the finite "
+             "element solution, you can set treatFlippedAsValid to 1 for disregarding flipping warnings.");
+    // FIXME update
+  // FIXME update treatFlippedAsValid to 1
 }
 
 std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
