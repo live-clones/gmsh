@@ -32,30 +32,49 @@
 #endif
 
 // TODO:
-//  1. add enableGeoFit option
-//  2. add restrictToElementType option + corresponding help message (or tooltip)
-//  x. Update Help message GUI (Explain what is smartrecompute)
-//       Say in help that the plugin can be used to compute jacobian, hide best
-//       elements, then compute quality (the gain is to compute quality of less
-//       elements)
-//  4. Test with ctest that everything works?
-//  5. Check fixmes, todos, etc.
-//  6. Add a quick presentation of metrics in Help message. Start by asking IA
-//     about the subject.
-//  x. Automatically set 'Custom' range mode for element view + move that out
-//     of plot constructor
-//  x. Number of hidden/made visible element in human readable format if
-//     verbose < 1. Or if verbose = 2, then give exact number?
-//  x. Change name of regularizeDeterminant (treatFlippedAsValid?) and make
-//     it change also GeoFit
-//  10. Merge master + Clang format
-//  11. Add warning when not all element have data (in print stat: say at rigth
-//      of table than have less element?).
-//      -> Say how many element correspond the stats. But percentage when less than 100%
-//   x. Add to FAQ what to do if bug, suggestion, question
-//  13. Add after validity, in presence of curved geometry entities:
-//      "Among curved surfaces/edges, there are x potentially invalid elements,
-//      and y flipped elements
+//  1. Small changes:
+//     - force2D = -2, force1D = -1 + warn 1D not implemented
+//     - By default: regularizeGeoFit, doNotTreatFlippedAsValid
+//       -> create second option
+//       -> OR treatFlippedAsValid: -1=doNotRegularizeGeoFit, 0=regularizeGeoFit, 1=ON (alter minJ and minJ/maxJ)
+//       -> OR treatFlippedAsValid: -1=never, 0=forCurvedGeo (alter FeoFit), 1=always (also alter minJ and minJ/maxJ)
+//     - if guidanceLevel=-1 do not print Executing AnalyseMeshQuality as in
+//       script, it is already printed `Running Plugin(AnalyseMeshQuality)...'
+//     - add number of element for statistics: `-> Statistics for dimension 3 (HERE):'
+//       + warning not all elements have metric => _warn(1, ...);
+//     - add enableGeoFit option
+//     - put dataManagementPolicy after smartRecomputation
+//     - reorder treatFlippedAsValid, enableMinJacDetAsAMetric,
+//               enableRatioJacDetAsAMetric, skipStatPrinting
+//     - Set plot color black
+//     - Say geofit is experimental
+//     - Say number of view created
+//     - Add definition requested element
+//  2. add restrictToElementType option + corresponding help message
+//     (and main element in tooltip)
+//  3. Add a quick presentation of metrics in Help message.
+//  4. guidanceLevel=2 => justPrintDetailedInfoOnMetrics (and set guidanceLevel=1)
+//  5. Add to FAQ why not a metric about distance to geometry
+//  6. Print different info at execution for GeoFit (and JacDet) in function of
+//     regularization or not
+//     -> If regu: then GeoFit >= a means valid, [-a, a] invalid
+//     -> If notRegu: then GeoFit >= a means valid, [-a, a] invalid, <a flipped
+//  7. Test plot such that first element take same place, like 1/50
+//     -> If choose to stay at fixed cutoff determine which cutoff to choose for
+//        which number of element
+//  8. Move info how to read plot at execution. Say in important notes that
+//     Help does not cover all information and it is adviced to set
+//     guidanceLevel=1 at the beginning to have contextual more complete info
+//  9. Add to FAQ diff between 3 options concerning data management
+
+
+
+// TODO Finalization:
+//  1. Check fixmes, todos, etc.
+//  2. Merge master + Clang format
+//  3. Test with ctest that everything works?
+//  4. Update `What does the plugin'
+
 
 // TODO Later:
 //  1. Add check + message after having fetched parameters
@@ -75,6 +94,23 @@
 //     For now, let all 2D together.
 //  3. Demo mode?
 //  4. Disable keep data? (dataManagementPolicy=1)
+//  5. If computed from scripts, have `Running Plugin(AnalyseMeshQuality)...'
+//     then `Executing the plugin AnalyseMeshQuality...'. If it is possible
+//     to know that in script or from GUI, then have condition for
+//     printing _info(Executing the plugin AnalyseMeshQuality...
+//  6. A tuto? (with at the end the list of options and tooltips as comment)
+//     -> in which case say in getting started that this exists
+//     -> a ball with a hole would be perfectly fine: element touching
+//        inner boundary being much more curved than element touching external
+//        boundary
+//  7. Add after validity, in presence of curved geometry entities:
+//     "Among curved surfaces/edges, there are x potentially invalid elements,
+//     and y flipped elements
+//  8. Set plot color to loop over different a set of uniform colormap
+//     (same color for each value)
+//  9. Print info why no view when no view created (if verbose)?
+
+
 
 // FIXME: PView are based on elements. If I remesh with a different mesh size
 //  factor, data is still there but on wrong elements.
@@ -85,7 +121,7 @@
 //   Split step 1 into two steps:
 //    1a. Set requested element, determine requested metrics, Prominent metrics
 //    1b. Compute missing data
-//    3. Print stats for requested metrics
+//    2. Print stats for available metrics on requested elements
 //  1. Compute validity/quality IF usePreviousData = OFF
 //   • Limit to GEntity in GModel::current()
 //   • In function of dimensionPolicy:
@@ -1160,12 +1196,12 @@ bool Plug::_performHiding(const std::vector<Measures> &measures)
   }
 
   if(countHidden && countMadeVisible)
-    _info(0, "-> %s elements have been made visible, %s have been hidden.",
+    _info(MP, "-> %s elements have been made visible, %s have been hidden.",
       formatNumber(countMadeVisible).c_str(), formatNumber(countHidden).c_str());
   else if (countHidden)
-    _info(0, "-> %s elements have been hidden.", formatNumber(countHidden).c_str());
+    _info(MP, "-> %s elements have been hidden.", formatNumber(countHidden).c_str());
   else if (countMadeVisible)
-    _info(0, "-> %s elements have been made visible.", formatNumber(countMadeVisible).c_str());
+    _info(MP, "-> %s elements have been made visible.", formatNumber(countMadeVisible).c_str());
 
   return static_cast<bool>(countHidden + countMadeVisible);
 }
