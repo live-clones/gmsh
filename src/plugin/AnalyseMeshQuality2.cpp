@@ -33,7 +33,7 @@
 
 // TODO:
 //  1. Small changes:
-//     - force2D = -2, force1D = -1 + warn 1D not implemented
+//     x force2D = -2, force1D = -1 + warn 1D not implemented
 //     - By default: regularizeGeoFit, doNotTreatFlippedAsValid
 //       -> create second option
 //       -> OR treatFlippedAsValid: -1=doNotRegularizeGeoFit, 0=regularizeGeoFit, 1=ON (alter minJ and minJ/maxJ)
@@ -208,7 +208,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "adjustElementsVisibility", nullptr, 0, "OFF, 1=skipIfAllWouldBeHidden, 2=acceptAllHidden"}, //TODO updtate for geofit
   {GMSH_FULLRC, "guidanceLevel", nullptr, 0, "(-1)=minimalOutput, 0=verbose, 1=verboseAndExplanations"},
   // Elements Selection:
-  {GMSH_FULLRC, "dimensionPolicy", nullptr, 0, "(-1)=force2D, 0=prioritize3D, 1=2D+3D, 2=combine2D+3D"},
+  {GMSH_FULLRC, "dimensionPolicy", nullptr, 0, "(-2)=force2D, (-1)=force1D, 0=prioritize3D, 1=2D+3D, 2=combine2D+3D"},
   // TODO: add restrictToElementType
   {GMSH_FULLRC, "restrictToVisibleElements", nullptr, 0, "OFF, ON=analyzeOnlyVisibleElements"},
   {GMSH_FULLRC, "restrictToCurvedElements", nullptr, 0, "OFF, ON=analyzeOnlyNonStraightElements"},
@@ -524,7 +524,7 @@ PView *Plug::execute(PView *v)
   _info(MP, "---------------------------------------------");
   _status(0, "Executing the plugin AnalyseMeshQuality...");
 
-  _fetchParameters();
+  if(!_fetchParameters()) return v;
 
   _info(1, "-> <|>Option 'guidanceLevel' is 1. This makes the plugin to "
            "provide various explanations");
@@ -633,7 +633,7 @@ PView *Plug::execute(PView *v)
 // ======== Plugin: private methods ============================================
 // =============================================================================
 
-void Plug::_fetchParameters()
+bool Plug::_fetchParameters()
 {
   Parameters::Computation &pc = _param.compute;
   Parameters::Post &pp = _param.pview;
@@ -656,6 +656,12 @@ void Plug::_fetchParameters()
 
   // Elements Selection:
   _dimensionPolicy = static_cast<int>(MeshQuality2Options_Number[6].def);
+  if(_dimensionPolicy == -1) {
+    _error(MP, "   <|>Option 'dimensionPolicy' is set to -1 (force1D) but "
+              "1D metrics are not yet implemented. Aborting. Please set "
+              "'dimensionPolicy' to another value");
+    return false;
+  }
   pc.onlyVisible = static_cast<bool>(MeshQuality2Options_Number[7].def);
   pc.onlyCurved = static_cast<bool>(MeshQuality2Options_Number[8].def);
 
@@ -745,6 +751,8 @@ void Plug::_fetchParameters()
   // _dataPViewIGE.clear();
   // _dataPViewICN.clear();
 #endif
+
+  return true;
 }
 
 void Plug::_fetchLegacyParameters()

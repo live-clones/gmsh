@@ -139,7 +139,7 @@ public:
   PView *execute(PView *) override;
 
 private:
-  void _fetchParameters();
+  bool _fetchParameters();
   void _fetchLegacyParameters();
   void _purgeViews(bool purge2D, bool purge3D);
   void _decideDimensionToCheck(bool &check2D, bool &check3D) const;
