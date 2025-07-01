@@ -55,11 +55,11 @@
 //     (and main element in tooltip)
 //  xx Add a quick presentation of metrics in Help message.
 //  xx guidanceLevel=2 => justPrintDetailedInfoOnMetrics (and set guidanceLevel=1)
-//  5. Add to FAQ:
-//     - why not a metric about distance to geometry
-//     - diff between 3 options concerning data management
-//     - why OFF, ON in tooltips?
-//     - why not classify CG elements in terms of validity and unflip
+//  xx Add to FAQ:
+//     x why not a metric about distance to geometry
+//     x diff between 3 options concerning data management
+//     x why OFF, ON in tooltips?
+//     x why not classify CG elements in terms of validity and unflip
 //  6. Print different info at execution for GeoFit (and JacDet) in function of
 //     regularization or not
 //     -> If regu: then GeoFit >= a means valid, [-a, a] invalid
@@ -238,7 +238,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "dataReleasePolicy ", nullptr, 0, "(-1)=skipExecutionJustFreeData, 0=freeOldDataIfMeshAbsent, 1=keepAllData"},
   {GMSH_FULLRC, "omitMetricsComputation", nullptr, 0, "OFF, ON=usePreviousData"},
   {GMSH_FULLRC, "smartRecomputation", nullptr, 0, "OFF=alwaysRecompute, ON=avoidRecomputeIfUnchangedElementTags"},
-  {GMSH_FULLRC, "skipValidity", nullptr, 0, "(0-)=includeValidity, ON=skipPreventiveValidityCheck"},
+  {GMSH_FULLRC, "skipValidity", nullptr, 0, "(0-)=includeValidity, (1+)=skipPreventiveValidityCheck"},
   // Advanced analysis options:
   {GMSH_FULLRC, "treatFlippedAsValid", nullptr, 0, "(-1)=never, 0=forCurvedGeo (alter FeoFit), 1=always (also alter minJ and minJ/maxJ)"},
   {GMSH_FULLRC, "enableMinJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=(0-)"},
@@ -620,51 +620,87 @@ std::string Plug::getHelp() const
     "\n"
     "FAQ\n"
     BULLET"Q1: As the plugin has been rewritten, will my script that uses the "
-    "old version fail to work?\n"
-    BULLETA"A: No, although not available in the GUI, the old options have been "
-    "kept as legacy options. However, it is recommended to update "
-    "the script, as these legacy options may be removed in a future release.\n"
-    BULLET"Q2: Why is there a `+' after Validity when the plugin says it computes that?\n"
-    BULLETA"A: The plugin actually does not compute validity exactly but instead "
-    "calculates the minimum and maximum of the Jacobian determinant. "
-    "From that, it derives four quantities: validity, element flipping, "
-    "and minJ and minJ/maxJ.\n"
-    BULLET"Q3: What should I do if I find a bug, have a question, or want to "
-    "propose a suggestion for the plugin?\n"
-    BULLETA"A: To report a bug or make a suggestion, please create an issue on Gmsh's GitLab: "
-    "https://gitlab.onelab.info/gmsh/gmsh/-/issues/new. "
-    "  Be sure to provide sufficient details about the issue or suggestion to "
-    "help with clarification. "
-    "For additional inquiries, you may contact the plugin author at amaury.johnen@uclouvain.be.\n";
-  BULLET"Q4: What is the difference between the three options concerning "
-        "data management: `dataReleasePolicy', `omitMetricsComputation', "
-        "and `smartRecomputation'?\n"
-  ANSWER"A: First, note that the plugin stores the data it computes to avoid "
-        "unnecessary recomputation if run again. Running the plugin with "
-        "`dataReleasePolicy' set to -1 causes the plugin to release "
-        "memory and stop immediately. By default, the plugin releases "
-        "data related to previously analyzed geometry entities that "
-        "are absent in the current model. This behavior can be changed by setting "
-        "`dataReleasePolicy' to 1, in which case data is retained. "
-        "This can be useful when deliberately switching between different models. " //FIXME really useful?
-        "When `omitMetricsComputation' is set to 1, the plugin will recalculate "
-        "the list of requested elements based on the current restrictions but will "
-        "omit computing missing data, relying only on previously computed data for the output. "
-        "This can be helpful, for example, for printing statistics for a subset of "
-        "elements. "
-        "If `omitMetricsComputation' is set to 0, two behaviors are possible. "
-        "If `smartRecomputation' is set to 0, metrics are always (re)computed for each "
-        "requested element. "
-        "If `smartRecomputation' is set to 1, the plugin compares the stored list of "
-        "elements with the list in the geometry entity. "
-        "If they are identical, the plugin only computes missing data. "
-        "Otherwise, it recomputes data for the entire mesh on "
-        "that geometry entity. Note that the plugin cannot detect meshes "
-        "whose element lists remain unchanged but have been modified by moving "
-        "nodes (e.g., after optimization). Therefore, use "
-        "`smartRecomputation' with caution."
-        " \n"
-  // TODO add question about abbreviation (ND, CG)?
+          "old version fail to work?\n"
+    ANSWER"A: No, although not available in the GUI, the old options have been "
+          "kept as legacy options. However, it is recommended to update "
+          "the script, as these legacy options may be removed in a future release.\n"
+    BULLET"Q2: Why is there a metric for the alignment of elements with curved "
+          "edges/surfaces of the geometry (GeoFit) but not a metric for "
+          "distance to the geometry?\n"
+    ANSWER"A: The plugin assumes that the element nodes are "
+          "exactly on the geometry, that the geometry is continuous, and "
+          "that the parameterization is correct. "
+          "Under these assumptions, it can be shown that a mesh which "
+          "aligns well with the geometry in terms of orientation will also have "
+          "a small distance to the geometry. In other words, as the GeoFit value "
+          "tends to 1, the distance tends to zero. Conversely, it is possible "
+          "to create situations where the orientation alignment remains poor "
+          "while the distance to the geometry tends to zero. "
+          "This is why the focus is on alignment rather than distance.\n"
+    BULLET"Q3: Why are CG elements not classified in terms of validity and "
+          "flipping like ND elements?\n"
+    ANSWER"A: For simplicity, this answer will focus on 2D meshes on curved "
+          "surfaces, but it is also applicable to 1D meshes on curved edges. "
+          "There are two possible uses for surface meshes in the finite element "
+          "method: either as the boundary of a volume mesh or for computing "
+          "a finite element solution directly on it. In the first case, "
+          "what is important is that the surface mesh does not interfere with "
+          "the generation of a good volume mesh. In that context, "
+          "validity/non-flipping is required only for the volume mesh. "
+          "GeoFit allows users to verify that the surface mesh is "
+          "suitable for generating a high-quality volume mesh. "
+          "In the second case, the validity and quality requirements of the "
+          "mesh depend on its specific application, and the plugin cannot "
+          "account for all possible situations. "
+          "GeoFit is still useful for checking whether the "
+          "mesh accurately represents the surface.\n" //TODO improve
+    BULLET"Q4: What is the difference between the three options concerning "
+          "data management: `dataReleasePolicy', `omitMetricsComputation', "
+          "and `smartRecomputation'?\n"
+    ANSWER"A: First, note that the plugin stores the data it computes to avoid "
+          "unnecessary recomputation if run again. Running the plugin with "
+          "`dataReleasePolicy' set to -1 causes the plugin to release "
+          "memory and stop immediately. By default, the plugin releases "
+          "data related to previously analyzed geometry entities that "
+          "are absent in the current model. This behavior can be changed by setting "
+          "`dataReleasePolicy' to 1, in which case data is retained. "
+          "This can be useful when deliberately switching between different models. " //FIXME really useful?
+          "When `omitMetricsComputation' is set to 1, the plugin will recalculate "
+          "the list of requested elements based on the current restrictions but will "
+          "omit computing missing data, relying only on previously computed data for the output. "
+          "This can be helpful, for example, for printing statistics for a subset of "
+          "elements. "
+          "If `omitMetricsComputation' is set to 0, two behaviors are possible. "
+          "If `smartRecomputation' is set to 0, metrics are always (re)computed for each "
+          "requested element. "
+          "If `smartRecomputation' is set to 1, the plugin compares the stored list of "
+          "elements with the list in the geometry entity. "
+          "If they are identical, the plugin only computes missing data. "
+          "Otherwise, it recomputes data for the entire mesh on "
+          "that geometry entity. Note that the plugin cannot detect meshes "
+          "whose element lists remain unchanged but have been modified by moving "
+          "nodes (e.g., after optimization). Therefore, use "
+          "`smartRecomputation' with caution."
+          " \n"
+    BULLET"Q5: Why are OFF and ON used in certain tooltips?\n"
+    ANSWER"A: While most of the options function as on/off parameters, the "
+          "input fields are uniform and expect a double-precision input. "
+          "For this reason, OFF always corresponds to 0, while ON can be any "
+          "value different from 0. "
+          "In some cases, numbers are specifically listed instead of ON or OFF, "
+          "which means that the option is a selection parameter.\n"
+    BULLET"Q6: Why is there a `+' after Validity when the plugin says it computes that?\n"
+    ANSWER"A: The plugin actually does not compute validity exactly but "
+          "instead calculates the minimum and maximum of the Jacobian "
+          "determinant. From that, it derives four quantities: validity, "
+          "element flipping, and minJ and minJ/maxJ.\n"
+    BULLET"Q7: What should I do if I find a bug, have a question, or want "
+          "to propose a suggestion for the plugin?\n"
+    ANSWER"A: To report a bug or make a suggestion, please create an issue "
+          "on Gmsh's GitLab: https://gitlab.onelab.info/gmsh/gmsh/-/issues/new. "
+          "Be sure to provide sufficient details about the issue or suggestion "
+          "to help with clarification. For additional inquiries, you may contact "
+          "the plugin author at amaury.johnen@uclouvain.be.\n";
 #undef SPACE
 #undef BULLET
 #undef BULLET2
