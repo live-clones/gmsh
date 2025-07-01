@@ -223,6 +223,30 @@ private:
 
   public:
     explicit DataEntity(GEntity *ge) : _ge(ge) { _computeNormals(); }
+    DataEntity(const DataEntity &other) : _ge(other._ge)
+    {
+      if(other._normals) {
+        _normals = new fullMatrix<double>(*other._normals);
+        _updateNormalsToPrint();
+      }
+    }
+    // Move Constructor
+    DataEntity(DataEntity &&other) noexcept
+        : _ge(other._ge),
+          _isCurvedGeo(other._isCurvedGeo),
+          _mapElemToIndex(std::move(other._mapElemToIndex)),
+          _minJ(std::move(other._minJ)),
+          _maxJ(std::move(other._maxJ)),
+          _minGFit(std::move(other._minGFit)),
+          _maxGFit(std::move(other._maxGFit)),
+          _minDisto(std::move(other._minDisto)),
+          _minAspect(std::move(other._minAspect)),
+          _flags(std::move(other._flags)),
+          _normals(other._normals),
+          _normalsToPrint(std::move(other._normalsToPrint)) {
+      // Null out the original pointer in the source object
+      other._normals = nullptr;
+    }
     ~DataEntity()
     {
       delete _normals;
@@ -255,6 +279,7 @@ private:
     void _count(unsigned char mask, std::size_t &cnt);
     void _countCurved(std::size_t &known, std::size_t &curved);
     void _computeNormals();
+    void _updateNormalsToPrint();
   };
 
   class StatGenerator {
