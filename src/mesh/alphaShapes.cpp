@@ -2276,7 +2276,7 @@ void AlphaShape::alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int 
         resultTags1.insert(ed->tag);
     }
 
-    bool usePhysicalTags = true;
+    bool usePhysicalTags = false;
     if (usePhysicalTags){
       std::set<int> physTags0;
       std::set<int> physTags1;
@@ -3091,6 +3091,7 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
     }
     auto tet_bary = tet->barycenter();
     sizeAtTetBarycenter[i] = field->operator()(tet_bary.x(), tet_bary.y(), tet_bary.z(), NULL);
+    // printf("size at tet barycenter %zu = %g \n", i, sizeAtTetBarycenter[i]);
   }
   // auto t3 = std::chrono::steady_clock::now(); 
   computeTetNeighbors_(tetNodes, neighbors);
@@ -4940,7 +4941,7 @@ void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std
             if (abs(orient1-orient2) > 1e-10) 
             t = orient1/(orient1-orient2);
             t *= (1.-1e-10); // This ensures that the node stays inside the domain
-            SVector3 nx = x0 + t*(x1-x0);
+            nx = x0 + t*(x1-x0);
             v2 = nx-pa;
           }
           else if (intersectOrProjectOnBoundary == 1){ // Project
