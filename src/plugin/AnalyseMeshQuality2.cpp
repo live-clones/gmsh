@@ -31,6 +31,10 @@
 // #include "BasisFactory.h"
 #endif
 
+// FIXME Bug:
+//  1. Launch T8, then mesh 2, then run plugin, not have validity printed, but if compute
+//     -> not a bug, problem is that by default, the plugin has nothing to do for curved meshes
+
 // TODO:
 //  1. Small changes:
 //     x force2D = -2, force1D = -1 + warn 1D not implemented
@@ -76,6 +80,8 @@
 //      elements.
 //      -> If not: either prevent creation element view or create element
 //         view for subset.
+//  12. I think that omitMetricsComputation still need to not have the mesh
+//      changed, which is not checked right now.
 
 
 
@@ -775,7 +781,12 @@ PView *Plug::execute(PView *v)
   std::size_t totalToCompute = _printElementToCompute(counts2D, counts3D);
   Counts countsTotal = counts2D + counts3D;
   if(!totalToCompute) {
-    _guidanceNothingToCompute(countsTotal, check2D, check3D);
+    if(pc.skip && !_data2D->hasDataToShow() && !_data3D->hasDataToShow()) {
+      _warn(MP, "-> <|>No data available but option 'omitMetricsComputation' is set to 1. "
+                "Set 'omitMetricsComputation' to 0 for analyzing something");
+    }
+    else
+      _guidanceNothingToCompute(countsTotal, check2D, check3D);
     if(!countsTotal.reqElem) return v;
   }
   else {
@@ -1146,10 +1157,8 @@ void Plug::_purgeViews(bool purge2D, bool purge3D)
 void Plug::_computeRequestedData(Counts counts, bool check2D, bool check3D) const
 {
   std::vector<DataEntity*> allDataEntities;
-  if(check2D)
-    _data2D->getDataEntities(allDataEntities);
-  if(check3D)
-    _data3D->getDataEntities(allDataEntities);
+  if(check2D) _data2D->getDataEntities(allDataEntities);
+  if(check3D) _data3D->getDataEntities(allDataEntities);
 
   if(counts.elToCompute[0] > 0 || counts.elToCompute[1] > 0) {
     _status(0, "-> Computing Validity+...");
@@ -1638,8 +1647,8 @@ void Plug::StatGenerator::_unpackCutoff(double input,
 void Plug::StatGenerator::_printStats(const Measures &measure)
 {
   size_t numReqElem = measure.elements.size();
-  _info(MP, "-> Statistics for %s (%s requested elements):", measure.dimStr,
-        formatNumber(numReqElem).c_str());
+  _info(MP, "-> Statistics summary for %s:", measure.dimStr);
+  _info(MP, "   Number of requested elements: %s", formatNumber(numReqElem).c_str());
 
   // 1. Print header table if necessary
   bool haveQualityToPrint = false;
@@ -1867,6 +1876,18 @@ void Plug::DataSingleDimension::gatherValues(const Counts &counts, Measures &mea
   for(auto &it : _dataEntities) {
     it.second.addValues(measures);
   }
+}
+
+bool Plug::DataSingleDimension::hasDataToShow() const
+{
+  bool hasData = false;
+  for(auto &it : _dataEntities) {
+    if(it.second.hasDataToShow()) {
+      hasData = true;
+      break;
+    }
+  }
+  return hasData;
 }
 
 // ======== DataEntity =========================================================
@@ -2319,6 +2340,44 @@ void Plug::DataEntity::addValues(Measures &measures)
         measures.minAspect.push_back(NOTCOMPUTED);
     }
   }
+}
+
+bool Plug::DataEntity::hasDataToShow() const
+{
+  bool hasData = false;
+
+  for(const auto jac: _minJ) {
+    if(jac != NOTCOMPUTED) {
+      hasData = true;
+      break;
+    }
+  }
+  if(hasData) return true;
+
+  for(const auto geoFit: _minGFit) {
+    if(geoFit != NOTCOMPUTED) {
+      hasData = true;
+      break;
+    }
+  }
+  if(hasData) return true;
+
+  for(auto disto: _minDisto) {
+    if(disto != NOTCOMPUTED) {
+      hasData = true;
+      break;
+    }
+  }
+  if(hasData) return true;
+
+  for(auto aspect: _minAspect) {
+    if(aspect != NOTCOMPUTED) {
+      hasData = true;
+      break;
+    }
+  }
+
+  return hasData;
 }
 
 // ======== Plugin: User Messages ==============================================

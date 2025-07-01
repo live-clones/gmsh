@@ -199,6 +199,7 @@ private:
     }
     bool getRequestedHasChanged() { return _requestedListHasChanged; }
     void gatherValues(const Counts &, Measures &);
+    bool hasDataToShow() const;
 
   private:
     void _updateGEntitiesList(std::set<GEntity *, GEntityPtrLessThan> &, bool free);
@@ -238,6 +239,7 @@ private:
     GEntity *getEntity() const { return _ge; }
     // std::size_t getNumToCompute(int i) const { return _numToCompute[i]; }
     void addValues(Measures &);
+    bool hasDataToShow() const;
 
     // I separate the computation of each measure because computation can be
     // really heavy and take a a lot of time. Computing the validity is much
