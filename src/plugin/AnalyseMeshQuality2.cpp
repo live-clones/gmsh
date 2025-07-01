@@ -50,7 +50,7 @@
 //     x put dataManagementPolicy after smartRecomputation
 //     x reorder treatFlippedAsValid, enableMinJacDetAsAMetric,
 //               enableRatioJacDetAsAMetric, skipStatPrinting
-//     - update metrics info
+//     - distortion -> disto
 //  xx add restrictToElementType option + corresponding help message
 //     (and main element in tooltip)
 //  xx Add a quick presentation of metrics in Help message.
@@ -59,6 +59,7 @@
 //     - why not a metric about distance to geometry
 //     - diff between 3 options concerning data management
 //     - why OFF, ON in tooltips?
+//     - why not classify CG elements in terms of validity and unflip
 //  6. Print different info at execution for GeoFit (and JacDet) in function of
 //     regularization or not
 //     -> If regu: then GeoFit >= a means valid, [-a, a] invalid
@@ -69,6 +70,8 @@
 //  8. Move info how to read plot at execution. Say in important notes that
 //     Help does not cover all information and it is adviced to set
 //     guidanceLevel=1 at the beginning to have contextual more complete info
+//  9. Update metrics info
+//  10. Use space non-breakable space character for Help message
 
 
 
@@ -113,6 +116,11 @@
 //  8. Set plot color to loop over different a set of uniform colormap
 //     (same color for each value)
 //  9. Print info why no view when no view created (if verbose)?
+//  10. Revise tooltips as \n can be used?
+//  11. Add option to limit views to subset of element?
+//      -> using new options or hiding options
+//      -> or not, can be done by running the plugin multiple time!
+//      -> tuto with geofit?
 
 
 
