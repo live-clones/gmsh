@@ -72,6 +72,10 @@
 //     guidanceLevel=1 at the beginning to have contextual more complete info
 //  9. Update metrics info
 //  xxx Use space non-breakable space character for Help message
+//  11. If omitMetricsComputation and createElementsView, have to check if same
+//      elements.
+//      -> If not: either prevent creation element view or create element
+//         view for subset.
 
 
 
@@ -100,7 +104,7 @@
 //  2. Check if surface is curved and count differently.
 //     For now, let all 2D together.
 //  3. Demo mode?
-//  4. Disable keep data? (dataManagementPolicy=1)
+//  4. Disable keep data? (dataReleasePolicy=1)
 //  5. If computed from scripts, have `Running Plugin(AnalyseMeshQuality)...'
 //     then `Executing the plugin AnalyseMeshQuality...'. If it is possible
 //     to know that in script or from GUI, then have condition for
@@ -128,20 +132,20 @@
 //  factor, data is still there but on wrong elements.
 
 // NOTE What does the plugin
-//  0. Free data and stop IF dataManagementPolicy = -1
+//  0. Free data and stop IF dataReleasePolicy = -1
 //  TODO:
 //   Split step 1 into two steps:
 //    1a. Set requested element, determine requested metrics, Prominent metrics
 //    1b. Compute missing data
 //    2. Print stats for available metrics on requested elements
-//  1. Compute validity/quality IF usePreviousData = OFF
+//  1. Compute validity/quality IF omitMetricsComputation = OFF
 //   • Limit to GEntity in GModel::current()
 //   • In function of dimensionPolicy:
 //     - IF = -1 Limit to dimension 2 meshes
 //     - IF = 0 Limit to dimension 3 meshes IF there is any 3D mesh OTHERWISE
 //              limit to dimension 2 meshes
 //     - IF >= 1 do not limit (both dimension 2 and 3 meshes)
-//   • Clear old entities IF dataManagementPolicy = 0
+//   • Clear old entities IF dataReleasePolicy = 0
 //   • Check if previous data can be reused IF smartRecomputation = ON
 //   • Limit to visible elements IF restrictToVisibleElements = ON
 //   • Limit to curved elements IF restrictToCurvedElements = ON
@@ -231,9 +235,9 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "hideWorstElements", nullptr, 0, "OFF=hideBestElements, ON"},
   {GMSH_FULLRC, "doNoSetVisible", nullptr, 0, "OFF=performHidingAndUnhiding, ON=justPerformHiding"},
   // Advanced computation options:
-  {GMSH_FULLRC, "usePreviousData", nullptr, 0, "OFF, ON=skipComputationMetrics"},
-  {GMSH_FULLRC, "smartRecomputation", nullptr, 0, "OFF=alwaysRecompute, ON=avoidRecomputeIfUnchangedElementTags"}, // changed order
-  {GMSH_FULLRC, "dataManagementPolicy", nullptr, 0, "(-1)=skipExecutionJustFreeData, 0=freeOldDataIfMeshAbsent, 1=keepAllData"}, // changed order
+  {GMSH_FULLRC, "dataReleasePolicy ", nullptr, 0, "(-1)=skipExecutionJustFreeData, 0=freeOldDataIfMeshAbsent, 1=keepAllData"},
+  {GMSH_FULLRC, "omitMetricsComputation", nullptr, 0, "OFF, ON=usePreviousData"},
+  {GMSH_FULLRC, "smartRecomputation", nullptr, 0, "OFF=alwaysRecompute, ON=avoidRecomputeIfUnchangedElementTags"},
   {GMSH_FULLRC, "skipValidity", nullptr, 0, "(0-)=includeValidity, ON=skipPreventiveValidityCheck"},
   // Advanced analysis options:
   {GMSH_FULLRC, "treatFlippedAsValid", nullptr, 0, "(-1)=never, 0=forCurvedGeo (alter FeoFit), 1=always (also alter minJ and minJ/maxJ)"},
@@ -474,7 +478,7 @@ std::string Plug::getHelp() const
     BULLET2"`1': Prints detailed information about the plugin's operation, "
            "which may be useful for debugging. "
            "It also provides guidance for beginner users.\n"
-    BULLET"`dataManagementPolicy': Determines how data is managed by "
+    BULLET"`dataReleasePolicy': Determines how data is managed by "
           "the plugin:\n"
     BULLET2"`-1': Frees data and stops the plugin immediately, preventing any "
            "further actions. This is typically useful in scripting contexts.\n"
@@ -609,7 +613,7 @@ std::string Plug::getHelp() const
     BULLET2"`adjustElementsVisibility = 1'\n"
     BULLET2"`restrictToVisibleElements = 0'\n"
     BULLET2"`visibilityThreshold = 100'\n"
-    BULLET2"`usePreviousData = 1'\n"
+    BULLET2"`omitMetricsComputation = 1'\n"
     BULLET2"`skipStatPrinting = 1'\n"
     BULLET2"`enableMinJacDetAsAMetric = 3'\n"
     "NB: This last operation can also be performed using built-in Gmsh functions.\n"
@@ -664,11 +668,11 @@ PView *Plug::execute(PView *v)
   // Handle cases where no computation is requested
   if(_param.freeData) {
     _info(-1, "-> Freeing data...");
-    _info(1, "-> Freeing data... (because option 'dataManagePolicy' is -1)");
+    _info(1, "-> Freeing data... (because option 'dataReleasePolicy' is -1)");
     _data2D->clear();
     _data3D->clear();
-    MeshQuality2Options_Number[18].def = !_previousFreeOldData;
-    _info(MP, "Done. Option 'dataManagePolicy' has been reset");
+    MeshQuality2Options_Number[16].def = !_previousFreeOldData;
+    _info(MP, "Done. Option 'dataReleasePolicy' has been reset");
     _info(1, "Nothing else to do, re-run the plugin to compute something");
     return v;
   }
@@ -680,7 +684,7 @@ PView *Plug::execute(PView *v)
              "     * enableDistortionQuality\n"
              "     * enableAspectQuality\n"
              "     * enableGeoFit\n"
-             "   - OR turn OFF 'skipValidity'.");
+             "   - OR set 'skipValidity' to 0.");
     return v;
   }
 
@@ -774,7 +778,7 @@ bool Plug::_fetchParameters()
   Parameters::MetricsToShow &ps = _param.show;
 
   double skipValidity, disto, aspect, geofit, minJ, ratioJ, elementType,
-   dataManagePolicy;
+   dataReleasePolicy;
 
   // Metrics to include:
   disto = MeshQuality2Options_Number[0].def;
@@ -808,9 +812,9 @@ bool Plug::_fetchParameters()
   ph.unhideToo = !static_cast<bool>(MeshQuality2Options_Number[15].def);
 
   // Advanced computation options:
-  pc.skip = static_cast<bool>(MeshQuality2Options_Number[16].def);
-  pc.smartRecompute = static_cast<bool>(MeshQuality2Options_Number[17].def);
-  dataManagePolicy = static_cast<int>(MeshQuality2Options_Number[18].def);
+  dataReleasePolicy = static_cast<int>(MeshQuality2Options_Number[16].def);
+  pc.skip = static_cast<bool>(MeshQuality2Options_Number[17].def);
+  pc.smartRecompute = static_cast<bool>(MeshQuality2Options_Number[18].def);
   skipValidity = MeshQuality2Options_Number[19].def;
 
   // Advanced analysis options:
@@ -826,10 +830,10 @@ bool Plug::_fetchParameters()
   _statGen->setCutoffStats(pp.statCutoffPack);
   _statGen->setCutoffPlots(pp.plotCutoffPack);
 
-  // -> dataManagePolicy
+  // -> data management
   _previousFreeOldData = pc.freeOldData;
-  _param.freeData = dataManagePolicy == -1;
-  pc.freeOldData = dataManagePolicy <= 0;
+  _param.freeData = dataReleasePolicy == -1;
+  pc.freeOldData = dataReleasePolicy <= 0;
 
   // -> metrics to compute
   pc.jacobian = skipValidity <= 0;
