@@ -20,6 +20,6 @@ docker push onelab/debian.stretch.64bit
 
 # To run something using the docker images:
 
-docker run onelab/ubuntu20.04 ls -al /'
+docker run --platform linux/amd64 onelab/ubuntu20.04 ls -al /'
 docker run --platform linux/amd64 -it onelab/ubuntu20.04 bash
-docker run -it onelab/debian.stretch.64bit bash
+docker run --platform linux/amd64 -it onelab/debian.stretch.64bit bash
