@@ -790,7 +790,7 @@ PView *Plug::execute(PView *v)
     if(!countsTotal.reqElem) return v;
   }
   else {
-    if(!pc.jacobian && (countsTotal.elToCompute[2] || countsTotal.elToCompute[3])) {
+    if(!pc.jacobian && (countsTotal.metricValsToCompute[2] || countsTotal.metricValsToCompute[3])) {
       _warn(1, "-> <|>Option 'skipValidity' is ON, validity will not be "
                "computed. This may significantly slow down quality computation "
                "in the presence of invalid elements");
@@ -1160,33 +1160,33 @@ void Plug::_computeRequestedData(Counts counts, bool check2D, bool check3D) cons
   if(check2D) _data2D->getDataEntities(allDataEntities);
   if(check3D) _data3D->getDataEntities(allDataEntities);
 
-  if(counts.elToCompute[0] > 0 || counts.elToCompute[1] > 0) {
+  if(counts.metricValsToCompute[0] > 0 || counts.metricValsToCompute[1] > 0) {
     _status(0, "-> Computing Validity+...");
-    MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[0] + counts.elToCompute[1]));
+    MsgProgressStatus progress_status(static_cast<int>(counts.metricValsToCompute[0] + counts.metricValsToCompute[1]));
     for(auto data: allDataEntities) {
-      data->computeJacDet(progress_status, counts.elToCompute[0], counts.elToCompute[1]);
+      data->computeJacDet(progress_status, counts.metricValsToCompute[0], counts.metricValsToCompute[1]);
     }
   }
 
-  if(counts.elToCompute[2] > 0) {
+  if(counts.metricValsToCompute[2] > 0) {
     _status(0, "-> Computing Distortion quality...");
-    MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[2]));
+    MsgProgressStatus progress_status(static_cast<int>(counts.metricValsToCompute[2]));
     for(auto data: allDataEntities) {
       data->computeDisto(progress_status, !_param.compute.jacobian);
     }
   }
 
-  if(counts.elToCompute[3] > 0) {
+  if(counts.metricValsToCompute[3] > 0) {
     _status(0, "-> Computing Aspect quality...");
-    MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[3]));
+    MsgProgressStatus progress_status(static_cast<int>(counts.metricValsToCompute[3]));
     for(auto data: allDataEntities) {
       data->computeAspect(progress_status, !_param.compute.jacobian);
     }
   }
 
-  if(counts.elToCompute[4] > 0) {
+  if(counts.metricValsToCompute[4] > 0) {
     _status(0, "-> Computing GeoFit...");
-    MsgProgressStatus progress_status(static_cast<int>(counts.elToCompute[4]));
+    MsgProgressStatus progress_status(static_cast<int>(counts.metricValsToCompute[4]));
     for(auto data: allDataEntities) {
       data->computeGeoFit(progress_status);
     }
@@ -1857,7 +1857,7 @@ void Plug::DataSingleDimension::_updateGEntitiesList(
 void Plug::DataSingleDimension::gatherValues(const Counts &counts, Measures &measures)
 {
   size_t sz = counts.reqElem;
-  size_t szCurvGeo = counts.reqElemCurvGeo;
+  size_t szCurvGeo = counts.reqElemOkForGFit;
   if(_dim == 2)
     measures.dim2Elem = true;
   else
@@ -2023,7 +2023,7 @@ void Plug::DataEntity::count(const Parameters::Computation &param, Counts &count
   _count(F_REQU, _numRequested);
   counts.reqElem += _numRequested;
   if(param.geofit && _isCurvedGeo)
-    counts.reqElemCurvGeo += _numRequested;
+    counts.reqElemOkForGFit += _numRequested;
 
   // Count number of elements to compute
   if(!param.skip) {
@@ -2039,20 +2039,20 @@ void Plug::DataEntity::count(const Parameters::Computation &param, Counts &count
       _count(F_REQU | F_NOTORI, _numToCompute[4]);
 
     for(int i = 0; i < metricsCount; ++i) {
-      counts.elToCompute[i] += _numToCompute[i];
+      counts.metricValsToCompute[i] += _numToCompute[i];
     }
   }
 
   // Count total number, number of visible and curved elements
-  counts.totalEl += _mapElemToIndex.size();
+  counts.elem += _mapElemToIndex.size();
   for(const auto &flag : _flags) {
-    if(isBitSet(flag, F_VISBL)) ++counts.visibleEl;
+    if(isBitSet(flag, F_VISBL)) ++counts.visibleElem;
   }
-  _countCurved(counts.elCurvedComputed, counts.curvedEl);
+  _countCurved(counts.elemWithKnownCurving, counts.curvedElem);
 
   // Count number of element by type
   for(int i = 0; i < TYPE_MAX_NUM; ++i) {
-    counts.elType[i] += _ge->getNumMeshElementsByType(i);
+    counts.elem_byType[i] += _ge->getNumMeshElementsByType(i);
   }
 }
 
@@ -2606,8 +2606,8 @@ std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
                                          const Counts &cnt3D) const
 {
   std::size_t sum2D = 0, sum3D = 0;
-  for (std::size_t x : cnt2D.elToCompute) sum2D += x;
-  for (std::size_t x : cnt3D.elToCompute) sum3D += x;
+  for (std::size_t x : cnt2D.metricValsToCompute) sum2D += x;
+  for (std::size_t x : cnt3D.metricValsToCompute) sum3D += x;
 
   if(sum2D + sum3D == 0) return 0;
 
@@ -2615,17 +2615,17 @@ std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
   _info(0, "   | %5s%11s%11s%11s%11s", "", "Validity+", "Disto", "Aspect", "GeoFit");
   if(sum2D)
     _info(0, "   | %5s%11s%11s%11s%11s", "2D:",
-              formatNumber(cnt2D.elToCompute[0]+cnt2D.elToCompute[1]).c_str(),
-              formatNumber(cnt2D.elToCompute[2]).c_str(),
-              formatNumber(cnt2D.elToCompute[3]).c_str(),
-              formatNumber(cnt2D.elToCompute[4]).c_str());
+              formatNumber(cnt2D.metricValsToCompute[0]+cnt2D.metricValsToCompute[1]).c_str(),
+              formatNumber(cnt2D.metricValsToCompute[2]).c_str(),
+              formatNumber(cnt2D.metricValsToCompute[3]).c_str(),
+              formatNumber(cnt2D.metricValsToCompute[4]).c_str());
 
   if(sum3D)
     _info(0, "   | %5s%11s%11s%11s%11s", "3D:",
-              formatNumber(cnt3D.elToCompute[0]+cnt3D.elToCompute[1]).c_str(),
-              formatNumber(cnt3D.elToCompute[2]).c_str(),
-              formatNumber(cnt3D.elToCompute[3]).c_str(),
-              formatNumber(cnt3D.elToCompute[4]).c_str());
+              formatNumber(cnt3D.metricValsToCompute[0]+cnt3D.metricValsToCompute[1]).c_str(),
+              formatNumber(cnt3D.metricValsToCompute[2]).c_str(),
+              formatNumber(cnt3D.metricValsToCompute[3]).c_str(),
+              formatNumber(cnt3D.metricValsToCompute[4]).c_str());
 
   return sum2D + sum3D;
 }
@@ -2639,18 +2639,18 @@ void Plug::_guidanceNothingToCompute(Counts counts, bool check2D,
     _info(-1, "-> Nothing to compute, nothing to show");
     _info(0, "   Nothing to show neither");
 
-    if (counts.totalEl) {
-      if (_param.compute.onlyVisible && counts.visibleEl == 0) {
+    if (counts.elem) {
+      if (_param.compute.onlyVisible && counts.visibleElem == 0) {
         _warn(0, "   Option 'restrictToVisibleElements' is ON but no visible elements found");
       }
-      else if (_param.compute.onlyCurved && counts.curvedEl == 0) {
+      else if (_param.compute.onlyCurved && counts.curvedElem == 0) {
         _warn(0, "   Option 'restrictToCurvedElements' is ON but no curved elements found");
       }
       else if (_param.compute.onlyGivenElemType) {
         size_t countType = 0;
         for(int i = 0; i < TYPE_MAX_NUM; ++i) {
           if(_param.compute.acceptedElemType[i])
-            countType += counts.elType[i];
+            countType += counts.elem_byType[i];
         }
         if(!countType) {
           _warn(0, "   Option 'restrictToElementType' is ON but no elements of requested type found");
@@ -2713,18 +2713,18 @@ Plug::Counts Plug::Counts::operator+(const Counts &other) const
 
   constexpr int metricsCount = 5;
   for (int i = 0; i < metricsCount; ++i) {
-    result.elToCompute[i] = elToCompute[i] + other.elToCompute[i];
+    result.metricValsToCompute[i] = metricValsToCompute[i] + other.metricValsToCompute[i];
   }
   for (int i = 0; i < TYPE_MAX_NUM; ++i) {
-    result.elType[i] = elType[i] + other.elType[i];
+    result.elem_byType[i] = elem_byType[i] + other.elem_byType[i];
   }
 
   result.reqElem = reqElem + other.reqElem;
-  result.reqElemCurvGeo = reqElemCurvGeo + other.reqElemCurvGeo;
-  result.totalEl = totalEl + other.totalEl;
-  result.elCurvedComputed = elCurvedComputed + other.elCurvedComputed;
-  result.curvedEl = curvedEl + other.curvedEl;
-  result.visibleEl = visibleEl + other.visibleEl;
+  result.reqElemOkForGFit = reqElemOkForGFit + other.reqElemOkForGFit;
+  result.elem = elem + other.elem;
+  result.elemWithKnownCurving = elemWithKnownCurving + other.elemWithKnownCurving;
+  result.curvedElem = curvedElem + other.curvedElem;
+  result.visibleElem = visibleElem + other.visibleElem;
 
   return result;
 }

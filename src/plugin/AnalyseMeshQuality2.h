@@ -320,15 +320,26 @@ private:
   };
 
   struct Counts {
-    std::size_t elToCompute[5]{}; // jac, jacOnCurvedGeo, disto, aspect, geofit
+    // This struct helps determine what will be computed, why the plugin has
+    // nothing to analyze or other things
+
+    // Five metrics to compute: jacNDelem, jacCGelem, disto, aspect, geofit
+    std::size_t metricValsToCompute[5]{};
+    // NOTE: metricValsToCompute[i] != reqElem - metricValsToCompute[i] in
+    //       general because of omitMetricsComputation option
+
+    // For stopping early, and for reserving size vector
     std::size_t reqElem = 0;
-    std::size_t reqElemCurvGeo = 0;
-    // Those counts are useful for guidance when reqElem == 0:
-    std::size_t totalEl = 0;
-    std::size_t visibleEl = 0;
-    std::size_t curvedEl = 0;
-    std::size_t elCurvedComputed = 0; // NOTE: unused
-    std::size_t elType[TYPE_MAX_NUM]{};
+    std::size_t reqElemOkForGFit = 0;
+
+    // For guiding when reqElem == 0:
+    std::size_t elem = 0;
+    std::size_t visibleElem = 0;
+    std::size_t curvedElem = 0;
+    std::size_t elemWithKnownCurving = 0; // NOTE: unused
+    std::size_t elem_byType[TYPE_MAX_NUM]{};
+
+    // Methods
     Counts operator+(const Counts &) const;
   };
 
