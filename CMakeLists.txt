@@ -1,9 +1,9 @@
-# Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-cmake_minimum_required(VERSION 3.3 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
 
 # if CMAKE_BUILD_TYPE is specified use it; otherwise set the default
 # build type to "RelWithDebInfo" ("-O2 -g" with gcc) prior to calling
@@ -16,8 +16,8 @@ endif()
 
 project(gmsh CXX C)
 
-# require C++11 and request C99
-set(CMAKE_CXX_STANDARD 11)
+# require C++14 and request C99
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 99)
 
@@ -50,7 +50,6 @@ opt(DINTEGRATION "Enable discrete integration (needed for levelsets)" ${DEFAULT}
 opt(DOMHEX "Enable experimental DOMHEX code" ${DEFAULT})
 opt(EIGEN "Enable Eigen for linear algebra (instead of Blas/Lapack)" ON)
 opt(FLTK "Enable FLTK graphical user interface (requires mesh/post)" ${DEFAULT})
-opt(GEODESIC "Enable geodic code (requires mesh)" ${DEFAULT})
 opt(GEOMETRYCENTRAL "Enable geometry-central library (experimental)" ${DEFAULT})
 opt(GETDP "Enable GetDP solver (linked as a library, experimental)" ${DEFAULT})
 opt(GMM "Enable GMM linear solvers (simple alternative to PETSc)" ${DEFAULT})
@@ -61,6 +60,7 @@ opt(KBIPACK "Enable Kbipack (neeeded by homology solver)" ${DEFAULT})
 opt(MATHEX "Enable Mathex expression parser (used by plugins and options)" ${DEFAULT})
 opt(MED "Enable MED mesh and post file formats" ${DEFAULT})
 opt(MESH "Enable mesh module" ${DEFAULT})
+opt(MESQUITE "Enable mesquite" ${DEFAULT})
 opt(METIS "Enable Metis mesh partitioner" ${DEFAULT})
 opt(MMG "Enable Mmg mesh adaptation interface" ${DEFAULT})
 opt(MPEG_ENCODE "Enable built-in MPEG movie encoder" ${DEFAULT})
@@ -68,6 +68,7 @@ opt(MPI "Enable MPI (experimental, not used for meshing)" OFF)
 opt(MSVC_STATIC_RUNTIME "Enable static Visual C++ runtime" OFF)
 opt(MUMPS "Enable MUMPS sparse direct linear solver" OFF)
 opt(NETGEN "Enable Netgen 3D frontal mesh generator" ${DEFAULT})
+opt(NII2MESH "Enable 3D voxel image to a triangulated mesh" ${DEFAULT})
 opt(NUMPY "Enable fullMatrix and numpy array conversion for private API" OFF)
 opt(PETSC4PY "Enable petsc4py wrappers for petsc matrices for private API" OFF)
 opt(OCC "Enable OpenCASCADE CAD kernel" ${DEFAULT})
@@ -99,7 +100,10 @@ opt(SOLVER "Enable built-in finite element solvers (required for reparametrizati
 opt(SYSTEM_CONTRIB "Use system versions of contrib libraries, when possible" OFF)
 opt(TCMALLOC "Enable libtcmalloc (fast malloc that does not release memory)" OFF)
 opt(TESTS "Enable tests" ${DEFAULT})
+opt(TINYOBJLOADER "Enable TibyObjLoader for reading Wavefront files)" ON)
+opt(TINYXML2 "Enable TinyXML2 parser (used by XAO reader)" ${DEFAULT})
 opt(TOUCHBAR "Enable Apple Touch bar" ${DEFAULT})
+opt(UNTANGLE "Enable 2D and 3D UNTANGLER" ${DEFAULT})
 opt(VISUDEV "Enable additional visualization capabilities for development purposes" OFF)
 opt(VOROPP "Enable voro++ (for hex meshing, experimental)" ${DEFAULT})
 opt(WINSLOWUNTANGLER "Enable WinslowUntangler extensions (requires ALGLIB)" ${DEFAULT})
@@ -108,7 +112,7 @@ opt(WRAP_PYTHON "Generate SWIG Python wrappers for private API (not used by publ
 opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 4)
-set(GMSH_MINOR_VERSION 12)
+set(GMSH_MINOR_VERSION 14)
 set(GMSH_PATCH_VERSION 0)
 if(NOT GMSH_EXTRA_VERSION)
   set(GMSH_EXTRA_VERSION "")
@@ -125,7 +129,11 @@ if(NOT GMSH_RELEASE)
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
   endif()
   if(GIT_COMMIT_HASH)
+    message(STATUS "Found git hash ${GIT_COMMIT_HASH}")
     set(GMSH_EXTRA_VERSION "${GMSH_EXTRA_VERSION}-git-${GIT_COMMIT_HASH}")
+  else()
+    message(STATUS "Could not find git hash")
+    set(GMSH_EXTRA_VERSION "${GMSH_EXTRA_VERSION}-git")
   endif()
   set(GMSH_EXTRA_VERSION_TEXI "${GMSH_EXTRA_VERSION_TEXI} (development version)")
 endif()
@@ -171,13 +179,7 @@ set(ONELAB_PY contrib/onelab/python/onelab.py)
 set(GMSH_PY api/gmsh.py)
 set(GMSH_JL api/gmsh.jl)
 
-if(${CMAKE_MAJOR_VERSION} GREATER 2)
-  string(TIMESTAMP DATE "%Y%m%d")
-else()
-  execute_process(COMMAND date "+%Y%m%d" OUTPUT_VARIABLE DATE
-                  OUTPUT_STRIP_TRAILING_WHITESPACE)
-endif()
-
+string(TIMESTAMP DATE "%Y%m%d")
 if(NOT DATE)
   set(DATE "unknown")
 endif()
@@ -233,7 +235,7 @@ if(NOT GMSH_OS)
 endif()
 
 include(CheckTypeSize)
-include(CheckFunctionExists)
+include(CheckSymbolExists)
 include(CheckIncludeFile)
 include(CheckCXXCompilerFlag)
 include(CheckCCompilerFlag)
@@ -308,8 +310,10 @@ if(MSVC)
     if(ENABLE_MSVC_STATIC_RUNTIME AND ${VAR} MATCHES "/MD")
       string(REGEX REPLACE "/MD" "/MT" ${VAR} "${${VAR}}")
     endif()
-    if(NOT ${VAR} MATCHES "/MP") # enable parallel compilation
-      set(${VAR} "${${VAR}} /MP")
+    if (NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+      if(NOT ${VAR} MATCHES "/MP") # enable parallel compilation
+        set(${VAR} "${${VAR}} /MP")
+      endif()
     endif()
   endforeach()
   if(ENABLE_PRIVATE_API)
@@ -625,7 +629,7 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
     execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --api-version
                     OUTPUT_VARIABLE FLTK_VERSION)
     string(STRIP "${FLTK_VERSION}" FLTK_VERSION)
-    if(FLTK_VERSION VERSION_GREATER 1.3)
+    if(FLTK_VERSION VERSION_GREATER_EQUAL "1.3.0")
       add_subdirectory(src/fltk)
       set_config_option(HAVE_FLTK "Fltk")
       message(STATUS "Using fltk-config script for Fltk " ${FLTK_VERSION})
@@ -830,6 +834,26 @@ if(ENABLE_MATHEX)
   endif()
 endif()
 
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/tinyobjloader AND
+   ENABLE_TINYOBJLOADER)
+    include_directories(contrib/tinyobjloader/include)
+    set_config_option(HAVE_TINYOBJLOADER "tinyobjloader")
+endif()
+
+if(ENABLE_TINYXML2)
+  find_library(TINYXML2_LIB tinyxml2 PATH_SUFFIXES lib)
+  find_path(TINYXML2_INC "tinyxml2.h" PATH_SUFFIXES src include)
+  if(ENABLE_SYSTEM_CONTRIB AND TINYXML2_LIB AND TINYXML2_INC)
+    list(APPEND EXTERNAL_LIBRARIES ${TINYXML2_LIB})
+    list(APPEND EXTERNAL_INCLUDES ${TINYXML2_INC})
+    set_config_option(HAVE_TINYXML2 "TinyXML2")
+  elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/tinyxml2)
+    add_subdirectory(contrib/tinyxml2)
+    include_directories(contrib/tinyxml2)
+    set_config_option(HAVE_TINYXML2 "TinyXML2[contrib]")
+  endif()
+endif()
+
 if(ENABLE_MPI)
   find_package(MPI)
   if(MPI_FOUND)
@@ -839,6 +863,17 @@ if(ENABLE_MPI)
     set(CMAKE_C_COMPILER ${MPI_C_COMPILER})
     set(CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER})
     set(CMAKE_Fortran_COMPILER ${MPI_Fortran_COMPILER})
+  endif()
+endif()
+
+
+if(ENABLE_MESQUITE)
+  find_library(MESQUITE_LIB mesquite)
+  find_path(MESQUITE_INC "Mesquite.hpp" PATH_SUFFIXES src include)
+  if(MESQUITE_LIB AND MESQUITE_INC)
+    set_config_option(HAVE_MESQUITE "Mesquite")
+    list(APPEND EXTERNAL_LIBRARIES ${MESQUITE_LIB})
+    list(APPEND EXTERNAL_INCLUDES ${MESQUITE_INC})
   endif()
 endif()
 
@@ -937,6 +972,18 @@ if(HAVE_MESH)
     set_config_option(HAVE_BLOSSOM "Blossom")
   endif()
 
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/nii2mesh AND ENABLE_NII2MESH)
+    add_subdirectory(contrib/nii2mesh)
+    include_directories(contrib/nii2mesh)
+    set_config_option(HAVE_NII2MESH "Nii2mesh")
+  endif()
+
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/untangle AND ENABLE_UNTANGLE)
+    add_subdirectory(contrib/untangle)
+    include_directories(contrib/untangle)
+    set_config_option(HAVE_UNTANGLE "Untangle")
+  endif()
+
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/Netgen AND ENABLE_NETGEN)
     add_subdirectory(contrib/Netgen)
     include_directories(contrib/Netgen contrib/Netgen/libsrc/include
@@ -1002,12 +1049,6 @@ if(HAVE_MESH)
     add_subdirectory(contrib/WinslowUntangler)
     include_directories(BEFORE contrib/WinslowUntangler)
   endif()
-
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/geodesic_matlab
-     AND ENABLE_GEODESIC)
-    set_config_option(HAVE_GEODESIC "Geodesic")
-    include_directories(BEFORE contrib/geodesic_matlab/src)
-  endif()
 endif()
 
 if(ENABLE_MED OR ENABLE_CGNS)
@@ -1062,8 +1103,8 @@ if(HAVE_SOLVER)
       message(STATUS "Using system version of GMM")
       list(APPEND EXTERNAL_INCLUDES ${GMM_INC})
       set_config_option(HAVE_GMM "Gmm")
-    elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/gmm)
-      include_directories(contrib/gmm)
+    elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/gmm/include/gmm)
+      include_directories(contrib/gmm/include)
       set_config_option(HAVE_GMM "Gmm[contrib]")
     endif()
   endif()
@@ -1381,6 +1422,9 @@ if(ENABLE_OCC)
     if(WIN32 AND NOT MSVC)
       add_definitions(-DOCC_CONVERT_SIGNALS)
     endif()
+    if(WIN32 AND MSVC)
+      add_definitions(-D "Standard_EXPORT=__declspec(dllimport)")
+    endif()
   endif()
 endif()
 
@@ -1446,7 +1490,7 @@ if(ENABLE_PRIVATE_API AND ENABLE_WRAP_PYTHON)
   endif()
 endif()
 
-check_function_exists(vsnprintf HAVE_VSNPRINTF)
+check_symbol_exists(vsnprintf "stdio.h" HAVE_VSNPRINTF)
 if(NOT HAVE_VSNPRINTF AND NOT ENABLE_BUILD_IOS AND NOT ENABLE_BUILD_ANDROID)
   set_config_option(HAVE_NO_VSNPRINTF "NoVsnprintf")
 endif()
@@ -1616,17 +1660,21 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doc/texinfo/version.texi.in
 if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   if (GMSH_RELEASE)
     set(GMSH_PYTHON_VERSION ${GMSH_SHORT_VERSION})
-    file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh.rst GMSH_LONG_DESCRIPTION)
+    file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh.rst
+         GMSH_LONG_DESCRIPTION)
   else()
     if ("${GMSH_EXTRA_VERSION}" MATCHES "-nox")
       set(GMSH_PYTHON_VERSION "${GMSH_SHORT_VERSION}.dev1+nox")
-      file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh-nox-dev.rst GMSH_LONG_DESCRIPTION)
+      file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh-nox-dev.rst
+           GMSH_LONG_DESCRIPTION)
     else ()
       set(GMSH_PYTHON_VERSION "${GMSH_SHORT_VERSION}.dev1")
-      file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh-dev.rst GMSH_LONG_DESCRIPTION)
+      file(READ ${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/README.gmsh-dev.rst
+           GMSH_LONG_DESCRIPTION)
     endif()
   endif()
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/METADATA.in ${CMAKE_CURRENT_BINARY_DIR}/METADATA)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/utils/pypi/METADATA.in
+                 ${CMAKE_CURRENT_BINARY_DIR}/METADATA)
 endif()
 
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/version.txt ${GMSH_SHORT_VERSION})
@@ -1730,7 +1778,7 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
      SOVERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION})
   if(WIN32)
     set_target_properties(shared PROPERTIES PREFIX "" IMPORT_PREFIX ""
-      IMPORT_SUFFIX ".lib" COMPILE_FLAGS "-DGMSH_DLL -DGMSH_DLL_EXPORT")
+      IMPORT_SUFFIX ".dll.lib" COMPILE_FLAGS "-DGMSH_DLL -DGMSH_DLL_EXPORT")
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     if(NOT ENABLE_PRIVATE_API)
       # hide all symbols by default (if not exporting the private API); symbols to
@@ -1850,7 +1898,8 @@ if(UNIX)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU" OR
-   CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+   ((CMAKE_CXX_COMPILER_ID MATCHES "Clang") AND NOT
+   (CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")))
   execute_process(COMMAND ${CMAKE_CXX_COMPILER} -dumpversion
                   OUTPUT_VARIABLE CXX_COMPILER_VERSION
                   OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -1954,12 +2003,34 @@ endif()
 
 # mark targets as optional so we can install them separately if needed
 # (e.g. "make lib" or "make shared" followed by "make install/fast")
-install(TARGETS gmsh DESTINATION ${GMSH_BIN} OPTIONAL)
+install(TARGETS gmsh
+  RUNTIME DESTINATION ${GMSH_BIN}
+  OPTIONAL)
 if(ENABLE_BUILD_LIB)
-  install(TARGETS lib DESTINATION ${GMSH_LIB} OPTIONAL)
+  install(TARGETS lib EXPORT gmshTargets ARCHIVE DESTINATION
+        ${GMSH_LIB} OPTIONAL)
+  TARGET_INCLUDE_DIRECTORIES(lib PUBLIC $<INSTALL_INTERFACE:include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/api>)
 endif()
 if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
-  install(TARGETS shared DESTINATION ${GMSH_LIB} OPTIONAL)
+  install(TARGETS shared EXPORT gmshTargets
+    RUNTIME DESTINATION ${GMSH_LIB}
+    ARCHIVE DESTINATION ${GMSH_LIB}
+    LIBRARY DESTINATION ${GMSH_LIB}
+    OPTIONAL)
+  TARGET_INCLUDE_DIRECTORIES(shared PUBLIC $<INSTALL_INTERFACE:include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/api>)
+endif()
+if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
+  install(EXPORT gmshTargets NAMESPACE gmsh:: DESTINATION share/gmsh)
+  include(CMakePackageConfigHelpers)
+  configure_package_config_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/utils/misc/gmsh-config.cmake.in
+      "${CMAKE_CURRENT_BINARY_DIR}/gmshConfig.cmake"
+      INSTALL_DESTINATION "share/gmsh" NO_SET_AND_CHECK_MACRO
+      NO_CHECK_REQUIRED_COMPONENTS_MACRO)
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/gmshConfig.cmake DESTINATION "share/gmsh")
+  export(EXPORT gmshTargets FILE "${CMAKE_CURRENT_BINARY_DIR}/gmshTargets.cmake")
 endif()
 
 if(ENABLE_ONELAB AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab)
@@ -2191,16 +2262,15 @@ macro(filter_tests IN OUT)
     unset(BAD2)
     unset(BAD3)
     # OpenCASCADE
-    if(NOT HAVE_OCC AND NOT BAD1 AND NOT BAD2 AND NOT BAD3)
+    if(NOT HAVE_OCC)
       file(STRINGS ${FILE} BAD1 REGEX "^SetFactory.*OpenCASCADE.*")
-      file(STRINGS ${FILE} BAD2 REGEX ".*occ\\.synchronize.*")
-      file(STRINGS ${FILE} BAD3 REGEX ".*occ::synchronize.*")
+      file(STRINGS ${FILE} BAD2 REGEX ".*occ.*synchronize.*")
+      file(STRINGS ${FILE} BAD3 REGEX ".*[mM]erge.*brep.*")
     endif()
     # Metis
     if(NOT HAVE_METIS AND NOT BAD1 AND NOT BAD2 AND NOT BAD3)
       file(STRINGS ${FILE} BAD1 REGEX ".*PartitionMesh.*")
-      file(STRINGS ${FILE} BAD2 REGEX ".*mesh\\.partition.*")
-      file(STRINGS ${FILE} BAD3 REGEX ".*mesh::partition.*")
+      file(STRINGS ${FILE} BAD2 REGEX ".*mesh.*partition.*")
     endif()
     if(BAD1 OR BAD2 OR BAD3)
       message("Skipping test " ${FILE})
@@ -2223,7 +2293,7 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
     FILE(RELATIVE_PATH TEST ${CMAKE_CURRENT_BINARY_DIR} ${TESTFILE})
     add_test(${TEST} ./gmsh ${TEST} -3 -nopopup -o ./tmp.msh)
   endforeach()
-  # test c++ api tutorials with dynamic builds
+  # test c++ and c api tutorials with dynamic builds
   if(ENABLE_BUILD_DYNAMIC)
     file(GLOB_RECURSE ALLFILES tutorials/c++/*.cpp tutorials/c/*.c)
     filter_tests("${ALLFILES}" TESTFILES)

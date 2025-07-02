@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -423,7 +423,7 @@ void PrintBuildInfo()
 static bool GetGeometryOption(const std::vector<std::string> &argv,
                               std::size_t &i, bool exitOnError)
 {
-  if(i < 0 || i >= argv.size()) return false;
+  if(i >= argv.size()) return false;
 
   if(argv[i] == "-0") {
     CTX::instance()->batch = -1;
@@ -465,7 +465,7 @@ static bool GetGeometryOption(const std::vector<std::string> &argv,
 static bool GetMeshOption(const std::vector<std::string> &argv,
                           std::size_t &i, bool exitOnError)
 {
-  if(i < 0 || i >= argv.size()) return false;
+  if(i >= argv.size()) return false;
 
   if(argv[i] == "-check") {
     CTX::instance()->batch = -2;
@@ -523,10 +523,6 @@ static bool GetMeshOption(const std::vector<std::string> &argv,
   }
   else if(argv[i] == "-quadlayout") {
     CTX::instance()->batch = 69;
-    i++;
-  }
-  else if(argv[i] == "-geodesic") {
-    CTX::instance()->batch = 70;
     i++;
   }
   else if(argv[i] == "-part") {
@@ -610,6 +606,7 @@ static bool GetMeshOption(const std::vector<std::string> &argv,
   }
   else if(argv[i] == "-part_physicals") {
     opt_mesh_partition_create_physicals(0, GMSH_SET, 1.);
+    opt_mesh_partition_old_style_msh2(0, GMSH_SET, 0.);
     i++;
   }
   else if(argv[i] == "-part_no_physicals") {
@@ -1070,7 +1067,7 @@ static bool GetMeshOption(const std::vector<std::string> &argv,
 static bool GetPostProcessingOption(const std::vector<std::string> &argv,
                                     std::size_t &i, bool exitOnError)
 {
-  if(i < 0 || i >= argv.size()) return false;
+  if(i >= argv.size()) return false;
 
   if(argv[i] == "-noview") {
     opt_view_visible(0, GMSH_SET, 0);
@@ -1103,7 +1100,7 @@ static bool GetPostProcessingOption(const std::vector<std::string> &argv,
 static bool GetSolverOption(const std::vector<std::string> &argv,
                             std::size_t &i, bool exitOnError)
 {
-  if(i < 0 || i >= argv.size()) return false;
+  if(i >= argv.size()) return false;
 
   if(argv[i] == "-run") {
     // same as '-', but will run local Gmsh client (if no other clients are
@@ -1171,7 +1168,7 @@ static bool GetSolverOption(const std::vector<std::string> &argv,
 static bool GetOtherOption(const std::vector<std::string> &argv,
                            std::size_t &i, bool exitOnError)
 {
-  if(i < 0 || i >= argv.size()) return false;
+  if(i >= argv.size()) return false;
 
   if(argv[i] == "-" || argv[i] == "-parse_and_exit") {
     CTX::instance()->batch = -99;
@@ -1179,7 +1176,7 @@ static bool GetOtherOption(const std::vector<std::string> &argv,
   }
   else if(argv[i] == "-log") {
     i++;
-    if(i < argv.size()) { Msg::SetLogFile(argv[i++]); }
+    if(i < argv.size()) { Msg::SetLogFileName(argv[i++]); }
     else {
       Msg::Error("Missing filename");
       if(exitOnError) Msg::Exit(1);
@@ -1388,7 +1385,7 @@ static bool GetOtherOption(const std::vector<std::string> &argv,
   else if(argv[i] == "-help" || argv[i] == "--help") {
     Msg::Direct("Gmsh, a 3D mesh generator with pre- and post-processing "
                 "facilities");
-    Msg::Direct("Copyright (C) 1997-2023 C. Geuzaine and J.-F. Remacle");
+    Msg::Direct("Copyright (C) 1997-2024 C. Geuzaine and J.-F. Remacle");
     PrintUsage(argv[0]);
     Msg::Exit(0);
   }

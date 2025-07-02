@@ -101,7 +101,6 @@ int main(int argc, char **argv)
   gmsh::view::option::setNumber(v[2], "Axes", 1);
   gmsh::view::option::setNumber(v[2], "IntervalsType", 2);
   gmsh::view::option::setNumber(v[2], "Type", 2);
-  gmsh::view::option::setNumber(v[2], "IntervalsType", 2);
   gmsh::view::option::setNumber(v[2], "AutoPosition", 0);
   gmsh::view::option::setNumber(v[2], "PositionX", 85);
   gmsh::view::option::setNumber(v[2], "PositionY", 50);

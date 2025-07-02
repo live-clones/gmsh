@@ -41,7 +41,6 @@ extern "C" {
 #include "hxt_tetColor.h"
 #include "hxt_tetFlag.h"
 #include "hxt_tetRefine.h"
-#include "hxt_alphashape.h"
 #include "hxt_tetRepair.h"
 #include "hxt_curvature.h"
 #include "hxt_boundary_recovery.h"
@@ -455,19 +454,6 @@ inline bool checkVertexConnection(PolyMesh* pm, PolyMesh::Vertex* v, int volTag)
     if (f->data == volTag) return true;
   }
   return false;
-  // PolyMesh::HalfEdge* he = v->he;
-  // size_t i_debug = 0;
-  // do {
-  //   if (!he) return false;
-  //   if (!he->f) return false;
-  //   if (he->f->data == volTag) return true;
-  //   he = he->next->next->opposite;
-  //   if (i_debug++ > 1000){
-  //     printf("infite loop \n");
-  //     return false;
-  //   }
-  // } while (he != v->he);
-  // return false;
 }
 
 static PolyMesh::Face *WalkGeneral(PolyMesh::Face *f, double x, double y, PolyMesh::HalfEdge** heBnd = nullptr)
@@ -515,13 +501,6 @@ static PolyMesh::Face *WalkGeneral(PolyMesh::Face *f, double x, double y, PolyMe
   }
   // should only come here wether the triangulated domain is not convex
   return nullptr;
-}
-
-void AlphaShape::_decimateTriangulation(const int faceTag, const double thresholdDistance){
-  PolyMesh* pm;
-  GFace2PolyMesh(faceTag, &pm);
-  pm->decimate(thresholdDistance);
-  PolyMesh2GFace(pm, faceTag);
 }
 
 void createOctree(const int volumeTag, OctreeNode<3, 32, MElement*>& octree){
@@ -2117,7 +2096,9 @@ void AlphaShape::filterNodes(PolyMesh *pm, const int tag) {
 static std::pair<double, double> projectPointOnSegment(SPoint2 p, SPoint2 a, SPoint2 b){
   SPoint2 ab = b-a;
   SPoint2 ap = p-a;
-  double t = dot(ap, ab)/dot(ab, ab);
+  SVector3 ab_vec(ab.x(), ab.y(), 0);
+  SVector3 ap_vec(ap.x(), ap.y(), 0);
+  double t = dot(ap_vec, ab_vec)/dot(ab_vec, ab_vec);
   if (t < 0) t = 0;
   if (t > 1) t = 1;
   SPoint2 proj(a.x() + t*ab.x(), a.y() + t*ab.y());
@@ -2525,7 +2506,6 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize, const
 
   for(auto tet: gr->tetrahedra) delete tet;
   gr->tetrahedra.clear();
-  gr->removeElements(TYPE_TET);
 
   std::vector<MTetrahedron *> tets;
   HXTMesh *mesh;
@@ -3028,10 +3008,9 @@ void AlphaShape::_alphaShape3DFromArray(const int tag, const std::vector<size_t>
     for (auto tri : _df->triangles){
       delete tri;
     }
-    _df->removeElements(TYPE_TRI);
+    _df->triangles.clear();
   }
 
-  // df->removeElements(TYPE_TRI);
   for (size_t i=0; i<alphaFaces.size(); i++){
     size_t tetIndex = alphaFaces[i]/4;
     size_t faceIndex = alphaFaces[i]%4;
@@ -3068,9 +3047,12 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
   }
   // create size field on nodes
 
-
+  printf("here0 \n");
+  
+  
   Field* field = GModel::current()->getFields()->get(sizeFieldTag);
   
+  printf("here1 \n");
   // std::unordered_map<MTetrahedron*, double> sizeAtTetBarycenter;
   std::vector<double> sizeAtTetBarycenter(gr->getNumMeshElementsByType(TYPE_TET));
   if (gr->getNumMeshElementsByType(TYPE_TET) == 0) {
@@ -3093,8 +3075,10 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
     sizeAtTetBarycenter[i] = field->operator()(tet_bary.x(), tet_bary.y(), tet_bary.z(), NULL);
     // printf("size at tet barycenter %zu = %g \n", i, sizeAtTetBarycenter[i]);
   }
+  printf("here2 \n");
   // auto t3 = std::chrono::steady_clock::now(); 
   computeTetNeighbors_(tetNodes, neighbors);
+  printf("here3 \n");
   std::unordered_set<MVertex*> verticesInConnected;
   // Compute the alpha shape
   std::vector<bool> _touched(n_tets, false);
@@ -3102,127 +3086,114 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
   std::vector<MTetrahedron*> alphaTets;
   double hTet, R;
   SPoint3 cc;
-
-  for (size_t i=0; i<n_tets; i++){
+  
+  printf("here4 \n");
+  for (size_t i = 0; i < n_tets; i++) {
     auto tet = gr->tetrahedra[i];
     R = _tetCircumCenter(tet);
     hTet = sizeAtTetBarycenter[i];
-    if (R/hTet < alpha && !_touched[i]){
+    if (R / hTet < alpha && !_touched[i]) {
       std::stack<size_t> _s;
       _s.push(i);
       _touched[i] = true;
       // we create a new tetrahedron
       auto tet_alpha = new MTetrahedron(tet->getVertex(0), tet->getVertex(1), tet->getVertex(2), tet->getVertex(3), tet->getNum());
-      for (size_t jn=0; jn<4; jn++) {verticesInConnected.insert(tet_alpha->getVertex(jn));}
+      for (size_t jn = 0; jn < 4; jn++) {
+        verticesInConnected.insert(tet_alpha->getVertex(jn));
+      }
       alphaTets.push_back(tet_alpha);
-      while(!_s.empty()){
+      while (!_s.empty()) {
         auto i_t = _s.top();
         _s.pop();
-        for (size_t j=0; j<4; j++){
-          if (neighbors[4*i_t+j] == 4*n_tets){
-            alphaFaces.push_back(4*i_t+j);
+        for (size_t j = 0; j < 4; j++) {
+          if (neighbors[4 * i_t + j] == 4 * n_tets) {
+            alphaFaces.push_back(4 * i_t + j);
           }
-          else if (!_touched[size_t(neighbors[4*i_t+j]/4)]){
-            size_t i_t_neigh = neighbors[4*i_t+j]/4;
+          else if (!_touched[size_t(neighbors[4 * i_t + j] / 4)]) {
+            size_t i_t_neigh = neighbors[4 * i_t + j] / 4;
             auto tet_neigh = gr->tetrahedra[i_t_neigh];
             R = _tetCircumCenter(tet_neigh);
             hTet = sizeAtTetBarycenter[i_t_neigh];
             // if (hTet == MAX_LC){
-              //   hTet = 1e-12;
-              // }
-            if (R/hTet < alpha){
+            //   hTet = 1e-12;
+            // }
+            if (R / hTet < alpha) {
               auto tet_alpha = new MTetrahedron(tet_neigh->getVertex(0), tet_neigh->getVertex(1), tet_neigh->getVertex(2), tet_neigh->getVertex(3), tet_neigh->getNum());
-              for (size_t jn=0; jn<4; jn++) {verticesInConnected.insert(tet_alpha->getVertex(jn));}
+              for (size_t jn = 0; jn < 4; jn++) {
+                verticesInConnected.insert(tet_alpha->getVertex(jn));
+              }
               alphaTets.push_back(tet_alpha);
               _s.push(i_t_neigh);
               _touched[i_t_neigh] = true;
             }
             else {
-              alphaFaces.push_back(4*i_t+j);
+              alphaFaces.push_back(4 * i_t + j);
             }
           }
         }
       }
     }
-  } 
-
+  }
+  printf("here5 \n");
+  
   GRegion *dr = GModel::current()->getRegionByTag(tagAlpha);
-  if(!dr) {
+  if (!dr) {
     Msg::Error("Entity of dimension 3 with tag %d does not exist", tagAlpha);
     return;
   }
-
-  for (auto tet : dr->tetrahedra){
+  printf("here6 \n");
+  
+  for (auto tet : dr->tetrahedra) {
     delete tet;
   }
   dr->tetrahedra.clear();
-  for (size_t i=0; i<alphaTets.size(); i++){
+  for (size_t i = 0; i < alphaTets.size(); i++) {
     dr->tetrahedra.push_back(alphaTets[i]);
   }
-
-  if (removeDisconnectedNodes){
+  
+  printf("here7 \n");
+  if (removeDisconnectedNodes) {
     size_t n_removed = 0;
-    // std::unordered_set<MVertex*> verticesInConnected;
-    // size_t n_tets_in_connected = dr->getNumMeshElementsByType(TYPE_TET);
-    // for (size_t i=0; i<n_tets_in_connected; i++){
-    //   auto tet = dr->tetrahedra[i];
-    //   for (size_t j=0; j<4; j++){
-    //     verticesInConnected.insert(tet->getVertex(j));
-    //   }
-    // }
-    // for (auto _gr : gm->getRegions()){
-    for(MVertex *v : gr->mesh_vertices) {
-      if (verticesInConnected.find(v) == verticesInConnected.end()){
+    for (MVertex *v : gr->mesh_vertices) {
+      if (verticesInConnected.find(v) == verticesInConnected.end()) {
         gr->removeMeshVertex(v);
-        // printf("removing node %zu \n", v->getNum());
-        // gm->gm->addMVertexToVertexCache(vm);
-        // gm->MVertex
-        // delete v;
-        // v->setEntity(NULL);
         n_removed++;
       }
     }
-    // }
     Msg::Info("Removed %zu disconnected node(s) in alpha shape\n", n_removed);
   }
   
-  // for (auto tet : dr->tetrahedra){
-  //   for (size_t i=0; i<4; i++){
-  //     auto v = tet->getVertex(i);
-  //     v->setEntity(dr);
-  //   }
-  // }
-
   GFace *df = GModel::current()->getFaceByTag(tagAlphaBoundary);
-  if(!df) {
+  if (!df) {
     Msg::Error("Entity of dimension 2 with tag %d does not exist", tagAlphaBoundary);
     return;
   }
-
-  if (returnTri2TetMap){
-    tri2Tet.resize(2*alphaFaces.size());
+  printf("here8 \n");
+  
+  if (returnTri2TetMap) {
+    tri2Tet.resize(2 * alphaFaces.size());
   }
-  for (auto _df : gm->getFaces()){
-    for (auto tri : _df->triangles){
+  for (auto _df : gm->getFaces()) {
+    for (auto tri : _df->triangles) {
       delete tri;
     }
-    _df->removeElements(TYPE_TRI);
+    _df->triangles.clear();
   }
-
-  // df->removeElements(TYPE_TRI);
-  for (size_t i=0; i<alphaFaces.size(); i++){
-    size_t tetIndex = alphaFaces[i]/4;
-    size_t faceIndex = alphaFaces[i]%4;
+  
+  printf("here9 \n");
+  for (size_t i = 0; i < alphaFaces.size(); i++) {
+    size_t tetIndex = alphaFaces[i] / 4;
+    size_t faceIndex = alphaFaces[i] % 4;
     auto tet = gr->tetrahedra[tetIndex];
     auto f_i = tet->getFace(faceIndex);
-    MVertex* v0 = f_i.getVertex(0);
-    MVertex* v1 = f_i.getVertex(1);
-    MVertex* v2 = f_i.getVertex(2);
-    MTriangle* tri = new MTriangle(v0, v1, v2, i+1);
+    MVertex *v0 = f_i.getVertex(0);
+    MVertex *v1 = f_i.getVertex(1);
+    MVertex *v2 = f_i.getVertex(2);
+    MTriangle *tri = new MTriangle(v0, v1, v2, i + 1);
     df->triangles.push_back(tri);
-    if (returnTri2TetMap){
-      tri2Tet[2*i+0] = tri->getNum();
-      tri2Tet[2*i+1] = tet->getNum();
+    if (returnTri2TetMap) {
+      tri2Tet[2 * i + 0] = tri->getNum();
+      tri2Tet[2 * i + 1] = tet->getNum();
     }
   }
   // auto t4 = std::chrono::steady_clock::now(); 
@@ -3235,18 +3206,18 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
   // printf("rest of as   time : %f percent \n", 100*double(dur2.count())/double(durTotal.count()) );
 }
 
-
+            
 int split_edge(PolyMesh* pm, PolyMesh::HalfEdge* he, SVector3& position, int data, std::vector<PolyMesh::Face*>& newFaces, std::vector<PolyMesh::Vertex*>& linkedVertices){
-    linkedVertices.push_back(he->v);
-    linkedVertices.push_back(he->opposite->v);
-    linkedVertices.push_back(he->next->next->v);
-    linkedVertices.push_back(he->opposite->next->next->v);
-    pm->split_edge(he, position, data);
-    newFaces.push_back(he->f);
-    newFaces.push_back(he->opposite->f);
-    newFaces.push_back(he->next->opposite->f);
-    newFaces.push_back(he->next->opposite->next->opposite->f);
-    return 0;
+  linkedVertices.push_back(he->v);
+  linkedVertices.push_back(he->opposite->v);
+  linkedVertices.push_back(he->next->next->v);
+  linkedVertices.push_back(he->opposite->next->next->v);
+  pm->split_edge(he, position, data);
+  newFaces.push_back(he->f);
+  newFaces.push_back(he->opposite->f);
+  newFaces.push_back(he->next->opposite->f);
+  newFaces.push_back(he->next->opposite->next->opposite->f);
+  return 0;
 }
 
 struct pair_hash {
@@ -3593,7 +3564,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
   for (auto tri : df->triangles){
     delete tri;
   }
-  df->removeElements(TYPE_TRI);
+  df->triangles.clear();
   size_t i=1;
   for (auto f : pm->faces){
     MVertex* v0 = gm->getMeshVertexByTag(f->he->v->data);
@@ -3780,9 +3751,6 @@ void AlphaShape::_volumeMeshRefinementMeshFromAlphaShapeElements(const int fullT
   hxtGetTri2TetMap(m, tri2TetMap, &nbMissingTriangles);
   
   
-  printf("n tets : %lu \n", m->tetrahedra.num);
-  printf("n tris : %lu \n", m->triangles.num);
-  
   if (nbMissingTriangles!=0){
     if(nbMissingTriangles)
     HXT_INFO("Recovering %" HXTu64 " missing facet(s)",
@@ -3806,7 +3774,6 @@ void AlphaShape::_volumeMeshRefinementMeshFromAlphaShapeElements(const int fullT
       Msg::Info("Constrained lines and triangles recovered\n");
   }
       
-  printf("nbMissingTriangles = %lu \n", nbMissingTriangles);
   hxtConstrainTriangles(m, tri2TetMap);
   printf("triangles constrained \n");
   setFlagsToProcessOnlyVolumesInBrep(m);
@@ -3872,7 +3839,7 @@ void AlphaShape::_volumeMeshRefinementMeshFromAlphaShapeElements(const int fullT
   for (auto tet : dr->tetrahedra){
     delete tet;
   }
-  dr->removeElements(TYPE_TET);
+  dr->tetrahedra.clear();
   
   for (uint64_t i=0; i<m->tetrahedra.num; i++){
     if (m->tetrahedra.color[i] == HXT_COLOR_OUT) continue;
@@ -4092,8 +4059,8 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
     for (auto tet : dr->tetrahedra){
       delete tet;
     }
-    dr->removeElements(TYPE_TET);
-    
+    dr->tetrahedra.clear();
+
     for (uint64_t i=0; i<m->tetrahedra.num; i++){
       if (m->tetrahedra.color[i] == HXT_COLOR_OUT) continue;
       auto t = &m->tetrahedra.node[4*i];
@@ -4363,7 +4330,6 @@ void _createBoundaryOctree3D(const std::string & boundaryModel, OctreeNode<3, 12
     }
     bbox*=1.1;
     octree.set_bbox(bbox);
-    int i_debug = 0;
     // OctreeNode<2, 32, alphaShapeBndEdge*> octree(bbox);
     for (auto el : allElements){
       BBox<3> el_bbox;
@@ -4408,7 +4374,7 @@ void AlphaShape::_colourBoundariesWithGmshOctree(const int faceTag, const std::s
       bndElement2Entity[e->getMeshElement(i_el)] = e->tag();
     }
   }
-  auto t2 = std::chrono::steady_clock::now();
+  // auto t2 = std::chrono::steady_clock::now();
   
   // 3. Perform search in octree
   auto pt_param = SPoint3(0,0,0);
@@ -4473,7 +4439,7 @@ void AlphaShape::_colourBoundariesWithGmshOctree(const int faceTag, const std::s
     // for (auto tri : gf_bnd->triangles){
     //   delete tri;
     // }
-    gf_bnd->removeElements(TYPE_TRI);
+    gf_bnd->triangles.clear();
     for (auto tri : it.second){
       gf_bnd->triangles.push_back(tri);
     }
@@ -4522,7 +4488,7 @@ void AlphaShape::_matchTrianglesToEntities(const int faceTag, const std::string 
       bndElement2Entity[e->getMeshElement(i_el)] = e->tag();
     }
   }
-  auto t2 = std::chrono::steady_clock::now();
+  // auto t2 = std::chrono::steady_clock::now();
   
   // 3. Perform search in octree
   auto pt_param = SPoint3(0,0,0);
@@ -4701,7 +4667,7 @@ void AlphaShape::_colourBoundaries(const int faceTag, const std::string & bounda
     // for (auto tri : gf_bnd->triangles){
     //   delete tri;
     // }
-    gf_bnd->removeElements(TYPE_TRI);
+    gf_bnd->triangles.clear();
     for (auto tri : it.second){
       gf_bnd->triangles.push_back(tri);
     }
@@ -5018,78 +4984,6 @@ double alphaShape (const size_t *t, const std::vector<double> &p, const double h
   double R = sqrt ((x[0]-C[0])*(x[0]-C[0])+(x[1]-C[1])*(x[1]-C[1])+(x[2]-C[2])*(x[2]-C[2]));
   return R/hMean;
 }
-void generateMesh3D_(const std::vector<double>& coord, const std::vector<size_t>& nodeTags){
-  GModel *m = GModel::current();
-  
-  /* initialize hxt mesh */
-  HXTMesh *mesh;
-  hxtMeshCreate(&mesh);
-
-  /* set the gmsh surface mesh to hxt format */
-  std::map<MVertex *, uint32_t> v2c;
-  std::vector<MVertex *> c2v;
-  std::set<GRegion *, GEntityPtrLessThan> rs;
-  rs = m->getRegions();
-  std::vector<GRegion *> regions(rs.begin(), rs.end());
-  std::for_each(m->firstRegion(), m->lastRegion(), deMeshGRegion());
-  Gmsh2HxtAlpha(regions, mesh, v2c, c2v);
-
-  // all other fields of the options will be 0 or NULL (standard C behavior)
-  HXTTetMeshOptions options = {};
-  options.defaultThreads = 1;
-  options.verbosity=2;
-  options.stat=1;
-
-	// create the empty mesh
-	hxtTetMesh(mesh, &options);
-
-  uint32_t nBndPts = mesh->vertices.num;
-
-  // create the bounding box of the mesh
-	HXTBbox bbox;
-	hxtBboxInit(&bbox);
-	hxtBboxAdd(&bbox, mesh->vertices.coord, mesh->vertices.num);
-
-  uint32_t numNewPts = coord.size()/3;
-  std::vector<HXTNodeInfo> nodeInfo(numNewPts);
-
-  /* add the internal nodes to the mesh */
-  mesh->vertices.num += numNewPts;
-	if (mesh->vertices.num > mesh->vertices.size) {
-		hxtAlignedRealloc(&mesh->vertices.coord, sizeof(double) * mesh->vertices.num * 4);
-		mesh->vertices.size = mesh->vertices.num;
-	}
-  for (size_t p = 0; p < numNewPts; p++) {
-    uint32_t nodeIndex = p + nBndPts;
-    for (int dim = 0; dim < 3; dim++) {
-      mesh->vertices.coord[4 * nodeIndex + dim] = coord[3*p+dim];
-    }
-    nodeInfo[p].node = nodeIndex;
-    nodeInfo[p].status = HXT_STATUS_TRYAGAIN; // state that we want to insert this point
-  }
-
-  HXTDelaunayOptions delOptions = {};
-  delOptions.bbox = &bbox;
-  delOptions.numVerticesInMesh = nBndPts;
-  delOptions.insertionFirst = nBndPts;
-  delOptions.verbosity = 2;
-
-  /* Generate the tet mesh */
-  hxtDelaunaySteadyVertices(mesh, &delOptions, &nodeInfo[0], numNewPts);
-
-  Hxt2GmshAlpha(regions, mesh, v2c, c2v);
-
-  /* reset the vertex indices */
-  for (size_t i=nBndPts; i<mesh->vertices.num; i++){
-    MVertex* oldv = c2v[i];
-    if(nodeTags.size()){
-      oldv->forceNum(nodeTags[i-nBndPts]);
-    }
-  }
-
-  hxtMeshDelete(&mesh);
-}
-
 
 HXTStatus gmsh2hxtCallback (double *coord, uint32_t* volume, size_t n, void* userData){
   auto cbGmsh = (std::function<double(int, int, double, double, double, double)>*)userData;
@@ -5116,424 +5010,5 @@ double qualityFunForOptimize(double* p0, double* p1, double* p2, double* p3, voi
   double hMean = (s0+s1+s2+s3)/4.;
   return hMean/R;
 }
-
-void AlphaShape::_computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double alpha, const double hMean,
-                        std::function<double(int, int, double, double, double, double)> sizeFieldCallback, 
-                        const int triangulate, const int refine){
-  
-  auto t0 = std::chrono::steady_clock::now(); 
-  auto t1 = std::chrono::steady_clock::now(); 
-  auto t2 = std::chrono::steady_clock::now(); 
-  auto t3 = std::chrono::steady_clock::now(); 
-  auto t4 = std::chrono::steady_clock::now(); 
-  auto t5 = std::chrono::steady_clock::now(); 
-  auto t6 = std::chrono::steady_clock::now(); 
-  auto t7 = std::chrono::steady_clock::now(); 
-
-  GRegion* gr = GModel::current()->getRegionByTag(alphaShapeTags[0]);
-  size_t nNodesInMesh = gr->mesh_vertices.size();
-  std::vector<double> coordsInMesh(3*nNodesInMesh);
-  std::vector<size_t> nodeTagsInMesh(nNodesInMesh);
-  size_t maxNode = 0;
-  for (size_t i=0; i<nNodesInMesh; i++){
-    MVertex* v = gr->mesh_vertices[i];
-    coordsInMesh[3*i+0] = v->x();
-    coordsInMesh[3*i+1] = v->y();
-    coordsInMesh[3*i+2] = v->z();
-    nodeTagsInMesh[i] = v->getNum();
-    maxNode = std::max(maxNode, nodeTagsInMesh[i]);
-  }
-
-  /* initialize hxt mesh */
-  HXTMesh *mesh;
-  hxtMeshCreate(&mesh);
-  HXTTetMeshOptions options = {};
-  // options.defaultThreads = 2;
-  options.verbosity=2;
-  options.stat=1;
-
-  mesh->vertices.num += nNodesInMesh;
-  hxtAlignedRealloc(&mesh->vertices.coord, sizeof(double) * mesh->vertices.num * 4);
-  mesh->vertices.size = mesh->vertices.num;
-  for (size_t p = 0; p < nNodesInMesh; p++) {
-    uint32_t nodeIndex = p;
-    for (int dim = 0; dim < 3; dim++) {
-      mesh->vertices.coord[4 * nodeIndex + dim] = coordsInMesh[3*p+dim];
-    }
-  }
-  
-  // create the bounding box of the mesh
-	HXTBbox bbox;
-	hxtBboxInit(&bbox);
-	hxtBboxAdd(&bbox, mesh->vertices.coord, mesh->vertices.num);
-  double center[3] = {(bbox.min[0]+bbox.max[0])*.5, (bbox.min[1]+bbox.max[1])*.5, (bbox.min[2]+bbox.max[2])*.5};
-  double scale = 1.1;
-  for (size_t i=0; i<3; i++){
-    bbox.min[i] = center[i] + (bbox.min[i] - center[i])*scale;
-    bbox.max[i] = center[i] + (bbox.max[i] - center[i])*scale;
-  }
-
-  HXTDelaunayOptions delOptions = {};
-  delOptions.bbox = &bbox;
-  delOptions.numVerticesInMesh = 0;
-  delOptions.insertionFirst = 0;
-  delOptions.verbosity = 2;
-  delOptions.allowOuterInsertion = 0;
-
-  t1 = std::chrono::steady_clock::now(); 
-
-  /* Generate the tet mesh */
-  hxtDelaunay(mesh, &delOptions);
-  // printf("initial delaunay done \n");
-  mesh->tetrahedra.color = (uint32_t*) malloc(sizeof(uint32_t) * mesh->tetrahedra.num);
-
-  
-  t2 = std::chrono::steady_clock::now(); 
-  
-  HXTNodalSizes nodalSizes = {
-      .array = NULL,
-      .callback = gmsh2hxtCallback, 
-      .userData = (void*)&sizeFieldCallback,
-      // .callback = NULL, 
-      // .userData = NULL,
-      // .min = .2*.04, 
-      // .max = ,  
-      .factor = 1.,
-      .enabled = 0  // only enabled for the refine step
-  };
-  hxtNodalSizesInit(mesh, &nodalSizes);
-  
-  double nodalSizeMin = 1e10;
-  double nodalSizeMax = 0.;
-  for (size_t i=0; i<mesh->vertices.num; i++){
-    nodalSizes.array[i] = sizeFieldCallback(3, nodeTagsInMesh[i], mesh->vertices.coord[4*i+0], mesh->vertices.coord[4*i+1], mesh->vertices.coord[4*i+2], 0.);
-    nodalSizeMin = std::min(nodalSizeMin, nodalSizes.array[i]);
-    nodalSizeMax = std::max(nodalSizeMax, nodalSizes.array[i]);
-  }
-  nodalSizes.min = nodalSizeMin;
-  nodalSizes.max = nodalSizeMax;
-  delOptions.nodalSizes = &nodalSizes;
-  printf("nodal sizes initialized \n");
-
-  HXTAlphaShapeOptions alphaShapeOptions = {
-      .colorIn = static_cast<uint32_t>(alphaShapeTags[0]),
-      .colorOut = 1,
-      .colorBoundary = static_cast<uint32_t>(alphaShapeTags[1]),
-      .alpha = alpha,
-      .hMean = hMean,
-      .minQuality = .1, // TO CHECK !!!!!!!!!!!
-      .minRadius = nodalSizeMin,
-      .n_tetrahedra = 0,
-      .tetrahedra = NULL,
-      .n_boundaryFacets = 0,
-      .boundaryFacets = NULL,    
-  };
-  
-  // hxtMeshWriteGmsh(mesh, "convexHullMesh.msh");
-  hxtAlphaShape(mesh, &delOptions, &alphaShapeOptions);
-  printf("alpha shape done \n");
-
-  t3 = std::chrono::steady_clock::now(); 
-
-
-  if (alphaShapeOptions.n_tetrahedra == 0){
-    HXT_ERROR_MSG(HXT_STATUS_FAILED, "No tetrahedra in alpha shape, exiting \n");
-    return;
-  }
-  // Add alpha shape facets into the mesh
-  mesh->triangles.num = alphaShapeOptions.n_boundaryFacets;
-  if (mesh->triangles.num != mesh->triangles.size){
-    hxtAlignedRealloc(&mesh->triangles.node, sizeof(uint32_t) * mesh->triangles.num * 3);
-    hxtAlignedRealloc(&mesh->triangles.color, sizeof(uint32_t) * mesh->triangles.num);
-    mesh->triangles.size = mesh->triangles.num;
-  }
-  for (u_int32_t i=0; i<alphaShapeOptions.n_boundaryFacets; i++){
-    mesh->triangles.node[3*i+0] = alphaShapeOptions.boundaryFacets[3*i+0];
-    mesh->triangles.node[3*i+1] = alphaShapeOptions.boundaryFacets[3*i+1];
-    mesh->triangles.node[3*i+2] = alphaShapeOptions.boundaryFacets[3*i+2];
-    mesh->triangles.color[i] = alphaShapeOptions.colorBoundary;
-  }
-
-  if (refine == 1){
-
-    hxtRefineSurfaceTriangulation(&mesh, &delOptions, &alphaShapeOptions);
-
-    printf("done with surface triangulation refinement\n");
-    
-    // hxtMeshWriteGmsh(mesh, "afterSurfaceRefinement.msh");
-    
-    
-    delOptions.nodalSizes->enabled = 1;
-    delOptions.allowOuterInsertion = 0;
-    
-    
-    // hxtAlphaShapeNodeInsertion(mesh, &delOptions, &alphaShapeOptions);
-
-    for (uint64_t i=0; i<mesh->tetrahedra.num; i++) {
-      if(mesh->tetrahedra.color[i]!=alphaShapeOptions.colorIn) {
-        setProcessedFlag(mesh, i);
-      }
-      else {
-        unsetProcessedFlag(mesh, i);
-      }
-    }
-    t4 = std::chrono::steady_clock::now(); 
-    hxtRefineTetrahedra(mesh, &delOptions);
-    t5 = std::chrono::steady_clock::now(); 
-    
-    hxtMeshWriteGmsh(mesh, "afterNodeInsertion.msh");
-    // printf("wrote mesh after node insertion\n");
-    HXTOptimizeOptions optOptions = {
-      .bbox = &bbox, 
-      .qualityFun = NULL,
-      // .qualityFun = qualityFunForOptimize,
-      .qualityData = NULL,
-      // .qualityData = (void*)&sizeFieldCallback,
-      .qualityMin = .1,
-      .numVerticesConstrained = mesh->vertices.num,
-      .verbosity = 2,
-      .reproducible = 0
-    };
-    // #pragma omp parallel for
-    for (uint64_t i=0; i<mesh->tetrahedra.num; i++) {
-      if(mesh->tetrahedra.color[i]!=alphaShapeOptions.colorIn) {
-        setProcessedFlag(mesh, i);
-      }
-      else {
-        unsetProcessedFlag(mesh, i);
-      }
-    }
-    hxtOptimizeTetrahedra(mesh, &optOptions);
-    t6 = std::chrono::steady_clock::now(); 
-    // hxtMeshWriteGmsh(mesh, "afterOptimisation.msh");
-    // printf("wrote mesh after second alpha shape\n");
-  }
-  else {
-    // create a mesh with only the elements in the alpha shape
-    for (uint64_t i=0; i<mesh->tetrahedra.num; i++){
-      if (mesh->tetrahedra.color[i] != alphaShapeOptions.colorIn){
-        mesh->tetrahedra.color[i] = HXT_COLOR_OUT;
-      }
-    }
-  }
-
-  gmsh::vectorpair atags3D;
-  atags3D.push_back(std::make_pair(3, alphaShapeTags[0]));
-  gmsh::model::mesh::clear(atags3D);
-  gmsh::vectorpair atags2D;
-  atags2D.push_back(std::make_pair(2, alphaShapeTags[1]));
-  gmsh::model::mesh::clear(atags2D);
-
-  std::vector<size_t> nodeTags(mesh->vertices.num);
-  std::vector<double> coords(3*mesh->vertices.num);
-  size_t nNodes = 0;
-  robin_hood::unordered_map<size_t, size_t> i2g;
-  
-  std::vector<size_t> alphaTriTags, alphaTriNodeTags, alphaTetTags, alphaTetNodeTags;
-  for (uint64_t i=0; i<mesh->triangles.num; i++){
-    alphaTriTags.push_back(i+1);
-    for (int j=0; j<3; j++){
-      size_t nodeIndex = mesh->triangles.node[3*i+j];
-      auto it = i2g.find(nodeIndex);
-      if (it == i2g.end()){
-        coords[3*nNodes+0] = mesh->vertices.coord[4*nodeIndex+0];
-        coords[3*nNodes+1] = mesh->vertices.coord[4*nodeIndex+1];
-        coords[3*nNodes+2] = mesh->vertices.coord[4*nodeIndex+2];
-        if (nodeIndex < nNodesInMesh) nodeTags[nNodes] = nodeTagsInMesh[nodeIndex];
-        else nodeTags[nNodes] = ++maxNode;
-        i2g[nodeIndex] = nodeTags[nNodes];
-        alphaTriNodeTags.push_back(nodeTags[nNodes]);
-        nNodes++;
-      }
-      else 
-        alphaTriNodeTags.push_back(it->second);
-    }
-  }
-  // for (int i=0; i<alphaShapeOptions.n_tetrahedra; i++){
-  size_t tetTag = 1;
-  for (uint64_t i=0; i<mesh->tetrahedra.num; i++){
-    uint32_t myColor = mesh->tetrahedra.color[i];
-    if (myColor == HXT_COLOR_OUT) continue;
-    alphaTetTags.push_back(tetTag++);
-    // uint64_t tetIndex = alphaShapeOptions.tetrahedra[i];
-    uint64_t tetIndex = i;
-    for (int j=0; j<4; j++){
-      size_t nodeIndex = mesh->tetrahedra.node[4*tetIndex+j];
-      auto it = i2g.find(nodeIndex);
-      if (it == i2g.end()){
-        coords[3*nNodes+0] = mesh->vertices.coord[4*nodeIndex+0];
-        coords[3*nNodes+1] = mesh->vertices.coord[4*nodeIndex+1];
-        coords[3*nNodes+2] = mesh->vertices.coord[4*nodeIndex+2];
-        if (nodeIndex < nNodesInMesh) nodeTags[nNodes] = nodeTagsInMesh[nodeIndex];
-        else nodeTags[nNodes] = ++maxNode;
-        i2g[nodeIndex] = nodeTags[nNodes];
-        alphaTetNodeTags.push_back(nodeTags[nNodes]);
-        nNodes++;
-      }
-      else 
-        alphaTetNodeTags.push_back(it->second);
-    }
-  }
-  
-  nodeTags.resize(nNodes);
-  coords.resize(3*nNodes);
-  gmsh::model::mesh::addNodes(3, alphaShapeTags[0], nodeTags, coords);
-  gmsh::model::mesh::addElementsByType(alphaShapeTags[1], 2, alphaTriTags, alphaTriNodeTags);
-  gmsh::model::mesh::addElementsByType(alphaShapeTags[0],  4, alphaTetTags, alphaTetNodeTags);
-  hxtMeshDelete(&mesh);
-  t7 = std::chrono::steady_clock::now(); 
-  
-  auto dur1 = std::chrono::duration_cast<std::chrono::milliseconds>(t1-t0);
-  auto dur2 = std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1);
-  auto dur3 = std::chrono::duration_cast<std::chrono::milliseconds>(t3-t2);
-  auto dur4 = std::chrono::duration_cast<std::chrono::milliseconds>(t4-t3);
-  auto dur5 = std::chrono::duration_cast<std::chrono::milliseconds>(t5-t4);
-  auto dur6 = std::chrono::duration_cast<std::chrono::milliseconds>(t6-t5);
-  auto dur7 = std::chrono::duration_cast<std::chrono::milliseconds>(t7-t6);
-  auto durTotal = std::chrono::duration_cast<std::chrono::milliseconds>(t7-t0);
-  printf("initial      time : %f percent \n", 100*double(dur1.count())/double(durTotal.count()) );
-  printf("delaunay     time : %f percent \n", 100*double(dur2.count())/double(durTotal.count()) );
-  printf("alpha shape  time : %f percent \n", 100*double(dur3.count())/double(durTotal.count()) );
-  printf("surface ref  time : %f percent \n", 100*double(dur4.count())/double(durTotal.count()) );
-  printf("volume ref   time : %f percent \n", 100*double(dur5.count())/double(durTotal.count()) );
-  printf("optimize     time : %f percent \n", 100*double(dur6.count())/double(durTotal.count()) );
-  printf("finalize     time : %f percent \n", 100*double(dur7.count())/double(durTotal.count()) ); 
-}
-
-// void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std::vector<size_t> & nodeTags, const std::vector<double> & nodesDx, OctreeNode<3, 32, alphaShapeBndEdge*> &bnd_octree, double boundary_tol){
-//   // check if size of nodesDx is the same as the number of nodes
-//   GModel* gm = GModel::current();
-//   GRegion* gr = gm->getRegionByTag(tag);
-//   if (gr->getNumMeshVertices() != nodesDx.size()/3){
-//     Msg::Error("size of nodesDX does not match the number of nodes in the mesh");
-//     return;
-//   }
-
-//   // 1. keep boundary nodes on the boundary
-//   std::unordered_set<MVertex*> boundaryNodesSet;
-//   std::vector<GEntity*> bndEntities;
-//   gm->getEntities(bndEntities, 1);
-//   for (auto ge : bndEntities){
-//     if (ge->tag() == freeSurfaceTag) continue;
-//     std::vector<std::size_t> edges;
-//     std::vector<std::size_t> edgeTags;
-//     for (size_t i=0; i<ge->getNumMeshElements(); i++){
-//       MElement* elem = ge->getMeshElement(i);
-//       boundaryNodesSet.insert(elem->getVertex(0));
-//       boundaryNodesSet.insert(elem->getVertex(1));
-//     }
-//   }
-
-//   std::unordered_set<size_t> projectedControlNodes;
-//   for (size_t i=0; i<gf->getNumMeshVertices(); i++){
-//     // MVertex* v = gf->getMeshVertex(i);
-//     MVertex* v = gm->getMeshVertexByTag(nodeTags[i]);
-//     bool intersect = false;
-//     SVector3 x0(v->point());
-//     SVector3 dx(nodesDx[3*i], nodesDx[3*i+1], nodesDx[3*i+2]);
-//     SVector3 x1 = x0 + dx;
-//     // We check if it is a boundary node -> if yes, it is forced to stay on the boundary
-//     SVector3 x1_projected;
-//     if (boundaryNodesSet.find(v) != boundaryNodesSet.end()) {
-//       BBox<2> bbox;
-//       bbox.extends({x1[0]-1.5*dx[0]-boundary_tol, x1[1]-1.5*dx[1]-boundary_tol});
-//       bbox.extends({x1[0]+1.5*dx[0]+boundary_tol, x1[1]+1.5*dx[1]+boundary_tol});
-//       bbox.extends({x1[0]-1.5*dx[0]+boundary_tol, x1[1]-1.5*dx[1]+boundary_tol});
-//       bbox.extends({x1[0]+1.5*dx[0]-boundary_tol, x1[1]+1.5*dx[1]-boundary_tol});
-//       // std::vector<const Mesh::Vertex*> vertices;
-//       std::vector<alphaShapeBndEdge *> edges;
-//       double t=0.;
-      
-//       // First, we test if the node is close to a control node, i.e. a geometric node
-//       // If this is the case, we move the node to the control node
-      
-//       // TODO !!!
-      
-//       // octree_nodes.search(bbox, vertices);
-//       // if (vertices.size() == 1){
-//       //     if (projectedControlNodes.find(vertices[0]->tag) == projectedControlNodes.end()){
-//       //         projectedControlNodes.insert(vertices[0]->tag);
-//       //         newCoords[3*i+0] = vertices[0]->x[0];
-//       //         newCoords[3*i+1] = vertices[0]->x[1];
-//       //         newCoords[3*i+2] = 0.;
-//       //         intersect = true;
-//       //     }
-//       // }
-
-//       if (!intersect){
-//         bnd_octree.search(bbox, edges);
-//         double minDist = 1e10;
-//         double norm;
-//         for (auto edge : edges) {
-//           double x2[2] = {edge->x0, edge->y0};
-//           double x3[2] = {edge->x1, edge->y1};
-//           double x2x1[2] = {x1[0]-x2[0], x1[1]-x2[1]};
-//           double x2x3[2] = {x3[0]-x2[0], x3[1]-x2[1]};
-//           double dot = x2x1[0]*x2x3[0] + x2x1[1]*x2x3[1];
-//           norm = x2x3[0]*x2x3[0] + x2x3[1]*x2x3[1];
-//           t = dot/norm;
-//           double nx[2];
-//           double dist;
-//           if(t > 0 && t < 1){
-//             nx[0] = x2[0]+t*x2x3[0];
-//             nx[1] = x2[1]+t*x2x3[1];
-//           }
-//           else if (t <= 0){
-//             nx[0] = x2[0];
-//             nx[1] = x2[1];
-//           }
-//           else if (t >= 1){
-//             nx[0] = x3[0];
-//             nx[1] = x3[1];
-//           }
-//           dist = (nx[0]-x1[0])*(nx[0]-x1[0]) + (nx[1]-x1[1])*(nx[1]-x1[1]);
-//           if (dist < minDist){
-//             x1_projected[0] = nx[0];
-//             x1_projected[1] = nx[1];
-//             x1_projected[2] = 0.;
-//             intersect = true;
-//             minDist = dist;
-//           }
-//         }
-//       }
-//       if (!intersect){
-//           Msg::Warning("No intersection found for boundary node %zu (%.15f, %.15f) -> (%.15f, %.15f) (norm = %.15e) (size of edges : %lu) (t = %.15f) \n", v->getNum(), x0[0], x0[1], x1[0], x1[1], sqrt((x1[0]-x0[0])*(x1[0]-x0[0]) + (x1[1]-x0[1])*(x1[1]-x0[1])), edges.size(), t);
-//       }
-//     }
-//     else {
-//       std::vector<alphaShapeBndEdge *> edges;
-//       BBox<2> bbox;
-//       bbox.extends({x0[0], x0[1]});
-//       bbox.extends({x1[0], x1[1]});
-//       bnd_octree.search(bbox, edges);
-//       for (auto edge : edges) {
-//         double a1[2] = {edge->x0, edge->y0};
-//         double a2[2] = {edge->x1, edge->y1};
-//         double a143 = robustPredicates::orient2d(a1,x1,x0);
-//         double a243 = robustPredicates::orient2d(a2,x1,x0);    
-//         double a123 = robustPredicates::orient2d(a1,a2,x0);
-//         double a124 = robustPredicates::orient2d(a1,a2,x1);
-//         if (a143*a243 < 0 && a123*a124 < 0){
-//           double t = fabs(a143)/(fabs(a143)+fabs(a243));
-//           double vec[2] = {a2[0]-a1[0], a2[1]-a1[1]};
-//           double new_intersection[2] = {a1[0]+t*vec[0], a1[1]+t*vec[1]};
-//           x1_projected[0] = new_intersection[0];
-//           x1_projected[1] = new_intersection[1];
-//           x1_projected[2] = 0.;
-//           intersect = true;
-//           // printf("node %zu intersects but is not boundary \n", v->getNum());
-//           break;
-//         }
-//       }
-//     }
-//     if (intersect) {
-//         x1 = x1_projected;
-//     }
-//     // printf("moving node %zu from (%.15f, %.15f) to (%.15f, %.15f) (dx was : %.15f, %.15f) \n", v->getNum(), x0[0], x0[1], x1[0], x1[1], dx[0], dx[1]);
-//     v->setXYZ(x1[0], x1[1], x1[2]);
-//   }
-// }
-
-
 
 #endif

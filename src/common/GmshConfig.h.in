@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -20,7 +20,6 @@
 #cmakedefine HAVE_DOMHEX
 #cmakedefine HAVE_EIGEN
 #cmakedefine HAVE_FLTK
-#cmakedefine HAVE_GEODESIC
 #cmakedefine HAVE_GEOMETRYCENTRAL
 #cmakedefine HAVE_GMM
 #cmakedefine HAVE_GMP
@@ -36,12 +35,14 @@
 #cmakedefine HAVE_MATHEX
 #cmakedefine HAVE_MED
 #cmakedefine HAVE_MESH
+#cmakedefine HAVE_MESQUITE
 #cmakedefine HAVE_METIS
 #cmakedefine HAVE_MMG
 #cmakedefine HAVE_MPEG_ENCODE
 #cmakedefine HAVE_MPI
 #cmakedefine HAVE_MUMPS
 #cmakedefine HAVE_NETGEN
+#cmakedefine HAVE_NII2MESH
 #cmakedefine HAVE_NUMPY
 #cmakedefine HAVE_NO_INTPTR_T
 #cmakedefine HAVE_NO_SOCKLEN_T
@@ -72,8 +73,10 @@
 #cmakedefine HAVE_SGEOM
 #cmakedefine HAVE_SLEPC
 #cmakedefine HAVE_SOLVER
+#cmakedefine HAVE_UNTANGLE
 #cmakedefine HAVE_TAUCS
 #cmakedefine HAVE_TETGENBR
+#cmakedefine HAVE_TINYXML2
 #cmakedefine HAVE_TOUCHBAR
 #cmakedefine HAVE_VISUDEV
 #cmakedefine HAVE_VOROPP

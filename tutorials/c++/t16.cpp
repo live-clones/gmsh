@@ -35,7 +35,7 @@ int main(int argc, char **argv)
     return 0;
   }
 
-  // We apply a boolean difference to create the "cube minus one eigth" shape:
+  // We apply a boolean difference to create the "cube minus one eighth" shape:
   std::vector<std::pair<int, int> > ov;
   std::vector<std::vector<std::pair<int, int> > > ovv;
   gmsh::model::occ::cut({{3, 1}}, {{3, 2}}, ov, ovv, 3);
@@ -96,7 +96,7 @@ int main(int argc, char **argv)
 
   // The tag of the cube will change though, so we need to access it
   // programmatically:
-  gmsh::model::addPhysicalGroup(3, {ov[ov.size() - 1].second}, 10);
+  gmsh::model::addPhysicalGroup(3, {ov[0].second}, 10);
 
   // Creating entities using constructive solid geometry is very powerful, but
   // can lead to practical issues for e.g. setting mesh sizes at points, or

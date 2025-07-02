@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -24,8 +24,8 @@
 
 #if defined(HAVE_HXT)
 
-extern "C" {
 #include "hxt_omp.h"
+extern "C" {
 #include "hxt_tetMesh.h"
 #include "hxt_tetDelaunay.h"
 }
@@ -51,7 +51,7 @@ static HXTStatus nodalSizesCallBack(double *pts, uint32_t *volume,
   std::vector<GRegion *> *allGR = (std::vector<GRegion *> *)userData;
 
   double lcGlob = CTX::instance()->lc;
-  int useInterpolatedSize = CTX::instance()->mesh.lcExtendFromBoundary;
+  int useInterpolatedSize = Extend2dMeshIn3dVolumes();
 
   HXT_INFO("Computing %smesh sizes...", useInterpolatedSize ? "interpolated " : "");
 
@@ -60,7 +60,7 @@ static HXTStatus nodalSizesCallBack(double *pts, uint32_t *volume,
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t i = 0; i < numPts; i++) {
     if(exceptions) continue;
-    if(volume[i] < 0 || volume[i] >= allGR->size()) {
+    if(volume[i] >= allGR->size()) {
       Msg::Error("Invalid volume tag %d in mesh size calculation", volume[i]);
       continue;
     }
@@ -440,13 +440,6 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
   return HXT_STATUS_OK;
 }
 
-void Hxt2GmshAlpha(std::vector<GRegion *> &regions, HXTMesh *m,
-                          std::map<MVertex *, uint32_t> &v2c,
-                          std::vector<MVertex *> &c2v)
-{
-  Hxt2Gmsh(regions, m, v2c, c2v);
-}
-
 HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
                    std::map<MVertex *, uint32_t> &v2c,
                    std::vector<MVertex *> &c2v)
@@ -567,120 +560,6 @@ HXTStatus Gmsh2Hxt(std::vector<GRegion *> &regions, HXTMesh *m,
   return HXT_STATUS_OK;
 }
 
-void Gmsh2HxtAlpha(std::vector<GRegion *> &regions, HXTMesh *m,
-                   std::map<MVertex *, uint32_t> &v2c,
-                   std::vector<MVertex *> &c2v)
-{
-  std::set<MVertex *> all;
-  std::vector<GFace *> surfaces;
-  std::vector<GEdge *> curves;
-  std::vector<GVertex *> points;
-  std::map<MVertex *, double> vlc;
-
-  getAllSurfaces(regions, m, surfaces);
-  getAllCurves(regions, surfaces, m, curves);
-
-  uint64_t index = 0, ntri = 0, nedg = 0, npts = 0;
-
-  // embedded points in volumes (all other embedded points will be in the
-  // curve/surface meshes already)
-  for(GRegion *gr : regions) {
-    for(GVertex *gv : gr->embeddedVertices()) {
-      points.push_back(gv);
-      npts += gv->points.size();
-      for(size_t i = 0; i < gv->points.size(); i++) {
-        MVertex *v = gv->points[i]->getVertex(0);
-        all.insert(v);
-        if(gv->prescribedMeshSizeAtVertex() != MAX_LC)
-          vlc[v] = gv->prescribedMeshSizeAtVertex();
-      }
-    }
-  }
-  
-
-  for(size_t j = 0; j < curves.size(); j++) {
-    GEdge *ge = curves[j];
-    nedg += ge->lines.size();
-    for(size_t i = 0; i < ge->lines.size(); i++) {
-      all.insert(ge->lines[i]->getVertex(0));
-      all.insert(ge->lines[i]->getVertex(1));
-    }
-  }
-
-  for(size_t j = 0; j < surfaces.size(); j++) {
-    GFace *gf = surfaces[j];
-    ntri += gf->triangles.size();
-    for(size_t i = 0; i < gf->triangles.size(); i++) {
-      all.insert(gf->triangles[i]->getVertex(0));
-      all.insert(gf->triangles[i]->getVertex(1));
-      all.insert(gf->triangles[i]->getVertex(2));
-    }
-  }
-  
-  m->vertices.num = m->vertices.size = all.size();
-  hxtAlignedMalloc(&m->vertices.coord, 4 * m->vertices.num * sizeof(double));
-  size_t count = 0;
-  c2v.resize(all.size());
-  for(MVertex *v : all) {
-    m->vertices.coord[4 * count + 0] = v->x();
-    m->vertices.coord[4 * count + 1] = v->y();
-    m->vertices.coord[4 * count + 2] = v->z();
-    m->vertices.coord[4 * count + 3] = 0;
-    if(CTX::instance()
-         ->mesh.lcFromPoints) { // size on embedded points in volume
-      auto it = vlc.find(v);
-      if(it != vlc.end()) m->vertices.coord[4 * count + 3] = it->second;
-    }
-    v2c[v] = count;
-    c2v[count++] = v;
-  }
-  all.clear();
-
-  m->points.num = m->points.size = npts;
-  hxtAlignedMalloc(&m->points.node, (m->points.num) * sizeof(uint32_t));
-  hxtAlignedMalloc(&m->points.color, (m->points.num) * sizeof(uint32_t));
-  index = 0;
-  for(size_t j = 0; j < points.size(); j++) {
-    GVertex *gv = points[j];
-    for(size_t i = 0; i < gv->points.size(); i++) {
-      m->points.node[index] = v2c[gv->points[i]->getVertex(0)];
-      m->points.color[index] = gv->tag();
-      index++;
-    }
-  }
-
-  m->lines.num = m->lines.size = nedg;
-  hxtAlignedMalloc(&m->lines.node, (m->lines.num) * 2 * sizeof(uint32_t));
-  hxtAlignedMalloc(&m->lines.color, (m->lines.num) * sizeof(uint32_t));
-  index = 0;
-  for(size_t j = 0; j < curves.size(); j++) {
-    GEdge *ge = curves[j];
-    for(size_t i = 0; i < ge->lines.size(); i++) {
-      m->lines.node[2 * index + 0] = v2c[ge->lines[i]->getVertex(0)];
-      m->lines.node[2 * index + 1] = v2c[ge->lines[i]->getVertex(1)];
-      m->lines.color[index] = ge->tag();
-      index++;
-    }
-  }
-
-  m->triangles.num = m->triangles.size = ntri;
-  hxtAlignedMalloc(&m->triangles.node,
-                             (m->triangles.num) * 3 * sizeof(uint32_t));
-  hxtAlignedMalloc(&m->triangles.color,
-                             (m->triangles.num) * sizeof(uint32_t));
-  index = 0;
-  for(size_t j = 0; j < surfaces.size(); j++) {
-    GFace *gf = surfaces[j];
-    for(size_t i = 0; i < gf->triangles.size(); i++) {
-      m->triangles.node[3 * index + 0] = v2c[gf->triangles[i]->getVertex(0)];
-      m->triangles.node[3 * index + 1] = v2c[gf->triangles[i]->getVertex(1)];
-      m->triangles.node[3 * index + 2] = v2c[gf->triangles[i]->getVertex(2)];
-      m->triangles.color[index] = gf->tag();
-      index++;
-    }
-  }
-}
-
 static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
 {
   HXT_CHECK(hxtSetMessageCallback(messageCallback));
@@ -698,7 +577,7 @@ static HXTStatus _meshGRegionHxt(std::vector<GRegion *> &regions)
     nthreads, // int defaultThreads;
     nthreads, // int delaunayThreads;
     nthreads, // int improveThreads;
-    1, // int reproducible;
+    CTX::instance()->mesh.reproducible, // int reproducible;
     (Msg::GetVerbosity() > 5) ? 2 : 1, // int verbosity;
     1, // int stat;
     1, // int refine;
@@ -761,6 +640,7 @@ static HXTStatus _delaunayMeshIn3DHxt(std::vector<MVertex *> &verts,
     0, // insertionFirst
     0, // partitionability
     1, // perfectDelaunay
+    0, // allowOuterInsertion
     0, // verbosity
     0, // reproducible
     nthreads // delaunayThreads (0 = omp_get_max_threads)

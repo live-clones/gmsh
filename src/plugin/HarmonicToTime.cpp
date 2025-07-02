@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -7,13 +7,13 @@
 #include "GmshDefines.h"
 
 StringXNumber HarmonicToTimeOptions_Number[] = {
-  {GMSH_FULLRC, "RealPart", nullptr, 0.},
-  {GMSH_FULLRC, "ImaginaryPart", nullptr, 1.},
-  {GMSH_FULLRC, "NumSteps", nullptr, 20.},
-  {GMSH_FULLRC, "TimeSign", nullptr, -1.},
-  {GMSH_FULLRC, "Frequency", nullptr, 1},
-  {GMSH_FULLRC, "NumPeriods", nullptr, 1},
-  {GMSH_FULLRC, "View", nullptr, -1.}};
+  {GMSH_FULLRC, "RealPart", nullptr, 0., "RealPart"},
+  {GMSH_FULLRC, "ImaginaryPart", nullptr, 1., "ImaginaryPart"},
+  {GMSH_FULLRC, "NumSteps", nullptr, 20., "NumSteps"},
+  {GMSH_FULLRC, "TimeSign", nullptr, -1., "TimeSign"},
+  {GMSH_FULLRC, "Frequency", nullptr, 1, "Frequency"},
+  {GMSH_FULLRC, "NumPeriods", nullptr, 1, "NumPeriods"},
+  {GMSH_FULLRC, "View", nullptr, -1., "View"}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterHarmonicToTimePlugin()

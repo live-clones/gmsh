@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -7,12 +7,12 @@
 #include "PViewOptions.h"
 #include "shapeFunctions.h"
 
-StringXNumber Scal2VecOptions_Number[] = {{GMSH_FULLRC, "ViewX", nullptr, -1},
-                                          {GMSH_FULLRC, "ViewY", nullptr, -1},
-                                          {GMSH_FULLRC, "ViewZ", nullptr, -1}};
+StringXNumber Scal2VecOptions_Number[] = {{GMSH_FULLRC, "ViewX", nullptr, -1, ""},
+                                          {GMSH_FULLRC, "ViewY", nullptr, -1, ""},
+                                          {GMSH_FULLRC, "ViewZ", nullptr, -1, ""}};
 
 StringXString Scal2VecOptions_String[] = {
-  {GMSH_FULLRC, "NameNewView", nullptr, "NewView"}};
+  {GMSH_FULLRC, "NameNewView", nullptr, "NewView", ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterScal2VecPlugin() { return new GMSH_Scal2VecPlugin(); }

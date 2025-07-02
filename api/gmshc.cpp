@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -242,6 +242,17 @@ GMSH_API void gmshOptionGetColor(const char * name, int * r, int * g, int * b, i
   }
 }
 
+GMSH_API void gmshOptionRestoreDefaults(int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::option::restoreDefaults();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelAdd(const char * name, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -380,6 +391,21 @@ GMSH_API void gmshModelGetPhysicalGroups(int ** dimTags, size_t * dimTags_n, con
     gmsh::vectorpair api_dimTags_;
     gmsh::model::getPhysicalGroups(api_dimTags_, dim);
     vectorpair2intptr(api_dimTags_, dimTags, dimTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelGetPhysicalGroupsEntities(int ** dimTags, size_t * dimTags_n, int *** entities, size_t ** entities_n, size_t *entities_nn, const int dim, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_;
+    std::vector<gmsh::vectorpair >api_entities_;
+    gmsh::model::getPhysicalGroupsEntities(api_dimTags_, api_entities_, dim);
+    vectorpair2intptr(api_dimTags_, dimTags, dimTags_n);
+    vectorvectorpair2intptrptr(api_entities_, entities, entities_n, entities_nn);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -601,6 +627,19 @@ GMSH_API void gmshModelRemoveEntities(const int * dimTags, const size_t dimTags_
   }
 }
 
+GMSH_API void gmshModelGetEntityType(const int dim, const int tag, char ** entityType, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::string api_entityType_;
+    gmsh::model::getEntityType(dim, tag, api_entityType_);
+    *entityType = strdup(api_entityType_.c_str());
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelGetType(const int dim, const int tag, char ** entityType, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -608,6 +647,21 @@ GMSH_API void gmshModelGetType(const int dim, const int tag, char ** entityType,
     std::string api_entityType_;
     gmsh::model::getType(dim, tag, api_entityType_);
     *entityType = strdup(api_entityType_.c_str());
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelGetEntityProperties(const int dim, const int tag, int ** integers, size_t * integers_n, double ** reals, size_t * reals_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_integers_;
+    std::vector<double> api_reals_;
+    gmsh::model::getEntityProperties(dim, tag, api_integers_, api_reals_);
+    vector2ptr(api_integers_, integers, integers_n);
+    vector2ptr(api_reals_, reals, reals_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -1059,6 +1113,18 @@ GMSH_API void gmshModelMeshClear(const int * dimTags, const size_t dimTags_n, in
       api_dimTags_[i].second = dimTags[i * 2 + 1];
     }
     gmsh::model::mesh::clear(api_dimTags_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshRemoveElements(const int dim, const int tag, const size_t * elementTags, const size_t elementTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::size_t> api_elementTags_(elementTags, elementTags + elementTags_n);
+    gmsh::model::mesh::removeElements(dim, tag, api_elementTags_);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -2396,47 +2462,6 @@ GMSH_API void gmshModelMeshComputeCrossField(int ** viewTags, size_t * viewTags_
   }
 }
 
-GMSH_API void gmshModelMeshTriangulate(const double * coord, const size_t coord_n, const size_t * edges, const size_t edges_n, size_t ** tri, size_t * tri_n, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    std::vector<double> api_coord_(coord, coord + coord_n);
-    std::vector<std::size_t> api_edges_(edges, edges + edges_n);
-    std::vector<std::size_t> api_tri_;
-    gmsh::model::mesh::triangulate(api_coord_, api_edges_, api_tri_);
-    vector2ptr(api_tri_, tri, tri_n);
-  }
-  catch(...){
-    if(ierr) *ierr = 1;
-  }
-}
-
-GMSH_API void gmshModelMeshTetrahedralize(const double * coord, const size_t coord_n, size_t ** tetra, size_t * tetra_n, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    std::vector<double> api_coord_(coord, coord + coord_n);
-    std::vector<std::size_t> api_tetra_;
-    gmsh::model::mesh::tetrahedralize(api_coord_, api_tetra_);
-    vector2ptr(api_tetra_, tetra, tetra_n);
-  }
-  catch(...){
-    if(ierr) *ierr = 1;
-  }
-}
-
-GMSH_API void gmshModelMeshComputeAlphaShape3D(const int dim, const int * alphaShapeTags, const size_t alphaShapeTags_n, const double alpha, const double hMean, double (*sizeFieldCallback)(int dim, int tag, double x, double y, double z, double lc, void * data), void * sizeFieldCallback_data, const int triangulate, const int refine, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    std::vector<int> api_alphaShapeTags_(alphaShapeTags, alphaShapeTags + alphaShapeTags_n);
-    gmsh::model::mesh::computeAlphaShape3D(dim, api_alphaShapeTags_, alpha, hMean, std::bind(sizeFieldCallback, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, sizeFieldCallback_data), triangulate, refine);
-  }
-  catch(...){
-    if(ierr) *ierr = 1;
-  }
-}
-
 GMSH_API void gmshModelMeshAdvectMeshNodes(const int dim, const int tag, const int bndTag, const char * boundaryModel, const size_t * nodeTags, const size_t nodeTags_n, const double * dxNodes, const size_t dxNodes_n, const double boundaryTolerance, const int intersectOrProjectOnBoundary, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -2461,17 +2486,6 @@ GMSH_API void gmshModelMeshComputeAlphaShape(const int dim, const int tag, const
     vector2ptr(api_newNodeTags_, newNodeTags, newNodeTags_n);
     vector2ptr(api_newNodeElementTags_, newNodeElementTags, newNodeElementTags_n);
     vector2ptr(api_newNodeParametricCoord_, newNodeParametricCoord, newNodeParametricCoord_n);
-  }
-  catch(...){
-    if(ierr) *ierr = 1;
-  }
-}
-
-GMSH_API void gmshModelMeshDecimateTriangulation(const int faceTag, const double distanceThreshold, int * ierr)
-{
-  if(ierr) *ierr = 0;
-  try {
-    gmsh::model::mesh::decimateTriangulation(faceTag, distanceThreshold);
   }
   catch(...){
     if(ierr) *ierr = 1;
@@ -3876,6 +3890,71 @@ GMSH_API void gmshModelOccChamfer(const int * volumeTags, const size_t volumeTag
   }
 }
 
+GMSH_API void gmshModelOccDefeature(const int * volumeTags, const size_t volumeTags_n, const int * surfaceTags, const size_t surfaceTags_n, int ** outDimTags, size_t * outDimTags_n, const int removeVolume, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<int> api_volumeTags_(volumeTags, volumeTags + volumeTags_n);
+    std::vector<int> api_surfaceTags_(surfaceTags, surfaceTags + surfaceTags_n);
+    gmsh::vectorpair api_outDimTags_;
+    gmsh::model::occ::defeature(api_volumeTags_, api_surfaceTags_, api_outDimTags_, removeVolume);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API int gmshModelOccFillet2D(const int edgeTag1, const int edgeTag2, const double radius, const int tag, const int pointTag, const int reverse, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::occ::fillet2D(edgeTag1, edgeTag2, radius, tag, pointTag, reverse);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API int gmshModelOccChamfer2D(const int edgeTag1, const int edgeTag2, const double distance1, const double distance2, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::occ::chamfer2D(edgeTag1, edgeTag2, distance1, distance2, tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API void gmshModelOccOffsetCurve(const int curveLoopTag, const double offset, int ** outDimTags, size_t * outDimTags_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_outDimTags_;
+    gmsh::model::occ::offsetCurve(curveLoopTag, offset, api_outDimTags_);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelOccGetDistance(const int dim1, const int tag1, const int dim2, const int tag2, double * distance, double * x1, double * y1, double * z1, double * x2, double * y2, double * z2, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::occ::getDistance(dim1, tag1, dim2, tag2, *distance, *x1, *y1, *z1, *x2, *y2, *z2);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelOccFuse(const int * objectDimTags, const size_t objectDimTags_n, const int * toolDimTags, const size_t toolDimTags_n, int ** outDimTags, size_t * outDimTags_n, int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn, const int tag, const int removeObject, const int removeTool, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -4642,6 +4721,35 @@ GMSH_API void gmshViewOptionCopy(const int refTag, const int tag, int * ierr)
   }
 }
 
+GMSH_API void gmshAlgorithmTriangulate(const double * coordinates, const size_t coordinates_n, size_t ** triangles, size_t * triangles_n, const size_t * edges, const size_t edges_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_coordinates_(coordinates, coordinates + coordinates_n);
+    std::vector<std::size_t> api_triangles_;
+    std::vector<std::size_t> api_edges_(edges, edges + edges_n);
+    gmsh::algorithm::triangulate(api_coordinates_, api_triangles_, api_edges_);
+    vector2ptr(api_triangles_, triangles, triangles_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshAlgorithmTetrahedralize(const double * coordinates, const size_t coordinates_n, size_t ** tetrahedra, size_t * tetrahedra_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_coordinates_(coordinates, coordinates + coordinates_n);
+    std::vector<std::size_t> api_tetrahedra_;
+    gmsh::algorithm::tetrahedralize(api_coordinates_, api_tetrahedra_);
+    vector2ptr(api_tetrahedra_, tetrahedra, tetrahedra_n);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshPluginSetNumber(const char * name, const char * option, const double value, int * ierr)
 {
   if(ierr) *ierr = 0;
@@ -5183,6 +5291,32 @@ GMSH_API double gmshLoggerGetCpuTime(int * ierr)
   if(ierr) *ierr = 0;
   try {
     result_api_ = gmsh::logger::getCpuTime();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API double gmshLoggerGetMemory(int * ierr)
+{
+  double result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::logger::getMemory();
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
+GMSH_API double gmshLoggerGetTotalMemory(int * ierr)
+{
+  double result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::logger::getTotalMemory();
   }
   catch(...){
     if(ierr) *ierr = 1;

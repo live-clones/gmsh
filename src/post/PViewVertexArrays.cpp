@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1236,20 +1236,20 @@ static void addTensorElement(PView *p, int iEnt, int iEle, int numNodes,
 	    tensor(j, 0) = val[i][0 + j * 3];
 	    tensor(j, 1) = val[i][1 + j * 3];
 	    tensor(j, 2) = val[i][2 + j * 3];
-	  }	  
+	  }
 	  tensor.eig(S, imS, leftV, rightV, false);
 	  for(int k = 0; k < 3; k++) {
 	    vval[k][0] = xyz[i][k];
 	    for(int j = 0; j < 3; j++) { vval[k][j + 1] = rightV(k, j) * S(j); }
 	  }
 	}
-	
-	//	double lmax = std::max(S(0), std::max(S(1), S(2)));
-	//	double lmin = std::min(S(0), std::min(S(1), S(2)));
+
+	// double lmax = std::max(S(0), std::max(S(1), S(2)));
+	// double lmin = std::min(S(0), std::min(S(1), S(2)));
 	double det = S(0)*S(1)*S(2);
 
-	printf("%12.5E %12.5E %12.5E \n",det,opt->tmpMin, opt->tmpMax);
-	
+	// printf("%12.5E %12.5E %12.5E \n",det,opt->tmpMin, opt->tmpMax);
+
         unsigned int color = opt->getColor(
           det, opt->tmpMin, opt->tmpMax, false,
           (opt->intervalsType == PViewOptions::Discrete) ? opt->nbIso : -1);

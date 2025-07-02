@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -13,24 +13,24 @@
 #endif
 
 StringXNumber CutBoxOptions_Number[] = {
-  {GMSH_FULLRC, "X0", GMSH_CutBoxPlugin::callbackX0, 0.},
-  {GMSH_FULLRC, "Y0", GMSH_CutBoxPlugin::callbackY0, 0.},
-  {GMSH_FULLRC, "Z0", GMSH_CutBoxPlugin::callbackZ0, 0.},
-  {GMSH_FULLRC, "X1", GMSH_CutBoxPlugin::callbackX1, 1.},
-  {GMSH_FULLRC, "Y1", GMSH_CutBoxPlugin::callbackY1, 0.},
-  {GMSH_FULLRC, "Z1", GMSH_CutBoxPlugin::callbackZ1, 0.},
-  {GMSH_FULLRC, "X2", GMSH_CutBoxPlugin::callbackX2, 0.},
-  {GMSH_FULLRC, "Y2", GMSH_CutBoxPlugin::callbackY2, 1.},
-  {GMSH_FULLRC, "Z2", GMSH_CutBoxPlugin::callbackZ2, 0.},
-  {GMSH_FULLRC, "X3", GMSH_CutBoxPlugin::callbackX3, 0.},
-  {GMSH_FULLRC, "Y3", GMSH_CutBoxPlugin::callbackY3, 0.},
-  {GMSH_FULLRC, "Z3", GMSH_CutBoxPlugin::callbackZ3, 1.},
-  {GMSH_FULLRC, "NumPointsU", GMSH_CutBoxPlugin::callbackU, 20},
-  {GMSH_FULLRC, "NumPointsV", GMSH_CutBoxPlugin::callbackV, 20},
-  {GMSH_FULLRC, "NumPointsW", GMSH_CutBoxPlugin::callbackW, 20},
-  {GMSH_FULLRC, "ConnectPoints", GMSH_CutBoxPlugin::callbackConnect, 1},
-  {GMSH_FULLRC, "Boundary", GMSH_CutBoxPlugin::callbackBoundary, 1},
-  {GMSH_FULLRC, "View", nullptr, -1.}};
+  {GMSH_FULLRC, "X0", GMSH_CutBoxPlugin::callbackX0, 0., ""},
+  {GMSH_FULLRC, "Y0", GMSH_CutBoxPlugin::callbackY0, 0., ""},
+  {GMSH_FULLRC, "Z0", GMSH_CutBoxPlugin::callbackZ0, 0., ""},
+  {GMSH_FULLRC, "X1", GMSH_CutBoxPlugin::callbackX1, 1., ""},
+  {GMSH_FULLRC, "Y1", GMSH_CutBoxPlugin::callbackY1, 0., ""},
+  {GMSH_FULLRC, "Z1", GMSH_CutBoxPlugin::callbackZ1, 0., ""},
+  {GMSH_FULLRC, "X2", GMSH_CutBoxPlugin::callbackX2, 0., ""},
+  {GMSH_FULLRC, "Y2", GMSH_CutBoxPlugin::callbackY2, 1., ""},
+  {GMSH_FULLRC, "Z2", GMSH_CutBoxPlugin::callbackZ2, 0., ""},
+  {GMSH_FULLRC, "X3", GMSH_CutBoxPlugin::callbackX3, 0., ""},
+  {GMSH_FULLRC, "Y3", GMSH_CutBoxPlugin::callbackY3, 0., ""},
+  {GMSH_FULLRC, "Z3", GMSH_CutBoxPlugin::callbackZ3, 1., ""},
+  {GMSH_FULLRC, "NumPointsU", GMSH_CutBoxPlugin::callbackU, 20, ""},
+  {GMSH_FULLRC, "NumPointsV", GMSH_CutBoxPlugin::callbackV, 20, ""},
+  {GMSH_FULLRC, "NumPointsW", GMSH_CutBoxPlugin::callbackW, 20, ""},
+  {GMSH_FULLRC, "ConnectPoints", GMSH_CutBoxPlugin::callbackConnect, 1, ""},
+  {GMSH_FULLRC, "Boundary", GMSH_CutBoxPlugin::callbackBoundary, 1, ""},
+  {GMSH_FULLRC, "View", nullptr, -1., ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterCutBoxPlugin() { return new GMSH_CutBoxPlugin(); }

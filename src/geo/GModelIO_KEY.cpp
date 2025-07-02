@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -121,9 +121,9 @@ int GModel::writeKEY(const std::string &name, int saveAll,
                       physicalName(this, dim, it->first).c_str(), ++setid);
             }
             if(!(n % 8))
-              fprintf(fp, "\n%lu", e->getNum());
+              fprintf(fp, "\n%zu", e->getNum());
             else
-              fprintf(fp, ", %lu", e->getNum());
+              fprintf(fp, ", %zu", e->getNum());
             n++;
           }
         }

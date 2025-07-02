@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -42,10 +42,12 @@ public:
   virtual bool containsPoint(const SPoint3 &pt) const;
   virtual bool containsParam(const SPoint2 &pt);
   virtual SVector3 normal(const SPoint2 &param) const;
-  virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const;
+  virtual std::pair<SVector3, SVector3> firstDer(const SPoint2 &param) const;
   virtual void secondDer(const SPoint2 &, SVector3 &, SVector3 &,
                          SVector3 &) const;
   virtual GEntity::GeomType geomType() const;
+  virtual void geomProperties(std::vector<int> &integers,
+                              std::vector<double> &reals) const;
   virtual ModelType getNativeType() const { return OpenCascadeModel; }
   virtual void *getNativePtr() const { return (void *)&_s; }
   virtual SPoint2 parFromPoint(const SPoint3 &, bool onSurface = true,

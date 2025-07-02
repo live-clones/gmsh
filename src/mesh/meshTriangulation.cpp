@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -89,7 +89,7 @@ int PolyMesh2GFace(PolyMesh *pm, int faceTag)
 {
   GFace *gf = GModel::current()->getFaceByTag(faceTag);
 
-  if(!gf) {
+  if(!gf){
     Msg::Error("PolyMesh2GFace cannot find surface %d", faceTag);
     return 0;
   }
@@ -204,8 +204,8 @@ int GFace2PolyMesh(int faceTag, PolyMesh **pm)
 
   // FIXME should probably not use the public API here
   std::vector<int> elementTypes;
-  std::vector<std::vector<std::size_t>> elementTags;
-  std::vector<std::vector<std::size_t>> nodeTags;
+  std::vector<std::vector<std::size_t> > elementTags;
+  std::vector<std::vector<std::size_t> > nodeTags;
   gmsh::model::mesh::getElements(elementTypes, elementTags, nodeTags, 2,
                                  faceTag);
 
@@ -255,6 +255,16 @@ int GFace2PolyMesh(int faceTag, PolyMesh **pm)
         he[j]->next = he[(j + 1) % nNod];
         he[j]->prev = he[(j - 1 + nNod) % nNod];
         he[j]->f = ff;
+        //	size_t n0 = v[j]->data;
+        //	size_t n1 = v[(j+1)%nNod]->data;
+        //	std::pair<size_t, size_t> pj =
+        //	  std::make_pair(std::min(n0,n1),std::max(n0,n1));
+        //	auto itj = opposites.find(pj);
+        //	if(itj == opposites.end()) opposites[pj] = he[j];
+        //	else {
+        //	  he[j]->opposite = itj->second;
+        //	  itj->second->opposite = he[j];
+        //	}
       }
     }
   }
@@ -263,47 +273,15 @@ int GFace2PolyMesh(int faceTag, PolyMesh **pm)
   std::sort((*pm)->hedges.begin(), (*pm)->hedges.end(), compare);
 
   HalfEdgePtrEqual equal;
-
-  std::vector<PolyMesh::Face*> toRemove;
-
   for(size_t i = 0; i < (*pm)->hedges.size() - 1; i++) {
     PolyMesh::HalfEdge *h0 = (*pm)->hedges[i];
     PolyMesh::HalfEdge *h1 = (*pm)->hedges[i + 1];
     if(equal(h0, h1)) {
       h0->opposite = h1;
       h1->opposite = h0;
-      while (1){
-	if (i+2 == (*pm)->hedges.size())break;
-	PolyMesh::HalfEdge *h2 = (*pm)->hedges[i + 2];
-	if(equal(h0, h2)){
-	  Msg::Warning("Non Manifold Mesh cannot be encoded in a half edge data structure (edge %d %d) -- removing a face",
-		       h0->v->data,h0->next->v->data);
-	  toRemove.push_back(h2->f);
-	  i++;
-	}
-	else break;
-      }
       i++;
     }
   }
-
-  //  printf("%lu %lu -->",(*pm)->hedges.size(),(*pm)->faces.size());
-  
-  for (auto f : toRemove){
-    if (f->he->opposite)f->he->opposite->opposite = nullptr;
-    if (f->he->next->opposite)f->he->next->opposite->opposite = nullptr;
-    if (f->he->next->next->opposite)f->he->next->next->opposite->opposite = nullptr;
-    (*pm)->hedges.erase(std::find((*pm)->hedges.begin(),(*pm)->hedges.end(), f->he));
-    (*pm)->hedges.erase(std::find((*pm)->hedges.begin(),(*pm)->hedges.end(), f->he->next));
-    (*pm)->hedges.erase(std::find((*pm)->hedges.begin(),(*pm)->hedges.end(), f->he->next->next));
-    (*pm)->faces.erase(std::find((*pm)->faces.begin(),(*pm)->faces.end(), f));
-  }
-  for(size_t i = 0; i < (*pm)->hedges.size(); i++) {
-    PolyMesh::HalfEdge *h0 = (*pm)->hedges[i];
-    h0->v->he = h0;
-  }
-  //  printf(" %lu %lu\n",(*pm)->hedges.size(),(*pm)->faces.size());
-  
   return 0;
 }
 
@@ -322,6 +300,38 @@ static int delaunayEdgeCriterionPlaneIsotropic(PolyMesh::HalfEdge *he, void *)
   return (result > 0) ? 1 : 0;
 }
 
+static double faceQuality(PolyMesh::Vertex *v0,
+			  PolyMesh::Vertex *v1,
+			  PolyMesh::Vertex *v2)
+{
+  return qmTriangle::gamma(v0->position.x(), v0->position.y(), v0->position.z(),
+			   v1->position.x(), v1->position.y(), v1->position.z(),
+			   v2->position.x(), v2->position.y(), v2->position.z());
+}
+
+static int enhanceQuality(PolyMesh::HalfEdge *he, void *)
+{
+  if(he->opposite == nullptr) return -1;
+
+  PolyMesh::Vertex *v0 = he->v;
+  PolyMesh::Vertex *v1 = he->next->v;
+  PolyMesh::Vertex *v2 = he->next->next->v;
+  PolyMesh::Vertex *v3 = he->opposite->next->next->v;
+
+  int d0 = degree(v0);
+  int d1 = degree(v1);
+  int d2 = degree(v2);
+  int d3 = degree(v3);
+
+  if ((d0 > 7 || d1 > 7) && (d2 < 7 && d3 < 7))return 1;
+
+  double qBefore = std::min(faceQuality(v0,v1,v2), faceQuality(v1,v0,v3));
+  double qAfter  = std::min(faceQuality(v2,v3,v0), faceQuality(v3,v2,v1));
+
+  return qAfter > qBefore ? 1 : 0;
+}
+
+
 static void faceCircumCenter(PolyMesh::HalfEdge *he, GFace *gf, double *res,
                              double *uv)
 {
@@ -336,6 +346,7 @@ static void faceCircumCenter(PolyMesh::HalfEdge *he, GFace *gf, double *res,
   double q2[3] = {p2.x(), p2.y(), p2.z()};
   circumCenterXYZ(q0, q1, q2, res, uv);
 }
+
 
 static double faceQuality(PolyMesh::HalfEdge *he, GFace *gf)
 {
@@ -420,11 +431,11 @@ static PolyMesh::Face *Walk(PolyMesh::Face *f, double x, double y)
     else {
       Msg::Error("Could not find half-edge in walk for point %g %g on "
                  "face %g %g %g / %g %g %g / %g %g %g "
-                 "(orientation tests %g %g %g)",
-                 x, y, v0->position.x(), v0->position.y(), v0->position.z(),
+                 "(orientation tests %g %g %g)", x, y,
+                 v0->position.x(), v0->position.y(), v0->position.z(),
                  v1->position.x(), v1->position.y(), v1->position.z(),
-                 v2->position.x(), v2->position.y(), v2->position.z(), s0, s1,
-                 s2);
+                 v2->position.x(), v2->position.y(), v2->position.z(),
+                 s0, s1, s2);
     }
     if(he == nullptr) break;
   }
@@ -451,7 +462,7 @@ static int intersect(PolyMesh::Vertex *v0, PolyMesh::Vertex *v1,
   return 1;
 }
 
-int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
+static int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
                         PolyMesh::Vertex *v_end)
 {
   PolyMesh::HalfEdge *he = v_start->he;
@@ -475,14 +486,10 @@ int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
     he = he->next->next->opposite;
   } while(he != v_start->he);
 
-  //  printf("coucou2 %lu\n",_list.size());
-
   if(_list.empty()) { return -1; }
 
   // find all intersections
-  int iter = 0;
   while(1) {
-    if(iter++ > 1000) return -3;
     he = _list.back();
     he = he->opposite;
     if(!he) return -2;
@@ -516,10 +523,8 @@ int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
   }
 
   int nbIntersection = _list.size();
-  //  printf("%d intersections\n", nbIntersection);
+  // printf("%d intersections\n", nbIntersection);
   // int K = 100;
-  int _iter = 0;
-  // pm->print4debug(K++);
   while(!_list.empty()) {
     he = *_list.begin();
     _list.erase(_list.begin());
@@ -536,9 +541,7 @@ int recover_edge(PolyMesh *pm, PolyMesh::Vertex *v_start,
     }
     else
       _list.push_back(he);
-    if(_iter++ > 1000) return -1;
   }
-  //  printf("%d intersections done\n", nbIntersection);
   return nbIntersection;
 }
 
@@ -608,7 +611,7 @@ void GFaceDelaunayRefinement(size_t faceTag)
               if(std::find(_f.begin(), _f.end(), h->f) == _f.end())
                 _f.push_back(h->f);
 
-            // printf("step %d %lu touched : ", I, _f.size());
+            // printf("step %d %zu touched : ", I, _f.size());
             for(auto pf : _f) {
               q = faceQuality(pf->he, gf);
               // printf("%12.5E ", q);
@@ -711,7 +714,7 @@ static void getNodeCopies(GFace *gf,
         else
           direction = 1;
       }
-      // printf("model edge %lu %lu vertices\n", e->tag(), e_vertices.size());
+      // printf("model edge %zu %zu vertices\n", e->tag(), e_vertices.size());
       for(auto v : e_vertices) {
         SPoint2 param;
         if(direction != -1) {
@@ -755,12 +758,11 @@ static void getNodeCopies(GFace *gf,
   }
 }
 
-void addPointsAlpha(PolyMesh *pm, std::vector<double> &pts, SBoundingBox3d &bb,
-                    std::vector<size_t> &IND)
+void addPoints(PolyMesh *pm, std::vector<double> &pts, SBoundingBox3d &bb)
 {
   const size_t N = pts.size() / 2;
   std::vector<double> X(N), Y(N);
-  std::vector<size_t> HC(N);
+  std::vector<size_t> HC(N), IND(N);
   PolyMesh::Face *f = pm->faces[0];
   for(size_t i = 0; i < N; i++) {
     X[i] = pts[2 * i];
@@ -781,150 +783,8 @@ void addPointsAlpha(PolyMesh *pm, std::vector<double> &pts, SBoundingBox3d &bb,
   }
 }
 
-void addPoints(PolyMesh *pm, std::vector<double> &pts, SBoundingBox3d &bb)
-{
-  const size_t N = pts.size() / 2;
-  std::vector<double> X(N), Y(N);
-  std::vector<size_t> HC(N), IND(N);
-  PolyMesh::Face *f = pm->faces[0];
-  for(size_t i = 0; i < N; i++) {
-    X[i] = pts[2 * i];
-    Y[i] = pts[2 * i + 1];
-    HC[i] = HilbertCoordinates(X[i], Y[i], bb.center().x(), bb.center().y(),
-                               bb.max().x() - bb.center().x(), 0, 0,
-                               bb.max().y() - bb.center().y());
-    IND[i] = i;
-  }
-
-  for(size_t i = 0; i < N; i++) {
-    size_t I = IND[i];
-    f = Walk(f, X[I], Y[I]);
-    pm->split_triangle(i, X[I], Y[I], 0, f, delaunayEdgeCriterionPlaneIsotropic,
-                       nullptr);
-  }
-}
-
 PolyMesh *GFaceInitialMesh(int faceTag, int recover,
                            std::vector<double> *additional)
-{
-  GFace *gf = GModel::current()->getFaceByTag(faceTag);
-  if(!gf) Msg::Error("GFaceInitialMesh: no face with tag %d", faceTag);
-
-  PolyMesh *pm = new PolyMesh;
-
-  std::unordered_map<size_t, nodeCopies> copies;
-  getNodeCopies(gf, copies);
-
-  SBoundingBox3d bb;
-  for(auto c : copies) {
-    for(size_t i = 0; i < c.second.nbCopies; i++){
-      bb += SPoint3(c.second.u[i], c.second.v[i], 0);
-    }
-  }
-  bb *= 1.1;
-  pm->initialize_rectangle(bb.min().x(), bb.max().x(), bb.min().y(),
-                           bb.max().y());
-  PolyMesh::Face *f = pm->faces[0];
-  for(std::unordered_map<size_t, nodeCopies>::iterator it = copies.begin();
-      it != copies.end(); ++it) {
-    for(size_t i = 0; i < it->second.nbCopies; i++) {
-      double x = it->second.u[i];
-      double y = it->second.v[i];
-      // find face in which lies x,y
-      f = Walk(f, x, y);
-      // split f and then swap edges to recover delaunayness
-      pm->split_triangle(-1, x, y, 0, f, delaunayEdgeCriterionPlaneIsotropic,
-                         nullptr);
-      // remember node tags
-      it->second.id[i] = pm->vertices.size() - 1;
-      pm->vertices[pm->vertices.size() - 1]->data = it->first;
-    }
-  }
-
-  if(additional) addPoints(pm, *additional, bb);
-  //  pm->print4debug(faceTag);
-
-  if(recover) {
-    std::vector<GEdge *> edges = gf->edges();
-    std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
-    edges.insert(edges.end(), emb_edges.begin(), emb_edges.end());
-    if(edges.empty())
-      edges.insert(edges.end(), gf->model()->firstEdge(),
-                   gf->model()->lastEdge());
-
-    for(auto e : edges) {
-      if(!e->isMeshDegenerated()) {
-        for(auto l : e->lines) {
-          auto c0 = copies.find(l->getVertex(0)->getNum());
-          auto c1 = copies.find(l->getVertex(1)->getNum());
-          if(c0 == copies.end() || c1 == copies.end())
-            Msg::Error("unable to find %lu %lu %d %d",
-                       l->getVertex(0)->getNum(), l->getVertex(1)->getNum(),
-                       c0 == copies.end(), c1 == copies.end());
-          if(c0->second.nbCopies > c1->second.nbCopies) {
-            auto cc = c0;
-            c0 = c1;
-            c1 = cc;
-          }
-          for(size_t j = 0; j < c0->second.nbCopies; j++) {
-            PolyMesh::Vertex *v0 = pm->vertices[c0->second.id[j]];
-            PolyMesh::Vertex *v1 = pm->vertices[c1->second.closest(
-              c0->second.u[j], c0->second.v[j])];
-            int result = recover_edge(pm, v0, v1);
-            if(result < 0) {
-              Msg::Warning("Impossible to recover edge %lu %lu (error tag %d)",
-                           l->getVertex(0)->getNum(), l->getVertex(1)->getNum(),
-                           result);
-            }
-            else {
-              PolyMesh::HalfEdge *he = pm->getEdge(v0, v1);
-              if(he) {
-                if(he->opposite) he->opposite->data = e->tag();
-                he->data = e->tag();
-              }
-            }
-          }
-        }
-      }
-    }
-    //    printf("AAAAAAAAAAAAAAAAA %d\n",recover);
-    // pm->print4debug(faceTag+1000);
-  }
-  // color all PolyMesh::Faces
-  // the first 4 vertices are "infinite vertices" --> color them with tag -2
-  // meaning exterior
-  PolyMesh::HalfEdge *other_side = Color(pm->vertices[0]->he, -2);
-  // other_side is inthernal to the face --> color them with tag faceTag
-  other_side = Color(other_side, faceTag);
-  // holes will be tagged -1
-
-  // flip edges that have been scrambled
-  if(!recover) {
-    int iter = 0;
-    while(iter++ < 100) {
-      int count = 0;
-      for(auto he : pm->hedges) {
-        if(he->opposite && he->f->data == faceTag &&
-           he->opposite->f->data == faceTag) {
-          if(delaunayEdgeCriterionPlaneIsotropic(he, nullptr)) {
-            if(intersect(he->v, he->next->v, he->next->next->v,
-                         he->opposite->next->next->v)) {
-              pm->swap_edge(he);
-              count++;
-            }
-          }
-        }
-      }
-      if(!count) break;
-    }
-  }
-
-  return pm;
-}
-
-PolyMesh *GFaceInitialMeshAlpha(int faceTag, int recover,
-                                std::vector<double> *additional,
-                                std::vector<size_t> &IND)
 {
   GFace *gf = GModel::current()->getFaceByTag(faceTag);
 
@@ -960,7 +820,7 @@ PolyMesh *GFaceInitialMeshAlpha(int faceTag, int recover,
     }
   }
 
-  // pm->print4debug(faceTag);
+  //pm->print4debug(faceTag);
 
   if(recover) {
     std::vector<GEdge *> edges = gf->edges();
@@ -976,7 +836,7 @@ PolyMesh *GFaceInitialMeshAlpha(int faceTag, int recover,
           auto c0 = copies.find(l->getVertex(0)->getNum());
           auto c1 = copies.find(l->getVertex(1)->getNum());
           if(c0 == copies.end() || c1 == copies.end())
-            Msg::Error("unable to find %lu %lu %d %d",
+            Msg::Error("unable to find %zu %zu %d %d",
                        l->getVertex(0)->getNum(), l->getVertex(1)->getNum(),
                        c0 == copies.end(), c1 == copies.end());
           if(c0->second.nbCopies > c1->second.nbCopies) {
@@ -990,7 +850,7 @@ PolyMesh *GFaceInitialMeshAlpha(int faceTag, int recover,
               c0->second.u[j], c0->second.v[j])];
             int result = recover_edge(pm, v0, v1);
             if(result < 0) {
-              Msg::Warning("Impossible to recover edge %lu %lu (error tag %d)",
+              Msg::Warning("Impossible to recover edge %zu %zu (error tag %d)",
                            l->getVertex(0)->getNum(), l->getVertex(0)->getNum(),
                            result);
             }
@@ -1033,218 +893,39 @@ PolyMesh *GFaceInitialMeshAlpha(int faceTag, int recover,
       if(!count) break;
     }
   }
-  if(additional) addPointsAlpha(pm, *additional, bb, IND);
+
+  if(additional) addPoints(pm, *additional, bb);
 
   return pm;
 }
 
-int meshTriangulate2d(const std::vector<double> &coord,
-                      std::vector<std::size_t> &tri,
-                      const std::vector<size_t> *rec)
-{
-  PolyMesh *pm = new PolyMesh;
+// -----------------------------------
+// only on planar faces ...
+int PolyMeshDelaunayize (int faceTag){
 
-  SBoundingBox3d bb;
-  for(size_t i = 0; i < coord.size(); i += 2) {
-    bb += SPoint3(coord[i], coord[i + 1], 0);
-  }
-  bb *= 1.1;
-  pm->initialize_rectangle(bb.min().x(), bb.max().x(), bb.min().y(),
-                           bb.max().y());
+  PolyMesh *pm;
+  GFace2PolyMesh(faceTag, &pm);
 
-  PolyMesh::Face *f = pm->faces[0];
-  for(size_t i = 0; i < coord.size(); i += 2) {
-    double x = coord[i];
-    double y = coord[i + 1];
-    // find face in which lies x,y
-    f = Walk(f, x, y);
-    // split f and then swap edges to recover delaunayness
-    pm->split_triangle(-1, x, y, 0, f, delaunayEdgeCriterionPlaneIsotropic,
-                       nullptr);
-    pm->vertices[pm->vertices.size() - 1]->data = i / 2 + 1;
-  }
+  for(auto ff : pm->faces)ff->data = faceTag;
 
+  // flip edges that are not delaunay
   int iter = 0;
-  while(1) {
-    int nbs = 0;
+  while(iter++ < 100) {
+    int count = 0;
     for(auto he : pm->hedges) {
-      if(he->opposite && (he->v->data == -1 || he->opposite->v->data == -1)) {
-        if(intersect(he->v, he->next->v, he->next->next->v,
-                     he->opposite->next->next->v)) {
-          pm->swap_edge(he);
-          nbs++;
-        }
+      if(he->opposite && enhanceQuality(he, nullptr)) {
+	if(intersect(he->v, he->next->v, he->next->next->v,
+		     he->opposite->next->next->v)) {
+	  pm->swap_edge(he);
+	  count++;
+	}
       }
     }
-    if(nbs == 0) break;
-    if(iter++ > 30) break;
+    if(!count) break;
   }
-
-  if(rec) {
-    for(size_t i = 0; i < rec->size(); i += 2) {
-      if(recover_edge(pm, pm->vertices[4 + (*rec)[i]],
-                      pm->vertices[4 + (*rec)[i + 1]]))
-        Msg::Debug("impossible to recover an edge");
-      else {
-        PolyMesh::HalfEdge *he_ = pm->getEdge(pm->vertices[4 + (*rec)[i]],
-                                              pm->vertices[4 + (*rec)[i + 1]]);
-        he_->data = -10;
-        he_ = pm->getEdge(pm->vertices[4 + (*rec)[i + 1]],
-                          pm->vertices[4 + (*rec)[i]]);
-        he_->data = -10;
-      }
-    }
-  }
-
-  std::stack<PolyMesh::Face *> _f;
-  for(auto t : pm->faces) {
-    int i0 = t->he->v->data;
-    int i1 = t->he->next->v->data;
-    int i2 = t->he->next->next->v->data;
-    if(i0 < 0 || i1 < 0 || i2 < 0) {
-      _f.push(t);
-      t->data = -10;
-      break;
-    }
-  }
-
-  while(!_f.empty()) {
-    PolyMesh::Face *f = _f.top();
-    _f.pop();
-    if(f->he->opposite && f->he->opposite->data == -1 &&
-       f->he->opposite->f->data == -1) {
-      _f.push(f->he->opposite->f);
-      f->he->opposite->f->data = -10;
-    }
-    if(f->he->next->opposite && f->he->next->opposite->data == -1 &&
-       f->he->next->opposite->f->data == -1) {
-      _f.push(f->he->next->opposite->f);
-      f->he->next->opposite->f->data = -10;
-    }
-    if(f->he->next->next->opposite && f->he->next->next->opposite->data == -1 &&
-       f->he->next->next->opposite->f->data == -1) {
-      _f.push(f->he->next->next->opposite->f);
-      f->he->next->next->opposite->f->data = -10;
-    }
-  }
-
-  for(auto t : pm->faces) {
-    int i0 = t->he->v->data;
-    int i1 = t->he->next->v->data;
-    int i2 = t->he->next->next->v->data;
-    if(i0 > 0 && i1 > 0 && i2 > 0 && t->data == -10) { // (t->data == -1){
-      tri.push_back(i0);
-      tri.push_back(i1);
-      tri.push_back(i2);
-    }
-  }
+  PolyMesh2GFace(pm, faceTag);
 
   delete pm;
-
   return 0;
 }
-
-int triangulateEntity(const int tag){
-  GFace* df = (GFace*)GModel::current()->getEntityByTag(2, tag);
-  std::vector<GEdge*> edges = df->edges();
-  std::vector<MVertex*> boundaryNodes;
-  for (auto e : edges){
-    for (auto n : e->mesh_vertices){
-      // printf("%lu \n", n->getNum());
-      boundaryNodes.push_back(n);
-    }
-  }
-
-  PolyMesh *pm = new PolyMesh;
-  SBoundingBox3d bb;
-  for(auto n : boundaryNodes) {
-    printf("adding boundary point : %f, %f, %f \n", n->x(), n->y(), n->z());
-    bb += SPoint3(n->x(), n->y(), n->z());
-  }
-  bb *= 1.1;
-  pm->initialize_rectangle(bb.min().x(), bb.max().x(), bb.min().y(),
-                           bb.max().y());
-  
-  PolyMesh::Face *f = pm->faces[0];
-  for (auto n : boundaryNodes){
-    // find face in which lies n
-    double x = n->x();
-    double y = n->y();
-    f = Walk(f, x,y);
-    // split f and then swap edges to recover delaunayness
-    pm->split_triangle(-1, x, y, 0, f, delaunayEdgeCriterionPlaneIsotropic,
-		       nullptr);
-    pm->vertices[pm->vertices.size() - 1]->data = n->getNum();
-  }
-  for (auto n : df->mesh_vertices){
-    double x = n->x();
-    double y = n->y();
-    // find face in which lies x,y
-    f = Walk(f, x, y);
-    // split f and then swap edges to recover delaunayness
-    pm->split_triangle(-1, x, y, 0, f, delaunayEdgeCriterionPlaneIsotropic,
-		       nullptr);
-    pm->vertices[pm->vertices.size() - 1]->data = n->getNum();
-  }
-  
-  int iter=0;
- 
-  while(1){  // WHY ?
-    int nbs =0;
-    for (auto he : pm->hedges){
-      if (he->opposite && (he->v->data == -1 || he->opposite->v->data == -1)){
-	      if(intersect(he->v, he->next->v, he->next->next->v, he->opposite->next->next->v)) {
-	        pm->swap_edge(he);
-	        nbs++;
-	      }
-      }    
-    }
-    if (nbs == 0)break;
-    if (iter++ > 10)break;
-  }
-
-  // for (size_t i=0;i<rec->size();i+=2){
-  //   if (recover_edge(pm, pm->vertices[4+(*rec)[i]], pm->vertices[4+(*rec)[i+1]]))
-	//     Msg::Debug("impossible to recover an edge");
-  //   else {
-  //     PolyMesh::HalfEdge *he_ = pm->getEdge (pm->vertices[4+(*rec)[i]], pm->vertices[4+(*rec)[i+1]]);
-  //     he_->data = -10;
-  //     he_ = pm->getEdge (pm->vertices[4+(*rec)[i+1]], pm->vertices[4+(*rec)[i]]);
-  //     he_->data = -10;
-  //   }	
-  // }
-  std::vector<size_t> tri;
-  for (auto t : pm->faces){
-    int i0 = t->he->v->data;
-    int i1 = t->he->next->v->data;
-    int i2 = t->he->next->next->v->data;
-    if (i0 > 0 && i1 > 0 && i2 > 0){ // (t->data == -1){
-      tri.push_back(i0);
-      tri.push_back(i2);
-      tri.push_back(i1);
-    }
-  }
-  size_t numEle = tri.size()/3;
-  size_t numNodesPerEle = 3;
-  std::vector<MElement *> elements(numEle);
-  std::vector<MVertex *> nodes(numNodesPerEle);
-  for(std::size_t j = 0; j < numEle; j++) {
-    std::size_t etag = 0; // 0 = automatic tag
-    MElementFactory f;
-    for(std::size_t k = 0; k < numNodesPerEle; k++) {
-      std::size_t vtag = tri[numNodesPerEle * j + k];
-      // this will rebuild the node cache if necessary
-      nodes[k] = GModel::current()->getMeshVertexByTag(vtag);
-      if(!nodes[k]) {
-        Msg::Error("Unknown node %d", vtag);
-        return 0;
-      }
-    }
-    elements[j] = f.create(2, nodes, etag);
-  }
-  for (auto n : df->triangles) delete n;
-  df->triangles.clear();
-  for(std::size_t i = 0; i < elements.size(); i++)
-    df->triangles.push_back(static_cast<MTriangle *>(elements[i]));
-  return 0;
-}
+// -----------------------------------

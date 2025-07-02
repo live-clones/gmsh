@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -138,7 +138,7 @@ static double LC_MVertex_PNTS(GEntity *ge, double U, double V)
     GVertex *gv = (GVertex *)ge;
     double lc = gv->prescribedMeshSizeAtVertex();
     // FIXME we might want to remove this to make all lc treatment consistent
-    if(lc >= MAX_LC) return CTX::instance()->lc / 10.;
+    if(lc >= MAX_LC) return CTX::instance()->lc * 0.1;
     return lc;
   }
   case 1: {
@@ -151,7 +151,7 @@ static double LC_MVertex_PNTS(GEntity *ge, double U, double V)
       if(lc1 >= MAX_LC && lc2 >= MAX_LC) {
         // FIXME we might want to remove this to make all lc treatment
         // consistent
-        return CTX::instance()->lc / 10.;
+        return CTX::instance()->lc * 0.1;
       }
       else {
         Range<double> range = ged->parBounds(0);

@@ -1,4 +1,4 @@
-// HighOrderMeshOptimizer - Copyright (C) 2013-2023 UCLouvain-ULiege
+// HighOrderMeshOptimizer - Copyright (C) 2013-2024 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -167,7 +167,7 @@ namespace BoundaryLayerCurver {
   void projectVerticesIntoGFace(const MEdgeN *edge, const GFace *gface,
                                 bool alsoExtremity = true)
   {
-    int i = alsoExtremity ? 0 : 2;
+    std::size_t i = alsoExtremity ? 0 : 2;
 
     for(; i < edge->getNumVertices(); ++i)
       projectVertexIntoGFace(edge->getVertex(i), gface);
@@ -176,7 +176,7 @@ namespace BoundaryLayerCurver {
   void projectVerticesIntoGFace(const MFaceN *face, const GFace *gface,
                                 bool alsoBoundary = true)
   {
-    int i = alsoBoundary ? 0 : face->getNumVerticesOnBoundary();
+    std::size_t i = alsoBoundary ? 0 : face->getNumVerticesOnBoundary();
 
     for(; i < face->getNumVertices(); ++i)
       projectVertexIntoGFace(face->getVertex(i), gface);
@@ -410,7 +410,7 @@ namespace BoundaryLayerCurver {
       fullMatrix<double> newxyz(orderCurve + 1, 3);
       data->invA.mult(xyz, newxyz);
 
-      for(int i = 2; i < edge->getNumVertices(); ++i) {
+      for(std::size_t i = 2; i < edge->getNumVertices(); ++i) {
         edge->getVertex(i)->x() = newxyz(i, 0);
         edge->getVertex(i)->y() = newxyz(i, 1);
         edge->getVertex(i)->z() = newxyz(i, 2);
@@ -486,7 +486,7 @@ namespace BoundaryLayerCurver {
         newxyz(i, 2) = p.z();
       }
 
-      for(int i = 2; i < edge->getNumVertices(); ++i) {
+      for(std::size_t i = 2; i < edge->getNumVertices(); ++i) {
         edge->getVertex(i)->x() = newxyz(i, 0);
         edge->getVertex(i)->y() = newxyz(i, 1);
         edge->getVertex(i)->z() = newxyz(i, 2);
@@ -603,7 +603,7 @@ namespace BoundaryLayerCurver {
             LegendrePolynomials::fc(order + 1, refNodesh(i, 0), val);
             for(int j = 0; j < nbDofh; ++j) { vandermonde(i, j) = val[j]; }
           }
-          delete val;
+          delete [] val;
 
           fullMatrix<double> tmp;
           vandermonde.invert(tmp);
@@ -620,7 +620,7 @@ namespace BoundaryLayerCurver {
             LegendrePolynomials::fc(order, refNodes(i, 0), val);
             for(int j = 0; j < nbDof; ++j) { Me(i, j) = val[j]; }
           }
-          delete val;
+          delete [] val;
         }
         //      Me.print("Me");
 
@@ -720,7 +720,7 @@ namespace BoundaryLayerCurver {
         eta[i].second = vb1->distance(v1);
       }
 
-      for(int i = 1; i < eta.size(); ++i) {
+      for(std::size_t i = 1; i < eta.size(); ++i) {
         eta[i].first /= eta.back().first;
         eta[i].second /= eta.back().second;
       }
@@ -833,7 +833,7 @@ namespace BoundaryLayerCurver {
       int numVertices = stack[0].getNumVertices();
 
       for(std::size_t i = 1; i < stack.size(); ++i) {
-        if(i == iLast) continue;
+        if((int)i == iLast) continue;
         // we want to change stack[iFirst] but not stack[iLast]
 
         fullMatrix<double> x(numVertices, 3);
@@ -1005,7 +1005,7 @@ namespace BoundaryLayerCurver {
         }
       }
 
-      delete val;
+      delete [] val;
 
       fullMatrix<double> tmp(szSpace + 2, nGP + 2, false);
       invM1.mult(M2, tmp);
@@ -1063,7 +1063,7 @@ namespace BoundaryLayerCurver {
         }
       }
 
-      delete val;
+      delete [] val;
 
       fullMatrix<double> tmp(szSpace + nConstraint, nGP + nConstraint, false);
       invM1.mult(M2, tmp);
@@ -1121,7 +1121,7 @@ namespace BoundaryLayerCurver {
         }
       }
 
-      delete val;
+      delete [] val;
 
       fullMatrix<double> tmp(szSpace + nConstraint, nGP + nConstraint, false);
       invM1.mult(M2, tmp);
@@ -1132,6 +1132,7 @@ namespace BoundaryLayerCurver {
       Leg2Lag.mult(tmp2, data->invA);
       return data;
     }
+    return data;
   }
 
   LeastSquareData *getLeastSquareData(int typeElement, int order,
@@ -1222,7 +1223,7 @@ namespace BoundaryLayerCurver {
                                 std::vector<MFaceN> &stackFaces)
   {
     const std::vector<MElement *> &stackElements = column.second;
-    const int numElements = (int)stackElements.size();
+    const std::size_t numElements = stackElements.size();
     stackEdges.resize(numElements);
     stackFaces.resize(numElements);
 
@@ -1459,7 +1460,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
   //    }
   //  }
 
-  for(int i = 0; i < bndEl2column.size(); ++i) {
+  for(std::size_t i = 0; i < bndEl2column.size(); ++i) {
     //    if (bndEl2column[i].first->getNum() != 205) continue; // t161
     //    if (bndEl2column[i].first->getNum() != 316) continue; // t161
     //    if (bndEl2column[i].first->getNum() != 1156) continue; // trimesh
@@ -1501,7 +1502,7 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
   //    }
   //  }
 
-  for(int i = 0; i < bndEl2column.size(); ++i)
+  for(std::size_t i = 0; i < bndEl2column.size(); ++i)
     BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], gface, gedge,
                                        SVector3());
 }

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1455,9 +1455,12 @@ void window_cb(Fl_Widget *w, void *data)
   }
   else if(str == "fullscreen") {
     if(!fullscreen) {
+      // resize to screen size first, in case fullscreen does not work
       int x, y, w, h;
       Fl::screen_xywh(x, y, w, h);
       FlGui::instance()->fullscreen->resize(x, y, w, h);
+      // setting resizable() is necessary with recent FLTK versions (1.4)
+      FlGui::instance()->fullscreen->resizable(FlGui::instance()->fullscreen);
       FlGui::instance()->fullscreen->valid(0);
       FlGui::instance()->fullscreen->show();
       FlGui::instance()->fullscreen->fullscreen();

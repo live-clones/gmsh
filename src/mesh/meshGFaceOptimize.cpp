@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1015,55 +1015,19 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
   if(gf->triangles.empty()) return;
   if(gf->compound.size()) return;
 
-  std::vector<MVertex *> emb_edgeverts;
-  {
+  std::set<MEdge,MEdgeLessThan> bndedges;
+  std::set<MEdge,MEdgeLessThan> embedges;
+  {  
     std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
-    auto ite = emb_edges.begin();
-    while(ite != emb_edges.end()) {
-      if(!(*ite)->isMeshDegenerated()) {
-        emb_edgeverts.insert(emb_edgeverts.end(), (*ite)->mesh_vertices.begin(),
-                             (*ite)->mesh_vertices.end());
-        if((*ite)->getBeginVertex())
-          emb_edgeverts.insert(emb_edgeverts.end(),
-                               (*ite)->getBeginVertex()->mesh_vertices.begin(),
-                               (*ite)->getBeginVertex()->mesh_vertices.end());
-        if((*ite)->getEndVertex())
-          emb_edgeverts.insert(emb_edgeverts.end(),
-                               (*ite)->getEndVertex()->mesh_vertices.begin(),
-                               (*ite)->getEndVertex()->mesh_vertices.end());
-      }
-      ++ite;
-    }
+    for (auto ee : emb_edges)
+      for (auto l : ee->lines)
+    	embedges.insert (MEdge(l->getVertex(0),l->getVertex(1)));
+    
+    std::vector<GEdge *> edges = gf->edges();
+    for (auto ee : edges)
+      for (auto l : ee->lines)
+	bndedges.insert (MEdge(l->getVertex(0),l->getVertex(1)));
   }
-
-  {
-    std::vector<GEdge *> const &_edges = gf->edges();
-    auto ite = _edges.begin();
-    while(ite != _edges.end()) {
-      if(!(*ite)->isMeshDegenerated()) {
-        if((*ite)->isSeam(gf)) {
-          emb_edgeverts.insert(emb_edgeverts.end(),
-                               (*ite)->mesh_vertices.begin(),
-                               (*ite)->mesh_vertices.end());
-          if((*ite)->getBeginVertex())
-            emb_edgeverts.insert(
-              emb_edgeverts.end(),
-              (*ite)->getBeginVertex()->mesh_vertices.begin(),
-              (*ite)->getBeginVertex()->mesh_vertices.end());
-          if((*ite)->getEndVertex())
-            emb_edgeverts.insert(emb_edgeverts.end(),
-                                 (*ite)->getEndVertex()->mesh_vertices.begin(),
-                                 (*ite)->getEndVertex()->mesh_vertices.end());
-        }
-      }
-      ++ite;
-    }
-  }
-
-  // sort and erase the duplicates
-  std::sort(emb_edgeverts.begin(), emb_edgeverts.end());
-  emb_edgeverts.erase(std::unique(emb_edgeverts.begin(), emb_edgeverts.end()),
-                      emb_edgeverts.end());
 
   e2t_cont adj;
   buildEdgeToElement(gf->triangles, adj);
@@ -1084,16 +1048,15 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
   std::map<MVertex *, std::pair<MElement *, MElement *> > makeGraphPeriodic;
 
   for(auto it = adj.begin(); it != adj.end(); ++it) {
-    if(it->second.second && it->second.first->getNumVertices() == 3 &&
-       it->second.second->getNumVertices() == 3 &&
-       (!std::binary_search(emb_edgeverts.begin(), emb_edgeverts.end(),
-                            it->first.getVertex(0)) ||
-        !std::binary_search(emb_edgeverts.begin(), emb_edgeverts.end(),
-                            it->first.getVertex(1)))) {
+    MEdge ed (it->first.getVertex(0),it->first.getVertex(1));
+    if(bndedges.find(ed) == bndedges.end() && 
+       it->second.second && it->second.first->getNumVertices() == 3 &&
+       it->second.second->getNumVertices() == 3) {
       pairs.push_back(RecombineTriangle(it->first, it->second.first,
-                                        it->second.second, cross_field));
+					it->second.second, cross_field));
     }
-    else if(!it->second.second && it->second.first->getNumVertices() == 3) {
+    else if(embedges.find(ed) == embedges.end() &&
+	    !it->second.second && it->second.first->getNumVertices() == 3) {
       for(int i = 0; i < 2; i++) {
         MVertex *const v = it->first.getVertex(i);
         auto itv = makeGraphPeriodic.find(v);
@@ -1171,10 +1134,11 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
       sprintf(MATCHFILE, ".face.match");
       if(perfect_match(ncount, nullptr, ecount, &elist, &elen, nullptr,
                        MATCHFILE, 0, 0, 0, 0, &matzeit)) {
-        Msg::Error(
+        Msg::Warning(
           "Perfect Match failed in quadrangulation, try something else");
         free(elist);
         pairs.clear();
+	_recombineIntoQuads(gf, false, cubicGraph);
       }
       else {
         // TEST
@@ -1211,10 +1175,26 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
                 break;
               }
             }
-            MQuadrangle *q = new MQuadrangle(
-              t1->getVertex(start), t1->getVertex((start + 1) % 3), other,
-              t1->getVertex((start + 2) % 3));
-            gf->quadrangles.push_back(q);
+	    MVertex *vs[4] = {t1->getVertex(start), t1->getVertex((start + 1) % 3), other,
+			      t1->getVertex((start + 2) % 3)};
+	    MEdge e1 (vs[0],vs[2]);
+	    MEdge e2 (vs[1],vs[3]);
+	    if (embedges.find(e1) != embedges.end()){
+	      MTriangle *t1 = new MTriangle(vs[0],vs[1],vs[2]);
+	      MTriangle *t2 = new MTriangle(vs[2],vs[3],vs[0]);
+	      gf->triangles.push_back(t1);
+	      gf->triangles.push_back(t2);
+	    }
+	    else if (embedges.find(e2) != embedges.end()){
+	      MTriangle *t1 = new MTriangle(vs[1],vs[2],vs[3]);
+	      MTriangle *t2 = new MTriangle(vs[3],vs[0],vs[1]);
+	      gf->triangles.push_back(t1);
+	      gf->triangles.push_back(t2);
+	    }
+	    else {
+	      MQuadrangle *q = new MQuadrangle(vs[0],vs[1],vs[2],vs[3]);
+	      gf->quadrangles.push_back(q);
+	    }
           }
         }
         free(elist);
@@ -1332,7 +1312,7 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
   }
 
 // FIXME: not thread-safe
-#pragma omp critical
+#pragma omp critical(recombineIntoQuads)
   {
     if(topologicalOptiPasses > 0) {
       if(!_isModelOkForTopologicalOpti(gf->model())) {

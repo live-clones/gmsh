@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -15,7 +15,7 @@
 // scripting language (.geo files), or through the C++, C, Python, Julia and
 // Fortran application programming interface (API).
 //
-// This file redefines the Gmsh C++ API in terms of the C API (v4.12.0).
+// This file redefines the Gmsh C++ API in terms of the C API (v4.14.0).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
@@ -314,6 +314,16 @@ namespace gmsh { // Top-level functions
       if(ierr) throwLastError();
     }
 
+    // gmsh::option::restoreDefaults
+    //
+    // Restore all options to default settings.
+    inline void restoreDefaults()
+    {
+      int ierr = 0;
+      gmshOptionRestoreDefaults(&ierr);
+      if(ierr) throwLastError();
+    }
+
   } // namespace option
 
   namespace model { // Model functions
@@ -451,9 +461,9 @@ namespace gmsh { // Top-level functions
 
     // gmsh::model::getPhysicalGroups
     //
-    // Get all the physical groups in the current model. If `dim' is >= 0, return
-    // only the entities of the specified dimension (e.g. physical points if `dim'
-    // == 0). The entities are returned as a vector of (dim, tag) pairs.
+    // Get the physical groups in the current model. The physical groups are
+    // returned as a vector of (dim, tag) pairs. If `dim' is >= 0, return only the
+    // groups of the specified dimension (e.g. physical points if `dim' == 0).
     inline void getPhysicalGroups(gmsh::vectorpair & dimTags,
                                   const int dim = -1)
     {
@@ -462,6 +472,26 @@ namespace gmsh { // Top-level functions
       gmshModelGetPhysicalGroups(&api_dimTags_, &api_dimTags_n_, dim, &ierr);
       if(ierr) throwLastError();
       dimTags.resize(api_dimTags_n_ / 2); for(size_t i = 0; i < api_dimTags_n_ / 2; ++i){ dimTags[i].first = api_dimTags_[i * 2 + 0]; dimTags[i].second = api_dimTags_[i * 2 + 1]; } gmshFree(api_dimTags_);
+    }
+
+    // gmsh::model::getPhysicalGroupsEntities
+    //
+    // Get the physical groups in the current model as well as the model entities
+    // that make them up. The physical groups are returned as the vector of (dim,
+    // tag) pairs `dimTags'. The model entities making up the corresponding
+    // physical groups are returned in `entities'. If `dim' is >= 0, return only
+    // the groups of the specified dimension (e.g. physical points if `dim' == 0).
+    inline void getPhysicalGroupsEntities(gmsh::vectorpair & dimTags,
+                                          std::vector<gmsh::vectorpair> & entities,
+                                          const int dim = -1)
+    {
+      int ierr = 0;
+      int *api_dimTags_; size_t api_dimTags_n_;
+      int **api_entities_; size_t *api_entities_n_, api_entities_nn_;
+      gmshModelGetPhysicalGroupsEntities(&api_dimTags_, &api_dimTags_n_, &api_entities_, &api_entities_n_, &api_entities_nn_, dim, &ierr);
+      if(ierr) throwLastError();
+      dimTags.resize(api_dimTags_n_ / 2); for(size_t i = 0; i < api_dimTags_n_ / 2; ++i){ dimTags[i].first = api_dimTags_[i * 2 + 0]; dimTags[i].second = api_dimTags_[i * 2 + 1]; } gmshFree(api_dimTags_);
+      entities.resize(api_entities_nn_); for(size_t i = 0; i < api_entities_nn_; ++i){ entities[i].resize(api_entities_n_[i] / 2); for(size_t j = 0; j < api_entities_n_[i] / 2; ++j){ entities[i][j].first = api_entities_[i][j * 2 + 0]; entities[i][j].second = api_entities_[i][j * 2 + 1]; } gmshFree(api_entities_[i]); } gmshFree(api_entities_); gmshFree(api_entities_n_);
     }
 
     // gmsh::model::getEntitiesForPhysicalGroup
@@ -720,9 +750,24 @@ namespace gmsh { // Top-level functions
       gmshFree(api_dimTags_);
     }
 
-    // gmsh::model::getType
+    // gmsh::model::getEntityType
     //
     // Get the type of the entity of dimension `dim' and tag `tag'.
+    inline void getEntityType(const int dim,
+                              const int tag,
+                              std::string & entityType)
+    {
+      int ierr = 0;
+      char *api_entityType_;
+      gmshModelGetEntityType(dim, tag, &api_entityType_, &ierr);
+      if(ierr) throwLastError();
+      entityType = std::string(api_entityType_); gmshFree(api_entityType_);
+    }
+
+    // gmsh::model::getType
+    //
+    // Get the type of the entity of dimension `dim' and tag `tag'. (This is a
+    // deprecated synonym for `getType'.)
     inline void getType(const int dim,
                         const int tag,
                         std::string & entityType)
@@ -732,6 +777,29 @@ namespace gmsh { // Top-level functions
       gmshModelGetType(dim, tag, &api_entityType_, &ierr);
       if(ierr) throwLastError();
       entityType = std::string(api_entityType_); gmshFree(api_entityType_);
+    }
+
+    // gmsh::model::getEntityProperties
+    //
+    // Get the properties of the entity of dimension `dim' and tag `tag'. The
+    // `reals' vector contains the 4 coefficients of the cartesian equation for a
+    // plane surface; the center coordinates, axis direction, major radius and
+    // minor radius for a torus; the center coordinates, axis direction and radius
+    // for a cylinder; the center coordinates, axis direction, radius and semi-
+    // angle for surfaces of revolution; the center coordinates and the radius for
+    // a sphere.
+    inline void getEntityProperties(const int dim,
+                                    const int tag,
+                                    std::vector<int> & integers,
+                                    std::vector<double> & reals)
+    {
+      int ierr = 0;
+      int *api_integers_; size_t api_integers_n_;
+      double *api_reals_; size_t api_reals_n_;
+      gmshModelGetEntityProperties(dim, tag, &api_integers_, &api_integers_n_, &api_reals_, &api_reals_n_, &ierr);
+      if(ierr) throwLastError();
+      integers.assign(api_integers_, api_integers_ + api_integers_n_); gmshFree(api_integers_);
+      reals.assign(api_reals_, api_reals_ + api_reals_n_); gmshFree(api_reals_);
     }
 
     // gmsh::model::getParent
@@ -984,7 +1052,8 @@ namespace gmsh { // Top-level functions
     // are given as x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...].
     // `parametricCoord' returns the parametric coordinates t on the curve (if
     // `dim' == 1) or u and v coordinates concatenated on the surface (if `dim' =
-    // 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].
+    // 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...]. The closest points can lie
+    // outside the (trimmed) entities: use `isInside()' to check.
     inline void getClosestPoint(const int dim,
                                 const int tag,
                                 const std::vector<double> & coord,
@@ -1251,7 +1320,8 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::setOrder
       //
-      // Set the order of the elements in the mesh of the current model to `order'.
+      // Change the order of the elements in the mesh of the current model to
+      // `order'.
       inline void setOrder(const int order)
       {
         int ierr = 0;
@@ -1300,6 +1370,23 @@ namespace gmsh { // Top-level functions
         gmshModelMeshClear(api_dimTags_, api_dimTags_n_, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_dimTags_);
+      }
+
+      // gmsh::model::mesh::removeElements
+      //
+      // Remove the elements with tags `elementTags' from the entity of dimension
+      // `dim' and tag `tag'. If `elementTags' is empty, remove all the elements
+      // classified on the entity. To get consistent node classification on model
+      // entities, `reclassifyNodes()' should be called afterwards.
+      inline void removeElements(const int dim,
+                                 const int tag,
+                                 const std::vector<std::size_t> & elementTags = std::vector<std::size_t>())
+      {
+        int ierr = 0;
+        size_t *api_elementTags_; size_t api_elementTags_n_; vector2ptr(elementTags, &api_elementTags_, &api_elementTags_n_);
+        gmshModelMeshRemoveElements(dim, tag, api_elementTags_, api_elementTags_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_elementTags_);
       }
 
       // gmsh::model::mesh::reverse
@@ -3160,78 +3247,6 @@ namespace gmsh { // Top-level functions
         viewTags.assign(api_viewTags_, api_viewTags_ + api_viewTags_n_); gmshFree(api_viewTags_);
       }
 
-      // gmsh::model::mesh::triangulate
-      //
-      // Triangulate the points given in the `coord' vector as pairs of u, v
-      // coordinates, and return the node tags (with numbering starting at 1) of
-      // the resulting triangles in `tri'. If specified, `edges' contains
-      // constrained edges in the mesh, given as pairs of nodes.
-      inline void triangulate(const std::vector<double> & coord,
-                              const std::vector<std::size_t> & edges,
-                              std::vector<std::size_t> & tri)
-      {
-        int ierr = 0;
-        double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
-        size_t *api_edges_; size_t api_edges_n_; vector2ptr(edges, &api_edges_, &api_edges_n_);
-        size_t *api_tri_; size_t api_tri_n_;
-        gmshModelMeshTriangulate(api_coord_, api_coord_n_, api_edges_, api_edges_n_, &api_tri_, &api_tri_n_, &ierr);
-        if(ierr) throwLastError();
-        gmshFree(api_coord_);
-        gmshFree(api_edges_);
-        tri.assign(api_tri_, api_tri_ + api_tri_n_); gmshFree(api_tri_);
-      }
-
-      // gmsh::model::mesh::tetrahedralize
-      //
-      // Tetrahedralize the points given in the `coord' vector as x, y, z
-      // coordinates, concatenated, and return the node tags (with numbering
-      // starting at 1) of the resulting tetrahedra in `tetra'.
-      inline void tetrahedralize(const std::vector<double> & coord,
-                                 std::vector<std::size_t> & tetra)
-      {
-        int ierr = 0;
-        double *api_coord_; size_t api_coord_n_; vector2ptr(coord, &api_coord_, &api_coord_n_);
-        size_t *api_tetra_; size_t api_tetra_n_;
-        gmshModelMeshTetrahedralize(api_coord_, api_coord_n_, &api_tetra_, &api_tetra_n_, &ierr);
-        if(ierr) throwLastError();
-        gmshFree(api_coord_);
-        tetra.assign(api_tetra_, api_tetra_ + api_tetra_n_); gmshFree(api_tetra_);
-      }
-
-      // gmsh::model::mesh::computeAlphaShape3D
-      //
-      // Compute the alpha shape of the set of points on the discrete entity
-      // defined by the first tag of `alphaShapeTags', with the second tag its
-      // boundary. The alpha shape is computed with respect to a constant mean mesh
-      // size `hMean' (if `hMean' > 0) or to the size field defined by
-      // `sizeFieldCallback'. If desired, also refine the elements in the alpha
-      // shape so as to respect the size field defined by `sizeFieldCallback'. The
-      // new mesh will be stored in the discrete entities with tags
-      // `alphaShapeTags' = [alphaShapeTag, alphaShapeBoundaryTag]. If the alpha
-      // shape entity already contains elements and no new mesh should be
-      // generated, triangulate should be 0.
-      inline void computeAlphaShape3D(const int dim,
-                                      const std::vector<int> & alphaShapeTags,
-                                      const double alpha,
-                                      const double hMean,
-                                      std::function<double(int, int, double, double, double, double)> sizeFieldCallback,
-                                      const int triangulate,
-                                      const int refine)
-      {
-        int ierr = 0;
-        int *api_alphaShapeTags_; size_t api_alphaShapeTags_n_; vector2ptr(alphaShapeTags, &api_alphaShapeTags_, &api_alphaShapeTags_n_);
-        struct sizeFieldCallback_caller_  {
-          static double call(int dim, int tag, double x, double y, double z, double lc, void * callbackp_) {
-            return (*static_cast<std::function<double(int, int, double, double, double, double)>*> (callbackp_))(dim, tag, x, y, z, lc);
-          }
-        };
-        // FIXME memory leak
-        auto *sizeFieldCallback_ptr_ = new std::function<double(int, int, double, double, double, double)>(sizeFieldCallback);
-        gmshModelMeshComputeAlphaShape3D(dim, api_alphaShapeTags_, api_alphaShapeTags_n_, alpha, hMean, &sizeFieldCallback_caller_::call, sizeFieldCallback_ptr_, triangulate, refine, &ierr);
-        if(ierr) throwLastError();
-        gmshFree(api_alphaShapeTags_);
-      }
-
       // gmsh::model::mesh::advectMeshNodes
       //
       // Advect nodes of a mesh with displacement vector dxNodes
@@ -3281,17 +3296,6 @@ namespace gmsh { // Top-level functions
         newNodeTags.assign(api_newNodeTags_, api_newNodeTags_ + api_newNodeTags_n_); gmshFree(api_newNodeTags_);
         newNodeElementTags.assign(api_newNodeElementTags_, api_newNodeElementTags_ + api_newNodeElementTags_n_); gmshFree(api_newNodeElementTags_);
         newNodeParametricCoord.assign(api_newNodeParametricCoord_, api_newNodeParametricCoord_ + api_newNodeParametricCoord_n_); gmshFree(api_newNodeParametricCoord_);
-      }
-
-      // gmsh::model::mesh::decimateTriangulation
-      //
-      // Decimate a triangulation
-      inline void decimateTriangulation(const int faceTag,
-                                        const double distanceThreshold)
-      {
-        int ierr = 0;
-        gmshModelMeshDecimateTriangulation(faceTag, distanceThreshold, &ierr);
-        if(ierr) throwLastError();
       }
 
       // gmsh::model::mesh::tetrahedralizePoints
@@ -3902,10 +3906,11 @@ namespace gmsh { // Top-level functions
       // Add a `geometry' in the built-in CAD representation. `geometry' can
       // currently be one of "Sphere" or "PolarSphere" (where `numbers' should
       // contain the x, y, z coordinates of the center, followed by the radius), or
-      // "Parametric" (where `strings' should contains three expression evaluating
-      // to the x, y and z coordinates. If `tag' is positive, set the tag of the
-      // geometry explicitly; otherwise a new tag is selected automatically. Return
-      // the tag of the geometry.
+      // "ParametricSurface" (where `strings' should contains three expression
+      // evaluating to the x, y and z coordinates in terms of parametric
+      // coordinates u and v). If `tag' is positive, set the tag of the geometry
+      // explicitly; otherwise a new tag is selected automatically. Return the tag
+      // of the geometry.
       inline int addGeometry(const std::string & geometry,
                              const std::vector<double> & numbers = std::vector<double>(),
                              const std::vector<std::string> & strings = std::vector<std::string>(),
@@ -4164,8 +4169,8 @@ namespace gmsh { // Top-level functions
       //
       // Mirror the entities `dimTags' (given as a vector of (dim, tag) pairs) in
       // the built-in CAD representation, with respect to the plane of equation `a'
-      // * x + `b' * y + `c' * z + `d' = 0. (This is a synonym for `mirror', which
-      // will be deprecated in a future release.)
+      // * x + `b' * y + `c' * z + `d' = 0. (This is a deprecated synonym for
+      // `mirror'.)
       inline void symmetrize(const gmsh::vectorpair & dimTags,
                              const double a,
                              const double b,
@@ -4227,8 +4232,8 @@ namespace gmsh { // Top-level functions
       //
       // Split the curve of tag `tag' in the built-in CAD representation, on the
       // specified control points `pointTags'. This feature is only available for
-      // lines, splines and b-splines. Return the tag(s) `curveTags' of the newly
-      // created curve(s).
+      // splines and b-splines. Return the tag(s) `curveTags' of the newly created
+      // curve(s).
       inline void splitCurve(const int tag,
                              const std::vector<int> & pointTags,
                              std::vector<int> & curveTags)
@@ -4803,7 +4808,7 @@ namespace gmsh { // Top-level functions
       inline int addSurfaceFilling(const int wireTag,
                                    const int tag = -1,
                                    const std::vector<int> & pointTags = std::vector<int>(),
-                                   const int degree = 3,
+                                   const int degree = 2,
                                    const int numPointsOnCurves = 15,
                                    const int numIter = 2,
                                    const bool anisotropic = false,
@@ -5344,14 +5349,114 @@ namespace gmsh { // Top-level functions
         outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
       }
 
+      // gmsh::model::occ::defeature
+      //
+      // Defeature the volumes `volumeTags' by removing the surfaces `surfaceTags'.
+      // Return the defeatured entities in `outDimTags'. Remove the original volume
+      // if `removeVolume' is set.
+      inline void defeature(const std::vector<int> & volumeTags,
+                            const std::vector<int> & surfaceTags,
+                            gmsh::vectorpair & outDimTags,
+                            const bool removeVolume = true)
+      {
+        int ierr = 0;
+        int *api_volumeTags_; size_t api_volumeTags_n_; vector2ptr(volumeTags, &api_volumeTags_, &api_volumeTags_n_);
+        int *api_surfaceTags_; size_t api_surfaceTags_n_; vector2ptr(surfaceTags, &api_surfaceTags_, &api_surfaceTags_n_);
+        int *api_outDimTags_; size_t api_outDimTags_n_;
+        gmshModelOccDefeature(api_volumeTags_, api_volumeTags_n_, api_surfaceTags_, api_surfaceTags_n_, &api_outDimTags_, &api_outDimTags_n_, (int)removeVolume, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_volumeTags_);
+        gmshFree(api_surfaceTags_);
+        outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
+      }
+
+      // gmsh::model::occ::fillet2D
+      //
+      // Create a fillet edge between edges `edgeTag1' and `edgeTag2' with radius
+      // `radius'. The modifed edges keep their tag. If `tag' is positive, set the
+      // tag explicitly; otherwise a new tag is selected automatically. If
+      // `pointTag' is positive, set the point on the edge at which the fillet is
+      // created. If `reverse' is set, the normal of the plane through the two
+      // planes is reversed before the fillet is created.
+      inline int fillet2D(const int edgeTag1,
+                          const int edgeTag2,
+                          const double radius,
+                          const int tag = -1,
+                          const int pointTag = -1,
+                          const bool reverse = false)
+      {
+        int ierr = 0;
+        int result_api_ = gmshModelOccFillet2D(edgeTag1, edgeTag2, radius, tag, pointTag, (int)reverse, &ierr);
+        if(ierr) throwLastError();
+        return result_api_;
+      }
+
+      // gmsh::model::occ::chamfer2D
+      //
+      // Create a chamfer edge between edges `edgeTag1' and `edgeTag2' with
+      // distance1 `distance1' and distance2 `distance2'. The modifed edges keep
+      // their tag. If `tag' is positive, set the tag explicitly; otherwise a new
+      // tag is selected automatically.
+      inline int chamfer2D(const int edgeTag1,
+                           const int edgeTag2,
+                           const double distance1,
+                           const double distance2,
+                           const int tag = -1)
+      {
+        int ierr = 0;
+        int result_api_ = gmshModelOccChamfer2D(edgeTag1, edgeTag2, distance1, distance2, tag, &ierr);
+        if(ierr) throwLastError();
+        return result_api_;
+      }
+
+      // gmsh::model::occ::offsetCurve
+      //
+      // Create an offset curve based on the curve loop `curveLoopTag' with offset
+      // `offset'. Return the offset curves in `outDimTags' as a vector of (dim,
+      // tag) pairs.
+      inline void offsetCurve(const int curveLoopTag,
+                              const double offset,
+                              gmsh::vectorpair & outDimTags)
+      {
+        int ierr = 0;
+        int *api_outDimTags_; size_t api_outDimTags_n_;
+        gmshModelOccOffsetCurve(curveLoopTag, offset, &api_outDimTags_, &api_outDimTags_n_, &ierr);
+        if(ierr) throwLastError();
+        outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
+      }
+
+      // gmsh::model::occ::getDistance
+      //
+      // Find the minimal distance between shape with `dim1' and `tag1' and shape
+      // with `dim2' and `tag2' and the according coordinates. Return the distance
+      // in `distance' and the coordinate of the points as `x1', `y1', `z1' and
+      // `x2', `y2', `z2'.
+      inline void getDistance(const int dim1,
+                              const int tag1,
+                              const int dim2,
+                              const int tag2,
+                              double & distance,
+                              double & x1,
+                              double & y1,
+                              double & z1,
+                              double & x2,
+                              double & y2,
+                              double & z2)
+      {
+        int ierr = 0;
+        gmshModelOccGetDistance(dim1, tag1, dim2, tag2, &distance, &x1, &y1, &z1, &x2, &y2, &z2, &ierr);
+        if(ierr) throwLastError();
+      }
+
       // gmsh::model::occ::fuse
       //
       // Compute the boolean union (the fusion) of the entities `objectDimTags' and
       // `toolDimTags' (vectors of (dim, tag) pairs) in the OpenCASCADE CAD
-      // representation. Return the resulting entities in `outDimTags'. If `tag' is
-      // positive, try to set the tag explicitly (only valid if the boolean
-      // operation results in a single entity). Remove the object if `removeObject'
-      // is set. Remove the tool if `removeTool' is set.
+      // representation. Return the resulting entities in `outDimTags', and the
+      // correspondance between input and resulting entities in `outDimTagsMap'. If
+      // `tag' is positive, try to set the tag explicitly (only valid if the
+      // boolean operation results in a single entity). Remove the object if
+      // `removeObject' is set. Remove the tool if `removeTool' is set.
       inline void fuse(const gmsh::vectorpair & objectDimTags,
                        const gmsh::vectorpair & toolDimTags,
                        gmsh::vectorpair & outDimTags,
@@ -5378,9 +5483,11 @@ namespace gmsh { // Top-level functions
       // Compute the boolean intersection (the common parts) of the entities
       // `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the
       // OpenCASCADE CAD representation. Return the resulting entities in
-      // `outDimTags'. If `tag' is positive, try to set the tag explicitly (only
-      // valid if the boolean operation results in a single entity). Remove the
-      // object if `removeObject' is set. Remove the tool if `removeTool' is set.
+      // `outDimTags', and the correspondance between input and resulting entities
+      // in `outDimTagsMap'. If `tag' is positive, try to set the tag explicitly
+      // (only valid if the boolean operation results in a single entity). Remove
+      // the object if `removeObject' is set. Remove the tool if `removeTool' is
+      // set.
       inline void intersect(const gmsh::vectorpair & objectDimTags,
                             const gmsh::vectorpair & toolDimTags,
                             gmsh::vectorpair & outDimTags,
@@ -5406,7 +5513,8 @@ namespace gmsh { // Top-level functions
       //
       // Compute the boolean difference between the entities `objectDimTags' and
       // `toolDimTags' (given as vectors of (dim, tag) pairs) in the OpenCASCADE
-      // CAD representation. Return the resulting entities in `outDimTags'. If
+      // CAD representation. Return the resulting entities in `outDimTags', and the
+      // correspondance between input and resulting entities in `outDimTagsMap'. If
       // `tag' is positive, try to set the tag explicitly (only valid if the
       // boolean operation results in a single entity). Remove the object if
       // `removeObject' is set. Remove the tool if `removeTool' is set.
@@ -5439,10 +5547,11 @@ namespace gmsh { // Top-level functions
       // all interfaces conformal. When applied to entities of different
       // dimensions, the lower dimensional entities will be automatically embedded
       // in the higher dimensional entities if they are not on their boundary.
-      // Return the resulting entities in `outDimTags'. If `tag' is positive, try
-      // to set the tag explicitly (only valid if the boolean operation results in
-      // a single entity). Remove the object if `removeObject' is set. Remove the
-      // tool if `removeTool' is set.
+      // Return the resulting entities in `outDimTags', and the correspondance
+      // between input and resulting entities in `outDimTagsMap'. If `tag' is
+      // positive, try to set the tag explicitly (only valid if the boolean
+      // operation results in a single entity). Remove the object if `removeObject'
+      // is set. Remove the tool if `removeTool' is set.
       inline void fragment(const gmsh::vectorpair & objectDimTags,
                            const gmsh::vectorpair & toolDimTags,
                            gmsh::vectorpair & outDimTags,
@@ -5680,7 +5789,7 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::occ::importShapesNativePointer
       //
-      // Imports an OpenCASCADE `shape' by providing a pointer to a native
+      // Import an OpenCASCADE `shape' by providing a pointer to a native
       // OpenCASCADE `TopoDS_Shape' object (passed as a pointer to void). The
       // imported entities are returned in `outDimTags' as a vector of (dim, tag)
       // pairs. If the optional argument `highestDimOnly' is set, only import the
@@ -5794,6 +5903,9 @@ namespace gmsh { // Top-level functions
       // gmsh::model::occ::getMass
       //
       // Get the mass of the OpenCASCADE entity of dimension `dim' and tag `tag'.
+      // If no density is attached to the entity (the default), the value
+      // corresponds respectively to the length, area and volume for `dim' = 1, 2
+      // and 3.
       inline void getMass(const int dim,
                           const int tag,
                           double & mass)
@@ -6393,6 +6505,49 @@ namespace gmsh { // Top-level functions
 
   } // namespace view
 
+  namespace algorithm { // Raw algorithms
+
+    // gmsh::algorithm::triangulate
+    //
+    // Triangulate the points given in the `coordinates' vector as concatenated
+    // pairs of u, v coordinates, with (optional) constrained edges given in the
+    // `edges' vector as pair of indexes (with numbering starting at 1), and return
+    // the triangles as concatenated triplets of point indexes (with numbering
+    // starting at 1) in `triangles'.
+    inline void triangulate(const std::vector<double> & coordinates,
+                            std::vector<std::size_t> & triangles,
+                            const std::vector<std::size_t> & edges = std::vector<std::size_t>())
+    {
+      int ierr = 0;
+      double *api_coordinates_; size_t api_coordinates_n_; vector2ptr(coordinates, &api_coordinates_, &api_coordinates_n_);
+      size_t *api_triangles_; size_t api_triangles_n_;
+      size_t *api_edges_; size_t api_edges_n_; vector2ptr(edges, &api_edges_, &api_edges_n_);
+      gmshAlgorithmTriangulate(api_coordinates_, api_coordinates_n_, &api_triangles_, &api_triangles_n_, api_edges_, api_edges_n_, &ierr);
+      if(ierr) throwLastError();
+      gmshFree(api_coordinates_);
+      triangles.assign(api_triangles_, api_triangles_ + api_triangles_n_); gmshFree(api_triangles_);
+      gmshFree(api_edges_);
+    }
+
+    // gmsh::algorithm::tetrahedralize
+    //
+    // Tetrahedralize the points given in the `coordinates' vector as concatenated
+    // triplets of x, y, z coordinates, and return the tetrahedra as concatenated
+    // quadruplets of point indexes (with numbering starting at 1) in `tetrahedra'.
+    inline void tetrahedralize(const std::vector<double> & coordinates,
+                               std::vector<std::size_t> & tetrahedra)
+    {
+      int ierr = 0;
+      double *api_coordinates_; size_t api_coordinates_n_; vector2ptr(coordinates, &api_coordinates_, &api_coordinates_n_);
+      size_t *api_tetrahedra_; size_t api_tetrahedra_n_;
+      gmshAlgorithmTetrahedralize(api_coordinates_, api_coordinates_n_, &api_tetrahedra_, &api_tetrahedra_n_, &ierr);
+      if(ierr) throwLastError();
+      gmshFree(api_coordinates_);
+      tetrahedra.assign(api_tetrahedra_, api_tetrahedra_ + api_tetrahedra_n_); gmshFree(api_tetrahedra_);
+    }
+
+  } // namespace algorithm
+
   namespace plugin { // Plugin functions
 
     // gmsh::plugin::setNumber
@@ -6963,7 +7118,7 @@ namespace gmsh { // Top-level functions
 
     // gmsh::logger::getWallTime
     //
-    // Return wall clock time.
+    // Return wall clock time (in s).
     inline double getWallTime()
     {
       int ierr = 0;
@@ -6974,11 +7129,33 @@ namespace gmsh { // Top-level functions
 
     // gmsh::logger::getCpuTime
     //
-    // Return CPU time.
+    // Return CPU time (in s).
     inline double getCpuTime()
     {
       int ierr = 0;
       double result_api_ = gmshLoggerGetCpuTime(&ierr);
+      if(ierr) throwLastError();
+      return result_api_;
+    }
+
+    // gmsh::logger::getMemory
+    //
+    // Return memory usage (in Mb).
+    inline double getMemory()
+    {
+      int ierr = 0;
+      double result_api_ = gmshLoggerGetMemory(&ierr);
+      if(ierr) throwLastError();
+      return result_api_;
+    }
+
+    // gmsh::logger::getTotalMemory
+    //
+    // Return total available memory (in Mb).
+    inline double getTotalMemory()
+    {
+      int ierr = 0;
+      double result_api_ = gmshLoggerGetTotalMemory(&ierr);
       if(ierr) throwLastError();
       return result_api_;
     }

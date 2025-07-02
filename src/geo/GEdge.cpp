@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -52,14 +52,14 @@ GEdge::~GEdge()
 
 void GEdge::deleteMesh()
 {
+  if(getNumMeshVertices() || getNumMeshElements())
+    model()->destroyMeshCaches();
   for(std::size_t i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
   mesh_vertices.clear();
-  for(std::size_t i = 0; i < lines.size(); i++) delete lines[i];
-  lines.clear();
+  removeElements(true);
   correspondingVertices.clear();
   correspondingHighOrderVertices.clear();
   deleteVertexArrays();
-  model()->destroyMeshCaches();
 }
 
 void GEdge::setMeshMaster(GEdge *ge, int ori)
@@ -772,35 +772,37 @@ static void _discretize(double tol, GEdge *edge, std::vector<sortedPoint> &upts,
   _discretize(tol, edge, upts, posmid);
 }
 
-void GEdge::addElement(int type, MElement *e)
+void GEdge::addElement(MElement *e)
 {
-  switch(type) {
+  switch(e->getType()) {
   case TYPE_LIN: addLine(reinterpret_cast<MLine *>(e)); break;
   default:
     Msg::Error("Trying to add unsupported element in curve %d", tag());
   }
 }
 
-void GEdge::removeElement(int type, MElement *e)
+void GEdge::removeElement(MElement *e, bool del)
 {
-  switch(type) {
+  switch(e->getType()) {
   case TYPE_LIN: {
     auto it =
       std::find(lines.begin(), lines.end(), reinterpret_cast<MLine *>(e));
-    if(it != lines.end()) lines.erase(it);
+    if(it != lines.end()) {
+      lines.erase(it);
+      if(del) delete e;
+    }
   } break;
   default:
     Msg::Error("Trying to remove unsupported element in curve %d", tag());
   }
 }
 
-void GEdge::removeElements(int type)
+void GEdge::removeElements(bool del)
 {
-  switch(type) {
-  case TYPE_LIN: lines.clear(); break;
-  default:
-    Msg::Error("Trying to remove unsupported elements in curve %d", tag());
+  if(del) {
+    for(auto e : lines) delete e;
   }
+  lines.clear();
 }
 
 void GEdge::discretize(double tol, std::vector<SPoint3> &dpts,

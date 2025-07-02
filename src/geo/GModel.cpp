@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -214,7 +214,7 @@ void GModel::destroy(bool keepName)
 void GModel::destroyMeshCaches()
 {
   // this is called in GEntity::deleteMesh()
-#pragma omp critical
+#pragma omp critical(destroyMeshCaches)
   {
     _vertexVectorCache.clear();
     std::vector<MVertex *>().swap(_vertexVectorCache);
@@ -327,8 +327,8 @@ bool GModel::empty() const
 
 GRegion *GModel::getRegionByTag(int n) const
 {
-  GEntity tmp((GModel *)this, n);
-  auto it = regions.find((GRegion *)&tmp);
+  GRegion tmp((GModel *)this, n);
+  auto it = regions.find(&tmp);
   if(it != regions.end())
     return *it;
   else
@@ -337,8 +337,8 @@ GRegion *GModel::getRegionByTag(int n) const
 
 GFace *GModel::getFaceByTag(int n) const
 {
-  GEntity tmp((GModel *)this, n);
-  auto it = faces.find((GFace *)&tmp);
+  GFace tmp((GModel *)this, n);
+  auto it = faces.find(&tmp);
   if(it != faces.end())
     return *it;
   else
@@ -347,8 +347,8 @@ GFace *GModel::getFaceByTag(int n) const
 
 GEdge *GModel::getEdgeByTag(int n) const
 {
-  GEntity tmp((GModel *)this, n);
-  auto it = edges.find((GEdge *)&tmp);
+  GEdge tmp((GModel *)this, n);
+  auto it = edges.find(&tmp);
   if(it != edges.end())
     return *it;
   else
@@ -357,8 +357,8 @@ GEdge *GModel::getEdgeByTag(int n) const
 
 GVertex *GModel::getVertexByTag(int n) const
 {
-  GEntity tmp((GModel *)this, n);
-  auto it = vertices.find((GVertex *)&tmp);
+  GVertex tmp((GModel *)this, n);
+  auto it = vertices.find(&tmp);
   if(it != vertices.end())
     return *it;
   else
@@ -379,8 +379,12 @@ GEntity *GModel::getEntityByTag(int dim, int n) const
 bool GModel::changeEntityTag(int dim, int tag, int newTag)
 {
   if(dim == 0) {
-    GVertex *gv = getVertexByTag(tag);
-    if(gv) {
+    GVertex *gv = getVertexByTag(tag), *gvn = getVertexByTag(newTag);
+    if(gvn) {
+      Msg::Error("Point with tag %d already exists", newTag);
+      return false;
+    }
+    else if(gv) {
       vertices.erase(gv);
       gv->setTag(newTag);
       vertices.insert(gv);
@@ -391,8 +395,12 @@ bool GModel::changeEntityTag(int dim, int tag, int newTag)
     }
   }
   else if(dim == 1) {
-    GEdge *ge = getEdgeByTag(tag);
-    if(ge) {
+    GEdge *ge = getEdgeByTag(tag), *gen = getEdgeByTag(newTag);
+    if(gen) {
+      Msg::Error("Curve with tag %d already exists", newTag);
+      return false;
+    }
+    else if(ge) {
       edges.erase(ge);
       ge->setTag(newTag);
       edges.insert(ge);
@@ -403,8 +411,12 @@ bool GModel::changeEntityTag(int dim, int tag, int newTag)
     }
   }
   else if(dim == 2) {
-    GFace *gf = getFaceByTag(tag);
-    if(gf) {
+    GFace *gf = getFaceByTag(tag), *gfn = getFaceByTag(newTag);
+    if(gfn) {
+      Msg::Error("Surface with tag %d already exists", newTag);
+      return false;
+    }
+    else if(gf) {
       faces.erase(gf);
       gf->setTag(newTag);
       faces.insert(gf);
@@ -415,8 +427,12 @@ bool GModel::changeEntityTag(int dim, int tag, int newTag)
     }
   }
   else if(dim == 3) {
-    GRegion *gr = getRegionByTag(tag);
-    if(gr) {
+    GRegion *gr = getRegionByTag(tag), *grn = getRegionByTag(newTag);
+    if(grn) {
+      Msg::Error("Volume with tag %d already exists", newTag);
+      return false;
+    }
+    else if(gr) {
       regions.erase(gr);
       gr->setTag(newTag);
       regions.insert(gr);
@@ -1728,8 +1744,8 @@ void GModel::renumberMeshVertices(const std::map<std::size_t, std::size_t> &mapp
             remap[v] = it->second;
           else {
             if(info) {
-              Msg::Info("Mapping does not contain a node tag (%lu) - "
-                        "incrementing after last provided tag (%lu)",
+              Msg::Info("Mapping does not contain a node tag (%zu) - "
+                        "incrementing after last provided tag (%zu)",
                         v->getNum(), maxmap);
               info = false;
             }
@@ -1856,8 +1872,8 @@ void GModel::renumberMeshElements(const std::map<std::size_t, std::size_t> &mapp
             remap[e] = it->second;
           else {
             if(info) {
-              Msg::Info("Mapping does not contain an element tag (%lu) - "
-                        "incrementing after last provided tag (%lu)",
+              Msg::Info("Mapping does not contain an element tag (%zu) - "
+                        "incrementing after last provided tag (%zu)",
                         e->getNum(), maxmap);
               info = false;
             }
@@ -1995,6 +2011,7 @@ void GModel::rebuildMeshVertexCache(bool onlyIfNecessary)
 {
   if(!onlyIfNecessary ||
      (_vertexVectorCache.empty() && _vertexMapCache.empty())) {
+    Msg::Debug("Rebuilding mesh node cache");
     _vertexVectorCache.clear();
     _vertexMapCache.clear();
     bool dense = false;
@@ -2071,7 +2088,6 @@ MVertex *GModel::getMeshVertexByTag(std::size_t n)
 #pragma omp barrier
 #pragma omp single
     {
-      Msg::Debug("Rebuilding mesh node cache");
       rebuildMeshVertexCache();
     }
   }
@@ -2085,11 +2101,10 @@ MVertex *GModel::getMeshVertexByTag(std::size_t n)
 void GModel::addMVertexToVertexCache(MVertex* v)
 {
   if(_vertexVectorCache.empty() && _vertexMapCache.empty()) {
-    Msg::Debug("Rebuilding mesh node cache");
     rebuildMeshVertexCache();
   }
   if (_vertexVectorCache.size() > 0) {
-#pragma omp critical
+#pragma omp critical(addMVertexToVertexCache)
     if (v->getNum() >= _vertexVectorCache.size()) {
       _vertexVectorCache.resize(v->getNum()+1, nullptr);
     }
@@ -2125,7 +2140,6 @@ MElement *GModel::getMeshElementByTag(std::size_t n, int &entityTag)
 #pragma omp barrier
 #pragma omp single
     {
-      Msg::Debug("Rebuilding mesh element cache");
       rebuildMeshElementCache();
     }
   }
@@ -2195,7 +2209,7 @@ std::size_t GModel::removeInvisibleElements()
     (*it)->deleteVertexArrays();
   }
   destroyMeshCaches();
-  Msg::Info("Removed %lu elements", n);
+  Msg::Info("Removed %zu elements", n);
   return n;
 }
 
@@ -2243,7 +2257,7 @@ std::size_t GModel::reverseInvisibleElements()
     if(all) (*it)->setVisibility(1);
   }
   destroyMeshCaches();
-  Msg::Info("Reversed %lu elements", n);
+  Msg::Info("Reversed %zu elements", n);
   return n;
 }
 
@@ -2280,7 +2294,7 @@ std::size_t GModel::indexMeshVertices(bool all, int singlePartition,
 
   // renumber all the mesh nodes tagged with 0
   std::size_t numVertices = 0;
-  long int index = 0;
+  long int index = CTX::instance()->mesh.firstNodeTag - 1;
   for(std::size_t i = 0; i < entities.size(); i++) {
     for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
       MVertex *v = entities[i]->mesh_vertices[j];
@@ -2739,7 +2753,7 @@ void GModel::checkMeshCoherence(double tolerance)
         fprintf(fp, "View \"duplicate vertices\"{\n");
         for(auto it = duplicates.begin(); it != duplicates.end(); it++) {
           MVertex *v = *it;
-          fprintf(fp, "SP(%.16g,%.16g,%.16g){%lu};\n", v->x(), v->y(), v->z(),
+          fprintf(fp, "SP(%.16g,%.16g,%.16g){%zu};\n", v->x(), v->y(), v->z(),
                   v->getNum());
         }
         fprintf(fp, "};\n");
@@ -2913,22 +2927,19 @@ int GModel::removeDuplicateMeshElements(const std::vector<GEntity*> &ents)
   if(entities.empty()) getEntities(entities);
   int num = 0;
   for(auto &e : entities) {
-    std::vector<int> types;
-    e->getElementTypes(types);
-    for(auto t : types) {
-      std::set<MElement*, MElementPtrLessThanVertices> uniq;
-      for(std::size_t i = 0; i < e->getNumMeshElementsByType(t); i++) {
-        MElement *ele = e->getMeshElementByType(t, i);
-        uniq.insert(ele);
-      }
-      int diff = e->getNumMeshElementsByType(t) - uniq.size();
-      if(diff > 0) {
-        num += diff;
-        Msg::Info("Removed %d duplicate element%s in entity %d of dimension %d",
-                  diff, diff > 1 ? "s" : "", e->tag(), e->dim());
-        e->removeElements(t);
-        for(auto ele : uniq) e->addElement(t, ele);
-      }
+    std::set<MElement*, MElementPtrLessThanVertices> uniq;
+    for(std::size_t i = 0; i < e->getNumMeshElements(); i++) {
+      MElement *ele = e->getMeshElement(i);
+      uniq.insert(ele);
+    }
+    int diff = e->getNumMeshElements() - uniq.size();
+    if(diff > 0) {
+      num += diff;
+      Msg::Info("Removed %d duplicate element%s in entity %d of dimension %d",
+                diff, diff > 1 ? "s" : "", e->tag(), e->dim());
+      e->removeElements(false);
+      for(auto ele : uniq) e->addElement(ele);
+      // TODO: we should delete the duplicate elements
     }
   }
 

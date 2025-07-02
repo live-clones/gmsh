@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -19,12 +19,12 @@ GVertex::~GVertex() { GVertex::deleteMesh(); }
 
 void GVertex::deleteMesh()
 {
-  for(std::size_t i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
+  if(getNumMeshVertices() || getNumMeshElements())
+    model()->destroyMeshCaches();
+  for(auto v : mesh_vertices) delete v;
   mesh_vertices.clear();
-  for(std::size_t i = 0; i < points.size(); i++) delete points[i];
-  points.clear();
+  removeElements(true);
   deleteVertexArrays();
-  model()->destroyMeshCaches();
 }
 
 void GVertex::resetMeshAttributes() { meshSize = MAX_LC; }
@@ -193,35 +193,37 @@ void GVertex::relocateMeshVertices()
   }
 }
 
-void GVertex::addElement(int type, MElement *e)
+void GVertex::addElement(MElement *e)
 {
-  switch(type) {
+  switch(e->getType()) {
   case TYPE_PNT: addPoint(reinterpret_cast<MPoint *>(e)); break;
   default:
     Msg::Error("Trying to add unsupported element in point %d", tag());
   }
 }
 
-void GVertex::removeElement(int type, MElement *e)
+void GVertex::removeElement(MElement *e, bool del)
 {
-  switch(type) {
+  switch(e->getType()) {
   case TYPE_PNT: {
     auto it =
       std::find(points.begin(), points.end(), reinterpret_cast<MPoint *>(e));
-    if(it != points.end()) points.erase(it);
+    if(it != points.end()) {
+      points.erase(it);
+      if(del) delete e;
+    }
   } break;
   default:
     Msg::Error("Trying to remove unsupported element in point %d", tag());
   }
 }
 
-void GVertex::removeElements(int type)
+void GVertex::removeElements(bool del)
 {
-  switch(type) {
-  case TYPE_PNT: points.clear(); break;
-  default:
-    Msg::Error("Trying to remove unsupported elements in point %d", tag());
+  if(del) {
+    for(auto e : points) delete e;
   }
+  points.clear();
 }
 
 bool GVertex::reorder(const int elementType,

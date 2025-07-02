@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -850,7 +850,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
   double sampling = opt_view_sampling(current, GMSH_GET, 0);
 
   std::string name = opt_view_name(current, GMSH_GET, "");
-  std::string format = opt_view_format(current, GMSH_GET, "");
+  std::string format = opt_view_number_format(current, GMSH_GET, "");
   std::string axes_label0 = opt_view_axes_label0(current, GMSH_GET, "");
   std::string axes_label1 = opt_view_axes_label1(current, GMSH_GET, "");
   std::string axes_label2 = opt_view_axes_label2(current, GMSH_GET, "");
@@ -1227,7 +1227,7 @@ static void view_options_ok_cb(Fl_Widget *w, void *data)
       if(force || (str != name)) opt_view_name(i, GMSH_SET, str);
 
       str = o->view.input[1]->value();
-      if(force || (str != format)) opt_view_format(i, GMSH_SET, str);
+      if(force || (str != format)) opt_view_number_format(i, GMSH_SET, str);
 
       str = o->view.input[10]->value();
       if(force || (str != axes_label0)) opt_view_axes_label0(i, GMSH_SET, str);
@@ -2189,6 +2189,7 @@ optionWindow::optionWindow(int deltaFontSize)
         {"Physical tag(s)", 0, nullptr, nullptr},
         {"Elementary name", 0, nullptr, nullptr},
         {"Physical name(s)", 0, nullptr, nullptr},
+        {"Coordinates", 0, nullptr, nullptr},
         {nullptr}};
       geo.choice[4] =
         new Fl_Choice(L + 2 * WB, 2 * WB + 5 * BH, IW, BH, "Label type");
@@ -3901,7 +3902,7 @@ void optionWindow::resetBrowser()
   browser->add("Post-pro");
   for(std::size_t i = 0; i < PView::list.size(); i++) {
     char str[128];
-    sprintf(str, "View [%lu]", i);
+    sprintf(str, "View [%zu]", i);
     browser->add(str);
   }
   int num = (select <= browser->size()) ? select : browser->size();
@@ -3916,7 +3917,7 @@ void optionWindow::resetExternalViewList()
   view.choice[10]->add("Self");
   view.choice[11]->add("Self");
   for(std::size_t i = 0; i < PView::list.size(); i++) {
-    sprintf(str, "View [%lu]", i);
+    sprintf(str, "View [%zu]", i);
     view.choice[10]->add(str, 0, nullptr);
     view.choice[11]->add(str, 0, nullptr);
   }
@@ -3942,7 +3943,7 @@ void optionWindow::updateViewGroup(int index)
   double val2 = 2. * CTX::instance()->lc / maxval;
 
   opt_view_name(index, GMSH_GUI, "");
-  opt_view_format(index, GMSH_GUI, "");
+  opt_view_number_format(index, GMSH_GUI, "");
   opt_view_type(index, GMSH_GUI, 0);
   opt_view_show_scale(index, GMSH_GUI, 0);
   opt_view_draw_strings(index, GMSH_GUI, 0);

@@ -6,7 +6,10 @@ if len(sys.argv) < 2:
     exit(0)
 
 gmsh.initialize()
-gmsh.open(sys.argv[1])
+try:
+    gmsh.open(sys.argv[1])
+except:
+    exit(0)
 
 print("Model name: " + gmsh.model.getCurrent())
 

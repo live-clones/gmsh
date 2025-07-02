@@ -1,8 +1,9 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
+#include "GmshConfig.h"
 #include "GModel.h"
 #include "GRegion.h"
 #include "MLine.h"
@@ -15,6 +16,11 @@
 #include "Context.h"
 #include "meshGFaceOptimize.h"
 #include "qualityMeasures.h"
+#include "Context.h"
+
+#if defined(HAVE_WINSLOWUNTANGLER)
+#include "winslowUntangler.h"
+#endif
 
 static double objective_function(double xi, MVertex *ver, double xTarget,
                                  double yTarget, double zTarget,
@@ -244,9 +250,9 @@ static double Maximize_Quality_Golden_Section(MVertex *ver, GFace *gf,
   return a;
 }
 
-static void _relocateVertexOfPyramid(MVertex *ver,
-                                     const std::vector<MElement *> &lt,
-                                     double relax)
+void relocateVertexOfPyramid(MVertex *ver,
+                             const std::vector<MElement *> &lt,
+                             double relax)
 {
   if(ver->onWhat()->dim() != 3) return;
   double x = 0.0, y = 0.0, z = 0.0;
@@ -296,13 +302,14 @@ static void _relocateVertexOfPyramid(MVertex *ver,
   }
 }
 
-static void _relocateVertexGolden(MVertex *ver,
-                                  const std::vector<MElement *> &lt,
-                                  double relax, double tol)
+static void relocateVertexGolden(MVertex *ver,
+                                 const std::vector<MElement *> &lt,
+                                 double relax, double tol)
 {
   if(ver->onWhat()->dim() != 3) return;
   double x = 0.0, y = 0.0, z = 0.0;
   int N = 0;
+
   for(std::size_t i = 0; i < lt.size(); i++) {
     double XCG = 0.0, YCG = 0.0, ZCG = 0.0;
     for(std::size_t j = 0; j < lt[i]->getNumVertices(); j++) {
@@ -317,26 +324,25 @@ static void _relocateVertexGolden(MVertex *ver,
   }
 
   double NO_MOVE_OBJ = objective_function(0.0, ver, x / N, y / N, z / N, lt);
-  if(NO_MOVE_OBJ > 0.1) return;
   double FULL_MOVE_OBJ = objective_function(1.0, ver, x / N, y / N, z / N, lt);
   if(FULL_MOVE_OBJ > NO_MOVE_OBJ) {
     ver->x() = x / N;
     ver->y() = y / N;
     ver->z() = z / N;
-    return;
+    //    return;
   }
 
   double q;
-  double xi = relax * Maximize_Quality_Golden_Section(ver, x / N, y / N, z / N,
-                                                      lt, tol, q);
+  double xi =
+    Maximize_Quality_Golden_Section(ver, x / N, y / N, z / N, lt, tol, q);
   ver->x() = (1. - xi) * ver->x() + xi * x / N;
   ver->y() = (1. - xi) * ver->y() + xi * y / N;
   ver->z() = (1. - xi) * ver->z() + xi * z / N;
 }
 
 // use real space + projection at the end
-static double _relocateVertex2(GFace *gf, MVertex *ver,
-                               const std::vector<MElement *> &lt, double tol)
+static double relocateVertex2(GFace *gf, MVertex *ver,
+                              const std::vector<MElement *> &lt, double tol)
 {
   SPoint3 p1(0, 0, 0);
   std::size_t counter = 0;
@@ -362,8 +368,8 @@ static double _relocateVertex2(GFace *gf, MVertex *ver,
   return worst;
 }
 
-static double _relocateVertex(GFace *gf, MVertex *ver,
-                              const std::vector<MElement *> &lt, double tol)
+static double relocateVertex(GFace *gf, MVertex *ver,
+                             const std::vector<MElement *> &lt, double tol)
 {
   if(ver->onWhat()->dim() != 2) return 2.0;
 
@@ -371,7 +377,7 @@ static double _relocateVertex(GFace *gf, MVertex *ver,
   SPoint2 p2;
   if(ver->getParameter(0, p2[0])) { ver->getParameter(1, p2[1]); }
   else {
-    return _relocateVertex2(gf, ver, lt, tol);
+    return relocateVertex2(gf, ver, lt, tol);
   }
 
   std::size_t counter = 0;
@@ -421,7 +427,7 @@ void RelocateVertices(GFace *gf, int niter, double tol)
     auto it = adj.begin();
     while(it != adj.end()) {
       if(vs.find(it->first) == vs.end()) {
-        _relocateVertex(gf, it->first, it->second, tol);
+        relocateVertex(gf, it->first, it->second, tol);
       }
       ++it;
     }
@@ -441,15 +447,155 @@ void RelocateVertices(GRegion *region, int niter, double tol)
     auto it = adj.begin();
     double relax = std::min((double)(i + 1) / niter, 1.0);
     while(it != adj.end()) {
-      _relocateVertexGolden(it->first, it->second, relax, tol);
+      relocateVertexGolden(it->first, it->second, relax, tol);
       ++it;
     }
   }
 }
 
+#if defined(HAVE_WINSLOWUNTANGLER)
+int _untanglePyramids(GRegion *region, bool topological, bool geometrical)
+{
+  std::vector<MVertex *> _v_pyr;
+  for(size_t i = 0; i < region->pyramids.size(); i++) {
+    _v_pyr.push_back(region->pyramids[i]->getVertex(4));
+  }
+  std::sort(_v_pyr.begin(), _v_pyr.end());
+
+  // get all vertices ...
+  std::set<MVertex *> _vts;
+  std::set<MFace, MFaceLessThan> _fcs;
+
+  std::vector<MTetrahedron *> _tets;
+  for(size_t i = 0; i < region->tetrahedra.size(); i++) {
+    MTetrahedron *t = region->tetrahedra[i];
+    for(size_t j = 0; j < 4; j++) _fcs.insert(t->getFace(j));
+    for(size_t j = 0; j < 4; j++) {
+      MVertex *v = t->getVertex(j);
+      if(std::binary_search(_v_pyr.begin(), _v_pyr.end(), v)) {
+        _tets.push_back(t);
+        _vts.insert(t->getVertex(0));
+        _vts.insert(t->getVertex(1));
+        _vts.insert(t->getVertex(2));
+        _vts.insert(t->getVertex(3));
+        break;
+      }
+    }
+  }
+
+  int count = 0;
+  std::vector<bool> locked;
+
+  std::vector<std::array<double, 3>> points;
+  for(auto v : _vts) {
+    points.push_back({v->x(), v->y(), v->z()});
+    if(std::binary_search(_v_pyr.begin(), _v_pyr.end(), v))
+      locked.push_back(false);
+    else
+      locked.push_back(true);
+    v->setIndex(count++);
+  }
+  std::vector<std::array<uint32_t, 4>> tets;
+
+  double avgEdgeSize = 0.0;
+
+  for(auto t : _tets) {
+    for(size_t k=0;k<4;k++)
+      for(size_t l=k+1;l<4;l++)
+	avgEdgeSize += t->getVertex(k)->distance(t->getVertex(l));
+    uint32_t n0 = t->getVertex(0)->getIndex();
+    uint32_t n1 = t->getVertex(1)->getIndex();
+    uint32_t n2 = t->getVertex(2)->getIndex();
+    uint32_t n3 = t->getVertex(3)->getIndex();
+    std::array<uint32_t, 4> _tt = {n0, n3, n2, n1};
+    tets.push_back(_tt);
+  }
+  avgEdgeSize /= (6.0*_tets.size());
+  double ee[4][3] = {{.5, 0, -1. / (2. * std::sqrt(2.))},
+		     {-.5, 0, -1. / (2. * std::sqrt(2.))},
+		     {0, .5, 1. / (2. * std::sqrt(2.))},
+		     {0, -.5, 1. / (2. * std::sqrt(2.))}};
+
+  //avgEdgeSize *= 0.2;
+  std::array<std::array<double, 3>, 4> equi;
+
+  for(size_t lv = 0; lv < 4; ++lv) {
+    equi[0][lv] = ee[lv][0] * (avgEdgeSize);
+    equi[1][lv] = ee[lv][1] * (avgEdgeSize);
+    equi[2][lv] = ee[lv][2] * (avgEdgeSize);
+  }
+
+
+  for(size_t i = 0; i < region->pyramids.size(); i++) {
+    MFace mf = region->pyramids[i]->getFace(0);
+    auto mf2 = _fcs.find(mf);
+    if(mf2 == _fcs.end()) {
+      Msg::Warning("Error in Pyramid Untangling");
+      return -1;
+    }
+    if(topological) {
+      SVector3 nf = mf.normal();
+      SVector3 nf2 = (*mf2).normal();
+      //      printf("%12.5E\n",dot(nf,nf2));
+      if(dot(nf, nf2) > 0) {
+        MVertex *v1 = region->pyramids[i]->getVertex(1);
+        MVertex *v3 = region->pyramids[i]->getVertex(3);
+        region->pyramids[i]->setVertex(1, v3);
+        region->pyramids[i]->setVertex(3, v1);
+        // printf("reverting pyramid %d %d %d %d
+        // %d\n",region->pyramids[i]->getVertex(0)->getIndex(),
+        //        region->pyramids[i]->getVertex(1)->getIndex(),
+        //        region->pyramids[i]->getVertex(2)->getIndex(),
+        //        region->pyramids[i]->getVertex(3)->getIndex(),
+        //        region->pyramids[i]->getVertex(4)->getIndex());
+      }
+    }
+    MVertex *v0 = region->pyramids[i]->getVertex(0);
+    MVertex *v1 = region->pyramids[i]->getVertex(1);
+    MVertex *v2 = region->pyramids[i]->getVertex(2);
+    MVertex *v3 = region->pyramids[i]->getVertex(3);
+    MVertex *v4 = region->pyramids[i]->getVertex(4);
+    tets.push_back({(uint32_t)v0->getIndex(), (uint32_t)v4->getIndex(),
+	  (uint32_t)v2->getIndex(), (uint32_t)v1->getIndex()});
+    tets.push_back({(uint32_t)v2->getIndex(), (uint32_t)v4->getIndex(),
+	  (uint32_t)v0->getIndex(), (uint32_t)v3->getIndex()});
+
+    tets.push_back({(uint32_t)v1->getIndex(), (uint32_t)v4->getIndex(),
+	  (uint32_t)v3->getIndex(), (uint32_t)v2->getIndex()});
+    tets.push_back({(uint32_t)v3->getIndex(), (uint32_t)v4->getIndex(),
+	  (uint32_t)v1->getIndex(), (uint32_t)v0->getIndex()});
+  }
+  if(geometrical) {
+    std::vector<std::array<std::array<double, 3>, 4>> tetIdealShapes;
+
+    for(size_t i = 0; i < tets.size(); i++){
+      tetIdealShapes.push_back(equi);
+    }
+    untangle_tetrahedra(points, locked, tets, tetIdealShapes, 1, 100, 10);
+
+    for(auto v : _v_pyr) {
+      v->x() = points[v->getIndex()][0];
+      v->y() = points[v->getIndex()][1];
+      v->z() = points[v->getIndex()][2];
+    }
+  }
+  return 0;
+}
+#endif
+
 void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
 {
+#if defined(HAVE_WINSLOWUNTANGLER)
+  if(CTX::instance()->mesh.optimizePyramids == 1) {
+    Msg::Info("Using new pyramid optimization");
+    _untanglePyramids(region, true, true);
+    return;
+  }
+#endif
+
   if(!niter) return;
+
+  Msg::Info("Using old pyramid optimization");
 
   std::vector<MVertex *> _v_pyr;
   for(size_t i = 0; i < region->pyramids.size(); i++) {
@@ -494,7 +640,7 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
     double relax = (double)i / 10. + 1e-6;
     auto it = adj.begin();
     while(it != adj.end()) {
-      _relocateVertexOfPyramid(it->first, it->second, relax);
+      relocateVertexOfPyramid(it->first, it->second, relax);
       ++it;
     }
   }
@@ -505,7 +651,7 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
     auto it = adj.begin();
     double relax = std::min((double)(i + 1) / niter, 1.0);
     while(it != adj.end()) {
-      _relocateVertexGolden(it->first, it->second, relax, tol);
+      relocateVertexGolden(it->first, it->second, relax, tol);
       ++it;
     }
   }

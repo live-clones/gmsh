@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -295,7 +295,7 @@ public:
 };
 
 typedef std::vector<int> IndicesReoriented;
-typedef std::pair<int, std::pair<int, int> > TupleReorientation;
+typedef std::pair<int, std::pair<int, int>> TupleReorientation;
 
 /*
  * MTriangleN  FIXME: check the plot
@@ -416,7 +416,7 @@ public:
   }
   virtual int getTypeForVTK() const
   {
-    return (_order == 2) ? 22 : MTriangle::getTypeForVTK();
+    return 69; // VTK_LAGRANGE_TRIANGLE
   }
   virtual void reverse();
   virtual void getNode(int num, double &u, double &v, double &w) const

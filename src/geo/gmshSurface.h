@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -9,7 +9,6 @@
 #include <cmath>
 #include <cstdio>
 #include <map>
-#include "Pair.h"
 #include "Range.h"
 #include "SPoint2.h"
 #include "SPoint3.h"
@@ -61,7 +60,7 @@ public:
   // Return the normal to the face at the given parameter location.
   virtual SVector3 normal(const SPoint2 &param) const;
   // Return the first derivate of the face at the parameter location.
-  virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param);
+  virtual std::pair<SVector3, SVector3> firstDer(const SPoint2 &param);
   virtual double getMetricEigenvalue(const SPoint2 &);
 };
 

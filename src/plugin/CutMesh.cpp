@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -7,9 +7,9 @@
 #include "GModel.h"
 #include "gmshLevelset.h"
 
-StringXNumber CutMeshOptions_Number[] = {{GMSH_FULLRC, "View", nullptr, -1.},
-                                         {GMSH_FULLRC, "Split", nullptr, 0.},
-                                         {GMSH_FULLRC, "SaveTri", nullptr, 0.}};
+StringXNumber CutMeshOptions_Number[] = {{GMSH_FULLRC, "View", nullptr, -1., ""},
+                                         {GMSH_FULLRC, "Split", nullptr, 0., ""},
+                                         {GMSH_FULLRC, "SaveTri", nullptr, 0., ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterCutMeshPlugin() { return new GMSH_CutMeshPlugin(); }

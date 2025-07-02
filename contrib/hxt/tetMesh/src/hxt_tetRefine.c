@@ -83,7 +83,7 @@ HXTStatus hxtEmptyMesh(HXTMesh* mesh, HXTDelaunayOptions* delOptions)
  * return 0 if the computed point does respect the interpolated nodalsize
  * return 1 if the computed point does not respect the interpolated nodalsize
  * the interpolated nodalsize is placed into center[3]  */
-int getBestCenter(double p[4][4], double nodalSize[4], double center[4], HXTNodalSizes* ns)
+static int getBestCenter(double p[4][4], double nodalSize[4], double center[4], HXTNodalSizes* ns)
 {
   double avg = 0.0;
   double num = 0;
@@ -127,9 +127,10 @@ int getBestCenter(double p[4][4], double nodalSize[4], double center[4], HXTNoda
 
   // these formula accumulate a lot of errors...
   double xa = sqrt(e0l2);
-  double xb = (e1l2 + e0l2 - e3l2)/(2*xa);
+  double invtwoxa = 1./(2*xa);
+  double xb = (e1l2 + e0l2 - e3l2)*invtwoxa;
   double yb = sqrt(e1l2 - xb*xb);
-  double xc = (e2l2 + e0l2 - e4l2)/(2*xa);
+  double xc = (e2l2 + e0l2 - e4l2)*invtwoxa;
   double yc = (e1l2 + e2l2 - e5l2 - 2*xb*xc)/(2*yb);
   double zc = sqrt(e2l2 - xc*xc - yc*yc);
 
@@ -297,9 +298,9 @@ static uint64_t* scanbsearch(uint64_t* array, uint64_t key, size_t num)
  *  - startTet[maxThreads] = mesh->tetrahedra.num
  *  - `startPt[t+1] - startPt[t]` gives how many point will be created by thread t
  */
-static HXTStatus balanceRefineWork(HXTMesh* mesh, uint32_t* startPt, size_t* startTet, int maxThreads)
+static HXTStatus balanceRefineWork(HXTMesh* mesh, uint32_t* startPt, uint64_t* startTet, int maxThreads)
 {
-  size_t* scan;
+  uint64_t* scan;
   uint32_t ptPerThreadGoal;
   HXT_CHECK( hxtAlignedMalloc(&scan, sizeof(size_t) * mesh->tetrahedra.num) );
 
@@ -343,7 +344,7 @@ static HXTStatus balanceRefineWork(HXTMesh* mesh, uint32_t* startPt, size_t* sta
 
     // we want to find i such that scan[i] = scanToFind.
     // we do a simple binary search in the prefix scan array to find `i`
-    size_t* pfnd = scanbsearch(scan, scanToFind, mesh->tetrahedra.num);
+    uint64_t* pfnd = scanbsearch(scan, scanToFind, mesh->tetrahedra.num);
     startTet[threadID] = pfnd  - scan;
     if(startTet[threadID] < mesh->tetrahedra.num)
       startPt[threadID] = *pfnd;

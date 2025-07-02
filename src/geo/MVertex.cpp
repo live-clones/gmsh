@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -356,8 +356,8 @@ void MVertex::writeBDF(FILE *fp, int format, double scalingFactor)
   }
   else {
     // large field format (8 char first/last field, 16 char middle, 6 per line)
-    fprintf(fp, "GRID*   %-16ld%-16d%-16.9G%-16.9G\n", _index, 0, x1, y1);
-    fprintf(fp, "*       %-16.9G\n", z1);
+    fprintf(fp, "GRID*   %-16ld%-16d%-#16.9G%-#16.9G\n", _index, 0, x1, y1);
+    fprintf(fp, "*       %-#16.9G\n", z1);
   }
 }
 

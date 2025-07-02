@@ -1,4 +1,4 @@
-// HighOrderMeshOptimizer - Copyright (C) 2013-2023 UCLouvain-ULiege
+// HighOrderMeshOptimizer - Copyright (C) 2013-2024 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -127,11 +127,11 @@ MetaEl::metaInfoType::metaInfoType(int type, int order)
   foundVerts.insert(topInd.begin(), topInd.end());
   freeTopInd = std::vector<int>(topInd.begin() + nbPrimTopVert, topInd.end());
   freeTop2Base.resize(freeTopInd.size());
-  for(int iVFT = 0; iVFT < freeTopInd.size(); iVFT++) {
+  for(size_t iVFT = 0; iVFT < freeTopInd.size(); iVFT++) {
     const int &indFT = freeTopInd[iVFT];
     const double &uTop = points(indFT, 0);
     const double &vTop = points(indFT, 1);
-    for(int iVB = 0; iVB < baseInd.size();
+    for(size_t iVB = 0; iVB < baseInd.size();
         iVB++) { // Find corresponding base vertex
       const int &indB = baseInd[iVB];
       const double diffU = uTop - points(indB, 0);
@@ -157,7 +157,7 @@ MetaEl::metaInfoType::metaInfoType(int type, int order)
       foundVerts.insert(iV);
       const double &uFree = points(iV, 0);
       const double &vFree = points(iV, 1);
-      for(int iVB = 0; iVB < baseInd.size();
+      for(size_t iVB = 0; iVB < baseInd.size();
           iVB++) { // Find corresponding base vertex
         const int &indB = baseInd[iVB];
         const double diffU = uFree - points(indB, 0);
@@ -167,7 +167,7 @@ MetaEl::metaInfoType::metaInfoType(int type, int order)
           break;
         }
       }
-      for(int iVT = 0; iVT < baseInd.size();
+      for(size_t iVT = 0; iVT < baseInd.size();
           iVT++) { // Find corresponding top vertex
         const int &indT = topInd[iVT];
         const double diffU = uFree - points(indT, 0);
@@ -245,7 +245,7 @@ MetaEl::MetaEl(int type, int order, const std::vector<MVertex *> &baseVert,
   // Add copies of vertices in base & top faces (only first-order vertices for
   // top face)
   _metaVert.resize(nbVert);
-  for(int iV = 0; iV < baseInd.size(); iV++) {
+  for(size_t iV = 0; iV < baseInd.size(); iV++) {
     const MVertex *const &bVert = baseVert[iV];
     GEntity *geomEnt = bVert->onWhat();
     if(geomEnt->dim() == 0)
@@ -264,7 +264,7 @@ MetaEl::MetaEl(int type, int order, const std::vector<MVertex *> &baseVert,
         new MFaceVertex(bVert->x(), bVert->y(), bVert->z(), geomEnt, u, v);
     }
   }
-  for(int iV = 0; iV < topPrimVert.size(); iV++)
+  for(size_t iV = 0; iV < topPrimVert.size(); iV++)
     _metaVert[topInd[iV]] = new MVertex(*topPrimVert[iV]);
 
   // Create first-order meta-element and normals to base face
@@ -299,7 +299,7 @@ MetaEl::MetaEl(int type, int order, const std::vector<MVertex *> &baseVert,
   computeBaseNorm(metaNorm, baseVert, topPrimVert, _baseNorm);
 
   // Add HO vertices in top face
-  for(int iV = topPrimVert.size(); iV < topInd.size(); iV++) {
+  for(size_t iV = topPrimVert.size(); iV < topInd.size(); iV++) {
     SPoint3 p;
     const int ind = topInd[iV];
     _metaEl0->pnt(points(ind, 0), points(ind, 1), points(ind, 2), p);
@@ -307,7 +307,7 @@ MetaEl::MetaEl(int type, int order, const std::vector<MVertex *> &baseVert,
   }
 
   // Add vertices on edges (excluding base and top faces)
-  for(int iV = 0; iV < edgeInd.size(); iV++) {
+  for(size_t iV = 0; iV < edgeInd.size(); iV++) {
     SPoint3 p;
     const int ind = edgeInd[iV];
     _metaEl0->pnt(points(ind, 0), points(ind, 1), points(ind, 2), p);
@@ -315,7 +315,7 @@ MetaEl::MetaEl(int type, int order, const std::vector<MVertex *> &baseVert,
   }
 
   // Add remaining face and interior points
-  for(int iV = 0; iV < otherInd.size(); iV++)
+  for(size_t iV = 0; iV < otherInd.size(); iV++)
     _metaVert[otherInd[iV]] = new MVertex(0., 0., 0.);
   placeOtherNodes();
 
@@ -329,7 +329,7 @@ MetaEl::MetaEl(int type, int order, const std::vector<MVertex *> &baseVert,
 
 MetaEl::~MetaEl()
 {
-  for(int i = 0; i < _metaVert.size(); i++) delete _metaVert[i];
+  for(size_t i = 0; i < _metaVert.size(); i++) delete _metaVert[i];
   _metaVert.clear();
   if(_metaEl) delete _metaEl;
   if(_metaEl0) delete _metaEl0;
@@ -339,7 +339,7 @@ MetaEl::~MetaEl()
 // faces
 void MetaEl::placeOtherNodes()
 {
-  for(int iVO = 0; iVO < _mInfo.otherInd.size(); iVO++) {
+  for(size_t iVO = 0; iVO < _mInfo.otherInd.size(); iVO++) {
     const int &indF = _mInfo.otherInd[iVO];
     const int &iVB = _mInfo.other2Base[iVO], indB = _mInfo.baseInd[iVB];
     const int &iVT = _mInfo.other2Top[iVO], indT = _mInfo.topInd[iVT];
@@ -357,7 +357,7 @@ void MetaEl::setCurvedTop(double factor)
 {
   // Place HO vertices of top face so that meta-elemnt has almost uniform
   // thickness
-  for(int iVFT = 0; iVFT < _mInfo.freeTopInd.size(); iVFT++) {
+  for(size_t iVFT = 0; iVFT < _mInfo.freeTopInd.size(); iVFT++) {
     const int &indFT = _mInfo.freeTopInd[iVFT];
     const int &iVB = _mInfo.freeTop2Base[iVFT], indB = _mInfo.baseInd[iVB];
     const int iUVWNorm = _mInfo.dim - 1;
@@ -380,7 +380,7 @@ void MetaEl::setFlatTop()
   const std::vector<int> &freeTopInd = _mInfo.topInd;
 
   // Put top vertices on straight meta-element
-  for(int iVFT = 0; iVFT < freeTopInd.size(); iVFT++) {
+  for(size_t iVFT = 0; iVFT < freeTopInd.size(); iVFT++) {
     const int &indFT = freeTopInd[iVFT];
     SPoint3 p;
     _metaEl0->pnt(points(indFT, 0), points(indFT, 1), points(indFT, 2), p);

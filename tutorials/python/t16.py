@@ -28,7 +28,7 @@ gmsh.logger.start()
 gmsh.model.occ.addBox(0, 0, 0, 1, 1, 1, 1)
 gmsh.model.occ.addBox(0, 0, 0, 0.5, 0.5, 0.5, 2)
 
-# We apply a boolean difference to create the "cube minus one eigth" shape:
+# We apply a boolean difference to create the "cube minus one eighth" shape:
 gmsh.model.occ.cut([(3, 1)], [(3, 2)], 3)
 
 # Boolean operations with OpenCASCADE always create new entities. By default the
@@ -80,7 +80,7 @@ for i in range(1, 6):
 
 # The tag of the cube will change though, so we need to access it
 # programmatically:
-gmsh.model.addPhysicalGroup(3, [ov[-1][1]], 10)
+gmsh.model.addPhysicalGroup(3, [ov[0][1]], 10)
 
 # Creating entities using constructive solid geometry is very powerful, but can
 # lead to practical issues for e.g. setting mesh sizes at points, or identifying

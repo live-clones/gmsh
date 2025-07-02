@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -8,8 +8,8 @@
 #include "PViewOptions.h"
 
 StringXNumber MeshVolumeOptions_Number[] = {
-  {GMSH_FULLRC, "PhysicalGroup", nullptr, -1},
-  {GMSH_FULLRC, "Dimension", nullptr, 3}};
+  {GMSH_FULLRC, "PhysicalGroup", nullptr, -1, ""},
+  {GMSH_FULLRC, "Dimension", nullptr, 3, ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterMeshVolumePlugin()

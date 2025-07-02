@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -168,6 +168,7 @@ namespace tetgenBR {
           all.insert(v2);
         }
         if(_sqr) {
+	  //printf("face %d %zu quadrangles\n", gf->tag(), gf->quadrangles.size());
           for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
             MVertex *v0 = gf->quadrangles[i]->getVertex(0);
             MVertex *v1 = gf->quadrangles[i]->getVertex(1);

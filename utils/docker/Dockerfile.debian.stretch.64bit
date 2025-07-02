@@ -107,13 +107,14 @@ RUN curl -L -O https://src.fedoraproject.org/lookaside/pkgs/med/med-4.1.0.tar.gz
 # OpenCASCADE
 # -----------------------
 
-RUN curl -L -o occt.tgz "http://git.dev.opencascade.org/gitweb/?p=occt.git;a=snapshot;h=refs/tags/V7_7_2;sf=tgz" && tar xf occt.tgz && cd occt-* && mkdir build && cd build && CXXFLAGS="-fPIC -DIGNORE_NO_ATOMICS" cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBRARY_TYPE=Static -DBUILD_MODULE_Draw=0 -DBUILD_MODULE_Visualization=0 -DBUILD_MODULE_ApplicationFramework=0 .. && make -i -j 4 install && cd ../.. && rm -rf occt.tgz occt-*
+RUN curl -L -o occt.tgz "http://git.dev.opencascade.org/gitweb/?p=occt.git;a=snapshot;h=refs/tags/V7_8_1;sf=tgz" && tar xf occt.tgz && cd occt-* && sed -i 's/\/\/ remove descriptor from the registry/return;\/\/gmsh fix for step bug at exit/g' src/Standard/Standard_Type.cxx && mkdir build && cd build && CXXFLAGS="-fPIC -DIGNORE_NO_ATOMICS" cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_LIBRARY_TYPE=Static -DBUILD_MODULE_Draw=0 -DBUILD_MODULE_Visualization=0 -DBUILD_MODULE_ApplicationFramework=0 .. && make -i -j 4 install && cd ../.. && rm -rf occt.tgz occt-*
 
 # -----------------------
 # FLTK
 # -----------------------
 
-RUN git clone https://github.com/fltk/fltk.git && cd fltk && make makeinclude && ./configure --enable-localpng=no --enable-localzlib=no --enable-localjpeg=no && make -j 4 && make install && cd ../.. && rm -rf fltk
+# FLTK 1.4 introduces severe performance regression with OpenGL 1 on Windows and Linux; stick with FLTK 1.3 for now
+RUN git clone --branch branch-1.3 --single-branch https://github.com/fltk/fltk.git && cd fltk && make makeinclude && ./configure --enable-localpng=no --enable-localzlib=no --enable-localjpeg=no && make -j 4 && make install && cd ../.. && rm -rf fltk
 
 # -----------------------
 # MMG

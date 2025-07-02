@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -15,22 +15,22 @@
 #endif
 
 StringXNumber StreamLinesOptions_Number[] = {
-  {GMSH_FULLRC, "X0", GMSH_StreamLinesPlugin::callbackX0, 0.},
-  {GMSH_FULLRC, "Y0", GMSH_StreamLinesPlugin::callbackY0, 0.},
-  {GMSH_FULLRC, "Z0", GMSH_StreamLinesPlugin::callbackZ0, 0.},
-  {GMSH_FULLRC, "X1", GMSH_StreamLinesPlugin::callbackX1, 1.},
-  {GMSH_FULLRC, "Y1", GMSH_StreamLinesPlugin::callbackY1, 0.},
-  {GMSH_FULLRC, "Z1", GMSH_StreamLinesPlugin::callbackZ1, 0.},
-  {GMSH_FULLRC, "X2", GMSH_StreamLinesPlugin::callbackX2, 0.},
-  {GMSH_FULLRC, "Y2", GMSH_StreamLinesPlugin::callbackY2, 1.},
-  {GMSH_FULLRC, "Z2", GMSH_StreamLinesPlugin::callbackZ2, 0.},
-  {GMSH_FULLRC, "NumPointsU", GMSH_StreamLinesPlugin::callbackU, 10},
-  {GMSH_FULLRC, "NumPointsV", GMSH_StreamLinesPlugin::callbackV, 1},
-  {GMSH_FULLRC, "DT", nullptr, .1},
-  {GMSH_FULLRC, "MaxIter", nullptr, 100},
-  {GMSH_FULLRC, "TimeStep", nullptr, 0},
-  {GMSH_FULLRC, "View", nullptr, -1.},
-  {GMSH_FULLRC, "OtherView", nullptr, -1.}};
+  {GMSH_FULLRC, "X0", GMSH_StreamLinesPlugin::callbackX0, 0., ""},
+  {GMSH_FULLRC, "Y0", GMSH_StreamLinesPlugin::callbackY0, 0., ""},
+  {GMSH_FULLRC, "Z0", GMSH_StreamLinesPlugin::callbackZ0, 0., ""},
+  {GMSH_FULLRC, "X1", GMSH_StreamLinesPlugin::callbackX1, 1., ""},
+  {GMSH_FULLRC, "Y1", GMSH_StreamLinesPlugin::callbackY1, 0., ""},
+  {GMSH_FULLRC, "Z1", GMSH_StreamLinesPlugin::callbackZ1, 0., ""},
+  {GMSH_FULLRC, "X2", GMSH_StreamLinesPlugin::callbackX2, 0., ""},
+  {GMSH_FULLRC, "Y2", GMSH_StreamLinesPlugin::callbackY2, 1., ""},
+  {GMSH_FULLRC, "Z2", GMSH_StreamLinesPlugin::callbackZ2, 0., ""},
+  {GMSH_FULLRC, "NumPointsU", GMSH_StreamLinesPlugin::callbackU, 10, ""},
+  {GMSH_FULLRC, "NumPointsV", GMSH_StreamLinesPlugin::callbackV, 1, ""},
+  {GMSH_FULLRC, "DT", nullptr, .1, ""},
+  {GMSH_FULLRC, "MaxIter", nullptr, 100, ""},
+  {GMSH_FULLRC, "TimeStep", nullptr, 0, ""},
+  {GMSH_FULLRC, "View", nullptr, -1., ""},
+  {GMSH_FULLRC, "OtherView", nullptr, -1., ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterStreamLinesPlugin()

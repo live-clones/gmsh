@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -8,6 +8,7 @@
 #include "GModel.h"
 #include "OS.h"
 #include "GmshMessage.h"
+#include "Context.h"
 
 int GModel::readMSH(const std::string &name)
 {
@@ -85,7 +86,7 @@ int GModel::writeMSH(const std::string &name, double version, bool binary,
   if(version < 3.0) {
     return _writeMSH2(name, version, binary, saveAll, saveParametric,
                       scalingFactor, elementStartNum, saveSinglePartition,
-                      append, true);
+                      append, CTX::instance()->mesh.preserveNumberingMsh2 == 0);
   }
   else if(version < 4.0) {
     return _writeMSH3(name, version, binary, saveAll, saveParametric,

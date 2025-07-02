@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -28,7 +28,7 @@ set(SRC
     GModelIO_GEOM.cpp GModelIO_INP.cpp GModelIO_KEY.cpp GModelIO_MAIL.cpp GModelIO_P3D.cpp
     GModelIO_CELUM.cpp GModelIO_NEU.cpp GModelIO_ACTRAN.cpp GModelIO_SU2.cpp
     GModelIO_SAMCEF.cpp GModelIO_MATLAB.cpp GModelIO_POS.cpp GModelIO_X3D.cpp
-    GModelIO_OFF.cpp GModelIO_RAD.cpp
+    GModelIO_OFF.cpp GModelIO_OBJ.cpp GModelIO_RAD.cpp GModelIO_NIfTI.cpp
   ExtrudeParams.cpp
   Geo.cpp GeoInterpolation.cpp
   scriptStringInterface.cpp

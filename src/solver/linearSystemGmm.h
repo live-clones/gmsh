@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -14,7 +14,7 @@
 #if defined(HAVE_GMM)
 
 #undef BB // can be defined by FlGui.h, and clashes with gmm arg name
-#include <gmm.h>
+#include <gmm/gmm.h>
 
 // Consider using linearSystemCSRGmm instead: assembly is much faster
 template <class scalar> class linearSystemGmm : public linearSystem<scalar> {

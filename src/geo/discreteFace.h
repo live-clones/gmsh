@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -16,7 +16,7 @@
 class MElementOctree;
 
 class discreteFace : public GFace {
-public:
+private:
   class param {
   public:
     MElementOctree *oct;
@@ -38,7 +38,8 @@ public:
   param _param;
   void _createGeometryFromSTL();
   void _computeSTLNormals();
-  void _debugParametrization(bool uv);  
+  void _debugParametrization(bool uv);
+
 public:
   discreteFace(GModel *model, int num);
   discreteFace(GModel *model);
@@ -59,7 +60,7 @@ public:
   double curvatures(const SPoint2 &param, SVector3 &dirMax, SVector3 &dirMin,
                     double &curvMax, double &curvMin) const;
   GEntity::GeomType geomType() const { return DiscreteSurface; }
-  virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const;
+  virtual std::pair<SVector3, SVector3> firstDer(const SPoint2 &param) const;
   virtual void secondDer(const SPoint2 &param, SVector3 &dudu, SVector3 &dvdv,
                          SVector3 &dudv) const;
   int createGeometry();

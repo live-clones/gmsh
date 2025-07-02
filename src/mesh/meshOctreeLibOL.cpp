@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -316,12 +316,21 @@ using namespace SurfaceProjectorUtils;
 
 SurfaceProjector::SurfaceProjector(GFace *gf_) : gf(NULL), OctIdx(0)
 {
-  std::vector<MTriangle *> triangles = gf->triangles;
+  if (gf_ == nullptr) {
+      Msg::Error("SurfaceProjector: GFace pointer is NULL");
+      return;
+  }
+  gf = gf_; // Assign the value, since it will be used later.
+
+  std::vector<MTriangle *> triangles; //Initialized as empty.
   if(gf->quadrangles.size() > 0) {
     Msg::Error("SurfaceProjector: quads not implemented yet, should create "
                "fake MTriangle* just for initialize()");
     abort();
+  } else {
+      triangles = gf->triangles; // only call this if the quadrangle test fails
   }
+
   bool ok = initialize(gf_, triangles);
   if(!ok) { Msg::Error("failed to initialize SurfaceProjector"); }
 }

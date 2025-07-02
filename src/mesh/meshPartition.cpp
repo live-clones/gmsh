@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -256,18 +256,15 @@ public:
             switch(_dim) {
             case 1:
               static_cast<ghostEdge *>(ghostEntities[_partition[_adjncy[j]]])
-                ->addElement(_element[i]->getType(), _element[i],
-                             _partition[i] + 1);
+                ->addElement(_element[i], _partition[i] + 1);
               break;
             case 2:
               static_cast<ghostFace *>(ghostEntities[_partition[_adjncy[j]]])
-                ->addElement(_element[i]->getType(), _element[i],
-                             _partition[i] + 1);
+                ->addElement(_element[i], _partition[i] + 1);
               break;
             case 3:
               static_cast<ghostRegion *>(ghostEntities[_partition[_adjncy[j]]])
-                ->addElement(_element[i]->getType(), _element[i],
-                             _partition[i] + 1);
+                ->addElement(_element[i], _partition[i] + 1);
               break;
             default: break;
             }
@@ -531,6 +528,10 @@ static int makeGraph(GModel *model, Graph &graph, int selectDim)
   idx_t eindIndex = 0;
   idx_t numVertex = 0;
 
+  if(graph.nn() == 0) {
+    Msg::Warning("No mesh nodes were found");
+    return 1;
+  }
   if(graph.ne() == 0) {
     Msg::Warning("No mesh elements were found");
     return 1;
@@ -764,7 +765,7 @@ assignElementsToEntities(GModel *model, hashmapelementpart &elmToPartition,
       newEntities[partition] = de;
     }
 
-    newEntities[partition]->addElement((*it)->getType(), *it);
+    newEntities[partition]->addElement(*it);
   }
 }
 
@@ -924,8 +925,7 @@ divideNonConnectedEntities(GModel *model, int dim,
             // Add to model
             model->add(pvertex);
             // Add elements
-            pvertex->addElement(vertex->getMeshElement(i)->getType(),
-                                vertex->getMeshElement(i));
+            pvertex->addElement(vertex->getMeshElement(i));
             // Move B-Rep
             std::vector<GEdge *> BRepEdges = vertex->edges();
             if(!BRepEdges.empty()) {
@@ -1024,7 +1024,7 @@ divideNonConnectedEntities(GModel *model, int dim,
             for(auto itSet = connectedElements[i].begin();
                 itSet != connectedElements[i].end(); ++itSet) {
               // Add elements
-              pedge->addElement((*itSet)->getType(), (*itSet));
+              pedge->addElement((*itSet));
             }
             // Move B-Rep
             if(BRepFaces.size() > 0) {
@@ -1120,7 +1120,7 @@ divideNonConnectedEntities(GModel *model, int dim,
             for(auto itSet = connectedElements[i].begin();
                 itSet != connectedElements[i].end(); ++itSet) {
               // Add elements
-              pface->addElement((*itSet)->getType(), (*itSet));
+              pface->addElement((*itSet));
             }
             // Move B-Rep
             if(BRepRegions.size() > 0) {
@@ -1217,7 +1217,7 @@ divideNonConnectedEntities(GModel *model, int dim,
             for(auto itSet = connectedElements[i].begin();
                 itSet != connectedElements[i].end(); ++itSet) {
               // Add elements
-              pregion->addElement((*itSet)->getType(), (*itSet));
+              pregion->addElement((*itSet));
             }
           }
 
@@ -2250,7 +2250,7 @@ int PartitionFaceMinEdgeLength(GFace *gf, int np, double tol)
     }
     if (!allTheSame) break;
     ubvec -= (1. - ubvec) * .5;
-    Msg::Warning("Partitioning face %d with %lu triangles that all have the same"
+    Msg::Warning("Partitioning face %d with %zu triangles that all have the same"
                  " partition - changing tolerance to %g", gf->tag(),
                  gf->triangles.size(), ubvec);
     if(ubvec > CTX::instance()->lc) {
@@ -2319,7 +2319,7 @@ int PartitionMesh(GModel *model, int numPart)
       totCount += count[j];
     }
     if(totCount > 0) {
-      Msg::Info(" - Repartition of %d %s: %lu(min) %lu(max) %g(avg)", totCount,
+      Msg::Info(" - Repartition of %d %s: %zu(min) %zu(max) %g(avg)", totCount,
                 ElementType::nameOfParentType(i, totCount > 1).c_str(),
                 minCount, maxCount, totCount / (double)numPart);
     }
@@ -2358,7 +2358,7 @@ static void assignToParent(std::set<MVertex *> &verts, PART_ENTITY *entity,
                            ITERATOR it_beg, ITERATOR it_end)
 {
   for(ITERATOR it = it_beg; it != it_end; ++it) {
-    entity->getParentEntity()->addElement((*it)->getType(), *it);
+    entity->getParentEntity()->addElement(*it);
     (*it)->setPartition(0);
 
     for(std::size_t i = 0; i < (*it)->getNumVertices(); i++) {
@@ -2608,15 +2608,15 @@ int PartitionUsingThisSplit(GModel *model,
         switch(graph.dim()) {
           case 1:
             static_cast<ghostEdge *>(ghostEntities[part - 1])
-              ->addElement(el->getType(), el, elmToPartition[el]);
+              ->addElement(el, elmToPartition[el]);
             break;
           case 2:
             static_cast<ghostFace *>(ghostEntities[part - 1])
-              ->addElement(el->getType(), el, elmToPartition[el]);
+              ->addElement(el, elmToPartition[el]);
             break;
           case 3:
             static_cast<ghostRegion *>(ghostEntities[part - 1])
-              ->addElement(el->getType(), el, elmToPartition[el]);
+              ->addElement(el, elmToPartition[el]);
             break;
           default: break;
         }

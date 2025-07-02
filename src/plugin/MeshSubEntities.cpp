@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -18,10 +18,10 @@
 #include "Context.h"
 
 StringXNumber MeshSubEntitiesOptions_Number[] = {
-  {GMSH_FULLRC, "InputDimension", nullptr, 1.},
-  {GMSH_FULLRC, "InputPhysicalGroup", nullptr, 1.},
-  {GMSH_FULLRC, "OuputDimension", nullptr, 0.},
-  {GMSH_FULLRC, "OuputPhysicalGroup", nullptr, 2000.},
+  {GMSH_FULLRC, "InputDimension", nullptr, 1., ""},
+  {GMSH_FULLRC, "InputPhysicalGroup", nullptr, 1., ""},
+  {GMSH_FULLRC, "OuputDimension", nullptr, 0., ""},
+  {GMSH_FULLRC, "OuputPhysicalGroup", nullptr, 2000., ""},
 };
 
 extern "C" {

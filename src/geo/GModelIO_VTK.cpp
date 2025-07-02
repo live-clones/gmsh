@@ -1,7 +1,10 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+//
+// Contributor(s):
+//   Florian Blachère
 
 #include "GModel.h"
 #include "OS.h"
@@ -29,7 +32,7 @@ int GModel::writeVTK(const std::string &name, bool binary, bool saveAll,
 
   // get the number of vertices and index the vertices in a continuous
   // sequence
-  int numVertices = indexMeshVertices(saveAll);
+  std::size_t numVertices = indexMeshVertices(saveAll);
 
   fprintf(fp, "# vtk DataFile Version 2.0\n");
   fprintf(fp, "%s, Created by Gmsh %s \n", getName().c_str(), GMSH_VERSION);
@@ -44,7 +47,7 @@ int GModel::writeVTK(const std::string &name, bool binary, bool saveAll,
   getEntities(entities);
 
   // write mesh vertices
-  fprintf(fp, "POINTS %d double\n", numVertices);
+  fprintf(fp, "POINTS %zu double\n", numVertices);
   for(std::size_t i = 0; i < entities.size(); i++)
     for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
       entities[i]->mesh_vertices[j]->writeVTK(fp, binary, scalingFactor,
@@ -52,7 +55,7 @@ int GModel::writeVTK(const std::string &name, bool binary, bool saveAll,
   fprintf(fp, "\n");
 
   // loop over all elements we need to save and count vertices
-  int numElements = 0, totalNumInt = 0;
+  std::size_t numElements = 0, totalNumInt = 0;
   for(std::size_t i = 0; i < entities.size(); i++) {
     if(entities[i]->physicals.size() || saveAll) {
       for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
@@ -65,7 +68,7 @@ int GModel::writeVTK(const std::string &name, bool binary, bool saveAll,
   }
 
   // print vertex indices in ascii or binary
-  fprintf(fp, "CELLS %d %d\n", numElements, totalNumInt);
+  fprintf(fp, "CELLS %zu %zu\n", numElements, totalNumInt);
   for(std::size_t i = 0; i < entities.size(); i++) {
     if(entities[i]->physicals.size() || saveAll) {
       for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
@@ -80,7 +83,7 @@ int GModel::writeVTK(const std::string &name, bool binary, bool saveAll,
   std::vector<int> physicals;
 
   // print element types in ascii or binary
-  fprintf(fp, "CELL_TYPES %d\n", numElements);
+  fprintf(fp, "CELL_TYPES %zu\n", numElements);
   for(std::size_t i = 0; i < entities.size(); i++) {
     if(entities[i]->physicals.size() || saveAll) {
       for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
@@ -106,12 +109,12 @@ int GModel::writeVTK(const std::string &name, bool binary, bool saveAll,
     }
   }
 
-  if(havePhysicals && numElements == (int)physicals.size()) {
+  if(havePhysicals && numElements == physicals.size()) {
     fprintf(fp, "\n");
-    fprintf(fp, "CELL_DATA %d\n", numElements);
+    fprintf(fp, "CELL_DATA %zu\n", numElements);
     fprintf(fp, "SCALARS CellEntityIds int 1\n");
     fprintf(fp, "LOOKUP_TABLE default\n");
-    for(int i = 0; i < numElements; i++) {
+    for(std::size_t i = 0; i < numElements; i++) {
       int type = physicals[i];
       if(binary) {
         // VTK always expects big endian binary data
@@ -137,7 +140,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   }
 
   char buffer[256], buffer2[256];
-  std::map<int, std::map<int, std::string> > physicals[4];
+  std::map<int, std::map<int, std::string>> physicals[4];
 
   if(!fgets(buffer, sizeof(buffer), fp)) {
     fclose(fp);
@@ -170,8 +173,8 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   }
 
   // read mesh vertices
-  int numVertices;
-  if(fscanf(fp, "%s %d %s", buffer, &numVertices, buffer2) != 3) return 0;
+  std::size_t numVertices;
+  if(fscanf(fp, "%s %zu %s", buffer, &numVertices, buffer2) != 3) return 0;
   if(strcmp(buffer, "POINTS") || !numVertices) {
     Msg::Warning("No points in dataset");
     fclose(fp);
@@ -187,9 +190,9 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
     fclose(fp);
     return 0;
   }
-  Msg::Info("Reading %d points", numVertices);
+  Msg::Info("Reading %zu points", numVertices);
   std::vector<MVertex *> vertices(numVertices);
-  for(int i = 0; i < numVertices; i++) {
+  for(std::size_t i = 0; i < numVertices; i++) {
     double xyz[3];
     if(binary) {
       if(datasize == sizeof(float)) {
@@ -219,8 +222,8 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   }
 
   // read mesh elements
-  int numElements, totalNumInt;
-  if(fscanf(fp, "%s %d %d", buffer, &numElements, &totalNumInt) != 3) {
+  std::size_t numElements, totalNumInt;
+  if(fscanf(fp, "%s %zu %zu", buffer, &numElements, &totalNumInt) != 3) {
     fclose(fp);
     return 0;
   }
@@ -228,13 +231,13 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   bool haveCells = true;
   bool haveLines = false;
   if(!strcmp(buffer, "CELLS") && numElements > 0)
-    Msg::Info("Reading %d cells", numElements);
+    Msg::Info("Reading %zu cells", numElements);
   else if(!strcmp(buffer, "POLYGONS") && numElements > 0)
-    Msg::Info("Reading %d polygons", numElements);
+    Msg::Info("Reading %zu polygons", numElements);
   else if(!strcmp(buffer, "LINES") && numElements > 0) {
     haveCells = false;
     haveLines = true;
-    Msg::Info("Reading %d lines", numElements);
+    Msg::Info("Reading %zu lines", numElements);
   }
   else {
     Msg::Warning("No cells or polygons in dataset");
@@ -247,10 +250,10 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
   int iSurface = getMaxElementaryNumber(2) + 1;
   int iVolume = getMaxElementaryNumber(3) + 1;
 
-  std::map<int, std::vector<MElement *> > elements[8];
+  std::map<int, std::vector<MElement *>> elements[8];
 
   if(haveCells) {
-    std::vector<std::vector<MVertex *> > cells(numElements);
+    std::vector<std::vector<MVertex *>> cells(numElements);
     for(std::size_t i = 0; i < cells.size(); i++) {
       int numVerts, n[100];
       if(binary) {
@@ -286,11 +289,11 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
     }
 
     if(unstructured) {
-      if(fscanf(fp, "%s %d", buffer, &numElements) != 2) {
+      if(fscanf(fp, "%s %zu", buffer, &numElements) != 2) {
         fclose(fp);
         return 0;
       }
-      if(strcmp(buffer, "CELL_TYPES") || numElements != (int)cells.size()) {
+      if(strcmp(buffer, "CELL_TYPES") || numElements != cells.size()) {
         Msg::Error("No or invalid number of cells types");
         fclose(fp);
         return 0;
@@ -310,6 +313,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
             return 0;
           }
         }
+        int numVerts = cells[i].size(), order;
         switch(type) {
         case 1: elements[0][iPoint++].push_back(new MPoint(cells[i])); break;
         // first order elements
@@ -373,6 +377,31 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
             cells[i][14], cells[i][13], cells[i][8], cells[i][10], cells[i][11],
             cells[i][15], cells[i][17], cells[i][16]));
           break;
+        // high-order elements
+        // https://vtk.org/doc/nightly/html/vtkCellType_8h_source.html
+        case 68: // VTK_LAGRANGE_CURVE
+          elements[1][iCurve].push_back(new MLineN(cells[i]));
+          break;
+        case 69: // VTK_LAGRANGE_TRIANGLE
+          switch(numVerts) {
+          case 3: order = 1; break;
+          case 6: order = 2; break;
+          case 10: order = 3; break;
+          case 15: order = 4; break;
+          default: order = 1; break;
+          }
+          elements[2][iSurface].push_back(new MTriangleN(cells[i], order));
+          break;
+        case 71: // VTK_LAGRANGE_TETRAHEDRON
+          switch(numVerts) {
+          case 4: order = 1; break;
+          case 10: order = 2; break;
+          case 20: order = 3; break;
+          case 35: order = 4; break;
+          default: order = 1; break;
+          }
+          elements[4][iVolume].push_back(new MTetrahedronN(cells[i], order));
+          break;
         default: Msg::Error("Unknown type of cell %d", type); break;
         }
       }
@@ -398,7 +427,7 @@ int GModel::readVTK(const std::string &name, bool bigEndian)
     if(!binary) {
       int v0, v1;
       char line[100000], *p, *pEnd, *pEnd2;
-      for(int k = 0; k < numElements; k++) {
+      for(std::size_t k = 0; k < numElements; k++) {
         physicals[1][iCurve][1] = "centerline";
         if(!fgets(line, sizeof(line), fp)) {
           fclose(fp);

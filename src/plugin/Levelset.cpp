@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -495,8 +495,6 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(
       }
 
       // if we extract volumes, add the nodes on the chosen side
-      // (FIXME: when cutting 2D views, the elts can have the wrong
-      // orientation)
       if(_extractVolume) {
         int nbCut = np;
         for(int nod = 0; nod < nsn; nod++) {
@@ -517,6 +515,19 @@ void GMSH_LevelsetPlugin::_cutAndAddElements(
         if(np == 6) reorderPrism(numComp, xp, yp, zp, valp, ep, nbCut);
         if(np > 8) // can't deal with this
           continue;
+
+        // Flip 2D elements in the correct orientation
+        if ((np == 3 && levels[n[0]]*levels[n[2]] > 0) ||
+            (np == 4 && levels[n[0]]*levels[n[2]] < 0)) {
+          double xpi[12], ypi[12], zpi[12], valpi[12][9];
+          int epi[12];
+          for(int k = 0; k < np; k++)
+            affect(xpi, ypi, zpi, valpi, epi, k, xp, yp, zp, valp, ep, k,
+                  numComp);
+          for(int k = 0; k < np; k++)
+            affect(xp, yp, zp, valp, ep, k, xpi, ypi, zpi, valpi, epi,
+                  np - k - 1, numComp);
+        }
       }
 
       // finally, add the new element

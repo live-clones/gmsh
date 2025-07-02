@@ -1,4 +1,4 @@
-// HighOrderMeshOptimizer - Copyright (C) 2013-2023 UCLouvain-ULiege
+// HighOrderMeshOptimizer - Copyright (C) 2013-2024 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -540,10 +540,10 @@ void distanceFromElementsToGeometry(GModel *gm, int dim,
 
   std::vector<GEntity *> entities;
   gm->getEntities(entities);
-  for(int iEnt = 0; iEnt < entities.size(); ++iEnt) {
+  for(size_t iEnt = 0; iEnt < entities.size(); ++iEnt) {
     GEntity *&entity = entities[iEnt];
     if(entity->dim() != dim) continue;
-    for(int iEl = 0; iEl < entity->getNumMeshElements();
+    for(size_t iEl = 0; iEl < entity->getNumMeshElements();
         iEl++) { // Detect bad elements
       MElement *element = entity->getMeshElement(iEl);
       double d = 0.;
@@ -572,7 +572,7 @@ double distanceToGeometry(GModel *gm, int distType, double tol, int meshDiscr,
     for(auto it = gm->firstEdge(); it != gm->lastEdge(); ++it) {
       if((*it)->geomType() == GEntity::Line) continue;
       for(unsigned int i = 0; i < (*it)->lines.size(); i++) {
-        double dist;
+        double dist{0.0};
         switch(distType) {
         case CADDIST_TAYLOR:
           dist = taylorDistanceEdge((*it)->lines[i], *it);

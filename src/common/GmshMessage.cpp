@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -49,6 +49,10 @@
 #include <FL/fl_ask.H>
 #include "FlGui.h"
 #include "extraDialogs.h"
+#endif
+
+#if defined(HAVE_OCC)
+#include <Standard_Version.hxx>
 #endif
 
 #if defined(_OPENMP)
@@ -147,10 +151,10 @@ void Msg::Initialize(int argc, char **argv)
       sargv[sargc++] = argv[i];
   }
   sargv[sargc] = nullptr;
-  PetscInitialize(&sargc, &sargv, PETSC_NULL, PETSC_NULL);
+  PetscInitialize(&sargc, &sargv, nullptr, nullptr);
   PetscPopSignalHandler();
 #if defined(HAVE_SLEPC)
-  SlepcInitialize(&sargc, &sargv, PETSC_NULL, PETSC_NULL);
+  SlepcInitialize(&sargc, &sargv, nullptr, nullptr);
 #endif
   delete [] sargv;
 #endif
@@ -262,7 +266,7 @@ int Msg::GetVerbosity()
   return _verbosity;
 }
 
-void Msg::SetLogFile(const std::string &name)
+void Msg::SetLogFileName(const std::string &name)
 {
   _logFileName = name;
   if(_logFile) fclose(_logFile);
@@ -273,6 +277,11 @@ void Msg::SetLogFile(const std::string &name)
   }
   else
     _logFile = nullptr;
+}
+
+std::string Msg::GetLogFileName()
+{
+  return _logFileName;
 }
 
 std::string Msg::GetLaunchDate()
@@ -387,13 +396,13 @@ onelab::client *Msg::GetOnelabClient()
 }
 #endif
 
-void Msg::Exit(int level)
+void Msg::Exit(int level, bool forceLevel)
 {
   Finalize();
 #if defined(HAVE_MPI)
   if(level) MPI_Abort(MPI_COMM_WORLD, level);
 #endif
-  exit(level ? level : _atLeastOneErrorInRun);
+  exit((forceLevel || level) ? level : _atLeastOneErrorInRun);
 }
 
 static int streamIsFile(FILE *stream)
@@ -506,7 +515,7 @@ void Msg::Error(const char *fmt, ...)
   }
 
   if(GetVerbosity() >= 1) {
-    if(_logFile) fprintf(_logFile, "Error: %s\n", str);
+    if(_logFile) fprintf(_logFile, "Error   : %s\n", str);
     if(_callback) (*_callback)("Error", str);
     if(_client) _client->Error(str);
 #if defined(HAVE_FLTK)
@@ -562,7 +571,7 @@ void Msg::Warning(const char *fmt, ...)
   va_end(args);
   int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
-  if(_logFile) fprintf(_logFile, "Warning: %s\n", str);
+  if(_logFile) fprintf(_logFile, "Warning : %s\n", str);
   if(_callback) (*_callback)("Warning", str);
   if(_client) _client->Warning(str);
 
@@ -608,7 +617,16 @@ void Msg::Info(const char *fmt, ...)
       strcat(str, res.c_str());
   }
 
-  if(_logFile) fprintf(_logFile, "Info: %s\n", str);
+  if(_logFile) {
+    if(_progressMeterCurrent >= 0 && _progressMeterTotal > 1 &&
+       _commSize == 1) {
+      int p =  _progressMeterCurrent;
+      fprintf(_logFile, "Info    : [%3d%%] %s\n", p, str);
+    }
+    else {
+      fprintf(_logFile, "Info    : %s\n", str);
+    }
+  }
   if(_callback) (*_callback)("Info", str);
   if(_client) _client->Info(str);
 
@@ -620,16 +638,18 @@ void Msg::Info(const char *fmt, ...)
   }
 #endif
 
-  if(CTX::instance()->terminal){
+  if(CTX::instance()->terminal) {
     if(_progressMeterCurrent >= 0 && _progressMeterTotal > 1 &&
-        _commSize == 1) {
+       _commSize == 1) {
       int p =  _progressMeterCurrent;
       fprintf(stdout, "Info    : [%3d%%] %s\n", p, str);
     }
-    else if(_commSize > 1)
+    else if(_commSize > 1) {
       fprintf(stdout, "Info    : [rank %3d] %s\n", GetCommRank(), str);
-    else
+    }
+    else {
       fprintf(stdout, "Info    : %s\n", str);
+    }
     fflush(stdout);
   }
 }
@@ -650,7 +670,7 @@ void Msg::Direct(const char *fmt, ...)
   va_end(args);
   int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
-  if(_logFile) fprintf(_logFile, "Direct: %s\n", str);
+  if(_logFile) fprintf(_logFile, "%s\n", str);
   if(_callback) (*_callback)("Direct", str);
   if(_client) _client->Info(str);
 
@@ -707,9 +727,9 @@ void Msg::StatusBar(bool log, const char *fmt, ...)
     strcat(str, res.c_str());
   }
 
-  if(_logFile) fprintf(_logFile, "Info: %s\n", str);
-  if(_callback && log) (*_callback)("Info", str);
-  if(_client && log) _client->Info(str);
+  if(log && _logFile) fprintf(_logFile, "Info    : %s\n", str);
+  if(log && _callback) (*_callback)("Info", str);
+  if(log && _client) _client->Info(str);
 
 #if defined(HAVE_FLTK)
   if(FlGui::available()){
@@ -768,7 +788,7 @@ void Msg::Debug(const char *fmt, ...)
   va_end(args);
   int l = strlen(str); if(str[l - 1] == '\n') str[l - 1] = '\0';
 
-  if(_logFile) fprintf(_logFile, "Debug: %s\n", str);
+  if(_logFile) fprintf(_logFile, "Debug   : %s\n", str);
   if(_callback) (*_callback)("Debug", str);
   if(_client) _client->Info(str);
 
@@ -799,10 +819,6 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
 
   if(percent >= _progressMeterCurrent || n > N - 1){
     int p = _progressMeterCurrent;
-    while(p < percent) p += _progressMeterStep;
-    if(p >= 100) p = 100;
-
-    _progressMeterCurrent = p;
 
     // TODO With C++11 use std::string (contiguous layout) and avoid all these C
     // problems
@@ -823,13 +839,17 @@ void Msg::ProgressMeter(int n, bool log, const char *fmt, ...)
       FlGui::check(true);
     }
 #endif
-    if(_logFile) fprintf(_logFile, "Progress: %s\n", str);
+    if(log && _logFile) fprintf(_logFile, "%s\n", str2);
     if(_callback) (*_callback)("Progress", str);
     if(!streamIsFile(stdout) && log && CTX::instance()->terminal){
-      fprintf(stdout, "%s                                          \r",
-              (n > N - 1) ? "" : str2);
+      std::string w(80, ' ');
+      fprintf(stdout, "%s%s\r", (n > N - 1) ? "" : str2, w.c_str());
       fflush(stdout);
     }
+
+    while(p <= percent) p += _progressMeterStep;
+    if(p >= 100) p = 100;
+    _progressMeterCurrent = p;
   }
 }
 
@@ -1209,6 +1229,8 @@ void Msg::FinalizeOnelab()
       it != onelab::server::instance()->lastClient(); it++){
     (*it)->kill();
   }
+  // clear db
+  onelab::server::instance()->clear();
   // delete local client
   if(_onelabClient){
     delete _onelabClient;
@@ -1418,28 +1440,6 @@ void Msg::ExchangeOnelabParameter(const std::string &key,
     ps[0].setMax(fopt["Max"][0]); ps[0].setMin(-onelab::parameter::maxNumber());
   }
   if(noRange && fopt.count("Step")) ps[0].setStep(fopt["Step"][0]);
-  // if no range/min/max/step info is provided, try to compute a reasonnable
-  // range and step (this makes the gui much nicer to use)
-  if(val.size() && noRange && !fopt.count("Range") && !fopt.count("Step") &&
-     !fopt.count("Min") && !fopt.count("Max")){
-    bool isInteger = (floor(val[0]) == val[0]);
-    double fact = isInteger ? 5. : 20.;
-    if(val[0] > 0){
-      ps[0].setMin(val[0] / fact);
-      ps[0].setMax(val[0] * fact);
-      ps[0].setStep((ps[0].getMax() - ps[0].getMin()) / 100.);
-    }
-    else if(val[0] < 0){
-      ps[0].setMin(val[0] * fact);
-      ps[0].setMax(val[0] / fact);
-      ps[0].setStep((ps[0].getMax() - ps[0].getMin()) / 100.);
-    }
-    if(val[0] && isInteger){
-      ps[0].setMin((int)ps[0].getMin());
-      ps[0].setMax((int)ps[0].getMax());
-      ps[0].setStep((int)ps[0].getStep());
-    }
-  }
   if(noChoices && fopt.count("Choices")){
     ps[0].setChoices(fopt["Choices"]);
     if(copt.count("Choices")) ps[0].setChoiceLabels(copt["Choices"]);

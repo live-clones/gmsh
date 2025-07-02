@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -51,19 +51,28 @@ static void drawElementLabels(drawContext *ctx, GEntity *e,
     if(i % labelStep == 0) {
       SPoint3 pc = ele->barycenter();
       char str[256];
-      if(CTX::instance()->mesh.labelType == 4)
+      switch(CTX::instance()->mesh.labelType) {
+      case 4:
         sprintf(str, "(%g,%g,%g)", pc.x(), pc.y(), pc.z());
-      else if(CTX::instance()->mesh.labelType == 3)
+        break;
+      case 3:
         sprintf(str, "%d", ele->getPartition());
-      else if(CTX::instance()->mesh.labelType == 2) {
-        int np = e->physicals.size();
-        int p = np ? e->physicals[np - 1] : 0;
-        sprintf(str, "%d", p);
-      }
-      else if(CTX::instance()->mesh.labelType == 1)
+        break;
+      case 2:
+        {
+          int np = e->physicals.size();
+          int p = np ? e->physicals[np - 1] : 0;
+          sprintf(str, "%d", p);
+        }
+        break;
+      case 1:
         sprintf(str, "%d", e->tag());
-      else
-        sprintf(str, "%lu", ele->getNum());
+        break;
+      case 0:
+      default:
+        sprintf(str, "%zu", ele->getNum());
+        break;
+      }
       ctx->drawString(str, pc.x(), pc.y(), pc.z());
     }
   }
@@ -109,8 +118,19 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
   int np = e->physicals.size();
   int physical = np ? e->physicals[np - 1] : 0;
   char str[256];
-  if(CTX::instance()->mesh.labelType == 4)
-    sprintf(str, "(%.16g,%.16g,%.16g)", v->x(), v->y(), v->z());
+  if(CTX::instance()->mesh.labelType == 4) {
+    strcpy(str, "(");
+    char tmp[256];
+    sprintf(tmp, CTX::instance()->numberFormat.c_str(), v->x());
+    strcat(str, tmp);
+    strcat(str, ",");
+    sprintf(tmp, CTX::instance()->numberFormat.c_str(), v->y());
+    strcat(str, tmp);
+    strcat(str, ",");
+    sprintf(tmp, CTX::instance()->numberFormat.c_str(), v->z());
+    strcat(str, tmp);
+    strcat(str, ")");
+  }
   else if(CTX::instance()->mesh.labelType == 3) {
     if(partition < 0)
       sprintf(str, "NA");
@@ -122,7 +142,7 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
   else if(CTX::instance()->mesh.labelType == 1)
     sprintf(str, "%d", e->tag());
   else
-    sprintf(str, "%lu", v->getNum());
+    sprintf(str, "%zu", v->getNum());
 
   if(CTX::instance()->mesh.colorCarousel == 0 ||
      CTX::instance()->mesh.volumeFaces ||
@@ -458,7 +478,7 @@ public:
     if(CTX::instance()->mesh.lineLabels) drawElementLabels(_ctx, e, e->lines);
 
     if(CTX::instance()->mesh.nodes || CTX::instance()->mesh.nodeLabels) {
-      if(e->getAllElementsVisible())
+      if(!e->getOnlySomeElementsVisible())
         drawVerticesPerEntity(_ctx, e);
       else
         drawVerticesPerElement(_ctx, e, e->lines);
@@ -522,8 +542,9 @@ public:
     }
 
     if(CTX::instance()->mesh.nodes || CTX::instance()->mesh.nodeLabels) {
-      if(f->getAllElementsVisible())
+      if(!f->getOnlySomeElementsVisible()) {
         drawVerticesPerEntity(_ctx, f);
+      }
       else {
         if(CTX::instance()->mesh.triangles)
           drawVerticesPerElement(_ctx, f, f->triangles);
@@ -620,8 +641,9 @@ public:
     }
 
     if(CTX::instance()->mesh.nodes || CTX::instance()->mesh.nodeLabels) {
-      if(r->getAllElementsVisible())
+      if(!r->getOnlySomeElementsVisible()) {
         drawVerticesPerEntity(_ctx, r);
+      }
       else {
         if(CTX::instance()->mesh.tetrahedra)
           drawVerticesPerElement(_ctx, r, r->tetrahedra);

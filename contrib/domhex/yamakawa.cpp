@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -4413,7 +4413,7 @@ void PostOp::statistics(GRegion *gr)
   printf("  percentage of prisms : %.2f\n", vol6 * 100.0 / vol);
   printf("  percentage of pyramids : %.2f\n", vol5 * 100.0 / vol);
   printf("  percentage of tetrahedra : %.2f\n", vol4 * 100.0 / vol);
-  printf("Total number of elements : %lu\n", gr->getNumMeshElements());
+  printf("Total number of elements : %zu\n", gr->getNumMeshElements());
   printf("Total volume : %f\n", vol);
   printf("Misc : %d %d %d\n", estimate1, estimate2, iterations);
 }

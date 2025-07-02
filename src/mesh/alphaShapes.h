@@ -18,7 +18,7 @@
 #include "meshTriangulation.h"
 #include "qualityMeasures.h"
 #include "robustPredicates.h"
-#include "alphaShape_ocTree2.h"
+#include "alphaShape_ocTree.h"
 
 
 struct alphaShapeBndEdge {
@@ -58,8 +58,6 @@ void filterNodes(PolyMesh *pm, const int tag);
 void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double alpha, const double hMean,
                         std::function<double(int, int, double, double, double, double)> sizeFieldCallback, 
                         const int triangulate, const int refine);
-
-void _decimateTriangulation(const int faceTag, const double thresholdDistance);
 
 void _tetrahedralizePoints(const int tag, const bool optimize, const double qualityMin);
 

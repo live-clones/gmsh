@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -48,7 +48,7 @@ static void addExtrudeNormals(std::vector<T *> &elements, int invert,
   }
 
   if(octree && !gouraud) { // get extrusion direction from post-processing view
-    std::set<MVertex *> verts;
+    std::set<MVertex *, MVertexPtrLessThan> verts;
     for(std::size_t i = 0; i < elements.size(); i++) {
       if(!ExtrudeParams::calcLayerScaleFactor[index]) {
         for(std::size_t j = 0; j < elements[i]->getNumVertices(); j++)
@@ -132,7 +132,7 @@ typedef std::set<std::pair<bool, std::pair<int, int> > > infoset;
 // between a scaled and not scaled region 'average' between being scaled and not
 // scaled.
 template <class T>
-static void addExtrudeNormals(std::set<T *> &entities,
+static void addExtrudeNormals(std::set<T *, GEntityPtrLessThan> &entities,
                               std::map<int, infoset> &infos,
                               std::map<int, bool> &skipScaleCalcMap)
 {
@@ -245,7 +245,8 @@ static void addExtrudeNormals(std::set<T *> &entities,
   }
 }
 
-static void checkDepends(GModel *m, GFace *f, std::set<GFace *> &dep)
+static void checkDepends(GModel *m, GFace *f,
+                         std::set<GFace *, GEntityPtrLessThan> &dep)
 {
   ExtrudeParams *ep = f->meshAttributes.extrude;
   if(ep && ep->mesh.ExtrudeMesh && ep->geo.Mode == COPIED_ENTITY) {
@@ -308,8 +309,8 @@ FixErasedExtrScaleFlags(GModel *m, std::map<int, bool> &faceSkipScaleCalc,
 
 int Mesh2DWithBoundaryLayers(GModel *m)
 {
-  std::set<GFace *> sourceFaces, otherFaces;
-  std::set<GEdge *> sourceEdges, otherEdges;
+  std::set<GFace *, GEntityPtrLessThan> sourceFaces, otherFaces;
+  std::set<GEdge *, GEntityPtrLessThan> sourceEdges, otherEdges;
   std::map<int, infoset> sourceFaceInfo, sourceEdgeInfo;
   std::map<int, bool> faceSkipScaleCalc, edgeSkipScaleCalc; // Trevor Strickler
   ExtrudeParams::calcLayerScaleFactor[0] = false; // Trevor Strickler
@@ -406,7 +407,7 @@ int Mesh2DWithBoundaryLayers(GModel *m)
   }
   // compute mesh dependencies in source faces (so we can e.g. create a boundary
   // layer on an extruded mesh)
-  std::set<GFace *> sourceFacesDependencies;
+  std::set<GFace *, GEntityPtrLessThan> sourceFacesDependencies;
   for(auto it = sourceFaces.begin(); it != sourceFaces.end(); it++)
     checkDepends(m, *it, sourceFacesDependencies);
   Msg::Info("%d dependencies in mesh of source faces",

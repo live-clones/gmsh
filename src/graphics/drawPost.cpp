@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -96,7 +96,7 @@ static void drawArrays(drawContext *ctx, PView *p, VertexArray *va, GLint type,
 #endif
         float dir[3] = {(p1[0] - p0[0]) / l, (p1[1] - p0[1]) / l,
                         (p1[2] - p0[2]) / l};
-        printf("%g %g %g %g %g %g\n", v0, v1, p0[0], p0[1], p1[0], p1[1]);
+        //printf("%g %g %g %g %g %g\n", v0, v1, p0[0], p0[1], p1[0], p1[1]);
         ctx->drawVector(1, 0, p0[0] - dir[1] * v0, p0[1] + dir[0] * v0, 0.0,
                         p1[0] - dir[1] * v1, p1[1] + dir[0] * v1, 0.0,
                         opt->light);

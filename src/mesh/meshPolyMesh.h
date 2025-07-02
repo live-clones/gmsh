@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -949,6 +949,7 @@ public:
     createFace(f0, v0, v1, v, he0, he1v, hev0);
     createFace(f1, v1, v2, v, he1, he2v, hev1);
     createFace(f2, v2, v0, v, he2, he0v, hev2);
+
     if(doSwap) {
       std::stack<HalfEdge *> _stack;
       _stack.push(he0);
@@ -1021,10 +1022,10 @@ public:
 struct HalfEdgePtrLessThan {
   bool operator()(PolyMesh::HalfEdge *l1, PolyMesh::HalfEdge *l2) const
   {
-    int /*PolyMesh::Vertex */ l10 = std::min(l1->v->data, l1->next->v->data);
-    int /*PolyMesh::Vertex */ l11 = std::max(l1->v->data, l1->next->v->data);
-    int /*PolyMesh::Vertex */ l20 = std::min(l2->v->data, l2->next->v->data);
-    int /*PolyMesh::Vertex */ l21 = std::max(l2->v->data, l2->next->v->data);
+    PolyMesh::Vertex *l10 = std::min(l1->v, l1->next->v);
+    PolyMesh::Vertex *l11 = std::max(l1->v, l1->next->v);
+    PolyMesh::Vertex *l20 = std::min(l2->v, l2->next->v);
+    PolyMesh::Vertex *l21 = std::max(l2->v, l2->next->v);
     if(l10 < l20) return true;
     if(l10 > l20) return false;
     if(l11 > l21) return true;
@@ -1046,5 +1047,20 @@ struct HalfEdgePtrEqual {
 
 void print__(const char *fn, PolyMesh *pm,
              std::map<PolyMesh::Vertex *, double> &ls);
+
+// compute the degree of a given vertex v
+inline int degree(const PolyMesh::Vertex *v) 
+{
+  PolyMesh::HalfEdge *he = v->he;
+  size_t count = 0;
+  do {
+    he = he->opposite;
+    if(he == NULL) return -1;
+    he = he->next;
+    count++;
+  } while(he != v->he);
+  return count;
+}
+
 
 #endif

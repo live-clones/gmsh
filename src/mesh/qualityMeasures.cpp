@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -18,6 +18,10 @@
 #include "GmshMessage.h"
 #include <limits>
 #include <string.h>
+
+static constexpr double INV_24 = 1.0 / 24.0;
+static constexpr double INV_60 = 1.0 / 60.0;
+static constexpr double INV_90 = 1.0 / 90.0;
 
 namespace {
 
@@ -194,7 +198,7 @@ double qmTriangle::eta(MTriangle *el)
 
   double amin = std::min(std::min(a1, a2), a3);
   double angle = std::abs(60. - amin);
-  return 1. - angle / 60;
+  return 1. - angle * INV_60;
 }
 
 double qmTriangle::angles(MTriangle *e)
@@ -429,7 +433,7 @@ double qmQuadrangle::eta(MQuadrangle *el)
   angle = std::max(fabs(90. - a3), angle);
   angle = std::max(fabs(90. - a4), angle);
 
-  return sign * (1. - angle / 90) * AR;
+  return sign * (1. - angle * INV_90) * AR;
 }
 
 double qmQuadrangle::angles(MQuadrangle *e)
@@ -713,7 +717,8 @@ double qmTetrahedron::gamma(const double &x1, const double &y1,
   // => R is actually undetermined but the quality is (close to) zero
   if(insideSqrt <= 0) return 0;
 
-  double R = std::sqrt(insideSqrt) / 24 / *volume;
+  // double R = std::sqrt(insideSqrt) * INV_24 / *volume;
+  double partR = std::sqrt(insideSqrt) * INV_24;
 
   double s1 = fabs(triangle_area(p0, p1, p2));
   double s2 = fabs(triangle_area(p0, p2, p3));
@@ -721,7 +726,8 @@ double qmTetrahedron::gamma(const double &x1, const double &y1,
   double s4 = fabs(triangle_area(p1, p2, p3));
   double rho = 3 * 3 * *volume / (s1 + s2 + s3 + s4);
 
-  return rho / R;
+  // return rho / R;
+  return rho * *volume / partR;
 }
 
 double qmTetrahedron::cond(const double &x1, const double &y1, const double &z1,

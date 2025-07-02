@@ -97,7 +97,6 @@ gmsh.view.option.setString(v[2], "Name", "Test...")
 gmsh.view.option.setNumber(v[2], "Axes", 1)
 gmsh.view.option.setNumber(v[2], "IntervalsType", 2)
 gmsh.view.option.setNumber(v[2], "Type", 2)
-gmsh.view.option.setNumber(v[2], "IntervalsType", 2)
 gmsh.view.option.setNumber(v[2], "AutoPosition", 0)
 gmsh.view.option.setNumber(v[2], "PositionX", 85)
 gmsh.view.option.setNumber(v[2], "PositionY", 50)
@@ -158,7 +157,7 @@ for num in range(1, 4):
 
             # gmsh.write("t8-{}.gif".format(num2))
             # gmsh.write("t8-{}.ppm".format(num2))
-            gmsh.write("t8-{}.jpg".format(num2))
+            # gmsh.write("t8-{}.jpg".format(num2))
             pass
 
     if num == 3:

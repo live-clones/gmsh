@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -23,12 +23,12 @@
 template <class scalar> class simpleFunction;
 
 StringXNumber DistanceOptions_Number[] = {
-  {GMSH_FULLRC, "PhysicalPoint", nullptr, 0.},
-  {GMSH_FULLRC, "PhysicalLine", nullptr, 0.},
-  {GMSH_FULLRC, "PhysicalSurface", nullptr, 0.},
-  {GMSH_FULLRC, "DistanceType", nullptr, 0},
-  {GMSH_FULLRC, "MinScale", nullptr, 0},
-  {GMSH_FULLRC, "MaxScale", nullptr, 0}};
+  {GMSH_FULLRC, "PhysicalPoint", nullptr, 0., ""},
+  {GMSH_FULLRC, "PhysicalLine", nullptr, 0., ""},
+  {GMSH_FULLRC, "PhysicalSurface", nullptr, 0., ""},
+  {GMSH_FULLRC, "DistanceType", nullptr, 0, ""},
+  {GMSH_FULLRC, "MinScale", nullptr, 0, ""},
+  {GMSH_FULLRC, "MaxScale", nullptr, 0, ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterDistancePlugin() { return new GMSH_DistancePlugin(); }

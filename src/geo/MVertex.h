@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -219,6 +219,13 @@ struct MVertexPtrLessThan {
   bool operator()(const MVertex *v1, const MVertex *v2) const
   {
     return v1->getNum() < v2->getNum();
+  }
+};
+
+struct MVertexPtrLessThanIndex {
+  bool operator()(const MVertex *v1, const MVertex *v2) const
+  {
+    return v1->getIndex() < v2->getIndex();
   }
 };
 

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -664,13 +664,13 @@ static void createLagrangeMultipliers(dofManager<double> &myAssembler,
   //  if (g.crosses[0]->inInternalBoundary)return;
 
   if(g.singularities.size() == 1) {
-    //    printf("group id %d singularity %lu (%lu)\n", g.groupId,
+    //    printf("group id %d singularity %zu (%zu)\n", g.groupId,
     //           g.singularities[0]->getNum(), g.singularities.size());
     myAssembler.numberVertex(g.singularities[0], 0, 33);
     myAssembler.numberVertex(g.singularities[0], 0, 34);
   }
   else {
-    //    printf("group id %d %lu singularities \n", g.groupId,
+    //    printf("group id %d %zu singularities \n", g.groupId,
     //           g.singularities.size());
   }
 
@@ -1182,7 +1182,7 @@ struct temp_comp {
 static bool isSingular(MVertex *v, std::vector<cross2d *> &adj, double &MAX)
 {
   const std::size_t TEST = 0;
-  if(v->getNum() == TEST) printf("VERTEX %lu\n", v->getNum());
+  if(v->getNum() == TEST) printf("VERTEX %zu\n", v->getNum());
   SVector3 n(0, 0, 0);
   for(size_t i = 0; i < adj.size(); i++) {
     if(adj[i]->inBoundary || adj[i]->inInternalBoundary) return false;
@@ -1222,7 +1222,7 @@ static bool isSingular(MVertex *v, std::vector<cross2d *> &adj, double &MAX)
   }
 
   if(v->getNum() == TEST)
-    printf("VERTEX %lu %12.5E %12.5E %12.5E\n", v->getNum(), n.x(), n.y(),
+    printf("VERTEX %zu %12.5E %12.5E %12.5E\n", v->getNum(), n.x(), n.y(),
            n.z());
   SVector3 t0, b0;
   std::vector<double> angles;
@@ -1245,7 +1245,7 @@ static bool isSingular(MVertex *v, std::vector<cross2d *> &adj, double &MAX)
     adj[i]->normalize(angle);
     angles.push_back(angle);
     if(v->getNum() == TEST) {
-      printf("EDGE %lu %lu\n", adj[i]->_e.getVertex(0)->getNum(),
+      printf("EDGE %zu %zu\n", adj[i]->_e.getVertex(0)->getNum(),
              adj[i]->_e.getVertex(1)->getNum());
       printf("o %12.5E %12.5E %12.5E\n", adj[i]->o_i.x(), adj[i]->o_i.y(),
              adj[i]->o_i.z());
@@ -1263,8 +1263,8 @@ static bool isSingular(MVertex *v, std::vector<cross2d *> &adj, double &MAX)
   }
   if(v->getNum() == TEST) printf("\n");
   if(v->getNum() == TEST)
-    printf("vertex %lu %lu edges %12.5E\n", v->getNum(), adj.size(), MAX);
-  //  if (MAX > .5)printf("vertex %lu %lu edges %12.5E -- new method %12.5E\n",
+    printf("vertex %zu %zu edges %12.5E\n", v->getNum(), adj.size(), MAX);
+  //  if (MAX > .5)printf("vertex %zu %zu edges %12.5E -- new method %12.5E\n",
   //  v->getNum(), adj.size(), MAX,dot(ref,ref0));
   return MAX > .5;
 }
@@ -1559,7 +1559,7 @@ groupBoundaries(GModel *gm, std::map<MEdge, cross2d, MEdgeLessThan> &C,
               vnew = (it2->second->_e.getVertex(0) == v) ?
                        it2->second->_e.getVertex(1) :
                        it2->second->_e.getVertex(0);
-              fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%lu,%lu};\n",
+              fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%zu,%zu};\n",
                       it2->second->_e.getVertex(0)->x(),
                       it2->second->_e.getVertex(0)->y(),
                       it2->second->_e.getVertex(0)->z(),
@@ -1585,7 +1585,7 @@ groupBoundaries(GModel *gm, std::map<MEdge, cross2d, MEdgeLessThan> &C,
         MVertex *v = *it;
         if(cutgraph.find(v) != cutgraph.end() ||
            singularities.find(v) != singularities.end()) {
-          //	  printf("START POINT %lu %d %d\n",v->getNum(),cutgraph.find(v)
+          //	  printf("START POINT %zu %d %d\n",v->getNum(),cutgraph.find(v)
           //!= cutgraph.end() , 		  singularities.find(v) !=
           //! singularities.end());
           std::vector<cross2d *> group;
@@ -1600,12 +1600,12 @@ groupBoundaries(GModel *gm, std::map<MEdge, cross2d, MEdgeLessThan> &C,
                 vnew = (it2->second->_e.getVertex(0) == v) ?
                          it2->second->_e.getVertex(1) :
                          it2->second->_e.getVertex(0);
-                //		printf("EDGE %lu %lu (%d)\n",
+                //		printf("EDGE %zu %zu (%d)\n",
                 //		       it2->second->_e.getVertex(0)->getNum(),it2->second->_e.getVertex(1)->getNum(),
                 //		       singularities.find(v) == singularities.end());
-                //	    printf("v %lu EDGE %lu
-                //%lu\n",v->getNum(),it2->second->_e.getVertex(0)->getNum(),it2->second->_e.getVertex(1)->getNum());
-                fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%lu,%lu};\n",
+                //	    printf("v %zu EDGE %zu
+                //%zu\n",v->getNum(),it2->second->_e.getVertex(0)->getNum(),it2->second->_e.getVertex(1)->getNum());
+                fprintf(f, "SL(%g,%g,%g,%g,%g,%g){%zu,%zu};\n",
                         it2->second->_e.getVertex(0)->x(),
                         it2->second->_e.getVertex(0)->y(),
                         it2->second->_e.getVertex(0)->z(),
@@ -1618,8 +1618,8 @@ groupBoundaries(GModel *gm, std::map<MEdge, cross2d, MEdgeLessThan> &C,
             }
             if(vnew == nullptr) break;
             v = vnew;
-            //	    printf("NEXT POINT %lu %d
-            //%lu\n",v->getNum(),singularities.find(v) == singularities.end(),
+            //	    printf("NEXT POINT %zu %d
+            //%zu\n",v->getNum(),singularities.find(v) == singularities.end(),
             //		   singularities.size());
           } while(cutgraph.find(v) == cutgraph.end() &&
                   singularities.find(v) == singularities.end());
@@ -2082,8 +2082,8 @@ static int computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL, MVertex *v0,
     p[0] = (1. - xi) * e.getVertex(0)->x() + xi * e.getVertex(1)->x();
     p[1] = (1. - xi) * e.getVertex(0)->y() + xi * e.getVertex(1)->y();
     p[2] = (1. - xi) * e.getVertex(0)->z() + xi * e.getVertex(1)->z();
-    //    printf("cutgaphends %lu
-    //    %lu\n",o.getVertex(0)->getNum(),o.getVertex(1)->getNum()); printf("%lu
+    //    printf("cutgaphends %zu
+    //    %zu\n",o.getVertex(0)->getNum(),o.getVertex(1)->getNum()); printf("%zu
     //    ends to the cutgraph\n",cutGraphEnds.size());
     cutGraphEnds.erase(cutGraphEnds.begin());
     // visited.clear();
@@ -2142,7 +2142,7 @@ static int computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL, MVertex *v0,
     }
 
     if(count > 20) {
-      printf("CYCLE DETECTED for SING %lu : ", vsing->getNum());
+      printf("CYCLE DETECTED for SING %zu : ", vsing->getNum());
       for(size_t k = 0; k < passages.size(); k++)
         printf("(%d,%d) ", passages[k]._id, passages[k]._uv);
       printf("\n");
@@ -2158,7 +2158,7 @@ static int computeOneIso(MVertex *vsing, v2t_cont &adj, double VAL, MVertex *v0,
     else {
     }
     XX += ROT;
-    // printf("XX = %d ROT = %d %lu\n",XX,ROT,cutGraphEnds.size());
+    // printf("XX = %d ROT = %d %zu\n",XX,ROT,cutGraphEnds.size());
     if(distance(e.getVertex(0), o.getVertex(0)) < 1.e-12)
       VAL = (1. - xi) * (*POT)[o.getVertex(0)] + xi * (*POT)[o.getVertex(1)];
     else
@@ -2291,7 +2291,7 @@ static bool computeIsos(
   for(; it != singularities.end(); ++it) {
     GEntity *ge = (*it)->onWhat();
     if(ge->dim() == 2 || ge->edges().size() == 0) {
-      printf("%lu %d %d %lu %22.15E %22.15E\n", ge->edges().size(), ge->tag(),
+      printf("%zu %d %d %zu %22.15E %22.15E\n", ge->edges().size(), ge->tag(),
              ge->dim(), singularities.size(), potU[*it], potV[*it]);
       bool success = computeIso(*it, adj, potU[*it], potU, potV, f, d1, G, 0,
                                 cuts, passages);
@@ -2320,7 +2320,7 @@ void getAllConnectedTriangles(
 {
   std::set<cross2d *> touched;
 
-  //  printf("group %lu isolated singularities\n",
+  //  printf("group %zu isolated singularities\n",
   //  isolated_singularities.size());
 
   for(size_t i = 0; i < group.size(); i++) {
@@ -2479,7 +2479,7 @@ static void createJumpyPairs(
           }
         }
         else
-          Msg::Error("error in jumpy pairs %lu \n", vv->getNum());
+          Msg::Error("error in jumpy pairs %zu \n", vv->getNum());
       }
       else if(singularities.find(vv) != singularities.end()) {
         g.singularities.push_back(vv);
@@ -2489,7 +2489,7 @@ static void createJumpyPairs(
       //	}
     }
   }
-  //    printf("GRoup %d mat [%g,%g] [%g,%g] %lu nodes on each side \n"
+  //    printf("GRoup %d mat [%g,%g] [%g,%g] %zu nodes on each side \n"
   //  	 ,g.groupId,g.mat[0][0],g.mat[0][1],g.mat[1][0],g.mat[1][1],
   //    	 g.left.size());
 }
@@ -2754,7 +2754,7 @@ public:
     for(size_t i = 0; i < f.size(); i++) {
       std::vector<GEdge *> e = f[i]->edges();
       if(e.size()) firsts.insert(e[0]);
-      //      printf("--> %lu\n",e[0]->tag());
+      //      printf("--> %zu\n",e[0]->tag());
       for(size_t j = 0; j < f[i]->triangles.size(); j++) {
         MTriangle *t = f[i]->triangles[j];
         SElement se(t);
@@ -2976,7 +2976,7 @@ public:
       itc->second.normalize(aa);
       if(!itc->second.inBoundary) { itc->second._a = aa; }
       else {
-        //	printf("%12.5E %lu %lu\n",aa,
+        //	printf("%12.5E %zu %zu\n",aa,
         //	       itc->second._e.getVertex(0)->getNum(),
         //	       itc->second._e.getVertex(1)->getNum());
         itc->second._a = 0;
@@ -3385,7 +3385,7 @@ public:
         newt.push_back(ts[i]);
       }
     }
-    //    printf("replcing %lu by %lu\n",ts.size(),newt.size());
+    //    printf("replcing %zu by %zu\n",ts.size(),newt.size());
     ts = newt;
   }
 
@@ -3476,7 +3476,7 @@ public:
             }
             else {
               printf("BAD BEHAVIOR 3\n");
-              printf("%lu %lu %lu \n", v0->getNum(), v1->getNum(),
+              printf("%zu %zu %zu \n", v0->getNum(), v1->getNum(),
                      v2->getNum());
               printf("%d %d %d\n", id0, id1, id2);
             }
@@ -3529,7 +3529,7 @@ public:
                    id[3].first, id[4].first, id[5].first);
           }
           else {
-            Msg::Error("TODO %lu in CutMesh !!!!!!!", tcuts.count(*iti));
+            Msg::Error("TODO %zu in CutMesh !!!!!!!", tcuts.count(*iti));
           }
         }
         newT.insert(newT.begin(), ttt.begin(), ttt.end());
@@ -3798,7 +3798,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
     qLayout.myAssembler->getDofValue(*it, 0, 1, h);
     std::vector<double> jj;
     jj.push_back(h);
-    //    printf("adding data for %lu\n",(*it)->getNum());
+    //    printf("adding data for %zu\n",(*it)->getNum());
     dataH[(*it)->getNum()] = jj;
   }
 
@@ -3843,7 +3843,7 @@ static int computeCrossFieldAndH(GModel *gm, std::vector<GFace *> &f,
   for(auto it = GModel::current()->firstFace();
       it != GModel::current()->lastFace(); it++) {
     if((*it)->edges().size() != 4) {
-      Msg::Warning("quad layout failed : face %lu has %lu boundaries",
+      Msg::Warning("quad layout failed : face %zu has %zu boundaries",
                    (*it)->tag(), (*it)->edges().size());
       countError++;
     }

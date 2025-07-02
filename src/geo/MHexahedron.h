@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -324,8 +324,8 @@ public:
   }
   virtual MVertex *getVertexRAD(int num)
   {
-    static const int map[20] = {0,  1, 2,  3,  4,  5,  6,  7,  8,  11,
-                                13, 9, 16, 18, 19, 17, 10, 12, 14, 15};
+    static const int map[20] = { 0,  1,  2,  3,  4,  5,  6,  7,  8, 11,
+                                13,  9, 10, 12, 14, 15, 16, 18, 19, 17};
     return getVertex(map[num]);
   }
   virtual MVertex *getVertexDIFF(int num)
@@ -488,6 +488,13 @@ public:
     static const int map[27] = {0,  1,  2,  3,  4,  5,  6,  7,  8,
                                 11, 13, 9,  16, 18, 19, 17, 10, 12,
                                 14, 15, 26, 20, 25, 21, 23, 24, 22};
+    return getVertex(map[num]);
+  }
+  virtual MVertex *getVertexRAD(int num)
+  {
+    static const int map[27] = { 0,  1,  2,  3,  4,  5,  6,  7,  8, 11,
+                                13,  9, 10, 12, 14, 15, 16, 18, 19, 17,   
+				                        20, 21, 22, 23, 24, 25, 26};
     return getVertex(map[num]);
   }
   virtual MVertex *getVertexDIFF(int num)

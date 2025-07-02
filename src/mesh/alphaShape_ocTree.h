@@ -6,20 +6,21 @@
 #include <ostream>
 #include <unordered_map>
 #include <vector>
+#include "gmsh.h"
 
 template<int dim>
-using Coord = std::array<double, dim>;
+using _Coord = std::array<double, dim>;
 
 template<int dim>
 struct BBox {
-  Coord<dim> min, max;
+  _Coord<dim> min, max;
   BBox() {
     for (int i = 0; i < dim; i++) {
       min[i] = std::numeric_limits<double>::max();
       max[i] = std::numeric_limits<double>::lowest();
     }
   }
-  void extends(const Coord<dim> point) {
+  void extends(const _Coord<dim> point) {
     for (int i = 0; i < dim; i++) {
       min[i] = std::min(min[i], point[i]);
       max[i] = std::max(max[i], point[i]);
@@ -36,48 +37,61 @@ struct BBox {
 
   void operator*=(double scale)
   {
-    double center[2] = {(min[0]+max[0])*.5, (min[1]+max[1])*.5};
-    min[0] -= center[0];
-    min[1] -= center[1];
-    max[0] -= center[0];
-    max[1] -= center[1];
-    min[0] *= scale;
-    min[1] *= scale;
-    max[0] *= scale;
-    max[1] *= scale;
-    min[0] += center[0];
-    min[1] += center[1];
-    max[0] += center[0];
-    max[1] += center[1];
+    double center[dim];
+    for (int i=0; i<dim; i++) center[i] = (min[i]+max[i])*.5;
+    for (int i=0; i<dim; i++) {
+      min[i] -= center[i];
+      max[i] -= center[i];
+      min[i] *= scale;
+      max[i] *= scale;
+      min[i] += center[i];
+      max[i] += center[i];
+    }
   }
 };
 
-// template<int dim, int binsize, typename Object, auto objectIntersect>
-template<int dim, int binsize, typename Object, bool (* objectIntersect)(Object obj, const Coord<2> &bbmin, const Coord<2> &bbmax)>
+template<int dim, int binsize, typename Object, int max_recursion_level=15>
 class OctreeNode {
 
   struct Leaf {
-    Object objects[binsize];
-    int n;
-    Leaf(): n(0) {};
-    void search(const BBox<dim> bbox, std::vector<Object> &result) {
-      for (size_t i = 0; i < n; ++i) {
-        if (objectIntersect(objects[i], bbox.min, bbox.max)) {
-          result.push_back(objects[i]);
-          auto it = std::lower_bound(result.begin(), result.end(), objects[i]);
-          if (it == result.end() || *it != objects[i]) {
-            result.insert(it, objects[i]);
+    private:
+    std::vector<std::pair<Object, BBox<dim>>> contents;
+    public:
+    Leaf() {contents.reserve(binsize);};
+
+    void add(Object obj, const BBox<dim> &bbox) {
+      contents.push_back(std::make_pair(obj, bbox));
+    }
+
+    void search(const BBox<dim> bbox_search, std::vector<Object> &result) {
+      for (auto &it : contents) {
+        auto obj = it.first;
+        auto bbox = it.second;
+        if (bbox.intersects(bbox_search)) {
+          auto it = std::lower_bound(result.begin(), result.end(), obj);
+          if (it == result.end() || *it != obj) {
+            result.insert(it, obj);
           }
         }
       }
     }
+
+    std::pair<Object, BBox<dim>> operator[](int i) const {
+      return contents[i];
+    }
+
+    size_t n() const {
+      return contents.size();
+    }
   };
 
-  BBox<dim> bbox_;
+
   Leaf *leaf_;
   OctreeNode *children_;
 
+
   public:
+  BBox<dim> bbox_;
   void set_bbox(BBox<dim> bbox) {
     bbox_ = bbox;
   }
@@ -101,30 +115,31 @@ class OctreeNode {
     }
   }
 
-  void add(Object obj) {
-    if (!objectIntersect(obj, bbox_.min, bbox_.max)) {
+  void add(Object obj, const BBox<dim> &bbox, int recursion = 0) {
+    if (!bbox.intersects(bbox_)) {
       return;
     }
     if (leaf_) {
-      if (leaf_->n < binsize) {
-        leaf_->objects[leaf_->n++] = obj;
+      if (leaf_->n() < binsize || recursion == max_recursion_level) {
+        leaf_->add(obj, bbox);
         return;
       }
       else { // split
-        Coord<dim> mid;
+        _Coord<dim> mid;
         for (int i = 0; i < dim; i++) {
           mid[i] = (bbox_.min[i] + bbox_.max[i]) / 2;
         }
         children_ = new OctreeNode[1<<dim];
         for (int i = 0; i < 1<<dim; i++) {
-          BBox<dim> bbox;
+          BBox<dim> bboxc;
           for (int j = 0; j < dim; j++) {
-            bbox.min[j] = (i & 1<<j) ? mid[j] : bbox_.min[j];
-            bbox.max[j] = (i & 1<<j) ? bbox_.max[j] : mid[j];
+            bboxc.min[j] = (i & 1<<j) ? mid[j] : bbox_.min[j];
+            bboxc.max[j] = (i & 1<<j) ? bbox_.max[j] : mid[j];
           }
-          children_[i].set_bbox(bbox);
-          for (int j = 0; j < leaf_->n; j++) {
-            children_[i].add(leaf_->objects[j]);
+          children_[i].set_bbox(bboxc);
+          for (int j = 0; j < leaf_->n(); j++) {
+            auto pair = (*leaf_)[j];
+            children_[i].add(pair.first, pair.second, recursion+1);
           }
         }
         delete leaf_;
@@ -132,8 +147,7 @@ class OctreeNode {
       }
     }
     for (int i = 0; i < 1<<dim; i++) {
-      children_[i].add(obj);
+      children_[i].add(obj, bbox, recursion+1);
     }
   }
 };
-

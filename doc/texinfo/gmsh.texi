@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+@c Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 @c
 @c See the LICENSE.txt file in the Gmsh root directory for license information.
 @c Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -22,7 +22,7 @@
 @c %**starts of header
 @setfilename gmsh.info
 @include version.texi
-@set COPYRIGHT @copyright{} 1997-2023 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
+@set COPYRIGHT @copyright{} 1997-2024 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @set SYN a synchronization of the CAD model with the internal Gmsh model.
 @set SYNC This operation triggers @value{SYN}
 @set SYNCS These operations all trigger @value{SYN}
@@ -336,7 +336,10 @@ kernel's own API.  In the same philosophy, models can be imported in the
 geometry module through each CAD kernel's own import mechanisms. For
 example, by default Gmsh imports STEP and IGES files through
 OpenCASCADE, which will lead to the creation of model entities with an
-internal OpenCASCADE representation.
+internal OpenCASCADE representation. Models represented with the
+built-in CAD kernel can be serialized to disk by exporting them as
+@file{.geo_unrolled} files, while models contructed with the OpenCASCADE
+kernel can be serialized as @file{.brep} or @file{.xao} files.
 
 The @ref{Gmsh tutorial}, starting with @ref{t1}, is the best place to
 learn how to use the geometry module: it contains examples of increasing
@@ -348,7 +351,7 @@ actions in the geometry module automatically append the related command
 in the input script file, and can optionally also generate input for the
 languages supported by the API (see the
 @code{General.ScriptingLanguages} option; this is still work-in-progress
-as of Gmsh 4.11.)
+as of Gmsh 4.12.)
 
 In addition to CAD-type geometrical entities, whose geometry is provided
 by a CAD kernel, Gmsh also supports @emph{discrete} model entities,
@@ -564,77 +567,68 @@ command line (@pxref{Gmsh command-line interface}), or with the
 @cindex Mesh, background
 @cindex Background mesh
 
-There are several ways to specify the size of the mesh elements for a
-given geometry:
-
+To determine the size of mesh elements, Gmsh locally computes the minimum of
 @enumerate
 @item
-First, if the options @code{Mesh.MeshSizeFromPoints} and
-@code{Mesh.MeshSizeExtendFromBoundary} are set (they are by default; see
-@ref{Mesh options}), you can simply specify desired mesh element sizes
-at the geometrical points of the model. The size of the mesh elements
-will then be computed by interpolating these values inside the domain
-during mesh generation. This might sometimes lead to over-refinement in
-some areas, so that you may have to add ``dummy'' geometrical entities
-in the model in order to get the desired element sizes or use more
-advanced methods explained below.
+the size of the model bounding box;
 @item
-Second, if @code{Mesh.MeshSizeFromCurvature} is set to a positive value
-(it is set to 0 by default), the mesh will be adapted with respect to
-the curvature of the model entities, the value giving the target number
-of elements per 2 Pi radians.
+if @code{Mesh.MeshSizeFromPoints} is set, the mesh size specified at
+geometrical points;
 @item
-Next, you can specify a general target mesh size, expressed as a
-combination of mesh size fields (@pxref{Gmsh mesh size fields}):
+if @code{Mesh.MeshSizeFromCurvature} is positive, the mesh size based on
+the curvature of the curves and surfaces (the specified value is the
+number of elements per 2 Pi radians);
+@item
+the background mesh size field, expressed as a combination of mesh size
+fields (@pxref{Gmsh mesh size fields}):
 @itemize @bullet
 @item
-The @code{Box} field specifies the size of the elements inside and
-outside of a parallelepipedic region.
+@code{Box} fields specify the size inside and outside of a
+parallelepipedic region;
 @item
-The @code{Distance} field specifies the size of the mesh according to
-the distance to some model entities.
+@code{Distance} fields specify the size according to the distance to
+model entities;
 @item
-The @code{MathEval} field specifies the size of the mesh using an
-explicit mathematical function.
+@code{MathEval} fields specify the size using an explicit mathematical
+function;
 @item
-The @code{PostView} field specifies an explicit background mesh in the
-form of a scalar post-processing view (see @ref{Post-processing module},
-and @ref{Gmsh file formats}) in which the nodal values are the target
-element sizes.  This method is very general but it requires a first
-(usually rough) mesh and a way to compute the target sizes on this mesh
-(usually through an error estimation procedure, e.g. in an iterative
-process of mesh adaptation).
+@code{PostView} fields specify an explicit background mesh in the form
+of a scalar post-processing view (see @ref{Post-processing module}, and
+@ref{Gmsh file formats}) in which the nodal values represent the target
+sizes.  This method is very general but it requires a first (usually
+rough) mesh and a way to compute the target sizes on this mesh (usually
+through an error estimation procedure, e.g. in an iterative process of
+mesh adaptation);
 @item
-The @code{Min} field specifies the size as the minimum of the sizes
-computed using other fields.
+@code{Extend} fields compute an extension of the sizes from a given
+boundary entity inside the enclosed surfaces or volumes;
+@item
+@code{Min} and @code{Max} fields specify the size as the minimum or
+maximum of the sizes computed using other fields;
 @item
 @dots{}
 @end itemize
 @item
-Mesh sizes are also constrained by structured meshing constraints
-(e.g. transfinite or extruded meshes) as well as by any discrete model
-entity that is not equipped with a geometry, and which will thus
-preserve it mesh during mesh generation.
-@item
-Boundary mesh sizes are interpolated inside surfaces and/or volumes
-depending on the value of @code{Mesh.MeshSizeExtendFromBoundary}.
+any per-entity mesh size constraint.
 @end enumerate
 
-To determine the actual mesh size at any given point in the model, Gmsh
-evaluates all the above mesh size constraints and selects the smallest
-value. Using the Gmsh API, this value can then be further modified using
-a C++, C, Python, Julia or Fortran mesh size callback function provided
-via @code{gmsh/model/mesh/setSizeCallback} (@pxref{Namespace
+Using the Gmsh API, this value can then be further modified using a C++,
+C, Python, Julia or Fortran mesh size callback function provided via
+@code{gmsh/model/mesh/setSizeCallback} (@pxref{Namespace
 gmsh/model/mesh}).
 
-The resulting value is further constrained in the interval [
-@code{Mesh.MeshSizeMin}, @code{Mesh.MeshSizeMax} ] (which can also be
-provided on the command line with @code{-clmin} and @code{-clmax}). The
-resulting value is then finally multiplied by @code{Mesh.MeshSizeFactor}
-(@code{-clscale} on the command line).
+The resulting value is then constrained in the interval
+[@code{Mesh.MeshSizeMin}, @code{Mesh.MeshSizeMax}] (which can also be
+provided on the command line with @code{-clmin} and @code{-clmax}) and
+multiplied by @code{Mesh.MeshSizeFactor} (@code{-clscale} on the command
+line).
 
-Note that when the element size is fully specified by a mesh size field,
-it is thus often desirable to set
+Boundary mesh sizes are interpolated during mesh generation inside
+surfaces and/or volumes depending on the value of
+@code{Mesh.MeshSizeExtendFromBoundary} (see @ref{Mesh options} for the
+default values of all these options). When the mesh element sizes are
+fully specified by a background mesh size field, it is often desirable
+to set
 @example
 Mesh.MeshSizeFromPoints = 0;
 Mesh.MeshSizeFromCurvature = 0;
@@ -642,6 +636,13 @@ Mesh.MeshSizeExtendFromBoundary = 0;
 @end example
 to prevent over-refinement inside an entity due to small mesh sizes on
 its boundary.
+
+In all cases, meshes are constrained by structured meshing constraints
+(e.g. transfinite or extruded meshes) as well as by any discrete model
+entity that is not equipped with a geometry (which will thus preserve
+its mesh during mesh generation). Meshes on curves are further
+constrainted by the @code{Mesh.MinLineNodes}, @code{Mesh.MinCircleNodes}
+and @code{Mesh.MinCurveNodes} options.
 
 @c .........................................................................
 @c Elementary entities vs. physical groups
@@ -857,6 +858,14 @@ conforming in the sense of finite element meshes;
 Gmsh's graphical user interface is only exposing a limited number of the
 available features, and many aspects of the interface could be enhanced
 (especially manipulators).
+@item
+While Gmsh can create and manipulate geometries interactively, it is in
+no way a full-fledged replacement for an advanced CAD system.
+@item
+Gmsh uses straightforward OpenGL 1.1 for graphics, without specific
+tricks to handle very large meshes and post-processing datasets
+(decimation and automatic level of detail, culling, advanced
+transparency, etc.).
 @item
 Your complaints about Gmsh here :-)
 @end itemize
@@ -2509,6 +2518,9 @@ Sine of @var{expression}.
 @item Sinh ( @var{expression} )
 Hyperbolic sine of @var{expression}.
 
+@item Step ( @var{expression} )
+Returns 0 if @var{expression} is negative, 1 if not.
+
 @item Tan ( @var{expression} )
 Tangent of @var{expression}.
 
@@ -3060,7 +3072,7 @@ Create a straight line segment. The @var{expression} inside the
 parentheses is the line segment's tag; the two @w{@var{expression}s}
 inside the braces on the right hand side give tags of the start and end
 points of the segment.
-@c TODO: multi-lines not authorized yet
+@c TODO: multi-lines not officially supported
 
 @item Bezier ( @var{expression} ) = @{ @var{expression-list} @};
 Create a Bezier curve. The @var{expression-list} contains the
@@ -3580,7 +3592,7 @@ only available with the built-in kernel.
 @item Split Curve @{ @var{expression} @} Point @{ @var{expression-list} @}
 (Not a transformation per-se.) Split the curve @var{expression} on the
 specified control points. Only available with the built-in kernel, for
-lines, splines and BSplines.
+splines and BSplines. @c multi-lines are not officially supported
 @end ftable
 
 @noindent with
@@ -3954,6 +3966,8 @@ Optimize the current mesh with the given algorithm (currently
 for Netgen optimizer, @code{"HighOrder"} for direct high-order mesh
 optimizer, @code{"HighOrderElastic"} for high-order elastic smoother,
 @code{"HighOrderFastCurving"} for fast curving algorithm,
+@code{"UntangleTets''} for untangling tetrahedral meshes,
+@code{"UntangleTris''} for untangling xy-planar triangular meshes,
 @code{"Laplace2D"} for Laplace smoothing, @code{"Relocate2D"} and
 @code{"Relocate3D"} for node relocation).
 
@@ -4050,7 +4064,7 @@ Classify (``color'') the current surface mesh based on an angle
 threshold (the first argument, in radians), and create new discrete
 surfaces, curves and points accordingly.  If the second argument is set,
 also create discrete curves on the boundary if the surface is open. If
-the third argument is set, create edges and surfaces than can be
+the third argument is set, create edges and surfaces that can be
 reparametrized with @code{CreateGeometry}. The last optional argument
 sets an angle threshold to force splitting of the generated curves.
 
@@ -4452,13 +4466,13 @@ geometrical and the mesh data) and @emph{views} (which hold
 post-processing data). These are manipulated by the API functions in the
 top-level namespaces @code{gmsh/model} and @code{gmsh/view},
 respectively. The other top-level namespaces are @code{gmsh/option}
-(which handles all options), @code{gmsh/plugin} (which handles
-extensions to core Gmsh functionality), @code{gmsh/graphics} (which
-handles drawing), @code{gmsh/fltk} (which handles the graphical user
-interface), @code{gmsh/parser} (which handles the Gmsh parser),
-@code{gmsh/onelab} (which handles ONELAB parameters and communications
-with external codes) and @code{gmsh/logger} (which handles information
-logging).
+(which handles all options), @code{gmsh/algorithm} (which handles raw
+algorithms), @code{gmsh/plugin} (which handles extensions to core Gmsh
+functionality), @code{gmsh/graphics} (which handles drawing),
+@code{gmsh/fltk} (which handles the graphical user interface),
+@code{gmsh/parser} (which handles the Gmsh parser), @code{gmsh/onelab}
+(which handles ONELAB parameters and communications with external codes)
+and @code{gmsh/logger} (which handles information logging).
 @item
 Geometrical data is made of model @emph{entities}, called @emph{points}
 (entities of dimension 0), @emph{curves} (entities of dimension 1),
@@ -5500,8 +5514,8 @@ $Elements
 $EndElements
 $Periodic
 @var{number-of-periodic-entities}
-<Affine @var{value} ...>
 @var{dimension} @var{entity-tag} @var{master-entity-tag}
+<Affine @var{value} ...>
 @var{number-of-nodes}
 @var{node-number master-node-number}
 @dots{}
@@ -6777,20 +6791,46 @@ dragging the mouse in the input fields.
 
 @item What is the signification of SICN, Gamma and SIGE in Tools->Statistics?
 
-They measure the quality of the tetrahedra in a mesh:
+They measure the quality of the elements' shape in a mesh. They are defined for
+all 2D and 3D element types, except Gamma which is not defined for hexes and pyramids.
+The `S-' of SICN and SIGE stands for `Signed'. Those two measures actually give two information
+on an element: Their absolute value gives the element's shape quality while their sign
+gives the element validity. In other words, negative values of SICN and SIGE
+indicate tangled elements. The pure quality part of the measures take values
+between 0 and 1, with 1 corresponding to the best shape.
 
+The measures are computed for 3D elements if any, otherwise for 2D elements. Given values
+are the average, the minimum and the maximum among elements.
+Graphs plot the number of elements vs. the quality measure.
+
+Meaning of the measures:
 @itemize
 @item
-SICN: signed inverse condition number
+`(S-)ICN' stands  for (Signed-) Inverse Condition Number. Low-ICN elements influence
+negatively the condition number of the stiffness matrix which, as a result, can
+introduce roundoff errors, or significantly reduce the convergence speed of iterative methods.
 @item
-Gamma: inscribed radius / circumscribed radius
+`(S-)IGE' stands  for (Signed-) Inverse Gradient Error. Low-IGE elements influence
+negatively the error on the gradient of the FE solution. For hexahedra, the measure
+is the well-known "scaled Jacobian" as defined in the hexahedral community.
 @item
-SIGE: signed inverse error on the gradient of FE solution
+For triangles and tetrahedra, `Gamma' is equal to the ratio
+"inscribed radius / circumscribed radius", which is a measure that is largely used
+in the community of simplicial meshes. This form is closely related to the ICN measure.
+@item
+For quadrangles and prisms, `Gamma' is computed on the worst corner using the
+formula [1 - abs(r)] where r is proportional to the difference between the corner angle
+and the perfect (solid) angle, that is pi/2 for quads and pi/3 for prisms. This form is closely
+related to the IGE measure.
 @end itemize
 
 For the exact definitions, see
-@url{@value{GITLAB-PREFIX}/src/geo/MElement.cpp,src/geo/MElement.cpp}. The
-graphs plot the the number of elements vs. the quality measure.
+@url{@value{GITLAB-PREFIX}/src/geo/MElement.cpp,src/geo/MElement.cpp}, and, for
+the ICN and IGE measures, see the paper
+A. Johnen, C. Geuzaine, T. Toulorge and J.-F. Remacle,
+@url{https://www.sciencedirect.com/science/article/abs/pii/S0010448518301015,
+"Efficient computation of the minimum of shape quality measures on curvilinear finite elements"},
+Computer-Aided Design 103, pp. 24-33, 2018.
 
 @item How can I save a mesh file with a given (e.g. older) MSH file format version?
 

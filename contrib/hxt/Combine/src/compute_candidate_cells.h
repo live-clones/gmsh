@@ -136,7 +136,7 @@ void computeAllPyramids(ACTION& actionOnPyramid, const TetMeshForCombining& M, d
   for (int t = 0; t < (int)M.nbTets(); ++t) {
     for (TetFacetIndex f = 0; f < 4; ++f) {
       AdjacentTetIndex adj = M.adjacentTet(t, f);
-      if (M.isOnBoundary(t, f) || t > adj) continue;
+      if (M.isOnBoundary(t, f) || t > (int)adj) continue;
 
       TetFacetIndex adjFacet = M.adjacentFacetInAdjacentTet(t, f);
 

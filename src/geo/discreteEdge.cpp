@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -239,7 +239,7 @@ bool discreteEdge::writeParametrization(FILE *fp, bool binary)
     fwrite(&d[0], sizeof(double), 4 * N, fp);
   }
   else {
-    fprintf(fp, "%lu\n", N);
+    fprintf(fp, "%zu\n", N);
     for(std::size_t i = 0; i < N; i++) {
       fprintf(fp, "%.16g %.16g %.16g %.16g\n", _discretization[i].x(),
               _discretization[i].y(), _discretization[i].z(), _pars[i]);
@@ -255,7 +255,7 @@ bool discreteEdge::readParametrization(FILE *fp, bool binary)
     if(fread(&N, sizeof(std::size_t), 1, fp) != 1) { return false; }
   }
   else {
-    if(fscanf(fp, "%lu", &N) != 1) { return false; }
+    if(fscanf(fp, "%zu", &N) != 1) { return false; }
   }
   _pars.resize(N);
   _discretization.resize(N);

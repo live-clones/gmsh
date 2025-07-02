@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -16,11 +16,11 @@
 #include "VoroMetal.h"
 
 StringXNumber VoroMetalOptions_Number[] = {
-  {GMSH_FULLRC, "ComputeBestSeeds", nullptr, 0.},
-  {GMSH_FULLRC, "ComputeMicrostructure", nullptr, 1.}};
+  {GMSH_FULLRC, "ComputeBestSeeds", nullptr, 0., ""},
+  {GMSH_FULLRC, "ComputeMicrostructure", nullptr, 1., ""}};
 
 StringXString VoroMetalOptions_String[] = {
-  {GMSH_FULLRC, "SeedsFile", nullptr, "seeds.txt"},
+  {GMSH_FULLRC, "SeedsFile", nullptr, "seeds.txt", ""},
 };
 
 extern "C" {

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -32,6 +32,7 @@
 #include "SPoint3KDTree.h"
 #include "MVertex.h"
 #include "alphaShapes.h"
+
 
 #if defined(HAVE_POST)
 #include "PView.h"
@@ -374,14 +375,14 @@ public:
     double ny[3] = {y1[0] - x0[0], y1[1] - x0[1], y1[2] - x0[2]};
     double nz[3] = {z1[0] - x0[0], z1[1] - x0[1], z1[2] - x0[2]};
     double pvect[3] = {xp - x0[0], yp - x0[1], zp - x0[2]};
-    double projX = scalProd(nx, pvect);
-    double tempX = scalProd(nx, nx);
+    double projX = prosca(nx, pvect);
+    double tempX = prosca(nx, nx);
     if(tempX) projX /= tempX;
-    double projY = scalProd(ny, pvect);
-    double tempY = scalProd(ny, ny);
+    double projY = prosca(ny, pvect);
+    double tempY = prosca(ny, ny);
     if(tempY) projY /= tempY;
-    double projZ = scalProd(nz, pvect);
-    double tempZ = scalProd(nz, nz);
+    double projZ = prosca(nz, pvect);
+    double tempZ = prosca(nz, nz);
     if(tempZ) projZ /= tempZ;
     if(projX < 0.0) projX = 0.0;
     if(projX > 1.0) projX = 1.0;
@@ -664,7 +665,7 @@ public:
       new FieldOptionDouble(_lcMax, "Mesh size when value > DistMax");
     options["Sigmoid"] = new FieldOptionBool(
       _sigmoid,
-      "True to interpolate between SizeMin and LcMax using a sigmoid, "
+      "True to interpolate between SizeMin and SizeMax using a sigmoid, "
       "false to interpolate linearly");
     options["StopAtDistMax"] = new FieldOptionBool(
       _stopAtDistMax, "True to not impose mesh size outside DistMax (i.e., "
@@ -1159,7 +1160,7 @@ public:
     // evaluator is not thread-safe; this should be fixed as it makes the
     // MathEvalField not reentrant (i.e. a MathEval field cannot reference
     // another MathEval field)
-#pragma omp critical
+#pragma omp critical(MathEvalField)
     {
       if(updateNeeded) {
         if(!_expr.set_function(_f))
@@ -1226,7 +1227,7 @@ public:
   void operator()(double x, double y, double z, SMetric3 &metr,
                   GEntity *ge = nullptr)
   {
-#pragma omp critical
+#pragma omp critical(MathEvalFieldAnisoMetric)
     {
       if(updateNeeded) {
         for(int i = 0; i < 6; i++) {
@@ -1242,7 +1243,7 @@ public:
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     SMetric3 metr;
-#pragma omp critical
+#pragma omp critical(MathEvalFieldAnisoScalar)
     {
       if(updateNeeded) {
         for(int i = 0; i < 6; i++) {
@@ -1864,7 +1865,7 @@ public:
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
-#pragma omp critical
+#pragma omp critical(MinField)
     {
       if(updateNeeded) {
         _fields.clear();
@@ -1913,7 +1914,7 @@ public:
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
-#pragma omp critical
+#pragma omp critical(MaxField)
     {
       if(updateNeeded) {
         _fields.clear();
@@ -2000,7 +2001,7 @@ public:
                                     ge->tag()) != _surfaceTags.end()) ||
        (ge->dim() == 3 && std::find(_volumeTags.begin(), _volumeTags.end(),
                                     ge->tag()) != _volumeTags.end()))
-      return (*f)(x, y, z);
+      return (*f)(x, y, z, ge);
     if(_boundary) {
       if(ge->dim() <= 2) {
         std::list<GRegion *> volumes = ge->regions();
@@ -2234,7 +2235,8 @@ public:
   {
     if(updateNeeded) update();
     double xyz[3] = {x, y, z};
-#pragma omp critical // avoid crash (still incorrect) - use Distance instead
+    // critical section to avoid crash (still incorrect) - use Distance instead
+#pragma omp critical(AttractorAnisoCurveFieldMetric)
     _kdTree->annkSearch(xyz, 1, _index, _dist);
     double d = sqrt(_dist[0]);
     double lTg = d < _dMin ? _lMinTangent :
@@ -2255,7 +2257,8 @@ public:
   {
     if(updateNeeded) update();
     double xyz[3] = {X, Y, Z};
-#pragma omp critical // avoid crash (still incorrect) - use Distance instead
+    // critical section to avoid crash (still incorrect) - use Distance instead
+#pragma omp critical(AttractorAnisoCurveFieldScalar)
     _kdTree->annkSearch(xyz, 1, _index, _dist);
     double d = sqrt(_dist[0]);
     return std::max(d, 0.05);
@@ -2601,6 +2604,7 @@ public:
   using Field::operator();
   virtual double operator()(double X, double Y, double Z, GEntity *ge = nullptr)
   {
+    update();
     if(!_kdtree) return MAX_LC;
     double pt[3] = {X, Y, Z};
     nanoflann::KNNResultSet<double> res(1);
@@ -2610,6 +2614,7 @@ public:
     return sqrt(outDistSqr);
   }
 };
+
 class ExtendField : public Field {
   std::list<int> _tagCurves, _tagSurfaces;
   std::vector<double> _sizeCurves, _sizeSurfaces;
@@ -2715,7 +2720,7 @@ public:
     if(ge->dim() != 2 && ge->dim() != 3) return MAX_LC;
     if(ge->dim() == 2 && _tagCurves.empty()) return MAX_LC;
     if(ge->dim() == 3 && _tagSurfaces.empty()) return MAX_LC;
-#pragma omp critical
+#pragma omp critical(ExtendFieldCurves)
     if(updateNeeded ||
        (ge->dim() == 2 && _tagCurves.size() && _sizeCurves.empty())) {
       // we are meshing our first surface; recompute distance to the elements on
@@ -2724,7 +2729,7 @@ public:
       _sizeSurfaces.clear();
       updateNeeded = false;
     }
-#pragma omp critical
+#pragma omp critical(ExtendFieldSurfaces)
     if(updateNeeded ||
        (ge->dim() == 3 && _tagSurfaces.size() && _sizeSurfaces.empty())) {
       // we are meshing our first volume; recompute distance to the elements on

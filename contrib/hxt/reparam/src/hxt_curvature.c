@@ -364,46 +364,45 @@ HXTStatus hxtCurvatureRusinkiewicz (HXTMesh *mesh, double **nodalCurvatures, dou
   //-----------------------------------------------------------------------------
 
   //  printf("coucou1 %d\n",edges->numEdges);
-  //  printf("coucou1\n");
-  // HXT_CHECK(hxtMalloc(crossField,3*edges->numEdges*sizeof(double)));
-  // for (uint64_t i = 0; i<edges->numEdges; i++){
-  //   uint32_t v0 = edges->node[2*i  ];
-  //   uint32_t v1 = edges->node[2*i+1];
-  //   double dir0[3] = {(*nodalCurvatures) [6 * v0 + 0],
-	// 	      (*nodalCurvatures) [6 * v0 + 1],
-	// 	      (*nodalCurvatures) [6 * v0 + 2]};
-  //   double dir1[3] = {(*nodalCurvatures) [6 * v0 + 3],
-	// 	      (*nodalCurvatures) [6 * v0 + 4],
-	// 	      (*nodalCurvatures) [6 * v0 + 5]};
-  //   double x1 = normalize(dir0);
-  //   double x2 = normalize(dir1);
-  //   double *n    = &(nodeNormals [3 * v0]);    
-  //   double dir2[3];
-  //   crossprod(dir0,dir1,dir2);
-  //   if (dotprod(n,dir2) < 0){
-  //     dir1[0] = -dir1[0];
-  //     dir1[1] = -dir1[1];
-  //     dir1[2] = -dir1[2];
-  //   }
+  HXT_CHECK(hxtMalloc(crossField,3*edges->numEdges*sizeof(double)));
+  for (uint64_t i = 0; i<edges->numEdges; i++){
+    uint32_t v0 = edges->node[2*i  ];
+    uint32_t v1 = edges->node[2*i+1];
+    double dir0[3] = {(*nodalCurvatures) [6 * v0 + 0],
+		      (*nodalCurvatures) [6 * v0 + 1],
+		      (*nodalCurvatures) [6 * v0 + 2]};
+    double dir1[3] = {(*nodalCurvatures) [6 * v0 + 3],
+		      (*nodalCurvatures) [6 * v0 + 4],
+		      (*nodalCurvatures) [6 * v0 + 5]};
+    double x1 = normalize(dir0);
+    double x2 = normalize(dir1);
+    double *n    = &(nodeNormals [3 * v0]);    
+    double dir2[3];
+    crossprod(dir0,dir1,dir2);
+    if (dotprod(n,dir2) < 0){
+      dir1[0] = -dir1[0];
+      dir1[1] = -dir1[1];
+      dir1[2] = -dir1[2];
+    }
     
-  //   //    printf ("vertex %d C %g %g %g\n",v0,dir0[0],dir0[1],dir0[2]);
-  //   double ed[3];
-  //   makevector (mesh->vertices.coord + 4*v0,
-  //               mesh->vertices.coord + 4*v1, ed);
-  //   normalize(ed);
-  //   double SIN = dotprod(ed,dir0);
-  //   double COS = dotprod(ed,dir1);
-  //   double ANG = atan2(SIN,COS);
-  //   //    printf ("%g %g %g\n",SIN,COS,ANG);
-  //   (*crossField)[2*i  ] = cos(4*ANG);
-  //   (*crossField)[2*i+1] = sin(4*ANG);
-  //   if (x2 > x1){
-  //     double temp = x1;
-  //     x1 = x2;x2 = temp;
-  //   }
-  //   (*crossField)[2*edges->numEdges+i] = x1 > 1.e-4 ? x1/x2 : 1.e-12;
-  //   //    printf("%g %g %g\n",x1,x2,(*crossField)[2*edges->numEdges+i]);
-  // }
+    //    printf ("vertex %d C %g %g %g\n",v0,dir0[0],dir0[1],dir0[2]);
+    double ed[3];
+    makevector (mesh->vertices.coord + 4*v0,
+                mesh->vertices.coord + 4*v1, ed);
+    normalize(ed);
+    double SIN = dotprod(ed,dir0);
+    double COS = dotprod(ed,dir1);
+    double ANG = atan2(SIN,COS);
+    //    printf ("%g %g %g\n",SIN,COS,ANG);
+    (*crossField)[2*i  ] = cos(4*ANG);
+    (*crossField)[2*i+1] = sin(4*ANG);
+    if (x2 > x1){
+      double temp = x1;
+      x1 = x2;x2 = temp;
+    }
+    (*crossField)[2*edges->numEdges+i] = x1 > 1.e-4 ? x1/x2 : 1.e-12;
+    //    printf("%g %g %g\n",x1,x2,(*crossField)[2*edges->numEdges+i]);
+  }
   //  printf("coucou2\n");
   
   //-----------------------------------------------------------------------------
@@ -422,6 +421,7 @@ HXTStatus hxtCurvatureRusinkiewicz (HXTMesh *mesh, double **nodalCurvatures, dou
   return HXT_STATUS_OK;
   
 }
+
 HXTStatus hxtCurvatureAndNormalRusinkiewicz (HXTMesh *mesh, double **nodalCurvatures, double **nodalNormals, int debug)
 {
   // clock_t T1 = clock();
@@ -627,3 +627,4 @@ HXTStatus hxtCurvatureAndNormalRusinkiewicz (HXTMesh *mesh, double **nodalCurvat
   return HXT_STATUS_OK;
   
 }
+

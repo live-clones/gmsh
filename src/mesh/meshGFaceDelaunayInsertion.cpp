@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -31,6 +31,7 @@
 #include "surfaceFiller.h"
 #endif
 
+static constexpr double ONE_THIRD = 1.0 / 3.0;
 static double LIMIT_ = 0.5 * std::sqrt(2.0) * 1;
 int MTri3::radiusNorm = 2;
 
@@ -331,11 +332,11 @@ static void circumCenterMetric(MTriangle *base, const double *metric,
 
 void buildMetric(GFace *gf, double *uv, double *metric)
 {
-  Pair<SVector3, SVector3> der = gf->firstDer(SPoint2(uv[0], uv[1]));
+  std::pair<SVector3, SVector3> der = gf->firstDer(SPoint2(uv[0], uv[1]));
 
-  metric[0] = dot(der.first(), der.first());
-  metric[1] = dot(der.second(), der.first());
-  metric[2] = dot(der.second(), der.second());
+  metric[0] = dot(der.first, der.first);
+  metric[1] = dot(der.second, der.first);
+  metric[2] = dot(der.second, der.second);
 }
 
 static double computeTolerance(const double radius)
@@ -370,8 +371,8 @@ int inCircumCircleAniso(GFace *gf, MTriangle *base, const double *uv,
     int index0 = data.getIndex(base->getVertex(0));
     int index1 = data.getIndex(base->getVertex(1));
     int index2 = data.getIndex(base->getVertex(2));
-    double pa[2] = {(data.Us[index0] + data.Us[index1] + data.Us[index2]) / 3.,
-                    (data.Vs[index0] + data.Vs[index1] + data.Vs[index2]) / 3.};
+    double pa[2] = {(data.Us[index0] + data.Us[index1] + data.Us[index2]) * ONE_THIRD,
+                    (data.Vs[index0] + data.Vs[index1] + data.Vs[index2]) * ONE_THIRD};
     buildMetric(gf, pa, metric);
   }
   else {
@@ -438,8 +439,8 @@ MTri3::MTri3(MTriangle *t, double lc, SMetric3 *metric, bidimMeshData *data,
       double const p2[2] = {data->Us[index1], data->Vs[index1]};
       double const p3[2] = {data->Us[index2], data->Vs[index2]};
 
-      double midpoint[2] = {(p1[0] + p2[0] + p3[0]) / 3.0,
-                            (p1[1] + p2[1] + p3[1]) / 3.0};
+      double midpoint[2] = {(p1[0] + p2[0] + p3[0]) * ONE_THIRD,
+                            (p1[1] + p2[1] + p3[1]) * ONE_THIRD};
 
       double quadAngle =
         backgroundMesh::current() ?
@@ -729,7 +730,6 @@ static int insertVertexB(std::list<edgeXface> &shell,
     int index0 = data.getIndex(t->getVertex(0));
     int index1 = data.getIndex(t->getVertex(1));
     int index2 = data.getIndex(t->getVertex(2));
-    constexpr double ONE_THIRD = 1. / 3.;
     double lc = ONE_THIRD * (data.vSizes[index0] + data.vSizes[index1] +
                              data.vSizes[index2]);
     double lcBGM =
@@ -885,8 +885,8 @@ static MTri3 *search4Triangle(MTri3 *t, double pt[2], bidimMeshData &data,
     int index0 = data.getIndex(t->tri()->getVertex(0));
     int index1 = data.getIndex(t->tri()->getVertex(1));
     int index2 = data.getIndex(t->tri()->getVertex(2));
-    SPoint3 q2((data.Us[index0] + data.Us[index1] + data.Us[index2]) / 3.0,
-               (data.Vs[index0] + data.Vs[index1] + data.Vs[index2]) / 3.0, 0);
+    SPoint3 q2((data.Us[index0] + data.Us[index1] + data.Us[index2]) * ONE_THIRD,
+               (data.Vs[index0] + data.Vs[index1] + data.Vs[index2]) * ONE_THIRD, 0);
     int i;
     for(i = 0; i < 3; i++) {
       int i1 = data.getIndex(t->tri()->getVertex(i == 0 ? 2 : i - 1));
@@ -896,7 +896,7 @@ static MTri3 *search4Triangle(MTri3 *t, double pt[2], bidimMeshData &data,
       if(intersection_segments_2(p1, p2, q1, q2)) break;
     }
     if(i >= 3) {
-      printf("impossible\n");
+      Msg::Error("Impossible case in triangle search");
       break;
     }
     t = t->getNeigh(i);
@@ -1075,8 +1075,8 @@ void bowyerWatson(GFace *gf, int MAXPNT,
       int index1 = DATA.getIndex(base->getVertex(1));
       int index2 = DATA.getIndex(base->getVertex(2));
       double pa[2] = {
-        (DATA.Us[index0] + DATA.Us[index1] + DATA.Us[index2]) / 3.,
-        (DATA.Vs[index0] + DATA.Vs[index1] + DATA.Vs[index2]) / 3.};
+        (DATA.Us[index0] + DATA.Us[index1] + DATA.Us[index2]) * ONE_THIRD,
+        (DATA.Vs[index0] + DATA.Vs[index1] + DATA.Vs[index2]) * ONE_THIRD};
 
       buildMetric(gf, pa, metric);
       circumCenterMetric(worst->tri(), metric, DATA, center, r2);
@@ -1170,8 +1170,8 @@ static double optimalPointFrontal(GFace *gf, MTri3 *worst, int active_edge,
   int index0 = data.getIndex(base->getVertex(0));
   int index1 = data.getIndex(base->getVertex(1));
   int index2 = data.getIndex(base->getVertex(2));
-  double pa[2] = {(data.Us[index0] + data.Us[index1] + data.Us[index2]) / 3.,
-                  (data.Vs[index0] + data.Vs[index1] + data.Vs[index2]) / 3.};
+  double pa[2] = {(data.Us[index0] + data.Us[index1] + data.Us[index2]) * ONE_THIRD,
+                  (data.Vs[index0] + data.Vs[index1] + data.Vs[index2]) * ONE_THIRD};
   buildMetric(gf, pa, metric);
   circumCenterMetric(worst->tri(), metric, data, center, r2);
   // compute the middle point of the edge
@@ -1252,6 +1252,7 @@ static bool optimalPointFrontalB(GFace *gf, MTri3 *worst, int active_edge,
                v3->z() - middle.z());
   SVector3 n1 = crossprod(v1v2, tmp);
   if(n1.norm() < 1.e-12) return true;
+
   SVector3 n2 = crossprod(n1, v1v2);
   n1.normalize();
   n2.normalize();
@@ -1286,10 +1287,6 @@ static bool optimalPointFrontalB(GFace *gf, MTri3 *worst, int active_edge,
   return true;
 }
 
-#if 1
-#include "meshTriangulation.h"
-#endif
-
 void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
                          std::map<MVertex *, SPoint2> *parametricCoordinates,
                          std::vector<SPoint2> *true_boundary)
@@ -1319,7 +1316,10 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
 
   Range<double> RU = gf->parBounds(0);
   Range<double> RV = gf->parBounds(1);
-  SPoint2 FAR(2 * RU.high(), 2 * RV.high());
+  // THIS WAS ACTUALLY WRONG IF high is 0 !!!
+  //  SPoint2 FAR(2 * RU.high(), 2 * RV.high());
+  /// This is better !
+  SPoint2 FAR(RU.high() + (RU.high()-RU.low()), RV.high() + (RV.high()-RV.low()));
 
 
   // insert points
@@ -1355,6 +1355,9 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
           insertAPoint(gf, AllTris.end(), newPoint, metric, DATA, AllTris,
                        &ActiveTris, worst, nullptr, testStarShapeness);
       }
+      else {
+        Msg::Debug("no point found");
+      }
     }
   }
 
@@ -1364,31 +1367,7 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
   transferDataStructure(gf, AllTris, DATA);
 
   splitElementsInBoundaryLayerIfNeeded(gf);
-#if 0
-  PolyMesh *pm;
-  GFace2PolyMesh(gf->tag(), &pm);
-  std::map<PolyMesh::Vertex*,double> dist_exact;
 
-  // Choose a source  
-  PolyMesh::VertexOnFace _source;
-  _source.u = 0.33;
-  _source.v = 0.33;
-  _source.he = pm->vertices[rand() % (pm->vertices.size() -1)]->he;
-  pm->exactGeodesicDistance(_source,dist_exact);
-
-  for (int i=0;i<120;i++){    
-    PolyMesh::VertexOnFace _target;
-    _target.u = 0.33;
-    _target.v = 0.33;
-    _target.he = pm->vertices[rand() % (pm->vertices.size() -1)]->he;
-    if (_target.he !=_source.he){
-      PolyMesh::Path P = pm->backTrack (_source, _target, dist_exact );
-      P.print4debug(i);
-    }
-  }
-  
-#endif
-  
 }
 
 static void optimalPointFrontalQuad(GFace *gf, MTri3 *worst, int active_edge,
@@ -1663,7 +1642,7 @@ void bowyerWatsonParallelograms(
     return;
   }
 
-  
+
 #if defined(HAVE_DOMHEX)
   if(old_algo_hexa()) {
     Msg::Debug("bowyerWatsonParallelograms: call packingOfParallelograms()");
@@ -1678,7 +1657,7 @@ void bowyerWatsonParallelograms(
   Msg::Error("Packing of parallelograms algorithm requires DOMHEX");
 #endif
 
-  Msg::Info("%lu Nodes created --> now staring insertion", packed.size());
+  Msg::Info("%zu Nodes created --> now staring insertion", packed.size());
 
   if(!buildMeshGenerationDataStructures(gf, AllTris, DATA)) {
     Msg::Error("Invalid meshing data structure");

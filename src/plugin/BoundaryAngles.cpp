@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -18,15 +18,15 @@
 #include <vector>
 
 StringXNumber BoundaryAnglesOptions_Number[] = {
-  {GMSH_FULLRC, "View", nullptr, -1.},
-  {GMSH_FULLRC, "Save", nullptr, 0.},
-  {GMSH_FULLRC, "Visible", nullptr, 0.},
-  {GMSH_FULLRC, "Remove", nullptr, 0.},
+  {GMSH_FULLRC, "View", nullptr, -1., ""},
+  {GMSH_FULLRC, "Save", nullptr, 0., ""},
+  {GMSH_FULLRC, "Visible", nullptr, 0., ""},
+  {GMSH_FULLRC, "Remove", nullptr, 0., ""},
 };
 
 StringXString BoundaryAnglesOptions_String[] = {
-  {GMSH_FULLRC, "Filename", nullptr, "Angles_Surface"},
-  {GMSH_FULLRC, "Dir", nullptr, ""},
+  {GMSH_FULLRC, "Filename", nullptr, "Angles_Surface", ""},
+  {GMSH_FULLRC, "Dir", nullptr, "", ""},
 };
 
 extern "C" {

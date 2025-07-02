@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -60,6 +60,7 @@ int GetFileFormatFromExtension(const std::string &ext, double *version)
   else if(ext == ".ir3")      return FORMAT_IR3;
   else if(ext == ".mesh")     return FORMAT_MESH;
   else if(ext == ".off")      return FORMAT_OFF;
+  else if(ext == ".obj")      return FORMAT_OBJ;
   else if(ext == ".mail")     return FORMAT_MAIL;
   else if(ext == ".bdf")      return FORMAT_BDF;
   else if(ext == ".diff")     return FORMAT_DIFF;
@@ -89,6 +90,7 @@ int GetFileFormatFromExtension(const std::string &ext, double *version)
   else if(ext == ".ppm")      return FORMAT_PPM;
   else if(ext == ".yuv")      return FORMAT_YUV;
   else if(ext == ".brep")     return FORMAT_BREP;
+  else if(ext == ".xao")      return FORMAT_XAO;
   else if(ext == ".step")     return FORMAT_STEP;
   else if(ext == ".stp")      return FORMAT_STEP;
   else if(ext == ".iges")     return FORMAT_IGES;
@@ -127,6 +129,7 @@ std::string GetDefaultFileExtension(int format, bool onlyMeshFormats)
   case FORMAT_IR3:     name = ".ir3"; mesh = true; break;
   case FORMAT_MESH:    name = ".mesh"; mesh = true; break;
   case FORMAT_OFF:     name = ".off"; mesh = true; break;
+  case FORMAT_OBJ:     name = ".obj"; mesh = true; break;
   case FORMAT_MAIL:    name = ".mail"; mesh = true; break;
   case FORMAT_BDF:     name = ".bdf"; mesh = true; break;
   case FORMAT_DIFF:    name = ".diff"; mesh = true; break;
@@ -152,6 +155,7 @@ std::string GetDefaultFileExtension(int format, bool onlyMeshFormats)
   case FORMAT_PPM:     name = ".ppm"; break;
   case FORMAT_YUV:     name = ".yuv"; break;
   case FORMAT_BREP:    name = ".brep"; break;
+  case FORMAT_XAO:     name = ".xao"; break;
   case FORMAT_IGES:    name = ".iges"; break;
   case FORMAT_STEP:    name = ".step"; break;
   case FORMAT_NEU:     name = ".neu"; mesh = true; break;
@@ -325,13 +329,16 @@ void CreateOutputFile(const std::string &fileName, int format,
       GModel::current()->writePartitionedMSH
         (splitName[0], CTX::instance()->mesh.mshFileVersion,
          CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
-         CTX::instance()->mesh.saveParametric, CTX::instance()->mesh.scalingFactor);
+         CTX::instance()->mesh.saveParametric,
+         CTX::instance()->mesh.scalingFactor);
     }
     else{
       GModel::current()->writeMSH
-        (name, CTX::instance()->mesh.mshFileVersion, CTX::instance()->mesh.binary,
-         CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveParametric,
-         CTX::instance()->mesh.scalingFactor);
+        (name, CTX::instance()->mesh.mshFileVersion,
+         CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
+         CTX::instance()->mesh.saveParametric,
+         CTX::instance()->mesh.scalingFactor,
+         CTX::instance()->mesh.firstElementTag - 1);
     }
     if(GModel::current()->getNumPartitions() &&
        CTX::instance()->mesh.partitionSaveTopologyFile){
@@ -403,6 +410,11 @@ void CreateOutputFile(const std::string &fileName, int format,
 
   case FORMAT_OFF:
     GModel::current()->writeOFF
+      (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
+    break;
+
+  case FORMAT_OBJ:
+    GModel::current()->writeOBJ
       (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
     break;
 
@@ -502,6 +514,13 @@ void CreateOutputFile(const std::string &fileName, int format,
       Msg::Error("No OpenCASCADE CAD data found for BREP export");
     break;
 
+  case FORMAT_XAO:
+    if(GModel::current()->getOCCInternals())
+      GModel::current()->writeOCCXAO(name);
+    else
+      Msg::Error("No OpenCASCADE CAD data found for XAO export");
+    break;
+
   case FORMAT_STEP:
     if(GModel::current()->getParasolidInternals())
       GModel::current()->writeParasolidSTEP(name);
@@ -538,7 +557,8 @@ void CreateOutputFile(const std::string &fileName, int format,
   case FORMAT_PNG:
     {
       if(!FlGui::available()){
-        Msg::Error("Creating '%s' requires a graphical interface context", name.c_str());
+        Msg::Error("Creating '%s' requires a graphical interface context",
+                   name.c_str());
         break;
       }
 
@@ -549,7 +569,8 @@ void CreateOutputFile(const std::string &fileName, int format,
         break;
       }
 
-      PixelBuffer *buffer = GetCompositePixelBuffer(GL_RGB, GL_UNSIGNED_BYTE);
+      PixelBuffer *buffer = GetCompositePixelBuffer
+        ((format == FORMAT_PNG) ? GL_RGBA : GL_RGB, GL_UNSIGNED_BYTE);
 
       if(format == FORMAT_PPM)
         create_ppm(fp, buffer);

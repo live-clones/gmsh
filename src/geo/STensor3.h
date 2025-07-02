@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -60,6 +60,14 @@ public:
   {
     for(int i = 0; i < 6; i++) _val[i] *= other;
     return *this;
+  }
+  SMetric3& operator=(const SMetric3& other) {
+  if (this != &other) {
+    for (int i = 0; i < 6; ++i) {
+      _val[i] = other._val[i];
+    }
+  }
+  return *this;
   }
   SMetric3 &operator*=(const SMetric3 &other);
   SMetric3 transform(fullMatrix<double> &V);

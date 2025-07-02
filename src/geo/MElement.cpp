@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -200,7 +200,7 @@ bool MElement::getEdgeInfo(const MEdge &edge, int &ithEdge, int &sign) const
       return true;
     }
   }
-  Msg::Error("Could not get edge information for element %lu", getNum());
+  Msg::Error("Could not get edge information for element %zu", getNum());
   return false;
 }
 
@@ -527,9 +527,10 @@ SPoint3 MElement::barycenter(bool primary) const
     p[1] += v->y();
     p[2] += v->z();
   }
-  p[0] /= (double)n;
-  p[1] /= (double)n;
-  p[2] /= (double)n;
+  double inv_n = 1.0/n;
+  p[0] *= inv_n;
+  p[1] *= inv_n;
+  p[2] *= inv_n;
   return p;
 }
 
@@ -558,9 +559,10 @@ SPoint3 MElement::barycenterUVW() const
     p[1] += y;
     p[2] += z;
   }
-  p[0] /= (double)n;
-  p[1] /= (double)n;
-  p[2] /= (double)n;
+  double inv_n = 1.0/n;
+  p[0] *= inv_n;
+  p[1] *= inv_n;
+  p[2] *= inv_n;
   return p;
 }
 
@@ -568,7 +570,7 @@ double MElement::getVolume()
 {
   int npts;
   IntPt *pts;
-  getIntegrationPoints(getDim() * (getPolynomialOrder() - 1), &npts, &pts);
+  getIntegrationPoints(getPolynomialOrder() + 3, &npts, &pts);
   double vol = 0.;
   for(int i = 0; i < npts; i++) {
     vol += getJacobianDeterminant(pts[i].pt[0], pts[i].pt[1], pts[i].pt[2]) *
@@ -1544,7 +1546,7 @@ void MElement::writePOS(FILE *fp, bool printElementary, bool printElementNumber,
         first = false;
       else
         fprintf(fp, ",");
-      fprintf(fp, "%lu", getNum());
+      fprintf(fp, "%zu", getNum());
     }
   }
   if(printSICN) {
@@ -1832,11 +1834,11 @@ void MElement::writeBDF(FILE *fp, int format, int elementTagType,
                                     elementary;
 
   if(format == 0) { // free field format
-    fprintf(fp, "%s,%lu,%d", str, _num, tag);
+    fprintf(fp, "%s,%zu,%d", str, _num, tag);
     for(int i = 0; i < n; i++) {
       fprintf(fp, ",%ld", getVertexBDF(i)->getIndex());
       if(i != n - 1 && !((i + 3) % 8)) {
-        fprintf(fp, ",+%s%lu\n+%s%lu", cont[ncont], _num, cont[ncont], _num);
+        fprintf(fp, ",+%s%zu\n+%s%zu", cont[ncont], _num, cont[ncont], _num);
         ncont++;
       }
     }

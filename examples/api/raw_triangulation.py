@@ -11,7 +11,7 @@ visu = ("-nopopup" not in sys.argv)
 gmsh.initialize()
 
 points = np.random.standard_normal(2 * N)
-tris = gmsh.model.mesh.triangulate(points)
+tris = gmsh.algorithm.triangulate(points)
 
 if visu:
     surf = gmsh.model.addDiscreteEntity(2)

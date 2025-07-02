@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -570,7 +570,7 @@ bool GEO_Internals::addCurveLoops(const std::vector<int> &curveTags,
 
   for(std::size_t i = 0; i < vs.size(); i++) {
     if(vs[i].size() < 2 || vs[i][0] != vs[i][vs[i].size() - 1]) {
-      Msg::Warning("Skipping invalid loop with %lu points", vs[i].size());
+      Msg::Warning("Skipping invalid loop with %zu points", vs[i].size());
       continue;
     }
     else {
@@ -1434,7 +1434,7 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
 
   std::vector<GEntity*> removed;
   model->remove(toRemove, removed);
-  Msg::Debug("Destroying %lu model entities during first pass", removed.size());
+  Msg::Debug("Destroying %zu model entities during first pass", removed.size());
   for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
 
   if(Tree_Nbr(Points)) {
@@ -1537,13 +1537,15 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
   // entities
   removed.clear();
   model->remove(toRemove, removed);
-  Msg::Debug("Destroying %lu model entities during second pass", removed.size());
+  Msg::Debug("Destroying %zu model entities during second pass", removed.size());
   for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
 
   // delete all physical groups before sync only if there is no mesh (if there
   // is a mesh, it could have been loaded from a file with physical groups - we
-  // don't want to remove those)
-  if(!model->getNumMeshElements()) model->removePhysicalGroups();
+  // don't want to remove those) and we have physical groups in the built-in
+  // kernel
+  if(!model->getNumMeshElements() && Tree_Nbr(PhysicalGroups))
+    model->removePhysicalGroups();
   // we might want to store physical groups directly in GModel; but I guess this
   // is OK for now:
   if(Tree_Nbr(PhysicalGroups)) {
@@ -1709,6 +1711,7 @@ public:
   }
   void operator()(std::pair<std::string, FieldOption *> it)
   {
+    if(it.second->isDeprecated()) return;
     std::string v;
     it.second->getTextRepresentation(v);
     fprintf(geo, "Field[%i].%s = %s;\n", field->id, it.first.c_str(),
@@ -1724,6 +1727,7 @@ public:
   writeFieldGEO(FILE *fp) { geo = fp ? fp : stdout; }
   void operator()(std::pair<const int, Field *> it)
   {
+    if(it.second->isDeprecated()) return;
     fprintf(geo, "Field[%i] = %s;\n", it.first, it.second->getName());
     std::for_each(it.second->options.begin(), it.second->options.end(),
                   writeFieldOptionGEO(geo, it.second));
@@ -1827,47 +1831,68 @@ int GModel::writeGEO(const std::string &name, bool printLabels,
     return 0;
   }
 
-  std::map<double, std::string> meshSizeParameters;
-  int cpt = 0;
+  bool occ = true, geo = true;
   for(auto it = firstVertex(); it != lastVertex(); it++) {
-    double val = (*it)->prescribedMeshSizeAtVertex();
-    if(meshSizeParameters.find(val) == meshSizeParameters.end()) {
-      std::ostringstream paramName;
-      paramName << "cl__" << ++cpt;
-      fprintf(fp, "%s = %.16g;\n", paramName.str().c_str(), val);
-      meshSizeParameters.insert(std::make_pair(val, paramName.str()));
+    if((*it)->getNativeType() != GEntity::OpenCascadeModel) occ = false;
+    if((*it)->getNativeType() != GEntity::GmshModel) geo = false;
+  }
+
+  // if we only have OpenCASCADE data, serialize it to .xao instead of doing an
+  // incomplete .geo export (this is a typical source of confusion for new
+  // users); to force unrolled debug .geo output with OCC geometries, simply add
+  // a dummy built-in point
+  if(occ) {
+    if(writeOCCXAO(name + ".xao")) {
+      fprintf(fp, "Merge \"%s\";\n", (name + ".xao").c_str());
     }
+    else
+      Msg::Error("Could not write '%s'", (name + ".xao").c_str());
   }
+  else {
+    if(!geo)
+      Msg::Warning("Exporting non 'built-in' CAD kernel entities in .geo "
+                   "format is for debugging only - most entities are not "
+                   "supported");
 
-  for(auto it = firstVertex(); it != lastVertex(); it++) {
-    double val = (*it)->prescribedMeshSizeAtVertex();
-    if(!onlyPhysicals || !skipVertex(*it))
-      (*it)->writeGEO(fp, meshSizeParameters[val]);
-  }
-  for(auto it = firstEdge(); it != lastEdge(); it++) {
-    if(!onlyPhysicals || !skipEdge(*it)) (*it)->writeGEO(fp);
-  }
-  for(auto it = firstFace(); it != lastFace(); it++) {
-    if(!onlyPhysicals || !skipFace(*it)) (*it)->writeGEO(fp);
-  }
-  for(auto it = firstRegion(); it != lastRegion(); it++) {
-    if(!onlyPhysicals || !skipRegion(*it)) (*it)->writeGEO(fp);
-  }
-
-  std::map<int, std::string> labels;
+    std::map<double, std::string> meshSizeParameters;
+    int cpt = 0;
+    for(auto it = firstVertex(); it != lastVertex(); it++) {
+      double val = (*it)->prescribedMeshSizeAtVertex();
+      if(meshSizeParameters.find(val) == meshSizeParameters.end()) {
+        std::ostringstream paramName;
+        paramName << "cl__" << ++cpt;
+        fprintf(fp, "%s = %.16g;\n", paramName.str().c_str(), val);
+        meshSizeParameters.insert(std::make_pair(val, paramName.str()));
+      }
+    }
+    for(auto it = firstVertex(); it != lastVertex(); it++) {
+      double val = (*it)->prescribedMeshSizeAtVertex();
+      if(!onlyPhysicals || !skipVertex(*it))
+        (*it)->writeGEO(fp, meshSizeParameters[val]);
+    }
+    for(auto it = firstEdge(); it != lastEdge(); it++) {
+      if(!onlyPhysicals || !skipEdge(*it)) (*it)->writeGEO(fp);
+    }
+    for(auto it = firstFace(); it != lastFace(); it++) {
+      if(!onlyPhysicals || !skipFace(*it)) (*it)->writeGEO(fp);
+    }
+    for(auto it = firstRegion(); it != lastRegion(); it++) {
+      if(!onlyPhysicals || !skipRegion(*it)) (*it)->writeGEO(fp);
+    }
+    std::map<int, std::string> labels;
 #if defined(HAVE_PARSER)
-  // get "old-style" labels from parser
-  for(auto it = gmsh_yysymbols.begin(); it != gmsh_yysymbols.end(); ++it)
-    for(std::size_t i = 0; i < it->second.value.size(); i++)
-      labels[(int)it->second.value[i]] = it->first;
+    // get "old-style" labels from parser
+    for(auto it = gmsh_yysymbols.begin(); it != gmsh_yysymbols.end(); ++it)
+      for(std::size_t i = 0; i < it->second.value.size(); i++)
+        labels[(int)it->second.value[i]] = it->first;
 #endif
-
-  std::map<int, std::vector<GEntity *> > groups[4];
-  getPhysicalGroups(groups);
-  for(int i = 0; i < 4; i++)
-    std::for_each(
-      groups[i].begin(), groups[i].end(),
-      writePhysicalGroupGEO(fp, i, printLabels, labels, _physicalNames));
+    std::map<int, std::vector<GEntity *> > groups[4];
+    getPhysicalGroups(groups);
+    for(int i = 0; i < 4; i++)
+      std::for_each(groups[i].begin(), groups[i].end(),
+                    writePhysicalGroupGEO(fp, i, printLabels, labels,
+                                          _physicalNames));
+  }
 
 #if defined(HAVE_MESH)
   std::for_each(getFields()->begin(), getFields()->end(), writeFieldGEO(fp));

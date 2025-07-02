@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -25,6 +25,10 @@
 #include "discreteEdge.h"
 #include "discreteFace.h"
 #include "discreteRegion.h"
+
+#if defined(HAVE_POST)
+#include "PView.h"
+#endif
 
 static int readMSHPhysicals(FILE *fp, GEntity *ge)
 {
@@ -197,7 +201,7 @@ int GModel::_readMSH3(const std::string &name)
 
   char str[256] = "";
   double version = 0.;
-  bool binary = false, swap = false, postpro = false;
+  bool binary = false, swap = false;
   int minVertex = 0;
   std::map<int, std::vector<MElement *> > elements[11];
   std::size_t oldNumPartitions = getNumPartitions();
@@ -523,18 +527,38 @@ int GModel::_readMSH3(const std::string &name)
       readMSHPeriodicNodes(fp, this);
     }
 
+#if defined(HAVE_POST)
     // Post-processing sections
+    else if(!strncmp(&str[1], "InterpolationScheme", 19)) {
+      if(!PView::readMSHInterpolationScheme(fp)) {
+        fclose(fp);
+        return 0;
+      }
+    }
     else if(!strncmp(&str[1], "NodeData", 8) ||
             !strncmp(&str[1], "ElementData", 11) ||
             !strncmp(&str[1], "ElementNodeData", 15)) {
-      postpro = true;
-      break;
+      // store the elements in their associated elementary entity. If the entity
+      // does not exist, create a new (discrete) one. Clear the elements so that
+      // we don't store them twice below.
+      for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++) {
+        _storeElementsInEntities(elements[i]);
+        elements[i].clear();
+      }
+      if(!PView::readMSHViewData(name, fp, binary, swap, &str[1])) {
+        fclose(fp);
+        return 0;
+      }
     }
+#endif
 
     do {
       if(!fgets(str, sizeof(str), fp) || feof(fp)) break;
     } while(str[0] != '$');
   }
+
+  std::map<std::size_t, MVertex *> vertexMap(_vertexMapCache);
+  std::vector<MVertex *> vertexVector(_vertexVectorCache);
 
   // store the elements in their associated elementary entity. If the
   // entity does not exist, create a new (discrete) one.
@@ -545,10 +569,10 @@ int GModel::_readMSH3(const std::string &name)
   _associateEntityWithMeshVertices();
 
   // store the vertices in their associated geometrical entity
-  if(_vertexVectorCache.size())
-    _storeVerticesInEntities(_vertexVectorCache);
+  if(vertexVector.size())
+    _storeVerticesInEntities(vertexVector);
   else
-    _storeVerticesInEntities(_vertexMapCache);
+    _storeVerticesInEntities(vertexMap);
 
   for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
     _storeParentsInSubElements(elements[i]);
@@ -560,7 +584,7 @@ int GModel::_readMSH3(const std::string &name)
      getNumPartitions() > oldNumPartitions)
     convertOldPartitioningToNewOne();
 
-  return postpro ? 2 : 1;
+  return 1;
 }
 
 static void writeMSHPhysicals(FILE *fp, GEntity *ge)
@@ -574,7 +598,7 @@ static void writeMSHPhysicals(FILE *fp, GEntity *ge)
 void writeMSHEntities(FILE *fp, GModel *gm) // also used in MSH2
 {
   fprintf(fp, "$Entities\n");
-  fprintf(fp, "%lu %lu %lu %lu\n", gm->getNumVertices(), gm->getNumEdges(),
+  fprintf(fp, "%zu %zu %zu %zu\n", gm->getNumVertices(), gm->getNumEdges(),
           gm->getNumFaces(), gm->getNumRegions());
   for(auto it = gm->firstVertex(); it != gm->lastVertex(); ++it) {
     fprintf(fp, "%d ", (*it)->tag());
@@ -715,7 +739,7 @@ void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity *> &entities,
         if(renumber)
           fprintf(fp, "%ld %ld\n", v1->getIndex(), v2->getIndex());
         else
-          fprintf(fp, "%lu %lu\n", v1->getNum(), v2->getNum());
+          fprintf(fp, "%zu %zu\n", v1->getNum(), v2->getNum());
       }
     }
   }

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -102,7 +102,7 @@ void gmshFace::resetNativePtr(Surface *s)
   _parBounds[1] = Range<double>(0., 1.);
   if(_s->Typ == MSH_SURF_PLAN) {
     SBoundingBox3d bb;
-    for(auto ge: l_edges) {
+    for(auto ge : l_edges) {
       if(ge->geomType() != DiscreteCurve &&
          ge->geomType() != BoundaryLayerCurve) {
         Range<double> t_bounds = ge->parBounds(0);
@@ -121,7 +121,6 @@ void gmshFace::resetNativePtr(Surface *s)
       _parBounds[1] = Range<double>(bb.min().y(), bb.max().y());
     }
   }
-
 }
 
 double gmshFace::getMetricEigenvalue(const SPoint2 &pt)
@@ -215,19 +214,19 @@ SVector3 gmshFace::normal(const SPoint2 &param) const
   }
 }
 
-Pair<SVector3, SVector3> gmshFace::firstDer(const SPoint2 &param) const
+std::pair<SVector3, SVector3> gmshFace::firstDer(const SPoint2 &param) const
 {
   if(_s->Typ == MSH_SURF_PLAN && !_s->geometry) {
     double x, y, z, VX[3], VY[3];
     getMeanPlaneData(VX, VY, x, y, z);
-    return Pair<SVector3, SVector3>(SVector3(VX[0], VX[1], VX[2]),
-                                    SVector3(VY[0], VY[1], VY[2]));
+    return std::make_pair(SVector3(VX[0], VX[1], VX[2]),
+                          SVector3(VY[0], VY[1], VY[2]));
   }
   else {
     Vertex vu = InterpolateSurface(_s, param[0], param[1], 1, 1);
     Vertex vv = InterpolateSurface(_s, param[0], param[1], 1, 2);
-    return Pair<SVector3, SVector3>(SVector3(vu.Pos.X, vu.Pos.Y, vu.Pos.Z),
-                                    SVector3(vv.Pos.X, vv.Pos.Y, vv.Pos.Z));
+    return std::make_pair(SVector3(vu.Pos.X, vu.Pos.Y, vu.Pos.Z),
+                          SVector3(vv.Pos.X, vv.Pos.Y, vv.Pos.Z));
   }
 }
 
@@ -334,6 +333,22 @@ GEntity::GeomType gmshFace::geomType() const
   case MSH_SURF_DISCRETE: return DiscreteSurface;
   case MSH_SURF_BND_LAYER: return BoundaryLayerSurface;
   default: return Unknown;
+  }
+}
+
+void gmshFace::geomProperties(std::vector<int> &integers,
+                              std::vector<double> &reals) const
+{
+  switch(_s->Typ) {
+  case MSH_SURF_PLAN:
+    reals.push_back(meanPlane.a);
+    reals.push_back(meanPlane.b);
+    reals.push_back(meanPlane.c);
+    reals.push_back(meanPlane.d);
+    break;
+  default:
+    // TODO
+    break;
   }
 }
 

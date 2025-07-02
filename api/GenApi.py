@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1294,14 +1294,19 @@ libpath = None
 possible_libpaths = [os.path.join(moduledir, libname),
                      os.path.join(moduledir, "lib", libname),
                      os.path.join(moduledir, "Lib", libname),
+                     os.path.join(moduledir, "bin", libname),
                      # first parent dir
                      os.path.join(parentdir1, libname),
                      os.path.join(parentdir1, "lib", libname),
                      os.path.join(parentdir1, "Lib", libname),
+                     os.path.join(parentdir1, "bin", libname),
                      # second parent dir
                      os.path.join(parentdir2, libname),
                      os.path.join(parentdir2, "lib", libname),
-                     os.path.join(parentdir2, "Lib", libname)
+                     os.path.join(parentdir2, "Lib", libname),
+                     os.path.join(parentdir2, "bin", libname),
+                     # for Windows conda-forge
+                     os.path.join(parentdir2, "Library", "bin", "gmsh.dll")
                      ]
 
 for libpath_to_look in possible_libpaths:
@@ -1312,16 +1317,17 @@ for libpath_to_look in possible_libpaths:
 # if we couldn't find it, use ctype's find_library utility...
 if not libpath:
     if platform.system() == "Windows":
-        libpath = find_library("gmsh-4.11")
+        libpath = find_library("{7}-{3}.{4}")
         if not libpath:
-            libpath = find_library("gmsh")
+            libpath = find_library("{7}")
     else:
-        libpath = find_library("gmsh")
+        libpath = find_library("{7}")
 
 # ... and print a warning if everything failed
-if (not libpath) or (not os.path.exists(libpath)):
-    print("Warning: could not find Gmsh shared library " + libname)
-    print("Searched at these locations: " + str(possible_libpaths))
+if not libpath:
+    print("Warning: could not find {2} shared library " + libname +
+          " with ctypes.util.find_library() or in the following locations: " +
+          str(possible_libpaths))
 
 lib = CDLL(libpath)
 
@@ -1341,7 +1347,7 @@ if try_numpy:
 
 prev_interrupt_handler = None
 
-# Utility functions, not part of the Gmsh Python API
+# Utility functions, not part of the {2} Python API
 
 def _ostring(s):
     sp = s.value.decode("utf-8")
@@ -1497,7 +1503,7 @@ def _ivectorvectordouble(os):
 def _iargcargv(o):
     return c_int(len(o)), (c_char_p * len(o))(*(s.encode() for s in o))
 
-# Gmsh Python API begins here
+# {2} Python API begins here
 """
 
 julia_header = """# {0}
@@ -1722,16 +1728,22 @@ fortran_footer = """
   end function ivectordouble_
 
   subroutine ivectorstring_(o, cstrs, cptrs)
-    character(len=*), intent(in) :: o(:)
+    character(len=*), intent(in), optional :: o(:)
     character(len=GMSH_API_MAX_STR_LEN, kind=c_char), target, allocatable, intent(out) :: cstrs(:)
     type(c_ptr), allocatable, intent(out) :: cptrs(:)
     integer :: i
-    allocate(cstrs(size(o)))    ! Return to keep references from cptrs
-    allocate(cptrs(size(o)))
-    do i = 1, size(o)
+
+    if (present(o)) then
+      allocate(cstrs(size(o)))  ! Return to keep references from cptrs
+      allocate(cptrs(size(o)))
+      do i = 1, size(o)
         cstrs(i) = istring_(o(i))
         cptrs(i) = c_loc(cstrs(i))
-    end do
+      end do
+    else
+      allocate(cstrs(0))
+      allocate(cptrs(0))
+    end if
   end subroutine ivectorstring_
 
   function ivectorpair_(o) result(v)
@@ -1877,7 +1889,7 @@ fortran_footer = """
     do i = 1_c_size_t, n
         iend = int(dims(i))
         call c_f_pointer(ptrs(i), v_, [iend])
-        v(istart:iend) = v_
+        v(istart:istart + iend - 1) = v_
         istart = istart + iend
     end do
     do i = 1_c_size_t, n
@@ -1904,7 +1916,7 @@ fortran_footer = """
     do i = 1_c_size_t, n
         iend = int(dims(i))
         call c_f_pointer(ptrs(i), v_, [iend])
-        v(istart:iend) = v_
+        v(istart:istart + iend - 1) = v_
         istart = istart + iend
     end do
     do i = 1_c_size_t, n
@@ -1931,7 +1943,7 @@ fortran_footer = """
     do i = 1_c_size_t, n
         iend = int(dims(i))
         call c_f_pointer(ptrs(i), v_, [iend])
-        v(istart:iend) = v_
+        v(istart:istart + iend - 1) = v_
         istart = istart + iend
     end do
     do i = 1_c_size_t, n
@@ -1958,7 +1970,7 @@ fortran_footer = """
     do i = 1_c_size_t, n
         iend = int(dims(i)/2)
         call c_f_pointer(ptrs(i), v_, [2_c_size_t, iend])
-        v(:,istart:iend) = v_
+        v(:,istart:istart + iend - 1) = v_
         istart = istart + iend
     end do
     do i = 1_c_size_t, n
@@ -1984,7 +1996,7 @@ class API:
         version_patch,
         namespace = "gmsh",
         code = "Gmsh",
-        copyright = "Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle",
+        copyright = "Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle",
         issues = "https://gitlab.onelab.info/gmsh/gmsh/issues.",
         description = "Gmsh is an automatic three-dimensional finite element mesh generator with a built-in CAD engine and post-processor. Its design goal is to provide a fast, light and user-friendly meshing tool with parametric input and flexible visualization capabilities.\nGmsh is built around four modules (geometry, mesh, solver and post-processing), which can be controlled with the graphical user interface, from the command line, using text files written in Gmsh's own scripting language (.geo files), or through the C++, C, Python, Julia and Fortran application programming interface (API)."):
         self.version_major = version_major
@@ -2680,7 +2692,7 @@ class API:
                 for line in file[1]:
                     l = l + 1
                     # allow white space between func name and (
-                    if re.search(func + '\s*\(', line):
+                    if re.search(func + '\\s*\\(', line):
                         strip = re.sub(r'\s+', '', line)
                         # don't report matches in comments
                         if not in_comments and strip.startswith(comment):

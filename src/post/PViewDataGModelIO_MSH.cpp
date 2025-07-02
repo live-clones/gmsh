@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2023 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -61,6 +61,7 @@ bool PViewDataGModel::readMSH(const std::string &viewName,
       }
     }
     double *d = _steps[step]->getData(num, true, mult);
+
     if(binary) {
       if((int)fread(d, sizeof(double), numComp * mult, fp) != numComp * mult)
         return false;
@@ -199,15 +200,15 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version,
       fprintf(fp, "1\n\"%s\"\n", getName().c_str());
       fprintf(fp, "1\n%.16g\n", _steps[step]->getTime());
       if(partitionNum > 0) {
-        fprintf(fp, "4\n%lu\n%d\n%d\n%d\n", step, numComp, numEnt,
+        fprintf(fp, "4\n%zu\n%d\n%d\n%d\n", step, numComp, numEnt,
                 partitionNum);
       }
       else if(_steps[step]->getPartitions().size() == 1) {
         int p = *_steps[step]->getPartitions().begin();
-        fprintf(fp, "4\n%lu\n%d\n%d\n%d\n", step, numComp, numEnt, p);
+        fprintf(fp, "4\n%zu\n%d\n%d\n%d\n", step, numComp, numEnt, p);
       }
       else {
-        fprintf(fp, "3\n%lu\n%d\n%d\n", step, numComp, numEnt);
+        fprintf(fp, "3\n%zu\n%d\n%d\n", step, numComp, numEnt);
       }
       for(std::size_t i = 0; i < _steps[step]->getNumData(); i++) {
         if(_steps[step]->getData(i)) {
@@ -245,15 +246,15 @@ bool PViewDataGModel::writeMSH(const std::string &fileName, double version,
 
       fprintf(fp, "1\n%.16g\n", _steps[step]->getTime());
       if(partitionNum > 0) {
-        fprintf(fp, "4\n%lu\n%d\n%d\n%d\n", step, numComp, numEnt,
+        fprintf(fp, "4\n%zu\n%d\n%d\n%d\n", step, numComp, numEnt,
                 partitionNum);
       }
       else if(_steps[step]->getPartitions().size() == 1) {
         int p = *_steps[step]->getPartitions().begin();
-        fprintf(fp, "4\n%lu\n%d\n%d\n%d\n", step, numComp, numEnt, p);
+        fprintf(fp, "4\n%zu\n%d\n%d\n%d\n", step, numComp, numEnt, p);
       }
       else {
-        fprintf(fp, "3\n%lu\n%d\n%d\n", step, numComp, numEnt);
+        fprintf(fp, "3\n%zu\n%d\n%d\n", step, numComp, numEnt);
       }
       for(std::size_t i = 0; i < _steps[step]->getNumData(); i++) {
         if(_steps[step]->getData(i)) {
