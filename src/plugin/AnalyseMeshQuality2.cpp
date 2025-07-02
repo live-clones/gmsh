@@ -228,7 +228,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "createElementsView", nullptr, 0, "OFF, ON"},
   {GMSH_FULLRC, "createPlotView", nullptr, 0, "OFF, ON"},
   {GMSH_FULLRC, "adjustElementsVisibility", nullptr, 0, "OFF, 1=skipIfAllWouldBeHidden, 2=acceptAllHidden"}, //TODO updtate for geofit
-  {GMSH_FULLRC, "guidanceLevel", nullptr, 0, "(-1)=minimalOutput, 0=verbose, 1=verboseAndExplanations, 2=justPrintDetailsOnMetrics"},
+  {GMSH_FULLRC, "guidanceLevel", nullptr, 0, "(-1)=minimalOutput, 0=verbose, 1=verboseAndExplanations, 2=printDetailsOnMetricsAndSkipExecution"},
   // Elements Selection:
   {GMSH_FULLRC, "dimensionPolicy", nullptr, 0, "(-2)=force2D, (-1)=force1D, 0=prioritize3D, 1=2D+3D, 2=combine2D+3D"},
   {GMSH_FULLRC, "restrictToElementType", nullptr, 0, "OFF, 1=Tri/Tet, 2=Quad/Hex, 3=Prism/Pyr"},
@@ -241,14 +241,14 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "hideWorstElements", nullptr, 0, "OFF=hideBestElements, ON"},
   {GMSH_FULLRC, "doNoSetVisible", nullptr, 0, "OFF=performHidingAndUnhiding, ON=justPerformHiding"},
   // Advanced computation options:
-  {GMSH_FULLRC, "dataReleasePolicy ", nullptr, 0, "(-1)=skipExecutionJustFreeData, 0=freeOldDataIfMeshAbsent, 1=keepAllData"},
+  {GMSH_FULLRC, "dataReleasePolicy ", nullptr, 0, "(-1)=freeDataAndSkipExecution, 0=freeOldDataIfGeoEntityAbsent, 1=keepAllData"},
   {GMSH_FULLRC, "omitMetricsComputation", nullptr, 0, "OFF, ON=usePreviousData"},
   {GMSH_FULLRC, "smartRecomputation", nullptr, 0, "OFF=alwaysRecompute, ON=avoidRecomputeIfUnchangedElementTags"},
   {GMSH_FULLRC, "skipValidity", nullptr, 0, "(0-)=includeValidity, (1+)=skipPreventiveValidityCheck"},
   // Advanced analysis options:
   {GMSH_FULLRC, "treatFlippedAsValid", nullptr, 0, "(-1)=never, 0=forCurvedGeo (alter FeoFit), 1=always (also alter minJ and minJ/maxJ)"},
-  {GMSH_FULLRC, "enableMinJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=(0-)"},
-  {GMSH_FULLRC, "enableRatioJacDetAsAMetric", nullptr, 0, "OFF, 1+ (require skipValidity=(0-))"},
+  {GMSH_FULLRC, "enableMinJacDetAsAMetric", nullptr, 0, "OFF, 1+ (Validity must be computed)"},
+  {GMSH_FULLRC, "enableRatioJacDetAsAMetric", nullptr, 0, "OFF, 1+ (Validity must be computed)"},
   {GMSH_FULLRC, "skipStatPrinting", nullptr, 0, "OFF, ON"},
   {GMSH_FULLRC, "wmCutoffsForStats", nullptr, 10, "CUTOFFS (for stats weighted mean, see Help)"},
   {GMSH_FULLRC, "wmCutoffsForPlots", nullptr, 10, "CUTOFFS (for plots weighted mean, see Help)"},
@@ -663,30 +663,28 @@ std::string Plug::getHelp() const
     BULLET"Q4: What is the difference between the three options concerning "
           "data management: `dataReleasePolicy', `omitMetricsComputation', "
           "and `smartRecomputation'?\n"
-    ANSWER"A: First, note that the plugin stores the data it computes to avoid "
-          "unnecessary recomputation if run again. Running the plugin with "
-          "`dataReleasePolicy' set to -1 causes the plugin to release "
-          "memory and stop immediately. By default, the plugin releases "
-          "data related to previously analyzed geometry entities that "
-          "are absent in the current model. This behavior can be changed by setting "
-          "`dataReleasePolicy' to 1, in which case data is retained. "
-          "This can be useful when deliberately switching between different models. " //FIXME really useful?
-          "When `omitMetricsComputation' is set to 1, the plugin will recalculate "
-          "the list of requested elements based on the current restrictions but will "
-          "omit computing missing data, relying only on previously computed data for the output. "
-          "This can be helpful, for example, for printing statistics for a subset of "
-          "elements. "
-          "If `omitMetricsComputation' is set to 0, two behaviors are possible. "
-          "If `smartRecomputation' is set to 0, metrics are always (re)computed for each "
-          "requested element. "
-          "If `smartRecomputation' is set to 1, the plugin compares the stored list of "
-          "elements with the list in the geometry entity. "
-          "If they are identical, the plugin only computes missing data. "
-          "Otherwise, it recomputes data for the entire mesh on "
-          "that geometry entity. Note that the plugin cannot detect meshes "
-          "whose element lists remain unchanged but have been modified by moving "
-          "nodes (e.g., after optimization). Therefore, use "
-          "`smartRecomputation' with caution."
+    ANSWER"A: First, note that the plugin stores computed data to avoid "
+          "unnecessary recomputation if run again. By default, however, "
+          "the plugin releases data related to previously analyzed geometry "
+          "entities that are absent in the current model. "
+          "Setting `dataReleasePolicy' to 1 causes the plugin to retain all data, "
+          "which is useful when switching between different models. " //FIXME really useful?
+          "In contrast, launching the plugin with `dataReleasePolicy' set to "
+          "-1 causes it to release all memory and stop immediately. "
+          "When `omitMetricsComputation' is enabled, the plugin skips computing "
+          "missing metrics and relies only on previously computed data for the output. "
+          "This is especially useful for generating output for a subset of elements. "
+          "Note that the plugin will still release data according to the `dataReleasePolicy' "
+          "option. If `omitMetricsComputation' is disabled, two scenarios arise: "
+          "If `smartRecomputation' is disabled, metrics are recomputed for all "
+          "requested elements. If `smartRecomputation' is enabled, "
+          "the plugin compares the current list of elements with stored data. "
+          "If they match exactly, only the missing metrics are computed. "
+          "Otherwise, metrics are recomputed for all the requested elements "
+          "on that geometry entity. "
+          "Note: Use `smartRecomputation' with caution, as the plugin cannot "
+          "detect meshes where only node positions have been modified "
+          "(typically after optimization)."
           " \n"
     BULLET"Q5: Why are OFF and ON used in certain tooltips?\n"
     ANSWER"A: While most of the options function as on/off parameters, the "
@@ -737,14 +735,16 @@ PView *Plug::execute(PView *v)
 
   // Handle cases where no computation is requested
   if(_param.freeData) {
+    _info(-2, "-> Freeing data...");
     _info(-1, "-> Freeing data...");
     _info(1, "-> Freeing data... (because option 'dataReleasePolicy' is -1)");
     _data2D->clear();
     _data3D->clear();
     MeshQuality2Options_Number[16].def = !_previousFreeOldData;
-    _info(MP, "Done. Option 'dataReleasePolicy' has been reset");
     _info(1, "Nothing else to do, re-run the plugin to compute something");
     return v;
+    _info(0, "   Done.");
+    _info(MP, "-> Option 'dataReleasePolicy' has been reset");
   }
 
   Parameters::Computation &pc = _param.compute;
@@ -760,7 +760,8 @@ PView *Plug::execute(PView *v)
 
   GModel *m = GModel::current();
   if(pc.freeOldData && _m && _m != m) {
-    _info(0, "-> Detected a new Model, previous data will be cleared");
+    _info(0, "-> <|>Detected a new model. Previous data will be cleared "
+             "(set 'dataReleasePolicy' to 1 to prevent this)");
     // FIXME may not be the case (can we create a new model with exact same geometry and mesh?)
     // FIXME Do I really need this?
   }
@@ -2541,7 +2542,7 @@ void Plug::_statusBar(int verb, const char *format, ...)
 void Plug::_printDetailsMetrics(size_t which[METRIC_COUNT], bool verbose2)
 {
   if(verbose2)
-    _info(1, "-> Here is all available metric described in details:");
+    _info(1, "-> Here are all available metrics described in details:");
   else
     _info(1, "-> Printing statistics, here is what is important to know about "
     "them:");
@@ -2636,8 +2637,9 @@ void Plug::_guidanceNothingToCompute(Counts counts, bool check2D,
   _info(1, "-> No element to compute");
 
   if (!counts.reqElem) {
+    _info(1, "   Nothing to show neither");
     _info(-1, "-> Nothing to compute, nothing to show");
-    _info(0, "   Nothing to show neither");
+    _info(-2, "-> Nothing to compute, nothing to show");
 
     if (counts.elem) {
       if (_param.compute.onlyVisible && counts.visibleElem == 0) {
