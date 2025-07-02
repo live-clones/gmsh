@@ -715,27 +715,27 @@ std::string Plug::getHelp() const
 
 PView *Plug::execute(PView *v)
 {
+  // Fetch verbose option and display the plugin introduction
   _verbose = static_cast<int>(MeshQuality2Options_Number[6].def);
-
   _info(MP, "---------------------------------------------");
   _status(0, "Executing the plugin AnalyseMeshQuality...");
 
+  // _checkForEarlyExit();
+
+  // Fetch the other parameters
+  bool exitEarly = !_fetchParameters();
+
+  // Print detailed metrics if requested
   if(_verbose == 2) {
     size_t which[METRIC_COUNT];
     std::fill(std::begin(which), std::end(which), 1);
     _printDetailsMetrics(which, true);
     MeshQuality2Options_Number[6].def = 1;
-    _info(MP, "Done. Option 'guidanceLevel' has been set to 1");
-    _info(MP, "Re-run the plugin to compute something");
-    return v;
+    _info(MP, "-> Option 'guidanceLevel' has been set to 1");
+    exitEarly = true;
   }
 
-  if(!_fetchParameters()) return v;
-
-  _info(1, "-> <|>Option 'guidanceLevel' is 1. This makes the plugin to "
-           "provide various explanations");
-
-  // Handle cases where no computation is requested
+  // Free allocated data if requested
   if(_param.freeData) {
     _info(-2, "-> Freeing data...");
     _info(-1, "-> Freeing data...");
@@ -743,10 +743,9 @@ PView *Plug::execute(PView *v)
     _data2D->clear();
     _data3D->clear();
     MeshQuality2Options_Number[16].def = !_previousFreeOldData;
-    _info(1, "Nothing else to do, re-run the plugin to compute something");
-    return v;
     _info(0, "   Done.");
     _info(MP, "-> Option 'dataReleasePolicy' has been reset");
+    exitEarly = true;
   }
 
   // TODO Check if all metric off, in which case, nothing to show and exit early
@@ -767,7 +766,9 @@ PView *Plug::execute(PView *v)
     return v;
   }
 
+  // Check if this is a new model and warn about clearing data
   GModel *m = GModel::current();
+  Parameters::Computation &pc = _param.compute;
   if(pc.freeOldData && _m && _m != m) {
     _info(0, "-> <|>Detected a new model. Previous data will be cleared "
              "(set 'dataReleasePolicy' to 1 to prevent this)");
@@ -776,13 +777,43 @@ PView *Plug::execute(PView *v)
   }
   _m = m;
 
-  // Check which dimension to compute/show, initialize data and counts elements
+  // Check which dimension to compute/show
   bool check2D, check3D;
   _decideDimensionToCheck(check2D, check3D);
+
+  // // Check if there is something to do
+  // bool noMetricToCompute = !pc.jacobian && !pc.jacobianOnCurvedGeo
+  //                          && !pc.disto && !pc.aspect && !pc.geofit;
+  // // Is hasDataToShow sufficient? If disto asked but only validity
+  // if( (pc.skip || noMetricToCompute)
+  //     && (!check2D || !_data2D->hasDataToShow())
+  //     && (!check3D || !_data3D->hasDataToShow()) ) {
+  //   if(pc.skip) {
+  //     _warn(MP, "-> <|>Option 'omitMetricsComputation' is set to 1 but no previously computed data "
+  //               "available to analyze. Set 'omitMetricsComputation' to 0 for "
+  //               "analyzing a mesh");
+  //   }
+  //   if(noMetricToCompute) {
+  //     _warn(0, "-> No metric to compute. Please adjust the following options:\n"
+  //              "   - Turn ON at least one of the following metrics:\n"
+  //              "     * enableDistortionQuality\n"
+  //              "     * enableAspectQuality\n"
+  //              "     * enableGeoFit\n"
+  //              "   - OR set 'skipValidity' to 0.");
+  //   }
+  //   return v;
+  // }
+
+
+
+  // Here it is possible to ask for minJ or maxJ and it is computed
+  // but with skipValidity ON
+
 
   Counts counts2D, counts3D;
   if(check2D) _data2D->syncWithModel(_m, _param.compute, counts2D);
   if(check3D) _data3D->syncWithModel(_m, _param.compute, counts3D);
+  Counts countsTotal = counts2D + counts3D;
 
   // TODO:
   //  Purge views
@@ -795,7 +826,6 @@ PView *Plug::execute(PView *v)
 
   // Count and compute if needed, otherwise check there is something to output
   std::size_t totalToCompute = _printElementToCompute(counts2D, counts3D);
-  Counts countsTotal = counts2D + counts3D;
   if(!totalToCompute) {
     if(pc.skip && !_data2D->hasDataToShow() && !_data3D->hasDataToShow()) {
       _warn(MP, "-> <|>No data available but option 'omitMetricsComputation' is set to 1. "
