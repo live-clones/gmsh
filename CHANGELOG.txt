@@ -4,7 +4,7 @@ export to handle OCC geometries; new Step() built-in parser function; fix
 occ/getClosestPoint for OCC surfaces; renamed Windows DLL import library from
 .lib to .dll.lib; official binary builds now use OCC 7.8, and Linux and Windows
 binary builds use FLTK 1.3 (instead of FLTK 1.4, which introduced performance
-regressions in OpenGL rendering).
+regressions in OpenGL rendering); bug fixes.
 
 * New API functions: model/getEntityProperties, model/getPhysicalGroupsEntities
 
