@@ -82,6 +82,7 @@
 //         view for subset.
 //  12. I think that omitMetricsComputation still need to not have the mesh
 //      changed, which is not checked right now.
+//  13. Print selected x element before printing num to compute (with %)
 
 
 
@@ -390,6 +391,7 @@ std::string Plug::getHelp() const
     BULLET"`Curved Geometry elements' (CG elements): Elements that are "
           "defined along curved geometrical features, such as 1D elements "
           "on curved edges or 2D elements on curved surfaces.\n"
+    // FIXME use Selected elements. Then, is the definition still usefull?
     BULLET"`Requested elements': The plugin will identify, among all "
           "available elements, the ones that satisfy all the restrictions "
           "specified by the options: `dimensionPolicy', "
@@ -747,14 +749,21 @@ PView *Plug::execute(PView *v)
     _info(MP, "-> Option 'dataReleasePolicy' has been reset");
   }
 
-  Parameters::Computation &pc = _param.compute;
-  if(!pc.jacobian && !pc.jacobianOnCurvedGeo && !pc.disto && !pc.aspect && !pc.geofit) {
-    _warn(0, "-> Nothing to execute. Please adjust the following options:\n"
-             "   - Turn ON at least one of the following metrics:\n"
-             "     * enableDistortionQuality\n"
-             "     * enableAspectQuality\n"
-             "     * enableGeoFit\n"
-             "   - OR set 'skipValidity' to 0.");
+  // TODO Check if all metric off, in which case, nothing to show and exit early
+  // if(!pc.jacobian && !pc.jacobianOnCurvedGeo && !pc.disto && !pc.aspect && !pc.geofit
+  //   && !_data2D->hasDataToShow()) {
+  //   _warn(0, "-> Nothing to execute. Please adjust the following options:\n"
+  //            "   - Turn ON at least one of the following metrics:\n"
+  //            "     * enableDistortionQuality\n"
+  //            "     * enableAspectQuality\n"
+  //            "     * enableGeoFit\n"
+  //            "   - OR set 'skipValidity' to 0.");
+  //   return v;
+  // }
+
+  // Exit early if required
+  if(exitEarly) {
+    _info(MP, "Nothing (else) to do, re-run the plugin to analyze a mesh");
     return v;
   }
 
@@ -775,6 +784,12 @@ PView *Plug::execute(PView *v)
   if(check2D) _data2D->syncWithModel(_m, _param.compute, counts2D);
   if(check3D) _data3D->syncWithModel(_m, _param.compute, counts3D);
 
+  // TODO:
+  //  Purge views
+  //  1. If no selected elements -> guide and exit
+  //  2. For metric to show, if no data (available+tobeComputed) -> guide and exit
+  //  Continue
+
   // Purge views just after initialization of _data2D and _data3D
   _purgeViews(check2D, check3D);
 
@@ -791,6 +806,7 @@ PView *Plug::execute(PView *v)
     if(!countsTotal.reqElem) return v;
   }
   else {
+    // FIXME use distoOrAspectToComputeButUnknownValidity
     if(!pc.jacobian && (countsTotal.metricValsToCompute[2] || countsTotal.metricValsToCompute[3])) {
       _warn(1, "-> <|>Option 'skipValidity' is ON, validity will not be "
                "computed. This may significantly slow down quality computation "
@@ -2642,6 +2658,16 @@ void Plug::_guidanceNothingToCompute(Counts counts, bool check2D,
     _info(-2, "-> Nothing to compute, nothing to show");
 
     if (counts.elem) {
+      // FIXME: change:
+      //   if noVisible elment but asked: print
+      //   if noCurved elment but asked: print
+      //   if noType elment but asked: print
+      //   if not print yet: print that no element match combination
+      //      -> mesh has x visible element (a% of total)
+      //         mesh has y curved element (b% of total)
+      //         mesh has z asked-type element (c% of total)
+      //         but no element are all three at same time
+      //  For this: need numElemVisible (selected or not)
       if (_param.compute.onlyVisible && counts.visibleElem == 0) {
         _warn(0, "   Option 'restrictToVisibleElements' is ON but no visible elements found");
       }
@@ -2660,6 +2686,7 @@ void Plug::_guidanceNothingToCompute(Counts counts, bool check2D,
       }
       else {
         _error(0, "   Unexpected state: should not be here");
+        // FIXME: yes, we can have: only quad curved and ask for tri and curved...
       }
     }
     else { // Case where no elements found
