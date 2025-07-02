@@ -96,7 +96,7 @@ private:
   Parameters _param;
   // bool _myVerbose = false;
   int _dimensionPolicy = 0;
-  int _previousFreeOldData = 0;
+  int _previousFreeOldData = 1;
   std::map<Key, PView *> _pviews;
 
 #if defined(HAVE_VISUDEV)
@@ -144,6 +144,7 @@ public:
 private:
   bool _fetchParameters();
   void _fetchLegacyParameters();
+  bool _checkEarlyExitOptions();
   void _purgeViews(bool purge2D, bool purge3D);
   void _decideDimensionToCheck(bool &check2D, bool &check3D) const;
   void _computeRequestedData(Counts param, bool check2D, bool check3D) const;

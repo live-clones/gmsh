@@ -720,48 +720,10 @@ PView *Plug::execute(PView *v)
   _info(MP, "---------------------------------------------");
   _status(0, "Executing the plugin AnalyseMeshQuality...");
 
-  // _checkForEarlyExit();
-
-  // Fetch the other parameters
-  bool exitEarly = !_fetchParameters();
-
-  // Print detailed metrics if requested
-  if(_verbose == 2) {
-    size_t which[METRIC_COUNT];
-    std::fill(std::begin(which), std::end(which), 1);
-    _printDetailsMetrics(which, true);
-    MeshQuality2Options_Number[6].def = 1;
-    _info(MP, "-> Option 'guidanceLevel' has been set to 1");
-    exitEarly = true;
-  }
-
-  // Free allocated data if requested
-  if(_param.freeData) {
-    _info(-2, "-> Freeing data...");
-    _info(-1, "-> Freeing data...");
-    _info(1, "-> Freeing data... (because option 'dataReleasePolicy' is -1)");
-    _data2D->clear();
-    _data3D->clear();
-    MeshQuality2Options_Number[16].def = !_previousFreeOldData;
-    _info(0, "   Done.");
-    _info(MP, "-> Option 'dataReleasePolicy' has been reset");
-    exitEarly = true;
-  }
-
-  // TODO Check if all metric off, in which case, nothing to show and exit early
-  // if(!pc.jacobian && !pc.jacobianOnCurvedGeo && !pc.disto && !pc.aspect && !pc.geofit
-  //   && !_data2D->hasDataToShow()) {
-  //   _warn(0, "-> Nothing to execute. Please adjust the following options:\n"
-  //            "   - Turn ON at least one of the following metrics:\n"
-  //            "     * enableDistortionQuality\n"
-  //            "     * enableAspectQuality\n"
-  //            "     * enableGeoFit\n"
-  //            "   - OR set 'skipValidity' to 0.");
-  //   return v;
-  // }
-
-  // Exit early if required
-  if(exitEarly) {
+  // Fetch the other parameters and check options that may cause an early exit
+  bool unhandledOptions= !_fetchParameters();
+  bool earlyExit = _checkEarlyExitOptions();
+  if (unhandledOptions || earlyExit) {
     _info(MP, "Nothing (else) to do, re-run the plugin to analyze a mesh");
     return v;
   }
@@ -1169,6 +1131,54 @@ void Plug::_fetchLegacyParameters()
   else {
     _param.dimPolicy = 0;
   }
+}
+
+bool Plug::_checkEarlyExitOptions()
+{
+  bool exit = false;
+
+  // Print detailed metrics if requested
+  if(_verbose == 2) {
+    size_t which[METRIC_COUNT];
+    std::fill(std::begin(which), std::end(which), 1);
+    _printDetailsMetrics(which, true);
+    MeshQuality2Options_Number[6].def = 1;
+    _info(MP, "-> Option 'guidanceLevel' has been set to 1");
+    exit = true;
+  }
+
+  // Free allocated data if requested
+  if(_param.freeData) {
+    _info(-2, "-> Freeing data...");
+    _info(-1, "-> Freeing data...");
+    _info(1, "-> Freeing data... (because option 'dataReleasePolicy' is -1)");
+    _data2D->clear();
+    _data3D->clear();
+    MeshQuality2Options_Number[16].def = !_previousFreeOldData;
+    _info(0, "   Done.");
+    _info(MP, "-> Option 'dataReleasePolicy' has been reset");
+    exit = true;
+  }
+
+  // Check if at least one metric is requested
+  Parameters::MetricsToShow ps = _param.show;
+  int sum = 0;
+  for(int i = 0; i < METRIC_COUNT; i++) {
+    sum += std::abs(ps.which[i]);
+  }
+  if(!sum) {
+    _warn(MP, "-> No metric to analyze. Please adjust the following options:\n");
+    _info(MP, "   - Turn ON at least one of the following metrics:\n"
+              "     * enableDistortionQuality\n"
+              "     * enableAspectQuality\n"
+              "     * enableGeoFit\n"
+              "     * enableMinJacDetAsAMetric\n"
+              "     * enableRatioJacDetAsAMetric\n"
+              "   - OR set 'skipValidity' to 0");
+    exit = true;
+  }
+
+  return exit;
 }
 
 void Plug::_purgeViews(bool purge2D, bool purge3D)
