@@ -738,6 +738,26 @@ module gmsh
         gmshModelMeshComputeHomology
     procedure, nopass :: computeCrossField => &
         gmshModelMeshComputeCrossField
+    procedure, nopass :: advectMeshNodes => &
+        gmshModelMeshAdvectMeshNodes
+    procedure, nopass :: computeAlphaShape => &
+        gmshModelMeshComputeAlphaShape
+    procedure, nopass :: tetrahedralizePoints => &
+        gmshModelMeshTetrahedralizePoints
+    procedure, nopass :: alphaShape3D => &
+        gmshModelMeshAlphaShape3D
+    procedure, nopass :: alphaShape3DFromArray => &
+        gmshModelMeshAlphaShape3DFromArray
+    procedure, nopass :: surfaceEdgeSplitting => &
+        gmshModelMeshSurfaceEdgeSplitting
+    procedure, nopass :: volumeMeshRefinement => &
+        gmshModelMeshVolumeMeshRefinement
+    procedure, nopass :: filterCloseNodes => &
+        gmshModelMeshFilterCloseNodes
+    procedure, nopass :: colourBoundaryFaces => &
+        gmshModelMeshColourBoundaryFaces
+    procedure, nopass :: matchTrianglesToEntities => &
+        gmshModelMeshMatchTrianglesToEntities
   end type gmsh_model_mesh_t
 
   type, public :: gmsh_model_t
@@ -7565,6 +7585,574 @@ module gmsh
     viewTags = ovectorint_(api_viewTags_, &
       api_viewTags_n_)
   end subroutine gmshModelMeshComputeCrossField
+
+  !> Advect nodes of a mesh with displacement vector dxNodes
+  subroutine gmshModelMeshAdvectMeshNodes(dim, &
+                                          tag, &
+                                          bndTag, &
+                                          boundaryModel, &
+                                          nodeTags, &
+                                          dxNodes, &
+                                          boundaryTolerance, &
+                                          intersectOrProjectOnBoundary, &
+                                          ierr)
+    interface
+    subroutine C_API(dim, &
+                     tag, &
+                     bndTag, &
+                     boundaryModel, &
+                     api_nodeTags_, &
+                     api_nodeTags_n_, &
+                     api_dxNodes_, &
+                     api_dxNodes_n_, &
+                     boundaryTolerance, &
+                     intersectOrProjectOnBoundary, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshAdvectMeshNodes")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), value, intent(in) :: bndTag
+      character(len=1, kind=c_char), dimension(*), intent(in) :: boundaryModel
+      integer(c_size_t), dimension(*) :: api_nodeTags_
+      integer(c_size_t), value, intent(in) :: api_nodeTags_n_
+      real(c_double), dimension(*) :: api_dxNodes_
+      integer(c_size_t), value, intent(in) :: api_dxNodes_n_
+      real(c_double), value, intent(in) :: boundaryTolerance
+      integer(c_int), value, intent(in) :: intersectOrProjectOnBoundary
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    integer, intent(in) :: bndTag
+    character(len=*), intent(in) :: boundaryModel
+    integer(c_size_t), dimension(:), intent(in) :: nodeTags
+    real(c_double), dimension(:), intent(in) :: dxNodes
+    real(c_double), intent(in), optional :: boundaryTolerance
+    logical, intent(in), optional :: intersectOrProjectOnBoundary
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(dim=int(dim, c_int), &
+         tag=int(tag, c_int), &
+         bndTag=int(bndTag, c_int), &
+         boundaryModel=istring_(boundaryModel), &
+         api_nodeTags_=nodeTags, &
+         api_nodeTags_n_=size_gmsh_size(nodeTags), &
+         api_dxNodes_=dxNodes, &
+         api_dxNodes_n_=size_gmsh_double(dxNodes), &
+         boundaryTolerance=optval_c_double(1e-6, boundaryTolerance), &
+         intersectOrProjectOnBoundary=optval_c_bool(.false., intersectOrProjectOnBoundary), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshAdvectMeshNodes
+
+  !> Compute the alpha shape - improved function
+  subroutine gmshModelMeshComputeAlphaShape(dim, &
+                                            tag, &
+                                            bndTag, &
+                                            boundaryModel, &
+                                            alpha, &
+                                            alphaShapeSizeField, &
+                                            refineSizeField, &
+                                            newNodeTags, &
+                                            newNodeElementTags, &
+                                            newNodeParametricCoord, &
+                                            usePreviousMesh, &
+                                            boundaryTolerance, &
+                                            refine, &
+                                            delaunayTag, &
+                                            deleteDisconnectedNodes, &
+                                            ierr)
+    interface
+    subroutine C_API(dim, &
+                     tag, &
+                     bndTag, &
+                     boundaryModel, &
+                     alpha, &
+                     alphaShapeSizeField, &
+                     refineSizeField, &
+                     api_newNodeTags_, &
+                     api_newNodeTags_n_, &
+                     api_newNodeElementTags_, &
+                     api_newNodeElementTags_n_, &
+                     api_newNodeParametricCoord_, &
+                     api_newNodeParametricCoord_n_, &
+                     usePreviousMesh, &
+                     boundaryTolerance, &
+                     refine, &
+                     delaunayTag, &
+                     deleteDisconnectedNodes, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshComputeAlphaShape")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), value, intent(in) :: bndTag
+      character(len=1, kind=c_char), dimension(*), intent(in) :: boundaryModel
+      real(c_double), value, intent(in) :: alpha
+      integer(c_int), value, intent(in) :: alphaShapeSizeField
+      integer(c_int), value, intent(in) :: refineSizeField
+      type(c_ptr), intent(out) :: api_newNodeTags_
+      integer(c_size_t), intent(out) :: api_newNodeTags_n_
+      type(c_ptr), intent(out) :: api_newNodeElementTags_
+      integer(c_size_t), intent(out) :: api_newNodeElementTags_n_
+      type(c_ptr), intent(out) :: api_newNodeParametricCoord_
+      integer(c_size_t) :: api_newNodeParametricCoord_n_
+      integer(c_int), value, intent(in) :: usePreviousMesh
+      real(c_double), value, intent(in) :: boundaryTolerance
+      integer(c_int), value, intent(in) :: refine
+      integer(c_int), value, intent(in) :: delaunayTag
+      integer(c_int), value, intent(in) :: deleteDisconnectedNodes
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    integer, intent(in) :: bndTag
+    character(len=*), intent(in) :: boundaryModel
+    real(c_double), intent(in) :: alpha
+    integer, intent(in) :: alphaShapeSizeField
+    integer, intent(in) :: refineSizeField
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: newNodeTags
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: newNodeElementTags
+    real(c_double), dimension(:), allocatable, intent(out) :: newNodeParametricCoord
+    logical, intent(in), optional :: usePreviousMesh
+    real(c_double), intent(in), optional :: boundaryTolerance
+    logical, intent(in), optional :: refine
+    integer, intent(in), optional :: delaunayTag
+    logical, intent(in), optional :: deleteDisconnectedNodes
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_newNodeTags_
+    integer(c_size_t) :: api_newNodeTags_n_
+    type(c_ptr) :: api_newNodeElementTags_
+    integer(c_size_t) :: api_newNodeElementTags_n_
+    type(c_ptr) :: api_newNodeParametricCoord_
+    integer(c_size_t) :: api_newNodeParametricCoord_n_
+    call C_API(dim=int(dim, c_int), &
+         tag=int(tag, c_int), &
+         bndTag=int(bndTag, c_int), &
+         boundaryModel=istring_(boundaryModel), &
+         alpha=real(alpha, c_double), &
+         alphaShapeSizeField=int(alphaShapeSizeField, c_int), &
+         refineSizeField=int(refineSizeField, c_int), &
+         api_newNodeTags_=api_newNodeTags_, &
+         api_newNodeTags_n_=api_newNodeTags_n_, &
+         api_newNodeElementTags_=api_newNodeElementTags_, &
+         api_newNodeElementTags_n_=api_newNodeElementTags_n_, &
+         api_newNodeParametricCoord_=api_newNodeParametricCoord_, &
+         api_newNodeParametricCoord_n_=api_newNodeParametricCoord_n_, &
+         usePreviousMesh=optval_c_bool(.false., usePreviousMesh), &
+         boundaryTolerance=optval_c_double(1e-6, boundaryTolerance), &
+         refine=optval_c_bool(.true., refine), &
+         delaunayTag=optval_c_int(-1, delaunayTag), &
+         deleteDisconnectedNodes=optval_c_bool(.true., deleteDisconnectedNodes), &
+         ierr_=ierr)
+    newNodeTags = ovectorsize_(api_newNodeTags_, &
+      api_newNodeTags_n_)
+    newNodeElementTags = ovectorsize_(api_newNodeElementTags_, &
+      api_newNodeElementTags_n_)
+    newNodeParametricCoord = ovectordouble_(api_newNodeParametricCoord_, &
+      api_newNodeParametricCoord_n_)
+  end subroutine gmshModelMeshComputeAlphaShape
+
+  !> Tetrahedralize points in entity of tag `tag
+  subroutine gmshModelMeshTetrahedralizePoints(tag, &
+                                               optimize, &
+                                               quality, &
+                                               ierr)
+    interface
+    subroutine C_API(tag, &
+                     optimize, &
+                     quality, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshTetrahedralizePoints")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), value, intent(in) :: optimize
+      real(c_double), value, intent(in) :: quality
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    logical, intent(in), optional :: optimize
+    real(c_double), intent(in), optional :: quality
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(tag=int(tag, c_int), &
+         optimize=optval_c_bool(.false., optimize), &
+         quality=optval_c_double(0.00001, quality), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshTetrahedralizePoints
+
+  !> Compute alpha shape of the mesh in entity of tag `tag
+  subroutine gmshModelMeshAlphaShape3D(tag, &
+                                       alpha, &
+                                       sizeFieldTag, &
+                                       tagAlpha, &
+                                       tagAlphaBoundary, &
+                                       tri2TetMap, &
+                                       removeDisconnectedNodes, &
+                                       returnTri2TetMap, &
+                                       ierr)
+    interface
+    subroutine C_API(tag, &
+                     alpha, &
+                     sizeFieldTag, &
+                     tagAlpha, &
+                     tagAlphaBoundary, &
+                     api_tri2TetMap_, &
+                     api_tri2TetMap_n_, &
+                     removeDisconnectedNodes, &
+                     returnTri2TetMap, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshAlphaShape3D")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      real(c_double), value, intent(in) :: alpha
+      integer(c_int), value, intent(in) :: sizeFieldTag
+      integer(c_int), value, intent(in) :: tagAlpha
+      integer(c_int), value, intent(in) :: tagAlphaBoundary
+      type(c_ptr), intent(out) :: api_tri2TetMap_
+      integer(c_size_t), intent(out) :: api_tri2TetMap_n_
+      integer(c_int), value, intent(in) :: removeDisconnectedNodes
+      integer(c_int), value, intent(in) :: returnTri2TetMap
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    real(c_double), intent(in) :: alpha
+    integer, intent(in) :: sizeFieldTag
+    integer, intent(in) :: tagAlpha
+    integer, intent(in) :: tagAlphaBoundary
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: tri2TetMap
+    logical, intent(in), optional :: removeDisconnectedNodes
+    logical, intent(in), optional :: returnTri2TetMap
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_tri2TetMap_
+    integer(c_size_t) :: api_tri2TetMap_n_
+    call C_API(tag=int(tag, c_int), &
+         alpha=real(alpha, c_double), &
+         sizeFieldTag=int(sizeFieldTag, c_int), &
+         tagAlpha=int(tagAlpha, c_int), &
+         tagAlphaBoundary=int(tagAlphaBoundary, c_int), &
+         api_tri2TetMap_=api_tri2TetMap_, &
+         api_tri2TetMap_n_=api_tri2TetMap_n_, &
+         removeDisconnectedNodes=optval_c_bool(.false., removeDisconnectedNodes), &
+         returnTri2TetMap=optval_c_bool(.false., returnTri2TetMap), &
+         ierr_=ierr)
+    tri2TetMap = ovectorsize_(api_tri2TetMap_, &
+      api_tri2TetMap_n_)
+  end subroutine gmshModelMeshAlphaShape3D
+
+  !> Compute alpha shape of the mesh in entity of tag `tag' using an array of
+  !! values alpha. The values correspond to the element tags stored in
+  !! elementTags.
+  subroutine gmshModelMeshAlphaShape3DFromArray(tag, &
+                                                elementTags, &
+                                                alpha, &
+                                                tagAlpha, &
+                                                tagAlphaBoundary, &
+                                                tri2TetMap, &
+                                                removeDisconnectedNodes, &
+                                                returnTri2TetMap, &
+                                                ierr)
+    interface
+    subroutine C_API(tag, &
+                     api_elementTags_, &
+                     api_elementTags_n_, &
+                     api_alpha_, &
+                     api_alpha_n_, &
+                     tagAlpha, &
+                     tagAlphaBoundary, &
+                     api_tri2TetMap_, &
+                     api_tri2TetMap_n_, &
+                     removeDisconnectedNodes, &
+                     returnTri2TetMap, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshAlphaShape3DFromArray")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      integer(c_size_t), dimension(*) :: api_elementTags_
+      integer(c_size_t), value, intent(in) :: api_elementTags_n_
+      real(c_double), dimension(*) :: api_alpha_
+      integer(c_size_t), value, intent(in) :: api_alpha_n_
+      integer(c_int), value, intent(in) :: tagAlpha
+      integer(c_int), value, intent(in) :: tagAlphaBoundary
+      type(c_ptr), intent(out) :: api_tri2TetMap_
+      integer(c_size_t), intent(out) :: api_tri2TetMap_n_
+      integer(c_int), value, intent(in) :: removeDisconnectedNodes
+      integer(c_int), value, intent(in) :: returnTri2TetMap
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    integer(c_size_t), dimension(:), intent(in) :: elementTags
+    real(c_double), dimension(:), intent(in) :: alpha
+    integer, intent(in) :: tagAlpha
+    integer, intent(in) :: tagAlphaBoundary
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: tri2TetMap
+    logical, intent(in), optional :: removeDisconnectedNodes
+    logical, intent(in), optional :: returnTri2TetMap
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_tri2TetMap_
+    integer(c_size_t) :: api_tri2TetMap_n_
+    call C_API(tag=int(tag, c_int), &
+         api_elementTags_=elementTags, &
+         api_elementTags_n_=size_gmsh_size(elementTags), &
+         api_alpha_=alpha, &
+         api_alpha_n_=size_gmsh_double(alpha), &
+         tagAlpha=int(tagAlpha, c_int), &
+         tagAlphaBoundary=int(tagAlphaBoundary, c_int), &
+         api_tri2TetMap_=api_tri2TetMap_, &
+         api_tri2TetMap_n_=api_tri2TetMap_n_, &
+         removeDisconnectedNodes=optval_c_bool(.false., removeDisconnectedNodes), &
+         returnTri2TetMap=optval_c_bool(.false., returnTri2TetMap), &
+         ierr_=ierr)
+    tri2TetMap = ovectorsize_(api_tri2TetMap_, &
+      api_tri2TetMap_n_)
+  end subroutine gmshModelMeshAlphaShape3DFromArray
+
+  !> Mesh refinement/derefinement through edge splitting of (surface) entity of
+  !! tag `tag
+  subroutine gmshModelMeshSurfaceEdgeSplitting(fullTag, &
+                                               surfaceTag, &
+                                               sizeFieldTag, &
+                                               tri2TetMap, &
+                                               tetrahedralize, &
+                                               buildElementOctree, &
+                                               ierr)
+    interface
+    subroutine C_API(fullTag, &
+                     surfaceTag, &
+                     sizeFieldTag, &
+                     api_tri2TetMap_, &
+                     api_tri2TetMap_n_, &
+                     tetrahedralize, &
+                     buildElementOctree, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshSurfaceEdgeSplitting")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: fullTag
+      integer(c_int), value, intent(in) :: surfaceTag
+      integer(c_int), value, intent(in) :: sizeFieldTag
+      integer(c_size_t), dimension(*) :: api_tri2TetMap_
+      integer(c_size_t), value, intent(in) :: api_tri2TetMap_n_
+      integer(c_int), value, intent(in) :: tetrahedralize
+      integer(c_int), value, intent(in) :: buildElementOctree
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: fullTag
+    integer, intent(in) :: surfaceTag
+    integer, intent(in) :: sizeFieldTag
+    integer(c_size_t), dimension(:), intent(in) :: tri2TetMap
+    logical, intent(in), optional :: tetrahedralize
+    logical, intent(in), optional :: buildElementOctree
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(fullTag=int(fullTag, c_int), &
+         surfaceTag=int(surfaceTag, c_int), &
+         sizeFieldTag=int(sizeFieldTag, c_int), &
+         api_tri2TetMap_=tri2TetMap, &
+         api_tri2TetMap_n_=size_gmsh_size(tri2TetMap), &
+         tetrahedralize=optval_c_bool(.false., tetrahedralize), &
+         buildElementOctree=optval_c_bool(.false., buildElementOctree), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshSurfaceEdgeSplitting
+
+  !> Volume mesh refinement/derefinement using hxt refinement approaches of
+  !! volume entity of tag `tag', and bounded by surface entity of tag
+  !! `surfaceTag'.
+  subroutine gmshModelMeshVolumeMeshRefinement(fullTag, &
+                                               surfaceTag, &
+                                               volumeTag, &
+                                               sizeFieldTag, &
+                                               returnNodalCurvature, &
+                                               nodalCurvature, &
+                                               ierr)
+    interface
+    subroutine C_API(fullTag, &
+                     surfaceTag, &
+                     volumeTag, &
+                     sizeFieldTag, &
+                     returnNodalCurvature, &
+                     api_nodalCurvature_, &
+                     api_nodalCurvature_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshVolumeMeshRefinement")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: fullTag
+      integer(c_int), value, intent(in) :: surfaceTag
+      integer(c_int), value, intent(in) :: volumeTag
+      integer(c_int), value, intent(in) :: sizeFieldTag
+      integer(c_int), value, intent(in) :: returnNodalCurvature
+      type(c_ptr), intent(out) :: api_nodalCurvature_
+      integer(c_size_t) :: api_nodalCurvature_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: fullTag
+    integer, intent(in) :: surfaceTag
+    integer, intent(in) :: volumeTag
+    integer, intent(in) :: sizeFieldTag
+    logical, intent(in) :: returnNodalCurvature
+    real(c_double), dimension(:), allocatable, intent(out) :: nodalCurvature
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_nodalCurvature_
+    integer(c_size_t) :: api_nodalCurvature_n_
+    call C_API(fullTag=int(fullTag, c_int), &
+         surfaceTag=int(surfaceTag, c_int), &
+         volumeTag=int(volumeTag, c_int), &
+         sizeFieldTag=int(sizeFieldTag, c_int), &
+         returnNodalCurvature=merge(1_c_int, 0_c_int, returnNodalCurvature), &
+         api_nodalCurvature_=api_nodalCurvature_, &
+         api_nodalCurvature_n_=api_nodalCurvature_n_, &
+         ierr_=ierr)
+    nodalCurvature = ovectordouble_(api_nodalCurvature_, &
+      api_nodalCurvature_n_)
+  end subroutine gmshModelMeshVolumeMeshRefinement
+
+  !> Filter out points in the region with tag `tag' that are too close to each
+  !! other based on the size field with tag `sizeFieldTag' and a given tolerance
+  !! `tolerance'.
+  subroutine gmshModelMeshFilterCloseNodes(tag, &
+                                           sizeFieldTag, &
+                                           tolerance, &
+                                           ierr)
+    interface
+    subroutine C_API(tag, &
+                     sizeFieldTag, &
+                     tolerance, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshFilterCloseNodes")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), value, intent(in) :: sizeFieldTag
+      real(c_double), value, intent(in) :: tolerance
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    integer, intent(in) :: sizeFieldTag
+    real(c_double), intent(in) :: tolerance
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(tag=int(tag, c_int), &
+         sizeFieldTag=int(sizeFieldTag, c_int), &
+         tolerance=real(tolerance, c_double), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshFilterCloseNodes
+
+  !> Color the faces of tag `tag' based on the entities in the boundary model
+  !! `boundarModel'. Colouring is done using an octree that colour the faces
+  !! using the colours of the boundary entities, if they are within a given
+  !! tolerance `tolerance'.
+  subroutine gmshModelMeshColourBoundaryFaces(tag, &
+                                              boundaryModel, &
+                                              tolerance, &
+                                              ierr)
+    interface
+    subroutine C_API(tag, &
+                     boundaryModel, &
+                     tolerance, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshColourBoundaryFaces")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      character(len=1, kind=c_char), dimension(*), intent(in) :: boundaryModel
+      real(c_double), value, intent(in) :: tolerance
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    character(len=*), intent(in) :: boundaryModel
+    real(c_double), intent(in) :: tolerance
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(tag=int(tag, c_int), &
+         boundaryModel=istring_(boundaryModel), &
+         tolerance=real(tolerance, c_double), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshColourBoundaryFaces
+
+  !> Match the triangles of the mesh in entity of tag `tag' to the entities in
+  !! the boundary model `boundaryModel'. The matching is done using an octree
+  !! that match the triangles to the entities, if they are within a given
+  !! tolerance `tolerance'. The output is a vector of entity tags and a vector
+  !! of triangle tags.
+  subroutine gmshModelMeshMatchTrianglesToEntities(tag, &
+                                                   boundaryModel, &
+                                                   tolerance, &
+                                                   outEntities, &
+                                                   outTriangles, &
+                                                   outTriangles_n, &
+                                                   outTriangleNodeTags, &
+                                                   outTriangleNodeTags_n, &
+                                                   ierr)
+    interface
+    subroutine C_API(tag, &
+                     boundaryModel, &
+                     tolerance, &
+                     api_outEntities_, &
+                     api_outEntities_n_, &
+                     api_outTriangles_, &
+                     api_outTriangles_n_, &
+                     api_outTriangles_nn_, &
+                     api_outTriangleNodeTags_, &
+                     api_outTriangleNodeTags_n_, &
+                     api_outTriangleNodeTags_nn_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshMatchTrianglesToEntities")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      character(len=1, kind=c_char), dimension(*), intent(in) :: boundaryModel
+      real(c_double), value, intent(in) :: tolerance
+      type(c_ptr), intent(out) :: api_outEntities_
+      integer(c_size_t), intent(out) :: api_outEntities_n_
+      type(c_ptr), intent(out) :: api_outTriangles_
+      type(c_ptr), intent(out) :: api_outTriangles_n_
+      integer(c_size_t), intent(out) :: api_outTriangles_nn_
+      type(c_ptr), intent(out) :: api_outTriangleNodeTags_
+      type(c_ptr), intent(out) :: api_outTriangleNodeTags_n_
+      integer(c_size_t), intent(out) :: api_outTriangleNodeTags_nn_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    character(len=*), intent(in) :: boundaryModel
+    real(c_double), intent(in) :: tolerance
+    integer(c_int), dimension(:), allocatable, intent(out) :: outEntities
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: outTriangles
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: outTriangles_n
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: outTriangleNodeTags
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: outTriangleNodeTags_n
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_outEntities_
+    integer(c_size_t) :: api_outEntities_n_
+    type(c_ptr) :: api_outTriangles_, api_outTriangles_n_
+    integer(c_size_t) :: api_outTriangles_nn_
+    type(c_ptr) :: api_outTriangleNodeTags_, api_outTriangleNodeTags_n_
+    integer(c_size_t) :: api_outTriangleNodeTags_nn_
+    call C_API(tag=int(tag, c_int), &
+         boundaryModel=istring_(boundaryModel), &
+         tolerance=real(tolerance, c_double), &
+         api_outEntities_=api_outEntities_, &
+         api_outEntities_n_=api_outEntities_n_, &
+         api_outTriangles_=api_outTriangles_, &
+         api_outTriangles_n_=api_outTriangles_n_, &
+         api_outTriangles_nn_=api_outTriangles_nn_, &
+         api_outTriangleNodeTags_=api_outTriangleNodeTags_, &
+         api_outTriangleNodeTags_n_=api_outTriangleNodeTags_n_, &
+         api_outTriangleNodeTags_nn_=api_outTriangleNodeTags_nn_, &
+         ierr_=ierr)
+    outEntities = ovectorint_(api_outEntities_, &
+      api_outEntities_n_)
+    call ovectorvectorsize_(api_outTriangles_, &
+      api_outTriangles_n_, &
+      api_outTriangles_nn_, &
+      outTriangles, &
+      outTriangles_n)
+    call ovectorvectorsize_(api_outTriangleNodeTags_, &
+      api_outTriangleNodeTags_n_, &
+      api_outTriangleNodeTags_nn_, &
+      outTriangleNodeTags, &
+      outTriangleNodeTags_n)
+  end subroutine gmshModelMeshMatchTrianglesToEntities
 
   !> Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
   !! the tag explicitly; otherwise a new tag is assigned automatically. Return

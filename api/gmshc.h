@@ -1662,6 +1662,116 @@ GMSH_API void gmshModelMeshComputeHomology(int ** dimTags, size_t * dimTags_n,
 GMSH_API void gmshModelMeshComputeCrossField(int ** viewTags, size_t * viewTags_n,
                                              int * ierr);
 
+/* Advect nodes of a mesh with displacement vector dxNodes */
+GMSH_API void gmshModelMeshAdvectMeshNodes(const int dim,
+                                           const int tag,
+                                           const int bndTag,
+                                           const char * boundaryModel,
+                                           const size_t * nodeTags, const size_t nodeTags_n,
+                                           const double * dxNodes, const size_t dxNodes_n,
+                                           const double boundaryTolerance,
+                                           const int intersectOrProjectOnBoundary,
+                                           int * ierr);
+
+/* Compute the alpha shape - improved function */
+GMSH_API void gmshModelMeshComputeAlphaShape(const int dim,
+                                             const int tag,
+                                             const int bndTag,
+                                             const char * boundaryModel,
+                                             const double alpha,
+                                             const int alphaShapeSizeField,
+                                             const int refineSizeField,
+                                             size_t ** newNodeTags, size_t * newNodeTags_n,
+                                             size_t ** newNodeElementTags, size_t * newNodeElementTags_n,
+                                             double ** newNodeParametricCoord, size_t * newNodeParametricCoord_n,
+                                             const int usePreviousMesh,
+                                             const double boundaryTolerance,
+                                             const int refine,
+                                             const int delaunayTag,
+                                             const int deleteDisconnectedNodes,
+                                             int * ierr);
+
+/* Tetrahedralize points in entity of tag `tag */
+GMSH_API void gmshModelMeshTetrahedralizePoints(const int tag,
+                                                const int optimize,
+                                                const double quality,
+                                                int * ierr);
+
+/* Compute alpha shape of the mesh in entity of tag `tag */
+GMSH_API void gmshModelMeshAlphaShape3D(const int tag,
+                                        const double alpha,
+                                        const int sizeFieldTag,
+                                        const int tagAlpha,
+                                        const int tagAlphaBoundary,
+                                        size_t ** tri2TetMap, size_t * tri2TetMap_n,
+                                        const int removeDisconnectedNodes,
+                                        const int returnTri2TetMap,
+                                        int * ierr);
+
+/* Compute alpha shape of the mesh in entity of tag `tag' using an array of
+ * values alpha. The values correspond to the element tags stored in
+ * elementTags. */
+GMSH_API void gmshModelMeshAlphaShape3DFromArray(const int tag,
+                                                 const size_t * elementTags, const size_t elementTags_n,
+                                                 const double * alpha, const size_t alpha_n,
+                                                 const int tagAlpha,
+                                                 const int tagAlphaBoundary,
+                                                 size_t ** tri2TetMap, size_t * tri2TetMap_n,
+                                                 const int removeDisconnectedNodes,
+                                                 const int returnTri2TetMap,
+                                                 int * ierr);
+
+/* Mesh refinement/derefinement through edge splitting of (surface) entity of
+ * tag `tag */
+GMSH_API void gmshModelMeshSurfaceEdgeSplitting(const int fullTag,
+                                                const int surfaceTag,
+                                                const int sizeFieldTag,
+                                                const size_t * tri2TetMap, const size_t tri2TetMap_n,
+                                                const int tetrahedralize,
+                                                const int buildElementOctree,
+                                                int * ierr);
+
+/* Volume mesh refinement/derefinement using hxt refinement approaches of
+ * volume entity of tag `tag', and bounded by surface entity of tag
+ * `surfaceTag'. */
+GMSH_API void gmshModelMeshVolumeMeshRefinement(const int fullTag,
+                                                const int surfaceTag,
+                                                const int volumeTag,
+                                                const int sizeFieldTag,
+                                                const int returnNodalCurvature,
+                                                double ** nodalCurvature, size_t * nodalCurvature_n,
+                                                int * ierr);
+
+/* Filter out points in the region with tag `tag' that are too close to each
+ * other based on the size field with tag `sizeFieldTag' and a given tolerance
+ * `tolerance'. */
+GMSH_API void gmshModelMeshFilterCloseNodes(const int tag,
+                                            const int sizeFieldTag,
+                                            const double tolerance,
+                                            int * ierr);
+
+/* Color the faces of tag `tag' based on the entities in the boundary model
+ * `boundarModel'. Colouring is done using an octree that colour the faces
+ * using the colours of the boundary entities, if they are within a given
+ * tolerance `tolerance'. */
+GMSH_API void gmshModelMeshColourBoundaryFaces(const int tag,
+                                               const char * boundaryModel,
+                                               const double tolerance,
+                                               int * ierr);
+
+/* Match the triangles of the mesh in entity of tag `tag' to the entities in
+ * the boundary model `boundaryModel'. The matching is done using an octree
+ * that match the triangles to the entities, if they are within a given
+ * tolerance `tolerance'. The output is a vector of entity tags and a vector
+ * of triangle tags. */
+GMSH_API void gmshModelMeshMatchTrianglesToEntities(const int tag,
+                                                    const char * boundaryModel,
+                                                    const double tolerance,
+                                                    int ** outEntities, size_t * outEntities_n,
+                                                    size_t *** outTriangles, size_t ** outTriangles_n, size_t *outTriangles_nn,
+                                                    size_t *** outTriangleNodeTags, size_t ** outTriangleNodeTags_n, size_t *outTriangleNodeTags_nn,
+                                                    int * ierr);
+
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
  * the tag explicitly; otherwise a new tag is assigned automatically. Return
  * the field tag. Available field types are listed in the "Gmsh mesh size

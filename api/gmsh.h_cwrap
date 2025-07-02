@@ -3247,6 +3247,204 @@ namespace gmsh { // Top-level functions
         viewTags.assign(api_viewTags_, api_viewTags_ + api_viewTags_n_); gmshFree(api_viewTags_);
       }
 
+      // gmsh::model::mesh::advectMeshNodes
+      //
+      // Advect nodes of a mesh with displacement vector dxNodes
+      inline void advectMeshNodes(const int dim,
+                                  const int tag,
+                                  const int bndTag,
+                                  const std::string & boundaryModel,
+                                  const std::vector<std::size_t> & nodeTags,
+                                  const std::vector<double> & dxNodes,
+                                  const double boundaryTolerance = 1e-6,
+                                  const bool intersectOrProjectOnBoundary = false)
+      {
+        int ierr = 0;
+        size_t *api_nodeTags_; size_t api_nodeTags_n_; vector2ptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_);
+        double *api_dxNodes_; size_t api_dxNodes_n_; vector2ptr(dxNodes, &api_dxNodes_, &api_dxNodes_n_);
+        gmshModelMeshAdvectMeshNodes(dim, tag, bndTag, boundaryModel.c_str(), api_nodeTags_, api_nodeTags_n_, api_dxNodes_, api_dxNodes_n_, boundaryTolerance, (int)intersectOrProjectOnBoundary, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_nodeTags_);
+        gmshFree(api_dxNodes_);
+      }
+
+      // gmsh::model::mesh::computeAlphaShape
+      //
+      // Compute the alpha shape - improved function
+      inline void computeAlphaShape(const int dim,
+                                    const int tag,
+                                    const int bndTag,
+                                    const std::string & boundaryModel,
+                                    const double alpha,
+                                    const int alphaShapeSizeField,
+                                    const int refineSizeField,
+                                    std::vector<std::size_t> & newNodeTags,
+                                    std::vector<std::size_t> & newNodeElementTags,
+                                    std::vector<double> & newNodeParametricCoord,
+                                    const bool usePreviousMesh = false,
+                                    const double boundaryTolerance = 1e-6,
+                                    const bool refine = true,
+                                    const int delaunayTag = -1,
+                                    const bool deleteDisconnectedNodes = true)
+      {
+        int ierr = 0;
+        size_t *api_newNodeTags_; size_t api_newNodeTags_n_;
+        size_t *api_newNodeElementTags_; size_t api_newNodeElementTags_n_;
+        double *api_newNodeParametricCoord_; size_t api_newNodeParametricCoord_n_;
+        gmshModelMeshComputeAlphaShape(dim, tag, bndTag, boundaryModel.c_str(), alpha, alphaShapeSizeField, refineSizeField, &api_newNodeTags_, &api_newNodeTags_n_, &api_newNodeElementTags_, &api_newNodeElementTags_n_, &api_newNodeParametricCoord_, &api_newNodeParametricCoord_n_, (int)usePreviousMesh, boundaryTolerance, (int)refine, delaunayTag, (int)deleteDisconnectedNodes, &ierr);
+        if(ierr) throwLastError();
+        newNodeTags.assign(api_newNodeTags_, api_newNodeTags_ + api_newNodeTags_n_); gmshFree(api_newNodeTags_);
+        newNodeElementTags.assign(api_newNodeElementTags_, api_newNodeElementTags_ + api_newNodeElementTags_n_); gmshFree(api_newNodeElementTags_);
+        newNodeParametricCoord.assign(api_newNodeParametricCoord_, api_newNodeParametricCoord_ + api_newNodeParametricCoord_n_); gmshFree(api_newNodeParametricCoord_);
+      }
+
+      // gmsh::model::mesh::tetrahedralizePoints
+      //
+      // Tetrahedralize points in entity of tag `tag
+      inline void tetrahedralizePoints(const int tag,
+                                       const bool optimize = false,
+                                       const double quality = 0.00001)
+      {
+        int ierr = 0;
+        gmshModelMeshTetrahedralizePoints(tag, (int)optimize, quality, &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // gmsh::model::mesh::alphaShape3D
+      //
+      // Compute alpha shape of the mesh in entity of tag `tag
+      inline void alphaShape3D(const int tag,
+                               const double alpha,
+                               const int sizeFieldTag,
+                               const int tagAlpha,
+                               const int tagAlphaBoundary,
+                               std::vector<std::size_t> & tri2TetMap,
+                               const bool removeDisconnectedNodes = false,
+                               const bool returnTri2TetMap = false)
+      {
+        int ierr = 0;
+        size_t *api_tri2TetMap_; size_t api_tri2TetMap_n_;
+        gmshModelMeshAlphaShape3D(tag, alpha, sizeFieldTag, tagAlpha, tagAlphaBoundary, &api_tri2TetMap_, &api_tri2TetMap_n_, (int)removeDisconnectedNodes, (int)returnTri2TetMap, &ierr);
+        if(ierr) throwLastError();
+        tri2TetMap.assign(api_tri2TetMap_, api_tri2TetMap_ + api_tri2TetMap_n_); gmshFree(api_tri2TetMap_);
+      }
+
+      // gmsh::model::mesh::alphaShape3DFromArray
+      //
+      // Compute alpha shape of the mesh in entity of tag `tag' using an array of
+      // values alpha. The values correspond to the element tags stored in
+      // elementTags.
+      inline void alphaShape3DFromArray(const int tag,
+                                        const std::vector<std::size_t> & elementTags,
+                                        const std::vector<double> & alpha,
+                                        const int tagAlpha,
+                                        const int tagAlphaBoundary,
+                                        std::vector<std::size_t> & tri2TetMap,
+                                        const bool removeDisconnectedNodes = false,
+                                        const bool returnTri2TetMap = false)
+      {
+        int ierr = 0;
+        size_t *api_elementTags_; size_t api_elementTags_n_; vector2ptr(elementTags, &api_elementTags_, &api_elementTags_n_);
+        double *api_alpha_; size_t api_alpha_n_; vector2ptr(alpha, &api_alpha_, &api_alpha_n_);
+        size_t *api_tri2TetMap_; size_t api_tri2TetMap_n_;
+        gmshModelMeshAlphaShape3DFromArray(tag, api_elementTags_, api_elementTags_n_, api_alpha_, api_alpha_n_, tagAlpha, tagAlphaBoundary, &api_tri2TetMap_, &api_tri2TetMap_n_, (int)removeDisconnectedNodes, (int)returnTri2TetMap, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_elementTags_);
+        gmshFree(api_alpha_);
+        tri2TetMap.assign(api_tri2TetMap_, api_tri2TetMap_ + api_tri2TetMap_n_); gmshFree(api_tri2TetMap_);
+      }
+
+      // gmsh::model::mesh::surfaceEdgeSplitting
+      //
+      // Mesh refinement/derefinement through edge splitting of (surface) entity of
+      // tag `tag
+      inline void surfaceEdgeSplitting(const int fullTag,
+                                       const int surfaceTag,
+                                       const int sizeFieldTag,
+                                       const std::vector<std::size_t> & tri2TetMap,
+                                       const bool tetrahedralize = false,
+                                       const bool buildElementOctree = false)
+      {
+        int ierr = 0;
+        size_t *api_tri2TetMap_; size_t api_tri2TetMap_n_; vector2ptr(tri2TetMap, &api_tri2TetMap_, &api_tri2TetMap_n_);
+        gmshModelMeshSurfaceEdgeSplitting(fullTag, surfaceTag, sizeFieldTag, api_tri2TetMap_, api_tri2TetMap_n_, (int)tetrahedralize, (int)buildElementOctree, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_tri2TetMap_);
+      }
+
+      // gmsh::model::mesh::volumeMeshRefinement
+      //
+      // Volume mesh refinement/derefinement using hxt refinement approaches of
+      // volume entity of tag `tag', and bounded by surface entity of tag
+      // `surfaceTag'.
+      inline void volumeMeshRefinement(const int fullTag,
+                                       const int surfaceTag,
+                                       const int volumeTag,
+                                       const int sizeFieldTag,
+                                       const bool returnNodalCurvature,
+                                       std::vector<double> & nodalCurvature)
+      {
+        int ierr = 0;
+        double *api_nodalCurvature_; size_t api_nodalCurvature_n_;
+        gmshModelMeshVolumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag, (int)returnNodalCurvature, &api_nodalCurvature_, &api_nodalCurvature_n_, &ierr);
+        if(ierr) throwLastError();
+        nodalCurvature.assign(api_nodalCurvature_, api_nodalCurvature_ + api_nodalCurvature_n_); gmshFree(api_nodalCurvature_);
+      }
+
+      // gmsh::model::mesh::filterCloseNodes
+      //
+      // Filter out points in the region with tag `tag' that are too close to each
+      // other based on the size field with tag `sizeFieldTag' and a given
+      // tolerance `tolerance'.
+      inline void filterCloseNodes(const int tag,
+                                   const int sizeFieldTag,
+                                   const double tolerance)
+      {
+        int ierr = 0;
+        gmshModelMeshFilterCloseNodes(tag, sizeFieldTag, tolerance, &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // gmsh::model::mesh::colourBoundaryFaces
+      //
+      // Color the faces of tag `tag' based on the entities in the boundary model
+      // `boundarModel'. Colouring is done using an octree that colour the faces
+      // using the colours of the boundary entities, if they are within a given
+      // tolerance `tolerance'.
+      inline void colourBoundaryFaces(const int tag,
+                                      const std::string & boundaryModel,
+                                      const double tolerance)
+      {
+        int ierr = 0;
+        gmshModelMeshColourBoundaryFaces(tag, boundaryModel.c_str(), tolerance, &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // gmsh::model::mesh::matchTrianglesToEntities
+      //
+      // Match the triangles of the mesh in entity of tag `tag' to the entities in
+      // the boundary model `boundaryModel'. The matching is done using an octree
+      // that match the triangles to the entities, if they are within a given
+      // tolerance `tolerance'. The output is a vector of entity tags and a vector
+      // of triangle tags.
+      inline void matchTrianglesToEntities(const int tag,
+                                           const std::string & boundaryModel,
+                                           const double tolerance,
+                                           std::vector<int> & outEntities,
+                                           std::vector<std::vector<std::size_t> > & outTriangles,
+                                           std::vector<std::vector<std::size_t> > & outTriangleNodeTags)
+      {
+        int ierr = 0;
+        int *api_outEntities_; size_t api_outEntities_n_;
+        size_t **api_outTriangles_; size_t *api_outTriangles_n_, api_outTriangles_nn_;
+        size_t **api_outTriangleNodeTags_; size_t *api_outTriangleNodeTags_n_, api_outTriangleNodeTags_nn_;
+        gmshModelMeshMatchTrianglesToEntities(tag, boundaryModel.c_str(), tolerance, &api_outEntities_, &api_outEntities_n_, &api_outTriangles_, &api_outTriangles_n_, &api_outTriangles_nn_, &api_outTriangleNodeTags_, &api_outTriangleNodeTags_n_, &api_outTriangleNodeTags_nn_, &ierr);
+        if(ierr) throwLastError();
+        outEntities.assign(api_outEntities_, api_outEntities_ + api_outEntities_n_); gmshFree(api_outEntities_);
+        outTriangles.resize(api_outTriangles_nn_); for(size_t i = 0; i < api_outTriangles_nn_; ++i){ outTriangles[i].assign(api_outTriangles_[i], api_outTriangles_[i] + api_outTriangles_n_[i]); gmshFree(api_outTriangles_[i]); } gmshFree(api_outTriangles_); gmshFree(api_outTriangles_n_);
+        outTriangleNodeTags.resize(api_outTriangleNodeTags_nn_); for(size_t i = 0; i < api_outTriangleNodeTags_nn_; ++i){ outTriangleNodeTags[i].assign(api_outTriangleNodeTags_[i], api_outTriangleNodeTags_[i] + api_outTriangleNodeTags_n_[i]); gmshFree(api_outTriangleNodeTags_[i]); } gmshFree(api_outTriangleNodeTags_); gmshFree(api_outTriangleNodeTags_n_);
+      }
+
       namespace field { // Mesh size field functions
 
         // gmsh::model::mesh::field::add
