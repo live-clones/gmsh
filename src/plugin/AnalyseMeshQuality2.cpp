@@ -770,7 +770,7 @@ PView *Plug::execute(PView *v)
     if(!_checkAndGuideNoDataToShow(countsTotal, check2D, check3D))
       return v;
   }
-  else if(countsTotal.distoOrAspectToComputeButUnknownValidity){
+  else if(!pc.jacobian && countsTotal.distoOrAspectToComputeButUnknownValidity){
     _warn(1, "-> <|>Validity computation is disabled (option 'skipValidity' "
              "is ON). This may significantly slow down quality computation "
              "in the presence of invalid elements");
@@ -904,9 +904,11 @@ bool Plug::_fetchParameters()
   pc.geofit = static_cast<bool>(geofit);
 
   // -> elementType
+  pc.onlyGivenElemType = false;
   if(elementType > 0) {
     pc.onlyGivenElemType = true;
     int elemType = static_cast<int>(elementType);
+    for(int i = 0; i < TYPE_MAX_NUM; ++i) pc.acceptedElemType[i] = 0;
     switch(elemType) {
     case 1:
       pc.acceptedElemType[TYPE_TRI] = pc.acceptedElemType[TYPE_TET] = true;
@@ -1869,18 +1871,23 @@ void Plug::DataSingleDimension::syncWithModel(GModel const *m,
 void Plug::DataSingleDimension::_updateGEntitiesList(
   std::set<GEntity *, GEntityPtrLessThan> &entities, bool freeNonExistent)
 {
-  // Get GEntities present in the current model, add new ones in _dataEntities
+  // Add new GEntities present in the current model to _dataEntities
   for(const auto &ge: entities) {
     if(_dataEntities.find(ge) == _dataEntities.end())
       _dataEntities.emplace(ge, DataEntity(ge));
   }
 
   if(freeNonExistent) {
+    // GEntityPtrLessThan cannot be called on deleted GEntity
+    std::set<GEntity *> entities2;
+    for (auto ge : entities) {
+      entities2.insert(ge);
+    }
+
     // Remove GEntities from _dataEntities that are not existent in the current model
     for(auto it = _dataEntities.begin(); it != _dataEntities.end();) {
-      if(entities.find(it->first) == entities.end()) {
-        if(it->second.getNumRequested())
-          _requestedListHasChanged = true;
+      if(entities2.find(it->first) == entities2.end()) {
+        if(it->second.getNumRequested()) _requestedListHasChanged = true;
         it = _dataEntities.erase(it);
       }
       else {
@@ -1893,7 +1900,7 @@ void Plug::DataSingleDimension::_updateGEntitiesList(
 void Plug::DataSingleDimension::gatherValues(const Counts &counts, Measures &measures)
 {
   size_t sz = counts.reqElem;
-  size_t szCurvGeo = counts.reqElemOnCurvGeo;
+  size_t szCurvGeo = counts.reqElemOkGeoFit;
   if(_dim == 2)
     measures.dim2Elem = true;
   else
@@ -1967,6 +1974,12 @@ size_t Plug::DataEntity::updateElementsAndFlags(const Parameters::Computation &p
 {
   size_t cntRequestedChanged = 0;
   std::size_t num = _ge->getNumMeshElements();
+
+  // Step 0: Update normals in case it was not computed previously (this can
+  //         happen because normals are computed from mesh and if the plugin
+  //         is run with GEntity free of mesh and run later with that
+  //         GEntity containing a mesh)
+  _computeNormals();
 
   // Step 1: Get all elements present in GEntity
   std::vector<MElement *> elements;
@@ -2049,10 +2062,12 @@ size_t Plug::DataEntity::updateElementsAndFlags(const Parameters::Computation &p
 
 void Plug::DataEntity::count(const Parameters::Computation &param, Counts &counts)
 {
-  if(_isCurvedGeo)
-    ++counts.geoEntCurved[_ge->dim() - 1];
-  else
-    ++counts.geoEntFlat[_ge->dim() - 1];
+  if(_curvingIsKnown) {
+    if(_isCurvedGeo)
+      ++counts.geoEntCurved[_ge->dim() - 1];
+    else
+      ++counts.geoEntFlat[_ge->dim() - 1];
+  }
 
   // Reset intern data
   _numRequested = 0;
@@ -2062,8 +2077,10 @@ void Plug::DataEntity::count(const Parameters::Computation &param, Counts &count
   // Count number of requested elements
   _count(F_REQU, _numRequested);
   counts.reqElem += _numRequested;
-  if(param.geofit && _isCurvedGeo)
+  if(_isCurvedGeo)
     counts.reqElemOnCurvGeo += _numRequested;
+  if(param.geofit && _isCurvedGeo)
+    counts.reqElemOkGeoFit += _numRequested;
 
   // Count number of elements to compute
   if(!param.skip) {
@@ -2121,8 +2138,8 @@ void Plug::DataEntity::_countAvailableValues(const Parameters::Computation &para
       if(isBitUnset(flag, F_NOTASPECT)) ++cnt[4];
     }
   }
-  if (param.jacobian && !_isCurvedGeo) cnt[0] += numJacComputed;
-  if (param.jacobianOnCurvedGeo && _isCurvedGeo) cnt[1] += numJacComputed;
+  if (_isCurvedGeo) cnt[1] += numJacComputed;
+  else cnt[0] += numJacComputed;
 
 
   if((param.disto || param.aspect) && !param.jacobian) {
@@ -2140,9 +2157,16 @@ void Plug::DataEntity::_countAvailableValues(const Parameters::Computation &para
 
 void Plug::DataEntity::_computeNormals()
 {
+  // FIXME If no mesh, then cannot say if curved geo or not.
+  // And mesh can come later...
+  // -> by default, consider flat, knowCurving=false
+  //    if mesh, then knowCurving = true, isCurved = !normal
   std::size_t num = _ge->getNumMeshElements();
 
-  if(num && _ge->dim() == 2) {
+  if(!num || _curvingIsKnown) return;
+  _curvingIsKnown = true;
+
+  if(_ge->dim() == 2) {
     GFace *gf = _ge->cast2Face();
     SVector3 normal;
     if(gf->normalToPlanarMesh(normal, true)) {
@@ -2710,18 +2734,18 @@ void Plug::_guidanceNoSelectedElem(Counts counts, bool check2D,
 {
   if(counts.reqElem) return;
 
-  _info(MP, "-> No element selected for analysis");
+  _error(MP, "-> No element selected for analysis");
 
   if(counts.elem) {
     // Case where elements are found
     // This must be due to one of the three 'restrictTo...' options, or...
     bool found = false;
     if(_param.compute.onlyVisible && counts.elemVisible == 0) {
-      _error(0, "   Option 'restrictToVisibleElements' is ON, but no visible elements were found");
+      _warn(0, "   <|>Option 'restrictToVisibleElements' is ON, but no visible elements were found");
       found = true;
     }
     if(_param.compute.onlyCurved && counts.elemCurved == 0) {
-      _error(0, "   Option 'restrictToCurvedElements' is ON, but no curved elements were found");
+      _warn(0, "   <|>Option 'restrictToCurvedElements' is ON, but no curved elements were found");
       found = true;
     }
     size_t countType = 0;
@@ -2731,7 +2755,7 @@ void Plug::_guidanceNoSelectedElem(Counts counts, bool check2D,
           countType += counts.elem_byType[i];
       }
       if(!countType) {
-        _error(0, "   Option 'restrictToElementType' is ON, but no elements of the requested type were found");
+        _warn(0, "   <|>Option 'restrictToElementType' is ON, but no elements of the requested type were found");
         found = true;
       }
     }
@@ -2757,9 +2781,9 @@ void Plug::_guidanceNoSelectedElem(Counts counts, bool check2D,
         ++numCrit;
       }
       if(numCrit == 2)
-        _error(0, "   No elements satisfy both criteria");
+        _warn(0, "   No elements satisfy both criteria");
       else if(numCrit == 3)
-        _error(0, "   No elements satisfy all three criteria");
+        _warn(0, "   No elements satisfy all three criteria");
       else
         _error(0, "   Unexpected state: this case should not occur");
     }
@@ -2767,14 +2791,16 @@ void Plug::_guidanceNoSelectedElem(Counts counts, bool check2D,
   else {
     // Case where no elements are found
     if(!_m->getNumFaces() && !_m->getNumRegions()) {
-      _error(0, "   No geometry was found in the current model");
+      _warn(0, "   No geometry was found in the current model");
     }
     else if(_dimensionPolicy == -2 && !_m->getNumFaces() && _m->getNumRegions()) {
-      _error(0, "   Planned to check the 2D meshes as 'dimensionPolicy' is set to -2, but no mesh was found");
-      _info(0, "   3D geometry was found instead. Consider setting 'dimensionPolicy' to 0");
+      // NOTE: This actually never happen because a GRegion always require
+      //       a GFace as boundary
+      _warn(0, "   Planned to check the 2D meshes as 'dimensionPolicy' is set to -2, but no mesh was found");
+      _warn(0, "   3D geometry was found instead. Consider setting 'dimensionPolicy' to 0");
     }
     else {
-      _error(0, "   No mesh was found in the current model");
+      _warn(0, "   No mesh was found in the current model");
     }
   }
 }
@@ -2806,23 +2832,23 @@ bool Plug::_checkAndGuideNoDataToShow(Counts counts, bool check2D, bool check3D)
   // Step 2: Check if there are available computed values for desired metrics
   if(numDesiredVals > 0)
     return true; // Metrics available -> Continue processing
-  _info(MP, "-> No data to output");
+  _error(MP, "-> No data to output");
 
   // Step 3: Case 1 - 'omitMetricComputation' is activated
   if(_param.compute.skip) {
-    _error(MP, "   <|>Option 'omitMetricComputation' is ON but there are no "
+    _warn(MP, "   <|>Option 'omitMetricComputation' is ON but there are no "
                "previously computed data corresponding to desired metrics for "
                "the selected elements");
 
     if(numUndesiredVals > 0) {
       _info(0, "   The following metrics are available for the selected elements:");
       if(!which[VALIDITY] && available[0]) _info(0, "   * Validity");
-      if(!which[UNFLIP] && available[0]) _info(0, "   * Unflip");
+      // if(!which[UNFLIP] && available[0]) _info(0, "   * Unflip");
+      if(!which[DISTO] && available[3]) _info(0, "   * Disto");
+      if(!which[ASPECT] && available[4]) _info(0, "   * Aspect");
+      if(!which[GEOFIT] && available[2]) _info(0, "   * GeoFit");
       if(!which[MINJAC] && available[0]+available[1]) _info(0, "   * minJ");
       if(!which[RATIOJAC] && available[0]+available[1]) _info(0, "   * minJ/maxJ");
-      if(!which[GEOFIT] && available[2]) _info(0, "   * GeoFit");
-      if(!which[DISTO] && available[3]) _info(0, "   * Dist");
-      if(!which[ASPECT] && available[4]) _info(0, "   * Aspect");
     }
   }
 
@@ -2834,9 +2860,10 @@ bool Plug::_checkAndGuideNoDataToShow(Counts counts, bool check2D, bool check3D)
   bool wantValidityOnly = wantValidity && !wantGeoFit && !wantOther;
   bool wantGeoFitOnly = !wantValidity && wantGeoFit && !wantOther;
 
-  bool hasReqElemOnCurvGeo = counts.reqElemOnCurvGeo;
-  bool hasReqElemOnFlatGeo = counts.reqElem - counts.reqElemOnCurvGeo;
-  bool hasElemOnFlatGeo = counts.elem - counts.elemOnCurvGeo;
+  size_t numReqElemOnCurvGeo = counts.reqElemOnCurvGeo;
+  size_t numReqElemOnFlatGeo = counts.reqElem - counts.reqElemOnCurvGeo;
+  size_t numElemOnCurvGeo = counts.elemOnCurvGeo;
+  size_t numElemOnFlatGeo = counts.elem - counts.elemOnCurvGeo;
 
   bool hasCurvGeo = false;
   bool hasFlatGeo = false;
@@ -2849,29 +2876,33 @@ bool Plug::_checkAndGuideNoDataToShow(Counts counts, bool check2D, bool check3D)
     hasFlatGeo |= counts.geoEntFlat[2];
   }
 
-  if(wantValidityOnly && !hasReqElemOnFlatGeo) {
+  if(wantValidityOnly && numReqElemOnFlatGeo == 0) {
     if(!hasFlatGeo) {
-      _error(MP, "   <|>Validity is the only requested metric, but all geometry entities are curved");
+      _warn(MP, "   <|>Validity is the only requested metric, but all geometry entities are curved");
       _info(0, "   <|>Validity is not defined on curved geometry entities. Please enable another metric");
     }
     else {
-      _error(MP, "   <|>Validity is the only requested metric, but all selected elements are on curved geometry entities");
-      if(hasElemOnFlatGeo)
-        _info(0, "   <|>The model contains %s elements on flat geometry entities, but none of them are selected",
-              formatNumber(hasElemOnFlatGeo).c_str());
+      _warn(MP, "   <|>Validity is the only requested metric, but all selected elements are on curved geometry entities");
+      if(numElemOnFlatGeo > 0)
+        _info(0, "   <|>The model contains %s unselected elements on flat geometry entities",
+              formatNumber(numElemOnFlatGeo).c_str());
+      else
+        _info(0, "   <|>The model does not contain elements on flat geometry entities");
     }
   }
 
-  if(wantGeoFitOnly && !hasReqElemOnCurvGeo) {
+  if(wantGeoFitOnly && numReqElemOnCurvGeo == 0) {
     if(!hasCurvGeo) {
-      _error(MP, "   <|>GeoFit is the only requested metric, but all geometry entities are flat");
+      _warn(MP, "   <|>GeoFit is the only requested metric, but all geometry entities are flat");
       _info(0, "   <|>GeoFit is not defined on flat geometry entities. Please enable another metric");
     }
     else {
-      _error(MP, "   <|>GeoFit is the only requested metric, but all selected elements are on flat geometry entities");
-      if(hasReqElemOnCurvGeo)
-        _info(0, "   <|>The model contains %s elements on curved geometry entities, but none of them are selected",
-              formatNumber(hasReqElemOnCurvGeo).c_str());
+      _warn(MP, "   <|>GeoFit is the only requested metric, but all selected elements are on flat geometry entities");
+      if(numElemOnCurvGeo > 0)
+        _info(0, "   <|>The model contains %s unselected elements on curved geometry entities",
+          formatNumber(numElemOnCurvGeo).c_str());
+      else
+        _info(0, "   <|>The model does not contain elements on curved geometry entities");
     }
   }
 
@@ -2888,18 +2919,30 @@ Plug::Counts Plug::Counts::operator+(const Counts &other) const
   constexpr int metricsCount = 5;
   for (int i = 0; i < metricsCount; ++i) {
     result.metricValsToCompute[i] = metricValsToCompute[i] + other.metricValsToCompute[i];
-  }
-  for (int i = 0; i < TYPE_MAX_NUM; ++i) {
-    result.elem_byType[i] = elem_byType[i] + other.elem_byType[i];
+    result.metricValsAvailOnSelectedElem[i] = metricValsAvailOnSelectedElem[i] + other.metricValsAvailOnSelectedElem[i];
   }
 
   result.reqElem = reqElem + other.reqElem;
+  result.reqElemOkGeoFit = reqElemOkGeoFit + other.reqElemOkGeoFit;
   result.reqElemOnCurvGeo = reqElemOnCurvGeo + other.reqElemOnCurvGeo;
-  result.elem = elem + other.elem;
-  result.elemWithKnownCurving = elemWithKnownCurving + other.elemWithKnownCurving;
-  result.elemCurved = elemCurved + other.elemCurved;
-  result.elemVisible = elemVisible + other.elemVisible;
 
+  result.distoOrAspectToComputeButUnknownValidity =
+    distoOrAspectToComputeButUnknownValidity
+  + other.distoOrAspectToComputeButUnknownValidity;
+
+  result.elem = elem + other.elem;
+  result.elemOnCurvGeo = elemOnCurvGeo + other.elemOnCurvGeo;
+  result.elemVisible = elemVisible + other.elemVisible;
+  result.elemCurved = elemCurved + other.elemCurved;
+  result.elemWithKnownCurving = elemWithKnownCurving + other.elemWithKnownCurving;
+
+  for (int i = 0; i < TYPE_MAX_NUM; ++i) {
+    result.elem_byType[i] = elem_byType[i] + other.elem_byType[i];
+  }
+  for(int i = 0; i < 3; ++i) {
+    result.geoEntFlat[i] = geoEntFlat[i] + other.geoEntFlat[i];
+    result.geoEntCurved[i] = geoEntCurved[i] + other.geoEntCurved[i];
+  }
   return result;
 }
 

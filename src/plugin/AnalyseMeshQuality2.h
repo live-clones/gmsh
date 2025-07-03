@@ -209,6 +209,7 @@ private:
   class DataEntity {
   private:
     GEntity *_ge = nullptr;
+    bool _curvingIsKnown = false;
     bool _isCurvedGeo = false;
 
     std::map<MElement *, size_t> _mapElemToIndex;
@@ -239,6 +240,7 @@ private:
     // Move Constructor
     DataEntity(DataEntity &&other) noexcept
         : _ge(other._ge),
+          _curvingIsKnown(other._curvingIsKnown),
           _isCurvedGeo(other._isCurvedGeo),
           _mapElemToIndex(std::move(other._mapElemToIndex)),
           _minJ(std::move(other._minJ)),
@@ -339,6 +341,7 @@ private:
 
     // For stopping early, and for reserving size vector
     std::size_t reqElem = 0;
+    std::size_t reqElemOkGeoFit = 0;
     std::size_t reqElemOnCurvGeo = 0;
 
     // For warning about longer computation
@@ -351,6 +354,7 @@ private:
     std::size_t elemCurved = 0;
     std::size_t elemWithKnownCurving = 0; // NOTE: unused
     std::size_t elem_byType[TYPE_MAX_NUM]{};
+
     std::size_t geoEntFlat[3]{};
     std::size_t geoEntCurved[3]{};
 
