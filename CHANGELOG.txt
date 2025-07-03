@@ -1,4 +1,4 @@
-4.14.0 (Work-in-progress): improve return value of boolean operations; improved
+4.14.0 (July 3, 2025): improve return value of boolean operations; improved
 ONELAB parameter GUI; improved XAO export with mesh sizes; improved unrolled GEO
 export to handle OCC geometries; new Step() built-in parser function; fix
 occ/getClosestPoint for OCC surfaces; renamed Windows DLL import library from
