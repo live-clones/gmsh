@@ -85,7 +85,7 @@ private:
     bool check2D = false;
     bool check3D = false;
   };
-  enum Metric { VALIDITY, UNFLIP, GEOFIT, DISTO, ASPECT, RATIOJAC, MINJAC, METRIC_COUNT};
+  enum Metric { VALIDITY, UNFLIP, MINJAC, RATIOJAC, GEOFIT, DISTO, ASPECT, METRIC_COUNT};
   static const std::array<std::string, METRIC_COUNT> _metricNames;
 
 
@@ -210,15 +210,20 @@ private:
   private:
     GEntity *_ge = nullptr;
     bool _isCurvedGeo = false;
+
     std::map<MElement *, size_t> _mapElemToIndex;
     std::vector<double> _minJ, _maxJ, _minGFit, _maxGFit, _minDisto, _minAspect;
-    std::size_t _numToCompute[5]{}; // jac, jacOnCurvedGeo, disto, aspect, geofit
+
+    // Order of 5 metric to compute: jacNDelem, jacCGelem, geofit, disto, aspect
+    std::size_t _numToCompute[5]{};
     std::size_t _numRequested = 0;
+
     // 8 bits of char are used for the following information:
     // - to say if quantities has already been computed
     // - to say if element is visible, known to be straightOrCurved, curved,
     //   requested (see .cpp)
     std::vector<unsigned char> _flags;
+
     fullMatrix<double> *_normals = nullptr;
     fullMatrix<double> _normalsToPrint;
 
@@ -324,10 +329,10 @@ private:
     // This struct helps determine what will be computed, why the plugin has
     // nothing to analyze or other things
 
-    // Five metrics to compute: jacNDelem, jacCGelem, disto, aspect, geofit
+    // Order of 5 metric to compute: jacNDelem, jacCGelem, geofit, disto, aspect
     std::size_t metricValsToCompute[5]{};
-    // NOTE: metricValsToCompute[i] != reqElem - metricValsToCompute[i] in
-    //       general because of omitMetricsComputation option
+    // NB: metricValsToCompute[i] != reqElem - metricValsToCompute[i] in
+    //     general because of omitMetricsComputation option
 
     // For stopping early, and for reserving size vector
     std::size_t reqElem = 0;
