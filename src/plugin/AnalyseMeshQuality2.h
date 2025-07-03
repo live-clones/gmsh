@@ -172,7 +172,7 @@ private:
 
   // User guidance
   std::size_t _printElementToCompute(const Counts &cnt2D, const Counts &cnt3D) const;
-  void _guidanceNothingToCompute(Counts counts,
+  void _guidanceNoSelectedElem(Counts counts,
                                         bool check2D, bool check3D) const;
   static void _printDetailsMetrics(size_t which[METRIC_COUNT], bool verbose2 = false);
 

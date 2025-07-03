@@ -247,7 +247,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "smartRecomputation", nullptr, 0, "OFF=alwaysRecompute, ON=avoidRecomputeIfUnchangedElementTags"},
   {GMSH_FULLRC, "skipValidity", nullptr, 0, "(0-)=includeValidity, (1+)=skipPreventiveValidityCheck"},
   // Advanced analysis options:
-  {GMSH_FULLRC, "treatFlippedAsValid", nullptr, 0, "(-1)=never, 0=forCurvedGeo (alter FeoFit), 1=always (also alter minJ and minJ/maxJ)"},
+  {GMSH_FULLRC, "treatFlippedAsValid", nullptr, 0, "(-1)=never, 0=forCurvedGeo (alter GeoFit), 1=always (also alter minJ and minJ/maxJ)"},
   {GMSH_FULLRC, "enableMinJacDetAsAMetric", nullptr, 0, "OFF, 1+ (Validity must be computed)"},
   {GMSH_FULLRC, "enableRatioJacDetAsAMetric", nullptr, 0, "OFF, 1+ (Validity must be computed)"},
   {GMSH_FULLRC, "skipStatPrinting", nullptr, 0, "OFF, ON"},
@@ -732,8 +732,10 @@ PView *Plug::execute(PView *v)
   GModel *m = GModel::current();
   Parameters::Computation &pc = _param.compute;
   if(pc.freeOldData && _m && _m != m) {
-    _info(0, "-> <|>Detected a new model. Previous data will be cleared "
+    _warn(1, "-> <|>Detected a new model. Previous data will be cleared "
              "(set 'dataReleasePolicy' to 1 to prevent this)");
+    _info(-1, "-> <|>Detected a new model. Previous data will be cleared "
+              "(set 'dataReleasePolicy' to 1 to prevent this)");
     // FIXME may not be the case (can we create a new model with exact same geometry and mesh?)
     // FIXME Do I really need this?
   }
@@ -743,39 +745,28 @@ PView *Plug::execute(PView *v)
   bool check2D, check3D;
   _decideDimensionToCheck(check2D, check3D);
 
-  // // Check if there is something to do
-  // bool noMetricToCompute = !pc.jacobian && !pc.jacobianOnCurvedGeo
-  //                          && !pc.disto && !pc.aspect && !pc.geofit;
-  // // Is hasDataToShow sufficient? If disto asked but only validity
-  // if( (pc.skip || noMetricToCompute)
-  //     && (!check2D || !_data2D->hasDataToShow())
-  //     && (!check3D || !_data3D->hasDataToShow()) ) {
-  //   if(pc.skip) {
-  //     _warn(MP, "-> <|>Option 'omitMetricsComputation' is set to 1 but no previously computed data "
-  //               "available to analyze. Set 'omitMetricsComputation' to 0 for "
-  //               "analyzing a mesh");
-  //   }
-  //   if(noMetricToCompute) {
-  //     _warn(0, "-> No metric to compute. Please adjust the following options:\n"
-  //              "   - Turn ON at least one of the following metrics:\n"
-  //              "     * enableDistortionQuality\n"
-  //              "     * enableAspectQuality\n"
-  //              "     * enableGeoFit\n"
-  //              "   - OR set 'skipValidity' to 0.");
-  //   }
-  //   return v;
-  // }
-
 
 
   // Here it is possible to ask for minJ or maxJ and it is computed
   // but with skipValidity ON
 
-
+  // Update requested element list and counts elements
   Counts counts2D, counts3D;
   if(check2D) _data2D->syncWithModel(_m, _param.compute, counts2D);
   if(check3D) _data3D->syncWithModel(_m, _param.compute, counts3D);
   Counts countsTotal = counts2D + counts3D;
+
+  // Purge views after calling syncWithModel and before the plugin exits
+  _purgeViews(check2D, check3D);
+
+  // Handle the case where there are no selected elements or print number
+  if(!countsTotal.reqElem) {
+    _guidanceNoSelectedElem(countsTotal, check2D, check3D);
+    return v;
+  }
+  _info(MP, "-> Selected %s elements for analysis",
+    formatNumber(countsTotal.reqElem).c_str());
+
 
   // TODO:
   //  Purge views
@@ -783,18 +774,18 @@ PView *Plug::execute(PView *v)
   //  2. For metric to show, if no data (available+tobeComputed) -> guide and exit
   //  Continue
 
-  // Purge views just after initialization of _data2D and _data3D
-  _purgeViews(check2D, check3D);
-
   // Count and compute if needed, otherwise check there is something to output
   std::size_t totalToCompute = _printElementToCompute(counts2D, counts3D);
+
+
+
   if(!totalToCompute) {
     if(pc.skip && !_data2D->hasDataToShow() && !_data3D->hasDataToShow()) {
-      _warn(MP, "-> <|>No data available but option 'omitMetricsComputation' is set to 1. "
+      _error(MP, "-> <|>No data available but option 'omitMetricsComputation' is set to 1. "
                 "Set 'omitMetricsComputation' to 0 for analyzing something");
     }
     else
-      _guidanceNothingToCompute(countsTotal, check2D, check3D);
+      _guidanceNoSelectedElem(countsTotal, check2D, check3D);
     if(!countsTotal.reqElem) return v;
   }
   else {
@@ -941,9 +932,10 @@ bool Plug::_fetchParameters()
       pc.acceptedElemType[TYPE_PYR] = pc.acceptedElemType[TYPE_PRI] = true;
       break;
     default:
-      _warn(MP, "   <|>Option 'elementType' is set to %d but this value does "
-                "not correspond to an accepted element type ", elemType);
+      _error(MP, "   <|>Option 'elementType' is set to %d but this value does "
+      "not correspond to an accepted element type", elemType);
       pc.onlyGivenElemType = false;
+      return false;
     }
   }
 
@@ -1013,7 +1005,7 @@ void Plug::_fetchLegacyParameters()
 
   _verbose = 1;
 
-  _error(MP, "-> <|>Deprecated options detected. The plugin will execute using "
+  _warn(MP, "-> <|>Deprecated options detected. The plugin will execute using "
              "the legacy configuration and ignore new options.");
   _warn(MP, "   <|>Please update the deprecated options to their modern "
             "counterparts.");
@@ -1167,14 +1159,15 @@ bool Plug::_checkEarlyExitOptions()
     sum += std::abs(ps.which[i]);
   }
   if(!sum) {
-    _warn(MP, "-> No metric to analyze. Please adjust the following options:\n");
-    _info(MP, "   - Turn ON at least one of the following metrics:\n"
-              "     * enableDistortionQuality\n"
-              "     * enableAspectQuality\n"
-              "     * enableGeoFit\n"
-              "     * enableMinJacDetAsAMetric\n"
-              "     * enableRatioJacDetAsAMetric\n"
-              "   - OR set 'skipValidity' to 0");
+    _error(MP, "-> No metric to analyze. Please adjust the following options:\n");
+    _info(MP, "   <|>"
+              "- Turn ON at least one of the following metrics:\n"
+              "  * enableDistortionQuality\n"
+              "  * enableAspectQuality\n"
+              "  * enableGeoFit\n"
+              "  * enableMinJacDetAsAMetric\n"
+              "  * enableRatioJacDetAsAMetric\n"
+              "- OR set 'skipValidity' to 0");
     exit = true;
   }
 
@@ -2666,7 +2659,10 @@ std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
   for (std::size_t x : cnt2D.metricValsToCompute) sum2D += x;
   for (std::size_t x : cnt3D.metricValsToCompute) sum3D += x;
 
-  if(sum2D + sum3D == 0) return 0;
+  if(sum2D + sum3D == 0) {
+    _info(1, "-> No element to compute");
+    return 0;
+  }
 
   _info(0, "-> Number of evaluations to perform:\n");
   _info(0, "   | %5s%11s%11s%11s%11s", "", "Validity+", "Disto", "Aspect", "GeoFit");
@@ -2687,88 +2683,76 @@ std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
   return sum2D + sum3D;
 }
 
-void Plug::_guidanceNothingToCompute(Counts counts, bool check2D,
+void Plug::_guidanceNoSelectedElem(Counts counts, bool check2D,
                                      bool check3D) const
 {
-  _info(1, "-> No element to compute");
+  if(counts.reqElem) return;
 
-  if (!counts.reqElem) {
-    _info(1, "   Nothing to show neither");
-    _info(-1, "-> Nothing to compute, nothing to show");
-    _info(-2, "-> Nothing to compute, nothing to show");
+  _info(MP, "-> No element selected for analysis");
 
-    if (counts.elem) {
-      // FIXME: change:
-      //   if noVisible elment but asked: print
-      //   if noCurved elment but asked: print
-      //   if noType elment but asked: print
-      //   if not print yet: print that no element match combination
-      //      -> mesh has x visible element (a% of total)
-      //         mesh has y curved element (b% of total)
-      //         mesh has z asked-type element (c% of total)
-      //         but no element are all three at same time
-      //  For this: need numElemVisible (selected or not)
-      if (_param.compute.onlyVisible && counts.visibleElem == 0) {
-        _warn(0, "   Option 'restrictToVisibleElements' is ON but no visible elements found");
+  if(counts.elem) {
+    // Case where elements are found
+    // This must be due to one of the three 'restrictTo...' options, or...
+    bool found = false;
+    if(_param.compute.onlyVisible && counts.visibleElem == 0) {
+      _error(0, "   Option 'restrictToVisibleElements' is ON, but no visible elements were found");
+      found = true;
+    }
+    if(_param.compute.onlyCurved && counts.curvedElem == 0) {
+      _error(0, "   Option 'restrictToCurvedElements' is ON, but no curved elements were found");
+      found = true;
+    }
+    size_t countType = 0;
+    if(_param.compute.onlyGivenElemType) {
+      for(int i = 0; i < TYPE_MAX_NUM; ++i) {
+        if(_param.compute.acceptedElemType[i])
+          countType += counts.elem_byType[i];
       }
-      else if (_param.compute.onlyCurved && counts.curvedElem == 0) {
-        _warn(0, "   Option 'restrictToCurvedElements' is ON but no curved elements found");
-      }
-      else if (_param.compute.onlyGivenElemType) {
-        size_t countType = 0;
-        for(int i = 0; i < TYPE_MAX_NUM; ++i) {
-          if(_param.compute.acceptedElemType[i])
-            countType += counts.elem_byType[i];
-        }
-        if(!countType) {
-          _warn(0, "   Option 'restrictToElementType' is ON but no elements of requested type found");
-        }
-      }
-      else {
-        _error(0, "   Unexpected state: should not be here");
-        // FIXME: yes, we can have: only quad curved and ask for tri and curved...
+      if(!countType) {
+        _error(0, "   Option 'restrictToElementType' is ON, but no elements of the requested type were found");
+        found = true;
       }
     }
-    else { // Case where no elements found
-      if (_dimensionPolicy == 0) {
-        if (check2D) {
-          if (_m->getNumFaces())
-            _warn(0, "   No mesh has been found (in current model)");
-          else
-            _warn(0, "   No geometry has been found (in current model)");
-        }
-        else if(check3D) {
-          _error(0, "   Unexpected state: should not be here with check3D==true");
-          // ...because if _dimensionPolicy == 0, then check3D==true only if there are elements
-        }
-        else {
-          _error(0, "   Unexpected state: should not be here with check3D==false");
-          // ...because at least check2D or check3D should be true
-        }
+
+    // ... due to a combination of those restrictions
+    if(!found) {
+      _info(0, "   The mesh contains:");
+      int numCrit = 0;
+      double percentage, numElement = counts.elem;
+      if(_param.compute.onlyVisible) {
+        percentage = static_cast<double>(counts.visibleElem) / numElement * 100;
+        _info(0, "   * %s visible elements (~%.2g%% of the total)", formatNumber(counts.visibleElem).c_str(), percentage);
+        ++numCrit;
       }
-      else if (_dimensionPolicy == -1) {
-        if (_m->getNumRegions()) {
-          _warn(0, "   Planned to check 2D mesh as option 'dimensionPolicy' "
-                   "is -1, but no 2D mesh found.");
-          _warn(0, "   3D geometry found, consider setting 'dimensionPolicy' "
-                   "to 0");
-        }
-        else {
-          if (_m->getNumFaces())
-            _warn(0, "   No mesh has been found (in current model)");
-          else
-            _warn(0, "   No geometry has been found (in current model)");
-        }
+      if(_param.compute.onlyCurved) {
+        percentage = static_cast<double>(counts.curvedElem) / numElement * 100;
+        _info(0, "   * %s curved elements (~%.2g%% of the total)", formatNumber(counts.curvedElem).c_str(), percentage);
+        ++numCrit;
       }
-      else if (_dimensionPolicy >= 1) {
-        if (_m->getNumFaces() + _m->getNumRegions())
-          _warn(0, "   No mesh has been found (in current model)");
-        else
-          _warn(0, "   No geometry has been found (in current model)");
+      if(_param.compute.onlyGivenElemType) {
+        percentage = static_cast<double>(countType) / numElement * 100;
+        _info(0, "   * %s elements of the requested type (~%.2g%% of the total)", formatNumber(countType).c_str(), percentage);
+        ++numCrit;
       }
-      else {
-        _error(0, "   Unexpected state: should not be here");
-      }
+      if(numCrit == 2)
+        _error(0, "   No elements satisfy both criteria.");
+      else if(numCrit == 3)
+        _error(0, "   No elements satisfy all three criteria.");
+      else
+        _error(0, "   Unexpected state: this case should not occur.");
+    }
+  }
+  else {
+    // Case where no elements are found
+    if(!_m->getNumFaces() && !_m->getNumRegions()) {
+      _error(0, "   No geometry was found in the current model.");
+    }
+    else if(_dimensionPolicy == -2 && !_m->getNumFaces() && _m->getNumRegions()) {
+      _error(0, "   Planned to check the 2D meshes as 'dimensionPolicy' is set to -2, but no mesh was found.");
+      _info(0, "   3D geometry was found instead. Consider setting 'dimensionPolicy' to 0.");
+    }
+    else {
+      _error(0, "   No mesh was found in the current model.");
     }
   }
 }
