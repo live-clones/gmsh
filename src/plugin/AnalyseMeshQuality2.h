@@ -284,6 +284,8 @@ private:
   private:
     void _count(unsigned char mask, std::size_t &cnt);
     void _countCurved(std::size_t &known, std::size_t &curved);
+    void _countAvailableValues(const Parameters::Computation &, std::size_t cnt[5],
+      size_t &numForWarningNotValidity);
     void _computeNormals();
     void _updateNormalsToPrint();
   };
@@ -330,7 +332,7 @@ private:
     // nothing to analyze or other things
 
     // Order of 5 metric to compute: jacNDelem, jacCGelem, geofit, disto, aspect
-    std::size_t metricValsAvailOnSelectedElem[5]{}; // TODO: implement
+    std::size_t metricValsAvailOnSelectedElem[5]{};
     std::size_t metricValsToCompute[5]{};
     // NB: metricValsToCompute[i] != reqElem - metricValsToCompute[i] in
     //     general because of omitMetricsComputation option
@@ -340,17 +342,17 @@ private:
     std::size_t reqElemOnCurvGeo = 0;
 
     // For warning about longer computation
-    std::size_t distoOrAspectToComputeButUnknownValidity = 0; // TODO: implement
+    std::size_t distoOrAspectToComputeButUnknownValidity = 0;
 
     // For guiding when reqElem == 0:
     std::size_t elem = 0;
-    std::size_t elemOnCurvGeo = 0; // TODO: implement
+    std::size_t elemOnCurvGeo = 0;
     std::size_t elemVisible = 0;
     std::size_t elemCurved = 0;
     std::size_t elemWithKnownCurving = 0; // NOTE: unused
     std::size_t elem_byType[TYPE_MAX_NUM]{};
-    std::size_t geoEntFlat[3]{}; // TODO: implement
-    std::size_t geoEntCurved[3]{}; // TODO: implement
+    std::size_t geoEntFlat[3]{};
+    std::size_t geoEntCurved[3]{};
 
     // Methods
     Counts operator+(const Counts &) const;

@@ -2049,11 +2049,15 @@ size_t Plug::DataEntity::updateElementsAndFlags(const Parameters::Computation &p
 
 void Plug::DataEntity::count(const Parameters::Computation &param, Counts &counts)
 {
+  if(_isCurvedGeo)
+    ++counts.geoEntCurved[_ge->dim() - 1];
+  else
+    ++counts.geoEntFlat[_ge->dim() - 1];
+
   // Reset intern data
   _numRequested = 0;
   constexpr int metricsCount = 5;
-  for(int i = 0; i < metricsCount; ++i)
-    _numToCompute[i] = 0;
+  for(int i = 0; i < metricsCount; ++i) _numToCompute[i] = 0;
 
   // Count number of requested elements
   _count(F_REQU, _numRequested);
@@ -2063,24 +2067,27 @@ void Plug::DataEntity::count(const Parameters::Computation &param, Counts &count
 
   // Count number of elements to compute
   if(!param.skip) {
-    if (param.jacobian && !_isCurvedGeo)
-      _count(F_REQU | F_NOTJAC, _numToCompute[0]);
-    if (param.jacobianOnCurvedGeo && _isCurvedGeo)
-      _count(F_REQU | F_NOTJAC, _numToCompute[1]);
-    if (param.geofit && _isCurvedGeo)
-      _count(F_REQU | F_NOTORI, _numToCompute[2]);
-    if (param.disto)
-      _count(F_REQU | F_NOTDISTO, _numToCompute[3]);
-    if (param.aspect)
-      _count(F_REQU | F_NOTASPECT, _numToCompute[4]);
+    std::size_t numJacToCompute = 0;
+    _count(F_REQU | F_NOTJAC, numJacToCompute);
+    if (param.jacobian && !_isCurvedGeo) _numToCompute[0] += numJacToCompute;
+    if (param.jacobianOnCurvedGeo && _isCurvedGeo) _numToCompute[1] += numJacToCompute;
+    if (param.geofit && _isCurvedGeo) _count(F_REQU | F_NOTORI, _numToCompute[2]);
+    if (param.disto) _count(F_REQU | F_NOTDISTO, _numToCompute[3]);
+    if (param.aspect) _count(F_REQU | F_NOTASPECT, _numToCompute[4]);
 
     for(int i = 0; i < metricsCount; ++i) {
       counts.metricValsToCompute[i] += _numToCompute[i];
     }
   }
 
+  // Count available values for selected elements
+  _countAvailableValues(param, counts.metricValsAvailOnSelectedElem,
+    counts.distoOrAspectToComputeButUnknownValidity);
+
   // Count total number, number of visible and curved elements
   counts.elem += _mapElemToIndex.size();
+  if(_isCurvedGeo)
+    counts.elemOnCurvGeo += _mapElemToIndex.size();
   for(const auto &flag : _flags) {
     if(isBitSet(flag, F_VISBL)) ++counts.elemVisible;
   }
@@ -2098,6 +2105,35 @@ void Plug::DataEntity::_countCurved(std::size_t &known, std::size_t &curved)
     if(isBitUnset(flag, F_CURVNOTCOMP)) {
       ++known;
       if(isBitSet(flag, F_CURVED)) ++curved;
+    }
+  }
+}
+
+void Plug::DataEntity::_countAvailableValues(const Parameters::Computation &param,
+  size_t cnt[5], size_t &numForWarningNotValidity)
+{
+  size_t numJacComputed = 0;
+  for (const auto &flag : _flags) {
+    if (isBitSet(flag, F_REQU)) {
+      if(isBitUnset(flag, F_NOTJAC)) ++numJacComputed;
+      if(isBitUnset(flag, F_NOTORI)) ++cnt[2];
+      if(isBitUnset(flag, F_NOTDISTO)) ++cnt[3];
+      if(isBitUnset(flag, F_NOTASPECT)) ++cnt[4];
+    }
+  }
+  if (param.jacobian && !_isCurvedGeo) cnt[0] += numJacComputed;
+  if (param.jacobianOnCurvedGeo && _isCurvedGeo) cnt[1] += numJacComputed;
+
+
+  if((param.disto || param.aspect) && !param.jacobian) {
+    int maskJacToCompute = F_REQU | F_NOTJAC;
+
+    for (const auto &flag : _flags) {
+      if(areBitsSet(flag, maskJacToCompute)) {
+        if ((param.disto && isBitSet(flag, F_NOTDISTO)) ||
+            (param.aspect && isBitSet(flag, F_NOTASPECT)))
+          ++numForWarningNotValidity;
+      }
     }
   }
 }
