@@ -188,7 +188,7 @@ private:
   private:
     const int _dim;
     std::map<GEntity *, DataEntity> _dataEntities;
-    bool _requestedListHasChanged = false;
+    bool _selectedListHasChanged = false;
 
   public:
     explicit DataSingleDimension(int dim) : _dim(dim) {}
@@ -198,7 +198,7 @@ private:
     {
       for(auto &d : _dataEntities) set.push_back(&d.second);
     }
-    bool getRequestedHasChanged() { return _requestedListHasChanged; }
+    bool getSelectedListHasChanged() { return _selectedListHasChanged; }
     void gatherValues(const Counts &, Measures &);
     bool hasDataToShow() const;
 
@@ -217,7 +217,7 @@ private:
 
     // Order of 5 metric to compute: jacNDelem, jacCGelem, geofit, disto, aspect
     std::size_t _numToCompute[5]{};
-    std::size_t _numRequested = 0;
+    std::size_t _numSelected = 0;
 
     // 8 bits of char are used for the following information:
     // - to say if quantities has already been computed
@@ -259,7 +259,7 @@ private:
     {
       delete _normals;
     }
-    size_t getNumRequested() const { return _numRequested; }
+    size_t getNumSelected() const { return _numSelected; }
     size_t updateElementsAndFlags(const Parameters::Computation &);
     void count(const Parameters::Computation &, Counts &);
     void reset(std::size_t);

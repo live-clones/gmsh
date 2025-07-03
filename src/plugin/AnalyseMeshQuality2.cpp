@@ -32,9 +32,9 @@
 #endif
 
 // TODO:
-//  1. Small changes:
-//     - distortion -> disto
-//     - requested element -> selected elements
+//  xx Small changes:
+//     x distortion -> disto
+//     x requested element -> selected elements
 //  2. Test plot such that first element take same place, like 1/50
 //     -> If choose to stay at fixed cutoff determine which cutoff to choose for
 //        which number of element
@@ -104,9 +104,9 @@
 //  0. Free data and stop IF dataReleasePolicy = -1
 //  TODO:
 //   Split step 1 into two steps:
-//    1a. Set requested element, determine requested metrics, Prominent metrics
+//    1a. Set selected element, determine requested metrics, Prominent metrics
 //    1b. Compute missing data
-//    2. Print stats for available metrics on requested elements
+//    2. Print stats for available metrics on selected elements
 //  1. Compute validity/quality IF omitMetricsComputation = OFF
 //   • Limit to GEntity in GModel::current()
 //   • In function of dimensionPolicy:
@@ -119,7 +119,7 @@
 //   • Limit to visible elements IF restrictToVisibleElements = ON
 //   • Limit to curved elements IF restrictToCurvedElements = ON
 //   • Compute Validity IF skipValidity <= 0
-//   • Compute Distortion IF enableDistortionQuality > 0
+//   • Compute Disto IF enableDistoQuality > 0
 //   • Compute Aspect IF enableAspectQuality > 0
 //   • Regularize Jacobian IF skipValidity <= 0 AND treatFlippedAsValid = ON
 //  2. Print statistics
@@ -130,7 +130,7 @@
 //     - IF = 1 do not limit (dimension 2 and 3 data separately)
 //     - IF = 2 combine dimension 2 and 3 data
 //   • In columns: min, max and Worst Weighted Means of UNPACK(wmCutoffsForStats)
-//   • Distortion IF enableDistortionQuality > 0
+//   • Disto IF enableDistoQuality > 0
 //   • Aspect IF enableAspectQuality > 0
 //   • IF skipValidity <= 0:
 //     - minJ/maxJ IF enableRatioJacDetAsAMetric > 0
@@ -142,9 +142,9 @@
 //     - IF = 0 Limit to dimension 3 data IF there is any 3D mesh OTHERWISE
 //              limit to dimension 2 data
 //     - IF >= 1 do not limit (dimension 2 and 3 data) (combined not possible)
-//   • Let M = max(-skipValidity, enableDistortionQuality, enableAspectQuality, enableRatioJacDetAsAMetric, enableMinJacDetAsAMetric)
+//   • Let M = max(-skipValidity, enableDistoQuality, enableAspectQuality, enableRatioJacDetAsAMetric, enableMinJacDetAsAMetric)
 //   • Validity IF skipValidity = -M
-//   • Distortion IF enableDistortionQuality = M
+//   • Disto IF enableDistoQuality = M
 //   • Aspect IF enableAspectQuality = M
 //   • minJ IF skipValidity <= 0 AND enableMinJacDetAsAMetric = M
 //   • minJ/maxJ IF skipValidity <= 0 AND enableMinJacDetAsAMetric = M
@@ -184,7 +184,7 @@ namespace {
 
 StringXNumber MeshQuality2Options_Number[] = {
   // Quality metrics to include:
-  {GMSH_FULLRC, "enableDistortionQuality", nullptr, 0, "OFF, (1+)=includeDistortionQuality"},
+  {GMSH_FULLRC, "enableDistoQuality", nullptr, 0, "OFF, (1+)=includeDistoQuality"},
   {GMSH_FULLRC, "enableAspectQuality", nullptr, 0, "OFF, (1+)=includeAspectQuality"},
   {GMSH_FULLRC, "enableGeoFitQuality", nullptr, 0, "OFF, (1+)=includeGeofitQuality (experimental)"},
   // What to do:
@@ -319,7 +319,7 @@ std::string Plug::getHelp() const
     "INTRODUCTION\n"
     "Plugin(AnalyseMeshQuality) evaluates the validity and quality of mesh "
     "elements within the current model. The plugin allows users to compute "
-    "various quality metrics such as Distortion, Aspect, and GeoFit, "
+    "various quality metrics such as Disto, Aspect, and GeoFit, "
     "generating detailed statistics for each of them, create visualization views "
     "(element-based or plot-based), and adjust element visibility based on "
     "customizable criteria.\n"
@@ -353,20 +353,13 @@ std::string Plug::getHelp() const
     BULLET"`Curved Geometry elements' (CG elements): Elements that are "
           "defined along curved geometrical features, such as 1D elements "
           "on curved edges or 2D elements on curved surfaces.\n"
-    // FIXME use Selected elements. Then, is the definition still usefull?
-    BULLET"`Requested elements': The plugin will identify, among all "
-          "available elements, the ones that satisfy all the restrictions "
-          "specified by the options: `dimensionPolicy', "
-          "`restrictToElementType', `restrictToVisibleElements' and "
-          "`restrictToCurvedElements'. These elements are called the "
-          "requested elements.\n"
     BULLET"`Prominent metrics': The plugin distinguishes between requested "
           "metrics, which are computed and displayed as statistics, and a "
           "subset of these called `Prominent metrics'. "
           "The Prominent metrics are used to determine visibility "
           "adjustment and visualization views. To obtain the subset, "
           "the plugin compute the maximum value among:\n"
-    BULLET2"enableDistortionQuality\n"
+    BULLET2"enableDistoQuality\n"
     BULLET2"enableAspectQuality\n"
     BULLET2"enableGeoFitQuality\n"
     BULLET2"enableMinJacDetAsAMetric\n"
@@ -417,7 +410,7 @@ std::string Plug::getHelp() const
   //   // "`Validity' and `Unflip' assess whether elements are valid (Jacobian determinant ≠ 0) or inverted "
   //   // "(Jacobian determinant < 0), as such elements can significantly affect the Finite Element solution. "
   //   // "`MinJ' and `Ratio minJ/maxJ' provide insights into element sizes and deformation, with the latter being "
-  //   // "a quick, albeit approximate, quality indicator. For numerical performance, `Distortion quality' (related "
+  //   // "a quick, albeit approximate, quality indicator. For numerical performance, `Disto quality' (related "
   //   // "to stiffness matrix conditioning) and `Aspect quality' (impacting solution gradients) range from 0 to 1, "
   //   // "where higher values indicate better quality. For CG elements, `GeoFit' measures alignment with the "
   //   // "geometry, ranging from -1 (flipped) to 1 (perfect alignment).\n"
@@ -568,9 +561,9 @@ std::string Plug::getHelp() const
          "This focuses computations only on the subset of interest and "
          "avoids analyzing the entire mesh. Set `adjustElementsVisibility' "
          "to `0' to prevent further changes to visibility. In this example, "
-         "Aspect quality and Distortion quality are computed, but only "
-         "Distortion quality is visualized:\n"
-    BULLET2"`enableDistortionQuality = 2'\n"
+         "Aspect quality and Disto quality are computed, but only "
+         "Disto quality is visualized:\n"
+    BULLET2"`enableDistoQuality = 2'\n"
     BULLET2"`enableAspectQuality = 1'\n"
     BULLET2"`createElementsView = 1'\n"
     BULLET2"`adjustElementsVisibility = 0'\n"
@@ -641,10 +634,10 @@ std::string Plug::getHelp() const
           "Note that the plugin will still release data according to the `dataReleasePolicy' "
           "option. If `omitMetricsComputation' is disabled, two scenarios arise: "
           "If `smartRecomputation' is disabled, metrics are recomputed for all "
-          "requested elements. If `smartRecomputation' is enabled, "
+          "selected elements. If `smartRecomputation' is enabled, "
           "the plugin compares the current list of elements with stored data. "
           "If they match exactly, only the missing metrics are computed. "
-          "Otherwise, metrics are recomputed for all the requested elements "
+          "Otherwise, metrics are recomputed for all the selected elements "
           "on that geometry entity. "
           "Note: Use `smartRecomputation' with caution, as the plugin cannot "
           "detect meshes where only node positions have been modified "
@@ -707,7 +700,7 @@ PView *Plug::execute(PView *v)
   bool check2D, check3D;
   _decideDimensionToCheck(check2D, check3D);
 
-  // Update requested element list and counts elements
+  // Update selected element list and counts elements
   Counts counts2D, counts3D;
   if(check2D) _data2D->syncWithModel(_m, _param.compute, counts2D);
   if(check3D) _data3D->syncWithModel(_m, _param.compute, counts3D);
@@ -963,7 +956,7 @@ void Plug::_fetchLegacyParameters()
            "equivalent results:\n"
            " 1. Set 'skipComputationMetrics' to 1 IF '_Recompute' is 0\n"
            " 2. Set 'createElementsView' to '_CreateView'\n"
-           " 3. Set 'enableDistortionQuality' to 1 IF '_ICNMeasure' is not 0\n"
+           " 3. Set 'enableDistoQuality' to 1 IF '_ICNMeasure' is not 0\n"
            " 4. Set 'enableAspectQuality'' to 1 IF '_IGEMeasure' is not 0\n"
            " 5. Set 'dimensionPolicy' to -1 IF '_DimensionOfElements' is 2\n"
            "    OTHERWISE set 'dimensionPolicy' to 1 IF '_DimensionOfElements' "
@@ -977,8 +970,8 @@ void Plug::_fetchLegacyParameters()
            "12. IF '_HidingThreshold' is smaller than 99:\n"
            "    -  Set 'adjustElementsVisibility' to 1\n"
            "    -  Set 'visibilityPolicy' to 1\n"
-           "    -  Set 'enableDistortionQuality' to 2 IF "
-           "'enableDistortionQuality' is 1\n"
+           "    -  Set 'enableDistoQuality' to 2 IF "
+           "'enableDistoQuality' is 1\n"
            "       OTHERWISE set 'enableAspectQuality' to 2 IF "
            "'enableAspectQuality' is 1\n"
            "       OTHERWISE set 'enableRatioJacDetAsAMetric' to 2");
@@ -1112,7 +1105,7 @@ bool Plug::_checkEarlyExitOptions()
     _error(MP, "-> No metric to analyze. Please adjust the following options:\n");
     _info(MP, "   <|>"
               "- Turn ON at least one of the following metrics:\n"
-              "  * enableDistortionQuality\n"
+              "  * enableDistoQuality\n"
               "  * enableAspectQuality\n"
               "  * enableGeoFit\n"
               "  * enableMinJacDetAsAMetric\n"
@@ -1136,7 +1129,7 @@ void Plug::_purgeViews(bool purge2D, bool purge3D)
   }
 
   // Remove PViews to forget
-  if(purge2D && _data2D->getRequestedHasChanged()) {
+  if(purge2D && _data2D->getSelectedListHasChanged()) {
     for (auto it = _pviews.begin(); it != _pviews.end(); ) {
       if(it->first.dim2Elem)
         it = _pviews.erase(it);
@@ -1144,7 +1137,7 @@ void Plug::_purgeViews(bool purge2D, bool purge3D)
         ++it;
     }
   }
-  if(purge3D && _data3D->getRequestedHasChanged()) {
+  if(purge3D && _data3D->getSelectedListHasChanged()) {
     for (auto it = _pviews.begin(); it != _pviews.end(); ) {
       if(it->first.dim3Elem)
         it = _pviews.erase(it);
@@ -1177,7 +1170,7 @@ void Plug::_computeRequestedData(Counts counts, bool check2D, bool check3D) cons
   }
 
   if(counts.metricValsToCompute[3] > 0) {
-    _status(0, "-> Computing Distortion quality...");
+    _status(0, "-> Computing Disto quality...");
     MsgProgressStatus progress_status(static_cast<int>(counts.metricValsToCompute[3]));
     for(auto data: allDataEntities) {
       data->computeDisto(progress_status, !_param.compute.jacobian);
@@ -1665,7 +1658,7 @@ void Plug::StatGenerator::_printStats(const Measures &measure)
   }
 
   if(showColumnPercentElem)
-    _warn(1, "   Not all the requested elements have metric computed");
+    _warn(1, "   Not all the selected elements have metric computed");
 
   if(haveQualityToPrint) {
     std::ostringstream columnNamesStream;
@@ -1715,7 +1708,7 @@ void Plug::StatGenerator::_printStats(const Measures &measure)
 
   if (measure.numToShow[VALIDITY] < numReqElem) {
     double percentage = static_cast<double>(measure.numToShow[VALIDITY]) / numReqElem * 100;
-    _status(MP, "   Among the %.2g%% of the requested elements that were analyzed", percentage);
+    _status(MP, "   Among the %.2g%% of the selected elements that were analyzed", percentage);
   }
 }
 
@@ -1814,7 +1807,7 @@ void Plug::DataSingleDimension::syncWithModel(GModel const *m,
                                               const Parameters::Computation &param,
                                               Counts &counts)
 {
-  _requestedListHasChanged = false;
+  _selectedListHasChanged = false;
 
   // Update list GEntities (thus _dataEntities) if needed
   std::set<GEntity *, GEntityPtrLessThan> entities;
@@ -1824,8 +1817,8 @@ void Plug::DataSingleDimension::syncWithModel(GModel const *m,
 
   // Initialize all DataEntity and count elements
   for(auto &it : _dataEntities) {
-    int numRequestedChanged = it.second.updateElementsAndFlags(param);
-    if(numRequestedChanged) _requestedListHasChanged = true;
+    int numSelectedChanged = it.second.updateElementsAndFlags(param);
+    if(numSelectedChanged) _selectedListHasChanged = true;
     it.second.count(param, counts);
   }
 }
@@ -1849,7 +1842,7 @@ void Plug::DataSingleDimension::_updateGEntitiesList(
     // Remove GEntities from _dataEntities that are not existent in the current model
     for(auto it = _dataEntities.begin(); it != _dataEntities.end();) {
       if(entities2.find(it->first) == entities2.end()) {
-        if(it->second.getNumRequested()) _requestedListHasChanged = true;
+        if(it->second.getNumSelected()) _selectedListHasChanged = true;
         it = _dataEntities.erase(it);
       }
       else {
@@ -1934,7 +1927,7 @@ inline void unsetBit(unsigned char &value, int maskOneBit)
 
 size_t Plug::DataEntity::updateElementsAndFlags(const Parameters::Computation &param)
 {
-  size_t cntRequestedChanged = 0;
+  size_t cntSelectedChanged = 0;
   std::size_t num = _ge->getNumMeshElements();
 
   // Step 0: Update normals in case it was not computed previously (this can
@@ -1967,7 +1960,7 @@ size_t Plug::DataEntity::updateElementsAndFlags(const Parameters::Computation &p
       resetData = sizeMismatch || elementListMismatch;
     }
     if(resetData) {
-      cntRequestedChanged += _numRequested;
+      cntSelectedChanged += _numSelected;
       reset(num);
       add(elements);
     }
@@ -2008,18 +2001,18 @@ size_t Plug::DataEntity::updateElementsAndFlags(const Parameters::Computation &p
     bool typeMismatch = param.onlyGivenElemType && !param.acceptedElemType[it.first->getType()];
     if(!typeMismatch && areBitsSet(flag, maskRequested)) {
       if(isBitUnset(flag, F_REQU)) {
-        ++cntRequestedChanged;
+        ++cntSelectedChanged;
         setBit(flag, F_REQU);
       }
     }
     else {
       if(isBitSet(flag, F_REQU)) {
-        ++cntRequestedChanged;
+        ++cntSelectedChanged;
         unsetBit(flag, F_REQU);
       }
     }
   }
-  return cntRequestedChanged;
+  return cntSelectedChanged;
 }
 
 void Plug::DataEntity::count(const Parameters::Computation &param, Counts &counts)
@@ -2032,17 +2025,17 @@ void Plug::DataEntity::count(const Parameters::Computation &param, Counts &count
   }
 
   // Reset intern data
-  _numRequested = 0;
+  _numSelected = 0;
   constexpr int metricsCount = 5;
   for(int i = 0; i < metricsCount; ++i) _numToCompute[i] = 0;
 
-  // Count number of requested elements
-  _count(F_REQU, _numRequested);
-  counts.reqElem += _numRequested;
+  // Count number of selected elements
+  _count(F_REQU, _numSelected);
+  counts.reqElem += _numSelected;
   if(_isCurvedGeo)
-    counts.reqElemOnCurvGeo += _numRequested;
+    counts.reqElemOnCurvGeo += _numSelected;
   if(param.geofit && _isCurvedGeo)
-    counts.reqElemOkGeoFit += _numRequested;
+    counts.reqElemOkGeoFit += _numSelected;
 
   // Count number of elements to compute
   if(!param.skip) {
@@ -2212,10 +2205,10 @@ void Plug::DataEntity::computeDisto(MsgProgressStatus &progress_status, bool con
 {
   // FIXME update
   if(_ge->dim() == 2)
-    _info(1, "   Surface %d: Computing Distortion quality of %d elements",
+    _info(1, "   Surface %d: Computing Disto quality of %d elements",
           _ge->tag(), _numToCompute[3]);
   else
-    _info(1, "   Volume %d: Computing Distortion quality of %d elements",
+    _info(1, "   Volume %d: Computing Disto quality of %d elements",
           _ge->tag(), _numToCompute[3]);
 
   for(const auto &it : _mapElemToIndex) {
@@ -2628,17 +2621,17 @@ void Plug::_printDetailsMetrics(size_t which[METRIC_COUNT], bool verbose2)
     // FIXME update : useful for curved element (HO)
     _info(1, "   *R<|>atio minJ/maxJ*  is the ratio between the minimum and "
              "maximum values of the Jacobian determinant. It is faster to "
-             "compute than the distortion and aspect quality metrics and can "
+             "compute than Disto and Aspect quality metrics and can "
              "be used to evaluate how much elements are deformed. However, "
              "note that it is not a true quality metric. Values range from "
              "-∞ to 1.");
   if(which[DISTO])
     // FIXME update
-    _info(1, "   *D<|>istortion quality*  (previously ICN) is related to the "
-             "condition number of the stiffness matrix. Low-Distortion elements "
-             "may cause numerical roundoff errors or significantly reduce the "
-             "convergence speed of iterative methods. Values "
-             "range from 0 to 1.");
+    _info(1, "   *D<|>isto quality*  (short for distortion, previously ICN) "
+             "is related to the condition number of the stiffness matrix. "
+             "Low-distortion elements may cause numerical roundoff errors or "
+             "significantly reduce the convergence speed of iterative methods. "
+             "Values range from 0 to 1.");
   if(which[ASPECT])
     // FIXME update
     _info(1, "   *A<|>spect quality*  (previously IGE) is related to "
