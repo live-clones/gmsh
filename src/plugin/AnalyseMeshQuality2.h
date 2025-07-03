@@ -172,8 +172,8 @@ private:
 
   // User guidance
   std::size_t _printElementToCompute(const Counts &cnt2D, const Counts &cnt3D) const;
-  void _guidanceNoSelectedElem(Counts counts,
-                                        bool check2D, bool check3D) const;
+  void _guidanceNoSelectedElem(Counts counts, bool check2D, bool check3D) const;
+  bool _checkAndGuideNoDataToShow(Counts counts, bool check2D, bool check3D) const;
   static void _printDetailsMetrics(size_t which[METRIC_COUNT], bool verbose2 = false);
 
 #if defined(HAVE_VISUDEV)
@@ -330,20 +330,27 @@ private:
     // nothing to analyze or other things
 
     // Order of 5 metric to compute: jacNDelem, jacCGelem, geofit, disto, aspect
+    std::size_t metricValsAvailOnSelectedElem[5]{}; // TODO: implement
     std::size_t metricValsToCompute[5]{};
     // NB: metricValsToCompute[i] != reqElem - metricValsToCompute[i] in
     //     general because of omitMetricsComputation option
 
     // For stopping early, and for reserving size vector
     std::size_t reqElem = 0;
-    std::size_t reqElemOkForGFit = 0;
+    std::size_t reqElemOnCurvGeo = 0;
+
+    // For warning about longer computation
+    std::size_t distoOrAspectToComputeButUnknownValidity = 0; // TODO: implement
 
     // For guiding when reqElem == 0:
     std::size_t elem = 0;
-    std::size_t visibleElem = 0;
-    std::size_t curvedElem = 0;
+    std::size_t elemOnCurvGeo = 0; // TODO: implement
+    std::size_t elemVisible = 0;
+    std::size_t elemCurved = 0;
     std::size_t elemWithKnownCurving = 0; // NOTE: unused
     std::size_t elem_byType[TYPE_MAX_NUM]{};
+    std::size_t geoEntFlat[3]{}; // TODO: implement
+    std::size_t geoEntCurved[3]{}; // TODO: implement
 
     // Methods
     Counts operator+(const Counts &) const;

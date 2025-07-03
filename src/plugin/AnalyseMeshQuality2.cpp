@@ -745,11 +745,6 @@ PView *Plug::execute(PView *v)
   bool check2D, check3D;
   _decideDimensionToCheck(check2D, check3D);
 
-
-
-  // Here it is possible to ask for minJ or maxJ and it is computed
-  // but with skipValidity ON
-
   // Update requested element list and counts elements
   Counts counts2D, counts3D;
   if(check2D) _data2D->syncWithModel(_m, _param.compute, counts2D);
@@ -767,36 +762,24 @@ PView *Plug::execute(PView *v)
   _info(MP, "-> Selected %s elements for analysis",
     formatNumber(countsTotal.reqElem).c_str());
 
-
-  // TODO:
-  //  Purge views
-  //  1. If no selected elements -> guide and exit
-  //  2. For metric to show, if no data (available+tobeComputed) -> guide and exit
-  //  Continue
-
-  // Count and compute if needed, otherwise check there is something to output
+  // Print the number of value to compute
+  // - If nothing to compute, check data availability for output.
+  // - Otherwise, warn about computing quality without validity checks.
   std::size_t totalToCompute = _printElementToCompute(counts2D, counts3D);
-
-
-
   if(!totalToCompute) {
-    if(pc.skip && !_data2D->hasDataToShow() && !_data3D->hasDataToShow()) {
-      _error(MP, "-> <|>No data available but option 'omitMetricsComputation' is set to 1. "
-                "Set 'omitMetricsComputation' to 0 for analyzing something");
-    }
-    else
-      _guidanceNoSelectedElem(countsTotal, check2D, check3D);
-    if(!countsTotal.reqElem) return v;
+    if(!_checkAndGuideNoDataToShow(countsTotal, check2D, check3D))
+      return v;
   }
-  else {
-    // FIXME use distoOrAspectToComputeButUnknownValidity
-      _warn(1, "-> <|>Option 'skipValidity' is ON, validity will not be "
-               "computed. This may significantly slow down quality computation "
-               "in the presence of invalid elements");
-    if(!pc.jacobian && (countsTotal.metricValsToCompute[3] || countsTotal.metricValsToCompute[4])) {
-    }
-    _computeRequestedData(countsTotal, check2D, check3D);
+  else if(countsTotal.distoOrAspectToComputeButUnknownValidity){
+    _warn(1, "-> <|>Validity computation is disabled (option 'skipValidity' "
+             "is ON). This may significantly slow down quality computation "
+             "in the presence of invalid elements");
+    _warn(-1, "-> <|>There are quality metrics to compute without in the "
+              "absence of preventive validity check");
   }
+
+  // Launch computation
+  _computeRequestedData(countsTotal, check2D, check3D);
 
   // Gather data
   std::vector<Measures> measures;
@@ -820,15 +803,18 @@ PView *Plug::execute(PView *v)
     measures.erase(measures.begin() + 1);
   }
 
+  // Output 1: Print statistics
   _param.check2D = check2D;
   _param.check3D = check3D;
   _statGen->printStats(_param, measures);
 
-
+  // Output 2: Create plots
   _createPlots(measures);
 
+  // Output 3: Create Element views
   _createElementViews(measures);
 
+  // Output 4: Hide elements
   if(_performHiding(measures)) {
     CTX::instance()->mesh.changed = ENT_ALL;
 #if defined(HAVE_OPENGL)
@@ -836,9 +822,9 @@ PView *Plug::execute(PView *v)
 #endif
   }
 
+  // Say goodbye
   _info(0, "Done executing Plugin AnalyseMeshQuality");
   _info(1, "(Set guidanceLevel to 0 or -1 to reduce verbosity)");
-
   return v;
 }
 
@@ -1513,12 +1499,12 @@ bool Plug::_performHiding(const std::vector<Measures> &measures)
   }
 
   if(countHidden && countMadeVisible)
-    _info(MP, "-> %s elements have been made visible, %s have been hidden.",
+    _info(MP, "-> %s elements have been made visible, %s have been hidden",
       formatNumber(countMadeVisible).c_str(), formatNumber(countHidden).c_str());
   else if (countHidden)
-    _info(MP, "-> %s elements have been hidden.", formatNumber(countHidden).c_str());
+    _info(MP, "-> %s elements have been hidden", formatNumber(countHidden).c_str());
   else if (countMadeVisible)
-    _info(MP, "-> %s elements have been made visible.", formatNumber(countMadeVisible).c_str());
+    _info(MP, "-> %s elements have been made visible", formatNumber(countMadeVisible).c_str());
 
   return static_cast<bool>(countHidden + countMadeVisible);
 }
@@ -1590,7 +1576,7 @@ bool Plug::_hideElements(const Measures &measure,
                          size_t &countHidden, size_t &countMadeVisible)
 {
   if(_param.hide.todo < 2 && elemToHide.size() == measure.elements.size()) {
-    _info(0, "Skipping hiding because all elements would be hidden.");
+    _info(0, "Skipping hiding because all elements would be hidden");
     _info(1, "To force hiding, set 'adjustElementsVisibility' to 2");
     return false;
   }
@@ -1907,7 +1893,7 @@ void Plug::DataSingleDimension::_updateGEntitiesList(
 void Plug::DataSingleDimension::gatherValues(const Counts &counts, Measures &measures)
 {
   size_t sz = counts.reqElem;
-  size_t szCurvGeo = counts.reqElemOkForGFit;
+  size_t szCurvGeo = counts.reqElemOnCurvGeo;
   if(_dim == 2)
     measures.dim2Elem = true;
   else
@@ -2073,7 +2059,7 @@ void Plug::DataEntity::count(const Parameters::Computation &param, Counts &count
   _count(F_REQU, _numRequested);
   counts.reqElem += _numRequested;
   if(param.geofit && _isCurvedGeo)
-    counts.reqElemOkForGFit += _numRequested;
+    counts.reqElemOnCurvGeo += _numRequested;
 
   // Count number of elements to compute
   if(!param.skip) {
@@ -2096,9 +2082,9 @@ void Plug::DataEntity::count(const Parameters::Computation &param, Counts &count
   // Count total number, number of visible and curved elements
   counts.elem += _mapElemToIndex.size();
   for(const auto &flag : _flags) {
-    if(isBitSet(flag, F_VISBL)) ++counts.visibleElem;
+    if(isBitSet(flag, F_VISBL)) ++counts.elemVisible;
   }
-  _countCurved(counts.elemWithKnownCurving, counts.curvedElem);
+  _countCurved(counts.elemWithKnownCurving, counts.elemCurved);
 
   // Count number of element by type
   for(int i = 0; i < TYPE_MAX_NUM; ++i) {
@@ -2694,11 +2680,11 @@ void Plug::_guidanceNoSelectedElem(Counts counts, bool check2D,
     // Case where elements are found
     // This must be due to one of the three 'restrictTo...' options, or...
     bool found = false;
-    if(_param.compute.onlyVisible && counts.visibleElem == 0) {
+    if(_param.compute.onlyVisible && counts.elemVisible == 0) {
       _error(0, "   Option 'restrictToVisibleElements' is ON, but no visible elements were found");
       found = true;
     }
-    if(_param.compute.onlyCurved && counts.curvedElem == 0) {
+    if(_param.compute.onlyCurved && counts.elemCurved == 0) {
       _error(0, "   Option 'restrictToCurvedElements' is ON, but no curved elements were found");
       found = true;
     }
@@ -2720,13 +2706,13 @@ void Plug::_guidanceNoSelectedElem(Counts counts, bool check2D,
       int numCrit = 0;
       double percentage, numElement = counts.elem;
       if(_param.compute.onlyVisible) {
-        percentage = static_cast<double>(counts.visibleElem) / numElement * 100;
-        _info(0, "   * %s visible elements (~%.2g%% of the total)", formatNumber(counts.visibleElem).c_str(), percentage);
+        percentage = static_cast<double>(counts.elemVisible) / numElement * 100;
+        _info(0, "   * %s visible elements (~%.2g%% of the total)", formatNumber(counts.elemVisible).c_str(), percentage);
         ++numCrit;
       }
       if(_param.compute.onlyCurved) {
-        percentage = static_cast<double>(counts.curvedElem) / numElement * 100;
-        _info(0, "   * %s curved elements (~%.2g%% of the total)", formatNumber(counts.curvedElem).c_str(), percentage);
+        percentage = static_cast<double>(counts.elemCurved) / numElement * 100;
+        _info(0, "   * %s curved elements (~%.2g%% of the total)", formatNumber(counts.elemCurved).c_str(), percentage);
         ++numCrit;
       }
       if(_param.compute.onlyGivenElemType) {
@@ -2735,26 +2721,125 @@ void Plug::_guidanceNoSelectedElem(Counts counts, bool check2D,
         ++numCrit;
       }
       if(numCrit == 2)
-        _error(0, "   No elements satisfy both criteria.");
+        _error(0, "   No elements satisfy both criteria");
       else if(numCrit == 3)
-        _error(0, "   No elements satisfy all three criteria.");
+        _error(0, "   No elements satisfy all three criteria");
       else
-        _error(0, "   Unexpected state: this case should not occur.");
+        _error(0, "   Unexpected state: this case should not occur");
     }
   }
   else {
     // Case where no elements are found
     if(!_m->getNumFaces() && !_m->getNumRegions()) {
-      _error(0, "   No geometry was found in the current model.");
+      _error(0, "   No geometry was found in the current model");
     }
     else if(_dimensionPolicy == -2 && !_m->getNumFaces() && _m->getNumRegions()) {
-      _error(0, "   Planned to check the 2D meshes as 'dimensionPolicy' is set to -2, but no mesh was found.");
-      _info(0, "   3D geometry was found instead. Consider setting 'dimensionPolicy' to 0.");
+      _error(0, "   Planned to check the 2D meshes as 'dimensionPolicy' is set to -2, but no mesh was found");
+      _info(0, "   3D geometry was found instead. Consider setting 'dimensionPolicy' to 0");
     }
     else {
-      _error(0, "   No mesh was found in the current model.");
+      _error(0, "   No mesh was found in the current model");
     }
   }
+}
+
+bool Plug::_checkAndGuideNoDataToShow(Counts counts, bool check2D, bool check3D) const
+{
+  const int *which = _param.show.which;
+
+  // Step 1: Calculate number of desired and undesired metric values
+  size_t numDesiredVals = 0, numUndesiredVals = 0;
+  std::size_t *available = counts.metricValsAvailOnSelectedElem;
+
+  auto addMetricValues = [&](int metricFlag, std::size_t metricVal)
+  {
+    if(which[metricFlag])
+      numDesiredVals += metricVal;
+    else
+      numUndesiredVals += metricVal;
+  };
+
+  addMetricValues(VALIDITY, available[0]);
+  addMetricValues(UNFLIP, available[0]);
+  addMetricValues(MINJAC, available[0] + available[1]);
+  addMetricValues(RATIOJAC, available[0] + available[1]);
+  addMetricValues(GEOFIT, available[2]);
+  addMetricValues(DISTO, available[3]);
+  addMetricValues(ASPECT, available[4]);
+
+  // Step 2: Check if there are available computed values for desired metrics
+  if(numDesiredVals > 0)
+    return true; // Metrics available -> Continue processing
+  _info(MP, "-> No data to output");
+
+  // Step 3: Case 1 - 'omitMetricComputation' is activated
+  if(_param.compute.skip) {
+    _error(MP, "   <|>Option 'omitMetricComputation' is ON but there are no "
+               "previously computed data corresponding to desired metrics for "
+               "the selected elements");
+
+    if(numUndesiredVals > 0) {
+      _info(0, "   The following metrics are available for the selected elements:");
+      if(!which[VALIDITY] && available[0]) _info(0, "   * Validity");
+      if(!which[UNFLIP] && available[0]) _info(0, "   * Unflip");
+      if(!which[MINJAC] && available[0]+available[1]) _info(0, "   * minJ");
+      if(!which[RATIOJAC] && available[0]+available[1]) _info(0, "   * minJ/maxJ");
+      if(!which[GEOFIT] && available[2]) _info(0, "   * GeoFit");
+      if(!which[DISTO] && available[3]) _info(0, "   * Dist");
+      if(!which[ASPECT] && available[4]) _info(0, "   * Aspect");
+    }
+  }
+
+  // Step 4: Case 2 - Check compatibility of requested metrics with geometry
+  bool wantValidity = std::abs(which[VALIDITY]) + std::abs(which[UNFLIP]);
+  bool wantGeoFit = std::abs(which[GEOFIT]);
+  bool wantOther = std::abs(which[MINJAC]) + std::abs(which[RATIOJAC]) + std::abs(which[DISTO]) + std::abs(which[ASPECT]);
+
+  bool wantValidityOnly = wantValidity && !wantGeoFit && !wantOther;
+  bool wantGeoFitOnly = !wantValidity && wantGeoFit && !wantOther;
+
+  bool hasReqElemOnCurvGeo = counts.reqElemOnCurvGeo;
+  bool hasReqElemOnFlatGeo = counts.reqElem - counts.reqElemOnCurvGeo;
+  bool hasElemOnFlatGeo = counts.elem - counts.elemOnCurvGeo;
+
+  bool hasCurvGeo = false;
+  bool hasFlatGeo = false;
+
+  if(check2D) {
+    hasCurvGeo |= counts.geoEntCurved[1];
+    hasFlatGeo |= counts.geoEntFlat[1];
+  }
+  if(check3D) {
+    hasFlatGeo |= counts.geoEntFlat[2];
+  }
+
+  if(wantValidityOnly && !hasReqElemOnFlatGeo) {
+    if(!hasFlatGeo) {
+      _error(MP, "   <|>Validity is the only requested metric, but all geometry entities are curved");
+      _info(0, "   <|>Validity is not defined on curved geometry entities. Please enable another metric");
+    }
+    else {
+      _error(MP, "   <|>Validity is the only requested metric, but all selected elements are on curved geometry entities");
+      if(hasElemOnFlatGeo)
+        _info(0, "   <|>The model contains %s elements on flat geometry entities, but none of them are selected",
+              formatNumber(hasElemOnFlatGeo).c_str());
+    }
+  }
+
+  if(wantGeoFitOnly && !hasReqElemOnCurvGeo) {
+    if(!hasCurvGeo) {
+      _error(MP, "   <|>GeoFit is the only requested metric, but all geometry entities are flat");
+      _info(0, "   <|>GeoFit is not defined on flat geometry entities. Please enable another metric");
+    }
+    else {
+      _error(MP, "   <|>GeoFit is the only requested metric, but all selected elements are on flat geometry entities");
+      if(hasReqElemOnCurvGeo)
+        _info(0, "   <|>The model contains %s elements on curved geometry entities, but none of them are selected",
+              formatNumber(hasReqElemOnCurvGeo).c_str());
+    }
+  }
+
+  return false;
 }
 
 // ======== struct Counts ======================================================
@@ -2773,11 +2858,11 @@ Plug::Counts Plug::Counts::operator+(const Counts &other) const
   }
 
   result.reqElem = reqElem + other.reqElem;
-  result.reqElemOkForGFit = reqElemOkForGFit + other.reqElemOkForGFit;
+  result.reqElemOnCurvGeo = reqElemOnCurvGeo + other.reqElemOnCurvGeo;
   result.elem = elem + other.elem;
   result.elemWithKnownCurving = elemWithKnownCurving + other.elemWithKnownCurving;
-  result.curvedElem = curvedElem + other.curvedElem;
-  result.visibleElem = visibleElem + other.visibleElem;
+  result.elemCurved = elemCurved + other.elemCurved;
+  result.elemVisible = elemVisible + other.elemVisible;
 
   return result;
 }
