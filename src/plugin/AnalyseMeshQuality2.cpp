@@ -31,66 +31,25 @@
 // #include "BasisFactory.h"
 #endif
 
-// FIXME Bug:
-//  1. Launch T8, then mesh 2, then run plugin, not have validity printed, but if compute
-//     -> not a bug, problem is that by default, the plugin has nothing to do for curved meshes
-
 // TODO:
 //  1. Small changes:
-//     x force2D = -2, force1D = -1 + warn 1D not implemented
-//     x By default: regularizeGeoFit, doNotTreatFlippedAsValid
-//       -> create second option
-//       -> OR treatFlippedAsValid: -1=doNotRegularizeGeoFit, 0=regularizeGeoFit, 1=ON (alter minJ and minJ/maxJ)
-//       -> OR treatFlippedAsValid: -1=never, 0=forCurvedGeo (alter FeoFit), 1=always (also alter minJ and minJ/maxJ)
-//     x if guidanceLevel=-1 do not print Executing AnalyseMeshQuality as in
-//       script, it is already printed `Running Plugin(AnalyseMeshQuality)...'
-//     x add number of element for statistics: `-> Statistics for dimension 3 (HERE):'
-//       + warning not all elements have metric => _warn(1, ...);
-//     x Set plot color black
-//     x Say geofit is experimental
-//     x Say number of view created
-//     x Add definition requested element
-//     x add enableGeoFit option
-//     x put dataManagementPolicy after smartRecomputation
-//     x reorder treatFlippedAsValid, enableMinJacDetAsAMetric,
-//               enableRatioJacDetAsAMetric, skipStatPrinting
 //     - distortion -> disto
-//  xx add restrictToElementType option + corresponding help message
-//     (and main element in tooltip)
-//  xx Add a quick presentation of metrics in Help message.
-//  xx guidanceLevel=2 => justPrintDetailedInfoOnMetrics (and set guidanceLevel=1)
-//  xx Add to FAQ:
-//     x why not a metric about distance to geometry
-//     x diff between 3 options concerning data management
-//     x why OFF, ON in tooltips?
-//     x why not classify CG elements in terms of validity and unflip
-//  6. Print different info at execution for GeoFit (and JacDet) in function of
-//     regularization or not
-//     -> If regu: then GeoFit >= a means valid, [-a, a] invalid
-//     -> If notRegu: then GeoFit >= a means valid, [-a, a] invalid, <a flipped
-//  7. Test plot such that first element take same place, like 1/50
+//     - requested element -> selected elements
+//  2. Test plot such that first element take same place, like 1/50
 //     -> If choose to stay at fixed cutoff determine which cutoff to choose for
 //        which number of element
-//  8. Move info how to read plot at execution. Say in important notes that
+//  3. Move info how to read plot at execution. Say in important notes that
 //     Help does not cover all information and it is adviced to set
 //     guidanceLevel=1 at the beginning to have contextual more complete info
-//  9. Update metrics info
-//  xxx Use space non-breakable space character for Help message
-//  11. If omitMetricsComputation and createElementsView, have to check if same
-//      elements.
-//      -> If not: either prevent creation element view or create element
-//         view for subset.
-//  12. I think that omitMetricsComputation still need to not have the mesh
-//      changed, which is not checked right now.
-//  13. Print selected x element before printing num to compute (with %)
-
-
+//  4. Update metrics info
+//  5. Make option name starting with upper case because it is the convention
 
 // TODO Finalization:
 //  1. Check fixmes, todos, etc.
-//  2. Merge master + Clang format
-//  3. Test with ctest that everything works?
-//  4. Update `What does the plugin'
+//  2. Check english
+//  3. Merge master + Clang format
+//  4. Test with ctest that everything works?
+//  5. Update `What does the plugin'
 
 
 // TODO Later:
@@ -102,36 +61,39 @@
 //     - minJ/maxJ can be considered as a quality measure
 //     - if dimension policy=-2?
 //     - also GeoFit
-//  3. Add more verbose messages?
-//  4. Make option name starting with upper case because it is the convention
-//  5. Add after computation metrics (Wall %gs, CPU %gs) (like in first version)
+//  3. Add after computation metrics "(Wall %gs, CPU %gs)" (like in first version)
 
 // TODO Maybe:
 //  1. Intrinsic validity : smartreco777 for sharing element or 888 or 999
-//  2. Check if surface is curved and count differently.
-//     For now, let all 2D together.
-//  3. Demo mode?
-//  4. Disable keep data? (dataReleasePolicy=1)
-//  5. If computed from scripts, have `Running Plugin(AnalyseMeshQuality)...'
-//     then `Executing the plugin AnalyseMeshQuality...'. If it is possible
-//     to know that in script or from GUI, then have condition for
-//     printing _info(Executing the plugin AnalyseMeshQuality...
+//  2. Demo mode?
+//  3. Disable keep data? (dataReleasePolicy=1)
+//  4. If computed from scripts, we have `Running Plugin(AnalyseMeshQuality)...'
+//     then `Executing the plugin AnalyseMeshQuality...'.
+//     -> If it is possible to know that in script or from GUI, then have
+//     print _info(Executing the plugin AnalyseMeshQuality... conditionnally
 //  6. A tuto? (with at the end the list of options and tooltips as comment)
 //     -> in which case say in getting started that this exists
-//     -> a ball with a hole would be perfectly fine: element touching
+//     -> a ball with a hole and BL would be perfectly fine: element touching
 //        inner boundary being much more curved than element touching external
 //        boundary
 //  7. Add after validity, in presence of curved geometry entities:
 //     "Among curved surfaces/edges, there are x potentially invalid elements,
-//     and y flipped elements
-//  8. Set plot color to loop over different a set of uniform colormap
-//     (same color for each value)
-//  9. Print info why no view when no view created (if verbose)?
+//     and y flipped elements?
+//  8. Set plot color to loop over different set of uniform colormap
+//     (same color for each value)?
+//  9. Print info "why no view" when no view created (if verbose)?
 //  10. Revise tooltips as \n can be used?
 //  11. Add option to limit views to subset of element?
 //      -> using new options or hiding options
 //      -> or not, can be done by running the plugin multiple time!
 //      -> tuto with geofit?
+//  12. Print different info at execution for GeoFit (and JacDet) in function of
+//      regularization or not
+//      -> If regu: then GeoFit >= a means valid, [-a, a] invalid
+//      -> If notRegu: then GeoFit >= a means valid, [-a, a] invalid, <a flipped
+//  13. Add to FAQ?:
+//      - How the plugin decide to create views or not
+//  14. Add verbose message for stats on selected elements if verbose==1?
 
 
 
