@@ -40,9 +40,9 @@
 //        which number of element
 //  xx Move info how to read plot at execution. Say in important notes that
 //     Help does not cover all information and it is adviced to set
-//     guidanceLevel=1 at the beginning to have contextual more complete info
+//     GuidanceLevel=1 at the beginning to have contextual more complete info
 //  xx Update metrics info
-//  5. Make option name starting with upper case because it is the convention
+//  xx Make option name starting with upper case because it is the convention
 //  6. Choose what to do with WW-G/M. Options are:
 //     - As current: user choose and can have multiple cutoff. Adviced 25, 10, 2
 //     - As current: plugin choose, user can give preference between 25, 10, 2
@@ -89,7 +89,7 @@
 // TODO Maybe:
 //  1. Intrinsic validity : smartreco777 for sharing element or 888 or 999
 //  2. Demo mode?
-//  3. Disable keep data? (dataReleasePolicy=1)
+//  3. Disable keep data? (DataReleasePolicy=1)
 //  4. If computed from scripts, we have `Running Plugin(AnalyseMeshQuality)...'
 //     then `Executing the plugin AnalyseMeshQuality...'.
 //     -> If it is possible to know that in script or from GUI, then have
@@ -124,62 +124,62 @@
 //  factor, data is still there but on wrong elements.
 
 // NOTE What does the plugin
-//  0. Free data and stop IF dataReleasePolicy = -1
+//  0. Free data and stop IF DataReleasePolicy = -1
 //  TODO:
 //   Split step 1 into two steps:
 //    1a. Set selected element, determine requested metrics, Prominent metrics
 //    1b. Compute missing data
 //    2. Print stats for available metrics on selected elements
-//  1. Compute validity/quality IF omitMetricsComputation = OFF
+//  1. Compute validity/quality IF OmitMetricsComputation = OFF
 //   • Limit to GEntity in GModel::current()
-//   • In function of dimensionPolicy:
+//   • In function of DimensionPolicy:
 //     - IF = -1 Limit to dimension 2 meshes
 //     - IF = 0 Limit to dimension 3 meshes IF there is any 3D mesh OTHERWISE
 //              limit to dimension 2 meshes
 //     - IF >= 1 do not limit (both dimension 2 and 3 meshes)
-//   • Clear old entities IF dataReleasePolicy = 0
-//   • Check if previous data can be reused IF smartRecomputation = ON
-//   • Limit to visible elements IF restrictToVisibleElements = ON
-//   • Limit to curved elements IF restrictToCurvedElements = ON
-//   • Compute Validity IF skipValidity <= 0
-//   • Compute Disto IF enableDistoQuality > 0
-//   • Compute Aspect IF enableAspectQuality > 0
-//   • Regularize Jacobian IF skipValidity <= 0 AND treatFlippedAsValid = ON
+//   • Clear old entities IF DataReleasePolicy = 0
+//   • Check if previous data can be reused IF SmartRecomputation = ON
+//   • Limit to visible elements IF RestrictToVisibleElements = ON
+//   • Limit to curved elements IF RestrictToCurvedElements = ON
+//   • Compute Validity IF SkipValidity <= 0
+//   • Compute Disto IF EnableDistoQuality > 0
+//   • Compute Aspect IF EnableAspectQuality > 0
+//   • Regularize Jacobian IF SkipValidity <= 0 AND TreatFlippedAsValid = ON
 //  2. Print statistics
-//   • In function of dimensionPolicy:
+//   • In function of DimensionPolicy:
 //     - IF = -1 Limit to dimension 2 data
 //     - IF = 0 Limit to dimension 3 data IF there is any 3D mesh OTHERWISE
 //              limit to dimension 2 data
 //     - IF = 1 do not limit (dimension 2 and 3 data separately)
 //     - IF = 2 combine dimension 2 and 3 data
-//   • In columns: min, max and Worst Weighted Means of UNPACK(wmCutoffsForStats)
-//   • Disto IF enableDistoQuality > 0
-//   • Aspect IF enableAspectQuality > 0
-//   • IF skipValidity <= 0:
-//     - minJ/maxJ IF enableRatioJacDetAsAMetric > 0
-//     - minJ IF enableMinJacDetAsAMetric > 0
+//   • In columns: min, max and Worst Weighted Means of UNPACK(WmCutoffsForStats)
+//   • Disto IF EnableDistoQuality > 0
+//   • Aspect IF EnableAspectQuality > 0
+//   • IF SkipValidity <= 0:
+//     - minJ/maxJ IF EnableRatioJacDetAsAMetric > 0
+//     - minJ IF EnableMinJacDetAsAMetric > 0
 //     - validity
-//  3. Create PViewElementData IF createElementsView = ON
-//   • In function of dimensionPolicy:
+//  3. Create PViewElementData IF CreateElementsView = ON
+//   • In function of DimensionPolicy:
 //     - IF = -1 Limit to dimension 2 data
 //     - IF = 0 Limit to dimension 3 data IF there is any 3D mesh OTHERWISE
 //              limit to dimension 2 data
 //     - IF >= 1 do not limit (dimension 2 and 3 data) (combined not possible)
-//   • Let M = max(-skipValidity, enableDistoQuality, enableAspectQuality, enableRatioJacDetAsAMetric, enableMinJacDetAsAMetric)
-//   • Validity IF skipValidity = -M
-//   • Disto IF enableDistoQuality = M
-//   • Aspect IF enableAspectQuality = M
-//   • minJ IF skipValidity <= 0 AND enableMinJacDetAsAMetric = M
-//   • minJ/maxJ IF skipValidity <= 0 AND enableMinJacDetAsAMetric = M
+//   • Let M = max(-SkipValidity, EnableDistoQuality, EnableAspectQuality, EnableRatioJacDetAsAMetric, EnableMinJacDetAsAMetric)
+//   • Validity IF SkipValidity = -M
+//   • Disto IF EnableDistoQuality = M
+//   • Aspect IF EnableAspectQuality = M
+//   • minJ IF SkipValidity <= 0 AND EnableMinJacDetAsAMetric = M
+//   • minJ/maxJ IF SkipValidity <= 0 AND EnableMinJacDetAsAMetric = M
 //   • But: skip creation IF PView already exists and unchanged data
-//  4. Create PView2D IF createPlotView = ON
-//   • In function of dimensionPolicy, as for (point 2.)
+//  4. Create PView2D IF CreatePlotView = ON
+//   • In function of DimensionPolicy, as for (point 2.)
 //   • For metrics as for (point 3.).
-//   • For Worst Weighted Means in function of UNPACK(wmCutoffsForPlots)
+//   • For Worst Weighted Means in function of UNPACK(WmCutoffsForPlots)
 //   • But: skip creation IF PView already exists and unchanged data
-//  5. Change visibility of elements IF adjustElementsVisibility >= 1
-//   • In function of dimensionPolicy, as for (point 2.)
-//   • In function of visibilityPolicy [here in the case hideWorstElements = OFF]:
+//  5. Change visibility of elements IF AdjustElementsVisibility >= 1
+//   • In function of DimensionPolicy, as for (point 2.)
+//   • In function of VisibilityPolicy [here in the case HideWorstElements = OFF]:
 //     - IF = -1 Limit to valid elements IF there are any invalid elements,
 //               OTHERWISE skip hiding/making visible
 //     - IF = 0 As "IF = 1" IF no invalid elements OTHERWISE as "IF = -1"
@@ -188,14 +188,14 @@
 //                        for the metric == M
 //     - IF = 2 Limit to elements that do not meet criterion for all metrics == M
 //     - IF = 3 Limit to elements that do not meet criterion for any metrics == M
-//   • In function of visibilityCriterion [in the case hideWorstElements = OFF]:
+//   • In function of VisibilityCriterion [in the case HideWorstElements = OFF]:
 //     - IF = 0 Use "metricValue <= x" as criterion
 //     - IF = 1 Use "x worst elements" as criterion
 //     - IF = 2 Use "x% worst elements" as criterion
-//     where x = visibilityThreshold
-//   • Hide worst elements instead of best IF hideWorstElements = ON
-//   • Unhide others IF doNoSetVisible = OFF
-//   • In function of adjustElementsVisibility:
+//     where x = VisibilityThreshold
+//   • Hide worst elements instead of best IF HideWorstElements = ON
+//   • Unhide others IF DoNoSetVisible = OFF
+//   • In function of AdjustElementsVisibility:
 //     - IF = 1 Skip adjustment IF all elements are to be hidden
 //     - IF >= 2 Hide/Set visible even if all elements are to be hidden
 
@@ -207,37 +207,37 @@ namespace {
 
 StringXNumber MeshQuality2Options_Number[] = {
   // Quality metrics to include:
-  {GMSH_FULLRC, "enableDistoQuality", nullptr, 2, "OFF, (1+)=includeDistoQuality"},
-  {GMSH_FULLRC, "enableAspectQuality", nullptr, 0, "OFF, (1+)=includeAspectQuality"},
-  {GMSH_FULLRC, "enableGeoFitQuality", nullptr, 1, "OFF, (1+)=includeGeofitQuality (experimental)"},
+  {GMSH_FULLRC, "EnableDistoQuality", nullptr, 2, "OFF, (1+)=includeDistoQuality"},
+  {GMSH_FULLRC, "EnableAspectQuality", nullptr, 0, "OFF, (1+)=includeAspectQuality"},
+  {GMSH_FULLRC, "EnableGeoFitQuality", nullptr, 1, "OFF, (1+)=includeGeofitQuality (experimental)"},
   // What to do:
-  {GMSH_FULLRC, "createElementsView", nullptr, 0, "OFF, ON"},
-  {GMSH_FULLRC, "createPlotView", nullptr, 1, "OFF, ON"},
-  {GMSH_FULLRC, "adjustElementsVisibility", nullptr, 0, "OFF, 1=skipIfAllWouldBeHidden, 2=acceptAllHidden"}, //TODO updtate for geofit
-  {GMSH_FULLRC, "guidanceLevel", nullptr, 2, "(-1)=minimalOutput, 0=verbose, 1=verboseAndExplanations, 2=printDetailsOnMetricsAndSkipExecution"},
+  {GMSH_FULLRC, "CreateElementsView", nullptr, 0, "OFF, ON"},
+  {GMSH_FULLRC, "CreatePlotView", nullptr, 1, "OFF, ON"},
+  {GMSH_FULLRC, "AdjustElementsVisibility", nullptr, 0, "OFF, 1=skipIfAllWouldBeHidden, 2=acceptAllHidden"}, //TODO updtate for geofit
+  {GMSH_FULLRC, "GuidanceLevel", nullptr, 2, "(-1)=minimalOutput, 0=verbose, 1=verboseAndExplanations, 2=printDetailsOnMetricsAndSkipExecution"},
   // Elements Selection:
-  {GMSH_FULLRC, "dimensionPolicy", nullptr, 0, "(-2)=force2D, (-1)=force1D, 0=prioritize3D, 1=2D+3D, 2=combine2D+3D"},
-  {GMSH_FULLRC, "restrictToElementType", nullptr, 0, "OFF, 1=Tri/Tet, 2=Quad/Hex, 3=Prism/Pyr"},
-  {GMSH_FULLRC, "restrictToVisibleElements", nullptr, 0, "OFF, ON=analyzeOnlyVisibleElements"},
-  {GMSH_FULLRC, "restrictToCurvedElements", nullptr, 0, "OFF, ON=analyzeOnlyNonStraightElements"},
+  {GMSH_FULLRC, "DimensionPolicy", nullptr, 0, "(-2)=force2D, (-1)=force1D, 0=prioritize3D, 1=2D+3D, 2=combine2D+3D"},
+  {GMSH_FULLRC, "RestrictToElementType", nullptr, 0, "OFF, 1=Tri/Tet, 2=Quad/Hex, 3=Prism/Pyr"},
+  {GMSH_FULLRC, "RestrictToVisibleElements", nullptr, 0, "OFF, ON=analyzeOnlyVisibleElements"},
+  {GMSH_FULLRC, "RestrictToCurvedElements", nullptr, 0, "OFF, ON=analyzeOnlyNonStraightElements"},
   // Hiding options:
-  {GMSH_FULLRC, "visibilityPolicy", nullptr, 0, "(-1)=validity|skip, 0=validity|1, 1=qualOR, 2=qualAND"},
-  {GMSH_FULLRC, "visibilityCriterion", nullptr, 0, "0=proportionVisibleElem, 1=numVisibleElem, 2=metricValue"},
-  {GMSH_FULLRC, "visibilityThreshold", nullptr, 10, "DOUBLE (which meaning depends on visibilityCriterion)"},
-  {GMSH_FULLRC, "hideWorstElements", nullptr, 0, "OFF=hideBestElements, ON"},
-  {GMSH_FULLRC, "doNoSetVisible", nullptr, 0, "OFF=performHidingAndUnhiding, ON=justPerformHiding"},
+  {GMSH_FULLRC, "VisibilityPolicy", nullptr, 0, "(-1)=validity|skip, 0=validity|1, 1=qualOR, 2=qualAND"},
+  {GMSH_FULLRC, "VisibilityCriterion", nullptr, 0, "0=proportionVisibleElem, 1=numVisibleElem, 2=metricValue"},
+  {GMSH_FULLRC, "VisibilityThreshold", nullptr, 10, "DOUBLE (which meaning depends on VisibilityCriterion)"},
+  {GMSH_FULLRC, "HideWorstElements", nullptr, 0, "OFF=hideBestElements, ON"},
+  {GMSH_FULLRC, "DoNoSetVisible", nullptr, 0, "OFF=performHidingAndUnhiding, ON=justPerformHiding"},
   // Advanced computation options:
-  {GMSH_FULLRC, "dataReleasePolicy ", nullptr, 0, "(-1)=freeDataAndSkipExecution, 0=freeOldDataIfGeoEntityAbsent, 1=keepAllData"},
-  {GMSH_FULLRC, "omitMetricsComputation", nullptr, 0, "OFF, ON=usePreviousData"},
-  {GMSH_FULLRC, "smartRecomputation", nullptr, 0, "OFF=alwaysRecompute, ON=avoidRecomputeIfUnchangedElementTags"},
-  {GMSH_FULLRC, "skipValidity", nullptr, 0, "(0-)=includeValidity, (1+)=skipPreventiveValidityCheck"},
+  {GMSH_FULLRC, "DataReleasePolicy ", nullptr, 0, "(-1)=freeDataAndSkipExecution, 0=freeOldDataIfGeoEntityAbsent, 1=keepAllData"},
+  {GMSH_FULLRC, "OmitMetricsComputation", nullptr, 0, "OFF, ON=usePreviousData"},
+  {GMSH_FULLRC, "SmartRecomputation", nullptr, 0, "OFF=alwaysRecompute, ON=avoidRecomputeIfUnchangedElementTags"},
+  {GMSH_FULLRC, "SkipValidity", nullptr, 0, "(0-)=includeValidity, (1+)=skipPreventiveValidityCheck"},
   // Advanced analysis options:
-  {GMSH_FULLRC, "treatFlippedAsValid", nullptr, 0, "(-1)=never, 0=forCurvedGeo (alter GeoFit), 1=always (also alter minJ and minJ/maxJ)"},
-  {GMSH_FULLRC, "enableMinJacDetAsAMetric", nullptr, 0, "OFF, 1+ (Validity must be computed)"},
-  {GMSH_FULLRC, "enableRatioJacDetAsAMetric", nullptr, 0, "OFF, 1+ (Validity must be computed)"},
-  {GMSH_FULLRC, "skipStatPrinting", nullptr, 0, "OFF, ON"},
-  {GMSH_FULLRC, "wmCutoffsForStats", nullptr, 21025, "CUTOFFS (for stats weighted mean, see Help)"},
-  {GMSH_FULLRC, "wmCutoffsForPlots", nullptr, 10, "CUTOFFS (for plots weighted mean, see Help)"},
+  {GMSH_FULLRC, "TreatFlippedAsValid", nullptr, 0, "(-1)=never, 0=forCurvedGeo (alter GeoFit), 1=always (also alter minJ and minJ/maxJ)"},
+  {GMSH_FULLRC, "EnableMinJacDetAsAMetric", nullptr, 0, "OFF, 1+ (Validity must be computed)"},
+  {GMSH_FULLRC, "EnableRatioJacDetAsAMetric", nullptr, 0, "OFF, 1+ (Validity must be computed)"},
+  {GMSH_FULLRC, "SkipStatPrinting", nullptr, 0, "OFF, ON"},
+  {GMSH_FULLRC, "WmCutoffsForStats", nullptr, 21025, "CUTOFFS (for stats weighted mean, see Help)"},
+  {GMSH_FULLRC, "WmCutoffsForPlots", nullptr, 10, "CUTOFFS (for plots weighted mean, see Help)"},
   // Legacy options:
   {GMSH_FULLRC, "JacobianDeterminant", nullptr, UNTOUCHED, "[legacy] OFF, ON"},
   {GMSH_FULLRC, "IGEMeasure", nullptr, UNTOUCHED, "[legacy] OFF, ON"},
@@ -413,9 +413,9 @@ PView *Plug::execute(PView *v)
   Parameters::Computation &pc = _param.compute;
   if(pc.freeOldData && _m && _m != m) {
     _warn(1, "-> <|>Detected a new model. Previous data will be cleared "
-             "(set 'dataReleasePolicy' to 1 to prevent this)");
+             "(set 'DataReleasePolicy' to 1 to prevent this)");
     _info(-1, "-> <|>Detected a new model. Previous data will be cleared "
-              "(set 'dataReleasePolicy' to 1 to prevent this)");
+              "(set 'DataReleasePolicy' to 1 to prevent this)");
     // FIXME may not be the case (can we create a new model with exact same geometry and mesh?)
     // FIXME Do I really need this?
   }
@@ -451,7 +451,7 @@ PView *Plug::execute(PView *v)
       return v;
   }
   else if(!pc.jacobian && countsTotal.distoOrAspectToComputeButUnknownValidity){
-    _warn(1, "-> <|>Validity computation is disabled (option 'skipValidity' "
+    _warn(1, "-> <|>Validity computation is disabled (option 'SkipValidity' "
              "is ON). This may significantly slow down quality computation "
              "in the presence of invalid elements");
     _warn(-1, "-> <|>There are quality metrics to compute without in the "
@@ -504,7 +504,7 @@ PView *Plug::execute(PView *v)
 
   // Say goodbye
   _info(0, "Done executing Plugin AnalyseMeshQuality");
-  _info(1, "(Set guidanceLevel to 0 or -1 to reduce verbosity)");
+  _info(1, "(Set GuidanceLevel to 0 or -1 to reduce verbosity)");
   return v;
 }
 
@@ -536,9 +536,9 @@ bool Plug::_fetchParameters()
   // Elements Selection:
   _dimensionPolicy = static_cast<int>(MeshQuality2Options_Number[7].def);
   if(_dimensionPolicy == -1) {
-    _error(MP, "   <|>Option 'dimensionPolicy' is set to -1 (force1D) but "
+    _error(MP, "   <|>Option 'DimensionPolicy' is set to -1 (force1D) but "
               "1D metrics are not yet implemented. Aborting. Please set "
-              "'dimensionPolicy' to another value");
+              "'DimensionPolicy' to another value");
     return false;
   }
   elementType = MeshQuality2Options_Number[8].def;
@@ -680,26 +680,26 @@ void Plug::_fetchLegacyParameters()
   _info(0, "-> <|>Use the following changes to map the options and achieve "
            "equivalent results:\n"
            " 1. Set 'skipComputationMetrics' to 1 IF '_Recompute' is 0\n"
-           " 2. Set 'createElementsView' to '_CreateView'\n"
-           " 3. Set 'enableDistoQuality' to 1 IF '_ICNMeasure' is not 0\n"
-           " 4. Set 'enableAspectQuality'' to 1 IF '_IGEMeasure' is not 0\n"
-           " 5. Set 'dimensionPolicy' to -1 IF '_DimensionOfElements' is 2\n"
-           "    OTHERWISE set 'dimensionPolicy' to 1 IF '_DimensionOfElements' "
+           " 2. Set 'CreateElementsView' to '_CreateView'\n"
+           " 3. Set 'EnableDistoQuality' to 1 IF '_ICNMeasure' is not 0\n"
+           " 4. Set 'EnableAspectQuality'' to 1 IF '_IGEMeasure' is not 0\n"
+           " 5. Set 'DimensionPolicy' to -1 IF '_DimensionOfElements' is 2\n"
+           "    OTHERWISE set 'DimensionPolicy' to 1 IF '_DimensionOfElements' "
            "is 4\n"
-           " 6. Set 'visibilityThreshold' to '_HidingThreshold'\n"
-           " 7. Set 'hideWorstElements' to 1 IF '_ThresholdGreater' is 0\n"
-           " 8. Set 'skipValidity' to 1 if '_JacobianDeterminant' is 0\n"
-           " 9. Set 'enableRatioJacDetAsAMetric' to 1\n"
-           "10. Set 'enableMinJacDetAsAMetric' to 1\n"
-           "11. Set 'wmCutoffsForStats' to 50\n"
+           " 6. Set 'VisibilityThreshold' to '_HidingThreshold'\n"
+           " 7. Set 'HideWorstElements' to 1 IF '_ThresholdGreater' is 0\n"
+           " 8. Set 'SkipValidity' to 1 if '_JacobianDeterminant' is 0\n"
+           " 9. Set 'EnableRatioJacDetAsAMetric' to 1\n"
+           "10. Set 'EnableMinJacDetAsAMetric' to 1\n"
+           "11. Set 'WmCutoffsForStats' to 50\n"
            "12. IF '_HidingThreshold' is smaller than 99:\n"
-           "    -  Set 'adjustElementsVisibility' to 1\n"
-           "    -  Set 'visibilityPolicy' to 1\n"
-           "    -  Set 'enableDistoQuality' to 2 IF "
-           "'enableDistoQuality' is 1\n"
-           "       OTHERWISE set 'enableAspectQuality' to 2 IF "
-           "'enableAspectQuality' is 1\n"
-           "       OTHERWISE set 'enableRatioJacDetAsAMetric' to 2");
+           "    -  Set 'AdjustElementsVisibility' to 1\n"
+           "    -  Set 'VisibilityPolicy' to 1\n"
+           "    -  Set 'EnableDistoQuality' to 2 IF "
+           "'EnableDistoQuality' is 1\n"
+           "       OTHERWISE set 'EnableAspectQuality' to 2 IF "
+           "'EnableAspectQuality' is 1\n"
+           "       OTHERWISE set 'EnableRatioJacDetAsAMetric' to 2");
   _info(0, "   Note: To disable this message, avoid modifying the "
             "deprecated options.");
 
@@ -803,7 +803,7 @@ bool Plug::_checkEarlyExitOptions()
     std::fill(std::begin(which), std::end(which), 1);
     _printDetailsMetrics(which, true);
     MeshQuality2Options_Number[6].def = 1;
-    _info(MP, "-> Option 'guidanceLevel' has been set to 1");
+    _info(MP, "-> Option 'GuidanceLevel' has been set to 1");
     exit = true;
   }
 
@@ -811,12 +811,12 @@ bool Plug::_checkEarlyExitOptions()
   if(_param.freeData) {
     _info(-2, "-> Freeing data...");
     _info(-1, "-> Freeing data...");
-    _info(1, "-> Freeing data... (because option 'dataReleasePolicy' is -1)");
+    _info(1, "-> Freeing data... (because option 'DataReleasePolicy' is -1)");
     _data2D->clear();
     _data3D->clear();
     MeshQuality2Options_Number[16].def = !_previousFreeOldData;
     _info(0, "   Done.");
-    _info(MP, "-> Option 'dataReleasePolicy' has been reset");
+    _info(MP, "-> Option 'DataReleasePolicy' has been reset");
     exit = true;
   }
 
@@ -830,12 +830,12 @@ bool Plug::_checkEarlyExitOptions()
     _error(MP, "-> No metric to analyze. Please adjust the following options:\n");
     _info(MP, "   <|>"
               "- Turn ON at least one of the following metrics:\n"
-              "  * enableDistoQuality\n"
-              "  * enableAspectQuality\n"
-              "  * enableGeoFit\n"
-              "  * enableMinJacDetAsAMetric\n"
-              "  * enableRatioJacDetAsAMetric\n"
-              "- OR set 'skipValidity' to 0");
+              "  * EnableDistoQuality\n"
+              "  * EnableAspectQuality\n"
+              "  * EnableGeoFitQuality\n"
+              "  * EnableMinJacDetAsAMetric\n"
+              "  * EnableRatioJacDetAsAMetric\n"
+              "- OR set 'SkipValidity' to 0");
     exit = true;
   }
 
@@ -1279,7 +1279,7 @@ bool Plug::_hideElements(const Measures &measure,
 {
   if(_param.hide.todo < 2 && elemToHide.size() == measure.elements.size()) {
     _info(0, "Skipping hiding because all elements would be hidden");
-    _info(1, "To force hiding, set 'adjustElementsVisibility' to 2");
+    _info(1, "To force hiding, set 'AdjustElementsVisibility' to 2");
     return false;
   }
 
@@ -2223,7 +2223,7 @@ std::string Plug::_getHelpIntro()
     "subsequent sections.\n"
     "Additionally:\n"
     BULLET"To get live, contextual explanations during execution, "
-          "users can set `guidanceLevel' to 1.\n"
+          "users can set `GuidanceLevel' to 1.\n"
     BULLET"A FAQ is available at the end of this help message.\n"
     "\n"
     "IMPORTANT NOTES\n"
@@ -2235,7 +2235,7 @@ std::string Plug::_getHelpIntro()
           "See the 'OPTIONS CLARIFICATIONS' section for details.\n"
     BULLET"This help message does not cover all of the available information. "
           "Users who are not familiar with this plugin (or its new version) "
-          "should set the `guidanceLevel' option to 1 to receive "
+          "should set the `GuidanceLevel' option to 1 to receive "
           "additional assistance.\n";
 }
 
@@ -2255,11 +2255,11 @@ std::string Plug::_getHelpDefinitions()
           "The Prominent metrics are used to determine visibility "
           "adjustment and visualization views. To obtain the subset, "
           "the plugin compute the maximum value among:\n"
-    BULLET2"enableDistoQuality\n"
-    BULLET2"enableAspectQuality\n"
-    BULLET2"enableGeoFitQuality\n"
-    BULLET2"enableMinJacDetAsAMetric\n"
-    BULLET2"enableRatioJacDetAsAMetric\n"
+    BULLET2"EnableDistoQuality\n"
+    BULLET2"EnableAspectQuality\n"
+    BULLET2"EnableGeoFitQuality\n"
+    BULLET2"EnableMinJacDetAsAMetric\n"
+    BULLET2"EnableRatioJacDetAsAMetric\n"
     "The metrics matching this maximum value are in the set of Prominent metrics.\n";
 }
 
@@ -2287,8 +2287,8 @@ std::string Plug::_getHelpMetrics()
     "The minJ/maxJ ratio, while not a true quality metric, can serve as an indicator "
     "for detecting distorted elements. Be cautious, as there is no guarantee "
     "that an element with a good minJ/maxJ ratio has a good shape. "
-    "For additional details about the metrics in use during execution, set guidanceLevel to ‘1’. "
-    "Alternatively, set guidanceLevel to ‘2’ to instruct the plugin to print detailed "
+    "For additional details about the metrics in use during execution, set GuidanceLevel to ‘1’. "
+    "Alternatively, set GuidanceLevel to ‘2’ to instruct the plugin to print detailed "
     "information for all metrics and then stop.\n";
 //
 // // "Those two metrics are derived through the computation of the Jacobian determinant. "
@@ -2302,8 +2302,8 @@ std::string Plug::_getHelpMetrics()
 //   "Ratio minJ/maxJ, while not a "
 //   "true quality metric, allow to fastly detect distorted elements. Be cautious as there is "
 //   "no guarantee that an element with a good minJ/maxJ have a good shape. "
-//   "For more details on metrics you are using during execution, set guidanceLevel to "
-//   "`1', or set guidanceLevel to `2' to make the plugin printing those details "
+//   "For more details on metrics you are using during execution, set GuidanceLevel to "
+//   "`1', or set GuidanceLevel to `2' to make the plugin printing those details "
 //   "for all metrics and stop. "
 //   // ""
 //   // "The plugin evaluates several metrics to analyze the validity and quality of mesh elements. "
@@ -2362,7 +2362,7 @@ std::string Plug::_getHelpOptionsClarification()
   return
     "OPTIONS CLARIFICATIONS\n"
     "For clarification about visibility options, see next section.\n"
-    BULLET"`guidanceLevel': Determines the verbosity level of the plugin output:\n"
+    BULLET"`GuidanceLevel': Determines the verbosity level of the plugin output:\n"
     BULLET2"`-1': Typically used for scripting, where only the printed "
            "statistics are desired.\n"
     BULLET2"`0': Prints an overview of what the plugin is doing but "
@@ -2370,7 +2370,7 @@ std::string Plug::_getHelpOptionsClarification()
     BULLET2"`1': Prints detailed information about the plugin's operation, "
            "which may be useful for debugging. "
            "It also provides guidance for beginner users.\n"
-    BULLET"`dataReleasePolicy': Determines how data is managed by "
+    BULLET"`DataReleasePolicy': Determines how data is managed by "
           "the plugin:\n"
     BULLET2"`-1': Frees data and stops the plugin immediately, preventing any "
            "further actions. This is typically useful in scripting contexts.\n"
@@ -2379,7 +2379,7 @@ std::string Plug::_getHelpOptionsClarification()
     BULLET2"`1': Keeps data corresponding to geometry entities that are "
            "absent in the current model. This is useful if the plugin may "
            "be run again with a previous model.\n"
-    BULLET"`smartRecomputation': Prevents unnecessary recomputation when "
+    BULLET"`SmartRecomputation': Prevents unnecessary recomputation when "
           "the plugin is run again and prevent recreating exact same views. "
           "If set to `0', the plugin will always recompute. If set to `1', "
           "for each geometrical entity, the plugin will decide to recompute "
@@ -2388,15 +2388,15 @@ std::string Plug::_getHelpOptionsClarification()
           "if a topological operation has been performed. "
           "However, the plugin cannot detect if nodes have been moved, "
           "such as after an optimization. Use this option with caution!\n"
-    BULLET"`skipValidity': The plugin is designed to check the validity "
+    BULLET"`SkipValidity': The plugin is designed to check the validity "
           "of elements before evaluating any quality metrics. "
           "This behavior ensures faster computation of quality metrics "
           "in the presence of invalid elements. The user can set "
-          "`skipValidity' to `1' to disable validity checks. "
+          "`SkipValidity' to `1' to disable validity checks. "
           "To include validity as part of Prominent metrics, set its "
           "value to `-M', where `M' is the maximum value among all metrics.\n"
     // FIXME move some of this info in the new section on metrics
-    BULLET"`treatFlippedAsValid': By default, the plugin detects flipped "
+    BULLET"`TreatFlippedAsValid': By default, the plugin detects flipped "
           "ND elements, i.e. ND elements with a negative area or volume, "
           "and classifies those elements into three categories: valid, "
           "invalid, and flipped. Whether flipped elements are problematic "
@@ -2417,7 +2417,7 @@ std::string Plug::_getHelpOptionsClarification()
           "This process implies that regularizing the Jacobian "
           "determinant also affects other metrics derived from it: "
           "`minJ' and `minJ/maxJ'.\n"
-    BULLET"`wmCutoffsForStats' and `wmCutoffsForPlots': Defines a list "
+    BULLET"`WmCutoffsForStats' and `WmCutoffsForPlots': Defines a list "
           "of cutoff values used for computing weighted mean-based "
           "statistics and generating plots. The list of cutoff is specified "
           "as a sequence of two-digit values, e.g. 123456, which would "
@@ -2440,11 +2440,11 @@ std::string Plug::_getHelpVisibility()
           "If all elements are valid, the plugin will select the 10% worst "
           "element according to the Prominent metrics and make them visible "
           "while hiding the others.\nAvailable options:\n"
-    BULLET"`adjustElementsVisibility': Enables the operation of hiding "
+    BULLET"`AdjustElementsVisibility': Enables the operation of hiding "
           "and unhiding elements. If set to `1', the plugin will abort if "
           "all analyzed elements meet the criterion to be hidden. "
           "To force the hiding in this case, set it to `2'.\n"
-    BULLET"`visibilityPolicy': Determines which metric(s) are used to "
+    BULLET"`VisibilityPolicy': Determines which metric(s) are used to "
           "decide which elements are hidden or made visible. "
           "The available settings and their behaviors are:\n"
     BULLET2"`-1': The plugin first checks if there are invalid elements. "
@@ -2461,17 +2461,17 @@ std::string Plug::_getHelpVisibility()
     BULLET2"`2': The behavior is the opposite of `1'. Elements that fail "
            "to meet the visibility criterion are made visible, while those "
            "that meet it are hidden.\n"
-    BULLET"`visibilityCriterion': Defines the purpose of the threshold. "
+    BULLET"`VisibilityCriterion': Defines the purpose of the threshold. "
           "Available values are:\n"
     BULLET2"`0': The threshold is the percentage of elements to make visible.\n"
     BULLET2"`1': The threshold is the number of elements to make visible.\n"
     BULLET2"`2': The threshold is the metric value.\n"
-    BULLET"`visibilityThreshold': Specifies the threshold value used for "
-          "`visibilityCriterion'.\n"
-    BULLET"`hideWorstElements': Reverses the hiding operation. "
+    BULLET"`VisibilityThreshold': Specifies the threshold value used for "
+          "`VisibilityCriterion'.\n"
+    BULLET"`HideWorstElements': Reverses the hiding operation. "
           "If set to `1', the best-rated elements are made visible "
           "and worst-rated elements are hidden.\n"
-    BULLET"`doNoSetVisible': Controls whether elements are made visible or "
+    BULLET"`DoNoSetVisible': Controls whether elements are made visible or "
           "only hidden. If set to `0', the plugin performs both hiding and "
           "unhiding. If set to `1', the plugin only performs the hiding "
           "operation without making any elements visible.\n";
@@ -2489,32 +2489,32 @@ std::string Plug::_getHelpAdvancedUse()
          "`minJ/maxJ') for all elements and use the visibility adjustment "
          "options to make only a subset of elements visible. For instance, "
          "to make only the 20% smallest elements visible:\n"
-    BULLET2"`adjustElementsVisibility = 1'\n"
-    BULLET2"`visibilityPolicy = 1'\n"
-    BULLET2"`visibilityThreshold = 20'\n"
-    BULLET2"`enableMinJacDetAsAMetric = 1'\n"
+    BULLET2"`AdjustElementsVisibility = 1'\n"
+    BULLET2"`VisibilityPolicy = 1'\n"
+    BULLET2"`VisibilityThreshold = 20'\n"
+    BULLET2"`EnableMinJacDetAsAMetric = 1'\n"
     SPACE"2. Second run: Compute quality metrics for the visible elements. "
          "This focuses computations only on the subset of interest and "
-         "avoids analyzing the entire mesh. Set `adjustElementsVisibility' "
+         "avoids analyzing the entire mesh. Set `AdjustElementsVisibility' "
          "to `0' to prevent further changes to visibility. In this example, "
          "Aspect quality and Disto quality are computed, but only "
          "Disto quality is visualized:\n"
-    BULLET2"`enableDistoQuality = 2'\n"
-    BULLET2"`enableAspectQuality = 1'\n"
-    BULLET2"`createElementsView = 1'\n"
-    BULLET2"`adjustElementsVisibility = 0'\n"
-    BULLET2"`restrictToVisibleElements = 1'\n"
-    BULLET2"`smartRecomputation = 1'\n"
-    //BULLET2"`enableMinJacDetAsAMetric = 0'\n"
+    BULLET2"`EnableDistoQuality = 2'\n"
+    BULLET2"`EnableAspectQuality = 1'\n"
+    BULLET2"`CreateElementsView = 1'\n"
+    BULLET2"`AdjustElementsVisibility = 0'\n"
+    BULLET2"`RestrictToVisibleElements = 1'\n"
+    BULLET2"`SmartRecomputation = 1'\n"
+    //BULLET2"`EnableMinJacDetAsAMetric = 0'\n"
     SPACE"3. Optional final run: Use the plugin to make all elements "
          "visible again. This can be achieved by setting:\n"
-    BULLET2"`createElementsView = 0'\n"
-    BULLET2"`adjustElementsVisibility = 1'\n"
-    BULLET2"`restrictToVisibleElements = 0'\n"
-    BULLET2"`visibilityThreshold = 100'\n"
-    BULLET2"`omitMetricsComputation = 1'\n"
-    BULLET2"`skipStatPrinting = 1'\n"
-    BULLET2"`enableMinJacDetAsAMetric = 3'\n"
+    BULLET2"`CreateElementsView = 0'\n"
+    BULLET2"`AdjustElementsVisibility = 1'\n"
+    BULLET2"`RestrictToVisibleElements = 0'\n"
+    BULLET2"`VisibilityThreshold = 100'\n"
+    BULLET2"`OmitMetricsComputation = 1'\n"
+    BULLET2"`SkipStatPrinting = 1'\n"
+    BULLET2"`EnableMinJacDetAsAMetric = 3'\n"
     "NB: This last operation can also be performed using built-in Gmsh functions.\n";
 }
 
@@ -2558,28 +2558,28 @@ std::string Plug::_getHelpFAQ()
           "GeoFit is still useful for checking whether the "
           "mesh accurately represents the surface.\n" //TODO improve
     BULLET"Q4: What is the difference between the three options concerning "
-          "data management: `dataReleasePolicy', `omitMetricsComputation', "
-          "and `smartRecomputation'?\n"
+          "data management: `DataReleasePolicy', `OmitMetricsComputation', "
+          "and `SmartRecomputation'?\n"
     ANSWER"A: First, note that the plugin stores computed data to avoid "
           "unnecessary recomputation if run again. By default, however, "
           "the plugin releases data related to previously analyzed geometry "
           "entities that are absent in the current model. "
-          "Setting `dataReleasePolicy' to 1 causes the plugin to retain all data, "
+          "Setting `DataReleasePolicy' to 1 causes the plugin to retain all data, "
           "which is useful when switching between different models. " //FIXME really useful?
-          "In contrast, launching the plugin with `dataReleasePolicy' set to "
+          "In contrast, launching the plugin with `DataReleasePolicy' set to "
           "-1 causes it to release all memory and stop immediately. "
-          "When `omitMetricsComputation' is enabled, the plugin skips computing "
+          "When `OmitMetricsComputation' is enabled, the plugin skips computing "
           "missing metrics and relies only on previously computed data for the output. "
           "This is especially useful for generating output for a subset of elements. "
-          "Note that the plugin will still release data according to the `dataReleasePolicy' "
-          "option. If `omitMetricsComputation' is disabled, two scenarios arise: "
-          "If `smartRecomputation' is disabled, metrics are recomputed for all "
-          "selected elements. If `smartRecomputation' is enabled, "
+          "Note that the plugin will still release data according to the `DataReleasePolicy' "
+          "option. If `OmitMetricsComputation' is disabled, two scenarios arise: "
+          "If `SmartRecomputation' is disabled, metrics are recomputed for all "
+          "selected elements. If `SmartRecomputation' is enabled, "
           "the plugin compares the current list of elements with stored data. "
           "If they match exactly, only the missing metrics are computed. "
           "Otherwise, metrics are recomputed for all the selected elements "
           "on that geometry entity. "
-          "Note: Use `smartRecomputation' with caution, as the plugin cannot "
+          "Note: Use `SmartRecomputation' with caution, as the plugin cannot "
           "detect meshes where only node positions have been modified "
           "(typically after optimization)."
           " \n"
@@ -2779,7 +2779,7 @@ void Plug::_printDetailsMetrics(size_t which[METRIC_COUNT], bool verbose2)
                "i.e., straight edges, planar faces, and volumes. "
                "For curved geometry entities, GeoFit can provide the necessary data. "
                "In views, Validity takes the values 0 (invalid) or 1 (valid).\n"
-               "-> Disable Validity by setting 'skipValidity' to 1 (not recommended).");
+               "-> Disable Validity by setting 'SkipValidity' to 1 (not recommended).");
   }
   if(which[UNFLIP]) {
     _info(1, "   *F<|>lipping*  provides information about whether the Jacobian "
@@ -2793,7 +2793,7 @@ void Plug::_printDetailsMetrics(size_t which[METRIC_COUNT], bool verbose2)
                "In views, the metric is called Unflip, harmonizing the "
                "logic with other metrics: a bad element takes the value 0 "
                "(flipped), while a good element takes the value 1 (not flipped).\n"
-               "-> Disable flipping/Unflip by setting 'treatFlippedAsValid' to 1.");
+               "-> Disable flipping/Unflip by setting 'TreatFlippedAsValid' to 1.");
   }
   if(which[MINJAC]) {
     _info(1, "   *m<|>inJ*  is the minimum of the Jacobian determinant computed "
@@ -2802,7 +2802,7 @@ void Plug::_printDetailsMetrics(size_t which[METRIC_COUNT], bool verbose2)
              "where the time step may depend on the size of the smallest "
              "element. Values range from -∞ to +∞.");
     if(verbose2)
-      _info(1, "     -> Enable minJ by setting 'enableMinJacDetAsAMetric' to 1.");
+      _info(1, "     -> Enable minJ by setting 'EnableMinJacDetAsAMetric' to 1.");
   }
   if(which[RATIOJAC]) {
     _info(1, "   *R<|>atio minJ/maxJ*  is the ratio between the minimum and "
@@ -2814,7 +2814,7 @@ void Plug::_printDetailsMetrics(size_t which[METRIC_COUNT], bool verbose2)
              "quality metric and cannot replace shape quality metrics. "
              "Values range from -∞ to 1.");
     if(verbose2)
-      _info(1, "     -> Enable minJ/maxJ by setting 'enableRatioJacDetAsAMetric' to 1.");
+      _info(1, "     -> Enable minJ/maxJ by setting 'EnableRatioJacDetAsAMetric' to 1.");
   }
   if(which[DISTO]) {
     _info(1, "   *D<|>isto quality*  (short for distortion, previously ICN) "
@@ -2824,7 +2824,7 @@ void Plug::_printDetailsMetrics(size_t which[METRIC_COUNT], bool verbose2)
              "significantly slow the convergence of iterative methods. "
              "Values range from 0 to 1.");
     if(verbose2)
-      _info(1, "     -> Enable Disto by setting 'enableDistoQuality' to 1.");
+      _info(1, "     -> Enable Disto by setting 'EnableDistoQuality' to 1.");
   }
   if(which[ASPECT]) {
     _info(1, "   *A<|>spect quality* (previously IGE) is a shape quality metric "
@@ -2832,7 +2832,7 @@ void Plug::_printDetailsMetrics(size_t which[METRIC_COUNT], bool verbose2)
              "Elements with poor aspect quality negatively impact errors in the "
              "solution's gradient. Values range from 0 to 1.");
     if(verbose2)
-      _info(1, "     -> Enable Aspect by setting 'enableAspectQuality' to 1.");
+      _info(1, "     -> Enable Aspect by setting 'EnableAspectQuality' to 1.");
   }
   if(which[GEOFIT]) {
     _info(1, "   *G<|>eoFit (experimental)*  is defined for curved edges "
@@ -2854,8 +2854,8 @@ void Plug::_printDetailsMetrics(size_t which[METRIC_COUNT], bool verbose2)
                "the opposite orientation. This is ideal for boundary meshes "
                "since element orientation does not affect the finite element "
                "solution. This behavior can be disabled by setting "
-               "`treatFlippedAsValid` to -1.\n"
-               "-> Enable GeoFit by setting 'enableGeoFitQuality' to 1.");
+               "`TreatFlippedAsValid` to -1.\n"
+               "-> Enable GeoFit by setting 'EnableGeoFitQuality' to 1.");
   }
 
   if(verbose2)
@@ -2863,7 +2863,7 @@ void Plug::_printDetailsMetrics(size_t which[METRIC_COUNT], bool verbose2)
              "the plugin for visualization. Specifically, these metrics have "
              "the corresponding option set to 'M,' where 'M' represents the "
              "maximum value among all metrics. To include Validity and "
-             "Unflip as prominent metrics, set 'skipValidity' to '-M'.");
+             "Unflip as prominent metrics, set 'SkipValidity' to '-M'.");
 }
 
 std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
@@ -2906,14 +2906,14 @@ void Plug::_guidanceNoSelectedElem(Counts counts, bool check2D,
 
   if(counts.elem) {
     // Case where elements are found
-    // This must be due to one of the three 'restrictTo...' options, or...
+    // This must be due to one of the three 'RestrictTo...' options, or...
     bool found = false;
     if(_param.compute.onlyVisible && counts.elemVisible == 0) {
-      _warn(0, "   <|>Option 'restrictToVisibleElements' is ON, but no visible elements were found");
+      _warn(0, "   <|>Option 'RestrictToVisibleElements' is ON, but no visible elements were found");
       found = true;
     }
     if(_param.compute.onlyCurved && counts.elemCurved == 0) {
-      _warn(0, "   <|>Option 'restrictToCurvedElements' is ON, but no curved elements were found");
+      _warn(0, "   <|>Option 'RestrictToCurvedElements' is ON, but no curved elements were found");
       found = true;
     }
     size_t countType = 0;
@@ -2923,7 +2923,7 @@ void Plug::_guidanceNoSelectedElem(Counts counts, bool check2D,
           countType += counts.elem_byType[i];
       }
       if(!countType) {
-        _warn(0, "   <|>Option 'restrictToElementType' is ON, but no elements of the requested type were found");
+        _warn(0, "   <|>Option 'RestrictToElementType' is ON, but no elements of the requested type were found");
         found = true;
       }
     }
@@ -2964,8 +2964,8 @@ void Plug::_guidanceNoSelectedElem(Counts counts, bool check2D,
     else if(_dimensionPolicy == -2 && !_m->getNumFaces() && _m->getNumRegions()) {
       // NOTE: This actually never happen because a GRegion always require
       //       a GFace as boundary
-      _warn(0, "   Planned to check the 2D meshes as 'dimensionPolicy' is set to -2, but no mesh was found");
-      _warn(0, "   3D geometry was found instead. Consider setting 'dimensionPolicy' to 0");
+      _warn(0, "   Planned to check the 2D meshes as 'DimensionPolicy' is set to -2, but no mesh was found");
+      _warn(0, "   3D geometry was found instead. Consider setting 'DimensionPolicy' to 0");
     }
     else {
       _warn(0, "   No mesh was found in the current model");

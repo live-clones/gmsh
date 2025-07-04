@@ -346,7 +346,7 @@ private:
     std::size_t metricValsAvailOnSelectedElem[5]{};
     std::size_t metricValsToCompute[5]{};
     // NB: metricValsToCompute[i] != reqElem - metricValsToCompute[i] in
-    //     general because of omitMetricsComputation option
+    //     general because of OmitMetricsComputation option
 
     // For stopping early, and for reserving size vector
     std::size_t reqElem = 0;
