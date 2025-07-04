@@ -34,7 +34,7 @@ private:
   class StatGenerator;
   struct Counts;
   struct Measures;
-  struct Key;
+  struct ViewKey;
 
 private:
   struct Parameters {
@@ -97,7 +97,7 @@ private:
   // bool _myVerbose = false;
   int _dimensionPolicy = 0;
   int _previousFreeOldData = 1;
-  std::map<Key, PView *> _pviews;
+  std::map<ViewKey, PView *> _pviews;
 
 #if defined(HAVE_VISUDEV)
   // Pointwise data
@@ -144,7 +144,7 @@ public:
 private:
   bool _fetchParameters();
   void _fetchLegacyParameters();
-  bool _checkEarlyExitOptions();
+  bool _checkEarlyExitOptions() const;
   void _purgeViews(bool purge2D, bool purge3D);
   void _decideDimensionToCheck(bool &check2D, bool &check3D) const;
   void _computeRequestedData(Counts param, bool check2D, bool check3D) const;
@@ -180,8 +180,8 @@ private:
   static std::string _getHelpFAQ() ;
 
   // User guidance
-  std::size_t _printElementToCompute(const Counts &cnt2D, const Counts &cnt3D) const;
-  void _guidanceNoSelectedElem(Counts counts, bool check2D, bool check3D) const;
+  static std::size_t _printElementToCompute(const Counts &cnt2D, const Counts &cnt3D);
+  void _guidanceNoSelectedElem(Counts counts) const;
   bool _checkAndGuideNoDataToShow(Counts counts, bool check2D, bool check3D) const;
   static void _printDetailsMetrics(size_t which[METRIC_COUNT], bool verbose2 = false);
 
@@ -277,7 +277,6 @@ private:
     {
       for(auto &e : elements) add(e);
     }
-    GEntity *getEntity() const { return _ge; }
     // std::size_t getNumToCompute(int i) const { return _numToCompute[i]; }
     void addValues(Measures &);
     bool hasDataToShow() const;
@@ -397,29 +396,29 @@ private:
     std::size_t numToShow[7]{};
 
     static Measures combine(const Measures &, const Measures &, const char *name, const char *shortName);
+    void getValues(Metric m, std::vector<double> &values, std::vector<MElement *> *filteredElements = nullptr) const;
     const std::vector<double> &_getValues(Metric m) const;
     const std::vector<MElement *> &_getElements(Metric m) const;
-    void getValues(Metric m, std::vector<double> &values, std::vector<MElement *> *filteredElements = nullptr) const;
   };
 
-  struct Key {
+  struct ViewKey {
     bool dim2Elem;
     bool dim3Elem;
     Metric metric;
     enum TypeView { PLOT, ELEMENTS } typeView;
     double cutoff;
 
-    Key(bool d2, bool d3, Metric m, TypeView t, double c)
+    ViewKey(bool d2, bool d3, Metric m, TypeView t, double c)
       : dim2Elem(d2), dim3Elem(d3), metric(m), typeView(t), cutoff(c) {}
 
     // Equality operator for unordered_map or map
-    bool operator==(const Key &other) const {
+    bool operator==(const ViewKey &other) const {
       return std::tie(dim2Elem, dim3Elem, metric, typeView, cutoff) ==
              std::tie(other.dim2Elem, other.dim3Elem, other.metric, other.typeView, other.cutoff);
     }
 
     // Less-than operator for std::map
-    bool operator<(const Key &other) const {
+    bool operator<(const ViewKey &other) const {
       return std::tie(dim2Elem, dim3Elem, metric, typeView, cutoff) <
              std::tie(other.dim2Elem, other.dim3Elem, other.metric, other.typeView, other.cutoff);
     }

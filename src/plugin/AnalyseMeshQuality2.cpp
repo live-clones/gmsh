@@ -275,6 +275,9 @@ const std::array<std::string, 7> Plug::_metricNames = {
   "Validity", "Unflip", "GeoFit", "Disto", "Aspect", "MinJ/maxJ", "MinJac"
 };
 
+// ======== Utility methods ====================================================
+// =============================================================================
+
 std::string formatNumber(size_t value) {
   std::ostringstream formatted;
   if (value < 10000) {
@@ -437,7 +440,7 @@ PView *Plug::execute(PView *v)
 
   // Handle the case where there are no selected elements or print number
   if(!countsTotal.reqElem) {
-    _guidanceNoSelectedElem(countsTotal, check2D, check3D);
+    _guidanceNoSelectedElem(countsTotal);
     return v;
   }
   if(countsTotal.reqElem < countsTotal.elem) {
@@ -802,7 +805,7 @@ void Plug::_fetchLegacyParameters()
   }
 }
 
-bool Plug::_checkEarlyExitOptions()
+bool Plug::_checkEarlyExitOptions() const
 {
   bool exit = false;
 
@@ -849,6 +852,24 @@ bool Plug::_checkEarlyExitOptions()
   }
 
   return exit;
+}
+
+void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
+{
+  std::size_t num3DElem = 0;
+
+  // Iterate through regions to count 3D mesh elements
+  for(auto it = _m->firstRegion(); it != _m->lastRegion(); ++it) {
+    num3DElem += (*it)->getNumMeshElements();
+  }
+
+  // Apply policy logic
+  check2D = true;
+  check3D = true;
+  if(_dimensionPolicy == 0 && num3DElem > 0)
+    check2D = false;
+  else if(_dimensionPolicy <= 0)
+    check3D = false;
 }
 
 void Plug::_purgeViews(bool purge2D, bool purge3D)
@@ -1082,7 +1103,7 @@ bool Plug::_createPlotsOneMetric(const Measures &m, Metric metric)
   s += " (p)";
 
   for(double cutoff: _statGen->getCutoffPlots()) {
-    Key key(m.dim2Elem, m.dim3Elem, metric, Key::TypeView::PLOT, cutoff);
+    ViewKey key(m.dim2Elem, m.dim3Elem, metric, ViewKey::TypeView::PLOT, cutoff);
     if(_pviews.find(key) == _pviews.end()) {
       PView *p = new PView(s, cutoff, true, values);
       _pviews[key] = p;
@@ -1132,7 +1153,7 @@ bool Plug::_createElementViewsOneMetric(const Measures &m, Metric metric)
   s += m.dimStrShort;
   s += " (e)";
 
-  Key key(m.dim2Elem, m.dim3Elem, metric, Key::TypeView::ELEMENTS, 0);
+  ViewKey key(m.dim2Elem, m.dim3Elem, metric, ViewKey::TypeView::ELEMENTS, 0);
   if(_pviews.find(key) == _pviews.end()) {
     std::map<int, std::vector<double> > dataPV;
     for(size_t i = 0; i < values.size(); i++) {
@@ -1308,24 +1329,6 @@ bool Plug::_hideElements(const Measures &measure,
   countHidden += elemToHide.size();
   countMadeVisible += measure.elements.size() - elemToHide.size();
   return true;
-}
-
-void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
-{
-  std::size_t num3DElem = 0;
-
-  // Iterate through regions to count 3D mesh elements
-  for(auto it = _m->firstRegion(); it != _m->lastRegion(); ++it) {
-    num3DElem += (*it)->getNumMeshElements();
-  }
-
-  // Apply policy logic
-  check2D = true;
-  check3D = true;
-  if(_dimensionPolicy == 0 && num3DElem > 0)
-    check2D = false;
-  else if(_dimensionPolicy <= 0)
-    check3D = false;
 }
 
 // ======== StatGenerator ======================================================
@@ -1627,18 +1630,6 @@ void Plug::DataSingleDimension::gatherValues(const Counts &counts, Measures &mea
   for(auto &it : _dataEntities) {
     it.second.addValues(measures);
   }
-}
-
-bool Plug::DataSingleDimension::hasDataToShow() const
-{
-  bool hasData = false;
-  for(auto &it : _dataEntities) {
-    if(it.second.hasDataToShow()) {
-      hasData = true;
-      break;
-    }
-  }
-  return hasData;
 }
 
 // ======== DataEntity =========================================================
@@ -2008,6 +1999,32 @@ void Plug::DataEntity::computeAspect(MsgProgressStatus &progress_status, bool co
   }
 }
 
+void Plug::DataEntity::computeGeoFit(MsgProgressStatus &progress_status)
+{
+  if(_ge->dim() != 2) return;
+  // FIXME update for
+  if(_ge->dim() == 2)
+    _info(1, "   Surface %d: Computing GeoFit quality of %d elements",
+          _ge->tag(), _numToCompute[2]);
+  // else
+  //   _info(1, "   Volume %d: Computing GeoFit quality of %d elements",
+  //         _ge->tag(), _numToCompute[2]);
+
+  double minmaxO[2];
+  for(const auto &it : _mapElemToIndex) {
+    const std::size_t idx = it.second;
+    if(areBitsSet(_flags[idx], F_REQU | F_NOTORI)) {
+      MElement *el = it.first;
+      // FIXME: cast GFace can be cast GEdge
+      computeGeoFit((GFace*)_ge, el, minmaxO);
+      _minGFit[idx] = minmaxO[0];
+      _maxGFit[idx] = minmaxO[1];
+      unsetBit(_flags[idx], F_NOTORI);
+      progress_status.next();
+    }
+  }
+}
+
 void Plug::DataEntity::computeGeoFit(GFace *gf, MElement *el, double minmaxO[2]) const
 {
   double minmaxAng[2] = {std::numeric_limits<double>::max(),
@@ -2058,32 +2075,6 @@ void Plug::DataEntity::computeGeoFit(GFace *gf, MElement *el, double minmaxO[2])
   }
   minmaxO[0] = 1 - minmaxAng[1] / M_PI * 2;
   minmaxO[1] = 1 - minmaxAng[0] / M_PI * 2;
-}
-
-void Plug::DataEntity::computeGeoFit(MsgProgressStatus &progress_status)
-{
-  if(_ge->dim() != 2) return;
-  // FIXME update for
-  if(_ge->dim() == 2)
-    _info(1, "   Surface %d: Computing GeoFit quality of %d elements",
-          _ge->tag(), _numToCompute[2]);
-  // else
-  //   _info(1, "   Volume %d: Computing GeoFit quality of %d elements",
-  //         _ge->tag(), _numToCompute[2]);
-
-  double minmaxO[2];
-  for(const auto &it : _mapElemToIndex) {
-    const std::size_t idx = it.second;
-    if(areBitsSet(_flags[idx], F_REQU | F_NOTORI)) {
-      MElement *el = it.first;
-      // FIXME: cast GFace can be cast GEdge
-      computeGeoFit((GFace*)_ge, el, minmaxO);
-      _minGFit[idx] = minmaxO[0];
-      _maxGFit[idx] = minmaxO[1];
-      unsetBit(_flags[idx], F_NOTORI);
-      progress_status.next();
-    }
-  }
 }
 
 void Plug::DataEntity::reset(std::size_t num)
@@ -2150,44 +2141,6 @@ void Plug::DataEntity::addValues(Measures &measures)
         measures.minAspect.push_back(NOTCOMPUTED);
     }
   }
-}
-
-bool Plug::DataEntity::hasDataToShow() const
-{
-  bool hasData = false;
-
-  for(const auto jac: _minJ) {
-    if(jac != NOTCOMPUTED) {
-      hasData = true;
-      break;
-    }
-  }
-  if(hasData) return true;
-
-  for(const auto geoFit: _minGFit) {
-    if(geoFit != NOTCOMPUTED) {
-      hasData = true;
-      break;
-    }
-  }
-  if(hasData) return true;
-
-  for(auto disto: _minDisto) {
-    if(disto != NOTCOMPUTED) {
-      hasData = true;
-      break;
-    }
-  }
-  if(hasData) return true;
-
-  for(auto aspect: _minAspect) {
-    if(aspect != NOTCOMPUTED) {
-      hasData = true;
-      break;
-    }
-  }
-
-  return hasData;
 }
 
 // ======== Plugin: User Messages ==============================================
@@ -2875,7 +2828,7 @@ void Plug::_printDetailsMetrics(size_t which[METRIC_COUNT], bool verbose2)
 }
 
 std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
-                                         const Counts &cnt3D) const
+                                         const Counts &cnt3D)
 {
   std::size_t sum2D = 0, sum3D = 0;
   for (std::size_t x : cnt2D.metricValsToCompute) sum2D += x;
@@ -2905,8 +2858,7 @@ std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
   return sum2D + sum3D;
 }
 
-void Plug::_guidanceNoSelectedElem(Counts counts, bool check2D,
-                                     bool check3D) const
+void Plug::_guidanceNoSelectedElem(Counts counts) const
 {
   if(counts.reqElem) return;
 
