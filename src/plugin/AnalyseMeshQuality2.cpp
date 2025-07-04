@@ -41,7 +41,7 @@
 //  xx Move info how to read plot at execution. Say in important notes that
 //     Help does not cover all information and it is adviced to set
 //     guidanceLevel=1 at the beginning to have contextual more complete info
-//  4. Update metrics info
+//  xx Update metrics info
 //  5. Make option name starting with upper case because it is the convention
 //  6. Choose what to do with WW-G/M. Options are:
 //     - As current: user choose and can have multiple cutoff. Adviced 25, 10, 2
@@ -214,7 +214,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "createElementsView", nullptr, 0, "OFF, ON"},
   {GMSH_FULLRC, "createPlotView", nullptr, 1, "OFF, ON"},
   {GMSH_FULLRC, "adjustElementsVisibility", nullptr, 0, "OFF, 1=skipIfAllWouldBeHidden, 2=acceptAllHidden"}, //TODO updtate for geofit
-  {GMSH_FULLRC, "guidanceLevel", nullptr, 0, "(-1)=minimalOutput, 0=verbose, 1=verboseAndExplanations, 2=printDetailsOnMetricsAndSkipExecution"},
+  {GMSH_FULLRC, "guidanceLevel", nullptr, 2, "(-1)=minimalOutput, 0=verbose, 1=verboseAndExplanations, 2=printDetailsOnMetricsAndSkipExecution"},
   // Elements Selection:
   {GMSH_FULLRC, "dimensionPolicy", nullptr, 0, "(-2)=force2D, (-1)=force1D, 0=prioritize3D, 1=2D+3D, 2=combine2D+3D"},
   {GMSH_FULLRC, "restrictToElementType", nullptr, 0, "OFF, 1=Tri/Tet, 2=Quad/Hex, 3=Prism/Pyr"},
@@ -327,7 +327,7 @@ std::string Plug::getHelp() const
     _getHelpIntro() + "\n" +
     _getHelpMetrics() + "\n" +
     _getHelpWWM() + "\n" +
-    _getHelpOptions() + "\n" +
+    _getHelpOptionsClarification() + "\n" +
     _getHelpVisibility() + "\n" +
     _getHelpFAQ();
 }
@@ -397,8 +397,8 @@ PView *Plug::execute(PView *v)
   //   values[0] = -1;
   //   PView *p = new PView("Test", cutoff, true, values);
   // }
-
-  return v;
+  //
+  // return v;
 
   // Fetch the other parameters and check options that may cause an early exit
   bool unhandledOptions= !_fetchParameters();
@@ -2763,63 +2763,107 @@ void Plug::_printDetailsMetrics(size_t which[METRIC_COUNT], bool verbose2)
   if(verbose2)
     _info(1, "-> Here are all available metrics described in details:");
   else
-    _info(1, "-> Printing statistics, here is what is important to know about "
+    _info(1, "-> <|>Printing statistics\nHere is the important information to know about them:"
     "them:");
 
-  if(which[VALIDITY])
-    // Add guarantee that the Jacobian determinant will be strictly different from
-    // zero at any gaussian point?
+  if(which[VALIDITY]) {
     _info(1, "   *V<|>alidity*  provides information about whether the Jacobian "
-             "determinant is strictly different from zero. "
-             "A mesh containing invalid elements "
-             "will usually result in incorrect Finite Element solutions. Each "
-             "element is classified as either valid or invalid.");
-  if(which[UNFLIP])
-    _info(1, "   *U<|>nflip*  provides information about whether the Jacobian "
-             "determinant is strictly positive. A mesh containing flipped (inverted) "
-             "elements may lead to incorrect Finite Element solutions "
+             "determinant is strictly non-zero. "
+             "This ensures that the Jacobian determinant remains strictly non-zero "
+             "at any Gaussian point, which is crucial for ensuring a valid mesh. "
+             "A mesh containing invalid elements typically results in incorrect "
+             "Finite Element solutions. "
+             "Each element is classified as either valid or invalid.");
+    if(verbose2)
+      _info(1, "     <|>Validity is only defined for flat geometry entities, "
+               "i.e., straight edges, planar faces, and volumes. "
+               "For curved geometry entities, GeoFit can provide the necessary data. "
+               "In views, Validity takes the values 0 (invalid) or 1 (valid).\n"
+               "-> Disable Validity by setting 'skipValidity' to 1 (not recommended).");
+  }
+  if(which[UNFLIP]) {
+    _info(1, "   *F<|>lipping*  provides information about whether the Jacobian "
+             "determinant is strictly negative. A mesh containing flipped "
+             "(inverted) elements can result in incorrect Finite Element solutions, "
              "depending on the solver. Each valid element is classified as "
              "either flipped or not flipped.");
-  if(which[MINJAC])
+    if(verbose2)
+      _info(1, "     <|>As with validity, flipping is only defined for flat "
+               "geometries. GeoFit can compensate for this limitation. "
+               "In views, the metric is called Unflip, harmonizing the "
+               "logic with other metrics: a bad element takes the value 0 "
+               "(flipped), while a good element takes the value 1 (not flipped).\n"
+               "-> Disable flipping/Unflip by setting 'treatFlippedAsValid' to 1.");
+  }
+  if(which[MINJAC]) {
     _info(1, "   *m<|>inJ*  is the minimum of the Jacobian determinant computed "
-             "in the reference space and can be used to check the element size. "
-             "This metric is particularly relevant for iterative methods, "
+             "in the reference space and is used to check element size. "
+             "This metric is especially relevant for iterative methods, "
              "where the time step may depend on the size of the smallest "
              "element. Values range from -∞ to +∞.");
-  if(which[RATIOJAC])
-    // FIXME update : useful for curved element (HO)
+    if(verbose2)
+      _info(1, "     -> Enable minJ by setting 'enableMinJacDetAsAMetric' to 1.");
+  }
+  if(which[RATIOJAC]) {
     _info(1, "   *R<|>atio minJ/maxJ*  is the ratio between the minimum and "
-             "maximum values of the Jacobian determinant. It is faster to "
-             "compute than Disto and Aspect quality metrics and can "
-             "be used to evaluate how much elements are deformed. However, "
-             "note that it is not a true quality metric. Values range from "
-             "-∞ to 1.");
-  if(which[DISTO])
-    // FIXME update
+             "maximum values of the Jacobian determinant. This metric is "
+             "particularly relevant for high-order meshes, as it is faster to "
+             "compute than Disto or Aspect quality metrics. It can be used to "
+             "evaluate element deformation. "
+             "However, it is important to note that it is not a true "
+             "quality metric and cannot replace shape quality metrics. "
+             "Values range from -∞ to 1.");
+    if(verbose2)
+      _info(1, "     -> Enable minJ/maxJ by setting 'enableRatioJacDetAsAMetric' to 1.");
+  }
+  if(which[DISTO]) {
     _info(1, "   *D<|>isto quality*  (short for distortion, previously ICN) "
-             "is related to the condition number of the stiffness matrix. "
-             "Low-distortion elements may cause numerical roundoff errors or "
-             "significantly reduce the convergence speed of iterative methods. "
+             "is a shape quality metric related to the condition number of the "
+             "stiffness matrix. "
+             "Elements with low distortion may cause numerical roundoff errors or "
+             "significantly slow the convergence of iterative methods. "
              "Values range from 0 to 1.");
-  if(which[ASPECT])
-    // FIXME update
-    _info(1, "   *A<|>spect quality*  (previously IGE) is related to "
-             "the gradient of the FE solution. Elements with poor aspect quality "
-             "negatively affect errors in the gradient of the solution. Values "
-             "range from 0 to 1.");
-  if(which[GEOFIT])
-    _info(1, "   *G<|>eoFit (experimental)* is defined on curved surfaces and curved edges of the geometry and measures how well "
-             "element orientations align with the underlying geometry. On such configurations, validity is "
-             "not defined, and GeoFit provides a natural alternative for assessing whether the mesh is "
-             "appropriate as a boundary for the interior mesh. GeoFit can be considered as equivalent "
-             "to a normalized Jacobian determinant. GeoFit values range from -1 (completely flipped) to 1 (perfectly "
-             "aligned). A negative value may indicate an inappropriate (invalid-like) element, while a positive "
-             "but small value suggests a poor representation of the geometry (and possibly high oscillations "
-             "in element geometry for high-order elements), indicating potential challenges during interior "
-             "mesh generation. For boundary meshes, since element orientation does not influence the finite "
-             "element solution, you can set treatFlippedAsValid to 1 for disregarding flipping warnings.");
-    // FIXME update
-  // FIXME update treatFlippedAsValid to 1
+    if(verbose2)
+      _info(1, "     -> Enable Disto by setting 'enableDistoQuality' to 1.");
+  }
+  if(which[ASPECT]) {
+    _info(1, "   *A<|>spect quality* (previously IGE) is a shape quality metric "
+             "related to the gradient of the Finite Element solution. "
+             "Elements with poor aspect quality negatively impact errors in the "
+             "solution's gradient. Values range from 0 to 1.");
+    if(verbose2)
+      _info(1, "     -> Enable Aspect by setting 'enableAspectQuality' to 1.");
+  }
+  if(which[GEOFIT]) {
+    _info(1, "   *G<|>eoFit (experimental)*  is defined for curved edges "
+             "and curved surfaces in the geometry and measures how well "
+             "element orientations align with the underlying geometry. "
+             "For such configurations, validity is not defined, and GeoFit "
+             "acts as a natural alternative for assessing whether the mesh is "
+             "suitable as a boundary for the interior mesh. "
+             "GeoFit can be interpreted as a 'normalized Jacobian determinant'. "
+             "GeoFit values range from -1 (completely flipped) to 1 (perfectly "
+             "aligned). "
+             "A negative value may indicate an inappropriate (invalid-like) "
+             "element, while a small positive value suggests poor "
+             "geometry representation (and possibly high oscillations "
+             "for high-order elements). Such values may indicate "
+             "potential difficulties during interior mesh generation.");
+    if(verbose2)
+      _info(1, "     <|>By default, flipped elements are treated as if they add "
+               "the opposite orientation. This is ideal for boundary meshes "
+               "since element orientation does not affect the finite element "
+               "solution. This behavior can be disabled by setting "
+               "`treatFlippedAsValid` to -1.\n"
+               "-> Enable GeoFit by setting 'enableGeoFitQuality' to 1.");
+  }
+
+  if(verbose2)
+    _info(1, "   *P<|>rominent metrics*  are the metrics selected by "
+             "the plugin for visualization. Specifically, these metrics have "
+             "the corresponding option set to 'M,' where 'M' represents the "
+             "maximum value among all metrics. To include Validity and "
+             "Unflip as prominent metrics, set 'skipValidity' to '-M'.");
 }
 
 std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
