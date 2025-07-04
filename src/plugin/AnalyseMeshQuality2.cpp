@@ -35,7 +35,7 @@
 //  xx Small changes:
 //     x distortion -> disto
 //     x requested element -> selected elements
-//  2. Test plot such that first element take same place, like 1/50
+//  xx Test plot such that first element take same place, like 1/50
 //     -> If choose to stay at fixed cutoff determine which cutoff to choose for
 //        which number of element
 //  3. Move info how to read plot at execution. Say in important notes that
@@ -43,6 +43,28 @@
 //     guidanceLevel=1 at the beginning to have contextual more complete info
 //  4. Update metrics info
 //  5. Make option name starting with upper case because it is the convention
+//  6. Choose what to do with WW-G/M. Options are:
+//     - As current: user choose and can have multiple cutoff. Adviced 25, 10, 2
+//     - As current: plugin choose, user can give preference between 25, 10, 2
+//                   so that the plugin can decide when superposition.
+//     - As current: plugin choose if user set wwmCutOff to 0 (which made
+//                   the default).
+//     - Fixed weigth worst: the idea is that the worst value count for the
+//                           same weight whatever the number of values.
+//                           This weight can be a parameter
+//                           The cutoff depend on the number of values.
+//                Advantage: On graph, this is comfortable for looking at
+//                           minimum value (with 3~5% worst-weight).
+//                           Easier for the user, he do not have to choose.
+//                           Can still change parameter if not happy.
+//             Disadvantage: The x-axis of graph is changing for every value
+//                           count, which is a bit anoying visually.
+//      Unresolved question: How comparison between mesh of different element
+//                           count is affected?
+//             Idea to test: compare 3~4 simulated mesh of different size.
+//                           Values are 1 except N that are 0. N is either
+//                           certain percentage of total value count or a
+//                           certain number of element. Look at graph and wwm.
 
 // TODO Finalization:
 //  1. Check fixmes, todos, etc.
@@ -62,6 +84,7 @@
 //     - if dimension policy=-2?
 //     - also GeoFit
 //  3. Add after computation metrics "(Wall %gs, CPU %gs)" (like in first version)
+//  4. Option to add data as time step in plots (and element view?)
 
 // TODO Maybe:
 //  1. Intrinsic validity : smartreco777 for sharing element or 888 or 999
@@ -184,12 +207,12 @@ namespace {
 
 StringXNumber MeshQuality2Options_Number[] = {
   // Quality metrics to include:
-  {GMSH_FULLRC, "enableDistoQuality", nullptr, 0, "OFF, (1+)=includeDistoQuality"},
+  {GMSH_FULLRC, "enableDistoQuality", nullptr, 2, "OFF, (1+)=includeDistoQuality"},
   {GMSH_FULLRC, "enableAspectQuality", nullptr, 0, "OFF, (1+)=includeAspectQuality"},
-  {GMSH_FULLRC, "enableGeoFitQuality", nullptr, 0, "OFF, (1+)=includeGeofitQuality (experimental)"},
+  {GMSH_FULLRC, "enableGeoFitQuality", nullptr, 1, "OFF, (1+)=includeGeofitQuality (experimental)"},
   // What to do:
   {GMSH_FULLRC, "createElementsView", nullptr, 0, "OFF, ON"},
-  {GMSH_FULLRC, "createPlotView", nullptr, 0, "OFF, ON"},
+  {GMSH_FULLRC, "createPlotView", nullptr, 1, "OFF, ON"},
   {GMSH_FULLRC, "adjustElementsVisibility", nullptr, 0, "OFF, 1=skipIfAllWouldBeHidden, 2=acceptAllHidden"}, //TODO updtate for geofit
   {GMSH_FULLRC, "guidanceLevel", nullptr, 0, "(-1)=minimalOutput, 0=verbose, 1=verboseAndExplanations, 2=printDetailsOnMetricsAndSkipExecution"},
   // Elements Selection:
@@ -213,7 +236,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "enableMinJacDetAsAMetric", nullptr, 0, "OFF, 1+ (Validity must be computed)"},
   {GMSH_FULLRC, "enableRatioJacDetAsAMetric", nullptr, 0, "OFF, 1+ (Validity must be computed)"},
   {GMSH_FULLRC, "skipStatPrinting", nullptr, 0, "OFF, ON"},
-  {GMSH_FULLRC, "wmCutoffsForStats", nullptr, 10, "CUTOFFS (for stats weighted mean, see Help)"},
+  {GMSH_FULLRC, "wmCutoffsForStats", nullptr, 21025, "CUTOFFS (for stats weighted mean, see Help)"},
   {GMSH_FULLRC, "wmCutoffsForPlots", nullptr, 10, "CUTOFFS (for plots weighted mean, see Help)"},
   // Legacy options:
   {GMSH_FULLRC, "JacobianDeterminant", nullptr, UNTOUCHED, "[legacy] OFF, ON"},
@@ -498,6 +521,10 @@ std::string Plug::getHelp() const
           "weighted mean where the worst 10% of the values influence "
           "equally with the rest. This technique highlights critical data "
           "subsets generally impacting the finite element solution.\n"
+          // // Recommended cutoffs in function of element count:
+          // 100 ~ 10k -> 25
+          // 2k ~ 4M -> 10
+          // 500k ~ 10+B -> 2
     "\n"
     "VISIBILITY ADJUSTMENT\n"
     BULLET"The plugin is able to hide and unhide elements based on specific "
@@ -674,6 +701,67 @@ PView *Plug::execute(PView *v)
   _verbose = static_cast<int>(MeshQuality2Options_Number[6].def);
   _info(MP, "---------------------------------------------");
   _status(0, "Executing the plugin AnalyseMeshQuality...");
+
+  // std::vector<double> values;
+  // const int num = 6;
+  // const int listN[num] = {100, static_cast<int>(1e4), static_cast<int>(2e3), static_cast<int>(5e6), static_cast<int>(5e5), static_cast<int>(1e8)};
+  // const double listC[num] = {25, 25, 10, 10, 2, 2};
+  // int num2 = 6;
+  //
+  // for(int k = 0; k < num2; k++) {
+  //   const int N = listN[k];
+  //   const double cutoff = listC[k];
+  //   values.clear();
+  //   values.reserve(N);
+  //   for(int i = 0; i < N; i++)
+  //     values.push_back(static_cast<double>(i) / static_cast<double>(N-1));
+  //   values[0] = -1;
+  //   PView *p = new PView("Test", cutoff, true, values);
+  // }
+  //
+  // return v;
+
+  //
+  // // Option 1: Fixed
+  //
+  // std::vector<double> values;
+  // const int num = 4;
+  // const int listN[num] = {static_cast<int>(1e2), static_cast<int>(1e4), static_cast<int>(1e6), static_cast<int>(1e8)};
+  // const double listC[num] = {25, 10, 10, 2};
+  // int num2 = 4;
+  //
+  // for(int k = 0; k < num2; k++) {
+  //   const int N = listN[k];
+  //   const double cutoff = listC[k];
+  //   values.clear();
+  //   values.reserve(N);
+  //   for(int i = 0; i < N; i++)
+  //     values.push_back(static_cast<double>(i) / static_cast<double>(N-1));
+  //   values[0] = -1;
+  //   PView *p = new PView("Test", cutoff, true, values);
+  // }
+  //
+  // // Option 2: Width 1st element = 5 %
+  //
+  // // const int listN[num] = {static_cast<int>(1e3), static_cast<int>(1e4), static_cast<int>(1e5), static_cast<int>(1e6)};
+  // // const double listC2[num] = {20.22, 11.87, 6.97, 4.09};
+  // // const int listN[num] = {static_cast<int>(1e2), static_cast<int>(1e4), static_cast<int>(1e6), static_cast<int>(1e7)};
+  // // const double listC2[num] = {34.45, 11.87, 4.09, 2.40};
+  // // const int listN[num] = {static_cast<int>(1e2), static_cast<int>(1e4), static_cast<int>(1e6), static_cast<int>(1e8)};
+  // const double listC2[num] = {34.45, 11.87, 4.09, 1.40};
+  //
+  // for(int k = 0; k < num2; k++) {
+  //   const int N = listN[k];
+  //   const double cutoff = listC2[k];
+  //   values.clear();
+  //   values.reserve(N);
+  //   for(int i = 0; i < N; i++)
+  //     values.push_back(static_cast<double>(i) / static_cast<double>(N-1));
+  //   values[0] = -1;
+  //   PView *p = new PView("Test", cutoff, true, values);
+  // }
+
+  return v;
 
   // Fetch the other parameters and check options that may cause an early exit
   bool unhandledOptions= !_fetchParameters();
