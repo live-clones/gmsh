@@ -152,7 +152,6 @@ public:
                   bool finalize);
 };
 
-
 class PViewDataWorstWeighted : public PViewDataList {
 private:
   std::vector<double> _values;
@@ -185,10 +184,17 @@ public:
 
     finalize();
   }
-  double getMinValues() { return _min; }
-  double getMaxValues() { return _max; }
+  double getMin(int step = -1, bool onlyVisible = false, int tensorRep = 0,
+                int forceNumComponents = 0, int componentMap[9] = nullptr)
+  {
+    return _min;
+  }
+  double getMax(int step = -1, bool onlyVisible = false, int tensorRep = 0,
+                int forceNumComponents = 0, int componentMap[9] = nullptr)
+  {
+    return _max;
+  }
   void update(double cutoff, double height, double prec);
 };
-
 
 #endif

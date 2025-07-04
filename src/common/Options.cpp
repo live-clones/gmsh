@@ -9358,6 +9358,7 @@ double opt_view_cutoff(OPT_ARGS_NUM)
     opt->worstWeightCutoff = (int)val;
     if(view) view->setChanged(true);
   }
+  // FIXME: If validated, have to check this
   // #if defined(HAVE_FLTK)
   //   if(_gui_action_valid(action, num)) {
   //     FlGui::instance()->options->view.value[3]->value(opt->axesTics[0]);

@@ -357,7 +357,6 @@ void drawXTicsAndGridWorstMeanGraph(drawContext *ctx, PView *p,
   }
 }
 
-
 static void drawGraphAxes(drawContext *ctx, PView *p, double xleft, double ytop,
                           double width, double height, double xmin, double xmax,
                           double tic, int overlay, bool inModelCoordinates)

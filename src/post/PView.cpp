@@ -118,6 +118,8 @@ PView::PView(const std::string &xname, const std::string &yname,
 PView::PView(const std::string &yname, double cutoff, bool isMinValueWorst,
              const std::vector<double> &y)
 {
+  // FIXME: If validated, must implement more things
+  //        (be able to save pos file and load...)
   _init();
   _isWorstWeightedGraph = true;
   PViewDataWorstWeighted *data = new PViewDataWorstWeighted(cutoff, isMinValueWorst);

@@ -1411,7 +1411,6 @@ std::vector<double> *PViewDataList::incrementList(int numComp, int type,
   return nullptr;
 }
 
-
 void PViewDataWorstWeighted::update(double cutoff, double height, double precision)
 {
   if(cutoff == 0.0) {
@@ -1448,11 +1447,11 @@ void PViewDataWorstWeighted::update(double cutoff, double height, double precisi
   SP.push_back(y);
   NbSP = 1;
   for(size_t i = 1; i < _values.size(); ++i) {
-    if(_values[i] - SP.back() <= precision)
+    if(_values[i] - y <= precision)
       continue;
 
-    double x = std::pow(static_cast<double>(i-1) / sz, exp);
-    double newy = _values[i-1];
+    double x = std::pow(static_cast<double>(i) / sz, exp);
+    double newy = _values[i];
     SP.push_back(x);
     SP.push_back(0.);
     SP.push_back(0.);
