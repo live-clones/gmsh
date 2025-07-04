@@ -65,6 +65,7 @@
 //                           Values are 1 except N that are 0. N is either
 //                           certain percentage of total value count or a
 //                           certain number of element. Look at graph and wwm.
+//  xx Add '. Reason is:' at end of error in guidance + warn -> info
 
 // TODO Finalization:
 //  1. Check fixmes, todos, etc.
@@ -207,14 +208,14 @@ namespace {
 
 StringXNumber MeshQuality2Options_Number[] = {
   // Quality metrics to include:
-  {GMSH_FULLRC, "EnableDistoQuality", nullptr, 2, "OFF, (1+)=includeDistoQuality"},
+  {GMSH_FULLRC, "EnableDistoQuality", nullptr, 0, "OFF, (1+)=includeDistoQuality"},
   {GMSH_FULLRC, "EnableAspectQuality", nullptr, 0, "OFF, (1+)=includeAspectQuality"},
-  {GMSH_FULLRC, "EnableGeoFitQuality", nullptr, 1, "OFF, (1+)=includeGeofitQuality (experimental)"},
+  {GMSH_FULLRC, "EnableGeoFitQuality", nullptr, 0, "OFF, (1+)=includeGeofitQuality (experimental)"},
   // What to do:
   {GMSH_FULLRC, "CreateElementsView", nullptr, 0, "OFF, ON"},
-  {GMSH_FULLRC, "CreatePlotView", nullptr, 1, "OFF, ON"},
+  {GMSH_FULLRC, "CreatePlotView", nullptr, 0, "OFF, ON"},
   {GMSH_FULLRC, "AdjustElementsVisibility", nullptr, 0, "OFF, 1=skipIfAllWouldBeHidden, 2=acceptAllHidden"}, //TODO updtate for geofit
-  {GMSH_FULLRC, "GuidanceLevel", nullptr, 2, "(-1)=minimalOutput, 0=verbose, 1=verboseAndExplanations, 2=printDetailsOnMetricsAndSkipExecution"},
+  {GMSH_FULLRC, "GuidanceLevel", nullptr, 0, "(-1)=minimalOutput, 0=verbose, 1=verboseAndExplanations, 2=printDetailsOnMetricsAndSkipExecution"},
   // Elements Selection:
   {GMSH_FULLRC, "DimensionPolicy", nullptr, 0, "(-2)=force2D, (-1)=force1D, 0=prioritize3D, 1=2D+3D, 2=combine2D+3D"},
   {GMSH_FULLRC, "RestrictToElementType", nullptr, 0, "OFF, 1=Tri/Tet, 2=Quad/Hex, 3=Prism/Pyr"},
@@ -439,8 +440,16 @@ PView *Plug::execute(PView *v)
     _guidanceNoSelectedElem(countsTotal, check2D, check3D);
     return v;
   }
-  _info(MP, "-> Selected %s elements for analysis",
-    formatNumber(countsTotal.reqElem).c_str());
+  if(countsTotal.reqElem < countsTotal.elem) {
+    double percentage = static_cast<double>(countsTotal.reqElem) /
+      static_cast<double>(countsTotal.elem) * 100;
+    _info(MP, "-> Selected %s elements for analysis (~%.2g%% of the total)",
+      formatNumber(countsTotal.reqElem).c_str(), percentage);
+  }
+  else {
+    _info(0, "-> All available elements are selected for analysis",
+      formatNumber(countsTotal.reqElem).c_str());
+  }
 
   // Print the number of value to compute
   // - If nothing to compute, check data availability for output.
@@ -1386,7 +1395,6 @@ void Plug::StatGenerator::_printStats(const Measures &measure)
 {
   size_t numReqElem = measure.elements.size();
   _info(MP, "-> Statistics summary for %s:", measure.dimStr);
-  _info(MP, "   Number of requested elements: %s", formatNumber(numReqElem).c_str());
 
   // 1. Print header table if necessary
   bool haveQualityToPrint = false;
@@ -2902,18 +2910,18 @@ void Plug::_guidanceNoSelectedElem(Counts counts, bool check2D,
 {
   if(counts.reqElem) return;
 
-  _error(MP, "-> No element selected for analysis");
+  _error(MP, "-> No element selected for analysis. Reason is:");
 
   if(counts.elem) {
     // Case where elements are found
     // This must be due to one of the three 'RestrictTo...' options, or...
     bool found = false;
     if(_param.compute.onlyVisible && counts.elemVisible == 0) {
-      _warn(0, "   <|>Option 'RestrictToVisibleElements' is ON, but no visible elements were found");
+      _info(0, "   <|>Option 'RestrictToVisibleElements' is ON, but no visible elements were found");
       found = true;
     }
     if(_param.compute.onlyCurved && counts.elemCurved == 0) {
-      _warn(0, "   <|>Option 'RestrictToCurvedElements' is ON, but no curved elements were found");
+      _info(0, "   <|>Option 'RestrictToCurvedElements' is ON, but no curved elements were found");
       found = true;
     }
     size_t countType = 0;
@@ -2923,7 +2931,7 @@ void Plug::_guidanceNoSelectedElem(Counts counts, bool check2D,
           countType += counts.elem_byType[i];
       }
       if(!countType) {
-        _warn(0, "   <|>Option 'RestrictToElementType' is ON, but no elements of the requested type were found");
+        _info(0, "   <|>Option 'RestrictToElementType' is ON, but no elements of the requested type were found");
         found = true;
       }
     }
@@ -2949,9 +2957,9 @@ void Plug::_guidanceNoSelectedElem(Counts counts, bool check2D,
         ++numCrit;
       }
       if(numCrit == 2)
-        _warn(0, "   No elements satisfy both criteria");
+        _info(0, "   No elements satisfy both criteria");
       else if(numCrit == 3)
-        _warn(0, "   No elements satisfy all three criteria");
+        _info(0, "   No elements satisfy all three criteria");
       else
         _error(0, "   Unexpected state: this case should not occur");
     }
@@ -2959,16 +2967,16 @@ void Plug::_guidanceNoSelectedElem(Counts counts, bool check2D,
   else {
     // Case where no elements are found
     if(!_m->getNumFaces() && !_m->getNumRegions()) {
-      _warn(0, "   No geometry was found in the current model");
+      _info(0, "   No geometry was found in the current model");
     }
     else if(_dimensionPolicy == -2 && !_m->getNumFaces() && _m->getNumRegions()) {
       // NOTE: This actually never happen because a GRegion always require
       //       a GFace as boundary
-      _warn(0, "   Planned to check the 2D meshes as 'DimensionPolicy' is set to -2, but no mesh was found");
-      _warn(0, "   3D geometry was found instead. Consider setting 'DimensionPolicy' to 0");
+      _info(0, "   Planned to check the 2D meshes as 'DimensionPolicy' is set to -2, but no mesh was found");
+      _info(0, "   3D geometry was found instead. Consider setting 'DimensionPolicy' to 0");
     }
     else {
-      _warn(0, "   No mesh was found in the current model");
+      _info(0, "   No mesh was found in the current model");
     }
   }
 }
@@ -3000,11 +3008,11 @@ bool Plug::_checkAndGuideNoDataToShow(Counts counts, bool check2D, bool check3D)
   // Step 2: Check if there are available computed values for desired metrics
   if(numDesiredVals > 0)
     return true; // Metrics available -> Continue processing
-  _error(MP, "-> No data to output");
+  _error(MP, "-> No data to output. Reason is:");
 
   // Step 3: Case 1 - 'omitMetricComputation' is activated
   if(_param.compute.skip) {
-    _warn(MP, "   <|>Option 'omitMetricComputation' is ON but there are no "
+    _info(MP, "   <|>Option 'omitMetricComputation' is ON but there are no "
                "previously computed data corresponding to desired metrics for "
                "the selected elements");
 
@@ -3046,11 +3054,16 @@ bool Plug::_checkAndGuideNoDataToShow(Counts counts, bool check2D, bool check3D)
 
   if(wantValidityOnly && numReqElemOnFlatGeo == 0) {
     if(!hasFlatGeo) {
-      _warn(MP, "   <|>Validity is the only requested metric, but all geometry entities are curved");
-      _info(0, "   <|>Validity is not defined on curved geometry entities. Please enable another metric");
+      if(_param.compute.skip)
+        _warn(MP, "   <|>Also, Validity is the only requested metric, but all geometry entities are curved");
+      else
+        _info(0, "   <|>Validity is not defined on curved geometry entities. Please enable another metric");
     }
     else {
-      _warn(MP, "   <|>Validity is the only requested metric, but all selected elements are on curved geometry entities");
+      if(_param.compute.skip)
+        _warn(MP, "   <|>Also, Validity is the only requested metric, but all selected elements are on curved geometry entities");
+      else
+        _info(MP, "   <|>Validity is the only requested metric, but all selected elements are on curved geometry entities");
       if(numElemOnFlatGeo > 0)
         _info(0, "   <|>The model contains %s unselected elements on flat geometry entities",
               formatNumber(numElemOnFlatGeo).c_str());
@@ -3061,11 +3074,17 @@ bool Plug::_checkAndGuideNoDataToShow(Counts counts, bool check2D, bool check3D)
 
   if(wantGeoFitOnly && numReqElemOnCurvGeo == 0) {
     if(!hasCurvGeo) {
-      _warn(MP, "   <|>GeoFit is the only requested metric, but all geometry entities are flat");
+      if(_param.compute.skip)
+        _warn(MP, "   <|>Also, GeoFit is the only requested metric, but all geometry entities are flat");
+      else
+        _info(MP, "   <|>GeoFit is the only requested metric, but all geometry entities are flat");
       _info(0, "   <|>GeoFit is not defined on flat geometry entities. Please enable another metric");
     }
     else {
-      _warn(MP, "   <|>GeoFit is the only requested metric, but all selected elements are on flat geometry entities");
+      if(_param.compute.skip)
+        _warn(MP, "   <|>Also, GeoFit is the only requested metric, but all selected elements are on flat geometry entities");
+      else
+        _info(MP, "   <|>GeoFit is the only requested metric, but all selected elements are on flat geometry entities");
       if(numElemOnCurvGeo > 0)
         _info(0, "   <|>The model contains %s unselected elements on curved geometry entities",
           formatNumber(numElemOnCurvGeo).c_str());
