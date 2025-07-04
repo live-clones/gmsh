@@ -174,7 +174,7 @@ private:
   static std::string _getHelpDefinitions();
   static std::string _getHelpMetrics();
   static std::string _getHelpWWM() ;
-  static std::string _getHelpOptions();
+  static std::string _getHelpOptionsClarification();
   static std::string _getHelpVisibility();
   static std::string _getHelpAdvancedUse();
   static std::string _getHelpFAQ() ;

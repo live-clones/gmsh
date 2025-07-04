@@ -38,7 +38,7 @@
 //  xx Test plot such that first element take same place, like 1/50
 //     -> If choose to stay at fixed cutoff determine which cutoff to choose for
 //        which number of element
-//  3. Move info how to read plot at execution. Say in important notes that
+//  xx Move info how to read plot at execution. Say in important notes that
 //     Help does not cover all information and it is adviced to set
 //     guidanceLevel=1 at the beginning to have contextual more complete info
 //  4. Update metrics info
@@ -1038,7 +1038,27 @@ void Plug::_createPlots(const std::vector<Measures> &measures)
     }
   }
 
-  if(numPlots) _info(MP, "-> Created %d plots", numPlots);
+  if(numPlots) {
+    _info(MP, "-> Created %d plots", numPlots);
+    _info(1, "   <|>Here is how to interpret them. First, note that the "
+             "quality value is represented on the y-axis, while the x-axis "
+             "shows the percentage of elements. "
+             "The x-axis uses an exponential scale, with the cutoff "
+             "positioned in the middle. "
+             "Each point (x, y) in the plot indicates that x%% of the elements "
+             "have a quality less than or equal to y, "
+             "while (100 - x)%% of the elements have a quality greater "
+             "than or equal to y. "
+             "This means that a window defined by (x0, y0) and (x1, y1) "
+             "represents the portion (x1 - x0)%% of the elements with a quality "
+             "between y0 and y1. One advantage of this type of plot is "
+             "that the worst value is always clearly visible. For small meshes, "
+             "the plot may display abrupt jumps on the left-hand side, "
+             "which is normal and expected. "
+             "The first jump corresponds to the transition from the worst "
+             "value to the second worst value. It also indicates the number of "
+             "analyzed elements, as it occurs at x = 1 / nb.\n");
+  }
 }
 
 bool Plug::_createPlotsOneMetric(const Measures &m, Metric metric)
@@ -2212,7 +2232,11 @@ std::string Plug::_getHelpIntro()
           "For this reason, some options support negative values.\n"
     BULLET"The advanced option `smartRecompute' can be very useful when "
           "running the plugin multiple times but must be used cautiously. "
-          "See the 'OPTIONS CLARIFICATIONS' section for details.\n";
+          "See the 'OPTIONS CLARIFICATIONS' section for details.\n"
+    BULLET"This help message does not cover all of the available information. "
+          "Users who are not familiar with this plugin (or its new version) "
+          "should set the `guidanceLevel' option to 1 to receive "
+          "additional assistance.\n";
 }
 
 std::string Plug::_getHelpDefinitions()
@@ -2294,25 +2318,46 @@ std::string Plug::_getHelpMetrics()
 
 std::string Plug::_getHelpWWM()
 {
+  // // Recommended cutoffs in function of element count:
+  // 100 ~ 10k -> 25
+  // 2k ~ 4M -> 10
+  // 500k ~ 10+B -> 2
+
   return
+    "WORST-WEIGHTED MEAN\n"
+    "The plugin computes an alternative mean value, called the "
+    "worst-weighted mean, for inclusion in the statistics. "
+    "This mean is designed to give more weight to the worst values compared to "
+    "the best values. "
+    "The rationale is that, in the finite element method, critical issues are "
+    "often caused by the worst values. "
+    "This metric is parameterized by a single value: the cutoff. "
+    "For applications involving between 2k and 4M elements, a cutoff value of 10% "
+    "is recommended. "
+    "A 10% cutoff means that the worst 10% of values contribute equally "
+    "to the mean as the remaining 90%. "
+    "For small meshes with 100 to 10k elements, a higher cutoff of 25% is "
+    "better suited. "
+    "In contrast, for large meshes starting around 500k elements, a cutoff "
+    "of 2% is more appropriate. "
+    "The worst-weighted mean is computed as the integral of the "
+    "worst-weighted graph; refer to the next section for a presentation of "
+    "those graphs.\n"
+    "\n"
     "PLOTS\n"
-    "The plugin creates a new type of plot, designed to improve readability and "
-    "facilitate comparison. In these plots, the quality value is represented on "
-    "the y-axis, while the x-axis shows the percentage of elements. Note that the "
-    "x-axis is not linear but exponential, with the cutoff "
-    "(see OPTIONS CLARIFICATIONS section) positioned at the middle of the axis. "
-    "Each point (x, y) in the plot indicates that x% of the elements have a "
-    "quality less than or equal to y. Conversely, (100-x)% of the elements have a "
-    "quality greater than or equal to y. A window defined by (x0, y0) and (x1, y1) "
-    "shows that (x1-x0)% of the elements have a quality between y0 and y1. "
-    "These plots make it easy to visualize the minimum quality of the mesh. For small "
-    "meshes, the plot exhibits abrupt jumps on the left side. This is normal "
-    "and expected. The first jump corresponds to the transition from the worst "
-    "value to the second worst value. It also indicates the number of "
-    "analyzed elements, as it is located at x = 1 / nb.\n";
+    "The plugin generates a new type of plot to enhance readability and "
+    "facilitate comparisons. "
+    "In these plots, the quality value is represented on the y-axis, "
+    "while the x-axis displays the percentage of elements. "
+    "Note that the x-axis uses an exponential rather than linear scale, "
+    "with the cutoff (see the OPTIONS CLARIFICATIONS section) positioned "
+    "in the middle of the axis. "
+    "Each point (x, y) on the plot indicates that x% of the elements have a "
+    "quality less than or equal to y. "
+    "These plots also provide a clear visualization of the minimum values.\n";
 }
 
-std::string Plug::_getHelpOptions()
+std::string Plug::_getHelpOptionsClarification()
 {
   return
     "OPTIONS CLARIFICATIONS\n"
@@ -2381,10 +2426,6 @@ std::string Plug::_getHelpOptions()
           "weighted mean where the worst 10% of the values influence "
           "equally with the rest. This technique highlights critical data "
           "subsets generally impacting the finite element solution.\n";
-          // // Recommended cutoffs in function of element count:
-          // 100 ~ 10k -> 25
-          // 2k ~ 4M -> 10
-          // 500k ~ 10+B -> 2
 }
 
 std::string Plug::_getHelpVisibility()
