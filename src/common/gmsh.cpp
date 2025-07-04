@@ -48,6 +48,8 @@
 #include "OS.h"
 #include "Options.h"
 #include "OpenFile.h"
+
+// TODO #if defined(HAVE_HIERARCHICAL_BASIS)
 #include "HierarchicalBasisH1Quad.h"
 #include "HierarchicalBasisH1Tria.h"
 #include "HierarchicalBasisH1Line.h"
@@ -61,6 +63,7 @@
 #include "HierarchicalBasisHcurlTria.h"
 #include "HierarchicalBasisHcurlTetra.h"
 #include "HierarchicalBasisHcurlPri.h"
+// TODO #endif
 
 #if defined(HAVE_MESH)
 #include "Field.h"
@@ -2905,6 +2908,9 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(
     }
     numOrientations = 1;
   }
+
+// TODO #if defined(HAVE_HIERARCHICAL_BASIS)
+
   else { // Hierarchical type
     HierarchicalBasis *basis(nullptr);
     if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
@@ -3800,6 +3806,8 @@ GMSH_API void gmsh::model::mesh::getKeys(const int elementType,
   const std::vector<GEntity *> &entities(typeEnt[elementType]);
   int familyType = ElementType::getParentType(elementType);
 
+// TODO #if defined(HAVE_HIERARCHICAL_BASIS)
+
   HierarchicalBasis *basis(nullptr);
   if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
     switch(familyType) {
@@ -4281,6 +4289,9 @@ gmsh::model::mesh::getNumberOfKeys(const int elementType,
     return 0;
   }
   int familyType = ElementType::getParentType(elementType);
+
+// TODO #if defined(HAVE_HIERARCHICAL_BASIS)
+
   if(fsName == "H1Legendre" || fsName == "GradH1Legendre") {
     HierarchicalBasis *basis(nullptr);
     switch(familyType) {
@@ -4394,6 +4405,8 @@ GMSH_API void gmsh::model::mesh::getKeysInformation(
                typeKeys.size(), entityKeys.size());
     return;
   }
+
+// TODO #if defined(HAVE_HIERARCHICAL_BASIS)
 
   HierarchicalBasis *basis(nullptr);
   int familyType = ElementType::getParentType(elementType);
