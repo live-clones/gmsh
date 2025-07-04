@@ -55,7 +55,8 @@
 //                           The cutoff depend on the number of values.
 //                Advantage: On graph, this is comfortable for looking at
 //                           minimum value (with 3~5% worst-weight).
-//                           Easier for the user, he do not have to choose.
+//                           Easier for the user, he do not have to choose
+//                           a cutoff.
 //                           Can still change parameter if not happy.
 //             Disadvantage: The x-axis of graph is changing for every value
 //                           count, which is a bit anoying visually.
@@ -65,14 +66,19 @@
 //                           Values are 1 except N that are 0. N is either
 //                           certain percentage of total value count or a
 //                           certain number of element. Look at graph and wwm.
+//                           - 1k, 10k, 100k, 1M values
+//                           - 1, 10, 100 zero-values,
+//                             OR 0.1%, 1%, 10% zero-values
+//                           - fixed cutoff v.s. fixed worst-weight
 //  xx Add '. Reason is:' at end of error in guidance + warn -> info
 
 // TODO Finalization:
 //  1. Check fixmes, todos, etc.
 //  2. Check english
-//  3. Merge master + Clang format
-//  4. Test with ctest that everything works?
-//  5. Update `What does the plugin'
+//  3. Check coverage
+//  4. Merge master + Clang format
+//  5. Test with ctest that everything works?
+//  6. Update `What does the plugin'
 
 
 // TODO Later:
@@ -425,7 +431,7 @@ PView *Plug::execute(PView *v)
   }
   _m = m;
 
-  // Check which dimension to compute/show
+  // Check which dimension to analyze
   bool check2D, check3D;
   _decideDimensionToCheck(check2D, check3D);
 
@@ -438,11 +444,13 @@ PView *Plug::execute(PView *v)
   // Purge views after calling syncWithModel and before the plugin exits
   _purgeViews(check2D, check3D);
 
-  // Handle the case where there are no selected elements or print number
+  // Handle the case where there are no selected elements
   if(!countsTotal.reqElem) {
     _guidanceNoSelectedElem(countsTotal);
     return v;
   }
+
+  // Print the number of elements to analyze
   if(countsTotal.reqElem < countsTotal.elem) {
     double percentage = static_cast<double>(countsTotal.reqElem) /
       static_cast<double>(countsTotal.elem) * 100;
@@ -455,8 +463,10 @@ PView *Plug::execute(PView *v)
   }
 
   // Print the number of value to compute
-  // - If nothing to compute, check data availability for output.
-  // - Otherwise, warn about computing quality without validity checks.
+  // - If nothing to compute, check data availability for output. If no data to
+  //   output, abort.
+  // - If something to compute, check if must warn about computing quality
+  //   without validity checks.
   std::size_t totalToCompute = _printElementToCompute(counts2D, counts3D);
   if(!totalToCompute) {
     if(!_checkAndGuideNoDataToShow(countsTotal, check2D, check3D))
@@ -489,7 +499,7 @@ PView *Plug::execute(PView *v)
   }
   _finalizeMeasuresData(measures);
 
-  // Combine if necessary
+  // Combine data if necessary
   if(_dimensionPolicy == 2) {
     measures[0] = Measures::combine(measures[0], measures[1], "dimension 2 and 3 combined", "2D+3D");
     measures.erase(measures.begin() + 1);
@@ -530,13 +540,10 @@ bool Plug::_fetchParameters()
   Parameters::Hiding &ph = _param.hide;
   Parameters::MetricsToShow &ps = _param.show;
 
-  double skipValidity, disto, aspect, geofit, minJ, ratioJ, elementType,
-   dataReleasePolicy;
-
   // Metrics to include:
-  disto = MeshQuality2Options_Number[0].def;
-  aspect = MeshQuality2Options_Number[1].def;
-  geofit = MeshQuality2Options_Number[2].def;
+  double disto = MeshQuality2Options_Number[0].def;
+  double aspect = MeshQuality2Options_Number[1].def;
+  double geofit = MeshQuality2Options_Number[2].def;
 
   // What to do:
   pp.createElemView = static_cast<bool>(MeshQuality2Options_Number[3].def);
@@ -553,7 +560,7 @@ bool Plug::_fetchParameters()
               "'DimensionPolicy' to another value");
     return false;
   }
-  elementType = MeshQuality2Options_Number[8].def;
+  double elementType = MeshQuality2Options_Number[8].def;
   pc.onlyVisible = static_cast<bool>(MeshQuality2Options_Number[9].def);
   pc.onlyCurved = static_cast<bool>(MeshQuality2Options_Number[10].def);
 
@@ -565,16 +572,16 @@ bool Plug::_fetchParameters()
   ph.unhideToo = !static_cast<bool>(MeshQuality2Options_Number[15].def);
 
   // Advanced computation options:
-  dataReleasePolicy = static_cast<int>(MeshQuality2Options_Number[16].def);
+  double dataReleasePolicy = static_cast<int>(MeshQuality2Options_Number[16].def);
   pc.skip = static_cast<bool>(MeshQuality2Options_Number[17].def);
   pc.smartRecompute = static_cast<bool>(MeshQuality2Options_Number[18].def);
-  skipValidity = MeshQuality2Options_Number[19].def;
+  double skipValidity = MeshQuality2Options_Number[19].def;
 
   // Advanced analysis options:
   ps.regularizeJac = MeshQuality2Options_Number[20].def > 0;
   ps.regularizeGFit = MeshQuality2Options_Number[20].def > -1;
-  minJ = MeshQuality2Options_Number[21].def;
-  ratioJ = MeshQuality2Options_Number[22].def;
+  double minJ = MeshQuality2Options_Number[21].def;
+  double ratioJ = MeshQuality2Options_Number[22].def;
   ps.skipStats = static_cast<bool>(MeshQuality2Options_Number[23].def);
   pp.statCutoffPack = MeshQuality2Options_Number[24].def;
   pp.plotCutoffPack = MeshQuality2Options_Number[25].def;
@@ -978,6 +985,9 @@ void Plug::_finalizeMeasuresData(std::vector<Measures> &measures) const
     }
 
     if(ps.which[VALIDITY] || ps.which[UNFLIP]) {
+      // FIXME don't think that m.elements.size()-m.elementsGFit.size(); is correct
+      //       (what if elementsGFit is zero because GeoFit not asked?)
+      // FIXME on testPlugin2 (then run with many option on), elementsGFit contains flat element
       size_t num = m.elements.size()-m.elementsGFit.size();
       m.elementsStraightGeo.resize(num);
       if(ps.which[VALIDITY]) m.isValid.resize(num);
@@ -1616,6 +1626,7 @@ void Plug::DataSingleDimension::gatherValues(const Counts &counts, Measures &mea
     measures.dim2Elem = true;
   else
     measures.dim3Elem = true;
+  // FIXME Do we want to reserve memory only for ask metrics?
   measures.minJ.reserve(sz);
   measures.maxJ.reserve(sz);
   measures.minDisto.reserve(sz);
@@ -2126,7 +2137,9 @@ void Plug::DataEntity::addValues(Measures &measures)
         measures.minJ.push_back(NOTCOMPUTED);
         measures.maxJ.push_back(NOTCOMPUTED);
       }
-      if(isBitUnset(_flags[idx], F_NOTORI)) {
+      if(_isCurvedGeo && isBitUnset(_flags[idx], F_NOTORI)) {
+        // FIXME What if GeoFit is not asked but has been computed before?
+        //       (same for the rest?)
         measures.minGFit.push_back(_minGFit[idx]);
         measures.maxGFit.push_back(_maxGFit[idx]);
         measures.elementsGFit.push_back(it.first);
