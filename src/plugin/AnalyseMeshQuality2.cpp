@@ -49,7 +49,7 @@
 //                   so that the plugin can decide when superposition.
 //     - As current: plugin choose if user set wwmCutOff to 0 (which made
 //                   the default).
-//     - Fixed weigth worst: the idea is that the worst value count for the
+//     - Fixed weight worst: the idea is that the worst value count for the
 //                           same weight whatever the number of values.
 //                           This weight can be a parameter
 //                           The cutoff depend on the number of values.
@@ -59,7 +59,7 @@
 //                           a cutoff.
 //                           Can still change parameter if not happy.
 //             Disadvantage: The x-axis of graph is changing for every value
-//                           count, which is a bit anoying visually.
+//                           count, which is a bit annoying visually.
 //      Unresolved question: How comparison between mesh of different element
 //                           count is affected?
 //             Idea to test: compare 3~4 simulated mesh of different size.
@@ -70,6 +70,31 @@
 //                           - 1, 10, 100 zero-values,
 //                             OR 0.1%, 1%, 10% zero-values
 //                           - fixed cutoff v.s. fixed worst-weight
+//     => Thinking about it, first solution seems more what we expect: if 10%
+//        of the values are 0 and the rest 1, we expect the mean to be the same
+//        whatever the number of values. With second solution, the mean remain
+//        the same if the worst value only is 0, which would be quite strange.
+//     -> Maybe we can have the best of the two worlds by choosing a
+//        worst value weight that goes continuously from 50% for 2 values to
+//        1% for largest mesh to consider (reasonably with future expectation, 1e16?)
+//        cutoff: C = 100 * exp( ln(2) * ln(1/x) / ln(100 / p) )
+//             p: 100 / p = 100 + 98 * log(x/1e16) / log(1e16 / 2)
+//        Advantages: - No duplication, nothing to choose.
+//                    - Width of first jump give indication of size of mesh
+//                    - Two meshes with similar element count will have
+//                      meaningful mean that can be compared
+//                    - Comfortable to look at on graphs
+//                    - Smaller weight for small element count
+//                      #=40 -> c=33% -> ww=10%,
+//                      #=1530 -> c=18.3% -> ww=5%,
+//                      #=210k -> c=8.9% -> ww=3%,
+//                      #=98M -> c=3.84% -> ww=2%,
+//                      #=1T -> c=0.4% -> ww=1%
+//                    - Cutoff value give also indication of size of mesh
+//                      -> expert will know the size
+//     Disadvantages: - x-axis of graph is changing for every value count
+//      Idea to test: plot using mesh(x=log(#elem), y=(%good), z=mean)
+//                    and compare the three options with standard mean.
 //  xx Add '. Reason is:' at end of error in guidance + warn -> info
 
 // TODO Finalization:
