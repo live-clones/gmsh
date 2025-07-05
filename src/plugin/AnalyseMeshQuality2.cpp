@@ -1685,11 +1685,9 @@ size_t Plug::DataEntity::updateElementsAndFlags(const Parameters::Computation &p
   size_t cntSelectedChanged = 0;
   std::size_t num = _ge->getNumMeshElements();
 
-  // Step 0: Update normals in case it was not computed previously (this can
-  //         happen because normals are computed from mesh and if the plugin
-  //         is run with GEntity free of mesh and run later with that
-  //         GEntity containing a mesh)
-  _computeNormals();
+  // Step 0: Update normals in case it was not computed previously
+  if(!_flatnessIsKnown)
+    _checkFlatnessAndComputeNormals();
 
   // Step 1: Get all elements present in GEntity
   std::vector<MElement *> elements;
@@ -1772,7 +1770,7 @@ size_t Plug::DataEntity::updateElementsAndFlags(const Parameters::Computation &p
 
 void Plug::DataEntity::count(const Parameters::Computation &param, Counts &counts)
 {
-  if(_curvingIsKnown) {
+  if(_flatnessIsKnown) {
     if(_isCurvedGeo)
       ++counts.geoEntCurved[_ge->dim() - 1];
     else
@@ -1865,17 +1863,22 @@ void Plug::DataEntity::_countAvailableValues(const Parameters::Computation &para
   }
 }
 
-void Plug::DataEntity::_computeNormals()
+void Plug::DataEntity::_checkFlatnessAndComputeNormals()
 {
-  // FIXME If no mesh, then cannot say if curved geo or not.
-  // And mesh can come later...
-  // -> by default, consider flat, knowCurving=false
-  //    if mesh, then knowCurving = true, isCurved = !normal
+  // Check cases where normals cannot or do not need to be computed
+  if(_flatnessIsKnown) return;
+
+  if(_ge->dim() == 3) {
+    _flatnessIsKnown = true;
+    _isCurvedGeo = false;
+    return;
+  }
+
+  // Flatness/normals are determined using the mesh
   std::size_t num = _ge->getNumMeshElements();
+  if(!num) return;
 
-  if(!num || _curvingIsKnown) return;
-  _curvingIsKnown = true;
-
+  // Compute flatness and normals
   if(_ge->dim() == 2) {
     GFace *gf = _ge->cast2Face();
     SVector3 normal;
@@ -1899,6 +1902,8 @@ void Plug::DataEntity::_computeNormals()
   default:
     _isCurvedGeo = !_normals;
   }
+
+  _flatnessIsKnown = true;
 }
 
 void Plug::DataEntity::_updateNormalsToPrint()

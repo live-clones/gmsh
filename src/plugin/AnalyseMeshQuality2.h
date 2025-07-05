@@ -218,7 +218,7 @@ private:
   class DataEntity {
   private:
     GEntity *_ge = nullptr;
-    bool _curvingIsKnown = false;
+    bool _flatnessIsKnown = false;
     bool _isCurvedGeo = false;
 
     std::map<MElement *, size_t> _mapElemToIndex;
@@ -238,7 +238,7 @@ private:
     fullMatrix<double> _normalsToPrint;
 
   public:
-    explicit DataEntity(GEntity *ge) : _ge(ge) { _computeNormals(); }
+    explicit DataEntity(GEntity *ge) : _ge(ge) { _checkFlatnessAndComputeNormals(); }
     DataEntity(const DataEntity &other) : _ge(other._ge)
     {
       if(other._normals) {
@@ -249,7 +249,7 @@ private:
     // Move Constructor
     DataEntity(DataEntity &&other) noexcept
         : _ge(other._ge),
-          _curvingIsKnown(other._curvingIsKnown),
+          _flatnessIsKnown(other._flatnessIsKnown),
           _isCurvedGeo(other._isCurvedGeo),
           _mapElemToIndex(std::move(other._mapElemToIndex)),
           _minJ(std::move(other._minJ)),
@@ -296,7 +296,7 @@ private:
     void _countCurved(std::size_t &known, std::size_t &curved);
     void _countAvailableValues(const Parameters::Computation &, std::size_t cnt[5],
       size_t &numForWarningNotValidity);
-    void _computeNormals();
+    void _checkFlatnessAndComputeNormals();
     void _updateNormalsToPrint();
   };
 
