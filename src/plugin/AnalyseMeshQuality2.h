@@ -81,17 +81,19 @@ private:
     bool check3D = false;
   };
   enum Metric { VALIDITY, UNFLIP, MINJAC, RATIOJAC, GEOFIT, DISTO, ASPECT, METRIC_COUNT};
-  static const std::array<std::string, METRIC_COUNT> _metricNames;
 
+private:
+  static int _verbose;
+  static const std::array<std::string, METRIC_COUNT> _metricNames;
 
 private:
   GModel *_m;
-  DataSingleDimension *_data2D, *_data3D;
-  StatGenerator *_statGen;
   Parameters _param;
-  // bool _myVerbose = false;
   int _dimensionPolicy = 0;
   int _previousFreeOldData = 1;
+  double _previousOptionValues[50]{};
+  DataSingleDimension *_data2D, *_data3D;
+  StatGenerator *_statGen;
   std::map<ViewKey, PView *> _pviews;
 
 #if defined(HAVE_VISUDEV)
@@ -109,14 +111,7 @@ private:
 #endif
 
 public:
-  GMSH_AnalyseMeshQuality2Plugin()
-  {
-    _m = nullptr;
-    _data2D = new DataSingleDimension(2);
-    _data3D = new DataSingleDimension(3);
-    _statGen = new StatGenerator();
-  }
-
+  GMSH_AnalyseMeshQuality2Plugin();
   ~GMSH_AnalyseMeshQuality2Plugin() override
   {
     delete _data2D;
@@ -140,6 +135,7 @@ private:
   bool _fetchParameters();
   void _fetchLegacyParameters();
   bool _checkEarlyExitOptions() const;
+  void _logModifiedOptions();
   void _purgeViews(bool purge2D, bool purge3D);
   void _decideDimensionToCheck(bool &check2D, bool &check3D) const;
   void _computeRequestedData(Counts param, bool check2D, bool check3D) const;

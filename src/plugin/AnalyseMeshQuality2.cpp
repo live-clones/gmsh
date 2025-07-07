@@ -445,6 +445,15 @@ std::string Plug::getHelp() const
     _getHelpFAQ();
 }
 
+GMSH_AnalyseMeshQuality2Plugin::GMSH_AnalyseMeshQuality2Plugin() {
+  _m = nullptr;
+  _data2D = new DataSingleDimension(2);
+  _data3D = new DataSingleDimension(3);
+  _statGen = new StatGenerator();
+  for(int i = 0; i < Plug::getNbOptions(false); i++)
+    _previousOptionValues[i] = MeshQuality2Options_Number[i].def;
+}
+
 PView *Plug::execute(PView *v)
 {
   // Fetch verbose option and display the plugin introduction
@@ -531,6 +540,9 @@ PView *Plug::execute(PView *v)
     _info(MP, "Nothing (else) to do, re-run the plugin to analyze a mesh");
     return v;
   }
+
+  // Check and print option changes
+  _logModifiedOptions();
 
   // Check if this is a new model and warn about clearing data
   GModel *m = GModel::current();
@@ -973,6 +985,25 @@ bool Plug::_checkEarlyExitOptions() const
   }
 
   return exit;
+}
+
+void GMSH_AnalyseMeshQuality2Plugin::_logModifiedOptions()
+{
+  bool introduced = false;
+  // FIXME if _previousVerbose != 1:
+  //  - check also for different from default
+  //  - message is "The following options take non-default values"
+  for(int i = 0; i < getNbOptions(false); i++) {
+    if(MeshQuality2Options_Number[i].def != _previousOptionValues[i]) {
+      if(!introduced) {
+        _info(1, "-> The following options were modified:");
+        introduced = true;
+      }
+      _info(1, "   - %s = %g", MeshQuality2Options_Number[i].str,
+        MeshQuality2Options_Number[i].def);
+      _previousOptionValues[i] = MeshQuality2Options_Number[i].def;
+    }
+  }
 }
 
 void Plug::_decideDimensionToCheck(bool &check2D, bool &check3D) const
