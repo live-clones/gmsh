@@ -56,8 +56,7 @@ private:
     struct Post {
       bool createPlot = false;
       bool createElemView = false;
-      double plotCutoffPack = 10;
-      double statCutoffPack = 10;
+      double plotCutoff = 10;
     } pview;
 
     struct Hiding {
@@ -300,8 +299,10 @@ private:
     std::vector<std::vector<double>> _coeff;
     std::map<std::pair<double, size_t>, size_t> _cutoffvsNumValues;
 
-    std::vector<double> _statCutoffs;
+    std::vector<double> _statCutoffs = {10};
     std::vector<double> _plotCutoffs;
+    // FIXME clean this class if new idea (fixed Wm10 for stats, automatic
+    //  cutoff for plots is validated)
 
   public:
     StatGenerator()
@@ -318,6 +319,7 @@ private:
       _unpackCutoff(pack, _plotCutoffs);
     }
     std::vector<double> getCutoffPlots() const { return _plotCutoffs; }
+    double getCutoffPlotFromSize(size_t) const;
     void printStats(const Parameters &, const std::vector<Measures> &measures);
 
   private:

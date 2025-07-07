@@ -58,7 +58,7 @@
 //     GuidanceLevel=1 at the beginning to have contextual more complete info
 //  xx Update metrics info
 //  xx Make option name starting with upper case because it is the convention
-//  6. Choose what to do with WW-G/M. Options are:
+//  xx Choose what to do with WW-G/M. Options are:
 //     - As current: user choose and can have multiple cutoff. Adviced 25, 10, 2
 //     - As current: plugin choose, user can give preference between 25, 10, 2
 //                   so that the plugin can decide when superposition.
@@ -346,8 +346,7 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "EnableMinJacDetAsAMetric", nullptr, 0, "OFF, 1+ (Validity must be computed)"},
   {GMSH_FULLRC, "EnableRatioJacDetAsAMetric", nullptr, 0, "OFF, 1+ (Validity must be computed)"},
   {GMSH_FULLRC, "SkipStatPrinting", nullptr, 0, "OFF, ON"},
-  {GMSH_FULLRC, "WmCutoffsForStats", nullptr, 21025, "CUTOFFS (for stats weighted mean, see Help)"},
-  {GMSH_FULLRC, "WmCutoffsForPlots", nullptr, 10, "CUTOFFS (for plots weighted mean, see Help)"},
+  {GMSH_FULLRC, "LockPlotCutoffValue", nullptr, 0, "OFF=automaticCutoffComputation, ]0,50]=setFixedCutoffValue"},
   // Legacy options:
   {GMSH_FULLRC, "JacobianDeterminant", nullptr, UNTOUCHED, "[legacy] OFF, ON"},
   {GMSH_FULLRC, "IGEMeasure", nullptr, UNTOUCHED, "[legacy] OFF, ON"},
@@ -374,7 +373,7 @@ std::pair<int, std::string> MeshQuality2Options_Headers[] = {
   {11, "Visibility adjustment options"},
   {16, "Advanced computation options"},
   {20, "Advanced analysis options"},
-  {26, "Legacy options"},
+  {25, "Legacy options"},
 };
 
 namespace JacQual = jacobianBasedQuality;
@@ -709,12 +708,11 @@ bool Plug::_fetchParameters()
   double minJ = MeshQuality2Options_Number[21].def;
   double ratioJ = MeshQuality2Options_Number[22].def;
   ps.skipStats = static_cast<bool>(MeshQuality2Options_Number[23].def);
-  pp.statCutoffPack = MeshQuality2Options_Number[24].def;
-  pp.plotCutoffPack = MeshQuality2Options_Number[25].def;
+  pp.plotCutoff = MeshQuality2Options_Number[24].def;
 
   // -> statsGenerator
-  _statGen->setCutoffStats(pp.statCutoffPack);
-  _statGen->setCutoffPlots(pp.plotCutoffPack);
+  // _statGen->setCutoffStats(pp.statCutoffPack);
+  // _statGen->setCutoffPlots(pp.plotCutoffPack);
 
   // -> data management
   _previousFreeOldData = pc.freeOldData;
@@ -836,8 +834,7 @@ void Plug::_fetchLegacyParameters()
            " 8. Set 'SkipValidity' to 1 if '_JacobianDeterminant' is 0\n"
            " 9. Set 'EnableRatioJacDetAsAMetric' to 1\n"
            "10. Set 'EnableMinJacDetAsAMetric' to 1\n"
-           "11. Set 'WmCutoffsForStats' to 50\n"
-           "12. IF '_HidingThreshold' is smaller than 99:\n"
+           "11. IF '_HidingThreshold' is smaller than 99:\n"
            "    -  Set 'AdjustElementsVisibility' to 1\n"
            "    -  Set 'VisibilityPolicy' to 1\n"
            "    -  Set 'EnableDistoQuality' to 2 IF "
@@ -858,7 +855,7 @@ void Plug::_fetchLegacyParameters()
   pc.onlyGivenElemType = false;
   pc.onlyVisible = false;
   pc.onlyCurved = false;
-  pp.statCutoffPack = 50;
+  //pp.statCutoffPack = 50;
   pp.createPlot = false;
   ps.which[UNFLIP] = 0;
   ps.which[GEOFIT] = 0;
@@ -1244,6 +1241,8 @@ void Plug::_createPlots(const std::vector<Measures> &measures)
              "The first jump corresponds to the transition from the worst "
              "value to the second worst value. It also indicates the number of "
              "analyzed elements, as it occurs at x = 1 / nb.\n");
+    // FIXME Add that cutoff is automatically computed (but check if the case)
+    //  and that it allow to have an idea of the size of values
   }
 }
 
@@ -1258,24 +1257,30 @@ bool Plug::_createPlotsOneMetric(const Measures &m, Metric metric)
   s += m.dimStrShort;
   s += " (p)";
 
-  for(double cutoff: _statGen->getCutoffPlots()) {
-    ViewKey key(m.dim2Elem, m.dim3Elem, metric, ViewKey::TypeView::PLOT, cutoff);
-    if(_pviews.find(key) == _pviews.end()) {
-      PView *p = new PView(s, cutoff, true, values);
-      _pviews[key] = p;
-      p->getOptions()->colorTable.ipar[COLORTABLE_NUMBER] = 0;
-      ColorTable_Recompute(&p->getOptions()->colorTable);
-      if(metric != RATIOJAC && metric != MINJAC) {
-        p->getOptions()->rangeType = PViewOptions::Custom;
-        p->getOptions()->customMin = 0;
-        p->getOptions()->customMax = 1;
-        if(metric == GEOFIT) {
-          p->getOptions()->customMin = -1;
-        }
+  double cutoff = _param.pview.plotCutoff;
+  if(std::abs(cutoff) < 1e-2) // could be .1 as 1 is already very small
+    cutoff = _statGen->getCutoffPlotFromSize(values.size());
+  ViewKey key(m.dim2Elem, m.dim3Elem, metric, ViewKey::TypeView::PLOT, cutoff);
+
+  if(_pviews.find(key) == _pviews.end()) {
+    PView *p = new PView(s, cutoff, true, values);
+    _pviews[key] = p;
+
+    p->getOptions()->colorTable.ipar[COLORTABLE_NUMBER] = 0;
+    ColorTable_Recompute(&p->getOptions()->colorTable);
+
+    if(metric != RATIOJAC && metric != MINJAC) {
+      p->getOptions()->rangeType = PViewOptions::Custom;
+      p->getOptions()->customMin = 0;
+      p->getOptions()->customMax = 1;
+      if(metric == GEOFIT) {
+        p->getOptions()->customMin = -1;
       }
-      return true;
     }
+
+    return true;
   }
+
   return false;
 }
 
@@ -1490,6 +1495,13 @@ bool Plug::_hideElements(const Measures &measure,
 // ======== StatGenerator ======================================================
 // =============================================================================
 
+double Plug::StatGenerator::getCutoffPlotFromSize(size_t sz) const
+{
+  double size = static_cast<double>(sz);
+  double a = 100 + 98 * std::log(size/1e16) / std::log(1e16 / 2);
+  return 100 * std::exp(std::log(2) * (-std::log(size)) / std::log(a) );
+}
+
 void Plug::StatGenerator::printStats(const Parameters &param,
                                      const std::vector<Measures> &measures)
 {
@@ -1508,7 +1520,7 @@ void Plug::StatGenerator::printStats(const Parameters &param,
     cntQuality += totalNumberToShow[i];
   }
 
-  if(param.pview.statCutoffPack && cntQuality)
+  if(cntQuality)
     _info(1, "   *W<|>orst-10%% Weighted Mean*  (Wm10) corresponds to a weighted "
              "mean where the worst 10%% of the values are assigned the same weight "
              "as the remaining values. This approach is preferable to the standard "
@@ -2460,27 +2472,30 @@ std::string Plug::_getHelpWWM()
     "the best values. "
     "The rationale is that, in the finite element method, critical issues are "
     "often caused by the worst values. "
-    "This metric is parameterized by a single value: the cutoff. "
-    "For applications involving between 2k and 4M elements, a cutoff value of 10% "
-    "is recommended. "
-    "A 10% cutoff means that the worst 10% of values contribute equally "
-    "to the mean as the remaining 90%. "
-    "For small meshes with 100 to 10k elements, a higher cutoff of 25% is "
-    "better suited. "
-    "In contrast, for large meshes starting around 500k elements, a cutoff "
-    "of 2% is more appropriate. "
+    // "This metric is parameterized by a single value: the cutoff. "
+    // "For applications involving between 2k and 4M elements, a cutoff value of 10% "
+    // "is recommended. "
+    // "A 10% cutoff means that the worst 10% of values contribute equally "
+    // "to the mean as the remaining 90%. "
+    // "For small meshes with 100 to 10k elements, a higher cutoff of 25% is "
+    // "better suited. "
+    // "In contrast, for large meshes starting around 500k elements, a cutoff "
+    // "of 2% is more appropriate. "
     "The worst-weighted mean is computed as the integral of the "
     "worst-weighted graph; refer to the next section for a presentation of "
     "those graphs.\n"
     "\n"
-    "PLOTS\n"
+    "WORST-WEIGHTED PLOTS\n"
     "The plugin generates a new type of plot to enhance readability and "
     "facilitate comparisons. "
     "In these plots, the quality value is represented on the y-axis, "
     "while the x-axis displays the percentage of elements. "
     "Note that the x-axis uses an exponential rather than linear scale, "
     "with the cutoff (see the OPTIONS CLARIFICATIONS section) positioned "
-    "in the middle of the axis. "
+    "in the middle of the axis. <More to be added>"
+    // FIXME: cutoff automatically computed but the user can set a fixed
+    //  value, see option clarification. Automatic value give an idea of
+    //  mesh size for those who use them regularly.
     "Each point (x, y) on the plot indicates that x% of the elements have a "
     "quality less than or equal to y. "
     "These plots also provide a clear visualization of the minimum values.\n";
@@ -2546,15 +2561,17 @@ std::string Plug::_getHelpOptionsClarification()
           "This process implies that regularizing the Jacobian "
           "determinant also affects other metrics derived from it: "
           "`minJ' and `minJ/maxJ'.\n"
-    BULLET"`WmCutoffsForStats' and `WmCutoffsForPlots': Defines a list "
-          "of cutoff values used for computing weighted mean-based "
-          "statistics and generating plots. The list of cutoff is specified "
-          "as a sequence of two-digit values, e.g. 123456, which would "
-          "result in extracted cutoffs: `12%', `34%' and `56%'. "
-          "The default value is 10. A `10%' cutoff corresponds to a "
-          "weighted mean where the worst 10% of the values influence "
-          "equally with the rest. This technique highlights critical data "
-          "subsets generally impacting the finite element solution.\n";
+  // FIXME: Update this
+    BULLET"`LockPlotCutoffValue': <TODO>.\n";
+    // BULLET"`WmCutoffsForStats' and `WmCutoffsForPlots': Defines a list "
+    //       "of cutoff values used for computing weighted mean-based "
+    //       "statistics and generating plots. The list of cutoff is specified "
+    //       "as a sequence of two-digit values, e.g. 123456, which would "
+    //       "result in extracted cutoffs: `12%', `34%' and `56%'. "
+    //       "The default value is 10. A `10%' cutoff corresponds to a "
+    //       "weighted mean where the worst 10% of the values influence "
+    //       "equally with the rest. This technique highlights critical data "
+    //       "subsets generally impacting the finite element solution.\n";
 }
 
 std::string Plug::_getHelpVisibility()
