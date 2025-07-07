@@ -148,18 +148,18 @@
 //      is better to have one element view with Validity+ (both validity and unflip)
 
 // FIXME
-//  1. On blades:
+//  xx On blades:
 //     • Run with all four: Create**View, AdjustElementsVisibility, SmartRecomputation:
 //       x Create only plots for Unflip... would expect also validity
 //       - Make visible only Invalid... would expect also unflip?
 //       x Say created 1 elmeent view... expected 2
 //     • Run now with HideWorstElements to hide the invalid elements
 //     • Run now with restrictToVisibleElements and not HideWorstElements
-//       or Create**View
-//       - Do not perform hiding... would expect hide all but flipped one.
-//  1. On blades:
+//       nor Create**View
+//       x Do not perform hiding... would expect hide all but flipped one.
+//  xx On blades:
 //     • Run with two shape measure ON:
-//       - Status does not show for validity and dist...
+//       x StatusBar not shown for validity and dist...
 //       x Show stats for MinJ/maxJ and minJ... expected other measures
 //         (think it is just the name ordering)
 
@@ -1382,13 +1382,14 @@ bool Plug::_performHiding(const std::vector<Measures> &measures)
     // Hide in function of validity, if requested
     if(hide.policy <= 0) {
       // FIXME update
-      for(size_t i = 0; i < measure.isValid.size(); i++) {
-        bool val = static_cast<bool>(measure.isValid[i]);
-        if(hide.worst ? !val : val)
+      for(size_t i = 0; i < measure.validityPlus.size(); i++) {
+        double val = measure.validityPlus[i];
+        if(hide.worst ? val <= .75 : val > .75)
           toHide.push_back(measure.elements[i]);
       }
 
-      if(!toHide.empty() || hide.policy == -1) {
+      if(hide.policy == -1 || (!toHide.empty() &&
+          toHide.size() < measure.validityPlus.size())) {
         _hideElements(measure, toHide, countHidden, countMadeVisible);
         continue;
       }
@@ -1396,8 +1397,10 @@ bool Plug::_performHiding(const std::vector<Measures> &measures)
 
     // Hide in function of quality-like metrics
     bool first = true;
+    bool foundProminentQualityMetric = false;
     for (int i = MINJAC; i <= ASPECT; ++i) {
       if(show.which[i] == show.M) {
+        foundProminentQualityMetric = true;
         std::set<MElement *> tmp;
         _findElementsToHide(measure, static_cast<Metric>(i), tmp);
         if(first) {
@@ -1421,7 +1424,8 @@ bool Plug::_performHiding(const std::vector<Measures> &measures)
         toHide = std::move(result);
       }
     }
-    _hideElements(measure, toHide, countHidden, countMadeVisible);
+    if(foundProminentQualityMetric)
+      _hideElements(measure, toHide, countHidden, countMadeVisible);
   }
 
   if(countHidden && countMadeVisible)
@@ -1431,6 +1435,9 @@ bool Plug::_performHiding(const std::vector<Measures> &measures)
     _info(MP, "-> %s elements have been hidden", formatNumber(countHidden).c_str());
   else if (countMadeVisible)
     _info(MP, "-> %s elements have been made visible", formatNumber(countMadeVisible).c_str());
+  else
+    // FIXME: guide the user why (e.g. policy=1, all valid and no quality requested)
+    _info(MP, "-> no visibility adjustment performed");
 
   return static_cast<bool>(countHidden + countMadeVisible);
 }
@@ -1502,8 +1509,9 @@ bool Plug::_hideElements(const Measures &measure,
                          size_t &countHidden, size_t &countMadeVisible)
 {
   if(_param.hide.todo < 2 && elemToHide.size() == measure.elements.size()) {
-    _info(0, "Skipping hiding because all elements would be hidden");
-    _info(1, "To force hiding, set 'AdjustElementsVisibility' to 2");
+    _info(0, "-> <|>Skipping hiding for %s because all elements would be hidden",
+          measure.dimStr);
+    _info(1, "   To force hiding, set 'AdjustElementsVisibility' to 2");
     return false;
   }
 

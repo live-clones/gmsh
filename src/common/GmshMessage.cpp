@@ -1659,8 +1659,8 @@ void MsgProgressStatus::next()
   _nextIToCheck = (currentPercentage + 1) * _totalElementToTreat / 100 + 1;
 
   double currentTime = Cpu();
-  if ((currentPercentage < 5                   && currentTime - _lastTime > 15.) ||
-      (currentPercentage > _lastPercentage + 4 && currentTime - _lastTime > 10.)) {
+  if ((currentPercentage < 5                   && currentTime - _lastTime > .5) ||
+      (currentPercentage > _lastPercentage + 4 && currentTime - _lastTime > 2.)) {
     _lastPercentage = currentPercentage;
     _lastTime = currentTime;
     const double remaining = (currentTime - _initialTime) / (_currentI + 1) *
