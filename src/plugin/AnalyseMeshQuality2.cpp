@@ -31,10 +31,25 @@
 // #include "BasisFactory.h"
 #endif
 
+// TODO To think of:
+//  1. Have one plot/element view for both validity and unflip and call it
+//     validity+. Flipped elements have a value of either 1/2 (to say, it is
+//     fifty-fifty, flipped may be invalid or not), or -1 (for coherence with
+//     GeoFit).
+//  2. Rename skipValidity+, or skipValidityPlus?
+//  3. Jacobian is computed before shape quality if it is not said that the
+//     element is valid.
+//     -> either skipValidity do not disable preventive validity check or
+//        add a forceComputation in minIGEMeasure / minICNMeasure arguments.
+//        But this is dangerous.
+
 // TODO:
-//  xx Small changes:
+//  1. Small changes:
 //     x distortion -> disto
 //     x requested element -> selected elements
+//     - If nothing to compute: tell it and remove "-> Done computing data"
+//     - Remove custom range for validity/Unflip
+//     - Show found x invalid then table
 //  xx Test plot such that first element take same place, like 1/50
 //     -> If choose to stay at fixed cutoff determine which cutoff to choose for
 //        which number of element
@@ -92,10 +107,57 @@
 //                      #=1T -> c=0.4% -> ww=1%
 //                    - Cutoff value give also indication of size of mesh
 //                      -> expert will know the size
-//     Disadvantages: - x-axis of graph is changing for every value count
+//      Disadvantage: - x-axis of graph is changing for every value count
 //      Idea to test: plot using mesh(x=log(#elem), y=(%good), z=mean)
 //                    and compare the three options with standard mean.
+//     => I think the best option is:
+//        - for plots, Use the above idea with a plugin option 'fixPlotCutoffTo'
+//                     to let the user have that possibility (+say in Help
+//                     that advised 10 for medium mesh, etc.)
+//                     (or it can be available as a Gmsh built-in parameter but
+//                     it would be less practical...)
+//                     -> I think that it is what we want. The accent is on
+//                        reading a maximum of information from 1 plot.
+//                        For comparing two meshes, it is better to fix the
+//                        cutoff (we can add a tick mark at the place of the
+//                        automatic cutoff so that it is easy to know its place
+//                        and check that the fixed cutoff is not too far from
+//                        the automatic)
+//        - for stats, the above idea has the advantage that the mean equals
+//                     the standard mean for 2 values and to have a cutoff that
+//                     continuously decreases. However, the cutoff does not converge.
+//                     It would be better if it converges to a cutoff of e.g. 10
+//                     Or just use a fix cutoff. Of e.g. 10 and thus the mean of
+//                     two values is given by 0.81 * worst and 0.19 * best.
+//                     This is quite strange but it should be kept in mind that
+//                     the worst-weighted mean is designed for a large set
+//                     of values...
+//                     -> I think that a fixed cutoff of 10 works best. It is
+//                        simpler and two meshes that have two sets of value in
+//                        the same proportion will have the same wwm,
+//                        even if the element counts are far apart. It is more
+//                        logical.
 //  xx Add '. Reason is:' at end of error in guidance + warn -> info
+//  7. If guidanceLevel=1: At each run, print what option has been changed
+//     -> can be useful as a log message when bugs.
+//     -> say at FAQ:
+//  8. Avoid ~1e+02% (when it is 99.999...) -> create formatPercentage method.
+//     Use ~100% and ~0%.
+//     Precision should be 1 digit after point when <10% and 0 otherwise.
+
+// FIXME
+//  1. On blades:
+//     • Run with all four: Create**View, AdjustElementsVisibility, SmartRecomputation:
+//       - Create only plots for Unflip... would expect also validity
+//       - Make visible only Invalid... would expect also unflip?
+//     • Run now with HideWorstElements to hide the invalid elements
+//     • Run now with restrictToVisibleElements and not HideWorstElements
+//       or Create**View
+//       - Do not perform hiding... would expect hide all but flipped one.
+//  1. On blades:
+//     • Run with two shape measure ON:
+//       - Status does not show for validity and dist...
+//       - Show stats for MinJ/maxJ and minJ... expected other measures (think it is just the name order)
 
 // TODO Finalization:
 //  1. Check fixmes, todos, etc.
@@ -117,6 +179,20 @@
 //     - also GeoFit
 //  3. Add after computation metrics "(Wall %gs, CPU %gs)" (like in first version)
 //  4. Option to add data as time step in plots (and element view?)
+//  5. Potential additional advanced use case (for tutorial?):
+//     there are invalid elements and we want to see a view of the 10% worst
+//     elements among valid. Run first for hiding invalid elements with
+//     HideWorstElements ON, then rerun again.
+//  6. Say what was the criterion for creating plot/element view or for hiding
+//     when guidanceLevel=1.
+//  7. In visibility section, introduce the 6 visibility options:
+//     - 1 for enabling it
+//     - 3 for selecting the elements
+//     - 2 for determining what to do
+//     Also:
+//     - inverse order DoNotSetVisible and HideWorstElements?
+//     - rename HideWorstElements for inverseWhichAreHidden or something like that?
+//     - rename DoNotSetVisible for DoNotMakeVisible?
 
 // TODO Maybe:
 //  1. Intrinsic validity : smartreco777 for sharing element or 888 or 999
@@ -149,6 +225,7 @@
 //  13. Add to FAQ?:
 //      - How the plugin decide to create views or not
 //  14. Add verbose message for stats on selected elements if verbose==1?
+//  15. Have input field empty instead of 0 at starting?
 
 
 
@@ -256,11 +333,11 @@ StringXNumber MeshQuality2Options_Number[] = {
   {GMSH_FULLRC, "VisibilityPolicy", nullptr, 0, "(-1)=validity|skip, 0=validity|1, 1=qualOR, 2=qualAND"},
   {GMSH_FULLRC, "VisibilityCriterion", nullptr, 0, "0=proportionVisibleElem, 1=numVisibleElem, 2=metricValue"},
   {GMSH_FULLRC, "VisibilityThreshold", nullptr, 10, "DOUBLE (which meaning depends on VisibilityCriterion)"},
-  {GMSH_FULLRC, "HideWorstElements", nullptr, 0, "OFF=hideBestElements, ON"},
+  {GMSH_FULLRC, "HideWorstElements", nullptr, 0, "OFF=hideBestElements, ON=hideWorstElements"},
   {GMSH_FULLRC, "DoNoSetVisible", nullptr, 0, "OFF=performHidingAndUnhiding, ON=justPerformHiding"},
   // Advanced computation options:
   {GMSH_FULLRC, "DataReleasePolicy ", nullptr, 0, "(-1)=freeDataAndSkipExecution, 0=freeOldDataIfGeoEntityAbsent, 1=keepAllData"},
-  {GMSH_FULLRC, "OmitMetricsComputation", nullptr, 0, "OFF, ON=usePreviousData"},
+  {GMSH_FULLRC, "OmitMetricsComputation", nullptr, 0, "OFF, ON=onlyUsePreviousData"},
   {GMSH_FULLRC, "SmartRecomputation", nullptr, 0, "OFF=alwaysRecompute, ON=avoidRecomputeIfUnchangedElementTags"},
   {GMSH_FULLRC, "SkipValidity", nullptr, 0, "(0-)=includeValidity, (1+)=skipPreventiveValidityCheck"},
   // Advanced analysis options:
@@ -397,10 +474,21 @@ PView *Plug::execute(PView *v)
   // // Option 1: Fixed
   //
   // std::vector<double> values;
-  // const int num = 4;
-  // const int listN[num] = {static_cast<int>(1e2), static_cast<int>(1e4), static_cast<int>(1e6), static_cast<int>(1e8)};
-  // const double listC[num] = {25, 10, 10, 2};
-  // int num2 = 4;
+  // const int num = 8;
+  // const int listN[num] = {2, 8, 32, 128, 512, 2048, 8192, 32768};//, static_cast<int>(1e1), static_cast<int>(1e2), static_cast<int>(1e3), static_cast<int>(1e4), static_cast<int>(1e6)};
+  // double listC[num] = {25, 10, 10, 2};
+  // for(int k = 0; k < num; k++) {
+  //   double a = 100 + 98 * std::log(listN[k]/1e16) / std::log(1e16 / 2);
+  //   listC[k] = 100 * std::exp(std::log(2) * (-std::log(listN[k])) / std::log(a) );
+  //   std::cout << "a = " << a << std::endl;
+  //   std::cout << "(-std::log(listN[k])) = " << (-std::log(listN[k])) << std::endl;
+  //   std::cout << "(-std::log(listN[k])) / std::log(a) = " << (-std::log(listN[k])) / std::log(a) << std::endl;
+  //   std::cout << "std::log(2) * (-std::log(listN[k])) / std::log(a) = " << std::log(2) * (-std::log(listN[k])) / std::log(a) << std::endl;
+  //   std::cout << "C = " << listC[k] << std::endl;
+  //   //        cutoff: C = 100 * exp( ln(2) * ln(1/x) / ln(100 / p) )
+  //   //             p: 100 / p = 100 + 98 * log(x/1e16) / log(1e16 / 2)
+  // }
+  // int num2 = 8;
   //
   // for(int k = 0; k < num2; k++) {
   //   const int N = listN[k];
@@ -2202,9 +2290,9 @@ void Plug::DataEntity::addValues(Measures &measures)
 //         - "\x20" (Non-breakable space character)
 //         - "\u00A0" (Non-breaking space)
 #define SPACE "\u2002"
-#define BULLET "\u2002• "
-#define BULLET2 "\u2002\u2002- "
-#define ANSWER "\u2002\u2002  "
+#define BULLET "\u2009• "
+#define BULLET2 "\u2009\u2002- "
+#define ANSWER "\u2009\u2002 "
 
 std::string Plug::_getHelpIntro()
 {
