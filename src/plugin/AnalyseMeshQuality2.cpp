@@ -32,7 +32,7 @@
 #endif
 
 // TODO To think of:
-//  1. Have one plot/element view for both validity and unflip and call it
+//  xx Have one plot/element view for both validity and unflip and call it
 //     validity+. Flipped elements have a value of either 1/2 (to say, it is
 //     fifty-fifty, flipped may be invalid or not), or -1 (for coherence with
 //     GeoFit).
@@ -144,12 +144,15 @@
 //  xx Avoid ~1e+02% (when it is 99.999...) -> create formatPercentage method.
 //     Use ~100% and ~0%.
 //     Precision should be 1 digit after point when <10% and 0 otherwise.
+//  xxx Plots are not really useful with validity and unflip. Moreover, it
+//      is better to have one element view with Validity+ (both validity and unflip)
 
 // FIXME
 //  1. On blades:
 //     • Run with all four: Create**View, AdjustElementsVisibility, SmartRecomputation:
-//       - Create only plots for Unflip... would expect also validity
+//       x Create only plots for Unflip... would expect also validity
 //       - Make visible only Invalid... would expect also unflip?
+//       x Say created 1 elmeent view... expected 2
 //     • Run now with HideWorstElements to hide the invalid elements
 //     • Run now with restrictToVisibleElements and not HideWorstElements
 //       or Create**View
@@ -380,7 +383,7 @@ namespace JacQual = jacobianBasedQuality;
 using Plug = GMSH_AnalyseMeshQuality2Plugin;
 int Plug::_verbose = 0;
 const std::array<std::string, 7> Plug::_metricNames = {
-  "Validity", "Unflip", "MinJac", "MinJ/maxJ", "GeoFit", "Disto", "Aspect"
+  "Validity", "Validity+", "MinJac", "MinJ/maxJ", "GeoFit", "Disto", "Aspect"
 };
 
 // ======== Utility methods ====================================================
@@ -765,18 +768,14 @@ bool Plug::_fetchParameters()
   }
 
   // -> metrics to show
-  ps.which[VALIDITY] = skipValidity == 0 ? -1 : skipValidity > 0 ? 0 : -static_cast<int>(skipValidity);
-  ps.which[DISTO] = static_cast<int>(disto);
-  ps.which[ASPECT] = static_cast<int>(aspect);
-  ps.which[MINJAC] = static_cast<int>(minJ);
-  ps.which[RATIOJAC] = static_cast<int>(ratioJ);
-  ps.which[GEOFIT] = static_cast<int>(geofit);
-  ps.which[UNFLIP] = ps.which[VALIDITY] && !ps.regularizeJac;
+  ps.which[VALIDITY] = skipValidity > 0 ? 0 : 1-static_cast<int>(skipValidity);
+  ps.which[UNFLIP] = ps.regularizeJac ? 0 : ps.which[VALIDITY];
+  ps.which[MINJAC] = minJ <= 0 ? 0 : 1 + static_cast<int>(minJ);
+  ps.which[RATIOJAC] = ratioJ <= 0 ? 0 : 1 + static_cast<int>(ratioJ);
+  ps.which[GEOFIT] = geofit <= 0 ? 0 : 1 + static_cast<int>(geofit);
+  ps.which[DISTO] = disto <= 0 ? 0 : 1 + static_cast<int>(disto);
+  ps.which[ASPECT] = aspect <= 0 ? 0 : 1 + static_cast<int>(aspect);
   ps.M = *std::max_element(std::begin(ps.which), std::end(ps.which));
-  if(ps.M == 0 && ps.which[VALIDITY] == -1) {
-    ps.which[VALIDITY] = 1;
-    ps.M = 1;
-  }
 
   // Legacy options (must be last):
   _fetchLegacyParameters();
@@ -1088,7 +1087,7 @@ void Plug::_computeRequestedData(Counts counts, bool check2D, bool check3D) cons
   }
 
   if(counts.metricValsToCompute[3] > 0) {
-    _status(0, "-> Computing Disto quality...");
+    _status(0, "-> Computing Disto...");
     MsgProgressStatus progress_status(static_cast<int>(counts.metricValsToCompute[3]));
     for(auto data: allDataEntities) {
       data->computeDisto(progress_status, !_param.compute.jacobian);
@@ -1096,7 +1095,7 @@ void Plug::_computeRequestedData(Counts counts, bool check2D, bool check3D) cons
   }
 
   if(counts.metricValsToCompute[4] > 0) {
-    _status(0, "-> Computing Aspect quality...");
+    _status(0, "-> Computing Aspect...");
     MsgProgressStatus progress_status(static_cast<int>(counts.metricValsToCompute[4]));
     for(auto data: allDataEntities) {
       data->computeAspect(progress_status, !_param.compute.jacobian);
@@ -1176,6 +1175,18 @@ void Plug::_finalizeMeasuresData(std::vector<Measures> &measures) const
           if(flipped) ++m.numFlippedElements;
         }
       }
+
+      m.validityPlus.resize(num, 1.);
+      if(!m.isValid.empty()) {
+        for (size_t i = 0; i < m.isValid.size(); ++i) {
+          m.validityPlus[i] -= 1 - m.isValid[i];
+        }
+      }
+      if(!m.isNotFlipped.empty()) {
+        for (size_t i = 0; i < m.isNotFlipped.size(); ++i) {
+          m.validityPlus[i] -= .5 * (1 - m.isNotFlipped[i]);
+        }
+      }
     }
 
     if(_param.show.which[RATIOJAC]) {
@@ -1227,7 +1238,7 @@ void Plug::_createPlots(const std::vector<Measures> &measures)
   int numPlots = 0;
   Parameters::MetricsToShow &ps = _param.show;
   for(const auto &m: measures) {
-    for(int i = VALIDITY; i <= ASPECT; i++) {
+    for(int i = MINJAC; i <= ASPECT; i++) {
       if(ps.which[i] == ps.M) {
         if(_createPlotsOneMetric(m, static_cast<Metric>(i)))
           ++numPlots;
@@ -1305,7 +1316,15 @@ void Plug::_createElementViews(const std::vector<Measures> &measures)
   int numViews = 0;
   Parameters::MetricsToShow &ps = _param.show;
   for(const auto &m: measures) {
-    for(int i = VALIDITY; i <= ASPECT; i++) {
+    if(ps.which[UNFLIP] == ps.M) {
+      if (_createElementViewsOneMetric(m, UNFLIP))
+        ++numViews;
+    }
+    else if(ps.which[VALIDITY] == ps.M) {
+      if (_createElementViewsOneMetric(m, VALIDITY))
+        ++numViews;
+    }
+    for(int i = MINJAC; i <= ASPECT; i++) {
       if(ps.which[i] == ps.M) {
         if (_createElementViewsOneMetric(m, static_cast<Metric>(i)))
           ++numViews;
@@ -1343,8 +1362,8 @@ bool Plug::_createElementViewsOneMetric(const Measures &m, Metric metric)
       if(metric == GEOFIT) {
         p->getOptions()->customMin = -1;
       }
-      return true;
     }
+    return true;
   }
   return false;
 }
@@ -3371,7 +3390,8 @@ const std::vector<double> &Plug::Measures::_getValues(Metric m) const
   case VALIDITY:
     return isValid;
   case UNFLIP:
-    return isNotFlipped;
+    return validityPlus;
+    // return isNotFlipped;
   case GEOFIT:
     return minGFit;
   case DISTO:

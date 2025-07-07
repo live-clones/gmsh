@@ -383,6 +383,7 @@ private:
     // Data for elements on straight geometry
     std::vector<double> isValid;
     std::vector<double> isNotFlipped;
+    std::vector<double> validityPlus;
     std::vector<MElement *> elementsStraightGeo;
     size_t numInvalidElements;
     size_t numFlippedElements;
