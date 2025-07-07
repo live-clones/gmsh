@@ -44,12 +44,12 @@
 //        But this is dangerous.
 
 // TODO:
-//  1. Small changes:
+//  xx Small changes:
 //     x distortion -> disto
 //     x requested element -> selected elements
-//     - If nothing to compute: tell it and remove "-> Done computing data"
-//     - Remove custom range for validity/Unflip
-//     - Show found x invalid then table
+//     x If nothing to compute: tell it and remove "-> Done computing data"
+//     x Remove custom range for validity/Unflip
+//     x Show found x invalid then table
 //  xx Test plot such that first element take same place, like 1/50
 //     -> If choose to stay at fixed cutoff determine which cutoff to choose for
 //        which number of element
@@ -138,7 +138,7 @@
 //                        even if the element counts are far apart. It is more
 //                        logical.
 //  xx Add '. Reason is:' at end of error in guidance + warn -> info
-//  7. If guidanceLevel=1: At each run, print what option has been changed
+//  xx If guidanceLevel=1: At each run, print what option has been changed
 //     -> can be useful as a log message when bugs.
 //     -> say at FAQ:
 //  8. Avoid ~1e+02% (when it is 99.999...) -> create formatPercentage method.
@@ -607,7 +607,7 @@ PView *Plug::execute(PView *v)
   }
 
   // Launch computation
-  _computeRequestedData(countsTotal, check2D, check3D);
+  if(totalToCompute) _computeRequestedData(countsTotal, check2D, check3D);
 
   // Gather data
   std::vector<Measures> measures;
@@ -996,7 +996,7 @@ void GMSH_AnalyseMeshQuality2Plugin::_logModifiedOptions()
   for(int i = 0; i < getNbOptions(false); i++) {
     if(MeshQuality2Options_Number[i].def != _previousOptionValues[i]) {
       if(!introduced) {
-        _info(1, "-> The following options were modified:");
+        _info(1, "-> The following option(s) was/were modified:");
         introduced = true;
       }
       _info(1, "   - %s = %g", MeshQuality2Options_Number[i].str,
@@ -1317,7 +1317,7 @@ bool Plug::_createElementViewsOneMetric(const Measures &m, Metric metric)
     }
     PView *p = new PView(s, "ElementData", _m, dataPV);
     _pviews[key] = p;
-    if(metric != RATIOJAC && metric != MINJAC) {
+    if(metric >= GEOFIT) {
       // Preset customMin and Max but let rangeType be Default
       p->getOptions()->customMin = 0;
       p->getOptions()->customMax = 1;
@@ -1555,7 +1555,8 @@ void Plug::StatGenerator::_printStats(const Measures &measure)
   size_t numReqElem = measure.elements.size();
   _info(MP, "-> Statistics summary for %s:", measure.dimStr);
 
-  // 1. Print header table if necessary
+  // 1. Check if the table must be printed and if there is an absence of
+  //    metric value for selected elements
   bool haveQualityToPrint = false;
   bool showColumnPercentElem = false;
 
@@ -1569,31 +1570,9 @@ void Plug::StatGenerator::_printStats(const Measures &measure)
     }
   }
 
+  // 2. Warn if there is an absence of metric values
   if(showColumnPercentElem)
     _warn(1, "   Not all the selected elements have metric computed");
-
-  if(haveQualityToPrint) {
-    std::ostringstream columnNamesStream;
-    columnNamesStream << "   | ";
-    columnNamesStream << std::setw(_colWidth) << "";
-    if (showColumnPercentElem) {
-      columnNamesStream << std::setw(7) << "%Elem";
-    }
-    columnNamesStream << std::setw(_colWidth) << "Min";
-    for (double c : _statCutoffs) {
-      std::ostringstream formattedP;
-      formattedP << std::setprecision(2) << c;
-      columnNamesStream << std::setw(_colWidth) << "Wm" + formattedP.str();
-    }
-    columnNamesStream << std::setw(_colWidth) << "Max";
-    _info(MP, "%s", columnNamesStream.str().c_str());
-  }
-
-  // 2. Print values for requested quality metrics
-  for(int i = MINJAC; i <= ASPECT; i++) {
-    if(measure.numToShow[i])
-      _printStatsOneMetric(measure, static_cast<Metric>(i), showColumnPercentElem);
-  }
 
   // 3. Print info about validity and flipping
   if(!measure.numToShow[VALIDITY] && !measure.numToShow[UNFLIP]) return;
@@ -1620,7 +1599,32 @@ void Plug::StatGenerator::_printStats(const Measures &measure)
 
   if (measure.numToShow[VALIDITY] < numReqElem) {
     double percentage = static_cast<double>(measure.numToShow[VALIDITY]) / numReqElem * 100;
-    _status(MP, "   Among the %.2g%% of the selected elements that were analyzed", percentage);
+    _status(MP, "   <|>... among the %.2g%% of the selected elements that were analyzed for validity", percentage);
+  }
+
+
+  if(haveQualityToPrint) {
+    // 3. Print header of table
+    std::ostringstream columnNamesStream;
+    columnNamesStream << "   | ";
+    columnNamesStream << std::setw(_colWidth) << "";
+    if (showColumnPercentElem) {
+      columnNamesStream << std::setw(7) << "%Elem";
+    }
+    columnNamesStream << std::setw(_colWidth) << "Min";
+    for (double c : _statCutoffs) {
+      std::ostringstream formattedP;
+      formattedP << std::setprecision(2) << c;
+      columnNamesStream << std::setw(_colWidth) << "Wm" + formattedP.str();
+    }
+    columnNamesStream << std::setw(_colWidth) << "Max";
+    _info(MP, "%s", columnNamesStream.str().c_str());
+
+    // 4. Print values for requested quality metrics
+    for(int i = MINJAC; i <= ASPECT; i++) {
+      if(measure.numToShow[i])
+        _printStatsOneMetric(measure, static_cast<Metric>(i), showColumnPercentElem);
+    }
   }
 }
 
@@ -2999,7 +3003,7 @@ std::size_t Plug::_printElementToCompute(const Counts &cnt2D,
   for (std::size_t x : cnt3D.metricValsToCompute) sum3D += x;
 
   if(sum2D + sum3D == 0) {
-    _info(1, "-> No element to compute");
+    _info(1, "-> No metric values to compute");
     return 0;
   }
 
@@ -3026,7 +3030,7 @@ void Plug::_guidanceNoSelectedElem(Counts counts) const
 {
   if(counts.reqElem) return;
 
-  _error(MP, "-> No element selected for analysis. Reason is:");
+  _error(MP, "-> No element selected for analysis:");
 
   if(counts.elem) {
     // Case where elements are found
@@ -3124,7 +3128,7 @@ bool Plug::_checkAndGuideNoDataToShow(Counts counts, bool check2D, bool check3D)
   // Step 2: Check if there are available computed values for desired metrics
   if(numDesiredVals > 0)
     return true; // Metrics available -> Continue processing
-  _error(MP, "-> No data to output. Reason is:");
+  _error(MP, "-> No data to output based on the current selection or request:");
 
   // Step 3: Case 1 - 'omitMetricComputation' is activated
   if(_param.compute.skip) {
