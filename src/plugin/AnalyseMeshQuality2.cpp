@@ -162,6 +162,11 @@
 //       x StatusBar not shown for validity and dist...
 //       x Show stats for MinJ/maxJ and minJ... expected other measures
 //         (think it is just the name ordering)
+//  xx On testPlugin2:
+//     x On test case 11, geofit values is not printed in stat summary
+//  xx Launch GUI dummy:
+//     • Mesh 3 and enable Disto + plot
+//       x Get Unflip. Expected not Unflip
 
 // TODO Finalization:
 //  1. Check fixmes, todos, etc.
@@ -233,8 +238,13 @@
 
 
 
-// FIXME: PView are based on elements. If I remesh with a different mesh size
-//  factor, data is still there but on wrong elements.
+// FIXME ask JF or Christophe:
+//  1. PView are based on elements. If I remesh with a different mesh size
+//     factor, data is still there but on wrong elements.
+//  2. PView use pointer to GEntities, if I launch testPlugin2 with
+//     'CreateElementsView' = 1, then Asan crashes at test case 9 because
+//     geometry is deleted...
+
 
 // NOTE What does the plugin
 //  0. Free data and stop IF DataReleasePolicy = -1
@@ -414,9 +424,9 @@ std::string formatPercentage(double value) {
   else if(value < 0.05)
     formatted << 0;
   else if(value < 9.5)
-    formatted << std::setprecision(1) << value;
+    formatted << std::fixed << std::setprecision(1) << value;
   else
-    formatted << std::setprecision(0) << value;
+    formatted << std::fixed << std::setprecision(0) << value;
   return formatted.str();
 }
 
@@ -984,13 +994,13 @@ bool Plug::_checkEarlyExitOptions() const
   if(!sum) {
     _error(MP, "-> No metric to analyze. Please adjust the following options:\n");
     _info(MP, "   <|>"
-              "- Turn ON at least one of the following metrics:\n"
-              "  * EnableDistoQuality\n"
-              "  * EnableAspectQuality\n"
-              "  * EnableGeoFitQuality\n"
-              "  * EnableMinJacDetAsAMetric\n"
-              "  * EnableRatioJacDetAsAMetric\n"
-              "- OR set 'SkipValidity' to 0");
+              "Turn ON at least one of the following metrics:\n"
+              "- EnableDistoQuality\n"
+              "- EnableAspectQuality\n"
+              "- EnableGeoFitQuality\n"
+              "- EnableMinJacDetAsAMetric\n"
+              "- EnableRatioJacDetAsAMetric\n"
+              "OR set 'SkipValidity' to 0");
     exit = true;
   }
 
@@ -1628,41 +1638,41 @@ void Plug::StatGenerator::_printStats(const Measures &measure)
     _warn(1, "   Not all the selected elements have metric computed");
 
   // 3. Print info about validity and flipping
-  if(!measure.numToShow[VALIDITY] && !measure.numToShow[UNFLIP]) return;
+  if(measure.numToShow[VALIDITY] || measure.numToShow[UNFLIP]) {
+    double numElement = static_cast<double>(measure.elements.size());
+    double percentageInvalid = static_cast<double>(measure.numInvalidElements) / numElement * 100;
+    double percentageFlipped = static_cast<double>(measure.numFlippedElements) / numElement * 100;
+    if(!(measure.numInvalidElements + measure.numFlippedElements))
+      _status(MP, "   All elements are valid :-)");
+    else if(!measure.numFlippedElements)
+      _warn(MP, "   Found %s invalid elements (~%s%%)",
+        //FIXME 3 formatNumber
+        formatNumber(measure.numInvalidElements).c_str(),
+        formatPercentage(percentageInvalid).c_str());
+    //// It cannot happen since Unflip is currently not computed without validity
+    // else if(!measure.numToShow[VALIDITY])
+    //   _warn(MP, "   Found %s flipped elements (~%s%%)",
+    //     formatNumber(measure.numFlippedElements).c_str(),
+    //     formatPercentage(percentageFlipped).c_str());
+    else if(!measure.numInvalidElements)
+      _warn(MP, "   <|>All elements are valid but %s elements are flipped (~%s%%)",
+        formatNumber(measure.numFlippedElements).c_str(),
+        formatPercentage(percentageFlipped).c_str());
+    else
+      _warn(MP, "   <|>Found %s invalid elements (~%s%%) and %s flipped "
+                "elements (~%s%%)",
+                formatNumber(measure.numInvalidElements).c_str(),
+                formatPercentage(percentageInvalid).c_str(),
+                formatNumber(measure.numFlippedElements).c_str(),
+                formatPercentage(percentageFlipped).c_str());
 
-  double numElement = static_cast<double>(measure.elements.size());
-  double percentageInvalid = static_cast<double>(measure.numInvalidElements) / numElement * 100;
-  double percentageFlipped = static_cast<double>(measure.numFlippedElements) / numElement * 100;
-  if(!(measure.numInvalidElements + measure.numFlippedElements))
-    _status(MP, "   All elements are valid :-)");
-  else if(!measure.numFlippedElements)
-    _warn(MP, "   Found %s invalid elements (~%s%%)",
-      //FIXME 3 formatNumber
-      formatNumber(measure.numInvalidElements).c_str(),
-      formatPercentage(percentageInvalid).c_str());
-  //// It cannot happen since Unflip is currently not computed without validity
-  // else if(!measure.numToShow[VALIDITY])
-  //   _warn(MP, "   Found %s flipped elements (~%s%%)",
-  //     formatNumber(measure.numFlippedElements).c_str(),
-  //     formatPercentage(percentageFlipped).c_str());
-  else if(!measure.numInvalidElements)
-    _warn(MP, "   <|>All elements are valid but %s elements are flipped (~%s%%)",
-      formatNumber(measure.numFlippedElements).c_str(),
-      formatPercentage(percentageFlipped).c_str());
-  else
-    _warn(MP, "   <|>Found %s invalid elements (~%s%%) and %s flipped "
-              "elements (~%s%%)",
-              formatNumber(measure.numInvalidElements).c_str(),
-              formatPercentage(percentageInvalid).c_str(),
-              formatNumber(measure.numFlippedElements).c_str(),
-              formatPercentage(percentageFlipped).c_str());
-
-  if (measure.numToShow[VALIDITY] < numReqElem) {
-    double percentage = static_cast<double>(measure.numToShow[VALIDITY]) / numReqElem * 100;
-    _status(MP, "   <|>... among the %.2g%% of the selected elements that were analyzed for validity", percentage);
+    if (measure.numToShow[VALIDITY] < numReqElem) {
+      double percentage = static_cast<double>(measure.numToShow[VALIDITY]) / numReqElem * 100;
+      _status(MP, "   <|>(among the %.2g%% of the selected elements that were analyzed for validity)", percentage);
+    }
   }
 
-
+  // Table
   if(haveQualityToPrint) {
     // 3. Print header of table
     std::ostringstream columnNamesStream;
@@ -2957,8 +2967,7 @@ void Plug::_printDetailsMetrics(size_t which[METRIC_COUNT], bool verbose2)
   if(verbose2)
     _info(1, "-> Here are all available metrics described in details:");
   else
-    _info(1, "-> <|>Printing statistics\nHere is the important information to know about them:"
-    "them:");
+    _info(1, "-> <|>Printing statistics\nHere is the important information to know about them:");
 
   if(which[VALIDITY]) {
     _info(1, "   *V<|>alidity*  provides information about whether the Jacobian "
@@ -3128,21 +3137,21 @@ void Plug::_guidanceNoSelectedElem(Counts counts) const
       double percentage, numElement = counts.elem;
       if(_param.compute.onlyVisible) {
         percentage = static_cast<double>(counts.elemVisible) / numElement * 100;
-        _info(0, "   * %s visible elements (~%s%% of the total)",
+        _info(0, "   - %s visible elements (~%s%% of the total)",
           formatNumber(counts.elemVisible).c_str(),
           formatPercentage(percentage).c_str());
         ++numCrit;
       }
       if(_param.compute.onlyCurved) {
         percentage = static_cast<double>(counts.elemCurved) / numElement * 100;
-        _info(0, "   * %s curved elements (~%s%% of the total)",
+        _info(0, "   - %s curved elements (~%s%% of the total)",
           formatNumber(counts.elemCurved).c_str(),
           formatPercentage(percentage).c_str());
         ++numCrit;
       }
       if(_param.compute.onlyGivenElemType) {
         percentage = static_cast<double>(countType) / numElement * 100;
-        _info(0, "   * %s elements of the requested type (~%s%% of the total)",
+        _info(0, "   - %s elements of the requested type (~%s%% of the total)",
           formatNumber(countType).c_str(),
           formatPercentage(percentage).c_str());
         ++numCrit;
@@ -3209,13 +3218,13 @@ bool Plug::_checkAndGuideNoDataToShow(Counts counts, bool check2D, bool check3D)
 
     if(numUndesiredVals > 0) {
       _info(0, "   The following metrics are available for the selected elements:");
-      if(!which[VALIDITY] && available[0]) _info(0, "   * Validity");
-      // if(!which[UNFLIP] && available[0]) _info(0, "   * Unflip");
-      if(!which[DISTO] && available[3]) _info(0, "   * Disto");
-      if(!which[ASPECT] && available[4]) _info(0, "   * Aspect");
-      if(!which[GEOFIT] && available[2]) _info(0, "   * GeoFit");
-      if(!which[MINJAC] && available[0]+available[1]) _info(0, "   * minJ");
-      if(!which[RATIOJAC] && available[0]+available[1]) _info(0, "   * minJ/maxJ");
+      if(!which[VALIDITY] && available[0]) _info(0, "   - Validity");
+      // if(!which[UNFLIP] && available[0]) _info(0, "   - Unflip");
+      if(!which[DISTO] && available[3]) _info(0, "   - Disto");
+      if(!which[ASPECT] && available[4]) _info(0, "   - Aspect");
+      if(!which[GEOFIT] && available[2]) _info(0, "   - GeoFit");
+      if(!which[MINJAC] && available[0]+available[1]) _info(0, "   - minJ");
+      if(!which[RATIOJAC] && available[0]+available[1]) _info(0, "   - minJ/maxJ");
     }
   }
 
