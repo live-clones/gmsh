@@ -157,7 +157,8 @@
 //  1. On blades:
 //     • Run with two shape measure ON:
 //       - Status does not show for validity and dist...
-//       - Show stats for MinJ/maxJ and minJ... expected other measures (think it is just the name order)
+//       x Show stats for MinJ/maxJ and minJ... expected other measures
+//         (think it is just the name ordering)
 
 // TODO Finalization:
 //  1. Check fixmes, todos, etc.
@@ -380,7 +381,7 @@ namespace JacQual = jacobianBasedQuality;
 using Plug = GMSH_AnalyseMeshQuality2Plugin;
 int Plug::_verbose = 0;
 const std::array<std::string, 7> Plug::_metricNames = {
-  "Validity", "Unflip", "GeoFit", "Disto", "Aspect", "MinJ/maxJ", "MinJac"
+  "Validity", "Unflip", "MinJac", "MinJ/maxJ", "GeoFit", "Disto", "Aspect"
 };
 
 // ======== Utility methods ====================================================

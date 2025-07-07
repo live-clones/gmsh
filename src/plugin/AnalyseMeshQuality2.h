@@ -26,17 +26,12 @@ GMSH_Plugin *GMSH_RegisterAnalyseMeshQuality2Plugin();
 
 class GMSH_AnalyseMeshQuality2Plugin : public GMSH_PostPlugin {
 private:
-  static int _verbose;
-
-private:
   class DataSingleDimension;
   class DataEntity;
   class StatGenerator;
   struct Counts;
   struct Measures;
   struct ViewKey;
-
-private:
   struct Parameters {
     double dimPolicy = 0;
     bool freeData = false;
