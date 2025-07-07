@@ -141,7 +141,7 @@
 //  xx If guidanceLevel=1: At each run, print what option has been changed
 //     -> can be useful as a log message when bugs.
 //     -> say at FAQ:
-//  8. Avoid ~1e+02% (when it is 99.999...) -> create formatPercentage method.
+//  xx Avoid ~1e+02% (when it is 99.999...) -> create formatPercentage method.
 //     Use ~100% and ~0%.
 //     Precision should be 1 digit after point when <10% and 0 otherwise.
 
@@ -404,6 +404,19 @@ std::string formatNumber(size_t value) {
   return formatted.str();
 }
 
+std::string formatPercentage(double value) {
+  std::ostringstream formatted;
+  if(value > 99.5)
+    formatted << 100;
+  else if(value < 0.05)
+    formatted << 0;
+  else if(value < 9.5)
+    formatted << std::setprecision(1) << value;
+  else
+    formatted << std::setprecision(0) << value;
+  return formatted.str();
+}
+
 // ======== Plugin: Base class methods =========================================
 // =============================================================================
 
@@ -579,8 +592,9 @@ PView *Plug::execute(PView *v)
   if(countsTotal.reqElem < countsTotal.elem) {
     double percentage = static_cast<double>(countsTotal.reqElem) /
       static_cast<double>(countsTotal.elem) * 100;
-    _info(MP, "-> Selected %s elements for analysis (~%.2g%% of the total)",
-      formatNumber(countsTotal.reqElem).c_str(), percentage);
+    _info(MP, "-> Selected %s elements for analysis (~%s%% of the total)",
+      formatNumber(countsTotal.reqElem).c_str(),
+      formatPercentage(percentage).c_str());
   }
   else {
     _info(0, "-> All available elements are selected for analysis",
@@ -1595,19 +1609,26 @@ void Plug::StatGenerator::_printStats(const Measures &measure)
   if(!(measure.numInvalidElements + measure.numFlippedElements))
     _status(MP, "   All elements are valid :-)");
   else if(!measure.numFlippedElements)
-    _warn(MP, "   Found %zu invalid elements (~%.2g%%)",
-      measure.numInvalidElements, percentageInvalid);
+    _warn(MP, "   Found %s invalid elements (~%s%%)",
+      //FIXME 3 formatNumber
+      formatNumber(measure.numInvalidElements).c_str(),
+      formatPercentage(percentageInvalid).c_str());
   //// It cannot happen since Unflip is currently not computed without validity
   // else if(!measure.numToShow[VALIDITY])
-  //   _warn(MP, "   Found %zu flipped elements (~%.2g%%)",
-  //     measure.numFlippedElements, percentageFlipped);
+  //   _warn(MP, "   Found %s flipped elements (~%s%%)",
+  //     formatNumber(measure.numFlippedElements).c_str(),
+  //     formatPercentage(percentageFlipped).c_str());
   else if(!measure.numInvalidElements)
-    _warn(MP, "   <|>All elements are valid but %zu elements are flipped (~%.2g%%)",
-      measure.numFlippedElements, percentageFlipped);
+    _warn(MP, "   <|>All elements are valid but %s elements are flipped (~%s%%)",
+      formatNumber(measure.numFlippedElements).c_str(),
+      formatPercentage(percentageFlipped).c_str());
   else
-    _warn(MP, "   <|>Found %zu invalid elements (~%.2g%%) and %zu flipped "
-              "elements (~%.2g%%)", measure.numInvalidElements,
-              percentageInvalid, measure.numFlippedElements, percentageFlipped);
+    _warn(MP, "   <|>Found %s invalid elements (~%s%%) and %s flipped "
+              "elements (~%s%%)",
+              formatNumber(measure.numInvalidElements).c_str(),
+              formatPercentage(percentageInvalid).c_str(),
+              formatNumber(measure.numFlippedElements).c_str(),
+              formatPercentage(percentageFlipped).c_str());
 
   if (measure.numToShow[VALIDITY] < numReqElem) {
     double percentage = static_cast<double>(measure.numToShow[VALIDITY]) / numReqElem * 100;
@@ -3080,17 +3101,23 @@ void Plug::_guidanceNoSelectedElem(Counts counts) const
       double percentage, numElement = counts.elem;
       if(_param.compute.onlyVisible) {
         percentage = static_cast<double>(counts.elemVisible) / numElement * 100;
-        _info(0, "   * %s visible elements (~%.2g%% of the total)", formatNumber(counts.elemVisible).c_str(), percentage);
+        _info(0, "   * %s visible elements (~%s%% of the total)",
+          formatNumber(counts.elemVisible).c_str(),
+          formatPercentage(percentage).c_str());
         ++numCrit;
       }
       if(_param.compute.onlyCurved) {
         percentage = static_cast<double>(counts.elemCurved) / numElement * 100;
-        _info(0, "   * %s curved elements (~%.2g%% of the total)", formatNumber(counts.elemCurved).c_str(), percentage);
+        _info(0, "   * %s curved elements (~%s%% of the total)",
+          formatNumber(counts.elemCurved).c_str(),
+          formatPercentage(percentage).c_str());
         ++numCrit;
       }
       if(_param.compute.onlyGivenElemType) {
         percentage = static_cast<double>(countType) / numElement * 100;
-        _info(0, "   * %s elements of the requested type (~%.2g%% of the total)", formatNumber(countType).c_str(), percentage);
+        _info(0, "   * %s elements of the requested type (~%s%% of the total)",
+          formatNumber(countType).c_str(),
+          formatPercentage(percentage).c_str());
         ++numCrit;
       }
       if(numCrit == 2)
