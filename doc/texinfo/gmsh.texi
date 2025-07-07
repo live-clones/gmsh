@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+@c Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 @c
 @c See the LICENSE.txt file in the Gmsh root directory for license information.
 @c Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -22,7 +22,7 @@
 @c %**starts of header
 @setfilename gmsh.info
 @include version.texi
-@set COPYRIGHT @copyright{} 1997-2024 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
+@set COPYRIGHT @copyright{} 1997-2025 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @set SYN a synchronization of the CAD model with the internal Gmsh model.
 @set SYNC This operation triggers @value{SYN}
 @set SYNCS These operations all trigger @value{SYN}
@@ -351,7 +351,7 @@ actions in the geometry module automatically append the related command
 in the input script file, and can optionally also generate input for the
 languages supported by the API (see the
 @code{General.ScriptingLanguages} option; this is still work-in-progress
-as of Gmsh 4.12.)
+as of Gmsh 4.14.)
 
 In addition to CAD-type geometrical entities, whose geometry is provided
 by a CAD kernel, Gmsh also supports @emph{discrete} model entities,
@@ -2518,6 +2518,9 @@ Sine of @var{expression}.
 @item Sinh ( @var{expression} )
 Hyperbolic sine of @var{expression}.
 
+@item Step ( @var{expression} )
+Returns 0 if @var{expression} is negative, 1 if not.
+
 @item Tan ( @var{expression} )
 Tangent of @var{expression}.
 
@@ -4463,13 +4466,13 @@ geometrical and the mesh data) and @emph{views} (which hold
 post-processing data). These are manipulated by the API functions in the
 top-level namespaces @code{gmsh/model} and @code{gmsh/view},
 respectively. The other top-level namespaces are @code{gmsh/option}
-(which handles all options), @code{gmsh/plugin} (which handles
-extensions to core Gmsh functionality), @code{gmsh/graphics} (which
-handles drawing), @code{gmsh/fltk} (which handles the graphical user
-interface), @code{gmsh/parser} (which handles the Gmsh parser),
-@code{gmsh/onelab} (which handles ONELAB parameters and communications
-with external codes) and @code{gmsh/logger} (which handles information
-logging).
+(which handles all options), @code{gmsh/algorithm} (which handles raw
+algorithms), @code{gmsh/plugin} (which handles extensions to core Gmsh
+functionality), @code{gmsh/graphics} (which handles drawing),
+@code{gmsh/fltk} (which handles the graphical user interface),
+@code{gmsh/parser} (which handles the Gmsh parser), @code{gmsh/onelab}
+(which handles ONELAB parameters and communications with external codes)
+and @code{gmsh/logger} (which handles information logging).
 @item
 Geometrical data is made of model @emph{entities}, called @emph{points}
 (entities of dimension 0), @emph{curves} (entities of dimension 1),

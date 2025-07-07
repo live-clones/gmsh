@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -990,10 +990,14 @@ bool OCC_Internals::addCircleArc(int &tag, int startTag, int middleTag,
     Handle(Geom_Circle) C = new Geom_Circle(Circ);
     Standard_Real Alpha1 = ElCLib::Parameter(Circ, aP1);
     Standard_Real Alpha2 = ElCLib::Parameter(Circ, aP3);
-    bool Sense = false;
+    bool Sense = false; // trigonometric to match built-in kernel arcs
     if(!center) {
       Standard_Real AlphaC = ElCLib::Parameter(Circ, aP2);
-      if(AlphaC > Alpha1 && AlphaC < Alpha2) Sense = true;
+      Sense = (Alpha1 < AlphaC && AlphaC < Alpha2) ||
+        (AlphaC < Alpha2 && Alpha2 < Alpha1) ||
+        (Alpha2 < Alpha1 && Alpha1 < AlphaC);
+      Msg::Debug("Circle through point sense %d: Alpha1=%g, Alpha2=%g, AlphaC=%g",
+                 Sense ? 1 : 0, Alpha1, Alpha2, AlphaC);
     }
     Handle(Geom_TrimmedCurve) arc =
       new Geom_TrimmedCurve(C, Alpha1, Alpha2, Sense);
@@ -1335,7 +1339,7 @@ bool OCC_Internals::_addBSpline(int &tag, const std::vector<int> &pointTags,
       }
       else if(!tangents.empty()) {
         Msg::Warning(
-          "Wrong number of tangent constraints for spline (%lu != %lu)",
+          "Wrong number of tangent constraints for spline (%zu != %zu)",
           tangents.size(), pointTags.size());
       }
       intp.Perform();
@@ -4316,7 +4320,7 @@ bool OCC_Internals::_transform(
 
   TopoDS_Shape result;
   if(tfo) {
-    tfo->Perform(c, Standard_False);
+    tfo->Perform(c, Standard_True);
     if(!tfo->IsDone()) {
       Msg::Error("Could not apply transformation");
       return false;
@@ -4324,7 +4328,7 @@ bool OCC_Internals::_transform(
     result = tfo->Shape();
   }
   else if(gtfo) {
-    gtfo->Perform(c, Standard_False);
+    gtfo->Perform(c, Standard_True);
     if(!gtfo->IsDone()) {
       Msg::Error("Could not apply transformation");
       return false;
@@ -4888,9 +4892,9 @@ void _writeXAO(TopoDS_Shape &shape, GModel *model, const std::string &fileName)
     return;
   }
 
-  // TODO: In addition to saving physical group tags (see below), we could
-  // further extend the XAO output by dumping OCCAttributes (extrusion
-  // constraints, mesh sizes...).
+  // TODO: In addition to saving physical group tags and mesh sizes at points
+  // (see below), we could further extend the XAO output by dumping
+  // OCCAttributes (extrusion constraints, ...).
 
   // We could also save the entity tag; for reading back this info we would then
   // either need to change/write a custom importShapes/synchronize() where tags
@@ -4959,9 +4963,17 @@ void _writeXAO(TopoDS_Shape &shape, GModel *model, const std::string &fileName)
     for(auto p : topo[dim]) {
       std::string name =
         model->getElementaryName(p.second->dim(), p.second->tag());
-      file << "        <" << label << " index=\"" << index << "\" "
-           << "name=\"" << name << "\" "
-           << "reference=\"" << p.first << "\"/>" << std::endl;
+      file << "        <" << label << " index=\"" << index
+           << "\" name=\"" << name << "\" reference=\"" << p.first << "\"";
+#if 1
+      // Gmsh XAO extension: also save the prescribed mesh size at the vertex
+      if(dim == 0) {
+        double lc = static_cast<GVertex *>(p.second)->prescribedMeshSizeAtVertex();
+        if(lc != MAX_LC)
+          file << " meshsize=\"" << lc << "\"";
+      }
+#endif
+      file << "/>" << std::endl;
       for(auto &g : p.second->physicals) {
         groups[dim][std::abs(g)].push_back(index);
       }
@@ -5482,7 +5494,7 @@ void OCC_Internals::synchronize(GModel *model)
   std::sort(toRemove.begin(), toRemove.end(), sortByInvDim);
   std::vector<GEntity *> removed;
   model->remove(toRemove, removed);
-  Msg::Debug("Destroying %lu entities in model", removed.size());
+  Msg::Debug("Destroying %zu entities in model", removed.size());
   for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
   _toRemove.clear();
 
@@ -6607,6 +6619,12 @@ int GModel::readOCCXAO(const std::string &fn)
           const char *name = nullptr;
           if(vertex->QueryAttribute("name", &name) == XML_SUCCESS)
             if(strlen(name)) setElementaryName(0, gv->tag(), name);
+          // Gmsh XAO extension: Gmsh saves the mesh size at vertices when
+          // creating XAO files
+          double lc;
+          if(vertex->QueryDoubleAttribute("meshsize", &lc) == XML_SUCCESS) {
+            gv->setPrescribedMeshSizeAtVertex(lc);
+          }
         }
         else {
           Msg::Error("Could not find model point for XAO reference %d", ref);

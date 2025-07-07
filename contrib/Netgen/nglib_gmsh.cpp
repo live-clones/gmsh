@@ -216,7 +216,7 @@ namespace nglib
       //RemoveIllegalElements(*m);
       //OptimizeVolume(mparam, *m);
     }
-    catch(netgen::NgException error){
+    catch(netgen::NgException& error){
       return NG_VOLUME_FAILURE;
     }
     return NG_OK;
@@ -237,7 +237,7 @@ namespace nglib
       RemoveIllegalElements(*m);
       OptimizeVolume(mparam, *m);
     }
-    catch(netgen::NgException error){
+    catch(netgen::NgException& error){
       return NG_VOLUME_FAILURE;
     }
     return NG_OK;

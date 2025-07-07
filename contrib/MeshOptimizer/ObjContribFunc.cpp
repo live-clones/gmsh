@@ -1,4 +1,4 @@
-// MeshOptimizer - Copyright (C) 2013-2024 UCLouvain-ULiege
+// MeshOptimizer - Copyright (C) 2013-2025 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -52,7 +52,7 @@ const double ObjContribFuncBarrier::MARGINCOEFF = 0.1;
 const double ObjContribFuncBarrier::STAGTHRESHOLD = 0.01;
 
 ObjContribFuncBarrier::ObjContribFuncBarrier()
-  : _target(0.), _barrier(0.), _init(0.), _opt(0.), _defaultMargin(0.)
+  : _opt(0.), _defaultMargin(0.), _barrier(0.), _target(0.), _init(0.)
 {
 }
 

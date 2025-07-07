@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -24,8 +24,8 @@
 
 #if defined(HAVE_HXT)
 
-extern "C" {
 #include "hxt_omp.h"
+extern "C" {
 #include "hxt_tetMesh.h"
 #include "hxt_tetDelaunay.h"
 }
@@ -60,7 +60,7 @@ static HXTStatus nodalSizesCallBack(double *pts, uint32_t *volume,
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t i = 0; i < numPts; i++) {
     if(exceptions) continue;
-    if(volume[i] < 0 || volume[i] >= allGR->size()) {
+    if(volume[i] >= allGR->size()) {
       Msg::Error("Invalid volume tag %d in mesh size calculation", volume[i]);
       continue;
     }
@@ -640,6 +640,7 @@ static HXTStatus _delaunayMeshIn3DHxt(std::vector<MVertex *> &verts,
     0, // insertionFirst
     0, // partitionability
     1, // perfectDelaunay
+    0, // allowOuterInsertion
     0, // verbosity
     0, // reproducible
     nthreads // delaunayThreads (0 = omp_get_max_threads)

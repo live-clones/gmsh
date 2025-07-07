@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -42,10 +42,9 @@
 
 static GEdge *
 getModelEdge(GModel *gm, std::vector<GFace *> &gfs,
-             std::vector<std::pair<GEdge *, std::vector<GFace *> > > &newEdges,
+             std::vector<std::pair<GEdge *, std::vector<GFace *>>> &newEdges,
              size_t &MAX1)
 {
-
   if(gfs.size() == 2 && gfs[0] == gfs[1]) return nullptr;
 
   for(size_t i = 0; i < newEdges.size(); i++) {
@@ -56,12 +55,12 @@ getModelEdge(GModel *gm, std::vector<GFace *> &gfs,
            gfs.end()) {
           found = false;
           break;
-	}
-	if(std::find(newEdges[i].second.begin(), newEdges[i].second.end(), gfs[j]) ==
-	   newEdges[i].second.end()) {
-	  found = false;
-	  break;
-	}
+        }
+        if(std::find(newEdges[i].second.begin(), newEdges[i].second.end(),
+                     gfs[j]) == newEdges[i].second.end()) {
+          found = false;
+          break;
+        }
       }
       if(found) return newEdges[i].first;
     }
@@ -239,7 +238,7 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
     (*rit)->set(std::vector<GFace *>(_newFaces.begin(), _newFaces.end()));
   }
 
-  std::vector<std::pair<GEdge *, std::vector<GFace *> > > newEdges;
+  std::vector<std::pair<GEdge *, std::vector<GFace *>>> newEdges;
   {
     auto it = tris.begin();
     for(; it != tris.end(); ++it) {
@@ -249,7 +248,7 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
         std::vector<GFace *> faces;
         for(size_t i = 0; i < it->second.size(); ++i) {
           faces.push_back(reverse[it->second[i]]);
-	}
+        }
         GEdge *ge = getModelEdge(gm, faces, newEdges, MAX1);
         if(ge) ge->lines.push_back(*itl);
       }
@@ -258,23 +257,23 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
   Msg::Info("Found %d model curves", newEdges.size());
 
   // check if an edge is embedded in a face
-  std::set<MVertex*> forceSplit;
-  std::map<GEdge*, GFace*> embedded;
+  std::set<MVertex *> forceSplit;
+  std::map<GEdge *, GFace *> embedded;
   for(auto ite = newEdges.begin(); ite != newEdges.end(); ++ite) {
     GEdge *ge = ite->first;
-    for (size_t i = 0;i<ite->second.size();++i) {
-      for (size_t j = i+1;j<ite->second.size();++j) {
-	if (ite->second[i] == ite->second[j]){
-	  embedded.insert({ge,ite->second[i]});
-	  std::vector<MEdge> allEdges;
-	  for(std::size_t i = 0; i < ite->first->lines.size(); i++)
-	    allEdges.push_back(MEdge(ite->first->lines[i]->getVertex(0),
-				     ite->first->lines[i]->getVertex(1)));
-	  std::vector<std::vector<MVertex *> > vs_;
-	  SortEdgeConsecutive(allEdges, vs_);
-	  forceSplit.insert(vs_[0][0]);
-	  forceSplit.insert(vs_[0][vs_[0].size() - 1]);
-	}
+    for(size_t i = 0; i < ite->second.size(); ++i) {
+      for(size_t j = i + 1; j < ite->second.size(); ++j) {
+        if(ite->second[i] == ite->second[j]) {
+          embedded.insert({ge, ite->second[i]});
+          std::vector<MEdge> allEdges;
+          for(std::size_t i = 0; i < ite->first->lines.size(); i++)
+            allEdges.push_back(MEdge(ite->first->lines[i]->getVertex(0),
+                                     ite->first->lines[i]->getVertex(1)));
+          std::vector<std::vector<MVertex *>> vs_;
+          SortEdgeConsecutive(allEdges, vs_);
+          forceSplit.insert(vs_[0][0]);
+          forceSplit.insert(vs_[0][vs_[0].size() - 1]);
+        }
       }
     }
   }
@@ -285,12 +284,13 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
     newFaceTopology;
   std::map<MVertex *, GVertex *> modelVertices;
 
-  std::map<int,int> embedded_new;
+  std::map<int, int> embedded_new;
   for(auto ite = newEdges.begin(); ite != newEdges.end(); ++ite) {
     std::vector<MEdge> allEdges;
 
     GFace *emb = embedded.find(ite->first) != embedded.end() ?
-      embedded[ite->first] : nullptr;
+                   embedded[ite->first] :
+                   nullptr;
 
     for(std::size_t i = 0; i < ite->first->lines.size(); i++) {
       allEdges.push_back(MEdge(ite->first->lines[i]->getVertex(0),
@@ -298,11 +298,11 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
       delete ite->first->lines[i];
     }
     ite->first->lines.clear();
-    std::vector<std::vector<MVertex *> > vs_;
+    std::vector<std::vector<MVertex *>> vs_;
 
     SortEdgeConsecutive(allEdges, vs_);
 
-    std::vector<std::vector<MVertex *> > vs;
+    std::vector<std::vector<MVertex *>> vs;
     for(size_t i = 0; i < vs_.size(); i++) {
       bool periodic = (vs_[i][vs_[i].size() - 1] == vs_[i][0]);
       if(periodic) {
@@ -376,7 +376,7 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
       GEdge *newGe = new discreteEdge(gm, (MAX1++) + 1, modelVertices[vB],
                                       modelVertices[vE]);
 
-      if(emb) embedded_new.insert({newGe->tag(),emb->tag()});
+      if(emb) embedded_new.insert({newGe->tag(), emb->tag()});
 
       for(size_t j = 1; j < vs[i].size(); j++) {
         MVertex *v1 = vs[i][j - 1];
@@ -402,15 +402,16 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
 
   for(auto itFT = newFaceTopology.begin(); itFT != newFaceTopology.end();
       ++itFT) {
-
     std::vector<int> bndEdges, embEdges;
-    for (auto e : itFT->second){
-      if (embedded_new.find(e) != embedded_new.end() &&
-	  embedded_new[e] == itFT->first->tag()) embEdges.push_back(e);
-      else bndEdges.push_back(e);
+    for(auto e : itFT->second) {
+      if(embedded_new.find(e) != embedded_new.end() &&
+         embedded_new[e] == itFT->first->tag())
+        embEdges.push_back(e);
+      else
+        bndEdges.push_back(e);
     }
     itFT->first->setBoundEdges(bndEdges);
-    for (auto e : embEdges)itFT->first->addEmbeddedEdge(gm->getEdgeByTag(e));
+    for(auto e : embEdges) itFT->first->addEmbeddedEdge(gm->getEdgeByTag(e));
   }
 
   for(auto ite = newEdges.begin(); ite != newEdges.end(); ++ite) {
@@ -507,14 +508,14 @@ void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
 
 int computeDiscreteCurvatures(GModel *gm)
 {
-  std::map<MVertex *, std::pair<SVector3, SVector3> > &C = gm->getCurvatures();
+  std::map<MVertex *, std::pair<SVector3, SVector3>> &C = gm->getCurvatures();
   C.clear();
   for(auto it = gm->firstFace(); it != gm->lastFace(); ++it) {
     GFace *gf = *it;
     std::map<MVertex *, int> nodeIndex;
     std::vector<SPoint3> nodes;
     std::vector<int> tris;
-    std::vector<std::pair<SVector3, SVector3> > curv;
+    std::vector<std::pair<SVector3, SVector3>> curv;
     for(std::size_t i = 0; i < gf->triangles.size(); i++) {
       MTriangle *t = gf->triangles[i];
       for(int j = 0; j < 3; j++) {
@@ -581,7 +582,7 @@ bool computeParametrization(const std::vector<MTriangle *> &triangles,
       return false;
     }
   }
-  std::vector<std::vector<MVertex *> > vs;
+  std::vector<std::vector<MVertex *>> vs;
   if(!SortEdgeConsecutive(es, vs)) {
     Msg::Error("Wrong topology of boundary mesh for parametrization");
     return false;
@@ -591,8 +592,8 @@ bool computeParametrization(const std::vector<MTriangle *> &triangles,
     return false;
   }
 
-  Msg::Debug("Parametrisation of surface with %lu triangles, %lu edges and "
-             "%lu holes",
+  Msg::Debug("Parametrisation of surface with %zu triangles, %zu edges and "
+             "%zu holes",
              triangles.size(), edges.size(), vs.size() - 1);
 
   // find longest loop and use it as the "exterior" loop
@@ -676,7 +677,7 @@ bool computeParametrization(const std::vector<MTriangle *> &triangles,
     }
   }
 #endif
-
+  unsigned nnz = 0;
   for(auto it = edges.begin(); it != edges.end(); ++it) {
     for(int ij = 0; ij < 2; ij++) {
       MVertex *v0 = it->first.getVertex(ij);
@@ -709,28 +710,33 @@ bool computeParametrization(const std::vector<MTriangle *> &triangles,
       double c = (tan(.5 * thetaL) + tan(.5 * thetaR)) / ne;
       lsys->addToMatrix(index0, index1, -c);
       lsys->addToMatrix(index0, index0, c);
+      nnz += 2;
     }
   }
-  for(std::size_t i = 0; i < vs[loop].size() - 1; i++) {
-    int row = nodeIndex[vs[loop][i]];
-    lsys->addToMatrix(row, row, 1);
-  }
+  if(nnz) {
+    for(std::size_t i = 0; i < vs[loop].size() - 1; i++) {
+      int row = nodeIndex[vs[loop][i]];
+      lsys->addToMatrix(row, row, 1);
+    }
 
-  lsys->zeroRightHandSide();
-  for(std::size_t i = 0; i < vs[loop].size() - 1; i++) {
-    int row = nodeIndex[vs[loop][i]];
-    lsys->addToRightHandSide(row, u[row]);
-  }
-  lsys->systemSolve();
-  for(std::size_t i = 0; i < nodes.size(); i++) lsys->getFromSolution(i, u[i]);
+    lsys->zeroRightHandSide();
+    for(std::size_t i = 0; i < vs[loop].size() - 1; i++) {
+      int row = nodeIndex[vs[loop][i]];
+      lsys->addToRightHandSide(row, u[row]);
+    }
+    lsys->systemSolve();
+    for(std::size_t i = 0; i < nodes.size(); i++)
+      lsys->getFromSolution(i, u[i]);
 
-  lsys->zeroRightHandSide();
-  for(std::size_t i = 0; i < vs[loop].size() - 1; i++) {
-    int row = nodeIndex[vs[loop][i]];
-    lsys->addToRightHandSide(row, v[row]);
+    lsys->zeroRightHandSide();
+    for(std::size_t i = 0; i < vs[loop].size() - 1; i++) {
+      int row = nodeIndex[vs[loop][i]];
+      lsys->addToRightHandSide(row, v[row]);
+    }
+    lsys->systemSolve();
+    for(std::size_t i = 0; i < nodes.size(); i++)
+      lsys->getFromSolution(i, v[i]);
   }
-  lsys->systemSolve();
-  for(std::size_t i = 0; i < nodes.size(); i++) lsys->getFromSolution(i, v[i]);
 
   delete lsys;
 #endif
@@ -794,11 +800,11 @@ static int isTriangulationParametrizable(const std::vector<MTriangle *> &t,
   }
   if(bnd.empty()) {
     why << "poincare characteristic 2 is not 0";
-    //debugTriangulation(t, why.str());
+    // debugTriangulation(t, why.str());
     return 2;
   }
 
-  std::vector<std::vector<MVertex *> > vs;
+  std::vector<std::vector<MVertex *>> vs;
   if(!SortEdgeConsecutive(bnd, vs)) {
     why << "boundary not manifold";
     return 2;
@@ -850,9 +856,8 @@ public:
   }
 };
 
-bool
-makePartitionSimplyConnected(std::vector<MTriangle *> &t,
-                             std::vector<std::vector<MTriangle *> > &ts)
+bool makePartitionSimplyConnected(std::vector<MTriangle *> &t,
+                                  std::vector<std::vector<MTriangle *>> &ts)
 {
   std::map<MEdge, twoT, MEdgeLessThan> conn;
   for(std::size_t i = 0; i < t.size(); i++) {
@@ -906,7 +911,7 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
     std::vector<MVertex *> verts = (*it)->mesh_vertices;
     std::map<MTriangle *, int, MElementPtrLessThan> global;
     std::map<MEdge, int, MEdgeLessThan> cuts;
-    std::stack<std::vector<MTriangle *> > partitions;
+    std::stack<std::vector<MTriangle *>> partitions;
     std::stack<int> _levels;
     partitions.push((*it)->triangles);
     _levels.push(0);
@@ -946,7 +951,7 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
       else {
 #if defined(HAVE_MESH)
         if(!PartitionFaceMinEdgeLength(*it, np)) {
-          std::vector<std::vector<MTriangle *> > t(np);
+          std::vector<std::vector<MTriangle *>> t(np);
           for(std::size_t i = 0; i < (*it)->triangles.size(); i++) {
             int p = (*it)->triangles[i]->getPartition();
             if(p >= 0 && p < np)
@@ -955,7 +960,7 @@ void computeEdgeCut(GModel *gm, std::vector<MLine *> &cut,
               Msg::Error("Invalid partition index");
           }
           for(std::size_t i = 0; i < t.size(); i++) {
-            std::vector<std::vector<MTriangle *> > ts;
+            std::vector<std::vector<MTriangle *>> ts;
             if(!makePartitionSimplyConnected(t[i], ts)) {
               Msg::Warning("Could not make partition simply connected");
               break;

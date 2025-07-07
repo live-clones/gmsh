@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -14,7 +14,7 @@
 #include <MTriangle.h>
 
 StringXNumber DiscretizationErrorOptions_Number[] = {
-  {GMSH_FULLRC, "SuperSamplingNodes", nullptr, 10.}};
+  {GMSH_FULLRC, "SuperSamplingNodes", nullptr, 10., ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterDiscretizationErrorPlugin()

@@ -1,5 +1,5 @@
 !
-! Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+! Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 !
 ! See the LICENSE.txt file in the Gmsh root directory for license information.
 ! Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -179,6 +179,14 @@ module gmsh
     procedure, nopass :: run => &
         gmshPluginRun
   end type gmsh_plugin_t
+
+  type, public :: gmsh_algorithm_t
+    contains
+    procedure, nopass :: triangulate => &
+        gmshAlgorithmTriangulate
+    procedure, nopass :: tetrahedralize => &
+        gmshAlgorithmTetrahedralize
+  end type gmsh_algorithm_t
 
   type, public :: gmsh_view_option_t
     contains
@@ -730,10 +738,6 @@ module gmsh
         gmshModelMeshComputeHomology
     procedure, nopass :: computeCrossField => &
         gmshModelMeshComputeCrossField
-    procedure, nopass :: triangulate => &
-        gmshModelMeshTriangulate
-    procedure, nopass :: tetrahedralize => &
-        gmshModelMeshTetrahedralize
   end type gmsh_model_mesh_t
 
   type, public :: gmsh_model_t
@@ -765,6 +769,8 @@ module gmsh
         gmshModelRemoveEntityName
     procedure, nopass :: getPhysicalGroups => &
         gmshModelGetPhysicalGroups
+    procedure, nopass :: getPhysicalGroupsEntities => &
+        gmshModelGetPhysicalGroupsEntities
     procedure, nopass :: getEntitiesForPhysicalGroup => &
         gmshModelGetEntitiesForPhysicalGroup
     procedure, nopass :: getEntitiesForPhysicalName => &
@@ -797,8 +803,12 @@ module gmsh
         gmshModelAddDiscreteEntity
     procedure, nopass :: removeEntities => &
         gmshModelRemoveEntities
+    procedure, nopass :: getEntityType => &
+        gmshModelGetEntityType
     procedure, nopass :: getType => &
         gmshModelGetType
+    procedure, nopass :: getEntityProperties => &
+        gmshModelGetEntityProperties
     procedure, nopass :: getParent => &
         gmshModelGetParent
     procedure, nopass :: getNumberOfPartitions => &
@@ -871,6 +881,7 @@ module gmsh
     type(gmsh_option_t) :: option
     type(gmsh_model_t) :: model
     type(gmsh_view_t) :: view
+    type(gmsh_algorithm_t) :: algorithm
     type(gmsh_plugin_t) :: plugin
     type(gmsh_graphics_t) :: graphics
     type(gmsh_fltk_t) :: fltk
@@ -1486,9 +1497,9 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelRemoveEntityName
 
-  !> Get all the physical groups in the current model. If `dim' is >= 0, return
-  !! only the entities of the specified dimension (e.g. physical points if `dim'
-  !! == 0). The entities are returned as a vector of (dim, tag) pairs.
+  !> Get the physical groups in the current model. The physical groups are
+  !! returned as a vector of (dim, tag) pairs. If `dim' is >= 0, return only the
+  !! groups of the specified dimension (e.g. physical points if `dim' == 0).
   subroutine gmshModelGetPhysicalGroups(dimTags, &
                                         dim, &
                                         ierr)
@@ -1517,6 +1528,60 @@ module gmsh
     dimTags = ovectorpair_(api_dimTags_, &
       api_dimTags_n_)
   end subroutine gmshModelGetPhysicalGroups
+
+  !> Get the physical groups in the current model as well as the model entities
+  !! that make them up. The physical groups are returned as the vector of (dim,
+  !! tag) pairs `dimTags'. The model entities making up the corresponding
+  !! physical groups are returned in `entities'. If `dim' is >= 0, return only
+  !! the groups of the specified dimension (e.g. physical points if `dim' == 0).
+  subroutine gmshModelGetPhysicalGroupsEntities(dimTags, &
+                                                entities, &
+                                                entities_n, &
+                                                dim, &
+                                                ierr)
+    interface
+    subroutine C_API(api_dimTags_, &
+                     api_dimTags_n_, &
+                     api_entities_, &
+                     api_entities_n_, &
+                     api_entities_nn_, &
+                     dim, &
+                     ierr_) &
+      bind(C, name="gmshModelGetPhysicalGroupsEntities")
+      use, intrinsic :: iso_c_binding
+      type(c_ptr), intent(out) :: api_dimTags_
+      integer(c_size_t), intent(out) :: api_dimTags_n_
+      type(c_ptr), intent(out) :: api_entities_
+      type(c_ptr), intent(out) :: api_entities_n_
+      integer(c_size_t) :: api_entities_nn_
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: dimTags
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: entities
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: entities_n
+    integer, intent(in), optional :: dim
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_dimTags_
+    integer(c_size_t) :: api_dimTags_n_
+    type(c_ptr) :: api_entities_, api_entities_n_
+    integer(c_size_t) :: api_entities_nn_
+    call C_API(api_dimTags_=api_dimTags_, &
+         api_dimTags_n_=api_dimTags_n_, &
+         api_entities_=api_entities_, &
+         api_entities_n_=api_entities_n_, &
+         api_entities_nn_=api_entities_nn_, &
+         dim=optval_c_int(-1, dim), &
+         ierr_=ierr)
+    dimTags = ovectorpair_(api_dimTags_, &
+      api_dimTags_n_)
+    call ovectorvectorpair_(api_entities_, &
+      api_entities_n_, &
+      api_entities_nn_, &
+      entities, &
+      entities_n)
+  end subroutine gmshModelGetPhysicalGroupsEntities
 
   !> Get the tags of the model entities making up the physical group of
   !! dimension `dim' and tag `tag'.
@@ -2093,6 +2158,37 @@ module gmsh
   end subroutine gmshModelRemoveEntities
 
   !> Get the type of the entity of dimension `dim' and tag `tag'.
+  subroutine gmshModelGetEntityType(dim, &
+                                    tag, &
+                                    entityType, &
+                                    ierr)
+    interface
+    subroutine C_API(dim, &
+                     tag, &
+                     api_entityType_, &
+                     ierr_) &
+      bind(C, name="gmshModelGetEntityType")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), value, intent(in) :: tag
+      type(c_ptr), intent(out) :: api_entityType_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    character(len=:), allocatable, intent(out) :: entityType
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_entityType_
+    call C_API(dim=int(dim, c_int), &
+         tag=int(tag, c_int), &
+         api_entityType_=api_entityType_, &
+         ierr_=ierr)
+    entityType = ostring_(api_entityType_)
+  end subroutine gmshModelGetEntityType
+
+  !> Get the type of the entity of dimension `dim' and tag `tag'. (This is a
+  !! deprecated synonym for `getType'.)
   subroutine gmshModelGetType(dim, &
                               tag, &
                               entityType, &
@@ -2121,6 +2217,59 @@ module gmsh
          ierr_=ierr)
     entityType = ostring_(api_entityType_)
   end subroutine gmshModelGetType
+
+  !> Get the properties of the entity of dimension `dim' and tag `tag'. The
+  !! `reals' vector contains the 4 coefficients of the cartesian equation for a
+  !! plane surface; the center coordinates, axis direction, major radius and
+  !! minor radius for a torus; the center coordinates, axis direction and radius
+  !! for a cylinder; the center coordinates, axis direction, radius and semi-
+  !! angle for surfaces of revolution; the center coordinates and the radius for
+  !! a sphere.
+  subroutine gmshModelGetEntityProperties(dim, &
+                                          tag, &
+                                          integers, &
+                                          reals, &
+                                          ierr)
+    interface
+    subroutine C_API(dim, &
+                     tag, &
+                     api_integers_, &
+                     api_integers_n_, &
+                     api_reals_, &
+                     api_reals_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelGetEntityProperties")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), value, intent(in) :: tag
+      type(c_ptr), intent(out) :: api_integers_
+      integer(c_size_t), intent(out) :: api_integers_n_
+      type(c_ptr), intent(out) :: api_reals_
+      integer(c_size_t) :: api_reals_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    integer(c_int), dimension(:), allocatable, intent(out) :: integers
+    real(c_double), dimension(:), allocatable, intent(out) :: reals
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_integers_
+    integer(c_size_t) :: api_integers_n_
+    type(c_ptr) :: api_reals_
+    integer(c_size_t) :: api_reals_n_
+    call C_API(dim=int(dim, c_int), &
+         tag=int(tag, c_int), &
+         api_integers_=api_integers_, &
+         api_integers_n_=api_integers_n_, &
+         api_reals_=api_reals_, &
+         api_reals_n_=api_reals_n_, &
+         ierr_=ierr)
+    integers = ovectorint_(api_integers_, &
+      api_integers_n_)
+    reals = ovectordouble_(api_reals_, &
+      api_reals_n_)
+  end subroutine gmshModelGetEntityProperties
 
   !> In a partitioned model, get the parent of the entity of dimension `dim' and
   !! tag `tag', i.e. from which the entity is a part of, if any. `parentDim' and
@@ -2669,7 +2818,9 @@ module gmsh
   !! `closestCoord' are given as x, y, z coordinates, concatenated: [p1x, p1y,
   !! p1z, p2x, ...]. `parametricCoord' returns the parametric coordinates t on
   !! the curve (if `dim' == 1) or u and v coordinates concatenated on the
-  !! surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].
+  !! surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...]. The
+  !! closest points can lie outside the (trimmed) entities: use `isInside()' to
+  !! check.
   subroutine gmshModelGetClosestPoint(dim, &
                                       tag, &
                                       coord, &
@@ -7415,76 +7566,6 @@ module gmsh
       api_viewTags_n_)
   end subroutine gmshModelMeshComputeCrossField
 
-  !> Triangulate the points given in the `coord' vector as pairs of u, v
-  !! coordinates, and return the node tags (with numbering starting at 1) of the
-  !! resulting triangles in `tri'.
-  subroutine gmshModelMeshTriangulate(coord, &
-                                      tri, &
-                                      ierr)
-    interface
-    subroutine C_API(api_coord_, &
-                     api_coord_n_, &
-                     api_tri_, &
-                     api_tri_n_, &
-                     ierr_) &
-      bind(C, name="gmshModelMeshTriangulate")
-      use, intrinsic :: iso_c_binding
-      real(c_double), dimension(*) :: api_coord_
-      integer(c_size_t), value, intent(in) :: api_coord_n_
-      type(c_ptr), intent(out) :: api_tri_
-      integer(c_size_t), intent(out) :: api_tri_n_
-      integer(c_int), intent(out), optional :: ierr_
-    end subroutine C_API
-    end interface
-    real(c_double), dimension(:), intent(in) :: coord
-    integer(c_size_t), dimension(:), allocatable, intent(out) :: tri
-    integer(c_int), intent(out), optional :: ierr
-    type(c_ptr) :: api_tri_
-    integer(c_size_t) :: api_tri_n_
-    call C_API(api_coord_=coord, &
-         api_coord_n_=size_gmsh_double(coord), &
-         api_tri_=api_tri_, &
-         api_tri_n_=api_tri_n_, &
-         ierr_=ierr)
-    tri = ovectorsize_(api_tri_, &
-      api_tri_n_)
-  end subroutine gmshModelMeshTriangulate
-
-  !> Tetrahedralize the points given in the `coord' vector as x, y, z
-  !! coordinates, concatenated, and return the node tags (with numbering
-  !! starting at 1) of the resulting tetrahedra in `tetra'.
-  subroutine gmshModelMeshTetrahedralize(coord, &
-                                         tetra, &
-                                         ierr)
-    interface
-    subroutine C_API(api_coord_, &
-                     api_coord_n_, &
-                     api_tetra_, &
-                     api_tetra_n_, &
-                     ierr_) &
-      bind(C, name="gmshModelMeshTetrahedralize")
-      use, intrinsic :: iso_c_binding
-      real(c_double), dimension(*) :: api_coord_
-      integer(c_size_t), value, intent(in) :: api_coord_n_
-      type(c_ptr), intent(out) :: api_tetra_
-      integer(c_size_t), intent(out) :: api_tetra_n_
-      integer(c_int), intent(out), optional :: ierr_
-    end subroutine C_API
-    end interface
-    real(c_double), dimension(:), intent(in) :: coord
-    integer(c_size_t), dimension(:), allocatable, intent(out) :: tetra
-    integer(c_int), intent(out), optional :: ierr
-    type(c_ptr) :: api_tetra_
-    integer(c_size_t) :: api_tetra_n_
-    call C_API(api_coord_=coord, &
-         api_coord_n_=size_gmsh_double(coord), &
-         api_tetra_=api_tetra_, &
-         api_tetra_n_=api_tetra_n_, &
-         ierr_=ierr)
-    tetra = ovectorsize_(api_tetra_, &
-      api_tetra_n_)
-  end subroutine gmshModelMeshTetrahedralize
-
   !> Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
   !! the tag explicitly; otherwise a new tag is assigned automatically. Return
   !! the field tag. Available field types are listed in the "Gmsh mesh size
@@ -9049,8 +9130,8 @@ module gmsh
 
   !> Mirror the entities `dimTags' (given as a vector of (dim, tag) pairs) in
   !! the built-in CAD representation, with respect to the plane of equation `a'
-  !! * x + `b' * y + `c' * z + `d' = 0. (This is a synonym for `mirror', which
-  !! will be deprecated in a future release.)
+  !! * x + `b' * y + `c' * z + `d' = 0. (This is a deprecated synonym for
+  !! `mirror'.)
   subroutine gmshModelGeoSymmetrize(dimTags, &
                                     a, &
                                     b, &
@@ -11858,8 +11939,9 @@ module gmsh
 
   !> Compute the boolean union (the fusion) of the entities `objectDimTags' and
   !! `toolDimTags' (vectors of (dim, tag) pairs) in the OpenCASCADE CAD
-  !! representation. Return the resulting entities in `outDimTags'. If `tag' is
-  !! positive, try to set the tag explicitly (only valid if the boolean
+  !! representation. Return the resulting entities in `outDimTags', and the
+  !! correspondance between input and resulting entities in `outDimTagsMap'. If
+  !! `tag' is positive, try to set the tag explicitly (only valid if the boolean
   !! operation results in a single entity). Remove the object if `removeObject'
   !! is set. Remove the tool if `removeTool' is set.
   subroutine gmshModelOccFuse(objectDimTags, &
@@ -11940,9 +12022,11 @@ module gmsh
   !> Compute the boolean intersection (the common parts) of the entities
   !! `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the
   !! OpenCASCADE CAD representation. Return the resulting entities in
-  !! `outDimTags'. If `tag' is positive, try to set the tag explicitly (only
-  !! valid if the boolean operation results in a single entity). Remove the
-  !! object if `removeObject' is set. Remove the tool if `removeTool' is set.
+  !! `outDimTags', and the correspondance between input and resulting entities
+  !! in `outDimTagsMap'. If `tag' is positive, try to set the tag explicitly
+  !! (only valid if the boolean operation results in a single entity). Remove
+  !! the object if `removeObject' is set. Remove the tool if `removeTool' is
+  !! set.
   subroutine gmshModelOccIntersect(objectDimTags, &
                                    toolDimTags, &
                                    outDimTags, &
@@ -12020,8 +12104,9 @@ module gmsh
 
   !> Compute the boolean difference between the entities `objectDimTags' and
   !! `toolDimTags' (given as vectors of (dim, tag) pairs) in the OpenCASCADE CAD
-  !! representation. Return the resulting entities in `outDimTags'. If `tag' is
-  !! positive, try to set the tag explicitly (only valid if the boolean
+  !! representation. Return the resulting entities in `outDimTags', and the
+  !! correspondance between input and resulting entities in `outDimTagsMap'. If
+  !! `tag' is positive, try to set the tag explicitly (only valid if the boolean
   !! operation results in a single entity). Remove the object if `removeObject'
   !! is set. Remove the tool if `removeTool' is set.
   subroutine gmshModelOccCut(objectDimTags, &
@@ -12105,8 +12190,9 @@ module gmsh
   !! all interfaces conformal. When applied to entities of different dimensions,
   !! the lower dimensional entities will be automatically embedded in the higher
   !! dimensional entities if they are not on their boundary. Return the
-  !! resulting entities in `outDimTags'. If `tag' is positive, try to set the
-  !! tag explicitly (only valid if the boolean operation results in a single
+  !! resulting entities in `outDimTags', and the correspondance between input
+  !! and resulting entities in `outDimTagsMap'. If `tag' is positive, try to set
+  !! the tag explicitly (only valid if the boolean operation results in a single
   !! entity). Remove the object if `removeObject' is set. Remove the tool if
   !! `removeTool' is set.
   subroutine gmshModelOccFragment(objectDimTags, &
@@ -14325,6 +14411,87 @@ module gmsh
          tag=int(tag, c_int), &
          ierr_=ierr)
   end subroutine gmshViewOptionCopy
+
+  !> Triangulate the points given in the `coordinates' vector as concatenated
+  !! pairs of u, v coordinates, with (optional) constrained edges given in the
+  !! `edges' vector as pair of indexes (with numbering starting at 1), and
+  !! return the triangles as concatenated triplets of point indexes (with
+  !! numbering starting at 1) in `triangles'.
+  subroutine gmshAlgorithmTriangulate(coordinates, &
+                                      triangles, &
+                                      edges, &
+                                      ierr)
+    interface
+    subroutine C_API(api_coordinates_, &
+                     api_coordinates_n_, &
+                     api_triangles_, &
+                     api_triangles_n_, &
+                     api_edges_, &
+                     api_edges_n_, &
+                     ierr_) &
+      bind(C, name="gmshAlgorithmTriangulate")
+      use, intrinsic :: iso_c_binding
+      real(c_double), dimension(*) :: api_coordinates_
+      integer(c_size_t), value, intent(in) :: api_coordinates_n_
+      type(c_ptr), intent(out) :: api_triangles_
+      integer(c_size_t), intent(out) :: api_triangles_n_
+      integer(c_size_t), dimension(*), optional :: api_edges_
+      integer(c_size_t), value, intent(in) :: api_edges_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    real(c_double), dimension(:), intent(in) :: coordinates
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: triangles
+    integer(c_size_t), dimension(:), intent(in), optional :: edges
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_triangles_
+    integer(c_size_t) :: api_triangles_n_
+    call C_API(api_coordinates_=coordinates, &
+         api_coordinates_n_=size_gmsh_double(coordinates), &
+         api_triangles_=api_triangles_, &
+         api_triangles_n_=api_triangles_n_, &
+         api_edges_=edges, &
+         api_edges_n_=size_gmsh_size(edges), &
+         ierr_=ierr)
+    triangles = ovectorsize_(api_triangles_, &
+      api_triangles_n_)
+  end subroutine gmshAlgorithmTriangulate
+
+  !> Tetrahedralize the points given in the `coordinates' vector as concatenated
+  !! triplets of x, y, z coordinates, and return the tetrahedra as concatenated
+  !! quadruplets of point indexes (with numbering starting at 1) in
+  !! `tetrahedra'.
+  subroutine gmshAlgorithmTetrahedralize(coordinates, &
+                                         tetrahedra, &
+                                         ierr)
+    interface
+    subroutine C_API(api_coordinates_, &
+                     api_coordinates_n_, &
+                     api_tetrahedra_, &
+                     api_tetrahedra_n_, &
+                     ierr_) &
+      bind(C, name="gmshAlgorithmTetrahedralize")
+      use, intrinsic :: iso_c_binding
+      real(c_double), dimension(*) :: api_coordinates_
+      integer(c_size_t), value, intent(in) :: api_coordinates_n_
+      type(c_ptr), intent(out) :: api_tetrahedra_
+      integer(c_size_t), intent(out) :: api_tetrahedra_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    real(c_double), dimension(:), intent(in) :: coordinates
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: tetrahedra
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_tetrahedra_
+    integer(c_size_t) :: api_tetrahedra_n_
+    call C_API(api_coordinates_=coordinates, &
+         api_coordinates_n_=size_gmsh_double(coordinates), &
+         api_tetrahedra_=api_tetrahedra_, &
+         api_tetrahedra_n_=api_tetrahedra_n_, &
+         ierr_=ierr)
+    tetrahedra = ovectorsize_(api_tetrahedra_, &
+      api_tetrahedra_n_)
+  end subroutine gmshAlgorithmTetrahedralize
 
   !> Set the numerical option `option' to the value `value' for plugin `name'.
   !! Plugins available in the official Gmsh release are listed in the "Gmsh

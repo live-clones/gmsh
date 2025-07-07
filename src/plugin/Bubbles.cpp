@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -12,11 +12,11 @@
 #include "OS.h"
 
 StringXNumber BubblesOptions_Number[] = {
-  {GMSH_FULLRC, "ShrinkFactor", nullptr, 0.},
+  {GMSH_FULLRC, "ShrinkFactor", nullptr, 0., ""},
 };
 
 StringXString BubblesOptions_String[] = {
-  {GMSH_FULLRC, "OutputFile", nullptr, "bubbles.geo"}};
+  {GMSH_FULLRC, "OutputFile", nullptr, "bubbles.geo", ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterBubblesPlugin() { return new GMSH_BubblesPlugin(); }

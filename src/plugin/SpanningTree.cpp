@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -15,13 +15,13 @@
 using namespace std;
 
 StringXNumber SpanningTreeOptions_Number[] = {
-  {GMSH_FULLRC, "OutputPhysical", nullptr, -1},
+  {GMSH_FULLRC, "OutputPhysical", nullptr, -1, ""},
 };
 
 StringXString SpanningTreeOptions_String[] = {
-  {GMSH_FULLRC, "PhysicalVolumes", nullptr, ""},
-  {GMSH_FULLRC, "PhysicalSurfaces", nullptr, ""},
-  {GMSH_FULLRC, "PhysicalCurves", nullptr, ""},
+  {GMSH_FULLRC, "PhysicalVolumes", nullptr, "", ""},
+  {GMSH_FULLRC, "PhysicalSurfaces", nullptr, "", ""},
+  {GMSH_FULLRC, "PhysicalCurves", nullptr, "", ""},
 };
 
 extern "C" {

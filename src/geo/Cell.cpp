@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -508,7 +508,7 @@ void Cell::printCell()
   printf("%d-cell %d: \n", getDim(), getNum());
   printf("  Vertices:");
   for(int i = 0; i < this->getNumVertices(); i++) {
-    printf(" %lu", this->getMeshVertex(i)->getNum());
+    printf(" %zu", this->getMeshVertex(i)->getNum());
   }
   printf(", in subdomain: %d, ", inSubdomain());
   printf("combined: %d. \n", isCombined());

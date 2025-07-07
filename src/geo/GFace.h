@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -166,7 +166,7 @@ public:
   virtual bool checkTopology() const { return true; }
 
   // return the point on the face corresponding to the given parameter
-  virtual GPoint point(double par1, double par2) const = 0;
+  virtual GPoint point(double par1, double par2) const { return GPoint(); }
   virtual GPoint point(const SPoint2 &pt) const
   {
     return point(pt.x(), pt.y());
@@ -200,11 +200,14 @@ public:
   virtual SVector3 normal(const SPoint2 &param) const;
 
   // return the first derivate of the face at the parameter location
-  virtual std::pair<SVector3, SVector3> firstDer(const SPoint2 &param) const = 0;
+  virtual std::pair<SVector3, SVector3> firstDer(const SPoint2 &param) const
+  {
+    return std::make_pair(SVector3(), SVector3());
+  }
 
   // compute the second derivates of the face at the parameter location
   virtual void secondDer(const SPoint2 &param, SVector3 &dudu, SVector3 &dvdv,
-                         SVector3 &dudv) const = 0;
+                         SVector3 &dudv) const {};
 
   // return the curvature computed as the divergence of the normal
   inline double curvature(const SPoint2 &param) const

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -59,7 +59,7 @@ bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
     }
   }
   N = count;
-  //  printf("point %22.5E %22.5E out %22.5E %22.5E in parametric domain (bnd size %lu) : %d %d\n",p.x(),p.y(),out.x(), out.y(), bnd.size(),count, count%2);
+  //  printf("point %22.5E %22.5E out %22.5E %22.5E in parametric domain (bnd size %zu) : %d %d\n",p.x(),p.y(),out.x(), out.y(), bnd.size(),count, count%2);
   if(count % 2 == 0) return false;
   return true;
 }
@@ -488,7 +488,7 @@ static void copyMesh(GFace *source, GFace *target)
     }
     else {
       Msg::Error("Could not find periodic counterpart of triangle nodes "
-                 "%lu %lu %lu",
+                 "%zu %zu %zu",
                  source->triangles[i]->getVertex(0)->getNum(),
                  source->triangles[i]->getVertex(1)->getNum(),
                  source->triangles[i]->getVertex(2)->getNum());
@@ -505,7 +505,7 @@ static void copyMesh(GFace *source, GFace *target)
     }
     else {
       Msg::Error("Could not find periodic counterpart of quadrangle nodes "
-                 "%lu %lu %lu %lu",
+                 "%zu %zu %zu %zu",
                  source->quadrangles[i]->getVertex(0)->getNum(),
                  source->quadrangles[i]->getVertex(1)->getNum(),
                  source->quadrangles[i]->getVertex(2)->getNum(),
@@ -872,7 +872,7 @@ static void modifyInitialMeshForBoundaryLayers(
         if(!N) continue;
 
         for(int l = 0; l < N; ++l) {
-          MVertex *v11, *v12, *v21, *v22;
+          MVertex *v11 = nullptr, *v12 = nullptr, *v21 = nullptr, *v22 = nullptr;
           v21 = c1._column[l];
           v22 = c2._column[l];
           if(l == 0) {
@@ -898,7 +898,7 @@ static void modifyInitialMeshForBoundaryLayers(
         }
 
         if(c1._column.size() != c2._column.size()) {
-          MVertex *v11, *v12, *v;
+          MVertex *v11 = nullptr, *v12 = nullptr, *v = nullptr;
           v11 = c1._column[N - 1];
           v12 = c2._column[N - 1];
           v = c1._column.size() > c2._column.size() ? c1._column[N] :
@@ -935,7 +935,7 @@ static void modifyInitialMeshForBoundaryLayers(
         int N = std::min(c1._column.size(), c2._column.size());
         std::vector<MElement *> myCol;
         for(int l = 0; l < N; ++l) {
-          MVertex *v11, *v12, *v21, *v22;
+          MVertex *v11 = nullptr, *v12 = nullptr, *v21 = nullptr, *v22 = nullptr;
           v21 = c1._column[l];
           v22 = c2._column[l];
           if(l == 0) {
@@ -989,7 +989,7 @@ static void modifyInitialMeshForBoundaryLayers(
         const BoundaryLayerData &c2 = _columns->getColumn(v, i + 1);
         int N = std::min(c1._column.size(), c2._column.size());
         std::vector<MElement *> myCol;
-        MVertex *v11, *v12, *v21, *v22;
+        MVertex *v11 = nullptr, *v12 = nullptr, *v21 = nullptr, *v22 = nullptr;
         for(int l = 0; l < N; ++l) {
           if(l == 0) {
             if(i == 0) { v11 = v; }
@@ -1031,7 +1031,7 @@ static void modifyInitialMeshForBoundaryLayers(
         const BoundaryLayerData &c2 = _columns->getColumn(v, i + 1);
         int N = std::min(c1._column.size(), c2._column.size());
         std::vector<MElement *> myCol;
-        MVertex *v11, *v12, *v21, *v22;
+        MVertex *v11 = nullptr, *v12 = nullptr, *v21 = nullptr, *v22 = nullptr;
         for(int l = 0; l < N; ++l) {
           if(i >= cp && l >= cp) continue;
 
@@ -1082,7 +1082,7 @@ static void modifyInitialMeshForBoundaryLayers(
         std::vector<MElement *> myCol;
 
         for(int l = 0; l < N; l++) {
-          MVertex *v11, *v12, *v21, *v22;
+          MVertex *v11 = nullptr, *v12 = nullptr, *v21 = nullptr, *v22 = nullptr;
           int k = dir_half - l - 1;
           const BoundaryLayerData &c2 = _columns->getColumn(v, k);
           const BoundaryLayerData &c3 = _columns->getColumn(v, k - 1);
@@ -1141,7 +1141,7 @@ static void modifyInitialMeshForBoundaryLayers(
         std::vector<MElement *> myCol;
 
         for(int l = 0; l < N; l++) {
-          MVertex *v11, *v12, *v21, *v22;
+          MVertex *v11 = nullptr, *v12 = nullptr, *v21 = nullptr, *v22 = nullptr;
 
           int k = dir_half + l - 1;
 
@@ -1468,7 +1468,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
                "nodes are considered once)",
                boundary.size());
     for(auto it = boundary.begin(); it != boundary.end(); it++) {
-      Msg::Debug("Remaining node %lu", (*it)->getNum());
+      Msg::Debug("Remaining node %zu", (*it)->getNum());
     }
     gf->meshStatistics.status = GFace::FAILED;
     return false;

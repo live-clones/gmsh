@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -581,9 +581,9 @@ const remove_entity_name = removeEntityName
 """
     gmsh.model.getPhysicalGroups(dim = -1)
 
-Get all the physical groups in the current model. If `dim` is >= 0, return only
-the entities of the specified dimension (e.g. physical points if `dim` == 0).
-The entities are returned as a vector of (dim, tag) pairs.
+Get the physical groups in the current model. The physical groups are returned
+as a vector of (dim, tag) pairs. If `dim` is >= 0, return only the groups of the
+specified dimension (e.g. physical points if `dim` == 0).
 
 Return `dimTags`.
 
@@ -604,6 +604,47 @@ function getPhysicalGroups(dim = -1)
     return dimTags
 end
 const get_physical_groups = getPhysicalGroups
+
+"""
+    gmsh.model.getPhysicalGroupsEntities(dim = -1)
+
+Get the physical groups in the current model as well as the model entities that
+make them up. The physical groups are returned as the vector of (dim, tag) pairs
+`dimTags`. The model entities making up the corresponding physical groups are
+returned in `entities`. If `dim` is >= 0, return only the groups of the
+specified dimension (e.g. physical points if `dim` == 0).
+
+Return `dimTags`, `entities`.
+
+Types:
+ - `dimTags`: vector of pairs of integers
+ - `entities`: vector of vectors of pairs of integers
+ - `dim`: integer
+"""
+function getPhysicalGroupsEntities(dim = -1)
+    api_dimTags_ = Ref{Ptr{Cint}}()
+    api_dimTags_n_ = Ref{Csize_t}()
+    api_entities_ = Ref{Ptr{Ptr{Cint}}}()
+    api_entities_n_ = Ref{Ptr{Csize_t}}()
+    api_entities_nn_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetPhysicalGroupsEntities, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Ptr{Cint}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          api_dimTags_, api_dimTags_n_, api_entities_, api_entities_n_, api_entities_nn_, dim, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tmp_api_dimTags_ = unsafe_wrap(Array, api_dimTags_[], api_dimTags_n_[], own = true)
+    dimTags = [ (tmp_api_dimTags_[i], tmp_api_dimTags_[i+1]) for i in 1:2:length(tmp_api_dimTags_) ]
+    tmp_api_entities_ = unsafe_wrap(Array, api_entities_[], api_entities_nn_[], own = true)
+    tmp_api_entities_n_ = unsafe_wrap(Array, api_entities_n_[], api_entities_nn_[], own = true)
+    entities = Vector{Tuple{Cint,Cint}}[]
+    resize!(entities, api_entities_nn_[])
+    for i in 1:api_entities_nn_[]
+        tmp = unsafe_wrap(Array, tmp_api_entities_[i], tmp_api_entities_n_[i], own = true)
+        entities[i] = [(tmp[i], tmp[i+1]) for i in 1:2:length(tmp)]
+    end
+    return dimTags, entities
+end
+const get_physical_groups_entities = getPhysicalGroupsEntities
 
 """
     gmsh.model.getEntitiesForPhysicalGroup(dim, tag)
@@ -1016,9 +1057,34 @@ end
 const remove_entities = removeEntities
 
 """
-    gmsh.model.getType(dim, tag)
+    gmsh.model.getEntityType(dim, tag)
 
 Get the type of the entity of dimension `dim` and tag `tag`.
+
+Return `entityType`.
+
+Types:
+ - `dim`: integer
+ - `tag`: integer
+ - `entityType`: string
+"""
+function getEntityType(dim, tag)
+    api_entityType_ = Ref{Ptr{Cchar}}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetEntityType, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Ptr{Cchar}}, Ptr{Cint}),
+          dim, tag, api_entityType_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    entityType = unsafe_string(api_entityType_[])
+    return entityType
+end
+const get_entity_type = getEntityType
+
+"""
+    gmsh.model.getType(dim, tag)
+
+Get the type of the entity of dimension `dim` and tag `tag`. (This is a
+deprecated synonym for `getType`.)
 
 Return `entityType`.
 
@@ -1038,6 +1104,40 @@ function getType(dim, tag)
     return entityType
 end
 const get_type = getType
+
+"""
+    gmsh.model.getEntityProperties(dim, tag)
+
+Get the properties of the entity of dimension `dim` and tag `tag`. The `reals`
+vector contains the 4 coefficients of the cartesian equation for a plane
+surface; the center coordinates, axis direction, major radius and minor radius
+for a torus; the center coordinates, axis direction and radius for a cylinder;
+the center coordinates, axis direction, radius and semi-angle for surfaces of
+revolution; the center coordinates and the radius for a sphere.
+
+Return `integers`, `reals`.
+
+Types:
+ - `dim`: integer
+ - `tag`: integer
+ - `integers`: vector of integers
+ - `reals`: vector of doubles
+"""
+function getEntityProperties(dim, tag)
+    api_integers_ = Ref{Ptr{Cint}}()
+    api_integers_n_ = Ref{Csize_t}()
+    api_reals_ = Ref{Ptr{Cdouble}}()
+    api_reals_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelGetEntityProperties, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          dim, tag, api_integers_, api_integers_n_, api_reals_, api_reals_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    integers = unsafe_wrap(Array, api_integers_[], api_integers_n_[], own = true)
+    reals = unsafe_wrap(Array, api_reals_[], api_reals_n_[], own = true)
+    return integers, reals
+end
+const get_entity_properties = getEntityProperties
 
 """
     gmsh.model.getParent(dim, tag)
@@ -1402,7 +1502,8 @@ the points `coord`, by orthogonal projection. `coord` and `closestCoord` are
 given as x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...].
 `parametricCoord` returns the parametric coordinates t on the curve (if `dim` ==
 1) or u and v coordinates concatenated on the surface (if `dim` = 2), i.e. [p1t,
-p2t, ...] or [p1u, p1v, p2u, ...].
+p2t, ...] or [p1u, p1v, p2u, ...]. The closest points can lie outside the
+(trimmed) entities: use `isInside()` to check.
 
 Return `closestCoord`, `parametricCoord`.
 
@@ -4493,56 +4594,6 @@ end
 const compute_cross_field = computeCrossField
 
 """
-    gmsh.model.mesh.triangulate(coord)
-
-Triangulate the points given in the `coord` vector as pairs of u, v coordinates,
-and return the node tags (with numbering starting at 1) of the resulting
-triangles in `tri`.
-
-Return `tri`.
-
-Types:
- - `coord`: vector of doubles
- - `tri`: vector of sizes
-"""
-function triangulate(coord)
-    api_tri_ = Ref{Ptr{Csize_t}}()
-    api_tri_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshTriangulate, gmsh.lib), Cvoid,
-          (Ptr{Cdouble}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
-          convert(Vector{Cdouble}, coord), length(coord), api_tri_, api_tri_n_, ierr)
-    ierr[] != 0 && error(gmsh.logger.getLastError())
-    tri = unsafe_wrap(Array, api_tri_[], api_tri_n_[], own = true)
-    return tri
-end
-
-"""
-    gmsh.model.mesh.tetrahedralize(coord)
-
-Tetrahedralize the points given in the `coord` vector as x, y, z coordinates,
-concatenated, and return the node tags (with numbering starting at 1) of the
-resulting tetrahedra in `tetra`.
-
-Return `tetra`.
-
-Types:
- - `coord`: vector of doubles
- - `tetra`: vector of sizes
-"""
-function tetrahedralize(coord)
-    api_tetra_ = Ref{Ptr{Csize_t}}()
-    api_tetra_n_ = Ref{Csize_t}()
-    ierr = Ref{Cint}()
-    ccall((:gmshModelMeshTetrahedralize, gmsh.lib), Cvoid,
-          (Ptr{Cdouble}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
-          convert(Vector{Cdouble}, coord), length(coord), api_tetra_, api_tetra_n_, ierr)
-    ierr[] != 0 && error(gmsh.logger.getLastError())
-    tetra = unsafe_wrap(Array, api_tetra_[], api_tetra_n_[], own = true)
-    return tetra
-end
-
-"""
     module gmsh.model.mesh.field
 
 Mesh size field functions
@@ -5570,8 +5621,7 @@ end
 
 Mirror the entities `dimTags` (given as a vector of (dim, tag) pairs) in the
 built-in CAD representation, with respect to the plane of equation `a` * x + `b`
-* y + `c` * z + `d` = 0. (This is a synonym for `mirror`, which will be
-deprecated in a future release.)
+* y + `c` * z + `d` = 0. (This is a deprecated synonym for `mirror`.)
 
 Types:
  - `dimTags`: vector of pairs of integers
@@ -7285,8 +7335,9 @@ const get_distance = getDistance
 
 Compute the boolean union (the fusion) of the entities `objectDimTags` and
 `toolDimTags` (vectors of (dim, tag) pairs) in the OpenCASCADE CAD
-representation. Return the resulting entities in `outDimTags`. If `tag` is
-positive, try to set the tag explicitly (only valid if the boolean operation
+representation. Return the resulting entities in `outDimTags`, and the
+correspondance between input and resulting entities in `outDimTagsMap`. If `tag`
+is positive, try to set the tag explicitly (only valid if the boolean operation
 results in a single entity). Remove the object if `removeObject` is set. Remove
 the tool if `removeTool` is set.
 
@@ -7334,7 +7385,8 @@ end
 
 Compute the boolean intersection (the common parts) of the entities
 `objectDimTags` and `toolDimTags` (vectors of (dim, tag) pairs) in the
-OpenCASCADE CAD representation. Return the resulting entities in `outDimTags`.
+OpenCASCADE CAD representation. Return the resulting entities in `outDimTags`,
+and the correspondance between input and resulting entities in `outDimTagsMap`.
 If `tag` is positive, try to set the tag explicitly (only valid if the boolean
 operation results in a single entity). Remove the object if `removeObject` is
 set. Remove the tool if `removeTool` is set.
@@ -7383,8 +7435,9 @@ end
 
 Compute the boolean difference between the entities `objectDimTags` and
 `toolDimTags` (given as vectors of (dim, tag) pairs) in the OpenCASCADE CAD
-representation. Return the resulting entities in `outDimTags`. If `tag` is
-positive, try to set the tag explicitly (only valid if the boolean operation
+representation. Return the resulting entities in `outDimTags`, and the
+correspondance between input and resulting entities in `outDimTagsMap`. If `tag`
+is positive, try to set the tag explicitly (only valid if the boolean operation
 results in a single entity). Remove the object if `removeObject` is set. Remove
 the tool if `removeTool` is set.
 
@@ -7435,7 +7488,8 @@ the entities `objectDimTags` and `toolDimTags` (given as vectors of (dim, tag)
 pairs) in the OpenCASCADE CAD representation, making all interfaces conformal.
 When applied to entities of different dimensions, the lower dimensional entities
 will be automatically embedded in the higher dimensional entities if they are
-not on their boundary. Return the resulting entities in `outDimTags`. If `tag`
+not on their boundary. Return the resulting entities in `outDimTags`, and the
+correspondance between input and resulting entities in `outDimTagsMap`. If `tag`
 is positive, try to set the tag explicitly (only valid if the boolean operation
 results in a single entity). Remove the object if `removeObject` is set. Remove
 the tool if `removeTool` is set.
@@ -8877,6 +8931,70 @@ end
 end # end of module option
 
 end # end of module view
+
+"""
+    module gmsh.algorithm
+
+Raw algorithms
+"""
+module algorithm
+
+import ..gmsh
+
+"""
+    gmsh.algorithm.triangulate(coordinates, edges = Csize_t[])
+
+Triangulate the points given in the `coordinates` vector as concatenated pairs
+of u, v coordinates, with (optional) constrained edges given in the `edges`
+vector as pair of indexes (with numbering starting at 1), and return the
+triangles as concatenated triplets of point indexes (with numbering starting at
+1) in `triangles`.
+
+Return `triangles`.
+
+Types:
+ - `coordinates`: vector of doubles
+ - `triangles`: vector of sizes
+ - `edges`: vector of sizes
+"""
+function triangulate(coordinates, edges = Csize_t[])
+    api_triangles_ = Ref{Ptr{Csize_t}}()
+    api_triangles_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshAlgorithmTriangulate, gmsh.lib), Cvoid,
+          (Ptr{Cdouble}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
+          convert(Vector{Cdouble}, coordinates), length(coordinates), api_triangles_, api_triangles_n_, convert(Vector{Csize_t}, edges), length(edges), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    triangles = unsafe_wrap(Array, api_triangles_[], api_triangles_n_[], own = true)
+    return triangles
+end
+
+"""
+    gmsh.algorithm.tetrahedralize(coordinates)
+
+Tetrahedralize the points given in the `coordinates` vector as concatenated
+triplets of x, y, z coordinates, and return the tetrahedra as concatenated
+quadruplets of point indexes (with numbering starting at 1) in `tetrahedra`.
+
+Return `tetrahedra`.
+
+Types:
+ - `coordinates`: vector of doubles
+ - `tetrahedra`: vector of sizes
+"""
+function tetrahedralize(coordinates)
+    api_tetrahedra_ = Ref{Ptr{Csize_t}}()
+    api_tetrahedra_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshAlgorithmTetrahedralize, gmsh.lib), Cvoid,
+          (Ptr{Cdouble}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          convert(Vector{Cdouble}, coordinates), length(coordinates), api_tetrahedra_, api_tetrahedra_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tetrahedra = unsafe_wrap(Array, api_tetrahedra_[], api_tetrahedra_n_[], own = true)
+    return tetrahedra
+end
+
+end # end of module algorithm
 
 """
     module gmsh.plugin

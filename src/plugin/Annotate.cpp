@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -13,17 +13,17 @@
 #endif
 
 StringXNumber AnnotateOptions_Number[] = {
-  {GMSH_FULLRC, "X", GMSH_AnnotatePlugin::callbackX, 50.},
-  {GMSH_FULLRC, "Y", GMSH_AnnotatePlugin::callbackY, 30.},
-  {GMSH_FULLRC, "Z", GMSH_AnnotatePlugin::callbackZ, 0.},
-  {GMSH_FULLRC, "ThreeD", GMSH_AnnotatePlugin::callback3D, 0.},
-  {GMSH_FULLRC, "FontSize", GMSH_AnnotatePlugin::callbackFontSize, 14.},
-  {GMSH_FULLRC, "View", nullptr, -1.}};
+  {GMSH_FULLRC, "X", GMSH_AnnotatePlugin::callbackX, 50., ""},
+  {GMSH_FULLRC, "Y", GMSH_AnnotatePlugin::callbackY, 30., ""},
+  {GMSH_FULLRC, "Z", GMSH_AnnotatePlugin::callbackZ, 0., ""},
+  {GMSH_FULLRC, "ThreeD", GMSH_AnnotatePlugin::callback3D, 0., ""},
+  {GMSH_FULLRC, "FontSize", GMSH_AnnotatePlugin::callbackFontSize, 14., ""},
+  {GMSH_FULLRC, "View", nullptr, -1., ""}};
 
 StringXString AnnotateOptions_String[] = {
-  {GMSH_FULLRC, "Text", GMSH_AnnotatePlugin::callbackText, "My Text"},
-  {GMSH_FULLRC, "Font", GMSH_AnnotatePlugin::callbackFont, "Helvetica"},
-  {GMSH_FULLRC, "Align", GMSH_AnnotatePlugin::callbackAlign, "Left"}};
+  {GMSH_FULLRC, "Text", GMSH_AnnotatePlugin::callbackText, "My Text", ""},
+  {GMSH_FULLRC, "Font", GMSH_AnnotatePlugin::callbackFont, "Helvetica", ""},
+  {GMSH_FULLRC, "Align", GMSH_AnnotatePlugin::callbackAlign, "Left", ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterAnnotatePlugin() { return new GMSH_AnnotatePlugin(); }

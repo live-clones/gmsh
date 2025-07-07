@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -7,14 +7,15 @@
 #include "Invisible.h"
 
 StringXNumber InvisibleOptions_Number[] = {
-  {GMSH_FULLRC, "DeleteElements", nullptr, 1.},
-  {GMSH_FULLRC, "ReverseElements", nullptr, 0.},
-  {GMSH_FULLRC, "XMin", nullptr, 0.},
-  {GMSH_FULLRC, "YMin", nullptr, 0.},
-  {GMSH_FULLRC, "ZMin", nullptr, 0.},
-  {GMSH_FULLRC, "XMax", nullptr, 0.},
-  {GMSH_FULLRC, "YMax", nullptr, 0.},
-  {GMSH_FULLRC, "ZMax", nullptr, 0.}
+  {GMSH_FULLRC, "DeleteElements", nullptr, 1., ""},
+  {GMSH_FULLRC, "ReverseElements", nullptr, 0., ""},
+  {GMSH_FULLRC, "XMin", nullptr, 0., ""},
+  {GMSH_FULLRC, "YMin", nullptr, 0., ""},
+  {GMSH_FULLRC, "ZMin", nullptr, 0., ""},
+  {GMSH_FULLRC, "XMax", nullptr, 0., ""},
+  {GMSH_FULLRC, "YMax", nullptr, 0., ""},
+  {GMSH_FULLRC, "ZMax", nullptr, 0., ""},
+  {GMSH_FULLRC, "Inside", nullptr, 0., ""}
 };
 
 extern "C" {
@@ -30,8 +31,8 @@ std::string GMSH_InvisiblePlugin::getHelp() const
          "reverses (if `ReverseElements' is set) all the invisible elements in "
          "the current model. If the bounding box defined by `XMin' < x < `XMax, "
          "`YMin' < y < `YMax and `ZMin' < z < `ZMax' is not empty, mark all "
-         "elements outside the bounding box as invisible prior to deleting or "
-         "inverting the elements.";
+         "elements outside or inside (if `Inside' is set) the bounding box "
+         "as invisible prior to deleting or inverting the elements.";
 }
 
 int GMSH_InvisiblePlugin::getNbOptions(bool legacy) const
@@ -52,6 +53,7 @@ PView *GMSH_InvisiblePlugin::execute(PView *v)
   double xmax = InvisibleOptions_Number[5].def;
   double ymax = InvisibleOptions_Number[6].def;
   double zmax = InvisibleOptions_Number[7].def;
+  int inside = (int)InvisibleOptions_Number[8].def;
 
   GModel *m = GModel::current();
 
@@ -61,13 +63,13 @@ PView *GMSH_InvisiblePlugin::execute(PView *v)
     for(std::size_t i = 0; i < entities.size(); i++) {
       for(std::size_t j = 0; j < entities[i]->getNumMeshElements(); j++) {
         MElement *e = entities[i]->getMeshElement(j);
-        bool visible = false;
+        bool visible = inside ? true : false;
         for(std::size_t k = 0; k < e->getNumVertices(); k++) {
           MVertex *v = e->getVertex(k);
           if(v->x() >= xmin && v->x() <= xmax &&
              v->y() >= ymin && v->y() <= ymax &&
              v->z() >= zmin && v->z() <= zmax) {
-            visible = true;
+            visible = inside ? false : true;
             break;
           }
         }

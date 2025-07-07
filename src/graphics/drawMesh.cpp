@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -70,7 +70,7 @@ static void drawElementLabels(drawContext *ctx, GEntity *e,
         break;
       case 0:
       default:
-        sprintf(str, "%lu", ele->getNum());
+        sprintf(str, "%zu", ele->getNum());
         break;
       }
       ctx->drawString(str, pc.x(), pc.y(), pc.z());
@@ -142,7 +142,7 @@ static void drawVertexLabel(drawContext *ctx, GEntity *e, MVertex *v,
   else if(CTX::instance()->mesh.labelType == 1)
     sprintf(str, "%d", e->tag());
   else
-    sprintf(str, "%lu", v->getNum());
+    sprintf(str, "%zu", v->getNum());
 
   if(CTX::instance()->mesh.colorCarousel == 0 ||
      CTX::instance()->mesh.volumeFaces ||

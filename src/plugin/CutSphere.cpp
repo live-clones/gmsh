@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -13,14 +13,14 @@
 #endif
 
 StringXNumber CutSphereOptions_Number[] = {
-  {GMSH_FULLRC, "Xc", GMSH_CutSpherePlugin::callbackX, 0.},
-  {GMSH_FULLRC, "Yc", GMSH_CutSpherePlugin::callbackY, 0.},
-  {GMSH_FULLRC, "Zc", GMSH_CutSpherePlugin::callbackZ, 0.},
-  {GMSH_FULLRC, "R", GMSH_CutSpherePlugin::callbackR, 0.25},
-  {GMSH_FULLRC, "ExtractVolume", GMSH_CutSpherePlugin::callbackVol, 0.},
-  {GMSH_FULLRC, "RecurLevel", GMSH_CutSpherePlugin::callbackRecur, 3},
-  {GMSH_FULLRC, "TargetError", GMSH_CutSpherePlugin::callbackTarget, 1e-4},
-  {GMSH_FULLRC, "View", nullptr, -1.}};
+  {GMSH_FULLRC, "Xc", GMSH_CutSpherePlugin::callbackX, 0., ""},
+  {GMSH_FULLRC, "Yc", GMSH_CutSpherePlugin::callbackY, 0., ""},
+  {GMSH_FULLRC, "Zc", GMSH_CutSpherePlugin::callbackZ, 0., ""},
+  {GMSH_FULLRC, "R", GMSH_CutSpherePlugin::callbackR, 0.25, ""},
+  {GMSH_FULLRC, "ExtractVolume", GMSH_CutSpherePlugin::callbackVol, 0., ""},
+  {GMSH_FULLRC, "RecurLevel", GMSH_CutSpherePlugin::callbackRecur, 3, ""},
+  {GMSH_FULLRC, "TargetError", GMSH_CutSpherePlugin::callbackTarget, 1e-4, ""},
+  {GMSH_FULLRC, "View", nullptr, -1., ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterCutSpherePlugin()

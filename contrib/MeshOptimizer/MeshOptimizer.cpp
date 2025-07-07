@@ -1,4 +1,4 @@
-// MeshOptimizer - Copyright (C) 2013-2024 UCLouvain-ULiege
+// MeshOptimizer - Copyright (C) 2013-2025 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -60,12 +60,12 @@ namespace {
   {
     vertSet bnd;
     for(auto itE = elements.begin(); itE != elements.end(); ++itE) {
-      for(int i = 0; i < (*itE)->getNumPrimaryVertices(); ++i) {
+      for(size_t i = 0; i < (*itE)->getNumPrimaryVertices(); ++i) {
         const elVec &neighbours =
           vertex2elements.find((*itE)->getVertex(i))->second;
         for(size_t k = 0; k < neighbours.size(); ++k) {
           if(elements.find(neighbours[k]) == elements.end()) {
-            for(int j = 0; j < neighbours[k]->getNumVertices(); ++j) {
+            for(size_t j = 0; j < neighbours[k]->getNumVertices(); ++j) {
               bnd.insert(neighbours[k]->getVertex(j));
             }
           }
@@ -82,7 +82,7 @@ namespace {
     auto it = e2e.find(el);
     if(it == e2e.end()) { // If not in e2e, compute and store
       neighbours.clear();
-      for(int i = 0; i < el->getNumPrimaryVertices(); ++i) {
+      for(size_t i = 0; i < el->getNumPrimaryVertices(); ++i) {
         const elVec &adjEl = v2e.find(el->getVertex(i))->second;
         for(auto itA = adjEl.begin(); itA != adjEl.end(); itA++)
           if(*itA != el) neighbours.insert(*itA);
@@ -161,7 +161,7 @@ namespace {
     for(size_t i = 0; i < entity->getNumMeshElements(); ++i) {
       MElement *element = entity->getMeshElement(i);
       if(element->getDim() == dim)
-        for(int j = 0; j < element->getNumPrimaryVertices(); ++j)
+        for(size_t j = 0; j < element->getNumPrimaryVertices(); ++j)
           vertex2elements[element->getVertex(j)].push_back(element);
     }
   }
@@ -180,12 +180,12 @@ namespace {
     for(auto itGF = gFaces.begin(); itGF != gFaces.end(); itGF++) {
       if(f.getNumVertices() == 3) {
         std::vector<MTriangle *> &tris = (*itGF)->triangles;
-        for(int iEl = 0; iEl < tris.size(); iEl++)
+        for(size_t iEl = 0; iEl < tris.size(); iEl++)
           if(tris[iEl]->getFace(0) == f) return tris[iEl];
       }
       else {
         std::vector<MQuadrangle *> &quads = (*itGF)->quadrangles;
-        for(int iEl = 0; iEl < quads.size(); iEl++)
+        for(size_t iEl = 0; iEl < quads.size(); iEl++)
           if(quads[iEl]->getFace(0) == f) return quads[iEl];
       }
     }
@@ -197,7 +197,7 @@ namespace {
   {
     for(auto itGE = gEdges.begin(); itGE != gEdges.end(); itGE++) {
       std::vector<MLine *> &lines = (*itGE)->lines;
-      for(int iEl = 0; iEl < lines.size(); iEl++)
+      for(size_t iEl = 0; iEl < lines.size(); iEl++)
         if(lines[iEl]->getEdge(0) == e) return lines[iEl];
     }
     return nullptr;
@@ -214,18 +214,18 @@ namespace {
       GFaceList gFaces = entity->faces();
       for(auto itGF = gFaces.begin(); itGF != gFaces.end(); itGF++) {
         std::vector<MTriangle *> &tris = (*itGF)->triangles;
-        for(int i = 0; i < tris.size(); i++)
+        for(size_t i = 0; i < tris.size(); i++)
           bndEl2Ent.insert(std::pair<MElement *, GEntity *>(tris[i], *itGF));
         std::vector<MQuadrangle *> &quads = (*itGF)->quadrangles;
-        for(int i = 0; i < quads.size(); i++)
+        for(size_t i = 0; i < quads.size(); i++)
           bndEl2Ent.insert(std::pair<MElement *, GEntity *>(quads[i], *itGF));
       }
 
       // Fill element -> boundary element connectivity
-      for(int iEl = 0; iEl < entity->getNumMeshElements(); iEl++) {
+      for(size_t iEl = 0; iEl < entity->getNumMeshElements(); iEl++) {
         MElement *el = entity->getMeshElement(iEl);
         int nBndVert = 0; // Compute nb. of bnd. vertices in element
-        for(int iV = 0; iV < el->getNumPrimaryVertices(); iV++)
+        for(size_t iV = 0; iV < el->getNumPrimaryVertices(); iV++)
           if(el->getVertex(iV)->onWhat() != entity) nBndVert++;
         if(nBndVert >=
            3) // If more than 3 primary vert. on bnd., look for bnd. face(s)
@@ -242,15 +242,15 @@ namespace {
       GEdgeList gEdges = entity->edges();
       for(auto itGE = gEdges.begin(); itGE != gEdges.end(); itGE++) {
         std::vector<MLine *> &lines = (*itGE)->lines;
-        for(int i = 0; i < lines.size(); i++)
+        for(size_t i = 0; i < lines.size(); i++)
           bndEl2Ent.insert(std::pair<MElement *, GEntity *>(lines[i], *itGE));
       }
 
       // Fill element -> boundary element connectivity
-      for(int iEl = 0; iEl < entity->getNumMeshElements(); iEl++) {
+      for(size_t iEl = 0; iEl < entity->getNumMeshElements(); iEl++) {
         MElement *el = entity->getMeshElement(iEl);
         int nBndVert = 0; // Compute nb. of bnd. vertices in element
-        for(int iV = 0; iV < el->getNumPrimaryVertices(); iV++)
+        for(size_t iV = 0; iV < el->getNumPrimaryVertices(); iV++)
           if(el->getVertex(iV)->onWhat() != entity) nBndVert++;
         if(nBndVert >=
            2) // If more than 2 primary vert. on bnd., look for bnd. edge(s)
@@ -293,7 +293,7 @@ namespace {
     Msg::Info("Computing patch connectivity...");
     std::map<MElement *, std::set<int> > tags;
     std::vector<std::set<int> > patchConnect(primPatches.size());
-    for(int iB = 0; iB < primPatches.size(); ++iB) {
+    for(size_t iB = 0; iB < primPatches.size(); ++iB) {
       elSet &patch = primPatches[iB];
       for(auto itEl = patch.begin(); itEl != patch.end(); ++itEl) {
         std::set<int> &patchInd = tags[*itEl];
@@ -311,7 +311,7 @@ namespace {
     Msg::Info("Identifying groups of primary patches...");
     std::list<std::set<int> > groups;
     std::vector<bool> todoPB(primPatches.size(), true);
-    for(int iB = 0; iB < primPatches.size(); ++iB)
+    for(size_t iB = 0; iB < primPatches.size(); ++iB)
       if(todoPB[iB]) {
         std::set<int> group;
         addPatchChaintoGroup(group, patchConnect, todoPB, iB);
@@ -362,7 +362,7 @@ namespace {
                    std::vector<std::string> &objFunctionNames,
                    std::vector<std::pair<double, double> > newObjFunctionRange)
   {
-    for(int i = 0; i < objFunctionNames.size(); i++) {
+    for(size_t i = 0; i < objFunctionNames.size(); i++) {
       if(nbPatchSuccess[0] > 0)
         mvcolor(6, true);
       else if(nbPatchSuccess[1] > 0)
@@ -450,7 +450,7 @@ namespace {
     std::vector<elSet> bndElts;
     bndElts.resize(toOptimize.size());
     if(!el2BndEl.empty()) {
-      for(int iPatch = 0; iPatch < toOptimize.size(); ++iPatch)
+      for(size_t iPatch = 0; iPatch < toOptimize.size(); ++iPatch)
         getAdjacentBndElts(el2BndEl, bndEl2Ent, toOptimize[iPatch].first,
                            bndElts[iPatch], par);
     }
@@ -459,7 +459,7 @@ namespace {
   int nthreads = CTX::instance()->numThreads;
   if(!nthreads) nthreads = Msg::GetMaxThreads();
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
-    for(int iPatch = 0; iPatch < toOptimize.size(); ++iPatch) {
+    for(size_t iPatch = 0; iPatch < toOptimize.size(); ++iPatch) {
       // Initialize optimization and output if asked
       if(par.nCurses) {
         mvbold(true);
@@ -502,7 +502,7 @@ namespace {
           objFunctionNames = opt.objFunction()->names();
         }
         else {
-          for(int i = 0; i < newObjFunctionRange.size(); i++) {
+          for(size_t i = 0; i < newObjFunctionRange.size(); i++) {
             newObjFunctionRange[i].first =
               std::min(newObjFunctionRange[i].first,
                        opt.objFunction()->minMax()[i].first);
@@ -583,7 +583,7 @@ namespace {
 
     // Loop over bad elements
     for(int iBadEl = 0; iBadEl < initNumBadElts; iBadEl++) {
-      int success;
+      int success = -1;
       if(badElts.empty()) break;
 
       // Create patch around worst element and remove it from badElts
@@ -659,7 +659,7 @@ namespace {
             objFunctionNames = opt.objFunction()->names();
           }
           else {
-            for(int i = 0; i < newObjFunctionRange.size(); i++) {
+            for(size_t i = 0; i < newObjFunctionRange.size(); i++) {
               newObjFunctionRange[i].first =
                 std::min(newObjFunctionRange[i].first,
                          opt.objFunction()->minMax()[i].first);
@@ -733,7 +733,7 @@ void MeshOptimizer(std::vector<GEntity *> &entities, MeshOptParameters &par)
   elEntMap element2entity, bndEl2Ent;
   elElMap el2BndEl;
   elSet badElts;
-  for(int iEnt = 0; iEnt < entities.size(); ++iEnt) {
+  for(size_t iEnt = 0; iEnt < entities.size(); ++iEnt) {
     GEntity *&entity = entities[iEnt];
     if(entity->dim() != par.dim ||
        (par.onlyVisible && !entity->getVisibility()))
@@ -749,7 +749,7 @@ void MeshOptimizer(std::vector<GEntity *> &entities, MeshOptParameters &par)
     if((par.useGeomForPatches) || (par.useGeomForOpt))
       calcElement2Entity(entity, element2entity);
     if(par.useBoundaries) calcBndInfo(entity, el2BndEl, bndEl2Ent);
-    for(int iEl = 0; iEl < entity->getNumMeshElements();
+    for(size_t iEl = 0; iEl < entity->getNumMeshElements();
         iEl++) { // Detect bad elements
       MElement *el = entity->getMeshElement(iEl);
       if(el->getDim() == par.dim) {

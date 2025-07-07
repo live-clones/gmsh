@@ -1,4 +1,4 @@
-                 Gmsh is copyright (C) 1997-2024
+                 Gmsh is copyright (C) 1997-2025
 
                        Christophe Geuzaine
                      <cgeuzaine at uliege.be>
@@ -33,10 +33,10 @@ Badia (hierarchical basis functions), Jeremy Theler (X3D export), Thomas
 Toulorge (high order mesh optimizer, new CGNS IO), Max Orok (binary PLY), Marek
 Wojciechowski (PyPi packaging), Maxence Reberol (automatic transfinite, quad
 meshing tools), Michael Ermakov (Gambit IO, Fortran API, TransfiniteTri,
-boundary layer fans), Alex Krasner (X3D export), Giannis Nikiteas (Fortran API),
-Paul Sharp (Radioss export), Marco Failla (2D fillet/offset and API
-additions). See comments in the sources for more information. If we forgot to
-list your contributions please send us an email!
+boundary layer fans), Alex Krasner (X3D export), Giannis Nikiteas (Fortran API,
+OBJ import/export), Paul Sharp (Radioss export), Marco Failla (2D fillet/offset
+and API additions). See comments in the sources for more information. If we
+forgot to list your contributions please send us an email!
 
 Thanks to the following folks who have contributed by providing fresh ideas on
 theoretical or programming topics, who have sent patches, requests for changes
@@ -66,7 +66,8 @@ Christophe Bourcier, Mattéo Couplet, Giuseppe Musacchio, Romin Tomasetti, Lin Q
 Chen, Tim Furlan, Matthias Lang, Tim Gabriel, Julien Chapelat, Boris Martin,
 Thomas Pirottin, Kazuyoshi Furutaka, Mariusz Wozniak, Christophe Friebel,
 Thierry Thomas, Joonas Haapsaari, Jani V"alimaa, Erik Schaubelt, Louis Denis,
-Francis Franklin.
+Francis Franklin, Florian Blachère, Aleksandr Artemyev, Carlos Ballesteros,
+Theodore Chang, Tom Gillam, Francisco Orlandini, Simon Février.
 
 Special thanks to Bill Spitzak, Michael Sweet, Matthias Melcher, Greg Ercolano
 and others for the Fast Light Tool Kit on which Gmsh's GUI is based. See

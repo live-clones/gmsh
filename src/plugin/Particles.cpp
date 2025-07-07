@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -15,24 +15,24 @@
 #endif
 
 StringXNumber ParticlesOptions_Number[] = {
-  {GMSH_FULLRC, "X0", GMSH_ParticlesPlugin::callbackX0, 0.},
-  {GMSH_FULLRC, "Y0", GMSH_ParticlesPlugin::callbackY0, 0.},
-  {GMSH_FULLRC, "Z0", GMSH_ParticlesPlugin::callbackZ0, 0.},
-  {GMSH_FULLRC, "X1", GMSH_ParticlesPlugin::callbackX1, 1.},
-  {GMSH_FULLRC, "Y1", GMSH_ParticlesPlugin::callbackY1, 0.},
-  {GMSH_FULLRC, "Z1", GMSH_ParticlesPlugin::callbackZ1, 0.},
-  {GMSH_FULLRC, "X2", GMSH_ParticlesPlugin::callbackX2, 0.},
-  {GMSH_FULLRC, "Y2", GMSH_ParticlesPlugin::callbackY2, 1.},
-  {GMSH_FULLRC, "Z2", GMSH_ParticlesPlugin::callbackZ2, 0.},
-  {GMSH_FULLRC, "NumPointsU", GMSH_ParticlesPlugin::callbackU, 10},
-  {GMSH_FULLRC, "NumPointsV", GMSH_ParticlesPlugin::callbackV, 1},
-  {GMSH_FULLRC, "A2", nullptr, 1.},
-  {GMSH_FULLRC, "A1", nullptr, 0.},
-  {GMSH_FULLRC, "A0", nullptr, 0.},
-  {GMSH_FULLRC, "DT", nullptr, .1},
-  {GMSH_FULLRC, "MaxIter", nullptr, 100},
-  {GMSH_FULLRC, "TimeStep", nullptr, 0},
-  {GMSH_FULLRC, "View", nullptr, -1.}};
+  {GMSH_FULLRC, "X0", GMSH_ParticlesPlugin::callbackX0, 0., ""},
+  {GMSH_FULLRC, "Y0", GMSH_ParticlesPlugin::callbackY0, 0., ""},
+  {GMSH_FULLRC, "Z0", GMSH_ParticlesPlugin::callbackZ0, 0., ""},
+  {GMSH_FULLRC, "X1", GMSH_ParticlesPlugin::callbackX1, 1., ""},
+  {GMSH_FULLRC, "Y1", GMSH_ParticlesPlugin::callbackY1, 0., ""},
+  {GMSH_FULLRC, "Z1", GMSH_ParticlesPlugin::callbackZ1, 0., ""},
+  {GMSH_FULLRC, "X2", GMSH_ParticlesPlugin::callbackX2, 0., ""},
+  {GMSH_FULLRC, "Y2", GMSH_ParticlesPlugin::callbackY2, 1., ""},
+  {GMSH_FULLRC, "Z2", GMSH_ParticlesPlugin::callbackZ2, 0., ""},
+  {GMSH_FULLRC, "NumPointsU", GMSH_ParticlesPlugin::callbackU, 10, ""},
+  {GMSH_FULLRC, "NumPointsV", GMSH_ParticlesPlugin::callbackV, 1, ""},
+  {GMSH_FULLRC, "A2", nullptr, 1., ""},
+  {GMSH_FULLRC, "A1", nullptr, 0., ""},
+  {GMSH_FULLRC, "A0", nullptr, 0., ""},
+  {GMSH_FULLRC, "DT", nullptr, .1, ""},
+  {GMSH_FULLRC, "MaxIter", nullptr, 100, ""},
+  {GMSH_FULLRC, "TimeStep", nullptr, 0, ""},
+  {GMSH_FULLRC, "View", nullptr, -1., ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterParticlesPlugin()

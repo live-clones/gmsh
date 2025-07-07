@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -22,15 +22,15 @@
 #endif
 
 StringXNumber SimplePartitionOptions_Number[] = {
-  {GMSH_FULLRC, "NumSlicesX", nullptr, 4.},
-  {GMSH_FULLRC, "NumSlicesY", nullptr, 1.},
-  {GMSH_FULLRC, "NumSlicesZ", nullptr, 1.}
+  {GMSH_FULLRC, "NumSlicesX", nullptr, 4., ""},
+  {GMSH_FULLRC, "NumSlicesY", nullptr, 1., ""},
+  {GMSH_FULLRC, "NumSlicesZ", nullptr, 1., ""}
 };
 
 StringXString SimplePartitionOptions_String[] = {
-  {GMSH_FULLRC, "MappingX", nullptr, "t"},
-  {GMSH_FULLRC, "MappingY", nullptr, "t"},
-  {GMSH_FULLRC, "MappingZ", nullptr, "t"}
+  {GMSH_FULLRC, "MappingX", nullptr, "t", ""},
+  {GMSH_FULLRC, "MappingY", nullptr, "t", ""},
+  {GMSH_FULLRC, "MappingZ", nullptr, "t", ""}
 };
 
 extern "C" {

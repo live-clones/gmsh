@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -490,11 +490,11 @@ int GModel::writeDIFF(const std::string &name, bool binary, bool saveAll,
   fprintf(fp, "\n\n");
   fprintf(fp, " Finite element mesh (GridFE):\n\n");
   fprintf(fp, " Number of space dim. =   3\n");
-  fprintf(fp, " Number of elements   =  %lu\n", numElements);
+  fprintf(fp, " Number of elements   =  %zu\n", numElements);
   fprintf(fp, " Number of nodes      =  %d\n\n", numVertices);
   fprintf(fp, " All elements are of the same type: %s\n",
           (maxNumNodesPerElement != minNumNodesPerElement) ? "dpFALSE" : "dpTRUE");
-  fprintf(fp, " Max number of nodes in an element: %lu \n",
+  fprintf(fp, " Max number of nodes in an element: %zu \n",
           maxNumNodesPerElement);
   fprintf(fp, " Only one subdomain               : dpFALSE\n");
   fprintf(fp, " Lattice data                     ? 0\n\n\n\n");

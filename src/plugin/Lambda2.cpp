@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -7,8 +7,8 @@
 #include "Numeric.h"
 
 StringXNumber Lambda2Options_Number[] = {
-  {GMSH_FULLRC, "Eigenvalue", nullptr, 2.},
-  {GMSH_FULLRC, "View", nullptr, -1.}};
+  {GMSH_FULLRC, "Eigenvalue", nullptr, 2., ""},
+  {GMSH_FULLRC, "View", nullptr, -1., ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterLambda2Plugin() { return new GMSH_Lambda2Plugin(); }
@@ -115,8 +115,8 @@ static void eigen(std::vector<double> &inList, int inNb,
         // compute gradient of shape functions
         double GradPhi_x[MAX_NOD][3];
         double GradPhi_ksi[MAX_NOD][3];
-        double dx_dksi[3][3];
-        double dksi_dx[3][3];
+        double dx_dksi[3][3] = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
+        double dksi_dx[3][3] = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
         double det;
         if(nbNod == 3) { // triangles
           double a[3], b[3], cross[3];
