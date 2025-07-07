@@ -18,7 +18,7 @@
 void gmshGeneratePoints(FuncSpaceData data, fullMatrix<double> &points)
 {
   const int order = data.getSpaceOrder();
-  const bool serendip = data.getSerendipity();
+  const bool serendip = data.getIsSerendipity();
   switch(data.getType()) {
   case TYPE_PNT: points = gmshGeneratePointsLine(0); return;
   case TYPE_LIN: points = gmshGeneratePointsLine(order); return;
@@ -31,7 +31,7 @@ void gmshGeneratePoints(FuncSpaceData data, fullMatrix<double> &points)
   case TYPE_HEX: points = gmshGeneratePointsHexahedron(order, serendip); return;
   case TYPE_PYR:
     points = gmshGeneratePointsPyramidGeneral(
-      data.getPyramidalSpace(), data.getNij(), data.getNk(), serendip);
+      data.getIsPyramidalSpace(), data.getXYOrder(), data.getZOrder(), serendip);
     return;
   default:
     Msg::Error("Unknown element type %d for points generation", data.getType());
@@ -138,7 +138,7 @@ fullMatrix<double> gmshGeneratePointsPyramidGeneral(bool pyr, int nij, int nk,
 void gmshGenerateMonomials(FuncSpaceData data, fullMatrix<double> &monomials)
 {
   const int order = data.getSpaceOrder();
-  const bool serendip = data.getSerendipity();
+  const bool serendip = data.getIsSerendipity();
   switch(data.getType()) {
   case TYPE_PNT: monomials = gmshGenerateMonomialsLine(0); return;
   case TYPE_LIN: monomials = gmshGenerateMonomialsLine(order); return;
@@ -159,7 +159,7 @@ void gmshGenerateMonomials(FuncSpaceData data, fullMatrix<double> &monomials)
     return;
   case TYPE_PYR:
     monomials = gmshGenerateMonomialsPyramidGeneral(
-      data.getPyramidalSpace(), data.getNij(), data.getNk(), serendip);
+      data.getIsPyramidalSpace(), data.getXYOrder(), data.getZOrder(), serendip);
     return;
   default:
     Msg::Error("Unknown element type %d for monomials generation",
@@ -1085,7 +1085,7 @@ void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points,
 
   const int type = data.getType();
   const int order = data.getSpaceOrder();
-  const bool pyr = data.getPyramidalSpace();
+  const bool pyr = data.getIsPyramidalSpace();
 
   if(onBezierDomain) {
     if(type != TYPE_PYR) {
@@ -1102,12 +1102,12 @@ void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points,
       // else:
       //   div = max(nij, nk)
       //   monomial(i, j, k) -> (i/nij, j/nij, (nk-k)/div)
-      const int nij = data.getNij();
-      const int nk = data.getNk();
-      const int div = pyr ? nij + nk : std::max(nij, nk);
-      double scale = 1. / nij;
+      const int pXY = data.getXYOrder();
+      const int pZ = data.getZOrder();
+      const int div = pyr ? pXY + pZ : std::max(pXY, pZ);
+      double scale = 1. / pXY;
       for(int i = 0; i < points.size1(); ++i) {
-        points(i, 2) = (nk - points(i, 2)) / div;
+        points(i, 2) = (pZ - points(i, 2)) / div;
         if(pyr) scale = 1. / div / (1 - points(i, 2));
         points(i, 0) = points(i, 0) * scale;
         points(i, 1) = points(i, 1) * scale;
@@ -1145,14 +1145,14 @@ void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points,
     //   div = max(nij, nk)
     //   monomial(i, j, k) -> (-1+2*i/nij)*(1-k'), (-1+2*j/nij)*(1-k'),
     //   (nk-k)/div)
-    const int nij = data.getNij();
-    const int nk = data.getNk();
-    const int div = pyr ? nij + nk : std::max(nij, nk);
+    const int pXY = data.getXYOrder();
+    const int pZ = data.getZOrder();
+    const int div = pyr ? pXY + pZ : std::max(pXY, pZ);
     double scale = 2. / div;
     for(int i = 0; i < points.size1(); ++i) {
-      points(i, 2) = (nk - points(i, 2)) / div;
+      points(i, 2) = (pZ - points(i, 2)) / div;
       const double duv = 1. - points(i, 2);
-      if(!pyr) scale = 2. / nij * duv;
+      if(!pyr) scale = 2. / pXY * duv;
       points(i, 0) = -duv + points(i, 0) * scale;
       points(i, 1) = -duv + points(i, 1) * scale;
     }
@@ -1165,7 +1165,7 @@ void gmshGenerateOrderedPoints(FuncSpaceData data, fullMatrix<double> &points,
 void gmshGenerateOrderedMonomials(FuncSpaceData data,
                                   fullMatrix<double> &monomials)
 {
-  if(data.getSerendipity())
+  if(data.getIsSerendipity())
     Msg::Warning("Ordered monomials for serendipity elements not implemented");
 
   int idx, order = data.getSpaceOrder();
@@ -1244,17 +1244,17 @@ void gmshGenerateOrderedMonomials(FuncSpaceData data,
     }
     return;
   case TYPE_PYR: {
-    const int nij = data.getNij();
-    const int nk = data.getNk();
-    if(data.getPyramidalSpace()) {
-      int n = nk + nij;
+    const int pXY = data.getXYOrder();
+    const int pZ = data.getZOrder();
+    if(data.getIsPyramidalSpace()) {
+      int n = pZ + pXY;
       int numMonomials = (n + 1) * (n + 2) * (2 * n + 3) / 6;
-      numMonomials -= nij * (nij + 1) * (2 * nij + 1) / 6;
+      numMonomials -= pXY * (pXY + 1) * (2 * pXY + 1) / 6;
       monomials.resize(numMonomials, 3);
       idx = 0;
-      for(int k = nk; k >= 0; --k) {
-        for(int j = 0; j < k + nij + 1; ++j) {
-          for(int i = 0; i < k + nij + 1; ++i) {
+      for(int k = pZ; k >= 0; --k) {
+        for(int j = 0; j < k + pXY + 1; ++j) {
+          for(int i = 0; i < k + pXY + 1; ++i) {
             monomials(idx, 0) = i;
             monomials(idx, 1) = j;
             monomials(idx, 2) = k;
@@ -1264,11 +1264,11 @@ void gmshGenerateOrderedMonomials(FuncSpaceData data,
       }
     }
     else {
-      monomials.resize((nij + 1) * (nij + 1) * (nk + 1), 3);
+      monomials.resize((pXY + 1) * (pXY + 1) * (pZ + 1), 3);
       idx = 0;
-      for(int k = nk; k >= 0; --k) {
-        for(int j = 0; j < nij + 1; ++j) {
-          for(int i = 0; i < nij + 1; ++i) {
+      for(int k = pZ; k >= 0; --k) {
+        for(int j = 0; j < pXY + 1; ++j) {
+          for(int i = 0; i < pXY + 1; ++i) {
             monomials(idx, 0) = i;
             monomials(idx, 1) = j;
             monomials(idx, 2) = k;

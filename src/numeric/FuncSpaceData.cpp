@@ -8,36 +8,36 @@
 
 FuncSpaceData::FuncSpaceData(const FuncSpaceData &fsd, int order)
   : _parentType(fsd._parentType), _spaceOrder(order),
-    _serendipity(fsd._serendipity), _nij(0), _nk(_spaceOrder),
-    _pyramidalSpace(fsd._pyramidalSpace)
+    _isSerendipity(fsd._isSerendipity), _xyOrder(0), _yOrder(_spaceOrder),
+    _isPyramidalSpace(fsd._isPyramidalSpace)
 {
 }
 
 FuncSpaceData::FuncSpaceData(const FuncSpaceData &fsd, int nij, int nk)
   : _parentType(fsd._parentType),
-    _spaceOrder(fsd._pyramidalSpace ? nij + nk : std::max(nij, nk)),
-    _serendipity(fsd._serendipity), _nij(nij), _nk(nk),
-    _pyramidalSpace(fsd._pyramidalSpace)
+    _spaceOrder(fsd._isPyramidalSpace ? nij + nk : std::max(nij, nk)),
+    _isSerendipity(fsd._isSerendipity), _xyOrder(nij), _yOrder(nk),
+    _isPyramidalSpace(fsd._isPyramidalSpace)
 {
 }
 
 FuncSpaceData::FuncSpaceData(const MElement *el)
   : _parentType(el->getType()), _spaceOrder(el->getPolynomialOrder()),
-    _serendipity(el->getIsOnlySerendipity()), _nij(0), _nk(_spaceOrder),
-    _pyramidalSpace(_parentType == TYPE_PYR)
+    _isSerendipity(el->getIsOnlySerendipity()), _xyOrder(0), _yOrder(_spaceOrder),
+    _isPyramidalSpace(_parentType == TYPE_PYR)
 {
 }
 
 FuncSpaceData::FuncSpaceData(const MElement *el, int order, bool serendip)
-  : _parentType(el->getType()), _spaceOrder(order), _serendipity(serendip),
-    _nij(0), _nk(_spaceOrder), _pyramidalSpace(_parentType == TYPE_PYR)
+  : _parentType(el->getType()), _spaceOrder(order), _isSerendipity(serendip),
+    _xyOrder(0), _yOrder(_spaceOrder), _isPyramidalSpace(_parentType == TYPE_PYR)
 {
 }
 
 FuncSpaceData::FuncSpaceData(const MElement *el, bool pyr, int nij, int nk,
                              bool serendip)
   : _parentType(el->getType()), _spaceOrder(pyr ? nij + nk : std::max(nij, nk)),
-    _serendipity(serendip), _nij(nij), _nk(nk), _pyramidalSpace(pyr)
+    _isSerendipity(serendip), _xyOrder(nij), _yOrder(nk), _isPyramidalSpace(pyr)
 {
   if(el->getType() != TYPE_PYR)
     Msg::Error("Creation of pyramidal space data for a non-pyramid element !");
@@ -46,21 +46,21 @@ FuncSpaceData::FuncSpaceData(const MElement *el, bool pyr, int nij, int nk,
 FuncSpaceData::FuncSpaceData(int tag)
   : _parentType(ElementType::getParentType(tag)),
     _spaceOrder(ElementType::getOrder(tag)),
-    _serendipity(ElementType::getSerendipity(tag) > 1), _nij(0),
-    _nk(_spaceOrder),
-    _pyramidalSpace(_parentType == TYPE_PYR)
+    _isSerendipity(ElementType::getSerendipity(tag) > 1), _xyOrder(0),
+    _yOrder(_spaceOrder),
+    _isPyramidalSpace(_parentType == TYPE_PYR)
 {
 }
 
 FuncSpaceData::FuncSpaceData(int type, int order, bool serendip)
-  : _parentType(type), _spaceOrder(order), _serendipity(serendip), _nij(0),
-    _nk(_spaceOrder), _pyramidalSpace(type == TYPE_PYR)
+  : _parentType(type), _spaceOrder(order), _isSerendipity(serendip), _xyOrder(0),
+    _yOrder(_spaceOrder), _isPyramidalSpace(type == TYPE_PYR)
 {
 }
 
 FuncSpaceData::FuncSpaceData(int type, bool pyr, int nij, int nk, bool serendip)
   : _parentType(type), _spaceOrder(pyr ? nij + nk : std::max(nij, nk)),
-    _serendipity(serendip), _nij(nij), _nk(nk), _pyramidalSpace(pyr)
+    _isSerendipity(serendip), _xyOrder(nij), _yOrder(nk), _isPyramidalSpace(pyr)
 {
   if(_parentType != TYPE_PYR)
     Msg::Error("Creation of pyramidal space data for a non-pyramid element!");
@@ -68,19 +68,19 @@ FuncSpaceData::FuncSpaceData(int type, bool pyr, int nij, int nk, bool serendip)
 
 void FuncSpaceData::getOrderForBezier(int order[3], int exponentZ) const
 {
-  if(_pyramidalSpace && exponentZ < 0) {
+  if(_isPyramidalSpace && exponentZ < 0) {
     Msg::Error("getOrderForBezier needs third exponent for pyramidal space!");
     order[0] = order[1] = order[2] = -1;
     return;
   }
   if(getType() == TYPE_PYR) {
-    if(_pyramidalSpace) {
-      order[0] = order[1] = _nij + exponentZ;
-      order[2] = _nk;
+    if(_isPyramidalSpace) {
+      order[0] = order[1] = _xyOrder + exponentZ;
+      order[2] = _yOrder;
     }
     else {
-      order[0] = order[1] = _nij;
-      order[2] = _nk;
+      order[0] = order[1] = _xyOrder;
+      order[2] = _yOrder;
     }
   }
   else
@@ -89,10 +89,10 @@ void FuncSpaceData::getOrderForBezier(int order[3], int exponentZ) const
 
 FuncSpaceData FuncSpaceData::getForNonSerendipitySpace() const
 {
-  if(!_serendipity) return *this;
+  if(!_isSerendipity) return *this;
 
   if(_parentType == TYPE_PYR)
-    return FuncSpaceData(_parentType, _pyramidalSpace, _nij, _nk, false);
+    return FuncSpaceData(_parentType, _isPyramidalSpace, _xyOrder, _yOrder, false);
   else
     return FuncSpaceData(_parentType, _spaceOrder, false);
 }

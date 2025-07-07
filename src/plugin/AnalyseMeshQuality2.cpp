@@ -972,6 +972,7 @@ void Plug::_computeRequestedData(Counts counts, bool check2D, bool check3D) cons
     }
   }
 
+  bezierCoeff::releasePools();
   _status(0, "-> Done computing data");
 }
 

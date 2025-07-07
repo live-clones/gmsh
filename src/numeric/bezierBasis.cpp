@@ -260,10 +260,11 @@ void bezierBasis::_constructPyr()
     Msg::Error("This bezierBasis constructor is for pyramids!");
   }
 
-  const bool pyr = _funcSpaceData.getPyramidalSpace();
-  const int nij = _funcSpaceData.getNij(), nk = _funcSpaceData.getNk();
+  const bool pyr = _funcSpaceData.getIsPyramidalSpace();
+  const int xyOrder = _funcSpaceData.getXYOrder();
+  const int zOrder = _funcSpaceData.getZOrder();
 
-  _numLagCoeff = nk == 0 ? 4 : 8;
+  _numLagCoeff = zOrder == 0 ? 4 : 8;
   _dimSimplex = 0;
 
   // Note that the sampling points for the Jacobian determinant of pyramids are
@@ -274,7 +275,7 @@ void bezierBasis::_constructPyr()
   generateExponents(_funcSpaceData, _exponents);
 
   fullMatrix<double> matBez2Lag =
-    generateBez2LagMatrixPyramid(_exponents, samplingPntsBezDom, pyr, nij, nk);
+    generateBez2LagMatrixPyramid(_exponents, samplingPntsBezDom, pyr, xyOrder, zOrder);
   matBez2Lag.invert(_matrixLag2Bez);
 
   gmshGenerateOrderedPoints(_funcSpaceData, _samplingPntsLagDomain);
@@ -442,7 +443,7 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
     _fillRaiserData();
     return;
   }
-  if(fsdata.getPyramidalSpace()) {
+  if(fsdata.getIsPyramidalSpace()) {
     Msg::Error("Bezier raiser not implemented for pyramidal space");
     return;
   }
@@ -453,7 +454,7 @@ void bezierBasisRaiser::_fillRaiserDataPyr()
     double2int(expD, exp);
   }
   int ncoeff = exp.size1();
-  int order[3] = {fsdata.getNij(), fsdata.getNij(), fsdata.getNk()};
+  int order[3] = {fsdata.getXYOrder(), fsdata.getXYOrder(), fsdata.getZOrder()};
   int orderHash = std::max(order[0], order[2]);
 
   // Speedup: Since the coefficients (num/den) are invariant from a permutation
@@ -619,7 +620,7 @@ bezierCoeff::bezierCoeff(const FuncSpaceData fsData,
     _basis(BasisFactory::getBezierBasis(fsData))
 {
   bool abort = false;
-  if(fsData.getSerendipity()) {
+  if(fsData.getIsSerendipity()) {
     // Bezier interpolation cannot expand an incomplete function space
     Msg::Error("Call of Bezier expansion for Serendipity space.");
     abort = true;
@@ -659,7 +660,7 @@ bezierCoeff::bezierCoeff(const FuncSpaceData fsData,
     _basis(BasisFactory::getBezierBasis(fsData))
 {
   bool abort = false;
-  if(fsData.getSerendipity()) {
+  if(fsData.getIsSerendipity()) {
     // Bezier interpolation cannot expand an incomplete function space
     Msg::Error("Call of Bezier expansion for Serendipity space.");
     abort = true;
@@ -774,8 +775,8 @@ void bezierCoeff::_computeCoefficients(const double *lagCoeffDataConst)
     return;
   case TYPE_PYR: {
     // Pyramids space is tensorial like the hex
-    const int nbij = _funcSpaceData.getNij() + 1;
-    const int nbk = _funcSpaceData.getNk() + 1;
+    const int nbij = _funcSpaceData.getXYOrder() + 1;
+    const int nbk = _funcSpaceData.getZOrder() + 1;
     fullVector<double> xij, xk;
     gmshGenerateOrderedPointsLine(nbij - 1, xij);
     gmshGenerateOrderedPointsLine(nbk - 1, xk);
@@ -888,7 +889,7 @@ int bezierCoeff::getIdxCornerCoeff(int i) const
     case 5: return _r - 1;
     }
   case TYPE_PYR:
-    if(_funcSpaceData.getPyramidalSpace()) {
+    if(_funcSpaceData.getIsPyramidalSpace()) {
       switch(i) {
       case 0: return 0;
       case 1: return order;
@@ -898,17 +899,17 @@ int bezierCoeff::getIdxCornerCoeff(int i) const
       }
     }
     else {
-      const int nij = _funcSpaceData.getNij();
-      const int nk = _funcSpaceData.getNk();
+      const int pXY = _funcSpaceData.getXYOrder();
+      const int pZ = _funcSpaceData.getZOrder();
       switch(i) {
       case 0: return 0;
-      case 1: return nij;
-      case 2: return (nij + 1) * (nij + 1) - 1;
-      case 3: return (nij + 1) * nij;
-      case 4: return (nij + 1) * (nij + 1) * nk;
-      case 5: return (nij + 1) * (nij + 1) * nk + nij;
+      case 1: return pXY;
+      case 2: return (pXY + 1) * (pXY + 1) - 1;
+      case 3: return (pXY + 1) * pXY;
+      case 4: return (pXY + 1) * (pXY + 1) * pZ;
+      case 5: return (pXY + 1) * (pXY + 1) * pZ + pXY;
       case 6: return _r - 1;
-      case 7: return (nij + 1) * (nij + 1) * nk + (nij + 1) * nij;
+      case 7: return (pXY + 1) * (pXY + 1) * pZ + (pXY + 1) * pXY;
       }
     }
   default:
@@ -1344,8 +1345,8 @@ void bezierCoeff::_subdividePrism(const bezierCoeff &coeff,
 void bezierCoeff::_subdividePyramid(const bezierCoeff &coeff,
                                     std::vector<bezierCoeff *> &subCoeff)
 {
-  const int nij = coeff._funcSpaceData.getNij();
-  const int nk = coeff._funcSpaceData.getNk();
+  const int nij = coeff._funcSpaceData.getXYOrder() + 1;
+  const int nk = coeff._funcSpaceData.getZOrder() + 1;
   const int Nij = 2 * nij - 1;
   const int Nk = 2 * nk - 1;
   const int dim = coeff._c;

@@ -19,23 +19,23 @@ class FuncSpaceData {
 
 private:
   int _parentType, _spaceOrder;
-  bool _serendipity;
+  bool _isSerendipity;
   // For pyramids, '_spaceOrder' is not used.
 
   // Pyramids:
-  int _nij, _nk;
-  bool _pyramidalSpace;
-  // There are two possible spaces in function of '_pyramidalSpace'.
-  // if '_pyramidalSpace' == true, the space is a pyramid-like space:
-  //   {X^i Y^j Z^k | i,j <= k+'_nij', k <= '_nk'},
+  int _xyOrder, _yOrder; // polynomial order in each direction
+  bool _isPyramidalSpace;
+  // There are two possible spaces in function of '_isPyramidalSpace'.
+  // if '_isPyramidalSpace' == true, the space is a pyramid-like space:
+  //   {X^i Y^j Z^k | i,j <= k+'_xyOrder', k <= '_yOrder'},
   // otherwise, the space is a hex-like space:
-  //   {X^i Y^j Z^k | i,j <= '_nij', k <= '_nk'},
+  //   {X^i Y^j Z^k | i,j <= '_xyOrder', k <= '_yOrder'},
   // where X = xi/(1-zeta), Y = eta/(1-zeta) and Z = (1-zeta).
 
 public:
   FuncSpaceData()
-    : _parentType(-1), _spaceOrder(-1), _serendipity(false), _nij(-1), _nk(-1),
-      _pyramidalSpace(false)
+    : _parentType(-1), _spaceOrder(-1), _isSerendipity(false), _xyOrder(-1), _yOrder(-1),
+      _isPyramidalSpace(false)
   {
   }
 
@@ -57,8 +57,8 @@ public:
   void print() const
   {
     Msg::Info("FuncSpaceData: type%d, order%d, nij%d, nk%d, pyr%d, serendip%d",
-              _parentType, _spaceOrder, _nij, _nk, _pyramidalSpace,
-              _serendipity);
+              _parentType, _spaceOrder, _xyOrder, _yOrder, _isPyramidalSpace,
+              _isSerendipity);
   }
 
   // Get methods
@@ -78,10 +78,10 @@ public:
     }
   }
   int getSpaceOrder() const { return _spaceOrder; }
-  int getNij() const { return _nij; }
-  int getNk() const { return _nk; }
-  bool getSerendipity() const { return _serendipity; }
-  bool getPyramidalSpace() const { return _pyramidalSpace; }
+  int getXYOrder() const { return _xyOrder; }
+  int getZOrder() const { return _yOrder; }
+  bool getIsSerendipity() const { return _isSerendipity; }
+  bool getIsPyramidalSpace() const { return _isPyramidalSpace; }
 
   void getOrderForBezier(int[3], int exponentZ = -1) const;
 
@@ -93,15 +93,15 @@ public:
   {
     if(_parentType == other._parentType) {
       if(_spaceOrder == other._spaceOrder) {
-        if(_nij == other._nij) {
-          if(_nk == other._nk) {
-            return _pyramidalSpace ? false : other._pyramidalSpace;
+        if(_xyOrder == other._xyOrder) {
+          if(_yOrder == other._yOrder) {
+            return _isPyramidalSpace ? false : other._isPyramidalSpace;
           }
           else
-            return _nk < other._nk;
+            return _yOrder < other._yOrder;
         }
         else
-          return _nij < other._nij;
+          return _xyOrder < other._xyOrder;
       }
       else
         return _spaceOrder < other._spaceOrder;
@@ -112,8 +112,8 @@ public:
   inline bool operator==(const FuncSpaceData &other) const
   {
     return _parentType == other._parentType &&
-           _spaceOrder == other._spaceOrder && _nij == other._nij &&
-           _nk == other._nk && _pyramidalSpace == other._pyramidalSpace;
+           _spaceOrder == other._spaceOrder && _xyOrder == other._xyOrder &&
+           _yOrder == other._yOrder && _isPyramidalSpace == other._isPyramidalSpace;
   }
 };
 
