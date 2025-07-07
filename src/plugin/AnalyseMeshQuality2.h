@@ -131,6 +131,7 @@ public:
   PView *execute(PView *) override;
 
 private:
+  void _testPlots() const;
   bool _fetchParameters();
   void _fetchLegacyParameters();
   bool _checkEarlyExitOptions() const;

@@ -131,6 +131,8 @@
 //      but 20 is acceptable, then choose 20 instead of 15)
 //  18. Have an option for tolerance in quality computation
 //      -> not allowed by the methods in jacBasedQual..
+//  19. Option for a fast approximate values (sampled instead of computing
+//      exact values)
 
 
 
@@ -142,81 +144,94 @@
 //     geometry is deleted...
 
 
+// FIXME: should make a summary? (because less complicated now)
 // NOTE What does the plugin
-//  0. Free data and stop IF DataReleasePolicy = -1
-//  TODO:
-//   Split step 1 into two steps:
-//    1a. Set selected element, determine requested metrics, Prominent metrics
-//    1b. Compute missing data
-//    2. Print stats for available metrics on selected elements
-//  1. Compute validity/quality IF OmitMetricsComputation = OFF
-//   • Limit to GEntity in GModel::current()
-//   • In function of DimensionPolicy:
-//     - IF = -1 Limit to dimension 2 meshes
-//     - IF = 0 Limit to dimension 3 meshes IF there is any 3D mesh OTHERWISE
-//              limit to dimension 2 meshes
-//     - IF >= 1 do not limit (both dimension 2 and 3 meshes)
-//   • Clear old entities IF DataReleasePolicy = 0
-//   • Check if previous data can be reused IF SmartRecomputation = ON
-//   • Limit to visible elements IF RestrictToVisibleElements = ON
-//   • Limit to curved elements IF RestrictToCurvedElements = ON
-//   • Compute Validity IF SkipValidity <= 0
-//   • Compute Disto IF EnableDistoQuality > 0
-//   • Compute Aspect IF EnableAspectQuality > 0
-//   • Regularize Jacobian IF SkipValidity <= 0 AND TreatFlippedAsValid = ON
-//  2. Print statistics
-//   • In function of DimensionPolicy:
-//     - IF = -1 Limit to dimension 2 data
-//     - IF = 0 Limit to dimension 3 data IF there is any 3D mesh OTHERWISE
-//              limit to dimension 2 data
-//     - IF = 1 do not limit (dimension 2 and 3 data separately)
-//     - IF = 2 combine dimension 2 and 3 data
-//   • In columns: min, max and Worst Weighted Means of UNPACK(WmCutoffsForStats)
-//   • Disto IF EnableDistoQuality > 0
-//   • Aspect IF EnableAspectQuality > 0
-//   • IF SkipValidity <= 0:
-//     - minJ/maxJ IF EnableRatioJacDetAsAMetric > 0
-//     - minJ IF EnableMinJacDetAsAMetric > 0
-//     - validity
-//  3. Create PViewElementData IF CreateElementsView = ON
-//   • In function of DimensionPolicy:
-//     - IF = -1 Limit to dimension 2 data
-//     - IF = 0 Limit to dimension 3 data IF there is any 3D mesh OTHERWISE
-//              limit to dimension 2 data
-//     - IF >= 1 do not limit (dimension 2 and 3 data) (combined not possible)
-//   • Let M = max(-SkipValidity, EnableDistoQuality, EnableAspectQuality, EnableRatioJacDetAsAMetric, EnableMinJacDetAsAMetric)
-//   • Validity IF SkipValidity = -M
-//   • Disto IF EnableDistoQuality = M
-//   • Aspect IF EnableAspectQuality = M
-//   • minJ IF SkipValidity <= 0 AND EnableMinJacDetAsAMetric = M
-//   • minJ/maxJ IF SkipValidity <= 0 AND EnableMinJacDetAsAMetric = M
-//   • But: skip creation IF PView already exists and unchanged data
-//  4. Create PView2D IF CreatePlotView = ON
-//   • In function of DimensionPolicy, as for (point 2.)
-//   • For metrics as for (point 3.).
-//   • For Worst Weighted Means in function of UNPACK(WmCutoffsForPlots)
-//   • But: skip creation IF PView already exists and unchanged data
-//  5. Change visibility of elements IF AdjustElementsVisibility >= 1
-//   • In function of DimensionPolicy, as for (point 2.)
-//   • In function of VisibilityPolicy [here in the case HideWorstElements = OFF]:
-//     - IF = -1 Limit to valid elements IF there are any invalid elements,
-//               OTHERWISE skip hiding/making visible
-//     - IF = 0 As "IF = 1" IF no invalid elements OTHERWISE as "IF = -1"
-//     - IF = 1 As "IF = 2" IF there are multiple metric equal to M
-//              OTHERWISE limit to elements that do not meet criterion
-//                        for the metric == M
-//     - IF = 2 Limit to elements that do not meet criterion for all metrics == M
-//     - IF = 3 Limit to elements that do not meet criterion for any metrics == M
-//   • In function of VisibilityCriterion [in the case HideWorstElements = OFF]:
-//     - IF = 0 Use "metricValue <= x" as criterion
-//     - IF = 1 Use "x worst elements" as criterion
-//     - IF = 2 Use "x% worst elements" as criterion
-//     where x = VisibilityThreshold
-//   • Hide worst elements instead of best IF HideWorstElements = ON
-//   • Unhide others IF DoNoSetVisible = OFF
-//   • In function of AdjustElementsVisibility:
-//     - IF = 1 Skip adjustment IF all elements are to be hidden
-//     - IF >= 2 Hide/Set visible even if all elements are to be hidden
+//  0. Perform "earlyExit" operation and abort IF at least one of those
+//     coditions arises:
+//     • IF DataReleasePolicy = -1: Free data
+//     • IF GuidanceLevel = 2: Print metric detailed info
+//     • IF all metric are disabled: Explain the problem
+//  1. Select element for analysis
+//     • Limit to GEntity in GModel::current()
+//     • In function of DimensionPolicy:
+//       - IF = -2: Limit to dimension 2 meshes
+//       - IF = -1: Limit to dimension 1 meshes
+//       - IF = 0: Limit to dimension 3 meshes IF there is any 3D mesh OTHERWISE
+//                 limit to dimension 2 meshes
+//       - IF >= 1: do not limit (both dimension 2 and 3 meshes)
+//     • Clear old entities IF DataReleasePolicy = 0
+//     • Limit to visible elements IF RestrictToVisibleElements = ON
+//     • Limit to curved elements IF RestrictToCurvedElements = ON
+//     • In function of RestrictToElementType:
+//       - IF = 0: do not limit
+//       - IF = 1: Limit to triangles and tetrahedra
+//       - IF = 2: Limit to quadrangles and hexahedra
+//       - IF = 3: Limit to prisms and pyramids
+//  2. Compute validity/quality for selected elements IF OmitMetricsComputation = OFF:
+//     • Skip GEntity IF SmartRecomputation = ON AND list of element unchanged
+//     • IF SkipValidity <= 0:
+//       - Compute Validity
+//       - Regularize Jacobian IF TreatFlippedAsValid = 1
+//     • Compute Disto IF EnableDistoQuality > 0
+//     • Compute Aspect IF EnableAspectQuality > 0
+//     • IF EnableGeoFitQuality > 0:
+//       - Compute GeoFit
+//       - Regularize GeoFit IF TreatFlippedAsValid >= 0
+//  3. Print statistics for selected elements:
+//     • In function of DimensionPolicy:
+//       - IF <= 0 For the one selected dimension
+//       - IF = 1 For both dimension 2 and 3
+//       - IF = 1 For dimension 2 and 3 combined
+//     • IF SkipValidity <= 0:
+//       - Print number of invalid elements
+//       - Print number of inverted elements IF TreatFlippedAsValid <= 0
+//     • Print a table for the other metrics:
+//       - In columns: min, Worst-10% Weighted Mean, and max
+//       - minJ IF EnableMinJacDetAsAMetric > 0
+//       - minJ/maxJ IF EnableRatioJacDetAsAMetric > 0
+//       - GeoFit IF EnableGeoFitQuality > 0
+//       - Disto IF EnableDistoQuality > 0
+//       - Aspect IF EnableAspectQuality > 0
+//  4. Create PViewElementData IF CreateElementsView = ON
+//     • In function of DimensionPolicy:
+//       - IF = -1 Limit to dimension 2 data
+//       - IF = -1 Limit to dimension 2 data
+//       - IF = 0 Limit to dimension 3 data IF there is any 3D mesh OTHERWISE
+//                limit to dimension 2 data
+//       - IF >= 1 do not limit (dimension 2 and 3 data) (combined not possible)
+//     • Let M = max(-SkipValidity, EnableDistoQuality, EnableAspectQuality, EnableRatioJacDetAsAMetric, EnableMinJacDetAsAMetric)
+//     • Validity IF SkipValidity = -M
+//     • Disto IF EnableDistoQuality = M
+//     • Aspect IF EnableAspectQuality = M
+//     • minJ IF SkipValidity <= 0 AND EnableMinJacDetAsAMetric = M
+//     • minJ/maxJ IF SkipValidity <= 0 AND EnableMinJacDetAsAMetric = M
+//     • But: skip creation IF PView already exists and unchanged data
+//  5. Create PView2D IF CreatePlotView = ON
+//     • In function of DimensionPolicy, as for (point 2.)
+//     • For metrics as for (point 3.).
+//     • For Worst Weighted Means in function of UNPACK(WmCutoffsForPlots)
+//     • But: skip creation IF PView already exists and unchanged data
+//  6. Change visibility of elements IF AdjustElementsVisibility >= 1
+//     • In function of DimensionPolicy, as for (point 2.)
+//     • In function of VisibilityPolicy [here in the case HideWorstElements = OFF]:
+//       - IF = -1 Limit to valid elements IF there are any invalid elements,
+//                 OTHERWISE skip hiding/making visible
+//       - IF = 0 As "IF = 1" IF no invalid elements OTHERWISE as "IF = -1"
+//       - IF = 1 As "IF = 2" IF there are multiple metric equal to M
+//                OTHERWISE limit to elements that do not meet criterion
+//                          for the metric == M
+//       - IF = 2 Limit to elements that do not meet criterion for all metrics == M
+//       - IF = 3 Limit to elements that do not meet criterion for any metrics == M
+//     • In function of VisibilityCriterion [in the case HideWorstElements = OFF]:
+//       - IF = 0 Use "metricValue <= x" as criterion
+//       - IF = 1 Use "x worst elements" as criterion
+//       - IF = 2 Use "x% worst elements" as criterion
+//       where x = VisibilityThreshold
+//     • Hide worst elements instead of best IF HideWorstElements = ON
+//     • Unhide others IF DoNoSetVisible = OFF
+//     • In function of AdjustElementsVisibility:
+//       - IF = 1 Skip adjustment IF all elements are to be hidden
+//       - IF >= 2 Hide/Set visible even if all elements are to be hidden
 
 namespace {
   constexpr double UNTOUCHED = -987654321;
@@ -382,77 +397,8 @@ PView *Plug::execute(PView *v)
   _info(MP, "---------------------------------------------");
   _status(0, "Executing the plugin AnalyseMeshQuality...");
 
-  // std::vector<double> values;
-  // const int num = 6;
-  // const int listN[num] = {100, static_cast<int>(1e4), static_cast<int>(2e3), static_cast<int>(5e6), static_cast<int>(5e5), static_cast<int>(1e8)};
-  // const double listC[num] = {25, 25, 10, 10, 2, 2};
-  // int num2 = 6;
-  //
-  // for(int k = 0; k < num2; k++) {
-  //   const int N = listN[k];
-  //   const double cutoff = listC[k];
-  //   values.clear();
-  //   values.reserve(N);
-  //   for(int i = 0; i < N; i++)
-  //     values.push_back(static_cast<double>(i) / static_cast<double>(N-1));
-  //   values[0] = -1;
-  //   PView *p = new PView("Test", cutoff, true, values);
-  // }
-  //
-  // return v;
-
-  //
-  // // Option 1: Fixed
-  //
-  // std::vector<double> values;
-  // const int num = 8;
-  // const int listN[num] = {2, 8, 32, 128, 512, 2048, 8192, 32768};//, static_cast<int>(1e1), static_cast<int>(1e2), static_cast<int>(1e3), static_cast<int>(1e4), static_cast<int>(1e6)};
-  // double listC[num] = {25, 10, 10, 2};
-  // for(int k = 0; k < num; k++) {
-  //   double a = 100 + 98 * std::log(listN[k]/1e16) / std::log(1e16 / 2);
-  //   listC[k] = 100 * std::exp(std::log(2) * (-std::log(listN[k])) / std::log(a) );
-  //   std::cout << "a = " << a << std::endl;
-  //   std::cout << "(-std::log(listN[k])) = " << (-std::log(listN[k])) << std::endl;
-  //   std::cout << "(-std::log(listN[k])) / std::log(a) = " << (-std::log(listN[k])) / std::log(a) << std::endl;
-  //   std::cout << "std::log(2) * (-std::log(listN[k])) / std::log(a) = " << std::log(2) * (-std::log(listN[k])) / std::log(a) << std::endl;
-  //   std::cout << "C = " << listC[k] << std::endl;
-  //   //        cutoff: C = 100 * exp( ln(2) * ln(1/x) / ln(100 / p) )
-  //   //             p: 100 / p = 100 + 98 * log(x/1e16) / log(1e16 / 2)
-  // }
-  // int num2 = 8;
-  //
-  // for(int k = 0; k < num2; k++) {
-  //   const int N = listN[k];
-  //   const double cutoff = listC[k];
-  //   values.clear();
-  //   values.reserve(N);
-  //   for(int i = 0; i < N; i++)
-  //     values.push_back(static_cast<double>(i) / static_cast<double>(N-1));
-  //   values[0] = -1;
-  //   PView *p = new PView("Test", cutoff, true, values);
-  // }
-  //
-  // // Option 2: Width 1st element = 5 %
-  //
-  // // const int listN[num] = {static_cast<int>(1e3), static_cast<int>(1e4), static_cast<int>(1e5), static_cast<int>(1e6)};
-  // // const double listC2[num] = {20.22, 11.87, 6.97, 4.09};
-  // // const int listN[num] = {static_cast<int>(1e2), static_cast<int>(1e4), static_cast<int>(1e6), static_cast<int>(1e7)};
-  // // const double listC2[num] = {34.45, 11.87, 4.09, 2.40};
-  // // const int listN[num] = {static_cast<int>(1e2), static_cast<int>(1e4), static_cast<int>(1e6), static_cast<int>(1e8)};
-  // const double listC2[num] = {34.45, 11.87, 4.09, 1.40};
-  //
-  // for(int k = 0; k < num2; k++) {
-  //   const int N = listN[k];
-  //   const double cutoff = listC2[k];
-  //   values.clear();
-  //   values.reserve(N);
-  //   for(int i = 0; i < N; i++)
-  //     values.push_back(static_cast<double>(i) / static_cast<double>(N-1));
-  //   values[0] = -1;
-  //   PView *p = new PView("Test", cutoff, true, values);
-  // }
-  //
-  // return v;
+  // // For dev purpose:
+  // _testPlots(); return v;
 
   // Fetch the other parameters and check options that may cause an early exit
   bool unhandledOptions= !_fetchParameters();
@@ -1437,6 +1383,84 @@ bool Plug::_hideElements(const Measures &measure,
   countHidden += elemToHide.size();
   countMadeVisible += measure.elements.size() - elemToHide.size();
   return true;
+}
+
+
+
+void GMSH_AnalyseMeshQuality2Plugin::_testPlots() const
+{
+  // std::vector<double> values;
+  // const int num = 6;
+  // const int listN[num] = {100, static_cast<int>(1e4), static_cast<int>(2e3), static_cast<int>(5e6), static_cast<int>(5e5), static_cast<int>(1e8)};
+  // const double listC[num] = {25, 25, 10, 10, 2, 2};
+  // int num2 = 6;
+  //
+  // for(int k = 0; k < num2; k++) {
+  //   const int N = listN[k];
+  //   const double cutoff = listC[k];
+  //   values.clear();
+  //   values.reserve(N);
+  //   for(int i = 0; i < N; i++)
+  //     values.push_back(static_cast<double>(i) / static_cast<double>(N-1));
+  //   values[0] = -1;
+  //   PView *p = new PView("Test", cutoff, true, values);
+  // }
+  //
+  // return v;
+
+
+  // Option 1: Fixed
+
+  std::vector<double> values;
+  const int num = 8;
+  const int listN[num] = {2, 8, 32, 128, 512, 2048, 8192, 32768};//, static_cast<int>(1e1), static_cast<int>(1e2), static_cast<int>(1e3), static_cast<int>(1e4), static_cast<int>(1e6)};
+  double listC[num] = {25, 10, 10, 2};
+  for(int k = 0; k < num; k++) {
+    double a = 100 + 98 * std::log(listN[k]/1e16) / std::log(1e16 / 2);
+    listC[k] = 100 * std::exp(std::log(2) * (-std::log(listN[k])) / std::log(a) );
+    std::cout << "a = " << a << std::endl;
+    std::cout << "(-std::log(listN[k])) = " << (-std::log(listN[k])) << std::endl;
+    std::cout << "(-std::log(listN[k])) / std::log(a) = " << (-std::log(listN[k])) / std::log(a) << std::endl;
+    std::cout << "std::log(2) * (-std::log(listN[k])) / std::log(a) = " << std::log(2) * (-std::log(listN[k])) / std::log(a) << std::endl;
+    std::cout << "C = " << listC[k] << std::endl;
+    //        cutoff: C = 100 * exp( ln(2) * ln(1/x) / ln(100 / p) )
+    //             p: 100 / p = 100 + 98 * log(x/1e16) / log(1e16 / 2)
+  }
+  int num2 = 8;
+
+  for(int k = 0; k < num2; k++) {
+    const int N = listN[k];
+    const double cutoff = listC[k];
+    values.clear();
+    values.reserve(N);
+    for(int i = 0; i < N; i++)
+      values.push_back(static_cast<double>(i) / static_cast<double>(N-1));
+    values[0] = -1;
+    PView *p = new PView("Test", cutoff, true, values);
+  }
+
+  //
+  // // Option 2: Width 1st element = 5 %
+  //
+  // // const int listN[num] = {static_cast<int>(1e3), static_cast<int>(1e4), static_cast<int>(1e5), static_cast<int>(1e6)};
+  // // const double listC2[num] = {20.22, 11.87, 6.97, 4.09};
+  // // const int listN[num] = {static_cast<int>(1e2), static_cast<int>(1e4), static_cast<int>(1e6), static_cast<int>(1e7)};
+  // // const double listC2[num] = {34.45, 11.87, 4.09, 2.40};
+  // // const int listN[num] = {static_cast<int>(1e2), static_cast<int>(1e4), static_cast<int>(1e6), static_cast<int>(1e8)};
+  // const double listC2[num] = {34.45, 11.87, 4.09, 1.40};
+  //
+  // for(int k = 0; k < num2; k++) {
+  //   const int N = listN[k];
+  //   const double cutoff = listC2[k];
+  //   values.clear();
+  //   values.reserve(N);
+  //   for(int i = 0; i < N; i++)
+  //     values.push_back(static_cast<double>(i) / static_cast<double>(N-1));
+  //   values[0] = -1;
+  //   PView *p = new PView("Test", cutoff, true, values);
+  // }
+  //
+  // return v;
 }
 
 // ======== StatGenerator ======================================================
