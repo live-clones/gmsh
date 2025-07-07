@@ -32,141 +32,16 @@
 #endif
 
 // TODO To think of:
-//  xx Have one plot/element view for both validity and unflip and call it
-//     validity+. Flipped elements have a value of either 1/2 (to say, it is
-//     fifty-fifty, flipped may be invalid or not), or -1 (for coherence with
-//     GeoFit).
-//  2. Rename skipValidity+, or skipValidityPlus?
-//  3. Jacobian is computed before shape quality if it is not said that the
+//  1. Rename skipValidity+, or skipValidityPlus?
+//  2. Jacobian is computed before shape quality if it is not said that the
 //     element is valid.
 //     -> either skipValidity do not disable preventive validity check or
 //        add a forceComputation in minIGEMeasure / minICNMeasure arguments.
 //        But this is dangerous.
 
 // TODO:
-//  xx Small changes:
-//     x distortion -> disto
-//     x requested element -> selected elements
-//     x If nothing to compute: tell it and remove "-> Done computing data"
-//     x Remove custom range for validity/Unflip
-//     x Show found x invalid then table
-//  xx Test plot such that first element take same place, like 1/50
-//     -> If choose to stay at fixed cutoff determine which cutoff to choose for
-//        which number of element
-//  xx Move info how to read plot at execution. Say in important notes that
-//     Help does not cover all information and it is adviced to set
-//     GuidanceLevel=1 at the beginning to have contextual more complete info
-//  xx Update metrics info
-//  xx Make option name starting with upper case because it is the convention
-//  xx Choose what to do with WW-G/M. Options are:
-//     - As current: user choose and can have multiple cutoff. Adviced 25, 10, 2
-//     - As current: plugin choose, user can give preference between 25, 10, 2
-//                   so that the plugin can decide when superposition.
-//     - As current: plugin choose if user set wwmCutOff to 0 (which made
-//                   the default).
-//     - Fixed weight worst: the idea is that the worst value count for the
-//                           same weight whatever the number of values.
-//                           This weight can be a parameter
-//                           The cutoff depend on the number of values.
-//                Advantage: On graph, this is comfortable for looking at
-//                           minimum value (with 3~5% worst-weight).
-//                           Easier for the user, he do not have to choose
-//                           a cutoff.
-//                           Can still change parameter if not happy.
-//             Disadvantage: The x-axis of graph is changing for every value
-//                           count, which is a bit annoying visually.
-//      Unresolved question: How comparison between mesh of different element
-//                           count is affected?
-//             Idea to test: compare 3~4 simulated mesh of different size.
-//                           Values are 1 except N that are 0. N is either
-//                           certain percentage of total value count or a
-//                           certain number of element. Look at graph and wwm.
-//                           - 1k, 10k, 100k, 1M values
-//                           - 1, 10, 100 zero-values,
-//                             OR 0.1%, 1%, 10% zero-values
-//                           - fixed cutoff v.s. fixed worst-weight
-//     => Thinking about it, first solution seems more what we expect: if 10%
-//        of the values are 0 and the rest 1, we expect the mean to be the same
-//        whatever the number of values. With second solution, the mean remain
-//        the same if the worst value only is 0, which would be quite strange.
-//     -> Maybe we can have the best of the two worlds by choosing a
-//        worst value weight that goes continuously from 50% for 2 values to
-//        1% for largest mesh to consider (reasonably with future expectation, 1e16?)
-//        cutoff: C = 100 * exp( ln(2) * ln(1/x) / ln(100 / p) )
-//             p: 100 / p = 100 + 98 * log(x/1e16) / log(1e16 / 2)
-//        Advantages: - No duplication, nothing to choose.
-//                    - Width of first jump give indication of size of mesh
-//                    - Two meshes with similar element count will have
-//                      meaningful mean that can be compared
-//                    - Comfortable to look at on graphs
-//                    - Smaller weight for small element count
-//                      #=40 -> c=33% -> ww=10%,
-//                      #=1530 -> c=18.3% -> ww=5%,
-//                      #=210k -> c=8.9% -> ww=3%,
-//                      #=98M -> c=3.84% -> ww=2%,
-//                      #=1T -> c=0.4% -> ww=1%
-//                    - Cutoff value give also indication of size of mesh
-//                      -> expert will know the size
-//      Disadvantage: - x-axis of graph is changing for every value count
-//      Idea to test: plot using mesh(x=log(#elem), y=(%good), z=mean)
-//                    and compare the three options with standard mean.
-//     => I think the best option is:
-//        - for plots, Use the above idea with a plugin option 'fixPlotCutoffTo'
-//                     to let the user have that possibility (+say in Help
-//                     that advised 10 for medium mesh, etc.)
-//                     (or it can be available as a Gmsh built-in parameter but
-//                     it would be less practical...)
-//                     -> I think that it is what we want. The accent is on
-//                        reading a maximum of information from 1 plot.
-//                        For comparing two meshes, it is better to fix the
-//                        cutoff (we can add a tick mark at the place of the
-//                        automatic cutoff so that it is easy to know its place
-//                        and check that the fixed cutoff is not too far from
-//                        the automatic)
-//        - for stats, the above idea has the advantage that the mean equals
-//                     the standard mean for 2 values and to have a cutoff that
-//                     continuously decreases. However, the cutoff does not converge.
-//                     It would be better if it converges to a cutoff of e.g. 10
-//                     Or just use a fix cutoff. Of e.g. 10 and thus the mean of
-//                     two values is given by 0.81 * worst and 0.19 * best.
-//                     This is quite strange but it should be kept in mind that
-//                     the worst-weighted mean is designed for a large set
-//                     of values...
-//                     -> I think that a fixed cutoff of 10 works best. It is
-//                        simpler and two meshes that have two sets of value in
-//                        the same proportion will have the same wwm,
-//                        even if the element counts are far apart. It is more
-//                        logical.
-//  xx Add '. Reason is:' at end of error in guidance + warn -> info
-//  xx If guidanceLevel=1: At each run, print what option has been changed
-//     -> can be useful as a log message when bugs.
-//     -> say at FAQ:
-//  xx Avoid ~1e+02% (when it is 99.999...) -> create formatPercentage method.
-//     Use ~100% and ~0%.
-//     Precision should be 1 digit after point when <10% and 0 otherwise.
-//  xxx Plots are not really useful with validity and unflip. Moreover, it
-//      is better to have one element view with Validity+ (both validity and unflip)
 
 // FIXME
-//  xx On blades:
-//     • Run with all four: Create**View, AdjustElementsVisibility, SmartRecomputation:
-//       x Create only plots for Unflip... would expect also validity
-//       - Make visible only Invalid... would expect also unflip?
-//       x Say created 1 elmeent view... expected 2
-//     • Run now with HideWorstElements to hide the invalid elements
-//     • Run now with restrictToVisibleElements and not HideWorstElements
-//       nor Create**View
-//       x Do not perform hiding... would expect hide all but flipped one.
-//  xx On blades:
-//     • Run with two shape measure ON:
-//       x StatusBar not shown for validity and dist...
-//       x Show stats for MinJ/maxJ and minJ... expected other measures
-//         (think it is just the name ordering)
-//  xx On testPlugin2:
-//     x On test case 11, geofit values is not printed in stat summary
-//  xx Launch GUI dummy:
-//     • Mesh 3 and enable Disto + plot
-//       x Get Unflip. Expected not Unflip
 
 // TODO Finalization:
 //  1. Check fixmes, todos, etc.
@@ -202,6 +77,19 @@
 //     - inverse order DoNotSetVisible and HideWorstElements?
 //     - rename HideWorstElements for inverseWhichAreHidden or something like that?
 //     - rename DoNotSetVisible for DoNotMakeVisible?
+//  8. In presence of curved geo, validity is computed on a subset of elements
+//     which is normal. But the message "... among the x% of the selected
+//     elements that were analyzed for validity" is printed which is confusing.
+//     -> must check percent in function of elementOnFlatGeo
+//     -> message could be "x% of the selected elements on flat geometry
+//     entities that could be analyzed" (which is any case is printed in the case
+//     omitMetricComputation=1)
+//  9. Small modifications:
+//     - default for hidingThreshold not 10 as it is confusing with wm10 -> 5
+//  10. Update help:
+//      - due to changes with cutoff
+//      - due to changes with validity+
+
 
 // TODO Maybe:
 //  1. Intrinsic validity : smartreco777 for sharing element or 888 or 999
@@ -235,6 +123,14 @@
 //      - How the plugin decide to create views or not
 //  14. Add verbose message for stats on selected elements if verbose==1?
 //  15. Have input field empty instead of 0 at starting?
+//  16. Split GuidanceLevel=1 into verbose (level=1) and verbose+Help (level=2)
+//  17. Compute plot cutoff in a predifined set of values e.g.
+//      {..., 5, 7.5, 10, 15, 20,...},
+//      and optionally try to stick to previously chosen value when possible
+//      (if previous cutoff was 20 and best choice for the new plot is 15
+//      but 20 is acceptable, then choose 20 instead of 15)
+//  18. Have an option for tolerance in quality computation
+//      -> not allowed by the methods in jacBasedQual..
 
 
 
