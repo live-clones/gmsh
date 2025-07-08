@@ -78,7 +78,6 @@ for step in range(11, 20):
 # create several files. If the `PostProcessing.SaveMesh' option is not set,
 # `gmsh.view.write()' will only save the view data, without the mesh (which
 # could be saved independently with `gmsh.write()').
-gmsh.option.setNumber('Mesh.MshFileVersion', 2)
 gmsh.view.write(t1, "x4_t1.msh")
 gmsh.view.write(t2, "x4_t2.msh")
 
