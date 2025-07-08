@@ -954,7 +954,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
 #if defined(HAVE_OPTHOM)
     FastCurvingParameters p;
     p.dim = m->getMeshDim();
-    p.thickness = false;
+    p.useNewAlgo = false;
     p.curveOuterBL =
       (FastCurvingParameters::OUTERBLCURVE)CTX::instance()->mesh.hoCurveOuterBL;
     p.maxNumLayers = CTX::instance()->mesh.hoNLayers;

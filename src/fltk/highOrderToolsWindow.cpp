@@ -148,6 +148,11 @@ static void chooseopti_strategy(Fl_Widget *w, void *data)
     for(int i = 9; i <= 11; i++) o->value[i]->deactivate();
 }
 
+static void highordertools_runblc_cb(Fl_Widget *w, void *data)
+{
+  Msg::Error("Not implemented");
+}
+
 static void highordertools_runopti_cb(Fl_Widget *w, void *data)
 {
   highOrderToolsWindow *o = FlGui::instance()->highordertools;
@@ -196,7 +201,7 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
   case 2: { // Fast curving
     FastCurvingParameters p;
     p.onlyVisible = onlyVisible;
-    p.thickness = false;
+    p.useNewAlgo = false;
     p.dim = dim;
     p.curveOuterBL =
       (FastCurvingParameters::OUTERBLCURVE)CTX::instance()->mesh.hoCurveOuterBL;
@@ -210,7 +215,7 @@ static void highordertools_runopti_cb(Fl_Widget *w, void *data)
   case 3: { // Fast curving 2
     FastCurvingParameters p;
     p.onlyVisible = onlyVisible;
-    p.thickness = true;
+    p.useNewAlgo = true;
     p.curveOuterBL =
       (FastCurvingParameters::OUTERBLCURVE)CTX::instance()->mesh.hoCurveOuterBL;
     p.maxNumLayers = (int)o->value[2]->value();
@@ -278,7 +283,8 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   FL_NORMAL_SIZE -= deltaFontSize;
 
   int width = 3 * IW + 4 * WB;
-  int height = 24 * BH;
+  int height = 31 * BH + BH / 2;
+  int skip = 4;
 
   win = new paletteWindow(width, height,
                           CTX::instance()->nonModalWindows ? true : false,
@@ -320,7 +326,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
   }
 
-  y += BH;
+  y += BH + skip;
 
   value[0] = new Fl_Value_Input(x, y, IW, BH, "Polynomial order");
   value[0]->minimum(1);
@@ -335,9 +341,6 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
                                 "Generate incomplete elements");
   butt[0]->type(FL_TOGGLE_BUTTON);
   butt[0]->value(!complete);
-  // AJ: This is bad a design. Add a proper Fl_Button to toggle between
-  // completeness if needed. Plus: only 2d version implemented for now
-  //  butt[0]->callback(change_completeness_cb);
 
   y += BH;
 
@@ -352,7 +355,65 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   push[0]->callback(highordertools_runp_cb);
 
   {
-    y += BH / 2;
+    y += BH / 2 + 2 * skip;
+    Fl_Box *b = new Fl_Box(x, y + BH - WB, width - 4 * WB, 2);
+    b->box(FL_ENGRAVED_FRAME);
+    b->labeltype(FL_NO_LABEL);
+  }
+
+  {
+    y += BH;
+    Fl_Box *b =
+      new Fl_Box(x - WB, y, width, BH, "2. Curve boundary-layers");
+    b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+  }
+
+  y += BH;
+
+  butt[4] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
+                                "Smooth boundary before (!: detach HO nodes from geometry)");
+  butt[4]->type(FL_TOGGLE_BUTTON);
+  butt[4]->tooltip("Choose []=skipThis or [x]=smoothTheBoundary");
+  butt[4]->value(0);
+  butt[4]->deactivate();
+
+  y += BH;
+
+  value[12] = new Fl_Value_Input(x, y, IW, BH, "Exterior curving factor");
+  value[12]->minimum(0);
+  value[12]->maximum(1);
+  if(CTX::instance()->inputScrolling) value[12]->step(.01);
+  value[12]->align(FL_ALIGN_RIGHT);
+  value[12]->value(0);
+  value[12]->tooltip("Choose in [0, 1], where: 0=forceLinearExteriorMesh, 1=completelyCurveExteriorMesh");
+
+  y += BH;
+
+  value[13] = new Fl_Value_Input(x, y, IW, BH, "Percentage of thickness to preserve from linearity");
+  value[13]->minimum(0);
+  value[13]->maximum(1);
+  if(CTX::instance()->inputScrolling) value[13]->step(.01);
+  value[13]->align(FL_ALIGN_RIGHT);
+  value[13]->value(0);
+  value[13]->tooltip("Choose in [0, 1[, where: 0=doNotPreserve, 1=completelyAlignAdjacentElement");
+
+  y += BH;
+
+  value[14] = new Fl_Value_Input(x, y, IW, BH, "Alignment factor");
+  value[14]->minimum(0);
+  value[14]->maximum(1);
+  if(CTX::instance()->inputScrolling) value[14]->step(.01);
+  value[14]->align(FL_ALIGN_RIGHT);
+  value[14]->value(1);
+  value[14]->tooltip("Choose in [0, 1], where: 0=doNotTryToAlign, 1=completelyAlignAdjacentElement");
+
+  y += BH;
+
+  push[2] = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Curve");
+  push[2]->callback(highordertools_runblc_cb);
+
+  {
+    y += BH / 2 + 2 * skip;
     Fl_Box *b = new Fl_Box(x, y + BH - WB, width - 4 * WB, 2);
     b->box(FL_ENGRAVED_FRAME);
     b->labeltype(FL_NO_LABEL);
@@ -361,16 +422,17 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   {
     y += BH;
     Fl_Box *b = new Fl_Box(x - WB, y, width, BH,
-                           "2. Regularization of high-order elements");
+                           "3. Regularization of high-order elements");
     b->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
   }
 
-  y += BH;
+  y += BH + skip;
+
   static Fl_Menu_Item menu_method[] = {
     {"Optimization", 0, nullptr, nullptr},
     {"Elastic Analogy", 0, nullptr, nullptr},
     {"Fast Curving", 0, nullptr, nullptr},
-    {"Boundary Layer Curving (experimental)", 0, nullptr, nullptr},
+    {"Boundary Layer Curving (experimental)", 0, nullptr, nullptr}, // FIXME Remove this one
     {nullptr}};
   choice[2] = new Fl_Choice(x, y, IW, BH, "Algorithm");
   choice[2]->align(FL_ALIGN_RIGHT);

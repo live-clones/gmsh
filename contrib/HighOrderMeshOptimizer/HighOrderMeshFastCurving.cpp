@@ -1204,13 +1204,13 @@ namespace {
     else if(bndEnt->dim() == 2) {
       GFace *gFace = bndEnt->cast2Face();
       for(std::size_t i = 0; i < gFace->triangles.size(); i++) {
-        if(p.thickness)
+        if(p.useNewAlgo)
           bndEl.push_back(gFace->triangles[i]);
         else
           insertIfCurved(gFace->triangles[i], bndEl);
       }
       for(std::size_t i = 0; i < gFace->quadrangles.size(); i++)
-        if(p.thickness)
+        if(p.useNewAlgo)
           bndEl.push_back(gFace->quadrangles[i]);
         else
           insertIfCurved(gFace->quadrangles[i], bndEl);
@@ -1218,7 +1218,7 @@ namespace {
     else
       Msg::Error("Cannot process %s in fast curving", entName(bndEnt).c_str());
 
-    if(p.thickness) {
+    if(p.useNewAlgo) {
       getColumnsAndcurveBoundaryLayer(ed2el, face2el, ent, bndEnt, bndEl, p,
                                       normal);
       return;
@@ -1380,7 +1380,7 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
       const GEntity::GeomType bndType = bndEnt->geomType();
       if((bndType == GEntity::Line) || (bndType == GEntity::Plane))
         continue; // Skip if boundary is straight
-      if(p.dim == 2 || !p.thickness) {
+      if(p.dim == 2 || !p.useNewAlgo) {
         Msg::Info("Curving elements in %s for boundary %s...",
                   entName(gEnt).c_str(), entName(bndEnt).c_str());
         curveMeshFromBnd(ed2el, face2el, gEnt, bndEnt, p, normal);
@@ -1389,7 +1389,7 @@ void HighOrderMeshFastCurving(GModel *gm, FastCurvingParameters &p,
         gather3Dcolumns(face2el, gEnt, bndEnt, p, bndEl2column);
     }
 
-    if(p.thickness && p.dim == 3 && bndEnts.size()) {
+    if(p.useNewAlgo && p.dim == 3 && bndEnts.size()) {
       Msg::Info("Curving elements in %s...", entName(gEnt).c_str());
       curve3DBoundaryLayer(bndEl2column, (GFace *)bndEnts[0]);
     }
