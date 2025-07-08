@@ -3092,11 +3092,13 @@ curve if the first and last points are identical.
 @item Circle ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} <, ...> @};
 Create a circle arc. If three @var{expression}s are provided on the
 right-hand-side they define the start point, the center and the end
-point of the arc. With the built-in geometry kernel the arc should be
-strictly smaller than Pi. With the OpenCASCADE kernel, if between 4 and
-6 expressions are provided, the first three define the coordinates of
-the center, the next one defines the radius, and the optional next two
-the start and end angle.
+point of the arc; the three points should not be colinear. With the
+built-in geometry kernel the arc should be strictly smaller than
+Pi. With the OpenCASCADE kernel, if between 4 and 6 expressions are
+provided the arc is created in the X-Y plane: the first three define the
+coordinates of the center, the next one defines the radius, and the
+optional next two the start and end angle.
+
 @c TODO: document < Plane @{ @var{expression}, @var{expression}, @var{expression} @}; >
 
 @item Ellipse ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} <, ...> @};

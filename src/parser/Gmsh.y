@@ -200,7 +200,7 @@ struct doubleXstring{
 %token tDefineString tSetNumber tSetTag tSetString
 %token tPoint tCircle tEllipse tCurve tSphere tPolarSphere tSurface tSpline tVolume
 %token tBox tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
-%token tRectangle tDisk tWire tGeoEntity
+%token tRectangle tDisk tWire tGeoEntity tNormal
 %token tCharacteristic tLength tParametric tElliptic
 %token tRefineMesh tRecombineMesh tAdaptMesh tTransformMesh
 %token tRelocateMesh tReorientMesh tSetFactory tThruSections tWedge tFillet tChamfer
@@ -6039,6 +6039,52 @@ FExpr_Multi :
       else{
         yymsg(0, "MatrixOfInertia only available with OpenCASCADE geometry kernel");
       }
+    }
+   | tNormal tSurface '{' RecursiveListOfDouble '}'
+    {
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      if(GModel::current()->getGEOInternals()->getChanged())
+        GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      $$ = List_Create(9, 1, sizeof(double));
+      if(List_Nbr($4) < 1) {
+        yymsg(0, "Missing surface tag for normal computation");
+      }
+      else {
+        double d;
+        List_Read($4, 0, &d);
+        int tag = (int)d;
+        GFace *gf = GModel::current()->getFaceByTag(tag);
+        if(!gf) {
+          yymsg(0, "Surface %d does not exist", tag);
+        }
+        if(List_Nbr($4) == 1) {
+          SPoint2 param(0., 0.);
+          SVector3 n = gf->normal(param);
+          double x = n.x(), y = n.y(), z = n.z();
+          List_Add($$, &x);
+          List_Add($$, &y);
+          List_Add($$, &z);
+        }
+        else if(List_Nbr($4) - 1 % 2) {
+          yymsg(0, "Number of parametric coordinates should be even");
+        }
+        else {
+          for(int i = 1; i < List_Nbr($4); i += 2) {
+            double u, v;
+            List_Read($4, i, &u);
+            List_Read($4, i + 1, &v);
+            SPoint2 param(u, v);
+            SVector3 n = gf->normal(param);
+            double x = n.x(), y = n.y(), z = n.z();
+            List_Add($$, &x);
+            List_Add($$, &y);
+            List_Add($$, &z);
+          }
+        }
+      }
+      List_Delete($4);
     }
    | tColor GeoEntity123 '{' FExpr '}'
     {
