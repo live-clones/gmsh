@@ -1,4 +1,4 @@
-// MeshOptimizer - Copyright (C) 2013-2024 UCLouvain-ULiege
+// MeshOptimizer - Copyright (C) 2013-2025 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -52,15 +52,15 @@ MeshOpt::MeshOpt(const std::map<MElement *, GEntity *> &element2entity,
     _initObj(0)
 {
   _allObjFunc.resize(par.pass.size());
-  for(int iPass = 0; iPass < par.pass.size(); iPass++) {
+  for(size_t iPass = 0; iPass < par.pass.size(); iPass++) {
     _allObjFunc[iPass].resize(par.pass[iPass].contrib.size());
-    for(int iC = 0; iC < par.pass[iPass].contrib.size(); iC++)
+    for(size_t iC = 0; iC < par.pass[iPass].contrib.size(); iC++)
       _allObjFunc[iPass][iC] = par.pass[iPass].contrib[iC]->copy();
   }
   _objFunc = &_allObjFunc[0];
   if(par.nCurses) {
     int minCol = 0;
-    for(int i = 0; i < _objFunc->names().size(); i++) {
+    for(size_t i = 0; i < _objFunc->names().size(); i++) {
       if(i > 0) minCol += 5;
       minCol += 34;
       minCol += _objFunc->names()[i].size();
@@ -99,8 +99,8 @@ MeshOpt::MeshOpt(const std::map<MElement *, GEntity *> &element2entity,
 
 MeshOpt::~MeshOpt()
 {
-  for(int iPass = 0; iPass < _allObjFunc.size(); iPass++)
-    for(int iC = 0; iC < _allObjFunc[iPass].size(); iC++)
+  for(size_t iPass = 0; iPass < _allObjFunc.size(); iPass++)
+    for(size_t iC = 0; iC < _allObjFunc[iPass].size(); iC++)
       delete _allObjFunc[iPass][iC];
   while(_optHistory.size() > 0) {
     delete[] _optHistory.back();
@@ -315,7 +315,7 @@ int MeshOpt::optimize(const MeshOptParameters &par)
               patch.nEl(), patch.nVert(), patch.nFV(), patch.nPC());
 
   // Loop on passes
-  for(_iPass = 0; _iPass < par.pass.size(); _iPass++) {
+  for(_iPass = 0; (size_t)_iPass < par.pass.size(); _iPass++) {
     // Set objective function Output if required
     _objFunc = &_allObjFunc[_iPass];
     if(_verbose > 2) {

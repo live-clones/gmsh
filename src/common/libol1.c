@@ -231,29 +231,29 @@ typedef struct
 /*----------------------------------------------------------------------------*/
 
 static void    SetMshBox   (TreSct *, MshSct *);
-static void    AddVer      (MshSct *, TreSct *, OctSct *, fpn *, fpn *);
-static void    AddEdg      (MshSct *, TreSct *, OctSct *, fpn *, fpn *);
-static void    AddTri      (MshSct *, TreSct *, OctSct *, fpn *, fpn *);
-static void    AddQad      (MshSct *, TreSct *, OctSct *, fpn *, fpn *);
-static void    AddTet      (MshSct *, TreSct *, OctSct *, fpn *, fpn *);
-static void    SubOct      (MshSct *, TreSct *, OctSct *, fpn *, fpn *);
+static void    AddVer      (MshSct *, TreSct *, OctSct *, fpn [3], fpn [3]);
+static void    AddEdg      (MshSct *, TreSct *, OctSct *, fpn [3], fpn [3]);
+static void    AddTri      (MshSct *, TreSct *, OctSct *, fpn [3], fpn [3]);
+static void    AddQad      (MshSct *, TreSct *, OctSct *, fpn [3], fpn [3]);
+static void    AddTet      (MshSct *, TreSct *, OctSct *, fpn [3], fpn [3]);
+static void    SubOct      (MshSct *, TreSct *, OctSct *, fpn [3], fpn [3]);
 static void    LnkItm      (TreSct *, OctSct *, itg, itg, char);
-static OctSct *GetCrd      (OctSct *, itg, fpn *, fpn *, fpn *);
+static OctSct *GetCrd      (OctSct *, itg, fpn [3], fpn [3], fpn [3]);
 static void    GetBox      (TreSct *, OctSct *, itg, itg *, itg, itg *,
-                           char *, fpn [2][3], fpn, fpn *, fpn *, itg );
+                           char *, fpn [2][3], fpn, fpn [3], fpn [3], itg );
 static itg     BoxIntBox   (fpn [2][3], fpn [2][3], fpn);
 static void    SetItm      (MshSct *, itg, itg, itg, itg);
 static void    AniTri      (MshSct *, itg);
-static void    SetSonCrd   (itg, fpn *, fpn *, fpn *, fpn *);
-static void    GetOctLnk   (MshSct *, itg, fpn *, itg *, fpn *, OctSct *,
-                           fpn *, fpn *, itg (void *, itg),  void *, itg);
+static void    SetSonCrd   (itg, fpn [3], fpn [3], fpn [3], fpn [3]);
+static void    GetOctLnk   (MshSct *, itg, fpn [3], itg *, fpn *, OctSct *,
+                           fpn [3], fpn [3], itg (void *, itg),  void *, itg);
 static void    IntRayOct   (TreSct *, MshSct *, fpn *, fpn *, itg *, fpn *,
-                            OctSct *, fpn *, fpn *, itg (void *, itg),  void *,
+                            OctSct *, fpn [3], fpn [3], itg (void *, itg),  void *,
                             itg);
-static void    GetBucBox   (TreSct *, BucSct *, fpn *, fpn *);
+static void    GetBucBox   (TreSct *, BucSct *, fpn [3], fpn [3]);
 static BucSct *GetBucNgb   (TreSct *, BucSct *, itg);
-static fpn     DisVerOct   (fpn *, fpn *, fpn *);
-static itg     VerInsOct   (fpn *, fpn *, fpn *);
+static fpn     DisVerOct   (fpn [3], fpn [3], fpn [3]);
+static itg     VerInsOct   (fpn [3], fpn [3], fpn [3]);
 static char   *GetPtrItm   (MshSct *, itg, itg);
 static void    BakMshItm   (MshSct *);
 static void    RstMshItm   (MshSct *);
@@ -264,15 +264,15 @@ static void    RstMshItm   (MshSct *);
 /*----------------------------------------------------------------------------*/
 
 static itg     EdgIntEdg   (EdgSct *, EdgSct *, VerSct *, fpn);
-static fpn     DisVerTri   (MshSct *, fpn *, TriSct *);
-static fpn     DisVerQad   (MshSct *, fpn *, QadSct *);
+static fpn     DisVerTri   (MshSct *, fpn [3], TriSct *);
+static fpn     DisVerQad   (MshSct *, fpn [3], QadSct *);
 static fpn     DisVerTet   (MshSct *, fpn *, TetSct *);
 static fpn     GetTriSrf   (TriSct *);
 static fpn     GetVolTet   (TetSct *);
-static fpn     DisVerEdg   (fpn *, EdgSct *);
-static void    GetTriVec   (TriSct *, fpn *);
+static fpn     DisVerEdg   (fpn [3], EdgSct *);
+static void    GetTriVec   (TriSct *, fpn [3]);
 static void    SetTriNrm   (TriSct *);
-static void    SetTmpHex   (HexSct *, fpn *, fpn *);
+static void    SetTmpHex   (HexSct *, fpn [3], fpn [3]);
 static itg     VerInsTet   (VerSct *, TetSct *, fpn);
 static itg     VerInsHex   (VerSct *, HexSct *);
 static itg     EdgIntHex   (EdgSct *, HexSct *, fpn);
@@ -291,25 +291,25 @@ static fpn     GetTriAni   (TriSct *);
 /* Prototypes of geometric procedures                                         */
 /*----------------------------------------------------------------------------*/
 
-static void    PrjVerLin   (fpn *, fpn *, fpn *, fpn *);
-static fpn     PrjVerPla   (fpn *, fpn *, fpn *, fpn *);
-static void    LinCmbVec3  (fpn,   fpn *, fpn,   fpn *, fpn *);
-static void    ClrVec      (fpn *);
-static void    CpyVec      (fpn *, fpn *);
-static void    AddVec2     (fpn *, fpn *);
-static void    SubVec2     (fpn *, fpn *);
-static void    SubVec3     (fpn *, fpn *, fpn *);
-static void    AddScaVec1  (fpn,   fpn *);
-static void    AddScaVec2  (fpn,   fpn *, fpn *);
-static void    MulVec1     (fpn,   fpn *);
-static void    MulVec2     (fpn,   fpn *, fpn *);
-static void    NrmVec      (fpn *);
-static void    CrsPrd      (fpn *, fpn *, fpn *);
-static fpn     DotPrd      (fpn *, fpn *);
-static fpn     dis         (fpn *, fpn *);
-static fpn     DisPow      (fpn *, fpn *);
-static fpn     DisVerPla   (fpn *, fpn *, fpn *);
-static fpn     GetNrmVec   (fpn *);
+static void    PrjVerLin   (fpn [3], fpn [3], fpn [3], fpn [3]);
+static fpn     PrjVerPla   (fpn [3], fpn [3], fpn [3], fpn [3]);
+static void    LinCmbVec3  (fpn,   fpn [3], fpn,   fpn [3], fpn [3]);
+static void    ClrVec      (fpn [3]);
+static void    CpyVec      (fpn [3], fpn [3]);
+static void    AddVec2     (fpn [3], fpn [3]);
+static void    SubVec2     (fpn [3], fpn [3]);
+static void    SubVec3     (fpn [3], fpn [3], fpn [3]);
+static void    AddScaVec1  (fpn,   fpn [3]);
+static void    AddScaVec2  (fpn,   fpn [3], fpn [3]);
+static void    MulVec1     (fpn,   fpn [3]);
+static void    MulVec2     (fpn,   fpn [3], fpn [3]);
+static void    NrmVec      (fpn [3]);
+static void    CrsPrd      (fpn [3], fpn [3], fpn [3]);
+static fpn     DotPrd      (fpn [3], fpn [3]);
+static fpn     dis         (fpn [3], fpn [3]);
+static fpn     DisPow      (fpn [3], fpn [3]);
+static fpn     DisVerPla   (fpn [3], fpn [3], fpn [3]);
+static fpn     GetNrmVec   (fpn [3]);
 static fpn     VerInsBox   (fpn *, fpn *, fpn *, fpn);
 static itg     LinIntBox   (fpn *, fpn *, fpn *, fpn *, fpn);
 static void    LinIntPla   (fpn *, fpn *, fpn *, fpn *, fpn *);
@@ -547,35 +547,35 @@ int64_t LolNewOctree(itg NmbVer, fpn *PtrCrd1, fpn *PtrCrd2,
    }
 
    // Insert each vertex in the octree
-   for(i=0;i<msh->NmbItm[ LolTypVer ];i++)
+   for(i=0;i<(int)msh->NmbItm[ LolTypVer ];i++)
    {
       SetItm(msh, LolTypVer, i + BasIdx, 0, 0);
       AddVer(msh, tre, &tre->oct, tre->bnd[0], tre->bnd[1]);
    }
 
    // Insert each edge in the octree
-   for(i=0;i<msh->NmbItm[ LolTypEdg ];i++)
+   for(i=0;i<(int)msh->NmbItm[ LolTypEdg ];i++)
    {
       SetItm(msh, LolTypEdg, i + BasIdx, 0, 0);
       AddEdg(msh, tre, &tre->oct, tre->bnd[0], tre->bnd[1]);
    }
 
    // Insert each triangle in the octree
-   for(i=0;i<msh->NmbItm[ LolTypTri ];i++)
+   for(i=0;i<(int)msh->NmbItm[ LolTypTri ];i++)
    {
       SetItm(msh, LolTypTri, i + BasIdx, TngFlg | AniFlg, 0);
       AddTri(msh, tre, &tre->oct, tre->bnd[0], tre->bnd[1]);
    }
 
    // Insert each quad in the octree
-   for(i=0;i<msh->NmbItm[ LolTypQad ];i++)
+   for(i=0;i<(int)msh->NmbItm[ LolTypQad ];i++)
    {
       SetItm(msh, LolTypQad, i + BasIdx, TngFlg | AniFlg, 0);
       AddQad(msh, tre, &tre->oct, tre->bnd[0], tre->bnd[1]);
    }
 
    // Insert each tetrahedron in the octree
-   for(i=0;i<msh->NmbItm[ LolTypTet ];i++)
+   for(i=0;i<(int)msh->NmbItm[ LolTypTet ];i++)
    {
       SetItm(msh, LolTypTet, i + BasIdx, TngFlg, 0);
       AddTet(msh, tre, &tre->oct, tre->bnd[0], tre->bnd[1]);
@@ -1149,7 +1149,7 @@ static void GetOctLnk(  MshSct *msh, itg typ, fpn VerCrd[3], itg *MinItm,
                         itg (UsrPrc)(void *, itg), void *UsrDat, itg ThrIdx )
 {
    itg         i, *IdxTab;
-   fpn         CurDis, SonMin[3], SonMax[3];
+   fpn         CurDis=0, SonMin[3], SonMax[3];
    LnkSct     *lnk;
    MshThrSct  *ThrMsh = &msh->thr[ ThrIdx ];
 
@@ -1444,7 +1444,7 @@ static void SetMshBox(TreSct *box, MshSct *msh)
    CpyVec((fpn *)GetPtrItm(msh, LolTypVer, msh->BasIdx), MinCrd);
    CpyVec((fpn *)GetPtrItm(msh, LolTypVer, msh->BasIdx), MaxCrd);
 
-   for(i=1;i<msh->NmbItm[ LolTypVer ];i++)
+   for(i=1;i<(int)msh->NmbItm[ LolTypVer ];i++)
    {
       CrdTab = (fpn *)GetPtrItm(msh, LolTypVer, i + msh->BasIdx);
 

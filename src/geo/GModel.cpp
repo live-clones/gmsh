@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -2011,6 +2011,7 @@ void GModel::rebuildMeshVertexCache(bool onlyIfNecessary)
 {
   if(!onlyIfNecessary ||
      (_vertexVectorCache.empty() && _vertexMapCache.empty())) {
+    Msg::Debug("Rebuilding mesh node cache");
     _vertexVectorCache.clear();
     _vertexMapCache.clear();
     bool dense = false;
@@ -2087,7 +2088,6 @@ MVertex *GModel::getMeshVertexByTag(std::size_t n)
 #pragma omp barrier
 #pragma omp single
     {
-      Msg::Debug("Rebuilding mesh node cache");
       rebuildMeshVertexCache();
     }
   }
@@ -2101,7 +2101,6 @@ MVertex *GModel::getMeshVertexByTag(std::size_t n)
 void GModel::addMVertexToVertexCache(MVertex* v)
 {
   if(_vertexVectorCache.empty() && _vertexMapCache.empty()) {
-    Msg::Debug("Rebuilding mesh node cache");
     rebuildMeshVertexCache();
   }
   if (_vertexVectorCache.size() > 0) {
@@ -2141,7 +2140,6 @@ MElement *GModel::getMeshElementByTag(std::size_t n, int &entityTag)
 #pragma omp barrier
 #pragma omp single
     {
-      Msg::Debug("Rebuilding mesh element cache");
       rebuildMeshElementCache();
     }
   }
@@ -2296,7 +2294,7 @@ std::size_t GModel::indexMeshVertices(bool all, int singlePartition,
 
   // renumber all the mesh nodes tagged with 0
   std::size_t numVertices = 0;
-  long int index = 0;
+  long int index = CTX::instance()->mesh.firstNodeTag - 1;
   for(std::size_t i = 0; i < entities.size(); i++) {
     for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
       MVertex *v = entities[i]->mesh_vertices[j];

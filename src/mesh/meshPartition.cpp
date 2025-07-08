@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -528,6 +528,10 @@ static int makeGraph(GModel *model, Graph &graph, int selectDim)
   idx_t eindIndex = 0;
   idx_t numVertex = 0;
 
+  if(graph.nn() == 0) {
+    Msg::Warning("No mesh nodes were found");
+    return 1;
+  }
   if(graph.ne() == 0) {
     Msg::Warning("No mesh elements were found");
     return 1;

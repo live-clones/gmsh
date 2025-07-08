@@ -1,4 +1,4 @@
-// MeshOptimizer - Copyright (C) 2013-2024 UCLouvain-ULiege
+// MeshOptimizer - Copyright (C) 2013-2025 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation
@@ -166,7 +166,7 @@ namespace {
 } // namespace
 
 VertexCoordLocalLine::VertexCoordLocalLine(MVertex *v)
-  : dir(0.), x0(v->x()), y0(v->y()), z0(v->z())
+  : x0(v->x()), y0(v->y()), z0(v->z()), dir(0.)
 {
   GEntity *ge = v->onWhat();
   const unsigned nEl = ge->getNumMeshElements();

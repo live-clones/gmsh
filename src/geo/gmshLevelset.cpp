@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -348,7 +348,7 @@ void gLevelset::getRPN(std::vector<gLevelset *> &gLsRPN)
   }
 }
 
-gLevelset::gLevelset(const gLevelset &lv) { tag_ = lv.tag_; }
+gLevelset::gLevelset(const gLevelset &lv) : simpleFunction<double>(lv), tag_(lv.tag_) {}
 
 gLevelsetSphere::gLevelsetSphere(const double &x, const double &y,
                                  const double &z, const double &R, int tag)

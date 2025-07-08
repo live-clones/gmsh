@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -75,7 +75,7 @@ static bool readMSH4Physicals(GModel *const model, FILE *fp,
 
 static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
                                      GEntity *const entity, bool binary,
-                                     bool swap)
+                                     bool swap, int maxTagEmbed)
 {
   std::size_t numBrep = 0;
   std::vector<GEntity *> boundingEntities, embeddedEntities;
@@ -111,13 +111,11 @@ static bool readMSH4BoundingEntities(GModel *const model, FILE *fp,
       if(fscanf(fp, "%d", &entityTag) != 1) { return false; }
 
       // FIXME: temporary hack until we update the MSH4 format - assume entities
-      // with tag > maxTag are embedded entities of dimension (dim - 1); this
-      // does not work for e.g. points in surfaces (dimension == dim - 2)
-      if (std::abs(entityTag) > model->getMaxElementaryNumber(entity->dim() - 1)){
-        int embeddedTag = std::abs(entityTag) -
-          model->getMaxElementaryNumber(entity->dim() - 1);
-	GEntity *emb =
-	  model->getEntityByTag(entity->dim() - 1, embeddedTag);
+      // with tag > maxTagEmbed are embedded entities of dimension (dim - 1);
+      // this does not work for e.g. points in surfaces (dimension == dim - 2)
+      if (std::abs(entityTag) > maxTagEmbed){
+        int embeddedTag = std::abs(entityTag) - maxTagEmbed;
+	GEntity *emb = model->getEntityByTag(entity->dim() - 1, embeddedTag);
 	if(!emb) {
 	  Msg::Warning("Embedded entity %d not found in the Brep of entity %d",
                        embeddedTag, entity->tag());
@@ -357,6 +355,9 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
   else
     Msg::Info("%d entit%s", nume, nume > 1 ? "ies" : "y");
 
+  // FIXME: remove this when embedded entities are correctly handled
+  int maxTags[3] = {0, 0, 0};
+
   for(int dim = 0; dim < 4; dim++) {
     for(std::size_t i = 0; i < numEntities[dim]; i++) {
       int tag = 0, parentDim = 0, parentTag = 0;
@@ -404,7 +405,7 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
         if(!readMSH4Physicals(model, fp, ge, binary, swap)) {
           return false;
         }
-        if(!readMSH4BoundingEntities(model, fp, ge, binary, swap)) {
+        if(!readMSH4BoundingEntities(model, fp, ge, binary, swap, maxTags[0])) {
           return false;
         }
       } break;
@@ -425,7 +426,7 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
         if(!readMSH4Physicals(model, fp, gf, binary, swap)) {
           return false;
         }
-        if(!readMSH4BoundingEntities(model, fp, gf, binary, swap)) {
+        if(!readMSH4BoundingEntities(model, fp, gf, binary, swap, maxTags[1])) {
           return false;
         }
       } break;
@@ -446,12 +447,15 @@ static bool readMSH4Entities(GModel *const model, FILE *fp, bool partition,
         if(!readMSH4Physicals(model, fp, gr, binary, swap)) {
           return false;
         }
-        if(!readMSH4BoundingEntities(model, fp, gr, binary, swap)) {
+        if(!readMSH4BoundingEntities(model, fp, gr, binary, swap, maxTags[2])) {
           return false;
         }
       } break;
       }
     }
+
+    // FIXME: remove this when embedded entities are correctly handled
+    if(dim < 3) maxTags[dim] = model->getMaxElementaryNumber(dim);
   }
   return true;
 }

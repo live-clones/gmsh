@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -54,14 +54,19 @@ libpath = None
 possible_libpaths = [os.path.join(moduledir, libname),
                      os.path.join(moduledir, "lib", libname),
                      os.path.join(moduledir, "Lib", libname),
+                     os.path.join(moduledir, "bin", libname),
                      # first parent dir
                      os.path.join(parentdir1, libname),
                      os.path.join(parentdir1, "lib", libname),
                      os.path.join(parentdir1, "Lib", libname),
+                     os.path.join(parentdir1, "bin", libname),
                      # second parent dir
                      os.path.join(parentdir2, libname),
                      os.path.join(parentdir2, "lib", libname),
-                     os.path.join(parentdir2, "Lib", libname)
+                     os.path.join(parentdir2, "Lib", libname),
+                     os.path.join(parentdir2, "bin", libname),
+                     # for Windows conda-forge
+                     os.path.join(parentdir2, "Library", "bin", "gmsh.dll")
                      ]
 
 for libpath_to_look in possible_libpaths:
@@ -817,9 +822,9 @@ class model:
         """
         gmsh.model.getPhysicalGroups(dim=-1)
 
-        Get all the physical groups in the current model. If `dim' is >= 0, return
-        only the entities of the specified dimension (e.g. physical points if `dim'
-        == 0). The entities are returned as a vector of (dim, tag) pairs.
+        Get the physical groups in the current model. The physical groups are
+        returned as a vector of (dim, tag) pairs. If `dim' is >= 0, return only the
+        groups of the specified dimension (e.g. physical points if `dim' == 0).
 
         Return `dimTags'.
 
@@ -837,6 +842,39 @@ class model:
             raise Exception(logger.getLastError())
         return _ovectorpair(api_dimTags_, api_dimTags_n_.value)
     get_physical_groups = getPhysicalGroups
+
+    @staticmethod
+    def getPhysicalGroupsEntities(dim=-1):
+        """
+        gmsh.model.getPhysicalGroupsEntities(dim=-1)
+
+        Get the physical groups in the current model as well as the model entities
+        that make them up. The physical groups are returned as the vector of (dim,
+        tag) pairs `dimTags'. The model entities making up the corresponding
+        physical groups are returned in `entities'. If `dim' is >= 0, return only
+        the groups of the specified dimension (e.g. physical points if `dim' == 0).
+
+        Return `dimTags', `entities'.
+
+        Types:
+        - `dimTags': vector of pairs of integers
+        - `entities': vector of vectors of pairs of integers
+        - `dim': integer
+        """
+        api_dimTags_, api_dimTags_n_ = POINTER(c_int)(), c_size_t()
+        api_entities_, api_entities_n_, api_entities_nn_ = POINTER(POINTER(c_int))(), POINTER(c_size_t)(), c_size_t()
+        ierr = c_int()
+        lib.gmshModelGetPhysicalGroupsEntities(
+            byref(api_dimTags_), byref(api_dimTags_n_),
+            byref(api_entities_), byref(api_entities_n_), byref(api_entities_nn_),
+            c_int(dim),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return (
+            _ovectorpair(api_dimTags_, api_dimTags_n_.value),
+            _ovectorvectorpair(api_entities_, api_entities_n_, api_entities_nn_))
+    get_physical_groups_entities = getPhysicalGroupsEntities
 
     @staticmethod
     def getEntitiesForPhysicalGroup(dim, tag):
@@ -1288,11 +1326,38 @@ class model:
     remove_entities = removeEntities
 
     @staticmethod
+    def getEntityType(dim, tag):
+        """
+        gmsh.model.getEntityType(dim, tag)
+
+        Get the type of the entity of dimension `dim' and tag `tag'.
+
+        Return `entityType'.
+
+        Types:
+        - `dim': integer
+        - `tag': integer
+        - `entityType': string
+        """
+        api_entityType_ = c_char_p()
+        ierr = c_int()
+        lib.gmshModelGetEntityType(
+            c_int(dim),
+            c_int(tag),
+            byref(api_entityType_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return _ostring(api_entityType_)
+    get_entity_type = getEntityType
+
+    @staticmethod
     def getType(dim, tag):
         """
         gmsh.model.getType(dim, tag)
 
-        Get the type of the entity of dimension `dim' and tag `tag'.
+        Get the type of the entity of dimension `dim' and tag `tag'. (This is a
+        deprecated synonym for `getType'.)
 
         Return `entityType'.
 
@@ -1312,6 +1377,43 @@ class model:
             raise Exception(logger.getLastError())
         return _ostring(api_entityType_)
     get_type = getType
+
+    @staticmethod
+    def getEntityProperties(dim, tag):
+        """
+        gmsh.model.getEntityProperties(dim, tag)
+
+        Get the properties of the entity of dimension `dim' and tag `tag'. The
+        `reals' vector contains the 4 coefficients of the cartesian equation for a
+        plane surface; the center coordinates, axis direction, major radius and
+        minor radius for a torus; the center coordinates, axis direction and radius
+        for a cylinder; the center coordinates, axis direction, radius and semi-
+        angle for surfaces of revolution; the center coordinates and the radius for
+        a sphere.
+
+        Return `integers', `reals'.
+
+        Types:
+        - `dim': integer
+        - `tag': integer
+        - `integers': vector of integers
+        - `reals': vector of doubles
+        """
+        api_integers_, api_integers_n_ = POINTER(c_int)(), c_size_t()
+        api_reals_, api_reals_n_ = POINTER(c_double)(), c_size_t()
+        ierr = c_int()
+        lib.gmshModelGetEntityProperties(
+            c_int(dim),
+            c_int(tag),
+            byref(api_integers_), byref(api_integers_n_),
+            byref(api_reals_), byref(api_reals_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return (
+            _ovectorint(api_integers_, api_integers_n_.value),
+            _ovectordouble(api_reals_, api_reals_n_.value))
+    get_entity_properties = getEntityProperties
 
     @staticmethod
     def getParent(dim, tag):
@@ -1715,7 +1817,9 @@ class model:
         `closestCoord' are given as x, y, z coordinates, concatenated: [p1x, p1y,
         p1z, p2x, ...]. `parametricCoord' returns the parametric coordinates t on
         the curve (if `dim' == 1) or u and v coordinates concatenated on the
-        surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...].
+        surface (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...]. The
+        closest points can lie outside the (trimmed) entities: use `isInside()' to
+        check.
 
         Return `closestCoord', `parametricCoord'.
 
@@ -5090,58 +5194,6 @@ class model:
             return _ovectorint(api_viewTags_, api_viewTags_n_.value)
         compute_cross_field = computeCrossField
 
-        @staticmethod
-        def triangulate(coord):
-            """
-            gmsh.model.mesh.triangulate(coord)
-
-            Triangulate the points given in the `coord' vector as pairs of u, v
-            coordinates, and return the node tags (with numbering starting at 1) of the
-            resulting triangles in `tri'.
-
-            Return `tri'.
-
-            Types:
-            - `coord': vector of doubles
-            - `tri': vector of sizes
-            """
-            api_coord_, api_coord_n_ = _ivectordouble(coord)
-            api_tri_, api_tri_n_ = POINTER(c_size_t)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshTriangulate(
-                api_coord_, api_coord_n_,
-                byref(api_tri_), byref(api_tri_n_),
-                byref(ierr))
-            if ierr.value != 0:
-                raise Exception(logger.getLastError())
-            return _ovectorsize(api_tri_, api_tri_n_.value)
-
-        @staticmethod
-        def tetrahedralize(coord):
-            """
-            gmsh.model.mesh.tetrahedralize(coord)
-
-            Tetrahedralize the points given in the `coord' vector as x, y, z
-            coordinates, concatenated, and return the node tags (with numbering
-            starting at 1) of the resulting tetrahedra in `tetra'.
-
-            Return `tetra'.
-
-            Types:
-            - `coord': vector of doubles
-            - `tetra': vector of sizes
-            """
-            api_coord_, api_coord_n_ = _ivectordouble(coord)
-            api_tetra_, api_tetra_n_ = POINTER(c_size_t)(), c_size_t()
-            ierr = c_int()
-            lib.gmshModelMeshTetrahedralize(
-                api_coord_, api_coord_n_,
-                byref(api_tetra_), byref(api_tetra_n_),
-                byref(ierr))
-            if ierr.value != 0:
-                raise Exception(logger.getLastError())
-            return _ovectorsize(api_tetra_, api_tetra_n_.value)
-
 
         class field:
             """
@@ -6306,8 +6358,8 @@ class model:
 
             Mirror the entities `dimTags' (given as a vector of (dim, tag) pairs) in
             the built-in CAD representation, with respect to the plane of equation `a'
-            * x + `b' * y + `c' * z + `d' = 0. (This is a synonym for `mirror', which
-            will be deprecated in a future release.)
+            * x + `b' * y + `c' * z + `d' = 0. (This is a deprecated synonym for
+            `mirror'.)
 
             Types:
             - `dimTags': vector of pairs of integers
@@ -8321,8 +8373,9 @@ class model:
 
             Compute the boolean union (the fusion) of the entities `objectDimTags' and
             `toolDimTags' (vectors of (dim, tag) pairs) in the OpenCASCADE CAD
-            representation. Return the resulting entities in `outDimTags'. If `tag' is
-            positive, try to set the tag explicitly (only valid if the boolean
+            representation. Return the resulting entities in `outDimTags', and the
+            correspondance between input and resulting entities in `outDimTagsMap'. If
+            `tag' is positive, try to set the tag explicitly (only valid if the boolean
             operation results in a single entity). Remove the object if `removeObject'
             is set. Remove the tool if `removeTool' is set.
 
@@ -8365,9 +8418,11 @@ class model:
             Compute the boolean intersection (the common parts) of the entities
             `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the
             OpenCASCADE CAD representation. Return the resulting entities in
-            `outDimTags'. If `tag' is positive, try to set the tag explicitly (only
-            valid if the boolean operation results in a single entity). Remove the
-            object if `removeObject' is set. Remove the tool if `removeTool' is set.
+            `outDimTags', and the correspondance between input and resulting entities
+            in `outDimTagsMap'. If `tag' is positive, try to set the tag explicitly
+            (only valid if the boolean operation results in a single entity). Remove
+            the object if `removeObject' is set. Remove the tool if `removeTool' is
+            set.
 
             Return `outDimTags', `outDimTagsMap'.
 
@@ -8407,8 +8462,9 @@ class model:
 
             Compute the boolean difference between the entities `objectDimTags' and
             `toolDimTags' (given as vectors of (dim, tag) pairs) in the OpenCASCADE CAD
-            representation. Return the resulting entities in `outDimTags'. If `tag' is
-            positive, try to set the tag explicitly (only valid if the boolean
+            representation. Return the resulting entities in `outDimTags', and the
+            correspondance between input and resulting entities in `outDimTagsMap'. If
+            `tag' is positive, try to set the tag explicitly (only valid if the boolean
             operation results in a single entity). Remove the object if `removeObject'
             is set. Remove the tool if `removeTool' is set.
 
@@ -8454,8 +8510,9 @@ class model:
             all interfaces conformal. When applied to entities of different dimensions,
             the lower dimensional entities will be automatically embedded in the higher
             dimensional entities if they are not on their boundary. Return the
-            resulting entities in `outDimTags'. If `tag' is positive, try to set the
-            tag explicitly (only valid if the boolean operation results in a single
+            resulting entities in `outDimTags', and the correspondance between input
+            and resulting entities in `outDimTagsMap'. If `tag' is positive, try to set
+            the tag explicitly (only valid if the boolean operation results in a single
             entity). Remove the object if `removeObject' is set. Remove the tool if
             `removeTool' is set.
 
@@ -10032,6 +10089,70 @@ class view:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+
+
+class algorithm:
+    """
+    Raw algorithms
+    """
+
+    @staticmethod
+    def triangulate(coordinates, edges=[]):
+        """
+        gmsh.algorithm.triangulate(coordinates, edges=[])
+
+        Triangulate the points given in the `coordinates' vector as concatenated
+        pairs of u, v coordinates, with (optional) constrained edges given in the
+        `edges' vector as pair of indexes (with numbering starting at 1), and
+        return the triangles as concatenated triplets of point indexes (with
+        numbering starting at 1) in `triangles'.
+
+        Return `triangles'.
+
+        Types:
+        - `coordinates': vector of doubles
+        - `triangles': vector of sizes
+        - `edges': vector of sizes
+        """
+        api_coordinates_, api_coordinates_n_ = _ivectordouble(coordinates)
+        api_triangles_, api_triangles_n_ = POINTER(c_size_t)(), c_size_t()
+        api_edges_, api_edges_n_ = _ivectorsize(edges)
+        ierr = c_int()
+        lib.gmshAlgorithmTriangulate(
+            api_coordinates_, api_coordinates_n_,
+            byref(api_triangles_), byref(api_triangles_n_),
+            api_edges_, api_edges_n_,
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return _ovectorsize(api_triangles_, api_triangles_n_.value)
+
+    @staticmethod
+    def tetrahedralize(coordinates):
+        """
+        gmsh.algorithm.tetrahedralize(coordinates)
+
+        Tetrahedralize the points given in the `coordinates' vector as concatenated
+        triplets of x, y, z coordinates, and return the tetrahedra as concatenated
+        quadruplets of point indexes (with numbering starting at 1) in
+        `tetrahedra'.
+
+        Return `tetrahedra'.
+
+        Types:
+        - `coordinates': vector of doubles
+        - `tetrahedra': vector of sizes
+        """
+        api_coordinates_, api_coordinates_n_ = _ivectordouble(coordinates)
+        api_tetrahedra_, api_tetrahedra_n_ = POINTER(c_size_t)(), c_size_t()
+        ierr = c_int()
+        lib.gmshAlgorithmTetrahedralize(
+            api_coordinates_, api_coordinates_n_,
+            byref(api_tetrahedra_), byref(api_tetrahedra_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return _ovectorsize(api_tetrahedra_, api_tetrahedra_n_.value)
 
 
 class plugin:

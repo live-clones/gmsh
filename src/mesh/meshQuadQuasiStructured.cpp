@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -276,7 +276,7 @@ int fillSizemapFromTriangleSizes(const std::vector<MTriangle *> &triangles,
                                  std::unordered_map<MVertex *, double> &sizeMap)
 {
   const double tol = CTX::instance()->geom.tolerance;
-  std::unordered_map<MVertex *, std::vector<MVertex *> > v2v;
+  VertexToVertexMap v2v;
   buildVertexToVertexMap(triangles, v2v);
   for(auto &kv : v2v) {
     MVertex *v = kv.first;
@@ -441,6 +441,14 @@ bool getGFaceBackgroundMeshLinesAndTriangles(
   for(size_t i = 0; i < it->second.triangles.size(); ++i) {
     triangles.push_back(&(it->second.triangles[i]));
   }
+
+  sort_unique(lines, [](MLine *a, MLine *b) {
+    return a->getNum() < b->getNum();
+  });
+  sort_unique(triangles, [](MTriangle *a, MTriangle *b) {
+    return a->getNum() < b->getNum();
+  });
+
 
   return true;
 }

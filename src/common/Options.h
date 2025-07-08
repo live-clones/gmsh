@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -455,6 +455,7 @@ double opt_mesh_label_sampling(OPT_ARGS_NUM);
 double opt_mesh_optimize(OPT_ARGS_NUM);
 double opt_mesh_optimize_threshold(OPT_ARGS_NUM);
 double opt_mesh_optimize_netgen(OPT_ARGS_NUM);
+double opt_mesh_optimize_pyramids(OPT_ARGS_NUM);
 double opt_mesh_refine_steps(OPT_ARGS_NUM);
 double opt_mesh_normals(OPT_ARGS_NUM);
 double opt_mesh_num_sub_edges(OPT_ARGS_NUM);
@@ -544,7 +545,7 @@ double opt_mesh_binary(OPT_ARGS_NUM);
 double opt_mesh_smooth_cross_field(OPT_ARGS_NUM);
 double opt_mesh_cross_field_closest_point(OPT_ARGS_NUM);
 double opt_mesh_bdf_field_format(OPT_ARGS_NUM);
-double opt_mesh_stl_remove_duplicate_triangles(OPT_ARGS_NUM);
+double opt_mesh_stl_remove_bad_triangles(OPT_ARGS_NUM);
 double opt_mesh_stl_one_solid_per_surface(OPT_ARGS_NUM);
 double opt_mesh_stl_linear_deflection(OPT_ARGS_NUM);
 double opt_mesh_stl_linear_deflection_relative(OPT_ARGS_NUM);

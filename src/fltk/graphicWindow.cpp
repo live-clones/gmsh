@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -140,6 +140,7 @@ static const char *input_formats =
   "Mesh - Nastran Bulk Data File\t*.{bdf,nas}\n"
   "Mesh - GAMBIT Neutral File\t*.neu\n"
   "Mesh - Object File Format\t*.off\n"
+  "Mesh - Wavefront File Format\t*.obj\n"
   "Mesh - Plot3D Structured Mesh\t*.p3d\n"
   "Mesh - STL Surface\t*.stl\n"
   "Mesh - VTK\t*.vtk\n"
@@ -375,6 +376,10 @@ static int _save_off(const char *name)
 {
   return genericMeshFileDialog(name, "OFF Options", FORMAT_OFF, false, false);
 }
+static int _save_obj(const char *name)
+{
+  return genericMeshFileDialog(name, "OBJ Options", FORMAT_OBJ, false, false);
+}
 static int _save_mail(const char *name)
 {
   return genericMeshFileDialog(name, "MAIL Options", FORMAT_MAIL, false, false);
@@ -501,6 +506,7 @@ static int _save_auto(const char *name)
   case FORMAT_RMED: return _save_view_med(name);
   case FORMAT_MESH: return _save_mesh(name);
   case FORMAT_OFF: return _save_off(name);
+  case FORMAT_OBJ: return _save_obj(name);
   case FORMAT_MAIL: return _save_mail(name);
   case FORMAT_MATLAB: return _save_matlab(name);
   case FORMAT_BDF: return _save_bdf(name);
@@ -577,6 +583,7 @@ static void file_export_cb(Fl_Widget *w, void *data)
     {"Mesh - Matlab\t*.m", _save_matlab},
     {"Mesh - Nastran Bulk Data File\t*.bdf", _save_bdf},
     {"Mesh - Object File Format\t*.off", _save_off},
+    {"Mesh - Wavefront File Format\t*.obj", _save_obj},
     {"Mesh - Plot3D Structured Mesh\t*.p3d", _save_p3d},
     {"Mesh - STL Surface\t*.stl", _save_stl},
     {"Mesh - VRML Surface\t*.wrl", _save_vrml},
@@ -780,7 +787,8 @@ void help_about_cb(Fl_Widget *w, void *data)
 static void geometry_edit_cb(Fl_Widget *w, void *data)
 {
   std::string prog = FixWindowsPath(CTX::instance()->editor);
-  std::string file = FixWindowsPath(GModel::current()->getFileName());
+  // allow white space in file name
+  std::string file = "\"" + FixWindowsPath(GModel::current()->getFileName()) + "\"";
   SystemCall(ReplaceSubString("%s", file, prog));
 }
 

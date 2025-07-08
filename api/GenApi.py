@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1294,14 +1294,19 @@ libpath = None
 possible_libpaths = [os.path.join(moduledir, libname),
                      os.path.join(moduledir, "lib", libname),
                      os.path.join(moduledir, "Lib", libname),
+                     os.path.join(moduledir, "bin", libname),
                      # first parent dir
                      os.path.join(parentdir1, libname),
                      os.path.join(parentdir1, "lib", libname),
                      os.path.join(parentdir1, "Lib", libname),
+                     os.path.join(parentdir1, "bin", libname),
                      # second parent dir
                      os.path.join(parentdir2, libname),
                      os.path.join(parentdir2, "lib", libname),
-                     os.path.join(parentdir2, "Lib", libname)
+                     os.path.join(parentdir2, "Lib", libname),
+                     os.path.join(parentdir2, "bin", libname),
+                     # for Windows conda-forge
+                     os.path.join(parentdir2, "Library", "bin", "gmsh.dll")
                      ]
 
 for libpath_to_look in possible_libpaths:
@@ -1991,7 +1996,7 @@ class API:
         version_patch,
         namespace = "gmsh",
         code = "Gmsh",
-        copyright = "Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle",
+        copyright = "Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle",
         issues = "https://gitlab.onelab.info/gmsh/gmsh/issues.",
         description = "Gmsh is an automatic three-dimensional finite element mesh generator with a built-in CAD engine and post-processor. Its design goal is to provide a fast, light and user-friendly meshing tool with parametric input and flexible visualization capabilities.\nGmsh is built around four modules (geometry, mesh, solver and post-processing), which can be controlled with the graphical user interface, from the command line, using text files written in Gmsh's own scripting language (.geo files), or through the C++, C, Python, Julia and Fortran application programming interface (API)."):
         self.version_major = version_major

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -206,8 +206,7 @@ int GModel::readSTL(const std::string &name, double tolerance)
         v[k] = pos.find(x, y, z);
         if(!v[k])
           Msg::Error("Could not find node at position (%.16g, %.16g, %.16g) "
-                     "with tol=%.16g",
-                     x, y, z, eps);
+                     "with tol=%.16g", x, y, z, eps);
       }
       if(!v[0] || !v[1] || !v[2]) {
         // error
@@ -217,10 +216,20 @@ int GModel::readSTL(const std::string &name, double tolerance)
                    v[1]->getNum(), v[2]->getNum());
         nbDegen++;
       }
-      else if(CTX::instance()->mesh.stlRemoveDuplicateTriangles) {
+      else if(CTX::instance()->mesh.stlRemoveBadTriangles) {
         MFace mf(v[0], v[1], v[2]);
         if(unique.find(mf) == unique.end()) {
-          faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+          if(CTX::instance()->mesh.stlRemoveBadTriangles > 1) {
+            double a = mf.approximateArea();
+            if(a < tolerance * tolerance) {
+              Msg::Warning("Skipping degenerated triangle with area %g", a);
+              nbDegen++;
+            }
+            else
+              faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
+          }
+          else
+            faces[i]->triangles.push_back(new MTriangle(v[0], v[1], v[2]));
           unique.insert(mf);
         }
         else {

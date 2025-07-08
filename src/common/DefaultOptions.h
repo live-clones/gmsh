@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -123,11 +123,11 @@ StringXString GeneralOptions_String[] = {
 
   { F|O, "TextEditor" , opt_general_editor ,
 #if defined(WIN32)
-    "notepad.exe '%s'" ,
+    "notepad.exe %s" ,
 #elif defined(__APPLE__)
-    "open -t '%s'" ,
+    "open -t %s" ,
 #else
-    "gedit '%s'" ,
+    "gedit %s" ,
 #endif
     "System command to launch a text editor" },
   { F|S, "TmpFileName" , opt_general_tmp_filename ,
@@ -1438,6 +1438,8 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "OptimizeNetgen" , opt_mesh_optimize_netgen , 0 ,
     "Optimize the mesh using Netgen to improve the quality of tetrahedral "
     "elements" },
+  { F|O, "OptimizePyramids" , opt_mesh_optimize_pyramids , 0 ,
+    "Optimize pyramids in hybrid 3D meshes (0: smoother; 1: untangler)" },
 
   { F|O, "PartitionHexWeight" , opt_mesh_partition_hex_weight , -1 ,
     "Weight of hexahedral element for METIS load balancing (-1: automatic)" },
@@ -1630,8 +1632,11 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "StlOneSolidPerSurface" , opt_mesh_stl_one_solid_per_surface, 0. ,
     "Create one solid per surface when exporting STL files? (0: single solid, "
     "1: one solid per face, 2: one solid per physical surface)" },
-  { F|O, "StlRemoveDuplicateTriangles" , opt_mesh_stl_remove_duplicate_triangles, 0. ,
-    "Remove duplicate triangles when importing STL files?" },
+  { F|O, "StlRemoveBadTriangles" , opt_mesh_stl_remove_bad_triangles, 0. ,
+    "Remove bad triangles when importing STL files (1: remove duplicates; 2: remove "
+    "duplicate and zero-area triangles)" },
+  { F|O|D, "StlRemoveDuplicateTriangles" , opt_mesh_stl_remove_bad_triangles, 0. ,
+    "[Deprecated]" },
   { F|O, "SubdivisionAlgorithm" , opt_mesh_algo_subdivide , 0 ,
     "Mesh subdivision algorithm (0: none, 1: all quadrangles, 2: all hexahedra, "
     "3: barycentric)" },
@@ -1777,7 +1782,7 @@ StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "Smoothing" , opt_post_smooth , 0. ,
     "Apply (non-reversible) smoothing to post-processing view when merged" },
 
-  { 0, nullptr , nullptr , 0. }
+  { 0, nullptr , nullptr , 0., "" }
 } ;
 
 StringXNumber ViewOptions_Number[] = {
@@ -2196,7 +2201,7 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "Width" , opt_print_width , -1. ,
     "Width of printed image; use (possibly scaled) current width if < 0)" },
 
-  { 0, nullptr , nullptr , 0. }
+  { 0, nullptr , nullptr , 0., "" }
 } ;
 
 // COLORS

@@ -143,7 +143,7 @@ inline int FindInnerPoint (POINTArray & points,
   */
 
   int act[5] = { 0, nf, nf+1, nf+2, nf+3 };
-  int sol[4];
+  int sol[4] = {0, 0, 0, 0};
 
   while (1)
     {

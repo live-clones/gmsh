@@ -9,12 +9,12 @@
 #ifndef HXT_SORT_H
 #define HXT_SORT_H
 
+#include "hxt_omp.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #include "hxt_tools.h"
-#include "hxt_omp.h"
 
 // sorting function already defined
 typedef struct{

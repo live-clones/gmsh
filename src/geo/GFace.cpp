@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -144,6 +144,8 @@ void GFace::setBoundEdges(const std::vector<int> &tagEdges,
 
 void GFace::deleteMesh()
 {
+  if(getNumMeshVertices() || getNumMeshElements())
+    model()->destroyMeshCaches();
   for(std::size_t i = 0; i < mesh_vertices.size(); i++) delete mesh_vertices[i];
   mesh_vertices.clear();
   transfinite_vertices.clear();
@@ -151,7 +153,6 @@ void GFace::deleteMesh()
   correspondingVertices.clear();
   correspondingHighOrderVertices.clear();
   deleteVertexArrays();
-  model()->destroyMeshCaches();
 }
 
 void GFace::deleteGeometryVertexArrays()
