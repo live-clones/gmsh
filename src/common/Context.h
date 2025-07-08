@@ -319,10 +319,8 @@ public:
   int mouseInvertZoom;
   // disable some warnings for expert users?
   int expertMode;
-#if defined(HAVE_VISUDEV)
   // Enable heavy visualization capabilities (for development purpose)
   int heavyVisu;
-#endif
   // dynamic: equal to 1 while gmsh is printing
   int printing;
   // hide all unselected entities?

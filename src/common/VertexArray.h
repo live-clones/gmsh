@@ -11,6 +11,7 @@
 #include "SVector3.h"
 #include "SBoundingBox3d.h"
 
+#include "GmshConfig.h"
 #if defined(HAVE_VISUDEV)
 typedef float normal_type;
 #else

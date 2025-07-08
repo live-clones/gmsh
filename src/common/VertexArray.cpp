@@ -5,6 +5,7 @@
 
 #include <string.h>
 #include <algorithm>
+#include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "VertexArray.h"
 #include "Context.h"

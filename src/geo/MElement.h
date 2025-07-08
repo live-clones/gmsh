@@ -48,10 +48,8 @@ protected:
                    SVector3 *n, int faceIndex = -1);
   void _getFaceRep(MVertex *v0, MVertex *v1, MVertex *v2, double *x, double *y,
                    double *z, SVector3 *n);
-#if defined(HAVE_VISUDEV)
   void _getFaceRepQuad(MVertex *v0, MVertex *v1, MVertex *v2, MVertex *v3,
                        double *x, double *y, double *z, SVector3 *n);
-#endif
 
   static bool _getFaceInfo(const MFace &face, const MFace &other, int &sign,
                            int &rot);
