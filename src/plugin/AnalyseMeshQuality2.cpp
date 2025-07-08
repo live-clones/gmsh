@@ -1099,7 +1099,7 @@ void Plug::_createPlots(const std::vector<Measures> &measures)
   }
 
   if(numPlots) {
-    _info(MP, "-> Created %d plots", numPlots);
+    _info(MP, "-> Created %d plot(s)", numPlots);
     _info(1, "   <|>Here is how to interpret them. First, note that the "
              "quality value is represented on the y-axis, while the x-axis "
              "shows the percentage of elements. "
@@ -1184,7 +1184,7 @@ void Plug::_createElementViews(const std::vector<Measures> &measures)
     }
   }
 
-  if(numViews) _info(MP, "-> Created %d elements views", numViews);
+  if(numViews) _info(MP, "-> Created %d elements view(s)", numViews);
 }
 
 bool Plug::_createElementViewsOneMetric(const Measures &m, Metric metric)
@@ -2758,7 +2758,7 @@ void Plug::_printMessage(void (*func1)(const char *, ...),
   vsnprintf(str, sizeof(str), format, args);
 
   // Define the maximum allowable length for a single line
-  const size_t maxChunkSize = 80;
+  const size_t maxChunkSize = 100;
 
   // Look for "<|>" in the first 30 characters
   const char *delimiter = "<|>";
@@ -2811,14 +2811,14 @@ void Plug::_printMessage(void (*func1)(const char *, ...),
     size_t chunkSize = end - offset;
     char chunk[maxChunkSize + 1]; // +1 for null-terminator
     if (isFirstLine) {
-      strncpy(chunk, prefix, prefixLen); // Add the first-line prefix
-      strncpy(chunk + prefixLen, str + offset, chunkSize);
-      chunk[prefixLen + chunkSize] = '\0'; // Null-terminate the chunk
-    } else {
-      strncpy(chunk, subsequentPrefixCStr, prefixLen); // Add the subsequent-line prefix
-      strncpy(chunk + prefixLen, str + offset, chunkSize);
-      chunk[prefixLen + chunkSize] = '\0'; // Null-terminate the chunk
+      memcpy(chunk, prefix, std::min(prefixLen, maxChunkSize));                  // Safe copy for the first-line prefix
+      memcpy(chunk + prefixLen, str + offset, std::min(chunkSize, maxChunkSize - prefixLen));
     }
+    else {
+      memcpy(chunk, subsequentPrefixCStr, std::min(prefixLen, maxChunkSize));   // Safe copy for subsequent-line prefix
+      memcpy(chunk + prefixLen, str + offset, std::min(chunkSize, maxChunkSize - prefixLen));
+    }
+    chunk[prefixLen + chunkSize] = '\0'; // Null-terminate the chunk
 
     // Call the function
     if(func2)
