@@ -1336,7 +1336,7 @@ void Plug::_findElementsToHide(const Measures &measure,
   measure.getValues(metric, val, &elements);
   std::set<MElement *> onLimit;
 
-  for(int i = 0; i < val.size(); i++) {
+  for(size_t i = 0; i < val.size(); i++) {
     if(_param.hide.worst ? val[i] < limitVal : val[i] > limitVal) {
       elementsToHide.insert(elements[i]);
     }
@@ -1634,7 +1634,7 @@ void Plug::StatGenerator::_printStatsOneMetric(const Measures &measure, Metric m
 
   std::vector<double> avg(numCutoff);
   std::sort(values.begin(), values.end());
-  for(int i = 0; i < numCutoff; ++i) {
+  for(size_t i = 0; i < numCutoff; ++i) {
     const std::vector<double> &coeff = _getCoefficients(_statCutoffs[i], numElem);
     avg[i] = std::inner_product(values.begin(), values.end(), coeff.begin(), 0.0);
   }
@@ -1650,7 +1650,7 @@ void Plug::StatGenerator::_printStatsOneMetric(const Measures &measure, Metric m
   if(metric == ASPECT || metric == DISTO) valStream << std::fixed;
   if(metric == MINJAC) valStream << std::defaultfloat; // could be std::scientific
   valStream << std::setw(_colWidth) << min;
-  for(auto i = 0; i < numCutoff; ++i)
+  for(size_t i = 0; i < numCutoff; ++i)
     valStream << std::setw(_colWidth) << avg[i];
   valStream << std::setw(_colWidth) << max;
   _info(MP, "%s", valStream.str().c_str());
@@ -1699,7 +1699,7 @@ void Plug::StatGenerator::_computeCoefficients(double cutoff, size_t sz,
   coeff.resize(sz+1);
   double exp = std::log(2)/std::log(100/cutoff);
   coeff[0] = 0;
-  for(auto i = 1; i < sz+1; ++i) {
+  for(size_t i = 1; i < sz+1; ++i) {
     coeff[i] = std::pow(static_cast<double>(i)/(sz), exp);
     coeff[i-1] = coeff[i] - coeff[i-1];
   }
@@ -1832,7 +1832,7 @@ size_t Plug::DataEntity::updateElementsAndFlags(const Parameters::Computation &p
   // Step 1: Get all elements present in GEntity
   std::vector<MElement *> elements;
   elements.reserve(num);
-  for(auto i = 0; i < num; ++i) {
+  for(size_t i = 0; i < num; ++i) {
     elements.push_back(_ge->getMeshElement(i));
   }
 
@@ -1843,7 +1843,7 @@ size_t Plug::DataEntity::updateElementsAndFlags(const Parameters::Computation &p
       bool sizeMismatch = (num != _mapElemToIndex.size());
       bool elementListMismatch = false;
       if(!sizeMismatch) {
-        for(auto i = 0; i < num; ++i) {
+        for(size_t i = 0; i < num; ++i) {
           if(_mapElemToIndex.find(elements[i]) == _mapElemToIndex.end()) {
             elementListMismatch = true;
             break;
@@ -2185,7 +2185,7 @@ void Plug::DataEntity::computeGeoFit(GFace *gf, MElement *el, double minmaxO[2])
 {
   double minmaxAng[2] = {std::numeric_limits<double>::max(),
                          std::numeric_limits<double>::min()};
-  for(int i = 0; i < el->getNumPrimaryVertices(); ++i) {
+  for(size_t i = 0; i < el->getNumPrimaryVertices(); ++i) {
     MVertex *vert = el->getVertex(i);
     MFaceN face = el->getHighOrderFace(0, 0, 0);
     double uGF, vGF, uRef, vRef, dummy;
@@ -2209,7 +2209,7 @@ void Plug::DataEntity::computeGeoFit(GFace *gf, MElement *el, double minmaxO[2])
                "is normal as GeoFit is still experimental)", vert->getNum());
     }
 
-    // for(int i = 0; i < el->getNumPrimaryVertices(); ++i) {
+    // for(size_t i = 0; i < el->getNumPrimaryVertices(); ++i) {
     //   MVertex *vert = el->getVertex(i);
     //   MFaceN face = el->getHighOrderFace(0, 0, 0);
     //   double uGE, uGF, vGF, uRef, vRef, dummy;
@@ -3308,7 +3308,7 @@ void Plug::Measures::getValues(Metric m, std::vector<double> &values, std::vecto
   values.resize(numToShow[m]);
   if(elements) elements->resize(numToShow[m]);
 
-  int k = 0;
+  size_t k = 0;
   for (size_t i = 0; i < val.size(); ++i) {
     if (val[i] != NOTCOMPUTED) {
       values[k] = val[i];

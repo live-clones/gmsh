@@ -4,6 +4,7 @@
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
 #include <sstream>
+#include <unordered_set>
 #include "GmshConfig.h"
 #include "GmshMessage.h"
 #include "GModel.h"
