@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1436,7 +1436,7 @@ void GMSH_AnalyseMeshQuality2Plugin::_testPlots() const
     for(int i = 0; i < N; i++)
       values.push_back(static_cast<double>(i) / static_cast<double>(N-1));
     values[0] = -1;
-    PView *p = new PView("Test", cutoff, true, values);
+    new PView("Test", cutoff, true, values);
   }
 
   //
