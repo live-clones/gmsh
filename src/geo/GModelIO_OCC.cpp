@@ -158,6 +158,7 @@
 #include <XCAFDoc_Color.hxx>
 #include <XCAFDoc_ColorTool.hxx>
 #include <XCAFDoc_DocumentTool.hxx>
+#include <XCAFDoc_LayerTool.hxx>
 #include <XCAFDoc_Location.hxx>
 #include <XCAFDoc_MaterialTool.hxx>
 #include <XCAFDoc_ShapeTool.hxx>
@@ -4640,6 +4641,7 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
                                const Handle_XCAFDoc_ShapeTool &shapeTool,
                                const Handle_XCAFDoc_ColorTool &colorTool,
                                const Handle_XCAFDoc_MaterialTool &materialTool,
+                               const Handle_XCAFDoc_LayerTool &layerTool,
                                const TDF_Label &label,
                                const TopLoc_Location &loc,
                                const std::string &pathName, bool isRef)
@@ -4656,7 +4658,7 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
 
   TDF_Label ref;
   if(shapeTool->IsReference(label) && shapeTool->GetReferredShape(label, ref)) {
-    setShapeAttributes(attributes, shapeTool, colorTool, materialTool, ref,
+    setShapeAttributes(attributes, shapeTool, colorTool, materialTool, layerTool, ref,
                        partLoc, phys, true);
   }
   else if(shapeTool->IsSimpleShape(label) &&
@@ -4695,6 +4697,21 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
       Msg::Info(" - Label '%s' (%dD)", phys.c_str(), dim);
     }
     if(phys.size()) { attributes->insert(new OCCAttributes(dim, shape, phys)); }
+
+    // check layer names
+    TDF_LabelSequence layers;
+
+    if(layerTool->GetLayers(shape, layers)) {
+      TDF_LabelSequence::iterator it;
+      for(it = layers.begin(); it != layers.end(); ++it) {
+        Handle(TDataStd_Name) n;
+        if (label.FindAttribute(TDataStd_Name::GetID(), n)) {
+          TCollection_ExtendedString name = n->Get();
+          Msg::Info(" - Layer '%s'", TCollection_AsciiString(name).ToCString());
+
+        }
+      }
+    }
 
     Quantity_Color col;
     if(colorTool->GetColor(label, XCAFDoc_ColorGen, col)) {
@@ -4749,7 +4766,7 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
   }
   else {
     for(TDF_ChildIterator it(label); it.More(); it.Next()) {
-      setShapeAttributes(attributes, shapeTool, colorTool, materialTool,
+      setShapeAttributes(attributes, shapeTool, colorTool, materialTool, layerTool,
                          it.Value(), partLoc, phys, false);
     }
   }
@@ -4780,8 +4797,9 @@ void readAttributes(OCCAttributesRTree *attributes, T &reader,
     XCAFDoc_DocumentTool::ColorTool(mainLabel);
   Handle_XCAFDoc_MaterialTool materialTool =
     XCAFDoc_DocumentTool::MaterialTool(mainLabel);
+  Handle_XCAFDoc_LayerTool layerTool = XCAFDoc_DocumentTool::LayerTool(mainLabel);
   // traverse the labels recursively to set attributes on shapes
-  setShapeAttributes(attributes, shapeTool, colorTool, materialTool, mainLabel,
+  setShapeAttributes(attributes, shapeTool, colorTool, materialTool, layerTool, mainLabel,
                      TopLoc_Location(), "", false);
 }
 
