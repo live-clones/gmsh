@@ -17,9 +17,11 @@ docker build --platform linux/amd64 -f Dockerfile.debian.bullseye -t onelab/debi
 docker login
 docker push onelab/ubuntu20.04
 docker push onelab/debian.stretch.64bit
+docker push onelab/debian.bullseye
 
 # To run something using the docker images:
 
 docker run --platform linux/amd64 onelab/ubuntu20.04 ls -al /'
 docker run --platform linux/amd64 -it onelab/ubuntu20.04 bash
 docker run --platform linux/amd64 -it onelab/debian.stretch.64bit bash
+docker run --platform linux/amd64 -it onelab/debian.bullseye bash

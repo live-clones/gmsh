@@ -247,6 +247,7 @@ N2S                     return tNameToString;
 NameStruct              return tNameStruct;
 NameToString            return tNameToString;
 NewModel                return tNewModel;
+Normal                  return tNormal;
 Nurbs			return tNurbs;
 
 OnelabAction            return tOnelabAction;

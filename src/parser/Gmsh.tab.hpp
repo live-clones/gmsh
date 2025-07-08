@@ -159,132 +159,133 @@
      tDisk = 375,
      tWire = 376,
      tGeoEntity = 377,
-     tCharacteristic = 378,
-     tLength = 379,
-     tParametric = 380,
-     tElliptic = 381,
-     tRefineMesh = 382,
-     tRecombineMesh = 383,
-     tAdaptMesh = 384,
-     tTransformMesh = 385,
-     tRelocateMesh = 386,
-     tReorientMesh = 387,
-     tSetFactory = 388,
-     tThruSections = 389,
-     tWedge = 390,
-     tFillet = 391,
-     tChamfer = 392,
-     tPlane = 393,
-     tRuled = 394,
-     tTransfinite = 395,
-     tPhysical = 396,
-     tCompound = 397,
-     tPeriodic = 398,
-     tParent = 399,
-     tUsing = 400,
-     tPlugin = 401,
-     tDegenerated = 402,
-     tRecursive = 403,
-     tSewing = 404,
-     tRotate = 405,
-     tTranslate = 406,
-     tSymmetry = 407,
-     tDilate = 408,
-     tExtrude = 409,
-     tLevelset = 410,
-     tAffine = 411,
-     tBooleanUnion = 412,
-     tBooleanIntersection = 413,
-     tBooleanDifference = 414,
-     tBooleanSection = 415,
-     tBooleanFragments = 416,
-     tThickSolid = 417,
-     tRecombine = 418,
-     tSmoother = 419,
-     tSplit = 420,
-     tDelete = 421,
-     tCoherence = 422,
-     tHealShapes = 423,
-     tIntersect = 424,
-     tMeshAlgorithm = 425,
-     tReverseMesh = 426,
-     tMeshSize = 427,
-     tMeshSizeFromBoundary = 428,
-     tLayers = 429,
-     tScaleLast = 430,
-     tHole = 431,
-     tAlias = 432,
-     tAliasWithOptions = 433,
-     tCopyOptions = 434,
-     tQuadTriAddVerts = 435,
-     tQuadTriNoNewVerts = 436,
-     tRecombLaterals = 437,
-     tTransfQuadTri = 438,
-     tText2D = 439,
-     tText3D = 440,
-     tInterpolationScheme = 441,
-     tTime = 442,
-     tCombine = 443,
-     tBSpline = 444,
-     tBezier = 445,
-     tNurbs = 446,
-     tNurbsOrder = 447,
-     tNurbsKnots = 448,
-     tColor = 449,
-     tColorTable = 450,
-     tFor = 451,
-     tIn = 452,
-     tEndFor = 453,
-     tIf = 454,
-     tElseIf = 455,
-     tElse = 456,
-     tEndIf = 457,
-     tExit = 458,
-     tAbort = 459,
-     tField = 460,
-     tReturn = 461,
-     tCall = 462,
-     tSlide = 463,
-     tMacro = 464,
-     tShow = 465,
-     tHide = 466,
-     tGetValue = 467,
-     tGetStringValue = 468,
-     tGetEnv = 469,
-     tGetString = 470,
-     tGetNumber = 471,
-     tUnique = 472,
-     tSetMaxTag = 473,
-     tHomology = 474,
-     tCohomology = 475,
-     tBetti = 476,
-     tExists = 477,
-     tFileExists = 478,
-     tGetForced = 479,
-     tGetForcedStr = 480,
-     tGMSH_MAJOR_VERSION = 481,
-     tGMSH_MINOR_VERSION = 482,
-     tGMSH_PATCH_VERSION = 483,
-     tGmshExecutableName = 484,
-     tSetPartition = 485,
-     tNameToString = 486,
-     tStringToName = 487,
-     tUnsplitWindow = 488,
-     tAFFECTDIVIDE = 489,
-     tAFFECTTIMES = 490,
-     tAFFECTMINUS = 491,
-     tAFFECTPLUS = 492,
-     tOR = 493,
-     tAND = 494,
-     tNOTEQUAL = 495,
-     tEQUAL = 496,
-     tGREATERGREATER = 497,
-     tLESSLESS = 498,
-     tGREATEROREQUAL = 499,
-     tLESSOREQUAL = 500,
-     UNARYPREC = 501,
-     tMINUSMINUS = 502,
-     tPLUSPLUS = 503
+     tNormal = 378,
+     tCharacteristic = 379,
+     tLength = 380,
+     tParametric = 381,
+     tElliptic = 382,
+     tRefineMesh = 383,
+     tRecombineMesh = 384,
+     tAdaptMesh = 385,
+     tTransformMesh = 386,
+     tRelocateMesh = 387,
+     tReorientMesh = 388,
+     tSetFactory = 389,
+     tThruSections = 390,
+     tWedge = 391,
+     tFillet = 392,
+     tChamfer = 393,
+     tPlane = 394,
+     tRuled = 395,
+     tTransfinite = 396,
+     tPhysical = 397,
+     tCompound = 398,
+     tPeriodic = 399,
+     tParent = 400,
+     tUsing = 401,
+     tPlugin = 402,
+     tDegenerated = 403,
+     tRecursive = 404,
+     tSewing = 405,
+     tRotate = 406,
+     tTranslate = 407,
+     tSymmetry = 408,
+     tDilate = 409,
+     tExtrude = 410,
+     tLevelset = 411,
+     tAffine = 412,
+     tBooleanUnion = 413,
+     tBooleanIntersection = 414,
+     tBooleanDifference = 415,
+     tBooleanSection = 416,
+     tBooleanFragments = 417,
+     tThickSolid = 418,
+     tRecombine = 419,
+     tSmoother = 420,
+     tSplit = 421,
+     tDelete = 422,
+     tCoherence = 423,
+     tHealShapes = 424,
+     tIntersect = 425,
+     tMeshAlgorithm = 426,
+     tReverseMesh = 427,
+     tMeshSize = 428,
+     tMeshSizeFromBoundary = 429,
+     tLayers = 430,
+     tScaleLast = 431,
+     tHole = 432,
+     tAlias = 433,
+     tAliasWithOptions = 434,
+     tCopyOptions = 435,
+     tQuadTriAddVerts = 436,
+     tQuadTriNoNewVerts = 437,
+     tRecombLaterals = 438,
+     tTransfQuadTri = 439,
+     tText2D = 440,
+     tText3D = 441,
+     tInterpolationScheme = 442,
+     tTime = 443,
+     tCombine = 444,
+     tBSpline = 445,
+     tBezier = 446,
+     tNurbs = 447,
+     tNurbsOrder = 448,
+     tNurbsKnots = 449,
+     tColor = 450,
+     tColorTable = 451,
+     tFor = 452,
+     tIn = 453,
+     tEndFor = 454,
+     tIf = 455,
+     tElseIf = 456,
+     tElse = 457,
+     tEndIf = 458,
+     tExit = 459,
+     tAbort = 460,
+     tField = 461,
+     tReturn = 462,
+     tCall = 463,
+     tSlide = 464,
+     tMacro = 465,
+     tShow = 466,
+     tHide = 467,
+     tGetValue = 468,
+     tGetStringValue = 469,
+     tGetEnv = 470,
+     tGetString = 471,
+     tGetNumber = 472,
+     tUnique = 473,
+     tSetMaxTag = 474,
+     tHomology = 475,
+     tCohomology = 476,
+     tBetti = 477,
+     tExists = 478,
+     tFileExists = 479,
+     tGetForced = 480,
+     tGetForcedStr = 481,
+     tGMSH_MAJOR_VERSION = 482,
+     tGMSH_MINOR_VERSION = 483,
+     tGMSH_PATCH_VERSION = 484,
+     tGmshExecutableName = 485,
+     tSetPartition = 486,
+     tNameToString = 487,
+     tStringToName = 488,
+     tUnsplitWindow = 489,
+     tAFFECTDIVIDE = 490,
+     tAFFECTTIMES = 491,
+     tAFFECTMINUS = 492,
+     tAFFECTPLUS = 493,
+     tOR = 494,
+     tAND = 495,
+     tNOTEQUAL = 496,
+     tEQUAL = 497,
+     tGREATERGREATER = 498,
+     tLESSLESS = 499,
+     tGREATEROREQUAL = 500,
+     tLESSOREQUAL = 501,
+     UNARYPREC = 502,
+     tMINUSMINUS = 503,
+     tPLUSPLUS = 504
    };
 #endif
 /* Tokens.  */
@@ -408,132 +409,133 @@
 #define tDisk 375
 #define tWire 376
 #define tGeoEntity 377
-#define tCharacteristic 378
-#define tLength 379
-#define tParametric 380
-#define tElliptic 381
-#define tRefineMesh 382
-#define tRecombineMesh 383
-#define tAdaptMesh 384
-#define tTransformMesh 385
-#define tRelocateMesh 386
-#define tReorientMesh 387
-#define tSetFactory 388
-#define tThruSections 389
-#define tWedge 390
-#define tFillet 391
-#define tChamfer 392
-#define tPlane 393
-#define tRuled 394
-#define tTransfinite 395
-#define tPhysical 396
-#define tCompound 397
-#define tPeriodic 398
-#define tParent 399
-#define tUsing 400
-#define tPlugin 401
-#define tDegenerated 402
-#define tRecursive 403
-#define tSewing 404
-#define tRotate 405
-#define tTranslate 406
-#define tSymmetry 407
-#define tDilate 408
-#define tExtrude 409
-#define tLevelset 410
-#define tAffine 411
-#define tBooleanUnion 412
-#define tBooleanIntersection 413
-#define tBooleanDifference 414
-#define tBooleanSection 415
-#define tBooleanFragments 416
-#define tThickSolid 417
-#define tRecombine 418
-#define tSmoother 419
-#define tSplit 420
-#define tDelete 421
-#define tCoherence 422
-#define tHealShapes 423
-#define tIntersect 424
-#define tMeshAlgorithm 425
-#define tReverseMesh 426
-#define tMeshSize 427
-#define tMeshSizeFromBoundary 428
-#define tLayers 429
-#define tScaleLast 430
-#define tHole 431
-#define tAlias 432
-#define tAliasWithOptions 433
-#define tCopyOptions 434
-#define tQuadTriAddVerts 435
-#define tQuadTriNoNewVerts 436
-#define tRecombLaterals 437
-#define tTransfQuadTri 438
-#define tText2D 439
-#define tText3D 440
-#define tInterpolationScheme 441
-#define tTime 442
-#define tCombine 443
-#define tBSpline 444
-#define tBezier 445
-#define tNurbs 446
-#define tNurbsOrder 447
-#define tNurbsKnots 448
-#define tColor 449
-#define tColorTable 450
-#define tFor 451
-#define tIn 452
-#define tEndFor 453
-#define tIf 454
-#define tElseIf 455
-#define tElse 456
-#define tEndIf 457
-#define tExit 458
-#define tAbort 459
-#define tField 460
-#define tReturn 461
-#define tCall 462
-#define tSlide 463
-#define tMacro 464
-#define tShow 465
-#define tHide 466
-#define tGetValue 467
-#define tGetStringValue 468
-#define tGetEnv 469
-#define tGetString 470
-#define tGetNumber 471
-#define tUnique 472
-#define tSetMaxTag 473
-#define tHomology 474
-#define tCohomology 475
-#define tBetti 476
-#define tExists 477
-#define tFileExists 478
-#define tGetForced 479
-#define tGetForcedStr 480
-#define tGMSH_MAJOR_VERSION 481
-#define tGMSH_MINOR_VERSION 482
-#define tGMSH_PATCH_VERSION 483
-#define tGmshExecutableName 484
-#define tSetPartition 485
-#define tNameToString 486
-#define tStringToName 487
-#define tUnsplitWindow 488
-#define tAFFECTDIVIDE 489
-#define tAFFECTTIMES 490
-#define tAFFECTMINUS 491
-#define tAFFECTPLUS 492
-#define tOR 493
-#define tAND 494
-#define tNOTEQUAL 495
-#define tEQUAL 496
-#define tGREATERGREATER 497
-#define tLESSLESS 498
-#define tGREATEROREQUAL 499
-#define tLESSOREQUAL 500
-#define UNARYPREC 501
-#define tMINUSMINUS 502
-#define tPLUSPLUS 503
+#define tNormal 378
+#define tCharacteristic 379
+#define tLength 380
+#define tParametric 381
+#define tElliptic 382
+#define tRefineMesh 383
+#define tRecombineMesh 384
+#define tAdaptMesh 385
+#define tTransformMesh 386
+#define tRelocateMesh 387
+#define tReorientMesh 388
+#define tSetFactory 389
+#define tThruSections 390
+#define tWedge 391
+#define tFillet 392
+#define tChamfer 393
+#define tPlane 394
+#define tRuled 395
+#define tTransfinite 396
+#define tPhysical 397
+#define tCompound 398
+#define tPeriodic 399
+#define tParent 400
+#define tUsing 401
+#define tPlugin 402
+#define tDegenerated 403
+#define tRecursive 404
+#define tSewing 405
+#define tRotate 406
+#define tTranslate 407
+#define tSymmetry 408
+#define tDilate 409
+#define tExtrude 410
+#define tLevelset 411
+#define tAffine 412
+#define tBooleanUnion 413
+#define tBooleanIntersection 414
+#define tBooleanDifference 415
+#define tBooleanSection 416
+#define tBooleanFragments 417
+#define tThickSolid 418
+#define tRecombine 419
+#define tSmoother 420
+#define tSplit 421
+#define tDelete 422
+#define tCoherence 423
+#define tHealShapes 424
+#define tIntersect 425
+#define tMeshAlgorithm 426
+#define tReverseMesh 427
+#define tMeshSize 428
+#define tMeshSizeFromBoundary 429
+#define tLayers 430
+#define tScaleLast 431
+#define tHole 432
+#define tAlias 433
+#define tAliasWithOptions 434
+#define tCopyOptions 435
+#define tQuadTriAddVerts 436
+#define tQuadTriNoNewVerts 437
+#define tRecombLaterals 438
+#define tTransfQuadTri 439
+#define tText2D 440
+#define tText3D 441
+#define tInterpolationScheme 442
+#define tTime 443
+#define tCombine 444
+#define tBSpline 445
+#define tBezier 446
+#define tNurbs 447
+#define tNurbsOrder 448
+#define tNurbsKnots 449
+#define tColor 450
+#define tColorTable 451
+#define tFor 452
+#define tIn 453
+#define tEndFor 454
+#define tIf 455
+#define tElseIf 456
+#define tElse 457
+#define tEndIf 458
+#define tExit 459
+#define tAbort 460
+#define tField 461
+#define tReturn 462
+#define tCall 463
+#define tSlide 464
+#define tMacro 465
+#define tShow 466
+#define tHide 467
+#define tGetValue 468
+#define tGetStringValue 469
+#define tGetEnv 470
+#define tGetString 471
+#define tGetNumber 472
+#define tUnique 473
+#define tSetMaxTag 474
+#define tHomology 475
+#define tCohomology 476
+#define tBetti 477
+#define tExists 478
+#define tFileExists 479
+#define tGetForced 480
+#define tGetForcedStr 481
+#define tGMSH_MAJOR_VERSION 482
+#define tGMSH_MINOR_VERSION 483
+#define tGMSH_PATCH_VERSION 484
+#define tGmshExecutableName 485
+#define tSetPartition 486
+#define tNameToString 487
+#define tStringToName 488
+#define tUnsplitWindow 489
+#define tAFFECTDIVIDE 490
+#define tAFFECTTIMES 491
+#define tAFFECTMINUS 492
+#define tAFFECTPLUS 493
+#define tOR 494
+#define tAND 495
+#define tNOTEQUAL 496
+#define tEQUAL 497
+#define tGREATERGREATER 498
+#define tLESSLESS 499
+#define tGREATEROREQUAL 500
+#define tLESSOREQUAL 501
+#define UNARYPREC 502
+#define tMINUSMINUS 503
+#define tPLUSPLUS 504
 
 
 
@@ -552,7 +554,7 @@ typedef union YYSTYPE
   struct TwoChar c2;
 }
 /* Line 1529 of yacc.c.  */
-#line 556 "Gmsh.tab.hpp"
+#line 558 "Gmsh.tab.hpp"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
