@@ -12,6 +12,7 @@
 #include "meshGEdge.h"
 #include "BoundaryLayer.h"
 #include "winslowUntangler.h"
+#include "Context.h"
 
 StringXNumber BoundaryLayerOptions_Number[] = {
   {GMSH_FULLRC, "Width", nullptr, 1.e-2},
@@ -406,16 +407,19 @@ bool bl(GModel *m, std::vector<GVertex *> &onPoints,
           for(size_t j = 0; j < V0.size(); j++) {
             std::set<MEdge, MEdgeLessThan>::iterator it =
               edges_of_elements.find(MEdge(V1[j], V0[j]));
-            if(it == edges_of_elements.end())
-              Msg::Error("Edge Not Found in Boundary Layer");
-            // orientation matters !!!
-            if(it->getVertex(0) == V0[j])
-              gf->quadrangles.push_back(new MQuadrangle(
-                l->getVertex(0), l->getVertex(1), V1[j], V0[j]));
-            else
-              gf->quadrangles.push_back(new MQuadrangle(
-                l->getVertex(1), l->getVertex(0), V0[j], V1[j]));
-            layers[gf->quadrangles.back()] = width;
+            if(it == edges_of_elements.end()) {
+              Msg::Error("Edge not found in boundary layer");
+            }
+            else {
+              // orientation matters !!!
+              if(it->getVertex(0) == V0[j])
+                gf->quadrangles.push_back
+                  (new MQuadrangle(l->getVertex(0), l->getVertex(1), V1[j], V0[j]));
+              else
+                gf->quadrangles.push_back
+                  (new MQuadrangle(l->getVertex(1), l->getVertex(0), V0[j], V1[j]));
+              layers[gf->quadrangles.back()] = width;
+            }
           }
         }
       }
@@ -735,10 +739,10 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   std::string volume = BoundaryLayerOptions_String[0].def;
   std::string surface = BoundaryLayerOptions_String[1].def;
   std::string curve = BoundaryLayerOptions_String[2].def;
-  std::string vertex = BoundaryLayerOptions_String[3].def;
+  std::string point = BoundaryLayerOptions_String[3].def;
 
   std::vector<std::list<int>> entities(4);
-  vertex = parse(vertex, entities[0]);
+  point = parse(point, entities[0]);
   curve = parse(curve, entities[1]);
   surface = parse(surface, entities[2]);
   volume = parse(volume, entities[3]);
@@ -836,6 +840,10 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
 
   //  for (auto gf : f)
   //    expandBL(gf, perfectShapes, layers, f);
+
+  printf("Ola!\n");
+
+  CTX::instance()->mesh.changed = ENT_ALL;
 
   return v;
 }
