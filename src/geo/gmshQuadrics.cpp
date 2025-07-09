@@ -142,6 +142,8 @@ void computeGradient(const std::vector<SPoint3> &points, const double params[6],
   }
 }
 
+#if defined(HAVE_ALGLIB)
+
 static void bfgs_callback_cyl(const alglib::real_1d_array &x, double &func,
                               alglib::real_1d_array &grad, void *ptr)
 {
@@ -153,8 +155,11 @@ static void bfgs_callback_cyl(const alglib::real_1d_array &x, double &func,
   for(int i = 0; i < 6; i++) grad[i] = g[i];
 }
 
+#endif
+
 void fitCylinder(std::vector<SPoint3> &points, double params[6])
 {
+#if defined(HAVE_ALGLIB)
   alglib::ae_int_t dim = 6;
   alglib::ae_int_t corr = 2; // Num of corrections in the scheme in [3,7]
   alglib::minlbfgsstate state;
@@ -176,6 +181,9 @@ void fitCylinder(std::vector<SPoint3> &points, double params[6])
   alglib::minlbfgsreport rep;
   minlbfgsresults(state, x, rep);
   for(int i = 0; i < 6; i++) params[i] = x[i];
+#else
+  Msg::Error("fitCylinder requires ALGLIB");
+#endif
 }
 
 void gmshQuadricSphere::compute(std::vector<SPoint3> &p)
