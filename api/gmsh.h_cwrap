@@ -15,7 +15,7 @@
 // scripting language (.geo files), or through the C++, C, Python, Julia and
 // Fortran application programming interface (API).
 //
-// This file redefines the Gmsh C++ API in terms of the C API (v4.14.0).
+// This file redefines the Gmsh C++ API in terms of the C API (v4.14.1).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
@@ -1047,13 +1047,13 @@ namespace gmsh { // Top-level functions
 
     // gmsh::model::getClosestPoint
     //
-    // Get the points `closestCoord' on the entity of dimension `dim' and tag `tag'
-    // to the points `coord', by orthogonal projection. `coord' and `closestCoord'
-    // are given as x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...].
-    // `parametricCoord' returns the parametric coordinates t on the curve (if
-    // `dim' == 1) or u and v coordinates concatenated on the surface (if `dim' =
-    // 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...]. The closest points can lie
-    // outside the (trimmed) entities: use `isInside()' to check.
+    // Get the points `closestCoord' on the entity of dimension `dim' (1 or 2) and
+    // tag `tag' to the points `coord', by orthogonal projection. `coord' and
+    // `closestCoord' are given as x, y, z coordinates, concatenated: [p1x, p1y,
+    // p1z, p2x, ...]. `parametricCoord' returns the parametric coordinates t on
+    // the curve (if `dim' == 1) or u and v coordinates concatenated on the surface
+    // (if `dim' = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...]. The closest
+    // points can lie outside the (trimmed) entities: use `isInside()' to check.
     inline void getClosestPoint(const int dim,
                                 const int tag,
                                 const std::vector<double> & coord,
