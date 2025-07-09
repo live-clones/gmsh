@@ -2122,6 +2122,7 @@ with
   Point|Curve|Surface|Volume In BoundingBox @{ @var{expression-list} @} |
   BoundingBox Point|Curve|Surface|Volume @{ @var{expression-list} @} |
   Parametric BoundingBox Curve|Surface @{ @var{expression} @} |
+  Parametric Point @{ @var{expression} @} In Surface @{ @var{expression} @} |
   Normal Surface @{ @var{expression} @} Paramtric @{ @var{expression}, @var{expression} @} |
   Mass Curve|Surface|Volume @{ @var{expression} @} |
   CenterOfMass Curve|Surface|Volume @{ @var{expression} @} |
@@ -2157,9 +2158,11 @@ specified as (X min, Y min, Z min, X max, Y max, Z max). Beware that the
 order of coordinates is different than in the @code{BoundingBox} command
 for the scene: see @ref{Other general commands}. @code{Parametric
 BoundingBox} retrieves the parametric bounds (U min, U max) and (U min,
-V min, U max, V max) or a curve or a surface, respectively. @code{Normal
-Surface} returns the normal to a surface evaluated at the specified
-parametric coordinates.
+V min, U max, V max) or a curve or a surface,
+respectively. @code{Parametric Point} retrieves the parametric
+coordinates U, V of a point on a surface. @code{Normal Surface} returns
+the normal to a surface evaluated at the specified parametric
+coordinates.
 
 The last cases permit to retrieve the mass, the center of mass or the
 matrix of inertia of an entity, the coordinates of a given geometry

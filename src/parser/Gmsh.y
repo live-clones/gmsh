@@ -6092,6 +6092,26 @@ FExpr_Multi :
         yymsg(0, "Surface %d does not exist", tag);
       }
     }
+  | tParametric tPoint '{' FExpr '}' tIn tSurface '{' FExpr '}'
+    {
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      if(GModel::current()->getGEOInternals()->getChanged())
+        GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      $$ = List_Create(9, 1, sizeof(double));
+      GVertex *gv = GModel::current()->getVertexByTag((int)$4);
+      GFace *gf = GModel::current()->getFaceByTag((int)$9);
+      if(gv && gf) {
+        SPoint2 p = gv->reparamOnFace(gf, 0);
+        double u = p.x(), v = p.y();
+        List_Add($$, &u);
+        List_Add($$, &v);
+      }
+      else {
+        yymsg(0, "Point %d or surface %d does not exist", (int)$4, (int)$9);
+      }
+    }
    | tColor GeoEntity123 '{' FExpr '}'
     {
       $$ = List_Create(3, 1, sizeof(double));
