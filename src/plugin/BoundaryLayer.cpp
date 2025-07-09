@@ -207,10 +207,10 @@ static void fanitzie(std::vector<GFace *> &gfs, std::vector<GVertex *> &gvs,
   }
 }
 
-bool bl3d(GModel *m, 
-	  std::vector<GFace *> &onSurfaces,
-	  std::vector<GRegion *> &inVolumes, double thickness,
-	  std::map<MElement *, double> &layers) {
+bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
+          std::vector<GRegion *> &inVolumes, double thickness,
+          std::map<MElement *, double> &layers)
+{
   // 3D case:
   // for each GVertex connected to the GFaces in inSurfaces:
   //   - if all adjacent GFaces to the GVertex are in inSurface, spawn 1 MVertex
@@ -222,7 +222,7 @@ bool bl3d(GModel *m,
   // inSurfaces:
   //   -
   // for each MVertex classified on the GFaces in inSurfaces:
-  //   -     
+  //   -
 
   std::set<GFace *> onSurfacesSet;
   onSurfacesSet.insert(onSurfaces.begin(), onSurfaces.end());
@@ -238,7 +238,8 @@ bool bl3d(GModel *m,
     connectedPoints.insert(vs.begin(), vs.end());
   }
 
-  ///// ----> TREAT POINTS ---------------------------------------------------------
+  ///// ----> TREAT POINTS
+  ///---------------------------------------------------------
   // spawn nodes for model points
   for(auto gv : connectedPoints) {
     if(gv->mesh_vertices.empty()) {
@@ -253,71 +254,74 @@ bool bl3d(GModel *m,
 
     std::size_t found = 0;
 
-    std::set<GEdge*> curvesThatAreAdjacentToonSurfacesSet;
+    std::set<GEdge *> curvesThatAreAdjacentToonSurfacesSet;
     for(auto gf : onSurfacesSet) {
       auto e = gf->edges();
-      curvesThatAreAdjacentToonSurfacesSet.insert(e.begin(),e.end());
+      curvesThatAreAdjacentToonSurfacesSet.insert(e.begin(), e.end());
     }
 
     for(auto ge : connectedCurves) {
-      if(curvesThatAreAdjacentToonSurfacesSet.find(ge) != curvesThatAreAdjacentToonSurfacesSet.end()){
-	found++;
+      if(curvesThatAreAdjacentToonSurfacesSet.find(ge) !=
+         curvesThatAreAdjacentToonSurfacesSet.end()) {
+        found++;
       }
       else {
         toinsert.push_back(ge);
       }
     }
-    
+
     for(auto ge : toinsert) {
       MVertex *v = gv->mesh_vertices[0];
       double param;
       if(reparamMeshVertexOnEdge(v, ge, param)) {
-	bool end = ge->getEndVertex() == gv;
-	MVertex *newv;
-	if(end) {
-	  MEdgeVertex *vend =
-	    static_cast<MEdgeVertex *>(ge->mesh_vertices.back());
-	  newv =
-	    new MEdgeVertex(v->x(), v->y(), v->z(), ge, param, vend->getLc());
-	  ge->mesh_vertices.push_back(newv);
-	}
-	else {
-	  MEdgeVertex *vbeg =
-	    static_cast<MEdgeVertex *>(ge->mesh_vertices.front());
-	  newv =
-	    new MEdgeVertex(v->x(), v->y(), v->z(), ge, param, vbeg->getLc());
-	  ge->mesh_vertices.insert(ge->mesh_vertices.begin(), newv);
-	}
-	
-	spawned[v].push_back(newv);
-	Msg::Debug("inserted node %lu from point %d in curve %d -- %lu internal nodes",
-		   newv->getNum(), gv->tag(), ge->tag(),ge->mesh_vertices.size());
-	if(end)
-	  ge->lines.push_back(new MLine(v, newv));
-	else
-	  ge->lines.insert(ge->lines.begin(), new MLine(newv, v));
+        bool end = ge->getEndVertex() == gv;
+        MVertex *newv;
+        if(end) {
+          MEdgeVertex *vend =
+            static_cast<MEdgeVertex *>(ge->mesh_vertices.back());
+          newv =
+            new MEdgeVertex(v->x(), v->y(), v->z(), ge, param, vend->getLc());
+          ge->mesh_vertices.push_back(newv);
+        }
+        else {
+          MEdgeVertex *vbeg =
+            static_cast<MEdgeVertex *>(ge->mesh_vertices.front());
+          newv =
+            new MEdgeVertex(v->x(), v->y(), v->z(), ge, param, vbeg->getLc());
+          ge->mesh_vertices.insert(ge->mesh_vertices.begin(), newv);
+        }
+
+        spawned[v].push_back(newv);
+        Msg::Debug(
+          "inserted node %lu from point %d in curve %d -- %lu internal nodes",
+          newv->getNum(), gv->tag(), ge->tag(), ge->mesh_vertices.size());
+        if(end)
+          ge->lines.push_back(new MLine(v, newv));
+        else
+          ge->lines.insert(ge->lines.begin(), new MLine(newv, v));
       }
       else {
-	Msg::Warning("Could not compute parametric coordinates of node on "
-		     "curve %d", ge->tag());
+        Msg::Warning("Could not compute parametric coordinates of node on "
+                     "curve %d",
+                     ge->tag());
       }
     }
 
     // We insert mesh that is classified on a model vertex on a surface
-    
+
     std::vector<GFace *> toinsert2;
     for(auto gf : connectedSurfaces) {
       auto ed = gf->edges();
       bool edgeAlreadyDone = false;
-      for(auto ge : ed) 
-	if (std::find(toinsert.begin(), toinsert.end(), ge) == toinsert.end())
-	  edgeAlreadyDone = true;
-      
-      if(edgeAlreadyDone || onSurfacesSet.find(gf) != onSurfacesSet.end()){
-	found++;
+      for(auto ge : ed)
+        if(std::find(toinsert.begin(), toinsert.end(), ge) == toinsert.end())
+          edgeAlreadyDone = true;
+
+      if(edgeAlreadyDone || onSurfacesSet.find(gf) != onSurfacesSet.end()) {
+        found++;
       }
       else {
-	toinsert2.push_back(gf);
+        toinsert2.push_back(gf);
       }
     }
 
@@ -325,16 +329,19 @@ bool bl3d(GModel *m,
       MVertex *v = gv->mesh_vertices[0];
       SPoint2 param;
       if(reparamMeshVertexOnFace(v, gf, param)) {
-	MFaceVertex *newv = new MFaceVertex(v->x(), v->y(), v->z(), gf, param.x(), param.y());
-	gf->mesh_vertices.push_back(newv);
-	spawned[v].push_back(newv);
+        MFaceVertex *newv =
+          new MFaceVertex(v->x(), v->y(), v->z(), gf, param.x(), param.y());
+        gf->mesh_vertices.push_back(newv);
+        spawned[v].push_back(newv);
       }
     }
   }
-  ///// ----> END OF TREAT POINTS ---------------------------------------------------------
+  ///// ----> END OF TREAT POINTS
+  ///---------------------------------------------------------
 
-  ///// ----> TREAT CURVES ---------------------------------------------------------
-  //// --> Spawn nodes on model curves
+  ///// ----> TREAT CURVES
+  ///--------------------------------------------------------- / --> Spawn nodes
+  ///on model curves
 
   std::set<GEdge *> connectedCurves;
   for(auto gf : onSurfaces) {
@@ -344,45 +351,47 @@ bool bl3d(GModel *m,
   for(auto ge : connectedCurves) {
     auto fs = ge->faces();
     // for all faces f2ge adjacent to ge
-    for (auto f2ge : fs) {
+    for(auto f2ge : fs) {
       // if f2ge is onSurfaces of f2ge continue
-      if (onSurfacesSet.find(f2ge) != onSurfacesSet.end()) continue;
+      if(onSurfacesSet.find(f2ge) != onSurfacesSet.end()) continue;
       auto vs = f2ge->regions();
       // for all volumes v adjacent to f2ge
-      for (auto vol : vs) {
-	if (inVolumesSet.find(vol) == inVolumesSet.end())continue;
-	auto facesOfvol = vol->faces();
-	if (std::find(facesOfvol.begin(),facesOfvol.end(),f2ge) != facesOfvol.end()){
-	  for (auto ev : ge->mesh_vertices){
-	    SPoint2 param;
-	    reparamMeshVertexOnFace(ev, f2ge, param);
-	    MFaceVertex *newv = new MFaceVertex(ev->x(), ev->y(), ev->z(), f2ge, param.x(), param.y());
-	    f2ge->mesh_vertices.push_back(newv);
-	    spawned[ev].push_back(newv);
-	  }	  
-	}
-	else{
-	  for (auto ev : ge->mesh_vertices){
-	    MVertex *newv = new MVertex(ev->x(), ev->y(), ev->z(), vol);
-	    vol->mesh_vertices.push_back(newv);
-	    spawned[ev].push_back(newv);	  
-	  }
-	}
+      for(auto vol : vs) {
+        if(inVolumesSet.find(vol) == inVolumesSet.end()) continue;
+        auto facesOfvol = vol->faces();
+        if(std::find(facesOfvol.begin(), facesOfvol.end(), f2ge) !=
+           facesOfvol.end()) {
+          for(auto ev : ge->mesh_vertices) {
+            SPoint2 param;
+            reparamMeshVertexOnFace(ev, f2ge, param);
+            MFaceVertex *newv = new MFaceVertex(ev->x(), ev->y(), ev->z(), f2ge,
+                                                param.x(), param.y());
+            f2ge->mesh_vertices.push_back(newv);
+            spawned[ev].push_back(newv);
+          }
+        }
+        else {
+          for(auto ev : ge->mesh_vertices) {
+            MVertex *newv = new MVertex(ev->x(), ev->y(), ev->z(), vol);
+            vol->mesh_vertices.push_back(newv);
+            spawned[ev].push_back(newv);
+          }
+        }
       }
     }
   }
 
-  for (auto gf : onSurfacesSet){
+  for(auto gf : onSurfacesSet) {
     auto vs = gf->regions();
-    for (auto vol : vs) {
-      if (inVolumesSet.find(vol) != inVolumesSet.end()){
-	for (auto vv : gf->mesh_vertices){
-	  MVertex *newv = new MVertex(vv->x(), vv->y(), vv->z(), vol);
-	  vol->mesh_vertices.push_back(newv);
-	  spawned[vv].push_back(newv);
-	  printf("Spawned node %d in volume %d from surface %d\n",
-		newv->getNum(),vol->tag(), gf->tag());
-	}
+    for(auto vol : vs) {
+      if(inVolumesSet.find(vol) != inVolumesSet.end()) {
+        for(auto vv : gf->mesh_vertices) {
+          MVertex *newv = new MVertex(vv->x(), vv->y(), vv->z(), vol);
+          vol->mesh_vertices.push_back(newv);
+          spawned[vv].push_back(newv);
+          printf("Spawned node %zu in volume %d from surface %d\n",
+                 newv->getNum(), vol->tag(), gf->tag());
+        }
       }
     }
   }
@@ -406,9 +415,9 @@ bool bl3d(GModel *m,
     auto fs = gr->faces();
     surfacesAdjacentToVolumesForBoundaryLayer.insert(fs.begin(), fs.end());
   }
-  
+
   for(auto gf : surfacesAdjacentToVolumesForBoundaryLayer) {
-    if (onSurfacesSet.find(gf) != onSurfacesSet.end()) continue;
+    if(onSurfacesSet.find(gf) != onSurfacesSet.end()) continue;
     for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
       MElement *e = gf->getMeshElement(i);
       for(std::size_t j = 0; j < e->getNumVertices(); j++) {
@@ -422,7 +431,6 @@ bool bl3d(GModel *m,
     }
   }
 
-  
   // create zero-sized elements in connected surfaces
 
   std::set<GEdge *> onCurves;
@@ -441,9 +449,10 @@ bool bl3d(GModel *m,
           edges_of_elements.insert(e->getEdge(j));
       }
 
-      if (onSurfacesSet.find(gf) != onSurfacesSet.end()) continue;
-      if (surfacesAdjacentToVolumesForBoundaryLayer.find(gf) ==
-	  surfacesAdjacentToVolumesForBoundaryLayer.end()) continue;            
+      if(onSurfacesSet.find(gf) != onSurfacesSet.end()) continue;
+      if(surfacesAdjacentToVolumesForBoundaryLayer.find(gf) ==
+         surfacesAdjacentToVolumesForBoundaryLayer.end())
+        continue;
 
       for(std::size_t i = 0; i < ge->lines.size(); i++) {
         MLine *l = ge->lines[i];
@@ -478,11 +487,11 @@ bool bl3d(GModel *m,
             else {
               // orientation matters !!!
               if(it->getVertex(0) == V0[j])
-                gf->quadrangles.push_back
-                  (new MQuadrangle(l->getVertex(0), l->getVertex(1), V1[j], V0[j]));
+                gf->quadrangles.push_back(new MQuadrangle(
+                  l->getVertex(0), l->getVertex(1), V1[j], V0[j]));
               else
-                gf->quadrangles.push_back
-                  (new MQuadrangle(l->getVertex(1), l->getVertex(0), V0[j], V1[j]));
+                gf->quadrangles.push_back(new MQuadrangle(
+                  l->getVertex(1), l->getVertex(0), V0[j], V1[j]));
               layers[gf->quadrangles.back()] = thickness;
             }
           }
@@ -495,10 +504,8 @@ bool bl3d(GModel *m,
 }
 
 bool bl(GModel *m, std::vector<GVertex *> &onPoints,
-        std::vector<GEdge *> &onCurves,
-	std::vector<GFace *> &inSurfaces,
-        double thickness,
-        std::map<MElement *, double> &layers)
+        std::vector<GEdge *> &onCurves, std::vector<GFace *> &inSurfaces,
+        double thickness, std::map<MElement *, double> &layers)
 {
   // 2D case:
   // for each GVertex connected to the GEdges in onCurves:
@@ -508,7 +515,6 @@ bool bl(GModel *m, std::vector<GVertex *> &onPoints,
   //     connected GEdge
   // for each MVertex classified on the GEdges in onCurves:
   //   - spawn 1 MVertex in the connected GFaces that are in inSurfaces
-
 
   std::set<GEdge *> onCurvesSet;
   onCurvesSet.insert(onCurves.begin(), onCurves.end());
@@ -590,8 +596,9 @@ bool bl(GModel *m, std::vector<GVertex *> &onPoints,
           }
 
           spawned[v].push_back(newv);
-          Msg::Debug("inserted node %lu from point %d in curve %d -- %lu internal nodes",
-                     newv->getNum(), gv->tag(), ge->tag(),ge->mesh_vertices.size());
+          Msg::Debug(
+            "inserted node %lu from point %d in curve %d -- %lu internal nodes",
+            newv->getNum(), gv->tag(), ge->tag(), ge->mesh_vertices.size());
           if(end)
             ge->lines.push_back(new MLine(v, newv));
           else
@@ -599,7 +606,8 @@ bool bl(GModel *m, std::vector<GVertex *> &onPoints,
         }
         else {
           Msg::Warning("Could not compute parametric coordinates of node on "
-                       "curve %d", ge->tag());
+                       "curve %d",
+                       ge->tag());
         }
       }
     }
@@ -685,11 +693,11 @@ bool bl(GModel *m, std::vector<GVertex *> &onPoints,
             else {
               // orientation matters !!!
               if(it->getVertex(0) == V0[j])
-                gf->quadrangles.push_back
-                  (new MQuadrangle(l->getVertex(0), l->getVertex(1), V1[j], V0[j]));
+                gf->quadrangles.push_back(new MQuadrangle(
+                  l->getVertex(0), l->getVertex(1), V1[j], V0[j]));
               else
-                gf->quadrangles.push_back
-                  (new MQuadrangle(l->getVertex(1), l->getVertex(0), V0[j], V1[j]));
+                gf->quadrangles.push_back(new MQuadrangle(
+                  l->getVertex(1), l->getVertex(0), V0[j], V1[j]));
               layers[gf->quadrangles.back()] = thickness;
             }
           }
@@ -1086,7 +1094,6 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
 
   //  printf("perfectshapes = %lu\n",perfectShapes.size());
 
-
   double ww = 0.0;
   std::vector<double> ws;
   double hwall = size;
@@ -1104,20 +1111,19 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   //    printf("h = %g y = %g\n",wid,h);
   //  }
 
-  if (r.empty())  
-    bl  (m, vv, e, f, ww, layers);
+  if(r.empty())
+    bl(m, vv, e, f, ww, layers);
   else
     bl3d(m, f, r, ww, layers);
-  
+
   for(GModel::eiter eit = m->firstEdge(); eit != m->lastEdge(); ++eit)
     meshGEdgeInsertBoundaryLayer(*eit, ww);
 
-  //  if (r.empty())  
-    for(auto gf : f) expandBL(gf, perfectShapes, layers, f);
+  //  if (r.empty())
+  for(auto gf : f) expandBL(gf, perfectShapes, layers, f);
 
-  if (r.empty())  
-    if (ws.size() > 1)
-      splitounette(f, layers, ws);
+  if(r.empty())
+    if(ws.size() > 1) splitounette(f, layers, ws);
 
   //  for (auto gf : f)
   //    expandBL(gf, perfectShapes, layers, f);
