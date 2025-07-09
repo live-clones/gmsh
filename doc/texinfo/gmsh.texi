@@ -2123,7 +2123,7 @@ with
   BoundingBox Point|Curve|Surface|Volume @{ @var{expression-list} @} |
   Parametric BoundingBox Curve|Surface @{ @var{expression} @} |
   Parametric Point @{ @var{expression} @} In Surface @{ @var{expression} @} |
-  Normal Surface @{ @var{expression} @} Paramtric @{ @var{expression}, @var{expression} @} |
+  Normal Surface @{ @var{expression} @} Parametric @{ @var{expression}, @var{expression} @} |
   Mass Curve|Surface|Volume @{ @var{expression} @} |
   CenterOfMass Curve|Surface|Volume @{ @var{expression} @} |
   MatrixOfInertia Curve|Surface|Volume @{ @var{expression} @} |
