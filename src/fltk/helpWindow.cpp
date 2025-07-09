@@ -11,6 +11,7 @@
 #include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Input.H>
 #include <FL/Fl_Color_Chooser.H>
+#include <FL/filename.H>
 #include "GmshConfig.h"
 #include "FlGui.h"
 #include "inputValue.h"
