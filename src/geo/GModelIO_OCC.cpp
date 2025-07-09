@@ -4687,31 +4687,39 @@ static void setShapeAttributes(OCCAttributesRTree *attributes,
     Standard_Real matDensity;
     Handle(TCollection_HAsciiString) matDensName;
     Handle(TCollection_HAsciiString) matDensValType;
-    if(materialTool->GetMaterial(label, matName, matDescription, matDensity,
-                                 matDensName, matDensValType)) {
-      if(!phys.empty()) phys += " & ";
-      phys += matName->ToCString();
-      Msg::Info(" - Label & material '%s' (%dD)", phys.c_str(), dim);
-    }
-    else if(phys.size()) {
-      Msg::Info(" - Label '%s' (%dD)", phys.c_str(), dim);
-    }
-    if(phys.size()) { attributes->insert(new OCCAttributes(dim, shape, phys)); }
-
-    // check layer names
     TDF_LabelSequence layers;
+
+    std::string layerdata;
 
     if(layerTool->GetLayers(shape, layers)) {
       TDF_LabelSequence::iterator it;
       for(it = layers.begin(); it != layers.end(); ++it) {
         Handle(TDataStd_Name) n;
-        if (label.FindAttribute(TDataStd_Name::GetID(), n)) {
+        if (it->FindAttribute(TDataStd_Name::GetID(), n)) {
           TCollection_ExtendedString name = n->Get();
-          Msg::Info(" - Layer '%s'", TCollection_AsciiString(name).ToCString());
-
+          layerdata = TCollection_AsciiString(name).ToCString();
         }
       }
     }
+    if(materialTool->GetMaterial(label, matName, matDescription, matDensity,
+                                 matDensName, matDensValType)) {
+      if(!phys.empty()) phys += " & ";
+      phys += matName->ToCString();
+      if(layerdata.empty()) {
+        Msg::Info(" - Label & material '%s' (%dD)", phys.c_str(), dim);
+      } else {
+        phys += " & " + layerdata;
+        Msg::Info(" - Label & material & layer '%s' (%dD)", phys.c_str(), dim);
+      }
+    }
+    else if(phys.size() && !layerdata.empty()) {
+        phys += " & & " + layerdata;
+        Msg::Info(" - Label & layer '%s' (%dD)", phys.c_str(), dim);
+    } else if(phys.size()) {
+      Msg::Info(" - Label '%s' (%dD)", phys.c_str(), dim);
+    }
+    if(phys.size()) { attributes->insert(new OCCAttributes(dim, shape, phys)); }
+
 
     Quantity_Color col;
     if(colorTool->GetColor(label, XCAFDoc_ColorGen, col)) {
