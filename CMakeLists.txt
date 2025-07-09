@@ -1,4 +1,4 @@
-# Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+# Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 #
 # See the LICENSE.txt file in the Gmsh root directory for license information.
 # Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -100,6 +100,7 @@ opt(SOLVER "Enable built-in finite element solvers (required for reparametrizati
 opt(SYSTEM_CONTRIB "Use system versions of contrib libraries, when possible" OFF)
 opt(TCMALLOC "Enable libtcmalloc (fast malloc that does not release memory)" OFF)
 opt(TESTS "Enable tests" ${DEFAULT})
+opt(TINYOBJLOADER "Enable TibyObjLoader for reading Wavefront files)" ON)
 opt(TINYXML2 "Enable TinyXML2 parser (used by XAO reader)" ${DEFAULT})
 opt(TOUCHBAR "Enable Apple Touch bar" ${DEFAULT})
 opt(UNTANGLE "Enable 2D and 3D UNTANGLER" ${DEFAULT})
@@ -112,7 +113,7 @@ opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
 set(GMSH_MAJOR_VERSION 4)
 set(GMSH_MINOR_VERSION 14)
-set(GMSH_PATCH_VERSION 0)
+set(GMSH_PATCH_VERSION 1)
 if(NOT GMSH_EXTRA_VERSION)
   set(GMSH_EXTRA_VERSION "")
 endif()
@@ -628,7 +629,7 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/src/fltk AND ENABLE_FLTK)
     execute_process(COMMAND ${FLTK_CONFIG_SCRIPT} --api-version
                     OUTPUT_VARIABLE FLTK_VERSION)
     string(STRIP "${FLTK_VERSION}" FLTK_VERSION)
-    if(FLTK_VERSION VERSION_GREATER 1.3)
+    if(FLTK_VERSION VERSION_GREATER_EQUAL "1.3.0")
       add_subdirectory(src/fltk)
       set_config_option(HAVE_FLTK "Fltk")
       message(STATUS "Using fltk-config script for Fltk " ${FLTK_VERSION})
@@ -831,6 +832,12 @@ if(ENABLE_MATHEX)
     include_directories(contrib/MathEx)
     set_config_option(HAVE_MATHEX "MathEx[contrib]")
   endif()
+endif()
+
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/tinyobjloader AND
+   ENABLE_TINYOBJLOADER)
+    include_directories(contrib/tinyobjloader/include)
+    set_config_option(HAVE_TINYOBJLOADER "tinyobjloader")
 endif()
 
 if(ENABLE_TINYXML2)
@@ -1771,7 +1778,7 @@ if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
      SOVERSION ${GMSH_MAJOR_VERSION}.${GMSH_MINOR_VERSION})
   if(WIN32)
     set_target_properties(shared PROPERTIES PREFIX "" IMPORT_PREFIX ""
-      IMPORT_SUFFIX ".lib" COMPILE_FLAGS "-DGMSH_DLL -DGMSH_DLL_EXPORT")
+      IMPORT_SUFFIX ".dll.lib" COMPILE_FLAGS "-DGMSH_DLL -DGMSH_DLL_EXPORT")
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     if(NOT ENABLE_PRIVATE_API)
       # hide all symbols by default (if not exporting the private API); symbols to
@@ -1996,18 +2003,23 @@ endif()
 
 # mark targets as optional so we can install them separately if needed
 # (e.g. "make lib" or "make shared" followed by "make install/fast")
-install(TARGETS gmsh RUNTIME DESTINATION ${GMSH_BIN} OPTIONAL)
+install(TARGETS gmsh
+  RUNTIME DESTINATION ${GMSH_BIN}
+  OPTIONAL)
 if(ENABLE_BUILD_LIB)
-  install(TARGETS lib EXPORT gmshTargets LIBRARY DESTINATION ${GMSH_LIB}
-          ARCHIVE DESTINATION ${GMSH_LIB} OPTIONAL)
-  TARGET_INCLUDE_DIRECTORIES(lib PUBLIC $<INSTALL_INTERFACE:include>)
+  install(TARGETS lib EXPORT gmshTargets ARCHIVE DESTINATION
+        ${GMSH_LIB} OPTIONAL)
+  TARGET_INCLUDE_DIRECTORIES(lib PUBLIC $<INSTALL_INTERFACE:include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/api>)
 endif()
 if(ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
-  install(TARGETS shared DESTINATION ${GMSH_LIB} OPTIONAL)
-  install(TARGETS shared EXPORT gmshTargets RUNTIME DESTINATION ${GMSH_LIB}
-          LIBRARY DESTINATION ${GMSH_LIB} ARCHIVE DESTINATION ${GMSH_LIB}
-          OPTIONAL)
-  TARGET_INCLUDE_DIRECTORIES(shared PUBLIC $<INSTALL_INTERFACE:include>)
+  install(TARGETS shared EXPORT gmshTargets
+    RUNTIME DESTINATION ${GMSH_LIB}
+    ARCHIVE DESTINATION ${GMSH_LIB}
+    LIBRARY DESTINATION ${GMSH_LIB}
+    OPTIONAL)
+  TARGET_INCLUDE_DIRECTORIES(shared PUBLIC $<INSTALL_INTERFACE:include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/api>)
 endif()
 if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
   install(EXPORT gmshTargets NAMESPACE gmsh:: DESTINATION share/gmsh)
@@ -2018,6 +2030,7 @@ if(ENABLE_BUILD_LIB OR ENABLE_BUILD_SHARED OR ENABLE_BUILD_DYNAMIC)
       INSTALL_DESTINATION "share/gmsh" NO_SET_AND_CHECK_MACRO
       NO_CHECK_REQUIRED_COMPONENTS_MACRO)
   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/gmshConfig.cmake DESTINATION "share/gmsh")
+  export(EXPORT gmshTargets FILE "${CMAKE_CURRENT_BINARY_DIR}/gmshTargets.cmake")
 endif()
 
 if(ENABLE_ONELAB AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/onelab)
@@ -2280,7 +2293,7 @@ if(ENABLE_TESTS AND NOT DISABLE_GMSH_TESTS)
     FILE(RELATIVE_PATH TEST ${CMAKE_CURRENT_BINARY_DIR} ${TESTFILE})
     add_test(${TEST} ./gmsh ${TEST} -3 -nopopup -o ./tmp.msh)
   endforeach()
-  # test c++ api tutorials with dynamic builds
+  # test c++ and c api tutorials with dynamic builds
   if(ENABLE_BUILD_DYNAMIC)
     file(GLOB_RECURSE ALLFILES tutorials/c++/*.cpp tutorials/c/*.c)
     filter_tests("${ALLFILES}" TESTFILES)

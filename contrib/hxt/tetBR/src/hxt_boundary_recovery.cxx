@@ -1,7 +1,7 @@
+#include "hxt_omp.h"
 extern "C" {
 #include "hxt_mesh.h"
 #include "hxt_tools.h"
-#include "hxt_omp.h"
 #include "predicates.h"
 }
 

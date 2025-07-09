@@ -1006,6 +1006,27 @@ namespace netgen
 #endif
   }
 
+  // copy constructor
+  Element :: Element(const Element& other) :
+    typ(other.typ),
+    np(other.np),
+    index(other.index),
+    orderx(other.orderx),
+    ordery(other.ordery),
+    orderz(other.orderz),
+    badness(other.badness),
+#ifdef PARALLEL
+    partitionNumber(other.partitionNumber),
+    isghost(other.isghost),
+#endif
+    flags(other.flags) // Copy the flagstruct directly
+  {
+    // Copy the pnum array
+    for (int i = 0; i < ELEMENT_MAXPOINTS; ++i) {
+      pnum[i] = other.pnum[i];
+    }
+  }
+
   void Element :: SetOrder (const int aorder) 
   { 
     orderx = aorder; 
@@ -2327,6 +2348,30 @@ namespace netgen
     domin_singular = domout_singular = 0.;
     bcname = 0;
     firstelement = -1;
+  }
+
+  FaceDescriptor& FaceDescriptor::operator=(const FaceDescriptor& other) {
+    if (this != &other) {
+      surfnr = other.surfnr;
+      domin = other.domin;
+      domout = other.domout;
+      tlosurf = other.tlosurf;
+      bcprop = other.bcprop;
+      surfcolour = other.surfcolour;
+
+      // Handle bcname carefully to avoid memory leaks
+      delete bcname;  // Delete existing bcname
+      if (other.bcname) {
+          bcname = new string(*other.bcname); // Deep copy if it exists
+      } else {
+          bcname = nullptr; // Set to null if the other doesn't have one.
+      }
+
+      firstelement = other.firstelement;  //Assuming SurfaceElementIndex has a proper copy assignment
+      domin_singular = other.domin_singular;
+      domout_singular = other.domout_singular;
+    }
+    return *this;
   }
 
   int FaceDescriptor ::  SegmentFits (const Segment & seg)

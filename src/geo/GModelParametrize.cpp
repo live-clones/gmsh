@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -107,6 +107,8 @@ static bool breakForLargeAngle(MVertex *vprev, MVertex *vmid, MVertex *vpos,
 
 #endif
 
+// extern void discoverQuadrics(GModel *gm);
+
 void classifyFaces(GModel *gm, double curveAngleThreshold)
 {
 #if defined(HAVE_MESH)
@@ -130,6 +132,9 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
     Msg::Warning("Reverting to first order mesh for classification");
     gm->setOrderN(1, 0, 0, 0);
   }
+
+  // First Detect quadrics and subdivide the faces
+  //  discoverQuadrics(gm);
 
   // create a structure from mesh edges to geometrical curves, and remove curves
   // from the model
@@ -445,6 +450,8 @@ void classifyFaces(GModel *gm, double curveAngleThreshold)
 void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
                    bool forParametrization, double curveAngleThreshold)
 {
+  //  bool _detectQuadrics = true;
+
 #if defined(HAVE_MESH)
   size_t MAX1 = gm->getMaxElementaryNumber(1);
 
@@ -478,6 +485,9 @@ void classifyFaces(GModel *gm, double angleThreshold, bool includeBoundary,
       edge->lines.push_back(new MLine(ea.v1, ea.v2));
     }
   }
+
+  //  std::vector<std::array<int,2> > q_detected;
+  //  if (_detectQuadrics)detectQuadrics (adj,q_detected);
 
   computeDiscreteCurvatures(gm);
   if(forParametrization)

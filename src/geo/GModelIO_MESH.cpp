@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -283,8 +283,9 @@ int GModel::readMESH(const std::string &name)
         for(int i = 0; i < nbe; i++) {
           if(!fgets(buffer, sizeof(buffer), fp)) break;
           int n[10], cl;
+          // vertices 8 and 9 are reversed, see MElement::writeMESH()
           sscanf(buffer, "%d %d %d %d %d %d %d %d %d %d %d", &n[0], &n[1],
-                 &n[2], &n[3], &n[4], &n[5], &n[6], &n[7], &n[8], &n[9], &cl);
+                 &n[2], &n[3], &n[4], &n[5], &n[6], &n[7], &n[9], &n[8], &cl);
           for(int j = 0; j < 10; j++) n[j]--;
           std::vector<MVertex *> vertices;
           if(!getMeshVertices(10, n, vertexVector, vertices)) {

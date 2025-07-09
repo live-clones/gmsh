@@ -1,5 +1,5 @@
 %{
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -200,7 +200,7 @@ struct doubleXstring{
 %token tDefineString tSetNumber tSetTag tSetString
 %token tPoint tCircle tEllipse tCurve tSphere tPolarSphere tSurface tSpline tVolume
 %token tBox tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
-%token tRectangle tDisk tWire tGeoEntity
+%token tRectangle tDisk tWire tGeoEntity tNormal
 %token tCharacteristic tLength tParametric tElliptic
 %token tRefineMesh tRecombineMesh tAdaptMesh tTransformMesh
 %token tRelocateMesh tReorientMesh tSetFactory tThruSections tWedge tFillet tChamfer
@@ -228,7 +228,7 @@ struct doubleXstring{
 %type <d> LoopOptions
 %type <v> VExpr VExpr_Single CircleOptions TransfiniteType
 %type <i> NumericAffectation NumericIncrement BooleanOperator BooleanOption
-%type <i> PhysicalId_per_dim_entity GeoEntity GeoEntity123 GeoEntity12 GeoEntity02
+%type <i> PhysicalId_per_dim_entity GeoEntity GeoEntity123 GeoEntity12 GeoEntity012
 %type <i> TransfiniteArrangement RecombineAngle
 %type <i> Append AppendOrNot
 %type <u> ColorExpr
@@ -2444,7 +2444,7 @@ GeoEntity12 :
     }
 ;
 
-GeoEntity02 :
+GeoEntity012 :
     tPoint
     { $$ = 0; }
   | tCurve
@@ -5131,7 +5131,7 @@ Constraints :
         List_Delete($3);
       }
     }
-  | tRelocateMesh GeoEntity02 ListOfDoubleOrAll tEND
+  | tRelocateMesh GeoEntity012 ListOfDoubleOrAll tEND
     {
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
@@ -6038,6 +6038,58 @@ FExpr_Multi :
       }
       else{
         yymsg(0, "MatrixOfInertia only available with OpenCASCADE geometry kernel");
+      }
+    }
+   | tParametric tBoundingBox GeoEntity12 '{' FExpr '}'
+    {
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      if(GModel::current()->getGEOInternals()->getChanged())
+        GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      $$ = List_Create(9, 1, sizeof(double));
+      GEntity *entity = GModel::current()->getEntityByTag($3, (int)$5);
+      if(!entity) {
+        yymsg(0, "%s %d does not exist", ($3 == 1) ? "Curve" : "Surface",
+              (int)$5);
+      }
+      else {
+        Range<double> u = entity->parBounds(0);
+        double umin = u.low(), umax = u.high();
+        if($3 == 1) {
+          List_Add($$, &umin);
+          List_Add($$, &umax);
+        }
+        else {
+          Range<double> v = entity->parBounds(1);
+          double vmin = v.low(), vmax = v.high();
+          List_Add($$, &umin);
+          List_Add($$, &vmin);
+          List_Add($$, &umax);
+          List_Add($$, &vmax);
+        }
+      }
+    }
+  | tNormal tSurface '{' FExpr '}' tParametric '{' FExpr ',' FExpr '}'
+    {
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      if(GModel::current()->getGEOInternals()->getChanged())
+        GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      $$ = List_Create(9, 1, sizeof(double));
+      int tag = (int)$4;
+      GFace *gf = GModel::current()->getFaceByTag(tag);
+      if(gf) {
+        SPoint2 param($8, $10);
+        SVector3 n = gf->normal(param);
+        double x = n.x(), y = n.y(), z = n.z();
+        List_Add($$, &x);
+        List_Add($$, &y);
+        List_Add($$, &z);
+      }
+      else {
+        yymsg(0, "Surface %d does not exist", tag);
       }
     }
    | tColor GeoEntity123 '{' FExpr '}'

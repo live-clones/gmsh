@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -989,10 +989,26 @@ int GModel::_writeMSH2(const std::string &name, double version, bool binary,
 
   std::vector<GEntity *> entities;
   getEntities(entities);
-  for(std::size_t i = 0; i < entities.size(); i++)
-    for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
-      entities[i]->mesh_vertices[j]->writeMSH2(fp, binary, saveParametric,
-                                               scalingFactor);
+
+  if(!renumberVertices) {
+    // if we don't renumber vertices, still save them in ascending order
+    std::set<MVertex*, MVertexPtrLessThanIndex> v;
+    for(std::size_t i = 0; i < entities.size(); i++) {
+      for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
+        if(entities[i]->mesh_vertices[j]->getIndex() >= 0) {
+          v.insert(entities[i]->mesh_vertices[j]);
+        }
+      }
+    }
+    for(auto vp : v)
+      vp->writeMSH2(fp, binary, saveParametric, scalingFactor);
+  }
+  else {
+    for(std::size_t i = 0; i < entities.size(); i++)
+      for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++)
+        entities[i]->mesh_vertices[j]->writeMSH2(fp, binary, saveParametric,
+                                                 scalingFactor);
+  }
 
   if(binary) fprintf(fp, "\n");
 

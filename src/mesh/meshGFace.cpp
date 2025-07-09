@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -872,7 +872,7 @@ static void modifyInitialMeshForBoundaryLayers(
         if(!N) continue;
 
         for(int l = 0; l < N; ++l) {
-          MVertex *v11, *v12, *v21, *v22;
+          MVertex *v11 = nullptr, *v12 = nullptr, *v21 = nullptr, *v22 = nullptr;
           v21 = c1._column[l];
           v22 = c2._column[l];
           if(l == 0) {
@@ -898,7 +898,7 @@ static void modifyInitialMeshForBoundaryLayers(
         }
 
         if(c1._column.size() != c2._column.size()) {
-          MVertex *v11, *v12, *v;
+          MVertex *v11 = nullptr, *v12 = nullptr, *v = nullptr;
           v11 = c1._column[N - 1];
           v12 = c2._column[N - 1];
           v = c1._column.size() > c2._column.size() ? c1._column[N] :
@@ -935,7 +935,7 @@ static void modifyInitialMeshForBoundaryLayers(
         int N = std::min(c1._column.size(), c2._column.size());
         std::vector<MElement *> myCol;
         for(int l = 0; l < N; ++l) {
-          MVertex *v11, *v12, *v21, *v22;
+          MVertex *v11 = nullptr, *v12 = nullptr, *v21 = nullptr, *v22 = nullptr;
           v21 = c1._column[l];
           v22 = c2._column[l];
           if(l == 0) {
@@ -989,7 +989,7 @@ static void modifyInitialMeshForBoundaryLayers(
         const BoundaryLayerData &c2 = _columns->getColumn(v, i + 1);
         int N = std::min(c1._column.size(), c2._column.size());
         std::vector<MElement *> myCol;
-        MVertex *v11, *v12, *v21, *v22;
+        MVertex *v11 = nullptr, *v12 = nullptr, *v21 = nullptr, *v22 = nullptr;
         for(int l = 0; l < N; ++l) {
           if(l == 0) {
             if(i == 0) { v11 = v; }
@@ -1031,7 +1031,7 @@ static void modifyInitialMeshForBoundaryLayers(
         const BoundaryLayerData &c2 = _columns->getColumn(v, i + 1);
         int N = std::min(c1._column.size(), c2._column.size());
         std::vector<MElement *> myCol;
-        MVertex *v11, *v12, *v21, *v22;
+        MVertex *v11 = nullptr, *v12 = nullptr, *v21 = nullptr, *v22 = nullptr;
         for(int l = 0; l < N; ++l) {
           if(i >= cp && l >= cp) continue;
 
@@ -1082,7 +1082,7 @@ static void modifyInitialMeshForBoundaryLayers(
         std::vector<MElement *> myCol;
 
         for(int l = 0; l < N; l++) {
-          MVertex *v11, *v12, *v21, *v22;
+          MVertex *v11 = nullptr, *v12 = nullptr, *v21 = nullptr, *v22 = nullptr;
           int k = dir_half - l - 1;
           const BoundaryLayerData &c2 = _columns->getColumn(v, k);
           const BoundaryLayerData &c3 = _columns->getColumn(v, k - 1);
@@ -1141,7 +1141,7 @@ static void modifyInitialMeshForBoundaryLayers(
         std::vector<MElement *> myCol;
 
         for(int l = 0; l < N; l++) {
-          MVertex *v11, *v12, *v21, *v22;
+          MVertex *v11 = nullptr, *v12 = nullptr, *v21 = nullptr, *v22 = nullptr;
 
           int k = dir_half + l - 1;
 
@@ -3197,6 +3197,7 @@ static bool isMeshValid(GFace *gf)
     double v = TRIANGLE_VALIDITY(gf, gf->triangles[i]);
     if(v < 0) invalid++;
   }
+
   if(invalid == 0 || invalid == gf->triangles.size()) return true;
 
   return false;
@@ -3304,6 +3305,7 @@ void meshGFace::operator()(GFace *gf, bool print)
 
   // test validity for non-Gmsh models (currently we cannot reliably evaluate
   // the normal on the boundary of surfaces with the Gmsh kernel)
+
   if(CTX::instance()->mesh.algoSwitchOnFailure &&
      gf->getNativeType() != GEntity::GmshModel &&
      gf->geomType() != GEntity::Plane && algoDelaunay2D(gf) &&

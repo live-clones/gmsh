@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -307,9 +307,7 @@ double opt_general_zoom_factor(OPT_ARGS_NUM);
 double opt_general_expert_mode(OPT_ARGS_NUM);
 double opt_general_stereo_mode(OPT_ARGS_NUM);
 double opt_general_camera_mode(OPT_ARGS_NUM);
-#if defined(HAVE_VISUDEV)
 double opt_general_heavy_visualization(OPT_ARGS_NUM);
-#endif
 double opt_general_eye_sep_ratio(OPT_ARGS_NUM);
 double opt_general_focallength_ratio(OPT_ARGS_NUM);
 double opt_general_camera_aperture(OPT_ARGS_NUM);

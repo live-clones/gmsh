@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -25,14 +25,14 @@
 #endif
 
 StringXNumber CurvedMeshOptions_Number[] = {
-  {GMSH_FULLRC, "JacobianDeterminant", nullptr, 0},
-  {GMSH_FULLRC, "IGEMeasure", nullptr, 0},
-  {GMSH_FULLRC, "ICNMeasure", nullptr, 0},
-  {GMSH_FULLRC, "HidingThreshold", nullptr, 99},
-  {GMSH_FULLRC, "ThresholdGreater", nullptr, 1},
-  {GMSH_FULLRC, "CreateView", nullptr, 0},
-  {GMSH_FULLRC, "Recompute", nullptr, 0},
-  {GMSH_FULLRC, "DimensionOfElements", nullptr, -1}
+  {GMSH_FULLRC, "JacobianDeterminant", nullptr, 0, ""},
+  {GMSH_FULLRC, "IGEMeasure", nullptr, 0, ""},
+  {GMSH_FULLRC, "ICNMeasure", nullptr, 0, ""},
+  {GMSH_FULLRC, "HidingThreshold", nullptr, 99, ""},
+  {GMSH_FULLRC, "ThresholdGreater", nullptr, 1, ""},
+  {GMSH_FULLRC, "CreateView", nullptr, 0, ""},
+  {GMSH_FULLRC, "Recompute", nullptr, 0, ""},
+  {GMSH_FULLRC, "DimensionOfElements", nullptr, -1, ""}
 #if defined(HAVE_VISUDEV)
   ,
   {GMSH_FULLRC, "Element to draw quality", nullptr, 0}

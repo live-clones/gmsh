@@ -640,7 +640,7 @@ Default value: @code{1}
 @end table
 
 @item Plugin(Invisible)
-Plugin(Invisible) deletes (if `DeleteElements' is set) or reverses (if `ReverseElements' is set) all the invisible elements in the current model. If the bounding box defined by `XMin' < x < `XMax, `YMin' < y < `YMax and `ZMin' < z < `ZMax' is not empty, mark all elements outside the bounding box as invisible prior to deleting or inverting the elements.
+Plugin(Invisible) deletes (if `DeleteElements' is set) or reverses (if `ReverseElements' is set) all the invisible elements in the current model. If the bounding box defined by `XMin' < x < `XMax, `YMin' < y < `YMax and `ZMin' < z < `ZMax' is not empty, mark all elements outside or inside (if `Inside' is set) the bounding box as invisible prior to deleting or inverting the elements.
 Numeric options:
 @table @code
 @item DeleteElements
@@ -658,6 +658,8 @@ Default value: @code{0}
 @item YMax
 Default value: @code{0}
 @item ZMax
+Default value: @code{0}
+@item Inside
 Default value: @code{0}
 @end table
 

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -12,24 +12,24 @@
 #include <algorithm>
 
 StringXNumber MathEvalOptions_Number[] = {
-  {GMSH_FULLRC, "TimeStep", nullptr, -1.},
-  {GMSH_FULLRC, "View", nullptr, -1.},
-  {GMSH_FULLRC, "OtherTimeStep", nullptr, -1.},
-  {GMSH_FULLRC, "OtherView", nullptr, -1.},
-  {GMSH_FULLRC, "ForceInterpolation", nullptr, 0.},
-  {GMSH_FULLRC, "PhysicalGroup", nullptr, -1.},
-  {GMSH_FULLRC, "Dimension", nullptr, -1.}};
+  {GMSH_FULLRC, "TimeStep", nullptr, -1., ""},
+  {GMSH_FULLRC, "View", nullptr, -1., ""},
+  {GMSH_FULLRC, "OtherTimeStep", nullptr, -1., ""},
+  {GMSH_FULLRC, "OtherView", nullptr, -1., ""},
+  {GMSH_FULLRC, "ForceInterpolation", nullptr, 0., ""},
+  {GMSH_FULLRC, "PhysicalGroup", nullptr, -1., ""},
+  {GMSH_FULLRC, "Dimension", nullptr, -1., ""}};
 
 StringXString MathEvalOptions_String[] = {
-  {GMSH_FULLRC, "Expression0", nullptr, "Sqrt(v0^2+v1^2+v2^2)"},
-  {GMSH_FULLRC, "Expression1", nullptr, ""},
-  {GMSH_FULLRC, "Expression2", nullptr, ""},
-  {GMSH_FULLRC, "Expression3", nullptr, ""},
-  {GMSH_FULLRC, "Expression4", nullptr, ""},
-  {GMSH_FULLRC, "Expression5", nullptr, ""},
-  {GMSH_FULLRC, "Expression6", nullptr, ""},
-  {GMSH_FULLRC, "Expression7", nullptr, ""},
-  {GMSH_FULLRC, "Expression8", nullptr, ""}};
+  {GMSH_FULLRC, "Expression0", nullptr, "Sqrt(v0^2+v1^2+v2^2)", ""},
+  {GMSH_FULLRC, "Expression1", nullptr, "", ""},
+  {GMSH_FULLRC, "Expression2", nullptr, "", ""},
+  {GMSH_FULLRC, "Expression3", nullptr, "", ""},
+  {GMSH_FULLRC, "Expression4", nullptr, "", ""},
+  {GMSH_FULLRC, "Expression5", nullptr, "", ""},
+  {GMSH_FULLRC, "Expression6", nullptr, "", ""},
+  {GMSH_FULLRC, "Expression7", nullptr, "", ""},
+  {GMSH_FULLRC, "Expression8", nullptr, "", ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterMathEvalPlugin() { return new GMSH_MathEvalPlugin(); }

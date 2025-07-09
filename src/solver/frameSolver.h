@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -19,8 +19,8 @@ struct gmshBeam2d {
   MLine *_element;
   double _i, _a, _e, _l;
   bool _rigidNodes[2];
-  double _forceVector[6];
-  double _displacement[6];
+  double _forceVector[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  double _displacement[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
   int _rotationTags[2];
   fullMatrix<double> _stiffness;
   gmshBeam2d(MLine *l, double E, double I, double A, int r[2])
