@@ -22,17 +22,28 @@
 #include "winslowUntangler.h"
 #endif
 
-using vec3 = std::array<double,3>;
-inline double dot      (const vec3& a, const vec3& b) { return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]; }
-inline vec3 cross(const vec3& a, const vec3& b) { return {{a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]}};}
-inline vec3 operator-(const vec3& a, const vec3& b) { return {{a[0]-b[0], a[1]-b[1], a[2]-b[2]}}; }
-inline vec3 operator+(const vec3& a, const vec3& b) { return {{a[0]+b[0], a[1]+b[1], a[2]+b[2]}}; }
+using vec3 = std::array<double, 3>;
+inline double dot(const vec3 &a, const vec3 &b)
+{
+  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+inline vec3 cross(const vec3 &a, const vec3 &b)
+{
+  return {{a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2],
+           a[0] * b[1] - a[1] * b[0]}};
+}
+inline vec3 operator-(const vec3 &a, const vec3 &b)
+{
+  return {{a[0] - b[0], a[1] - b[1], a[2] - b[2]}};
+}
+inline vec3 operator+(const vec3 &a, const vec3 &b)
+{
+  return {{a[0] + b[0], a[1] + b[1], a[2] + b[2]}};
+}
 inline double tet_volume(vec3 a, vec3 b, vec3 c, vec3 d)
 {
   return dot((a - d), cross(b - d, c - d)) / 6.;
 }
-
-
 
 static double objective_function(double xi, MVertex *ver, double xTarget,
                                  double yTarget, double zTarget,
@@ -262,8 +273,7 @@ static double Maximize_Quality_Golden_Section(MVertex *ver, GFace *gf,
   return a;
 }
 
-void relocateVertexOfPyramid(MVertex *ver,
-                             const std::vector<MElement *> &lt,
+void relocateVertexOfPyramid(MVertex *ver, const std::vector<MElement *> &lt,
                              double relax)
 {
   if(ver->onWhat()->dim() != 3) return;
@@ -467,35 +477,38 @@ void RelocateVertices(GRegion *region, int niter, double tol)
 
 #if defined(HAVE_WINSLOWUNTANGLER)
 
-void _getVertices (std::vector<MElement*> &el, std::vector<MVertex*> & interior,
-		   std::vector<MVertex*> & boundary){
+void _getVertices(std::vector<MElement *> &el, std::vector<MVertex *> &interior,
+                  std::vector<MVertex *> &boundary)
+{
   std::set<MFace, MFaceLessThan> _fcs;
-  std::set<MVertex*> _v,_vin,_vbd;
-  for (auto e : el){
-    for (size_t i = 0 ; i<e->getNumFaces() ; i++){
+  std::set<MVertex *> _v, _vin, _vbd;
+  for(auto e : el) {
+    for(int i = 0; i < e->getNumFaces(); i++) {
       auto f = e->getFace(i);
       auto it = _fcs.find(f);
-      if ( it == _fcs.end()) _fcs.insert (f);
-      else _fcs.erase(it);
+      if(it == _fcs.end())
+        _fcs.insert(f);
+      else
+        _fcs.erase(it);
     }
   }
-  for (auto f : _fcs){
-    for (size_t i = 0 ; i<f.getNumVertices() ; i++){
+  for(auto f : _fcs) {
+    for(size_t i = 0; i < f.getNumVertices(); i++) {
       _vbd.insert(f.getVertex(i));
     }
   }
-  for (auto e : el){
-    for (size_t i = 0 ; i<e->getNumVertices() ; i++){
+  for(auto e : el) {
+    for(size_t i = 0; i < e->getNumVertices(); i++) {
       auto v = e->getVertex(i);
-      if (_vbd.find(v) == _vbd.end()) _vin.insert(v);
+      if(_vbd.find(v) == _vbd.end()) _vin.insert(v);
     }
   }
   interior.insert(interior.begin(), _vin.begin(), _vin.end());
   boundary.insert(boundary.begin(), _vbd.begin(), _vbd.end());
 }
 
-
-void _untanglePyramidsLocal(GRegion *region) {
+void _untanglePyramidsLocal(GRegion *region)
+{
   v2t_cont adj;
   buildVertexToElement(region->tetrahedra, adj);
   buildVertexToElement(region->pyramids, adj);
@@ -504,14 +517,14 @@ void _untanglePyramidsLocal(GRegion *region) {
 
   double avgEdgeSize = 0.0;
   for(auto t : region->tetrahedra)
-    for(size_t k=0;k<4;k++)
-      for(size_t l=k+1;l<4;l++)
-	avgEdgeSize += t->getVertex(k)->distance(t->getVertex(l));
-  avgEdgeSize /= (6.0*region->tetrahedra.size());
+    for(size_t k = 0; k < 4; k++)
+      for(size_t l = k + 1; l < 4; l++)
+        avgEdgeSize += t->getVertex(k)->distance(t->getVertex(l));
+  avgEdgeSize /= (6.0 * region->tetrahedra.size());
   double ee[4][3] = {{.5, 0, -1. / (2. * std::sqrt(2.))},
-		     {-.5, 0, -1. / (2. * std::sqrt(2.))},
-		     {0, .5, 1. / (2. * std::sqrt(2.))},
-		     {0, -.5, 1. / (2. * std::sqrt(2.))}};
+                     {-.5, 0, -1. / (2. * std::sqrt(2.))},
+                     {0, .5, 1. / (2. * std::sqrt(2.))},
+                     {0, -.5, 1. / (2. * std::sqrt(2.))}};
   std::array<std::array<double, 3>, 4> equi;
   for(size_t lv = 0; lv < 4; ++lv) {
     equi[lv][0] = ee[lv][0] * (avgEdgeSize);
@@ -526,31 +539,31 @@ void _untanglePyramidsLocal(GRegion *region) {
 
   // all pyramid vertex relocated one by one
   int ITER = 0, MAXITER = 3;
-  while (ITER++ < MAXITER){
+  while(ITER++ < MAXITER) {
     std::set<MVertex *> _v_pyr_new;
-    for (auto v_current : _v_pyr) {
-      std::vector<MElement*> el = adj[v_current];
+    for(auto v_current : _v_pyr) {
+      std::vector<MElement *> el = adj[v_current];
       //      for (int k=0;k<=ITER;k++){
       //	_addLayer (el,adj);
       //      }
-      std::vector<MVertex*> interior, boundary;
-      _getVertices (el, interior, boundary);
+      std::vector<MVertex *> interior, boundary;
+      _getVertices(el, interior, boundary);
       std::vector<std::array<double, 3>> points;
       int index = 0;
       std::vector<bool> locked;
       for(auto v : interior) {
-	v->setIndex(index++);
-	points.push_back({v->x(), v->y(), v->z()});
-	locked.push_back(false);
+        v->setIndex(index++);
+        points.push_back({v->x(), v->y(), v->z()});
+        locked.push_back(false);
       }
-      double X=0,Y=0,Z=0;
+      double X = 0, Y = 0, Z = 0;
       for(auto v : boundary) {
-	v->setIndex(index++);
-	points.push_back({v->x(), v->y(), v->z()});
-	X += v->x();
-	Y += v->y();
-	Z += v->z();
-	locked.push_back(true);
+        v->setIndex(index++);
+        points.push_back({v->x(), v->y(), v->z()});
+        X += v->x();
+        Y += v->y();
+        Z += v->z();
+        locked.push_back(true);
       }
       X /= boundary.size();
       Y /= boundary.size();
@@ -563,65 +576,67 @@ void _untanglePyramidsLocal(GRegion *region) {
 
       std::vector<std::array<uint32_t, 4>> tets;
       std::vector<std::array<std::array<double, 3>, 4>> tetIdealShapes;
-      for (auto e : el) {
-	uint32_t n0 = e->getVertex(0)->getIndex();
-	uint32_t n1 = e->getVertex(1)->getIndex();
-	uint32_t n2 = e->getVertex(2)->getIndex();
-	uint32_t n3 = e->getVertex(3)->getIndex();
-	if (e->getNumVertices() == 4){
-	  int order[4] = {0,3,2,1};
-	  tets.push_back({n0, n3, n2, n1});
-	  for(size_t lv = 0; lv < 4; ++lv) {
-	    equi[lv][0] = e->getVertex(order[lv])->x() ;
-	    equi[lv][1] = e->getVertex(order[lv])->y() ;
-	    equi[lv][2] = e->getVertex(order[lv])->z() ;
-	  }
-          //double reg_vol = tet_volume(equi[0], equi[1], equi[2], equi[3]);
-	  //printf("reg_vol = %g -- %lu %lu %lu %lu \n",reg_vol,n0,n3,n2,n1);
-	  tetIdealShapes.push_back(equi);
-	}
-	else if (e->getNumVertices() == 5){
-	  uint32_t n4 = e->getVertex(4)->getIndex();
-	  tets.push_back({n0, n4, n2, n1});
-	  tets.push_back({n2, n4, n0, n3});
-	  tets.push_back({n1, n4, n3, n2});
-	  tets.push_back({n3, n4, n1, n0});
-	  int e0[4][4] = {{0,4,2,1},{2,4,0,3},{1,4,3,2},{3,4,1,0}};
-	  for(size_t k = 0; k < 4; ++k) {
-	    for(size_t lv = 0; lv < 4; ++lv) {
-	      equi[lv][0] = e0[k][lv] == 4 ? X : e->getVertex(e0[k][lv])->x() ;
-	      equi[lv][1] = e0[k][lv] == 4 ? Y : e->getVertex(e0[k][lv])->y() ;
-	      equi[lv][2] = e0[k][lv] == 4 ? Z : e->getVertex(e0[k][lv])->z() ;
-	    }
-	    //double reg_vol = tet_volume(equi[0], equi[1], equi[2], equi[3]);
-	    //printf("reg_vol 2= %g -- %lu %lu %lu %lu %lu\n",reg_vol,n0,n1,n2,n3,n4);
-	    tetIdealShapes.push_back(equi);
-	  }
-	}
+      for(auto e : el) {
+        uint32_t n0 = e->getVertex(0)->getIndex();
+        uint32_t n1 = e->getVertex(1)->getIndex();
+        uint32_t n2 = e->getVertex(2)->getIndex();
+        uint32_t n3 = e->getVertex(3)->getIndex();
+        if(e->getNumVertices() == 4) {
+          int order[4] = {0, 3, 2, 1};
+          tets.push_back({n0, n3, n2, n1});
+          for(size_t lv = 0; lv < 4; ++lv) {
+            equi[lv][0] = e->getVertex(order[lv])->x();
+            equi[lv][1] = e->getVertex(order[lv])->y();
+            equi[lv][2] = e->getVertex(order[lv])->z();
+          }
+          // double reg_vol = tet_volume(equi[0], equi[1], equi[2], equi[3]);
+          // printf("reg_vol = %g -- %lu %lu %lu %lu \n",reg_vol,n0,n3,n2,n1);
+          tetIdealShapes.push_back(equi);
+        }
+        else if(e->getNumVertices() == 5) {
+          uint32_t n4 = e->getVertex(4)->getIndex();
+          tets.push_back({n0, n4, n2, n1});
+          tets.push_back({n2, n4, n0, n3});
+          tets.push_back({n1, n4, n3, n2});
+          tets.push_back({n3, n4, n1, n0});
+          int e0[4][4] = {
+            {0, 4, 2, 1}, {2, 4, 0, 3}, {1, 4, 3, 2}, {3, 4, 1, 0}};
+          for(size_t k = 0; k < 4; ++k) {
+            for(size_t lv = 0; lv < 4; ++lv) {
+              equi[lv][0] = e0[k][lv] == 4 ? X : e->getVertex(e0[k][lv])->x();
+              equi[lv][1] = e0[k][lv] == 4 ? Y : e->getVertex(e0[k][lv])->y();
+              equi[lv][2] = e0[k][lv] == 4 ? Z : e->getVertex(e0[k][lv])->z();
+            }
+            // double reg_vol = tet_volume(equi[0], equi[1], equi[2], equi[3]);
+            // printf("reg_vol 2= %g -- %lu %lu %lu %lu
+            // %lu\n",reg_vol,n0,n1,n2,n3,n4);
+            tetIdealShapes.push_back(equi);
+          }
+        }
       }
-      //printf("Untangling vertex %d (%lu elements, %lu interior, %lu bnd)\n",
-      //       v_current->getIndex(),el.size(), interior.size(), boundary.size());
+      // printf("Untangling vertex %d (%lu elements, %lu interior, %lu bnd)\n",
+      //        v_current->getIndex(),el.size(), interior.size(),
+      //        boundary.size());
       untangle_tetrahedra(points, locked, tets, tetIdealShapes, 1.e-0, 130, 2);
       bool success = true;
-      if (!success) _v_pyr_new.insert(v_current);
+      if(!success)
+        _v_pyr_new.insert(v_current);
       else {
-	for(auto v : interior) {
-	  v->x() = points[v->getIndex()][0];
-	  v->y() = points[v->getIndex()][1];
-	  v->z() = points[v->getIndex()][2];
-	}
-	for(auto v : boundary) {
-	  v->x() = points[v->getIndex()][0];
-	  v->y() = points[v->getIndex()][1];
-	  v->z() = points[v->getIndex()][2];
-	}
+        for(auto v : interior) {
+          v->x() = points[v->getIndex()][0];
+          v->y() = points[v->getIndex()][1];
+          v->z() = points[v->getIndex()][2];
+        }
+        for(auto v : boundary) {
+          v->x() = points[v->getIndex()][0];
+          v->y() = points[v->getIndex()][1];
+          v->z() = points[v->getIndex()][2];
+        }
       }
     }
     _v_pyr = _v_pyr_new;
   }
-
 }
-
 
 int _untanglePyramids(GRegion *region, bool topological, bool geometrical)
 {
@@ -656,7 +671,8 @@ int _untanglePyramids(GRegion *region, bool topological, bool geometrical)
   std::vector<std::array<double, 3>> points;
   for(auto v : _vts) {
     points.push_back({v->x(), v->y(), v->z()});
-    if(v->onWhat()->dim() == 3 && std::binary_search(_v_pyr.begin(), _v_pyr.end(), v))
+    if(v->onWhat()->dim() == 3 &&
+       std::binary_search(_v_pyr.begin(), _v_pyr.end(), v))
       locked.push_back(false);
     else
       locked.push_back(true);
@@ -667,9 +683,9 @@ int _untanglePyramids(GRegion *region, bool topological, bool geometrical)
   double avgEdgeSize = 0.0;
 
   for(auto t : _tets) {
-    for(size_t k=0;k<4;k++)
-      for(size_t l=k+1;l<4;l++)
-	avgEdgeSize += t->getVertex(k)->distance(t->getVertex(l));
+    for(size_t k = 0; k < 4; k++)
+      for(size_t l = k + 1; l < 4; l++)
+        avgEdgeSize += t->getVertex(k)->distance(t->getVertex(l));
     uint32_t n0 = t->getVertex(0)->getIndex();
     uint32_t n1 = t->getVertex(1)->getIndex();
     uint32_t n2 = t->getVertex(2)->getIndex();
@@ -677,13 +693,13 @@ int _untanglePyramids(GRegion *region, bool topological, bool geometrical)
     std::array<uint32_t, 4> _tt = {n0, n3, n2, n1};
     tets.push_back(_tt);
   }
-  avgEdgeSize /= (6.0*_tets.size());
+  avgEdgeSize /= (6.0 * _tets.size());
   double ee[4][3] = {{.5, 0, -1. / (2. * std::sqrt(2.))},
-		     {-.5, 0, -1. / (2. * std::sqrt(2.))},
-		     {0, .5, 1. / (2. * std::sqrt(2.))},
-		     {0, -.5, 1. / (2. * std::sqrt(2.))}};
+                     {-.5, 0, -1. / (2. * std::sqrt(2.))},
+                     {0, .5, 1. / (2. * std::sqrt(2.))},
+                     {0, -.5, 1. / (2. * std::sqrt(2.))}};
 
-  //avgEdgeSize *= 0.2;
+  // avgEdgeSize *= 0.2;
   std::array<std::array<double, 3>, 4> equi;
 
   for(size_t lv = 0; lv < 4; ++lv) {
@@ -691,7 +707,6 @@ int _untanglePyramids(GRegion *region, bool topological, bool geometrical)
     equi[1][lv] = ee[lv][1] * (avgEdgeSize);
     equi[2][lv] = ee[lv][2] * (avgEdgeSize);
   }
-
 
   for(size_t i = 0; i < region->pyramids.size(); i++) {
     MFace mf = region->pyramids[i]->getFace(0);
@@ -724,21 +739,19 @@ int _untanglePyramids(GRegion *region, bool topological, bool geometrical)
     locked[v3->getIndex()] = true;
 
     tets.push_back({(uint32_t)v0->getIndex(), (uint32_t)v4->getIndex(),
-	  (uint32_t)v2->getIndex(), (uint32_t)v1->getIndex()});
+                    (uint32_t)v2->getIndex(), (uint32_t)v1->getIndex()});
     tets.push_back({(uint32_t)v2->getIndex(), (uint32_t)v4->getIndex(),
-	  (uint32_t)v0->getIndex(), (uint32_t)v3->getIndex()});
+                    (uint32_t)v0->getIndex(), (uint32_t)v3->getIndex()});
 
     tets.push_back({(uint32_t)v1->getIndex(), (uint32_t)v4->getIndex(),
-	  (uint32_t)v3->getIndex(), (uint32_t)v2->getIndex()});
+                    (uint32_t)v3->getIndex(), (uint32_t)v2->getIndex()});
     tets.push_back({(uint32_t)v3->getIndex(), (uint32_t)v4->getIndex(),
-	  (uint32_t)v1->getIndex(), (uint32_t)v0->getIndex()});
+                    (uint32_t)v1->getIndex(), (uint32_t)v0->getIndex()});
   }
   if(geometrical) {
     std::vector<std::array<std::array<double, 3>, 4>> tetIdealShapes;
 
-    for(size_t i = 0; i < tets.size(); i++){
-      tetIdealShapes.push_back(equi);
-    }
+    for(size_t i = 0; i < tets.size(); i++) { tetIdealShapes.push_back(equi); }
 
     untangle_tetrahedra(points, locked, tets, tetIdealShapes, 1.e-12, 130, 2);
 
@@ -805,7 +818,6 @@ void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
   buildVertexToElement(region->pyramids, adj);
   buildVertexToElement(region->prisms, adj);
   buildVertexToElement(region->hexahedra, adj);
-
 
   for(int i = 0; i < 10; i++) {
     double relax = (double)i / 10. + 1e-6;
