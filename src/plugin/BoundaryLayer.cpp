@@ -814,12 +814,13 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
 
   //  printf("perfectshapes = %lu\n",perfectShapes.size());
 
+
   double ww = 0.0;
   std::vector<double> ws;
   while(1) {
     ws.push_back(hwall);
-    if(ww + hwall > width) break;
     ww += hwall;
+    if(ww + hwall >= width) break;
     hwall *= ratio;
   }
 
@@ -836,12 +837,11 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
 
   for(auto gf : f) expandBL(gf, perfectShapes, layers, f);
 
-  splitounette(f, layers, ws);
+  if (ws.size() > 1) 
+    splitounette(f, layers, ws);
 
   //  for (auto gf : f)
   //    expandBL(gf, perfectShapes, layers, f);
-
-  printf("Ola!\n");
 
   CTX::instance()->mesh.changed = ENT_ALL;
 

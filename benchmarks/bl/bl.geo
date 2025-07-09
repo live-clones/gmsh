@@ -8,4 +8,5 @@ Mesh 2;
 Plugin(BoundaryLayer).Surfaces = "1";
 Plugin(BoundaryLayer).Curves = "1,2,3";
 Plugin(BoundaryLayer).Width = l/10;
+Plugin(BoundaryLayer).Hwall = l/10+.1;
 Plugin(BoundaryLayer).Run;
