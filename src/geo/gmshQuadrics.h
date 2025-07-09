@@ -16,15 +16,13 @@ class gmshQuadric {
 
 public:
   virtual double distance(const SPoint3 &p) = 0;
-  virtual int minNumPoints() = 0;
+  virtual std::size_t minNumPoints() = 0;
   virtual void compute(std::vector<SPoint3> &p) = 0;
   virtual std::string name() = 0;
   virtual ~gmshQuadric() {}
   bool addPointIfOk(const SPoint3 &p, double d)
   {
     if(points.size() < minNumPoints()) {
-      //      printf("--> adding %g %g %g
-      //      %g\n",p.x(),p.y(),p.z(),p.y()*p.y()+p.z()*p.z());
       for(auto pp : points)
         if(pp.distance(p) < 1.e-12) return true;
       points.push_back(p);
@@ -33,7 +31,6 @@ public:
     }
 
     double dist = distance(p);
-    //    printf("dist %g d %g name %s\n",dist,d,name().c_str());
     if(dist < d) return true;
     return false;
   }
@@ -46,7 +43,7 @@ public:
   std::string name() { return "Plane"; }
   void compute(std::vector<SPoint3> &p);
   double distance(const SPoint3 &p);
-  int minNumPoints() { return 3; }
+  std::size_t minNumPoints() { return 3; }
   ~gmshQuadricPlane() {}
 };
 
@@ -58,7 +55,7 @@ public:
   std::string name() { return "Sphere"; }
   void compute(std::vector<SPoint3> &p);
   double distance(const SPoint3 &p);
-  int minNumPoints() { return 4; }
+  std::size_t minNumPoints() { return 4; }
   ~gmshQuadricSphere() {}
 };
 
@@ -71,7 +68,7 @@ public:
   std::string name() { return "Cylinder"; }
   void compute(std::vector<SPoint3> &p);
   double distance(const SPoint3 &p);
-  int minNumPoints() { return 6; }
+  std::size_t minNumPoints() { return 6; }
   ~gmshQuadricCylinder() {}
 };
 

@@ -227,13 +227,13 @@ double gmshQuadricCylinder::distance(const SPoint3 &p)
 
 void discoverQuadric(GFace *gf, int typeOfQuadric,
                      std::map<MTriangle *, int> _classified, double eps,
-                     int minn)
+                     std::size_t minn)
 {
   std::map<MEdge, std::vector<MTriangle *>, MEdgeLessThan> cont;
   printf("face %d -- %lu triangles\n", gf->tag(), gf->triangles.size());
 
   for(auto t : gf->triangles) {
-    for(size_t i = 0; i < t->getNumEdges(); i++) {
+    for(int i = 0; i < t->getNumEdges(); i++) {
       cont[t->getEdge(i)].push_back(t);
     }
   }
@@ -241,7 +241,7 @@ void discoverQuadric(GFace *gf, int typeOfQuadric,
   printf("face %d -- %lu edges\n", gf->tag(), cont.size());
 
   int iter = 0;
-  while(iter < gf->triangles.size() - _classified.size()) {
+  while(iter < (int)(gf->triangles.size() - _classified.size())) {
     gmshQuadric *gmshQ = nullptr;
     if(typeOfQuadric == 1)
       gmshQ = new gmshQuadricPlane;
@@ -255,7 +255,6 @@ void discoverQuadric(GFace *gf, int typeOfQuadric,
     MTriangle *t = gf->triangles[i];
     if(_classified.find(t) != _classified.end()) continue;
     iter++;
-    //    printf("%d\n",iter);
     std::set<MTriangle *> _touched;
     std::stack<MTriangle *> _stack;
     std::vector<MTriangle *> _quadric;
@@ -313,7 +312,7 @@ void discoverQuadric(GFace *gf, int typeOfQuadric,
       }
       fprintf(f, "};\n");
       fclose(f);
-      //      break;
+      // break;
     }
     delete gmshQ;
   }
@@ -324,9 +323,9 @@ void discoverQuadrics(GModel *gm)
   std::map<MTriangle *, int> _classified;
   for(auto it = gm->firstFace(); it != gm->lastFace(); it++) {
     discoverQuadric(*it, 1, _classified, 1.e-7, 30);
-    //    discoverQuadric(*it,1,_classified);
+    // discoverQuadric(*it,1,_classified);
     discoverQuadric(*it, 2, _classified, 1.e-7, 10);
     discoverQuadric(*it, 3, _classified, 1.e-7, 10);
-    //    discoverQuadric(*it,3,_classified);
+    // discoverQuadric(*it,3,_classified);
   }
 }
