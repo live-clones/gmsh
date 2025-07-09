@@ -77,7 +77,7 @@ static double triangle_area_2d(std::array<double, 2> a, std::array<double, 2> b,
                (a[1] - c[1]) * (a[0] + c[0]));
 }
 
-static bool fanitzie(std::vector<GFace *> &gfs, std::vector<GVertex *> &gvs,
+static void fanitzie(std::vector<GFace *> &gfs, std::vector<GVertex *> &gvs,
                      std::vector<MElement *> &ecole_des_fans)
 {
   for(auto gv : gvs) {
@@ -374,7 +374,7 @@ bool bl(GModel *m, std::vector<GVertex *> &onVertices,
       std::set<MEdge, MEdgeLessThan> edges_of_elements;
       for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
         MElement *e = gf->getMeshElement(i);
-        for(size_t j = 0; j < e->getNumEdges(); j++)
+        for(int j = 0; j < e->getNumEdges(); j++)
           edges_of_elements.insert(e->getEdge(j));
       }
 
@@ -519,7 +519,7 @@ static void expandBL(
     reparamMeshVertexOnFace(v, gf, param);
     points.push_back({param.x(), param.y()});
   }
-  int tricount = 0;
+  // int tricount = 0;
   for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
     MElement *e = gf->getMeshElement(i);
     if(e->getNumVertices() == 3) {
