@@ -3154,9 +3154,6 @@ static bool isMeshValid(GFace *gf)
     if(v < 0) invalid++;
   }
 
-  //  if (gf->tag() == 44) printf("FACE 44 -- %d\n",invalid);
-    
-
   if(invalid == 0 || invalid == gf->triangles.size()) return true;
 
   return false;

@@ -422,10 +422,10 @@ bool bl(GModel *m, std::vector<GVertex *> &onVertices,
     }
   }
 
-  std::vector<MElement*> ecole_des_fans;
-  fanitzie (inSurfaces, onVertices, ecole_des_fans); 
-  for (auto e : ecole_des_fans)layers[e] = width;
-  return true;  
+  std::vector<MElement *> ecole_des_fans;
+  fanitzie(inSurfaces, onVertices, ecole_des_fans);
+  for(auto e : ecole_des_fans) layers[e] = width;
+  return true;
 }
 
 static void expandBL(
