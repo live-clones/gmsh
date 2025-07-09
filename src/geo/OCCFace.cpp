@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -321,8 +321,9 @@ GPoint OCCFace::closestPoint(const SPoint3 &qp,
   double uv[2], xyz[3];
   if(_project(qp.data(), uv, xyz))
     return GPoint(xyz[0], xyz[1], xyz[2], this, uv);
-  else
+  else {
     return GFace::closestPoint(qp, initialGuess);
+  }
 }
 
 SPoint2 OCCFace::parFromPoint(const SPoint3 &qp, bool onSurface,

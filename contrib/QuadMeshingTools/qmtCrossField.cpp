@@ -702,7 +702,7 @@ namespace QMT {
 
     vector<double> steps;
     if(nbDiffusionLevels > 1) {
-      for(size_t i = 0; i < nbDiffusionLevels;
+      for(int i = 0; i < nbDiffusionLevels;
           ++i) { /* resolution transition */
         double dt = dtInitial + (dtFinal - dtInitial) * double(i) /
                                   double(nbDiffusionLevels - 1);
@@ -748,7 +748,7 @@ namespace QMT {
 
       /* Loop over the changing timesteps */
       double prev_dt = DBL_MAX;
-      for(int iter = 0; iter < steps.size(); ++iter) {
+      for(size_t iter = 0; iter < steps.size(); ++iter) {
         if(iter > 0 && steps[iter] > prev_dt) continue;
         double dt = steps[iter];
         prev_dt = dt;
@@ -1667,7 +1667,7 @@ int detectCrossFieldSingularities(
       bool found = false;
       double dpmax = -DBL_MAX;
       size_t kmax = (size_t)-1;
-      for(size_t k = 0; k < Ns; ++k) { /* Loop over branches */
+      for(int k = 0; k < Ns; ++k) { /* Loop over branches */
         double agl = A + double(k) / double(Ns) * 2. * M_PI;
         SVector3 branch = tgt * cos(agl) + tgt2 * sin(agl);
         if(dot(branch, e_x) >= 0. && dot(branch, e_y) >= 0.) {

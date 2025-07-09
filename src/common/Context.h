@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -319,10 +319,8 @@ public:
   int mouseInvertZoom;
   // disable some warnings for expert users?
   int expertMode;
-#if defined(HAVE_VISUDEV)
   // Enable heavy visualization capabilities (for development purpose)
   int heavyVisu;
-#endif
   // dynamic: equal to 1 while gmsh is printing
   int printing;
   // hide all unselected entities?

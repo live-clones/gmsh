@@ -1,4 +1,4 @@
-// MeshOptimizer - Copyright (C) 2013-2024 UCLouvain-ULiege
+// MeshOptimizer - Copyright (C) 2013-2025 UCLouvain-ULiege
 //
 // Permission is hereby granted, free of charge, to any person
 // obtaining a copy of this software and associated documentation

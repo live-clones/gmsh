@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1438,7 +1438,7 @@ StringXNumber MeshOptions_Number[] = {
   { F|O, "OptimizeNetgen" , opt_mesh_optimize_netgen , 0 ,
     "Optimize the mesh using Netgen to improve the quality of tetrahedral "
     "elements" },
-  { F|O, "OptimizePyramids" , opt_mesh_optimize_pyramids , 1 ,
+  { F|O, "OptimizePyramids" , opt_mesh_optimize_pyramids , 0 ,
     "Optimize pyramids in hybrid 3D meshes (0: smoother; 1: untangler)" },
 
   { F|O, "PartitionHexWeight" , opt_mesh_partition_hex_weight , -1 ,
@@ -1782,7 +1782,7 @@ StringXNumber PostProcessingOptions_Number[] = {
   { F|O, "Smoothing" , opt_post_smooth , 0. ,
     "Apply (non-reversible) smoothing to post-processing view when merged" },
 
-  { 0, nullptr , nullptr , 0. }
+  { 0, nullptr , nullptr , 0., "" }
 } ;
 
 StringXNumber ViewOptions_Number[] = {
@@ -2201,7 +2201,7 @@ StringXNumber PrintOptions_Number[] = {
   { F|O, "Width" , opt_print_width , -1. ,
     "Width of printed image; use (possibly scaled) current width if < 0)" },
 
-  { 0, nullptr , nullptr , 0. }
+  { 0, nullptr , nullptr , 0., "" }
 } ;
 
 // COLORS

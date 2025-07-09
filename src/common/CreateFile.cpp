@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -60,6 +60,7 @@ int GetFileFormatFromExtension(const std::string &ext, double *version)
   else if(ext == ".ir3")      return FORMAT_IR3;
   else if(ext == ".mesh")     return FORMAT_MESH;
   else if(ext == ".off")      return FORMAT_OFF;
+  else if(ext == ".obj")      return FORMAT_OBJ;
   else if(ext == ".mail")     return FORMAT_MAIL;
   else if(ext == ".bdf")      return FORMAT_BDF;
   else if(ext == ".diff")     return FORMAT_DIFF;
@@ -128,6 +129,7 @@ std::string GetDefaultFileExtension(int format, bool onlyMeshFormats)
   case FORMAT_IR3:     name = ".ir3"; mesh = true; break;
   case FORMAT_MESH:    name = ".mesh"; mesh = true; break;
   case FORMAT_OFF:     name = ".off"; mesh = true; break;
+  case FORMAT_OBJ:     name = ".obj"; mesh = true; break;
   case FORMAT_MAIL:    name = ".mail"; mesh = true; break;
   case FORMAT_BDF:     name = ".bdf"; mesh = true; break;
   case FORMAT_DIFF:    name = ".diff"; mesh = true; break;
@@ -408,6 +410,11 @@ void CreateOutputFile(const std::string &fileName, int format,
 
   case FORMAT_OFF:
     GModel::current()->writeOFF
+      (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
+    break;
+
+  case FORMAT_OBJ:
+    GModel::current()->writeOBJ
       (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
     break;
 

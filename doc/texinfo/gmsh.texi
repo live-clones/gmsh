@@ -1,5 +1,5 @@
 \input texinfo.tex @c -*-texinfo-*-
-@c Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+@c Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 @c
 @c See the LICENSE.txt file in the Gmsh root directory for license information.
 @c Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -22,7 +22,7 @@
 @c %**starts of header
 @setfilename gmsh.info
 @include version.texi
-@set COPYRIGHT @copyright{} 1997-2024 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
+@set COPYRIGHT @copyright{} 1997-2025 Christophe Geuzaine, Jean-Fran@,{c}ois Remacle
 @set SYN a synchronization of the CAD model with the internal Gmsh model.
 @set SYNC This operation triggers @value{SYN}
 @set SYNCS These operations all trigger @value{SYN}
@@ -351,7 +351,7 @@ actions in the geometry module automatically append the related command
 in the input script file, and can optionally also generate input for the
 languages supported by the API (see the
 @code{General.ScriptingLanguages} option; this is still work-in-progress
-as of Gmsh 4.12.)
+as of Gmsh 4.14.)
 
 In addition to CAD-type geometrical entities, whose geometry is provided
 by a CAD kernel, Gmsh also supports @emph{discrete} model entities,
@@ -2121,6 +2121,8 @@ with
   @var{boolean} |
   Point|Curve|Surface|Volume In BoundingBox @{ @var{expression-list} @} |
   BoundingBox Point|Curve|Surface|Volume @{ @var{expression-list} @} |
+  Parametric BoundingBox Curve|Surface @{ @var{expression} @} |
+  Normal Surface @{ @var{expression} @} Paramtric @{ @var{expression}, @var{expression} @} |
   Mass Curve|Surface|Volume @{ @var{expression} @} |
   CenterOfMass Curve|Surface|Volume @{ @var{expression} @} |
   MatrixOfInertia Curve|Surface|Volume @{ @var{expression} @} |
@@ -2153,12 +2155,17 @@ The next two cases allow to retrieve entities in a given bounding box,
 or get the bounding box of a given entity, with the bounding box
 specified as (X min, Y min, Z min, X max, Y max, Z max). Beware that the
 order of coordinates is different than in the @code{BoundingBox} command
-for the scene: see @ref{Other general commands}. The last cases permit to
-retrieve the mass, the center of mass or the matrix of inertia of an
-entity, the coordinates of a given geometry point (@pxref{Points}), the
-elementary entities making up physical groups, and the tags of all
-(physical or elementary) points, curves, surfaces or volumes in the
-model. @value{SYNCS}
+for the scene: see @ref{Other general commands}. @code{Parametric
+BoundingBox} retrieves the parametric bounds (U min, U max) and (U min,
+V min, U max, V max) or a curve or a surface, respectively. @code{Normal
+Surface} returns the normal to a surface evaluated at the specified
+parametric coordinates.
+
+The last cases permit to retrieve the mass, the center of mass or the
+matrix of inertia of an entity, the coordinates of a given geometry
+point (@pxref{Points}), the elementary entities making up physical
+groups, and the tags of all (physical or elementary) points, curves,
+surfaces or volumes in the model. @value{SYNCS}
 
 To see the practical use of such expressions, have a look at the first
 couple of examples in @ref{Gmsh tutorial}. Note that, in order to
@@ -3092,11 +3099,13 @@ curve if the first and last points are identical.
 @item Circle ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} <, ...> @};
 Create a circle arc. If three @var{expression}s are provided on the
 right-hand-side they define the start point, the center and the end
-point of the arc. With the built-in geometry kernel the arc should be
-strictly smaller than Pi. With the OpenCASCADE kernel, if between 4 and
-6 expressions are provided, the first three define the coordinates of
-the center, the next one defines the radius, and the optional next two
-the start and end angle.
+point of the arc; the three points should not be colinear. With the
+built-in geometry kernel the arc should be strictly smaller than
+Pi. With the OpenCASCADE kernel, if between 4 and 6 expressions are
+provided the arc is created in the X-Y plane: the first three define the
+coordinates of the center, the next one defines the radius, and the
+optional next two the start and end angle.
+
 @c TODO: document < Plane @{ @var{expression}, @var{expression}, @var{expression} @}; >
 
 @item Ellipse ( @var{expression} ) = @{ @var{expression}, @var{expression}, @var{expression} <, ...> @};
@@ -4466,13 +4475,13 @@ geometrical and the mesh data) and @emph{views} (which hold
 post-processing data). These are manipulated by the API functions in the
 top-level namespaces @code{gmsh/model} and @code{gmsh/view},
 respectively. The other top-level namespaces are @code{gmsh/option}
-(which handles all options), @code{gmsh/plugin} (which handles
-extensions to core Gmsh functionality), @code{gmsh/graphics} (which
-handles drawing), @code{gmsh/fltk} (which handles the graphical user
-interface), @code{gmsh/parser} (which handles the Gmsh parser),
-@code{gmsh/onelab} (which handles ONELAB parameters and communications
-with external codes) and @code{gmsh/logger} (which handles information
-logging).
+(which handles all options), @code{gmsh/algorithm} (which handles raw
+algorithms), @code{gmsh/plugin} (which handles extensions to core Gmsh
+functionality), @code{gmsh/graphics} (which handles drawing),
+@code{gmsh/fltk} (which handles the graphical user interface),
+@code{gmsh/parser} (which handles the Gmsh parser), @code{gmsh/onelab}
+(which handles ONELAB parameters and communications with external codes)
+and @code{gmsh/logger} (which handles information logging).
 @item
 Geometrical data is made of model @emph{entities}, called @emph{points}
 (entities of dimension 0), @emph{curves} (entities of dimension 1),

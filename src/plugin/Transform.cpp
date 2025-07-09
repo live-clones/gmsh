@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -6,20 +6,20 @@
 #include "Transform.h"
 
 StringXNumber TransformOptions_Number[] = {
-  {GMSH_FULLRC, "A11", nullptr, 1.},
-  {GMSH_FULLRC, "A12", nullptr, 0.},
-  {GMSH_FULLRC, "A13", nullptr, 0.},
-  {GMSH_FULLRC, "A21", nullptr, 0.},
-  {GMSH_FULLRC, "A22", nullptr, 1.},
-  {GMSH_FULLRC, "A23", nullptr, 0.},
-  {GMSH_FULLRC, "A31", nullptr, 0.},
-  {GMSH_FULLRC, "A32", nullptr, 0.},
-  {GMSH_FULLRC, "A33", nullptr, 1.},
-  {GMSH_FULLRC, "Tx", nullptr, 0.},
-  {GMSH_FULLRC, "Ty", nullptr, 0.}, // cannot use T2 (reserved token in parser)
-  {GMSH_FULLRC, "Tz", nullptr, 0.}, // cannot use T3 (reserved token in parser)
-  {GMSH_FULLRC, "SwapOrientation", nullptr, 0.},
-  {GMSH_FULLRC, "View", nullptr, -1.}};
+  {GMSH_FULLRC, "A11", nullptr, 1., ""},
+  {GMSH_FULLRC, "A12", nullptr, 0., ""},
+  {GMSH_FULLRC, "A13", nullptr, 0., ""},
+  {GMSH_FULLRC, "A21", nullptr, 0., ""},
+  {GMSH_FULLRC, "A22", nullptr, 1., ""},
+  {GMSH_FULLRC, "A23", nullptr, 0., ""},
+  {GMSH_FULLRC, "A31", nullptr, 0., ""},
+  {GMSH_FULLRC, "A32", nullptr, 0., ""},
+  {GMSH_FULLRC, "A33", nullptr, 1., ""},
+  {GMSH_FULLRC, "Tx", nullptr, 0., ""},
+  {GMSH_FULLRC, "Ty", nullptr, 0., ""}, // cannot use T2 (reserved token in parser)
+  {GMSH_FULLRC, "Tz", nullptr, 0., ""}, // cannot use T3 (reserved token in parser)
+  {GMSH_FULLRC, "SwapOrientation", nullptr, 0., ""},
+  {GMSH_FULLRC, "View", nullptr, -1., ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterTransformPlugin()
