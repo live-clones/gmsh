@@ -278,9 +278,8 @@ bool bl(GModel *m, std::vector<GVertex *> &onPoints,
               new MFaceVertex(v->x(), v->y(), v->z(), gf, param.x(), param.y());
             gf->mesh_vertices.push_back(newv);
             spawned[v].push_back(newv);
-            //            printf("inserted node %lu from point %d in surface
-            //            %d\n",
-            //                   newv->getNum(), gv->tag(), gf->tag());
+            Msg::Debug("inserted node %lu from point %d in surface %d",
+                       newv->getNum(), gv->tag(), gf->tag());
           }
           else {
             Msg::Warning("Could not compute parametric coordinates of node on "
@@ -315,10 +314,8 @@ bool bl(GModel *m, std::vector<GVertex *> &onPoints,
           }
 
           spawned[v].push_back(newv);
-          //          printf("inserted node %lu from point %d in curve %d -- %lu
-          //          internal nodes\n",
-          //                 newv->getNum(), gv->tag(),
-          //                 ge->tag(),ge->mesh_vertices.size());
+          Msg::Debug("inserted node %lu from point %d in curve %d -- %lu internal nodes",
+                     newv->getNum(), gv->tag(), ge->tag(),ge->mesh_vertices.size());
           if(end)
             ge->lines.push_back(new MLine(v, newv));
           else
@@ -326,8 +323,7 @@ bool bl(GModel *m, std::vector<GVertex *> &onPoints,
         }
         else {
           Msg::Warning("Could not compute parametric coordinates of node on "
-                       "curve %d",
-                       ge->tag());
+                       "curve %d", ge->tag());
         }
       }
     }
