@@ -22,7 +22,7 @@ StringXString BoundaryLayerOptions_String[] = {
   {GMSH_FULLRC, "Volumes", nullptr, ""},
   {GMSH_FULLRC, "Surfaces", nullptr, ""},
   {GMSH_FULLRC, "Curves", nullptr, ""},
-  {GMSH_FULLRC, "Vertices", nullptr, ""},
+  {GMSH_FULLRC, "Points", nullptr, ""},
 };
 
 extern "C" {
@@ -206,7 +206,7 @@ static void fanitzie(std::vector<GFace *> &gfs, std::vector<GVertex *> &gvs,
   }
 }
 
-bool bl(GModel *m, std::vector<GVertex *> &onVertices,
+bool bl(GModel *m, std::vector<GVertex *> &onPoints,
         std::vector<GEdge *> &onCurves, std::vector<GFace *> &inSurfaces,
         std::vector<GRegion *> &inVolumes, double width,
         std::map<MElement *, double> &layers)
@@ -423,7 +423,7 @@ bool bl(GModel *m, std::vector<GVertex *> &onVertices,
   }
 
   std::vector<MElement *> ecole_des_fans;
-  fanitzie(inSurfaces, onVertices, ecole_des_fans);
+  fanitzie(inSurfaces, onPoints, ecole_des_fans);
   for(auto e : ecole_des_fans) layers[e] = width;
   return true;
 }
