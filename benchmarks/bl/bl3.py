@@ -9,9 +9,9 @@ gmsh.plugin.setString('BoundaryLayer','Surfaces','1')
 gmsh.plugin.setString('BoundaryLayer','Curves','1,2,3')
 gmsh.plugin.setString('BoundaryLayer','Points','30')
 
-gmsh.plugin.setNumber('BoundaryLayer','Width',.04)
+gmsh.plugin.setNumber('BoundaryLayer','Thickness',.04)
+gmsh.plugin.setNumber('BoundaryLayer','Size',.0001)
 gmsh.plugin.setNumber('BoundaryLayer','Ratio',1.5)
-gmsh.plugin.setNumber('BoundaryLayer','Hwall',.0001)
 gmsh.plugin.run('BoundaryLayer')
 # gmsh.plugin.setString('BoundaryLayer','Points','')
 

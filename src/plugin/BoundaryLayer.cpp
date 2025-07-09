@@ -15,8 +15,8 @@
 #include "Context.h"
 
 StringXNumber BoundaryLayerOptions_Number[] = {
-  {GMSH_FULLRC, "Width", nullptr, 1.e-2},
-  {GMSH_FULLRC, "Hwall", nullptr, 1.e-3},
+  {GMSH_FULLRC, "Thickness", nullptr, 1.e-2},
+  {GMSH_FULLRC, "Size", nullptr, 1.e-3},
   {GMSH_FULLRC, "Ratio", nullptr, 1.2}};
 
 StringXString BoundaryLayerOptions_String[] = {
@@ -209,7 +209,7 @@ static void fanitzie(std::vector<GFace *> &gfs, std::vector<GVertex *> &gvs,
 
 bool bl(GModel *m, std::vector<GVertex *> &onPoints,
         std::vector<GEdge *> &onCurves, std::vector<GFace *> &inSurfaces,
-        std::vector<GRegion *> &inVolumes, double width,
+        std::vector<GRegion *> &inVolumes, double thickness,
         std::map<MElement *, double> &layers)
 {
   // 2D case:
@@ -418,7 +418,7 @@ bool bl(GModel *m, std::vector<GVertex *> &onPoints,
               else
                 gf->quadrangles.push_back
                   (new MQuadrangle(l->getVertex(1), l->getVertex(0), V0[j], V1[j]));
-              layers[gf->quadrangles.back()] = width;
+              layers[gf->quadrangles.back()] = thickness;
             }
           }
         }
@@ -428,7 +428,7 @@ bool bl(GModel *m, std::vector<GVertex *> &onPoints,
 
   std::vector<MElement *> ecole_des_fans;
   fanitzie(inSurfaces, onPoints, ecole_des_fans);
-  for(auto e : ecole_des_fans) layers[e] = width;
+  for(auto e : ecole_des_fans) layers[e] = thickness;
   return true;
 }
 
@@ -451,11 +451,11 @@ static void expandBL(
     if(e->getNumVertices() == 3) {
       if(it != layers.end()) {
         double T = M_PI / 6.;
-        double width = it->second;
+        double thickness = it->second;
         //	double fact = it->second/sqrt(3.0);
         vs[0] = {0, 0.};
-        vs[1] = {width, 0.};
-        vs[2] = {width * cos(T), width * sin(T)};
+        vs[1] = {thickness, 0.};
+        vs[2] = {thickness * cos(T), thickness * sin(T)};
         //	vs[0] = {fact, 0.};
         //	vs[1] = {fact*cos(2. * M_PI / 3.), fact*sin(2 * M_PI / 3.)};
         //	vs[2] = {fact*cos(4. * M_PI / 3.), fact*sin(4 * M_PI / 3.)};
@@ -471,9 +471,9 @@ static void expandBL(
     }
     else {
       if(it != layers.end()) {
-        double width = it->second;
+        double thickness = it->second;
         /*
-        (0,width)  (dx,width)
+        (0,thickness)  (dx,thickness)
         +-------------+
         |             |
         +-------------+
@@ -483,9 +483,9 @@ static void expandBL(
                          (vs[0][1] - vs[1][1]) * (vs[0][1] - vs[1][1]));
         std::array<double, 2> p0 = {0, 0};
         std::array<double, 2> p1 = {dx, 0};
-        std::array<double, 2> p2 = {dx, width};
-        std::array<double, 2> p3 = {0, width};
-        //	printf("width = %12.5E\n",width);
+        std::array<double, 2> p2 = {dx, thickness};
+        std::array<double, 2> p3 = {0, thickness};
+        //	printf("thickness = %12.5E\n",thickness);
         sh.push_back({p0, p1, p2});
         sh.push_back({p2, p3, p0});
         sh.push_back({p0, p1, p3});
@@ -768,8 +768,8 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
     if(gr) r.push_back(gr);
   }
 
-  double width = BoundaryLayerOptions_Number[0].def;
-  double hwall = BoundaryLayerOptions_Number[1].def;
+  double thickness = BoundaryLayerOptions_Number[0].def;
+  double size = BoundaryLayerOptions_Number[1].def;
   double ratio = BoundaryLayerOptions_Number[2].def;
 
   std::map<MElement *, std::array<std::array<double, 2>, 4>> perfectShapes;
@@ -817,10 +817,11 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
 
   double ww = 0.0;
   std::vector<double> ws;
+  double hwall = size;
   while(1) {
     ws.push_back(hwall);
     ww += hwall;
-    if(ww + hwall >= width) break;
+    if(ww + hwall >= thickness) break;
     hwall *= ratio;
   }
 
@@ -837,7 +838,7 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
 
   for(auto gf : f) expandBL(gf, perfectShapes, layers, f);
 
-  if (ws.size() > 1) 
+  if (ws.size() > 1)
     splitounette(f, layers, ws);
 
   //  for (auto gf : f)
