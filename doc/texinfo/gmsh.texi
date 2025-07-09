@@ -2121,6 +2121,8 @@ with
   @var{boolean} |
   Point|Curve|Surface|Volume In BoundingBox @{ @var{expression-list} @} |
   BoundingBox Point|Curve|Surface|Volume @{ @var{expression-list} @} |
+  Parametric BoundingBox Curve|Surface @{ @var{expression} @} |
+  Normal Surface @{ @var{expression} @} Paramtric @{ @var{expression}, @var{expression} @} |
   Mass Curve|Surface|Volume @{ @var{expression} @} |
   CenterOfMass Curve|Surface|Volume @{ @var{expression} @} |
   MatrixOfInertia Curve|Surface|Volume @{ @var{expression} @} |
@@ -2153,12 +2155,17 @@ The next two cases allow to retrieve entities in a given bounding box,
 or get the bounding box of a given entity, with the bounding box
 specified as (X min, Y min, Z min, X max, Y max, Z max). Beware that the
 order of coordinates is different than in the @code{BoundingBox} command
-for the scene: see @ref{Other general commands}. The last cases permit to
-retrieve the mass, the center of mass or the matrix of inertia of an
-entity, the coordinates of a given geometry point (@pxref{Points}), the
-elementary entities making up physical groups, and the tags of all
-(physical or elementary) points, curves, surfaces or volumes in the
-model. @value{SYNCS}
+for the scene: see @ref{Other general commands}. @code{Parametric
+BoundingBox} retrieves the parametric bounds (U min, U max) and (U min,
+V min, U max, V max) or a curve or a surface, respectively. @code{Normal
+Surface} returns the normal to a surface evaluated at the specified
+parametric coordinates.
+
+The last cases permit to retrieve the mass, the center of mass or the
+matrix of inertia of an entity, the coordinates of a given geometry
+point (@pxref{Points}), the elementary entities making up physical
+groups, and the tags of all (physical or elementary) points, curves,
+surfaces or volumes in the model. @value{SYNCS}
 
 To see the practical use of such expressions, have a look at the first
 couple of examples in @ref{Gmsh tutorial}. Note that, in order to
