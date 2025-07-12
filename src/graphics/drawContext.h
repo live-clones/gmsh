@@ -27,6 +27,7 @@
 #include <GL/glu.h>
 #endif
 
+#include "GmshConfig.h"
 #if defined(HAVE_VISUDEV)
 #define NORMAL_GLTYPE GL_FLOAT
 #else
