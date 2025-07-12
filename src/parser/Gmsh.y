@@ -3559,7 +3559,7 @@ Command :
 	 PluginManager::instance()->action($3, $6, 0);
        }
        catch(...) {
-	 yymsg(0, "Unknown action '%s' or plugin '%s'", $6, $3);
+	 yymsg(0, "Failed action '%s' or unknown plugin '%s'", $6, $3);
        }
 #endif
        Free($3); Free($6);
