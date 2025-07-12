@@ -1226,6 +1226,9 @@ GMSH_API void gmsh::model::getClosestPoint(const int dim, const int tag,
       parametricCoord.push_back(pp.v());
     }
   }
+  else {
+    Msg::Error("Closet point calculation only for entities of dimension 1 or 2");
+  }
 }
 
 GMSH_API void gmsh::model::setVisibility(const vectorpair &dimTags,
