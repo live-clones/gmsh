@@ -42,6 +42,7 @@
 #include "CreateFile.h"
 #include "Options.h"
 #include "GModelParametrize.h"
+#include "Overlap.h"
 
 #if defined(HAVE_MESH)
 #include "meshGEdge.h"
