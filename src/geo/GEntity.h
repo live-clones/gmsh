@@ -126,7 +126,9 @@ public:
     PartitionVolume,
     GhostCurve,
     GhostSurface,
-    GhostVolume
+    GhostVolume,
+    OverlapSurface,
+    OverlapVolume,
   };
 
   // the mesh generation status
