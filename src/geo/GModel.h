@@ -11,6 +11,7 @@
 #include <set>
 #include <map>
 #include <string>
+#include <tuple>
 #include <unordered_map>
 #include <functional>
 #include "GVertex.h"
@@ -35,6 +36,11 @@ class gLevelset;
 class discreteFace;
 class discreteRegion;
 class MElementOctree;
+class overlapFace;
+class overlapRegion;
+class partitionEdge;
+class partitionFace;
+class partitionRegion;
 
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
 class GModel {
@@ -55,6 +61,15 @@ private:
   // the maximum vertex and element id number in the mesh
   std::size_t _maxVertexNum, _maxElementNum;
   std::size_t _checkPointedMaxVertexNum, _checkPointedMaxElementNum;
+
+  // Overlaps data
+  std::tuple<std::vector<overlapFace *>, std::vector<overlapRegion *>>
+    _overlaps;
+
+  std::unordered_map<GFace*, std::vector<partitionEdge*>> _overlapInnerBoundaries2D;
+  std::unordered_map<GRegion*, std::vector<partitionFace*>> _overlapInnerBoundaries3D;
+  std::unordered_map<GEdge*, std::vector<partitionEdge*>> _overlapOfBoundaries2D;
+  std::unordered_map<GFace*, std::vector<partitionFace*>> _overlapOfBoundaries3D;
 
 private:
   int _readMSH2(const std::string &name);
@@ -388,6 +403,54 @@ public:
   {
     return vertices;
   };
+
+  void addOverlap(overlapFace *of)
+  {
+    std::get<0>(_overlaps).push_back(of);
+  }
+  void addOverlap(overlapRegion *or_)
+  {
+    std::get<1>(_overlaps).push_back(or_);
+  }
+
+  const std::tuple<std::vector<overlapFace *>, std::vector<overlapRegion *>>& getAllOverlaps() const
+  {
+    return _overlaps;
+  }
+
+  void addInnerBoundary(GFace *f, partitionEdge *e)
+  {
+    _overlapInnerBoundaries2D[f].push_back(e);
+  }
+  void addInnerBoundary(GRegion *r, partitionFace *f)
+  {
+    _overlapInnerBoundaries3D[r].push_back(f);
+  }
+  void addOverlapOfBoundary(GEdge *e, partitionEdge *pe)
+  {
+    _overlapOfBoundaries2D[e].push_back(pe);
+  }
+  void addOverlapOfBoundary(GFace *f, partitionFace *pf)
+  {
+    _overlapOfBoundaries3D[f].push_back(pf);
+  }
+
+  const auto& getOverlapInnerBoundaries2D() const
+  {
+    return _overlapInnerBoundaries2D;
+  }
+  const auto& getOverlapInnerBoundaries3D() const
+  {
+    return _overlapInnerBoundaries3D;
+  }
+  const auto& getOverlapOfBoundaries2D() const
+  {
+    return _overlapOfBoundaries2D;
+  }
+  const auto& getOverlapOfBoundaries3D() const
+  {
+    return _overlapOfBoundaries3D;
+  }
 
   // find the entity with the given tag
   GRegion *getRegionByTag(int n) const;
