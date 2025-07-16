@@ -4062,6 +4062,8 @@ void discreteFront::initFront(std::vector<double> points,
     }
   }
 
+  pm->print4debug(1);
+
 }
 
 SVector3 discreteFront::closestPoints2d(const SVector3 &P,
