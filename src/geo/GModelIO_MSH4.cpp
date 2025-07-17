@@ -2040,15 +2040,15 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     fprintf(fp, "$EndEntities\n");
 }
 
+template <class It>
 static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
                                  int saveParametric, double scalingFactor,
-                                 double version)
+                                 double version, It begin, It end, size_t numVerts)
 {
   int parametric = saveParametric;
   if(ge->dim() != 1 && ge->dim() != 2)
     parametric = 0; // Gmsh only stores parametric coordinates for dim 1 and 2
 
-  std::size_t numVerts = ge->getNumMeshVertices();
 
   if(binary) {
     int entityDim = ge->dim();
@@ -2061,7 +2061,7 @@ static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
   else {
     fprintf(fp, "%d %d %d %zu\n", (version >= 4.1) ? ge->dim() : ge->tag(),
             (version >= 4.1) ? ge->tag() : ge->dim(), parametric,
-            ge->getNumMeshVertices());
+            numVerts);
   }
 
   if(!numVerts) {
@@ -2072,14 +2072,14 @@ static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
   if(parametric) n += ge->dim();
 
   if(binary) {
-    std::vector<size_t> tags(numVerts);
-    for(std::size_t i = 0; i < numVerts; i++)
-      tags[i] = ge->getMeshVertex(i)->getNum();
+    std::vector<size_t> tags; tags.reserve(numVerts);
+    for(auto it = begin; it != end; ++it)
+      tags.push_back((*it)->getNum());
     fwrite(&tags[0], sizeof(std::size_t), numVerts, fp);
     std::vector<double> coord(n * numVerts);
     std::size_t j = 0;
-    for(std::size_t i = 0; i < numVerts; i++) {
-      MVertex *mv = ge->getMeshVertex(i);
+    for(auto it = begin; it != end; ++it) {
+      MVertex *mv = *it;
       coord[j++] = mv->x() * scalingFactor;
       coord[j++] = mv->y() * scalingFactor;
       coord[j++] = mv->z() * scalingFactor;
@@ -2090,11 +2090,11 @@ static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
   }
   else {
     if(version >= 4.1) {
-      for(std::size_t i = 0; i < numVerts; i++)
-        fprintf(fp, "%zu\n", ge->getMeshVertex(i)->getNum());
+      for(auto it = begin; it != end; ++it) 
+        fprintf(fp, "%zu\n", (*it)->getNum());
     }
-    for(std::size_t i = 0; i < numVerts; i++) {
-      MVertex *mv = ge->getMeshVertex(i);
+    for(auto it = begin; it != end; ++it) {
+      MVertex *mv = *it;
       double x = mv->x() * scalingFactor;
       double y = mv->y() * scalingFactor;
       double z = mv->z() * scalingFactor;
@@ -2352,9 +2352,12 @@ getEntitiesToSave(GModel *const model, bool partitioned,
   }
 }
 
-static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
-                           int partitionToSave, bool binary, int saveParametric,
-                           double scalingFactor, bool saveAll, double version)
+static void writeMSH4Nodes(
+  GModel *const model, FILE *fp, bool partitioned, int partitionToSave,
+  bool binary, int saveParametric, double scalingFactor, bool saveAll,
+  double version,
+  const std::unordered_map<GEntity *, std::unordered_set<MVertex *>>
+    &verticesToSaveOnOtherEntities)
 {
   std::set<GRegion *, GEntityPtrLessThan> regions;
   std::set<GFace *, GEntityPtrLessThan> faces;
@@ -2363,39 +2366,61 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
   getEntitiesToSave(model, partitioned, partitionToSave, saveAll, regions,
                     faces, edges, vertices);
 
-  std::size_t numNodes = (saveAll && !partitioned &&
+  /*std::size_t numNodes = (saveAll && !partitioned &&
                           !CTX::instance()->mesh.saveWithoutOrphans) ?
     model->getNumMeshVertices() :
-    getAdditionalEntities(regions, faces, edges, vertices);
+    getAdditionalEntities(regions, faces, edges, vertices);*/
+    // What was the purpose of getAdditionalEntities before overlaps? Maybe embedded stuff ?
+
+  std::size_t numNodes = 0;
+  auto incrementNodes = [&](const auto &entities) {
+    for(const auto &entity : entities) numNodes += entity->getNumMeshVertices();
+  };
+
+  for (auto [entity, _]: verticesToSaveOnOtherEntities) {
+    auto gv = dynamic_cast<GVertex *>(entity); if (gv) vertices.insert(gv);
+    auto ge = dynamic_cast<GEdge *>(entity); if (ge) edges.insert(ge);
+    auto gf = dynamic_cast<GFace *>(entity); if (gf) faces.insert(gf);
+    auto gr = dynamic_cast<GRegion *>(entity); if (gr) regions.insert(gr);
+  }
+
+  incrementNodes(vertices);
+  incrementNodes(edges);
+  incrementNodes(faces);
+  incrementNodes(regions);
 
   if(!numNodes) return;
 
   fprintf(fp, "$Nodes\n");
 
   std::size_t minTag = std::numeric_limits<std::size_t>::max(), maxTag = 0;
-  for(auto it = vertices.begin(); it != vertices.end(); ++it) {
-    for(std::size_t i = 0; i < (*it)->getNumMeshVertices(); i++) {
-      minTag = std::min(minTag, (*it)->getMeshVertex(i)->getNum());
-      maxTag = std::max(maxTag, (*it)->getMeshVertex(i)->getNum());
+  auto upgradeMinMaxTag = [&](GEntity *entity) {
+    auto it = verticesToSaveOnOtherEntities.find(entity);
+    if(it == verticesToSaveOnOtherEntities.end()) {
+      for(std::size_t i = 0; i < entity->getNumMeshVertices(); i++) {
+        minTag = std::min(minTag, entity->getMeshVertex(i)->getNum());
+        maxTag = std::max(maxTag, entity->getMeshVertex(i)->getNum());
+      }
     }
+    else {
+      for(const auto &mv : it->second) {
+        minTag = std::min(minTag, mv->getNum());
+        maxTag = std::max(maxTag, mv->getNum());
+      }
+    }
+  };
+
+  for(auto entity : vertices) {
+    upgradeMinMaxTag(entity);
   }
-  for(auto it = edges.begin(); it != edges.end(); ++it) {
-    for(std::size_t i = 0; i < (*it)->getNumMeshVertices(); i++) {
-      minTag = std::min(minTag, (*it)->getMeshVertex(i)->getNum());
-      maxTag = std::max(maxTag, (*it)->getMeshVertex(i)->getNum());
-    }
+  for(auto entity : edges) {
+    upgradeMinMaxTag(entity);
   }
-  for(auto it = faces.begin(); it != faces.end(); ++it) {
-    for(std::size_t i = 0; i < (*it)->getNumMeshVertices(); i++) {
-      minTag = std::min(minTag, (*it)->getMeshVertex(i)->getNum());
-      maxTag = std::max(maxTag, (*it)->getMeshVertex(i)->getNum());
-    }
+  for(auto entity : faces) {
+    upgradeMinMaxTag(entity);
   }
-  for(auto it = regions.begin(); it != regions.end(); ++it) {
-    for(std::size_t i = 0; i < (*it)->getNumMeshVertices(); i++) {
-      minTag = std::min(minTag, (*it)->getMeshVertex(i)->getNum());
-      maxTag = std::max(maxTag, (*it)->getMeshVertex(i)->getNum());
-    }
+  for(auto entity : regions) {
+    upgradeMinMaxTag(entity);
   }
 
   if(binary) {
@@ -2419,22 +2444,25 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
     }
   }
 
-  for(auto it = vertices.begin(); it != vertices.end(); ++it) {
-    writeMSH4EntityNodes(*it, fp, binary, saveParametric, scalingFactor,
-                         version);
-  }
-  for(auto it = edges.begin(); it != edges.end(); ++it) {
-    writeMSH4EntityNodes(*it, fp, binary, saveParametric, scalingFactor,
-                         version);
-  }
-  for(auto it = faces.begin(); it != faces.end(); ++it) {
-    writeMSH4EntityNodes(*it, fp, binary, saveParametric, scalingFactor,
-                         version);
-  }
-  for(auto it = regions.begin(); it != regions.end(); ++it) {
-    writeMSH4EntityNodes(*it, fp, binary, saveParametric, scalingFactor,
-                         version);
-  }
+  auto saveEntity = [&](GEntity *entity) {
+    auto subset = verticesToSaveOnOtherEntities.find(entity);
+    if(subset == verticesToSaveOnOtherEntities.end()) {
+      writeMSH4EntityNodes(entity, fp, binary, saveParametric, scalingFactor,
+                           version, entity->getMeshVertexBegin(),
+                           entity->getMeshVertexEnd(),
+                           entity->getNumMeshVertices());
+    }
+    else {
+      writeMSH4EntityNodes(entity, fp, binary, saveParametric, scalingFactor,
+                           version, subset->second.begin(),
+                           subset->second.end(), subset->second.size());
+    }
+  };
+
+  for(GVertex *entity : vertices) { saveEntity(entity); }
+  for(GEdge *entity : edges) { saveEntity(entity); }
+  for(GFace *entity : faces) { saveEntity(entity); }
+  for(GRegion *entity : regions) { saveEntity(entity); }
 
   if(binary) fprintf(fp, "\n");
 
@@ -2443,7 +2471,8 @@ static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
 
 static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
                               int partitionToSave, bool binary, bool saveAll,
-                              double version)
+                              double version, const std::variant<std::monostate, decltype(findCoveredEntitiesAndElementsToSave<2>(model, partitionToSave)), 
+               decltype(findCoveredEntitiesAndElementsToSave<3>(model, partitionToSave))>& overlapElements)
 {
   std::set<GRegion *, GEntityPtrLessThan> regions;
   std::set<GFace *, GEntityPtrLessThan> faces;
@@ -2451,6 +2480,47 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
   std::set<GVertex *, GEntityPtrLessThan> vertices;
   getEntitiesToSave(model, partitioned, partitionToSave, saveAll, regions,
                     faces, edges, vertices);
+
+  const int overlapDim = model->overlapDim();
+  std::unordered_set<GEdge*> overlapBnd2D;
+  std::unordered_set<GFace*> overlapBnd3D;
+
+  auto addOverlapBoundaries = [&](const auto& map, auto& container) {
+    using ContainerType = std::remove_cv_t<std::remove_reference_t<decltype(container)>>;
+    for (const auto& [parent, vecOfEntities]: map)
+    {
+      for (const auto& entity : vecOfEntities)
+      {
+        auto partitions = entity->getPartitions();
+        if (partitions.size() != 1) Msg::Error("Overlap boundary with more than one partition.");
+        int partition = *partitions.begin();
+        if(partition == partitionToSave) {
+          if constexpr (std::is_same_v<ContainerType, std::unordered_set<GEdge*>>) {
+            auto cast = static_cast<GEdge *>(entity);
+            if (!cast) Msg::Error("Expected GEdge for 2D overlap boundary.");
+            edges.insert(cast);
+            overlapBnd2D.insert(cast);
+          } else if constexpr (std::is_same_v<ContainerType, std::unordered_set<GFace*>>) {
+            auto cast = static_cast<GFace *>(entity);
+            if (!cast) Msg::Error("Expected GFace for 3D overlap boundary.");
+            faces.insert(cast);
+            overlapBnd3D.insert(cast);
+          }
+          else {
+            Msg::Error("Unsupported overlap boundary type.");
+          }
+        }
+      }
+    }
+  };
+
+  addOverlapBoundaries(model->getOverlapInnerBoundaries2D(), overlapBnd2D);
+  addOverlapBoundaries(model->getOverlapOfBoundaries2D(), overlapBnd2D);
+  addOverlapBoundaries(model->getOverlapInnerBoundaries3D(), overlapBnd3D);
+  addOverlapBoundaries(model->getOverlapOfBoundaries3D(), overlapBnd3D);
+
+  Msg::Info("OverlapBnd size: %zu 2D, %zu 3D",
+            overlapBnd2D.size(), overlapBnd3D.size());
 
   std::map<std::pair<int, int>, std::vector<MElement *> > elementsByType[4];
   std::size_t numElements = 0;
@@ -2467,7 +2537,7 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
 
   for(auto it = edges.begin(); it != edges.end(); ++it) {
     if(!saveAll && (*it)->physicals.size() == 0 &&
-       (*it)->geomType() != GEntity::GhostCurve)
+       (*it)->geomType() != GEntity::GhostCurve && overlapBnd2D.count(*it) == 0)
       continue;
 
     numElements += (*it)->lines.size();
@@ -2479,7 +2549,7 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
 
   for(auto it = faces.begin(); it != faces.end(); ++it) {
     if(!saveAll && (*it)->physicals.size() == 0 &&
-       (*it)->geomType() != GEntity::GhostSurface)
+       (*it)->geomType() != GEntity::GhostSurface && overlapBnd3D.count(*it) == 0)
       continue;
 
     numElements += (*it)->triangles.size();
@@ -2492,6 +2562,30 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
       std::pair<int, int> p((*it)->tag(),
                             (*it)->quadrangles[i]->getTypeForMSH());
       elementsByType[2][p].push_back((*it)->quadrangles[i]);
+    }
+  }
+
+  // Overlap faces - TODO: ensure it's exported only if not all partitions are saved
+  if(overlapDim == 2) {
+    auto overlapFaces =
+      std::get_if<decltype(findCoveredEntitiesAndElementsToSave<2>(
+        model, partitionToSave))>(&overlapElements);
+    if(overlapFaces) {
+      Msg::Info("Found %lu overlapFaces for partition %d",
+                overlapFaces->size(), partitionToSave);
+      for(const auto &[pface, elements] : *overlapFaces) {
+        int tag = pface->tag();
+        if(faces.count(pface)) continue; // already saved
+        if(!saveAll && pface->physicals.size() == 0 &&
+           pface->geomType() != GEntity::GhostSurface)
+          continue;
+
+        numElements += elements.size();
+        for(const auto &element : elements) {
+          std::pair<int, int> p(tag, element->getTypeForMSH());
+          elementsByType[2][p].push_back(element);
+        }
+      }
     }
   }
 
@@ -2525,6 +2619,28 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
     for(std::size_t i = 0; i < (*it)->trihedra.size(); i++) {
       std::pair<int, int> p((*it)->tag(), (*it)->trihedra[i]->getTypeForMSH());
       elementsByType[3][p].push_back((*it)->trihedra[i]);
+    }
+  }
+
+  // Overlap regions - TODO: ensure it's exported only if not all partitions are saved
+  if (overlapDim == 3) {
+    auto overlapRegions =
+      std::get_if<decltype(findCoveredEntitiesAndElementsToSave<3>(
+        model, partitionToSave))>(&overlapElements);
+    if(overlapRegions) {
+      for(const auto &[pregion, elements] : *overlapRegions) {
+        int tag = pregion->tag();
+        if(regions.count(pregion)) continue; // already saved
+        if(!saveAll && pregion->physicals.size() == 0 &&
+           pregion->geomType() != GEntity::GhostVolume)
+          continue;
+
+        numElements += elements.size();
+        for(const auto &element : elements) {
+          std::pair<int, int> p(tag, element->getTypeForMSH());
+          elementsByType[3][p].push_back(element);
+        }
+      }
     }
   }
 
@@ -2919,13 +3035,32 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
     writeMSH4Entities(this, fp, true, binary, scalingFactor, version,
                       entityBounds);
 
+  std::variant<std::monostate, decltype(findCoveredEntitiesAndElementsToSave<2>(this, partitionToSave)), 
+               decltype(findCoveredEntitiesAndElementsToSave<3>(this, partitionToSave))> nonOwnedEntitiesToSave;
+  std::unordered_map<
+    GEntity*,
+    std::unordered_set<MVertex*>> verticesToSaveOnOtherEntities;
+  int overlapDim = this->overlapDim();
+  if(overlapDim == 2) {
+    nonOwnedEntitiesToSave =
+      findCoveredEntitiesAndElementsToSave<2>(this, partitionToSave);
+    verticesToSaveOnOtherEntities = findNonOwnedVerticesToSave<2>(
+      this, partitionToSave, std::get<1>(nonOwnedEntitiesToSave));
+  }
+  else if(overlapDim == 3) {
+    nonOwnedEntitiesToSave =
+      findCoveredEntitiesAndElementsToSave<3>(this, partitionToSave);
+    verticesToSaveOnOtherEntities = findNonOwnedVerticesToSave<3>(
+      this, partitionToSave, std::get<2>(nonOwnedEntitiesToSave));
+  }
+
   // nodes
   writeMSH4Nodes(this, fp, partitioned, partitionToSave, binary,
-                 saveParametric ? 1 : 0, scalingFactor, saveAll, version);
+                 saveParametric ? 1 : 0, scalingFactor, saveAll, version, verticesToSaveOnOtherEntities);
 
   // elements
   writeMSH4Elements(this, fp, partitioned, partitionToSave, binary, saveAll,
-                    version);
+                    version, nonOwnedEntitiesToSave);
 
   // periodic
   writeMSH4PeriodicNodes(this, fp, binary, version);
