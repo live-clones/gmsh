@@ -1490,30 +1490,37 @@ GMSH_API void gmsh::model::mesh::findInnerBoundary(const int dim, const int tag,
   if(!_checkInit()) return;
   entities.clear();
   GModel *model = GModel::current();
-  if(dim == 2) {
-    GFace *face = model->getFaceByTag(tag);
-    if(!face) {
-      Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
-      return;
+  try {
+    if(dim == 2) {
+      GFace *face = model->getFaceByTag(tag);
+      if(!face) {
+        Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+        return;
+      }
+      const auto &list = model->getOverlapInnerBoundaries2D().at(face);
+      for(const auto &it : list) {
+        if(it->getPartition(0) == partition) { entities.push_back(it->tag()); }
+      }
     }
-    const auto &list = model->getOverlapInnerBoundaries2D().at(face);
-    for(const auto &it : list) {
-      if(it->getPartition(0) == partition) { entities.push_back(it->tag()); }
+    else if(dim == 3) {
+      GRegion *region = model->getRegionByTag(tag);
+      if(!region) {
+        Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+        return;
+      }
+      const auto &list = model->getOverlapInnerBoundaries3D().at(region);
+      for(const auto &it : list) {
+        if(it->getPartition(0) == partition) { entities.push_back(it->tag()); }
+      }
+    }
+    else {
+      Msg::Error("Inner boundary search is not supported for dimension %d",
+                 dim);
     }
   }
-  else if (dim == 3) {
-    GRegion *region = model->getRegionByTag(tag);
-    if(!region) {
-      Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
-      return;
-    }
-    const auto &list = model->getOverlapInnerBoundaries3D().at(region);
-    for(const auto &it : list) {
-      if(it->getPartition(0) == partition) { entities.push_back(it->tag()); }
-    }
-  }
-  else {
-    Msg::Error("Inner boundary search is not supported for dimension %d", dim);
+  catch (const std::out_of_range &e) {
+    Msg::Warning("No inner boundaries found for %s with tag %d in partition %d",
+               _getEntityName(dim, tag).c_str(), tag, partition);
   }
 }
 
