@@ -16,6 +16,7 @@
 #include <cstdlib>
 #include <limits>
 #include <stdexcept>
+#include <variant>
 
 #include "GmshDefines.h"
 #include "OS.h"
@@ -40,6 +41,7 @@
 #include "MPyramid.h"
 #include "MTrihedron.h"
 #include "StringUtils.h"
+#include "Overlap.h"
 
 #if defined(HAVE_POST)
 #include "PView.h"
