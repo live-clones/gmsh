@@ -297,11 +297,25 @@ void overlapBuildBoundaries(GModel *const model,
             auto elem = new MLine(edge.getVertex(0), edge.getVertex(1));
             bnd->addLine(elem);
           }
-          Msg::Info("Created entity with %lu elements for partition %d.",
-                    bnd->getNumMeshElements(), partition);
         }
         else if constexpr(dim == 3) {
-          Msg::Error("3D overlap boundaries not implemented yet.");
+          for (const MFace& face : innerboundarySet) {
+            if (face.getNumVertices() == 3) {
+              auto elem = new MTriangle(
+                face.getVertex(0), face.getVertex(1), face.getVertex(2));
+              bnd->addTriangle(elem);
+            }
+            else if (face.getNumVertices() == 4) {
+              auto elem = new MQuadrangle(
+                face.getVertex(0), face.getVertex(1), face.getVertex(2),
+                face.getVertex(3));
+              bnd->addQuadrangle(elem);
+            }
+            else {
+              Msg::Error("Face with %d vertices not supported in 3D overlap.",
+                         face.getNumVertices());
+            }
+          }
         }
         model->add(bnd);
         model->addInnerBoundary(parent, bnd);
