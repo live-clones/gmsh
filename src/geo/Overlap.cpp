@@ -12,6 +12,8 @@
 #include <unordered_set>
 #include "MElement.h"
 #include "MLine.h"
+#include "MTriangle.h"
+#include "MQuadrangle.h"
 #include "MFace.h"
 #include "GModel.h"
 
