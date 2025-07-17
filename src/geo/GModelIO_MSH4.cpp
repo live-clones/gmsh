@@ -1249,6 +1249,73 @@ static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
   return true;
 }
 
+template <int dim>
+static bool readMSH4VolumeOverlaps(GModel *const model, FILE *fp, bool binary)
+{
+  size_t nOverlaps = 0;
+  if(binary) {
+    if(fread(&nOverlaps, sizeof(size_t), 1, fp) != 1) { return false; }
+  }
+  else {
+    if(fscanf(fp, "%zu", &nOverlaps) != 1) { return false; }
+  }
+  Msg::Info("%zu volume overlap%s of dim %d", nOverlaps,
+            nOverlaps > 1 ? "s" : "", dim);
+  for(size_t k = 0; k < nOverlaps; k++) {
+    int tag, coveredTag, partition;
+    size_t numElements = 0;
+    if(binary) {
+      if(fread(&tag, sizeof(int), 1, fp) != 1) { return false; }
+      if(fread(&coveredTag, sizeof(int), 1, fp) != 1) { return false; }
+      if(fread(&partition, sizeof(int), 1, fp) != 1) { return false; }
+      if(fread(&numElements, sizeof(size_t), 1, fp) != 1) { return false; }
+    }
+    else {
+      if(fscanf(fp, "%d %d %d %zu", &tag, &coveredTag, &partition,
+                &numElements) != 4) {
+        return false;
+      }
+    }
+    GEntity *coveredEntity = model->getEntityByTag(dim, coveredTag);
+    if(!coveredEntity) {
+      Msg::Error("Not found: %dD entity %d in volume overlap", dim, tag);
+      return false;
+    }
+    auto covered =
+      dynamic_cast<typename OverlapHelpers<dim>::PartitionEntity *>(
+        coveredEntity);
+    if(!covered) {
+      Msg::Error("Could cast %dD entity %d in volume overlap. It is of type %s", dim, tag, coveredEntity->getTypeString().c_str());
+      return false;
+    }
+    auto overlapEntity = new
+      typename OverlapHelpers<dim>::OverlapEntity(model, covered, partition);
+    overlapEntity->setTag(tag);
+
+    model->addOverlap(overlapEntity);
+    model->add(overlapEntity);
+
+    // Read elements
+    for(size_t i = 0; i < numElements; i++) {
+      size_t elementTag = 0;
+      if(binary) {
+        if(fread(&elementTag, sizeof(size_t), 1, fp) != 1) { return false; }
+      }
+      else {
+        if(fscanf(fp, "%zu", &elementTag) != 1) { return false; }
+      }
+      MElement *element = model->getMeshElementByTag(elementTag);
+
+      if(!element) {
+        Msg::Error("Unknown element %zu in volume overlap %d", elementTag, tag);
+        return false;
+      }
+      overlapEntity->addElement(element);
+    }
+  }
+  return true;
+}
+
 int GModel::_readMSH4(const std::string &name)
 {
   bool partitioned = false;
@@ -1434,6 +1501,20 @@ int GModel::_readMSH4(const std::string &name)
     else if(!strncmp(&str[1], "GhostElements", 13)) {
       if(!readMSH4GhostElements(this, fp, binary, swap)) {
         Msg::Error("Could not read ghost elements");
+        fclose(fp);
+        return 0;
+      }
+    }
+    else if (!strncmp(&str[1], "VolumeOverlaps2D", 16)) {
+      if (!readMSH4VolumeOverlaps<2>(this, fp, binary)) {
+        Msg::Error("Could not read 2D volume overlaps");
+        fclose(fp);
+        return 0;
+      }
+    }
+    else if (!strncmp(&str[1], "VolumeOverlaps3D", 16)) {
+      if (!readMSH4VolumeOverlaps<3>(this, fp, binary)) {
+        Msg::Error("Could not read 3D volume overlaps");
         fclose(fp);
         return 0;
       }
@@ -2954,6 +3035,61 @@ static void writeMSH4Parametrizations(GModel *const model, FILE *fp,
   fprintf(fp, "$EndParametrizations\n");
 }
 
+// Overlap exports
+template <int dim>
+static void writeMSH4VolumeOverlaps(GModel *const model, FILE *fp,
+                                    int partitionToSave, bool binary)
+{
+  fprintf(fp, "$VolumeOverlaps%dD\n", dim);
+  const auto &allOverlaps =
+    std::get<std::vector<typename OverlapHelpers<dim>::OverlapEntity *>>(
+      model->getAllOverlaps());
+  std::vector<typename OverlapHelpers<dim>::OverlapEntity *> overlapsToSave;
+  for(const auto &overlap : allOverlaps) {
+    if(partitionToSave == 0 || overlap->owningPartition() == partitionToSave) {
+      overlapsToSave.push_back(overlap);
+    }
+  }
+
+  size_t numOverlaps = overlapsToSave.size();
+  if (binary)
+    fwrite(&numOverlaps, sizeof(std::size_t), 1, fp);
+  else
+    fprintf(fp, "%zu\n", numOverlaps);
+  // Print number of overlapEntities. Then, for each entity, we print its tag, the tag of the covered entity
+  // the number of elements, then all elements
+  for (const auto& overlap: overlapsToSave) {
+    int tag = overlap->tag();
+    int coveredTag = overlap->getCovered()->tag();
+    Msg::Info("Exporting overlap %d with covered tag %d, partition %d, num elements %zu",
+              tag, coveredTag, overlap->owningPartition(), overlap->getNumMeshElements());
+    int partition = overlap->owningPartition();
+    std::size_t numElements = overlap->getNumMeshElements();
+    std::vector<size_t> tags; tags.reserve(numElements);
+    for (size_t k = 0; k < numElements; k++) {
+      tags.push_back(overlap->getMeshElement(k)->getNum());
+    }
+    if (binary) {
+      fwrite(&tag, sizeof(int), 1, fp);
+      fwrite(&coveredTag, sizeof(int), 1, fp);
+      fwrite(&partition, sizeof(int), 1, fp);
+      fwrite(&numElements, sizeof(std::size_t), 1, fp);
+      fwrite(tags.data(), sizeof(std::size_t), numElements, fp);
+    }
+    else {
+      fprintf(fp, "%d %d %d %zu\n", tag,
+              coveredTag, partition, numElements);
+      for (size_t tag: tags)
+        fprintf(fp, "%zu ", tag);
+      fprintf(fp, "\n");
+    }
+  }
+
+  // Binary: one line in total
+  if(binary) fprintf(fp, "\n");
+  fprintf(fp, "$EndVolumeOverlaps%dD\n", dim);
+}
+
 int GModel::_writeMSH4(const std::string &name, double version, bool binary,
                        bool saveAll, bool saveParametric, double scalingFactor,
                        bool append, int partitionToSave,
@@ -3067,6 +3203,16 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
 
   // ghostCells
   writeMSH4GhostCells(this, fp, partitionToSave, binary);
+
+  // Write Volume overlaps
+  if(partitioned && overlapDim > 0) {
+    if(overlapDim == 2) {
+      writeMSH4VolumeOverlaps<2>(this, fp, partitionToSave, binary);
+    }
+    else if(overlapDim == 3) {
+      writeMSH4VolumeOverlaps<3>(this, fp, partitionToSave, binary);
+    }
+  }
 
   // parametrizations
   writeMSH4Parametrizations(this, fp, binary);
