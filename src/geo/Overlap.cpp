@@ -340,3 +340,67 @@ template void overlapBuildBoundaries<2>(GModel *const model,
                                          const OverlapCollection<2> &overlaps);
 template void overlapBuildBoundaries<3>(GModel *const model,
                                             const OverlapCollection<3> &overlaps);
+
+template <int dim>
+std::unordered_map<typename OverlapHelpers<dim>::PartitionEntity *,
+                   std::unordered_set<MElement *>>
+findCoveredEntitiesAndElementsToSave(GModel *const model, int partition)
+{
+  std::unordered_map<typename OverlapHelpers<dim>::PartitionEntity *,
+                     std::unordered_set<MElement *>>
+    result;
+  
+  using overlapEntityType = typename OverlapHelpers<dim>::OverlapEntity;
+
+  const auto& overlaps = std::get<std::vector<overlapEntityType*>>(model->getAllOverlaps());
+  for (auto overlapPtr: overlaps) {
+    if (overlapPtr->owningPartition() != partition) continue;
+    size_t numElements = overlapPtr->getNumMeshElements();
+    for (size_t i = 0; i < numElements; ++i) {
+      MElement *element = overlapPtr->getMeshElement(i);
+      result[overlapPtr->getCovered()].insert(element);
+    }
+  }
+  
+  return result;
+}
+
+template std::unordered_map<typename OverlapHelpers<2>::PartitionEntity *,
+                            std::unordered_set<MElement *>>
+findCoveredEntitiesAndElementsToSave<2>(GModel *const model, int partition);
+
+template std::unordered_map<typename OverlapHelpers<3>::PartitionEntity *,
+                            std::unordered_set<MElement *>>
+findCoveredEntitiesAndElementsToSave<3>(GModel *const model, int partition);
+
+template <int dim>
+std::unordered_map<GEntity *, std::unordered_set<MVertex *>>
+findNonOwnedVerticesToSave(
+  GModel *const model, int partition,
+  const std::unordered_map<typename OverlapHelpers<dim>::PartitionEntity *,
+                           std::unordered_set<MElement *>> &coveredEntities)
+{
+  std::unordered_map<GEntity *, std::unordered_set<MVertex *>> result;
+  for(const auto &[coveredEntity, elements] : coveredEntities) {
+    for (MElement* elem: elements) {
+      for (int v = 0; v < elem->getNumVertices(); ++v) {
+        MVertex *vertex = elem->getVertex(v);
+        auto onWhat = vertex->onWhat();
+        result[onWhat].insert(vertex);
+      }
+    }
+  }
+
+  return result;
+}
+
+template std::unordered_map<GEntity *, std::unordered_set<MVertex *>>
+findNonOwnedVerticesToSave<2>(
+  GModel *const model, int partition,
+  const std::unordered_map<typename OverlapHelpers<2>::PartitionEntity *,
+                           std::unordered_set<MElement *>> &coveredEntities);
+template std::unordered_map<GEntity *, std::unordered_set<MVertex *>>
+findNonOwnedVerticesToSave<3>(
+  GModel *const model, int partition,
+  const std::unordered_map<typename OverlapHelpers<3>::PartitionEntity *,
+                           std::unordered_set<MElement *>> &coveredEntities);
