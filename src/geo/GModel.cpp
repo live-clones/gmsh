@@ -326,6 +326,16 @@ bool GModel::empty() const
   return vertices.empty() && edges.empty() && faces.empty() && regions.empty();
 }
 
+int GModel::overlapDim() const { 
+  if (std::get<1>(_overlaps).size() > 0) {
+    return 3; // 3D overlap
+  }
+  else if (std::get<0>(_overlaps).size() > 0) {
+    return 2; // 2D overlap
+  }
+  return 0; // no overlap
+}
+
 GRegion *GModel::getRegionByTag(int n) const
 {
   GRegion tmp((GModel *)this, n);

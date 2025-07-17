@@ -392,6 +392,9 @@ public:
   const_eiter lastEdge() const { return edges.end(); }
   const_viter lastVertex() const { return vertices.end(); }
 
+
+  // Returns 0 (no overlap), 2 (2D overlap) or 3 (3D overlap)
+  int overlapDim() const;
   // get the set of entities
   std::set<GRegion *, GEntityPtrLessThan> getRegions() const
   {
