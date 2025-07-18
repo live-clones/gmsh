@@ -79,7 +79,6 @@ void buildOverlapEntities(GModel* const model, const OverlapCollection<dim>& ove
 
   using OverlapEntity = typename OverlapHelpers<dim>::OverlapEntity;
   using ParentEntityType = typename OverlapHelpers<dim>::Entity;
-  std::unordered_map<ParentEntityType *, std::unordered_set<OverlapEntity*>> overlapEntities;
 
   if (overlaps.size() != model->getNumPartitions())
     Msg::Error("Number of partitions in overlaps does not match model partitions.");
@@ -102,7 +101,6 @@ void buildOverlapEntities(GModel* const model, const OverlapCollection<dim>& ove
         Msg::Error("Parent entity of dim %d and tag %d is not of the expected type.",
                    covered->dim(), covered->tag());
       }
-      overlapEntities[parent].insert(overlapEntity);
       
       // Add elements to the overlap entity - no new creation
       for (const auto& element : elements) {
