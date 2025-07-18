@@ -1424,6 +1424,57 @@ static bool readMSH4EdgeTags(
   return true;
 }
 
+static bool readMSH4FaceTags(
+  GModel *const model, FILE *fp, bool binary)
+{
+  size_t numFaceTags = 0;
+  if(binary) {
+    if (fread(&numFaceTags, sizeof(size_t), 1, fp) != 1) {
+      Msg::Error("Error reading number of face tags in MSH4 file.");
+      return false;
+    }
+  }
+  else {
+    if(fscanf(fp, "%zu", &numFaceTags) != 1) {
+      Msg::Error("Error reading number of face tags in MSH4 file.");
+      return false;
+    }
+  }
+
+  std::array<size_t, 6> faceData; // Num of vertices, the 4 vertices, the face tag
+  for (size_t k = 0; k < numFaceTags; ++k) {
+    if(binary) {
+      if (fread(faceData.data(), sizeof(size_t), 6, fp) != 6) {
+        Msg::Error("Error reading face tag data in MSH4 file.");
+        return false;
+      }
+    }
+    else {
+      if(fscanf(fp, "%zu %zu %zu %zu %zu %zu", &faceData[0], &faceData[1], &faceData[2], &faceData[3], &faceData[4], &faceData[5]) != 6) {
+        Msg::Error("Error reading face tag data in MSH4 file.");
+        return false;
+      }
+    }
+    if (faceData[0] != 3 && faceData[0] != 4) {
+      Msg::Error("Invalid number of vertices in face tag data in MSH4 file.");
+      return false;
+    }
+    MVertex *v0 = model->getMeshVertexByTag(faceData[1]);
+    MVertex *v1 = model->getMeshVertexByTag(faceData[2]);
+    MVertex *v2 = model->getMeshVertexByTag(faceData[3]);
+    MVertex *v3 = faceData[0] == 4 ? model->getMeshVertexByTag(faceData[4]) : nullptr;
+    if(!v0 || !v1 || !v2 || (faceData[0] == 4 && !v3)) {
+      Msg::Error("Invalid vertex numbers in face tag data in MSH4 file.");
+      return false;
+    }
+
+    MFace mf(v0, v1, v2, v3);
+    model->addMFace(std::move(mf), faceData[5]);
+  }
+
+  return true;
+}
+
 int GModel::_readMSH4(const std::string &name)
 {
   bool partitioned = false;
@@ -1602,6 +1653,13 @@ int GModel::_readMSH4(const std::string &name)
     else if (!strncmp(&str[1], "EdgeTags", 8)) {
       if (!readMSH4EdgeTags(this, fp, binary)) {
         Msg::Error("Could not read edge tags");
+        fclose(fp);
+        return 0;
+      }
+    }
+    else if (!strncmp(&str[1], "FaceTags", 8)) {
+      if (!readMSH4FaceTags(this, fp, binary)) {
+        Msg::Error("Could not read face tags");
         fclose(fp);
         return 0;
       }
@@ -3018,6 +3076,85 @@ static void writeMSH4EdgeTags(
   }
 }
 
+static void writeMSH4FaceTags(GModel *const model, FILE *fp, bool binary,
+                              bool partitioned, int partitionToSave)
+{
+  auto printFaces = [&](const GModel::hashmapMFace &faces) {
+    fprintf(fp, "$FaceTags\n");
+    if(binary) {
+      std::size_t numFaces = faces.size();
+      fwrite(&numFaces, sizeof(std::size_t), 1, fp);
+    }
+    else {
+      fprintf(fp, "%zu\n", faces.size());
+    }
+    for(const auto &[face, tag] : faces) {
+      size_t numVertices = face.getNumVertices();
+      if(numVertices > 4)
+        Msg::Error("MSH4 with face export does not support faces with more "
+                   "than 4 vertices.");
+      size_t v0 = face.getVertex(0)->getNum();
+      size_t v1 = face.getVertex(1)->getNum();
+      size_t v2 = face.getVertex(2)->getNum();
+      size_t v3 = numVertices == 4 ? face.getVertex(3)->getNum() : 0;
+
+      // In current format, we always write 4 tags and pad with a 0 if it's a
+      // triangle
+      if(binary) {
+        fwrite(&numVertices, sizeof(size_t), 1, fp);
+        fwrite(&v0, sizeof(size_t), 1, fp);
+        fwrite(&v1, sizeof(size_t), 1, fp);
+        fwrite(&v2, sizeof(size_t), 1, fp);
+        fwrite(&v3, sizeof(size_t), 1, fp);
+        fwrite(&tag, sizeof(size_t), 1, fp);
+      }
+      else {
+        fprintf(fp, "%zu %zu %zu %zu %zu %zu\n", numVertices, v0, v1, v2, v3,
+                tag);
+      }
+    }
+
+    if(binary) fprintf(fp, "\n");
+    fprintf(fp, "$EndFaceTags\n");
+  };
+
+  if(partitionToSave == 0 || !partitioned) {
+    printFaces(model->getMFaces());
+    return;
+  }
+  // Compute face subset to export
+  GModel::hashmapMFace subsetFaces;
+  auto addFacesFromEntity = [&](GEntity *entity) {
+    for(size_t k = 0; k < entity->getNumMeshElements(); ++k) {
+      MElement *el = entity->getMeshElement(k);
+      for(size_t j = 0; j < el->getNumFaces(); ++j) {
+        MFace mf = el->getFace(j);
+        auto it = model->getMFaces().find(mf);
+        if(it != model->getMFaces().end()) { subsetFaces[mf] = it->second; }
+      }
+    }
+  };
+  std::set<GRegion *, GEntityPtrLessThan> regions;
+  std::set<GFace *, GEntityPtrLessThan> faces;
+  std::set<GEdge *, GEntityPtrLessThan> edges;
+  std::set<GVertex *, GEntityPtrLessThan> vertices;
+  getEntitiesToSave(model, partitioned, partitionToSave, true, regions, faces,
+                    edges, vertices);
+  for(auto vertex : vertices) { addFacesFromEntity(vertex); }
+  for(auto edge : edges) { addFacesFromEntity(edge); }
+  for(auto face : faces) { addFacesFromEntity(face); }
+  for(auto region : regions) { addFacesFromEntity(region); }
+  for(const auto &overlaps2D : std::get<0>(model->getAllOverlaps())) {
+    if(overlaps2D->owningPartition() == partitionToSave)
+      addFacesFromEntity(overlaps2D);
+  }
+  for(const auto &overlaps3D : std::get<1>(model->getAllOverlaps())) {
+    if(overlaps3D->owningPartition() == partitionToSave)
+      addFacesFromEntity(overlaps3D);
+  }
+  printFaces(subsetFaces);
+}
+
 static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
                                    bool binary, double version)
 {
@@ -3494,6 +3631,9 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
 
   // edges
   writeMSH4EdgeTags(this, fp, binary, partitioned, partitionToSave);
+
+  // faces
+  writeMSH4FaceTags(this, fp, binary, partitioned, partitionToSave);
 
   // periodic
   writeMSH4PeriodicNodes(this, fp, binary, version);
