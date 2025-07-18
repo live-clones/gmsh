@@ -1688,6 +1688,7 @@ GMSH_API void gmshModelMeshGet_DF(double ** api_d_pos, size_t * api_d_pos_n,
                                   double ** DF_to_mesh_parametric, size_t * DF_to_mesh_parametric_n,
                                   size_t ** meshNodes_to_DF, size_t * meshNodes_to_DF_n,
                                   double ** mesh_to_DF_parametric, size_t * mesh_to_DF_parametric_n,
+                                  const int mesh_relation,
                                   int * ierr);
 
 /* Antoine put a comment here. */
@@ -1741,6 +1742,18 @@ GMSH_API void gmshModelMeshRead_DF(const char * filename_DF,
 /* Antoine put a comment here. */
 GMSH_API void gmshModelMeshRemove_small_features(const double l,
                                                  int * ierr);
+
+/* Antoine put a comment here. */
+GMSH_API void gmshModelMeshPrint_DF(const char * filename_DF,
+                                    int * ierr);
+
+/* Antoine put a comment here. */
+GMSH_API void gmshModelMeshSet_mesh_pos(const double * mesh_pos, const size_t mesh_pos_n,
+                                        int * ierr);
+
+/* Antoine put a comment here. */
+GMSH_API void gmshModelMeshGet_interfaces(size_t *** interfaces, size_t ** interfaces_n, size_t *interfaces_nn,
+                                          int * ierr);
 
 /* Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
  * the tag explicitly; otherwise a new tag is assigned automatically. Return

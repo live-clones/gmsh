@@ -2516,7 +2516,7 @@ GMSH_API void gmshModelMeshAdd_free_form(const int tag, const double * poly, con
   }
 }
 
-GMSH_API void gmshModelMeshGet_DF(double ** api_d_pos, size_t * api_d_pos_n, int ** api_d_tags, size_t * api_d_tags_n, size_t ** api_d_ids, size_t * api_d_ids_n, double ** api_t_pos, size_t * api_t_pos_n, int ** api_t_tags, size_t * api_t_tags_n, size_t ** api_t_ids, size_t * api_t_ids_n, size_t ** DF_to_meshNodes, size_t * DF_to_meshNodes_n, double ** DF_to_mesh_parametric, size_t * DF_to_mesh_parametric_n, size_t ** meshNodes_to_DF, size_t * meshNodes_to_DF_n, double ** mesh_to_DF_parametric, size_t * mesh_to_DF_parametric_n, int * ierr)
+GMSH_API void gmshModelMeshGet_DF(double ** api_d_pos, size_t * api_d_pos_n, int ** api_d_tags, size_t * api_d_tags_n, size_t ** api_d_ids, size_t * api_d_ids_n, double ** api_t_pos, size_t * api_t_pos_n, int ** api_t_tags, size_t * api_t_tags_n, size_t ** api_t_ids, size_t * api_t_ids_n, size_t ** DF_to_meshNodes, size_t * DF_to_meshNodes_n, double ** DF_to_mesh_parametric, size_t * DF_to_mesh_parametric_n, size_t ** meshNodes_to_DF, size_t * meshNodes_to_DF_n, double ** mesh_to_DF_parametric, size_t * mesh_to_DF_parametric_n, const int mesh_relation, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
@@ -2530,7 +2530,7 @@ GMSH_API void gmshModelMeshGet_DF(double ** api_d_pos, size_t * api_d_pos_n, int
     std::vector<double> api_DF_to_mesh_parametric_;
     std::vector<std::size_t> api_meshNodes_to_DF_;
     std::vector<double> api_mesh_to_DF_parametric_;
-    gmsh::model::mesh::get_DF(api_api_d_pos_, api_api_d_tags_, api_api_d_ids_, api_api_t_pos_, api_api_t_tags_, api_api_t_ids_, api_DF_to_meshNodes_, api_DF_to_mesh_parametric_, api_meshNodes_to_DF_, api_mesh_to_DF_parametric_);
+    gmsh::model::mesh::get_DF(api_api_d_pos_, api_api_d_tags_, api_api_d_ids_, api_api_t_pos_, api_api_t_tags_, api_api_t_ids_, api_DF_to_meshNodes_, api_DF_to_mesh_parametric_, api_meshNodes_to_DF_, api_mesh_to_DF_parametric_, mesh_relation);
     vector2ptr(api_api_d_pos_, api_d_pos, api_d_pos_n);
     vector2ptr(api_api_d_tags_, api_d_tags, api_d_tags_n);
     vector2ptr(api_api_d_ids_, api_d_ids, api_d_ids_n);
@@ -2684,6 +2684,42 @@ GMSH_API void gmshModelMeshRemove_small_features(const double l, int * ierr)
   if(ierr) *ierr = 0;
   try {
     gmsh::model::mesh::remove_small_features(l);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshPrint_DF(const char * filename_DF, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::model::mesh::print_DF(filename_DF);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshSet_mesh_pos(const double * mesh_pos, const size_t mesh_pos_n, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<double> api_mesh_pos_(mesh_pos, mesh_pos + mesh_pos_n);
+    gmsh::model::mesh::set_mesh_pos(api_mesh_pos_);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
+GMSH_API void gmshModelMeshGet_interfaces(size_t *** interfaces, size_t ** interfaces_n, size_t *interfaces_nn, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    std::vector<std::vector<std::size_t> > api_interfaces_;
+    gmsh::model::mesh::get_interfaces(api_interfaces_);
+    vectorvector2ptrptr(api_interfaces_, interfaces, interfaces_n, interfaces_nn);
   }
   catch(...){
     if(ierr) *ierr = 1;

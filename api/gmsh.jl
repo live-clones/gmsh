@@ -4653,7 +4653,7 @@ function add_free_form(tag, poly, _corners, loop = true)
 end
 
 """
-    gmsh.model.mesh.get_DF()
+    gmsh.model.mesh.get_DF(mesh_relation = true)
 
 Antoine put a comment here.
 
@@ -4670,8 +4670,9 @@ Types:
  - `DF_to_mesh_parametric`: vector of doubles
  - `meshNodes_to_DF`: vector of sizes
  - `mesh_to_DF_parametric`: vector of doubles
+ - `mesh_relation`: boolean
 """
-function get_DF()
+function get_DF(mesh_relation = true)
     api_api_d_pos_ = Ref{Ptr{Cdouble}}()
     api_api_d_pos_n_ = Ref{Csize_t}()
     api_api_d_tags_ = Ref{Ptr{Cint}}()
@@ -4694,8 +4695,8 @@ function get_DF()
     api_mesh_to_DF_parametric_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshGet_DF, gmsh.lib), Cvoid,
-          (Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          api_api_d_pos_, api_api_d_pos_n_, api_api_d_tags_, api_api_d_tags_n_, api_api_d_ids_, api_api_d_ids_n_, api_api_t_pos_, api_api_t_pos_n_, api_api_t_tags_, api_api_t_tags_n_, api_api_t_ids_, api_api_t_ids_n_, api_DF_to_meshNodes_, api_DF_to_meshNodes_n_, api_DF_to_mesh_parametric_, api_DF_to_mesh_parametric_n_, api_meshNodes_to_DF_, api_meshNodes_to_DF_n_, api_mesh_to_DF_parametric_, api_mesh_to_DF_parametric_n_, ierr)
+          (Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          api_api_d_pos_, api_api_d_pos_n_, api_api_d_tags_, api_api_d_tags_n_, api_api_d_ids_, api_api_d_ids_n_, api_api_t_pos_, api_api_t_pos_n_, api_api_t_tags_, api_api_t_tags_n_, api_api_t_ids_, api_api_t_ids_n_, api_DF_to_meshNodes_, api_DF_to_meshNodes_n_, api_DF_to_mesh_parametric_, api_DF_to_mesh_parametric_n_, api_meshNodes_to_DF_, api_meshNodes_to_DF_n_, api_mesh_to_DF_parametric_, api_mesh_to_DF_parametric_n_, mesh_relation, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     api_d_pos = unsafe_wrap(Array, api_api_d_pos_[], api_api_d_pos_n_[], own = true)
     api_d_tags = unsafe_wrap(Array, api_api_d_tags_[], api_api_d_tags_n_[], own = true)
@@ -4934,6 +4935,66 @@ function remove_small_features(l)
           l, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
+end
+
+"""
+    gmsh.model.mesh.print_DF(filename_DF)
+
+Antoine put a comment here.
+
+Types:
+ - `filename_DF`: string
+"""
+function print_DF(filename_DF)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshPrint_DF, gmsh.lib), Cvoid,
+          (Ptr{Cchar}, Ptr{Cint}),
+          filename_DF, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const print__df = print_DF
+
+"""
+    gmsh.model.mesh.set_mesh_pos(mesh_pos)
+
+Antoine put a comment here.
+
+Types:
+ - `mesh_pos`: vector of doubles
+"""
+function set_mesh_pos(mesh_pos)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshSet_mesh_pos, gmsh.lib), Cvoid,
+          (Ptr{Cdouble}, Csize_t, Ptr{Cint}),
+          convert(Vector{Cdouble}, mesh_pos), length(mesh_pos), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
+    gmsh.model.mesh.get_interfaces()
+
+Antoine put a comment here.
+
+Return `interfaces`.
+
+Types:
+ - `interfaces`: vector of vectors of sizes
+"""
+function get_interfaces()
+    api_interfaces_ = Ref{Ptr{Ptr{Csize_t}}}()
+    api_interfaces_n_ = Ref{Ptr{Csize_t}}()
+    api_interfaces_nn_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshGet_interfaces, gmsh.lib), Cvoid,
+          (Ptr{Ptr{Ptr{Csize_t}}}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          api_interfaces_, api_interfaces_n_, api_interfaces_nn_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    tmp_api_interfaces_ = unsafe_wrap(Array, api_interfaces_[], api_interfaces_nn_[], own = true)
+    tmp_api_interfaces_n_ = unsafe_wrap(Array, api_interfaces_n_[], api_interfaces_nn_[], own = true)
+    interfaces = [ unsafe_wrap(Array, tmp_api_interfaces_[i], tmp_api_interfaces_n_[i], own = true) for i in 1:api_interfaces_nn_[] ]
+    return interfaces
 end
 
 """

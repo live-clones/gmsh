@@ -5837,6 +5837,11 @@ GMSH_API void gmsh::model::mesh::set_mesh_pos(const std::vector<double> &api_pos
   return;
 }
 
+GMSH_API void gmsh::model::mesh::get_interfaces(std::vector<std::vector<size_t>> &api_interfaces){
+  discreteFront::instance()->get_interfaces_api(api_interfaces);
+  return;
+}
+
 
 
 // gmsh::model::mesh::field

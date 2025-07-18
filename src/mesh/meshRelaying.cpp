@@ -4612,6 +4612,12 @@ void discreteFront::renumber_DF(){
     }
   }
 }
+
+void discreteFront::get_interfaces_api(std::vector<std::vector<size_t>> &api_interfaces){
+  for(size_t i=0; i<interfaces.size(); ++i){
+    api_interfaces.push_back(interfaces[i].markers);
+  }
+}
   
 
 int clockwise(std::vector<double> loop)

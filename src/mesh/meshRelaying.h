@@ -278,6 +278,7 @@ public:
   std::vector<double> getPos() { return pos; }
 
   void get_potential_markers(double position[2], std::vector<std::pair<int, std::pair<size_t, size_t>>> &potential_markers);
+  void get_interfaces_api(std::vector<std::vector<size_t>> &api_interfaces);
 };
 
 class meshRelaying {

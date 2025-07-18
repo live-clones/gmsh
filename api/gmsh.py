@@ -5274,9 +5274,9 @@ class model:
                 raise Exception(logger.getLastError())
 
         @staticmethod
-        def get_DF():
+        def get_DF(mesh_relation=True):
             """
-            gmsh.model.mesh.get_DF()
+            gmsh.model.mesh.get_DF(mesh_relation=True)
 
             Antoine put a comment here.
 
@@ -5293,6 +5293,7 @@ class model:
             - `DF_to_mesh_parametric': vector of doubles
             - `meshNodes_to_DF': vector of sizes
             - `mesh_to_DF_parametric': vector of doubles
+            - `mesh_relation': boolean
             """
             api_api_d_pos_, api_api_d_pos_n_ = POINTER(c_double)(), c_size_t()
             api_api_d_tags_, api_api_d_tags_n_ = POINTER(c_int)(), c_size_t()
@@ -5316,6 +5317,7 @@ class model:
                 byref(api_DF_to_mesh_parametric_), byref(api_DF_to_mesh_parametric_n_),
                 byref(api_meshNodes_to_DF_), byref(api_meshNodes_to_DF_n_),
                 byref(api_mesh_to_DF_parametric_), byref(api_mesh_to_DF_parametric_n_),
+                c_int(bool(mesh_relation)),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
@@ -5557,6 +5559,63 @@ class model:
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+
+        @staticmethod
+        def print_DF(filename_DF):
+            """
+            gmsh.model.mesh.print_DF(filename_DF)
+
+            Antoine put a comment here.
+
+            Types:
+            - `filename_DF': string
+            """
+            ierr = c_int()
+            lib.gmshModelMeshPrint_DF(
+                c_char_p(filename_DF.encode()),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        print__df = print_DF
+
+        @staticmethod
+        def set_mesh_pos(mesh_pos):
+            """
+            gmsh.model.mesh.set_mesh_pos(mesh_pos)
+
+            Antoine put a comment here.
+
+            Types:
+            - `mesh_pos': vector of doubles
+            """
+            api_mesh_pos_, api_mesh_pos_n_ = _ivectordouble(mesh_pos)
+            ierr = c_int()
+            lib.gmshModelMeshSet_mesh_pos(
+                api_mesh_pos_, api_mesh_pos_n_,
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+
+        @staticmethod
+        def get_interfaces():
+            """
+            gmsh.model.mesh.get_interfaces()
+
+            Antoine put a comment here.
+
+            Return `interfaces'.
+
+            Types:
+            - `interfaces': vector of vectors of sizes
+            """
+            api_interfaces_, api_interfaces_n_, api_interfaces_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshGet_interfaces(
+                byref(api_interfaces_), byref(api_interfaces_n_), byref(api_interfaces_nn_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorvectorsize(api_interfaces_, api_interfaces_n_, api_interfaces_nn_)
 
 
         class field:

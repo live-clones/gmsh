@@ -770,6 +770,12 @@ module gmsh
         gmshModelMeshRead_DF
     procedure, nopass :: remove_small_features => &
         gmshModelMeshRemove_small_features
+    procedure, nopass :: print_DF => &
+        gmshModelMeshPrint_DF
+    procedure, nopass :: set_mesh_pos => &
+        gmshModelMeshSet_mesh_pos
+    procedure, nopass :: get_interfaces => &
+        gmshModelMeshGet_interfaces
   end type gmsh_model_mesh_t
 
   type, public :: gmsh_model_t
@@ -7727,6 +7733,7 @@ module gmsh
                                  DF_to_mesh_parametric, &
                                  meshNodes_to_DF, &
                                  mesh_to_DF_parametric, &
+                                 mesh_relation, &
                                  ierr)
     interface
     subroutine C_API(api_api_d_pos_, &
@@ -7749,6 +7756,7 @@ module gmsh
                      api_meshNodes_to_DF_n_, &
                      api_mesh_to_DF_parametric_, &
                      api_mesh_to_DF_parametric_n_, &
+                     mesh_relation, &
                      ierr_) &
       bind(C, name="gmshModelMeshGet_DF")
       use, intrinsic :: iso_c_binding
@@ -7772,6 +7780,7 @@ module gmsh
       integer(c_size_t), intent(out) :: api_meshNodes_to_DF_n_
       type(c_ptr), intent(out) :: api_mesh_to_DF_parametric_
       integer(c_size_t) :: api_mesh_to_DF_parametric_n_
+      integer(c_int), value, intent(in) :: mesh_relation
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
@@ -7785,6 +7794,7 @@ module gmsh
     real(c_double), dimension(:), allocatable, intent(out) :: DF_to_mesh_parametric
     integer(c_size_t), dimension(:), allocatable, intent(out) :: meshNodes_to_DF
     real(c_double), dimension(:), allocatable, intent(out) :: mesh_to_DF_parametric
+    logical, intent(in), optional :: mesh_relation
     integer(c_int), intent(out), optional :: ierr
     type(c_ptr) :: api_api_d_pos_
     integer(c_size_t) :: api_api_d_pos_n_
@@ -7826,6 +7836,7 @@ module gmsh
          api_meshNodes_to_DF_n_=api_meshNodes_to_DF_n_, &
          api_mesh_to_DF_parametric_=api_mesh_to_DF_parametric_, &
          api_mesh_to_DF_parametric_n_=api_mesh_to_DF_parametric_n_, &
+         mesh_relation=optval_c_bool(.true., mesh_relation), &
          ierr_=ierr)
     api_d_pos = ovectordouble_(api_api_d_pos_, &
       api_api_d_pos_n_)
@@ -8128,6 +8139,78 @@ module gmsh
     call C_API(l=real(l, c_double), &
          ierr_=ierr)
   end subroutine gmshModelMeshRemove_small_features
+
+  !> Antoine put a comment here.
+  subroutine gmshModelMeshPrint_DF(filename_DF, &
+                                   ierr)
+    interface
+    subroutine C_API(filename_DF, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshPrint_DF")
+      use, intrinsic :: iso_c_binding
+      character(len=1, kind=c_char), dimension(*), intent(in) :: filename_DF
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    character(len=*), intent(in) :: filename_DF
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(filename_DF=istring_(filename_DF), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshPrint_DF
+
+  !> Antoine put a comment here.
+  subroutine gmshModelMeshSet_mesh_pos(mesh_pos, &
+                                       ierr)
+    interface
+    subroutine C_API(api_mesh_pos_, &
+                     api_mesh_pos_n_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshSet_mesh_pos")
+      use, intrinsic :: iso_c_binding
+      real(c_double), dimension(*) :: api_mesh_pos_
+      integer(c_size_t), value, intent(in) :: api_mesh_pos_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    real(c_double), dimension(:), intent(in) :: mesh_pos
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(api_mesh_pos_=mesh_pos, &
+         api_mesh_pos_n_=size_gmsh_double(mesh_pos), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshSet_mesh_pos
+
+  !> Antoine put a comment here.
+  subroutine gmshModelMeshGet_interfaces(interfaces, &
+                                         interfaces_n, &
+                                         ierr)
+    interface
+    subroutine C_API(api_interfaces_, &
+                     api_interfaces_n_, &
+                     api_interfaces_nn_, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshGet_interfaces")
+      use, intrinsic :: iso_c_binding
+      type(c_ptr), intent(out) :: api_interfaces_
+      type(c_ptr), intent(out) :: api_interfaces_n_
+      integer(c_size_t), intent(out) :: api_interfaces_nn_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: interfaces
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: interfaces_n
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_interfaces_, api_interfaces_n_
+    integer(c_size_t) :: api_interfaces_nn_
+    call C_API(api_interfaces_=api_interfaces_, &
+         api_interfaces_n_=api_interfaces_n_, &
+         api_interfaces_nn_=api_interfaces_nn_, &
+         ierr_=ierr)
+    call ovectorvectorsize_(api_interfaces_, &
+      api_interfaces_n_, &
+      api_interfaces_nn_, &
+      interfaces, &
+      interfaces_n)
+  end subroutine gmshModelMeshGet_interfaces
 
   !> Add a new mesh size field of type `fieldType'. If `tag' is positive, assign
   !! the tag explicitly; otherwise a new tag is assigned automatically. Return

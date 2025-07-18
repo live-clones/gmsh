@@ -3321,7 +3321,8 @@ namespace gmsh { // Top-level functions
                          std::vector<std::size_t> & DF_to_meshNodes,
                          std::vector<double> & DF_to_mesh_parametric,
                          std::vector<std::size_t> & meshNodes_to_DF,
-                         std::vector<double> & mesh_to_DF_parametric)
+                         std::vector<double> & mesh_to_DF_parametric,
+                         const bool mesh_relation = true)
       {
         int ierr = 0;
         double *api_api_d_pos_; size_t api_api_d_pos_n_;
@@ -3334,7 +3335,7 @@ namespace gmsh { // Top-level functions
         double *api_DF_to_mesh_parametric_; size_t api_DF_to_mesh_parametric_n_;
         size_t *api_meshNodes_to_DF_; size_t api_meshNodes_to_DF_n_;
         double *api_mesh_to_DF_parametric_; size_t api_mesh_to_DF_parametric_n_;
-        gmshModelMeshGet_DF(&api_api_d_pos_, &api_api_d_pos_n_, &api_api_d_tags_, &api_api_d_tags_n_, &api_api_d_ids_, &api_api_d_ids_n_, &api_api_t_pos_, &api_api_t_pos_n_, &api_api_t_tags_, &api_api_t_tags_n_, &api_api_t_ids_, &api_api_t_ids_n_, &api_DF_to_meshNodes_, &api_DF_to_meshNodes_n_, &api_DF_to_mesh_parametric_, &api_DF_to_mesh_parametric_n_, &api_meshNodes_to_DF_, &api_meshNodes_to_DF_n_, &api_mesh_to_DF_parametric_, &api_mesh_to_DF_parametric_n_, &ierr);
+        gmshModelMeshGet_DF(&api_api_d_pos_, &api_api_d_pos_n_, &api_api_d_tags_, &api_api_d_tags_n_, &api_api_d_ids_, &api_api_d_ids_n_, &api_api_t_pos_, &api_api_t_pos_n_, &api_api_t_tags_, &api_api_t_tags_n_, &api_api_t_ids_, &api_api_t_ids_n_, &api_DF_to_meshNodes_, &api_DF_to_meshNodes_n_, &api_DF_to_mesh_parametric_, &api_DF_to_mesh_parametric_n_, &api_meshNodes_to_DF_, &api_meshNodes_to_DF_n_, &api_mesh_to_DF_parametric_, &api_mesh_to_DF_parametric_n_, (int)mesh_relation, &ierr);
         if(ierr) throwLastError();
         api_d_pos.assign(api_api_d_pos_, api_api_d_pos_ + api_api_d_pos_n_); gmshFree(api_api_d_pos_);
         api_d_tags.assign(api_api_d_tags_, api_api_d_tags_ + api_api_d_tags_n_); gmshFree(api_api_d_tags_);
@@ -3482,6 +3483,40 @@ namespace gmsh { // Top-level functions
         int ierr = 0;
         gmshModelMeshRemove_small_features(l, &ierr);
         if(ierr) throwLastError();
+      }
+
+      // gmsh::model::mesh::print_DF
+      //
+      // Antoine put a comment here.
+      inline void print_DF(const std::string & filename_DF)
+      {
+        int ierr = 0;
+        gmshModelMeshPrint_DF(filename_DF.c_str(), &ierr);
+        if(ierr) throwLastError();
+      }
+
+      // gmsh::model::mesh::set_mesh_pos
+      //
+      // Antoine put a comment here.
+      inline void set_mesh_pos(const std::vector<double> & mesh_pos)
+      {
+        int ierr = 0;
+        double *api_mesh_pos_; size_t api_mesh_pos_n_; vector2ptr(mesh_pos, &api_mesh_pos_, &api_mesh_pos_n_);
+        gmshModelMeshSet_mesh_pos(api_mesh_pos_, api_mesh_pos_n_, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_mesh_pos_);
+      }
+
+      // gmsh::model::mesh::get_interfaces
+      //
+      // Antoine put a comment here.
+      inline void get_interfaces(std::vector<std::vector<std::size_t> > & interfaces)
+      {
+        int ierr = 0;
+        size_t **api_interfaces_; size_t *api_interfaces_n_, api_interfaces_nn_;
+        gmshModelMeshGet_interfaces(&api_interfaces_, &api_interfaces_n_, &api_interfaces_nn_, &ierr);
+        if(ierr) throwLastError();
+        interfaces.resize(api_interfaces_nn_); for(size_t i = 0; i < api_interfaces_nn_; ++i){ interfaces[i].assign(api_interfaces_[i], api_interfaces_[i] + api_interfaces_n_[i]); gmshFree(api_interfaces_[i]); } gmshFree(api_interfaces_); gmshFree(api_interfaces_n_);
       }
 
       namespace field { // Mesh size field functions

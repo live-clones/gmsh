@@ -654,6 +654,9 @@ mesh.add('print_DF', doc, None, istring('filename_DF'))
 doc = '''Antoine put a comment here.'''
 mesh.add('set_mesh_pos', doc, None, ivectordouble('mesh_pos') )
 
+doc = '''Antoine put a comment here.'''
+mesh.add('get_interfaces', doc, None, ovectorvectorsize('interfaces') )
+
 
 ################################################################################
 

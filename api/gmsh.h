@@ -1909,7 +1909,8 @@ namespace gmsh { // Top-level functions
                            std::vector<std::size_t> & DF_to_meshNodes,
                            std::vector<double> & DF_to_mesh_parametric,
                            std::vector<std::size_t> & meshNodes_to_DF,
-                           std::vector<double> & mesh_to_DF_parametric);
+                           std::vector<double> & mesh_to_DF_parametric,
+                           const bool mesh_relation = true);
 
       // gmsh::model::mesh::get_front_nodes_position
       //
@@ -1976,6 +1977,21 @@ namespace gmsh { // Top-level functions
       //
       // Antoine put a comment here.
       GMSH_API void remove_small_features(const double l);
+
+      // gmsh::model::mesh::print_DF
+      //
+      // Antoine put a comment here.
+      GMSH_API void print_DF(const std::string & filename_DF);
+
+      // gmsh::model::mesh::set_mesh_pos
+      //
+      // Antoine put a comment here.
+      GMSH_API void set_mesh_pos(const std::vector<double> & mesh_pos);
+
+      // gmsh::model::mesh::get_interfaces
+      //
+      // Antoine put a comment here.
+      GMSH_API void get_interfaces(std::vector<std::vector<std::size_t> > & interfaces);
 
       namespace field { // Mesh size field functions
 
