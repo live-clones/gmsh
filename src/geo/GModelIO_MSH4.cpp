@@ -1259,7 +1259,7 @@ static bool readMSH4VolumeOverlaps(GModel *const model, FILE *fp, bool binary)
   else {
     if(fscanf(fp, "%zu", &nOverlaps) != 1) { return false; }
   }
-  Msg::Info("%zu volume overlap%s of dim %d", nOverlaps,
+  Msg::Info("Reading %zu volume overlap%s of dim %d", nOverlaps,
             nOverlaps > 1 ? "s" : "", dim);
   for(size_t k = 0; k < nOverlaps; k++) {
     int tag, coveredTag, partition;
@@ -1293,7 +1293,11 @@ static bool readMSH4VolumeOverlaps(GModel *const model, FILE *fp, bool binary)
     overlapEntity->setTag(tag);
 
     model->addOverlap(overlapEntity);
-    model->add(overlapEntity);
+    if(!model->add(overlapEntity)) {
+      delete overlapEntity;
+      Msg::Error("Could not add volume overlap %d to model", tag);
+      return false;
+    }
 
     // Read elements
     for(size_t i = 0; i < numElements; i++) {
@@ -1314,6 +1318,63 @@ static bool readMSH4VolumeOverlaps(GModel *const model, FILE *fp, bool binary)
     }
   }
   return true;
+}
+
+template <int dim>
+static bool readMSH4OverlapBoundaries(GModel *const model, FILE *fp, bool binary) {
+    size_t numGlobalEntities = 0;
+    if(binary) {
+        if(fread(&numGlobalEntities, sizeof(size_t), 1, fp) != 1) { return false; }
+    } else {
+        if(fscanf(fp, "%zu", &numGlobalEntities) != 1) { return false; }
+    }
+    for (size_t k = 0; k < numGlobalEntities; ++k) {
+        int dimOfEntity, tag;
+        size_t numBoundaryEntities;
+        if (binary) {
+            if (fread(&dimOfEntity, sizeof(int), 1, fp) != 1) { return false; }
+            if (fread(&tag, sizeof(int), 1, fp) != 1) { return false; }
+            if (fread(&numBoundaryEntities, sizeof(size_t), 1, fp) != 1) { return false; }
+        } else {
+            if (fscanf(fp, "%d %d %zu", &dimOfEntity, &tag, &numBoundaryEntities) != 3) { return false; }
+        }
+        GEntity *entity = model->getEntityByTag(dimOfEntity, tag);
+        if (!entity) {
+            Msg::Error("Could not find %dD entity %d in overlap boundary", dimOfEntity, tag);
+            return false;
+        }
+        std::vector<int> boundaryTags(numBoundaryEntities);
+        if (binary) {
+            if (fread(&boundaryTags[0], sizeof(int), numBoundaryEntities, fp) != numBoundaryEntities) {
+                return false;
+            }
+        } else {
+            for (size_t i = 0; i < numBoundaryEntities; ++i) {
+                if (fscanf(fp, "%d", &boundaryTags[i]) != 1) { return false; }
+            }
+        }
+        for (int boundaryTag : boundaryTags) {
+            GEntity *boundaryEntity = model->getEntityByTag(dim - 1,  boundaryTag);
+            if (!boundaryEntity) {
+                Msg::Error("Could not find %dD boundary entity %d in overlap", dim - 1, boundaryTag);
+                return false;
+            }
+            if (dim == dimOfEntity) {
+              auto parentCast = dynamic_cast<typename OverlapHelpers<dim>::Entity *>(entity);
+              if (!parentCast) Msg::Error("Could not cast %dD entity %d in overlap boundary.", dim, tag);
+              auto boundaryCast = dynamic_cast<typename OverlapHelpers<dim>::BoundaryEntity *>(boundaryEntity);
+              if (!boundaryCast) Msg::Error("Could not cast %dD boundary entity %d in overlap boundary.", dim - 1, boundaryTag);
+              model->addInnerBoundary(parentCast, boundaryCast);
+            } else {
+              auto parentCast = dynamic_cast<typename OverlapHelpers<dim - 1>::Entity *>(entity);
+              if (!parentCast) Msg::Error("Could not cast %dD entity %d in overlap boundary.", dim - 1, tag);
+              auto boundaryCast = dynamic_cast<typename OverlapHelpers<dim>::BoundaryEntity *>(boundaryEntity);
+              if (!boundaryCast) Msg::Error("Could not cast %dD boundary entity %d in overlap boundary.", dim - 2, boundaryTag);
+              model->addOverlapOfBoundary(parentCast, boundaryCast);
+            }
+        }
+    }
+    return true;
 }
 
 int GModel::_readMSH4(const std::string &name)
@@ -1519,6 +1580,20 @@ int GModel::_readMSH4(const std::string &name)
         return 0;
       }
     }
+    else if (!strncmp(&str[1], "OverlapBoundaries2D", 19)) {
+      if (!readMSH4OverlapBoundaries<2>(this, fp, binary)) {
+        Msg::Error("Could not read 2D boundary overlaps");
+        fclose(fp);
+        return 0;
+      }
+    }
+    else if (!strncmp(&str[1], "OverlapBoundaries3D", 19)) {
+      if (!readMSH4OverlapBoundaries<3>(this, fp, binary)) {
+        Msg::Error("Could not read 3D boundary overlaps");
+        fclose(fp);
+        return 0;
+      }
+    }
     else if(!strncmp(&str[1], "Parametrizations", 16)) {
       if(!readMSH4Parametrizations(this, fp, binary)) {
         Msg::Error("Could not read parametrizations");
@@ -1701,6 +1776,9 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     for(auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
       if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
         continue;
+      if (dynamic_cast<overlapFace*>(*it)) {
+        continue;
+      }
       if((*it)->geomType() != GEntity::PartitionCurve &&
          (*it)->geomType() != GEntity::GhostCurve)
         edges.insert(*it);
@@ -1708,6 +1786,9 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
       if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
         continue;
+      if (dynamic_cast<overlapFace*>(*it)) {
+        continue;
+      }
       if((*it)->geomType() != GEntity::PartitionSurface &&
          (*it)->geomType() != GEntity::GhostSurface)
         faces.insert(*it);
@@ -2600,9 +2681,6 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
   addOverlapBoundaries(model->getOverlapInnerBoundaries3D(), overlapBnd3D);
   addOverlapBoundaries(model->getOverlapOfBoundaries3D(), overlapBnd3D);
 
-  Msg::Info("OverlapBnd size: %zu 2D, %zu 3D",
-            overlapBnd2D.size(), overlapBnd3D.size());
-
   std::map<std::pair<int, int>, std::vector<MElement *> > elementsByType[4];
   std::size_t numElements = 0;
 
@@ -2652,8 +2730,6 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
       std::get_if<decltype(findCoveredEntitiesAndElementsToSave<2>(
         model, partitionToSave))>(&overlapElements);
     if(overlapFaces) {
-      Msg::Info("Found %lu overlapFaces for partition %d",
-                overlapFaces->size(), partitionToSave);
       for(const auto &[pface, elements] : *overlapFaces) {
         int tag = pface->tag();
         if(faces.count(pface)) continue; // already saved
@@ -3061,8 +3137,6 @@ static void writeMSH4VolumeOverlaps(GModel *const model, FILE *fp,
   for (const auto& overlap: overlapsToSave) {
     int tag = overlap->tag();
     int coveredTag = overlap->getCovered()->tag();
-    Msg::Info("Exporting overlap %d with covered tag %d, partition %d, num elements %zu",
-              tag, coveredTag, overlap->owningPartition(), overlap->getNumMeshElements());
     int partition = overlap->owningPartition();
     std::size_t numElements = overlap->getNumMeshElements();
     std::vector<size_t> tags; tags.reserve(numElements);
