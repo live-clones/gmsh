@@ -9287,6 +9287,459 @@ end
 end # end of module algorithm
 
 """
+    module gmsh.alphaShape
+
+Alpha shape class
+"""
+module alphaShape
+
+import ..gmsh
+
+"""
+    gmsh.alphaShape.add(name, tag = -1)
+
+Create a new alpha shape class with the given `name`. If `tag` is positive, use
+it, otherwise associate a new tag. Return the alpha shape tag.
+
+Return an integer.
+
+Types:
+ - `name`: string
+ - `tag`: integer
+"""
+function add(name, tag = -1)
+    ierr = Ref{Cint}()
+    api_result_ = ccall((:gmshAlphaShapeAdd, gmsh.lib), Cint,
+          (Ptr{Cchar}, Cint, Ptr{Cint}),
+          name, tag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_result_
+end
+
+"""
+    gmsh.alphaShape.clear(tag)
+
+Cleaer the alpha shape with tag `tag`.
+
+Types:
+ - `tag`: integer
+"""
+function clear(tag)
+    ierr = Ref{Cint}()
+    ccall((:gmshAlphaShapeClear, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cint}),
+          tag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
+    gmsh.alphaShape.triangulate(tag, vertices, removeExistingNodes)
+
+Triangulate the nodes given as concatenated triplets of x,y,z coordinates in
+`vertices`.
+
+Types:
+ - `tag`: integer
+ - `vertices`: vector of doubles
+ - `removeExistingNodes`: boolean
+"""
+function triangulate(tag, vertices, removeExistingNodes)
+    ierr = Ref{Cint}()
+    ccall((:gmshAlphaShapeTriangulate, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
+          tag, convert(Vector{Cdouble}, vertices), length(vertices), removeExistingNodes, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+
+"""
+    gmsh.alphaShape.alphaShape2D(tag, alpha, sizeAtElements)
+
+Create a 2D alpha shape from the nodes in the current alpha shape class with tag
+`tag`, using the given `alpha` value. The `elementTags` vector contains the tags
+of the elements to be used in the alpha shape, and `sizeAtElements` gives the
+size at each element.
+
+Types:
+ - `tag`: integer
+ - `alpha`: double
+ - `sizeAtElements`: vector of doubles
+"""
+function alphaShape2D(tag, alpha, sizeAtElements)
+    ierr = Ref{Cint}()
+    ccall((:gmshAlphaShapeAlphaShape2D, gmsh.lib), Cvoid,
+          (Cint, Cdouble, Ptr{Cdouble}, Csize_t, Ptr{Cint}),
+          tag, alpha, convert(Vector{Cdouble}, sizeAtElements), length(sizeAtElements), ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const alpha_shape2_d = alphaShape2D
+
+"""
+    gmsh.alphaShape.getNodes(tag)
+
+Get node coordinates from the alpha shape with tag `tag`. The coordinates are
+returned in the `vertices` vector as concatenated triplets of x, y, z
+coordinates.
+
+Return `vertices`.
+
+Types:
+ - `tag`: integer
+ - `vertices`: vector of doubles
+"""
+function getNodes(tag)
+    api_vertices_ = Ref{Ptr{Cdouble}}()
+    api_vertices_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshAlphaShapeGetNodes, gmsh.lib), Cvoid,
+          (Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          tag, api_vertices_, api_vertices_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    vertices = unsafe_wrap(Array, api_vertices_[], api_vertices_n_[], own = true)
+    return vertices
+end
+const get_nodes = getNodes
+
+"""
+    gmsh.alphaShape.getElements(tag)
+
+ Get all the elements in the Delaunay triangulation of the alpha shape with tag
+`tag`. The elements are returned in the `elements` vector as concatenated
+triplets of point indexes (with numbering starting at 1).
+
+Return `elementNodes`.
+
+Types:
+ - `tag`: integer
+ - `elementNodes`: vector of sizes
+"""
+function getElements(tag)
+    api_elementNodes_ = Ref{Ptr{Csize_t}}()
+    api_elementNodes_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshAlphaShapeGetElements, gmsh.lib), Cvoid,
+          (Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          tag, api_elementNodes_, api_elementNodes_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    elementNodes = unsafe_wrap(Array, api_elementNodes_[], api_elementNodes_n_[], own = true)
+    return elementNodes
+end
+const get_elements = getElements
+
+"""
+    gmsh.alphaShape.filterNodes(tag, sizeAtNodes, tolerance)
+
+Filter nodes that are too close to each other compared to the size field
+
+Types:
+ - `tag`: integer
+ - `sizeAtNodes`: vector of doubles
+ - `tolerance`: double
+"""
+function filterNodes(tag, sizeAtNodes, tolerance)
+    ierr = Ref{Cint}()
+    ccall((:gmshAlphaShapeFilterNodes, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cdouble}, Csize_t, Cdouble, Ptr{Cint}),
+          tag, convert(Vector{Cdouble}, sizeAtNodes), length(sizeAtNodes), tolerance, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const filter_nodes = filterNodes
+
+"""
+    gmsh.alphaShape.edgeRefine(tag, nodeTags, sizeAtNodes, tolerance)
+
+Refine the edges of the alpha shape with tag `tag` using the nodes in `nodeTags`
+and their sizes in `sizeAtNodes`. The `tolerance` is used to determine if two
+nodes are too far from each other.
+
+Types:
+ - `tag`: integer
+ - `nodeTags`: vector of sizes
+ - `sizeAtNodes`: vector of doubles
+ - `tolerance`: double
+"""
+function edgeRefine(tag, nodeTags, sizeAtNodes, tolerance)
+    ierr = Ref{Cint}()
+    ccall((:gmshAlphaShapeEdgeRefine, gmsh.lib), Cvoid,
+          (Cint, Ptr{Csize_t}, Csize_t, Ptr{Cdouble}, Csize_t, Cdouble, Ptr{Cint}),
+          tag, convert(Vector{Csize_t}, nodeTags), length(nodeTags), convert(Vector{Cdouble}, sizeAtNodes), length(sizeAtNodes), tolerance, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const edge_refine = edgeRefine
+
+"""
+    gmsh.alphaShape.volumeRefine(tag, nodeTags, sizeAtNodes, minQualityLimit, minSizeLimit)
+
+Volume refine the alpha shape with tag `tag` using the nodes in `nodeTags` and
+their sizes in `sizeAtNodes`. The `minQualityLimit` and `minSizeLimit` are used
+to determine if an element should be refined.
+
+Types:
+ - `tag`: integer
+ - `nodeTags`: vector of sizes
+ - `sizeAtNodes`: vector of doubles
+ - `minQualityLimit`: double
+ - `minSizeLimit`: double
+"""
+function volumeRefine(tag, nodeTags, sizeAtNodes, minQualityLimit, minSizeLimit)
+    ierr = Ref{Cint}()
+    ccall((:gmshAlphaShapeVolumeRefine, gmsh.lib), Cvoid,
+          (Cint, Ptr{Csize_t}, Csize_t, Ptr{Cdouble}, Csize_t, Cdouble, Cdouble, Ptr{Cint}),
+          tag, convert(Vector{Csize_t}, nodeTags), length(nodeTags), convert(Vector{Cdouble}, sizeAtNodes), length(sizeAtNodes), minQualityLimit, minSizeLimit, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const volume_refine = volumeRefine
+
+"""
+    gmsh.alphaShape.applyChew(tag, sizeAtNodes, minQualityLimit, minSizeLimit)
+
+Apply Chew`s algorithm for mesh refinement on the alpha shape with tag `tag`.
+The nodes to be used in the refinement are given in `nodeTags` and their sizes
+in `sizeAtNodes`. The `minQualityLimit` and `minSizeLimit` are used to determine
+if an element should be refined.
+
+Types:
+ - `tag`: integer
+ - `sizeAtNodes`: vector of doubles
+ - `minQualityLimit`: double
+ - `minSizeLimit`: double
+"""
+function applyChew(tag, sizeAtNodes, minQualityLimit, minSizeLimit)
+    ierr = Ref{Cint}()
+    ccall((:gmshAlphaShapeApplyChew, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cdouble}, Csize_t, Cdouble, Cdouble, Ptr{Cint}),
+          tag, convert(Vector{Cdouble}, sizeAtNodes), length(sizeAtNodes), minQualityLimit, minSizeLimit, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const apply_chew = applyChew
+
+"""
+    gmsh.alphaShape.setBoundaryModel(tag, boundaryModelName)
+
+Set a (GMSH) boundary model with name `boundaryModelName` for the alpha shape
+with tag `tag`. This model can be used to match the alpha shape`s boundary edges
+with the physical groups of the boundary model.
+
+Types:
+ - `tag`: integer
+ - `boundaryModelName`: string
+"""
+function setBoundaryModel(tag, boundaryModelName)
+    ierr = Ref{Cint}()
+    ccall((:gmshAlphaShapeSetBoundaryModel, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cchar}, Ptr{Cint}),
+          tag, boundaryModelName, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const set_boundary_model = setBoundaryModel
+
+"""
+    gmsh.alphaShape.matchAlphaShapeWithModel(tag, boundaryModelName, tolerance)
+
+Match the boundary edges of the alpha shape with tag `tag` to the physical
+groups of the boundary model `boundaryModelName`. The colored edges are returned
+in `coloredEdges` as a vector matching the edges of getEdgesOfAlphaShape.
+
+Return `coloredEdges`.
+
+Types:
+ - `tag`: integer
+ - `boundaryModelName`: string
+ - `tolerance`: double
+ - `coloredEdges`: vector of integers
+"""
+function matchAlphaShapeWithModel(tag, boundaryModelName, tolerance)
+    api_coloredEdges_ = Ref{Ptr{Cint}}()
+    api_coloredEdges_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshAlphaShapeMatchAlphaShapeWithModel, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cchar}, Cdouble, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Cint}),
+          tag, boundaryModelName, tolerance, api_coloredEdges_, api_coloredEdges_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    coloredEdges = unsafe_wrap(Array, api_coloredEdges_[], api_coloredEdges_n_[], own = true)
+    return coloredEdges
+end
+const match_alpha_shape_with_model = matchAlphaShapeWithModel
+
+"""
+    gmsh.alphaShape.moveNodes(tag, displacement, recoverDelaunay = false)
+
+Apply a displacement to the nodes of the alpha shape with tag `tag`. The
+displacement is given as a vector of concatenated triplets of x, y, z
+coordinates. If a boundary model `boundaryModelName` is provided, the
+displacement is corrected so that nodes remain inside the model. If
+`boundaryModelName` is empty, the displacement is applied without any
+correction. If `recoverDelaunay` is set, we adapt the triangulation to recover
+Delaunayness after displacement.
+
+Types:
+ - `tag`: integer
+ - `displacement`: vector of doubles
+ - `recoverDelaunay`: boolean
+"""
+function moveNodes(tag, displacement, recoverDelaunay = false)
+    ierr = Ref{Cint}()
+    ccall((:gmshAlphaShapeMoveNodes, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cdouble}, Csize_t, Cint, Ptr{Cint}),
+          tag, convert(Vector{Cdouble}, displacement), length(displacement), recoverDelaunay, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const move_nodes = moveNodes
+
+"""
+    gmsh.alphaShape.correctDisplacement(tag, dx, tolerance)
+
+Correct the displacement `dx` of the nodes of the alpha shape with tag `tag` so
+that they remain inside the boundary model `boundaryModelName`. The corrected
+displacement is returned in `correctedDx`. The `tolerance` is used to determine
+if a node is inside the model.
+
+Return `correctedDx`.
+
+Types:
+ - `tag`: integer
+ - `dx`: vector of doubles
+ - `tolerance`: double
+ - `correctedDx`: vector of doubles
+"""
+function correctDisplacement(tag, dx, tolerance)
+    api_correctedDx_ = Ref{Ptr{Cdouble}}()
+    api_correctedDx_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshAlphaShapeCorrectDisplacement, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cdouble}, Csize_t, Cdouble, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          tag, convert(Vector{Cdouble}, dx), length(dx), tolerance, api_correctedDx_, api_correctedDx_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    correctedDx = unsafe_wrap(Array, api_correctedDx_[], api_correctedDx_n_[], own = true)
+    return correctedDx
+end
+const correct_displacement = correctDisplacement
+
+"""
+    gmsh.alphaShape.createAlphaShapeOctree(tag)
+
+Create an octree on the triangles of the alpha shape with tag `tag`.
+
+Types:
+ - `tag`: integer
+"""
+function createAlphaShapeOctree(tag)
+    ierr = Ref{Cint}()
+    ccall((:gmshAlphaShapeCreateAlphaShapeOctree, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cint}),
+          tag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const create_alpha_shape_octree = createAlphaShapeOctree
+
+"""
+    gmsh.alphaShape.getTrianglesAndParametricCoords(tag, points)
+
+Get the triangles and parametric coordinates of the alpha shape with tag `tag`.
+The triangles are returned as indices matching the elements from getElements,
+and the parametric coordinates are returned in `parametricCoords` as
+concatenated triplets of u, v, w coordinates.
+
+Return `triangles`, `parametricCoords`.
+
+Types:
+ - `tag`: integer
+ - `points`: vector of doubles
+ - `triangles`: vector of sizes
+ - `parametricCoords`: vector of doubles
+"""
+function getTrianglesAndParametricCoords(tag, points)
+    api_triangles_ = Ref{Ptr{Csize_t}}()
+    api_triangles_n_ = Ref{Csize_t}()
+    api_parametricCoords_ = Ref{Ptr{Cdouble}}()
+    api_parametricCoords_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshAlphaShapeGetTrianglesAndParametricCoords, gmsh.lib), Cvoid,
+          (Cint, Ptr{Cdouble}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          tag, convert(Vector{Cdouble}, points), length(points), api_triangles_, api_triangles_n_, api_parametricCoords_, api_parametricCoords_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    triangles = unsafe_wrap(Array, api_triangles_[], api_triangles_n_[], own = true)
+    parametricCoords = unsafe_wrap(Array, api_parametricCoords_[], api_parametricCoords_n_[], own = true)
+    return triangles, parametricCoords
+end
+const get_triangles_and_parametric_coords = getTrianglesAndParametricCoords
+
+"""
+    gmsh.alphaShape.getAlphaShapeMesh(tag)
+
+Get the mesh of the alpha shape with tag `tag`. The mesh is returned as a vector
+of concatenated triplets of x, y, z coordinates in `coords`, and as a vector of
+concatenated triplets of point indexes in `triangles`, and as a vector of
+concatenated doublets of edge indexes in `edges`.
+
+Return `coords`, `triangles`, `edges`.
+
+Types:
+ - `tag`: integer
+ - `coords`: vector of doubles
+ - `triangles`: vector of sizes
+ - `edges`: vector of sizes
+"""
+function getAlphaShapeMesh(tag)
+    api_coords_ = Ref{Ptr{Cdouble}}()
+    api_coords_n_ = Ref{Csize_t}()
+    api_triangles_ = Ref{Ptr{Csize_t}}()
+    api_triangles_n_ = Ref{Csize_t}()
+    api_edges_ = Ref{Ptr{Csize_t}}()
+    api_edges_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshAlphaShapeGetAlphaShapeMesh, gmsh.lib), Cvoid,
+          (Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          tag, api_coords_, api_coords_n_, api_triangles_, api_triangles_n_, api_edges_, api_edges_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    coords = unsafe_wrap(Array, api_coords_[], api_coords_n_[], own = true)
+    triangles = unsafe_wrap(Array, api_triangles_[], api_triangles_n_[], own = true)
+    edges = unsafe_wrap(Array, api_edges_[], api_edges_n_[], own = true)
+    return coords, triangles, edges
+end
+const get_alpha_shape_mesh = getAlphaShapeMesh
+
+"""
+    gmsh.alphaShape.getDelaunayMesh(tag)
+
+Get the full Delaunay mesh as a set of coordinates and triangles from the alpha
+shape with tag `tag`.
+
+Return `coords`, `triangles`.
+
+Types:
+ - `tag`: integer
+ - `coords`: vector of doubles
+ - `triangles`: vector of sizes
+"""
+function getDelaunayMesh(tag)
+    api_coords_ = Ref{Ptr{Cdouble}}()
+    api_coords_n_ = Ref{Csize_t}()
+    api_triangles_ = Ref{Ptr{Csize_t}}()
+    api_triangles_n_ = Ref{Csize_t}()
+    ierr = Ref{Cint}()
+    ccall((:gmshAlphaShapeGetDelaunayMesh, gmsh.lib), Cvoid,
+          (Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
+          tag, api_coords_, api_coords_n_, api_triangles_, api_triangles_n_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    coords = unsafe_wrap(Array, api_coords_[], api_coords_n_[], own = true)
+    triangles = unsafe_wrap(Array, api_triangles_[], api_triangles_n_[], own = true)
+    return coords, triangles
+end
+const get_delaunay_mesh = getDelaunayMesh
+
+end # end of module alphaShape
+
+"""
     module gmsh.plugin
 
 Plugin functions

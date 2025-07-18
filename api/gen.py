@@ -1109,6 +1109,65 @@ algorithm.add('tetrahedralize', doc, None, ivectordouble('coordinates'), ovector
 
 ################################################################################
 
+alphaShape = gmsh.add_module('alphaShape', 'Alpha shape class')
+
+doc = '''Create a new alpha shape class with the given `name'. If `tag' is positive, use it, otherwise associate a new tag. Return the alpha shape tag.'''
+alphaShape.add('add', doc, oint, istring('name'), iint('tag', '-1'))
+
+doc = '''Cleaer the alpha shape with tag `tag'.'''
+alphaShape.add('clear', doc, None, iint('tag'))
+
+doc = '''Triangulate the nodes given as concatenated triplets of x,y,z coordinates in `vertices'.'''
+alphaShape.add('triangulate', doc, None, iint('tag'), ivectordouble('vertices'), ibool('removeExistingNodes'))
+
+doc = '''Create a 2D alpha shape from the nodes in the current alpha shape class with tag `tag', using the given `alpha' value. The `elementTags' vector contains the tags of the elements to be used in the alpha shape, and `sizeAtElements' gives the size at each element.'''
+alphaShape.add('alphaShape2D', doc, None, iint('tag'), idouble('alpha'), ivectordouble('sizeAtElements'))
+
+doc = '''Get node coordinates from the alpha shape with tag `tag'. The coordinates are returned in the `vertices' vector as concatenated triplets of x, y, z coordinates.'''
+alphaShape.add('getNodes', doc, None, iint('tag'), ovectordouble('vertices'))
+
+doc = ''' Get all the elements in the Delaunay triangulation of the alpha shape with tag `tag'. The elements are returned in the `elements' vector as concatenated triplets of point indexes (with numbering starting at 1).'''
+alphaShape.add('getElements', doc, None, iint('tag'), ovectorsize('elementNodes'))
+
+doc = '''Filter nodes that are too close to each other compared to the size field'''
+alphaShape.add('filterNodes', doc, None, iint('tag'), ivectordouble('sizeAtNodes'), idouble('tolerance'))
+
+doc = '''Refine the edges of the alpha shape with tag `tag' using the nodes in `nodeTags' and their sizes in `sizeAtNodes'. The `tolerance' is used to determine if two nodes are too far from each other.'''
+alphaShape.add('edgeRefine', doc, None, iint('tag'), ivectorsize('nodeTags'), ivectordouble('sizeAtNodes'), idouble('tolerance'))
+
+doc = '''Volume refine the alpha shape with tag `tag' using the nodes in `nodeTags' and their sizes in `sizeAtNodes'. The `minQualityLimit' and `minSizeLimit' are used to determine if an element should be refined.'''
+alphaShape.add('volumeRefine', doc, None, iint('tag'), ivectorsize('nodeTags'), ivectordouble('sizeAtNodes'), idouble('minQualityLimit'), idouble('minSizeLimit'))
+
+doc = '''Apply Chew's algorithm for mesh refinement on the alpha shape with tag `tag'. The nodes to be used in the refinement are given in `nodeTags' and their sizes in `sizeAtNodes'. The `minQualityLimit' and `minSizeLimit' are used to determine if an element should be refined.'''
+alphaShape.add('applyChew', doc, None, iint('tag'), ivectordouble('sizeAtNodes'), idouble('minQualityLimit'), idouble('minSizeLimit'))
+
+doc = '''Set a (GMSH) boundary model with name `boundaryModelName' for the alpha shape with tag `tag'. This model can be used to match the alpha shape's boundary edges with the physical groups of the boundary model.'''
+alphaShape.add('setBoundaryModel', doc, None, iint('tag'), istring('boundaryModelName'))
+
+doc = '''Match the boundary edges of the alpha shape with tag `tag' to the physical groups of the boundary model `boundaryModelName'. The colored edges are returned in `coloredEdges' as a vector matching the edges of getEdgesOfAlphaShape.'''
+alphaShape.add('matchAlphaShapeWithModel', doc, None, iint('tag'), istring('boundaryModelName'), idouble('tolerance'), ovectorint('coloredEdges'))
+
+doc = '''Apply a displacement to the nodes of the alpha shape with tag `tag'. The displacement is given as a vector of concatenated triplets of x, y, z coordinates. If a boundary model `boundaryModelName' is provided, the displacement is corrected so that nodes remain inside the model. If `boundaryModelName' is empty, the displacement is applied without any correction. If `recoverDelaunay' is set, we adapt the triangulation to recover Delaunayness after displacement.'''
+alphaShape.add('moveNodes', doc, None, iint('tag'), ivectordouble('displacement'), ibool('recoverDelaunay', 'false', 'False'))
+
+doc = '''Correct the displacement `dx' of the nodes of the alpha shape with tag `tag' so that they remain inside the boundary model `boundaryModelName'. The corrected displacement is returned in `correctedDx'. The `tolerance' is used to determine if a node is inside the model.'''
+alphaShape.add('correctDisplacement', doc, None, iint('tag'), ivectordouble('dx'), idouble('tolerance'), ovectordouble('correctedDx'))
+
+doc = '''Create an octree on the triangles of the alpha shape with tag `tag'.'''
+alphaShape.add('createAlphaShapeOctree', doc, None, iint('tag'))
+
+doc = '''Get the triangles and parametric coordinates of the alpha shape with tag `tag'. The triangles are returned as indices matching the elements from getElements, and the parametric coordinates are returned in `parametricCoords' as concatenated triplets of u, v, w coordinates.'''
+alphaShape.add('getTrianglesAndParametricCoords', doc, None, iint('tag'), ivectordouble('points'), ovectorsize('triangles'), ovectordouble('parametricCoords'))
+
+# void getCleanAlphaShapeMesh(std::vector<double> & coords, std::vector<size_t> & triangles);
+doc = '''Get the mesh of the alpha shape with tag `tag'. The mesh is returned as a vector of concatenated triplets of x, y, z coordinates in `coords', and as a vector of concatenated triplets of point indexes in `triangles', and as a vector of concatenated doublets of edge indexes in `edges'.'''
+alphaShape.add('getAlphaShapeMesh', doc, None, iint('tag'), ovectordouble('coords'), ovectorsize('triangles'), ovectorsize('edges'))
+
+doc = '''Get the full Delaunay mesh as a set of coordinates and triangles from the alpha shape with tag `tag'.'''
+alphaShape.add('getDelaunayMesh', doc, None, iint('tag'), ovectordouble('coords'), ovectorsize('triangles'))
+
+################################################################################
+
 plugin = gmsh.add_module('plugin', 'plugin functions')
 
 doc = '''Set the numerical option `option' to the value `value' for plugin `name'. Plugins available in the official Gmsh release are listed in the "Gmsh plugins" chapter of the Gmsh reference manual (https://gmsh.info/doc/texinfo/gmsh.html#Gmsh-plugins).'''

@@ -1,3 +1,6 @@
+#ifndef ALPHA_SHAPE_OCTREE_H
+#define ALPHA_SHAPE_OCTREE_H
+
 #include <algorithm>
 #include <array>
 #include <chrono>
@@ -6,7 +9,7 @@
 #include <ostream>
 #include <unordered_map>
 #include <vector>
-#include "gmsh.h"
+// #include "gmsh.h"
 
 template<int dim>
 using _Coord = std::array<double, dim>;
@@ -101,6 +104,11 @@ class OctreeNode {
     if (leaf_) delete leaf_;
     if (children_)delete[] children_;
   }
+  void reset()
+  {
+    if (leaf_) delete leaf_;
+    if (children_) delete[] children_;
+  }
 
   void search(const BBox<dim> bbox, std::vector<Object> &result) {
     if (children_) {
@@ -151,3 +159,5 @@ class OctreeNode {
     }
   }
 };
+
+# endif // ALPHA_SHAPE_OCTREE_H

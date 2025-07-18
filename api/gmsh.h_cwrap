@@ -6548,6 +6548,308 @@ namespace gmsh { // Top-level functions
 
   } // namespace algorithm
 
+  namespace alphaShape { // Alpha shape class
+
+    // gmsh::alphaShape::add
+    //
+    // Create a new alpha shape class with the given `name'. If `tag' is positive,
+    // use it, otherwise associate a new tag. Return the alpha shape tag.
+    inline int add(const std::string & name,
+                   const int tag = -1)
+    {
+      int ierr = 0;
+      int result_api_ = gmshAlphaShapeAdd(name.c_str(), tag, &ierr);
+      if(ierr) throwLastError();
+      return result_api_;
+    }
+
+    // gmsh::alphaShape::clear
+    //
+    // Cleaer the alpha shape with tag `tag'.
+    inline void clear(const int tag)
+    {
+      int ierr = 0;
+      gmshAlphaShapeClear(tag, &ierr);
+      if(ierr) throwLastError();
+    }
+
+    // gmsh::alphaShape::triangulate
+    //
+    // Triangulate the nodes given as concatenated triplets of x,y,z coordinates in
+    // `vertices'.
+    inline void triangulate(const int tag,
+                            const std::vector<double> & vertices,
+                            const bool removeExistingNodes)
+    {
+      int ierr = 0;
+      double *api_vertices_; size_t api_vertices_n_; vector2ptr(vertices, &api_vertices_, &api_vertices_n_);
+      gmshAlphaShapeTriangulate(tag, api_vertices_, api_vertices_n_, (int)removeExistingNodes, &ierr);
+      if(ierr) throwLastError();
+      gmshFree(api_vertices_);
+    }
+
+    // gmsh::alphaShape::alphaShape2D
+    //
+    // Create a 2D alpha shape from the nodes in the current alpha shape class with
+    // tag `tag', using the given `alpha' value. The `elementTags' vector contains
+    // the tags of the elements to be used in the alpha shape, and `sizeAtElements'
+    // gives the size at each element.
+    inline void alphaShape2D(const int tag,
+                             const double alpha,
+                             const std::vector<double> & sizeAtElements)
+    {
+      int ierr = 0;
+      double *api_sizeAtElements_; size_t api_sizeAtElements_n_; vector2ptr(sizeAtElements, &api_sizeAtElements_, &api_sizeAtElements_n_);
+      gmshAlphaShapeAlphaShape2D(tag, alpha, api_sizeAtElements_, api_sizeAtElements_n_, &ierr);
+      if(ierr) throwLastError();
+      gmshFree(api_sizeAtElements_);
+    }
+
+    // gmsh::alphaShape::getNodes
+    //
+    // Get node coordinates from the alpha shape with tag `tag'. The coordinates
+    // are returned in the `vertices' vector as concatenated triplets of x, y, z
+    // coordinates.
+    inline void getNodes(const int tag,
+                         std::vector<double> & vertices)
+    {
+      int ierr = 0;
+      double *api_vertices_; size_t api_vertices_n_;
+      gmshAlphaShapeGetNodes(tag, &api_vertices_, &api_vertices_n_, &ierr);
+      if(ierr) throwLastError();
+      vertices.assign(api_vertices_, api_vertices_ + api_vertices_n_); gmshFree(api_vertices_);
+    }
+
+    // gmsh::alphaShape::getElements
+    //
+    //  Get all the elements in the Delaunay triangulation of the alpha shape with
+    // tag `tag'. The elements are returned in the `elements' vector as
+    // concatenated triplets of point indexes (with numbering starting at 1).
+    inline void getElements(const int tag,
+                            std::vector<std::size_t> & elementNodes)
+    {
+      int ierr = 0;
+      size_t *api_elementNodes_; size_t api_elementNodes_n_;
+      gmshAlphaShapeGetElements(tag, &api_elementNodes_, &api_elementNodes_n_, &ierr);
+      if(ierr) throwLastError();
+      elementNodes.assign(api_elementNodes_, api_elementNodes_ + api_elementNodes_n_); gmshFree(api_elementNodes_);
+    }
+
+    // gmsh::alphaShape::filterNodes
+    //
+    // Filter nodes that are too close to each other compared to the size field
+    inline void filterNodes(const int tag,
+                            const std::vector<double> & sizeAtNodes,
+                            const double tolerance)
+    {
+      int ierr = 0;
+      double *api_sizeAtNodes_; size_t api_sizeAtNodes_n_; vector2ptr(sizeAtNodes, &api_sizeAtNodes_, &api_sizeAtNodes_n_);
+      gmshAlphaShapeFilterNodes(tag, api_sizeAtNodes_, api_sizeAtNodes_n_, tolerance, &ierr);
+      if(ierr) throwLastError();
+      gmshFree(api_sizeAtNodes_);
+    }
+
+    // gmsh::alphaShape::edgeRefine
+    //
+    // Refine the edges of the alpha shape with tag `tag' using the nodes in
+    // `nodeTags' and their sizes in `sizeAtNodes'. The `tolerance' is used to
+    // determine if two nodes are too far from each other.
+    inline void edgeRefine(const int tag,
+                           const std::vector<std::size_t> & nodeTags,
+                           const std::vector<double> & sizeAtNodes,
+                           const double tolerance)
+    {
+      int ierr = 0;
+      size_t *api_nodeTags_; size_t api_nodeTags_n_; vector2ptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_);
+      double *api_sizeAtNodes_; size_t api_sizeAtNodes_n_; vector2ptr(sizeAtNodes, &api_sizeAtNodes_, &api_sizeAtNodes_n_);
+      gmshAlphaShapeEdgeRefine(tag, api_nodeTags_, api_nodeTags_n_, api_sizeAtNodes_, api_sizeAtNodes_n_, tolerance, &ierr);
+      if(ierr) throwLastError();
+      gmshFree(api_nodeTags_);
+      gmshFree(api_sizeAtNodes_);
+    }
+
+    // gmsh::alphaShape::volumeRefine
+    //
+    // Volume refine the alpha shape with tag `tag' using the nodes in `nodeTags'
+    // and their sizes in `sizeAtNodes'. The `minQualityLimit' and `minSizeLimit'
+    // are used to determine if an element should be refined.
+    inline void volumeRefine(const int tag,
+                             const std::vector<std::size_t> & nodeTags,
+                             const std::vector<double> & sizeAtNodes,
+                             const double minQualityLimit,
+                             const double minSizeLimit)
+    {
+      int ierr = 0;
+      size_t *api_nodeTags_; size_t api_nodeTags_n_; vector2ptr(nodeTags, &api_nodeTags_, &api_nodeTags_n_);
+      double *api_sizeAtNodes_; size_t api_sizeAtNodes_n_; vector2ptr(sizeAtNodes, &api_sizeAtNodes_, &api_sizeAtNodes_n_);
+      gmshAlphaShapeVolumeRefine(tag, api_nodeTags_, api_nodeTags_n_, api_sizeAtNodes_, api_sizeAtNodes_n_, minQualityLimit, minSizeLimit, &ierr);
+      if(ierr) throwLastError();
+      gmshFree(api_nodeTags_);
+      gmshFree(api_sizeAtNodes_);
+    }
+
+    // gmsh::alphaShape::applyChew
+    //
+    // Apply Chew's algorithm for mesh refinement on the alpha shape with tag
+    // `tag'. The nodes to be used in the refinement are given in `nodeTags' and
+    // their sizes in `sizeAtNodes'. The `minQualityLimit' and `minSizeLimit' are
+    // used to determine if an element should be refined.
+    inline void applyChew(const int tag,
+                          const std::vector<double> & sizeAtNodes,
+                          const double minQualityLimit,
+                          const double minSizeLimit)
+    {
+      int ierr = 0;
+      double *api_sizeAtNodes_; size_t api_sizeAtNodes_n_; vector2ptr(sizeAtNodes, &api_sizeAtNodes_, &api_sizeAtNodes_n_);
+      gmshAlphaShapeApplyChew(tag, api_sizeAtNodes_, api_sizeAtNodes_n_, minQualityLimit, minSizeLimit, &ierr);
+      if(ierr) throwLastError();
+      gmshFree(api_sizeAtNodes_);
+    }
+
+    // gmsh::alphaShape::setBoundaryModel
+    //
+    // Set a (GMSH) boundary model with name `boundaryModelName' for the alpha
+    // shape with tag `tag'. This model can be used to match the alpha shape's
+    // boundary edges with the physical groups of the boundary model.
+    inline void setBoundaryModel(const int tag,
+                                 const std::string & boundaryModelName)
+    {
+      int ierr = 0;
+      gmshAlphaShapeSetBoundaryModel(tag, boundaryModelName.c_str(), &ierr);
+      if(ierr) throwLastError();
+    }
+
+    // gmsh::alphaShape::matchAlphaShapeWithModel
+    //
+    // Match the boundary edges of the alpha shape with tag `tag' to the physical
+    // groups of the boundary model `boundaryModelName'. The colored edges are
+    // returned in `coloredEdges' as a vector matching the edges of
+    // getEdgesOfAlphaShape.
+    inline void matchAlphaShapeWithModel(const int tag,
+                                         const std::string & boundaryModelName,
+                                         const double tolerance,
+                                         std::vector<int> & coloredEdges)
+    {
+      int ierr = 0;
+      int *api_coloredEdges_; size_t api_coloredEdges_n_;
+      gmshAlphaShapeMatchAlphaShapeWithModel(tag, boundaryModelName.c_str(), tolerance, &api_coloredEdges_, &api_coloredEdges_n_, &ierr);
+      if(ierr) throwLastError();
+      coloredEdges.assign(api_coloredEdges_, api_coloredEdges_ + api_coloredEdges_n_); gmshFree(api_coloredEdges_);
+    }
+
+    // gmsh::alphaShape::moveNodes
+    //
+    // Apply a displacement to the nodes of the alpha shape with tag `tag'. The
+    // displacement is given as a vector of concatenated triplets of x, y, z
+    // coordinates. If a boundary model `boundaryModelName' is provided, the
+    // displacement is corrected so that nodes remain inside the model. If
+    // `boundaryModelName' is empty, the displacement is applied without any
+    // correction. If `recoverDelaunay' is set, we adapt the triangulation to
+    // recover Delaunayness after displacement.
+    inline void moveNodes(const int tag,
+                          const std::vector<double> & displacement,
+                          const bool recoverDelaunay = false)
+    {
+      int ierr = 0;
+      double *api_displacement_; size_t api_displacement_n_; vector2ptr(displacement, &api_displacement_, &api_displacement_n_);
+      gmshAlphaShapeMoveNodes(tag, api_displacement_, api_displacement_n_, (int)recoverDelaunay, &ierr);
+      if(ierr) throwLastError();
+      gmshFree(api_displacement_);
+    }
+
+    // gmsh::alphaShape::correctDisplacement
+    //
+    // Correct the displacement `dx' of the nodes of the alpha shape with tag `tag'
+    // so that they remain inside the boundary model `boundaryModelName'. The
+    // corrected displacement is returned in `correctedDx'. The `tolerance' is used
+    // to determine if a node is inside the model.
+    inline void correctDisplacement(const int tag,
+                                    const std::vector<double> & dx,
+                                    const double tolerance,
+                                    std::vector<double> & correctedDx)
+    {
+      int ierr = 0;
+      double *api_dx_; size_t api_dx_n_; vector2ptr(dx, &api_dx_, &api_dx_n_);
+      double *api_correctedDx_; size_t api_correctedDx_n_;
+      gmshAlphaShapeCorrectDisplacement(tag, api_dx_, api_dx_n_, tolerance, &api_correctedDx_, &api_correctedDx_n_, &ierr);
+      if(ierr) throwLastError();
+      gmshFree(api_dx_);
+      correctedDx.assign(api_correctedDx_, api_correctedDx_ + api_correctedDx_n_); gmshFree(api_correctedDx_);
+    }
+
+    // gmsh::alphaShape::createAlphaShapeOctree
+    //
+    // Create an octree on the triangles of the alpha shape with tag `tag'.
+    inline void createAlphaShapeOctree(const int tag)
+    {
+      int ierr = 0;
+      gmshAlphaShapeCreateAlphaShapeOctree(tag, &ierr);
+      if(ierr) throwLastError();
+    }
+
+    // gmsh::alphaShape::getTrianglesAndParametricCoords
+    //
+    // Get the triangles and parametric coordinates of the alpha shape with tag
+    // `tag'. The triangles are returned as indices matching the elements from
+    // getElements, and the parametric coordinates are returned in
+    // `parametricCoords' as concatenated triplets of u, v, w coordinates.
+    inline void getTrianglesAndParametricCoords(const int tag,
+                                                const std::vector<double> & points,
+                                                std::vector<std::size_t> & triangles,
+                                                std::vector<double> & parametricCoords)
+    {
+      int ierr = 0;
+      double *api_points_; size_t api_points_n_; vector2ptr(points, &api_points_, &api_points_n_);
+      size_t *api_triangles_; size_t api_triangles_n_;
+      double *api_parametricCoords_; size_t api_parametricCoords_n_;
+      gmshAlphaShapeGetTrianglesAndParametricCoords(tag, api_points_, api_points_n_, &api_triangles_, &api_triangles_n_, &api_parametricCoords_, &api_parametricCoords_n_, &ierr);
+      if(ierr) throwLastError();
+      gmshFree(api_points_);
+      triangles.assign(api_triangles_, api_triangles_ + api_triangles_n_); gmshFree(api_triangles_);
+      parametricCoords.assign(api_parametricCoords_, api_parametricCoords_ + api_parametricCoords_n_); gmshFree(api_parametricCoords_);
+    }
+
+    // gmsh::alphaShape::getAlphaShapeMesh
+    //
+    // Get the mesh of the alpha shape with tag `tag'. The mesh is returned as a
+    // vector of concatenated triplets of x, y, z coordinates in `coords', and as a
+    // vector of concatenated triplets of point indexes in `triangles', and as a
+    // vector of concatenated doublets of edge indexes in `edges'.
+    inline void getAlphaShapeMesh(const int tag,
+                                  std::vector<double> & coords,
+                                  std::vector<std::size_t> & triangles,
+                                  std::vector<std::size_t> & edges)
+    {
+      int ierr = 0;
+      double *api_coords_; size_t api_coords_n_;
+      size_t *api_triangles_; size_t api_triangles_n_;
+      size_t *api_edges_; size_t api_edges_n_;
+      gmshAlphaShapeGetAlphaShapeMesh(tag, &api_coords_, &api_coords_n_, &api_triangles_, &api_triangles_n_, &api_edges_, &api_edges_n_, &ierr);
+      if(ierr) throwLastError();
+      coords.assign(api_coords_, api_coords_ + api_coords_n_); gmshFree(api_coords_);
+      triangles.assign(api_triangles_, api_triangles_ + api_triangles_n_); gmshFree(api_triangles_);
+      edges.assign(api_edges_, api_edges_ + api_edges_n_); gmshFree(api_edges_);
+    }
+
+    // gmsh::alphaShape::getDelaunayMesh
+    //
+    // Get the full Delaunay mesh as a set of coordinates and triangles from the
+    // alpha shape with tag `tag'.
+    inline void getDelaunayMesh(const int tag,
+                                std::vector<double> & coords,
+                                std::vector<std::size_t> & triangles)
+    {
+      int ierr = 0;
+      double *api_coords_; size_t api_coords_n_;
+      size_t *api_triangles_; size_t api_triangles_n_;
+      gmshAlphaShapeGetDelaunayMesh(tag, &api_coords_, &api_coords_n_, &api_triangles_, &api_triangles_n_, &ierr);
+      if(ierr) throwLastError();
+      coords.assign(api_coords_, api_coords_ + api_coords_n_); gmshFree(api_coords_);
+      triangles.assign(api_triangles_, api_triangles_ + api_triangles_n_); gmshFree(api_triangles_);
+    }
+
+  } // namespace alphaShape
+
   namespace plugin { // Plugin functions
 
     // gmsh::plugin::setNumber

@@ -74,6 +74,7 @@
 #include "meshGRegionHxt.h"
 #include "gmshCrossFields.h"
 #include "alphaShapes.h"
+#include "alphaShapeClass.h"
 #include "meshTriangulation.h"
 #include "qualityMeasuresJacobian.h"
 #include "meshRenumber.h"
@@ -5736,7 +5737,7 @@ gmsh::model::mesh::computeAlphaShape(const int dim,
                                       const int delaunayTag,
                                       const bool deleteDisconnectedNodes)
 {
-#if defined(HAVE_MESH) && defined(HAVE_HXT)
+#if defined(HAVE_MESH)
   if (dim == 2){
     std::vector<PolyMesh::Vertex*> controlNodes;
 
@@ -8494,6 +8495,240 @@ gmsh::algorithm::tetrahedralize(const std::vector<double> &coord,
 #else
   Msg::Error("Tetrahedralize requires the mesh module");
 #endif
+}
+
+GMSH_API int 
+gmsh::alphaShape::add(const std::string &name, const int tag)
+{
+  if(!_checkInit()) return -1;
+  AlphaShapeClass *as = new AlphaShapeClass(name);
+  as->set(tag, as);
+  return tag;
+}
+
+GMSH_API void
+gmsh::alphaShape::clear(const int tag)
+{
+  if(!_checkInit()) return;
+  auto as = AlphaShapeClass::get(tag);
+  if(!as) {
+    Msg::Error("Unknown alpha shape with tag %d", tag);
+    return;
+  }
+  as->clear();
+}
+
+GMSH_API void
+gmsh::alphaShape::triangulate(const int tag,
+                           const std::vector<double> & vertices, 
+                           const bool removeExistingNodes)
+{
+  auto as = AlphaShapeClass::get(tag);
+  if(!as) {
+    Msg::Error("Unknown alpha shape with tag %d", tag);
+  }
+  as->triangulate(vertices, removeExistingNodes);
+}
+
+GMSH_API void
+gmsh::alphaShape::alphaShape2D(const int tag,
+                               const double alpha,
+                               const std::vector<double> & sizeAtElements)
+{
+  if(!_checkInit()) return;
+  auto as = AlphaShapeClass::get(tag);
+  if(!as) {
+    Msg::Error("Unknown alpha shape with tag %d", tag);
+  }
+  as->alphaShape2D(alpha, sizeAtElements);
+}
+
+GMSH_API void
+gmsh::alphaShape::getNodes(const int tag,
+                           std::vector<double> & vertices)
+{
+  if(!_checkInit()) return;
+  auto as = AlphaShapeClass::get(tag);
+  if(!as) {
+    Msg::Error("Unknown alpha shape with tag %d", tag);
+  }
+  as->getNodes(vertices);
+}
+
+GMSH_API void
+gmsh::alphaShape::getElements(const int tag,
+                              std::vector<std::size_t> & elementNodes)
+{
+  if(!_checkInit()) return;
+  auto as = AlphaShapeClass::get(tag);
+  if(!as) {
+    Msg::Error("Unknown alpha shape with tag %d", tag);
+  }
+  as->getElements(elementNodes);
+}
+
+GMSH_API void
+gmsh::alphaShape::filterNodes(const int tag,
+                              const std::vector<double> & sizeAtNodes,
+                              const double tolerance)
+{
+  if(!_checkInit()) return;
+  auto as = AlphaShapeClass::get(tag);
+  if(!as) {
+    Msg::Error("Unknown alpha shape with tag %d", tag);
+  }
+  as->filterNodes(sizeAtNodes, tolerance);
+}
+
+GMSH_API void
+gmsh::alphaShape::edgeRefine(const int tag,
+                             const std::vector<std::size_t> & nodeTags,
+                             const std::vector<double> & sizeAtNodes,
+                             const double tolerance)
+{
+  if (!_checkInit()) return;
+  auto as = AlphaShapeClass::get(tag);
+  if (!as) {
+    Msg::Error("Unknown alpha shape with tag %d", tag);
+  }
+  as->edgeRefine(nodeTags, sizeAtNodes, tolerance);
+}
+
+GMSH_API void
+gmsh::alphaShape::volumeRefine(const int tag,
+                               const std::vector<std::size_t> & nodeTags,
+                               const std::vector<double> & sizeAtNodes,
+                               const double minQualityLimit,
+                               const double minSizeLimit)
+{
+  if (!_checkInit()) return;
+  auto as = AlphaShapeClass::get(tag);
+  if (!as) {
+    Msg::Error("Unknown alpha shape with tag %d", tag);
+  }
+  as->volumeRefine(nodeTags, sizeAtNodes, minQualityLimit, minSizeLimit);
+}
+
+GMSH_API void
+gmsh::alphaShape::applyChew(const int tag,
+                            const std::vector<double> & sizeAtNodes,
+                            const double minQualityLimit,
+                            const double minSizeLimit)
+{
+  if (!_checkInit()) return;
+  auto as = AlphaShapeClass::get(tag);
+  if (!as) {
+    Msg::Error("Unknown alpha shape with tag %d", tag);
+  }
+  as->applyChew(sizeAtNodes, minQualityLimit, minSizeLimit);
+}
+
+GMSH_API void
+gmsh::alphaShape::setBoundaryModel(const int tag,
+                                    const std::string & boundaryModelName)
+{
+  if (!_checkInit()) return;
+  auto as = AlphaShapeClass::get(tag);
+  if (!as) {
+    Msg::Error("Unknown alpha shape with tag %d", tag);
+  }
+  as->setBoundaryModel(boundaryModelName);
+}
+
+GMSH_API void
+gmsh::alphaShape::matchAlphaShapeWithModel(const int tag,
+                                            const std::string & boundaryModelName,
+                                            const double tolerance,
+                                            std::vector<int> & coloredEdges)
+{
+  if (!_checkInit()) return;
+  auto as = AlphaShapeClass::get(tag);
+  if (!as) {
+    Msg::Error("Unknown alpha shape with tag %d", tag);
+  }
+  as->matchAlphaShapeWithModel(boundaryModelName, tolerance, coloredEdges); 
+}
+
+// alphaShape.add('moveNodes', doc, None, iint('tag'), ivectordouble('displacement'), istring('boundaryModelName', '""'), idouble('tolerance', '1e-6'))
+GMSH_API void
+gmsh::alphaShape::moveNodes(const int tag,
+                            const std::vector<double> &displacement,
+                            const bool recoverDelaunay)
+{
+  if (!_checkInit()) return;
+  auto as = AlphaShapeClass::get(tag);
+  if (!as) {
+    Msg::Error("Unknown alpha shape with tag %d", tag);
+  }
+  as->moveNodes(displacement, recoverDelaunay);
+}
+
+GMSH_API void
+gmsh::alphaShape::correctDisplacement(const int tag,
+                                      const std::vector<double> & dx,
+                                      const double tolerance,
+                                      std::vector<double> & correctedDx)
+{
+  if (!_checkInit()) return;
+  auto as = AlphaShapeClass::get(tag);
+  if (!as) {
+    Msg::Error("Unknown alpha shape with tag %d", tag);
+  }
+  as->correctDisplacement(dx, tolerance, correctedDx);
+}
+
+GMSH_API void
+gmsh::alphaShape::createAlphaShapeOctree(const int tag){
+  if (!_checkInit()) return;
+  auto as = AlphaShapeClass::get(tag);
+  if (!as) {
+    Msg::Error("Unknown alpha shape with tag %d", tag);
+  }
+  as->createAlphaShapeOctree();
+}
+
+GMSH_API void 
+gmsh::alphaShape::getTrianglesAndParametricCoords(const int tag,
+                                                  const std::vector<double> & points,
+                                                  std::vector<std::size_t> & triangles,
+                                                  std::vector<double> & parametricCoords)
+{
+  if(!_checkInit()) return;
+  auto as = AlphaShapeClass::get(tag);
+  if(!as) {
+    Msg::Error("Unknown alpha shape with tag %d", tag);
+    return;
+  }
+  as->getTrianglesAndParametricCoords(points, triangles, parametricCoords);
+}
+
+GMSH_API void
+gmsh::alphaShape::getAlphaShapeMesh(const int tag,
+                                         std::vector<double> & coords,
+                                         std::vector<std::size_t> & triangles, 
+                                         std::vector<std::size_t> & edges)
+{
+  if(!_checkInit()) return;
+  auto as = AlphaShapeClass::get(tag);
+  if(!as) {
+    Msg::Error("Unknown alpha shape with tag %d", tag);
+    return;
+  }
+  as->getAlphaShapeMesh(coords, triangles, edges);
+}
+
+GMSH_API void
+gmsh::alphaShape::getDelaunayMesh(const int tag,
+                                  std::vector<double> & coords,
+                                  std::vector<std::size_t> & triangles)
+{
+  if(!_checkInit()) return;
+  auto as = AlphaShapeClass::get(tag);
+  if(!as) {
+    Msg::Error("Unknown alpha shape with tag %d", tag);
+    return;
+  }
+  as->getDelaunayMesh(coords, triangles);
 }
 
 // gmsh::plugin

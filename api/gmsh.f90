@@ -180,6 +180,46 @@ module gmsh
         gmshPluginRun
   end type gmsh_plugin_t
 
+  type, public :: gmsh_alphaShape_t
+    contains
+    procedure, nopass :: add => &
+        gmshAlphaShapeAdd
+    procedure, nopass :: clear => &
+        gmshAlphaShapeClear
+    procedure, nopass :: triangulate => &
+        gmshAlphaShapeTriangulate
+    procedure, nopass :: alphaShape2D => &
+        gmshAlphaShapeAlphaShape2D
+    procedure, nopass :: getNodes => &
+        gmshAlphaShapeGetNodes
+    procedure, nopass :: getElements => &
+        gmshAlphaShapeGetElements
+    procedure, nopass :: filterNodes => &
+        gmshAlphaShapeFilterNodes
+    procedure, nopass :: edgeRefine => &
+        gmshAlphaShapeEdgeRefine
+    procedure, nopass :: volumeRefine => &
+        gmshAlphaShapeVolumeRefine
+    procedure, nopass :: applyChew => &
+        gmshAlphaShapeApplyChew
+    procedure, nopass :: setBoundaryModel => &
+        gmshAlphaShapeSetBoundaryModel
+    procedure, nopass :: matchAlphaShapeWithModel => &
+        gmshAlphaShapeMatchAlphaShapeWithModel
+    procedure, nopass :: moveNodes => &
+        gmshAlphaShapeMoveNodes
+    procedure, nopass :: correctDisplacement => &
+        gmshAlphaShapeCorrectDisplacement
+    procedure, nopass :: createAlphaShapeOctree => &
+        gmshAlphaShapeCreateAlphaShapeOctree
+    procedure, nopass :: getTrianglesAndParametricCoords => &
+        gmshAlphaShapeGetTrianglesAndParametricCoords
+    procedure, nopass :: getAlphaShapeMesh => &
+        gmshAlphaShapeGetAlphaShapeMesh
+    procedure, nopass :: getDelaunayMesh => &
+        gmshAlphaShapeGetDelaunayMesh
+  end type gmsh_alphaShape_t
+
   type, public :: gmsh_algorithm_t
     contains
     procedure, nopass :: triangulate => &
@@ -902,6 +942,7 @@ module gmsh
     type(gmsh_model_t) :: model
     type(gmsh_view_t) :: view
     type(gmsh_algorithm_t) :: algorithm
+    type(gmsh_alphaShape_t) :: alphaShape
     type(gmsh_plugin_t) :: plugin
     type(gmsh_graphics_t) :: graphics
     type(gmsh_fltk_t) :: fltk
@@ -15080,6 +15121,659 @@ module gmsh
     tetrahedra = ovectorsize_(api_tetrahedra_, &
       api_tetrahedra_n_)
   end subroutine gmshAlgorithmTetrahedralize
+
+  !> Create a new alpha shape class with the given `name'. If `tag' is positive,
+  !! use it, otherwise associate a new tag. Return the alpha shape tag.
+  function gmshAlphaShapeAdd(name, &
+                             tag, &
+                             ierr)
+    interface
+    function C_API(name, &
+                   tag, &
+                   ierr_) &
+      bind(C, name="gmshAlphaShapeAdd")
+      use, intrinsic :: iso_c_binding
+      integer(c_int) :: C_API
+      character(len=1, kind=c_char), dimension(*), intent(in) :: name
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), intent(out), optional :: ierr_
+    end function C_API
+    end interface
+    integer(c_int) :: gmshAlphaShapeAdd
+    character(len=*), intent(in) :: name
+    integer, intent(in), optional :: tag
+    integer(c_int), intent(out), optional :: ierr
+    gmshAlphaShapeAdd = C_API(name=istring_(name), &
+                        tag=optval_c_int(-1, tag), &
+                        ierr_=ierr)
+  end function gmshAlphaShapeAdd
+
+  !> Cleaer the alpha shape with tag `tag'.
+  subroutine gmshAlphaShapeClear(tag, &
+                                 ierr)
+    interface
+    subroutine C_API(tag, &
+                     ierr_) &
+      bind(C, name="gmshAlphaShapeClear")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(tag=int(tag, c_int), &
+         ierr_=ierr)
+  end subroutine gmshAlphaShapeClear
+
+  !> Triangulate the nodes given as concatenated triplets of x,y,z coordinates
+  !! in `vertices'.
+  subroutine gmshAlphaShapeTriangulate(tag, &
+                                       vertices, &
+                                       removeExistingNodes, &
+                                       ierr)
+    interface
+    subroutine C_API(tag, &
+                     api_vertices_, &
+                     api_vertices_n_, &
+                     removeExistingNodes, &
+                     ierr_) &
+      bind(C, name="gmshAlphaShapeTriangulate")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      real(c_double), dimension(*) :: api_vertices_
+      integer(c_size_t), value, intent(in) :: api_vertices_n_
+      integer(c_int), value, intent(in) :: removeExistingNodes
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    real(c_double), dimension(:), intent(in) :: vertices
+    logical, intent(in) :: removeExistingNodes
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(tag=int(tag, c_int), &
+         api_vertices_=vertices, &
+         api_vertices_n_=size_gmsh_double(vertices), &
+         removeExistingNodes=merge(1_c_int, 0_c_int, removeExistingNodes), &
+         ierr_=ierr)
+  end subroutine gmshAlphaShapeTriangulate
+
+  !> Create a 2D alpha shape from the nodes in the current alpha shape class
+  !! with tag `tag', using the given `alpha' value. The `elementTags' vector
+  !! contains the tags of the elements to be used in the alpha shape, and
+  !! `sizeAtElements' gives the size at each element.
+  subroutine gmshAlphaShapeAlphaShape2D(tag, &
+                                        alpha, &
+                                        sizeAtElements, &
+                                        ierr)
+    interface
+    subroutine C_API(tag, &
+                     alpha, &
+                     api_sizeAtElements_, &
+                     api_sizeAtElements_n_, &
+                     ierr_) &
+      bind(C, name="gmshAlphaShapeAlphaShape2D")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      real(c_double), value, intent(in) :: alpha
+      real(c_double), dimension(*) :: api_sizeAtElements_
+      integer(c_size_t), value, intent(in) :: api_sizeAtElements_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    real(c_double), intent(in) :: alpha
+    real(c_double), dimension(:), intent(in) :: sizeAtElements
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(tag=int(tag, c_int), &
+         alpha=real(alpha, c_double), &
+         api_sizeAtElements_=sizeAtElements, &
+         api_sizeAtElements_n_=size_gmsh_double(sizeAtElements), &
+         ierr_=ierr)
+  end subroutine gmshAlphaShapeAlphaShape2D
+
+  !> Get node coordinates from the alpha shape with tag `tag'. The coordinates
+  !! are returned in the `vertices' vector as concatenated triplets of x, y, z
+  !! coordinates.
+  subroutine gmshAlphaShapeGetNodes(tag, &
+                                    vertices, &
+                                    ierr)
+    interface
+    subroutine C_API(tag, &
+                     api_vertices_, &
+                     api_vertices_n_, &
+                     ierr_) &
+      bind(C, name="gmshAlphaShapeGetNodes")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      type(c_ptr), intent(out) :: api_vertices_
+      integer(c_size_t) :: api_vertices_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    real(c_double), dimension(:), allocatable, intent(out) :: vertices
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_vertices_
+    integer(c_size_t) :: api_vertices_n_
+    call C_API(tag=int(tag, c_int), &
+         api_vertices_=api_vertices_, &
+         api_vertices_n_=api_vertices_n_, &
+         ierr_=ierr)
+    vertices = ovectordouble_(api_vertices_, &
+      api_vertices_n_)
+  end subroutine gmshAlphaShapeGetNodes
+
+  !>  Get all the elements in the Delaunay triangulation of the alpha shape with
+  !! tag `tag'. The elements are returned in the `elements' vector as
+  !! concatenated triplets of point indexes (with numbering starting at 1).
+  subroutine gmshAlphaShapeGetElements(tag, &
+                                       elementNodes, &
+                                       ierr)
+    interface
+    subroutine C_API(tag, &
+                     api_elementNodes_, &
+                     api_elementNodes_n_, &
+                     ierr_) &
+      bind(C, name="gmshAlphaShapeGetElements")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      type(c_ptr), intent(out) :: api_elementNodes_
+      integer(c_size_t), intent(out) :: api_elementNodes_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: elementNodes
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_elementNodes_
+    integer(c_size_t) :: api_elementNodes_n_
+    call C_API(tag=int(tag, c_int), &
+         api_elementNodes_=api_elementNodes_, &
+         api_elementNodes_n_=api_elementNodes_n_, &
+         ierr_=ierr)
+    elementNodes = ovectorsize_(api_elementNodes_, &
+      api_elementNodes_n_)
+  end subroutine gmshAlphaShapeGetElements
+
+  !> Filter nodes that are too close to each other compared to the size field
+  subroutine gmshAlphaShapeFilterNodes(tag, &
+                                       sizeAtNodes, &
+                                       tolerance, &
+                                       ierr)
+    interface
+    subroutine C_API(tag, &
+                     api_sizeAtNodes_, &
+                     api_sizeAtNodes_n_, &
+                     tolerance, &
+                     ierr_) &
+      bind(C, name="gmshAlphaShapeFilterNodes")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      real(c_double), dimension(*) :: api_sizeAtNodes_
+      integer(c_size_t), value, intent(in) :: api_sizeAtNodes_n_
+      real(c_double), value, intent(in) :: tolerance
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    real(c_double), dimension(:), intent(in) :: sizeAtNodes
+    real(c_double), intent(in) :: tolerance
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(tag=int(tag, c_int), &
+         api_sizeAtNodes_=sizeAtNodes, &
+         api_sizeAtNodes_n_=size_gmsh_double(sizeAtNodes), &
+         tolerance=real(tolerance, c_double), &
+         ierr_=ierr)
+  end subroutine gmshAlphaShapeFilterNodes
+
+  !> Refine the edges of the alpha shape with tag `tag' using the nodes in
+  !! `nodeTags' and their sizes in `sizeAtNodes'. The `tolerance' is used to
+  !! determine if two nodes are too far from each other.
+  subroutine gmshAlphaShapeEdgeRefine(tag, &
+                                      nodeTags, &
+                                      sizeAtNodes, &
+                                      tolerance, &
+                                      ierr)
+    interface
+    subroutine C_API(tag, &
+                     api_nodeTags_, &
+                     api_nodeTags_n_, &
+                     api_sizeAtNodes_, &
+                     api_sizeAtNodes_n_, &
+                     tolerance, &
+                     ierr_) &
+      bind(C, name="gmshAlphaShapeEdgeRefine")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      integer(c_size_t), dimension(*) :: api_nodeTags_
+      integer(c_size_t), value, intent(in) :: api_nodeTags_n_
+      real(c_double), dimension(*) :: api_sizeAtNodes_
+      integer(c_size_t), value, intent(in) :: api_sizeAtNodes_n_
+      real(c_double), value, intent(in) :: tolerance
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    integer(c_size_t), dimension(:), intent(in) :: nodeTags
+    real(c_double), dimension(:), intent(in) :: sizeAtNodes
+    real(c_double), intent(in) :: tolerance
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(tag=int(tag, c_int), &
+         api_nodeTags_=nodeTags, &
+         api_nodeTags_n_=size_gmsh_size(nodeTags), &
+         api_sizeAtNodes_=sizeAtNodes, &
+         api_sizeAtNodes_n_=size_gmsh_double(sizeAtNodes), &
+         tolerance=real(tolerance, c_double), &
+         ierr_=ierr)
+  end subroutine gmshAlphaShapeEdgeRefine
+
+  !> Volume refine the alpha shape with tag `tag' using the nodes in `nodeTags'
+  !! and their sizes in `sizeAtNodes'. The `minQualityLimit' and `minSizeLimit'
+  !! are used to determine if an element should be refined.
+  subroutine gmshAlphaShapeVolumeRefine(tag, &
+                                        nodeTags, &
+                                        sizeAtNodes, &
+                                        minQualityLimit, &
+                                        minSizeLimit, &
+                                        ierr)
+    interface
+    subroutine C_API(tag, &
+                     api_nodeTags_, &
+                     api_nodeTags_n_, &
+                     api_sizeAtNodes_, &
+                     api_sizeAtNodes_n_, &
+                     minQualityLimit, &
+                     minSizeLimit, &
+                     ierr_) &
+      bind(C, name="gmshAlphaShapeVolumeRefine")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      integer(c_size_t), dimension(*) :: api_nodeTags_
+      integer(c_size_t), value, intent(in) :: api_nodeTags_n_
+      real(c_double), dimension(*) :: api_sizeAtNodes_
+      integer(c_size_t), value, intent(in) :: api_sizeAtNodes_n_
+      real(c_double), value, intent(in) :: minQualityLimit
+      real(c_double), value, intent(in) :: minSizeLimit
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    integer(c_size_t), dimension(:), intent(in) :: nodeTags
+    real(c_double), dimension(:), intent(in) :: sizeAtNodes
+    real(c_double), intent(in) :: minQualityLimit
+    real(c_double), intent(in) :: minSizeLimit
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(tag=int(tag, c_int), &
+         api_nodeTags_=nodeTags, &
+         api_nodeTags_n_=size_gmsh_size(nodeTags), &
+         api_sizeAtNodes_=sizeAtNodes, &
+         api_sizeAtNodes_n_=size_gmsh_double(sizeAtNodes), &
+         minQualityLimit=real(minQualityLimit, c_double), &
+         minSizeLimit=real(minSizeLimit, c_double), &
+         ierr_=ierr)
+  end subroutine gmshAlphaShapeVolumeRefine
+
+  !> Apply Chew's algorithm for mesh refinement on the alpha shape with tag
+  !! `tag'. The nodes to be used in the refinement are given in `nodeTags' and
+  !! their sizes in `sizeAtNodes'. The `minQualityLimit' and `minSizeLimit' are
+  !! used to determine if an element should be refined.
+  subroutine gmshAlphaShapeApplyChew(tag, &
+                                     sizeAtNodes, &
+                                     minQualityLimit, &
+                                     minSizeLimit, &
+                                     ierr)
+    interface
+    subroutine C_API(tag, &
+                     api_sizeAtNodes_, &
+                     api_sizeAtNodes_n_, &
+                     minQualityLimit, &
+                     minSizeLimit, &
+                     ierr_) &
+      bind(C, name="gmshAlphaShapeApplyChew")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      real(c_double), dimension(*) :: api_sizeAtNodes_
+      integer(c_size_t), value, intent(in) :: api_sizeAtNodes_n_
+      real(c_double), value, intent(in) :: minQualityLimit
+      real(c_double), value, intent(in) :: minSizeLimit
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    real(c_double), dimension(:), intent(in) :: sizeAtNodes
+    real(c_double), intent(in) :: minQualityLimit
+    real(c_double), intent(in) :: minSizeLimit
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(tag=int(tag, c_int), &
+         api_sizeAtNodes_=sizeAtNodes, &
+         api_sizeAtNodes_n_=size_gmsh_double(sizeAtNodes), &
+         minQualityLimit=real(minQualityLimit, c_double), &
+         minSizeLimit=real(minSizeLimit, c_double), &
+         ierr_=ierr)
+  end subroutine gmshAlphaShapeApplyChew
+
+  !> Set a (GMSH) boundary model with name `boundaryModelName' for the alpha
+  !! shape with tag `tag'. This model can be used to match the alpha shape's
+  !! boundary edges with the physical groups of the boundary model.
+  subroutine gmshAlphaShapeSetBoundaryModel(tag, &
+                                            boundaryModelName, &
+                                            ierr)
+    interface
+    subroutine C_API(tag, &
+                     boundaryModelName, &
+                     ierr_) &
+      bind(C, name="gmshAlphaShapeSetBoundaryModel")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      character(len=1, kind=c_char), dimension(*), intent(in) :: boundaryModelName
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    character(len=*), intent(in) :: boundaryModelName
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(tag=int(tag, c_int), &
+         boundaryModelName=istring_(boundaryModelName), &
+         ierr_=ierr)
+  end subroutine gmshAlphaShapeSetBoundaryModel
+
+  !> Match the boundary edges of the alpha shape with tag `tag' to the physical
+  !! groups of the boundary model `boundaryModelName'. The colored edges are
+  !! returned in `coloredEdges' as a vector matching the edges of
+  !! getEdgesOfAlphaShape.
+  subroutine gmshAlphaShapeMatchAlphaShapeWithModel(tag, &
+                                                    boundaryModelName, &
+                                                    tolerance, &
+                                                    coloredEdges, &
+                                                    ierr)
+    interface
+    subroutine C_API(tag, &
+                     boundaryModelName, &
+                     tolerance, &
+                     api_coloredEdges_, &
+                     api_coloredEdges_n_, &
+                     ierr_) &
+      bind(C, name="gmshAlphaShapeMatchAlphaShapeWithModel")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      character(len=1, kind=c_char), dimension(*), intent(in) :: boundaryModelName
+      real(c_double), value, intent(in) :: tolerance
+      type(c_ptr), intent(out) :: api_coloredEdges_
+      integer(c_size_t), intent(out) :: api_coloredEdges_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    character(len=*), intent(in) :: boundaryModelName
+    real(c_double), intent(in) :: tolerance
+    integer(c_int), dimension(:), allocatable, intent(out) :: coloredEdges
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_coloredEdges_
+    integer(c_size_t) :: api_coloredEdges_n_
+    call C_API(tag=int(tag, c_int), &
+         boundaryModelName=istring_(boundaryModelName), &
+         tolerance=real(tolerance, c_double), &
+         api_coloredEdges_=api_coloredEdges_, &
+         api_coloredEdges_n_=api_coloredEdges_n_, &
+         ierr_=ierr)
+    coloredEdges = ovectorint_(api_coloredEdges_, &
+      api_coloredEdges_n_)
+  end subroutine gmshAlphaShapeMatchAlphaShapeWithModel
+
+  !> Apply a displacement to the nodes of the alpha shape with tag `tag'. The
+  !! displacement is given as a vector of concatenated triplets of x, y, z
+  !! coordinates. If a boundary model `boundaryModelName' is provided, the
+  !! displacement is corrected so that nodes remain inside the model. If
+  !! `boundaryModelName' is empty, the displacement is applied without any
+  !! correction. If `recoverDelaunay' is set, we adapt the triangulation to
+  !! recover Delaunayness after displacement.
+  subroutine gmshAlphaShapeMoveNodes(tag, &
+                                     displacement, &
+                                     recoverDelaunay, &
+                                     ierr)
+    interface
+    subroutine C_API(tag, &
+                     api_displacement_, &
+                     api_displacement_n_, &
+                     recoverDelaunay, &
+                     ierr_) &
+      bind(C, name="gmshAlphaShapeMoveNodes")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      real(c_double), dimension(*) :: api_displacement_
+      integer(c_size_t), value, intent(in) :: api_displacement_n_
+      integer(c_int), value, intent(in) :: recoverDelaunay
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    real(c_double), dimension(:), intent(in) :: displacement
+    logical, intent(in), optional :: recoverDelaunay
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(tag=int(tag, c_int), &
+         api_displacement_=displacement, &
+         api_displacement_n_=size_gmsh_double(displacement), &
+         recoverDelaunay=optval_c_bool(.false., recoverDelaunay), &
+         ierr_=ierr)
+  end subroutine gmshAlphaShapeMoveNodes
+
+  !> Correct the displacement `dx' of the nodes of the alpha shape with tag
+  !! `tag' so that they remain inside the boundary model `boundaryModelName'.
+  !! The corrected displacement is returned in `correctedDx'. The `tolerance' is
+  !! used to determine if a node is inside the model.
+  subroutine gmshAlphaShapeCorrectDisplacement(tag, &
+                                               dx, &
+                                               tolerance, &
+                                               correctedDx, &
+                                               ierr)
+    interface
+    subroutine C_API(tag, &
+                     api_dx_, &
+                     api_dx_n_, &
+                     tolerance, &
+                     api_correctedDx_, &
+                     api_correctedDx_n_, &
+                     ierr_) &
+      bind(C, name="gmshAlphaShapeCorrectDisplacement")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      real(c_double), dimension(*) :: api_dx_
+      integer(c_size_t), value, intent(in) :: api_dx_n_
+      real(c_double), value, intent(in) :: tolerance
+      type(c_ptr), intent(out) :: api_correctedDx_
+      integer(c_size_t) :: api_correctedDx_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    real(c_double), dimension(:), intent(in) :: dx
+    real(c_double), intent(in) :: tolerance
+    real(c_double), dimension(:), allocatable, intent(out) :: correctedDx
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_correctedDx_
+    integer(c_size_t) :: api_correctedDx_n_
+    call C_API(tag=int(tag, c_int), &
+         api_dx_=dx, &
+         api_dx_n_=size_gmsh_double(dx), &
+         tolerance=real(tolerance, c_double), &
+         api_correctedDx_=api_correctedDx_, &
+         api_correctedDx_n_=api_correctedDx_n_, &
+         ierr_=ierr)
+    correctedDx = ovectordouble_(api_correctedDx_, &
+      api_correctedDx_n_)
+  end subroutine gmshAlphaShapeCorrectDisplacement
+
+  !> Create an octree on the triangles of the alpha shape with tag `tag'.
+  subroutine gmshAlphaShapeCreateAlphaShapeOctree(tag, &
+                                                  ierr)
+    interface
+    subroutine C_API(tag, &
+                     ierr_) &
+      bind(C, name="gmshAlphaShapeCreateAlphaShapeOctree")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(tag=int(tag, c_int), &
+         ierr_=ierr)
+  end subroutine gmshAlphaShapeCreateAlphaShapeOctree
+
+  !> Get the triangles and parametric coordinates of the alpha shape with tag
+  !! `tag'. The triangles are returned as indices matching the elements from
+  !! getElements, and the parametric coordinates are returned in
+  !! `parametricCoords' as concatenated triplets of u, v, w coordinates.
+  subroutine gmshAlphaShapeGetTrianglesAndParametricCoords(tag, &
+                                                           points, &
+                                                           triangles, &
+                                                           parametricCoords, &
+                                                           ierr)
+    interface
+    subroutine C_API(tag, &
+                     api_points_, &
+                     api_points_n_, &
+                     api_triangles_, &
+                     api_triangles_n_, &
+                     api_parametricCoords_, &
+                     api_parametricCoords_n_, &
+                     ierr_) &
+      bind(C, name="gmshAlphaShapeGetTrianglesAndParametricCoords")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      real(c_double), dimension(*) :: api_points_
+      integer(c_size_t), value, intent(in) :: api_points_n_
+      type(c_ptr), intent(out) :: api_triangles_
+      integer(c_size_t), intent(out) :: api_triangles_n_
+      type(c_ptr), intent(out) :: api_parametricCoords_
+      integer(c_size_t) :: api_parametricCoords_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    real(c_double), dimension(:), intent(in) :: points
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: triangles
+    real(c_double), dimension(:), allocatable, intent(out) :: parametricCoords
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_triangles_
+    integer(c_size_t) :: api_triangles_n_
+    type(c_ptr) :: api_parametricCoords_
+    integer(c_size_t) :: api_parametricCoords_n_
+    call C_API(tag=int(tag, c_int), &
+         api_points_=points, &
+         api_points_n_=size_gmsh_double(points), &
+         api_triangles_=api_triangles_, &
+         api_triangles_n_=api_triangles_n_, &
+         api_parametricCoords_=api_parametricCoords_, &
+         api_parametricCoords_n_=api_parametricCoords_n_, &
+         ierr_=ierr)
+    triangles = ovectorsize_(api_triangles_, &
+      api_triangles_n_)
+    parametricCoords = ovectordouble_(api_parametricCoords_, &
+      api_parametricCoords_n_)
+  end subroutine gmshAlphaShapeGetTrianglesAndParametricCoords
+
+  !> Get the mesh of the alpha shape with tag `tag'. The mesh is returned as a
+  !! vector of concatenated triplets of x, y, z coordinates in `coords', and as
+  !! a vector of concatenated triplets of point indexes in `triangles', and as a
+  !! vector of concatenated doublets of edge indexes in `edges'.
+  subroutine gmshAlphaShapeGetAlphaShapeMesh(tag, &
+                                             coords, &
+                                             triangles, &
+                                             edges, &
+                                             ierr)
+    interface
+    subroutine C_API(tag, &
+                     api_coords_, &
+                     api_coords_n_, &
+                     api_triangles_, &
+                     api_triangles_n_, &
+                     api_edges_, &
+                     api_edges_n_, &
+                     ierr_) &
+      bind(C, name="gmshAlphaShapeGetAlphaShapeMesh")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      type(c_ptr), intent(out) :: api_coords_
+      integer(c_size_t) :: api_coords_n_
+      type(c_ptr), intent(out) :: api_triangles_
+      integer(c_size_t), intent(out) :: api_triangles_n_
+      type(c_ptr), intent(out) :: api_edges_
+      integer(c_size_t), intent(out) :: api_edges_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    real(c_double), dimension(:), allocatable, intent(out) :: coords
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: triangles
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: edges
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_coords_
+    integer(c_size_t) :: api_coords_n_
+    type(c_ptr) :: api_triangles_
+    integer(c_size_t) :: api_triangles_n_
+    type(c_ptr) :: api_edges_
+    integer(c_size_t) :: api_edges_n_
+    call C_API(tag=int(tag, c_int), &
+         api_coords_=api_coords_, &
+         api_coords_n_=api_coords_n_, &
+         api_triangles_=api_triangles_, &
+         api_triangles_n_=api_triangles_n_, &
+         api_edges_=api_edges_, &
+         api_edges_n_=api_edges_n_, &
+         ierr_=ierr)
+    coords = ovectordouble_(api_coords_, &
+      api_coords_n_)
+    triangles = ovectorsize_(api_triangles_, &
+      api_triangles_n_)
+    edges = ovectorsize_(api_edges_, &
+      api_edges_n_)
+  end subroutine gmshAlphaShapeGetAlphaShapeMesh
+
+  !> Get the full Delaunay mesh as a set of coordinates and triangles from the
+  !! alpha shape with tag `tag'.
+  subroutine gmshAlphaShapeGetDelaunayMesh(tag, &
+                                           coords, &
+                                           triangles, &
+                                           ierr)
+    interface
+    subroutine C_API(tag, &
+                     api_coords_, &
+                     api_coords_n_, &
+                     api_triangles_, &
+                     api_triangles_n_, &
+                     ierr_) &
+      bind(C, name="gmshAlphaShapeGetDelaunayMesh")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: tag
+      type(c_ptr), intent(out) :: api_coords_
+      integer(c_size_t) :: api_coords_n_
+      type(c_ptr), intent(out) :: api_triangles_
+      integer(c_size_t), intent(out) :: api_triangles_n_
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: tag
+    real(c_double), dimension(:), allocatable, intent(out) :: coords
+    integer(c_size_t), dimension(:), allocatable, intent(out) :: triangles
+    integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_coords_
+    integer(c_size_t) :: api_coords_n_
+    type(c_ptr) :: api_triangles_
+    integer(c_size_t) :: api_triangles_n_
+    call C_API(tag=int(tag, c_int), &
+         api_coords_=api_coords_, &
+         api_coords_n_=api_coords_n_, &
+         api_triangles_=api_triangles_, &
+         api_triangles_n_=api_triangles_n_, &
+         ierr_=ierr)
+    coords = ovectordouble_(api_coords_, &
+      api_coords_n_)
+    triangles = ovectorsize_(api_triangles_, &
+      api_triangles_n_)
+  end subroutine gmshAlphaShapeGetDelaunayMesh
 
   !> Set the numerical option `option' to the value `value' for plugin `name'.
   !! Plugins available in the official Gmsh release are listed in the "Gmsh

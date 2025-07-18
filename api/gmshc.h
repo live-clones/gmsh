@@ -3489,6 +3489,151 @@ GMSH_API void gmshAlgorithmTetrahedralize(const double * coordinates, const size
                                           size_t ** tetrahedra, size_t * tetrahedra_n,
                                           int * ierr);
 
+/* Create a new alpha shape class with the given `name'. If `tag' is positive,
+ * use it, otherwise associate a new tag. Return the alpha shape tag. */
+GMSH_API int gmshAlphaShapeAdd(const char * name,
+                               const int tag,
+                               int * ierr);
+
+/* Cleaer the alpha shape with tag `tag'. */
+GMSH_API void gmshAlphaShapeClear(const int tag,
+                                  int * ierr);
+
+/* Triangulate the nodes given as concatenated triplets of x,y,z coordinates
+ * in `vertices'. */
+GMSH_API void gmshAlphaShapeTriangulate(const int tag,
+                                        const double * vertices, const size_t vertices_n,
+                                        const int removeExistingNodes,
+                                        int * ierr);
+
+/* Create a 2D alpha shape from the nodes in the current alpha shape class
+ * with tag `tag', using the given `alpha' value. The `elementTags' vector
+ * contains the tags of the elements to be used in the alpha shape, and
+ * `sizeAtElements' gives the size at each element. */
+GMSH_API void gmshAlphaShapeAlphaShape2D(const int tag,
+                                         const double alpha,
+                                         const double * sizeAtElements, const size_t sizeAtElements_n,
+                                         int * ierr);
+
+/* Get node coordinates from the alpha shape with tag `tag'. The coordinates
+ * are returned in the `vertices' vector as concatenated triplets of x, y, z
+ * coordinates. */
+GMSH_API void gmshAlphaShapeGetNodes(const int tag,
+                                     double ** vertices, size_t * vertices_n,
+                                     int * ierr);
+
+/*  Get all the elements in the Delaunay triangulation of the alpha shape with
+ * tag `tag'. The elements are returned in the `elements' vector as
+ * concatenated triplets of point indexes (with numbering starting at 1). */
+GMSH_API void gmshAlphaShapeGetElements(const int tag,
+                                        size_t ** elementNodes, size_t * elementNodes_n,
+                                        int * ierr);
+
+/* Filter nodes that are too close to each other compared to the size field */
+GMSH_API void gmshAlphaShapeFilterNodes(const int tag,
+                                        const double * sizeAtNodes, const size_t sizeAtNodes_n,
+                                        const double tolerance,
+                                        int * ierr);
+
+/* Refine the edges of the alpha shape with tag `tag' using the nodes in
+ * `nodeTags' and their sizes in `sizeAtNodes'. The `tolerance' is used to
+ * determine if two nodes are too far from each other. */
+GMSH_API void gmshAlphaShapeEdgeRefine(const int tag,
+                                       const size_t * nodeTags, const size_t nodeTags_n,
+                                       const double * sizeAtNodes, const size_t sizeAtNodes_n,
+                                       const double tolerance,
+                                       int * ierr);
+
+/* Volume refine the alpha shape with tag `tag' using the nodes in `nodeTags'
+ * and their sizes in `sizeAtNodes'. The `minQualityLimit' and `minSizeLimit'
+ * are used to determine if an element should be refined. */
+GMSH_API void gmshAlphaShapeVolumeRefine(const int tag,
+                                         const size_t * nodeTags, const size_t nodeTags_n,
+                                         const double * sizeAtNodes, const size_t sizeAtNodes_n,
+                                         const double minQualityLimit,
+                                         const double minSizeLimit,
+                                         int * ierr);
+
+/* Apply Chew's algorithm for mesh refinement on the alpha shape with tag
+ * `tag'. The nodes to be used in the refinement are given in `nodeTags' and
+ * their sizes in `sizeAtNodes'. The `minQualityLimit' and `minSizeLimit' are
+ * used to determine if an element should be refined. */
+GMSH_API void gmshAlphaShapeApplyChew(const int tag,
+                                      const double * sizeAtNodes, const size_t sizeAtNodes_n,
+                                      const double minQualityLimit,
+                                      const double minSizeLimit,
+                                      int * ierr);
+
+/* Set a (GMSH) boundary model with name `boundaryModelName' for the alpha
+ * shape with tag `tag'. This model can be used to match the alpha shape's
+ * boundary edges with the physical groups of the boundary model. */
+GMSH_API void gmshAlphaShapeSetBoundaryModel(const int tag,
+                                             const char * boundaryModelName,
+                                             int * ierr);
+
+/* Match the boundary edges of the alpha shape with tag `tag' to the physical
+ * groups of the boundary model `boundaryModelName'. The colored edges are
+ * returned in `coloredEdges' as a vector matching the edges of
+ * getEdgesOfAlphaShape. */
+GMSH_API void gmshAlphaShapeMatchAlphaShapeWithModel(const int tag,
+                                                     const char * boundaryModelName,
+                                                     const double tolerance,
+                                                     int ** coloredEdges, size_t * coloredEdges_n,
+                                                     int * ierr);
+
+/* Apply a displacement to the nodes of the alpha shape with tag `tag'. The
+ * displacement is given as a vector of concatenated triplets of x, y, z
+ * coordinates. If a boundary model `boundaryModelName' is provided, the
+ * displacement is corrected so that nodes remain inside the model. If
+ * `boundaryModelName' is empty, the displacement is applied without any
+ * correction. If `recoverDelaunay' is set, we adapt the triangulation to
+ * recover Delaunayness after displacement. */
+GMSH_API void gmshAlphaShapeMoveNodes(const int tag,
+                                      const double * displacement, const size_t displacement_n,
+                                      const int recoverDelaunay,
+                                      int * ierr);
+
+/* Correct the displacement `dx' of the nodes of the alpha shape with tag
+ * `tag' so that they remain inside the boundary model `boundaryModelName'.
+ * The corrected displacement is returned in `correctedDx'. The `tolerance' is
+ * used to determine if a node is inside the model. */
+GMSH_API void gmshAlphaShapeCorrectDisplacement(const int tag,
+                                                const double * dx, const size_t dx_n,
+                                                const double tolerance,
+                                                double ** correctedDx, size_t * correctedDx_n,
+                                                int * ierr);
+
+/* Create an octree on the triangles of the alpha shape with tag `tag'. */
+GMSH_API void gmshAlphaShapeCreateAlphaShapeOctree(const int tag,
+                                                   int * ierr);
+
+/* Get the triangles and parametric coordinates of the alpha shape with tag
+ * `tag'. The triangles are returned as indices matching the elements from
+ * getElements, and the parametric coordinates are returned in
+ * `parametricCoords' as concatenated triplets of u, v, w coordinates. */
+GMSH_API void gmshAlphaShapeGetTrianglesAndParametricCoords(const int tag,
+                                                            const double * points, const size_t points_n,
+                                                            size_t ** triangles, size_t * triangles_n,
+                                                            double ** parametricCoords, size_t * parametricCoords_n,
+                                                            int * ierr);
+
+/* Get the mesh of the alpha shape with tag `tag'. The mesh is returned as a
+ * vector of concatenated triplets of x, y, z coordinates in `coords', and as
+ * a vector of concatenated triplets of point indexes in `triangles', and as a
+ * vector of concatenated doublets of edge indexes in `edges'. */
+GMSH_API void gmshAlphaShapeGetAlphaShapeMesh(const int tag,
+                                              double ** coords, size_t * coords_n,
+                                              size_t ** triangles, size_t * triangles_n,
+                                              size_t ** edges, size_t * edges_n,
+                                              int * ierr);
+
+/* Get the full Delaunay mesh as a set of coordinates and triangles from the
+ * alpha shape with tag `tag'. */
+GMSH_API void gmshAlphaShapeGetDelaunayMesh(const int tag,
+                                            double ** coords, size_t * coords_n,
+                                            size_t ** triangles, size_t * triangles_n,
+                                            int * ierr);
+
 /* Set the numerical option `option' to the value `value' for plugin `name'.
  * Plugins available in the official Gmsh release are listed in the "Gmsh
  * plugins" chapter of the Gmsh reference manual

@@ -3781,7 +3781,7 @@ void AlphaShape::_volumeMeshRefinementMeshFromAlphaShapeElements(const int fullT
   // hxtMapColorsToBrep(m, tri2TetMap);
 
   printf("here =)\n");
-  hxtMeshWriteGmsh(m, "initialTetMesh.msh");
+  // hxtMeshWriteGmsh(m, "initialTetMesh.msh");
 
   
   uint32_t n_nodesInMesh = m->vertices.num;
@@ -3813,7 +3813,7 @@ void AlphaShape::_volumeMeshRefinementMeshFromAlphaShapeElements(const int fullT
   nodalSizes.max = nodalSizeMax;
   delOptions.nodalSizes = &nodalSizes;
   delOptions.nodalSizes->enabled = 1; // activate the filtering...
-  hxtMeshWriteGmsh(m, "tetMeshBefore.msh");
+  // hxtMeshWriteGmsh(m, "tetMeshBefore.msh");
   printf("going to refine ...\n");
   hxtRefineTetrahedra(m, &delOptions);
   

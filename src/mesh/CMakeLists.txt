@@ -5,6 +5,7 @@
 
 set(SRC
   alphaShapes.cpp
+  alphaShapeClass.cpp
   Generator.cpp
   meshGEdge.cpp
     meshGEdgeExtruded.cpp
