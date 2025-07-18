@@ -1377,6 +1377,53 @@ static bool readMSH4OverlapBoundaries(GModel *const model, FILE *fp, bool binary
     return true;
 }
 
+
+static bool readMSH4EdgeTags(
+  GModel *const model, FILE *fp, bool binary)
+{
+  size_t numEdgeTags = 0;
+  if(binary) {
+    if (fread(&numEdgeTags, sizeof(size_t), 1, fp) != 1) {
+      Msg::Error("Error reading number of edge tags in MSH4 file.");
+      return false;
+    }
+  }
+  else {
+    if(fscanf(fp, "%zu", &numEdgeTags) != 1) {
+      Msg::Error("Error reading number of edge tags in MSH4 file.");
+      return false;
+    }
+  }
+
+  std::array<size_t, 3> edgeData;
+  for (size_t k = 0; k < numEdgeTags; ++k) {
+    if(binary) {
+      if (fread(edgeData.data(), sizeof(size_t), 3, fp) != 3) {
+        Msg::Error("Error reading edge tag data in MSH4 file.");
+        return false;
+      }
+    }
+    else {
+      if(fscanf(fp, "%zu %zu %zu", &edgeData[0], &edgeData[1], &edgeData[2]) != 3) {
+        Msg::Error("Error reading edge tag data in MSH4 file.");
+        return false;
+      }
+    }
+
+    MVertex *v0 = model->getMeshVertexByTag(edgeData[0]);
+    MVertex *v1 = model->getMeshVertexByTag(edgeData[1]);
+    if(!v0 || !v1) {
+      Msg::Error("Invalid vertex numbers in edge tag data in MSH4 file.");
+      return false;
+    }
+
+    MEdge me(v0, v1);
+    model->addMEdge(std::move(me), edgeData[2]);
+  }
+
+  return true;
+}
+
 int GModel::_readMSH4(const std::string &name)
 {
   bool partitioned = false;
@@ -1551,6 +1598,13 @@ int GModel::_readMSH4(const std::string &name)
         }
       }
       delete[] elementCache;
+    }
+    else if (!strncmp(&str[1], "EdgeTags", 8)) {
+      if (!readMSH4EdgeTags(this, fp, binary)) {
+        Msg::Error("Could not read edge tags");
+        fclose(fp);
+        return 0;
+      }
     }
     else if(!strncmp(&str[1], "Periodic", 8)) {
       if(!readMSH4PeriodicNodes(this, fp, binary, swap, version)) {
@@ -2883,6 +2937,87 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
   fprintf(fp, "$EndElements\n");
 }
 
+static void writeMSH4EdgeTags(
+  GModel *const model, FILE *fp, bool binary, bool partitioned,
+  int partitionToSave)
+{
+  
+  auto printEdges = [&](const GModel::hashmapMEdge &edges) {
+    fprintf(fp, "$EdgeTags\n");
+    if(binary) {
+      std::size_t numEdges = edges.size();
+      fwrite(&numEdges, sizeof(std::size_t), 1, fp);
+    }
+    else {
+      fprintf(fp, "%zu\n", edges.size());
+    }
+    for(const auto &[edge, tag] : edges) {
+      size_t v0 = edge.getVertex(0)->getNum();
+      size_t v1 = edge.getVertex(1)->getNum();
+      if(binary) {
+        fwrite(&v0, sizeof(size_t), 1, fp);
+        fwrite(&v1, sizeof(size_t), 1, fp);
+        fwrite(&tag, sizeof(size_t), 1, fp);
+      }
+      else {
+        fprintf(fp, "%zu %zu %zu\n", v0, v1, tag);
+      }
+    }
+
+    if(binary) fprintf(fp, "\n");
+    fprintf(fp, "$EndEdgeTags\n");
+  };
+
+  if(partitionToSave == 0 || !partitioned)
+    printEdges(model->getMEdges());
+  else {
+    GModel::hashmapMEdge subsetEdges;
+    auto addEdgesFromElement = [&](auto *e) {
+      for(std::size_t k = 0; k < e->getNumEdges(); ++k) {
+        MEdge me = e->getEdge(k);
+        auto it = model->getMEdges().find(me);
+        if(it != model->getMEdges().end()) { subsetEdges[me] = it->second; }
+      }
+    };
+    auto addEdgesFromEntity = [&](GEntity *entity) {
+      for(size_t k = 0; k < entity->getNumMeshElements(); ++k) {
+        MElement *el = entity->getMeshElement(k);
+        addEdgesFromElement(el);
+      }
+    };
+    std::set<GRegion *, GEntityPtrLessThan> regions;
+    std::set<GFace *, GEntityPtrLessThan> faces;
+    std::set<GEdge *, GEntityPtrLessThan> edges;
+    std::set<GVertex *, GEntityPtrLessThan> vertices;
+    getEntitiesToSave(model, partitioned, partitionToSave, true, regions,
+                      faces, edges, vertices);
+    for (auto vertex : vertices) {
+      addEdgesFromEntity(vertex);
+    }
+    for (auto edge : edges) {
+      addEdgesFromEntity(edge);
+    }
+    for (auto face : faces) {
+      addEdgesFromEntity(face);
+    }
+    for (auto region : regions) {
+      addEdgesFromEntity(region);
+    }
+    for (const auto &overlaps2D: std::get<0>(model->getAllOverlaps()))
+    {
+      if (overlaps2D->owningPartition() == partitionToSave)
+        addEdgesFromEntity(overlaps2D);
+    }
+    for (const auto &overlaps3D: std::get<1>(model->getAllOverlaps()))
+    {
+      if (overlaps3D->owningPartition() == partitionToSave)
+        addEdgesFromEntity(overlaps3D);
+    }
+
+    printEdges(subsetEdges);
+  }
+}
+
 static void writeMSH4PeriodicNodes(GModel *const model, FILE *fp,
                                    bool binary, double version)
 {
@@ -3356,6 +3491,9 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   // elements
   writeMSH4Elements(this, fp, partitioned, partitionToSave, binary, saveAll,
                     version, nonOwnedEntitiesToSave);
+
+  // edges
+  writeMSH4EdgeTags(this, fp, binary, partitioned, partitionToSave);
 
   // periodic
   writeMSH4PeriodicNodes(this, fp, binary, version);
