@@ -89,6 +89,11 @@ public:
 
 template <int dim> struct OverlapHelpers {};
 
+template <> struct OverlapHelpers<1> {
+  using PartitionEntity = partitionEdge;
+  using Entity = GEdge;
+};
+
 template <> struct OverlapHelpers<2> {
   using PartitionEntity = partitionFace;
   using Entity = GFace;

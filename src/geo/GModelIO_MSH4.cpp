@@ -3164,6 +3164,91 @@ static void writeMSH4VolumeOverlaps(GModel *const model, FILE *fp,
   fprintf(fp, "$EndVolumeOverlaps%dD\n", dim);
 }
 
+template <int dim>
+static const auto& getInnerOverlap(GModel* const model) {
+  if constexpr (dim == 2) {
+    return model->getOverlapInnerBoundaries2D();
+  } else if constexpr (dim == 3) {
+    return model->getOverlapInnerBoundaries3D();
+  } else {
+    static_assert(dim == 2 || dim == 3, "Unsupported dimension for overlap");
+  }
+}
+
+template <int dim>
+static const auto& getOuterOverlap(GModel* const model) {
+  if constexpr (dim == 2) {
+    return model->getOverlapOfBoundaries2D();
+  } else if constexpr (dim == 3) {
+    return model->getOverlapOfBoundaries3D();
+  } else {
+    static_assert(dim == 2 || dim == 3, "Unsupported dimension for overlap");
+  }
+}
+
+template <int dim>
+static void writeMSH4OverlapBoundaries(GModel *const model, FILE *fp,
+                                        int partitionToSave, bool binary)
+{
+  // These are regular entities, we just need to write in what container to put those
+  fprintf(fp, "$OverlapBoundaries%dD\n", dim);
+  const auto &overlapBoundaries = getInnerOverlap<dim>(model);
+    const auto &outerOverlapBoundaries = getOuterOverlap<dim>(model);
+
+  {
+    size_t numEntities = overlapBoundaries.size() + outerOverlapBoundaries.size();
+    if (binary) {
+      fwrite(&numEntities, sizeof(std::size_t), 1, fp);
+    } else {
+      fprintf(fp, "%zu\n", numEntities);
+    }
+  }
+
+  auto writeEntityOverlapPairs = [&](const auto &set) {
+    for(const auto &[entity, boundaries] : set) {
+      std::vector<typename OverlapHelpers<dim>::BoundaryEntity *>
+        boundariesToSave;
+      for(const auto &boundary : boundaries) {
+        auto partitions = boundary->getPartitions();
+        if(partitionToSave == 0 ||
+           std::find(partitions.begin(), partitions.end(), partitionToSave) !=
+             partitions.end()) {
+          boundariesToSave.push_back(boundary);
+        }
+      }
+      std::size_t numBoundaries = boundariesToSave.size();
+      int thisDim = entity->dim();
+      int tag = entity->tag();
+      if(binary) {
+        fwrite(&thisDim, sizeof(int), 1, fp);
+        fwrite(&tag, sizeof(int), 1, fp);
+        fwrite(&numBoundaries, sizeof(std::size_t), 1, fp);
+      }
+      else {
+        fprintf(fp, "%d %d %zu\n", entity->dim(), entity->tag(),
+                boundariesToSave.size());
+      }
+      for(const auto &boundary : boundariesToSave) {
+        int boundaryTag = boundary->tag();
+        if(binary) { fwrite(&boundaryTag, sizeof(int), 1, fp); }
+        else {
+          fprintf(fp, "%d\n", boundaryTag);
+        }
+      }
+    }
+  };
+
+  writeEntityOverlapPairs(overlapBoundaries);
+  writeEntityOverlapPairs(outerOverlapBoundaries);
+
+  
+
+  // Binary: one line in total
+  if(binary) fprintf(fp, "\n");
+  fprintf(fp, "$EndOverlapBoundaries%dD\n", dim);
+
+}
+
 int GModel::_writeMSH4(const std::string &name, double version, bool binary,
                        bool saveAll, bool saveParametric, double scalingFactor,
                        bool append, int partitionToSave,
@@ -3282,9 +3367,11 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   if(partitioned && overlapDim > 0) {
     if(overlapDim == 2) {
       writeMSH4VolumeOverlaps<2>(this, fp, partitionToSave, binary);
+      writeMSH4OverlapBoundaries<2>(this, fp, partitionToSave, binary);
     }
     else if(overlapDim == 3) {
       writeMSH4VolumeOverlaps<3>(this, fp, partitionToSave, binary);
+      writeMSH4OverlapBoundaries<3>(this, fp, partitionToSave, binary);
     }
   }
 
