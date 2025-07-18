@@ -925,7 +925,7 @@ integer
 @end table
 
 @item gmsh/model/getClosestPoint
-Get the points @code{closestCoord} on the entity of dimension @code{dim} and tag @code{tag} to the points @code{coord}, by orthogonal projection. @code{coord} and @code{closestCoord} are given as x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...]. @code{parametricCoord} returns the parametric coordinates t on the curve (if @code{dim} == 1) or u and v coordinates concatenated on the surface (if @code{dim} = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...]. The closest points can lie outside the (trimmed) entities: use @code{isInside()} to check.
+Get the points @code{closestCoord} on the entity of dimension @code{dim} (1 or 2) and tag @code{tag} to the points @code{coord}, by orthogonal projection. @code{coord} and @code{closestCoord} are given as x, y, z coordinates, concatenated: [p1x, p1y, p1z, p2x, ...]. @code{parametricCoord} returns the parametric coordinates t on the curve (if @code{dim} == 1) or u and v coordinates concatenated on the surface (if @code{dim} = 2), i.e. [p1t, p2t, ...] or [p1u, p1v, p2u, ...]. The closest points can lie outside the (trimmed) entities: use @code{isInside()} to check.
 
 @table @asis
 @item Input:
@@ -1475,7 +1475,7 @@ Reclassify all nodes on their associated model entity, based on the elements. Ca
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L912,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L789,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L2728,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L2359,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x2.cpp#L107,x2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/x2.py#L102,x2.py}, @url{@value{GITLAB-PREFIX}/examples/api/remove_elements.py#L28,remove_elements.py}, @url{@value{GITLAB-PREFIX}/examples/api/terrain.py#L66,terrain.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x2.cpp#L107,x2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/x2.py#L102,x2.py}, @url{@value{GITLAB-PREFIX}/examples/api/remesh_cavity.py#L69,remesh_cavity.py}, @url{@value{GITLAB-PREFIX}/examples/api/remove_elements.py#L28,remove_elements.py}, @url{@value{GITLAB-PREFIX}/examples/api/terrain.py#L66,terrain.py})
 @end table
 
 @item gmsh/model/mesh/relocateNodes
@@ -1869,7 +1869,7 @@ Get the global unique mesh face identifiers @code{faceTags} and orientations @co
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1297,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1145,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L3606,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3139,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x7.cpp#L52,x7.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/x7.py#L45,x7.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x7.cpp#L52,x7.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/x7.py#L45,x7.py}, @url{@value{GITLAB-PREFIX}/examples/api/remesh_cavity.py#L38,remesh_cavity.py})
 @end table
 
 @item gmsh/model/mesh/createEdges
@@ -1901,7 +1901,7 @@ Create unique mesh faces for the entities @code{dimTags}, given as a vector of (
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1312,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1158,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L3662,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3185,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x7.cpp#L46,x7.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/x7.py#L41,x7.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x7.cpp#L46,x7.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/x7.py#L41,x7.py}, @url{@value{GITLAB-PREFIX}/examples/api/remesh_cavity.py#L37,remesh_cavity.py})
 @end table
 
 @item gmsh/model/mesh/getAllEdges
@@ -2077,7 +2077,7 @@ Get the nodes on the faces of type @code{faceType} (3 for triangular faces, 4 fo
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1449,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1283,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4014,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3521,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x7.cpp#L35,x7.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/x7.py#L31,x7.py}, @url{@value{GITLAB-PREFIX}/examples/api/neighbors.py#L16,neighbors.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x7.cpp#L35,x7.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/x7.py#L31,x7.py}, @url{@value{GITLAB-PREFIX}/examples/api/neighbors.py#L16,neighbors.py}, @url{@value{GITLAB-PREFIX}/examples/api/remesh_cavity.py#L36,remesh_cavity.py})
 @end table
 
 @item gmsh/model/mesh/getGhostElements
@@ -2653,7 +2653,7 @@ Create a geometry for the discrete entities @code{dimTags} (given as a vector of
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1830,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1620,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L5051,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L4466,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t13.cpp#L59,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/x2.cpp#L111,x2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t13.py#L50,t13.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/x2.py#L106,x2.py}, @url{@value{GITLAB-PREFIX}/examples/api/aneurysm.py#L13,aneurysm.py}, @url{@value{GITLAB-PREFIX}/examples/api/glue_and_remesh_stl.py#L32,glue_and_remesh_stl.py}, @url{@value{GITLAB-PREFIX}/examples/api/remesh_stl.py#L26,remesh_stl.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t13.cpp#L59,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/x2.cpp#L111,x2.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t13.py#L50,t13.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/x2.py#L106,x2.py}, @url{@value{GITLAB-PREFIX}/examples/api/aneurysm.py#L13,aneurysm.py}, @url{@value{GITLAB-PREFIX}/examples/api/glue_and_remesh_stl.py#L32,glue_and_remesh_stl.py}, @url{@value{GITLAB-PREFIX}/examples/api/remesh_cavity.py#L73,remesh_cavity.py}, ...)
 @end table
 
 @item gmsh/model/mesh/createTopology
@@ -5237,7 +5237,7 @@ Triangulate the points given in the @code{coordinates} vector as concatenated pa
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3904,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3479,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10441,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9250,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3784,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3369,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10100,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L8960,Julia}
 @item Examples:
 Python (@url{@value{GITLAB-PREFIX}/examples/api/raw_triangulation.py#L14,raw_triangulation.py})
 @end table
@@ -5253,267 +5253,9 @@ Tetrahedralize the points given in the @code{coordinates} vector as concatenated
 @item Return:
 -
 @item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3913,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3488,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10472,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9275,Julia}
+@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3793,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3378,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10131,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L8985,Julia}
 @item Examples:
 Python (@url{@value{GITLAB-PREFIX}/examples/api/raw_tetrahedralization.py#L16,raw_tetrahedralization.py})
-@end table
-
-@end ftable
-
-@node Namespace gmsh/alphaShape, Namespace gmsh/plugin, Namespace gmsh/algorithm, Gmsh application programming interface
-@section Namespace @code{gmsh/alphaShape}: Alpha shape class
-
-@ftable @code
-@item gmsh/alphaShape/add
-Create a new alpha shape class with the given @code{name}. If @code{tag} is positive, use it, otherwise associate a new tag. Return the alpha shape tag.
-
-@table @asis
-@item Input:
-@code{name} (string), @code{tag = -1} (integer)
-@item Output:
--
-@item Return:
-integer
-@item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3924,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3494,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10505,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9310,Julia}
-@end table
-
-@item gmsh/alphaShape/clear
-Cleaer the alpha shape with tag @code{tag}.
-
-@table @asis
-@item Input:
-@code{tag} (integer)
-@item Output:
--
-@item Return:
--
-@item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3930,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3499,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10528,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9327,Julia}
-@end table
-
-@item gmsh/alphaShape/triangulate
-Triangulate the nodes given as concatenated triplets of x,y,z coordinates in @code{vertices}.
-
-@table @asis
-@item Input:
-@code{tag} (integer), @code{vertices} (vector of doubles), @code{removeExistingNodes} (boolean)
-@item Output:
--
-@item Return:
--
-@item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3936,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3504,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10545,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9347,Julia}
-@end table
-
-@item gmsh/alphaShape/alphaShape2D
-Create a 2D alpha shape from the nodes in the current alpha shape class with tag @code{tag}, using the given @code{alpha} value. The @code{elementTags} vector contains the tags of the elements to be used in the alpha shape, and @code{sizeAtElements} gives the size at each element.
-
-@table @asis
-@item Input:
-@code{tag} (integer), @code{alpha} (double), @code{sizeAtElements} (vector of doubles)
-@item Output:
--
-@item Return:
--
-@item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3946,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3513,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10568,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9369,Julia}
-@end table
-
-@item gmsh/alphaShape/getNodes
-Get node coordinates from the alpha shape with tag @code{tag}. The coordinates are returned in the @code{vertices} vector as concatenated triplets of x, y, z coordinates.
-
-@table @asis
-@item Input:
-@code{tag} (integer)
-@item Output:
-@code{vertices} (vector of doubles)
-@item Return:
--
-@item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3955,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3521,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10594,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9392,Julia}
-@end table
-
-@item gmsh/alphaShape/getElements
- Get all the elements in the Delaunay triangulation of the alpha shape with tag @code{tag}. The elements are returned in the @code{elements} vector as concatenated triplets of point indexes (with numbering starting at 1).
-
-@table @asis
-@item Input:
-@code{tag} (integer)
-@item Output:
-@code{elementNodes} (vector of sizes)
-@item Return:
--
-@item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3963,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3528,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10620,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9418,Julia}
-@end table
-
-@item gmsh/alphaShape/filterNodes
-Filter nodes that are too close to each other compared to the size field
-
-@table @asis
-@item Input:
-@code{tag} (integer), @code{sizeAtNodes} (vector of doubles), @code{tolerance} (double)
-@item Output:
--
-@item Return:
--
-@item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3969,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3533,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10646,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9441,Julia}
-@end table
-
-@item gmsh/alphaShape/edgeRefine
-Refine the edges of the alpha shape with tag @code{tag} using the nodes in @code{nodeTags} and their sizes in @code{sizeAtNodes}. The @code{tolerance} is used to determine if two nodes are too far from each other.
-
-@table @asis
-@item Input:
-@code{tag} (integer), @code{nodeTags} (vector of sizes), @code{sizeAtNodes} (vector of doubles), @code{tolerance} (double)
-@item Output:
--
-@item Return:
--
-@item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3978,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3541,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10669,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9464,Julia}
-@end table
-
-@item gmsh/alphaShape/volumeRefine
-Volume refine the alpha shape with tag @code{tag} using the nodes in @code{nodeTags} and their sizes in @code{sizeAtNodes}. The @code{minQualityLimit} and @code{minSizeLimit} are used to determine if an element should be refined.
-
-@table @asis
-@item Input:
-@code{tag} (integer), @code{nodeTags} (vector of sizes), @code{sizeAtNodes} (vector of doubles), @code{minQualityLimit} (double), @code{minSizeLimit} (double)
-@item Output:
--
-@item Return:
--
-@item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L3988,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3550,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10697,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9488,Julia}
-@end table
-
-@item gmsh/alphaShape/applyChew
-Apply Chew}s algorithm for mesh refinement on the alpha shape with tag @code{tag}. The nodes to be used in the refinement are given in @code{nodeTags} and their sizes in @code{sizeAtNodes}. The @code{minQualityLimit} and @code{minSizeLimit} are used to determine if an element should be refined.
-
-@table @asis
-@item Input:
-@code{tag} (integer), @code{sizeAtNodes} (vector of doubles), @code{minQualityLimit} (double), @code{minSizeLimit} (double)
-@item Output:
--
-@item Return:
--
-@item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L4000,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3561,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10727,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9512,Julia}
-@end table
-
-@item gmsh/alphaShape/setBoundaryModel
-Set a (GMSH) boundary model with name @code{boundaryModelName} for the alpha shape with tag @code{tag}. This model can be used to match the alpha shape}s boundary edges with the physical groups of the boundary model.
-
-@table @asis
-@item Input:
-@code{tag} (integer), @code{boundaryModelName} (string)
-@item Output:
--
-@item Return:
--
-@item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L4010,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3570,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10755,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9533,Julia}
-@end table
-
-@item gmsh/alphaShape/matchAlphaShapeWithModel
-Match the boundary edges of the alpha shape with tag @code{tag} to the physical groups of the boundary model @code{boundaryModelName}. The colored edges are returned in @code{coloredEdges} as a vector matching the edges of getEdgesOfAlphaShape.
-
-@table @asis
-@item Input:
-@code{tag} (integer), @code{boundaryModelName} (string), @code{tolerance} (double)
-@item Output:
-@code{coloredEdges} (vector of integers)
-@item Return:
--
-@item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L4019,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3578,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10777,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9558,Julia}
-@end table
-
-@item gmsh/alphaShape/moveNodes
-Apply a displacement to the nodes of the alpha shape with tag @code{tag}. The displacement is given as a vector of concatenated triplets of x, y, z coordinates. If a boundary model @code{boundaryModelName} is provided, the displacement is corrected so that nodes remain inside the model. If @code{boundaryModelName} is empty, the displacement is applied without any correction. If @code{recoverDelaunay} is set, we adapt the triangulation to recover Delaunayness after displacement.
-
-@table @asis
-@item Input:
-@code{tag} (integer), @code{displacement} (vector of doubles), @code{recoverDelaunay = False} (boolean)
-@item Output:
--
-@item Return:
--
-@item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L4033,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3591,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10808,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9587,Julia}
-@end table
-
-@item gmsh/alphaShape/correctDisplacement
-Correct the displacement @code{dx} of the nodes of the alpha shape with tag @code{tag} so that they remain inside the boundary model @code{boundaryModelName}. The corrected displacement is returned in @code{correctedDx}. The @code{tolerance} is used to determine if a node is inside the model.
-
-@table @asis
-@item Input:
-@code{tag} (integer), @code{dx} (vector of doubles), @code{tolerance} (double)
-@item Output:
-@code{correctedDx} (vector of doubles)
-@item Return:
--
-@item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L4043,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3600,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10837,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9613,Julia}
-@end table
-
-@item gmsh/alphaShape/createAlphaShapeOctree
-Create an octree on the triangles of the alpha shape with tag @code{tag}.
-
-@table @asis
-@item Input:
-@code{tag} (integer)
-@item Output:
--
-@item Return:
--
-@item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L4051,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3607,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10869,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9634,Julia}
-@end table
-
-@item gmsh/alphaShape/getTrianglesAndParametric@-Coords
-Get the triangles and parametric coordinates of the alpha shape with tag @code{tag}. The triangles are returned as indices matching the elements from getElements, and the parametric coordinates are returned in @code{parametricCoords} as concatenated triplets of u, v, w coordinates.
-
-@table @asis
-@item Input:
-@code{tag} (integer), @code{points} (vector of doubles)
-@item Output:
-@code{triangles} (vector of sizes), @code{parametricCoords} (vector of doubles)
-@item Return:
--
-@item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L4059,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3614,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10887,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9660,Julia}
-@end table
-
-@item gmsh/alphaShape/getAlphaShapeMesh
-Get the mesh of the alpha shape with tag @code{tag}. The mesh is returned as a vector of concatenated triplets of x, y, z coordinates in @code{coords}, and as a vector of concatenated triplets of point indexes in @code{triangles}, and as a vector of concatenated doublets of edge indexes in @code{edges}.
-
-@table @asis
-@item Input:
-@code{tag} (integer)
-@item Output:
-@code{coords} (vector of doubles), @code{triangles} (vector of sizes), @code{edges} (vector of sizes)
-@item Return:
--
-@item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L4070,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3624,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10922,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9692,Julia}
-@end table
-
-@item gmsh/alphaShape/getDelaunayMesh
-Get the full Delaunay mesh as a set of coordinates and triangles from the alpha shape with tag @code{tag}.
-
-@table @asis
-@item Input:
-@code{tag} (integer)
-@item Output:
-@code{coords} (vector of doubles), @code{triangles} (vector of sizes)
-@item Return:
--
-@item Language-specific definition:
-@url{@value{GITLAB-PREFIX}/api/gmsh.h#L4079,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3632,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L10958,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9724,Julia}
 @end table
 
 @end ftable

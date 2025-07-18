@@ -147,8 +147,6 @@ bool buildTrianglesAndTargetsFromElements(
 
 	double l = 1;//sqrt(fabs(area));
 
-	//printf("l = %g\n",l);
-
         std::array<vec2, 3> target = {qtarget[quad_dcp[k][0]]*l,
                                       qtarget[quad_dcp[k][1]]*l,
                                       qtarget[quad_dcp[k][2]]*l};
@@ -655,9 +653,9 @@ bool untangleGFaceMeshConstrained(GFace *gf, int iterMax, double timeMax)
   /* Call Winslow untangler */
   int iterMaxInner = 300;//0;
   int iterFailMax = 10;
-  double lambda = 1.e-13;
+  double lambda = 1;
 
-  #if 1
+#if 1
   {
     char name[245];
     sprintf(name,"x%d.pos",gf->tag());

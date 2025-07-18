@@ -1,8 +1,10 @@
-4.14.0 (Work-in-progress): improve return value of boolean operations; improved
+4.14.0 (July 3, 2025): improve return value of boolean operations; improved
 ONELAB parameter GUI; improved XAO export with mesh sizes; improved unrolled GEO
 export to handle OCC geometries; new Step() built-in parser function; fix
 occ/getClosestPoint for OCC surfaces; renamed Windows DLL import library from
-.lib to .dll.lib; upgraded official binary builds with OCC 7.8;
+.lib to .dll.lib; official binary builds now use OCC 7.8, and Linux and Windows
+binary builds use FLTK 1.3 (instead of FLTK 1.4, which introduced performance
+regressions in OpenGL rendering); bug fixes.
 
 * New API functions: model/getEntityProperties, model/getPhysicalGroupsEntities
 

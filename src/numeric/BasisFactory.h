@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -17,10 +17,10 @@ class FuncSpaceData;
 class BasisFactory {
 private:
   static std::map<int, nodalBasis *> fs;
-  static std::map<int, CondNumBasis *> cs;
-  static std::map<FuncSpaceData, JacobianBasis *> js;
   static std::map<FuncSpaceData, bezierBasis *> bs;
-  static std::map<FuncSpaceData, GradientBasis *> gs;
+  static std::map<std::pair<int, int>, CondNumBasis *> cs;
+  static std::map<std::pair<int, FuncSpaceData>, JacobianBasis *> js;
+  static std::map<std::pair<int, FuncSpaceData>, GradientBasis *> gs;
 
 public:
   // Caution: the returned pointer can be NULL

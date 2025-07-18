@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1563,12 +1563,14 @@ optionWindow::optionWindow(int deltaFontSize)
       general.value[32]->deactivate();
 #endif
 
-#if defined(HAVE_VISUDEV)
       general.butt[20] =
-        new Fl_Check_Button(L + 2 * WB, 2 * WB + 10 * BH, BW / 2 - WB, BH,
+        new Fl_Check_Button(L + 2 * WB, 2 * WB + 10 * BH, BW, BH,
                             "Enable heavy visualization capabilities");
       general.butt[20]->type(FL_TOGGLE_BUTTON);
       general.butt[20]->callback(general_options_ok_cb);
+
+#if !defined(HAVE_VISUDEV)
+      general.butt[20]->deactivate();
 #endif
 
       Fl_Button *b2 = new Fl_Button(L + 2 * WB, 2 * WB + 11 * BH, BW, BH,

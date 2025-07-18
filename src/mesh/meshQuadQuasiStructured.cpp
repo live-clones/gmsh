@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -95,9 +95,9 @@ static int getNumThreads()
 
 int buildBackgroundField(
   GModel *gm, const std::vector<MTriangle *> &global_triangles,
-  const std::vector<std::array<double, 9> > &global_triangle_directions,
+  const std::vector<std::array<double, 9>> &global_triangle_directions,
   const std::unordered_map<MVertex *, double> &global_size_map,
-  const std::vector<std::array<double, 5> > &global_singularity_list,
+  const std::vector<std::array<double, 5>> &global_singularity_list,
   const std::string &viewName = "guiding_field")
 {
   Msg::Info("Build background field (view 'guiding_field') ...");
@@ -197,7 +197,7 @@ int buildBackgroundField(
 
 void showCrossFieldInView(
   const std::vector<MTriangle *> &global_triangles,
-  const std::vector<std::array<double, 9> > &global_triangle_directions,
+  const std::vector<std::array<double, 9>> &global_triangle_directions,
   const std::string &viewName = "cross_field")
 {
   for(size_t i = 0; i < global_triangles.size(); ++i) {
@@ -216,8 +216,8 @@ void showCrossFieldInView(
 void showUVParametrization(GFace *gf, const std::vector<MElement *> &elts,
                            const std::string &viewName = "uv")
 {
-  std::vector<std::vector<double> > values_u;
-  std::vector<std::vector<double> > values_v;
+  std::vector<std::vector<double>> values_u;
+  std::vector<std::vector<double>> values_v;
   for(MElement *t : elts) {
     std::vector<SPoint2> tris_uvs = paramOnElement(gf, t);
     std::vector<double> us(tris_uvs.size());
@@ -442,13 +442,11 @@ bool getGFaceBackgroundMeshLinesAndTriangles(
     triangles.push_back(&(it->second.triangles[i]));
   }
 
-  sort_unique(lines, [](MLine *a, MLine *b) {
-    return a->getNum() < b->getNum();
-  });
+  sort_unique(lines,
+              [](MLine *a, MLine *b) { return a->getNum() < b->getNum(); });
   sort_unique(triangles, [](MTriangle *a, MTriangle *b) {
     return a->getNum() < b->getNum();
   });
-
 
   return true;
 }
@@ -561,9 +559,9 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
    *   - one-way smoothing with Dijkstra + gradient max
    */
   std::vector<MTriangle *> global_triangles;
-  std::vector<std::array<double, 9> > global_triangle_directions;
-  std::vector<std::pair<MVertex *, double> > global_size_map;
-  std::vector<std::array<double, 5> >
+  std::vector<std::array<double, 9>> global_triangle_directions;
+  std::vector<std::pair<MVertex *, double>> global_size_map;
+  std::vector<std::array<double, 5>>
     global_singularity_list; /* format: gf->tag(), index, x, y, z */
   /* Per GFace computations, in parallel */
   {
@@ -576,8 +574,10 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
 
     std::vector<GFace *> faces = model_faces(gm);
     size_t ntris = 0;
+    std::set<GFace *> compnds;
     for(size_t f = 0; f < faces.size(); ++f) {
       GFace *gf = faces[f];
+      if(gf->compoundSurface) compnds.insert(gf->compoundSurface);
       auto it = bmesh.faceBackgroundMeshes.find(gf);
       if(it != bmesh.faceBackgroundMeshes.end()) {
         ntris += it->second.triangles.size();
@@ -596,7 +596,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
       if(CTX::instance()->debugSurface > 0 &&
          gf->tag() != CTX::instance()->debugSurface)
         continue;
-
+      if(compnds.find(gf) != compnds.end()) continue;
       /* Compute a cross field on each face */
 
       /* Get mesh elements for solver */
@@ -611,7 +611,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
       }
 
       /* Cross field */
-      std::vector<std::array<double, 3> > triEdgeTheta;
+      std::vector<std::array<double, 3>> triEdgeTheta;
       int nbDiffusionLevels = 4;
       double thresholdNormConvergence = 1.e-2;
       int nbBoundaryExtensionLayer = 1;
@@ -630,7 +630,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
       /* Cross field singularities */
       bool addSingularitiesAtAcuteCorners = true;
       double thresholdInDeg = 30.;
-      std::vector<std::pair<SPoint3, int> > singularities;
+      std::vector<std::pair<SPoint3, int>> singularities;
       int scsi = detectCrossFieldSingularities(N, triangles, triEdgeTheta,
                                                addSingularitiesAtAcuteCorners,
                                                thresholdInDeg, singularities);
@@ -638,8 +638,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
         Msg::Warning("- Face %i: failed to compute cross field singularities",
                      gf->tag());
       }
-      std::vector<std::array<double, 5> > singularity_list(
-        singularities.size());
+      std::vector<std::array<double, 5>> singularity_list(singularities.size());
       for(size_t k = 0; k < singularities.size(); ++k) {
         singularity_list[k] = {
           double(gf->tag()), double(singularities[k].second),
@@ -653,7 +652,7 @@ int BuildBackgroundMeshAndGuidingField(GModel *gm, bool overwriteGModelMesh,
         }
       }
 
-      std::vector<std::array<double, 9> > triangleDirections;
+      std::vector<std::array<double, 9>> triangleDirections;
       int sc = convertToPerTriangleCrossFieldDirections(
         N, triangles, triEdgeTheta, triangleDirections);
       if(sc != 0) {
@@ -884,7 +883,7 @@ bool backgroundMeshAndGuidingFieldExists(GModel *gm)
 }
 
 bool getSingularitiesFromBackgroundField(
-  GFace *gf, std::vector<std::pair<SPoint3, int> > &singularities)
+  GFace *gf, std::vector<std::pair<SPoint3, int>> &singularities)
 {
   singularities.clear();
 
@@ -933,7 +932,7 @@ bool getSingularitiesFromBackgroundField(
 
 bool getSingularitiesFromNewCrossFieldComputation(
   GlobalBackgroundMesh &bmesh, GFace *gf,
-  std::vector<std::pair<SPoint3, int> > &singularities)
+  std::vector<std::pair<SPoint3, int>> &singularities)
 {
   const int N = 4;
 
@@ -948,7 +947,7 @@ bool getSingularitiesFromNewCrossFieldComputation(
   }
 
   /* Cross field */
-  std::vector<std::array<double, 3> > triEdgeTheta;
+  std::vector<std::array<double, 3>> triEdgeTheta;
   int nbDiffusionLevels = 4;
   double thresholdNormConvergence = 1.e-2;
   int nbBoundaryExtensionLayer = 1;
@@ -1023,10 +1022,10 @@ bool getBoundaryIdealAndAllowedValences(
   int fixingDim, /* 0 when fixing corners, 1 when fixing curves, 2 when fixing
                     surfaces */
   GFaceMeshPatch &patch,
-  const unordered_map<MVertex *, std::vector<MElement *> > &adj,
+  const unordered_map<MVertex *, std::vector<MElement *>> &adj,
   const unordered_map<MVertex *, double> &qValIdeal,
   std::vector<int> &bndIdealValence,
-  std::vector<std::pair<int, int> > &bndAllowedValenceRange)
+  std::vector<std::pair<int, int>> &bndAllowedValenceRange)
 {
   if(fixingDim < 0 || fixingDim > 2) return false;
   size_t N = patch.bdrVertices.front().size();
@@ -1155,7 +1154,7 @@ bool meshOrientationIsOppositeOfCadOrientation(GFace *gf)
 
 void updateAdjacencies(const GFaceMeshPatch &before,
                        const GFaceMeshPatch &after,
-                       unordered_map<MVertex *, std::vector<MElement *> > &adj)
+                       unordered_map<MVertex *, std::vector<MElement *>> &adj)
 {
   /* Remove old vertices from adjacency keys */
   for(MVertex *v : before.intVertices) {
@@ -1182,7 +1181,7 @@ void updateAdjacencies(const GFaceMeshPatch &before,
 
 std::vector<MElement *>
 getNeighbors(const std::vector<MElement *> &elements,
-             const unordered_map<MVertex *, std::vector<MElement *> > &adj)
+             const unordered_map<MVertex *, std::vector<MElement *>> &adj)
 {
   std::vector<MElement *> neighbors;
   for(MElement *e : elements) {
@@ -1198,10 +1197,9 @@ getNeighbors(const std::vector<MElement *> &elements,
   return neighbors;
 }
 
-bool smoothThePool(
-  GFace *gf, const std::vector<MVertex *> &smoothingPool,
-  const unordered_map<MVertex *, std::vector<MElement *> > &adj,
-  bool invertNormalsForQuality, SurfaceProjector *sp = nullptr)
+bool smoothThePool(GFace *gf, const std::vector<MVertex *> &smoothingPool,
+                   const unordered_map<MVertex *, std::vector<MElement *>> &adj,
+                   bool invertNormalsForQuality, SurfaceProjector *sp = nullptr)
 {
   /* Get all quads used for smoothing */
   std::vector<MElement *> elements;
@@ -1227,7 +1225,7 @@ bool smoothThePool(
   elements = intersection(elements, faceElements);
 
   /* Build the disconnected patches and smooth them independently */
-  std::vector<std::vector<MElement *> > components;
+  std::vector<std::vector<MElement *>> components;
   bool okc = getConnectedComponents(elements, components);
   if(!okc) return false;
   Msg::Debug("smooth %li connected components from %li initial elements ...",
@@ -1308,7 +1306,7 @@ int improveCornerValences(
   GFace *gf,
   const unordered_map<MVertex *, double>
     &qValIdeal, /* valence on bdr vertices */
-  unordered_map<MVertex *, std::vector<MElement *> > &adj, DQOptions &opt,
+  unordered_map<MVertex *, std::vector<MElement *>> &adj, DQOptions &opt,
   DQStats &stats)
 {
   Msg::Debug("- Face %i: improve corner valences", gf->tag());
@@ -1318,7 +1316,7 @@ int improveCornerValences(
 
   /* qValIdeal is unordered_map and its ordering is random, we replace
    * it with a deterministic ordering, containing only the corners */
-  std::vector<std::pair<MVertex *, double> > cornerAndIdeal;
+  std::vector<std::pair<MVertex *, double>> cornerAndIdeal;
   for(auto &kv : qValIdeal) {
     GVertex *gv = dynamic_cast<GVertex *>(kv.first->onWhat());
     if(gv != nullptr) { cornerAndIdeal.push_back({kv.first, kv.second}); }
@@ -1413,7 +1411,7 @@ int improveCornerValences(
       }
 
       std::vector<int> bndIdealValence;
-      std::vector<std::pair<int, int> > bndAllowedValenceRange;
+      std::vector<std::pair<int, int>> bndAllowedValenceRange;
       const int dimCorner = 0;
       bool okb = getBoundaryIdealAndAllowedValences(dimCorner, patch, adj,
                                                     qValIdeal, bndIdealValence,
@@ -1493,12 +1491,11 @@ int improveCornerValences(
   return 0;
 }
 
-int improveCurveValences(
-  GFace *gf,
-  const unordered_map<MVertex *, double>
-    &qValIdeal, /* valence on bdr vertices */
-  unordered_map<MVertex *, std::vector<MElement *> > &adj, DQOptions &opt,
-  DQStats &stats)
+int improveCurveValences(GFace *gf,
+                         const unordered_map<MVertex *, double>
+                           &qValIdeal, /* valence on bdr vertices */
+                         unordered_map<MVertex *, std::vector<MElement *>> &adj,
+                         DQOptions &opt, DQStats &stats)
 {
   Msg::Debug("- Face %i: improve curve valences", gf->tag());
   std::vector<MVertex *>
@@ -1507,7 +1504,7 @@ int improveCurveValences(
 
   /* qValIdeal is unordered_map and its ordering is random, we replace
    * it with a deterministic ordering, containing only the corners */
-  std::vector<std::pair<MVertex *, double> > curveVertexAndIdeal;
+  std::vector<std::pair<MVertex *, double>> curveVertexAndIdeal;
   curveVertexAndIdeal.reserve(qValIdeal.size());
   for(auto &kv : qValIdeal) {
     MVertex *v = kv.first;
@@ -1552,7 +1549,7 @@ int improveCurveValences(
     }
 
     std::vector<int> bndIdealValence;
-    std::vector<std::pair<int, int> > bndAllowedValenceRange;
+    std::vector<std::pair<int, int>> bndAllowedValenceRange;
     const int dimCurve = 1;
     bool okb = getBoundaryIdealAndAllowedValences(
       dimCurve, patch, adj, qValIdeal, bndIdealValence, bndAllowedValenceRange);
@@ -1646,10 +1643,10 @@ int improveCurveValences(
   return 0;
 }
 
-double irregularityEnergy(
-  const GFaceMeshPatch &patch,
-  const unordered_map<MVertex *, double> &qValIdeal,
-  const unordered_map<MVertex *, std::vector<MElement *> > &adj)
+double
+irregularityEnergy(const GFaceMeshPatch &patch,
+                   const unordered_map<MVertex *, double> &qValIdeal,
+                   const unordered_map<MVertex *, std::vector<MElement *>> &adj)
 {
   double Ir = 0.;
   /* Boundary vertices */
@@ -1676,10 +1673,10 @@ double irregularityEnergy(
   return Ir;
 }
 
-double irregularityEnergy(
-  GFace *gf, const std::vector<MElement *> &quads,
-  const unordered_map<MVertex *, double> &qValIdeal,
-  const unordered_map<MVertex *, std::vector<MElement *> > &adj)
+double
+irregularityEnergy(GFace *gf, const std::vector<MElement *> &quads,
+                   const unordered_map<MVertex *, double> &qValIdeal,
+                   const unordered_map<MVertex *, std::vector<MElement *>> &adj)
 {
   GFaceMeshPatch patch;
   bool okp = patchFromElements(gf, quads, patch);
@@ -1691,7 +1688,7 @@ int improveInteriorValences(
   GFace *gf,
   const unordered_map<MVertex *, double>
     &qValIdeal, /* valence on bdr vertices */
-  unordered_map<MVertex *, std::vector<MElement *> > &adj, DQOptions &opt,
+  unordered_map<MVertex *, std::vector<MElement *>> &adj, DQOptions &opt,
   DQStats &stats)
 {
   Msg::Debug("- Face %i: improve interior valences", gf->tag());
@@ -1702,7 +1699,7 @@ int improveInteriorValences(
 
   /* Priority queue */
   std::priority_queue<std::pair<double, MVertex *>,
-                      std::vector<std::pair<double, MVertex *> > >
+                      std::vector<std::pair<double, MVertex *>>>
     Q;
 
   /* Initialize with all very irregular vertices of the face */
@@ -1749,7 +1746,7 @@ int improveInteriorValences(
 
     /* Get ideal and allowed ranges on the patch boundary */
     std::vector<int> bndIdealValence;
-    std::vector<std::pair<int, int> > bndAllowedValenceRange;
+    std::vector<std::pair<int, int>> bndAllowedValenceRange;
     const int dimCurve = 2;
     bool okb = getBoundaryIdealAndAllowedValences(
       dimCurve, patch, adj, qValIdeal, bndIdealValence, bndAllowedValenceRange);
@@ -1836,7 +1833,7 @@ int improveInteriorValences(
 
 bool patchIsValidForDiskRequadrangulation(
   const GFaceMeshPatch &patch,
-  const unordered_map<MVertex *, std::vector<MElement *> > &adj)
+  const unordered_map<MVertex *, std::vector<MElement *>> &adj)
 {
   if(patch.bdrVertices.size() != 1) return false;
   for(MVertex *v : patch.intVertices) {
@@ -1861,9 +1858,9 @@ bool patchIsValidForDiskRequadrangulation(
 
 bool getIrregularPatchesAroundVertices(
   const std::vector<MVertex *> &vert,
-  const unordered_map<MVertex *, std::vector<MElement *> > &adj,
+  const unordered_map<MVertex *, std::vector<MElement *>> &adj,
   const unordered_map<MVertex *, double> &qValIdeal,
-  std::vector<std::pair<double, GFaceMeshPatch> > &patches)
+  std::vector<std::pair<double, GFaceMeshPatch>> &patches)
 {
   for(MVertex *v : vert) {
     GFace *gf = dynamic_cast<GFace *>(v->onWhat());
@@ -1939,7 +1936,7 @@ int improveInteriorValencesV2(
   GFace *gf,
   const unordered_map<MVertex *, double>
     &qValIdeal, /* valence on bdr vertices */
-  unordered_map<MVertex *, std::vector<MElement *> > &adj, DQOptions &opt,
+  unordered_map<MVertex *, std::vector<MElement *>> &adj, DQOptions &opt,
   DQStats &stats)
 {
   Msg::Debug("- Face %i: improve interior valences", gf->tag());
@@ -1969,7 +1966,7 @@ int improveInteriorValencesV2(
     const size_t val = quads.size();
     if(val == 4) continue;
 
-    std::vector<std::pair<double, GFaceMeshPatch> > patches;
+    std::vector<std::pair<double, GFaceMeshPatch>> patches;
     getIrregularPatchesAroundVertices({v}, adj, qValIdeal, patches);
     for(size_t k = 0; k < patches.size(); ++k) { Q.push(patches[k]); }
   }
@@ -1983,7 +1980,7 @@ int improveInteriorValencesV2(
 
     /* Get ideal and allowed ranges on the patch boundary */
     std::vector<int> bndIdealValence;
-    std::vector<std::pair<int, int> > bndAllowedValenceRange;
+    std::vector<std::pair<int, int>> bndAllowedValenceRange;
     const int dimCurve = 2;
     bool okb = getBoundaryIdealAndAllowedValences(
       dimCurve, patch, adj, qValIdeal, bndIdealValence, bndAllowedValenceRange);
@@ -2026,7 +2023,7 @@ int improveInteriorValencesV2(
 
         /* If new irregular patches have been created,
          * add them to the queue */
-        std::vector<std::pair<double, GFaceMeshPatch> > patches;
+        std::vector<std::pair<double, GFaceMeshPatch>> patches;
         getIrregularPatchesAroundVertices(patchAfter.bdrVertices.front(), adj,
                                           qValIdeal, patches);
         for(size_t k = 0; k < patches.size(); ++k) { Q.push(patches[k]); }
@@ -2081,7 +2078,7 @@ int RefineMeshWithBackgroundMeshProjectionSimple(GModel *gm)
   unordered_map<MVertex *, MVertex *> old2new;
 
   // FIXME: crash #1799
-  int nthreads = 1; //getNumThreads();
+  int nthreads = 1; // getNumThreads();
 
 #pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(size_t e = 0; e < edges.size(); ++e) {
@@ -2327,9 +2324,9 @@ int RefineMeshWithBackgroundMeshProjection(GModel *gm)
   std::vector<GFace *> faces = model_faces(gm);
   /* Build custom edgeToFaces because ge->faces() does not work
    * for embedded edges */
-  std::unordered_map<GEdge *, std::vector<MVertex *> > toProjectOnCurve;
-  std::unordered_map<GFace *, std::vector<MVertex *> > toProjectOnFace;
-  std::unordered_map<GEdge *, std::unordered_set<GFace *> > edgeToFaces;
+  std::unordered_map<GEdge *, std::vector<MVertex *>> toProjectOnCurve;
+  std::unordered_map<GFace *, std::vector<MVertex *>> toProjectOnFace;
+  std::unordered_map<GEdge *, std::unordered_set<GFace *>> edgeToFaces;
   for(GFace *gf : model_faces(gm)) {
     std::vector<GEdge *> fedges = face_edges(gf);
     for(GEdge *ge : fedges) edgeToFaces[ge].insert(gf);
@@ -2635,7 +2632,7 @@ int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace *gf)
   computeBdrVertexIdealValence(gf->quadrangles, qValIdeal);
 
   /* Vertex to quads */
-  unordered_map<MVertex *, std::vector<MElement *> > adj;
+  unordered_map<MVertex *, std::vector<MElement *>> adj;
   for(MQuadrangle *f : gf->quadrangles)
     for(size_t lv = 0; lv < 4; ++lv) {
       MVertex *v = f->getVertex(lv);
@@ -2732,7 +2729,7 @@ int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace *gf)
 
 int insertExtrudedBoundaryLayer(
   GFace *gf, const std::vector<MVertex *> &loop,
-  const unordered_map<MVertex *, std::vector<MElement *> > &adj)
+  const unordered_map<MVertex *, std::vector<MElement *>> &adj)
 {
   if(loop.size() < 2) return -1;
   unordered_map<MVertex *, MVertex *> extrusion;
@@ -2809,7 +2806,7 @@ int optimizeFaceQuadMeshBoundaries(GFace *gf, bool ignoreAcuteCorners = false)
   std::vector<MElement *> elts =
     dynamic_cast_vector<MQuadrangle *, MElement *>(gf->quadrangles);
   computeSICN(elts, minSICNb, avgSICNb);
-  std::vector<std::array<MVertex *, 4> > quadsInit(gf->quadrangles.size());
+  std::vector<std::array<MVertex *, 4>> quadsInit(gf->quadrangles.size());
   for(size_t i = 0; i < gf->quadrangles.size(); ++i)
     for(size_t lv = 0; lv < 4; ++lv) {
       quadsInit[i][lv] = gf->quadrangles[i]->getVertex(lv);
@@ -2824,7 +2821,7 @@ int optimizeFaceQuadMeshBoundaries(GFace *gf, bool ignoreAcuteCorners = false)
   computeBdrVertexIdealValence(gf->quadrangles, qValIdeal);
 
   /* Face boundary loops */
-  std::vector<std::vector<MVertex *> > loops;
+  std::vector<std::vector<MVertex *>> loops;
   bool okb = buildBoundaries(elts, loops);
   if(!okb) {
     Msg::Warning("failed to build boundary loops on face %i", gf->tag());
@@ -2832,7 +2829,7 @@ int optimizeFaceQuadMeshBoundaries(GFace *gf, bool ignoreAcuteCorners = false)
   }
 
   /* Vertex to quads */
-  unordered_map<MVertex *, std::vector<MElement *> > adj;
+  unordered_map<MVertex *, std::vector<MElement *>> adj;
   for(MQuadrangle *f : gf->quadrangles)
     for(size_t lv = 0; lv < 4; ++lv) {
       MVertex *v = f->getVertex(lv);
@@ -3064,9 +3061,10 @@ int quadMeshingOfSimpleFacesWithPatterns(GModel *gm,
     if(CTX::instance()->debugSurface > 0 &&
        gf->tag() != CTX::instance()->debugSurface)
       continue;
-    if(gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
+    if(gf->quadrangles.size() == 0) continue;
     if(gf->embeddedEdges().size() > 0 || gf->embeddedVertices().size() > 0)
       continue;
+    //    if (gf->tag() == 696)printf("coucou %d\n",696);
 
     bool invertNormals = meshOrientationIsOppositeOfCadOrientation(gf);
     meshFaceWithGlobalPattern(gf, invertNormals, minimumQualityRequired);
@@ -3193,13 +3191,13 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
     gf->meshStatistics.status = GFace::DONE;
 
     /* Get singularities from global storage */
-    std::vector<std::pair<SPoint3, int> > singularities;
+    std::vector<std::pair<SPoint3, int>> singularities;
     bool okg = getSingularitiesFromBackgroundField(gf, singularities);
     if(!okg) {
-      okg = getSingularitiesFromNewCrossFieldComputation(bmesh, gf,
-              singularities);
+      okg =
+        getSingularitiesFromNewCrossFieldComputation(bmesh, gf, singularities);
       if(!okg) {
-          Msg::Warning("- Face %i: failed to get singularities", gf->tag());
+        Msg::Warning("- Face %i: failed to get singularities", gf->tag());
       }
     }
 
@@ -3216,8 +3214,7 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
   appendQuadMeshStatistics(gm, stats, "Mesh_");
   printStatistics(stats, "Quad mesh after cavity remeshing:");
 
-  if(Msg::GetVerbosity() > 5)
-    writeStatistics(stats, "quadqs_statistics.json");
+  if(Msg::GetVerbosity() > 5) writeStatistics(stats, "quadqs_statistics.json");
 
   if(PARANO_VALIDITY) {
     errorAndAbortIfInvalidVertexInModel(gm,
@@ -3539,10 +3536,10 @@ int quadqsCleanup(GModel *gm)
 
 void getAcuteCorners(
   GFace *gf,
-  std::unordered_map<MVertex *, std::vector<MVertex *> > &acuteCorners,
+  std::unordered_map<MVertex *, std::vector<MVertex *>> &acuteCorners,
   double angle_threshold_rad)
 {
-  std::unordered_map<MVertex *, std::vector<MVertex *> > corner2vertices;
+  std::unordered_map<MVertex *, std::vector<MVertex *>> corner2vertices;
   for(GEdge *ge : gf->edges()) {
     for(MLine *line : ge->lines) {
       MVertex *v1 = line->getVertex(0);
@@ -3572,7 +3569,7 @@ void getAcuteCorners(
 int optimize1DMeshAtAcuteCorners(GModel *gm)
 {
   /* Collect acute corners */
-  std::unordered_map<MVertex *, std::vector<MVertex *> > acuteCorners;
+  std::unordered_map<MVertex *, std::vector<MVertex *>> acuteCorners;
   double threshold = 30. * M_PI / 180.;
   for(GFace *gf : gm->getFaces()) {
     for(GEdge *ge : gf->edges())

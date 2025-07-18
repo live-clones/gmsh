@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1231,6 +1231,9 @@ GMSH_API void gmsh::model::getClosestPoint(const int dim, const int tag,
       parametricCoord.push_back(pp.u());
       parametricCoord.push_back(pp.v());
     }
+  }
+  else {
+    Msg::Error("Closet point calculation only for entities of dimension 1 or 2");
   }
 }
 

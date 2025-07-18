@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1613,10 +1613,11 @@ void GEO_Internals::synchronize(GModel *model, bool resetMeshAttributes)
         continue;
       }
       if(ent) {
+	Msg::Info("Found %s %d in compound", name, tag);
         ents.push_back(ent);
       }
       else {
-        Msg::Warning("Skipping unknown %d %d in compound", name, tag);
+        Msg::Warning("Skipping unknown %s %d in compound", name, tag);
       }
     }
     for(std::size_t i = 0; i < ents.size(); i++) { ents[i]->compound = ents; }

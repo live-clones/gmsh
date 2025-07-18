@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -641,7 +641,7 @@ static void Mesh2D(GModel *m)
       }
     }
     transferSeamGEdgesVerticesToGFace(m);
-    quadMeshingOfSimpleFacesWithPatterns(m);
+    quadMeshingOfSimpleFacesWithPatterns(m,-1000.0);
     optimizeTopologyWithDiskQuadrangulationRemeshing(m);
     optimizeTopologyWithCavityRemeshing(m);
     OptimizeMesh(m, "UntangleTris");
@@ -885,6 +885,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
     for(auto it = m->firstRegion(); it != m->lastRegion(); it++) {
       optimizeMeshGRegion opt;
       opt(*it, force);
+      // RelocateVerticesOfPyramids(*it, 10, 1.e-6);      
     }
     m->setAllVolumesPositive();
   }

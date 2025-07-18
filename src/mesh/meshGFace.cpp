@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -59,7 +59,9 @@ bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
     }
   }
   N = count;
-  //  printf("point %22.5E %22.5E out %22.5E %22.5E in parametric domain (bnd size %zu) : %d %d\n",p.x(),p.y(),out.x(), out.y(), bnd.size(),count, count%2);
+  //  printf("point %22.5E %22.5E out %22.5E %22.5E in parametric domain (bnd
+  //  size %zu) : %d %d\n",p.x(),p.y(),out.x(), out.y(), bnd.size(),count,
+  //  count%2);
   if(count % 2 == 0) return false;
   return true;
 }
@@ -127,8 +129,8 @@ static void computeElementShapes(GFace *gf, double &worst, double &avg,
 class quadMeshRemoveHalfOfOneDMesh {
 private:
   GFace *_gf;
-  std::map<GEdge *, std::vector<MLine *> > _backup;
-  std::map<GEdge *, std::vector<MVertex *> > _backupv;
+  std::map<GEdge *, std::vector<MLine *>> _backup;
+  std::map<GEdge *, std::vector<MVertex *>> _backupv;
   std::map<MEdge, MVertex *, MEdgeLessThan> _middle;
   void _subdivide()
   {
@@ -254,9 +256,10 @@ private:
     edges.insert(edges.begin(), emb.begin(), emb.end());
     auto ite = edges.begin();
     while(ite != edges.end()) {
-      //      printf("restore %d  %d --> %d\n",(*ite)->tag(),(*ite)->lines.size(),_backup[*ite].size());
+      //      printf("restore %d  %d -->
+      //      %d\n",(*ite)->tag(),(*ite)->lines.size(),_backup[*ite].size());
       for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
-	delete(*ite)->lines[i];
+        delete(*ite)->lines[i];
       }
       (*ite)->lines = _backup[*ite];
       (*ite)->mesh_vertices = _backupv[*ite];
@@ -292,7 +295,7 @@ public:
       if(!(*ite)->isMeshDegenerated()) {
         std::vector<MLine *> temp;
         _backupv[*ite] = (*ite)->mesh_vertices;
-	(*ite)->mesh_vertices.clear();
+        (*ite)->mesh_vertices.clear();
         for(std::size_t i = 0; i < (*ite)->lines.size(); i += 2) {
           if(i + 1 >= (*ite)->lines.size()) {
             Msg::Error("1D mesh cannot be divided by 2");
@@ -305,18 +308,27 @@ public:
           v2->y() = 0.5 * (v1->y() + v3->y());
           v2->z() = 0.5 * (v1->z() + v3->z());
           temp.push_back(new MLine(v1, v3));
-	  //	  printf("%d %d %d %d %d\n",(*ite)->tag(),v1->onWhat()->dim(),v1->onWhat()->tag(),v3->onWhat()->dim(),v3->onWhat()->tag());
-	  if(v1->onWhat() == *ite && std::find((*ite)->mesh_vertices.begin(), (*ite)->mesh_vertices.end(), v1) == (*ite)->mesh_vertices.end()) {
-	    //	  	    printf("adding vertex %d to %d\n",v1->getNum(),(*ite)->tag());
-	    (*ite)->mesh_vertices.push_back(v1);
-	  }
-	  //	  if(v3->onWhat() == *ite && std::find((*ite)->mesh_vertices.begin(), (*ite)->mesh_vertices.end(), v3) == (*ite)->mesh_vertices.end()) {
-	    //	    printf("adding vertex %d to %d\n",v3->getNum(),(*ite)->tag());
-	  //	    (*ite)->mesh_vertices.push_back(v3);
-	  //	  }
+          //	  printf("%d %d %d %d
+          //%d\n",(*ite)->tag(),v1->onWhat()->dim(),v1->onWhat()->tag(),v3->onWhat()->dim(),v3->onWhat()->tag());
+          if(v1->onWhat() == *ite &&
+             std::find((*ite)->mesh_vertices.begin(),
+                       (*ite)->mesh_vertices.end(),
+                       v1) == (*ite)->mesh_vertices.end()) {
+            //	  	    printf("adding vertex %d to
+            //%d\n",v1->getNum(),(*ite)->tag());
+            (*ite)->mesh_vertices.push_back(v1);
+          }
+          //	  if(v3->onWhat() == *ite &&
+          //std::find((*ite)->mesh_vertices.begin(),
+          //(*ite)->mesh_vertices.end(), v3) == (*ite)->mesh_vertices.end()) {
+          //	    printf("adding vertex %d to
+          //%d\n",v3->getNum(),(*ite)->tag());
+          //	    (*ite)->mesh_vertices.push_back(v3);
+          //	  }
           _middle[MEdge(v1, v3)] = v2;
         }
-	//	printf("%d %d --> %d\n",(*ite)->tag(), (*ite)->lines.size(),temp.size());
+        //	printf("%d %d --> %d\n",(*ite)->tag(),
+        //(*ite)->lines.size(),temp.size());
         _backup[*ite] = (*ite)->lines;
         (*ite)->lines = temp;
       }
@@ -872,7 +884,8 @@ static void modifyInitialMeshForBoundaryLayers(
         if(!N) continue;
 
         for(int l = 0; l < N; ++l) {
-          MVertex *v11, *v12, *v21, *v22;
+          MVertex *v11 = nullptr, *v12 = nullptr, *v21 = nullptr,
+                  *v22 = nullptr;
           v21 = c1._column[l];
           v22 = c2._column[l];
           if(l == 0) {
@@ -898,7 +911,7 @@ static void modifyInitialMeshForBoundaryLayers(
         }
 
         if(c1._column.size() != c2._column.size()) {
-          MVertex *v11, *v12, *v;
+          MVertex *v11 = nullptr, *v12 = nullptr, *v = nullptr;
           v11 = c1._column[N - 1];
           v12 = c2._column[N - 1];
           v = c1._column.size() > c2._column.size() ? c1._column[N] :
@@ -935,7 +948,8 @@ static void modifyInitialMeshForBoundaryLayers(
         int N = std::min(c1._column.size(), c2._column.size());
         std::vector<MElement *> myCol;
         for(int l = 0; l < N; ++l) {
-          MVertex *v11, *v12, *v21, *v22;
+          MVertex *v11 = nullptr, *v12 = nullptr, *v21 = nullptr,
+                  *v22 = nullptr;
           v21 = c1._column[l];
           v22 = c2._column[l];
           if(l == 0) {
@@ -989,7 +1003,7 @@ static void modifyInitialMeshForBoundaryLayers(
         const BoundaryLayerData &c2 = _columns->getColumn(v, i + 1);
         int N = std::min(c1._column.size(), c2._column.size());
         std::vector<MElement *> myCol;
-        MVertex *v11, *v12, *v21, *v22;
+        MVertex *v11 = nullptr, *v12 = nullptr, *v21 = nullptr, *v22 = nullptr;
         for(int l = 0; l < N; ++l) {
           if(l == 0) {
             if(i == 0) { v11 = v; }
@@ -1031,7 +1045,7 @@ static void modifyInitialMeshForBoundaryLayers(
         const BoundaryLayerData &c2 = _columns->getColumn(v, i + 1);
         int N = std::min(c1._column.size(), c2._column.size());
         std::vector<MElement *> myCol;
-        MVertex *v11, *v12, *v21, *v22;
+        MVertex *v11 = nullptr, *v12 = nullptr, *v21 = nullptr, *v22 = nullptr;
         for(int l = 0; l < N; ++l) {
           if(i >= cp && l >= cp) continue;
 
@@ -1082,7 +1096,8 @@ static void modifyInitialMeshForBoundaryLayers(
         std::vector<MElement *> myCol;
 
         for(int l = 0; l < N; l++) {
-          MVertex *v11, *v12, *v21, *v22;
+          MVertex *v11 = nullptr, *v12 = nullptr, *v21 = nullptr,
+                  *v22 = nullptr;
           int k = dir_half - l - 1;
           const BoundaryLayerData &c2 = _columns->getColumn(v, k);
           const BoundaryLayerData &c3 = _columns->getColumn(v, k - 1);
@@ -1141,7 +1156,8 @@ static void modifyInitialMeshForBoundaryLayers(
         std::vector<MElement *> myCol;
 
         for(int l = 0; l < N; l++) {
-          MVertex *v11, *v12, *v21, *v22;
+          MVertex *v11 = nullptr, *v12 = nullptr, *v21 = nullptr,
+                  *v22 = nullptr;
 
           int k = dir_half + l - 1;
 
@@ -1298,7 +1314,6 @@ static bool improved_translate(GFace *gf, MVertex *vertex, SVector3 &v1,
 
 static void directions_storage(GFace *gf)
 {
-
   std::set<MVertex *> vertices;
   for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
     MElement *element = gf->getMeshElement(i);
@@ -1392,6 +1407,34 @@ static void deleteUnusedVertices(GFace *gf)
   gf->mesh_vertices.insert(gf->mesh_vertices.end(), allverts.begin(),
                            allverts.end());
 }
+/*
+static void separateLoopsToIsolatedEdges (std::vector<GEdge*> &edges,
+std::vector<GEdge*> &emb ) { std::map<GVertex*, std::vector<GEdge*> >conn; for
+(auto e : edges) { auto v = e->getBeginVertex(); conn[v]. push_back(e); v =
+e->getEndVertex(); conn[v]. push_back(e);
+  }
+  std::set<GEdge*> embedded_excess;
+  for (auto c : conn) {
+    auto current_v   = c.first;
+    auto eds = c.second;
+    // if only one edge in the adjacency of a vertex, then
+    // it is embedded. So we walk until we find a vertex with
+    // a number of neighbors that is not 2
+    if (eds.size() == 1){
+      auto current = eds[0];
+      while(1) {
+    embedded_excess.insert(current);
+    current_v = current->getBeginVertex() != current_v ?
+      current->getBeginVertex() : current->getEndVertex();
+    eds = conn[current_v];
+    if (eds.size() != 2) break;
+    current = eds[0] == current ? eds[1] : eds[0];
+      }
+    }
+  }
+  printf("%lu edges that should be embedded\n",embedded_excess.size());
+}
+*/
 
 // Builds An initial triangular mesh that respects the boundaries of
 // the domain, including embedded points and surfaces
@@ -1414,6 +1457,8 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   std::vector<GEdge *> edges =
     replacementEdges ? *replacementEdges : gf->edges();
 
+  //  separateLoopsToIsolatedEdges (edges, edges );
+
   FILE *fdeb = nullptr;
   if(debug && RECUR_ITER == 0) {
     char name[245];
@@ -1426,6 +1471,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   std::set<MVertex *, MVertexPtrLessThan> all_vertices, boundary;
   auto ite = edges.begin();
   while(ite != edges.end()) {
+    if(gf->tag() == 100124) printf("%d / %d\n", gf->tag(), (*ite)->tag());
     if((*ite)->isSeam(gf)) {
       if(fdeb != nullptr) fclose(fdeb);
       return false;
@@ -1434,13 +1480,11 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
       for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
         MVertex *v1 = (*ite)->lines[i]->getVertex(0);
         MVertex *v2 = (*ite)->lines[i]->getVertex(1);
-
         if(fdeb) {
           fprintf(fdeb, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", v1->x(), v1->y(),
                   v1->z(), v2->x(), v2->y(), v2->z(), (*ite)->tag(),
                   (*ite)->tag());
         }
-
         all_vertices.insert(v1);
         all_vertices.insert(v2);
         if(boundary.find(v1) == boundary.end())
@@ -2341,6 +2385,12 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   }
   if(CTX::instance()->debugSurface > 0) debug = true;
 
+  //  std::vector<GEdge *> edges = gf->edges();
+  //  std::vector<GEdge *> emb_edges = gf->embeddedEdges();
+  //  printf("AAAAAAAAAAAAAAAARRRRRRRRRRRRRRRRRRRRRRRRRRRRRBG %lu
+  //  %lu\n",edges.size(),emb_edges.size()); separateLoopsToIsolatedEdges
+  //  (edges, edges );
+
   // TEST !!!
   // PolyMesh * pm = GFaceInitialMesh(gf->tag(), 1);
 
@@ -2362,7 +2412,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
   // procedure
   BDS_Mesh *m = new BDS_Mesh;
 
-  std::vector<std::vector<BDS_Point *> > edgeLoops_BDS;
+  std::vector<std::vector<BDS_Point *>> edgeLoops_BDS;
   SBoundingBox3d bbox;
   int nbPointsTotal = 0;
   {
@@ -2445,7 +2495,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
     std::vector<GVertex *> emb_vertx = gf->getEmbeddedVertices();
     auto itvx = emb_vertx.begin();
 
-    std::map<MVertex *, std::set<BDS_Point *> > invertedRecoverMap;
+    std::map<MVertex *, std::set<BDS_Point *>> invertedRecoverMap;
     for(auto it = recoverMap.begin(); it != recoverMap.end(); it++) {
       invertedRecoverMap[it->second].insert(it->first);
     }
@@ -3110,7 +3160,6 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
 
   gf->meshStatistics.status = GFace::DONE;
 
-
   // Remove unused vertices, generated e.g. during background mesh
   deleteUnusedVertices(gf);
 
@@ -3153,6 +3202,7 @@ static bool isMeshValid(GFace *gf)
     double v = TRIANGLE_VALIDITY(gf, gf->triangles[i]);
     if(v < 0) invalid++;
   }
+
   if(invalid == 0 || invalid == gf->triangles.size()) return true;
 
   return false;
@@ -3260,6 +3310,7 @@ void meshGFace::operator()(GFace *gf, bool print)
 
   // test validity for non-Gmsh models (currently we cannot reliably evaluate
   // the normal on the boundary of surfaces with the Gmsh kernel)
+
   if(CTX::instance()->mesh.algoSwitchOnFailure &&
      gf->getNativeType() != GEntity::GmshModel &&
      gf->geomType() != GEntity::Plane && algoDelaunay2D(gf) &&
