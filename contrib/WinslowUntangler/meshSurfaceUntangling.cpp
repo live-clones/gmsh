@@ -457,7 +457,6 @@ static bool untangleGFaceMeanPlane(GFace *gf,
       locked.push_back(true);
     v->setIndex(i++);
   }
-  //quad_dcp
 
   int nbPos = 0, nbNeg = 0;
 
@@ -503,9 +502,7 @@ static bool untangleGFaceMeanPlane(GFace *gf,
     }
   }
 
-  //  Msg::Info("%d triangles ",triangles.size());
-
-  double lambda = 1.e-8;
+  double lambda = 1.;
   int iterMaxInner = 200;
   int iterMax = 3;
   int iterFailMax = 300;
@@ -620,7 +617,7 @@ bool untangleGFaceMeshConstrained(GFace *gf, int iterMax, double timeMax)
 {
 
   const uint32_t NO_U32 = (uint32_t)-1;
-  if(gf->geomType() != GFace::Plane)
+  if(gf->geomType() != GFace::Plane || 1)
     return untangleGFaceRANSAC(gf, 1.e-2);
 
   if(gf->getNumMeshElements() == 0) {

@@ -790,7 +790,7 @@ static bool recoverEdge(BDS_Mesh *m, GFace *gf, GEdge *ge,
           e->g = g;
         else {
           if(_fatallyFailed) {
-            Msg::Error("Unable to recover the edge %d (%d/%d) on curve %d (on "
+            Msg::Warning("Unable to recover the edge %d (%d/%d) on curve %d (on "
                        "surface %d)",
                        ge->lines[i]->getNum(), i + 1, ge->lines.size(),
                        ge->tag(), gf->tag());
