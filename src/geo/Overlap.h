@@ -19,6 +19,10 @@
 // vertices belongs to a shared partitionEntity, that element is part of the overlap of that other partition.
 template <int dim> OverlapCollection<dim> quickOverlap(GModel *const model);
 
+// For each partition: find all elements on other partitions touching the current overlap
+template <int dim> void extendOverlapCollection(GModel *const model,
+                                               OverlapCollection<dim> &overlaps);
+
 // Read an overlap collection and modify the GModel to add overlap entities.
 // No new elements are created but these entities will point to underlying
 // elements of their covered partitionEntity. Does not handle any boundary.

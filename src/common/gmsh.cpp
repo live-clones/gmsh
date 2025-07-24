@@ -1395,17 +1395,21 @@ GMSH_API void gmsh::model::mesh::buildOverlaps(const int layers)
     return;
   }
 
-  if (layers != 1)
-    Msg::Error("Only one layer of overlaps is supported at the moment");
+  if (layers < 1)
+    Msg::Error("Number of layers must be strictly positive, got %d", layers);
 
   if(dim == 2) {
     auto ovlps = quickOverlap<2>(m);
+    for (int i = 1; i < layers; ++i)
+      extendOverlapCollection<2>(m, ovlps);
     buildOverlapEntities<2>(m, ovlps);
     auto bnd = findBoundaryOfOverlapEntities<2>(m, ovlps);
     overlapBuildBoundaries<2>(m, ovlps);
   }
   else if(dim == 3) {
     auto ovlps = quickOverlap<3>(m);
+    for (int i = 1; i < layers; ++i)
+      extendOverlapCollection<3>(m, ovlps);
     buildOverlapEntities<3>(m, ovlps);
     auto bnd = findBoundaryOfOverlapEntities<3>(m, ovlps);
     overlapBuildBoundaries<3>(m, ovlps);
@@ -1425,7 +1429,7 @@ GMSH_API void gmsh::model::mesh::findPartition(
   overlapEntities.clear();
   GModel *model = GModel::current();
   GEntity *ge = model->getEntityByTag(dim, tag);
-  if(model->getNumPartitions() < partition) {
+  if(model->getNumPartitions() < static_cast<size_t>(partition)) {
     Msg::Error("Partition %d does not exist", partition);
     return;
   }
