@@ -89,6 +89,9 @@ void buildOverlapEntities(GModel* const model, const OverlapCollection<dim>& ove
       if (!covered) continue; // Skip null entities
       auto overlapEntity = new OverlapEntity(model, covered, partition);
       bool add = model->add(overlapEntity);
+      if (!add)
+        Msg::Error("Failed to add overlap entity for partition %d and covered entity with tag %d.",
+                   partition, covered->tag());
       model->addOverlap(overlapEntity);
 
       if constexpr (dim == 2)
@@ -186,7 +189,7 @@ buildBoundaryElementToEntityDict(GModel *const model)
       if(partitionEdge) {
         for(size_t i = 0; i < partitionEdge->getNumMeshElements(); ++i) {
           MElement *element = partitionEdge->getMeshElement(i);
-          for(size_t j = 0; j < element->getNumEdges(); ++j) {
+          for(int j = 0; j < element->getNumEdges(); ++j) {
             MEdge edge = element->getEdge(j);
             if(boundaryToEntity.find(edge) == boundaryToEntity.end()) {
               boundaryToEntity[edge] = partitionEdge;
@@ -206,7 +209,7 @@ buildBoundaryElementToEntityDict(GModel *const model)
       if(partitionFace) {
         for(size_t i = 0; i < partitionFace->getNumMeshElements(); ++i) {
           MElement *element = partitionFace->getMeshElement(i);
-          for(size_t j = 0; j < element->getNumFaces(); ++j) {
+          for(int j = 0; j < element->getNumFaces(); ++j) {
             MFace face = element->getFace(j);
             if(boundaryToEntity.find(face) == boundaryToEntity.end()) {
               boundaryToEntity[face] = partitionFace;
