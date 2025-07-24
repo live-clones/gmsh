@@ -70,6 +70,77 @@ template <int dim>
 template OverlapCollection<2> quickOverlap<2>(GModel *const model);
 template OverlapCollection<3> quickOverlap<3>(GModel *const model);
 
+template <int dim>
+void extendOverlapCollection(GModel *const model,
+                             OverlapCollection<dim> &overlaps)
+{
+
+  static_assert(dim == 2 || dim == 3, "Only dim=2 and dim=3 are supported.");
+  if(overlaps.size() != model->getNumPartitions()) {
+    Msg::Error("Number of partitions in overlaps does not match model partitions.");
+  }
+
+  //std::vector<std::unordered_set<MVertex*>> verticesInOverlap(model->getNumPartitions());
+  std::unordered_multimap<MVertex*, int> vertexToOverlaps; // 0-based index
+
+  // Build vertex to partitions map
+  for(size_t i = 0; i < overlaps.size(); ++i) {
+    for (const auto& [_, elements]: overlaps[i]) {
+      for (MElement* element : elements) {
+        for (size_t v = 0; v < element->getNumVertices(); ++v) {
+          MVertex *vertex = element->getVertex(v);
+          // Store the vertex and the partition index, 0-based
+          vertexToOverlaps.insert({vertex, static_cast<int>(i)});
+        }
+      }
+    }
+  }
+
+  auto addElements = [&](typename OverlapHelpers<dim>::PartitionEntity* pe) {
+    for (size_t ie = 0; ie < pe->getNumMeshElements(); ++ie) {
+      MElement* element = pe->getMeshElement(ie);
+      for (size_t v = 0; v < element->getNumVertices(); ++v) {
+        MVertex *vertex = element->getVertex(v);
+        auto range = vertexToOverlaps.equal_range(vertex);
+        for (auto it = range.first; it != range.second; ++it) {
+          int partitionIndex = it->second;
+          // Do not overlap yourself!
+          auto partitions = pe->getPartitions();
+          if (std::find(partitions.begin(), partitions.end(), partitionIndex + 1) != partitions.end()) {
+            continue;
+          }
+          overlaps[partitionIndex][pe].insert(element);
+        }
+      }
+    }
+  };
+
+  if constexpr (dim == 2) {
+    for (auto it = model->firstFace(); it != model->lastFace(); ++it) {
+      auto face = *it;
+      auto partitionEntity = dynamic_cast<typename OverlapHelpers<dim>::PartitionEntity *>(face);
+      if (partitionEntity) {
+        addElements(partitionEntity);
+      }
+    }
+  }
+  else if constexpr (dim == 3) {
+    for (auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
+      auto region = *it;
+      auto partitionEntity = dynamic_cast<typename OverlapHelpers<dim>::PartitionEntity *>(region);
+      if (partitionEntity) {
+        addElements(partitionEntity);
+      }
+    }
+  }
+
+}
+
+template void extendOverlapCollection<2>(GModel *const model,
+                                          OverlapCollection<2> &overlaps);
+template void extendOverlapCollection<3>(GModel *const model,
+                                          OverlapCollection<3> &overlaps);
+
 // Read an overlap collection and modify the GModel to add overlap entities.
 // No new elements are created but these entities will point to underlying elements of their covered partitionEntity.
 template <int dim>
