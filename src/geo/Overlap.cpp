@@ -241,7 +241,6 @@ void overlapBuildBoundaries(GModel *const model,
   // It's a vector per partition, then the entry is a dict Entity-> set of bnds
   auto boundaryElements = findBoundaryOfOverlapEntities<dim>(model, overlaps);
 
-  using Entity = typename OverlapHelpers<dim>::Entity;
   using BoundaryMeshObject = typename OverlapHelpers<dim>::BoundaryMeshObject;
   using BoundaryMeshObjectHash =
     typename OverlapHelpers<dim>::BoundaryMeshObjectHash;
@@ -395,7 +394,7 @@ findNonOwnedVerticesToSave(
   std::unordered_map<GEntity *, std::unordered_set<MVertex *>> result;
   for(const auto &[coveredEntity, elements] : coveredEntities) {
     for (MElement* elem: elements) {
-      for (int v = 0; v < elem->getNumVertices(); ++v) {
+      for (size_t v = 0; v < elem->getNumVertices(); ++v) {
         MVertex *vertex = elem->getVertex(v);
         auto onWhat = vertex->onWhat();
         result[onWhat].insert(vertex);
