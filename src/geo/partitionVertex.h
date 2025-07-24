@@ -32,7 +32,7 @@ public:
   virtual GeomType geomType() const { return PartitionPoint; }
   virtual void setParentEntity(GEntity *v) { _parentEntity = v; }
   virtual GEntity *getParentEntity() { return _parentEntity; }
-  virtual void setPartitions(std::vector<int> &partitions)
+  virtual void setPartitions(const std::vector<int> &partitions)
   {
     _partitions = partitions;
   }
