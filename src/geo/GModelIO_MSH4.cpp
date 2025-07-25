@@ -1311,8 +1311,14 @@ static bool readMSH4VolumeOverlaps(GModel *const model, FILE *fp, bool binary)
       MElement *element = model->getMeshElementByTag(elementTag);
 
       if(!element) {
-        Msg::Error("Unknown element %zu in volume overlap %d", elementTag, tag);
-        return false;
+        Msg::Warning("Couldn't find an element, rebuilding the cache...");
+        model->rebuildMeshElementCache();
+        element = model->getMeshElementByTag(elementTag);
+        if(!element) {
+          Msg::Error("Unknown element %zu in volume overlap %d of dimension %d",
+                     elementTag, tag, dim);
+          return false;
+        }
       }
       overlapEntity->addElement(element);
     }
