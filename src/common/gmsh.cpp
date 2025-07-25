@@ -1388,6 +1388,15 @@ gmsh::model::mesh::partition(const int numPart,
   CTX::instance()->mesh.changed = ENT_ALL;
 }
 
+template <int dim>
+static void _buildOverlapsForDim(const int layers, GModel* const m) {
+  auto ovlps = quickOverlap<dim>(m);
+  for (int i = 1; i < layers; ++i)
+    extendOverlapCollection<dim>(m, ovlps);
+  buildOverlapEntities<dim>(m, ovlps);
+  auto bnd = findBoundaryOfOverlapEntities<dim>(m, ovlps);
+  overlapBuildBoundaries<dim>(m, ovlps);
+}
 
 GMSH_API void gmsh::model::mesh::buildOverlaps(const int layers)
 {
@@ -1409,20 +1418,10 @@ GMSH_API void gmsh::model::mesh::buildOverlaps(const int layers)
 
   double t1 = Cpu(); double w1 = TimeOfDay();
   if(dim == 2) {
-    auto ovlps = quickOverlap<2>(m);
-    for (int i = 1; i < layers; ++i)
-      extendOverlapCollection<2>(m, ovlps);
-    buildOverlapEntities<2>(m, ovlps);
-    auto bnd = findBoundaryOfOverlapEntities<2>(m, ovlps);
-    overlapBuildBoundaries<2>(m, ovlps);
+    _buildOverlapsForDim<2>(layers, m);
   }
   else if(dim == 3) {
-    auto ovlps = quickOverlap<3>(m);
-    for (int i = 1; i < layers; ++i)
-      extendOverlapCollection<3>(m, ovlps);
-    buildOverlapEntities<3>(m, ovlps);
-    auto bnd = findBoundaryOfOverlapEntities<3>(m, ovlps);
-    overlapBuildBoundaries<3>(m, ovlps);
+    _buildOverlapsForDim<3>(layers, m);
   }
   else {
     Msg::Error("Model dimension (%d) is not supported for overlap checks", dim);
