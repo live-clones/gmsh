@@ -736,11 +736,6 @@ namespace gmsh { // Top-level functions
                                       std::vector<int>& entities);
       
       
-      // gmsh::model::mesh::findOverlapOfBoundary
-      //
-      // If `dim' is one less than the dimension of the model, the the entites that represent overlap of the entity of tag `tag'.
-      GMSH_API void findOverlapOfBoundary(const int dim, const int tag, const int partition,
-                                      std::vector<int>& entities);
 
       // gmsh::model::mesh::unpartition
       //
