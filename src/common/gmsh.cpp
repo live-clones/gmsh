@@ -1405,7 +1405,9 @@ GMSH_API void gmsh::model::mesh::buildOverlaps(const int layers)
 
   if (layers < 1)
     Msg::Error("Number of layers must be strictly positive, got %d", layers);
+  Msg::StatusBar(true, "Building overlaps...");
 
+  double t1 = Cpu(); double w1 = TimeOfDay();
   if(dim == 2) {
     auto ovlps = quickOverlap<2>(m);
     for (int i = 1; i < layers; ++i)
@@ -1426,6 +1428,10 @@ GMSH_API void gmsh::model::mesh::buildOverlaps(const int layers)
     Msg::Error("Model dimension (%d) is not supported for overlap checks", dim);
     return;
   }
+  double t2 = Cpu(), w2 = TimeOfDay();
+  CTX::instance()->mesh.timer[1] = w2 - w1;
+  Msg::StatusBar(true, "Done overlaps (Wall %gs, CPU %gs)",
+                 CTX::instance()->mesh.timer[1], t2 - t1);
 }
 
 GMSH_API void gmsh::model::mesh::findPartition(
@@ -1441,7 +1447,9 @@ GMSH_API void gmsh::model::mesh::findPartition(
     Msg::Error("Partition %d does not exist", partition);
     return;
   }
-  if(dim == 1) {
+  if (dim == 0)
+    Msg::Error("findPartition is not supported for dimension 0 (points)");
+  else if(dim == 1) {
     for(auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
       auto pe = dynamic_cast<partitionEdge *>(*it);
       if (!pe) continue;
@@ -1478,12 +1486,30 @@ GMSH_API void gmsh::model::mesh::findPartition(
       }
     }
     else if (model->getDim() == 3) {
-      Msg::Error("Partitioning is not implemented yet for dimension 3");
+      findOverlapOfBoundary(dim, tag, partition, overlapEntities);
     }
   }
-  else {
-    Msg::Error("Partitioning is not supported for dimension %d", dim);
-    return;
+  else if (dim == 3) {
+    for (auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
+      GRegion *gr = *it;
+      auto pr = dynamic_cast<partitionRegion *>(gr);
+      if(pr && pr->getPartitions().size() == 1 &&
+         pr->getPartitions().at(0) == partition) {
+        if(pr->getParentEntity() == ge) { entities.push_back(pr->tag()); }
+      }
+    }
+    const auto& allOverlaps =
+      std::get<std::vector<overlapRegion *>>(model->getAllOverlaps());
+    for(overlapRegion *or_ : allOverlaps) {
+      if(!or_) {
+        Msg::Error("Null overlapRegion pointer found");
+        continue;
+      }
+      if(or_->getCovered()->getParentEntity() == ge &&
+         or_->owningPartition() == partition) {
+        overlapEntities.push_back(or_->tag());
+      }
+    }
   }
 }
 

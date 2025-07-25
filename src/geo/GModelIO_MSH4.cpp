@@ -1888,9 +1888,7 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     for(auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
       if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
         continue;
-      if (dynamic_cast<overlapFace*>(*it)) {
-        continue;
-      }
+      
       if((*it)->geomType() != GEntity::PartitionCurve &&
          (*it)->geomType() != GEntity::GhostCurve)
         edges.insert(*it);
@@ -1906,6 +1904,9 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
         faces.insert(*it);
     }
     for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
+      if (dynamic_cast<overlapRegion*>(*it)) {
+        continue;
+      }
       if((*it)->geomType() != GEntity::PartitionVolume &&
          (*it)->geomType() != GEntity::GhostVolume)
         regions.insert(*it);
