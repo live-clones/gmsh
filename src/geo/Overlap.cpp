@@ -429,11 +429,13 @@ void overlapBuildBoundaries(GModel *const model,
           Msg::Info("Created overlap of boundary entity with %lu elements for partition %d in dimension %d.",
                     bnd->getNumMeshElements(), partition, dim);
         }
+        Msg::Info("Entity %d %d is creating an overlap of %d %d", parent->dim(),
+                  parent->tag(), entity->dim(), entity->tag());
         model->add(bnd);
         if constexpr(dim == 2)
-          model->addOverlapOfBoundary(dynamic_cast<GEdge *>(entity), bnd);
+          model->addOverlapOfBoundary(dynamic_cast<GEdge *>(entity), bnd, parent);
         else if constexpr(dim == 3)
-          model->addOverlapOfBoundary(dynamic_cast<GFace *>(entity), bnd);
+          model->addOverlapOfBoundary(dynamic_cast<GFace *>(entity), bnd, parent);
       }
     }
   }

@@ -1350,34 +1350,50 @@ static bool readMSH4OverlapBoundaries(GModel *const model, FILE *fp, bool binary
             return false;
         }
         std::vector<int> boundaryTags(numBoundaryEntities);
+        std::vector<int> creatorTags(numBoundaryEntities, -1);
         if (binary) {
-            if (fread(&boundaryTags[0], sizeof(int), numBoundaryEntities, fp) != numBoundaryEntities) {
+            /*if (fread(&boundaryTags[0], sizeof(int), numBoundaryEntities, fp) != numBoundaryEntities) {
                 return false;
+            }*/
+            for (size_t i = 0; i < numBoundaryEntities; ++i) {
+                if (fread(&boundaryTags[i], sizeof(int), 1, fp) != 1) { return false; }
+                if (fread(&creatorTags[i], sizeof(int), 1, fp) != 1) { return false; }
             }
         } else {
             for (size_t i = 0; i < numBoundaryEntities; ++i) {
-                if (fscanf(fp, "%d", &boundaryTags[i]) != 1) { return false; }
+                if (fscanf(fp, "%d %d", &boundaryTags[i], &creatorTags[i]) != 2) { return false; }
             }
         }
-        for (int boundaryTag : boundaryTags) {
-            GEntity *boundaryEntity = model->getEntityByTag(dim - 1,  boundaryTag);
-            if (!boundaryEntity) {
-                Msg::Error("Could not find %dD boundary entity %d in overlap", dim - 1, boundaryTag);
-                return false;
+        for (size_t i = 0; i < numBoundaryEntities; ++i) {
+          int boundaryTag = boundaryTags[i];
+          int creatorTag = creatorTags[i];
+          GEntity *boundaryEntity = model->getEntityByTag(dim - 1,  boundaryTag);
+          if (!boundaryEntity) {
+              Msg::Error("Could not find %dD boundary entity %d in overlap", dim - 1, boundaryTag);
+              return false;
+          }
+          if (dim == dimOfEntity) {
+            auto parentCast = dynamic_cast<typename OverlapHelpers<dim>::Entity *>(entity);
+            if (!parentCast) Msg::Error("Could not cast %dD entity %d in overlap boundary.", dim, tag);
+            auto boundaryCast = dynamic_cast<typename OverlapHelpers<dim>::BoundaryEntity *>(boundaryEntity);
+            if (!boundaryCast) Msg::Error("Could not cast %dD boundary entity %d in overlap boundary.", dim - 1, boundaryTag);
+            model->addInnerBoundary(parentCast, boundaryCast);
+            // Creator is obvious
+          } else {
+            auto parentCast = dynamic_cast<typename OverlapHelpers<dim - 1>::Entity *>(entity);
+            if (!parentCast) Msg::Error("Could not cast %dD entity %d in overlap boundary.", dim - 1, tag);
+            auto boundaryCast = dynamic_cast<typename OverlapHelpers<dim>::BoundaryEntity *>(boundaryEntity);
+            if (!boundaryCast) Msg::Error("Could not cast %dD boundary entity %d in overlap boundary.", dim - 2, boundaryTag);
+            GEntity *creatorEntity = model->getEntityByTag(dim, creatorTag);
+            auto creator = dynamic_cast<typename OverlapHelpers<dim>::Entity *>(
+              creatorEntity);
+            if (!creator) {
+              Msg::Error("Could not cast %dD creator entity %d in overlap boundary.", dim, creatorTag);
+              return false;
             }
-            if (dim == dimOfEntity) {
-              auto parentCast = dynamic_cast<typename OverlapHelpers<dim>::Entity *>(entity);
-              if (!parentCast) Msg::Error("Could not cast %dD entity %d in overlap boundary.", dim, tag);
-              auto boundaryCast = dynamic_cast<typename OverlapHelpers<dim>::BoundaryEntity *>(boundaryEntity);
-              if (!boundaryCast) Msg::Error("Could not cast %dD boundary entity %d in overlap boundary.", dim - 1, boundaryTag);
-              model->addInnerBoundary(parentCast, boundaryCast);
-            } else {
-              auto parentCast = dynamic_cast<typename OverlapHelpers<dim - 1>::Entity *>(entity);
-              if (!parentCast) Msg::Error("Could not cast %dD entity %d in overlap boundary.", dim - 1, tag);
-              auto boundaryCast = dynamic_cast<typename OverlapHelpers<dim>::BoundaryEntity *>(boundaryEntity);
-              if (!boundaryCast) Msg::Error("Could not cast %dD boundary entity %d in overlap boundary.", dim - 2, boundaryTag);
-              model->addOverlapOfBoundary(parentCast, boundaryCast);
-            }
+            model->addOverlapOfBoundary(parentCast, boundaryCast,
+                                        creator);
+          }
         }
     }
     return true;
@@ -3509,9 +3525,26 @@ static void writeMSH4OverlapBoundaries(GModel *const model, FILE *fp,
       }
       for(const auto &boundary : boundariesToSave) {
         int boundaryTag = boundary->tag();
-        if(binary) { fwrite(&boundaryTag, sizeof(int), 1, fp); }
+        int creatorTag = 0;
+        if(thisDim == dim - 1) {
+          try {
+            auto creator =
+              std::get<dim - 2>(model->getBoundaryOfOverlapCreators())
+                .at(boundary);
+            creatorTag = creator->tag();
+          }
+          catch(const std::out_of_range &) {
+            Msg::Error("No creator found for boundary %d of entity %d",
+                       boundaryTag, tag);
+          }
+        }
+        if(binary) {
+          fwrite(&boundaryTag, sizeof(int), 1, fp);
+          fwrite(&creatorTag, sizeof(int), 1, fp);
+        }
+
         else {
-          fprintf(fp, "%d\n", boundaryTag);
+          fprintf(fp, "%d %d\n", boundaryTag, creatorTag);
         }
       }
     }
