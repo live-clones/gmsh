@@ -734,6 +734,12 @@ namespace gmsh { // Top-level functions
       // (non-partitioned) entity of dimension `dim' and tag `tag', and which belong to the partition of interest.
       GMSH_API void findInnerBoundary(const int dim, const int tag, const int partition,
                                       std::vector<int>& entities);
+
+      // gmsh::model::mesh::findCreatingEntityForOverlapOfBoundary
+      //
+      // In entity of dimension `dim' and tag `tag' is an overlap of boundary entity, find which entity of dim `dim+1` created it.
+      // Returns -1 and outputs a warning in case of incorrect input.
+      GMSH_API void findCreatingEntityForOverlapOfBoundary(const int dim, const int tag, int& out);
       
       
 

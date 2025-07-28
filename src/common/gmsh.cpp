@@ -1606,6 +1606,60 @@ GMSH_API void gmsh::model::mesh::findInnerBoundary(const int dim, const int tag,
   }
 }
 
+GMSH_API void gmsh::model::mesh::findCreatingEntityForOverlapOfBoundary(
+  const int dim, const int tag, int &out)
+{
+  if(!_checkInit()) return;
+  GModel* model = GModel::current();
+  GEntity* entity = model->getEntityByTag(dim, tag);
+  if(!entity) {
+    Msg::Warning("findCreatingEntityForOverlapOfBoundary: no entity of dimension %d and tag %d",
+                 dim, tag);
+    out = -1;
+    return;
+  }
+  if (dim == 3 || dim == 0) {
+    Msg::Warning("findCreatingEntityForOverlapOfBoundary: only supported for 2D and 1D entities");
+    out = -1;
+    return;
+  }
+  if (dim == 1) {
+    partitionEdge* pe = dynamic_cast<partitionEdge *>(entity);
+    if (!pe) {
+      Msg::Warning("findCreatingEntityForOverlapOfBoundary: entity %d %d is not a partitionEdge",
+                   dim, tag);
+      out = -1;
+      return;
+    }
+    const auto& dict = std::get<std::unordered_map<partitionEdge*, GFace*>>(model->getBoundaryOfOverlapCreators());
+    auto it = dict.find(pe);
+    if (it == dict.end()) {
+      Msg::Warning("findCreatingEntityForOverlapOfBoundary: no creating entity found for partitionEdge %d %d",
+                   tag, dim);
+      out = -1;
+      return;
+    }
+    GFace* face = it->second;
+    out = face->tag();
+  }
+  else if (dim == 2) {
+    partitionFace* pf = dynamic_cast<partitionFace *>(entity);
+    if (!pf) {
+      Msg::Warning("findCreatingEntityForOverlapOfBoundary: entity %d %d is not a partitionFace",
+                   dim, tag);
+      out = -1;
+      return;
+    }
+    const auto& dict = std::get<std::unordered_map<partitionFace*, GRegion*>>(model->getBoundaryOfOverlapCreators());
+    auto it = dict.find(pf);
+    if (it == dict.end()) {
+      Msg::Warning("findCreatingEntityForOverlapOfBoundary: no creating entity found for partitionFace %d %d",
+                   tag, dim);
+      out = -1;
+      return;
+    }
+  }
+}
 
 GMSH_API void gmsh::model::mesh::unpartition()
 {
