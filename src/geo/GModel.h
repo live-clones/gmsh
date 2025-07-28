@@ -70,6 +70,9 @@ private:
   std::unordered_map<GRegion*, std::vector<partitionFace*>> _overlapInnerBoundaries3D;
   std::unordered_map<GEdge*, std::vector<partitionEdge*>> _overlapOfBoundaries2D;
   std::unordered_map<GFace*, std::vector<partitionFace*>> _overlapOfBoundaries3D;
+  std::tuple<std::unordered_map<partitionEdge*, GFace*>,
+             std::unordered_map<partitionFace*, GRegion*>>
+    _boundaryOfOverlapCreators;
 
 private:
   int _readMSH2(const std::string &name);
@@ -431,13 +434,15 @@ public:
   {
     _overlapInnerBoundaries3D[r].push_back(f);
   }
-  void addOverlapOfBoundary(GEdge *e, partitionEdge *pe)
+  void addOverlapOfBoundary(GEdge *e, partitionEdge *pe, GFace* parent)
   {
     _overlapOfBoundaries2D[e].push_back(pe);
+    std::get<0>(_boundaryOfOverlapCreators)[pe] = parent;
   }
-  void addOverlapOfBoundary(GFace *f, partitionFace *pf)
+  void addOverlapOfBoundary(GFace *f, partitionFace *pf, GRegion* parent)
   {
     _overlapOfBoundaries3D[f].push_back(pf);
+    std::get<1>(_boundaryOfOverlapCreators)[pf] = parent;
   }
 
   const auto& getOverlapInnerBoundaries2D() const
@@ -455,6 +460,11 @@ public:
   const auto& getOverlapOfBoundaries3D() const
   {
     return _overlapOfBoundaries3D;
+  }
+
+  const auto& getBoundaryOfOverlapCreators() const
+  {
+    return _boundaryOfOverlapCreators;
   }
 
   // find the entity with the given tag
