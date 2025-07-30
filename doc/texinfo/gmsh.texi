@@ -3382,9 +3382,9 @@ three @w{@var{expression}s} giving the X, Y and Z direction of the
 rotation axis, which should match the direction of the translation; the
 third @var{expression-list} should contain three @w{@var{expression}s}
 giving the X, Y and Z components of any point on this axis; the last
-@var{expression} should contain the rotation angle (in radians). With
-the built-in geometry kernel the angle should be strictly smaller than
-Pi.
+@var{expression} should contain the rotation angle (in radians), which
+should be strictly smaller than Pi. Only available with the built-in
+geometry kernel.
 
 @item Extrude @{ @var{extrude-list} @}
 Extrude entities in @var{extrude-list} using a translation along their
