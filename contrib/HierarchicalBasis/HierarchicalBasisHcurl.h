@@ -18,7 +18,8 @@ class HierarchicalBasisHcurl : public HierarchicalBasis {
 protected:
     virtual void orientOneFace(double const &u, double const &v, double const &w,
                                int const &flag1, int const &flag2, int const &flag3,
-                               int const &faceNumber, std::vector<double> &faceFunctions) {
+                               int const &faceNumber, std::vector<double> &faceFunctions,
+                               std::string typeFunction) {
         // The method is an intentionally-blank override
     }
     
@@ -72,7 +73,8 @@ public:
     virtual void addAllOrientedFaceFunctions(double const &u, double const &v, double const &w,
                                              const std::vector<double> &faceFunctions,
                                              std::vector<double> &quadFaceFunctionsAllOrientations,
-                                             std::vector<double> &triFaceFunctionsAllOrientations) {
+                                             std::vector<double> &triFaceFunctionsAllOrientations,
+                                             std::string typeFunction) {
         // The method is an intentionally-blank override
     }
 

@@ -13,11 +13,19 @@
 #include <iostream>
 #include "HierarchicalBasisHdivTria.h"
 
-HierarchicalBasisHdivTria::HierarchicalBasisHdivTria(int order) : _pf(order), _pOrderEdge{order,order,order},
-    _numVertex(3), _numEdge(3), _numTriFace(1), _numQuadFace(0),
-    _numVertexFunction(0), _numEdgeFunction(3 * order + 3), _numQuadFaceFunction(0),
-    _numTriFaceFunction( (order == 0) ? 0 :  3 * (order - 1) + (order - 1) * (order - 2) ),
-    _numBubbleFunction(0) { }
+HierarchicalBasisHdivTria::HierarchicalBasisHdivTria(int order) {
+    _pf = order;
+    _pOrderEdge = {order,order,order};
+    _numVertex = 3;
+    _numEdge = 3;
+    _numTriFace = 1;
+    _numQuadFace = 0;
+    _numVertexFunction = 0;
+    _numEdgeFunction = 3 * order + 3;
+    _numQuadFaceFunction = 0;
+    _numTriFaceFunction = ( (order == 0) ? 0 :  3 * (order - 1) + (order - 1) * (order - 2) );
+    _numBubbleFunction = 0;
+}
 
 double HierarchicalBasisHdivTria::dotProduct(const std::vector<double> &u, const std::vector<double> &v) {
     return u[0] * v[0] + u[1] * v[1];
@@ -381,7 +389,7 @@ void HierarchicalBasisHdivTria::orientEdge(int const &flagOrientation, int const
 }
 
 void HierarchicalBasisHdivTria::orientEdge(int const &flagOrientation, int const &edgeNumber,
-                                            std::vector<std::vector<double> > &edgeFunctions,
+                                            std::vector<double> &edgeFunctions,
                                             const std::vector<double> &eTablePositiveFlag,
                                             const std::vector<double> &eTableNegativeFlag) {
     if(flagOrientation == -1) {
@@ -410,8 +418,10 @@ void HierarchicalBasisHdivTria::orientEdge(int const &flagOrientation, int const
 
 
 void HierarchicalBasisHdivTria::orientOneFace(double const &u, double const &v, double const &w,
-                                               int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
-                                               std::vector<std::vector<double> > &faceFunctions, std::string typeFunction) {
+                                              int const &flag1, int const &flag2, int const &flag3,
+                                              int const &faceNumber,
+                                              std::vector<std::vector<double> > &faceFunctions,
+                                              std::string typeFunction) {
     if(!(flag1 == 0 && flag2 == 1)) {
         if(typeFunction == "HdivLegendre") {
             // to map onto the reference domain of gmsh:
@@ -546,8 +556,10 @@ void HierarchicalBasisHdivTria::orientOneFace(double const &u, double const &v, 
 }
 
 void HierarchicalBasisHdivTria::orientOneFace(double const &u, double const &v, double const &w,
-                                               int const &flag1, int const &flag2, int const &flag3, int const &faceNumber,
-                                               std::vector<double> &faceFunctions, std::string typeFunction) {
+                                              int const &flag1, int const &flag2, int const &flag3,
+                                              int const &faceNumber,
+                                              std::vector<double> &faceFunctions,
+                                              std::string typeFunction) {
     if(!(flag1 == 0 && flag2 == 1)) {
         if("DivHdivLegendre" == typeFunction) {
             // to map onto the reference domain of gmsh:
@@ -732,8 +744,8 @@ void HierarchicalBasisHdivTria::orientFace(int const &flag1, int const &flag2, i
      */
     
     int iOrientation = getOrientationTriFaceIndex(flag1, flag2);
-    int offset = iOrientation * _nTriFaceFunction;
-    for(int i = 0; i < _nTriFaceFunction; i++) {
+    int offset = iOrientation * _numTriFaceFunction;
+    for(int i = 0; i < _numTriFaceFunction; i++) {
         fTableCopy[i][0] = triFaceFunctionsAllOrientation[i + offset][0];
         fTableCopy[i][1] = triFaceFunctionsAllOrientation[i + offset][1];
         fTableCopy[i][2] = triFaceFunctionsAllOrientation[i + offset][2];

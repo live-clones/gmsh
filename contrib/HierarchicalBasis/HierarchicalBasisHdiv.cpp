@@ -12,6 +12,65 @@
 #include "HierarchicalBasisHdiv.h"
 
 void HierarchicalBasisHdiv::addAllOrientedFaceFunctions(double const &u, double const &v, double const &w,
+                                                      const std::vector<double> &faceFunctions,
+                                                      std::vector<double> &quadFaceFunctionsAllOrientations,
+                                                      std::vector<double> &triFaceFunctionsAllOrientations,
+                                                        std::string typeFunction) {
+    // quadrilateral faces
+    int it = 0;
+    if(_numQuadFaceFunction > 0) {
+        for(int iOrientation = 0; iOrientation < 8; iOrientation++) {
+
+            std::vector<double> orientedFaceFunction(_numQuadFaceFunction + _numTriFaceFunction);
+            
+            for(int r = 0; r < _numQuadFaceFunction + _numTriFaceFunction; r++) {
+                orientedFaceFunction[r] = faceFunctions[r];
+            }
+            
+            std::array<int, 3> quadFlags = getQuadFaceFlagsFromIndex(iOrientation);
+            int flag1 = quadFlags[0];
+            int flag2 = quadFlags[1];
+            int flag3 = quadFlags[2];
+            
+            for(int iFace = 0; iFace < _numQuadFace; iFace++) {
+                orientOneFace(u, v, w, flag1, flag2, flag3, iFace, orientedFaceFunction, typeFunction);
+            }
+            
+            for(int r = 0; r < _numQuadFaceFunction; r++) {
+                quadFaceFunctionsAllOrientations[it] = orientedFaceFunction[r];
+                it++;
+            }
+        }
+    }
+    
+    // Triangular faces
+    it = 0;
+    if(_numTriFaceFunction > 0) {
+        for(int iOrientation = 0; iOrientation < 6; iOrientation++) {
+            std::vector<double> orientedFaceFunction(_numQuadFaceFunction + _numTriFaceFunction);
+            for(int r = 0; r < _numQuadFaceFunction + _numTriFaceFunction; r++) {
+                orientedFaceFunction[r] = faceFunctions[r];
+            }
+            
+            std::array<int, 2> triFlags = getTriFaceFlagsFromIndex(iOrientation);
+            int flag1 = triFlags[0];
+            int flag2 = triFlags[1];
+            int flag3 = 1;
+            
+            for(int iFace = _numQuadFace; iFace < _numQuadFace + _numTriFace; iFace++) {
+                orientOneFace(u, v, w, flag1, flag2, flag3, iFace, orientedFaceFunction, typeFunction); // flage3 no sense !!!
+            }
+            
+            for(int r = 0; r < _numTriFaceFunction; r++) {
+                triFaceFunctionsAllOrientations[it] = orientedFaceFunction[r + _numQuadFaceFunction];
+                it++;
+            }
+        }
+    }
+}
+
+
+void HierarchicalBasisHdiv::addAllOrientedFaceFunctions(double const &u, double const &v, double const &w,
                                                          const std::vector<std::vector<double> > &faceFunctions,
                                                          std::vector<std::vector<double> > &quadFaceFunctionsAllOrientation,
                                                          std::vector<std::vector<double> > &triFaceFunctionsAllOrientation,

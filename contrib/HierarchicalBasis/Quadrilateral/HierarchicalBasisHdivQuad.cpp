@@ -12,13 +12,18 @@
 #include <stdexcept>
 #include "HierarchicalBasisHdivQuad.h"
 
-HierarchicalBasisHdivQuad::HierarchicalBasisHdivQuad(int order):
-    _pf{order, order}, _pOrderEdge{order, order, order, order},
-    _numVertex(4), _numEdge(4), _numQuadFace(1), _numTriFace(0),
-    _numVertexFunction(0), _numEdgeFunction(4 * order + 4),
-    _numQuadFaceFunction(2 * order * (order + 1)), _numTriFaceFunction(0),
-    _numBubbleFunction(0) {
-        
+HierarchicalBasisHdivQuad::HierarchicalBasisHdivQuad(int order) {
+    _pf = {order, order};
+    _pOrderEdge = {order, order, order, order};
+    _numVertex = 4;
+    _numEdge = 4;
+    _numQuadFace = 1;
+    _numTriFace = 0;
+    _numVertexFunction = 0;
+    _numEdgeFunction = (4 * order + 4);
+    _numQuadFaceFunction = (2 * order * (order + 1));
+    _numTriFaceFunction = 0,
+    _numBubbleFunction = 0;
     }
 
 unsigned int HierarchicalBasisHdivQuad::getNumberOfOrientations() const {

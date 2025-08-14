@@ -18,7 +18,7 @@ class HierarchicalBasisH1 : public HierarchicalBasis {
 protected:
     void orientOneFace(double const &u, double const &v, double const &w,
                        int const &flag1, int const &flag2, int const &flag3,
-                       int const &faceNumber, std::vector<double> &faceFunctions) override = 0;
+                       int const &faceNumber, std::vector<double> &faceFunctions, std::string typeFunction = "H1Legendre") override = 0;
     void orientOneFace(double const &u, double const &v, double const &w,
                        int const &flag1, int const &flag2,
                        int const &flag3, int const &faceNumber,
@@ -60,7 +60,7 @@ public:
     void addAllOrientedFaceFunctions(double const &u, double const &v, double const &w,
                                      const std::vector<double> &faceFunctions,
                                      std::vector<double> &quadFaceFunctionsAllOrientations,
-                                     std::vector<double> &triFaceFunctionsAllOrientations) override;
+                                     std::vector<double> &triFaceFunctionsAllOrientations, std::string typeFunction = "H1Legendre") override;
     void addAllOrientedFaceFunctions(double const &u, double const &v, double const &w,
                                      const std::vector<std::vector<double> > &faceFunctions,
                                      std::vector<std::vector<double> > &quadFaceFunctionsAllOrientations,

@@ -39,11 +39,13 @@ protected:
     // to be used in addAllOrientedFaceFunctions
     virtual void orientOneFace(double const &u, double const &v, double const &w,
                                int const &flag1, int const &flag2, int const &flag3,
-                               int const &faceNumber, std::vector<double> &faceFunctions) = 0;
+                               int const &faceNumber, std::vector<double> &faceFunctions,
+                               std::string typeFunction) = 0;
     
     virtual void orientOneFace(double const &u, double const &v, double const &w,
                                int const &flag1, int const &flag2, int const &flag3,
-                               int const &faceNumber, std::vector<std::vector<double> > &faceFunctions, std::string typeFunction) = 0;
+                               int const &faceNumber, std::vector<std::vector<double> > &faceFunctions,
+                               std::string typeFunction) = 0;
     // typeFunction = GradH1Legendre, HcurlLegendre, curlHcurlLegendre
     
     HierarchicalBasis() = default;
@@ -88,7 +90,8 @@ public:
     virtual void addAllOrientedFaceFunctions(double const &u, double const &v, double const &w,
                                              const std::vector<double> &faceFunctions,
                                              std::vector<double> &quadFaceFunctionsAllOrientation,
-                                             std::vector<double> &triFaceFunctionsAllOrientation) = 0;
+                                             std::vector<double> &triFaceFunctionsAllOrientation,
+                                             std::string typeFunction) = 0;
     virtual void addAllOrientedFaceFunctions(double const &u, double const &v, double const &w,
                                              const std::vector<std::vector<double> > &faceFunctions,
                                              std::vector<std::vector<double> > &quadFaceFunctionsAllOrientation,

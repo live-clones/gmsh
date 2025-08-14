@@ -488,7 +488,7 @@ void HierarchicalBasisH1Quad::orientEdge(int const &flagOrientation, int const &
 
 void HierarchicalBasisH1Quad::orientOneFace(double const &u, double const &v, double const &w,
                                             int const &flag1, int const &flag2, int const &flag3,
-                                            int const &faceNumber, std::vector<double> &faceBasis) {
+                                            int const &faceNumber, std::vector<double> &faceBasis, std::string typeFunction) {
     if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
         int iterator = 0;
         if(flag3 == 1) {

@@ -491,7 +491,8 @@ void HierarchicalBasisH1Tetra::orientOneFace(double const &u, double const &v,
                                              double const &w, int const &flag1,
                                              int const &flag2, int const &flag3,
                                              int const &faceNumber,
-                                             std::vector<double> &faceBasis) {
+                                             std::vector<double> &faceBasis,
+                                             std::string typeFunction) {
     if(!(flag1 == 0 && flag2 == 1)) {
     // to map onto the reference domain of gmsh:
         double uc = 2 * u - 1;

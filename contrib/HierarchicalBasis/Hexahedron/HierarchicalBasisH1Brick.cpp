@@ -524,7 +524,7 @@ void HierarchicalBasisH1Brick::orientEdgeFunctionsForNegativeFlag(std::vector<st
 void HierarchicalBasisH1Brick::orientOneFace(double const &u, double const &v, double const &w,
                                              int const &flag1, int const &flag2, int const &flag3,
                                              int const &faceNumber,
-                                             std::vector<double> &faceBasis) {
+                                             std::vector<double> &faceBasis, std::string typeFunction) {
     if(!(flag1 == 1 && flag2 == 1 && flag3 == 1)) {
         int iterator = 0;
         for(int i = 0; i < faceNumber; i++) {

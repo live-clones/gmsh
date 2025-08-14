@@ -48,10 +48,10 @@
 #include "OS.h"
 #include "Options.h"
 #include "OpenFile.h"
-#include "Utils.h"
 #include "CreateHierarchicalBasis.h"
 
 #if defined(HAVE_HIERARCHICAL_BASIS)
+#include "Utils.h"
 #include "Quadrilateral/HierarchicalBasisH1Quad.h"
 #include "Triangle/HierarchicalBasisH1Tria.h"
 #include "Line/HierarchicalBasisH1Line.h"
@@ -66,6 +66,7 @@
 #include "Tetrahedron/HierarchicalBasisHcurlTetra.h"
 #include "Prism/HierarchicalBasisHcurlPri.h"
 #else
+#include "Utils.h"
 #include "HierarchicalBasisH1Quad.h"
 #include "HierarchicalBasisH1Tria.h"
 #include "HierarchicalBasisH1Line.h"
@@ -3031,8 +3032,13 @@ GMSH_API void gmsh::model::mesh::getBasisFunctions(const int elementType, // in
                         const double u = localCoord[3 * q];
                         const double v = localCoord[3 * q + 1];
                         const double w = localCoord[3 * q + 2];
+#if defined(HAVE_HIERARCHICAL_BASIS)
+                        basis->addAllOrientedFaceFunctions(u, v, w, fTable[q],
+                                                           quadFaceFunctionsAllOrientations[q], triFaceFunctionsAllOrientations[q], fsName);
+#else
                         basis->addAllOrientedFaceFunctions(u, v, w, fTable[q],
                                                            quadFaceFunctionsAllOrientations[q], triFaceFunctionsAllOrientations[q]);
+#endif
                     }
                 }
                 

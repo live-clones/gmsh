@@ -18,7 +18,8 @@ class HierarchicalBasisHdiv : public HierarchicalBasis {
 protected:
     virtual void orientOneFace(double const &u, double const &v, double const &w,
                                int const &flag1, int const &flag2, int const &flag3,
-                               int const &faceNumber, std::vector<double> &faceFunctions) = 0;
+                               int const &faceNumber, std::vector<double> &faceFunctions,
+                               std::string typeFunction) = 0;
     
     virtual void orientOneFace(double const &u, double const &v, double const &w,
                                int const &flag1, int const &flag2, int const &flag3,
@@ -60,7 +61,8 @@ public:
     virtual void addAllOrientedFaceFunctions(double const &u, double const &v, double const &w,
                                              const std::vector<double> &faceFunctions,
                                              std::vector<double> &quadFaceFunctionsAllOrientations,
-                                             std::vector<double> &triFaceFunctionsAllOrientations) = 0;
+                                             std::vector<double> &triFaceFunctionsAllOrientations,
+                                             std::string typeFunction);
     virtual void addAllOrientedFaceFunctions(double const &u, double const &v, double const &w,
                                              const std::vector<std::vector<double> > &faceFunctions,
                                              std::vector<std::vector<double> > &quadFaceFunctionsAllOrientations,

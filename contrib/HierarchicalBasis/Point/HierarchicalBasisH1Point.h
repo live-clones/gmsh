@@ -30,7 +30,7 @@ private:
 
     void orientOneFace(double const &u, double const &v, double const &w,
                        int const &flag1, int const &flag2, int const &flag3,
-                       int const &faceNumber, std::vector<double> &faceFunctions) override {
+                       int const &faceNumber, std::vector<double> &faceFunctions, std::string typeFunction = "H1Legendre") override {
         /* No operation needed for point basis */
     }
     void orientOneFace(double const &u, double const &v, double const &w,

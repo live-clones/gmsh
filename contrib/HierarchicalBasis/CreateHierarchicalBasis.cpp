@@ -11,6 +11,7 @@
 #include "GmshMessage.h"
 
 #include "HierarchicalBasis.h"
+
 #include "Quadrilateral/HierarchicalBasisH1Quad.h"
 #include "Triangle/HierarchicalBasisH1Tria.h"
 #include "Line/HierarchicalBasisH1Line.h"
@@ -18,12 +19,16 @@
 #include "Tetrahedron/HierarchicalBasisH1Tetra.h"
 #include "Prism/HierarchicalBasisH1Pri.h"
 #include "Point/HierarchicalBasisH1Point.h"
+
 #include "Line/HierarchicalBasisHcurlLine.h"
 #include "Quadrilateral/HierarchicalBasisHcurlQuad.h"
 #include "Hexahedron/HierarchicalBasisHcurlBrick.h"
 #include "Triangle/HierarchicalBasisHcurlTria.h"
 #include "Tetrahedron/HierarchicalBasisHcurlTetra.h"
 #include "Prism/HierarchicalBasisHcurlPri.h"
+
+#include "Triangle/HierarchicalBasisHdivTria.h"
+
 
 HierarchicalBasis* CreateHierarchicalBasis(const std::string &fsName, int familyType, int fsOrder) {
     HierarchicalBasis *basis(nullptr);
@@ -84,6 +89,19 @@ HierarchicalBasis* CreateHierarchicalBasis(const std::string &fsName, int family
                 return nullptr;
         }
     }
+    else if(fsName == "HdivLegendre" || fsName == "DivHdivLegendre")
+    {
+        switch(familyType)
+        {
+            case TYPE_TRI:
+                basis = new HierarchicalBasisHdivTria(fsOrder);
+                break;
+            default:
+                Msg::Error("Unknown familyType %i for basis function type %s", familyType, fsName.c_str());
+                return nullptr;
+        }
+    }
+
     else
     {
         Msg::Error("Unknown function space named '%s'", fsName.c_str());

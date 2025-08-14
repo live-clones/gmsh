@@ -9,15 +9,16 @@ set(SRC
     CreateHierarchicalBasis.cpp
     HierarchicalBasisH1.cpp
     HierarchicalBasisHcurl.cpp
+    HierarchicalBasisHdiv.cpp
     Point/HierarchicalBasisH1Point.cpp
     Line/HierarchicalBasisH1Line.cpp
     Line/HierarchicalBasisHcurlLine.cpp
     Triangle/HierarchicalBasisH1Tria.cpp
     Triangle/HierarchicalBasisHcurlTria.cpp
-#    Triangle/HierarchicalBasisHdivTria.cpp 
+    Triangle/HierarchicalBasisHdivTria.cpp 
     Quadrilateral/HierarchicalBasisH1Quad.cpp
     Quadrilateral/HierarchicalBasisHcurlQuad.cpp
-#    Quadrilateral/HierarchicalBasisHdivQuad.cpp   
+   # Quadrilateral/HierarchicalBasisHdivQuad.cpp   
     Tetrahedron/HierarchicalBasisH1Tetra.cpp
     Tetrahedron/HierarchicalBasisHcurlTetra.cpp
     Hexahedron/HierarchicalBasisH1Brick.cpp

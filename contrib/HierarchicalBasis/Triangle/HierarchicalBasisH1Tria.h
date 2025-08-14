@@ -56,7 +56,8 @@ private:
     
     void orientOneFace(double const &u, double const &v, double const &w,
                        int const &flag1, int const &flag2, int const &flag3,
-                       int const &faceNumber, std::vector<double> &faceBasis) override;
+                       int const &faceNumber, std::vector<double> &faceBasis,
+                       std::string typeFunction = "H1Legendre") override;
     void orientOneFace(double const &u, double const &v, double const &w,
                        int const &flag1, int const &flag2, int const &flag3,
                        int const &faceNumber, std::vector<std::vector<double> > &faceFunctions,

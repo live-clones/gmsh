@@ -57,12 +57,17 @@ private:
                                   std::vector<double> &bubbleBasis);
 
     static double dotProduct(const std::vector<double> &u, const std::vector<double> &v);
-    
+
+    virtual void orientOneFace(double const &u, double const &v, double const &w,
+                               int const &flag1, int const &flag2, int const &flag3,
+                               int const &faceNumber, std::vector<double> &faceFunctions,
+                               std::string typeFunction);
+
     virtual void orientOneFace(double const &u, double const &v, double const &w,
                                int const &flag1, int const &flag2, int const &flag3,
                                int const &faceNumber, std::vector<std::vector<double> > &faceFunctions,
                                std::string typeFunction);
-
+    
 public:
     HierarchicalBasisHdivTria(int order);
     
