@@ -48,9 +48,9 @@
 #include "OS.h"
 #include "Options.h"
 #include "OpenFile.h"
-#include "CreateHierarchicalBasis.h"
 
 #if defined(HAVE_HIERARCHICAL_BASIS)
+#include "CreateHierarchicalBasis.h"
 #include "Utils.h"
 #include "Quadrilateral/HierarchicalBasisH1Quad.h"
 #include "Triangle/HierarchicalBasisH1Tria.h"
@@ -66,6 +66,7 @@
 #include "Tetrahedron/HierarchicalBasisHcurlTetra.h"
 #include "Prism/HierarchicalBasisHcurlPri.h"
 #else
+#include "CreateHierarchicalBasis.h"
 #include "Utils.h"
 #include "HierarchicalBasisH1Quad.h"
 #include "HierarchicalBasisH1Tria.h"
