@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include "OrthogonalPoly.h"
 
-double OrthogonalPoly2::EvalLobatto(int order, double x)
+double OrthogonalPoly::EvalLobatto(int order, double x)
 {
   double L = 0;
   double xsquare = pow(x, 2);
@@ -124,7 +124,7 @@ double OrthogonalPoly2::EvalLobatto(int order, double x)
   }
 }
 
-double OrthogonalPoly2::EvalDLobatto(int order, double x)
+double OrthogonalPoly::EvalDLobatto(int order, double x)
 {
   double dL = 0;
   double xsquare = pow(x, 2);
@@ -235,7 +235,7 @@ double OrthogonalPoly2::EvalDLobatto(int order, double x)
   }
 }
 
-double OrthogonalPoly2::EvalKernelFunction(int order, double x)
+double OrthogonalPoly::EvalKernelFunction(int order, double x)
 {
   double phi = 0;
   double xsquare = pow(x, 2);
@@ -326,7 +326,7 @@ double OrthogonalPoly2::EvalKernelFunction(int order, double x)
   }
 }
 
-double OrthogonalPoly2::EvalDKernelFunction(int order, double x)
+double OrthogonalPoly::EvalDKernelFunction(int order, double x)
 {
   double dphi = 0;
   double xsquare = pow(x, 2);
@@ -412,7 +412,7 @@ double OrthogonalPoly2::EvalDKernelFunction(int order, double x)
   }
 }
 
-double OrthogonalPoly2::EvalLegendre(int order, double x)
+double OrthogonalPoly::EvalLegendre(int order, double x)
 {
   double L = 0;
   double xsquare = pow(x, 2);
@@ -462,7 +462,7 @@ double OrthogonalPoly2::EvalLegendre(int order, double x)
   }
 }
 
-double OrthogonalPoly2::EvalDLegendre(int order, double x)
+double OrthogonalPoly::EvalDLegendre(int order, double x)
 {
   double dL = 0;
   double xsquare = pow(x, 2);

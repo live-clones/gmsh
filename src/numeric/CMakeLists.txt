@@ -39,23 +39,6 @@ set(SRC
   Iso.cpp
   approximationError.cpp
   ConjugateGradients.cpp
-  OrthogonalPoly.cpp
-  HierarchicalBasisH1.cpp
-  HierarchicalBasisH1Quad.cpp
-  HierarchicalBasisH1Tria.cpp
-  HierarchicalBasisH1Line.cpp
-  HierarchicalBasisH1Brick.cpp
-  HierarchicalBasisH1Tetra.cpp
-  HierarchicalBasisH1Pri.cpp
-  HierarchicalBasisH1Point.cpp
-  HierarchicalBasis.cpp
-  HierarchicalBasisHcurl.cpp
-  HierarchicalBasisHcurlQuad.cpp
-  HierarchicalBasisHcurlBrick.cpp
-  HierarchicalBasisHcurlTria.cpp
-  HierarchicalBasisHcurlTetra.cpp
-  HierarchicalBasisHcurlPri.cpp
-  HierarchicalBasisHcurlLine.cpp
   curvature.cpp
 )
 

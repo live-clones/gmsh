@@ -954,13 +954,18 @@ if(HAVE_MESH)
     set_config_option(HAVE_OPTHOM "OptHom")
   endif()
 
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/HierarchicalBasis AND
-    ENABLE_HIERARCHICAL_BASIS)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/HierarchicalBasis AND ENABLE_HIERARCHICAL_BASIS)
+    message(STATUS "Using new HierarchicalBasis implementation")
     add_subdirectory(contrib/HierarchicalBasis)
-    include_directories(contrib/HierarchicalBasis)
-    set_config_option(HAVE_HIERARCHICAL_BASIS "HierarchicalBasis")
-  endif()
-
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/contrib/HierarchicalBasis)
+    add_definitions(-DHAVE_HIERARCHICAL_BASIS=1)
+else()
+    message(STATUS "Using old HierarchicalBasis implementation")
+    add_subdirectory(contrib/HierarchicalBasis_old)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/contrib/HierarchicalBasis_old)
+    # Pas de définition -> macro absente
+endif()
+  
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/contrib/domhex AND ENABLE_DOMHEX)
     add_subdirectory(contrib/domhex)
     include_directories(contrib/domhex)

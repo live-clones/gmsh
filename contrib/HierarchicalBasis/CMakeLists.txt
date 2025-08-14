@@ -5,10 +5,25 @@
 
 set(SRC
     OrthogonalPoly.cpp
-    #  Triangle/H1.cpp
-    #  Triangle/Hcurl.cpp
-    #  Quadrangle/H1.cpp
-    #  Quadrangle/Hcurl.cpp
+    Utils.cpp
+    CreateHierarchicalBasis.cpp
+    HierarchicalBasisH1.cpp
+    HierarchicalBasisHcurl.cpp
+    Point/HierarchicalBasisH1Point.cpp
+    Line/HierarchicalBasisH1Line.cpp
+    Line/HierarchicalBasisHcurlLine.cpp
+    Triangle/HierarchicalBasisH1Tria.cpp
+    Triangle/HierarchicalBasisHcurlTria.cpp
+#    Triangle/HierarchicalBasisHdivTria.cpp 
+    Quadrilateral/HierarchicalBasisH1Quad.cpp
+    Quadrilateral/HierarchicalBasisHcurlQuad.cpp
+#    Quadrilateral/HierarchicalBasisHdivQuad.cpp   
+    Tetrahedron/HierarchicalBasisH1Tetra.cpp
+    Tetrahedron/HierarchicalBasisHcurlTetra.cpp
+    Hexahedron/HierarchicalBasisH1Brick.cpp
+    Hexahedron/HierarchicalBasisHcurlBrick.cpp
+    Prism/HierarchicalBasisH1Pri.cpp
+    Prism/HierarchicalBasisHcurlPri.cpp
 )
 
 file(GLOB_RECURSE HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

@@ -3,13 +3,13 @@
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
 
-#ifndef _ORTHOGONALPOLY2_H_
-#define _ORTHOGONALPOLY2_H_
+#ifndef _ORTHOGONALPOLY_H_
+#define _ORTHOGONALPOLY_H_
 
 #include <math.h>
 #include <string>
 
-namespace OrthogonalPoly2 {
+namespace OrthogonalPoly {
 
   // Lobatto Orthogonal Shape Functions in Horner's form
   double EvalLobatto(int order, double x);
