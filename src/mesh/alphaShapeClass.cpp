@@ -4,6 +4,7 @@
 #include <math.h>
 #include <vector>
 #include <stack>
+#include <climits>
 #include <algorithm>
 #include "alphaShapeClass.h"
 
@@ -266,7 +267,7 @@ void AlphaShapeClass::alphaShape2D(const double alpha, const std::vector<double>
         }
       }
     }
-    for (int i=0; i<_pm->faces.size(); i++){
+    for (std::size_t i=0; i<_pm->faces.size(); i++){
       auto f = _pm->faces[i];
       if (f->he == nullptr) continue; // skip faces without half edges
       int i0 = f->he->v->data;
@@ -281,7 +282,7 @@ void AlphaShapeClass::alphaShape2D(const double alpha, const std::vector<double>
         f->data = -1;
       }
       else{
-        f->data = i;
+        f->data = static_cast<int>(i);
       }
     }
     updateAlphaShapeMesh();
@@ -1201,7 +1202,7 @@ void AlphaShapeClass::correctDisplacement(const std::vector<double> & dx, const 
             nx[0] = x2[0];
             nx[1] = x2[1];
           }
-          else if (t >= 1){
+          else {
             nx[0] = x3[0];
             nx[1] = x3[1];
           }

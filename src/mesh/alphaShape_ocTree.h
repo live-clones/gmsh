@@ -145,7 +145,7 @@ class OctreeNode {
             bboxc.max[j] = (i & 1<<j) ? bbox_.max[j] : mid[j];
           }
           children_[i].set_bbox(bboxc);
-          for (int j = 0; j < leaf_->n(); j++) {
+          for (size_t j = 0; j < leaf_->n(); j++) {
             auto pair = (*leaf_)[j];
             children_[i].add(pair.first, pair.second, recursion+1);
           }

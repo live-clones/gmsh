@@ -2429,7 +2429,7 @@ void AlphaShape::_moveNodes(const int tag, const int freeSurfaceTag, const std::
             nx[0] = x2[0];
             nx[1] = x2[1];
           }
-          else if (t >= 1){
+          else {
             nx[0] = x3[0];
             nx[1] = x3[1];
           }
@@ -2628,7 +2628,7 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize, const
 
   #pragma omp parallel for
   for (uint64_t i=0; i<mesh->tetrahedra.num; i++){
-    int32_t nod = mesh->tetrahedra.node[4*i+3];
+    uint32_t nod = mesh->tetrahedra.node[4*i+3];
     int ext = -1;
     for (int j=0; j<4; j++){
       if (mesh->tetrahedra.node[4*i+j] < 8){
@@ -2639,7 +2639,7 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize, const
     if (nod == HXT_GHOST_VERTEX || ext > -1){
     // if (nod == HXT_GHOST_VERTEX){
       setProcessedFlag(mesh, i);
-      size_t i_face = nod == HXT_GHOST_VERTEX ? 3 : ext;
+      uint64_t i_face = nod == HXT_GHOST_VERTEX ? 3 : ext;
       auto tet_neigh = mesh->tetrahedra.neigh[4*i+i_face]/4;
       auto tet_face = mesh->tetrahedra.neigh[4*i+i_face]%4;
       if (tet_neigh < mesh->tetrahedra.num){
@@ -2662,7 +2662,7 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize, const
                                   .qualityMin = qualityMin,
                                   .numThreads = nthreads,
                                   .numVerticesConstrained = mesh->vertices.num,
-                                  .verbosity = 2,
+                                  .verbosity = (Msg::GetVerbosity() < 4) ? 0 : 2,
                                   .reproducible = 0
                                   } ;
     hxtOptimizeTetrahedra(mesh, &options);
@@ -2673,7 +2673,7 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize, const
   for(size_t i = 0; i < mesh->tetrahedra.num; i++) {
     if(mesh->tetrahedra.node[i * 4 + 3] != UINT32_MAX) {
       uint32_t myColor = mesh->tetrahedra.color[i];
-      if(myColor == tag) {
+      if(myColor == static_cast<uint32_t>(tag)) {
         uint32_t *n = &mesh->tetrahedra.node[4 * i];
         tets.push_back(
           new MTetrahedron(gr->mesh_vertices[n[0]-8], gr->mesh_vertices[n[1]-8], gr->mesh_vertices[n[2]-8], gr->mesh_vertices[n[3]-8], i+1));
