@@ -1510,7 +1510,7 @@ C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/x1.cpp#L84,x1.cpp}), Python (@url{
 @end table
 
 @item gmsh/model/mesh/getElement
-Get the type and node tags of the element with tag @code{tag}, as well as the dimension @code{dim} and tag @code{tag} of the entity on which the element is classified. This function relies on an internal cache (a vector in case of dense element numbering, a map otherwise); for large meshes accessing elements in bulk is often preferable.
+Get the type and node tags of the element with tag @code{elementTag}, as well as the dimension @code{dim} and tag @code{tag} of the entity on which the element is classified. This function relies on an internal cache (a vector in case of dense element numbering, a map otherwise); for large meshes accessing elements in bulk is often preferable.
 
 @table @asis
 @item Input:

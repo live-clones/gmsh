@@ -4121,8 +4121,8 @@ module gmsh
       nodeTags_n)
   end subroutine gmshModelMeshGetElements
 
-  !> Get the type and node tags of the element with tag `tag', as well as the
-  !! dimension `dim' and tag `tag' of the entity on which the element is
+  !> Get the type and node tags of the element with tag `elementTag', as well as
+  !! the dimension `dim' and tag `tag' of the entity on which the element is
   !! classified. This function relies on an internal cache (a vector in case of
   !! dense element numbering, a map otherwise); for large meshes accessing
   !! elements in bulk is often preferable.
