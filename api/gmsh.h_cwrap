@@ -663,6 +663,20 @@ namespace gmsh { // Top-level functions
       downward.assign(api_downward_, api_downward_ + api_downward_n_); gmshFree(api_downward_);
     }
 
+    // gmsh::model::isEntityOrphan
+    //
+    // Return whether the model entity of dimension `dim' and tag `tag' is an
+    // orphan, i.e. is not connected to any entity of the highest dimension in the
+    // model.
+    inline int isEntityOrphan(const int dim,
+                              const int tag)
+    {
+      int ierr = 0;
+      int result_api_ = gmshModelIsEntityOrphan(dim, tag, &ierr);
+      if(ierr) throwLastError();
+      return result_api_;
+    }
+
     // gmsh::model::getEntitiesInBoundingBox
     //
     // Get the model entities in the bounding box defined by the two points

@@ -1167,6 +1167,31 @@ class model:
     get_adjacencies = getAdjacencies
 
     @staticmethod
+    def isEntityOrphan(dim, tag):
+        """
+        gmsh.model.isEntityOrphan(dim, tag)
+
+        Return whether the model entity of dimension `dim' and tag `tag' is an
+        orphan, i.e. is not connected to any entity of the highest dimension in the
+        model.
+
+        Return an integer.
+
+        Types:
+        - `dim': integer
+        - `tag': integer
+        """
+        ierr = c_int()
+        api_result_ = lib.gmshModelIsEntityOrphan(
+            c_int(dim),
+            c_int(tag),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return api_result_
+    is_entity_orphan = isEntityOrphan
+
+    @staticmethod
     def getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim=-1):
         """
         gmsh.model.getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim=-1)

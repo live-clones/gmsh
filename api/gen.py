@@ -167,6 +167,9 @@ model.add('getBoundary', doc, None, ivectorpair('dimTags'), ovectorpair('outDimT
 doc = '''Get the upward and downward adjacencies of the model entity of dimension `dim' and tag `tag'. The `upward' vector returns the tags of adjacent entities of dimension `dim' + 1; the `downward' vector returns the tags of adjacent entities of dimension `dim' - 1.'''
 model.add('getAdjacencies', doc, None, iint('dim'), iint('tag'), ovectorint('upward'), ovectorint('downward'))
 
+doc = '''Return whether the model entity of dimension `dim' and tag `tag' is an orphan, i.e. is not connected to any entity of the highest dimension in the model.'''
+model.add('isEntityOrphan', doc, oint, iint('dim'), iint('tag'))
+
 doc = '''Get the model entities in the bounding box defined by the two points (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0, return only the entities of the specified dimension (e.g. points if `dim' == 0).'''
 model.add('getEntitiesInBoundingBox', doc, None, idouble('xmin'), idouble('ymin'), idouble('zmin'), idouble('xmax'), idouble('ymax'), idouble('zmax'), ovectorpair('dimTags'), iint('dim', '-1'))
 

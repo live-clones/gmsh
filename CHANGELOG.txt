@@ -1,3 +1,7 @@
+x.x.x (Work-in-progress): bug fixes.
+
+* New API functions: model/isEntityOrphan
+
 4.14.0 (July 3, 2025): improve return value of boolean operations; improved
 ONELAB parameter GUI; improved XAO export with mesh sizes; improved unrolled GEO
 export to handle OCC geometries; new Step() built-in parser function; fix

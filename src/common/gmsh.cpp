@@ -614,6 +614,17 @@ GMSH_API void gmsh::model::getAdjacencies(const int dim, const int tag,
   }
 }
 
+GMSH_API int gmsh::model::isEntityOrphan(const int dim, const int tag)
+{
+  if(!_checkInit()) return 0;
+  GEntity *ge = GModel::current()->getEntityByTag(dim, tag);
+  if(!ge) {
+    Msg::Error("%s does not exist", _getEntityName(dim, tag).c_str());
+    return 0;
+  }
+  return ge->isOrphan() ? 1 : 0;
+}
+
 GMSH_API void gmsh::model::getEntitiesInBoundingBox(
   const double xmin, const double ymin, const double zmin, const double xmax,
   const double ymax, const double zmax, vectorpair &dimTags, const int dim)

@@ -793,6 +793,8 @@ module gmsh
         gmshModelGetBoundary
     procedure, nopass :: getAdjacencies => &
         gmshModelGetAdjacencies
+    procedure, nopass :: isEntityOrphan => &
+        gmshModelIsEntityOrphan
     procedure, nopass :: getEntitiesInBoundingBox => &
         gmshModelGetEntitiesInBoundingBox
     procedure, nopass :: getBoundingBox => &
@@ -1957,6 +1959,33 @@ module gmsh
     downward = ovectorint_(api_downward_, &
       api_downward_n_)
   end subroutine gmshModelGetAdjacencies
+
+  !> Return whether the model entity of dimension `dim' and tag `tag' is an
+  !! orphan, i.e. is not connected to any entity of the highest dimension in the
+  !! model.
+  function gmshModelIsEntityOrphan(dim, &
+                                   tag, &
+                                   ierr)
+    interface
+    function C_API(dim, &
+                   tag, &
+                   ierr_) &
+      bind(C, name="gmshModelIsEntityOrphan")
+      use, intrinsic :: iso_c_binding
+      integer(c_int) :: C_API
+      integer(c_int), value, intent(in) :: dim
+      integer(c_int), value, intent(in) :: tag
+      integer(c_int), intent(out), optional :: ierr_
+    end function C_API
+    end interface
+    integer(c_int) :: gmshModelIsEntityOrphan
+    integer, intent(in) :: dim
+    integer, intent(in) :: tag
+    integer(c_int), intent(out), optional :: ierr
+    gmshModelIsEntityOrphan = C_API(dim=int(dim, c_int), &
+                              tag=int(tag, c_int), &
+                              ierr_=ierr)
+  end function gmshModelIsEntityOrphan
 
   !> Get the model entities in the bounding box defined by the two points
   !! (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0,

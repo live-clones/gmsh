@@ -364,6 +364,14 @@ namespace gmsh { // Top-level functions
                                  std::vector<int> & upward,
                                  std::vector<int> & downward);
 
+    // gmsh::model::isEntityOrphan
+    //
+    // Return whether the model entity of dimension `dim' and tag `tag' is an
+    // orphan, i.e. is not connected to any entity of the highest dimension in the
+    // model.
+    GMSH_API int isEntityOrphan(const int dim,
+                                const int tag);
+
     // gmsh::model::getEntitiesInBoundingBox
     //
     // Get the model entities in the bounding box defined by the two points

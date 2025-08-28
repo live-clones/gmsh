@@ -922,6 +922,28 @@ end
 const get_adjacencies = getAdjacencies
 
 """
+    gmsh.model.isEntityOrphan(dim, tag)
+
+Return whether the model entity of dimension `dim` and tag `tag` is an orphan,
+i.e. is not connected to any entity of the highest dimension in the model.
+
+Return an integer.
+
+Types:
+ - `dim`: integer
+ - `tag`: integer
+"""
+function isEntityOrphan(dim, tag)
+    ierr = Ref{Cint}()
+    api_result_ = ccall((:gmshModelIsEntityOrphan, gmsh.lib), Cint,
+          (Cint, Cint, Ptr{Cint}),
+          dim, tag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_result_
+end
+const is_entity_orphan = isEntityOrphan
+
+"""
     gmsh.model.getEntitiesInBoundingBox(xmin, ymin, zmin, xmax, ymax, zmax, dim = -1)
 
 Get the model entities in the bounding box defined by the two points (`xmin`,

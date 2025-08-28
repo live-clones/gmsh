@@ -305,6 +305,13 @@ GMSH_API void gmshModelGetAdjacencies(const int dim,
                                       int ** downward, size_t * downward_n,
                                       int * ierr);
 
+/* Return whether the model entity of dimension `dim' and tag `tag' is an
+ * orphan, i.e. is not connected to any entity of the highest dimension in the
+ * model. */
+GMSH_API int gmshModelIsEntityOrphan(const int dim,
+                                     const int tag,
+                                     int * ierr);
+
 /* Get the model entities in the bounding box defined by the two points
  * (`xmin', `ymin', `zmin') and (`xmax', `ymax', `zmax'). If `dim' is >= 0,
  * return only the entities of the specified dimension (e.g. points if `dim'

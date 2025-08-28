@@ -560,6 +560,19 @@ GMSH_API void gmshModelGetAdjacencies(const int dim, const int tag, int ** upwar
   }
 }
 
+GMSH_API int gmshModelIsEntityOrphan(const int dim, const int tag, int * ierr)
+{
+  int result_api_ = 0;
+  if(ierr) *ierr = 0;
+  try {
+    result_api_ = gmsh::model::isEntityOrphan(dim, tag);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+  return result_api_;
+}
+
 GMSH_API void gmshModelGetEntitiesInBoundingBox(const double xmin, const double ymin, const double zmin, const double xmax, const double ymax, const double zmax, int ** dimTags, size_t * dimTags_n, const int dim, int * ierr)
 {
   if(ierr) *ierr = 0;
