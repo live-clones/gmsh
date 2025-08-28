@@ -7,5 +7,6 @@
 /// Estimating Curvatures and Their Derivatives on Triangle Meshes, Szymon Rusinkiewicz
 HXTStatus hxtCurvatureRusinkiewicz (HXTMesh *mesh, double **nodalCurvatures, double **crossField, HXTEdges* edges, int debug);
 void saveNodalField (HXTMesh *mesh, double *v, int ncomp, const char *fn);
+HXTStatus hxtCurvatureAndNormalRusinkiewicz (HXTMesh *mesh, double **nodalCurvatures, double **nodeNormals, int debug);
 
 #endif

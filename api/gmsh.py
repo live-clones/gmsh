@@ -5194,6 +5194,347 @@ class model:
             return _ovectorint(api_viewTags_, api_viewTags_n_.value)
         compute_cross_field = computeCrossField
 
+        @staticmethod
+        def advectMeshNodes(dim, tag, bndTag, boundaryModel, nodeTags, dxNodes, boundaryTolerance=1e-6, intersectOrProjectOnBoundary=False):
+            """
+            gmsh.model.mesh.advectMeshNodes(dim, tag, bndTag, boundaryModel, nodeTags, dxNodes, boundaryTolerance=1e-6, intersectOrProjectOnBoundary=False)
+
+            Advect nodes of a mesh with displacement vector dxNodes
+
+            Types:
+            - `dim': integer
+            - `tag': integer
+            - `bndTag': integer
+            - `boundaryModel': string
+            - `nodeTags': vector of sizes
+            - `dxNodes': vector of doubles
+            - `boundaryTolerance': double
+            - `intersectOrProjectOnBoundary': boolean
+            """
+            api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
+            api_dxNodes_, api_dxNodes_n_ = _ivectordouble(dxNodes)
+            ierr = c_int()
+            lib.gmshModelMeshAdvectMeshNodes(
+                c_int(dim),
+                c_int(tag),
+                c_int(bndTag),
+                c_char_p(boundaryModel.encode()),
+                api_nodeTags_, api_nodeTags_n_,
+                api_dxNodes_, api_dxNodes_n_,
+                c_double(boundaryTolerance),
+                c_int(bool(intersectOrProjectOnBoundary)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        advect_mesh_nodes = advectMeshNodes
+
+        @staticmethod
+        def computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh=False, boundaryTolerance=1e-6, refine=True, delaunayTag=-1, deleteDisconnectedNodes=True):
+            """
+            gmsh.model.mesh.computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh=False, boundaryTolerance=1e-6, refine=True, delaunayTag=-1, deleteDisconnectedNodes=True)
+
+            Compute the alpha shape - improved function
+
+            Return `newNodeTags', `newNodeElementTags', `newNodeParametricCoord'.
+
+            Types:
+            - `dim': integer
+            - `tag': integer
+            - `bndTag': integer
+            - `boundaryModel': string
+            - `alpha': double
+            - `alphaShapeSizeField': integer
+            - `refineSizeField': integer
+            - `newNodeTags': vector of sizes
+            - `newNodeElementTags': vector of sizes
+            - `newNodeParametricCoord': vector of doubles
+            - `usePreviousMesh': boolean
+            - `boundaryTolerance': double
+            - `refine': boolean
+            - `delaunayTag': integer
+            - `deleteDisconnectedNodes': boolean
+            """
+            api_newNodeTags_, api_newNodeTags_n_ = POINTER(c_size_t)(), c_size_t()
+            api_newNodeElementTags_, api_newNodeElementTags_n_ = POINTER(c_size_t)(), c_size_t()
+            api_newNodeParametricCoord_, api_newNodeParametricCoord_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshComputeAlphaShape(
+                c_int(dim),
+                c_int(tag),
+                c_int(bndTag),
+                c_char_p(boundaryModel.encode()),
+                c_double(alpha),
+                c_int(alphaShapeSizeField),
+                c_int(refineSizeField),
+                byref(api_newNodeTags_), byref(api_newNodeTags_n_),
+                byref(api_newNodeElementTags_), byref(api_newNodeElementTags_n_),
+                byref(api_newNodeParametricCoord_), byref(api_newNodeParametricCoord_n_),
+                c_int(bool(usePreviousMesh)),
+                c_double(boundaryTolerance),
+                c_int(bool(refine)),
+                c_int(delaunayTag),
+                c_int(bool(deleteDisconnectedNodes)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return (
+                _ovectorsize(api_newNodeTags_, api_newNodeTags_n_.value),
+                _ovectorsize(api_newNodeElementTags_, api_newNodeElementTags_n_.value),
+                _ovectordouble(api_newNodeParametricCoord_, api_newNodeParametricCoord_n_.value))
+        compute_alpha_shape = computeAlphaShape
+
+        @staticmethod
+        def tetrahedralizePoints(tag, optimize=False, quality=0.00001):
+            """
+            gmsh.model.mesh.tetrahedralizePoints(tag, optimize=False, quality=0.00001)
+
+            Tetrahedralize points in entity of tag `tag
+
+            Types:
+            - `tag': integer
+            - `optimize': boolean
+            - `quality': double
+            """
+            ierr = c_int()
+            lib.gmshModelMeshTetrahedralizePoints(
+                c_int(tag),
+                c_int(bool(optimize)),
+                c_double(quality),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        tetrahedralize_points = tetrahedralizePoints
+
+        @staticmethod
+        def alphaShape3D(tag, alpha, sizeFieldTag, tagAlpha, tagAlphaBoundary, removeDisconnectedNodes=False, returnTri2TetMap=False):
+            """
+            gmsh.model.mesh.alphaShape3D(tag, alpha, sizeFieldTag, tagAlpha, tagAlphaBoundary, removeDisconnectedNodes=False, returnTri2TetMap=False)
+
+            Compute alpha shape of the mesh in entity of tag `tag
+
+            Return `tri2TetMap'.
+
+            Types:
+            - `tag': integer
+            - `alpha': double
+            - `sizeFieldTag': integer
+            - `tagAlpha': integer
+            - `tagAlphaBoundary': integer
+            - `tri2TetMap': vector of sizes
+            - `removeDisconnectedNodes': boolean
+            - `returnTri2TetMap': boolean
+            """
+            api_tri2TetMap_, api_tri2TetMap_n_ = POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshAlphaShape3D(
+                c_int(tag),
+                c_double(alpha),
+                c_int(sizeFieldTag),
+                c_int(tagAlpha),
+                c_int(tagAlphaBoundary),
+                byref(api_tri2TetMap_), byref(api_tri2TetMap_n_),
+                c_int(bool(removeDisconnectedNodes)),
+                c_int(bool(returnTri2TetMap)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorsize(api_tri2TetMap_, api_tri2TetMap_n_.value)
+        alpha_shape3_d = alphaShape3D
+
+        @staticmethod
+        def alphaShape3DFromArray(tag, elementTags, alpha, tagAlpha, tagAlphaBoundary, removeDisconnectedNodes=False, returnTri2TetMap=False):
+            """
+            gmsh.model.mesh.alphaShape3DFromArray(tag, elementTags, alpha, tagAlpha, tagAlphaBoundary, removeDisconnectedNodes=False, returnTri2TetMap=False)
+
+            Compute alpha shape of the mesh in entity of tag `tag' using an array of
+            values alpha. The values correspond to the element tags stored in
+            elementTags.
+
+            Return `tri2TetMap'.
+
+            Types:
+            - `tag': integer
+            - `elementTags': vector of sizes
+            - `alpha': vector of doubles
+            - `tagAlpha': integer
+            - `tagAlphaBoundary': integer
+            - `tri2TetMap': vector of sizes
+            - `removeDisconnectedNodes': boolean
+            - `returnTri2TetMap': boolean
+            """
+            api_elementTags_, api_elementTags_n_ = _ivectorsize(elementTags)
+            api_alpha_, api_alpha_n_ = _ivectordouble(alpha)
+            api_tri2TetMap_, api_tri2TetMap_n_ = POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshAlphaShape3DFromArray(
+                c_int(tag),
+                api_elementTags_, api_elementTags_n_,
+                api_alpha_, api_alpha_n_,
+                c_int(tagAlpha),
+                c_int(tagAlphaBoundary),
+                byref(api_tri2TetMap_), byref(api_tri2TetMap_n_),
+                c_int(bool(removeDisconnectedNodes)),
+                c_int(bool(returnTri2TetMap)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectorsize(api_tri2TetMap_, api_tri2TetMap_n_.value)
+        alpha_shape3_dfrom_array = alphaShape3DFromArray
+
+        @staticmethod
+        def surfaceEdgeSplitting(fullTag, surfaceTag, sizeFieldTag, tri2TetMap, tetrahedralize=False, buildElementOctree=False):
+            """
+            gmsh.model.mesh.surfaceEdgeSplitting(fullTag, surfaceTag, sizeFieldTag, tri2TetMap, tetrahedralize=False, buildElementOctree=False)
+
+            Mesh refinement/derefinement through edge splitting of (surface) entity of
+            tag `tag
+
+            Types:
+            - `fullTag': integer
+            - `surfaceTag': integer
+            - `sizeFieldTag': integer
+            - `tri2TetMap': vector of sizes
+            - `tetrahedralize': boolean
+            - `buildElementOctree': boolean
+            """
+            api_tri2TetMap_, api_tri2TetMap_n_ = _ivectorsize(tri2TetMap)
+            ierr = c_int()
+            lib.gmshModelMeshSurfaceEdgeSplitting(
+                c_int(fullTag),
+                c_int(surfaceTag),
+                c_int(sizeFieldTag),
+                api_tri2TetMap_, api_tri2TetMap_n_,
+                c_int(bool(tetrahedralize)),
+                c_int(bool(buildElementOctree)),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        surface_edge_splitting = surfaceEdgeSplitting
+
+        @staticmethod
+        def volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag, returnNodalCurvature):
+            """
+            gmsh.model.mesh.volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag, returnNodalCurvature)
+
+            Volume mesh refinement/derefinement using hxt refinement approaches of
+            volume entity of tag `tag', and bounded by surface entity of tag
+            `surfaceTag'.
+
+            Return `nodalCurvature'.
+
+            Types:
+            - `fullTag': integer
+            - `surfaceTag': integer
+            - `volumeTag': integer
+            - `sizeFieldTag': integer
+            - `returnNodalCurvature': boolean
+            - `nodalCurvature': vector of doubles
+            """
+            api_nodalCurvature_, api_nodalCurvature_n_ = POINTER(c_double)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshVolumeMeshRefinement(
+                c_int(fullTag),
+                c_int(surfaceTag),
+                c_int(volumeTag),
+                c_int(sizeFieldTag),
+                c_int(bool(returnNodalCurvature)),
+                byref(api_nodalCurvature_), byref(api_nodalCurvature_n_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return _ovectordouble(api_nodalCurvature_, api_nodalCurvature_n_.value)
+        volume_mesh_refinement = volumeMeshRefinement
+
+        @staticmethod
+        def filterCloseNodes(tag, sizeFieldTag, tolerance):
+            """
+            gmsh.model.mesh.filterCloseNodes(tag, sizeFieldTag, tolerance)
+
+            Filter out points in the region with tag `tag' that are too close to each
+            other based on the size field with tag `sizeFieldTag' and a given tolerance
+            `tolerance'.
+
+            Types:
+            - `tag': integer
+            - `sizeFieldTag': integer
+            - `tolerance': double
+            """
+            ierr = c_int()
+            lib.gmshModelMeshFilterCloseNodes(
+                c_int(tag),
+                c_int(sizeFieldTag),
+                c_double(tolerance),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        filter_close_nodes = filterCloseNodes
+
+        @staticmethod
+        def colourBoundaryFaces(tag, boundaryModel, tolerance):
+            """
+            gmsh.model.mesh.colourBoundaryFaces(tag, boundaryModel, tolerance)
+
+            Color the faces of tag `tag' based on the entities in the boundary model
+            `boundarModel'. Colouring is done using an octree that colour the faces
+            using the colours of the boundary entities, if they are within a given
+            tolerance `tolerance'.
+
+            Types:
+            - `tag': integer
+            - `boundaryModel': string
+            - `tolerance': double
+            """
+            ierr = c_int()
+            lib.gmshModelMeshColourBoundaryFaces(
+                c_int(tag),
+                c_char_p(boundaryModel.encode()),
+                c_double(tolerance),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        colour_boundary_faces = colourBoundaryFaces
+
+        @staticmethod
+        def matchTrianglesToEntities(tag, boundaryModel, tolerance):
+            """
+            gmsh.model.mesh.matchTrianglesToEntities(tag, boundaryModel, tolerance)
+
+            Match the triangles of the mesh in entity of tag `tag' to the entities in
+            the boundary model `boundaryModel'. The matching is done using an octree
+            that match the triangles to the entities, if they are within a given
+            tolerance `tolerance'. The output is a vector of entity tags and a vector
+            of triangle tags.
+
+            Return `outEntities', `outTriangles', `outTriangleNodeTags'.
+
+            Types:
+            - `tag': integer
+            - `boundaryModel': string
+            - `tolerance': double
+            - `outEntities': vector of integers
+            - `outTriangles': vector of vectors of sizes
+            - `outTriangleNodeTags': vector of vectors of sizes
+            """
+            api_outEntities_, api_outEntities_n_ = POINTER(c_int)(), c_size_t()
+            api_outTriangles_, api_outTriangles_n_, api_outTriangles_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
+            api_outTriangleNodeTags_, api_outTriangleNodeTags_n_, api_outTriangleNodeTags_nn_ = POINTER(POINTER(c_size_t))(), POINTER(c_size_t)(), c_size_t()
+            ierr = c_int()
+            lib.gmshModelMeshMatchTrianglesToEntities(
+                c_int(tag),
+                c_char_p(boundaryModel.encode()),
+                c_double(tolerance),
+                byref(api_outEntities_), byref(api_outEntities_n_),
+                byref(api_outTriangles_), byref(api_outTriangles_n_), byref(api_outTriangles_nn_),
+                byref(api_outTriangleNodeTags_), byref(api_outTriangleNodeTags_n_), byref(api_outTriangleNodeTags_nn_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return (
+                _ovectorint(api_outEntities_, api_outEntities_n_.value),
+                _ovectorvectorsize(api_outTriangles_, api_outTriangles_n_, api_outTriangles_nn_),
+                _ovectorvectorsize(api_outTriangleNodeTags_, api_outTriangleNodeTags_n_, api_outTriangleNodeTags_nn_))
+        match_triangles_to_entities = matchTrianglesToEntities
+
 
         class field:
             """
@@ -10153,6 +10494,495 @@ class algorithm:
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return _ovectorsize(api_tetrahedra_, api_tetrahedra_n_.value)
+
+
+class alphaShape:
+    """
+    Alpha shape class
+    """
+
+    @staticmethod
+    def add(name, tag=-1):
+        """
+        gmsh.alphaShape.add(name, tag=-1)
+
+        Create a new alpha shape class with the given `name'. If `tag' is positive,
+        use it, otherwise associate a new tag. Return the alpha shape tag.
+
+        Return an integer.
+
+        Types:
+        - `name': string
+        - `tag': integer
+        """
+        ierr = c_int()
+        api_result_ = lib.gmshAlphaShapeAdd(
+            c_char_p(name.encode()),
+            c_int(tag),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return api_result_
+
+    @staticmethod
+    def clear(tag):
+        """
+        gmsh.alphaShape.clear(tag)
+
+        Cleaer the alpha shape with tag `tag'.
+
+        Types:
+        - `tag': integer
+        """
+        ierr = c_int()
+        lib.gmshAlphaShapeClear(
+            c_int(tag),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+
+    @staticmethod
+    def triangulate(tag, vertices, removeExistingNodes):
+        """
+        gmsh.alphaShape.triangulate(tag, vertices, removeExistingNodes)
+
+        Triangulate the nodes given as concatenated triplets of x,y,z coordinates
+        in `vertices'.
+
+        Types:
+        - `tag': integer
+        - `vertices': vector of doubles
+        - `removeExistingNodes': boolean
+        """
+        api_vertices_, api_vertices_n_ = _ivectordouble(vertices)
+        ierr = c_int()
+        lib.gmshAlphaShapeTriangulate(
+            c_int(tag),
+            api_vertices_, api_vertices_n_,
+            c_int(bool(removeExistingNodes)),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+
+    @staticmethod
+    def alphaShape2D(tag, alpha, sizeAtElements):
+        """
+        gmsh.alphaShape.alphaShape2D(tag, alpha, sizeAtElements)
+
+        Create a 2D alpha shape from the nodes in the current alpha shape class
+        with tag `tag', using the given `alpha' value. The `elementTags' vector
+        contains the tags of the elements to be used in the alpha shape, and
+        `sizeAtElements' gives the size at each element.
+
+        Types:
+        - `tag': integer
+        - `alpha': double
+        - `sizeAtElements': vector of doubles
+        """
+        api_sizeAtElements_, api_sizeAtElements_n_ = _ivectordouble(sizeAtElements)
+        ierr = c_int()
+        lib.gmshAlphaShapeAlphaShape2D(
+            c_int(tag),
+            c_double(alpha),
+            api_sizeAtElements_, api_sizeAtElements_n_,
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+    alpha_shape2_d = alphaShape2D
+
+    @staticmethod
+    def getNodes(tag):
+        """
+        gmsh.alphaShape.getNodes(tag)
+
+        Get node coordinates from the alpha shape with tag `tag'. The coordinates
+        are returned in the `vertices' vector as concatenated triplets of x, y, z
+        coordinates.
+
+        Return `vertices'.
+
+        Types:
+        - `tag': integer
+        - `vertices': vector of doubles
+        """
+        api_vertices_, api_vertices_n_ = POINTER(c_double)(), c_size_t()
+        ierr = c_int()
+        lib.gmshAlphaShapeGetNodes(
+            c_int(tag),
+            byref(api_vertices_), byref(api_vertices_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return _ovectordouble(api_vertices_, api_vertices_n_.value)
+    get_nodes = getNodes
+
+    @staticmethod
+    def getElements(tag):
+        """
+        gmsh.alphaShape.getElements(tag)
+
+         Get all the elements in the Delaunay triangulation of the alpha shape with
+        tag `tag'. The elements are returned in the `elements' vector as
+        concatenated triplets of point indexes (with numbering starting at 1).
+
+        Return `elementNodes'.
+
+        Types:
+        - `tag': integer
+        - `elementNodes': vector of sizes
+        """
+        api_elementNodes_, api_elementNodes_n_ = POINTER(c_size_t)(), c_size_t()
+        ierr = c_int()
+        lib.gmshAlphaShapeGetElements(
+            c_int(tag),
+            byref(api_elementNodes_), byref(api_elementNodes_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return _ovectorsize(api_elementNodes_, api_elementNodes_n_.value)
+    get_elements = getElements
+
+    @staticmethod
+    def filterNodes(tag, sizeAtNodes, tolerance):
+        """
+        gmsh.alphaShape.filterNodes(tag, sizeAtNodes, tolerance)
+
+        Filter nodes that are too close to each other compared to the size field
+
+        Types:
+        - `tag': integer
+        - `sizeAtNodes': vector of doubles
+        - `tolerance': double
+        """
+        api_sizeAtNodes_, api_sizeAtNodes_n_ = _ivectordouble(sizeAtNodes)
+        ierr = c_int()
+        lib.gmshAlphaShapeFilterNodes(
+            c_int(tag),
+            api_sizeAtNodes_, api_sizeAtNodes_n_,
+            c_double(tolerance),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+    filter_nodes = filterNodes
+
+    @staticmethod
+    def edgeRefine(tag, nodeTags, sizeAtNodes, tolerance):
+        """
+        gmsh.alphaShape.edgeRefine(tag, nodeTags, sizeAtNodes, tolerance)
+
+        Refine the edges of the alpha shape with tag `tag' using the nodes in
+        `nodeTags' and their sizes in `sizeAtNodes'. The `tolerance' is used to
+        determine if two nodes are too far from each other.
+
+        Types:
+        - `tag': integer
+        - `nodeTags': vector of sizes
+        - `sizeAtNodes': vector of doubles
+        - `tolerance': double
+        """
+        api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
+        api_sizeAtNodes_, api_sizeAtNodes_n_ = _ivectordouble(sizeAtNodes)
+        ierr = c_int()
+        lib.gmshAlphaShapeEdgeRefine(
+            c_int(tag),
+            api_nodeTags_, api_nodeTags_n_,
+            api_sizeAtNodes_, api_sizeAtNodes_n_,
+            c_double(tolerance),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+    edge_refine = edgeRefine
+
+    @staticmethod
+    def volumeRefine(tag, nodeTags, sizeAtNodes, minQualityLimit, minSizeLimit):
+        """
+        gmsh.alphaShape.volumeRefine(tag, nodeTags, sizeAtNodes, minQualityLimit, minSizeLimit)
+
+        Volume refine the alpha shape with tag `tag' using the nodes in `nodeTags'
+        and their sizes in `sizeAtNodes'. The `minQualityLimit' and `minSizeLimit'
+        are used to determine if an element should be refined.
+
+        Types:
+        - `tag': integer
+        - `nodeTags': vector of sizes
+        - `sizeAtNodes': vector of doubles
+        - `minQualityLimit': double
+        - `minSizeLimit': double
+        """
+        api_nodeTags_, api_nodeTags_n_ = _ivectorsize(nodeTags)
+        api_sizeAtNodes_, api_sizeAtNodes_n_ = _ivectordouble(sizeAtNodes)
+        ierr = c_int()
+        lib.gmshAlphaShapeVolumeRefine(
+            c_int(tag),
+            api_nodeTags_, api_nodeTags_n_,
+            api_sizeAtNodes_, api_sizeAtNodes_n_,
+            c_double(minQualityLimit),
+            c_double(minSizeLimit),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+    volume_refine = volumeRefine
+
+    @staticmethod
+    def applyChew(tag, sizeAtNodes, minQualityLimit, minSizeLimit):
+        """
+        gmsh.alphaShape.applyChew(tag, sizeAtNodes, minQualityLimit, minSizeLimit)
+
+        Apply Chew's algorithm for mesh refinement on the alpha shape with tag
+        `tag'. The nodes to be used in the refinement are given in `nodeTags' and
+        their sizes in `sizeAtNodes'. The `minQualityLimit' and `minSizeLimit' are
+        used to determine if an element should be refined.
+
+        Types:
+        - `tag': integer
+        - `sizeAtNodes': vector of doubles
+        - `minQualityLimit': double
+        - `minSizeLimit': double
+        """
+        api_sizeAtNodes_, api_sizeAtNodes_n_ = _ivectordouble(sizeAtNodes)
+        ierr = c_int()
+        lib.gmshAlphaShapeApplyChew(
+            c_int(tag),
+            api_sizeAtNodes_, api_sizeAtNodes_n_,
+            c_double(minQualityLimit),
+            c_double(minSizeLimit),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+    apply_chew = applyChew
+
+    @staticmethod
+    def setBoundaryModel(tag, boundaryModelName):
+        """
+        gmsh.alphaShape.setBoundaryModel(tag, boundaryModelName)
+
+        Set a (GMSH) boundary model with name `boundaryModelName' for the alpha
+        shape with tag `tag'. This model can be used to match the alpha shape's
+        boundary edges with the physical groups of the boundary model.
+
+        Types:
+        - `tag': integer
+        - `boundaryModelName': string
+        """
+        ierr = c_int()
+        lib.gmshAlphaShapeSetBoundaryModel(
+            c_int(tag),
+            c_char_p(boundaryModelName.encode()),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+    set_boundary_model = setBoundaryModel
+
+    @staticmethod
+    def matchAlphaShapeWithModel(tag, boundaryModelName, tolerance):
+        """
+        gmsh.alphaShape.matchAlphaShapeWithModel(tag, boundaryModelName, tolerance)
+
+        Match the boundary edges of the alpha shape with tag `tag' to the physical
+        groups of the boundary model `boundaryModelName'. The colored edges are
+        returned in `coloredEdges' as a vector matching the edges of
+        getEdgesOfAlphaShape.
+
+        Return `coloredEdges'.
+
+        Types:
+        - `tag': integer
+        - `boundaryModelName': string
+        - `tolerance': double
+        - `coloredEdges': vector of integers
+        """
+        api_coloredEdges_, api_coloredEdges_n_ = POINTER(c_int)(), c_size_t()
+        ierr = c_int()
+        lib.gmshAlphaShapeMatchAlphaShapeWithModel(
+            c_int(tag),
+            c_char_p(boundaryModelName.encode()),
+            c_double(tolerance),
+            byref(api_coloredEdges_), byref(api_coloredEdges_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return _ovectorint(api_coloredEdges_, api_coloredEdges_n_.value)
+    match_alpha_shape_with_model = matchAlphaShapeWithModel
+
+    @staticmethod
+    def moveNodes(tag, displacement, recoverDelaunay=False):
+        """
+        gmsh.alphaShape.moveNodes(tag, displacement, recoverDelaunay=False)
+
+        Apply a displacement to the nodes of the alpha shape with tag `tag'. The
+        displacement is given as a vector of concatenated triplets of x, y, z
+        coordinates. If a boundary model `boundaryModelName' is provided, the
+        displacement is corrected so that nodes remain inside the model. If
+        `boundaryModelName' is empty, the displacement is applied without any
+        correction. If `recoverDelaunay' is set, we adapt the triangulation to
+        recover Delaunayness after displacement.
+
+        Types:
+        - `tag': integer
+        - `displacement': vector of doubles
+        - `recoverDelaunay': boolean
+        """
+        api_displacement_, api_displacement_n_ = _ivectordouble(displacement)
+        ierr = c_int()
+        lib.gmshAlphaShapeMoveNodes(
+            c_int(tag),
+            api_displacement_, api_displacement_n_,
+            c_int(bool(recoverDelaunay)),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+    move_nodes = moveNodes
+
+    @staticmethod
+    def correctDisplacement(tag, dx, tolerance):
+        """
+        gmsh.alphaShape.correctDisplacement(tag, dx, tolerance)
+
+        Correct the displacement `dx' of the nodes of the alpha shape with tag
+        `tag' so that they remain inside the boundary model `boundaryModelName'.
+        The corrected displacement is returned in `correctedDx'. The `tolerance' is
+        used to determine if a node is inside the model.
+
+        Return `correctedDx'.
+
+        Types:
+        - `tag': integer
+        - `dx': vector of doubles
+        - `tolerance': double
+        - `correctedDx': vector of doubles
+        """
+        api_dx_, api_dx_n_ = _ivectordouble(dx)
+        api_correctedDx_, api_correctedDx_n_ = POINTER(c_double)(), c_size_t()
+        ierr = c_int()
+        lib.gmshAlphaShapeCorrectDisplacement(
+            c_int(tag),
+            api_dx_, api_dx_n_,
+            c_double(tolerance),
+            byref(api_correctedDx_), byref(api_correctedDx_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return _ovectordouble(api_correctedDx_, api_correctedDx_n_.value)
+    correct_displacement = correctDisplacement
+
+    @staticmethod
+    def createAlphaShapeOctree(tag):
+        """
+        gmsh.alphaShape.createAlphaShapeOctree(tag)
+
+        Create an octree on the triangles of the alpha shape with tag `tag'.
+
+        Types:
+        - `tag': integer
+        """
+        ierr = c_int()
+        lib.gmshAlphaShapeCreateAlphaShapeOctree(
+            c_int(tag),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+    create_alpha_shape_octree = createAlphaShapeOctree
+
+    @staticmethod
+    def getTrianglesAndParametricCoords(tag, points):
+        """
+        gmsh.alphaShape.getTrianglesAndParametricCoords(tag, points)
+
+        Get the triangles and parametric coordinates of the alpha shape with tag
+        `tag'. The triangles are returned as indices matching the elements from
+        getElements, and the parametric coordinates are returned in
+        `parametricCoords' as concatenated triplets of u, v, w coordinates.
+
+        Return `triangles', `parametricCoords'.
+
+        Types:
+        - `tag': integer
+        - `points': vector of doubles
+        - `triangles': vector of sizes
+        - `parametricCoords': vector of doubles
+        """
+        api_points_, api_points_n_ = _ivectordouble(points)
+        api_triangles_, api_triangles_n_ = POINTER(c_size_t)(), c_size_t()
+        api_parametricCoords_, api_parametricCoords_n_ = POINTER(c_double)(), c_size_t()
+        ierr = c_int()
+        lib.gmshAlphaShapeGetTrianglesAndParametricCoords(
+            c_int(tag),
+            api_points_, api_points_n_,
+            byref(api_triangles_), byref(api_triangles_n_),
+            byref(api_parametricCoords_), byref(api_parametricCoords_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return (
+            _ovectorsize(api_triangles_, api_triangles_n_.value),
+            _ovectordouble(api_parametricCoords_, api_parametricCoords_n_.value))
+    get_triangles_and_parametric_coords = getTrianglesAndParametricCoords
+
+    @staticmethod
+    def getAlphaShapeMesh(tag):
+        """
+        gmsh.alphaShape.getAlphaShapeMesh(tag)
+
+        Get the mesh of the alpha shape with tag `tag'. The mesh is returned as a
+        vector of concatenated triplets of x, y, z coordinates in `coords', and as
+        a vector of concatenated triplets of point indexes in `triangles', and as a
+        vector of concatenated doublets of edge indexes in `edges'.
+
+        Return `coords', `triangles', `edges'.
+
+        Types:
+        - `tag': integer
+        - `coords': vector of doubles
+        - `triangles': vector of sizes
+        - `edges': vector of sizes
+        """
+        api_coords_, api_coords_n_ = POINTER(c_double)(), c_size_t()
+        api_triangles_, api_triangles_n_ = POINTER(c_size_t)(), c_size_t()
+        api_edges_, api_edges_n_ = POINTER(c_size_t)(), c_size_t()
+        ierr = c_int()
+        lib.gmshAlphaShapeGetAlphaShapeMesh(
+            c_int(tag),
+            byref(api_coords_), byref(api_coords_n_),
+            byref(api_triangles_), byref(api_triangles_n_),
+            byref(api_edges_), byref(api_edges_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return (
+            _ovectordouble(api_coords_, api_coords_n_.value),
+            _ovectorsize(api_triangles_, api_triangles_n_.value),
+            _ovectorsize(api_edges_, api_edges_n_.value))
+    get_alpha_shape_mesh = getAlphaShapeMesh
+
+    @staticmethod
+    def getDelaunayMesh(tag):
+        """
+        gmsh.alphaShape.getDelaunayMesh(tag)
+
+        Get the full Delaunay mesh as a set of coordinates and triangles from the
+        alpha shape with tag `tag'.
+
+        Return `coords', `triangles'.
+
+        Types:
+        - `tag': integer
+        - `coords': vector of doubles
+        - `triangles': vector of sizes
+        """
+        api_coords_, api_coords_n_ = POINTER(c_double)(), c_size_t()
+        api_triangles_, api_triangles_n_ = POINTER(c_size_t)(), c_size_t()
+        ierr = c_int()
+        lib.gmshAlphaShapeGetDelaunayMesh(
+            c_int(tag),
+            byref(api_coords_), byref(api_coords_n_),
+            byref(api_triangles_), byref(api_triangles_n_),
+            byref(ierr))
+        if ierr.value != 0:
+            raise Exception(logger.getLastError())
+        return (
+            _ovectordouble(api_coords_, api_coords_n_.value),
+            _ovectorsize(api_triangles_, api_triangles_n_.value))
+    get_delaunay_mesh = getDelaunayMesh
 
 
 class plugin:
