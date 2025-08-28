@@ -623,12 +623,16 @@ provided on the command line with @code{-clmin} and @code{-clmax}) and
 multiplied by @code{Mesh.MeshSizeFactor} (@code{-clscale} on the command
 line).
 
-Boundary mesh sizes are interpolated during mesh generation inside
-surfaces and/or volumes depending on the value of
-@code{Mesh.MeshSizeExtendFromBoundary} (see @ref{Mesh options} for the
-default values of all these options). When the mesh element sizes are
-fully specified by a background mesh size field, it is often desirable
-to set
+Boundary mesh sizes are automatically interpolated during mesh
+generation inside surfaces and/or volumes if
+@code{Mesh.MeshSizeExtendFromBoundary} is set (it is set by default; see
+@ref{Mesh options} for the default values of all the options).  If only
+specific parts of the model should use a different mesh size
+(e.g. refinement of the mesh along an edge or within a fillet/surface),
+you may want to set @code{Mesh.MeshSizeExtendFromBoundary} to 0 to avoid
+unintentional refinement in nearby entities. Typically, when the mesh
+element sizes are fully specified by a mesh size field, it is often
+desirable to set
 @example
 Mesh.MeshSizeFromPoints = 0;
 Mesh.MeshSizeFromCurvature = 0;
