@@ -147,6 +147,7 @@ createVertexToVertexGraph(GModel *gm,
     std::vector<GEntity *> entities;
     gm->getEntities(entities);
     for(auto ge : entities) {
+      if(ge->dim() == 0) continue; // ignore points
       for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
         elements.push_back(ge->getMeshElement(j));
       }
