@@ -1,10 +1,13 @@
-x.x.x (Work-in-progress): bug fixes.
+(Work-in-progress): bug fixes.
 
 * New API functions: model/isEntityOrphan
 
-4.14.0 (July 3, 2025): improve return value of boolean operations; improved
+4.14.1 (September 2, 2025): further improvement of return value of boolean
+operations; bug fixes.
+
+4.14.0 (July 3, 2025): improved return value of boolean operations; improved
 ONELAB parameter GUI; improved XAO export with mesh sizes; improved unrolled GEO
-export to handle OCC geometries; new Step() built-in parser function; fix
+export to handle OCC geometries; new Step() built-in parser function; fixed
 occ/getClosestPoint for OCC surfaces; renamed Windows DLL import library from
 .lib to .dll.lib; official binary builds now use OCC 7.8, and Linux and Windows
 binary builds use FLTK 1.3 (instead of FLTK 1.4, which introduced performance
