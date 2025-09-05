@@ -2889,10 +2889,6 @@ void AlphaShape::_alphaShape3DFromArray(const int tag, const std::vector<size_t>
   double alphaTet, R;
   SPoint3 cc;
 
-  printf("here p \n");
-
-  printf("n_tets = %zu \n", n_tets);
-
   for (size_t i=0; i<n_tets; i++){
     auto tet = gr->tetrahedra[i];
     auto tetTag = tet->getNum();
@@ -2949,10 +2945,6 @@ void AlphaShape::_alphaShape3DFromArray(const int tag, const std::vector<size_t>
     Msg::Error("Entity of dimension 3 with tag %d does not exist", tagAlpha);
     return;
   }
-
-  printf("in alpha shape : \n");
-  printf("%lu alpha faces \n", alphaFaces.size());
-  printf("%lu alpha tets \n", alphaTets.size());
 
   for (auto tet : dr->tetrahedra){
     delete tet;
@@ -3047,12 +3039,8 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
   }
   // create size field on nodes
 
-  printf("here0 \n");
-  
-  
   Field* field = GModel::current()->getFields()->get(sizeFieldTag);
   
-  printf("here1 \n");
   // std::unordered_map<MTetrahedron*, double> sizeAtTetBarycenter;
   std::vector<double> sizeAtTetBarycenter(gr->getNumMeshElementsByType(TYPE_TET));
   if (gr->getNumMeshElementsByType(TYPE_TET) == 0) {
@@ -3075,10 +3063,8 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
     sizeAtTetBarycenter[i] = field->operator()(tet_bary.x(), tet_bary.y(), tet_bary.z(), NULL);
     // printf("size at tet barycenter %zu = %g \n", i, sizeAtTetBarycenter[i]);
   }
-  printf("here2 \n");
   // auto t3 = std::chrono::steady_clock::now(); 
   computeTetNeighbors_(tetNodes, neighbors);
-  printf("here3 \n");
   std::unordered_set<MVertex*> verticesInConnected;
   // Compute the alpha shape
   std::vector<bool> _touched(n_tets, false);
@@ -3087,7 +3073,6 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
   double hTet, R;
   SPoint3 cc;
   
-  printf("here4 \n");
   for (size_t i = 0; i < n_tets; i++) {
     auto tet = gr->tetrahedra[i];
     R = _tetCircumCenter(tet);
@@ -3134,14 +3119,12 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
       }
     }
   }
-  printf("here5 \n");
   
   GRegion *dr = GModel::current()->getRegionByTag(tagAlpha);
   if (!dr) {
     Msg::Error("Entity of dimension 3 with tag %d does not exist", tagAlpha);
     return;
   }
-  printf("here6 \n");
   
   for (auto tet : dr->tetrahedra) {
     delete tet;
@@ -3151,7 +3134,6 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
     dr->tetrahedra.push_back(alphaTets[i]);
   }
   
-  printf("here7 \n");
   if (removeDisconnectedNodes) {
     size_t n_removed = 0;
     for (MVertex *v : gr->mesh_vertices) {
@@ -3168,7 +3150,6 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
     Msg::Error("Entity of dimension 2 with tag %d does not exist", tagAlphaBoundary);
     return;
   }
-  printf("here8 \n");
   
   if (returnTri2TetMap) {
     tri2Tet.resize(2 * alphaFaces.size());
@@ -3180,7 +3161,6 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
     _df->triangles.clear();
   }
   
-  printf("here9 \n");
   for (size_t i = 0; i < alphaFaces.size(); i++) {
     size_t tetIndex = alphaFaces[i] / 4;
     size_t faceIndex = alphaFaces[i] % 4;
@@ -4563,13 +4543,13 @@ void AlphaShape::_colourBoundaries(const int faceTag, const std::string & bounda
   // }
 
 
-  auto t0 = std::chrono::steady_clock::now();
+  // auto t0 = std::chrono::steady_clock::now();
   OctreeNode<3, 128, MElement*> octree;
   _createBoundaryOctree3D(boundaryModel, octree);
   // if (!gm_boundary->_elementOctree){
   //   gm_boundary->_elementOctree = new MElementOctree(gm_boundary);
   // }
-  auto t1 = std::chrono::steady_clock::now();
+  // auto t1 = std::chrono::steady_clock::now();
   double search_size = tolerance*2.;
   std::unordered_map<size_t, std::vector<MTriangle*>> bndMap;
   
@@ -4583,7 +4563,7 @@ void AlphaShape::_colourBoundaries(const int faceTag, const std::string & bounda
       bndElement2Entity[e->getMeshElement(i_el)] = e->tag();
     }
   }
-  auto t2 = std::chrono::steady_clock::now();
+  // auto t2 = std::chrono::steady_clock::now();
   
   for (auto tri : gf->triangles){
     std::vector<std::unordered_set<size_t>> entity_found(3);
@@ -4647,14 +4627,14 @@ void AlphaShape::_colourBoundaries(const int faceTag, const std::string & bounda
     }
   }
       
-  auto t3 = std::chrono::steady_clock::now();
-  auto dur1 = std::chrono::duration_cast<std::chrono::microseconds>(t1-t0);
-  auto dur2 = std::chrono::duration_cast<std::chrono::microseconds>(t2-t1);
-  auto dur3 = std::chrono::duration_cast<std::chrono::microseconds>(t3-t2);
-  auto durTotal = std::chrono::duration_cast<std::chrono::microseconds>(t3-t0);
-  printf("octree creation : %f percent \n", 100*double(dur1.count())/double(durTotal.count()) );
-  printf("element2entity  : %f percent \n", 100*double(dur2.count())/double(durTotal.count()) );
-  printf("search oct      : %f percent \n", 100*double(dur3.count())/double(durTotal.count()) );
+  // auto t3 = std::chrono::steady_clock::now();
+  // auto dur1 = std::chrono::duration_cast<std::chrono::microseconds>(t1-t0);
+  // auto dur2 = std::chrono::duration_cast<std::chrono::microseconds>(t2-t1);
+  // auto dur3 = std::chrono::duration_cast<std::chrono::microseconds>(t3-t2);
+  // auto durTotal = std::chrono::duration_cast<std::chrono::microseconds>(t3-t0);
+  // printf("octree creation : %f percent \n", 100*double(dur1.count())/double(durTotal.count()) );
+  // printf("element2entity  : %f percent \n", 100*double(dur2.count())/double(durTotal.count()) );
+  // printf("search oct      : %f percent \n", 100*double(dur3.count())/double(durTotal.count()) );
 
   // colour boundary triangles
   for (auto it : bndMap){
