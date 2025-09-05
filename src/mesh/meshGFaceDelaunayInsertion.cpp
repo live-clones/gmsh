@@ -1706,6 +1706,12 @@ void bowyerWatsonParallelograms(
     }
   }
 
+#if 1
+   char name[256];
+   sprintf(name,"RawTriangulation%d.pos",gf->tag());
+   _printTris (name, AllTris.begin(), AllTris.end(),nullptr);
+#endif
+  
   transferDataStructure(gf, AllTris, DATA);
   backgroundMesh::unset();
 

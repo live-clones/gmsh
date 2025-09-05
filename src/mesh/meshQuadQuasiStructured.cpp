@@ -2620,7 +2620,7 @@ int replaceBadQuadDominantMeshes(GModel *gm)
 
 int optimizeQuadMeshWithDiskQuadrangulationRemeshing(GFace *gf)
 {
-  if(gf->triangles.size() > 0 || gf->quadrangles.size() == 0) return -1;
+  if(/*gf->triangles.size() > 0 ||*/ gf->quadrangles.size() == 0) return -1;
 
   // Disk quadrangulation remeshing use the CAD normals to compute the signed
   // quality, so the orientation is important.
@@ -3118,7 +3118,7 @@ int optimizeTopologyWithDiskQuadrangulationRemeshing(GModel *gm)
     if(CTX::instance()->debugSurface > 0 &&
        gf->tag() != CTX::instance()->debugSurface)
       continue;
-    if(gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
+    if(/*gf->triangles.size() > 0 ||*/ gf->quadrangles.size() == 0) continue;
 
     optimizeQuadMeshWithDiskQuadrangulationRemeshing(gf);
 
@@ -3187,7 +3187,7 @@ int optimizeTopologyWithCavityRemeshing(GModel *gm)
     if(CTX::instance()->debugSurface > 0 &&
        gf->tag() != CTX::instance()->debugSurface)
       continue;
-    if(gf->triangles.size() > 0 || gf->quadrangles.size() == 0) continue;
+    if(/*gf->triangles.size() > 0 ||*/ gf->quadrangles.size() == 0) continue;
     gf->meshStatistics.status = GFace::DONE;
 
     /* Get singularities from global storage */

@@ -502,7 +502,7 @@ static bool untangleGFaceMeanPlane(GFace *gf,
     }
   }
 
-  double lambda = 1.;
+  double lambda = 1.e-4;
   int iterMaxInner = 200;
   int iterMax = 3;
   int iterFailMax = 300;

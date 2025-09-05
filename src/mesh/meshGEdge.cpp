@@ -853,13 +853,16 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
   }
 
   // force odd number of points if blossom is used for recombination
+  // if the adim length of the curve is too small, do not do it -- could be an option 
+  const double aLimit = 0.75;
+
   if((ge->meshAttributes.method != MESH_TRANSFINITE ||
       CTX::instance()->mesh.flexibleTransfinite) &&
      CTX::instance()->mesh.algoRecombine != 0) {
     std::vector<GFace *> const &faces = ge->faces();
     if(CTX::instance()->mesh.recombineAll) {
       //      if(N == 2) N = 1;
-      if(N % 2 == 0) N++;
+      if(N % 2 == 0 && a > aLimit) N++;
       if(CTX::instance()->mesh.algoRecombine == 2 ||
          CTX::instance()->mesh.algoRecombine == 4)
         N = increaseN(N);
@@ -867,7 +870,7 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
     else {
       for(auto it = faces.begin(); it != faces.end(); it++) {
         if((*it)->meshAttributes.recombine) {
-          if(N % 2 == 0) N++;
+	  if(N % 2 == 0 && a > aLimit) N++;
           if(CTX::instance()->mesh.algoRecombine == 2 ||
              CTX::instance()->mesh.algoRecombine == 4)
             N = increaseN(N);

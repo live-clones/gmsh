@@ -809,13 +809,8 @@ static void expandBL(
     if(e->getNumVertices() == 3) {
       //      if (areas[tricount] > 0)
       triangles.push_back({(uint32_t)e->getVertex(0)->getIndex(),
-                           (uint32_t)e->getVertex(1)->getIndex(),
-                           (uint32_t)e->getVertex(2)->getIndex()});
-      //      else
-      //	triangles.push_back({(uint32_t)e->getVertex(0)->getIndex(),
-      //	      (uint32_t)e->getVertex(2)->getIndex(),
-      //	      (uint32_t)e->getVertex(1)->getIndex()});
-      //      tricount++;
+	    (uint32_t)e->getVertex(1)->getIndex(),
+	    (uint32_t)e->getVertex(2)->getIndex()});
     }
     else {
       triangles.push_back({(uint32_t)e->getVertex(0)->getIndex(),

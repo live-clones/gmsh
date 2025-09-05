@@ -640,11 +640,18 @@ static void Mesh2D(GModel *m)
         gf->meshStatistics.status = GFace::PENDING;
       }
     }
+    bool debug = (Msg::GetVerbosity() == 99);
+    
     transferSeamGEdgesVerticesToGFace(m);
-    quadMeshingOfSimpleFacesWithPatterns(m,-1000.0);
-    optimizeTopologyWithDiskQuadrangulationRemeshing(m);
-    optimizeTopologyWithCavityRemeshing(m);
+    quadMeshingOfSimpleFacesWithPatterns(m,.2);
+    if(debug) m->writeMSH("opti1.msh");
+    //    optimizeTopologyWithDiskQuadrangulationRemeshing(m);
+    //    if(debug) m->writeMSH("opti2.msh");
+    //    optimizeTopologyWithCavityRemeshing(m);
+    //for(GFace *gf : m->getFaces()) if(debug) gf->model()->writeMSH("opti3.msh");
     OptimizeMesh(m, "UntangleTris");
+    if(debug) m->writeMSH("opti4.msh");
+    
     for(GFace *gf : m->getFaces()) {
       if(gf->meshStatistics.status == GFace::PENDING) {
         gf->meshStatistics.status = GFace::DONE;

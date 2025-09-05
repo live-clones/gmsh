@@ -420,7 +420,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 {
 
   //  printf("ALGO %d %d\n", CTX::instance()->mesh.algo2d,
-  //	 CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT);
+  //  	 CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT);
 
   FILE *f = NULL;
   FILE *f2 = NULL;
