@@ -719,6 +719,38 @@ namespace gmsh { // Top-level functions
                               const std::vector<std::size_t> & elementTags = std::vector<std::size_t>(),
                               const std::vector<int> & partitions = std::vector<int>());
 
+      // gmsh::model::mesh::buildOverlaps
+      //
+      // Generate overlaps for all partitions, and build boundary entities accordingly.
+      GMSH_API void buildOverlaps(const int layers = 1);
+
+      // gmsh::model::mesh::findPartition
+      //
+      // Find all the tags of the partitioned entities of dimension `dim' whose parent
+      // has the same dim and tag as `tag', and which belong to the partition of interest.
+      // If overlaps are present, fill `overlapEntities' with the tags of the entities that are in the overlap of the partition.
+      // Works for entities of the same dim as the model as well as for entities of one less dimension (overlap of boundary).
+      GMSH_API void findPartition(const int dim, 
+                                  const int tag,
+                                  const int partition,
+                                  std::vector<int>& entities,
+                                  std::vector<int>& overlapEntities);
+      
+      // gmsh::model::mesh::findOverlapOfBoundary
+      //
+      // Find all the tags of the entities of dimension `dim' that are inner overlap boundary of the 
+      // (non-partitioned) entity of dimension `dim' and tag `tag', and which belong to the partition of interest.
+      GMSH_API void findInnerBoundary(const int dim, const int tag, const int partition,
+                                      std::vector<int>& entities);
+
+      // gmsh::model::mesh::findCreatingEntityForOverlapOfBoundary
+      //
+      // In entity of dimension `dim' and tag `tag' is an overlap of boundary entity, find which entity of dim `dim+1` created it.
+      // Returns -1 and outputs a warning in case of incorrect input.
+      GMSH_API void findCreatingEntityForOverlapOfBoundary(const int dim, const int tag, int& out);
+      
+      
+
       // gmsh::model::mesh::unpartition
       //
       // Unpartition the mesh of the current model.
