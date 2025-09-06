@@ -88,13 +88,19 @@ gmsh.model.addPhysicalGroup(3, [ov[1][2]], 10)
 # boundaries.
 
 # To identify points or other bounding entities you can take advantage of the
-# `getEntities()', `getBoundary()' and `getEntitiesInBoundingBox()' functions:
+# `getEntities()', `getBoundary()', `getClosestEntity()' and
+# `getEntitiesInBoundingBox()' functions:
 
+# Define a physical surface for the top and right-most surfaces
+bnd = gmsh.model.getBoundary(gmsh.model.getEntities(3))
+top = gmsh.model.occ.getClosestEntity(0.5, 1, 0.5, bnd)[2]
+right = gmsh.model.occ.getClosestEntity(1, 0.5, 0.5, bnd)[2]
+gmsh.model.addPhysicalGroup(2, [top, right], 100, "Top & right surfaces")
+
+# Assign a mesh size to all the points:
 lcar1 = .1
 lcar2 = .0005
 lcar3 = .055
-
-# Assign a mesh size to all the points:
 ov = gmsh.model.getEntities(0);
 gmsh.model.mesh.setSize(ov, lcar1);
 

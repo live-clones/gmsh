@@ -1096,9 +1096,9 @@ class model:
     set_tag = setTag
 
     @staticmethod
-    def getBoundary(dimTags, combined=True, oriented=True, recursive=False):
+    def getBoundary(dimTags, combined=True, oriented=False, recursive=False):
         """
-        gmsh.model.getBoundary(dimTags, combined=True, oriented=True, recursive=False)
+        gmsh.model.getBoundary(dimTags, combined=True, oriented=False, recursive=False)
 
         Get the boundary of the model entities `dimTags', given as a vector of
         (dim, tag) pairs. Return in `outDimTags' the boundary of the individual

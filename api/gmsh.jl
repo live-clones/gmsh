@@ -855,7 +855,7 @@ end
 const set_tag = setTag
 
 """
-    gmsh.model.getBoundary(dimTags, combined = true, oriented = true, recursive = false)
+    gmsh.model.getBoundary(dimTags, combined = true, oriented = false, recursive = false)
 
 Get the boundary of the model entities `dimTags`, given as a vector of (dim,
 tag) pairs. Return in `outDimTags` the boundary of the individual entities (if
@@ -873,7 +873,7 @@ Types:
  - `oriented`: boolean
  - `recursive`: boolean
 """
-function getBoundary(dimTags, combined = true, oriented = true, recursive = false)
+function getBoundary(dimTags, combined = true, oriented = false, recursive = false)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
     api_dimTags_n_ = length(api_dimTags_)
     api_outDimTags_ = Ref{Ptr{Cint}}()

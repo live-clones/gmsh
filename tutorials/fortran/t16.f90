@@ -18,8 +18,8 @@ use gmsh
 implicit none
 
 type(gmsh_t) :: gmsh
-integer(c_int) :: ret, p, t
-integer(c_int), allocatable :: ov(:,:), ovv(:,:), holes(:,:)
+integer(c_int) :: ret, p, t, dim, top, right
+integer(c_int), allocatable :: ov(:,:), ov2(:,:), ovv(:,:), holes(:,:)
 integer(c_size_t), allocatable :: ovv_n(:)
 real(c_double) :: x, y, z, r, lcar1, lcar2, lcar3, eps
 character(len=GMSH_API_MAX_STR_LEN) :: cmd, str
@@ -111,13 +111,25 @@ deallocate(ov, ovv, ovv_n)
 ! boundaries.
 
 ! To identify points or other bounding entities you can take advantage of the
-! `getEntities()', `getBoundary()' and `getEntitiesInBoundingBox()' functions:
+! `getEntities()', `getBoundary()', `getClosestEntity()' and
+! `getEntitiesInBoundingBox()' functions:
 
+! Define a physical surface for the top and right-most surfaces
+call gmsh%model%getEntities(ov, 3)
+call gmsh%model%getBoundary(ov, ov2, .true., .false., .false.)
+call gmsh%model%occ%getClosestEntity(0.5d0, 1d0, 0.5d0, ov2, dim, top, &
+                                     r, x, y, z)
+call gmsh%model%occ%getClosestEntity(1d0, 0.5d0, 0.5d0, ov2, dim, right, &
+                                     r, x, y, z)
+ret = gmsh%model%addPhysicalGroup(2, [top, right], 100)
+deallocate(ov, ov2)
+
+! "Top & right surfaces"
+
+! Assign a mesh size to all the points:
 lcar1 = .1
 lcar2 = .0005
 lcar3 = .055
-
-! Assign a mesh size to all the points:
 call gmsh%model%getEntities(ov, 0)
 call gmsh%model%mesh%setSize(ov, lcar1)
 deallocate(ov)

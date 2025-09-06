@@ -631,7 +631,7 @@ namespace gmsh { // Top-level functions
     inline void getBoundary(const gmsh::vectorpair & dimTags,
                             gmsh::vectorpair & outDimTags,
                             const bool combined = true,
-                            const bool oriented = true,
+                            const bool oriented = false,
                             const bool recursive = false)
     {
       int ierr = 0;

@@ -904,7 +904,7 @@ public:
     return false;
   }
   bool getClosestEntity(double x, double y, double z,
-                        std::vector<std::pair<int, int> > &dimTags,
+                        const std::vector<std::pair<int, int> > &dimTags,
                         int &dim, int &tag, double &distance,
                         double &x2, double &y2, double &z2)
   {

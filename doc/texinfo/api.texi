@@ -374,7 +374,7 @@ Get all the entities in the current model. A model entity is represented by two 
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L233,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L189,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L727,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L505,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t13.cpp#L74,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t16.cpp#L114,t16.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t18.cpp#L31,t18.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t20.cpp#L113,t20.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t21.cpp#L46,t21.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t13.py#L64,t13.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t16.py#L97,t16.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t18.py#L29,t18.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t20.py#L91,t20.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t21.py#L35,t21.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t13.cpp#L74,t13.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t16.cpp#L110,t16.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t18.cpp#L31,t18.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t20.cpp#L113,t20.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t21.cpp#L46,t21.cpp}, ...), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t13.py#L64,t13.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t16.py#L94,t16.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t18.py#L29,t18.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t20.py#L91,t20.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t21.py#L35,t21.py}, ...)
 @end table
 
 @item gmsh/model/setEntityName
@@ -592,7 +592,7 @@ Get the boundary of the model entities @code{dimTags}, given as a vector of (dim
 
 @table @asis
 @item Input:
-@code{dimTags} (vector of pairs of integers), @code{combined = True} (boolean), @code{oriented = True} (boolean), @code{recursive = False} (boolean)
+@code{dimTags} (vector of pairs of integers), @code{combined = True} (boolean), @code{oriented = False} (boolean), @code{recursive = False} (boolean)
 @item Output:
 @code{outDimTags} (vector of pairs of integers)
 @item Return:
@@ -600,7 +600,7 @@ Get the boundary of the model entities @code{dimTags}, given as a vector of (dim
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L350,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L291,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L1099,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L876,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t14.cpp#L88,t14.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t16.cpp#L118,t16.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t18.cpp#L97,t18.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t19.cpp#L50,t19.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t21.cpp#L174,t21.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t14.py#L80,t14.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t16.py#L100,t16.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t18.py#L88,t18.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t19.py#L46,t19.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t21.py#L150,t21.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t14.cpp#L88,t14.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t16.cpp#L112,t16.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t18.cpp#L97,t18.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t19.cpp#L50,t19.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t21.cpp#L174,t21.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t14.py#L80,t14.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t16.py#L94,t16.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t18.py#L88,t18.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t19.py#L46,t19.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t21.py#L150,t21.py}, ...)
 @end table
 
 @item gmsh/model/getAdjacencies
@@ -646,7 +646,7 @@ Get the model entities in the bounding box defined by the two points (@code{xmin
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L381,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L319,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L1195,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L965,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t16.cpp#L123,t16.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t18.cpp#L86,t18.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t20.cpp#L105,t20.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t16.py#L105,t16.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t18.py#L80,t18.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t20.py#L86,t20.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L80,naca_boundary_layer_3d.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t16.cpp#L131,t16.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t18.cpp#L86,t18.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t20.cpp#L105,t20.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t16.py#L111,t16.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t18.py#L80,t18.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t20.py#L86,t20.py}, @url{@value{GITLAB-PREFIX}/examples/api/naca_boundary_layer_3d.py#L80,naca_boundary_layer_3d.py})
 @end table
 
 @item gmsh/model/getBoundingBox
@@ -2120,7 +2120,7 @@ Set a mesh size constraint on the model entities @code{dimTags}, given as a vect
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L1479,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L1310,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L4113,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L3596,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t16.cpp#L115,t16.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t18.cpp#L32,t18.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t21.cpp#L47,t21.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t16.py#L97,t16.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t18.py#L29,t18.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t21.py#L35,t21.py}, @url{@value{GITLAB-PREFIX}/examples/api/adapt_mesh.py#L80,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/examples/api/extend_field.py#L18,extend_field.py}, ...)
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t16.cpp#L123,t16.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t18.cpp#L32,t18.cpp}, @url{@value{GITLAB-PREFIX}/tutorials/c++/t21.cpp#L47,t21.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t16.py#L103,t16.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t18.py#L29,t18.py}, @url{@value{GITLAB-PREFIX}/tutorials/python/t21.py#L35,t21.py}, @url{@value{GITLAB-PREFIX}/examples/api/adapt_mesh.py#L80,adapt_mesh.py}, @url{@value{GITLAB-PREFIX}/examples/api/extend_field.py#L18,extend_field.py}, ...)
 @end table
 
 @item gmsh/model/mesh/getSizes
@@ -4261,6 +4261,8 @@ Find the closest entity to point (@code{x}, @code{y}, @code{z}) amongst the enti
 -
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L3144,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L2803,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L8395,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L7377,Julia}
+@item Examples:
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t16.cpp#L114,t16.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t16.py#L95,t16.py})
 @end table
 
 @item gmsh/model/occ/fuse
@@ -5842,7 +5844,7 @@ Get logged messages.
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L4128,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3635,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L11129,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9969,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t16.cpp#L137,t16.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t16.py#L118,t16.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t16.cpp#L145,t16.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t16.py#L124,t16.py})
 @end table
 
 @item gmsh/logger/stop
@@ -5858,7 +5860,7 @@ Stop logging messages.
 @item Language-specific definition:
 @url{@value{GITLAB-PREFIX}/api/gmsh.h#L4133,C++}, @url{@value{GITLAB-PREFIX}/api/gmshc.h#L3639,C}, @url{@value{GITLAB-PREFIX}/api/gmsh.py#L11150,Python}, @url{@value{GITLAB-PREFIX}/api/gmsh.jl#L9987,Julia}
 @item Examples:
-C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t16.cpp#L139,t16.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t16.py#L120,t16.py})
+C++ (@url{@value{GITLAB-PREFIX}/tutorials/c++/t16.cpp#L147,t16.cpp}), Python (@url{@value{GITLAB-PREFIX}/tutorials/python/t16.py#L126,t16.py})
 @end table
 
 @item gmsh/logger/getWallTime

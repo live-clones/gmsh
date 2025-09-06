@@ -80,6 +80,10 @@ int main(int argc, char **argv)
     printf("\n");
   }
 
+  for(int i = 0; i < ovv_nn; i++)
+    gmshFree(ovv[i]);
+  gmshFree(ovv_n);
+
   gmshModelOccSynchronize(&ierr);
 
   // When the boolean operation leads to simple modifications of entities, and
@@ -102,23 +106,36 @@ int main(int argc, char **argv)
   gmshModelAddPhysicalGroup(3, g, sizeof(g) / sizeof(g[0]), 10, "", &ierr);
 
   gmshFree(ov);
-  for(int i = 0; i < ovv_nn; i++)
-    gmshFree(ovv[i]);
-  gmshFree(ovv_n);
 
   // Creating entities using constructive solid geometry is very powerful, but
   // can lead to practical issues for e.g. setting mesh sizes at points, or
   // identifying boundaries.
 
   // To identify points or other bounding entities you can take advantage of the
-  // `gmshModelGetEntities()', `gmshModelGetBoundary()' and
-  // `gmshModelGetEntitiesInBoundingBox()' functions:
+  // `getEntities()', `getBoundary()', `getClosestEntity()' and
+  // `getEntitiesInBoundingBox()' functions:
 
+  // Define a physical surface for the top and right-most surfaces
+  gmshModelGetEntities(&ov, &ov_n, 3, &ierr);
+  int *ov2;
+  size_t ov2_n;
+  gmshModelGetBoundary(ov, ov_n, &ov2, &ov2_n, 1, 0, 0, &ierr);
+  int dim, top, right;
+  gmshModelOccGetClosestEntity(0.5, 1, 0.5, ov2, ov2_n, &dim, &top,
+                               &r, &x, &y, &z, &ierr);
+  gmshModelOccGetClosestEntity(1, 0.5, 0.5, ov2, ov2_n, &dim, &right,
+                               &r, &x, &y, &z, &ierr);
+  const int g2[] = {top, right};
+  gmshModelAddPhysicalGroup(2, g2, sizeof(g2) / sizeof(g2[0]), 100,
+                            "Top & right surfaces", &ierr);
+
+  gmshFree(ov);
+  gmshFree(ov2);
+
+  // Assign a mesh size to all the points:
   double lcar1 = .1;
   double lcar2 = .0005;
   double lcar3 = .055;
-
-  // Assign a mesh size to all the points:
   gmshModelGetEntities(&ov, &ov_n, 0, &ierr);
   gmshModelMeshSetSize(ov, ov_n, lcar1, &ierr);
   gmshFree(ov);

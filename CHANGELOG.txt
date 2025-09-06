@@ -1,7 +1,8 @@
 (Work-in-progress): new Closest parser function; changed Boundary and
 CombinedBoundary parser functions to not return signed entity tags anymore (use
-new OrientedBoundary and OrientedCombinedBoudnary to get the old behavior); bug
-fixes.
+new OrientedBoundary and OrientedCombinedBoudnary to get the old behavior);
+changed default value of `oriented' argument to false in model/getBoundary API;
+bug fixes.
 
 * New API functions: model/isEntityOrphan, occ/getClosestEntity
 

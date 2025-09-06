@@ -350,7 +350,7 @@ namespace gmsh { // Top-level functions
     GMSH_API void getBoundary(const gmsh::vectorpair & dimTags,
                               gmsh::vectorpair & outDimTags,
                               const bool combined = true,
-                              const bool oriented = true,
+                              const bool oriented = false,
                               const bool recursive = false);
 
     // gmsh::model::getAdjacencies

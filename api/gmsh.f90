@@ -1905,7 +1905,7 @@ module gmsh
          api_outDimTags_=api_outDimTags_, &
          api_outDimTags_n_=api_outDimTags_n_, &
          combined=optval_c_bool(.true., combined), &
-         oriented=optval_c_bool(.true., oriented), &
+         oriented=optval_c_bool(.false., oriented), &
          recursive=optval_c_bool(.false., recursive), &
          ierr_=ierr)
     outDimTags = ovectorpair_(api_outDimTags_, &
