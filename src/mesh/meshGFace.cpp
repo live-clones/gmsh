@@ -123,7 +123,7 @@ static void computeElementShapes(GFace *gf, double &worst, double &avg,
     best = std::max(best, q);
     nT++;
   }
-  avg /= nT;
+  if(nT) avg /= nT;
 }
 
 class quadMeshRemoveHalfOfOneDMesh {

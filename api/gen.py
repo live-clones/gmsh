@@ -893,8 +893,11 @@ occ.add('chamfer2D', doc, oint, iint('edgeTag1'), iint('edgeTag2'), idouble('dis
 doc = '''Create an offset curve based on the curve loop `curveLoopTag' with offset `offset'. Return the offset curves in `outDimTags' as a vector of (dim, tag) pairs.'''
 occ.add('offsetCurve', doc, None, iint('curveLoopTag'), idouble('offset'), ovectorpair('outDimTags'))
 
-doc = '''Find the minimal distance between shape with `dim1' and `tag1' and shape with `dim2' and `tag2' and the according coordinates. Return the distance in `distance' and the coordinate of the points as `x1', `y1', `z1' and `x2', `y2', `z2'. '''
+doc = '''Find the minimal distance between shape with `dim1' and `tag1' and shape with `dim2' and `tag2' and the according coordinates. Return the distance in `distance' and the coordinates of the points as `x1', `y1', `z1' and `x2', `y2', `z2'. A negative `distance' indicates failure.'''
 occ.add('getDistance', doc, None, iint('dim1'), iint('tag1'), iint('dim2'), iint('tag2'), odouble('distance'), odouble('x1'), odouble('y1'), odouble('z1'), odouble('x2'), odouble('y2'), odouble('z2'))
+
+doc = '''Find the closest entity to point (`x', `y', `z') amongst the entities `dimTags'. Return dimension `dim' and tag `tag' of the closest entity, the distance `distance' and the coordinates of the closest point `x2', `y2', `z2'. A negative `distance' indicates failure.'''
+occ.add('getClosestEntity', doc, None, idouble('x'), idouble('y'), idouble('z'), ivectorpair('dimTags'), oint('dim'), oint('tag'), odouble('distance'), odouble('x2'), odouble('y2'), odouble('z2'))
 
 doc = '''Compute the boolean union (the fusion) of the entities `objectDimTags' and `toolDimTags' (vectors of (dim, tag) pairs) in the OpenCASCADE CAD representation. Return the resulting entities in `outDimTags', and the correspondance between input and resulting entities in `outDimTagsMap'. If `tag' is positive, try to set the tag explicitly (only valid if the boolean operation results in a single entity). Remove the object if `removeObject' is set. Remove the tool if `removeTool' is set.'''
 occ.add('fuse', doc, None, ivectorpair('objectDimTags'), ivectorpair('toolDimTags'), ovectorpair('outDimTags'), ovectorvectorpair('outDimTagsMap'), iint('tag', '-1'), ibool('removeObject', 'true', 'True'), ibool('removeTool', 'true', 'True'))

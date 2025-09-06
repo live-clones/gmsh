@@ -3121,8 +3121,8 @@ namespace gmsh { // Top-level functions
       //
       // Find the minimal distance between shape with `dim1' and `tag1' and shape
       // with `dim2' and `tag2' and the according coordinates. Return the distance
-      // in `distance' and the coordinate of the points as `x1', `y1', `z1' and
-      // `x2', `y2', `z2'.
+      // in `distance' and the coordinates of the points as `x1', `y1', `z1' and
+      // `x2', `y2', `z2'. A negative `distance' indicates failure.
       GMSH_API void getDistance(const int dim1,
                                 const int tag1,
                                 const int dim2,
@@ -3134,6 +3134,23 @@ namespace gmsh { // Top-level functions
                                 double & x2,
                                 double & y2,
                                 double & z2);
+
+      // gmsh::model::occ::getClosestEntity
+      //
+      // Find the closest entity to point (`x', `y', `z') amongst the entities
+      // `dimTags'. Return dimension `dim' and tag `tag' of the closest entity, the
+      // distance `distance' and the coordinates of the closest point `x2', `y2',
+      // `z2'. A negative `distance' indicates failure.
+      GMSH_API void getClosestEntity(const double x,
+                                     const double y,
+                                     const double z,
+                                     const gmsh::vectorpair & dimTags,
+                                     int & dim,
+                                     int & tag,
+                                     double & distance,
+                                     double & x2,
+                                     double & y2,
+                                     double & z2);
 
       // gmsh::model::occ::fuse
       //

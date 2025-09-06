@@ -5245,8 +5245,8 @@ namespace gmsh { // Top-level functions
       //
       // Find the minimal distance between shape with `dim1' and `tag1' and shape
       // with `dim2' and `tag2' and the according coordinates. Return the distance
-      // in `distance' and the coordinate of the points as `x1', `y1', `z1' and
-      // `x2', `y2', `z2'.
+      // in `distance' and the coordinates of the points as `x1', `y1', `z1' and
+      // `x2', `y2', `z2'. A negative `distance' indicates failure.
       inline void getDistance(const int dim1,
                               const int tag1,
                               const int dim2,
@@ -5262,6 +5262,30 @@ namespace gmsh { // Top-level functions
         int ierr = 0;
         gmshModelOccGetDistance(dim1, tag1, dim2, tag2, &distance, &x1, &y1, &z1, &x2, &y2, &z2, &ierr);
         if(ierr) throwLastError();
+      }
+
+      // gmsh::model::occ::getClosestEntity
+      //
+      // Find the closest entity to point (`x', `y', `z') amongst the entities
+      // `dimTags'. Return dimension `dim' and tag `tag' of the closest entity, the
+      // distance `distance' and the coordinates of the closest point `x2', `y2',
+      // `z2'. A negative `distance' indicates failure.
+      inline void getClosestEntity(const double x,
+                                   const double y,
+                                   const double z,
+                                   const gmsh::vectorpair & dimTags,
+                                   int & dim,
+                                   int & tag,
+                                   double & distance,
+                                   double & x2,
+                                   double & y2,
+                                   double & z2)
+      {
+        int ierr = 0;
+        int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
+        gmshModelOccGetClosestEntity(x, y, z, api_dimTags_, api_dimTags_n_, &dim, &tag, &distance, &x2, &y2, &z2, &ierr);
+        if(ierr) throwLastError();
+        gmshFree(api_dimTags_);
       }
 
       // gmsh::model::occ::fuse

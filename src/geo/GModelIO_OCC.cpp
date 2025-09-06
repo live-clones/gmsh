@@ -5441,29 +5441,56 @@ bool OCC_Internals::getDistance(int dim1, int tag1, int dim2, int tag2,
   TopoDS_Shape shape2 = _find(dim2, tag2);
 
   BRepExtrema_DistShapeShape dist(shape1, shape2);
-  if(dist.IsDone()) {
-    double dmin = 1.e200;
-    gp_Pnt pmin1, pmin2;
-    for(int i = 1; i <= dist.NbSolution(); i++) {
-      gp_Pnt p1 = dist.PointOnShape1(i);
-      gp_Pnt p2 = dist.PointOnShape2(i);
-      double d = p1.Distance(p2);
-      if(d < dmin) {
-        dmin = d;
-        pmin1 = p1;
-        pmin2 = p2;
-      }
-    }
-    x1 = pmin1.X();
-    y1 = pmin1.Y();
-    z1 = pmin1.Z();
-    x2 = pmin2.X();
-    y2 = pmin2.Y();
-    z2 = pmin2.Z();
-    distance = dmin;
+  if(dist.IsDone() && dist.NbSolution() > 0) {
+    distance = dist.Value();
+    gp_Pnt p1 = dist.PointOnShape1(1);
+    gp_Pnt p2 = dist.PointOnShape2(1);
+    x1 = p1.X();
+    y1 = p1.Y();
+    z1 = p1.Z();
+    x2 = p2.X();
+    y2 = p2.Y();
+    z2 = p2.Z();
     return true;
   }
 
+  return false;
+}
+
+bool OCC_Internals::getClosestEntity(double x, double y, double z,
+                                     const std::vector<std::pair<int, int> > &dimTags,
+                                     int &dim, int &tag, double &distance,
+                                     double &x2, double &y2, double &z2)
+{
+  gp_Pnt aPnt(x, y, z);
+  BRepBuilderAPI_MakeVertex v(aPnt);
+  v.Build();
+  TopoDS_Vertex vertex = v.Vertex();
+  distance = 1e200;
+  x2 = y2 = z2 = 0;
+  for(auto e : dimTags) {
+    if(!_isBound(e.first, e.second)) {
+      Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d",
+                 e.first, e.second);
+      return false;
+    }
+    TopoDS_Shape shape = _find(e.first, e.second);
+    BRepExtrema_DistShapeShape dist(vertex, shape);
+    if(dist.IsDone() && dist.NbSolution() > 0) {
+      double d = dist.Value();
+      if(d < distance) {
+        gp_Pnt p2 = dist.PointOnShape2(1);
+        distance = d;
+        x2 = p2.X();
+        y2 = p2.Y();
+        z2 = p2.Z();
+        dim = e.first;
+        tag = e.second;
+      }
+    }
+  }
+
+  if(distance < 1e200) return true;
   return false;
 }
 

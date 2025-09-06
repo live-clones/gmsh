@@ -7317,8 +7317,8 @@ const offset_curve = offsetCurve
 
 Find the minimal distance between shape with `dim1` and `tag1` and shape with
 `dim2` and `tag2` and the according coordinates. Return the distance in
-`distance` and the coordinate of the points as `x1`, `y1`, `z1` and `x2`, `y2`,
-`z2`.
+`distance` and the coordinates of the points as `x1`, `y1`, `z1` and `x2`, `y2`,
+`z2`. A negative `distance` indicates failure.
 
 Return `distance`, `x1`, `y1`, `z1`, `x2`, `y2`, `z2`.
 
@@ -7351,6 +7351,46 @@ function getDistance(dim1, tag1, dim2, tag2)
     return api_distance_[], api_x1_[], api_y1_[], api_z1_[], api_x2_[], api_y2_[], api_z2_[]
 end
 const get_distance = getDistance
+
+"""
+    gmsh.model.occ.getClosestEntity(x, y, z, dimTags)
+
+Find the closest entity to point (`x`, `y`, `z`) amongst the entities `dimTags`.
+Return dimension `dim` and tag `tag` of the closest entity, the distance
+`distance` and the coordinates of the closest point `x2`, `y2`, `z2`. A negative
+`distance` indicates failure.
+
+Return `dim`, `tag`, `distance`, `x2`, `y2`, `z2`.
+
+Types:
+ - `x`: double
+ - `y`: double
+ - `z`: double
+ - `dimTags`: vector of pairs of integers
+ - `dim`: integer
+ - `tag`: integer
+ - `distance`: double
+ - `x2`: double
+ - `y2`: double
+ - `z2`: double
+"""
+function getClosestEntity(x, y, z, dimTags)
+    api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
+    api_dimTags_n_ = length(api_dimTags_)
+    api_dim_ = Ref{Cint}()
+    api_tag_ = Ref{Cint}()
+    api_distance_ = Ref{Cdouble}()
+    api_x2_ = Ref{Cdouble}()
+    api_y2_ = Ref{Cdouble}()
+    api_z2_ = Ref{Cdouble}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccGetClosestEntity, gmsh.lib), Cvoid,
+          (Cdouble, Cdouble, Cdouble, Ptr{Cint}, Csize_t, Ptr{Cint}, Ptr{Cint}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cint}),
+          x, y, z, api_dimTags_, api_dimTags_n_, api_dim_, api_tag_, api_distance_, api_x2_, api_y2_, api_z2_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_dim_[], api_tag_[], api_distance_[], api_x2_[], api_y2_[], api_z2_[]
+end
+const get_closest_entity = getClosestEntity
 
 """
     gmsh.model.occ.fuse(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)

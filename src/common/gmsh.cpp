@@ -6977,15 +6977,28 @@ GMSH_API void gmsh::model::occ::fuse(const vectorpair &objectDimTags,
     removeTool);
 }
 
-GMSH_API void gmsh::model::occ::getDistance(int dim1, int tag1, int dim2,
-                                            int tag2, double &distance,
+GMSH_API void gmsh::model::occ::getDistance(const int dim1, const int tag1,
+                                            const int dim2, const int tag2,
+                                            double &distance,
                                             double &x1, double &y1, double &z1,
                                             double &x2, double &y2, double &z2)
 {
   if(!_checkInit()) return;
   _createOcc();
-  GModel::current()->getOCCInternals()->getDistance(
+  bool ret = GModel::current()->getOCCInternals()->getDistance(
     dim1, tag1, dim2, tag2, distance, x1, y1, z1, x2, y2, z2);
+  if(!ret) distance = -1.;
+}
+
+GMSH_API void gmsh::model::occ::getClosestEntity(
+  const double x, const double y, const double z, const vectorpair &dimTags,
+  int &dim, int &tag, double &distance, double &x2, double &y2, double &z2)
+{
+  if(!_checkInit()) return;
+  _createOcc();
+  bool ret = GModel::current()->getOCCInternals()->getClosestEntity(
+    x, y, z, dimTags, dim, tag, distance, x2, y2, z2);
+  if(!ret) distance = -1.;
 }
 
 GMSH_API void gmsh::model::occ::intersect(

@@ -8340,8 +8340,8 @@ class model:
 
             Find the minimal distance between shape with `dim1' and `tag1' and shape
             with `dim2' and `tag2' and the according coordinates. Return the distance
-            in `distance' and the coordinate of the points as `x1', `y1', `z1' and
-            `x2', `y2', `z2'.
+            in `distance' and the coordinates of the points as `x1', `y1', `z1' and
+            `x2', `y2', `z2'. A negative `distance' indicates failure.
 
             Return `distance', `x1', `y1', `z1', `x2', `y2', `z2'.
 
@@ -8390,6 +8390,61 @@ class model:
                 api_y2_.value,
                 api_z2_.value)
         get_distance = getDistance
+
+        @staticmethod
+        def getClosestEntity(x, y, z, dimTags):
+            """
+            gmsh.model.occ.getClosestEntity(x, y, z, dimTags)
+
+            Find the closest entity to point (`x', `y', `z') amongst the entities
+            `dimTags'. Return dimension `dim' and tag `tag' of the closest entity, the
+            distance `distance' and the coordinates of the closest point `x2', `y2',
+            `z2'. A negative `distance' indicates failure.
+
+            Return `dim', `tag', `distance', `x2', `y2', `z2'.
+
+            Types:
+            - `x': double
+            - `y': double
+            - `z': double
+            - `dimTags': vector of pairs of integers
+            - `dim': integer
+            - `tag': integer
+            - `distance': double
+            - `x2': double
+            - `y2': double
+            - `z2': double
+            """
+            api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
+            api_dim_ = c_int()
+            api_tag_ = c_int()
+            api_distance_ = c_double()
+            api_x2_ = c_double()
+            api_y2_ = c_double()
+            api_z2_ = c_double()
+            ierr = c_int()
+            lib.gmshModelOccGetClosestEntity(
+                c_double(x),
+                c_double(y),
+                c_double(z),
+                api_dimTags_, api_dimTags_n_,
+                byref(api_dim_),
+                byref(api_tag_),
+                byref(api_distance_),
+                byref(api_x2_),
+                byref(api_y2_),
+                byref(api_z2_),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+            return (
+                api_dim_.value,
+                api_tag_.value,
+                api_distance_.value,
+                api_x2_.value,
+                api_y2_.value,
+                api_z2_.value)
+        get_closest_entity = getClosestEntity
 
         @staticmethod
         def fuse(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True):

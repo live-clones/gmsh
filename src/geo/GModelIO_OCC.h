@@ -439,6 +439,10 @@ public:
                      double &distance,
                      double &x1, double &y1, double &z1,
                      double &x2, double &y2, double &z2);
+  bool getClosestEntity(double x, double y, double z,
+                        const std::vector<std::pair<int, int> > &dimTags,
+                        int &dim, int &tag, double &distance,
+                        double &x2, double &y2, double &z2);
   GVertex *getVertexForOCCShape(GModel *model, const TopoDS_Vertex &toFind);
   GEdge *getEdgeForOCCShape(GModel *model, const TopoDS_Edge &toFind);
   GFace *getFaceForOCCShape(GModel *model, const TopoDS_Face &toFind);
@@ -897,7 +901,14 @@ public:
                      double &x1, double &y1, double &z1,
                      double &x2, double &y2, double &z2)
   {
-    return -1;
+    return false;
+  }
+  bool getClosestEntity(double x, double y, double z,
+                        std::vector<std::pair<int, int> > &dimTags,
+                        int &dim, int &tag, double &distance,
+                        double &x2, double &y2, double &z2)
+  {
+    return false;
   }
   bool makeRectangleSTL(double x, double y, double z, double dx, double dy,
                         double roundedRadius, std::vector<SPoint3> &vertices,

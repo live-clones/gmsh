@@ -1269,7 +1269,7 @@ static double printStats(GFace *gf, const char *message)
     "%s: %d quads, %d triangles, %d invalid quads, %d quads with Q < 0.1, "
     "avg Q = %g, min Q = %g",
     message, gf->quadrangles.size(), gf->triangles.size(), nbInv, nbBad,
-    Qav / gf->quadrangles.size(), Qmin);
+    Qav / std::max((int)gf->quadrangles.size(), 1), Qmin);
   return Qmin;
 }
 

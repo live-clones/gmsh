@@ -1425,7 +1425,8 @@ static void optimalPointFrontalQuad(GFace *gf, MTri3 *worst, int active_edge,
   const double rhoM_hat =
     std::min(std::max(rhoM, p), (p * p + q * q) / (2 * q));
   const double factor =
-    (rhoM_hat + std::sqrt(rhoM_hat * rhoM_hat - p * p)) / (std::sqrt(3.) * p);
+    (rhoM_hat + std::sqrt(std::max(rhoM_hat * rhoM_hat - p * p, 0.))) /
+    (std::sqrt(3.) * p);
 
   double npx, npy;
   if(xp * yp > 0) {
@@ -1706,12 +1707,12 @@ void bowyerWatsonParallelograms(
     }
   }
 
-#if 1
+#if 0
    char name[256];
    sprintf(name,"RawTriangulation%d.pos",gf->tag());
    _printTris (name, AllTris.begin(), AllTris.end(),nullptr);
 #endif
-  
+
   transferDataStructure(gf, AllTris, DATA);
   backgroundMesh::unset();
 

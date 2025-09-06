@@ -206,7 +206,7 @@ struct doubleXstring{
 %token tRelocateMesh tReorientMesh tSetFactory tThruSections tWedge tFillet tChamfer
 %token tPlane tRuled tTransfinite tPhysical tCompound tPeriodic tParent
 %token tUsing tPlugin tDegenerated tRecursive tSewing
-%token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tAffine
+%token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tAffine tClosest
 %token tBooleanUnion tBooleanIntersection tBooleanDifference tBooleanSection
 %token tBooleanFragments tThickSolid
 %token tRecombine tSmoother tSplit tDelete tCoherence tHealShapes
@@ -2557,6 +2557,26 @@ Transform :
       if(!r) yymsg(0, "Could not transform shapes");
       List_Delete($3);
       $$ = $6;
+    }
+  | tClosest VExpr '{' MultipleShape '}'
+    {
+      std::vector<std::pair<int, int> > dimTags, outDimTags;
+      ListOfShapes2VectorOfPairs($4, dimTags);
+      $$ = $4;
+      List_Reset($$);
+      bool r = true;
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        int dim, tag;
+        double dist, x, y, z;
+        r = GModel::current()->getOCCInternals()->getClosestEntity
+          ($2[0], $2[1], $2[2], dimTags, dim, tag, dist, x, y, z);
+        if(r) outDimTags.push_back(std::make_pair(dim, tag));
+      }
+      else{
+        yymsg(0, "Closest entity only available with OpenCASCADE geometry kernel");
+      }
+      if(!r) yymsg(0, "Closest entity search failed");
+      VectorOfPairs2ListOfShapes(outDimTags, $$);
     }
   | tSTRING '{' MultipleShape '}'
     {

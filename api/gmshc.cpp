@@ -3835,6 +3835,22 @@ GMSH_API void gmshModelOccGetDistance(const int dim1, const int tag1, const int 
   }
 }
 
+GMSH_API void gmshModelOccGetClosestEntity(const double x, const double y, const double z, const int * dimTags, const size_t dimTags_n, int * dim, int * tag, double * distance, double * x2, double * y2, double * z2, int * ierr)
+{
+  if(ierr) *ierr = 0;
+  try {
+    gmsh::vectorpair api_dimTags_(dimTags_n/2);
+    for(size_t i = 0; i < dimTags_n/2; ++i){
+      api_dimTags_[i].first = dimTags[i * 2 + 0];
+      api_dimTags_[i].second = dimTags[i * 2 + 1];
+    }
+    gmsh::model::occ::getClosestEntity(x, y, z, api_dimTags_, *dim, *tag, *distance, *x2, *y2, *z2);
+  }
+  catch(...){
+    if(ierr) *ierr = 1;
+  }
+}
+
 GMSH_API void gmshModelOccFuse(const int * objectDimTags, const size_t objectDimTags_n, const int * toolDimTags, const size_t toolDimTags_n, int ** outDimTags, size_t * outDimTags_n, int *** outDimTagsMap, size_t ** outDimTagsMap_n, size_t *outDimTagsMap_nn, const int tag, const int removeObject, const int removeTool, int * ierr)
 {
   if(ierr) *ierr = 0;

@@ -2781,8 +2781,8 @@ GMSH_API void gmshModelOccOffsetCurve(const int curveLoopTag,
 
 /* Find the minimal distance between shape with `dim1' and `tag1' and shape
  * with `dim2' and `tag2' and the according coordinates. Return the distance
- * in `distance' and the coordinate of the points as `x1', `y1', `z1' and
- * `x2', `y2', `z2'. */
+ * in `distance' and the coordinates of the points as `x1', `y1', `z1' and
+ * `x2', `y2', `z2'. A negative `distance' indicates failure. */
 GMSH_API void gmshModelOccGetDistance(const int dim1,
                                       const int tag1,
                                       const int dim2,
@@ -2795,6 +2795,22 @@ GMSH_API void gmshModelOccGetDistance(const int dim1,
                                       double * y2,
                                       double * z2,
                                       int * ierr);
+
+/* Find the closest entity to point (`x', `y', `z') amongst the entities
+ * `dimTags'. Return dimension `dim' and tag `tag' of the closest entity, the
+ * distance `distance' and the coordinates of the closest point `x2', `y2',
+ * `z2'. A negative `distance' indicates failure. */
+GMSH_API void gmshModelOccGetClosestEntity(const double x,
+                                           const double y,
+                                           const double z,
+                                           const int * dimTags, const size_t dimTags_n,
+                                           int * dim,
+                                           int * tag,
+                                           double * distance,
+                                           double * x2,
+                                           double * y2,
+                                           double * z2,
+                                           int * ierr);
 
 /* Compute the boolean union (the fusion) of the entities `objectDimTags' and
  * `toolDimTags' (vectors of (dim, tag) pairs) in the OpenCASCADE CAD
