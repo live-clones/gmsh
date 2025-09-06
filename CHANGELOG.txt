@@ -1,6 +1,9 @@
-(Work-in-progress): bug fixes.
+(Work-in-progress): new Closest parser function; changed Boundary and
+CombinedBoundary parser functions to not return signed entity tags anymore (use
+new OrientedBoundary and OrientedCombinedBoudnary to get the old behavior); bug
+fixes.
 
-* New API functions: model/isEntityOrphan
+* New API functions: model/isEntityOrphan, occ/getClosestEntity
 
 4.14.1 (September 2, 2025): further improvement of return value of boolean
 operations; bug fixes.

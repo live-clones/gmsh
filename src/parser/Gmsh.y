@@ -2595,6 +2595,7 @@ Transform :
         }
       }
       else if(action == "Boundary" || action == "CombinedBoundary" ||
+              action == "OrientedBoundary" || action == "OrientedCombinedBoundary" ||
               action == "PointsOf"){
         // boundary operations are performed directly on GModel, which enables
         // to compute the boundary of hybrid CAD models; this also automatically
@@ -2604,9 +2605,13 @@ Transform :
           GModel::current()->getOCCInternals()->synchronize(GModel::current());
         if(GModel::current()->getGEOInternals()->getChanged())
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
+        bool combined = (action == "CombinedBoundary" ||
+                         action == "OrientedCombinedBoundary");
+        bool oriented = (action == "OrientedBoundary" ||
+                         action == "OrientedCombinedBoundary");
+        bool recursive = action == "PointsOf";
         r = GModel::current()->getBoundaryTags
-          (inDimTags, outDimTags, action == "CombinedBoundary", true,
-           action == "PointsOf");
+          (inDimTags, outDimTags, combined, oriented, recursive);
       }
       else{
         yymsg(0, "Unknown action on multiple shapes '%s'", $1);

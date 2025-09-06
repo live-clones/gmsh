@@ -3584,16 +3584,22 @@ the X, Y and Z components of the translation vector.
 
 @item Boundary @{ @var{transform-list} @}
 (Not a transformation per-se.) Return the entities on the boundary of
-the elementary entities in @var{transform-list}, with signs indicating
-their orientation in the boundary. To get unsigned tags (e.g. to reuse
-the output in other commands), apply the @code{Abs} function on the
-returned list. @value{SYNC}
+the elementary entities in @var{transform-list}. @value{SYNC}
+
+@item OrientedBoundary @{ @var{transform-list} @}
+(Not a transformation per-se.) Same as @code{Boundary}, but returns
+entity tags with signs indicating their orientation in the boundary.
 
 @item CombinedBoundary @{ @var{transform-list} @}
 (Not a transformation per-se.) Return the boundary of the elementary
 entities, combined as if a single entity, in
 @var{transform-list}. Useful to compute the boundary of a complex part.
 @value{SYNC}
+
+@item OrientedCombinedBoundary @{ @var{transform-list} @}
+(Not a transformation per-se.) Same as @code{CombinedBoundary}, but
+returns entity tags with signs indicating their orientation in the
+boundary.
 
 @item PointsOf @{ @var{transform-list} @}
 (Not a transformation per-se.) Return all the geometrical points on the
