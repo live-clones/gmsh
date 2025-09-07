@@ -115,7 +115,9 @@ int main(int argc, char **argv)
   // `getEntities()', `getBoundary()', `getClosestEntity()' and
   // `getEntitiesInBoundingBox()' functions:
 
-  // Define a physical surface for the top and right-most surfaces
+  // Define a physical surface for the top and right-most surfaces, by finding
+  // amongst the surfaces making up the boundary of model, those closest to two
+  // specified points:
   gmshModelGetEntities(&ov, &ov_n, 3, &ierr);
   int *ov2;
   size_t ov2_n;
@@ -146,7 +148,8 @@ int main(int argc, char **argv)
   gmshModelMeshSetSize(ov, ov_n, lcar3, &ierr);
   gmshFree(ov);
 
-  // Select the corner point by searching for it geometrically:
+  // Select the corner point by searching for it geometrically using a bounding
+  // box ("getClosestEntity()" could have been used as well):
   double eps = 1e-3;
   gmshModelGetEntitiesInBoundingBox(0.5 - eps, 0.5 - eps, 0.5 - eps,
                                     0.5 + eps, 0.5 + eps, 0.5 + eps,

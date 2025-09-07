@@ -106,7 +106,9 @@ int main(int argc, char **argv)
   // `getEntities()', `getBoundary()', `getClosestEntity()' and
   // `getEntitiesInBoundingBox()' functions:
 
-  // Define a physical surface for the top and right-most surfaces
+  // Define a physical surface for the top and right-most surfaces, by finding
+  // amongst the surfaces making up the boundary of model, those closest to two
+  // specified points:
   gmsh::model::getEntities(ov, 3);
   std::vector<std::pair<int, int> > ov2;
   gmsh::model::getBoundary(ov, ov2);
@@ -126,7 +128,8 @@ int main(int argc, char **argv)
   gmsh::model::getBoundary(holes, ov, false, false, true);
   gmsh::model::mesh::setSize(ov, lcar3);
 
-  // Select the corner point by searching for it geometrically:
+  // Select the corner point by searching for it geometrically using a bounding
+  // box ("getClosestEntity()" could have been used as well):
   double eps = 1e-3;
   gmsh::model::getEntitiesInBoundingBox(0.5 - eps, 0.5 - eps, 0.5 - eps,
                                         0.5 + eps, 0.5 + eps, 0.5 + eps, ov, 0);

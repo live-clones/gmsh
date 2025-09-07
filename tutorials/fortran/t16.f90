@@ -114,7 +114,9 @@ deallocate(ov, ovv, ovv_n)
 ! `getEntities()', `getBoundary()', `getClosestEntity()' and
 ! `getEntitiesInBoundingBox()' functions:
 
-! Define a physical surface for the top and right-most surfaces
+! Define a physical surface for the top and right-most surfaces, by finding
+! amongst the surfaces making up the boundary of model, those closest to two
+! specified points:
 call gmsh%model%getEntities(ov, 3)
 call gmsh%model%getBoundary(ov, ov2, .true., .false., .false.)
 call gmsh%model%occ%getClosestEntity(0.5d0, 1d0, 0.5d0, ov2, dim, top, &
@@ -139,7 +141,8 @@ call gmsh%model%getBoundary(holes, ov, .false., .false., .true.)
 call gmsh%model%mesh%setSize(ov, lcar3)
 deallocate(ov)
 
-! Select the corner point by searching for it geometrically:
+! Select the corner point by searching for it geometrically using a bounding box
+! ("getClosestEntity()" could have been used as well):
 eps = 1e-3
 call gmsh%model%getEntitiesInBoundingBox(0.5 - eps, 0.5 - eps, 0.5 - eps, &
                                          0.5 + eps, 0.5 + eps, 0.5 + eps, ov, 0)

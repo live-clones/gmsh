@@ -91,7 +91,9 @@ gmsh.model.addPhysicalGroup(3, [ov[1][2]], 10)
 # `getEntities()', `getBoundary()', `getClosestEntity()' and
 # `getEntitiesInBoundingBox()' functions:
 
-# Define a physical surface for the top and right-most surfaces
+# Define a physical surface for the top and right-most surfaces, by finding in
+# the surfaces making up the boundary of model, those closest to two specified
+# points:
 bnd = gmsh.model.getBoundary(gmsh.model.getEntities(3))
 top = gmsh.model.occ.getClosestEntity(0.5, 1, 0.5, bnd)[2]
 right = gmsh.model.occ.getClosestEntity(1, 0.5, 0.5, bnd)[2]
@@ -108,7 +110,8 @@ gmsh.model.mesh.setSize(ov, lcar1);
 ov = gmsh.model.getBoundary(holes, false, false, true);
 gmsh.model.mesh.setSize(ov, lcar3);
 
-# Select the corner point by searching for it geometrically:
+# Select the corner point by searching for it geometrically using a bounding box
+# ("getClosestEntity()" could have been used as well):
 eps = 1e-3
 ov = gmsh.model.getEntitiesInBoundingBox(0.5 - eps, 0.5 - eps, 0.5 - eps,
                                          0.5 + eps, 0.5 + eps, 0.5 + eps, 0)

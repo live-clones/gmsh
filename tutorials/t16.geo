@@ -62,7 +62,9 @@ Physical Volume(10) = v(0);
 // To identify points or other bounding entities you can take advantage of the
 // `CombinedBoundary`, `Closest', `PointfsOf' and `In BoundingBox' commands.
 
-// Define a physical surface for the top and right-most surfaces
+// Define a physical surface for the top and right-most surfaces, by finding
+// amongst the surfaces making up the boundary of model, those closest to two
+// specified points:
 bnd() = CombinedBoundary{ Volume{:}; };
 top() = Closest {0.5,1,0.5} { Surface{bnd()}; };
 right() = Closest {1,0.5,0.5} { Surface{bnd()}; };
@@ -77,7 +79,8 @@ MeshSize{ PointsOf{ Volume{:}; } } = lcar1;
 // Override this constraint on the points of the five spheres:
 MeshSize{ PointsOf{ Volume{3 + 1 : 3 + 5}; } } = lcar3;
 
-// Select the corner point by searching for it geometrically:
+// Select the corner point by searching for it geometrically using a bounding
+// box ("Closest" could have been used as well):
 eps = 1e-3;
 p() = Point In BoundingBox{0.5-eps, 0.5-eps, 0.5-eps,
                            0.5+eps, 0.5+eps, 0.5+eps};
