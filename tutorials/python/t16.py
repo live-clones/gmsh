@@ -91,7 +91,7 @@ gmsh.model.addPhysicalGroup(3, [ov[0][1]], 10)
 # `getEntitiesInBoundingBox()' functions:
 
 # Define a physical surface for the top and right-most surfaces, by finding
-# amongst the surfaces making up the boundary of model, those closest to two
+# amongst the surfaces making up the boundary of the model, those closest to two
 # specified points:
 bnd = gmsh.model.getBoundary(gmsh.model.getEntities(3))
 top = gmsh.model.occ.getClosestEntity(0.5, 1, 0.5, bnd)[1]

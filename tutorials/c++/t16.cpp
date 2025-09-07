@@ -107,8 +107,8 @@ int main(int argc, char **argv)
   // `getEntitiesInBoundingBox()' functions:
 
   // Define a physical surface for the top and right-most surfaces, by finding
-  // amongst the surfaces making up the boundary of model, those closest to two
-  // specified points:
+  // amongst the surfaces making up the boundary of the model, those closest to
+  // two specified points:
   gmsh::model::getEntities(ov, 3);
   std::vector<std::pair<int, int> > ov2;
   gmsh::model::getBoundary(ov, ov2);

@@ -116,8 +116,8 @@ int main(int argc, char **argv)
   // `getEntitiesInBoundingBox()' functions:
 
   // Define a physical surface for the top and right-most surfaces, by finding
-  // amongst the surfaces making up the boundary of model, those closest to two
-  // specified points:
+  // amongst the surfaces making up the boundary of the model, those closest to
+  // two specified points:
   gmshModelGetEntities(&ov, &ov_n, 3, &ierr);
   int *ov2;
   size_t ov2_n;

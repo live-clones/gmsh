@@ -115,7 +115,7 @@ deallocate(ov, ovv, ovv_n)
 ! `getEntitiesInBoundingBox()' functions:
 
 ! Define a physical surface for the top and right-most surfaces, by finding
-! amongst the surfaces making up the boundary of model, those closest to two
+! amongst the surfaces making up the boundary of the model, those closest to two
 ! specified points:
 call gmsh%model%getEntities(ov, 3)
 call gmsh%model%getBoundary(ov, ov2, .true., .false., .false.)
