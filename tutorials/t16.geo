@@ -80,7 +80,7 @@ MeshSize{ PointsOf{ Volume{:}; } } = lcar1;
 MeshSize{ PointsOf{ Volume{3 + 1 : 3 + 5}; } } = lcar3;
 
 // Select the corner point by searching for it geometrically using a bounding
-// box ("Closest" could have been used as well):
+// box (`Closest' could have been used as well):
 eps = 1e-3;
 p() = Point In BoundingBox{0.5-eps, 0.5-eps, 0.5-eps,
                            0.5+eps, 0.5+eps, 0.5+eps};

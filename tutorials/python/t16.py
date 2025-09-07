@@ -109,7 +109,7 @@ gmsh.model.mesh.setSize(gmsh.model.getBoundary(holes, False, False, True),
                         lcar3)
 
 # Select the corner point by searching for it geometrically using a bounding box
-# ("getClosestEntity()" could have been used as well):
+# (`getClosestEntity()' could have been used as well):
 eps = 1e-3
 ov = gmsh.model.getEntitiesInBoundingBox(0.5 - eps, 0.5 - eps, 0.5 - eps,
                                          0.5 + eps, 0.5 + eps, 0.5 + eps, 0)

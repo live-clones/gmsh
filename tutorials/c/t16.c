@@ -149,7 +149,7 @@ int main(int argc, char **argv)
   gmshFree(ov);
 
   // Select the corner point by searching for it geometrically using a bounding
-  // box ("getClosestEntity()" could have been used as well):
+  // box (`getClosestEntity()' could have been used as well):
   double eps = 1e-3;
   gmshModelGetEntitiesInBoundingBox(0.5 - eps, 0.5 - eps, 0.5 - eps,
                                     0.5 + eps, 0.5 + eps, 0.5 + eps,
