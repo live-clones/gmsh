@@ -6990,15 +6990,18 @@ GMSH_API void gmsh::model::occ::getDistance(const int dim1, const int tag1,
   if(!ret) distance = -1.;
 }
 
-GMSH_API void gmsh::model::occ::getClosestEntity(
+GMSH_API void gmsh::model::occ::getClosestEntities(
   const double x, const double y, const double z, const vectorpair &dimTags,
-  int &dim, int &tag, double &distance, double &x2, double &y2, double &z2)
+  vectorpair &outDimTags, std::vector<double> &distances,
+  std::vector<double> &coord, const int n)
 {
   if(!_checkInit()) return;
   _createOcc();
-  bool ret = GModel::current()->getOCCInternals()->getClosestEntity(
-    x, y, z, dimTags, dim, tag, distance, x2, y2, z2);
-  if(!ret) distance = -1.;
+  outDimTags.clear();
+  distances.clear();
+  coord.clear();
+  GModel::current()->getOCCInternals()->getClosestEntities(
+    x, y, z, dimTags, outDimTags, distances, coord, n);
 }
 
 GMSH_API void gmsh::model::occ::intersect(

@@ -2796,21 +2796,19 @@ GMSH_API void gmshModelOccGetDistance(const int dim1,
                                       double * z2,
                                       int * ierr);
 
-/* Find the closest entity to point (`x', `y', `z') amongst the entities
- * `dimTags'. Return dimension `dim' and tag `tag' of the closest entity, the
- * distance `distance' and the coordinates of the closest point `x2', `y2',
- * `z2'. A negative `distance' indicates failure. */
-GMSH_API void gmshModelOccGetClosestEntity(const double x,
-                                           const double y,
-                                           const double z,
-                                           const int * dimTags, const size_t dimTags_n,
-                                           int * dim,
-                                           int * tag,
-                                           double * distance,
-                                           double * x2,
-                                           double * y2,
-                                           double * z2,
-                                           int * ierr);
+/* Find the `n' closest entities to point (`x', `y', `z') amongst the entities
+ * `dimTags'. Return the entities in `outDimTags' sorted by increasing
+ * distance, the corresponding distances in `distances', and the
+ * correspdonding closest x, y, z coordinates, concatenated, in `coord'. */
+GMSH_API void gmshModelOccGetClosestEntities(const double x,
+                                             const double y,
+                                             const double z,
+                                             const int * dimTags, const size_t dimTags_n,
+                                             int ** outDimTags, size_t * outDimTags_n,
+                                             double ** distances, size_t * distances_n,
+                                             double ** coord, size_t * coord_n,
+                                             const int n,
+                                             int * ierr);
 
 /* Compute the boolean union (the fusion) of the entities `objectDimTags' and
  * `toolDimTags' (vectors of (dim, tag) pairs) in the OpenCASCADE CAD

@@ -103,19 +103,19 @@ int main(int argc, char **argv)
   // identifying boundaries.
 
   // To identify points or other bounding entities you can take advantage of the
-  // `getEntities()', `getBoundary()', `getClosestEntity()' and
+  // `getEntities()', `getBoundary()', `getClosestEntities()' and
   // `getEntitiesInBoundingBox()' functions:
 
   // Define a physical surface for the top and right-most surfaces, by finding
-  // amongst the surfaces making up the boundary of the model, those closest to
-  // two specified points:
+  // amongst the surfaces making up the boundary of the model, the two closest
+  // to point (1, 1, 0.5):
   gmsh::model::getEntities(ov, 3);
   std::vector<std::pair<int, int> > ov2;
   gmsh::model::getBoundary(ov, ov2);
-  int dim, top, right;
-  gmsh::model::occ::getClosestEntity(0.5, 1, 0.5, ov2, dim, top, r, x, y, z);
-  gmsh::model::occ::getClosestEntity(1, 0.5, 0.5, ov2, dim, right, r, x, y, z);
-  gmsh::model::addPhysicalGroup(2, {top, right}, 100, "Top & right surfaces");
+  std::vector<double> dist, coord;
+  gmsh::model::occ::getClosestEntities(1, 1, 0.5, ov2, ov, dist, coord, 2);
+  gmsh::model::addPhysicalGroup(2, {ov[0].second, ov[1].second}, 100,
+                                "Top & right surfaces");
 
   // Assign a mesh size to all the points:
   double lcar1 = .1;
@@ -129,7 +129,7 @@ int main(int argc, char **argv)
   gmsh::model::mesh::setSize(ov, lcar3);
 
   // Select the corner point by searching for it geometrically using a bounding
-  // box (`getClosestEntity()' could have been used as well):
+  // box (`getClosestEntities()' could have been used as well):
   double eps = 1e-3;
   gmsh::model::getEntitiesInBoundingBox(0.5 - eps, 0.5 - eps, 0.5 - eps,
                                         0.5 + eps, 0.5 + eps, 0.5 + eps, ov, 0);

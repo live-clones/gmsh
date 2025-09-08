@@ -3835,7 +3835,7 @@ GMSH_API void gmshModelOccGetDistance(const int dim1, const int tag1, const int 
   }
 }
 
-GMSH_API void gmshModelOccGetClosestEntity(const double x, const double y, const double z, const int * dimTags, const size_t dimTags_n, int * dim, int * tag, double * distance, double * x2, double * y2, double * z2, int * ierr)
+GMSH_API void gmshModelOccGetClosestEntities(const double x, const double y, const double z, const int * dimTags, const size_t dimTags_n, int ** outDimTags, size_t * outDimTags_n, double ** distances, size_t * distances_n, double ** coord, size_t * coord_n, const int n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
@@ -3844,7 +3844,13 @@ GMSH_API void gmshModelOccGetClosestEntity(const double x, const double y, const
       api_dimTags_[i].first = dimTags[i * 2 + 0];
       api_dimTags_[i].second = dimTags[i * 2 + 1];
     }
-    gmsh::model::occ::getClosestEntity(x, y, z, api_dimTags_, *dim, *tag, *distance, *x2, *y2, *z2);
+    gmsh::vectorpair api_outDimTags_;
+    std::vector<double> api_distances_;
+    std::vector<double> api_coord_;
+    gmsh::model::occ::getClosestEntities(x, y, z, api_dimTags_, api_outDimTags_, api_distances_, api_coord_, n);
+    vectorpair2intptr(api_outDimTags_, outDimTags, outDimTags_n);
+    vector2ptr(api_distances_, distances, distances_n);
+    vector2ptr(api_coord_, coord, coord_n);
   }
   catch(...){
     if(ierr) *ierr = 1;

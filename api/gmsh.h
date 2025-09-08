@@ -3135,22 +3135,20 @@ namespace gmsh { // Top-level functions
                                 double & y2,
                                 double & z2);
 
-      // gmsh::model::occ::getClosestEntity
+      // gmsh::model::occ::getClosestEntities
       //
-      // Find the closest entity to point (`x', `y', `z') amongst the entities
-      // `dimTags'. Return dimension `dim' and tag `tag' of the closest entity, the
-      // distance `distance' and the coordinates of the closest point `x2', `y2',
-      // `z2'. A negative `distance' indicates failure.
-      GMSH_API void getClosestEntity(const double x,
-                                     const double y,
-                                     const double z,
-                                     const gmsh::vectorpair & dimTags,
-                                     int & dim,
-                                     int & tag,
-                                     double & distance,
-                                     double & x2,
-                                     double & y2,
-                                     double & z2);
+      // Find the `n' closest entities to point (`x', `y', `z') amongst the
+      // entities `dimTags'. Return the entities in `outDimTags' sorted by
+      // increasing distance, the corresponding distances in `distances', and the
+      // correspdonding closest x, y, z coordinates, concatenated, in `coord'.
+      GMSH_API void getClosestEntities(const double x,
+                                       const double y,
+                                       const double z,
+                                       const gmsh::vectorpair & dimTags,
+                                       gmsh::vectorpair & outDimTags,
+                                       std::vector<double> & distances,
+                                       std::vector<double> & coord,
+                                       const int n = 1);
 
       // gmsh::model::occ::fuse
       //

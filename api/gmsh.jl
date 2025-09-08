@@ -7353,44 +7353,46 @@ end
 const get_distance = getDistance
 
 """
-    gmsh.model.occ.getClosestEntity(x, y, z, dimTags)
+    gmsh.model.occ.getClosestEntities(x, y, z, dimTags, n = 1)
 
-Find the closest entity to point (`x`, `y`, `z`) amongst the entities `dimTags`.
-Return dimension `dim` and tag `tag` of the closest entity, the distance
-`distance` and the coordinates of the closest point `x2`, `y2`, `z2`. A negative
-`distance` indicates failure.
+Find the `n` closest entities to point (`x`, `y`, `z`) amongst the entities
+`dimTags`. Return the entities in `outDimTags` sorted by increasing distance,
+the corresponding distances in `distances`, and the correspdonding closest x, y,
+z coordinates, concatenated, in `coord`.
 
-Return `dim`, `tag`, `distance`, `x2`, `y2`, `z2`.
+Return `outDimTags`, `distances`, `coord`.
 
 Types:
  - `x`: double
  - `y`: double
  - `z`: double
  - `dimTags`: vector of pairs of integers
- - `dim`: integer
- - `tag`: integer
- - `distance`: double
- - `x2`: double
- - `y2`: double
- - `z2`: double
+ - `outDimTags`: vector of pairs of integers
+ - `distances`: vector of doubles
+ - `coord`: vector of doubles
+ - `n`: integer
 """
-function getClosestEntity(x, y, z, dimTags)
+function getClosestEntities(x, y, z, dimTags, n = 1)
     api_dimTags_ = collect(Cint, Iterators.flatten(dimTags))
     api_dimTags_n_ = length(api_dimTags_)
-    api_dim_ = Ref{Cint}()
-    api_tag_ = Ref{Cint}()
-    api_distance_ = Ref{Cdouble}()
-    api_x2_ = Ref{Cdouble}()
-    api_y2_ = Ref{Cdouble}()
-    api_z2_ = Ref{Cdouble}()
+    api_outDimTags_ = Ref{Ptr{Cint}}()
+    api_outDimTags_n_ = Ref{Csize_t}()
+    api_distances_ = Ref{Ptr{Cdouble}}()
+    api_distances_n_ = Ref{Csize_t}()
+    api_coord_ = Ref{Ptr{Cdouble}}()
+    api_coord_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
-    ccall((:gmshModelOccGetClosestEntity, gmsh.lib), Cvoid,
-          (Cdouble, Cdouble, Cdouble, Ptr{Cint}, Csize_t, Ptr{Cint}, Ptr{Cint}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cdouble}, Ptr{Cint}),
-          x, y, z, api_dimTags_, api_dimTags_n_, api_dim_, api_tag_, api_distance_, api_x2_, api_y2_, api_z2_, ierr)
+    ccall((:gmshModelOccGetClosestEntities, gmsh.lib), Cvoid,
+          (Cdouble, Cdouble, Cdouble, Ptr{Cint}, Csize_t, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          x, y, z, api_dimTags_, api_dimTags_n_, api_outDimTags_, api_outDimTags_n_, api_distances_, api_distances_n_, api_coord_, api_coord_n_, n, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    return api_dim_[], api_tag_[], api_distance_[], api_x2_[], api_y2_[], api_z2_[]
+    tmp_api_outDimTags_ = unsafe_wrap(Array, api_outDimTags_[], api_outDimTags_n_[], own = true)
+    outDimTags = [ (tmp_api_outDimTags_[i], tmp_api_outDimTags_[i+1]) for i in 1:2:length(tmp_api_outDimTags_) ]
+    distances = unsafe_wrap(Array, api_distances_[], api_distances_n_[], own = true)
+    coord = unsafe_wrap(Array, api_coord_[], api_coord_n_[], own = true)
+    return outDimTags, distances, coord
 end
-const get_closest_entity = getClosestEntity
+const get_closest_entities = getClosestEntities
 
 """
     gmsh.model.occ.fuse(objectDimTags, toolDimTags, tag = -1, removeObject = true, removeTool = true)

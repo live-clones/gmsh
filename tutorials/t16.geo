@@ -63,12 +63,11 @@ Physical Volume(10) = v(0);
 // `CombinedBoundary`, `Closest', `PointfsOf' and `In BoundingBox' commands.
 
 // Define a physical surface for the top and right-most surfaces, by finding
-// amongst the surfaces making up the boundary of the model, those closest to
-// two specified points:
+// amongst the surfaces making up the boundary of the model, the two closest to
+// point (1,1,0.5):
 bnd() = CombinedBoundary{ Volume{:}; };
-top() = Closest {0.5,1,0.5} { Surface{bnd()}; };
-right() = Closest {1,0.5,0.5} { Surface{bnd()}; };
-Physical Surface("Top & right surfaces", 100) = {top(0), right(0)};
+closest() = Closest {1,1,0.5} { Surface{bnd()}; };
+Physical Surface("Top & right surfaces", 100) = {closets(0), closest(1)};
 
 // Assign a mesh size to all the points of all the volumes:
 lcar1 = .1;

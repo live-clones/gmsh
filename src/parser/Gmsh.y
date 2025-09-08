@@ -2560,19 +2560,18 @@ Transform :
     }
   | tClosest '{' RecursiveListOfDouble '}' '{' MultipleShape '}'
     {
-      std::vector<double> coord; ListOfDouble2Vector($3, coord);
+      std::vector<double> xyz; ListOfDouble2Vector($3, xyz);
       std::vector<std::pair<int, int> > dimTags, outDimTags;
       ListOfShapes2VectorOfPairs($6, dimTags);
       $$ = $6;
       List_Reset($$);
       bool r = true;
       if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
-        int dim, tag;
-        double dist, x, y, z;
-        if(coord.size() == 3) {
-          r = GModel::current()->getOCCInternals()->getClosestEntity
-            (coord[0], coord[1], coord[2], dimTags, dim, tag, dist, x, y, z);
-          if(r) outDimTags.push_back(std::make_pair(dim, tag));
+        if(xyz.size() == 3) {
+          std::vector<double> dist, coord;
+          r = GModel::current()->getOCCInternals()->getClosestEntities
+            (xyz[0], xyz[1], xyz[2], dimTags, outDimTags, dist, coord,
+             (int)dimTags.size());
         }
         else {
           yymsg(0, "Closest first argument should contain 3 coordinates");
@@ -2582,7 +2581,7 @@ Transform :
         yymsg(0, "Closest entity only available with OpenCASCADE geometry kernel");
       }
       if(!r) yymsg(0, "Closest entity search failed");
-      VectorOfPairs2ListOfShapes(outDimTags, $$);
+      else VectorOfPairs2ListOfShapes(outDimTags, $$);
       List_Delete($3);
     }
   | tSTRING '{' MultipleShape '}'

@@ -5264,28 +5264,32 @@ namespace gmsh { // Top-level functions
         if(ierr) throwLastError();
       }
 
-      // gmsh::model::occ::getClosestEntity
+      // gmsh::model::occ::getClosestEntities
       //
-      // Find the closest entity to point (`x', `y', `z') amongst the entities
-      // `dimTags'. Return dimension `dim' and tag `tag' of the closest entity, the
-      // distance `distance' and the coordinates of the closest point `x2', `y2',
-      // `z2'. A negative `distance' indicates failure.
-      inline void getClosestEntity(const double x,
-                                   const double y,
-                                   const double z,
-                                   const gmsh::vectorpair & dimTags,
-                                   int & dim,
-                                   int & tag,
-                                   double & distance,
-                                   double & x2,
-                                   double & y2,
-                                   double & z2)
+      // Find the `n' closest entities to point (`x', `y', `z') amongst the
+      // entities `dimTags'. Return the entities in `outDimTags' sorted by
+      // increasing distance, the corresponding distances in `distances', and the
+      // correspdonding closest x, y, z coordinates, concatenated, in `coord'.
+      inline void getClosestEntities(const double x,
+                                     const double y,
+                                     const double z,
+                                     const gmsh::vectorpair & dimTags,
+                                     gmsh::vectorpair & outDimTags,
+                                     std::vector<double> & distances,
+                                     std::vector<double> & coord,
+                                     const int n = 1)
       {
         int ierr = 0;
         int *api_dimTags_; size_t api_dimTags_n_; vectorpair2intptr(dimTags, &api_dimTags_, &api_dimTags_n_);
-        gmshModelOccGetClosestEntity(x, y, z, api_dimTags_, api_dimTags_n_, &dim, &tag, &distance, &x2, &y2, &z2, &ierr);
+        int *api_outDimTags_; size_t api_outDimTags_n_;
+        double *api_distances_; size_t api_distances_n_;
+        double *api_coord_; size_t api_coord_n_;
+        gmshModelOccGetClosestEntities(x, y, z, api_dimTags_, api_dimTags_n_, &api_outDimTags_, &api_outDimTags_n_, &api_distances_, &api_distances_n_, &api_coord_, &api_coord_n_, n, &ierr);
         if(ierr) throwLastError();
         gmshFree(api_dimTags_);
+        outDimTags.resize(api_outDimTags_n_ / 2); for(size_t i = 0; i < api_outDimTags_n_ / 2; ++i){ outDimTags[i].first = api_outDimTags_[i * 2 + 0]; outDimTags[i].second = api_outDimTags_[i * 2 + 1]; } gmshFree(api_outDimTags_);
+        distances.assign(api_distances_, api_distances_ + api_distances_n_); gmshFree(api_distances_);
+        coord.assign(api_coord_, api_coord_ + api_coord_n_); gmshFree(api_coord_);
       }
 
       // gmsh::model::occ::fuse

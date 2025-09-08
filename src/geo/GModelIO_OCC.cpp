@@ -5457,17 +5457,16 @@ bool OCC_Internals::getDistance(int dim1, int tag1, int dim2, int tag2,
   return false;
 }
 
-bool OCC_Internals::getClosestEntity(double x, double y, double z,
-                                     const std::vector<std::pair<int, int> > &dimTags,
-                                     int &dim, int &tag, double &distance,
-                                     double &x2, double &y2, double &z2)
+bool OCC_Internals::getClosestEntities(
+  double x, double y, double z, const std::vector<std::pair<int, int> > &dimTags,
+  std::vector<std::pair<int, int>> &outDimTags, std::vector<double> &distances,
+  std::vector<double> &coord, int n)
 {
   gp_Pnt aPnt(x, y, z);
   BRepBuilderAPI_MakeVertex v(aPnt);
   v.Build();
   TopoDS_Vertex vertex = v.Vertex();
-  distance = 1e200;
-  x2 = y2 = z2 = 0;
+  std::set<std::pair<double, std::tuple<int, int, double, double, double>>> d;
   for(auto e : dimTags) {
     if(!_isBound(e.first, e.second)) {
       Msg::Error("Unknown OpenCASCADE entity of dimension %d with tag %d",
@@ -5477,21 +5476,26 @@ bool OCC_Internals::getClosestEntity(double x, double y, double z,
     TopoDS_Shape shape = _find(e.first, e.second);
     BRepExtrema_DistShapeShape dist(vertex, shape);
     if(dist.IsDone() && dist.NbSolution() > 0) {
-      double d = dist.Value();
-      if(d < distance) {
-        gp_Pnt p2 = dist.PointOnShape2(1);
-        distance = d;
-        x2 = p2.X();
-        y2 = p2.Y();
-        z2 = p2.Z();
-        dim = e.first;
-        tag = e.second;
-      }
+      gp_Pnt p2 = dist.PointOnShape2(1);
+      std::tuple<int, int, double, double, double> t
+        {e.first, e.second, p2.X(), p2.Y(), p2.Z()};
+      d.insert(std::make_pair(dist.Value(), t));
     }
   }
 
-  if(distance < 1e200) return true;
-  return false;
+  if(d.empty()) return false;
+
+  int nn = 0;
+  for(auto it = d.begin(); it != d.end(); it++, nn++) {
+    outDimTags.push_back(std::make_pair(std::get<0>(it->second),
+                                        std::get<1>(it->second)));
+    distances.push_back(it->first);
+    coord.push_back(std::get<2>(it->second));
+    coord.push_back(std::get<3>(it->second));
+    coord.push_back(std::get<4>(it->second));
+    if(nn > n) break;
+  }
+  return true;
 }
 
 bool const sortByInvDim(std::pair<int, int> const &lhs,

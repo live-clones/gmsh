@@ -336,8 +336,8 @@ module gmsh
         gmshModelOccOffsetCurve
     procedure, nopass :: getDistance => &
         gmshModelOccGetDistance
-    procedure, nopass :: getClosestEntity => &
-        gmshModelOccGetClosestEntity
+    procedure, nopass :: getClosestEntities => &
+        gmshModelOccGetClosestEntities
     procedure, nopass :: fuse => &
         gmshModelOccFuse
     procedure, nopass :: intersect => &
@@ -11968,47 +11968,47 @@ module gmsh
          ierr_=ierr)
   end subroutine gmshModelOccGetDistance
 
-  !> Find the closest entity to point (`x', `y', `z') amongst the entities
-  !! `dimTags'. Return dimension `dim' and tag `tag' of the closest entity, the
-  !! distance `distance' and the coordinates of the closest point `x2', `y2',
-  !! `z2'. A negative `distance' indicates failure.
-  subroutine gmshModelOccGetClosestEntity(x, &
-                                          y, &
-                                          z, &
-                                          dimTags, &
-                                          dim, &
-                                          tag, &
-                                          distance, &
-                                          x2, &
-                                          y2, &
-                                          z2, &
-                                          ierr)
+  !> Find the `n' closest entities to point (`x', `y', `z') amongst the entities
+  !! `dimTags'. Return the entities in `outDimTags' sorted by increasing
+  !! distance, the corresponding distances in `distances', and the
+  !! correspdonding closest x, y, z coordinates, concatenated, in `coord'.
+  subroutine gmshModelOccGetClosestEntities(x, &
+                                            y, &
+                                            z, &
+                                            dimTags, &
+                                            outDimTags, &
+                                            distances, &
+                                            coord, &
+                                            n, &
+                                            ierr)
     interface
     subroutine C_API(x, &
                      y, &
                      z, &
                      api_dimTags_, &
                      api_dimTags_n_, &
-                     dim, &
-                     tag, &
-                     distance, &
-                     x2, &
-                     y2, &
-                     z2, &
+                     api_outDimTags_, &
+                     api_outDimTags_n_, &
+                     api_distances_, &
+                     api_distances_n_, &
+                     api_coord_, &
+                     api_coord_n_, &
+                     n, &
                      ierr_) &
-      bind(C, name="gmshModelOccGetClosestEntity")
+      bind(C, name="gmshModelOccGetClosestEntities")
       use, intrinsic :: iso_c_binding
       real(c_double), value, intent(in) :: x
       real(c_double), value, intent(in) :: y
       real(c_double), value, intent(in) :: z
       integer(c_int), dimension(*) :: api_dimTags_
       integer(c_size_t), value, intent(in) :: api_dimTags_n_
-      integer(c_int) :: dim
-      integer(c_int) :: tag
-      real(c_double) :: distance
-      real(c_double) :: x2
-      real(c_double) :: y2
-      real(c_double) :: z2
+      type(c_ptr), intent(out) :: api_outDimTags_
+      integer(c_size_t), intent(out) :: api_outDimTags_n_
+      type(c_ptr), intent(out) :: api_distances_
+      integer(c_size_t) :: api_distances_n_
+      type(c_ptr), intent(out) :: api_coord_
+      integer(c_size_t) :: api_coord_n_
+      integer(c_int), value, intent(in) :: n
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
@@ -12016,26 +12016,37 @@ module gmsh
     real(c_double), intent(in) :: y
     real(c_double), intent(in) :: z
     integer(c_int), dimension(:,:), intent(in) :: dimTags
-    integer(c_int) :: dim
-    integer(c_int) :: tag
-    real(c_double) :: distance
-    real(c_double) :: x2
-    real(c_double) :: y2
-    real(c_double) :: z2
+    integer(c_int), dimension(:,:), allocatable, intent(out) :: outDimTags
+    real(c_double), dimension(:), allocatable, intent(out) :: distances
+    real(c_double), dimension(:), allocatable, intent(out) :: coord
+    integer, intent(in), optional :: n
     integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_outDimTags_
+    integer(c_size_t) :: api_outDimTags_n_
+    type(c_ptr) :: api_distances_
+    integer(c_size_t) :: api_distances_n_
+    type(c_ptr) :: api_coord_
+    integer(c_size_t) :: api_coord_n_
     call C_API(x=real(x, c_double), &
          y=real(y, c_double), &
          z=real(z, c_double), &
          api_dimTags_=dimTags, &
          api_dimTags_n_=size_gmsh_pair(dimTags), &
-         dim=dim, &
-         tag=tag, &
-         distance=distance, &
-         x2=x2, &
-         y2=y2, &
-         z2=z2, &
+         api_outDimTags_=api_outDimTags_, &
+         api_outDimTags_n_=api_outDimTags_n_, &
+         api_distances_=api_distances_, &
+         api_distances_n_=api_distances_n_, &
+         api_coord_=api_coord_, &
+         api_coord_n_=api_coord_n_, &
+         n=optval_c_int(1, n), &
          ierr_=ierr)
-  end subroutine gmshModelOccGetClosestEntity
+    outDimTags = ovectorpair_(api_outDimTags_, &
+      api_outDimTags_n_)
+    distances = ovectordouble_(api_distances_, &
+      api_distances_n_)
+    coord = ovectordouble_(api_coord_, &
+      api_coord_n_)
+  end subroutine gmshModelOccGetClosestEntities
 
   !> Compute the boolean union (the fusion) of the entities `objectDimTags' and
   !! `toolDimTags' (vectors of (dim, tag) pairs) in the OpenCASCADE CAD

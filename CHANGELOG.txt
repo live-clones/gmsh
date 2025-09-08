@@ -4,7 +4,7 @@ new OrientedBoundary and OrientedCombinedBoudnary to get the old behavior);
 changed default value of `oriented' argument to false in model/getBoundary API;
 bug fixes.
 
-* New API functions: model/isEntityOrphan, occ/getClosestEntity
+* New API functions: model/isEntityOrphan, occ/getClosestEntities
 
 4.14.1 (September 2, 2025): further improvement of return value of boolean
 operations; bug fixes.

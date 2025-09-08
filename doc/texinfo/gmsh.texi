@@ -3607,10 +3607,10 @@ boundary of the elementary entities. Useful to compute the boundary of a
 complex part. @value{SYNC}
 
 @item Closest @{ @var{expression-list} @} @{ @var{transform-list} @}
-(Not a transformation per-se.) Return the closest entity, amongst those
-provided in @var{transform-list}, to the point with coordinates
-@var{expression-list}. Currently only available with the OpenCASCADE
-kernel.
+(Not a transformation per-se.) Return the entities from
+@var{transform-list} ordered by their distance to the point with
+coordinates @var{expression-list}. Currently only available with the
+OpenCASCADE kernel.
 
 @item Intersect Curve @{ @var{expression-list} @} Surface @{ @var{expression} @}
 (Not a transformation per-se.) Return the intersections of the curves

@@ -8392,59 +8392,49 @@ class model:
         get_distance = getDistance
 
         @staticmethod
-        def getClosestEntity(x, y, z, dimTags):
+        def getClosestEntities(x, y, z, dimTags, n=1):
             """
-            gmsh.model.occ.getClosestEntity(x, y, z, dimTags)
+            gmsh.model.occ.getClosestEntities(x, y, z, dimTags, n=1)
 
-            Find the closest entity to point (`x', `y', `z') amongst the entities
-            `dimTags'. Return dimension `dim' and tag `tag' of the closest entity, the
-            distance `distance' and the coordinates of the closest point `x2', `y2',
-            `z2'. A negative `distance' indicates failure.
+            Find the `n' closest entities to point (`x', `y', `z') amongst the entities
+            `dimTags'. Return the entities in `outDimTags' sorted by increasing
+            distance, the corresponding distances in `distances', and the
+            correspdonding closest x, y, z coordinates, concatenated, in `coord'.
 
-            Return `dim', `tag', `distance', `x2', `y2', `z2'.
+            Return `outDimTags', `distances', `coord'.
 
             Types:
             - `x': double
             - `y': double
             - `z': double
             - `dimTags': vector of pairs of integers
-            - `dim': integer
-            - `tag': integer
-            - `distance': double
-            - `x2': double
-            - `y2': double
-            - `z2': double
+            - `outDimTags': vector of pairs of integers
+            - `distances': vector of doubles
+            - `coord': vector of doubles
+            - `n': integer
             """
             api_dimTags_, api_dimTags_n_ = _ivectorpair(dimTags)
-            api_dim_ = c_int()
-            api_tag_ = c_int()
-            api_distance_ = c_double()
-            api_x2_ = c_double()
-            api_y2_ = c_double()
-            api_z2_ = c_double()
+            api_outDimTags_, api_outDimTags_n_ = POINTER(c_int)(), c_size_t()
+            api_distances_, api_distances_n_ = POINTER(c_double)(), c_size_t()
+            api_coord_, api_coord_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
-            lib.gmshModelOccGetClosestEntity(
+            lib.gmshModelOccGetClosestEntities(
                 c_double(x),
                 c_double(y),
                 c_double(z),
                 api_dimTags_, api_dimTags_n_,
-                byref(api_dim_),
-                byref(api_tag_),
-                byref(api_distance_),
-                byref(api_x2_),
-                byref(api_y2_),
-                byref(api_z2_),
+                byref(api_outDimTags_), byref(api_outDimTags_n_),
+                byref(api_distances_), byref(api_distances_n_),
+                byref(api_coord_), byref(api_coord_n_),
+                c_int(n),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return (
-                api_dim_.value,
-                api_tag_.value,
-                api_distance_.value,
-                api_x2_.value,
-                api_y2_.value,
-                api_z2_.value)
-        get_closest_entity = getClosestEntity
+                _ovectorpair(api_outDimTags_, api_outDimTags_n_.value),
+                _ovectordouble(api_distances_, api_distances_n_.value),
+                _ovectordouble(api_coord_, api_coord_n_.value))
+        get_closest_entities = getClosestEntities
 
         @staticmethod
         def fuse(objectDimTags, toolDimTags, tag=-1, removeObject=True, removeTool=True):
