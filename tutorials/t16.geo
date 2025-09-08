@@ -67,7 +67,7 @@ Physical Volume(10) = v(0);
 // point (1,1,0.5):
 bnd() = CombinedBoundary{ Volume{:}; };
 closest() = Closest {1,1,0.5} { Surface{bnd()}; };
-Physical Surface("Top & right surfaces", 100) = {closets(0), closest(1)};
+Physical Surface("Top & right surfaces", 100) = {closest(0), closest(1)};
 
 // Assign a mesh size to all the points of all the volumes:
 lcar1 = .1;
