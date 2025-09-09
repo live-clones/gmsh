@@ -5485,7 +5485,7 @@ bool OCC_Internals::getClosestEntities(
 
   if(d.empty()) return false;
 
-  int nn = 0;
+  int nn = 1;
   for(auto it = d.begin(); it != d.end(); it++, nn++) {
     outDimTags.push_back(std::make_pair(std::get<0>(it->second),
                                         std::get<1>(it->second)));
@@ -5493,7 +5493,7 @@ bool OCC_Internals::getClosestEntities(
     coord.push_back(std::get<2>(it->second));
     coord.push_back(std::get<3>(it->second));
     coord.push_back(std::get<4>(it->second));
-    if(nn > n) break;
+    if(nn >= n) break;
   }
   return true;
 }
