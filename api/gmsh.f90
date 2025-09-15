@@ -14569,37 +14569,51 @@ module gmsh
   end subroutine gmshAlgorithmTriangulate
 
   !> Tetrahedralize the points given in the `coordinates' vector as concatenated
-  !! triplets of x, y, z coordinates, and return the tetrahedra as concatenated
-  !! quadruplets of point indexes (with numbering starting at 1) in
-  !! `tetrahedra'.
+  !! triplets of x, y, z coordinates, with constrained triangles given in the
+  !! `triangles' vector as triplet of indexes (with numbering starting at 1),
+  !! and return the tetrahedra as concatenated quadruplets of point indexes
+  !! (with numbering starting at 1) in `tetrahedra'. Steiner points might be
+  !! added in the `coordinates' vector.
   subroutine gmshAlgorithmTetrahedralize(coordinates, &
                                          tetrahedra, &
+                                         triangles, &
                                          ierr)
     interface
     subroutine C_API(api_coordinates_, &
                      api_coordinates_n_, &
                      api_tetrahedra_, &
                      api_tetrahedra_n_, &
+                     api_triangles_, &
+                     api_triangles_n_, &
                      ierr_) &
       bind(C, name="gmshAlgorithmTetrahedralize")
       use, intrinsic :: iso_c_binding
-      real(c_double), dimension(*) :: api_coordinates_
-      integer(c_size_t), value, intent(in) :: api_coordinates_n_
+      type(c_ptr), intent(out) :: api_coordinates_
+      integer(c_size_t) :: api_coordinates_n_
       type(c_ptr), intent(out) :: api_tetrahedra_
       integer(c_size_t), intent(out) :: api_tetrahedra_n_
+      integer(c_size_t), dimension(*) :: api_triangles_
+      integer(c_size_t), value, intent(in) :: api_triangles_n_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
-    real(c_double), dimension(:), intent(in) :: coordinates
+    real(c_double), dimension(:), allocatable, intent(out) :: coordinates
     integer(c_size_t), dimension(:), allocatable, intent(out) :: tetrahedra
+    integer(c_size_t), dimension(:), intent(in) :: triangles
     integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_coordinates_
+    integer(c_size_t) :: api_coordinates_n_
     type(c_ptr) :: api_tetrahedra_
     integer(c_size_t) :: api_tetrahedra_n_
-    call C_API(api_coordinates_=coordinates, &
-         api_coordinates_n_=size_gmsh_double(coordinates), &
+    call C_API(api_coordinates_=api_coordinates_, &
+         api_coordinates_n_=api_coordinates_n_, &
          api_tetrahedra_=api_tetrahedra_, &
          api_tetrahedra_n_=api_tetrahedra_n_, &
+         api_triangles_=triangles, &
+         api_triangles_n_=size_gmsh_size(triangles), &
          ierr_=ierr)
+    coordinates = ovectordouble_(api_coordinates_, &
+      api_coordinates_n_)
     tetrahedra = ovectorsize_(api_tetrahedra_, &
       api_tetrahedra_n_)
   end subroutine gmshAlgorithmTetrahedralize

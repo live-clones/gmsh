@@ -3811,10 +3811,14 @@ namespace gmsh { // Top-level functions
     // gmsh::algorithm::tetrahedralize
     //
     // Tetrahedralize the points given in the `coordinates' vector as concatenated
-    // triplets of x, y, z coordinates, and return the tetrahedra as concatenated
-    // quadruplets of point indexes (with numbering starting at 1) in `tetrahedra'.
-    GMSH_API void tetrahedralize(const std::vector<double> & coordinates,
-                                 std::vector<std::size_t> & tetrahedra);
+    // triplets of x, y, z coordinates, with constrained triangles given in the
+    // `triangles' vector as triplet of indexes (with numbering starting at 1), and
+    // return the tetrahedra as concatenated quadruplets of point indexes (with
+    // numbering starting at 1) in `tetrahedra'. Steiner points might be added in
+    // the `coordinates' vector.
+    GMSH_API void tetrahedralize(std::vector<double> & coordinates,
+                                 std::vector<std::size_t> & tetrahedra,
+                                 const std::vector<std::size_t> & triangles);
 
   } // namespace algorithm
 

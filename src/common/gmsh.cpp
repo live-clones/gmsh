@@ -8305,13 +8305,18 @@ GMSH_API void gmsh::algorithm::triangulate(const std::vector<double> &coord,
 }
 
 GMSH_API void
-gmsh::algorithm::tetrahedralize(const std::vector<double> &coord,
-                                std::vector<std::size_t> &tetra)
+gmsh::algorithm::tetrahedralize(std::vector<double> &coord,
+                                std::vector<std::size_t> &tetra,
+                                const std::vector<std::size_t>& triangles)
 {
   if(!_checkInit()) return;
   tetra.clear();
   if(coord.size() % 3) {
     Msg::Error("Number of coordinates should be a multiple of 3");
+    return;
+  }
+  if(triangles.size() % 3) {
+    Msg::Error("Number of triangle points should be a multiple of 3");
     return;
   }
 #if defined(HAVE_MESH)
@@ -8322,12 +8327,33 @@ gmsh::algorithm::tetrahedralize(const std::vector<double> &coord,
     v->setIndex(j);
     verts[j++] = v;
   }
+  std::vector<MTriangle> trianglesToRecover;
+  for(std::size_t i = 0; i < triangles.size(); i += 3)
+    trianglesToRecover.emplace_back(verts[triangles[i] - 1], verts[triangles[i + 1] - 1], verts[triangles[i + 2] - 1]);
+
   std::vector<MTetrahedron *> tets;
   if(CTX::instance()->mesh.algo3d == ALGO_3D_HXT)
-    delaunayMeshIn3DHxt(verts, tets);
+    delaunayMeshIn3DHxt(verts, tets, trianglesToRecover);
   else
+  {
+    if(triangles.size() > 0)
+        Msg::Error("3D constrained delaunay tetrahedralization is currently only available using HXT !");  
+
     delaunayMeshIn3D(verts, tets, true);
+  }  
   if(tets.empty()) return;
+
+  if(verts.size() > coord.size() / 3)
+  {
+    //Steiner Points!
+    for(std::size_t v = coord.size() / 3 ; v < verts.size() ; ++v)
+    {
+        coord.push_back(verts[v]->x());
+        coord.push_back(verts[v]->y());
+        coord.push_back(verts[v]->z());
+    }
+  }
+
   tetra.resize(4 * tets.size());
   for(std::size_t i = 0; i < tets.size(); i++) {
     MTetrahedron *t = tets[i];

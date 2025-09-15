@@ -9034,28 +9034,35 @@ function triangulate(coordinates, edges = Csize_t[])
 end
 
 """
-    gmsh.algorithm.tetrahedralize(coordinates)
+    gmsh.algorithm.tetrahedralize(triangles)
 
 Tetrahedralize the points given in the `coordinates` vector as concatenated
-triplets of x, y, z coordinates, and return the tetrahedra as concatenated
-quadruplets of point indexes (with numbering starting at 1) in `tetrahedra`.
+triplets of x, y, z coordinates, with constrained triangles given in the
+`triangles` vector as triplet of indexes (with numbering starting at 1), and
+return the tetrahedra as concatenated quadruplets of point indexes (with
+numbering starting at 1) in `tetrahedra`. Steiner points might be added in the
+`coordinates` vector.
 
-Return `tetrahedra`.
+Return `coordinates`, `tetrahedra`.
 
 Types:
  - `coordinates`: vector of doubles
  - `tetrahedra`: vector of sizes
+ - `triangles`: vector of sizes
 """
-function tetrahedralize(coordinates)
+function tetrahedralize(triangles)
+    api_coordinates_ = Ref{Ptr{Cdouble}}()
+    api_coordinates_n_ = Ref{Csize_t}()
     api_tetrahedra_ = Ref{Ptr{Csize_t}}()
     api_tetrahedra_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshAlgorithmTetrahedralize, gmsh.lib), Cvoid,
-          (Ptr{Cdouble}, Csize_t, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Cint}),
-          convert(Vector{Cdouble}, coordinates), length(coordinates), api_tetrahedra_, api_tetrahedra_n_, ierr)
+          (Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Csize_t}, Csize_t, Ptr{Cint}),
+          api_coordinates_, api_coordinates_n_, api_tetrahedra_, api_tetrahedra_n_, convert(Vector{Csize_t}, triangles), length(triangles), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
+    coordinates = unsafe_wrap(Array, api_coordinates_[], api_coordinates_n_[], own = true)
     tetrahedra = unsafe_wrap(Array, api_tetrahedra_[], api_tetrahedra_n_[], own = true)
-    return tetrahedra
+    return coordinates, tetrahedra
 end
 
 end # end of module algorithm

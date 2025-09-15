@@ -11,8 +11,10 @@
 class GRegion;
 class MVertex;
 class MTetrahedron;
+class MTriangle;
 
 int meshGRegionHxt(std::vector<GRegion *> &regions);
 void delaunayMeshIn3DHxt(std::vector<MVertex *> &points,
-                         std::vector<MTetrahedron *> &tets);
+                         std::vector<MTetrahedron *> &tets,
+                         const std::vector<MTriangle> &triangles);
 #endif
