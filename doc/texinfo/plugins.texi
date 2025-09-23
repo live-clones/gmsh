@@ -95,6 +95,29 @@ Default value: @code{0}
 Default value: @code{0}
 @end table
 
+@item Plugin(BoundaryLayer)
+Plugin(BoundaryLayer) performs magic.
+String options:
+@table @code
+@item Volumes
+Default value: @code{""}
+@item Surfaces
+Default value: @code{""}
+@item Curves
+Default value: @code{""}
+@item Points
+Default value: @code{""}
+@end table
+Numeric options:
+@table @code
+@item Thickness
+Default value: @code{0.01}
+@item Size
+Default value: @code{0.001}
+@item Ratio
+Default value: @code{1.2}
+@end table
+
 @item Plugin(Bubbles)
 Plugin(Bubbles) constructs a geometry consisting of `bubbles' inscribed in the Voronoi of an input triangulation. `ShrinkFactor' allows to change the size of the bubbles. The plugin expects a triangulation in the `z = 0' plane to exist in the current model.@*
 @*

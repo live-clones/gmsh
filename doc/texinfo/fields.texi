@@ -256,6 +256,10 @@ Default value: @code{@{@}}
 Include the boundary of the entities@*
 Type: boolean@*
 Default value: @code{1}
+@item IncludeEmbedded
+Include embedded entities@*
+Type: boolean@*
+Default value: @code{1}
 @item PointsList
 Point tags@*
 Type: list@*
@@ -803,6 +807,10 @@ Type: integer@*
 Default value: @code{1}
 @item IncludeBoundary
 Include the boundary of the entities@*
+Type: boolean@*
+Default value: @code{1}
+@item IncludeEmbedded
+Include embedded entities@*
 Type: boolean@*
 Default value: @code{1}
 @item PointsList
