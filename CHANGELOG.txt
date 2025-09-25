@@ -1,8 +1,9 @@
-(Work-in-progress): new Closest parser function; changed Boundary and
-CombinedBoundary parser functions to not return signed entity tags anymore (use
-new OrientedBoundary and OrientedCombinedBoudnary to get the old behavior);
-changed default value of `oriented' argument to false in model/getBoundary API;
-improved Constant and Restrict mesh size fields; bug fixes.
+(Work-in-progress): new Closest, Parametric Point and Normal parser functions;
+changed Boundary and CombinedBoundary parser functions to not return signed
+entity tags anymore (use new OrientedBoundary and OrientedCombinedBoudnary to
+get the old behavior); changed default value of oriented argument to false in
+model/getBoundary API; improved Constant and Restrict mesh size fields; bug
+fixes.
 
 * New API functions: model/isEntityOrphan, occ/getClosestEntities
 

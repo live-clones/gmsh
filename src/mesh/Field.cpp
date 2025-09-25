@@ -2056,7 +2056,8 @@ public:
   {
     return "Restrict the application of a field to a given list of geometrical "
            "points, curves, surfaces or volumes (as well as their boundaries "
-           "if IncludeBoundary is set).";
+           "if IncludeBoundary is set, and their embedded entities if "
+           "IncludeEmbedded is set).";
   }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
@@ -2109,7 +2110,8 @@ public:
   std::string getDescription()
   {
     return "Return VIn when inside the entities (and on their boundary if "
-           "IncludeBoundary is set), and VOut outside.";
+           "IncludeBoundary is set, and on their embedded entities if "
+           "IncludeEmbedded is set), and VOut outside.";
   }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
