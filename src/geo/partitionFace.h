@@ -32,7 +32,7 @@ public:
   virtual bool haveParametrization() { return false; }
   virtual void setParentEntity(GEntity *f) { _parentEntity = f; }
   virtual GEntity *getParentEntity() { return _parentEntity; }
-  virtual void setPartitions(std::vector<int> &partitions)
+  virtual void setPartitions(const std::vector<int> &partitions)
   {
     _partitions = partitions;
   }
