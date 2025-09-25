@@ -2587,32 +2587,26 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize, const
   mesh->vertices.num = nvert+8;
   mesh->vertices.size = nvert+8;
 
+  double nThreadsDBL = 0;
+  gmsh::option::getNumber("Mesh.MaxNumThreads3D", nThreadsDBL);
+  if(nThreadsDBL == 0)
+    gmsh::option::getNumber("General.NumThreads", nThreadsDBL);
+  int nthreads = static_cast<int>(nThreadsDBL);
 
-  // mesh->vertices.num = nvert;
-  // mesh->vertices.size = nvert;
-
-  int nthreads = Msg::GetMaxThreads();
-  // int nthreads = Msg::GetMaxThreads();
-
-  // create the bounding box of the mesh
-	HXTBbox bbox;
-	hxtBboxInit(&bbox);
-	// hxtBboxAdd(&bbox, mesh->vertices.coord, mesh->vertices.num);
-  hxtBboxAddOne(&bbox, coord_max);
-  hxtBboxAddOne(&bbox, coord_min);
-
-  HXTDelaunayOptions delOptions = {
-    // &bbox, // bbox
-    nullptr, // bbox
-    nullptr, // nodalSizes
-    0, // numVertcesInMesh
-    0, // insertionFirst
-    0, // partitionability
-    0, // perfectDelaunay
-    0, // verbosity
-    0, // reproducible
-    nthreads // delaunayThreads (0 = omp_get_max_threads)
-  };
+  double verbosityDBL = 0;
+  gmsh::option::getNumber("General.Terminal", verbosityDBL);
+  
+  HXTDelaunayOptions delOptions;
+  delOptions.bbox = nullptr;
+  delOptions.nodalSizes = nullptr;
+  delOptions.numVerticesInMesh = 0;
+  delOptions.insertionFirst = 0;
+  delOptions.partitionability = 0;
+  delOptions.perfectDelaunay = 1;
+  delOptions.allowOuterInsertion = 0;
+  delOptions.verbosity = (verbosityDBL == 0) ? 0 : 2;
+  delOptions.reproducible = 0;
+  delOptions.delaunayThreads = nthreads;
 
   HXTNodeInfo *nodeInfo;
   hxtAlignedMalloc(&nodeInfo, sizeof(HXTNodeInfo) * mesh->vertices.num);
@@ -3951,6 +3945,15 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
   else {
 
     // 1. insert already existing nodes
+    double nThreadsDBL = 0;
+    gmsh::option::getNumber("Mesh.MaxNumThreads3D", nThreadsDBL);
+    if(nThreadsDBL == 0)
+      gmsh::option::getNumber("General.NumThreads", nThreadsDBL);
+    int nthreads = static_cast<int>(nThreadsDBL);
+
+    double verbosityDBL = 0;
+    gmsh::option::getNumber("General.Terminal", verbosityDBL);
+
     HXTBbox bbox;
     hxtBboxInit(&bbox);
     hxtBboxAdd(&bbox, m->vertices.coord, m->vertices.num);
@@ -3958,7 +3961,8 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
     delOptions.bbox = &bbox;
     delOptions.numVerticesInMesh = n_vertices_old; //m->vertices.num;
     delOptions.insertionFirst = n_vertices_old; // ->vertices.num;
-    delOptions.verbosity = 0;
+    delOptions.verbosity = (verbosityDBL == 0) ? 0 : 2;
+    delOptions.delaunayThreads = nthreads;
     int numNewPts = 0;
     for (auto _gr : gm->getRegions()){
       for(MVertex *v : _gr->mesh_vertices) {
