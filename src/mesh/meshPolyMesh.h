@@ -134,7 +134,7 @@ public:
       HalfEdge *he = it;
       fprintf(f, "SL(%g,%g,0,%g,%g,0){%d,%d};\n", he->v->position.x(),
               he->v->position.y(), he->next->next->v->position.x(),
-              he->next->next->v->position.y(), 3, 3);
+              he->next->next->v->position.y(), he->data, he->data);
     }
 
     fprintf(f, "};\n");

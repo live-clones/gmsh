@@ -5739,7 +5739,7 @@ GMSH_API void gmsh::model::mesh::concentration_from_DF(const std::vector<int> &c
   meshRelaying::instance()->concentration(&concentration);
   // meshRelaying::instance()->concentration_bfs(&concentration);
   // meshRelaying::instance()->curvatureFromMarkers(concentration_list, tension_table, concentration, &curvature);
-  // meshRelaying::instance()->curvatureFromConcentration(&curvature);
+  meshRelaying::instance()->curvatureFromConcentration(&curvature);
   return;
 }
 

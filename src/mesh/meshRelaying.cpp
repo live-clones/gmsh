@@ -586,6 +586,7 @@ void meshRelaying::curvatureFromConcentration(std::vector<double>*curvature){
 
     if(colors.size()==1) continue;
     
+
     he = v->he;
     double pos0[3] = {0, 0, 0};
     double pos1[3] = {v->position[0], v->position[1], 0};
@@ -605,28 +606,58 @@ void meshRelaying::curvatureFromConcentration(std::vector<double>*curvature){
       he = he->opposite->next;
     }while(he!=v->he);
 
+
     // compute curvature circle
-    double a = pos1[0] - pos0[0];
-    double b = pos1[1] - pos0[1];
-    double c = pos2[0] - pos0[0];
-    double d = pos2[1] - pos0[1];
-    double e = a * (pos0[0] + pos1[0]) + b * (pos0[1] + pos1[1]);
-    double f = c * (pos0[0] + pos2[0]) + d * (pos0[1] + pos2[1]);
-    double g = 2.0 * (a * (pos2[1] - pos1[1]) - b * (pos2[0] - pos1[0]));
-    if(g > 1e-10) {
-      double x = (d * e - b * f) / g;
-      double y = (a * f - c * e) / g;
-      double r = sqrt((x - pos0[0]) * (x - pos0[0]) + (y - pos0[1]) * (y - pos0[1]));
-      nodes_curvature[id-1] = 1.0 / r;
+    // double a = pos1[0] - pos0[0];
+    // double b = pos1[1] - pos0[1];
+    // double c = pos2[0] - pos0[0];
+    // double d = pos2[1] - pos0[1];
+    // double e = a * (pos0[0] + pos1[0]) + b * (pos0[1] + pos1[1]);
+    // double f = c * (pos0[0] + pos2[0]) + d * (pos0[1] + pos2[1]);
+    // double g = 2.0 * (a * (pos2[1] - pos1[1]) - b * (pos2[0] - pos1[0]));
+    // if(fabs(g) > 1e-10) {
+    //   double x = (d * e - b * f) / g;
+    //   double y = (a * f - c * e) / g;
+    //   double r = sqrt((x - pos0[0]) * (x - pos0[0]) + (y - pos0[1]) * (y - pos0[1]));
+    //   nodes_curvature[id-1] = 1.0 / r;
+    // } else {
+    //   nodes_curvature[id-1] = 0.0;
+    // }
+
+    double dy1 = pos0[1]-pos1[1];
+    double dy2 = pos1[1]-pos2[1];
+    double dy3 = pos2[1]-pos0[1];
+
+    double n1 = pos0[0]*pos0[0] + pos0[1]*pos0[1];
+    double n2 = pos1[0]*pos1[0] + pos1[1]*pos1[1];
+    double n3 = pos2[0]*pos2[0] + pos2[1]*pos2[1];
+
+    double area = 0.5*(pos0[0]*dy2 + pos1[0]*dy3 + pos2[0]*dy1);
+    if (area == 0){
+        nodes_curvature[id-1] = 0.0;
     } else {
-      nodes_curvature[id-1] = 0.0;
+        double Ux = (1/(4*area))*(n1*dy2 + n2*dy3 + n3*dy1);
+        double Uy = (1/(4*area))*(n1*(pos2[0]-pos1[0]) + n2*(pos0[0]-pos2[0]) + n3*(pos1[0]-pos0[0]));
+
+        double radius_x = Ux-pos1[0];
+        double radius_y = Uy-pos1[1];
+        double R = sqrt(radius_x*radius_x + radius_y*radius_y);
+        double sign = robustPredicates::orient2d(pos0, pos1, pos2);
+        if (sign < 0) {
+            sign = -1;
+        } else {
+            sign = 1;
+        }
+        nodes_curvature[id-1] = -sign*(1/R);
     }
+
+
 
   }
 
   for(size_t i = 0; i < tris.size()/3; ++i) {
     for(size_t j = 0; j < 3; j++) {
-      if(node_dominant_color[tris[3*i + j]] == tris_concentration[i]) {
+      if(node_dominant_color[tris[3*i + j]] != tris_concentration[i]) {
         (*curvature)[3*i + j] = nodes_curvature[tris[3*i + j]];
       }
     }
@@ -3948,7 +3979,6 @@ void discreteFront::initFront(std::vector<double> points,
     }
   }
 
-  
   pm->reset();
   triangulation2PolyMesh(tri, pos2d, &pm);
   
@@ -3986,6 +4016,8 @@ void discreteFront::initFront(std::vector<double> points,
     }
   }
 
+  pm->print4debug(21);
+
   //find center_face
   double center[2] = {bbTri.center().x(), bbTri.center().y()};
   PolyMesh::Face *f = pm->faces[0];
@@ -4005,20 +4037,24 @@ void discreteFront::initFront(std::vector<double> points,
         PolyMesh::Face *current = todo[td];
         current->data = concentration[i];
         PolyMesh::HalfEdge *he = current->he;
-        do {
+        size_t iter = 0;
+        while(iter < 3) {
           if(he->opposite == nullptr) {
             he = he->next;
+            iter++;
             continue;
           }
           if(he->data == 5 || he->opposite->data == 5) {
             he = he->next;
+            iter++;
             continue;
           }
           if(he->opposite->f->data == -10) {
             new_todo.push_back(he->opposite->f);
           }
           he = he->next;
-        } while(he != current->he);
+          iter++;
+        }
       }
       todo = new_todo;
       new_todo.clear();
@@ -4026,7 +4062,7 @@ void discreteFront::initFront(std::vector<double> points,
   }
 
   
-
+  pm->print4debug(22);
   // keep only the triangles that are inside the domain
   tri.clear();
   std::vector<int> tri_tag;
@@ -4052,6 +4088,8 @@ void discreteFront::initFront(std::vector<double> points,
   computeNewInterfaces();
   triangulateInterfaces();
   colorTriangles();
+
+  pm->print4debug(23);
 
   // correct corners that dissapeared
   for(size_t i=0; i<corners.size(); i++) {
