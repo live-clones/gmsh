@@ -591,7 +591,7 @@ doc = '''Tetrahedralize the points given in the `coord' vector as x, y, z coordi
 mesh.add('tetrahedralize', doc, None, ivectordouble('coord'), ovectorsize('tetra'))
 
 doc = '''Antoine put a comment here.'''
-mesh.add('concentration_from_DF', doc, None, ivectorint('concentration_list'), ivectordouble('tension_table'), ovectorint('concentration'), ovectordouble('curvature'))
+mesh.add('concentration_from_DF', doc, None, ivectorint('concentration_list'), ivectordouble('tension_table'), ovectorint('concentration'), ovectordouble('curvature'), ibool('bfs_flag', 'false', 'False'))
 
 doc = '''Antoine put a comment here.'''
 mesh.add('advance_DF_in_time', doc, None, idouble('dt'), ivectordouble('velocity'), idouble('epsilon', '0.'), ibool('triple_slip', 'true', 'True'))

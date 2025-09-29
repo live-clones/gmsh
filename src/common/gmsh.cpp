@@ -5735,9 +5735,14 @@ gmsh::model::mesh::tetrahedralize(const std::vector<double> &coord,
 #endif
 }
 
-GMSH_API void gmsh::model::mesh::concentration_from_DF(const std::vector<int> &concentration_list, const std::vector<double> &tension_table ,std::vector<int> &concentration, std::vector<double> &curvature){
-  meshRelaying::instance()->concentration(&concentration);
-  // meshRelaying::instance()->concentration_bfs(&concentration);
+GMSH_API void gmsh::model::mesh::concentration_from_DF(const std::vector<int> &concentration_list, const std::vector<double> &tension_table ,std::vector<int> &concentration, std::vector<double> &curvature, const bool bfs_flag){
+  
+  if(bfs_flag){
+    meshRelaying::instance()->concentration_bfs(&concentration);
+  } else {
+    meshRelaying::instance()->concentration(&concentration);
+  }
+  
   // meshRelaying::instance()->curvatureFromMarkers(concentration_list, tension_table, concentration, &curvature);
   meshRelaying::instance()->curvatureFromConcentration(&curvature);
   return;

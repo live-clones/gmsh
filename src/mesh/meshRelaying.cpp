@@ -255,14 +255,17 @@ void meshRelaying::doRelaying(
   discreteFront::instance()->getBndMarkers(&bnd_markers);
   std::vector<interface> interfaces = discreteFront::instance()->getInterfaces();
 
-  int MAXIT = 5;
+  int MAXIT = 7;
   int ITTT = 0;
 
   std::vector<size_t> marker_corner_done;
   corners.clear();
   while(true) {
     
-    if(ITTT++ == MAXIT) break;
+    if(ITTT++ == MAXIT){
+      printf("  relaying stopped after %d iterations and didn't converges...\n", ITTT-1);
+      break;
+    } 
 
     if(tets.empty() && ITTT == 1) {
       for(size_t i = 0; i < tris.size(); i += 3) {
@@ -409,6 +412,7 @@ void meshRelaying::doRelaying(
     }
 
     if(moves.empty()) break;
+    printf(" %d moves \n", (int)moves.size());
 
     std::sort(moves.begin(), moves.end());
     for(auto c : moves) {
@@ -765,6 +769,11 @@ void meshRelaying::concentration_bfs(std::vector<int> *concentration){
   std::vector<std::pair<size_t, size_t>> front_edges;
   for(size_t i=0; i<fn_interfaces.size(); i++) {
     std::sort(fn_interfaces[i].begin(), fn_interfaces[i].end());
+
+    // for(size_t p=0; p<fn_interfaces[i].size(); p++) {
+    //   printf("interface %lu - fn %lu : node %lu, t %f, m1 %lu, m2 %lu \n", i, p, fn_interfaces[i][p].meshNode, fn_interfaces[i][p].t, fn_interfaces[i][p].m1, fn_interfaces[i][p].m2);
+    // }
+
     for(size_t j=0; j<fn_interfaces[i].size(); j++) {
       size_t n = fn_interfaces[i].size();
       size_t n1 = fn_interfaces[i][j].meshNode;

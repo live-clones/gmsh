@@ -143,10 +143,19 @@ public:
     int id1 = std::find(markers.begin(), markers.end(), m1) - markers.begin();
     int id2 = std::find(markers.begin(), markers.end(), m2) - markers.begin();
     double t_m = 0;
+    size_t n_m = markers.size();
     if(id1<id2) {
-      t_m = (double)id1;
+      if (id2 == n_m -1 && id1 == 0){
+        t_m = (double)id2;
+      }else{
+        t_m = (double)id1;
+      }
     }else {
-      t_m = (double)id2;
+      if (id1 == n_m -1 && id2 == 0){
+        t_m = (double)id1;
+      }else{
+        t_m = (double)id2;
+      }
     }
 
     if(m1 == m2) { 
@@ -164,11 +173,13 @@ public:
     }
 
     double a = 0;
-    if(id1<id2){
+    if(t_m == (double)id1){
       a = (t - p0).norm() / d;
     } else {
       a = (t - p1).norm() / d;
     }
+    if(a < 0) a = 0;
+    if(a > 1) a = 1;
      
     fn.push_back(frontNode(n, inter, m1, m2, t_m + a));
   }
