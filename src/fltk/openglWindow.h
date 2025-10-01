@@ -55,7 +55,7 @@ public:
   void value(const std::string &s)
   {
     strncpy(_text, s.c_str(), 1023);
-    _text[1023] = '\n';
+    _text[1023] = '\0';
     fl_font(Fl_Tooltip::font(), Fl_Tooltip::size());
     int ww = Fl_Tooltip::wrap_width();
     int hh = 0;

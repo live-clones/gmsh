@@ -60,7 +60,7 @@ Physical Volume(10) = v(0);
 // identifying boundaries.
 
 // To identify points or other bounding entities you can take advantage of the
-// `CombinedBoundary`, `Closest', `PointfsOf' and `In BoundingBox' commands.
+// `CombinedBoundary`, `Closest', `PointsOf' and `In BoundingBox' commands.
 
 // Define a physical surface for the top and right-most surfaces, by finding
 // amongst the surfaces making up the boundary of the model, the two closest to
