@@ -185,6 +185,7 @@ public:
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
+#pragma omp critical(StructuredField)
     if(updateNeeded) {
       _errorStatus = false;
       try {
@@ -1419,14 +1420,17 @@ public:
   {
     double xyz[3] = {x, y, z};
     double f;
-    if(updateNeeded) {
-      closePipes();
-      _pipes.start(_cmdLine.c_str());
-      updateNeeded = false;
-    }
-    if(!_pipes.write((void *)xyz, 3 * sizeof(double)) ||
-       !_pipes.read((void *)&f, sizeof(double))) {
-      f = 1e22; // std::numeric_limits<double>::max();
+#pragma omp critical(ExternalProcessField)
+    {
+      if(updateNeeded) {
+        closePipes();
+        _pipes.start(_cmdLine.c_str());
+        updateNeeded = false;
+      }
+      if(!_pipes.write((void *)xyz, 3 * sizeof(double)) ||
+         !_pipes.read((void *)&f, sizeof(double))) {
+        f = 1e22; // std::numeric_limits<double>::max();
+      }
     }
     return f;
   }
@@ -1534,24 +1538,28 @@ public:
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
-    if(updateNeeded) {
-      for(int i = 0; i < 3; i++) {
-        if(!_expr[i].set_function(_f[i]))
-          Msg::Error("Field %i: invalid matheval expression \"%s\"", this->id,
-                     _f[i].c_str());
-      }
-      updateNeeded = false;
-    }
     if(_inField == id) return MAX_LC;
     Field *field = GModel::current()->getFields()->get(_inField);
     if(!field) {
       Msg::Warning("Unknown Field %i", _inField);
       return MAX_LC;
     }
-    return (*field)(_expr[0].evaluate(x, y, z, ge),
-                    _expr[1].evaluate(x, y, z, ge),
-                    _expr[2].evaluate(x, y, z, ge),
-                    ge);
+    double xx, yy, zz;
+#pragma omp critical(ParametricField)
+    {
+      if(updateNeeded) {
+        for(int i = 0; i < 3; i++) {
+          if(!_expr[i].set_function(_f[i]))
+            Msg::Error("Field %i: invalid matheval expression \"%s\"", id,
+                       _f[i].c_str());
+        }
+        updateNeeded = false;
+      }
+      xx = _expr[0].evaluate(x, y, z, ge);
+      yy = _expr[1].evaluate(x, y, z, ge);
+      zz = _expr[2].evaluate(x, y, z, ge);
+    }
+    return (*field)(xx, yy, zz, ge);
   }
   const char *getName() { return "Param"; }
 };
@@ -1864,16 +1872,14 @@ public:
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
 #pragma omp critical(MinField)
-    {
-      if(updateNeeded) {
-        _fields.clear();
-        for(auto it = _fieldIds.begin(); it != _fieldIds.end(); it++) {
-          Field *f = (GModel::current()->getFields()->get(*it));
-          if(!f) Msg::Warning("Unknown Field %i", *it);
-          if(f && *it != id) _fields.push_back(f);
-        }
-        updateNeeded = false;
+    if(updateNeeded) {
+      _fields.clear();
+      for(auto it = _fieldIds.begin(); it != _fieldIds.end(); it++) {
+        Field *f = (GModel::current()->getFields()->get(*it));
+        if(!f) Msg::Warning("Unknown Field %i", *it);
+        if(f && *it != id) _fields.push_back(f);
       }
+      updateNeeded = false;
     }
 
     double v = MAX_LC;
@@ -1913,16 +1919,14 @@ public:
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
 #pragma omp critical(MaxField)
-    {
-      if(updateNeeded) {
-        _fields.clear();
-        for(auto it = _fieldIds.begin(); it != _fieldIds.end(); it++) {
-          Field *f = (GModel::current()->getFields()->get(*it));
-          if(!f) Msg::Warning("Unknown Field %i", *it);
-          if(f && *it != id) _fields.push_back(f);
-        }
-        updateNeeded = false;
+    if(updateNeeded) {
+      _fields.clear();
+      for(auto it = _fieldIds.begin(); it != _fieldIds.end(); it++) {
+        Field *f = (GModel::current()->getFields()->get(*it));
+        if(!f) Msg::Warning("Unknown Field %i", *it);
+        if(f && *it != id) _fields.push_back(f);
       }
+      updateNeeded = false;
     }
 
     double v = -MAX_LC;
@@ -2069,6 +2073,7 @@ public:
       return MAX_LC;
     }
     if(!ge) return (*f)(x, y, z);
+#pragma omp critical(RestrictField)
     if(updateNeeded) {
       getRestrictEntities(ge->model(), _inTags, _tags, _boundary, _embedded);
       updateNeeded = false;
@@ -2117,11 +2122,11 @@ public:
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     if(!ge) return MAX_LC;
+#pragma omp critical(ConstantField)
     if(updateNeeded) {
       getRestrictEntities(ge->model(), _inTags, _tags, _boundary, _embedded);
       updateNeeded = false;
     }
-
     if(_tags[ge->dim()].count(ge->tag())) return _vIn;
     return _vOut;
   }
