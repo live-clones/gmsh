@@ -7,6 +7,8 @@ fixes.
 
 * New API functions: model/isEntityOrphan, occ/getClosestEntities
 
+* Incompatible API changes: new arguments to algorithm/tetrahedralize
+
 4.14.1 (September 2, 2025): further improvement of return value of boolean
 operations; bug fixes.
 

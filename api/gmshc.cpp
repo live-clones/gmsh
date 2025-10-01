@@ -4638,16 +4638,17 @@ GMSH_API void gmshAlgorithmTriangulate(const double * coordinates, const size_t 
   }
 }
 
-GMSH_API void gmshAlgorithmTetrahedralize(double ** coordinates, size_t * coordinates_n, size_t ** tetrahedra, size_t * tetrahedra_n, const size_t * triangles, const size_t triangles_n, int * ierr)
+GMSH_API void gmshAlgorithmTetrahedralize(const double * coordinates, const size_t coordinates_n, size_t ** tetrahedra, size_t * tetrahedra_n, double ** steiner, size_t * steiner_n, const size_t * triangles, const size_t triangles_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<double> api_coordinates_;
+    std::vector<double> api_coordinates_(coordinates, coordinates + coordinates_n);
     std::vector<std::size_t> api_tetrahedra_;
+    std::vector<double> api_steiner_;
     std::vector<std::size_t> api_triangles_(triangles, triangles + triangles_n);
-    gmsh::algorithm::tetrahedralize(api_coordinates_, api_tetrahedra_, api_triangles_);
-    vector2ptr(api_coordinates_, coordinates, coordinates_n);
+    gmsh::algorithm::tetrahedralize(api_coordinates_, api_tetrahedra_, api_steiner_, api_triangles_);
     vector2ptr(api_tetrahedra_, tetrahedra, tetrahedra_n);
+    vector2ptr(api_steiner_, steiner, steiner_n);
   }
   catch(...){
     if(ierr) *ierr = 1;

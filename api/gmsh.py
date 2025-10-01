@@ -10173,7 +10173,7 @@ class algorithm:
 
         Triangulate the points given in the `coordinates' vector as concatenated
         pairs of u, v coordinates, with (optional) constrained edges given in the
-        `edges' vector as pair of indexes (with numbering starting at 1), and
+        `edges' vector as pairs of indexes (with numbering starting at 1), and
         return the triangles as concatenated triplets of point indexes (with
         numbering starting at 1) in `triangles'.
 
@@ -10198,38 +10198,41 @@ class algorithm:
         return _ovectorsize(api_triangles_, api_triangles_n_.value)
 
     @staticmethod
-    def tetrahedralize(triangles):
+    def tetrahedralize(coordinates, triangles=[]):
         """
-        gmsh.algorithm.tetrahedralize(triangles)
+        gmsh.algorithm.tetrahedralize(coordinates, triangles=[])
 
         Tetrahedralize the points given in the `coordinates' vector as concatenated
-        triplets of x, y, z coordinates, with constrained triangles given in the
-        `triangles' vector as triplet of indexes (with numbering starting at 1),
-        and return the tetrahedra as concatenated quadruplets of point indexes
-        (with numbering starting at 1) in `tetrahedra'. Steiner points might be
-        added in the `coordinates' vector.
+        triplets of x, y, z coordinates, with (optional) constrained triangles
+        given in the `triangles' vector as triplets of indexes (with numbering
+        starting at 1), and return the tetrahedra as concatenated quadruplets of
+        point indexes (with numbering starting at 1) in `tetrahedra'. Steiner
+        points might be added in the `steiner' vector.
 
-        Return `coordinates', `tetrahedra'.
+        Return `tetrahedra', `steiner'.
 
         Types:
         - `coordinates': vector of doubles
         - `tetrahedra': vector of sizes
+        - `steiner': vector of doubles
         - `triangles': vector of sizes
         """
-        api_coordinates_, api_coordinates_n_ = POINTER(c_double)(), c_size_t()
+        api_coordinates_, api_coordinates_n_ = _ivectordouble(coordinates)
         api_tetrahedra_, api_tetrahedra_n_ = POINTER(c_size_t)(), c_size_t()
+        api_steiner_, api_steiner_n_ = POINTER(c_double)(), c_size_t()
         api_triangles_, api_triangles_n_ = _ivectorsize(triangles)
         ierr = c_int()
         lib.gmshAlgorithmTetrahedralize(
-            byref(api_coordinates_), byref(api_coordinates_n_),
+            api_coordinates_, api_coordinates_n_,
             byref(api_tetrahedra_), byref(api_tetrahedra_n_),
+            byref(api_steiner_), byref(api_steiner_n_),
             api_triangles_, api_triangles_n_,
             byref(ierr))
         if ierr.value != 0:
             raise Exception(logger.getLastError())
         return (
-            _ovectordouble(api_coordinates_, api_coordinates_n_.value),
-            _ovectorsize(api_tetrahedra_, api_tetrahedra_n_.value))
+            _ovectorsize(api_tetrahedra_, api_tetrahedra_n_.value),
+            _ovectordouble(api_steiner_, api_steiner_n_.value))
 
 
 class plugin:
