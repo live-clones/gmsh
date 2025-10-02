@@ -364,7 +364,7 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh,
 {
   int maxThreads = omp_get_max_threads();
 
-  uint64_t* startTet; // see balanceRefineWork
+  size_t* startTet; // see balanceRefineWork
   HXT_CHECK( hxtMalloc(&startTet, (maxThreads+1)*sizeof(size_t)) );
 
   uint32_t* startPt; // see balanceRefineWork
