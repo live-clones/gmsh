@@ -86,32 +86,49 @@ static void computeTransform2D(const std::vector<cgsize_t> &pointRange,
     return;
   }
 
+  /*
+      patch                   donor patch
+
+      ^j                      ^j
+      |                       |
+  jend*       *           jend*       *
+      |                       |       +
+      |                       |       +
+      |                       |      \/
+  jbeg*++++++>*---->i     jbeg*-------*---->i
+      ibeg   iend             ibeg   iend
+
+      +++ = example edge to match: here r=[n, 0], d=[0, -n]
+  */
+
   int r[2], d[2];
   for(int i = 0; i < 2; i++) {
     r[i] = pointRange[i + 2] - pointRange[i];
     d[i] = pointDonorRange[i + 2] - pointDonorRange[i];
   }
-  for(int i = 0; i < 2; i++) {
-    transform[i] = 0;
-    for(int j = 0; j < 2; j++) {
-      if(std::abs(r[i]) == std::abs(d[j])) { // == 0 on an interface
-        transform[i] = j + 1;
-        if(!r[i] && !d[j]) { // on an interface
+  for(int ri = 0; ri < 2; ri++) {
+    transform[ri] = 0;
+    for(int di = 0; di < 2; di++) {
+      if(std::abs(r[ri]) == std::abs(d[di]) && !transform[ri]) {
+        transform[ri] = di + 1;
+        if(!r[ri] && !d[di]) { // on an interface
           // both interfaces correspond to a min index or to a max index
-          if(type == typeDonor) transform[i] *= -1;
+          if(type == typeDonor) transform[ri] *= -1;
         }
         else {
-          if(r[i] * d[j] < 0) transform[i] *= -1;
+          if(r[ri] * d[di] < 0) transform[ri] *= -1;
         }
       }
     }
-    if(!transform[i]) Msg::Warning("Could not identify transform[%d]", i);
+    if(!transform[ri]) Msg::Warning("Could not identify transform[%d]", ri);
   }
 }
 
 static bool findRange2D(GFace *gf, GEdge *ge, int &ibeg, int &jbeg, int &iend,
                         int &jend, int &type)
 {
+  // find the begin/end i,j indices of the interface edge ge in the face gf;
+  // return type==1 if interface is on min indices, or 2 if on max indices
   GVertex *gv1 = ge->getBeginVertex(), *gv2 = ge->getEndVertex();
   if(!gv1 || !gv1->getNumMeshVertices() || !gv2 || !gv2->getNumMeshVertices())
     return false;
@@ -289,36 +306,55 @@ static void computeTransform3D(const std::vector<cgsize_t> &pointRange,
     transform[2] = 3;
     return;
   }
+
+  /*
+      patch                   donor patch
+                                          *
+      ^j    k                 ^j    k    ++
+      |    /                  |    /    +++
+  jend*   kend            jend*   kend*+++*
+      |  *++++++++*           |  /    +++
+      | /++++++++             | /     ++
+      |kbeg ++++              |kbeg   +
+  jbeg*+++++++*---->i     jbeg*-------*---->i
+      ibeg   iend             ibeg   iend
+
+      +++ = example face to match: here r=[n, 0, +-m], d=[0, +-n, +-m]
+  */
+
   // This will choose one of the 2 possible orientations if we have the same
-  // number of nodes on all the sides of the interface; not sure if this is an
-  // issue, as the transfinite points ordering is not linked with the geometry
-  // anyway?
+  // number of nodes on all the sides of the interface (i.e. n == m); not sure
+  // if this is an issue, as the transfinite points ordering is not linked with
+  // the geometry anyway?
   int r[3], d[3];
   for(int i = 0; i < 3; i++) {
     r[i] = pointRange[i + 3] - pointRange[i];
     d[i] = pointDonorRange[i + 3] - pointDonorRange[i];
   }
-  for(int i = 0; i < 3; i++) {
-    transform[i] = 0;
-    for(int j = 0; j < 3; j++) {
-      if(std::abs(r[i]) == std::abs(d[j])) { // == 0 on an interface
-        transform[i] = j + 1;
-        if(!r[i] && !d[j]) { // on an interface
+  for(int ri = 0; ri < 3; ri++) {
+    transform[ri] = 0;
+    for(int di = 0; di < 3; di++) {
+      if(std::abs(r[ri]) == std::abs(d[di]) && !transform[ri]) {
+        transform[ri] = di + 1;
+        if(!r[ri] && !d[di]) { // on an interface
           // both interfaces correspond to a min index or to a max index
-          if(type == typeDonor) transform[i] *= -1;
+          if(type == typeDonor) transform[ri] *= -1;
         }
         else {
-          if(r[i] * d[j] < 0) transform[i] *= -1;
+          if(r[ri] * d[di] < 0) transform[ri] *= -1;
         }
       }
     }
-    if(!transform[i]) Msg::Warning("Could not identify transform[%d]", i);
+    if(!transform[ri]) Msg::Warning("Could not identify transform[%d]", ri);
   }
 }
 
 static bool findRange3D(GRegion *gr, GFace *gf, int &ibeg, int &jbeg, int &kbeg,
                         int &iend, int &jend, int &kend, int &type)
 {
+  // find the begin/end i,j,k indices of the interface face gf in the volume gr;
+  // return type==1 if interface is on min indices, or 2 if on max indices
+
   if(gf->transfinite_vertices.empty() || gf->transfinite_vertices[0].empty())
     return false;
   MVertex *v1 = gf->transfinite_vertices.front().front();
@@ -381,8 +417,7 @@ static int writeInterface3D(int cgIndexFile, int cgIndexBase, int cgIndexZone,
   }
   else {
     Msg::Warning("Could not identify interface between volumes %d and %d, "
-                 "on surface %d",
-                 gr->tag(), gr2->tag(), gf->tag());
+                 "on surface %d", gr->tag(), gr2->tag(), gf->tag());
   }
   return 1;
 }
