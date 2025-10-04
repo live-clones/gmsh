@@ -11,7 +11,7 @@ int main(int argc, char **argv)
 
   gmsh::option::setNumber("Mesh.Algorithm3D", 10); // new Delaunay algo
 
-  std::vector<double> points(3 * N);
+  std::vector<double> points(3 * N), steiner;
   std::vector<std::size_t> tags(N);
   for(auto i = 0; i < N; ++i) {
     tags[i] = i + 1;
@@ -21,7 +21,7 @@ int main(int argc, char **argv)
   }
 
   std::vector<std::size_t> tets;
-  gmsh::algorithm::tetrahedralize(points, tets);
+  gmsh::algorithm::tetrahedralize(points, tets, steiner);
 
   std::set<std::string> args(argv, argv + argc);
   if(!args.count("-nopopup")) {

@@ -393,8 +393,7 @@ GMSH_API void gmsh::model::getEntityName(const int dim, const int tag,
   name = GModel::current()->getElementaryName(dim, tag);
 }
 
-GMSH_API void gmsh::model::getPhysicalGroups(vectorpair &dimTags,
-                                             const int dim)
+GMSH_API void gmsh::model::getPhysicalGroups(vectorpair &dimTags, const int dim)
 {
   if(!_checkInit()) return;
   dimTags.clear();
@@ -402,16 +401,13 @@ GMSH_API void gmsh::model::getPhysicalGroups(vectorpair &dimTags,
   GModel::current()->getPhysicalGroups(groups);
   for(int d = 0; d < 4; d++) {
     if(dim < 0 || d == dim) {
-      for(auto g : groups[d]) {
-        dimTags.push_back(std::make_pair(d, g.first));
-      }
+      for(auto g : groups[d]) { dimTags.push_back(std::make_pair(d, g.first)); }
     }
   }
 }
 
-GMSH_API void gmsh::model::getPhysicalGroupsEntities(vectorpair &dimTags,
-                                                     std::vector<vectorpair> &entities,
-                                                     const int dim)
+GMSH_API void gmsh::model::getPhysicalGroupsEntities(
+  vectorpair &dimTags, std::vector<vectorpair> &entities, const int dim)
 {
   if(!_checkInit()) return;
   dimTags.clear();
@@ -1239,7 +1235,8 @@ GMSH_API void gmsh::model::getClosestPoint(const int dim, const int tag,
     }
   }
   else {
-    Msg::Error("Closet point calculation only for entities of dimension 1 or 2");
+    Msg::Error(
+      "Closet point calculation only for entities of dimension 1 or 2");
   }
 }
 
@@ -6980,9 +6977,9 @@ GMSH_API void gmsh::model::occ::fuse(const vectorpair &objectDimTags,
 
 GMSH_API void gmsh::model::occ::getDistance(const int dim1, const int tag1,
                                             const int dim2, const int tag2,
-                                            double &distance,
-                                            double &x1, double &y1, double &z1,
-                                            double &x2, double &y2, double &z2)
+                                            double &distance, double &x1,
+                                            double &y1, double &z1, double &x2,
+                                            double &y2, double &z2)
 {
   if(!_checkInit()) return;
   _createOcc();
@@ -8250,9 +8247,10 @@ GMSH_API void gmsh::view::option::copy(const int refTag, const int tag)
 #endif
 }
 
-GMSH_API void gmsh::algorithm::triangulate(const std::vector<double> &coord,
-                                           std::vector<std::size_t> &tri,
-                                           const std::vector<std::size_t> &edges)
+GMSH_API void
+gmsh::algorithm::triangulate(const std::vector<double> &coord,
+                             std::vector<std::size_t> &tri,
+                             const std::vector<std::size_t> &edges)
 
 {
   if(!_checkInit()) return;
@@ -8281,13 +8279,12 @@ GMSH_API void gmsh::algorithm::triangulate(const std::vector<double> &coord,
   }
 
   std::vector<MTriangle *> tris;
-  if(edges.empty()) {
-    delaunayMeshIn2D(verts, tris);
-  }
+  if(edges.empty()) { delaunayMeshIn2D(verts, tris); }
   else {
     std::vector<MEdge> edgesToRecover(edges.size() / 2);
     for(std::size_t i = 0; i < edges.size(); i += 2)
-      edgesToRecover[i / 2] = MEdge(verts[edges[i] - 1], verts[edges[i + 1] - 1]);
+      edgesToRecover[i / 2] =
+        MEdge(verts[edges[i] - 1], verts[edges[i + 1] - 1]);
     delaunayMeshIn2D(verts, tris, true, &edgesToRecover);
   }
 
@@ -8307,12 +8304,19 @@ GMSH_API void gmsh::algorithm::triangulate(const std::vector<double> &coord,
 
 GMSH_API void
 gmsh::algorithm::tetrahedralize(const std::vector<double> &coord,
-                                std::vector<std::size_t> &tetra)
+                                std::vector<std::size_t> &tetra,
+                                std::vector<double> &steiner,
+                                const std::vector<std::size_t> &triangles)
 {
   if(!_checkInit()) return;
   tetra.clear();
+  steiner.clear();
   if(coord.size() % 3) {
     Msg::Error("Number of coordinates should be a multiple of 3");
+    return;
+  }
+  if(triangles.size() % 3) {
+    Msg::Error("Number of triangle points should be a multiple of 3");
     return;
   }
 #if defined(HAVE_MESH)
@@ -8323,12 +8327,33 @@ gmsh::algorithm::tetrahedralize(const std::vector<double> &coord,
     v->setIndex(j);
     verts[j++] = v;
   }
+  std::vector<MTriangle> trianglesToRecover;
+  for(std::size_t i = 0; i < triangles.size(); i += 3)
+    trianglesToRecover.emplace_back(verts[triangles[i] - 1],
+                                    verts[triangles[i + 1] - 1],
+                                    verts[triangles[i + 2] - 1]);
+
   std::vector<MTetrahedron *> tets;
-  if(CTX::instance()->mesh.algo3d == ALGO_3D_HXT)
-    delaunayMeshIn3DHxt(verts, tets);
-  else
+  if(CTX::instance()->mesh.algo3d == ALGO_3D_HXT) {
+    delaunayMeshIn3DHxt(verts, tets, trianglesToRecover);
+  }
+  else {
+    if(triangles.size() > 0)
+      Msg::Error("3D constrained delaunay tetrahedralization is currently only "
+                 "available using HXT");
     delaunayMeshIn3D(verts, tets, true);
+  }
   if(tets.empty()) return;
+
+  if(verts.size() > coord.size() / 3) {
+    // Steiner Points!
+    for(std::size_t v = coord.size() / 3; v < verts.size(); ++v) {
+      steiner.push_back(verts[v]->x());
+      steiner.push_back(verts[v]->y());
+      steiner.push_back(verts[v]->z());
+    }
+  }
+
   tetra.resize(4 * tets.size());
   for(std::size_t i = 0; i < tets.size(); i++) {
     MTetrahedron *t = tets[i];

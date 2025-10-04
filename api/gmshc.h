@@ -3384,7 +3384,7 @@ GMSH_API void gmshViewOptionCopy(const int refTag,
 
 /* Triangulate the points given in the `coordinates' vector as concatenated
  * pairs of u, v coordinates, with (optional) constrained edges given in the
- * `edges' vector as pair of indexes (with numbering starting at 1), and
+ * `edges' vector as pairs of indexes (with numbering starting at 1), and
  * return the triangles as concatenated triplets of point indexes (with
  * numbering starting at 1) in `triangles'. */
 GMSH_API void gmshAlgorithmTriangulate(const double * coordinates, const size_t coordinates_n,
@@ -3393,11 +3393,15 @@ GMSH_API void gmshAlgorithmTriangulate(const double * coordinates, const size_t 
                                        int * ierr);
 
 /* Tetrahedralize the points given in the `coordinates' vector as concatenated
- * triplets of x, y, z coordinates, and return the tetrahedra as concatenated
- * quadruplets of point indexes (with numbering starting at 1) in
- * `tetrahedra'. */
+ * triplets of x, y, z coordinates, with (optional) constrained triangles
+ * given in the `triangles' vector as triplets of indexes (with numbering
+ * starting at 1), and return the tetrahedra as concatenated quadruplets of
+ * point indexes (with numbering starting at 1) in `tetrahedra'. Steiner
+ * points might be added in the `steiner' vector. */
 GMSH_API void gmshAlgorithmTetrahedralize(const double * coordinates, const size_t coordinates_n,
                                           size_t ** tetrahedra, size_t * tetrahedra_n,
+                                          double ** steiner, size_t * steiner_n,
+                                          const size_t * triangles, const size_t triangles_n,
                                           int * ierr);
 
 /* Set the numerical option `option' to the value `value' for plugin `name'.
