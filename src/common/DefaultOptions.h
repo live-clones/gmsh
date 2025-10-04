@@ -968,8 +968,8 @@ StringXNumber GeometryOptions_Number[] = {
 
   { F|O, "Normals" , opt_geometry_normals , 0. ,
     "Display size of normal vectors (in pixels)" },
-  { F|O, "NumSubEdges" , opt_geometry_num_sub_edges , 40. ,
-    "Number of subdivisions (per control point or pole) used to draw curves" },
+  { F|O, "NumSubEdges" , opt_geometry_num_sub_edges , 100. ,
+    "Number of subdivisions used to draw curves" },
 
   { F|O, "OCCAutoEmbed" , opt_geometry_occ_auto_embed , 1. ,
     "Automatically embed points, curves and faces in higher dimensional entities if "
