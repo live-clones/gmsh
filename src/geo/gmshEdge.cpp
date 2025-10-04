@@ -158,13 +158,10 @@ int gmshEdge::minimumMeshSegments() const
 
 int gmshEdge::minimumDrawSegments() const
 {
-  int n = List_Nbr(_c->Control_Points) - 1;
-  if(n <= 0) n = GEdge::minimumDrawSegments();
-
   if(geomType() == Line && !_c->geometry)
-    return n;
+    return 1;
   else
-    return CTX::instance()->geom.numSubEdges * n;
+    return std::max(1, CTX::instance()->geom.numSubEdges);
 }
 
 SPoint2 gmshEdge::reparamOnFace(const GFace *face, double epar, int dir) const

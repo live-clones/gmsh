@@ -1127,8 +1127,8 @@ fltk.add('lock', doc, None)
 doc = '''Release the lock that was set using lock.'''
 fltk.add('unlock', doc, None)
 
-doc = '''Run the event loop of the graphical user interface, i.e. repeatedly call `wait()'. First automatically create the user interface if it has not yet been initialized. Can only be called in the main thread.'''
-fltk.add('run', doc, None)
+doc = '''Run the event loop of the graphical user interface, i.e. repeatedly call `wait()'. First automatically create the user interface if it has not yet been initialized. If an `optionFileName' is given, load it before entering the loop, and save all options and visibility information into it after exiting the loop. Can only be called in the main thread.'''
+fltk.add('run', doc, None, istring('optionFileName', '""'))
 
 doc = '''Check if the user interface is available (e.g. to detect if it has been closed).'''
 fltk.add('isAvailable', doc, oint)

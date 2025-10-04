@@ -3466,8 +3466,11 @@ GMSH_API void gmshFltkUnlock(int * ierr);
 
 /* Run the event loop of the graphical user interface, i.e. repeatedly call
  * `wait()'. First automatically create the user interface if it has not yet
- * been initialized. Can only be called in the main thread. */
-GMSH_API void gmshFltkRun(int * ierr);
+ * been initialized. If an `optionFileName' is given, load it before entering
+ * the loop, and save all options and visibility information into it after
+ * exiting the loop. Can only be called in the main thread. */
+GMSH_API void gmshFltkRun(const char * optionFileName,
+                          int * ierr);
 
 /* Check if the user interface is available (e.g. to detect if it has been
  * closed). */

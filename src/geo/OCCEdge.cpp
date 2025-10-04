@@ -400,13 +400,10 @@ int OCCEdge::minimumMeshSegments() const
 
 int OCCEdge::minimumDrawSegments() const
 {
-  int n = _nbpoles;
-  if(n <= 0) n = GEdge::minimumDrawSegments();
-
   if(geomType() == Line)
-    return n;
+    return 1;
   else
-    return CTX::instance()->geom.numSubEdges * n;
+    return std::max(1, CTX::instance()->geom.numSubEdges);
 }
 
 double OCCEdge::curvature(double par) const

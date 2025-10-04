@@ -4778,11 +4778,11 @@ GMSH_API void gmshFltkUnlock(int * ierr)
   }
 }
 
-GMSH_API void gmshFltkRun(int * ierr)
+GMSH_API void gmshFltkRun(const char * optionFileName, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::fltk::run();
+    gmsh::fltk::run(optionFileName);
   }
   catch(...){
     if(ierr) *ierr = 1;

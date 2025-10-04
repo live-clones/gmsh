@@ -299,6 +299,11 @@ static int _save_mesh_stat(const char *name)
 }
 static int _save_options(const char *name) { return optionsFileDialog(name); }
 static int _save_geo(const char *name) { return geoFileDialog(name); }
+static int _save_visibility(const char *name)
+{
+  CreateOutputFile(name, FORMAT_VIS);
+  return 1;
+}
 static int _save_brep(const char *name)
 {
   CreateOutputFile(name, FORMAT_BREP);
@@ -493,6 +498,7 @@ static int _save_auto(const char *name)
   case FORMAT_PVTU: return _save_view_adapt_pvtu(name);
   case FORMAT_TXT: return _save_view_txt(name);
   case FORMAT_OPT: return _save_options(name);
+  case FORMAT_VIS: return _save_visibility(name);
   case FORMAT_GEO: return _save_geo(name);
   case FORMAT_BREP: return _save_brep(name);
   case FORMAT_XAO: return _save_xao(name);
@@ -551,6 +557,7 @@ static void file_export_cb(Fl_Widget *w, void *data)
     {"Guess From Extension\t*.*", _save_auto},
     {"Geometry - Gmsh Options\t*.opt", _save_options},
     {"Geometry - Gmsh Unrolled GEO\t*.geo_unrolled", _save_geo},
+    {"Geometry - Gmsh Visibility\t*.vis", _save_visibility},
 #if defined(HAVE_OCC)
     {"Geometry - OpenCASCADE BRep\t*.brep", _save_brep},
     {"Geometry - OpenCASCADE XAO\t*.xao", _save_xao},
@@ -709,14 +716,16 @@ static void file_delete_cb(Fl_Widget *w, void *data)
 void file_quit_cb(Fl_Widget *w, void *data)
 {
   // save persistent info to disk
-  if(CTX::instance()->sessionSave)
+  if(CTX::instance()->sessionSave) {
     PrintOptions(
       0, GMSH_SESSIONRC, 0, 0,
       (CTX::instance()->homeDir + CTX::instance()->sessionFileName).c_str());
-  if(CTX::instance()->optionsSave == 1)
+  }
+  if(CTX::instance()->optionsSave == 1) {
     PrintOptions(
       0, GMSH_OPTIONSRC, 1, 0,
       (CTX::instance()->homeDir + CTX::instance()->optionsFileName).c_str());
+  }
   else if(CTX::instance()->optionsSave == 2) {
     std::string fileName = GModel::current()->getFileName() + ".opt";
     PrintOptions(0, GMSH_FULLRC, 1, 0, fileName.c_str());

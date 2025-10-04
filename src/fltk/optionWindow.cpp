@@ -2344,7 +2344,7 @@ optionWindow::optionWindow(int deltaFontSize)
                                          "Curve subdivisions");
       geo.value[19]->tooltip("Geometry.NumSubEdges");
       geo.value[19]->minimum(1);
-      geo.value[19]->maximum(50);
+      geo.value[19]->maximum(1000);
       if(CTX::instance()->inputScrolling) geo.value[19]->step(1);
       geo.value[19]->align(FL_ALIGN_RIGHT);
       geo.value[19]->callback(geometry_options_ok_cb);

@@ -628,6 +628,20 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
 
 FlGui::~FlGui()
 {
+  // copy back to temp values, in case we'd like to retrieve them after the GUI
+  // has been closed
+  drawContext *c = getCurrentDrawContext();
+  if(c) {
+    for(int i = 0; i < 3; i++) {
+      CTX::instance()->tmpRotation[i] = c->r[i];
+      CTX::instance()->tmpTranslation[i] = c->t[i];
+      CTX::instance()->tmpScale[i] = c->s[i];
+    }
+    for(int i = 0; i < 4; i++) {
+      CTX::instance()->tmpQuaternion[i] = c->quaternion[i];
+    }
+  }
+
   for(std::size_t i = 0; i < graph.size(); i++) delete graph[i];
   delete options;
   delete fields;
@@ -690,8 +704,14 @@ void FlGui::destroy()
   _instance = nullptr;
 }
 
-int FlGui::run()
+int FlGui::run(const std::string &optionFileName)
 {
+  // if optionFileName is given, we load the file before entering the event
+  // loop, and we automatically save the options when it ends
+  if(optionFileName.size()) {
+    MergeFile(optionFileName, false);
+  }
+
   // draw the scene
   drawContext::global()->draw(false);
 
@@ -699,7 +719,14 @@ int FlGui::run()
   updateTouchBar();
 #endif
 
-  return Fl::run();
+  int ret = Fl::run();
+
+  if(optionFileName.size()) {
+    PrintOptions(0, GMSH_FULLRC, 0, 0, optionFileName.c_str());
+    visibility_save(optionFileName);
+  }
+
+  return ret;
 }
 
 int FlGui::testGlobalShortcuts(int event)

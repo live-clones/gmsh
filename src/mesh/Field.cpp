@@ -185,7 +185,6 @@ public:
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
-#pragma omp critical(StructuredField)
     if(updateNeeded) {
       _errorStatus = false;
       try {

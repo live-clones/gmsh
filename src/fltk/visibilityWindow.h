@@ -37,5 +37,6 @@ public:
 };
 
 void visibility_cb(Fl_Widget *w, void *data);
+void visibility_save(const std::string &fileName);
 
 #endif

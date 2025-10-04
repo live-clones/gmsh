@@ -22,6 +22,7 @@
 #include "FlGui.h"
 #include "graphicWindow.h"
 #include "openglWindow.h"
+#include "visibilityWindow.h"
 #include "gl2ps.h"
 #include "gl2gif.h"
 #include "gl2jpeg.h"
@@ -48,6 +49,7 @@ int GetFileFormatFromExtension(const std::string &ext, double *version)
   else if(ext == ".pos")      return FORMAT_POS;
   else if(ext == ".pvtu")     return FORMAT_PVTU;
   else if(ext == ".opt")      return FORMAT_OPT;
+  else if(ext == ".vis")      return FORMAT_VIS;
   else if(ext == ".unv")      return FORMAT_UNV;
   else if(ext == ".vtk")      return FORMAT_VTK;
   else if(ext == ".m")        return FORMAT_MATLAB;
@@ -118,6 +120,7 @@ std::string GetDefaultFileExtension(int format, bool onlyMeshFormats)
   case FORMAT_X3D:     name = ".x3d"; mesh = true; break;
   case FORMAT_PVTU:    name = ".pvtu"; break;
   case FORMAT_OPT:     name = ".opt"; break;
+  case FORMAT_VIS:     name = ".vis"; break;
   case FORMAT_UNV:     name = ".unv"; mesh = true; break;
   case FORMAT_VTK:     name = ".vtk"; mesh = true; break;
   case FORMAT_MATLAB:  name = ".m"; mesh = true; break;
@@ -550,6 +553,11 @@ void CreateOutputFile(const std::string &fileName, int format,
     break;
 
 #if defined(HAVE_FLTK)
+  case FORMAT_VIS:
+    UnlinkFile(name);
+    visibility_save(name);
+    break;
+
   case FORMAT_PPM:
   case FORMAT_YUV:
   case FORMAT_GIF:

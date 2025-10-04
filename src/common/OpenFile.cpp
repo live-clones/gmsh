@@ -183,9 +183,13 @@ int ParseFile(const std::string &fileName, bool close, bool errorIfMissing)
   // fsetpos/fgetpos (used e.g. for user-defined functions)
   FILE *fp;
   if(!(fp = Fopen(fileName.c_str(), "rb"))) {
-    if(errorIfMissing)
+    if(errorIfMissing) {
       Msg::Error("Unable to open file '%s'", fileName.c_str());
-    return 0;
+      return 0;
+    }
+    else{
+      return 1; // still ok
+    }
   }
 
   Msg::AddOnelabStringChoice("Gmsh/}Input files", "file", fileName, true, true,
@@ -300,9 +304,13 @@ int MergeFile(const std::string &fileName, bool errorIfMissing,
   // contain binary data
   FILE *fp = Fopen(fileName.c_str(), "rb");
   if(!fp) {
-    if(errorIfMissing)
+    if(errorIfMissing) {
       Msg::Error("Unable to open file '%s'", fileName.c_str());
-    return 0;
+      return 0;
+    }
+    else{
+      return 1; // still ok
+    }
   }
 
   char header[256];
