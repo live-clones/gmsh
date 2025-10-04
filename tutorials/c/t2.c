@@ -200,7 +200,11 @@ int main(int argc, char **argv)
   //
   // gmshWrite("t2.geo_unrolled", &ierr);
 
-  // Launch the GUI to see the results:
+  // Launch the GUI to see the results. Providing an option file name (here
+  // "t2.opt") to the run() function will automatically load all the options and
+  // visibility information from that option file before running the GUI, and
+  // save all the options and visibility information to the file when the GUI is
+  // closed.
   int gui = 1;
   for(int i = 0; i < argc; i++) {
     if(!strcmp(argv[i], "-nopopup")) {
@@ -208,7 +212,7 @@ int main(int argc, char **argv)
       break;
     }
   }
-  if(gui) gmshFltkRun("", &ierr);
+  if(gui) gmshFltkRun("t2.opt", &ierr);
 
   gmshFinalize(&ierr);
   return 0;

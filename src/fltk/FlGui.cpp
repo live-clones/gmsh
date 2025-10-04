@@ -723,7 +723,10 @@ int FlGui::run(const std::string &optionFileName)
 
   if(optionFileName.size()) {
     PrintOptions(0, GMSH_FULLRC, 0, 0, optionFileName.c_str());
+    int old = CTX::instance()->expertMode;
+    CTX::instance()->expertMode = 1; // disable warning if non-geo file
     visibility_save(optionFileName);
+    CTX::instance()->expertMode = old;
   }
 
   return ret;

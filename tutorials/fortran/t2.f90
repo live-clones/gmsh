@@ -157,8 +157,11 @@ call gmsh%write("t2.msh")
 !
 ! call gmsh%write("t2.geo_unrolled");
 
-! Launch the GUI to see the results:
-if (.not. any(argv == "-nopopup")) call gmsh%fltk%run()
+! Launch the GUI to see the results. Providing an option file name (here
+! "t2.opt") to the run() function will automatically load all the options and
+! visibility information from that option file before running the GUI, and save
+! all the options and visibility information to the file when the GUI is closed.
+if (.not. any(argv == "-nopopup")) call gmsh%fltk%run("t2.opt")
 call gmsh%finalize()
 deallocate(ov, ov2, argv, xyz)
 

@@ -149,9 +149,13 @@ int main(int argc, char **argv)
   //
   // gmsh::write("t2.geo_unrolled");
 
-  // Launch the GUI to see the results:
+  // Launch the GUI to see the results. Providing an option file name (here
+  // "t2.opt") to the run() function will automatically load all the options and
+  // visibility information from that option file before running the GUI, and
+  // save all the options and visibility information to the file when the GUI is
+  // closed.
   std::set<std::string> args(argv, argv + argc);
-  if(!args.count("-nopopup")) gmsh::fltk::run();
+  if(!args.count("-nopopup")) gmsh::fltk::run("t2.opt");
 
   gmsh::finalize();
   return 0;
