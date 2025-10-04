@@ -49,8 +49,8 @@ static void scriptAddCommand(const std::string &text,
   // make sure we don't add stuff in a non-geo file
   static bool proceed = false;
   if(!CTX::instance()->expertMode && !proceed) {
-    if(ext.size() && ext != ".geo" && ext != ".GEO" && ext != ".vis" &&
-       ext != ".VIS") {
+    if(ext.size() && ext != ".geo" && ext != ".GEO" && ext != ".opt" &&
+       ext != ".OPT" && ext != ".vis" && ext != ".VIS") {
       std::ostringstream sstream;
       sstream << "A scripting command is going to be appended to a non-`.geo' "
                  "file. Are\nyou sure you want to proceed?\n\n"

@@ -729,6 +729,8 @@ void file_quit_cb(Fl_Widget *w, void *data)
   else if(CTX::instance()->optionsSave == 2) {
     std::string fileName = GModel::current()->getFileName() + ".opt";
     PrintOptions(0, GMSH_FULLRC, 1, 0, fileName.c_str());
+    // also save visibility info - same as with fltk::run("options")
+    visibility_save(fileName);
   }
 
   if(FlGui::instance()->quitShouldExit()) { Msg::Exit(0); }
