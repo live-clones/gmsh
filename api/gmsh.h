@@ -3801,9 +3801,9 @@ namespace gmsh { // Top-level functions
     //
     // Triangulate the points given in the `coordinates' vector as concatenated
     // pairs of u, v coordinates, with (optional) constrained edges given in the
-    // `edges' vector as pair of indexes (with numbering starting at 1), and return
-    // the triangles as concatenated triplets of point indexes (with numbering
-    // starting at 1) in `triangles'.
+    // `edges' vector as pairs of indexes (with numbering starting at 1), and
+    // return the triangles as concatenated triplets of point indexes (with
+    // numbering starting at 1) in `triangles'.
     GMSH_API void triangulate(const std::vector<double> & coordinates,
                               std::vector<std::size_t> & triangles,
                               const std::vector<std::size_t> & edges = std::vector<std::size_t>());
@@ -3811,10 +3811,15 @@ namespace gmsh { // Top-level functions
     // gmsh::algorithm::tetrahedralize
     //
     // Tetrahedralize the points given in the `coordinates' vector as concatenated
-    // triplets of x, y, z coordinates, and return the tetrahedra as concatenated
-    // quadruplets of point indexes (with numbering starting at 1) in `tetrahedra'.
+    // triplets of x, y, z coordinates, with (optional) constrained triangles given
+    // in the `triangles' vector as triplets of indexes (with numbering starting at
+    // 1), and return the tetrahedra as concatenated quadruplets of point indexes
+    // (with numbering starting at 1) in `tetrahedra'. Steiner points might be
+    // added in the `steiner' vector.
     GMSH_API void tetrahedralize(const std::vector<double> & coordinates,
-                                 std::vector<std::size_t> & tetrahedra);
+                                 std::vector<std::size_t> & tetrahedra,
+                                 std::vector<double> & steiner,
+                                 const std::vector<std::size_t> & triangles = std::vector<std::size_t>());
 
   } // namespace algorithm
 
