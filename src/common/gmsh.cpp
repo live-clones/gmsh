@@ -92,7 +92,6 @@
 
 #if defined(HAVE_FLTK)
 #include "FlGui.h"
-#include "visibilityWindow.h"
 #endif
 
 #if defined(HAVE_PARSER)
