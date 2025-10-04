@@ -14814,17 +14814,24 @@ module gmsh
 
   !> Run the event loop of the graphical user interface, i.e. repeatedly call
   !! `wait()'. First automatically create the user interface if it has not yet
-  !! been initialized. Can only be called in the main thread.
-  subroutine gmshFltkRun(ierr)
+  !! been initialized. If an `optionFileName' is given, load it before entering
+  !! the loop, and save all options and visibility information into it after
+  !! exiting the loop. Can only be called in the main thread.
+  subroutine gmshFltkRun(optionFileName, &
+                         ierr)
     interface
-    subroutine C_API(ierr_) &
+    subroutine C_API(optionFileName, &
+                     ierr_) &
       bind(C, name="gmshFltkRun")
       use, intrinsic :: iso_c_binding
+      character(len=1, kind=c_char), dimension(*), intent(in), optional :: optionFileName
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
+    character(len=*), intent(in), optional :: optionFileName
     integer(c_int), intent(out), optional :: ierr
-    call C_API(ierr_=ierr)
+    call C_API(optionFileName=istring_(optval_c_str("", optionFileName)), &
+         ierr_=ierr)
   end subroutine gmshFltkRun
 
   !> Check if the user interface is available (e.g. to detect if it has been

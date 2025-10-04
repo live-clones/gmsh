@@ -833,10 +833,8 @@ void visibility_cb(Fl_Widget *w, void *data)
   FlGui::instance()->visibility->updatePerWindow(true);
 }
 
-static void visibility_save_cb(Fl_Widget *w, void *data)
+void visibility_save(const std::string &fileName)
 {
-  Msg::StatusBar(true, "Appending visibility info to '%s'...",
-                 GModel::current()->getFileName().c_str());
   // get the whole visibility information in geo format
   std::vector<int> state[4][2];
   GModel *m = GModel::current();
@@ -859,12 +857,12 @@ static void visibility_save_cb(Fl_Widget *w, void *data)
     off += state[i][0].size();
   }
   if(on > off) {
-    scriptSetVisibilityAll(1, GModel::current()->getFileName());
+    scriptSetVisibilityAll(1, fileName);
     if(!off) return;
     mode = 0;
   }
   else {
-    scriptSetVisibilityAll(0, GModel::current()->getFileName());
+    scriptSetVisibilityAll(0, fileName);
     if(!on) return;
     mode = 1;
   }
@@ -875,7 +873,14 @@ static void visibility_save_cb(Fl_Widget *w, void *data)
       }
     }
   }
-  scriptSetVisibility(mode, entities, GModel::current()->getFileName());
+  scriptSetVisibility(mode, entities, fileName);
+}
+
+static void visibility_save_cb(Fl_Widget *w, void *data)
+{
+  Msg::StatusBar(true, "Appending visibility info to '%s'...",
+                 GModel::current()->getFileName().c_str());
+  visibility_save(GModel::current()->getFileName());
   Msg::StatusBar(true, "Done appending visibility info");
 }
 

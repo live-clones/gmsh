@@ -222,9 +222,9 @@ int GmshClearProject()
   return 1;
 }
 
-int GmshMergeFile(const std::string &fileName)
+int GmshMergeFile(const std::string &fileName, bool errorIfMissing)
 {
-  return MergeFile(fileName, true);
+  return MergeFile(fileName, errorIfMissing);
 }
 
 int GmshMergePostProcessingFile(const std::string &fileName)
@@ -354,16 +354,16 @@ int GmshBatch()
 
       //      void testRelaying();
       //      testRelaying() ;
-      //      
       //
-      
+      //
+
       std::vector<int> tags;
       computeCrossField(GModel::current(), tags);
       GoodbyeMessage();
       CTX::instance()->batch = 0;
       // still a bug in allocation somewhere
       exit(0);
-      
+
     }
 #endif
   }

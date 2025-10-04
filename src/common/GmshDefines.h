@@ -18,6 +18,7 @@
 #define FORMAT_AUTO         10
 #define FORMAT_PPM          11
 #define FORMAT_YUV          12
+#define FORMAT_VIS          14
 #define FORMAT_OPT          15
 #define FORMAT_VTK          16
 #define FORMAT_MPEG         17

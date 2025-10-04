@@ -9284,17 +9284,22 @@ function unlock()
 end
 
 """
-    gmsh.fltk.run()
+    gmsh.fltk.run(optionFileName = "")
 
 Run the event loop of the graphical user interface, i.e. repeatedly call
 `wait()`. First automatically create the user interface if it has not yet been
-initialized. Can only be called in the main thread.
+initialized. If an `optionFileName` is given, load it before entering the loop,
+and save all options and visibility information into it after exiting the loop.
+Can only be called in the main thread.
+
+Types:
+ - `optionFileName`: string
 """
-function run()
+function run(optionFileName = "")
     ierr = Ref{Cint}()
     ccall((:gmshFltkRun, gmsh.lib), Cvoid,
-          (Ptr{Cint},),
-          ierr)
+          (Ptr{Cchar}, Ptr{Cint}),
+          optionFileName, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end

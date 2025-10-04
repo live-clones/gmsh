@@ -92,6 +92,7 @@
 
 #if defined(HAVE_FLTK)
 #include "FlGui.h"
+#include "visibilityWindow.h"
 #endif
 
 #if defined(HAVE_PARSER)
@@ -8507,12 +8508,12 @@ GMSH_API void gmsh::fltk::awake(const std::string &action)
 #endif
 }
 
-GMSH_API void gmsh::fltk::run()
+GMSH_API void gmsh::fltk::run(const std::string &optionFileName)
 {
   if(!_checkInit()) return;
 #if defined(HAVE_FLTK)
   _createFltk();
-  FlGui::instance()->run(); // this calls draw() once
+  FlGui::instance()->run(optionFileName); // this calls draw() once
 #else
   Msg::Error("Fltk not available");
 #endif
