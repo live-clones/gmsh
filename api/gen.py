@@ -603,10 +603,10 @@ doc = '''Compute alpha shape of the mesh in entity of tag `tag' using an array o
 mesh.add('alphaShape3DFromArray', doc, None, iint('tag'), ivectorsize('elementTags'), ivectordouble('alpha'), iint('tagAlpha'), iint('tagAlphaBoundary'), ovectorsize('tri2TetMap'), ibool('removeDisconnectedNodes', 'false', 'False'), ibool('returnTri2TetMap', 'false', 'False'))
 
 doc = '''Mesh refinement/derefinement through edge splitting of (surface) entity of tag `tag'''
-mesh.add('surfaceEdgeSplitting', doc, None, iint('fullTag'), iint('surfaceTag'), iint('sizeFieldTag'), ivectorsize('tri2TetMap'), ibool('tetrahedralize', 'false', 'False'), ibool('buildElementOctree', 'false', 'False'))
+mesh.add('surfaceEdgeSplitting', doc, None, iint('fullTag'), iint('surfaceTag'), ovectordouble('sizeAtNodes'), ibool('tetrahedralize', 'false', 'False'))
 
 doc = '''Volume mesh refinement/derefinement using hxt refinement approaches of volume entity of tag `tag', and bounded by surface entity of tag `surfaceTag'.'''
-mesh.add('volumeMeshRefinement', doc, None, iint('fullTag'), iint('surfaceTag'), iint('volumeTag'), iint('sizeFieldTag'), ibool('returnNodalCurvature'), ovectordouble('nodalCurvature'))
+mesh.add('volumeMeshRefinement', doc, None, iint('fullTag'), iint('surfaceTag'), iint('volumeTag'), ivectordouble('sizeAtNodes'), ibool('returnNodalCurvature'), ovectordouble('nodalCurvature'))
 
 doc = '''Filter out points in the region with tag `tag' that are too close to each other based on the size field with tag `sizeFieldTag' and a given tolerance `tolerance'.'''
 mesh.add('filterCloseNodes', doc, None, iint('tag'), iint('sizeFieldTag'), idouble('tolerance'))

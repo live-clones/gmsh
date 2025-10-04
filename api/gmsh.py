@@ -5382,39 +5382,38 @@ class model:
         alpha_shape3_dfrom_array = alphaShape3DFromArray
 
         @staticmethod
-        def surfaceEdgeSplitting(fullTag, surfaceTag, sizeFieldTag, tri2TetMap, tetrahedralize=False, buildElementOctree=False):
+        def surfaceEdgeSplitting(fullTag, surfaceTag, tetrahedralize=False):
             """
-            gmsh.model.mesh.surfaceEdgeSplitting(fullTag, surfaceTag, sizeFieldTag, tri2TetMap, tetrahedralize=False, buildElementOctree=False)
+            gmsh.model.mesh.surfaceEdgeSplitting(fullTag, surfaceTag, tetrahedralize=False)
 
             Mesh refinement/derefinement through edge splitting of (surface) entity of
             tag `tag
 
+            Return `sizeAtNodes'.
+
             Types:
             - `fullTag': integer
             - `surfaceTag': integer
-            - `sizeFieldTag': integer
-            - `tri2TetMap': vector of sizes
+            - `sizeAtNodes': vector of doubles
             - `tetrahedralize': boolean
-            - `buildElementOctree': boolean
             """
-            api_tri2TetMap_, api_tri2TetMap_n_ = _ivectorsize(tri2TetMap)
+            api_sizeAtNodes_, api_sizeAtNodes_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshSurfaceEdgeSplitting(
                 c_int(fullTag),
                 c_int(surfaceTag),
-                c_int(sizeFieldTag),
-                api_tri2TetMap_, api_tri2TetMap_n_,
+                byref(api_sizeAtNodes_), byref(api_sizeAtNodes_n_),
                 c_int(bool(tetrahedralize)),
-                c_int(bool(buildElementOctree)),
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
+            return _ovectordouble(api_sizeAtNodes_, api_sizeAtNodes_n_.value)
         surface_edge_splitting = surfaceEdgeSplitting
 
         @staticmethod
-        def volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag, returnNodalCurvature):
+        def volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeAtNodes, returnNodalCurvature):
             """
-            gmsh.model.mesh.volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag, returnNodalCurvature)
+            gmsh.model.mesh.volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeAtNodes, returnNodalCurvature)
 
             Volume mesh refinement/derefinement using hxt refinement approaches of
             volume entity of tag `tag', and bounded by surface entity of tag
@@ -5426,17 +5425,18 @@ class model:
             - `fullTag': integer
             - `surfaceTag': integer
             - `volumeTag': integer
-            - `sizeFieldTag': integer
+            - `sizeAtNodes': vector of doubles
             - `returnNodalCurvature': boolean
             - `nodalCurvature': vector of doubles
             """
+            api_sizeAtNodes_, api_sizeAtNodes_n_ = _ivectordouble(sizeAtNodes)
             api_nodalCurvature_, api_nodalCurvature_n_ = POINTER(c_double)(), c_size_t()
             ierr = c_int()
             lib.gmshModelMeshVolumeMeshRefinement(
                 c_int(fullTag),
                 c_int(surfaceTag),
                 c_int(volumeTag),
-                c_int(sizeFieldTag),
+                api_sizeAtNodes_, api_sizeAtNodes_n_,
                 c_int(bool(returnNodalCurvature)),
                 byref(api_nodalCurvature_), byref(api_nodalCurvature_n_),
                 byref(ierr))

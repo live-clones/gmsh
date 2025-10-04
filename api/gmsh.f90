@@ -7955,47 +7955,41 @@ module gmsh
   !! tag `tag
   subroutine gmshModelMeshSurfaceEdgeSplitting(fullTag, &
                                                surfaceTag, &
-                                               sizeFieldTag, &
-                                               tri2TetMap, &
+                                               sizeAtNodes, &
                                                tetrahedralize, &
-                                               buildElementOctree, &
                                                ierr)
     interface
     subroutine C_API(fullTag, &
                      surfaceTag, &
-                     sizeFieldTag, &
-                     api_tri2TetMap_, &
-                     api_tri2TetMap_n_, &
+                     api_sizeAtNodes_, &
+                     api_sizeAtNodes_n_, &
                      tetrahedralize, &
-                     buildElementOctree, &
                      ierr_) &
       bind(C, name="gmshModelMeshSurfaceEdgeSplitting")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: fullTag
       integer(c_int), value, intent(in) :: surfaceTag
-      integer(c_int), value, intent(in) :: sizeFieldTag
-      integer(c_size_t), dimension(*) :: api_tri2TetMap_
-      integer(c_size_t), value, intent(in) :: api_tri2TetMap_n_
+      type(c_ptr), intent(out) :: api_sizeAtNodes_
+      integer(c_size_t) :: api_sizeAtNodes_n_
       integer(c_int), value, intent(in) :: tetrahedralize
-      integer(c_int), value, intent(in) :: buildElementOctree
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer, intent(in) :: fullTag
     integer, intent(in) :: surfaceTag
-    integer, intent(in) :: sizeFieldTag
-    integer(c_size_t), dimension(:), intent(in) :: tri2TetMap
+    real(c_double), dimension(:), allocatable, intent(out) :: sizeAtNodes
     logical, intent(in), optional :: tetrahedralize
-    logical, intent(in), optional :: buildElementOctree
     integer(c_int), intent(out), optional :: ierr
+    type(c_ptr) :: api_sizeAtNodes_
+    integer(c_size_t) :: api_sizeAtNodes_n_
     call C_API(fullTag=int(fullTag, c_int), &
          surfaceTag=int(surfaceTag, c_int), &
-         sizeFieldTag=int(sizeFieldTag, c_int), &
-         api_tri2TetMap_=tri2TetMap, &
-         api_tri2TetMap_n_=size_gmsh_size(tri2TetMap), &
+         api_sizeAtNodes_=api_sizeAtNodes_, &
+         api_sizeAtNodes_n_=api_sizeAtNodes_n_, &
          tetrahedralize=optval_c_bool(.false., tetrahedralize), &
-         buildElementOctree=optval_c_bool(.false., buildElementOctree), &
          ierr_=ierr)
+    sizeAtNodes = ovectordouble_(api_sizeAtNodes_, &
+      api_sizeAtNodes_n_)
   end subroutine gmshModelMeshSurfaceEdgeSplitting
 
   !> Volume mesh refinement/derefinement using hxt refinement approaches of
@@ -8004,7 +7998,7 @@ module gmsh
   subroutine gmshModelMeshVolumeMeshRefinement(fullTag, &
                                                surfaceTag, &
                                                volumeTag, &
-                                               sizeFieldTag, &
+                                               sizeAtNodes, &
                                                returnNodalCurvature, &
                                                nodalCurvature, &
                                                ierr)
@@ -8012,7 +8006,8 @@ module gmsh
     subroutine C_API(fullTag, &
                      surfaceTag, &
                      volumeTag, &
-                     sizeFieldTag, &
+                     api_sizeAtNodes_, &
+                     api_sizeAtNodes_n_, &
                      returnNodalCurvature, &
                      api_nodalCurvature_, &
                      api_nodalCurvature_n_, &
@@ -8022,7 +8017,8 @@ module gmsh
       integer(c_int), value, intent(in) :: fullTag
       integer(c_int), value, intent(in) :: surfaceTag
       integer(c_int), value, intent(in) :: volumeTag
-      integer(c_int), value, intent(in) :: sizeFieldTag
+      real(c_double), dimension(*) :: api_sizeAtNodes_
+      integer(c_size_t), value, intent(in) :: api_sizeAtNodes_n_
       integer(c_int), value, intent(in) :: returnNodalCurvature
       type(c_ptr), intent(out) :: api_nodalCurvature_
       integer(c_size_t) :: api_nodalCurvature_n_
@@ -8032,7 +8028,7 @@ module gmsh
     integer, intent(in) :: fullTag
     integer, intent(in) :: surfaceTag
     integer, intent(in) :: volumeTag
-    integer, intent(in) :: sizeFieldTag
+    real(c_double), dimension(:), intent(in) :: sizeAtNodes
     logical, intent(in) :: returnNodalCurvature
     real(c_double), dimension(:), allocatable, intent(out) :: nodalCurvature
     integer(c_int), intent(out), optional :: ierr
@@ -8041,7 +8037,8 @@ module gmsh
     call C_API(fullTag=int(fullTag, c_int), &
          surfaceTag=int(surfaceTag, c_int), &
          volumeTag=int(volumeTag, c_int), &
-         sizeFieldTag=int(sizeFieldTag, c_int), &
+         api_sizeAtNodes_=sizeAtNodes, &
+         api_sizeAtNodes_n_=size_gmsh_double(sizeAtNodes), &
          returnNodalCurvature=merge(1_c_int, 0_c_int, returnNodalCurvature), &
          api_nodalCurvature_=api_nodalCurvature_, &
          api_nodalCurvature_n_=api_nodalCurvature_n_, &

@@ -1725,10 +1725,8 @@ GMSH_API void gmshModelMeshAlphaShape3DFromArray(const int tag,
  * tag `tag */
 GMSH_API void gmshModelMeshSurfaceEdgeSplitting(const int fullTag,
                                                 const int surfaceTag,
-                                                const int sizeFieldTag,
-                                                const size_t * tri2TetMap, const size_t tri2TetMap_n,
+                                                double ** sizeAtNodes, size_t * sizeAtNodes_n,
                                                 const int tetrahedralize,
-                                                const int buildElementOctree,
                                                 int * ierr);
 
 /* Volume mesh refinement/derefinement using hxt refinement approaches of
@@ -1737,7 +1735,7 @@ GMSH_API void gmshModelMeshSurfaceEdgeSplitting(const int fullTag,
 GMSH_API void gmshModelMeshVolumeMeshRefinement(const int fullTag,
                                                 const int surfaceTag,
                                                 const int volumeTag,
-                                                const int sizeFieldTag,
+                                                const double * sizeAtNodes, const size_t sizeAtNodes_n,
                                                 const int returnNodalCurvature,
                                                 double ** nodalCurvature, size_t * nodalCurvature_n,
                                                 int * ierr);

@@ -5832,18 +5832,18 @@ gmsh::model::mesh::alphaShape3DFromArray(const int tag, const std::vector<size_t
 }
 
 GMSH_API void
-gmsh::model::mesh::surfaceEdgeSplitting(const int fullTag, const int surfaceTag, const int sizeFieldTag, const std::vector<std::size_t>& tri2TetMap, const bool tetrahedralize, const bool buildElementOctree){
+gmsh::model::mesh::surfaceEdgeSplitting(const int fullTag, const int surfaceTag, std::vector<double>& sizeAtNodes, const bool tetrahedralize){
 #if defined(HAVE_MESH) && defined(HAVE_HXT)
-  AlphaShape::_surfaceEdgeSplitting(fullTag, surfaceTag, sizeFieldTag, tetrahedralize, buildElementOctree, tri2TetMap);
+  AlphaShape::_surfaceEdgeSplitting(fullTag, surfaceTag, sizeAtNodes, tetrahedralize);
 #else
   Msg::Error("surfaceEdgeSplitting requires the mesh and hxt modules");
 #endif
 }
 
 GMSH_API void
-gmsh::model::mesh::volumeMeshRefinement(const int fullTag, const int surfaceTag, const int volumeTag, const int sizeFieldTag, const bool returnNodalCurvature, std::vector<double>& nodalCurvature){
+gmsh::model::mesh::volumeMeshRefinement(const int fullTag, const int surfaceTag, const int volumeTag, const std::vector<double>& sizeAtNodes, const bool returnNodalCurvature, std::vector<double>& nodalCurvature){
 #if defined(HAVE_MESH) && defined(HAVE_HXT)
-  AlphaShape::_volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag, returnNodalCurvature, nodalCurvature);
+  AlphaShape::_volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeAtNodes, returnNodalCurvature, nodalCurvature);
   // AlphaShape::_volumeMeshRefinementMeshFromAlphaShapeElements(fullTag, surfaceTag, volumeTag, sizeFieldTag, returnNodalCurvature, nodalCurvature);
 #else
   Msg::Error("volumeMeshRefinement requires the mesh and hxt modules");

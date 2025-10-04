@@ -1947,10 +1947,8 @@ namespace gmsh { // Top-level functions
       // tag `tag
       GMSH_API void surfaceEdgeSplitting(const int fullTag,
                                          const int surfaceTag,
-                                         const int sizeFieldTag,
-                                         const std::vector<std::size_t> & tri2TetMap,
-                                         const bool tetrahedralize = false,
-                                         const bool buildElementOctree = false);
+                                         std::vector<double> & sizeAtNodes,
+                                         const bool tetrahedralize = false);
 
       // gmsh::model::mesh::volumeMeshRefinement
       //
@@ -1960,7 +1958,7 @@ namespace gmsh { // Top-level functions
       GMSH_API void volumeMeshRefinement(const int fullTag,
                                          const int surfaceTag,
                                          const int volumeTag,
-                                         const int sizeFieldTag,
+                                         const std::vector<double> & sizeAtNodes,
                                          const bool returnNodalCurvature,
                                          std::vector<double> & nodalCurvature);
 

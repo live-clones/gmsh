@@ -3322,7 +3322,7 @@ int _GFace2PolyMesh(int faceTag, PolyMesh **pm, std::vector<PolyMesh::Face*>& to
   return 0;
 }
 
-void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, const int sizeFieldTag, const bool tetrahedralize, const bool buildElementOctree, const std::vector<size_t> tri2TetMap){
+void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, std::vector<double>& sizeAtNodes, const bool tetrahedralize){
   GModel *gm = GModel::current();
   GFace *df = gm->getFaceByTag(surfaceTag);
   
@@ -3341,101 +3341,22 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
     return;
   }
 
-  // printf("hmm 0 \n");
-
-  // if (buildElementOctree){
-  //   SPoint3 p0(0., 0., 0.);
-  //   SPoint3 p_param;
-  //   auto me = gm->getMeshElementByCoord(p0, p_param, 3);
-  // }
-
-  std::unordered_map<size_t, size_t> tri2Tet; 
-  std::unordered_map<size_t, MTetrahedron*> num2Tet;
-  bool useMap = false;
-  if (tri2TetMap.size() > 0){
-    useMap = true;
-    for (size_t i=0; i<tri2TetMap.size(); i+=2){
-      tri2Tet[tri2TetMap[i]] = tri2TetMap[i+1];
-    }
-    for (auto tet : gr->tetrahedra){
-      num2Tet[tet->getNum()] = tet;
-    }
-  }
-
-  // printf("hmm 1 \n");
-  // Update the alpha shape size field
-  // // Update the distance field
-  // std::vector<SPoint3> points;
-  // for (auto it : *GModel::current()->getFields()){
-  //   auto field = it.second;
-  //   if (field->getName() == std::string("AlphaShapeDistance")){
-  //     AlphaShapeDistanceField * asdf = dynamic_cast<AlphaShapeDistanceField*>(field);
-  //     std::vector<SPoint3> points;
-      
-  //     auto gf = gm->getFaceByTag(asdf->tag);
-  //     if (gf == nullptr){
-  //       Msg::Error("Incorrect tag %d in AlphaShapeDistance size field (face does not exist)", asdf->tag);
-  //     }
-  //     for (auto tri : gf->triangles){
-  //       SVector3 p0 = tri->getVertex(0)->point();
-  //       SVector3 p1 = tri->getVertex(1)->point();
-  //       SVector3 p2 = tri->getVertex(2)->point();
-  //       auto d0 = p2 - p0;
-  //       auto d1 = p2 - p1;
-  //       auto d_norm = std::max(norm(d0), norm(d1));
-  //       int n = asdf->sampling_length == 0 ? 2 : std::max(2, int(d_norm/asdf->sampling_length));
-  //       for (int i=0; i<n+1; i++){
-  //         auto p_start = p0 + double(i)/double(n) * d0;
-  //         auto p_end = p1 + double(i)/double(n)*d1;
-  //         auto hor_shift = p_end - p_start;
-  //         for (int j=0; j<n+1-i; j++){
-  //           auto pInter = p_start + double(j)/double(n+1-i) * hor_shift;
-  //           points.push_back(pInter.point());
-  //         }
-  //       } 
-  //     }
-  //     asdf->set(points);
-  //   }
-  // }
-
-  // printf("hmm 2 \n");
-
-  // create size field on nodes
-  Field* field = GModel::current()->getFields()->get(sizeFieldTag);
-  std::unordered_map<size_t, double> sizeAtNodes;
-  double minSize = 1e10;
-  for (auto _gr : gm->getRegions()){
-    for(MVertex *v : _gr->mesh_vertices) {
-      // printf("going to test size field for node %d \n", v->getNum());
-      sizeAtNodes[v->getNum()] = field->operator()(v->x(), v->y(), v->z(), NULL);
-      // printf("size : %f \n", sizeAtNodes[v->getNum()]);
-      minSize = std::min(minSize, sizeAtNodes[v->getNum()]);
-    }
-  }
   
   PolyMesh* pm; 
-  // printf("hmm 3 \n");
   std::vector<PolyMesh::Face*> toRemove;
   _GFace2PolyMesh(surfaceTag, &pm, toRemove);
   // Make set of toRemove
   std::set<PolyMesh::Face*> toRemoveSet;
   for (auto f : toRemove){
     toRemoveSet.insert(f);
-    // printf("removing face %d \n", f->data);
   }
-
-  // printf("hmm 4 \n");
-  // if (nonManifold==1){
-  //   Msg::Warning("Non-manifold surface mesh, skipping edge splitting");
-  //   return;
-  // }
 
   std::unordered_map<int, PolyMesh::Vertex*> vertexTagMap;
   for (auto v : pm->vertices){
     vertexTagMap[v->data] = v;
   }
   // Create sorted set of all the edges
-  std::unordered_set<std::pair<int,int>, hash_pair> edgeNodes;
+  std::unordered_set<std::pair<std::size_t, std::size_t>, hash_pair> edgeNodes;
   for (size_t i=0; i<df->triangles.size(); i++){
     auto tri = df->triangles[i];
     for (size_t j=0; j<3; j++){
@@ -3444,7 +3365,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
       edgeNodes.insert(std::make_pair(n0, n1));
     }
   }
-  std::multiset<std::pair<int,int>, decltype(&edgeLengthCompare)> edgeNodesSorted(edgeLengthCompare);
+  std::multiset<std::pair<std::size_t, std::size_t>, decltype(&edgeLengthCompare)> edgeNodesSorted(edgeLengthCompare);
   for (auto en : edgeNodes){
     edgeNodesSorted.insert(en);
   }
@@ -3489,8 +3410,8 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
     std::vector<PolyMesh::Face*> newFaces;
     std::vector<PolyMesh::Vertex*> linkedVertices;
     // printf("hereS 2\n");
-    double h0 = sizeAtNodes[it->first];
-    double h1 = sizeAtNodes[it->second];
+    double h0 = sizeAtNodes[it->first - 1];
+    double h1 = sizeAtNodes[it->second - 1];
     // printf("edge %d -> %d, length %f, h0 %f, h1 %f \n", it->first, it->second, l, h0, h1);
     if (l > dimensionFactor*(h0+h1)*0.5){
       // if (useMap){
@@ -3524,7 +3445,9 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
       vm->setEntity(gr);
       gm->addMVertexToVertexCache(vm);
       vertexTagMap[vm->getNum()] = pm->vertices[pm->vertices.size()-1];
-      sizeAtNodes[vm->getNum()] = 0.5*(h0+h1);
+      if(vm->getNum() > sizeAtNodes.size())
+        sizeAtNodes.resize(vm->getNum(), std::numeric_limits<double>::max());
+      sizeAtNodes[vm->getNum() - 1] = 0.5*(h0+h1);
       // onSurface.push_back(1);
       // nodalSizes.push_back(0.5*(s0+s1));
       // printf("hereS 3\n");
@@ -3868,7 +3791,7 @@ void AlphaShape::_volumeMeshRefinementMeshFromAlphaShapeElements(const int fullT
 
 }
 
-void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, const int volumeTag, const int sizeFieldTag, const bool returnNodalCurvature, std::vector<double>& nodalCurvature){
+void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, const int volumeTag, const std::vector<double>& sizeAtNodes, const bool returnNodalCurvature, std::vector<double>& nodalCurvature){
   auto gm = GModel::current();
   auto dr = GModel::current()->getRegionByTag(volumeTag);
   if (dr == nullptr) {
@@ -3887,12 +3810,10 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
   }
   std::map<MVertex *, uint32_t> v2c;
   std::vector<MVertex *> c2v;
+  std::vector<double> sizeAtNodesHXT;
 
   HXTMesh* m;
   hxtMeshCreate(&m);
-
-  Field* field = GModel::current()->getFields()->get(sizeFieldTag);
-  std::unordered_map<uint32_t, double> sizeAtNodes;
   
   m->triangles.num = m->triangles.size = df->getNumMeshElementsByType(TYPE_TRI);
   hxtAlignedMalloc(&m->triangles.node,
@@ -3916,13 +3837,14 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
   m->vertices.num = m->vertices.size = v2c.size();
   // c2v.reserve(v2c.size());
   hxtAlignedMalloc(&m->vertices.coord, 4 * m->vertices.num * sizeof(double));
+  sizeAtNodesHXT.resize(m->vertices.num);
   for (auto it : v2c){
     auto v = it.first;
     m->vertices.coord[4 * it.second + 0] = v->x();
     m->vertices.coord[4 * it.second + 1] = v->y();
     m->vertices.coord[4 * it.second + 2] = v->z();
     m->vertices.coord[4 * it.second + 3] = 0;
-    sizeAtNodes[it.second] = field->operator()(v->x(), v->y(), v->z(), NULL);
+    sizeAtNodesHXT[it.second] = sizeAtNodes[v->getNum() - 1];
   }
 
   // 0. Generate the empty tet mesh, containing only the triangles
@@ -3976,6 +3898,7 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
       std::vector<HXTNodeInfo> nodeInfo(numNewPts);
       m->vertices.size = m->vertices.num = m->vertices.num + numNewPts;
       hxtAlignedRealloc(&m->vertices.coord, sizeof(double) * m->vertices.num * 4);
+      sizeAtNodesHXT.resize(m->vertices.num);
       for (auto _gr : gm->getRegions()){
         for(MVertex *v : _gr->mesh_vertices) {
           if (v2c.find(v) == v2c.end()){
@@ -3983,7 +3906,7 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
             m->vertices.coord[4 * count + 1] = v->y();
             m->vertices.coord[4 * count + 2] = v->z();
             m->vertices.coord[4 * count + 3] = 0;
-            sizeAtNodes[count] = field->operator()(v->x(), v->y(), v->z(), NULL);
+            sizeAtNodesHXT[count] = sizeAtNodes[v->getNum() - 1];
             nodeInfo[index].node = count;
             nodeInfo[index].status = HXT_STATUS_TRYAGAIN;
             v2c[v] = count;
@@ -4013,7 +3936,7 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
     double nodalSizeMax = 0.;
     for (size_t i=0; i<m->vertices.num; i++){
       // nodalSizes.array[i] = sizeFieldCallback(3, nodeTagsInMesh[i], mesh->vertices.coord[4*i+0], mesh->vertices.coord[4*i+1], mesh->vertices.coord[4*i+2], 0.);
-      nodalSizes.array[i] = sizeAtNodes[i];
+      nodalSizes.array[i] = sizeAtNodesHXT[i];
       nodalSizeMin = std::min(nodalSizeMin, nodalSizes.array[i]);
       nodalSizeMax = std::max(nodalSizeMax, nodalSizes.array[i]);
     }

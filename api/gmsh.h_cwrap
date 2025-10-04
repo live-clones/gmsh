@@ -3360,16 +3360,14 @@ namespace gmsh { // Top-level functions
       // tag `tag
       inline void surfaceEdgeSplitting(const int fullTag,
                                        const int surfaceTag,
-                                       const int sizeFieldTag,
-                                       const std::vector<std::size_t> & tri2TetMap,
-                                       const bool tetrahedralize = false,
-                                       const bool buildElementOctree = false)
+                                       std::vector<double> & sizeAtNodes,
+                                       const bool tetrahedralize = false)
       {
         int ierr = 0;
-        size_t *api_tri2TetMap_; size_t api_tri2TetMap_n_; vector2ptr(tri2TetMap, &api_tri2TetMap_, &api_tri2TetMap_n_);
-        gmshModelMeshSurfaceEdgeSplitting(fullTag, surfaceTag, sizeFieldTag, api_tri2TetMap_, api_tri2TetMap_n_, (int)tetrahedralize, (int)buildElementOctree, &ierr);
+        double *api_sizeAtNodes_; size_t api_sizeAtNodes_n_;
+        gmshModelMeshSurfaceEdgeSplitting(fullTag, surfaceTag, &api_sizeAtNodes_, &api_sizeAtNodes_n_, (int)tetrahedralize, &ierr);
         if(ierr) throwLastError();
-        gmshFree(api_tri2TetMap_);
+        sizeAtNodes.assign(api_sizeAtNodes_, api_sizeAtNodes_ + api_sizeAtNodes_n_); gmshFree(api_sizeAtNodes_);
       }
 
       // gmsh::model::mesh::volumeMeshRefinement
@@ -3380,14 +3378,16 @@ namespace gmsh { // Top-level functions
       inline void volumeMeshRefinement(const int fullTag,
                                        const int surfaceTag,
                                        const int volumeTag,
-                                       const int sizeFieldTag,
+                                       const std::vector<double> & sizeAtNodes,
                                        const bool returnNodalCurvature,
                                        std::vector<double> & nodalCurvature)
       {
         int ierr = 0;
+        double *api_sizeAtNodes_; size_t api_sizeAtNodes_n_; vector2ptr(sizeAtNodes, &api_sizeAtNodes_, &api_sizeAtNodes_n_);
         double *api_nodalCurvature_; size_t api_nodalCurvature_n_;
-        gmshModelMeshVolumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag, (int)returnNodalCurvature, &api_nodalCurvature_, &api_nodalCurvature_n_, &ierr);
+        gmshModelMeshVolumeMeshRefinement(fullTag, surfaceTag, volumeTag, api_sizeAtNodes_, api_sizeAtNodes_n_, (int)returnNodalCurvature, &api_nodalCurvature_, &api_nodalCurvature_n_, &ierr);
         if(ierr) throwLastError();
+        gmshFree(api_sizeAtNodes_);
         nodalCurvature.assign(api_nodalCurvature_, api_nodalCurvature_ + api_nodalCurvature_n_); gmshFree(api_nodalCurvature_);
       }
 

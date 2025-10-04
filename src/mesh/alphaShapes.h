@@ -65,10 +65,10 @@ void _alphaShape3D(const int tag, const double alpha, const int sizeFieldTag, co
 
 void _alphaShape3DFromArray(const int tag, const std::vector<size_t> & elementTags, const std::vector<double> & alpha, const int tagAlpha, const int tagAlphaBoundary, const bool removeDisconnectedNodes, const bool returnTri2TetMap, std::vector<size_t>& tri2Tet);
 
-void _surfaceEdgeSplitting(const int fullTag, const int surfaceTag, const int sizeFieldTag, const bool tetrahealize, const bool buildElementOctree, const std::vector<size_t> tri2TetMap);
+void _surfaceEdgeSplitting(const int fullTag, const int surfaceTag, std::vector<double>& sizeAtNodes, const bool tetrahealize);
 
 void _volumeMeshRefinementMeshFromAlphaShapeElements(const int fullTag, const int surfaceTag, const int volumeTag, const int sizeFieldTag, const bool returnNodalCurvature, std::vector<double>& nodalCurvature);
-void _volumeMeshRefinement(const int fullTag, const int surfaceTag, const int volumeTag, const int sizeFieldTag, const bool returnNodalCurvature, std::vector<double>& nodalCurvature);
+void _volumeMeshRefinement(const int fullTag, const int surfaceTag, const int volumeTag, const std::vector<double>& sizeAtNodes, const bool returnNodalCurvature, std::vector<double>& nodalCurvature);
 
 void _filterCloseNodes(const int fullTag, const int sizeFieldTag, const double tolerance);
 

@@ -4743,31 +4743,34 @@ end
 const alpha_shape3_dfrom_array = alphaShape3DFromArray
 
 """
-    gmsh.model.mesh.surfaceEdgeSplitting(fullTag, surfaceTag, sizeFieldTag, tri2TetMap, tetrahedralize = false, buildElementOctree = false)
+    gmsh.model.mesh.surfaceEdgeSplitting(fullTag, surfaceTag, tetrahedralize = false)
 
 Mesh refinement/derefinement through edge splitting of (surface) entity of tag
 `tag
 
+Return `sizeAtNodes`.
+
 Types:
  - `fullTag`: integer
  - `surfaceTag`: integer
- - `sizeFieldTag`: integer
- - `tri2TetMap`: vector of sizes
+ - `sizeAtNodes`: vector of doubles
  - `tetrahedralize`: boolean
- - `buildElementOctree`: boolean
 """
-function surfaceEdgeSplitting(fullTag, surfaceTag, sizeFieldTag, tri2TetMap, tetrahedralize = false, buildElementOctree = false)
+function surfaceEdgeSplitting(fullTag, surfaceTag, tetrahedralize = false)
+    api_sizeAtNodes_ = Ref{Ptr{Cdouble}}()
+    api_sizeAtNodes_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshSurfaceEdgeSplitting, gmsh.lib), Cvoid,
-          (Cint, Cint, Cint, Ptr{Csize_t}, Csize_t, Cint, Cint, Ptr{Cint}),
-          fullTag, surfaceTag, sizeFieldTag, convert(Vector{Csize_t}, tri2TetMap), length(tri2TetMap), tetrahedralize, buildElementOctree, ierr)
+          (Cint, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Ptr{Cint}),
+          fullTag, surfaceTag, api_sizeAtNodes_, api_sizeAtNodes_n_, tetrahedralize, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
-    return nothing
+    sizeAtNodes = unsafe_wrap(Array, api_sizeAtNodes_[], api_sizeAtNodes_n_[], own = true)
+    return sizeAtNodes
 end
 const surface_edge_splitting = surfaceEdgeSplitting
 
 """
-    gmsh.model.mesh.volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag, returnNodalCurvature)
+    gmsh.model.mesh.volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeAtNodes, returnNodalCurvature)
 
 Volume mesh refinement/derefinement using hxt refinement approaches of volume
 entity of tag `tag`, and bounded by surface entity of tag `surfaceTag`.
@@ -4778,17 +4781,17 @@ Types:
  - `fullTag`: integer
  - `surfaceTag`: integer
  - `volumeTag`: integer
- - `sizeFieldTag`: integer
+ - `sizeAtNodes`: vector of doubles
  - `returnNodalCurvature`: boolean
  - `nodalCurvature`: vector of doubles
 """
-function volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag, returnNodalCurvature)
+function volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeAtNodes, returnNodalCurvature)
     api_nodalCurvature_ = Ref{Ptr{Cdouble}}()
     api_nodalCurvature_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshVolumeMeshRefinement, gmsh.lib), Cvoid,
-          (Cint, Cint, Cint, Cint, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
-          fullTag, surfaceTag, volumeTag, sizeFieldTag, returnNodalCurvature, api_nodalCurvature_, api_nodalCurvature_n_, ierr)
+          (Cint, Cint, Cint, Ptr{Cdouble}, Csize_t, Cint, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Cint}),
+          fullTag, surfaceTag, volumeTag, convert(Vector{Cdouble}, sizeAtNodes), length(sizeAtNodes), returnNodalCurvature, api_nodalCurvature_, api_nodalCurvature_n_, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     nodalCurvature = unsafe_wrap(Array, api_nodalCurvature_[], api_nodalCurvature_n_[], own = true)
     return nodalCurvature

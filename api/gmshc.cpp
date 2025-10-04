@@ -2531,24 +2531,26 @@ GMSH_API void gmshModelMeshAlphaShape3DFromArray(const int tag, const size_t * e
   }
 }
 
-GMSH_API void gmshModelMeshSurfaceEdgeSplitting(const int fullTag, const int surfaceTag, const int sizeFieldTag, const size_t * tri2TetMap, const size_t tri2TetMap_n, const int tetrahedralize, const int buildElementOctree, int * ierr)
+GMSH_API void gmshModelMeshSurfaceEdgeSplitting(const int fullTag, const int surfaceTag, double ** sizeAtNodes, size_t * sizeAtNodes_n, const int tetrahedralize, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    std::vector<std::size_t> api_tri2TetMap_(tri2TetMap, tri2TetMap + tri2TetMap_n);
-    gmsh::model::mesh::surfaceEdgeSplitting(fullTag, surfaceTag, sizeFieldTag, api_tri2TetMap_, tetrahedralize, buildElementOctree);
+    std::vector<double> api_sizeAtNodes_;
+    gmsh::model::mesh::surfaceEdgeSplitting(fullTag, surfaceTag, api_sizeAtNodes_, tetrahedralize);
+    vector2ptr(api_sizeAtNodes_, sizeAtNodes, sizeAtNodes_n);
   }
   catch(...){
     if(ierr) *ierr = 1;
   }
 }
 
-GMSH_API void gmshModelMeshVolumeMeshRefinement(const int fullTag, const int surfaceTag, const int volumeTag, const int sizeFieldTag, const int returnNodalCurvature, double ** nodalCurvature, size_t * nodalCurvature_n, int * ierr)
+GMSH_API void gmshModelMeshVolumeMeshRefinement(const int fullTag, const int surfaceTag, const int volumeTag, const double * sizeAtNodes, const size_t sizeAtNodes_n, const int returnNodalCurvature, double ** nodalCurvature, size_t * nodalCurvature_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
+    std::vector<double> api_sizeAtNodes_(sizeAtNodes, sizeAtNodes + sizeAtNodes_n);
     std::vector<double> api_nodalCurvature_;
-    gmsh::model::mesh::volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag, returnNodalCurvature, api_nodalCurvature_);
+    gmsh::model::mesh::volumeMeshRefinement(fullTag, surfaceTag, volumeTag, api_sizeAtNodes_, returnNodalCurvature, api_nodalCurvature_);
     vector2ptr(api_nodalCurvature_, nodalCurvature, nodalCurvature_n);
   }
   catch(...){
