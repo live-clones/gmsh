@@ -560,7 +560,12 @@ FlGui::FlGui(int argc, char **argv, bool quitShouldExit,
     new graphicWindow(true, CTX::instance()->numTiles,
                       CTX::instance()->detachedMenu ? true : false));
 
-  graph[0]->getWindow()->show(argc > 0 ? 1 : 0, argv);
+  if (argc > 0 && argv && argv[0]) {
+    graph[0]->getWindow()->show(1, argv);
+  }
+  else {
+    graph[0]->getWindow()->show();
+  }
   if(graph[0]->getMenuWindow()) graph[0]->getMenuWindow()->show();
 
   // re-apply color scheme (necessary after open_display to get the selection
