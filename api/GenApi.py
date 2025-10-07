@@ -2495,7 +2495,7 @@ class API:
             for ftype in m.submodules:
                 generate_ftypes(f, ftype, c_mpath, f_mpath, indent)
 
-        def write_function(f, fun, c_mpath, f_mpath, indent):
+        def write_function(f, fun, c_mpath, f_mpath, mpath, indent):
             def get_arg_list(args, indent):
                 arg_list = ""
                 for arg in args:
@@ -2601,6 +2601,7 @@ class API:
                     "&", f"&\n{(len(indent+fnamef)+1)*' '}"
                 )
             r += write_c_interface(args, rtype, fname, indent)
+            self.flog('f', mpath + '/' + name)
             if rtype:
                 r += f"{indent * 2}{rtype.fortran_types[0]} :: {fname}\n"
             r += get_arg_list(args, indent * 2)
@@ -2624,12 +2625,14 @@ class API:
             r += f"{indent}end {fnamef}\n"
             self.fwrite(f, r)
 
-        def write_module(f, m, c_mpath, f_mpath, indent):
+        def write_module(f, m, c_mpath, f_mpath, mpath, indent):
             c_mpath, f_mpath = get_fc_name_t(m.name, c_mpath, f_mpath)
+            if len(mpath): mpath += "/"
+            mpath += m.name
             for fun in m.fs:
-                write_function(f, fun, c_mpath, f_mpath, indent)
+                write_function(f, fun, c_mpath, f_mpath, mpath, indent)
             for m in m.submodules:
-                write_module(f, m, c_mpath, f_mpath, indent)
+                write_module(f, m, c_mpath, f_mpath, mpath, indent)
 
         self.current_lineno = 1
         with open(ns + ".f90", "w") as f:
@@ -2649,7 +2652,7 @@ class API:
                 self.fwrite(f, "\n")
             self.fwrite(f, f"{indent}contains\n")
             for module in self.modules:
-                write_module(f, module, "", "", indent)
+                write_module(f, module, "", "", "", indent)
             self.fwrite(f, fortran_footer)
 
 
@@ -2679,9 +2682,12 @@ class API:
         def find_function(lang, name, data):
             only_unique = False  # only report unique matches?
             in_comments = False  # report matches in comments?
-            if lang == 'Python':
+            if lang == 'Python' or lang == 'Julia':
                 func = name.replace('/', '.')
                 comment = '#'
+            elif lang == 'Fortran':
+                func = name.replace('/', '%')
+                comment = '!'
             else:
                 func = name.replace('/', '::')
                 comment = '//'
@@ -2707,7 +2713,7 @@ class API:
             return match
 
         def write_module(module, path, node, node_next, node_prev, cpp_data,
-                         py_data):
+                         py_data, jl_data, f90_data):
             f.write("@node " + node + ", " + node_next + ", " + node_prev +
                     ", Gmsh application programming interface\n")
             f.write("@section Namespace @code{" + path + "}: " + module.doc +
@@ -2755,9 +2761,17 @@ class API:
                             ",Julia}")
                 except:
                     pass
+                try:
+                    f.write(", @url{@value{GITLAB-PREFIX}/api/gmsh.f90#L" +
+                            str(self.api_lineno['f'][path + '/' + name]) +
+                            ",Fortran}")
+                except:
+                    pass
                 f.write("\n")
                 cpp = find_function('C++', path + '/' + name, cpp_data)
                 py = find_function('Python', path + '/' + name, py_data)
+                jl = find_function('Julia', path + '/' + name, jl_data)
+                f90 = find_function('Fortran', path + '/' + name, f90_data)
 
                 def write_matches(lang, matches, max_matches):
                     f.write(lang + ' (')
@@ -2774,9 +2788,15 @@ class API:
                     f.write("@item " + "Examples:\n")
                     if len(cpp):
                         write_matches("C++", cpp, 5)
-                        if len(py): f.write(', ')
+                        if len(py) or len(jl) or len(f90): f.write(', ')
                     if len(py):
                         write_matches("Python", py, 5)
+                        if len(jl) or len(f90): f.write(', ')
+                    if len(jl):
+                        write_matches("Julia", jl, 5)
+                        if len(f90) or len(f90): f.write(', ')
+                    if len(f90):
+                        write_matches("Fortran", f90, 5)
                     f.write("\n")
                 f.write("@end table\n\n")
             f.write("@end ftable\n\n")
@@ -2807,8 +2827,12 @@ class API:
             cpp_data.extend(get_file_data('../exampls/api', '.cpp'))
             py_data = get_file_data('../tutorials', '.py')
             py_data.extend(get_file_data('../examples/api', '.py'))
+            jl_data = get_file_data('../tutorials', '.jl')
+            jl_data.extend(get_file_data('../examples/api', '.jl'))
+            f90_data = get_file_data('../tutorials', '.f90')
+            f90_data.extend(get_file_data('../examples/api', '.f90'))
             for i in range(N):
                 write_module(flat[i][0], flat[i][1], node_name(flat[i]),
                              "" if i == N - 1 else node_name(flat[i + 1]),
                              "" if i == 0 else node_name(flat[i - 1]),
-                             cpp_data, py_data)
+                             cpp_data, py_data, jl_data, f90_data)
