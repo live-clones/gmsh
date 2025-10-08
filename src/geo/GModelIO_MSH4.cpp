@@ -2784,6 +2784,7 @@ static void writeMSH4Nodes(
 
   auto saveEntity = [&](GEntity *entity) {
     auto subset = verticesToSaveOnOtherEntities.find(entity);
+    auto parts = getEntityPartition(entity);
     if(subset == verticesToSaveOnOtherEntities.end()) {
       writeMSH4EntityNodes(entity, fp, binary, saveParametric, scalingFactor,
                            version, entity->getMeshVertexBegin(),

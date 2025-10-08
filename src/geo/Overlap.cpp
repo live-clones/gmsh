@@ -496,6 +496,18 @@ findNonOwnedVerticesToSave(
     }
   }
 
+  // Add empty entities that are the BREP of the covered entities
+  if (partition == 0)
+    return result;
+
+  for (const auto& [coveredEntity, _] : coveredEntities) {
+    result[coveredEntity]; // This will create an empty set if not present
+    auto brep = coveredEntity->boundaryEntities();
+    for (auto entity : brep) {
+      result[entity]; // This will create an empty set if not present
+    }
+  }
+
   return result;
 }
 
