@@ -1253,6 +1253,7 @@ template <int dim>
 static bool readMSH4VolumeOverlaps(GModel *const model, FILE *fp, bool binary)
 {
   size_t nOverlaps = 0;
+  std::set<int> addedTags;
   if(binary) {
     if(fread(&nOverlaps, sizeof(size_t), 1, fp) != 1) { return false; }
   }
@@ -1301,10 +1302,41 @@ static bool readMSH4VolumeOverlaps(GModel *const model, FILE *fp, bool binary)
 
     model->addOverlap(overlapEntity);
     if(!model->add(overlapEntity)) {
+      auto wrongEntity = model->getEntityByTag(dim, tag);
+
+      bool insertedAlready = addedTags.find(tag) != addedTags.end();
+      if (insertedAlready)
+        Msg::Error("Volume overlap with tag %d already exists in model", tag);
+      else
+        Msg::Error("Could not add volume overlap with tag %d to model", tag);
+
       delete overlapEntity;
-      Msg::Error("Could not add volume overlap %d to model", tag);
+      size_t containerSize;
+      const auto &[ovlp2D, ovlp3D] = model->getAllOverlaps();
+      if constexpr(dim == 3)
+        containerSize = ovlp3D.size();
+      else if constexpr(dim == 2)
+        containerSize = ovlp2D.size();
+      else
+        containerSize = 0;
+
+      std::string allTags;
+      if constexpr (dim == 3) {
+        for (const auto& ovlp : ovlp3D) {
+          allTags += std::to_string(ovlp->tag()) + " ";
+        }
+      } else if constexpr (dim == 2) {
+        for (const auto& ovlp : ovlp2D) {
+          allTags += std::to_string(ovlp->tag()) + " ";
+        }
+      }
+
+      Msg::Error(
+        "Could not add volume overlap %d to model. It contains %u entities. Tags are %s. Wrong entity is of type %s",
+        tag, containerSize, allTags.c_str(), wrongEntity->getTypeString().c_str());
       return false;
     }
+    addedTags.insert(tag);
 
     // Read elements
     for(size_t i = 0; i < numElements; i++) {
