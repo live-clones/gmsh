@@ -505,6 +505,12 @@ findNonOwnedVerticesToSave(
     auto brep = coveredEntity->boundaryEntities();
     for (auto entity : brep) {
       result[entity]; // This will create an empty set if not present
+      for (auto entity2: entity->boundaryEntities()) {
+        result[entity2]; // This will create an empty set if not present
+        for (auto entity3: entity2->boundaryEntities()) {
+          result[entity3]; // This will create an empty set if not present
+        }
+      }
     }
   }
 
