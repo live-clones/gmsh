@@ -650,6 +650,8 @@ void GModel::remove()
   faces.clear();
   edges.clear();
   vertices.clear();
+  std::get<0>(_overlaps).clear();
+  std::get<1>(_overlaps).clear();
 }
 
 void GModel::snapVertices()
