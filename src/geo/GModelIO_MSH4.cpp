@@ -2857,6 +2857,14 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
                               double version, const std::variant<std::monostate, decltype(findCoveredEntitiesAndElementsToSave<2>(model, partitionToSave)), 
                decltype(findCoveredEntitiesAndElementsToSave<3>(model, partitionToSave))>& overlapElements)
 {
+
+  /**
+   * If the mesh is partitioned and only one partition is saved, we save
+   * 1) elements on an enitity belonging to (at least) this partition
+   * 2) overlap boundary elements if there is an overlap
+   * 3) overlapped entities, with only the subset of elements actually used by the overlaps
+  */
+
   std::set<GRegion *, GEntityPtrLessThan> regions;
   std::set<GFace *, GEntityPtrLessThan> faces;
   std::set<GEdge *, GEntityPtrLessThan> edges;
