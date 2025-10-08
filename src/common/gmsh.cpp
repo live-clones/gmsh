@@ -1522,7 +1522,6 @@ static void _findOverlapOfBoundary(const int tag, const int partition,
     entity = model->getFaceByTag(tag);
   auto it = overlapOfBnds.find(entity);
   if(it == overlapOfBnds.end()) {
-    Msg::Warning("No overlaps found for entity %d %d", dim - 1, tag);
     return;
   }
   for(auto *pe : it->second) {
