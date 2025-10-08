@@ -1909,7 +1909,7 @@ static void writeMSH4BoundingBox(SBoundingBox3d boundBox, FILE *fp,
 
 static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
                               bool binary, double scalingFactor, double version,
-                              std::map<GEntity*, SBoundingBox3d> *entityBounds)
+                              std::map<GEntity*, SBoundingBox3d> *entityBounds, int partitionToSave = 0)
 {
   std::set<GEntity *, GEntityPtrFullLessThan> ghost;
   std::set<GRegion *, GEntityPtrLessThan> regions;
@@ -3681,7 +3681,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   // partitioned entities
   if(partitioned)
     writeMSH4Entities(this, fp, true, binary, scalingFactor, version,
-                      entityBounds);
+                      entityBounds, partitionToSave);
 
   std::variant<std::monostate, decltype(findCoveredEntitiesAndElementsToSave<2>(this, partitionToSave)), 
                decltype(findCoveredEntitiesAndElementsToSave<3>(this, partitionToSave))> nonOwnedEntitiesToSave;
