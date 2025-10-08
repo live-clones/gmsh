@@ -2915,6 +2915,9 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
     }
   }
 
+  // DEBUG
+  saveAll = true;
+
   for(auto it = edges.begin(); it != edges.end(); ++it) {
     if(!saveAll && (*it)->physicals.size() == 0 &&
        (*it)->geomType() != GEntity::GhostCurve && overlapBnd2D.count(*it) == 0)
@@ -3751,11 +3754,6 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
       this, partitionToSave, std::get<2>(nonOwnedEntitiesToSave));
   }
 
-  // partitioned entities
-  if(partitioned && partitionToSave == 0)
-    writeMSH4Entities(this, fp, true, binary, scalingFactor, version,
-                      entityBounds, 0);
-
   
   
   if(overlapDim == 2) {
@@ -3771,10 +3769,14 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
       this, partitionToSave, std::get<2>(nonOwnedEntitiesToSave));
   }
 
-  // Export entities using subet matching nodes
-  if(partitioned && partitionToSave != 0)
+
+  decltype(&verticesToSaveOnOtherEntities) sendVertices = nullptr;
+  if (partitionToSave > 0 && overlapDim > 0)
+    sendVertices = &verticesToSaveOnOtherEntities;
+  // partitioned entities. Use verticesToSaveOnOtherEntities to limit the nodes if needed
+  if(partitioned)
     writeMSH4Entities(this, fp, true, binary, scalingFactor, version,
-                      entityBounds, partitionToSave, &verticesToSaveOnOtherEntities);
+                      entityBounds, partitionToSave, sendVertices);
 
   // nodes
   writeMSH4Nodes(this, fp, partitioned, partitionToSave, binary,
