@@ -62,6 +62,7 @@ public:
   int delFace(GFace *face);
 
   virtual std::vector<GFace *> faces() const { return l_faces; }
+  virtual std::vector<GEntity *> boundaryEntities() const;;
 
   virtual std::vector<int> faceOrientations() const { return l_dirs; }
   void set(std::vector<GFace *> const &f) { l_faces = f; }
