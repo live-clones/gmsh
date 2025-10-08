@@ -151,7 +151,7 @@ typename OverlapHelpers<dim>::PartitionEntity *cast(GEntity *e)
   return dynamic_cast<typename OverlapHelpers<dim>::PartitionEntity *>(e);
 }
 
-inline std::vector<int> getEntityPartition(GEntity *entity)
+inline std::vector<int> getEntityPartition(GEntity *entity, bool failOnNull = true)
 {
   if(!entity) Msg::Error("getEntityPartition: entity is null.");
   auto pv = dynamic_cast<partitionVertex *>(entity);
@@ -162,7 +162,8 @@ inline std::vector<int> getEntityPartition(GEntity *entity)
   if(pf) { return pf->getPartitions(); }
   auto pr = dynamic_cast<partitionRegion *>(entity);
   if(pr) { return pr->getPartitions(); }
-  Msg::Error("getEntityPartition: entity is not a partitioned entity.");
+  if (failOnNull)
+    Msg::Error("getEntityPartition: entity is not a partitioned entity.");
   return {};
 }
 
