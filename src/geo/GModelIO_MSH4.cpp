@@ -1292,6 +1292,13 @@ static bool readMSH4VolumeOverlaps(GModel *const model, FILE *fp, bool binary)
       typename OverlapHelpers<dim>::OverlapEntity(model, covered, partition);
     overlapEntity->setTag(tag);
 
+    auto foundEntity = model->getEntityByTag(dim, tag);
+    if (foundEntity) {
+      Msg::Error("Volume overlap with tag %d already exists in model, and is of type %s", tag, foundEntity->getTypeString().c_str());
+      delete overlapEntity;
+      return false;
+    }
+
     model->addOverlap(overlapEntity);
     if(!model->add(overlapEntity)) {
       delete overlapEntity;
