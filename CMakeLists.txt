@@ -2107,6 +2107,7 @@ if(MAKEINFO)
   add_custom_command(OUTPUT ${TEX_DIR}/gmsh.html DEPENDS ${TEX_SRC}
     COMMAND ${MAKEINFO} --html --css-ref=/gmsh.css --no-split
     --set-customization-variable EXTRA_HEAD='<meta name="viewport" content="width=device-width,initial-scale=1.0"><style type="text/css"><!-- img {  width:66%\; max-width:768px } --></style>'
+    --set-customization-variable AFTER_BODY_OPEN='<div class="banner"><a href="/news/" class="banner-link"></a></div>'
     ARGS ${TEX_DIR}/gmsh.texi WORKING_DIRECTORY ${TEX_DIR})
   add_custom_target(html DEPENDS ${TEX_DIR}/gmsh.html)
   install(FILES ${TEX_DIR}/gmsh.html DESTINATION ${GMSH_DOC} OPTIONAL)

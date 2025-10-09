@@ -1,9 +1,60 @@
 * { line-height: 1.35; }
 
-html { max-width: 1500px; margin: auto; background: #ffffff/*#f4f4f4*/; color: #252525;
-  font-family: helvetica,sans-serif; font-size: 95%; }
+html {
+  max-width: 1500px;
+  margin: auto;
+  background: #ffffff/*#f4f4f4*/;
+  color: #252525;
+  font-family: helvetica,sans-serif;
+  font-size: 95%;
+}
 
-body { margin: auto; padding: 25px; background-color: #ffffff; }
+body {
+  margin: auto;
+  background-color: #ffffff;
+  padding: 25px; /* use this when there is no banner */
+  /* padding: 50px; */ /* use this when the banner is present */
+}
+
+.banner {
+  /* comment the following to show the banner - do not forget to change the
+   padding value in in "body" abov e */
+  display: none;
+  background: #48805b; /* color chosen to match Gitlab banner */
+  text-align: center;
+  padding: 8px 20px;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000; /* stays above all content */
+  opacity: 0;
+  transform: translateY(-30px); /* Start above */
+  animation: bannerFadeSlideIn 1s forwards;
+  animation-delay: 0.3s;
+  position: fixed;
+}
+
+@keyframes bannerFadeSlideIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.banner-link {
+  color: white;
+  font-weight: bold;
+  text-decoration: none;
+  opacity: 1; /* start invisible, animate with banner */
+}
+
+.banner-link:hover {
+  text-decoration: underline;
+}
+
+.banner-link::before { /* inject static text in the banner link */
+  content: "";
+}
 
 a { text-decoration: none; color: #1a0dab; background: none; }
 a:visited { color: #660099; }
