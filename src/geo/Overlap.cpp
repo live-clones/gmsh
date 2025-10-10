@@ -253,6 +253,7 @@ static BoundaryToPartitionEntity<dim>
 buildBoundaryElementToEntityDict(GModel *const model)
 {
   BoundaryToPartitionEntity<dim> boundaryToEntity;
+  static_assert(dim == 2 || dim == 3, "Only dim=2 and dim=3 are supported.");
   if constexpr(dim == 2) {
     for(auto &&face : model->getEdges()) {
       auto partitionEdge =
