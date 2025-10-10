@@ -3763,7 +3763,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
 
   
   
-  if(overlapDim == 2) {
+  /*if(overlapDim == 2) {
     nonOwnedEntitiesToSave =
       findCoveredEntitiesAndElementsToSave<2>(this, partitionToSave);
     verticesToSaveOnOtherEntities = findNonOwnedVerticesToSave<2>(
@@ -3774,7 +3774,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
       findCoveredEntitiesAndElementsToSave<3>(this, partitionToSave);
     verticesToSaveOnOtherEntities = findNonOwnedVerticesToSave<3>(
       this, partitionToSave, std::get<2>(nonOwnedEntitiesToSave));
-  }
+  }*/
 
 
   decltype(&verticesToSaveOnOtherEntities) sendVertices = nullptr;
