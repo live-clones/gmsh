@@ -348,11 +348,25 @@ void overlapBuildBoundaries(GModel *const model,
           auto partitionEntity = it->second;
           auto parentEntity = (partitionEntity->getParentEntity());
           if(!parentEntity) { Msg::Error("No parent entity"); }
-          // Prevent boundary between domain and its overlap
-          if(parentEntity->dim() == dim - 1)
+          
+          // If it is part of the outer boundary, add it to the overlap of boundary
+          if(parentEntity->dim() == dim - 1) {
             boundariesOfExisting[parentEntity].insert(melement);
+          }
+          else {
+            // Element is on an interface between two subdomains. If none of the subdomains are
+            // the current partition, add to inner boundary (which will lead to a duplicate element)
+            // On small partitions it's an edge case but this is actually critical.
+            auto parts = getEntityPartition(partitionEntity);
+            if(std::find(parts.begin(), parts.end(), partition) ==
+               parts.end()) {
+              Msg::Warning("Interface between two other subdomains added as artificial boundary.");
+              innerboundarySet.insert(melement);
+            }
+          }
         }
         else {
+          // element not on an existing entity, add to inner boundary
           innerboundarySet.insert(melement);
         }
       }
