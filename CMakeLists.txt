@@ -2132,7 +2132,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E echo
 if(MAKEINFO AND TEXI2PDF)
   add_custom_target(doc COMMAND ${CMAKE_COMMAND} -E tar zcf
                     ${CMAKE_CURRENT_BINARY_DIR}/gmsh-${GMSH_VERSION}-doc.tgz
-                    CREDITS.txt LICENSE.txt CHANGELOG.txt doc/gmsh.1
+                    CREDITS.txt LICENSE.txt CHANGELOG.txt doc/gmsh.1 doc/gmsh.css
                     doc/texinfo/gmsh.html doc/texinfo/images doc/texinfo/gmsh.info
                     doc/texinfo/gmsh.pdf doc/texinfo/gmsh.txt
                     COMMAND ${CMAKE_COMMAND} -E remove ${TEX_OBJ}
