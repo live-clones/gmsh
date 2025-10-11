@@ -529,6 +529,33 @@ findNonOwnedVerticesToSave(
     }
   }
 
+  // FIX for embedded vertices: the BREP trick doesn't save them, so we add any partitionVertex with at least one partition in what we export
+  // Otherwise the node is exported on a non-existent partitionVertex and the mesh is invalid
+  std::set<int> partitionsToExport;
+  for(const auto &[coveredEntity, _] : coveredEntities) {
+    auto parts = getEntityPartition(coveredEntity);
+    for(int part : parts) partitionsToExport.insert(part);
+  }
+
+  for (auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
+    auto pv = dynamic_cast<partitionVertex *>(*it);
+    if (!pv) continue;
+    auto parts = pv->getPartitions();
+    if (std::any_of(parts.begin(), parts.end(), [&](int p) { return partitionsToExport.count(p) > 0; })) {
+      result[pv]; // Insert empty vertex
+    }
+  }
+  // Same for partitionEdge
+  for (auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
+    auto pe = dynamic_cast<partitionEdge *>(*it);
+    if (!pe) continue;
+    auto parts = pe->getPartitions();
+    if (std::any_of(parts.begin(), parts.end(), [&](int p) { return partitionsToExport.count(p) > 0; })) {
+      result[pe]; // Insert empty edge
+    }
+  }
+
+
   return result;
 }
 
