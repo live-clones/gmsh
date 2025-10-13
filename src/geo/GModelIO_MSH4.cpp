@@ -2756,7 +2756,15 @@ static void writeMSH4Nodes(
   /* Replaced the sum of entities size by manual sum for robustness*/
   std::size_t numNodes = 0;
   auto incrementNodes = [&](const auto &entities) {
-    for(const auto &entity : entities) numNodes += entity->getNumMeshVertices();
+    
+    for(const auto &entity : entities) {
+      size_t toAdd = entity->getNumMeshVertices();
+      if (auto it = verticesToSaveOnOtherEntities.find(entity);
+          it != verticesToSaveOnOtherEntities.end()) {
+        toAdd = it->second.size();
+      }
+      numNodes += toAdd;
+    }
   };
 
   for (auto [entity, _]: verticesToSaveOnOtherEntities) {
