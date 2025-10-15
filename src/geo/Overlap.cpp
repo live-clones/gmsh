@@ -17,6 +17,8 @@
 #include "MFace.h"
 #include "GModel.h"
 
+#include <OS.h> // Timing
+
 //#include "overlapHelpers.h"
 
 template <int dim>
@@ -29,8 +31,24 @@ template <int dim>
     Msg::Error("Model is not partitioned. Cannot compute quick overlap.");
   }
 
+  double time0 = Cpu();
+
+  std::map<MVertex *, std::set<int>> vertexToPartitions;
+  auto updateVertexToPartition = [&vertexToPartitions](GEntity *ge) {
+    auto partsToAdd = getEntityPartition(ge, false);
+    if(partsToAdd.empty()) return;
+    for(size_t ie = 0; ie < ge->getNumMeshElements(); ++ie) {
+      MElement *element = ge->getMeshElement(ie);
+      for(size_t iv = 0; iv < element->getNumVertices(); ++iv) {
+        MVertex *v = element->getVertex(iv);
+        auto &parts = vertexToPartitions[v];
+        parts.insert(partsToAdd.begin(), partsToAdd.end());
+      }
+    }
+  };
+
   OverlapCollection<dim> overlap(numParts);
-  auto handleEntity = [&overlap](GEntity *entity) {
+  auto handleEntity = [&overlap, &vertexToPartitions](GEntity *entity) {
     auto partitionEntity = cast<dim>(entity);
     static_assert(
       std::is_same_v<decltype(partitionEntity),
@@ -43,7 +61,7 @@ template <int dim>
     for(size_t e = 0; e < partitionEntity->getNumMeshElements(); ++e) {
       MElement *element = partitionEntity->getMeshElement(e);
       for(size_t v = 0; v < element->getNumVertices(); ++v) {
-        auto onWhat = element->getVertex(v)->onWhat();
+        /*auto onWhat = element->getVertex(v)->onWhat();
         if(onWhat->dim() < dim) // Boundary vertex
         {
           auto partitions = getEntityPartition(onWhat);
@@ -52,17 +70,30 @@ template <int dim>
               overlap[part - 1][partitionEntity].insert(element);
             }
           }
+        }*/
+        if (element->getVertex(v)->onWhat()->dim() < dim) continue; // Non-Boundary vertex, skip it
+
+        auto parts = vertexToPartitions[element->getVertex(v)];
+        for(int part : parts) {
+          if(part != partition) {
+            overlap[part - 1][partitionEntity].insert(element);
+          }
         }
       }
     }
   };
 
   if constexpr(dim == 2) {
+    for(auto &&face : model->getFaces()) { updateVertexToPartition(face); }
     for(auto &&face : model->getFaces()) { handleEntity(face); }
   }
   else if constexpr(dim == 3) {
+    for(auto &&region : model->getRegions()) { updateVertexToPartition(region); }
     for(auto &&region : model->getRegions()) { handleEntity(region); }
   }
+
+  double time1 = Cpu();
+  Msg::Info("Quick overlap computed in %g s. (CPU time)", time1 - time0);
 
   return overlap;
 }
