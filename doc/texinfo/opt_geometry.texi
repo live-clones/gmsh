@@ -192,8 +192,8 @@ Default value: @code{0}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.NumSubEdges
-Number of subdivisions (per control point or pole) used to draw curves@*
-Default value: @code{40}@*
+Number of subdivisions used to draw curves@*
+Default value: @code{100}@*
 Saved in: @code{General.OptionsFileName}
 
 @item Geometry.OCCAutoEmbed

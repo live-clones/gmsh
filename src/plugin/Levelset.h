@@ -21,8 +21,8 @@ private:
 
 protected:
   double _ref[3], _targetError;
-  int _valueTimeStep, _valueView, _valueIndependent, _recurLevel,
-    _extractVolume;
+  int _valueTimeStep, _valueView, _valueIndependent, _recurLevel;
+  int _extractVolume, _visible;
   typedef enum { NONE, PLANE, SPHERE, MAP } ORIENTATION;
   ORIENTATION _orientation;
 

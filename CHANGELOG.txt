@@ -4,7 +4,8 @@ entity tags anymore (use new OrientedBoundary and OrientedCombinedBoudnary to
 get the old behavior); changed default value of oriented argument to false in
 model/getBoundary API; new fltk/run() option to automatically load/save options
 between runs; improved Constant and Restrict mesh size fields; reverted curve
-drawing to use fixed number of subdivisions; bug fixes.
+drawing to use fixed number of subdivisions; levelset-based plugins now take
+entity visibility into account; bug fixes.
 
 * New API functions: model/isEntityOrphan, occ/getClosestEntities
 

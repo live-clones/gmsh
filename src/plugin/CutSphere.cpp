@@ -20,7 +20,8 @@ StringXNumber CutSphereOptions_Number[] = {
   {GMSH_FULLRC, "ExtractVolume", GMSH_CutSpherePlugin::callbackVol, 0., ""},
   {GMSH_FULLRC, "RecurLevel", GMSH_CutSpherePlugin::callbackRecur, 3, ""},
   {GMSH_FULLRC, "TargetError", GMSH_CutSpherePlugin::callbackTarget, 1e-4, ""},
-  {GMSH_FULLRC, "View", nullptr, -1., ""}};
+  {GMSH_FULLRC, "View", nullptr, -1., ""},
+  {GMSH_FULLRC, "Visible", nullptr, 1., ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterCutSpherePlugin()
@@ -112,7 +113,8 @@ std::string GMSH_CutSpherePlugin::getHelp() const
          "If `ExtractVolume' is nonzero, the plugin extracts "
          "the elements inside (if `ExtractVolume' < 0) or "
          "outside (if `ExtractVolume' > 0) the sphere.\n\n"
-         "If `View' < 0, the plugin is run on the current view.\n\n"
+         "If `View' < 0, the plugin is run on the current view. "
+         "If `Visible' = 1, the plugin only cuts visible entities.\n\n"
          "Plugin(CutSphere) creates one new list-based view.";
 }
 
@@ -145,6 +147,7 @@ PView *GMSH_CutSpherePlugin::execute(PView *v)
   _extractVolume = (int)CutSphereOptions_Number[4].def;
   _recurLevel = (int)CutSphereOptions_Number[5].def;
   _targetError = CutSphereOptions_Number[6].def;
+  _visible = (int)CutSphereOptions_Number[8].def;
 
   _valueIndependent = 1;
   _valueView = -1;

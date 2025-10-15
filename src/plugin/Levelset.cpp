@@ -230,8 +230,8 @@ GMSH_LevelsetPlugin::GMSH_LevelsetPlugin()
   _valueTimeStep = -1; // use same time step in levelset and field data views
   _recurLevel = 4;
   _targetError = 0.;
-  _extractVolume =
-    0; // to create isovolumes (keep all elements < or > levelset)
+  _extractVolume = 0; // keep all elements < or > levelset
+  _visible = 0; // set to 1 to only apply algo on visible entities
   _orientation = GMSH_LevelsetPlugin::NONE;
 }
 
@@ -590,6 +590,7 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
     v2 = new PView();
     PViewDataList *out = getDataList(v2);
     for(int ent = 0; ent < vdata->getNumEntities(firstNonEmptyStep); ent++) {
+      if(_visible && vdata->skipEntity(firstNonEmptyStep, ent)) continue;
       for(int ele = 0; ele < vdata->getNumElements(firstNonEmptyStep, ent);
           ele++) {
         if(vdata->skipElement(firstNonEmptyStep, ent, ele)) continue;
@@ -614,6 +615,7 @@ PView *GMSH_LevelsetPlugin::execute(PView *v)
       v2 = new PView();
       PViewDataList *out = getDataList(v2);
       for(int ent = 0; ent < vdata->getNumEntities(step); ent++) {
+      if(_visible && vdata->skipEntity(step, ent)) continue;
         for(int ele = 0; ele < vdata->getNumElements(step, ent); ele++) {
           if(vdata->skipElement(step, ent, ele)) continue;
           for(int nod = 0; nod < vdata->getNumNodes(step, ent, ele); nod++) {
