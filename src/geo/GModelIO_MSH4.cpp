@@ -2752,7 +2752,10 @@ static void writeMSH4Nodes(
     getAdditionalEntities(regions, faces, edges, vertices);*/
     // What was the purpose of getAdditionalEntities before overlaps? Maybe embedded stuff ?
 
-  getAdditionalEntities(regions, faces, edges, vertices);
+  // Not needed if overlaps and partial saves are correct ?
+  //getAdditionalEntities(regions, faces, edges, vertices);
+
+
   /* Replaced the sum of entities size by manual sum for robustness*/
   std::size_t numNodes = 0;
   auto incrementNodes = [&](const auto &entities) {
