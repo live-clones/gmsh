@@ -71,7 +71,7 @@ template <int dim>
             }
           }
         }*/
-        if (element->getVertex(v)->onWhat()->dim() < dim) continue; // Non-Boundary vertex, skip it
+        if (element->getVertex(v)->onWhat()->dim() == dim) continue; // Non-Boundary vertex, skip it
 
         auto parts = vertexToPartitions[element->getVertex(v)];
         for(int part : parts) {
