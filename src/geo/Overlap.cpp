@@ -391,7 +391,7 @@ void overlapBuildBoundaries(GModel *const model,
             auto parts = getEntityPartition(partitionEntity);
             if(std::find(parts.begin(), parts.end(), partition) ==
                parts.end()) {
-              Msg::Warning("Interface between two other subdomains added as artificial boundary.");
+              //Msg::Warning("Interface between two other subdomains added as artificial boundary.");
               innerboundarySet.insert(melement);
             }
           }
@@ -567,6 +567,7 @@ findNonOwnedVerticesToSave(
     auto parts = getEntityPartition(coveredEntity);
     for(int part : parts) partitionsToExport.insert(part);
   }
+  partitionsToExport.erase(partition); // Remove own partition (full export)
 
   for (auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
     auto pv = dynamic_cast<partitionVertex *>(*it);
