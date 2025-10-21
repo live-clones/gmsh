@@ -826,8 +826,8 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         for(int k = 0; k < numVertPerElm; k++) {
           vertices[k] = model->getMeshVertexByTag(data[j + k + 1]);
           if(!vertices[k]) {
-            Msg::Error("Unknown node %zu in element %zu", data[j + k + 1],
-                       data[j]);
+            Msg::Error("Unknown node %zu in element %zu, for entity %d %d and element type %d", data[j + k + 1],
+                       data[j], entityDim, entityTag, elmType);
             delete[] elementCache;
             return nullptr;
           }
@@ -896,7 +896,14 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
 
           vertices[k] = model->getMeshVertexByTag(vertexTag);
           if(!vertices[k]) {
-            Msg::Error("Unknown node %zu in element %zu", vertexTag, elmTag);
+            auto parts = getEntityPartition(entity, false);
+            std::string partitionInfo = "";
+            if(!parts.empty()) {
+              partitionInfo = " (partitions:";
+              for(auto p : parts) partitionInfo += " " + std::to_string(p);
+              partitionInfo += ")";
+            }
+            Msg::Error("Unknown node %zu in element %zu in entity %d %d and elementType %d. Entity type is %s. Partition data is %s", vertexTag, elmTag, entityDim, entityTag, elmType, entity->getTypeString().c_str(), partitionInfo.c_str());
             delete[] elementCache;
             return nullptr;
           }
