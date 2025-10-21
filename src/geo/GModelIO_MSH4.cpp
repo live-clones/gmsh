@@ -2743,7 +2743,7 @@ static void writeMSH4Nodes(
   GModel *const model, FILE *fp, bool partitioned, int partitionToSave,
   bool binary, int saveParametric, double scalingFactor, bool saveAll,
   double version,
-  const std::unordered_map<GEntity *, std::unordered_set<MVertex *>>
+  std::unordered_map<GEntity *, std::unordered_set<MVertex *>>
     &verticesToSaveOnOtherEntities)
 {
   std::set<GRegion *, GEntityPtrLessThan> regions;
@@ -2777,12 +2777,31 @@ static void writeMSH4Nodes(
     }
   };
 
-  for (auto [entity, _]: verticesToSaveOnOtherEntities) {
+  for (auto& [entity, data]: verticesToSaveOnOtherEntities) {
     auto gv = dynamic_cast<GVertex *>(entity); if (gv) vertices.insert(gv);
     auto ge = dynamic_cast<GEdge *>(entity); if (ge) edges.insert(ge);
-    auto gf = dynamic_cast<GFace *>(entity); if (gf) faces.insert(gf);
-    auto gr = dynamic_cast<GRegion *>(entity); if (gr) regions.insert(gr);
+    auto gf = dynamic_cast<GFace *>(entity);
+    if(gf) {
+      faces.insert(gf);
+      auto parts = getEntityPartition(gf);
+      if(std::find(parts.begin(), parts.end(), partitionToSave) !=
+           parts.end() &&
+         data.size() < gf->getNumMeshVertices()) {
+        Msg::Warning(
+          "Partially saving an owned entity (%d) may lead to an invalid mesh. "
+          "Partition is %d. Saving only %zu points instead of %zu",
+          gf->tag(), partitionToSave, data.size(), gf->getNumMeshVertices());
+      
+        // Force full insertion. FIXME
+        for (size_t i = 0; i < gf->getNumMeshVertices(); i++) {
+          data.insert(gf->getMeshVertex(i));
+        }
+      }
+    }
+    auto gr = dynamic_cast<GRegion *>(entity);
+    if(gr) regions.insert(gr);
   }
+
 
   incrementNodes(vertices);
   incrementNodes(edges);
