@@ -3405,6 +3405,7 @@ module gmsh
   end subroutine gmshModelMeshRecombine
 
   !> Refine the mesh of the current model by uniformly splitting the elements.
+  !! This resets any high-order elements to order 1.
   subroutine gmshModelMeshRefine(ierr)
     interface
     subroutine C_API(ierr_) &

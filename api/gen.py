@@ -284,7 +284,7 @@ mesh.add('optimize', doc, None, istring('method', '""'), ibool('force', 'false',
 doc = '''Recombine the mesh of the current model.'''
 mesh.add('recombine', doc, None)
 
-doc = '''Refine the mesh of the current model by uniformly splitting the elements.'''
+doc = '''Refine the mesh of the current model by uniformly splitting the elements. This resets any high-order elements to order 1.'''
 mesh.add('refine', doc, None)
 
 doc = '''Change the order of the elements in the mesh of the current model to `order'.'''

@@ -643,7 +643,8 @@ GMSH_API void gmshModelMeshOptimize(const char * method,
 /* Recombine the mesh of the current model. */
 GMSH_API void gmshModelMeshRecombine(int * ierr);
 
-/* Refine the mesh of the current model by uniformly splitting the elements. */
+/* Refine the mesh of the current model by uniformly splitting the elements.
+ * This resets any high-order elements to order 1. */
 GMSH_API void gmshModelMeshRefine(int * ierr);
 
 /* Change the order of the elements in the mesh of the current model to
