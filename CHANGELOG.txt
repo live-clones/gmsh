@@ -1,4 +1,4 @@
-4.15.0 (Work-in-progress): new Closest, Parametric Point and Normal parser
+4.15.0 (October 26, 2025): new Closest, Parametric Point and Normal parser
 functions; changed Boundary and CombinedBoundary parser functions to not return
 signed entity tags anymore (use new OrientedBoundary and
 OrientedCombinedBoundary to get the old behavior); changed default value of
