@@ -332,8 +332,11 @@ public:
     int meshSizeFromBoundary;
     // do we use a specific transfinite algorithm for 3-sided surfaces
     bool transfinite3;
+    bool fixedMeshIF;
   } meshAttributes;
 
+  bool getFixedMeshIF(){return meshAttributes.fixedMeshIF;}
+  void setFixedMeshIF(bool fixed){meshAttributes.fixedMeshIF=fixed;}
   int getMeshingAlgo() const;
   void setMeshingAlgo(int val) { meshAttributes.algorithm = val; }
   void unsetMeshingAlgo() { meshAttributes.algorithm = 0; }
