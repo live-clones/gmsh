@@ -2492,11 +2492,11 @@ GMSH_API void gmshModelMeshComputeAlphaShape(const int dim, const int tag, const
   }
 }
 
-GMSH_API void gmshModelMeshTetrahedralizePoints(const int tag, const int optimize, const double quality, int * ierr)
+GMSH_API void gmshModelMeshTetrahedralizePoints(const int tag, const int surfaceTag, const int optimize, const double quality, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
-    gmsh::model::mesh::tetrahedralizePoints(tag, optimize, quality);
+    gmsh::model::mesh::tetrahedralizePoints(tag, surfaceTag, optimize, quality);
   }
   catch(...){
     if(ierr) *ierr = 1;

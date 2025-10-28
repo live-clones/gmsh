@@ -1691,8 +1691,10 @@ GMSH_API void gmshModelMeshComputeAlphaShape(const int dim,
                                              const int deleteDisconnectedNodes,
                                              int * ierr);
 
-/* Tetrahedralize points in entity of tag `tag */
+/* Tetrahedralize points in entity of tag `tag'. A surface mesh to constrained
+ * can be provided in in an entity of tag `surfaceTag */
 GMSH_API void gmshModelMeshTetrahedralizePoints(const int tag,
+                                                const int surfaceTag,
                                                 const int optimize,
                                                 const double quality,
                                                 int * ierr);

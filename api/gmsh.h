@@ -1910,8 +1910,10 @@ namespace gmsh { // Top-level functions
 
       // gmsh::model::mesh::tetrahedralizePoints
       //
-      // Tetrahedralize points in entity of tag `tag
+      // Tetrahedralize points in entity of tag `tag'. A surface mesh to
+      // constrained can be provided in in an entity of tag `surfaceTag
       GMSH_API void tetrahedralizePoints(const int tag,
+                                         const int surfaceTag,
                                          const bool optimize = false,
                                          const double quality = 0.00001);
 

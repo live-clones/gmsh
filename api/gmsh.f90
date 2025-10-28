@@ -7795,29 +7795,35 @@ module gmsh
       api_newNodeParametricCoord_n_)
   end subroutine gmshModelMeshComputeAlphaShape
 
-  !> Tetrahedralize points in entity of tag `tag
+  !> Tetrahedralize points in entity of tag `tag'. A surface mesh to constrained
+  !! can be provided in in an entity of tag `surfaceTag
   subroutine gmshModelMeshTetrahedralizePoints(tag, &
+                                               surfaceTag, &
                                                optimize, &
                                                quality, &
                                                ierr)
     interface
     subroutine C_API(tag, &
+                     surfaceTag, &
                      optimize, &
                      quality, &
                      ierr_) &
       bind(C, name="gmshModelMeshTetrahedralizePoints")
       use, intrinsic :: iso_c_binding
       integer(c_int), value, intent(in) :: tag
+      integer(c_int), value, intent(in) :: surfaceTag
       integer(c_int), value, intent(in) :: optimize
       real(c_double), value, intent(in) :: quality
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
     integer, intent(in) :: tag
+    integer, intent(in) :: surfaceTag
     logical, intent(in), optional :: optimize
     real(c_double), intent(in), optional :: quality
     integer(c_int), intent(out), optional :: ierr
     call C_API(tag=int(tag, c_int), &
+         surfaceTag=int(surfaceTag, c_int), &
          optimize=optval_c_bool(.false., optimize), &
          quality=optval_c_double(0.00001, quality), &
          ierr_=ierr)

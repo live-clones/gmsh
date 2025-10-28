@@ -593,8 +593,8 @@ mesh.add('advectMeshNodes', doc, None, iint('dim'), iint('tag'), iint('bndTag'),
 doc = '''Compute the alpha shape - improved function'''
 mesh.add('computeAlphaShape', doc, None, iint('dim'), iint('tag'), iint('bndTag'), istring('boundaryModel'), idouble('alpha'), iint('alphaShapeSizeField'), iint('refineSizeField'), ovectorsize('newNodeTags'), ovectorsize('newNodeElementTags'), ovectordouble('newNodeParametricCoord'), ibool('usePreviousMesh', 'false', 'False'), idouble('boundaryTolerance', '1e-6'), ibool('refine', 'true', 'True'), iint('delaunayTag', '-1'), ibool('deleteDisconnectedNodes', 'true', 'True'))
 
-doc = '''Tetrahedralize points in entity of tag `tag'''
-mesh.add('tetrahedralizePoints', doc, None, iint('tag'), ibool('optimize', 'false', 'False'), idouble('quality', '0.00001'))
+doc = '''Tetrahedralize points in entity of tag `tag'. A surface mesh to constrained can be provided in in an entity of tag `surfaceTag'''
+mesh.add('tetrahedralizePoints', doc, None, iint('tag'), iint('surfaceTag'), ibool('optimize', 'false', 'False'), idouble('quality', '0.00001'))
 
 doc = '''Compute alpha shape of the mesh in entity of tag `tag'''
 mesh.add('alphaShape3D', doc, None, iint('tag'), idouble('alpha'), iint('sizeFieldTag'), iint('tagAlpha'), iint('tagAlphaBoundary'), ovectorsize('tri2TetMap'),  ibool('removeDisconnectedNodes', 'false', 'False'), ibool('returnTri2TetMap', 'false', 'False'))

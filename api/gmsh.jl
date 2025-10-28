@@ -4662,20 +4662,22 @@ end
 const compute_alpha_shape = computeAlphaShape
 
 """
-    gmsh.model.mesh.tetrahedralizePoints(tag, optimize = false, quality = 0.00001)
+    gmsh.model.mesh.tetrahedralizePoints(tag, surfaceTag, optimize = false, quality = 0.00001)
 
-Tetrahedralize points in entity of tag `tag
+Tetrahedralize points in entity of tag `tag`. A surface mesh to constrained can
+be provided in in an entity of tag `surfaceTag
 
 Types:
  - `tag`: integer
+ - `surfaceTag`: integer
  - `optimize`: boolean
  - `quality`: double
 """
-function tetrahedralizePoints(tag, optimize = false, quality = 0.00001)
+function tetrahedralizePoints(tag, surfaceTag, optimize = false, quality = 0.00001)
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshTetrahedralizePoints, gmsh.lib), Cvoid,
-          (Cint, Cint, Cdouble, Ptr{Cint}),
-          tag, optimize, quality, ierr)
+          (Cint, Cint, Cint, Cdouble, Ptr{Cint}),
+          tag, surfaceTag, optimize, quality, ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     return nothing
 end

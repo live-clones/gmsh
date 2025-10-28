@@ -5805,9 +5805,9 @@ gmsh::model::mesh::computeAlphaShape(const int dim,
 }
 
 GMSH_API void
-gmsh::model::mesh::tetrahedralizePoints(const int tag, const bool optimize, const double qualityMin){
+gmsh::model::mesh::tetrahedralizePoints(const int tag, const int surfaceTag, const bool optimize, const double qualityMin){
 #if defined(HAVE_MESH) && defined(HAVE_HXT)
-  AlphaShape::_tetrahedralizePoints(tag, optimize, qualityMin);
+  AlphaShape::_tetrahedralizePoints(tag, surfaceTag, optimize, qualityMin);
 #else
   Msg::Error("tetrahedralizePoints requires the mesh and hxt modules");
 #endif

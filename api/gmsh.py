@@ -5284,20 +5284,23 @@ class model:
         compute_alpha_shape = computeAlphaShape
 
         @staticmethod
-        def tetrahedralizePoints(tag, optimize=False, quality=0.00001):
+        def tetrahedralizePoints(tag, surfaceTag, optimize=False, quality=0.00001):
             """
-            gmsh.model.mesh.tetrahedralizePoints(tag, optimize=False, quality=0.00001)
+            gmsh.model.mesh.tetrahedralizePoints(tag, surfaceTag, optimize=False, quality=0.00001)
 
-            Tetrahedralize points in entity of tag `tag
+            Tetrahedralize points in entity of tag `tag'. A surface mesh to constrained
+            can be provided in in an entity of tag `surfaceTag
 
             Types:
             - `tag': integer
+            - `surfaceTag': integer
             - `optimize': boolean
             - `quality': double
             """
             ierr = c_int()
             lib.gmshModelMeshTetrahedralizePoints(
                 c_int(tag),
+                c_int(surfaceTag),
                 c_int(bool(optimize)),
                 c_double(quality),
                 byref(ierr))

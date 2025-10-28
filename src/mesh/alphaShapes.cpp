@@ -2487,7 +2487,7 @@ void AlphaShape::_moveNodes(const int tag, const int freeSurfaceTag, const std::
 // ======================
 
 // Tetrahedralize points in discrete entity dim, tag
-void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize, const double qualityMin){
+void AlphaShape::_tetrahedralizePoints(const int tag, const int surfaceTag, const bool optimize, const double qualityMin){
   GModel* gm = GModel::current();
   // cast to GRegion
   GRegion* gr = gm->getRegionByTag(tag);
@@ -2504,6 +2504,8 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize, const
     return;
   }
 
+  GFace *df = gm->getFaceByTag(surfaceTag);
+
   for(auto tet: gr->tetrahedra) delete tet;
   gr->tetrahedra.clear();
 
@@ -2512,6 +2514,7 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize, const
   hxtMeshCreate(&mesh);
 
   size_t nvert = gr->mesh_vertices.size();
+  std::map<MVertex *, uint32_t> v2c;
 
   hxtAlignedMalloc(&mesh->vertices.coord, (nvert+8) * 4 * sizeof(double));
   
@@ -2526,6 +2529,7 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize, const
       if (mesh->vertices.coord[4 * (i+8) + j] > coord_max[j]) coord_max[j] = mesh->vertices.coord[4 * (i+8) + j];
       if (mesh->vertices.coord[4 * (i+8) + j] < coord_min[j]) coord_min[j] = mesh->vertices.coord[4 * (i+8) + j];
     }
+    v2c[gr->mesh_vertices[i]] = i + 8;
   }
 
   for (int i=0; i<3; i++){
@@ -2587,6 +2591,18 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize, const
   mesh->vertices.num = nvert+8;
   mesh->vertices.size = nvert+8;
 
+  mesh->triangles.num = mesh->triangles.size = df->getNumMeshElementsByType(TYPE_TRI);
+  hxtAlignedMalloc(&mesh->triangles.node,
+                             (mesh->triangles.num) * 3 * sizeof(uint32_t));
+  hxtAlignedMalloc(&mesh->triangles.color,
+                             (mesh->triangles.num) * sizeof(uint32_t));
+  for(size_t i = 0; i < df->triangles.size(); i++) {
+    for (size_t j=0; j<3; j++){
+      mesh->triangles.node[3*i + j] = v2c[df->triangles[i]->getVertex(j)];
+    }
+    mesh->triangles.color[i] = df->tag();
+  }
+
   double nThreadsDBL = 0;
   gmsh::option::getNumber("Mesh.MaxNumThreads3D", nThreadsDBL);
   if(nThreadsDBL == 0)
@@ -2615,6 +2631,24 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize, const
     nodeInfo[i].status = HXT_STATUS_TRYAGAIN;
   }
   hxtDelaunaySteadyVertices(mesh, &delOptions, nodeInfo, mesh->vertices.num);
+
+  if(df && df->getNumMeshElementsByType(TYPE_TRI) != 0)
+  {
+    std::size_t oldVerticesCount = mesh->vertices.num;
+    hxt_boundary_recovery(mesh, 1e-8);
+    std::size_t newVerticesCount = mesh->vertices.num;
+
+    std::size_t counter = 0;
+    for(std::size_t n = oldVerticesCount ; n < newVerticesCount ; ++n)
+    {
+        MVertex* vm = new MVertex(mesh->vertices.coord[3*n + 0], mesh->vertices.coord[3*n + 1], mesh->vertices.coord[3*n + 2]);
+        gr->addMeshVertex(vm);
+        v2c[vm] = oldVerticesCount + counter;
+    }
+    
+    if(verbosityDBL != 0.0 && counter > 0)
+        printf("Steiner points added by HXT!");
+  }  
   
   mesh->tetrahedra.color = (uint32_t*) malloc(sizeof(uint32_t) * mesh->tetrahedra.num);
 
@@ -2651,7 +2685,9 @@ void AlphaShape::_tetrahedralizePoints(const int tag, const bool optimize, const
 
   // hxtMeshWriteGmsh(mesh, "myMesh.msh");
 
-  if (optimize){
+  if(optimize && df)
+    throw std::runtime_error("Cannot optimize the mesh when a surface is constrained currently!");
+  else if (optimize){
     HXTOptimizeOptions options = {
                                   .qualityMin = qualityMin,
                                   .numThreads = nthreads,
@@ -3287,8 +3323,8 @@ int _GFace2PolyMesh(int faceTag, PolyMesh **pm, std::vector<PolyMesh::Face*>& to
           break;
 	      PolyMesh::HalfEdge *h2 = (*pm)->hedges[i + 2];
 	      if(equal(h0, h2)){
-          // Msg::Warning("Non Manifold Mesh cannot be encoded in a half edge data structure (edge %d %d) -- removing a face",
-          //        h0->v->data,h0->next->v->data);
+           Msg::Warning("Non Manifold Mesh cannot be encoded in a half edge data structure (edge %d %d) -- removing a face",
+                  h0->v->data,h0->next->v->data);
           toRemove.push_back(h2->f);
           toRemove.push_back(h0->f);
           toRemove.push_back(h1->f);
@@ -3478,7 +3514,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
   // printf("hereS 5\n");
   // Update the 3D mesh
   if (tetrahedralize)
-    _tetrahedralizePoints(fullTag, false, 0);
+    _tetrahedralizePoints(fullTag, std::numeric_limits<int>::max(), false, 0);
 
 }
 
