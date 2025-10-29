@@ -44,6 +44,9 @@
 
 #include "meshCombine3D.h"
 
+#include "meshQuantize2.h"
+
+
 #if defined(HAVE_DOMHEX)
 #include "simple3D.h"
 //#include "yamakawa.h"
@@ -67,6 +70,21 @@
 #include "PView.h"
 #include "PViewData.h"
 #endif
+
+#if defined(HAVE_QUADMESHINGTOOLS)
+#include "cppUtils.h"
+#include "qmtMeshUtils.h"
+#include "qmtCrossField.h"
+#include "qmtSizeMap.h"
+#include "qmtCurveQuantization.h"
+#include "qmtQuadCavityRemeshing.h"
+#include "qmtMeshGeometryOptimization.h"
+#include "arrayGeometry.h"
+#include "geolog.h"
+#endif
+
+
+#include "meshDuplicateVertices.h"
 
 class EmbeddedCompatibilityTest {
 public:
@@ -643,12 +661,22 @@ static void Mesh2D(GModel *m)
     bool debug = (Msg::GetVerbosity() == 99);
     
     transferSeamGEdgesVerticesToGFace(m);
-    quadMeshingOfSimpleFacesWithPatterns(m,.2);
+    quadMeshingOfSimpleFacesWithPatterns(m,.02);
     if(debug) m->writeMSH("opti1.msh");
-    //    optimizeTopologyWithDiskQuadrangulationRemeshing(m);
     //    if(debug) m->writeMSH("opti2.msh");
     //    optimizeTopologyWithCavityRemeshing(m);
-    //for(GFace *gf : m->getFaces()) if(debug) gf->model()->writeMSH("opti3.msh");
+
+    if (Msg::GetVerbosity() == 99){
+      std::vector<std::pair<SPoint3, int>> singularities;
+      for(GFace *gf : m->getFaces()) {
+	bool meshOrientationIsOppositeOfCadOrientation(GFace *gf);
+	//	bool invertNormals =
+	meshOrientationIsOppositeOfCadOrientation(gf);
+	improveQuadMeshTopologyWithCavityRemeshing(gf, singularities,
+						   false);
+      }
+    }
+    
     OptimizeMesh(m, "UntangleTris");
     if(debug) m->writeMSH("opti4.msh");
     
@@ -660,6 +688,7 @@ static void Mesh2D(GModel *m)
   }
 
   CheckEmptyMesh(m, 2);
+    
   double t2 = Cpu(), w2 = TimeOfDay();
   CTX::instance()->mesh.timer[1] = w2 - w1;
   Msg::StatusBar(true, "Done meshing 2D (Wall %gs, CPU %gs)",
@@ -876,7 +905,7 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
      how != "HighOrder" && how != "HighOrderElastic" &&
      how != "HighOrderFastCurving" && how != "Laplace2D" &&
      how != "Relocate2D" && how != "Relocate3D" &&
-     how != "DiskQuadrangulation" && how != "QuadCavityRemeshing" &&
+     how != "QuadCavityRemeshing" &&
      how != "QuadQuasiStructured" && how != "UntangleMeshGeometry") {
     Msg::Error("Unknown mesh optimization method '%s'", how.c_str());
     return;
@@ -1011,20 +1040,6 @@ void OptimizeMesh(GModel *m, const std::string &how, bool force, int niter)
     for(auto it = m->firstRegion(); it != m->lastRegion(); ++it) {
       GRegion *gr = *it;
       RelocateVertices(gr, niter);
-    }
-  }
-  else if(how == "DiskQuadrangulation") {
-    for(GFace *gf : m->getFaces()) {
-      if(gf->meshStatistics.status == GFace::DONE) {
-        gf->meshStatistics.status = GFace::PENDING;
-      }
-    }
-    transferSeamGEdgesVerticesToGFace(m);
-    optimizeTopologyWithDiskQuadrangulationRemeshing(m);
-    for(GFace *gf : m->getFaces()) {
-      if(gf->meshStatistics.status == GFace::PENDING) {
-        gf->meshStatistics.status = GFace::DONE;
-      }
     }
   }
   else if(how == "QuadCavityRemeshing") {
@@ -1405,6 +1420,42 @@ void FixPeriodicMesh(GModel *m)
 
 //#include <google/profiler.h>
 
+static bool quantize1DIfNeeded (GModel *m){
+
+  if(CTX::instance()->mesh.recombineAll){
+
+    std::vector<int> C;
+    std::vector<int> N;
+    quantizeCurvesForEvenSurfaceSubdivision (C, N);
+
+    int i = 0;
+    for(auto tag : C) {
+      int Ni = N[i];
+      GEdge *ge = m->getEdgeByTag(tag);
+      size_t Ni_now = ge->lines.size();
+      if (Ni_now!=Ni){
+	Msg::Info ("Remeshing Curve %d for Even Quantization",tag);
+	meshGEdge mge;
+	mge.ForceNumberOfSubdivisions = Ni;
+	mge(ge);
+      }
+      i++;
+    }    
+    //    for(auto it = m->firstFace(); it != m->lastFace(); ++it) {
+    //      auto ed = (*it)->edges();
+    //      int count = 0;
+    //      printf("Face %d ",(*it)->tag());      
+    //      for (auto e : ed){
+    //	size_t x = e->lines.size();
+    //	count += x;	
+    //	printf("(%d,%d) ",e->tag(),x);      
+    //      }
+    //      printf("--> count %d\n",count);      
+    //    }
+  }
+  return true;
+}
+
 void GenerateMesh(GModel *m, int ask)
 {
   // ProfilerStart("gmsh.prof");
@@ -1487,6 +1538,7 @@ void GenerateMesh(GModel *m, int ask)
     std::for_each(m->firstFace(), m->lastFace(), deMeshGFace());
     Mesh0D(m);
     Mesh1D(m);
+    quantize1DIfNeeded (m);
   }
 
   // 2D mesh
@@ -1564,6 +1616,11 @@ void GenerateMesh(GModel *m, int ask)
 
   if(qqs != nullptr) delete qqs;
 
+  // FIXME TEST
+  if (backgroundMeshAndGuidingFieldExists(m)) {
+    removeAllMeshEntitiesThatHaveSmallEdges();
+  }
+  
   CTX::instance()->lock = 0;
   // ProfilerStop();
 }

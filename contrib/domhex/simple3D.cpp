@@ -655,7 +655,7 @@ void Filler::create_spawns(GEntity *ge, MElementOctree *octree, Node *node,
   double h;
   Metric m;
   SPoint3 point;
-
+  
   point = node->get_point();
   x = point.x();
   y = point.y();

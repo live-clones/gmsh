@@ -585,7 +585,7 @@ static void printFandPrimitive(int tag, std::vector<IntPoint> &Points)
 // new algo for recombining + splitting
 static int increaseN(int N)
 {
-  //  if(((N + 1) / 2 - 1) % 2 != 0) return N + 2;
+  if(((N + 1) / 2 - 1) % 2 != 0) return N + 2;
   return N;
 }
 
@@ -596,12 +596,12 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
   if(ge->mesh_vertices.empty()) return;
   if(ge->meshAttributes.method == MESH_TRANSFINITE) return;
 
-  bool forceOdd = false;
-  if((ge->meshAttributes.method != MESH_TRANSFINITE ||
-      CTX::instance()->mesh.flexibleTransfinite) &&
-     CTX::instance()->mesh.algoRecombine != 0) {
-    if(CTX::instance()->mesh.recombineAll) { forceOdd = true; }
-  }
+  //  bool forceOdd = false;
+  //  if((ge->meshAttributes.method != MESH_TRANSFINITE ||
+  //      CTX::instance()->mesh.flexibleTransfinite) &&
+  //     CTX::instance()->mesh.algoRecombine != 0) {
+  //    if(CTX::instance()->mesh.recombineAll) { forceOdd = true; }
+  //  }
 
   if(!ge->getBeginVertex() || !ge->getEndVertex()) return;
 
@@ -635,9 +635,9 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
   }
   std::sort(lengths.begin(), lengths.end());
   int last = lengths.size();
-  if(forceOdd) {
-    while(last % 2 != 0) last--;
-  }
+  //  if(forceOdd) {
+  //    while(last % 2 != 0) last--;
+  //  }
   /*
     if(CTX::instance()->mesh.algoRecombine == 2){
       if(last < 4) last = 0;
@@ -797,10 +797,6 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
   Points.clear();
   //  printf("length %12.5E\n",length);
 
-  if(length < CTX::instance()->mesh.toleranceEdgeLength) {
-    ge->setTooSmall(true);
-  }
-
   // Integrate detJ/lc du
   filterMinimumN = 1;
   if(length == 0. && CTX::instance()->mesh.toleranceEdgeLength == 0.) {
@@ -853,33 +849,34 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
   }
 
   // force odd number of points if blossom is used for recombination
-  // if the adim length of the curve is too small, do not do it -- could be an option 
-  const double aLimit = 0.75;
-
+  // only do it if recombination method is 2 (simple full quad) or 4
+  // bipartite labelling
+  
   if((ge->meshAttributes.method != MESH_TRANSFINITE ||
       CTX::instance()->mesh.flexibleTransfinite) &&
      CTX::instance()->mesh.algoRecombine != 0) {
     std::vector<GFace *> const &faces = ge->faces();
     if(CTX::instance()->mesh.recombineAll) {
-      //      if(N == 2) N = 1;
-      if(N % 2 == 0 && a > aLimit) N++;
+      //            if(N == 2) N = 1;
       if(CTX::instance()->mesh.algoRecombine == 2 ||
-         CTX::instance()->mesh.algoRecombine == 4)
-        N = increaseN(N);
+	 CTX::instance()->mesh.algoRecombine == 4)
+	if(N % 2 == 0) N++;
+      //	N = increaseN(N);
     }
     else {
       for(auto it = faces.begin(); it != faces.end(); it++) {
-        if((*it)->meshAttributes.recombine) {
-	  if(N % 2 == 0 && a > aLimit) N++;
-          if(CTX::instance()->mesh.algoRecombine == 2 ||
-             CTX::instance()->mesh.algoRecombine == 4)
-            N = increaseN(N);
-          break;
-        }
+	if((*it)->meshAttributes.recombine) {
+	  if(CTX::instance()->mesh.algoRecombine == 2 ||
+	     CTX::instance()->mesh.algoRecombine == 4)
+	    //	    printf("coucou %d\n",N);
+	    if(N % 2 == 0) N++;
+	  //	    N = increaseN(N);
+	  break;
+	}
       }
     }
   }
-
+  
   return N;
 }
 
@@ -948,6 +945,8 @@ void meshGEdge::operator()(GEdge *ge)
   int filterMinimumN;
   meshGEdgeProcessing(ge, t_begin, t_end, N, Points, a, filterMinimumN);
 
+  if (ForceNumberOfSubdivisions > 0) N = ForceNumberOfSubdivisions+1;
+  
   //  printFandPrimitive(ge->tag(),Points);
 
   // if the curve is periodic and if the begin vertex is identical to
@@ -1047,7 +1046,7 @@ void meshGEdge::operator()(GEdge *ge)
 
   Msg::Debug("Meshing curve %d (%s): %li interior vertices", ge->tag(),
              ge->getTypeString().c_str(), ge->mesh_vertices.size());
-
+  
   ge->meshStatistics.status = GEdge::DONE;
 }
 

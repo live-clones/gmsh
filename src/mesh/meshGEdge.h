@@ -10,7 +10,8 @@ class GEdge;
 
 // Create the mesh of the edge
 struct meshGEdge {
-  meshGEdge() {}
+  int ForceNumberOfSubdivisions;
+  meshGEdge() : ForceNumberOfSubdivisions (-1){}
   void operator()(GEdge *);
 };
 

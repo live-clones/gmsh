@@ -42,6 +42,7 @@
 #include "filterElements.h"
 #include "meshGFaceBipartiteLabelling.h"
 #include "meshTriangulation.h"
+#include "meshDuplicateVertices.h"
 
 bool pointInsideParametricDomain(std::vector<SPoint2> &bnd, SPoint2 &p,
                                  SPoint2 &out, int &N)
@@ -1438,6 +1439,8 @@ e->getEndVertex(); conn[v]. push_back(e);
 
 // Builds An initial triangular mesh that respects the boundaries of
 // the domain, including embedded points and surfaces
+
+
 static bool meshGenerator(GFace *gf, int RECUR_ITER,
                           bool repairSelfIntersecting1dMesh,
                           int onlyInitialMesh, bool debug,
@@ -1456,7 +1459,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   std::map<MVertex *, BDS_Point *> recoverMapInv;
   std::vector<GEdge *> edges =
     replacementEdges ? *replacementEdges : gf->edges();
-
+    
   //  separateLoopsToIsolatedEdges (edges, edges );
 
   FILE *fdeb = nullptr;
@@ -1471,34 +1474,31 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
   std::set<MVertex *, MVertexPtrLessThan> all_vertices, boundary;
   auto ite = edges.begin();
   while(ite != edges.end()) {
-    if(gf->tag() == 100124) printf("%d / %d\n", gf->tag(), (*ite)->tag());
     if((*ite)->isSeam(gf)) {
       if(fdeb != nullptr) fclose(fdeb);
       return false;
     }
-    if(!(*ite)->isMeshDegenerated()) {
-      for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
-        MVertex *v1 = (*ite)->lines[i]->getVertex(0);
-        MVertex *v2 = (*ite)->lines[i]->getVertex(1);
-        if(fdeb) {
-          fprintf(fdeb, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", v1->x(), v1->y(),
-                  v1->z(), v2->x(), v2->y(), v2->z(), (*ite)->tag(),
-                  (*ite)->tag());
-        }
-        all_vertices.insert(v1);
-        all_vertices.insert(v2);
-        if(boundary.find(v1) == boundary.end())
-          boundary.insert(v1);
-        else
-          boundary.erase(v1);
-        if(boundary.find(v2) == boundary.end())
-          boundary.insert(v2);
-        else
-          boundary.erase(v2);
+    for(std::size_t i = 0; i < (*ite)->lines.size(); i++) {
+      MVertex *v1 = (*ite)->lines[i]->getVertex(0);
+      MVertex *v2 = (*ite)->lines[i]->getVertex(1);
+      v1 = degeneratedVertices::instance().find(v1);
+      v2 = degeneratedVertices::instance().find(v2);
+      if(fdeb) {
+	fprintf(fdeb, "SL(%g,%g,%g,%g,%g,%g){%d,%d};\n", v1->x(), v1->y(),
+		v1->z(), v2->x(), v2->y(), v2->z(), (*ite)->tag(),
+		(*ite)->tag());
       }
+      all_vertices.insert(v1);
+      all_vertices.insert(v2);
+      if(boundary.find(v1) == boundary.end())
+	boundary.insert(v1);
+      else
+	boundary.erase(v1);
+      if(boundary.find(v2) == boundary.end())
+	boundary.insert(v2);
+      else
+	boundary.erase(v2);
     }
-    else
-      Msg::Debug("Degenerated mesh on edge %d", (*ite)->tag());
     ++ite;
   }
 
@@ -2076,7 +2076,7 @@ static bool meshGenerator(GFace *gf, int RECUR_ITER,
                        gf->meshStatistics.nbTriangle,
                        gf->meshStatistics.nbGoodQuality);
 
-  if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) { directions_storage(gf); }
+  //  if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) { directions_storage(gf); }
 
   // remove unused vertices, generated e.g. during background mesh
   deleteUnusedVertices(gf);
@@ -3156,7 +3156,7 @@ static bool meshGeneratorPeriodic(GFace *gf, int RECUR_ITER,
                        gf->meshStatistics.nbTriangle,
                        gf->meshStatistics.nbGoodQuality);
 
-  if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) { directions_storage(gf); }
+  //  if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) { directions_storage(gf); }
 
   gf->meshStatistics.status = GFace::DONE;
 
@@ -3223,7 +3223,10 @@ void meshGFace::operator()(GFace *gf, bool print)
   deMeshGFace dem;
   dem(gf);
 
-  if(MeshTransfiniteSurface(gf)) return;
+  if(MeshTransfiniteSurface(gf)){
+    if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) { directions_storage(gf); }
+    return;
+  }
   if(MeshExtrudedSurface(gf)) return;
   if(gf->getMeshMaster() != gf) {
     GFace *gff = dynamic_cast<GFace *>(gf->getMeshMaster());
@@ -3236,6 +3239,7 @@ void meshGFace::operator()(GFace *gf, bool print)
                 gf->getTypeString().c_str(), gf->getMeshMaster()->tag());
       copyMesh(gff, gf);
       gf->meshStatistics.status = GFace::DONE;
+      if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) { directions_storage(gf); }
       return;
     }
     else
@@ -3297,6 +3301,8 @@ void meshGFace::operator()(GFace *gf, bool print)
                   (gf->getMeshingAlgo() == ALGO_2D_INITIAL_ONLY) ? 1 : 0,
                   (debugSurface >= 0 || debugSurface == -100), NULL);
   }
+
+  if(CTX::instance()->mesh.algo3d == ALGO_3D_RTREE) { directions_storage(gf); }
 
   Msg::Debug("Type %d %d triangles generated, %d internal nodes",
              gf->geomType(), gf->triangles.size(), gf->mesh_vertices.size());

@@ -470,7 +470,7 @@ static bool untangleGFaceMeanPlane(GFace *gf,
     int numSubdiv = e->getNumVertices() == 4 ? 4 : 1;
 
     const double NRM = 0.5;
-    std::array<vec2, 4> qt = {vec2{-NRM,-NRM},vec2{NRM,-NRM},vec2{NRM,NRM},vec2{-NRM,NRM}};
+    std::array<vec2, 4> qt = {vec2{NRM,NRM},vec2{-NRM,NRM},vec2{-NRM,-NRM},vec2{NRM,-NRM}};
 
     for (size_t j=0;j<numSubdiv;j++){
       int i0 = v[quad_dcp[j][0]]->getIndex();
@@ -502,12 +502,14 @@ static bool untangleGFaceMeanPlane(GFace *gf,
     }
   }
 
-  double lambda = 1.e-4;
+  double lambda = 1.e-2;
   int iterMaxInner = 200;
   int iterMax = 3;
   int iterFailMax = 300;
   double timeMax = 1.e+3;
 
+  //  triIdealShapes.clear();
+  
   bool converged =
     untangle_triangles_2D(points, locked, triangles, triIdealShapes, lambda,
                           iterMaxInner, iterMax, iterFailMax, timeMax,nullptr);
@@ -650,7 +652,7 @@ bool untangleGFaceMeshConstrained(GFace *gf, int iterMax, double timeMax)
   /* Call Winslow untangler */
   int iterMaxInner = 300;//0;
   int iterFailMax = 10;
-  double lambda = 1;
+  double lambda = 1.;
 
 #if 1
   {
@@ -669,6 +671,7 @@ bool untangleGFaceMeshConstrained(GFace *gf, int iterMax, double timeMax)
     fclose(f);
   }
 #endif
+  printf("coucou 1\n");
   bool converged =
     untangle_triangles_2D(points, locked, triangles, triIdealShapes, lambda,
                           iterMaxInner, iterMax, iterFailMax, timeMax,nullptr);

@@ -1353,7 +1353,6 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
   sprintf(name, "%s recombination completed (Wall %gs, CPU %gs)",
           blossom ? "Blossom" : "Simple", w2 - w1, t2 - t1);
   printStats(gf, name);
-
   if(debug) gf->model()->writeMSH("recombine_5final.msh");
 }
 

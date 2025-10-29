@@ -182,6 +182,7 @@ static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
                                          SPoint3 &pN, int N, bool geodesic,
                                          double *u, double *v)
 {
+
   const int NI = N - 1;
   u[0] = u0;
   v[0] = v0;

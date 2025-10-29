@@ -21,6 +21,7 @@ set(SRC
     meshGRegionExtruded.cpp meshGRegionCarveHole.cpp
     meshGRegionLocalMeshMod.cpp meshGRegionMMG.cpp
   meshGRegionBoundaryLayer.cpp
+  meshQuantize2.cpp
   meshRelocateVertex.cpp
   meshRenumber.cpp
   meshTriangulation.cpp
@@ -43,6 +44,7 @@ set(SRC
   meshQuadQuasiStructured.cpp
   meshOctreeLibOL.cpp
   meshCombine3D.cpp
+  meshDuplicateVertices.cpp
  )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)

@@ -20,7 +20,7 @@
 static const double k1 = 0.61; // k1*h is the minimal distance between two nodes
 static const double k2 = 0.5; // k2*h is the minimal distance to the boundary
 static const double sqrt3 = 1.73205081;
-static const double FACTOR = .55;
+static const double FACTOR = .7;
 
 //static const int NUMDIR = 1;
 //static const double DIRS[NUMDIR] = {0.0};
