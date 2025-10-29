@@ -1990,7 +1990,7 @@ int quadMeshingOfSimpleFacesWithPatterns(GModel *gm,
   initQuadPatterns();
 
   int nthreads = getNumThreads();
-#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
+  //#pragma omp parallel for schedule(dynamic) num_threads(nthreads)
   for(auto gf : faces) {
     //    if(gf->meshStatistics.status != GFace::PENDING) continue;
     if(CTX::instance()->mesh.meshOnlyVisible && !gf->getVisibility()) continue;

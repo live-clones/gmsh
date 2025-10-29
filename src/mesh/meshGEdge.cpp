@@ -583,11 +583,11 @@ static void printFandPrimitive(int tag, std::vector<IntPoint> &Points)
 */
 
 // new algo for recombining + splitting
-static int increaseN(int N)
-{
-  if(((N + 1) / 2 - 1) % 2 != 0) return N + 2;
-  return N;
-}
+ //static int increaseN(int N)
+ //{
+ //  if(((N + 1) / 2 - 1) % 2 != 0) return N + 2;
+ //  return N;
+ //}
 
 // ensure not to have points that are too close to each other.
 // can be caused by a coarse 1D mesh or by a noisy curve

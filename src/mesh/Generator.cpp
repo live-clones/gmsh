@@ -1433,7 +1433,7 @@ static bool quantize1DIfNeeded (GModel *m){
       int Ni = N[i];
       GEdge *ge = m->getEdgeByTag(tag);
       size_t Ni_now = ge->lines.size();
-      if (Ni_now!=Ni){
+      if ((int)Ni_now!=Ni){
 	Msg::Info ("Remeshing Curve %d for Even Quantization",tag);
 	meshGEdge mge;
 	mge.ForceNumberOfSubdivisions = Ni;
