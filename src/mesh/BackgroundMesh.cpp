@@ -113,8 +113,6 @@ backgroundMesh::backgroundMesh(GFace *_gf, bool cfd)
     _triangles.push_back(T2D);
   }
 
-  printf("coucou4 %d\n",myBCNodes.size());
-
 #if defined(HAVE_ANN)
   index = new ANNidx[2];
   dist = new ANNdist[2];
