@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <limits>
 #include <numeric>
+#include <unordered_map>
 #include "gmsh.h"
 
 using namespace std;
