@@ -158,7 +158,7 @@ static void createDuplicatedVertices () {
       GEdge *f = *it;
       for (size_t i=0;i<f->getNumMeshElements();i++){
 	MElement *e = f->getMeshElement(i);
-	for (size_t j=0;j<e->getNumEdges();j++){
+	for (int j=0;j<e->getNumEdges();j++){
 	  MEdge ed = e->getEdge(j);
 	  MVertex *v0 = ed.getVertex(0);
 	  MVertex *v1 = ed.getVertex(1);
@@ -179,7 +179,7 @@ static void createDuplicatedVertices () {
       GFace *f = *it;
       for (size_t i=0;i<f->getNumMeshElements();i++){
 	MElement *e = f->getMeshElement(i);
-	for (size_t j=0;j<e->getNumEdges();j++){
+	for (int j=0;j<e->getNumEdges();j++){
 	  MEdge ed = e->getEdge(j);
 	  MVertex *v0 = ed.getVertex(0);
 	  MVertex *v1 = ed.getVertex(1);
@@ -199,7 +199,7 @@ static void createDuplicatedVertices () {
       GRegion *f = *it;
       for (size_t i=0;i<f->getNumMeshElements();i++){
 	MElement *e = f->getMeshElement(i);
-	for (size_t j=0;j<e->getNumEdges();j++){
+	for (int j=0;j<e->getNumEdges();j++){
 	  MEdge ed = e->getEdge(j);
 	  MVertex *v0 = ed.getVertex(0);
 	  MVertex *v1 = ed.getVertex(1);
