@@ -665,10 +665,10 @@ static void Mesh2D(GModel *m)
     if(Msg::GetVerbosity() == 99) {
       std::vector<std::pair<SPoint3, int>> singularities;
       for(GFace *gf : m->getFaces()) {
-        bool meshOrientationIsOppositeOfCadOrientation(GFace * gf);
-        //	bool invertNormals =
-        meshOrientationIsOppositeOfCadOrientation(gf);
 #if defined(HAVE_QUADMESHINGTOOLS)
+        bool meshOrientationIsOppositeOfCadOrientation(GFace * gf);
+        // bool invertNormals =
+        meshOrientationIsOppositeOfCadOrientation(gf);
         improveQuadMeshTopologyWithCavityRemeshing(gf, singularities, false);
 #endif
       }
