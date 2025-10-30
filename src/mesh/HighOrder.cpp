@@ -34,7 +34,7 @@
 // is supposed to be (by construction) consistent with the ordering of the pair.
 // FIXME: replace this by std::map<MEdge, std::vector<MVertex *>,
 // MEdgeLessThan>!
-typedef std::map<std::pair<MVertex *, MVertex *>, std::vector<MVertex *> >
+typedef std::map<std::pair<MVertex *, MVertex *>, std::vector<MVertex *>>
   edgeContainer;
 
 // for each face (a list of vertices) we build a list of vertices that are the
@@ -182,7 +182,6 @@ static bool computeEquidistantParameters(GFace *gf, double u0, double uN,
                                          SPoint3 &pN, int N, bool geodesic,
                                          double *u, double *v)
 {
-
   const int NI = N - 1;
   u[0] = u0;
   v[0] = v0;
@@ -1357,9 +1356,11 @@ static void setHighOrderFromExistingMesh(GEdge *ge, edgeContainer &edgeVertices)
     std::pair<MVertex *, MVertex *> p(vMin, vMax);
     if(edgeVertices.count(p) == 0) {
       if(increasing)
-        edgeVertices[p].insert(edgeVertices[p].end(), v.begin() + e->getNumPrimaryVertices(), v.end());
+        edgeVertices[p].insert(edgeVertices[p].end(),
+                               v.begin() + e->getNumPrimaryVertices(), v.end());
       else
-        edgeVertices[p].insert(edgeVertices[p].end(), v.rbegin(), v.rend() - e->getNumPrimaryVertices());
+        edgeVertices[p].insert(edgeVertices[p].end(), v.rbegin(),
+                               v.rend() - e->getNumPrimaryVertices());
     }
   }
 }
@@ -1372,15 +1373,18 @@ static void setHighOrderFromExistingMesh(GFace *gf, edgeContainer &edgeVertices,
     for(int j = 0; j < e->getNumEdges(); j++) {
       MEdge edg = e->getEdge(j);
       MVertex *vMin, *vMax;
-      const bool increasing = getMinMaxVert(edg.getVertex(0), edg.getVertex(1), vMin, vMax);
+      const bool increasing =
+        getMinMaxVert(edg.getVertex(0), edg.getVertex(1), vMin, vMax);
       std::pair<MVertex *, MVertex *> p(vMin, vMax);
       if(edgeVertices.count(p) == 0) {
         std::vector<MVertex *> edgv;
         e->getEdgeVertices(j, edgv);
         if(increasing)
-          edgeVertices[p].insert(edgeVertices[p].end(), edgv.begin() + 2, edgv.end());
+          edgeVertices[p].insert(edgeVertices[p].end(), edgv.begin() + 2,
+                                 edgv.end());
         else
-          edgeVertices[p].insert(edgeVertices[p].end(), edgv.rbegin(), edgv.rend() - 2);
+          edgeVertices[p].insert(edgeVertices[p].end(), edgv.rbegin(),
+                                 edgv.rend() - 2);
       }
     }
     MFace f = e->getFace(0);

@@ -16,8 +16,8 @@ endif()
 
 project(gmsh CXX C)
 
-# require C++14 and request C99
-set(CMAKE_CXX_STANDARD 14)
+# require C++17 and request C99
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 99)
 
@@ -111,8 +111,8 @@ opt(WRAP_JAVA "Generate SWIG Java wrappers for private API" OFF)
 opt(WRAP_PYTHON "Generate SWIG Python wrappers for private API (not used by public API)" OFF)
 opt(ZIPPER "Enable Zip file compression/decompression" OFF)
 
-set(GMSH_MAJOR_VERSION 4)
-set(GMSH_MINOR_VERSION 15)
+set(GMSH_MAJOR_VERSION 5)
+set(GMSH_MINOR_VERSION 0)
 set(GMSH_PATCH_VERSION 0)
 if(NOT GMSH_EXTRA_VERSION)
   set(GMSH_EXTRA_VERSION "")
