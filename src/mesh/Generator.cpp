@@ -668,7 +668,9 @@ static void Mesh2D(GModel *m)
         bool meshOrientationIsOppositeOfCadOrientation(GFace * gf);
         //	bool invertNormals =
         meshOrientationIsOppositeOfCadOrientation(gf);
+#if defined(HAVE_QUADMESHINGTOOLS)
         improveQuadMeshTopologyWithCavityRemeshing(gf, singularities, false);
+#endif
       }
     }
 
