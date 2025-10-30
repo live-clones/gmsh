@@ -29,7 +29,7 @@
  * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  */
 
-/*  
+/*
  *  $Header: /n/picasso/project/mpeg/mpeg_dist/mpeg_encode/RCS/main.c,v 1.25 1995/08/07 21:44:21 smoot Exp $
  *  $Log: main.c,v $
  *  Revision 1.25  1995/08/07 21:44:21  smoot
@@ -131,6 +131,11 @@
 #include "specifics.h"
 #include "opts.h"
 #include <time.h>
+
+#undef max
+#define max(a,b) ((a) > (b) ? (a) : (b))
+#undef min
+#define min(a,b) ((a) < (b) ? (a) : (b))
 
 int	main _ANSI_ARGS_((int argc, char **argv));
 
@@ -266,7 +271,7 @@ mpeg_encode_main(int argc, char **argv)
 		Usage();
 	    }
 	} else if ( strcmp(argv[idx], "-combine_gops") == 0 ) {
-	    if ( (function != ENCODE_FRAMES) || (whichGOP != -1) || 
+	    if ( (function != ENCODE_FRAMES) || (whichGOP != -1) ||
 		 (frameStart != -1) ) {
 		Usage();
 	    }
@@ -559,7 +564,7 @@ Usage()
 /* extended usage (used by parallel code; shouldn't be called by user):
     -child parallelHostName portNumber ioPortNumber combinePortNumber machineNumber remote
     -io_server parallelHostName portNumber
-    
+
     (remote = 1 if need to use ioPortNumber)
  */
 }
