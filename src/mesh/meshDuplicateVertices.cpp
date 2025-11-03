@@ -37,48 +37,48 @@ bool allowVertexCollapse(MVertex *v1, MVertex *v0,
   // replace v1 by v0
   std::set<MFace,MFaceLessThan> fnew;
   for (auto f : f0){
-    std::set<MVertex*> nv;    
+    std::vector<MVertex*> q;    
     for (size_t i=0;i<f.getNumVertices();i++){
-      auto v = f.getVertex(i);
-      if (v == v1)nv.insert(v0);
-      else nv.insert(v);
+      auto v = f.getVertex(i) == v1 ? v0 : f.getVertex(i);
+      if (std::find(q.begin(), q.end(), v) == q.end())q.push_back(v);
     }
-    std::vector<MVertex*> vv;
-    vv.insert(vv.begin(), nv.begin(), nv.end());
-    if (vv.size() == 4)fnew.insert(MFace(vv[0],vv[1],vv[2],vv[3]));
-    if (vv.size() == 3)fnew.insert(MFace(vv[0],vv[1],vv[2]));
+    if (q.size() == 4)fnew.insert(MFace(q[0],q[1],q[2],q[3]));
+    if (q.size() == 3)fnew.insert(MFace(q[0],q[1],q[2]));
   }
   for (auto f : f1){
-    std::set<MVertex*> nv;    
+    std::vector<MVertex*> q;    
     for (size_t i=0;i<f.getNumVertices();i++){
-      auto v = f.getVertex(i);
-      if (v == v1)nv.insert(v0);
-      else nv.insert(v);
+      auto v = f.getVertex(i) == v1 ? v0 : f.getVertex(i);
+      if (std::find(q.begin(), q.end(), v) == q.end())q.push_back(v);
     }
-    std::vector<MVertex*> vv;
-    vv.insert(vv.begin(), nv.begin(), nv.end());
-    if (vv.size() == 4)fnew.insert(MFace(vv[0],vv[1],vv[2],vv[3]));
-    if (vv.size() == 3)fnew.insert(MFace(vv[0],vv[1],vv[2]));
+    if (q.size() == 4)fnew.insert(MFace(q[0],q[1],q[2],q[3]));
+    if (q.size() == 3)fnew.insert(MFace(q[0],q[1],q[2]));
   }
-
-
   std::set<MEdge,MEdgeLessThan> enew;
   std::set<MVertex*> vnew;
   std::vector<MFace> ff;
   for (auto f : fnew){
     ff.push_back(f);
+    //    printf("face %d verts\n",f.getNumVertices());
     for (size_t i=0;i<f.getNumVertices();i++){
+      //      printf("edge %d %d\n",f.getEdge(i).getVertex(0)->getNum(),f.getEdge(i).getVertex(1)->getNum());
       enew.insert(f.getEdge(i));
       vnew.insert(f.getVertex(i));
     }
   }
+
+  //  for (auto e : enew){
+  //    printf("--> edge %4d %4d\n",e.getVertex(0)->getNum(),e.getVertex(1)->getNum());
+  //  }
+
+  //  printf("%d %d  %d %d\n",v0->onWhat()->tag(),v0->onWhat()->dim(),v1->onWhat()->tag(),v1->onWhat()->dim());
+  //  printf("%lu %lu %lu -- %lu %lu %lu\n",F.size(), E.size(), V.size(),fnew.size(), enew.size(), vnew.size());
 
   if (F.size() - E.size() + V.size() == fnew.size() - enew.size() + vnew.size()){
     v2f[v0] = ff;
     v2f[v1] = {};
     return true;
   }
-  printf("%lu %lu %lu -- %lu %lu %lu\n",F.size(), E.size(), V.size(),fnew.size(), enew.size(), vnew.size());
   
   return false;
 }
