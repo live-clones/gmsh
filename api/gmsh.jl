@@ -4796,6 +4796,26 @@ end
 const volume_mesh_refinement = volumeMeshRefinement
 
 """
+    gmsh.model.mesh.constrainedDelaunay3D(surfaceTag, volumeTag)
+
+Generate the 3D constrained Delaunay mesh of the nodes stored in the volume
+entity of tag `volumeTag`, and bounded by surface entity of tag `surfaceTag`.
+
+Types:
+ - `surfaceTag`: integer
+ - `volumeTag`: integer
+"""
+function constrainedDelaunay3D(surfaceTag, volumeTag)
+    ierr = Ref{Cint}()
+    ccall((:gmshModelMeshConstrainedDelaunay3D, gmsh.lib), Cvoid,
+          (Cint, Cint, Ptr{Cint}),
+          surfaceTag, volumeTag, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return nothing
+end
+const constrained_delaunay3_d = constrainedDelaunay3D
+
+"""
     gmsh.model.mesh.filterCloseNodes(tag, sizeFieldTag, tolerance)
 
 Filter out points in the region with tag `tag` that are too close to each other

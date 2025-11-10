@@ -1964,6 +1964,14 @@ namespace gmsh { // Top-level functions
                                          const bool returnNodalCurvature,
                                          std::vector<double> & nodalCurvature);
 
+      // gmsh::model::mesh::constrainedDelaunay3D
+      //
+      // Generate the 3D constrained Delaunay mesh of the nodes stored in the
+      // volume entity of tag `volumeTag', and bounded by surface entity of tag
+      // `surfaceTag'.
+      GMSH_API void constrainedDelaunay3D(const int surfaceTag,
+                                          const int volumeTag);
+
       // gmsh::model::mesh::filterCloseNodes
       //
       // Filter out points in the region with tag `tag' that are too close to each

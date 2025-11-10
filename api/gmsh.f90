@@ -792,6 +792,8 @@ module gmsh
         gmshModelMeshSurfaceEdgeSplitting
     procedure, nopass :: volumeMeshRefinement => &
         gmshModelMeshVolumeMeshRefinement
+    procedure, nopass :: constrainedDelaunay3D => &
+        gmshModelMeshConstrainedDelaunay3D
     procedure, nopass :: filterCloseNodes => &
         gmshModelMeshFilterCloseNodes
     procedure, nopass :: colourBoundaryFaces => &
@@ -8049,6 +8051,31 @@ module gmsh
     nodalCurvature = ovectordouble_(api_nodalCurvature_, &
       api_nodalCurvature_n_)
   end subroutine gmshModelMeshVolumeMeshRefinement
+
+  !> Generate the 3D constrained Delaunay mesh of the nodes stored in the volume
+  !! entity of tag `volumeTag', and bounded by surface entity of tag
+  !! `surfaceTag'.
+  subroutine gmshModelMeshConstrainedDelaunay3D(surfaceTag, &
+                                                volumeTag, &
+                                                ierr)
+    interface
+    subroutine C_API(surfaceTag, &
+                     volumeTag, &
+                     ierr_) &
+      bind(C, name="gmshModelMeshConstrainedDelaunay3D")
+      use, intrinsic :: iso_c_binding
+      integer(c_int), value, intent(in) :: surfaceTag
+      integer(c_int), value, intent(in) :: volumeTag
+      integer(c_int), intent(out), optional :: ierr_
+    end subroutine C_API
+    end interface
+    integer, intent(in) :: surfaceTag
+    integer, intent(in) :: volumeTag
+    integer(c_int), intent(out), optional :: ierr
+    call C_API(surfaceTag=int(surfaceTag, c_int), &
+         volumeTag=int(volumeTag, c_int), &
+         ierr_=ierr)
+  end subroutine gmshModelMeshConstrainedDelaunay3D
 
   !> Filter out points in the region with tag `tag' that are too close to each
   !! other based on the size field with tag `sizeFieldTag' and a given tolerance

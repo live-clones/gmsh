@@ -70,6 +70,8 @@ void _surfaceEdgeSplitting(const int fullTag, const int surfaceTag, const int si
 void _volumeMeshRefinementMeshFromAlphaShapeElements(const int fullTag, const int surfaceTag, const int volumeTag, const int sizeFieldTag, const bool returnNodalCurvature, std::vector<double>& nodalCurvature);
 void _volumeMeshRefinement(const int fullTag, const int surfaceTag, const int volumeTag, const int sizeFieldTag, const bool returnNodalCurvature, std::vector<double>& nodalCurvature);
 
+void _constrainedDelaunay(const int surfaceTag, const int volumeTag);
+
 void _filterCloseNodes(const int fullTag, const int sizeFieldTag, const double tolerance);
 
 void _colourBoundaries(const int faceTag, const std::string & boundaryModel, const double tolerance);

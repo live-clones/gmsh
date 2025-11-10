@@ -5758,6 +5758,7 @@ gmsh::model::mesh::computeAlphaShape(const int dim,
 
     // Delaunay
     auto tic = std::chrono::high_resolution_clock::now();
+    // PolyMesh* pm = AlphaShape::_alphaShapeDelaunay2D(tag, boundaryModel, constrainedEdges);
     PolyMesh* pm = AlphaShape::_alphaShapeDelaunay2D(tag, boundaryModel);
     auto toc = std::chrono::high_resolution_clock::now();
     // std::cout << "Triangulate  : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
@@ -5845,6 +5846,15 @@ gmsh::model::mesh::volumeMeshRefinement(const int fullTag, const int surfaceTag,
 #if defined(HAVE_MESH) && defined(HAVE_HXT)
   AlphaShape::_volumeMeshRefinement(fullTag, surfaceTag, volumeTag, sizeFieldTag, returnNodalCurvature, nodalCurvature);
   // AlphaShape::_volumeMeshRefinementMeshFromAlphaShapeElements(fullTag, surfaceTag, volumeTag, sizeFieldTag, returnNodalCurvature, nodalCurvature);
+#else
+  Msg::Error("volumeMeshRefinement requires the mesh and hxt modules");
+#endif
+}
+
+GMSH_API void
+gmsh::model::mesh::constrainedDelaunay3D(const int surfaceTag, const int volumeTag){
+#if defined(HAVE_MESH) && defined(HAVE_HXT)
+  AlphaShape::_constrainedDelaunay(surfaceTag, volumeTag);
 #else
   Msg::Error("volumeMeshRefinement requires the mesh and hxt modules");
 #endif

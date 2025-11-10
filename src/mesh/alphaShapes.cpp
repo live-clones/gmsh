@@ -4094,6 +4094,136 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
 
 }
 
+void AlphaShape::_constrainedDelaunay(const int surfaceTag, const int volumeTag){
+  auto gm = GModel::current();
+  auto dr = GModel::current()->getRegionByTag(volumeTag);
+  if (dr == nullptr) {
+    Msg::Error("Entity of dimension 3 and tag %d not found\n", volumeTag);
+    return;
+  }
+  auto df = GModel::current()->getFaceByTag(surfaceTag);
+  if (df == nullptr) {
+    Msg::Error("Entity of dimension 2 and tag %d not found\n", surfaceTag);
+    return;
+  }
+  std::map<MVertex *, uint32_t> v2c;
+  std::vector<MVertex *> c2v;
+
+  HXTMesh* m;
+  hxtMeshCreate(&m);
+
+  m->triangles.num = m->triangles.size = df->getNumMeshElementsByType(TYPE_TRI);
+  hxtAlignedMalloc(&m->triangles.node,
+                             (m->triangles.num) * 3 * sizeof(uint32_t));
+  hxtAlignedMalloc(&m->triangles.color,
+                             (m->triangles.num) * sizeof(uint32_t));
+  size_t count = 0;
+  for(size_t i = 0; i < df->triangles.size(); i++) {
+    for (size_t j=0; j<3; j++){
+      auto v = df->triangles[i]->getVertex(j);
+      if (v2c.find(v) == v2c.end()) {
+        v2c[v] = count++;
+        c2v.push_back(v);
+      }
+      m->triangles.node[3 * i + j] = v2c[df->triangles[i]->getVertex(j)];
+    }
+    m->triangles.color[i] = df->tag();
+  }
+  
+  m->vertices.num = m->vertices.size = v2c.size();
+  hxtAlignedMalloc(&m->vertices.coord, 4 * m->vertices.num * sizeof(double));
+  for (auto it : v2c){
+    auto v = it.first;
+    m->vertices.coord[4 * it.second + 0] = v->x();
+    m->vertices.coord[4 * it.second + 1] = v->y();
+    m->vertices.coord[4 * it.second + 2] = v->z();
+    m->vertices.coord[4 * it.second + 3] = 0;
+  }
+
+  // 0. Generate the empty tet mesh, containing only the triangles
+  HXTTetMeshOptions options = {
+    .verbosity=0,
+    .stat=0,
+    .refine=0,
+    .optimize=0
+  };
+
+  // for (size_t i=0; i<m->vertices.num; i++){
+  //   printf("vertex %lu : %f, %f, %f \n", i, m->vertices.coord[4*i+0], m->vertices.coord[4*i+1], m->vertices.coord[4*i+2]);
+  // }
+  uint32_t n_vertices_old = m->vertices.num;
+  hxtTetMesh(m, &options);
+
+  if (m->vertices.num > n_vertices_old){
+    Msg::Warning("Number of vertices increased from %d to %d (Steiner point added in volume refinement) - Skipping refinement\n", n_vertices_old, m->vertices.num);
+  }
+  else {
+    // 1. insert already existing nodes
+    HXTBbox bbox;
+    hxtBboxInit(&bbox);
+    hxtBboxAdd(&bbox, m->vertices.coord, m->vertices.num);
+    HXTDelaunayOptions delOptions = {};
+    delOptions.bbox = &bbox;
+    delOptions.numVerticesInMesh = n_vertices_old; //m->vertices.num;
+    delOptions.insertionFirst = n_vertices_old; // ->vertices.num;
+    delOptions.verbosity = 0;
+    int numNewPts = 0;
+    for (auto _gr : gm->getRegions()){
+      for(MVertex *v : _gr->mesh_vertices) {
+        if (v2c.find(v) == v2c.end()) 
+          numNewPts++;
+      }
+    }
+    if (numNewPts > 0){
+      count = m->vertices.num;
+      int index = 0;
+      std::vector<HXTNodeInfo> nodeInfo(numNewPts);
+      m->vertices.size = m->vertices.num = m->vertices.num + numNewPts;
+      hxtAlignedRealloc(&m->vertices.coord, sizeof(double) * m->vertices.num * 4);
+      for (auto _gr : gm->getRegions()){
+        for(MVertex *v : _gr->mesh_vertices) {
+          if (v2c.find(v) == v2c.end()){
+            m->vertices.coord[4 * count + 0] = v->x();
+            m->vertices.coord[4 * count + 1] = v->y();
+            m->vertices.coord[4 * count + 2] = v->z();
+            m->vertices.coord[4 * count + 3] = 0;
+            nodeInfo[index].node = count;
+            nodeInfo[index].status = HXT_STATUS_TRYAGAIN;
+            v2c[v] = count;
+            c2v.push_back(v);
+            count++;
+            index++;
+          }
+        }
+      }
+      hxtDelaunaySteadyVertices(m, &delOptions, &nodeInfo[0], numNewPts);
+    }
+    uint32_t n_nodesInMesh = m->vertices.num;
+    // Back to gmsh
+    for (uint32_t i=n_nodesInMesh; i<m->vertices.num; i++){
+      MVertex* v = new MVertex(m->vertices.coord[4*i+0], m->vertices.coord[4*i+1], m->vertices.coord[4*i+2]);
+      dr->addMeshVertex(v);
+      gm->addMVertexToVertexCache(v);
+      v->setEntity(dr);
+      c2v.push_back(v);
+      v2c[v] = i;
+    }
+
+    for (auto tet : dr->tetrahedra){
+      delete tet;
+    }
+    dr->tetrahedra.clear();
+
+    for (uint64_t i=0; i<m->tetrahedra.num; i++){
+      if (m->tetrahedra.color[i] == HXT_COLOR_OUT) continue;
+      auto t = &m->tetrahedra.node[4*i];
+      auto tet = new MTetrahedron(c2v[t[0]], c2v[t[1]], c2v[t[2]], c2v[t[3]], i+1);
+      dr->tetrahedra.push_back(tet);
+    }
+  }
+  hxtMeshDelete(&m);
+}
+
 void _createVolumeOctree3D(const std::string & boundaryModel, OctreeNode<3, 64, MElement*>& octree){
     GModel* gm_alphaShape = GModel::current();
     GModel* gm_boundary = GModel::findByName(boundaryModel);

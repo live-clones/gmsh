@@ -608,6 +608,9 @@ mesh.add('surfaceEdgeSplitting', doc, None, iint('fullTag'), iint('surfaceTag'),
 doc = '''Volume mesh refinement/derefinement using hxt refinement approaches of volume entity of tag `tag', and bounded by surface entity of tag `surfaceTag'.'''
 mesh.add('volumeMeshRefinement', doc, None, iint('fullTag'), iint('surfaceTag'), iint('volumeTag'), iint('sizeFieldTag'), ibool('returnNodalCurvature'), ovectordouble('nodalCurvature'))
 
+doc = '''Generate the 3D constrained Delaunay mesh of the nodes stored in the volume entity of tag `volumeTag', and bounded by surface entity of tag `surfaceTag'.'''
+mesh.add('constrainedDelaunay3D', doc, None, iint('surfaceTag'), iint('volumeTag'))
+
 doc = '''Filter out points in the region with tag `tag' that are too close to each other based on the size field with tag `sizeFieldTag' and a given tolerance `tolerance'.'''
 mesh.add('filterCloseNodes', doc, None, iint('tag'), iint('sizeFieldTag'), idouble('tolerance'))
 

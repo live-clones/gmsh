@@ -1742,6 +1742,13 @@ GMSH_API void gmshModelMeshVolumeMeshRefinement(const int fullTag,
                                                 double ** nodalCurvature, size_t * nodalCurvature_n,
                                                 int * ierr);
 
+/* Generate the 3D constrained Delaunay mesh of the nodes stored in the volume
+ * entity of tag `volumeTag', and bounded by surface entity of tag
+ * `surfaceTag'. */
+GMSH_API void gmshModelMeshConstrainedDelaunay3D(const int surfaceTag,
+                                                 const int volumeTag,
+                                                 int * ierr);
+
 /* Filter out points in the region with tag `tag' that are too close to each
  * other based on the size field with tag `sizeFieldTag' and a given tolerance
  * `tolerance'. */

@@ -5446,6 +5446,28 @@ class model:
         volume_mesh_refinement = volumeMeshRefinement
 
         @staticmethod
+        def constrainedDelaunay3D(surfaceTag, volumeTag):
+            """
+            gmsh.model.mesh.constrainedDelaunay3D(surfaceTag, volumeTag)
+
+            Generate the 3D constrained Delaunay mesh of the nodes stored in the volume
+            entity of tag `volumeTag', and bounded by surface entity of tag
+            `surfaceTag'.
+
+            Types:
+            - `surfaceTag': integer
+            - `volumeTag': integer
+            """
+            ierr = c_int()
+            lib.gmshModelMeshConstrainedDelaunay3D(
+                c_int(surfaceTag),
+                c_int(volumeTag),
+                byref(ierr))
+            if ierr.value != 0:
+                raise Exception(logger.getLastError())
+        constrained_delaunay3_d = constrainedDelaunay3D
+
+        @staticmethod
         def filterCloseNodes(tag, sizeFieldTag, tolerance):
             """
             gmsh.model.mesh.filterCloseNodes(tag, sizeFieldTag, tolerance)

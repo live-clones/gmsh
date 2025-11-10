@@ -3391,6 +3391,19 @@ namespace gmsh { // Top-level functions
         nodalCurvature.assign(api_nodalCurvature_, api_nodalCurvature_ + api_nodalCurvature_n_); gmshFree(api_nodalCurvature_);
       }
 
+      // gmsh::model::mesh::constrainedDelaunay3D
+      //
+      // Generate the 3D constrained Delaunay mesh of the nodes stored in the
+      // volume entity of tag `volumeTag', and bounded by surface entity of tag
+      // `surfaceTag'.
+      inline void constrainedDelaunay3D(const int surfaceTag,
+                                        const int volumeTag)
+      {
+        int ierr = 0;
+        gmshModelMeshConstrainedDelaunay3D(surfaceTag, volumeTag, &ierr);
+        if(ierr) throwLastError();
+      }
+
       // gmsh::model::mesh::filterCloseNodes
       //
       // Filter out points in the region with tag `tag' that are too close to each
