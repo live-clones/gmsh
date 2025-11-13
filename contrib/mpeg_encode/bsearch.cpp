@@ -81,10 +81,8 @@
 #include "search.h"
 #include "fsize.h"
 
-#undef max
-#define max(a,b) ((a) > (b) ? (a) : (b))
-#undef min
-#define min(a,b) ((a) < (b) ? (a) : (b))
+#define mymax(a,b) ((a) > (b) ? (a) : (b))
+#define mymin(a,b) ((a) < (b) ? (a) : (b))
 
 
 /*==================*
@@ -301,7 +299,7 @@ BMotionSearchSimple(LumBlock currentBlock,
 
     ComputeBMotionLumBlock(prev, next, by, bx, MOTION_INTERPOLATE,
 			   *fmy, *fmx, *bmy, *bmx, interpBlock);
-    bestSoFar = min(backErr, forwardErr);
+    bestSoFar = mymin(backErr, forwardErr);
     interpErr = LumBlockMAD(currentBlock, interpBlock, bestSoFar);
 
 			    /* STEP 3 */
@@ -356,7 +354,7 @@ BMotionSearchCross2(LumBlock currentBlock,
     BMotionSearchNoInterp(currentBlock, prev, next, by, bx, fmy, fmx,
 			  &forwardErr, bmy, bmx, &backErr, TRUE);
 
-    bestErr = min(forwardErr, backErr);
+    bestErr = mymin(forwardErr, backErr);
 
 			    /* STEP 2 */
     ComputeBMotionLumBlock(prev, next, by, bx, MOTION_FORWARD,
@@ -370,7 +368,7 @@ BMotionSearchCross2(LumBlock currentBlock,
 
     interpErr = FindBestMatch(forwardBlock, currentBlock, next, by, bx,
 			      &newbmy, &newbmx, bestErr, searchRangeB);
-    bestErr = min(bestErr, interpErr);
+    bestErr = mymin(bestErr, interpErr);
     interpErr2 = FindBestMatch(backBlock, currentBlock, prev, by, bx,
 			       &newfmy, &newfmx, bestErr, searchRangeB);
 
@@ -622,7 +620,7 @@ FindBestMatchExhaust(LumBlock block,
 
 	/* do top, bottom */
 	for ( my = -distance; my < tempRightMY;
-	      my += max(tempRightMY+distance-stepSize, stepSize) ) {
+	      my += mymax(tempRightMY+distance-stepSize, stepSize) ) {
 	    if ( my < leftMY ) {
 		continue;
 	    }
@@ -644,7 +642,7 @@ FindBestMatchExhaust(LumBlock block,
 	}
 
 	/* do left, right */
-	for ( mx = -distance; mx < tempRightMX; mx += max(tempRightMX+distance-stepSize, stepSize) ) {
+	for ( mx = -distance; mx < tempRightMX; mx += mymax(tempRightMX+distance-stepSize, stepSize) ) {
 	    if ( mx < leftMX ) {
 		continue;
 	    }
@@ -766,7 +764,7 @@ FindBestMatchTwoLevel(LumBlock block,
 
 	/* do top, bottom */
 	for ( my = -distance; my < tempRightMY;
-	      my += max(tempRightMY+distance-2, 2) ) {
+	      my += mymax(tempRightMY+distance-2, 2) ) {
 	    if ( my < leftMY ) {
 		continue;
 	    }
@@ -788,7 +786,7 @@ FindBestMatchTwoLevel(LumBlock block,
 	}
 
 	/* do left, right */
-	for ( mx = -distance; mx < tempRightMX; mx += max(tempRightMX+distance-2, 2) ) {
+	for ( mx = -distance; mx < tempRightMX; mx += mymax(tempRightMX+distance-2, 2) ) {
 	    if ( mx < leftMX ) {
 		continue;
 	    }

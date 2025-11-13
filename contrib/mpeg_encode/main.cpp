@@ -132,10 +132,7 @@
 #include "opts.h"
 #include <time.h>
 
-#undef max
-#define max(a,b) ((a) > (b) ? (a) : (b))
-#undef min
-#define min(a,b) ((a) < (b) ? (a) : (b))
+#define mymin(a,b) ((a) < (b) ? (a) : (b))
 
 int	main _ANSI_ARGS_((int argc, char **argv));
 
@@ -415,7 +412,7 @@ mpeg_encode_main(int argc, char **argv)
 	decodeRefFrames = TRUE;
     }
 
-    numMachines = min(numMachines, maxMachines);
+    numMachines = mymin(numMachines, maxMachines);
 
     Tune_Init();
     Frame_Init();
