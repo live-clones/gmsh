@@ -99,7 +99,7 @@ windows_msvc_ci:
     - docker
 
 linux_official_snapshot:
-  image: onelab/debian.stretch.64bit
+  image: onelab/debian.bullseye
   variables:
     EXTRA_OPTION: "-DCMAKE_EXE_LINKER_FLAGS=-static-libstdc++"
   <<: *linux_official
@@ -115,7 +115,7 @@ linux_official_release:
     - /^gmsh_.*$/
 
 linux-sdk_official_snapshot:
-  image: onelab/debian.stretch.64bit
+  image: onelab/debian.bullseye
   variables:
     EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *linux_official
@@ -141,7 +141,7 @@ linux-sdk_official_release:
     expire_in: 1day
 
 linux-nox-sdk_official_snapshot:
-  image: onelab/debian.stretch.64bit
+  image: onelab/debian.bullseye
   variables:
     EXTRA_OPTION: "-DGMSH_EXTRA_VERSION=-nox -DENABLE_FLTK=0 -DENABLE_OCC_CAF=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *linux_official
