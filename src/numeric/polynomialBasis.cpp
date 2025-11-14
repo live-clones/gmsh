@@ -27,7 +27,7 @@ namespace {
       Msg::Error(
         "Wrong sizes for Lagrange coefficients generation %d %d -- %d %d",
         monomial.size1(), point.size1(), monomial.size2(), point.size2());
-      return fullMatrix<double>(1, 1);
+      return fullMatrix<double>();
     }
 
     int ndofs = monomial.size1();
