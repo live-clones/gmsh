@@ -19,7 +19,7 @@ public:
   std::vector<int> line_loops2;
   std::vector<int> faces2;
   int face_loops2;
-  geo_cell() {}
+  geo_cell() : face_loops2(0) {}
   ~geo_cell() {}
   int search_line(std::pair<int, int> line)
   {
