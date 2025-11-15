@@ -18,7 +18,7 @@ variables:
 # ----------------------------------------------
 
 linux_ci:
-  image: onelab/ubuntu20.04
+  image: onelab/ubuntu25.10
   script:
     - mkdir build
     - cd build
@@ -35,7 +35,7 @@ linux_ci:
     - tags
 
 linux_compatibility_ci:
-  image: onelab/ubuntu20.04
+  image: onelab/ubuntu25.10
   script:
     - mkdir build
     - cd build
@@ -343,13 +343,13 @@ macosarm-sdk_official_release:
     - docker
 
 source_official_snapshot:
-  image: onelab/ubuntu20.04
+  image: onelab/ubuntu25.10
   <<: *source_official
   except:
     - tags
 
 source_official_release:
-  image: onelab/ubuntu20.04
+  image: onelab/ubuntu25.10
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1"
   <<: *source_official
@@ -362,7 +362,7 @@ source_official_release:
 
 doc_official_snapshot:
   stage: .post
-  image: onelab/ubuntu20.04
+  image: onelab/ubuntu25.10
   only:
     - master@gmsh/gmsh
   <<: *ssh_config
@@ -381,7 +381,7 @@ doc_official_snapshot:
 
 doc_official_release:
   stage: .post
-  image: onelab/ubuntu20.04
+  image: onelab/ubuntu25.10
   only:
     - master@gmsh/gmsh
   <<: *ssh_config
@@ -405,7 +405,7 @@ doc_official_release:
 
 doc_cookbook:
   stage: .post
-  image: onelab/ubuntu20.04
+  image: onelab/ubuntu25.10
   only:
     - gmsh/gmsh
   <<: *ssh_config
@@ -422,7 +422,7 @@ doc_cookbook:
 
 pypi_official_snapshot:
   stage: .post
-  image: onelab/ubuntu20.04
+  image: onelab/ubuntu25.10
   only:
     - master@gmsh/gmsh
   <<: *ssh_config
@@ -449,7 +449,7 @@ pypi_official_snapshot:
 
 pypi_official_release:
   stage: .post
-  image: onelab/ubuntu20.04
+  image: onelab/ubuntu25.10
   only:
     - master@gmsh/gmsh
   <<: *ssh_config
