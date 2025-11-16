@@ -33,11 +33,8 @@ docker build --platform linux/amd64 -f Dockerfile.ci -t onelab/ci --build-arg RE
 # ------------------------------------------------------------------------------
 
 docker login
-docker push onelab/ubuntu20.04
-docker push onelab/ubuntu25.10
-docker push onelab/debian.stretch.64bit
 docker push onelab/debian.buster
-docker push onelab/debian.bullseye
+docker push onelab/ci
 
 # ------------------------------------------------------------------------------
 # To run something using the docker images:
