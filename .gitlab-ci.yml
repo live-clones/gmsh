@@ -20,10 +20,9 @@ variables:
 linux_ci:
   image: onelab/ci
   script:
-    - whoami
     - mkdir build
     - cd build
-    - export CXXFLAGS="-Werror"
+    - export CXXFLAGS=-Werror
     - cmake ..
     - make -j 8
     - make doc

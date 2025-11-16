@@ -1,6 +1,6 @@
 # ------------------------------------------------------------------------------
-# Debian docker images for offical Linux builds (using a mature compiler and
-# static dependencies) - (change xxx to a random string to rebuild the Gmsh lib)
+# Docker images for offical Linux builds (using a mature compiler and statically
+# linked dependencies) - Change xxx to a random string to rebuild the Gmsh lib
 # ------------------------------------------------------------------------------
 
 * Debian 9 (Stretch) GLIBC 2.24
@@ -16,8 +16,8 @@ docker build --platform linux/amd64 -f Dockerfile.debian.buster -t onelab/debian
 docker build --platform linux/amd64 -f Dockerfile.debian.bullseye -t onelab/debian.bullseye --build-arg REBUILD_GMSH=xxx .
 
 # ------------------------------------------------------------------------------
-# Ubuntu docker images for Linux CI builds, using standard dependencies as
-# available in recent ditros
+# Docker images for Linux CI builds, using a recent distribution with pre-
+# compiled dependencies + tools useful for CI testing (valgrind, ...)
 # ------------------------------------------------------------------------------
 
 * Ubuntu 20.04
@@ -40,9 +40,5 @@ docker push onelab/ci
 # To run something using the docker images:
 # ------------------------------------------------------------------------------
 
-docker run --platform linux/amd64 onelab/ubuntu20.04 ls -al /'
-docker run --platform linux/amd64 -it onelab/ubuntu20.04 bash
-docker run --platform linux/amd64 -it onelab/ubuntu25.10 bash -i
-docker run --platform linux/amd64 -it onelab/debian.stretch.64bit bash
 docker run --platform linux/amd64 -it onelab/debian.buster bash -i
-docker run --platform linux/amd64 -it onelab/debian.bullseye bash
+docker run --platform linux/amd64 -it onelab/ci bash -i
