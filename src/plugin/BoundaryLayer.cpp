@@ -724,7 +724,7 @@ static void expandBL(
     //    printf("%lu %lu\n",i,gf->getNumMeshElements());
     MElement *e = gf->getMeshElement(i);
 
-    std::array<std::array<double, 2>, 4> vs;
+    std::array<std::array<double, 2>, 4> vs{};
 
     auto it = layers.find(e);
 
