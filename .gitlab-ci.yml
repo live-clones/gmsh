@@ -18,7 +18,7 @@ variables:
 # ----------------------------------------------
 
 linux_ci:
-  image: onelab/ubuntu25.10
+  image: onelab/debian.buster
   script:
     - whoami
     - mkdir build
