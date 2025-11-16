@@ -237,8 +237,8 @@ std::vector<MVertex *> getLSBlob(std::size_t minNbPt, v2t_cont::iterator it,
   //    rad = std::max(rad,(*itEl)->getOuterRadius());
   //  rad *= RADFACT;
 
-  std::vector<MVertex *> vv(1, it->first),
-    bvv = vv; // Vector of vertices in blob and in boundary of blob
+  // Vector of vertices in blob and in boundary of blob
+  std::vector<MVertex *> vv(1, it->first), bvv(1, it->first);
   do {
     std::set<MVertex *> nbvv; // Set of vertices in new boundary
     for(auto itBV = bvv.begin(); itBV != bvv.end();
@@ -248,8 +248,8 @@ std::vector<MVertex *> getLSBlob(std::size_t minNbPt, v2t_cont::iterator it,
         for(std::size_t iV = 0; iV < (*itBVEl)->getNumVertices();
             iV++) { // ... look for adjacent vertices...
           MVertex *v = (*itBVEl)->getVertex(iV);
-          //          if ((find(vv.begin(),vv.end(),v) == vv.end()) &&
-          //          (p0.distance(v->point()) <= rad)) nbvv.insert(v);
+          // if ((find(vv.begin(),vv.end(),v) == vv.end()) &&
+          //     (p0.distance(v->point()) <= rad)) nbvv.insert(v);
           if(find(vv.begin(), vv.end(), v) == vv.end())
             nbvv.insert(v); // ... and add them in the new boundary if they are
                             // not already in the blob

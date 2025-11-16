@@ -23,7 +23,8 @@ linux_ci:
     - whoami
     - mkdir build
     - cd build
-#    - export CXXFLAGS=-Werror
+    # remove -Wno-stringop-overflow when Eigen is fixed
+    - export CXXFLAGS="-Werror -Wno-stringop-overflow"
     - cmake ..
     - make -j 8
     - make doc
