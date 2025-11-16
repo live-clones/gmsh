@@ -23,8 +23,7 @@ linux_ci:
     - whoami
     - mkdir build
     - cd build
-    # remove -Wno-* options once Eigen is fixed
-    - export CXXFLAGS="-Werror -Wno-stringop-overflow -Wno-array-bounds"
+    - export CXXFLAGS="-Werror"
     - cmake ..
     - make -j 8
     - make doc
