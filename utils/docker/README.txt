@@ -24,9 +24,9 @@ docker build --platform linux/amd64 -f Dockerfile.debian.bullseye -t onelab/debi
 
 docker build --platform linux/amd64 -f Dockerfile.ubuntu20.04 -t onelab/ubuntu20.04 --build-arg REBUILD_GMSH=xxx .
 
-* Ubuntu 25.10
+* Debian 13 (Trixie)
 
-docker build --platform linux/amd64 -f Dockerfile.ubuntu25.10 -t onelab/ubuntu25.10 --build-arg REBUILD_GMSH=xxx .
+docker build --platform linux/amd64 -f Dockerfile.ci -t onelab/ci --build-arg REBUILD_GMSH=xxx .
 
 # ------------------------------------------------------------------------------
 # To push the docker images to docker-hub:
