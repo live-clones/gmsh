@@ -20,6 +20,7 @@ variables:
 linux_ci:
   image: onelab/ubuntu25.10
   script:
+    - whoami
     - mkdir build
     - cd build
     - export CXXFLAGS=-Werror
