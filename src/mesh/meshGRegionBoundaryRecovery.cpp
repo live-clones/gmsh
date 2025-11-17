@@ -174,13 +174,20 @@ namespace tetgenBR {
             MVertex *v1 = gf->quadrangles[i]->getVertex(1);
             MVertex *v2 = gf->quadrangles[i]->getVertex(2);
             MVertex *v3 = gf->quadrangles[i]->getVertex(3);
-            MVertex *newv =
-              new MVertex((v0->x() + v1->x() + v2->x() + v3->x()) * 0.25,
-                          (v0->y() + v1->y() + v2->y() + v3->y()) * 0.25,
-                          (v0->z() + v1->z() + v2->z() + v3->z()) * 0.25, gf);
+            MFace mf = gf->quadrangles[i]->getFace(0);
+            SPoint3 p((v0->x() + v1->x() + v2->x() + v3->x()) * 0.25,
+                      (v0->y() + v1->y() + v2->y() + v3->y()) * 0.25,
+                      (v0->z() + v1->z() + v2->z() + v3->z()) * 0.25);
+            if(CTX::instance()->mesh.optimizePyramids < 0) {
+              // push the vertex along the face normal by fact * diam_face:
+              double fact = std::abs(CTX::instance()->mesh.optimizePyramids);
+              SVector3 n = mf.normal();
+              double diam = v0->distance(v2);
+              p = (p + fact * diam * n);
+            }
+            MVertex *newv = new MVertex(p.x(), p.y(), p.z(), gf);
             // the extra vertex will be added in a GRegion (and reclassified
             // correctly on that GRegion) when the pyramid is generated
-            MFace mf = gf->quadrangles[i]->getFace(0);
             _sqr->add(mf, newv, gf);
             all.insert(v0);
             all.insert(v1);

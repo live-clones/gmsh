@@ -767,6 +767,10 @@ int _untanglePyramids(GRegion *region, bool topological, bool geometrical)
 
 void RelocateVerticesOfPyramids(GRegion *region, int niter, double tol)
 {
+  // a negative value forces the node to be placed exactly along the normal to
+  // the quad face; don't move it afterwards - in development ;-)
+  if(CTX::instance()->mesh.optimizePyramids < 0) return;
+
 #if defined(HAVE_WINSLOWUNTANGLER)
   if(CTX::instance()->mesh.optimizePyramids == 1) {
     Msg::Info("Using new pyramid optimization");
