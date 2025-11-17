@@ -11,8 +11,11 @@
 #include "MQuadrangle.h"
 #include "meshGEdge.h"
 #include "BoundaryLayer.h"
-#include "winslowUntangler.h"
 #include "Context.h"
+
+#if defined(HAVE_WINSLOWUNTANGLER)
+#include "winslowUntangler.h"
+#endif
 
 StringXNumber BoundaryLayerOptions_Number[] = {
   {GMSH_FULLRC, "Thickness", nullptr, 1.e-2},
@@ -57,6 +60,8 @@ StringXString *GMSH_BoundaryLayerPlugin::getOptionStr(int iopt)
 {
   return &BoundaryLayerOptions_String[iopt];
 }
+
+#if defined(HAVE_WINSLOWUNTANGLER)
 
 /*
     nodes at start (s) and end (e) of GEdge ge
@@ -982,6 +987,9 @@ void splitounette(std::vector<GFace *> &f, std::map<MElement *, double> &layers,
   }
 }
 
+#endif // HAVE_WINSLOWUNTANGLER
+
+
 std::string GMSH_BoundaryLayerPlugin::parse(std::string str,
                                             std::list<int> &physical)
 {
@@ -1009,6 +1017,7 @@ std::string GMSH_BoundaryLayerPlugin::parse(std::string str,
 
 PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
 {
+#if defined(HAVE_WINSLOWUNTANGLER)
   GModel *m = GModel::current();
 
   std::string volume = BoundaryLayerOptions_String[0].def;
@@ -1125,5 +1134,8 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
 
   CTX::instance()->mesh.changed = ENT_ALL;
 
+#else
+  Msg::Error("Plugin(BoundaryLayer) requires Winslow untangler");
+#endif
   return v;
 }
