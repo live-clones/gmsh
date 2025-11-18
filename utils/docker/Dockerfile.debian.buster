@@ -2,7 +2,7 @@ FROM amd64/debian:buster
 
 ENV DEBIAN_FRONTEND noninteractive
 
-# buster is not be supported anymore...
+# buster has been archived:
 RUN echo "deb http://archive.debian.org/debian buster main" > /etc/apt/sources.list
 RUN echo "deb http://archive.debian.org/debian-security buster/updates main" >> /etc/apt/sources.list
 
@@ -118,7 +118,7 @@ RUN apt-get remove -y libssl-dev && rm -rf /tmp/cmake
 # FLTK
 # -----------------------
 
-# FLTK 1.4 introduces severe performance regression with OpenGL 1 on Windows and Linux; stick with FLTK 1.3 for now
+# FLTK 1.4 introduces performance regressions with OpenGL 1.1 - stick with FLTK 1.3 for now
 RUN git clone --branch branch-1.3 --single-branch https://github.com/fltk/fltk.git && cd fltk && make makeinclude && ./configure --enable-localpng=no --enable-localzlib=no --enable-localjpeg=no && make -j 4 && make install && cd ../.. && rm -rf fltk
 
 # -----------------------
