@@ -14,8 +14,8 @@ library:
 
 == CI builds ==
 
-Docker image based for Linux CI builds, using a recent distribution with
-pre-compiled dependencies + tools useful for CI testing (valgrind, ...):
+Docker image for Linux CI builds, using a recent distribution with pre-compiled
+dependencies + tools useful for CI testing (valgrind, ...):
 
 > docker build --platform linux/amd64 -f Dockerfile.ci -t onelab/ci --build-arg REBUILD_GMSH=xxx .
 
