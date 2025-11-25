@@ -28,6 +28,7 @@ StringXString HomologyPostProcessingOptions_String[] = {
   {GMSH_FULLRC, "PhysicalGroupsToTraceResults", nullptr, ""},
   {GMSH_FULLRC, "PhysicalGroupsToProjectResults", nullptr, ""},
   {GMSH_FULLRC, "NameForResultChains", nullptr, "c"},
+  {GMSH_FULLRC, "PhysicalGroupsOfOperatedChains2_bis", nullptr, ""},
 };
 
 extern "C" {
@@ -148,6 +149,7 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
   std::string cname = HomologyPostProcessingOptions_String[5].def;
   std::string traceString = HomologyPostProcessingOptions_String[3].def;
   std::string projectString = HomologyPostProcessingOptions_String[4].def;
+  std::string opString2_bis = HomologyPostProcessingOptions_String[6].def;
   int bd = (int)HomologyPostProcessingOptions_Number[0].def;
 
   GModel *m = GModel::current();
@@ -200,6 +202,9 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
   if(!parseStringOpt(1, basisPhysicals)) return nullptr;
   std::vector<int> basisPhysicals2;
   if(!parseStringOpt(2, basisPhysicals2)) return nullptr;
+
+  std::vector<int> basisPhysicals2_bis;
+  if(!parseStringOpt(6, basisPhysicals2_bis)) return nullptr;
 
   if(matrixString != "I" && (int)basisPhysicals.size() != cols &&
      basisPhysicals2.empty()) {
@@ -262,15 +267,51 @@ PView *GMSH_HomologyPostProcessingPlugin::execute(PView *v)
   std::vector<Chain<int> > newBasis(rows, Chain<int>());
   if(!curBasis2.empty()) {
     Msg::Info("Computing new basis %d-chains such that the incidence matrix of "
-              "%d-chain bases %s and %s is the indentity matrix",
+              "%d-chain bases %s and %s is the identity matrix",
               dim, dim, opString1.c_str(), opString2.c_str());
     int det = detIntegerMatrix(matrix);
-    if(det != 1 && det != -1)
-      Msg::Warning("Incidence matrix is not unimodular (det = %d)", det);
+    if(det != 1 && det != -1) {
+      if(!basisPhysicals2_bis.empty()) {
+        Msg::Info("Incidence matrix is not unimodular (det = %d)", det);
+        Msg::Info("Trying to compute the basis with the second set of operated chains"
+                  " %s instead of %s", opString2_bis.c_str(), opString2.c_str());
+        if(basisPhysicals2_bis.size() != basisPhysicals.size()) {
+          Msg::Error("Number of operated chains must match (%d != %d)",
+                     basisPhysicals2_bis.size(), basisPhysicals.size());
+          return nullptr;
+        }
+        std::vector<Chain<int> > curBasis2_bis;
+        for(std::size_t i = 0; i < basisPhysicals2_bis.size(); i++) {
+          curBasis2_bis.push_back(Chain<int>(m, basisPhysicals2_bis.at(i)));
+        }
+
+        if(!curBasis2_bis.empty()) {
+          rows = curBasis2_bis.size();
+          cols = curBasis.size();
+          matrix = std::vector<int>(rows * cols, 0);
+          for(int i = 0; i < rows; i++)
+            for(int j = 0; j < cols; j++)
+              matrix.at(i * cols + j) = incidence(curBasis2_bis.at(i), curBasis.at(j));
+          Msg::Info("Computing new basis %d-chains such that the incidence matrix of "
+                    "%d-chain bases %s and %s is the identity matrix",
+                    dim, dim, opString1.c_str(), opString2_bis.c_str());
+          int det_bis = detIntegerMatrix(matrix);
+          if(det_bis != 1 && det_bis != -1)
+            Msg::Warning("Incidence matrix is not unimodular (det = %d)", det_bis);
+          if(!invertIntegerMatrix(matrix)) return nullptr;
+          for(int i = 0; i < rows; i++)
+            for(int j = 0; j < cols; j++)
+                newBasis.at(i) += matrix.at(i * cols + j) * curBasis2_bis.at(j);
+        }
+      } else {
+        Msg::Warning("Incidence matrix is not unimodular (det = %d)", det);
+      }
+    }
     if(!invertIntegerMatrix(matrix)) return nullptr;
     for(int i = 0; i < rows; i++)
       for(int j = 0; j < cols; j++)
-        newBasis.at(i) += matrix.at(i * cols + j) * curBasis2.at(j);
+        if(det)
+          newBasis.at(i) += matrix.at(i * cols + j) * curBasis2.at(j);
   }
   else {
     Msg::Info("Applying transformation matrix [%s] to %d-chains %s",
