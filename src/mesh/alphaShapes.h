@@ -52,7 +52,7 @@ void _createOctreeForFace(GFace* gf, ElementOctree &octree);
 void getNewNodesOnOldMesh(PolyMesh *pm, ElementOctree &octree_prev, std::vector<size_t> &newNodeTags, std::vector<size_t> &newNodeElementTags, std::vector<double> &newNodeParametricCoords);
 
 // mark all nodes not coonected to a fluid element as disabled
-void filterNodes(PolyMesh *pm, const int tag);
+void filterNodes(PolyMesh *pm, const int tag, bool deleteDisconnectedNodes);
 
 // 3D functions 
 void _computeAlphaShape3D(const std::vector<int> & alphaShapeTags, const double alpha, const double hMean,

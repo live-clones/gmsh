@@ -1832,6 +1832,17 @@ bool _deletionAllowed(PolyMesh* pm, PolyMesh::HalfEdge* he_delete){
   return true;
 }
 
+bool pointOnTriangleEdge(double* p, PolyMesh::Face* f){
+  PolyMesh::HalfEdge* he = f->he;
+  PolyMesh::Vertex* v0 = he->v;
+  PolyMesh::Vertex* v1 = he->next->v;
+  PolyMesh::Vertex* v2 = he->next->next->v;
+  double tol = 1e-12;
+  return abs(robustPredicates::orient2d(v0->position, v1->position, p)) < tol ||
+         abs(robustPredicates::orient2d(v1->position, v2->position, p)) < tol ||
+         abs(robustPredicates::orient2d(v2->position, v0->position, p)) < tol;
+}
+
 void AlphaShape::_delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const int sizeFieldTag, std::vector<PolyMesh::Vertex*> & controlNodes){
   for (auto it : *GModel::current()->getFields()){
     auto field = it.second;
@@ -1950,6 +1961,7 @@ void AlphaShape::_delaunayRefinement(PolyMesh* pm, const int tag, const int bndT
   newTag++;
 
   size_t n_faces_init = _badFaces.size();
+  bool forceEdgeSplit = false;
   while (!_badFaces.empty()){
     if (_badFaces.size() > 1000*n_faces_init){
       printf("too many faces in refine, most likely a bug in geometry \n");
@@ -1964,6 +1976,10 @@ void AlphaShape::_delaunayRefinement(PolyMesh* pm, const int tag, const int bndT
     double q, R, s;
     SPoint3 cc;
     faceInfo(f->he, cc, &R, &q); // NB : q = 2*rho / R
+    // Check if the cc is ON an edge -> then we should split the edge, not the triangle
+    if (pointOnTriangleEdge(cc, f)){
+      forceEdgeSplit = true;
+    }
     s = _faceSizeFromMap(f->he, sizeAtNodes);
     if((q < _limit && R/s > _sizeMinFactor) || R/s > _size){
       PolyMesh::HalfEdge* heCandidate = nullptr;
@@ -1981,7 +1997,7 @@ void AlphaShape::_delaunayRefinement(PolyMesh* pm, const int tag, const int bndT
         }
       }
       std::vector<PolyMesh::HalfEdge *> _touched;
-      if (heCandidate && found){ // this means it is NOT a constrained edge
+      if (heCandidate && found && !forceEdgeSplit){ // this means it is NOT a constrained edge
         pm->split_triangle(-1, cc[0], cc[1], cc[2], heCandidate->f, delaunayCriterionColors, nullptr, &_touched);
       }
       else { // this means it is a constrained edge
@@ -1989,7 +2005,6 @@ void AlphaShape::_delaunayRefinement(PolyMesh* pm, const int tag, const int bndT
         cc.setPosition(p.x(), p.y(), p.z());
         if ( heCandidate->opposite){
           pm->split_edge(heCandidate, cc, -1);
-          // int heData = heCandidate->data;
           int heData = bndTag;
           heCandidate->next->opposite->f->data = heCandidate->f->data;
           heCandidate->opposite->f->data = heCandidate->next->opposite->next->opposite->f->data;
@@ -2024,6 +2039,7 @@ void AlphaShape::_delaunayRefinement(PolyMesh* pm, const int tag, const int bndT
             if (!(*face_it)->he) _badFaces.erase(face_it--);
         }
       }
+      forceEdgeSplit = false;
       PolyMesh::Vertex* v = pm->vertices.back();
       v->data = newTag++;
       sizeAtNodes[v->data] = field->operator()(v->position.x(), v->position.y(), 0, NULL);
@@ -2085,9 +2101,12 @@ void AlphaShape::_createBoundaryOctree(const std::string & boundaryModel, const 
     // return &octree;
 }
 
-void AlphaShape::filterNodes(PolyMesh *pm, const int tag) {
+void AlphaShape::filterNodes(PolyMesh *pm, const int tag, bool deleteDisconnectedNodes) {
   for (auto v : pm->vertices){
-    if (v->he == nullptr || !checkVertexConnection(pm, v, tag)) {
+    if (v->he == nullptr) {
+      v->data = -1;
+    }
+    else if (deleteDisconnectedNodes && !checkVertexConnection(pm, v, tag)) {
       v->data = -1;
     }
   }
@@ -2797,6 +2816,17 @@ double _tetCircumCenter (MTetrahedron* tet){
   return R;
 }
 
+double _tetVolume(MTetrahedron* tet){
+  double *A = tet->getVertex(0)->point();
+  double *B = tet->getVertex(1)->point();
+  double *C = tet->getVertex(2)->point();
+  double *D = tet->getVertex(3)->point();
+  double vol = (B[0]-A[0])*(C[1]-A[1])*(D[2]-A[2]) + (C[0]-A[0])*(D[1]-A[1])*(B[2]-A[2]) + (D[0]-A[0])*(B[1]-A[1])*(C[2]-A[2])
+             - (D[0]-A[0])*(C[1]-A[1])*(B[2]-A[2]) - (C[0]-A[0])*(B[1]-A[1])*(D[2]-A[2]) - (B[0]-A[0])*(D[1]-A[1])*(C[2]-A[2]);
+  vol /= 6.;
+  return fabs(vol);
+}
+
 double edgeLength(std::pair<int,int> a){
   MVertex* v0 = GModel::current()->getMeshVertexByTag(a.first);
   MVertex* v1 = GModel::current()->getMeshVertexByTag(a.second);
@@ -2886,7 +2916,7 @@ void AlphaShape::_alphaShape3DFromArray(const int tag, const std::vector<size_t>
   std::vector<bool> _touched(n_tets, false);
   std::vector<size_t> alphaFaces;
   std::vector<MTetrahedron*> alphaTets;
-  double alphaTet, R;
+  double alphaTet, R, vol;
   SPoint3 cc;
 
   for (size_t i=0; i<n_tets; i++){
@@ -2898,8 +2928,9 @@ void AlphaShape::_alphaShape3DFromArray(const int tag, const std::vector<size_t>
       return;
     }
     R = _tetCircumCenter(tet);
+    vol = _tetVolume(tet);
     alphaTet = it->second;
-    if (R < alphaTet && !_touched[i]){
+    if (R < alphaTet && vol > 1e-12 && !_touched[i]){
       std::stack<size_t> _s;
       _s.push(i);
       _touched[i] = true;
@@ -2924,7 +2955,8 @@ void AlphaShape::_alphaShape3DFromArray(const int tag, const std::vector<size_t>
               return;
             }
             alphaTet = it->second;
-            if (R < alphaTet){
+            vol = _tetVolume(tet_neigh);
+            if (R < alphaTet && vol > 1e-12){
               auto tet_alpha = new MTetrahedron(tet_neigh->getVertex(0), tet_neigh->getVertex(1), tet_neigh->getVertex(2), tet_neigh->getVertex(3), tet_neigh->getNum());
               for (size_t jn=0; jn<4; jn++) {verticesInConnected.insert(tet_alpha->getVertex(jn));}
               alphaTets.push_back(tet_alpha);
@@ -3018,6 +3050,8 @@ void AlphaShape::_alphaShape3DFromArray(const int tag, const std::vector<size_t>
       tri2Tet[2*i+1] = tet->getNum();
     }
   }
+  gm->renumberMeshElements();
+
   // auto t4 = std::chrono::steady_clock::now(); 
   // auto dur0 = std::chrono::duration_cast<std::chrono::microseconds>(t2-t1);
   // auto dur1 = std::chrono::duration_cast<std::chrono::microseconds>(t3-t2);
@@ -3145,6 +3179,8 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
     Msg::Info("Removed %zu disconnected node(s) in alpha shape\n", n_removed);
   }
   
+  
+
   GFace *df = GModel::current()->getFaceByTag(tagAlphaBoundary);
   if (!df) {
     Msg::Error("Entity of dimension 2 with tag %d does not exist", tagAlphaBoundary);
@@ -3169,13 +3205,15 @@ void AlphaShape::_alphaShape3D(const int tag, const double alpha, const int size
     MVertex *v0 = f_i.getVertex(0);
     MVertex *v1 = f_i.getVertex(1);
     MVertex *v2 = f_i.getVertex(2);
-    MTriangle *tri = new MTriangle(v0, v1, v2, i + 1);
+    MTriangle *tri = new MTriangle(v0, v1, v2);
     df->triangles.push_back(tri);
     if (returnTri2TetMap) {
       tri2Tet[2 * i + 0] = tri->getNum();
       tri2Tet[2 * i + 1] = tet->getNum();
     }
   }
+  gm->renumberMeshElements();
+
   // auto t4 = std::chrono::steady_clock::now(); 
   // auto dur0 = std::chrono::duration_cast<std::chrono::microseconds>(t2-t1);
   // auto dur1 = std::chrono::duration_cast<std::chrono::microseconds>(t3-t2);
@@ -3432,6 +3470,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
 
   // printf("hmm 4 \n");
   // if (nonManifold==1){
+  //   printf
   //   Msg::Warning("Non-manifold surface mesh, skipping edge splitting");
   //   return;
   // }
@@ -3458,6 +3497,20 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
 
   std::set<int> flaggedVertices;
   double dimensionFactor = 4/sqrt(6);
+
+  // create an octree on the nodes of the boundary to avoid inserting too close nodes
+  // OctreeNode<3, 64, PolyMesh::Vertex*> octree;
+  // BBox<3> bbox;
+  // for (auto v : pm->vertices){
+  //   bbox.extends({v->position[0], v->position[1], v->position[2]});
+  // }
+  // octree.set_bbox(bbox);
+  // for (auto v : pm->vertices){
+  //   BBox<3> vbbox;
+  //   vbbox.extends({v->position[0], v->position[1], v->position[2]});
+  //   octree.add(v, vbbox);
+  // }
+  size_t newVertices = 0;
 
   while (!edgeNodesSorted.empty()){
 
@@ -3488,6 +3541,7 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
       edgeNodesSorted.erase(it);
       continue;
     }
+
     // printf("edge %d -> %d\n", it->first, it->second);
     // double l = edgeLength(*it);
     double l = norm(v0->position - v1->position);
@@ -3522,9 +3576,26 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
       // }
       SVector3 midPoint = 0.5*(heToSplit->v->position + heToSplit->next->v->position);
       MVertex* vm = new MVertex(midPoint[0], midPoint[1], midPoint[2]);
+
+      // BBox<3> vbbox;
+      // vbbox.extends({midPoint[0], midPoint[1], midPoint[2]});
+      // std::vector<PolyMesh::Vertex*> res;
+      // octree.search(vbbox, res);
+      // if (!res.empty()){
+      //   printf("found a close vertex, skipping insertion !!!!!!!!!\n");
+      //   flaggedVertices.insert(it->first);
+      //   flaggedVertices.insert(it->second);
+      //   continue;
+      // }
+      
       split_edge(pm, heToSplit, midPoint, vm->getNum(), newFaces, linkedVertices);
+      
+
+        
+      // auto new_v = pm->vertices.back();
+      // octree.add(new_v, vbbox);
+      
       // print4debug(pm, ii++);
-      // printf("split an edge! \n");
       gr->addMeshVertex(vm);
       // printf("added a vertex at : %f %f %f\n", midPoint[0], midPoint[1], midPoint[2]);
       vm->setEntity(gr);
@@ -3537,24 +3608,23 @@ void AlphaShape::_surfaceEdgeSplitting(const int fullTag, const int surfaceTag, 
       for (auto v : linkedVertices){
         edgeNodesSorted.insert(std::make_pair(vm->getNum(), size_t(v->data)));
       }
+      newVertices++;
     }
   }
-  // printf("hereS 4\n");
+  printf("added %zu new vertices\n", newVertices);
   // Add faces to surfaceTag
   for (auto tri : df->triangles){
     delete tri;
   }
   df->triangles.clear();
-  size_t i=1;
   for (auto f : pm->faces){
     MVertex* v0 = gm->getMeshVertexByTag(f->he->v->data);
     MVertex* v1 = gm->getMeshVertexByTag(f->he->next->v->data);
     MVertex* v2 = gm->getMeshVertexByTag(f->he->next->next->v->data);
-    MTriangle* tri = new MTriangle(v0, v1, v2, i++);
+    MTriangle* tri = new MTriangle(v0, v1, v2);
     df->triangles.push_back(tri);
   }
-
-  // print4debug(pm, 1);
+  gm->renumberMeshElements();
 
   delete pm;
 
@@ -4091,7 +4161,7 @@ void AlphaShape::_volumeMeshRefinement(const int fullTag, const int surfaceTag, 
     // postProPoints(coordsDebug, dataDebug2, 2);
   }
   hxtMeshDelete(&m);
-
+  gm->renumberMeshElements();
 }
 
 void AlphaShape::_constrainedDelaunay(const int surfaceTag, const int volumeTag){
@@ -4145,7 +4215,7 @@ void AlphaShape::_constrainedDelaunay(const int surfaceTag, const int volumeTag)
     .verbosity=0,
     .stat=0,
     .refine=0,
-    .optimize=0
+    .optimize=0,
   };
 
   // for (size_t i=0; i<m->vertices.num; i++){
@@ -4377,8 +4447,8 @@ void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, co
     search_bbox.extends({v->x()-h, v->y()-h, v->z()-h});
     std::vector<MVertex*> closeVertices;
     octree.search(search_bbox, closeVertices);
-    std::sort(closeVertices.begin(), closeVertices.end());
-    closeVertices.erase(std::unique(closeVertices.begin(), closeVertices.end()), closeVertices.end());
+    // std::sort(closeVertices.begin(), closeVertices.end());
+    // closeVertices.erase(std::unique(closeVertices.begin(), closeVertices.end()), closeVertices.end());
     size_t mustDelete = closeVertices.size()-1;
     for (auto v_neigh : closeVertices){
       if (v_neigh == v) continue;
@@ -4412,7 +4482,7 @@ void AlphaShape::_filterCloseNodes(const int fullTag, const int sizeFieldTag, co
   // printf("number of nodes in the mesh : %lu\n", gr->mesh_vertices.size());
 
 
-  // printf("Filtered out %lu vertices from mesh\n", _deleted.size());
+  printf("Filtered out %lu vertices from mesh\n", _deleted.size());
   // Msg::Info("Filtered out %lu vertices from mesh\n", _deleted.size());
 }
 
@@ -4740,7 +4810,8 @@ void AlphaShape::_colourBoundaries(const int faceTag, const std::string & bounda
       }
           // bnd_element_found.push_back(bnd_element_found_i);
     }
-        
+    
+    
         
     std::vector<size_t> common_entities;
     for (auto ent : entity_found[0]){
@@ -4774,11 +4845,13 @@ void AlphaShape::_colourBoundaries(const int faceTag, const std::string & bounda
       // return;
       continue;
     }
+    // if (gf_bnd == gf) continue;
     // for (auto tri : gf_bnd->triangles){
     //   delete tri;
     // }
     gf_bnd->triangles.clear();
     for (auto tri : it.second){
+      // tri.setEntity(gf_bnd);
       gf_bnd->triangles.push_back(tri);
     }
   }
@@ -4824,7 +4897,6 @@ void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std
 
   std::unordered_set<size_t> projectedControlNodes;
   for (size_t i=0; i<nodeTags.size(); i++){
-    
     bool onPoint = false;
     bool onLine = false;
     MVertex* v = gm_alphaShape->getMeshVertexByTag(nodeTags[i]);
@@ -4836,7 +4908,7 @@ void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std
     SVector3 x0(v->point());
     SVector3 dx(nodesDx[3*i], nodesDx[3*i+1], nodesDx[3*i+2]);
     SVector3 x1 = x0 + dx;
-
+    
     // We check if it is a boundary node -> if yes, it is forced to stay on the boundary
     SVector3 x1_projected;
     if (boundaryNodesSet.find(v) != boundaryNodesSet.end()) {
@@ -4929,6 +5001,9 @@ void AlphaShape::_moveNodes3D(const int tag, const int freeSurfaceTag, const std
           double invDenom = 1. / (dot00 * dot11 - dot01 * dot01);
           double u = (dot11 * dot02 - dot01 * dot12) * invDenom;
           double v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+          // Always ensure that the point is put exactly on the triangle
+          nx = pa + u*v0 + v*v1;
+
           // printf("u %f, v %f \n", u, v);
           if (u >= 0 && v >= 0 && u + v <= 1){
             double dist = (nx-x0).norm();

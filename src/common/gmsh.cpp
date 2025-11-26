@@ -5783,8 +5783,8 @@ gmsh::model::mesh::computeAlphaShape(const int dim,
       // std::cout << "Refine       : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
     }
 
-    if (deleteDisconnectedNodes)
-      AlphaShape::filterNodes(pm, tag);
+    // if (deleteDisconnectedNodes)
+    AlphaShape::filterNodes(pm, tag, deleteDisconnectedNodes);
 
     if (canComputeParams){
       AlphaShape::getNewNodesOnOldMesh(pm, octree_prev, newNodeTags, newNodeElementTags, newNodeParametricCoords);
