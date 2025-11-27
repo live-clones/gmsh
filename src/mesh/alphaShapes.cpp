@@ -1593,7 +1593,7 @@ void AlphaShape::_edgeRecover(
   // std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() <<
   // "ms" << std::endl; print4debug(pm, 0); Color boundary edges
   std::set<int> resultTags0;
-  std::set<int> resultTags1;
+  // std::set<int> resultTags1;
   std::set<int> intersection;
   for(auto he : pm->hedges) {
     if(he->f == nullptr || he->f->data != tag) continue;
@@ -1603,10 +1603,13 @@ void AlphaShape::_edgeRecover(
       continue;
     }
     BBox<2> search_bbox;
-    search_bbox.extends(
-      {he->v->position.x() + boundary_tol, he->v->position.y() + boundary_tol});
-    search_bbox.extends(
-      {he->v->position.x() - boundary_tol, he->v->position.y() - boundary_tol});
+    // search_bbox.extends(
+    //   {he->v->position.x() + boundary_tol, he->v->position.y() + boundary_tol});
+    // search_bbox.extends(
+    //   {he->v->position.x() - boundary_tol, he->v->position.y() - boundary_tol});
+    auto midPoint = 0.5 * (he->v->position + he->next->v->position);
+    search_bbox.extends({midPoint.x() + boundary_tol, midPoint.y() + boundary_tol});
+    search_bbox.extends({midPoint.x() - boundary_tol, midPoint.y() - boundary_tol});
     result.clear();
     bnd_octree.search(search_bbox, result);
     if(result.size() == 0) { // free surface!!!
@@ -1618,35 +1621,44 @@ void AlphaShape::_edgeRecover(
     for(auto &ed : result) {
       SVector3 a(ed->x0, ed->y0, 0);
       SVector3 b(ed->x1, ed->y1, 0);
-      if(distPointSegment(he->v->position, a, b) < boundary_tol)
+      // if(distPointSegment(he->v->position, a, b) < boundary_tol)
+      if(distPointSegment(midPoint, a, b) < boundary_tol)
         resultTags0.insert(ed->tag);
     }
-    BBox<2> search_bbox1;
-    search_bbox1.extends({he->next->v->position.x() + boundary_tol,
-                          he->next->v->position.y() + boundary_tol});
-    search_bbox1.extends({he->next->v->position.x() - boundary_tol,
-                          he->next->v->position.y() - boundary_tol});
-    result.clear();
-    bnd_octree.search(search_bbox1, result);
-    if(result.size() == 0) { // free surface!!!
-      he->data = bndTag;
-      he->opposite->data = bndTag;
-      continue;
-    }
-    resultTags1.clear();
-    for(auto &ed : result) {
-      SVector3 a(ed->x0, ed->y0, 0);
-      SVector3 b(ed->x1, ed->y1, 0);
-      if(distPointSegment(he->next->v->position, a, b) < boundary_tol)
-        resultTags1.insert(ed->tag);
-    }
-    intersection.clear();
-    std::set_intersection(resultTags0.begin(), resultTags0.end(),
-                          resultTags1.begin(), resultTags1.end(),
-                          std::inserter(intersection, intersection.begin()));
-    if(intersection.size() == 1) {
-      he->data = *intersection.begin();
-      he->opposite->data = *intersection.begin();
+    // BBox<2> search_bbox1;
+    // search_bbox1.extends({he->next->v->position.x() + boundary_tol,
+    //                       he->next->v->position.y() + boundary_tol});
+    // search_bbox1.extends({he->next->v->position.x() - boundary_tol,
+    //                       he->next->v->position.y() - boundary_tol});
+    // result.clear();
+    // bnd_octree.search(search_bbox1, result);
+    // if(result.size() == 0) { // free surface!!!
+    //   he->data = bndTag;
+    //   he->opposite->data = bndTag;
+    //   continue;
+    // }
+    // resultTags1.clear();
+    // for(auto &ed : result) {
+    //   SVector3 a(ed->x0, ed->y0, 0);
+    //   SVector3 b(ed->x1, ed->y1, 0);
+    //   if(distPointSegment(he->next->v->position, a, b) < boundary_tol)
+    //     resultTags1.insert(ed->tag);
+    // }
+    // intersection.clear();
+    // std::set_intersection(resultTags0.begin(), resultTags0.end(),
+    //                       resultTags1.begin(), resultTags1.end(),
+    //                       std::inserter(intersection, intersection.begin()));
+    // if(intersection.size() == 1) {
+    //   he->data = *intersection.begin();
+    //   he->opposite->data = *intersection.begin();
+    // }
+    // else {
+    //   he->data = bndTag;
+    //   he->opposite->data = bndTag;
+    // }
+    if(resultTags0.size() == 1) {
+      he->data = *resultTags0.begin();
+      he->opposite->data = *resultTags0.begin();
     }
     else {
       he->data = bndTag;
@@ -1838,9 +1850,9 @@ bool pointOnTriangleEdge(double* p, PolyMesh::Face* f){
   PolyMesh::Vertex* v1 = he->next->v;
   PolyMesh::Vertex* v2 = he->next->next->v;
   double tol = 1e-12;
-  return abs(robustPredicates::orient2d(v0->position, v1->position, p)) < tol ||
-         abs(robustPredicates::orient2d(v1->position, v2->position, p)) < tol ||
-         abs(robustPredicates::orient2d(v2->position, v0->position, p)) < tol;
+  return ((he->data > 0 && abs(robustPredicates::orient2d(v0->position, v1->position, p)) < tol) ||
+         (he->next->data > 0 && abs(robustPredicates::orient2d(v1->position, v2->position, p)) < tol) ||
+         (he->next->next->data > 0 && abs(robustPredicates::orient2d(v2->position, v0->position, p)) < tol));
 }
 
 void AlphaShape::_delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const int sizeFieldTag, std::vector<PolyMesh::Vertex*> & controlNodes){
@@ -1979,6 +1991,7 @@ void AlphaShape::_delaunayRefinement(PolyMesh* pm, const int tag, const int bndT
     // Check if the cc is ON an edge -> then we should split the edge, not the triangle
     if (pointOnTriangleEdge(cc, f)){
       forceEdgeSplit = true;
+      printf("forcing edge split at cc %g %g \n", cc[0], cc[1]);
     }
     s = _faceSizeFromMap(f->he, sizeAtNodes);
     if((q < _limit && R/s > _sizeMinFactor) || R/s > _size){
