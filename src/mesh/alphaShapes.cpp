@@ -2248,12 +2248,15 @@ void AlphaShape::alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int 
     }
     // if (bndMap.find(he->data) == bndMap.end()) bndMap[he->data] = std::vector<size_t>();
     resultTags0.clear();
-    resultTags1.clear();
-    intersection.clear();
+    // resultTags1.clear();
+    // intersection.clear();
     BBox<2> search_bbox;
     // search_bbox.extends({he->v->position.x(), he->v->position.y()});
-    search_bbox.extends({he->v->position.x()+boundary_tol, he->v->position.y()+boundary_tol});
-    search_bbox.extends({he->v->position.x()-boundary_tol, he->v->position.y()-boundary_tol});
+    auto midPoint = 0.5*(he->v->position + he->next->v->position);
+    search_bbox.extends({midPoint.x()+boundary_tol, midPoint.y()+boundary_tol});
+    search_bbox.extends({midPoint.x()-boundary_tol, midPoint.y()-boundary_tol});
+    // search_bbox.extends({he->v->position.x()+boundary_tol, he->v->position.y()+boundary_tol});
+    // search_bbox.extends({he->v->position.x()-boundary_tol, he->v->position.y()-boundary_tol});
     // search_bbox*=(1+boundary_tol);
     result.clear();
     octree.search(search_bbox, result);
@@ -2266,28 +2269,29 @@ void AlphaShape::alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int 
     for (auto &ed : result){
       SVector3 a(ed->x0, ed->y0, 0);
       SVector3 b(ed->x1, ed->y1, 0);
-      if (distPointSegment(he->v->position, a, b) < boundary_tol)
+      // if (distPointSegment(he->v->position, a, b) < boundary_tol)
+      if (distPointSegment(midPoint, a, b) < boundary_tol)
         resultTags0.insert(ed->tag);
     }
-    BBox<2> search_bbox1;
+    // BBox<2> search_bbox1;
     // search_bbox1.extends({he->next->v->position.x(), he->next->v->position.y()});
-    search_bbox1.extends({he->next->v->position.x()+boundary_tol, he->next->v->position.y()+boundary_tol});
-    search_bbox1.extends({he->next->v->position.x()-boundary_tol, he->next->v->position.y()-boundary_tol});
+    // search_bbox1.extends({he->next->v->position.x()+boundary_tol, he->next->v->position.y()+boundary_tol});
+    // search_bbox1.extends({he->next->v->position.x()-boundary_tol, he->next->v->position.y()-boundary_tol});
     // search_bbox1*=(1+boundary_tol);
-    result.clear();
-    octree.search(search_bbox1, result);
-    if (result.size() == 0){ // free surface!!!
-      bndMap[bndTag].push_back(he->v->data);
-      bndMap[bndTag].push_back(he->next->v->data);
-      he->data = bndTag; 
-      continue; 
-    }
-    for (auto &ed : result){
-      SVector3 a(ed->x0, ed->y0, 0);
-      SVector3 b(ed->x1, ed->y1, 0);
-      if (distPointSegment(he->next->v->position, a, b) < boundary_tol)
-        resultTags1.insert(ed->tag);
-    }
+    // result.clear();
+    // octree.search(search_bbox1, result);
+    // if (result.size() == 0){ // free surface!!!
+    //   bndMap[bndTag].push_back(he->v->data);
+    //   bndMap[bndTag].push_back(he->next->v->data);
+    //   he->data = bndTag; 
+    //   continue; 
+    // }
+    // for (auto &ed : result){
+    //   SVector3 a(ed->x0, ed->y0, 0);
+    //   SVector3 b(ed->x1, ed->y1, 0);
+    //   if (distPointSegment(he->next->v->position, a, b) < boundary_tol)
+    //     resultTags1.insert(ed->tag);
+    // }
 
     bool usePhysicalTags = false;
     if (usePhysicalTags){
@@ -2320,16 +2324,26 @@ void AlphaShape::alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int 
       }
     }
     else {
-      std::set_intersection(resultTags0.begin(), resultTags0.end(), resultTags1.begin(), resultTags1.end(), std::inserter(intersection, intersection.begin()));
-      if (intersection.size() == 1){
-        bndMap[*intersection.begin()].push_back(he->v->data);
-        bndMap[*intersection.begin()].push_back(he->next->v->data);
-        he->data = *intersection.begin();
+      // std::set_intersection(resultTags0.begin(), resultTags0.end(), resultTags1.begin(), resultTags1.end(), std::inserter(intersection, intersection.begin()));
+      // if (intersection.size() == 1){
+      //   bndMap[*intersection.begin()].push_back(he->v->data);
+      //   bndMap[*intersection.begin()].push_back(he->next->v->data);
+      //   he->data = *intersection.begin();
+      // }
+      // else {
+      //   // bndMap[*intersection.begin()].push_back(he->v->data);
+      //   // bndMap[*intersection.begin()].push_back(he->next->v->data); 
+      //   // he->data = *intersection.begin(); 
+      //   bndMap[bndTag].push_back(he->v->data);
+      //   bndMap[bndTag].push_back(he->next->v->data); 
+      //   he->data = bndTag; 
+      // }
+      if (resultTags0.size() == 1){
+        bndMap[*resultTags0.begin()].push_back(he->v->data);
+        bndMap[*resultTags0.begin()].push_back(he->next->v->data);
+        he->data = *resultTags0.begin();
       }
       else {
-        // bndMap[*intersection.begin()].push_back(he->v->data);
-        // bndMap[*intersection.begin()].push_back(he->next->v->data); 
-        // he->data = *intersection.begin(); 
         bndMap[bndTag].push_back(he->v->data);
         bndMap[bndTag].push_back(he->next->v->data); 
         he->data = bndTag; 
