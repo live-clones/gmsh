@@ -83,9 +83,12 @@ static double triangle_area_2d(std::array<double, 2> a, std::array<double, 2> b,
                (a[1] - c[1]) * (a[0] + c[0]));
 }
 
+const int _debugBL3D = 1;
+
 bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
           std::vector<GRegion *> &inVolumes, double thickness,
-          std::map<MElement *, double> &layers)
+          std::map<MElement *, double> &layers,
+	  std::vector<GFace*> &toExpand)
 {
   // 3D case:
   // for each GVertex connected to the GFaces in inSurfaces:
@@ -117,12 +120,18 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
   ///// ----> TREAT POINTS
   ///---------------------------------------------------------
   // spawn nodes for model points
+
+  if (_debugBL3D)printf("connected points size %lu\n",connectedPoints.size());
+
   for(auto gv : connectedPoints) {
     if(gv->mesh_vertices.empty()) {
       Msg::Warning("No mesh node on model point %d - abort!", gv->tag());
       return false;
     }
 
+    
+    if (_debugBL3D)printf("connected point %d\n",gv->tag());
+    
     auto connectedCurves = gv->edges();
     auto connectedSurfaces = gv->faces();
     auto connectedVolumes = gv->regions();
@@ -132,17 +141,21 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
 
     std::set<GEdge *> curvesThatAreAdjacentToonSurfacesSet;
     for(auto gf : onSurfacesSet) {
+      if (_debugBL3D)printf("onSurfacesSet %d\n",gf->tag());
       auto e = gf->edges();
       curvesThatAreAdjacentToonSurfacesSet.insert(e.begin(), e.end());
     }
 
     for(auto ge : connectedCurves) {
+      if (_debugBL3D)printf("connectedCurve %d",ge->tag());
       if(curvesThatAreAdjacentToonSurfacesSet.find(ge) !=
          curvesThatAreAdjacentToonSurfacesSet.end()) {
+	if (_debugBL3D)printf(" found\n");
         found++;
       }
       else {
         toinsert.push_back(ge);
+	if (_debugBL3D)printf(" not found\n");
       }
     }
 
@@ -187,6 +200,7 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
 
     std::vector<GFace *> toinsert2;
     for(auto gf : connectedSurfaces) {
+      if (_debugBL3D)printf("connectedSurface %d\n",gf->tag());
       auto ed = gf->edges();
       bool edgeAlreadyDone = false;
       for(auto ge : ed)
@@ -330,6 +344,8 @@ bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
          surfacesAdjacentToVolumesForBoundaryLayer.end())
         continue;
 
+      toExpand.push_back(gf);
+      
       for(std::size_t i = 0; i < ge->lines.size(); i++) {
         MLine *l = ge->lines[i];
         auto sp0 = spawned[l->getVertex(0)];
@@ -632,33 +648,28 @@ static void expandBL(
         +-------------+
         (0,0)     (dx,0)
       */
+	// assume here zero size quads have been generated such as nodes 0 and 1 are
+	// along the curve ... nodes 1 and 2 are at the same position, same for 0 and 3
 	double dx = distance(e->getVertex(0),e->getVertex(1));
-	
-	
-	//	  printf("%g %g -- %g %g -- %g %g -- %g %g \n",vs[0][0],vs[0][1],vs[1][0],vs[1][1],vs[2][0],vs[2][1],
-	//	       vs[3][0],vs[3][1]);
-	
-	//	double dx = sqrt((vs[0][0] - vs[1][0]) * (vs[0][0] - vs[1][0]) +
-	//			 (vs[0][1] - vs[1][1]) * (vs[0][1] - vs[1][1]));
+		
         std::array<double, 2> p0 = {0, 0};
         std::array<double, 2> p1 = {dx, 0};
         std::array<double, 2> p2 = {dx, thickness};
         std::array<double, 2> p3 = {0, thickness};
-        //	printf("thickness = %12.5E\n",thickness);
+
         sh.push_back({p0, p1, p2});
         sh.push_back({p2, p3, p0});
         sh.push_back({p0, p1, p3});
         sh.push_back({p1, p2, p3});
 	//	printf(" %g %g %g %g %g %g\n",dx,thickness, triangle_area_2d(p0, p1, p2), triangle_area_2d(p2, p3, p0),
 	//	       triangle_area_2d(p0, p1, p3),triangle_area_2d(p1, p2, p3));
-
       }
       else {
         auto it2 = perfectShapes.find(e);
         if(it2 != perfectShapes.end())
           vs = it2->second;
         else
-          Msg::Error("Argh");
+          Msg::Error("Argh -- perfect shapes cannot be found ...");
         sh.push_back({vs[0], vs[1], vs[2]});
         sh.push_back({vs[2], vs[3], vs[0]});
         sh.push_back({vs[0], vs[1], vs[3]});
@@ -686,27 +697,44 @@ static void expandBL(
     points.push_back({param.x(), param.y()});
   }
   // int tricount = 0;
+  double area = 0.0;
   for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
     MElement *e = gf->getMeshElement(i);
     if(e->getNumVertices() == 3) {
-      //      if (areas[tricount] > 0)
-      triangles.push_back({(uint32_t)e->getVertex(0)->getIndex(),
-	    (uint32_t)e->getVertex(1)->getIndex(),
-	    (uint32_t)e->getVertex(2)->getIndex()});
+      uint32_t a = (uint32_t)e->getVertex(0)->getIndex();
+      uint32_t b = (uint32_t)e->getVertex(1)->getIndex();
+      uint32_t c = (uint32_t)e->getVertex(2)->getIndex();
+      std::array<double, 2> pa = points[a];
+      std::array<double, 2> pb = points[b];
+      std::array<double, 2> pc = points[c];
+      area += triangle_area_2d(pa, pb, pc);
+    }
+  }
+  printf("->area(%d) = %g\n",gf->tag(),area);
+
+  for(std::size_t i = 0; i < gf->getNumMeshElements(); i++) {
+    MElement *e = gf->getMeshElement(i);
+    uint32_t a = (uint32_t)e->getVertex(0)->getIndex();
+    uint32_t b = (uint32_t)e->getVertex(1)->getIndex();
+    uint32_t c = (uint32_t)e->getVertex(2)->getIndex();
+    if(e->getNumVertices() == 3) {
+      if (area > 0)triangles.push_back({a,b,c});
+      else triangles.push_back({b,a,c});
     }
     else {
-      triangles.push_back({(uint32_t)e->getVertex(0)->getIndex(),
-                           (uint32_t)e->getVertex(1)->getIndex(),
-                           (uint32_t)e->getVertex(2)->getIndex()});
-      triangles.push_back({(uint32_t)e->getVertex(2)->getIndex(),
-                           (uint32_t)e->getVertex(3)->getIndex(),
-                           (uint32_t)e->getVertex(0)->getIndex()});
-      triangles.push_back({(uint32_t)e->getVertex(0)->getIndex(),
-                           (uint32_t)e->getVertex(1)->getIndex(),
-                           (uint32_t)e->getVertex(3)->getIndex()});
-      triangles.push_back({(uint32_t)e->getVertex(1)->getIndex(),
-                           (uint32_t)e->getVertex(2)->getIndex(),
-                           (uint32_t)e->getVertex(3)->getIndex()});
+      uint32_t d = (uint32_t)e->getVertex(3)->getIndex();
+      if (area > 0){
+	triangles.push_back({a,b,c});
+	triangles.push_back({c,d,a});
+	triangles.push_back({a,b,d});
+	triangles.push_back({b,c,d});
+      }
+      else{
+	triangles.push_back({b,a,d});
+	triangles.push_back({d,c,b});
+	triangles.push_back({b,a,c});
+	triangles.push_back({a,d,c});
+      }
     }
   }
   untangle_triangles_2D(points, locked, triangles, sh, 1.e+0);
@@ -892,6 +920,60 @@ std::string GMSH_BoundaryLayerPlugin::parse(std::string str,
   return str;
 }
 
+
+void computePerfectShapes (std::vector<GFace*> & f,			   
+			   std::map<MElement *, std::array<std::array<double, 2>, 4>> &perfectShapes){
+  
+  for(auto gf : f) {
+    //      std::map<MVertex*,SPoint2> ivp;
+    double area = 0.0;
+    for(size_t i = 0; i < gf->getNumMeshElements(); i++) {
+      std::vector<SPoint2> pts;
+      for(size_t j = 0; j < gf->getMeshElement(i)->getNumVertices(); j++) {
+	SPoint2 param;
+	reparamMeshVertexOnFace(gf->getMeshElement(i)->getVertex(j), gf,
+				param);
+	pts.push_back(param);
+      }
+      if(pts.size() == 3) {
+	std::array<double, 2> vs0 = {pts[0].x(), pts[0].y()};
+	std::array<double, 2> vs1 = {pts[1].x(), pts[1].y()};
+	std::array<double, 2> vs2 = {pts[2].x(), pts[2].y()};
+	area += triangle_area_2d(vs0, vs1, vs2);
+      }
+    }
+
+    printf("area (%d) = %g\n",gf->tag(), area);
+    
+    for(size_t i = 0; i < gf->getNumMeshElements(); i++) {
+      std::vector<SPoint2> pts;
+      for(size_t j = 0; j < gf->getMeshElement(i)->getNumVertices(); j++) {
+	SPoint2 param;
+	reparamMeshVertexOnFace(gf->getMeshElement(i)->getVertex(j), gf,
+				param);
+	pts.push_back(param);
+      }
+      std::array<double, 2> vs0 = {pts[0].x(), pts[0].y()};
+      std::array<double, 2> vs1 = {pts[1].x(), pts[1].y()};
+      std::array<double, 2> vs2 = {pts[2].x(), pts[2].y()};
+      if(pts.size() == 3) {
+	if(area > 0)
+	  perfectShapes[gf->getMeshElement(i)] = {vs0, vs1, vs2, vs2};
+	else
+	  perfectShapes[gf->getMeshElement(i)] = {vs1, vs0, vs2, vs2};
+      }
+      else {
+	std::array<double, 2> vs3 = {pts[3].x(), pts[3].y()};
+	if(area > 0)
+	  perfectShapes[gf->getMeshElement(i)] = {vs0, vs1, vs2, vs3};
+	else
+	  perfectShapes[gf->getMeshElement(i)] = {vs1, vs0, vs3, vs2};
+      }
+    }
+  }
+}
+
+
 PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
 {
 #if defined(HAVE_WINSLOWUNTANGLER)
@@ -933,44 +1015,6 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   double size = BoundaryLayerOptions_Number[1].def;
   double ratio = BoundaryLayerOptions_Number[2].def;
 
-  std::map<MElement *, std::array<std::array<double, 2>, 4>> perfectShapes;
-
-  {
-    for(auto gf : f) {
-      //      std::map<MVertex*,SPoint2> ivp;
-      for(size_t i = 0; i < gf->getNumMeshElements(); i++) {
-        std::vector<SPoint2> pts;
-        for(size_t j = 0; j < gf->getMeshElement(i)->getNumVertices(); j++) {
-          SPoint2 param;
-          reparamMeshVertexOnFace(gf->getMeshElement(i)->getVertex(j), gf,
-                                  param);
-          pts.push_back(param);
-        }
-        if(pts.size() == 3) {
-          std::array<double, 2> vs0 = {pts[0].x(), pts[0].y()};
-          std::array<double, 2> vs1 = {pts[1].x(), pts[1].y()};
-          std::array<double, 2> vs2 = {pts[2].x(), pts[2].y()};
-          double a = triangle_area_2d(vs0, vs1, vs2);
-          if(a > 0)
-            perfectShapes[gf->getMeshElement(i)] = {vs0, vs1, vs2, vs2};
-          else
-            perfectShapes[gf->getMeshElement(i)] = {vs0, vs2, vs1, vs1};
-        }
-        else {
-          std::array<double, 2> vs0 = {pts[0].x(), pts[0].y()};
-          std::array<double, 2> vs1 = {pts[1].x(), pts[1].y()};
-          std::array<double, 2> vs2 = {pts[2].x(), pts[2].y()};
-          std::array<double, 2> vs3 = {pts[3].x(), pts[3].y()};
-          double a = triangle_area_2d(vs0, vs1, vs2);
-          if(a > 0)
-            perfectShapes[gf->getMeshElement(i)] = {vs0, vs1, vs2, vs3};
-          else
-            perfectShapes[gf->getMeshElement(i)] = {vs1, vs0, vs3, vs2};
-        }
-      }
-    }
-  }
-
   std::map<MElement *, double> layers;
 
   //  printf("perfectshapes = %lu\n",perfectShapes.size());
@@ -992,16 +1036,28 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
   //    printf("h = %g y = %g\n",wid,h);
   //  }
 
+  std::vector<GFace*> toExpand;
+  
   if(r.empty())
     bl(m, vv, e, f, ww, layers);
   else
-    bl3d(m, f, r, ww, layers);
+    bl3d(m, f, r, ww, layers, toExpand);
 
   for(GModel::eiter eit = m->firstEdge(); eit != m->lastEdge(); ++eit)
     meshGEdgeInsertBoundaryLayer(*eit, ww);
 
-  //  if (r.empty())
-  for(auto gf : f) expandBL(gf, perfectShapes, layers, f);
+  std::map<MElement *, std::array<std::array<double, 2>, 4>> perfectShapes;
+  
+  if (r.empty()){
+    computePerfectShapes (f,perfectShapes);
+    for(auto gf : f) expandBL(gf, perfectShapes, layers, f);
+  }
+  else{
+    computePerfectShapes (toExpand,perfectShapes);
+    for(auto gf : toExpand) {
+      expandBL(gf, perfectShapes, layers, toExpand);
+    }
+  }
 
   if(r.empty())
     if(ws.size() > 1) splitounette(f, layers, ws);

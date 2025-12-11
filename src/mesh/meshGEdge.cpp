@@ -1102,8 +1102,7 @@ int meshGEdgeInsertBoundaryLayer(GEdge *ge, double width)
   size_t end = ge->mesh_vertices.size() - 1;
 
   if(l0->getLength() < 1.e-12) {
-    //    printf("GEdge %d -- end line lengths %12.5E %12.5E
-    //    \n",ge->tag(),l0->getLength(),ln->getLength());
+    printf("GEdge %d -- end line lengths %12.5E %12.5E\n",ge->tag(),l0->getLength(),ln->getLength());
     for(auto v : ge->mesh_vertices) {
       double p;
       v->getParameter(0, p);
