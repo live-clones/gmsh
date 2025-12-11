@@ -1,3 +1,8 @@
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
+//
+// See the LICENSE.txt file in the Gmsh root directory for license information.
+// Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+
 #include <iostream>
 #include <vector>
 #include <cstdint>
@@ -247,18 +252,18 @@ void quantizeCurvesForEvenSurfaceSubdivision ( vector<int> &curveTags, vector<in
   vector<pair<int,int>> surfaces, curves;
   gmsh::model::getEntities(surfaces, 2);
   gmsh::model::getEntities(curves,   1);
-  
+
   //    printf("%lu %lu\n",surfaces.size(),curves.size());
-  
+
   // --- 2. Map tag de courbe -> index compact [0..m-1]
   //  vector<int> curveTags;
   curveTags.reserve(curves.size());
   for (const auto &c : curves) curveTags.push_back(c.second);
-  
+
   unordered_map<int,int> tag2idx;
   tag2idx.reserve(curveTags.size());
   for (size_t i = 0; i < curveTags.size(); ++i) tag2idx[curveTags[i]] = (int)i;
-  
+
   // --- 3. faces: pour chaque surface, récupérer le bord "courbes" (dim=1)
   faces.clear();
   faces.reserve(surfaces.size());
@@ -278,24 +283,24 @@ void quantizeCurvesForEvenSurfaceSubdivision ( vector<int> &curveTags, vector<in
     //    printf("\n");
     faces.push_back(std::move(f));
   }
-  
+
   // --- 4. N_i = nombre d'éléments 1D maillés sur la courbe i
   // NB: on additionne tous les types 1D retournés (2-node, 3-node, 4-node lines, etc.)
   N.assign((int)curveTags.size(), 0);
-  
+
   for (size_t i = 0; i < curveTags.size(); ++i) {
     int ctag = curveTags[i];
-    
+
     // Ces conteneurs seront remplis par Gmsh (par type d'élément)
     vector<int> elemTypes;
     vector<vector<std::size_t>> elemTags, nodeTags;
-    
+
     gmsh::model::mesh::getElements(elemTypes, elemTags, nodeTags,
 				   /*dim=*/1, /*tag=*/ctag);
-    
+
     std::size_t count = 0;
     for (const auto &etags : elemTags) count += etags.size();
-    
+
     N[i] = static_cast<int>(count);
   }
 
@@ -305,11 +310,11 @@ void quantizeCurvesForEvenSurfaceSubdivision ( vector<int> &curveTags, vector<in
   //    }
   //    printf("\n");
   //  }
-  
+
   auto sol = compute_weighted_even_faces(N, faces);
   std::cout << "Flips: " << sol.flips << "\n";
   std::cout << "Weighted cost: " << sol.cost << "\n";
-  N = sol.n;    
+  N = sol.n;
 }
 /*
 int main(int argc, char **argv) {
@@ -344,7 +349,7 @@ int main(int argc, char **argv) {
     for(size_t i=0;i<sol.n.size();++i){ if(i) std::cout << ", "; std::cout << sol.n[i]; }
     std::cout << "]\n";
 
-    
+
     // // Affichage rapide
     // std::cout << "Curves (m): " << N.size() << "\n";
     // for (size_t i = 0; i < N.size(); ++i) {

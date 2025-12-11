@@ -583,11 +583,11 @@ static void printFandPrimitive(int tag, std::vector<IntPoint> &Points)
 */
 
 // new algo for recombining + splitting
- //static int increaseN(int N)
- //{
- //  if(((N + 1) / 2 - 1) % 2 != 0) return N + 2;
- //  return N;
- //}
+// static int increaseN(int N)
+//{
+//  if(((N + 1) / 2 - 1) % 2 != 0) return N + 2;
+//  return N;
+//}
 
 // ensure not to have points that are too close to each other.
 // can be caused by a coarse 1D mesh or by a noisy curve
@@ -851,7 +851,7 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
   // force odd number of points if blossom is used for recombination
   // only do it if recombination method is 2 (simple full quad) or 4
   // bipartite labelling
-  
+
   if((ge->meshAttributes.method != MESH_TRANSFINITE ||
       CTX::instance()->mesh.flexibleTransfinite) &&
      CTX::instance()->mesh.algoRecombine != 0) {
@@ -859,24 +859,24 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
     if(CTX::instance()->mesh.recombineAll) {
       //            if(N == 2) N = 1;
       if(CTX::instance()->mesh.algoRecombine == 2 ||
-	 CTX::instance()->mesh.algoRecombine == 4)
-	if(N % 2 == 0) N++;
+         CTX::instance()->mesh.algoRecombine == 4)
+        if(N % 2 == 0) N++;
       //	N = increaseN(N);
     }
     else {
       for(auto it = faces.begin(); it != faces.end(); it++) {
-	if((*it)->meshAttributes.recombine) {
-	  if(CTX::instance()->mesh.algoRecombine == 2 ||
-	     CTX::instance()->mesh.algoRecombine == 4)
-	    //	    printf("coucou %d\n",N);
-	    if(N % 2 == 0) N++;
-	  //	    N = increaseN(N);
-	  break;
-	}
+        if((*it)->meshAttributes.recombine) {
+          if(CTX::instance()->mesh.algoRecombine == 2 ||
+             CTX::instance()->mesh.algoRecombine == 4)
+            //	    printf("coucou %d\n",N);
+            if(N % 2 == 0) N++;
+          //	    N = increaseN(N);
+          break;
+        }
       }
     }
   }
-  
+
   return N;
 }
 
@@ -945,8 +945,8 @@ void meshGEdge::operator()(GEdge *ge)
   int filterMinimumN;
   meshGEdgeProcessing(ge, t_begin, t_end, N, Points, a, filterMinimumN);
 
-  if (ForceNumberOfSubdivisions > 0) N = ForceNumberOfSubdivisions+1;
-  
+  if(ForceNumberOfSubdivisions > 0) N = ForceNumberOfSubdivisions + 1;
+
   //  printFandPrimitive(ge->tag(),Points);
 
   // if the curve is periodic and if the begin vertex is identical to
@@ -1046,7 +1046,7 @@ void meshGEdge::operator()(GEdge *ge)
 
   Msg::Debug("Meshing curve %d (%s): %li interior vertices", ge->tag(),
              ge->getTypeString().c_str(), ge->mesh_vertices.size());
-  
+
   ge->meshStatistics.status = GEdge::DONE;
 }
 

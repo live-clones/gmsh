@@ -42,6 +42,6 @@ Line Loop(61) = {27, 54, 55, 56};
 Line Loop(62) = {60, 57, 58, 59};
 Plane Surface(63) = {61, 62};
 Recombine Surface{63};
-Extrude {0, 0.6, 0} { // Warning: 4 layers here depends on lc !
-  Surface{63}; Layers{4}; Recombine;
+Extrude {0, 0.6, 0} { // Warning: 3 layers here depends on lc !
+  Surface{63}; Layers{3}; Recombine;
 }

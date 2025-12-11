@@ -7,4 +7,5 @@
 
 #include <vector>
 
-void quantizeCurvesForEvenSurfaceSubdivision (std::vector<int> &curveTags, std::vector<int> &N);
+void quantizeCurvesForEvenSurfaceSubdivision(std::vector<int> &curveTags,
+                                             std::vector<int> &N);
