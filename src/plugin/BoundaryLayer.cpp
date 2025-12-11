@@ -78,135 +78,6 @@ static double triangle_area_2d(std::array<double, 2> a, std::array<double, 2> b,
                (a[1] - c[1]) * (a[0] + c[0]));
 }
 
-static void fanitzie(std::vector<GFace *> &gfs, std::vector<GVertex *> &gvs,
-                     std::vector<MElement *> &ecole_des_fans)
-{
-  for(auto gv : gvs) {
-    MVertex *v = gv->mesh_vertices[0];
-    MVertex *toDelete = nullptr;
-
-    for(auto gf : gfs) {
-      int count = 0;
-      for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
-        for(size_t j = 0; j < 4; j++) {
-          MEdge ed = gf->quadrangles[i]->getEdge(j);
-          if(ed.getVertex(0) == v && ed.getVertex(1)->onWhat() == gf) {
-            toDelete = ed.getVertex(1);
-            count++;
-          }
-          else if(ed.getVertex(1) == v && ed.getVertex(0)->onWhat() == gf) {
-            toDelete = ed.getVertex(0);
-            count++;
-          }
-        }
-      }
-      if(count != 2) {
-        Msg::Warning("Impossible to make a fan at GVertex %d (count = %d)",
-                     gv->tag(), count);
-        continue;
-      }
-
-      std::vector<MTriangle *> corners, local_fans;
-      for(std::size_t i = 0; i < gf->triangles.size(); i++) {
-        for(std::size_t j = 0; j < 3; j++) {
-          if(gf->triangles[i]->getVertex(j) == toDelete) {
-            MVertex *vv[3] = {v, gf->triangles[i]->getVertex((j + 1) % 3),
-                              gf->triangles[i]->getVertex((j + 2) % 3)};
-            gf->triangles[i]->setVertex(0, vv[0]);
-            gf->triangles[i]->setVertex(1, vv[1]);
-            gf->triangles[i]->setVertex(2, vv[2]);
-            ecole_des_fans.push_back(gf->triangles[i]);
-            local_fans.push_back(gf->triangles[i]);
-          }
-        }
-      }
-
-      std::vector<MQuadrangle *> temp;
-      for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
-        bool found = false;
-
-        int foundindex = -1;
-        for(std::size_t j = 0; j < 4; j++)
-          if(gf->quadrangles[i]->getVertex(j) == v) { foundindex = j; }
-
-        for(std::size_t j = 0; j < 4; j++) {
-          if(gf->quadrangles[i]->getVertex(j) == toDelete) {
-            if(foundindex >= 0) {
-              found = true;
-              MVertex *qq[4] = {
-                gf->quadrangles[i]->getVertex((foundindex + 0) % 4),
-                gf->quadrangles[i]->getVertex((foundindex + 1) % 4),
-                gf->quadrangles[i]->getVertex((foundindex + 2) % 4),
-                gf->quadrangles[i]->getVertex((foundindex + 3) % 4)};
-              auto newT =
-                new MTriangle(gf->quadrangles[i]->getVertex((j + 1) % 4),
-                              gf->quadrangles[i]->getVertex((j + 2) % 4),
-                              gf->quadrangles[i]->getVertex((j + 3) % 4));
-              int count = 0;
-              //     printf("%lu %lu %lu %lu
-              //     \n",qq[0]->getNum(),qq[1]->getNum(),qq[2]->getNum(),qq[3]->getNum());
-              for(int k = 0; k < 4; k++) {
-                if(qq[k] != toDelete) newT->setVertex(count++, qq[k]);
-              }
-              ecole_des_fans.push_back(newT);
-              corners.push_back(newT);
-              gf->triangles.push_back(newT);
-            }
-            else {
-              gf->quadrangles[i]->setVertex(j, v);
-            }
-          }
-        }
-        if(found)
-          delete gf->quadrangles[i];
-        else
-          temp.push_back(gf->quadrangles[i]);
-      }
-      gf->quadrangles = temp;
-
-      auto toErase =
-        std::find(gf->mesh_vertices.begin(), gf->mesh_vertices.end(), toDelete);
-      if(toErase != gf->mesh_vertices.end()) gf->mesh_vertices.erase(toErase);
-
-      if(corners.size() == 2) {
-        for(auto t : corners) {
-          for(auto tt : local_fans) {
-            if(tt != t) {
-              for(size_t j = 0; j < 3; j++) {
-                MVertex *tj0 = t->getVertex(j);
-                MVertex *tj1 = t->getVertex((j + 1) % 3);
-                MVertex *tj2 = t->getVertex((j + 2) % 3);
-                for(size_t k = 0; k < 3; k++) {
-                  MVertex *ttj0 = tt->getVertex(k);
-                  MVertex *ttj1 = tt->getVertex((k + 1) % 3);
-                  MVertex *ttj2 = tt->getVertex((k + 2) % 3);
-                  if(ttj0 == tj1 && ttj1 == tj0) {
-                    gf->triangles.erase(
-                      std::find(gf->triangles.begin(), gf->triangles.end(), t));
-                    gf->triangles.erase(std::find(gf->triangles.begin(),
-                                                  gf->triangles.end(), tt));
-                    MVertex *vv[4] = {tj0, ttj2, tj1, tj2};
-                    for(size_t l = 0; l < 4; l++) {
-                      if(vv[l]->onWhat()->dim() != 2 &&
-                         vv[(l + 1) % 4]->onWhat()->dim() != 2) {
-                        gf->quadrangles.push_back(
-                          new MQuadrangle(vv[(l + 0) % 4], vv[(l + 1) % 4],
-                                          vv[(l + 2) % 4], vv[(l + 3) % 4]));
-                        ecole_des_fans.push_back(gf->quadrangles.back());
-                        break;
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
 bool bl3d(GModel *m, std::vector<GFace *> &onSurfaces,
           std::vector<GRegion *> &inVolumes, double thickness,
           std::map<MElement *, double> &layers)
@@ -706,9 +577,6 @@ bool bl(GModel *m, std::vector<GVertex *> &onPoints,
     }
   }
 
-  std::vector<MElement *> ecole_des_fans;
-  fanitzie(inSurfaces, onPoints, ecole_des_fans);
-  for(auto e : ecole_des_fans) layers[e] = thickness;
   return true;
 }
 
@@ -1121,7 +989,7 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
     if(ws.size() > 1) splitounette(f, layers, ws);
 
   //  for (auto gf : f)
-  //    expandBL(gf, perfectShapes, layers, f);
+  //    expandL(gf, perfectShapes, layers, f);
 
   CTX::instance()->mesh.changed = ENT_ALL;
 

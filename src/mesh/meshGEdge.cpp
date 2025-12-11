@@ -229,7 +229,7 @@ struct F_Lc {
       lc_here = BGM_MeshSize(ge->getEndVertex(), t, 0, p.x(), p.y(), p.z());
 
     lc_here = std::min(lc_here, BGM_MeshSize(ge, t, 0, p.x(), p.y(), p.z()));
-    //    printf("LC HERE %g %g\n",t,lc_here);
+    //    printf("%d LC HERE %g %g\n",ge->tag(),t,lc_here);
     SVector3 der = ge->firstDer(t);
     return norm(der) / lc_here;
   }
@@ -583,11 +583,11 @@ static void printFandPrimitive(int tag, std::vector<IntPoint> &Points)
 */
 
 // new algo for recombining + splitting
-// static int increaseN(int N)
-//{
-//  if(((N + 1) / 2 - 1) % 2 != 0) return N + 2;
-//  return N;
-//}
+static int increaseN(int N)
+{
+  if(((N + 1) / 2 - 1) % 2 != 0) return N + 2;
+  return N;
+}
 
 // ensure not to have points that are too close to each other.
 // can be caused by a coarse 1D mesh or by a noisy curve
@@ -596,13 +596,13 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
   if(ge->mesh_vertices.empty()) return;
   if(ge->meshAttributes.method == MESH_TRANSFINITE) return;
 
-  //  bool forceOdd = false;
-  //  if((ge->meshAttributes.method != MESH_TRANSFINITE ||
-  //      CTX::instance()->mesh.flexibleTransfinite) &&
-  //     CTX::instance()->mesh.algoRecombine != 0) {
-  //    if(CTX::instance()->mesh.recombineAll) { forceOdd = true; }
-  //  }
-
+  bool forceOdd = false;
+  if((ge->meshAttributes.method != MESH_TRANSFINITE ||
+      CTX::instance()->mesh.flexibleTransfinite) &&
+     CTX::instance()->mesh.algoRecombine != 0) {
+    if(CTX::instance()->mesh.recombineAll) { forceOdd = true; }
+  }
+  
   if(!ge->getBeginVertex() || !ge->getEndVertex()) return;
 
   MVertex *v0 = ge->getBeginVertex()->mesh_vertices[0];
@@ -635,19 +635,11 @@ static void filterPoints(GEdge *ge, int nMinimumPoints)
   }
   std::sort(lengths.begin(), lengths.end());
   int last = lengths.size();
-  //  if(forceOdd) {
-  //    while(last % 2 != 0) last--;
-  //  }
-  /*
-    if(CTX::instance()->mesh.algoRecombine == 2){
-      if(last < 4) last = 0;
-        while (last %4 != 0)last--;
-      }
-      else{
-        while (last %2 != 0)last--;
-      }
-    }
-  */
+
+  if(forceOdd) {
+    while(last % 2 != 0) last--;
+  }
+    
 
   bool filteringObservesMinimumN =
     (((int)ge->mesh_vertices.size() - last) >= nMinimumPoints);
@@ -859,18 +851,19 @@ int meshGEdgeProcessing(GEdge *ge, const double t_begin, double t_end, int &N,
     if(CTX::instance()->mesh.recombineAll) {
       //            if(N == 2) N = 1;
       if(CTX::instance()->mesh.algoRecombine == 2 ||
-         CTX::instance()->mesh.algoRecombine == 4)
-        if(N % 2 == 0) N++;
-      //	N = increaseN(N);
+         CTX::instance()->mesh.algoRecombine == 4){
+	if(N % 2 == 0) N++;
+      	N = increaseN(N);
+      }
     }
     else {
       for(auto it = faces.begin(); it != faces.end(); it++) {
         if((*it)->meshAttributes.recombine) {
           if(CTX::instance()->mesh.algoRecombine == 2 ||
              CTX::instance()->mesh.algoRecombine == 4)
+	    N = increaseN(N);
             //	    printf("coucou %d\n",N);
             if(N % 2 == 0) N++;
-          //	    N = increaseN(N);
           break;
         }
       }
@@ -945,7 +938,9 @@ void meshGEdge::operator()(GEdge *ge)
   int filterMinimumN;
   meshGEdgeProcessing(ge, t_begin, t_end, N, Points, a, filterMinimumN);
 
-  if(ForceNumberOfSubdivisions > 0) N = ForceNumberOfSubdivisions + 1;
+  if(ForceNumberOfSubdivisions > 0) {
+    N = ForceNumberOfSubdivisions + 1;
+  }
 
   //  printFandPrimitive(ge->tag(),Points);
 
@@ -1043,6 +1038,7 @@ void meshGEdge::operator()(GEdge *ge)
     v0->y() = beg_p.y();
     v0->z() = beg_p.z();
   }
+
 
   Msg::Debug("Meshing curve %d (%s): %li interior vertices", ge->tag(),
              ge->getTypeString().c_str(), ge->mesh_vertices.size());

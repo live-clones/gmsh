@@ -921,8 +921,9 @@ static void meshCompound(GEdge *ge)
 void GEdge::mesh(bool verbose)
 {
 #if defined(HAVE_MESH)
-  if(compound.size())
-    meshAttributes.meshSizeFactor = CTX::instance()->mesh.compoundLcFactor;
+  //  WHAT IS THAT ??
+  //  if(compound.size())
+  //    meshAttributes.meshSizeFactor = CTX::instance()->mesh.compoundLcFactor;
   
   meshGEdge mesher;
   mesher(this);

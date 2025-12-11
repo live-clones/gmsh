@@ -299,7 +299,7 @@ public:
         (*ite)->mesh_vertices.clear();
         for(std::size_t i = 0; i < (*ite)->lines.size(); i += 2) {
           if(i + 1 >= (*ite)->lines.size()) {
-            Msg::Error("1D mesh cannot be divided by 2");
+            Msg::Error("1D mesh of MEdge %d cannot be divided by 2 --  %lu lines",(*ite)->tag(),  (*ite)->lines.size());
             break;
           }
           MVertex *v1 = (*ite)->lines[i]->getVertex(0);
@@ -1439,7 +1439,6 @@ e->getEndVertex(); conn[v]. push_back(e);
 
 // Builds An initial triangular mesh that respects the boundaries of
 // the domain, including embedded points and surfaces
-
 
 static bool meshGenerator(GFace *gf, int RECUR_ITER,
                           bool repairSelfIntersecting1dMesh,

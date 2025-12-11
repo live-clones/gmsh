@@ -831,6 +831,8 @@ namespace WinslowUntangler {
       // Update regularized epsilon parameter
       data.eps = std::sqrt(1.e-12 + 0.04 * std::pow(std::min(data.J_det_min, 0.), 2));
 
+      printf("eps %g %d %d\n",data.eps,  iterMaxOuter, iterMaxInner);
+      
       double epsg = 1.e-4;
       double epsf = 1.e-12;
       double epsx = 1.e-12;

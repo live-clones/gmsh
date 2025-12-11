@@ -1176,7 +1176,7 @@ bool fillGFaceInfo(GFace *gf, GFaceInfo &info)
   std::vector<MTriangle *> trianglesToDel;
   bool okgt = getGFaceTriangles(gf, triangles, trianglesToDel);
   if(!okgt) {
-    Msg::Error("fillSurfaceProjector: case not supported, no triangles");
+    Msg::Warning("fillGFaceInfo: case not supported, no triangles %d %lu %lu",gf->tag(),gf->triangles.size(),gf->quadrangles.size());
     return false;
   }
 
