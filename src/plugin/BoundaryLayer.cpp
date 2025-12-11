@@ -597,7 +597,7 @@ static void expandBL(
     //    printf("%lu %lu\n",i,gf->getNumMeshElements());
     MElement *e = gf->getMeshElement(i);
 
-    std::array<std::array<double, 2>, 4> vs{};
+    std::array<std::array<double, 2>, 4> vs;
 
     auto it = layers.find(e);
 
@@ -632,8 +632,14 @@ static void expandBL(
         +-------------+
         (0,0)     (dx,0)
       */
-        double dx = sqrt((vs[0][0] - vs[1][0]) * (vs[0][0] - vs[1][0]) +
-                         (vs[0][1] - vs[1][1]) * (vs[0][1] - vs[1][1]));
+	double dx = distance(e->getVertex(0),e->getVertex(1));
+	
+	
+	//	  printf("%g %g -- %g %g -- %g %g -- %g %g \n",vs[0][0],vs[0][1],vs[1][0],vs[1][1],vs[2][0],vs[2][1],
+	//	       vs[3][0],vs[3][1]);
+	
+	//	double dx = sqrt((vs[0][0] - vs[1][0]) * (vs[0][0] - vs[1][0]) +
+	//			 (vs[0][1] - vs[1][1]) * (vs[0][1] - vs[1][1]));
         std::array<double, 2> p0 = {0, 0};
         std::array<double, 2> p1 = {dx, 0};
         std::array<double, 2> p2 = {dx, thickness};
@@ -643,6 +649,9 @@ static void expandBL(
         sh.push_back({p2, p3, p0});
         sh.push_back({p0, p1, p3});
         sh.push_back({p1, p2, p3});
+	//	printf(" %g %g %g %g %g %g\n",dx,thickness, triangle_area_2d(p0, p1, p2), triangle_area_2d(p2, p3, p0),
+	//	       triangle_area_2d(p0, p1, p3),triangle_area_2d(p1, p2, p3));
+
       }
       else {
         auto it2 = perfectShapes.find(e);
@@ -956,7 +965,7 @@ PView *GMSH_BoundaryLayerPlugin::execute(PView *v)
           if(a > 0)
             perfectShapes[gf->getMeshElement(i)] = {vs0, vs1, vs2, vs3};
           else
-            perfectShapes[gf->getMeshElement(i)] = {vs3, vs2, vs1, vs0};
+            perfectShapes[gf->getMeshElement(i)] = {vs1, vs0, vs3, vs2};
         }
       }
     }

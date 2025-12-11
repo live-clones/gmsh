@@ -482,6 +482,7 @@ static bool untangleGFaceMeanPlane(GFace *gf,
 	i1 = ii;
       }
       double area = triangleArea(points[i0], points[i1], points[i2]);
+      printf("area = %g\n",area);
       if (area > 0)nbPos ++;
       else nbNeg ++;
 
