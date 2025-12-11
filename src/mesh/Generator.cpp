@@ -666,9 +666,6 @@ static void Mesh2D(GModel *m)
       std::vector<std::pair<SPoint3, int>> singularities;
       for(GFace *gf : m->getFaces()) {
 #if defined(HAVE_QUADMESHINGTOOLS)
-        bool meshOrientationIsOppositeOfCadOrientation(GFace * gf);
-        // bool invertNormals =
-        meshOrientationIsOppositeOfCadOrientation(gf);
         improveQuadMeshTopologyWithCavityRemeshing(gf, singularities, false);
 #endif
       }
@@ -1539,6 +1536,12 @@ void GenerateMesh(GModel *m, int ask)
     // if two passes --> juste fait le ...
     //    createSizeFieldFromExistingMesh (m, false);
     // Mesh2D(m);
+  }
+
+  if(m->getMeshStatus() >= 2 && CTX::instance()->mesh.optimizePyramids < 0.) {
+    // make sure surface mesh is correctly oriented before meshing in 3D if we
+    // push points along the normals to create pyramids
+    std::for_each(m->firstFace(), m->lastFace(), orientMeshGFace());
   }
 
   // 3D mesh

@@ -65,7 +65,7 @@ fullMatrix<double> *getInnerVertexPlacement(int type, int order)
 
 fullMatrix<double> gmshGenerateInnerVertexPlacementTriangle(int order)
 {
-  if(order < 3) return fullMatrix<double>(0, 0);
+  if(order < 3) return fullMatrix<double>();
 
   const int szInc = 3 * order;
   const int szComp = (order + 1) * (order + 2) / 2;
@@ -107,7 +107,7 @@ fullMatrix<double> gmshGenerateInnerVertexPlacementTriangle(int order)
 
 fullMatrix<double> gmshGenerateInnerVertexPlacementQuadrangle(int order)
 {
-  if(order < 2) return fullMatrix<double>(0, 0);
+  if(order < 2) return fullMatrix<double>();
 
   const int szInc = 4 * order;
   const int szComp = (order + 1) * (order + 1);
@@ -146,7 +146,7 @@ fullMatrix<double> gmshGenerateInnerVertexPlacementQuadrangle(int order)
 
 fullMatrix<double> gmshGenerateInnerVertexPlacementTetrahedron(int order)
 {
-  if(order < 4) return fullMatrix<double>(0, 0);
+  if(order < 4) return fullMatrix<double>();
 
   const int szInt = (order - 3) * (order - 2) * (order - 1) / 6;
   const int szComp = (order + 1) * (order + 2) * (order + 3) / 6;
@@ -212,7 +212,7 @@ fullMatrix<double> gmshGenerateInnerVertexPlacementTetrahedron(int order)
 
 fullMatrix<double> gmshGenerateInnerVertexPlacementHexahedron(int order)
 {
-  if(order < 2) return fullMatrix<double>(0, 0);
+  if(order < 2) return fullMatrix<double>();
 
   const int szInt = (order - 1) * (order - 1) * (order - 1);
   const int szComp = (order + 1) * (order + 1) * (order + 1);
@@ -274,7 +274,7 @@ fullMatrix<double> gmshGenerateInnerVertexPlacementHexahedron(int order)
 
 fullMatrix<double> gmshGenerateInnerVertexPlacementPrism(int order)
 {
-  if(order < 3) return fullMatrix<double>(0, 0);
+  if(order < 3) return fullMatrix<double>();
 
   const int szInt = (order - 1) * (order - 2) * (order - 1) / 2;
   const int szComp = (order + 1) * (order + 1) * (order + 2) / 2;
@@ -341,7 +341,7 @@ fullMatrix<double> gmshGenerateInnerVertexPlacementPrism(int order)
 
 fullMatrix<double> gmshGenerateInnerVertexPlacementPyramid(int order)
 {
-  if(order < 3) return fullMatrix<double>(0, 0);
+  if(order < 3) return fullMatrix<double>();
 
   const int szInt = (order - 2) * ((order - 2) + 1) * (2 * (order - 2) + 1) / 6;
   const int szComp =
@@ -411,7 +411,7 @@ fullMatrix<double> gmshGenerateInnerVertexPlacementPyramid(int order)
 fullMatrix<double> gmshGenerateInnerVertexPlacementTriangleLinear(int order,
                                                                   int dir)
 {
-  if(order < 3) return fullMatrix<double>(0, 0);
+  if(order < 3) return fullMatrix<double>();
 
   const int szInc = 3 * order;
   const int szComp = (order + 1) * (order + 2) / 2;
@@ -460,7 +460,7 @@ fullMatrix<double> gmshGenerateInnerVertexPlacementTriangleLinear(int order,
 
 fullMatrix<double> gmshGenerateInnerVertexPlacementQuadrangleLinear(int order)
 {
-  if(order < 2) return fullMatrix<double>(0, 0);
+  if(order < 2) return fullMatrix<double>();
 
   const int szInc = 4 * order;
   const int szComp = (order + 1) * (order + 1);
@@ -494,7 +494,7 @@ fullMatrix<double> gmshGenerateInnerVertexPlacementTetrahedronLinear(int order,
                                                                      int dir)
 {
   // 'dir' corresponds to the number of edge
-  if(order < 4) return fullMatrix<double>(0, 0);
+  if(order < 4) return fullMatrix<double>();
 
   const int szInt = (order - 3) * (order - 2) * (order - 1) / 6;
   const int szComp = (order + 1) * (order + 2) * (order + 3) / 6;
@@ -560,7 +560,7 @@ fullMatrix<double> gmshGenerateInnerVertexPlacementTetrahedronLinear(int order,
 fullMatrix<double> gmshGenerateInnerVertexPlacementHexahedronLinear(int order,
                                                                     int dir)
 {
-  if(order < 2) return fullMatrix<double>(0, 0);
+  if(order < 2) return fullMatrix<double>();
 
   const int szInt = (order - 1) * (order - 1) * (order - 1);
   const int szComp = (order + 1) * (order + 1) * (order + 1);
@@ -611,7 +611,7 @@ fullMatrix<double> gmshGenerateInnerVertexPlacementHexahedronLinear(int order,
 fullMatrix<double> gmshGenerateInnerVertexPlacementPrismLinear(int order,
                                                                int dir)
 {
-  if(order < 3) return fullMatrix<double>(0, 0);
+  if(order < 3) return fullMatrix<double>();
 
   const int szInt = (order - 1) * (order - 2) * (order - 1) / 2;
   const int szComp = (order + 1) * (order + 1) * (order + 2) / 2;

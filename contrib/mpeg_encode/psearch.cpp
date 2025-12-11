@@ -86,10 +86,7 @@
 #include "fsize.h"
 #include "param.h"
 
-#undef max
-#define max(a,b) ((a) > (b) ? (a) : (b))
-#undef min
-#define min(a,b) ((a) < (b) ? (a) : (b))
+#define mymax(a,b) ((a) > (b) ? (a) : (b))
 
 /*==================*
  * STATIC VARIABLES *
@@ -668,7 +665,7 @@ PLocalSearch(LumBlock currentBlock,
 
 	/* do top, bottom */
 	for ( my = -distance; my < tempRightMY;
-	      my += max(tempRightMY+distance-stepSize, stepSize) ) {
+	      my += mymax(tempRightMY+distance-stepSize, stepSize) ) {
 	    if ( my < leftMY ) {
 		continue;
 	    }
@@ -690,7 +687,7 @@ PLocalSearch(LumBlock currentBlock,
 
 	/* do left, right */
 	for ( mx = -distance; mx < tempRightMX;
-	      mx += max(tempRightMX+distance-stepSize, stepSize) ) {
+	      mx += mymax(tempRightMX+distance-stepSize, stepSize) ) {
 	    if ( mx < leftMX ) {
 		continue;
 	    }
@@ -801,7 +798,7 @@ PTwoLevelSearch(LumBlock currentBlock,
 	}
 
 	/* do top, bottom */
-	loopInc = max(tempRightMY+distance-2, 2);
+	loopInc = mymax(tempRightMY+distance-2, 2);
 	for ( my = -distance; my < tempRightMY; my += loopInc ) {
 	    if ( my < leftMY ) {
 		continue;
@@ -823,7 +820,7 @@ PTwoLevelSearch(LumBlock currentBlock,
 	}
 
 	/* do left, right */
-	loopInc = max(tempRightMX+distance-2, 2);
+	loopInc = mymax(tempRightMX+distance-2, 2);
 	for ( mx = -distance; mx < tempRightMX; mx += loopInc ) {
 	    if ( mx < leftMX ) {
 		continue;

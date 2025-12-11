@@ -18,7 +18,7 @@ variables:
 # ----------------------------------------------
 
 linux_ci:
-  image: onelab/ubuntu20.04
+  image: onelab/ci
   script:
     - mkdir build
     - cd build
@@ -35,7 +35,7 @@ linux_ci:
     - tags
 
 linux_compatibility_ci:
-  image: onelab/ubuntu20.04
+  image: onelab/ci
   script:
     - mkdir build
     - cd build
@@ -99,7 +99,7 @@ windows_msvc_ci:
     - docker
 
 linux_official_snapshot:
-  image: onelab/debian.stretch.64bit
+  image: onelab/debian.buster
   variables:
     EXTRA_OPTION: "-DCMAKE_EXE_LINKER_FLAGS=-static-libstdc++"
   <<: *linux_official
@@ -107,7 +107,7 @@ linux_official_snapshot:
     - tags
 
 linux_official_release:
-  image: onelab/debian.stretch.64bit
+  image: onelab/debian.buster
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DCMAKE_EXE_LINKER_FLAGS=-static-libstdc++"
   <<: *linux_official
@@ -115,7 +115,7 @@ linux_official_release:
     - /^gmsh_.*$/
 
 linux-sdk_official_snapshot:
-  image: onelab/debian.stretch.64bit
+  image: onelab/debian.buster
   variables:
     EXTRA_OPTION: "-DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *linux_official
@@ -128,7 +128,7 @@ linux-sdk_official_snapshot:
     expire_in: 1day
 
 linux-sdk_official_release:
-  image: onelab/debian.stretch.64bit
+  image: onelab/debian.buster
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *linux_official
@@ -141,7 +141,7 @@ linux-sdk_official_release:
     expire_in: 1day
 
 linux-nox-sdk_official_snapshot:
-  image: onelab/debian.stretch.64bit
+  image: onelab/debian.buster
   variables:
     EXTRA_OPTION: "-DGMSH_EXTRA_VERSION=-nox -DENABLE_FLTK=0 -DENABLE_OCC_CAF=0 -DENABLE_BUILD_DYNAMIC=1 -DINSTALL_SDK_README=1"
   <<: *linux_official
@@ -343,13 +343,13 @@ macosarm-sdk_official_release:
     - docker
 
 source_official_snapshot:
-  image: onelab/ubuntu20.04
+  image: onelab/ci
   <<: *source_official
   except:
     - tags
 
 source_official_release:
-  image: onelab/ubuntu20.04
+  image: onelab/ci
   variables:
     EXTRA_OPTION: "-DGMSH_RELEASE=1"
   <<: *source_official
@@ -362,7 +362,7 @@ source_official_release:
 
 doc_official_snapshot:
   stage: .post
-  image: onelab/ubuntu20.04
+  image: onelab/ci
   only:
     - master@gmsh/gmsh
   <<: *ssh_config
@@ -381,7 +381,7 @@ doc_official_snapshot:
 
 doc_official_release:
   stage: .post
-  image: onelab/ubuntu20.04
+  image: onelab/ci
   only:
     - master@gmsh/gmsh
   <<: *ssh_config
@@ -405,7 +405,7 @@ doc_official_release:
 
 doc_cookbook:
   stage: .post
-  image: onelab/ubuntu20.04
+  image: onelab/ci
   only:
     - gmsh/gmsh
   <<: *ssh_config
@@ -422,7 +422,7 @@ doc_cookbook:
 
 pypi_official_snapshot:
   stage: .post
-  image: onelab/ubuntu20.04
+  image: onelab/ci
   only:
     - master@gmsh/gmsh
   <<: *ssh_config
@@ -449,7 +449,7 @@ pypi_official_snapshot:
 
 pypi_official_release:
   stage: .post
-  image: onelab/ubuntu20.04
+  image: onelab/ci
   only:
     - master@gmsh/gmsh
   <<: *ssh_config

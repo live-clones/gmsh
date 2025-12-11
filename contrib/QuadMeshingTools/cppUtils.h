@@ -289,11 +289,11 @@ namespace CppUtils {
     class RestoreValueAtEndOfLife
     {
       public:
-        RestoreValueAtEndOfLife<T>(T* ptr) {
+        RestoreValueAtEndOfLife(T* ptr) {
           _ptr = ptr;
           _value = *ptr;
         }
-        ~RestoreValueAtEndOfLife<T>() {
+        ~RestoreValueAtEndOfLife() {
           *_ptr = _value;
         }
       protected:

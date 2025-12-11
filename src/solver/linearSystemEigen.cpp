@@ -5,7 +5,19 @@
 
 #include <stdio.h>
 #include <math.h>
+
+// workaround GCC 10.2 warning
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#pragma GCC diagnostic ignored "-Warray-bounds"
+#endif
+
 #include "linearSystemEigen.h"
+
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic pop
+#endif
 
 #if defined(HAVE_EIGEN)
 

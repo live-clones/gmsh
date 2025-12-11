@@ -46,7 +46,7 @@ namespace {
       Msg::Error("Wrong sizes for bez2lag matrix generation %d %d -- %d %d",
                  exponent.size1(), point.size1(), exponent.size2(),
                  point.size2());
-      return fullMatrix<double>(1, 1);
+      return fullMatrix<double>();
     }
 
     int ndofs = exponent.size1();
@@ -91,7 +91,7 @@ namespace {
       Msg::Error(
         "Wrong sizes for pyramid's bez2lag matrix generation %d %d -- %d %d",
         exponent.size1(), point.size1(), exponent.size2(), point.size2());
-      return fullMatrix<double>(1, 1);
+      return fullMatrix<double>();
     }
 
     const int ndofs = exponent.size1();

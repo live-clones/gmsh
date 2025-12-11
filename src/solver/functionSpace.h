@@ -661,7 +661,7 @@ public:
                         std::vector<HessType> &hess) const
   {
   }
-  FilteredFunctionSpace<T, F>(FunctionSpace<T> *spacebase, F *filter)
+  FilteredFunctionSpace(FunctionSpace<T> *spacebase, F *filter)
     : _spacebase(spacebase), _filter(filter)
   {
   }

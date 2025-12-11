@@ -5026,7 +5026,7 @@ double opt_mesh_optimize_netgen(OPT_ARGS_NUM)
 
 double opt_mesh_optimize_pyramids(OPT_ARGS_NUM)
 {
-  if(action & GMSH_SET) CTX::instance()->mesh.optimizePyramids = (int)val;
+  if(action & GMSH_SET) CTX::instance()->mesh.optimizePyramids = val;
   return CTX::instance()->mesh.optimizePyramids;
 }
 
