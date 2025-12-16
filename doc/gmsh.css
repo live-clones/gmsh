@@ -12,15 +12,15 @@ html {
 body {
   margin: auto;
   background-color: #ffffff;
-  padding: 25px; /* use this when there is no banner */
-  /* padding: 50px; */ /* use this when the banner is present */
+  /* padding: 25px; */ /* use this when there is no news */
+  padding: 50px; /* NEWS use this when the news banner is present */
 }
 
-.banner {
-  /* comment the following to show the banner - do not forget to change the
-   padding value in in "body" abov e */
-  display: none;
-  background: #48805b; /* color chosen to match Gitlab banner */
+.news {
+  /* NEWS comment the following to show the news banner - do not forget to change
+   the padding value in in "body" above */
+  /* display: none; */
+  background: #41419F; /* color chosen to match Gitlab's Indigo alert banner */
   text-align: center;
   padding: 8px 20px;
   top: 0;
@@ -29,31 +29,31 @@ body {
   z-index: 1000; /* stays above all content */
   opacity: 0;
   transform: translateY(-30px); /* Start above */
-  animation: bannerFadeSlideIn 1s forwards;
+  animation: newsFadeSlideIn 1s forwards;
   animation-delay: 0.3s;
   position: fixed;
 }
 
-@keyframes bannerFadeSlideIn {
+@keyframes newsFadeSlideIn {
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
-.banner-link {
+.news-link {
   color: white;
   font-weight: bold;
   text-decoration: none;
-  opacity: 1; /* start invisible, animate with banner */
+  opacity: 1; /* start invisible, animate with news banner */
 }
 
-.banner-link:hover {
+.news-link:hover {
   text-decoration: underline;
 }
 
-.banner-link::before { /* inject static text in the banner link */
-  content: "";
+.news-link::before { /* NEWS inject static text in the news link */
+  content: "🚀 First Gmsh User Meeting, 8-9 July 2026 in Liège, Belgium";
 }
 
 a { text-decoration: none; color: #1a0dab; background: none; }
@@ -73,9 +73,9 @@ a[data-tooltip]:hover:before, a[data-tooltip]:hover:after { visibility: visible;
   -o-transition: visibility 0s linear 0s; transition: visibility 0s linear 0s; }
 
 img { border: none; vertical-align: middle; }
-#banner { float: right; width: 180px; padding-left: 1.5em; padding-bottom: 1.5em;
+#banner { float: right; width: 190px; padding-left: 1.5em; padding-bottom: 1.5em;
   background: #ffffff; }
-#banner img { width: 180px; margin-bottom: 1.5ex; box-shadow: 0px 1px 4px #bbb; }
+#banner img { width: 190px; margin-bottom: 1.5ex; box-shadow: 0px 1px 4px #bbb; }
 img.screenshot { width:250px; margin:0.5ex; box-shadow: 0px 1px 4px #bbb;  }
 #toc { margin-top:2em; margin-bottom:2.5em; }
 .fb-like, .twitter-follow-button { vertical-align:bottom; }
