@@ -56,3 +56,14 @@ if(ENABLE_PETSC)
 	target_compile_definitions(hxt_reparam PRIVATE HXT_HAVE_PETSC)
 endif()
 
+include(GNUInstallDirs)
+
+if(NOT HXT_REPARAM_OBJECT_ONLY)
+  install(TARGETS hxt_reparam DESTINATION ${CMAKE_INSTALL_LIBDIR}) 
+  set(HXT_REPARAM_PUBLIC_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/hxt_curvature.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/hxt_edge.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/hxt_linear_system.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/include/hxt_mean_values.h")
+  install(FILES ${HXT_REPARAM_PUBLIC_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+endif()
+
