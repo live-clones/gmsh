@@ -7135,14 +7135,37 @@ end
 const add_pipe = addPipe
 
 """
+    gmsh.model.occ.addLoft(wireTag, inwire1, inwire2)
+
+Add a loft in the OpenCASCADE CAD representation
+
+Return `tag`.
+
+Types:
+ - `wireTag`: integer
+ - `inwire1`: integer
+ - `inwire2`: integer
+ - `tag`: integer
+"""
+function addLoft(wireTag, inwire1, inwire2)
+    api_tag_ = Ref{Cint}()
+    ierr = Ref{Cint}()
+    ccall((:gmshModelOccAddLoft, gmsh.lib), Cvoid,
+          (Cint, Cint, Cint, Ptr{Cint}, Ptr{Cint}),
+          wireTag, inwire1, inwire2, api_tag_, ierr)
+    ierr[] != 0 && error(gmsh.logger.getLastError())
+    return api_tag_[]
+end
+const add_loft = addLoft
+
+"""
     gmsh.model.occ.fillet(volumeTags, curveTags, radii, removeVolume = true)
 
 Fillet the volumes `volumeTags` on the curves `curveTags` with radii `radii`.
 The `radii` vector can either contain a single radius, as many radii as
 `curveTags`, or twice as many as `curveTags` (in which case different radii are
 provided for the begin and end points of the curves). Return the filleted
-entities in `outDimTags` as a vector of (dim, tag) pairs. Remove the original
-volume if `removeVolume` is set.
+entities in `outDimTags`. Remove the original volume if `removeVolume` is set.
 
 Return `outDimTags`.
 
