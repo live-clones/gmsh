@@ -591,7 +591,7 @@ doc = '''Advect nodes of a mesh with displacement vector dxNodes'''
 mesh.add('advectMeshNodes', doc, None, iint('dim'), iint('tag'), iint('bndTag'), istring('boundaryModel'), ivectorsize('nodeTags'),ivectordouble('dxNodes'), idouble('boundaryTolerance', '1e-6'), ibool('intersectOrProjectOnBoundary', 'false', 'False'))
 
 doc = '''Compute the alpha shape - improved function'''
-mesh.add('computeAlphaShape', doc, None, iint('dim'), iint('tag'), iint('bndTag'), istring('boundaryModel'), idouble('alpha'), iint('alphaShapeSizeField'), iint('refineSizeField'), ovectorsize('newNodeTags'), ovectorsize('newNodeElementTags'), ovectordouble('newNodeParametricCoord'), ibool('usePreviousMesh', 'false', 'False'), idouble('boundaryTolerance', '1e-6'), ibool('refine', 'true', 'True'), iint('delaunayTag', '-1'), ibool('deleteDisconnectedNodes', 'true', 'True'))
+mesh.add('computeAlphaShape', doc, None, iint('dim'), iint('tag'), iint('bndTag'), istring('boundaryModel'), idouble('alpha'), iint('alphaShapeSizeField'), iint('refineSizeField'), ovectorsize('newNodeTags'), ovectorsize('newNodeElementTags'), ovectordouble('newNodeParametricCoord'), ovectorint('isBoundaryNode_new'), ibool('usePreviousMesh', 'false', 'False'), idouble('boundaryTolerance', '1e-6'), ibool('refine', 'true', 'True'), iint('delaunayTag', '-1'), ibool('deleteDisconnectedNodes', 'true', 'True'), ivectorint('oldNodeTags', 'std::vector<int>()', '[]', '[]'), ivectorint('isBoundaryNode_previous', 'std::vector<int>()', '[]', '[]'))
 
 doc = '''Tetrahedralize points in entity of tag `tag'''
 mesh.add('tetrahedralizePoints', doc, None, iint('tag'), ibool('optimize', 'false', 'False'), idouble('quality', '0.00001'))

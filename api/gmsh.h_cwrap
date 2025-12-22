@@ -3281,21 +3281,30 @@ namespace gmsh { // Top-level functions
                                     std::vector<std::size_t> & newNodeTags,
                                     std::vector<std::size_t> & newNodeElementTags,
                                     std::vector<double> & newNodeParametricCoord,
+                                    std::vector<int> & isBoundaryNode_new,
                                     const bool usePreviousMesh = false,
                                     const double boundaryTolerance = 1e-6,
                                     const bool refine = true,
                                     const int delaunayTag = -1,
-                                    const bool deleteDisconnectedNodes = true)
+                                    const bool deleteDisconnectedNodes = true,
+                                    const std::vector<int> & oldNodeTags = std::vector<int>(),
+                                    const std::vector<int> & isBoundaryNode_previous = std::vector<int>())
       {
         int ierr = 0;
         size_t *api_newNodeTags_; size_t api_newNodeTags_n_;
         size_t *api_newNodeElementTags_; size_t api_newNodeElementTags_n_;
         double *api_newNodeParametricCoord_; size_t api_newNodeParametricCoord_n_;
-        gmshModelMeshComputeAlphaShape(dim, tag, bndTag, boundaryModel.c_str(), alpha, alphaShapeSizeField, refineSizeField, &api_newNodeTags_, &api_newNodeTags_n_, &api_newNodeElementTags_, &api_newNodeElementTags_n_, &api_newNodeParametricCoord_, &api_newNodeParametricCoord_n_, (int)usePreviousMesh, boundaryTolerance, (int)refine, delaunayTag, (int)deleteDisconnectedNodes, &ierr);
+        int *api_isBoundaryNode_new_; size_t api_isBoundaryNode_new_n_;
+        int *api_oldNodeTags_; size_t api_oldNodeTags_n_; vector2ptr(oldNodeTags, &api_oldNodeTags_, &api_oldNodeTags_n_);
+        int *api_isBoundaryNode_previous_; size_t api_isBoundaryNode_previous_n_; vector2ptr(isBoundaryNode_previous, &api_isBoundaryNode_previous_, &api_isBoundaryNode_previous_n_);
+        gmshModelMeshComputeAlphaShape(dim, tag, bndTag, boundaryModel.c_str(), alpha, alphaShapeSizeField, refineSizeField, &api_newNodeTags_, &api_newNodeTags_n_, &api_newNodeElementTags_, &api_newNodeElementTags_n_, &api_newNodeParametricCoord_, &api_newNodeParametricCoord_n_, &api_isBoundaryNode_new_, &api_isBoundaryNode_new_n_, (int)usePreviousMesh, boundaryTolerance, (int)refine, delaunayTag, (int)deleteDisconnectedNodes, api_oldNodeTags_, api_oldNodeTags_n_, api_isBoundaryNode_previous_, api_isBoundaryNode_previous_n_, &ierr);
         if(ierr) throwLastError();
         newNodeTags.assign(api_newNodeTags_, api_newNodeTags_ + api_newNodeTags_n_); gmshFree(api_newNodeTags_);
         newNodeElementTags.assign(api_newNodeElementTags_, api_newNodeElementTags_ + api_newNodeElementTags_n_); gmshFree(api_newNodeElementTags_);
         newNodeParametricCoord.assign(api_newNodeParametricCoord_, api_newNodeParametricCoord_ + api_newNodeParametricCoord_n_); gmshFree(api_newNodeParametricCoord_);
+        isBoundaryNode_new.assign(api_isBoundaryNode_new_, api_isBoundaryNode_new_ + api_isBoundaryNode_new_n_); gmshFree(api_isBoundaryNode_new_);
+        gmshFree(api_oldNodeTags_);
+        gmshFree(api_isBoundaryNode_previous_);
       }
 
       // gmsh::model::mesh::tetrahedralizePoints

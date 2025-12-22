@@ -4619,11 +4619,11 @@ end
 const advect_mesh_nodes = advectMeshNodes
 
 """
-    gmsh.model.mesh.computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh = false, boundaryTolerance = 1e-6, refine = true, delaunayTag = -1, deleteDisconnectedNodes = true)
+    gmsh.model.mesh.computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh = false, boundaryTolerance = 1e-6, refine = true, delaunayTag = -1, deleteDisconnectedNodes = true, oldNodeTags = Cint[], isBoundaryNode_previous = Cint[])
 
 Compute the alpha shape - improved function
 
-Return `newNodeTags`, `newNodeElementTags`, `newNodeParametricCoord`.
+Return `newNodeTags`, `newNodeElementTags`, `newNodeParametricCoord`, `isBoundaryNode_new`.
 
 Types:
  - `dim`: integer
@@ -4636,28 +4636,34 @@ Types:
  - `newNodeTags`: vector of sizes
  - `newNodeElementTags`: vector of sizes
  - `newNodeParametricCoord`: vector of doubles
+ - `isBoundaryNode_new`: vector of integers
  - `usePreviousMesh`: boolean
  - `boundaryTolerance`: double
  - `refine`: boolean
  - `delaunayTag`: integer
  - `deleteDisconnectedNodes`: boolean
+ - `oldNodeTags`: vector of integers
+ - `isBoundaryNode_previous`: vector of integers
 """
-function computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh = false, boundaryTolerance = 1e-6, refine = true, delaunayTag = -1, deleteDisconnectedNodes = true)
+function computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh = false, boundaryTolerance = 1e-6, refine = true, delaunayTag = -1, deleteDisconnectedNodes = true, oldNodeTags = Cint[], isBoundaryNode_previous = Cint[])
     api_newNodeTags_ = Ref{Ptr{Csize_t}}()
     api_newNodeTags_n_ = Ref{Csize_t}()
     api_newNodeElementTags_ = Ref{Ptr{Csize_t}}()
     api_newNodeElementTags_n_ = Ref{Csize_t}()
     api_newNodeParametricCoord_ = Ref{Ptr{Cdouble}}()
     api_newNodeParametricCoord_n_ = Ref{Csize_t}()
+    api_isBoundaryNode_new_ = Ref{Ptr{Cint}}()
+    api_isBoundaryNode_new_n_ = Ref{Csize_t}()
     ierr = Ref{Cint}()
     ccall((:gmshModelMeshComputeAlphaShape, gmsh.lib), Cvoid,
-          (Cint, Cint, Cint, Ptr{Cchar}, Cdouble, Cint, Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Cint, Cdouble, Cint, Cint, Cint, Ptr{Cint}),
-          dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, api_newNodeTags_, api_newNodeTags_n_, api_newNodeElementTags_, api_newNodeElementTags_n_, api_newNodeParametricCoord_, api_newNodeParametricCoord_n_, usePreviousMesh, boundaryTolerance, refine, delaunayTag, deleteDisconnectedNodes, ierr)
+          (Cint, Cint, Cint, Ptr{Cchar}, Cdouble, Cint, Cint, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Csize_t}}, Ptr{Csize_t}, Ptr{Ptr{Cdouble}}, Ptr{Csize_t}, Ptr{Ptr{Cint}}, Ptr{Csize_t}, Cint, Cdouble, Cint, Cint, Cint, Ptr{Cint}, Csize_t, Ptr{Cint}, Csize_t, Ptr{Cint}),
+          dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, api_newNodeTags_, api_newNodeTags_n_, api_newNodeElementTags_, api_newNodeElementTags_n_, api_newNodeParametricCoord_, api_newNodeParametricCoord_n_, api_isBoundaryNode_new_, api_isBoundaryNode_new_n_, usePreviousMesh, boundaryTolerance, refine, delaunayTag, deleteDisconnectedNodes, convert(Vector{Cint}, oldNodeTags), length(oldNodeTags), convert(Vector{Cint}, isBoundaryNode_previous), length(isBoundaryNode_previous), ierr)
     ierr[] != 0 && error(gmsh.logger.getLastError())
     newNodeTags = unsafe_wrap(Array, api_newNodeTags_[], api_newNodeTags_n_[], own = true)
     newNodeElementTags = unsafe_wrap(Array, api_newNodeElementTags_[], api_newNodeElementTags_n_[], own = true)
     newNodeParametricCoord = unsafe_wrap(Array, api_newNodeParametricCoord_[], api_newNodeParametricCoord_n_[], own = true)
-    return newNodeTags, newNodeElementTags, newNodeParametricCoord
+    isBoundaryNode_new = unsafe_wrap(Array, api_isBoundaryNode_new_[], api_isBoundaryNode_new_n_[], own = true)
+    return newNodeTags, newNodeElementTags, newNodeParametricCoord, isBoundaryNode_new
 end
 const compute_alpha_shape = computeAlphaShape
 

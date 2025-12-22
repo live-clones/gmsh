@@ -2475,17 +2475,21 @@ GMSH_API void gmshModelMeshAdvectMeshNodes(const int dim, const int tag, const i
   }
 }
 
-GMSH_API void gmshModelMeshComputeAlphaShape(const int dim, const int tag, const int bndTag, const char * boundaryModel, const double alpha, const int alphaShapeSizeField, const int refineSizeField, size_t ** newNodeTags, size_t * newNodeTags_n, size_t ** newNodeElementTags, size_t * newNodeElementTags_n, double ** newNodeParametricCoord, size_t * newNodeParametricCoord_n, const int usePreviousMesh, const double boundaryTolerance, const int refine, const int delaunayTag, const int deleteDisconnectedNodes, int * ierr)
+GMSH_API void gmshModelMeshComputeAlphaShape(const int dim, const int tag, const int bndTag, const char * boundaryModel, const double alpha, const int alphaShapeSizeField, const int refineSizeField, size_t ** newNodeTags, size_t * newNodeTags_n, size_t ** newNodeElementTags, size_t * newNodeElementTags_n, double ** newNodeParametricCoord, size_t * newNodeParametricCoord_n, int ** isBoundaryNode_new, size_t * isBoundaryNode_new_n, const int usePreviousMesh, const double boundaryTolerance, const int refine, const int delaunayTag, const int deleteDisconnectedNodes, const int * oldNodeTags, const size_t oldNodeTags_n, const int * isBoundaryNode_previous, const size_t isBoundaryNode_previous_n, int * ierr)
 {
   if(ierr) *ierr = 0;
   try {
     std::vector<std::size_t> api_newNodeTags_;
     std::vector<std::size_t> api_newNodeElementTags_;
     std::vector<double> api_newNodeParametricCoord_;
-    gmsh::model::mesh::computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, api_newNodeTags_, api_newNodeElementTags_, api_newNodeParametricCoord_, usePreviousMesh, boundaryTolerance, refine, delaunayTag, deleteDisconnectedNodes);
+    std::vector<int> api_isBoundaryNode_new_;
+    std::vector<int> api_oldNodeTags_(oldNodeTags, oldNodeTags + oldNodeTags_n);
+    std::vector<int> api_isBoundaryNode_previous_(isBoundaryNode_previous, isBoundaryNode_previous + isBoundaryNode_previous_n);
+    gmsh::model::mesh::computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, api_newNodeTags_, api_newNodeElementTags_, api_newNodeParametricCoord_, api_isBoundaryNode_new_, usePreviousMesh, boundaryTolerance, refine, delaunayTag, deleteDisconnectedNodes, api_oldNodeTags_, api_isBoundaryNode_previous_);
     vector2ptr(api_newNodeTags_, newNodeTags, newNodeTags_n);
     vector2ptr(api_newNodeElementTags_, newNodeElementTags, newNodeElementTags_n);
     vector2ptr(api_newNodeParametricCoord_, newNodeParametricCoord, newNodeParametricCoord_n);
+    vector2ptr(api_isBoundaryNode_new_, isBoundaryNode_new, isBoundaryNode_new_n);
   }
   catch(...){
     if(ierr) *ierr = 1;

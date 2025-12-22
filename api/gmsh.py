@@ -5229,13 +5229,13 @@ class model:
         advect_mesh_nodes = advectMeshNodes
 
         @staticmethod
-        def computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh=False, boundaryTolerance=1e-6, refine=True, delaunayTag=-1, deleteDisconnectedNodes=True):
+        def computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh=False, boundaryTolerance=1e-6, refine=True, delaunayTag=-1, deleteDisconnectedNodes=True, oldNodeTags=[], isBoundaryNode_previous=[]):
             """
-            gmsh.model.mesh.computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh=False, boundaryTolerance=1e-6, refine=True, delaunayTag=-1, deleteDisconnectedNodes=True)
+            gmsh.model.mesh.computeAlphaShape(dim, tag, bndTag, boundaryModel, alpha, alphaShapeSizeField, refineSizeField, usePreviousMesh=False, boundaryTolerance=1e-6, refine=True, delaunayTag=-1, deleteDisconnectedNodes=True, oldNodeTags=[], isBoundaryNode_previous=[])
 
             Compute the alpha shape - improved function
 
-            Return `newNodeTags', `newNodeElementTags', `newNodeParametricCoord'.
+            Return `newNodeTags', `newNodeElementTags', `newNodeParametricCoord', `isBoundaryNode_new'.
 
             Types:
             - `dim': integer
@@ -5248,15 +5248,21 @@ class model:
             - `newNodeTags': vector of sizes
             - `newNodeElementTags': vector of sizes
             - `newNodeParametricCoord': vector of doubles
+            - `isBoundaryNode_new': vector of integers
             - `usePreviousMesh': boolean
             - `boundaryTolerance': double
             - `refine': boolean
             - `delaunayTag': integer
             - `deleteDisconnectedNodes': boolean
+            - `oldNodeTags': vector of integers
+            - `isBoundaryNode_previous': vector of integers
             """
             api_newNodeTags_, api_newNodeTags_n_ = POINTER(c_size_t)(), c_size_t()
             api_newNodeElementTags_, api_newNodeElementTags_n_ = POINTER(c_size_t)(), c_size_t()
             api_newNodeParametricCoord_, api_newNodeParametricCoord_n_ = POINTER(c_double)(), c_size_t()
+            api_isBoundaryNode_new_, api_isBoundaryNode_new_n_ = POINTER(c_int)(), c_size_t()
+            api_oldNodeTags_, api_oldNodeTags_n_ = _ivectorint(oldNodeTags)
+            api_isBoundaryNode_previous_, api_isBoundaryNode_previous_n_ = _ivectorint(isBoundaryNode_previous)
             ierr = c_int()
             lib.gmshModelMeshComputeAlphaShape(
                 c_int(dim),
@@ -5269,18 +5275,22 @@ class model:
                 byref(api_newNodeTags_), byref(api_newNodeTags_n_),
                 byref(api_newNodeElementTags_), byref(api_newNodeElementTags_n_),
                 byref(api_newNodeParametricCoord_), byref(api_newNodeParametricCoord_n_),
+                byref(api_isBoundaryNode_new_), byref(api_isBoundaryNode_new_n_),
                 c_int(bool(usePreviousMesh)),
                 c_double(boundaryTolerance),
                 c_int(bool(refine)),
                 c_int(delaunayTag),
                 c_int(bool(deleteDisconnectedNodes)),
+                api_oldNodeTags_, api_oldNodeTags_n_,
+                api_isBoundaryNode_previous_, api_isBoundaryNode_previous_n_,
                 byref(ierr))
             if ierr.value != 0:
                 raise Exception(logger.getLastError())
             return (
                 _ovectorsize(api_newNodeTags_, api_newNodeTags_n_.value),
                 _ovectorsize(api_newNodeElementTags_, api_newNodeElementTags_n_.value),
-                _ovectordouble(api_newNodeParametricCoord_, api_newNodeParametricCoord_n_.value))
+                _ovectordouble(api_newNodeParametricCoord_, api_newNodeParametricCoord_n_.value),
+                _ovectorint(api_isBoundaryNode_new_, api_isBoundaryNode_new_n_.value))
         compute_alpha_shape = computeAlphaShape
 
         @staticmethod

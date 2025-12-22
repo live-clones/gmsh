@@ -1902,11 +1902,14 @@ namespace gmsh { // Top-level functions
                                       std::vector<std::size_t> & newNodeTags,
                                       std::vector<std::size_t> & newNodeElementTags,
                                       std::vector<double> & newNodeParametricCoord,
+                                      std::vector<int> & isBoundaryNode_new,
                                       const bool usePreviousMesh = false,
                                       const double boundaryTolerance = 1e-6,
                                       const bool refine = true,
                                       const int delaunayTag = -1,
-                                      const bool deleteDisconnectedNodes = true);
+                                      const bool deleteDisconnectedNodes = true,
+                                      const std::vector<int> & oldNodeTags = std::vector<int>(),
+                                      const std::vector<int> & isBoundaryNode_previous = std::vector<int>());
 
       // gmsh::model::mesh::tetrahedralizePoints
       //

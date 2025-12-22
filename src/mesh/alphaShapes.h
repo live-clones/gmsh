@@ -38,9 +38,9 @@ void _alphaShape2D(PolyMesh* pm, const double alpha, const int faceTag, const in
 
 void _edgeRecover(PolyMesh* pm, const int tag, const int bndTag, const std::string & boundaryModel, std::vector<PolyMesh::Vertex*> & controlNodes, BoundaryOctree &bnd_octree, const double boundary_tol);
 
-void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const int sizeFieldTag, std::vector<PolyMesh::Vertex*> & controlNodes);
+void _delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const int sizeFieldTag, std::vector<PolyMesh::Vertex*> & controlNodes, const std::vector<int> &oldNodeTags, const std::vector<int> &isOnBoundary, std::unordered_map<int, int>& onBoundaryMap);
 
-void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, const std::string & boundaryModel, BoundaryOctree &bnd_octree, const double boundary_tol, const int delaunayTag);
+void alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, const std::string & boundaryModel, OctreeNode<2, 32, alphaShapeBndEdge*> &octree, const double boundary_tol, const int delaunayTag, std::vector<std::size_t> & newNodeTags, const std::vector<int> & oldNodeTags, const std::vector<int> & isBoundaryNode_previous, std::vector<int> & isBoundaryNode_new);
 
 void registerAlphaShapeField(FieldManager* fm);
 

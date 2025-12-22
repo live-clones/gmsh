@@ -5725,20 +5725,23 @@ gmsh::model::mesh::advectMeshNodes(const int dim,
 
 GMSH_API void
 gmsh::model::mesh::computeAlphaShape(const int dim,
-                                      const int tag,
-                                      const int bndTag,
-                                      const std::string & boundaryModel,
-                                      const double alpha,
-                                      const int alphaShapeSizeField,
-                                      const int refineSizeField,
-                                      std::vector<size_t> &newNodeTags,
-                                      std::vector<size_t> &newNodeElementTags,
-                                      std::vector<double> &newNodeParametricCoords,
-                                      const bool usePreviousMesh,
-                                      const double boundaryTolerance,
-                                      const bool refine, 
-                                      const int delaunayTag,
-                                      const bool deleteDisconnectedNodes)
+                                    const int tag,
+                                    const int bndTag,
+                                    const std::string & boundaryModel,
+                                    const double alpha,
+                                    const int alphaShapeSizeField,
+                                    const int refineSizeField,
+                                    std::vector<std::size_t> & newNodeTags,
+                                    std::vector<std::size_t> & newNodeElementTags,
+                                    std::vector<double> & newNodeParametricCoords,
+                                    std::vector<int> & isBoundaryNode_new,
+                                    const bool usePreviousMesh,
+                                    const double boundaryTolerance,
+                                    const bool refine,
+                                    const int delaunayTag,
+                                    const bool deleteDisconnectedNodes,
+                                    const std::vector<int> & oldNodeTags,
+                                    const std::vector<int> & isBoundaryNode_previous)
 {
 #if defined(HAVE_MESH)
   if (dim == 2){
@@ -5777,8 +5780,9 @@ gmsh::model::mesh::computeAlphaShape(const int dim,
     toc = std::chrono::high_resolution_clock::now();
     // std::cout << "Edge recover : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
     // mesh adapt
+    std::unordered_map<int, int> onBoundaryMap;
     if (refine){
-      AlphaShape::_delaunayRefinement(pm, tag, bndTag, refineSizeField, controlNodes);
+      AlphaShape::_delaunayRefinement(pm, tag, bndTag, refineSizeField, controlNodes, oldNodeTags, isBoundaryNode_previous, onBoundaryMap);
       tic = std::chrono::high_resolution_clock::now();
       // std::cout << "Refine       : " << std::chrono::duration_cast<std::chrono::milliseconds>(tic - toc).count() << "ms" << std::endl;
     }
@@ -5791,8 +5795,24 @@ gmsh::model::mesh::computeAlphaShape(const int dim,
     }
 
     // back to gmsh
-    AlphaShape::alphaShapePolyMesh2Gmsh(pm, tag, bndTag, boundaryModel, bnd_octree, boundaryTolerance, delaunayTag);
+    AlphaShape::alphaShapePolyMesh2Gmsh(pm, tag, bndTag, boundaryModel, bnd_octree, boundaryTolerance, delaunayTag, newNodeTags, oldNodeTags, isBoundaryNode_previous, isBoundaryNode_new);
     toc = std::chrono::high_resolution_clock::now();
+
+    isBoundaryNode_new.resize(newNodeTags.size(), 0);
+    if (isBoundaryNode_previous.size() > 0){
+      if (isBoundaryNode_previous.size() != oldNodeTags.size()){
+        Msg::Error("Size of isBoundaryNode_previous does not match size of oldNodeTags");
+        return;
+      }
+      // Update isBoundaryNode_new according to onBoundaryMap
+      for (size_t i = 0; i < newNodeTags.size(); i++){
+        auto it = onBoundaryMap.find(newNodeTags[i]);
+        if (it != onBoundaryMap.end()){
+          isBoundaryNode_new[i] = it->second;
+        }
+      }
+    }
+
     // std::cout << "To Gmsh      : " << std::chrono::duration_cast<std::chrono::milliseconds>(toc - tic).count() << "ms" << std::endl;
 
   }

@@ -1855,7 +1855,7 @@ bool pointOnTriangleEdge(double* p, PolyMesh::Face* f){
          (he->next->next->data > 0 && abs(robustPredicates::orient2d(v2->position, v0->position, p)) < tol));
 }
 
-void AlphaShape::_delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const int sizeFieldTag, std::vector<PolyMesh::Vertex*> & controlNodes){
+void AlphaShape::_delaunayRefinement(PolyMesh* pm, const int tag, const int bndTag, const int sizeFieldTag, std::vector<PolyMesh::Vertex*> & controlNodes, const std::vector<int> &oldNodeTags, const std::vector<int> &isOnBoundary, std::unordered_map<int, int>& onBoundaryMap){
   for (auto it : *GModel::current()->getFields()){
     auto field = it.second;
     if (field->getName() == std::string("AlphaShapeDistance")){
@@ -1954,6 +1954,20 @@ void AlphaShape::_delaunayRefinement(PolyMesh* pm, const int tag, const int bndT
     }
   }
   
+  // Vector defining whether the node I am adding is being added on an edge that has two "boundary" nodes
+  // CONTINUE!!!! 
+  onBoundaryMap.clear();
+  bool returnOnBoundary = isOnBoundary.size() > 0;
+  if (returnOnBoundary){
+    for (size_t i=0; i<pm->vertices.size(); i++){
+      PolyMesh::Vertex* v = pm->vertices[i];
+      auto idx = std::find(oldNodeTags.begin(), oldNodeTags.end(), v->data);
+      if (idx == oldNodeTags.end()) continue;
+      onBoundaryMap[v->data] = isOnBoundary[idx - oldNodeTags.begin()];
+    }
+  }
+  bool onBoundary = false;
+  
   // Refine
   std::vector<PolyMesh::Face *> _badFaces;
   double _limit = .4;         // Values to discuss...
@@ -1975,6 +1989,7 @@ void AlphaShape::_delaunayRefinement(PolyMesh* pm, const int tag, const int bndT
   size_t n_faces_init = _badFaces.size();
   bool forceEdgeSplit = false;
   while (!_badFaces.empty()){
+    onBoundary = false;
     if (_badFaces.size() > 1000*n_faces_init){
       printf("too many faces in refine, most likely a bug in geometry \n");
       print4debug(pm, 0); 
@@ -2017,7 +2032,15 @@ void AlphaShape::_delaunayRefinement(PolyMesh* pm, const int tag, const int bndT
         SVector3 p = 0.5*(heCandidate->v->position + heCandidate->next->v->position);
         cc.setPosition(p.x(), p.y(), p.z());
         if ( heCandidate->opposite){
+          if (returnOnBoundary){
+            auto onBnd0 = onBoundaryMap.find(heCandidate->v->data);
+            auto onBnd1 = onBoundaryMap.find(heCandidate->next->v->data);
+            if (onBnd0 != onBoundaryMap.end() && onBnd1 != onBoundaryMap.end()){
+              onBoundary = onBnd0->second && onBnd1->second;
+            }
+          }
           pm->split_edge(heCandidate, cc, -1);
+          // CONTINUE!!!! 
           int heData = bndTag;
           heCandidate->next->opposite->f->data = heCandidate->f->data;
           heCandidate->opposite->f->data = heCandidate->next->opposite->next->opposite->f->data;
@@ -2055,6 +2078,9 @@ void AlphaShape::_delaunayRefinement(PolyMesh* pm, const int tag, const int bndT
       forceEdgeSplit = false;
       PolyMesh::Vertex* v = pm->vertices.back();
       v->data = newTag++;
+      if (returnOnBoundary){
+        onBoundaryMap[v->data] = onBoundary;
+      }
       sizeAtNodes[v->data] = field->operator()(v->position.x(), v->position.y(), 0, NULL);
       std::vector<PolyMesh::Face *> _newFaces;
       for(auto _h : _touched){
@@ -2215,7 +2241,7 @@ void AlphaShape::getNewNodesOnOldMesh(PolyMesh *pm, ElementOctree &octree_prev, 
   }
 }
 
-void AlphaShape::alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, const std::string & boundaryModel, OctreeNode<2, 32, alphaShapeBndEdge*> &octree, const double boundary_tol, const int delaunayTag){
+void AlphaShape::alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int bndTag, const std::string & boundaryModel, OctreeNode<2, 32, alphaShapeBndEdge*> &octree, const double boundary_tol, const int delaunayTag, std::vector<std::size_t> & newNodeTags, const std::vector<int> & oldNodeTags, const std::vector<int> & isBoundaryNode_previous, std::vector<int> & isBoundaryNode_new){
   // std::vector<std::pair<int, int>> dimTag;
   // dimTag.push_back(std::make_pair(2, tag));
 
@@ -2388,7 +2414,7 @@ void AlphaShape::alphaShapePolyMesh2Gmsh(PolyMesh* pm, const int tag, const int 
   if (delaunayTag > 0){
     gmsh::model::mesh::addElementsByType(delaunayTag, 2, delaunayTriTag, delaunayTriangles);
   }
-  // printf("triangles added to gsmh \n");
+
   delete pm;
   gm_alphaShape->setAsCurrent();
 }

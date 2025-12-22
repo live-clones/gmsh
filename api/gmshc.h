@@ -1684,11 +1684,14 @@ GMSH_API void gmshModelMeshComputeAlphaShape(const int dim,
                                              size_t ** newNodeTags, size_t * newNodeTags_n,
                                              size_t ** newNodeElementTags, size_t * newNodeElementTags_n,
                                              double ** newNodeParametricCoord, size_t * newNodeParametricCoord_n,
+                                             int ** isBoundaryNode_new, size_t * isBoundaryNode_new_n,
                                              const int usePreviousMesh,
                                              const double boundaryTolerance,
                                              const int refine,
                                              const int delaunayTag,
                                              const int deleteDisconnectedNodes,
+                                             const int * oldNodeTags, const size_t oldNodeTags_n,
+                                             const int * isBoundaryNode_previous, const size_t isBoundaryNode_previous_n,
                                              int * ierr);
 
 /* Tetrahedralize points in entity of tag `tag */

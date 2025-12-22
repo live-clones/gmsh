@@ -7699,11 +7699,14 @@ module gmsh
                                             newNodeTags, &
                                             newNodeElementTags, &
                                             newNodeParametricCoord, &
+                                            isBoundaryNode_new, &
                                             usePreviousMesh, &
                                             boundaryTolerance, &
                                             refine, &
                                             delaunayTag, &
                                             deleteDisconnectedNodes, &
+                                            oldNodeTags, &
+                                            isBoundaryNode_previous, &
                                             ierr)
     interface
     subroutine C_API(dim, &
@@ -7719,11 +7722,17 @@ module gmsh
                      api_newNodeElementTags_n_, &
                      api_newNodeParametricCoord_, &
                      api_newNodeParametricCoord_n_, &
+                     api_isBoundaryNode_new_, &
+                     api_isBoundaryNode_new_n_, &
                      usePreviousMesh, &
                      boundaryTolerance, &
                      refine, &
                      delaunayTag, &
                      deleteDisconnectedNodes, &
+                     api_oldNodeTags_, &
+                     api_oldNodeTags_n_, &
+                     api_isBoundaryNode_previous_, &
+                     api_isBoundaryNode_previous_n_, &
                      ierr_) &
       bind(C, name="gmshModelMeshComputeAlphaShape")
       use, intrinsic :: iso_c_binding
@@ -7740,11 +7749,17 @@ module gmsh
       integer(c_size_t), intent(out) :: api_newNodeElementTags_n_
       type(c_ptr), intent(out) :: api_newNodeParametricCoord_
       integer(c_size_t) :: api_newNodeParametricCoord_n_
+      type(c_ptr), intent(out) :: api_isBoundaryNode_new_
+      integer(c_size_t), intent(out) :: api_isBoundaryNode_new_n_
       integer(c_int), value, intent(in) :: usePreviousMesh
       real(c_double), value, intent(in) :: boundaryTolerance
       integer(c_int), value, intent(in) :: refine
       integer(c_int), value, intent(in) :: delaunayTag
       integer(c_int), value, intent(in) :: deleteDisconnectedNodes
+      integer(c_int), dimension(*), optional :: api_oldNodeTags_
+      integer(c_size_t), value, intent(in) :: api_oldNodeTags_n_
+      integer(c_int), dimension(*), optional :: api_isBoundaryNode_previous_
+      integer(c_size_t), value, intent(in) :: api_isBoundaryNode_previous_n_
       integer(c_int), intent(out), optional :: ierr_
     end subroutine C_API
     end interface
@@ -7758,11 +7773,14 @@ module gmsh
     integer(c_size_t), dimension(:), allocatable, intent(out) :: newNodeTags
     integer(c_size_t), dimension(:), allocatable, intent(out) :: newNodeElementTags
     real(c_double), dimension(:), allocatable, intent(out) :: newNodeParametricCoord
+    integer(c_int), dimension(:), allocatable, intent(out) :: isBoundaryNode_new
     logical, intent(in), optional :: usePreviousMesh
     real(c_double), intent(in), optional :: boundaryTolerance
     logical, intent(in), optional :: refine
     integer, intent(in), optional :: delaunayTag
     logical, intent(in), optional :: deleteDisconnectedNodes
+    integer(c_int), dimension(:), intent(in), optional :: oldNodeTags
+    integer(c_int), dimension(:), intent(in), optional :: isBoundaryNode_previous
     integer(c_int), intent(out), optional :: ierr
     type(c_ptr) :: api_newNodeTags_
     integer(c_size_t) :: api_newNodeTags_n_
@@ -7770,6 +7788,8 @@ module gmsh
     integer(c_size_t) :: api_newNodeElementTags_n_
     type(c_ptr) :: api_newNodeParametricCoord_
     integer(c_size_t) :: api_newNodeParametricCoord_n_
+    type(c_ptr) :: api_isBoundaryNode_new_
+    integer(c_size_t) :: api_isBoundaryNode_new_n_
     call C_API(dim=int(dim, c_int), &
          tag=int(tag, c_int), &
          bndTag=int(bndTag, c_int), &
@@ -7783,11 +7803,17 @@ module gmsh
          api_newNodeElementTags_n_=api_newNodeElementTags_n_, &
          api_newNodeParametricCoord_=api_newNodeParametricCoord_, &
          api_newNodeParametricCoord_n_=api_newNodeParametricCoord_n_, &
+         api_isBoundaryNode_new_=api_isBoundaryNode_new_, &
+         api_isBoundaryNode_new_n_=api_isBoundaryNode_new_n_, &
          usePreviousMesh=optval_c_bool(.false., usePreviousMesh), &
          boundaryTolerance=optval_c_double(1e-6, boundaryTolerance), &
          refine=optval_c_bool(.true., refine), &
          delaunayTag=optval_c_int(-1, delaunayTag), &
          deleteDisconnectedNodes=optval_c_bool(.true., deleteDisconnectedNodes), &
+         api_oldNodeTags_=oldNodeTags, &
+         api_oldNodeTags_n_=size_gmsh_int(oldNodeTags), &
+         api_isBoundaryNode_previous_=isBoundaryNode_previous, &
+         api_isBoundaryNode_previous_n_=size_gmsh_int(isBoundaryNode_previous), &
          ierr_=ierr)
     newNodeTags = ovectorsize_(api_newNodeTags_, &
       api_newNodeTags_n_)
@@ -7795,6 +7821,8 @@ module gmsh
       api_newNodeElementTags_n_)
     newNodeParametricCoord = ovectordouble_(api_newNodeParametricCoord_, &
       api_newNodeParametricCoord_n_)
+    isBoundaryNode_new = ovectorint_(api_isBoundaryNode_new_, &
+      api_isBoundaryNode_new_n_)
   end subroutine gmshModelMeshComputeAlphaShape
 
   !> Tetrahedralize points in entity of tag `tag
