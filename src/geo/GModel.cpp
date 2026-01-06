@@ -42,6 +42,7 @@
 #include "CreateFile.h"
 #include "Options.h"
 #include "GModelParametrize.h"
+#include "Overlap.h"
 
 #if defined(HAVE_MESH)
 #include "meshGEdge.h"
@@ -323,6 +324,16 @@ void GModel::deleteGeometryVertexArrays()
 bool GModel::empty() const
 {
   return vertices.empty() && edges.empty() && faces.empty() && regions.empty();
+}
+
+int GModel::overlapDim() const { 
+  if (std::get<1>(_overlaps).size() > 0) {
+    return 3; // 3D overlap
+  }
+  else if (std::get<0>(_overlaps).size() > 0) {
+    return 2; // 2D overlap
+  }
+  return 0; // no overlap
 }
 
 GRegion *GModel::getRegionByTag(int n) const
@@ -639,6 +650,8 @@ void GModel::remove()
   faces.clear();
   edges.clear();
   vertices.clear();
+  std::get<0>(_overlaps).clear();
+  std::get<1>(_overlaps).clear();
 }
 
 void GModel::snapVertices()

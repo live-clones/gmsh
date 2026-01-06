@@ -126,7 +126,9 @@ public:
     PartitionVolume,
     GhostCurve,
     GhostSurface,
-    GhostVolume
+    GhostVolume,
+    OverlapSurface,
+    OverlapVolume,
   };
 
   // the mesh generation status
@@ -174,7 +176,9 @@ public:
       "Partition volume",
       "Ghost curve",
       "Ghost surface",
-      "Ghost volume"};
+      "Ghost volume",
+      "Overlap surface",
+      "Overlap volume"};
     unsigned int type = (unsigned int)geomType();
     if(type >= sizeof(name) / sizeof(name[0]))
       return "Undefined";
@@ -219,6 +223,8 @@ public:
     static std::vector<GEdge *> i;
     return i;
   }
+
+  virtual std::vector<GEntity *> boundaryEntities() const = 0;
 
   // vertices that bound this entity
   virtual std::vector<GVertex *> vertices() const
@@ -392,6 +398,14 @@ public:
 
   // get the mesh vertex at the given index
   MVertex *getMeshVertex(std::size_t index) { return mesh_vertices[index]; }
+  std::vector<MVertex*>::const_iterator getMeshVertexBegin() const
+  {
+    return mesh_vertices.begin();
+  }
+  std::vector<MVertex*>::const_iterator getMeshVertexEnd() const
+  {
+    return mesh_vertices.end();
+  }
 
   // add a mesh vertex
   void addMeshVertex(MVertex *v) { mesh_vertices.push_back(v); }
