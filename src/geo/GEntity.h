@@ -220,6 +220,8 @@ public:
     return i;
   }
 
+  virtual std::vector<GEntity *> boundaryEntities() const = 0;
+
   // vertices that bound this entity
   virtual std::vector<GVertex *> vertices() const
   {
