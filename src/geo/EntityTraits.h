@@ -2,6 +2,8 @@
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
+//
+// Contributed by Boris Martin
 
 #include "MFaceHash.h"
 #include "MEdgeHash.h"

@@ -394,6 +394,8 @@ public:
 
   // get the mesh vertex at the given index
   MVertex *getMeshVertex(std::size_t index) { return mesh_vertices[index]; }
+
+  // iterate over the mesh vertices
   std::vector<MVertex*>::const_iterator getMeshVertexBegin() const
   {
     return mesh_vertices.begin();
