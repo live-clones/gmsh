@@ -50,6 +50,7 @@ set(SRC
     CGNSZoneStruct.cpp CGNSZoneUnstruct.cpp
   CGNSRead.cpp CGNSWrite.cpp CGNSWriteStruct.cpp
   gmshQuadrics.cpp
+  Overlap.cpp
 )
 
 file(GLOB HDR RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.h)
