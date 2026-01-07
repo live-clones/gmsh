@@ -30,7 +30,11 @@ else()
 endif()
 
 target_include_directories(hxt_predicates INTERFACE include)
-target_link_libraries(hxt_predicates m) # link with the math library
+target_link_libraries(hxt_predicates hxt_core)
+if(NOT MSVC)
+    target_link_libraries(hxt_predicates m) # link with the math library
+endif()
+
 
 
 #################################################################################
@@ -50,4 +54,12 @@ else()
 	         Make sure compiled functions from predicates.c
 	         do NOT use extended double precision and follow IEEE754 standard.
 	         It is crucial for the robustness of geometric predicates.")
+endif()
+
+include(GNUInstallDirs)
+
+if(NOT HXT_PREDICATES_OBJECT_ONLY)
+  install(TARGETS hxt_predicates DESTINATION ${CMAKE_INSTALL_LIBDIR})  
+  set(HXT_PREDICATES_PUBLIC_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/predicates.h")     
+  install(FILES ${HXT_PREDICATES_PUBLIC_HEADERS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 endif()
