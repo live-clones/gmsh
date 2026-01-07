@@ -304,48 +304,38 @@ buildBoundaryElementToEntityDict(GModel *const model)
 {
   BoundaryToPartitionEntity<dim> boundaryToEntity;
   static_assert(dim == 2 || dim == 3, "Only dim=2 and dim=3 are supported.");
+
+  using BEntity = typename EntityTraits<dim>::BoundaryEntity;
+
+  // In 2D, build a MEdge -> PartitionEdge dict
+  // In 3D, build a MFace -> PartitionFace dict
+  // We iterate over all partition entities and their elements and build the dict. Keys should be unique.
+  auto processEntity = [&](auto *entity) {
+    auto partitionEntity = dynamic_cast<BEntity *>(entity);
+    if(!partitionEntity) return;
+
+    for(size_t i = 0; i < partitionEntity->getNumMeshElements(); ++i) {
+      MElement *element = partitionEntity->getMeshElement(i);
+
+      auto addBoundary = [&](const auto &boundary) {
+        // try_emplace returns {iterator, bool inserted}
+        if(!boundaryToEntity.try_emplace(boundary, partitionEntity).second) {
+          Msg::Error("Boundary object already has an associated entity.");
+        }
+      };
+
+      if constexpr(dim == 2) {
+        for(int j = 0; j < element->getNumEdges(); ++j) addBoundary(element->getEdge(j));
+      } else {
+        for(int j = 0; j < element->getNumFaces(); ++j) addBoundary(element->getFace(j));
+      }
+    }
+  };
+
   if constexpr(dim == 2) {
-    for(auto &&face : model->getEdges()) {
-      auto partitionEdge =
-        dynamic_cast<typename EntityTraits<dim>::BoundaryEntity *>(face);
-      if(partitionEdge) {
-        for(size_t i = 0; i < partitionEdge->getNumMeshElements(); ++i) {
-          MElement *element = partitionEdge->getMeshElement(i);
-          for(int j = 0; j < element->getNumEdges(); ++j) {
-            MEdge edge = element->getEdge(j);
-            if(boundaryToEntity.find(edge) == boundaryToEntity.end()) {
-              boundaryToEntity[edge] = partitionEdge;
-            }
-            else {
-              Msg::Error("Boundary edge already has an associated entity.");
-            }
-          }
-        }
-      }
-    }
-  }
-  else if constexpr(dim == 3) {
-    for(auto &&face : model->getFaces()) {
-      auto partitionFace =
-        dynamic_cast<typename EntityTraits<dim>::BoundaryEntity *>(face);
-      if(partitionFace) {
-        for(size_t i = 0; i < partitionFace->getNumMeshElements(); ++i) {
-          MElement *element = partitionFace->getMeshElement(i);
-          for(int j = 0; j < element->getNumFaces(); ++j) {
-            MFace face = element->getFace(j);
-            if(boundaryToEntity.find(face) == boundaryToEntity.end()) {
-              boundaryToEntity[face] = partitionFace;
-            }
-            else {
-              Msg::Error(
-                "Boundary face already has an associated entity."); // Should
-                                                                    // not
-                                                                    // happen
-            }
-          }
-        }
-      }
-    }
+    for(auto *edge : model->getEdges()) processEntity(edge);
+  } else {
+    for(auto *face : model->getFaces()) processEntity(face);
   }
 
   return boundaryToEntity;
