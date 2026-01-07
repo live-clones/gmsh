@@ -126,7 +126,9 @@ public:
     PartitionVolume,
     GhostCurve,
     GhostSurface,
-    GhostVolume
+    GhostVolume,
+    OverlapSurface,
+    OverlapVolume,
   };
 
   // the mesh generation status
@@ -174,7 +176,9 @@ public:
       "Partition volume",
       "Ghost curve",
       "Ghost surface",
-      "Ghost volume"};
+      "Ghost volume",
+      "Overlap surface",
+      "Overlap volume"};
     unsigned int type = (unsigned int)geomType();
     if(type >= sizeof(name) / sizeof(name[0]))
       return "Undefined";
