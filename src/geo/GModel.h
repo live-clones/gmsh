@@ -35,6 +35,11 @@ class gLevelset;
 class discreteFace;
 class discreteRegion;
 class MElementOctree;
+class overlapFace;
+class overlapRegion;
+class partitionEdge;
+class partitionFace;
+class partitionRegion;
 
 // A geometric model. The model is a "not yet" non-manifold B-Rep.
 class GModel {
