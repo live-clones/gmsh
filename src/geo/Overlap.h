@@ -36,8 +36,7 @@ void buildOverlapEntities(GModel *const model,
 // between the inner and overlap. These boundaries are computed per parent entity, so a physical interface will be a boundary.
 template <int dim>
 OveralBoundariesMesh<dim>
-findBoundaryOfOverlapEntities(GModel *const model,
-                              const OverlapCollection<dim> overlaps);
+findBoundaryOfOverlapEntities(const OverlapCollection<dim>& overlaps);
 
 /**
  * Robustness wrt to deep overlaps:

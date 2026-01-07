@@ -236,21 +236,24 @@ void buildOverlapEntities(GModel* const model, const OverlapCollection<dim>& ove
 
 template void buildOverlapEntities<2>(GModel* const model, const OverlapCollection<2>& overlaps);
 template void buildOverlapEntities<3>(GModel* const model, const OverlapCollection<3>& overlaps);
-// TODO - Finish check below
 
 template <int dim>
 OveralBoundariesMesh<dim> findBoundaryOfOverlapEntities(
-  GModel *const model,
-  const OverlapCollection<dim> overlaps)
+  const OverlapCollection<dim>& overlaps)
 {
   using Entity = typename EntityTraits<dim>::Entity;
   using MBnd = typename EntityTraits<dim>::BoundaryMeshObject;
   using Hash = typename EntityTraits<dim>::BoundaryMeshObjectHash;
   using Equal =  typename EntityTraits<dim>::BoundaryMeshObjectEqual;
+  using BndCountMap =
+    std::unordered_map<MBnd, unsigned, Hash, Equal>;
   OveralBoundariesMesh<dim> result(overlaps.size());
 
+  // Embarassingly parallel
+  #pragma omp parallel for schedule(dynamic)
   for(size_t i = 0; i < overlaps.size(); ++i) {
-    std::unordered_map<Entity *, std::unordered_map<MBnd, unsigned, Hash, Equal>> counts;
+    std::unordered_map<Entity *, BndCountMap> counts;
+
     for(const auto &[covered, elements] : overlaps[i]) {
       if(!covered) continue; // Skip null entities
       auto parent = dynamic_cast<Entity *>(covered->getParentEntity());
@@ -291,12 +294,9 @@ OveralBoundariesMesh<dim> findBoundaryOfOverlapEntities(
 }
 
 template OveralBoundariesMesh<2>
-findBoundaryOfOverlapEntities<2>(GModel *const model,
-                                 const OverlapCollection<2> overlaps);
+findBoundaryOfOverlapEntities<2>(const OverlapCollection<2>& overlaps);
 template OveralBoundariesMesh<3>
-findBoundaryOfOverlapEntities<3>(GModel *const model,
-                                 const OverlapCollection<3> overlaps);
-
+findBoundaryOfOverlapEntities<3>(const OverlapCollection<3>& overlaps);
 
 template <int dim>
 static BoundaryToPartitionEntity<dim>
@@ -364,7 +364,7 @@ void overlapBuildBoundaries(GModel *const model,
   auto boundaryToEntity = buildBoundaryElementToEntityDict<dim>(model);
   // What is the set of MEdge/MFace of the overlap for each **parent** entity ?
   // It's a vector per partition, then the entry is a dict Entity-> set of bnds
-  auto boundaryElements = findBoundaryOfOverlapEntities<dim>(model, overlaps);
+  auto boundaryElements = findBoundaryOfOverlapEntities<dim>(overlaps);
 
   using BoundaryMeshObject = typename EntityTraits<dim>::BoundaryMeshObject;
   using BoundaryMeshObjectHash =
