@@ -220,6 +220,8 @@ public:
     return i;
   }
 
+  virtual std::vector<GEntity *> boundaryEntities() const = 0;
+
   // vertices that bound this entity
   virtual std::vector<GVertex *> vertices() const
   {
@@ -392,6 +394,16 @@ public:
 
   // get the mesh vertex at the given index
   MVertex *getMeshVertex(std::size_t index) { return mesh_vertices[index]; }
+
+  // iterate over the mesh vertices
+  std::vector<MVertex*>::const_iterator getMeshVertexBegin() const
+  {
+    return mesh_vertices.begin();
+  }
+  std::vector<MVertex*>::const_iterator getMeshVertexEnd() const
+  {
+    return mesh_vertices.end();
+  }
 
   // add a mesh vertex
   void addMeshVertex(MVertex *v) { mesh_vertices.push_back(v); }

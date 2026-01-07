@@ -100,6 +100,11 @@ public:
   // edges that bound the face
   int delEdge(GEdge *edge);
   virtual std::vector<GEdge *> const &edges() const { return l_edges; }
+  virtual std::vector<GEntity *> boundaryEntities() const
+  {
+    std::vector<GEntity *> entities(l_edges.begin(), l_edges.end());
+    return entities;
+  }
   virtual std::vector<int> const &edgeOrientations() const { return l_dirs; }
   void set(const std::vector<GEdge *> &f) { l_edges = f; }
   void setOrientations(const std::vector<int> &f) { l_dirs = f; }

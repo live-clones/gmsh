@@ -62,6 +62,13 @@ public:
   void setEndVertex(GVertex *gv) { _v1 = gv; if(gv) gv->addEdge(this); }
   virtual GVertex *getBeginVertex() const { return _v0; }
   virtual GVertex *getEndVertex() const { return _v1; }
+  virtual std::vector<GEntity *> boundaryEntities() const
+  {
+    std::vector<GEntity *> entities;
+    if(_v0) entities.push_back(_v0);
+    if(_v1 && _v1 != _v0) entities.push_back(_v1);
+    return entities;
+  }
   void setVertex(GVertex *const f, const int orientation)
   {
     if(orientation > 0)
