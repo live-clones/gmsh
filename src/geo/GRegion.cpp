@@ -283,6 +283,11 @@ int GRegion::delFace(GFace *face)
   return orientation;
 }
 
+std::vector<GEntity *> GRegion::boundaryEntities() const
+{
+  return std::vector<GEntity *>(l_faces.begin(), l_faces.end());
+}
+
 void GRegion::setBoundFaces(const std::set<int> &tagFaces)
 {
   for(auto it = tagFaces.begin(); it != tagFaces.end(); ++it) {

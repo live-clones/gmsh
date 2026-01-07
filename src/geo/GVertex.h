@@ -47,6 +47,12 @@ public:
   void addEdge(GEdge *e);
   void delEdge(GEdge *e);
 
+  virtual std::vector<GEntity *> boundaryEntities() const
+  {
+    std::vector<GEntity *> entities;
+    return entities;
+  }
+
   // regions that bound this entity or that this entity bounds.
   virtual std::list<GRegion *> regions() const;
 
