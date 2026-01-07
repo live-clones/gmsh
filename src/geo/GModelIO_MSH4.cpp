@@ -5,6 +5,7 @@
 //
 // Contributor(s):
 //   Anthony Royer
+//   Boris Martin
 
 #include <cstdio>
 #include <fstream>
@@ -544,28 +545,28 @@ readMSH4Nodes(GModel *const model, FILE *fp, bool binary, bool &dense,
     if(!entity) {
       switch(entityDim) {
       case 0: {
-        Msg::Info("Creating discrete point %d", entityTag);
+        Msg::Info("Creating discrete point %d with %lu nodes.", entityTag, numNodes);
         GVertex *gv = new discreteVertex(model, entityTag);
         GModel::current()->add(gv);
         entity = gv;
         break;
       }
       case 1: {
-        Msg::Info("Creating discrete curve %d", entityTag);
+        Msg::Info("Creating discrete curve %d with %lu nodes.", entityTag, numNodes);
         GEdge *ge = new discreteEdge(model, entityTag, nullptr, nullptr);
         GModel::current()->add(ge);
         entity = ge;
         break;
       }
       case 2: {
-        Msg::Info("Creating discrete surface %d", entityTag);
+        Msg::Info("Creating discrete surface %d with %lu nodes.", entityTag, numNodes);
         GFace *gf = new discreteFace(model, entityTag);
         GModel::current()->add(gf);
         entity = gf;
         break;
       }
       case 3: {
-        Msg::Info("Creating discrete volume %d", entityTag);
+        Msg::Info("Creating discrete volume %d with %lu nodes.", entityTag, numNodes);
         GRegion *gr = new discreteRegion(model, entityTag);
         GModel::current()->add(gr);
         entity = gr;
@@ -823,8 +824,8 @@ readMSH4Elements(GModel *const model, FILE *fp, bool binary, bool &dense,
         for(int k = 0; k < numVertPerElm; k++) {
           vertices[k] = model->getMeshVertexByTag(data[j + k + 1]);
           if(!vertices[k]) {
-            Msg::Error("Unknown node %zu in element %zu", data[j + k + 1],
-                       data[j]);
+            Msg::Error("Unknown node %zu in element %zu, for entity %d %d and element type %d", data[j + k + 1],
+                       data[j], entityDim, entityTag, elmType);
             delete[] elementCache;
             return nullptr;
           }

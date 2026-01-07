@@ -291,6 +291,8 @@ public:
   hashmapMEdge::const_iterator lastMEdge() { return _mapEdgeNum.end(); }
   hashmapMFace::const_iterator firstMFace() { return _mapFaceNum.begin(); }
   hashmapMFace::const_iterator lastMFace() { return _mapFaceNum.end(); }
+  const hashmapMEdge& getMEdges() const { return _mapEdgeNum; }
+  const hashmapMFace& getMFaces() const { return _mapFaceNum; }
 
   // renumber mesh vertices and elements in a continuous sequence (this
   // invalidates the mesh caches)
