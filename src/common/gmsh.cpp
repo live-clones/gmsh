@@ -1379,7 +1379,7 @@ gmsh::model::mesh::partition(const int numPart,
       if(el)
         epart.push_back(std::make_pair(el, partitions[i]));
       else
-        Msg::Error("Unknown element %d", elementTags[i]);
+        Msg::Error("Unknown element %zu", elementTags[i]);
     }
   }
   GModel::current()->partitionMesh(
@@ -1521,7 +1521,7 @@ gmsh::model::mesh::removeElements(const int dim, const int tag,
   else {
     for(auto t : elementTags) {
       MElement *e = GModel::current()->getMeshElementByTag(t);
-      if(!e) { Msg::Error("Unknown element %d", t); }
+      if(!e) { Msg::Error("Unknown element %zu", t); }
       else {
         ge->removeElement(e, true);
       }
@@ -2031,7 +2031,7 @@ GMSH_API void gmsh::model::mesh::getElement(const std::size_t elementTag,
   int entityTag;
   MElement *e = GModel::current()->getMeshElementByTag(elementTag, entityTag);
   if(!e) {
-    Msg::Error("Unknown element %d", elementTag);
+    Msg::Error("Unknown element %zu", elementTag);
     return;
   }
   elementType = e->getTypeForMSH();
@@ -2108,7 +2108,7 @@ GMSH_API void gmsh::model::mesh::getLocalCoordinatesInElement(
   MElement *e = GModel::current()->getMeshElementByTag(elementTag);
   if(!e) {
     u = v = w = 0.;
-    Msg::Error("Unknown element %d", elementTag);
+    Msg::Error("Unknown element %zu", elementTag);
     return;
   }
   double xyz[3] = {x, y, z}, uvw[3];
@@ -2416,7 +2416,7 @@ GMSH_API void gmsh::model::mesh::getElementQualities(
   for(size_t k = begin; k < end; k++) {
     MElement *e = GModel::current()->getMeshElementByTag(elementTags[k]);
     if(!e) {
-      Msg::Error("Unknown element %d", elementTags[k]);
+      Msg::Error("Unknown element %zu", elementTags[k]);
       elementQualities[k] = 0.;
       continue;
     }
@@ -2812,7 +2812,7 @@ GMSH_API void gmsh::model::mesh::getJacobian(
   if(!_checkInit()) return;
   MElement *e = GModel::current()->getMeshElementByTag(elementTag);
   if(!e) {
-    Msg::Error("Unknown element %d", elementTag);
+    Msg::Error("Unknown element %zu", elementTag);
     return;
   }
   int numPoints = localCoord.size() / 3;
@@ -3501,6 +3501,10 @@ GMSH_API void gmsh::model::mesh::getBasisFunctionsOrientationForElement(
   }
 
   MElement *e = GModel::current()->getMeshElementByTag(elementTag);
+  if(!e) {
+    Msg::Error("Unknown element %zu", elementTag);
+    return;
+  }
   int elementType = e->getTypeForMSH();
   int familyType = ElementType::getParentType(elementType);
 
