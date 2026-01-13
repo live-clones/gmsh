@@ -4933,6 +4933,7 @@ gmsh::model::mesh::setTransfiniteSurface(const int tag,
     (arrangement == "AlternateLeft")  ? -2 :
     (arrangement == "Alternate")      ? 2 :
                                         -1;
+  gf->meshAttributes.corners.clear();
   if(cornerTags.empty() || cornerTags.size() == 3 || cornerTags.size() == 4) {
     for(std::size_t j = 0; j < cornerTags.size(); j++) {
       GVertex *gv = GModel::current()->getVertexByTag(cornerTags[j]);
@@ -4952,6 +4953,7 @@ gmsh::model::mesh::setTransfiniteVolume(const int tag,
     return;
   }
   gr->meshAttributes.method = MESH_TRANSFINITE;
+  gr->meshAttributes.corners.clear();
   if(cornerTags.empty() || cornerTags.size() == 6 || cornerTags.size() == 8) {
     for(std::size_t i = 0; i < cornerTags.size(); i++) {
       GVertex *gv = GModel::current()->getVertexByTag(cornerTags[i]);

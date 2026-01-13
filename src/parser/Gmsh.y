@@ -4700,6 +4700,7 @@ Constraints :
           if(gf){
             gf->meshAttributes.method = MESH_TRANSFINITE;
             gf->meshAttributes.transfiniteArrangement = $5;
+            gf->meshAttributes.corners.clear();
             if(corners.empty() || corners.size() == 3 || corners.size() == 4){
               for(std::size_t j = 0; j < corners.size(); j++){
                 GVertex *gv = GModel::current()->getVertexByTag(corners[j]);
@@ -4742,6 +4743,7 @@ Constraints :
           GRegion *gr = GModel::current()->getRegionByTag(tag);
           if(gr){
             gr->meshAttributes.method = MESH_TRANSFINITE;
+            gr->meshAttributes.corners.clear();
             if(corners.empty() || corners.size() == 6 || corners.size() == 8){
               for(std::size_t i = 0; i < corners.size(); i++){
                 GVertex *gv = GModel::current()->getVertexByTag(corners[i]);
