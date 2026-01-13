@@ -1498,6 +1498,12 @@ void GenerateMesh(GModel *m, int ask)
     // Mesh2D(m);
   }
 
+  if(m->getMeshStatus() >= 2 && CTX::instance()->mesh.optimizePyramids < 0) {
+    // make sure surface mesh is correctly oriented before meshing in 3D if we
+    // push points along the normals to create pyramids
+    std::for_each(m->firstFace(), m->lastFace(), orientMeshGFace());
+  }
+
   // 3D mesh
   if(ask == 3) { Mesh3D(m); }
 
