@@ -15,7 +15,7 @@
 // scripting language (.geo files), or through the C++, C, Python, Julia and
 // Fortran application programming interface (API).
 //
-// This file redefines the Gmsh C++ API in terms of the C API (v4.15.0).
+// This file redefines the Gmsh C++ API in terms of the C API (v4.15.1).
 //
 // This is provided as a convenience for users of the binary Gmsh SDK whose C++
 // compiler ABI is not compatible with the ABI of the C++ compiler used to create
