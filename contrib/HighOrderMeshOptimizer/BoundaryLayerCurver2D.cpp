@@ -3048,8 +3048,22 @@ namespace BoundaryLayerCurver {
       // FIXME: Should we check the quality of first element? In which case, if
       //  the quality is not good, what do we do? I don't know for now
     }
-    // TODO: Here we need to check the validity/quality of the two last elements
-    //  (last of BL and exterior one) and reduce the curvature if necessary.
+
+    /*
+     * TODO:
+     *  0. store:
+     *     - smoothingFactor = params.endSmoothingFactor
+     *     - linearizationFactor = params.endLinearizationFactor
+     *  1. Smooth last edge (if smoothingFactor > 0)
+     *  2. Linearize last edge (if linearizationFactor > 0)
+     *  3. If ensureQualityOuterMesh is True, check the validity/quality of the
+     *     last elements (exterior one) and increase smoothingFactor up to one,
+     *     then linearizationFactor up to one until having a satisfying
+     *     situation.
+     *  4. Backpropagate: Smooth/Linearize edges with smoothingFactor and
+     *                    linearizationFactor going from 0 at
+     *                    params.backpropLimit to actual value for last edge
+     */
 
     double gamma = params.endLinearizationFactor;
     double start = params.backpropLimit;
@@ -3329,7 +3343,7 @@ void curve2DBoundaryLayer(BoundaryLayerCurver::Parameters params,
   //  1. Check if easy to include to GUI. Include to GUI or make usable by script
   //  2. Create class for parameters:
   //     - skip ensuring good quality element touching the BLM
-  //     - how much reduce curving last layer
+  //     - how much reduce curving last layer (by smoothing)
   //     - how much last layer should be close to linearity
   //       => reduce curving for meeting all three conditions
   //     - % of thickness of high quality elements (if possible)
@@ -3340,7 +3354,7 @@ void curve2DBoundaryLayer(BoundaryLayerCurver::Parameters params,
   //  4. Implement better reducing of curving inside BLM
   //  5. Push to Git
 
-  // TODO:
+  // TODO Later:
   //  • Implement triangles
   //  • Implement suface BL
   //  • Clean the code
