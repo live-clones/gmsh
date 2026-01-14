@@ -1640,8 +1640,43 @@ namespace BoundaryLayerCurver {
       }
     }
 
+    double computeChordDeviation(fullMatrix<double> &xyz_seq, const fullMatrix<double> &xyz_HO)
+    {
+      int polyo = xyz_seq.size1() - 1;
+      xyz_seq.copy(xyz_HO, 0, polyo-1, 0, 3, 1, 0);
+
+      double vx, vy, vz;
+
+      // Compute L_linear
+      vx = xyz_seq(polyo, 0) - xyz_seq(0, 0);
+      vy = xyz_seq(polyo, 1) - xyz_seq(0, 1);
+      vz = xyz_seq(polyo, 2) - xyz_seq(0, 2);
+      double L_lin = std::sqrt(vx*vx + vy*vy + vz*vz);
+
+      if(L_lin <= 0.) return 0.; // degenerate
+
+      // Compute Z
+      double Z = 0;
+      for(int i = 1; i < polyo; ++i) {
+        double f = static_cast<double>(i) / polyo;
+        double x_lin = xyz_seq(0, 0) + f * vx;
+        double y_lin = xyz_seq(0, 1) + f * vy;
+        double z_lin = xyz_seq(0, 2) + f * vz;
+        double dx = x_lin - xyz_seq(i, 0);
+        double dy = y_lin - xyz_seq(i, 1);
+        double dz = z_lin - xyz_seq(i, 2);
+        Z += std::sqrt(dx*dx + dy*dy + dz*dz);
+      }
+      Z /= polyo; // not polyo+1 because simpson integration
+
+      const double k = 8.0;
+      return std::exp(-k * (Z / L_lin));
+    }
+
     double compute_R(fullMatrix<double> &xyz_seq, const fullMatrix<double> &xyz_HO)
     {
+      return computeChordDeviation(xyz_seq, xyz_HO);
+
       int polyo = xyz_seq.size1() - 1;
       xyz_seq.copy(xyz_HO, 0, polyo-1, 0, 3, 1, 0);
 
