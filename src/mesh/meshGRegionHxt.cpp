@@ -239,14 +239,14 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     uint32_t i0 = m->lines.node[2 * i + 0];
     uint32_t i1 = m->lines.node[2 * i + 1];
     if(!c2v[i0]) {
-      double *x = &m->vertices.coord[4 * i0];
+      double *xyz = &m->vertices.coord[4 * i0];
       // FIXME compute true coordinates
-      c2v[i0] = new MEdgeVertex(x[0], x[1], x[2], ge->second, 0);
+      c2v[i0] = new MEdgeVertex(xyz[0], xyz[1], xyz[2], ge->second, 0);
     }
     if(!c2v[i1]) {
       // FIXME compute true coordinates
-      double *x = &m->vertices.coord[4 * i1];
-      c2v[i1] = new MEdgeVertex(x[0], x[1], x[2], ge->second, 0);
+      double *xyz = &m->vertices.coord[4 * i1];
+      c2v[i1] = new MEdgeVertex(xyz[0], xyz[1], xyz[2], ge->second, 0);
     }
     ge->second->lines.push_back(new MLine(c2v[i0], c2v[i1]));
   }
@@ -269,24 +269,25 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     uint32_t i2 = m->triangles.node[3 * i + 2];
     if(!c2v[i0]) {
       // FIXME compute true coordinates
-      double *x = &m->vertices.coord[4 * i0];
-      c2v[i0] = new MFaceVertex(x[0], x[1], x[2], gf->second, 0, 0);
+      double *xyz = &m->vertices.coord[4 * i0];
+      c2v[i0] = new MFaceVertex(xyz[0], xyz[1], xyz[2], gf->second, 0, 0);
     }
     if(!c2v[i1]) {
       // FIXME compute true coordinates
-      double *x = &m->vertices.coord[4 * i1];
-      c2v[i1] = new MFaceVertex(x[0], x[1], x[2], gf->second, 0, 0);
+      double *xyz = &m->vertices.coord[4 * i1];
+      c2v[i1] = new MFaceVertex(xyz[0], xyz[1], xyz[2], gf->second, 0, 0);
     }
     if(!c2v[i2]) {
       // FIXME compute true coordinates
-      double *x = &m->vertices.coord[4 * i2];
-      c2v[i2] = new MFaceVertex(x[0], x[1], x[2], gf->second, 0, 0);
+      double *xyz = &m->vertices.coord[4 * i2];
+      c2v[i2] = new MFaceVertex(xyz[0], xyz[1], xyz[2], gf->second, 0, 0);
     }
     gf->second->triangles.push_back(new MTriangle(c2v[i0], c2v[i1], c2v[i2]));
   }
   HXT_CHECK(hxtAlignedFree(&m->triangles.node));
   HXT_CHECK(hxtAlignedFree(&m->triangles.color));
 
+#if 1
   std::vector<std::size_t> numtet(regions.size(), 0);
   for(std::size_t i = 0; i < m->tetrahedra.num; i++) {
     uint16_t c = m->tetrahedra.color[i];
@@ -297,7 +298,6 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     regions[c]->tetrahedra.reserve(numtet[c]);
     regions[c]->mesh_vertices.reserve(numtet[c] / 6);
   }
-
   for(std::size_t i = 0; i < m->tetrahedra.num; i++) {
     uint16_t c = m->tetrahedra.color[i];
     if(c >= regions.size()) continue;
@@ -316,6 +316,9 @@ static HXTStatus Hxt2Gmsh(std::vector<GRegion *> &regions, HXTMesh *m,
     }
     gr->tetrahedra.push_back(new MTetrahedron(vv[0], vv[1], vv[2], vv[3]));
   }
+#else
+  // TODO redo multi-threaded version
+#endif
 
   Msg::Debug("End Hxt2Gmsh");
   return HXT_STATUS_OK;
