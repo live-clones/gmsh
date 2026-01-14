@@ -3054,7 +3054,7 @@ namespace BoundaryLayerCurver {
     return true;
   }
 
-  bool change_normals(PairMElemVecMElem &column, const GFace *gface,
+  bool dev_change_normals(PairMElemVecMElem &column, const GFace *gface,
                              const GEdge *gedge, const SVector3 &normal)
   {
 
@@ -3125,7 +3125,7 @@ namespace BoundaryLayerCurver {
   }
 
 
-  bool reorient_normals(VecPairMElemVecMElem &columns, const GFace *gface,
+  bool dev_reorient_normals(VecPairMElemVecMElem &columns, const GFace *gface,
                              const GEdge *gedge, const SVector3 &normal)
   {
     for(auto &column : columns) {
@@ -3240,7 +3240,7 @@ namespace BoundaryLayerCurver {
     }
   }
 
-  bool touch_boundary(PairMElemVecMElem &column, const GFace *gface,
+  bool dev_touch_boundary(PairMElemVecMElem &column, const GFace *gface,
                              const GEdge *gedge, const SVector3 &normal)
   {
     if(column.second.size() < 2) return true;
@@ -3315,51 +3315,54 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
     return;
   }
 
-  if(normal.z() < .5) {
-    normal *= -1; // FIXME Hack for making work msh quad HO
-  }
-
-  if(bndEl2column.empty()) return;
-
-  std::unordered_set<MVertex*> vertices_to_keep;
-  for(auto gface = GModel::current()->firstFace(); gface != GModel::current()->lastFace(); ++gface) {
-    std::vector<MQuadrangle*> quadrangles = (*gface)->quadrangles;
-    for(auto quad : quadrangles) {
-      int num_vert = quad->getNumVertices();
-      for(int i = 0; i < num_vert; ++i) {
-        MVertex *v = quad->getVertex(i);
-        vertices_to_keep.insert(v);
-      }
-    }
-  }
-
-  for(auto gface = GModel::current()->firstFace(); gface != GModel::current()->lastFace(); ++gface) {
-    std::vector<MTriangle*> triangles = (*gface)->triangles;
-    for(auto triangle : triangles) {
-      int num_vert = triangle->getNumVertices();
-      int polyo = triangle->getPolynomialOrder();
-      for(int i = 3*polyo; i < num_vert; ++i) {
-        MVertex *v = triangle->getVertex(i);
-        v->setXYZ(-100, -100, 0);
-      }
-    }
-    (*gface)->triangles.clear(); // FIXME Hack for visu
-
-    std::vector<MVertex*> vertices = (*gface)->mesh_vertices;
-
-    std::vector<MVertex*> vertices_to_remove;
-    for (MVertex *v : vertices) {
-      if (vertices_to_keep.find(v) == vertices_to_keep.end()) {
-        vertices_to_remove.push_back(v);
-      }
-    }
-
-    std::cout << "Removing " << vertices_to_remove.size() << " vertices" << std::endl;
-
-    for(auto &v : vertices_to_remove) {
-      v->setXYZ(-100, -100, 0);
-    }
-  }
+  // // Hack for making pictures without HO vertices of triangles
+  // {
+  //   if(normal.z() < .5) {
+  //     normal *= -1; // FIXME Hack for making work msh quad HO
+  //   }
+  //
+  //   if(bndEl2column.empty()) return;
+  //
+  //   std::unordered_set<MVertex*> vertices_to_keep;
+  //   for(auto gface = GModel::current()->firstFace(); gface != GModel::current()->lastFace(); ++gface) {
+  //     std::vector<MQuadrangle*> quadrangles = (*gface)->quadrangles;
+  //     for(auto quad : quadrangles) {
+  //       int num_vert = quad->getNumVertices();
+  //       for(int i = 0; i < num_vert; ++i) {
+  //         MVertex *v = quad->getVertex(i);
+  //         vertices_to_keep.insert(v);
+  //       }
+  //     }
+  //   }
+  //
+  //   for(auto gface = GModel::current()->firstFace(); gface != GModel::current()->lastFace(); ++gface) {
+  //     std::vector<MTriangle*> triangles = (*gface)->triangles;
+  //     for(auto triangle : triangles) {
+  //       int num_vert = triangle->getNumVertices();
+  //       int polyo = triangle->getPolynomialOrder();
+  //       for(int i = 3*polyo; i < num_vert; ++i) {
+  //         MVertex *v = triangle->getVertex(i);
+  //         v->setXYZ(-100, -100, 0);
+  //       }
+  //     }
+  //     (*gface)->triangles.clear(); // FIXME Hack for visu
+  //
+  //     std::vector<MVertex*> vertices = (*gface)->mesh_vertices;
+  //
+  //     std::vector<MVertex*> vertices_to_remove;
+  //     for (MVertex *v : vertices) {
+  //       if (vertices_to_keep.find(v) == vertices_to_keep.end()) {
+  //         vertices_to_remove.push_back(v);
+  //       }
+  //     }
+  //
+  //     std::cout << "Removing " << vertices_to_remove.size() << " vertices" << std::endl;
+  //
+  //     for(auto &v : vertices_to_remove) {
+  //       v->setXYZ(-100, -100, 0);
+  //     }
+  //   }
+  // }
 
   //  for (int i = 0; i < bndEl2column.size(); ++i) {
   //    bndEl2column[i].first->setVisibility(1);
@@ -3369,14 +3372,14 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
   //  }
 
   // for(int i = 0; i < bndEl2column.size(); ++i) {
-  //   BoundaryLayerCurver::touch_boundary(bndEl2column[i], nullptr, gedge, normal);
+  //   BoundaryLayerCurver::dev_touch_boundary(bndEl2column[i], nullptr, gedge, normal);
   // }
 
   // for(int i = 0; i < bndEl2column.size(); ++i) {
-  //   BoundaryLayerCurver::change_normals(bndEl2column[i], nullptr, gedge, normal);
+  //   BoundaryLayerCurver::dev_change_normals(bndEl2column[i], nullptr, gedge, normal);
   // }
 
-  // BoundaryLayerCurver::reorient_normals(bndEl2column, nullptr, gedge, normal);
+  // BoundaryLayerCurver::dev_reorient_normals(bndEl2column, nullptr, gedge, normal);
 
   for(int i = 0; i < bndEl2column.size(); ++i) {
     // if (bndEl2column[i].first->getNum() != 205) continue; // t161
