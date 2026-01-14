@@ -2955,7 +2955,31 @@ namespace BoundaryLayerCurver {
     return true;
   }
 
-  bool curve2Dcolumn_newIdea(PairMElemVecMElem &column, const GFace *gface,
+  void computeRelativePositions(const std::vector<MEdgeN> &stackEdges, std::vector<double> relativePositions)
+  {
+    // FIXME: this is some basic code, need generalization for extrusion normal
+    //        changing direction
+
+    // Compute total thickness (left and right)
+    const MEdgeN *baseEdge = &stackEdges[0];
+    SVector3 v = stackEdges.back().pnt(-1) - baseEdge->pnt(-1);
+    double thickness_left = v.norm();
+    v = stackEdges.back().pnt(1) - baseEdge->pnt(1);
+    double thickness_right = v.norm();
+
+    // Compute ratios
+    relativePositions.resize(stackEdges.size());
+    relativePositions[0] = 0.0;
+    for(auto i = 1; i < stackEdges.size(); ++i) {
+      const MEdgeN *edge = &stackEdges[i];
+      v = edge->pnt(-1) - baseEdge->pnt(-1);
+      double ratio = v.norm() / thickness_left;
+      v = edge->pnt(1) - baseEdge->pnt(1);
+      relativePositions[i] = std::min(ratio, v.norm() / thickness_right);
+    }
+  }
+
+  bool curve2Dcolumn_newIdea(Parameters params, PairMElemVecMElem &column, const GFace *gface,
                              const GEdge *gedge, const SVector3 &normal)
   {
     // This approach consists in:
@@ -2975,33 +2999,17 @@ namespace BoundaryLayerCurver {
     std::vector<MFaceN> stackFaces;
     computeStackHOEdgesFaces(column, stackEdges, stackFaces);
 
-    // Compute total thickness
-    // FIXME: this is some basic code, need generalization for extrusion normal
-    //        changing direction (+ in the following loop)
-    MEdgeN *baseEdge = &stackEdges[0];
-    SVector3 v = stackEdges.back().pnt(-1) - baseEdge->pnt(-1);
-    double thickness_left = v.norm();
-    v = stackEdges.back().pnt(1) - baseEdge->pnt(1);
-    double thickness_right = v.norm();
+    // Compute relative positions
+    std::vector<double> relativePositions(stackEdges.size());
+    computeRelativePositions(stackEdges, relativePositions);
 
-    // Curve topEdge of first element and last edge
-    // int iFirst = 1, iLast = (int)stackEdges.size() - 1;
-    // MEdgeN *baseEdge = &stackEdges[0];
-    std::vector<double> ratios(stackEdges.size());
-    ratios[0] = 0.0;
+    // Curve all edges
     for(auto i = 1; i < stackEdges.size(); ++i) {
       MEdgeN *next = nullptr;
       if(i+1 < stackEdges.size()) {
        next = &stackEdges[i+1];
       }
-      v = stackEdges[i].pnt(1) - baseEdge->pnt(1);
-      double ratio = v.norm() / thickness_left;
-      if(i+1 < stackEdges.size()) {
-        v = next->pnt(1) - baseEdge->pnt(1);
-        ratio = std::min(ratio, v.norm() / thickness_right);
-      }
-      ratios[i] = ratio;
-      EdgeCurver2D::curveEdge_newIdea(&stackEdges[i-1], &stackEdges[i], gface, normal, next, ratio);
+      EdgeCurver2D::curveEdge_newIdea(&stackEdges[i-1], &stackEdges[i], gface, normal, next, relativePositions[i]);
       // FIXME: Should we check the quality of first element? In which case, if
       //  the quality is not good, what do we do? I don't know for now
     }
@@ -3020,9 +3028,9 @@ namespace BoundaryLayerCurver {
       for(int i = 1; i < N - 1; ++i) {
         double c = 0;
         double dx = 0;
-        if(ratios[i] > start) {
-          c = coeff / (1 - start) * (ratios[i] - start);
-          dx = max_displ / (1 - start) * (ratios[i] - start);
+        if(relativePositions[i] > start) {
+          c = coeff / (1 - start) * (relativePositions[i] - start);
+          dx = max_displ / (1 - start) * (relativePositions[i] - start);
           // if(start_index == -1) start_index = i - 1;
           // c = coeff / (N-1 - start_index) * (i - start_index);
           // dx = max_displ / (N-1 - start_index) * (i - start_index);
