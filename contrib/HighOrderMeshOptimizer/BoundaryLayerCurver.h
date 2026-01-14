@@ -44,6 +44,17 @@ typedef std::pair<MElement *, std::vector<MElement *> > PairMElemVecMElem;
 typedef std::vector<PairMElemVecMElem> VecPairMElemVecMElem;
 
 namespace BoundaryLayerCurver {
+
+  struct Parameters {
+    bool smoothBoundary; // Smooth boundary before (not implemented)
+    bool ensureQualityOuterMesh; // Check the validity/quality of the outer mesh (not implemented)
+    double alignmentFactor; // Try to align edges of adjacent elements if > 0
+    double endSmoothingFactor; // Smooth curving of last layer if > 0 (not implemented)
+    double endLinearizationFactor; // Reduce curving of last layer if > 0
+    // If ensureQualityOuterMesh=ON, endSmoothingFactor>0 or endLinearizationFactor>0:
+    double backpropLimit; // % of thickness layer not concerned by backpropagation algorithm
+  };
+
   bool computeCommonEdge(MElement *el1, MElement *el2, MEdge &e);
 
   void repositionInnerVertices(const std::vector<MFaceN> &stackFaces,
@@ -208,11 +219,13 @@ namespace BoundaryLayerCurver {
 } // namespace BoundaryLayerCurver
 
 // BL in planar surface (always prefer this one if possible)
-void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
+void curve2DBoundaryLayer(BoundaryLayerCurver::Parameters,
+                          VecPairMElemVecMElem &bndEl2column, SVector3 normal,
                           const GEdge *edge = nullptr);
 
 // BL on CAD surface
-void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, const GFace *,
+void curve2DBoundaryLayer(BoundaryLayerCurver::Parameters,
+                          VecPairMElemVecMElem &bndEl2column, const GFace *,
                           const GEdge *);
 
 // 3D BL

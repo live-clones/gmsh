@@ -1164,12 +1164,19 @@ namespace {
     }
 
     if(p.dim == 2) {
+      BoundaryLayerCurver::Parameters params;
+      params.smoothBoundary = p.newAlgoSmoothBoundary;
+      params.ensureQualityOuterMesh = p.newAlgoEnsureQualityOuterMesh;
+      params.alignmentFactor = p.newAlgoAlignmentFactor;
+      params.endSmoothingFactor = p.newAlgoEndSmoothingFactor;
+      params.endLinearizationFactor = p.newAlgoEndLinearizationFactor;
+      params.backpropLimit = p.newAlgoBackpropLimit;
       if(normal.norm() > .5) {
-        curve2DBoundaryLayer(bndEl2column, normal,
+        curve2DBoundaryLayer(params, bndEl2column, normal,
                              dynamic_cast<GEdge *>(bndEnt));
       }
       else {
-        curve2DBoundaryLayer(bndEl2column, dynamic_cast<GFace *>(ent),
+        curve2DBoundaryLayer(params, bndEl2column, dynamic_cast<GFace *>(ent),
                              dynamic_cast<GEdge *>(bndEnt));
       }
     }

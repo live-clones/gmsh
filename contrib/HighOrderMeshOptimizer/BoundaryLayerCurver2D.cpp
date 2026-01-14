@@ -1780,7 +1780,7 @@ namespace BoundaryLayerCurver {
       }
     }
 
-    void curveEdge_newIdea(const MEdgeN *baseEdge, MEdgeN *edge, const GFace *gface,
+    void curveEdge_newIdea(Parameters params, const MEdgeN *baseEdge, MEdgeN *edge, const GFace *gface,
                            const SVector3 &normal, MEdgeN *next, double current_h)
     {
       _Frame frame(baseEdge, gface, normal);
@@ -1858,7 +1858,7 @@ namespace BoundaryLayerCurver {
       gamma = current_h;
       // gamma = 1;
       gamma = 0; // 0 = curved
-      double kappa = .1;
+      double kappa = params.alignmentFactor;
       double tau = .1;
       _reduceCurving_newIdea2(edge, minThickness*tau, gface, gamma, kappa, baseEdge, next);
 
@@ -3009,15 +3009,15 @@ namespace BoundaryLayerCurver {
       if(i+1 < stackEdges.size()) {
        next = &stackEdges[i+1];
       }
-      EdgeCurver2D::curveEdge_newIdea(&stackEdges[i-1], &stackEdges[i], gface, normal, next, relativePositions[i]);
+      EdgeCurver2D::curveEdge_newIdea(params, &stackEdges[i-1], &stackEdges[i], gface, normal, next, relativePositions[i]);
       // FIXME: Should we check the quality of first element? In which case, if
       //  the quality is not good, what do we do? I don't know for now
     }
     // TODO: Here we need to check the validity/quality of the two last elements
     //  (last of BL and exterior one) and reduce the curvature if necessary.
 
-    double gamma = 0;
-    double start = 0;
+    double gamma = params.endLinearizationFactor;
+    double start = params.backpropLimit;
     int start_index = -1;
     int N = (int)stackEdges.size();
     if(gamma) {
@@ -3286,7 +3286,8 @@ namespace BoundaryLayerCurver {
   }
 } // namespace BoundaryLayerCurver
 
-void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
+void curve2DBoundaryLayer(BoundaryLayerCurver::Parameters params,
+                          VecPairMElemVecMElem &bndEl2column, SVector3 normal,
                           const GEdge *gedge)
 {
   // TODO:
@@ -3407,11 +3408,12 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column, SVector3 normal,
     // if (bndEl2column[i].first->getNum() != 6994) continue; // HO -> trailingL2
     // BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], nullptr, gedge, normal);
     //if (bndEl2column[i].first->getNum() != 12882) continue;
-    BoundaryLayerCurver::curve2Dcolumn_newIdea(bndEl2column[i], nullptr, gedge, normal);
+    BoundaryLayerCurver::curve2Dcolumn_newIdea(params, bndEl2column[i], nullptr, gedge, normal);
   }
 }
 
-void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
+void curve2DBoundaryLayer(BoundaryLayerCurver::Parameters params,
+                          VecPairMElemVecMElem &bndEl2column,
                           const GFace *gface, const GEdge *gedge)
 {
   if(!gface || !gedge) {
@@ -3431,6 +3433,6 @@ void curve2DBoundaryLayer(VecPairMElemVecMElem &bndEl2column,
   for(int i = 0; i < bndEl2column.size(); ++i)
 //    BoundaryLayerCurver::curve2Dcolumn(bndEl2column[i], gface, gedge,
 //                                       SVector3());
-    BoundaryLayerCurver::curve2Dcolumn_newIdea(bndEl2column[i], nullptr, gedge,
+    BoundaryLayerCurver::curve2Dcolumn_newIdea(params, bndEl2column[i], nullptr, gedge,
                                        SVector3());
 }

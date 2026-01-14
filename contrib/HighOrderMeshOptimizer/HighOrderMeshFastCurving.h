@@ -45,6 +45,13 @@ struct FastCurvingParameters {
 
   // New algo (experimental)
   bool useNewAlgo; // Curve boundary layer with new algo
+  bool newAlgoSmoothBoundary; // Smooth boundary before (not implemented)
+  bool newAlgoEnsureQualityOuterMesh; // Check the validity/quality of the outer mesh (not implemented)
+  double newAlgoAlignmentFactor; // Try to align edges of adjacent elements if > 0
+  double newAlgoEndSmoothingFactor; // Smooth curving of last layer if > 0
+  double newAlgoEndLinearizationFactor; // Reduce curving of last layer if > 0
+  // If newAlgoEnsureQualityOuterMesh=ON, newAlgoEndSmoothingFactor>0 or newAlgoEndLinearizationFactor>0:
+  double newAlgoBackpropLimit; // % of thickness layer not concerned by backpropagation algorithm
 
   FastCurvingParameters()
     : dim(3), onlyVisible(true), optimizeGeometry(false),

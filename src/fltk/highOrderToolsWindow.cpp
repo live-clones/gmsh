@@ -150,7 +150,50 @@ static void chooseopti_strategy(Fl_Widget *w, void *data)
 
 static void highordertools_runblc_cb(Fl_Widget *w, void *data)
 {
-  Msg::Error("Not implemented");
+  highOrderToolsWindow *o = FlGui::instance()->highordertools;
+
+  if(o->butt[3]->value()) FlGui::instance()->graph[0]->showMessages();
+  bool onlyVisible = (bool)o->butt[1]->value();
+
+  bool smoothBoundaryFirst = (bool)o->butt[4]->value();
+  bool ensureQualityOuterMesh = (bool)o->butt[5]->value();
+  double endSmoothingFactor = o->value[12]->value(); // FIXME
+  double endLinearizationFactor = o->value[15]->value();
+  double percentageToPreserve = o->value[13]->value();
+  double alignmentFactor = o->value[14]->value();
+
+#if defined(HAVE_OPTHOM)
+  FastCurvingParameters p;
+  p.onlyVisible = onlyVisible;
+  p.useNewAlgo = true;
+  p.curveOuterBL =
+    (FastCurvingParameters::OUTERBLCURVE)CTX::instance()->mesh.hoCurveOuterBL;
+  p.newAlgoSmoothBoundary = smoothBoundaryFirst;
+  p.newAlgoEnsureQualityOuterMesh = ensureQualityOuterMesh;
+  p.newAlgoAlignmentFactor = alignmentFactor;
+  p.newAlgoEndSmoothingFactor = endSmoothingFactor;
+  p.newAlgoEndLinearizationFactor = endLinearizationFactor;
+  p.newAlgoBackpropLimit = percentageToPreserve;
+
+  auto *gm = GModel::current();
+
+  int NE = 0;
+  for (auto *r : gm->getRegions()) NE += r->getNumMeshElements();
+
+  const int gdim = gm->getDim();
+  // const int dim = (gdim == 3) ? (NE > 0 ? 3 : 2) : gdim;
+  const int dim = (gdim == 3) ? 2 : gdim;
+
+  p.dim = dim;
+  HighOrderMeshFastCurving(GModel::current(), p);
+#else
+  Msg::Error("High-order mesh optimization requires the OPTHOM module");
+#endif
+
+  FixPeriodicMesh(GModel::current());
+
+  CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+  drawContext::global()->draw();
 }
 
 static void highordertools_runopti_cb(Fl_Widget *w, void *data)
@@ -283,7 +326,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   FL_NORMAL_SIZE -= deltaFontSize;
 
   int width = 3 * IW + 4 * WB;
-  int height = 31 * BH + BH / 2;
+  int height = 33 * BH + BH / 2;
   int skip = 4;
 
   win = new paletteWindow(width, height,
@@ -379,23 +422,12 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
   y += BH;
 
-  value[12] = new Fl_Value_Input(x, y, IW, BH, "Exterior curving factor");
-  value[12]->minimum(0);
-  value[12]->maximum(1);
-  if(CTX::instance()->inputScrolling) value[12]->step(.01);
-  value[12]->align(FL_ALIGN_RIGHT);
-  value[12]->value(0);
-  value[12]->tooltip("Choose in [0, 1], where: 0=forceLinearExteriorMesh, 1=completelyCurveExteriorMesh");
-
-  y += BH;
-
-  value[13] = new Fl_Value_Input(x, y, IW, BH, "Percentage of thickness to preserve from linearity");
-  value[13]->minimum(0);
-  value[13]->maximum(1);
-  if(CTX::instance()->inputScrolling) value[13]->step(.01);
-  value[13]->align(FL_ALIGN_RIGHT);
-  value[13]->value(0);
-  value[13]->tooltip("Choose in [0, 1[, where: 0=doNotPreserve, 1=completelyAlignAdjacentElement");
+  butt[5] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
+                                "Ensure validity/quality of exterior mesh");
+  butt[5]->type(FL_TOGGLE_BUTTON);
+  butt[5]->tooltip("Choose []=skipThis or [x]=smoothTheBoundary");
+  butt[5]->value(0);
+  butt[5]->deactivate();
 
   y += BH;
 
@@ -404,8 +436,40 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[14]->maximum(1);
   if(CTX::instance()->inputScrolling) value[14]->step(.01);
   value[14]->align(FL_ALIGN_RIGHT);
-  value[14]->value(1);
+  value[14]->value(.25);
   value[14]->tooltip("Choose in [0, 1], where: 0=doNotTryToAlign, 1=completelyAlignAdjacentElement");
+
+  y += BH;
+
+  value[12] = new Fl_Value_Input(x, y, IW, BH, "End of BL smoothing factor");
+  value[12]->minimum(0);
+  value[12]->maximum(1);
+  if(CTX::instance()->inputScrolling) value[12]->step(.01);
+  value[12]->align(FL_ALIGN_RIGHT);
+  value[12]->value(0);
+  value[12]->tooltip("Choose in [0, 1], where: 0=forceLowOrderEndOfBL, 1=keepHighOrderEndOfBL");
+  value[12]->deactivate();
+
+  y += BH;
+
+  value[15] = new Fl_Value_Input(x, y, IW, BH, "End of BL linearization factor");
+  value[15]->minimum(0);
+  value[15]->maximum(1);
+  if(CTX::instance()->inputScrolling) value[15]->step(.01);
+  value[15]->align(FL_ALIGN_RIGHT);
+  value[15]->value(0);
+  value[15]->tooltip("Choose in [0, 1], where: 0=completelyCurveEndOfBL, 1=forceLinearEndOfBL");
+  //value[15]->tooltip("Choose in [0, 1], where: 0=forceLinearEndOfBL, 1=completelyCurveEndOfBL");
+
+  y += BH;
+
+  value[13] = new Fl_Value_Input(x, y, IW, BH, "Backprop limit (BL fraction)");
+  value[13]->minimum(0);
+  value[13]->maximum(1);
+  if(CTX::instance()->inputScrolling) value[13]->step(.01);
+  value[13]->align(FL_ALIGN_RIGHT);
+  value[13]->value(.1);
+  value[13]->tooltip("Choose in [0, 1[, where: 0=backpropAffectsAllBL, 1=noBackprop");
 
   y += BH;
 
