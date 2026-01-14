@@ -2955,7 +2955,7 @@ namespace BoundaryLayerCurver {
     return true;
   }
 
-  void computeRelativePositions(const std::vector<MEdgeN> &stackEdges, std::vector<double> relativePositions)
+  void computeRelativePositions(const std::vector<MEdgeN> &stackEdges, std::vector<double> &relativePositions)
   {
     // FIXME: this is some basic code, need generalization for extrusion normal
     //        changing direction
