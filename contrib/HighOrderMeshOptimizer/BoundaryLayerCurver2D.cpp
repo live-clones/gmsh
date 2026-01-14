@@ -1081,18 +1081,18 @@ namespace BoundaryLayerCurver {
       const fullMatrix<double> &refNodes_gmsh = nb->getReferenceNodes();
       // refNodes_gmsh.print(std::string("refNodes_gmsh"), std::string(""));
       int nbDof = refNodes_gmsh.size1();
-      fullMatrix<double> refNodes_seq(polyo + 1, 3);
+      fullMatrix<double> refNodes_seq(polyo + 1, 1);
       refNodes_seq(0, 0) = refNodes_gmsh(0, 0);
-      refNodes_seq(0, 1) = refNodes_gmsh(0, 1);
-      refNodes_seq(0, 2) = refNodes_gmsh(0, 2);
+      // refNodes_seq(0, 1) = refNodes_gmsh(0, 1);
+      // refNodes_seq(0, 2) = refNodes_gmsh(0, 2);
       for(int i = 1; i < polyo; ++i) {
         refNodes_seq(i, 0) = refNodes_gmsh(i+1, 0);
-        refNodes_seq(i, 1) = refNodes_gmsh(i+1, 1);
-        refNodes_seq(i, 2) = refNodes_gmsh(i+1, 2);
+        // refNodes_seq(i, 1) = refNodes_gmsh(i+1, 1);
+        // refNodes_seq(i, 2) = refNodes_gmsh(i+1, 2);
       }
       refNodes_seq(polyo, 0) = refNodes_gmsh(1, 0);
-      refNodes_seq(polyo, 1) = refNodes_gmsh(1, 1);
-      refNodes_seq(polyo, 2) = refNodes_gmsh(1, 2);
+      // refNodes_seq(polyo, 1) = refNodes_gmsh(1, 1);
+      // refNodes_seq(polyo, 2) = refNodes_gmsh(1, 2);
 
       // 1) Construct Position linear system
       A_pos = fullMatrix<double>(polyo - 1, polyo + 1);
