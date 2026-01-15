@@ -1669,19 +1669,15 @@ static void writeMSH4Entities(
     for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
       if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
         continue;
-      if (dynamic_cast<overlapFace*>(*it)) {
-        continue;
-      }
       if((*it)->geomType() != GEntity::PartitionSurface &&
-         (*it)->geomType() != GEntity::GhostSurface)
+         (*it)->geomType() != GEntity::GhostSurface &&
+         (*it)->geomType() != GEntity::OverlapSurface)
         faces.insert(*it);
     }
     for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
-      if (dynamic_cast<overlapRegion*>(*it)) {
-        continue;
-      }
       if((*it)->geomType() != GEntity::PartitionVolume &&
-         (*it)->geomType() != GEntity::GhostVolume)
+         (*it)->geomType() != GEntity::GhostVolume &&
+         (*it)->geomType() != GEntity::OverlapVolume)
         regions.insert(*it);
     }
   }
