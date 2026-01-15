@@ -52,6 +52,7 @@ struct FastCurvingParameters {
   bool newAlgoEnsureQualityOuterMesh; // Check the validity/quality of the outer mesh
   // If newAlgoEnsureQualityOuterMesh=ON, newAlgoSmoothEndOfBL=ON or newAlgoEndLinearizationFactor>0:
   double newAlgoBackpropLimit; // % of thickness layer not concerned by backpropagation algorithm
+  int newAlgoInterpolationType; // % of thickness layer not concerned by backpropagation algorithm
 
   FastCurvingParameters()
     : dim(3), onlyVisible(true), optimizeGeometry(false),

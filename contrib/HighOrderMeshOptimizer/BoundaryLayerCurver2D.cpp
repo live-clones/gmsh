@@ -260,11 +260,12 @@ namespace BoundaryLayerCurver {
     }
 
     void _Frame::computeFrame(double paramEdge, SVector3 &t, SVector3 &n,
-                              SVector3 &w, bool atExtremity) const
+                              SVector3 &w, bool atExtremity, int dev_interpType) const
     {
       // Make sure that we execute the right code:
       if (_newIdea && _gedge) Msg::Error("There was an error in BLCurver computeFrame");
 
+      // Compute tangent using geometry if available
       if(_gedge) {
         double paramGeoEdge;
         if(atExtremity) {
@@ -280,16 +281,30 @@ namespace BoundaryLayerCurver {
         t = _gedge->firstDer(paramGeoEdge);
         t.normalize();
       }
+
+      // Compute tangent using previous edge if necessary
       if(!_gedge || t.norm() == 0) {
         if (_newIdea) {
-//          Msg::Error("TO BE IMPLEMENTED");
-          t = tangentBSpline(_edgeOnBoundary, paramEdge);
-          // TODO: Here, I have to change to compute smooth tangent
+          // t = tangentBSpline(_edgeOnBoundary, paramEdge);
+          // // TODO: Here, I have to change to compute smooth tangent
+          switch (dev_interpType) {
+          case -1:
+            Msg::Error("dev_interpType = -1: unexpected");
+          default:
+            Msg::Error("not implemented, using BSpline tangent");
+          case 1:
+            t = tangentBSpline(_edgeOnBoundary, paramEdge);
+            break;
+          case 0:
+            t = _edgeOnBoundary->tangent(paramEdge);
+            break;
+          }
         }
         else
           t = _edgeOnBoundary->tangent(paramEdge);
       }
 
+      // Compute normal to BL
       if(_gface) {
         SPoint2 paramGFace;
         if(atExtremity) {
@@ -314,6 +329,8 @@ namespace BoundaryLayerCurver {
       if(w.norm() == 0) {
         Msg::Error("normal to the CAD or 2Dmesh is nul. BL curving will fail.");
       }
+
+      // Compute normal inside BL
       n = crossprod(w, t);
     }
 
@@ -408,12 +425,12 @@ namespace BoundaryLayerCurver {
     }
 
     void _computeParameters(const MEdgeN *baseEdge, const MEdgeN *otherEdge,
-                            const _Frame &frame, double coeffs[2][3])
+                            const _Frame &frame, double coeffs[2][3], int dev_interpType)
     {
       SVector3 t, n, w, h;
       MVertex *vb, *vt;
 
-      frame.computeFrame(-1, t, n, w, true);
+      frame.computeFrame(-1, t, n, w, true, dev_interpType);
       vb = baseEdge->getVertex(0);
       vt = otherEdge->getVertex(0);
       h = SVector3(vt->x() - vb->x(), vt->y() - vb->y(), vt->z() - vb->z());
@@ -425,7 +442,7 @@ namespace BoundaryLayerCurver {
 //      //      SPoint3 p1(vb->x(), vb->y(), vb->z());
 //      draw3DFrame(p1, t, n, w, .0004);
 
-      frame.computeFrame(1, t, n, w, true);
+      frame.computeFrame(1, t, n, w, true, dev_interpType);
       vb = baseEdge->getVertex(1);
       vt = otherEdge->getVertex(1);
       h = SVector3(vt->x() - vb->x(), vt->y() - vb->y(), vt->z() - vb->z());
@@ -441,7 +458,8 @@ namespace BoundaryLayerCurver {
     void _refPntsForALPShiftedCurve(const MEdgeN *baseEdge, const _Frame &frame,
                                     double coeffs[2][3], 
                                     const std::vector<double> &refTarget,
-                                    std::vector<double> &refForExtrusion)
+                                    std::vector<double> &refForExtrusion,
+                                    int dev_interpType)
     {
       // ALP is for 'arc-length parameterized'
       // The idea is the following:
@@ -523,9 +541,9 @@ namespace BoundaryLayerCurver {
 
       // use now 'points' for shifted ones, extremities are fixed
       SVector3 t, n, w;
-      frame.computeFrame(-1, t, n, w);
+      frame.computeFrame(-1, t, n, w, false, dev_interpType);
       points[0] = points[0] + thickness * n;
-      frame.computeFrame(1, t, n, w);
+      frame.computeFrame(1, t, n, w, false, dev_interpType);
       points[nbPoints-1] = points[nbPoints-1] + thickness * n;
 
       // Init refForExtrusion with refTarget (s^0_i = g_i)
@@ -542,7 +560,7 @@ namespace BoundaryLayerCurver {
         // Compute shifted points
         for(size_t i = 1; i < nbPoints-1; ++i) {
           double u = refForExtrusion[i];
-          frame.computeFrame(u, t, n, w);
+          frame.computeFrame(u, t, n, w, false, dev_interpType);
           points[i] = baseEdge->pnt(u) + thickness * n;
         }
 //
@@ -612,7 +630,7 @@ namespace BoundaryLayerCurver {
     }
 
     // FIXME rename sampleIdealCurve?
-    void _idealPositionEdge(const MEdgeN *baseEdge, const _Frame &frame,
+    void _idealPositionEdge(Parameters params, const MEdgeN *baseEdge, const _Frame &frame,
                             double coeffs[2][3], int nbPoints,
                             const IntPt *points, fullMatrix<double> &xyz)
     {
@@ -625,7 +643,7 @@ namespace BoundaryLayerCurver {
       }
 
       std::vector<double> refPnts(nbPoints+2);
-      _refPntsForALPShiftedCurve(baseEdge, frame, coeffs, refTarget, refPnts);
+      _refPntsForALPShiftedCurve(baseEdge, frame, coeffs, refTarget, refPnts, params.interpolationType);
 
 //      for(size_t i = 0; i < nbPoints+2; ++i) {
 //        std::cout << refTarget[i] << " " << refPnts[i] << std:: endl;
@@ -642,7 +660,7 @@ namespace BoundaryLayerCurver {
         double u = refPnts[i+1];
         SPoint3 p = baseEdge->pnt(u);
         SVector3 t, n, w;
-        frame.computeFrame(u, t, n, w);
+        frame.computeFrame(u, t, n, w, false, params.interpolationType);
 
 //        //        draw3DFrame(p, t, n, w, .0002);
 //        SPoint3 pp = frame.pnt(u);
@@ -674,7 +692,8 @@ namespace BoundaryLayerCurver {
     }
 
     void _drawIdealPositionEdge(const MEdgeN *baseEdge, const _Frame &frame,
-                                double coeffs[2][3], GEdge *gedge = nullptr)
+                                double coeffs[2][3], GEdge *gedge = nullptr,
+                                int dev_interpType = -1)
     {
       if(!gedge) gedge = *GModel::current()->firstEdge();
       int N = 100;
@@ -684,7 +703,7 @@ namespace BoundaryLayerCurver {
         const double u = (double)i / N * 2 - 1;
         SPoint3 p = baseEdge->pnt(u);
         SVector3 t, n, w;
-        frame.computeFrame(u, t, n, w);
+        frame.computeFrame(u, t, n, w, false, dev_interpType);
 
         double interpolatedCoeffs[3];
         for(int j = 0; j < 3; ++j) {
@@ -711,13 +730,15 @@ namespace BoundaryLayerCurver {
       }
     }
 
-    void curveEdge(const MEdgeN *baseEdge, MEdgeN *edge, const GFace *gface,
+    void curveEdge(Parameters params, const MEdgeN *baseEdge, MEdgeN *edge, const GFace *gface,
                    const GEdge *gedge, const SVector3 &normal)
     {
-      _Frame frame(baseEdge, gface, gedge, normal);
+
+      // _Frame frame(baseEdge, gface, gedge, normal); // original
+      _Frame frame(baseEdge, gface, normal); // (dev) newIdea
 
       double coeffs[2][3];
-      _computeParameters(baseEdge, edge, frame, coeffs);
+      _computeParameters(baseEdge, edge, frame, coeffs, params.interpolationType);
 
       const int orderCurve = baseEdge->getPolynomialOrder();
       const int orderGauss = orderCurve * 2;
@@ -726,7 +747,7 @@ namespace BoundaryLayerCurver {
 
       // Least square projection
       fullMatrix<double> xyz(sizeSystem + 2, 3);
-      _idealPositionEdge(baseEdge, frame, coeffs, sizeSystem, gaussPnts, xyz);
+      _idealPositionEdge(params, baseEdge, frame, coeffs, sizeSystem, gaussPnts, xyz);
       //      _drawIdealPositionEdge(baseEdge, frame, coeffs, (GEdge*)gedge);
       for(int i = 0; i < 2; ++i) {
         xyz(sizeSystem + i, 0) = edge->getVertex(i)->x();
@@ -1821,7 +1842,7 @@ namespace BoundaryLayerCurver {
       _Frame frame(baseEdge, gface, normal);
 
       double coeffs[2][3];
-      _computeParameters(baseEdge, edge, frame, coeffs);
+      _computeParameters(baseEdge, edge, frame, coeffs, params.interpolationType);
 
       const int orderCurve = baseEdge->getPolynomialOrder();
       const int orderGauss = orderCurve * 2;
@@ -1830,8 +1851,8 @@ namespace BoundaryLayerCurver {
 
       // Least square projection
       fullMatrix<double> xyz(sizeSystem + 2, 3);
-      _idealPositionEdge(baseEdge, frame, coeffs, sizeSystem, gaussPnts, xyz);
-      // _drawIdealPositionEdge(baseEdge, frame, coeffs);
+      _idealPositionEdge(params, baseEdge, frame, coeffs, sizeSystem, gaussPnts, xyz);
+      // _drawIdealPositionEdge(baseEdge, frame, coeffs, params.interpolationType);
       for(int i = 0; i < 2; ++i) {
         xyz(sizeSystem + i, 0) = edge->getVertex(i)->x();
         xyz(sizeSystem + i, 1) = edge->getVertex(i)->y();
@@ -2979,8 +3000,10 @@ namespace BoundaryLayerCurver {
     }
     MEdgeN *topEdge = &stackEdges[iLast];
 
-    EdgeCurver2D::curveEdge(baseEdge, firstEdge, gface, gedge, normal);
-    EdgeCurver2D::curveEdge(baseEdge, topEdge, gface, gedge, normal);
+    // FIXME: (dev) hack for compilation
+    Msg::Error("Should not be here calling curveEdge with Parameters() as first argument");
+    EdgeCurver2D::curveEdge(Parameters(), baseEdge, firstEdge, gface, gedge, normal);
+    EdgeCurver2D::curveEdge(Parameters(), baseEdge, topEdge, gface, gedge, normal);
     EdgeCurver2D::recoverQualityElements(stackEdges, stackFaces, column.second,
                                          iFirst, iLast, gface);
 
@@ -3047,6 +3070,8 @@ namespace BoundaryLayerCurver {
       EdgeCurver2D::curveEdge_newIdea(params, &stackEdges[i-1], &stackEdges[i], gface, normal, next, relativePositions[i]);
       // FIXME: Should we check the quality of first element? In which case, if
       //  the quality is not good, what do we do? I don't know for now
+      // FIXME: (dev) this was for testing
+      // EdgeCurver2D::curveEdge(params, &stackEdges[i-1], &stackEdges[i], gface, nullptr, normal);
     }
 
     /*

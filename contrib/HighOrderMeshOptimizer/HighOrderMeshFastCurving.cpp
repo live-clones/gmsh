@@ -1171,6 +1171,7 @@ namespace {
       params.endLinearizationFactor = p.newAlgoEndLinearizationFactor;
       params.ensureQualityOuterMesh = p.newAlgoEnsureQualityOuterMesh;
       params.backpropLimit = p.newAlgoBackpropLimit;
+      params.interpolationType = p.newAlgoInterpolationType;
       if(normal.norm() > .5) {
         curve2DBoundaryLayer(params, bndEl2column, normal,
                              dynamic_cast<GEdge *>(bndEnt));

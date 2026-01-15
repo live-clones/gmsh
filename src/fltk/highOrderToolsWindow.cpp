@@ -161,6 +161,7 @@ static void highordertools_runblc_cb(Fl_Widget *w, void *data)
   double alignmentFactor = o->value[14]->value();
   double endLinearizationFactor = o->value[12]->value();
   double percentageToPreserve = o->value[13]->value();
+  int interpolationType = o->choice[1]->value();
 
 #if defined(HAVE_OPTHOM)
   FastCurvingParameters p;
@@ -174,6 +175,7 @@ static void highordertools_runblc_cb(Fl_Widget *w, void *data)
   p.newAlgoSmoothEndOfBL = smoothEndOfBL;
   p.newAlgoEndLinearizationFactor = endLinearizationFactor;
   p.newAlgoBackpropLimit = percentageToPreserve;
+  p.newAlgoInterpolationType = interpolationType;
 
   auto *gm = GModel::current();
 
@@ -471,6 +473,20 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
   y += BH;
 
+  // FIXME: for dev purpose
+  static Fl_Menu_Item menu_interpolationType[] = {
+    {"Lagrange", 0, nullptr, nullptr},
+    {"BSpline", 0, nullptr, nullptr},
+    {"QLP", 0, nullptr, nullptr},
+    {"QLP+", 0, nullptr, nullptr},
+    {nullptr}};
+  choice[1] = new Fl_Choice(x, y, IW, BH, "Choose interpolation type");
+  choice[1]->align(FL_ALIGN_RIGHT);
+  choice[1]->menu(menu_interpolationType);
+  choice[1]->callback(chooseopti_cb);
+
+  y += BH;
+
   push[2] = new Fl_Button(width - BB - 2 * WB, y, BB, BH, "Curve");
   push[2]->callback(highordertools_runblc_cb);
 
@@ -496,10 +512,9 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
     {"Fast Curving", 0, nullptr, nullptr},
     {"Boundary Layer Curving (experimental)", 0, nullptr, nullptr}, // FIXME Remove this one
     {nullptr}};
-  choice[2] = new Fl_Choice(x, y, IW, BH, "Algorithm");
-  choice[2]->align(FL_ALIGN_RIGHT);
-  choice[2]->menu(menu_method);
-  choice[2]->callback(chooseopti_cb);
+  choice[4] = new Fl_Choice(x, y, IW, BH, "Algorithm");
+  choice[4]->align(FL_ALIGN_RIGHT);
+  choice[4]->menu(menu_method);
 
   y += BH;
   value[1] = new Fl_Value_Input(x, y, IW / 2.0, BH);

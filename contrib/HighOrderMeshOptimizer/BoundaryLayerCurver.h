@@ -53,6 +53,7 @@ namespace BoundaryLayerCurver {
     bool ensureQualityOuterMesh; // Check the validity/quality of the outer mesh (not implemented)
     // If ensureQualityOuterMesh=ON, smoothEndOfBL=ON or endLinearizationFactor>0:
     double backpropLimit; // % of thickness layer not concerned by backpropagation algorithm
+    int interpolationType; // which interpolation
   };
 
   bool computeCommonEdge(MElement *el1, MElement *el2, MEdge &e);
@@ -104,7 +105,7 @@ namespace BoundaryLayerCurver {
       _Frame(const MEdgeN *edge, const GFace *gface, const SVector3 &normal);
 
       void computeFrame(double paramEdge, SVector3 &t, SVector3 &n, SVector3 &w,
-                        bool atExtremity = false) const;
+                        bool atExtremity = false, int dev_interpType = -1) const;
 
       SVector3 tangentBSpline(const MEdgeN *edge, double u) const;
       double computeBSpline(size_t n, double u, const std::vector<double>& t) const;
