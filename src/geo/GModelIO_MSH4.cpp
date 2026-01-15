@@ -1577,9 +1577,12 @@ static void writeMSH4BoundingBox(SBoundingBox3d boundBox, FILE *fp,
   }
 }
 
-static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
-                              bool binary, double scalingFactor, double version,
-                              std::map<GEntity*, SBoundingBox3d> *entityBounds)
+static void writeMSH4Entities(
+  GModel *const model, FILE *fp, bool partition, bool binary,
+  double scalingFactor, double version,
+  std::map<GEntity *, SBoundingBox3d> *entityBounds, int partitionToSave = 0,
+  std::unordered_map<GEntity *, std::unordered_set<MVertex *>> *vertexUsage =
+    nullptr)
 {
   std::set<GEntity *, GEntityPtrFullLessThan> ghost;
   std::set<GRegion *, GEntityPtrLessThan> regions;
@@ -1588,26 +1591,66 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
   std::set<GVertex *, GEntityPtrLessThan> vertices;
 
   if(partition) {
+    auto isInPartition = [&] (GEntity *entity) {
+      if (partitionToSave == 0) return true;
+      auto parts = getEntityPartition(entity, false);
+      return std::find(parts.begin(), parts.end(), partitionToSave) !=
+             parts.end();
+    };
     for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
       if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
         continue;
-      if((*it)->geomType() == GEntity::PartitionPoint) vertices.insert(*it);
+      if((*it)->geomType() == GEntity::PartitionPoint && isInPartition(*it))
+        vertices.insert(*it);
     }
     for(auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
       if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
         continue;
-      if((*it)->geomType() == GEntity::PartitionCurve) edges.insert(*it);
+      if((*it)->geomType() == GEntity::PartitionCurve && isInPartition(*it))
+        edges.insert(*it);
       if((*it)->geomType() == GEntity::GhostCurve) ghost.insert(*it);
     }
     for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
       if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
         continue;
-      if((*it)->geomType() == GEntity::PartitionSurface) faces.insert(*it);
+      if((*it)->geomType() == GEntity::PartitionSurface && isInPartition(*it))
+        faces.insert(*it);
       if((*it)->geomType() == GEntity::GhostSurface) ghost.insert(*it);
     }
     for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
-      if((*it)->geomType() == GEntity::PartitionVolume) regions.insert(*it);
+      if((*it)->geomType() == GEntity::PartitionVolume && isInPartition(*it))
+        regions.insert(*it);
       if((*it)->geomType() == GEntity::GhostVolume) ghost.insert(*it);
+    }
+    // Add partially saved entities
+    if(vertexUsage) {
+      for(const auto &[entity, _] : *vertexUsage) {
+        auto gv = dynamic_cast<GVertex *>(entity);
+        if(gv) vertices.insert(gv);
+        auto ge = dynamic_cast<GEdge *>(entity);
+        if(ge) edges.insert(ge);
+        auto gf = dynamic_cast<GFace *>(entity);
+        if(gf) faces.insert(gf);
+        auto gr = dynamic_cast<GRegion *>(entity);
+        if(gr) regions.insert(gr);
+      }
+    }
+    // Overlap boundaries are partition entities too
+    const auto &innerBnd2D = model->getOverlapInnerBoundaries2D();
+    for(const auto &[parent, boundarySet] : innerBnd2D) {
+      for(const auto &boundary : boundarySet) { edges.insert(boundary); }
+    }
+    const auto &outerBnd2D = model->getOverlapOfBoundaries2D();
+    for(const auto &[parent, boundaryMap] : outerBnd2D) {
+      for(const auto &boundary : boundaryMap) { edges.insert(boundary); }
+    }
+    const auto &innerBnd3D = model->getOverlapInnerBoundaries3D();
+    for(const auto &[parent, boundarySet] : innerBnd3D) {
+      for(const auto &boundary : boundarySet) { faces.insert(boundary); }
+    }
+    const auto &outerBnd3D = model->getOverlapOfBoundaries3D();
+    for(const auto &[parent, boundaryMap] : outerBnd3D) {
+      for(const auto &boundary : boundaryMap) { faces.insert(boundary); }
     }
   }
   else {
@@ -1626,11 +1669,17 @@ static void writeMSH4Entities(GModel *const model, FILE *fp, bool partition,
     for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
       if(CTX::instance()->mesh.saveWithoutOrphans && (*it)->isOrphan())
         continue;
+      if (dynamic_cast<overlapFace*>(*it)) {
+        continue;
+      }
       if((*it)->geomType() != GEntity::PartitionSurface &&
          (*it)->geomType() != GEntity::GhostSurface)
         faces.insert(*it);
     }
     for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
+      if (dynamic_cast<overlapRegion*>(*it)) {
+        continue;
+      }
       if((*it)->geomType() != GEntity::PartitionVolume &&
          (*it)->geomType() != GEntity::GhostVolume)
         regions.insert(*it);
