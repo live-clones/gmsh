@@ -1166,10 +1166,10 @@ namespace {
     if(p.dim == 2) {
       BoundaryLayerCurver::Parameters params;
       params.smoothBoundary = p.newAlgoSmoothBoundary;
-      params.ensureQualityOuterMesh = p.newAlgoEnsureQualityOuterMesh;
       params.alignmentFactor = p.newAlgoAlignmentFactor;
-      params.endSmoothingFactor = p.newAlgoEndSmoothingFactor;
+      params.smoothEndOfBL = p.newAlgoSmoothEndOfBL;
       params.endLinearizationFactor = p.newAlgoEndLinearizationFactor;
+      params.ensureQualityOuterMesh = p.newAlgoEnsureQualityOuterMesh;
       params.backpropLimit = p.newAlgoBackpropLimit;
       if(normal.norm() > .5) {
         curve2DBoundaryLayer(params, bndEl2column, normal,

@@ -47,11 +47,11 @@ namespace BoundaryLayerCurver {
 
   struct Parameters {
     bool smoothBoundary; // Smooth boundary before (not implemented)
-    bool ensureQualityOuterMesh; // Check the validity/quality of the outer mesh (not implemented)
     double alignmentFactor; // Try to align edges of adjacent elements if > 0
-    double endSmoothingFactor; // Smooth curving of last layer if > 0 (not implemented)
+    bool smoothEndOfBL; // Smooth last layer (not implemented)
     double endLinearizationFactor; // Reduce curving of last layer if > 0
-    // If ensureQualityOuterMesh=ON, endSmoothingFactor>0 or endLinearizationFactor>0:
+    bool ensureQualityOuterMesh; // Check the validity/quality of the outer mesh (not implemented)
+    // If ensureQualityOuterMesh=ON, smoothEndOfBL=ON or endLinearizationFactor>0:
     double backpropLimit; // % of thickness layer not concerned by backpropagation algorithm
   };
 

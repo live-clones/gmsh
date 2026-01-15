@@ -3052,7 +3052,7 @@ namespace BoundaryLayerCurver {
     /*
      * TODO:
      *  0. store:
-     *     - smoothingFactor = params.endSmoothingFactor
+     *     - smoothingFactor = params.smoothEndOfBL
      *     - linearizationFactor = params.endLinearizationFactor
      *  1. Smooth last edge (if smoothingFactor > 0)
      *  2. Linearize last edge (if linearizationFactor > 0)

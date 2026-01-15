@@ -156,11 +156,11 @@ static void highordertools_runblc_cb(Fl_Widget *w, void *data)
   bool onlyVisible = (bool)o->butt[1]->value();
 
   bool smoothBoundaryFirst = (bool)o->butt[4]->value();
+  bool smoothEndOfBL = (bool)o->butt[6]->value();
   bool ensureQualityOuterMesh = (bool)o->butt[5]->value();
-  double endSmoothingFactor = o->value[12]->value(); // FIXME
-  double endLinearizationFactor = o->value[15]->value();
-  double percentageToPreserve = o->value[13]->value();
   double alignmentFactor = o->value[14]->value();
+  double endLinearizationFactor = o->value[12]->value();
+  double percentageToPreserve = o->value[13]->value();
 
 #if defined(HAVE_OPTHOM)
   FastCurvingParameters p;
@@ -171,7 +171,7 @@ static void highordertools_runblc_cb(Fl_Widget *w, void *data)
   p.newAlgoSmoothBoundary = smoothBoundaryFirst;
   p.newAlgoEnsureQualityOuterMesh = ensureQualityOuterMesh;
   p.newAlgoAlignmentFactor = alignmentFactor;
-  p.newAlgoEndSmoothingFactor = endSmoothingFactor;
+  p.newAlgoSmoothEndOfBL = smoothEndOfBL;
   p.newAlgoEndLinearizationFactor = endLinearizationFactor;
   p.newAlgoBackpropLimit = percentageToPreserve;
 
@@ -422,10 +422,19 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
   y += BH;
 
+  butt[6] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
+                                "Smooth end of BL");
+  butt[6]->type(FL_TOGGLE_BUTTON);
+  butt[6]->tooltip("Choose []=skipThis or [x]=smoothTheEnd");
+  butt[6]->value(0);
+  butt[6]->deactivate();
+
+  y += BH;
+
   butt[5] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
                                 "Ensure validity/quality of exterior mesh");
   butt[5]->type(FL_TOGGLE_BUTTON);
-  butt[5]->tooltip("Choose []=skipThis or [x]=smoothTheBoundary");
+  butt[5]->tooltip("Choose []=skipThis or [x]=preserveValidityAndQuality");
   butt[5]->value(0);
   butt[5]->deactivate();
 
@@ -441,25 +450,14 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
   y += BH;
 
-  value[12] = new Fl_Value_Input(x, y, IW, BH, "End of BL smoothing factor");
+  value[12] = new Fl_Value_Input(x, y, IW, BH, "End of BL linearization factor");
   value[12]->minimum(0);
   value[12]->maximum(1);
   if(CTX::instance()->inputScrolling) value[12]->step(.01);
   value[12]->align(FL_ALIGN_RIGHT);
   value[12]->value(0);
-  value[12]->tooltip("Choose in [0, 1], where: 0=forceLowOrderEndOfBL, 1=keepHighOrderEndOfBL");
-  value[12]->deactivate();
-
-  y += BH;
-
-  value[15] = new Fl_Value_Input(x, y, IW, BH, "End of BL linearization factor");
-  value[15]->minimum(0);
-  value[15]->maximum(1);
-  if(CTX::instance()->inputScrolling) value[15]->step(.01);
-  value[15]->align(FL_ALIGN_RIGHT);
-  value[15]->value(0);
-  value[15]->tooltip("Choose in [0, 1], where: 0=completelyCurveEndOfBL, 1=forceLinearEndOfBL");
-  //value[15]->tooltip("Choose in [0, 1], where: 0=forceLinearEndOfBL, 1=completelyCurveEndOfBL");
+  value[12]->tooltip("Choose in [0, 1], where: 0=completelyCurveEndOfBL, 1=forceLinearEndOfBL");
+  //value[12]->tooltip("Choose in [0, 1], where: 0=forceLinearEndOfBL, 1=completelyCurveEndOfBL");
 
   y += BH;
 
