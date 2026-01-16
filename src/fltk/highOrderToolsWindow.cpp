@@ -487,7 +487,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
     {"QLP", 0, nullptr, nullptr},
     {"QLP+", 0, nullptr, nullptr},
     {nullptr}};
-  choice[1] = new Fl_Choice(x, y, IW, BH, "Dev: Choose interpolation type");
+  choice[1] = new Fl_Choice(x, y, IW, BH, "Dev: Choose interpolation type (for tangent)");
   choice[1]->align(FL_ALIGN_RIGHT);
   choice[1]->menu(menu_interpolationType);
 

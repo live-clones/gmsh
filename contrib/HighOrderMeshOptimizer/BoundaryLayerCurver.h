@@ -98,6 +98,7 @@ namespace BoundaryLayerCurver {
       const GFace *_gface;
       const GEdge *_gedge;
       const MEdgeN *_edgeOnBoundary; // TODO: rename into _edge if accept new idea
+      MEdgeN *_edgeFiltered = nullptr;
       double _paramVerticesOnGFace[40];
       double _paramVerticesOnGEdge[20];
       bool _newIdea;
@@ -106,6 +107,16 @@ namespace BoundaryLayerCurver {
       _Frame(const MEdgeN *edge, const GFace *gface, const GEdge *gedge,
              const SVector3 &normal);
       _Frame(const MEdgeN *edge, const GFace *gface, const SVector3 &normal);
+      ~_Frame()
+      {
+        if(_edgeFiltered) {
+          for(std::size_t i = 0; i < _edgeFiltered->getNumVertices(); ++i)
+            delete _edgeFiltered->getVertex(i);
+          delete _edgeFiltered;
+          _edgeFiltered = nullptr;
+        }
+
+      }
 
       void computeFrame(double paramEdge, SVector3 &t, SVector3 &n, SVector3 &w,
                         bool atExtremity = false, int dev_interpType = -1) const;
