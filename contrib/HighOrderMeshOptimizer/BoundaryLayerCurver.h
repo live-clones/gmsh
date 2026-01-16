@@ -53,7 +53,10 @@ namespace BoundaryLayerCurver {
     bool ensureQualityOuterMesh; // Check the validity/quality of the outer mesh (not implemented)
     // If ensureQualityOuterMesh=ON, smoothEndOfBL=ON or endLinearizationFactor>0:
     double backpropLimit; // % of thickness layer not concerned by backpropagation algorithm
-    int interpolationType; // which interpolation
+    int interpolationType; // (dev) which interpolation
+    int hierarchicalBasis; // (dev)
+    bool activateALP; // (dev)
+    bool useAngularInterp; // (dev)
   };
 
   bool computeCommonEdge(MElement *el1, MElement *el2, MEdge &e);

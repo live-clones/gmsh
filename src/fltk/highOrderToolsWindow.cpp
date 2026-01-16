@@ -162,6 +162,9 @@ static void highordertools_runblc_cb(Fl_Widget *w, void *data)
   double endLinearizationFactor = o->value[12]->value();
   double percentageToPreserve = o->value[13]->value();
   int interpolationType = o->choice[1]->value();
+  int hierarchicalBasis = o->choice[4]->value();
+  bool activateALP = (bool)o->butt[7]->value();
+  bool useAngularInterp = (bool)o->butt[8]->value();
 
 #if defined(HAVE_OPTHOM)
   FastCurvingParameters p;
@@ -176,6 +179,9 @@ static void highordertools_runblc_cb(Fl_Widget *w, void *data)
   p.newAlgoEndLinearizationFactor = endLinearizationFactor;
   p.newAlgoBackpropLimit = percentageToPreserve;
   p.newAlgoInterpolationType = interpolationType;
+  p.newAlgoHierarchicalBasis = hierarchicalBasis;
+  p.newAlgoActivateALP = activateALP;
+  p.newAlgoUseAngularInterp = useAngularInterp;
 
   auto *gm = GModel::current();
 
@@ -449,6 +455,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[14]->align(FL_ALIGN_RIGHT);
   value[14]->value(.25);
   value[14]->tooltip("Choose in [0, 1], where: 0=doNotTryToAlign, 1=completelyAlignAdjacentElement");
+  value[14]->deactivate();
 
   y += BH;
 
@@ -468,7 +475,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   value[13]->maximum(1);
   if(CTX::instance()->inputScrolling) value[13]->step(.01);
   value[13]->align(FL_ALIGN_RIGHT);
-  value[13]->value(.1);
+  value[13]->value(0);
   value[13]->tooltip("Choose in [0, 1[, where: 0=backpropAffectsAllBL, 1=noBackprop");
 
   y += BH;
@@ -480,10 +487,37 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
     {"QLP", 0, nullptr, nullptr},
     {"QLP+", 0, nullptr, nullptr},
     {nullptr}};
-  choice[1] = new Fl_Choice(x, y, IW, BH, "Choose interpolation type");
+  choice[1] = new Fl_Choice(x, y, IW, BH, "Dev: Choose interpolation type");
   choice[1]->align(FL_ALIGN_RIGHT);
   choice[1]->menu(menu_interpolationType);
-  choice[1]->callback(chooseopti_cb);
+
+  y += BH;
+
+  static Fl_Menu_Item menu_backpropagation[] = {
+    {"Legendre", 0, nullptr, nullptr},
+    {"Chebyshev", 0, nullptr, nullptr},
+    {"HSR", 0, nullptr, nullptr},
+    {nullptr}};
+  choice[4] = new Fl_Choice(x, y, IW, BH, "Dev: Choose hierarchical basis");
+  choice[4]->align(FL_ALIGN_RIGHT);
+  choice[4]->menu(menu_backpropagation);
+  choice[4]->deactivate();
+
+  y += BH;
+
+  butt[7] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
+                                "Dev: Activate ALP shift");
+  butt[7]->type(FL_TOGGLE_BUTTON);
+  butt[7]->tooltip("");
+  butt[7]->value(0);
+
+  y += BH;
+
+  butt[8] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
+                                "Dev: Use angular interp instead of positional");
+  butt[8]->type(FL_TOGGLE_BUTTON);
+  butt[8]->tooltip("");
+  butt[8]->value(0);
 
   y += BH;
 
@@ -512,9 +546,10 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
     {"Fast Curving", 0, nullptr, nullptr},
     {"Boundary Layer Curving (experimental)", 0, nullptr, nullptr}, // FIXME Remove this one
     {nullptr}};
-  choice[4] = new Fl_Choice(x, y, IW, BH, "Algorithm");
-  choice[4]->align(FL_ALIGN_RIGHT);
-  choice[4]->menu(menu_method);
+  choice[2] = new Fl_Choice(x, y, IW, BH, "Algorithm");
+  choice[2]->align(FL_ALIGN_RIGHT);
+  choice[2]->menu(menu_method);
+  choice[2]->callback(chooseopti_cb);
 
   y += BH;
   value[1] = new Fl_Value_Input(x, y, IW / 2.0, BH);

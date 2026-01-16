@@ -643,15 +643,15 @@ namespace BoundaryLayerCurver {
       }
 
       std::vector<double> refPnts(nbPoints+2);
-      _refPntsForALPShiftedCurve(baseEdge, frame, coeffs, refTarget, refPnts, params.interpolationType);
-
-//      for(size_t i = 0; i < nbPoints+2; ++i) {
-//        std::cout << refTarget[i] << " " << refPnts[i] << std:: endl;
-////        refPnts[i] = refTarget[i];
-//      }
-//      std::cout << std::endl;
-
-      // TODO : Interpolation angulaire si ouverture, linéaire si fermeture
+      if (params.activateALP)
+        _refPntsForALPShiftedCurve(baseEdge, frame, coeffs, refTarget, refPnts, params.interpolationType);
+      else {
+        for(size_t i = 0; i < nbPoints+2; ++i) {
+          // std::cout << refTarget[i] << " " << refPnts[i] << std:: endl;
+          refPnts[i] = refTarget[i];
+        }
+        // std::cout << std::endl;
+      }
 
       double angle1 = atan2(coeffs[0][1], coeffs[0][0]);
       double angle2 = atan2(coeffs[1][1], coeffs[1][0]);
@@ -666,25 +666,27 @@ namespace BoundaryLayerCurver {
 //        SPoint3 pp = frame.pnt(u);
 //        draw3DFrame(pp, t, n, w, .005);
 
-        double interpolatedCoeffs[3];
-        for(int j = 0; j < 3; ++j) {
-          interpolatedCoeffs[j] =
-            coeffs[0][j] * (1 - u) / 2 + coeffs[1][j] * (1 + u) / 2;
-        }
-        SVector3 h, h2;
-        h = interpolatedCoeffs[0] * n + interpolatedCoeffs[1] * t +
-            interpolatedCoeffs[2] * w;
-
-        // TODO: this is for a plane only, adapt the code for 3d!
-        double angle = angle1 * (1 - u) / 2 + angle2 * (1 + u) / 2;
-        double dist1 = norm3(coeffs[0]);
-        double dist2 = norm3(coeffs[1]);
-        double dist = dist1 * (1 - u) / 2 + dist2 * (1 + u) / 2;
-        h2 = dist * (std::cos(angle) * n + std::sin(angle) * t);
-        double uu = dist * std::cos(angle);
-        double vv = dist * std::sin(angle);
+        SVector3 h;
         // TODO: choose in function of expansion/reduction
-        h = h2;
+        //       (Interpolation angulaire si ouverture, linéaire si fermeture)
+        if (params.useAngularInterp) {
+          // TODO: this is for a plane only, adapt the code for 3d!
+          double angle = angle1 * (1 - u) / 2 + angle2 * (1 + u) / 2;
+          double dist1 = norm3(coeffs[0]);
+          double dist2 = norm3(coeffs[1]);
+          double dist = dist1 * (1 - u) / 2 + dist2 * (1 + u) / 2;
+          h = dist * (std::cos(angle) * n + std::sin(angle) * t);
+        }
+        else {
+          double interpolatedCoeffs[3];
+          for(int j = 0; j < 3; ++j) {
+            interpolatedCoeffs[j] =
+              coeffs[0][j] * (1 - u) / 2 + coeffs[1][j] * (1 + u) / 2;
+          }
+          h = interpolatedCoeffs[0] * n + interpolatedCoeffs[1] * t +
+              interpolatedCoeffs[2] * w;
+        }
+
         xyz(i, 0) = p.x() + h.x();
         xyz(i, 1) = p.y() + h.y();
         xyz(i, 2) = p.z() + h.z();
@@ -1910,13 +1912,13 @@ namespace BoundaryLayerCurver {
       //      => c_a = (1-w) et c_b = w => barycentric weight
       //  4. Mettre tout ensemble pour obtenir le résultat final
 
-      double gamma = current_h < .5 ? 0 : 2 * current_h - .5;
-      gamma = current_h;
-      // gamma = 1;
-      gamma = 0; // 0 = curved
-      double kappa = params.alignmentFactor;
-      double tau = .1;
-      _reduceCurving_newIdea2(edge, minThickness*tau, gface, gamma, kappa, baseEdge, next);
+      // double gamma = current_h < .5 ? 0 : 2 * current_h - .5;
+      // gamma = current_h;
+      // // gamma = 1;
+      // gamma = 0; // 0 = curved
+      // double kappa = params.alignmentFactor;
+      // double tau = .1;
+      // _reduceCurving_newIdea2(edge, minThickness*tau, gface, gamma, kappa, baseEdge, next);
 
       if(gface) projectVerticesIntoGFace(edge, gface, false);
 
