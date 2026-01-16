@@ -3628,7 +3628,7 @@ gmsh::model::mesh::getEdges(const std::vector<std::size_t> &nodeTags,
         edgeOrientations[i] = 0;
     }
     else {
-      Msg::Error("Unknown mesh node %d or %d", n0, n1);
+      Msg::Error("Unknown node %d or %d", n0, n1);
     }
   }
 }
@@ -3662,7 +3662,7 @@ GMSH_API void gmsh::model::mesh::getFaces(
       faceTags[i] = GModel::current()->getMFace(v0, v1, v2, v3, face);
     }
     else {
-      Msg::Error("Unknown mesh node %d, %d or %d", n0, n1, n2);
+      Msg::Error("Unknown node %d, %d or %d", n0, n1, n2);
     }
   }
 }
@@ -3753,7 +3753,7 @@ gmsh::model::mesh::addEdges(const std::vector<std::size_t> &edgeTags,
     for(int j = 0; j < 2; j++) {
       v[j] = m->getMeshVertexByTag(edgeNodes[2 * i + j]);
       if(!v[j]) {
-        Msg::Error("Unknown mesh node %zu", edgeNodes[2 * i + j]);
+        Msg::Error("Unknown node %zu", edgeNodes[2 * i + j]);
         return;
       }
     }
@@ -3782,7 +3782,7 @@ gmsh::model::mesh::addFaces(const int faceType,
     for(int j = 0; j < faceType; j++) {
       v[j] = m->getMeshVertexByTag(faceNodes[faceType * i + j]);
       if(!v[j]) {
-        Msg::Error("Unknown mesh node %zu", faceNodes[faceType * i + j]);
+        Msg::Error("Unknown node %zu", faceNodes[faceType * i + j]);
         return;
       }
     }
@@ -4074,6 +4074,10 @@ GMSH_API void gmsh::model::mesh::getKeysForElement(
     return;
   }
   MElement *e = GModel::current()->getMeshElementByTag(elementTag);
+  if(!e) {
+    Msg::Error("Unknown element %zu", elementTag);
+    return;
+  }
   int elementType = e->getTypeForMSH();
   int familyType = ElementType::getParentType(elementType);
 
