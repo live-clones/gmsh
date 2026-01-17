@@ -168,6 +168,7 @@ static void highordertools_runblc_cb(Fl_Widget *w, void *data)
 
 #if defined(HAVE_OPTHOM)
   FastCurvingParameters p;
+  p.maxRho = 10;
   p.onlyVisible = onlyVisible;
   p.useNewAlgo = true;
   p.curveOuterBL =
@@ -426,7 +427,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   butt[4]->type(FL_TOGGLE_BUTTON);
   butt[4]->tooltip("Choose []=skipThis or [x]=smoothTheBoundary");
   butt[4]->value(0);
-  butt[4]->deactivate();
+  // butt[4]->deactivate();
 
   y += BH;
 
@@ -435,7 +436,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   butt[6]->type(FL_TOGGLE_BUTTON);
   butt[6]->tooltip("Choose []=skipThis or [x]=smoothTheEnd");
   butt[6]->value(0);
-  butt[6]->deactivate();
+  // butt[6]->deactivate();
 
   y += BH;
 

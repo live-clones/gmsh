@@ -197,7 +197,7 @@ namespace {
   fullVector<double> mat_alphaLag(mat_alphaLag_data, 7);
   double limit_qlpPlus = 1.22;
 
-  void applyQLPfilter(MEdgeN &edge)
+  void applyQLPfilter(MEdgeN &edge, double fact=1.0)
   {
     fullMatrix<double> xyz(edge.getNumVertices(), 3);
 
@@ -210,6 +210,9 @@ namespace {
 
     fullMatrix<double> xyz_filtered(edge.getNumVertices(), 3);
     mat_lagToQLP.mult(xyz, xyz_filtered);
+
+    xyz_filtered.scale(fact);
+    xyz_filtered.axpy(xyz, 1.0 - fact);
 
     for(std::size_t i = 0; i < edge.getNumVertices(); ++i) {
       MVertex *v = edge.getVertex(i);
@@ -3145,6 +3148,19 @@ namespace BoundaryLayerCurver {
     std::vector<double> relativePositions(stackEdges.size());
     computeRelativePositions(stackEdges, relativePositions);
 
+    // Smooth first edge if requested
+    std: size_t numVertices = stackEdges[0].getNumVertices();
+    fullMatrix<double> xyz_boundary(numVertices, 3);
+    if(params.smoothBoundary) {
+      for(size_t i = 0; i < numVertices; ++i) {
+        MVertex *v = stackEdges[0].getVertex(i);
+        xyz_boundary(i, 0) = v->x();
+        xyz_boundary(i, 1) = v->y();
+        xyz_boundary(i, 2) = v->z();
+      }
+      applyQLPfilter(stackEdges[0]);
+    }
+
     // Curve all edges
     for(auto i = 1; i < stackEdges.size(); ++i) {
       MEdgeN *next = nullptr;
@@ -3158,12 +3174,20 @@ namespace BoundaryLayerCurver {
       // EdgeCurver2D::curveEdge(params, &stackEdges[i-1], &stackEdges[i], gface, nullptr, normal);
     }
 
+    // FIXME: Hack so that I can test multiple time with different parameters:
+    if(params.smoothBoundary) {
+      for(size_t i = 0; i < numVertices; ++i) {
+        MVertex *v = stackEdges[0].getVertex(i);
+        v->setXYZ(xyz_boundary(i, 0), xyz_boundary(i, 1), xyz_boundary(i, 2));
+      }
+    }
+
     /*
      * TODO:
      *  0. store:
      *     - smoothingFactor = params.smoothEndOfBL
      *     - linearizationFactor = params.endLinearizationFactor
-     *  1. Smooth last edge (if smoothingFactor > 0)
+     *  1. Smooth last edge (if params.smoothEndOfBL=true)
      *  2. Linearize last edge (if linearizationFactor > 0)
      *  3. If ensureQualityOuterMesh is True, check the validity/quality of the
      *     last elements (exterior one) and increase smoothingFactor up to one,
@@ -3173,6 +3197,16 @@ namespace BoundaryLayerCurver {
      *                    linearizationFactor going from 0 at
      *                    params.backpropLimit to actual value for last edge
      */
+
+    if(params.smoothEndOfBL) {
+      // applyQLPfilter(stackEdges.back());
+
+      std::size_t N = stackEdges.size();
+      for(std::size_t i = 1; i < N; ++i) {
+        double fact = relativePositions[i] * relativePositions[i];
+        applyQLPfilter(stackEdges[i], fact);
+      }
+    }
 
     double gamma = params.endLinearizationFactor;
     double start = params.backpropLimit;
