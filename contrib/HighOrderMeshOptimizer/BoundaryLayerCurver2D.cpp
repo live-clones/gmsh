@@ -3508,54 +3508,63 @@ void curve2DBoundaryLayer(BoundaryLayerCurver::Parameters params,
     return;
   }
 
-  // // Hack for making pictures without HO vertices of triangles
-  // {
-  //   if(normal.z() < .5) {
-  //     normal *= -1; // FIXME Hack for making work msh quad HO
-  //   }
-  //
-  //   if(bndEl2column.empty()) return;
-  //
-  //   std::unordered_set<MVertex*> vertices_to_keep;
-  //   for(auto gface = GModel::current()->firstFace(); gface != GModel::current()->lastFace(); ++gface) {
-  //     std::vector<MQuadrangle*> quadrangles = (*gface)->quadrangles;
-  //     for(auto quad : quadrangles) {
-  //       int num_vert = quad->getNumVertices();
-  //       for(int i = 0; i < num_vert; ++i) {
-  //         MVertex *v = quad->getVertex(i);
-  //         vertices_to_keep.insert(v);
-  //       }
-  //     }
-  //   }
-  //
-  //   for(auto gface = GModel::current()->firstFace(); gface != GModel::current()->lastFace(); ++gface) {
-  //     std::vector<MTriangle*> triangles = (*gface)->triangles;
-  //     for(auto triangle : triangles) {
-  //       int num_vert = triangle->getNumVertices();
-  //       int polyo = triangle->getPolynomialOrder();
-  //       for(int i = 3*polyo; i < num_vert; ++i) {
-  //         MVertex *v = triangle->getVertex(i);
-  //         v->setXYZ(-100, -100, 0);
-  //       }
-  //     }
-  //     (*gface)->triangles.clear(); // FIXME Hack for visu
-  //
-  //     std::vector<MVertex*> vertices = (*gface)->mesh_vertices;
-  //
-  //     std::vector<MVertex*> vertices_to_remove;
-  //     for (MVertex *v : vertices) {
-  //       if (vertices_to_keep.find(v) == vertices_to_keep.end()) {
-  //         vertices_to_remove.push_back(v);
-  //       }
-  //     }
-  //
-  //     std::cout << "Removing " << vertices_to_remove.size() << " vertices" << std::endl;
-  //
-  //     for(auto &v : vertices_to_remove) {
-  //       v->setXYZ(-100, -100, 0);
-  //     }
-  //   }
-  // }
+  // Hack for making pictures without HO vertices of triangles
+  {
+    if(normal.z() < .5) {
+      normal *= -1; // FIXME Hack for making work msh quad HO
+    }
+
+    if(bndEl2column.empty()) return;
+
+    std::unordered_set<MVertex*> vertices_to_keep;
+    for(auto gface = GModel::current()->firstFace(); gface != GModel::current()->lastFace(); ++gface) {
+      std::vector<MQuadrangle*> quadrangles = (*gface)->quadrangles;
+      for(auto quad : quadrangles) {
+        int num_vert = quad->getNumVertices();
+        for(int i = 0; i < num_vert; ++i) {
+          MVertex *v = quad->getVertex(i);
+          vertices_to_keep.insert(v);
+        }
+      }
+    }
+
+    for(auto gface = GModel::current()->firstFace(); gface != GModel::current()->lastFace(); ++gface) {
+      std::vector<MTriangle*> triangles = (*gface)->triangles;
+      std::vector<MTriangle*> triangles_toKeep;
+      for(auto triangle : triangles) {
+        int num_vert = triangle->getNumVertices();
+        int polyo = triangle->getPolynomialOrder();
+        for(int i = 0; i < 3*polyo; ++i) {
+          MVertex *v = triangle->getVertex(i);
+          if (vertices_to_keep.find(v) != vertices_to_keep.end()) {
+            triangles_toKeep.push_back(triangle);
+            break;
+          }
+        }
+        for(int i = 3*polyo; i < num_vert; ++i) {
+          MVertex *v = triangle->getVertex(i);
+          v->setXYZ(-100, -100, 0);
+        }
+      }
+      // (*gface)->triangles.clear(); // FIXME Hack for visu
+      (*gface)->triangles = triangles_toKeep; // FIXME Hack for visu
+
+      std::vector<MVertex*> vertices = (*gface)->mesh_vertices;
+
+      std::vector<MVertex*> vertices_to_remove;
+      for (MVertex *v : vertices) {
+        if (vertices_to_keep.find(v) == vertices_to_keep.end()) {
+          vertices_to_remove.push_back(v);
+        }
+      }
+
+      std::cout << "Removing " << vertices_to_remove.size() << " vertices" << std::endl;
+
+      for(auto &v : vertices_to_remove) {
+        v->setXYZ(-100, -100, 0);
+      }
+    }
+  }
 
   //  for (int i = 0; i < bndEl2column.size(); ++i) {
   //    bndEl2column[i].first->setVisibility(1);
