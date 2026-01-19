@@ -2520,7 +2520,7 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
 
   for(auto it = edges.begin(); it != edges.end(); ++it) {
     if(!saveAll && (*it)->physicals.size() == 0 &&
-       (*it)->geomType() != GEntity::GhostCurve)
+       (*it)->geomType() != GEntity::GhostCurve && overlapBnd2D.count(*it) == 0)
       continue;
 
     numElements += (*it)->lines.size();
@@ -2532,7 +2532,7 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
 
   for(auto it = faces.begin(); it != faces.end(); ++it) {
     if(!saveAll && (*it)->physicals.size() == 0 &&
-       (*it)->geomType() != GEntity::GhostSurface)
+       (*it)->geomType() != GEntity::GhostSurface && overlapBnd3D.count(*it) == 0)
       continue;
 
     numElements += (*it)->triangles.size();
