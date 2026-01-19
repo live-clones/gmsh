@@ -468,7 +468,7 @@ bool PViewDataGModel::writeMED(const std::string &fileName)
     if(_steps[0]->getData(i)) {
       MVertex *v = _steps[0]->getModel()->getMeshVertexByTag(i);
       if(!v) {
-        Msg::Error("Unknown node %d in data", i);
+        Msg::Error("Unknown node %d in data (MED)", i);
         return false;
       }
       profile.push_back(v->getIndex());
