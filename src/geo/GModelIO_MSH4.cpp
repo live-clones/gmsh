@@ -1657,8 +1657,8 @@ int GModel::_readMSH4(const std::string &name)
       partitioned = true;
     }
     else if(!strncmp(&str[1], "Nodes", 5)) {
-      _vertexVectorCache.clear();
-      _vertexMapCache.clear();
+      bool hadNodesBefore =
+        !_vertexVectorCache.empty() || !_vertexMapCache.empty();
       bool dense = false;
       std::size_t totalNumNodes = 0, maxNodeNum;
       std::pair<std::size_t, MVertex *> *vertexCache = readMSH4Nodes(
@@ -1669,24 +1669,31 @@ int GModel::_readMSH4(const std::string &name)
         fclose(fp);
         return false;
       }
-      if(dense) {
-        _vertexVectorCache.resize(maxNodeNum + 1, nullptr);
-        for(std::size_t i = 0; i < totalNumNodes; i++) {
-          if(!_vertexVectorCache[vertexCache[i].first]) {
-            _vertexVectorCache[vertexCache[i].first] = vertexCache[i].second;
-          }
-          else {
-            Msg::Info("Skipping duplicate node %d", vertexCache[i].first);
-          }
-        }
+      if(hadNodesBefore) {
+        // Reading additional file - invalidate cache, let lazy rebuild merge
+        destroyMeshCaches();
       }
       else {
-        for(std::size_t i = 0; i < totalNumNodes; i++) {
-          if(_vertexMapCache.count(vertexCache[i].first) == 0) {
-            _vertexMapCache[vertexCache[i].first] = vertexCache[i].second;
+        // First file - populate cache directly from just-read nodes
+        if(dense) {
+          _vertexVectorCache.resize(maxNodeNum + 1, nullptr);
+          for(std::size_t i = 0; i < totalNumNodes; i++) {
+            if(!_vertexVectorCache[vertexCache[i].first]) {
+              _vertexVectorCache[vertexCache[i].first] = vertexCache[i].second;
+            }
+            else {
+              Msg::Info("Skipping duplicate node %d", vertexCache[i].first);
+            }
           }
-          else {
-            Msg::Info("Skipping duplicate node %d", vertexCache[i].first);
+        }
+        else {
+          for(std::size_t i = 0; i < totalNumNodes; i++) {
+            if(_vertexMapCache.count(vertexCache[i].first) == 0) {
+              _vertexMapCache[vertexCache[i].first] = vertexCache[i].second;
+            }
+            else {
+              Msg::Info("Skipping duplicate node %d", vertexCache[i].first);
+            }
           }
         }
       }
