@@ -49,21 +49,20 @@ template <int dim>
 void overlapBuildBoundaries(GModel *const model,
                             const OverlapCollection<dim> &overlaps);
 
-
 /**
  * Export-related helpers
-*/
+ */
 
 template <int dim>
-std::unordered_map<
-    typename EntityTraits<dim>::PartitionEntity *,
-    std::unordered_set<MElement*>> findCoveredEntitiesAndElementsToSave(GModel *const model, int partition);
+std::unordered_map<typename EntityTraits<dim>::PartitionEntity *,
+                   std::unordered_set<MElement *>>
+findCoveredEntitiesAndElementsToSave(GModel *const model, int partition);
 
 template <int dim>
-std::unordered_map<
-    GEntity*,
-    std::unordered_set<MVertex*>> findNonOwnedVerticesToSave(GModel *const model, int partition, const std::unordered_map<
-    typename EntityTraits<dim>::PartitionEntity *,
-    std::unordered_set<MElement*>>& coveredEntities);
+std::unordered_map<GEntity *, std::unordered_set<MVertex *>>
+findNonOwnedVerticesToSave(
+  GModel *const model, int partition,
+  const std::unordered_map<typename EntityTraits<dim>::PartitionEntity *,
+                           std::unordered_set<MElement *>> &coveredEntities);
 
-#endif
+#endif // OVERLAP_H
