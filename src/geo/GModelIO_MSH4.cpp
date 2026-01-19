@@ -3138,7 +3138,13 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
 
   // elements
   writeMSH4Elements(this, fp, partitioned, partitionToSave, binary, saveAll,
-                    version);
+                    version, nonOwnedEntitiesToSave);
+
+  // edges
+  writeMSH4EdgeTags(this, fp, binary, partitioned, partitionToSave);
+
+  // faces
+  writeMSH4FaceTags(this, fp, binary, partitioned, partitionToSave);
 
   // periodic
   writeMSH4PeriodicNodes(this, fp, binary, version);
