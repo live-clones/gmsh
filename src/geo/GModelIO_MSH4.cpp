@@ -2530,39 +2530,67 @@ static void writeMSH4Nodes(
   getEntitiesToSave(model, partitioned, partitionToSave, saveAll, regions,
                     faces, edges, vertices);
 
-  std::size_t numNodes = (saveAll && !partitioned &&
-                          !CTX::instance()->mesh.saveWithoutOrphans) ?
-    model->getNumMeshVertices() :
-    getAdditionalEntities(regions, faces, edges, vertices);
+  std::size_t numNodes = 0;
+  auto incrementNodes = [&](const auto &entities) {
+    for(const auto &entity : entities) {
+      size_t toAdd = entity->getNumMeshVertices();
+      if (auto it = verticesToSaveOnOtherEntities.find(entity);
+          it != verticesToSaveOnOtherEntities.end()) {
+        toAdd = it->second.size();
+      }
+      numNodes += toAdd;
+    }
+  };
+
+  for (auto& [entity, data]: verticesToSaveOnOtherEntities) {
+    auto gv = dynamic_cast<GVertex *>(entity);
+    if(gv) vertices.insert(gv);
+    auto ge = dynamic_cast<GEdge *>(entity);
+    if(ge) edges.insert(ge);
+    auto gf = dynamic_cast<GFace *>(entity);
+    if (gf) faces.insert(gf);
+    auto gr = dynamic_cast<GRegion *>(entity);
+    if(gr) regions.insert(gr);
+    // In debugging we used to check no owned entity was partially saved. It should not happen, by design.
+  }
+
+  incrementNodes(vertices);
+  incrementNodes(edges);
+  incrementNodes(faces);
+  incrementNodes(regions);
 
   if(!numNodes) return;
 
   fprintf(fp, "$Nodes\n");
 
   std::size_t minTag = std::numeric_limits<std::size_t>::max(), maxTag = 0;
-  for(auto it = vertices.begin(); it != vertices.end(); ++it) {
-    for(std::size_t i = 0; i < (*it)->getNumMeshVertices(); i++) {
-      minTag = std::min(minTag, (*it)->getMeshVertex(i)->getNum());
-      maxTag = std::max(maxTag, (*it)->getMeshVertex(i)->getNum());
+  auto upgradeMinMaxTag = [&](GEntity *entity) {
+    auto it = verticesToSaveOnOtherEntities.find(entity);
+    if(it == verticesToSaveOnOtherEntities.end()) {
+      for(std::size_t i = 0; i < entity->getNumMeshVertices(); i++) {
+        minTag = std::min(minTag, entity->getMeshVertex(i)->getNum());
+        maxTag = std::max(maxTag, entity->getMeshVertex(i)->getNum());
+      }
     }
+    else {
+      for(const auto &mv : it->second) {
+        minTag = std::min(minTag, mv->getNum());
+        maxTag = std::max(maxTag, mv->getNum());
+      }
+    }
+  };
+
+  for(auto entity : vertices) {
+    upgradeMinMaxTag(entity);
   }
-  for(auto it = edges.begin(); it != edges.end(); ++it) {
-    for(std::size_t i = 0; i < (*it)->getNumMeshVertices(); i++) {
-      minTag = std::min(minTag, (*it)->getMeshVertex(i)->getNum());
-      maxTag = std::max(maxTag, (*it)->getMeshVertex(i)->getNum());
-    }
+  for(auto entity : edges) {
+    upgradeMinMaxTag(entity);
   }
-  for(auto it = faces.begin(); it != faces.end(); ++it) {
-    for(std::size_t i = 0; i < (*it)->getNumMeshVertices(); i++) {
-      minTag = std::min(minTag, (*it)->getMeshVertex(i)->getNum());
-      maxTag = std::max(maxTag, (*it)->getMeshVertex(i)->getNum());
-    }
+  for(auto entity : faces) {
+    upgradeMinMaxTag(entity);
   }
-  for(auto it = regions.begin(); it != regions.end(); ++it) {
-    for(std::size_t i = 0; i < (*it)->getNumMeshVertices(); i++) {
-      minTag = std::min(minTag, (*it)->getMeshVertex(i)->getNum());
-      maxTag = std::max(maxTag, (*it)->getMeshVertex(i)->getNum());
-    }
+  for(auto entity : regions) {
+    upgradeMinMaxTag(entity);
   }
 
   if(binary) {
