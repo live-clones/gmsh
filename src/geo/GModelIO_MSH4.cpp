@@ -1943,9 +1943,13 @@ static void writeMSH4Entities(
   std::set<GEdge *, GEntityPtrLessThan> edges;
   std::set<GVertex *, GEntityPtrLessThan> vertices;
 
+  const bool acceptAllPartitions =
+    (partitionToSave == 0) ||
+    !CTX::instance()->mesh.splitMeshLocalBREP;
+
   if(partition) {
-    auto isInPartition = [&] (GEntity *entity) {
-      if (partitionToSave == 0) return true;
+    auto isInPartition = [&](GEntity *entity) {
+      if(acceptAllPartitions) return true;
       auto parts = getEntityPartition(entity, false);
       return std::find(parts.begin(), parts.end(), partitionToSave) !=
              parts.end();
