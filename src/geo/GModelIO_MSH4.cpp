@@ -1257,6 +1257,104 @@ static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
   return true;
 }
 
+
+static bool readMSH4EdgeTags(
+  GModel *const model, FILE *fp, bool binary)
+{
+  size_t numEdgeTags = 0;
+  if(binary) {
+    if (fread(&numEdgeTags, sizeof(size_t), 1, fp) != 1) {
+      Msg::Error("Error reading number of edge tags in MSH4 file.");
+      return false;
+    }
+  }
+  else {
+    if(fscanf(fp, "%zu", &numEdgeTags) != 1) {
+      Msg::Error("Error reading number of edge tags in MSH4 file.");
+      return false;
+    }
+  }
+
+  std::array<size_t, 3> edgeData;
+  for (size_t k = 0; k < numEdgeTags; ++k) {
+    if(binary) {
+      if (fread(edgeData.data(), sizeof(size_t), 3, fp) != 3) {
+        Msg::Error("Error reading edge tag data in MSH4 file.");
+        return false;
+      }
+    }
+    else {
+      if(fscanf(fp, "%zu %zu %zu", &edgeData[0], &edgeData[1], &edgeData[2]) != 3) {
+        Msg::Error("Error reading edge tag data in MSH4 file.");
+        return false;
+      }
+    }
+
+    MVertex *v0 = model->getMeshVertexByTag(edgeData[0]);
+    MVertex *v1 = model->getMeshVertexByTag(edgeData[1]);
+    if(!v0 || !v1) {
+      Msg::Error("Invalid vertex numbers in edge tag data in MSH4 file.");
+      return false;
+    }
+
+    MEdge me(v0, v1);
+    model->addMEdge(std::move(me), edgeData[2]);
+  }
+
+  return true;
+}
+
+static bool readMSH4FaceTags(
+  GModel *const model, FILE *fp, bool binary)
+{
+  size_t numFaceTags = 0;
+  if(binary) {
+    if (fread(&numFaceTags, sizeof(size_t), 1, fp) != 1) {
+      Msg::Error("Error reading number of face tags in MSH4 file.");
+      return false;
+    }
+  }
+  else {
+    if(fscanf(fp, "%zu", &numFaceTags) != 1) {
+      Msg::Error("Error reading number of face tags in MSH4 file.");
+      return false;
+    }
+  }
+
+  std::array<size_t, 6> faceData; // Num of vertices, the 4 vertices, the face tag
+  for (size_t k = 0; k < numFaceTags; ++k) {
+    if(binary) {
+      if (fread(faceData.data(), sizeof(size_t), 6, fp) != 6) {
+        Msg::Error("Error reading face tag data in MSH4 file.");
+        return false;
+      }
+    }
+    else {
+      if(fscanf(fp, "%zu %zu %zu %zu %zu %zu", &faceData[0], &faceData[1], &faceData[2], &faceData[3], &faceData[4], &faceData[5]) != 6) {
+        Msg::Error("Error reading face tag data in MSH4 file.");
+        return false;
+      }
+    }
+    if (faceData[0] != 3 && faceData[0] != 4) {
+      Msg::Error("Invalid number of vertices in face tag data in MSH4 file.");
+      return false;
+    }
+    MVertex *v0 = model->getMeshVertexByTag(faceData[1]);
+    MVertex *v1 = model->getMeshVertexByTag(faceData[2]);
+    MVertex *v2 = model->getMeshVertexByTag(faceData[3]);
+    MVertex *v3 = faceData[0] == 4 ? model->getMeshVertexByTag(faceData[4]) : nullptr;
+    if(!v0 || !v1 || !v2 || (faceData[0] == 4 && !v3)) {
+      Msg::Error("Invalid vertex numbers in face tag data in MSH4 file.");
+      return false;
+    }
+
+    MFace mf(v0, v1, v2, v3);
+    model->addMFace(std::move(mf), faceData[5]);
+  }
+
+  return true;
+}
+
 int GModel::_readMSH4(const std::string &name)
 {
   bool partitioned = false;
@@ -1431,6 +1529,20 @@ int GModel::_readMSH4(const std::string &name)
         }
       }
       delete[] elementCache;
+    }
+    else if (!strncmp(&str[1], "EdgeTags", 8)) {
+      if (!readMSH4EdgeTags(this, fp, binary)) {
+        Msg::Error("Could not read edge tags");
+        fclose(fp);
+        return 0;
+      }
+    }
+    else if (!strncmp(&str[1], "FaceTags", 8)) {
+      if (!readMSH4FaceTags(this, fp, binary)) {
+        Msg::Error("Could not read face tags");
+        fclose(fp);
+        return 0;
+      }
     }
     else if(!strncmp(&str[1], "Periodic", 8)) {
       if(!readMSH4PeriodicNodes(this, fp, binary, swap, version)) {
