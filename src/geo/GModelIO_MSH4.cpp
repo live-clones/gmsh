@@ -2839,38 +2839,93 @@ static void writeMSH4Nodes(
     }
   }
 
-  for(auto it = vertices.begin(); it != vertices.end(); ++it) {
-    writeMSH4EntityNodes(*it, fp, binary, saveParametric, scalingFactor,
-                         version);
-  }
-  for(auto it = edges.begin(); it != edges.end(); ++it) {
-    writeMSH4EntityNodes(*it, fp, binary, saveParametric, scalingFactor,
-                         version);
-  }
-  for(auto it = faces.begin(); it != faces.end(); ++it) {
-    writeMSH4EntityNodes(*it, fp, binary, saveParametric, scalingFactor,
-                         version);
-  }
-  for(auto it = regions.begin(); it != regions.end(); ++it) {
-    writeMSH4EntityNodes(*it, fp, binary, saveParametric, scalingFactor,
-                         version);
-  }
+  auto saveEntity = [&](GEntity *entity) {
+    auto subset = verticesToSaveOnOtherEntities.find(entity);
+    if(subset == verticesToSaveOnOtherEntities.end()) {
+      // normal case: save all mesh vertices on this entity
+      writeMSH4EntityNodes(entity, fp, binary, saveParametric, scalingFactor,
+                           version, entity->getMeshVertexBegin(),
+                           entity->getMeshVertexEnd(),
+                           entity->getNumMeshVertices());
+    }
+    else {
+      writeMSH4EntityNodes(entity, fp, binary, saveParametric, scalingFactor,
+                           version, subset->second.begin(),
+                           subset->second.end(), subset->second.size());
+    }
+  };
+
+  for(GVertex *entity : vertices) { saveEntity(entity); }
+  for(GEdge *entity : edges) { saveEntity(entity); }
+  for(GFace *entity : faces) { saveEntity(entity); }
+  for(GRegion *entity : regions) { saveEntity(entity); }
 
   if(binary) fprintf(fp, "\n");
 
   fprintf(fp, "$EndNodes\n");
 }
 
-static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
-                              int partitionToSave, bool binary, bool saveAll,
-                              double version)
+static void writeMSH4Elements(
+  GModel *const model, FILE *fp, bool partitioned, int partitionToSave,
+  bool binary, bool saveAll, double version,
+  const std::variant<
+    std::monostate,
+    decltype(findCoveredEntitiesAndElementsToSave<2>(model, partitionToSave)),
+    decltype(findCoveredEntitiesAndElementsToSave<3>(model, partitionToSave))>
+    &overlapElements)
 {
+
+  /**
+   * If the mesh is partitioned and only one partition is saved, we save
+   * 1) elements on an enitity belonging to (at least) this partition
+   * 2) overlap boundary elements if there is an overlap
+   * 3) overlapped entities, with only the subset of elements actually used by the overlaps
+  */
+
   std::set<GRegion *, GEntityPtrLessThan> regions;
   std::set<GFace *, GEntityPtrLessThan> faces;
   std::set<GEdge *, GEntityPtrLessThan> edges;
   std::set<GVertex *, GEntityPtrLessThan> vertices;
   getEntitiesToSave(model, partitioned, partitionToSave, saveAll, regions,
                     faces, edges, vertices);
+
+  const int overlapDim = model->overlapDim();
+  std::unordered_set<GEdge*> overlapBnd2D;
+  std::unordered_set<GFace*> overlapBnd3D;
+
+  auto addOverlapBoundaries = [&](const auto& map, auto& container) {
+    using ContainerType = std::remove_cv_t<std::remove_reference_t<decltype(container)>>;
+    for (const auto& [parent, vecOfEntities]: map)
+    {
+      for (const auto& entity : vecOfEntities)
+      {
+        auto partitions = entity->getPartitions();
+        if (partitions.size() != 1) Msg::Error("Overlap boundary with more than one partition.");
+        int partition = *partitions.begin();
+        if(partition == partitionToSave) {
+          if constexpr (std::is_same_v<ContainerType, std::unordered_set<GEdge*>>) {
+            auto cast = static_cast<GEdge *>(entity);
+            if (!cast) Msg::Error("Expected GEdge for 2D overlap boundary.");
+            edges.insert(cast);
+            overlapBnd2D.insert(cast);
+          } else if constexpr (std::is_same_v<ContainerType, std::unordered_set<GFace*>>) {
+            auto cast = static_cast<GFace *>(entity);
+            if (!cast) Msg::Error("Expected GFace for 3D overlap boundary.");
+            faces.insert(cast);
+            overlapBnd3D.insert(cast);
+          }
+          else {
+            Msg::Error("Unsupported overlap boundary type.");
+          }
+        }
+      }
+    }
+  };
+
+  addOverlapBoundaries(model->getOverlapInnerBoundaries2D(), overlapBnd2D);
+  addOverlapBoundaries(model->getOverlapOfBoundaries2D(), overlapBnd2D);
+  addOverlapBoundaries(model->getOverlapInnerBoundaries3D(), overlapBnd3D);
+  addOverlapBoundaries(model->getOverlapOfBoundaries3D(), overlapBnd3D);
 
   std::map<std::pair<int, int>, std::vector<MElement *> > elementsByType[4];
   std::size_t numElements = 0;
@@ -2915,6 +2970,28 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
     }
   }
 
+  // Overlap faces - TODO: ensure it's exported only if not all partitions are saved
+  if(overlapDim == 2) {
+    auto overlapFaces =
+      std::get_if<decltype(findCoveredEntitiesAndElementsToSave<2>(
+        model, partitionToSave))>(&overlapElements);
+    if(overlapFaces) {
+      for(const auto &[pface, elements] : *overlapFaces) {
+        int tag = pface->tag();
+        if(faces.count(pface)) continue; // already saved
+        if(!saveAll && pface->physicals.size() == 0 &&
+           pface->geomType() != GEntity::GhostSurface)
+          continue;
+
+        numElements += elements.size();
+        for(const auto &element : elements) {
+          std::pair<int, int> p(tag, element->getTypeForMSH());
+          elementsByType[2][p].push_back(element);
+        }
+      }
+    }
+  }
+
   for(auto it = regions.begin(); it != regions.end(); ++it) {
     if(!saveAll && (*it)->physicals.size() == 0 &&
        (*it)->geomType() != GEntity::GhostVolume)
@@ -2945,6 +3022,28 @@ static void writeMSH4Elements(GModel *const model, FILE *fp, bool partitioned,
     for(std::size_t i = 0; i < (*it)->trihedra.size(); i++) {
       std::pair<int, int> p((*it)->tag(), (*it)->trihedra[i]->getTypeForMSH());
       elementsByType[3][p].push_back((*it)->trihedra[i]);
+    }
+  }
+
+  // Overlap regions - TODO: ensure it's exported only if not all partitions are saved
+  if (overlapDim == 3) {
+    auto overlapRegions =
+      std::get_if<decltype(findCoveredEntitiesAndElementsToSave<3>(
+        model, partitionToSave))>(&overlapElements);
+    if(overlapRegions) {
+      for(const auto &[pregion, elements] : *overlapRegions) {
+        int tag = pregion->tag();
+        if(regions.count(pregion)) continue; // already saved
+        if(!saveAll && pregion->physicals.size() == 0 &&
+           pregion->geomType() != GEntity::GhostVolume)
+          continue;
+
+        numElements += elements.size();
+        for(const auto &element : elements) {
+          std::pair<int, int> p(tag, element->getTypeForMSH());
+          elementsByType[3][p].push_back(element);
+        }
+      }
     }
   }
 
@@ -3416,6 +3515,157 @@ static void writeMSH4Parametrizations(GModel *const model, FILE *fp,
   if(binary) fprintf(fp, "\n");
 
   fprintf(fp, "$EndParametrizations\n");
+}
+
+// Overlap exports
+template <int dim>
+static void writeMSH4VolumeOverlaps(GModel *const model, FILE *fp,
+                                    int partitionToSave, bool binary)
+{
+  fprintf(fp, "$VolumeOverlaps%dD\n", dim);
+  const auto &allOverlaps =
+    std::get<std::vector<typename EntityTraits<dim>::OverlapEntity *>>(
+      model->getAllOverlaps());
+  std::vector<typename EntityTraits<dim>::OverlapEntity *> overlapsToSave;
+  for(const auto &overlap : allOverlaps) {
+    if(partitionToSave == 0 || overlap->owningPartition() == partitionToSave) {
+      overlapsToSave.push_back(overlap);
+    }
+  }
+
+  size_t numOverlaps = overlapsToSave.size();
+  if (binary)
+    fwrite(&numOverlaps, sizeof(std::size_t), 1, fp);
+  else
+    fprintf(fp, "%zu\n", numOverlaps);
+  // Print number of overlapEntities. Then, for each entity, we print its tag, the tag of the covered entity
+  // the number of elements, then all elements
+  for (const auto& overlap: overlapsToSave) {
+    int tag = overlap->tag();
+    int coveredTag = overlap->getCovered()->tag();
+    int partition = overlap->owningPartition();
+    std::size_t numElements = overlap->getNumMeshElements();
+    std::vector<size_t> tags; tags.reserve(numElements);
+    for (size_t k = 0; k < numElements; k++) {
+      tags.push_back(overlap->getMeshElement(k)->getNum());
+    }
+    if (binary) {
+      fwrite(&tag, sizeof(int), 1, fp);
+      fwrite(&coveredTag, sizeof(int), 1, fp);
+      fwrite(&partition, sizeof(int), 1, fp);
+      fwrite(&numElements, sizeof(std::size_t), 1, fp);
+      fwrite(tags.data(), sizeof(std::size_t), numElements, fp);
+    }
+    else {
+      fprintf(fp, "%d %d %d %zu\n", tag,
+              coveredTag, partition, numElements);
+      for (size_t tag: tags)
+        fprintf(fp, "%zu ", tag);
+      fprintf(fp, "\n");
+    }
+  }
+
+  // Binary: one line in total
+  if(binary) fprintf(fp, "\n");
+  fprintf(fp, "$EndVolumeOverlaps%dD\n", dim);
+}
+
+template <int dim>
+static const auto& getInnerOverlap(GModel* const model) {
+  if constexpr (dim == 2) {
+    return model->getOverlapInnerBoundaries2D();
+  } else if constexpr (dim == 3) {
+    return model->getOverlapInnerBoundaries3D();
+  } else {
+    static_assert(dim == 2 || dim == 3, "Unsupported dimension for overlap");
+  }
+}
+
+template <int dim>
+static const auto& getOuterOverlap(GModel* const model) {
+  if constexpr (dim == 2) {
+    return model->getOverlapOfBoundaries2D();
+  } else if constexpr (dim == 3) {
+    return model->getOverlapOfBoundaries3D();
+  } else {
+    static_assert(dim == 2 || dim == 3, "Unsupported dimension for overlap");
+  }
+}
+
+template <int dim>
+static void writeMSH4OverlapBoundaries(GModel *const model, FILE *fp,
+                                        int partitionToSave, bool binary)
+{
+  // These are regular entities, we just need to write in what container to put those
+  fprintf(fp, "$OverlapBoundaries%dD\n", dim);
+  const auto &overlapBoundaries = getInnerOverlap<dim>(model);
+    const auto &outerOverlapBoundaries = getOuterOverlap<dim>(model);
+
+  {
+    size_t numEntities = overlapBoundaries.size() + outerOverlapBoundaries.size();
+    if (binary) {
+      fwrite(&numEntities, sizeof(std::size_t), 1, fp);
+    } else {
+      fprintf(fp, "%zu\n", numEntities);
+    }
+  }
+
+  auto writeEntityOverlapPairs = [&](const auto &set) {
+    for(const auto &[entity, boundaries] : set) {
+      std::vector<typename EntityTraits<dim>::BoundaryEntity *>
+        boundariesToSave;
+      for(const auto &boundary : boundaries) {
+        auto partitions = boundary->getPartitions();
+        if(partitionToSave == 0 ||
+           std::find(partitions.begin(), partitions.end(), partitionToSave) !=
+             partitions.end()) {
+          boundariesToSave.push_back(boundary);
+        }
+      }
+      std::size_t numBoundaries = boundariesToSave.size();
+      int thisDim = entity->dim();
+      int tag = entity->tag();
+      if(binary) {
+        fwrite(&thisDim, sizeof(int), 1, fp);
+        fwrite(&tag, sizeof(int), 1, fp);
+        fwrite(&numBoundaries, sizeof(std::size_t), 1, fp);
+      }
+      else {
+        fprintf(fp, "%d %d %zu\n", entity->dim(), entity->tag(),
+                boundariesToSave.size());
+      }
+      for(const auto &boundary : boundariesToSave) {
+        int boundaryTag = boundary->tag();
+        int creatorTag = 0;
+        if(thisDim == dim - 1) {
+          try {
+            auto creator =
+              std::get<dim - 2>(model->getBoundaryOfOverlapCreators())
+                .at(boundary);
+            creatorTag = creator->tag();
+          }
+          catch(const std::out_of_range &) {
+            Msg::Error("No creator found for boundary %d of entity %d",
+                       boundaryTag, tag);
+          }
+        }
+        if(binary) {
+          fwrite(&boundaryTag, sizeof(int), 1, fp);
+          fwrite(&creatorTag, sizeof(int), 1, fp);
+        }
+        else {
+          fprintf(fp, "%d %d\n", boundaryTag, creatorTag);
+        }
+      }
+    }
+  };
+
+  writeEntityOverlapPairs(overlapBoundaries);
+  writeEntityOverlapPairs(outerOverlapBoundaries);
+
+  // Binary: one line in total
+  if(binary) fprintf(fp, "\n");
+  fprintf(fp, "$EndOverlapBoundaries%dD\n", dim);
 }
 
 int GModel::_writeMSH4(const std::string &name, double version, bool binary,
