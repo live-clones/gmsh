@@ -1257,6 +1257,203 @@ static bool readMSH4Parametrizations(GModel *const model, FILE *fp, bool binary)
   return true;
 }
 
+template <int dim>
+static bool readMSH4VolumeOverlaps(GModel *const model, FILE *fp, bool binary)
+{
+  size_t nOverlaps = 0;
+  std::set<int> addedTags;
+  if(binary) {
+    if(fread(&nOverlaps, sizeof(size_t), 1, fp) != 1) { return false; }
+  }
+  else {
+    if(fscanf(fp, "%zu", &nOverlaps) != 1) { return false; }
+  }
+  Msg::Info("Reading %zu volume overlap%s of dim %d", nOverlaps,
+            nOverlaps > 1 ? "s" : "", dim);
+  for(size_t k = 0; k < nOverlaps; k++) {
+    int tag, coveredTag, partition;
+    size_t numElements = 0;
+    if(binary) {
+      if(fread(&tag, sizeof(int), 1, fp) != 1) { return false; }
+      if(fread(&coveredTag, sizeof(int), 1, fp) != 1) { return false; }
+      if(fread(&partition, sizeof(int), 1, fp) != 1) { return false; }
+      if(fread(&numElements, sizeof(size_t), 1, fp) != 1) { return false; }
+    }
+    else {
+      if(fscanf(fp, "%d %d %d %zu", &tag, &coveredTag, &partition,
+                &numElements) != 4) {
+        return false;
+      }
+    }
+    GEntity *coveredEntity = model->getEntityByTag(dim, coveredTag);
+    if(!coveredEntity) {
+      Msg::Error("Could not find %dD entity %d in volume overlap", dim,
+                 coveredTag);
+      return false;
+    }
+    auto covered =
+      dynamic_cast<typename EntityTraits<dim>::PartitionEntity *>(
+        coveredEntity);
+    if(!covered) {
+      Msg::Error("Could not cast %dD entity %d in volume overlap. "
+                 "It is of type %s",
+                 dim, coveredTag, coveredEntity->getTypeString().c_str());
+      return false;
+    }
+    auto overlapEntity = new
+      typename EntityTraits<dim>::OverlapEntity(model, covered, partition);
+    overlapEntity->setTag(tag);
+
+    auto foundEntity = model->getEntityByTag(dim, tag);
+    if(foundEntity) {
+      Msg::Error("Volume overlap with tag %d already exists in model, "
+                 "and is of type %s",
+                 tag, foundEntity->getTypeString().c_str());
+      delete overlapEntity;
+      return false;
+    }
+
+    model->addOverlap(overlapEntity);
+    if(!model->add(overlapEntity)) {
+      Msg::Error("Could not add volume overlap with tag %d to model", tag);
+      // Note: overlapEntity was already added to overlap collection,
+      // but not to the main model - this is an inconsistent state
+      delete overlapEntity;
+      return false;
+    }
+
+    // Read elements
+    for(size_t i = 0; i < numElements; i++) {
+      size_t elementTag = 0;
+      if(binary) {
+        if(fread(&elementTag, sizeof(size_t), 1, fp) != 1) { return false; }
+      }
+      else {
+        if(fscanf(fp, "%zu", &elementTag) != 1) { return false; }
+      }
+      MElement *element = model->getMeshElementByTag(elementTag);
+
+      if(!element) {
+        Msg::Warning("Couldn't find an element, rebuilding the cache...");
+        model->rebuildMeshElementCache();
+        element = model->getMeshElementByTag(elementTag);
+        if(!element) {
+          Msg::Error("Unknown element %zu in volume overlap %d of dimension %d",
+                     elementTag, tag, dim);
+          return false;
+        }
+      }
+      overlapEntity->addElement(element);
+    }
+  }
+  return true;
+}
+
+template <int dim>
+static bool readMSH4OverlapBoundaries(GModel *const model, FILE *fp, bool binary)
+{
+  size_t numGlobalEntities = 0;
+  if(binary) {
+    if(fread(&numGlobalEntities, sizeof(size_t), 1, fp) != 1) { return false; }
+  }
+  else {
+    if(fscanf(fp, "%zu", &numGlobalEntities) != 1) { return false; }
+  }
+  for(size_t k = 0; k < numGlobalEntities; ++k) {
+    int dimOfEntity, tag;
+    size_t numBoundaryEntities;
+    if(binary) {
+      if(fread(&dimOfEntity, sizeof(int), 1, fp) != 1) { return false; }
+      if(fread(&tag, sizeof(int), 1, fp) != 1) { return false; }
+      if(fread(&numBoundaryEntities, sizeof(size_t), 1, fp) != 1) {
+        return false;
+      }
+    }
+    else {
+      if(fscanf(fp, "%d %d %zu", &dimOfEntity, &tag, &numBoundaryEntities) !=
+         3) {
+        return false;
+      }
+    }
+    GEntity *entity = model->getEntityByTag(dimOfEntity, tag);
+    if(!entity) {
+      Msg::Error("Could not find %dD entity %d in overlap boundary",
+                 dimOfEntity, tag);
+      return false;
+    }
+    std::vector<int> boundaryTags(numBoundaryEntities);
+    std::vector<int> creatorTags(numBoundaryEntities, -1);
+    if(binary) {
+      for(size_t i = 0; i < numBoundaryEntities; ++i) {
+        if(fread(&boundaryTags[i], sizeof(int), 1, fp) != 1) { return false; }
+        if(fread(&creatorTags[i], sizeof(int), 1, fp) != 1) { return false; }
+      }
+    }
+    else {
+      for(size_t i = 0; i < numBoundaryEntities; ++i) {
+        if(fscanf(fp, "%d %d", &boundaryTags[i], &creatorTags[i]) != 2) {
+          return false;
+        }
+      }
+    }
+    for(size_t i = 0; i < numBoundaryEntities; ++i) {
+      int boundaryTag = boundaryTags[i];
+      int creatorTag = creatorTags[i];
+      GEntity *boundaryEntity = model->getEntityByTag(dim - 1, boundaryTag);
+      if(!boundaryEntity) {
+        Msg::Error("Could not find %dD boundary entity %d in overlap", dim - 1,
+                   boundaryTag);
+        return false;
+      }
+      if(dim == dimOfEntity) {
+        auto parentCast =
+          dynamic_cast<typename EntityTraits<dim>::Entity *>(entity);
+        if(!parentCast)
+          Msg::Error("Could not cast %dD entity %d in overlap boundary.", dim,
+                     tag);
+        auto boundaryCast =
+          dynamic_cast<typename EntityTraits<dim>::BoundaryEntity *>(
+            boundaryEntity);
+        if(!boundaryCast)
+          Msg::Error("Could not cast %dD boundary entity %d in overlap "
+                     "boundary.",
+                     dim - 1, boundaryTag);
+        model->addInnerBoundary(parentCast, boundaryCast);
+      }
+      else {
+        auto parentCast =
+          dynamic_cast<typename EntityTraits<dim - 1>::Entity *>(entity);
+        if(!parentCast)
+          Msg::Error("Could not cast %dD entity %d in overlap boundary.",
+                     dim - 1, tag);
+        auto boundaryCast =
+          dynamic_cast<typename EntityTraits<dim>::BoundaryEntity *>(
+            boundaryEntity);
+        if(!boundaryCast)
+          Msg::Error("Could not cast %dD boundary entity %d in overlap "
+                     "boundary.",
+                     dim - 1, boundaryTag);
+        GEntity *creatorEntity = model->getEntityByTag(dim, creatorTag);
+        if(!creatorEntity) {
+          Msg::Error("Could not find %dD creator entity %d in overlap "
+                     "boundary.",
+                     dim, creatorTag);
+          return false;
+        }
+        auto creator =
+          dynamic_cast<typename EntityTraits<dim>::Entity *>(creatorEntity);
+        if(!creator) {
+          Msg::Error("Could not cast %dD creator entity %d in overlap "
+                     "boundary. It is of type %s",
+                     dim, creatorTag, creatorEntity->getTypeString().c_str());
+          return false;
+        }
+        model->addOverlapOfBoundary(parentCast, boundaryCast, creator);
+      }
+    }
+  }
+  return true;
+}
 
 static bool readMSH4EdgeTags(
   GModel *const model, FILE *fp, bool binary)
@@ -1554,6 +1751,34 @@ int GModel::_readMSH4(const std::string &name)
     else if(!strncmp(&str[1], "GhostElements", 13)) {
       if(!readMSH4GhostElements(this, fp, binary, swap)) {
         Msg::Error("Could not read ghost elements");
+        fclose(fp);
+        return 0;
+      }
+    }
+    else if (!strncmp(&str[1], "VolumeOverlaps2D", 16)) {
+      if (!readMSH4VolumeOverlaps<2>(this, fp, binary)) {
+        Msg::Error("Could not read 2D volume overlaps");
+        fclose(fp);
+        return 0;
+      }
+    }
+    else if (!strncmp(&str[1], "VolumeOverlaps3D", 16)) {
+      if (!readMSH4VolumeOverlaps<3>(this, fp, binary)) {
+        Msg::Error("Could not read 3D volume overlaps");
+        fclose(fp);
+        return 0;
+      }
+    }
+    else if (!strncmp(&str[1], "OverlapBoundaries2D", 19)) {
+      if (!readMSH4OverlapBoundaries<2>(this, fp, binary)) {
+        Msg::Error("Could not read 2D boundary overlaps");
+        fclose(fp);
+        return 0;
+      }
+    }
+    else if (!strncmp(&str[1], "OverlapBoundaries3D", 19)) {
+      if (!readMSH4OverlapBoundaries<3>(this, fp, binary)) {
+        Msg::Error("Could not read 3D boundary overlaps");
         fclose(fp);
         return 0;
       }
