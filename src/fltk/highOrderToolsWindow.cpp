@@ -480,7 +480,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
     {"QLP (only P6)", 0, nullptr, nullptr},
     {"QLP+ (not implemented)", 0, nullptr, nullptr},
     {"BSpline", 0, nullptr, nullptr},
-    {"RSR (only P6, not yet ok with ALP shift)", 0, nullptr, nullptr},
+    {"RSR (only P6)", 0, nullptr, nullptr},
     {nullptr}};
   choice[1] = new Fl_Choice(x, y, IW, BH, "Dev: Choose tangent (order: worst -> best)");
   choice[1]->align(FL_ALIGN_RIGHT);
@@ -501,7 +501,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   y += BH;
 
   butt[7] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
-                                "Dev: Activate ALP shift (not yet ok with RSR)");
+                                "Dev: Activate ALP shift");
   butt[7]->type(FL_TOGGLE_BUTTON);
   butt[7]->tooltip("");
   butt[7]->value(0);
