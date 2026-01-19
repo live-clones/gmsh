@@ -1926,9 +1926,9 @@ static void writeMSH4BoundingBox(SBoundingBox3d boundBox, FILE *fp,
 static void writeMSH4Entities(
   GModel *const model, FILE *fp, bool partition, bool binary,
   double scalingFactor, double version,
-  std::map<GEntity *, SBoundingBox3d> *entityBounds, int partitionToSave = 0,
-  std::unordered_map<GEntity *, std::unordered_set<MVertex *>> *vertexUsage =
-    nullptr)
+  std::map<GEntity *, SBoundingBox3d> *entityBounds, int partitionToSave,
+  const std::unordered_map<GEntity *, std::unordered_set<MVertex *>>
+    &entitiesWithSubsetToExport)
 {
   std::set<GEntity *, GEntityPtrFullLessThan> ghost;
   std::set<GRegion *, GEntityPtrLessThan> regions;
@@ -1969,8 +1969,8 @@ static void writeMSH4Entities(
       if((*it)->geomType() == GEntity::GhostVolume) ghost.insert(*it);
     }
     // Add partially saved entities
-    if(vertexUsage) {
-      for(const auto &[entity, _] : *vertexUsage) {
+    if(!entitiesWithSubsetToExport.empty()) {
+      for(const auto &[entity, _] : entitiesWithSubsetToExport) {
         auto gv = dynamic_cast<GVertex *>(entity);
         if(gv) vertices.insert(gv);
         auto ge = dynamic_cast<GEdge *>(entity);
@@ -2746,7 +2746,7 @@ static void writeMSH4Nodes(
   bool binary, int saveParametric, double scalingFactor, bool saveAll,
   double version,
   std::unordered_map<GEntity *, std::unordered_set<MVertex *>>
-    &verticesToSaveOnOtherEntities)
+    &entitiesWithSubsetToExport)
 {
   std::set<GRegion *, GEntityPtrLessThan> regions;
   std::set<GFace *, GEntityPtrLessThan> faces;
@@ -2755,19 +2755,26 @@ static void writeMSH4Nodes(
   getEntitiesToSave(model, partitioned, partitionToSave, saveAll, regions,
                     faces, edges, vertices);
 
+  // Add entities referenced by elements but not initially included (old behavior)
+  // Skip when using entitiesWithSubsetToExport (overlap code handles this)
+  if(entitiesWithSubsetToExport.empty() &&
+     !(saveAll && !partitioned && !CTX::instance()->mesh.saveWithoutOrphans)) {
+    getAdditionalEntities(regions, faces, edges, vertices);
+  }
+
   std::size_t numNodes = 0;
   auto incrementNodes = [&](const auto &entities) {
     for(const auto &entity : entities) {
       size_t toAdd = entity->getNumMeshVertices();
-      if (auto it = verticesToSaveOnOtherEntities.find(entity);
-          it != verticesToSaveOnOtherEntities.end()) {
+      if (auto it = entitiesWithSubsetToExport.find(entity);
+          it != entitiesWithSubsetToExport.end()) {
         toAdd = it->second.size();
       }
       numNodes += toAdd;
     }
   };
 
-  for (auto& [entity, data]: verticesToSaveOnOtherEntities) {
+  for (auto& [entity, data]: entitiesWithSubsetToExport) {
     auto gv = dynamic_cast<GVertex *>(entity);
     if(gv) vertices.insert(gv);
     auto ge = dynamic_cast<GEdge *>(entity);
@@ -2790,8 +2797,8 @@ static void writeMSH4Nodes(
 
   std::size_t minTag = std::numeric_limits<std::size_t>::max(), maxTag = 0;
   auto upgradeMinMaxTag = [&](GEntity *entity) {
-    auto it = verticesToSaveOnOtherEntities.find(entity);
-    if(it == verticesToSaveOnOtherEntities.end()) {
+    auto it = entitiesWithSubsetToExport.find(entity);
+    if(it == entitiesWithSubsetToExport.end()) {
       for(std::size_t i = 0; i < entity->getNumMeshVertices(); i++) {
         minTag = std::min(minTag, entity->getMeshVertex(i)->getNum());
         maxTag = std::max(maxTag, entity->getMeshVertex(i)->getNum());
@@ -2840,8 +2847,8 @@ static void writeMSH4Nodes(
   }
 
   auto saveEntity = [&](GEntity *entity) {
-    auto subset = verticesToSaveOnOtherEntities.find(entity);
-    if(subset == verticesToSaveOnOtherEntities.end()) {
+    auto subset = entitiesWithSubsetToExport.find(entity);
+    if(subset == entitiesWithSubsetToExport.end()) {
       // normal case: save all mesh vertices on this entity
       writeMSH4EntityNodes(entity, fp, binary, saveParametric, scalingFactor,
                            version, entity->getMeshVertexBegin(),
@@ -3717,7 +3724,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
 
   // entities (the non-partitioned ones)
   writeMSH4Entities(this, fp, false, binary, scalingFactor, version,
-                    entityBounds);
+                    entityBounds, 0, {});
 
   // check if the mesh is partitioned... and if we actually have elements in the
   // partitioned entities
@@ -3767,28 +3774,24 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
   // On those entities, find nodes and entities that must be saved partially.
   // Note that some owned entities will end up there.
   std::unordered_map<GEntity *, std::unordered_set<MVertex *>>
-    verticesToSaveOnOtherEntities;
+    entitiesWithSubsetToExport;
   if(partitionToSave > 0 && overlapDim > 0) {
     if(overlapDim == 2)
-      verticesToSaveOnOtherEntities = findNonOwnedVerticesToSave<2>(
+      entitiesWithSubsetToExport = findNonOwnedVerticesToSave<2>(
         this, partitionToSave, std::get<1>(nonOwnedEntitiesToSave));
     else if(overlapDim == 3)
-      verticesToSaveOnOtherEntities = findNonOwnedVerticesToSave<3>(
+      entitiesWithSubsetToExport = findNonOwnedVerticesToSave<3>(
         this, partitionToSave, std::get<2>(nonOwnedEntitiesToSave));
   }
 
-  decltype(&verticesToSaveOnOtherEntities) sendVertices = nullptr;
-  if(partitionToSave > 0 && overlapDim > 0)
-    sendVertices = &verticesToSaveOnOtherEntities;
-
-  // partitioned entities (use verticesToSaveOnOtherEntities to limit nodes)
+  // partitioned entities (use entitiesWithSubsetToExport to limit nodes)
   if(partitioned)
     writeMSH4Entities(this, fp, true, binary, scalingFactor, version,
-                      entityBounds, partitionToSave, sendVertices);
+                      entityBounds, partitionToSave, entitiesWithSubsetToExport);
 
   // nodes
   writeMSH4Nodes(this, fp, partitioned, partitionToSave, binary,
-                 saveParametric ? 1 : 0, scalingFactor, saveAll, version, verticesToSaveOnOtherEntities);
+                 saveParametric ? 1 : 0, scalingFactor, saveAll, version, entitiesWithSubsetToExport);
 
   // elements
   writeMSH4Elements(this, fp, partitioned, partitionToSave, binary, saveAll,
