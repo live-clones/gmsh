@@ -156,7 +156,7 @@ static void highordertools_runblc_cb(Fl_Widget *w, void *data)
   bool onlyVisible = (bool)o->butt[1]->value();
 
   bool smoothBoundaryFirst = (bool)o->butt[4]->value();
-  bool doNotSmoothEndOfBL = (bool)o->butt[6]->value();
+  bool smoothEndOfBL = (bool)o->butt[6]->value();
   bool ensureQualityOuterMesh = (bool)o->butt[5]->value();
   double alignmentFactor = o->value[14]->value();
   double endLinearizationFactor = o->value[12]->value();
@@ -177,7 +177,7 @@ static void highordertools_runblc_cb(Fl_Widget *w, void *data)
   p.newAlgoSmoothBoundary = smoothBoundaryFirst;
   p.newAlgoEnsureQualityOuterMesh = ensureQualityOuterMesh;
   p.newAlgoAlignmentFactor = alignmentFactor;
-  p.newAlgoSmoothEndOfBL = !doNotSmoothEndOfBL;
+  p.newAlgoSmoothEndOfBL = smoothEndOfBL;
   p.newAlgoEndLinearizationFactor = endLinearizationFactor;
   p.newAlgoBackpropLimit = percentageToPreserve;
   p.newAlgoInterpolationType = interpolationType;
@@ -524,7 +524,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   y += BH;
 
   butt[6] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
-                                "Dev: Do not smooth end of BL");
+                                "Dev: Smooth end of BL");
   butt[6]->type(FL_TOGGLE_BUTTON);
   butt[6]->tooltip("Choose []=skipThis or [x]=smoothTheEnd");
   butt[6]->value(1);

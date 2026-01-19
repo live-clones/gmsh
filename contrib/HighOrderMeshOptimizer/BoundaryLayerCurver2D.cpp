@@ -3124,6 +3124,8 @@ namespace BoundaryLayerCurver {
     }
   }
 
+  static std::map<MVertex*, SPoint3> dev_positionBoundaryVertices;
+
   bool curve2Dcolumn_newIdea(Parameters params, PairMElemVecMElem &column, const GFace *gface,
                              const GEdge *gedge, const SVector3 &normal)
   {
@@ -3149,15 +3151,25 @@ namespace BoundaryLayerCurver {
     computeRelativePositions(stackEdges, relativePositions);
 
     // Smooth first edge if requested
+    // FIXME: Hack so that first edge go back to original position (for testing purpose)
     std: size_t numVertices = stackEdges[0].getNumVertices();
-    fullMatrix<double> xyz_boundary(numVertices, 3);
-    if(params.smoothBoundary) {
-      for(size_t i = 0; i < numVertices; ++i) {
-        MVertex *v = stackEdges[0].getVertex(i);
-        xyz_boundary(i, 0) = v->x();
-        xyz_boundary(i, 1) = v->y();
-        xyz_boundary(i, 2) = v->z();
+    for(size_t i = 0; i < numVertices; ++i) {
+      MVertex *v = stackEdges[0].getVertex(i);
+
+      if(dev_positionBoundaryVertices.find(v) == dev_positionBoundaryVertices.end()) {
+        // xyz_boundary(i, 0) = v->x();
+        // xyz_boundary(i, 1) = v->y();
+        // xyz_boundary(i, 2) = v->z();
+        dev_positionBoundaryVertices[v] = SPoint3(v->x(), v->y(), v->z());
       }
+      else {
+        SPoint3 p = dev_positionBoundaryVertices[v];
+        v->x() = p.x();
+        v->y() = p.y();
+        v->z() = p.z();
+      }
+    }
+    if(params.smoothBoundary) {
       applyQLPfilter(stackEdges[0]);
     }
 
@@ -3173,14 +3185,6 @@ namespace BoundaryLayerCurver {
       // FIXME: (dev) this was for testing
       // EdgeCurver2D::curveEdge(params, &stackEdges[i-1], &stackEdges[i], gface, nullptr, normal);
       if(params.smoothIntermediate) applyQLPfilter(stackEdges[i]);
-    }
-
-    // FIXME: Hack so that I can test multiple time with different parameters:
-    if(params.smoothBoundary) {
-      for(size_t i = 0; i < numVertices; ++i) {
-        MVertex *v = stackEdges[0].getVertex(i);
-        v->setXYZ(xyz_boundary(i, 0), xyz_boundary(i, 1), xyz_boundary(i, 2));
-      }
     }
 
     /*
