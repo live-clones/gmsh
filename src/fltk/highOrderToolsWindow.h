@@ -23,7 +23,7 @@ public:
   int meshOrder;
   Fl_Window *win;
   Fl_Box *box;
-  Fl_Check_Button *butt[9];
+  Fl_Check_Button *butt[10];
   Fl_Value_Input *value[15];
   Fl_Choice *choice[5];
   Fl_Button *push[3];

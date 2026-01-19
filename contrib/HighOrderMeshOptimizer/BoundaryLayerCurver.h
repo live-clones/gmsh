@@ -57,6 +57,7 @@ namespace BoundaryLayerCurver {
     int hierarchicalBasis; // (dev)
     bool activateALP; // (dev)
     bool useAngularInterp; // (dev)
+    bool smoothIntermediate; // (dev)
   };
 
   bool computeCommonEdge(MElement *el1, MElement *el2, MEdge &e);

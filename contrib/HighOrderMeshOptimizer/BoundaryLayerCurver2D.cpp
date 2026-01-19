@@ -3172,6 +3172,7 @@ namespace BoundaryLayerCurver {
       //  the quality is not good, what do we do? I don't know for now
       // FIXME: (dev) this was for testing
       // EdgeCurver2D::curveEdge(params, &stackEdges[i-1], &stackEdges[i], gface, nullptr, normal);
+      if(params.smoothIntermediate) applyQLPfilter(stackEdges[i]);
     }
 
     // FIXME: Hack so that I can test multiple time with different parameters:

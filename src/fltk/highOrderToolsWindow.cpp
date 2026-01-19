@@ -156,7 +156,7 @@ static void highordertools_runblc_cb(Fl_Widget *w, void *data)
   bool onlyVisible = (bool)o->butt[1]->value();
 
   bool smoothBoundaryFirst = (bool)o->butt[4]->value();
-  bool smoothEndOfBL = (bool)o->butt[6]->value();
+  bool doNotSmoothEndOfBL = (bool)o->butt[6]->value();
   bool ensureQualityOuterMesh = (bool)o->butt[5]->value();
   double alignmentFactor = o->value[14]->value();
   double endLinearizationFactor = o->value[12]->value();
@@ -165,6 +165,7 @@ static void highordertools_runblc_cb(Fl_Widget *w, void *data)
   int hierarchicalBasis = o->choice[4]->value();
   bool activateALP = (bool)o->butt[7]->value();
   bool useAngularInterp = (bool)o->butt[8]->value();
+  bool smoothIntermediate = (bool)o->butt[9]->value();
 
 #if defined(HAVE_OPTHOM)
   FastCurvingParameters p;
@@ -176,13 +177,14 @@ static void highordertools_runblc_cb(Fl_Widget *w, void *data)
   p.newAlgoSmoothBoundary = smoothBoundaryFirst;
   p.newAlgoEnsureQualityOuterMesh = ensureQualityOuterMesh;
   p.newAlgoAlignmentFactor = alignmentFactor;
-  p.newAlgoSmoothEndOfBL = smoothEndOfBL;
+  p.newAlgoSmoothEndOfBL = !doNotSmoothEndOfBL;
   p.newAlgoEndLinearizationFactor = endLinearizationFactor;
   p.newAlgoBackpropLimit = percentageToPreserve;
   p.newAlgoInterpolationType = interpolationType;
   p.newAlgoHierarchicalBasis = hierarchicalBasis;
   p.newAlgoActivateALP = activateALP;
   p.newAlgoUseAngularInterp = useAngularInterp;
+  p.newAlgoSmoothIntermediate = smoothIntermediate;
 
   auto *gm = GModel::current();
 
@@ -431,15 +433,6 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
 
   y += BH;
 
-  butt[6] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
-                                "Smooth end of BL");
-  butt[6]->type(FL_TOGGLE_BUTTON);
-  butt[6]->tooltip("Choose []=skipThis or [x]=smoothTheEnd");
-  butt[6]->value(0);
-  // butt[6]->deactivate();
-
-  y += BH;
-
   butt[5] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
                                 "Ensure validity/quality of exterior mesh");
   butt[5]->type(FL_TOGGLE_BUTTON);
@@ -519,6 +512,23 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   butt[8]->type(FL_TOGGLE_BUTTON);
   butt[8]->tooltip("");
   butt[8]->value(0);
+
+  y += BH;
+
+  butt[9] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
+                                "Dev: Smooth intermediate layers");
+  butt[9]->type(FL_TOGGLE_BUTTON);
+  butt[9]->tooltip("");
+  butt[9]->value(0);
+
+  y += BH;
+
+  butt[6] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
+                                "Dev: Do not smooth end of BL");
+  butt[6]->type(FL_TOGGLE_BUTTON);
+  butt[6]->tooltip("Choose []=skipThis or [x]=smoothTheEnd");
+  butt[6]->value(1);
+  // butt[6]->deactivate();
 
   y += BH;
 

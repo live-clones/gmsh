@@ -56,6 +56,7 @@ struct FastCurvingParameters {
   int newAlgoHierarchicalBasis; // dev
   bool newAlgoActivateALP; // dev
   bool newAlgoUseAngularInterp; // dev
+  bool newAlgoSmoothIntermediate; // dev
 
 
   FastCurvingParameters()
