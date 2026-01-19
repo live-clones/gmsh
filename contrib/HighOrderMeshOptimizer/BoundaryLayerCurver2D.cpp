@@ -189,6 +189,20 @@ namespace {
   double mat_alphaLag_data[7] = {
     +1.1102230246251565e-16, +1.1102230246251565e-16, +4.7572983373069255e-03, +2.2484806934916141e-02, +7.3262303253209315e-02, +2.4993557912680645e-01, +4.4688682527495810e-01
   };
+  double vec_RSReval_data[9] = {
+    -1.0000000000000000e+00, -9.4910791234275849e-01, -7.4153118559939446e-01, -4.0584515137739718e-01, +0.0000000000000000e+00, +4.0584515137739718e-01, +7.4153118559939446e-01, +9.4910791234275849e-01,
+    +1.0000000000000000e+00
+  };
+  double mat_lagToTgRSR_data[63] = {
+    -4.7070343328376065e+00, -4.2834570560728178e+00, -1.7031203339449379e+00, +1.8384399357711192e-01, -3.2770301011197038e-02, +6.7078032475155619e-03, -3.2406837243303946e-03, +1.9352867808286529e-03,
+    +2.6688963458698063e-03, -2.6688963458759963e-03, -1.9352867808336586e-03, +3.2406837243244449e-03, -6.7078032475161682e-03, +3.2770301011196511e-02, -1.8384399357711675e-01, +1.7031203339446734e+00,
+    +4.2834570560722511e+00, +4.7070343328362263e+00, +7.1894551638290540e+00, +6.1209314693343702e+00, -2.4614135724374084e-01, -2.4514589119400054e+00, +3.6590247089693617e-01, -8.4767143220261409e-02,
+    +4.6677491060615153e-02, -3.0451605077624802e-02, -4.2433673598445874e-02, -3.4825011241904247e+00, -2.5512518680132117e+00, +2.8167275664040892e+00, +1.0222688928390651e+00, -2.1334940387602859e+00,
+    +4.7852782700761232e-01, -2.9871678102996302e-01, +2.1485744737534965e-01, +3.0155445320404700e-01, +1.2618699691509405e+00, +9.0011858383051269e-01, -1.1227458489086153e+00, +1.6458145125587509e+00,
+    +1.3333633439933683e-14, -1.6458145125586907e+00, +1.1227458489096769e+00, -9.0011858382938292e-01, -1.2618699691489212e+00, -3.0155445320462426e-01, -2.1485744737572493e-01, +2.9871678102957450e-01,
+    -4.7852782700764207e-01, +2.1334940387602734e+00, -1.0222688928391057e+00, -2.8167275664055995e+00, +2.5512518680113265e+00, +3.4825011241863661e+00, +4.2433673598536947e-02, +3.0451605077691613e-02,
+    -4.6677491060540741e-02, +8.4767143220268293e-02, -3.6590247089693229e-01, +2.4514589119400463e+00, +2.4614135724492842e-01, -6.1209314693327483e+00, -7.1894551638251425e+00
+  };
 
   fullMatrix<double> mat_lagToQLP(mat_lagToQLP_data, 7, 7);
   fullMatrix<double> mat_hsrToLag(mat_hsrToLag_data, 7, 7);
@@ -196,6 +210,8 @@ namespace {
   fullVector<double> mat_alphaPoly(mat_alphaPoly_data, 7);
   fullVector<double> mat_alphaLag(mat_alphaLag_data, 7);
   double limit_qlpPlus = 1.22;
+  fullVector<double> vec_RSReval(vec_RSReval_data, 9);
+  fullMatrix<double> mat_lagToTgRSR(mat_lagToTgRSR_data, 9, 7);
 
   void applyQLPfilter(MEdgeN &edge, double fact=1.0)
   {
@@ -218,6 +234,44 @@ namespace {
       MVertex *v = edge.getVertex(i);
       v->setXYZ(xyz_filtered(i, 0), xyz_filtered(i, 1), xyz_filtered(i, 2));
     }
+  }
+
+  SVector3 computeRSRtangent(const MEdgeN &edge, double paramEdge)
+  {
+    fullMatrix<double> xyz(edge.getNumVertices(), 3);
+
+    for(std::size_t i = 0; i < edge.getNumVertices(); ++i) {
+      MVertex *v = edge.getVertex(i);
+      xyz(i, 0) = v->x();
+      xyz(i, 1) = v->y();
+      xyz(i, 2) = v->z();
+    }
+
+    int num_eval = vec_RSReval.size();
+    fullMatrix<double> xyz_tangents(num_eval, 3);
+    mat_lagToTgRSR.mult(xyz, xyz_tangents);
+
+    if(paramEdge <= vec_RSReval(0))
+      return SVector3(xyz_tangents(0,0), xyz_tangents(0,1), xyz_tangents(0,2)).unit();
+    if(paramEdge >= vec_RSReval(num_eval-1)) {
+      int N = num_eval-1;
+      return SVector3(xyz_tangents(N, 0), xyz_tangents(N, 1), xyz_tangents(N, 2)).unit();
+    }
+
+    std::size_t idx = 0;
+    while(vec_RSReval(idx) < paramEdge) ++idx;
+
+    const double p0 = vec_RSReval(idx);
+    const double p1 = vec_RSReval(idx+1);
+    const double fact = (paramEdge - p0) / (p1-p0);
+
+    const double x0 = xyz_tangents(idx,0), x1 = xyz_tangents(idx+1,0);
+    const double y0 = xyz_tangents(idx,1), y1 = xyz_tangents(idx+1,1);
+    const double z0 = xyz_tangents(idx,2), z1 = xyz_tangents(idx+1,2);
+
+    return SVector3(x0 + fact * (x1-x0),
+                    y0 + fact * (y1-y0),
+                    z0 + fact * (z1-z0)).unit();
   }
 
 } // namespace
@@ -338,6 +392,8 @@ namespace BoundaryLayerCurver {
     void _Frame::computeFrame(double paramEdge, SVector3 &t, SVector3 &n,
                               SVector3 &w, bool atExtremity, int dev_interpType) const
     {
+      // std::cout << std::endl << std::setprecision(20) << "paramEdge = " << paramEdge << std::endl;
+
       // Make sure that we execute the right code:
       if (_newIdea && _gedge) Msg::Error("There was an error in BLCurver computeFrame");
 
@@ -368,20 +424,27 @@ namespace BoundaryLayerCurver {
             Msg::Error("dev_interpType = -1: unexpected");
           default:
             Msg::Error("not implemented, using BSpline tangent");
-          case 1:
+          case 3:
             t = tangentBSpline(_edgeOnBoundary, paramEdge);
             break;
           case 0:
             t = _edgeOnBoundary->tangent(paramEdge);
             break;
-          case 2:
+          case 1:
             t = _edgeFiltered->tangent(paramEdge);
             break;
-          case 3:
+          case 2:
             // FIXME
             // FIXME
             // FIXME
             t = _edgeFiltered->tangent(paramEdge);
+            break;
+          case 4:
+            // std::cout << "LagrangeTangent = " << _edgeOnBoundary->tangent(paramEdge).x() << std::endl;
+            // std::cout << "QLPTangent = " << _edgeFiltered->tangent(paramEdge).x() << std::endl;
+            // std::cout << "BSplineTangent = " << tangentBSpline(_edgeOnBoundary, paramEdge).x() << std::endl;
+            t = computeRSRtangent(_edgeOnBoundary[0], paramEdge);
+            // std::cout << "RSRtangent = " << t.x() << std::endl;
             break;
           }
         }

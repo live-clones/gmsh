@@ -477,11 +477,12 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   // FIXME: for dev purpose
   static Fl_Menu_Item menu_interpolationType[] = {
     {"Lagrange", 0, nullptr, nullptr},
+    {"QLP (only P6)", 0, nullptr, nullptr},
+    {"QLP+ (not implemented)", 0, nullptr, nullptr},
     {"BSpline", 0, nullptr, nullptr},
-    {"QLP", 0, nullptr, nullptr},
-    {"QLP+", 0, nullptr, nullptr},
+    {"RSR (only P6, not yet ok with ALP shift)", 0, nullptr, nullptr},
     {nullptr}};
-  choice[1] = new Fl_Choice(x, y, IW, BH, "Dev: Choose interpolation type (for tangent)");
+  choice[1] = new Fl_Choice(x, y, IW, BH, "Dev: Choose tangent (order: worst -> best)");
   choice[1]->align(FL_ALIGN_RIGHT);
   choice[1]->menu(menu_interpolationType);
 
@@ -500,7 +501,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
   y += BH;
 
   butt[7] = new Fl_Check_Button(x, y, width - 4 * WB, BH,
-                                "Dev: Activate ALP shift");
+                                "Dev: Activate ALP shift (not yet ok with RSR)");
   butt[7]->type(FL_TOGGLE_BUTTON);
   butt[7]->tooltip("");
   butt[7]->value(0);
@@ -527,7 +528,7 @@ highOrderToolsWindow::highOrderToolsWindow(int deltaFontSize)
                                 "Dev: Smooth end of BL");
   butt[6]->type(FL_TOGGLE_BUTTON);
   butt[6]->tooltip("Choose []=skipThis or [x]=smoothTheEnd");
-  butt[6]->value(1);
+  butt[6]->value(0);
   // butt[6]->deactivate();
 
   y += BH;
