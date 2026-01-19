@@ -31,8 +31,8 @@ void buildOverlapEntities(GModel *const model,
                           const OverlapCollection<dim> &overlaps);
 
 
-
-// For each entity, identify the boundary (set of MEdge/MFace) of the overlap patch. This includes all parts of the patch, including the interface
+// For each entity, identify the boundary (set of MEdge/MFace) of the overlap patch.
+// This includes all parts of the patch, including the interface
 // between the inner and overlap. These boundaries are computed per parent entity, so a physical interface will be a boundary.
 template <int dim>
 OveralBoundariesMesh<dim>
