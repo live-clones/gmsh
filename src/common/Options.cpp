@@ -5856,6 +5856,13 @@ double opt_mesh_partition_split_mesh_files(OPT_ARGS_NUM)
   return CTX::instance()->mesh.partitionSplitMeshFiles;
 }
 
+double opt_mesh_split_mesh_local_brep(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET)
+    CTX::instance()->mesh.splitMeshLocalBREP = (int)val;
+  return CTX::instance()->mesh.splitMeshLocalBREP;
+}
+
 double opt_mesh_partition_save_topology_file(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET)

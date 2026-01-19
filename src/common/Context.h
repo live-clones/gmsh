@@ -72,7 +72,7 @@ struct contextMeshOptions {
   int preserveNumberingMsh2, createTopologyMsh2;
   // partitioning
   int numPartitions, partitionCreateTopology, partitionCreateGhostCells;
-  int partitionCreatePhysicals, partitionSplitMeshFiles;
+  int partitionCreatePhysicals, partitionSplitMeshFiles, splitMeshLocalBREP;
   int partitionSaveTopologyFile, partitionTriWeight, partitionQuaWeight;
   int partitionTetWeight, partitionHexWeight, partitionLinWeight;
   int partitionPriWeight, partitionPyrWeight, partitionTrihWeight;

@@ -1620,6 +1620,8 @@ StringXNumber MeshOptions_Number[] = {
     "Smooth the mesh normals?" },
   { F|O, "SmoothRatio" , opt_mesh_smooth_ratio , 1.8 ,
     "Ratio between mesh sizes at nodes of a same edge (used in BAMG)" },
+  { F|O, "SplitMeshLocalBREP" , opt_mesh_split_mesh_local_brep , 0. ,
+    "Only export the subset of the BREP that is relevant when splitting mesh files" },
   { F|O, "StlAngularDeflection" , opt_mesh_stl_angular_deflection , 0.3 ,
     "Maximum angular deflection when creating STL representations of entities "
     "(currently only used with the OpenCASCADE kernel)"},
