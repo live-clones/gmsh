@@ -2205,15 +2205,14 @@ static void writeMSH4Entities(
     fprintf(fp, "$EndEntities\n");
 }
 
+template <class It>
 static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
                                  int saveParametric, double scalingFactor,
-                                 double version)
+                                 double version, It begin, It end, size_t numVerts)
 {
   int parametric = saveParametric;
   if(ge->dim() != 1 && ge->dim() != 2)
     parametric = 0; // Gmsh only stores parametric coordinates for dim 1 and 2
-
-  std::size_t numVerts = ge->getNumMeshVertices();
 
   if(binary) {
     int entityDim = ge->dim();
@@ -2226,7 +2225,7 @@ static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
   else {
     fprintf(fp, "%d %d %d %zu\n", (version >= 4.1) ? ge->dim() : ge->tag(),
             (version >= 4.1) ? ge->tag() : ge->dim(), parametric,
-            ge->getNumMeshVertices());
+            numVerts);
   }
 
   if(!numVerts) {
@@ -2237,14 +2236,14 @@ static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
   if(parametric) n += ge->dim();
 
   if(binary) {
-    std::vector<size_t> tags(numVerts);
-    for(std::size_t i = 0; i < numVerts; i++)
-      tags[i] = ge->getMeshVertex(i)->getNum();
+    std::vector<size_t> tags; tags.reserve(numVerts);
+    for(auto it = begin; it != end; ++it)
+      tags.push_back((*it)->getNum());
     fwrite(&tags[0], sizeof(std::size_t), numVerts, fp);
     std::vector<double> coord(n * numVerts);
     std::size_t j = 0;
-    for(std::size_t i = 0; i < numVerts; i++) {
-      MVertex *mv = ge->getMeshVertex(i);
+    for(auto it = begin; it != end; ++it) {
+      MVertex *mv = *it;
       coord[j++] = mv->x() * scalingFactor;
       coord[j++] = mv->y() * scalingFactor;
       coord[j++] = mv->z() * scalingFactor;
@@ -2255,11 +2254,11 @@ static void writeMSH4EntityNodes(GEntity *ge, FILE *fp, bool binary,
   }
   else {
     if(version >= 4.1) {
-      for(std::size_t i = 0; i < numVerts; i++)
-        fprintf(fp, "%zu\n", ge->getMeshVertex(i)->getNum());
+      for(auto it = begin; it != end; ++it)
+        fprintf(fp, "%zu\n", (*it)->getNum());
     }
-    for(std::size_t i = 0; i < numVerts; i++) {
-      MVertex *mv = ge->getMeshVertex(i);
+    for(auto it = begin; it != end; ++it) {
+      MVertex *mv = *it;
       double x = mv->x() * scalingFactor;
       double y = mv->y() * scalingFactor;
       double z = mv->z() * scalingFactor;
@@ -2517,9 +2516,12 @@ getEntitiesToSave(GModel *const model, bool partitioned,
   }
 }
 
-static void writeMSH4Nodes(GModel *const model, FILE *fp, bool partitioned,
-                           int partitionToSave, bool binary, int saveParametric,
-                           double scalingFactor, bool saveAll, double version)
+static void writeMSH4Nodes(
+  GModel *const model, FILE *fp, bool partitioned, int partitionToSave,
+  bool binary, int saveParametric, double scalingFactor, bool saveAll,
+  double version,
+  std::unordered_map<GEntity *, std::unordered_set<MVertex *>>
+    &verticesToSaveOnOtherEntities)
 {
   std::set<GRegion *, GEntityPtrLessThan> regions;
   std::set<GFace *, GEntityPtrLessThan> faces;
