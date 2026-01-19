@@ -3715,7 +3715,7 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
     fprintf(fp, "$EndPhysicalNames\n");
   }
 
-  // entities
+  // entities (the non-partitioned ones)
   writeMSH4Entities(this, fp, false, binary, scalingFactor, version,
                     entityBounds);
 
@@ -3744,14 +3744,51 @@ int GModel::_writeMSH4(const std::string &name, double version, bool binary,
     }
   }
 
-  // partitioned entities
+  // Optimized export in the partitioned case:
+  // partitionToSave = 0 -> full export
+  // partitionToSave > 0, no overlap -> only export what is owned by the partition
+  // partitionToSave > 0, with overlap -> export what is owned + what is needed
+  std::variant<
+    std::monostate,
+    decltype(findCoveredEntitiesAndElementsToSave<2>(this, partitionToSave)),
+    decltype(findCoveredEntitiesAndElementsToSave<3>(this, partitionToSave))>
+    nonOwnedEntitiesToSave;
+  int overlapDim = this->overlapDim(); // 0, 2 or 3
+  // Find entities of other partitions that are needed in the overlap case.
+  if(partitionToSave > 0) {
+    if(overlapDim == 2)
+      nonOwnedEntitiesToSave =
+        findCoveredEntitiesAndElementsToSave<2>(this, partitionToSave);
+    else if(overlapDim == 3)
+      nonOwnedEntitiesToSave =
+        findCoveredEntitiesAndElementsToSave<3>(this, partitionToSave);
+  }
+
+  // On those entities, find nodes and entities that must be saved partially.
+  // Note that some owned entities will end up there.
+  std::unordered_map<GEntity *, std::unordered_set<MVertex *>>
+    verticesToSaveOnOtherEntities;
+  if(partitionToSave > 0 && overlapDim > 0) {
+    if(overlapDim == 2)
+      verticesToSaveOnOtherEntities = findNonOwnedVerticesToSave<2>(
+        this, partitionToSave, std::get<1>(nonOwnedEntitiesToSave));
+    else if(overlapDim == 3)
+      verticesToSaveOnOtherEntities = findNonOwnedVerticesToSave<3>(
+        this, partitionToSave, std::get<2>(nonOwnedEntitiesToSave));
+  }
+
+  decltype(&verticesToSaveOnOtherEntities) sendVertices = nullptr;
+  if(partitionToSave > 0 && overlapDim > 0)
+    sendVertices = &verticesToSaveOnOtherEntities;
+
+  // partitioned entities (use verticesToSaveOnOtherEntities to limit nodes)
   if(partitioned)
     writeMSH4Entities(this, fp, true, binary, scalingFactor, version,
-                      entityBounds);
+                      entityBounds, partitionToSave, sendVertices);
 
   // nodes
   writeMSH4Nodes(this, fp, partitioned, partitionToSave, binary,
-                 saveParametric ? 1 : 0, scalingFactor, saveAll, version);
+                 saveParametric ? 1 : 0, scalingFactor, saveAll, version, verticesToSaveOnOtherEntities);
 
   // elements
   writeMSH4Elements(this, fp, partitioned, partitionToSave, binary, saveAll,
