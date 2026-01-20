@@ -445,6 +445,7 @@ public:
     std::get<1>(_boundaryOfOverlapCreators)[pf] = parent;
   }
 
+#ifndef SWIG
   const auto& getOverlapInnerBoundaries2D() const
   {
     return _overlapInnerBoundaries2D;
@@ -461,11 +462,11 @@ public:
   {
     return _overlapOfBoundaries3D;
   }
-
   const auto& getBoundaryOfOverlapCreators() const
   {
     return _boundaryOfOverlapCreators;
   }
+#endif
 
   // find the entity with the given tag
   GRegion *getRegionByTag(int n) const;
