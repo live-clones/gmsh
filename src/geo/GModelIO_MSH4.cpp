@@ -3151,7 +3151,7 @@ static void writeMSH4EdgeTags(
   GModel *const model, FILE *fp, bool binary, bool partitioned,
   int partitionToSave)
 {
-  
+
   auto printEdges = [&](const GModel::hashmapMEdge &edges) {
     fprintf(fp, "$EdgeTags\n");
     if(binary) {
@@ -3183,7 +3183,7 @@ static void writeMSH4EdgeTags(
   else {
     GModel::hashmapMEdge subsetEdges;
     auto addEdgesFromElement = [&](auto *e) {
-      for(std::size_t k = 0; k < e->getNumEdges(); ++k) {
+      for(int k = 0; k < e->getNumEdges(); ++k) {
         MEdge me = e->getEdge(k);
         auto it = model->getMEdges().find(me);
         if(it != model->getMEdges().end()) { subsetEdges[me] = it->second; }
@@ -3279,7 +3279,7 @@ static void writeMSH4FaceTags(GModel *const model, FILE *fp, bool binary,
   auto addFacesFromEntity = [&](GEntity *entity) {
     for(size_t k = 0; k < entity->getNumMeshElements(); ++k) {
       MElement *el = entity->getMeshElement(k);
-      for(size_t j = 0; j < el->getNumFaces(); ++j) {
+      for(int j = 0; j < el->getNumFaces(); ++j) {
         MFace mf = el->getFace(j);
         auto it = model->getMFaces().find(mf);
         if(it != model->getMFaces().end()) { subsetFaces[mf] = it->second; }
