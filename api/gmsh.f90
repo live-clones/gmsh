@@ -3461,7 +3461,7 @@ module gmsh
   end subroutine gmshModelMeshFindInnerBoundary
 
   !> In entity of dimension `dim' and tag `tag' is an overlap of boundary
-  !! entity, find which entity of dim `dim+1` created it. Returns -1 and outputs
+  !! entity, find which entity of dim `dim+1' created it. Returns -1 and outputs
   !! a warning in case of incorrect input.
   subroutine gmshModelMeshFindCreatingEntityForOverlapOfBoundary(dim, &
                                                                  tag, &

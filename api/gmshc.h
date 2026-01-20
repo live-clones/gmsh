@@ -650,7 +650,7 @@ GMSH_API void gmshModelMeshFindInnerBoundary(const int dim,
                                              int * ierr);
 
 /* In entity of dimension `dim' and tag `tag' is an overlap of boundary
- * entity, find which entity of dim `dim+1` created it. Returns -1 and outputs
+ * entity, find which entity of dim `dim+1' created it. Returns -1 and outputs
  * a warning in case of incorrect input. */
 GMSH_API void gmshModelMeshFindCreatingEntityForOverlapOfBoundary(const int dim,
                                                                   const int tag,

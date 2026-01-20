@@ -284,10 +284,8 @@ mesh.add('findPartition', doc, None, iint('dim'), iint('tag'), iint('partition')
 doc = '''Find all the tags of the entities of dimension `dim' that are inner overlap boundary of the (non-partitioned) entity of dimension `dim' and tag `tag', and which belong to the partition of interest.'''
 mesh.add('findInnerBoundary', doc, None, iint('dim'), iint('tag'), iint('partition'), ovectorint('entityTags'))
 
-doc = '''In entity of dimension `dim' and tag `tag' is an overlap of boundary entity, find which entity of dim `dim+1` created it. Returns -1 and outputs a warning in case of incorrect input.'''
+doc = '''In entity of dimension `dim' and tag `tag' is an overlap of boundary entity, find which entity of dim `dim+1' created it. Returns -1 and outputs a warning in case of incorrect input.'''
 mesh.add('findCreatingEntityForOverlapOfBoundary', doc, None, iint('dim'), iint('tag'), oint('parentTag'))
-
-
 
 doc = '''Unpartition the mesh of the current model.'''
 mesh.add('unpartition', doc, None)

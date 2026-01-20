@@ -1204,7 +1204,7 @@ Find all the tags of the entities of dimension @code{dim} that are inner overlap
 @end table
 
 @item gmsh/model/mesh/findCreatingEntityForOverlap@-OfBoundary
-In entity of dimension @code{dim} and tag @code{tag} is an overlap of boundary entity, find which entity of dim @code{dim+1@code{ created it. Returns -1 and outputs a warning in case of incorrect input.
+In entity of dimension @code{dim} and tag @code{tag} is an overlap of boundary entity, find which entity of dim @code{dim+1} created it. Returns -1 and outputs a warning in case of incorrect input.
 
 @table @asis
 @item Input:
