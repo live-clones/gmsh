@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -99,7 +99,7 @@ public:
   // check if the GUI is available
   static bool available();
   // run the GUI until there's no window left
-  static int run();
+  static int run(const std::string &optionFileName="");
   // check if there are any pending events, and process them (if rateLimited is
   // set, only perform the check if one has not been made in the last 1 /
   // General.FltkRefreshRate seconds)

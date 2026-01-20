@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -33,11 +33,11 @@ public:
     SVector3 n(0, 0, 1);
     return n;
   }
-  virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const
+  virtual std::pair<SVector3, SVector3> firstDer(const SPoint2 &param) const
   {
     SVector3 t1(1, 0, 0);
     SVector3 t2(0, 1, 0);
-    return Pair<SVector3, SVector3>(t1, t2);
+    return std::make_pair(t1, t2);
   }
   virtual void secondDer(const SPoint2 &, SVector3 &a, SVector3 &b,
                          SVector3 &c) const

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -22,6 +22,7 @@
 #include "FlGui.h"
 #include "graphicWindow.h"
 #include "openglWindow.h"
+#include "visibilityWindow.h"
 #include "gl2ps.h"
 #include "gl2gif.h"
 #include "gl2jpeg.h"
@@ -48,6 +49,7 @@ int GetFileFormatFromExtension(const std::string &ext, double *version)
   else if(ext == ".pos")      return FORMAT_POS;
   else if(ext == ".pvtu")     return FORMAT_PVTU;
   else if(ext == ".opt")      return FORMAT_OPT;
+  else if(ext == ".vis")      return FORMAT_VIS;
   else if(ext == ".unv")      return FORMAT_UNV;
   else if(ext == ".vtk")      return FORMAT_VTK;
   else if(ext == ".m")        return FORMAT_MATLAB;
@@ -60,6 +62,7 @@ int GetFileFormatFromExtension(const std::string &ext, double *version)
   else if(ext == ".ir3")      return FORMAT_IR3;
   else if(ext == ".mesh")     return FORMAT_MESH;
   else if(ext == ".off")      return FORMAT_OFF;
+  else if(ext == ".obj")      return FORMAT_OBJ;
   else if(ext == ".mail")     return FORMAT_MAIL;
   else if(ext == ".bdf")      return FORMAT_BDF;
   else if(ext == ".diff")     return FORMAT_DIFF;
@@ -117,6 +120,7 @@ std::string GetDefaultFileExtension(int format, bool onlyMeshFormats)
   case FORMAT_X3D:     name = ".x3d"; mesh = true; break;
   case FORMAT_PVTU:    name = ".pvtu"; break;
   case FORMAT_OPT:     name = ".opt"; break;
+  case FORMAT_VIS:     name = ".vis"; break;
   case FORMAT_UNV:     name = ".unv"; mesh = true; break;
   case FORMAT_VTK:     name = ".vtk"; mesh = true; break;
   case FORMAT_MATLAB:  name = ".m"; mesh = true; break;
@@ -128,6 +132,7 @@ std::string GetDefaultFileExtension(int format, bool onlyMeshFormats)
   case FORMAT_IR3:     name = ".ir3"; mesh = true; break;
   case FORMAT_MESH:    name = ".mesh"; mesh = true; break;
   case FORMAT_OFF:     name = ".off"; mesh = true; break;
+  case FORMAT_OBJ:     name = ".obj"; mesh = true; break;
   case FORMAT_MAIL:    name = ".mail"; mesh = true; break;
   case FORMAT_BDF:     name = ".bdf"; mesh = true; break;
   case FORMAT_DIFF:    name = ".diff"; mesh = true; break;
@@ -327,13 +332,16 @@ void CreateOutputFile(const std::string &fileName, int format,
       GModel::current()->writePartitionedMSH
         (splitName[0], CTX::instance()->mesh.mshFileVersion,
          CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
-         CTX::instance()->mesh.saveParametric, CTX::instance()->mesh.scalingFactor);
+         CTX::instance()->mesh.saveParametric,
+         CTX::instance()->mesh.scalingFactor);
     }
     else{
       GModel::current()->writeMSH
-        (name, CTX::instance()->mesh.mshFileVersion, CTX::instance()->mesh.binary,
-         CTX::instance()->mesh.saveAll, CTX::instance()->mesh.saveParametric,
-         CTX::instance()->mesh.scalingFactor);
+        (name, CTX::instance()->mesh.mshFileVersion,
+         CTX::instance()->mesh.binary, CTX::instance()->mesh.saveAll,
+         CTX::instance()->mesh.saveParametric,
+         CTX::instance()->mesh.scalingFactor,
+         CTX::instance()->mesh.firstElementTag - 1);
     }
     if(GModel::current()->getNumPartitions() &&
        CTX::instance()->mesh.partitionSaveTopologyFile){
@@ -405,6 +413,11 @@ void CreateOutputFile(const std::string &fileName, int format,
 
   case FORMAT_OFF:
     GModel::current()->writeOFF
+      (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
+    break;
+
+  case FORMAT_OBJ:
+    GModel::current()->writeOBJ
       (name, CTX::instance()->mesh.saveAll, CTX::instance()->mesh.scalingFactor);
     break;
 
@@ -540,6 +553,11 @@ void CreateOutputFile(const std::string &fileName, int format,
     break;
 
 #if defined(HAVE_FLTK)
+  case FORMAT_VIS:
+    UnlinkFile(name);
+    visibility_save(name);
+    break;
+
   case FORMAT_PPM:
   case FORMAT_YUV:
   case FORMAT_GIF:

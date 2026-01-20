@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <set>
+#include <unordered_set>
 #include <sstream>
 #include <algorithm>
 #include <ctime>
@@ -19,6 +20,7 @@
 #include "GmshMessage.h"
 #include "GModel.h"
 #include "ElementType.h"
+#include "EntityTraits.h"
 
 struct OriGEntityPtrFullLessThan {
   bool operator()(const std::pair<int, GEntity *> &p1,
@@ -528,6 +530,10 @@ static int makeGraph(GModel *model, Graph &graph, int selectDim)
   idx_t eindIndex = 0;
   idx_t numVertex = 0;
 
+  if(graph.nn() == 0) {
+    Msg::Warning("No mesh nodes were found");
+    return 1;
+  }
   if(graph.ne() == 0) {
     Msg::Warning("No mesh elements were found");
     return 1;
@@ -2246,7 +2252,7 @@ int PartitionFaceMinEdgeLength(GFace *gf, int np, double tol)
     }
     if (!allTheSame) break;
     ubvec -= (1. - ubvec) * .5;
-    Msg::Warning("Partitioning face %d with %lu triangles that all have the same"
+    Msg::Warning("Partitioning face %d with %zu triangles that all have the same"
                  " partition - changing tolerance to %g", gf->tag(),
                  gf->triangles.size(), ubvec);
     if(ubvec > CTX::instance()->lc) {
@@ -2260,6 +2266,83 @@ int PartitionFaceMinEdgeLength(GFace *gf, int np, double tol)
   return 0;
 }
 
+static std::unordered_set<GVertex *> findAllEmbeddedVertices(GModel *model)
+{
+  std::unordered_set<GVertex *> embeddedVertices;
+  for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
+    GFace *gf = *it;
+    for(const auto &ev : gf->embeddedVertices()) embeddedVertices.insert(ev);
+  }
+  for(auto it = model->firstRegion(); it != model->lastRegion(); ++it) {
+    GRegion *gr = *it;
+    for(const auto &ev : gr->embeddedVertices()) embeddedVertices.insert(ev);
+  }
+  return embeddedVertices;
+}
+
+static std::vector<int> clearDuplicates(const std::vector<int> &partitions)
+{
+  std::unordered_set<int> uniquePartitions(partitions.begin(),
+                                           partitions.end());
+  return std::vector<int>(uniquePartitions.begin(), uniquePartitions.end());
+}
+
+template <int dim>
+static void entityCheckForEmbedded(
+  typename EntityTraits<dim>::Entity *entity,
+  const std::unordered_map<MVertex *, partitionVertex *> &mvToPartitionVertex)
+{
+  auto *pe =
+    dynamic_cast<typename EntityTraits<dim>::PartitionEntity *>(entity);
+  if(!pe) return;
+  auto partitionsOfEdge = pe->getPartitions();
+
+  for(size_t e = 0; e < pe->getNumMeshElements(); e++) {
+    MElement *me = pe->getMeshElement(e);
+    for(size_t v = 0; v < me->getNumVertices(); v++) {
+      MVertex *mv = me->getVertex(v);
+      if(mv->onWhat()->dim() == 0) {
+        auto it = mvToPartitionVertex.find(mv);
+        if(it != mvToPartitionVertex.end()) {
+          partitionVertex *pv = it->second;
+          std::vector<int> partitions = pv->getPartitions();
+          for(int p : partitionsOfEdge) { partitions.push_back(p); }
+          pv->setPartitions(clearDuplicates(partitions));
+        }
+      }
+    }
+  }
+}
+
+static void fixEmbeddedVertices(GModel *model)
+{
+  Msg::Info("Fixing partition embedded vertices...");
+  auto embeddedVertices = findAllEmbeddedVertices(model);
+  std::unordered_map<MVertex *, partitionVertex *> mvToPartitionVertex;
+  for(auto it = model->firstVertex(); it != model->lastVertex(); ++it) {
+    GVertex *gv = *it;
+    if(gv->geomType() == GEntity::PartitionPoint) {
+      partitionVertex *pv = static_cast<partitionVertex *>(gv);
+      GVertex *parent = dynamic_cast<GVertex *>(pv->getParentEntity());
+      if(embeddedVertices.count(parent)) {
+        mvToPartitionVertex.insert(std::make_pair(pv->getMeshVertex(0), pv));
+
+        MVertex *mv = pv->getMeshVertex(0);
+        if(mv->onWhat() != pv) {
+          Msg::Warning("Mesh vertex %lu is not on partition vertex %d",
+                       mv->getNum(), pv->tag());
+        }
+      }
+    }
+  }
+
+  for(auto it = model->firstEdge(); it != model->lastEdge(); ++it) {
+    entityCheckForEmbedded<1>(*it, mvToPartitionVertex);
+  }
+  for(auto it = model->firstFace(); it != model->lastFace(); ++it) {
+    entityCheckForEmbedded<2>(*it, mvToPartitionVertex);
+  }
+}
 // Partition a mesh into n parts. Returns: 0 = success, 1 = error
 
 int PartitionMesh(GModel *model, int numPart)
@@ -2315,7 +2398,7 @@ int PartitionMesh(GModel *model, int numPart)
       totCount += count[j];
     }
     if(totCount > 0) {
-      Msg::Info(" - Repartition of %d %s: %lu(min) %lu(max) %g(avg)", totCount,
+      Msg::Info(" - Repartition of %d %s: %zu(min) %zu(max) %g(avg)", totCount,
                 ElementType::nameOfParentType(i, totCount > 1).c_str(),
                 minCount, maxCount, totCount / (double)numPart);
     }
@@ -2334,6 +2417,7 @@ int PartitionMesh(GModel *model, int numPart)
 
   assignPhysicals(model);
   assignMeshVertices(model);
+  fixEmbeddedVertices(model);
 
   if(CTX::instance()->mesh.partitionCreateGhostCells) {
     double t4 = Cpu(), w4 = TimeOfDay();
@@ -2591,6 +2675,7 @@ int PartitionUsingThisSplit(GModel *model,
 
   assignPhysicals(model);
   assignMeshVertices(model);
+  fixEmbeddedVertices(model);
 
   if (!elmGhosts.empty()) {
     std::sort(elmGhosts.begin(), elmGhosts.end());

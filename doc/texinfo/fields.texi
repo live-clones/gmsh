@@ -244,7 +244,7 @@ Default value: @code{0}
 @end table
 
 @item Constant
-Return VIn when inside the entities (and on their boundary if IncludeBoundary is set), and VOut outside.@*
+Return VIn when inside the entities (and on their boundary if IncludeBoundary is set, and on their embedded entities if IncludeEmbedded is set), and VOut outside.@*
 @*
 Options:@*
 @table @code
@@ -254,6 +254,10 @@ Type: list@*
 Default value: @code{@{@}}
 @item IncludeBoundary
 Include the boundary of the entities@*
+Type: boolean@*
+Default value: @code{1}
+@item IncludeEmbedded
+Include embedded entities@*
 Type: boolean@*
 Default value: @code{1}
 @item PointsList
@@ -789,7 +793,7 @@ Default value: @code{-1}
 @end table
 
 @item Restrict
-Restrict the application of a field to a given list of geometrical points, curves, surfaces or volumes (as well as their boundaries if IncludeBoundary is set).@*
+Restrict the application of a field to a given list of geometrical points, curves, surfaces or volumes (as well as their boundaries if IncludeBoundary is set, and their embedded entities if IncludeEmbedded is set).@*
 @*
 Options:@*
 @table @code
@@ -803,6 +807,10 @@ Type: integer@*
 Default value: @code{1}
 @item IncludeBoundary
 Include the boundary of the entities@*
+Type: boolean@*
+Default value: @code{1}
+@item IncludeEmbedded
+Include embedded entities@*
 Type: boolean@*
 Default value: @code{1}
 @item PointsList

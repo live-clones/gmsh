@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1419,14 +1419,17 @@ public:
   {
     double xyz[3] = {x, y, z};
     double f;
-    if(updateNeeded) {
-      closePipes();
-      _pipes.start(_cmdLine.c_str());
-      updateNeeded = false;
-    }
-    if(!_pipes.write((void *)xyz, 3 * sizeof(double)) ||
-       !_pipes.read((void *)&f, sizeof(double))) {
-      f = 1e22; // std::numeric_limits<double>::max();
+#pragma omp critical(ExternalProcessField)
+    {
+      if(updateNeeded) {
+        closePipes();
+        _pipes.start(_cmdLine.c_str());
+        updateNeeded = false;
+      }
+      if(!_pipes.write((void *)xyz, 3 * sizeof(double)) ||
+         !_pipes.read((void *)&f, sizeof(double))) {
+        f = 1e22; // std::numeric_limits<double>::max();
+      }
     }
     return f;
   }
@@ -1534,24 +1537,28 @@ public:
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
-    if(updateNeeded) {
-      for(int i = 0; i < 3; i++) {
-        if(!_expr[i].set_function(_f[i]))
-          Msg::Error("Field %i: invalid matheval expression \"%s\"", this->id,
-                     _f[i].c_str());
-      }
-      updateNeeded = false;
-    }
     if(_inField == id) return MAX_LC;
     Field *field = GModel::current()->getFields()->get(_inField);
     if(!field) {
       Msg::Warning("Unknown Field %i", _inField);
       return MAX_LC;
     }
-    return (*field)(_expr[0].evaluate(x, y, z, ge),
-                    _expr[1].evaluate(x, y, z, ge),
-                    _expr[2].evaluate(x, y, z, ge),
-                    ge);
+    double xx, yy, zz;
+#pragma omp critical(ParametricField)
+    {
+      if(updateNeeded) {
+        for(int i = 0; i < 3; i++) {
+          if(!_expr[i].set_function(_f[i]))
+            Msg::Error("Field %i: invalid matheval expression \"%s\"", id,
+                       _f[i].c_str());
+        }
+        updateNeeded = false;
+      }
+      xx = _expr[0].evaluate(x, y, z, ge);
+      yy = _expr[1].evaluate(x, y, z, ge);
+      zz = _expr[2].evaluate(x, y, z, ge);
+    }
+    return (*field)(xx, yy, zz, ge);
   }
   const char *getName() { return "Param"; }
 };
@@ -1864,16 +1871,14 @@ public:
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
 #pragma omp critical(MinField)
-    {
-      if(updateNeeded) {
-        _fields.clear();
-        for(auto it = _fieldIds.begin(); it != _fieldIds.end(); it++) {
-          Field *f = (GModel::current()->getFields()->get(*it));
-          if(!f) Msg::Warning("Unknown Field %i", *it);
-          if(f && *it != id) _fields.push_back(f);
-        }
-        updateNeeded = false;
+    if(updateNeeded) {
+      _fields.clear();
+      for(auto it = _fieldIds.begin(); it != _fieldIds.end(); it++) {
+        Field *f = (GModel::current()->getFields()->get(*it));
+        if(!f) Msg::Warning("Unknown Field %i", *it);
+        if(f && *it != id) _fields.push_back(f);
       }
+      updateNeeded = false;
     }
 
     double v = MAX_LC;
@@ -1913,16 +1918,14 @@ public:
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
 #pragma omp critical(MaxField)
-    {
-      if(updateNeeded) {
-        _fields.clear();
-        for(auto it = _fieldIds.begin(); it != _fieldIds.end(); it++) {
-          Field *f = (GModel::current()->getFields()->get(*it));
-          if(!f) Msg::Warning("Unknown Field %i", *it);
-          if(f && *it != id) _fields.push_back(f);
-        }
-        updateNeeded = false;
+    if(updateNeeded) {
+      _fields.clear();
+      for(auto it = _fieldIds.begin(); it != _fieldIds.end(); it++) {
+        Field *f = (GModel::current()->getFields()->get(*it));
+        if(!f) Msg::Warning("Unknown Field %i", *it);
+        if(f && *it != id) _fields.push_back(f);
       }
+      updateNeeded = false;
     }
 
     double v = -MAX_LC;
@@ -1943,43 +1946,121 @@ public:
   const char *getName() { return "Max"; }
 };
 
+static void getBoundingEntities(GEntity *ge, std::set<int> tags[4])
+{
+  if(ge->dim() >= 3) {
+    auto faces = ge->faces();
+    for(auto f : faces) tags[2].insert(f->tag());
+  }
+  if(ge->dim() >= 2) {
+    auto edges = ge->edges();
+    for(auto e : edges) tags[1].insert(e->tag());
+  }
+  if(ge->dim() >= 1) {
+    auto vertices = ge->vertices();
+    for(auto v : vertices) tags[0].insert(v->tag());
+  }
+}
+
+static void getRestrictEntities(GModel *m, std::list<int> inTags[4],
+                                std::set<int> tags[4], bool boundary,
+                                bool embedded)
+{
+  for(int dim = 0; dim <= 3; dim++) {
+    for(int t : inTags[dim]) {
+      tags[dim].insert(t);
+      if(dim > 0 && boundary) {
+        GEntity *ge = m->getEntityByTag(dim, t);
+        if(ge) {
+          getBoundingEntities(ge, tags);
+        }
+        else {
+          Msg::Error("Unknown model entity of dimension %d and tag %d",
+                     dim, t);
+        }
+      }
+      if(dim == 2 && embedded) {
+        GFace *gf = m->getFaceByTag(t);
+        if(gf) {
+          for(auto v : gf->embeddedVertices())
+            tags[0].insert(v->tag());
+          for(auto e : gf->embeddedEdges()) {
+            tags[1].insert(e->tag());
+            getBoundingEntities(e, tags);
+          }
+        }
+        else {
+          Msg::Error("Unknown surface %d", t);
+        }
+      }
+      else if(dim == 3 && embedded) {
+        GRegion *gr = m->getRegionByTag(t);
+        if(gr) {
+          for(auto v : gr->embeddedVertices())
+            tags[0].insert(v->tag());
+          for(auto e : gr->embeddedEdges()) {
+            tags[1].insert(e->tag());
+            getBoundingEntities(e, tags);
+          }
+          for(auto f : gr->embeddedFaces()) {
+            tags[2].insert(f->tag());
+            getBoundingEntities(f, tags);
+          }
+        }
+        else {
+          Msg::Error("Unknown volume %d", t);
+        }
+      }
+    }
+  }
+}
+
 class RestrictField : public Field {
 private:
   int _inField;
-  bool _boundary;
-  std::list<int> _pointTags, _curveTags, _surfaceTags, _volumeTags;
+  bool _boundary, _embedded;
+  std::list<int> _inTags[4];
+  std::set<int> _tags[4];
 
 public:
   RestrictField()
   {
     _inField = 1;
-    _boundary = true;
+    _boundary = _embedded = true;
 
     options["InField"] = new FieldOptionInt(_inField, "Input field tag");
-    options["PointsList"] = new FieldOptionList(_pointTags, "Point tags");
-    options["CurvesList"] = new FieldOptionList(_curveTags, "Curve tags");
-    options["SurfacesList"] = new FieldOptionList(_surfaceTags, "Surface tags");
-    options["VolumesList"] = new FieldOptionList(_volumeTags, "Volume tags");
+    options["PointsList"] =
+      new FieldOptionList(_inTags[0], "Point tags", &updateNeeded);
+    options["CurvesList"] =
+      new FieldOptionList(_inTags[1], "Curve tags", &updateNeeded);
+    options["SurfacesList"] =
+      new FieldOptionList(_inTags[2], "Surface tags", &updateNeeded);
+    options["VolumesList"] =
+      new FieldOptionList(_inTags[3], "Volume tags", &updateNeeded);
     options["IncludeBoundary"] =
-      new FieldOptionBool(_boundary, "Include the boundary of the entities");
+      new FieldOptionBool(_boundary, "Include the boundary of the entities",
+                          &updateNeeded);
+    options["IncludeEmbedded"] =
+      new FieldOptionBool(_embedded, "Include embedded entities", &updateNeeded);
 
     // deprecated names
     options["IField"] =
       new FieldOptionInt(_inField, "[Deprecated]", nullptr, true);
     options["VerticesList"] =
-      new FieldOptionList(_pointTags, "[Deprecated]", nullptr, true);
+      new FieldOptionList(_inTags[0], "[Deprecated]", nullptr, true);
     options["EdgesList"] =
-      new FieldOptionList(_curveTags, "[Deprecated]", nullptr, true);
+      new FieldOptionList(_inTags[1], "[Deprecated]", nullptr, true);
     options["FacesList"] =
-      new FieldOptionList(_surfaceTags, "[Deprecated]", nullptr, true);
+      new FieldOptionList(_inTags[2], "[Deprecated]", nullptr, true);
     options["RegionsList"] =
-      new FieldOptionList(_volumeTags, "[Deprecated]", nullptr, true);
+      new FieldOptionList(_inTags[3], "[Deprecated]", nullptr, true);
   }
   std::string getDescription()
   {
     return "Restrict the application of a field to a given list of geometrical "
            "points, curves, surfaces or volumes (as well as their boundaries "
-           "if IncludeBoundary is set).";
+           "if IncludeBoundary is set, and their embedded entities if "
+           "IncludeEmbedded is set).";
   }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
@@ -1991,38 +2072,12 @@ public:
       return MAX_LC;
     }
     if(!ge) return (*f)(x, y, z);
-    if((ge->dim() == 0 && std::find(_pointTags.begin(), _pointTags.end(),
-                                    ge->tag()) != _pointTags.end()) ||
-       (ge->dim() == 1 && std::find(_curveTags.begin(), _curveTags.end(),
-                                    ge->tag()) != _curveTags.end()) ||
-       (ge->dim() == 2 && std::find(_surfaceTags.begin(), _surfaceTags.end(),
-                                    ge->tag()) != _surfaceTags.end()) ||
-       (ge->dim() == 3 && std::find(_volumeTags.begin(), _volumeTags.end(),
-                                    ge->tag()) != _volumeTags.end()))
-      return (*f)(x, y, z, ge);
-    if(_boundary) {
-      if(ge->dim() <= 2) {
-        std::list<GRegion *> volumes = ge->regions();
-        for(auto v : volumes) {
-          if(std::find(_volumeTags.begin(), _volumeTags.end(), v->tag()) !=
-             _volumeTags.end()) return (*f)(x, y, z, ge);
-        }
-      }
-      if(ge->dim() <= 1) {
-        std::vector<GFace *> surfaces = ge->faces();
-        for(auto s : surfaces) {
-          if(std::find(_surfaceTags.begin(), _surfaceTags.end(), s->tag()) !=
-             _surfaceTags.end()) return (*f)(x, y, z, ge);
-        }
-      }
-      if(ge->dim() == 0) {
-        std::vector<GEdge *> curves = ge->edges();
-        for(auto c : curves) {
-          if(std::find(_curveTags.begin(), _curveTags.end(), c->tag()) !=
-             _curveTags.end()) return (*f)(x, y, z, ge);
-        }
-      }
+#pragma omp critical(RestrictField)
+    if(updateNeeded) {
+      getRestrictEntities(ge->model(), _inTags, _tags, _boundary, _embedded);
+      updateNeeded = false;
     }
+    if(_tags[ge->dim()].count(ge->tag())) return (*f)(x, y, z, ge);
     return MAX_LC;
   }
   const char *getName() { return "Restrict"; }
@@ -2031,65 +2086,47 @@ public:
 class ConstantField : public Field {
 private:
   double _vIn, _vOut;
-  bool _boundary;
-  std::list<int> _pointTags, _curveTags, _surfaceTags, _volumeTags;
-
+  bool _boundary, _embedded;
+  std::list<int> _inTags[4];
+  std::set<int> _tags[4];
 public:
   ConstantField()
   {
     _vIn = _vOut = MAX_LC;
-    _boundary = true;
+    _boundary = _embedded = true;
 
     options["VIn"] = new FieldOptionDouble(_vIn, "Value inside the entities");
     options["VOut"] = new FieldOptionDouble(_vOut, "Value outside the entities");
-    options["PointsList"] = new FieldOptionList(_pointTags, "Point tags");
-    options["CurvesList"] = new FieldOptionList(_curveTags, "Curve tags");
-    options["SurfacesList"] = new FieldOptionList(_surfaceTags, "Surface tags");
-    options["VolumesList"] = new FieldOptionList(_volumeTags, "Volume tags");
+    options["PointsList"] =
+      new FieldOptionList(_inTags[0], "Point tags", &updateNeeded);
+    options["CurvesList"] =
+      new FieldOptionList(_inTags[1], "Curve tags", &updateNeeded);
+    options["SurfacesList"] =
+      new FieldOptionList(_inTags[2], "Surface tags", &updateNeeded);
+    options["VolumesList"] =
+      new FieldOptionList(_inTags[3], "Volume tags", &updateNeeded);
     options["IncludeBoundary"] =
-      new FieldOptionBool(_boundary, "Include the boundary of the entities");
+      new FieldOptionBool(_boundary, "Include the boundary of the entities",
+                          &updateNeeded);
+    options["IncludeEmbedded"] =
+      new FieldOptionBool(_embedded, "Include embedded entities", &updateNeeded);
   }
   std::string getDescription()
   {
     return "Return VIn when inside the entities (and on their boundary if "
-           "IncludeBoundary is set), and VOut outside.";
+           "IncludeBoundary is set, and on their embedded entities if "
+           "IncludeEmbedded is set), and VOut outside.";
   }
   using Field::operator();
   double operator()(double x, double y, double z, GEntity *ge = nullptr)
   {
     if(!ge) return MAX_LC;
-    if((ge->dim() == 0 && std::find(_pointTags.begin(), _pointTags.end(),
-                                    ge->tag()) != _pointTags.end()) ||
-       (ge->dim() == 1 && std::find(_curveTags.begin(), _curveTags.end(),
-                                    ge->tag()) != _curveTags.end()) ||
-       (ge->dim() == 2 && std::find(_surfaceTags.begin(), _surfaceTags.end(),
-                                    ge->tag()) != _surfaceTags.end()) ||
-       (ge->dim() == 3 && std::find(_volumeTags.begin(), _volumeTags.end(),
-                                    ge->tag()) != _volumeTags.end()))
-      return _vIn;
-    if(_boundary) {
-      if(ge->dim() <= 2) {
-        std::list<GRegion *> volumes = ge->regions();
-        for(auto v : volumes) {
-          if(std::find(_volumeTags.begin(), _volumeTags.end(), v->tag()) !=
-             _volumeTags.end()) return _vIn;
-        }
-      }
-      if(ge->dim() <= 1) {
-        std::vector<GFace *> surfaces = ge->faces();
-        for(auto s : surfaces) {
-          if(std::find(_surfaceTags.begin(), _surfaceTags.end(), s->tag()) !=
-             _surfaceTags.end()) return _vIn;
-        }
-      }
-      if(ge->dim() == 0) {
-        std::vector<GEdge *> curves = ge->edges();
-        for(auto c : curves) {
-          if(std::find(_curveTags.begin(), _curveTags.end(), c->tag()) !=
-             _curveTags.end()) return _vIn;
-        }
-      }
+#pragma omp critical(ConstantField)
+    if(updateNeeded) {
+      getRestrictEntities(ge->model(), _inTags, _tags, _boundary, _embedded);
+      updateNeeded = false;
     }
+    if(_tags[ge->dim()].count(ge->tag())) return _vIn;
     return _vOut;
   }
   const char *getName() { return "Constant"; }
@@ -2602,6 +2639,7 @@ public:
   using Field::operator();
   virtual double operator()(double X, double Y, double Z, GEntity *ge = nullptr)
   {
+    update();
     if(!_kdtree) return MAX_LC;
     double pt[3] = {X, Y, Z};
     nanoflann::KNNResultSet<double> res(1);

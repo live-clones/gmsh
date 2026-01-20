@@ -60,10 +60,10 @@ bool buildTrianglesAndTargetsFromElements(
     std::vector<std::array<double,2> >& points,
     std::vector<std::array<uint32_t,6> >& elements,
     std::vector<std::array<uint32_t, 3> >& triangles,
-    std::vector<std::array<std::array<double,2>, 3> >& triIdealShapes);
+    std::vector<std::array<std::array<double,2>, 3> >& triIdealShapes,GFace *gf =nullptr);
 
 bool buildTrianglesAndTargetsFromElements(
     std::vector<std::array<double,2> >& points,
     std::vector<std::array<uint32_t,4> >& elements,
     std::vector<std::array<uint32_t, 3> >& triangles,
-    std::vector<std::array<std::array<double,2>, 3> >& triIdealShapes);
+    std::vector<std::array<std::array<double,2>, 3> >& triIdealShapes,GFace *gf =nullptr);

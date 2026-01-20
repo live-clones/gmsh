@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -85,10 +85,10 @@ bool compute4neighbors(
   metricField = SMetric3(1. / (L * L));
 
   // get the unit normal at that point
-  Pair<SVector3, SVector3> der =
+  std::pair<SVector3, SVector3> der =
     gf->firstDer(SPoint2(midpoint[0], midpoint[1]));
-  SVector3 s1 = der.first();
-  SVector3 s2 = der.second();
+  SVector3 s1 = der.first;
+  SVector3 s2 = der.second;
   SVector3 n = crossprod(s1, s2);
   n.normalize();
   t1 -= n*dot(t1,n);
@@ -216,7 +216,7 @@ bool compute4neighbors(
 	if (DIFF_L2 <= DIFF_L && DIFF_ANG2 <= DIFF_ANG){
 	}
 	else{
-	  Msg::Debug("Difficult to find a point %lu L %g vs %g (ps %12.5E) ",i,L,L2,DIFF_ANG2);
+	  Msg::Debug("Difficult to find a point %zu L %g vs %g (ps %12.5E) ",i,L,L2,DIFF_ANG2);
 	}
       }
       else{
@@ -259,10 +259,10 @@ bool compute4neighbors(
 //     //                 0
 
 //     // get the unit normal at that point
-//     Pair<SVector3, SVector3> der =
+//     std::pair<SVector3, SVector3> der =
 //       gf->firstDer(SPoint2(midpoint[0], midpoint[1]));
-//     SVector3 s1 = der.first();
-//     SVector3 s2 = der.second();
+//     SVector3 s1 = der.first;
+//     SVector3 s2 = der.second;
 //     SVector3 n = crossprod(s1, s2);
 //     n.normalize();
 
@@ -333,10 +333,10 @@ bool compute4neighbors(
 // 	nbMax++;
 //       }
 //     }
-//     if (nbMax == it-> second)printf("singularity %lu has a good set of %d sampling points\n",it->first->getNum(),nbMax);
+//     if (nbMax == it-> second)printf("singularity %zu has a good set of %d sampling points\n",it->first->getNum(),nbMax);
 //     else {
 //       toInsert.resize(toInsert.size() - nbMax);
-//       printf("singularity %lu has a bad set of %d vs %d sampling points\n",it->first->getNum(),nbMax,it->second);
+//       printf("singularity %zu has a bad set of %d vs %d sampling points\n",it->first->getNum(),nbMax,it->second);
 //     }
 //   }
 
@@ -420,7 +420,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
 {
 
   //  printf("ALGO %d %d\n", CTX::instance()->mesh.algo2d,
-  //	 CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT);
+  //  	 CTX::instance()->mesh.algo2d == ALGO_2D_QUAD_QUASI_STRUCT);
 
   FILE *f = NULL;
   FILE *f2 = NULL;
@@ -490,7 +490,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
     double du[4] = {0,0,0,0}, dv[4]= {0,0,0,0};
 
     //    printf("cop %d\n",(*it)->getNum());
-    
+
     for (int i=0;i<2;i++){
       if (gf->periodic(i)){
 	reparamMeshVertexOnFace(*it, gf, midpoint);
@@ -513,7 +513,7 @@ void packingOfParallelograms(GFace *gf, std::vector<MVertex *> &packed,
     }
 
     if (NP == 0)NP=1;
-    
+
     for (int i=0;i<NP;i++){
       bool singular = !compute4neighbors(gf, *it, midpoint, newp, metricField, cross_field, du[i],dv[i],globalMult );
       //      printf("there %d %g %g\n",singular,du[i],dv[i]);

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -38,13 +38,20 @@ struct SortClass {
   }
 };
 
-static void RCM(std::vector<std::size_t> &sorted, const std::size_t *const row,
-                const std::size_t *const indices)
+static int RCM(std::vector<std::size_t> &sorted,
+               const std::vector<std::size_t> &row,
+               const std::vector<std::size_t> &indices)
 {
   // Adapted from GmshFEM - Copyright (C) 2019-2022, A. Royer, E. Béchet,
   // C. Geuzaine, Université de Liège
 
-  std::vector<std::size_t> min; // long long for padding (64bits)
+  if(sorted.size() + 1 != row.size()) {
+    Msg::Error("Invalid input sizes for RCM: %zu+1 != %zu", sorted.size(),
+               row.size());
+    return 1;
+  }
+
+  std::vector<std::size_t> min;
   std::vector<std::size_t> Nmin;
   std::vector<std::size_t> degree;
   std::vector<std::size_t> newIndices;
@@ -80,7 +87,7 @@ static void RCM(std::vector<std::size_t> &sorted, const std::size_t *const row,
 
 #pragma omp single
     {
-      newIndices.resize(row[sorted.size()], 0);
+      newIndices.resize(row[sorted.size()] + 1, 0);
     }
 #pragma omp for
     for(auto i = 0ULL; i < sorted.size(); ++i) {
@@ -119,6 +126,8 @@ static void RCM(std::vector<std::size_t> &sorted, const std::size_t *const row,
       queue.push(Nmin);
     }
   }
+
+  return 0;
 }
 
 template <typename T>
@@ -138,6 +147,7 @@ createVertexToVertexGraph(GModel *gm,
     std::vector<GEntity *> entities;
     gm->getEntities(entities);
     for(auto ge : entities) {
+      if(ge->dim() == 0) continue; // ignore points
       for(std::size_t j = 0; j < ge->getNumMeshElements(); j++) {
         elements.push_back(ge->getMeshElement(j));
       }
@@ -199,11 +209,9 @@ int meshRenumber_Vertices_RCMK(const std::vector<std::size_t> &elementTags,
   createVertexToVertexGraph(gm, elementTags, initial_numbering,
                             inverse_numbering, ai, aj);
 
-  //  int before = bandwidth(ai, aj);
-
   std::vector<std::size_t> sorted(initial_numbering.size());
 
-  RCM(sorted, &ai[0], &aj[0]);
+  if(RCM(sorted, ai, aj)) return 1;
 
   int after = bandwidth(ai, aj, &sorted[0]);
 

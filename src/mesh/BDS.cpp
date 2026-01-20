@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -1262,9 +1262,9 @@ static inline bool getOrderedNeighboringVertices(BDS_Point *p,
     for(size_t i = 0; i < ts.size(); i++) {
       BDS_Point *pts[4];
       if(ts[i]->getNodes(pts)) {
-        printf("TR %lu : %p %p %p\n", i, (void*)pts[0], (void*)pts[1],
+        printf("TR %zu : %p %p %p\n", i, (void*)pts[0], (void*)pts[1],
                (void*)pts[2]);
-        printf("TR %lu : %d %d - %d %d - %d %d\n", i, ts[i]->e1->p1->iD,
+        printf("TR %zu : %d %d - %d %d - %d %d\n", i, ts[i]->e1->p1->iD,
                ts[i]->e1->p2->iD, ts[i]->e2->p1->iD, ts[i]->e2->p2->iD,
                ts[i]->e3->p1->iD, ts[i]->e3->p2->iD);
       }

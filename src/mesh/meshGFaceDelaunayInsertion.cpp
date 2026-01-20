@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -134,7 +134,7 @@ void _printTris(char *name, ITERATOR it, ITERATOR end, bidimMeshData *data,
               degenerated->end();
             if(deg[0] && !deg[1] && !deg[2]) {
               fprintf(
-                ff, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d,%d};\n",
+                ff, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g) {%lu,%lu,%lu,%lu};\n",
                 u3, v1, 0., u2, v1, 0., u2, v2, 0., u3, v3, 0.,
                 (worst)->tri()->getVertex(0)->getNum(),
                 (worst)->tri()->getVertex(0)->getNum(),
@@ -143,7 +143,7 @@ void _printTris(char *name, ITERATOR it, ITERATOR end, bidimMeshData *data,
             }
             else if(!deg[0] && deg[1] && !deg[2]) {
               fprintf(
-                ff, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d,%d};\n",
+                ff, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g) {%lu,%lu,%lu,%lu};\n",
                 u1, v2, 0., u3, v2, 0., u3, v3, 0., u1, v1, 0.,
                 (worst)->tri()->getVertex(1)->getNum(),
                 (worst)->tri()->getVertex(1)->getNum(),
@@ -152,7 +152,7 @@ void _printTris(char *name, ITERATOR it, ITERATOR end, bidimMeshData *data,
             }
             else if(!deg[0] && !deg[1] && deg[2]) {
               fprintf(
-                ff, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d,%d};\n",
+                ff, "SQ(%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g) {%lu,%lu,%lu,%lu};\n",
                 u2, v3, 0., u1, v3, 0., u1, v1, 0., u2, v2, 0.,
                 (worst)->tri()->getVertex(2)->getNum(),
                 (worst)->tri()->getVertex(2)->getNum(),
@@ -160,7 +160,7 @@ void _printTris(char *name, ITERATOR it, ITERATOR end, bidimMeshData *data,
                 (worst)->tri()->getVertex(1)->getNum());
             }
             else if(!deg[0] && !deg[1] && !deg[2]) {
-              fprintf(ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d};\n", u1,
+              fprintf(ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%lu,%lu,%lu};\n", u1,
                       v1, 0., u2, v2, 0., u3, v3, 0.,
                       (worst)->tri()->getVertex(0)->getNum(),
                       (worst)->tri()->getVertex(1)->getNum(),
@@ -168,7 +168,7 @@ void _printTris(char *name, ITERATOR it, ITERATOR end, bidimMeshData *data,
             }
           }
           else {
-            fprintf(ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d};\n", u1, v1,
+            fprintf(ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%lu,%lu,%lu};\n", u1, v1,
                     0., u2, v2, 0., u3, v3, 0.,
                     (worst)->tri()->getVertex(0)->getNum(),
                     (worst)->tri()->getVertex(1)->getNum(),
@@ -176,7 +176,7 @@ void _printTris(char *name, ITERATOR it, ITERATOR end, bidimMeshData *data,
           }
         }
         else
-          fprintf(ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%d,%d,%d};\n",
+          fprintf(ff, "ST(%g,%g,%g,%g,%g,%g,%g,%g,%g) {%lu,%lu,%lu};\n",
                   (worst)->tri()->getVertex(0)->x(),
                   (worst)->tri()->getVertex(0)->y(),
                   (worst)->tri()->getVertex(0)->z(),
@@ -332,11 +332,11 @@ static void circumCenterMetric(MTriangle *base, const double *metric,
 
 void buildMetric(GFace *gf, double *uv, double *metric)
 {
-  Pair<SVector3, SVector3> der = gf->firstDer(SPoint2(uv[0], uv[1]));
+  std::pair<SVector3, SVector3> der = gf->firstDer(SPoint2(uv[0], uv[1]));
 
-  metric[0] = dot(der.first(), der.first());
-  metric[1] = dot(der.second(), der.first());
-  metric[2] = dot(der.second(), der.second());
+  metric[0] = dot(der.first, der.first);
+  metric[1] = dot(der.second, der.first);
+  metric[2] = dot(der.second, der.second);
 }
 
 static double computeTolerance(const double radius)
@@ -896,7 +896,7 @@ static MTri3 *search4Triangle(MTri3 *t, double pt[2], bidimMeshData &data,
       if(intersection_segments_2(p1, p2, q1, q2)) break;
     }
     if(i >= 3) {
-      Msg::Error("Impossible case in triangle search");
+      Msg::Warning("Impossible case in triangle search");
       break;
     }
     t = t->getNeigh(i);
@@ -1252,6 +1252,7 @@ static bool optimalPointFrontalB(GFace *gf, MTri3 *worst, int active_edge,
                v3->z() - middle.z());
   SVector3 n1 = crossprod(v1v2, tmp);
   if(n1.norm() < 1.e-12) return true;
+
   SVector3 n2 = crossprod(n1, v1v2);
   n1.normalize();
   n2.normalize();
@@ -1315,7 +1316,10 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
 
   Range<double> RU = gf->parBounds(0);
   Range<double> RV = gf->parBounds(1);
-  SPoint2 FAR(2 * RU.high(), 2 * RV.high());
+  // THIS WAS ACTUALLY WRONG IF high is 0 !!!
+  //  SPoint2 FAR(2 * RU.high(), 2 * RV.high());
+  /// This is better !
+  SPoint2 FAR(RU.high() + (RU.high()-RU.low()), RV.high() + (RV.high()-RV.low()));
 
 
   // insert points
@@ -1350,6 +1354,9 @@ void bowyerWatsonFrontal(GFace *gf, std::map<MVertex *, MVertex *> *equivalence,
            pointInsideParametricDomain(*true_boundary, NP, FAR, nnnn))
           insertAPoint(gf, AllTris.end(), newPoint, metric, DATA, AllTris,
                        &ActiveTris, worst, nullptr, testStarShapeness);
+      }
+      else {
+        Msg::Debug("no point found");
       }
     }
   }
@@ -1418,7 +1425,8 @@ static void optimalPointFrontalQuad(GFace *gf, MTri3 *worst, int active_edge,
   const double rhoM_hat =
     std::min(std::max(rhoM, p), (p * p + q * q) / (2 * q));
   const double factor =
-    (rhoM_hat + std::sqrt(rhoM_hat * rhoM_hat - p * p)) / (std::sqrt(3.) * p);
+    (rhoM_hat + std::sqrt(std::max(rhoM_hat * rhoM_hat - p * p, 0.))) /
+    (std::sqrt(3.) * p);
 
   double npx, npy;
   if(xp * yp > 0) {
@@ -1650,7 +1658,7 @@ void bowyerWatsonParallelograms(
   Msg::Error("Packing of parallelograms algorithm requires DOMHEX");
 #endif
 
-  Msg::Info("%lu Nodes created --> now staring insertion", packed.size());
+  Msg::Info("%zu Nodes created --> now staring insertion", packed.size());
 
   if(!buildMeshGenerationDataStructures(gf, AllTris, DATA)) {
     Msg::Error("Invalid meshing data structure");
@@ -1698,6 +1706,12 @@ void bowyerWatsonParallelograms(
       }
     }
   }
+
+#if 0
+   char name[256];
+   sprintf(name,"RawTriangulation%d.pos",gf->tag());
+   _printTris (name, AllTris.begin(), AllTris.end(),nullptr);
+#endif
 
   transferDataStructure(gf, AllTris, DATA);
   backgroundMesh::unset();

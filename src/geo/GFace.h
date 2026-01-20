@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -10,13 +10,13 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <utility>
 #include "GmshDefines.h"
 #include "GEntity.h"
 #include "GPoint.h"
 #include "GEdgeLoop.h"
 #include "SPoint2.h"
 #include "SVector3.h"
-#include "Pair.h"
 #include "Numeric.h"
 #include "boundaryLayersData.h"
 
@@ -100,6 +100,11 @@ public:
   // edges that bound the face
   int delEdge(GEdge *edge);
   virtual std::vector<GEdge *> const &edges() const { return l_edges; }
+  virtual std::vector<GEntity *> boundaryEntities() const
+  {
+    std::vector<GEntity *> entities(l_edges.begin(), l_edges.end());
+    return entities;
+  }
   virtual std::vector<int> const &edgeOrientations() const { return l_dirs; }
   void set(const std::vector<GEdge *> &f) { l_edges = f; }
   void setOrientations(const std::vector<int> &f) { l_dirs = f; }
@@ -166,7 +171,7 @@ public:
   virtual bool checkTopology() const { return true; }
 
   // return the point on the face corresponding to the given parameter
-  virtual GPoint point(double par1, double par2) const = 0;
+  virtual GPoint point(double par1, double par2) const { return GPoint(); }
   virtual GPoint point(const SPoint2 &pt) const
   {
     return point(pt.x(), pt.y());
@@ -200,11 +205,14 @@ public:
   virtual SVector3 normal(const SPoint2 &param) const;
 
   // return the first derivate of the face at the parameter location
-  virtual Pair<SVector3, SVector3> firstDer(const SPoint2 &param) const = 0;
+  virtual std::pair<SVector3, SVector3> firstDer(const SPoint2 &param) const
+  {
+    return std::make_pair(SVector3(), SVector3());
+  }
 
   // compute the second derivates of the face at the parameter location
   virtual void secondDer(const SPoint2 &param, SVector3 &dudu, SVector3 &dvdv,
-                         SVector3 &dudv) const = 0;
+                         SVector3 &dudv) const {};
 
   // return the curvature computed as the divergence of the normal
   inline double curvature(const SPoint2 &param) const

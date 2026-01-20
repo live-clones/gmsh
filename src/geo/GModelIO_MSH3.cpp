@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -557,6 +557,9 @@ int GModel::_readMSH3(const std::string &name)
     } while(str[0] != '$');
   }
 
+  std::map<std::size_t, MVertex *> vertexMap(_vertexMapCache);
+  std::vector<MVertex *> vertexVector(_vertexVectorCache);
+
   // store the elements in their associated elementary entity. If the
   // entity does not exist, create a new (discrete) one.
   for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
@@ -566,10 +569,10 @@ int GModel::_readMSH3(const std::string &name)
   _associateEntityWithMeshVertices();
 
   // store the vertices in their associated geometrical entity
-  if(_vertexVectorCache.size())
-    _storeVerticesInEntities(_vertexVectorCache);
+  if(vertexVector.size())
+    _storeVerticesInEntities(vertexVector);
   else
-    _storeVerticesInEntities(_vertexMapCache);
+    _storeVerticesInEntities(vertexMap);
 
   for(int i = 0; i < (int)(sizeof(elements) / sizeof(elements[0])); i++)
     _storeParentsInSubElements(elements[i]);
@@ -595,7 +598,7 @@ static void writeMSHPhysicals(FILE *fp, GEntity *ge)
 void writeMSHEntities(FILE *fp, GModel *gm) // also used in MSH2
 {
   fprintf(fp, "$Entities\n");
-  fprintf(fp, "%lu %lu %lu %lu\n", gm->getNumVertices(), gm->getNumEdges(),
+  fprintf(fp, "%zu %zu %zu %zu\n", gm->getNumVertices(), gm->getNumEdges(),
           gm->getNumFaces(), gm->getNumRegions());
   for(auto it = gm->firstVertex(); it != gm->lastVertex(); ++it) {
     fprintf(fp, "%d ", (*it)->tag());
@@ -736,7 +739,7 @@ void writeMSHPeriodicNodes(FILE *fp, std::vector<GEntity *> &entities,
         if(renumber)
           fprintf(fp, "%ld %ld\n", v1->getIndex(), v2->getIndex());
         else
-          fprintf(fp, "%lu %lu\n", v1->getNum(), v2->getNum());
+          fprintf(fp, "%zu %zu\n", v1->getNum(), v2->getNum());
       }
     }
   }

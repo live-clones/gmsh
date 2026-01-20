@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -17,6 +17,7 @@ class GamePad;
 struct contextMeshOptions {
   // mesh algorithms
   int optimize, optimizeNetgen, refineSteps;
+  double optimizePyramids;
   int smoothCrossField, crossFieldClosestPoint;
   double lcFactor, randFactor, randFactor3d, lcIntegrationPrecision;
   double optimizeThreshold, normals, tangents, explode, angleSmoothNormals;
@@ -61,7 +62,7 @@ struct contextMeshOptions {
   int saveAll, saveTri, saveGroupsOfNodes, saveGroupsOfElements;
   int readGroupsOfElements;
   int binary, bdfFieldFormat;
-  int unvStrictFormat, stlRemoveDuplicateTriangles, stlOneSolidPerSurface;
+  int unvStrictFormat, stlRemoveBadTriangles, stlOneSolidPerSurface;
   double stlLinearDeflection, stlAngularDeflection;
   bool stlLinearDeflectionRelative;
   int saveParametric, saveTopology, saveWithoutOrphans, zoneDefinition;
@@ -319,10 +320,8 @@ public:
   int mouseInvertZoom;
   // disable some warnings for expert users?
   int expertMode;
-#if defined(HAVE_VISUDEV)
   // Enable heavy visualization capabilities (for development purpose)
   int heavyVisu;
-#endif
   // dynamic: equal to 1 while gmsh is printing
   int printing;
   // hide all unselected entities?

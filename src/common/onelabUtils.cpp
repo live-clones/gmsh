@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -716,6 +716,7 @@ namespace onelabUtils {
 
   void saveDb(const std::string &fileName)
   {
+    if(fileName == ".db") return;
     FILE *fp = Fopen(fileName.c_str(), "wb");
     if(fp) {
       Msg::StatusBar(true, "Saving database '%s'...", fileName.c_str());
@@ -726,7 +727,7 @@ namespace onelabUtils {
     else
       Msg::Error("Could not save database '%s'", fileName.c_str());
 
-#if 0
+#if 1
     fp = Fopen((fileName + ".json").c_str(), "wb");
     if(fp){
       std::string json;

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -19,7 +19,7 @@ public:
   std::vector<int> line_loops2;
   std::vector<int> faces2;
   int face_loops2;
-  geo_cell() {}
+  geo_cell() : face_loops2(0) {}
   ~geo_cell() {}
   int search_line(std::pair<int, int> line)
   {

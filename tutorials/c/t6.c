@@ -120,7 +120,7 @@ int main(int argc, char **argv)
       break;
     }
   }
-  if(gui) gmshFltkRun(&ierr);
+  if(gui) gmshFltkRun("", &ierr);
 
   gmshFinalize(&ierr);
   return 0;

@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -579,23 +579,30 @@ static void setLcs(MTetrahedron *t,
       MVertex *vi = t->getVertex(i);
       MVertex *vj = t->getVertex(j);
 
-      // smallest tet edge
       if(bndVertices.find(vi) == bndVertices.end()) {
         auto iti = vSizes.find(vi);
-
         double const length =
           hypotenuse(vi->x() - vj->x(), vi->y() - vj->y(), vi->z() - vj->z());
-
-        if(iti == vSizes.end() || iti->second > length) { vSizes[vi] = length; }
+        if(CTX::instance()->mesh.lcExtendFromBoundary == 2) {
+          // use smallest edge length
+          if(iti == vSizes.end() || iti->second > length) { vSizes[vi] = length; }
+        }
+        else {
+          if(iti == vSizes.end() || iti->second < length) { vSizes[vi] = length; }
+        }
       }
 
       if(bndVertices.find(vj) == bndVertices.end()) {
         auto itj = vSizes.find(vj);
-
         double const length =
           hypotenuse(vi->x() - vj->x(), vi->y() - vj->y(), vi->z() - vj->z());
-
-        if(itj == vSizes.end() || itj->second > length) { vSizes[vj] = length; }
+        if(CTX::instance()->mesh.lcExtendFromBoundary == 2) {
+          // use smallest edge length
+          if(itj == vSizes.end() || itj->second > length) { vSizes[vj] = length; }
+        }
+        else {
+          if(itj == vSizes.end() || itj->second < length) { vSizes[vj] = length; }
+        }
       }
     }
   }
@@ -1383,7 +1390,11 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
   // main loop in Delaunay inserstion starts here
 
   while(1) {
-    if(maxIter > 0 && ITER >= maxIter) break;
+    if(maxIter > 0 && ITER >= maxIter) {
+      Msg::Info("Max. number of iterations reached (%d) - stopping insertion",
+                ITER);
+      break;
+    }
     if(allTets.empty()) {
       Msg::Warning("No tetrahedra in region %d", gr->tag());
       break;
@@ -1402,6 +1413,7 @@ void insertVerticesInRegion(GRegion *gr, int maxIter,
                   ITER - 1, REALCOUNT, worst->getRadius(), COUNT_MISS_1,
                   COUNT_MISS_2);
       if(worst->getRadius() < worstTetRadiusTarget) break;
+
       double center[3];
       double uvw[3];
       MTetrahedron *base = worst->tet();

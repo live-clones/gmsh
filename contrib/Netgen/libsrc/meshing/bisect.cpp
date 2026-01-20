@@ -40,7 +40,7 @@ namespace netgen
     // face_j : face without node j,
     // mark_k : edge without node k
     
-    char faceedges[4];
+    unsigned char faceedges[4];
     // unsigned char faceedges[4];
     bool incorder;
     unsigned int order:6;
@@ -190,7 +190,7 @@ namespace netgen
     /// surface id
     int surfid;
 
-    bool incorder;
+    bool incorder{false};
     unsigned int order:6;
   };
   
@@ -232,8 +232,9 @@ namespace netgen
     /// surface id
     int surfid;
 
-    bool incorder;
+    bool incorder{false};
     unsigned int order:6;
+    MarkedQuad() { incorder = false; order = 0; }
   };
 
   ostream & operator<< (ostream & ost, const MarkedQuad & mt)

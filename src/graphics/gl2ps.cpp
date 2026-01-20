@@ -1,6 +1,6 @@
 /*
  * GL2PS, an OpenGL to PostScript Printing Library
- * Copyright (C) 1999-2020 C. Geuzaine
+ * Copyright (C) 1999-2025 C. Geuzaine
  *
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of either:
@@ -1491,7 +1491,7 @@ static GLint gl2psFindRoot(GL2PSlist *primitives, GL2PSprimitive **root)
 
   if(!gl2psListNbr(primitives)){
     gl2psMsg(GL2PS_ERROR, "Cannot fint root in empty primitive list");
-    return 0;
+    return -1;
   }
 
   *root = *(GL2PSprimitive**)gl2psListPointer(primitives, 0);
@@ -1606,6 +1606,7 @@ static void gl2psBuildBspTree(GL2PSbsptree *tree, GL2PSlist *primitives)
   tree->back = NULL;
   tree->primitives = gl2psListCreate(1, 2, sizeof(GL2PSprimitive*));
   idx = gl2psFindRoot(primitives, &prim);
+  if(idx < 0) return;
   gl2psGetPlane(prim, tree->plane);
   gl2psAddPrimitiveInList(prim, tree->primitives);
 

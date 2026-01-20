@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -23,10 +23,10 @@ SVector3 gmshSurface::normal(const SPoint2 &param) const
   return SVector3();
 }
 
-Pair<SVector3, SVector3> gmshSurface::firstDer(const SPoint2 &param)
+std::pair<SVector3, SVector3> gmshSurface::firstDer(const SPoint2 &param)
 {
   Msg::Error("First derivative not implemented for this type of surface");
-  return Pair<SVector3, SVector3>();
+  return std::pair<SVector3, SVector3>();
 }
 
 double gmshSurface::getMetricEigenvalue(const SPoint2 &)

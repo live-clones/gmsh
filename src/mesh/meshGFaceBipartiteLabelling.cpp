@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -190,7 +190,7 @@ void meshGFaceQuadrangulateBipartiteLabelling(int faceTag)
   printf("%d  Initial labelling done\n", faceTag);
 
   while(!_queue.empty()) {
-    //    printf("SIZE %lu\n",_queue.size());
+    //    printf("SIZE %zu\n",_queue.size());
     auto v = _queue.front();
     _queue.pop();
     bool currentLabel = _labels[v];
@@ -202,9 +202,9 @@ void meshGFaceQuadrangulateBipartiteLabelling(int faceTag)
       while(he->opposite) he = he->opposite->next;
       double dot_max = 0.0;
       PolyMesh::HalfEdge *best = nullptr;
-      //      printf("treating %lu\n",v->data);
+      //      printf("treating %zu\n",v->data);
       while(he) {
-        //	printf("  %lu\n",he->prev->v->data);
+        //	printf("  %zu\n",he->prev->v->data);
         SVector3 t = he->d();
         if(_labels[he->next->v] == -1) {
           double dd = std::max(fabs(dot(t1, t)), fabs(dot(t2, t)));
@@ -216,7 +216,7 @@ void meshGFaceQuadrangulateBipartiteLabelling(int faceTag)
         he = he->prev->opposite;
       }
       if(best && dot_max > 0.9) {
-        //	printf("connecting %lu to (%lu %lu) (%g
+        //	printf("connecting %zu to (%zu %zu) (%g
         //%g)\n",v->data,best->v->data,best->next->v->data,
         //	       best->d().x(),best->d().y());
         _dirs[best->next->v] = best->d();
@@ -246,7 +246,7 @@ void meshGFaceQuadrangulateBipartiteLabelling(int faceTag)
         if(count++ > 3) break;
         PolyMesh::HalfEdge *best = it.second;
         if(_labels[best->next->v] == -1) {
-          //	  printf("(%lu %g)", best->next->v->data, it.first);
+          //	  printf("(%zu %g)", best->next->v->data, it.first);
           _dirs[best->next->v] = best->d();
           _labels[best->next->v] = /*rand()%2; // TEST*/ !currentLabel;
           _queue.push(best->next->v);

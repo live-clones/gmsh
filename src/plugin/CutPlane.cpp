@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -15,14 +15,15 @@
 int GMSH_CutPlanePlugin::iview = 0;
 
 StringXNumber CutPlaneOptions_Number[] = {
-  {GMSH_FULLRC, "A", GMSH_CutPlanePlugin::callbackA, 1.},
-  {GMSH_FULLRC, "B", GMSH_CutPlanePlugin::callbackB, 0.},
-  {GMSH_FULLRC, "C", GMSH_CutPlanePlugin::callbackC, 0.},
-  {GMSH_FULLRC, "D", GMSH_CutPlanePlugin::callbackD, -0.01},
-  {GMSH_FULLRC, "ExtractVolume", GMSH_CutPlanePlugin::callbackVol, 0},
-  {GMSH_FULLRC, "RecurLevel", GMSH_CutPlanePlugin::callbackRecur, 3},
-  {GMSH_FULLRC, "TargetError", GMSH_CutPlanePlugin::callbackTarget, 1e-4},
-  {GMSH_FULLRC, "View", nullptr, -1.}};
+  {GMSH_FULLRC, "A", GMSH_CutPlanePlugin::callbackA, 1., ""},
+  {GMSH_FULLRC, "B", GMSH_CutPlanePlugin::callbackB, 0., ""},
+  {GMSH_FULLRC, "C", GMSH_CutPlanePlugin::callbackC, 0., ""},
+  {GMSH_FULLRC, "D", GMSH_CutPlanePlugin::callbackD, -0.01, ""},
+  {GMSH_FULLRC, "ExtractVolume", GMSH_CutPlanePlugin::callbackVol, 0, ""},
+  {GMSH_FULLRC, "RecurLevel", GMSH_CutPlanePlugin::callbackRecur, 3, ""},
+  {GMSH_FULLRC, "TargetError", GMSH_CutPlanePlugin::callbackTarget, 1e-4, ""},
+  {GMSH_FULLRC, "View", nullptr, -1., ""},
+  {GMSH_FULLRC, "Visible", nullptr, 1., ""}};
 
 extern "C" {
 GMSH_Plugin *GMSH_RegisterCutPlanePlugin() { return new GMSH_CutPlanePlugin(); }
@@ -112,7 +113,8 @@ std::string GMSH_CutPlanePlugin::getHelp() const
          "If `ExtractVolume' is nonzero, the plugin extracts "
          "the elements on one side of the plane (depending "
          "on the sign of `ExtractVolume').\n\n"
-         "If `View' < 0, the plugin is run on the current view.\n\n"
+         "If `View' < 0, the plugin is run on the current view. "
+         "If `Visible' = 1, the plugin only cuts visible entities.\n\n"
          "Plugin(CutPlane) creates one new list-based view.";
 }
 
@@ -160,6 +162,7 @@ PView *GMSH_CutPlanePlugin::execute(PView *v)
   _extractVolume = (int)CutPlaneOptions_Number[4].def;
   _recurLevel = (int)CutPlaneOptions_Number[5].def;
   _targetError = CutPlaneOptions_Number[6].def;
+  _visible = (int)CutPlaneOptions_Number[8].def;
 
   PView *v1 = getView(iView, v);
   if(!v1) return v;

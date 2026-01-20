@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -621,10 +621,10 @@ static bool _tryToCollapseThatVertex2(GFace *gf, std::vector<MElement *> &e1,
   double worst_quality_old = 1.0;
   double worst_quality_new = 1.0;
 
-  //int count = 0;
+  // int count = 0;
   for(std::size_t j = 0; j < e.size(); ++j) {
     if(e[j] != q) {
-      //count++;
+      // count++;
       worst_quality_old = std::min(worst_quality_old, e[j]->etaShapeMeasure());
       v1->x() = pp.x();
       v1->y() = pp.y();
@@ -686,10 +686,10 @@ static bool _tryToCollapseThatVertex(GFace *gf, std::vector<MElement *> &e1,
   GPoint pp = gf->point(0.5 * (uu1 + uu2), 0.5 * (vv1 + vv2));
   double worst_quality_old = 1.0;
   double worst_quality_new = 1.0;
-  //int count = 0;
+  // int count = 0;
   for(std::size_t j = 0; j < e.size(); ++j) {
     if(e[j] != q) {
-      //count++;
+      // count++;
       worst_quality_old = std::min(worst_quality_old, e[j]->etaShapeMeasure());
       v1->x() = pp.x();
       v1->y() = pp.y();
@@ -1015,55 +1015,19 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
   if(gf->triangles.empty()) return;
   if(gf->compound.size()) return;
 
-  std::vector<MVertex *> emb_edgeverts;
+  std::set<MEdge, MEdgeLessThan> bndedges;
+  std::set<MEdge, MEdgeLessThan> embedges;
   {
     std::vector<GEdge *> emb_edges = gf->getEmbeddedEdges();
-    auto ite = emb_edges.begin();
-    while(ite != emb_edges.end()) {
-      if(!(*ite)->isMeshDegenerated()) {
-        emb_edgeverts.insert(emb_edgeverts.end(), (*ite)->mesh_vertices.begin(),
-                             (*ite)->mesh_vertices.end());
-        if((*ite)->getBeginVertex())
-          emb_edgeverts.insert(emb_edgeverts.end(),
-                               (*ite)->getBeginVertex()->mesh_vertices.begin(),
-                               (*ite)->getBeginVertex()->mesh_vertices.end());
-        if((*ite)->getEndVertex())
-          emb_edgeverts.insert(emb_edgeverts.end(),
-                               (*ite)->getEndVertex()->mesh_vertices.begin(),
-                               (*ite)->getEndVertex()->mesh_vertices.end());
-      }
-      ++ite;
-    }
-  }
+    for(auto ee : emb_edges)
+      for(auto l : ee->lines)
+        embedges.insert(MEdge(l->getVertex(0), l->getVertex(1)));
 
-  {
-    std::vector<GEdge *> const &_edges = gf->edges();
-    auto ite = _edges.begin();
-    while(ite != _edges.end()) {
-      if(!(*ite)->isMeshDegenerated()) {
-        if((*ite)->isSeam(gf)) {
-          emb_edgeverts.insert(emb_edgeverts.end(),
-                               (*ite)->mesh_vertices.begin(),
-                               (*ite)->mesh_vertices.end());
-          if((*ite)->getBeginVertex())
-            emb_edgeverts.insert(
-              emb_edgeverts.end(),
-              (*ite)->getBeginVertex()->mesh_vertices.begin(),
-              (*ite)->getBeginVertex()->mesh_vertices.end());
-          if((*ite)->getEndVertex())
-            emb_edgeverts.insert(emb_edgeverts.end(),
-                                 (*ite)->getEndVertex()->mesh_vertices.begin(),
-                                 (*ite)->getEndVertex()->mesh_vertices.end());
-        }
-      }
-      ++ite;
-    }
+    std::vector<GEdge *> edges = gf->edges();
+    for(auto ee : edges)
+      for(auto l : ee->lines)
+        bndedges.insert(MEdge(l->getVertex(0), l->getVertex(1)));
   }
-
-  // sort and erase the duplicates
-  std::sort(emb_edgeverts.begin(), emb_edgeverts.end());
-  emb_edgeverts.erase(std::unique(emb_edgeverts.begin(), emb_edgeverts.end()),
-                      emb_edgeverts.end());
 
   e2t_cont adj;
   buildEdgeToElement(gf->triangles, adj);
@@ -1081,19 +1045,19 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
 
   std::vector<RecombineTriangle> pairs;
 
-  std::map<MVertex *, std::pair<MElement *, MElement *> > makeGraphPeriodic;
+  std::map<MVertex *, std::pair<MElement *, MElement *>> makeGraphPeriodic;
 
   for(auto it = adj.begin(); it != adj.end(); ++it) {
-    if(it->second.second && it->second.first->getNumVertices() == 3 &&
-       it->second.second->getNumVertices() == 3 &&
-       (!std::binary_search(emb_edgeverts.begin(), emb_edgeverts.end(),
-                            it->first.getVertex(0)) ||
-        !std::binary_search(emb_edgeverts.begin(), emb_edgeverts.end(),
-                            it->first.getVertex(1)))) {
+    MEdge ed(it->first.getVertex(0), it->first.getVertex(1));
+    if(bndedges.find(ed) == bndedges.end() &&
+       embedges.find(ed) == embedges.end() &&
+       it->second.second && it->second.first->getNumVertices() == 3 &&
+       it->second.second->getNumVertices() == 3) {
       pairs.push_back(RecombineTriangle(it->first, it->second.first,
                                         it->second.second, cross_field));
     }
-    else if(!it->second.second && it->second.first->getNumVertices() == 3) {
+    else if(embedges.find(ed) == embedges.end() &&
+            !it->second.second && it->second.first->getNumVertices() == 3) {
       for(int i = 0; i < 2; i++) {
         MVertex *const v = it->first.getVertex(i);
         auto itv = makeGraphPeriodic.find(v);
@@ -1171,10 +1135,11 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
       sprintf(MATCHFILE, ".face.match");
       if(perfect_match(ncount, nullptr, ecount, &elist, &elen, nullptr,
                        MATCHFILE, 0, 0, 0, 0, &matzeit)) {
-        Msg::Error(
+        Msg::Warning(
           "Perfect Match failed in quadrangulation, try something else");
         free(elist);
         pairs.clear();
+        _recombineIntoQuads(gf, false, cubicGraph);
       }
       else {
         // TEST
@@ -1211,10 +1176,27 @@ static void _recombineIntoQuads(GFace *gf, bool blossom, bool cubicGraph = 1)
                 break;
               }
             }
-            MQuadrangle *q = new MQuadrangle(
-              t1->getVertex(start), t1->getVertex((start + 1) % 3), other,
-              t1->getVertex((start + 2) % 3));
-            gf->quadrangles.push_back(q);
+            MVertex *vs[4] = {t1->getVertex(start),
+                              t1->getVertex((start + 1) % 3), other,
+                              t1->getVertex((start + 2) % 3)};
+            MEdge e1(vs[0], vs[2]);
+            MEdge e2(vs[1], vs[3]);
+            if(embedges.find(e1) != embedges.end()) {
+              MTriangle *t1 = new MTriangle(vs[0], vs[1], vs[2]);
+              MTriangle *t2 = new MTriangle(vs[2], vs[3], vs[0]);
+              gf->triangles.push_back(t1);
+              gf->triangles.push_back(t2);
+            }
+            else if(embedges.find(e2) != embedges.end()) {
+              MTriangle *t1 = new MTriangle(vs[1], vs[2], vs[3]);
+              MTriangle *t2 = new MTriangle(vs[3], vs[0], vs[1]);
+              gf->triangles.push_back(t1);
+              gf->triangles.push_back(t2);
+            }
+            else {
+              MQuadrangle *q = new MQuadrangle(vs[0], vs[1], vs[2], vs[3]);
+              gf->quadrangles.push_back(q);
+            }
           }
         }
         free(elist);
@@ -1287,7 +1269,7 @@ static double printStats(GFace *gf, const char *message)
     "%s: %d quads, %d triangles, %d invalid quads, %d quads with Q < 0.1, "
     "avg Q = %g, min Q = %g",
     message, gf->quadrangles.size(), gf->triangles.size(), nbInv, nbBad,
-    Qav / gf->quadrangles.size(), Qmin);
+    Qav / std::max((int)gf->quadrangles.size(), 1), Qmin);
   return Qmin;
 }
 
@@ -1336,15 +1318,16 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
   {
     if(topologicalOptiPasses > 0) {
       if(!_isModelOkForTopologicalOpti(gf->model())) {
-        Msg::Info
-          ("Skipping topological optimization - mesh topology is not complete");
+        Msg::Info(
+          "Skipping topological optimization - mesh topology is not complete");
       }
       else {
         int iter = 0, nbTwoQuadNodes = 1, nbDiamonds = 1;
         while(nbTwoQuadNodes || nbDiamonds) {
           Msg::Debug("Topological optimization of quad mesh: pass %d", iter);
           nbTwoQuadNodes = removeTwoQuadsNodes(gf);
-          // removeDiamonds uses the parametrization or searches for closest point
+          // removeDiamonds uses the parametrization or searches for closest
+          // point
           nbDiamonds = haveParam ? removeDiamonds(gf) : 0;
           if(haveParam && nodeRepositioning)
             RelocateVertices(gf, CTX::instance()->mesh.nbSmoothing);
@@ -1357,8 +1340,7 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
   }
 
   // re-split bad quads into triangles
-  if(minqual > 0)
-    quadsToTriangles(gf, minqual);
+  if(minqual > 0) quadsToTriangles(gf, minqual);
 
   if(debug) gf->model()->writeMSH("recombine_4quality.msh");
 
@@ -1371,14 +1353,13 @@ void recombineIntoQuads(GFace *gf, bool blossom, int topologicalOptiPasses,
   sprintf(name, "%s recombination completed (Wall %gs, CPU %gs)",
           blossom ? "Blossom" : "Simple", w2 - w1, t2 - t1);
   printStats(gf, name);
-
   if(debug) gf->model()->writeMSH("recombine_5final.msh");
 }
 
 void quadsToTriangles(GFace *gf, double minqual)
 {
   std::vector<MQuadrangle *> qds;
-  std::map<MElement *, std::pair<MElement *, MElement *> > change;
+  std::map<MElement *, std::pair<MElement *, MElement *>> change;
   for(std::size_t i = 0; i < gf->quadrangles.size(); i++) {
     MQuadrangle *q = gf->quadrangles[i];
     if(q->etaShapeMeasure() < minqual + 1e-12) {
@@ -1427,7 +1408,7 @@ void quadsToTriangles(GFace *gf, double minqual)
   // without taking care of if it is the truly the first one or not.
 
   //  std::map<MElement*,MElement*> _toFirst;
-  std::map<MElement *, std::vector<MElement *> > newElemColumns;
+  std::map<MElement *, std::vector<MElement *>> newElemColumns;
 
   for(auto it = _columns->_elemColumns.begin();
       it != _columns->_elemColumns.end(); it++) {

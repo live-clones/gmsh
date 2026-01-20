@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -746,7 +746,7 @@ void PrintOptions(int num, int level, int diff, int help, const char *filename,
 #if defined(HAVE_POST)
     for(std::size_t i = 0; i < PView::list.size(); i++) {
       char tmp[256];
-      sprintf(tmp, "View[%lu].", i);
+      sprintf(tmp, "View[%zu].", i);
       PrintOptionCategory(level, diff, help, "View options (strings)", file,
                           vec);
       PrintStringOptions(i, level, diff, help, ViewOptions_String, tmp, file,
@@ -1242,6 +1242,12 @@ std::string opt_general_options_filename(OPT_ARGS_STR)
 {
   if(action & GMSH_SET) CTX::instance()->optionsFileName = val;
   return CTX::instance()->optionsFileName;
+}
+
+std::string opt_general_log_filename(OPT_ARGS_STR)
+{
+  if(action & GMSH_SET) Msg::SetLogFileName(val);
+  return Msg::GetLogFileName();
 }
 
 std::string opt_general_recent_file0(OPT_ARGS_STR)
@@ -3643,22 +3649,22 @@ double opt_general_expert_mode(OPT_ARGS_NUM)
   return CTX::instance()->expertMode;
 }
 
-#if defined(HAVE_VISUDEV)
 double opt_general_heavy_visualization(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
+#if defined(HAVE_VISUDEV)
     if(CTX::instance()->heavyVisu != val)
       CTX::instance()->mesh.changed |= (ENT_CURVE | ENT_SURFACE | ENT_VOLUME);
+#endif
     CTX::instance()->heavyVisu = (int)val;
   }
-#if defined(HAVE_FLTK)
+#if defined(HAVE_VISUDEV) && defined(HAVE_FLTK)
   if(FlGui::available() && (action & GMSH_GUI))
     FlGui::instance()->options->general.butt[20]->value(
       CTX::instance()->heavyVisu);
 #endif
   return CTX::instance()->heavyVisu;
 }
-#endif
 
 double opt_general_stereo_mode(OPT_ARGS_NUM)
 {
@@ -4528,7 +4534,7 @@ double opt_geometry_label_type(OPT_ARGS_NUM)
   if(action & GMSH_SET) {
     CTX::instance()->geom.labelType = (int)val;
     if(CTX::instance()->geom.labelType < 0 ||
-       CTX::instance()->geom.labelType > 4)
+       CTX::instance()->geom.labelType > 5)
       CTX::instance()->geom.labelType = 0;
   }
 #if defined(HAVE_FLTK)
@@ -5016,6 +5022,12 @@ double opt_mesh_optimize_netgen(OPT_ARGS_NUM)
       CTX::instance()->mesh.optimizeNetgen);
 #endif
   return CTX::instance()->mesh.optimizeNetgen;
+}
+
+double opt_mesh_optimize_pyramids(OPT_ARGS_NUM)
+{
+  if(action & GMSH_SET) CTX::instance()->mesh.optimizePyramids = val;
+  return CTX::instance()->mesh.optimizePyramids;
 }
 
 double opt_mesh_refine_steps(OPT_ARGS_NUM)
@@ -5974,12 +5986,12 @@ double opt_mesh_bdf_field_format(OPT_ARGS_NUM)
   return CTX::instance()->mesh.bdfFieldFormat;
 }
 
-double opt_mesh_stl_remove_duplicate_triangles(OPT_ARGS_NUM)
+double opt_mesh_stl_remove_bad_triangles(OPT_ARGS_NUM)
 {
   if(action & GMSH_SET) {
-    CTX::instance()->mesh.stlRemoveDuplicateTriangles = (int)val;
+    CTX::instance()->mesh.stlRemoveBadTriangles = (int)val;
   }
-  return CTX::instance()->mesh.stlRemoveDuplicateTriangles;
+  return CTX::instance()->mesh.stlRemoveBadTriangles;
 }
 
 double opt_mesh_stl_one_solid_per_surface(OPT_ARGS_NUM)
@@ -6287,7 +6299,7 @@ double opt_mesh_min_curve_nodes(OPT_ARGS_NUM)
     if(!(action & GMSH_SET_DEFAULT) &&
        (int)val != CTX::instance()->mesh.minCurveNodes)
       Msg::SetOnelabChanged(2);
-    CTX::instance()->mesh.minCurveNodes = std::max((int)val, 2);
+    CTX::instance()->mesh.minCurveNodes = std::max((int)val, 1);
   }
   return CTX::instance()->mesh.minCurveNodes;
 }

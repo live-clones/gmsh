@@ -153,26 +153,15 @@ call gmsh%write("t2.msh")
 ! it is also sometimes useful to generate the `flat' geometry, with an explicit
 ! representation of all the elementary entities.
 !
-! With the built-in CAD kernel, this can be achieved by saving the model in the
-! `Gmsh Unrolled GEO' format:
+! This can be achieved by saving the model in the `Gmsh Unrolled GEO' format:
 !
 ! call gmsh%write("t2.geo_unrolled");
-!
-! With the OpenCASCADE CAD kernel, unrolling the geometry can be achieved by
-! exporting in the `OpenCASCADE BRep' format:
-!
-! call gmsh%write("t2.brep");
-!
-! (OpenCASCADE geometries can also be exported as STEP files.)
 
-! It is important to note that Gmsh never translates geometry data into a common
-! representation: all the operations on a geometrical entity are performed
-! natively with the associated CAD kernel. Consequently, one cannot export a
-! geometry constructed with the built-in kernel as an OpenCASCADE BRep file; or
-! export an OpenCASCADE model as an Unrolled GEO file.
-
-! Launch the GUI to see the results:
-if (.not. any(argv == "-nopopup")) call gmsh%fltk%run()
+! Launch the GUI to see the results. Providing an option file name (here
+! "t2.opt") to the run() function will automatically load all the options and
+! visibility information from that option file before running the GUI, and save
+! all the options and visibility information to the file when the GUI is closed.
+if (.not. any(argv == "-nopopup")) call gmsh%fltk%run("t2.opt")
 call gmsh%finalize()
 deallocate(ov, ov2, argv, xyz)
 

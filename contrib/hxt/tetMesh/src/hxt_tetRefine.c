@@ -302,7 +302,7 @@ static HXTStatus balanceRefineWork(HXTMesh* mesh, uint32_t* startPt, uint64_t* s
 {
   uint64_t* scan;
   uint32_t ptPerThreadGoal;
-  HXT_CHECK( hxtAlignedMalloc(&scan, sizeof(size_t) * mesh->tetrahedra.num) );
+  HXT_CHECK( hxtAlignedMalloc(&scan, sizeof(uint64_t) * mesh->tetrahedra.num) );
 
   #pragma omp parallel num_threads(maxThreads)
   {
@@ -365,7 +365,7 @@ HXTStatus hxtRefineTetrahedra(HXTMesh* mesh,
   int maxThreads = omp_get_max_threads();
 
   uint64_t* startTet; // see balanceRefineWork
-  HXT_CHECK( hxtMalloc(&startTet, (maxThreads+1)*sizeof(size_t)) );
+  HXT_CHECK( hxtMalloc(&startTet, (maxThreads+1)*sizeof(uint64_t)) );
 
   uint32_t* startPt; // see balanceRefineWork
   HXT_CHECK( hxtMalloc(&startPt, (maxThreads+1)*sizeof(uint32_t)) );

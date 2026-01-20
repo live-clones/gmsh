@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -220,6 +220,8 @@ public:
     return i;
   }
 
+  virtual std::vector<GEntity *> boundaryEntities() const = 0;
+
   // vertices that bound this entity
   virtual std::vector<GVertex *> vertices() const
   {
@@ -242,6 +244,10 @@ public:
 
   // underlying geometric representation of this entity
   virtual GeomType geomType() const { return Unknown; }
+
+  // properties of the underlying geometric representation of this entity
+  virtual void geomProperties(std::vector<int> &integers,
+                              std::vector<double> &reals) const { }
 
   // true if parametric space is continuous in the "dim" direction
   virtual bool continuous(int dim) const { return true; }
@@ -388,6 +394,16 @@ public:
 
   // get the mesh vertex at the given index
   MVertex *getMeshVertex(std::size_t index) { return mesh_vertices[index]; }
+
+  // iterate over the mesh vertices
+  std::vector<MVertex*>::const_iterator getMeshVertexBegin() const
+  {
+    return mesh_vertices.begin();
+  }
+  std::vector<MVertex*>::const_iterator getMeshVertexEnd() const
+  {
+    return mesh_vertices.end();
+  }
 
   // add a mesh vertex
   void addMeshVertex(MVertex *v) { mesh_vertices.push_back(v); }

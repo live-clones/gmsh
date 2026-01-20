@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -291,6 +291,8 @@ public:
   hashmapMEdge::const_iterator lastMEdge() { return _mapEdgeNum.end(); }
   hashmapMFace::const_iterator firstMFace() { return _mapFaceNum.begin(); }
   hashmapMFace::const_iterator lastMFace() { return _mapFaceNum.end(); }
+  const hashmapMEdge& getMEdges() const { return _mapEdgeNum; }
+  const hashmapMFace& getMFaces() const { return _mapFaceNum; }
 
   // renumber mesh vertices and elements in a continuous sequence (this
   // invalidates the mesh caches)
@@ -846,6 +848,11 @@ public:
   // Object file format (OFF)
   int readOFF(const std::string &name);
   int writeOFF(const std::string &name, bool saveAll = false,
+               double scalingFactor = 1.0);
+
+  // Wavefront OBJ format
+  int readOBJ(const std::string &name);
+  int writeOBJ(const std::string &name, bool saveAll = false,
                double scalingFactor = 1.0);
 
   // Nastran Bulk Data File format

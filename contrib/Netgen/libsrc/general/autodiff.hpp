@@ -64,6 +64,17 @@ public:
     return *this;
   }
 
+  // copy assignment operator
+  AutoDiff& operator=(const AutoDiff& other) throw() {
+    if (this != &other) {
+      val = other.val;
+      for (int i = 0; i < D; i++) {
+        dval[i] = other.dval[i];
+      }
+    }
+    return *this;
+  }
+
   /// returns value
   SCAL Value() const throw() { return val; }
 

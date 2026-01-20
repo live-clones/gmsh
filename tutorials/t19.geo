@@ -26,8 +26,8 @@ Ruled ThruSections(11) = {11:13};
 
 // We copy the first volume, and fillet all its edges:
 v() = Translate{4, 0, 0} { Duplicata{ Volume{1}; } };
-f() = Abs(Boundary{ Volume{v(0)}; });
-e() = Unique(Abs(Boundary{ Surface{f()}; }));
+f() = Boundary{ Volume{v(0)}; };
+e() = Unique(Boundary{ Surface{f()}; });
 Fillet{v(0)}{e()}{0.1}
 
 // OpenCASCADE also allows general extrusions along a smooth path. Let's first

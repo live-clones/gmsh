@@ -1,5 +1,5 @@
 %{
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -133,6 +133,7 @@ Chamfer                 return tChamfer;
 Characteristic          return tCharacteristic;
 Circle                  return tCircle;
 ClassifySurfaces        return tClassifySurfaces;
+Closest                 return tClosest;
 CodeName                return tCodeName;
 Coherence               return tCoherence;
 Cohomology              return tCohomology;
@@ -151,6 +152,7 @@ CreateTopology          return tCreateTopology;
 CurrentDir              return tCurrentDirectory;
 CurrentDirectory        return tCurrentDirectory;
 CurrentFileName         return tCurrentFileName;
+Curvature               return tCurvature;
 Curve                   return tCurve;
 Cylinder                return tCylinder;
 
@@ -247,6 +249,7 @@ N2S                     return tNameToString;
 NameStruct              return tNameStruct;
 NameToString            return tNameToString;
 NewModel                return tNewModel;
+Normal                  return tNormal;
 Nurbs			return tNurbs;
 
 OnelabAction            return tOnelabAction;
@@ -307,6 +310,7 @@ Spline                  return tSpline;
 Split                   return tSplit;
 Sprintf                 return tSprintf;
 Sqrt                    return tSqrt;
+Step                    return tStep;
 Str                     return tStr;
 StrCat                  return tStrCat;
 StrChoice               return tStrChoice;

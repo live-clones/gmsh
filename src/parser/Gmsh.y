@@ -1,5 +1,5 @@
 %{
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -181,7 +181,7 @@ struct doubleXstring{
 %token <c> tSTRING tBIGSTR
 
 %token tEND tAFFECT tDOTS tSCOPE tPi tMPI_Rank tMPI_Size tEuclidian tCoordinates tTestLevel
-%token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand
+%token tExp tLog tLog10 tSqrt tSin tAsin tCos tAcos tTan tRand tStep
 %token tAtan tAtan2 tSinh tCosh tTanh tFabs tAbs tFloor tCeil tRound tMin tMax
 %token tFmod tModulo tHypot tList tLinSpace tLogSpace tListFromFile tCatenary
 %token tPrintf tError tWarning tStr tSprintf tStrCat tStrPrefix tStrRelative tStrReplace
@@ -200,13 +200,13 @@ struct doubleXstring{
 %token tDefineString tSetNumber tSetTag tSetString
 %token tPoint tCircle tEllipse tCurve tSphere tPolarSphere tSurface tSpline tVolume
 %token tBox tCylinder tCone tTorus tEllipsoid tQuadric tShapeFromFile
-%token tRectangle tDisk tWire tGeoEntity
+%token tRectangle tDisk tWire tGeoEntity tNormal tCurvature
 %token tCharacteristic tLength tParametric tElliptic
 %token tRefineMesh tRecombineMesh tAdaptMesh tTransformMesh
 %token tRelocateMesh tReorientMesh tSetFactory tThruSections tWedge tFillet tChamfer
 %token tPlane tRuled tTransfinite tPhysical tCompound tPeriodic tParent
 %token tUsing tPlugin tDegenerated tRecursive tSewing
-%token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tAffine
+%token tRotate tTranslate tSymmetry tDilate tExtrude tLevelset tAffine tClosest
 %token tBooleanUnion tBooleanIntersection tBooleanDifference tBooleanSection
 %token tBooleanFragments tThickSolid
 %token tRecombine tSmoother tSplit tDelete tCoherence tHealShapes
@@ -228,7 +228,7 @@ struct doubleXstring{
 %type <d> LoopOptions
 %type <v> VExpr VExpr_Single CircleOptions TransfiniteType
 %type <i> NumericAffectation NumericIncrement BooleanOperator BooleanOption
-%type <i> PhysicalId_per_dim_entity GeoEntity GeoEntity123 GeoEntity12 GeoEntity02
+%type <i> PhysicalId_per_dim_entity GeoEntity GeoEntity123 GeoEntity12 GeoEntity012
 %type <i> TransfiniteArrangement RecombineAngle
 %type <i> Append AppendOrNot
 %type <u> ColorExpr
@@ -238,8 +238,8 @@ struct doubleXstring{
 %type <l> MultiStringExprVar SurfaceConstraints
 %type <l> RecursiveListOfStringExprVar Str_BracedRecursiveListOfStringExprVar
 %type <l> BracedOrNotRecursiveListOfStringExprVar BracedRecursiveListOfStringExprVar
-%type <l> FExpr_Multi ListOfDouble ListOfDoubleOrAll RecursiveListOfDouble
-%type <l> RecursiveListOfListOfDouble Enumeration
+%type <l> FExpr_Multi ListOfDouble ListOfDoubleWithBraces ListOfDoubleOrAll
+%type <l> RecursiveListOfDouble RecursiveListOfListOfDouble Enumeration
 %type <l> ListOfColor RecursiveListOfColor
 %type <l> ListOfShapes Transform Extrude MultipleShape Boolean
 %type <l> TransfiniteCorners PeriodicTransform
@@ -799,6 +799,7 @@ tSTRING_Reserved:
    tSTRING   { $$ = $1; }
  | tMin      { $$ = (char *)Malloc(4 * sizeof(char)); strcpy($$, "Min"); }
  | tMax      { $$ = (char *)Malloc(4 * sizeof(char)); strcpy($$, "Max"); }
+ | tStep     { $$ = (char *)Malloc(5 * sizeof(char)); strcpy($$, "Step"); }
  | tBox      { $$ = (char *)Malloc(4 * sizeof(char)); strcpy($$, "Box"); }
  | tCylinder { $$ = (char *)Malloc(9 * sizeof(char)); strcpy($$, "Cylinder"); }
 
@@ -1194,7 +1195,7 @@ Affectation :
       Free($6);
       Free($8);
     }
-  | tField '[' FExpr ']' '.' tSTRING_Reserved  tAFFECT '{' RecursiveListOfDouble '}' tEND
+  | tField '[' FExpr ']' '.' tSTRING_Reserved  tAFFECT ListOfDoubleWithBraces tEND
     {
 #if defined(HAVE_MESH)
       Field *field = GModel::current()->getFields()->get((int)$3);
@@ -1204,9 +1205,9 @@ Affectation :
 	  if(option->getType() == FIELD_OPTION_LIST) {
 	    std::list<int> vl = option->list();
 	    vl.clear();
-	    for(int i = 0; i < List_Nbr($9); i++){
+	    for(int i = 0; i < List_Nbr($8); i++){
 	      double id;
-	      List_Read($9, i, &id);
+	      List_Read($8, i, &id);
 	      vl.push_back((int)id);
 	    }
 	    option->list(vl);
@@ -1214,9 +1215,9 @@ Affectation :
 	  else {
 	    std::list<double> vl = option->listdouble();
 	    vl.clear();
-	    for(int i = 0; i < List_Nbr($9); i++){
+	    for(int i = 0; i < List_Nbr($8); i++){
 	      double id;
-	      List_Read($9, i, &id);
+	      List_Read($8, i, &id);
 	      vl.push_back(id);
 	    }
 	    option->listdouble(vl);
@@ -1230,7 +1231,7 @@ Affectation :
 	yymsg(0, "No field with id %i", (int)$3);
 #endif
       Free($6);
-      List_Delete($9);
+      List_Delete($8);
     }
   | tField '[' FExpr ']' '.' tSTRING_Reserved tEND
     {
@@ -1445,6 +1446,10 @@ FloatParameterOption :
   | tMax FExpr
     {
       floatOptions["Max"].push_back($2);
+    }
+  | tStep FExpr
+    {
+      floatOptions["Step"].push_back($2);
     }
   | tSTRING
     {
@@ -2439,7 +2444,7 @@ GeoEntity12 :
     }
 ;
 
-GeoEntity02 :
+GeoEntity012 :
     tPoint
     { $$ = 0; }
   | tCurve
@@ -2553,6 +2558,32 @@ Transform :
       List_Delete($3);
       $$ = $6;
     }
+  | tClosest '{' RecursiveListOfDouble '}' '{' MultipleShape '}'
+    {
+      std::vector<double> xyz; ListOfDouble2Vector($3, xyz);
+      std::vector<std::pair<int, int> > dimTags, outDimTags;
+      ListOfShapes2VectorOfPairs($6, dimTags);
+      $$ = $6;
+      List_Reset($$);
+      bool r = true;
+      if(gmsh_yyfactory == "OpenCASCADE" && GModel::current()->getOCCInternals()){
+        if(xyz.size() == 3) {
+          std::vector<double> dist, coord;
+          r = GModel::current()->getOCCInternals()->getClosestEntities
+            (xyz[0], xyz[1], xyz[2], dimTags, outDimTags, dist, coord,
+             (int)dimTags.size());
+        }
+        else {
+          yymsg(0, "Closest first argument should contain 3 coordinates");
+        }
+      }
+      else{
+        yymsg(0, "Closest entity only available with OpenCASCADE geometry kernel");
+      }
+      if(!r) yymsg(0, "Closest entity search failed");
+      else VectorOfPairs2ListOfShapes(outDimTags, $$);
+      List_Delete($3);
+    }
   | tSTRING '{' MultipleShape '}'
     {
       std::vector<std::pair<int, int> > inDimTags, outDimTags;
@@ -2570,6 +2601,7 @@ Transform :
         }
       }
       else if(action == "Boundary" || action == "CombinedBoundary" ||
+              action == "OrientedBoundary" || action == "OrientedCombinedBoundary" ||
               action == "PointsOf"){
         // boundary operations are performed directly on GModel, which enables
         // to compute the boundary of hybrid CAD models; this also automatically
@@ -2579,9 +2611,13 @@ Transform :
           GModel::current()->getOCCInternals()->synchronize(GModel::current());
         if(GModel::current()->getGEOInternals()->getChanged())
           GModel::current()->getGEOInternals()->synchronize(GModel::current());
+        bool combined = (action == "CombinedBoundary" ||
+                         action == "OrientedCombinedBoundary");
+        bool oriented = (action == "OrientedBoundary" ||
+                         action == "OrientedCombinedBoundary");
+        bool recursive = action == "PointsOf";
         r = GModel::current()->getBoundaryTags
-          (inDimTags, outDimTags, action == "CombinedBoundary", true,
-           action == "PointsOf");
+          (inDimTags, outDimTags, combined, oriented, recursive);
       }
       else{
         yymsg(0, "Unknown action on multiple shapes '%s'", $1);
@@ -3156,7 +3192,7 @@ Delete :
       if(!changed){
         std::vector<GEntity*> removed;
         GModel::current()->remove(dimTags, removed);
-        Msg::Debug("Destroying %lu entities in model", removed.size());
+        Msg::Debug("Destroying %zu entities in model", removed.size());
         for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
       }
       List_Delete($3);
@@ -3181,7 +3217,7 @@ Delete :
       if(!changed){
         std::vector<GEntity*> removed;
         GModel::current()->remove(dimTags, removed, true);
-        Msg::Debug("Destroying %lu entities in model", removed.size());
+        Msg::Debug("Destroying %zu entities in model", removed.size());
         for(std::size_t i = 0; i < removed.size(); i++) delete removed[i];
       }
       List_Delete($4);
@@ -3554,7 +3590,7 @@ Command :
 	 PluginManager::instance()->action($3, $6, 0);
        }
        catch(...) {
-	 yymsg(0, "Unknown action '%s' or plugin '%s'", $6, $3);
+	 yymsg(0, "Failed action '%s' or unknown plugin '%s'", $6, $3);
        }
 #endif
        Free($3); Free($6);
@@ -4664,6 +4700,7 @@ Constraints :
           if(gf){
             gf->meshAttributes.method = MESH_TRANSFINITE;
             gf->meshAttributes.transfiniteArrangement = $5;
+            gf->meshAttributes.corners.clear();
             if(corners.empty() || corners.size() == 3 || corners.size() == 4){
               for(std::size_t j = 0; j < corners.size(); j++){
                 GVertex *gv = GModel::current()->getVertexByTag(corners[j]);
@@ -4706,6 +4743,7 @@ Constraints :
           GRegion *gr = GModel::current()->getRegionByTag(tag);
           if(gr){
             gr->meshAttributes.method = MESH_TRANSFINITE;
+            gr->meshAttributes.corners.clear();
             if(corners.empty() || corners.size() == 6 || corners.size() == 8){
               for(std::size_t i = 0; i < corners.size(); i++){
                 GVertex *gv = GModel::current()->getVertexByTag(corners[i]);
@@ -5126,7 +5164,7 @@ Constraints :
         List_Delete($3);
       }
     }
-  | tRelocateMesh GeoEntity02 ListOfDoubleOrAll tEND
+  | tRelocateMesh GeoEntity012 ListOfDoubleOrAll tEND
     {
       if(GModel::current()->getOCCInternals() &&
          GModel::current()->getOCCInternals()->getChanged())
@@ -5377,6 +5415,7 @@ FExpr :
   | FExpr tGREATERGREATER FExpr    { $$ = ((int)$1 >> (int)$3); }
   | FExpr tLESSLESS FExpr          { $$ = ((int)$1 << (int)$3); }
   | FExpr '?' FExpr tDOTS FExpr    { $$ = $1 ? $3 : $5; }
+  | tStep   LP FExpr RP            { $$ = ($3 < 0) ? 0 : 1; }
   | tExp    LP FExpr RP            { $$ = exp($3);      }
   | tLog    LP FExpr RP            { $$ = log($3);      }
   | tLog10  LP FExpr RP            { $$ = log10($3);    }
@@ -5814,7 +5853,6 @@ ListOfDouble :
     }
   | '{' '}'
     {
-      // creates an empty list
       $$ = List_Create(2, 1, sizeof(double));
     }
   | '{' RecursiveListOfDouble '}'
@@ -5835,6 +5873,25 @@ ListOfDouble :
       for(int i = 0; i < List_Nbr($$); i++){
 	double *pd = (double*)List_Pointer($$, i);
 	(*pd) *= $1;
+      }
+    }
+;
+
+ListOfDoubleWithBraces :
+  '{' '}'
+    {
+      $$ = List_Create(2, 1, sizeof(double));
+    }
+  | '{' RecursiveListOfDouble '}'
+    {
+      $$ = $2;
+    }
+  | '-' '{' RecursiveListOfDouble '}'
+    {
+      $$ = $3;
+      for(int i = 0; i < List_Nbr($$); i++){
+	double *pd = (double*)List_Pointer($$, i);
+	(*pd) = - (*pd);
       }
     }
 ;
@@ -6014,6 +6071,118 @@ FExpr_Multi :
       }
       else{
         yymsg(0, "MatrixOfInertia only available with OpenCASCADE geometry kernel");
+      }
+    }
+   | tParametric tBoundingBox GeoEntity12 '{' FExpr '}'
+    {
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      if(GModel::current()->getGEOInternals()->getChanged())
+        GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      $$ = List_Create(9, 1, sizeof(double));
+      GEntity *entity = GModel::current()->getEntityByTag($3, (int)$5);
+      if(!entity) {
+        yymsg(0, "%s %d does not exist", ($3 == 1) ? "Curve" : "Surface",
+              (int)$5);
+      }
+      else {
+        Range<double> u = entity->parBounds(0);
+        double umin = u.low(), umax = u.high();
+        if($3 == 1) {
+          List_Add($$, &umin);
+          List_Add($$, &umax);
+        }
+        else {
+          Range<double> v = entity->parBounds(1);
+          double vmin = v.low(), vmax = v.high();
+          List_Add($$, &umin);
+          List_Add($$, &vmin);
+          List_Add($$, &umax);
+          List_Add($$, &vmax);
+        }
+      }
+    }
+  | tNormal tSurface '{' FExpr '}' tParametric '{' FExpr ',' FExpr '}'
+    {
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      if(GModel::current()->getGEOInternals()->getChanged())
+        GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      $$ = List_Create(9, 1, sizeof(double));
+      int tag = (int)$4;
+      GFace *gf = GModel::current()->getFaceByTag(tag);
+      if(gf) {
+        SPoint2 param($8, $10);
+        SVector3 n = gf->normal(param);
+        double x = n.x(), y = n.y(), z = n.z();
+        List_Add($$, &x);
+        List_Add($$, &y);
+        List_Add($$, &z);
+      }
+      else {
+        yymsg(0, "Surface %d does not exist", tag);
+      }
+    }
+
+  | tCurvature tSurface '{' FExpr '}' tParametric '{' FExpr ',' FExpr '}'
+    {
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      if(GModel::current()->getGEOInternals()->getChanged())
+        GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      $$ = List_Create(9, 1, sizeof(double));
+      int tag = (int)$4;
+      GFace *gf = GModel::current()->getFaceByTag(tag);
+      if(gf) {
+        SPoint2 param($8, $10);
+        double c = gf->curvatureMax(param);
+        List_Add($$, &c);
+      }
+      else {
+        yymsg(0, "Surface %d does not exist", tag);
+      }
+    }
+
+  | tCurvature tCurve '{' FExpr '}' tParametric '{' FExpr '}'
+    {
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      if(GModel::current()->getGEOInternals()->getChanged())
+        GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      $$ = List_Create(9, 1, sizeof(double));
+      int tag = (int)$4;
+      GEdge *ge = GModel::current()->getEdgeByTag(tag);
+      if(ge) {
+        double c = ge->curvature(8);
+        List_Add($$, &c);
+      }
+      else {
+        yymsg(0, "Curve %d does not exist", tag);
+      }
+    }
+
+  | tParametric tPoint '{' FExpr '}' tIn tSurface '{' FExpr '}'
+    {
+      if(GModel::current()->getOCCInternals() &&
+         GModel::current()->getOCCInternals()->getChanged())
+        GModel::current()->getOCCInternals()->synchronize(GModel::current());
+      if(GModel::current()->getGEOInternals()->getChanged())
+        GModel::current()->getGEOInternals()->synchronize(GModel::current());
+      $$ = List_Create(9, 1, sizeof(double));
+      GVertex *gv = GModel::current()->getVertexByTag((int)$4);
+      GFace *gf = GModel::current()->getFaceByTag((int)$9);
+      if(gv && gf) {
+        SPoint2 p = gv->reparamOnFace(gf, 0);
+        double u = p.x(), v = p.y();
+        List_Add($$, &u);
+        List_Add($$, &v);
+      }
+      else {
+        yymsg(0, "Point %d or surface %d does not exist", (int)$4, (int)$9);
       }
     }
    | tColor GeoEntity123 '{' FExpr '}'

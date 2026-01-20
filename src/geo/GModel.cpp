@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -327,8 +327,8 @@ bool GModel::empty() const
 
 GRegion *GModel::getRegionByTag(int n) const
 {
-  GEntity tmp((GModel *)this, n);
-  auto it = regions.find((GRegion *)&tmp);
+  GRegion tmp((GModel *)this, n);
+  auto it = regions.find(&tmp);
   if(it != regions.end())
     return *it;
   else
@@ -337,8 +337,8 @@ GRegion *GModel::getRegionByTag(int n) const
 
 GFace *GModel::getFaceByTag(int n) const
 {
-  GEntity tmp((GModel *)this, n);
-  auto it = faces.find((GFace *)&tmp);
+  GFace tmp((GModel *)this, n);
+  auto it = faces.find(&tmp);
   if(it != faces.end())
     return *it;
   else
@@ -347,8 +347,8 @@ GFace *GModel::getFaceByTag(int n) const
 
 GEdge *GModel::getEdgeByTag(int n) const
 {
-  GEntity tmp((GModel *)this, n);
-  auto it = edges.find((GEdge *)&tmp);
+  GEdge tmp((GModel *)this, n);
+  auto it = edges.find(&tmp);
   if(it != edges.end())
     return *it;
   else
@@ -357,8 +357,8 @@ GEdge *GModel::getEdgeByTag(int n) const
 
 GVertex *GModel::getVertexByTag(int n) const
 {
-  GEntity tmp((GModel *)this, n);
-  auto it = vertices.find((GVertex *)&tmp);
+  GVertex tmp((GModel *)this, n);
+  auto it = vertices.find(&tmp);
   if(it != vertices.end())
     return *it;
   else
@@ -1744,8 +1744,8 @@ void GModel::renumberMeshVertices(const std::map<std::size_t, std::size_t> &mapp
             remap[v] = it->second;
           else {
             if(info) {
-              Msg::Info("Mapping does not contain a node tag (%lu) - "
-                        "incrementing after last provided tag (%lu)",
+              Msg::Info("Mapping does not contain a node tag (%zu) - "
+                        "incrementing after last provided tag (%zu)",
                         v->getNum(), maxmap);
               info = false;
             }
@@ -1872,8 +1872,8 @@ void GModel::renumberMeshElements(const std::map<std::size_t, std::size_t> &mapp
             remap[e] = it->second;
           else {
             if(info) {
-              Msg::Info("Mapping does not contain an element tag (%lu) - "
-                        "incrementing after last provided tag (%lu)",
+              Msg::Info("Mapping does not contain an element tag (%zu) - "
+                        "incrementing after last provided tag (%zu)",
                         e->getNum(), maxmap);
               info = false;
             }
@@ -2011,6 +2011,7 @@ void GModel::rebuildMeshVertexCache(bool onlyIfNecessary)
 {
   if(!onlyIfNecessary ||
      (_vertexVectorCache.empty() && _vertexMapCache.empty())) {
+    Msg::Debug("Rebuilding mesh node cache");
     _vertexVectorCache.clear();
     _vertexMapCache.clear();
     bool dense = false;
@@ -2087,7 +2088,6 @@ MVertex *GModel::getMeshVertexByTag(std::size_t n)
 #pragma omp barrier
 #pragma omp single
     {
-      Msg::Debug("Rebuilding mesh node cache");
       rebuildMeshVertexCache();
     }
   }
@@ -2101,7 +2101,6 @@ MVertex *GModel::getMeshVertexByTag(std::size_t n)
 void GModel::addMVertexToVertexCache(MVertex* v)
 {
   if(_vertexVectorCache.empty() && _vertexMapCache.empty()) {
-    Msg::Debug("Rebuilding mesh node cache");
     rebuildMeshVertexCache();
   }
   if (_vertexVectorCache.size() > 0) {
@@ -2141,7 +2140,6 @@ MElement *GModel::getMeshElementByTag(std::size_t n, int &entityTag)
 #pragma omp barrier
 #pragma omp single
     {
-      Msg::Debug("Rebuilding mesh element cache");
       rebuildMeshElementCache();
     }
   }
@@ -2211,7 +2209,7 @@ std::size_t GModel::removeInvisibleElements()
     (*it)->deleteVertexArrays();
   }
   destroyMeshCaches();
-  Msg::Info("Removed %lu elements", n);
+  Msg::Info("Removed %zu elements", n);
   return n;
 }
 
@@ -2259,7 +2257,7 @@ std::size_t GModel::reverseInvisibleElements()
     if(all) (*it)->setVisibility(1);
   }
   destroyMeshCaches();
-  Msg::Info("Reversed %lu elements", n);
+  Msg::Info("Reversed %zu elements", n);
   return n;
 }
 
@@ -2296,7 +2294,7 @@ std::size_t GModel::indexMeshVertices(bool all, int singlePartition,
 
   // renumber all the mesh nodes tagged with 0
   std::size_t numVertices = 0;
-  long int index = 0;
+  long int index = CTX::instance()->mesh.firstNodeTag - 1;
   for(std::size_t i = 0; i < entities.size(); i++) {
     for(std::size_t j = 0; j < entities[i]->mesh_vertices.size(); j++) {
       MVertex *v = entities[i]->mesh_vertices[j];
@@ -2755,7 +2753,7 @@ void GModel::checkMeshCoherence(double tolerance)
         fprintf(fp, "View \"duplicate vertices\"{\n");
         for(auto it = duplicates.begin(); it != duplicates.end(); it++) {
           MVertex *v = *it;
-          fprintf(fp, "SP(%.16g,%.16g,%.16g){%lu};\n", v->x(), v->y(), v->z(),
+          fprintf(fp, "SP(%.16g,%.16g,%.16g){%zu};\n", v->x(), v->y(), v->z(),
                   v->getNum());
         }
         fprintf(fp, "};\n");

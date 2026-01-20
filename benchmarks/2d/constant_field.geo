@@ -42,10 +42,15 @@ Plane Surface(22) = {21};
 Curve Loop(23) = {11, -12, 13, 14, 1, 2, -3, 4, 5, 6, 7, -8, 9, 10};
 Plane Surface(24) = {23, 21};
 
+Line(21) = {23, 20};
+Line{21} In Surface{22};
+
 Field[1] = Constant;
 Field[1].SurfacesList = {22};
 Field[1].VIn = 0.001;
 Field[1].VOut = 0.01;
+//Field[1].IncludeEmbedded = 0; // test without embedded
+//Field[1].IncludeBoundary = 0; // test without boundary
 
 Field[2] = Constant;
 Field[2].SurfacesList = {24};

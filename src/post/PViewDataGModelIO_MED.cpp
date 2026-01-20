@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -384,7 +384,7 @@ bool PViewDataGModel::readMED(const std::string &fileName, int fileIndex)
           }
           startIndex += maxe;
         }
-        Msg::Debug("MED has no tags -- assuming starting index %lu",
+        Msg::Debug("MED has no tags -- assuming starting index %zu",
                    startIndex);
       }
 

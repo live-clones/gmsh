@@ -1,9 +1,60 @@
 * { line-height: 1.35; }
 
-html { max-width: 1500px; margin: auto; background: #ffffff/*#f4f4f4*/; color: #252525;
-  font-family: helvetica,sans-serif; font-size: 95%; }
+html {
+  max-width: 1500px;
+  margin: auto;
+  background: #ffffff/*#f4f4f4*/;
+  color: #252525;
+  font-family: helvetica,sans-serif;
+  font-size: 95%;
+}
 
-body { margin: auto; padding: 25px; background-color: #ffffff; }
+body {
+  margin: auto;
+  background-color: #ffffff;
+  /* padding: 25px; */ /* use this when there is no news */
+  padding: 50px; /* NEWS use this when the news banner is present */
+}
+
+.news {
+  /* NEWS comment the following to show the news banner - do not forget to change
+   the padding value in in "body" above */
+  /* display: none; */
+  background: #41419F; /* color chosen to match Gitlab's Indigo alert banner */
+  text-align: center;
+  padding: 8px 20px;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000; /* stays above all content */
+  opacity: 0;
+  transform: translateY(-30px); /* Start above */
+  animation: newsFadeSlideIn 1s forwards;
+  animation-delay: 0.3s;
+  position: fixed;
+}
+
+@keyframes newsFadeSlideIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.news-link {
+  color: white;
+  font-weight: bold;
+  text-decoration: none;
+  opacity: 1; /* start invisible, animate with news banner */
+}
+
+.news-link:hover {
+  text-decoration: underline;
+}
+
+.news-link::before { /* NEWS inject static text in the news link */
+  content: "🚀 First Gmsh User Meeting, 8-9 July 2026 in Liège, Belgium";
+}
 
 a { text-decoration: none; color: #1a0dab; background: none; }
 a:visited { color: #660099; }
@@ -22,9 +73,9 @@ a[data-tooltip]:hover:before, a[data-tooltip]:hover:after { visibility: visible;
   -o-transition: visibility 0s linear 0s; transition: visibility 0s linear 0s; }
 
 img { border: none; vertical-align: middle; }
-#banner { float: right; width: 180px; padding-left: 1.5em; padding-bottom: 1.5em;
+#banner { float: right; width: 190px; padding-left: 1.5em; padding-bottom: 1.5em;
   background: #ffffff; }
-#banner img { width: 180px; margin-bottom: 1.5ex; box-shadow: 0px 1px 4px #bbb; }
+#banner img { width: 190px; margin-bottom: 1.5ex; box-shadow: 0px 1px 4px #bbb; }
 img.screenshot { width:250px; margin:0.5ex; box-shadow: 0px 1px 4px #bbb;  }
 #toc { margin-top:2em; margin-bottom:2.5em; }
 .fb-like, .twitter-follow-button { vertical-align:bottom; }

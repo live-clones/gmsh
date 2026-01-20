@@ -36,7 +36,7 @@
  * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  */
 
-/*  
+/*
  *  $Header: /u/smoot/md/mpeg_encode/RCS/psearch.c,v 1.9 1995/01/19 23:09:12 eyhung Exp $
  *  $Log: psearch.c,v $
  * Revision 1.9  1995/01/19  23:09:12  eyhung
@@ -86,6 +86,7 @@
 #include "fsize.h"
 #include "param.h"
 
+#define mymax(a,b) ((a) > (b) ? (a) : (b))
 
 /*==================*
  * STATIC VARIABLES *
@@ -120,7 +121,7 @@ int psearchAlg;
  * PMotionSearch
  *
  *	compute the best P-frame motion vector we can
- *	
+ *
  *
  * RETURNS:	TRUE	    =	motion vector valid
  *		FALSE	    =	motion vector invalid; should code I-block
@@ -284,10 +285,10 @@ SetSearchRange(int pixelsP, int pixelsB)
 
     if ( computeMVHist ) {
       int max_search;
-      max_search=(searchRangeP>searchRangeB) ? 
+      max_search=(searchRangeP>searchRangeB) ?
 	((searchRangeP>searchRangeB)?searchRangeP:searchRangeB)
 	  : ((searchRangeB>searchRangeB)?searchRangeB:searchRangeB);
-	
+
 	pmvHistogram = (int **) malloc((2*searchRangeP+3)*sizeof(int *));
 	bbmvHistogram = (int **) malloc((2*searchRangeB+3)*sizeof(int *));
 	bfmvHistogram = (int **) malloc((2*searchRangeB+3)*sizeof(int *));
@@ -650,7 +651,7 @@ PLocalSearch(LumBlock currentBlock,
 	bestDiff = bestSoFar;
     }
 
-    /* try a spiral pattern */    
+    /* try a spiral pattern */
     for ( distance = stepSize; distance <= searchRange;
 	  distance += stepSize ) {
 	tempRightMY = rightMY;
@@ -664,7 +665,7 @@ PLocalSearch(LumBlock currentBlock,
 
 	/* do top, bottom */
 	for ( my = -distance; my < tempRightMY;
-	      my += max(tempRightMY+distance-stepSize, stepSize) ) {
+	      my += mymax(tempRightMY+distance-stepSize, stepSize) ) {
 	    if ( my < leftMY ) {
 		continue;
 	    }
@@ -686,7 +687,7 @@ PLocalSearch(LumBlock currentBlock,
 
 	/* do left, right */
 	for ( mx = -distance; mx < tempRightMX;
-	      mx += max(tempRightMX+distance-stepSize, stepSize) ) {
+	      mx += mymax(tempRightMX+distance-stepSize, stepSize) ) {
 	    if ( mx < leftMX ) {
 		continue;
 	    }
@@ -785,7 +786,7 @@ PTwoLevelSearch(LumBlock currentBlock,
     rightMY++;
     rightMX++;
 
-    /* try a spiral pattern */    
+    /* try a spiral pattern */
     for ( distance = 2; distance <= searchRange; distance += 2 ) {
 	tempRightMY = rightMY;
 	if ( distance < tempRightMY ) {
@@ -797,7 +798,7 @@ PTwoLevelSearch(LumBlock currentBlock,
 	}
 
 	/* do top, bottom */
-	loopInc = max(tempRightMY+distance-2, 2);
+	loopInc = mymax(tempRightMY+distance-2, 2);
 	for ( my = -distance; my < tempRightMY; my += loopInc ) {
 	    if ( my < leftMY ) {
 		continue;
@@ -819,7 +820,7 @@ PTwoLevelSearch(LumBlock currentBlock,
 	}
 
 	/* do left, right */
-	loopInc = max(tempRightMX+distance-2, 2);
+	loopInc = mymax(tempRightMX+distance-2, 2);
 	for ( mx = -distance; mx < tempRightMX; mx += loopInc ) {
 	    if ( mx < leftMX ) {
 		continue;
@@ -1008,4 +1009,3 @@ ShowBFMVHistogram(FILE *fpointer)
  *=====================*/
 
     /* none */
-

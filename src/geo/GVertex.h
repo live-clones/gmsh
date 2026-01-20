@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -36,16 +36,22 @@ public:
   virtual void resetMeshAttributes();
 
   // get/set the coordinates of the vertex
-  virtual GPoint point() const = 0;
-  virtual double x() const = 0;
-  virtual double y() const = 0;
-  virtual double z() const = 0;
+  virtual GPoint point() const { return GPoint(); }
+  virtual double x() const { return 0.; }
+  virtual double y() const { return 0.; }
+  virtual double z() const { return 0.; }
   virtual SPoint3 xyz() const { return SPoint3(x(), y(), z()); }
   virtual void setPosition(GPoint &p);
 
   // add/delete an edge bounded by this vertex
   void addEdge(GEdge *e);
   void delEdge(GEdge *e);
+
+  virtual std::vector<GEntity *> boundaryEntities() const
+  {
+    std::vector<GEntity *> entities;
+    return entities;
+  }
 
   // regions that bound this entity or that this entity bounds.
   virtual std::list<GRegion *> regions() const;

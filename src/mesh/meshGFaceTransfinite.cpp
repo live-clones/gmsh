@@ -1,4 +1,4 @@
-// Gmsh - Copyright (C) 1997-2024 C. Geuzaine, J.-F. Remacle
+// Gmsh - Copyright (C) 1997-2025 C. Geuzaine, J.-F. Remacle
 //
 // See the LICENSE.txt file in the Gmsh root directory for license information.
 // Please report all issues on https://gitlab.onelab.info/gmsh/gmsh/issues.
@@ -320,7 +320,7 @@ int MeshTransfiniteSurface(GFace *gf)
   const std::vector<GEdge *> &edges = gf->edges();
   for(auto it = edges.begin(); it != edges.end(); it++) {
     if(!(*it)->getBeginVertex() || !(*it)->getEndVertex()) {
-      Msg::Error(
+      Msg::Warning(
         "Transfinite algorithm cannot be applied to surface with bounding "
         "curve %d without begin or end point",
         (*it)->tag());
@@ -425,7 +425,7 @@ int MeshTransfiniteSurface(GFace *gf)
     }
 
     if(Lb != L || Hb != H) {
-      Msg::Error("Surface %d cannot be meshed using the transfinite algorithm "
+      Msg::Warning("Surface %d cannot be meshed using the transfinite algorithm "
                  "(non-matching number of nodes on opposite sides %d != %d or "
                  "%d != %d)",
                  gf->tag(), Lb, L, Hb, H);
@@ -441,7 +441,7 @@ int MeshTransfiniteSurface(GFace *gf)
     }
     else {
       if(Lb != L) {
-        Msg::Error(
+        Msg::Warning(
           "Surface %d cannot be meshed using the transfinite algorithm "
           "(non-matching number of nodes on opposite sides %d != %d)",
           gf->tag(), L, Lb);
