@@ -2128,6 +2128,8 @@ with
   Parametric BoundingBox Curve|Surface @{ @var{expression} @} |
   Parametric Point @{ @var{expression} @} In Surface @{ @var{expression} @} |
   Normal Surface @{ @var{expression} @} Parametric @{ @var{expression}, @var{expression} @} |
+  Curvature Curve @{ @var{expression} @} Parametric @{ @var{expression} @} |
+  Curvature Surface @{ @var{expression} @} Parametric @{ @var{expression}, @var{expression} @} |
   Mass Curve|Surface|Volume @{ @var{expression} @} |
   CenterOfMass Curve|Surface|Volume @{ @var{expression} @} |
   MatrixOfInertia Curve|Surface|Volume @{ @var{expression} @} |
@@ -2166,6 +2168,8 @@ V min, U max, V max) or a curve or a surface,
 respectively. @code{Parametric Point} retrieves the parametric
 coordinates U, V of a point on a surface. @code{Normal Surface} returns
 the normal to a surface evaluated at the specified parametric
+coordinates. @code{Curvature Curve} and. @code{Curvature Surface} return
+the curvature of a curve or a surface at the specified parametric
 coordinates.
 
 The last cases permit to retrieve the mass, the center of mass or the
